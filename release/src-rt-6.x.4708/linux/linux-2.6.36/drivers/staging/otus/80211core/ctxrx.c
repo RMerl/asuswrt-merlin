@@ -2688,7 +2688,7 @@ void zfiRecv80211(zdev_t* dev, zbuf_t* buf, struct zsAdditionInfo* addInfo)
                 }
             }
 
-#ifdef ZM_ENABLE_NATIVE_WIFI     //Native Wifi : 1, Ethernet format : 0
+#ifdef ZM_ENABLE_NATIVE_WIFI //Native Wifi : 1, Ethernet format : 0
             //To remove IV
             if (offset > 0)
             {
@@ -2785,7 +2785,7 @@ void zfiRecv80211(zdev_t* dev, zbuf_t* buf, struct zsAdditionInfo* addInfo)
             if (vap < ZM_MAX_AP_SUPPORT)
             /* AP mode */
             {
-#ifdef ZM_ENABLE_NATIVE_WIFI     //Native Wifi : 1, Ethernet format : 0
+#ifdef ZM_ENABLE_NATIVE_WIFI //Native Wifi : 1, Ethernet format : 0
                 //To remove IV
                 if (offset > 0)
                 {

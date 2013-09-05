@@ -238,6 +238,10 @@ struct sk_buff * BCMFASTPATH_HOST __alloc_skb(unsigned int size, gfp_t gfp_mask,
 #ifdef NET_SKBUFF_DATA_USES_OFFSET
 	skb->mac_header = ~0U;
 #endif
+#ifdef BCMFA
+	skb->napt_idx = BCM_FA_INVALID_IDX_VAL;
+	skb->napt_flags = 0;
+#endif
 
 	/* make sure we initialize shinfo sequentially */
 	shinfo = skb_shinfo(skb);
@@ -614,6 +618,11 @@ static void BCMFASTPATH_HOST __copy_skb_header(struct sk_buff *new, const struct
 	new->ctrace_start = 0;
 	new->ctrace_count = 1;
 #endif /* BCMDBG_CTRACE */
+
+#ifdef BCMFA
+	new->napt_idx		= BCM_FA_INVALID_IDX_VAL;
+	new->napt_flags		= 0;
+#endif
 
 	skb_copy_secmark(new, old);
 }

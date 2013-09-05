@@ -143,10 +143,10 @@ static struct devprobe2 mca_probes[] __initdata = {
 #ifdef CONFIG_NE2_MCA
 	{ne2_probe, 0},
 #endif
-#ifdef CONFIG_ELMC		    /* 3c523 */
+#ifdef CONFIG_ELMC		/* 3c523 */
 	{elmc_probe, 0},
 #endif
-#ifdef CONFIG_ELMC_II		    /* 3c527 */
+#ifdef CONFIG_ELMC_II		/* 3c527 */
 	{mc32_probe, 0},
 #endif
 	{NULL, 0},
@@ -157,7 +157,7 @@ static struct devprobe2 mca_probes[] __initdata = {
  * look for EISA/PCI/MCA cards in addition to ISA cards).
  */
 static struct devprobe2 isa_probes[] __initdata = {
-#if defined(CONFIG_HP100) && defined(CONFIG_ISA)	    /* ISA, EISA */
+#if defined(CONFIG_HP100) && defined(CONFIG_ISA)	/* ISA, EISA */
 	{hp100_probe, 0},
 #endif
 #ifdef CONFIG_3C515
@@ -169,7 +169,7 @@ static struct devprobe2 isa_probes[] __initdata = {
 #ifdef CONFIG_WD80x3
 	{wd_probe, 0},
 #endif
-#ifdef CONFIG_EL2 		    /* 3c503 */
+#ifdef CONFIG_EL2 		/* 3c503 */
 	{el2_probe, 0},
 #endif
 #ifdef CONFIG_HPLAN
@@ -178,14 +178,14 @@ static struct devprobe2 isa_probes[] __initdata = {
 #ifdef CONFIG_HPLAN_PLUS
 	{hp_plus_probe, 0},
 #endif
-#ifdef CONFIG_E2100		    /* Cabletron E21xx series. */
+#ifdef CONFIG_E2100		/* Cabletron E21xx series. */
 	{e2100_probe, 0},
 #endif
-#if defined(CONFIG_NE2000) || defined(CONFIG_NE_H8300)      /* ISA (use ne2k-pci for \
-	PCI cards) */
+#if defined(CONFIG_NE2000) || defined(CONFIG_NE_H8300)  /* ISA (use ne2k-pci for PCI \
+	cards) */
 	{ne_probe, 0},
 #endif
-#ifdef CONFIG_LANCE		    /* ISA/VLB (use pcnet32 for PCI cards) */
+#ifdef CONFIG_LANCE		/* ISA/VLB (use pcnet32 for PCI cards) */
 	{lance_probe, 0},
 #endif
 #ifdef CONFIG_SMC9194
@@ -203,26 +203,26 @@ static struct devprobe2 isa_probes[] __initdata = {
 #ifdef CONFIG_ETH16I
 	{eth16i_probe, 0},	/* ICL EtherTeam 16i/32 */
 #endif
-#ifdef CONFIG_EEXPRESS		    /* Intel EtherExpress */
+#ifdef CONFIG_EEXPRESS		/* Intel EtherExpress */
 	{express_probe, 0},
 #endif
-#ifdef CONFIG_EEXPRESS_PRO	    /* Intel EtherExpress Pro/10 */
+#ifdef CONFIG_EEXPRESS_PRO	/* Intel EtherExpress Pro/10 */
 	{eepro_probe, 0},
 #endif
-#ifdef CONFIG_EWRK3                 /* DEC EtherWORKS 3 */
+#ifdef CONFIG_EWRK3             /* DEC EtherWORKS 3 */
     	{ewrk3_probe, 0},
 #endif
 #if defined(CONFIG_APRICOT) || defined(CONFIG_MVME16x_NET) || \
-	defined(CONFIG_BVME6000_NET)	    /* Intel I82596 */
+	defined(CONFIG_BVME6000_NET)	/* Intel I82596 */
 	{i82596_probe, 0},
 #endif
-#ifdef CONFIG_EL1		    /* 3c501 */
+#ifdef CONFIG_EL1		/* 3c501 */
 	{el1_probe, 0},
 #endif
-#ifdef CONFIG_EL16		    /* 3c507 */
+#ifdef CONFIG_EL16		/* 3c507 */
 	{el16_probe, 0},
 #endif
-#ifdef CONFIG_ELPLUS		    /* 3c505 */
+#ifdef CONFIG_ELPLUS		/* 3c505 */
 	{elplus_probe, 0},
 #endif
 #ifdef CONFIG_NI5010
@@ -238,29 +238,29 @@ static struct devprobe2 isa_probes[] __initdata = {
 };
 
 static struct devprobe2 parport_probes[] __initdata = {
-#ifdef CONFIG_DE620		    /* D-Link DE-620 adapter */
+#ifdef CONFIG_DE620		/* D-Link DE-620 adapter */
 	{de620_probe, 0},
 #endif
 	{NULL, 0},
 };
 
 static struct devprobe2 m68k_probes[] __initdata = {
-#ifdef CONFIG_ATARILANCE	    /* Lance-based Atari ethernet boards */
+#ifdef CONFIG_ATARILANCE	/* Lance-based Atari ethernet boards */
 	{atarilance_probe, 0},
 #endif
-#ifdef CONFIG_SUN3LANCE             /* sun3 onboard Lance chip */
+#ifdef CONFIG_SUN3LANCE         /* sun3 onboard Lance chip */
 	{sun3lance_probe, 0},
 #endif
-#ifdef CONFIG_SUN3_82586            /* sun3 onboard Intel 82586 chip */
+#ifdef CONFIG_SUN3_82586        /* sun3 onboard Intel 82586 chip */
 	{sun3_82586_probe, 0},
 #endif
-#ifdef CONFIG_APNE		    /* A1200 PCMCIA NE2000 */
+#ifdef CONFIG_APNE		/* A1200 PCMCIA NE2000 */
 	{apne_probe, 0},
 #endif
-#ifdef CONFIG_MVME147_NET	    /* MVME147 internal Ethernet */
+#ifdef CONFIG_MVME147_NET	/* MVME147 internal Ethernet */
 	{mvme147lance_probe, 0},
 #endif
-#ifdef CONFIG_MAC8390               /* NuBus NS8390-based cards */
+#ifdef CONFIG_MAC8390           /* NuBus NS8390-based cards */
 	{mac8390_probe, 0},
 #endif
 #ifdef CONFIG_MAC89x0

@@ -2,7 +2,7 @@
  * RWL definitions  of
  * Broadcom 802.11bang Networking Device Driver
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -10,7 +10,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: rwl_wifi.h 281527 2011-09-02 17:12:53Z $
+ * $Id: rwl_wifi.h 393460 2013-03-27 19:43:28Z $
  *
  */
 
@@ -24,10 +24,6 @@
 #define RWL_WIFI_OUI_BYTE1		0x90
 #define RWL_WIFI_OUI_BYTE2		0x4c
 #define RWL_WIFI_ACTION_FRAME_SIZE	sizeof(struct dot11_action_wifi_vendor_specific)
-#define RWL_WIFI_FIND_MY_PEER		0x09 /* Used while finding server */
-#define RWL_WIFI_FOUND_PEER		0x0A /* Server response to the client  */
-#define RWL_WIFI_DEFAULT		0x00
-#define RWL_ACTION_WIFI_FRAG_TYPE	0x55 /* Fragment indicator for receiver */
 
 /*
  * Information about the action frame data fields in the dot11_action_wifi_vendor_specific

@@ -1,7 +1,7 @@
 /*
  * Flash mapping for BCM947XX boards
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

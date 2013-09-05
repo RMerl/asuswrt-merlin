@@ -47,7 +47,7 @@ static inline void pcie_no_aspm(void)
 }
 #endif
 
-#ifdef CONFIG_PCIEASPM_DEBUG     /* this depends on CONFIG_PCIEASPM */
+#ifdef CONFIG_PCIEASPM_DEBUG /* this depends on CONFIG_PCIEASPM */
 extern void pcie_aspm_create_sysfs_dev_files(struct pci_dev *pdev);
 extern void pcie_aspm_remove_sysfs_dev_files(struct pci_dev *pdev);
 #else

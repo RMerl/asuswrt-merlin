@@ -146,7 +146,7 @@ struct sigaction {
           __sighandler_t _sa_handler;
           void (*_sa_sigaction)(int, struct siginfo *, void *);
         } _u;
-#ifndef __s390x__     /* lovely */
+#ifndef __s390x__ /* lovely */
         sigset_t sa_mask;
         unsigned long sa_flags;
         void (*sa_restorer)(void);

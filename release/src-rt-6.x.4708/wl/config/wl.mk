@@ -1,7 +1,7 @@
 # Helper makefile for building Broadcom wl device driver
 # This file maps wl driver feature flags (import) to WLFLAGS and WLFILES_SRC (export).
 #
-# Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+# Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
 # 
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
 # OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-# $Id: wl.mk 398321 2013-04-24 03:20:39Z $
+# $Id: wl.mk 415806 2013-07-31 20:05:30Z $
 
 
 
@@ -51,27 +51,24 @@ ifeq ($(HSPOT),1)
 	WLPROBRESP_SW = 1
 endif
 
-ifeq ($(NPS),1)
-	WLWNM = 1
-	WLNPS = 1
-	ifeq ($(STA),1)
-		KEEP_ALIVE = 1
-	endif
-endif
-
-ifneq ($(MINIAP),1)
-	WLFLAGS += -DENABLE_ACPHY
-endif
 WLFLAGS += -DPPR_API
+
+ifdef BCMPHYCORENUM
+	WLFLAGS += -DBCMPHYCORENUM=$(BCMPHYCORENUM)
+endif
 
 #ifdef WL11AC
 ifneq ($(WL11AC),0)
 	WL11AC := 1
 	WLFLAGS += -DWL11AC
-
+        WLFLAGS += -DWL11N_STBC_RX_ENABLED
 ifneq ($(WLTXBF),0)
 	WLFLAGS += -DWL_BEAMFORMING
+	ifeq ($(WLMEDIA_TXBF_ENB),1)
+		WLFLAGS += -DWLMEDIA_TXBF_ENB
+	endif
 endif
+
 endif
 #endif
 
@@ -86,8 +83,15 @@ endif
 #ifdef PKTQ_LOG
 ifeq ($(PKTQ_LOG),1)
 	WLFLAGS += -DPKTQ_LOG
+	ifeq ($(SCB_BS_DATA),1)
+		WLFLAGS += -DSCB_BS_DATA
+	endif
 endif
 #endif
+
+ifeq ($(PSPRETEND),1)
+	WLFLAGS += -DPSPRETEND
+endif
 
 #ifdef BCMDBG_TRAP
 # CPU debug traps (lomem access, divide by 0, etc) are enabled except when mogrified out for
@@ -112,7 +116,6 @@ ifeq ($(WL_LOW),1)
 		WL_SPLIT = 1
 	endif
 endif
-
 ifeq ($(WL_HIGH),1)
 	ifneq ($(WL_LOW),1)
 		WL_SPLIT = 1
@@ -148,6 +151,9 @@ ifeq ($(WL_HIGH),1)
 		endif
 		ifeq ($(WLMEDIA_LARGE_DNGL_AGG),1)
 			WLFLAGS += -DWLMEDIA_LARGE_DNGL_AGG
+		endif
+		ifeq ($(BCMUSBDEV_COMPOSITE),1)
+			WLFLAGS += -DBCMUSBDEV_COMPOSITE
 		endif
 	endif
 endif
@@ -225,6 +231,57 @@ ifeq ($(WL),1)
 	WLFILES_SRC += src/wl/sys/wlc_intr.c
 	WLFILES_SRC += src/wl/sys/wlc_hw.c
 
+#enable offloads flag to use the functionality
+	ifeq ($(WLRXOE),1)
+		WLFLAGS += -DWLRXOE
+		WLFILES_SRC_LO += src/shared/bcm_ol_msg.c
+		WLFILES_SRC_LO += src/bcmcrypto/aeskeywrap.c
+		WLFILES_SRC_LO += src/bcmcrypto/rijndael-alg-fst.c
+		WLFILES_SRC_LO += src/bcmcrypto/md5.c
+		WLFILES_SRC_LO += src/bcmcrypto/hmac.c
+		WLFILES_SRC_LO += src/bcmcrypto/prf.c
+		WLFILES_SRC_LO += src/bcmcrypto/aes.c
+		WLFILES_SRC_LO += src/bcmcrypto/sha1.c
+		WLFILES_SRC_LO += src/shared/bcmwpa.c
+		WLFILES_SRC_LO += src/wl/sys/wlc_dngl_ol.c
+		WLFILES_SRC_LO += src/wl/sys/wlc_bcnol.c
+		WLFILES_SRC_LO += src/wl/sys/wlc_rssiol.c
+		WLFILES_SRC_LO += src/wl/sys/wlc_eventlog_ol.c
+		WLFILES_SRC_LO += src/bcmcrypto/tkhash.c
+		WLFILES_SRC_LO += src/bcmcrypto/rc4.c
+		WLFILES_SRC_LO += src/wl/sys/wlc_pktfilterol.c
+		WLFILES_SRC_LO += src/wl/sys/wlc_wowlol.c
+		WLFILES_SRC_LO += src/bcmcrypto/tkmic.c
+		ifeq ($(L2KEEPALIVEOL),1)
+		WLFLAGS += -DL2KEEPALIVEOL
+		WLFILES_SRC_LO += src/wl/sys/wlc_l2keepaliveol.c
+		endif
+		ifeq ($(GTKOL),1)
+			WLFLAGS += -DGTKOL
+			WLFILES_SRC_LO += src/wl/sys/wlc_gtkol.c
+		endif
+	endif
+	ifeq ($(SCANOL),1)
+		WLFLAGS += -DSCANOL
+		WLFILES_SRC_LO += src/wl/sys/wlc_scan.c
+		WLFILES_SRC_LO += src/wl/sys/wlc_scanol.c
+	endif
+	ifeq ($(SCANOL_HIGH),1)
+		WLFLAGS += -DSCANOL_HIGH
+		WLFILES_SRC_HI += src/wl/sys/wlc_scanol_iovar.c
+	endif
+	ifeq ($(MACOL),1)
+		WLFLAGS += -DMACOL
+		WLFILES_SRC_LO += src/wl/sys/wlc_macol.c
+	endif
+	ifeq ($(MACOL_HIGH),1)
+		WLFLAGS += -DMACOL_HIGH
+		WLFILES_SRC_HI += src/wl/sys/wlc_macol_iovar.c
+	endif
+	ifeq ($(WLPFN),1)
+		WLFLAGS += -DWLPFN
+		WLFILES_SRC_LO += src/wl/sys/wl_pfn.c
+	endif
 	WLFILES_SRC_LO += src/shared/qmath.c
 	WLFILES_SRC_LO += src/wl/sys/d11ucode_gt15.c
 	WLFILES_SRC_LO += src/wl/sys/d11ucode_ge24.c
@@ -232,17 +289,20 @@ ifeq ($(WL),1)
 	WLFILES_SRC_LO += src/wl/phy/wlc_phy_cmn.c
 	WLFILES_SRC_LO += src/wl/phy/wlc_phy_ssn.c
 	WLFILES_SRC_LO += src/wl/phy/wlc_phy_n.c
+	WLFILES_SRC_LO += src/wl/phy/wlc_phy_extended_n.c
 	WLFILES_SRC_LO += src/wl/phy/wlc_phy_radio_n.c
 	WLFILES_SRC_LO += src/wl/phy/wlc_phytbl_n.c
 	WLFILES_SRC_LO += src/wl/phy/wlc_phytbl_ssn.c
 	WLFILES_SRC_LO += src/wl/sys/wlc_phy_shim.c
 	WLFILES_SRC_LO += src/wl/sys/wlc_bmac.c
+	WLFILES_SRC_LO += src/wl/sys/wlc_rate_def.c
 
 	ifneq ($(MINIAP),1)
 		WLFILES_SRC_LO += src/wl/sys/d11ucode_ge40.c
 		WLFILES_SRC_LO += src/wl/phy/wlc_phytbl_ac.c
 		WLFILES_SRC_LO += src/wl/phy/wlc_phytbl_acdc.c
 		WLFILES_SRC_LO += src/wl/phy/wlc_phy_ac.c
+		WLFILES_SRC_LO += src/wl/phy/wlc_phy_ac_gains.c
 		WLFILES_SRC_LO += src/wl/sys/d11ucode_le15.c
 		WLFILES_SRC_LO += src/wl/phy/wlc_phy_ht.c
 		WLFILES_SRC_LO += src/wl/phy/wlc_phytbl_ht.c
@@ -256,12 +316,20 @@ ifeq ($(WL),1)
 	endif
 
 	WLFILES_SRC_HI += src/wl/sys/wlc.c
+	WLFILES_SRC_HI += src/wl/sys/wlc_stamon.c
+	WLFILES_SRC_HI += src/wl/sys/wlc_monitor.c
+ifeq ($(ATE),1)
+	WLFILES_SRC_HI += src/wl/sys/wlu.c
+	WLFILES_SRC_HI += src/wl/sys/wlu_common.c
+	WLFILES_SRC_HI += src/wl/shared/miniopt.c
+endif
 	WLFILES_SRC_HI += src/wl/sys/wlc_utils.c
 	WLFILES_SRC_HI += src/wl/sys/wlc_prot.c
 	WLFILES_SRC_HI += src/wl/sys/wlc_prot_g.c
 	WLFILES_SRC_HI += src/wl/sys/wlc_prot_n.c
 	WLFILES_SRC_HI += src/wl/sys/wlc_assoc.c
 	WLFILES_SRC_HI += src/wl/sys/wlc_rate.c
+	WLFILES_SRC_HI += src/wl/sys/wlc_rate_def.c
 	WLFILES_SRC_HI += src/wl/sys/wlc_stf.c
 	WLFILES_SRC_HI += src/wl/sys/wlc_lq.c
 	ifneq ($(WLWSEC),0)
@@ -272,6 +340,12 @@ ifeq ($(WL),1)
 	WLFILES_SRC_HI += src/wl/sys/wlc_scb.c
 	WLFILES_SRC_HI += src/wl/sys/wlc_rate_sel.c
 	WLFILES_SRC_HI += src/wl/sys/wlc_scb_ratesel.c
+
+        ifeq ($(WL_PROXDETECT),1)
+		WLFLAGS += -DWL_PROXDETECT
+		WLFILES_SRC_HI += src/wl/proxd/src/wlc_pdsvc.c
+		WLFILES_SRC_HI += src/wl/proxd/src/wlc_pdrssi.c
+	endif
 
 #ifdef WL_LPC
 	ifeq ($(WL_LPC),1)
@@ -303,6 +377,10 @@ ifeq ($(WL),1)
 	ifeq ($(WL11AC),1)
 		WLFILES_SRC_HI += src/wl/sys/wlc_vht.c
 		WLFILES_SRC_HI += src/wl/sys/wlc_txbf.c
+		ifeq ($(WLOLPC),1)
+			WLFLAGS += -DWLOLPC
+			WLFILES_SRC_HI += src/wl/olpc/src/wlc_olpc_engine.c
+		endif
 	endif
 	ifeq ($(WLATF),1)
 		WLFILES_SRC_HI += src/wl/sys/wlc_airtime.c
@@ -329,6 +407,9 @@ ifeq ($(WL),1)
 #endif
 	endif
 	WLFILES_SRC_HI += src/wl/sys/wlc_dfs.c
+	ifeq ($(WLC_DISABLE_DFS_RADAR_SUPPORT),1)
+		WLFLAGS += -DWLC_DISABLE_DFS_RADAR_SUPPORT
+	endif
 #ifdef WL11D
 	ifeq ($(WL11D),1)
 		WLFLAGS += -DWL11D
@@ -371,6 +452,9 @@ endif
 ifeq ($(WLSCANCACHE),1)
 	WLFLAGS += -DWLSCANCACHE
 	WLFILES_SRC_HI += src/wl/sys/wlc_scandb.c
+	ifeq ($(SCANOL),1)
+		WLFILES_SRC_LO += src/wl/sys/wlc_scandb.c
+	endif
 endif
 #endif
 	WLFILES_SRC_HI += src/wl/sys/wlc_hrt.c
@@ -380,7 +464,9 @@ endif
 #ifdef BCMDBUS
 ifeq ($(BCMDBUS),1)
 	WLFLAGS += -DBCMDBUS
-	WLFILES_SRC += src/shared/dbus.c
+	ifneq ($(BCM_EXTERNAL_MODULE),1)
+		WLFILES_SRC += src/shared/dbus.c
+	endif
 
 	ifeq ($(BCMTRXV2),1)
 		WLFLAGS += -DBCMTRXV2
@@ -401,8 +487,10 @@ ifeq ($(BCMDBUS),1)
 			WLFILES_SRC += src/shared/dbus_sdh.c
 			WLFILES_SRC += src/shared/dbus_sdh_linux.c
 		else
-			WLFILES_SRC += src/shared/dbus_usb.c
-			WLFILES_SRC += src/shared/dbus_usb_linux.c
+			ifneq ($(BCM_EXTERNAL_MODULE),1)
+				WLFILES_SRC += src/shared/dbus_usb.c
+				WLFILES_SRC += src/shared/dbus_usb_linux.c
+			endif
 		endif
 	else
 		ifeq ($(WLNDIS),1)
@@ -449,10 +537,12 @@ endif
 ifeq ($(EMBED_IMAGE_43526b),1)
 	WLFLAGS += -DEMBED_IMAGE_43526b
 endif
+ifeq ($(EMBED_IMAGE_4360b),1)
+	WLFLAGS += -DEMBED_IMAGE_4360b
+endif
 ifeq ($(EMBED_IMAGE_4325sd),1)
 	WLFLAGS += -DEMBED_IMAGE_4325sd
 endif
-
 ifeq ($(DNGL_WD_KEEP_ALIVE),1)
 	WLFLAGS += -DDNGL_WD_KEEP_ALIVE
 endif
@@ -497,7 +587,7 @@ endif
 #endif
 
 ifeq ($(BCM_STA_CFG80211),1)
-	WLFILES_SRC_HI += src/wl/sys/wl_cfg80211.c 
+	WLFILES_SRC_HI += src/wl/sys/wl_cfg80211.c
 	WLFILES_SRC_HI += src/wl/sys/wl_cfgp2p.c
 	WLFILES_SRC_HI += src/wl/sys/wldev_common.c
 	WLFILES_SRC_HI += src/wl/sys/wl_linux_mon.c
@@ -539,6 +629,18 @@ ifeq ($(TRAFFIC_MGMT),1)
 		WLFLAGS += -DTRAFFIC_MGMT_RSSI_POLICY=$(AP)
 	endif
 
+	ifeq ($(WLINTFERSTAT),1)
+        WLFLAGS += -DWLINTFERSTAT
+	endif
+
+	ifeq ($(TRAFFIC_MGMT_DWM),1)
+		WLFLAGS += -DTRAFFIC_MGMT_DWM
+	endif
+endif
+
+ifeq ($(WLSTAPRIO),1)
+	WLFLAGS += -DWL_STAPRIO
+	WLFILES_SRC += src/wl/sys/wlc_staprio.c
 endif
 
 #ifdef NDIS
@@ -659,6 +761,11 @@ endif
 ifeq ($(DHDOID),1)
 	WLFLAGS += -DWLC_HOSTOID
 	WLFILES_SRC += src/wl/sys/wlc_hostoid.c
+	ifeq ($(WLVISTA),1)
+		# DONGLE vista needs WL_MONITOR to pass RTM
+		WLFLAGS += -DEXT_STA -DWL_MONITOR -DWLCNTSCB
+		WLFILES_SRC += src/wl/sys/wl_gtkrefresh.c
+	endif
 endif
 #endif
 
@@ -722,7 +829,6 @@ ifeq ($(AP),1)
 	WLFILES_SRC_HI += src/wl/sys/wlc_ap.c
 	WLFILES_SRC_HI += src/wl/sys/wlc_apps.c
 	WLFLAGS += -DAP
-
 	ifeq ($(MBSS),1)
 		WLFLAGS += -DMBSS
 	endif
@@ -810,6 +916,9 @@ endif
 ifeq ($(UCAST_UPNP), 1)
 	WLFLAGS += -DWL_UCAST_UPNP
 endif
+ifeq ($(IGMPQ_FILTER), 1)
+	WLFLAGS += -DWL_WMF_IGMP_QUERY_FILTER
+endif
 #endif
 
 #ifdef MCAST_REGEN
@@ -877,6 +986,12 @@ endif
 # MONITOR
 ifeq ($(WL_MONITOR),1)
 	WLFLAGS += -DWL_MONITOR
+endif
+#endif
+
+#ifdef WL_STA_MONITOR
+ifeq ($(WL_STA_MONITOR),1)
+	WLFLAGS += -DWL_STA_MONITOR
 endif
 #endif
 
@@ -956,6 +1071,7 @@ endif
 #ifdef WL11U
 # 11U
 ifeq ($(WL11U),1)
+	L2_FILTER := 1
 	WLFLAGS += -DWL11U -DWIFI_ACT_FRAME
 	WLFILES_SRC_HI += src/wl/sys/wlc_11u.c
 endif
@@ -1020,6 +1136,14 @@ endif
 #endif
 
 
+ifeq ($(WL_OKC),1)
+	WLFLAGS += -DWL_OKC
+	WLFILES_SRC_HI += src/wl/sys/wlc_okc.c
+endif
+ifeq ($(WL_RCC),1)
+	WLFILES_SRC_HI += src/wl/sys/wlc_okc.c
+endif
+
 #ifdef WLCOEX
 # WLCOEX
 ifeq ($(WLCOEX),1)
@@ -1053,14 +1177,6 @@ ifeq ($(WLFBT),1)
 		WLFILES_SRC_HI += src/bcmcrypto/md5.c
 		WLFILES_SRC_HI += src/bcmcrypto/rijndael-alg-fst.c
 	endif
-endif
-
-ifeq ($(WLWNM),1)
-	WLFLAGS += -DWLWNM
-endif
-
-ifeq ($(WLNPS),1)
-	WLFLAGS += -DWLWNM -DWLNPS
 endif
 
 #ifdef BCMSUP_PSK
@@ -1130,7 +1246,7 @@ ifeq ($(MFP),1)
 	ifneq ($(BSD),1)
 		WLFILES_SRC_HI += src/bcmcrypto/rijndael-alg-fst.c
 	endif
-	ifeq ($(MFP_TEST),1)
+	ifneq ($(AP)$(MFP_TEST),)
 		WLFLAGS += -DMFP_TEST
 		WLFILES_SRC_HI += src/wl/sys/wlc_mfp_test.c
 	endif
@@ -1186,6 +1302,12 @@ ifeq ($(WLAMSDU),1)
 endif
 #endif
 
+#ifdef WLAMSDU_TX
+ifeq ($(WLAMSDU_TX),1)
+	WLFLAGS += -DWLAMSDU_TX
+endif
+#endif
+
 #ifdef WLAMSDU_SWDEAGG
 ifeq ($(WLAMSDU_SWDEAGG),1)
 	WLFLAGS += -DWLAMSDU_SWDEAGG
@@ -1199,6 +1321,12 @@ ifeq ($(WLNAR),1)
 endif
 #endif
 
+#ifdef WLTAF
+ifeq ($(WLTAF),1)
+    WLFILES_SRC_HI += src/wl/sys/wlc_taf.c
+    WLFLAGS += -DWLTAF
+endif
+#endif
 #ifdef WLAMPDU
 ifeq ($(WLAMPDU),1)
 	WLFLAGS += -DWLAMPDU
@@ -1298,28 +1426,48 @@ endif
 ifeq ($(WLOFFLD),1)
 	ifeq ($(WL_SPLIT),0)
 		WLFLAGS += -DWLOFFLD
+		WLFLAGS += -DWL_OFFLOADSTATS
 		WLFILES_SRC_HI += src/wl/sys/wlc_offloads.c
 		WLFILES_SRC_HI += src/shared/bcm_ol_msg.c
+
+	ifeq ($(NET_DETECT),1)
+		WLFLAGS += -DNET_DETECT
+		WLFILES_SRC_HI += src/wl/sys/wlc_net_detect.c
+	endif
+
+		WLFLAGS += -DEMBED_IMAGE_4352PCI
+		WLFLAGS += -DEMBED_IMAGE_4350PCI
 	endif
 endif
 #endif /* WLOFFLD */
 
-#ifdef WLVSDB
-ifeq ($(WLVSDB),1)
-        WLFLAGS += -DWLVSDB
-        WLMCNX := 1
-ifndef WLMCHAN
-        WLMCHAN := 1
+#ifdef SRHWVSDB
+ifeq ($(SRHWVSDB),1)
+	WLFLAGS += -DSRHWVSDB
 endif
+ifeq ($(PHY_WLSRVSDB),1)
+	# cpp define WLSRVSDB is used in this branch by PHY code only
+	WLFLAGS += -DWLSRVSDB
 endif
-#endif /*WLVSDB*/
+#endif /* SRHWVSDB */
 
+#ifdef WLMCHAN
+ifeq ($(WLMCHAN),1)
+	WLMCNX := 1
+endif
+#endif
 
 ifeq ($(WLMCNX),1)
 	WLFLAGS += -DWLP2P_UCODE
 	WLFILES_SRC_LO += src/wl/sys/d11ucode_p2p.c
 	WLFLAGS += -DWLMCNX
 	WLFILES_SRC_HI += src/wl/sys/wlc_mcnx.c
+	ifeq ($(FULLDNGLBLD),1)
+		ifneq ($(WLP2P_UCODE_ONLY),1)
+			# force P2P UCODE for MCNX on dongle
+			WLP2P_UCODE_ONLY := 1
+		endif
+	endif
 endif
 
 ifeq ($(WLP2P_UCODE_ONLY),1)
@@ -1328,6 +1476,7 @@ endif
 
 #ifdef WLMCHAN
 ifeq ($(WLMCHAN),1)
+	WLFLAGS += -DWLTXPWR_CACHE
 	WLFLAGS += -DWLMCHAN
 	WLFILES_SRC_HI += src/wl/sys/wlc_mchan.c
 ifndef WLMULTIQUEUE
@@ -1364,6 +1513,12 @@ ifeq ($(WLRWL),1)
 endif
 #endif
 
+ifeq ($(D0_COALESCING),1)
+	WLFLAGS += -DD0_COALESCING
+	WLFILES_SRC_HI += src/wl/sys/wl_d0_filter.c
+	WLMCHAN := 1
+endif
+
 ifneq ($(WLNDIS_DHD),1)
 endif
 
@@ -1393,6 +1548,19 @@ ifeq ($(WLMEDIA),1)
 endif
 #endif
 
+ifeq ($(WLMEDIA_FLAMES),1)
+        WLFLAGS += -DWLMEDIA_FLAMES
+endif
+
+
+#ifdef WL_WFDLL
+ifeq ($(WL_WFDLL),1)
+	WLFLAGS += -DWFD_PHY_LL
+ifeq ($(WL_WFDLLDBG),1)
+	WLFLAGS += -DWFD_PHY_LL_DEBUG
+endif
+endif
+
 #ifdef WLPKTDLYSTAT
 ifeq ($(WLPKTDLYSTAT),1)
 	WLFLAGS += -DWLPKTDLYSTAT
@@ -1402,12 +1570,6 @@ endif
 #ifdef WLPKTDLYSTAT_IND
 ifeq ($(WLPKTDLYSTAT_IND),1)
 	WLFLAGS += -DWLPKTDLYSTAT_IND
-endif
-#endif
-
-#ifdef WLINTFERSTAT
-ifeq ($(WLINTFERSTAT),1)
-        WLFLAGS += -DWLINTFERSTAT
 endif
 #endif
 
@@ -1672,13 +1834,15 @@ endif
 
 #ifdef WLPFN
 ifeq ($(WLPFN),1)
-	WLFLAGS += -DWLPFN
-	WLFILES_SRC += src/wl/sys/wl_pfn.c
-	ifeq ($(WLPFN_AUTO_CONNECT),1)
-		WLFLAGS += -DWLPFN_AUTO_CONNECT
+	ifeq ($(SCANOL),0)
+		WLFLAGS += -DWLPFN
+		WLFILES_SRC += src/wl/sys/wl_pfn.c
+		ifeq ($(WLPFN_AUTO_CONNECT),1)
+			WLFLAGS += -DWLPFN_AUTO_CONNECT
+		endif
 	endif
 endif
-#endif
+#endif /* WLPFN */
 
 #ifdef TOE
 ifeq ($(TOE),1)
@@ -1691,6 +1855,70 @@ endif
 ifeq ($(ARPOE),1)
 	WLFLAGS += -DARPOE
 	WLFILES_SRC += src/wl/sys/wl_arpoe.c
+endif
+#endif
+
+#ifdef MDNS
+ifeq ($(MDNS),1)
+	WLFLAGS += -DMDNS
+	WLFILES_SRC += src/wl/sys/wl_mdns_main.c
+	WLFILES_SRC += src/wl/sys/wl_mdns_common.c
+endif
+#endif
+
+#ifdef P2PO
+ifeq ($(P2PO),1)
+	WLFLAGS += -DP2PO
+	WLFLAGS += -DWL_EVENTQ
+	WLFLAGS += -DBCM_DECODE_NO_ANQP
+	WLFLAGS += -DBCM_DECODE_NO_HOTSPOT_ANQP
+	WLFILES_SRC += src/wl/sys/wl_p2po.c
+	WLFILES_SRC += src/wl/sys/wl_p2po_disc.c
+	WLFILES_SRC += src/wl/sys/wl_gas.c
+	WLFILES_SRC += src/wl/sys/wl_tmr.c
+	WLFILES_SRC += src/wl/sys/bcm_p2p_disc.c
+	WLFILES_SRC += src/wl/sys/wl_eventq.c
+	WLFILES_SRC += src/wl/gas/src/bcm_gas.c
+	WLFILES_SRC += src/wl/encode/src/bcm_decode.c
+	WLFILES_SRC += src/wl/encode/src/bcm_decode_gas.c
+	WLFILES_SRC += src/wl/encode/src/bcm_decode_ie.c
+	WLFILES_SRC += src/wl/encode/src/bcm_decode_anqp.c
+	WLFILES_SRC += src/wl/encode/src/bcm_decode_hspot_anqp.c
+	WLFILES_SRC += src/wl/encode/src/bcm_decode_p2p.c
+	WLFILES_SRC += src/wl/encode/src/bcm_encode.c
+	WLFILES_SRC += src/wl/encode/src/bcm_encode_gas.c
+	WLFILES_SRC += src/wl/encode/src/bcm_encode_ie.c
+	WLFILES_SRC += src/wl/encode/src/bcm_encode_anqp.c
+	WLFILES_SRC += src/wl/encode/src/bcm_encode_hspot_anqp.c
+	WLFILES_SRC += src/wl/encode/src/trace.c
+endif
+#endif
+
+#ifdef ANQPO
+ifeq ($(ANQPO),1)
+	WLFLAGS += -DANQPO
+	WLFLAGS += -DWL_EVENTQ
+	WLFLAGS += -DBCM_DECODE_NO_ANQP
+	WLFLAGS += -DBCM_DECODE_NO_HOTSPOT_ANQP
+	WLFILES_SRC += src/wl/sys/wl_anqpo.c
+	WLFILES_SRC += src/wl/sys/wl_gas.c
+	WLFILES_SRC += src/wl/sys/wl_tmr.c
+	WLFILES_SRC += src/wl/sys/wl_eventq.c
+	WLFILES_SRC += src/wl/gas/src/bcm_gas.c
+	WLFILES_SRC += src/wl/encode/src/bcm_decode.c
+	WLFILES_SRC += src/wl/encode/src/bcm_decode_gas.c
+	WLFILES_SRC += src/wl/encode/src/bcm_decode_ie.c
+	WLFILES_SRC += src/wl/encode/src/bcm_decode_p2p.c
+	WLFILES_SRC += src/wl/encode/src/bcm_encode.c
+	WLFILES_SRC += src/wl/encode/src/bcm_encode_gas.c
+	WLFILES_SRC += src/wl/encode/src/bcm_encode_ie.c
+endif
+#endif
+
+#ifdef TCPKAOE
+ifeq ($(TCPKAOE),1)
+	WLFLAGS += -DTCPKAOE
+	WLFILES_SRC += src/wl/sys/wl_tcpkeepol.c
 endif
 #endif
 
@@ -1735,8 +1963,7 @@ endif
 
 #ifdef PLC
 ifeq ($(PLC),1)
-	WLFLAGS += -DPLC -DPLC_WET
-	WLFILES_SRC += src/wl/sys/wl_plc_linux.c
+	WLFLAGS += -DPLC
 endif
 #endif
 
@@ -1753,11 +1980,6 @@ endif
 #endif
 
 #ifndef LINUX_HYBRID
-ifeq ($(KEEP_ALIVE),1)
-	WLFLAGS += -DKEEP_ALIVE
-	WLFILES_SRC += src/wl/sys/wl_keep_alive.c
-endif
-
 #ifdef OPENSRC_IOV_IOCTL
 ifeq ($(OPENSRC_IOV_IOCTL),1)
 	WLFLAGS += -DOPENSRC_IOV_IOCTL
@@ -1782,17 +2004,37 @@ ifeq ($(ASYNC_TSTAMPED_LOGS),1)
 	WLFLAGS += -DBCMTSTAMPEDLOGS
 endif
 
+ifeq ($(WL11K_AP),1)
+	WLFLAGS += -DWL11K_AP
+	WL11K = 1
+endif
 ifeq ($(WL11K),1)
 	WLFLAGS += -DWL11K
 	WLFILES_SRC += src/wl/sys/wlc_rrm.c
 endif
+
+ifeq ($(WLWNM_AP),1)
+	WLWNM := 1
+	WLFLAGS += -DWLWNM_AP
+endif
+
 ifeq ($(WLWNM),1)
 	WLFLAGS += -DWLWNM
+	ifeq ($(STA),1)
+		ifneq ($(WLWNM_AP),1)
+			KEEP_ALIVE = 1
+		endif
+	endif
 	WLFILES_SRC += src/wl/sys/wlc_wnm.c
 endif
-#endif
 
-# Sort and remove duplicates from WLFILES* 
+ifeq ($(KEEP_ALIVE),1)
+	WLFLAGS += -DKEEP_ALIVE
+	WLFILES_SRC += src/wl/sys/wl_keep_alive.c
+endif
+#endif  ##LINUX_HYBRID
+
+# Sort and remove duplicates from WLFILES*
 ifeq ($(WL_LOW),1)
 	WLFILES_SRC += $(sort $(WLFILES_SRC_LO))
 endif
@@ -1824,11 +2066,9 @@ ifeq ($(PHYMON),1)
 endif
 #endif
 
-#ifdef USBSHIM
-ifeq ($(USBSHIM),1)
-        WLFLAGS += -DUSBSHIM
-endif # USBSHIM
-#endif
+ifeq ($(BCM_EXTERNAL_MODULE),1)
+	WLFLAGS += -DLINUX_EXTERNAL_MODULE_DBUS
+endif
 
 #ifdef BCM_DCS
 ifeq ($(BCM_DCS),1)
@@ -1883,11 +2123,35 @@ ifeq ($(WL_URB_ZPKT),1)
 	WLFLAGS += -DWL_URB_ZPKT
 endif
 
-#ifdef SAVERESTORE
+ifeq ($(WL_LTR),1)
+	WLFLAGS += -DWL_LTR
+endif
+
+ifeq ($(WL_PRE_AC_DELAY_NOISE_INT),1)
+	WLFLAGS += -DWL_PRE_AC_DELAY_NOISE_INT
+endif
+
 ifeq ($(SAVERESTORE),1)
 	WLFLAGS += -DSAVERESTORE
+	SR_ESSENTIALS := 1
+endif
+
+# minimal functionality required to operate SR engine. Examples: sr binary download, sr enable.
+ifeq ($(SR_ESSENTIALS),1)
+	WLFLAGS += -DSR_ESSENTIALS
 	WLFILES_SRC_LO += src/shared/sr_array.c
 	WLFILES_SRC_LO += src/shared/saverestore.c
+endif
+
+#ifdef PMU_OPT
+ifeq ($(PMU_OPT),1)
+	WLFLAGS += -DPMU_OPT
+endif
+#endif
+
+#ifdef PMU_OPT_REV6
+ifeq ($(PMU_OPT_REV6),1)
+	WLFLAGS += -DPMU_OPT_REV6
 endif
 #endif
 
@@ -1924,8 +2188,72 @@ ifeq ($(WL_BCN_COALESCING),1)
 endif
 #endif
 
+#ifdef TINY_PKTJOIN
+ifeq ($(TINY_PKTJOIN),1)
+	WLFLAGS += -DTINY_PKTJOIN
+endif
+#endif
 
+#ifdef WL_RXEARLYRC
+ifeq ($(WL_RXEARLYRC),1)
+	WLFLAGS += -DWL_RXEARLYRC
+endif
+#endif
+
+#ifdef WLMCHAN
+#ifdef PROP_TXSTATUS
+ifeq ($(WLMCHAN),1)
+ifeq ($(PROP_TXSTATUS),1)
+	WLFLAGS += -DWLTXPWR_CACHE
+	ifeq ($(WL_SPLIT),0)
+		WLFLAGS += -DWLMCHANPRECLOSE
+		WLFLAGS += -DBBPLL_PARR
+	endif
+endif
+endif
+#endif  ## PROP_TXSTATUS
+#endif  ## WLMCHAN
+
+#ifdef WLRXOV
+ifeq ($(WLRXOV),1)
+	WLFLAGS += -DWLRXOV
+endif
+#endif
+
+ifeq ($(PKTC_DONGLE),1)
+	WLFLAGS += -DPKTC_DONGLE
+endif
 
 # Legacy WLFILES pathless definition, please use new src relative path
-# in make files. 
+# in make files.
 WLFILES := $(sort $(notdir $(WLFILES_SRC)))
+
+ifeq ($(AMPDU_HOSTREORDER), 1)
+	WLFLAGS += -DBRCMAPIVTW=128 -DWLAMPDU_HOSTREORDER
+endif
+
+# Work-arounds for ROM compatibility - relocate struct fields that were excluded in ROMs,
+# but are required in ROM offload builds.
+ifeq ($(WLC_PUB_OLDROM_BEAMFORMING_FIELDS),1)
+	EXTRA_DFLAGS += -DWLC_PUB_OLDROM_BEAMFORMING_FIELDS
+endif
+
+ifeq ($(WLC_STF_OLDROM_BEAMFORMING_FIELDS),1)
+	EXTRA_DFLAGS += -DWLC_STF_OLDROM_BEAMFORMING_FIELDS
+endif
+
+
+# used by the 4335c0 ROM. It avoids ROM abandons for every function that invokes this macro due to
+# additional devices added post tape-out.
+ifeq ($(IS_SINGLEBAND_5G_4335C0_ROM_COMPAT),1)
+	EXTRA_DFLAGS += -DIS_SINGLEBAND_5G_4335C0_ROM_COMPAT
+endif
+
+ifeq ($(WL_EVDATA_BSSINFO),1)
+	EXTRA_DFLAGS += -DWL_EVDATA_BSSINFO
+endif
+
+# Work-arounds for ROM compatibility to handle ROM that exclude MFP support.
+ifeq ($(WLC_MFP_ROM_COMPAT),1)
+	EXTRA_DFLAGS += -DWLC_MFP_ROM_COMPAT
+endif

@@ -1,7 +1,7 @@
 /*
  * Read-only support for NVRAM on flash and otp.
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -56,7 +56,7 @@ static char *findvar(char *vars_arg, char *lim, const char *name);
 extern void nvram_get_global_vars(char **varlst, uint *varsz);
 
 #if defined(FLASH)
-/* copy flash to ram */
+/** copy flash to ram */
 static void
 BCMINITFN(get_flash_nvram)(si_t *sih, struct nvram_header *nvh)
 {
@@ -291,7 +291,7 @@ exit:
 	return err;
 }
 
-/* NVRAM file read for pcie NIC's */
+/** NVRAM file read for pcie NIC's */
 static int
 initvars_file(si_t *sih, osl_t *osh, char **nvramp, int *nvraml)
 {

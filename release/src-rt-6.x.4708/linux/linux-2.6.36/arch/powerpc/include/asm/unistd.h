@@ -202,7 +202,7 @@
 #define __NR_vfork		189
 #define __NR_ugetrlimit		190	/* SuS compliant getrlimit */
 #define __NR_readahead		191
-#ifndef __powerpc64__			    /* these are 32-bit only */
+#ifndef __powerpc64__			/* these are 32-bit only */
 #define __NR_mmap2		192
 #define __NR_truncate64		193
 #define __NR_ftruncate64	194

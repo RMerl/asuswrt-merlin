@@ -296,7 +296,7 @@ static unsigned char lcd_bits[LCD_PORTS][LCD_BITS][BIT_STATES];
 #define DEFAULT_PARPORT CONFIG_PANEL_PARPORT
 #endif
 
-#if DEFAULT_PROFILE == 0	    /* custom */
+#if DEFAULT_PROFILE == 0	/* custom */
 #ifdef CONFIG_PANEL_KEYPAD
 #undef DEFAULT_KEYPAD
 #define DEFAULT_KEYPAD CONFIG_PANEL_KEYPAD

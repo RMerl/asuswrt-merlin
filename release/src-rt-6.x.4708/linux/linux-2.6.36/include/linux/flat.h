@@ -57,7 +57,7 @@ struct flat_hdr {
 #define FLAT_FLAG_KTRACE 0x0010 /* output useful kernel trace for debugging */
 
 
-#ifdef __KERNEL__     /* so systems without linux headers can compile the apps */
+#ifdef __KERNEL__ /* so systems without linux headers can compile the apps */
 /*
  * While it would be nice to keep this header clean,  users of older
  * tools still need this support in the kernel.  So this section is

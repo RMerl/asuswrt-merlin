@@ -1,7 +1,7 @@
 /*
  * Broadcom chipcommon NAND flash interface
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -29,6 +29,7 @@
 #define NFL_VENDOR_SAMSUNG		0xEC
 #define NFL_VENDOR_ESMT			0x92
 #define NFL_VENDOR_MXIC			0xC2
+#define NFL_VENDOR_ZENTEL               0xC8
 
 #define NFL_SECTOR_SIZE			512
 #define NFL_TABLE_END			0xffffffff

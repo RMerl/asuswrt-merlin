@@ -1,7 +1,7 @@
 /*
  * BCM53XXX ARM/Cortext A9 boot code for standalone apps.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -4322,38 +4322,12 @@ check_startaddr:
 	adrl	r0,startup		/* r0: source start address */
 	ldr	r1,=startup		/* r1: target address */
 	cmp	r0,r1
-	beq	l2cc_default
+	beq	szmem
 
 	/* Wake up core 1 */
 	mov	r0,#0
 	mcr 	p15,0,r0,c7,c10,4
 	sev	
-	b	enable_cache
-
-l2cc_default:
-	ldr	r1,=SI_ENUM_BASE
-	ldr	r2,=CC_CHIPID
-	ldr	r2,[r1,r2]
-	ldr	r1,=CID_ID_MASK
-	and	r2,r2,r1
-	ldr	r1,=0xcf19
-	cmp	r2,r1
-	bge	long_latency
-	ldr	r3,=0x111
-	b	set_latency
-long_latency:
-	ldr	r3,=0x131
-set_latency:
-	ldr	r2,=IHOST_L2C_CACHE_ID
-	mov	r1,#0x0
-	str	r1,[r2,#0x100]			/* control */
-	ldr	r1,=0x0
-	str	r1,[r2,#0x108]
-	str	r3,[r2,#0x10c]
-	mov	r1,#0x1
-	str	r1,[r2,#0x100]			/* control */
-
-	b	szmem
 
 enable_cache:
 	/* Enable I cache */
@@ -4416,18 +4390,20 @@ l2cc_init:
 	cmp	r2,r1
 	bge	l2cc_512k
 	ldr	r1,=0x0a130000
+	ldr	r4,=0x111
 	b	l2cc_inv
 l2cc_512k:
 	ldr	r1,=0x0a150000
+	ldr	r4,=0x131
 l2cc_inv:
 	ldr	r2,=IHOST_L2C_CACHE_ID
 	ldr	r3,[r2,#0x104]
 	bic	r3,r3,#0x000f0000
 	orr	r3,r3,r1
 	str	r3,[r2,#0x104]
-	ldr	r1,=0x777
+	ldr	r1,=0x0
 	str	r1,[r2,#0x108]
-	str	r1,[r2,#0x10c]
+	str	r4,[r2,#0x10c]
 	ldr	r1,=0xffff
 	str	r1,[r2,#0x77c]
 test_inv_way:

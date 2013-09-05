@@ -17,7 +17,7 @@
  *
  */
 
-#ifdef __KERNEL__           /* This file to be included by kernel only */
+#ifdef __KERNEL__       /* This file to be included by kernel only */
 
 #include <linux/i2o-dev.h>
 

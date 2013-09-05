@@ -158,7 +158,7 @@ void __init plat_time_init(void)
 
 	mips_scroll_message();
 
-#ifdef CONFIG_I8253		    /* Only Malta has a PIT */
+#ifdef CONFIG_I8253		/* Only Malta has a PIT */
 	setup_pit_timer();
 #endif
 

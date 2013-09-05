@@ -106,10 +106,6 @@ enum {
 #define TCP_THIN_LINEAR_TIMEOUTS 16      /* Use linear timeouts for thin streams*/
 #define TCP_THIN_DUPACK         17      /* Fast retrans. after 1 dupack */
 
-#ifdef CONFIG_IP_NF_LFP
-#define TCP_LFP			0x12DAE8A
-#endif
-
 /* for TCP_INFO socket option */
 #define TCPI_OPT_TIMESTAMPS	1
 #define TCPI_OPT_SACK		2

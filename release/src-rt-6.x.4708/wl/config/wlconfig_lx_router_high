@@ -1,6 +1,6 @@
 # Broadcom 802.11abg Networking Device Driver Configuration file
 #
-# Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+# Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
 # 
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -32,6 +32,8 @@ OSLLX=1
 WL_HIGH=1
 WL_LOW=0
 BCMDBUS=1
+# The TRX format is version 2 when CPU is cr4 defined in dongle/rte/Makerules
+BCMTRXV2=1
 RPC_NOCOPY=1
 #DBUS_LINUX_RXDPC=1
 BCMDMA32=1
@@ -41,8 +43,10 @@ BCM_RPC_TP_DBUS_NRXQ=200
 # 4-stream Chariot throughput test. Set it to double the value for safety.
 RPC_RETURN_WAIT_TIMEOUT_MSEC=64000
 
-# Embed 43236 image
+# Embed 43526b and 43236b image
 EMBED_IMAGE_43236b=1
+EMBED_IMAGE_43526b=1
+EMBED_IMAGE_4360b=1
 BCM_DNGL_EMBEDIMAGE=1
 DNGL_WD_KEEP_ALIVE=1
 RXCHAIN_PWRSAVE=1
@@ -51,7 +55,7 @@ RADIO_PWRSAVE=1
 USBAP=1
 WLLED=1
 WLPIO=0
-WLTUNEFILE=wltunable_rte_43236b_usbap.h
+WLTUNEFILE=wltunable_rte_usbap.h
 WMF=1
 BTC2WIRE=0
 WL_AP_TPC=1
@@ -68,3 +72,4 @@ WLEXTLOG=0
 WLDPT=0
 BCMAUTH_PSK=0
 WL_MONITOR=0
+WOWL=0

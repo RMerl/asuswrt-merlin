@@ -1399,7 +1399,7 @@ void XGINew_SetDRAMSize_310(struct xgi_hw_device_info *HwDeviceExtension, struct
     /* XGINew_SetReg1( pVBInfo->P3d4 , 0x30 , 0x40 ) ; */
 #endif
 
-#ifdef XGI302	    /* alan,should change value */
+#ifdef XGI302	/* alan,should change value */
     XGINew_SetReg1( pVBInfo->P3d4 , 0x30 , 0x4D ) ;
     XGINew_SetReg1( pVBInfo->P3d4 , 0x31 , 0xc0 ) ;
     XGINew_SetReg1( pVBInfo->P3d4 , 0x34 , 0x3F ) ;

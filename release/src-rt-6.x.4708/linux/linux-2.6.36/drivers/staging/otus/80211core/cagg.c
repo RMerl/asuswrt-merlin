@@ -117,7 +117,7 @@ void zfAggInit(zdev_t* dev)
     success_mpdu = 0;
     total_mpdu = 0;
 #ifdef ZM_ENABLE_AGGREGATION
-#ifndef ZM_ENABLE_FW_BA_RETRANSMISSION     //disable BAW
+#ifndef ZM_ENABLE_FW_BA_RETRANSMISSION //disable BAW
     BAW = zfwMemAllocate(dev, sizeof(struct baw_enabler));
     if(!BAW)
     {
@@ -582,7 +582,7 @@ struct dest* zfAggDestGetNext(zdev_t* dev, u16_t ac)
 }
 
 #ifdef ZM_ENABLE_AGGREGATION
-#ifndef ZM_ENABLE_FW_BA_RETRANSMISSION     //disable BAW
+#ifndef ZM_ENABLE_FW_BA_RETRANSMISSION //disable BAW
 u16_t   zfAggTidTxInsertHead(zdev_t* dev, struct bufInfo *buf_info,TID_TX tid_tx)
 {
     zbuf_t* buf;
@@ -1423,7 +1423,7 @@ u16_t zfAggTxDeleteQueue(zdev_t* dev, u16_t qnum)
 }
 
 #ifdef ZM_ENABLE_AGGREGATION
-#ifndef ZM_ENABLE_FW_BA_RETRANSMISSION     //disable BAW
+#ifndef ZM_ENABLE_FW_BA_RETRANSMISSION //disable BAW
 void zfBawCore(zdev_t* dev, u16_t baw_seq, u32_t bitmap, u16_t aggLen) {
     TID_BAW tid_baw;
     s16_t i;
@@ -2408,7 +2408,7 @@ void zfAggRecvBAR(zdev_t* dev, zbuf_t *buf) {
 }
 
 #ifdef ZM_ENABLE_AGGREGATION
-#ifndef ZM_ENABLE_FW_BA_RETRANSMISSION     //disable BAW
+#ifndef ZM_ENABLE_FW_BA_RETRANSMISSION //disable BAW
 void zfAggTxRetransmit(zdev_t* dev, struct bufInfo *buf_info, struct aggControl *aggControl, TID_TX tid_tx) {
     u16_t removeLen;
     u16_t err;

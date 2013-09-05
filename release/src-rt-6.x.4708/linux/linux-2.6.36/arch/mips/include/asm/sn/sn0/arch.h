@@ -12,7 +12,7 @@
 #define _ASM_SN_SN0_ARCH_H
 
 
-#ifndef SN0XXL      /* 128 cpu SMP max */
+#ifndef SN0XXL  /* 128 cpu SMP max */
 /*
  * This is the maximum number of nodes that can be part of a kernel.
  * Effectively, it's the maximum number of compact node ids (cnodeid_t).

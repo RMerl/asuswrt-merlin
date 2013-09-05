@@ -1,7 +1,7 @@
 /*
  * et driver ioctl swiss army knife command.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: et.c 393340 2013-03-27 06:10:49Z $
+ * $Id: et.c 414031 2013-07-23 10:54:51Z $
  */
 
 #include <stdio.h>
@@ -53,6 +53,25 @@ char buf[16 * 1024];
 
 #define VECLEN		5
 
+/* some OSes (FC4) have trouble allocating (kmalloc) 128KB worth of memory,
+ * hence keeping ET_DUMP_BUF_LEN below that
+ */
+#define ET_DUMP_BUF_LEN (127 * 1024)
+#define DUMP_BUF_ALLOC(a, b, l) \
+{ \
+	(a) = 1; \
+	(b) = malloc(ET_DUMP_BUF_LEN); \
+	(l) = ET_DUMP_BUF_LEN; \
+	if (!(b)) { \
+		(a) = 0; \
+		(b) = buf; \
+		(l) = sizeof(buf); \
+	} \
+	memset(b, 0, l); \
+}
+#define DUMP_BUF_FREE(a, b)	if ((a)) free(b)
+
+
 int
 main(int ac, char *av[])
 {
@@ -64,6 +83,8 @@ main(int ac, char *av[])
 	int s;
 	static int optind;
 	et_var_t var;
+	char *dbuf;
+	int dbuf_len, dbuf_alloc = 0;
 
 	if (ac < 2)
 		usage(av[0]);
@@ -83,7 +104,7 @@ main(int ac, char *av[])
 		syserr("socket");
 
 	if (interface)
-		strncpy(ifr.ifr_name, interface, sizeof (ifr.ifr_name));
+		strncpy(ifr.ifr_name, interface, sizeof(ifr.ifr_name));
 	else
 		et_find(s, &ifr);
 
@@ -106,10 +127,19 @@ main(int ac, char *av[])
 		if (ioctl(s, SIOCSETCLOOP, (caddr_t)&ifr) < 0)
 			syserr("etcloop");
 	} else if ((strcmp(av[optind], "dump") == 0) && (ac == 2)) {
-		ifr.ifr_data = buf;
-		if (ioctl(s, SIOCGETCDUMP, (caddr_t)&ifr) < 0)
+		DUMP_BUF_ALLOC(dbuf_alloc, dbuf, dbuf_len);
+		var.cmd = IOV_DUMP;
+		var.buf = dbuf;
+		var.len = dbuf_len;
+
+		ifr.ifr_data = (caddr_t)&var;
+		if (ioctl(s, SIOCSETGETVAR, (caddr_t)&ifr) < 0) {
+			DUMP_BUF_FREE(dbuf_alloc, dbuf);
 			syserr("etcdump");
-		printf("%s\n", buf);
+		}
+
+		printf("%s\n", dbuf);
+		DUMP_BUF_FREE(dbuf_alloc, dbuf);
 	} else if (strcmp(av[optind], "msglevel") == 0) {
 		if (optind >= (ac -1))
 			usage(av[0]);
@@ -160,7 +190,7 @@ main(int ac, char *av[])
 			usage(av[0]);
 		} else if (ac == (optind + 3)) {
 			/* PHY address provided */
-			vecarg[0] = strtoul(av[optind + 1], NULL, 0) << 16;;
+			vecarg[0] = strtoul(av[optind + 1], NULL, 0) << 16;
 			vecarg[0] |= strtoul(av[optind + 2], NULL, 0) & 0xffff;
 			cmd = SIOCGETCPHYRD2;
 		} else {
@@ -179,7 +209,7 @@ main(int ac, char *av[])
 		if ((ac < (optind + 3)) || (ac > (optind + 4))) {
 			usage(av[0]);
 		} else if (ac == (optind + 4)) {
-			vecarg[0] = strtoul(av[optind + 1], NULL, 0) << 16;;
+			vecarg[0] = strtoul(av[optind + 1], NULL, 0) << 16;
 			vecarg[0] |= strtoul(av[optind + 2], NULL, 0) & 0xffff;
 			vecarg[1] = strtoul(av[optind + 3], NULL, 0);
 			cmd = SIOCSETCPHYWR2;
@@ -192,28 +222,50 @@ main(int ac, char *av[])
 		if (ioctl(s, cmd, (caddr_t)&ifr) < 0)
 			syserr("etcphywr");
 	} else if (strcmp(av[optind], "robord") == 0) {
-		if (ac != (optind + 3))
+		if ((ac != (optind + 3)) && (ac != (optind + 4)))
 			usage(av[0]);
 
-		vecarg[0] = strtoul(av[optind + 1], NULL, 0) << 16;;
+		vecarg[1] = 2;
+		if (av[optind + 3])
+			vecarg[1] = strtoul(av[optind + 3], NULL, 0);
+		/* only 1, 2, 4, 6, and 8 bytes are valid */
+		if ((vecarg[1] != 1) && (vecarg[1] != 8) && (0xF9 & vecarg[1]))
+			usage(av[0]);
+
+		vecarg[0] = strtoul(av[optind + 1], NULL, 0) << 16;
 		vecarg[0] |= strtoul(av[optind + 2], NULL, 0) & 0xffff;
 
 		ifr.ifr_data = (caddr_t) vecarg;
 		if (ioctl(s, SIOCGETCROBORD, (caddr_t)&ifr) < 0)
 			syserr("etcrobord");
 
-		printf("0x%08x\n", vecarg[1]);
+		/* For SPI mode, the length can only be 1, 2, and 4 bytes */
+		if (vecarg[1] == -1)
+			printf("Invalid length. For SPI mode, the length can only be 1, 2, and 4 bytes.\n");
+		else
+			printf("0x%0.*llx\n", (2*vecarg[1]), *((unsigned long long *)&vecarg[2]));
 	} else if (strcmp(av[optind], "robowr") == 0) {
-		if (ac != (optind + 4))
+		if ((ac != (optind + 4)) && (ac != (optind + 5)))
 			usage(av[0]);
 
-		vecarg[0] = strtoul(av[optind + 1], NULL, 0) << 16;;
+		vecarg[1] = 2;
+		if (av[optind + 4])
+			vecarg[1] = strtoul(av[optind + 4], NULL, 0);
+		/* only 1, 2, 4, 6, and 8 bytes are valid */
+		if ((vecarg[1] != 1) && (vecarg[1] != 8) && (0xF9 & vecarg[1]))
+			usage(av[0]);
+
+		vecarg[0] = strtoul(av[optind + 1], NULL, 0) << 16;
 		vecarg[0] |= strtoul(av[optind + 2], NULL, 0) & 0xffff;
-		vecarg[1] = strtoul(av[optind + 3], NULL, 0);
+		*((unsigned long long *)&vecarg[2]) = strtoull(av[optind + 3], NULL, 0);
 
 		ifr.ifr_data = (caddr_t) vecarg;
 		if (ioctl(s, SIOCSETCROBOWR, (caddr_t)&ifr) < 0)
 			syserr("etcrobowr");
+
+		/* For SPI mode, the length can only be 1, 2, and 4 bytes */
+		if (vecarg[1] == -1)
+			printf("Invalid length. For SPI mode, the length can only be 1, 2, and 4 bytes.\n");
 	} else if (strcmp(av[optind], "clear_dump") == 0) {
 		if ((ac > (optind + 2)))
 			usage(av[0]);
@@ -249,15 +301,19 @@ main(int ac, char *av[])
 		else
 			syserr("counters");
 
+		DUMP_BUF_ALLOC(dbuf_alloc, dbuf, dbuf_len);
 		var.cmd = IOV_COUNTERS;
-		var.buf = buf;
-		var.len = sizeof(buf);
+		var.buf = dbuf;
+		var.len = dbuf_len;
 
 		ifr.ifr_data = (caddr_t)&var;
-		if (ioctl(s, SIOCSETGETVAR, (caddr_t)&ifr) < 0)
+		if (ioctl(s, SIOCSETGETVAR, (caddr_t)&ifr) < 0) {
+			DUMP_BUF_FREE(dbuf_alloc, dbuf);
 			syserr("counters");
+		}
 
-		printf("%s\n", buf);
+		printf("%s\n", dbuf);
+		DUMP_BUF_FREE(dbuf_alloc, dbuf);
 	} else if ((strcmp(av[optind], "dump") == 0) && (ac > 2)) {
 		if (strcmp(av[optind + 1], "ctf") == 0) {
 			if (ac == (optind + 2))
@@ -265,31 +321,57 @@ main(int ac, char *av[])
 			else
 				syserr("dump ctf");
 
+			DUMP_BUF_ALLOC(dbuf_alloc, dbuf, dbuf_len);
 			var.cmd = IOV_DUMP_CTF;
-			var.buf = buf;
-			var.len = sizeof(buf);
+			var.buf = dbuf;
+			var.len = dbuf_len;
 
 			ifr.ifr_data = (caddr_t)&var;
-			if (ioctl(s, SIOCSETGETVAR, (caddr_t)&ifr) < 0)
+			if (ioctl(s, SIOCSETGETVAR, (caddr_t)&ifr) < 0) {
+				DUMP_BUF_FREE(dbuf_alloc, dbuf);
 				syserr("dump ctf");
+			}
 
-			printf("%s\n", buf);
+			printf("%s\n", dbuf);
 		} else if (strcmp(av[optind + 1], "ctrace") == 0) {
 			if (ac == (optind + 2))
 				var.set = 0;
 			else
 				syserr("dump ctrace");
 
+			DUMP_BUF_ALLOC(dbuf_alloc, dbuf, dbuf_len);
 			var.cmd = IOV_DUMP_CTRACE;
-			var.buf = buf;
-			var.len = sizeof(buf);
+			var.buf = dbuf;
+			var.len = dbuf_len;
 
 			ifr.ifr_data = (caddr_t)&var;
-			if (ioctl(s, SIOCSETGETVAR, (caddr_t)&ifr) < 0)
+			if (ioctl(s, SIOCSETGETVAR, (caddr_t)&ifr) < 0) {
+				DUMP_BUF_FREE(dbuf_alloc, dbuf);
 				syserr("dump ctrace");
+			}
 
-			printf("%s\n", buf);
+			printf("%s\n", dbuf);
+		} else if (strcmp(av[optind + 1], "fa") == 0) {
+			if (ac == (optind + 2))
+				var.set = 0;
+			else
+				syserr("dump fa");
+
+			DUMP_BUF_ALLOC(dbuf_alloc, dbuf, dbuf_len);
+			var.cmd = IOV_FA_DUMP;
+			var.buf = dbuf;
+			var.len = dbuf_len;
+
+			ifr.ifr_data = (caddr_t)&var;
+			if (ioctl(s, SIOCSETGETVAR, (caddr_t)&ifr) < 0) {
+				DUMP_BUF_FREE(dbuf_alloc, dbuf);
+				syserr("dump fa");
+			}
+
+			printf("%s\n", dbuf);
 		}
+
+		DUMP_BUF_FREE(dbuf_alloc, dbuf);
 	} else {
 		if (strcmp(av[optind], "switch_mode") == 0) {
 			int all = 0;
@@ -356,12 +438,11 @@ usage(char *av0)
 		"\tspeed <auto, 10half, 10full, 100half, 100full, 1000full>\n"
 		"\tphyrd [<phyaddr>] <reg>\n"
 		"\tphywr [<phyaddr>] <reg> <val>\n"
-		"\trobord <page> <reg>\n"
-		"\trobowr <page> <reg> <val>\n"
+		"\trobord <page> <reg> [length] (length can be 1, 2, 4, 6, 8 bytes. Default length is 2 bytes)\n"
+		"\trobowr <page> <reg> <val> [length] (length can be 1, 2, 4, 6, 8 bytes. Default length is 2 bytes)\n"
 		"\tswitch_mode <phy> <mode> (mode normal=0, auto=1, manual=2, both=3)\n"
 		"\tpktc <0 or 1>\n"
-		"\tpktcbnd <val>\n"
-		,		
+		"\tpktcbnd <val>\n",
 		av0);
 	exit(1);
 }
@@ -376,9 +457,9 @@ et_find(int s, struct ifreq *ifr)
 	ifr->ifr_name[0] = '\0';
 
 	/* eat first two lines */
-        if (!(fp = fopen(proc_net_dev, "r")) ||
-            !fgets(buf, sizeof(buf), fp) ||
-            !fgets(buf, sizeof(buf), fp))
+	if (!(fp = fopen(proc_net_dev, "r")) ||
+	    !fgets(buf, sizeof(buf), fp) ||
+	    !fgets(buf, sizeof(buf), fp))
 		return;
 
 	while (fgets(buf, sizeof(buf), fp)) {
@@ -386,6 +467,8 @@ et_find(int s, struct ifreq *ifr)
 		while (isspace(*c))
 			c++;
 		if (!(name = strsep(&c, ":")))
+			continue;
+		if (!strncmp(name, "aux", 3))
 			continue;
 		strncpy(ifr->ifr_name, name, IFNAMSIZ);
 		if (et_check(s, ifr) == 0)

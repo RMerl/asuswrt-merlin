@@ -30,7 +30,7 @@
  *
  *****************************************************************************/
 
-#ifndef XILINX_BUFFER_ICAP_H_	    /* prevent circular inclusions */
+#ifndef XILINX_BUFFER_ICAP_H_	/* prevent circular inclusions */
 #define XILINX_BUFFER_ICAP_H_	/* by using protection macros */
 
 #include <linux/types.h>

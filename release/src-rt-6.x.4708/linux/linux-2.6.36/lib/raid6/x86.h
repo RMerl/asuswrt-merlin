@@ -21,7 +21,7 @@
 
 #if (defined(__i386__) || defined(__x86_64__)) && !defined(__arch_um__)
 
-#ifdef __KERNEL__     /* Real code */
+#ifdef __KERNEL__ /* Real code */
 
 #include <asm/i387.h>
 

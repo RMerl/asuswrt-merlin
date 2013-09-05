@@ -2,7 +2,7 @@
  * Generic Broadcom Home Networking Division (HND) DMA engine SW interface
  * This supports the following chips: BCM42xx, 44xx, 47xx .
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: hnddma.h 370836 2012-11-23 23:19:04Z $
+ * $Id: hnddma.h 401759 2013-05-13 16:08:08Z $
  */
 
 #ifndef	_hnddma_h_

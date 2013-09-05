@@ -1,7 +1,7 @@
 /*
  * pcicfg.h: PCI configuration constants and structures.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: pcicfg.h 316716 2012-02-23 04:39:13Z $
+ * $Id: pcicfg.h 401759 2013-05-13 16:08:08Z $
  */
 
 #ifndef	_h_pcicfg_
@@ -414,6 +414,7 @@ typedef struct _pciconfig_cap_msi {
 	uint16	msgctrl;
 	uint32	msgaddr;
 } pciconfig_cap_msi;
+#define MSI_ENABLE	0x1		/* bit 0 of msgctrl */
 
 /* Data structure to define the Power managment facility
  * Valid for PCI and PCIE configurations

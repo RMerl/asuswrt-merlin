@@ -81,7 +81,7 @@ static struct pci_driver phison_pci_driver = {
 	.id_table	= phison_pci_tbl,
 	.probe		= phison_init_one,
 	.remove		= ata_pci_remove_one,
-#ifdef CONFIG_PM	    /* haven't tested it. */
+#ifdef CONFIG_PM	/* haven't tested it. */
 	.suspend	= ata_pci_device_suspend,
 	.resume		= ata_pci_device_resume,
 #endif

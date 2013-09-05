@@ -1,7 +1,7 @@
 /*
  * Broadcom 802.11abg Networking Device Driver Configuration file
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -58,3 +58,5 @@
 
 #define AMPDU_PKTQ_LEN          1536
 #define AMPDU_PKTQ_FAVORED_LEN  4096
+
+#define WLRXEXTHDROOM -1        /* to reserve extra headroom in DMA Rx buffer */

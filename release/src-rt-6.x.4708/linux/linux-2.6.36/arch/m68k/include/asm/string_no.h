@@ -1,7 +1,7 @@
 #ifndef _M68KNOMMU_STRING_H_
 #define _M68KNOMMU_STRING_H_
 
-#ifdef __KERNEL__     /* only set these up for kernel code */
+#ifdef __KERNEL__ /* only set these up for kernel code */
 
 #include <asm/setup.h>
 #include <asm/page.h>

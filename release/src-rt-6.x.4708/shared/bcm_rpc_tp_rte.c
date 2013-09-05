@@ -2,7 +2,7 @@
  * RPC Transport layer(for HNDRTE bus driver)
  * Broadcom 802.11abg Networking Device Driver
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -10,7 +10,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: bcm_rpc_tp_rte.c 314318 2012-02-10 20:15:12Z $
+ * $Id: bcm_rpc_tp_rte.c 401759 2013-05-13 16:08:08Z $
  */
 
 #ifndef WLC_LOW

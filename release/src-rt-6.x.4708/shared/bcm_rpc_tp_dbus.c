@@ -2,7 +2,7 @@
  * RPC Transport layer(for host dbus driver)
  * Broadcom 802.11abg Networking Device Driver
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcm_rpc_tp_dbus.c 330245 2012-04-30 09:38:26Z $
+ * $Id: bcm_rpc_tp_dbus.c 401759 2013-05-13 16:08:08Z $
  */
 
 #if (!defined(WLC_HIGH) && !defined(WLC_LOW))

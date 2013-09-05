@@ -152,7 +152,7 @@
 #define zm_msg2_agg(lv, msg, val) if (ZM_AGGMSG_LEV >= lv) \
         {zm_debug_msg2(msg, val);}
 
-#ifndef ZM_ENABLE_FW_BA_RETRANSMISSION     //disable BAW
+#ifndef ZM_ENABLE_FW_BA_RETRANSMISSION //disable BAW
 struct baw_header_r {
     u16_t       *header;
     u16_t       *mic;
@@ -192,7 +192,7 @@ struct aggElement
 };
 
 
-#ifndef ZM_ENABLE_FW_BA_RETRANSMISSION     //disable BAW
+#ifndef ZM_ENABLE_FW_BA_RETRANSMISSION //disable BAW
 struct baw_buf
 {
     zbuf_t*     buf;
@@ -355,7 +355,7 @@ u16_t   zfAggClearQueue(zdev_t* dev);
 void    zfAggTxScheduler(zdev_t* dev, u8_t ScanAndClear);
 
 /* tid_tx manipulation */
-#ifndef ZM_ENABLE_FW_BA_RETRANSMISSION     //disable BAW
+#ifndef ZM_ENABLE_FW_BA_RETRANSMISSION //disable BAW
 u16_t   zfAggTidTxInsertHead(zdev_t* dev, struct bufInfo* buf_info, TID_TX tid_tx);
 #endif
 void    zfAggDestInsert(zdev_t* dev, u16_t Qtype, u16_t ac, TID_TX tid_tx, void* vtxq);
@@ -416,7 +416,7 @@ u16_t   zfAggSetBarBody(zdev_t* dev, zbuf_t* buf, u16_t offset, TID_TX tid_tx, s
 u16_t   zfAggGenBarHeader(zdev_t* dev, u16_t* dst,
                 u16_t* header, u16_t len, zbuf_t* buf, u16_t vap, u8_t encrypt);
 
-#ifndef ZM_ENABLE_FW_BA_RETRANSMISSION     //disable BAW
+#ifndef ZM_ENABLE_FW_BA_RETRANSMISSION //disable BAW
 /* BAW BA retransmission */
 void    zfBawCore(zdev_t* dev, u16_t baw_seq, u32_t bitmap, u16_t aggLen);
 void    zfBawInit(zdev_t* dev);

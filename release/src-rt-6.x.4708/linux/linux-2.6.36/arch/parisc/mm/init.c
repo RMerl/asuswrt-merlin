@@ -516,7 +516,7 @@ void __init mem_init(void)
 		initsize >> 10
 	);
 
-#ifdef CONFIG_DEBUG_KERNEL     /* double-sanity-check paranoia */
+#ifdef CONFIG_DEBUG_KERNEL /* double-sanity-check paranoia */
 	printk("virtual kernel memory layout:\n"
 	       "    vmalloc : 0x%p - 0x%p   (%4ld MB)\n"
 	       "    memory  : 0x%p - 0x%p   (%4ld MB)\n"

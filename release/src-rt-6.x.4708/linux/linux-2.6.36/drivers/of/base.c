@@ -63,7 +63,7 @@ int of_n_size_cells(struct device_node *np)
 }
 EXPORT_SYMBOL(of_n_size_cells);
 
-#if !defined(CONFIG_SPARC)       /* SPARC doesn't do ref counting (yet) */
+#if !defined(CONFIG_SPARC)   /* SPARC doesn't do ref counting (yet) */
 /**
  *	of_node_get - Increment refcount of a node
  *	@node:	Node to inc refcount, NULL is supported to

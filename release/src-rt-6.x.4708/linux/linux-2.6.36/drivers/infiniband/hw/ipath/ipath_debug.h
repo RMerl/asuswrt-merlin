@@ -34,7 +34,7 @@
 #ifndef _IPATH_DEBUG_H
 #define _IPATH_DEBUG_H
 
-#ifndef _IPATH_DEBUGGING	    /* debugging enabled or not */
+#ifndef _IPATH_DEBUGGING	/* debugging enabled or not */
 #define _IPATH_DEBUGGING 1
 #endif
 

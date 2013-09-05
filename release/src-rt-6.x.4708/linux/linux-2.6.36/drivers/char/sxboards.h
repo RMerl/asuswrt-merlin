@@ -21,7 +21,7 @@
 
 */
 
-#ifndef	_sxboards_h				    /* If SXBOARDS.H not already defined */
+#ifndef	_sxboards_h				/* If SXBOARDS.H not already defined */
 #define	_sxboards_h    1
 
 /*****************************************************************************

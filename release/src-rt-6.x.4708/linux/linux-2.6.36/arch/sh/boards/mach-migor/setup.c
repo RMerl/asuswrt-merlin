@@ -551,7 +551,7 @@ static int __init migor_devices_setup(void)
 	gpio_request(GPIO_FN_IRQ6, NULL);
 
 	/* LCD Panel */
-#ifdef CONFIG_SH_MIGOR_QVGA     /* LCDC - QVGA - Enable SYS Interface signals */
+#ifdef CONFIG_SH_MIGOR_QVGA /* LCDC - QVGA - Enable SYS Interface signals */
 	gpio_request(GPIO_FN_LCDD17, NULL);
 	gpio_request(GPIO_FN_LCDD16, NULL);
 	gpio_request(GPIO_FN_LCDD15, NULL);
@@ -575,7 +575,7 @@ static int __init migor_devices_setup(void)
 	gpio_request(GPIO_PTH2, NULL); /* LCD_DON */
 	gpio_direction_output(GPIO_PTH2, 1);
 #endif
-#ifdef CONFIG_SH_MIGOR_RTA_WVGA     /* LCDC - WVGA - Enable RGB Interface signals */
+#ifdef CONFIG_SH_MIGOR_RTA_WVGA /* LCDC - WVGA - Enable RGB Interface signals */
 	gpio_request(GPIO_FN_LCDD15, NULL);
 	gpio_request(GPIO_FN_LCDD14, NULL);
 	gpio_request(GPIO_FN_LCDD13, NULL);

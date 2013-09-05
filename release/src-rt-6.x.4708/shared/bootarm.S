@@ -3,7 +3,7 @@
  *
  * Code should be position-independent until it copies itself to SRAM.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -73,7 +73,7 @@ atrom:
 	/* install the exception handler in RAM */
 	ldr	r0,=text_start
 	eor	r1,r1,r1
-	ldr	r2,=disable_arm_ints
+	ldr	r2,=disable_arm_irq
 1:	ldmia	r0!,{r4-r7}
 	stmia	r1!,{r4-r7}
 	cmp	r2,r0

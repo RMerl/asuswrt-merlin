@@ -1,7 +1,7 @@
 #
 # Makefile for Broadcom BCM947XX boards
 #
-# Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+# Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
 # 
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -90,7 +90,7 @@ ifeq ($(strip ${CFG_UNCACHED}),1)
   endif
 else
   ifeq ($(strip $(CFG_XIP)),0)
-    CFG_TEXT_START := 0x80700000
+    CFG_TEXT_START := 0x80e00000
   else
     CFG_DATA_START := 0x80001000
   endif

@@ -7,7 +7,7 @@
 #ifndef _LINUX_SUNRPC_MSGPROT_H_
 #define _LINUX_SUNRPC_MSGPROT_H_
 
-#ifdef __KERNEL__     /* user programs should get these from the rpc header files */
+#ifdef __KERNEL__ /* user programs should get these from the rpc header files */
 
 #define RPC_VERSION 2
 

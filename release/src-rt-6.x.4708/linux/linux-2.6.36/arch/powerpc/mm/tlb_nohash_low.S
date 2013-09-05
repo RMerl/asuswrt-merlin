@@ -66,7 +66,7 @@ _GLOBAL(__tlbil_va)
  * Nothing to do for 8xx, everything is inline
  */
 
-#elif defined(CONFIG_44x)   /* Includes 47x */
+#elif defined(CONFIG_44x) /* Includes 47x */
 
 /*
  * 440 implementation uses tlbsx/we for tlbil_va and a full sweep

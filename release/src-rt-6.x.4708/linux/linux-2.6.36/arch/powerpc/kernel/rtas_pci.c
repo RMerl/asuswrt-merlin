@@ -287,7 +287,7 @@ void __init find_and_init_phbs(void)
 		if (prop)
 			pci_probe_only = *prop;
 
-#ifdef CONFIG_PPC32     /* Will be made generic soon */
+#ifdef CONFIG_PPC32 /* Will be made generic soon */
 		prop = of_get_property(of_chosen,
 				"linux,pci-assign-all-buses", NULL);
 		if (prop && *prop)

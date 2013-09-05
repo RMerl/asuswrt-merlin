@@ -1961,7 +1961,7 @@ void ieee80211_start_ibss_wq(struct work_struct *work)
 	ieee80211_softmac_check_all_nets(ieee);
 
 
-#ifdef ENABLE_DOT11D     //if creating an ad-hoc, set its channel to 10 temporarily--this is the requirement for ASUS, not 11D, so disable 11d.
+#ifdef ENABLE_DOT11D //if creating an ad-hoc, set its channel to 10 temporarily--this is the requirement for ASUS, not 11D, so disable 11d.
 //	if((IS_DOT11D_ENABLE(ieee)) && (ieee->state == IEEE80211_NOLINK))
 	if (ieee->state == IEEE80211_NOLINK)
 		ieee->current_network.channel = 6;

@@ -24,7 +24,7 @@
  *
  */
 #include "platform.h"
-#if defined(DIVA_ISTREAM)     /* { */
+#if defined(DIVA_ISTREAM) /* { */
 #include "pc.h"
 #include "pr_pc.h"
 #include "di_defs.h"

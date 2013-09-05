@@ -26,7 +26,7 @@
  * with the slab allocator.
  */
 
-#ifndef TEST                            // to test in user space...
+#ifndef TEST                        // to test in user space...
 #include <linux/slab.h>
 #include <linux/init.h>
 #include <linux/module.h>

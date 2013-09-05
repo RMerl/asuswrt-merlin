@@ -749,7 +749,7 @@ static struct platform_device i2c_bfin_twi0_device = {
 	.resource = bfin_twi0_resource,
 };
 
-#if !defined(CONFIG_BF542)	    /* The BF542 only has 1 TWI */
+#if !defined(CONFIG_BF542)	/* The BF542 only has 1 TWI */
 static struct resource bfin_twi1_resource[] = {
 	[0] = {
 		.start = TWI1_REGBASE,

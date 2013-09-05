@@ -3,7 +3,7 @@
  *
  * Should be called bcmsromstubs.c .
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: sromstubs.c 334434 2012-05-22 08:23:02Z $
+ * $Id: sromstubs.c 401759 2013-05-13 16:08:08Z $
  */
 
 #include <typedefs.h>

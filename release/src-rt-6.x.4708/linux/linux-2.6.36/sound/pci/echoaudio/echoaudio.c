@@ -450,7 +450,7 @@ din_exit:
 
 
 
-#ifndef ECHOCARD_HAS_VMIXER	    /* See the note in snd_echo_new_pcm() */
+#ifndef ECHOCARD_HAS_VMIXER	/* See the note in snd_echo_new_pcm() */
 
 static int pcm_digital_out_open(struct snd_pcm_substream *substream)
 {
@@ -651,7 +651,7 @@ static int pcm_digital_in_hw_params(struct snd_pcm_substream *substream,
 
 
 
-#ifndef ECHOCARD_HAS_VMIXER	    /* See the note in snd_echo_new_pcm() */
+#ifndef ECHOCARD_HAS_VMIXER	/* See the note in snd_echo_new_pcm() */
 static int pcm_digital_out_hw_params(struct snd_pcm_substream *substream,
 				     struct snd_pcm_hw_params *hw_params)
 {

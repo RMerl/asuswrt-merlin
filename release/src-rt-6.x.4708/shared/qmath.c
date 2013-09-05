@@ -2,7 +2,7 @@
  * qmath functions used in arithmatic and DSP operations where
  * fractional operations, saturation support is needed.
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -10,7 +10,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: qmath.c 300516 2011-12-04 17:39:44Z $
+ * $Id: qmath.c 401759 2013-05-13 16:08:08Z $
  */
 
 #include <bcm_cfg.h>

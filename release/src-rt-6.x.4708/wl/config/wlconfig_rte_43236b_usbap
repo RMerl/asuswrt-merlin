@@ -1,6 +1,6 @@
 # Broadcom 802.11abg Networking Device Driver Configuration file
 #
-# Copyright (C) 2012, Broadcom Corporation
+# Copyright (C) 2013, Broadcom Corporation
 # All Rights Reserved.
 # 
 # This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -37,3 +37,4 @@ WLLED=1
 WL_DMA_TX_FREE=1
 
 BCM_RPC_TP_FLOWCTL_QWM_HIGH=48
+BCMPHYCORENUM=2

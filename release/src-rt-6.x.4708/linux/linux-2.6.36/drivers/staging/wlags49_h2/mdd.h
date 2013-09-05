@@ -1031,7 +1031,7 @@ XX1( CFG_SCAN,					SCAN_RS_STRCT, scan_result[32]		 ) /*Scan results											*
 //Quick&Dirty to get download for DOS ODI Hermes-II running typedef LTV_STRCT FAR *	LTVP;
 typedef LTV_STRCT FAR *	LTVP;   // i.s.o #define LTVP LTV_STRCT FAR *
 
-#if defined WVLAN_42 || defined WVLAN_43     //;?keepup with legacy a little while longer (4aug2003)
+#if defined WVLAN_42 || defined WVLAN_43 //;?keepup with legacy a little while longer (4aug2003)
 typedef struct DUI_STRCT {			/* "legacy", still used by WVLAN42/43, NDIS drivers use WLAPI			*/
 	void  FAR	*ifbp;				/* Pointer to IFB
 									 *	returned from MSF to USF by uil_connect

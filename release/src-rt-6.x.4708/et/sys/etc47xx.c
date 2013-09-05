@@ -4,7 +4,7 @@
  * This file implements the chip-specific routines
  * for Broadcom HNBU Sonics SiliconBackplane enet cores.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: etc47xx.c 286404 2011-09-27 19:29:08Z $
+ * $Id: etc47xx.c 411691 2013-07-10 04:19:32Z $
  */
 
 #include <et_cfg.h>
@@ -122,6 +122,7 @@ struct chops bcm47xx_et_chops = {
 	chiprxfill,
 	chipgetintrevents,
 	chiperrors,
+	NULL,
 	chipintrson,
 	chipintrsoff,
 	chiptxreclaim,

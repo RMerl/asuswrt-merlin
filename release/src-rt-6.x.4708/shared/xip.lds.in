@@ -34,7 +34,9 @@ SECTIONS {
 		_fdata = .;
 		data_start = .;
 		*(.data)
+		*(.rodataini2.*)
 		*(.dataini2.*)
+		*(.rodataini3.*)
 		*(.dataini3.*)
 		*(.data.*)
 		*(.sdata)
@@ -55,4 +57,11 @@ SECTIONS {
 	}
 
 	_end = .;
+
+	.logstrs 0 (OVERLAY) : {
+		 KEEP(*(.lognums))
+		 KEEP(*(.logstrs))
+		 logstrs_size = .;
+	}
+
 }

@@ -1,7 +1,7 @@
 /*
  * FILE-CSTYLED
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -142,7 +142,7 @@ static const char VersDate[] = "Epigram 15-jul-98";
 #define BSD43                  /* changed by BSD42 if necessary */
 #endif
 
-#if defined(_WIN32)                /* Window NT 4.0 compiled with VisualC++ 4 */
+#if defined(_WIN32)            /* Window NT 4.0 compiled with VisualC++ 4 */
 #define __NTVIS__
 #define SYSV
 #define SININIT
@@ -362,7 +362,7 @@ static const char VersDate[] = "Epigram 15-jul-98";
 
 
 #if defined(__NTVIS__)
-#if defined(_DEBUG)     /* usual debug symbol for VC++ */
+#if defined(_DEBUG) /* usual debug symbol for VC++ */
 #define DEBUG 1
 #endif
 
@@ -1536,7 +1536,7 @@ epi_ttcp_main_args(int argc, char **argv)
 				else
 					pb = &(buf[0]);
 
-#if !defined(__NTVIS__)     /* else case specific to WINNT */
+#if !defined(__NTVIS__) /* else case specific to WINNT */
 				while((cnt=read(0,pb,rbuflen)) > 0)
 #else /* __NTVIS__ */
 				while((cnt=(int)fread(pb,1,rbuflen,stdin)) > 0)
@@ -1630,7 +1630,7 @@ epi_ttcp_main_args(int argc, char **argv)
 					nbytes += cnt;
 					hash_print();
 					if (!sinkmode) {
-#if !defined(__NTVIS__)     /* else case specific to WINNT */
+#if !defined(__NTVIS__) /* else case specific to WINNT */
 						if (write(1,buf,cnt) != cnt)
 							err("write");
 #else /* __NTVIS__ */
@@ -1785,7 +1785,7 @@ udp_rcv_test(void)
 			}
 			hash_print();
 			if (!sinkmode) {
-#if !defined(__NTVIS__)     /* else case specific to WINNT */
+#if !defined(__NTVIS__) /* else case specific to WINNT */
 				if (write(1,&(buf[1]),cnt-1) != cnt-1)
 					err("write");
 #else /* __NTVIS__ */
@@ -2312,7 +2312,7 @@ prusage(struct rusage *r0, struct rusage *r1,
 #if defined(__osf__)
 	cp = "%Uuser %Ssys %Ereal %P %Xi+%Dd %Mmaxrss %F+%Rpf %Ccsw\0";
 #else
-#if defined(sgi)                        /* IRIX 3.3 will show 0 for %M,%F,%R,%C */
+#if defined(sgi)                    /* IRIX 3.3 will show 0 for %M,%F,%R,%C */
 	cp = "%Uuser %Ssys %Ereal %P %Mmaxrss %F+%Rpf %Ccsw\0";
 #else
 #if defined(__Lynx__)

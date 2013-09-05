@@ -3,7 +3,7 @@
  * Contents are wifi-specific, used by any kernel or app-level
  * software that might want wifi things as it grows.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: bcm_app_utils.c 315348 2012-02-16 07:32:51Z $
+ * $Id: bcm_app_utils.c 401759 2013-05-13 16:08:08Z $
  */
 
 #include <typedefs.h>

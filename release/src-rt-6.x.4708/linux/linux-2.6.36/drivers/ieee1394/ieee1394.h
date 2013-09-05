@@ -165,7 +165,7 @@ struct ext_selfid {
 	u32 more_packets:1;
 } __attribute__((packed));
 
-#elif defined __LITTLE_ENDIAN_BITFIELD   /* __BIG_ENDIAN_BITFIELD */
+#elif defined __LITTLE_ENDIAN_BITFIELD /* __BIG_ENDIAN_BITFIELD */
 
 /*
  * Note: these mean to be bit fields of a big endian SelfID as seen on a little

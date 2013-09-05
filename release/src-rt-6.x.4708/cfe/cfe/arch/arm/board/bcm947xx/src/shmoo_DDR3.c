@@ -179,6 +179,8 @@ unsigned int CheckMemory(ddr40_addr_t Address, unsigned long const nLengthDwords
 	result_dst = (result_dst & 0xFFFF) | ((result_dst >> 16) & 0xFFFF);
 #endif
 
+	SHMOO_INVALIDATE_DATA_FROM_DRAM(Address, DATA_TRANSFER_LENGTH_BYTES);
+
 	return result_dst;
 }
 #else /* SHMOO_USE_MEMCPY */
@@ -260,7 +262,8 @@ unsigned int CheckMemory(ddr40_addr_t Address, unsigned long const nLengthDwords
  */
 void timeout_ns(unsigned int ticks)
 {
-	while (ticks-- > 0) /* nothing */;
+	volatile unsigned int count = ticks;
+	while (count-- > 0) /* nothing */;
 }
 
 int timer_delay(unsigned int const delay)

@@ -1,15 +1,21 @@
 /*
  * Broadcom USB remote download definitions
  *
- * Copyright (C) 2012, Broadcom Corporation
- * All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
- * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
- * the contents of this file may not be disclosed to third parties, copied
- * or duplicated in any form, in whole or in part, without the prior
- * written permission of Broadcom Corporation.
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+ * SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
+ * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+ * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: usbrdl.h 314495 2012-02-12 07:56:39Z $
+ * $Id: usbrdl.h 394558 2013-04-03 00:11:01Z $
  */
 
 #ifndef _USB_RDL_H

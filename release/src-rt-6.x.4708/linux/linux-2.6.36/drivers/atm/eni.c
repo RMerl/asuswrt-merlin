@@ -394,7 +394,7 @@ static int do_rx_dma(struct atm_vcc *vcc,struct sk_buff *skb,
 			paddr += init << 2;
 			words -= init;
 		}
-#ifdef CONFIG_ATM_ENI_BURST_RX_16W     /* may work with some PCI chipsets ... */
+#ifdef CONFIG_ATM_ENI_BURST_RX_16W /* may work with some PCI chipsets ... */
 		if (words & ~15) {
 			dma[j++] = MID_DT_16W | ((words >> 4) <<
 			    MID_DMA_COUNT_SHIFT) | (vcc->vci <<
@@ -404,7 +404,7 @@ static int do_rx_dma(struct atm_vcc *vcc,struct sk_buff *skb,
 			words &= 15;
 		}
 #endif
-#ifdef CONFIG_ATM_ENI_BURST_RX_8W      /* works only with *some* PCI chipsets ... */
+#ifdef CONFIG_ATM_ENI_BURST_RX_8W  /* works only with *some* PCI chipsets ... */
 		if (words & ~7) {
 			dma[j++] = MID_DT_8W | ((words >> 3) <<
 			    MID_DMA_COUNT_SHIFT) | (vcc->vci <<
@@ -414,7 +414,7 @@ static int do_rx_dma(struct atm_vcc *vcc,struct sk_buff *skb,
 			words &= 7;
 		}
 #endif
-#ifdef CONFIG_ATM_ENI_BURST_RX_4W     /* recommended */
+#ifdef CONFIG_ATM_ENI_BURST_RX_4W /* recommended */
 		if (words & ~3) {
 			dma[j++] = MID_DT_4W | ((words >> 2) <<
 			    MID_DMA_COUNT_SHIFT) | (vcc->vci <<
@@ -424,7 +424,7 @@ static int do_rx_dma(struct atm_vcc *vcc,struct sk_buff *skb,
 			words &= 3;
 		}
 #endif
-#ifdef CONFIG_ATM_ENI_BURST_RX_2W     /* probably useless if RX_4W, RX_8W, ... */
+#ifdef CONFIG_ATM_ENI_BURST_RX_2W /* probably useless if RX_4W, RX_8W, ... */
 		if (words & ~1) {
 			dma[j++] = MID_DT_2W | ((words >> 1) <<
 			    MID_DMA_COUNT_SHIFT) | (vcc->vci <<
@@ -957,7 +957,7 @@ static inline void put_dma(int chan,u32 *dma,int *j,dma_addr_t paddr,
 		paddr += init << 2;
 		words -= init;
 	}
-#ifdef CONFIG_ATM_ENI_BURST_TX_16W     /* may work with some PCI chipsets ... */
+#ifdef CONFIG_ATM_ENI_BURST_TX_16W /* may work with some PCI chipsets ... */
 	if (words & ~15) {
 		DPRINTK("put_dma: %lx DMA: %d*16/%d words\n",
 		    (unsigned long) paddr,words >> 4,words);
@@ -968,7 +968,7 @@ static inline void put_dma(int chan,u32 *dma,int *j,dma_addr_t paddr,
 		words &= 15;
 	}
 #endif
-#ifdef CONFIG_ATM_ENI_BURST_TX_8W     /* recommended */
+#ifdef CONFIG_ATM_ENI_BURST_TX_8W /* recommended */
 	if (words & ~7) {
 		DPRINTK("put_dma: %lx DMA: %d*8/%d words\n",
 		    (unsigned long) paddr,words >> 3,words);
@@ -979,7 +979,7 @@ static inline void put_dma(int chan,u32 *dma,int *j,dma_addr_t paddr,
 		words &= 7;
 	}
 #endif
-#ifdef CONFIG_ATM_ENI_BURST_TX_4W     /* probably useless if TX_8W or TX_16W */
+#ifdef CONFIG_ATM_ENI_BURST_TX_4W /* probably useless if TX_8W or TX_16W */
 	if (words & ~3) {
 		DPRINTK("put_dma: %lx DMA: %d*4/%d words\n",
 		    (unsigned long) paddr,words >> 2,words);
@@ -990,7 +990,7 @@ static inline void put_dma(int chan,u32 *dma,int *j,dma_addr_t paddr,
 		words &= 3;
 	}
 #endif
-#ifdef CONFIG_ATM_ENI_BURST_TX_2W     /* probably useless if TX_4W, TX_8W, ... */
+#ifdef CONFIG_ATM_ENI_BURST_TX_2W /* probably useless if TX_4W, TX_8W, ... */
 	if (words & ~1) {
 		DPRINTK("put_dma: %lx DMA: %d*2/%d words\n",
 		    (unsigned long) paddr,words >> 1,words);

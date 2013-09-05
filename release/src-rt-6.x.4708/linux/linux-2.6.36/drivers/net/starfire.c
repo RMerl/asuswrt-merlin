@@ -737,7 +737,7 @@ static int __devinit starfire_init_one(struct pci_dev *pdev,
 	for (i = 0; i < 6; i++)
 		dev->dev_addr[i] = readb(base + EEPROMCtrl + 20 - i);
 
-#if !defined(final_version)     /* Dump the EEPROM contents during development. */
+#if !defined(final_version) /* Dump the EEPROM contents during development. */
 	if (debug > 4)
 		for (i = 0; i < 0x20; i++)
 			printk("%2.2x%s",
@@ -1496,7 +1496,7 @@ static int __netdev_rx(struct net_device *dev, int *quota)
 			np->rx_info[entry].skb = NULL;
 			np->rx_info[entry].mapping = 0;
 		}
-#ifndef final_version			    /* Remove after testing. */
+#ifndef final_version			/* Remove after testing. */
 		/* You will want this info for the initial debug. */
 		if (debug > 5) {
 			printk(KERN_DEBUG "  Rx data %pM %pM %2.2x%2.2x.\n",

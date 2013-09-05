@@ -1161,7 +1161,7 @@ xpc_die_deactivate(void)
 static int
 xpc_system_die(struct notifier_block *nb, unsigned long event, void *unused)
 {
-#ifdef CONFIG_IA64		    /* !!! temporary kludge */
+#ifdef CONFIG_IA64		/* !!! temporary kludge */
 	switch (event) {
 	case DIE_MACHINE_RESTART:
 	case DIE_MACHINE_HALT:

@@ -1105,12 +1105,6 @@ int xhci_endpoint_init(struct xhci_hcd *xhci,
 		ep_ctx->ep_info2 |= MAX_PACKET(max_packet);
 		/* dig out max burst from ep companion desc */
 		max_packet = ep->ss_ep_comp.bMaxBurst;
-#ifdef CONFIG_BCM47XX
-		if(EP_TYPE(BULK_OUT_EP) == xhci_get_endpoint_type(udev, ep)){
-			printk("force burst = 0.\n");
-			max_packet = 0;
-		}
-#endif
 		if (!max_packet)
 			xhci_warn(xhci, "WARN no SS endpoint bMaxBurst\n");
 		ep_ctx->ep_info2 |= MAX_BURST(max_packet);

@@ -621,7 +621,7 @@ typedef struct wvlan_rx_wmp_hdr
 	unsigned short address3[3];
 	unsigned short sequenceControl;
 	unsigned short address4[3];
-#ifndef HERMES25	    //;?just to be on the safe side of inherited but not comprehended code #ifdef HERMES2
+#ifndef HERMES25	//;?just to be on the safe side of inherited but not comprehended code #ifdef HERMES2
 	unsigned short seems_to_be_unused_reserved3[5];  //;?
 	unsigned short seems_to_be_unused_reserved4;	 //;?
 #endif // HERMES25

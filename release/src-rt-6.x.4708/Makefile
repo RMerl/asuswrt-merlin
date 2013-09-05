@@ -445,6 +445,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_LANWAN_LED/d" $(1); \
 		echo "RTCONFIG_LANWAN_LED=y" >>$(1); \
 	fi; \
+	if [ "$(WLAN_LED)" = "y" ]; then \
+		sed -i "/RTCONFIG_WLAN_LED/d" $(1); \
+		echo "RTCONFIG_WLAN_LED=y" >>$(1); \
+	fi; \
 	if [ "$(LAN4WAN_LED)" = "y" ]; then \
 		sed -i "/RTCONFIG_LAN4WAN_LED/d" $(1); \
 		echo "RTCONFIG_LAN4WAN_LED=y" >>$(1); \
@@ -457,6 +461,14 @@ define RouterOptions
 		sed -i "/RTCONFIG_SWMODE_SWITCH/d" $(1); \
 		echo "RTCONFIG_SWMODE_SWITCH=y" >>$(1); \
 	fi; \
+	if [ "$(WL_AUTO_CHANNEL)" = "y" ]; then \
+		sed -i "/RTCONFIG_WL_AUTO_CHANNEL/d" $(1); \
+		echo "RTCONFIG_WL_AUTO_CHANNEL=y" >>$(1); \
+	fi; \
+	if [ "$(SMALL_FW_UPDATE)" = "y" ]; then \
+		sed -i "/RTCONFIG_SMALL_FW_UPDATE/d" $(1); \
+		echo "RTCONFIG_SMALL_FW_UPDATE=y" >>$(1); \
+ 	fi; \
 	if [ "$(WIRELESS_SWITCH)" = "y" ]; then \
 		sed -i "/RTCONFIG_WIRELESS_SWITCH/d" $(1); \
 		echo "RTCONFIG_WIRELESS_SWITCH=y" >>$(1); \
@@ -824,6 +836,16 @@ define BusyboxOptions
 		sed -i "/CONFIG_HDPARM/d" $(1); \
 		echo "CONFIG_HDPARM=y" >>$(1); \
 	fi; \
+        if [ "$(DUALWAN)" = "y" ]; then \
+                sed -i "/CONFIG_IP_ADVANCED_ROUTER/d" $(1); \
+                echo "CONFIG_IP_ADVANCED_ROUTER=y" >>$(1); \
+                echo "CONFIG_ASK_IP_FIB_HASH=y" >>$(1); \
+                echo "# CONFIG_IP_FIB_TRIE is not set" >>$(1); \
+                echo "CONFIG_IP_MULTIPLE_TABLES=y" >>$(1); \
+                echo "CONFIG_IP_ROUTE_MULTIPATH=y" >>$(1); \
+                echo "# CONFIG_IP_ROUTE_VERBOSE is not set" >>$(1); \
+                echo "CONFIG_IP_MROUTE_MULTIPLE_TABLES=y" >>$(1); \
+        fi; \
 	)
 	$(call platformBusyboxOptions, $(1))
 endef

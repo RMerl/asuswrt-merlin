@@ -1,7 +1,7 @@
 /*
  * Dongle BUS interface for USB, OS independent
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: dbus_usb.c 359968 2012-10-01 09:34:17Z $
+ * $Id: dbus_usb.c 408461 2013-06-19 06:50:14Z $
  */
 
 #include <osl.h>
@@ -39,38 +39,55 @@
 #ifdef EMBED_IMAGE_43526b
 #include "rtecdc_43526b.h"
 #endif /* EMBED_IMAGE_43526b */
+#ifdef EMBED_IMAGE_4360b
+#include "rtecdc_4360b.h"
+#endif /* EMBED_IMAGE_4360b */
 #ifdef EMBED_IMAGE_43242a0
 #include "rtecdc_43242a0.h"
 #endif /* EMBED_IMAGE_43242a0 */
+#ifdef EMBED_IMAGE_43242a1
+#include "rtecdc_43242a1.h"
+#endif /* EMBED_IMAGE_43242a1 */
 #ifdef EMBED_IMAGE_43143a0
 #include "rtecdc_43143a0.h"
 #endif /* EMBED_IMAGE_43143a0 */
+#ifdef EMBED_IMAGE_43143b0
+#include "rtecdc_43143b0.h"
+#endif /* EMBED_IMAGE_43143b0 */
+#ifdef EMBED_IMAGE_4350a0
+#include "rtecdc_4350a0.h"
+#endif /* EMBED_IMAGE_4350a0 */
+#ifdef EMBED_IMAGE_4350b0
+#include "rtecdc_4350b0.h"
+#endif /* EMBED_IMAGE_4350b0 */
+#ifdef EMBED_IMAGE_4350b1
+#include "rtecdc_4350b1.h"
+#endif /* EMBED_IMAGE_4350b1 */
 #ifdef EMBED_IMAGE_GENERIC
 #include "rtecdc.h"
 #endif
 #endif /* BCM_DNGL_EMBEDIMAGE */
 
-typedef struct {
-	dbus_pub_t *pub;
+#define USB_DLIMAGE_SPINWAIT         10      /* in unit of ms */
+#define USB_DLIMAGE_LIMIT            500     /* spinwait limit (ms) */
+#define USB_SFLASH_DLIMAGE_SPINWAIT  200     /* in unit of ms */
+#define USB_SFLASH_DLIMAGE_LIMIT     2000    /* spinwait limit (ms) */
+#define POSTBOOT_ID                  0xA123  /* ID to detect if dongle has boot up */
+#define USB_RESETCFG_SPINWAIT        1       /* wait after resetcfg (ms) */
+#define USB_DEV_ISBAD(u)             (u->pub->attrib.devid == 0xDEAD)
+#define USB_DLGO_SPINWAIT            100     /* wait after DL_GO (ms) */
+#define TEST_CHIP                    0x4328
 
-	void *cbarg;
+typedef struct {
+	dbus_pub_t  *pub;
+
+	void        *cbarg;
 	dbus_intf_callbacks_t *cbs;
 	dbus_intf_t *drvintf;
-	void *usbosl_info;
-	uint32 rdlram_base_addr;
-	uint32 rdlram_size;
+	void        *usbosl_info;
+	uint32      rdlram_base_addr;
+	uint32      rdlram_size;
 } usb_info_t;
-
-#define USB_DLIMAGE_SPINWAIT		10	/* in unit of ms */
-#define USB_DLIMAGE_LIMIT		500	/* spinwait limit (ms) */
-#define USB_SFLASH_DLIMAGE_SPINWAIT	200	/* in unit of ms */
-#define USB_SFLASH_DLIMAGE_LIMIT	2000	/* spinwait limit (ms) */
-#define POSTBOOT_ID			0xA123  /* ID to detect if dongle has boot up */
-#define USB_RESETCFG_SPINWAIT		1	/* wait after resetcfg (ms) */
-#define USB_DEV_ISBAD(u)		(u->pub->attrib.devid == 0xDEAD)
-
-#define USB_DLGO_SPINWAIT		100	/* wait after DL_GO (ms) */
-#define TEST_CHIP			0x4328
 
 /*
  * Callbacks common to all USB
@@ -82,12 +99,11 @@ static void dbus_usb_recv_irb_complete(void *handle, dbus_irb_rx_t *rxirb, int s
 static void dbus_usb_errhandler(void *handle, int err);
 static void dbus_usb_ctl_complete(void *handle, int type, int status);
 static void dbus_usb_state_change(void *handle, int state);
-struct dbus_irb* dbus_usb_getirb(void *handle, bool send);
+static struct dbus_irb* dbus_usb_getirb(void *handle, bool send);
 static void dbus_usb_rxerr_indicate(void *handle, bool on);
 static int dbus_usb_resetcfg(usb_info_t *usbinfo);
 static int dbus_usb_iovar_op(void *bus, const char *name,
 	void *params, int plen, void *arg, int len, bool set);
-
 static int dbus_iovar_process(usb_info_t* usbinfo, const char *name,
                  void *params, int plen, void *arg, int len, bool set);
 static int dbus_usb_doiovar(usb_info_t *bus, const bcm_iovar_t *vi, uint32 actionid,
@@ -118,11 +134,11 @@ static dbus_intf_callbacks_t dbus_usb_intf_cbs = {
 	dbus_usb_errhandler,
 	dbus_usb_ctl_complete,
 	dbus_usb_state_change,
-	NULL,			/* isr */
-	NULL,			/* dpc */
-	NULL,			/* watchdog */
-	NULL,			/* dbus_if_pktget */
-	NULL, 			/* dbus_if_pktfree */
+	NULL,  /* isr */
+	NULL,  /* dpc */
+	NULL,  /* watchdog */
+	NULL,  /* dbus_if_pktget */
+	NULL,  /* dbus_if_pktfree */
 	dbus_usb_getirb,
 	dbus_usb_rxerr_indicate
 };
@@ -146,10 +162,12 @@ const bcm_iovar_t dhdusb_iovars[] = {
  * attach() is not called at probe and detach()
  * can be called inside disconnect()
  */
-static probe_cb_t probe_cb = NULL;
+static probe_cb_t      probe_cb = NULL;
 static disconnect_cb_t disconnect_cb = NULL;
-static void *probe_arg = NULL;
-static void *disc_arg = NULL;
+static void            *probe_arg = NULL;
+static void            *disc_arg = NULL;
+static dbus_intf_t     *g_dbusintf = NULL;
+static dbus_intf_t     dbus_usb_intf;
 
 /*
  * dbus_intf_t common to all USB
@@ -157,13 +175,14 @@ static void *disc_arg = NULL;
  */
 static void *dbus_usb_attach(dbus_pub_t *pub, void *cbarg, dbus_intf_callbacks_t *cbs);
 static void dbus_usb_detach(dbus_pub_t *pub, void *info);
-
-static dbus_intf_t *g_dbusintf = NULL;
-static dbus_intf_t dbus_usb_intf;
-
 static void * dbus_usb_probe(void *arg, const char *desc, uint32 bustype, uint32 hdrlen);
 
 /* functions */
+
+/**
+ * As part of DBUS initialization/registration, the higher level DBUS (dbus.c) needs to know what
+ * lower level DBUS functions to call (in both dbus_usb.c and dbus_usb_os.c).
+ */
 static void *
 dbus_usb_probe(void *arg, const char *desc, uint32 bustype, uint32 hdrlen)
 {
@@ -194,6 +213,10 @@ dbus_usb_probe(void *arg, const char *desc, uint32 bustype, uint32 hdrlen)
 	return NULL;
 }
 
+/**
+ * On return, *intf contains this or lower-level DBUS functions to be called by higher
+ * level (dbus.c)
+ */
 int
 dbus_bus_register(int vid, int pid, probe_cb_t prcb,
 	disconnect_cb_t discb, void *prarg, dbus_intf_t **intf, void *param1, void *param2)
@@ -219,6 +242,7 @@ dbus_bus_deregister()
 	return dbus_bus_osl_deregister();
 }
 
+/** initialization consists of registration followed by 'attach'. */
 void *
 dbus_usb_attach(dbus_pub_t *pub, void *cbarg, dbus_intf_callbacks_t *cbs)
 {
@@ -283,6 +307,10 @@ dbus_usb_disconnect(void *handle)
 		disconnect_cb(disc_arg);
 }
 
+/**
+ * When the lower DBUS level (dbus_usb_os.c) signals this event, the higher DBUS level has to be
+ * notified.
+ */
 static void
 dbus_usb_send_irb_timeout(void *handle, dbus_irb_tx_t *txirb)
 {
@@ -297,6 +325,10 @@ dbus_usb_send_irb_timeout(void *handle, dbus_irb_tx_t *txirb)
 		usb_info->cbs->send_irb_timeout(usb_info->cbarg, txirb);
 }
 
+/**
+ * When the lower DBUS level (dbus_usb_os.c) signals this event, the higher DBUS level has to be
+ * notified.
+ */
 static void
 dbus_usb_send_irb_complete(void *handle, dbus_irb_tx_t *txirb, int status)
 {
@@ -309,6 +341,10 @@ dbus_usb_send_irb_complete(void *handle, dbus_irb_tx_t *txirb, int status)
 		usb_info->cbs->send_irb_complete(usb_info->cbarg, txirb, status);
 }
 
+/**
+ * When the lower DBUS level (dbus_usb_os.c) signals this event, the higher DBUS level has to be
+ * notified.
+ */
 static void
 dbus_usb_recv_irb_complete(void *handle, dbus_irb_rx_t *rxirb, int status)
 {
@@ -321,7 +357,8 @@ dbus_usb_recv_irb_complete(void *handle, dbus_irb_rx_t *rxirb, int status)
 		usb_info->cbs->recv_irb_complete(usb_info->cbarg, rxirb, status);
 }
 
-struct dbus_irb*
+/** Lower DBUS level (dbus_usb_os.c) requests a free IRB. Pass this on to the higher DBUS level. */
+static struct dbus_irb*
 dbus_usb_getirb(void *handle, bool send)
 {
 	usb_info_t *usb_info = (usb_info_t *) handle;
@@ -335,6 +372,10 @@ dbus_usb_getirb(void *handle, bool send)
 	return NULL;
 }
 
+/**
+ * When the lower DBUS level (dbus_usb_os.c) signals this event, the higher DBUS level has to be
+ * notified.
+ */
 static void
 dbus_usb_rxerr_indicate(void *handle, bool on)
 {
@@ -347,6 +388,10 @@ dbus_usb_rxerr_indicate(void *handle, bool on)
 		usb_info->cbs->rxerr_indicate(usb_info->cbarg, on);
 }
 
+/**
+ * When the lower DBUS level (dbus_usb_os.c) signals this event, the higher DBUS level has to be
+ * notified.
+ */
 static void
 dbus_usb_errhandler(void *handle, int err)
 {
@@ -359,6 +404,10 @@ dbus_usb_errhandler(void *handle, int err)
 		usb_info->cbs->errhandler(usb_info->cbarg, err);
 }
 
+/**
+ * When the lower DBUS level (dbus_usb_os.c) signals this event, the higher DBUS level has to be
+ * notified.
+ */
 static void
 dbus_usb_ctl_complete(void *handle, int type, int status)
 {
@@ -371,6 +420,10 @@ dbus_usb_ctl_complete(void *handle, int type, int status)
 		usb_info->cbs->ctl_complete(usb_info->cbarg, type, status);
 }
 
+/**
+ * When the lower DBUS level (dbus_usb_os.c) signals this event, the higher DBUS level has to be
+ * notified.
+ */
 static void
 dbus_usb_state_change(void *handle, int state)
 {
@@ -382,6 +435,8 @@ dbus_usb_state_change(void *handle, int state)
 	if (usb_info->cbs && usb_info->cbs->state_change)
 		usb_info->cbs->state_change(usb_info->cbarg, state);
 }
+
+/** called by higher DBUS level (dbus.c) */
 static int
 dbus_usb_iovar_op(void *bus, const char *name,
 	void *params, int plen, void *arg, int len, bool set)
@@ -391,6 +446,8 @@ dbus_usb_iovar_op(void *bus, const char *name,
 	err = dbus_iovar_process((usb_info_t*)bus, name, params, plen, arg, len, set);
 	return err;
 }
+
+/** process iovar request from higher DBUS level */
 static int
 dbus_iovar_process(usb_info_t* usbinfo, const char *name,
                  void *params, int plen, void *arg, int len, bool set)
@@ -529,6 +586,7 @@ exit:
 	return bcmerror;
 }
 
+/** higher DBUS level (dbus.c) wants to set NVRAM variables in dongle */
 static int
 dhdusb_downloadvars(usb_info_t *bus, void *arg, int len)
 {
@@ -582,6 +640,10 @@ err:
 	return bcmerror;
 }
 
+/**
+ * After downloading firmware into dongle and starting it, we need to know if the firmware is
+ * indeed up and running.
+ */
 static int
 dbus_usb_resetcfg(usb_info_t *usbinfo)
 {
@@ -629,6 +691,7 @@ dbus_usb_resetcfg(usb_info_t *usbinfo)
 	return DBUS_OK;
 }
 
+/** before firmware download, the dongle has to be prepared to receive the fw image */
 static int
 dbus_usb_rdl_dwnld_state(usb_info_t *usbinfo)
 {
@@ -653,12 +716,16 @@ fail:
 	return err;
 }
 
+/**
+ * Dongle contains bootcode in ROM but firmware is (partially) contained in dongle RAM. Therefore,
+ * firmware has to be downloaded into dongle RAM.
+ */
 static int
 dbus_usb_dl_writeimage(usb_info_t *usbinfo, uint8 *fw, int fwlen)
 {
 	osl_t *osh = usbinfo->pub->osh;
 	void *osinfo = usbinfo->usbosl_info;
-	unsigned int sendlen, sent, dllen;
+	unsigned int sendlen, sent, dllen, pktlen;
 	char *bulkchunk = NULL, *dlpos;
 	rdl_state_t state;
 	int err = DBUS_OK;
@@ -674,6 +741,17 @@ dbus_usb_dl_writeimage(usb_info_t *usbinfo, uint8 *fw, int fwlen)
 	sent = 0;
 	dlpos = fw;
 	dllen = fwlen;
+	pktlen = RDL_CHUNK;
+
+#ifdef BCM_USB30
+	/* for SuperSpeed with non-disconnect target, need to make sure */
+	/* bulk out write times can divided by 32 to keep SeqN is 0           */
+	pktlen = (fwlen + RDL_CHUNK - 1)/RDL_CHUNK;
+	if (pktlen%32) {
+		pktlen = (pktlen/32 + 1)*32;
+	}
+	pktlen = (dllen + pktlen - 1)/pktlen;
+#endif /* BCM_USB30 */
 
 	/* Get chip id and rev */
 	id.chip = usbinfo->pub->attrib.devid;
@@ -688,17 +766,18 @@ dbus_usb_dl_writeimage(usb_info_t *usbinfo, uint8 *fw, int fwlen)
 		/* Wait until the usb device reports it received all the bytes we sent */
 
 		if (sent < dllen) {
-			if ((dllen-sent) < RDL_CHUNK)
+			if ((dllen-sent) < pktlen)
 				sendlen = dllen-sent;
 			else
-				sendlen = RDL_CHUNK;
+				sendlen = pktlen;
 
+#ifndef BCM_USB30
 			/* simply avoid having to send a ZLP by ensuring we never have an even
 			 * multiple of 64
 			 */
 			if (!(sendlen % 64))
 				sendlen -= 4;
-
+#endif /* BCM_USB30 */
 			/* send data */
 			memcpy(bulkchunk, dlpos, sendlen);
 			if (!dbus_usbos_dl_send_bulk(osinfo, bulkchunk, sendlen)) {
@@ -711,9 +790,6 @@ dbus_usb_dl_writeimage(usb_info_t *usbinfo, uint8 *fw, int fwlen)
 			DBUSTRACE(("%s: sendlen %d\n", __FUNCTION__, sendlen));
 		}
 
-		/* 43236a0 bootloader runs from sflash, which is slower than rom
-		 * Wait for downloaded image crc check to complete in the dongle
-		 */
 		wait = 0;
 		wait_time = USB_SFLASH_DLIMAGE_SPINWAIT;
 		while (!dbus_usbos_dl_cmd(osinfo, DL_GETSTATE, &state,
@@ -754,6 +830,7 @@ fail:
 	return err;
 }
 
+/** Higher level DBUS layer (dbus.c) requests this layer to download image into dongle */
 static int
 dbus_usb_dlstart(void *bus, uint8 *fw, int len)
 {
@@ -832,6 +909,11 @@ dbus_usb_update_chipinfo(usb_info_t *usbinfo, uint32 chip)
 			usbinfo->rdlram_base_addr = RDL_RAM_BASE_43143;
 			break;
 
+		case 0x4350:
+			usbinfo->rdlram_size = RDL_RAM_SIZE_4350;
+			usbinfo->rdlram_base_addr = RDL_RAM_BASE_4350;
+			break;
+
 		case POSTBOOT_ID:
 			break;
 
@@ -845,6 +927,7 @@ dbus_usb_update_chipinfo(usb_info_t *usbinfo, uint32 chip)
 	return retval;
 }
 
+/** higher DBUS level (dbus.c) wants to know if firmware download is required. */
 static bool
 dbus_usb_dlneeded(void *bus)
 {
@@ -891,6 +974,7 @@ exit:
 	return dl_needed;
 }
 
+/** After issuing firmware download, higher DBUS level (dbus.c) wants to start the firmware. */
 static int
 dbus_usb_dlrun(void *bus)
 {
@@ -934,6 +1018,11 @@ dbus_usb_dlrun(void *bus)
 	return err;
 }
 
+/**
+ * As preparation for firmware download, higher DBUS level (dbus.c) requests the firmware image
+ * to be used for the type of dongle detected. Directly called by dbus.c (so not via a callback
+ * construction)
+ */
 void
 dbus_bus_fw_get(void *bus, uint8 **fw, int *fwlen, int *decomp)
 {
@@ -965,6 +1054,13 @@ dbus_bus_fw_get(void *bus, uint8 **fw, int *fwlen, int *decomp)
 		}
 	}	break;
 	case BCM4360_CHIP_ID:
+#ifdef EMBED_IMAGE_4360b
+		if (crev > 2) {
+			*fw = (uint8 *)dlarray_4360b;
+			*fwlen = sizeof(dlarray_4360b);
+		}
+#endif
+		break;
 	case BCM4352_CHIP_ID:
 	case BCM43526_CHIP_ID:
 #ifdef EMBED_IMAGE_43526a
@@ -985,6 +1081,9 @@ dbus_bus_fw_get(void *bus, uint8 **fw, int *fwlen, int *decomp)
 #ifdef EMBED_IMAGE_43242a0
 		*fw = (uint8 *)dlarray_43242a0;
 		*fwlen = sizeof(dlarray_43242a0);
+#elif defined(EMBED_IMAGE_43242a1)
+		*fw = (uint8 *)dlarray_43242a1;
+		*fwlen = sizeof(dlarray_43242a1);
 #endif
 		break;
 
@@ -992,6 +1091,30 @@ dbus_bus_fw_get(void *bus, uint8 **fw, int *fwlen, int *decomp)
 #ifdef EMBED_IMAGE_43143a0
 		*fw = (uint8 *)dlarray_43143a0;
 		*fwlen = sizeof(dlarray_43143a0);
+#elif defined(EMBED_IMAGE_43143b0)
+		*fw = (uint8 *)dlarray_43143b0;
+		*fwlen = sizeof(dlarray_43143b0);
+#endif
+		break;
+
+	case BCM4350_CHIP_ID:
+#ifdef EMBED_IMAGE_4350a0
+		if (crev == 0) {
+			*fw = (uint8 *)dlarray_4350a0;
+			*fwlen = sizeof(dlarray_4350a0);
+		}
+#endif
+#ifdef EMBED_IMAGE_4350b0
+		if (crev == 1) {
+			*fw = (uint8 *)dlarray_4350b0;
+			*fwlen = sizeof(dlarray_4350b0);
+		}
+#endif
+#ifdef EMBED_IMAGE_4350b1
+		if (crev == 2) {
+			*fw = (uint8 *)dlarray_4350b1;
+			*fwlen = sizeof(dlarray_4350b1);
+		}
 #endif
 		break;
 

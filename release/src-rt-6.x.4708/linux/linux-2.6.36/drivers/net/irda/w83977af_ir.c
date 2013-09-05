@@ -61,7 +61,7 @@
 #include "w83977af.h"
 #include "w83977af_ir.h"
 
-#ifdef  CONFIG_ARCH_NETWINDER                /* Adjust to NetWinder differences */
+#ifdef  CONFIG_ARCH_NETWINDER            /* Adjust to NetWinder differences */
 #undef  CONFIG_NETWINDER_TX_DMA_PROBLEMS /* Not needed */
 #define CONFIG_NETWINDER_RX_DMA_PROBLEMS /* Must have this one! */
 #endif
@@ -74,7 +74,7 @@ static int  qos_mtt_bits = 0x07;   /* 1 ms or more */
 #define CHIP_IO_EXTENT 8
 
 static unsigned int io[] = { 0x180, ~0, ~0, ~0 };
-#ifdef CONFIG_ARCH_NETWINDER                 /* Adjust to NetWinder differences */
+#ifdef CONFIG_ARCH_NETWINDER             /* Adjust to NetWinder differences */
 static unsigned int irq[] = { 6, 0, 0, 0 };
 #else
 static unsigned int irq[] = { 11, 0, 0, 0 };

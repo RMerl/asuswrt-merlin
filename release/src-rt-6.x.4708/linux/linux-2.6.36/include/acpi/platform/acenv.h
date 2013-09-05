@@ -149,7 +149,7 @@
 #elif defined(WIN64)
 #include "acwin64.h"
 
-#elif defined(MSDOS)		  /* Must appear after WIN32 and WIN64 check */
+#elif defined(MSDOS)		/* Must appear after WIN32 and WIN64 check */
 #include "acdos16.h"
 
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)

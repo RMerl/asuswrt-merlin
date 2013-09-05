@@ -33,7 +33,7 @@ static DEFINE_MUTEX(deflate_mutex);
 static DEFINE_MUTEX(inflate_mutex);
 static z_stream inf_strm, def_strm;
 
-#ifdef __KERNEL__     /* Linux-only */
+#ifdef __KERNEL__ /* Linux-only */
 #include <linux/vmalloc.h>
 #include <linux/init.h>
 #include <linux/mutex.h>

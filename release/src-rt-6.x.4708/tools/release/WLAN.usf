@@ -20,12 +20,12 @@
 # This list is used in module makefiles to set vpath search
 # paths and include paths
 
-WLAN_AllComponentPaths=src-rt-6.x.4708/shared/bcmwifi src-rt-6.x.4708/wl/clm src-rt-6.x.4708/wl/lwip src-rt-6.x.4708/wl/ppr src-rt-6.x.4708/wl/rel_mcast
+WLAN_COMPONENT_PATHS=src-rt-6.x.4708/shared/bcmwifi src-rt-6.x.4708/wl/clm src/wl/lwip src-rt-6.x.4708/wl/plqmr src-rt-6.x.4708/wl/ppr src-rt-6.x.4708/wl/rel_mcast src-rt-6.x.4708/wl/proxd src-rt-6.x.4708/wl/gas src-rt-6.x.4708/wl/encode src-rt-6.x.4708/wl/olpc
 
-# This WLAN_GenBaseDir is staging area for generated content
+# This WLAN_GEN_BASEDIR is staging area for generated content
 # that need to be shared between build step and packaging
 # step. e.g When CLM data files need to be packaged, they need
-# to be first staged in following $(WLAN_GenBaseDir) first 
+# to be first staged in following $(WLAN_GEN_BASEDIR) first 
 # and packaging step picks up from there subsequently
 
-WLAN_GenBaseDir=generated
+WLAN_GEN_BASEDIR=generated

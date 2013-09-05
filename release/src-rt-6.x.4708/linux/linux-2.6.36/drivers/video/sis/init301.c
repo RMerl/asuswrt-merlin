@@ -2436,7 +2436,7 @@ SiS_SetCRT2ModeRegs(struct SiS_Private *SiS_Pr, unsigned short ModeNo, unsigned 
 
      if(SiS_Pr->ChipType < SIS_315H) {
 
-#ifdef SIS300        /* ---- 300 series ---- */
+#ifdef SIS300    /* ---- 300 series ---- */
 
 	/* For 301BDH: (with LCD via LVDS) */
 	if(SiS_Pr->SiS_VBType & VB_NoLCD) {
@@ -2463,7 +2463,7 @@ SiS_SetCRT2ModeRegs(struct SiS_Private *SiS_Pr, unsigned short ModeNo, unsigned 
 
      } else {
 
-#ifdef SIS315H        /* ------- 315/330 series ------ */
+#ifdef SIS315H    /* ------- 315/330 series ------ */
 
 	if(ModeNo > 0x13) {
 	   tempcl -= ModeVGA;
@@ -3902,7 +3902,7 @@ SiS_DisableBridge(struct SiS_Private *SiS_Pr)
 
 	if(SiS_Pr->ChipType < SIS_315H) {
 
-#ifdef SIS300	       /* 300 series */
+#ifdef SIS300	   /* 300 series */
 
 	   if(!(SiS_CR36BIOSWord23b(SiS_Pr))) {
 	      if(SiS_Pr->SiS_VBType & VB_SISLVDS) {
@@ -3939,7 +3939,7 @@ SiS_DisableBridge(struct SiS_Private *SiS_Pr)
 
         } else {
 
-#ifdef SIS315H	       /* 315 series */
+#ifdef SIS315H	   /* 315 series */
 
 	   int didpwd = 0;
 	   bool custom1 = (SiS_Pr->SiS_CustomT == CUT_COMPAQ1280) ||
@@ -4109,7 +4109,7 @@ SiS_DisableBridge(struct SiS_Private *SiS_Pr)
 
     if(SiS_Pr->ChipType < SIS_315H) {
 
-#ifdef SIS300	    /* 300 series */
+#ifdef SIS300	/* 300 series */
 
 	if(SiS_Pr->SiS_IF_DEF_CH70xx == 1) {
 	   SiS_SetCH700x(SiS_Pr,0x0E,0x09);
@@ -4157,7 +4157,7 @@ SiS_DisableBridge(struct SiS_Private *SiS_Pr)
 
     } else {
 
-#ifdef SIS315H	    /* 315 series */
+#ifdef SIS315H	/* 315 series */
 
 	if(!(SiS_IsNotM650orLater(SiS_Pr))) {
 	   /*if(SiS_Pr->ChipType < SIS_340) { */ /* XGI needs this */
@@ -4304,7 +4304,7 @@ SiS_EnableBridge(struct SiS_Private *SiS_Pr)
 
       if(SiS_Pr->ChipType < SIS_315H) {
 
-#ifdef SIS300         /* 300 series */
+#ifdef SIS300     /* 300 series */
 
 	 if(SiS_CRT2IsLCD(SiS_Pr)) {
 	    if(SiS_Pr->SiS_VBType & VB_SISLVDS) {
@@ -4371,7 +4371,7 @@ SiS_EnableBridge(struct SiS_Private *SiS_Pr)
 
       } else {
 
-#ifdef SIS315H        /* 315 series */
+#ifdef SIS315H    /* 315 series */
 
 #ifdef SET_EMI
 	 unsigned char   r30=0, r31=0, r32=0, r33=0, cr36=0;
@@ -4715,7 +4715,7 @@ SiS_EnableBridge(struct SiS_Private *SiS_Pr)
 
     if(SiS_Pr->ChipType < SIS_315H) {
 
-#ifdef SIS300        /* 300 series */
+#ifdef SIS300    /* 300 series */
 
        if(SiS_CRT2IsLCD(SiS_Pr)) {
 	  if(SiS_Pr->ChipType == SIS_730) {
@@ -4763,7 +4763,7 @@ SiS_EnableBridge(struct SiS_Private *SiS_Pr)
 
     } else {
 
-#ifdef SIS315H        /* 315 series */
+#ifdef SIS315H    /* 315 series */
 
        if(!(SiS_IsNotM650orLater(SiS_Pr))) {
 	  /*if(SiS_Pr->ChipType < SIS_340) {*/  /* XGI needs this */
@@ -4947,7 +4947,7 @@ SiS_SetCRT2Sync(struct SiS_Private *SiS_Pr, unsigned short ModeNo, unsigned shor
 
       if(SiS_Pr->ChipType < SIS_315H) {
 
-#ifdef SIS300      /* ---- 300 series --- */
+#ifdef SIS300  /* ---- 300 series --- */
 
 	 if(SiS_Pr->SiS_VBType & VB_SIS30xBLV) {			/* 630 - 301B(-DH) */
 
@@ -4980,7 +4980,7 @@ SiS_SetCRT2Sync(struct SiS_Private *SiS_Pr, unsigned short ModeNo, unsigned shor
 
       } else {
 
-#ifdef SIS315H      /* ------- 315 series ------ */
+#ifdef SIS315H  /* ------- 315 series ------ */
 
 	 if(SiS_Pr->SiS_VBType & VB_SISLVDS) {	  		/* 315 - LVDS */
 
@@ -5720,7 +5720,7 @@ SiS_SetGroup1_LVDS(struct SiS_Private *SiS_Pr, unsigned short ModeNo, unsigned s
 
   if(SiS_Pr->ChipType < SIS_315H) {
 
-#ifdef SIS300          /* 300 series */
+#ifdef SIS300      /* 300 series */
      tempeax = SiS_Pr->SiS_VGAVDE << 6;
      temp = (tempeax % (unsigned int)SiS_Pr->SiS_VDE);
      tempeax = tempeax / (unsigned int)SiS_Pr->SiS_VDE;
@@ -5735,7 +5735,7 @@ SiS_SetGroup1_LVDS(struct SiS_Private *SiS_Pr, unsigned short ModeNo, unsigned s
 
   } else {
 
-#ifdef SIS315H      /* 315 series */
+#ifdef SIS315H  /* 315 series */
      tempeax = SiS_Pr->SiS_VGAVDE << 18;
      tempebx = SiS_Pr->SiS_VDE;
      temp = (tempeax % tempebx);
@@ -6027,7 +6027,7 @@ SiS_SetGroup1(struct SiS_Private *SiS_Pr, unsigned short ModeNo, unsigned short 
 
      if(SiS_Pr->ChipType < SIS_315H ) {
 
-#ifdef SIS300       /* ------------- 300 series --------------*/
+#ifdef SIS300   /* ------------- 300 series --------------*/
 
 	temp = (SiS_Pr->SiS_VGAHT - 1) & 0x0FF;   		  /* BTVGA2HT 0x08,0x09 */
 	SiS_SetReg(SiS_Pr->SiS_Part1Port,0x08,temp);              /* CRT2 Horizontal Total */
@@ -6050,7 +6050,7 @@ SiS_SetGroup1(struct SiS_Private *SiS_Pr, unsigned short ModeNo, unsigned short 
 
      } else {
 
-#ifdef SIS315H      /* ------------------- 315/330 series --------------- */
+#ifdef SIS315H  /* ------------------- 315/330 series --------------- */
 
 	tempcx = SiS_Pr->SiS_VGAHT;				  /* BTVGA2HT 0x08,0x09 */
 	if(modeflag & HalfDCLK) {
@@ -6232,7 +6232,7 @@ SiS_SetGroup1(struct SiS_Private *SiS_Pr, unsigned short ModeNo, unsigned short 
 
      if(SiS_Pr->ChipType < SIS_315H) {
 
-#ifdef SIS300      /* ---------- 300 series -------------- */
+#ifdef SIS300  /* ---------- 300 series -------------- */
 
 	if(SiS_Pr->SiS_VBType & VB_SISVB) {
 	   temp = 0x20;
@@ -6290,7 +6290,7 @@ SiS_SetGroup1(struct SiS_Private *SiS_Pr, unsigned short ModeNo, unsigned short 
 
      } else {
 
-#ifdef SIS315H       /* --------------- 315/330 series ---------------*/
+#ifdef SIS315H   /* --------------- 315/330 series ---------------*/
 
 	if(SiS_Pr->ChipType < SIS_661) {
 
@@ -8075,7 +8075,7 @@ SiS_SetCHTVReg(struct SiS_Private *SiS_Pr, unsigned short ModeNo, unsigned short
 
 }
 
-#ifdef SIS315H      /* ----------- 315 series only ---------- */
+#ifdef SIS315H  /* ----------- 315 series only ---------- */
 
 void
 SiS_Chrontel701xBLOn(struct SiS_Private *SiS_Pr)

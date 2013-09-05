@@ -93,12 +93,21 @@ void flush_cache_page(struct vm_area_struct *vma, unsigned long user_addr, unsig
 #define flush_pfn_alias(pfn,vaddr)	do { } while (0)
 #endif
 
+#ifdef CONFIG_BCM47XX
+/* Merged from Linux-2.6.37 */
+static void flush_ptrace_access_other(void *args)
+{
+	__flush_icache_all();
+}
+#else
 #ifdef CONFIG_SMP
 static void flush_ptrace_access_other(void *args)
 {
 	__flush_icache_all();
 }
 #endif
+#endif /* CONFIG_BCM47XX */
+
 
 static
 void flush_ptrace_access(struct vm_area_struct *vma, struct page *page,
@@ -122,11 +131,16 @@ void flush_ptrace_access(struct vm_area_struct *vma, struct page *page,
 	if (vma->vm_flags & VM_EXEC) {
 		unsigned long addr = (unsigned long)kaddr;
 		__cpuc_coherent_kern_range(addr, addr + len);
+#ifdef CONFIG_BCM47XX
+		/* Merged from Linux-2.6.37 */
+		if (cache_ops_need_broadcast())
+			smp_call_function(flush_ptrace_access_other, NULL, 1);
+#else
 #ifdef CONFIG_SMP
 		if (cache_ops_need_broadcast())
-			smp_call_function(flush_ptrace_access_other,
-					  NULL, 1);
+			smp_call_function(flush_ptrace_access_other, NULL, 1);
 #endif
+#endif /* CONFIG_BCM47XX */
 	}
 }
 
@@ -245,7 +259,20 @@ void flush_dcache_page(struct page *page)
 		return;
 
 	mapping = page_mapping(page);
-
+#ifdef CONFIG_BCM47XX
+	/* Merged from Linux-2.6.37 */
+	if (!cache_ops_need_broadcast() &&
+	    mapping && !mapping_mapped(mapping))
+		clear_bit(PG_dcache_clean, &page->flags);
+	else {
+		__flush_dcache_page(mapping, page);
+		if (mapping && cache_is_vivt())
+			__flush_dcache_aliases(mapping, page);
+		else if (mapping)
+			__flush_icache_all();
+		set_bit(PG_dcache_clean, &page->flags);
+	}
+#else
 #ifndef CONFIG_SMP
 	if (!PageHighMem(page) && mapping && !mapping_mapped(mapping))
 		set_bit(PG_dcache_dirty, &page->flags);
@@ -258,7 +285,9 @@ void flush_dcache_page(struct page *page)
 		else if (mapping)
 			__flush_icache_all();
 	}
+#endif /* CONFIG_BCM47XX */
 }
+
 EXPORT_SYMBOL(flush_dcache_page);
 
 /*

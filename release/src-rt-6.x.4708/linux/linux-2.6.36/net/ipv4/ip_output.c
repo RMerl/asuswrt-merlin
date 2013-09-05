@@ -102,7 +102,7 @@ int __ip_local_out(struct sk_buff *skb)
 	ip_send_check(iph);
 
 	/* Mark skb to identify SMB data packet */
-	if (ip_hdr(skb)->protocol == IPPROTO_TCP)
+	if ((ip_hdr(skb)->protocol == IPPROTO_TCP) && tcp_hdr(skb))
 		skb->tcpf_smb = (tcp_hdr(skb)->source == htons(0x01bd));
 
 	return nf_hook(NFPROTO_IPV4, NF_INET_LOCAL_OUT, skb, NULL,

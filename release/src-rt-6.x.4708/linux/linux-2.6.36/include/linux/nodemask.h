@@ -476,7 +476,7 @@ static inline int num_node_state(enum node_states state)
  * NODEMASK_ALLOC(type, name) allocates an object with a specified type and
  * name.
  */
-#if NODES_SHIFT > 8     /* nodemask_t > 256 bytes */
+#if NODES_SHIFT > 8 /* nodemask_t > 256 bytes */
 #define NODEMASK_ALLOC(type, name, gfp_flags)	\
 			type *name = kmalloc(sizeof(*name), gfp_flags)
 #define NODEMASK_FREE(m)			kfree(m)

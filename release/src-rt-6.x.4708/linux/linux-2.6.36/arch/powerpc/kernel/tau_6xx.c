@@ -108,7 +108,7 @@ void TAUupdate(int cpu)
 	printk("grew = %d\n", tau[cpu].grew);
 #endif
 
-#ifndef CONFIG_TAU_INT     /* tau_timeout will do this if not using interrupts */
+#ifndef CONFIG_TAU_INT /* tau_timeout will do this if not using interrupts */
 	set_thresholds(cpu);
 #endif
 

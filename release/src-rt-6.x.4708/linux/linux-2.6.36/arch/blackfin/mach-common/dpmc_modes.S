@@ -174,7 +174,7 @@ ENDPROC(_sleep_deeper)
 ENTRY(_set_dram_srfs)
 	/*  set the dram to self refresh mode */
 	SSYNC;
-#if defined(EBIU_RSTCTL)	    /* DDR */
+#if defined(EBIU_RSTCTL)	/* DDR */
 	P0.H = hi(EBIU_RSTCTL);
 	P0.L = lo(EBIU_RSTCTL);
 	R2 = [P0];
@@ -212,13 +212,13 @@ ENDPROC(_set_dram_srfs)
 
 ENTRY(_unset_dram_srfs)
 	/*  set the dram out of self refresh mode */
-#if defined(EBIU_RSTCTL)	    /* DDR */
+#if defined(EBIU_RSTCTL)	/* DDR */
 	P0.H = hi(EBIU_RSTCTL);
 	P0.L = lo(EBIU_RSTCTL);
 	R2 = [P0];
 	BITCLR(R2, 3); /* clear SRREQ bit */
 	[P0] = R2;
-#elif defined(EBIU_SDGCTL)	  /* SDRAM */
+#elif defined(EBIU_SDGCTL)	/* SDRAM */
 
 	P0.L = lo(EBIU_SDGCTL); /* release CLKOUT from self-refresh */
 	P0.H = hi(EBIU_SDGCTL);

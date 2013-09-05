@@ -675,7 +675,7 @@ struct hpi_pci {
 	u32 __iomem *ap_mem_base[HPI_MAX_ADAPTER_MEM_SPACES];
 	struct pci_dev *p_os_data;
 
-#ifndef HPI64BIT		    /* keep structure size constant */
+#ifndef HPI64BIT		/* keep structure size constant */
 	u32 padding[HPI_MAX_ADAPTER_MEM_SPACES + 1];
 #endif
 	u16 vendor_id;
@@ -692,7 +692,7 @@ struct hpi_resource {
 		const struct hpi_pci *pci;
 		const char *net_if;
 	} r;
-#ifndef HPI64BIT		    /* keep structure size constant */
+#ifndef HPI64BIT		/* keep structure size constant */
 	u32 pad_to64;
 #endif
 	u16 bus_type;		/* HPI_BUS_PNPISA, _PCI, _USB etc */

@@ -2,7 +2,7 @@
  * Broadcom SiliconBackplane SDIO/PCMCIA hardware-specific
  * device core support
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: sbsdpcmdev.h 321146 2012-03-14 08:27:23Z $
+ * $Id: sbsdpcmdev.h 391685 2013-03-19 03:39:02Z $
  */
 
 #ifndef	_sbsdpcmdev_h_
@@ -147,8 +147,15 @@ typedef volatile struct {
 
 	/* sprom "size" & "blank" info */
 	uint16 spromstatus;		/* SPROMStatus, 0x7BE, rev2 */
-	uint32 PAD[464];
 
+	uint16 PAD[32];
+	uint32 f3corectl;		/* F3(BT) Core control, 0x800, rev8 */
+	uint32 f3corestatus;		/* F3 Core Status, 0x804, rev8 */
+	uint32 f3intstatus;		/* F3 Interrupt Status, 0x808, rev8 */
+	uint32 btinten;			/* Bt interrupt enable, 0x80c, rev8 */
+	uint32 PAD[9];
+	uint32 btintrcvlazy;
+	uint32 PAD[430];
 	/* Sonics SiliconBackplane registers */
 	sbconfig_t sbconfig;		/* SbConfig Regs, 0xf00-0xfff, rev8 */
 } sdpcmd_regs_t;

@@ -193,7 +193,7 @@
 
 #define MPT_POLLING_INTERVAL		1000	/* in milliseconds */
 
-#ifdef __KERNEL__	    /* { */
+#ifdef __KERNEL__	/* { */
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
 #include <linux/proc_fs.h>

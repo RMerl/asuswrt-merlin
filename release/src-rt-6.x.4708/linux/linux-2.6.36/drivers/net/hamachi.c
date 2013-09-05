@@ -609,7 +609,7 @@ static int __devinit hamachi_init_one (struct pci_dev *pdev,
 	}
 
 	base = pci_resource_start(pdev, 0);
-#ifdef __alpha__				    /* Really "64 bit addrs" */
+#ifdef __alpha__				/* Really "64 bit addrs" */
 	base |= (pci_resource_start(pdev, 1) << 32);
 #endif
 
@@ -1383,7 +1383,7 @@ static irqreturn_t hamachi_interrupt(int irq, void *dev_instance)
 	long boguscnt = max_interrupt_work;
 	int handled = 0;
 
-#ifndef final_version			    /* Can never occur. */
+#ifndef final_version			/* Can never occur. */
 	if (dev == NULL) {
 		printk (KERN_ERR "hamachi_interrupt(): irq %d for unknown device.\n", irq);
 		return IRQ_NONE;

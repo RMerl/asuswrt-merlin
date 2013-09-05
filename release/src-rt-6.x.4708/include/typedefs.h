@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: typedefs.h 355800 2012-09-09 01:32:41Z $
+ * $Id: typedefs.h 401759 2013-05-13 16:08:08Z $
  */
 
 #ifndef _TYPEDEFS_H_
@@ -98,7 +98,7 @@ typedef unsigned long long int uintptr;
 typedef long unsigned int size_t;
 #endif
 
-#ifdef _MSC_VER	    /* Microsoft C */
+#ifdef _MSC_VER	/* Microsoft C */
 #define TYPEDEF_INT64
 #define TYPEDEF_UINT64
 typedef signed __int64	int64;
@@ -107,7 +107,7 @@ typedef unsigned __int64 uint64;
 
 #if defined(MACOSX)
 #define TYPEDEF_BOOL
-#endif
+#endif /* MACOSX */
 
 #if defined(__NetBSD__)
 #ifndef _KERNEL

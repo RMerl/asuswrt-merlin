@@ -689,7 +689,7 @@
 #define		EnableForceMDinBIOS          0x40
 #define		EnableForceMDinDrv           0x80
 
-#ifdef                   NewScratch                          /* New Scratch */
+#ifdef                   NewScratch                      /* New Scratch */
 /* ---------------------- VUMA Information */
 #define		LCDSettingFromCMOS           0x04               /* CR3C */
 #define		TVSettingFromCMOS            0x08

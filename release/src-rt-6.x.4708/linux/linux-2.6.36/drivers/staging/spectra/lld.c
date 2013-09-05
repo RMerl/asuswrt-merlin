@@ -24,7 +24,7 @@
 #include "lld_nand.h"
 
 /*&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&*/
-#if FLASH_EMU		    /* vector all the LLD calls to the LLD_EMU code */
+#if FLASH_EMU		/* vector all the LLD calls to the LLD_EMU code */
 #include "lld_emu.h"
 #include "lld_cdma.h"
 
@@ -104,7 +104,7 @@ u16  GLOB_LLD_Get_Bad_Block(u32 block)
 #endif /* FLASH_EMU */
 
 /*&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&*/
-#if FLASH_MTD		    /* vector all the LLD calls to the LLD_MTD code */
+#if FLASH_MTD		/* vector all the LLD calls to the LLD_MTD code */
 #include "lld_mtd.h"
 #include "lld_cdma.h"
 
@@ -184,7 +184,7 @@ u16  GLOB_LLD_Get_Bad_Block(u32 block)
 #endif /* FLASH_MTD */
 
 /*&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&*/
-#if FLASH_NAND	    /* vector all the LLD calls to the NAND controller code */
+#if FLASH_NAND	/* vector all the LLD calls to the NAND controller code */
 #include "lld_nand.h"
 #include "lld_cdma.h"
 #include "flash.h"

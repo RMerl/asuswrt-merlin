@@ -361,9 +361,15 @@ KBUILD_LDFLAGS_MODULE := -T $(srctree)/scripts/module-common.lds
 
 # Broadcom source tree
 KBUILD_CFLAGS += -I$(SRCBASE)/include
+KBUILD_CFLAGS += -I$(SRCBASE)/common/include
 KBUILD_CFLAGS += $(WLAN_ComponentIncPath)
+KBUILD_CFLAGS += $(WLAN_StdIncPathA)
 KBUILD_AFLAGS += -I$(SRCBASE)/include
+KBUILD_AFLAGS += -I$(SRCBASE)/common/include
 KBUILD_CFLAGS += -DBCMDRIVER -Dlinux
+
+# Bcm dbg flag
+#KBUILD_CFLAGS += -DBCMDBG
 
 
 # Read KERNELRELEASE from include/config/kernel.release (if it exists)
@@ -552,8 +558,12 @@ KBUILD_CFLAGS += -DCTF_IPV6
 endif
 endif
 
-ifneq ($(CONFIG_PROXYARP),)
-KBUILD_CFLAGS += -DPROXYARP
+ifneq ($(CONFIG_BCM_FA),)
+KBUILD_CFLAGS += -DBCMFA
+endif
+
+ifneq ($(CONFIG_BCM47XX),)
+KBUILD_CFLAGS += -DBCM47XX
 endif
 
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE

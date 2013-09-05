@@ -2816,7 +2816,7 @@ func_start	serial_init,%d0/%d1/%a0/%a1
 
 #ifdef MAC_USE_SCC_B
 	/* Initialize channel B */
-#ifndef MAC_USE_SCC_A	    /* Load mac_sccbase only if needed */
+#ifndef MAC_USE_SCC_A	/* Load mac_sccbase only if needed */
 	movel	%pc@(L(mac_sccbase)),%a0
 #endif	/* MAC_USE_SCC_A */
 	lea	%pc@(L(scc_initable_mac)),%a1
@@ -2908,7 +2908,7 @@ func_start	serial_putc,%d0/%d1/%a0/%a1
 #endif	/* MAC_USE_SCC_A */
 
 #ifdef MAC_USE_SCC_B
-#ifndef MAC_USE_SCC_A	    /* Load mac_sccbase only if needed */
+#ifndef MAC_USE_SCC_A	/* Load mac_sccbase only if needed */
 	movel	%pc@(L(mac_sccbase)),%a1
 #endif	/* MAC_USE_SCC_A */
 4:	btst	#2,%a1@(mac_scc_cha_b_ctrl_offset)
@@ -3237,7 +3237,7 @@ L(console_clear_loop):
 	lea	%pc@(font_vga_8x16),%a0
 #elif defined(FONT_6x11) && defined(CONFIG_FONT_6x11)
 	lea	%pc@(font_vga_6x11),%a0
-#elif defined(CONFIG_FONT_8x8)   /* default */
+#elif defined(CONFIG_FONT_8x8) /* default */
 	lea	%pc@(font_vga_8x8),%a0
 #else /* no compiled-in font */
 	lea	0,%a0

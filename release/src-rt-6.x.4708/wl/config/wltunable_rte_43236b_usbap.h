@@ -1,7 +1,7 @@
 /*
  * Broadcom 802.11abg Networking Device Driver Configuration file
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,22 +9,14 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: wltunable_rte_43236b_usbap.h 302471 2011-12-12 20:06:35Z $
+ * $Id: wltunable_rte_43236b_usbap.h 395069 2013-04-04 23:24:21Z $
  *
  * wl driver tunables for 43236b1 BMAC rte dev
  */
 
 #define D11CONF		0x1000000	/* D11 Core Rev 24 */
 #define D11CONF2	0		/* D11 Core Rev > 31 */
-#define GCONF		0		/* No G-Phy */
-#define ACONF		0		/* No A-Phy */
-#define HTCONF		0		/* No HT-Phy */
 #define NCONF		0x200		/* N-Phy Rev 9 */
-#define LPCONF		0		/* No LP-Phy */
-#define SSLPNCONF	0		/* No SSLPN-Phy */
-#define LCNCONF		0		/* No LCN-Phy */
-#define LCN40CONF	0		/* No LCN40-Phy */
-#define ACCONF		0		/* No AC-Phy */
 
 #define CTFPOOLSZ       384	/* max buffers in ctfpool */
 #define NTXD		64	/* THIS HAS TO MATCH with HIGH driver tunable, AMPDU/rpc_agg */

@@ -2,7 +2,7 @@
  * CFE polled-mode device driver for
  * Broadcom BCM47XX 10/100 Mbps Ethernet Controller
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

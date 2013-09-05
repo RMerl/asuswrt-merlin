@@ -116,11 +116,11 @@ struct bsd_dict {
     union {				/* hash value */
 	unsigned long	fcode;
 	struct {
-#if defined(__LITTLE_ENDIAN)		    /* Little endian order */
+#if defined(__LITTLE_ENDIAN)		/* Little endian order */
 	    unsigned short	prefix;	/* preceding code */
 	    unsigned char	suffix; /* last character of new code */
 	    unsigned char	pad;
-#elif defined(__BIG_ENDIAN)		  /* Big endian order */
+#elif defined(__BIG_ENDIAN)		/* Big endian order */
 	    unsigned char	pad;
 	    unsigned char	suffix; /* last character of new code */
 	    unsigned short	prefix; /* preceding code */

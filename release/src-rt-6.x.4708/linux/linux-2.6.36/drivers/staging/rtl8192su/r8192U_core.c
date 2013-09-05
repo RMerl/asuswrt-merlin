@@ -2992,7 +2992,7 @@ void rtl8192_SetWirelessMode(struct net_device* dev, u8 wireless_mode)
 			wireless_mode = WIRELESS_MODE_B;
 		}
 	}
-#ifdef TO_DO_LIST //    // TODO: this function doesn't work well at this time, we should wait for FPGA
+#ifdef TO_DO_LIST //// TODO: this function doesn't work well at this time, we should wait for FPGA
 	ActUpdateChannelAccessSetting( pAdapter, pHalData->CurrentWirelessMode, &pAdapter->MgntInfo.Info8185.ChannelAccessSetting );
 #endif
 	//LZM 090306 usb crash here, mark it temp
@@ -7079,7 +7079,7 @@ rtl819xusb_process_received_packet(
 	pstats->virtual_address += get_rxpacket_shiftbytes_819xusb(pstats);
 	frame = pstats->virtual_address;
 	frame_len = pstats->packetlength;
-#ifdef TODO	    // by amy about HCT
+#ifdef TODO	// by amy about HCT
 	if(!Adapter->bInHctTest)
 		CountRxErrStatistics(Adapter, pRfd);
 #endif

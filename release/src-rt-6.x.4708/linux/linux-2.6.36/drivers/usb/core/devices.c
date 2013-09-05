@@ -437,7 +437,7 @@ static char *usb_dump_desc(char *start, char *end, struct usb_device *dev)
 }
 
 
-#ifdef PROC_EXTRA     /* TBD: may want to add this code later */
+#ifdef PROC_EXTRA /* TBD: may want to add this code later */
 
 static char *usb_dump_hub_descriptor(char *start, char *end,
 				     const struct usb_hub_descriptor *desc)

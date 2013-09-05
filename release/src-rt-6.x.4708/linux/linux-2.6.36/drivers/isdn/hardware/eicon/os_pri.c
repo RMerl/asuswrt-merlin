@@ -797,7 +797,7 @@ static int pri_get_serial_number(diva_os_xdi_adapter_t * a)
  	DIVA_OS_MEM_DETACH_CONFIG(&a->xdi_adapter, config);
 
 	if (memcmp(&data[48], "DIVAserverPR", 12)) {
-#if !defined(DIVA_PRI_NO_PCI_BIOS_WORKAROUND)	    /* { */
+#if !defined(DIVA_PRI_NO_PCI_BIOS_WORKAROUND)	/* { */
 		word cmd = 0, cmd_org;
 		void *addr;
 		dword addr1, addr3, addr4;

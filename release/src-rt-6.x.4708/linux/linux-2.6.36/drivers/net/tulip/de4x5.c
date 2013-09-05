@@ -669,7 +669,7 @@ static c_char *de4x5_signatures[] = DE4X5_SIGNATURE;
 /*#define DESC_ALIGN    u32 dummy[4];  / * Must agree with DESC_SKIP_LEN */
 #define DESC_ALIGN
 
-#ifndef DEC_ONLY                            /* See README.de4x5 for using this */
+#ifndef DEC_ONLY                        /* See README.de4x5 for using this */
 static int dec_only;
 #else
 static int dec_only = 1;

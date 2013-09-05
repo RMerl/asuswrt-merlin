@@ -3750,7 +3750,7 @@ static void mpi_receive_802_11(struct airo_info *ai)
 	}
 	memcpy ((char *)buffer + hdrlen, ptr, len);
 	ptr += len;
-#ifdef IW_WIRELESS_SPY	      /* defined in iw_handler.h */
+#ifdef IW_WIRELESS_SPY	  /* defined in iw_handler.h */
 	if (ai->spy_data.spy_number > 0) {
 		char *sa;
 		struct iw_quality wstats;

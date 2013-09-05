@@ -1,7 +1,7 @@
 /*
  * Code to operate on PCI/E core, in NIC mode
  * Implements pci_api.h
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: nicpci.c 348160 2012-07-31 21:25:18Z $
+ * $Id: nicpci.c 401759 2013-05-13 16:08:08Z $
  */
 
 #include <bcm_cfg.h>
@@ -52,6 +52,9 @@ typedef struct {
 	uint16	pcie_reqsize;
 	uint16	pcie_mps;
 	uint8	pciecap_devctrl2_offset; /* PCIE DevControl2 reg offset in the config space */
+	uint32	pciecap_ltr0_reg_offset; /* PCIE LTR0 reg offset in the config space */
+	uint32	pciecap_ltr1_reg_offset; /* PCIE LTR1 reg offset in the config space */
+	uint32	pciecap_ltr2_reg_offset; /* PCIE LTR2 reg offset in the config space */
 	uint8	pcie_configspace[PCI_CONFIG_SPACE_SIZE];
 } pcicore_info_t;
 
@@ -127,7 +130,8 @@ static void pcicore_fixlatencytimer(pcicore_info_t* pch, uint8 timer_val);
 /* delay needed between the mdio control/ mdiodata register data access */
 #define PR28829_DELAY() OSL_DELAY(10)
 
-/* Initialize the PCI core. It's caller's responsibility to make sure that this is done
+/**
+ * Initialize the PCI core. It's caller's responsibility to make sure that this is done
  * only once
  */
 void *
@@ -156,6 +160,9 @@ pcicore_init(si_t *sih, osl_t *osh, void *regs)
 		pi->pciecap_devctrl_offset = cap_ptr + PCIE_CAP_DEVCTRL_OFFSET;
 		pi->pciecap_lcreg_offset = cap_ptr + PCIE_CAP_LINKCTRL_OFFSET;
 		pi->pciecap_devctrl2_offset = cap_ptr + PCIE_CAP_DEVCTRL2_OFFSET;
+		pi->pciecap_ltr0_reg_offset = cap_ptr + PCIE_CAP_LTR0_REG_OFFSET;
+		pi->pciecap_ltr1_reg_offset = cap_ptr + PCIE_CAP_LTR1_REG_OFFSET;
+		pi->pciecap_ltr2_reg_offset = cap_ptr + PCIE_CAP_LTR2_REG_OFFSET;
 	} else if (sih->buscoretype == PCIE_CORE_ID) {
 		pi->regs.pcieregs = (sbpcieregs_t*)regs;
 		cap_ptr = pcicore_find_pci_capability(pi->osh, PCI_CAP_PCIECAP_ID, NULL, NULL);
@@ -163,6 +170,9 @@ pcicore_init(si_t *sih, osl_t *osh, void *regs)
 		pi->pciecap_lcreg_offset = cap_ptr + PCIE_CAP_LINKCTRL_OFFSET;
 		pi->pciecap_devctrl_offset = cap_ptr + PCIE_CAP_DEVCTRL_OFFSET;
 		pi->pciecap_devctrl2_offset = cap_ptr + PCIE_CAP_DEVCTRL2_OFFSET;
+		pi->pciecap_ltr0_reg_offset = cap_ptr + PCIE_CAP_LTR0_REG_OFFSET;
+		pi->pciecap_ltr1_reg_offset = cap_ptr + PCIE_CAP_LTR1_REG_OFFSET;
+		pi->pciecap_ltr2_reg_offset = cap_ptr + PCIE_CAP_LTR2_REG_OFFSET;
 		pi->pcie_power_save = TRUE; /* Enable pcie_power_save by default */
 	} else
 		pi->regs.pciregs = (sbpciregs_t*)regs;
@@ -181,7 +191,7 @@ pcicore_deinit(void *pch)
 	MFREE(pi->osh, pi, sizeof(pcicore_info_t));
 }
 
-/* return cap_offset if requested capability exists in the PCI config space */
+/** return cap_offset if requested capability exists in the PCI config space */
 /* Note that it's caller's responsibility to make sure it's a pci bus */
 uint8
 pcicore_find_pci_capability(osl_t *osh, uint8 req_cap_id, uchar *buf, uint32 *buflen)
@@ -240,7 +250,7 @@ end:
 	return cap_ptr;
 }
 
-/* ***** Register Access API */
+/** Register Access API */
 uint
 pcie_readreg(si_t *sih, sbpcieregs_t *pcieregs, uint addrtype, uint offset)
 {
@@ -478,14 +488,14 @@ pciegen1_mdioop(pcicore_info_t *pi, uint physmedia, uint regaddr, bool write, ui
 	return 1;
 }
 
-/* use the mdio interface to read from mdio slaves */
+/** use the mdio interface to read from mdio slaves */
 static int
 pcie_mdioread(pcicore_info_t *pi, uint physmedia, uint regaddr, uint *regval)
 {
 	return pcie_mdioop(pi, physmedia, regaddr, FALSE, regval);
 }
 
-/* use the mdio interface to write to mdio slaves */
+/** use the mdio interface to write to mdio slaves */
 static int
 pcie_mdiowrite(pcicore_info_t *pi, uint physmedia, uint regaddr, uint val)
 {
@@ -493,6 +503,13 @@ pcie_mdiowrite(pcicore_info_t *pi, uint physmedia, uint regaddr, uint val)
 }
 
 /* ***** Support functions ***** */
+
+/**
+ * By default, PCIe devices are not allowed to create payloads of greater than 128 bytes.
+ * Maximum Read Request Size is a PCIe parameter that is advertized to the host, so the host can
+ * choose a balance between high throughput and low 'chunkiness' on the bus. Regardless of the
+ * setting of this (hardware) field, the core does not initiate read requests larger than 512 bytes.
+ */
 static uint32
 pcie_devcontrol_mrrs(void *pch, uint32 mask, uint32 val)
 {
@@ -602,6 +619,122 @@ pcie_ltrenable(void *pch, uint32 mask, uint32 val)
 		return 0;
 }
 
+/* JIRA:SWWLAN-28745
+    val and return value:
+	0  Disabled
+	1  Enable using Message signaling[Var A]
+	2  Enable using Message signaling[Var B]
+	3  Enable using WAKE# signaling
+*/
+uint8
+pcie_obffenable(void *pch, uint32 mask, uint32 val)
+{
+	pcicore_info_t *pi = (pcicore_info_t *)pch;
+	uint32 reg_val;
+	uint8 offset;
+
+	offset = pi->pciecap_devctrl2_offset;
+	if (!offset)
+		return 0;
+
+	reg_val = OSL_PCI_READ_CONFIG(pi->osh, offset, sizeof(uint32));
+
+	/* set operation */
+	if (mask) {
+		reg_val = (reg_val & ~PCIE_CAP_DEVCTRL2_OBFF_ENAB_MASK) |
+			((val << PCIE_CAP_DEVCTRL2_OBFF_ENAB_SHIFT) &
+			PCIE_CAP_DEVCTRL2_OBFF_ENAB_MASK);
+		OSL_PCI_WRITE_CONFIG(pi->osh, offset, sizeof(uint32), reg_val);
+		reg_val = OSL_PCI_READ_CONFIG(pi->osh, offset, sizeof(uint32));
+	}
+
+	return  (reg_val & PCIE_CAP_DEVCTRL2_OBFF_ENAB_MASK) >> PCIE_CAP_DEVCTRL2_OBFF_ENAB_SHIFT;
+}
+
+uint32
+pcie_ltr_reg(void *pch, uint32 reg, uint32 mask, uint32 val)
+{
+	pcicore_info_t *pi = (pcicore_info_t *)pch;
+	uint32 reg_val;
+	uint32 offset;
+
+	if (PCIE_GEN1(pi->sih))
+		return 0;
+
+	if (reg == PCIE_CAP_LTR0_REG)
+		offset = pi->pciecap_ltr0_reg_offset;
+	else if (reg == PCIE_CAP_LTR1_REG)
+		offset = pi->pciecap_ltr1_reg_offset;
+	else if (reg == PCIE_CAP_LTR2_REG)
+		offset = pi->pciecap_ltr2_reg_offset;
+	else {
+		PCI_ERROR(("pcie_ltr_reg: unsupported LTR register offset %d\n",
+			reg));
+		return 0;
+	}
+
+	if (!offset)
+		return 0;
+
+	if (mask) { /* set operation */
+		reg_val = val;
+		pcie_writereg(pi->sih, pi->regs.pcieregs, PCIE_CONFIGREGS, offset, reg_val);
+	}
+	else { /* get operation */
+		reg_val = pcie_readreg(pi->sih, pi->regs.pcieregs, PCIE_CONFIGREGS, offset);
+	}
+
+	return reg_val;
+}
+
+uint32
+pcieltrspacing_reg(void *pch, uint32 mask, uint32 val)
+{
+	pcicore_info_t *pi = (pcicore_info_t *)pch;
+	si_t *sih = pi->sih;
+	sbpcieregs_t *pcieregs = pi->regs.pcieregs;
+	uint32 retval;
+
+	if (PCIE_GEN1(sih))
+		return 0;
+
+	ASSERT(pcieregs != NULL);
+
+	if (mask) { /* set operation */
+		retval = val;
+		W_REG(pi->osh, &(pcieregs->ltrspacing), val);
+	}
+	else { /* get operation */
+		retval = R_REG(pi->osh, &(pcieregs->ltrspacing));
+	}
+
+	return retval;
+}
+
+uint32
+pcieltrhysteresiscnt_reg(void *pch, uint32 mask, uint32 val)
+{
+	pcicore_info_t *pi = (pcicore_info_t *)pch;
+	si_t *sih = pi->sih;
+	sbpcieregs_t *pcieregs = pi->regs.pcieregs;
+	uint32 retval;
+
+	if (PCIE_GEN1(sih))
+		return 0;
+
+	ASSERT(pcieregs != NULL);
+
+	if (mask) { /* set operation */
+		retval = val;
+		W_REG(pi->osh, &(pcieregs->ltrhysteresiscnt), val);
+	}
+	else { /* get operation */
+		retval = R_REG(pi->osh, &(pcieregs->ltrhysteresiscnt));
+	}
+
+	return retval;
+}
+
 static void
 pcie_extendL1timer(pcicore_info_t *pi, bool extend)
 {
@@ -622,7 +755,7 @@ pcie_extendL1timer(pcicore_info_t *pi, bool extend)
 	w = pcie_readreg(sih, pcieregs, PCIE_PCIEREGS, PCIE_DLLP_PMTHRESHREG);
 }
 
-/* centralized clkreq control policy */
+/** centralized clkreq control policy */
 static void
 pcie_clkreq_upd(pcicore_info_t *pi, uint state)
 {
@@ -684,8 +817,9 @@ pcie_war_polarity(pcicore_info_t *pi)
 		pi->pcie_polarity = (SERDES_RX_CTRL_FORCE | SERDES_RX_CTRL_POLARITY);
 }
 
-/* enable ASPM and CLKREQ if srom doesn't have it */
-/* Needs to happen when update to shadow SROM is needed
+/**
+ * enable ASPM and CLKREQ if srom doesn't have it.
+ * Needs to happen when update to shadow SROM is needed
  *   : Coming out of 'standby'/'hibernate'
  *   : If pcie_war_aspm_ovr state changed
  */
@@ -755,7 +889,7 @@ pcie_war_pmebits(pcicore_info_t *pi)
 	}
 }
 
-/* Apply the polarity determined at the start */
+/** Apply the polarity determined at the start */
 /* Needs to happen when coming out of 'standby'/'hibernate' */
 static void
 pcie_war_serdes(pcicore_info_t *pi)
@@ -772,7 +906,7 @@ pcie_war_serdes(pcicore_info_t *pi)
 	}
 }
 
-/* Fix MISC config to allow coming out of L2/L3-Ready state w/o PRST */
+/** Fix MISC config to allow coming out of L2/L3-Ready state w/o PRST */
 /* Needs to happen when coming out of 'standby'/'hibernate' */
 static void
 BCMINITFN(pcie_misc_config_fixup)(pcicore_info_t *pi)
@@ -789,7 +923,6 @@ BCMINITFN(pcie_misc_config_fixup)(pcicore_info_t *pi)
 	}
 }
 
-/* quick hack for testing */
 /* Needs to happen when coming out of 'standby'/'hibernate' */
 static void
 pcie_war_noplldown(pcicore_info_t *pi)
@@ -808,7 +941,7 @@ pcie_war_noplldown(pcicore_info_t *pi)
 	W_REG(pi->osh, reg16, 0);
 }
 
-/* Needs to happen when coming out of 'standby'/'hibernate' */
+/** Needs to happen when coming out of 'standby'/'hibernate' */
 static void
 pcie_war_pci_setup(pcicore_info_t *pi)
 {
@@ -1033,11 +1166,12 @@ pcie_set_L1_entry_time(void *pch, uint32 val)
 	if (val > 0x7F)
 		return;
 
-	data = pcie_readreg(sih, pcieregs, PCIE_CONFIGREGS, 0x1004);
-	pcie_writereg(pch, pcieregs, PCIE_CONFIGREGS, 0x1004, (data & ~0x7F0000) | (val << 16));
+	data = pcie_readreg(sih, pcieregs, PCIE_CONFIGREGS, PCIECFGREG_PDL_CTRL1);
+	pcie_writereg(pch, pcieregs, PCIE_CONFIGREGS,
+		PCIECFGREG_PDL_CTRL1, (data & ~0x7F0000) | (val << 16));
 }
 
-/* mode : 0 -- reset, 1 -- tx, 2 -- rx */
+/** mode : 0 -- reset, 1 -- tx, 2 -- rx */
 void
 pcie_set_error_injection(void *pch, uint32 mode)
 {
@@ -1050,11 +1184,66 @@ pcie_set_error_injection(void *pch, uint32 mode)
 		return;
 
 	if (mode == 0)
-		pcie_writereg(pch, pcieregs, PCIE_CONFIGREGS, 0x181c, 0);
+		pcie_writereg(pch, pcieregs, PCIE_CONFIGREGS, PCIECFGREG_REG_PHY_CTL7, 0);
 	else if (mode == 1)
-		pcie_writereg(pch, pcieregs, PCIE_CONFIGREGS, 0x181c, 0x14031);
+		pcie_writereg(pch, pcieregs, PCIE_CONFIGREGS, PCIECFGREG_REG_PHY_CTL7, 0x14031);
 	else
-		pcie_writereg(pch, pcieregs, PCIE_CONFIGREGS, 0x181c, 0x2c031);
+		pcie_writereg(pch, pcieregs, PCIE_CONFIGREGS, PCIECFGREG_REG_PHY_CTL7, 0x2c031);
+}
+
+void
+pcie_set_L1substate(void *pch, uint32 substate)
+{
+	pcicore_info_t *pi = (pcicore_info_t *)pch;
+	si_t *sih = pi->sih;
+	sbpcieregs_t *pcieregs = pi->regs.pcieregs;
+	uint32 data;
+
+	ASSERT(PCIE_GEN2(sih));
+	ASSERT(substate <= 3);
+
+	if (substate != 0) {
+		/* turn on ASPM L1 */
+		data = pcie_readreg(sih, pcieregs, PCIE_CONFIGREGS, pi->pciecap_lcreg_offset);
+		pcie_writereg(sih, pcieregs, PCIE_CONFIGREGS, pi->pciecap_lcreg_offset, data | 2);
+
+		/* enable LTR */
+		pcie_ltrenable(pch, 1, 1);
+	}
+
+	/* PML1_sub_control1 can only be accessed by OSL_PCI_xxxx_CONFIG */
+	data = OSL_PCI_READ_CONFIG(pi->osh, PCIECFGREG_PML1_SUB_CTRL1, sizeof(uint32)) & 0xfffffff0;
+
+	/* JIRA:SWWLAN-28455 */
+	if (substate & 1)
+		data |= PCI_PM_L1_2_ENA_MASK | ASPM_L1_2_ENA_MASK;
+
+	if (substate & 2)
+		data |= PCI_PM_L1_1_ENA_MASK | ASPM_L1_1_ENA_MASK;
+
+	OSL_PCI_WRITE_CONFIG(pi->osh, PCIECFGREG_PML1_SUB_CTRL1, sizeof(uint32), data);
+}
+
+uint32
+pcie_get_L1substate(void *pch)
+{
+	pcicore_info_t *pi = (pcicore_info_t *)pch;
+	si_t *sih = pi->sih;
+	uint32 data, substate = 0;
+
+	ASSERT(PCIE_GEN2(sih));
+	UNUSED_PARAMETER(sih);
+
+	data = OSL_PCI_READ_CONFIG(pi->osh, PCIECFGREG_PML1_SUB_CTRL1, sizeof(uint32));
+
+	/* JIRA:SWWLAN-28455 */
+	if (data & (PCI_PM_L1_2_ENA_MASK | ASPM_L1_2_ENA_MASK))
+		substate |= 1;
+
+	if (data & (PCI_PM_L1_1_ENA_MASK | ASPM_L1_1_ENA_MASK))
+		substate |= 2;
+
+	return substate;
 }
 
 /* ***** Functions called during driver state changes ***** */
@@ -1067,7 +1256,9 @@ BCMATTACHFN(pcicore_attach)(void *pch, char *pvars, int state)
 	if (!PCIE_GEN1(sih)) {
 		if ((BCM4360_CHIP_ID == CHIPID(sih->chip)) ||
 		    (BCM43460_CHIP_ID == CHIPID(sih->chip)) ||
-		    (BCM4352_CHIP_ID == CHIPID(sih->chip)))
+		    (BCM4350_CHIP_ID == CHIPID(sih->chip)) ||
+		    (BCM4352_CHIP_ID == CHIPID(sih->chip)) ||
+		    (BCM4335_CHIP_ID == CHIPID(sih->chip)))
 			pi->pcie_reqsize = PCIE_CAP_DEVCTRL_MRRS_1024B;
 		return;
 	}
@@ -1164,7 +1355,7 @@ pcicore_up(void *pch, int state)
 	pcie_devcontrol_mrrs(pi, PCIE_CAP_DEVCTRL_MRRS_MASK, pi->pcie_reqsize);
 }
 
-/* When the device is going to enter D3 state (or the system is going to enter S3/S4 states */
+/** When the device is going to enter D3 state (or the system is going to enter S3/S4 states */
 void
 pcicore_sleep(void *pch)
 {
@@ -1206,7 +1397,7 @@ pcicore_down(void *pch, int state)
 }
 
 /* ***** Wake-on-wireless-LAN (WOWL) support functions ***** */
-/* Just uses PCI config accesses to find out, when needed before sb_attach is done */
+/** Just uses PCI config accesses to find out, when needed before sb_attach is done */
 bool
 pcicore_pmecap_fast(osl_t *osh)
 {
@@ -1223,7 +1414,8 @@ pcicore_pmecap_fast(osl_t *osh)
 	return ((pmecap & PME_CAP_PM_STATES) != 0);
 }
 
-/* return TRUE if PM capability exists in the pci config space
+/**
+ * return TRUE if PM capability exists in the pci config space
  * Uses and caches the information using core handle
  */
 static bool
@@ -1253,7 +1445,7 @@ pcicore_pmecap(pcicore_info_t *pi)
 	return (pi->pmecap);
 }
 
-/* Enable PME generation */
+/** Enable PME generation */
 void
 pcicore_pmeen(void *pch)
 {
@@ -1271,9 +1463,7 @@ pcicore_pmeen(void *pch)
 	OSL_PCI_WRITE_CONFIG(pi->osh, pi->pmecap_offset + PME_CSR_OFFSET, sizeof(uint32), w);
 }
 
-/*
- * Return TRUE if PME status set
- */
+/** Return TRUE if PME status set */
 bool
 pcicore_pmestat(void *pch)
 {
@@ -1309,8 +1499,7 @@ pcicore_pmestatclr(void *pch)
 	}
 }
 
-/* Disable PME generation, clear the PME status bit if set
- */
+/** Disable PME generation, clear the PME status bit if set */
 void
 pcicore_pmeclr(void *pch)
 {
@@ -1481,3 +1670,39 @@ pcie_get_link_speed(void* pch)
 	data = pcie_readreg(pi->sih, pcieregs, PCIE_CONFIGREGS, pi->pciecap_lcreg_offset);
 	return (data & PCIE_LINKSPEED_MASK) >> PCIE_LINKSPEED_SHIFT;
 }
+
+uint32
+pcie_survive_perst(void* pch, uint32 mask, uint32 val)
+{
+#ifdef SURVIVE_PERST_ENAB
+	pcicore_info_t *pi = (pcicore_info_t *)pch;
+	sbpcieregs_t *pcieregs = pi->regs.pcieregs;
+	uint32 w;
+
+	/* mask and set */
+	if (mask || val) {
+		w = (R_REG(pi->osh, (&pcieregs->control)) & ~mask) | val;
+		W_REG(pi->osh, (&pcieregs->control), w);
+	}
+	/* readback */
+	return R_REG(pi->osh, (&pcieregs->control));
+#else
+	return 0;
+#endif /* SURVIVE_PERST_ENAB */
+}
+
+
+#if defined(WLTEST) || defined(BCMDBG)
+/* Dump PCIE Info */
+int
+pcicore_dump_pcieinfo(void *pch, struct bcmstrbuf *b)
+{
+	pcicore_info_t *pi = (pcicore_info_t *)pch;
+
+	if (!PCIE_GEN1(pi->sih) && !PCIE_GEN2(pi->sih))
+		return BCME_ERROR;
+
+	bcm_bprintf(b, "PCIE link speed: %d\n", pcie_get_link_speed(pch));
+	return 0;
+}
+#endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -7,7 +7,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: igsc.h 387069 2013-02-22 23:42:22Z $
+ * $Id: igsc.h 387389 2013-02-25 21:05:20Z $
  */
 
 #ifndef _IGSC_H_

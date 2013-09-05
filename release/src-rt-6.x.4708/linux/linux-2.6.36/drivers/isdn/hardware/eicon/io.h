@@ -23,7 +23,7 @@
   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  */
-#ifndef __DIVA_XDI_COMMON_IO_H_INC__     /* { */
+#ifndef __DIVA_XDI_COMMON_IO_H_INC__ /* { */
 #define __DIVA_XDI_COMMON_IO_H_INC__
 /*
  maximum = 16 adapters

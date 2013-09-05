@@ -1,7 +1,7 @@
 /*
  * BCM43XX PCIE core hardware definitions.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: pcie_core.h 348160 2012-07-31 21:25:18Z $
+ * $Id: pcie_core.h 401759 2013-05-13 16:08:08Z $
  */
 #ifndef	_PCIE_CORE_H
 #define	_PCIE_CORE_H
@@ -67,7 +67,9 @@ typedef struct sbpcieregs {
 	uint32 errlogaddr;	/* PCIE2: 0x44 */
 	uint32 mailboxint;	/* PCIE2: 0x48 */
 	uint32 mailboxintmsk; /* PCIE2: 0x4c */
-	uint32 PAD[44];
+	uint32 ltrspacing;	/* PCIE2: 0x50 */
+	uint32 ltrhysteresiscnt;	/* PCIE2: 0x54 */
+	uint32 PAD[42];
 
 	uint32 sbtopcie0;	/* sb to pcie translation 0: 0x100 */
 	uint32 sbtopcie1;	/* sb to pcie translation 1: 0x104 */
@@ -103,6 +105,8 @@ typedef struct sbpcieregs {
 /* PCI control */
 #define PCIE_RST_OE	0x01	/* When set, drives PCI_RESET out to pin */
 #define PCIE_RST	0x02	/* Value driven out to pin */
+#define PCIE_SPERST	0x04	/* SurvivePeRst */
+#define PCIE_DISSPROMLD	0x200	/* DisableSpromLoadOnPerst */
 
 #define	PCIE_CFGADDR	0x120	/* offsetof(configaddr) */
 #define	PCIE_CFGDATA	0x124	/* offsetof(configdata) */
@@ -114,6 +118,7 @@ typedef struct sbpcieregs {
 #define PCIE_INTNFATAL	0x08	/* PCIE INTNONFATAL message is received */
 #define PCIE_INTCORR	0x10	/* PCIE INTCORR message is received */
 #define PCIE_INTPME	0x20	/* PCIE INTPME message is received */
+#define PCIE_PERST	0x40	/* PCIE Reset Interrupt */
 
 #define PCIE_INT_MB_FN0_0 0x0100 /* PCIE to SB Mailbox int Fn0.0 is received */
 #define PCIE_INT_MB_FN0_1 0x0200 /* PCIE to SB Mailbox int Fn0.1 is received */
@@ -381,9 +386,22 @@ typedef struct sbpcieregs {
 #define PCIE_ASPM_L0s_ENAB		1	/* ASPM L0s & L1 in linkctrl */
 #define PCIE_ASPM_DISAB			0	/* ASPM L0s & L1 in linkctrl */
 
+#define PCIE_ASPM_L11_ENAB		8	/* ASPM L1.1 in PML1_sub_control2 */
+#define PCIE_ASPM_L12_ENAB		4	/* ASPM L1.2 in PML1_sub_control2 */
+
 /* Devcontrol2 reg offset in PCIE Cap */
 #define PCIE_CAP_DEVCTRL2_OFFSET	0x28	/* devctrl2 offset in pcie cap */
 #define PCIE_CAP_DEVCTRL2_LTR_ENAB_MASK	0x400	/* Latency Tolerance Reporting Enable */
+#define PCIE_CAP_DEVCTRL2_OBFF_ENAB_SHIFT 13	/* Enable OBFF mechanism, select signaling method */
+#define PCIE_CAP_DEVCTRL2_OBFF_ENAB_MASK 0x6000	/* Enable OBFF mechanism, select signaling method */
+
+/* LTR registers in PCIE Cap */
+#define PCIE_CAP_LTR0_REG_OFFSET	0x798	/* ltr0_reg offset in pcie cap */
+#define PCIE_CAP_LTR1_REG_OFFSET	0x79C	/* ltr1_reg offset in pcie cap */
+#define PCIE_CAP_LTR2_REG_OFFSET	0x7A0	/* ltr2_reg offset in pcie cap */
+#define PCIE_CAP_LTR0_REG			0		/* ltr0_reg */
+#define PCIE_CAP_LTR1_REG			1		/* ltr1_reg */
+#define PCIE_CAP_LTR2_REG			2		/* ltr2_reg */
 
 /* Status reg PCIE_PLP_STATUSREG */
 #define PCIE_PLP_POLARITYINV_STAT	0x10
@@ -414,6 +432,18 @@ typedef struct sbpcieregs {
 #define PCIE2R0_BRCMCAP_BPADDR_OFFSET		48
 #define PCIE2R0_BRCMCAP_BPDATA_OFFSET		52
 #define PCIE2R0_BRCMCAP_CLKCTLSTS_OFFSET	56
+
+/* definition of configuration space registers of PCIe gen2
+ * http://hwnbu-twiki.sj.broadcom.com/twiki/pub/Mwgroup/CurrentPcieGen2ProgramGuide/pcie_ep.htm
+ */
+#define PCIECFGREG_PML1_SUB_CTRL1		0x248
+#define PCI_PM_L1_2_ENA_MASK			0x00000001	/* PCI-PM L1.2 Enabled */
+#define PCI_PM_L1_1_ENA_MASK			0x00000002	/* PCI-PM L1.1 Enabled */
+#define ASPM_L1_2_ENA_MASK			0x00000004	/* ASPM L1.2 Enabled */
+#define ASPM_L1_1_ENA_MASK			0x00000008	/* ASPM L1.1 Enabled */
+
+#define PCIECFGREG_PDL_CTRL1			0x1004
+#define PCIECFGREG_REG_PHY_CTL7			0x181c
 
 
 #endif	/* _PCIE_CORE_H */

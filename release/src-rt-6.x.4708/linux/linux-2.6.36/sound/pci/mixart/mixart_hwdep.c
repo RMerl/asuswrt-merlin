@@ -546,8 +546,8 @@ static int mixart_dsp_load(struct mixart_mgr* mgr, int index, const struct firmw
 
 
 #if defined(CONFIG_FW_LOADER) || defined(CONFIG_FW_LOADER_MODULE)
-#if !defined(CONFIG_USE_MIXARTLOADER) && !defined(CONFIG_SND_MIXART)     /* built-in \
-	kernel */
+#if !defined(CONFIG_USE_MIXARTLOADER) && !defined(CONFIG_SND_MIXART) /* built-in kernel \
+	*/
 #define SND_MIXART_FW_LOADER	/* use the standard firmware loader */
 #endif
 #endif

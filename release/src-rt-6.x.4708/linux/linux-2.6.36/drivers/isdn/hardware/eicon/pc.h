@@ -23,7 +23,7 @@
   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  */
-#ifndef PC_H_INCLUDED      /* { */
+#ifndef PC_H_INCLUDED  /* { */
 #define PC_H_INCLUDED
 /*------------------------------------------------------------------*/
 /* buffer definition                                                */

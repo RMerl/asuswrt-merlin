@@ -1972,7 +1972,7 @@ static void NCR5380_information_transfer(struct Scsi_Host *instance) {
 #else
 				transfersize = cmd->transfersize;
 
-#ifdef LIMIT_TRANSFERSIZE	    /* If we have problems with interrupt service */
+#ifdef LIMIT_TRANSFERSIZE	/* If we have problems with interrupt service */
 				if (transfersize > 512)
 					transfersize = 512;
 #endif				/* LIMIT_TRANSFERSIZE */

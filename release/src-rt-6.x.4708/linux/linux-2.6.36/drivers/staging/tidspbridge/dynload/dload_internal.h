@@ -217,7 +217,7 @@ struct tramp_info {
 enum cinit_mode {
 	CI_COUNT = 0,		/* expecting a count */
 	CI_ADDRESS,		/* expecting an address */
-#if CINIT_ALIGN < CINIT_ADDRESS	    /* handle case of partial address field */
+#if CINIT_ALIGN < CINIT_ADDRESS	/* handle case of partial address field */
 	CI_PARTADDRESS,		/* have only part of the address */
 #endif
 	CI_COPY,		/* in the middle of copying data */

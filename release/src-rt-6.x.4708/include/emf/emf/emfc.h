@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -7,7 +7,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: emfc.h 340526 2012-06-22 14:54:20Z $
+ * $Id: emfc.h 406828 2013-06-10 22:52:43Z $
  */
 
 #ifndef _EMFC_H_
@@ -61,7 +61,7 @@ typedef struct emfc_mi
  * one interface list. Each interface list entry has flags (infact ref count)
  * indicating the entry type. An interface can be of type rtport, uffp or
  * both. As a general rule IGMP frames are forwarded on rtport type interfaces.
- * Unregistered data frames are forwareded on to rtport and uffp interfaces.
+ * Unregistered data frames are forwarded on to rtport and uffp interfaces.
  */
 typedef struct emfc_iflist
 {

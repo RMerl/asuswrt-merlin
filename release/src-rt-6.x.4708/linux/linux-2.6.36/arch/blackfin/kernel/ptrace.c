@@ -334,7 +334,7 @@ long arch_ptrace(struct task_struct *child, long request, long addr, long data)
 
 	case PTRACE_PEEKUSR:
 		switch (addr) {
-#ifdef CONFIG_BINFMT_ELF_FDPIC	    /* backwards compat */
+#ifdef CONFIG_BINFMT_ELF_FDPIC	/* backwards compat */
 		case PT_FDPIC_EXEC:
 			request = PTRACE_GETFDPIC;
 			addr = PTRACE_GETFDPIC_EXEC;

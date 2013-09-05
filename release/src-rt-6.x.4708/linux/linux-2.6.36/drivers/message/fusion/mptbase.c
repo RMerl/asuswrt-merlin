@@ -6453,7 +6453,7 @@ mpt_ioc_reset(MPT_ADAPTER *ioc, int reset_phase)
 }
 
 
-#ifdef CONFIG_PROC_FS		    /* { */
+#ifdef CONFIG_PROC_FS		/* { */
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 /*
  *	procfs (%MPT_PROCFS_MPTBASEDIR/...) support stuff...

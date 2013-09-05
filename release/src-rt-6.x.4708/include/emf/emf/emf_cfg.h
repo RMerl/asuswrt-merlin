@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -7,7 +7,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: emf_cfg.h 390526 2013-03-12 15:53:29Z $
+ * $Id: emf_cfg.h 390729 2013-03-13 11:22:14Z $
  */
 
 #ifndef _EMF_CFG_H_

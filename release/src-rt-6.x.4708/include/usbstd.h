@@ -127,11 +127,19 @@ typedef struct {
 #define UR_GET_INTERFACE	0x0a
 #define UR_SET_INTERFACE	0x0b
 #define UR_SYNCH_FRAME		0x0c
+#define UR_SET_SEL			0x30
+#define UR_SET_ISODELAY		0x31
 
 /* Feature numbers */
-#define UF_ENDPOINT_HALT	0
+#define UF_ENDPOINT_HALT		0
 #define UF_DEVICE_REMOTE_WAKEUP	1
-#define UF_TEST_MODE		2
+#define UF_DEVICE_U1_ENABLE		48
+#define UF_DEVICE_U2_ENABLE		49
+#define UF_DEVICE_LTM_ENABLE	50
+#define UF_INTRF_FUNC_SUSPEND	0
+#define UF_INTRF_FUNC_SUSP_LP	(1<<8)
+#define UF_INTRF_FUNC_SUSP_RW	(1<<9)
+#define UF_TEST_MODE			2
 
 #define USB_MAX_IPACKET		8 /* maximum size of the initial packet */
 
@@ -177,7 +185,8 @@ typedef struct {
 #define UC_SELF_POWERED		0x40
 #define UC_REMOTE_WAKEUP	0x20
 	uByte		bMaxPower; /* max current in 2 mA units */
-#define UC_POWER_FACTOR 2
+#define UC_POWER_FACTOR 	2
+#define UC_SSPOWER_FACTOR	8
 } UPACKED usb_config_descriptor_t;
 #define USB_CONFIG_DESCRIPTOR_SIZE 9
 
@@ -220,6 +229,16 @@ typedef struct {
 	uByte		bInterval;
 } UPACKED usb_endpoint_descriptor_t;
 #define USB_ENDPOINT_DESCRIPTOR_SIZE 7
+
+typedef struct {
+	uByte		bLength;
+	uByte		bDescriptorType;
+	uByte		bMaxBurst;
+	uByte		bmAttributes;
+	uWord		wBytesPerInterVal;
+} UPACKED usb_endpoint_companion_descriptor_t;
+#define USB_ENDPOINT_COMPANION_DESCRIPTOR_SIZE	6 
+
 
 typedef struct {
 	uByte		bLength;

@@ -1,7 +1,7 @@
 /*
  * bcmevent read-only data shared by kernel or app layers
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: bcmevent.c 390365 2013-03-12 01:48:24Z $
+ * $Id: bcmevent.c 403825 2013-05-22 16:24:58Z $
  */
 
 #include <bcm_cfg.h>
@@ -23,10 +23,6 @@
 #include <proto/ethernet.h>
 #include <proto/bcmeth.h>
 #include <proto/bcmevent.h>
-
-#if WLC_E_LAST != 106
-#error "You need to add an entry to bcmevent_names[] for the new event"
-#endif
 
 const bcmevent_name_t bcmevent_names[] = {
 	{ WLC_E_SET_SSID, "SET_SSID" },
@@ -136,9 +132,37 @@ const bcmevent_name_t bcmevent_names[] = {
 	{ WLC_E_SERVICE_FOUND, "SERVICE_FOUND" },
 	{ WLC_E_GAS_FRAGMENT_RX, "GAS_FRAGMENT_RX" },
 	{ WLC_E_GAS_COMPLETE, "GAS_COMPLETE" },
-#ifdef WLINTFERSTAT
-	{ WLC_E_INTFERSTAT_IND, "INTFERSTAT_IND" },
-#endif /* WLPINTFERSTAT */
+	{ WLC_E_P2PO_ADD_DEVICE, "WLC_E_P2PO_ADD_DEVICE" },
+	{ WLC_E_P2PO_DEL_DEVICE, "WLC_E_P2PO_DEL_DEVICE" },
+#ifdef WLWNM
+	{ WLC_E_WNM_STA_SLEEP, "WMM_STA_SLEEP" },
+#endif /* WLWNM */
+#if defined(WL_PROXDETECT)
+	{ WLC_E_PROXD, "WLC_E_PROXD" },
+#endif
+#ifdef WLAWDL
+	{ WLC_E_AWDL_AW_EXT_END, "WLC_E_AWDL_AW_EXT_END" },
+	{ WLC_E_AWDL_AW_EXT_START, "WLC_E_AWDL_AW_EXT_START"},
+	{ WLC_E_AWDL_AW_START, "WLC_E_AWDL_AW_START" },
+	{ WLC_E_AWDL_RADIO_OFF, "WLC_E_AWDL_RADIO_OFF"},
+	{ WLC_E_AWDL_PEER_STATE, "WLC_E_AWDL_PEER_STATE"},
+	{ WLC_E_AWDL_SYNC_STATE_CHANGED, "WLC_E_AWDL_SYNC_STATE_CHANGED"},
+	{ WLC_E_AWDL_CHIP_RESET, "WLC_E_AWDL_CHIP_RESET"},
+	{ WLC_E_AWDL_INTERLEAVED_SCAN_START, "WLC_E_AWDL_SCAN_INTERLEAVED_START"},
+	{ WLC_E_AWDL_INTERLEAVED_SCAN_STOP, "WLC_E_AWDL_SCAN_INTERLEAVED_STOP" },
+	{ WLC_E_AWDL_PEER_CACHE_CONTROL, "WLC_E_AWDL_PEER_CACHE_CONTROL" },
+	{ WLC_E_CSA_START_IND, "WLC_E_CSA_START_IND" },
+	{ WLC_E_CSA_DONE_IND, "WLC_E_CSA_DONE_IND" },
+	{ WLC_E_CSA_FAILURE_IND, "WLC_E_CSA_FAILURE_IND" },
+#endif
+	{ WLC_E_CCA_CHAN_QUAL, "CCA_BASED_CHANNEL_QUALITY" },
+	{ WLC_E_BSSID, "BSSID_CHANGED" },
+	{ WLC_E_TX_STAT_ERROR, "REPORT_TX_ERR_CNT" },
+#ifdef PROP_TXSTATUS
+	{ WLC_E_BCMC_CREDIT_SUPPORT, "BCMC_CREDIT_SUPPORT" },
+#endif
+	{ WLC_E_TXFAIL_THRESH, "INTFER_TXFAIL_THRESH" },
+	{ WLC_E_PSTA_PRIMARY_INTF_IND, "PSTA_PRIMARY_INTF_IND" },
 };
 
 const int bcmevent_names_size = ARRAYSIZE(bcmevent_names);

@@ -1,7 +1,7 @@
 /*
  * SROM format definition.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmsrom_fmt.h 360211 2012-10-02 06:01:44Z $
+ * $Id: bcmsrom_fmt.h 401759 2013-05-13 16:08:08Z $
  */
 
 #ifndef	_bcmsrom_fmt_h_
@@ -448,9 +448,10 @@
 #define SROM11_MPWR_RAWTS		88
 #define SROM11_TS_SLP_OPT_CORRX		89
 #define SROM11_XTAL_FREQ		90
+#define SROM11_5GB0_4080_W0_A1          91
 #define SROM11_PHYCAL_TEMPDELTA  	92
 #define SROM11_MPWR_1_AND_2 		93
-
+#define SROM11_5GB0_4080_W1_A1          94
 #define SROM11_TSSIFLOOR_2G 		95
 #define SROM11_TSSIFLOOR_5GL 		96
 #define SROM11_TSSIFLOOR_5GM 		97
@@ -476,13 +477,15 @@
 #define SROM11_PDOFF_2G_40M_VALID_MASK  0x8000
 #define SROM11_PDOFF_2G_40M_VALID_SHIFT 15
 
-#define SROM11_PDOFF_2G_40M 	100
+#define SROM11_PDOFF_2G_40M             100
 #define SROM11_PDOFF_40M_A0		101
 #define SROM11_PDOFF_40M_A1		102
 #define SROM11_PDOFF_40M_A2		103
+#define SROM11_5GB0_4080_W2_A1          103
 #define SROM11_PDOFF_80M_A0		104
 #define SROM11_PDOFF_80M_A1		105
 #define SROM11_PDOFF_80M_A2		106
+#define SROM11_5GB1_4080_W0_A1          106
 
 #define SROM11_SUBBAND5GVER 		107
 
@@ -493,9 +496,12 @@
 #define SROM11_PATH2			148
 
 #define	SROM11_2G_MAXP			0
+#define SROM11_5GB1_4080_PA             0
 #define	SROM11_2G_PA			1
+#define SROM11_5GB2_4080_PA             2
 #define	SROM11_RXGAINS1			4
 #define	SROM11_RXGAINS			5
+#define SROM11_5GB3_4080_PA             5
 #define	SROM11_5GB1B0_MAXP		6
 #define	SROM11_5GB3B2_MAXP		7
 #define	SROM11_5GB0_PA			8
@@ -576,8 +582,10 @@
 #define SROM11_SB20IN40LRPO 		210
 #define SROM11_SB20IN80AND160LR5GLPO	211
 #define SROM11_SB40AND80LR5GLPO		212
+#define SROM11_TXIDXCAP2G               212
 #define SROM11_SB20IN80AND160LR5GMPO	213
 #define SROM11_SB40AND80LR5GMPO		214
+#define SROM11_TXIDXCAP5G               214
 #define SROM11_SB20IN80AND160LR5GHPO	215
 #define SROM11_SB40AND80LR5GHPO		216
 

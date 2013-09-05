@@ -12,7 +12,7 @@
 #ifndef _ASM_STRING_H_
 #define _ASM_STRING_H_
 
-#ifdef __KERNEL__     /* only set these up for kernel code */
+#ifdef __KERNEL__ /* only set these up for kernel code */
 
 #define __HAVE_ARCH_MEMSET 1
 #define __HAVE_ARCH_MEMCPY 1

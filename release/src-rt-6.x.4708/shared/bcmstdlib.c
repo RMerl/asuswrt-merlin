@@ -1,7 +1,7 @@
 /*
  * stdlib support routines for self-contained images.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmstdlib.c 355155 2012-09-05 17:00:22Z $
+ * $Id: bcmstdlib.c 401759 2013-05-13 16:08:08Z $
  */
 
 /*
@@ -675,7 +675,7 @@ memcpy(void *dest, const void *src, size_t n)
 			 * and may need to be reordered if function or compiler is changed.
 			 */
 			asm volatile("1:\n\t"
-#if (__GNUC_MINOR__ >= 5)	    /* arm-none-eabi-gcc 4.5.1 (2010.09) */
+#if (__GNUC_MINOR__ >= 5)	/* arm-none-eabi-gcc 4.5.1 (2010.09) */
 				     "ldmia.w %0!, {%3, %4, %5, %6, %8, %9, %10, %7}\n\t"
 				     "stmia.w %1!, {%3, %4, %5, %6, %8, %9, %10, %7}\n\t"
 #else				/* arm-none-eabi-gcc 4.2.1 (2007q3-53) */

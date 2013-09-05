@@ -27,7 +27,7 @@
 #include "jfs_filsys.h"
 #include "jfs_debug.h"
 
-#ifdef PROC_FS_JFS     /* see jfs_debug.h */
+#ifdef PROC_FS_JFS /* see jfs_debug.h */
 
 static struct proc_dir_entry *base;
 #ifdef CONFIG_JFS_DEBUG

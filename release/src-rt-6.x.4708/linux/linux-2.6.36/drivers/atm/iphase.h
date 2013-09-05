@@ -69,7 +69,7 @@
 
 #define IF_IADBG(f) if (IADebugFlag & (f))
 
-#ifdef  CONFIG_ATM_IA_DEBUG       /* Debug build */
+#ifdef  CONFIG_ATM_IA_DEBUG   /* Debug build */
 
 #define IF_LOUD(A) IF_IADBG(IF_IADBG_LOUD) { A }
 #define IF_ERR(A) IF_IADBG(IF_IADBG_ERR) { A }

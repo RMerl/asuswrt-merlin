@@ -114,7 +114,7 @@ static inline void sb800_prefetch(struct ohci_hcd *ohci, int on)
  * On architectures with edge-triggered interrupts we must never return
  * IRQ_NONE.
  */
-#if defined(CONFIG_SA1111)      /* ... or other edge-triggered systems */
+#if defined(CONFIG_SA1111)  /* ... or other edge-triggered systems */
 #define IRQ_NOTMINE	IRQ_HANDLED
 #else
 #define IRQ_NOTMINE	IRQ_NONE

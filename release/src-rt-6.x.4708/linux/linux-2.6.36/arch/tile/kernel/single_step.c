@@ -15,7 +15,7 @@
  * Derived from iLib's single-stepping code.
  */
 
-#ifndef __tilegx__       /* No support for single-step yet. */
+#ifndef __tilegx__   /* No support for single-step yet. */
 
 /* These functions are only used on the TILE platform */
 #include <linux/slab.h>

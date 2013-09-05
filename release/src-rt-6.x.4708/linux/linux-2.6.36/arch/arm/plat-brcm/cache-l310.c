@@ -120,7 +120,7 @@ static void BCMFASTPATH l2x0_clean_range(unsigned long start, unsigned long end)
 	atomic_cache_sync(base);
 }
 
-static void BCMFASTPATH l2x0_flush_range(unsigned long start, unsigned long end)
+static void l2x0_flush_range(unsigned long start, unsigned long end)
 {
 	void __iomem *base = l2x0_base;
 
@@ -159,6 +159,21 @@ static irqreturn_t l2x0_isr( int irq, void * cookie )
 	printk(KERN_WARNING "L310: interrupt bits %#x\n", reg );
 
 	return IRQ_HANDLED ;
+}
+
+unsigned int
+l2x0_read_event_cnt(int idx)
+{
+	unsigned int val;
+
+	if (idx == 1)
+		val = readl_relaxed(l2x0_base + L2X0_EVENT_CNT1_VAL);
+	else if (idx == 0)
+		val = readl_relaxed(l2x0_base + L2X0_EVENT_CNT0_VAL);
+	else
+		val = -1;
+
+	return val;
 }
 
 void __init l310_init(void __iomem *base, u32 aux_val, u32 aux_mask, int irq)
@@ -212,7 +227,17 @@ void __init l310_init(void __iomem *base, u32 aux_val, u32 aux_mask, int irq)
 	outer_cache.flush_range = l2x0_flush_range;
 	outer_cache.sync = l2x0_cache_sync;
 
+	/* configure total hits */
+	writel_relaxed((2 << 2), l2x0_base + L2X0_EVENT_CNT1_CFG);
+
+	/* configure total read accesses */
+	writel_relaxed((3 << 2), l2x0_base + L2X0_EVENT_CNT0_CFG);
+
+	/* enable event counting */
+	writel_relaxed(0x1, l2x0_base + L2X0_EVENT_CNT_CTRL);
+
 	printk(KERN_INFO "L310: cache controller enabled %d ways, "
 			"CACHE_ID 0x%08x, AUX_CTRL 0x%08x\n",
 			 ways, cache_id, aux);
 }
+EXPORT_SYMBOL(l2x0_read_event_cnt);

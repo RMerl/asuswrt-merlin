@@ -1,7 +1,7 @@
 /*
  * Stubs for NVRAM functions for platforms without flash
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: nvramstubs.c 398971 2013-04-26 22:39:49Z $
+ * $Id: nvramstubs.c 401759 2013-05-13 16:08:08Z $
  */
 
 #include <bcm_cfg.h>

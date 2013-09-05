@@ -573,7 +573,7 @@ Amd7930_l1hw(struct PStack *st, int pr, void *arg)
 			spin_lock_irqsave(&cs->lock, flags);
 			if (cs->tx_skb) {
 				skb_queue_tail(&cs->sq, skb);
-#ifdef L2FRAME_DEBUG		    /* psa */
+#ifdef L2FRAME_DEBUG		/* psa */
 				if (cs->debug & L1_DEB_LAPD)
 					Logl2Frame(cs, skb, "Amd7930: l1hw: PH_DATA Queued", 0);
 #endif
@@ -581,7 +581,7 @@ Amd7930_l1hw(struct PStack *st, int pr, void *arg)
 				cs->tx_skb = skb;
 				cs->tx_cnt = 0;
                                 cs->dc.amd7930.tx_xmtlen=0;
-#ifdef L2FRAME_DEBUG		    /* psa */
+#ifdef L2FRAME_DEBUG		/* psa */
 				if (cs->debug & L1_DEB_LAPD)
 					Logl2Frame(cs, skb, "Amd7930: l1hw: PH_DATA", 0);
 #endif
@@ -605,7 +605,7 @@ Amd7930_l1hw(struct PStack *st, int pr, void *arg)
 			cs->tx_skb = skb;
 			cs->tx_cnt = 0;
                         cs->dc.amd7930.tx_xmtlen=0;
-#ifdef L2FRAME_DEBUG		    /* psa */
+#ifdef L2FRAME_DEBUG		/* psa */
 			if (cs->debug & L1_DEB_LAPD)
 				Logl2Frame(cs, skb, "Amd7930: l1hw: PH_DATA_PULLED", 0);
 #endif
@@ -613,7 +613,7 @@ Amd7930_l1hw(struct PStack *st, int pr, void *arg)
 			spin_unlock_irqrestore(&cs->lock, flags);
 			break;
 		case (PH_PULL | REQUEST):
-#ifdef L2FRAME_DEBUG		    /* psa */
+#ifdef L2FRAME_DEBUG		/* psa */
 			if (cs->debug & L1_DEB_LAPD)
 				debugl1(cs, "Amd7930: l1hw: -> PH_REQUEST_PULL, skb: %s", (cs->tx_skb)? "yes":"no");
 #endif

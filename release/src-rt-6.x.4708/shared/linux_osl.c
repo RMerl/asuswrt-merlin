@@ -1,7 +1,7 @@
 /*
  * Linux OS Independent Layer
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: linux_osl.c 400835 2013-05-07 19:23:31Z $
+ * $Id: linux_osl.c 409212 2013-06-24 11:09:04Z $
  */
 
 #define LINUX_PORT
@@ -169,12 +169,17 @@ static int16 linuxbcmerrormap[] =
 	-ENODEV,		/* BCME_NODEVICE */
 	-EINVAL,		/* BCME_NMODE_DISABLED */
 	-ENODATA,		/* BCME_NONRESIDENT */
-	-EINVAL,                /* BCME_SCANREJECT */
+	-EINVAL,		/* BCME_SCANREJECT */
+	-EINVAL,		/* unused */
+	-EINVAL,		/* unused */
+	-EINVAL,		/* unused */
+	-EOPNOTSUPP,		/* BCME_DISABLED */
+
 /* When an new error code is added to bcmutils.h, add os
  * specific error translation here as well
  */
 /* check if BCME_LAST changed since the last time this function was updated */
-#if BCME_LAST != -43
+#if BCME_LAST != -47
 #error "You need to add a OS error translation in the linuxbcmerrormap \
 	for new error code defined in bcmutils.h"
 #endif
@@ -301,27 +306,26 @@ osl_detach(osl_t *osh)
 	kfree(osh);
 }
 
-static struct sk_buff *osl_alloc_skb(osl_t *osh, unsigned int len)
+static struct sk_buff *osl_alloc_skb(unsigned int len)
 {
-	struct sk_buff *skb;
-
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 25)
 	gfp_t flags = GFP_ATOMIC;
+	struct sk_buff *skb;
+
 #if defined(CONFIG_SPARSEMEM) && defined(CONFIG_ZONE_DMA)
 	flags |= GFP_DMA;
 #endif
 	skb = __dev_alloc_skb(len, flags);
-#else
-	skb = dev_alloc_skb(len);
-#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 25) */
-
 #ifdef CTFMAP
 	if (skb) {
-		_DMA_MAP(osh, PKTDATA(osh, skb), len, DMA_RX, NULL, NULL);
+		skb->data = skb->head + 16;
+		skb->tail = skb->head + 16;
 	}
-#endif
-
+#endif /* CTFMAP */
 	return skb;
+#else
+	return dev_alloc_skb(len);
+#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 25) */
 }
 
 #ifdef CTFPOOL
@@ -357,13 +361,15 @@ osl_ctfpool_add(osl_t *osh)
 	}
 
 	/* Allocate a new skb and add it to the ctfpool */
-	skb = osl_alloc_skb(osh, osh->ctfpool->obj_size);
+	skb = osl_alloc_skb(osh->ctfpool->obj_size);
 	if (skb == NULL) {
 		printf("%s: skb alloc of len %d failed\n", __FUNCTION__,
 		       osh->ctfpool->obj_size);
 		CTFPOOL_UNLOCK(osh->ctfpool, flags);
 		return NULL;
 	}
+
+	/* Add to ctfpool */
 	skb->next = (struct sk_buff *)osh->ctfpool->head;
 	osh->ctfpool->head = skb;
 	osh->ctfpool->fast_frees++;
@@ -517,13 +523,9 @@ osl_pktfastget(osl_t *osh, uint len)
 
 	/* Init skb struct */
 	skb->next = skb->prev = NULL;
-#if defined(__ARM_ARCH_7A__)
-	skb->data = skb->head + NET_SKB_PAD;
-	skb->tail = skb->head + NET_SKB_PAD;
-#else
 	skb->data = skb->head + 16;
 	skb->tail = skb->head + 16;
-#endif /* __ARM_ARCH_7A__ */
+
 	skb->len = 0;
 	skb->cloned = 0;
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 14)
@@ -626,9 +628,9 @@ osl_pktget(osl_t *osh, uint len)
 #ifdef CTFPOOL
 	/* Allocate from local pool */
 	skb = osl_pktfastget(osh, len);
-	if ((skb != NULL) || ((skb = osl_alloc_skb(osh, len)) != NULL)) {
+	if ((skb != NULL) || ((skb = osl_alloc_skb(len)) != NULL)) {
 #else /* CTFPOOL */
-	if ((skb = osl_alloc_skb(osh, len))) {
+	if ((skb = osl_alloc_skb(len))) {
 #endif /* CTFPOOL */
 #ifdef BCMDBG
 		skb_put(skb, len);
@@ -718,16 +720,18 @@ osl_pktfree(osl_t *osh, void *p, bool send)
 		/* Clear the map ptr before freeing */
 		PKTCLRCTF(osh, skb);
 		CTFMAPPTR(osh, skb) = NULL;
-#endif /* CTFMAP */
+#endif
 
 #ifdef CTFPOOL
-		if ((PKTISFAST(osh, skb)) && (atomic_read(&skb->users) == 1))
+		if (PKTISFAST(osh, skb)) {
+			if (atomic_read(&skb->users) == 1)
+				smp_rmb();
+			else if (!atomic_dec_and_test(&skb->users))
+				goto next_skb;
 			osl_pktfastfree(osh, skb);
-		else {
-#else /* CTFPOOL */
+		} else
+#endif
 		{
-#endif /* CTFPOOL */
-
 			if (skb->destructor)
 				/* cannot kfree_skb() on hard IRQ (net/core/skbuff.c) if
 				 * destructor exists
@@ -739,6 +743,9 @@ osl_pktfree(osl_t *osh, void *p, bool send)
 				 */
 				dev_kfree_skb(skb);
 		}
+#ifdef CTFPOOL
+next_skb:
+#endif
 		atomic_dec(&osh->pktalloced);
 		skb = nskb;
 	}
@@ -1041,7 +1048,7 @@ osl_dma_alloc_consistent(osl_t *osh, uint size, uint16 align_bits, uint *alloced
 #ifdef __ARM_ARCH_7A__
 	va = kmalloc(size, GFP_ATOMIC | __GFP_ZERO);
 	if (va)
-		*pap = (ulong)__virt_to_phys(va);
+		*pap = (ulong)__virt_to_phys((ulong)va);
 #else
 	va = pci_alloc_consistent(osh->pdev, size, (dma_addr_t*)pap);
 #endif
@@ -1084,14 +1091,13 @@ osl_dma_map(osl_t *osh, void *va, uint size, int direction, void *p, hnddma_seg_
 				ASSERT(totsegs + nsegs <= MAX_DMA_SEGS);
 				sg->page_link = 0;
 				sg_set_buf(sg, PKTDATA(osh, skb), PKTLEN(osh, skb));
-#ifdef CTFMAP
+#ifdef	CTFMAP
 				/* Map size bytes (not skb->len) for ctf bufs */
 				pci_map_single(osh->pdev, PKTDATA(osh, skb),
 				    PKTISCTF(osh, skb) ? CTFMAPSZ : PKTLEN(osh, skb), dir);
 #else
 				pci_map_single(osh->pdev, PKTDATA(osh, skb), PKTLEN(osh, skb), dir);
-
-#endif	/* CTFMAP */
+#endif
 			}
 			totsegs += nsegs;
 			totlen += PKTLEN(osh, skb);
@@ -1211,11 +1217,7 @@ osl_pktdup(osl_t *osh, void *skb)
 	 */
 	PKTCTFMAP(osh, skb);
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 36)
-	if ((p = pskb_copy((struct sk_buff *)skb, GFP_ATOMIC)) == NULL)
-#else
 	if ((p = skb_clone((struct sk_buff *)skb, GFP_ATOMIC)) == NULL)
-#endif
 		return NULL;
 
 #ifdef CTFPOOL

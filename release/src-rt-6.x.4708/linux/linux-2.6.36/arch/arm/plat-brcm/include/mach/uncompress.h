@@ -11,7 +11,7 @@
 #ifndef    __ASM_ARCH_UNCOMPRESS_H
 #define __ASM_ARCH_UNCOMPRESS_H
 
-#ifndef	CONFIG_DEBUG_LL		    /* Enable debug UART offset calculations */
+#ifndef	CONFIG_DEBUG_LL		/* Enable debug UART offset calculations */
 #define	CONFIG_DEBUG_LL	
 #endif
 

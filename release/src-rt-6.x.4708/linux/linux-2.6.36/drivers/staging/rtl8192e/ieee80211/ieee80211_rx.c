@@ -975,7 +975,7 @@ int ieee80211_rtl_rx(struct ieee80211_device *ieee, struct sk_buff *skb,
 #if WIRELESS_EXT > 15
 	/* Put this code here so that we avoid duplicating it in all
 	 * Rx paths. - Jean II */
-#ifdef IW_WIRELESS_SPY		    /* defined in iw_handler.h */
+#ifdef IW_WIRELESS_SPY		/* defined in iw_handler.h */
 	/* If spy monitoring on */
 	if (iface->spy_data.spy_number > 0) {
 		struct iw_quality wstats;

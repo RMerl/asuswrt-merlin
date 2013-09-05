@@ -2,7 +2,7 @@
  * Broadcom 802.11 Message infra (pcie<-> CR4) used for RX offloads
  *
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -13,7 +13,7 @@
  * $Id: bcm_ol_msg.c chandrum $
  */
 
-#if defined(WLOFFLD) || defined(WLRXOE)
+#if defined(WLOFFLD) || defined(BCMPCIDEV)
 
 #include <typedefs.h>
 #include <bcmdefs.h>
@@ -24,7 +24,7 @@
 #include <bcm_ol_msg.h>
 
 #define MOD_INC(val, inc, size)  (((val)+(inc))%(size))
-#define NEXT(msg) MOD_INC(load32_ua(&msg->wx), 1, load32_ua(&msg->size))
+#define NEXT(msg) MOD_INC(load32_ua((void *)&msg->wx), 1, load32_ua((void *)&msg->size))
 #define store32_ua_1(a, v)	htol32_ua_store_1(v, a)
 
 #ifdef __GNUC__
@@ -43,19 +43,70 @@ htol32_ua_store_1(uint32 val, uint8 *bytes)
 
 #ifdef BCMDBG
 const char *olevent_str[BCM_OL_MSG_MAX] =  {
+	"BCM_OL_UNUSED",
 	"BCM_OL_BEACON_ENABLE",
 	"BCM_OL_BEACON_DISABLE",
+	"BCM_OL_RSSI_INIT",
+	"BCM_OL_LOW_RSSI_NOTIFICATION",
 	"BCM_OL_ARP_ENABLE",
 	"BCM_OL_ARP_SETIP",
 	"BCM_OL_ARP_DISABLE",
 	"BCM_OL_ND_ENABLE",
 	"BCM_OL_ND_SETIP",
 	"BCM_OL_ND_DISABLE",
+	"BCM_OL_PKT_FILTER_ENABLE",
+	"BCM_OL_PKT_FILTER_ADD",
+	"BCM_OL_PKT_FILTER_DISABLE",
+	"BCM_OL_WOWL_ENABLE_START",
+	"BCM_OL_WOWL_ENABLE_COMPLETE",
+	"BCM_OL_WOWL_ENABLE_COMPLETED",
+	"BCM_OL_ARM_TX",
+	"BCM_OL_ARM_TX_DONE",
 	"BCM_OL_RESET",
 	"BCM_OL_FIFODEL",
 	"BCM_OL_MSG_TEST",
 	"BCM_OL_MSG_IE_NOTIFICATION_FLAG",
-	"BCM_OL_MSG_IE_NOTIFICATION"
+	"BCM_OL_MSG_IE_NOTIFICATION",
+	"BCM_OL_SCAN_ENAB",
+	"BCM_OL_SCAN",
+	"BCM_OL_SCAN_RESULTS",
+	"BCM_OL_SCAN_CONFIG",
+	"BCM_OL_SCAN_BSS",
+	"BCM_OL_SCAN_QUIET",
+	"BCM_OL_SCAN_VALID2G",
+	"BCM_OL_SCAN_VALID5G",
+	"BCM_OL_SCAN_CHANSPECS",
+	"BCM_OL_SCAN_BSSID",
+	"BCM_OL_MACADDR",
+	"BCM_OL_SCAN_TXRXCHAIN",
+	"BCM_OL_SCAN_COUNTRY",
+	"BCM_OL_SCAN_PARAMS",
+	"BCM_OL_SSIDS",
+	"BCM_OL_PREFSSIDS",
+	"BCM_OL_PFN_LIST",
+	"BCM_OL_PFN_ADD",
+	"BCM_OL_PFN_DEL",
+	"BCM_OL_ULP",
+	"BCM_OL_CURPWR",
+	"BCM_OL_SARLIMIT",
+	"BCM_OL_TXCORE",
+	"BCM_OL_SCAN_DUMP",
+	"BCM_OL_MSGLEVEL",
+	"BCM_OL_MSGLEVEL2",
+	"BCM_OL_DMA_DUMP",
+	"BCM_OL_BCNS_PROMISC",
+	"BCM_OL_SETCHANNEL",
+	"BCM_OL_L2KEEPALIVE_ENABLE",
+	"BCM_OL_GTK_UPD",
+	"BCM_OL_GTK_ENABLE",
+#ifdef WL_LTR
+	"BCM_OL_LTR",
+#endif /* WL_LTR */
+	"BCM_OL_TCP_KEEP_CONN",
+	"BCM_OL_TCP_KEEP_TIMERS",
+	"BCM_OL_EL_START",
+	"BCM_OL_EL_SEND_REPORT",
+	"BCM_OL_EL_REPORT"
 };
 #endif /* BCMDBG */
 
@@ -66,8 +117,8 @@ const char *olevent_str[BCM_OL_MSG_MAX] =  {
 #define OLMSG_DBG_VAL		0x8
 
 #ifdef BCMDBG
-static uint32 olmsg_debug_level = OLMSG_ERROR_VAL |
-	OLMSG_TRACE_VAL | OLMSG_DBG_VAL | OLMSG_WARN_VAL;
+static uint32 olmsg_debug_level = OLMSG_ERROR_VAL;
+
 #define OLMSG_ERROR(args) do { if (olmsg_debug_level & OLMSG_ERROR_VAL) printf args; } while (0)
 #define OLMSG_TRACE(args) do { if (olmsg_debug_level & OLMSG_TRACE_VAL) printf args; } while (0)
 #define OLMSG_WARN(args) do { if (olmsg_debug_level & OLMSG_WARN_VAL) printf args; } while (0)
@@ -77,7 +128,6 @@ static uint32 olmsg_debug_level = OLMSG_ERROR_VAL |
 #else
 static uint32 olmsg_debug_level = 0;
 #define OLMSG_ERROR(args)
-#define OLMSG_DEBUG(args)
 #define OLMSG_TRACE(args)
 #define OLMSG_WARN(args)
 #define OLMSG_DBG(args)
@@ -106,17 +156,20 @@ bcm_olmsg_create(uchar *buf, uint32 len)
 	store32_ua_1((uint8 *)&host_msg->rx, 0);
 	store32_ua_1((uint8 *)&host_msg->wx, 0);
 
-	store32_ua_1((uint8 *)&dngl_msg->offset, load32_ua(&host_msg->offset) + OLMSG_HOST_BUF_SZ);
+	store32_ua_1((uint8 *)&dngl_msg->offset,
+		load32_ua((uint8 *)&host_msg->offset) + OLMSG_HOST_BUF_SZ);
 	store32_ua_1((uint8 *)&dngl_msg->size, OLMSG_DGL_BUF_SZ);
 	store32_ua_1((uint8 *)&dngl_msg->rx, 0);
 	store32_ua_1((uint8 *)&dngl_msg->wx, 0);
 
-	ASSERT((uint32)(load32_ua(&dngl_msg->offset) + load32_ua(&dngl_msg->size)) < len);
+	ASSERT((uint32)(load32_ua((uint8 *)&dngl_msg->offset) + load32_ua((uint8 *)&dngl_msg->size))
+		< len);
 
-	if (((uint32)(load32_ua(&dngl_msg->offset) + load32_ua(&dngl_msg->size))) > len) {
+	if (((uint32)(load32_ua((uint8 *)&dngl_msg->offset) + load32_ua((uint8 *)&dngl_msg->size)))
+		> len) {
 		OLMSG_ERROR(("%s: Invalid parameters, actual buffer size (%d) is less "
-			"than total length of partitions (%d) \n", __FUNCTION__, len,
-			(load32_ua(&dngl_msg->offset) + load32_ua(&dngl_msg->size))));
+		"than total length of partitions (%d) \n", __FUNCTION__, len,
+		(load32_ua((uint8 *)&dngl_msg->offset) + load32_ua((uint8 *)&dngl_msg->size))));
 		return BCME_BUFTOOSHORT;
 	}
 	return BCME_OK;
@@ -169,9 +222,9 @@ uint32 bcm_olmsg_avail(olmsg_info *ol)
 {
 	uint32 avail = 0;
 	olmsg_buf_info *buf_info = ol->write;
-	uint32 w_rx = load32_ua(&buf_info->rx);
-	uint32 w_wx = load32_ua(&buf_info->wx);
-	uint32 w_size = load32_ua(&buf_info->size);
+	uint32 w_rx = load32_ua((void *)&buf_info->rx);
+	uint32 w_wx = load32_ua((void *)&buf_info->wx);
+	uint32 w_size = load32_ua((void *)&buf_info->size);
 
 	if (w_rx <= w_wx) {
 		avail = (w_size - w_wx + w_rx) - 1;
@@ -190,9 +243,22 @@ uint32 bcm_olmsg_avail(olmsg_info *ol)
 bool bcm_olmsg_is_writebuf_full(olmsg_info *ol_info)
 {
 	olmsg_buf_info *buf_info = ol_info->write;
-	OLMSG_DBG(("rx 0x%x mod(wx) 0x%x \n", load32_ua(&buf_info->rx), NEXT(buf_info)));
-	return NEXT(buf_info) == load32_ua(&buf_info->rx);
+	OLMSG_DBG(("rx 0x%x mod(wx) 0x%x \n", load32_ua((void *)&buf_info->rx), NEXT(buf_info)));
+	return NEXT(buf_info) == load32_ua((void *)&buf_info->rx);
 }
+/*
+ * Returns true if write buffer space is empty
+ */
+bool bcm_olmsg_is_writebuf_empty(olmsg_info *ol_info)
+{
+	olmsg_buf_info *buf_info = ol_info->write;
+	uint32 w_rx = load32_ua((void *)&buf_info->rx);
+	uint32 w_wx = load32_ua((void *)&buf_info->wx);
+
+	OLMSG_DBG(("%s: wx 0x%x rx 0x%x\n", __FUNCTION__, w_wx, w_rx));
+	return (w_rx == w_wx);
+}
+
 
 /* write a message to the shared buffer
  * return if there is no free space
@@ -204,9 +270,9 @@ bcm_olmsg_writemsg(olmsg_info *ol, uchar *buf, uint16 len)
 	olmsg_header *hdr = (olmsg_header *)buf;
 	olmsg_buf_info *buf_info = ol->write;
 	uint32 copy_bytes;
-	uint32 w_wx = load32_ua(&buf_info->wx);
-	uint32 w_size = load32_ua(&buf_info->size);
-	uchar *dst = ol->msg_buff + load32_ua(&buf_info->offset);
+	uint32 w_wx = load32_ua((void *)&buf_info->wx);
+	uint32 w_size = load32_ua((void *)&buf_info->size);
+	uchar *dst = ol->msg_buff + load32_ua((void *)&buf_info->offset);
 
 	if (olmsg_debug_level & OLMSG_DBG_VAL) {
 		OLMSG_DBG(("Dumping r/w records before writing a message\n"));
@@ -219,7 +285,7 @@ bcm_olmsg_writemsg(olmsg_info *ol, uchar *buf, uint16 len)
 	}
 	hdr->seq = ol->next_seq++;
 
-	if (olmsg_debug_level & OLMSG_DBG_VAL) {
+	if (olmsg_debug_level & OLMSG_ERROR_VAL) {
 		OLMSG_DBG(("Writing message len %d write_ptr %p\n", len, buf_info));
 		bcm_olmsg_dump_msg(ol, hdr);
 	}
@@ -253,8 +319,8 @@ uint32 bcm_olmsg_bytes_to_read(olmsg_info *ol_info)
 {
 	uint32 read_bytes;
 	olmsg_buf_info *buf_info = ol_info->read;
-	uint32 r_wx = load32_ua(&buf_info->wx), r_size = load32_ua(&buf_info->size);
-	uint32 r_rx = load32_ua(&buf_info->rx);
+	uint32 r_wx = load32_ua((void *)&buf_info->wx), r_size = load32_ua((void *)&buf_info->size);
+	uint32 r_rx = load32_ua((void *)&buf_info->rx);
 	if (r_wx >= r_rx) {
 		read_bytes = r_wx - r_rx;
 	}
@@ -270,8 +336,9 @@ uint32 bcm_olmsg_bytes_to_read(olmsg_info *ol_info)
 bool bcm_olmsg_is_readbuf_empty(olmsg_info *ol_info)
 {
 	olmsg_buf_info *buf_info = ol_info->read;
-	OLMSG_TRACE(("wx 0x%x rx 0x%x\n", load32_ua(&buf_info->wx), load32_ua(&buf_info->rx)));
-	return load32_ua(&buf_info->wx) == load32_ua(&buf_info->rx);
+	OLMSG_TRACE(("wx 0x%x rx 0x%x\n",
+		load32_ua((void *)&buf_info->wx), load32_ua((void *)&buf_info->rx)));
+	return load32_ua((void *)&buf_info->wx) == load32_ua((void *)&buf_info->rx);
 }
 /*
  * Read "len"/remaining bytes to dst from read buffer.
@@ -283,13 +350,13 @@ bcm_olmsg_peekbytes(olmsg_info *ol, uchar *dst, uint32 len)
 {
 	uint32 read_bytes = 0;
 	olmsg_buf_info *buf_info = ol->read;
-	uint32 r_wx = load32_ua(&buf_info->wx), r_size = load32_ua(&buf_info->size);
-	uint32 r_rx = load32_ua(&buf_info->rx);
-	uchar *src = ol->msg_buff + load32_ua(&buf_info->offset);
+	uint32 r_wx = load32_ua((void *)&buf_info->wx), r_size = load32_ua((void *)&buf_info->size);
+	uint32 r_rx = load32_ua((void *)&buf_info->rx);
+	uchar *src = ol->msg_buff + load32_ua((void *)&buf_info->offset);
 	OLMSG_DBG(("wx 0x%x rx 0x%x \n", r_wx, r_rx));
 
 	if (bcm_olmsg_is_readbuf_empty(ol)) {
-		OLMSG_ERROR((" Read buffer is empty (rx 0x%x wx 0x%x\n", r_wx, r_rx));
+		OLMSG_DBG((" Read buffer is empty (rx 0x%x wx 0x%x\n", r_wx, r_rx));
 		return 0;
 	}
 	/* number of bytes to be read */
@@ -300,9 +367,12 @@ bcm_olmsg_peekbytes(olmsg_info *ol, uchar *dst, uint32 len)
 		bcopy(src+r_rx, dst, read_bytes);
 	else {
 		uint32 temp_r = r_size - r_rx;
-		ASSERT(read_bytes > (buf_info->size - buf_info->rx));
-		bcopy(src+r_rx, dst, temp_r);
-		bcopy(src, dst+temp_r, read_bytes - temp_r);
+		if (read_bytes > (buf_info->size - buf_info->rx)) {
+			bcopy(src+r_rx, dst, temp_r);
+			bcopy(src, dst+temp_r, read_bytes - temp_r);
+		}
+		else
+			bcopy(src+r_rx, dst, read_bytes);
 	}
 	return read_bytes;
 }
@@ -314,7 +384,7 @@ bcm_olmsg_readbytes(olmsg_info *ol, uchar *dst, uint32 len)
 {
 	uint32 read_bytes = 0;
 	olmsg_buf_info *buf_info = ol->read;
-	uint32 r_rx = load32_ua(&buf_info->rx), r_size = load32_ua(&buf_info->size);
+	uint32 r_rx = load32_ua((void *)&buf_info->rx), r_size = load32_ua((void *)&buf_info->size);
 
 	if (olmsg_debug_level & OLMSG_DBG_VAL) {
 		OLMSG_DBG(("Dumping r/w records before reading a message\n"));
@@ -356,17 +426,28 @@ uint16
 bcm_olmsg_readmsg(olmsg_info *ol, uchar *buf, uint16 len)
 {
 	uint16 msg_len = bcm_olmsg_peekmsg_len(ol);
-	if (!msg_len || (len < msg_len) || (buf == NULL)) {
-		OLMSG_ERROR(("Error in reading the message of size(1) %d\n", msg_len));
-		return 0;
-	}
-	/* Read the message */
-	if (bcm_olmsg_readbytes(ol, buf, msg_len) != msg_len) {
-		OLMSG_ERROR(("Error in reading the message of size(2) %d\n", msg_len));
+	if (msg_len == 0) {
+		OLMSG_DBG(("No more messages\n"));
 		return 0;
 	}
 
-	if (olmsg_debug_level & OLMSG_DBG_VAL) {
+	if (buf == NULL) {
+		OLMSG_ERROR(("Null buffer\n"));
+		return 0;
+	}
+
+	if (len < msg_len) {
+		OLMSG_ERROR(("Buffer size (%d) is smaller than msg_len (%d)\n", len, msg_len));
+		return 0;
+	}
+
+	/* Read the message */
+	if (bcm_olmsg_readbytes(ol, buf, msg_len) != msg_len) {
+		OLMSG_ERROR(("Error in reading the message of size %d\n", msg_len));
+		return 0;
+	}
+
+	if (olmsg_debug_level & OLMSG_ERROR_VAL) {
 		OLMSG_DBG(("Dumping the read message \n"));
 		bcm_olmsg_dump_msg(ol, (olmsg_header *)buf);
 	}
@@ -378,13 +459,15 @@ bcm_olmsg_readmsg(olmsg_info *ol, uchar *buf, uint16 len)
 void bcm_olmsg_dump_msg(olmsg_info *ol, olmsg_header *hdr)
 {
 
-	OLMSG_ERROR(("Offload Message: \n"));
+	OLMSG_ERROR(("Offload Message: "));
 	if (hdr->type < BCM_OL_MSG_MAX)
-		OLMSG_ERROR(("	Type: %s\n", olevent_str[hdr->type]));
-	else
-		OLMSG_ERROR(("	Type: %d is invalid \n", hdr->type));
-	OLMSG_ERROR(("	Sequence:%d\n", hdr->seq));
-	OLMSG_ERROR(("	len:%d\n", hdr->len));
+		OLMSG_ERROR(("Type: %s", olevent_str[hdr->type]));
+	else {
+		OLMSG_ERROR(("Type: %d is invalid ", hdr->type));
+		ASSERT(!"Invalid Message Type");
+	}
+	OLMSG_ERROR((" Seq:%d ", hdr->seq));
+	OLMSG_ERROR((" len:%d\n", hdr->len));
 }
 void bcm_olmsg_dump_record(olmsg_info *ol)
 {
@@ -392,19 +475,19 @@ void bcm_olmsg_dump_record(olmsg_info *ol)
 	olmsg_buf_info *buf_write = ol->write;
 	olmsg_buf_info *buf_read = ol->read;
 #endif
-	OLMSG_ERROR(("Dumping init values\n"));
-	OLMSG_ERROR(("	msgbuff %p len:0%x write_ptr %p read_ptr %p\n",
+	OLMSG_DBG(("Dumping init values\n"));
+	OLMSG_DBG(("	msgbuff %p len:0%x write_ptr %p read_ptr %p\n",
 		ol->msg_buff, ol->len, buf_write, buf_read));
 
-	OLMSG_ERROR(("Dumping write record \n"));
-	OLMSG_ERROR(("	offset 0x%08x size 0x%08x rx 0x%08x wx %08x\n",
-		load32_ua(&buf_write->offset), load32_ua(&buf_write->size),
-		load32_ua(&buf_write->rx), load32_ua(&buf_write->wx)));
+	OLMSG_DBG(("Dumping write record \n"));
+	OLMSG_DBG(("	offset 0x%08x size 0x%08x rx 0x%08x wx %08x\n",
+		load32_ua((void *)&buf_write->offset), load32_ua((void *)&buf_write->size),
+		load32_ua((void *)&buf_write->rx), load32_ua((void *)&buf_write->wx)));
 
-	OLMSG_ERROR(("Dumping read record \n"));
-	OLMSG_ERROR(("	offset 0x%08x size 0x%08x rx 0x%08x wx %08x\n",
-		load32_ua(&buf_read->offset), load32_ua(&buf_read->size),
-		load32_ua(&buf_read->rx), load32_ua(&buf_read->wx)));
+	OLMSG_DBG(("Dumping read record \n"));
+	OLMSG_DBG(("	offset 0x%08x size 0x%08x rx 0x%08x wx %08x\n",
+		load32_ua((void *)&buf_read->offset), load32_ua((void *)&buf_read->size),
+		load32_ua((void *)&buf_read->rx), load32_ua((void *)&buf_read->wx)));
 }
 
 #endif /* WLOFFLD */

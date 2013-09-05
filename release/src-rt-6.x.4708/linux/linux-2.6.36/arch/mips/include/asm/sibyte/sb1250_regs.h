@@ -56,7 +56,7 @@
     ********************************************************************* */
 
 
-#if SIBYTE_HDR_FEATURE_1250_112x		    /* This MC only on 1250 & 112x */
+#if SIBYTE_HDR_FEATURE_1250_112x		/* This MC only on 1250 & 112x */
 #define A_MC_BASE_0                 0x0010051000
 #define A_MC_BASE_1                 0x0010052000
 #define MC_REGISTER_SPACING         0x1000
@@ -103,7 +103,7 @@
     * L2 Cache Control Registers
     ********************************************************************* */
 
-#if SIBYTE_HDR_FEATURE_1250_112x	    /* This L2C only on 1250/112x */
+#if SIBYTE_HDR_FEATURE_1250_112x	/* This L2C only on 1250/112x */
 
 #define A_L2_READ_TAG               0x0010040018
 #define A_L2_ECC_TAG                0x0010040038
@@ -131,7 +131,7 @@
     * PCI Interface Registers
     ********************************************************************* */
 
-#if SIBYTE_HDR_FEATURE_1250_112x	    /* This PCI/HT only on 1250/112x */
+#if SIBYTE_HDR_FEATURE_1250_112x	/* This PCI/HT only on 1250/112x */
 #define A_PCI_TYPE00_HEADER         0x00DE000000
 #define A_PCI_TYPE01_HEADER         0x00DE000800
 #endif
@@ -268,7 +268,7 @@
     ********************************************************************* */
 
 
-#if SIBYTE_HDR_FEATURE_1250_112x        /* This MC only on 1250 & 112x */
+#if SIBYTE_HDR_FEATURE_1250_112x    /* This MC only on 1250 & 112x */
 #define R_DUART_NUM_PORTS           2
 
 #define A_DUART                     0x0010060000
@@ -300,7 +300,7 @@
  * so use these macros instead.
  */
 
-#if SIBYTE_HDR_FEATURE_1250_112x        /* This MC only on 1250 & 112x */
+#if SIBYTE_HDR_FEATURE_1250_112x    /* This MC only on 1250 & 112x */
 #define DUART_IMRISR_SPACING	    0x20
 #define DUART_INCHNG_SPACING	    0x10
 
@@ -386,7 +386,7 @@
     ********************************************************************* */
 
 
-#if SIBYTE_HDR_FEATURE_1250_112x	    /* sync serial only on 1250/112x */
+#if SIBYTE_HDR_FEATURE_1250_112x	/* sync serial only on 1250/112x */
 
 #define A_SER_BASE_0                0x0010060400
 #define A_SER_BASE_1                0x0010060800

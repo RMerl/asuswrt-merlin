@@ -1,7 +1,7 @@
 /*
  * From FreeBSD 2.2.7: Fundamental constants relating to ethernet.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,10 +15,10 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ethernet.h 370581 2012-11-22 08:29:04Z $
+ * $Id: ethernet.h 401759 2013-05-13 16:08:08Z $
  */
 
-#ifndef _NET_ETHERNET_H_	    /* use native BSD ethernet.h when available */
+#ifndef _NET_ETHERNET_H_	/* use native BSD ethernet.h when available */
 #define _NET_ETHERNET_H_
 
 #ifndef _TYPEDEFS_H_
@@ -88,7 +88,7 @@
 
 #define ETHER_TYPE_PPP_SES	0x8864		/* PPPoE Session */
 
-#define ETHER_TYPE_IPV6		0x86dd		/* IPV6 */
+#define ETHER_TYPE_IAPP_L2_UPDATE	0x6	/* IAPP L2 update frame */
 
 /* Broadcom subtype follows ethertype;  First 2 bytes are reserved; Next 2 are subtype; */
 #define	ETHER_BRCM_SUBTYPE_LEN	4	/* Broadcom 4 byte subtype */
@@ -113,7 +113,7 @@
 		((uint8 *)ea)[5] = ((mgrp_ip) >>  0) & 0xff;	\
 }
 
-#ifndef __INCif_etherh     /* Quick and ugly hack for VxWorks */
+#ifndef __INCif_etherh /* Quick and ugly hack for VxWorks */
 /*
  * Structure of a 10Mb/s Ethernet header.
  */

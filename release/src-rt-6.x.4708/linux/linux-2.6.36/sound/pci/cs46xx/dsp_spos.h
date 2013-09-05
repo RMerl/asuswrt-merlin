@@ -23,7 +23,7 @@
  * 2002-07 Benny Sjostrand benny@hostmobility.com
  */
 
-#ifdef  CONFIG_SND_CS46XX_NEW_DSP     /* hack ... */
+#ifdef  CONFIG_SND_CS46XX_NEW_DSP /* hack ... */
 #ifndef __DSP_SPOS_H__
 #define __DSP_SPOS_H__
 

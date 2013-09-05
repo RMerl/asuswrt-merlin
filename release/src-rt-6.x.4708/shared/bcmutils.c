@@ -1,7 +1,7 @@
 /*
  * Driver O/S-independent utility routines
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: bcmutils.c 371895 2012-11-29 20:15:08Z $
+ * $Id: bcmutils.c 401759 2013-05-13 16:08:08Z $
  */
 
 #include <bcm_cfg.h>
@@ -75,7 +75,7 @@ static int vars_len = -1;
 #endif /* WLC_LOW */
 
 int
-pktpool_init(osl_t *osh, pktpool_t *pktp, int *pplen, int plen, bool istx)
+BCMATTACHFN(pktpool_init)(osl_t *osh, pktpool_t *pktp, int *pplen, int plen, bool istx)
 {
 	int i, err = BCME_OK;
 	void *p;
@@ -126,7 +126,7 @@ exit:
 }
 
 int
-pktpool_deinit(osl_t *osh, pktpool_t *pktp)
+BCMATTACHFN(pktpool_deinit)(osl_t *osh, pktpool_t *pktp)
 {
 	int i;
 	int cnt;
@@ -231,7 +231,7 @@ pktpool_enq(pktpool_t *pktp, void *p)
 }
 
 int
-pktpool_avail_register(pktpool_t *pktp, pktpool_cb_t cb, void *arg)
+BCMATTACHFN(pktpool_avail_register)(pktpool_t *pktp, pktpool_cb_t cb, void *arg)
 {
 	int i;
 
@@ -250,7 +250,7 @@ pktpool_avail_register(pktpool_t *pktp, pktpool_cb_t cb, void *arg)
 }
 
 int
-pktpool_empty_register(pktpool_t *pktp, pktpool_cb_t cb, void *arg)
+BCMATTACHFN(pktpool_empty_register)(pktpool_t *pktp, pktpool_cb_t cb, void *arg)
 {
 	int i;
 
@@ -1599,6 +1599,56 @@ bcm_ip_ntoa(struct ipv4_addr *ia, char *buf)
 	snprintf(buf, 16, "%d.%d.%d.%d",
 	         ia->addr[0], ia->addr[1], ia->addr[2], ia->addr[3]);
 	return (buf);
+}
+
+char *
+bcm_ipv6_ntoa(void *ipv6, char *buf)
+{
+	/* Implementing RFC 5952 Sections 4 + 5 */
+	/* Not thoroughly tested */
+	uint16 *a = (uint16 *)ipv6;
+	char *p = buf;
+	int i, i_max = -1, cnt = 0, cnt_max = 1;
+	uint8 *a4 = NULL;
+
+	for (i = 0; i < IPV6_ADDR_LEN/2; i++) {
+		if (a[i]) {
+			if (cnt > cnt_max) {
+				cnt_max = cnt;
+				i_max = i - cnt;
+			}
+			cnt = 0;
+		} else
+			cnt++;
+	}
+	if (cnt > cnt_max) {
+		cnt_max = cnt;
+		i_max = i - cnt;
+	}
+	if (i_max == 0 &&
+		/* IPv4-translated: ::ffff:0:a.b.c.d */
+		((cnt_max == 4 && a[4] == 0xffff && a[5] == 0) ||
+		/* IPv4-mapped: ::ffff:a.b.c.d */
+		(cnt_max == 5 && a[5] == 0xffff)))
+		a4 = (uint8*) (a + 6);
+
+	for (i = 0; i < IPV6_ADDR_LEN/2; i++) {
+		if ((uint8*) (a + i) == a4) {
+			snprintf(p, 16, ":%u.%u.%u.%u", a4[0], a4[1], a4[2], a4[3]);
+			break;
+		} else if (i == i_max) {
+			*p++ = ':';
+			i += cnt_max - 1;
+			p[0] = ':';
+			p[1] = '\0';
+		} else {
+			if (i)
+				*p++ = ':';
+			p += snprintf(p, 8, "%x", ntoh16(a[i]));
+		}
+	}
+
+	return buf;
 }
 
 #ifdef BCMDRIVER
@@ -3270,4 +3320,31 @@ bcm_uint64_divide(uint32* r, uint32 a_high, uint32 a_low, uint32 b)
 
 	r0 += a0 / b;
 	*r = r0;
+}
+
+/* calculate a >> b; and returns only lower 32 bits */
+void
+bcm_uint64_right_shift(uint32* r, uint32 a_high, uint32 a_low, uint32 b)
+{
+	uint32 a1 = a_high, a0 = a_low, r0 = 0;
+
+	if (b == 0) {
+		r0 = a_low;
+		*r = r0;
+		return;
+	}
+
+	if (b < 32) {
+		a0 = a0 >> b;
+		a1 = a1 & ((1 << b) - 1);
+		a1 = a1 << (32 - b);
+		r0 = a0 | a1;
+		*r = r0;
+		return;
+	} else {
+		r0 = a1 >> (b - 32);
+		*r = r0;
+		return;
+	}
+
 }

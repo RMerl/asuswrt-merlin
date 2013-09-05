@@ -757,7 +757,7 @@ long st_write(struct sk_buff *skb)
 		pr_err("data/tty unavailable to perform write");
 		return -1;
 	}
-#ifdef DEBUG			    /* open-up skb to read the 1st byte */
+#ifdef DEBUG			/* open-up skb to read the 1st byte */
 	switch (skb->data[0]) {
 	case HCI_COMMAND_PKT:
 	case HCI_ACLDATA_PKT:

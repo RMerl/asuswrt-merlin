@@ -1,7 +1,7 @@
 /*
  * Dongle BUS interface for USB, SDIO, SPI, etc.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,14 +15,13 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: dbus.c 349456 2012-08-08 08:05:29Z $
+ * $Id: dbus.c 401759 2013-05-13 16:08:08Z $
  */
 
 
 #include "osl.h"
 #include "dbus.h"
 #include <bcmutils.h>
-
 #if defined(BCM_DNGL_EMBEDIMAGE)
 #include <bcmsrom_fmt.h>
 #include <trxhdr.h>
@@ -32,31 +31,6 @@
 #include <sbpcmcia.h>
 #include <bcmnvram.h>
 #include <bcmdevs.h>
-
-/* zlib file format field ids etc from gzio.c */
-#define Z_DEFLATED   8
-#define ASCII_FLAG   0x01 /* bit 0 set: file probably ascii text */
-#define HEAD_CRC     0x02 /* bit 1 set: header CRC present */
-#define EXTRA_FIELD  0x04 /* bit 2 set: extra field present */
-#define ORIG_NAME    0x08 /* bit 3 set: original file name present */
-#define COMMENT      0x10 /* bit 4 set: file comment present */
-#define RESERVED     0xE0 /* bits 5..7: reserved */
-
-#ifdef WL_FW_DECOMP
-#define UNZIP_ENAB(info)	1
-#else
-#define UNZIP_ENAB(info)	0
-
-#ifdef inflateInit2
-#undef inflateInit2
-#define inflateInit2(a, b)	Z_ERRNO
-#endif
-#define inflate(a, b)		Z_STREAM_ERROR
-#define inflateEnd(a)		do {} while (0)
-#define crc32(a, b, c)		-1
-#define free(a)			do {} while (0)
-#endif /* WL_FW_DECOMP */
-
 #elif defined(BCM_REQUEST_FW)
 #include <bcmsrom_fmt.h>
 #include <trxhdr.h>
@@ -65,78 +39,102 @@
 #include <sbpcmcia.h>
 #include <bcmnvram.h>
 #include <bcmdevs.h>
+#endif /* #if defined(BCM_DNGL_EMBEDIMAGE) */
+#if defined(EHCI_FASTPATH_TX) || defined(EHCI_FASTPATH_RX)
+#include <linux/usb.h>
+#endif /* EHCI_FASTPATH_TX || EHCI_FASTPATH_RX */
+
+
+#if defined(BCM_DNGL_EMBEDIMAGE)
+/* zlib file format field ids etc from gzio.c */
+#define Z_DEFLATED     8
+#define ASCII_FLAG     0x01 /* bit 0 set: file probably ascii text */
+#define HEAD_CRC       0x02 /* bit 1 set: header CRC present */
+#define EXTRA_FIELD    0x04 /* bit 2 set: extra field present */
+#define ORIG_NAME      0x08 /* bit 3 set: original file name present */
+#define COMMENT        0x10 /* bit 4 set: file comment present */
+#define RESERVED       0xE0 /* bits 5..7: reserved */
+
+#ifdef WL_FW_DECOMP
+#define UNZIP_ENAB(info)  1
+#else
+#define UNZIP_ENAB(info)  0
+
+#ifdef inflateInit2
+#undef inflateInit2
+#define inflateInit2(a, b)  Z_ERRNO
+#endif
+#define inflate(a, b)       Z_STREAM_ERROR
+#define inflateEnd(a)       do {} while (0)
+#define crc32(a, b, c)      -1
+#define free(a)             do {} while (0)
+#endif /* WL_FW_DECOMP */
+
+#elif defined(BCM_REQUEST_FW)
 #ifndef VARS_MAX
-#define VARS_MAX	8192
+#define VARS_MAX            8192
 #endif
 #endif /* #if defined(BCM_DNGL_EMBEDIMAGE) */
-
-
-/* General info for all BUS */
-typedef struct dbus_irbq {
-	dbus_irb_t *head;
-	dbus_irb_t *tail;
-	int cnt;
-} dbus_irbq_t;
 
 /* This private structure dbus_info_t is also declared in dbus_usb_linux.c.
  * All the fields must be consistent in both declarations.
  */
 typedef struct dbus_info {
-	dbus_pub_t pub; /* MUST BE FIRST */
+	dbus_pub_t   pub; /* MUST BE FIRST */
 
-	void *cbarg;
+	void        *cbarg;
 	dbus_callbacks_t *cbs;
-	void *bus_info;
+	void        *bus_info;
 	dbus_intf_t *drvintf;
-	uint8 *fw;
-	int fwlen;
-	uint32 errmask;
-	int rx_low_watermark;
-	int tx_low_watermark;
-	bool txoff;
-	bool txoverride;
-	bool rxoff;
-	bool tx_timer_ticking;
+	uint8       *fw;
+	int         fwlen;
+	uint32      errmask;
+	int         rx_low_watermark;
+	int         tx_low_watermark;
+	bool        txoff;
+	bool        txoverride;
+	bool        rxoff;
+	bool        tx_timer_ticking;
 
 	dbus_irbq_t *rx_q;
 	dbus_irbq_t *tx_q;
 
 #ifdef BCMDBG
-	int *txpend_q_hist;
-	int *rxpend_q_hist;
+	int         *txpend_q_hist;
+	int         *rxpend_q_hist;
 #endif /* BCMDBG */
 #ifdef EHCI_FASTPATH_RX
-	atomic_t rx_outstanding;
+	atomic_t    rx_outstanding;
 #endif
-	uint8 *nvram;
-	int	nvram_len;
-	uint8 *image;	/* buffer for combine fw and nvram */
-	int image_len;
-	uint8 *orig_fw;
-	int origfw_len;
-	int decomp_memsize;
+	uint8        *nvram;
+	int          nvram_len;
+	uint8        *image;  /* buffer for combine fw and nvram */
+	int          image_len;
+	uint8        *orig_fw;
+	int          origfw_len;
+	int          decomp_memsize;
 	dbus_extdl_t extdl;
-	int nvram_nontxt;
+	int          nvram_nontxt;
 #if defined(BCM_REQUEST_FW)
-	void *firmware;
-	void *nvfile;
+	void         *firmware;
+	void         *nvfile;
 #endif
 } dbus_info_t;
 
 struct exec_parms {
-union {
-	/* Can consolidate same params, if need be, but this shows
-	 * group of parameters per function
-	 */
-	struct {
-		dbus_irbq_t *q;
-		dbus_irb_t *b;
-	} qenq;
+	union {
+		/* Can consolidate same params, if need be, but this shows
+		 * group of parameters per function
+		 */
+		struct {
+			dbus_irbq_t  *q;
+			dbus_irb_t   *b;
+		} qenq;
 
-	struct {
-		dbus_irbq_t *q;
-	} qdeq;
-};
+		struct {
+			dbus_irbq_t  *q;
+		} qdeq;
+	};
 };
 
 #define EXEC_RXLOCK(info, fn, a) \
@@ -144,10 +142,6 @@ union {
 
 #define EXEC_TXLOCK(info, fn, a) \
 	info->drvintf->exec_txlock(dbus_info->bus_info, ((exec_cb_t)fn), ((struct exec_parms *) a))
-
-#if defined(EHCI_FASTPATH_TX) || defined(EHCI_FASTPATH_RX)
-#include <linux/usb.h>
-#endif /* EHCI_FASTPATH_TX || EHCI_FASTPATH_RX */
 
 /*
  * Callbacks common for all BUS
@@ -170,9 +164,9 @@ static dbus_intf_callbacks_t dbus_intf_cbs = {
 	dbus_if_errhandler,
 	dbus_if_ctl_complete,
 	dbus_if_state_change,
-	NULL,			/* isr */
-	NULL,			/* dpc */
-	NULL,			/* watchdog */
+	NULL,   /* isr */
+	NULL,   /* dpc */
+	NULL,   /* watchdog */
 	dbus_if_pktget,
 	dbus_if_pktfree,
 	dbus_if_getirb,
@@ -184,28 +178,28 @@ static dbus_intf_callbacks_t dbus_intf_cbs = {
  * attach() is not called at probe and detach()
  * can be called inside disconnect()
  */
-static dbus_intf_t *g_busintf = NULL;
-static probe_cb_t probe_cb = NULL;
+static dbus_intf_t     *g_busintf = NULL;
+static probe_cb_t      probe_cb = NULL;
 static disconnect_cb_t disconnect_cb = NULL;
-static void *probe_arg = NULL;
-static void *disc_arg = NULL;
+static void            *probe_arg = NULL;
+static void            *disc_arg = NULL;
 
 #if defined(BCM_REQUEST_FW)
-int8 *nonfwnvram = NULL; /* stand-alone multi-nvram given with driver load */
-int nonfwnvramlen = 0;
+int8 *nonfwnvram   = NULL; /* stand-alone multi-nvram given with driver load */
+int nonfwnvramlen  = 0;
 #endif /* #if defined(BCM_REQUEST_FW) */
 static void* q_enq(dbus_irbq_t *q, dbus_irb_t *b);
 static void* q_enq_exec(struct exec_parms *args);
 static dbus_irb_t*q_deq(dbus_irbq_t *q);
 static void* q_deq_exec(struct exec_parms *args);
-static int   dbus_tx_timer_init(dbus_info_t *dbus_info);
-static int   dbus_tx_timer_start(dbus_info_t *dbus_info, uint timeout);
-static int   dbus_tx_timer_stop(dbus_info_t *dbus_info);
-static int   dbus_irbq_init(dbus_info_t *dbus_info, dbus_irbq_t *q, int nq, int size_irb);
-static int   dbus_irbq_deinit(dbus_info_t *dbus_info, dbus_irbq_t *q, int size_irb);
-static int   dbus_rxirbs_fill(dbus_info_t *dbus_info);
-static int   dbus_send_irb(dbus_pub_t *pub, uint8 *buf, int len, void *pkt, void *info);
-static void  dbus_disconnect(void *handle);
+static int dbus_tx_timer_init(dbus_info_t *dbus_info);
+static int dbus_tx_timer_start(dbus_info_t *dbus_info, uint timeout);
+static int dbus_tx_timer_stop(dbus_info_t *dbus_info);
+static int dbus_irbq_init(dbus_info_t *dbus_info, dbus_irbq_t *q, int nq, int size_irb);
+static int dbus_irbq_deinit(dbus_info_t *dbus_info, dbus_irbq_t *q, int size_irb);
+static int dbus_rxirbs_fill(dbus_info_t *dbus_info);
+static int dbus_send_irb(dbus_pub_t *pub, uint8 *buf, int len, void *pkt, void *info);
+static void dbus_disconnect(void *handle);
 static void *dbus_probe(void *arg, const char *desc, uint32 bustype, uint32 hdrlen);
 
 #if (defined(BCM_DNGL_EMBEDIMAGE) || defined(BCM_REQUEST_FW))
@@ -661,7 +655,7 @@ dbus_jumbo_nvram(dbus_info_t *dbus_info)
 	if (ret == DBUS_JUMBO_BAD_FORMAT)
 			return DBUS_ERR_NVRAM;
 	else if (ret == DBUS_JUMBO_NOMATCH &&
-		(boardrev != 0xFFFF || boardrev  != 0xFFFF)) {
+		(boardtype != 0xFFFF || boardrev  != 0xFFFF)) {
 			DBUSERR(("No matching NVRAM for boardtype 0x%02x boardrev 0x%02x\n",
 				boardtype, boardrev));
 			return DBUS_ERR_NVRAM;
@@ -1030,8 +1024,10 @@ dbus_if_recv_irb_complete(void *handle, dbus_irb_rx_t *rxirb, int status)
 			DBUSERR(("%s: %d status = %d, buf %p\n", __FUNCTION__, __LINE__, status,
 				rxirb->buf));
 #if defined(BCM_RPC_NOCOPY) || defined(BCM_RPC_RXNOCOPY)
-			PKTFRMNATIVE(dbus_info->pub.osh, rxirb->buf);
-			PKTFREE(dbus_info->pub.osh, rxirb->buf, FALSE);
+			if (rxirb->buf) {
+				PKTFRMNATIVE(dbus_info->pub.osh, rxirb->buf);
+				PKTFREE(dbus_info->pub.osh, rxirb->buf, FALSE);
+			}
 #endif /* BCM_RPC_NOCOPY || BCM_RPC_TXNOCOPY || BCM_RPC_TOC */
 		} else {
 			DBUSERR(("%s: %d status = %d, buf %p\n", __FUNCTION__, __LINE__, status,
@@ -1845,6 +1841,12 @@ dhd_dbus_hdrlen(const dbus_pub_t *pub)
 	return 0;
 }
 
+void *
+dbus_get_devinfo(dbus_pub_t *pub)
+{
+	return pub->dev_info;
+}
+
 #if defined(BCM_DNGL_EMBEDIMAGE) || defined(BCM_REQUEST_FW)
 
 static int
@@ -2349,8 +2351,45 @@ dbus_zlib_free(void *ptr)
 #endif /* #if defined(BCM_DNGL_EMBEDIMAGE) */
 #endif /* #if defined(BCM_DNGL_EMBEDIMAGE) || defined(BCM_REQUEST_FW) */
 
-void *
-dbus_get_devinfo(dbus_pub_t *pub)
+
+#ifdef LINUX_EXTERNAL_MODULE_DBUS
+
+static int __init
+bcm_dbus_module_init(void)
 {
-	return pub->dev_info;
+	printf("Inserting bcm_dbus module \n");
+	return 0;
 }
+
+static void __exit
+bcm_dbus_module_exit(void)
+{
+	printf("Removing bcm_dbus module \n");
+	return;
+}
+
+EXPORT_SYMBOL(dbus_pnp_sleep);
+EXPORT_SYMBOL(dbus_register);
+EXPORT_SYMBOL(dbus_get_devinfo);
+#ifdef BCMDBG
+EXPORT_SYMBOL(dbus_hist_dump);
+#endif
+EXPORT_SYMBOL(dbus_detach);
+EXPORT_SYMBOL(dbus_get_attrib);
+EXPORT_SYMBOL(dbus_down);
+EXPORT_SYMBOL(dbus_pnp_resume);
+EXPORT_SYMBOL(dbus_set_config);
+EXPORT_SYMBOL(dbus_flowctrl_rx);
+EXPORT_SYMBOL(dbus_up);
+EXPORT_SYMBOL(dbus_get_device_speed);
+EXPORT_SYMBOL(dbus_send_pkt);
+EXPORT_SYMBOL(dbus_recv_ctl);
+EXPORT_SYMBOL(dbus_attach);
+EXPORT_SYMBOL(dbus_deregister);
+
+MODULE_LICENSE("GPL");
+
+module_init(bcm_dbus_module_init);
+module_exit(bcm_dbus_module_exit);
+
+#endif  /* #ifdef LINUX_EXTERNAL_MODULE_DBUS */

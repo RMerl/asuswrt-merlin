@@ -336,7 +336,7 @@ repeat:
 			goto out;	/* Something got screwed up here */
 
 		switch (sig) {
-#ifndef CONFIG_ZISOFS		    /* No flag for SF or ZF */
+#ifndef CONFIG_ZISOFS		/* No flag for SF or ZF */
 		case SIG('R', 'R'):
 			if ((rr->u.RR.flags[0] &
 			     (RR_PX | RR_TF | RR_SL | RR_CL)) == 0)

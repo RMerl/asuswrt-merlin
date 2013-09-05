@@ -29,7 +29,7 @@
 /*									*/
 /************************************************************************/
 
-#ifndef	_rioboard_h		    /* If RIOBOARD.H not already defined */
+#ifndef	_rioboard_h		/* If RIOBOARD.H not already defined */
 #define	_rioboard_h    1
 
 /*****************************************************************************

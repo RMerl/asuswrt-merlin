@@ -144,7 +144,7 @@
  ******************************************************************************/
 void wl_isr_handler( unsigned long p );
 
-#if 0 //SCULL_USE_PROC     /* don't waste space if unused */
+#if 0 //SCULL_USE_PROC /* don't waste space if unused */
 //int scull_read_procmem(char *buf, char **start, off_t offset, int len, int unused);
 int scull_read_procmem(char *buf, char **start, off_t offset, int len, int *eof, void *data );
 static int write_int(struct file *file, const char *buffer, unsigned long count, void *data);
@@ -742,7 +742,7 @@ int wl_insert( struct net_device *dev )
 		printk( "%02X%c", dev->dev_addr[i], (( i < ( ETH_ALEN-1 )) ? ':' : '\n' ));
 	}
 
-#if 0 //SCULL_USE_PROC     /* don't waste space if unused */
+#if 0 //SCULL_USE_PROC /* don't waste space if unused */
 	create_proc_read_entry( "wlags", 0, NULL, scull_read_procmem, dev );
 	proc_mkdir("driver/wlags49", 0);
 	proc_write("driver/wlags49/wlags49_type", write_int, &lp->wlags49_type);
@@ -1732,7 +1732,7 @@ static void __exit wl_module_exit( void )
 	DBG_ENTER(DbgInfo);
 
 	wl_adapter_cleanup_module( );
-#if 0 //SCULL_USE_PROC     /* don't waste space if unused */
+#if 0 //SCULL_USE_PROC /* don't waste space if unused */
 	remove_proc_entry( "wlags", NULL );		//;?why so a-symmetric compared to location of create_proc_read_entry
 #endif
 
@@ -3147,7 +3147,7 @@ void wl_wds_netdev_deregister( struct wl_private *lp )
 #endif  /* USE_WDS */
 
 
-#if 0 //SCULL_USE_PROC     /* don't waste space if unused */
+#if 0 //SCULL_USE_PROC /* don't waste space if unused */
 /*
  * The proc filesystem: function to read and entry
  */

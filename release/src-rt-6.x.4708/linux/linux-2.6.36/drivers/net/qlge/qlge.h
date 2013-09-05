@@ -59,7 +59,7 @@
 /* The maximum number of frags we handle is based
  * on PAGE_SIZE...
  */
-#if (PAGE_SHIFT == 12) || (PAGE_SHIFT == 13)	    /* 4k & 8k pages */
+#if (PAGE_SHIFT == 12) || (PAGE_SHIFT == 13)	/* 4k & 8k pages */
 #define TX_DESC_PER_OAL ((MAX_SKB_FRAGS - TX_DESC_PER_IOCB) + 2)
 #else /* all other page sizes */
 #define TX_DESC_PER_OAL 0

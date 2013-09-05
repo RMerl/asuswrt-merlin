@@ -137,11 +137,20 @@
 #error Unknown cache maintainence model
 #endif
 
+#ifdef CONFIG_BCM47XX
+/*
+ * Merged from Linux-2.6.37
+ * This flag is used to indicate that the page pointed to by a pte is clean
+ * and does not require cleaning before returning it to the user.
+ */
+#define PG_dcache_clean PG_arch_1
+#else
 /*
  * This flag is used to indicate that the page pointed to by a pte
  * is dirty and requires cleaning before returning it to the user.
  */
 #define PG_dcache_dirty PG_arch_1
+#endif /* CONFIG_BCM47XX */
 
 /*
  *	MM Cache Management

@@ -255,7 +255,7 @@ static char *version =
 #define SRAM_BS1               BIT(1)       /* 00=8kb,  01=16kb  */
 #define SRAM_BS0               BIT(0)       /* 10=32kb, 11=64kb  */
 
-#ifndef ETH16I_TX_BUF_SIZE                       /* 0 = 2kb, 1 = 4kb  */
+#ifndef ETH16I_TX_BUF_SIZE                   /* 0 = 2kb, 1 = 4kb  */
 #define ETH16I_TX_BUF_SIZE     3             /* 2 = 8kb, 3 = 16kb */
 #endif
 #define TX_BUF_1x2048          0

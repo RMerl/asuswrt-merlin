@@ -1,7 +1,7 @@
 /*
  * BCM44XX Ethernet Windows device driver custom OID definitions.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: etioctl.h 381881 2013-01-30 06:04:30Z $
+ * $Id: etioctl.h 414031 2013-07-23 10:54:51Z $
  */
 
 #ifndef _etioctl_h_
@@ -59,6 +59,8 @@
 #define IOV_COUNTERS		6
 #define IOV_DUMP_CTF		7
 #define IOV_DUMP_CTRACE		8
+#define IOV_DUMP		9
+#define IOV_FA_DUMP		10
 
 #if defined(linux) || defined(__ECOS)
 #define SIOCSETCUP		(SIOCDEVPRIVATE + ETCUP)

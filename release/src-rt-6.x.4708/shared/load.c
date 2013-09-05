@@ -2,7 +2,7 @@
  * Initialization and support routines for self-booting
  * compressed image.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: load.c 368663 2012-11-14 09:42:37Z $
+ * $Id: load.c 401759 2013-05-13 16:08:08Z $
  */
 
 #include <typedefs.h>

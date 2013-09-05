@@ -124,7 +124,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define	AND		;
 #define	NOARGS
 #define	CONST
-#ifndef const     /* some systems define it in header files for non-ansi mode */
+#ifndef const /* some systems define it in header files for non-ansi mode */
 #define	const
 #endif
 #define	VOLATILE

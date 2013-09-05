@@ -15,7 +15,7 @@
  * #include <packed_section_end.h>
  *
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -28,7 +28,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: packed_section_end.h 241182 2011-02-17 21:50:03Z $
+ * $Id: packed_section_end.h 397846 2013-04-21 22:11:16Z $
  */
 
 
@@ -61,6 +61,9 @@
 	#endif   /* BWL_PACKED_SECTION */
 #endif   /* _MSC_VER */
 
+#if defined(__GNUC__) && defined(EFI)
+#pragma pack(pop)
+#endif
 
 /* Compiler-specific directives for structure packing are declared in
  * packed_section_start.h. This marks the end of the structure packing section,

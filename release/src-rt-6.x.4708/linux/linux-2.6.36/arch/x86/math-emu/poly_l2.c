@@ -135,7 +135,7 @@ int poly_l2p1(u_char sign0, u_char sign1,
 
 		if (sign0 != SIGN_POS) {
 			/* Trying to get the log of a negative number. */
-#ifdef PECULIAR_486		    /* Stupid 80486 doesn't worry about log(negative). */
+#ifdef PECULIAR_486		/* Stupid 80486 doesn't worry about log(negative). */
 			changesign(st1_ptr);
 #else
 			if (arith_invalid(1) < 0)

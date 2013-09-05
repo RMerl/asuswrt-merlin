@@ -1,7 +1,7 @@
 /*
  * OS Abstraction Layer
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: osl.h 377094 2013-01-04 03:11:57Z $
+ * $Id: osl.h 401759 2013-05-13 16:08:08Z $
  */
 
 #ifndef _osl_h_
@@ -25,7 +25,11 @@
 typedef struct osl_info osl_t;
 typedef struct osl_dmainfo osldma_t;
 
+#ifdef MACOSX
+#define OSL_PKTTAG_SZ	56
+#else
 #define OSL_PKTTAG_SZ	32 /* Size of PktTag */
+#endif
 
 /* Drivers use PKTFREESETCB to register a callback function when a packet is freed by OSL */
 typedef void (*pktfree_cb_fn_t)(void *ctx, void *pkt, unsigned int status);

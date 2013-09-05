@@ -21,8 +21,8 @@ enum page_debug_flags {
  */
 
 #ifdef CONFIG_WANT_PAGE_DEBUG_FLAGS
-#if !defined(CONFIG_PAGE_POISONING)     /* && \
-	!defined(CONFIG_PAGE_DEBUG_SOMETHING_ELSE) && ... */
+#if !defined(CONFIG_PAGE_POISONING) /* && !defined(CONFIG_PAGE_DEBUG_SOMETHING_ELSE) && \
+	... */
 #error WANT_PAGE_DEBUG_FLAGS is turned on with no debug features!
 #endif
 #endif /* CONFIG_WANT_PAGE_DEBUG_FLAGS */

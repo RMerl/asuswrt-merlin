@@ -54,6 +54,7 @@ SECTIONS {
 		_retext1 = .;
 	}
 	.datarc1 : {
+		*(.rodataini1.*)
 		*(.dataini1.*)
 		. = ALIGN(4);
 		_rend1 = .;
@@ -67,6 +68,7 @@ SECTIONS {
 		_retext2 = .;
 	}
 	.datarc2 : {
+		*(.rodataini2.*)
 		*(.dataini2.*)
 		. = ALIGN(4);
 		_clmincstart = .;
@@ -82,9 +84,17 @@ SECTIONS {
 		*(.textini3.*)
 	}
 	.datarc3 : {
+		*(.rodataini3.*)
 		*(.dataini3.*)
 		_rend3 = .;
 	}
 
 	_end = .;
+
+	.logstrs 0 (OVERLAY) : {
+		 KEEP(*(.lognums))
+		 KEEP(*(.logstrs))
+		 logstrs_size = .;
+	}
+
 }

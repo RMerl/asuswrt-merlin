@@ -211,7 +211,7 @@ DChannel_proc_rcv(struct IsdnCardState *cs)
 		if (test_bit(FLG_L1_ACTTIMER, &stptr->l1.Flags))
 			FsmEvent(&stptr->l1.l1m, EV_TIMER_ACT, NULL);	
 	while ((skb = skb_dequeue(&cs->rq))) {
-#ifdef L2FRAME_DEBUG		    /* psa */
+#ifdef L2FRAME_DEBUG		/* psa */
 		if (cs->debug & L1_DEB_LAPD)
 			Logl2Frame(cs, skb, "PH_DATA", 1);
 #endif
@@ -372,7 +372,7 @@ init_bcstate(struct IsdnCardState *cs, int bc)
 	bcs->Flag = 0;
 }
 
-#ifdef L2FRAME_DEBUG		    /* psa */
+#ifdef L2FRAME_DEBUG		/* psa */
 
 static char *
 l2cmd(u_char cmd)

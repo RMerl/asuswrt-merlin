@@ -137,7 +137,7 @@ HCF_STATIC int			download( IFBP ifbp, CFG_PROG_STRCT FAR *ltvp );
 HCF_STATIC hcf_8		hcf_encap( wci_bufp type );
 #endif // HCF_ENCAP
 HCF_STATIC hcf_8		null_addr[4] = { 0, 0, 0, 0 };
-#if ! defined IN_PORT_WORD			    //replace I/O Macros with logging facility
+#if ! defined IN_PORT_WORD			//replace I/O Macros with logging facility
 extern FILE *log_file;
 
 #define IN_PORT_WORD(port)			in_port_word( (hcf_io)(port) )
@@ -344,7 +344,7 @@ struct CFG_RANGE6_STRCT BASED cfg_drv_act_ranges_hsi = {
 	COMP_ROLE_ACT,
 	COMP_ID_HSI,
 	{
-#if defined HCF_HSI_VAR_0					    // Controlled deployment
+#if defined HCF_HSI_VAR_0					// Controlled deployment
 	 {	0,									// var_rec[1] - Variant number
 		CFG_DRV_ACT_RANGES_HSI_0_BOTTOM,		//           - Bottom Compatibility
 		CFG_DRV_ACT_RANGES_HSI_0_TOP			//           - Top Compatibility
@@ -355,7 +355,7 @@ struct CFG_RANGE6_STRCT BASED cfg_drv_act_ranges_hsi = {
 	 { 0, 0, 0 }, 							// HCF_HSI_VAR_1 not supported by HCF 7
 	 { 0, 0, 0 }, 							// HCF_HSI_VAR_2 not supported by HCF 7
 	 { 0, 0, 0 }, 							// HCF_HSI_VAR_3 not supported by HCF 7
-#if defined HCF_HSI_VAR_4					    // Hermes-II all types
+#if defined HCF_HSI_VAR_4					// Hermes-II all types
 	 {	4,									// var_rec[1] - Variant number
 		CFG_DRV_ACT_RANGES_HSI_4_BOTTOM,		//           - Bottom Compatibility
 		CFG_DRV_ACT_RANGES_HSI_4_TOP			//           - Top Compatibility
@@ -363,7 +363,7 @@ struct CFG_RANGE6_STRCT BASED cfg_drv_act_ranges_hsi = {
 #else
 	 { 0, 0, 0 },
 #endif // HCF_HSI_VAR_4
-#if defined HCF_HSI_VAR_5					    // WARP Hermes-2.5
+#if defined HCF_HSI_VAR_5					// WARP Hermes-2.5
 	 {	5,									// var_rec[1] - Variant number
 		CFG_DRV_ACT_RANGES_HSI_5_BOTTOM,		//           - Bottom Compatibility
 		CFG_DRV_ACT_RANGES_HSI_5_TOP			//           - Top Compatibility
@@ -382,7 +382,7 @@ CFG_RANGE4_STRCT BASED cfg_drv_act_ranges_apf = {
 	COMP_ROLE_ACT,
 	COMP_ID_APF,
 	{
-#if defined HCF_APF_VAR_1				    //(Fake) Hermes-I
+#if defined HCF_APF_VAR_1				//(Fake) Hermes-I
 	 {	1,									//var_rec[1] - Variant number
 		CFG_DRV_ACT_RANGES_APF_1_BOTTOM,		//           - Bottom Compatibility
 		CFG_DRV_ACT_RANGES_APF_1_TOP			//           - Top Compatibility
@@ -390,7 +390,7 @@ CFG_RANGE4_STRCT BASED cfg_drv_act_ranges_apf = {
 #else
 	 { 0, 0, 0 },
 #endif // HCF_APF_VAR_1
-#if defined HCF_APF_VAR_2				    //Hermes-II
+#if defined HCF_APF_VAR_2				//Hermes-II
 	 {	2,									// var_rec[1] - Variant number
 		CFG_DRV_ACT_RANGES_APF_2_BOTTOM,		//           - Bottom Compatibility
 		CFG_DRV_ACT_RANGES_APF_2_TOP			//           - Top Compatibility
@@ -398,7 +398,7 @@ CFG_RANGE4_STRCT BASED cfg_drv_act_ranges_apf = {
 #else
 	 { 0, 0, 0 },
 #endif // HCF_APF_VAR_2
-#if defined HCF_APF_VAR_3						    // Native_USB
+#if defined HCF_APF_VAR_3						// Native_USB
 	 {	3,										// var_rec[1] - Variant number
 		CFG_DRV_ACT_RANGES_APF_3_BOTTOM,		//           - Bottom Compatibility	!!!!!see note below!!!!!!!
 		CFG_DRV_ACT_RANGES_APF_3_TOP			//           - Top Compatibility
@@ -406,7 +406,7 @@ CFG_RANGE4_STRCT BASED cfg_drv_act_ranges_apf = {
 #else
 	 { 0, 0, 0 },
 #endif // HCF_APF_VAR_3
-#if defined HCF_APF_VAR_4						    // WARP Hermes 2.5
+#if defined HCF_APF_VAR_4						// WARP Hermes 2.5
 	 {	4,										// var_rec[1] - Variant number
 		CFG_DRV_ACT_RANGES_APF_4_BOTTOM,		//           - Bottom Compatibility	!!!!!see note below!!!!!!!
 		CFG_DRV_ACT_RANGES_APF_4_TOP			//           - Top Compatibility
@@ -1170,7 +1170,7 @@ LTV_STRCT	x;
 	}
 
 
-#if ( (HCF_TYPE) & HCF_TYPE_PRELOADED ) == 0	    //switch clock back for SEEPROM access  !!!
+#if ( (HCF_TYPE) & HCF_TYPE_PRELOADED ) == 0	//switch clock back for SEEPROM access  !!!
 	OUT_PORT_WORD( io_addr + HREG_CMD, HCMD_INI );  	    //OPW not yet useable
 	prot_cnt = INI_TICK_INI;
 	HCF_WAIT_WHILE( (IN_PORT_WORD( io_addr +  HREG_EV_STAT) & HREG_EV_CMD) == 0 );
@@ -1179,7 +1179,7 @@ LTV_STRCT	x;
 	for ( q = (hcf_8*)(&ifbp->IFB_Magic); q > (hcf_8*)ifbp; *--q = 0 ) /*NOP*/;						/* 4 */
 	ifbp->IFB_Magic		= HCF_MAGIC;
 	ifbp->IFB_Version	= IFB_VERSION;
-#if defined MSF_COMPONENT_ID     //a new IFB demonstrates how dirty the solution is
+#if defined MSF_COMPONENT_ID //a new IFB demonstrates how dirty the solution is
 	xxxx[xxxx_PRI_IDENTITY_OFFSET] = NULL;		//IFB_PRIIdentity placeholder	0xFD02
 	xxxx[xxxx_PRI_IDENTITY_OFFSET+1] = NULL;	//IFB_PRISup placeholder		0xFD03
 #endif // MSF_COMPONENT_ID
@@ -1198,7 +1198,7 @@ LTV_STRCT	x;
 		ifbp->IFB_AssertRtn = (MSF_ASSERT_RTNP)msf_assert;											/* 6 */
 	}
 #endif // HCF_ASSERT_LNK_MSF_RTN
-#if (HCF_ASSERT) & HCF_ASSERT_MB				    //build the structure to pass the assert info to hcf_put_info
+#if (HCF_ASSERT) & HCF_ASSERT_MB				//build the structure to pass the assert info to hcf_put_info
 	ifbp->IFB_AssertStrct.len = sizeof(ifbp->IFB_AssertStrct)/sizeof(hcf_16) - 1;
 	ifbp->IFB_AssertStrct.typ = CFG_MB_INFO;
 	ifbp->IFB_AssertStrct.base_typ = CFG_MB_ASSERT;
@@ -1231,7 +1231,7 @@ LTV_STRCT	x;
 		IF_PROT_TIME( HCFASSERT( prot_cnt, IPW( HREG_EV_STAT) ) ) /* if prot_cnt == 0, cmd_exe will fail, causing DEFUNCT */
 	}
 	OPW( HREG_EV_ACK, ~HREG_EV_SLEEP_REQ );
-#if ( (HCF_TYPE) & HCF_TYPE_PRELOADED ) == 0														    /*12*/
+#if ( (HCF_TYPE) & HCF_TYPE_PRELOADED ) == 0														/*12*/
 	(void)cmd_exe( ifbp, HCMD_INI, 0 );
 #endif // HCF_TYPE_PRELOADED
 if ( io_base != HCF_DISCONNECT ) {
@@ -1885,7 +1885,7 @@ int			i;
 *.ENDDOC				END DOCUMENTATION
 *
 ************************************************************************************************************/
-#if HCF_ENCAP	    //i.e HCF_ENC or HCF_ENC_SUP
+#if HCF_ENCAP	//i.e HCF_ENC or HCF_ENC_SUP
 #if ! ( (HCF_ENCAP) & HCF_ENC_SUP )
 HCF_STATIC
 #endif // HCF_ENCAP
@@ -2033,7 +2033,7 @@ int			i;
 	HCFASSERT( 1 < ltvp->len && ltvp->len <= HCF_MAX_LTV + 1, MERGE_2( ltvp->typ, ltvp->len ) )
 
 	ltvp->len = 0;								//default to: No Info Available
-#if defined MSF_COMPONENT_ID || (HCF_EXT) & HCF_EXT_MB     //filter out all specials
+#if defined MSF_COMPONENT_ID || (HCF_EXT) & HCF_EXT_MB //filter out all specials
 	for ( i = 0; ( q = xxxx[i] ) != NULL && q[1] != type; i++ ) /*NOP*/;
 #endif // MSF_COMPONENT_ID / HCF_EXT_MB
 #if HCF_TALLIES
@@ -2666,7 +2666,7 @@ hcf_16		fid = 0;
 
 	if ( descp ) ifbp->IFB_TxFID = 0;				//cancel a pre-put message
 
-#if (HCF_EXT) & HCF_EXT_TX_CONT				    // Continuous transmit test
+#if (HCF_EXT) & HCF_EXT_TX_CONT				// Continuous transmit test
 	if ( tx_cntl == HFS_TX_CNTL_TX_CONT ) {
 	 	fid = get_fid(ifbp);
 	 	if (fid != 0 ) {
@@ -4030,7 +4030,7 @@ int	rc = HCF_SUCCESS;
 	ifbp->IFB_FWIdentity.version_major = CNV_LITTLE_TO_SHORT( ifbp->IFB_FWIdentity.version_major );
 	ifbp->IFB_FWIdentity.version_minor = CNV_LITTLE_TO_SHORT( ifbp->IFB_FWIdentity.version_minor );
 #endif // HCF_BIG_ENDIAN
-#if defined MSF_COMPONENT_ID																		    /*14*/
+#if defined MSF_COMPONENT_ID																		/*14*/
 	if ( rc == HCF_SUCCESS ) {																		/*16*/
 		ifbp->IFB_HSISup.len = sizeof(CFG_SUP_RANGE_STRCT)/sizeof(hcf_16) - 1;
 		ifbp->IFB_HSISup.typ = CFG_NIC_HSI_SUP_RANGE;
@@ -4083,7 +4083,7 @@ int i = sizeof( CFG_FW_IDENTITY_STRCT) + sizeof(CFG_SUP_RANGE_STRCT );
 		}
 	}
 #endif // MSF_COMPONENT_ID
-#if HCF_DL_ONLY == 0																			    /* 28 */
+#if HCF_DL_ONLY == 0																			/* 28 */
 	if ( rc == HCF_SUCCESS && ifbp->IFB_FWIdentity.comp_id >= COMP_ID_FW_STA ) {
 PROT_CNT_INI
 		/**************************************************************************************
@@ -4163,7 +4163,7 @@ RID_LOGP	ridp = ifbp->IFB_RIDLogp;	//NULL or pointer to array of RID_LOG structu
 		(void)setup_bap( ifbp, fid, 0, IO_IN );
 		get_frag( ifbp, (wci_bufp)info, 4 BE_PAR(2) );
 		HCFASSERT( info[0] <= HCF_MAX_LTV + 1, MERGE_2( info[1], info[0] ) )  //;? a smaller value makes more sense
-#if (HCF_TALLIES) & HCF_TALLIES_NIC		    //Hermes tally support
+#if (HCF_TALLIES) & HCF_TALLIES_NIC		//Hermes tally support
 		if ( info[1] == CFG_TALLIES ) {
 hcf_32	*p;
 /*2*/		if ( info[0] > HCF_NIC_TAL_CNT ) {
@@ -4492,7 +4492,7 @@ int rc = HCF_SUCCESS;
 	if ( ifbp->IFB_CardStat == 0 &&																/* 20*/
 		 ( ( CFG_RID_CFG_MIN <= ltvp->typ    && ltvp->typ <= CFG_RID_CFG_MAX ) ||
 		   ( CFG_RID_ENG_MIN <= ltvp->typ /* && ltvp->typ <= 0xFFFF */       )     ) ) {
-#if HCF_ASSERT     //FCC8, FCB0, FCB4, FCB6, FCB7, FCB8, FCC0, FCC4, FCBC, FCBD, FCBE, FCBF
+#if HCF_ASSERT //FCC8, FCB0, FCB4, FCB6, FCB7, FCB8, FCC0, FCC4, FCBC, FCBD, FCBE, FCBF
  {
  hcf_16		t = ltvp->typ;
  LTV_STRCT 	x = { 2, t, {0} };															/*24*/

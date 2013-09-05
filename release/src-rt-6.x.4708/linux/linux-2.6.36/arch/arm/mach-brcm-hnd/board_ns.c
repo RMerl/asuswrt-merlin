@@ -200,13 +200,13 @@ void soc_watchdog(void)
 		si_watchdog_ms(sih, watchdog);
 }
 
-#define CFE_UPDATE 1            // added by Chen-I for mac/regulation update
+#define CFE_UPDATE 1		// added by Chen-I for mac/regulation update
 
 #ifdef CFE_UPDATE
 void bcm947xx_watchdog_disable(void)
 {
-        watchdog=0;
-        si_watchdog_ms(sih, 0);
+	watchdog=0;
+	si_watchdog_ms(sih, 0);
 }
 #endif
 
@@ -262,17 +262,17 @@ static void __init board_fixup(
  */
 void __init bcm47xx_adjust_zones(unsigned long *size, unsigned long *hole)
 {
-        unsigned long dma_size = SZ_128M >> PAGE_SHIFT;
+	unsigned long dma_size = SZ_128M >> PAGE_SHIFT;
 
-        if (size[0] <= dma_size)
-                return;
+	if (size[0] <= dma_size)
+		return;
 
-        size[ZONE_NORMAL] = size[0] - dma_size;
-        size[ZONE_DMA] = dma_size;
-        hole[ZONE_NORMAL] = hole[0];
-        hole[ZONE_DMA] = 0;
+	size[ZONE_NORMAL] = size[0] - dma_size;
+	size[ZONE_DMA] = dma_size;
+	hole[ZONE_NORMAL] = hole[0];
+	hole[ZONE_DMA] = 0;
 }
-#endif
+#endif /* CONFIG_ZONE_DMA */
 
 static struct sys_timer board_timer = {
    .init = board_init_timer,
@@ -389,12 +389,18 @@ static uint32 boot_partition_size(uint32 flash_phys) {
 #else
 #define FAILSAFE_PARTS 0
 #endif
+#if defined(CONFIG_CRASHLOG)
+#define CRASHLOG_PARTS 1
+#else
+#define CRASHLOG_PARTS 0
+#endif
 /* boot;nvram;kernel;rootfs;empty */
-#define FLASH_PARTS_NUM	(5+MTD_PARTS+PLC_PARTS+FAILSAFE_PARTS)
+#define FLASH_PARTS_NUM	(5+MTD_PARTS+PLC_PARTS+FAILSAFE_PARTS+CRASHLOG_PARTS)
 
 static struct mtd_partition bcm947xx_flash_parts[FLASH_PARTS_NUM] = {{0}};
 
-static uint lookup_flash_rootfs_offset(struct mtd_info *mtd, int *trx_off, size_t size)
+static uint lookup_flash_rootfs_offset(struct mtd_info *mtd, int *trx_off, size_t size, 
+                                       uint32 *trx_size)
 {
 	struct romfs_super_block *romfsb;
 	struct cramfs_super *cramfsb;
@@ -427,6 +433,7 @@ static uint lookup_flash_rootfs_offset(struct mtd_info *mtd, int *trx_off, size_
 		/* Try looking at TRX header for rootfs offset */
 		if (le32_to_cpu(trx->magic) == TRX_MAGIC) {
 			*trx_off = off;
+			*trx_size = le32_to_cpu(trx->len);
 			if (trx->offsets[1] == 0)
 				continue;
 			/*
@@ -477,6 +484,10 @@ init_mtd_partitions(hndsflash_t *sfl_info, struct mtd_info *mtd, size_t size)
 	uint vmlz_off, knl_size;
 	uint32 top = 0;
 	uint32 bootsz;
+	uint32 trx_size;
+#ifdef CONFIG_CRASHLOG
+	char create_crash_partition = 0;
+#endif
 #ifdef CONFIG_FAILSAFE_UPGRADE
 	char *img_boot = nvram_get(BOOTPARTITION);
 	char *imag_1st_offset = nvram_get(IMAGE_FIRST_OFFSET);
@@ -509,7 +520,7 @@ init_mtd_partitions(hndsflash_t *sfl_info, struct mtd_info *mtd, size_t size)
 
 	if (knldev != SOC_KNLDEV_NANDFLASH) {
 		vmlz_off = 0;
-		rfs_off = lookup_flash_rootfs_offset(mtd, &vmlz_off, size);
+		rfs_off = lookup_flash_rootfs_offset(mtd, &vmlz_off, size, &trx_size);
 
 		/* Size pmon */
 		bcm947xx_flash_parts[nparts].name = "boot";
@@ -551,6 +562,17 @@ init_mtd_partitions(hndsflash_t *sfl_info, struct mtd_info *mtd, size_t size)
 		bcm947xx_flash_parts[nparts].size -= (mtd->erasesize *4);
 #endif
 #endif	/* CONFIG_FAILSAFE_UPGRADE */
+
+#ifdef CONFIG_CRASHLOG
+		if ((bcm947xx_flash_parts[nparts].size - trx_size) >=
+		    ROUNDUP(0x4000, mtd->erasesize)) {
+			bcm947xx_flash_parts[nparts].size -= ROUNDUP(0x4000, mtd->erasesize);
+			create_crash_partition = 1;
+		} else {
+			create_crash_partition = 0;
+		}
+#endif
+
 		bcm947xx_flash_parts[nparts].offset = vmlz_off;
 		knl_size = bcm947xx_flash_parts[nparts].size;
 		offset = bcm947xx_flash_parts[nparts].offset + knl_size;
@@ -561,11 +583,23 @@ init_mtd_partitions(hndsflash_t *sfl_info, struct mtd_info *mtd, size_t size)
 		bcm947xx_flash_parts[nparts].size = knl_size - (rfs_off - vmlz_off);
 		bcm947xx_flash_parts[nparts].offset = rfs_off;
 		bcm947xx_flash_parts[nparts].mask_flags = MTD_WRITEABLE; /* forces on read only */
+		offset = bcm947xx_flash_parts[nparts].offset + bcm947xx_flash_parts[nparts].size;
 		nparts++;
+
+#if defined(CONFIG_CRASHLOG) && defined(BCMDBG)
+		if (create_crash_partition) {
+			/* Setup crash MTD partition */
+			bcm947xx_flash_parts[nparts].name = "crash";
+			bcm947xx_flash_parts[nparts].size = ROUNDUP(0x4000, mtd->erasesize);
+			bcm947xx_flash_parts[nparts].offset = offset;
+			bcm947xx_flash_parts[nparts].mask_flags = 0;
+			nparts++;
+		}
+#endif
 #ifdef CONFIG_FAILSAFE_UPGRADE
 		if (dual_image_on) {
 			offset = image_second_offset;
-			rfs_off = lookup_flash_rootfs_offset(mtd, &offset, size);
+			rfs_off = lookup_flash_rootfs_offset(mtd, &offset, size, &trx_size);
 			vmlz_off = offset;
 			/* Setup kernel2 MTD partition */
 			bcm947xx_flash_parts[nparts].name = "linux2";
@@ -603,7 +637,7 @@ init_mtd_partitions(hndsflash_t *sfl_info, struct mtd_info *mtd, size_t size)
 		bcm947xx_flash_parts[nparts].name = "boot";
 		bcm947xx_flash_parts[nparts].size = bootsz;
 		bcm947xx_flash_parts[nparts].offset = top;
-		//bcm947xx_flash_parts[nparts].mask_flags = MTD_WRITEABLE; /* NOT forces on read only */
+		//bcm947xx_flash_parts[nparts].mask_flags = MTD_WRITEABLE; /* forces on read only */
 		offset = bcm947xx_flash_parts[nparts].size;
 		nparts++;
 	}
@@ -771,13 +805,13 @@ init_nflash_mtd_partitions(hndnand_t *nfl, struct mtd_info *mtd, size_t size)
 			/* CFE occupies at least one block */
 			bootsz = mtd->erasesize;
 		}
-		printk("Boot Partition size = %d(0x%x)\n", bootsz, bootsz);
+		printk("Boot partition size = %d(0x%x)\n", bootsz, bootsz);
 
 		/* Size pmon */
 		bcm947xx_nflash_parts[nparts].name = "boot";
 		bcm947xx_nflash_parts[nparts].size = bootsz;
 		bcm947xx_nflash_parts[nparts].offset = top;
-		//bcm947xx_nflash_parts[nparts].mask_flags = MTD_WRITEABLE; /* NOT forces on read only */
+		//bcm947xx_nflash_parts[nparts].mask_flags = MTD_WRITEABLE; /* forces on read only */
 		offset = bcm947xx_nflash_parts[nparts].size;
 		nparts++;
 
@@ -932,3 +966,45 @@ static int __init cfenenad_parser_init(void)
 module_init(cfenenad_parser_init);
 
 #endif /* CONFIG_MTD_NFLASH */
+
+#ifdef CONFIG_CRASHLOG
+extern char *get_logbuf(void);
+extern char *get_logsize(void);
+
+void nvram_store_crash(void)
+{
+	struct mtd_info *mtd = NULL;
+	int i;
+	char *buffer;
+	unsigned char buf[16];
+	int buf_len;
+	int len;
+
+	printk("Trying to store crash\n");
+
+	mtd = get_mtd_device_nm("crash");
+
+	if (!IS_ERR(mtd)) {
+
+		buf_len = get_logsize();
+		buffer = get_logbuf();
+		if (buf_len > mtd->size)
+			buf_len = mtd->size;
+
+		memset(buf,0,sizeof(buf));
+		mtd->read(mtd, 0, sizeof(buf), &len, buf);
+		for (len=0;len<sizeof(buf);len++)
+			if (buf[len]!=0xff) {
+				printk("Could not save crash, partition not clean\n");
+				break;
+			}
+		if (len == sizeof(buf)) {
+			mtd->write(mtd, 0, buf_len, &len, buffer);
+			if (buf_len == len)
+				printk("Crash Saved\n");
+		}
+	} else {
+		printk("Could not find NVRAM partition\n");
+	}
+}
+#endif /* CONFIG_CRASHLOG */

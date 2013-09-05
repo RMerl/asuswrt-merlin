@@ -1,7 +1,7 @@
 /*
  * RoboSwitch setup functions
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmrobo.h 393340 2013-03-27 06:10:49Z $
+ * $Id: bcmrobo.h 414031 2013-07-23 10:54:51Z $
  */
 
 #ifndef _bcm_robo_h_
@@ -173,5 +173,10 @@ extern void robo_eee_advertise_init(robo_info_t *robo);
 #ifdef PLC
 extern void robo_plc_hw_init(robo_info_t *robo);
 #endif /* PLC */
+
+#ifdef BCMFA
+extern void robo_fa_aux_init(robo_info_t *robo);
+extern void robo_fa_aux_enable(robo_info_t *robo, bool enable);
+#endif
 
 #endif /* _bcm_robo_h_ */

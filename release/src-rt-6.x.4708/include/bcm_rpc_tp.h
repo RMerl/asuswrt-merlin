@@ -3,7 +3,7 @@
  *   HOST may glue it to DBUS layer
  *   CLIENT may glue it to its bus driver
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcm_rpc_tp.h 365477 2012-10-29 22:36:46Z $
+ * $Id: bcm_rpc_tp.h 401759 2013-05-13 16:08:08Z $
  */
 
 #ifndef _bcm_rpc_tp_h_
@@ -40,6 +40,13 @@
 #define BCM_RPC_TP_DNGL_AGG_FLOWCTL	0x00000002	/* DNGL->HOST tx flowcontrol agg */
 #define BCM_RPC_TP_DNGL_AGG_TEST	0x00000010	/* DNGL->HOST test agg */
 
+
+#define BCM_RPC_TP_HOST_AGG_MAX_SFRAME  3	/* max agg subframes, AMPDU only, 3 is enough */
+#define BCM_RPC_TP_HOST_AGG_MAX_BYTE    3400    /* max agg bytes; to fit 2+ tcp/udp pkts. Each one:
+						 * 802.3pkt + 802.11 hdr + rpc hdr + tp hdr < 1700B
+						 * Need to be in sync with dongle usb rx dma
+						 *  rxbufsize(USBBULK_RXBUF_GIANT in usbdev_sb.c)
+						 */
 #define BCM_RPC_TP_DNGL_AGG_MAX_SFRAME	3       /* max agg subframes, must be <= USB_NTXD */
 #if defined(BCM_RPC_NOCOPY) || defined(BCM_RPC_RXNOCOPY)
 #define BCM_RPC_TP_DNGL_AGG_MAX_BYTE	2100    /* max agg bytes, we only do either agg or nocopy */
@@ -47,12 +54,33 @@
 #define BCM_RPC_TP_DNGL_AGG_MAX_BYTE	4000    /* max agg bytes */
 #endif /* BCM_RPC_NOCOPY || BCM_RPC_RXNOCOPY */
 
+#define BCM_RPC_TP_DNGL_AGG_MAX_BYTE_4360	16000
 
-/* only used by windows */
-#define BCM_RPC_TP_DNGL_AGG_MAX_SFRAME_4360 12
-#define BCM_RPC_TP_DNGL_AGG_MAX_BYTE_4360	16000    /* max agg bytes */
-#define BCM_RPC_TP_DNGL_AGG_DEFAULT_4360	(((BCM_RPC_TP_DNGL_AGG_MAX_SFRAME_4360)\
-	 << BCM_RPC_TP_HOST_AGG_SHIFT) | BCM_RPC_TP_DNGL_AGG_MAX_BYTE_4360)
+/* chip specific AMPDU_MPDU should be defined in chipid makefile.
+ * if not defined in chipid makefile defaults defined below will be used
+ */
+#ifndef BCM_AMPDU_MPDU
+#define BCM_AMPDU_MPDU			16
+#endif
+/* chip specific HOST/DNGL_DEFAULT_SFRAME/BYTE constants should be defined in chipid makefile
+ * if not defined in chipid makefile defaults defined below will be used
+ */
+#ifndef BCM_RPC_TP_HOST_AGG_DEFAULT_SFRAME
+#define BCM_RPC_TP_HOST_AGG_DEFAULT_SFRAME	3
+#endif
+#ifndef BCM_RPC_TP_HOST_AGG_DEFAULT_BYTE
+#define BCM_RPC_TP_HOST_AGG_DEFAULT_BYTE	3400
+#endif
+#ifndef BCM_RPC_TP_DNGL_AGG_DEFAULT_SFRAME
+#define BCM_RPC_TP_DNGL_AGG_DEFAULT_SFRAME	3
+#endif
+#ifndef BCM_RPC_TP_DNGL_AGG_DEFAULT_BYTE
+#define BCM_RPC_TP_DNGL_AGG_DEFAULT_BYTE	3400
+#endif
+#define BCM_RPC_TP_HOST_AGG_DEFAULT	(((BCM_RPC_TP_HOST_AGG_DEFAULT_SFRAME)\
+	 << BCM_RPC_TP_HOST_AGG_SHIFT) | BCM_RPC_TP_HOST_AGG_DEFAULT_BYTE)
+#define BCM_RPC_TP_DNGL_AGG_DEFAULT	(((BCM_RPC_TP_DNGL_AGG_DEFAULT_SFRAME)\
+	 << BCM_RPC_TP_HOST_AGG_SHIFT) | BCM_RPC_TP_DNGL_AGG_DEFAULT_BYTE)
 
 #ifndef WLMEDIA_LARGE_DNGL_AGG
 /* rxbufsize for dbus_attach, linux only for now */
@@ -61,25 +89,6 @@
 #define DBUS_RX_BUFFER_SIZE_RPC    (BCM_RPC_TP_DNGL_AGG_MAX_BYTE_4360)
 #endif
 
-#define BCM_RPC_TP_HOST_AGG_MAX_SFRAME  3	/* max agg subframes, AMPDU only, 3 is enough */
-#define BCM_RPC_TP_HOST_AGG_MAX_BYTE    3400    /* max agg bytes; to fit 2+ tcp/udp pkts. Each one:
-						 * 802.3pkt + 802.11 hdr + rpc hdr + tp hdr < 1700B
-						 * Need to be in sync with dongle usb rx dma
-						 *  rxbufsize(USBBULK_RXBUF_GIANT in usbdev_sb.c)
-						 */
-/*
- * 43236 has not problem handling scattering and can handle larger aggregation size
- */
-#define BCM_RPC_TP_HOST_AGG_DEFAULT_SFRAME_43236	 8
-#define BCM_RPC_TP_HOST_AGG_DEFAULT_BYTE_43236		0x3e00	/* 15872 */
-#define BCM_RPC_TP_HOST_AGG_DEFAULT_43236	(((BCM_RPC_TP_HOST_AGG_DEFAULT_SFRAME_43236)\
-	 << BCM_RPC_TP_HOST_AGG_SHIFT) | BCM_RPC_TP_HOST_AGG_DEFAULT_BYTE_43236)
-
-
-#define BCM_RPC_TP_HOST_AGG_DEFAULT_SFRAME_4360	 12
-#define BCM_RPC_TP_HOST_AGG_DEFAULT_BYTE_4360 0x6A80	/* 27264 */
-#define BCM_RPC_TP_HOST_AGG_DEFAULT_4360	(((BCM_RPC_TP_HOST_AGG_DEFAULT_SFRAME_4360)\
-	 << BCM_RPC_TP_HOST_AGG_SHIFT) | BCM_RPC_TP_HOST_AGG_DEFAULT_BYTE_4360)
 #if (defined(NDIS) && (NDISVER >= 0x0600) && 0) || defined WLMEDIA_LARGE_DNGL_AGG
 /* TP-DBUS pkts flowcontrol */
 #ifndef BCM_RPC_TP_DBUS_NTXQ

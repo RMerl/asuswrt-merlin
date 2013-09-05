@@ -1,7 +1,7 @@
 #
 # Makefile for the Broadcom CTF
 #
-# Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+# Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
 # 
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +20,7 @@
 
 obj-${CONFIG_BCM_CTF} := ctf.o
 
-CTFSRC := ../../../../../../src-rt-6.x.4708/router/ctf_arm/
+CTFSRC := ../../../../../../src-rt-6.x.4708/router/ctf${BCMEX}/
 CTFOBJ := $(CTFSRC)/hndctf.o $(CTFSRC)/hndctf_linux.o
 SYMOBJ := $(CTFSRC)/hndctf.o
 
@@ -30,7 +30,7 @@ endif # CONFIG_BUZZZ_FUNC
 
 # Search for sources under src/router/ctf
 ifneq (,$(wildcard $(src)/$(CTFSRC)/*.c))
-  EXTRA_CFLAGS += -I$(src)/$(CTFSRC)/../../router/ctf_arm -DHNDCTF
+  EXTRA_CFLAGS += -I$(src)/$(CTFSRC)/../../router/ctf${BCMEX} -DHNDCTF
   ctf-objs := $(CTFOBJ) ctf_ksyms.o
 else
   ctf-objs := $(CTFSRC)/linux/ctf.o

@@ -2,7 +2,7 @@
  * RPC layer. It links to bus layer with transport layer(bus dependent)
  * Broadcom 802.11abg Networking Device Driver
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -10,7 +10,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: bcm_rpc.c 358609 2012-09-24 21:59:30Z $
+ * $Id: bcm_rpc.c 401759 2013-05-13 16:08:08Z $
  */
 
 #include <epivers.h>
@@ -1133,7 +1133,7 @@ bcm_rpc_call(struct rpc_info *rpci, rpc_buf_t *b)
 	rpci->trans++;
 	RPC_OSL_UNLOCK(rpci->rpc_osh);
 
-#ifdef BCMDBG_RPC	    /* Since successful add the entry */
+#ifdef BCMDBG_RPC	/* Since successful add the entry */
 	if (RPC_PKTLOG_ON()) {
 		bcm_rpc_add_entry_tx(rpci, &cur);
 	}
@@ -1256,7 +1256,7 @@ bcm_rpc_call_with_return(struct rpc_info *rpci, rpc_buf_t *b)
 	rpci->wait_return = FALSE; /* Could have woken up by timeout */
 	RPC_OSL_UNLOCK(rpci->rpc_osh);
 
-#ifdef BCMDBG_RPC	    /* Since successful add the entry */
+#ifdef BCMDBG_RPC	/* Since successful add the entry */
 	if (RPC_PKTLOG_ON())
 		bcm_rpc_add_entry_tx(rpci, &cur);
 #endif

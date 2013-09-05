@@ -93,7 +93,10 @@ unsigned int tb_r(ddr40_addr_t Address)
 
 void tb_w(ddr40_addr_t Address, unsigned int Data)
 {
+	volatile unsigned int dummy;
+
 	*(unsigned int *)Address = Data;
+	dummy = *(volatile unsigned int *)Address;
 }
 
 unsigned int SHMOO_DRAM_READ_32(ddr40_addr_t Address)

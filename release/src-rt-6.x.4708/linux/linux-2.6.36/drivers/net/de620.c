@@ -135,11 +135,11 @@ typedef unsigned char byte;
  * See also "de620.h"                                  *
  *                                                     *
  *******************************************************/
-#ifndef DE620_IO     /* Compile-time configurable */
+#ifndef DE620_IO /* Compile-time configurable */
 #define DE620_IO 0x378
 #endif
 
-#ifndef DE620_IRQ     /* Compile-time configurable */
+#ifndef DE620_IRQ /* Compile-time configurable */
 #define DE620_IRQ	7
 #endif
 

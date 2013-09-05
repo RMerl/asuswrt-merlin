@@ -63,7 +63,7 @@ struct usb_hub {
 							resumed */
 	unsigned long		removed_bits[1]; /* ports with a "removed"
 							device present */
-#if USB_MAXCHILDREN > 31     /* 8*sizeof(unsigned long) - 1 */
+#if USB_MAXCHILDREN > 31 /* 8*sizeof(unsigned long) - 1 */
 #error event_bits[] is too short!
 #endif
 

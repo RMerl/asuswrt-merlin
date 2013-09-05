@@ -1,6 +1,6 @@
 # Broadcom 802.11abg Networking Device Driver Configuration file
 #
-# Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+# Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
 # 
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,7 @@
 #
 # Linux Kernel wl driver config file
 
-# get common 
+# get common
 include $(WLCFGDIR)/wl_default
 
 # tunables
@@ -40,3 +40,9 @@ PHYMON=1
 BCM_DCS=1
 DWDS=1
 WLNAR=1
+WL11K_AP=1
+PSPRETEND=1
+WL_STA_MONITOR=1
+WL_MONITOR=1
+WLTAF=1
+SCB_BS_DATA=1

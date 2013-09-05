@@ -1156,7 +1156,7 @@ static struct platform_device i2c_bfin_twi0_device = {
 	.resource = bfin_twi0_resource,
 };
 
-#if !defined(CONFIG_BF542)	    /* The BF542 only has 1 TWI */
+#if !defined(CONFIG_BF542)	/* The BF542 only has 1 TWI */
 static struct resource bfin_twi1_resource[] = {
 	[0] = {
 		.start = TWI1_REGBASE,
@@ -1182,7 +1182,7 @@ static struct platform_device i2c_bfin_twi1_device = {
 static struct i2c_board_info __initdata bfin_i2c_board_info0[] = {
 };
 
-#if !defined(CONFIG_BF542)	    /* The BF542 only has 1 TWI */
+#if !defined(CONFIG_BF542)	/* The BF542 only has 1 TWI */
 static struct i2c_board_info __initdata bfin_i2c_board_info1[] = {
 #if defined(CONFIG_BFIN_TWI_LCD) || defined(CONFIG_BFIN_TWI_LCD_MODULE)
 	{
@@ -1412,7 +1412,7 @@ static int __init ezkit_init(void)
 
 	i2c_register_board_info(0, bfin_i2c_board_info0,
 				ARRAY_SIZE(bfin_i2c_board_info0));
-#if !defined(CONFIG_BF542)	    /* The BF542 only has 1 TWI */
+#if !defined(CONFIG_BF542)	/* The BF542 only has 1 TWI */
 	i2c_register_board_info(1, bfin_i2c_board_info1,
 				ARRAY_SIZE(bfin_i2c_board_info1));
 #endif

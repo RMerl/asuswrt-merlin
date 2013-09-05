@@ -439,7 +439,7 @@
 	 * all ILP32 processes and all the kernel for machines with
 	 * under 4GB of memory) */
 	.macro		L3_ptep pgd,pte,index,va,fault
-#if PT_NLEVELS == 3     /* we might have a 2-Level scheme, e.g. with 16kb page size */
+#if PT_NLEVELS == 3 /* we might have a 2-Level scheme, e.g. with 16kb page size */
 	extrd,u		\va,63-ASM_PGDIR_SHIFT,ASM_BITS_PER_PGD,\index
 	copy		%r0,\pte
 	extrd,u,*=	\va,63-ASM_PGDIR_SHIFT,64-ASM_PGDIR_SHIFT,%r0

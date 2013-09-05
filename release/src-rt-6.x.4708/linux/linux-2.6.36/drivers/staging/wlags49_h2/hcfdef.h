@@ -341,7 +341,7 @@ err: PRI_1 not supported for H-I;	// Compatibility for Primary Firmware - driver
 err: PRI_2 not supported for H-I;	// Compatibility for Primary Firmware - driver I/F
 #endif // HCF_CFG_PRI_2_TOP / HCF_CFG_PRI_2_BOTTOM
 
-#ifdef HCF_CFG_PRI_3_TOP									    // Top Compatibility for Primary Firmware - driver I/F
+#ifdef HCF_CFG_PRI_3_TOP									// Top Compatibility for Primary Firmware - driver I/F
 #if HCF_CFG_PRI_3_TOP == 0 || CFG_DRV_ACT_RANGES_PRI_3_BOTTOM <= HCF_CFG_PRI_3_TOP && \
 	HCF_CFG_PRI_3_TOP <= CFG_DRV_ACT_RANGES_PRI_3_TOP
 #undef CFG_DRV_ACT_RANGES_PRI_3_TOP
@@ -351,7 +351,7 @@ err: ;
 #endif
 #endif // HCF_CFG_PRI_3_TOP
 
-#ifdef HCF_CFG_PRI_3_BOTTOM                       			    // Bottom Compatibility for Primary Firmware - driver I/F
+#ifdef HCF_CFG_PRI_3_BOTTOM                       			// Bottom Compatibility for Primary Firmware - driver I/F
 #if CFG_DRV_ACT_RANGES_PRI_3_BOTTOM <= HCF_CFG_PRI_3_BOTTOM && HCF_CFG_PRI_3_BOTTOM <= \
 	CFG_DRV_ACT_RANGES_PRI_3_TOP
 #undef CFG_DRV_ACT_RANGES_PRI_3_BOTTOM
@@ -379,7 +379,7 @@ err: HSI_2 not supported for H-I;	// Compatibility for HSI I/F
 err: HSI_3 not supported for H-I;	// Compatibility for HSI I/F
 #endif // HCF_CFG_HSI_3_TOP / HCF_CFG_HSI_3_BOTTOM
 
-#ifdef HCF_CFG_HSI_4_TOP 									    // Top Compatibility for HSI I/F
+#ifdef HCF_CFG_HSI_4_TOP 									// Top Compatibility for HSI I/F
 #if HCF_CFG_HSI_4_TOP == 0 || CFG_DRV_ACT_RANGES_HSI_4_BOTTOM <= CF_CFG_HSI_4_TOP && \
 	HCF_CFG_HSI_4_TOP <= CFG_DRV_ACT_RANGES_HSI_4_TOP
 #undef CFG_DRV_ACT_RANGES_HSI_4_TOP
@@ -389,7 +389,7 @@ err: ;
 #endif
 #endif // HCF_CFG_HSI_4_TOP
 
-#ifdef HCF_CFG_HSI_4_BOTTOM								    // Bottom Compatibility for HSI I/F
+#ifdef HCF_CFG_HSI_4_BOTTOM								// Bottom Compatibility for HSI I/F
 #if CFG_DRV_ACT_RANGES_HSI_4_BOTTOM <= HCF_CFG_HSI_4_BOTTOM && HCF_CFG_HSI_4_BOTTOM <= \
 	CFG_DRV_ACT_RANGES_HSI_4_TOP
 #undef CFG_DRV_ACT_RANGES_HSI_4_BOTTOM
@@ -399,7 +399,7 @@ err: ;
 #endif
 #endif // HCF_CFG_HSI_4_BOTTOM
 
-#ifdef HCF_CFG_HSI_5_TOP 									    // Top Compatibility for HSI I/F
+#ifdef HCF_CFG_HSI_5_TOP 									// Top Compatibility for HSI I/F
 #if HCF_CFG_HSI_5_TOP == 0 || CFG_DRV_ACT_RANGES_HSI_5_BOTTOM <= CF_CFG_HSI_5_TOP && \
 	HCF_CFG_HSI_5_TOP <= CFG_DRV_ACT_RANGES_HSI_5_TOP
 #undef CFG_DRV_ACT_RANGES_HSI_5_TOP
@@ -409,7 +409,7 @@ err: ;
 #endif
 #endif // HCF_CFG_HSI_5_TOP
 
-#ifdef HCF_CFG_HSI_5_BOTTOM								    // Bottom Compatibility for HSI I/F
+#ifdef HCF_CFG_HSI_5_BOTTOM								// Bottom Compatibility for HSI I/F
 #if CFG_DRV_ACT_RANGES_HSI_5_BOTTOM <= HCF_CFG_HSI_5_BOTTOM && HCF_CFG_HSI_5_BOTTOM <= \
 	CFG_DRV_ACT_RANGES_HSI_5_TOP
 #undef CFG_DRV_ACT_RANGES_HSI_5_BOTTOM
@@ -423,7 +423,7 @@ err: ;
 err: APF_1 not supported for H-I;	// Compatibility for AP Firmware - driver I/F
 #endif // HCF_CFG_APF_1_TOP / HCF_CFG_APF_1_BOTTOM
 
-#ifdef HCF_CFG_APF_2_TOP                  					    // Top Compatibility for AP Firmware - driver I/F
+#ifdef HCF_CFG_APF_2_TOP                  					// Top Compatibility for AP Firmware - driver I/F
 #if HCF_CFG_APF_2_TOP == 0 || CFG_DRV_ACT_RANGES_APF_2_BOTTOM <= HCF_CFG_APF_2_TOP && \
 	HCF_CFG_APF_2_TOP <= CFG_DRV_ACT_RANGES_APF_2_TOP
 #undef CFG_DRV_ACT_RANGES_APF_2_TOP
@@ -433,7 +433,7 @@ err: ;
 #endif
 #endif // HCF_CFG_APF_TOP
 
-#ifdef HCF_CFG_APF_2_BOTTOM                       			    // Bottom Compatibility for AP Firmware - driver I/F
+#ifdef HCF_CFG_APF_2_BOTTOM                       			// Bottom Compatibility for AP Firmware - driver I/F
 #if CFG_DRV_ACT_RANGES_APF_2_BOTTOM <= HCF_CFG_APF_2_BOTTOM && HCF_CFG_APF_2_BOTTOM <= \
 	CFG_DRV_ACT_RANGES_APF_2_TOP
 #undef CFG_DRV_ACT_RANGES_APF_2_BOTTOM
@@ -448,7 +448,7 @@ err: ;
 err: STA_1 not supported for H-I;	// Compatibility for Station Firmware - driver I/F
 #endif // HCF_CFG_STA_1_TOP / HCF_CFG_STA_1_BOTTOM
 
-#ifdef HCF_CFG_STA_2_TOP                  					    // Top Compatibility for Station Firmware - driver I/F
+#ifdef HCF_CFG_STA_2_TOP                  					// Top Compatibility for Station Firmware - driver I/F
 #if HCF_CFG_STA_2_TOP == 0 || CFG_DRV_ACT_RANGES_STA_2_BOTTOM <= HCF_CFG_STA_2_TOP && \
 	HCF_CFG_STA_2_TOP <= CFG_DRV_ACT_RANGES_STA_2_TOP
 #undef CFG_DRV_ACT_RANGES_STA_2_TOP
@@ -458,7 +458,7 @@ err: ;
 #endif
 #endif // HCF_CFG_STA_TOP
 
-#ifdef HCF_CFG_STA_2_BOTTOM                       			    // Bottom Compatibility for Station Firmware - driver I/F
+#ifdef HCF_CFG_STA_2_BOTTOM                       			// Bottom Compatibility for Station Firmware - driver I/F
 #if CFG_DRV_ACT_RANGES_STA_2_BOTTOM <= HCF_CFG_STA_2_BOTTOM && HCF_CFG_STA_2_BOTTOM <= \
 	CFG_DRV_ACT_RANGES_STA_2_TOP
 #undef CFG_DRV_ACT_RANGES_STA_2_BOTTOM
@@ -531,7 +531,7 @@ err: MSF should no longer supply this macro;
 #define IF_NOT_SSN(x) x
 #endif // HCF_TYPE_WPA
 
-#if HCF_TALLIES & HCF_TALLIES_HCF		    //HCF tally support
+#if HCF_TALLIES & HCF_TALLIES_HCF		//HCF tally support
 #define IF_TALLY(x)  x
 #else
 #define IF_TALLY(x)
@@ -667,7 +667,7 @@ extern IFBP BASED assert_ifbp;			//to make asserts easily work under MMD and DHF
 EXTERN_C void		 mdd_assert			(IFBP ifbp, unsigned int line_number, hcf_32 q );
 #endif //HCF_ASSERT
 
-#if ! ( (HCF_IO) & HCF_IO_32BITS )				    // defined 16 bits only
+#if ! ( (HCF_IO) & HCF_IO_32BITS )				// defined 16 bits only
 #undef OUT_PORT_STRING_32
 #undef IN_PORT_STRING_32
 #endif // HCF_IO

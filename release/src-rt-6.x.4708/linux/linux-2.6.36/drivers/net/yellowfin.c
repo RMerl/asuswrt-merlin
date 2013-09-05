@@ -36,12 +36,12 @@ static int debug = 1;			/* 1 normal messages, 0 quiet .. 7 verbose. */
 /* Maximum events (Rx packets, etc.) to handle at each interrupt. */
 static int max_interrupt_work = 20;
 static int mtu;
-#ifdef YF_PROTOTYPE			    /* Support for prototype hardware errata. */
+#ifdef YF_PROTOTYPE			/* Support for prototype hardware errata. */
 /* System-wide count of bogus-rx frames. */
 static int bogus_rx;
 static int dma_ctrl = 0x004A0263; 			/* Constrained by errata */
 static int fifo_cfg = 0x0020;				/* Bypass external Tx FIFO. */
-#elif defined(YF_NEW)					  /* A future perfect board :->.  */
+#elif defined(YF_NEW)					/* A future perfect board :->.  */
 static int dma_ctrl = 0x00CAC277;			/* Override when loading module! */
 static int fifo_cfg = 0x0028;
 #else
@@ -1100,7 +1100,7 @@ static int yellowfin_rx(struct net_device *dev)
 			if (status2 & 0x03) dev->stats.rx_frame_errors++;
 			if (status2 & 0x04) dev->stats.rx_crc_errors++;
 			if (status2 & 0x80) dev->stats.rx_dropped++;
-#ifdef YF_PROTOTYPE		    /* Support for prototype hardware errata. */
+#ifdef YF_PROTOTYPE		/* Support for prototype hardware errata. */
 		} else if ((yp->flags & HasMACAddrBug)  &&
 			memcmp(le32_to_cpu(yp->rx_ring_dma +
 				entry*sizeof(struct yellowfin_desc)),
@@ -1270,7 +1270,7 @@ static int yellowfin_close(struct net_device *dev)
 		yp->tx_skbuff[i] = NULL;
 	}
 
-#ifdef YF_PROTOTYPE			    /* Support for prototype hardware errata. */
+#ifdef YF_PROTOTYPE			/* Support for prototype hardware errata. */
 	if (yellowfin_debug > 0) {
 		netdev_printk(KERN_DEBUG, dev, "Received %d frames that we should not have\n",
 			      bogus_rx);

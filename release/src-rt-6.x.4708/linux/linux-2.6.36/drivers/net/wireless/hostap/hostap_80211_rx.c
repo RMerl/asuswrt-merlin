@@ -758,7 +758,7 @@ void hostap_80211_rx(struct net_device *dev, struct sk_buff *skb,
 
 	/* Put this code here so that we avoid duplicating it in all
 	 * Rx paths. - Jean II */
-#ifdef IW_WIRELESS_SPY		    /* defined in iw_handler.h */
+#ifdef IW_WIRELESS_SPY		/* defined in iw_handler.h */
 	/* If spy monitoring on */
 	if (iface->spy_data.spy_number > 0) {
 		struct iw_quality wstats;

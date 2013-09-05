@@ -1808,7 +1808,7 @@ PHY_GetTxPowerLevel8192S(
 	// 1. 802.11h power contraint
 	//
 	//
-#ifdef TODO     //WB, 11h has not implemented now.
+#ifdef TODO //WB, 11h has not implemented now.
 	if(	priv->ieee80211->iw_mode != IW_MODE_INFRA && priv->bWithCcxCellPwr &&
 		channel == priv->ieee80211->current_network.channel)// & priv->ieee80211->mAssoc )
 	{

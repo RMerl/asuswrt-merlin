@@ -169,7 +169,7 @@ struct jffs2_sum_marker
 
 #define JFFS2_SUMMARY_FRAME_SIZE (sizeof(struct jffs2_raw_summary) + sizeof(struct jffs2_sum_marker))
 
-#ifdef CONFIG_JFFS2_SUMMARY	    /* SUMMARY SUPPORT ENABLED */
+#ifdef CONFIG_JFFS2_SUMMARY	/* SUMMARY SUPPORT ENABLED */
 
 #define jffs2_sum_active() (1)
 int jffs2_sum_init(struct jffs2_sb_info *c);

@@ -648,7 +648,7 @@ static void __xen_evtchn_do_upcall(void)
 		if (__get_cpu_var(xed_nesting_count)++)
 			goto out;
 
-#ifndef CONFIG_X86     /* No need for a barrier -- XCHG is a barrier on x86. */
+#ifndef CONFIG_X86 /* No need for a barrier -- XCHG is a barrier on x86. */
 		/* Clear master flag /before/ clearing selector flag. */
 		wmb();
 #endif

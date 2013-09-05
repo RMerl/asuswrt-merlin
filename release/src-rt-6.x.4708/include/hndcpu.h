@@ -1,7 +1,7 @@
 /*
  * HND SiliconBackplane MIPS/ARM cores software interface.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: hndcpu.h 355282 2012-09-06 02:30:09Z $
+ * $Id: hndcpu.h 401759 2013-05-13 16:08:08Z $
  */
 
 #ifndef _hndcpu_h_
@@ -33,7 +33,11 @@ extern uint32 si_mem_clock(si_t *sih);
 extern void hnd_cpu_wait(si_t *sih);
 extern void hnd_cpu_jumpto(void *addr);
 extern void hnd_cpu_reset(si_t *sih);
+#if defined(BCMDBG_LOADAVG) && defined(__ARM_ARCH_7R__)
+extern void hnd_cpu_loadavg_timer(si_t *sih, uint32 val);
+#else
 extern void hnd_cpu_deadman_timer(si_t *sih, uint32 val);
+#endif
 extern void si_router_coma(si_t *sih, int reset, int delay);
 extern void si_dmc_phyctl(si_t *sih, uint32 phyctl_val);
 extern uint32 si_arm_sflags(si_t *sih);

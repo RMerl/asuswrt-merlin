@@ -927,7 +927,7 @@ on_treeview2_button_press_event(GtkWidget * widget,
 	struct menu *menu;
 	gint col;
 
-#if GTK_CHECK_VERSION(2,1,4)     // bug in ctree with earlier version of GTK
+#if GTK_CHECK_VERSION(2,1,4) // bug in ctree with earlier version of GTK
 	gint tx = (gint) event->x;
 	gint ty = (gint) event->y;
 	gint cx, cy;

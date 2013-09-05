@@ -35,8 +35,8 @@
 
 
 #if defined(CONFIG_FW_LOADER) || defined(CONFIG_FW_LOADER_MODULE)
-#if !defined(CONFIG_USE_PCXHRLOADER) && !defined(CONFIG_SND_PCXHR)     /* built-in \
-	kernel */
+#if !defined(CONFIG_USE_PCXHRLOADER) && !defined(CONFIG_SND_PCXHR) /* built-in kernel \
+	*/
 #define SND_PCXHR_FW_LOADER	/* use the standard firmware loader */
 #endif
 #endif

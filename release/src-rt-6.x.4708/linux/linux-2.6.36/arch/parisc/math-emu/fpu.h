@@ -36,7 +36,7 @@
 #endif
 
 
-#ifndef _MACHINE_FPU_INCLUDED     /* allows multiple inclusion */
+#ifndef _MACHINE_FPU_INCLUDED /* allows multiple inclusion */
 #define _MACHINE_FPU_INCLUDED
 
 

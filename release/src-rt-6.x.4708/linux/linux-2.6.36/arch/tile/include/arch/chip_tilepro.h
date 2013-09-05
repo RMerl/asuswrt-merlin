@@ -196,7 +196,7 @@
 /** Does the chip have native single step support? */
 #define CHIP_HAS_SINGLE_STEP() 0
 
-#ifndef __OPEN_SOURCE__      /* features only relevant to hypervisor-level code */
+#ifndef __OPEN_SOURCE__  /* features only relevant to hypervisor-level code */
 
 /** How many entries are present in the instruction TLB? */
 #define CHIP_ITLB_ENTRIES() 16

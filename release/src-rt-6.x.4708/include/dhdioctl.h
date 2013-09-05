@@ -5,7 +5,7 @@
  *
  * Definitions subject to change without notice.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -19,7 +19,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: dhdioctl.h 327775 2012-04-16 18:54:32Z $
+ * $Id: dhdioctl.h 401759 2013-05-13 16:08:08Z $
  */
 
 #ifndef _dhdioctl_h_

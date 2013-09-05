@@ -25,7 +25,7 @@
 // 18 May   1992     MAG Changed CMD_OPOST
 //
 //------------------------------------------------------------------------------
-#ifndef I2CMD_H          // To prevent multiple includes
+#ifndef I2CMD_H      // To prevent multiple includes
 #define I2CMD_H   1
 
 #include "ip2types.h"

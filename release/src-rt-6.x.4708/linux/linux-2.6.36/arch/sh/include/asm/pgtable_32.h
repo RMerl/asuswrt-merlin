@@ -137,7 +137,7 @@ static inline unsigned long copy_ptea_attributes(unsigned long x)
 
 #ifndef __ASSEMBLY__
 
-#if defined(CONFIG_X2TLB)     /* SH-X2 TLB */
+#if defined(CONFIG_X2TLB) /* SH-X2 TLB */
 #define PAGE_NONE	__pgprot(_PAGE_PROTNONE | _PAGE_CACHABLE | \
 				 _PAGE_ACCESSED | _PAGE_FLAGS_HARD)
 
@@ -206,7 +206,7 @@ static inline unsigned long copy_ptea_attributes(unsigned long x)
 				 (slot ? _PAGE_PCC_AREA5 : _PAGE_PCC_AREA6) | \
 				 (type))
 
-#elif defined(CONFIG_MMU)   /* SH-X TLB */
+#elif defined(CONFIG_MMU) /* SH-X TLB */
 #define PAGE_NONE	__pgprot(_PAGE_PROTNONE | _PAGE_CACHABLE | \
 				 _PAGE_ACCESSED | _PAGE_FLAGS_HARD)
 

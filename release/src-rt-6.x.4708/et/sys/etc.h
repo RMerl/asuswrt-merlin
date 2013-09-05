@@ -2,7 +2,7 @@
  * Common [OS-independent] header file for
  * Broadcom BCM47XX 10/100Mbps Ethernet Device Driver
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: etc.h 352715 2012-08-23 19:50:14Z $
+ * $Id: etc.h 414031 2013-07-23 10:54:51Z $
  */
 
 #ifndef _etc_h_
@@ -57,6 +57,7 @@ struct chops {
 	void (*rxfill)(ch_t *ch);			/* post dma rx buffers */
 	int (*getintrevents)(ch_t *ch, bool in_isr);	/* return intr events */
 	bool (*errors)(ch_t *ch);			/* handle chip errors */
+	bool (*dmaerrors)(ch_t *ch);			/* check chip dma errors */
 	void (*intrson)(ch_t *ch);			/* enable chip interrupts */
 	void (*intrsoff)(ch_t *ch);			/* disable chip interrupts */
 	void (*txreclaim)(ch_t *ch, bool all);		/* reclaim transmit resources */
@@ -103,6 +104,7 @@ typedef struct etc_info {
 	uint16		deviceid;	/* pci function device id */
 	uint		chip;		/* chip number */
 	uint		chiprev;	/* chip revision */
+	uint		chippkg;	/* chip package option */
 	uint		coreid;		/* core id */
 	uint		corerev;	/* core revision */
 
@@ -158,6 +160,10 @@ typedef struct etc_info {
 	uint32		currchainsz;	/* current chain size */
 #if defined(BCMDBG) && defined(PKTC)
 	uint32		chainsz[PKTCBND];	/* chain size histo */
+#endif
+	uint32		reset_countdown;
+#ifdef ETFA
+	void		*fa;		/* optional fa private data */
 #endif
 } etc_info_t;
 
@@ -265,7 +271,7 @@ extern void etc_init(etc_info_t *etc, uint options);
 extern void etc_up(etc_info_t *etc);
 extern uint etc_down(etc_info_t *etc, int reset);
 extern int etc_ioctl(etc_info_t *etc, int cmd, void *arg);
-extern int etc_iovar(etc_info_t *etc, uint cmd, uint set, void *arg);
+extern int etc_iovar(etc_info_t *etc, uint cmd, uint set, void *arg, int len);
 extern void etc_promisc(etc_info_t *etc, uint on);
 extern void etc_qos(etc_info_t *etc, uint on);
 extern void etc_dump(etc_info_t *etc, struct bcmstrbuf *b);

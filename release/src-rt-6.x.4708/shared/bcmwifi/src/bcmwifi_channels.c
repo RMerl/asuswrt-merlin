@@ -3,7 +3,7 @@
  * Contents are wifi-specific, used by any kernel or app-level
  * software that might want wifi things as it grows.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -21,10 +21,10 @@
 
 #include <bcm_cfg.h>
 #include <typedefs.h>
+#include <bcmutils.h>
 
 #ifdef BCMDRIVER
 #include <osl.h>
-#include <bcmutils.h>
 #define strtoul(nptr, endptr, base) bcm_strtoul((nptr), (endptr), (base))
 #define tolower(c) (bcm_isupper((c)) ? ((c) + 'a' - 'A') : (c))
 #else
@@ -1019,6 +1019,9 @@ wf_channel2chspec(uint ctl_ch, uint bw)
 		center_ch = wf_5g_160m_chans;
 		num_ch = WF_NUM_5G_160M_CHANS;
 		bw = 160;
+	} else if (bw == WL_CHANSPEC_BW_20) {
+		chspec |= ctl_ch;
+		return chspec;
 	} else {
 		return 0;
 	}

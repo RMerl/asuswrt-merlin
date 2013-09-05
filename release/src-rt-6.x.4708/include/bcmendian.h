@@ -1,7 +1,7 @@
 /*
  * Byte order utilities
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- *  $Id: bcmendian.h 358865 2012-09-25 19:04:27Z $
+ *  $Id: bcmendian.h 370210 2012-11-21 05:35:27Z $
  *
  * This file by default provides proper behavior on little-endian architectures.
  * On big-endian architectures, IL_BIGENDIAN should be defined.
@@ -244,6 +244,12 @@ static INLINE uint32
 bcmswap32(uint32 val)
 {
 	return BCMSWAP32(val);
+}
+
+static INLINE uint64
+bcmswap64(uint64 val)
+{
+	return BCMSWAP64(val);
 }
 
 static INLINE uint32

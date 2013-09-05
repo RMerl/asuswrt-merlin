@@ -2,7 +2,7 @@
  * Required functions exported by the port-specific (os-dependent) driver
  * to common (os-independent) driver code.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: et_export.h 381881 2013-01-30 06:04:30Z $
+ * $Id: et_export.h 414031 2013-07-23 10:54:51Z $
  */
 
 #ifndef _et_export_h_
@@ -41,4 +41,12 @@ extern void et_dump_ctf(void *et, struct bcmstrbuf *b);
 #ifdef BCMDBG_CTRACE
 extern void et_dump_ctrace(void *et, struct bcmstrbuf *b);
 #endif
+#ifdef ETFA
+extern void et_fa_lock_init(void *et);
+extern void et_fa_lock(void *et);
+extern void et_fa_unlock(void *et);
+extern void *et_fa_get_fa_dev(void *et);
+extern void et_fa_fs_create(void);
+extern void et_fa_fs_clean(void);
+#endif /* ETFA */
 #endif	/* _et_export_h_ */

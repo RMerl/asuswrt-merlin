@@ -274,7 +274,7 @@ kbd_keycode(struct kbd_data *kbd, unsigned int keycode)
 		if (type == KT_LETTER)
 			type = KT_LATIN;
 		value = KVAL(keysym);
-#ifdef CONFIG_MAGIC_SYSRQ	           /* Handle the SysRq Hack */
+#ifdef CONFIG_MAGIC_SYSRQ	       /* Handle the SysRq Hack */
 		if (kbd->sysrq) {
 			if (kbd->sysrq == K(KT_LATIN, '-')) {
 				kbd->sysrq = 0;

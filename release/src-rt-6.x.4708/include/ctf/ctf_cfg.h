@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -39,6 +39,7 @@
 #define CTFCFG_STATUS_FLOW_ALREADY_SUSPENDED	4
 #define CTFCFG_STATUS_FLOW_NOT_SUSPENDED	5
 #define CTFCFG_STATUS_DEFAULT_FWD_INVALID	6
+#define CTFCFG_STATUS_PROTOCOL_NOT_SUPPORTED	7
 
 typedef union
 {
@@ -51,9 +52,9 @@ typedef struct
 	int family;
 
 	ip_address_t src_addr;
-	uint16_t src_port;
-
 	ip_address_t dst_addr;
+
+	uint16_t src_port;
 	uint16_t dst_port;
 
 	uint8_t protocol;

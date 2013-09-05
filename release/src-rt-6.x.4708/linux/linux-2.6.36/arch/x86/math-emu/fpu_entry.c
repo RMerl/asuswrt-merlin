@@ -40,7 +40,7 @@
 
 #define __BAD__ FPU_illegal	/* Illegal on an 80486, causes SIGILL */
 
-#ifndef NO_UNDOC_CODE		    /* Un-documented FPU op-codes supported by default. */
+#ifndef NO_UNDOC_CODE		/* Un-documented FPU op-codes supported by default. */
 
 /* WARNING: These codes are not documented by Intel in their 80486 manual
    and may not work on FPU clones or later Intel FPUs. */

@@ -3,7 +3,7 @@
  *
  * This file implements the chip-specific routines for the GMAC core.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: etcgmac.c 394331 2013-04-02 03:38:39Z $
+ * $Id: etcgmac.c 414031 2013-07-23 10:54:51Z $
  */
 
 #include <et_cfg.h>
@@ -50,6 +50,9 @@
 #ifdef ETADM
 #include <etc_adm.h>
 #endif /* ETADM */
+#ifdef ETFA
+#include <etc_fa.h>
+#endif /* ETFA */
 
 struct bcmgmac;	/* forward declaration */
 #define ch_t	struct bcmgmac
@@ -94,6 +97,7 @@ static void *chiprx(ch_t *ch);
 static void chiprxfill(ch_t *ch);
 static int chipgetintrevents(ch_t *ch, bool in_isr);
 static bool chiperrors(ch_t *ch);
+static bool chipdmaerrors(ch_t *ch);
 static void chipintrson(ch_t *ch);
 static void chipintrsoff(ch_t *ch);
 static void chiptxreclaim(ch_t *ch, bool all);
@@ -131,6 +135,7 @@ struct chops bcmgmac_et_chops = {
 	chiprxfill,
 	chipgetintrevents,
 	chiperrors,
+	chipdmaerrors,
 	chipintrson,
 	chipintrsoff,
 	chiptxreclaim,
@@ -224,6 +229,7 @@ chipattach(etc_info_t *etc, void *osh, void *regsva)
 	ch->regs = regs;
 	etc->chip = ch->sih->chip;
 	etc->chiprev = ch->sih->chiprev;
+	etc->chippkg = ch->sih->chippkg;
 	etc->coreid = si_coreid(ch->sih);
 	etc->nicmode = !(ch->sih->bustype == SI_BUS);
 	etc->coreunit = si_coreunit(ch->sih);
@@ -233,7 +239,8 @@ chipattach(etc_info_t *etc, void *osh, void *regsva)
 	boardtype = ch->sih->boardtype;
 
 #ifdef PKTC
-	etc->pktc = (getintvar(ch->vars, "pktc_disable") == 0);
+	etc->pktc = (getintvar(ch->vars, "pktc_disable") == 0) &&
+		(getintvar(ch->vars, "ctf_disable") == 0);
 #endif
 
 	/* get our local ether addr */
@@ -494,6 +501,24 @@ chipattach(etc_info_t *etc, void *osh, void *regsva)
 	}
 #endif /* ETADM */
 
+#ifdef ETFA
+	/*
+	 * Broadcom FA.
+	 */
+	if (BCM4707_CHIP(CHIPID(ch->sih->chip))) {
+		/* Attach to the fa */
+		if ((etc->fa = fa_attach(ch->sih, ch->et, ch->vars, etc->unit, etc->robo))) {
+			ET_TRACE(("et%d: chipattach: Calling fa attach\n", etc->unit));
+			/* Enable the fa */
+			if (fa_enable_device(etc->fa)) {
+				ET_ERROR(("et%d: chipattach: fa_enable_device failed\n",
+					etc->unit));
+				goto fail;
+			}
+		}
+	}
+#endif /* ETFA */
+
 	return ((void *) ch);
 
 fail:
@@ -522,6 +547,12 @@ chipdetach(ch_t *ch)
 	if (ch->adm)
 		adm_detach(ch->adm);
 #endif /* ETADM */
+
+#ifdef ETFA
+	/* free FA state */
+	if (ch->etc->fa)
+		fa_detach(ch->etc->fa);
+#endif /* ETFA */
 
 	/* free dma state */
 	for (i = 0; i < NUMTXQ; i++)
@@ -596,6 +627,14 @@ chipdump(ch_t *ch, struct bcmstrbuf *b)
 	if (ch->adm)
 		adm_dump_regs(ch->adm, b->buf);
 #endif /* ETADM */
+#ifdef ETFA
+	if (ch->etc->fa) {
+		/* dump entries */
+		fa_dump(ch->etc->fa, b, FALSE);
+		/* dump regs */
+		fa_regs_show(ch->etc->fa, b);
+	}
+#endif /* ETFA */
 #endif	/* BCMDBG */
 }
 
@@ -747,7 +786,7 @@ gmac_reset(ch_t *ch)
 
 	cmdcfg &= ~(CC_TE | CC_RE | CC_RPI | CC_TAI | CC_HD | CC_ML |
 	            CC_CFE | CC_RL | CC_RED | CC_PE | CC_TPI | CC_PAD_EN | CC_PF);
-	cmdcfg |= (CC_PROM | CC_NLC | CC_CFE);
+	cmdcfg |= (CC_PROM | CC_NLC | CC_CFE | CC_TPI | CC_AT);
 
 	if (cmdcfg != ocmdcfg)
 		W_REG(ch->osh, &ch->regs->cmdcfg, cmdcfg);
@@ -1008,12 +1047,12 @@ gmac_miiconfig(ch_t *ch)
 	 *          If reset, this selects 125MHz reference clock input.
 	 */
 	if (BCM4707_CHIP(CHIPID(ch->sih->chip))) {
-		if (ch->etc->forcespeed == ET_AUTO) {
+		if (ch->etc->phyaddr == EPHY_NOREG) {
 			si_core_cflags(ch->sih, 0x44, 0x44);
 			gmac_speed(ch, ET_2500FULL);
+			ch->etc->speed = 2500;
+			ch->etc->duplex = 1;
 		}
-		else
-			gmac_speed(ch, ch->etc->forcespeed);
 	} else {
 		uint32 devstatus, mode;
 		gmacregs_t *regs;
@@ -1030,10 +1069,17 @@ gmac_miiconfig(ch_t *ch)
 		 * using mii/rev mii.
 		 */
 		if ((mode == 0) || (mode == 1)) {
-			if (ch->etc->forcespeed == ET_AUTO)
+			if (ch->etc->forcespeed == ET_AUTO) {
 				gmac_speed(ch, ET_100FULL);
-			else
+				ch->etc->speed = 100;
+				ch->etc->duplex = 1;
+			} else
 				gmac_speed(ch, ch->etc->forcespeed);
+		} else {
+			if (ch->etc->phyaddr == EPHY_NOREG) {
+				ch->etc->speed = 1000;
+				ch->etc->duplex = 1;
+			}
 		}
 	}
 }
@@ -1098,8 +1144,11 @@ chipinreset:
 		}
 	}
 
-	/* reset core */
-	si_core_reset(ch->sih, flagbits, 0);
+	/* 3GMAC: for BCM4707, only do core reset at chipattach */
+	if (CHIPID(ch->sih->chip) != BCM4707_CHIP_ID) {
+		/* reset core */
+		si_core_reset(ch->sih, flagbits, 0);
+	}
 
 	/* Request Misc PLL for corerev > 2 */
 	if (ch->etc->corerev > 2 && !BCM4707_CHIP(CHIPID(ch->sih->chip))) {
@@ -1592,6 +1641,12 @@ chiperrors(ch_t *ch)
 		return (TRUE);
 
 	return (FALSE);
+}
+
+static bool
+chipdmaerrors(ch_t *ch)
+{
+	return dma_rxtxerror(ch->di[TX_Q1], TRUE);
 }
 
 static void

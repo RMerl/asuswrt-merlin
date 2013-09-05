@@ -1,7 +1,7 @@
 /*
  * bcmwpa.h - interface definitions of shared WPA-related functions
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,14 +9,14 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: bcmwpa.h 353470 2012-08-27 18:08:37Z $
+ * $Id: bcmwpa.h 401759 2013-05-13 16:08:08Z $
  */
 
 #ifndef _BCMWPA_H_
 #define _BCMWPA_H_
 
 #include <proto/wpa.h>
-#if defined(BCMSUP_PSK) || defined(BCMSUPPL) || defined(MFP)
+#if defined(BCMSUP_PSK) || defined(BCMSUPPL) || defined(MFP) || defined(WLRXOE)
 #include <proto/eapol.h>
 #endif
 #include <proto/802.11.h>
@@ -155,6 +155,8 @@ extern wps_at_fixed_t *bcm_wps_find_at(wps_at_fixed_t *at, int len, uint16 id);
 /* Look for a WiFi P2P IE; return it's address if found, NULL otherwise */
 extern wifi_p2p_ie_t *bcm_find_p2pie(uint8 *parse, uint len);
 #endif
+/* Look for a hotspot2.0 IE; return it's address if found, NULL otherwise */
+bcm_tlv_t *bcm_find_hs20ie(uint8 *parse, uint len);
 
 /* Check whether the given IE has the specific OUI and the specific type. */
 extern bool bcm_has_ie(uint8 *ie, uint8 **tlvs, uint *tlvs_len,
@@ -174,11 +176,14 @@ extern bool bcm_has_ie(uint8 *ie, uint8 **tlvs, uint *tlvs_len,
 #define bcm_is_p2p_ie(ie, tlvs, len)	bcm_has_ie(ie, tlvs, len, \
 	(const uint8 *)WFA_OUI, WFA_OUI_LEN, WFA_OUI_TYPE_P2P)
 #endif
+/* Check whether the given IE looks like WFA hotspot2.0 IE. */
+#define bcm_is_hs20_ie(ie, tlvs, len)	bcm_has_ie(ie, tlvs, len, \
+	(const uint8 *)WFA_OUI, WFA_OUI_LEN, WFA_OUI_TYPE_HS20)
 
 /* Convert WPA2 IE cipher suite to locally used value */
 extern bool BCMROMFN(wpa2_cipher)(wpa_suite_t *suite, ushort *cipher, bool wep_ok);
 
-#if defined(BCMSUP_PSK) || defined(BCMSUPPL)
+#if defined(BCMSUP_PSK) || defined(BCMSUPPL) || defined(WLRXOE)
 /* Look for an encapsulated GTK; return it's address if found, NULL otherwise */
 extern eapol_wpa2_encap_data_t *BCMROMFN(wpa_find_gtk_encap)(uint8 *parse, uint len);
 
@@ -189,7 +194,7 @@ extern bool BCMROMFN(wpa_is_gtk_encap)(uint8 *ie, uint8 **tlvs, uint *tlvs_len);
 extern eapol_wpa2_encap_data_t *BCMROMFN(wpa_find_kde)(uint8 *parse, uint len, uint8 type);
 #endif /* defined(BCMSUP_PSK) || defined(BCMSUPPL) */
 
-#ifdef BCMSUP_PSK
+#if defined(BCMSUP_PSK) || defined(WLRXOE)
 /* Calculate a pair-wise transient key */
 extern void BCMROMFN(wpa_calc_ptk)(struct ether_addr *auth_ea, struct ether_addr *sta_ea,
                                    uint8 *anonce, uint8* snonce, uint8 *pmk, uint pmk_len,

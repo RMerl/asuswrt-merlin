@@ -192,10 +192,16 @@ void update_mmu_cache(struct vm_area_struct *vma, unsigned long addr,
 		return;
 
 	mapping = page_mapping(page);
+#ifdef CONFIG_BCM47XX
+	/* Merged from Linux-2.6.37 */
+	if (!test_and_set_bit(PG_dcache_clean, &page->flags))
+		__flush_dcache_page(mapping, page);
+#else
 #ifndef CONFIG_SMP
 	if (test_and_clear_bit(PG_dcache_dirty, &page->flags))
 		__flush_dcache_page(mapping, page);
 #endif
+#endif /* CONFIG_BCM47XX */
 	if (mapping) {
 		if (cache_is_vivt())
 			make_coherent(mapping, vma, addr, ptep, pfn);

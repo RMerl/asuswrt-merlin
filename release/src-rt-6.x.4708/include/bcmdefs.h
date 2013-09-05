@@ -1,7 +1,7 @@
 /*
  * Misc system wide definitions
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmdefs.h 377098 2013-01-04 03:52:54Z $
+ * $Id: bcmdefs.h 401759 2013-05-13 16:08:08Z $
  */
 
 #ifndef	_bcmdefs_h_
@@ -102,8 +102,13 @@ extern bool attach_part_reclaimed;
 #define	BCMNMIATTACHFN(_fn)	_fn
 #define	BCMNMIATTACHDATA(_data)	_data
 #define CONST	const
+#if defined(__ARM_ARCH_7A__)
+#define BCM47XX_CA9
+#else
+#undef BCM47XX_CA9
+#endif
 #ifndef BCMFASTPATH
-#if defined(mips) || defined(__ARM_ARCH_7A__)
+#if defined(mips) || defined(BCM47XX_CA9)
 #define BCMFASTPATH		__attribute__ ((__section__ (".text.fastpath")))
 #define BCMFASTPATH_HOST	__attribute__ ((__section__ (".text.fastpath_host")))
 #else
@@ -239,7 +244,7 @@ typedef struct  {
 /* In NetBSD we also want more segments because the lower level mbuf mapping api might
  * allocate a large number of segments
  */
-#define MAX_DMA_SEGS 16
+#define MAX_DMA_SEGS 32
 #elif defined(linux)
 #define MAX_DMA_SEGS 8
 #else
@@ -265,15 +270,11 @@ typedef struct {
 /* add 40 bytes to allow for extra RPC header and info  */
 #define BCMEXTRAHDROOM 260
 #else /* BCM_RPC_NOCOPY || BCM_RPC_TXNOCOPY */
-#if defined(linux) && defined(__ARM_ARCH_7A__)
-#define BCMEXTRAHDROOM 224
-#else
 #ifdef CTFMAP
 #define BCMEXTRAHDROOM 208
 #else /* CTFMAP */
 #define BCMEXTRAHDROOM 204
 #endif /* CTFMAP */
-#endif /* linux && __ARM_ARCH_7A__ */
 #endif /* BCM_RPC_NOCOPY || BCM_RPC_TXNOCOPY */
 
 /* Packet alignment for most efficient SDIO (can change based on platform) */
@@ -332,7 +333,10 @@ typedef struct {
 #endif
 
 /* Max. nvram variable table size */
+#ifndef MAXSZ_NVRAM_VARS
 #define	MAXSZ_NVRAM_VARS	4096
+#endif
+
 
 #ifdef EFI
 #define __attribute__(x)	/* CSTYLED */

@@ -841,7 +841,7 @@ static void NCR53c406a_intr(void *dev_id)
 			VDEB(printk("NCR53c406a: Data-Out phase\n"));
 			outb(FLUSH_FIFO, CMD_REG);
 			LOAD_DMA_COUNT(scsi_bufflen(current_SC));	/* Max transfer size */
-#if USE_DMA			    /* No s/g support for DMA */
+#if USE_DMA			/* No s/g support for DMA */
 			NCR53c406a_dma_write(scsi_sglist(current_SC),
                                              scsdi_bufflen(current_SC));
 
@@ -863,7 +863,7 @@ static void NCR53c406a_intr(void *dev_id)
 			VDEB(printk("NCR53c406a: Data-In phase\n"));
 			outb(FLUSH_FIFO, CMD_REG);
 			LOAD_DMA_COUNT(scsi_bufflen(current_SC));	/* Max transfer size */
-#if USE_DMA			    /* No s/g support for DMA */
+#if USE_DMA			/* No s/g support for DMA */
 			NCR53c406a_dma_read(scsi_sglist(current_SC),
                                             scsdi_bufflen(current_SC));
 #endif				/* USE_DMA */

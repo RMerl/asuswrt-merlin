@@ -1073,6 +1073,37 @@ bcm5301x_usb_phy_init(int coreid)
 	}
 }
 
+static void
+bcm5301x_usb_hc_init(struct pci_dev *dev, int coreid)
+{
+	uint32 start, len;
+
+	if (!BCM4707_CHIP(CHIPID(sih->chip)))
+		return;
+
+	if (coreid == NS_USB20_CORE_ID) {
+		uint32 ehci_base;
+		uint32 *insnreg01, *insnreg03;
+
+		start = pci_resource_start(dev, 0);
+		len = pci_resource_len(dev, 0);
+		if (!len)
+			return;
+
+		/* Delay after PHY initialized to ensure HC is ready to be configured */
+		mdelay(1);
+
+		ehci_base = (uint32)REG_MAP(start, len);
+		insnreg01 = (uint32 *)(ehci_base + 0x94);
+		insnreg03 = (uint32 *)(ehci_base + 0x9C);
+		/* Set packet buffer OUT threshold */
+		writel(((readl(insnreg01) & 0xFFFF) | (0x80 << 16)), insnreg01);
+		/* Enabling break memory transfer */
+		writel((readl(insnreg03) | 0x1), insnreg03);
+		REG_UNMAP((void *)ehci_base);
+	}
+}
+
 int
 pcibios_enable_device(struct pci_dev *dev, int mask)
 {
@@ -1115,6 +1146,9 @@ pcibios_enable_device(struct pci_dev *dev, int mask)
 
 		/* USB PHY init */
 		bcm5301x_usb_phy_init(coreid);
+
+		/* USB HC init */
+		bcm5301x_usb_hc_init(dev, coreid);
 	}
 
 	rc = 0;

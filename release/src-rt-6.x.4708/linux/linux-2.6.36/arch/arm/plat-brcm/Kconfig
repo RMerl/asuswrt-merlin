@@ -59,3 +59,9 @@ config PLAT_NAND_JFFS2
 	Support for JFFS2 on NAND Flash memory connected to the SoC
 	NAND controller.
 
+config PLAT_MUX_CONSOLE
+	bool "Support UART1(CCA) console"
+	depends on PLAT_BCM5301X
+	default n
+	help
+	Using Top-level Muxing to support UART1(CCA) console.  Otherwise default is GPIO pins.

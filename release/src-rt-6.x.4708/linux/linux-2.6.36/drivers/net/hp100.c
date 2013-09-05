@@ -2082,7 +2082,7 @@ static void hp100_set_multicast_list(struct net_device *dev)
 	} else if (!netdev_mc_empty(dev) || (dev->flags & IFF_ALLMULTI)) {
 		lp->mac2_mode = HP100_MAC2MODE5;	/* multicast mode = get packets for */
 		lp->mac1_mode = HP100_MAC1MODE5;	/* me, broadcasts and all multicasts */
-#ifdef HP100_MULTICAST_FILTER	    /* doesn't work!!! */
+#ifdef HP100_MULTICAST_FILTER	/* doesn't work!!! */
 		if (dev->flags & IFF_ALLMULTI) {
 			/* set hash filter to receive all multicast packets */
 			memset(&lp->hash_bytes, 0xff, 8);

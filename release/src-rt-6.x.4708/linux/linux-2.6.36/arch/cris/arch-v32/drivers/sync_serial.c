@@ -185,7 +185,7 @@ static irqreturn_t rx_interrupt(int irq, void *dev_id);
 static irqreturn_t manual_interrupt(int irq, void *dev_id);
 #endif
 
-#ifdef CONFIG_ETRAXFS	    /* ETRAX FS */
+#ifdef CONFIG_ETRAXFS	/* ETRAX FS */
 #define OUT_DMA_NBR 4
 #define IN_DMA_NBR 5
 #define PINMUX_SSER pinmux_sser0

@@ -1246,7 +1246,7 @@ static int netdev_rx(struct net_device *dev)
 				skb_put(skb = np->rx_skbuff[entry], pkt_len);
 				np->rx_skbuff[entry] = NULL;
 			}
-#ifndef final_version				    /* Remove after testing. */
+#ifndef final_version				/* Remove after testing. */
 			/* You will want this info for the initial debug. */
 			if (debug > 5)
 				printk(KERN_DEBUG "  Rx data %pM %pM %02x%02x %pI4\n",

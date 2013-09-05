@@ -1,7 +1,7 @@
 /*
  * Implementation of event notification component.
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -149,7 +149,7 @@ static void BCMATTACHFN(dealloc_module)(bcm_notif_module_t *notif_module)
  *    BCME_OK     Object initialized successfully. May be used.
  *    BCME_NOMEM  Initialization failed due to no memory. Object must not be used
  */
-int bcm_notif_create_list(bcm_notif_module_t *notif_module, bcm_notif_h *hdlp)
+int BCMATTACHFN(bcm_notif_create_list)(bcm_notif_module_t *notif_module, bcm_notif_h *hdlp)
 {
 	int result = BCME_OK;
 
@@ -342,7 +342,7 @@ int bcm_notif_signal(bcm_notif_h hdl, bcm_notif_server_data data)
  *    BCME_OK     Event list successfully deleted.
  *    BCME_ERROR  General error
  */
-int bcm_notif_delete_list(bcm_notif_h *hdl)
+int BCMATTACHFN(bcm_notif_delete_list)(bcm_notif_h *hdl)
 {
 	/* First free all the nodes. */
 	struct bcm_notif_client_request * nodep = (*hdl)->tail;

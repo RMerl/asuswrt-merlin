@@ -354,7 +354,7 @@ static void au1xmmc_data_complete(struct au1xmmc_host *host, u32 status)
 
 	if (!data->error) {
 		if (host->flags & HOST_F_DMA) {
-#ifdef CONFIG_SOC_AU1200	    /* DBDMA */
+#ifdef CONFIG_SOC_AU1200	/* DBDMA */
 			u32 chan = DMA_CHANNEL(host);
 
 			chan_tab_t *c = *((chan_tab_t **)chan);
@@ -571,7 +571,7 @@ static void au1xmmc_cmd_complete(struct au1xmmc_host *host, u32 status)
 	host->status = HOST_S_DATA;
 
 	if (host->flags & HOST_F_DMA) {
-#ifdef CONFIG_SOC_AU1200	    /* DBDMA */
+#ifdef CONFIG_SOC_AU1200	/* DBDMA */
 		u32 channel = DMA_CHANNEL(host);
 
 		/* Start the DMA as soon as the buffer gets something in it */
@@ -634,7 +634,7 @@ static int au1xmmc_prepare_data(struct au1xmmc_host *host,
 	au_writel(data->blksz - 1, HOST_BLKSIZE(host));
 
 	if (host->flags & HOST_F_DMA) {
-#ifdef CONFIG_SOC_AU1200	    /* DBDMA */
+#ifdef CONFIG_SOC_AU1200	/* DBDMA */
 		int i;
 		u32 channel = DMA_CHANNEL(host);
 

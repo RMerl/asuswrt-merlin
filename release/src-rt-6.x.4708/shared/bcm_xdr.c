@@ -1,7 +1,7 @@
 /*
  * Utilites for XDR encode and decode of data
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: bcm_xdr.c 318785 2012-03-05 19:15:48Z $
+ * $Id: bcm_xdr.c 401759 2013-05-13 16:08:08Z $
  */
 
 #include <osl.h>

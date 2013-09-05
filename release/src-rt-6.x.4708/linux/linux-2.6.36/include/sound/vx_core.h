@@ -28,8 +28,7 @@
 #include <linux/interrupt.h>
 
 #if defined(CONFIG_FW_LOADER) || defined(CONFIG_FW_LOADER_MODULE)
-#if !defined(CONFIG_USE_VXLOADER) && !defined(CONFIG_SND_VX_LIB)     /* built-in kernel \
-	*/
+#if !defined(CONFIG_USE_VXLOADER) && !defined(CONFIG_SND_VX_LIB) /* built-in kernel */
 #define SND_VX_FW_LOADER	/* use the standard firmware loader */
 #endif
 #endif

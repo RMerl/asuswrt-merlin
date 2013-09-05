@@ -200,7 +200,7 @@ typedef struct _hfc4s8s_hw {
 /***************************/
 /* inline function defines */
 /***************************/
-#ifdef HISAX_HFC4S8S_PCIMEM	    /* inline functions memory mapped */
+#ifdef HISAX_HFC4S8S_PCIMEM	/* inline functions memory mapped */
 
 /* memory write and dummy IO read to avoid PCI byte merge problems */
 #define Write_hfc8(a,b,c) {(*((volatile u_char *)(a->membase+b)) = c); inb(a->iobase+4);}

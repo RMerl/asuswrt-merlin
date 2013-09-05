@@ -1660,7 +1660,7 @@ static void init_vgachip(struct fb_info *info)
 
 static void switch_monitor(struct cirrusfb_info *cinfo, int on)
 {
-#ifdef CONFIG_ZORRO     /* only works on Zorro boards */
+#ifdef CONFIG_ZORRO /* only works on Zorro boards */
 	static int IsOn = 0;
 
 	if (cinfo->btype == BT_PICASSO4)

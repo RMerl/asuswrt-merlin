@@ -339,7 +339,7 @@ typedef unsigned long			hcf_32;
 
 //HWi for migration purposes I defined a define which will be TRUE for ALL drivers
 //Meaning that _CCX defined code which we think will get a all driver OK flag can be defined from _CCX to _CCX_OK
-#if defined WVLAN_48     // && !defined _WIN32_WCE
+#if defined WVLAN_48 // && !defined _WIN32_WCE
 #if _VARIANT == 4 || _VARIANT == 6
 #define _CCX_OK		1
 #endif // _VARIANT == 4 || _VARIANT == 6
@@ -631,12 +631,12 @@ extern void   CE_OUT_PORT_STRING(hcf_32 port, void *addr, hcf_16 len);
 
 #if defined H0_LDR || defined H1_LDR || defined H2_LDR || defined H5_LDR
 
-#if defined H0_LDR				    //implies H-I
+#if defined H0_LDR				//implies H-I
 #define HCF_DLV		0			//H-I legacy, meaningless under H-II
 #define HCF_DLNV	1			//H-I legacy, meaningless under H-II
 #endif // H0_LDR
 
-#if defined H1_LDR 				    //implies H-I
+#if defined H1_LDR 				//implies H-I
 #define HCF_DLV		1			//H-I legacy, meaningless under H-II
 #define HCF_DLNV	0			//H-I legacy, meaningless under H-II
 #endif // H1_LDR / H2_LDR
@@ -1007,7 +1007,7 @@ void write_io_16 (int, uint16);
 /*********************************  W A V E P O I N T  ******************************************/
 /************************************************************************************************/
 
-#if defined WVLAN_81	    /* BORLANDC */
+#if defined WVLAN_81	/* BORLANDC */
 
 #define EXTERN_C  extern	// needed because DHF uses this instead of 'extern'
 
@@ -1431,7 +1431,7 @@ static hcf_16 swap_var;
 /*********************************  NGAP   ***************************************/
 /************************************************************************************************/
 
-#if defined __VX_WORKS__	    /* VxWorks */
+#if defined __VX_WORKS__	/* VxWorks */
 
 #if defined WLC_STATION
 //#undef HCF_TYPE 				/* Hermes-I Station F/W without SSN support */
@@ -1499,7 +1499,7 @@ void sysWrite16( unsigned short *port, unsigned short value );
 		} \
 	} while ( 0 )
 
-#elif defined FADS860BSP   /* elif defined AS2000BSP */
+#elif defined FADS860BSP /* elif defined AS2000BSP */
 
 #define HCF_BIG_ENDIAN 1
 
@@ -2044,11 +2044,11 @@ typedef hcf_16 hcf_io;
 #define			DUI_COMPAT_VAR		MSF_COMPONENT_ID
 #endif //		DUI_COMPAT_VAR
 
-#if ! defined	DUI_COMPAT_BOT		    //;?this way utilities can lower as well raise the bottom
+#if ! defined	DUI_COMPAT_BOT		//;?this way utilities can lower as well raise the bottom
 #define			DUI_COMPAT_BOT		8
 #endif //		DUI_COMPAT_BOT
 
-#if ! defined	DUI_COMPAT_TOP		    //;?this way utilities can lower as well raise the top
+#if ! defined	DUI_COMPAT_TOP		//;?this way utilities can lower as well raise the top
 #define			DUI_COMPAT_TOP       8
 #endif //		DUI_COMPAT_TOP
 
@@ -2157,7 +2157,7 @@ err: invalid value for HCF_ALIGN;
 err: invalid value for HCF_ASSERT;
 #endif // HCF_ASSERT
 
-#if (HCF_ASSERT) & HCF_ASSERT_MB && ! ( (HCF_EXT) & HCF_EXT_MB )		    //detect potential conflict
+#if (HCF_ASSERT) & HCF_ASSERT_MB && ! ( (HCF_EXT) & HCF_EXT_MB )		//detect potential conflict
 err: these macros are not used consistently;
 #endif // HCF_ASSERT_MB / HCF_EXT_MB
 

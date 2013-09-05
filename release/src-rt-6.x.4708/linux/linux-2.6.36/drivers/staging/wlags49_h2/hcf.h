@@ -240,12 +240,12 @@ typedef struct  {  //HCF Tallies (IFB substructure)
 
 //Note this way to define ..._TAL_CNT implies that all tallies must keep the same (hcf_32) size
 #if (HCF_TALLIES) & ( HCF_TALLIES_NIC | HCF_TALLIES_HCF )
-#if (HCF_TALLIES) & HCF_TALLIES_NIC	    //Hermes tally support
+#if (HCF_TALLIES) & HCF_TALLIES_NIC	//Hermes tally support
 #define		HCF_NIC_TAL_CNT	(sizeof(CFG_HERMES_TALLIES_STRCT)/ sizeof(hcf_32))
 #else
 #define		HCF_NIC_TAL_CNT	0
 #endif // HCF_TALLIES
-#if (HCF_TALLIES) & HCF_TALLIES_HCF	    //HCF tally support
+#if (HCF_TALLIES) & HCF_TALLIES_HCF	//HCF tally support
 #define		HCF_HCF_TAL_CNT	(sizeof(CFG_HCF_TALLIES_STRCT)   / sizeof(hcf_32))
 #else
 #define		HCF_HCF_TAL_CNT	0
@@ -330,7 +330,7 @@ typedef struct  {
 #if (HCF_ASSERT) & ( HCF_ASSERT_LNK_MSF_RTN | HCF_ASSERT_RT_MSF_RTN )
   MSF_ASSERT_RTNP	IFB_AssertRtn;		// MSF Assert Call back routine (inspired by GEF, DrDobbs Nov 1998 )
 #endif // HCF_ASSERT_LNK_MSF_RTN
-#if (HCF_ASSERT) & HCF_ASSERT_PRINTF	    // engineering facilty intended as F/W debugging aid
+#if (HCF_ASSERT) & HCF_ASSERT_PRINTF	// engineering facilty intended as F/W debugging aid
    hcf_16       IFB_DbgPrintF_Cnt;
    CFG_FW_PRINTF_BUFFER_LOCATION_STRCT IFB_FwPfBuff;
 #endif // HCF_ASSERT_PRINTF
@@ -341,15 +341,15 @@ typedef struct  {
 #if (HCF_TYPE) & HCF_TYPE_CCX
   hcf_16         IFB_CKIPStat;			// CKIP Status flag
 #endif // HCF_TYPE_CCX
-#if (HCF_TALLIES) & ( HCF_TALLIES_NIC | HCF_TALLIES_HCF )	    //Hermes and/or HCF tally support
+#if (HCF_TALLIES) & ( HCF_TALLIES_NIC | HCF_TALLIES_HCF )	//Hermes and/or HCF tally support
   hcf_32		IFB_Silly_you_should_align;	//;?
   hcf_16		IFB_TallyLen;			// Tally length (to build an LTV)
   hcf_16		IFB_TallyTyp;			// Tally Type (to build an LTV)
 #endif // HCF_TALLIES_NIC / HCF_TALLIES_HCF
-#if (HCF_TALLIES) & HCF_TALLIES_NIC		    //Hermes tally support
+#if (HCF_TALLIES) & HCF_TALLIES_NIC		//Hermes tally support
   CFG_HERMES_TALLIES_STRCT	IFB_NIC_Tallies;
 #endif // HCF_TALLIES_NIC
-#if (HCF_TALLIES) & HCF_TALLIES_HCF		    //HCF tally support
+#if (HCF_TALLIES) & HCF_TALLIES_HCF		//HCF tally support
   CFG_HCF_TALLIES_STRCT		IFB_HCF_Tallies;
 #endif // HCF_TALLIES_HCF
 #if HCF_DMA
@@ -368,7 +368,7 @@ typedef struct  {
   hcf_16		IFB_Magic;				/* "Magic" signature, to help the debugger interpret a memory dump
 										 * also the last field cleared at hcf_connect
 										 */
-#if (HCF_EXT) & HCF_EXT_IFB_STRCT		    // for usage by the MSF
+#if (HCF_EXT) & HCF_EXT_IFB_STRCT		// for usage by the MSF
   void FAR	   *IFB_MSFSup;				// pointer for arbitrary use by the MSF
 #endif // HCF_EXT_IFB_STRCT_EXT
 } IFB_STRCT;

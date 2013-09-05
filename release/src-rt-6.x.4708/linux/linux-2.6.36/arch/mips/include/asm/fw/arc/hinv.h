@@ -92,7 +92,7 @@ typedef enum {
 	Output = 64
 } IDENTIFIERFLAG;
 
-#ifndef NULL			    /* for GetChild(NULL); */
+#ifndef NULL			/* for GetChild(NULL); */
 #define	NULL	0
 #endif
 

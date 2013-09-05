@@ -9,7 +9,7 @@
 
 #include <linux/types.h>
 
-#ifdef __KERNEL__		    /* only set these up for kernel code */
+#ifdef __KERNEL__		/* only set these up for kernel code */
 
 #define __HAVE_ARCH_STRCPY
 extern char *strcpy(char *dest, const char *src);

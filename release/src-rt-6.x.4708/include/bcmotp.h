@@ -1,7 +1,7 @@
 /*
  * OTP support.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmotp.h 321779 2012-03-16 19:39:00Z $
+ * $Id: bcmotp.h 401759 2013-05-13 16:08:08Z $
  */
 
 #ifndef	_bcmotp_h_

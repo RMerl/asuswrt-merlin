@@ -470,7 +470,7 @@ _GLOBAL(kexec_wait)
 	SYNC
 
 99:	HMT_LOW
-#ifdef CONFIG_KEXEC		    /* use no memory without kexec */
+#ifdef CONFIG_KEXEC		/* use no memory without kexec */
 	lwz	r4,0(r5)
 	cmpwi	0,r4,0
 	bnea	0x60

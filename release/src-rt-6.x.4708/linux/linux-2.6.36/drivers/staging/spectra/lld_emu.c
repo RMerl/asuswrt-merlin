@@ -38,7 +38,7 @@ u32 totalUsedBanks;
 u32 valid_banks[MAX_CHANS];
 #endif
 
-#if FLASH_EMU			    /* This is for entire module */
+#if FLASH_EMU			/* This is for entire module */
 
 static u8 *flash_memory[GLOB_LLD_BLOCKS * GLOB_LLD_PAGES];
 

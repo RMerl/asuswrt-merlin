@@ -1,6 +1,6 @@
 # Broadcom 802.11abg Networking Device Driver Configuration file
 #
-# Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+# Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
 # 
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -20,14 +20,11 @@
 
 # AP features
 
-#MFP can be flipped by router makefile
-MFP=0
-
-#HSPOT can be flipped by router makefile
-HSPOT=0
-
-#NPS can be flipped by router makefile
-NPS=0
+# Allow these to be overridden via the environment.
+# Router makefile make use of these features.
+MFP      = $(if $(findstring y,$(CONFIG_MFP)),1,0)
+HSPOT    = $(if $(findstring y,$(CONFIG_HSPOT)),1,0)
+WLWNM_AP = $(if $(findstring y,$(CONFIG_WNM)$(CONFIG_HSPOT)),1,0)
 
 AP=1
 WDS=1
@@ -38,4 +35,3 @@ WME_PER_AC_TX_PARAMS=1
 WME_PER_AC_TUNING=1
 WLOVERTHRUSTER=1
 BCMECICOEX=0
-WLMULTIQUEUE=1

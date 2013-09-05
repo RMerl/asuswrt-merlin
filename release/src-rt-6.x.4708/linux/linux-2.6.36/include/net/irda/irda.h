@@ -46,7 +46,7 @@ typedef __u32 magic_t;
 #define SMALL 5
 #endif
 
-#ifndef IRDA_MIN     /* Lets not mix this MIN with other header files */
+#ifndef IRDA_MIN /* Lets not mix this MIN with other header files */
 #define IRDA_MIN(a, b) (((a) < (b)) ? (a) : (b))
 #endif
 

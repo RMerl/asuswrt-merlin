@@ -55,8 +55,7 @@
 #include <asm/pgtable.h>
 #endif
 
-#if defined(CONFIG_ATM_FORE200E_USE_TASKLET)     /* defer interrupt work to a tasklet \
-	*/
+#if defined(CONFIG_ATM_FORE200E_USE_TASKLET) /* defer interrupt work to a tasklet */
 #define FORE200E_USE_TASKLET
 #endif
 

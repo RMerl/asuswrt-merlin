@@ -1,7 +1,7 @@
 /*
  * NVRAM variable manipulation (Linux kernel half)
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -941,10 +941,10 @@ done:
 static ssize_t
 dev_nvram_write(struct file *file, const char *buf, size_t count, loff_t *ppos)
 {
-	char tmp[100], *name = tmp, *value;
+	char tmp[512], *name = tmp, *value;
 	ssize_t ret;
 
-	if (count+1 > sizeof(tmp)) {
+	if ((count+1) > sizeof(tmp)) {
 		if (!(name = kmalloc(count+1, GFP_KERNEL)))
 			return -ENOMEM;
 	}
@@ -953,7 +953,7 @@ dev_nvram_write(struct file *file, const char *buf, size_t count, loff_t *ppos)
 		ret = -EFAULT;
 		goto done;
 	}
-	name[ count ] = '\0';
+	name[count] = '\0';
 	value = name;
 	name = strsep(&value, "=");
 	if (value)

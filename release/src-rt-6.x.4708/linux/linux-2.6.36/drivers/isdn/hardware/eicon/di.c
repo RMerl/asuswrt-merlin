@@ -497,7 +497,7 @@ static byte isdn_rc(ADAPTER *a,
       this->Rc = Rc;
       this->More &=~XBUSY;
       this->complete=0xff;
-#if defined(DIVA_ISTREAM)     /* { */
+#if defined(DIVA_ISTREAM) /* { */
       if ((Rc == ASSIGN_OK) && a->ram_offset &&
           (a->IdTypeTable[this->No] == NL_ID) &&
           ((extended_info_type == DIVA_RC_TYPE_RX_DMA) ||

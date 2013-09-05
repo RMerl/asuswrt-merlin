@@ -765,7 +765,7 @@ static void smsc_ircc_init_chip(struct smsc_ircc_cb *self)
 	outb(((inb(iobase + IRCC_SCE_CFGA) & 0x87) | IRCC_CFGA_IRDA_SIR_A),
 	     iobase + IRCC_SCE_CFGA);
 
-#ifdef smsc_669     /* Uses pin 88/89 for Rx/Tx */
+#ifdef smsc_669 /* Uses pin 88/89 for Rx/Tx */
 	outb(((inb(iobase + IRCC_SCE_CFGB) & 0x3f) | IRCC_CFGB_MUX_COM),
 	     iobase + IRCC_SCE_CFGB);
 #else
@@ -1006,7 +1006,7 @@ static void smsc_ircc_fir_start(struct smsc_ircc_cb *self)
 	register_bank(fir_base, 1);
 
 	/* Select the TX/RX interface */
-#ifdef SMSC_669     /* Uses pin 88/89 for Rx/Tx */
+#ifdef SMSC_669 /* Uses pin 88/89 for Rx/Tx */
 	outb(((inb(fir_base + IRCC_SCE_CFGB) & 0x3f) | IRCC_CFGB_MUX_COM),
 	     fir_base + IRCC_SCE_CFGB);
 #else

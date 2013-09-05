@@ -239,10 +239,10 @@ struct ScsiInqData
 						/* Peripheral Device Type definitions	*/
 						/* See include/scsi/scsi.h		*/
 #define TYPE_NODEV		SCSI_DEVTYPE	/* Unknown or no device type		*/
-#ifndef TYPE_PRINTER				    /*					*/
+#ifndef TYPE_PRINTER				/*					*/
 # define TYPE_PRINTER			0x02	/* Printer device			*/
 #endif						/*					*/
-#ifndef TYPE_COMM				    /*					*/
+#ifndef TYPE_COMM				/*					*/
 # define TYPE_COMM			0x09	/* Communications device		*/
 #endif
 

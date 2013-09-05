@@ -558,12 +558,22 @@ extern void flush_tlb_kernel_page(unsigned long kaddr);
 extern void flush_tlb_range(struct vm_area_struct *vma, unsigned long start, unsigned long end);
 extern void flush_tlb_kernel_range(unsigned long start, unsigned long end);
 #endif
-
+#ifdef CONFIG_BCM47XX
+/*
+ * Merged from Linux-2.6.37
+ * If PG_dcache_clean is not set for the page, we need to ensure that any
+ * cache entries for the kernels virtual memory range are written
+ * back to the page. On ARMv6 and later, the cache coherency is handled via
+ * the set_pte_at() function.
+ */
+#else
 /*
  * if PG_dcache_dirty is set for the page, we need to ensure that any
  * cache entries for the kernels virtual memory range are written
  * back to the page.
  */
+#endif /* CONFIG_BCM47XX */
+
 extern void update_mmu_cache(struct vm_area_struct *vma, unsigned long addr,
 	pte_t *ptep);
 

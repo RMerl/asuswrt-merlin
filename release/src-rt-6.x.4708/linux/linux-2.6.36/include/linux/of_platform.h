@@ -62,7 +62,7 @@ extern struct platform_device *of_find_device_by_node(struct device_node *np);
 
 extern int of_bus_type_init(struct bus_type *bus, const char *name);
 
-#if !defined(CONFIG_SPARC)     /* SPARC has its own device registration method */
+#if !defined(CONFIG_SPARC) /* SPARC has its own device registration method */
 /* Platform devices and busses creation */
 extern struct platform_device *of_platform_device_create(struct device_node *np,
 						   const char *bus_id,

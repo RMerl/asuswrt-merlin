@@ -525,6 +525,14 @@ void ___dma_page_dev_to_cpu(struct page *page, unsigned long off,
 		outer_inv_range(paddr, paddr + size);
 
 	dma_cache_maint_page(page, off, size, dir, dmac_unmap_area);
+#ifdef CONFIG_BCM47XX
+	/*
+	 * Merged from Linux-2.6.37
+	 * Mark the D-cache clean for this page to avoid extra flushing.
+	 */
+	if (dir != DMA_TO_DEVICE && off == 0 && size >= PAGE_SIZE)
+		set_bit(PG_dcache_clean, &page->flags);
+#endif /* CONFIG_BCM47XX */
 }
 EXPORT_SYMBOL(___dma_page_dev_to_cpu);
 

@@ -360,7 +360,7 @@ static int __devinit ohci_pci_start (struct usb_hcd *hcd)
 	struct ohci_hcd	*ohci = hcd_to_ohci (hcd);
 	int		ret;
 
-#ifdef CONFIG_PM     /* avoid warnings about unused pdev */
+#ifdef CONFIG_PM /* avoid warnings about unused pdev */
 	if (hcd->self.controller) {
 		struct pci_dev *pdev = to_pci_dev(hcd->self.controller);
 

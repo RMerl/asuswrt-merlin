@@ -28,6 +28,9 @@ endchoice
 config BCM_CTF
 	tristate "BCMCTF support"
 	depends on HND
+config BCM_FA
+        bool "BCM HW Flow Accelerator support"
+        depends on BCM_CTF
 config WL_EMULATOR
 	bool "WL emulation using Gigabit ethernet"
 	depends on HND
@@ -110,6 +113,4 @@ config EMF
 config PLC
 	bool "Broadcom PLC network failover support"
 	depends on ET && WL
-config PROXYARP
-	tristate "Broadcom 802.11v Proxy ARP support"
 endmenu

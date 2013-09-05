@@ -25,7 +25,7 @@
 #ifndef _BC_DTS_TYPES_H_
 #define _BC_DTS_TYPES_H_
 
-#ifdef __LINUX_USER__      /* Don't include these for KERNEL.. */
+#ifdef __LINUX_USER__  /* Don't include these for KERNEL.. */
 #include <stdint.h>
 #endif
 
@@ -39,7 +39,7 @@ typedef int	BOOL;
 
 #if defined(__KERNEL__) || defined(__LINUX_USER__)
 
-#ifdef __LINUX_USER__	    /* Don't include these for KERNEL */
+#ifdef __LINUX_USER__	/* Don't include these for KERNEL */
 typedef uint32_t	ULONG;
 typedef int32_t		LONG;
 typedef void		*HANDLE;

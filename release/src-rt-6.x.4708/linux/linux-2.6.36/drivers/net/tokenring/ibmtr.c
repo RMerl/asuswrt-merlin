@@ -110,7 +110,7 @@ in the event that chatty debug messages are desired - jjs 12/30/98 */
 #include <linux/module.h>
 #include <linux/sched.h>
 
-#ifdef PCMCIA		    /* required for ibmtr_cs.c to build */
+#ifdef PCMCIA		/* required for ibmtr_cs.c to build */
 #undef MODULE		/* yes, really */
 #undef ENABLE_PAGING
 #else

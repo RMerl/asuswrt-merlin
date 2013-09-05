@@ -2184,7 +2184,7 @@ static void rtl8192_SetWirelessMode(struct net_device* dev, u8 wireless_mode)
 			wireless_mode = WIRELESS_MODE_B;
 		}
 	}
-#ifdef TO_DO_LIST //    // TODO: this function doesn't work well at this time, we should wait for FPGA
+#ifdef TO_DO_LIST //// TODO: this function doesn't work well at this time, we should wait for FPGA
 	ActUpdateChannelAccessSetting( pAdapter, pHalData->CurrentWirelessMode, &pAdapter->MgntInfo.Info8185.ChannelAccessSetting );
 #endif
 	priv->ieee80211->mode = wireless_mode;
@@ -5088,7 +5088,7 @@ rtl8190_process_cck_rxpathsel(
 	struct ieee80211_rx_stats * pprevious_stats
 	)
 {
-#ifdef RTL8190P	    //Only 90P 2T4R need to check
+#ifdef RTL8190P	//Only 90P 2T4R need to check
 	char				last_cck_adc_pwdb[4]={0,0,0,0};
 	u8				i;
 //cosa add for Rx path selection
@@ -5543,7 +5543,7 @@ static void rtl8192_query_rxphystatus(
 #endif
 		priv->stats.numqry_phystatusCCK++;
 
-#ifdef RTL8190P	    //Only 90P 2T4R need to check
+#ifdef RTL8190P	//Only 90P 2T4R need to check
 		if(priv->rf_type == RF_2T4R && DM_RxPathSelTable.Enable && bpacket_match_bssid)
 		{
 			for(i=RF90_PATH_A; i<RF90_PATH_MAX; i++)
@@ -5647,7 +5647,7 @@ static void rtl8192_query_rxphystatus(
 
 			//Fixed by Jacken from Bryant 2008-03-20
 			//Original value is 106
-#ifdef RTL8190P	       //Modify by Jacken 2008/03/31
+#ifdef RTL8190P	   //Modify by Jacken 2008/03/31
 			rx_pwr[i] = ((pofdm_buf->trsw_gain_X[i]&0x3F)*2) - 106;
 #else
 			rx_pwr[i] = ((pofdm_buf->trsw_gain_X[i]&0x3F)*2) - 110;

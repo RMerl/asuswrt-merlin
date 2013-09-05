@@ -2,7 +2,7 @@
  * Dongle BUS interface Abstraction layer
  *   target serial buses like USB, SDIO, SPI, etc.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: dbus.h 331695 2012-05-07 10:05:24Z $
+ * $Id: dbus.h 394558 2013-04-03 00:11:01Z $
  */
 
 #ifndef __DBUS_H__
@@ -29,7 +29,6 @@
 #define DBUSINFO(args)
 #define DBUSTRACE(args)
 #define DBUSDBGLOCK(args)
-
 #else
 #define DBUSTRACE(args)
 #define DBUSERR(args)
@@ -37,6 +36,26 @@
 #define DBUSTRACE(args)
 #define DBUSDBGLOCK(args)
 #endif
+
+#define BCM_OTP_SIZE_43236      84     /* number of 16 bit values */
+#define BCM_OTP_SW_RGN_43236    24     /* start offset of SW config region */
+#define BCM_OTP_ADDR_43236      0x18000800 /* address of otp base */
+
+#define ERR_CBMASK_TXFAIL       0x00000001
+#define ERR_CBMASK_RXFAIL       0x00000002
+#define ERR_CBMASK_ALL          0xFFFFFFFF
+
+#define DBUS_CBCTL_WRITE        0
+#define DBUS_CBCTL_READ         1
+
+#define DBUS_TX_RETRY_LIMIT       3     /* retries for failed txirb */
+#define DBUS_TX_TIMEOUT_INTERVAL  250   /* timeout for txirb complete, in ms */
+
+#define DBUS_BUFFER_SIZE_TX         32000
+#define DBUS_BUFFER_SIZE_RX         24000
+
+#define DBUS_BUFFER_SIZE_TX_NOAGG   2048
+#define DBUS_BUFFER_SIZE_RX_NOAGG   2048
 
 enum {
 	DBUS_OK = 0,
@@ -61,26 +80,6 @@ enum {
 	DBUS_JUMBO_BAD_FORMAT,
 	DBUS_NVRAM_NONTXT
 };
-
-#define BCM_OTP_SIZE_43236  84	/* number of 16 bit values */
-#define BCM_OTP_SW_RGN_43236	24  /* start offset of SW config region */
-#define BCM_OTP_ADDR_43236 0x18000800 /* address of otp base */
-
-#define ERR_CBMASK_TXFAIL		0x00000001
-#define ERR_CBMASK_RXFAIL		0x00000002
-#define ERR_CBMASK_ALL			0xFFFFFFFF
-
-#define DBUS_CBCTL_WRITE		0
-#define DBUS_CBCTL_READ			1
-
-#define DBUS_TX_RETRY_LIMIT		3		/* retries for failed txirb */
-#define DBUS_TX_TIMEOUT_INTERVAL	250		/* timeout for txirb complete, in ms */
-
-#define DBUS_BUFFER_SIZE_TX	32000
-#define DBUS_BUFFER_SIZE_RX	24000
-
-#define DBUS_BUFFER_SIZE_TX_NOAGG	2048
-#define DBUS_BUFFER_SIZE_RX_NOAGG	2048
 
 /* DBUS types */
 enum {
@@ -113,10 +112,10 @@ enum dbus_file {
 
 typedef enum _DEVICE_SPEED {
 	INVALID_SPEED = -1,
-	LOW_SPEED     =  1,	/* USB 1.1: 1.5 Mbps */
-	FULL_SPEED,     	/* USB 1.1: 12  Mbps */
-	HIGH_SPEED,		/* USB 2.0: 480 Mbps */
-	SUPER_SPEED,		/* USB 3.0: 4.8 Gbps */
+	LOW_SPEED     =  1, /* USB 1.1: 1.5 Mbps */
+	FULL_SPEED,         /* USB 1.1: 12  Mbps */
+	HIGH_SPEED,         /* USB 2.0: 480 Mbps */
+	SUPER_SPEED,        /* USB 3.0: 4.8 Gbps */
 } DEVICE_SPEED;
 
 typedef struct {
@@ -124,9 +123,9 @@ typedef struct {
 	int vid;
 	int pid;
 	int devid;
-	int chiprev; /* chip revsion number */
+	int chiprev;     /* chip revsion number */
 	int mtu;
-	int nchan; /* Data Channels */
+	int nchan;       /* Data Channels */
 	int has_2nd_bulk_in_ep;
 } dbus_attrib_t;
 
@@ -247,88 +246,36 @@ typedef struct {
 
 typedef struct dbus_pub {
 	struct osl_info *osh;
-	dbus_stats_t stats;
-	dbus_attrib_t attrib;
+	dbus_stats_t    stats;
+	dbus_attrib_t   attrib;
 	enum dbus_state busstate;
-	DEVICE_SPEED device_speed;
-	int ntxq, nrxq, rxsize;
-	void *bus;
+	DEVICE_SPEED    device_speed;
+	int   ntxq, nrxq, rxsize;
+	void  *bus;
 	struct shared_info *sh;
     void *dev_info;
 } dbus_pub_t;
 
 #define BUS_INFO(bus, type) (((type *) bus)->pub->bus)
 
-#define	ALIGNED_LOCAL_VARIABLE(var, align)					\
-	uint8	buffer[SDALIGN+64];						\
-	uint8	*var = (uint8 *)(((uintptr)&buffer[0]) & ~(align-1)) + align;
-
-/*
- * Public Bus Function Interface
- */
-
-/*
- * FIX: Is there better way to pass OS/Host handles to DBUS but still
- *      maintain common interface for all OS??
- * Under NDIS, param1 needs to be MiniportHandle
- *  For NDIS60, param2 is WdfDevice
- * Under Linux, param1 and param2 are NULL;
- */
-extern int dbus_register(int vid, int pid, probe_cb_t prcb, disconnect_cb_t discb, void *prarg,
-	void *param1, void *param2);
-extern int dbus_deregister(void);
-
-extern dbus_pub_t *dbus_attach(struct osl_info *osh, int rxsize, int nrxq, int ntxq,
-	void *cbarg, dbus_callbacks_t *cbs, dbus_extdl_t *extdl, struct shared_info *sh);
-extern void dbus_detach(dbus_pub_t *pub);
-
-extern int dbus_up(dbus_pub_t *pub);
-extern int dbus_down(dbus_pub_t *pub);
-extern int dbus_stop(dbus_pub_t *pub);
-extern int dbus_shutdown(dbus_pub_t *pub);
-extern void dbus_flowctrl_rx(dbus_pub_t *pub, bool on);
-
-extern int dbus_send_buf(dbus_pub_t *pub, uint8 *buf, int len, void *info);
-extern int dbus_send_pkt(dbus_pub_t *pub, void *pkt, void *info);
-extern int dbus_send_ctl(dbus_pub_t *pub, uint8 *buf, int len);
-extern int dbus_recv_ctl(dbus_pub_t *pub, uint8 *buf, int len);
-extern int dbus_recv_bulk(dbus_pub_t *pub, uint32 ep_idx);
-
-extern int dbus_get_stats(dbus_pub_t *pub, dbus_stats_t *stats);
-extern int dbus_get_attrib(dbus_pub_t *pub, dbus_attrib_t *attrib);
-extern int dbus_get_device_speed(dbus_pub_t *pub);
-extern int dbus_set_config(dbus_pub_t *pub, dbus_config_t *config);
-extern int dbus_get_config(dbus_pub_t *pub, dbus_config_t *config);
-extern void * dbus_get_devinfo(dbus_pub_t *pub);
-
-extern void *dbus_pktget(dbus_pub_t *pub, int len);
-extern void dbus_pktfree(dbus_pub_t *pub, void* pkt);
-
-extern int dbus_set_errmask(dbus_pub_t *pub, uint32 mask);
-extern int dbus_pnp_sleep(dbus_pub_t *pub);
-extern int dbus_pnp_resume(dbus_pub_t *pub, int *fw_reload);
-extern int dbus_pnp_disconnect(dbus_pub_t *pub);
-
-extern int dbus_iovar_op(dbus_pub_t *pub, const char *name,
-	void *params, int plen, void *arg, int len, bool set);
-#ifdef BCMDBG
-extern void dbus_hist_dump(dbus_pub_t *pub, struct bcmstrbuf *b);
-#endif /* BCMDBG */
-
-extern void *dhd_dbus_txq(const dbus_pub_t *pub);
-extern uint dhd_dbus_hdrlen(const dbus_pub_t *pub);
-
-/*
- * Private Common Bus Interface
- */
+#define	ALIGNED_LOCAL_VARIABLE(var, align) \
+	uint8  buffer[SDALIGN+64]; \
+	uint8  *var = (uint8 *)(((uintptr)&buffer[0]) & ~(align-1)) + align;
 
 /* IO Request Block (IRB) */
 typedef struct dbus_irb {
-	struct dbus_irb *next;	/* it's casted from dbus_irb_tx or dbus_irb_rx struct */
+	struct dbus_irb *next;  /* it's casted from dbus_irb_tx or dbus_irb_rx struct */
 } dbus_irb_t;
 
+/* General info for all BUS */
+typedef struct dbus_irbq {
+	dbus_irb_t *head;
+	dbus_irb_t *tail;
+	int cnt;
+} dbus_irbq_t;
+
 typedef struct dbus_irb_rx {
-	struct dbus_irb irb; /* Must be first */
+	struct dbus_irb irb;  /* Must be first */
 	uint8 *buf;
 	int buf_len;
 	int actual_len;
@@ -338,7 +285,7 @@ typedef struct dbus_irb_rx {
 } dbus_irb_rx_t;
 
 typedef struct dbus_irb_tx {
-	struct dbus_irb irb; /* Must be first */
+	struct dbus_irb irb;  /* Must be first */
 	uint8 *buf;
 	int len;
 	void *pkt;
@@ -347,6 +294,7 @@ typedef struct dbus_irb_tx {
 	void *arg;
 	void *send_buf; /* linear  bufffer for LINUX when aggreagtion is enabled */
 } dbus_irb_tx_t;
+
 
 /* DBUS interface callbacks are different from user callbacks
  * so, internally, different info can be passed to upper layer
@@ -367,9 +315,205 @@ typedef struct dbus_intf_callbacks {
 	void (*rxerr_indicate)(void *cbarg, bool on);
 } dbus_intf_callbacks_t;
 
+
+#if defined(EHCI_FASTPATH_TX) || defined(EHCI_FASTPATH_RX)
+
+#if !defined(linux)
+#error "EHCI fastpath is for Linux only."
+#endif
+
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 0))
+/* Backward compatibility */
+typedef unsigned int gfp_t;
+
+#define dma_pool   pci_pool
+#define dma_pool_create(name, dev, size, align, alloc) \
+				pci_pool_create(name, dev, size, align, alloc, GFP_DMA | GFP_ATOMIC)
+#define dma_pool_destroy(pool) pci_pool_destroy(pool)
+#define dma_pool_alloc(pool, flags, handle)    pci_pool_alloc(pool, flags, handle)
+#define dma_pool_free(pool, vaddr, addr)       pci_pool_free(pool, vaddr, addr)
+#define dma_map_single(dev, addr, size, dir)   pci_map_single(dev, addr, size, dir)
+#define dma_unmap_single(dev, hnd, size, dir)  pci_unmap_single(dev, hnd, size, dir)
+#define DMA_FROM_DEVICE    PCI_DMA_FROMDEVICE
+#define DMA_TO_DEVICE      PCI_DMA_TODEVICE
+#endif /* (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 0)) */
+
+/* Availability of these functions varies (when present, they have two arguments) */
+#ifndef hc32_to_cpu
+#define hc32_to_cpu(x)	le32_to_cpu(x)
+#define cpu_to_hc32(x)	cpu_to_le32(x)
+typedef unsigned int __hc32;
+#else
+#error Two-argument functions needed
+#endif
+
+/* Private USB opcode base */
+#define EHCI_FASTPATH         0x31
+#define EHCI_SET_EP_BYPASS    EHCI_FASTPATH
+#define EHCI_SET_BYPASS_CB    (EHCI_FASTPATH + 1)
+#define EHCI_SET_BYPASS_DEV   (EHCI_FASTPATH + 2)
+#define EHCI_DUMP_STATE       (EHCI_FASTPATH + 3)
+#define EHCI_SET_BYPASS_POOL  (EHCI_FASTPATH + 4)
+#define EHCI_CLR_EP_BYPASS    (EHCI_FASTPATH + 5)
+
 /*
- * Porting: To support new bus, port these functions below
+ * EHCI QTD structure (hardware and extension)
+ * NOTE that is does not need to (and does not) match its kernel counterpart
  */
+#define EHCI_QTD_NBUFFERS      5
+#define EHCI_QTD_ALIGN         32
+#define EHCI_BULK_PACKET_SIZE  512
+#define EHCI_QTD_XACTERR_MAX   32
+
+struct ehci_qtd {
+	/* Hardware map */
+	volatile uint32_t   qtd_next;
+	volatile uint32_t   qtd_altnext;
+	volatile uint32_t   qtd_status;
+#define	EHCI_QTD_GET_BYTES(x)   (((x)>>16) & 0x7fff)
+#define	EHCI_QTD_IOC            0x00008000
+#define	EHCI_QTD_GET_CERR(x)    (((x)>>10) & 0x3)
+#define EHCI_QTD_SET_CERR(x)    ((x) << 10)
+#define	EHCI_QTD_GET_PID(x)     (((x)>>8) & 0x3)
+#define EHCI_QTD_SET_PID(x)     ((x) <<  8)
+#define EHCI_QTD_ACTIVE         0x80
+#define EHCI_QTD_HALTED         0x40
+#define EHCI_QTD_BUFERR         0x20
+#define EHCI_QTD_BABBLE         0x10
+#define EHCI_QTD_XACTERR        0x08
+#define EHCI_QTD_MISSEDMICRO    0x04
+	volatile uint32_t   qtd_buffer[EHCI_QTD_NBUFFERS];
+	volatile uint32_t   qtd_buffer_hi[EHCI_QTD_NBUFFERS];
+
+	/* Implementation extension */
+	dma_addr_t          qtd_self;   /* own hardware address */
+	struct ehci_qtd     *obj_next;  /* software link to the next QTD */
+	void                *rpc;       /* pointer to the rpc buffer */
+	size_t              length;     /* length of the data in the buffer */
+	void                *buff;      /* pointer to the reassembly buffer */
+	int                 xacterrs;   /* retry counter for qtd xact error */
+} __attribute__ ((aligned(EHCI_QTD_ALIGN)));
+
+#define EHCI_NULL     __constant_cpu_to_le32(1) /* HW null pointer shall be odd */
+
+#define SHORT_READ_Q(token) (EHCI_QTD_GET_BYTES(token) != 0 && EHCI_QTD_GET_PID(token) == 1)
+
+/* Queue Head */
+/* NOTE This structure is slightly different from the one in the kernel; but needs to stay
+ * compatible
+ */
+struct ehci_qh {
+	/* Hardware map */
+	volatile uint32_t  qh_link;
+	volatile uint32_t  qh_endp;
+	volatile uint32_t  qh_endphub;
+	volatile uint32_t  qh_curqtd;
+
+	/* QTD overlay */
+	volatile uint32_t  ow_next;
+	volatile uint32_t  ow_altnext;
+	volatile uint32_t  ow_status;
+	volatile uint32_t  ow_buffer [EHCI_QTD_NBUFFERS];
+	volatile uint32_t  ow_buffer_hi [EHCI_QTD_NBUFFERS];
+
+	/* Extension (should match the kernel layout) */
+	dma_addr_t         unused0;
+	void               *unused1;
+	struct list_head   unused2;
+	struct ehci_qtd    *dummy;
+	struct ehci_qh     *unused3;
+
+	struct ehci_hcd    *unused4;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0))
+	struct kref     unused5;
+	unsigned        unused6;
+
+	uint8_t         unused7;
+
+	/* periodic schedule info */
+	uint8_t         unused8;
+	uint8_t         unused9;
+	uint8_t         unused10;
+	uint16_t        unused11;
+	uint16_t        unused12;
+	uint16_t        unused13;
+	struct usb_device  *unused14;
+#else
+	unsigned    unused5;
+	u8          unused6;
+
+	/* periodic schedule info */
+	u8          unused7;
+	u8          unused8;
+	u8          unused9;
+	unsigned short  unused10;
+	unsigned short  unused11;
+#define NO_FRAME ((unsigned short)~0)
+#ifdef EHCI_QUIRK_FIX
+	struct usb_device  *unused12;
+#endif /* EHCI_QUIRK_FIX */
+#endif /* (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0)) */
+	struct ehci_qtd    *first_qtd;
+	/* Link to the first QTD; this is an optimized equivalent of the qtd_list field */
+	/* NOTE that ehci_qh in ehci.h shall reserve this word */
+} __attribute__ ((aligned(EHCI_QTD_ALIGN)));
+
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 0))
+/* The corresponding structure in the kernel is used to get the QH */
+struct hcd_dev { /* usb_device.hcpriv points to this */
+	struct list_head  unused0;
+	struct list_head  unused1;
+
+	/* array of QH pointers */
+	void             *ep[32];
+};
+#endif /* (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0)) */
+#endif /* EHCI_FASTPATH_TX || EHCI_FASTPATH_RX */
+
+/*
+ * Public Bus Function Interface
+ */
+extern int dbus_register(int vid, int pid, probe_cb_t prcb, disconnect_cb_t discb, void *prarg,
+	void *param1, void *param2);
+extern int dbus_deregister(void);
+extern dbus_pub_t *dbus_attach(struct osl_info *osh, int rxsize, int nrxq, int ntxq,
+	void *cbarg, dbus_callbacks_t *cbs, dbus_extdl_t *extdl, struct shared_info *sh);
+extern void dbus_detach(dbus_pub_t *pub);
+extern int dbus_up(dbus_pub_t *pub);
+extern int dbus_down(dbus_pub_t *pub);
+extern int dbus_stop(dbus_pub_t *pub);
+extern int dbus_shutdown(dbus_pub_t *pub);
+extern void dbus_flowctrl_rx(dbus_pub_t *pub, bool on);
+extern int dbus_send_buf(dbus_pub_t *pub, uint8 *buf, int len, void *info);
+extern int dbus_send_pkt(dbus_pub_t *pub, void *pkt, void *info);
+extern int dbus_send_ctl(dbus_pub_t *pub, uint8 *buf, int len);
+extern int dbus_recv_ctl(dbus_pub_t *pub, uint8 *buf, int len);
+extern int dbus_recv_bulk(dbus_pub_t *pub, uint32 ep_idx);
+extern int dbus_get_stats(dbus_pub_t *pub, dbus_stats_t *stats);
+extern int dbus_get_attrib(dbus_pub_t *pub, dbus_attrib_t *attrib);
+extern int dbus_get_device_speed(dbus_pub_t *pub);
+extern int dbus_set_config(dbus_pub_t *pub, dbus_config_t *config);
+extern int dbus_get_config(dbus_pub_t *pub, dbus_config_t *config);
+extern void * dbus_get_devinfo(dbus_pub_t *pub);
+extern void *dbus_pktget(dbus_pub_t *pub, int len);
+extern void dbus_pktfree(dbus_pub_t *pub, void* pkt);
+extern int dbus_set_errmask(dbus_pub_t *pub, uint32 mask);
+extern int dbus_pnp_sleep(dbus_pub_t *pub);
+extern int dbus_pnp_resume(dbus_pub_t *pub, int *fw_reload);
+extern int dbus_pnp_disconnect(dbus_pub_t *pub);
+extern int dbus_iovar_op(dbus_pub_t *pub, const char *name,
+	void *params, int plen, void *arg, int len, bool set);
+#ifdef BCMDBG
+extern void dbus_hist_dump(dbus_pub_t *pub, struct bcmstrbuf *b);
+#endif /* BCMDBG */
+extern void *dhd_dbus_txq(const dbus_pub_t *pub);
+extern uint dhd_dbus_hdrlen(const dbus_pub_t *pub);
+extern void  dbus_flowctrl_tx(void *dbi, bool on);
+#if defined(BCM_REQUEST_FW)
+extern void *dbus_get_fw_nvfile(int devid, uint8 **fw, int *fwlen, int type,
+	uint16 boardtype, uint16 boardrev);
+extern void dbus_release_fw_nvfile(void *firmware);
+#endif  /* #if defined(BCM_REQUEST_FW) */
 
 /*
  * Bus specific Interface
@@ -387,188 +531,18 @@ extern void dbus_bus_fw_get(void *bus, uint8 **fw, int *fwlen, int *decomp);
 extern int dbus_bus_osl_register(int vid, int pid, probe_cb_t prcb, disconnect_cb_t discb,
 	void *prarg, dbus_intf_t **intf, void *param1, void *param2);
 extern int dbus_bus_osl_deregister(void);
-
-/*
- * Bus-specific, OS-specific, HW-specific Interface
- * Mainly for SDIO Host HW controller
- */
 extern int dbus_bus_osl_hw_register(int vid, int pid, probe_cb_t prcb, disconnect_cb_t discb,
 	void *prarg, dbus_intf_t **intf);
 extern int dbus_bus_osl_hw_deregister(void);
-
 extern uint usbdev_bulkin_eps(void);
-#if defined(BCM_REQUEST_FW)
-extern void *dbus_get_fw_nvfile(int devid, uint8 **fw, int *fwlen, int type,
-  uint16 boardtype, uint16 boardrev);
-extern void dbus_release_fw_nvfile(void *firmware);
-#endif  /* #if defined(BCM_REQUEST_FW) */
-
 
 #if defined(EHCI_FASTPATH_TX) || defined(EHCI_FASTPATH_RX)
-
-#if !defined(linux)
-#error "EHCI fastpath is for Linux only."
-#endif
-
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 0))
-	/* Backward compatibility */
-	typedef unsigned int gfp_t;
-
-	#define dma_pool pci_pool
-	#define dma_pool_create(name, dev, size, align, alloc) \
-		pci_pool_create(name, dev, size, align, alloc, GFP_DMA | GFP_ATOMIC)
-	#define dma_pool_destroy(pool) pci_pool_destroy(pool)
-	#define dma_pool_alloc(pool, flags, handle) pci_pool_alloc(pool, flags, handle)
-	#define dma_pool_free(pool, vaddr, addr) pci_pool_free(pool, vaddr, addr)
-
-	#define dma_map_single(dev, addr, size, dir)	pci_map_single(dev, addr, size, dir)
-	#define dma_unmap_single(dev, hnd, size, dir)	pci_unmap_single(dev, hnd, size, dir)
-	#define DMA_FROM_DEVICE PCI_DMA_FROMDEVICE
-	#define DMA_TO_DEVICE PCI_DMA_TODEVICE
-#endif /* (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 0)) */
-
-/* Availability of these functions varies (when present, they have two arguments) */
-#ifndef hc32_to_cpu
-	#define hc32_to_cpu(x)	le32_to_cpu(x)
-	#define cpu_to_hc32(x)	cpu_to_le32(x)
-	typedef unsigned int __hc32;
-#else
-	#error Two-argument functions needed
-#endif
-
-/* Private USB opcode base */
-#define EHCI_FASTPATH		0x31
-#define	EHCI_SET_EP_BYPASS	EHCI_FASTPATH
-#define	EHCI_SET_BYPASS_CB	(EHCI_FASTPATH + 1)
-#define	EHCI_SET_BYPASS_DEV	(EHCI_FASTPATH + 2)
-#define	EHCI_DUMP_STATE		(EHCI_FASTPATH + 3)
-#define	EHCI_SET_BYPASS_POOL	(EHCI_FASTPATH + 4)
-#define	EHCI_CLR_EP_BYPASS	(EHCI_FASTPATH + 5)
-
-/*
- * EHCI QTD structure (hardware and extension)
- * NOTE that is does not need to (and does not) match its kernel counterpart
- */
-#define EHCI_QTD_NBUFFERS       5
-#define EHCI_QTD_ALIGN  	32
-#define EHCI_BULK_PACKET_SIZE	512
-#define EHCI_QTD_XACTERR_MAX	32
-
-struct ehci_qtd {
-	/* Hardware map */
-	volatile uint32_t	qtd_next;
-	volatile uint32_t	qtd_altnext;
-	volatile uint32_t	qtd_status;
-#define	EHCI_QTD_GET_BYTES(x)	(((x)>>16) & 0x7fff)
-#define	EHCI_QTD_IOC            0x00008000
-#define	EHCI_QTD_GET_CERR(x)	(((x)>>10) & 0x3)
-#define EHCI_QTD_SET_CERR(x)    ((x) << 10)
-#define	EHCI_QTD_GET_PID(x)	(((x)>>8) & 0x3)
-#define EHCI_QTD_SET_PID(x)     ((x) <<  8)
-#define EHCI_QTD_ACTIVE         0x80
-#define EHCI_QTD_HALTED         0x40
-#define EHCI_QTD_BUFERR         0x20
-#define EHCI_QTD_BABBLE         0x10
-#define EHCI_QTD_XACTERR        0x08
-#define EHCI_QTD_MISSEDMICRO    0x04
-	volatile uint32_t 	qtd_buffer[EHCI_QTD_NBUFFERS];
-	volatile uint32_t 	qtd_buffer_hi[EHCI_QTD_NBUFFERS];
-
-	/* Implementation extension */
-	dma_addr_t		qtd_self;		/* own hardware address */
-	struct ehci_qtd		*obj_next;		/* software link to the next QTD */
-	void			*rpc;			/* pointer to the rpc buffer */
-	size_t			length;			/* length of the data in the buffer */
-	void			*buff;			/* pointer to the reassembly buffer */
-	int			xacterrs;		/* retry counter for qtd xact error */
-} __attribute__ ((aligned(EHCI_QTD_ALIGN)));
-
-#define	EHCI_NULL	__constant_cpu_to_le32(1) /* HW null pointer shall be odd */
-
-#define SHORT_READ_Q(token) (EHCI_QTD_GET_BYTES(token) != 0 && EHCI_QTD_GET_PID(token) == 1)
-
-/* Queue Head */
-/* NOTE This structure is slightly different from the one in the kernel; but needs to stay
- * compatible
- */
-struct ehci_qh {
-	/* Hardware map */
-	volatile uint32_t 	qh_link;
-	volatile uint32_t 	qh_endp;
-	volatile uint32_t 	qh_endphub;
-	volatile uint32_t 	qh_curqtd;
-
-	/* QTD overlay */
-	volatile uint32_t	ow_next;
-	volatile uint32_t	ow_altnext;
-	volatile uint32_t	ow_status;
-	volatile uint32_t	ow_buffer [EHCI_QTD_NBUFFERS];
-	volatile uint32_t	ow_buffer_hi [EHCI_QTD_NBUFFERS];
-
-	/* Extension (should match the kernel layout) */
-	dma_addr_t		unused0;
-	void 			*unused1;
-	struct list_head	unused2;
-	struct ehci_qtd		*dummy;
-	struct ehci_qh		*unused3;
-
-	struct ehci_hcd		*unused4;
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0))
-	struct kref		unused5;
-	unsigned		unused6;
-
-	uint8_t			unused7;
-
-	/* periodic schedule info */
-	uint8_t			unused8;
-	uint8_t			unused9;
-	uint8_t			unused10;
-	uint16_t		unused11;
-	uint16_t		unused12;
-	uint16_t		unused13;
-	struct usb_device	*unused14;
-#else
-	unsigned		unused5;
-
-	u8			unused6;
-
-	/* periodic schedule info */
-	u8			unused7;
-	u8			unused8;
-	u8			unused9;
-	unsigned short		unused10;
-	unsigned short		unused11;
-#define NO_FRAME ((unsigned short)~0)
-#ifdef EHCI_QUIRK_FIX
-	struct usb_device	*unused12;
-#endif /* EHCI_QUIRK_FIX */
-#endif /* (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0)) */
-	struct ehci_qtd		*first_qtd;
-		/* Link to the first QTD; this is an optimized equivalent of the qtd_list field */
-		/* NOTE that ehci_qh in ehci.h shall reserve this word */
-} __attribute__ ((aligned(EHCI_QTD_ALIGN)));
-
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 0))
-/* The corresponding structure in the kernel is used to get the QH */
-struct hcd_dev {	/* usb_device.hcpriv points to this */
-	struct list_head	unused0;
-	struct list_head	unused1;
-
-	/* array of QH pointers */
-	void			*ep[32];
-};
-#endif /* (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0)) */
-
-int optimize_qtd_fill_with_rpc(const dbus_pub_t *pub,  int epn, struct ehci_qtd *qtd, void *rpc,
-	int token, int len);
-int optimize_qtd_fill_with_data(const dbus_pub_t *pub, int epn, struct ehci_qtd *qtd, void *data,
-	int token, int len);
-int optimize_submit_async(struct ehci_qtd *qtd, int epn);
-void inline optimize_ehci_qtd_init(struct ehci_qtd *qtd, dma_addr_t dma);
-struct ehci_qtd *optimize_ehci_qtd_alloc(gfp_t flags);
-void optimize_ehci_qtd_free(struct ehci_qtd *qtd);
-void optimize_submit_rx_request(const dbus_pub_t *pub, int epn, struct ehci_qtd *qtd_in, void *buf);
+extern int optimize_qtd_fill_with_rpc(const dbus_pub_t *pub,  int epn, struct ehci_qtd *qtd,
+	void *rpc, int token, int len);
+extern int optimize_submit_async(struct ehci_qtd *qtd, int epn);
+extern struct ehci_qtd *optimize_ehci_qtd_alloc(gfp_t flags);
+extern void optimize_ehci_qtd_free(struct ehci_qtd *qtd);
+extern void optimize_submit_rx_request(const dbus_pub_t *pub, int epn, struct ehci_qtd *qtd_in,
+	void *buf);
 #endif /* EHCI_FASTPATH_TX || EHCI_FASTPATH_RX */
-
-void  dbus_flowctrl_tx(void *dbi, bool on);
 #endif /* __DBUS_H__ */

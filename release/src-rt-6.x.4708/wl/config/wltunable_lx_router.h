@@ -1,7 +1,7 @@
 /*
  * Broadcom 802.11abg Networking Device Driver Configuration file
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: wltunable_lx_router.h 376399 2012-12-26 09:50:35Z $
+ * $Id: wltunable_lx_router.h 401759 2013-05-13 16:08:08Z $
  *
  * wl driver tunables
  */
@@ -31,11 +31,7 @@
 #define NRXBUFPOST	56	/* # rx buffers posted */
 #define RXBND		24	/* max # rx frames to process */
 #define PKTCBND		36	/* max # rx frames to chain */
-#ifdef __ARM_ARCH_7A__
-#define CTFPOOLSZ       512	/* max buffers in ctfpool */
-#else
 #define CTFPOOLSZ       192	/* max buffers in ctfpool */
-#endif
 
 #define WME_PER_AC_TX_PARAMS 1
 #define WME_PER_AC_TUNING 1
@@ -44,13 +40,9 @@
 #define NRXD_AC3X3		512	/* RX descriptor ring */
 #define NTXD_LARGE_AC3X3	2048	/* TX descriptor ring */
 #define NRXD_LARGE_AC3X3	2048	/* RX descriptor ring */
-#define NRXBUFPOST_AC3X3	320	/* # rx buffers posted */
+#define NRXBUFPOST_AC3X3	500	/* # rx buffers posted */
 #define RXBND_AC3X3		36	/* max # rx frames to process */
-#ifdef __ARM_ARCH_7A__
-#define CTFPOOLSZ_AC3X3		1024	/* max buffers in ctfpool */
-#else
 #define CTFPOOLSZ_AC3X3		512	/* max buffers in ctfpool */
-#endif
 #define PKTCBND_AC3X3		48	/* max # rx frames to chain */
 
 #define TXMR			2	/* number of outstanding reads */
@@ -66,3 +58,5 @@
 
 #define AMPDU_PKTQ_LEN          1536
 #define AMPDU_PKTQ_FAVORED_LEN  4096
+
+#define WLRXEXTHDROOM -1        /* to reserve extra headroom in DMA Rx buffer */

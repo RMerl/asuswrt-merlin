@@ -1,7 +1,7 @@
 /*
  * NDIS Error codes
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: ndiserrmap.c 375471 2012-12-18 22:59:42Z $
+ * $Id: ndiserrmap.c 401759 2013-05-13 16:08:08Z $
  */
 #ifndef NDIS
 #include <bcm_ndis.h>
@@ -66,15 +66,20 @@ static NDIS_STATUS ndisbcmerrormap[] =
 	NDIS_STATUS_ADAPTER_REMOVED,		/* BCME_NODEVICE */
 	NDIS_STATUS_FAILURE,			/* BCME_NMODE_DISABLED */
 	NDIS_STATUS_INVALID_DATA,		/* BCME_NONRESIDENT */
-	NDIS_STATUS_FAILURE,                    /* BCME_SCANREJECT */
+	NDIS_STATUS_FAILURE,			/* BCME_SCANREJECT */
+	NDIS_STATUS_FAILURE,			/* unused */
+	NDIS_STATUS_FAILURE,			/* unused */
+	NDIS_STATUS_FAILURE,			/* unused */
+	NDIS_STATUS_NOT_SUPPORTED,		/* BCME_DISABLED */
+
 /* When an new error code is added to bcmutils.h, add os
  * spcecific error translation here as well
  */
 /* check if BCME_LAST changed since the last time this function was updated */
-#if BCME_LAST != -43
+#if BCME_LAST != -47
 #error "You need to add a OS error translation in the ndisbcmerrormap \
 	for new error code defined in bcmutils.h"
-#endif /* BCME_LAST != -43 */
+#endif /* BCME_LAST != -47 */
 	};
 
 int

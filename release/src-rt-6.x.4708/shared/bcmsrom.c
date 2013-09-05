@@ -1,7 +1,9 @@
 /*
- *  Routines to access SPROM and to parse SROM/CIS variables.
+ * Routines to access SPROM and to parse SROM/CIS variables.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Despite its file name, OTP contents is also parsed in this file.
+ *
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +17,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmsrom.c 364585 2012-10-24 18:17:16Z $
+ * $Id: bcmsrom.c 414820 2013-07-26 05:03:14Z $
  */
 
 #include <bcm_cfg.h>
@@ -58,6 +60,9 @@
 #include <sbsprom.h>
 #endif
 #include <proto/ethernet.h>	/* for sprom content groking */
+#ifdef BCMPCIDEV
+#include <bcm_ol_msg.h>
+#endif
 
 
 #if defined(BCMDBG_ERR) || defined(WLTEST)
@@ -88,10 +93,14 @@ extern uint _varsz;
 
 
 static int initvars_srom_si(si_t *sih, osl_t *osh, void *curmap, char **vars, uint *count);
+#if defined(BCMPCIDEV_ENABLED)
+static int initvars_tcm_pcidev(si_t *sih, osl_t *osh, void *curmap, char **vars, uint *count);
+#endif /* BCMPCIDEV_ENABLED */
 static void _initvars_srom_pci(uint8 sromrev, uint16 *srom, uint off, varbuf_t *b);
 static int initvars_srom_pci(si_t *sih, void *curmap, char **vars, uint *count);
 static int initvars_cis_pcmcia(si_t *sih, osl_t *osh, char **vars, uint *count);
-#if !defined(BCMUSBDEV_ENABLED) && !defined(BCMSDIODEV_ENABLED)
+#if !defined(BCMUSBDEV_ENABLED) && !defined(BCMSDIODEV_ENABLED) && \
+	!defined(BCMPCIDEV_ENABLED)
 static int initvars_flash_si(si_t *sih, char **vars, uint *count);
 #endif 
 #ifdef BCMSPI
@@ -358,41 +367,61 @@ static char BCMATTACHDATA(defaultsromvars_43235usb)[] =
 	"END\0";
 
 static char BCMATTACHDATA(defaultsromvars_4350usb)[] =
-	"vendid=0x14e4\0"
-	"subvendid=0x0a5c\0"
-	"subdevid=0xbdc\0"
 	"sromrev=11\0"
-	"boardrev=0x1140\0"
-	"boardflags=0x0\0"
-	"boardflags2=0x0\0"
-	"boardtype=0x604\0"
-	"boardflags3=0x0\0"
-	"boardnum=57410\0"
-	"macaddr=00:90:4c:0c:e0:42\0"
-	"xtalfreq=37400\0"
-	"rxchain=3\0"
-	"txchain=3\0"
+	"boardrev=0x1134\0"
+	"boardtype=0x695\0"
+	"boardflags=0x10401001\0"
+	"boardflags2=0x802000\0"
+	"boardflags3=0x00000088\0"
+	"macaddr=00:90:4c:13:c0:01\0"
 	"ccode=0\0"
 	"regrev=0\0"
-	"aa2g=7\0"
-	"aa5g=7\0"
-	"agbg0=71\0"
-	"agbg1=71\0"
-	"agbg2=133\0"
-	"aga0=71\0"
-	"aga1=133\0"
-	"aga2=133\0"
 	"antswitch=0\0"
+	"pdgain5g=0\0"
+	"pdgain2g=1\0"
+	"tworangetssi2g=0\0"
+	"tworangetssi5g=0\0"
+	"femctrl=10\0"
+	"vendid=0x14e4\0"
+	"devid=0x43b7\0"
+	"xtalfreq=40000\0"
+	"rxgains2gelnagaina0=3\0"
+	"rxgains2gtrisoa0=5\0"
+	"rxgains2gtrelnabypa0=1\0"
+	"rxgains5gelnagaina0=3\0"
+	"rxgains5gtrisoa0=5\0"
+	"rxgains5gtrelnabypa0=1\0"
+	"rxgains5gmelnagaina0=3\0"
+	"rxgains5gmtrisoa0=5\0"
+	"rxgains5gmtrelnabypa0=1\0"
+	"rxgains5ghelnagaina0=3\0"
+	"rxgains5ghtrisoa0=5\0"
+	"rxgains5ghtrelnabypa0=1\0"
+	"rxgains2gelnagaina1=3\0"
+	"rxgains2gtrisoa1=5\0"
+	"rxgains2gtrelnabypa1=1\0"
+	"rxgains5gelnagaina1=3\0"
+	"rxgains5gtrisoa1=5\0"
+	"rxgains5gtrelnabypa1=1\0"
+	"rxgains5gmelnagaina1=3\0"
+	"rxgains5gmtrisoa1=5\0"
+	"rxgains5gmtrelnabypa1=1\0"
+	"rxgains5ghelnagaina1=3\0"
+	"rxgains5ghtrisoa1=5\0"
+	"rxgains5ghtrelnabypa1=1\0"
+	"rxchain=3\0"
+	"txchain=3\0"
+	"aa2g=3\0"
+	"aa5g=3\0"
+	"agbg0=2\0"
+	"agbg1=2\0"
+	"aga0=2\0"
+	"aga1=2\0"
 	"tssiposslope2g=1\0"
 	"epagain2g=0\0"
-	"pdgain2g=0\0"
-	"tworangetssi2g=0\0"
 	"papdcap2g=0\0"
-	"femctrl=1\0"
 	"tssiposslope5g=1\0"
 	"epagain5g=0\0"
-	"pdgain5g=0\0"
-	"tworangetssi5g=0\0"
 	"papdcap5g=0\0"
 	"gainctrlsph=0\0"
 	"tempthresh=255\0"
@@ -402,61 +431,72 @@ static char BCMATTACHDATA(defaultsromvars_4350usb)[] =
 	"tempsense_slope=0xff\0"
 	"tempcorrx=0x3f\0"
 	"tempsense_option=0x3\0"
+	"pa2ga0=0xff4c,0x1666,0xfd38\0"
+	"pa2ga1=0xff4c,0x16c9,0xfd2b\0"
+	"pa5ga0=0xffad,0x1710,0xfd7a,0xff95,0x1615,0xfd80,0xffb1,0x15ea,0xfda0,0xffda,"
+	"0x16b0,0xfd9a\0"
+	"pa5ga1=0xffb9,0x177f,0xfd76,0xffc8,0x17c6,0xfd75,0xffc5,0x16d8,0xfd89,0x0011,"
+	"0x1834,0xfdac\0"
+	"pa5gbw4080a0=0xffd0,0x178d,0xfd85,0xffd3,0x1760,0xfd8a,0xffe3,0x171b,0xfd9b,"
+	"0x0012,0x17e5,0xfda3\0"
+	"pa5gbw4080a1=0xffd2,0x1803,0xfd74,0xffdc,0x180a,0xfd7a,0xffef,0x17ff,0xfd7b,"
+	"0x001d,0x18cc,0xfd82\0"
+	"maxp2ga0=80\0"
+	"maxp5ga0=76,76,76,76\0"
+	"maxp2ga1=80\0"
+	"maxp5ga1=76,76,76,76\0"
+	"subband5gver=0x4\0"
+	"paparambwver=2\0"
+	"pdoffset2g40mvalid=0\0"
+	"pdoffset2g40ma0=1\0"
+	"pdoffset2g40ma1=1\0"
+	"pdoffset40ma0=0x0000\0"
+	"pdoffset80ma0=0x0000\0"
+	"pdoffset40ma1=0x0000\0"
+	"pdoffset80ma1=0x0000\0"
+	"cckbw202gpo=0\0"
+	"cckbw20ul2gpo=0\0"
+	"mcsbw202gpo=0x88642000\0"
+	"mcsbw402gpo=0xA8642000\0"
+	"dot11agofdmhrbw202gpo=0x2000\0"
+	"ofdmlrbw202gpo=0x0020\0"
+	"mcsbw205glpo=0xaa864200\0"
+	"mcsbw405glpo=0xcca86420\0"
+	"mcsbw805glpo=0xcca86420\0"
+	"mcsbw1605glpo=0\0"
+	"mcsbw205gmpo=0xaa864200\0"
+	"mcsbw405gmpo=0xcca86420\0"
+	"mcsbw805gmpo=0xcca86420\0"
+	"mcsbw1605gmpo=0\0"
+	"mcsbw205ghpo=0xaa864200\0"
+	"mcsbw405ghpo=0xcca86420\0"
+	"mcsbw805ghpo=0xcca86420\0"
+	"mcsbw1605ghpo=0\0"
+	"mcslr5glpo=0x0\0"
+	"mcslr5gmpo=0x0000\0"
+	"mcslr5ghpo=0x0000\0"
+	"sb20in40hrpo=0x0\0"
+	"sb20in80and160hr5glpo=0x0\0"
+	"sb40and80hr5glpo=0x0\0"
+	"sb20in80and160hr5gmpo=0x0\0"
+	"sb40and80hr5gmpo=0x0\0"
+	"sb20in80and160hr5ghpo=0x0\0"
+	"sb40and80hr5ghpo=0x0\0"
+	"sb20in40lrpo=0x0\0"
+	"sb20in80and160lr5glpo=0x0\0"
+	"sb40and80lr5glpo=0x0\0"
+	"sb20in80and160lr5gmpo=0x0\0"
+	"sb40and80lr5gmpo=0x0\0"
+	"sb20in80and160lr5ghpo=0x0\0"
+	"sb40and80lr5ghpo=0x0\0"
+	"dot11agduphrpo=0x0\0"
+	"dot11agduplrpo=0x0\0"
 	"phycal_tempdelta=255\0"
 	"temps_period=15\0"
 	"temps_hysteresis=15\0"
 	"measpower1=0x7f\0"
 	"measpower2=0x7f\0"
-	"subband5gver=0x4\0"
-	"sar2g=18\0"
-	"sar5g=15\0"
-	"noiselvl2ga0=31\0"
-	"noiselvl2ga1=31\0"
-	"noiselvl2ga2=31\0"
-	"noiselvl5gla0=31\0"
-	"noiselvl5gla1=31\0"
-	"noiselvl5gla2=31\0"
-	"noiselvl5gma0=31\0"
-	"noiselvl5gma1=31\0"
-	"noiselvl5gma2=31\0"
-	"noiselvl5gha0=31\0"
-	"noiselvl5gha1=31\0"
-	"noiselvl5gha2=31\0"
-	"noiselvl5gua0=31\0"
-	"noiselvl5gua1=31\0"
-	"noiselvl5gua2=31\0"
-	"rxgainerr2g=0xffff\0"
-	"rxgainerr5g=0xffff,0xffff,0xffff,0xffff\0"
-	"maxp2ga0=76\0"
-	"pa2ga0=0xfe72,0x14c0,0xfac7\0"
-	"rxgains2gelnagaina0=4\0"
-	"rxgains2gtrisoa0=10\0"
-	"rxgains2gtrelnabypa0=1\0"
-	"rxgains5gelnagaina0=3\0"
-	"rxgains5gtrisoa0=10\0"
-	"rxgains5gtrelnabypa0=1\0"
-	"maxp5ga0=17,34,51,68\0"
-"pa5ga0=0xfe75,0x14b5,0xfad4,0xfe97,0x121a,0xfb6e,0xfe7f,0x149d,0xfad0,0xfe7c,0x1431,0xfae6\0"
-	"maxp2ga1=76\0"
-	"pa2ga1=0xfe80,0x1472,0xfabc\0"
-	"rxgains2gelnagaina1=4\0"
-	"rxgains2gtrisoa1=10\0"
-	"rxgains2gtrelnabypa1=1\0"
-	"rxgains5gelnagaina1=3\0"
-	"rxgains5gtrisoa1=10\0"
-	"rxgains5gtrelnabypa1=1\0"
-	"maxp5ga1=72,72,76,76\0"
-"pa5ga1=0xfe72,0x155e,0xfa96,0xfea1,0x125d,0xfb55,0xfe77,0x1596,0xfa8e,0xfe78,0x15e1,0xfa7a\0"
-	"maxp2ga2=76\0"
-	"pa2ga2=0xfe82,0x14bf,0xfad9\0"
-	"rxgains2gelnagaina2=4\0"
-	"rxgains2gtrisoa2=10\0"
-	"rxgains2gtrelnabypa2=1\0"
-	"rxgains5gelnagaina2=3\0"
-	"rxgains5gtrisoa2=10\0"
-	"rxgains5gtrelnabypa2=1\0"
-	"maxp5ga2=72,72,76,76\0"
-"pa5ga2=0xfe7d,0x14d8,0xfacd,0xfea6,0x1218,0xfb79,0xfe7c,0x1452,0xfade,0xfe82,0x1406,0xfaf6\0"
+	"muxenab=0x1\0"
 	"END\0";
 
 static char BCMATTACHDATA(defaultsromvars_43242usb)[] =
@@ -761,6 +801,7 @@ static char BCMATTACHDATA(defaultsromvars_4360usb)[] =
 	"boardflags2=0x0\0"
 	"boardflags3=0x0\0"
 	"macaddr=00:90:4c:0e:60:11\0"
+	"muxenab=0x01\0"
 	"ccode=0\0"
 	"regrev=0\0"
 	"ledbh0=0xff\0"
@@ -1153,8 +1194,6 @@ static char BCMATTACHDATA(defaultsromvars_4335)[] =
 	"ccode=0\0"
 	"regrev=0\0"
 	"antswitch=0\0"
-	"pdgain2g=0\0"
-	"pdgain5g=0\0"
 	"tworangetssi2g=0\0"
 	"tworangetssi5g=0\0"
 	"femctrl=4\0"
@@ -1190,6 +1229,149 @@ static char BCMATTACHDATA(defaultsromvars_4335)[] =
 	"pdoffset40ma0=0\0"
 	"pdoffset80ma0=0\0"
 	"END\0";
+
+
+static char BCMATTACHDATA(defaultsromvars_4350)[] =
+	"sromrev=11\0"
+	"boardrev=0x1250\0"
+	"boardflags=0x02400001\0"
+	"boardflags2=0x00800000\0"
+	"boardtype=0x68e\0"
+	"subvid=0x14e4\0"
+	"boardflags3=0xc\0"
+	"boardnum=1\0"
+	"macaddr=00:90:4c:13:80:01\0"
+	"ccode=X0\0"
+	"regrev=0\0"
+	"aa2g=3\0"
+	"aa5g=3\0"
+	"agbg0=2\0"
+	"agbg1=2\0"
+	"aga0=2\0"
+	"aga1=2\0"
+	"rxchain=3\0"
+	"txchain=3\0"
+	"antswitch=0\0"
+	"tssiposslope2g=1\0"
+	"extpagain2g=2\0"
+	"epagain2g=2\0"
+	"pdgain2g=2\0"
+	"tworangetssi2g=0\0"
+	"papdcap2g=0\0"
+	"femctrl=10\0"
+	"tssiposslope5g=1\0"
+	"epagain5g=2\0"
+	"pdgain5g=2\0"
+	"tworangetssi5g=0\0"
+	"papdcap5g=0\0"
+	"gainctrlsph=0\0"
+	"tempthresh=255\0"
+	"tempoffset=255\0"
+	"rawtempsense=0x1ff\0"
+	"measpower=0x7f\0"
+	"tempsense_slope=0xff\0"
+	"tempcorrx=0x3f\0"
+	"tempsense_option=0x3\0"
+	"xtalfreq=40000\0"
+	"phycal_tempdelta=255\0"
+	"temps_period=15\0"
+	"temps_hysteresis=15\0"
+	"measpower1=0x7f\0"
+	"measpower2=0x7f\0"
+	"pdoffset2g40ma0=0\0"
+	"pdoffset2g40ma1=0\0"
+	"pdoffset2g40mvalid=0\0"
+	"pdoffset40ma0=0\0"
+	"pdoffset40ma1=0\0"
+	"pdoffset80ma0=0\0"
+	"pdoffset80ma1=0\0"
+	"subband5gver=0x4\0"
+	"cckbw202gpo=0\0"
+	"cckbw20ul2gpo=0\0"
+	"mcsbw202gpo=0\0"
+	"mcsbw402gpo=0\0"
+	"dot11agofdmhrbw202gpo=0\0"
+	"ofdmlrbw202gpo=0\0"
+	"mcsbw205glpo=0\0"
+	"mcsbw405glpo=0\0"
+	"mcsbw805glpo=0\0"
+	"mcsbw1605glpo=0\0"
+	"mcsbw205gmpo=0\0"
+	"mcsbw405gmpo=0\0"
+	"mcsbw805gmpo=0\0"
+	"mcsbw1605gmpo=0\0"
+	"mcsbw205ghpo=0\0"
+	"mcsbw405ghpo=0\0"
+	"mcsbw805ghpo=0\0"
+	"mcsbw1605ghpo=0\0"
+	"mcslr5glpo=0\0"
+	"mcslr5gmpo=0\0"
+	"mcslr5ghpo=0\0"
+	"sb20in40hrpo=0\0"
+	"sb20in80and160hr5glpo=0\0"
+	"sb40and80hr5glpo=0\0"
+	"sb20in80and160hr5gmpo=0\0"
+	"sb40and80hr5gmpo=0\0"
+	"sb20in80and160hr5ghpo=0\0"
+	"sb40and80hr5ghpo=0\0"
+	"sb20in40lrpo=0\0"
+	"sb20in80and160lr5glpo=0\0"
+	"sb40and80lr5glpo=0\0"
+	"sb20in80and160lr5gmpo=0\0"
+	"sb40and80lr5gmpo=0\0"
+	"sb20in80and160lr5ghpo=0\0"
+	"sb40and80lr5ghpo=0\0"
+	"dot11agduphrpo=0\0"
+	"dot11agduplrpo=0\0"
+	"pcieingress_war=15\0"
+	"sar2g=18\0"
+	"sar5g=15\0"
+	"noiselvl2ga0=31\0"
+	"noiselvl2ga1=31\0"
+	"noiselvl2ga2=31\0"
+	"noiselvl5ga0=31,31,31,31\0"
+	"noiselvl5ga1=31,31,31,31\0"
+	"noiselvl5ga2=31,31,31,31\0"
+	"rxgainerr2ga0=63\0"
+	"rxgainerr2ga1=31\0"
+	"rxgainerr2ga2=31\0"
+	"rxgainerr5ga0=63,63,63,63\0"
+	"rxgainerr5ga1=31,31,31,31\0"
+	"rxgainerr5ga2=31,31,31,31\0"
+	"maxp2ga0=80\0"
+	"pa2ga0=0xff63,0x15b0,0xfd7b\0"
+	"rxgains5gmelnagaina0=0\0"
+	"rxgains5gmtrisoa0=4\0"
+	"rxgains5gmtrelnabypa0=0\0"
+	"rxgains5ghelnagaina0=0\0"
+	"rxgains5ghtrisoa0=4\0"
+	"rxgains5ghtrelnabypa0=0\0"
+	"rxgains2gelnagaina0=4\0"
+	"rxgains2gtrisoa0=3\0"
+	"rxgains2gtrelnabypa0=0\0"
+	"rxgains5gelnagaina0=0\0"
+	"rxgains5gtrisoa0=4\0"
+	"rxgains5gtrelnabypa0=0\0"
+	"maxp5ga0=76,76,76,76\0"
+"pa5ga0=0xff3a,0x14d4,0xfd5f,0xff36,0x1626,0xfd2e,0xff42,0x15bd,0xfd47,0xff39,0x15a3,0xfd3d\0"
+	"maxp2ga1=80\0"
+	"pa2ga1=0xff6c,0x15f6,0xfd7c\0"
+	"rxgains5gmelnagaina1=0\0"
+	"rxgains5gmtrisoa1=4\0"
+	"rxgains5gmtrelnabypa1=0\0"
+	"rxgains5ghelnagaina1=0\0"
+	"rxgains5ghtrisoa1=4\0"
+	"rxgains5ghtrelnabypa1=0\0"
+	"rxgains2gelnagaina1=0\0"
+	"rxgains2gtrisoa1=3\0"
+	"rxgains2gtrelnabypa1=0\0"
+	"rxgains5gelnagaina1=0\0"
+	"rxgains5gtrisoa1=4\0"
+	"rxgains5gtrelnabypa1=0\0"
+	"maxp5ga1=76,76,76,76\0"
+"pa5ga1=0xff4e,0x1530,0xfd53,0xff58,0x15b4,0xfd4d,0xff58,0x1671,0xfd2f,0xff55,0x15e2,0xfd46\0"
+	"END\0";
+
 #endif 
 
 /* BCMHOSTVARS is enabled only if WLTEST is enabled or BCMEXTNVM is enabled */
@@ -1290,7 +1472,7 @@ BCMATTACHFN(srom_vars_len)(char *vars)
 }
 #endif 
 
-/* Initialization of varbuf structure */
+/** Initialization of varbuf structure */
 static void
 BCMATTACHFN(varbuf_init)(varbuf_t *b, char *buf, uint size)
 {
@@ -1298,7 +1480,7 @@ BCMATTACHFN(varbuf_init)(varbuf_t *b, char *buf, uint size)
 	b->base = b->buf = buf;
 }
 
-/* append a null terminated var=value string */
+/** append a null terminated var=value string */
 static int
 BCMATTACHFN(varbuf_append)(varbuf_t *b, const char *fmt, ...)
 {
@@ -1351,7 +1533,7 @@ BCMATTACHFN(varbuf_append)(varbuf_t *b, const char *fmt, ...)
 	return r;
 }
 
-/*
+/**
  * Initialize local vars from the right source for this platform.
  * Return 0 on success, nonzero on error.
  */
@@ -1393,7 +1575,7 @@ BCMATTACHFN(srom_var_init)(si_t *sih, uint bustype, void *curmap, osl_t *osh,
 	return (-1);
 }
 
-/* support only 16-bit word read from srom */
+/** support only 16-bit word read from srom */
 int
 srom_read(si_t *sih, uint bustype, void *curmap, osl_t *osh,
           uint byteoff, uint nbytes, uint16 *buf, bool check_crc)
@@ -1479,7 +1661,7 @@ srom_read(si_t *sih, uint bustype, void *curmap, osl_t *osh,
 }
 
 #if defined(WLTEST) || defined(DHD_SPROM) || defined(BCMDBG)
-/* support only 16-bit word write into srom */
+/** support only 16-bit word write into srom */
 int
 srom_write(si_t *sih, uint bustype, void *curmap, osl_t *osh,
            uint byteoff, uint nbytes, uint16 *buf)
@@ -1735,6 +1917,139 @@ done:
 
 	return rc;
 }
+
+/** support only 16-bit word write into srom */
+int
+srom_write_short(si_t *sih, uint bustype, void *curmap, osl_t *osh,
+                 uint byteoff, uint16 value)
+{
+	volatile uint32 val32;
+	int rc = 1;
+
+	ASSERT(bustype == BUSTYPE(bustype));
+
+
+	if (byteoff & 1)
+		goto done;
+
+	if (BUSTYPE(bustype) == PCI_BUS) {
+		uint16 *srom = NULL;
+		void *ccregs = NULL;
+		uint32 ccval = 0;
+
+		if ((CHIPID(sih->chip) == BCM4331_CHIP_ID) ||
+		    (CHIPID(sih->chip) == BCM43431_CHIP_ID) ||
+		    (CHIPID(sih->chip) == BCM4360_CHIP_ID) ||
+		    (CHIPID(sih->chip) == BCM43460_CHIP_ID) ||
+		    (CHIPID(sih->chip) == BCM43526_CHIP_ID) ||
+		    (CHIPID(sih->chip) == BCM4352_CHIP_ID)) {
+			/* save current control setting */
+			ccval = si_chipcontrl_read(sih);
+		}
+
+		if ((CHIPID(sih->chip) == BCM4331_CHIP_ID) ||
+			(CHIPID(sih->chip) == BCM43431_CHIP_ID)) {
+			/* Disable Ext PA lines to allow reading from SROM */
+			si_chipcontrl_epa4331(sih, FALSE);
+		} else if (((CHIPID(sih->chip) == BCM4360_CHIP_ID) ||
+			(CHIPID(sih->chip) == BCM43460_CHIP_ID) ||
+			(CHIPID(sih->chip) == BCM4352_CHIP_ID)) &&
+			(CHIPREV(sih->chiprev) <= 2)) {
+			si_chipcontrl_srom4360(sih, TRUE);
+		}
+
+		/* enable writes to the SPROM */
+		if (sih->ccrev > 31) {
+			ccregs = (void *)((uint8 *)curmap + PCI_16KB0_CCREGS_OFFSET);
+			srom = (uint16 *)((uint8 *)ccregs + CC_SROM_OTP);
+			(void)srom_cc_cmd(sih, osh, ccregs, SRC_OP_WREN, 0, 0);
+		} else {
+			srom = (uint16 *)((uint8 *)curmap + PCI_BAR0_SPROM_OFFSET);
+			val32 = OSL_PCI_READ_CONFIG(osh, PCI_SPROM_CONTROL, sizeof(uint32));
+			val32 |= SPROM_WRITEEN;
+			OSL_PCI_WRITE_CONFIG(osh, PCI_SPROM_CONTROL, sizeof(uint32), val32);
+		}
+		bcm_mdelay(WRITE_ENABLE_DELAY);
+		/* write srom */
+		if (sih->ccrev > 31) {
+			if ((sih->cccaps & CC_CAP_SROM) == 0) {
+				/* No srom support in this chip */
+				BS_ERROR(("srom_write, invalid srom, skip\n"));
+			} else
+				(void)srom_cc_cmd(sih, osh, ccregs, SRC_OP_WRITE,
+				                   byteoff/2, value);
+		} else {
+			W_REG(osh, &srom[byteoff/2], value);
+		}
+		bcm_mdelay(WRITE_WORD_DELAY);
+
+		/* disable writes to the SPROM */
+		if (sih->ccrev > 31) {
+			(void)srom_cc_cmd(sih, osh, ccregs, SRC_OP_WRDIS, 0, 0);
+		} else {
+			OSL_PCI_WRITE_CONFIG(osh, PCI_SPROM_CONTROL, sizeof(uint32), val32 &
+			                     ~SPROM_WRITEEN);
+		}
+
+		if ((CHIPID(sih->chip) == BCM4331_CHIP_ID) ||
+		    (CHIPID(sih->chip) == BCM43431_CHIP_ID) ||
+		    (CHIPID(sih->chip) == BCM4360_CHIP_ID) ||
+		    (CHIPID(sih->chip) == BCM43460_CHIP_ID) ||
+		    (CHIPID(sih->chip) == BCM4352_CHIP_ID)) {
+			/* Restore config after reading SROM */
+			si_chipcontrl_restore(sih, ccval);
+		}
+
+	} else if (BUSTYPE(bustype) == PCMCIA_BUS) {
+		/* enable writes to the SPROM */
+		if (sprom_cmd_pcmcia(osh, SROM_WEN))
+			goto done;
+		bcm_mdelay(WRITE_ENABLE_DELAY);
+		/* write srom */
+		sprom_write_pcmcia(osh, (uint16)(byteoff/2), value);
+		bcm_mdelay(WRITE_WORD_DELAY);
+
+		/* disable writes to the SPROM */
+		if (sprom_cmd_pcmcia(osh, SROM_WDS))
+			goto done;
+	} else if (BUSTYPE(bustype) == SI_BUS) {
+#if defined(BCMUSBDEV)
+		if (SPROMBUS == PCMCIA_BUS) {
+			uint origidx;
+			void *regs;
+			bool wasup;
+
+			origidx = si_coreidx(sih);
+			regs = si_setcore(sih, PCMCIA_CORE_ID, 0);
+			if (!regs)
+				regs = si_setcore(sih, SDIOD_CORE_ID, 0);
+			ASSERT(regs != NULL);
+
+			if (!(wasup = si_iscoreup(sih)))
+				si_core_reset(sih, 0, 0);
+
+			rc = set_si_pcmcia_srom(sih, osh, regs, byteoff, &value, 2);
+
+			if (!wasup)
+				si_core_disable(sih, 0);
+
+			si_setcoreidx(sih, origidx);
+			goto done;
+		}
+#endif 
+		goto done;
+	} else {
+		goto done;
+	}
+
+	bcm_mdelay(WRITE_ENABLE_DELAY);
+	rc = 0;
+
+done:
+	return rc;
+}
+
+
 #endif 
 
 #if defined(BCMUSBDEV)
@@ -1743,7 +2058,7 @@ done:
 #define SI_PCMCIA_WRITE(osh, regs, fcr, v) \
 		W_REG(osh, (volatile uint8 *)(regs) + 0x600 + (fcr) - 0x700 / 2, v)
 
-/* set PCMCIA srom command register */
+/** set PCMCIA srom command register */
 static int
 srom_cmd_si_pcmcia(osl_t *osh, uint8 *pcmregs, uint8 cmd)
 {
@@ -1765,7 +2080,7 @@ srom_cmd_si_pcmcia(osl_t *osh, uint8 *pcmregs, uint8 cmd)
 	return 1;
 }
 
-/* read a word from the PCMCIA srom over SI */
+/** read a word from the PCMCIA srom over SI */
 static int
 srom_read_si_pcmcia(osl_t *osh, uint8 *pcmregs, uint16 addr, uint16 *data)
 {
@@ -2098,11 +2413,15 @@ static const char BCMATTACHDATA(vstr_usbssphy_sleep0)[] = "usbssphy_sleep0=0x%x"
 static const char BCMATTACHDATA(vstr_usbssphy_sleep1)[] = "usbssphy_sleep1=0x%x";
 static const char BCMATTACHDATA(vstr_usbssphy_sleep2)[] = "usbssphy_sleep2=0x%x";
 static const char BCMATTACHDATA(vstr_usbssphy_sleep3)[] = "usbssphy_sleep3=0x%x";
+static const char BCMATTACHDATA(vstr_usbssphy_mdio)[] = "usbssmdio%d=0x%x,0x%x,0x%x,0x%x";
+static const char BCMATTACHDATA(vstr_usb30phy_noss)[] = "usbnoss=0x%x";
+static const char BCMATTACHDATA(vstr_usb30phy_u1u2)[] = "usb30u1u2=0x%x";
+static const char BCMATTACHDATA(vstr_usb30phy_regs)[] = "usb30regs%d=0x%x,0x%x,0x%x,0x%x";
 
 /* Power per rate for SROM V9 */
 static const char BCMATTACHDATA(vstr_cckbw202gpo)[][19] =
 	{ "cckbw202gpo=0x%x", "cckbw20ul2gpo=0x%x" };
-static const char BCMATTACHDATA(vstr_legofdmbw202gpo)[][22] =
+static const char BCMATTACHDATA(vstr_legofdmbw202gpo)[][23] =
 	{ "legofdmbw202gpo=0x%x", "legofdmbw20ul2gpo=0x%x" };
 static const char BCMATTACHDATA(vstr_legofdmbw205gpo)[][24] =
 	{ "legofdmbw205glpo=0x%x", "legofdmbw20ul5glpo=0x%x",
@@ -2145,7 +2464,14 @@ static const char BCMATTACHDATA(vstr_pa2ga)[] = "pa2ga%d=0x%x,0x%x,0x%x";
 static const char BCMATTACHDATA(vstr_maxp5ga)[] = "maxp5ga%d=0x%x,0x%x,0x%x,0x%x";
 static const char BCMATTACHDATA(vstr_pa5ga)[] = "pa5ga%d=0x%x,0x%x,0x%x,0x%x,0x%x,0x%x,"
 	"0x%x,0x%x,0x%x,0x%x,0x%x,0x%x";
-static const char BCMATTACHDATA(vstr_rxgainsgelnagaina)[] = "rxgains%dgelnagaina=%d";
+static const char BCMATTACHDATA(vstr_pa2gccka)[] = "pa2gccka%d=0x%x,0x%x,0x%x";
+static const char BCMATTACHDATA(vstr_pa5gbw40a)[] = "pa5gbw40a%d=0x%x,0x%x,0x%x,0x%x,0x%x,0x%x,"
+	"0x%x,0x%x,0x%x,0x%x,0x%x,0x%x";
+static const char BCMATTACHDATA(vstr_pa5gbw80a)[] = "pa5gbw80a%d=0x%x,0x%x,0x%x,0x%x,0x%x,0x%x,"
+	"0x%x,0x%x,0x%x,0x%x,0x%x,0x%x";
+static const char BCMATTACHDATA(vstr_pa5gbw4080a)[] = "pa5gbw4080a%d=0x%x,0x%x,0x%x,0x%x,0x%x,0x%x,"
+	"0x%x,0x%x,0x%x,0x%x,0x%x,0x%x";
+static const char BCMATTACHDATA(vstr_rxgainsgelnagaina)[] = "rxgains%dgelnagaina%d=%d";
 static const char BCMATTACHDATA(vstr_rxgainsgtrisoa)[] = "rxgains%dgtrisoa%d=%d";
 static const char BCMATTACHDATA(vstr_rxgainsgtrelnabypa)[] = "rxgains%dgtrelnabypa%d=%d";
 static const char BCMATTACHDATA(vstr_rxgainsgxelnagaina)[] = "rxgains%dg%celnagaina%d=%d";
@@ -2175,6 +2501,7 @@ static const char BCMATTACHDATA(vstr_agbg)[] = "agbg%d=0x%x";	/* HNBU_AGBGA */
 static const char BCMATTACHDATA(vstr_aga)[] = "aga%d=0x%x";
 static const char BCMATTACHDATA(vstr_txduty_ofdm)[] = "tx_duty_cycle_ofdm_%d_5g=%d";
 static const char BCMATTACHDATA(vstr_txduty_thresh)[] = "tx_duty_cycle_thresh_%d_5g=%d";
+static const char BCMATTACHDATA(vstr_paparambwver)[] = "paparambwver=%d";
 
 static const char BCMATTACHDATA(vstr_uuid)[] = "uuid=%s";
 
@@ -2256,6 +2583,10 @@ BCMATTACHFN(srom_probe_boardtype)(uint8 *pcis[], uint ciscnt)
 }
 #endif /* BCM_BMAC_VARS_APPEND */
 
+/**
+ * Both SROM and OTP contain variables in 'CIS' format, whereas the rest of the firmware works with
+ * 'variable/value' string pairs.
+ */
 int
 BCMATTACHFN(srom_parsecis)(osl_t *osh, uint8 *pcis[], uint ciscnt, char **vars, uint *count)
 {
@@ -2553,6 +2884,84 @@ BCMATTACHFN(srom_parsecis)(osl_t *osh, uint8 *pcis[], uint ciscnt, char **vars, 
 								(cis[i + (j*8) + 7] << 16) |
 								(cis[i + (j*8) + 6] << 8) |
 								cis[i + (j*8) + 5]);
+						}
+					}
+					break;
+				case HNBU_PATCH_AUTOINC8: {
+						char vstr_paddr[16];
+						char vstr_pdatah[16];
+						char vstr_pdatal[16];
+						uint32 addr_inc;
+						uint8 pcnt;
+
+						addr_inc = (cis[i + 4] << 24) |
+							(cis[i + 3] << 16) |
+							(cis[i + 2] << 8) |
+							(cis[i + 1]);
+
+						pcnt = (tlen - 5)/8;
+						for (j = 0; j < pcnt; j++) {
+							snprintf(vstr_paddr, sizeof(vstr_paddr),
+								"pa%d=0x%%x", j + patch_pair);
+							snprintf(vstr_pdatah, sizeof(vstr_pdatah),
+								"pdh%d=0x%%x", j + patch_pair);
+							snprintf(vstr_pdatal, sizeof(vstr_pdatal),
+								"pdl%d=0x%%x", j + patch_pair);
+
+							varbuf_append(&b, vstr_paddr, addr_inc);
+							varbuf_append(&b, vstr_pdatal,
+								(cis[i + (j*8) + 8] << 24) |
+								(cis[i + (j*8) + 7] << 16) |
+								(cis[i + (j*8) + 6] << 8) |
+								cis[i + (j*8) + 5]);
+							varbuf_append(&b, vstr_pdatah,
+								(cis[i + (j*8) + 12] << 24) |
+								(cis[i + (j*8) + 11] << 16) |
+								(cis[i + (j*8) + 10] << 8) |
+								cis[i + (j*8) + 9]);
+							addr_inc += 8;
+						}
+						patch_pair += pcnt;
+					}
+					break;
+				case HNBU_PATCH8:
+					{
+						char vstr_paddr[16];
+						char vstr_pdatah[16];
+						char vstr_pdatal[16];
+
+						/* retrieve the patch pairs
+						 * from tlen/8; where 8 is
+						 * sizeof(patch addr(4)) +
+						 * sizeof(patch data(4)).
+						 */
+						patch_pair = tlen/12;
+
+						for (j = 0; j < patch_pair; j++) {
+							snprintf(vstr_paddr, sizeof(vstr_paddr),
+								"pa%d=0x%%x", j);
+							snprintf(vstr_pdatah, sizeof(vstr_pdatah),
+								"pdh%d=0x%%x", j);
+							snprintf(vstr_pdatal, sizeof(vstr_pdatal),
+								"pdl%d=0x%%x", j);
+
+							varbuf_append(&b, vstr_paddr,
+								(cis[i + (j*12) + 4] << 24) |
+								(cis[i + (j*12) + 3] << 16) |
+								(cis[i + (j*12) + 2] << 8) |
+								cis[i + (j*12) + 1]);
+
+							varbuf_append(&b, vstr_pdatal,
+								(cis[i + (j*12) + 8] << 24) |
+								(cis[i + (j*12) + 7] << 16) |
+								(cis[i + (j*12) + 6] << 8) |
+								cis[i + (j*12) + 5]);
+
+							varbuf_append(&b, vstr_pdatah,
+								(cis[i + (j*12) + 12] << 24) |
+								(cis[i + (j*12) + 11] << 16) |
+								(cis[i + (j*12) + 10] << 8) |
+								cis[i + (j*12) + 9]);
 						}
 					}
 					break;
@@ -3895,6 +4304,48 @@ BCMATTACHFN(srom_parsecis)(osl_t *osh, uint8 *pcis[], uint ciscnt, char **vars, 
 					varbuf_append(&b, vstr_usbssphy_sleep3,
 						(cis[i + 2] << 8) | cis[i + 1]);
 					break;
+				case HNBU_USBSSPHY_MDIO:
+					{
+					int setnum, k;
+
+					setnum = (cis[i + 1])/4;
+					if (setnum == 0)
+						break;
+					for (j = 0; j < setnum; j++) {
+						k = j*12;
+						varbuf_append(&b, vstr_usbssphy_mdio, j,
+						(cis[i+4+k]<<16) | (cis[i+3+k]<<8) | cis[i+2+k],
+						(cis[i+7+k]<<16) | (cis[i+6+k]<<8) | cis[i+5+k],
+						(cis[i+10+k]<<16) | (cis[i+9+k]<<8) | cis[i+8+k],
+						(cis[i+13+k]<<16) | (cis[i+12+k]<<8) | cis[i+11+k]);
+						}
+					}
+					break;
+				case HNBU_USB30PHY_NOSS:
+					{
+						varbuf_append(&b, vstr_usb30phy_noss, cis[i + 1]);
+					}
+					break;
+				case HNBU_USB30PHY_U1U2:
+					{
+						varbuf_append(&b, vstr_usb30phy_u1u2, cis[i + 1]);
+					}
+					break;
+				case HNBU_USB30PHY_REGS:
+					{
+						varbuf_append(&b, vstr_usb30phy_regs, 0,
+							cis[i+4]|cis[i+3]|cis[i+2]|cis[i+1],
+							cis[i+8]|cis[i+7]|cis[i+6]|cis[i+5],
+							cis[i+12]|cis[i+11]|cis[i+10]|cis[i+9],
+							cis[i+16]|cis[i+15]|cis[i+14]|cis[i+13]);
+						varbuf_append(&b, vstr_usb30phy_regs, 1,
+							cis[i+20]|cis[i+19]|cis[i+18]|cis[i+17],
+							cis[i+24]|cis[i+23]|cis[i+22]|cis[i+21],
+							cis[i+28]|cis[i+27]|cis[i+26]|cis[i+25],
+							cis[i+32]|cis[i+31]|cis[i+30]|cis[i+29]);
+
+					}
+					break;
 
 				case HNBU_PDOFF_2G:
 					{
@@ -3913,6 +4364,115 @@ BCMATTACHFN(srom_parsecis)(osl_t *osh, uint8 *pcis[], uint ciscnt, char **vars, 
 						SROM11_PDOFF_2G_40M_VALID_SHIFT);
 					break;
 					}
+
+				case HNBU_ACPAPARAM:
+					{
+					uint8 cor = 0;
+					/* 4335 uses 2ga0,5ga0,2ga1,5ga1,5g2 order right now. */
+					for (cor = 0; cor < 3; cor++) {
+					uint8 k = 0;
+					/* pa2g */
+					if (cor != 2) {
+					varbuf_append(&b, vstr_pa2ga, cor,
+						(cis[i + 2 + cor*30] << 8) + cis[i + 1 + cor*30],
+						(cis[i + 4 + cor*30] << 8) + cis[i + 3 + cor*30],
+						(cis[i + 6 + cor*30] << 8) + cis[i + 5 + cor*30]);
+					k = 6;
+					}
+					/* pa5g */
+					varbuf_append(&b, vstr_pa5ga, cor,
+					(cis[i + 2 + cor*30 + k] << 8) + cis[i + 1 + cor*30 + k],
+					(cis[i + 4 + cor*30 + k] << 8) + cis[i + 3 + cor*30 + k],
+					(cis[i + 6 + cor*30 + k] << 8) + cis[i + 5 + cor*30 + k],
+					(cis[i + 8 + cor*30 + k] << 8) + cis[i + 7 + cor*30 + k],
+					(cis[i + 10 + cor*30 + k] << 8) + cis[i + 9 + cor*30 + k],
+					(cis[i + 12 + cor*30 + k] << 8) + cis[i + 11 + cor*30 + k],
+					(cis[i + 14 + cor*30 + k] << 8) + cis[i + 13 + cor*30 + k],
+					(cis[i + 16 + cor*30 + k] << 8) + cis[i + 15 + cor*30 + k],
+					(cis[i + 18 + cor*30 + k] << 8) + cis[i + 17 + cor*30 + k],
+					(cis[i + 20 + cor*30 + k] << 8) + cis[i + 19 + cor*30 + k],
+					(cis[i + 22 + cor*30 + k] << 8) + cis[i + 21 + cor*30 + k],
+					(cis[i + 24 + cor*30 + k] << 8) + cis[i + 23 + cor*30 + k]);
+					}
+					break;
+					}
+
+				case HNBU_ACPA_CCK:
+					varbuf_append(&b, vstr_pa2gccka, 0,
+					        (cis[i + 2] << 8) + cis[i + 1],
+						(cis[i + 4] << 8) + cis[i + 3],
+						(cis[i + 6] << 8) + cis[i + 5]);
+					break;
+
+				case HNBU_ACPA_40:
+					varbuf_append(&b, vstr_pa5gbw40a, 0,
+					        (cis[i + 2] << 8) + cis[i + 1],
+						(cis[i + 4] << 8) + cis[i + 3],
+						(cis[i + 6] << 8) + cis[i + 5],
+					        (cis[i + 8] << 8) + cis[i + 7],
+						(cis[i + 10] << 8) + cis[i + 9],
+						(cis[i + 12] << 8) + cis[i + 11],
+					        (cis[i + 14] << 8) + cis[i + 13],
+						(cis[i + 16] << 8) + cis[i + 15],
+						(cis[i + 18] << 8) + cis[i + 17],
+					        (cis[i + 20] << 8) + cis[i + 19],
+						(cis[i + 22] << 8) + cis[i + 21],
+						(cis[i + 24] << 8) + cis[i + 23]);
+					break;
+
+				case HNBU_ACPA_80:
+					varbuf_append(&b, vstr_pa5gbw80a, 0,
+					        (cis[i + 2] << 8) + cis[i + 1],
+						(cis[i + 4] << 8) + cis[i + 3],
+						(cis[i + 6] << 8) + cis[i + 5],
+					        (cis[i + 8] << 8) + cis[i + 7],
+						(cis[i + 10] << 8) + cis[i + 9],
+						(cis[i + 12] << 8) + cis[i + 11],
+					        (cis[i + 14] << 8) + cis[i + 13],
+						(cis[i + 16] << 8) + cis[i + 15],
+						(cis[i + 18] << 8) + cis[i + 17],
+					        (cis[i + 20] << 8) + cis[i + 19],
+						(cis[i + 22] << 8) + cis[i + 21],
+						(cis[i + 24] << 8) + cis[i + 23]);
+					break;
+
+				case HNBU_ACPA_4080:
+					varbuf_append(&b, vstr_pa5gbw4080a, 0,
+					        (cis[i + 2] << 8) + cis[i + 1],
+						(cis[i + 4] << 8) + cis[i + 3],
+						(cis[i + 6] << 8) + cis[i + 5],
+					        (cis[i + 8] << 8) + cis[i + 7],
+						(cis[i + 10] << 8) + cis[i + 9],
+						(cis[i + 12] << 8) + cis[i + 11],
+					        (cis[i + 14] << 8) + cis[i + 13],
+						(cis[i + 16] << 8) + cis[i + 15],
+						(cis[i + 18] << 8) + cis[i + 17],
+					        (cis[i + 20] << 8) + cis[i + 19],
+						(cis[i + 22] << 8) + cis[i + 21],
+						(cis[i + 24] << 8) + cis[i + 23]);
+					varbuf_append(&b, vstr_pa5gbw4080a, 1,
+					        (cis[i + 26] << 8) + cis[i + 25],
+						(cis[i + 28] << 8) + cis[i + 27],
+						(cis[i + 30] << 8) + cis[i + 29],
+					        (cis[i + 32] << 8) + cis[i + 31],
+						(cis[i + 34] << 8) + cis[i + 33],
+						(cis[i + 36] << 8) + cis[i + 35],
+					        (cis[i + 38] << 8) + cis[i + 37],
+						(cis[i + 40] << 8) + cis[i + 39],
+						(cis[i + 42] << 8) + cis[i + 41],
+					        (cis[i + 44] << 8) + cis[i + 43],
+						(cis[i + 46] << 8) + cis[i + 45],
+						(cis[i + 48] << 8) + cis[i + 47]);
+					break;
+
+				case HNBU_SUBBAND5GVER:
+					varbuf_append(&b, vstr_subband5gver,
+					        (cis[i + 2] << 8) + cis[i + 1]);
+					break;
+
+				case HNBU_PAPARAMBWVER:
+					varbuf_append(&b, vstr_paparambwver, 0, cis[i + 1]);
+					break;
 				}
 
 				break;
@@ -3951,7 +4511,7 @@ BCMATTACHFN(srom_parsecis)(osl_t *osh, uint8 *pcis[], uint ciscnt, char **vars, 
 	return err;
 }
 
-/* set PCMCIA sprom command register */
+/** set PCMCIA sprom command register */
 static int
 sprom_cmd_pcmcia(osl_t *osh, uint8 cmd)
 {
@@ -3971,7 +4531,7 @@ sprom_cmd_pcmcia(osl_t *osh, uint8 cmd)
 	return 1;
 }
 
-/* read a word from the PCMCIA srom */
+/** read a word from the PCMCIA srom */
 static int
 sprom_read_pcmcia(osl_t *osh, uint16 addr, uint16 *data)
 {
@@ -3998,7 +4558,7 @@ sprom_read_pcmcia(osl_t *osh, uint16 addr, uint16 *data)
 }
 
 #if defined(WLTEST) || defined(DHD_SPROM) || defined(BCMDBG)
-/* write a word to the PCMCIA srom */
+/** write a word to the PCMCIA srom */
 static int
 sprom_write_pcmcia(osl_t *osh, uint16 addr, uint16 data)
 {
@@ -4022,7 +4582,8 @@ sprom_write_pcmcia(osl_t *osh, uint16 addr, uint16 data)
 }
 #endif 
 
-/* In chips with chipcommon rev 32 and later, the srom is in chipcommon,
+/**
+ * In chips with chipcommon rev 32 and later, the srom is in chipcommon,
  * not in the bus cores.
  */
 static uint16
@@ -4054,7 +4615,7 @@ srom_cc_cmd(si_t *sih, osl_t *osh, void *ccregs, uint32 cmd, uint wordoff, uint1
 		return 0xffff;
 }
 
-/*
+/**
  * Read in and validate sprom.
  * Return 0 on success, nonzero on error.
  */
@@ -4266,10 +4827,10 @@ out:
 #endif 
 }
 
-/*
-* Create variable table from memory.
-* Return 0 on success, nonzero on error.
-*/
+/**
+ * Create variable table from memory.
+ * Return 0 on success, nonzero on error.
+ */
 static int
 BCMATTACHFN(initvars_table)(osl_t *osh, char *start, char *end, char **vars, uint *count)
 {
@@ -4293,7 +4854,7 @@ BCMATTACHFN(initvars_table)(osl_t *osh, char *start, char *end, char **vars, uin
 	return 0;
 }
 
-/*
+/**
  * Find variables with <devpath> from flash. 'base' points to the beginning
  * of the table upon enter and to the end of the table upon exit when success.
  * Return 0 on success, nonzero on error.
@@ -4372,8 +4933,9 @@ exit:	MFREE(osh, flash, MAX_NVRAM_SPACE);
 	return err;
 }
 
-#if !defined(BCMUSBDEV_ENABLED) && !defined(BCMSDIODEV_ENABLED)
-/*
+#if !defined(BCMUSBDEV_ENABLED) && !defined(BCMSDIODEV_ENABLED) && \
+	!defined(BCMPCIDEV_ENABLED)
+/**
  * Initialize nonvolatile variable table from flash.
  * Return 0 on success, nonzero on error.
  */
@@ -4401,7 +4963,8 @@ BCMATTACHFN(initvars_flash_si)(si_t *sih, char **vars, uint *count)
 }
 #endif	
 
-/* Parse SROM and create name=value pairs. 'srom' points to
+/**
+ * Parse SROM and create name=value pairs. 'srom' points to
  * the SROM word array. 'off' specifies the offset of the
  * first word 'srom' points to, which should be either 0 or
  * SROM3_SWRG_OFF (full SROM or software region).
@@ -4692,7 +5255,8 @@ BCMATTACHFN(_initvars_srom_pci)(uint8 sromrev, uint16 *srom, uint off, varbuf_t 
 	}
 }
 
-/*
+
+/**
  * Initialize nonvolatile variable table from sprom.
  * Return 0 on success, nonzero on error.
  */
@@ -4804,19 +5368,22 @@ BCMATTACHFN(initvars_srom_pci)(si_t *sih, void *curmap, char **vars, uint *count
 				BS_ERROR(("No nvm file, use generic default (for programming"
 					" SPROM/OTP only)\n"));
 
-				if (((sih->chip == BCM4331_CHIP_ID) ||
-					(sih->chip == BCM43431_CHIP_ID)) &&
-					(sih->chiprev < 3)) {
+				if (((CHIPID(sih->chip) == BCM4331_CHIP_ID) ||
+					(CHIPID(sih->chip) == BCM43431_CHIP_ID)) &&
+					(CHIPREV(sih->chiprev) < 3)) {
 
 					defvarslen = srom_vars_len(defaultsromvars_4331);
 					bcopy(defaultsromvars_4331, vp, defvarslen);
 
-				} else if ((sih->chip == BCM4360_CHIP_ID) ||
-				           (sih->chip == BCM4352_CHIP_ID)) {
+				} else if ((CHIPID(sih->chip) == BCM4360_CHIP_ID) ||
+				           (CHIPID(sih->chip) == BCM43460_CHIP_ID) ||
+				           (CHIPID(sih->chip) == BCM4352_CHIP_ID)) {
 					defvarslen = srom_vars_len(defaultsromvars_4360);
 					bcopy(defaultsromvars_4360, vp, defvarslen);
-				} else if (sih->chip == BCM4335_CHIP_ID ||
-					0) {
+				} else if (CHIPID(sih->chip) == BCM4350_CHIP_ID)  {
+					defvarslen = srom_vars_len(defaultsromvars_4350);
+					bcopy(defaultsromvars_4350, vp, defvarslen);
+				} else if (CHIPID(sih->chip) == BCM4335_CHIP_ID) {
 					defvarslen = srom_vars_len(defaultsromvars_4335);
 					bcopy(defaultsromvars_4335, vp, defvarslen);
 				} else {
@@ -4824,7 +5391,7 @@ BCMATTACHFN(initvars_srom_pci)(si_t *sih, void *curmap, char **vars, uint *count
 					 * programmed, so can't really verify the OTP is
 					 * unprogrammed or a bad OTP.
 					 */
-					if (sih->chip == BCM4311_CHIP_ID) {
+					if (CHIPID(sih->chip) == BCM4311_CHIP_ID) {
 						const char *devid = "devid=0x4311";
 						const size_t devid_strlen = strlen(devid);
 						BS_ERROR(("setting the devid to be 4311\n"));
@@ -4845,26 +5412,28 @@ BCMATTACHFN(initvars_srom_pci)(si_t *sih, void *curmap, char **vars, uint *count
 			BS_ERROR(("Used %d bytes of defaultsromvars\n", defvarslen));
 			goto varsdone;
 
-		} else if ((((sih->chip == BCM4331_CHIP_ID) ||
-			(sih->chip == BCM43431_CHIP_ID)) &&
-			(sih->chiprev < 3)) || (sih->chip == BCM4360_CHIP_ID) ||
-			(sih->chip == BCM43460_CHIP_ID) ||
-			(sih->chip == BCM4352_CHIP_ID)) {
+		} else if ((((CHIPID(sih->chip) == BCM4331_CHIP_ID) ||
+			(CHIPID(sih->chip) == BCM43431_CHIP_ID)) &&
+			(CHIPREV(sih->chiprev) < 3)) || (CHIPID(sih->chip) == BCM4360_CHIP_ID) ||
+			(CHIPID(sih->chip) == BCM43460_CHIP_ID) ||
+			(CHIPID(sih->chip) == BCM4352_CHIP_ID)) {
 			base = vp = mfgsromvars;
 
-			if ((sih->chip == BCM4360_CHIP_ID) ||
-			    (sih->chip == BCM43460_CHIP_ID) ||
-			    (sih->chip == BCM4352_CHIP_ID))
+			if ((CHIPID(sih->chip) == BCM4360_CHIP_ID) ||
+			    (CHIPID(sih->chip) == BCM43460_CHIP_ID) ||
+			    (CHIPID(sih->chip) == BCM4352_CHIP_ID))
 				BS_ERROR(("4360 BOOT w/o SPROM or OTP\n"));
 			else
 				BS_ERROR(("4331 BOOT w/o SPROM or OTP\n"));
 
 			if (defvarslen == 0) {
-				if ((sih->chip == BCM4360_CHIP_ID) ||
-				           (sih->chip == BCM4352_CHIP_ID)) {
+				if ((CHIPID(sih->chip) == BCM4360_CHIP_ID) ||
+				           (CHIPID(sih->chip) == BCM43460_CHIP_ID) ||
+				           (CHIPID(sih->chip) == BCM4352_CHIP_ID)) {
 					defvarslen = srom_vars_len(defaultsromvars_4360);
 					bcopy(defaultsromvars_4360, vp, defvarslen);
-				} else {
+				}
+				else {
 					defvarslen = srom_vars_len(defaultsromvars_4331);
 					bcopy(defaultsromvars_4331, vp, defvarslen);
 				}
@@ -4872,8 +5441,7 @@ BCMATTACHFN(initvars_srom_pci)(si_t *sih, void *curmap, char **vars, uint *count
 			vp += defvarslen;
 			*vp++ = '\0';
 			goto varsdone;
-		} else if (sih->chip == BCM4335_CHIP_ID ||
-			0) {
+		} else if (CHIPID(sih->chip) == BCM4335_CHIP_ID) {
 			base = vp = mfgsromvars;
 
 			defvarslen = srom_vars_len(defaultsromvars_4335);
@@ -4947,7 +5515,7 @@ errout:
 	return err;
 }
 
-/*
+/**
  * Read the cis and call parsecis to initialize the vars.
  * Return 0 on success, nonzero on error.
  */
@@ -4983,7 +5551,7 @@ BCMATTACHFN(initvars_cis_pcmcia)(si_t *sih, osl_t *osh, char **vars, uint *count
 
 
 #ifdef BCMSPI
-/*
+/**
  * Read the SPI cis and call parsecis to initialize the vars.
  * Return 0 on success, nonzero on error.
  */
@@ -5026,7 +5594,7 @@ BCMATTACHFN(initvars_cis_spi)(osl_t *osh, char **vars, uint *count)
 #endif /* BCMSPI */
 
 #if defined(BCMUSBDEV)
-/* Return sprom size in 16-bit words */
+/** Return sprom size in 16-bit words */
 uint
 srom_size(si_t *sih, osl_t *osh)
 {
@@ -5073,14 +5641,14 @@ srom_size(si_t *sih, osl_t *osh)
 }
 #endif 
 
-/*
+/**
  * initvars are different for BCMUSBDEV and BCMSDIODEV.  This is OK when supporting both at
  * the same time, but only because all of the code is in attach functions and not in ROM.
  */
 
 #if defined(BCMUSBDEV_ENABLED)
 #if defined(BCMUSBDEV_BMAC) || defined(BCM_BMAC_VARS_APPEND)
-/*
+/**
  * Read the USB cis and call parsecis to initialize the vars.
  * Return 0 on success, nonzero on error.
  */
@@ -5110,7 +5678,7 @@ BCMATTACHFN(initvars_cis_usbdriver)(si_t *sih, osl_t *osh, char **vars, uint *co
 	return (rc);
 }
 
-/* For driver(not bootloader), if nvram is not downloadable or missing, use default */
+/** For driver(not bootloader), if nvram is not downloadable or missing, use default */
 static int
 BCMATTACHFN(initvars_srom_si_usbdriver)(si_t *sih, osl_t *osh, char **vars, uint *varsz)
 {
@@ -5298,6 +5866,9 @@ BCMATTACHFN(initvars_srom_si_bl)(si_t *sih, osl_t *osh, void *curmap, char **var
 }
 #endif	/* #ifdef BCM_DONGLEVARS */
 
+/**
+ * Reads OTP or SPROM and appends parsed contents to caller supplied var/value pairs.
+ */
 static int
 BCMATTACHFN(initvars_srom_si)(si_t *sih, osl_t *osh, void *curmap, char **vars, uint *varsz)
 {
@@ -5335,8 +5906,8 @@ BCMATTACHFN(initvars_srom_si)(si_t *sih, osl_t *osh, void *curmap, char **vars, 
 	}
 #endif  /* BCMUSBDEV_BMAC || BCM_BMAC_VARS_APPEND */
 
-#ifdef BCM_DONGLEVARS	    /* this flag should be defined for usb bootloader, to read \
-	OTP or SROM */
+#ifdef BCM_DONGLEVARS	/* this flag should be defined for usb bootloader, to read OTP or \
+	SROM */
 	if (BCME_OK != initvars_srom_si_bl(sih, osh, curmap, vars, varsz))
 		return BCME_ERROR;
 #endif
@@ -5798,9 +6369,10 @@ BCMATTACHFN(initvars_srom_si)(si_t *sih, osl_t *osh, void *curmap, char **vars, 
 	case BCM4314_CHIP_ID: ciss = 1; defcis = defcis4330; hdrsz = 4; break;
 	case BCM4334_CHIP_ID: ciss = 1; defcis = defcis4330; hdrsz = 4; break;
 	case BCM4335_CHIP_ID: ciss = 1; defcis = defcis4335; hdrsz = 4; break;
+	case BCM4350_CHIP_ID: ciss = 1; defcis = defcis4350; hdrsz = 4; break;
 	case BCM43143_CHIP_ID: ciss = 1; defcis = defcis43143; hdrsz = 4; break;
 	default:
-		BS_ERROR(("%s: Unknown chip 0x%04x\n", __FUNCTION__, sih->chip));
+		BS_ERROR(("%s: Unknown chip 0x%04x\n", __FUNCTION__, CHIPID(sih->chip)));
 		return BCME_ERROR;
 	}
 	if (sih->ccrev >= 36) {
@@ -5908,11 +6480,34 @@ BCMATTACHFN(initvars_srom_si)(si_t *sih, osl_t *osh, void *curmap, char **vars, 
 
 #else /* !BCMUSBDEV && !BCMSDIODEV */
 
+
+#if defined(BCMPCIDEV_ENABLED)
+/**
+ * Initialize nonvolatile variable table from shared info in TCM.
+ */
+
+extern olmsg_shared_info_t *ppcie_shared;
+
+static int
+BCMATTACHFN(initvars_tcm_pcidev)(si_t *sih, osl_t *osh, void *curmap, char **vars, uint *varsz)
+{
+	*vars = (char *)ppcie_shared->vars;
+	*varsz = (int)ppcie_shared->vars_size;
+
+	return BCME_OK;
+}
+#endif /* BCMPCIDEV_ENABLED */
+
 static int
 BCMATTACHFN(initvars_srom_si)(si_t *sih, osl_t *osh, void *curmap, char **vars, uint *varsz)
 {
+#if defined(BCMPCIDEV_ENABLED)
+	/* Initialize nonvolatile variable table from shared info in TCM. */
+	return initvars_tcm_pcidev(sih, osh, curmap, vars, varsz);
+#else
 	/* Search flash nvram section for srom variables */
 	return initvars_flash_si(sih, vars, varsz);
+#endif /* BCMPCIDEV_ENABLED */
 }
 #endif	
 

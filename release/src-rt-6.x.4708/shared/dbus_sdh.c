@@ -2,7 +2,7 @@
  * Dongle BUS interface
  * Common to all SDIO interface
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -10,7 +10,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: dbus_sdh.c 300516 2011-12-04 17:39:44Z $
+ * $Id: dbus_sdh.c 401759 2013-05-13 16:08:08Z $
  */
 
 #include <typedefs.h>
@@ -4756,7 +4756,7 @@ dbus_sdh_probe(uint16 venid, uint16 devid, uint16 bus_no, uint16 slot,
 	ASSERT(g_probe_info.chinfo);
 	g_probe_info.ramsize = g_probe_info.orig_ramsize = g_probe_info.chinfo->socram_size;
 
-#ifndef BCMSPI      /* wake-wlan in gSPI will bring up the htavail/alpavail clocks. */
+#ifndef BCMSPI  /* wake-wlan in gSPI will bring up the htavail/alpavail clocks. */
 	/* Force PLL off until si_attach() programs PLL control regs */
 
 

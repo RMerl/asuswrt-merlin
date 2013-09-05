@@ -1,6 +1,6 @@
 # Broadcom 802.11abg Networking Device Driver Configuration file
 #
-# Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+# Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
 # 
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,8 @@
 
 # wl driver base
 WL=1
+# bcm dbg
+#DEBUG=1
 
 # features
 WLLED=1
@@ -47,6 +49,7 @@ BCMROMOFFLOAD=0
 BTC2WIRE=1
 WLCOEX=1
 WL_NOPHYIPA=0
+WLOLPC=1
 WLHOSTVARS=1
 BCMEXTNVM=0
 BCMECICOEX=1

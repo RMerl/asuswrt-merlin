@@ -89,7 +89,7 @@ typedef struct net_device netdevice_t;
 #define ARPHRD_IEEE80211 801	/* kernel 2.4.6 */
 #endif
 
-#ifndef ARPHRD_IEEE80211_PRISM	    /* kernel 2.4.18 */
+#ifndef ARPHRD_IEEE80211_PRISM	/* kernel 2.4.18 */
 #define ARPHRD_IEEE80211_PRISM 802
 #endif
 

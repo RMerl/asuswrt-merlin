@@ -303,9 +303,10 @@ void br_topology_change_detection(struct net_bridge *br)
 		isroot ? "propagating" : "sending tcn bpdu");
 
 	if (isroot) {
+		u32 ratio = HZ/10;
 		br->topology_change = 1;
 		mod_timer(&br->topology_change_timer, jiffies
-			  + br->bridge_forward_delay + br->bridge_max_age);
+			  + (br->bridge_forward_delay + br->bridge_max_age)/ratio);
 	} else if (!br->topology_change_detected) {
 		br_transmit_tcn(br);
 		mod_timer(&br->tcn_timer, jiffies + br->bridge_hello_time);

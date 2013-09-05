@@ -534,7 +534,7 @@ static inline int alchemy_irq_to_gpio(int irq)
 #ifndef CONFIG_GPIOLIB
 
 
-#ifndef CONFIG_ALCHEMY_GPIO_INDIRECT	    /* case (4) */
+#ifndef CONFIG_ALCHEMY_GPIO_INDIRECT	/* case (4) */
 
 static inline int gpio_direction_input(int gpio)
 {
@@ -592,7 +592,7 @@ static inline void gpio_free(unsigned gpio)
 
 
  /* using gpiolib to provide up to 2 gpio_chips for on-chip gpios */
-#ifndef CONFIG_ALCHEMY_GPIO_INDIRECT	    /* case (2) */
+#ifndef CONFIG_ALCHEMY_GPIO_INDIRECT	/* case (2) */
 
 /* get everything through gpiolib */
 #define gpio_to_irq	__gpio_to_irq

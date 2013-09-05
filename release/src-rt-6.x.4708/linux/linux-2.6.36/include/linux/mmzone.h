@@ -602,7 +602,7 @@ typedef struct pglist_data {
 	struct zone node_zones[MAX_NR_ZONES];
 	struct zonelist node_zonelists[MAX_ZONELISTS];
 	int nr_zones;
-#ifdef CONFIG_FLAT_NODE_MEM_MAP	    /* means !SPARSEMEM */
+#ifdef CONFIG_FLAT_NODE_MEM_MAP	/* means !SPARSEMEM */
 	struct page *node_mem_map;
 #ifdef CONFIG_CGROUP_MEM_RES_CTLR
 	struct page_cgroup *node_page_cgroup;

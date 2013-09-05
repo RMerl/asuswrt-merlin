@@ -1,7 +1,7 @@
 /*
  * BCM43XX PCI/E core sw API definitions.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: nicpci.h 348160 2012-07-31 21:25:18Z $
+ * $Id: nicpci.h 401759 2013-05-13 16:08:08Z $
  */
 
 #ifndef	_NICPCI_H
@@ -29,6 +29,10 @@
 #define pcie_clkreq(a, b, c)	(0)
 #define pcie_lcreg(a, b, c)	(0)
 #define pcie_ltrenable(a, b, c)	(0)
+#define pcie_obffenable(a, b, c)	(0)
+#define pcie_ltr_reg(a, b, c, d)	(0)
+#define pcieltrspacing_reg(a, b, c)	(0)
+#define pcieltrhysteresiscnt_reg(a, b, c)	(0)
 
 #define pcicore_init(a, b, c) (0x0dadbeef)
 #define pcicore_deinit(a)	do { } while (0)
@@ -43,6 +47,9 @@
 
 #define pcicore_pcieserdesreg(a, b, c, d, e) (0)
 #define pcicore_pciereg(a, b, c, d, e) (0)
+#if defined(WLTEST) || defined(BCMDBG)
+#define pcicore_dump_pcieinfo(a, b) (0)
+#endif 
 #ifdef BCMDBG
 #define pcie_lcreg(a, b, c) (0)
 #define pcicore_dump(a, b)	do { } while (0)
@@ -64,8 +71,11 @@
 #define pcie_configspace_get(a, b, c) (0)
 #define pcie_set_L1_entry_time(a, b) do { } while (0)
 #define pcie_disable_TL_clk_gating(a) do { } while (0)
-#define pcie_get_link_speed(a) do { } while (0)
+#define pcie_get_link_speed(a) (0)
 #define pcie_set_error_injection(a, b) do { } while (0)
+#define pcie_set_L1substate(a, b) do { } while (0)
+#define pcie_get_L1substate(a) (0)
+#define pcie_survive_perst(a, b, c) (0)
 #else
 struct sbpcieregs;
 
@@ -81,6 +91,12 @@ extern void pcie_set_L1_entry_time(void *pch, uint32 val);
 extern void pcie_disable_TL_clk_gating(void *pch);
 extern void pcie_set_error_injection(void *pch, uint32 mode);
 extern uint8 pcie_ltrenable(void *pch, uint32 mask, uint32 val);
+extern uint8 pcie_obffenable(void *pch, uint32 mask, uint32 val);
+extern void pcie_set_L1substate(void *pch, uint32 substate);
+extern uint32 pcie_get_L1substate(void *pch);
+extern uint32 pcie_ltr_reg(void *pch, uint32 reg, uint32 mask, uint32 val);
+extern uint32 pcieltrspacing_reg(void *pch, uint32 mask, uint32 val);
+extern uint32 pcieltrhysteresiscnt_reg(void *pch, uint32 mask, uint32 val);
 
 extern void *pcicore_init(si_t *sih, osl_t *osh, void *regs);
 extern void pcicore_deinit(void *pch);
@@ -97,6 +113,10 @@ extern uint32 pcicore_pcieserdesreg(void *pch, uint32 mdioslave, uint32 offset,
                                     uint32 mask, uint32 val);
 
 extern uint32 pcicore_pciereg(void *pch, uint32 offset, uint32 mask, uint32 val, uint type);
+
+#if defined(WLTEST) || defined(BCMDBG)
+extern int pcicore_dump_pcieinfo(void *pch, struct bcmstrbuf *b);
+#endif
 
 
 #ifdef BCMDBG
@@ -118,6 +138,7 @@ extern int pcie_configspace_cache(void* pch);
 extern int pcie_configspace_restore(void* pch);
 extern int pcie_configspace_get(void* pch, uint8 *buf, uint size);
 extern uint32 pcie_get_link_speed(void* pch);
+extern uint32 pcie_survive_perst(void* pch, uint32 mask, uint32 val);
 #endif 
 
 #define PCIE_MRRS_OVERRIDE(sih) \

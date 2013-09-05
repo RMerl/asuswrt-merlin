@@ -1,7 +1,7 @@
 /*
  * Northstar coma mode.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: hndcoma.c 400139 2013-05-03 02:31:23Z $
+ * $Id: hndcoma.c 406135 2013-06-06 04:57:34Z $
  */
 
 #include <linux/proc_fs.h>
@@ -25,64 +25,61 @@
 #include <bcmdevs.h>
 #include <bcmnvram.h>
 #include <asm/uaccess.h>
+#include <linux/platform_device.h>
 
 #define DMU_BASE 0x1800c000
-#define CHIP_COMMON_A 0x18000000
 /* Offset */
 #define CRU_INTERRUPT 0x18c
 #define PCU_AOPC_CONTROL 0x20
 #define PVTMON_CONTROL0 0x2c0
 #define CRU_RESET 0x184
-#define CHIP_COMMON_A_GPIOOUT 0x64
-#define CHIP_COMMON_A_GPIOOUTEN 0x68
 
 #define MAX_COMA_SLEEP_TIME 0x003fffe0
+
+/* Global SB handle */
+extern si_t *bcm947xx_sih;
+extern spinlock_t bcm947xx_sih_lock;
+
+/* Convenience */
+#define sih bcm947xx_sih
+#define sih_lock bcm947xx_sih_lock
+
+static uint32 dmu_base;
+static struct delayed_work coma_work;
+static struct platform_device *coma_pdev;
 
 static void coma_gpioout(uint32 gpio);
 
 static void
 coma_gpioout(uint32 gpio)
 {
-	uint32 val;
-	uint32 chip_common_a;
+	int enable_gpio_mask;
 
-	chip_common_a = (uint32)REG_MAP(CHIP_COMMON_A, 4096);
+	enable_gpio_mask = 1 << gpio;
 
-	gpio = 1 << gpio;
-	val = readl(chip_common_a + CHIP_COMMON_A_GPIOOUT);
-	val &= ~gpio;
-	writel(val, chip_common_a + CHIP_COMMON_A_GPIOOUT);
-	val = readl(chip_common_a + CHIP_COMMON_A_GPIOOUTEN);
-	val |= gpio;
-	writel(val, chip_common_a + CHIP_COMMON_A_GPIOOUTEN);
-	REG_UNMAP((void *)chip_common_a);
+	/* low active */
+	si_gpioout(sih, enable_gpio_mask, 0, GPIO_DRV_PRIORITY);
+	si_gpioouten(sih, enable_gpio_mask, enable_gpio_mask, GPIO_DRV_PRIORITY);
 }
 
-static int coma_read_proc(char * buffer, char **start,
-off_t offset, int length, int * eof, void * data)
+static void
+coma_polling(struct work_struct *work)
 {
 	uint32 cru_interrupt;
-	uint32 reg_base;
-	int len;
 
-	len = 0;
-
-	reg_base = (uint32)REG_MAP(DMU_BASE, 4096);
-	cru_interrupt = readl(reg_base + CRU_INTERRUPT);
-	REG_UNMAP((void *)reg_base);
-	if (cru_interrupt & 0x01)
-		len += sprintf(buffer + len, "1\n");
-	else
-		len += sprintf(buffer + len, "0\n");
-
-	return len;
+	cru_interrupt = readl(dmu_base + CRU_INTERRUPT);
+	if (cru_interrupt & 0x01) {
+		coma_pdev = platform_device_register_simple("coma_dev", 0, NULL, 0);
+		return;
+	}
+	schedule_delayed_work(&coma_work, msecs_to_jiffies(1000));
 }
 
-static int coma_write_proc(struct file *file, const char __user *buf,
+static int
+coma_write_proc(struct file *file, const char __user *buf,
 	unsigned long count, void *data)
 {
 	char *buffer, *var;
-	uint32 reg_base;
 	uint32 pcu_aopc_control;
 	uint32 pvtmon_control0;
 	uint32 gpio;
@@ -99,14 +96,14 @@ static int coma_write_proc(struct file *file, const char __user *buf,
 		goto out;
 	}
 
-	if (buffer[0] == '1') {
+	/* enter coma mode */
+	if (buffer[0] == '2') {
 		/* PVT monitor power-down */
-		reg_base = (uint32)REG_MAP(DMU_BASE, 4096);
-		pvtmon_control0 = readl(reg_base + PVTMON_CONTROL0) | 0x1;
-		writel(pvtmon_control0, reg_base + PVTMON_CONTROL0);
+		pvtmon_control0 = readl(dmu_base + PVTMON_CONTROL0) | 0x1;
+		writel(pvtmon_control0, dmu_base + PVTMON_CONTROL0);
 
 		/* Put ROBOSW, USBPHY, OPT, PVTMON in reset mode */
-		writel(0x6, reg_base + CRU_RESET);
+		writel(0x6, dmu_base + CRU_RESET);
 
 		/* Drive GPIO pin to low to disable on-board switching regulator */
 		gpio = getgpiopin(NULL, "coma_swreg", GPIO_PIN_NOTDEFINED);
@@ -115,12 +112,12 @@ static int coma_write_proc(struct file *file, const char __user *buf,
 		}
 
 		/* Clear bit0 (PWR_DIS_LATCH_EN) of PCU_AOPC_CONTROL */
-		pcu_aopc_control = readl(reg_base + PCU_AOPC_CONTROL);
+		pcu_aopc_control = readl(dmu_base + PCU_AOPC_CONTROL);
 		pcu_aopc_control &= 0xfffffffe;
-		writel(pcu_aopc_control, reg_base + PCU_AOPC_CONTROL);
+		writel(pcu_aopc_control, dmu_base + PCU_AOPC_CONTROL);
 
 		/* set timer to auto-wakeup */
-		pcu_aopc_control = readl(reg_base + PCU_AOPC_CONTROL);
+		pcu_aopc_control = readl(dmu_base + PCU_AOPC_CONTROL);
 		var = getvar(NULL, "coma_sleep_time");
 		if (var)
 			sleep_time = bcm_strtoul(var, NULL, 0);
@@ -134,7 +131,13 @@ static int coma_write_proc(struct file *file, const char __user *buf,
 
 		/* Config power down setting */
 		pcu_aopc_control |= 0x8040001f;
-		writel(pcu_aopc_control, reg_base + PCU_AOPC_CONTROL);
+		writel(pcu_aopc_control, dmu_base + PCU_AOPC_CONTROL);
+	} else if (buffer[0] == '0') {
+		/* cancel polling work */
+		cancel_delayed_work(&coma_work);
+	} else if (buffer[0] == '1') {
+		/* resume polling work */
+		schedule_delayed_work(&coma_work, msecs_to_jiffies(1000));
 	}
 out:
 	if (buffer)
@@ -143,9 +146,19 @@ out:
 	return count;
 }
 
-static void __init coma_proc_init(void)
+static void __init
+coma_proc_init(void)
 {
 	struct proc_dir_entry *coma_proc_dir, *coma;
+	char *var;
+	uint32 coma_disabled;
+
+	var = getvar(NULL, "coma_disable");
+	if (var) {
+		coma_disabled = bcm_strtoul(var, NULL, 0);
+		if (coma_disabled == 1)
+			return;
+	}
 
 	coma_proc_dir = proc_mkdir("bcm947xx", NULL);
 
@@ -160,7 +173,20 @@ static void __init coma_proc_init(void)
 		return;
 	}
 
-	coma->read_proc = coma_read_proc;
+	dmu_base = (uint32)REG_MAP(DMU_BASE, 4096);
 	coma->write_proc = coma_write_proc;
+
+	INIT_DELAYED_WORK(&coma_work, coma_polling);
+	schedule_delayed_work(&coma_work, msecs_to_jiffies(1000));
 }
-fs_initcall(coma_proc_init);
+
+static void __exit
+coma_proc_exit(void)
+{
+	REG_UNMAP((void *)dmu_base);
+	cancel_delayed_work(&coma_work);
+	remove_proc_entry("bcm947xx/coma", NULL);
+}
+
+module_init(coma_proc_init);
+module_exit(coma_proc_exit);

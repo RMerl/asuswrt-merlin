@@ -1,7 +1,7 @@
 /*
  * HND Run Time Environment for standalone ARM programs.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -79,7 +79,7 @@ var:	.word	val
 #endif	/* _LANGUAGE_ASSEMBLY */
 
 
-#if defined(__ARM_ARCH_7M__)	    /* Cortex-M3 */
+#if defined(__ARM_ARCH_7M__)	/* Cortex-M3 */
 
 /* Data Watchpoint and Trigger */
 #define CM3_DWT_CTRL		0xe0001000
@@ -206,7 +206,7 @@ var:	.word	val
 #define CM3_TROFF_PC	24
 #define CM3_TROFF_xPSR	28
 
-#elif defined(__ARM_ARCH_7A__)	  /* Cortex-A9 */
+#elif defined(__ARM_ARCH_7A__)	/* Cortex-A9 */
 /* Fields in cpsr */
 #define	PS_USR		0x00000010		/* Mode: User */
 #define	PS_FIQ		0x00000011		/* Mode: FIQ */

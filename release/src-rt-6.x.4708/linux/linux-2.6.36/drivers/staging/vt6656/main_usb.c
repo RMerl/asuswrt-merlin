@@ -252,7 +252,7 @@ static int vt6656_probe(struct usb_interface *intf,
 			const struct usb_device_id *id);
 static void vt6656_disconnect(struct usb_interface *intf);
 
-#ifdef CONFIG_PM	    /* Minimal support for suspend and resume */
+#ifdef CONFIG_PM	/* Minimal support for suspend and resume */
 static int vt6656_suspend(struct usb_interface *intf, pm_message_t message);
 static int vt6656_resume(struct usb_interface *intf);
 #endif /* CONFIG_PM */
@@ -714,7 +714,7 @@ static BOOL device_release_WPADEV(PSDevice pDevice)
     return TRUE;
 }
 
-#ifdef CONFIG_PM	    /* Minimal support for suspend and resume */
+#ifdef CONFIG_PM	/* Minimal support for suspend and resume */
 
 static int vt6656_suspend(struct usb_interface *intf, pm_message_t message)
 {

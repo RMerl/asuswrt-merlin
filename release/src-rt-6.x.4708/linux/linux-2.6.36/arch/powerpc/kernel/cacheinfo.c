@@ -751,7 +751,7 @@ void __cpuinit cacheinfo_cpu_online(unsigned int cpu_id)
 	cacheinfo_sysfs_populate(cpu_id, cache);
 }
 
-#ifdef CONFIG_HOTPLUG_CPU     /* functions needed for cpu offline */
+#ifdef CONFIG_HOTPLUG_CPU /* functions needed for cpu offline */
 
 static struct cache *cache_lookup_by_cpu(unsigned int cpu_id)
 {

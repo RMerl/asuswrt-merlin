@@ -1,7 +1,7 @@
 /*
  * Broadcom SiliconBackplane ARM definitions
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: sbhndarm.h 352647 2012-08-23 16:41:55Z $
+ * $Id: sbhndarm.h 401759 2013-05-13 16:08:08Z $
  */
 
 #ifndef	_sbhndarm_h_
@@ -64,13 +64,8 @@
 /* interrupt/exception */
 #define ARMCM3_NUMINTS		16		/* # of external interrupts */
 #define ARMCM3_INTALL		((1 << ARMCM3_NUMINTS) - 1)	/* Interrupt mask */
-#define	ARMCM3_FAULTMASK	0x40000000	/* Master fault enable/disable */
-#define	ARMCM3_PRIMASK		0x80000000	/* Master interrupt enable/disable */
 #define ARMCM3_SHARED_INT	0		/* Interrupt shared by multiple cores */
 #define ARMCM3_INT(i)		(1 << (i))	/* Individual interrupt enable/disable */
-/* compatible with arm7tdmi-s */
-#define PS_I	ARMCM3_PRIMASK
-#define PS_F	ARMCM3_FAULTMASK
 /* intmask/intstatus bits */
 #define ARMCM3_INTMASK_TIMER	0x1
 #define ARMCM3_INTMASK_SYSRESET	0x4
@@ -165,6 +160,8 @@
 #define ARMCR4_DATA_MASK	(~0x7)
 #define ARMCR4_DATA_VALID	(1 << 0)
 
+/* intmask/intstatus bits */
+#define ARMCR4_INTMASK_TIMER	0x1
 
 /* arm core-specific conrol flags */
 #define	SICF_CPUHALT		0x0020

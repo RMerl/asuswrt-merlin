@@ -1,7 +1,7 @@
 /*
  * Broadcom chipcommon NAND flash interface
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: nflash.c 376441 2012-12-27 00:45:42Z $
+ * $Id: nflash.c 411492 2013-07-09 05:55:15Z $
  */
 
 #include <typedefs.h>
@@ -215,6 +215,9 @@ nflash_check_id(uint8 *id)
 		break;
 	case NFL_VENDOR_MXIC:
 		name = "Mxic";
+		break;
+	case NFL_VENDOR_ZENTEL:
+		name = "Zentel";
 		break;
 	default:
 		printf("No NAND flash type found\n");

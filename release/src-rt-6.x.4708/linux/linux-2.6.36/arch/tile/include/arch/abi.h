@@ -79,7 +79,7 @@ typedef long long int_reg_t;
 /** String prefix to use for printf(). */
 #define INT_REG_FMT "ll"
 
-#elif !defined(__LP64__)     /* avoid confusion with LP64 cross-build tools */
+#elif !defined(__LP64__)   /* avoid confusion with LP64 cross-build tools */
 
 /** Unsigned type that can hold a register. */
 typedef unsigned long uint_reg_t;

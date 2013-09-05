@@ -1043,7 +1043,7 @@ int wl_rx(struct net_device *dev)
 
 void wl_multicast( struct net_device *dev )
 {
-#if 1 //;? (HCF_TYPE) & HCF_TYPE_STA     //;?should we return an error status in AP mode
+#if 1 //;? (HCF_TYPE) & HCF_TYPE_STA //;?should we return an error status in AP mode
 //;?seems reasonable that even an AP-only driver could afford this small additional footprint
 
     int                 x;

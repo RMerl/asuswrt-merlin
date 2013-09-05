@@ -53,7 +53,7 @@ asmlinkage void plat_irq_dispatch(struct pt_regs *regs)
 	 * comes first!
 	 */
 
-#ifdef CONFIG_IRQ_MSP_CIC	    /* break out the CIC stuff for now */
+#ifdef CONFIG_IRQ_MSP_CIC	/* break out the CIC stuff for now */
 	if (pending & C_IRQ4)	/* do the peripherals first, that's the timer */
 		msp_cic_irq_dispatch();
 

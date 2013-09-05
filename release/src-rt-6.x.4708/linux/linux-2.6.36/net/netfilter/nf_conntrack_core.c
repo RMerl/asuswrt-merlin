@@ -73,6 +73,8 @@
 #include <ctf/hndctf.h>
 
 #define NFC_CTF_ENABLED	(1 << 31)
+#else
+#define BCMFASTPATH_HOST
 #endif /* HNDCTF */
 
 int (*nfnetlink_parse_nat_setup_hook)(struct nf_conn *ct,
@@ -248,8 +250,11 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 	 * live counter of brc entry whenever a received packet
 	 * matches corresponding ipc entry matches.
 	 */
-	if ((skb->dev != NULL) && ctf_isbridge(kcih, skb->dev))
+	if ((skb->dev != NULL) && ctf_isbridge(kcih, skb->dev)) {
 		ipc_entry.brcp = ctf_brc_lkup(kcih, eth_hdr(skb)->h_source);
+		if (ipc_entry.brcp != NULL)
+			ctf_brc_release(kcih, ipc_entry.brcp);
+	}
 
 	hh = skb_dst(skb)->hh;
 	if (hh != NULL) {
@@ -295,28 +300,24 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 		ipc_entry.action = CTF_ACTION_UNTAG;
 	}	
 #ifdef CTF_PPPOE
-	const char *vars = NULL, *dev_name = NULL;
-
 	/* For pppoe interfaces fill the session id and header add/del actions */
 	if (skb_dst(skb)->dev->flags & IFF_POINTOPOINT) {
 		/* Transmit interface and sid will be populated by pppoe module */
 		ipc_entry.ppp_ifp = skb_dst(skb)->dev;
-		dev_name = skb_dst(skb)->dev->name;
 	} else if (skb->dev->flags & IFF_POINTOPOINT) {
 		ipc_entry.ppp_ifp = skb->dev;
-		dev_name = skb->dev->name;
 	} else{
 		ipc_entry.ppp_ifp = NULL;
 		ipc_entry.pppoe_sid = 0xffff;
 	}
 
+
 	if (ipc_entry.ppp_ifp){
 		struct net_device  *pppox_tx_dev=NULL;
 		ctf_ppp_t ctfppp;
-
-
-		if (ppp_get_conn_pkt_info(ipc_entry.ppp_ifp,&ctfppp))
+		if (ppp_get_conn_pkt_info(ipc_entry.ppp_ifp,&ctfppp)){
 			return;
+		}
 		else {
 			if(ctfppp.psk.pppox_protocol == PX_PROTO_OE){
 				if (skb_dst(skb)->dev->flags & IFF_POINTOPOINT) {
@@ -332,9 +333,10 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 			}
 			else
 				return;
-
+			
 			/* For vlan interfaces fill the vlan id and the tag/untag actions */
 			if(pppox_tx_dev){
+		
 				if(!CTFQOS_ULDL_DIFFIF(kcih)){	
 					if (pppox_tx_dev ->priv_flags & IFF_802_1Q_VLAN) {
 						ipc_entry.txif = (void *)vlan_dev_real_dev(pppox_tx_dev);
@@ -350,13 +352,21 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 					ipc_entry.txif = pppox_tx_dev;
 					ipc_entry.action |= CTF_ACTION_UNTAG;
 				}					
+				
+				
+				
+				
+				
 			}
-		}
-	}
+			
+			}
+		}	
 
 #endif /* CTF_PPPOE */
 
-	if (kcih->ipc_suspend) {
+
+	if (((ipc_entry.tuple.proto == IPPROTO_TCP) && (kcih->ipc_suspend & CTF_SUSPEND_TCP)) ||
+	    ((ipc_entry.tuple.proto == IPPROTO_UDP) && (kcih->ipc_suspend & CTF_SUSPEND_UDP))) {
 		/* The default action is suspend */
 		ipc_entry.action |= CTF_ACTION_SUSPEND;
 	}
@@ -408,6 +418,7 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 				ipc_entry.action |= brcp->action;
 				ipc_entry.txif = brcp->txifp;
 				ipc_entry.vid = brcp->vid;
+				ctf_brc_release(kcih, brcp);
 			}
 		}
 	}
@@ -429,11 +440,12 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 				else
 					ipc_entry.txif = brcp->txifp;
 				ipc_entry.vid = brcp->vid;
+				ctf_brc_release(kcih, brcp);
 			}
 		}
 	
 	}
-	
+
 #ifdef DEBUG
 	if (IPVERSION_IS_4(ipver))
 		printk("%s: Adding ipc entry for [%d]%u.%u.%u.%u:%u - %u.%u.%u.%u:%u\n", __FUNCTION__,
@@ -465,10 +477,20 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 		printk("manip_ip: %u.%u.%u.%u manip_port %u\n",
 			NIPQUAD(ipc_entry.nat.ip), ntohs(ipc_entry.nat.port));
 	printk("txif: %s\n", ((struct net_device *)ipc_entry.txif)->name);
-	if (ipc_entry.ppp_ifp) printk("pppif: %s\n", ((struct net_device *)ipc_entry.ppp_ifp)->name);
 #endif
 
+#ifdef BCMFA
+	ipc_entry.pkt = skb;
+
+	/* rxif */
+	if (skb->dev->priv_flags & IFF_802_1Q_VLAN)
+		ipc_entry.rxif = (void *)vlan_dev_real_dev(skb->dev);
+	else
+		ipc_entry.rxif = (void *)skb->dev;
+#endif /* BCMFA */
+
 	ctf_ipc_add(kcih, &ipc_entry, !IPVERSION_IS_4(ipver));
+
 
 	/* Update the attributes flag to indicate a CTF conn */
 	ct->ctf_flags |= (CTF_FLAGS_CACHED | (1 << dir));
@@ -525,20 +547,36 @@ ip_conntrack_ipct_delete(struct nf_conn *ct, int ct_timeout)
 		/* Postpone the deletion of ct entry if there are frames
 		 * flowing in this direction.
 		 */
-		if ((ipct != NULL) && (ipct->live > 0)) {
-			ipct->live = 0;
-			ct->timeout.expires = jiffies + ct->expire_jiffies;
-			add_timer(&ct->timeout);
-			return (-1);
+		if (ipct != NULL) {
+#ifdef BCMFA
+			if (ctf_fa_live(kcih, ipct, v6))
+				ipct->live = 1;
+#endif
+			if (ipct->live > 0) {
+				ipct->live = 0;
+				ctf_ipc_release(kcih, ipct);
+				ct->timeout.expires = jiffies + ct->expire_jiffies;
+				add_timer(&ct->timeout);
+				return (-1);
+			}
+			ctf_ipc_release(kcih, ipct);
 		}
 
 		ipct = ctf_ipc_lkup(kcih, &repl_ipct, v6);
 
-		if ((ipct != NULL) && (ipct->live > 0)) {
-			ipct->live = 0;
-			ct->timeout.expires = jiffies + ct->expire_jiffies;
-			add_timer(&ct->timeout);
-			return (-1);
+		if (ipct != NULL) {
+#ifdef BCMFA
+			if (ctf_fa_live(kcih, ipct, v6))
+				ipct->live = 1;
+#endif
+			if (ipct->live > 0) {
+				ipct->live = 0;
+				ctf_ipc_release(kcih, ipct);
+				ct->timeout.expires = jiffies + ct->expire_jiffies;
+				add_timer(&ct->timeout);
+				return (-1);
+			}
+			ctf_ipc_release(kcih, ipct);
 		}
 	}
 

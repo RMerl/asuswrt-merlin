@@ -6,7 +6,7 @@
  *	Copyright (C) Alex Holden <alex@linuxhacker.org> 1998, 1999.
  */
 
-#ifdef __NWBUTTON_C	    /* Actually compiling the driver itself */
+#ifdef __NWBUTTON_C	/* Actually compiling the driver itself */
 
 /* Various defines: */
 

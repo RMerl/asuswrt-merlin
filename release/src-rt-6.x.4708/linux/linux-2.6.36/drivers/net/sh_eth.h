@@ -143,7 +143,7 @@
 # define FWNLCR1         0xB0
 # define FWALCR1         0x40
 
-#elif defined(CONFIG_CPU_SH4)	  /* #if defined(CONFIG_CPU_SUBTYPE_SH7763) */
+#elif defined(CONFIG_CPU_SH4)	/* #if defined(CONFIG_CPU_SUBTYPE_SH7763) */
 /* EtherC */
 #define ECMR		0x100
 #define RFLR		0x108

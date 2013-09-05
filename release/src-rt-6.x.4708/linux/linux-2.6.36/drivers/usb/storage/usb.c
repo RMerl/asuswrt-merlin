@@ -130,7 +130,7 @@ static struct us_unusual_dev us_unusual_dev_list[] = {
 #undef USUAL_DEV
 
 
-#ifdef CONFIG_PM	    /* Minimal support for suspend and resume */
+#ifdef CONFIG_PM	/* Minimal support for suspend and resume */
 
 int usb_stor_suspend(struct usb_interface *iface, pm_message_t message)
 {

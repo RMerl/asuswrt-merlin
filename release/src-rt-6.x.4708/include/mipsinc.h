@@ -1,7 +1,7 @@
 /*
  * HND Run Time Environment for standalone MIPS programs.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -353,13 +353,13 @@ symbol:		.frame	sp, 0, ra
 #define CONF_AR_SHIFT			10
 #define CONF_AT				(_ULCAST_(3) << 13)
 #define CONF_AT_SHIFT			13
-#ifndef CONF_BE				    /* duplicate in mipsregs.h */
+#ifndef CONF_BE				/* duplicate in mipsregs.h */
 #define CONF_BE				(_ULCAST_(1) << 15)
 #endif
 #define CONF_SC				(_ULCAST_(1) << 17)
 #define CONF_AC				(_ULCAST_(1) << 23)
 #define CONF_HALT			(_ULCAST_(1) << 25)
-#ifndef CONF_M				    /* duplicate in mipsregs.h */
+#ifndef CONF_M				/* duplicate in mipsregs.h */
 #define CONF_M				(_ULCAST_(1) << 31)
 #endif
 
@@ -397,7 +397,7 @@ symbol:		.frame	sp, 0, ra
 #define PRID_COPT_MASK		0xff000000
 #define PRID_COMP_MASK		0x00ff0000
 #define PRID_IMP_MASK		0x0000ff00
-#ifndef PRID_REV_MASK				    /* May duplicate in cpu.h */
+#ifndef PRID_REV_MASK				/* May duplicate in cpu.h */
 #define PRID_REV_MASK		0x000000ff
 #endif
 

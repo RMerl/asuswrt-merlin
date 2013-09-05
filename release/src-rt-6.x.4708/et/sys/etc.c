@@ -3,7 +3,7 @@
  * Broadcom Home Networking Division 10/100 Mbit/s Ethernet
  * Device Driver.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: etc.c 393340 2013-03-27 06:10:49Z $
+ * $Id: etc.c 414031 2013-07-23 10:54:51Z $
  */
 
 #include <et_cfg.h>
@@ -34,6 +34,12 @@
 #include <etc.h>
 #include <et_export.h>
 #include <bcmutils.h>
+#include <hndsoc.h>
+#ifdef ETFA
+#include <etc_fa.h>
+#endif
+
+#define ETC_TXERR_COUNTDOWN 3
 
 #ifdef ETROBO
 #ifndef	_siutils_h_
@@ -228,7 +234,7 @@ etc_down(etc_info_t *etc, int reset)
 
 /* common iovar handler. return 0=ok, -1=error */
 int
-etc_iovar(etc_info_t *etc, uint cmd, uint set, void *arg)
+etc_iovar(etc_info_t *etc, uint cmd, uint set, void *arg, int len)
 {
 	int error;
 	uint *vecarg;
@@ -300,7 +306,7 @@ etc_iovar(etc_info_t *etc, uint cmd, uint set, void *arg)
 		case IOV_COUNTERS:
 			{
 				struct bcmstrbuf b;
-				bcm_binit(&b, (char*)arg, IOCBUFSZ);
+				bcm_binit(&b, (char*)arg, len);
 				etc_dumpetc(etc, &b);
 			}
 			break;
@@ -309,7 +315,7 @@ etc_iovar(etc_info_t *etc, uint cmd, uint set, void *arg)
 		case IOV_DUMP_CTF:
 			{
 				struct bcmstrbuf b;
-				bcm_binit(&b, (char*)arg, IOCBUFSZ);
+				bcm_binit(&b, (char*)arg, len);
 				et_dump_ctf(etc->et, &b);
 			}
 			break;
@@ -319,11 +325,34 @@ etc_iovar(etc_info_t *etc, uint cmd, uint set, void *arg)
 		case IOV_DUMP_CTRACE:
 			{
 				struct bcmstrbuf b;
-				bcm_binit(&b, (char*)arg, IOCBUFSZ);
+				bcm_binit(&b, (char*)arg, len);
 				et_dump_ctrace(etc->et, &b);
 			}
 			break;
 #endif /* BCMDBG_CTRACE */
+
+		case IOV_DUMP:
+		if (et_msg_level & 0x10000)
+			bcmdumplog((char *)arg, len);
+#ifdef BCMDBG
+		else
+		{
+			struct bcmstrbuf b;
+			bcm_binit(&b, (char*)arg, len);
+			et_dump(etc->et, &b);
+		}
+#endif /* BCMDBG */
+		break;
+
+#ifdef ETFA
+		case IOV_FA_DUMP:
+			{
+				struct bcmstrbuf b;
+				bcm_binit(&b, (char*)arg, len);
+				fa_dump(etc->fa, &b, FALSE);
+			}
+			break;
+#endif /* ETFA */
 
 		default:
 			error = -1;
@@ -385,6 +414,10 @@ etc_ioctl(etc_info_t *etc, int cmd, void *arg)
 		break;
 
 	case ETCSPEED:
+		if (etc->phyaddr == EPHY_NOREG) {
+			/* Don't configure the MII interface speed through ioctl */
+			goto err;
+		}
 		if (val == ET_1000FULL) {
 			etc->speed = 1000;
 			etc->duplex = 1;
@@ -451,13 +484,6 @@ etc_ioctl(etc_info_t *etc, int cmd, void *arg)
 		if (vec) {
 			ET_TRACE(("etc_ioctl: ETCPHYWR to reg 0x%x <= 0x%x\n", vec[0], vec[1]));
 			(*etc->chops->phywr)(etc->ch, etc->phyaddr, vec[0], (uint16)vec[1]);
-#ifdef ETROBO
-			/* Invalidate current robo page */
-			if (etc->robo && etc->phyaddr == EPHY_NOREG && vec[0] == 0x10) {
-				uint16 page = (*etc->chops->phyrd)(etc->ch, EPHY_NOREG, 0x10);
-				((robo_info_t *)etc->robo)->page = (page == 0xffff) ? -1 : (page >> 8);
-			}
-#endif
 		}
 		break;
 
@@ -468,13 +494,6 @@ etc_ioctl(etc_info_t *etc, int cmd, void *arg)
 			if (phyaddr < MAXEPHY) {
 				reg = vec[0] & 0xffff;
 				(*etc->chops->phywr)(etc->ch, phyaddr, reg, (uint16)vec[1]);
-#ifdef ETROBO
-				/* Invalidate current robo page */
-				if (etc->robo && phyaddr == EPHY_NOREG && reg == 0x10) {
-					uint16 page = (*etc->chops->phyrd)(etc->ch, EPHY_NOREG, 0x10);
-					((robo_info_t *)etc->robo)->page = (page == 0xffff) ? -1 : (page >> 8);
-				}
-#endif
 				ET_TRACE(("etc_ioctl: ETCPHYWR2 to phy 0x%x, reg 0x%x <= 0x%x\n",
 				          phyaddr, reg, vec[1]));
 			}
@@ -485,15 +504,23 @@ etc_ioctl(etc_info_t *etc, int cmd, void *arg)
 	case ETCROBORD:
 		if (etc->robo && vec) {
 			uint page, reg;
-			uint32 val;
+			uint64 val;
+			int len = 2;
 			robo_info_t *robo = (robo_info_t *)etc->robo;
 
 			page = vec[0] >> 16;
 			reg = vec[0] & 0xffff;
-			val = -1;
-			robo->ops->read_reg(etc->robo, page, reg, &val, 4);
-			vec[1] = val;
-			ET_TRACE(("etc_ioctl: ETCROBORD of page 0x%x, reg 0x%x => 0x%x\n",
+			if ((vec[1] >= 1) && (vec[1] <= 8))
+				len = vec[1];
+			/* For SPI mode, the length can only be 1, 2, and 4 bytes */
+			if ((len > 4) && (!strcmp(robo->ops->desc, "SPI (GPIO)"))) {
+				vec[1] = -1;
+				break;
+			}
+			val = 0;
+			robo->ops->read_reg(etc->robo, page, reg, &val, len);
+			*((unsigned long long *)&vec[2]) = val;
+			ET_TRACE(("etc_ioctl: ETCROBORD of page 0x%x, reg 0x%x  => 0x%016llX\n",
 			          page, reg, val));
 		}
 		break;
@@ -501,14 +528,21 @@ etc_ioctl(etc_info_t *etc, int cmd, void *arg)
 	case ETCROBOWR:
 		if (etc->robo && vec) {
 			uint page, reg;
-			uint32 val;
+			uint64 val;
 			robo_info_t *robo = (robo_info_t *)etc->robo;
-
+			int len = 2;
 			page = vec[0] >> 16;
 			reg = vec[0] & 0xffff;
-			val = vec[1];
-			robo->ops->write_reg(etc->robo, page, vec[0], &val, 4);
-			ET_TRACE(("etc_ioctl: ETCROBOWR to page 0x%x, reg 0x%x <= 0x%x\n",
+			if ((vec[1] >= 1) && (vec[1] <= 8))
+				len = vec[1];
+			/* For SPI mode, the length can only be 1, 2, and 4 bytes */
+			if ((len > 4) && (!strcmp(robo->ops->desc, "SPI (GPIO)"))) {
+				vec[1] = -1;
+				break;
+			}
+			val = *((unsigned long long *)&vec[2]);
+			robo->ops->write_reg(etc->robo, page, vec[0], &val, len);
+			ET_TRACE(("etc_ioctl: ETCROBOWR to page 0x%x, reg 0x%x <= 0x%016llX\n",
 			          page, reg, val));
 		}
 		break;
@@ -571,6 +605,19 @@ etc_watchdog(etc_info_t *etc)
 		}
 	}
 #endif /* ETROBO && !_CFE_ */
+
+	if (etc->coreid == GMAC_CORE_ID && etc->corerev >= 4) {
+		if ((*etc->chops->dmaerrors)(etc->ch)) {
+			if (etc->reset_countdown == 0)
+				etc->reset_countdown = ETC_TXERR_COUNTDOWN;
+				etc->reset_countdown--;
+			if (etc->reset_countdown == 0) {
+				et_reset(etc->et);
+				et_init(etc->et, ET_INIT_FULL | ET_INIT_INTRON);
+			}
+		} else
+			etc->reset_countdown = 0;
+	}
 
 	/* no local phy registers */
 	if (etc->phyaddr == EPHY_NOREG) {

@@ -75,7 +75,12 @@ static void v6_copy_user_highpage_aliasing(struct page *to,
 	unsigned int offset = CACHE_COLOUR(vaddr);
 	unsigned long kfrom, kto;
 
+#ifdef CONFIG_BCM47XX
+	/* Merged from Linux-2.6.37 */
+	if (!test_and_set_bit(PG_dcache_clean, &from->flags))
+#else
 	if (test_and_clear_bit(PG_dcache_dirty, &from->flags))
+#endif /* CONFIG_BCM47XX */
 		__flush_dcache_page(page_mapping(from), from);
 
 	discard_old_kernel_data(page_address(to));

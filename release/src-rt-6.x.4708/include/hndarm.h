@@ -1,7 +1,7 @@
 /*
  * HND SiliconBackplane ARM core software interface.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: hndarm.h 355282 2012-09-06 02:30:09Z $
+ * $Id: hndarm.h 401759 2013-05-13 16:08:08Z $
  */
 
 #ifndef _hndarm_h_
@@ -29,11 +29,19 @@ extern uint32 hndarm_rev;
 
 extern void si_arm_init(si_t *sih);
 
-extern void enable_arm_ints(uint32 which);
-extern void disable_arm_ints(uint32 which);
+extern void enable_arm_irq(void);
+extern void disable_arm_irq(void);
+extern void enable_arm_fiq(void);
+extern void disable_arm_fiq(void);
+extern void enable_arm_dab(void);
+extern void disable_arm_dab(void);
+extern void enable_nvic_ints(uint32 which);
+extern void disable_nvic_ints(uint32 which);
 
 extern uint32 get_arm_cyclecount(void);
 extern void set_arm_cyclecount(uint32 ticks);
+
+extern uint32 get_backplane_cyclecount(void);
 
 #ifdef	__ARM_ARCH_7R__
 extern uint32 get_arm_perfcount_enable(void);
@@ -51,6 +59,12 @@ extern void set_arm_perfcount(uint32 which);
 
 extern void enable_arm_cyclecount(void);
 extern void disable_arm_cyclecount(void);
+
+extern uint32 get_arm_data_fault_status(void);
+extern uint32 get_arm_data_fault_address(void);
+
+extern uint32 get_arm_instruction_fault_status(void);
+extern uint32 get_arm_instruction_fault_address(void);
 #endif	/* __ARM_ARCH_7R__ */
 
 extern uint32 get_arm_inttimer(void);

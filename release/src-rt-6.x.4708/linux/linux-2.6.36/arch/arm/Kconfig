@@ -1162,6 +1162,12 @@ config FAILSAFE_UPGRADE
         bool "Failsafe Upgrades"
         depends on BCM947XX
         default n
+
+config CRASHLOG
+	bool "Store Crashlog in nvram"
+	depends on BCM947XX
+	default n
+
 endmenu
 
 menu "Bus support"
