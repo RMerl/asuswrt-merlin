@@ -196,11 +196,11 @@ function finish_upload(){
 } 
 
 function refresh_hint_status(status){
-	$("span#hint").text(decodeURI(status));
+	$("span#hint").text(decodeURIComponent(status));
 }
 
 function refresh_status(status){
-	$("span#progress").text(decodeURI(status));
+	$("span#progress").text(decodeURIComponent(status));
 }
     
 function refresh_progress(progress){

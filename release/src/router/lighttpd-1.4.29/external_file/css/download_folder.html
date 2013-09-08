@@ -86,7 +86,7 @@ var array_download_folder = [];
 var array_download_file = [];
 var g_open_url = '';
 var storage_key_map = {
-    "port": "http_port",
+	"port": "http_port",
     "agent": "user_agent"
 };
 
@@ -95,11 +95,11 @@ function showEnableJAVAUI(){
 	var enable_html = '<input class="enableJAVA" type="button" value="Enable JAVA">';
 	$(enable_html).appendTo($("#save"));
 	
-  refresh_hint_status(m.getString("title_not_support_java"));
+  	refresh_hint_status(m.getString("title_not_support_java"));
   
-  $(".enableJAVA").click(function(){
-  	window.open("http://java.com/en/download/help/enable_browser.xml", "_blank");
-  }); 
+  	$(".enableJAVA").click(function(){
+  		window.open("http://java.com/en/download/help/enable_browser.xml", "_blank");
+  	}); 
 }
 
 function showInstallJAVAUI(){
@@ -108,8 +108,8 @@ function showInstallJAVAUI(){
 	
 	refresh_hint_status(m.getString("title_not_install_java"));
 	
-  $(".install").click(function(){
-  	window.open("http://java.com/download", "_blank");
+  	$(".install").click(function(){
+  		window.open("http://java.com/download", "_blank");
  	}); 
 }
 
@@ -124,14 +124,14 @@ $("document").ready(function() {
 	var msg = "";
 	
 	if (!navigator.javaEnabled()) {
-    showEnableJAVAUI();
-    return;
+    	showEnableJAVAUI();
+    	return;
 	}
 	
 	var is_java_enabled = false;
 	if (deployJava.versionCheck("1.6.0+") || deployJava.versionCheck("1.4") || deployJava.versionCheck("1.5.0*")) {
-  	is_java_enabled = true;
-  }
+  		is_java_enabled = true;
+  	}
 	
 	if(!is_java_enabled){
 		showInstallJAVAUI();
@@ -157,7 +157,7 @@ $("document").ready(function() {
 				
 	var applet_html = '<applet name="AiCloud_Applet" id="AiCloud_Applet" ARCHIVE="';
 	applet_html += jar_file;
-	applet_html += '" code="com.asus.aicloud.Download.class" width="100%" height="100%" >';
+	applet_html += '" code="com.asus.aicloud.Download.class" width="100%" height="100%">';
 	applet_html += 'Your browser does not support JAVA!';
 	applet_html += '<PARAM NAME="MAYSCRIPT" VALUE="true">';
 	applet_html += '</applet>';
@@ -176,6 +176,7 @@ $("document").ready(function() {
 	refresh_hint_status(msg);
 	
 	var count = select_folder.length;
+	
 	for(var i=0; i<count; i++){
 		var folder_path = select_folder[i]; 
 		recursiove_propfind(folder_path);
@@ -184,6 +185,7 @@ $("document").ready(function() {
 });
 
 function recursiove_propfind(open_url){
+	
 	if(open_url==""||open_url==undefined)
 		return;
 		
@@ -206,7 +208,7 @@ function recursiove_propfind(open_url){
 				}
 				else { // Internet Explorer
 					xmlDoc=new ActiveXObject("Microsoft.XMLDOM");
-          xmlDoc.async="false";
+          			xmlDoc.async="false";
 					xmlDoc.loadXML(content);
 						
 					if(!xmlDoc.documentElement){
@@ -247,88 +249,87 @@ function recursiove_propfind(open_url){
 					for (j=0;j<y.length;j++){
 						if(y[j].nodeType==1&&y[j].nodeName=="D:propstat"){
 											
-								var z = y[j].childNodes;
+							var z = y[j].childNodes;
 											
-								for (k=0;k<z.length;k++)
-								{
-									if(z[k].nodeName=="D:prop"){
+							for (k=0;k<z.length;k++)
+							{
+								if(z[k].nodeName=="D:prop"){
 													
-										var a = z[k].childNodes;
+									var a = z[k].childNodes;
 													
-										for (l=0;l<a.length;l++)
-										{
-											if(a[l].childNodes.length<=0)
-												continue;
+									for (l=0;l<a.length;l++)
+									{
+										if(a[l].childNodes.length<=0)
+											continue;
 															
-											if(a[l].nodeName=="D:getcontenttype"){														
-												this_contenttype = String(a[l].childNodes[0].nodeValue);
-											}
-											else if(a[l].nodeName=="D:getuniqueid"){
-												this_uniqueid = String(a[l].childNodes[0].nodeValue);
-											}
-											else if(a[l].nodeName=="D:getonline"){
-												this_online = String(a[l].childNodes[0].nodeValue);
-											}
-											else if(a[l].nodeName=="D:getlastmodified"){
-												this_lastmodified = String(a[l].childNodes[0].nodeValue);
-											}
-											else if(a[l].nodeName=="D:getcontentlength"){
-												//this_contentlength = String( size_format(parseInt(a[l].childNodes[0].nodeValue)));
-												this_contentlength = String(a[l].childNodes[0].nodeValue);
-											}
-											else if(a[l].nodeName=="D:getmac"){
-												this_mac = String(a[l].childNodes[0].nodeValue);
-											}
-											else if(a[l].nodeName=="D:getip"){
-												this_ip = String(a[l].childNodes[0].nodeValue);
-											}
-											else if(a[l].nodeName=="D:gettype"){
-												this_type = String(a[l].childNodes[0].nodeValue);
-											}
-											else if(a[l].nodeName=="D:getattr"){
-												var bb = a[l].childNodes;												
-												for (n=0;n<bb.length;n++){
-													if(bb[n].nodeName=="D:readonly")
-														this_attr_readonly = bb[n].childNodes[0].nodeValue;
-													else if(bb[n].nodeName=="D:hidden")
-														this_attr_hidden = bb[n].childNodes[0].nodeValue;
-												}
+										if(a[l].nodeName=="D:getcontenttype"){														
+											this_contenttype = String(a[l].childNodes[0].nodeValue);
+										}
+										else if(a[l].nodeName=="D:getuniqueid"){
+											this_uniqueid = String(a[l].childNodes[0].nodeValue);
+										}
+										else if(a[l].nodeName=="D:getonline"){
+											this_online = String(a[l].childNodes[0].nodeValue);
+										}
+										else if(a[l].nodeName=="D:getlastmodified"){
+											this_lastmodified = String(a[l].childNodes[0].nodeValue);
+										}
+										else if(a[l].nodeName=="D:getcontentlength"){
+											//this_contentlength = String( size_format(parseInt(a[l].childNodes[0].nodeValue)));
+											this_contentlength = String(a[l].childNodes[0].nodeValue);
+										}
+										else if(a[l].nodeName=="D:getmac"){
+											this_mac = String(a[l].childNodes[0].nodeValue);
+										}
+										else if(a[l].nodeName=="D:getip"){
+											this_ip = String(a[l].childNodes[0].nodeValue);
+										}
+										else if(a[l].nodeName=="D:gettype"){
+											this_type = String(a[l].childNodes[0].nodeValue);
+										}
+										else if(a[l].nodeName=="D:getattr"){
+											var bb = a[l].childNodes;												
+											for (n=0;n<bb.length;n++){
+												if(bb[n].nodeName=="D:readonly")
+													this_attr_readonly = bb[n].childNodes[0].nodeValue;
+												else if(bb[n].nodeName=="D:hidden")
+													this_attr_hidden = bb[n].childNodes[0].nodeValue;
 											}
 										}
 									}
 								}
 							}
-							else if(y[j].nodeType==1&&y[j].nodeName=="D:href"){
-								this_href = String(y[j].childNodes[0].nodeValue);
+						}
+						else if(y[j].nodeType==1&&y[j].nodeName=="D:href"){
+							this_href = String(y[j].childNodes[0].nodeValue);
 								
-								var cur_host = "";
+							var cur_host = "";
 								
-								if(this_href.match(/^http/))						
-									cur_host = window.location.protocol + "//" + window.location.host;	
+							if(this_href.match(/^http/))						
+								cur_host = window.location.protocol + "//" + window.location.host;	
 									
-								var cururl = cur_host + addPathSlash(open_url);
+							var cururl = cur_host + addPathSlash(open_url);
 																
-								if(this_href!=cururl){
-									var o_url = open_url;
-									this_href = this_href.replace(cur_host,"");									
-								}
-								else{
-									this_href="";
-								}
-								//alert(this_href);
+							if(this_href!=cururl){
+								var o_url = open_url;
+								this_href = this_href.replace(cur_host,"");									
 							}
+							else{
+								this_href="";
+							}							
+						}
 					}
 						
 					if(this_href!=""){							
-							if( this_contenttype=="httpd/unix-directory" ){
-								var loc = this_href.replace(addPathSlash(g_open_url),"");
-								array_download_folder.push({ folder: loc });
-								recursiove_propfind(this_href);
-							}				
-							else{
-								var loc = this_href.replace(addPathSlash(g_open_url),"");
-								array_download_file.push({ file: loc, size: this_contentlength });
-							}
+						if( this_contenttype=="httpd/unix-directory" ){
+							var loc = this_href.replace(addPathSlash(g_open_url),"");
+							array_download_folder.push({ folder: loc });
+							recursiove_propfind(this_href);
+						}				
+						else{
+							var loc = this_href.replace(addPathSlash(g_open_url),"");
+							array_download_file.push({ file: loc, size: this_contentlength });
+						}
 					}
 				}
 			}

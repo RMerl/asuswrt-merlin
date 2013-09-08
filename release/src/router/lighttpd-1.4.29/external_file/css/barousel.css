@@ -82,7 +82,7 @@ right: 10px;
 bottom: 10px;
 }
 .barousel_nav .nav_btn_icon{
-background:transparent url("style-theme1.png") no-repeat top left;
+background:transparent url("style-theme.png") no-repeat top left;
 }
 .barousel_nav .nav_btn{
 background-color: #4D4D4D;
@@ -99,7 +99,7 @@ line-height:0;
 text-decoration:none;    
 }
 .barousel_nav .prev{
-background-position: -360px -295px;
+background-position: -320px -470px;
 width: 40px;
 height: 60px;
 position: absolute;
@@ -107,7 +107,7 @@ left: 0;
 top: 50%;	
 }
 .barousel_nav .next{
-background-position: -320px -295px;
+background-position: -280px -470px;
 width: 40px;
 height: 60px;
 position: absolute;
@@ -115,15 +115,15 @@ right: 0;
 top: 50%;	
 }
 .barousel_nav .close{
-background-position: -400px -295px;
+background-position: -440px -470px;
 width: 40px;
 height: 60px;
 position: absolute;
-right: 0;
+left: 0;
 top: 0;	
 }
 .barousel_nav .play{
-background-position: -320px -295px;
+background-position: -280px -470px;
 width: 40px;
 height: 60px;
 position: absolute;
@@ -131,7 +131,7 @@ left: 50%;
 bottom: 0px;	
 }
 .barousel_nav .pause{
-background-position: -440px -295px;
+background-position: -360px -470px;
 width: 40px;
 height: 60px;
 position: absolute;
