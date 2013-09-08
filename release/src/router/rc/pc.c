@@ -413,7 +413,7 @@ void config_daytime_string(FILE *fp, char *logaccept, char *logdrop)
 	pc_s *pc_list = NULL, *enabled_list = NULL, *follow_pc;
 	pc_event_s *follow_e;
 	char *lan_if = nvram_safe_get("lan_ifname");
-	char *datestr[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
+	char *datestr[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 	int i;
 	char *default_policy, *ftype, *fftype;
 
@@ -452,11 +452,9 @@ void config_daytime_string(FILE *fp, char *logaccept, char *logdrop)
 					fprintf(fp, " --timestop %d:0", follow_e->end_hour);
 				fprintf(fp, DAYS_PARAM " %s -m mac --mac-source %s -j %s\n", datestr[follow_e->start_day], follow_pc->mac, fftype);
 			}
-			else{
-				if(follow_e->start_day > follow_e->end_day) {
-					// DO CARE if "start_day > end_day !!!"
-					follow_e->end_day = 7;
-				}
+			else if(follow_e->start_day > follow_e->end_day)
+				; // Don't care "start_day > end_day".
+			else{ // start_day < end_day.
 				// first interval.
 #ifdef BLOCKLOCAL
 				fprintf(fp, "-A INPUT -i %s -m time", lan_if);
