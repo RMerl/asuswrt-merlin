@@ -9,7 +9,6 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <link rel="apple-touch-icon" href="/smb/css/appicon.png">
 <link rel="apple-touch-startup-image" href="/smb/css/startup.png">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
 <title>AiCloud</title>
 <style>
 html{
@@ -23,19 +22,19 @@ overflow: hidden;
 }
 
 input,#ok {
-background:transparent url("/smb/css/style-theme.png") no-repeat top left;
+background:transparent url("/smb/css/style-theme1.png") no-repeat top left;
 }
 
 #login_logo{
 width:300px;
-height:76px;
+height:128px;
 background:transparent url("/smb/css/logo.jpg") no-repeat top left;
 position: absolute;
-top: 60px;
+top: 10px;
 }
 
 #ok{
-background-position: -200px -390px;
+background-position: -120px -95px;
 width:40px;
 height:40px;
 float:right;
@@ -52,7 +51,7 @@ input {
 font-size: 15px;
 text-shadow: 0px 1px 0px white;
 outline: none;
-background-position: 0 -540px;
+background-position: -280px -414px;
 -webkit-border-radius: 0;
 -moz-border-radius: 0;
 border-radius: 0;
@@ -60,7 +59,6 @@ border: 0;
 -webkit-box-shadow: 0 0 0;
 -moz-box-shadow: 0 0 0;
 box-shadow: 0 0 0;
-padding-left:3px;
 }
 div.cap_num{
 width:40px;
@@ -240,11 +238,12 @@ function doOK(e) {
 					new_left = the_left - i*5;
 				
 				$('div#login_logo').animate({
-			    	left: new_left
-			  	}, 100, function(){
-			  		if(i=5)	
-			  			adjustUI();
-			  	});
+			    left: new_left
+			  }, 100, function(){
+			  	if(i=5)	
+			  		adjustUI();
+			  } );
+			  
 			}
 			
 		}
@@ -274,7 +273,7 @@ function onKeyHandler(e){
 
 </script>
 </head>
-<body style='padding-top:20px;margin:0;background-color:#313131'>
+<body style='padding-top:20px;margin:0;background-color:#014051'>
 
 <table id="logo" width="100%" border="0" valign="middle" align="center" cellpadding="0" cellspacing="0">
 	<tbody><tr height="128px">
@@ -286,7 +285,7 @@ function onKeyHandler(e){
 	<tbody>
 		<tr>
 		<td valign="middle" align="center">
-			<div style="width:300px;height:88px;background-color:#595F62;padding-top:10px">
+			<div style="width:300px;height:88px;background-color:#01536B;padding-top:10px">
 				<div id="title1">Welcome.</div>
 				<div id="title2">Who’s coming home?</div>
 			</div>
@@ -303,7 +302,7 @@ function onKeyHandler(e){
 			<table valign="middle" align="center" border="0" cellpadding="0" cellspacing="0">
 				<tbody><tr>
 					<td align="left" background="" height="106" alt="">		
-						<div id="main" style="width:300px;height:385px;background-color:#595F62">
+						<div id="main" style="width:300px;height:385px;background-color:#008F6D">
 							<table id="table_login" border="0" cellpadding="0" cellspacing="3" style="position: relative;left:40px;padding-top:20px;display:none">
 								<tbody>
 									<tr>

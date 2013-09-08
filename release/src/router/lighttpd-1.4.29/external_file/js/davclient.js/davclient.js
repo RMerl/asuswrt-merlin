@@ -557,8 +557,7 @@ global.davlib = new function() {
 			request.send('');
 		};
 		
-		this.DavClient.prototype.PROPFINDMEDIALIST = function(path, handler, context, media_type, start, 
-			end, keyword, orderby, orderrule, parentid){
+		this.DavClient.prototype.PROPFINDMEDIALIST = function(path, handler, context, media_type, start, end, keyword, orderby, orderrule) {
 			/* perform a PROPFINDMEDIALIST request
 			*/
 			
@@ -588,10 +587,6 @@ global.davlib = new function() {
 			if (orderrule) {
 				request.setRequestHeader("Orderrule", orderrule);
 			};
-			
-			if (parentid) {
-				request.setRequestHeader("Parentid", parentid);
-			};
 			/*
 			var xml = '<?xml version="1.0" encoding="UTF-8" ?>' +
                   '<D:propfind xmlns:D="DAV:">' +
@@ -609,56 +604,6 @@ global.davlib = new function() {
 					  '</D:propfind>';
 									  
 			request.send(xml);
-		};
-		
-		this.DavClient.prototype.GETMUSICCLASSIFICATION = function(path,classify,handler,context,locktoken){			
-			var request = this._getRequest('GETMUSICCLASSIFICATION',path,handler,context);	
-			if (classify) {
-				request.setRequestHeader("Classify", classify);
-			};		
-			if(locktoken){
-				request.setRequestHeader('If','<'+locktoken+'>');
-			};
-			request.send('');
-		};
-		
-		this.DavClient.prototype.GETMUSICPLAYLIST = function(path,id,handler,context,locktoken){			
-			var request = this._getRequest('GETMUSICPLAYLIST',path,handler,context);	
-			if (id) {
-				request.setRequestHeader("id", id);
-			};		
-			if(locktoken){
-				request.setRequestHeader('If','<'+locktoken+'>');
-			};
-			request.send('');
-		};
-		
-		this.DavClient.prototype.GETPRODUCTICON = function(path,handler,context,locktoken){			
-			var request = this._getRequest('GETPRODUCTICON',path,handler,context);
-			if(locktoken){
-				request.setRequestHeader('If','<'+locktoken+'>');
-			};
-			request.send('');
-		};
-				
-		this.DavClient.prototype.GETTHUMBIMAGE = function(path, file, handler,context,locktoken){			
-			var request = this._getRequest('GETTHUMBIMAGE',path,handler,context);
-			if (file) {
-				request.setRequestHeader("File", file);
-			};
-			if(locktoken){
-				request.setRequestHeader('If','<'+locktoken+'>');
-			};
-			request.send('');
-		};
-		
-		this.DavClient.prototype.GETVIDEOSUBTITLE = function(path,name,handler,context,locktoken){			
-			var request = this._getRequest('GETVIDEOSUBTITLE',path,handler,context);
-			request.setRequestHeader("FILENAME", name);
-			if(locktoken){
-				request.setRequestHeader('If','<'+locktoken+'>');
-			};
-			request.send('');
 		};
 			
     	// XXX not sure about the order of the args here

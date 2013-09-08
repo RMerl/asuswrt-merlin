@@ -32,7 +32,6 @@ $("document").ready(function() {
 	$('button#ok').text(m.getString('btn_apply'));
 	$('button#cancel').text(m.getString('btn_cancel'));
 	$('span#desc').text(m.getString('msg_sharelink'));
-	$('#sharelink_warning').text(m.getString('msg_sharelink_warning'));
 	
 	this_url = getUrlVars()["v"];
 	is_private_ip = getUrlVars()["b"];
@@ -90,7 +89,7 @@ function select_all(){
 
 <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0" style="overflow:hidden;">	
 	<tr>
-  		<td>
+  	<td>
 			<table width="100%">
 				<td><tr>				  
 					<span id='desc'></span>
@@ -99,21 +98,16 @@ function select_all(){
 					<textarea name="sharelink" id="sharelink" style="height:400px;width:570px" wrap="off"></textarea>
 				</td></tr>				
 			</table>  
-    	</td>    
-	</tr>
-  	<!--<tr style='height:20px'></tr>-->
-    <tr>
-    	<td>
-    		<div id="sharelink_warning" name="sharelink_warning" style="margin:5px;color:#ff0000"></div>
-    	</td>
-    </tr>
-  	<tr>
-  		<td>
-  			<div class="table_block_footer" style="text-align:right">
-    			<button id="ok" class="btnStyle" onClick="doCancel();">Close</button>
-    		</div>
-    	</td>
-  	</tr>
+    </td>    
+  </tr>
+  <tr style='height:20px'></tr>
+  <tr>
+  	<td>
+  	<div class="table_block_footer" style="text-align:right">
+    	<button id="ok" class="btnStyle" onClick="doCancel();">Close</button>
+    </div>
+    </td>
+  </tr>
 </table>
 </body>
 </html>

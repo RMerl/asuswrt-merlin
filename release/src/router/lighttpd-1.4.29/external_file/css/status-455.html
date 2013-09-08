@@ -19,12 +19,22 @@ body{
 display: block;
 overflow: hidden;
 }
-#login_logo{
+
+input,#ok {
+background:transparent url("/smb/css/style-theme1.png") no-repeat top left;
+}
+
+#logo{
 width:300px;
-height:76px;
+height:128px;
 background:transparent url("/smb/css/logo.jpg") no-repeat top left;
-position: absolute;
-top: 60px;
+}
+
+#ok{
+background-position: -120px -95px;
+width:40px;
+height:40px;
+float:right;
 }
 #title1{
 color:#fff;
@@ -33,6 +43,31 @@ font-size:30px
 #title2{
 color:#fff;
 font-size:20px
+}
+input {
+font-size: 15px;
+text-shadow: 0px 1px 0px white;
+outline: none;
+background-position: -280px -414px;
+-webkit-border-radius: 0;
+-moz-border-radius: 0;
+border-radius: 0;
+border: 0;
+-webkit-box-shadow: 0 0 0;
+-moz-box-shadow: 0 0 0;
+box-shadow: 0 0 0;
+}
+div.cap_num{
+width:40px;
+height:40px;
+float:right;
+}
+.unselectable {
+-moz-user-select: -moz-none;
+-khtml-user-select: none;
+-webkit-user-select: none;
+-o-user-select: none;
+user-select: none;
 }
 </style>
 <script type="text/javascript" src="/smb/js/tools.js"></script>
@@ -48,29 +83,26 @@ $("document").ready(function() {
 	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
 	m.setLanguage(lan);
 	
-	var logo_left = ($(document).width() - $("div#login_logo").width())/2;
-	$("div#login_logo").css("left", logo_left);
-	
 	$('label#error_lock1').text(m.getString('msg_error_lock1'));
 	$('label#error_lock2').text(m.getString('msg_error_lock2'));
+	
 });
 
 </script>
 </head>
-<body style='padding-top:20px;margin:0;background-color:#313131'>
+<body style='padding-top:20px;margin:0;background-color:#014051'>
 
-<table id="logo" width="100%" border="0" valign="middle" align="center" cellpadding="0" cellspacing="0">
-	<tbody>
-    	<tr height="128px"></tr>
-		<tr><td valign="middle" align="center"><div id="login_logo"></div></td></tr>		
-	</tbody>
+<table width="100%" border="0" valign="middle" align="center" cellpadding="0" cellspacing="0">
+	<tbody><tr height="128px">
+		<td valign="middle" align="center"><div id="logo"></div></td>
+	</tr></tbody>
 </table>
 
 <table width="100%" border="0" valign="middle" align="center" cellpadding="0" cellspacing="0">
 	<tbody>
 		<tr>
 		<td valign="middle" align="center">
-			<div style="width:300px;height:88px;background-color:#595F62;padding-top:10px">
+			<div style="width:300px;height:88px;background-color:#01536B;padding-top:10px">
 				<div id="title1">Welcome.</div>
 				<div id="title2">Who’s coming home?</div>
 			</div>
@@ -87,7 +119,7 @@ $("document").ready(function() {
 			<table valign="middle" align="center" border="0" cellpadding="0" cellspacing="0">
 				<tbody><tr>
 					<td align="left" background="" height="106" alt="">		
-						<div id="main" style="width:300px;height:385px;background-color:#595F62">
+						<div id="main" style="width:300px;height:385px;background-color:#008F6D">
 							<table border="0" cellpadding="0" cellspacing="3" style="position: relative;left:40px;padding-top:20px">
 									<tbody>	
 										<tr>
