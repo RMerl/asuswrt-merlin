@@ -151,6 +151,15 @@ var audioPlaylist = new Playlist("1", g_audio_playlist, {
     play: function() {
     	$(this).jPlayer("pauseOthers");
     },
+	playing: function() {
+		g_storage.set('stopLogoutTimer', "1");
+	},
+	pause: function() {
+		g_storage.set('stopLogoutTimer', "0");
+	},
+	stop: function(){
+		g_storage.set('stopLogoutTimer', "0");
+	},
     swfPath: "/smb/js/jplayer/",
 		supplied: g_jplayer_supplied,
 		solution: g_jplayer_solution,

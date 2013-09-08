@@ -1,0 +1,208 @@
+/*.x-btn-ctrl, .playbar, .volumebar{*/
+.x-btn-ctrl, .volumebar{
+background:transparent url("style-vlc_video.png") no-repeat top left;
+}
+html{
+	margin:0 0;
+	padding:0px;
+}
+body{
+	display: block;
+	overflow: hidden;
+	background: #e8e8e8;
+}
+#errorpage{
+	background-image:url('vlc_bg_img.jpg');
+	width:100%;
+	height:100%;
+}
+
+.movie_overview{
+	padding:10px;
+}
+td {
+	font-family: Verdana,Arial,sans-serif;
+	color: #fff;
+	font-size: 13px;
+}
+td.img_primary{
+	padding: 0 14px 0 0;
+	vertical-align: top;
+}
+td.overview {
+	vertical-align: top;
+	width: 100%;
+}
+.overview td.a1{
+	width:20%;
+	text-align:left;	
+}
+.overview td.a2{
+	text-align:left;	
+}
+.x-form-item{
+	font: normal 12px tahoma, arial, helvetica, sans-serif;
+}
+.x-form-item-label{
+	width:100px;
+	font-weight: bold;
+	text-align: left;
+	display: block;
+	float: left;
+	padding: 3px;
+	padding-left: 0;
+	clear: left;
+	z-index: 2;
+	position: relative;
+}
+.x-form-element{
+	position:relative;
+	text-align: left;
+}
+.x-form-display-field{
+	font-size: 12px;
+color: #ded8eb;
+padding-top: 3px;
+padding-bottom: 4px;
+text-align: left;
+}
+a.allowDefCtxMenu{
+	color: #E9E4F2;
+text-decoration: underline;
+cursor: pointer;
+}
+.x-form-display-title-field{
+	font-size: 16px;
+	font-weight: bold;
+	color:#F90;
+	padding-bottom:15px;
+}
+.toolbar{
+padding: 6px 20px 0 20px;
+height: 50px;
+border: 0;
+background-color: #000;
+}
+.x-btn-ctrl{
+cursor:pointer;
+}
+.play{
+width:40px !important;
+height:40px !important;
+background-position: 0 0;
+}
+.play:hover{
+background-position: 0 -40px;
+}
+.pause{
+width:40px !important;
+height:40px !important;
+background-position: -40px 0;
+}
+.pause:hover{
+background-position: -40px -40px;
+}
+.stop{
+width:34px !important;
+height:34px !important;
+background-position: 0 -130px;
+}
+.stop:hover{
+background-position: 0 -164px;
+}
+/*------------------------------------*/
+.x-slider-end{
+width:100%;
+}
+.playbar{
+width:100%;
+height:16px;
+position:relative;
+}
+.playbar .slider-progress{
+width:0;
+height:10px;
+position:absolute;
+top:3px;
+left:10px;
+background-color:#0CF;
+}
+.playbar .slider-thumb{
+width:26px !important;
+height:16px !important;
+background-position: -50px -130px;
+position:absolute;
+}
+.playbar .slider-thumb:hover{
+background-position: -50px -146px;
+}
+.playbar .slider-tracker{
+width:280px;
+height:10px;
+background-color:#ccc;
+top:3px;
+position:absolute;
+left:10px;
+}
+/*------------------------------------*/
+.volumebar{
+width:104px;
+height:16px;
+position:relative;
+background-position:-95px 0;
+}
+.volumebar .slider-progress{
+width:0;
+height:5px;
+position:absolute;
+top:5px;
+left:15px;
+background-color:#0CF;
+}
+.volumebar .slider-thumb{
+width:16px !important;
+height:16px !important;
+background-position: -76px -130px;
+position:absolute;
+left:0px;
+}
+.volumebar .slider-thumb:hover{
+background-position: -76px -146px;
+}
+/*-------------------------------------*/
+.footer{
+height: 45px;
+background-image: url("images/panel_bg.png");
+background-repeat: repeat-x;
+}
+
+#btnClose{
+float:right;
+right:5px;
+top: 5px;
+position: relative;
+}
+.subtitle{
+text-align: center;
+background-color: #000;
+color: #fff;
+height:30px;
+}
+.subtitle-ctrl{
+float: left;
+width: 250px;
+}
+#label_subtitle{
+position: relative;
+float: left;
+top: 8px;
+left: 10px;
+font-size:14px;
+}
+#select_subtitle{
+width: 150px;
+position: relative;
+float: left;
+top: 5px;
+left: 18px;
+}

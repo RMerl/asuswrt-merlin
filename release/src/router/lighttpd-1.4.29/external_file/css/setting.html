@@ -40,8 +40,8 @@ background-color: #595959;
 overflow:auto;
 }
 .dellink, .delcheck{
-background:transparent url("style-theme1.png") no-repeat top left;
-background-position: -479px -313px;
+background:transparent url("style-theme.png") no-repeat top left;
+background-position: -400px -438px;
 width:40px;
 height:28px;
 }
@@ -198,40 +198,58 @@ function refreshShareLinkList(){
     		table_html += "</tr></thead>";
     	
     		table_html += "<tbody id='ntb'>";
-    	
+    		
+			var encode_filename = parseInt($(data).find('encode_filename').text());
+			
     		var i = 0;
 			$(data).find('sharelink').each(function(){
 				
-				var filename = decodeURI($(this).attr("filename"));
-				var url = window.location.protocol + "//" + window.location.host + "/" + $(this).attr("url") + "/" + filename;
-				var createtime = $(this).attr("createtime");
-				var expiretime = $(this).attr("expiretime");
-				var lefttime = parseFloat($(this).attr("lefttime"));
-				var hour = parseInt(lefttime/3600);
-				var minute = parseInt(lefttime%3600/60);
-												
-				table_html += "<tr nid='" + i + "' class='even'>";
-    			
-				table_html += "<td fid='check' align='center'><input type='checkbox' id='check_del' name='check_del' class='check_del' link='" + $(this).attr("url") + "'></td>";
-				
-    			table_html += "<td fid='filename' align='center'><div style='overflow:hidden;'>";
-				table_html += "<a class='share_link_url' uhref='" + url + "' href='#' title='" + filename + "' style='white-space:nowrap;'>" + filename + "</a>";
-				table_html += "</div></td>";
-       			table_html += "<td fid='createtime' align='center'>" + createtime + "</td>";
-				if(expiretime==0){
-					table_html += "<td fid='expiretime' align='center'>" + m.getString('title_unlimited') + "</td>";
-					table_html += "<td fid='lefttime' align='center'>" + m.getString('title_unlimited') + "</td>";
+				try{
+					var filename = "";
+					var filetitle = "";
+					
+					if(encode_filename==1){
+						filename = $(this).attr("filename");				
+						filetitle = decodeURIComponent(filename);
+					}
+					else{
+						filetitle = $(this).attr("filename");				
+						filename = encodeURIComponent($(this).attr("filename"));
+					}
+						
+					var url = window.location.protocol + "//" + window.location.host + "/" + $(this).attr("url") + "/" + filename;
+					var createtime = $(this).attr("createtime");
+					var expiretime = $(this).attr("expiretime");
+					var lefttime = parseFloat($(this).attr("lefttime"));
+					var hour = parseInt(lefttime/3600);
+					var minute = parseInt(lefttime%3600/60);
+													
+					table_html += "<tr nid='" + i + "' class='even'>";
+					
+					table_html += "<td fid='check' align='center'><input type='checkbox' id='check_del' name='check_del' class='check_del' link='" + $(this).attr("url") + "'></td>";
+					
+					table_html += "<td fid='filename' align='center'><div style='overflow:hidden;'>";
+					table_html += "<a class='share_link_url' uhref='" + url + "' href='#' title='" + filetitle + "' style='white-space:nowrap;'>" + filetitle + "</a>";
+					table_html += "</div></td>";
+					table_html += "<td fid='createtime' align='center'>" + createtime + "</td>";
+					if(expiretime==0){
+						table_html += "<td fid='expiretime' align='center'>" + m.getString('title_unlimited') + "</td>";
+						table_html += "<td fid='lefttime' align='center'>" + m.getString('title_unlimited') + "</td>";
+					}
+					else{
+						table_html += "<td fid='expiretime' align='center'>" + expiretime + "</td>";
+						table_html += "<td fid='lefttime' align='center'>" + hour + " hours " + minute + " mins" + "</td>";
+					}
+					table_html += "<td fid='remove' align='center'><a>";
+					table_html += "<div class='dellink' title='remove' link='" + $(this).attr("url") + "' style='cursor:pointer'></div>";
+					table_html += "</a></td>";
+					
+					table_html += "</tr>";
+			  	}
+				catch(err){
+					//Handle errors here				  	
 				}
-				else{
-					table_html += "<td fid='expiretime' align='center'>" + expiretime + "</td>";
-					table_html += "<td fid='lefttime' align='center'>" + hour + " hours " + minute + " mins" + "</td>";
-				}
-				table_html += "<td fid='remove' align='center'><a>";
-				table_html += "<div class='dellink' title='remove' link='" + $(this).attr("url") + "' style='cursor:pointer'></div>";
-				table_html += "</a></td>";
 				
-				table_html += "</tr>";
-			  
 				i++;
 			});
 			

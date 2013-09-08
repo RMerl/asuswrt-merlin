@@ -1,0 +1,41 @@
+<html>  
+  <head>
+    <title>Proxy A</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <script type="text/javascript">
+    
+      // This event is fired when you change my window size
+      window.onresize = function(){
+      	
+        // Retrieve the hash of my url, ex: #color:red
+        var hash = document.location.hash;
+        
+        if(hash != ''){
+        
+          // Split # to extract "color:red"
+          var hash = hash.split('#');
+          
+          // Split : to extract "color" and "red"
+          var params = hash[1].split(':');
+          
+          switch(params[0]){
+          
+            case 'color':            
+              // Change my parent body background color
+              window.top.document.getElementsByTagName('body')[0].style.background = params[1];
+              break;
+              
+            case 'close':            
+              // Call my parent funtion closeModal
+              window.top.closeJqmWindow(1);
+              break;
+              
+            default:
+              break;
+          }
+        }
+      };
+    </script>
+  </head>
+  <body></body>
+</html>
