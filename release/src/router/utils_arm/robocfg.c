@@ -202,24 +202,18 @@ static u32 robo_read32(robo_t *robo, u8 page, u8 reg)
 {
 #if BCM5301X
         int args[5];
-	u32 result;
 
         args[0] = page << 16;
         args[0] |= reg;
-        args[1] = 0;
-        args[2] = 0;
+        args[1] = 4;	// len
+        args[2] = 0;	// value
 
         robo->ifr.ifr_data = (caddr_t) args;
         if (ioctl(robo->fd, SIOCGETCROBORD, (caddr_t)&robo->ifr) < 0)
                 return 0;
-	result = args[2];
-	args[0] = args[0] + 1;
 
-	if (ioctl(robo->fd, SIOCGETCROBORD, (caddr_t)&robo->ifr) < 0)
-                return 0;
-
-//        printf("rd32: 0x%08x - 0x%08x (0x%16x)\n", result, args[2], (result | (args[2] << 16)));
-        return (result | (args[2] << 16));
+//        printf("rd32: 0x%16x\n", args[2]);
+        return args[2];
 
 #else
 	robo_reg(robo, page, reg, REG_MII_ADDR_READ);
@@ -261,7 +255,7 @@ static int robo_vlan535x(robo_t *robo, u32 phyid)
 {
 
 	/* Northstar device? */
-	if ((robo_read32(robo, ROBO_MGMT_PAGE, ROBO_DEVICE_ID) & 0xFFF0) == 0x3010)
+	if ((robo_read32(robo, ROBO_MGMT_PAGE, ROBO_DEVICE_ID) & 0xFFFFFFF0) == 0x53010)
 		return 4;
 
 	/* set vlan access id to 15 and read it back */
@@ -796,6 +790,7 @@ main(int argc, char *argv[])
 			mac[2] >> 8, mac[2] & 255, mac[1] >> 8, mac[1] & 255, mac[0] >> 8, mac[0] & 255);
 #else
 		printf("mac: ??:??:??:??:??:??\n");
+
 #endif
 	}
 
