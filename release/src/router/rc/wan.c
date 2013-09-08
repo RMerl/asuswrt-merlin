@@ -134,7 +134,7 @@ int add_multi_routes(void)
 	char wan_if[32], wan_ip[32], wan_gate[32];
 	char cmd[2048];
 #ifdef RTCONFIG_DUALWAN
-	int gate_num, gate_count, wan_weight, table;
+	int gate_num, wan_weight, table;
 	char cmd2[2048], *ptr;
 	char wan_dns[1024];
 	char wan_multi_if[WAN_UNIT_MAX][32], wan_multi_gate[WAN_UNIT_MAX][32];
@@ -176,9 +176,8 @@ int add_multi_routes(void)
 
 	memset(wan_multi_if, 0, sizeof(char)*WAN_UNIT_MAX*32);
 	memset(wan_multi_gate, 0, sizeof(char)*WAN_UNIT_MAX*32);
-
-	gate_count = 0;
 #endif
+
 	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){ // Multipath
 		if(unit != wan_primary_ifunit()
 #ifdef RTCONFIG_DUALWAN
@@ -211,32 +210,31 @@ int add_multi_routes(void)
 				table = WAN0_ROUTE_TABLE;
 
 			// set the rules of wan[X]'s ip and gateway for multi routing tables.
-			memset(cmd, 0, 2048);
-			sprintf(cmd, "ip rule del pref 200 from %s table %d", wan_ip, table);
-			system(cmd);
+			memset(cmd2, 0, 2048);
+			sprintf(cmd2, "ip rule del pref 200 from %s table %d", wan_ip, table);
+			system(cmd2);
 
-			memset(cmd, 0, 2048);
-			sprintf(cmd, "ip rule add pref 200 from %s table %d", wan_ip, table);
-			system(cmd);
+			memset(cmd2, 0, 2048);
+			sprintf(cmd2, "ip rule add pref 200 from %s table %d", wan_ip, table);
+			system(cmd2);
 
-			memset(cmd, 0, 2048);
-			sprintf(cmd, "ip rule del pref 400 to %s table %d", wan_gate, table);
-			system(cmd);
+			memset(cmd2, 0, 2048);
+			sprintf(cmd2, "ip rule del pref 400 to %s table %d", wan_gate, table);
+			system(cmd2);
 
-			memset(cmd, 0, 2048);
-			sprintf(cmd, "ip rule add pref 400 to %s table %d", wan_gate, table);
-			system(cmd);
+			memset(cmd2, 0, 2048);
+			sprintf(cmd2, "ip rule add pref 400 to %s table %d", wan_gate, table);
+			system(cmd2);
 
 			// set the routes for multi routing tables.
 			copy_routes(table);
 
-			memset(cmd, 0, 2048);
-			sprintf(cmd, "ip route replace default via %s dev %s table %d", wan_gate, wan_if, table);
-			system(cmd);
+			memset(cmd2, 0, 2048);
+			sprintf(cmd2, "ip route replace default via %s dev %s table %d", wan_gate, wan_if, table);
+			system(cmd2);
 
-			strcpy(wan_multi_if[gate_count], wan_if);
-			strcpy(wan_multi_gate[gate_count], wan_gate);
-			++gate_count;
+			strcpy(wan_multi_if[unit], wan_if);
+			strcpy(wan_multi_gate[unit], wan_gate);
 
 			// set the static routing rules.
 			if(nvram_match("wans_routing_enable", "1")){
@@ -261,13 +259,13 @@ int add_multi_routes(void)
 						continue;
 
 					if(rtable == table){
-						memset(cmd, 0, 2048);
-						sprintf(cmd, "ip rule del pref 100 from %s to %s table %d", rfrom, rto, rtable);
-						system(cmd);
+						memset(cmd2, 0, 2048);
+						sprintf(cmd2, "ip rule del pref 100 from %s to %s table %d", rfrom, rto, rtable);
+						system(cmd2);
 
-						memset(cmd, 0, 2048);
-						sprintf(cmd, "ip rule add pref 100 from %s to %s table %d", rfrom, rto, rtable);
-						system(cmd);
+						memset(cmd2, 0, 2048);
+						sprintf(cmd2, "ip rule add pref 100 from %s to %s table %d", rfrom, rto, rtable);
+						system(cmd2);
 					}
 	 			}
 				free(nv);
@@ -288,13 +286,13 @@ int add_multi_routes(void)
 					while(fgets(line, sizeof(line), fp)){
 						char *token = strtok(line, "\n");
 
-						memset(cmd, 0, 2048);
-						sprintf(cmd, "ip rule del pref 300 %s table %d", token, table);
-						system(cmd);
+						memset(cmd2, 0, 2048);
+						sprintf(cmd2, "ip rule del pref 300 %s table %d", token, table);
+						system(cmd2);
 
-						memset(cmd, 0, 2048);
-						sprintf(cmd, "ip rule add pref 300 %s table %d", token, table);
-						system(cmd);
+						memset(cmd2, 0, 2048);
+						sprintf(cmd2, "ip rule add pref 300 %s table %d", token, table);
+						system(cmd2);
 					}
 					fclose(fp);
 				}
@@ -329,7 +327,7 @@ int add_multi_routes(void)
 
 			// move the gateway via VPN+DHCP from the main routing table to the correct one.
 			strcpy(wan_gate, nvram_safe_get(strcat_r(prefix, "xgateway", tmp)));
-			if(strlen(wan_gate) > 0 && strcmp(wan_gate, "0.0.0.0")){
+			if(strlen(wan_gate) > 0 && strcmp(wan_gate, "0.0.0.0") && strcmp(wan_gate, wan_multi_gate[unit])){
 				memset(cmd2, 0, 2048);
 				sprintf(cmd2, "ip route del default via %s dev %s", wan_gate, get_wanx_ifname(unit));
 				system(cmd2);
@@ -391,8 +389,7 @@ int add_multi_routes(void)
 
 				++i;
 			}
-			if(nv)
-				free(nv);
+
 			if(!b)
 				continue;
 
@@ -404,11 +401,13 @@ int add_multi_routes(void)
 				ptr = cmd+strlen(cmd);
 				sprintf(ptr, " nexthop via %s dev %s weight %d", wan_multi_gate[unit], wan_multi_if[unit], wan_weight);
 			}
+
+			if(nv)
+				free(nv);
 		}
 
-		if(strlen(cmd) > 0){
+		if(strlen(cmd) > 0)
 			system(cmd);
-		}
 	}
 #endif
 
@@ -1405,6 +1404,10 @@ TRACE_PT("3g end.\n");
 		}
 		close(s);
 
+		/* Set initial QoS mode again now that WAN port is ready. */
+#ifdef CONFIG_BCMWL5
+		set_et_qos_mode();
+#endif
 		if(unit == wan_primary_ifunit())
 			start_pppoe_relay(wan_ifname);
 
@@ -2094,7 +2097,7 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 		}
 		break;
 	case WAN_UNIT_SECOND:
-		if (is_module_loaded("hw_nat")) {
+		if (module_loaded("hw_nat")) {
 			char primary[] = "wan1_primaryXXXXXX";
 
 			sprintf(primary, "wan%d_primary", WAN_UNIT_SECOND);
@@ -2498,7 +2501,7 @@ stop_wan(void)
 		return;
 
 #ifdef RTCONFIG_RALINK
-	if (is_module_loaded("hw_nat"))
+	if (module_loaded("hw_nat"))
 	{
 		modprobe_r("hw_nat");
 		if (!g_reboot)

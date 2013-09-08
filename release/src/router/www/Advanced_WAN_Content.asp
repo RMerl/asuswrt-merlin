@@ -91,6 +91,10 @@ function change_wan_unit(){
 		document.form.current_page.value = "Advanced_DSL_Content.asp";
 	else if(document.form.wan_unit.options[document.form.wan_unit.selectedIndex].text == "USB")
 		document.form.current_page.value = "Advanced_Modem_Content.asp";
+	else if(document.form.wan_unit.options[document.form.wan_unit.selectedIndex].text == "WAN" || document.form.wan_unit.options[document.form.wan_unit.selectedIndex].text == "LAN")
+		document.form.current_page.value = "Advanced_WAN_Content.asp";
+	else
+		return false;
 
 	FormActions("apply.cgi", "change_wan_unit", "", "");
 	document.form.target = "";

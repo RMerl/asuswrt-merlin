@@ -127,3 +127,15 @@ int killall(const char *name, int sig)
 	return -2;
 }
 
+int process_exists(pid_t pid)
+{
+	return (kill(pid, 0) == 0 || errno != ESRCH);
+}
+
+int module_loaded(const char *module)
+{
+	char sys_path[128];
+
+	snprintf(sys_path, sizeof(sys_path), "/sys/module/%s", module);
+	return d_exists(sys_path);
+}

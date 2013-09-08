@@ -5597,14 +5597,14 @@ var array_occupied = new Array();
 				if(i != MULTIFILTER_MACFILTER_DAYTIME_col.length-2)
 					_jData += ",";*/
 					
-				/*Jieming added to divide time slot*/
-				var test_startday = parseInt(MULTIFILTER_MACFILTER_DAYTIME_col[i+1].substring(0,1));
-				var test_endday = parseInt(MULTIFILTER_MACFILTER_DAYTIME_col[i+1].substring(1,2));
-				var test_starttime = parseInt(MULTIFILTER_MACFILTER_DAYTIME_col[i+1].substring(2,4));
-				var test_endtime = parseInt(MULTIFILTER_MACFILTER_DAYTIME_col[i+1].substring(4,6));
+				/*Jieming added to divide time slot*/				
+				var test_startday = parseInt(MULTIFILTER_MACFILTER_DAYTIME_col[i+1].substring(0,1),10);
+				var test_endday = parseInt(MULTIFILTER_MACFILTER_DAYTIME_col[i+1].substring(1,2),10);
+				var test_starttime = parseInt(MULTIFILTER_MACFILTER_DAYTIME_col[i+1].substring(2,4),10);
+				var test_endtime = parseInt(MULTIFILTER_MACFILTER_DAYTIME_col[i+1].substring(4,6),10);
 				var duration_day = 0;
 				var duration = 0;
-				
+
 				if(test_endday - test_startday == 0 && MULTIFILTER_MACFILTER_DAYTIME_col[i+1] != "000000"){					
 					duration_day = 1;
 					duration = test_endtime- test_starttime;

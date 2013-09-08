@@ -54,6 +54,8 @@ var loadBalance_Ratio = '<%nvram_get("wans_lb_ratio");%>';
 var yadns_enable = '<% nvram_get("yadns_enable_x"); %>';
 var yadns_mode = '<% nvram_get("yadns_mode"); %>';
 
+var wan_unit = '<% nvram_get("wan_unit"); %>' || 0;
+
 function add_lanport_number(if_name)
 {
 	if (if_name == "lan") {
@@ -94,7 +96,7 @@ function showtext2(obj, str, visible)
 function initial(){
 	flash_button();
 	// if dualwan enabled , show dualwan status
-	if(dualWAN_support){
+	if(parent.wans_flag){
 		var pri_if = wans_dualwan.split(" ")[0];
 		var sec_if = wans_dualwan.split(" ")[1];	
 		pri_if = add_lanport_number(pri_if);
@@ -102,43 +104,53 @@ function initial(){
 		pri_if = pri_if.toUpperCase();
 		sec_if = sec_if.toUpperCase();
 
-			if(sec_if != 'NONE'){
-				$("dualwan_row_main").style.display = "";	
-				// DSLTODO, need ajax to update failover status
-				$('dualwan_mode_ctrl').style.display = "";
-				$('wan_enable_button').style.display = "none";
+		if(sec_if != 'NONE'){
+			$("dualwan_row_main").style.display = "";	
+			// DSLTODO, need ajax to update failover status
+			$('dualwan_mode_ctrl').style.display = "";
+			$('wan_enable_button').style.display = "none";
+			
+			if(wans_mode == "lb"){
+				//document.getElementById("wansMode").value = 1;
+				$('dualwan_row_main').style.display = "none";
+				//$('loadbalance_config_ctrl').style.display = "";
+				showtext($("loadbalance_config"), loadBalance_Ratio);
 				
-				if(wans_mode == "lb"){
-					$('dualwan_row_main').style.display = "none";
-					$('loadbalance_config_ctrl').style.display = "";
-					showtext($("loadbalance_config"), loadBalance_Ratio);
-					
-					if (wan0_primary == '1') {
-						showtext($j("#dualwan_current")[0], pri_if);
-					}
-					else {
-						showtext($j("#dualwan_current")[0], sec_if);		
-					}				
-					showtext($("dualwan_mode"), "Load Balance");
-					loadBalance_form(parent.document.form.dual_wan_flag.value);  // 0: Priamry WAN, 1: Secondary WAN		
+				if (wan0_primary == '1') {
+					showtext($j("#dualwan_current")[0], pri_if);
 				}
-				else if(wans_mode == "fo"){
-					showtext($("dualwan_mode"), "Fail Over");		
-					failover_form(parent.document.form.dual_wan_flag.value, pri_if, sec_if);
-				}		
+				else {
+					showtext($j("#dualwan_current")[0], sec_if);		
+				}				
+				showtext($("dualwan_mode"), "<#dualwan_mode_lb#>");
+				loadBalance_form(parent.document.form.dual_wan_flag.value);  // 0: Priamry WAN, 1: Secondary WAN		
 			}
+			else{
+				//document.getElementById("wansMode").value = 2;
+				showtext($("dualwan_mode"), "<#dualwan_mode_fo#>");		
+				failover_form(parent.document.form.dual_wan_flag.value, pri_if, sec_if);
+			}		
+		}
 	}
 	else{
 		if (wanlink_type() == "dhcp" || wanlink_xtype() == "dhcp") {
 		$('primary_lease_ctrl').style.display = "";
 		$('primary_expires_ctrl').style.display = "";
 		}
-		
 	}
 
 	if(sw_mode == 1){
 		setTimeout("update_wanip();", 1);
 		$('goSetting').style.display = "";
+
+		if(parent.document.form.dual_wan_flag.value == 0 || (dualWAN_support && !parent.wans_flag)){
+			$("goDualWANSetting").style.display = "none";
+			$("dualwan_enable_button").style.display = "";
+		}
+		else{
+			$("goDualWANSetting").style.display = "";
+			$("dualwan_enable_button").style.display = "none";
+		}
 	}
 	else{
 		$("rt_table").style.display = "none";
@@ -199,6 +211,7 @@ function initial(){
 	update_all_ip(wanip, wandns, wangateway , 0);
 	update_all_xip(wanxip, wanxdns, wanxgateway, 0);
 }
+
 function update_connection_type(dualwan_unit){
 	if(dualwan_unit == 0){
 		if(wanlink_type() == "dhcp")
@@ -232,7 +245,7 @@ function update_connection_type(dualwan_unit){
 }
 
 function loadBalance_form(lb_unit){
-	if(!dualWAN_support)
+	if(!parent.wans_flag)
 		return 0;
 
 	var pri_if = wans_dualwan.split(" ")[0];
@@ -281,6 +294,20 @@ function failover_form(fo_unit, primary_if, secondary_if){
 	if(fo_unit == 0){
 		have_lease = (wanlink_type() == "dhcp" || wanlink_xtype() == "dhcp");
 		showtext($j("#dualwan_current")[0], primary_if);
+		if(wanlink_type() == "dhcp")
+			var wanlink_type_conv = "<#BOP_ctype_title1#>";
+		else 	if(wanlink_type() == "pppoe" ||wanlink_type() == "PPPOE")
+			var wanlink_type_conv = "PPPoE";
+		else 	if(wanlink_type() == "static")
+			var wanlink_type_conv = "<#BOP_ctype_title5#>";
+		else 	if(wanlink_type() == "pptp")
+			var wanlink_type_conv = "PPTP";
+		else 	if(wanlink_type() == "l2tp")
+			var wanlink_type_conv = "L2TP";
+		else
+			var wanlink_type_conv = wanlink_type();
+			
+		showtext($j("#connectionType")[0], wanlink_type_conv);
 		$('primary_WANIP_ctrl').style.display = "";
 		$('secondary_WANIP_ctrl').style.display = "none";
 		$('primary_DNS_ctrl').style.display = "";
@@ -295,6 +322,20 @@ function failover_form(fo_unit, primary_if, secondary_if){
 	else{
 		have_lease = (secondary_wanlink_type() == "dhcp" || secondary_wanlink_xtype() == "dhcp");
 		showtext($j("#dualwan_current")[0], secondary_if);
+		if(secondary_wanlink_type() == "dhcp")
+			var secondary_wanlink_type_conv = "<#BOP_ctype_title1#>";
+		else 	if(secondary_wanlink_type() == "pppoe" ||secondary_wanlink_type() == "PPPOE")
+			var secondary_wanlink_type_conv = "PPPoE";
+		else 	if(secondary_wanlink_type() == "static")
+			var secondary_wanlink_type_conv = "<#BOP_ctype_title5#>";
+		else 	if(secondary_wanlink_type() == "pptp")
+			var secondary_wanlink_type_conv = "PPTP";
+		else 	if(secondary_wanlink_type() == "l2tp")
+			var secondary_wanlink_type_conv = "L2TP";
+		else
+			var secondary_wanlink_type_conv = secondary_wanlink_type();
+			
+		showtext($j("#connectionType")[0], secondary_wanlink_type_conv);
 		$('primary_WANIP_ctrl').style.display = "none";
 		$('secondary_WANIP_ctrl').style.display = "";
 		$('primary_DNS_ctrl').style.display = "none";
@@ -398,7 +439,7 @@ function update_wanip(e) {
 		wanxip = wanlink_xipaddr();
 		wanxdns = wanlink_xdns();
 		wanxgateway = wanlink_xgateway();
-		if(dualWAN_support){
+		if(parent.wans_flag){
 			secondary_wanip = secondary_wanlink_ipaddr();
 			secondary_wandns = secondary_wanlink_dns();
 			secondary_wangateway = secondary_wanlink_gateway();
@@ -415,7 +456,7 @@ function update_wanip(e) {
 		else{
 			update_all_ip(wanip, wandns, wangateway, 0);
 			update_all_xip(wanxip, wanxdns, wanxgateway, 0);
-			if(dualWAN_support){
+			if(parent.wans_flag){
 				update_all_ip(secondary_wanip, secondary_wandns, secondary_wangateway, 1);
 				update_all_xip(secondary_wanxip, secondary_wanxdns, secondary_wanxgateway, 1);
 			}
@@ -445,10 +486,18 @@ function goQIS(){
 }
 
 function goToWAN(){
-	if(dualWAN_support)
-		parent.location.href = '/Advanced_WANPort_Content.asp';
-	else	
+	if(parent.wans_flag){
+		if(wans_dualwan.split(" ")[wan_unit].toUpperCase == "USB")
+			parent.location.href = '/Advanced_Modem_Content.asp';
+		else
+			parent.location.href = '/Advanced_WAN_Content.asp';
+	}
+	else
 		parent.location.href = '/Advanced_WAN_Content.asp';
+}
+
+function goToDualWAN(){
+	parent.location.href = '/Advanced_WANPort_Content.asp';
 }
 
 function gotoSiteSurvey(){
@@ -474,8 +523,8 @@ function manualSetup(){
 <input type="hidden" name="action_script" value="restart_wan_if">
 <input type="hidden" name="action_wait" value="5">
 <input type="hidden" name="wan_enable" value="<% nvram_get("wan_enable"); %>">
+<input type="hidden" name="wans_dualwan" value="<% nvram_get("wans_dualwan"); %>">
 <input type="hidden" name="wan_unit" value="<% get_wan_unit(); %>">
-<!--input type="hidden" name="wlc_ssid" value="<% nvram_char_to_ascii("WLANConfig11b", "wlc_ssid"); %>" disabled-->
 <input type="hidden" name="dslx_link_enable" value="" disabled>
 <table border="0" cellpadding="0" cellspacing="0">
 	<tr>
@@ -498,7 +547,7 @@ function manualSetup(){
 <table width="95%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="table1px" id="rt_table">
 <tr id="wan_enable_button">
     <td height="50" style="padding:10px 15px 0px 15px;">
-    		<p class="formfonttitle_nwm" style="float:left;width:98px;"><#ConnectionStatus#></p>
+    		<p class="formfonttitle_nwm" style="float:left;width:98px;">Internet connection</p>
     		<div class="left" style="width:94px; float:right;" id="radio_wan_enable"></div>
 				<div class="clear"></div>
 				<script type="text/javascript">
@@ -532,10 +581,41 @@ function manualSetup(){
     </td>
 </tr>
 
+<tr id="dualwan_enable_button">
+    <td height="50" style="padding:10px 15px 0px 15px;">
+    		<p class="formfonttitle_nwm" style="float:left;width:98px;"><#dualwan_enable#></p>
+    		<div class="left" style="width:94px; float:right;" id="radio_dualwan_enable"></div>
+				<div class="clear"></div>
+				<script type="text/javascript">
+						$j('#radio_dualwan_enable').iphoneSwitch(parent.wans_flag, 
+							 function() {
+								document.internetForm.wans_dualwan.value = "wan usb";
+								document.internetForm.action_wait.value = '<% get_default_reboot_time(); %>';
+								document.internetForm.action_script.value = "reboot";
+								parent.showLoading();
+								document.internetForm.submit();	
+								return true;
+							 },
+							 function() {
+								document.internetForm.wans_dualwan.value = "wan none";
+								document.internetForm.action_wait.value = '<% get_default_reboot_time(); %>';
+								document.internetForm.action_script.value = "reboot";
+								parent.showLoading();
+								document.internetForm.submit();	
+								return true;
+							 },
+							 {
+								switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
+							 }
+						);
+				</script>
+    		<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+    </td>
+</tr>
 
 <tr id=dualwan_row_main style="display:none">
     <td style="padding:5px 10px 5px 15px;">
-    		<p class="formfonttitle_nwm">Dual WAN</p>
+    		<p class="formfonttitle_nwm">WAN Port</p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="dualwan_current"></p>
       	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
     </td>
@@ -559,14 +639,20 @@ function manualSetup(){
 
 <tr id="dualwan_mode_ctrl" style="display:none">
     <td style="padding:5px 10px 5px 15px;">
-    		<p class="formfonttitle_nwm">Dual WAN Mode</p>
+    		<p class="formfonttitle_nwm"><#dualwan_mode#></p>
+
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="dualwan_mode"></p>
+				<!--select style="*margin-top:-7px;" id="wansMode" class="input_option" onchange="">
+					<option value="1">Load Balance</option>
+					<option value="2">Fail Over</option>
+				</select-->
+
       	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
     </td>
 </tr>
 <tr id="loadbalance_config_ctrl" style="display:none">
     <td style="padding:5px 10px 5px 15px;">
-    		<p class="formfonttitle_nwm">Load Balance Configuration</p>
+    		<p class="formfonttitle_nwm"><#dualwan_mode_lb_setting#></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="loadbalance_config"></p>
       	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
     </td>
@@ -676,13 +762,21 @@ function manualSetup(){
     	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
     </td>
 </tr>
-<tr id="goSetting" style="display:none">
+<tr id="goDualWANSetting">
 	<td height="50" style="padding:10px 15px 0px 15px;">
-		<p class="formfonttitle_nwm" style="float:left;width:138px;">Go to WAN setting</p>
-		<input type="button" class="button_gen" onclick="goToWAN();" value="<#btn_go#>" style="margin-top:-10px;">
+		<p class="formfonttitle_nwm" style="float:left;width:116px;">Dual WAN setting</p>
+		<input type="button" class="button_gen_long" onclick="goToDualWAN();" value="<#btn_go#>" style="margin-top:-10px;">
 		<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
 	</td>
 </tr>
+<tr id="goSetting" style="display:none">
+	<td height="50" style="padding:10px 15px 0px 15px;">
+		<p class="formfonttitle_nwm" style="float:left;width:116px;"><#btn_to_WAN#></p>
+		<input type="button" class="button_gen_long" onclick="goToWAN();" value="<#btn_go#>" style="margin-top:-10px;">
+		<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+	</td>
+</tr>
+
 <!--tr>
     <td height="50" style="padding:10px 15px 0px 15px;">
     		<p class="formfonttitle_nwm" style="float:left;width:98px; "><#QIS#></p>

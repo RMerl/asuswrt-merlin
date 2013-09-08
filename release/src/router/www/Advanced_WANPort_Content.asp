@@ -8,9 +8,14 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<title><#Web_Title#> - Dual WAN</title>
+<title><#Web_Title#> - <#dualwan#></title>
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
+<style>
+.ISPProfile{
+	display:none;
+}
+</style>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
@@ -410,14 +415,14 @@ function show_wans_rules(){
 					else{							
 						code += '<td width="25%"><select class="input_option">';
 						if(routing_rules_col[2] =="0")
-							code += '<option value="0" selected>Primary WAN</option>';
+							code += "<option value=\"0\" selected><#dualwan_primary#></option>";
 						else
-							code += '<option value="0">Primary WAN</option>';
+							code += "<option value=\"0\"><#dualwan_primary#></option>";
 
 						if(routing_rules_col[2] =="1")
-							code += '<option value="1" selected>Secondary WAN</option>';
+							code += "<option value=\"1\" selected><#dualwan_secondary#></option>";
 						else
-							code += '<option value="1">Secondary WAN</option>';								
+							code += "<option value=\"1\"><#dualwan_secondary#></option>";								
 
 						code += '</select></td>';								
 					}		
@@ -639,7 +644,7 @@ function del_Row(obj){
 								<tr>
 								  <td bgcolor="#4D595D" valign="top">
 								  <div>&nbsp;</div>
-								  <div class="formfonttitle">Wan Port Setup</div>
+								  <div class="formfonttitle"><#dualwan_port#></div>
 								  <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 					  			<div class="formfontdesc"><#Layer3Forwarding_x_ConnectionType_sectiondesc#></div>
 									<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
@@ -651,7 +656,7 @@ function del_Row(obj){
 			  						</thead>
 			  						
 										<tr>
-										<th>Enable Dual Wan</th>
+										<th><#dualwan_enable#></th>
 											<td>
 												<div class="left" style="width:94px; float:left; cursor:pointer;" id="radio_dualwan_enable"></div>
 												<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
@@ -694,7 +699,7 @@ function del_Row(obj){
 										</tr>
 
 										<tr>
-											<th>Primary WAN</th>
+											<th><#dualwan_primary#></th>
 											<td>
 												<select name="wans_primary" class="input_option" onchange="changeWANProto(this);"></select>
 												<select id="wans_lanport1" name="wans_lanport1" class="input_option" style="margin-left:7px;">
@@ -706,7 +711,7 @@ function del_Row(obj){
 											</td>
 									  </tr>
 										<tr>
-											<th>Secondary WAN</th>
+											<th><#dualwan_secondary#></th>
 											<td>
 												<select name="wans_second" class="input_option" onchange="changeWANProto(this);"></select>
 												<select id="wans_lanport2" name="wans_lanport2" class="input_option" style="margin-left:7px;">
@@ -719,10 +724,10 @@ function del_Row(obj){
 									  </tr>
 
 										<tr>
-											<th>Multi WAN Mode</th>
+											<th><#dualwan_mode#></th>
 											<td>
 												<select name="wans_mode" class="input_option" onchange="appendModeOption(this.value);">
-													<option value="fo" <% nvram_match("wans_mode", "fo", "selected"); %>>Fail Over</option>
+													<option value="fo" <% nvram_match("wans_mode", "fo", "selected"); %>><#dualwan_mode_fo#></option>
 													<option value="lb" <% nvram_match("wans_mode", "lb", "selected"); %>>LoadBalance</option>
 													<!--option value="rt" <% nvram_match("wans_mode", "rt", "selected"); %>>Routing</option-->
 												</select>			
@@ -730,7 +735,7 @@ function del_Row(obj){
 									  </tr>
 
 			          		<tr>
-			            		<th>Load Balance Configuration</th>
+			            		<th><#dualwan_mode_lb_setting#></th>
 			            		<td>
 												<input type="text" maxlength="1" class="input_3_table" name="wans_lb_ratio_0" value="" onkeypress="return is_number(this,event);" />
 												&nbsp; : &nbsp;
@@ -738,25 +743,25 @@ function del_Row(obj){
 											</td>
 			          		</tr>
 
-			          		<tr>
-			          			<th>Import ISP profile rules</th>
+			          		<tr class="ISPProfile">
+			          			<th><#dualwan_isp_rules#></th>
 			          			<td>
 			          				<input type="radio" value="0" name="wans_isp_unit" class="content_input_fd" onClick="change_isp_unit(this.value);">None
-				  							<input type="radio" value="1" name="wans_isp_unit" class="content_input_fd" onClick="change_isp_unit(this.value);">Primary WAN
-				  							<input type="radio" value="2" name="wans_isp_unit" class="content_input_fd" onClick="change_isp_unit(this.value);">Secondary WAN
+				  							<input type="radio" value="1" name="wans_isp_unit" class="content_input_fd" onClick="change_isp_unit(this.value);"><#dualwan_primary#>
+				  							<input type="radio" value="2" name="wans_isp_unit" class="content_input_fd" onClick="change_isp_unit(this.value);"><#dualwan_secondary#>
 			          			</td>	
 			          		</tr>	
 			          		
-			          		<tr>
-			          			<th>Country / ISP profile rules for Primary WAN</th>
+			          		<tr class="ISPProfile">
+			          			<th><#dualwan_isp_primary#></th>
 			          			<td>
 			          					<select name="wan0_isp_country" class="input_option" onchange="appendcountry(this);" value=""></select>
 													<select name="wan0_isp_list" class="input_option" style="display:none;"value=""></select>
 			          			</td>	
 			          		</tr>
 			          		
-			          		<tr>
-			          			<th>Country / ISP profile rules for Secondary WAN</th>
+			          		<tr class="ISPProfile">
+			          			<th><#dualwan_isp_secondary#></th>
 			          			<td>
 			          					<select name="wan1_isp_country" class="input_option" onchange="appendcountry(this);" value=""></select>
 													<select name="wan1_isp_list" class="input_option" style="display:none;"value=""></select>
@@ -791,7 +796,7 @@ function del_Row(obj){
 			  	<tr>
 		  			<th><!--a class="hintstyle" href="javascript:void(0);"--><#FirewallConfig_LanWanSrcIP_itemname#><!--/a--></th>
         		<th><#FirewallConfig_LanWanDstIP_itemname#></th>
-        		<th>WAN Unit</th>
+        		<th><#dualwan_unit#></th>
         		<th>Add / Delete</th>
 			  	</tr>			  
 			  	<tr>
@@ -805,8 +810,8 @@ function del_Row(obj){
             			</td>
             			<td width="25%">
 										<select name="wans_unit_x_0" class="input_option">
-												<option value="0">Primary WAN</option>
-												<option value="1">Secondary WAN</option>
+												<option value="0"><#dualwan_primary#></option>
+												<option value="1"><#dualwan_secondary#></option>
 										</select>            				
             			</td>            			
             			<td width="15%">

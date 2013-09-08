@@ -1,0 +1,46 @@
+#!/bin/sh
+# Ensure that the size of a long-named-symlink is > 0.
+
+# Copyright (C) 2002-2011 Free Software Foundation, Inc.
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+. "${srcdir=.}/init.sh"; path_prepend_ ../src
+print_ver_ du
+
+# Determine if `.' is on a local (would non-NFS be sufficient?) file system.
+# At least on OSF/1 4.0d, when using an nfsv3 file system,
+# each created symlink can end up having a size of 0.
+require_local_dir_
+
+if df --type=xfs . >/dev/null 2>&1; then
+  # At least on Irix-6.5.19, when using an xfs file system,
+  # each created symlink (name lengths up to 255) would have a size of `0'.
+  skip_ "\`.' is on an XFS file system"
+fi
+
+symlink_name_lengths='1 15 16 31 32 59 60 63 64 127 128 255 256 511 512 1024'
+for len in $symlink_name_lengths; do
+  name=`seq 1 $len|tr -c x y |head -c$len`
+  # Record the names of symlinks that are successfully created.
+  ln -fs $name $len > /dev/null 2>&1 \
+    && symlinks="$symlinks $len"
+done
+
+du -a $symlinks > out || fail=1
+
+# Require that at least one of these symlinks has a non-zero size.
+grep '^[1-9]' out > /dev/null || fail=1
+
+Exit $fail

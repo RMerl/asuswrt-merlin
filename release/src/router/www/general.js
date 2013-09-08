@@ -1140,35 +1140,20 @@ function nmode_limitation(){ //Lock add 2009.11.05 for TKIP limitation in n mode
 			var wl_nmode_x_flag = document.form.wl_nmode_x.value;	
 	}
 	
-	
 	if(wl_nmode_x_flag == "1"){
-		if(document.form.wl_auth_mode_x.selectedIndex == 0 && (document.form.wl_wep_x.selectedIndex == "1" || document.form.wl_wep_x.selectedIndex == "2")){
+		if((document.form.wl_auth_mode_x.selectedIndex == 0 && (document.form.wl_wep_x.selectedIndex == "1" || document.form.wl_wep_x.selectedIndex == "2")) ||
+			document.form.wl_auth_mode_x.selectedIndex == 1 || 
+			document.form.wl_auth_mode_x.selectedIndex == 2 || 
+			document.form.wl_auth_mode_x.selectedIndex == 8){
+		
 			alert("<#WLANConfig11n_nmode_limition_hint#>");
 			document.form.wl_auth_mode_x.selectedIndex = 3;
-			document.form.wl_wpa_mode.value = 2;
-		}
-		else if(document.form.wl_auth_mode_x.selectedIndex == 1){
-			alert("<#WLANConfig11n_nmode_limition_hint#>");
-			document.form.wl_auth_mode_x.selectedIndex = 3;
-			document.form.wl_wpa_mode.value = 2;
-		}
-		else if(document.form.wl_auth_mode_x.selectedIndex == 2){
-			alert("<#WLANConfig11n_nmode_limition_hint#>");
-			document.form.wl_auth_mode_x.selectedIndex = 3;
-			document.form.wl_wpa_mode.value = 2;
 		}
 		else if(document.form.wl_auth_mode_x.selectedIndex == 5){
 			alert("<#WLANConfig11n_nmode_limition_hint#>");
 			document.form.wl_auth_mode_x.selectedIndex = 6;
 		}
-		else if(document.form.wl_auth_mode_x.selectedIndex == 8){
-			alert("<#WLANConfig11n_nmode_limition_hint#>");
-			document.form.wl_auth_mode_x.selectedIndex = 3;
-		}
-		/*else if(document.form.wl_auth_mode_x.selectedIndex == 7 && (document.form.wl_crypto.selectedIndex == 0 || document.form.wl_crypto.selectedIndex == 2)){
-			alert("<#WLANConfig11n_nmode_limition_hint#>");
-			document.form.wl_crypto.selectedIndex = 1;
-		}*/
+
 		wl_auth_mode_change(0);
 	}
 }
@@ -1189,27 +1174,12 @@ function change_common(o, s, v){
 	pageChanged = 1;
 	if(v == "wl_auth_mode_x"){ /* Handle AuthenticationMethod Change */
 		wl_auth_mode_change(0);
-		if(o.value == "psk" || o.value == "psk2" || o.value == "pskpsk2" || o.value == "wpa" || o.value == "wpawpa2"){
-			opts = document.form.wl_auth_mode_x.options;			
-			if(opts[opts.selectedIndex].text == "WPA-Personal"){
-				document.form.wl_wpa_mode.value="1";
-				automode_hint();
-			}
-			else if(opts[opts.selectedIndex].text == "WPA2-Personal")
-				document.form.wl_wpa_mode.value="2";
-			else if(opts[opts.selectedIndex].text == "WPA-Auto-Personal")
-				document.form.wl_wpa_mode.value="0";
-			else if(opts[opts.selectedIndex].text == "WPA-Enterprise")
-				document.form.wl_wpa_mode.value="3";
-			else if(opts[opts.selectedIndex].text == "WPA-Auto-Enterprise")
-				document.form.wl_wpa_mode.value="4";
-			
-			if(o.value == "psk" || o.value == "psk2" || o.value == "pskpsk2"){
-				document.form.wl_wpa_psk.focus();
-			}
+
+		if(o.value == "psk" || o.value == "psk2" || o.value == "pskpsk2"){
+			document.form.wl_wpa_psk.focus();
 		}
 		else if(o.value == "shared"){ 
-					document.form.wl_key.focus();
+			document.form.wl_key.focus();
 		}
 	
 		nmode_limitation();
@@ -2226,6 +2196,11 @@ function insertExtChannelOption_2g(){
 			add_a_option(document.form.wl_nctrlsb, "upper", "Upper");
 			if (document.form.wl_nctrlsb_old.value == "upper")
 				document.form.wl_nctrlsb.options.selectedIndex=1;
+			
+			if(is_high_power && CurrentCh == 5)  // for high power model, Jieming added at 2013/08/19
+				document.form.wl_nctrlsb.remove(1);
+			else if(is_high_power && CurrentCh == 7)
+				document.form.wl_nctrlsb.remove(0);
 		}
 		else if ((CurrentCh >= 8) && (CurrentCh <= 9)){
 			x.options[0].text = "Upper";

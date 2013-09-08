@@ -69,7 +69,7 @@ int main(int argc, char *const* argv)
 	argc -= optind;
 	argv += optind;
 	if ((cmd = command_lookup(*argv)) == NULL) {
-		fprintf(stderr, "never heard of command [%s]\n", *argv);
+		fprintf(stderr, "never heard of command [%s]\n", argv[1]);
 		goto help;
 	}
 	

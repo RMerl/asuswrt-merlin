@@ -15,7 +15,6 @@ var $j = jQuery.noConflict();
 var wlc_state = '0';
 var wlc_sbstate = '0';
 var wlc_scan_state = '0';
-var waitingTime = 120;
 var systime = new Date();
 var isDefault = false;
 
@@ -371,7 +370,6 @@ function submitForm(){
 	}
 
 	/* Viz add to set time_zone automatically 2013.05 start */
-/*
 	if(timezones[systime.getTimezoneOffset()] != undefined 
 			&& timezones[systime.getTimezoneOffset()] != "" 
 			&& document.form.time_zone.value != timezones[systime.getTimezoneOffset()]
@@ -379,9 +377,8 @@ function submitForm(){
 	{
 				document.form.time_zone.disabled = false;
 				document.form.time_zone.value = timezones[systime.getTimezoneOffset()];
-				document.form.action_script.value += ";restart_time";
+				// document.form.action_script.value += ";restart_time";
 	}
-*/
 	/* Viz add to set time_zone automatically 2013.05 end */	
 	child_macaddr = '';
 	parent.w_Setting_tmp = document.form.w_Setting.value;
@@ -442,48 +439,64 @@ function gotoIndex_wireless(){
 		parent.location.href = '/index.asp';
 }
 
-var errCount;
-function update_site_info(){
-	child_macaddr = '';
+var retValHandler = {
+	"errCounter" : 0,
 
-	$j.ajax({
-		url: '/apscan.asp',
-		dataType: 'script',
-		error: function(xhr){
-			parent.document.getElementById("connHint").innerHTML = "<#QIS_detect_desc5#>";
-			setTimeout("update_site_info();", 1000);
-			errCount++;
-			if(errCount > 5){ // assume it in in connected and the IP of DUT has been changed
-				genErrorHint();
-				parent.hideLoadingBar();
-				//parent.location.href = 'http://router.asus.com/QIS_wizard.htm?flag=finish';
-			}
-		},
-		success: function(response){
-			if(parent.parent_macaddr && child_macaddr){
-				if(child_macaddr != parent.parent_macaddr){
+	"forceHideLoading" : function(){
+		parent.hideLoading();
+		if(parent.document.getElementById("LoadingBar")){
+			parent.document.getElementById("LoadingBar").style.visibility = "hidden";
+			parent.document.getElementById("LoadingBar").style.display = "none";
+		}
+	},
+
+	"doQuery" : function(){
+		child_macaddr = '';
+	
+		$j.ajax({
+			url: '/apscan.asp',
+			dataType: 'script',
+			timeout: 2000,
+			error: function(xhr){
+				setTimeout("retValHandler.doQuery();", 1000);
+				retValHandler.errCounter++;
+				if(retValHandler.errCounter > 5){ // assume it in in connected and the IP of DUT has been changed
 					genErrorHint();
-					parent.$("LoadingBar").style.visibility = 'hidden';
+					retValHandler.forceHideLoading();
+				}
+			},
+			success: function(response){
+				retValHandler.forceHideLoading();
+	
+				if(parent.parent_macaddr && child_macaddr){
+					if(child_macaddr != parent.parent_macaddr){
+						genErrorHint();
+						return false;
+					}
+				}
+				else{
+					genErrorHint();
 					return false;
 				}
+	
+				if(retValHandler.isConnected(wlc_state)){ // connected
+					location.href = '/qis/QIS_finish.htm';
+				}
+				else{
+					parent.isSubmit = true;
+					parent.isrescan = 120;
+					location.href = '/qis/QIS_sitesurvey.htm';
+				}
 			}
-			else{
-				genErrorHint();
-				parent.$("LoadingBar").style.visibility = 'hidden';
-				return false;
-			}
+		});	
+	},
 
-			parent.$("LoadingBar").style.visibility = 'hidden';
-			if(wlc_state == 2){ // connected
-				location.href = '/qis/QIS_finish.htm';
-			}
-			else{
-				parent.issubmit = 120;
-				parent.isrescan = 120;
-				location.href = '/qis/QIS_sitesurvey.htm';
-			}
-		}
-	});	
+	"isConnected" : function(retVal){
+		if(retVal == 2)	
+			return true;
+		else
+			return false;
+	}
 }
 
 function PrevSetting(v){
@@ -728,7 +741,7 @@ function detect_LANStatus(_flag){
 <input type="hidden" name="http_username" value="<% nvram_get("http_username"); %>">
 <input type="hidden" name="http_passwd" value="<% nvram_get("http_passwd"); %>">
 <input type="hidden" name="sw_mode" value="">
-<input type="hidden" name="x_Setting" value="1">
+<input type="hidden" name="x_Setting" value="1" disabled>
 <input type="hidden" name="w_Setting" value="1">
 <!-- wireless client -->
 <input type="hidden" name="wlc_ure_ssid_org" value="<% nvram_char_to_ascii("WLANConfig11b", "wlc_ure_ssid"); %>" disabled>

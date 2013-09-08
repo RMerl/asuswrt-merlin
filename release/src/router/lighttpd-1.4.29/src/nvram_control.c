@@ -54,10 +54,6 @@
 
 #define DBE 0
 
-extern char *nvram_get(const char *name);
-extern int nvram_set(const char *name, const char *value);
-extern int nvram_commit(void);
-
 #ifdef APP_IPKG
 static inline char * strcat_r(const char *s1, const char *s2, char *buf)
 {
@@ -325,32 +321,34 @@ int nvram_smbdav_pc_append(const char* ap_str )
 	return 0;
 }
 
-char*  nvram_get_smbdav_str(void)
+char*  nvram_get_smbdav_str()
 {	
    return  nvram_get(WEBDAV_SMB_PC);
 }
 
 int nvram_set_smbdav_str(const char* pc_info)
 {
-	return nvram_set(WEBDAV_SMB_PC, pc_info);
+	char* set_str = nvram_set(WEBDAV_SMB_PC, pc_info);
+	return set_str;
 }
 
-char*  nvram_get_sharelink_str(void)
+char*  nvram_get_sharelink_str()
 {	
    return  nvram_get(SHARELINK);
 }
 
 int nvram_set_sharelink_str(const char* share_info)
 {
-	return nvram_set(SHARELINK, share_info);
+	char* set_str = nvram_set(SHARELINK, share_info);
+	return set_str;
 }
 
-int nvram_do_commit(void){
+int nvram_do_commit(){
 	nvram_commit();
 	return 1;
 }
 
-int nvram_is_ddns_enable(void)
+int nvram_is_ddns_enable()
 {
 	char*	ddns_e=NULL;
 	int		ddns_enable_x=0;
@@ -365,12 +363,12 @@ int nvram_is_ddns_enable(void)
 	else				return 0;
 }
 
-char* nvram_get_ddns_server_name(void)
+char* nvram_get_ddns_server_name()
 {
 	return nvram_get(DDNS_SERVER_X);
 }
 
-char* nvram_get_ddns_host_name(void)
+char* nvram_get_ddns_host_name()
 {
 	/*
 	nvram get/set ddns_enable_x
@@ -381,7 +379,7 @@ char* nvram_get_ddns_host_name(void)
 	char* ddns_host_name_x=NULL;
 	if(!nvram_is_ddns_enable())
 	   goto nvram_get_ddns_host_name_EXIT;
-	if(!nvram_get_ddns_server_name())
+	if(!nvram_get_ddns_server_name) 
 	   goto nvram_get_ddns_host_name_EXIT;
 	 ddns_host_name_x= nvram_get (DDNS_HOST_NAME_X);  
 	
@@ -390,24 +388,24 @@ nvram_get_ddns_host_name_EXIT:
 	return ddns_host_name_x;
 }
 
-char* nvram_get_ddns_host_name2(void)
+char* nvram_get_ddns_host_name2()
 {
 	char* ddns_host_name_x=NULL;
 	ddns_host_name_x= nvram_get(DDNS_HOST_NAME_X);
 	return ddns_host_name_x;
 }
 
-char* nvram_get_productid(void)
+char* nvram_get_productid()
 {
 	return get_productid();
 }
 
-char* nvram_get_acc_list(void)
+char* nvram_get_acc_list()
 {
 	return nvram_get(ACC_LIST);
 }
 
-char* nvram_get_webdavaidisk(void)
+char* nvram_get_webdavaidisk()
 {
 	return nvram_get(WEBDAVAIDISK);
 }
@@ -418,7 +416,7 @@ int nvram_set_webdavaidisk(const char* enable)
 	return 1;
 }
 
-char* nvram_get_webdavproxy(void)
+char* nvram_get_webdavproxy()
 {
 	return nvram_get(WEBDAVPROXY);
 }
@@ -429,12 +427,12 @@ int nvram_set_webdavproxy(const char* enable)
 	return 1;
 }
 
-char* nvram_get_acc_webdavproxy(void)
+char* nvram_get_acc_webdavproxy()
 {
 	return nvram_get(ACC_WEBDAVPROXY);
 }
 
-int nvram_get_st_samba_mode(void)
+int nvram_get_st_samba_mode()
 {
 	char* res = nvram_get(ST_SAMBA_MODE);
 	int a = atoi(res);
@@ -444,52 +442,52 @@ int nvram_get_st_samba_mode(void)
 	return a;
 }
 
-char* nvram_get_http_username(void)
+char* nvram_get_http_username()
 {
 	return nvram_get(HTTP_USERNAME);
 }
 
-char* nvram_get_http_passwd(void)
+char* nvram_get_http_passwd()
 {
 	return nvram_get(HTTP_PASSWD);
 }
 
-char* nvram_get_computer_name(void)
+char* nvram_get_computer_name()
 {
 	return nvram_get(COMPUTER_NAME);
 }
 
-char* nvram_get_router_mac(void)
+char* nvram_get_router_mac()
 {
 	return nvram_get(ETHMACADDR);
 }
 
-char* nvram_get_firmware_version(void)
+char* nvram_get_firmware_version()
 {
 	return nvram_get(FIRMVER);
 }
 
-char* nvram_get_build_no(void)
+char* nvram_get_build_no()
 {
 	return nvram_get(BUILDNO);
 }
 
-char* nvram_get_st_webdav_mode(void)
+char* nvram_get_st_webdav_mode()
 {
 	return nvram_get(ST_WEBDAV_MODE);
 }
 
-char* nvram_get_webdav_http_port(void)
+char* nvram_get_webdav_http_port()
 {
 	return nvram_get(WEBDAV_HTTP_PORT);
 }
 
-char* nvram_get_webdav_https_port(void)
+char* nvram_get_webdav_https_port()
 {
 	return nvram_get(WEBDAV_HTTPS_PORT);
 }
 
-char* nvram_get_http_enable(void)
+char* nvram_get_http_enable()
 {
 	// 0 --> http
     // 1 --> https
@@ -497,32 +495,32 @@ char* nvram_get_http_enable(void)
 	return nvram_get(HTTP_ENABLE);
 }
 
-char* nvram_get_misc_http_x(void)
+char* nvram_get_misc_http_x()
 {
 	return nvram_get(MISC_HTTP_X);
 }
 
-char* nvram_get_misc_http_port(void)
+char* nvram_get_misc_http_port()
 {
 	return nvram_get(MISC_HTTP_PORT);
 }
 
-char* nvram_get_misc_https_port(void)
+char* nvram_get_misc_https_port()
 {
 	return nvram_get(MISC_HTTPS_PORT);
 }
 
-char* nvram_get_enable_webdav_captcha(void)
+char* nvram_get_enable_webdav_captcha()
 {
 	return nvram_get(ENABLE_WEBDAV_CAPTCHA);
 }
 
-char* nvram_get_enable_webdav_lock(void)
+char* nvram_get_enable_webdav_lock()
 {
 	return nvram_get(ENABLE_WEBDAV_LOCK);
 }
 
-char* nvram_get_webdav_acc_lock(void)
+char* nvram_get_webdav_acc_lock()
 {
 	return nvram_get(WEBDAV_ACC_LOCK);
 }
@@ -533,32 +531,33 @@ int nvram_set_webdav_acc_lock(const char* acc_lock)
 	return 1;
 }
 
-char* nvram_get_webdav_lock_interval(void)
+char* nvram_get_webdav_lock_interval()
 {
 	return nvram_get(WEBDAV_LOCK_INTERVAL);
 }
 
-char* nvram_get_webdav_lock_times(void)
+char* nvram_get_webdav_lock_times()
 {
 	return nvram_get(WEBDAV_LOCK_TIMES);
 }
 
-char* nvram_get_webdav_last_login_info(void)
+char* nvram_get_webdav_last_login_info()
 {
 	return nvram_get(WEBDAV_LAST_LOGININFO);
 }
 
 int nvram_set_webdav_last_login_info(const char* last_login_info)
 {
-	return nvram_set(WEBDAV_LAST_LOGININFO, last_login_info);
+	char* set_str = nvram_set(WEBDAV_LAST_LOGININFO, last_login_info);
+	return set_str;
 }
 
-char* nvram_get_latest_version(void)
+char* nvram_get_latest_version()
 {
 	return nvram_get(WEBS_STATE_INFO);
 }
 
-int nvram_get_webs_state_error(void)
+int nvram_get_webs_state_error()
 {
 	char* res = nvram_get(WEBS_STATE_ERROR);
 	int a = atoi(res);
@@ -568,12 +567,12 @@ int nvram_get_webs_state_error(void)
 	return a;
 }
 
-char* nvram_get_share_link_param(void)
+char* nvram_get_share_link_param()
 {
 	return nvram_get(SHARE_LINK_PARAM);
 }
 
-char* nvram_get_time_zone(void)
+char* nvram_get_time_zone()
 {
 	return nvram_get(TIME_ZONE_X);
 }
@@ -585,7 +584,7 @@ int nvram_set_share_link_result(const char* result)
 	return 1;
 }
 
-int nvram_wan_primary_ifunit(void)
+int nvram_wan_primary_ifunit()
 {	
 	int unit;	
 	for (unit = 0; unit < 10; unit ++) {		
@@ -598,7 +597,7 @@ int nvram_wan_primary_ifunit(void)
 	return 0;
 }
 
-char* nvram_get_wan_ip(void){
+char* nvram_get_wan_ip(){
 	char *wan_ip;
 	char tmp[32], prefix[] = "wanXXXXXXXXXX_";
 	int unit = nvram_wan_primary_ifunit();
@@ -607,11 +606,11 @@ char* nvram_get_wan_ip(void){
 	return wan_ip;
 }
 
-char* nvram_get_swpjverno(void){
+char* nvram_get_swpjverno(){
 	return nvram_get(SWPJVERNO);
 }
 
-char* nvram_get_extendno(void){
+char* nvram_get_extendno(){
 	return nvram_get(EXTENDNO);
 }
 

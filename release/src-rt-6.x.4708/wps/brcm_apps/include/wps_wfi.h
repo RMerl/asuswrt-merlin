@@ -1,7 +1,7 @@
 /*
  * WPS WiFi Invite (WFI) header file
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: wps_wfi.h 282619 2011-09-08 20:28:23Z $
+ * $Id: wps_wfi.h 383924 2013-02-08 04:14:39Z $
  */
 
 #ifndef _WPS_WFI_H_
@@ -37,7 +37,7 @@ typedef BWL_PRE_PACKED_STRUCT struct {
 	                   *  MAC address of the STA for whome the WFI is destined (ProbeRsp).
 	                   */
 	uint8 fname_len;   /* Length of the BDD friendly name (of STA in case of ProbeReq,
-	                   *  of AP in case of ProbeRsp). 
+	                   *  of AP in case of ProbeRsp).
 	                   */
 	uint8 fname[1];    /* BDD Friendly name, variable length, non-null-terminated */
 } BWL_POST_PACKED_STRUCT brcm_wfi_ie_t;

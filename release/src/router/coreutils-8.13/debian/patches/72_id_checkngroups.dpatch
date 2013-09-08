@@ -1,0 +1,16 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+
+@DPATCH@
+--- coreutils-6.10/src/id.c.orig	2008-01-28 20:14:06.147283549 -0500
++++ coreutils-6.10/src/id.c	2008-01-28 20:27:39.523284910 -0500
+@@ -370,6 +370,10 @@
+ 	ok = false;
+ 	return;
+       }
++    else if (sysconf(_SC_NGROUPS_MAX) > 0 && n_groups > sysconf(_SC_NGROUPS_MAX))
++      {
++        fprintf (stderr, _("Warning: user %s is in more groups than system's configured maximum.\n"), (username != NULL)?username:"");
++      }
+ 
+     if (n_groups > 0)
+       fputs (_(" groups="), stdout);

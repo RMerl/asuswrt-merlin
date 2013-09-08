@@ -28,7 +28,9 @@ int getStorageStatus(STORAGE_INFO_T *st)
 #ifdef RTCONFIG_WEBDAV
 	st->ExtendCap = EXTEND_CAP_WEBDAV;
 #else
-	st->ExtendCap = nvram_get_int("webdav_extend_cap");
+	st->ExtendCap = 0;
+	if(check_if_file_exist("/opt/etc/init.d/S50aicloud")) 
+		st->ExtendCap = EXTEND_CAP_WEBDAV;
 #endif
 
 	if(nvram_get_int("enable_webdav")) 	

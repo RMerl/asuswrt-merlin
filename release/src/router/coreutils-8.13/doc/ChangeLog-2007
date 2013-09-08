@@ -1,0 +1,2009 @@
+2007-10-05  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (chroot invocation): List two systems on which
+	chroot works when run by non-root.
+
+2007-09-19  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (expr invocation): Correct description of relative
+	operator precedence.  Reported by hanpingtian@gmail.com.
+
+2007-08-25  Eric Blake  <ebb9@byu.net>
+
+	Avoid case-insensitive clash in one-page-per-node html docs.
+	* coreutils.texi (Concept index): Rename from Index.
+
+2007-07-15  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi: Revise node structure per new fdl.texi.
+
+2007-06-06  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (rmdir invocation): Fix a tiny typo.
+
+2007-06-03  Jim Meyering  <jim@meyering.net>
+
+	* constants.texi: Remove from version control.
+	This file has always been generated.
+	* .gitignore: Add constants.texi.
+
+2007-04-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (nohup invocation): Add advice about saving
+	output to a file.
+
+2007-04-16  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (cut invocation): Adjust synopsis to show that an
+	OPTION is required.  Reported by Rudolf Kastl.
+
+2007-03-21  Eric Blake  <ebb9@byu.net>
+
+	* coreutils.texi (md5sum invocation): Document escapes in output
+	format.  Reported by Armijn Hemel.
+
+2007-03-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix manual in response to bug reports by Dan Jacobson.
+	* coreutils.texi (sort invocation): Explain numeric sorts better.
+	Compress self-congratulation into a simple "comparison is exact"
+	notice; the --general-numeric-sort option already explains the
+	tradeoffs.
+	(seq invocation): Add example of -f.
+
+2007-03-12  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (cp invocation): Mention that --preserve=timestamps
+	doesn't preserve time stamps on symbolic links.
+	Reported by Polo Talnir in <https://bugzilla.redhat.com/230866>.
+
+2007-02-27  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (df invocation): With -P, the default block size
+	and output format is not affected by DF_BLOCK_SIZE, BLOCK_SIZE, or
+	BLOCKSIZE.
+
+2007-01-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi
+	(Input processing in ptx, mkdir invocation, rmdir invocation):
+	@item -> @itemx to fix some typos.
+
+2007-01-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (mkdir invocation): Say how to set the file
+	permission bits of a parent directory with mkdir -p.
+
+2007-01-29  Jim Meyering  <jim@meyering.net>
+
+	Document new syntax: "chown +0:+287 file", "chgrp +99 file"
+	* coreutils.texi (Disambiguating names and IDs): New section.
+	(chown invocation, chgrp invocation): Mention the new syntax
+	with an xref to the new section.
+
+2007-01-19  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (ls: General output formatting): Mention the
+	workarounds to accommodate the Apple Terminal bug.
+
+2007-01-04  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (base64 invocation): When decoding, newlines
+	are always accepted.
+
+2007-01-03  Jim Meyering  <jim@meyering.net>
+
+	Document what the ".0" in e.g., "-k 2,3.0" means, and...
+	* coreutils.texi (sort invocation): ... that it can be applied to the
+	field-end spec, but not the field-start one.  Patch from Evan Hunt.
+
+2006-12-21  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (dd invocation): Improve the documentation
+	for bs, ibs, obs, and cbs.  Suggestion from Dan Jacobson.
+	Patch by Olivier Delhomme.
+	(dd invocation): Add to the description of cbs.
+	(dd invocation): Specify that bs=N overrides only any
+	_preceding_ ibs and obs settings.  Spotted by Andreas Schwab.
+
+2006-12-14  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi: Remove two doubled words.
+	(Treating / specially): With --preserve-root, chgrp and chown
+	will not modify "/", even through a symlink.
+
+2006-11-28  Jim Meyering  <jim@meyering.net>
+
+	* perm.texi (Mode Structure): Fix typo: s/setgid/setuid/.
+	Reported by Georg Neis as Debian bug 400778.
+
+2006-10-27  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (wc invocation): When giving the order in which
+	the various "counts" are listed, also mention "maximum line length".
+	Prompted by a report from Vincent LeFevre.
+
+2006-10-23  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (rm invocation): Describe --one-file-system.
+
+2006-09-26  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (groups invocation): "groups" no longer prefixes
+	the output with "user :" unless more than one user is specified.
+
+2006-09-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (cp invocation): Say that -i and -f are
+	independent.  Clarify -i's behavior.
+	(Disk usage): Clarify intro.  Problem reported by Van Ly.
+
+2006-09-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (tail invocation): Ignore -f when standard input
+	is a FIFO, too.
+
+2006-09-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (Treating / specially): --preserve-root is
+	now the default for rm.
+	(rm invocation): Likewise.  Also, document that you can't
+	remove `.' or `..'.  Use the POSIX term "root directory"
+	rather than the more-ambiguous "file system root".
+
+2006-08-22  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* .cvsignore: Add Makefile.in, coreutils.html, coreutils.pdf,
+	coreutils.ps, coreutils.tps.  Remove coreutils.cm (dunno what it
+	is, but the makefile doesn't mention it).  Remove coreutils.info
+	as it is subsumed by coreutils.info*.
+
+2006-08-22  Jim Meyering  <jim@meyering.net>
+
+	* .cvsignore: Add files that are now generated by ../bootstrap.
+
+2006-08-20  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* Makefile.in, fdl.texi, getdate.texi:
+	Remove from CVS, since ../bootstrap generates them automatically.
+
+2006-08-17  Jim Meyering  <jim@meyering.net>
+
+	* Makefile.am (EXTRA_DIST): Reflect doclicense.texi->fdl.texi renaming.
+
+2006-08-17  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* ChangeLog: Add copyright notice.
+	* Makefile.am: Likewise.
+	* getdate.texi: Likewise.
+	* perm.texi: Likewise.
+	* getdate.texi: Update to version 1.2 of the GNU FDL.
+	* coreutils.texi: Likewise.
+	(Copying This Manual): Renamed from GNU Free Documentation License.
+	Now an appendix.  Include fdl.texi rather than doclicense.texi.
+	* fdl.tex: Renamed from doclicense.texi.  Latest version from FSF.
+	* perm.texi: Add copyright notice.
+
+2006-08-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (df invocation): df exits nonzero if it outputs
+	nothing.
+
+2006-08-09  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (dd invocation): Warn about oflag=append without
+	conv=notrunc.  See Debian bug 373736.
+
+2006-08-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (shuf invocation, Random sources): New sections.
+	(Operating on sorted files): Add shuf.
+	(sort invocation, shred invocation): New option --random-source.
+	(sort invocation): Fix typo: -R -> -r.
+
+2006-07-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (install invocation, mkdir invocation):
+	Add cross-references to Directory Setuid and Setgid.
+	(install-invocation): The default mode is no longer equivalent to 755.
+	* perm.texi (Changing Special Mode Bits): Clarify u+s versus
+	a+s versus +s, and likewise for g+s.
+	(Numeric Modes): Bring back example of 0055 == 55.  4755 no
+	longer clears setgid bit on directories.
+	(Directory Setuid and Setgid): Numeric modes now affect setuid
+	and setgid on directories only if they set these bits.  This
+	is so that leading 0 has no effect on numeric modes.
+
+2006-07-26  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (What information is listed): Mention that missing
+	pieces of information are marked with "?".  From Paul Eggert.
+
+2006-07-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* perm.texi (Directory Setuid and Setgid): Explain that this is a
+	GNU extension, and that other systems behave differently here.
+
+2006-07-22  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (What information is listed): Clarify that the
+	restricted deletion flag is another name for the sticky bit.
+	* perm.texi (Mode Structure): The restricted deletion flag
+	restricts only unprivileged users.
+	(Mode Structure, Symbolic Modes, Numeric Modes): Be more careful
+	about distinguishing file mode bits from permissions bits,
+	and about execute versus search permission.  The FreeBSD command
+	is chflags, not chrflags.
+
+2006-07-16  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi: Change GNU to @acronym{GNU} in a few places.
+	Use "set-user-ID" and "set-group-ID" a bit more consistently.
+	Use "appropriate privileges" rather than "super-user" a bit
+	more consistently.
+	(install invocation): Parent directories are now 755 without uid
+	or gid changing.  The default mode is now 0755, not 755.
+	(mkdir invocation): Rewrite the top-level usage description, since
+	I couldn't easily follow the old one.  It's now 3 lines not 8.
+	For -m, describe file permission bits versus other bits, and note
+	that mkdir is atomic if you don't mention special bits.
+	(chmod invocation): Mention what chmod does to setgid and setuid bits.
+	* perm.texi (Mode Structure): Modernize the explanation of the
+	setuid and setgid bits on directories.
+	(Changing Special Mode Bits): Mention that a implies both u and g
+	for s.  Cross reference to new node.
+	(Numeric Modes): Don't claim that 0055 is the same as 55; this isn't
+	true any more.  Mention new node.
+	4755 is now like u=rwxs,go=rx,g-s, not like u=rwxs,go=rx.
+	(Directory Setuid and Setgid): New node.
+
+2006-07-08  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (Squeezing): Separate doubled "the", so typo-checkers
+	don't complain.
+
+	* Makefile.am (check-texinfo): Enforce the zeros vs. zeroes consistency.
+
+2006-07-08  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	* coreutils.texi: Fix some typos.  Use `zeros' consistently (both
+	`zeros' and `zeroes' are correct).
+
+2006-07-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (tail invocation): With no operand, 'tail -f' now
+	silently ignores the '-f' only if standard input is a FIFO or pipe
+	and POSIXLY_CORRECT is set.
+
+2006-06-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (seq invocation): seq now uses long double
+	internally rather than double.  It now defaults to a minimal fixed
+	point format if possible.  It lets you use %a, %A, %E, %F, %G.
+	Don't assume printf doesn't work for numbers that fit in 64 but
+	not 32 bits; typically they work these days.  Improve discussion
+	of large integers and update the rounding-error numbers.
+
+2006-06-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (sort invocation): 'sort +1 -2' is now supported
+	even when conforming to POSIX 1003.1-2001, since this is a pure
+	extension to POSIX.
+
+2006-06-27  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (wc invocation): Remove ./ prefix from example.
+	From Padraig Brady.
+
+2006-06-26  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (wc invocation): Spell out `--files0-from' in
+	the example. Suggestion from Bob Proulx.
+
+	* coreutils.texi (wc invocation): Document new --files0-from option.
+
+2006-06-20  Eric Blake  <ebb9@byu.net>
+
+	* coreutils.texi (sleep invocation): Document that accepting
+	multiple arguments and suffixes are extensions.
+	Reported by Dan Jacobson.
+
+2006-06-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* Makefile.am (check-texinfo): Use $(_W) and $(W_) instead of
+	assuming grep -w (which is not portable).
+
+2006-05-27  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	* Makefile.am: Use `AM_MAKEINFOFLAGS' rather than
+	overwriting `MAKEINFO', so that `missing' can do its job.
+
+	* Makefile.am (check-texinfo): Use `$(EGREP)' instead of `grep -E'.
+	(check-texinfo): Use literal `{' only in brackets, i.e., [{] or [}],
+	to avoid triggering an error from Solaris 2.6's grep.
+
+2006-05-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (sort invocation): Remove mention of --seed, since
+	it's going away.
+
+2006-05-04  Eric Blake  <ebb9@byu.net>
+
+	* coreutils.texi (Examples of date): Give example of @seconds.
+
+2006-05-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (head invocation, tail invocation, sort invocation):
+	Give advice about porting to hosts that support only obsolete syntax.
+	Problem reported by Zack Weinberg.
+
+2006-04-23  Francesco Montorsi  <fr_m@hotmail.com>
+
+	* coreutils.texi (Which files are listed): Describe new option:
+	--group-directories-first.
+
+2006-04-17  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (What information is listed): Add P for Solaris
+	10 ports.  Add commented-out entries for other types that POSIX
+	says are possible, or that I observed in FreeBSD documentation.
+
+2006-04-18  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (Input processing in ptx): Remove mention of the
+	default --ignore file, /usr/local/lib/eign.  That file has never
+	been used.  Reported by Eric Blake.
+
+2006-04-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (expr invocation): expr exit status is 3 only for
+	internal errors now; 2 is also for invalid values in expressions.
+
+	(What information is listed): Document 'ls' type letters.
+	Problem reported by Lincoln Martin.
+
+2006-04-09  Ori Avtalion  <oavtal@bezeqint.net>
+
+	* coreutils.texi (Top): Add 'hostid' to System context menu line.
+	(trivial change)
+
+2006-03-22  Eric Blake  <ebb9@byu.net>
+
+	* coreutils.texi (General options in ptx): Undocument --copyright.
+
+2006-03-27  Eric Blake  <ebb9@byu.net>
+
+	* coreutils.texi (dirname invocation): Macro in previous patch
+	was too broad.
+
+2006-03-11  Eric Blake  <ebb9@byu.net>
+
+	* coreutils.texi (basename invocation, dirname invocation):
+	Improve documentation to match recent // patches.
+
+2006-03-23  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (nohup invocation): nohup now redirects stderr to
+	nohup.out if stdout is closed and stderr is a tty.
+
+2006-03-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (dd invocation): New flags directory, nolinks.
+	Alphabetize nofollow.
+
+2006-02-17  Simon Josefsson  <jas@extundo.com>
+
+	* coreutils.texi: Add base64 section.
+
+2006-02-20  Eric Blake  <ebb9@byu.net>
+
+	* coreutils.texi (rm invocation): Fix typo in last patch.
+	(paste invocation): Fix whitespace.
+
+2006-02-18  Eric Blake  <ebb9@byu.net>
+
+	* coreutils.texi (rm invocation): Document new -I option, and new
+	--interactive behavior.
+
+2006-02-12  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (Character sets): Don't say that an unknown
+	backslash-escape causes an error message -- it doesn't.
+	Mention that `\' also removes any special significance, so
+	is useful for [, ], *, -.  Prompted by Richard Neill in
+	http://savannah.gnu.org/bugs/index.php?func=detailitem&item_id=14937
+
+2006-02-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (od invocation): Warn that -t a ignores the high
+	order bit.
+
+2006-01-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (tail invocation): In the obsolete usage, the
+	count is optional, so put square brackets around it.
+
+2006-01-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* getdate.texi (General date syntax): Invalid dates are rejected.
+	(Time of day items): Mention the possibility of leap seconds.
+	Problem reported by Dr. David Alan Gilbert.
+
+	* coreutils.texi: Use @acronym around "ISO" uniformly.
+	(Date conversion specifiers): Explain %g, %G, and %V a bit better.
+
+2006-01-02  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (tail invocation): Say that --retry
+	is useful `mainly' (not `only') when following by name.
+
+2006-01-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi, perm.texi: Clarify file mode bits versus
+	file permission bits.
+	* coreutils.texi (mkfifo invocation, mknod invocation): -m
+	affects only file permission bits.
+
+2005-12-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (sort invocation): Clarify that a blank is a space
+	or a tab.
+
+2005-12-15  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (stat invocation) [--printf]: Describe new option.
+	[--format]: Add example.  Distinguish from --printf.
+	Sort option descriptions.
+
+2005-12-05  Andreas Gruenbacher  <agruen@suse.de>
+
+	* coreutils.texi (ls): Clarify the Alternate Access Method description.
+	(cp): Clarify that --preserve=mode also preserves acls.
+
+2005-12-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (sort invocation): Clarify explanation of
+	--random-sort, and use a simpler example.
+
+2005-12-10  Frederik Eaton  <frederik@ofb.net>
+
+	* coreutils.texi (sort invocation): Add --random-sort (-R) and --seed.
+
+2005-12-07  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (dd invocation): New noatime flag.
+
+2005-11-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (df invocation): Document treatment of dummy file
+	systems better.
+
+2005-11-16  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (ln invocation): ln -v now outputs lines only for
+	successful links.
+	(tail invocation): Say that the obsolete form uses exactly one
+	option and at most one file.
+
+2005-11-13  Jim Meyering  <jim@meyering.net>
+
+	* perm.texi (Mode Structure): Capitalize two sentences in an
+	enumerated list and fix a typo.  From Aaron Hawley.
+
+2005-11-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (Formatting file timestamps): ls now defaults to
+	--time-style='locale', which in turn acts like
+	--time-style='posix-long-iso' if the locale settings are messed up.
+
+2005-11-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (rm invocation): Don't mention --directory (-d).
+
+2005-11-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (tail invocation): Describe obsolete usages
+	like "tail -2" more precisely.
+	(touch invocation): The old usage works only for 1969-1999 now.
+
+2005-08-28  David Madore  <david.madore@ens.fr>
+
+	* coreutils.texi: Document SHA-1 and SHA-2 utilities.
+
+2005-10-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* doc/coreutils.texi (Top, General output formatting, dir invocation):
+	(vdir invocation): Don't document the old v and d commands.
+
+2005-10-15  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (du invocation): Document du's -m option,
+	now that we've decided to keep it.
+	(who invocation): Remove documentation for deprecated --idle (-i).
+
+2005-10-13  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi: Avoid a few overfull/underfull hboxes.
+
+2005-09-24  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (touch invocation):
+	"touch -" now touches standard output.
+
+2005-09-17  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (who invocation): Remove a stray '+'.
+
+2005-09-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (uname invocation): uname -a no longer generates
+	the -p and -i outputs if they are unknown.
+
+2005-09-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (Time conversion specifiers, Options for date):
+	Document date --rfc-3339 and new specifiers %:z, %::z, %:::z.  Use
+	"date and time" consistently; the old version sometimes said "time
+	and date".  Fix a minor bug in the documentation for --rfc-2822:
+	it claimed day-of-month < 10 had leading space, not leading zero.
+	Use a consistent format for terms like "RFC".
+	(uname invocation): Mention that Linux outputs "unknown" for
+	-i and -p.
+
+2005-09-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (nice invocation): Document "niceness" versus
+	"nice value" versus "scheduling priority".
+
+2005-09-07  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (nice invocation): Use "niceness", not "nice value"
+	to talk about nice values offset by -20.  Don't use the word
+	"priority" when niceness is intended.
+
+2005-08-15  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (join invocation): Itemize the defaults.
+	From Karl Berry.
+
+2005-08-12  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (cp invocation, mv invocation): Remove square
+	brackets in --reply=[HOW].  Reported by Oscar Liljeblad.
+
+2005-07-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (md5sum invocation): --check now allows multiple
+	FILE inputs.
+
+2005-07-18  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (false invocation):
+	Mention that false is often built-in, and that it exits
+	with status >1 on some hosts.
+	(true invocation): Remove now-incorrect "non-POSIX mode" reference.
+
+2005-07-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (nohup invocation): POSIXLY_CORRECT no longer
+	affects nohup's behavior.  Input is redirected from /dev/null.
+
+2005-07-11  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (cat invocation): Remove -B or --binary option
+	(available on MS-DOS-like platforms only).  Explain when text and
+	binary mode are used now.
+	(md5sum invocation): -b actually does have an effect on Unix: it
+	causes "*" to be output.  Explain when text and binary mode are
+	used now.
+
+2005-07-03  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (cp invocation): Mark --reply as deprecated.
+	(mv invocation): Likewise.
+
+2005-06-24  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (cp invocation): Clarify how --reply=no works.
+
+2005-06-14  William Brendling  <wbrendling@gmail.com>
+
+	* coreutils.texi (du invocation): New options --last-time and
+	--time-style.
+
+2005-06-19  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (ln invocation): Change a few `paths' to `file names'.
+	* Makefile.am (check-texinfo): Also catch uses of path, pathname.
+
+2005-06-17  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (shred invocation): Clarify that shred
+	works on ext3 as long as it's not in data=journal mode.
+	Patch from Mark Melahn.
+
+2005-06-16  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (Backup options): Undocument --version-control=S (-V).
+
+2005-06-07  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (ln invocation): Examples, from Bob Proulx.
+
+2005-06-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use "file name" when talking about file names, instead of "filename"
+	or "path", as per the GNU coding standards.
+	* coreutils.texi (readlink invocation): "path component" ->
+	"component", since we don't use the POSIX "path" nomenclature.
+
+2005-05-11  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* getdate.texi (General date syntax): Don't say that date
+	date --iso-8601=ns generates acceptable dates; it doesn't yet.
+	Problem reported by Nic Ferrier.
+
+2005-05-06  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (dd invocation): New flags "binary" and "text".
+
+2005-05-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (chmod invocation): chmod -w complains if its
+	behavior differs from what chmod a-w would do.
+
+2005-05-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (ls invocation): ls --indicator-style=directory
+	renamed to ls --indicator-style=slash, to avoid confusion with ls
+	--directory.
+
+2005-04-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* perm.texi (Mode Structure, Changing Special Permissions):
+	(Conditional Executability, Numeric Modes):
+	These days the sticky bit is more often uses as the restricted
+	deletion flag, so modernize the discussion about this.
+	(Mode Structure): Linux/GNU -> GNU/Linux.
+	(Symbolic Modes): Don't imply that "+ur" or "u" is valid.
+	(Setting Permissions): Don't imply that "+t" is invalid.
+	Use "rwx" rather than the less-common "rxw" in an example.
+	(Copying Permissions): Say that ugo is a replacement for
+	a string of the other letters.  Add spaces around examples.
+	Use "set-user-ID" rather than "set user ID" to avoid ambiguity.
+	Use "+t" rather than "o+t", since POSIX doesn't specify the latter.
+	Mention which combinations are portable and which are GNU.
+	(Numeric Modes): Don't imply they aren't portable; they are
+	nowadays.
+
+2005-04-26  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (Standards conformance): Do not mention head -10,
+	since it now works the same regardless of POSIX version.
+	(od invocation): -w N -> -w[N].
+	(pr invocation): -S STRING -> -SSTRING.
+	(fold invocation): -WIDTH works even when conforming to POSIX
+	1003.1-2001.
+	(head invocation, tail invocation): Likewise for -NUM.
+	(split invocation): Likewise for -LINES.
+	(uniq invocation): Likewise for -N.
+	(expand invocation, unexpand invocation): Likewise for -TAB.
+	(nice invocation): Likewise for -ADJUSTMENT.
+	(sort invocation): Clarify explanation of +N option.
+	(uniq invocation): Likewise.
+	(join invocation): Remove special case for --help, --version.
+	(touch invocation): Clarify explanation of date options.
+	(Options for date): -I timespec -> -I[timespec].
+
+2005-04-23  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (install invocation): Use a= instead of 0 for
+	the point of departure for -m, and explain what it meeams.
+	(mkdir invocation, mkfifo invocation, mknod invocation):
+	The umask does not affect the point of departure.
+	Problem reported by Mike Stone.
+
+2005-04-11  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi: For consistency, standardize on "user ID" rather
+	than "uid" or "UID" or "user id".  Similarly for "group ID".
+
+2005-04-09  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (rm invocation): Say that --recursive removes
+	listed directories too, not just their contents.
+
+2005-04-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (dd invocation): Document the distinction between
+	INFO and USR1 for dd, and the effect of POSIXLY_CORRECT here.
+
+2005-04-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (cat invocation, chown invocation)
+	(chgrp invocation, basename invocation, dirname invocation):
+	Add examples, which are copies of the examples newly added
+	to the usage messages.
+	(ln invocation): Use same format as other examples above,
+	for consistency.
+
+2005-03-26  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi: Clarify NUL vs null byte vs null character.
+
+2005-03-18  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (nohup invocation): Clarify nohup.out creation.
+
+2005-03-11  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (Formatting file timestamps): Very long timestamps
+	may be treated as errors.
+
+2005-03-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (date invocation): Use an example that makes it
+	clear tha the default date use space-padded day of month.
+	Replace "directive" with "conversion specifier" to be consistent
+	with POSIX.  All uses changed.
+	Fix menu RHS to match actual directive lists.
+	(Time conversion specifiers): Renamed from Time directives.
+	Use @samp consistently, sometimes instead of @code.
+	Consistently ention which specifiers are GNU extensions.
+	Give more examples (in some cases, instead of ranges).
+	Say why %F is preferred for dates.
+	(Date conversion specifiers): Renamed from Date directives.
+	Likewise for other changes.
+	(Padding and other flags): Correct the description.
+	Document #.  Give an example for %9B.
+
+2005-02-23  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi: Adjust to match current strftime.c.
+	(Time directives): Say that %k, %l, and %P are GNU extensions.
+	For %p and %P, mention handling of noon and midnight.
+	For %s, use ISO 8601, and mention handling of leap seconds.
+	For %S, clarify mention of leap seconds.
+	For %T, say that it's the same as %H:%M:%S.
+	For %X, don't say that it must be the same as %H:%M:%S.
+	For %z and %Z, clarify which time zones are used.  These options
+	are now affected by --date, so don't claim that they're not.
+	(Date directives): %C is now all but the last two chars of %Y.
+	For %D, say that it's equivalent to %m/%d/%y.
+	For %e, use blank in example.
+	For %h, use @code for %b.
+	For %Y, mention what happens with outlandish years.
+	(Padding and other flags): Renamed from Padding.
+	Mention that the flags are GNU extensions.
+	Mention the 0 and ^ flags.
+	Mention field widths an modifiers.
+	(Examples of date): - is a flag, not a modifier.
+
+2005-01-07  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (sort invocation): Specify that a string
+	of zero digits is interpreted as 0.  Reported by Ulrich Hermisson.
+
+2005-01-04  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (shred invocation): Clarify that shred works fine
+	with journaled file systems that are configured not to journal
+	file system data.  Also mention BFS and NTFS.
+
+2004-12-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (ls invocation): Change minor problem to be
+	"subdirectory not found", since top-level trouble is now serious.
+	(dircolors invocation): Quote argument to eval.  Problem reported
+	by Stephane Chazelas.
+
+2004-12-11  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (join invocation): Mention that blank separators
+	in the -o option need to be quoted.  Problem reported by Phil Clayton.
+
+2004-12-10  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (id invocation): -G also prints main group.
+	Problem reported by Tim Waugh.
+
+2004-12-09  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (ls invocation): Document new "ls" exit status.
+
+2004-12-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* getdate.texi (Time of day items, Time zone items):
+	Describe new formats +00:00, UTC+00:00.
+
+2004-12-04  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (cut invocation): Say when --complement is useful.
+
+2004-10-01  Paolo Bonzini  <bonzini@gnu.org>
+
+	* coreutils.texi (cut invocation): Document --complement and
+	adjust the documentation of -b, -c, -f.
+
+2004-11-27  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (du invocation): Use if=/dev/null rather
+	than :|.  Problem reported by Dan Jacobson.
+	Use "seek=2GiB" rather than the wordier "seek=`echo '2^31'|bc`".
+	Say "KiB" not the (inaccurate) "kilobytes".
+	Similarly for "GiB" and "gigabytes".
+
+2004-11-16  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi: Changes inspired by Debian coreutils 5.2.1-2.
+	(General output formatting): -x doesn't have an operand.
+	(Formatting the file names): Warn that even with -N unprintable
+	chars are still printed as '?' some times.
+	(rm invocation): Reword rm -d to note that it's sometimes useful
+	on non-directories.
+	(logname invocation, users invocation, who invocation):
+	The utmp and wtmp file names vary from system to system.
+
+	* getdate.texi (General date syntax): "next" is 1, not 2.
+	Document that "second" isn't allowed as an ordinal number.
+
+2004-11-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (dd invocation): Reword the new dd message.
+
+2004-11-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (dd invocation): dd now outputs total bytes,
+	seconds, and bytes per second.
+
+2004-11-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* Makefile.am (_W, W_): New macros.
+	(check-texinfo): Use them instead of assuming grep -w (which is not
+	portable).
+
+2004-10-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi: Document TZ better, and adjust to new getdate.texi.
+	(Top): Update menu.
+	(pr invocation, Formatting file timestamps, touch invocation,
+	stat invocation, who invocation, date invocation, Options for date):
+	Mention TZ.
+	* getdate.texi: Sync from gnulib.
+
+2004-10-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (Standards conformance): Use "head -10" rather
+	than "head -1" as example of obsolete usage, since the POSIX
+	consensus is that "head -1" could be supported even if we don't
+	yet have clear consensus on "head -10".  See today's revision to
+	the SUS FAQ
+	<http://www.opengroup.org/austin/papers/single_unix_faq.html>.
+
+2004-10-24  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (pathchk invocation): Options must precede operands.
+
+2004-10-17  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (pathchk invocation): Overall lengths are
+	OS limits, not file system limits.  Component length checks
+	apply to all components, not merely to existing ones.  Say
+	that nonexistent names are not errors.  For -p, omit all
+	checks based on the underlying file system, not merely length
+	checks.  Explain what the portable file name character set is.
+
+2004-10-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (printf invocation): Mention ISO/IEC 10646 as
+	well as Unicode.  Various minor formatting cleanups.
+
+2004-10-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (sort invocation): Move LC_ALL, LC_COLLATE
+	index entries to proper paragraph.
+
+2004-10-12  Jim Meyering  <jim@meyering.net>
+
+	* Makefile.am (check-texinfo): Add `builtin' and `builtins' to
+	the list of words to avoid.
+
+2004-10-11  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (Special built-in utilities): New node.
+	(printf invocation): builtin -> built-in, for consistency
+	with POSIX terminology.
+	(test invocation, pwd invocation):
+	Use specific rather than generic language to warn about
+	built-in commands.
+	(chroot invocation, env invocation, nice invocation, nohup invocation):
+	Warn that command must not be a special built-in.
+	(env invocation): Warn about environment variables with unusual
+	spellings, or duplicates.
+
+2004-09-26  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (ls invocation): Document "ls --hide".
+
+2004-09-24  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (chmod invocation): Warn about "chmod -w file".
+
+2004-09-23  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (tail invocation): Fix bugs in the description of
+	the obsolete syntax (e.g., it does not support -k or -m).  Warn
+	about usages like "tail -" and "tail -c 4" that are ambigous on
+	older systems.
+
+2004-09-20  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (mv invocation, rm invocation): Say "the response
+	is affirmative" rather than "the response begins with y or Y",
+	so that the documentation is accurate in non-English locales.
+	Problem reported by Munzir Taha.
+
+2004-09-18  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (dd invocation): Distinguish between options
+	(e.g., --help) and operands (e.g., if=file).  Move miscellaneous
+	stuff after the operand descriptions, for clarity.
+
+2004-09-09  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (sort invocation): -u disables the last-resort
+	comparison, too.  Revamp its description.
+	(test invocation): Document -r, -w, -x more carefully.
+
+2004-09-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (Common options): Some programs don't reorder
+	options.
+	(tr invocation, echo invocation, printf invocation, test invocation,
+	expr invocation, basename invocation, chroot invocation,
+	nice invocation, nohup invocation, seq invocation):
+	This program doesn't reorder options.
+	(tr invocation): Mention --help, --version, --.
+	(echo invocation): Mention that -- isn't special.
+	(test invocation): Mention that the expression is optional,
+	and that test ! EXPR is like ! test EXPR.
+	Mention that -h and -L don't dereference symlinks.
+	(expr invocation): Mention --help, --version.
+
+	* coreutils.texi (sort invocation): Add remarks about sort -u
+	versus sort | uniq.  Prompted by a question from Andrew Noymer.
+
+2004-09-06  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (od invocation): Several changes for POSIX
+	and FreeBSD compatibility.  Add support for XSI syntax
+	(POSIX 1003.1-2004).  Rename -s[N] to -S N.  Remove documentation
+	for -h.  -i is now -t dI (not d2) and -l is now -t dL (not d4).
+
+2004-09-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (String tests): Improve quality of warning about
+	quoting strings for the shell.
+
+2004-09-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (dd invocation): Specify which conversion options
+	are mutually exclusive.  Give a bit more detail about ascii,
+	ebcdic, and ibm conversions.
+
+2004-08-24  Paul Eggert  <eggert@cs.ucla.edu>
+
+	POSIX-conformance fixes for "expand" and "unexpand".
+	* coreutils.texi: Standardize on "tab stop" (the POSIX usage)
+	rather than "tabstop".
+	(unexpand invocation): Use "blank" rather than "space" when
+	POSIX requires "blank".  Define "blank".  Initial blanks are
+	converted even if there's just one.  For -a, convert two or
+	more blanks only if they occur just before a tab stop.
+
+2004-08-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (chown invocation): Fix synopsis:
+	group must always be preceded by separator.
+	"chown : file" and "chown '' file" don't change the owner or group.
+	Update the explanation of what happens to the set-user-ID or
+	set-group-ID bits, e.g., they sometimes are not cleared if they
+	denote mandatory locking.  Change "find"-oriented examples to use
+	chown -h.
+
+2004-08-18  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (printf invocation): Clarify how "printf" is
+	supposed to work with extra arguments, missing arguments, etc.
+
+2004-08-10  Paul Eggert  <eggert@cs.ucla.edu>
+
+	POSIX-conformance fixes for "-" used as an operand.
+	* coreutils.texi (Common options): Clarify that "-" means
+	stdin/stdout only when it is an operand, not when it is an
+	option-argument.
+	(shred invocation): "shred -- -" is equivalent to "shred -",
+	not to "shred ./-".
+	(tee invocation): "tee -" means to copy (again) to stdout.
+
+2004-07-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (nice invocation): Document the "nice value", and
+	how it affects the scheduling priority.  (The old documentation
+	implied that the nice value equaled the scheduling priority, which
+	isn't accurate.)  Document that the range of nice values might
+	exceed -20..19.  Specify what happens when you give a nice value
+	that is out of range, or when you don't have permissions to lower
+	the nice value.  Bash doesn't have a builtin 'nice', so don't say
+	"most shells" have one.
+
+2004-04-03  Dmitry V. Levin  <ldv@altlinux.org>
+
+	* coreutils.texi (readlink invocation): Document new
+	"readlink -f" behaviour and new canonicalize options, -e and -m.
+
+2004-07-02  Jim Meyering  <jim@meyering.net>
+
+	* Makefile.am (check-texinfo): Disallow `filename' in .texi files.
+	Spell it like `file name' instead, to be consistent.
+	Fail if a @footnote directive follows non-punctuation.
+	Fail upon use of @url.  Use @uref instead.
+
+2004-07-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (Common options, Target directory, cp invocation,
+	install invocation, mv invocation, ln invocation): Add -t as a
+	short option for --target-directory, and -T as a short option for
+	--no-target-directory.  Clean up relevant synopses a bit, so that
+	the language is similar for all.
+
+2004-06-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi: Put the right amount of space at sentence ends.
+	Make sure "i.e." and "e.g." are followed by commas (the GNU style).
+	Put blank lines before and after every @example, prefer the
+	previous line to end in ":" (when not a sentence end, for consistency),
+	and prepend @noindent to the following line when appropriate.
+	In examples, use "--" arguments when needed to prevent undesired
+	interpretation of operands as options.
+	Use "file name" rather than "filename", as per the GNU coding standards.
+	Remove unwanted spaces before @footnote.
+	Use "---" when appropriate, instead of " -- ".
+	Use "name" (or something like that) rather than "path" or "pathname",
+	since the GNU coding standards don't allow "path".
+	Use @acronym, @command, @minus{}, @samp in a few places,
+	where appropriate.
+	(Target directory): Clarify description of example.
+	(fmt invocation): Give issue number for reference, and reword
+	for clarity.
+	(sort invocation): Note that xargs without -0 also mishandles
+	file names containing some special characters other than newline.
+	(Translating): Mention that \012 is not universally portable.
+	Use '\0' rather than '\000'.
+	(Squeezing): bourne -> Bourne.
+	Fix unportable usage of '\n' by replacing it with '[\n*]'.
+	(More details about version sort): Remove unnecessary indent
+	in examples.
+	(dd invocation): Use 'kill -s USR1', not 'kill -USR1', as POSIX
+	indicates that the former is more portable (the latter is an XSI
+	extension).
+	(shred invocation): Use @uref rather than @url, and use a more-typical
+	style for the date.
+	(kill invocation): Clarify usage; for example, "kill -s TERM -1"
+	isn't allowed.
+	(seq invocation): Reword to avoid implying that printf necessarily
+	fails for numbers outside the 32-bit range.  Prefer separating
+	options from their operands.
+	(Opening the software toolbox): Give an online reference to
+	Robbins's article, and give a date.  Don't imply that the
+	current documentation is unchanged from his article.
+	(Putting the tools together): Rework examples so that they don't
+	assume the C locale; nowadays many users now operate outside the C
+	locale by default.  While we're at it, don't assume ASCII either.
+	Indent example to match actual output from GNU uniq.  Remove some
+	unnecessary and confusing brackets from 'tr' operands.  "Software
+	Tools in Pascal" is back in print, according to Amazon anyway.
+	Add references to Kernighan's online copies of examples.
+
+2004-06-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi, perm.texi: Standardize on "file system" rather
+	than "filesystem", as POSIX prefers it with a space.
+
+2004-06-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (Common options, Target directory, cp
+	invocation, install invocation, mv invocation, ln invocation):
+	Likewise.
+	(link invocation): Explain how to rewrite link using ln now
+	that we have --no-target-directory.
+	(ln invocation): Explain that --no-target-directory subsumes
+	--no-dereference.
+	(unlink invocation): Modify wording to match new wording in
+	link invocation.
+
+2004-06-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (install invocation): Document
+	--target-directory in synopsis, too.
+
+2004-06-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (yes invocation): "--" is now supported.
+	(false invocation, true invocation): --help and --version now
+	work unconditionally.
+
+2004-06-07  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi: Remove menu references to just-removed subsection.
+
+2004-06-06  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (tr invocation): Remove the section describing
+	how POSIXLY_CORRECT changes tr's behavior.
+
+2004-06-02  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (cut invocation): Clarify what --output-delimiter=STR
+	does with byte/character ranges.
+
+2004-06-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (tr invocation): Mention -C.
+
+2004-05-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (echo invocation): Document today's changes.
+
+2004-05-17  Jim Meyering  <jim@meyering.net>
+
+	chgrp and chown now dereference symlinks by default, per POSIX.
+	* coreutils.texi (chgrp invocation, chown invocation): Document it.
+
+2004-05-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (sort invocation): Document that "sort -m -o F"
+	might write F before reading all the input.
+
+2004-05-09  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (stat invocation): Change IO to I/O.
+	* Makefile.am (check-texinfo): Check for the above.
+
+2004-04-25  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi (sort invocation): Mention -k earlier, so
+	that the options are in alphabetical order.  Describe how -b works
+	more-accurately; this involves fixing some examples, too.  Mention
+	what happens if the start field falls after an end field or after
+	a line end.  Warn about using -k without -b, -g, -M, -n, or -t.
+	Add an example of how to sort IPv4 addresses and Apache Common
+	Log Format dates.  Remove a duplicate example.
+	(Putting the tools together): Use separate options rather
+	than agglomerating them.
+
+2004-03-27  Paul Eggert  <eggert@twinsun.com>
+
+	cp -pu and mv -u (when copying) now take the destination
+	file system time stamp resolution into account.
+
+	* coreutils.texi (mv invocation): Document this.
+	(cp invocation): Document -u (it was missing!) with new behavior.
+
+2004-04-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coreutils.texi (dd invocation): Remove noctty flag from dd.
+
+2004-04-07  Paul Eggert  <eggert@twinsun.com>
+
+	New dd conv= symbols nocreat, excl, fdatasync, fsync,
+	and new dd options iflag= and oflag=.
+
+	* coreutils.texi (dd invocation): Document them.
+
+2004-04-07  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (stty invocation - Input): Document new iutf8 option.
+
+2004-04-04  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (stat invocation): Correct --format description.
+
+2004-02-25  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi (Block size): Document new envvar BLOCKSIZE.
+
+2004-03-24  Jim Meyering  <jim@meyering.net>
+
+	* Makefile.am (check-texinfo): Add a check to ensure future
+	consistency in using @sc{nul}, not `NUL'.
+
+2004-03-23  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi: Use @sc{nul} consistently for NUL.
+	(du invocation): FILE0 -> FILE.
+
+2004-03-23  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (du invocation): --files0-from is useful with
+	--total (-c), not with --summarize.
+
+2004-03-22  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi: Tweak a few lines that resulted in
+	`overfull hbox' warnings.
+
+2004-03-03  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (du invocation): Document new option: --file0-from=F.
+
+2004-02-29  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi (touch invocation):
+	Describe use of fractional seconds.
+	(date invocation, Options for date): Likewise.
+	* getdate.texi (General date syntax, Time of day items): Likewise.
+	* coreutils.texi (date invocation): Mention effect of LC_TIME.
+	(Options for date): Describe new --iso-8601=ns option.
+
+	* getdate.texi: Add copyright notice.  Change getdate to
+	get_date when talking about the function name.
+	(Seconds since the Epoch): New section, containing the time_t
+	info moved from Date input formats section, along with new
+	info about the @ syntax.  Mention negative time stamps,
+	fractional time stamps, and leap seconds.
+	(General date syntax): Modernize examples a bit to reflect new
+	features.
+	(General date syntax, Relative items in date strings):
+	Use ' rather than " to quote formats.
+	(Time of day items): Add an example with fractional seconds.
+	Describe fractional-second syntax.
+
+2004-03-15  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (date invocation): Add missing `C' to %[...] range
+	in the `Date directives:: ...' menu entry.  From Bob Proulx.
+
+	* coreutils.texi: Add FIXME comment:
+	The following don't have `invocation' nodes: [, pinky, shasum, uptime.
+
+2004-03-10  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (Sorting the output): Remove description of
+	ls's --sort=directory option.  ls doesn't accept that option, yet.
+	Reported by Arvind Autar.
+
+	* coreutils.texi (cp invocation): Improve description of
+	cp's --sparse=WHEN option.
+
+	* coreutils.texi (nl invocation): Specify that these are _basic_
+	regular expressions (BRE), and add a link to grep's documentation.
+	Suggestion from Dan Jacobson.
+
+2004-02-23  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi (chown invocation): Document that chown now falls
+	back on USER.GROUP parsing regardless of POSIX version, as POSIX
+	1003.1-2001 allows that behavior as a compatible extension.
+
+2004-02-22  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (du invocation): Mention that using du's -H option
+	currently evokes a warning.
+
+2004-02-15  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi (expr invocation):
+	Document what forms integers may take, and say "integer"
+	consistently instead of "number".  Warn about operands
+	that "expr" can misinterpret, and how to work around the
+	problem.
+
+2004-02-17  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (csplit invocation): Correct typo (s/LINE/N/)
+	in description of `N' pattern.  From Reuben Thomas <rrt@sc3d.org>
+
+2004-02-11  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (Time directives): The %s value *is* changed by the
+	--date=DATE option; don't say otherwise.  Patch from Padraig Brady.
+
+2004-02-10  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi (Formatting the file names):
+	Improve wording for --quoting-style documentation.
+	Suggestions by Bruno Haible.
+
+2004-02-02  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (nice invocation): Add examples.
+	Prompted by a suggestion from Dan Jacobson.
+	(factor invocation): Add an example.
+	Update timing numbers for a more modern CPU.
+
+2004-01-27  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (seq invocation): Remove `@dots{}' at end of synopsis.
+	Separate `Synopses' section into three examples.
+	Clarify first paragraph.  @w{}-protect an expression.1
+	Use @option{--option}, rather than @code{--option}.
+
+2004-01-19  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi (Exit status): Document that ordinary failure
+	might not exit with status 1 on unusual platforms.
+	Mention chroot, env, nice, and su as having unusual exit
+	status patterns.  Don't bother to mention true and false
+	since their exit status patterns are actually normal.
+	(sort invocation, su invocation): Mention its unusual exit
+	status pattern.
+	(chroot invocation): Simplify description of exit status 1.
+	Remove duplicate description of status 127.
+	(env invocation): Use consistent tenses; simplifiy description
+	of status 1.
+	(nice invocation): Likewise.
+
+2003-12-15  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi (touch invocation): touch -r and -d can now
+	both be specified, with -r specifying the origin for -d.
+
+2004-01-15  Alfred M. Szmidt  <ams@kemisten.nu>
+
+	Factor out some common options.
+	* coreutils.texi (Common options): Define macros here.
+	(What information is listed, cp invocation): Use the macro(s).
+	(install invocation, mv invocation, ln invocation): Likewise.
+	(df invocation, du invocation): Likewise.
+
+2004-01-09  Jim Meyering  <jim@meyering.net>
+
+	Document the exit status of each and every program.
+	* coreutils.texi (yes invocation): Document that a write error
+	makes `yes' exit unsuccessfully.
+	(chroot invocation): Enumerate the meaning of exit status values.
+	(nice invocation): Likewise.
+	(Exit status) [@macro exitstatus]: New macro.
+	Use @exitstatus to describe the exit status of most programs.
+
+2004-01-02  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (du invocation): Mention that -H will eventually
+	mean not --si, but --dereference-args (-D).
+
+2003-12-20  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (du invocation): Describe new option: -0, --null.
+
+2003-12-03  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi (What information is listed, chroot invocation):
+	Adjust example 'ls' output to match new behavior with narrower
+	output columns.
+	(The cut command): Remove example that cut the output of
+	'ls -l'.  The output was incorrect even with the old 'ls', and
+	the whole idea of using 'cut' on 'ls -l' output is bogus anyway.
+
+2003-11-24  Paul Eggert  <eggert@twinsun.com>
+
+	Parse floating-point operands and options in the C locale.
+	POSIX requires this for printf, and we might as well be
+	consistent elsewhere (tail, sleep, seq).
+
+	* coreutils.texi (tail invocation, printf invocation,
+	sleep invocation, seq invocation): Document this.
+
+2003-11-24  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (Traversing symlinks, Treating / specially):
+	New sections.
+	(rm invocation, chown invocation, chmod invocation, chgrp invocation):
+	Describe new options, --preserve-root and --no-preserve-root.
+
+2003-11-11  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (chown invocation) [chownchgrpoptions]: New macro
+	describing -H, -L, -P options.  Use it here.
+	(chgrp invocation): And here.
+
+2003-11-09  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (dd invocation): Fix typo in example.
+
+2003-10-15  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (ln invocation): Note that --directory, -d, -F
+	probably won't work even for superuser.  Suggestion from Dan Jacobson.
+
+2003-09-29  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi (csplit invocation):
+	The regexp offset need not have a sign; POSIX requires support
+	for signless offets.
+
+2003-10-03  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (du invocation): Describe -P, --no-dereference.
+
+2003-09-28  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (Translating): Correct typo in menu description.
+	From A Costa.
+
+2003-09-02  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi (sort invocation): -d now overrides -i.
+	"whitespace" -> "blanks"; "whitespace" isn't correct.
+	-t '\0' now specifies a NUL tab.
+
+2003-08-17  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (who invocation): Add an entry for -l, --login.
+	Remove `-l' from the entry for --lookup.
+	(who invocation): Begin adding missing option documentation.
+
+2003-08-07  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi (split invocation):
+	Add -d or --numeric-suffixes option to 'split'.
+
+2003-07-31  Paul Eggert  <eggert@twinsun.com>
+
+	* getdate.texi (General date syntax): Add --rfc-2822 option to GNU date.
+	* coreutils.texi (Options for date): Fix a typo in format:
+	it's now %d not %_d.  Add URLs.
+
+2003-07-31  Paul Eggert  <eggert@twinsun.com>
+
+	* getdate.texi (Relative items in date strings): Warn about
+	fuzz in relative units.
+
+2003-07-29  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (tail invocation): Restore two end-of-sentence words
+	that were mistakenly removed on 2002-09-13.  Reported by Paul Worrall.
+
+2003-07-28  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (dd invocation): Explain that a SIGUSR1 signal
+	makes dd give a progress report to stderr.
+
+2003-07-24  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi: Document changes of 2003-07-24.
+
+2003-07-24  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (su invocation): Use `@subsection', not invalid
+	`@heading'.
+
+2003-07-17  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi (expr invocation): Exit status is 2 if the
+	expression is syntactically invalid, 3 if there is some other error.
+	This change is for conformance to POSIX.
+
+2003-07-14  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi (uname invocation): Explain the POSIX
+	terminology behind uname -m and uname -s.
+
+2003-07-13  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (chown invocation): Warn that chown
+	now clears set-user-ID and set-group-ID bits on some systems.
+	From Bob Proulx.
+	(nohup invocation): Tell what happens when stdout is not a terminal.
+	Based on a suggestion from Steven Mocking.
+
+2003-07-10  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (Standards conformance): Mention that uses like
+	`tail -1' and `head -1', like `sort +1', are non conforming.
+	(chown invocation): Say that using `.' as a separator may not work.
+
+2003-06-25  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (Time directives) [%s]: Add a cross reference
+	to the related examples.
+	(Examples of date): Add an @anchor here, along with a few more examples.
+	Suggestion from Dan Jacobson.
+
+2003-06-12  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (wc invocation): Tweak wording: wc prints counts in
+	the order `newline, word, byte'.  Suggestion from Keith M. Briggs.
+	Also change `lines' to `newlines'.
+
+2003-05-14  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (head invocation): Document --bytes=-N and --lines=-N.
+
+2003-05-13  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi (uniq invocation, squeezing, The uniq command):
+	Use "repeated" rather than "duplicate" to describe adjacent
+	duplicates; this simplifies the description and makes it more
+	consistent with POSIX.
+	(uniq invocation): Make it clear that -d and -u suppress the
+	output of lines, rather than cause some lines to be output.
+	Mention what happens if a line lacks enough fields or characters.
+
+2003-05-13  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (true invocation): Mention that it is possible to
+	make true --help or true --version (in non-POSIX mode) exit nonzero.
+	Suggestion from Paul Eggert.
+
+2003-05-10  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (Exit status): Remove `uniq' from the list.
+	It uses standard exit codes.
+	(More details about version sort): Note that strverscmp, and hence
+	`ls -v', does not use LC_COLLATE.  Reported by From: Andrey Borzenkov.
+
+2003-04-21  Jim Meyering  <jim@meyering.net>
+
+	Fix printf POSIX compatibility bug reported by Ben Harris in
+	<http://mail.gnu.org/archive/html/bug-coreutils/2003-04/msg00070.html>.
+	* coreutils.texi (printf invocation): It's \NNN in the format,
+	\0NNN in the %b operand.
+
+2003-04-10  Jim Meyering  <jim@meyering.net>
+
+	* Makefile.am (check-texinfo): Check for uses of non-zero.
+	I prefer to spell it `nonzero'.
+
+	* coreutils.texi (readlink invocation): Tweak description a little.
+
+2003-04-04  Jim Meyering  <jim@meyering.net>
+
+	* Makefile.am (constants.texi): Rename target (thus enabling it),
+	now that fileutils, textutils, and sh-utils have been merged.
+	(MAINTAINERCLEANFILES): Define.
+
+2003-04-02  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (false invocation): Note that false exits
+	unsuccessfully even with --help and --version.
+
+	* Makefile.am (check-texinfo): Don't fail if perl is missing.
+	Reported by Nelson Beebe.
+
+2003-03-27  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (printf invocation): Fix formatting bugs.
+	From Paul Eggert.
+	(sort invocation): Describe sort's --stable (-s) option.
+
+2003-03-13  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (shred invocation): Mention that --exact
+	is now the default for non-regular files.
+
+2003-03-02  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (Exit status): New section.
+	Suggestion from Michael Stone.
+
+2003-02-21  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (du invocation): Document --apparent-size.
+	Adjust documentation of --bytes (-b).
+	(stat invocation): Describe %B.
+
+2003-02-07  Richard Dawe  <rich@phekda.freeserve.co.uk>
+
+	* coreutils.texi: Use @command instead of @code for program names.
+
+	* perm.texi (Mode Structure): Mention filesystem-specific
+	permissions and that mounting a filesystem as read-only may
+	override actual file permissions.  Use @command instead
+	of @code for program names.
+
+2003-02-06  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi: Adjust alignment and mention `file, text, shell'
+	on the `* Coreutils:...' dirently line.  From Karl Berry.
+
+2003-02-05  Jim Meyering  <jim@meyering.net>
+
+	* Makefile.am (check-texinfo): Allow bare `POSIX' to be used on
+	direntry lines.
+
+	* coreutils.texi: Use new form of @direntry.
+	Put unlink in its proper place.  Adjust wording in some
+	dir entry descriptions, mainly so they fit in 80 columns.
+	Don't use mark-up like @acronym{POSIX} in direntries.
+	Mostly from Karl Berry.
+
+2003-01-25  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (cut invocation): Describe new functionality of
+	--output-delimiter=STR.
+
+2003-01-24  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (The cut command): Give an example of using cut -c
+	with an output delimiter.  From Jan Nieuwenhuizen.
+
+	* coreutils.texi (The cut command): Extend the new example a little.
+	(Formatting file timestamps): Fix typo: s/%M:S/%M:%S/.
+
+	* coreutils.texi: Change each use of `Core-utils' to `Coreutils'.
+	From Karl Berry.
+
+2003-01-19  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (Which files are listed): Document new option:
+	--dereference-command-line-symlink-to-dir.
+
+2003-01-15  Paul Eggert  <eggert@twinsun.com>
+
+	Change ls -H back to the way it was yesterday, since this is
+	compatible with FreeBSD and the POSIX spec is confusing
+	and somewhat contradictory.
+
+	* coreutils.texi (Which files are listed, General output
+	formatting): Undo last change.
+
+2003-01-15  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (General output formatting): Reflect option name change:
+	s/--dereference-command-line/--dereference-command-line-symlink-to-dir/.
+	Say that this option changes how ls treats only symlinks to directories
+	specified on the command line.
+
+2002-08-27  Dmitry V. Levin  <ldv@altlinux.org>
+
+	* coreutils.texi: Document readlink.
+
+2002-12-14  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (mknod invocation): Specify how major and minor mode
+	numbers are interpreted.  Report forwarded by Kristin E Thomas.
+
+2002-11-13  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (Examples of expr): Remove bogus `^'s.
+	Reported by Thomas Goerlich.
+
+2002-11-09  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (What information is listed) [--dired]:
+	Correct parts of --dired description.  Reported by Andre Spiegel.
+	Include a lot more description, with examples.
+
+2002-11-06  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (printf invocation): Fix typo in index:
+	change \0x prefix to \x.
+	Change \xhhh to \xhh.
+
+2002-10-07  Paul Eggert  <eggert@twinsun.com>
+
+	Add support for locale-specific size indications (e.g.,
+	thousands-separators) and for explicit size suffixes on output.
+
+	* coreutils.texi (Block size): Say that:
+	This affects display format as well as block size.
+	Fractional block counts are rounded up.
+	ls file size blocksize defaults to 1.
+	A block size spec preceded by ' generates thousands separators.
+	A suffix without a preceding integer generates suffixes.
+	(tail invocation): 32k -> 32 KiB.
+	(What information is listed): ls -h is now equivalent to
+	ls --block-size=human, and ls -H is now equivalent to
+	ls --block-size=si.  Displayed file size is now always affected by
+	--block-size.
+
+2002-09-13  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (tail invocation): In --sleep-interval=NUMBER,
+	NUMBER may now be a floating point number.
+	(stat invocation): Remove references to now-removed %S and %C.
+	(Time directives) [%S]: Explain why the range is [0..60].
+
+2002-08-30  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi [START-INFO-DIR-ENTRY]: Don't use sc{} on LHS.
+	Fix typo: s/permission/permissions/.  From Michail Litvak.
+
+2002-08-02  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi (uniq invocation): uniq now obeys LC_COLLATE.
+
+2002-07-29  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi (nohup invocation): Change behavior to conform to
+	POSIX 1003.1-2001:
+	  - Do not adjust scheduling priority.
+	  - Redirects stderr to stdout, if stderr is not a terminal.
+	  - Exit status is now 126 if command was found but not invoked,
+	    127 if nohup failed or if command was not found.
+
+2002-07-24  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (Time directives): Document %P, %R, %e, %F,
+	%g, %G, and %V
+
+2002-07-22  Martin Michlmayr  <tbm@cyrius.com>
+
+	* coreutils.texi (Formatting the file names): Document
+	that -N/--literal are equivalent to --quoting-style=literal.
+	Reported by Oskar Liljeblad as Debian bug#103612.
+
+2002-07-10  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (du invocation): s/PAT/PATTERN/.
+	From Martin Michlmayr.
+
+2002-07-08  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (cp invocation): Remove unnecessary "$@" in example;
+	Texinfo would render the @" as an umlaut over the following character.
+	From Paul Eggert.
+	* Makefile.am (check-texinfo): Check for the above.
+
+2002-07-06  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (stat invocation): Remove description of --secure.
+
+2002-07-03  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (stat invocation): Rename --link/-l
+	to --dereference/-L.  Rewrite description of --dereference.
+
+2002-06-26  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi (Putting the tools together): Don't mention egrep,
+	since it's not part of POSIX 1003.1-2001.
+
+2002-06-21  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (stat invocation): New section.  From Michael Meskes.
+
+2002-05-19  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi (ls invocation): Document new option: --author.
+
+2002-06-03  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (rm invocation): Add the warning (also in the --help
+	output) that the contents of a removed file are often recoverable.
+
+2002-05-27  Jim Meyering  <jim@meyering.net>
+
+	* Makefile.am (check-texinfo): Adapt to reflect that now we use
+	@acronym{POSIX}.
+
+2002-05-26  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi: Use @acronym in place of most uses of @sc.
+	* getdate.texi (Date input formats): Likewise.
+
+2002-04-28  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi: Change `@code{PROG}' to `@command{PROG}'.
+
+2002-04-28  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi (kill invocation): Document the above.
+	Document POSIX signals better.
+
+2002-04-15  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi: Document kill.
+	Written by Marcus Brinkmann.
+
+2002-04-13  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi: Document link and unlink.
+
+2002-04-08  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi: Use new directives, @copying and @insertcopying,
+	thus now requiring texinfo-4.2 to create the .info file.
+
+2002-02-26  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi (File characteristic tests): Document the
+	behavior of test -nt and -ot when one of the files does not exist,
+	using the same behavior that is documented in ksh93.
+
+2002-03-05  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi (cut invocation): Say that selected input is
+	written in the same order that it is read, and is written
+	exactly once.
+
+2002-03-03  Paul Eggert  <eggert@twinsun.com>
+
+	Make cp -r equivalent to cp -R.  Add a new cp option --copy-contents
+	for people who want to emulate the traditional (and rarely desirable)
+	cp -r behavior.
+
+	* coreutils.texi (cp invocation): Document this.
+	Fix some related minor bugs: --no-dereference is no longer
+	equivalent to -d, and --archive (-a) can override the other
+	symlink options.  Warn that cp -R is not portable on symbolic
+	links unless you also specify -P.
+
+2002-03-02  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (cp invocation): Document that cp -r
+	preserves symlinks.  Emphasize non-portability of cp -r.
+
+2002-02-27  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi (Time directives): Add %N for nanoseconds.
+	This documents the recent change to 'ls'.
+
+2002-02-28  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (pr invocation): Reword to avoid using `:'
+	in an @opindex entry -- info doesn't permit it.
+
+2002-02-27  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi (Formatting file timestamps): Document new
+	time-formatting method: --time-style=+FORMAT.
+
+2002-02-18  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi (seq invocation): In the example, use "tail
+	-n 3", not "tail -3", to conform to POSIX 1003.1-2001.
+
+2002-02-17  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (tsort background): New section.
+	From Ian Lance Taylor.
+	(tsort invocation): Add a more realistic example.
+
+2002-02-15  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi: Document _POSIX2_VERSION.
+	(Standards Conformance): New section.
+
+2002-01-24  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (START-INFO-DIR-ENTRY): Remove a few entries
+	and clean up a few others based on suggestions from Bob Proulx.
+
+2002-02-14  Paul Eggert  <eggert@twinsun.com>
+
+	Add support for POSIX 1003.1-2001, which requires removal for
+	support of obsolete "+" option syntax in sort, tail, and uniq.
+	* coreutils.texi: Document this.  (Also, document a similar
+	change to "touch", for fileutils).
+
+2002-01-12  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (shred invocation): List some journaled filesystems.
+
+2001-11-10  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (Date directives): Document %u.
+
+2001-11-07  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi (paste invocation): Give examples.
+	Thanks to Dan Jacobson for suggesting the examples.
+
+2001-11-05  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (sort invocation): Recommend setting LC_ALL=C,
+	not LC_COLLATE=C.  Explain how the latter can cause problems.
+	Based on a message from Paul Eggert.
+	(ls invocation): Recommend setting LC_ALL=C, not LC_COLLATE=C.
+
+2001-10-21  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (cp invocation): Describe --reply=...
+
+2001-10-17  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (cp invocation): `cp --no-dereference' is
+	no longer equivalent to `cp -d'.
+	`cp -d' is equivalent to `--no-dereference --preserve=links'.
+	cp's -P option means --no-dereference, not --parents.
+	Describe new optional argument to --preserve.
+	Describe new option: --no-preserve=ATTRIBUTE_LIST.
+
+2001-09-23  Jim Meyering  <jim@meyering.net>
+
+	* Makefile.am (check-texinfo): Redirect stderr of `grep -w' to
+	/dev/null, so people with old versions of grep don't see the failure.
+
+2001-09-16  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (mv invocation): Describe new option:
+	--reply={yes,no,query}.  Fix a few typos.
+
+2001-09-15  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi (uniq invocation): The input need not
+	be sorted.  Try to clarify -d versus -D versus -u.
+
+2001-09-12  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (tail invocation): Document new option: -F.
+	From Herbert Xu.
+
+2001-09-04  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi (join invocation): Describe the GNU
+	extension to join, which does not require sorted input when
+	the input contains no unpairable lines.
+
+2001-09-03  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi:
+	New 'uname' options -i or --hardware-platform,
+	and -o or --operating-system.
+	'uname -a' now outputs -i and -o information at the end.
+	New uname option --kernel-version is an alias for -v.
+	Uname option --release has been renamed to --kernel-release,
+	and --sysname has been renamed to --kernel-name;
+	the old options will work for a while, but are no longer documented.
+
+2001-08-24  Herbert Xu  <herbert@gondor.apana.org.au>
+
+	* coreutils.texi (cut invocation): Document how cut treats lines
+	with no separators.
+
+2001-06-19  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi: expr now uses LC_COLLATE for string comparison,
+	as per POSIX.
+
+2001-08-25  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi: Use @option, rather than @samp everywhere.
+
+2001-06-21  Paul Eggert  <eggert@twinsun.com>
+
+	* coreutils.texi: 'expr' now requires '+' rather than 'quote'
+	to quote tokens.
+
+2001-07-14  Jim Meyering  <jim@meyering.net>
+
+	* coreutils.texi (cp invocation): Reflect 2001-07-08 change to
+	cp (via copy.c).
+
+2001-06-16  Jim Meyering  <jim@meyering.net>
+
+	* Makefile.am (info_TEXINFOS): Reflect renaming: s/omni-/core/.
+	* coreutils.texi: Likewise.
+
+	* coreutils.texi: New, renamed from omni-utils.texi.
+	* omni-utils.texi: Removed, renamed to coreutils.texi.
+
+	* omni-utils.texi (ls invocation): Mention the effect of locale.
+	Reported by Keith Thompson.
+
+2001-05-24  Jim Meyering  <jim@meyering.net>
+
+	* texinfo.tex: Update from master source.
+
+	* omni-utils.texi (ls invocation): Document more clearly what ls
+	does when given no arguments.
+
+2001-05-21  Jim Meyering  <jim@meyering.net>
+
+	* textutils.texi: Remove file.
+
+	* Makefile.am ($(DVIS), $(INFO_DEPS)): Depend on $(EXTRA_DIST).
+	(DISABLED_constants.texi): New rule -- disabled for now.
+
+	This directory is now shared by fileutils, textutils, and sh-utils.
+
+
+	-----
+
+	Copyright (C) 2001-2011 Free Software Foundation, Inc.
+
+	Copying and distribution of this file, with or without
+	modification, are permitted provided the copyright notice
+	and this notice are preserved.

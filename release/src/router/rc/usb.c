@@ -1946,6 +1946,88 @@ void stop_samba(void)
 #ifdef RTCONFIG_MEDIA_SERVER
 #define MEDIA_SERVER_APP	"minidlna"
 
+#if 0		// Asuswrt-Merlin uses its own logic
+/* 
+ * 1. if (dms_dbdir) exist and file.db there, use it
+ * 2. find the first and the largest write-able directory in /tmp/mnt
+ * 3. /var/cache/minidlna 
+ */
+int find_dms_dbdir_candidate(char *dbdir)
+{
+        disk_info_t *disk_list, *disk_info;
+        partition_info_t *partition_info, *picked;
+        u64 max_size = 256*1024;
+	int found;
+
+        disk_list = read_disk_data();
+        if(disk_list == NULL){
+                cprintf("Can't get any disk's information.\n");
+                return 0;
+        }
+
+	found = 0;
+	picked = NULL;
+
+        for(disk_info = disk_list; disk_info != NULL; disk_info = disk_info->next) {
+                for(partition_info = disk_info->partitions; partition_info != NULL; partition_info = partition_info->next){
+                        if(partition_info->mount_point == NULL){
+                                cprintf("Skip if it can't be mounted.\n");
+                                continue;
+                        }
+			if(strncmp(partition_info->permission, "rw", 2)!=0) {
+				cprintf("Skip if permission is not rw\n"); 
+				continue;
+			}
+                               
+			if(partition_info->size_in_kilobytes > max_size && (partition_info->size_in_kilobytes - partition_info->used_kilobytes)>128*1024) {
+				max_size = partition_info->size_in_kilobytes;
+				picked = partition_info;
+			} 
+                }
+        }                          
+        if(picked && picked->mount_point) {
+		strcpy(dbdir, picked->mount_point);
+		found = 1;
+	}
+
+	free_disk_data(&disk_list);
+
+	return found;
+}
+
+void find_dms_dbdir(char *dbdir)
+{
+	char dbdir_t[128], dbfile[128];
+	int found=0;
+
+  	strcpy(dbdir_t, nvram_safe_get("dms_dbdir"));
+
+        /* if previous dms_dbdir there, use it */
+        if(!strcmp(dbdir, nvram_default_get("dms_dbdir"))==0) {
+                sprintf(dbfile, "%s/file.db", dbdir_t);
+                if (check_if_file_exist(dbfile)) {
+                        strcpy(dbdir, dbdir_t);
+                        found = 1;
+                }
+        }
+
+	/* find the first write-able directory */
+        if(!found && find_dms_dbdir_candidate(dbdir_t)) {
+      		sprintf(dbdir, "%s/minidlna", dbdir_t);
+		found = 1;
+	}
+	
+ 	/* use default dir */
+	if(!found)
+		strcpy(dbdir, nvram_default_get("dms_dbdir"));
+
+end:
+	nvram_set("dms_dbdir", dbdir);
+
+	return;
+}
+#endif
+
 void start_dms(void)
 {
 	FILE *f;
@@ -2797,18 +2879,30 @@ static int stop_diskscan()
 	return nvram_get_int("diskmon_force_stop");
 }
 
-static void start_diskscan()
+// -1: manully scan by diskmon_usbport, 1: scan the USB port 1,  2: scan the USB port 2.
+static void start_diskscan(int usb_port)
 {
 	disk_info_t *disk_list, *disk_info;
 	partition_info_t *partition_info;
-	char *policy, *usbport, *monpart, devpath[16];
+	char usbport[4];
+	char *policy, *monpart, devpath[16];
+	int port_num = 0;
 
 	if(stop_diskscan())
 		return;
 
 	policy = nvram_safe_get("diskmon_policy");
-	usbport = nvram_safe_get("diskmon_usbport");
 	monpart = nvram_safe_get("diskmon_part");
+
+	memset(usbport, 0, 4);
+	if(usb_port == -1){
+		port_num = atoi(usbport);
+		sprintf(usbport, "%s", nvram_safe_get("diskmon_usbport"));
+	}
+	else{
+		port_num = usb_port;
+		sprintf(usbport, "%d", port_num);
+	}
 
 	disk_list = read_disk_data();
 	if(disk_list == NULL){
@@ -2889,7 +2983,7 @@ static void diskmon_sighandler(int sig)
 		case SIGUSR2:
 			cprintf("disk_monitor: Scan manually...\n");
 			diskmon_status(DISKMON_START);
-			start_diskscan();
+			start_diskscan(-1);
 			sleep(10);
 			diskmon_status(DISKMON_IDLE);
 			diskmon_signal = sig;
@@ -2924,17 +3018,20 @@ void stop_diskmon(void)
 	killall_tk("disk_monitor");
 }
 
+int first_alarm = 1;
+
 int diskmon_main(int argc, char *argv[])
 {
 	FILE *fp;
 	sigset_t mask;
-	int diskmon_freq;
+	int diskmon_freq = DISKMON_FREQ_DISABLE;
 	time_t now;
 	struct tm local;
 	char *nv, *nvp;
 	char *set_day, *set_week, *set_hour;
-	int val_day = 0, val_hour = 0;
-	int wait_second = 0, wait_hour;
+	int val_day[2] = {0, 0}, val_hour[2] = {0, 0};
+	int wait_second[2] = {0, 0}, wait_hour = 0;
+	int diskmon_alarm_sec = 0;
 
 	fp = fopen("/var/run/disk_monitor.pid", "w");
 	if(fp != NULL) {
@@ -2958,29 +3055,56 @@ int diskmon_main(int argc, char *argv[])
 	sigdelset(&mask, SIGUSR2);
 	sigdelset(&mask, SIGALRM);
 
-	diskmon_freq = nvram_get_int("diskmon_freq");
-	if(diskmon_freq != DISKMON_FREQ_DISABLE){
-		nv = nvp = strdup(nvram_safe_get("diskmon_freq_time"));
+	int diskmon_enable, port_num;
+	char word[PATH_MAX], *next;
+	char nvram_name[32];
+
+	diskmon_enable = 0;
+	port_num = 0;
+	foreach(word, nvram_safe_get("ehci_ports"), next){
+		memset(nvram_name, 0, 32);
+		sprintf(nvram_name, "usb_path%d_diskmon_freq", (port_num+1));
+
+		diskmon_freq = nvram_get_int(nvram_name);
+		if(diskmon_freq == DISKMON_FREQ_DISABLE){
+			++port_num;
+			continue;
+		}
+
+		diskmon_enable += 1<<port_num;
+cprintf("disk_monitor: diskmon_enable=%d.\n", diskmon_enable);
+
+		memset(nvram_name, 0, 32);
+		sprintf(nvram_name, "usb_path%d_diskmon_freq_time", (port_num+1));
+		nv = nvp = strdup(nvram_safe_get(nvram_name));
 		if(!nv || strlen(nv) <= 0){
-			cprintf("disk_monitor: Finish without setting the running time!\n");
-			exit(0);
+			cprintf("disk_monitor: Without setting the running time at the port %d!\n", (port_num+1));
+			++port_num;
+			continue;
 		}
 
 		if((vstrsep(nvp, ">", &set_day, &set_week, &set_hour) != 3)){
-			cprintf("disk_monitor: Finish without the correct running time!\n");
-			exit(0);
+			cprintf("disk_monitor: Without the correct running time at the port %d!\n", (port_num+1));
+			++port_num;
+			continue;
 		}
 
-		val_hour = atoi(set_hour);
+		val_hour[port_num] = atoi(set_hour);
 		if(diskmon_freq == DISKMON_FREQ_MONTH)
-			val_day = atoi(set_day);
+			val_day[port_num] = atoi(set_day);
 		else if(diskmon_freq == DISKMON_FREQ_WEEK)
-			val_day = atoi(set_week);
+			val_day[port_num] = atoi(set_week);
 		else if(diskmon_freq == DISKMON_FREQ_DAY)
-			val_day = -1;
+			val_day[port_num] = -1;
+cprintf("disk_monitor: Port %d: val_day=%d, val_hour=%d.\n", port_num, val_day[port_num], val_hour[port_num]);
+
+		++port_num;
 	}
-	else
-		cprintf("disk_monitor: Just run after getting SIGUSR2!\n");
+
+	if(diskmon_enable == 0){
+		cprintf("disk_monitor: Disable the disk_monitor.\n");
+		exit(0);
+	}
 
 	while(1){
 		time(&now);
@@ -2989,37 +3113,52 @@ cprintf("disk_monitor: day=%d, week=%d, time=%d:%d.\n", local.tm_mday, local.tm_
 
 		if(diskmon_signal == SIGUSR2){
 cprintf("disk_monitor: wait more %d seconds and avoid to scan too often.\n", DISKMON_SAFE_RANGE*60);
-			wait_second = DISKMON_SAFE_RANGE*60;
+			diskmon_alarm_sec = DISKMON_SAFE_RANGE*60;
 		}
-		else if(diskmon_signal == SIGALRM){
+		else if(first_alarm || diskmon_signal == SIGALRM){
 cprintf("disk_monitor: decide if scan the target...\n");
-			if(local.tm_min <= DISKMON_SAFE_RANGE){
-				if(val_hour == local.tm_hour){
-					if((diskmon_freq == DISKMON_FREQ_MONTH && val_day == local.tm_mday)
-							|| (diskmon_freq == DISKMON_FREQ_WEEK && val_day == local.tm_wday)
-							|| (diskmon_freq == DISKMON_FREQ_DAY)){
-						// Running!!
-						diskmon_status(DISKMON_START);
-						start_diskscan();
-						sleep(10);
-						diskmon_status(DISKMON_IDLE);
-					}
-					wait_hour = DISKMON_DAY_HOUR;
-				}
-				else if(val_hour > local.tm_hour)
-					wait_hour = val_hour-local.tm_hour;
-				else // val_hour < local.tm_hour
-					wait_hour = 23-local.tm_hour+val_hour;
+			diskmon_alarm_sec = 0;
+			port_num = 0;
+			foreach(word, nvram_safe_get("ehci_ports"), next){
+				if(local.tm_min <= DISKMON_SAFE_RANGE){
+					if(val_hour[port_num] == local.tm_hour){
+						if((diskmon_freq == DISKMON_FREQ_MONTH && val_day[port_num] == local.tm_mday)
+								|| (diskmon_freq == DISKMON_FREQ_WEEK && val_day[port_num] == local.tm_wday)
+								|| (diskmon_freq == DISKMON_FREQ_DAY)){
+cprintf("disk_monitor: Running...\n");
+							// Running!!
+							diskmon_status(DISKMON_START);
+							start_diskscan(port_num+1);
+							sleep(10);
+							diskmon_status(DISKMON_IDLE);
+						}
 
-				wait_second = wait_hour*DISKMON_HOUR_SEC;
+						wait_hour = DISKMON_DAY_HOUR;
+					}
+					else if(val_hour[port_num] > local.tm_hour)
+						wait_hour = val_hour[port_num]-local.tm_hour;
+					else // val_hour < local.tm_hour
+						wait_hour = 23-local.tm_hour+val_hour[port_num];
+
+					wait_second[port_num] = wait_hour*DISKMON_HOUR_SEC;
+				}
+				else
+					wait_second[port_num] = (60-local.tm_min)*60;
+cprintf("disk_monitor: %d: wait_second=%d...\n", port_num, wait_second[port_num]);
+
+				if(diskmon_alarm_sec == 0 || diskmon_alarm_sec > wait_second[port_num])
+					diskmon_alarm_sec = wait_second[port_num];
+
+				++port_num;
 			}
-			else
-				wait_second = (60-local.tm_min)*60;
 		}
 
-		if(diskmon_signal == SIGUSR2 || diskmon_signal == SIGALRM){
-cprintf("disk_monitor: wait_second=%d...\n", wait_second);
-			alarm(wait_second);
+		if(first_alarm || diskmon_signal == SIGUSR2 || diskmon_signal == SIGALRM){
+			if(first_alarm)
+				first_alarm = 0;
+
+cprintf("disk_monitor: wait_second=%d...\n", diskmon_alarm_sec);
+			alarm(diskmon_alarm_sec);
 		}
 
 cprintf("disk_monitor: Pause...\n\n");

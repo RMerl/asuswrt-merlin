@@ -25,6 +25,12 @@ int f_exists(const char *path)	// note: anything but a directory
 	return (stat(path, &st) == 0) && (!S_ISDIR(st.st_mode));
 }
 
+int d_exists(const char *path)	//  directory only
+{
+	struct stat st;
+	return (stat(path, &st) == 0) && (S_ISDIR(st.st_mode));
+}
+
 unsigned long f_size(const char *path)	// 4GB-1	-1 = error
 {
 	struct stat st;
@@ -108,7 +114,6 @@ int f_read_alloc_string(const char *path, char **buffer, int max)
 	return _f_read_alloc(path, buffer, max, 1);
 }
 
-
 static int _f_wait_exists(const char *name, int max, int invert)
 {
 	while (max-- > 0) {
@@ -131,19 +136,7 @@ int f_wait_notexists(const char *name, int max)
 int
 check_if_dir_exist(const char *dirpath)
 {
-/*
-	DIR *dp;
-	if (!(dp=opendir(dir)))
-		return 0;
-	closedir(dp);
-	return 1;
-*/
-	struct stat stat_buf;
-
-	if (!stat(dirpath, &stat_buf))
-		return S_ISDIR(stat_buf.st_mode);
-	else
-		return 0;
+	return d_exists(dirpath);
 }
 
 int 
@@ -169,25 +162,12 @@ check_if_dir_empty(const char *dirpath)
 int
 check_if_file_exist(const char *filepath)
 {
-/*
-	FILE *fp;
-	fp=fopen(filename, "r");
-	if (fp)
-	{
-		fclose(fp);
-		return 1;
-	}
-	else
-		return 0;
+/* Note: f_exists() checks not S_ISREG, but !S_ISDIR
+	struct stat st;
+	return (stat(path, &st) == 0) && (S_ISREG(st.st_mode));
 */
-	struct stat stat_buf;
-
-	if (!stat(filepath, &stat_buf))
-		return S_ISREG(stat_buf.st_mode);
-	else
-		return 0;
+	return f_exists(filepath);
 }
-
 
 /* Test whether we can write to a directory.
  * @return:
@@ -263,4 +243,3 @@ void file_unlock(int lockfd)
                 close(lockfd);
         }
 }
-

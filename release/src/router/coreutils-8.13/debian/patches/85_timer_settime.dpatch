@@ -1,0 +1,32 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 85_timer_settime.dpatch by  <mstone@debian.org>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: timeout ignores fractional part of sleep times when timeout is more 
+## DP: than 100000s (approximately 1 day) on kfbsd. prevents failure modes 
+## DP: in libc implementation when timeout approaches max(time_t)
+
+@DPATCH@
+diff -urNad '--exclude=CVS' '--exclude=.svn' '--exclude=.git' '--exclude=.arch' '--exclude=.hg' '--exclude=_darcs' '--exclude=.bzr' coreutils-8.13~/src/timeout.c coreutils-8.13/src/timeout.c
+--- coreutils-8.13~/src/timeout.c	2011-09-01 13:16:21.000000000 -0400
++++ coreutils-8.13/src/timeout.c	2011-09-19 10:23:22.685116620 -0400
+@@ -113,6 +113,11 @@
+    resolution provided by alarm().  */
+ 
+ #if HAVE_TIMER_SETTIME
++#ifdef __FreeBSD_kernel__
++if (duration < 100000) {
++#else
++if (true) {
++#endif 
+   struct timespec ts = dtotimespec (duration);
+   struct itimerspec its = { {0, 0}, ts };
+   timer_t timerid;
+@@ -128,6 +133,7 @@
+     }
+   else if (errno != ENOSYS)
+     error (0, errno, _("warning: timer_create"));
++}
+ #endif
+ 
+   unsigned int timeint;

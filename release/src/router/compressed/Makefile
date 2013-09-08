@@ -18,6 +18,8 @@
 # $Id: Makefile 341899 2012-06-29 04:06:38Z $
 #
 
+include ../common.mak
+
 # Default mips
 ifeq ($(ARCH),)
 ARCH := mips
@@ -86,6 +88,9 @@ COMPRESS	?= $(SRCBASE)/ctools/lzma_4k e
 CFLAGS		+= -DUSE_LZMA -D_LZMA_NO_SYSTEM_SIZE_T -DBCMLZMA -I$(SRCBASE)/tools/misc/lzma_src/C
 
 CFLAGS		+= -I$(SRCBASE)/include -DBCMDRIVER
+ifeq ($(RTCONFIG_BCMARM),y)
+CFLAGS		+= -I$(SRCBASE)/common/include
+endif
 ASFLAGS		+= -I$(SRCBASE)/include
 
 all: zImage vmlinuz vmlinuz-gzip
@@ -128,4 +133,4 @@ piggy: $(SYSTEM)
 mrproper: clean
 
 clean:
-	rm -f vmlinux vmlinuz zImage piggz piggy *.lds *.o
+	rm -f vmlinux vmlinuz vmlinuz-gzip zImage piggz piggy *.lds *.o

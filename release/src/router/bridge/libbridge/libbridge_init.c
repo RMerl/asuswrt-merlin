@@ -56,7 +56,6 @@ void br_shutdown(void)
 }
 
 #ifdef HAVE_LIBSYSFS
-/* If /sys/class/net/XXX/bridge exists then it must be a bridge */
 static int isbridge(const struct sysfs_class_device *dev) 
 {
 	char path[SYSFS_PATH_MAX];

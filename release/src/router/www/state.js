@@ -93,6 +93,14 @@ var optimizeXbox_support = isSupport("optimize_xbox");
 var spectrum_support = isSupport("spectrum");
 var mediareview_support = '<% nvram_get("wlopmode"); %>' == 7 ? true : false;
 
+var localAP_support = true;
+if(sw_mode == 4)
+	localAP_support = false;
+
+var rrsut_support = false;
+if(based_modelid == "RT-AC56U" || based_modelid == "RT-AC68U") // MODELDEP: RT-AC56U, RT-AC68U
+	rrsut_support = true;
+
 var QISWIZARD = "QIS_wizard.htm";
 // Todo: Support repeater mode
 if(isMobile() && sw_mode != 2 && !dsl_support)
@@ -113,6 +121,10 @@ var gn_array_5g = <% wl_get_guestnetwork("1"); %>;
 var wan_line_state = "<% nvram_get("dsltmp_adslsyncsts"); %>";
 var wlan0_radio_flag = "<% nvram_get("wl0_radio"); %>";
 var wlan1_radio_flag = "<% nvram_get("wl1_radio"); %>";
+
+//for high power model
+var auto_channel = '<% nvram_get("AUTO_CHANNEL"); %>';
+var is_high_power = auto_channel ? true : false;
 
 function change_wl_unit_status(_unit){
 	if(sw_mode == 2 || sw_mode == 4) return false;
@@ -227,7 +239,7 @@ function show_banner(L3){// L3 = The third Level of Menu
 var tabtitle = new Array();
 tabtitle[0] = new Array("", "<#menu5_1_1#>", "<#menu5_1_2#>", "<#menu5_1_3#>", "<#menu5_1_4#>", "<#menu5_1_5#>", "<#menu5_1_6#>", "Site Survey");
 tabtitle[1] = new Array("", "<#menu5_2_1#>", "<#menu5_2_2#>", "<#menu5_2_3#>", "IPTV", "Switch Control");
-tabtitle[2] = new Array("", "<#menu5_3_1#>", "Dual WAN", "<#menu5_3_3#>", "<#menu5_3_4#>", "<#menu5_3_5#>", "<#menu5_3_6#>", "<#NAT_passthrough_itemname#>", "<#menu5_4_4#>");
+tabtitle[2] = new Array("", "<#menu5_3_1#>", "<#dualwan#>", "<#menu5_3_3#>", "<#menu5_3_4#>", "<#menu5_3_5#>", "<#menu5_3_6#>", "<#NAT_passthrough_itemname#>", "<#menu5_4_4#>");
 tabtitle[3] = new Array("", "<#UPnPMediaServer#>", "<#menu5_4_1#>", "NFS Exports" , "<#menu5_4_2#>", "<#menu5_4_3#>");
 tabtitle[4] = new Array("", "IPv6");
 tabtitle[5] = new Array("", "<#BOP_isp_heart_item#>", "<#vpn_Adv#>", "OpenVPN Server Settings", "OpenVPN Client Settings", "OpenVPN Keys", "VPN Status");
@@ -349,8 +361,10 @@ function remove_url(){
 		menuL2_link[7]="";
 		// Log
 		remove_menu_item(8, "Main_DHCPStatus_Content.asp");
+		remove_menu_item(8, "Main_IPV6Status_Content.asp");
+		remove_menu_item(8, "Main_RouteStatus_Content.asp");
 		remove_menu_item(8, "Main_IPTStatus_Content.asp");
-		remove_menu_item(8, "Main_RouteStatus_Content.asp");								
+		remove_menu_item(8, "Main_ConnStatus_Content.asp");
 	}
 	else if(sw_mode == 3){
 		// Traffic Manager
@@ -384,8 +398,10 @@ function remove_url(){
 		menuL2_link[7]="";
 		// Log
 		remove_menu_item(8, "Main_DHCPStatus_Content.asp");
+		remove_menu_item(8, "Main_IPV6Status_Content.asp");
+		remove_menu_item(8, "Main_RouteStatus_Content.asp");
 		remove_menu_item(8, "Main_IPTStatus_Content.asp");
-		remove_menu_item(8, "Main_RouteStatus_Content.asp");								
+		remove_menu_item(8, "Main_ConnStatus_Content.asp");										
 	}
 	
 	if(!dualWAN_support){
@@ -1037,6 +1053,10 @@ var mouseClick = function(){
 }
 
 function show_top_status(){
+	if(!localAP_support){
+		document.getElementById("ssidTitle").style.display = "none";
+	}
+
 	var ssid_status_2g =  decodeURIComponent('<% nvram_char_to_ascii("WLANConfig11b", "wl0_ssid"); %>');
 	var ssid_status_5g =  decodeURIComponent('<% nvram_char_to_ascii("WLANConfig11b", "wl1_ssid"); %>');
 
@@ -2345,6 +2365,8 @@ function get_changed_status(){
 }
 
 function isMobile(){
+	return false; //disable mobile QIS temporary, Jieming added at 2013.08.12
+	
 	if((navigator.userAgent.match(/iPhone/i))  || 
      (navigator.userAgent.match(/iPod/i))    ||
      (navigator.userAgent.match(/Android/i)) && (navigator.userAgent.match(/Mobile/i))){

@@ -281,12 +281,12 @@ SMBC_parse_path(TALLOC_CTX *ctx,
 	
 //- JerryLin Modify
 #if 1
-        /* See if any options were specified */
-        if ((q = strrchr(p, '?')) != NULL ) {
-                /* There are options.  Null terminate here and point to them */
-                *q++ = '\0';
+    /* See if any options were specified */
+    if ((q = strrchr(p, '?')) != NULL ) {
+    	/* There are options.  Null terminate here and point to them */
+        *q++ = '\0';
                 
-                DEBUG(4, ("Found options '%s'", q));
+        DEBUG(4, ("Found options '%s'", q));
 				
 		/* Copy the options */
 		if (pp_options && *pp_options != NULL) {
@@ -355,28 +355,31 @@ SMBC_parse_path(TALLOC_CTX *ctx,
 	 * exists ...
 	 */ 
 	 /* check that '@' occurs before '/', if '/' exists at all */
+#if 1
 
 	//- 20111221 Jerry add
 	int userinfo_len = -1;
 	int index = 0;
-	q = strchr_m(p, '@');
-  	while (q!=NULL)
-  	{
-  		index = q-p+1;
-    	//fprintf (stderr, "found at %d\n",index);
-    	q = strchr_m(q+1, '@');
-		break;
-  	}
 	
+	q = strchr_m(p, '@');
+	r = strchr_m(p, '/');
+	
+	while (q&& (!r || q < r))
+	{
+		index = q-p+1;
+		//fprintf (stderr, "found at %d\n", index);
+	    q = strchr_m(q+1, '@');
+	}
+		
 	if(index>0)
 		userinfo_len = index - 1;
-	
+		
 	 if(userinfo_len!=-1){
 	 	char *userinfo = NULL;
 		const char *u;
 
 		userinfo = talloc_strndup(ctx, p, userinfo_len);
-		
+			
 		if (!userinfo) {
 			return -1;
 		}
@@ -384,7 +387,7 @@ SMBC_parse_path(TALLOC_CTX *ctx,
 		//fprintf(stderr, "Libsmb_path.c->SMBC_parse_path: userinfo=%s\n", userinfo);
 
 		u = userinfo;
-             
+	             
 		if (strchr_m(u, ';')) {
 			next_token_no_ltrim_talloc(ctx, &u, &workgroup, ";");
 			if (!workgroup) {
@@ -394,7 +397,7 @@ SMBC_parse_path(TALLOC_CTX *ctx,
 				*pp_workgroup = workgroup;
 			}
 		}
-                
+	                
 		if (strchr_m(u, ':')) {
 			next_token_no_ltrim_talloc(ctx, &u, pp_user, ":");
 			if (!*pp_user) {
@@ -412,51 +415,54 @@ SMBC_parse_path(TALLOC_CTX *ctx,
 		}
 
 		p = p + userinfo_len + 1;
-	 }
-#if 0
-	else{     
-		/* check that '@' occurs before '/', if '/' exists at all */
-		q = strchr_m(p, '@');
-		r = strchr_m(p, '/');
 
-		//- 20111220 Jerry modify
-		//if (q && (!r || q < r)) {
-		if (q) {
-			char *userinfo = NULL;
-			const char *u;
+		//fprintf(stderr, "pp_user=%s, pp_password=%s\n", *pp_user, *pp_password);
+	}
+	
+#else
+	   
+	/* check that '@' occurs before '/', if '/' exists at all */
+	q = strchr_m(p, '@');
+	r = strchr_m(p, '/');
+
+	if (q && (!r || q < r)) {
+		char *userinfo = NULL;
+		const char *u;
 	                
-			next_token_no_ltrim_talloc(ctx, &p, &userinfo, "@");
-			if (!userinfo) {
+		next_token_no_ltrim_talloc(ctx, &p, &userinfo, "@");
+		if (!userinfo) {
+			return -1;
+		}
+		u = userinfo;
+	             
+		if (strchr_m(u, ';')) {
+			next_token_no_ltrim_talloc(ctx, &u, &workgroup, ";");
+			if (!workgroup) {
 				return -1;
 			}
-			u = userinfo;
-	             
-			if (strchr_m(u, ';')) {
-				next_token_no_ltrim_talloc(ctx, &u, &workgroup, ";");
-				if (!workgroup) {
-					return -1;
-				}
-				if (pp_workgroup) {
-					*pp_workgroup = workgroup;
-				}
+			if (pp_workgroup) {
+				*pp_workgroup = workgroup;
 			}
+		}
 	                
-			if (strchr_m(u, ':')) {
-				next_token_no_ltrim_talloc(ctx, &u, pp_user, ":");
-				if (!*pp_user) {
-					return -1;
-				}
-				*pp_password = talloc_strdup(ctx, u);
-				if (!*pp_password) {
-					return -1;
-				}
-			} else {
-				*pp_user = talloc_strdup(ctx, u);
-				if (!*pp_user) {
-					return -1;
-				}
+		if (strchr_m(u, ':')) {
+			next_token_no_ltrim_talloc(ctx, &u, pp_user, ":");
+			if (!*pp_user) {
+				return -1;
 			}
-		}		
+			*pp_password = talloc_strdup(ctx, u);
+			if (!*pp_password) {
+				return -1;
+			}
+		} else {
+			*pp_user = talloc_strdup(ctx, u);
+			if (!*pp_user) {
+				return -1;
+			}
+		}
+
+		fprintf(stderr, "pp_user=%s, pp_password=%s\n", *pp_user, *pp_password);
+				
 	}
 #endif
 

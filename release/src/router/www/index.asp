@@ -83,6 +83,10 @@ var wan0_primary = '<% nvram_get("wan0_primary"); %>';
 var wan1_primary = '<% nvram_get("wan1_primary"); %>';
 var wans_dualwan_orig = '<% nvram_get("wans_dualwan"); %>';
 var wans_mode = '<%nvram_get("wans_mode");%>';	
+if(wans_dualwan_orig.search(" ") == -1)
+	var wans_flag = 0;
+else
+	var wans_flag = (wans_dualwan_orig.search("none") == -1) ? 1:0;
 
 function initial(){
 	show_menu();
@@ -91,14 +95,13 @@ function initial(){
 		alert("<#ALERT_TO_CHANGE_BROWSER#>");
 	
 	if(dualWAN_support && sw_mode == 1){
-		wans_flag = (wans_dualwan_orig.search("none") == -1) ? 1:0;
 		check_dualwan(wans_flag);	
 	}
 	
 	if(sw_mode == 4)
-		show_middle_status('<% nvram_get("wlc_auth_mode"); %>', "", 0);		
+		show_middle_status('<% nvram_get("wlc_auth_mode"); %>', 0);		
 	else
-		show_middle_status(document.form.wl_auth_mode_x.value, document.form.wl_wpa_mode.value, parseInt(document.form.wl_wep_x.value));
+		show_middle_status(document.form.wl_auth_mode_x.value, parseInt(document.form.wl_wep_x.value));
 
 	set_default_choice();
 	show_client_status();		
@@ -263,7 +266,7 @@ function showMapWANStatus(flag){
 		return 0;
 }
 
-function show_middle_status(auth_mode, wpa_mode, wl_wep_x){
+function show_middle_status(auth_mode, wl_wep_x){
 	var security_mode;
 	switch (auth_mode){
 		case "open":
@@ -512,10 +515,18 @@ function clickEvent(obj){
 	if(obj.id.indexOf("Internet") > 0){
 		if(!dualWAN_support){
 			check_wan_unit();
-		}	
+		}
+
 		icon = "iconInternet";
 		stitle = "<#statusTitle_Internet#>";
 		$("statusframe").src = "/device-map/internet.asp";
+
+		if(parent.wans_flag){
+			if(obj.id.indexOf("primary") != -1)
+				stitle = "Primary WAN status"
+			else
+				stitle = "Secondary WAN status"
+		}
 	}
 	else if(obj.id.indexOf("Router") > 0){
 		icon = "iconRouter";
@@ -734,7 +745,6 @@ function check_wan_unit(){   //To check wan_unit, if USB Modem plug in change wa
 function change_wan_unit(wan_unit_flag){
 	document.form.wan_unit.value = wan_unit_flag;	
 	document.form.wl_auth_mode_x.disabled = true;	
-	document.form.wl_wpa_mode.disabled = true;	
 	document.form.wl_wep_x.disabled = true;		
 	FormActions("/apply.cgi", "change_wan_unit", "", "");
 	document.form.submit();
@@ -746,9 +756,9 @@ function show_ddns_fail_hint() {
 		str = "<#Disconnected#>";
 	else if(ddns_server = 'WWW.ASUS.COM') {
 		if(ddns_return_code == 'register,203')
-                alert("<#LANHostConfig_x_DDNS_alarm_hostname#> '<%nvram_get("ddns_hostname_x");%>' <#LANHostConfig_x_DDNS_alarm_registered#>");
-        	else if(ddns_return_code.indexOf('233')!=-1)
-                	str = "<#LANHostConfig_x_DDNS_alarm_hostname#> '<%nvram_get("ddns_hostname_x");%>' <#LANHostConfig_x_DDNS_alarm_registered_2#> '<%nvram_get("ddns_old_name");%>'.";
+               alert("<#LANHostConfig_x_DDNS_alarm_hostname#> '<%nvram_get("ddns_hostname_x");%>' <#LANHostConfig_x_DDNS_alarm_registered#>");
+        else if(ddns_return_code.indexOf('233')!=-1)
+                str = "<#LANHostConfig_x_DDNS_alarm_hostname#> '<%nvram_get("ddns_hostname_x");%>' <#LANHostConfig_x_DDNS_alarm_registered_2#> '<%nvram_get("ddns_old_name");%>'.";
 	  	else if(ddns_return_code.indexOf('297')!=-1)
         		str = "<#LANHostConfig_x_DDNS_alarm_7#>";
 	  	else if(ddns_return_code.indexOf('298')!=-1)
@@ -928,7 +938,6 @@ function change_wan_state(primary_status, secondary_status){
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="wl_auth_mode_x" value="<% nvram_get("wl0_auth_mode_x"); %>">
-<input type="hidden" name="wl_wpa_mode" value="<% nvram_get("wl0_wpa_mode"); %>">
 <input type="hidden" name="wl_wep_x" value="<% nvram_get("wl0_wep_x"); %>">
 <input type="hidden" name="action_mode" value="">
 <input type="hidden" name="action_script" value="">
@@ -963,14 +972,14 @@ function change_wan_state(primary_status, secondary_status){
 					<!--== Dual WAN ==-->
 					<td id="primary_wan_icon" width="160px;" height="155" align="center" class="NM_radius" valign="middle" bgcolor="#444f53" onclick="showstausframe('Internet_primary');" style="display:none">
 						<a href="/device-map/internet.asp" target="statusframe"><div id="iconInternet_primary" onclick="clickEvent(this);"></div></a>
-						<div>Primary WAN:</div>
+						<div><#dualwan_primary#>:</div>
 						<div><strong id="primary_status"></strong></div>
 					</td>
 					<td id="dual_wan_gap" width="40px" style="display:none">
 					</td>
 					<td id="secondary_wan_icon" width="160px;" height="155" align="center" class="NM_radius" valign="middle" bgcolor="#444f53" onclick="showstausframe('Internet_secondary');" style="display:none">
 						<a href="/device-map/internet.asp" target="statusframe"><div id="iconInternet_secondary" onclick="clickEvent(this);"></div></a>
-						<div>Secondary WAN:</div>
+						<div><#dualwan_secondary#>:</div>
 						<div><strong id="seconday_status"></strong></div>
 					</td>
 					<!--== single WAN ==-->

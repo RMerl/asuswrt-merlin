@@ -199,7 +199,7 @@ enum {
 	MODEL_APN12,
 	MODEL_APN12HP,
 	MODEL_RTN16,
-	MODEL_RTN18UHP,
+	MODEL_RTN18U,
 	MODEL_RTN15U,
 	MODEL_RTN53,
 	MODEL_RTN66U,
@@ -274,7 +274,8 @@ extern char *psname(int pid, char *buffer, int maxlen);
 extern int pidof(const char *name);
 extern int killall(const char *name, int sig);
 extern int ppid(int pid);
-
+extern int process_exists(pid_t pid);
+extern int module_loaded(const char *module);
 
 // files.c
 extern int check_if_dir_empty(const char *dirpath);
@@ -288,6 +289,7 @@ extern void file_unlock(int lockfd);
 
 extern unsigned long f_size(const char *path);
 extern int f_exists(const char *file);
+extern int d_exists(const char *path);
 extern int f_read(const char *file, void *buffer, int max);												// returns bytes read
 extern int f_write(const char *file, const void *buffer, int len, unsigned flags, unsigned cmode);		//
 extern int f_read_string(const char *file, char *buffer, int max);										// returns bytes read, not including term; max includes term

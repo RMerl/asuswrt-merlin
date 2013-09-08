@@ -1,0 +1,512 @@
+#! /usr/bin/perl -w
+
+# cvsu - do a quick check to see what files are out of date.
+#
+# Copyright (C) 2000-2005  Pavel Roskin <proski@gnu.org>
+# Initially written by Tom Tromey <tromey@cygnus.com>
+# Completely rewritten by Pavel Roskin <proski@gnu.org>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+require 5.004;
+use Getopt::Long;
+use File::Basename;
+use Time::Local;
+use strict;
+
+use vars qw($list_types %messages %options @batch_list $batch_cmd
+            $no_recurse $explain_type $find_mode $short_print
+            $no_cvsignore $nolinks $file $single_filename $curr_dir
+            @common_ignores $ignore_rx %entries %subdirs %removed);
+
+use constant SUBDIR_FOUND => 1;
+use constant SUBDIR_CVS   => 2;
+
+# This list comes from the CVS manual.
+use constant STANDARD_IGNORES =>
+        ('RCS', 'SCCS', 'CVS', 'CVS.adm', 'RCSLOG', 'cvslog.*', 'tags',
+         'TAGS', '.make.state', '.nse_depinfo', '*~', '#*', '.#*', ',*',
+         "_\$*", "*\$", '*.old', '*.bak', '*.BAK', '*.orig', '*.rej',
+         '.del-*', '*.a', '*.olb', '*.o', '*.obj', '*.so', '*.exe',
+         '*.Z', '*.elc', '*.ln', 'core');
+
+# 3-letter month names in POSIX locale, for fast date decoding
+my %months = (
+    "Jan" => 0,
+    "Feb" => 1,
+    "Mar" => 2,
+    "Apr" => 3,
+    "May" => 4,
+    "Jun" => 5,
+    "Jul" => 6,
+    "Aug" => 7,
+    "Sep" => 8,
+    "Oct" => 9,
+    "Nov" => 10,
+    "Dec" => 11
+);
+
+# print usage information and exit
+sub usage ()
+{
+    print "Usage:\n" .
+        "  cvsu [OPTIONS] [FILE] ...\n" .
+        "Options:\n" .
+        "  --local		Disable recursion\n" .
+        "  --explain		Verbosely print status of files\n" .
+        "  --find		Emulate find - filenames only\n" .
+        "  --short		Don't print paths\n" .
+        "  --ignore		Don't read .cvsignore\n" .
+        "  --messages		List known file types and long messages\n" .
+        "  --nolinks		Disable recognizing hard and soft links\n" .
+        "  --types=[^]LIST	Print only file types [not] from LIST\n" .
+        "  --batch=COMMAND	Execute this command on files\n" .
+        "  --help		Print this usage information\n" .
+        "  --version		Print version number\n" .
+        "Abbreviations and short options are supported\n";
+    exit 0;
+}
+
+# print version information and exit
+sub version ()
+{
+    print "cvsu - CVS offline examiner, version 0.2.3\n";
+    exit 0;
+}
+
+# If types begin with '^', make inversion
+sub adjust_types ()
+{
+    if ($list_types =~ m{^\^(.*)$}) {
+        $list_types = "";
+        foreach (keys %messages) {
+            $list_types .= $_
+                if (index ($1, $_) < 0);
+        }
+    }
+}
+
+# list known messages and exit
+sub list_messages ()
+{
+    my $default_mark;
+    print "Recognizable file types are:\n";
+    foreach (sort keys %messages) {
+        if (index($list_types, $_) >= 0) {
+            $default_mark = "*";
+        } else {
+            $default_mark = " ";
+        }
+        print "  $default_mark $_ $messages{$_}\n";
+    }
+    print "* indicates file types listed by default\n";
+    exit 0;
+}
+
+# Initialize @common_ignores
+# Also read $HOME/.cvsignore and append it to @common_ignores
+sub init_ignores ()
+{
+    my $HOME = $ENV{"HOME"};
+
+    push @common_ignores, STANDARD_IGNORES;
+
+    unless (defined($HOME)) {
+        return;
+    }
+
+    my $home_cvsignore = "${HOME}/.cvsignore";
+
+    if (-f "$home_cvsignore") {
+
+        unless (open (CVSIGNORE, "< $home_cvsignore")) {
+            error ("couldn't open $home_cvsignore: $!");
+        }
+
+        while (<CVSIGNORE>) {
+            push (@common_ignores, split);
+        }
+
+        close (CVSIGNORE);
+    }
+
+    my $CVSIGNOREENV = $ENV{"CVSIGNORE"};
+
+    unless (defined($CVSIGNOREENV)) {
+        return;
+    }
+
+    my @ignores_var = split (/ /, $CVSIGNOREENV);
+    push (@common_ignores, @ignores_var);
+
+}
+
+# Print message and exit (like "die", but without raising an exception).
+# Newline is added at the end.
+sub error ($)
+{
+        print STDERR "cvsu: ERROR: " . shift(@_) . "\n";
+        exit 1;
+}
+
+# execute commands from @exec_list with $exec_cmd
+sub do_batch ()
+{
+        my @cmd_list = split (' ', $batch_cmd);
+        system (@cmd_list,  @batch_list);
+}
+
+# print files status
+# Parameter 1: status in one-letter representation
+sub file_status ($)
+{
+    my $type = shift (@_);
+    my $item;
+    my $pathfile;
+
+    return
+        if $ignore_rx ne '' && $type =~ /[?SLD]/ && $file =~ /$ignore_rx/;
+
+    return
+        if (index($list_types, $type) < 0);
+
+    $pathfile = $curr_dir . $file;
+
+    if (defined($batch_cmd)) {
+        push (@batch_list, $pathfile);
+        # 1000 items in the command line might be too much for HP-UX
+        if ($#batch_list > 1000) {
+            do_batch();
+            undef @batch_list;
+        }
+    }
+
+    if ($short_print) {
+        $item = $file;
+    } else {
+        $item = $pathfile;
+    }
+
+    if ($find_mode) {
+        print "$item\n";
+    } else {
+        $type = $messages{$type}
+            if ($explain_type);
+        print "$type $item\n";
+    }
+}
+
+# load entries from CVS/Entries and CVS/Entries.Log
+# Parameter 1: file name for CVS/Entries
+# Return: list of entries in the format used in CVS/Entries
+sub load_entries ($);
+sub load_entries ($)
+{
+    my $entries_file = shift (@_);
+    my $entries_log_file = "$entries_file.Log";
+    my %ent = ();
+
+    unless (open (ENTRIES, "< $entries_file")) {
+        error ("couldn't open $entries_file: $!");
+    }
+    while (<ENTRIES>) {
+        chomp;
+        $ent{$_} = 1;
+    }
+    close (ENTRIES);
+
+    if (open (ENTRIES, "< $entries_log_file")) {
+        while (<ENTRIES>) {
+            chomp;
+            if ( m{^A (.+)} ) {
+                $ent{$1} = 1;
+            } elsif ( m{^R (.+)} ) {
+                delete $ent{$1};
+            } else {
+                # Note: "cvs commit" helps even when you are offline
+                error ("$entries_log_file:$.: unrecognizable line, " .
+                        "try \"cvs commit\"");
+            }
+        }
+        close (ENTRIES);
+    }
+
+    return keys %ent;
+}
+
+# process one directory
+# Parameter 1: directory name
+sub process_arg ($);
+sub process_arg ($)
+{
+    my $arg = shift (@_);
+    my %found_files = ();
+
+    # $file, $curr_dir, and $ignore_rx must be seen in file_status
+    local $file = "";
+    local $ignore_rx = "";
+    local $single_filename = 0;
+
+    if ( $arg eq "" or -d $arg ) {
+        $curr_dir = $arg;
+        my $real_curr_dir = $curr_dir eq "" ? "." : $curr_dir;
+
+        error ("$real_curr_dir is not a directory")
+            unless ( -d $real_curr_dir );
+
+        # Scan present files.
+        file_status (".");
+        opendir (DIR, $real_curr_dir) ||
+            error ("couldn't open directory $real_curr_dir: $!");
+        foreach (readdir (DIR)) {
+            $found_files {$_} = 1;
+        }
+        closedir (DIR);
+    } else {
+        $single_filename = basename $arg;
+        $curr_dir = dirname $arg;
+        $found_files{$single_filename} = 1 if lstat $arg;
+    }
+
+    $curr_dir .= "/"
+        unless ( $curr_dir eq "" || $curr_dir =~ m{/$} );
+
+    # Scan CVS/Entries.
+    my %entries = ();
+    my %subdirs = ();
+    my %removed = ();
+
+    foreach ( load_entries ("${curr_dir}CVS/Entries") ) {
+        if ( m{^D/([^/]+)/} ) {
+            $subdirs{$1} = SUBDIR_FOUND if !$single_filename;
+        } elsif ( m{^/([^/]+)/([^/])[^/]*/([^/]*)/} ) {
+            if ( !$single_filename or $single_filename eq $1 ) {
+                $entries{$1} = $3;
+                $removed{$1} = 1
+                    if $2 eq '-';
+            }
+        } elsif ( m{^D$} ) {
+            next;
+        } else {
+            error ("${curr_dir}CVS/Entries: unrecognizable line");
+        }
+    }
+
+    if ( $single_filename && !$entries{$single_filename} &&
+         !$found_files{$single_filename} ) {
+        error ("nothing known about $arg");
+    }
+
+    # Scan .cvsignore if any
+    unless ($no_cvsignore) {
+        my (@ignore_list) = ();
+
+        if (-f "${curr_dir}.cvsignore") {
+            open (CVSIGNORE, "< ${curr_dir}.cvsignore")
+                || error ("couldn't open ${curr_dir}.cvsignore: $!");
+            while (<CVSIGNORE>) {
+                push (@ignore_list, split);
+            }
+            close (CVSIGNORE);
+        }
+
+        my ($iter);
+        foreach $iter (@ignore_list, @common_ignores) {
+            if ($iter eq '!') {
+                $ignore_rx = ''
+            } else {
+                if ($ignore_rx eq '') {
+                    $ignore_rx = '^(';
+                } else {
+                    $ignore_rx .= '|';
+                }
+                $ignore_rx .= glob_to_rx ($iter);
+            }
+        }
+        $ignore_rx .= ')$'
+            if $ignore_rx ne '';
+    }
+
+    # File is missing
+    foreach $file (sort keys %entries) {
+        unless ($found_files{$file}) {
+            if ($removed{$file}) {
+                file_status("R");
+            } else {
+                file_status("U");
+            }
+        }
+    }
+
+    foreach $file (sort keys %found_files) {
+        next if ($file eq '.' || $file eq '..');
+        lstat ($curr_dir . $file) ||
+            error ("lstat() failed on $curr_dir . $file");
+        if (! $nolinks && -l _) {
+            file_status ("L");
+        } elsif (-d _) {
+            if ($file eq 'CVS') {
+                file_status ("C");
+            } elsif ($subdirs{$file}) {
+                $subdirs{$file} = SUBDIR_CVS;
+            } else {
+                file_status ("D"); # Unknown directory
+            }
+        } elsif (! (-f _) && ! (-l _)) {
+            file_status ("S"); # This must be something very special
+        } elsif (! $nolinks && (stat _) [3] > 1 ) {
+            file_status ("H"); # Hard link
+        } elsif (! $entries{$file}) {
+            file_status ("?");
+        } elsif ($entries{$file} =~ /^Initial |^dummy /) {
+            file_status ("A");
+        } elsif ($entries{$file} =~ /^Result of merge/) {
+            file_status ("G");
+        } elsif ($entries{$file} !~
+                /^(...) (...) (..) (..):(..):(..) (....)$/) {
+            error ("Invalid timestamp for $curr_dir$file: $entries{$file}");
+        } else {
+            my $cvtime = timegm($6, $5, $4, $3, $months{$2}, $7 - 1900);
+            my $mtime = (stat _) [9];
+            if ($cvtime == $mtime) {
+                file_status ("F");
+            } elsif ($cvtime < $mtime) {
+                file_status ("M");
+            } else {
+                file_status ("O");
+            }
+        }
+    }
+
+    # Now do directories.
+    unless ($no_recurse) {
+        my $save_curr_dir = $curr_dir;
+        foreach $file (sort keys %subdirs) {
+            if ($subdirs{$file} == SUBDIR_FOUND) {
+                $curr_dir = $save_curr_dir;
+                file_status ("X");
+            } elsif ($subdirs{$file} == SUBDIR_CVS) {
+                process_arg ($save_curr_dir . $file)
+            }
+        }
+    }
+}
+
+# Turn a glob into a regexp without recognizing square brackets.
+sub glob_to_rx_simple ($)
+{
+    my ($expr) = @_;
+    # Quote all non-word characters, convert ? to . and * to .*
+    $expr =~ s/(\W)/\\$1/g;
+    $expr =~ s/\\\*/.*/g;
+    $expr =~ s/\\\?/./g;
+    return $expr;
+}
+
+# Turn a glob into a regexp
+sub glob_to_rx ($)
+{
+    my $result = '';
+    my ($expr) = @_;
+    # Find parts in square brackets and copy them literally
+    # Text outside brackets is processed by glob_to_rx_simple()
+    while ($expr ne '') {
+        if ($expr =~ /^(.*?)(\[.*?\])(.*)/) {
+            $expr = $3;
+            $result .= glob_to_rx_simple ($1) . $2;
+        } else {
+            $result .= glob_to_rx_simple ($expr);
+            last;
+        }
+    }
+    return $result;
+}
+
+sub Main ()
+{
+    # types of files to be listed
+    $list_types = "^.FCL";
+
+    # long status messages
+    %messages = (
+        "?" => "Unlisted file",
+        "." => "Known directory",
+        "F" => "Up-to-date file",
+        "C" => "CVS admin directory",
+        "M" => "Modified file",
+        "S" => "Special file",
+        "D" => "Unlisted directory",
+        "L" => "Symbolic link",
+        "H" => "Hard link",
+        "U" => "Lost file",
+        "X" => "Lost directory",
+        "A" => "Newly added",
+        "O" => "Older copy",
+        "G" => "Result of merge",
+        "R" => "Removed file"
+    );
+
+    undef @batch_list;		# List of files for batch processing
+    undef $batch_cmd;		# Command to be executed on files
+    $no_recurse = 0;		# If this is set, do only local files
+    $explain_type = 0;		# Verbosely print status of files
+    $find_mode = 0;		# Don't print status at all
+    $short_print = 0;		# Print only filenames without path
+    $no_cvsignore = 0;		# Ignore .cvsignore
+    $nolinks = 0;		# Do not test for soft- or hard-links
+    my $want_msg = 0;		# List possible filetypes and exit
+    my $want_help = 0;		# Print help and exit
+    my $want_ver = 0;		# Print version and exit
+
+    my %options = (
+        "types=s"  => \$list_types,
+        "batch=s"  => \$batch_cmd,
+        "local"	   => \$no_recurse,
+        "explain"  => \$explain_type,
+        "find"	   => \$find_mode,
+        "short"	   => \$short_print,
+        "ignore"   => \$no_cvsignore,
+        "messages" => \$want_msg,
+        "nolinks"  => \$nolinks,
+        "help"     => \$want_help,
+        "version"  => \$want_ver
+    );
+
+    GetOptions(%options);
+
+    adjust_types();
+
+    list_messages() if $want_msg;
+    usage() if $want_help;
+    version() if $want_ver;
+
+    unless ($no_cvsignore) {
+        init_ignores();
+    }
+
+    if ($#ARGV < 0) {
+        @ARGV = ("");
+    }
+
+    foreach (@ARGV) {
+        process_arg ($_);
+    }
+
+    if ($#batch_list >= 0) {
+            do_batch();
+    }
+}
+
+Main();

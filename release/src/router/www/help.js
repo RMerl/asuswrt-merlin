@@ -6,7 +6,6 @@
 	DM_DisableHint: "You cannot use Download Master because Download Master is disabled!", 
 	the_array_is_end : "end here.",
 	ddns_home_link: "Get started",
-	go_to_wan_setting : "Go to WAN setting", // need to replace string manually in device-map/internet.asp
 	select_wireless_MAC : "Select the MAC address of Wireless Clients.",
 	select_AP : "Select the Access Point",
 	select_MAC : "Select the MAC address of DHCP clients.",
@@ -16,7 +15,11 @@
 	select_service : "Select the service name.",
 	select_client : "Select the client of DHCP clients.",
 	select_APN_service : "Select the APN service.",
-	Guest_Network_enable_ACL : "You must go to enable MAC filter"
+	Guest_Network_enable_ACL : "You must go to enable MAC filter",
+	WLANConfig11b_Channel_HighPower_desc1 : "To ensure the best wireless signal, we suggest to set the router channel with channel 2. If agree to access Channel 2, please click 'OK'. If disagree, please click 'Cancel'",
+	WLANConfig11b_Channel_HighPower_desc2 : "Due to local regulator limitation, Channel 1 can’t provide the best wireless coverage. If you insist to access Channel 1, please click 'OK'. If not, it will set to channel 2. Please click 'Cancel'",
+	WLANConfig11b_Channel_HighPower_desc3 : "To ensure the best wireless signal, we suggest to set the router channel with channel 10. If agree to access Channel 10, please click 'OK'. If disagree, please click 'Cancel'",
+	WLANConfig11b_Channel_HighPower_desc4 : "Due to local regulator limitation, Channel 11 can’t provide the best wireless coverage. If you insist to access Channel 11, please click 'OK'. If not, it will set to channel 10. Please click 'Cancel'"
 };
 var clicked_help_string = "<#Help_init_word1#> <a class=\"hintstyle\" style=\"background-color:#7aa3bd\"><#Help_init_word2#></a> <#Help_init_word3#>";
 
@@ -28,6 +31,8 @@ function addNewScript_help(scriptName){
 	document.getElementsByTagName("head")[0].appendChild(script);
 }
 function isMobile_help(){
+	return false; //disable mobile QIS temporary, Jieming added at 2013.08.12
+	
 	if(screen.width < 640 || screen.height < 640){
 		return true;
 	}
@@ -209,8 +214,12 @@ function overHint(itemNum){
 					var expire_min = Math.floor((gn_array_2g[i][13]%3600)/60);
 					if(expire_hr > 0)
 						statusmenu += '<b id="expire_hr_'+i+'">'+ expire_hr + '</b> Hr <b id="expire_min_'+i+'">' + expire_min +'</b> Min';
-					else
-						statusmenu += '<b id="expire_min_'+i+'">' + expire_min +'</b> Min';
+					else{
+						if(expire_min > 0)
+								statusmenu += '<b id="expire_min_'+i+'">' + expire_min +'</b> Min';
+						else	
+								statusmenu += '<b id="expire_min_'+i+'">< 1</b> Min';
+					}
 				}
 
 				statusmenu += " left)</span><br>";
@@ -238,8 +247,12 @@ function overHint(itemNum){
 						var expire_min = Math.floor((gn_array_5g[i][13]%3600)/60);
 						if(expire_hr > 0)
 							statusmenu += '<b id="expire_hr_'+i+'">'+ expire_hr + '</b> Hr <b id="expire_min_'+i+'">' + expire_min +'</b> Min';
-						else
-							statusmenu += '<b id="expire_min_'+i+'">' + expire_min +'</b> Min';
+						else{
+							if(expire_min > 0)
+								statusmenu += '<b id="expire_min_'+i+'">' + expire_min +'</b> Min';
+							else	
+								statusmenu += '<b id="expire_min_'+i+'">< 1</b> Min';
+						}
 					}
 
 					statusmenu += " left)</span><br>";
@@ -1968,7 +1981,7 @@ function chkPass(pwd, flag) {
 	var orig_pwd = "";
 	var oScorebar = $("scorebar");
 	var oScore = $("score");
-	var oComplexity = $("complexity");
+
 	// Simultaneous variable declaration and value assignment aren't supported in IE apparently
 	// so I'm forced to assign the same value individually per var to support a crappy browser *sigh* 
 	var nScore=0, nLength=0, nAlphaUC=0, nAlphaLC=0, nNumber=0, nSymbol=0, nMidChar=0, nRequirements=0, nAlphasOnly=0, nNumbersOnly=0, nUnqChar=0, nRepChar=0, nRepInc=0, nConsecAlphaUC=0, nConsecAlphaLC=0, nConsecNumber=0, nConsecSymbol=0, nConsecCharType=0, nSeqAlpha=0, nSeqNumber=0, nSeqSymbol=0, nSeqChar=0, nReqChar=0, nMultConsecCharType=0;

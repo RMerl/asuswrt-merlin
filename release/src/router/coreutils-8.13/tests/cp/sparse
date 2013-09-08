@@ -1,0 +1,40 @@
+#!/bin/sh
+# Test cp --sparse=always
+
+# Copyright (C) 2006-2011 Free Software Foundation, Inc.
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+. "${srcdir=.}/init.sh"; path_prepend_ ../src
+print_ver_ cp
+require_sparse_support_
+
+# Create a sparse file.
+# It has to be at least 128K in order to be sparse on some systems.
+# Make its size one larger than 128K, in order to tickle the
+# bug in coreutils-6.0.
+size=`expr 128 \* 1024 + 1`
+dd bs=1 seek=$size of=sparse < /dev/null 2> /dev/null || framework_failure_
+
+
+cp --sparse=always sparse copy || fail=1
+
+# Ensure that the copy has the same block count as the original.
+test `stat --printf %b copy` -le `stat --printf %b sparse` || fail=1
+
+# Ensure that --sparse={always,never} with --reflink fail.
+cp --sparse=always --reflink sparse copy && fail=1
+cp --sparse=never --reflink sparse copy && fail=1
+
+Exit $fail

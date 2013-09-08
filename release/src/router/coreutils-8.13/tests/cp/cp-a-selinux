@@ -1,0 +1,115 @@
+#!/bin/sh
+# Ensure that cp -a and cp --preserve=context work properly.
+# In particular, test on a writable NFS partition.
+# Check also locally if --preserve=context, -a and --preserve=all
+# does work
+
+# Copyright (C) 2007-2011 Free Software Foundation, Inc.
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+. "${srcdir=.}/init.sh"; path_prepend_ ../src
+print_ver_ cp
+require_root_
+require_selinux_
+require_mkfs_PATH_
+
+cwd=`pwd`
+cleanup_() { cd /; umount "$cwd/mnt"; }
+
+# This context is special: it works even when mcstransd isn't running.
+ctx=root:object_r:tmp_t:s0
+
+# Check basic functionality - before check on fixed context mount
+touch c || framework_failure_
+chcon $ctx c || framework_failure_
+cp -a c d 2>err || framework_failure_
+cp --preserve=context c e || framework_failure_
+cp --preserve=all c f || framework_failure_
+ls -Z d | grep $ctx || fail=1
+test -s err && fail=1   #there must be no stderr output for -a
+ls -Z e | grep $ctx || fail=1
+ls -Z f | grep $ctx || fail=1
+
+skip=0
+# Create a file system, then mount it with the context=... option.
+dd if=/dev/zero of=blob bs=8192 count=200    || skip=1
+mkdir mnt                                    || skip=1
+mkfs -t ext2 -F blob ||
+  skip_ "failed to create an ext2 file system"
+
+mount -oloop,context=$ctx blob mnt           || skip=1
+test $skip = 1 \
+  && skip_ "insufficient mount/ext2 support"
+
+cd mnt                                       || framework_failure_
+
+echo > f                                     || framework_failure_
+
+echo > g                                     || framework_failure_
+# /bin/cp from coreutils-6.7-3.fc7 would fail this test by letting cp
+# succeed (giving no diagnostics), yet leaving the destination file empty.
+cp -a f g 2>err || fail=1
+test -s g       || fail=1     # The destination file must not be empty.
+test -s err     && fail=1     # There must be no stderr output.
+
+# =====================================================
+# Here, we expect cp to succeed and not warn with "Operation not supported"
+rm -f g
+echo > g
+cp --preserve=all f g 2>err || fail=1
+test -s g || fail=1
+grep "Operation not supported" err && fail=1
+
+# =====================================================
+# The same as above except destination does not exist
+rm -f g
+cp --preserve=all f g 2>err || fail=1
+test -s g || fail=1
+grep "Operation not supported" err && fail=1
+
+# An alternative to the following approach would be to run in a confined
+# domain (maybe creating/loading it) that lacks the required permissions
+# to the file type.
+# Note: this test could also be run by a regular (non-root) user in an
+# NFS mounted directory.  When doing that, I get this diagnostic:
+# cp: failed to set the security context of `g' to `system_u:object_r:nfs_t': \
+#   Operation not supported
+cat <<\EOF > exp || framework_failure_
+cp: failed to set the security context of
+EOF
+
+rm -f g
+echo > g
+# =====================================================
+# Here, we expect cp to fail, because it cannot set the SELinux
+# security context through NFS or a mount with fixed context.
+cp --preserve=context f g 2> out && fail=1
+# Here, we *do* expect the destination to be empty.
+test -s g && fail=1
+sed "s/ .g' to .*//" out > k
+mv k out
+compare out exp || fail=1
+
+rm -f g
+echo > g
+# Check if -a option doesn't silence --preserve=context option diagnostics
+cp -a --preserve=context f g 2> out2 && fail=1
+# Here, we *do* expect the destination to be empty.
+test -s g && fail=1
+sed "s/ .g' to .*//" out2 > k
+mv k out2
+compare out2 exp || fail=1
+
+Exit $fail

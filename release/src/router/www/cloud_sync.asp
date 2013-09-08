@@ -198,7 +198,7 @@ function initial(){
 	document.aidiskForm.protocol.value = PROTOCOL;
 	initial_dir();
 
-	if('<% nvram_get("rrsut"); %>' != '1')
+	if(!rrsut_support)
 		$("rrsLink").style.display = "none";
 	else{
 		if(getflag != ""){
@@ -611,10 +611,10 @@ function validform(){
 		return false;
 	}
 
-	if(document.form.cloud_password.value.length < 8){
+	/*if(document.form.cloud_password.value.length < 8){ //disable to check length of password temporary, Jieming added at 2013.08.13
 		alert(Untranslated.cloud_list_password);
 		return false;
-	}
+	}*/
 	
 	if(document.form.cloud_dir.value.split("/").length < 4 || document.form.cloud_dir.value == ''){
 		alert("<#ALERT_OF_ERROR_Input10#>");

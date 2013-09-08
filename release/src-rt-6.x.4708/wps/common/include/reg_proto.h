@@ -1,7 +1,7 @@
 /*
  * Registrar protocol
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: reg_proto.h 295630 2011-11-11 04:45:47Z $
+ * $Id: reg_proto.h 383924 2013-02-08 04:14:39Z $
  */
 
 #ifndef _REGPROT_
@@ -33,7 +33,7 @@ uint32 reg_proto_process_nack(RegData *regInfo, BufferObj *msg, uint16 *configEr
 /* utility methods */
 int reg_proto_BN_bn2bin(const BIGNUM *a, unsigned char *to);
 uint32 reg_proto_generate_dhkeypair(DH **DHKeyPair);
-uint32 reg_proto_generate_prebuild_dhkeypair(DH **DHKeyPair, uint8 *prebuild_privkey);
+uint32 reg_proto_generate_prebuild_dhkeypair(DH **DHKeyPair, uint8 *pre_privkey);
 void reg_proto_generate_sha256hash(BufferObj *inBuf, BufferObj *outBuf);
 void reg_proto_derivekey(BufferObj *KDK, BufferObj *prsnlString, uint32 keyBits, BufferObj *key);
 bool reg_proto_validate_mac(BufferObj *data, uint8 *hmac, BufferObj *key);
@@ -48,6 +48,8 @@ uint32 reg_proto_get_msg_type(uint32 *msgType, BufferObj *msg);
 uint32 reg_proto_get_nonce(uint8 *nonce, BufferObj *msg, int nonceType);
 
 uint32 reg_proto_vendor_ext_vp(DevInfo *devInfo, BufferObj *msg);
+unsigned char *reg_proto_generate_priv_key(unsigned char *priv_key, unsigned char *pub_key_hash);
+
 #ifdef __cplusplus
 }
 #endif

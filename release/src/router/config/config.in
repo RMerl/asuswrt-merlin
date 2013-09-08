@@ -30,8 +30,8 @@ config RTCONFIG_HTTPS
 	default y
 
 config RTCONFIG_BCMARM
-        bool "Bcm Arm"
-        default n
+	bool "Bcm Arm"
+	default y
 
 config RTCONFIG_BCMSMP
 	bool "BCM SMP"
@@ -109,6 +109,10 @@ config RTCONFIG_BCMWL6
 	bool "BCM WL 6"
 	default n
 
+config RTCONFIG_BCMWL6A
+	bool "BCM WL 6.30.143"
+	default y
+
 config RTCONFIG_WIRELESSWAN
 	bool "Wireless WAN Function"
 	default n
@@ -119,18 +123,6 @@ config RTCONFIG_WIRELESSREPEATER
 
 config RTCONFIG_PROXYSTA
 	bool "Proxy STA"
-	default n
-
-config RTCONFIG_IXIAEP
-	bool "IXIA Performance Endpoint"
-	default n
-
-config RTCONFIG_IPERF
-	bool "Iperf"
-	default n
-
-config RTCONFIG_TCPDUMP
-	bool "tcpdump"
 	default n
 
 config RTCONFIG_OLD_PARENTALCTRL
@@ -219,11 +211,6 @@ config RTCONFIG_NTFS
 	depends on RTCONFIG_USB
 	default n
 
-config RTCONFIG_DISK_MONITOR
-	bool "Disk monitor Support"
-	depends on RTCONFIG_USB
-	default n
-
 config RTCONFIG_NTFS3G
 	bool "NTFS-3G Support"
 	depends on RTCONFIG_USB
@@ -306,10 +293,6 @@ config RTCONFIG_ODMPID
 	bool "ODM Product ID"
 	default n
 
-config RTCONFIG_LED_ALL
-	bool "LED All GPIO"
-	default n
-
 config CONFIG_LIBBCM
 	bool "Broadcom shared library functions"
 	default n
@@ -354,12 +337,24 @@ config RTCONFIG_LANWAN_LED
 	bool "SW Control LAN/WAN LED"
 	default n
 
+config RTCONFIG_LAN4WAN_LED
+	bool "SW Control 4LAN/WAN LED"
+	default n
+
 config RTCONFIG_WLAN_LED
 	bool "SW Control WLAN LED"
 	default n
 
 config RTCONFIG_SWMODE_SWITCH
 	bool "HW Switch for SWMODE"
+	default n
+
+config RTCONFIG_WL_AUTO_CHANNEL
+	bool "New auto_channel selection"
+	default n
+
+config RTCONFIG_SMALL_FW_UPDATE
+	bool "used for memory limited model"
 	default n
 
 config RTCONFIG_WIRELESS_SWITCH
@@ -411,16 +406,20 @@ config RTCONFIG_USB_2XHCI2
 	bool "XHCI2, XHCI is disabled by default"
 	default n
 
+config RTCONFIG_LED_ALL
+	bool "LEDALL"
+	default y
+
+config RTCONFIG_COMA
+	bool "COMA"
+	default n
+
 config RTCONFIG_WLMODULE_RT3090_AP
 	bool "Wireless module RT3090 ap"
 	default n
 
 config RTCONFIG_WLMODULE_RT3352_INIC_MII
 	bool "Wireless module RT3352 iNIC MII"
-	default n
-
-config RTCONFIG_WLMODULE_MT7610_AP
-	bool "Wireless module MT7610 ap"
 	default n
 
 config RTCONFIG_PSISTLOG
@@ -431,30 +430,30 @@ config RTCONFIG_DUAL_TRX
 	bool "DUAL_TRX"
 	default n
 
-config RTCONFIG_UBI
-	bool "Unsorted Block Images"
+config RTCONFIG_IXIAEP
+	bool "IXIA Performance Endpoint"
 	default n
 
-config RTCONFIG_UBIFS
-	bool "UBI File-System"
+config RTCONFIG_IPERF
+	bool "Iperf"
+	default n
+
+config RTCONFIG_TCPDUMP
+	bool "tcpdump"
+	default n
+
+config RTCONFIG_EXT4FS
+	bool "ext4 filesystem"
+	default n
+
+config RTCONFIG_DISKTEST
+	bool "Disk test tools"
 	default n
 
 config RTCONFIG_OPTIMIZE_XBOX
 	bool "OPTIMIZE_XBOX"
 	default n
 
-config RTCONFIG_NEW_REGULATION_DOMAIN
-	bool "New Regulation Domain"
-	default n
-
 config RTCONFIG_DYN_DICT_NAME
 	bool "DYN_DICT_NAME"
-	default n
-
-config RTCONFIG_LAN4WAN_LED
-	bool "SW Control 4LAN/WAN LED"
-	default n
-
-config RTCONFIG_EXT4FS
-	bool "ext4 filesystem"
 	default n

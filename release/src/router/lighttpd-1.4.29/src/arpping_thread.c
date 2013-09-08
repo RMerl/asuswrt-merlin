@@ -66,7 +66,6 @@ time_t g_begin_time=0;
 timer_t g_arp_timer;
 char g_scan_interface[10]="eth0";
 char* g_temp_file = "/tmp/arpping_list";
-int g_kill_list = 0;
 
 
 int is_shutdown = 0;
@@ -106,10 +105,7 @@ typedef struct _SrvInfo{
 }SrvInfo;
 SrvInfo a_srvInfo[MAX_THREADS];
 
-int init_a_srvInfo(void);
-
-void save_arpping_list(void)
-{
+void save_arpping_list(){
 
 #if EMBEDDED_EANBLE
 
@@ -156,8 +152,7 @@ void save_arpping_list(void)
 #endif
 }
 
-void read_arpping_list(void)
-{
+void read_arpping_list(){
 #if EMBEDDED_EANBLE
 	char* aa = nvram_get_smbdav_str();
 
@@ -494,9 +489,10 @@ static void *thread_do_arp_check_function(void *srvInfo)
 	pthread_exit(NULL);
 }
 
-static int thread_arpping(char *iface)
+static int thread_arpping(char* iface)
 {
 	int res;
+	void *thread_result;
 	int lots_of_threads;
 
 	//- Complete all samba scan
@@ -556,17 +552,16 @@ static int thread_arpping(char *iface)
 	return 1;
 }
 
-void query_one_hostname(void)
-{
+void query_one_hostname(){
 	smb_srv_info_t *p;
 	int bchange = 0;
 	
 	for (p = smb_srv_info_list; p; p = p->next) {
-		if(is_shutdown || g_kill_list)
+		if(is_shutdown)
 			break;
 
 		Cdbg(DBE, "Query samba server name, ip=[%s]", p->ip->ptr);
-		const char *hostname = smbc_nmblookup(p->ip->ptr);
+		char* hostname = smbc_nmblookup(p->ip->ptr);
 		
 		if( strcmp(p->name->ptr, "")!=0&&
 		    hostname!=NULL && 
@@ -574,7 +569,7 @@ void query_one_hostname(void)
 		    p->online ==1 ){	
 
 			if(hostname){
-				free((char*) hostname);
+				free(hostname);
 				hostname=NULL;
 			}
 			
@@ -600,7 +595,7 @@ void query_one_hostname(void)
 			save_arpping_list();
 
 		if(hostname){
-			free((char*) hostname);
+			free(hostname);
 			hostname=NULL;
 		}
 	}
@@ -610,8 +605,7 @@ void query_one_hostname(void)
 	
 }
 
-void on_arpping_timer_handler(server *srv)
-{
+void on_arpping_timer_handler(server *srv) {
 	
 	if(g_bInitialize==0)
 		return;
@@ -653,7 +647,7 @@ void on_arpping_timer_handler(server *srv)
 //static int mac_num;
 //static char mac_clone[MAX_MAC_NUM][18];
 
-void dumparptable(void)
+void dumparptable()
 {
 	char buf[256];
 	char ip_entry[32], hw_type[8], flags[8], hw_address[32], mask[32], device[8];
@@ -732,8 +726,7 @@ void dumparptable(void)
 	fclose(fp);
 }
 
-void on_arpping_timer_handler2(time_t cur_time)
-{
+void on_arpping_timer_handler2(time_t cur_time) {
 
 	if(g_bInitialize==0)
 		return;
@@ -769,8 +762,7 @@ void on_arpping_timer_handler2(time_t cur_time)
 }
 
 #ifdef _USEMYTIMER
-timer_t create_timer(int signo)
-{
+timer_t create_timer(int signo) {
 	timer_t timerid;
     struct sigevent se;
     se.sigev_notify = SIGEV_SIGNAL;
@@ -782,8 +774,7 @@ timer_t create_timer(int signo)
     return timerid;
 }
 
-void install_sighandler(int signo, void(*handler)(int))
-{
+void install_sighandler(int signo, void(*handler)(int)) {
     sigset_t set;
     struct sigaction act;
 
@@ -798,8 +789,7 @@ void install_sighandler(int signo, void(*handler)(int))
 	sigprocmask(SIG_UNBLOCK, &set, NULL);
 }
 
-void set_timer(timer_t timerid, int seconds)
-{
+void set_timer(timer_t timerid, int seconds) {
 	struct itimerspec timervals;
 	timervals.it_value.tv_sec = seconds;
 	timervals.it_value.tv_nsec = 0;
@@ -812,7 +802,7 @@ void set_timer(timer_t timerid, int seconds)
 }
 #endif
 
-int init_a_srvInfo(void)
+int init_a_srvInfo()	
 {	
 	u_int8_t macSrv[6];
 	struct in_addr ipSrv;
@@ -854,7 +844,7 @@ int init_a_srvInfo(void)
 		SrvInfo *pSrvInfo = &a_srvInfo[i];
 
 		pSrvInfo->id = -1;
-		pSrvInfo->t = 0;
+		pSrvInfo->t = NULL;
 		pSrvInfo->found = -1;
 		pSrvInfo->arp_cip = buffer_init();
 
@@ -942,8 +932,7 @@ static void get_auth_data_fn(const char * pServer,
 	UNUSED(pPassword);
 }
 
-static void sigaction_handler(int sig, siginfo_t *si, void *context)
-{
+static void sigaction_handler(int sig, siginfo_t *si, void *context) {
 	static siginfo_t empty_siginfo;
 	UNUSED(context);
 	
@@ -973,10 +962,46 @@ static void sigaction_handler(int sig, siginfo_t *si, void *context)
 		break;
 	case SIGCHLD:
 		break;
-	case SIGUSR1:
+	case SIGUSR1:{
+		
 		//- Remove all
-		g_kill_list = 1;
+		smb_srv_info_t *c;
+		smb_srv_info_t *tmp = NULL;
+		
+		c = smb_srv_info_list;
+		if( c != NULL ){
+			while(1){
+
+				int end = (c->next==NULL) ? 1 : 0;
+				
+
+				if(end==0){
+					tmp = c->next;
+					Cdbg(DBE, "next, ip=%s", tmp->ip->ptr);
+				}
+				else
+					tmp = NULL;
+				
+				if(c){
+					Cdbg(DBE, "remove , ip=[%s]", c->ip->ptr);
+					DLIST_REMOVE(smb_srv_info_list,c);			
+					free(c);
+				}
+				else
+					break;
+
+				if(end==1)
+					break;
+				
+				c = tmp;
+			}
+		}
+
+		//free(smb_srv_info_list);
+		g_threadIndex = 0;
+		
 		break;
+	}
 	}
 }
 
@@ -1064,37 +1089,6 @@ int main(int argc, char *argv[])
 		}		
 #endif
 		
-		if (g_kill_list) {
-			smb_srv_info_t *c;
-			smb_srv_info_t *tmp = NULL;
-
-			g_kill_list = 0;
-			c = smb_srv_info_list;
-			if (c != NULL) {
-				while (1) {
-					int end = (c->next == NULL) ? 1 : 0;
-
-					if (end == 0) {
-						tmp = c->next;
-						Cdbg(DBE, "next, ip=%s", tmp->ip->ptr);
-					} else
-						tmp = NULL;
-
-					if (c) {
-						Cdbg(DBE, "remove , ip=[%s]", c->ip->ptr);
-						DLIST_REMOVE(smb_srv_info_list, c);
-						free(c);
-					} else
-						break;
-
-					if (end == 1)
-						break;
-
-					c = tmp;
-				}
-			}
-			g_threadIndex = 0;
-		}
   	}
 
 	Cdbg(DBE, "Success to terminate lighttpd-arpping.....");

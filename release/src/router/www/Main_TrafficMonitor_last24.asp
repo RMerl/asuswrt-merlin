@@ -316,16 +316,16 @@ function Zoom(func){
 						  			<th style="text-align:center;width:160px;height:25px;"><#Total#></th>
 						  		</tr>
 						  		<tr>
-						  			<td style="text-align:center;font-weight: bold; background-color:#111;"><span id='rx-current' style="color:#FF9000;"></span></td>
+						  			<td style="text-align:center;font-weight: bold; background-color:#111;"><div id="rx-current"></div></td>
 						  			<td style="text-align:center; background-color:#111;" id='rx-avg'></td>
 						  			<td style="text-align:center; background-color:#111;" id='rx-max'></td>
 						  			<td style="text-align:center; background-color:#111;" id='rx-total'></td>
 						    	</tr>
 							<tr>
-						    		<td style="text-align:center;font-weight: bold; background-color:#111;"><span id='tx-current' style="color:#3CF;"></span></td>
-										<td style="text-align:center; background-color:#111;" id='tx-avg'></td>
-										<td style="text-align:center; background-color:#111;" id='tx-max'></td>
-										<td style="text-align:center; background-color:#111;" id='tx-total'></td>
+						    			<td style="text-align:center;font-weight: bold; background-color:#111;"><div id="tx-current"></div></td>
+									<td style="text-align:center; background-color:#111;" id='tx-avg'></td>
+									<td style="text-align:center; background-color:#111;" id='tx-max'></td>
+									<td style="text-align:center; background-color:#111;" id='tx-total'></td>
 								</tr>
 							</table>
 						</td>

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012, Broadcom Corporation
+# Copyright (C) 2013, Broadcom Corporation
 # All Rights Reserved.
 # 
 # This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -7,7 +7,7 @@
 # or duplicated in any form, in whole or in part, without the prior
 # written permission of Broadcom Corporation.
 #
-# $Id: wps_common_lib.mk 315890 2012-02-20 03:24:53Z $
+# $Id: wps_common_lib.mk 383066 2013-02-05 10:22:22Z $
 #
 # Linux makefile
 #
@@ -49,7 +49,7 @@ endif
 export LD = $(CC)
 export LDFLAGS = -r
 
-export INCLUDE = -I$(SRCBASE)/include -I./include $(WLAN_ComponentIncPathR)
+export INCLUDE = -I$(SRCBASE)/include -I$(SRCBASE)/common/include -I./include $(WLAN_ComponentIncPathR)
 
 # Include external openssl path
 ifeq ($(EXTERNAL_OPENSSL),1)

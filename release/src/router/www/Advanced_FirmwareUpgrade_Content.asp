@@ -279,7 +279,7 @@ function startDownloading(){
 function check_zip(obj){
 	var reg = new RegExp("^.*.(zip|ZIP|rar|RAR|7z|7Z)$", "gi");
 	if(reg.test(obj.value)){
-			alert("Please decompress the compressed file first.");
+			alert("<#FW_note_unzip#>");
 			obj.focus();
 			obj.select();
 			return false;

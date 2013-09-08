@@ -1,0 +1,199 @@
+#!/usr/bin/make -f
+# This file is public domain software, originally written by Joey Hess.
+
+# Uncomment this to turn on verbose mode. 
+export DH_VERBOSE=1
+
+# work around dpkg changes
+DEB_HOST_ARCH_CPU := $(shell dpkg-architecture -qDEB_HOST_ARCH_CPU 2>/dev/null)
+DEB_HOST_ARCH_OS := $(shell dpkg-architecture -qDEB_HOST_ARCH_OS 2>/dev/null)
+ifeq ($(DEB_HOST_ARCH_CPU),)
+  DEB_HOST_ARCH_CPU := $(shell dpkg-architecture -qDEB_HOST_GNU_CPU)
+  ifeq ($(DEB_HOST_ARCH_CPU),x86_64)
+    DEB_HOST_ARCH_CPU := amd64
+  endif
+endif
+ifeq ($(DEB_HOST_ARCH_OS),)
+  DEB_HOST_ARCH_OS := $(subst -gnu,,$(shell dpkg-architecture -qDEB_HOST_GNU_SYSTEM))
+  ifeq ($(DEB_HOST_ARCH_OS),gnu)
+    DEB_HOST_ARCH_OS := hurd
+  endif
+endif
+
+# implement no optimization build option
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+CFLAGS = -g -O0
+else
+CFLAGS ?= -g -O2
+endif
+CFLAGS += -DSYSLOG_SUCCESS -DSYSLOG_FAILURE -DSYSLOG_NON_ROOT
+
+# Renesas SH(sh4) need -mieee option.
+ifeq ($(DEB_HOST_ARCH_CPU),sh4)
+  CFLAGS += -mieee
+endif
+
+# programs to include/not include
+ifeq ($(DEB_HOST_ARCH_OS),hurd)
+  BUILDPROG_OPTS := --enable-install-program=su,arch
+else
+  BUILDPROG_OPTS := --enable-install-program=arch
+endif
+
+BIN_PROGS = cat chgrp chmod chown cp date dd df dir echo false ln ls mkdir \
+	mknod mv pwd readlink rm rmdir vdir sleep stty sync touch true uname \
+	mktemp
+d=debian/coreutils
+
+default: binary
+
+configure: patch configure-stamp 
+configure-stamp: 
+	dh_testdir
+
+	CFLAGS="$(CFLAGS)" \
+		LDFLAGS='$(LDFLAGS)' ./configure \
+		--build=$(DEB_BUILD_GNU_TYPE) --host=$(DEB_HOST_GNU_TYPE) \
+		--prefix=/usr -v \
+		--libexecdir=/usr/lib \
+		--infodir=/usr/share/info --mandir=/usr/share/man \
+		$(BUILDPROG_OPTS)
+
+	echo configured > configure-stamp
+
+build: patch configure build-arch build-indep
+build-arch: build-stamp
+build-indep: build-stamp
+build-stamp: 
+	dh_testdir
+	$(MAKE)
+ifeq (,$(findstring nocheck,$(DEB_BUILD_OPTIONS)))
+  ifeq (,$(findstring mips,$(DEB_BUILD_ARCH)))
+	$(MAKE) check VERBOSE=yes CFLAGS="$(filter-out -Werror=format-security,$(CFLAGS))"
+  endif
+endif
+	echo built > build-stamp
+
+clean: unpatch clean1
+clean1: 
+	dh_testdir
+	rm -f build-stamp configure-stamp
+	rm -rf debian/buildinfo
+	make distclean || true
+	rm -f config.log
+	rm -f config.status
+	dh_clean
+
+patch: patch-stamp
+patch-stamp: 
+	dpatch apply-all
+	dpatch cat-all > patch-stamp
+	touch man/*.1
+	touch patch-stamp
+
+unpatch: 
+	dpatch deapply-all
+	rm -rf patch-stamp debian-patched
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs
+
+	$(MAKE) install DESTDIR=$(CURDIR)/$(d)
+
+	# some things go in root rather than usr
+	for f in $(BIN_PROGS); do \
+		mv $(d)/usr/bin/$$f $(d)/bin/$$f; \
+	done
+	
+	# backward compatability
+	ln -s /usr/bin/md5sum $(d)/usr/bin/md5sum.textutils
+	ln -s /usr/share/man/man1/md5sum.1 $(d)/usr/share/man/man1/md5sum.textutils.1
+ifneq ($(DEB_HOST_ARCH_OS),hurd)
+		# touch used to be in /usr/bin, don't break scripts
+		ln -s /bin/touch $(d)/usr/bin/touch
+endif
+
+	# remove stuff provided by other packages
+ifeq ($(DEB_HOST_ARCH_OS),linux)
+	# kill from procps is linux-specific
+	rm -f $(d)/usr/bin/kill $(d)/usr/share/man/man1/kill.1
+else
+	mv $(d)/usr/bin/kill $(d)/bin
+endif
+ifneq ($(DEB_HOST_ARCH_OS),hurd)
+		rm -f $(d)/usr/bin/su $(d)/usr/share/man/man1/su.1
+endif
+	rm -f $(d)/usr/bin/hostname $(d)/usr/share/man/man1/hostname.1
+	rm -f $(d)/usr/bin/uptime $(d)/usr/share/man/man1/uptime.1
+
+	# the [ program doesn't have its own man page yet
+	ln -s test.1 $(d)/usr/share/man/man1/[.1
+
+	# gnu thinks chroot is in bin, debian thinks it's in sbin
+	install -d $(d)/usr/sbin $(d)/usr/share/man/man8
+	mv $(d)/usr/bin/chroot $(d)/usr/sbin/chroot
+	sed s/\"1\"/\"8\"/1 $(d)/usr/share/man/man1/chroot.1 > $(d)/usr/share/man/man8/chroot.8
+	rm $(d)/usr/share/man/man1/chroot.1
+
+	# some build environments will leave a dangling info dir
+	rm -f $(d)/usr/share/info/dir
+
+	# unneeded
+	rm -rf $(d)/usr/share/locale/*/LC_TIME
+
+	cp AUTHORS \
+		NEWS README \
+		THANKS \
+		TODO \
+		$(d)/usr/share/doc/coreutils
+
+	dh_install
+
+# Build architecture-independent files here.
+binary-indep: build install
+	dh_testdir -i
+	dh_testroot -i
+	dh_installchangelogs -i
+	dh_installdocs -i
+	dh_buildinfo
+	dh_installexamples -i
+	dh_installinfo -i
+	dh_installman -i
+	dh_link -i
+	dh_compress -i
+	dh_fixperms -i
+	dh_installdeb -i
+	dh_gencontrol -i
+	dh_md5sums -i
+	dh_builddeb -i
+
+# Build architecture-dependent files here.
+binary-arch: build install
+	dh_testdir -a
+	dh_testroot -a
+	dh_installchangelogs -a ChangeLog 
+	dh_installdocs -a
+	dh_buildinfo -a
+	dh_installexamples -a
+	dh_installinfo -a doc/coreutils.info
+	dh_installman -a
+ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
+	dh_strip -a
+endif
+	dh_link -a
+	dh_compress -a
+	dh_fixperms -a
+ifeq ($(DEB_HOST_ARCH_OS),hurd)
+	chmod u+s $(d)/usr/bin/su
+endif
+	dh_installdeb -a
+	dh_shlibdeps -a
+	dh_gencontrol -a
+	dh_md5sums -a
+	dh_builddeb -a
+
+binary: binary-indep binary-arch 
+.PHONY: build clean binary-indep binary-arch binary install patch unpatch clean1

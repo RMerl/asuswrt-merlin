@@ -49,7 +49,11 @@ function initial(){
 	if('<% nvram_get("wl_nmode_x"); %>' == "2")
 			inputCtrl(document.form.wl_bw, 0);
 
-	insertExtChannelOption();
+	if('<% nvram_get("wl_unit"); %>' == '1')		
+		insertExtChannelOption_5g();
+	else
+		check_channel_2g();
+
 	wl_auth_mode_change(1);
 	//mbss_display_ctrl();
 
@@ -101,6 +105,83 @@ function initial(){
 	automode_hint();	
 }
 
+function check_channel_2g(){
+	var wmode = document.form.wl_nmode_x.value;
+	var CurrentCh = document.form.wl_channel_orig.value;
+	if(is_high_power && auto_channel == 1){
+		CurrentCh = document.form.wl_channel_orig.value = 0;
+	}
+	
+	wl_channel_list_2g = eval('<% channel_list_2g(); %>');
+	if(wl_channel_list_2g[0] != "<#Auto#>")
+  		wl_channel_list_2g.splice(0,0,"0");
+		
+	var ch_v2 = new Array();
+    for(var i=0; i<wl_channel_list_2g.length; i++){
+        ch_v2[i] = wl_channel_list_2g[i];
+    }
+	
+    if(ch_v2[0] == "0")
+        wl_channel_list_2g[0] = "<#Auto#>";	
+		
+	add_options_x2(document.form.wl_channel, wl_channel_list_2g, ch_v2, CurrentCh);
+	var option_length = document.form.wl_channel.options.length;	
+	if ((wmode == "0"||wmode == "1") && document.form.wl_bw.value != "0"){
+		inputCtrl(document.form.wl_nctrlsb, 1);
+		var x = document.form.wl_nctrlsb;
+		var length = document.form.wl_nctrlsb.options.length;
+		if (length > 1){
+			x.selectedIndex = 1;
+			x.remove(x.selectedIndex);
+		}
+		
+		if ((CurrentCh >=1) && (CurrentCh <= 4)){
+			x.options[0].text = "Lower";
+			x.options[0].value = "lower";
+		}
+		else if ((CurrentCh >= 5) && (CurrentCh <= 7)){
+			x.options[0].text = "Lower";
+			x.options[0].value = "lower";
+			add_a_option(document.form.wl_nctrlsb, "upper", "Upper");
+			if (document.form.wl_nctrlsb_old.value == "upper")
+				document.form.wl_nctrlsb.options.selectedIndex=1;
+				
+			if(is_high_power && CurrentCh == 5) // for high power model, Jieming added at 2013/08/19
+				document.form.wl_nctrlsb.remove(1);
+			else if(is_high_power && CurrentCh == 7)
+				document.form.wl_nctrlsb.remove(0);	
+		}
+		else if ((CurrentCh >= 8) && (CurrentCh <= 9)){
+			x.options[0].text = "Upper";
+			x.options[0].value = "upper";
+			if (option_length >=14){
+				add_a_option(document.form.wl_nctrlsb, "lower", "Lower");
+				if (document.form.wl_nctrlsb_old.value == "lower")
+					document.form.wl_nctrlsb.options.selectedIndex=1;
+			}
+		}
+		else if (CurrentCh == 10){
+			x.options[0].text = "Upper";
+			x.options[0].value = "upper";
+			if (option_length > 14){
+				add_a_option(document.form.wl_nctrlsb, "lower", "Lower");
+				if (document.form.wl_nctrlsb_old.value == "lower")
+					document.form.wl_nctrlsb.options.selectedIndex=1;
+			}
+		}
+		else if (CurrentCh >= 11){
+			x.options[0].text = "Upper";
+			x.options[0].value = "upper";
+		}
+		else{
+			x.options[0].text = "<#Auto#>";
+			x.options[0].value = "1";
+		}
+	}
+	else
+		inputCtrl(document.form.wl_nctrlsb, 0);
+}
+
 function mbss_display_ctrl(){
 	// generate options
 	if(wl_vifnames != ""){
@@ -131,7 +212,7 @@ function applyRule(){
 	
 	if(document.form.wl_wpa_psk.value == "<#wireless_psk_fillin#>")
 		document.form.wl_wpa_psk.value = "";
-
+		
 	if(validForm()){
 		showLoading();
 		document.form.wps_config_state.value = "1";
@@ -158,7 +239,7 @@ function applyRule(){
 		inputCtrl(document.form.wl_key4, 1);
 		inputCtrl(document.form.wl_phrase_x, 1);
 		inputCtrl(document.form.wl_wpa_gtk_rekey, 1);*/
-
+		
 		if(sw_mode == 2 || sw_mode == 4)
 			document.form.action_wait.value = "5";
 
@@ -266,6 +347,32 @@ function check_NOnly_to_GN(){
 	return true;
 //  Viz add 2012.11.05 restriction for 'N Only' mode  ) end		
 }
+
+function high_power_auto_channel(){
+	if(is_high_power){
+		if(document.form.wl_channel.value == 1){
+			if(confirm(Untranslated.WLANConfig11b_Channel_HighPower_desc1)){
+				document.form.wl_channel.value = 2;
+			}
+			else if(!(confirm(Untranslated.WLANConfig11b_Channel_HighPower_desc2))){
+				document.form.wl_channel.value = 2;
+			}
+		}
+		else if(document.form.wl_channel.value == 11){
+			if(confirm(Untranslated.WLANConfig11b_Channel_HighPower_desc3)){
+				document.form.wl_channel.value = 10;
+			}
+			else if(!(confirm(Untranslated.WLANConfig11b_Channel_HighPower_desc4))){
+				document.form.wl_channel.value = 10;
+			}
+		}	
+
+		if(document.form.wl_channel.value == 0)
+			document.form.AUTO_CHANNEL.value = 1;
+		else
+			document.form.AUTO_CHANNEL.value = 0;
+	}
+}
 </script>
 </head>
 
@@ -307,7 +414,6 @@ function check_NOnly_to_GN(){
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="wps_mode" value="<% nvram_get("wps_mode"); %>">
 <input type="hidden" name="wps_config_state" value="<% nvram_get("wps_config_state"); %>">
-<input type="hidden" name="wl_wpa_mode" value="<% nvram_get("wl_wpa_mode"); %>">
 <input type="hidden" name="wl_wpa_psk_org" value="<% nvram_char_to_ascii("WLANConfig11b", "wl_wpa_psk"); %>">
 <input type="hidden" name="wl_key1_org" value="<% nvram_char_to_ascii("WLANConfig11b", "wl_key1"); %>">
 <input type="hidden" name="wl_key2_org" value="<% nvram_char_to_ascii("WLANConfig11b", "wl_key2"); %>">
@@ -322,6 +428,7 @@ function check_NOnly_to_GN(){
 <input type="hidden" name="wl_nctrlsb_old" value="<% nvram_get("wl_nctrlsb"); %>">
 <input type="hidden" name="wl_key_type" value='<% nvram_get("wl_key_type"); %>'> <!--Lock Add 2009.03.10 for ralink platform-->
 <input type="hidden" name="wl_channel_orig" value='<% nvram_get("wl_channel"); %>'>
+<input type="hidden" name="AUTO_CHANNEL" value='<% nvram_get("AUTO_CHANNEL"); %>'>
 <input type="hidden" name="wl_wep_x_orig" value='<% nvram_get("wl_wep_x"); %>'>
 <input type="hidden" name="wl_optimizexbox" value='<% nvram_get("wl_optimizexbox"); %>'>
 <input type="hidden" name="wl_subunit" value='-1'>
@@ -423,7 +530,7 @@ function check_NOnly_to_GN(){
 				<tr id="wl_channel_field">
 					<th><a id="wl_channel_select" class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 3);"><#WLANConfig11b_Channel_itemname#></a></th>
 					<td>
-				 		<select name="wl_channel" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_channel')"></select>
+				 		<select name="wl_channel" class="input_option" onChange="high_power_auto_channel();return change_common(this, 'WLANConfig11b', 'wl_channel')"></select>
 					</td>
 			  </tr>			 
 

@@ -86,8 +86,10 @@ void read_fat(DOS_FS * fs)
     unsigned long total_num_clusters;
 
     /* Clean up from previous pass */
-    free(fs->fat);
-    free(fs->cluster_owner);
+    if (fs->fat)
+	free(fs->fat);
+    if (fs->cluster_owner)
+	free(fs->cluster_owner);
     fs->fat = NULL;
     fs->cluster_owner = NULL;
 

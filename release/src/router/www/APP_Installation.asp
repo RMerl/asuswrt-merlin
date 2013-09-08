@@ -609,7 +609,7 @@ function show_apps(){
 			cookie_help.set("dm_enable", apps_array[i][4], 1000);
 		}
 
-		if(parseInt(apps_array[i][2].replace(/[.]/gi,"")) > parseInt(apps_array[i][1].replace(/[.]/gi,"")))
+		if(hasNewVer(apps_array[i]))
 			htmlcode += '</div><div style="color:#FC0;margin-top:10px;"><span class="app_action" onclick="apps_form(\'upgrade\',\''+ apps_array[i][0] +'\',\'\');"><#update_available#></span>\n';
 		
 		htmlcode += '</div><br/><br/></td></tr>\n';
@@ -628,6 +628,46 @@ function show_apps(){
 	stoppullstate = 1;
 	calHeight(1);
 	cookie_help.set("hwaddr", '<% nvram_get("et0macaddr"); %>', 1000);
+}
+
+/* 
+The first four digits only contain the APP version.
+Extention number should be appended to the end of APP version.
+*/
+var hasNewVer = function(arr){
+	if(arr[1])
+		oldVer = arr[1].split(".");
+	else
+		return false;
+
+	if(arr[2])
+		newVer = arr[2].split(".");
+	else
+		return false;
+	
+	for(var i=0; i<4; i++){ 
+		if(newVer[i] > oldVer[i]){
+			return true;
+			break;
+		}
+		else if(newVer[i] == oldVer[i])
+			continue;
+		else
+			return false;
+	}
+
+	if(oldVer.length < newVer.length)
+		return false;
+	else if(oldVer.length > newVer.length)
+		return true;		
+	else{
+		if(oldVer[oldVer.length-1] != newVer[newVer.length-1])
+			return true;
+		else
+			return false;
+	}
+
+	return false;
 }
 
 var partitions_array = "";

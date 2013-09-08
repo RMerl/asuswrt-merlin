@@ -159,3 +159,4 @@ define platformKernelConfig
 		cp -rf $(SRCBASE)/wl/sysdeps/$(BUILD_NAME)/* $(SRCBASE)/wl/; \
 	)
 endef
+

@@ -1,0 +1,38 @@
+This package uses dpatch to manage all modifications to the upstream
+source. Changes are stored in the source package as diffs in
+debian/patches and applied during the build.
+
+To get the fully patched source after unpacking the source package, cd
+to the root level of the source package and run:
+
+    debian/rules patch
+
+Removing a patch is as simple as removing its entry from the
+debian/patches/00list file, and please also remove the patch file
+itself.
+
+Creating a new patch is done with "dpatch-edit-patch patch XX_patchname"
+where you should replace XX with a new number and patchname with a
+descriptive shortname of the patch. You can then simply edit all the
+files your patch wants to edit, and then simply "exit 0" from the shell
+to actually create the patch file.
+
+To tweak an already existing patch, call "dpatch-edit-patch XX_patchname"
+and replace XX_patchname with the actual filename from debian/patches
+you want to use.
+
+To clean up afterwards again, "debian/rules unpatch" will do the
+work for you - or you can of course choose to call
+"fakeroot debian/rules clean" all together.
+
+
+--- 
+
+this documentation is part of dpatch package, and may be used by
+packages using dpatch to comply with policy on README.source. This
+documentation is meant to be useful to users who are not proficient in
+dpatch in doing work with dpatch-based packages. Please send any
+improvements to the BTS of dpatch package.
+
+original text by Gerfried Fuchs, edited by Junichi Uekawa <dancer@debian.org>
+10 Aug 2008.

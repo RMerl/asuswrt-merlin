@@ -8,7 +8,7 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<title><#Web_Title#> - IPv6 Network Information</title>
+<title><#Web_Title#> - <#ipv6_info#></title>
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
 
@@ -54,9 +54,9 @@
 								<tr bgcolor="#4D595D">
 									<td valign="top">
 										<div>&nbsp;</div>
-										<div class="formfonttitle"><#System_Log#> - IPv6 Network Information</div>
+										<div class="formfonttitle"><#System_Log#> - <#ipv6_info#></div>
 										<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-										<div class="formfontdesc">This page shows IPv6 network details.</div>
+										<div class="formfontdesc"><#ipv6_info_desc#></div>
 										<div style="margin-top:8px">   
 											<textarea cols="63" rows="25" readonly="readonly" wrap=off style="font-family:'Courier New', Courier, mono; font-size:13px;background:#475A5F;color:#FFFFFF;"><% nvram_dump("ipv6_network.log", "ipv6_network.sh"); %></textarea>
 										</div>

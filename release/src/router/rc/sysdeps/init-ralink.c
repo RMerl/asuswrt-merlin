@@ -516,20 +516,20 @@ switch_exist(void)
 
 void init_wl(void)
 {
-	if (!is_module_loaded("rt2860v2_ap"))
+	if (!module_loaded("rt2860v2_ap"))
 		modprobe("rt2860v2_ap");
 #if defined (RTCONFIG_WLMODULE_RT3090_AP)
-	if (!is_module_loaded("RTPCI_ap"))
+	if (!module_loaded("RTPCI_ap"))
 	{
 		modprobe("RTPCI_ap");
 	}
 #endif
 #if defined (RTCONFIG_WLMODULE_RT3352_INIC_MII)
-	if (!is_module_loaded("iNIC_mii"))
+	if (!module_loaded("iNIC_mii"))
 		modprobe("iNIC_mii", "mode=ap", "bridge=1", "miimaster=eth2", "syncmiimac=0");	// set iNIC mac address from eeprom need insmod with "syncmiimac=0"
 #endif
 #if defined (RTCONFIG_WLMODULE_MT7610_AP)
-	if (!is_module_loaded("MT7610_ap"))
+	if (!module_loaded("MT7610_ap"))
 		modprobe("MT7610_ap");
 #endif
 
@@ -538,26 +538,26 @@ void init_wl(void)
 
 void fini_wl(void)
 {
-	if (is_module_loaded("hw_nat"))
+	if (module_loaded("hw_nat"))
 		modprobe_r("hw_nat");
 
 #if defined (RTCONFIG_WLMODULE_MT7610_AP)
-	if (is_module_loaded("MT7610_ap"))
+	if (module_loaded("MT7610_ap"))
 		modprobe_r("MT7610_ap");
 #endif
 #if defined (RTCONFIG_WLMODULE_RT3352_INIC_MII)
-	if (is_module_loaded("iNIC_mii"))
+	if (module_loaded("iNIC_mii"))
 		modprobe_r("iNIC_mii");
 #endif
 
 #if defined (RTCONFIG_WLMODULE_RT3090_AP)
-	if (is_module_loaded("RTPCI_ap"))
+	if (module_loaded("RTPCI_ap"))
 	{
 		modprobe_r("RTPCI_ap");
 	}
 #endif
 
-	if (is_module_loaded("rt2860v2_ap"))
+	if (module_loaded("rt2860v2_ap"))
 		modprobe_r("rt2860v2_ap");
 }
 
@@ -931,22 +931,6 @@ void generate_wl_para(int unit, int subunit)
 {
 }
 
-int is_module_loaded(const char *module)
-{
-	DIR *dir_to_open = NULL;
-	char sys_path[128];
-
-	sprintf(sys_path, "/sys/module/%s", module);
-	dir_to_open = opendir(sys_path);
-	if(dir_to_open)
-	{
-		closedir(dir_to_open);
-		return 1;
-	}
-
-	return 0;
-}
-
 // only ralink solution can reload it dynamically
 void reinit_hwnat()
 {
@@ -976,7 +960,7 @@ void reinit_hwnat()
 #endif
 #endif
 
-			if (!is_module_loaded("hw_nat")) {
+			if (!module_loaded("hw_nat")) {
 #if 0
 				system("echo 2 > /proc/sys/net/ipv4/conf/default/force_igmp_version");
 				system("echo 2 > /proc/sys/net/ipv4/conf/all/force_igmp_version");
@@ -985,7 +969,7 @@ void reinit_hwnat()
 				sleep(1);
 			}
 		}	
-		else if (is_module_loaded("hw_nat")) {
+		else if (module_loaded("hw_nat")) {
 			modprobe_r("hw_nat");
 			sleep(1);
 #if 0

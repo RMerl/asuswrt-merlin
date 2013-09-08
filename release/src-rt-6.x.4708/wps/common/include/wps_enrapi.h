@@ -1,7 +1,7 @@
 /*
  * WPS Enrollee API
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,20 +9,13 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: wps_enrapi.h 296092 2011-11-14 09:33:42Z $
+ * $Id: wps_enrapi.h 383924 2013-02-08 04:14:39Z $
  */
 
 #ifndef __WPS_ENROLLEE_API_H__
 #define __WPS_ENROLLEE_API_H__
 
 #include <wps_devinfo.h>
-
-typedef enum {
-	WPS_WL_AKM_NONE = 0,
-	WPS_WL_AKM_PSK,
-	WPS_WL_AKM_PSK2,
-	WPS_WL_AKM_BOTH
-} WPS_WL_AKM_E;
 
 /* eap state machine states */
 enum {
@@ -84,7 +77,10 @@ uint32 wpssta_reg_init(DevInfo *user_info, char *nwKey, char *bssid);
 bool wps_is_wep_incompatible(bool role_reg);
 void wps_cleanup(void);
 uint32 wpssta_start_enrollment(char *dev_pin, unsigned long time);
+uint32 wpssta_start_enrollment_devpwid(char *dev_pin, uint16 devicepwid, unsigned long time);
 uint32 wpssta_start_registration(char *ap_pin, unsigned long time);
+uint32 wpssta_start_registration_devpwid(char *ap_pin, uint8 *pub_key_hash, uint16 devicepwid,
+	unsigned long time);
 void wpssta_get_credentials(WpsEnrCred* credential, const char *ssid, int len);
 void wpssta_get_reg_M7credentials(WpsEnrCred* credential);
 void wpssta_get_reg_M8credentials(WpsEnrCred* credential);

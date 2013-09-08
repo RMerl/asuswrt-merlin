@@ -107,7 +107,7 @@ static int rctest_main(int argc, char *argv[])
 		else if (strcmp(argv[1], "qos") == 0) {//qos test
 			if(on){
 #ifdef RTCONFIG_RALINK
-				if (is_module_loaded("hw_nat"))
+				if (module_loaded("hw_nat"))
 				{
 					modprobe_r("hw_nat");
 					sleep(1);
@@ -130,7 +130,7 @@ static int rctest_main(int argc, char *argv[])
 //					!(nvram_get_int("fw_pt_l2tp") || nvram_get_int("fw_pt_ipsec") &&
 //					(nvram_match("wl0_radio", "0") || nvram_get_int("wl0_mrate_x")) &&
 //					(nvram_match("wl1_radio", "0") || nvram_get_int("wl1_mrate_x")) &&
-					!is_module_loaded("hw_nat"))
+					!module_loaded("hw_nat"))
 				{
 #if 0
 					system("echo 2 > /proc/sys/net/ipv4/conf/default/force_igmp_version");

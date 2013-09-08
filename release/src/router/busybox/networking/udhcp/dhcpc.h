@@ -10,7 +10,6 @@ PUSH_AND_SET_FUNCTION_VISIBILITY_TO_HIDDEN
 struct client_config_t {
 	uint8_t client_mac[6];          /* Our mac address */
 	uint16_t client_mtu;		/* Our mtu */
-	char no_default_options;        /* Do not include default options in request */
 	IF_FEATURE_UDHCP_PORT(uint16_t port;)
 	int ifindex;                    /* Index number of the interface to use */
 	uint8_t opt_mask[256 / 8];      /* Bitmask of options to send (-O option) */

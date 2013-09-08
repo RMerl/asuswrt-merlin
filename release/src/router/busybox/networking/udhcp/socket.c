@@ -89,6 +89,7 @@ int FAST_FUNC udhcp_listen_socket(/*uint32_t ip,*/ int port, const char *inf)
 {
 	int fd;
 	struct sockaddr_in addr;
+	char *colon;
 
 	log1("Opening listen socket on *:%d %s", port, inf);
 	fd = xsocket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -97,9 +98,16 @@ int FAST_FUNC udhcp_listen_socket(/*uint32_t ip,*/ int port, const char *inf)
 	if (setsockopt_broadcast(fd) == -1)
 		bb_perror_msg_and_die("SO_BROADCAST");
 
-	/* NB: bug 1032 says this doesn't work on ethernet aliases (ethN:M) */
+	/* SO_BINDTODEVICE doesn't work on ethernet aliases (ethN:M) */
+	colon = strrchr(inf, ':');
+	if (colon)
+		*colon = '\0';
+
 	if (setsockopt_bindtodevice(fd, inf))
 		xfunc_die(); /* warning is already printed */
+
+	if (colon)
+		*colon = ':';
 
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;

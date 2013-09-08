@@ -2346,8 +2346,8 @@ uint32 print_job_start(struct current_user *user, int snum, char *jobname, NT_DE
 
 	/* see if we have sufficient disk space */
 	if (lp_minprintspace(snum)) {
-		SMB_BIG_UINT dspace, dsize, bsize;
-		if (sys_fsusage(path, &dspace, &dsize, &bsize) == 0 &&
+		SMB_BIG_UINT dspace, dsize;
+		if (sys_fsusage(path, &dspace, &dsize) == 0 &&
 		    dspace < 2*(SMB_BIG_UINT)lp_minprintspace(snum)) {
 			DEBUG(3, ("print_job_start: disk space check failed.\n"));
 			release_print_db(pdb);

@@ -625,11 +625,10 @@ int chk_proto(int wan_unit, int wan_state){
 	return CONNED;
 }
 
-int if_wan_phyconnected(int wan_unit, int wan_state){
-	//int unit;
+int if_wan_phyconnected(int wan_unit){
 	char *wired_link_nvram;
 #ifdef RTCONFIG_WIRELESSREPEATER
-	int link_ap;
+	int link_ap = 0;
 #endif
 	int link_changed = 0;
 	char prefix_wan[8], nvram_name[16], wan_proto[16];
@@ -740,8 +739,9 @@ int if_wan_phyconnected(int wan_unit, int wan_state){
 
 			if((nvram_get_int("web_redirect")&WEBREDIRECT_FLAG_NOLINK)){
 				disconn_case[wan_unit] = CASE_DISWAN;
-				return DISCONN;
 			}
+
+			return DISCONN;
 		}
 	}
 	else if(sw_mode == SW_MODE_AP){
@@ -1274,7 +1274,6 @@ int switch_wan_line(const int wan_unit){
 	else if(wan_unit == WAN_UNIT_SECOND)
 #endif
 	{
-		//if(!is_usb_modem_ready())
 		if(!link_wan[wan_unit])
 			return 0; // No modem in USB ports.
 	}
@@ -1443,7 +1442,7 @@ int wanduck_main(int argc, char *argv[]){
 	if(sw_mode == SW_MODE_ROUTER && !strcmp(dualwan_mode, "lb")){
 		cross_state = DISCONN;
 		for(wan_unit = WAN_UNIT_FIRST; wan_unit < WAN_UNIT_MAX; ++wan_unit){
-			conn_state[wan_unit] = if_wan_phyconnected(wan_unit, nvram_get_int(nvram_state[wan_unit]));
+			conn_state[wan_unit] = if_wan_phyconnected(wan_unit);
 			if(conn_state[wan_unit] == CONNED)
 				conn_state[wan_unit] = if_wan_connected(wan_unit, nvram_get_int(nvram_state[wan_unit]));
 
@@ -1465,7 +1464,7 @@ int wanduck_main(int argc, char *argv[]){
 	else if(sw_mode == SW_MODE_ROUTER && !strcmp(dualwan_mode, "fo")){
 		// To check the phy connection of the standby line. 
 		for(wan_unit = WAN_UNIT_FIRST; wan_unit < WAN_UNIT_MAX; ++wan_unit){
-			conn_state[wan_unit] = if_wan_phyconnected(wan_unit, nvram_get_int(nvram_state[wan_unit]));
+			conn_state[wan_unit] = if_wan_phyconnected(wan_unit);
 		}
 
 		current_wan_unit = wan_primary_ifunit();
@@ -1492,7 +1491,7 @@ int wanduck_main(int argc, char *argv[]){
 		current_wan_unit = wan_primary_ifunit();
 		other_wan_unit = !current_wan_unit;
 
-		conn_state[current_wan_unit] = if_wan_phyconnected(current_wan_unit, nvram_get_int(nvram_state[current_wan_unit]));
+		conn_state[current_wan_unit] = if_wan_phyconnected(current_wan_unit);
 		if(conn_state[current_wan_unit] == CONNED)
 			conn_state[current_wan_unit] = if_wan_connected(current_wan_unit, nvram_get_int(nvram_state[current_wan_unit]));
 
@@ -1507,7 +1506,7 @@ int wanduck_main(int argc, char *argv[]){
 	else{ // sw_mode == SW_MODE_AP, SW_MODE_REPEATER.
 		current_wan_unit = WAN_UNIT_FIRST;
 
-		conn_state[current_wan_unit] = if_wan_phyconnected(current_wan_unit, nvram_get_int(nvram_state[current_wan_unit]));
+		conn_state[current_wan_unit] = if_wan_phyconnected(current_wan_unit);
 
 		cross_state = conn_state[current_wan_unit];
 
@@ -1540,15 +1539,9 @@ csprintf("\n#CONNED : Enable direct rule\n");
 
 		get_related_nvram();
 
-#ifdef RTCONFIG_DUALWAN // RTCONFIG_DUALWAN
+#ifdef RTCONFIG_DUALWAN
 		if(sw_mode == SW_MODE_ROUTER && !strcmp(dualwan_mode, "lb")){
 			for(wan_unit = WAN_UNIT_FIRST; wan_unit < WAN_UNIT_MAX; ++wan_unit){
-#ifdef RTCONFIG_USB_MODEM
-				//if(get_dualwan_by_unit(wan_unit) == WANS_DUALWAN_IF_USB && !link_modem)
-				if(get_dualwan_by_unit(wan_unit) == WANS_DUALWAN_IF_USB && !link_wan[wan_unit])
-					continue;
-#endif
-
 				current_state[wan_unit] = nvram_get_int(nvram_state[wan_unit]);
 
 				if(current_state[wan_unit] == WAN_STATE_DISABLED){
@@ -1558,7 +1551,7 @@ csprintf("\n#CONNED : Enable direct rule\n");
 					conn_state[wan_unit] = DISCONN;
 				}
 				else{
-					conn_state[wan_unit] = if_wan_phyconnected(wan_unit, current_state[wan_unit]);
+					conn_state[wan_unit] = if_wan_phyconnected(wan_unit);
 					if(conn_state[wan_unit] == CONNED)
 						conn_state[wan_unit] = if_wan_connected(wan_unit, current_state[wan_unit]);
 				}
@@ -1575,6 +1568,11 @@ csprintf("\n#CONNED : Enable direct rule\n");
 					else if(conn_state[wan_unit] == DISCONN){
 						conn_changed_state[wan_unit] = C2D;
 
+#ifdef RTCONFIG_USB_MODEM
+						if(get_dualwan_by_unit(wan_unit) == WANS_DUALWAN_IF_USB)
+							set_disconn_count(wan_unit, max_disconn_count);
+						else
+#endif
 						set_disconn_count(wan_unit, S_COUNT);
 					}
 					else if(conn_state[wan_unit] == CONNED){
@@ -1620,7 +1618,7 @@ csprintf("\n# DualWAN: Disable direct rule(D2C)\n");
 		else if(sw_mode == SW_MODE_ROUTER && !strcmp(dualwan_mode, "fo")){
 			// To check the phy connection of the standby line. 
 			for(wan_unit = WAN_UNIT_FIRST; wan_unit < WAN_UNIT_MAX; ++wan_unit){
-				conn_state[wan_unit] = if_wan_phyconnected(wan_unit, nvram_get_int(nvram_state[wan_unit]));
+				conn_state[wan_unit] = if_wan_phyconnected(wan_unit);
 			}
 
 			current_wan_unit = wan_primary_ifunit();
@@ -1742,7 +1740,7 @@ csprintf("# wanduck: set S_COUNT: changed_count[] >= max_disconn_count.\n");
 				set_disconn_count(current_wan_unit, S_IDLE);
 			}
 			else{
-				conn_state[current_wan_unit] = if_wan_phyconnected(current_wan_unit, current_state[current_wan_unit]);
+				conn_state[current_wan_unit] = if_wan_phyconnected(current_wan_unit);
 				if(conn_state[current_wan_unit] == CONNED)
 					conn_state[current_wan_unit] = if_wan_connected(current_wan_unit, current_state[current_wan_unit]);
 			}
@@ -1846,7 +1844,7 @@ csprintf("# wanduck: set S_COUNT: changed_count[] >= max_disconn_count.\n");
 		}
 		else{ // sw_mode == SW_MODE_AP, SW_MODE_REPEATER.
 			current_wan_unit = WAN_UNIT_FIRST;
-			conn_state[current_wan_unit] = if_wan_phyconnected(current_wan_unit, current_state[current_wan_unit]);
+			conn_state[current_wan_unit] = if_wan_phyconnected(current_wan_unit);
 
 			if(conn_state[current_wan_unit] == DISCONN){
 				if(conn_state_old[current_wan_unit] == CONNED)
@@ -1989,7 +1987,6 @@ csprintf("\n# Disable direct rule if not tunnelled (D2C)\n");
 		 * switch the connect to the other line.
 		 */
 		else if(conn_changed_state[current_wan_unit] == DISCONN){
-			//if((link_modem && get_disconn_count(current_wan_unit) >= max_disconn_count)
 			if(get_disconn_count(current_wan_unit) >= max_disconn_count
 #ifdef RTCONFIG_USB_MODEM
 					|| (!link_wan[current_wan_unit]

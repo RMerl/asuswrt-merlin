@@ -167,9 +167,13 @@ function showTab(name)
 		if (max > 12500) max = Math.round((max + 12499) / 12500) * 12500;
 			else max += 100;
 		if(ifname == "WIRED" || ifname == "WIRELESS0" || ifname == "WIRELESS1"){
-			updateSVG(h.rx, h.tx, max, drawMode, colorTX[drawColorTX], colorRX[drawColorRX],updateInt, updateMaxL, updateDiv, avgMode, clock);
+			updateSVG(h.rx, h.tx, max, drawMode, colorTX[drawColorTX], colorRX[drawColorRX], updateInt, updateMaxL, updateDiv, avgMode, clock);
+			document.getElementById("rx-current").className = "blue_line";
+			document.getElementById("tx-current").className = "orange_line";
 		}else{
-			updateSVG(h.rx, h.tx, max, drawMode,colorRX[drawColorRX], colorTX[drawColorTX], updateInt, updateMaxL, updateDiv, avgMode, clock);
+			updateSVG(h.tx, h.rx, max, drawMode, colorTX[drawColorTX], colorRX[drawColorRX], updateInt, updateMaxL, updateDiv, avgMode, clock);
+			document.getElementById("rx-current").className = "orange_line";
+			document.getElementById("tx-current").className = "blue_line";
 		}	
 	}
 }

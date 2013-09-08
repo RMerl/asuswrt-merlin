@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: wlif_utils.h 337178 2012-06-06 14:10:08Z $
+ * $Id: wlif_utils.h 415105 2013-07-28 03:40:28Z $
  */
 
 #ifndef _wlif_utils_h_
@@ -83,5 +83,6 @@ extern int get_wlname_by_mac(unsigned char *mac, char *wlname);
 extern char *get_ifname_by_wlmac(unsigned char *mac, char *name);
 extern int get_wsec(wsec_info_t *info, unsigned char *mac, char *osifname);
 extern bool wl_wlif_is_psta(char *ifname);
+extern bool wl_wlif_is_dwds(char *ifname);
 
 #endif /* _wlif_utils_h_ */

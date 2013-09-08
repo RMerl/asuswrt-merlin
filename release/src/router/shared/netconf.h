@@ -77,6 +77,7 @@ typedef struct _netconf_match_t {
 	uint days[2];			/* Match by day of the week (local time) (Sunday == 0) */
 	uint secs[2];			/* Match by time of day (local time) (12:00 AM == 0) */
 	struct _netconf_match_t *next, *prev;
+	uint8 dscp;         /* Match by DSCP value */
 } netconf_match_t;
 
 #ifndef __CONFIG_IPV6__

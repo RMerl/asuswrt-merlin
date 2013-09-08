@@ -1,0 +1,75 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+
+@DPATCH@
+--- a/src/uname.c
++++ b/src/uname.c
+@@ -260,7 +260,7 @@
+ int
+ main (int argc, char **argv)
+ {
+-  static char const unknown[] = "unknown";
++  static char unknown[] = "unknown";
+ 
+   /* Mask indicating which elements to print. */
+   unsigned int toprint = 0;
+@@ -301,13 +301,35 @@
+ 
+   if (toprint & PRINT_PROCESSOR)
+     {
+-      char const *element = unknown;
++      char *element = unknown;
+ #if HAVE_SYSINFO && defined SI_ARCHITECTURE
+       {
+         static char processor[257];
+         if (0 <= sysinfo (SI_ARCHITECTURE, processor, sizeof processor))
+           element = processor;
+       }
++#else
++      {
++	struct utsname u;
++	uname(&u);
++	element = u.machine;
++#ifdef linux
++	if(!strcmp(element, "i686")) { /* Check for Athlon */
++		char cinfo[1024];
++		FILE *f=fopen("/proc/cpuinfo", "r");
++		if(f) {
++			while(fgets(cinfo, 1024, f)) {
++				if(!strncmp(cinfo, "vendor_id", 9)) {
++					if(strstr(cinfo, "AuthenticAMD"))
++						element="athlon";
++					break;
++				}
++			}
++			fclose(f);
++		}
++	}
++#endif
++      }
+ #endif
+ #ifdef UNAME_PROCESSOR
+       if (element == unknown)
+@@ -345,7 +367,7 @@
+ 
+   if (toprint & PRINT_HARDWARE_PLATFORM)
+     {
+-      char const *element = unknown;
++      char *element = unknown;
+ #if HAVE_SYSINFO && defined SI_PLATFORM
+       {
+         static char hardware_platform[257];
+@@ -353,6 +375,14 @@
+                           hardware_platform, sizeof hardware_platform))
+           element = hardware_platform;
+       }
++#else
++      {
++	struct utsname u;
++	uname(&u);
++	element = u.machine;
++	if(strlen(element)==4 && element[0]=='i' && element[2]=='8' && element[3]=='6')
++		element[1]='3';
++      }
+ #endif
+ #ifdef UNAME_HARDWARE_PLATFORM
+       if (element == unknown)

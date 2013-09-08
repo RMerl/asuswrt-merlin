@@ -1,0 +1,60 @@
+#!/bin/sh
+# Ensure that shuf randomizes its input.
+
+# Copyright (C) 2006-2011 Free Software Foundation, Inc.
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+. "${srcdir=.}/init.sh"; path_prepend_ ../src
+print_ver_ shuf
+getlimits_
+
+seq 100 > in || framework_failure_
+
+shuf in >out || fail=1
+
+# Fail if the input is the same as the output.
+# This is a probabilistic test :-)
+# However, the odds of failure are very low: 1 in 100! (~ 1 in 10^158)
+compare in out > /dev/null && { fail=1; echo "not random?" 1>&2; }
+
+# Fail if the sorted output is not the same as the input.
+sort -n out > out1
+compare in out1 || { fail=1; echo "not a permutation" 1>&2; }
+
+# Exercise shuf's -i option.
+shuf -i 1-100 > out || fail=1
+compare in out > /dev/null && { fail=1; echo "not random?" 1>&2; }
+sort -n out > out1
+compare in out1 || { fail=1; echo "not a permutation" 1>&2; }
+
+# Exercise shuf's -e option.
+t=`shuf -e a b c d e | sort | fmt`
+test "$t" = 'a b c d e' || { fail=1; echo "not a permutation" 1>&2; }
+
+# Before coreutils-6.3, this would infloop.
+# "seq 1860" produces 8193 (8K + 1) bytes of output.
+seq 1860 | shuf > /dev/null || fail=1
+
+# coreutils-6.12 and earlier would output a newline terminator, not \0.
+shuf --zero-terminated -i 1-1 > out || fail=1
+printf '1\0' > exp || framework_failure_
+cmp out exp || { fail=1; echo "missing NUL terminator?" 1>&2; }
+
+# Ensure shuf -n operates efficiently for small n. Before coreutils-8.13
+# this would try to allocate $SIZE_MAX * sizeof(size_t)
+timeout 10 shuf -i1-$SIZE_MAX -n2 >/dev/null ||
+  { fail=1; echo "couldn't get a small subset" >&2; }
+
+Exit $fail

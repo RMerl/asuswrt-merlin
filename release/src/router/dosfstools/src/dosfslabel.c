@@ -82,7 +82,7 @@ static void check_atari(void)
 
 int main(int argc, char *argv[])
 {
-    DOS_FS fs;
+    DOS_FS fs = {0};
     rw = 0;
 
     char *device = NULL;
@@ -113,6 +113,8 @@ int main(int argc, char *argv[])
 
     fs_open(device, rw);
     read_boot(&fs);
+    if (fs.fat_bits == 32)
+	read_fat(&fs);
     if (!rw) {
 	fprintf(stdout, "%s\n", fs.label);
 	exit(0);

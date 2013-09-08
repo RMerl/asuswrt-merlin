@@ -54,42 +54,6 @@ legend {
 	position:relative;
 }
 
-.QISfoot{
-	width:730px;
-	height:60px;
-	text-align:right;
-	line-height:30px;
-	position:absolute;
-	top:350px;
-}
-.QISfoot input{
-	border: 1px solid #416492;
-	background:url(/images/bgaibutton.gif) #ACCCE1;
-	height:20px;
-	font-family: Arial, Helvetica, sans-serif;
-	font-size:12px;
-	margin:10px 0px 0px 10px;
-	padding:0px 10px 0px 10px;
-}
-
-.QISfoot .sbtn{  /*Lock 1206 modified*/
-	border: 1px outset #333;
-	background:url(/images/sbtn0.gif) #FFCC66;
-	height:20px;
-	font-family:Verdana;
-	font-size:12px;
-	margin-right:5px;
-	margin-left:5px;	
-  padding:0 .70em 0 .70em;
-  width:auto;
-  overflow:visible;
-	cursor:pointer;
-}
-.QISfoot .sbtn:hover{
-	background:url(/images/sbtn.gif) #FFCC66;
-	color:#FFFFFF;
-}
-
 /*   0831 added for setting Form table in QIS iframe*/
 .QISform{
 	width:600px;
@@ -371,4 +335,28 @@ legend {
 	font-family:Georgia, Arial, sans-serif;
 	line-height: 20px;
 	width:280px;
+}
+#radio_0{
+  background: url(../images/survey/radio_status.png);
+  background-position: -0px -0px; width: 30px; height: 30px;
+}
+#radio_1{
+  background: url(../images/survey/radio_status.png);
+  background-position: -0px -30px; width: 30px; height: 30px;
+}	
+#radio_2{
+  background: url(../images/survey/radio_status.png);
+  background-position: -0px -60px; width: 30px; height: 30px;
+}	
+#radio_3{
+  background: url(../images/survey/radio_status.png);
+  background-position: -0px -90px; width: 30px; height: 30px;
+}	
+#radio_4{
+  background: url(../images/survey/radio_status.png);
+  background-position: -0px -120px; width: 30px; height: 30px;
+}	
+#radio_5{
+  background: url(../images/survey/radio_status.png);
+  background-position: -0px -150px; width: 30px; height: 30px;
 }

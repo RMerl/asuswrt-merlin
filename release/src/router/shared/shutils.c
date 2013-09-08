@@ -1591,20 +1591,6 @@ long uptime(void)
 	return info.uptime;
 }
 
-int is_hwnat_loaded(void)
-{
-	DIR *dir_to_open = NULL;
-
-	dir_to_open = opendir("/sys/module/hw_nat");
-	if (dir_to_open)
-	{
-		closedir(dir_to_open);
-		return 1;
-	}
-
-	return 0;
-}
-
 int _vstrsep(char *buf, const char *sep, ...)
 {
 	va_list ap;

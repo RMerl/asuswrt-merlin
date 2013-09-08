@@ -37,41 +37,6 @@ legend {
 	position:relative;
 }
 
-.QISfoot{
-	height:60px;
-	text-align:right;
-	line-height:30px;
-	position:absolute;
-	top:350px;
-}
-.QISfoot input{
-	border: 1px solid #416492;
-	background:url(/images/bgaibutton.gif) #ACCCE1;
-	height:20px;
-	font-family: Arial, Helvetica, sans-serif;
-	font-size:14px;
-	margin:10px 0px 0px 10px;
-	padding:0px 10px 0px 10px;
-}
-
-.QISfoot .sbtn{
-	border: 1px outset #333;
-	background:url(/images/sbtn0.gif) #FFCC66;
-	height:20px;
-	font-family:Verdana;
-	font-size:14px;
-	margin-right:5px;
-	margin-left:5px;	
-  padding:0 .70em 0 .70em;
-  width:auto;
-  overflow:visible;
-	cursor:pointer;
-}
-.QISfoot .sbtn:hover{
-	background:url(/images/sbtn.gif) #FFCC66;
-	 
-}
-
 .QISform{
 	font-size:13px;
 }

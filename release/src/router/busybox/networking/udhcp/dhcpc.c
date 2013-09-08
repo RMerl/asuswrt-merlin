@@ -593,36 +593,21 @@ static void init_packet(struct dhcp_packet *packet, char type)
 
 static void add_client_options(struct dhcp_packet *packet)
 {
-	uint8_t c;
 	int i, end, len;
 
-	uint8_t optionsToRequest[sizeof(client_config.opt_mask)];
-	uint16_t currOption;
-/*
 	len = sizeof(struct ip_udp_dhcp_packet);
-	if (client_config.client_mtu == 0 ||
-	    client_config.client_mtu > len)
-		udhcp_add_simple_option(packet, DHCP_MAX_SIZE, htons(len));
-*/
-	udhcp_add_simple_option(packet, DHCP_MAX_SIZE, htons(576));
+	if (client_config.client_mtu > 0)
+		len = MIN(client_config.client_mtu, len);
+	udhcp_add_simple_option(packet, DHCP_MAX_SIZE, htons(len));
 
 	/* Add a "param req" option with the list of options we'd like to have
 	 * from stubborn DHCP servers. Pull the data from the struct in common.c.
 	 * No bounds checking because it goes towards the head of the packet. */
 	end = udhcp_end_option(packet->options);
 	len = 0;
-	memcpy(optionsToRequest, client_config.opt_mask, sizeof(optionsToRequest));
-	if(!client_config.no_default_options) {
-		for (i = 0; (c = dhcp_optflags[i].code) != 0; i++) {
-			if (dhcp_optflags[i].flags & OPTION_REQ) {
-				optionsToRequest[c >> 3] |= 1 << (c & 7);
-			}
-		}
-	}
-	for(currOption = 0; currOption < sizeof(optionsToRequest) * 8; currOption++) {
-		if(optionsToRequest[currOption >> 3] & 1 << (currOption & 7))
-		{
-			packet->options[end + OPT_DATA + len] = (uint8_t)currOption;
+	for (i = 1; i < DHCP_END; i++) {
+		if (client_config.opt_mask[i >> 3] & (1 << (i & 7))) {
+			packet->options[end + OPT_DATA + len] = i;
 			len++;
 		}
 	}
@@ -1157,34 +1142,35 @@ static void client_background(void)
 //usage:# define IF_UDHCP_VERBOSE(...)
 //usage:#endif
 //usage:#define udhcpc_trivial_usage
-//usage:       "[-fbnq"IF_UDHCP_VERBOSE("v")"oCRB] [-i IFACE] [-r IP] [-s PROG] [-p PIDFILE]\n"
-//usage:       "	[-V VENDOR] [-x OPT:VAL]... [-O OPT]..." IF_FEATURE_UDHCP_PORT(" [-P N]")
+//usage:       "[-fbq"IF_UDHCP_VERBOSE("v")IF_FEATURE_UDHCPC_ARPING("a")"RB] [-t N] [-T SEC] [-A SEC/-n]\n"
+//usage:       "	[-i IFACE]"IF_FEATURE_UDHCP_PORT(" [-P PORT]")" [-s PROG] [-p PIDFILE]\n"
+//usage:       "	[-oC] [-r IP] [-V VENDOR] [-F NAME] [-x OPT:VAL]... [-O OPT]..."
 //usage:#define udhcpc_full_usage "\n"
 //usage:	IF_LONG_OPTS(
 //usage:     "\n	-i,--interface IFACE	Interface to use (default eth0)"
-//usage:     "\n	-p,--pidfile FILE	Create pidfile"
+//usage:	IF_FEATURE_UDHCP_PORT(
+//usage:     "\n	-P,--client-port PORT	Use PORT (default 68)"
+//usage:	)
 //usage:     "\n	-s,--script PROG	Run PROG at DHCP events (default "CONFIG_UDHCPC_DEFAULT_SCRIPT")"
+//usage:     "\n	-p,--pidfile FILE	Create pidfile"
 //usage:     "\n	-B,--broadcast		Request broadcast replies"
-//usage:     "\n	-t,--retries N		Send up to N discover packets"
-//usage:     "\n	-T,--timeout N		Pause between packets (default 3 seconds)"
-//usage:     "\n	-A,--tryagain N		Wait N seconds after failure (default 20)"
+//usage:     "\n	-t,--retries N		Send up to N discover packets (default 3)"
+//usage:     "\n	-T,--timeout SEC	Pause between packets (default 3)"
+//usage:     "\n	-A,--tryagain SEC	Wait if lease is not obtained (default 20)"
+//usage:     "\n	-n,--now		Exit if lease is not obtained"
+//usage:     "\n	-q,--quit		Exit after obtaining lease"
+//usage:     "\n	-R,--release		Release IP on exit"
 //usage:     "\n	-f,--foreground		Run in foreground"
 //usage:	USE_FOR_MMU(
 //usage:     "\n	-b,--background		Background if lease is not obtained"
 //usage:	)
-//usage:     "\n	-n,--now		Exit if lease is not obtained"
-//usage:     "\n	-q,--quit		Exit after obtaining lease"
-//usage:     "\n	-R,--release		Release IP on exit"
 //usage:     "\n	-S,--syslog		Log to syslog too"
-//usage:	IF_FEATURE_UDHCP_PORT(
-//usage:     "\n	-P,--client-port N	Use port N (default 68)"
-//usage:	)
 //usage:	IF_FEATURE_UDHCPC_ARPING(
 //usage:     "\n	-a,--arping		Use arping to validate offered address"
 //usage:	)
-//usage:     "\n	-O,--request-option OPT	Request option OPT from server (cumulative)"
-//usage:     "\n	-o,--no-default-options	Don't request any options (unless -O is given)"
 //usage:     "\n	-r,--request IP		Request this IP address"
+//usage:     "\n	-o,--no-default-options	Don't request any options (unless -O is given)"
+//usage:     "\n	-O,--request-option OPT	Request option OPT from server (cumulative)"
 //usage:     "\n	-x OPT:VAL		Include option OPT in sent packets (cumulative)"
 //usage:     "\n				Examples of string, numeric, and hex byte opts:"
 //usage:     "\n				-x hostname:bbox - option 12"
@@ -1199,29 +1185,29 @@ static void client_background(void)
 //usage:	)
 //usage:	IF_NOT_LONG_OPTS(
 //usage:     "\n	-i IFACE	Interface to use (default eth0)"
-//usage:     "\n	-p FILE		Create pidfile"
+//usage:	IF_FEATURE_UDHCP_PORT(
+//usage:     "\n	-P PORT		Use PORT (default 68)"
+//usage:	)
 //usage:     "\n	-s PROG		Run PROG at DHCP events (default "CONFIG_UDHCPC_DEFAULT_SCRIPT")"
+//usage:     "\n	-p FILE		Create pidfile"
 //usage:     "\n	-B		Request broadcast replies"
-//usage:     "\n	-t N		Send up to N discover packets"
-//usage:     "\n	-T N		Pause between packets (default 3 seconds)"
-//usage:     "\n	-A N		Wait N seconds (default 20) after failure"
+//usage:     "\n	-t N		Send up to N discover packets (default 3)"
+//usage:     "\n	-T SEC		Pause between packets (default 3)"
+//usage:     "\n	-A SEC		Wait if lease is not obtained (default 20)"
+//usage:     "\n	-n		Exit if lease is not obtained"
+//usage:     "\n	-q		Exit after obtaining lease"
+//usage:     "\n	-R		Release IP on exit"
 //usage:     "\n	-f		Run in foreground"
 //usage:	USE_FOR_MMU(
 //usage:     "\n	-b		Background if lease is not obtained"
 //usage:	)
-//usage:     "\n	-n		Exit if lease is not obtained"
-//usage:     "\n	-q		Exit after obtaining lease"
-//usage:     "\n	-R		Release IP on exit"
 //usage:     "\n	-S		Log to syslog too"
-//usage:	IF_FEATURE_UDHCP_PORT(
-//usage:     "\n	-P N		Use port N (default 68)"
-//usage:	)
 //usage:	IF_FEATURE_UDHCPC_ARPING(
 //usage:     "\n	-a		Use arping to validate offered address"
 //usage:	)
-//usage:     "\n	-O OPT		Request option OPT from server (cumulative)"
-//usage:     "\n	-o		Don't request any options (unless -O is given)"
 //usage:     "\n	-r IP		Request this IP address"
+//usage:     "\n	-o		Don't request any options (unless -O is given)"
+//usage:     "\n	-O OPT		Request option OPT from server (cumulative)"
 //usage:     "\n	-x OPT:VAL	Include option OPT in sent packets (cumulative)"
 //usage:     "\n			Examples of string, numeric, and hex byte opts:"
 //usage:     "\n			-x hostname:bbox - option 12"
@@ -1288,6 +1274,8 @@ int udhcpc_main(int argc UNUSED_PARAM, char **argv)
 		IF_UDHCP_VERBOSE(, &dhcp_verbose)
 	);
 	if (opt & (OPT_h|OPT_H)) {
+		//msg added 2011-11
+	//ASUS:	bb_error_msg("option -h NAME is deprecated, use -x hostname:NAME");
 		client_config.hostname = alloc_dhcp_option(DHCP_HOST_NAME, str_h, 0);
 	}
 	if (opt & OPT_F) {
@@ -1313,8 +1301,6 @@ int udhcpc_main(int argc UNUSED_PARAM, char **argv)
 		SERVER_PORT = CLIENT_PORT - 1;
 	}
 #endif
-	if (opt & OPT_o)
-		client_config.no_default_options = 1;
 	while (list_O) {
 		char *optstr = llist_pop(&list_O);
 		unsigned n = bb_strtou(optstr, NULL, 0);
@@ -1323,6 +1309,14 @@ int udhcpc_main(int argc UNUSED_PARAM, char **argv)
 			n = dhcp_optflags[n].code;
 		}
 		client_config.opt_mask[n >> 3] |= 1 << (n & 7);
+	}
+	if (!(opt & OPT_o)) {
+		unsigned i, n;
+		for (i = 0; (n = dhcp_optflags[i].code) != 0; i++) {
+			if (dhcp_optflags[i].flags & OPTION_REQ) {
+				client_config.opt_mask[n >> 3] |= 1 << (n & 7);
+			}
+		}
 	}
 	while (list_x) {
 		char *optstr = llist_pop(&list_x);
@@ -1419,8 +1413,8 @@ int udhcpc_main(int argc UNUSED_PARAM, char **argv)
 		retval = 0;
 		/* If we already timed out, fall through with retval = 0, else... */
 		if ((int)tv.tv_sec > 0) {
+			log1("Waiting on select %u seconds", (int)tv.tv_sec);
 			timestamp_before_wait = (unsigned)monotonic_sec();
-			log1("Waiting on select...");
 			retval = select(max_fd + 1, &rfds, NULL, NULL, &tv);
 			if (retval < 0) {
 				/* EINTR? A signal was caught, don't panic */
@@ -1458,7 +1452,7 @@ int udhcpc_main(int argc UNUSED_PARAM, char **argv)
 
 			switch (state) {
 			case INIT_SELECTING:
-				if (packet_num < discover_retries) {
+				if (!discover_retries || packet_num < discover_retries) {
 					if (packet_num == 0)
 						xid = random_xid();
 					/* broadcast */
@@ -1487,7 +1481,7 @@ int udhcpc_main(int argc UNUSED_PARAM, char **argv)
 				packet_num = 0;
 				continue;
 			case REQUESTING:
-				if (packet_num < discover_retries) {
+				if (!discover_retries || packet_num < discover_retries) {
 					/* send broadcast select packet */
 					send_select(xid, server_addr, requested_ip);
 					timeout = discover_timeout;
@@ -1739,7 +1733,7 @@ int udhcpc_main(int argc UNUSED_PARAM, char **argv)
 #endif
 				/* enter bound state */
 				timeout = lease_seconds / 2;
-			        temp_addr.s_addr = packet.yiaddr;
+				temp_addr.s_addr = packet.yiaddr;
 				bb_info_msg("Lease of %s obtained, lease time %u",
 					inet_ntoa(temp_addr), (unsigned)lease_seconds);
 				requested_ip = packet.yiaddr;

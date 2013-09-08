@@ -14337,7 +14337,7 @@ with_included_expat=no
 
 if test "$NEON_NEED_XML_PARSER" = "yes"; then
   # Find an XML parser
-  neon_xml_parser=none
+  neon_xml_parser=libxml2
 
   # Forced choice of expat:
   case $with_expat in

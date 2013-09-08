@@ -42,6 +42,9 @@ function initial(){
 			if('<% nvram_get("wl_subunit"); %>' != '-1'){
 				tabclickhandler('<% nvram_get("wl_unit"); %>');
 			}
+			else{
+				tabclickhandler('<% nvram_get("wlc_band"); %>');
+			}
 		}
 	}
 	else{
@@ -63,10 +66,11 @@ function initial(){
 	if(band5g_support){
 		$("t0").style.display = "";
 		$("t1").style.display = "";
-		/* allow to use the other band as a wireless AP
-		if(parent.sw_mode == 4)
+
+		// disallow to use the other band as a wireless AP
+		if(parent.sw_mode == 4 && !localAP_support){
 			$('t'+((parseInt(<% nvram_get("wlc_band"); %>+1))%2)).style.display = 'none';
-		*/
+		}
 	}
 
 	if($("t1").className == "tabclick_NW" && 	parent.Rawifi_support)	//no exist Rawifi
@@ -96,10 +100,10 @@ function initial(){
 	wl_auth_mode_change(1);
 	show_LAN_info();
 	if(parent.sw_mode == 4)
-		parent.show_middle_status('<% nvram_get("wlc_auth_mode"); %>', '', 0);		
+		parent.show_middle_status('<% nvram_get("wlc_auth_mode"); %>', 0);		
 	else
-		parent.show_middle_status(document.form.wl_auth_mode_x.value, document.form.wl_wpa_mode.value, parseInt(document.form.wl_wep_x.value));
-	
+		parent.show_middle_status(document.form.wl_auth_mode_x.value, parseInt(document.form.wl_wep_x.value));
+
 	flash_button();
 	automode_hint();		
 }
@@ -292,7 +296,8 @@ function change_wlweptype(wep_type_obj){
 	}
 	else{
 		if(document.form.wl_nmode_x.value == 1 && document.form.wl_wep_x.value != 0){
-			nmode_limitation2();
+			nmode_limitation();
+			wl_auth_mode_change(1);
 		}
 		$("all_wep_key").style.display = "";
 		$("asus_wep_key").style.display = "";
@@ -446,81 +451,24 @@ function submitForm(){
 	return true;
 }
 
-function startPBCmethod(){
-}
-
-function wpsPBC(obj){
-}
-
-function nmode_limitation2(){ //Lock add 2009.11.05 for TKIP limitation in n mode.
-	if(document.form.wl_nmode_x.value == "1"){
-		if(document.form.wl_auth_mode_x.selectedIndex == 0 && (document.form.wl_wep_x.selectedIndex == "1" || document.form.wl_wep_x.selectedIndex == "2")){
-			alert("<#WLANConfig11n_nmode_limition_hint#>");
-			document.form.wl_auth_mode_x.selectedIndex = 3;
-			document.form.wl_wpa_mode.value = 2;
-		}
-		else if(document.form.wl_auth_mode_x.selectedIndex == 1){
-			alert("<#WLANConfig11n_nmode_limition_hint#>");
-			document.form.wl_auth_mode_x.selectedIndex = 3;
-			document.form.wl_wpa_mode.value = 2;
-		}
-		else if(document.form.wl_auth_mode_x.selectedIndex == 2){
-			alert("<#WLANConfig11n_nmode_limition_hint#>");
-			document.form.wl_auth_mode_x.selectedIndex = 3;
-			document.form.wl_wpa_mode.value = 2;
-		}
-		else if(document.form.wl_auth_mode_x.selectedIndex == 5){
-			alert("<#WLANConfig11n_nmode_limition_hint#>");
-			document.form.wl_auth_mode_x.selectedIndex = 6;
-		}
-		wl_auth_mode_change(1);
-	}
-}
-
 function clean_input(obj){
 	if(obj.value == "<#wireless_psk_fillin#>")
 			obj.value = "";
 }
-
-function change_authmode(o, s, v){
-	change = 1;
-	pageChanged = 1;	
-	switchType(document.form.wl_wpa_psk,true);
-	
-	if(v == "wl_auth_mode_x"){ /* Handle AuthenticationMethod Change */
-		wl_auth_mode_change(0);
-		if(o.value == "psk" || o.value == "psk2" || o.value == "pskpsk2" || o.value == "wpa" || o.value == "wpawpa2"){
-			opts = document.form.wl_auth_mode_x.options;			
-			if(opts[opts.selectedIndex].text == "WPA-Personal"){
-				document.form.wl_wpa_mode.value="1";
-			}
-			else if(opts[opts.selectedIndex].text == "WPA2-Personal")
-				document.form.wl_wpa_mode.value="2";
-			else if(opts[opts.selectedIndex].text == "WPA-Auto-Personal")
-				document.form.wl_wpa_mode.value="0";
-			else if(opts[opts.selectedIndex].text == "WPA-Enterprise")
-				document.form.wl_wpa_mode.value="3";
-			else if(opts[opts.selectedIndex].text == "WPA-Auto-Enterprise")
-				document.form.wl_wpa_mode.value="4";
-
-		}
-		else if(o.value == "shared"){ //2009.03.10 Lock
-			document.form.wl_key.focus();
-		}
-		nmode_limitation();
-
-	}
-	
-	automode_hint();
-	return true;
-}
-
 
 function gotoSiteSurvey(){
 	if(sw_mode == 2)
 		parent.location.href = '/QIS_wizard.htm?flag=sitesurvey&band='+'<% nvram_get("wl_unit"); %>';
 	else
 		parent.location.href = '/QIS_wizard.htm?flag=sitesurvey_mb';
+}
+
+function startPBCmethod(){
+	return 0;
+}
+
+function wpsPBC(obj){
+	return 0;
 }
 
 function manualSetup(){
@@ -539,7 +487,6 @@ function manualSetup(){
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
 <input type="hidden" name="wps_enable" value="<% nvram_get("wps_enable"); %>">
 <input type="hidden" name="wsc_config_state" value="<% nvram_get("wsc_config_state"); %>">
-<input type="hidden" name="wl_wpa_mode" value="<% nvram_get("wl_wpa_mode"); %>">
 <input type="hidden" name="wl_key1" value="">
 <input type="hidden" name="wl_key2" value="">
 <input type="hidden" name="wl_key3" value="">
@@ -548,7 +495,6 @@ function manualSetup(){
 <input type="hidden" name="wlc_ure_ssid_org" value="<% nvram_char_to_ascii("WLANConfig11b", "wlc_ure_ssid"); %>" disabled>
 <input type="hidden" name="wl_wpa_psk_org" value="<% nvram_char_to_ascii("WLANConfig11b", "wl_wpa_psk"); %>">
 <input type="hidden" name="wl_auth_mode_orig" value="<% nvram_get("wl_auth_mode_x"); %>">
-<input type="hidden" name="wl_wpa_mode_orig" value="<% nvram_get("wl_wpa_mode"); %>">
 <input type="hidden" name="wl_wep_x_orig" value="<% nvram_get("wl_wep_x"); %>">
 <input type="hidden" name="wl_key_type" value="<% nvram_get("wl_key_type"); %>"><!--Lock Add 1125 for ralink platform-->
 <input type="hidden" name="wl_key_org" value="<% nvram_char_to_ascii("WLANConfig11b", "wl_key"); %>">
@@ -606,7 +552,7 @@ function manualSetup(){
   		<tr>
     			<td style="padding:5px 10px 0px 10px; *padding:1px 10px 0px 10px;">
     					<p class="formfonttitle_nwm" ><#WLANConfig11b_AuthenticationMethod_itemname#></p>
-				  		<select style="*margin-top:-7px;" name="wl_auth_mode_x" class="input_option" onChange="return change_authmode(this, 'WLANConfig11b', 'wl_auth_mode_x');">
+				  		<select style="*margin-top:-7px;" name="wl_auth_mode_x" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_auth_mode_x');">
 							<option value="open"    <% nvram_match("wl_auth_mode_x", "open",   "selected"); %>>Open System</option>
 							<option value="shared"  <% nvram_match("wl_auth_mode_x", "shared", "selected"); %>>Shared Key</option>
 							<option value="psk"     <% nvram_match("wl_auth_mode_x", "psk",    "selected"); %>>WPA-Personal</option>

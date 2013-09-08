@@ -1,7 +1,7 @@
 /*
  * WPS Registratar API
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: wps_apapi.h 372004 2012-11-30 03:46:58Z $
+ * $Id: wps_apapi.h 383924 2013-02-08 04:14:39Z $
  */
 
 #ifndef _WPS_AP_API_H_
@@ -37,13 +37,6 @@ typedef enum {
 } ap_eap_state_t;
 
 typedef enum {
-	WPS_WL_AKM_NONE = 0,
-	WPS_WL_AKM_PSK,
-	WPS_WL_AKM_PSK2,
-	WPS_WL_AKM_BOTH
-} WPS_WL_AKM_E;
-
-typedef enum {
 	WPS_PROC_STATE_INIT = 0,
 	WPS_PROC_STATE_PROCESSING,
 	WPS_PROC_STATE_SUCCESS,
@@ -57,7 +50,10 @@ int wps_get_mode(void *mc_dev);
 int wps_processMsg(void *mc_dev, void *inBuffer, uint32 in_len, void *outBuffer, uint32 *out_len,
 	TRANSPORT_TYPE m_transportType);
 uint32 wpsap_start_enrollment(void *mc_dev, char *ap_pin);
+uint32 wpsap_start_enrollment_devpwid(void *mc_dev, char *ap_pin, uint16 devicepwid);
 uint32 wpsap_start_registration(void *mc_dev, char *sta_pin);
+uint32 wpsap_start_registration_devpwid(void *mc_dev, char *sta_pin, uint8 *pub_key_hash,
+	uint16 devicepwid);
 unsigned char * wps_get_mac_income(void *mc_dev);
 unsigned char *wps_get_mac(void *mc_dev);
 uint8 wps_get_version2(void *mc_dev);

@@ -1,7 +1,7 @@
 /*
  * Broadcom WPS Set Selected Registrar
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: ap_ssr.h 241182 2011-02-17 21:50:03Z $
+ * $Id: ap_ssr.h 383924 2013-02-08 04:14:39Z $
  */
 
 #ifndef __AP_SSR_H__
@@ -43,7 +43,7 @@ typedef struct wps_ssr_scb_s {
 	char ipaddr[16]; /* string format */
 	char wps_ifname[IFNAMSIZ];
 	int authorizedMacs_len;
-	char authorizedMacs[SIZE_MAC_ADDR * SIZE_AUTHORIZEDMACS_NUM]; /* <= 30 B */	
+	char authorizedMacs[SIZE_MAC_ADDR * SIZE_AUTHORIZEDMACS_NUM]; /* <= 30 B */
 	char uuid_R[SIZE_UUID]; /* unique identifier for registrar = 16 B */
 	unsigned short selRegCfgMethods;
 	unsigned short devPwdId;

@@ -1,0 +1,10 @@
+Most of the coreutils documentation is available as info pages. (Try "info
+coreutils" at a command prompt). A version of this documentation is also
+available online at
+http://www.gnu.org/software/coreutils/manual/html_node/index.html
+(Note that the online version may not reflect the version of coreutils in this
+package.)
+
+There is also a frequently asked questions document available at
+http://www.gnu.org/software/coreutils/faq/coreutils-faq.html
+

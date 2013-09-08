@@ -1,0 +1,971 @@
+#! /bin/sh
+# Print a version string.
+scriptversion=2011-08-11.17; # UTC
+
+# Bootstrap this package from checked-out sources.
+
+# Copyright (C) 2003-2011 Free Software Foundation, Inc.
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Originally written by Paul Eggert.  The canonical version of this
+# script is maintained as build-aux/bootstrap in gnulib, however, to
+# be useful to your project, you should place a copy of it under
+# version control in the top-level directory of your project.  The
+# intent is that all customization can be done with a bootstrap.conf
+# file also maintained in your version control; gnulib comes with a
+# template build-aux/bootstrap.conf to get you started.
+
+# Please report bugs or propose patches to bug-gnulib@gnu.org.
+
+nl='
+'
+
+# Ensure file names are sorted consistently across platforms.
+LC_ALL=C
+export LC_ALL
+
+local_gl_dir=gl
+
+# Temporary directory names.
+bt='._bootmp'
+bt_regex=`echo "$bt"| sed 's/\./[.]/g'`
+bt2=${bt}2
+me=$0
+
+usage() {
+  cat <<EOF
+Usage: $me [OPTION]...
+Bootstrap this package from the checked-out sources.
+
+Options:
+ --gnulib-srcdir=DIRNAME  specify the local directory where gnulib
+                          sources reside.  Use this if you already
+                          have gnulib sources on your machine, and
+                          do not want to waste your bandwidth downloading
+                          them again.  Defaults to \$GNULIB_SRCDIR
+ --bootstrap-sync         if this bootstrap script is not identical to
+                          the version in the local gnulib sources,
+                          update this script, and then restart it with
+                          /bin/sh or the shell \$CONFIG_SHELL
+ --no-bootstrap-sync      do not check whether bootstrap is out of sync
+ --copy                   copy files instead of creating symbolic links
+ --force                  attempt to bootstrap even if the sources seem
+                          not to have been checked out
+ --no-git                 do not use git to update gnulib.  Requires that
+                          --gnulib-srcdir point to a correct gnulib snapshot
+ --skip-po                do not download po files
+
+If the file $me.conf exists in the same directory as this script, its
+contents are read as shell variables to configure the bootstrap.
+
+For build prerequisites, environment variables like \$AUTOCONF and \$AMTAR
+are honored.
+
+Running without arguments will suffice in most cases.
+EOF
+}
+
+# Configuration.
+
+# Name of the Makefile.am
+gnulib_mk=gnulib.mk
+
+# List of gnulib modules needed.
+gnulib_modules=
+
+# Any gnulib files needed that are not in modules.
+gnulib_files=
+
+# A function to be called to edit gnulib.mk right after it's created.
+# Override it via your own definition in bootstrap.conf.
+gnulib_mk_hook() { :; }
+
+# A function to be called after everything else in this script.
+# Override it via your own definition in bootstrap.conf.
+bootstrap_epilogue() { :; }
+
+# The command to download all .po files for a specified domain into
+# a specified directory.  Fill in the first %s is the domain name, and
+# the second with the destination directory.  Use rsync's -L and -r
+# options because the latest/%s directory and the .po files within are
+# all symlinks.
+po_download_command_format=\
+"rsync --delete --exclude '*.s1' -Lrtvz \
+ 'translationproject.org::tp/latest/%s/' '%s'"
+
+extract_package_name='
+  /^AC_INIT(/{
+     /.*,.*,.*, */{
+       s///
+       s/[][]//g
+       s/)$//
+       p
+       q
+     }
+     s/AC_INIT(\[*//
+     s/]*,.*//
+     s/^GNU //
+     y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/
+     s/[^A-Za-z0-9_]/-/g
+     p
+  }
+'
+package=`sed -n "$extract_package_name" configure.ac` || exit
+gnulib_name=lib$package
+
+build_aux=build-aux
+source_base=lib
+m4_base=m4
+doc_base=doc
+tests_base=tests
+gnulib_extra_files=''
+
+# Additional gnulib-tool options to use.  Use "\newline" to break lines.
+gnulib_tool_option_extras=
+
+# Other locale categories that need message catalogs.
+EXTRA_LOCALE_CATEGORIES=
+
+# Additional xgettext options to use.  Use "\\\newline" to break lines.
+XGETTEXT_OPTIONS='\\\
+ --flag=_:1:pass-c-format\\\
+ --flag=N_:1:pass-c-format\\\
+ --flag=error:3:c-format --flag=error_at_line:5:c-format\\\
+'
+
+# Package bug report address and copyright holder for gettext files
+COPYRIGHT_HOLDER='Free Software Foundation, Inc.'
+MSGID_BUGS_ADDRESS=bug-$package@gnu.org
+
+# Files we don't want to import.
+excluded_files=
+
+# File that should exist in the top directory of a checked out hierarchy,
+# but not in a distribution tarball.
+checkout_only_file=README-hacking
+
+# Whether to use copies instead of symlinks.
+copy=false
+
+# Set this to '.cvsignore .gitignore' in bootstrap.conf if you want
+# those files to be generated in directories like lib/, m4/, and po/.
+# Or set it to 'auto' to make this script select which to use based
+# on which version control system (if any) is used in the source directory.
+vc_ignore=auto
+
+# Set this to true in bootstrap.conf to enable --bootstrap-sync by
+# default.
+bootstrap_sync=false
+
+# Use git to update gnulib sources
+use_git=true
+
+# find_tool ENVVAR NAMES...
+# -------------------------
+# Search for a required program.  Use the value of ENVVAR, if set,
+# otherwise find the first of the NAMES that can be run (i.e.,
+# supports --version).  If found, set ENVVAR to the program name,
+# die otherwise.
+find_tool ()
+{
+  find_tool_envvar=$1
+  shift
+  find_tool_names=$@
+  eval "find_tool_res=\$$find_tool_envvar"
+  if test x"$find_tool_res" = x; then
+    for i
+    do
+      if ($i --version </dev/null) >/dev/null 2>&1; then
+       find_tool_res=$i
+       break
+      fi
+    done
+  else
+    find_tool_error_prefix="\$$find_tool_envvar: "
+  fi
+  if test x"$find_tool_res" = x; then
+    echo >&2 "$me: one of these is required: $find_tool_names"
+    exit 1
+  fi
+  ($find_tool_res --version </dev/null) >/dev/null 2>&1 || {
+    echo >&2 "$me: ${find_tool_error_prefix}cannot run $find_tool_res --version"
+    exit 1
+  }
+  eval "$find_tool_envvar=\$find_tool_res"
+  eval "export $find_tool_envvar"
+}
+
+# Find sha1sum, named gsha1sum on MacPorts, and shasum on MacOS 10.6.
+find_tool SHA1SUM sha1sum gsha1sum shasum
+
+# Override the default configuration, if necessary.
+# Make sure that bootstrap.conf is sourced from the current directory
+# if we were invoked as "sh bootstrap".
+case "$0" in
+  */*) test -r "$0.conf" && . "$0.conf" ;;
+  *) test -r "$0.conf" && . ./"$0.conf" ;;
+esac
+
+# Extra files from gnulib, which override files from other sources.
+test -z "${gnulib_extra_files}" && \
+  gnulib_extra_files="
+        $build_aux/install-sh
+        $build_aux/missing
+        $build_aux/mdate-sh
+        $build_aux/texinfo.tex
+        $build_aux/depcomp
+        $build_aux/config.guess
+        $build_aux/config.sub
+        doc/INSTALL
+"
+
+if test "$vc_ignore" = auto; then
+  vc_ignore=
+  test -d .git && vc_ignore=.gitignore
+  test -d CVS && vc_ignore="$vc_ignore .cvsignore"
+fi
+
+# Translate configuration into internal form.
+
+# Parse options.
+
+for option
+do
+  case $option in
+  --help)
+    usage
+    exit;;
+  --gnulib-srcdir=*)
+    GNULIB_SRCDIR=`expr "X$option" : 'X--gnulib-srcdir=\(.*\)'`;;
+  --skip-po)
+    SKIP_PO=t;;
+  --force)
+    checkout_only_file=;;
+  --copy)
+    copy=true;;
+  --bootstrap-sync)
+    bootstrap_sync=true;;
+  --no-bootstrap-sync)
+    bootstrap_sync=false;;
+  --no-git)
+    use_git=false;;
+  *)
+    echo >&2 "$0: $option: unknown option"
+    exit 1;;
+  esac
+done
+
+if $use_git || test -d "$GNULIB_SRCDIR"; then
+  :
+else
+  echo "$0: Error: --no-git requires --gnulib-srcdir" >&2
+  exit 1
+fi
+
+if test -n "$checkout_only_file" && test ! -r "$checkout_only_file"; then
+  echo "$0: Bootstrapping from a non-checked-out distribution is risky." >&2
+  exit 1
+fi
+
+# Ensure that lines starting with ! sort last, per gitignore conventions
+# for whitelisting exceptions after a more generic blacklist pattern.
+sort_patterns() {
+  sort -u "$@" | sed '/^!/ {
+    H
+    d
+  }
+  $ {
+    P
+    x
+    s/^\n//
+  }' | sed '/^$/d'
+}
+
+# If $STR is not already on a line by itself in $FILE, insert it,
+# sorting the new contents of the file and replacing $FILE with the result.
+insert_sorted_if_absent() {
+  file=$1
+  str=$2
+  test -f $file || touch $file
+  echo "$str" | sort_patterns - $file | cmp - $file > /dev/null \
+    || { echo "$str" | sort_patterns - $file > $file.bak \
+      && mv $file.bak $file; } \
+    || exit 1
+}
+
+# Adjust $PATTERN for $VC_IGNORE_FILE and insert it with
+# insert_sorted_if_absent.
+insert_vc_ignore() {
+  vc_ignore_file="$1"
+  pattern="$2"
+  case $vc_ignore_file in
+  *.gitignore)
+    # A .gitignore entry that does not start with `/' applies
+    # recursively to subdirectories, so prepend `/' to every
+    # .gitignore entry.
+    pattern=`echo "$pattern" | sed s,^,/,`;;
+  esac
+  insert_sorted_if_absent "$vc_ignore_file" "$pattern"
+}
+
+# Die if there is no AC_CONFIG_AUX_DIR($build_aux) line in configure.ac.
+found_aux_dir=no
+grep '^[	 ]*AC_CONFIG_AUX_DIR(\['"$build_aux"'\])' configure.ac \
+    >/dev/null && found_aux_dir=yes
+grep '^[	 ]*AC_CONFIG_AUX_DIR('"$build_aux"')' configure.ac \
+    >/dev/null && found_aux_dir=yes
+if test $found_aux_dir = no; then
+  echo "$0: expected line not found in configure.ac. Add the following:" >&2
+  echo "  AC_CONFIG_AUX_DIR([$build_aux])" >&2
+  exit 1
+fi
+
+# If $build_aux doesn't exist, create it now, otherwise some bits
+# below will malfunction.  If creating it, also mark it as ignored.
+if test ! -d $build_aux; then
+  mkdir $build_aux
+  for dot_ig in x $vc_ignore; do
+    test $dot_ig = x && continue
+    insert_vc_ignore $dot_ig $build_aux
+  done
+fi
+
+# Note this deviates from the version comparison in automake
+# in that it treats 1.5 < 1.5.0, and treats 1.4.4a < 1.4-p3a
+# but this should suffice as we won't be specifying old
+# version formats or redundant trailing .0 in bootstrap.conf.
+# If we did want full compatibility then we should probably
+# use m4_version_compare from autoconf.
+sort_ver() { # sort -V is not generally available
+  ver1="$1"
+  ver2="$2"
+
+  # split on '.' and compare each component
+  i=1
+  while : ; do
+    p1=$(echo "$ver1" | cut -d. -f$i)
+    p2=$(echo "$ver2" | cut -d. -f$i)
+    if [ ! "$p1" ]; then
+      echo "$1 $2"
+      break
+    elif [ ! "$p2" ]; then
+      echo "$2 $1"
+      break
+    elif [ ! "$p1" = "$p2" ]; then
+      if [ "$p1" -gt "$p2" ] 2>/dev/null; then # numeric comparison
+        echo "$2 $1"
+      elif [ "$p2" -gt "$p1" ] 2>/dev/null; then # numeric comparison
+        echo "$1 $2"
+      else # numeric, then lexicographic comparison
+        lp=$(printf "$p1\n$p2\n" | LANG=C sort -n | tail -n1)
+        if [ "$lp" = "$p2" ]; then
+          echo "$1 $2"
+        else
+          echo "$2 $1"
+        fi
+      fi
+      break
+    fi
+    i=$(($i+1))
+  done
+}
+
+get_version() {
+  app=$1
+
+  $app --version >/dev/null 2>&1 || return 1
+
+  $app --version 2>&1 |
+  sed -n '# Move version to start of line.
+          s/.*[v ]\([0-9]\)/\1/
+
+          # Skip lines that do not start with version.
+          /^[0-9]/!d
+
+          # Remove characters after the version.
+          s/[^.a-z0-9-].*//
+
+          # The first component must be digits only.
+          s/^\([0-9]*\)[a-z-].*/\1/
+
+          #the following essentially does s/5.005/5.5/
+          s/\.0*\([1-9]\)/.\1/g
+          p
+          q'
+}
+
+check_versions() {
+  ret=0
+
+  while read app req_ver; do
+    # We only need libtoolize from the libtool package.
+    if test "$app" = libtool; then
+      app=libtoolize
+    fi
+    # Exempt git if --no-git is in effect.
+    if test "$app" = git; then
+      $use_git || continue
+    fi
+    # Honor $APP variables ($TAR, $AUTOCONF, etc.)
+    appvar=`echo $app | tr '[a-z]-' '[A-Z]_'`
+    test "$appvar" = TAR && appvar=AMTAR
+    case $appvar in
+        GZIP) ;; # Do not use $GZIP:  it contains gzip options.
+        *) eval "app=\${$appvar-$app}" ;;
+    esac
+    if [ "$req_ver" = "-" ]; then
+      # Merely require app to exist; not all prereq apps are well-behaved
+      # so we have to rely on $? rather than get_version.
+      $app --version >/dev/null 2>&1
+      if [ 126 -le $? ]; then
+        echo "$me: Error: '$app' not found" >&2
+        ret=1
+      fi
+    else
+      # Require app to produce a new enough version string.
+      inst_ver=$(get_version $app)
+      if [ ! "$inst_ver" ]; then
+        echo "$me: Error: '$app' not found" >&2
+        ret=1
+      else
+        latest_ver=$(sort_ver $req_ver $inst_ver | cut -d' ' -f2)
+        if [ ! "$latest_ver" = "$inst_ver" ]; then
+          echo "$me: Error: '$app' version == $inst_ver is too old" >&2
+          echo "       '$app' version >= $req_ver is required" >&2
+          ret=1
+        fi
+      fi
+    fi
+  done
+
+  return $ret
+}
+
+print_versions() {
+  echo "Program    Min_version"
+  echo "----------------------"
+  printf %s "$buildreq"
+  echo "----------------------"
+  # can't depend on column -t
+}
+
+use_libtool=0
+# We'd like to use grep -E, to see if any of LT_INIT,
+# AC_PROG_LIBTOOL, AM_PROG_LIBTOOL is used in configure.ac,
+# but that's not portable enough (e.g., for Solaris).
+grep '^[	 ]*A[CM]_PROG_LIBTOOL' configure.ac >/dev/null \
+  && use_libtool=1
+grep '^[	 ]*LT_INIT' configure.ac >/dev/null \
+  && use_libtool=1
+if test $use_libtool = 1; then
+  find_tool LIBTOOLIZE glibtoolize libtoolize
+fi
+
+if ! printf "$buildreq" | check_versions; then
+  echo >&2
+  if test -f README-prereq; then
+    echo "$0: See README-prereq for how to get the prerequisite programs" >&2
+  else
+    echo "$0: Please install the prerequisite programs" >&2
+  fi
+  exit 1
+fi
+
+echo "$0: Bootstrapping from checked-out $package sources..."
+
+# See if we can use gnulib's git-merge-changelog merge driver.
+if test -d .git && (git --version) >/dev/null 2>/dev/null ; then
+  if git config merge.merge-changelog.driver >/dev/null ; then
+    :
+  elif (git-merge-changelog --version) >/dev/null 2>/dev/null ; then
+    echo "$0: initializing git-merge-changelog driver"
+    git config merge.merge-changelog.name 'GNU-style ChangeLog merge driver'
+    git config merge.merge-changelog.driver 'git-merge-changelog %O %A %B'
+  else
+    echo "$0: consider installing git-merge-changelog from gnulib"
+  fi
+fi
+
+
+cleanup_gnulib() {
+  status=$?
+  rm -fr "$gnulib_path"
+  exit $status
+}
+
+git_modules_config () {
+  test -f .gitmodules && git config --file .gitmodules "$@"
+}
+
+gnulib_path=`git_modules_config submodule.gnulib.path`
+test -z "$gnulib_path" && gnulib_path=gnulib
+
+# Get gnulib files.
+
+case ${GNULIB_SRCDIR--} in
+-)
+  if git_modules_config submodule.gnulib.url >/dev/null; then
+    echo "$0: getting gnulib files..."
+    git submodule init || exit $?
+    git submodule update || exit $?
+
+  elif [ ! -d "$gnulib_path" ]; then
+    echo "$0: getting gnulib files..."
+
+    trap cleanup_gnulib 1 2 13 15
+
+    shallow=
+    git clone -h 2>&1 | grep -- --depth > /dev/null && shallow='--depth 2'
+    git clone $shallow git://git.sv.gnu.org/gnulib "$gnulib_path" ||
+      cleanup_gnulib
+
+    trap - 1 2 13 15
+  fi
+  GNULIB_SRCDIR=$gnulib_path
+  ;;
+*)
+  # Use GNULIB_SRCDIR as a reference.
+  if test -d "$GNULIB_SRCDIR"/.git && \
+        git_modules_config submodule.gnulib.url >/dev/null; then
+    echo "$0: getting gnulib files..."
+    if git submodule -h|grep -- --reference > /dev/null; then
+      # Prefer the one-liner available in git 1.6.4 or newer.
+      git submodule update --init --reference "$GNULIB_SRCDIR" \
+        "$gnulib_path" || exit $?
+    else
+      # This fallback allows at least git 1.5.5.
+      if test -f "$gnulib_path"/gnulib-tool; then
+        # Since file already exists, assume submodule init already complete.
+        git submodule update || exit $?
+      else
+        # Older git can't clone into an empty directory.
+        rmdir "$gnulib_path" 2>/dev/null
+        git clone --reference "$GNULIB_SRCDIR" \
+          "$(git_modules_config submodule.gnulib.url)" "$gnulib_path" \
+          && git submodule init && git submodule update \
+          || exit $?
+      fi
+    fi
+    GNULIB_SRCDIR=$gnulib_path
+  fi
+  ;;
+esac
+
+if $bootstrap_sync; then
+  cmp -s "$0" "$GNULIB_SRCDIR/build-aux/bootstrap" || {
+    echo "$0: updating bootstrap and restarting..."
+    exec sh -c \
+      'cp "$1" "$2" && shift && exec "${CONFIG_SHELL-/bin/sh}" "$@"' \
+      -- "$GNULIB_SRCDIR/build-aux/bootstrap" \
+      "$0" "$@" --no-bootstrap-sync
+  }
+fi
+
+gnulib_tool=$GNULIB_SRCDIR/gnulib-tool
+<$gnulib_tool || exit
+
+# Get translations.
+
+download_po_files() {
+  subdir=$1
+  domain=$2
+  echo "$me: getting translations into $subdir for $domain..."
+  cmd=`printf "$po_download_command_format" "$domain" "$subdir"`
+  eval "$cmd"
+}
+
+# Mirror .po files to $po_dir/.reference and copy only the new
+# or modified ones into $po_dir.  Also update $po_dir/LINGUAS.
+# Note po files that exist locally only are left in $po_dir but will
+# not be included in LINGUAS and hence will not be distributed.
+update_po_files() {
+  # Directory containing primary .po files.
+  # Overwrite them only when we're sure a .po file is new.
+  po_dir=$1
+  domain=$2
+
+  # Mirror *.po files into this dir.
+  # Usually contains *.s1 checksum files.
+  ref_po_dir="$po_dir/.reference"
+
+  test -d $ref_po_dir || mkdir $ref_po_dir || return
+  download_po_files $ref_po_dir $domain \
+    && ls "$ref_po_dir"/*.po 2>/dev/null |
+      sed 's|.*/||; s|\.po$||' > "$po_dir/LINGUAS" || return
+
+  langs=`cd $ref_po_dir && echo *.po|sed 's/\.po//g'`
+  test "$langs" = '*' && langs=x
+  for po in $langs; do
+    case $po in x) continue;; esac
+    new_po="$ref_po_dir/$po.po"
+    cksum_file="$ref_po_dir/$po.s1"
+    if ! test -f "$cksum_file" ||
+        ! test -f "$po_dir/$po.po" ||
+        ! $SHA1SUM -c --status "$cksum_file" \
+            < "$new_po" > /dev/null; then
+      echo "$me: updated $po_dir/$po.po..."
+      cp "$new_po" "$po_dir/$po.po" \
+          && $SHA1SUM < "$new_po" > "$cksum_file"
+    fi
+  done
+}
+
+case $SKIP_PO in
+'')
+  if test -d po; then
+    update_po_files po $package || exit
+  fi
+
+  if test -d runtime-po; then
+    update_po_files runtime-po $package-runtime || exit
+  fi;;
+esac
+
+symlink_to_dir()
+{
+  src=$1/$2
+  dst=${3-$2}
+
+  test -f "$src" && {
+
+    # If the destination directory doesn't exist, create it.
+    # This is required at least for "lib/uniwidth/cjk.h".
+    dst_dir=`dirname "$dst"`
+    if ! test -d "$dst_dir"; then
+      mkdir -p "$dst_dir"
+
+      # If we've just created a directory like lib/uniwidth,
+      # tell version control system(s) it's ignorable.
+      # FIXME: for now, this does only one level
+      parent=`dirname "$dst_dir"`
+      for dot_ig in x $vc_ignore; do
+        test $dot_ig = x && continue
+        ig=$parent/$dot_ig
+        insert_vc_ignore $ig `echo "$dst_dir"|sed 's,.*/,,'`
+      done
+    fi
+
+    if $copy; then
+      {
+        test ! -h "$dst" || {
+          echo "$me: rm -f $dst" &&
+          rm -f "$dst"
+        }
+      } &&
+      test -f "$dst" &&
+      cmp -s "$src" "$dst" || {
+        echo "$me: cp -fp $src $dst" &&
+        cp -fp "$src" "$dst"
+      }
+    else
+      # Leave any existing symlink alone, if it already points to the source,
+      # so that broken build tools that care about symlink times
+      # aren't confused into doing unnecessary builds.  Conversely, if the
+      # existing symlink's time stamp is older than the source, make it afresh,
+      # so that broken tools aren't confused into skipping needed builds.  See
+      # <http://lists.gnu.org/archive/html/bug-gnulib/2011-05/msg00326.html>.
+      test -h "$dst" &&
+      src_ls=`ls -diL "$src" 2>/dev/null` && set $src_ls && src_i=$1 &&
+      dst_ls=`ls -diL "$dst" 2>/dev/null` && set $dst_ls && dst_i=$1 &&
+      test "$src_i" = "$dst_i" &&
+      both_ls=`ls -dt "$src" "$dst"` &&
+      test "X$both_ls" = "X$dst$nl$src" || {
+        dot_dots=
+        case $src in
+        /*) ;;
+        *)
+          case /$dst/ in
+          *//* | */../* | */./* | /*/*/*/*/*/)
+             echo >&2 "$me: invalid symlink calculation: $src -> $dst"
+             exit 1;;
+          /*/*/*/*/)	dot_dots=../../../;;
+          /*/*/*/)	dot_dots=../../;;
+          /*/*/)	dot_dots=../;;
+          esac;;
+        esac
+
+        echo "$me: ln -fs $dot_dots$src $dst" &&
+        ln -fs "$dot_dots$src" "$dst"
+      }
+    fi
+  }
+}
+
+cp_mark_as_generated()
+{
+  cp_src=$1
+  cp_dst=$2
+
+  if cmp -s "$cp_src" "$GNULIB_SRCDIR/$cp_dst"; then
+    symlink_to_dir "$GNULIB_SRCDIR" "$cp_dst"
+  elif cmp -s "$cp_src" "$local_gl_dir/$cp_dst"; then
+    symlink_to_dir $local_gl_dir "$cp_dst"
+  else
+    case $cp_dst in
+      *.[ch])             c1='/* '; c2=' */';;
+      *.texi)             c1='@c '; c2=     ;;
+      *.m4|*/Make*|Make*) c1='# ' ; c2=     ;;
+      *)                  c1=     ; c2=     ;;
+    esac
+
+    # If the destination directory doesn't exist, create it.
+    # This is required at least for "lib/uniwidth/cjk.h".
+    dst_dir=`dirname "$cp_dst"`
+    test -d "$dst_dir" || mkdir -p "$dst_dir"
+
+    if test -z "$c1"; then
+      cmp -s "$cp_src" "$cp_dst" || {
+        # Copy the file first to get proper permissions if it
+        # doesn't already exist.  Then overwrite the copy.
+        echo "$me: cp -f $cp_src $cp_dst" &&
+        rm -f "$cp_dst" &&
+        cp "$cp_src" "$cp_dst-t" &&
+        sed "s!$bt_regex/!!g" "$cp_src" > "$cp_dst-t" &&
+        mv -f "$cp_dst-t" "$cp_dst"
+      }
+    else
+      # Copy the file first to get proper permissions if it
+      # doesn't already exist.  Then overwrite the copy.
+      cp "$cp_src" "$cp_dst-t" &&
+      (
+        echo "$c1-*- buffer-read-only: t -*- vi: set ro:$c2" &&
+        echo "${c1}DO NOT EDIT! GENERATED AUTOMATICALLY!$c2" &&
+        sed "s!$bt_regex/!!g" "$cp_src"
+      ) > $cp_dst-t &&
+      if cmp -s "$cp_dst-t" "$cp_dst"; then
+        rm -f "$cp_dst-t"
+      else
+        echo "$me: cp $cp_src $cp_dst # with edits" &&
+        mv -f "$cp_dst-t" "$cp_dst"
+      fi
+    fi
+  fi
+}
+
+version_controlled_file() {
+  dir=$1
+  file=$2
+  found=no
+  if test -d CVS; then
+    grep -F "/$file/" $dir/CVS/Entries 2>/dev/null |
+             grep '^/[^/]*/[0-9]' > /dev/null && found=yes
+  elif test -d .git; then
+    git rm -n "$dir/$file" > /dev/null 2>&1 && found=yes
+  elif test -d .svn; then
+    svn log -r HEAD "$dir/$file" > /dev/null 2>&1 && found=yes
+  else
+    echo "$me: no version control for $dir/$file?" >&2
+  fi
+  test $found = yes
+}
+
+slurp() {
+  for dir in . `(cd $1 && find * -type d -print)`; do
+    copied=
+    sep=
+    for file in `ls -a $1/$dir`; do
+      case $file in
+      .|..) continue;;
+      # FIXME: should all file names starting with "." be ignored?
+      .*) continue;;
+      esac
+      test -d $1/$dir/$file && continue
+      for excluded_file in $excluded_files; do
+        test "$dir/$file" = "$excluded_file" && continue 2
+      done
+      if test $file = Makefile.am && test "X$gnulib_mk" != XMakefile.am; then
+        copied=$copied${sep}$gnulib_mk; sep=$nl
+        remove_intl='/^[^#].*\/intl/s/^/#/;'"s!$bt_regex/!!g"
+        sed "$remove_intl" $1/$dir/$file |
+        cmp - $dir/$gnulib_mk > /dev/null || {
+          echo "$me: Copying $1/$dir/$file to $dir/$gnulib_mk ..." &&
+          rm -f $dir/$gnulib_mk &&
+          sed "$remove_intl" $1/$dir/$file >$dir/$gnulib_mk &&
+          gnulib_mk_hook $dir/$gnulib_mk
+        }
+      elif { test "${2+set}" = set && test -r $2/$dir/$file; } ||
+           version_controlled_file $dir $file; then
+        echo "$me: $dir/$file overrides $1/$dir/$file"
+      else
+        copied=$copied$sep$file; sep=$nl
+        cp_mark_as_generated $1/$dir/$file $dir/$file
+      fi || exit
+    done
+
+    for dot_ig in x $vc_ignore; do
+      test $dot_ig = x && continue
+      ig=$dir/$dot_ig
+      if test -n "$copied"; then
+        insert_vc_ignore $ig "$copied"
+        # If an ignored file name ends with .in.h, then also add
+        # the name with just ".h".  Many gnulib headers are generated,
+        # e.g., stdint.in.h -> stdint.h, dirent.in.h ->..., etc.
+        # Likewise for .gperf -> .h, .y -> .c, and .sin -> .sed
+        f=`echo "$copied" |
+          sed '
+            s/\.in\.h$/.h/
+            s/\.sin$/.sed/
+            s/\.y$/.c/
+            s/\.gperf$/.h/
+          '
+        `
+        insert_vc_ignore $ig "$f"
+
+        # For files like sys_stat.in.h and sys_time.in.h, record as
+        # ignorable the directory we might eventually create: sys/.
+        f=`echo "$copied"|sed 's/sys_.*\.in\.h$/sys/'`
+        insert_vc_ignore $ig "$f"
+      fi
+    done
+  done
+}
+
+
+# Create boot temporary directories to import from gnulib and gettext.
+rm -fr $bt $bt2 &&
+mkdir $bt $bt2 || exit
+
+# Import from gnulib.
+
+gnulib_tool_options="\
+ --import\
+ --no-changelog\
+ --aux-dir $bt/$build_aux\
+ --doc-base $bt/$doc_base\
+ --lib $gnulib_name\
+ --m4-base $bt/$m4_base/\
+ --source-base $bt/$source_base/\
+ --tests-base $bt/$tests_base\
+ --local-dir $local_gl_dir\
+ $gnulib_tool_option_extras\
+"
+if test $use_libtool = 1; then
+  case "$gnulib_tool_options " in
+    *' --libtool '*) ;;
+    *) gnulib_tool_options="$gnulib_tool_options --libtool" ;;
+  esac
+fi
+echo "$0: $gnulib_tool $gnulib_tool_options --import ..."
+$gnulib_tool $gnulib_tool_options --import $gnulib_modules &&
+slurp $bt || exit
+
+for file in $gnulib_files; do
+  symlink_to_dir "$GNULIB_SRCDIR" $file || exit
+done
+
+
+# Import from gettext.
+with_gettext=yes
+grep '^[	 ]*AM_GNU_GETTEXT_VERSION(' configure.ac >/dev/null || \
+    with_gettext=no
+
+if test $with_gettext = yes; then
+  echo "$0: (cd $bt2; ${AUTOPOINT-autopoint}) ..."
+  cp configure.ac $bt2 &&
+  (cd $bt2 && ${AUTOPOINT-autopoint} && rm configure.ac) &&
+  slurp $bt2 $bt || exit
+fi
+rm -fr $bt $bt2 || exit
+
+# Remove any dangling symlink matching "*.m4" or "*.[ch]" in some
+# gnulib-populated directories.  Such .m4 files would cause aclocal to fail.
+# The following requires GNU find 4.2.3 or newer.  Considering the usual
+# portability constraints of this script, that may seem a very demanding
+# requirement, but it should be ok.  Ignore any failure, which is fine,
+# since this is only a convenience to help developers avoid the relatively
+# unusual case in which a symlinked-to .m4 file is git-removed from gnulib
+# between successive runs of this script.
+find "$m4_base" "$source_base" \
+  -depth \( -name '*.m4' -o -name '*.[ch]' \) \
+  -type l -xtype l -delete > /dev/null 2>&1
+
+# Reconfigure, getting other files.
+
+# Skip autoheader if it's not needed.
+grep -E '^[	 ]*AC_CONFIG_HEADERS?\>' configure.ac >/dev/null ||
+  AUTOHEADER=true
+
+for command in \
+  libtool \
+  "${ACLOCAL-aclocal} --force -I '$m4_base' $ACLOCAL_FLAGS" \
+  "${AUTOCONF-autoconf} --force" \
+  "${AUTOHEADER-autoheader} --force" \
+  "${AUTOMAKE-automake} --add-missing --copy --force-missing"
+do
+  if test "$command" = libtool; then
+    test $use_libtool = 0 \
+      && continue
+    command="${LIBTOOLIZE-libtoolize} -c -f"
+  fi
+  echo "$0: $command ..."
+  eval "$command" || exit
+done
+
+
+# Get some extra files from gnulib, overriding existing files.
+for file in $gnulib_extra_files; do
+  case $file in
+  */INSTALL) dst=INSTALL;;
+  build-aux/*) dst=$build_aux/`expr "$file" : 'build-aux/\(.*\)'`;;
+  *) dst=$file;;
+  esac
+  symlink_to_dir "$GNULIB_SRCDIR" $file $dst || exit
+done
+
+if test $with_gettext = yes; then
+  # Create gettext configuration.
+  echo "$0: Creating po/Makevars from po/Makevars.template ..."
+  rm -f po/Makevars
+  sed '
+    /^EXTRA_LOCALE_CATEGORIES *=/s/=.*/= '"$EXTRA_LOCALE_CATEGORIES"'/
+    /^COPYRIGHT_HOLDER *=/s/=.*/= '"$COPYRIGHT_HOLDER"'/
+    /^MSGID_BUGS_ADDRESS *=/s|=.*|= '"$MSGID_BUGS_ADDRESS"'|
+    /^XGETTEXT_OPTIONS *=/{
+      s/$/ \\/
+      a\
+          '"$XGETTEXT_OPTIONS"' $${end_of_xgettext_options+}
+    }
+  ' po/Makevars.template >po/Makevars || exit 1
+
+  if test -d runtime-po; then
+    # Similarly for runtime-po/Makevars, but not quite the same.
+    rm -f runtime-po/Makevars
+    sed '
+      /^DOMAIN *=.*/s/=.*/= '"$package"'-runtime/
+      /^subdir *=.*/s/=.*/= runtime-po/
+      /^MSGID_BUGS_ADDRESS *=/s/=.*/= bug-'"$package"'@gnu.org/
+      /^XGETTEXT_OPTIONS *=/{
+        s/$/ \\/
+        a\
+            '"$XGETTEXT_OPTIONS_RUNTIME"' $${end_of_xgettext_options+}
+      }
+    ' po/Makevars.template >runtime-po/Makevars || exit 1
+
+    # Copy identical files from po to runtime-po.
+    (cd po && cp -p Makefile.in.in *-quot *.header *.sed *.sin ../runtime-po)
+  fi
+fi
+
+bootstrap_epilogue
+
+echo "$0: done.  Now you can run './configure'."
+
+# Local variables:
+# eval: (add-hook 'write-file-hooks 'time-stamp)
+# time-stamp-start: "scriptversion="
+# time-stamp-format: "%:y-%02m-%02d.%02H"
+# time-stamp-time-zone: "UTC"
+# time-stamp-end: "; # UTC"
+# End:

@@ -1,7 +1,7 @@
 /*
  * Routines for managing persistent storage of port mappings, etc.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: nvparse.c 374496 2012-12-13 08:59:12Z $
+ * $Id: nvparse.c 406816 2013-06-10 22:14:46Z $
  */
 
 #include <stdio.h>
@@ -917,6 +917,53 @@ del_filter_url(int which)
 
 #ifdef TRAFFIC_MGMT
 /*
+ * Parser for DWM filter, convert string to binary structure
+ * string format: prot, dscp, priority, favored, enable
+ * e.g.: wlx_tm_dwmx=0,8,4,1,1
+ */
+bool
+get_trf_mgmt_dwm(char *prefix, int which, netconf_trmgmt_t *trm_dwm)
+{
+        char name[] = "wlx_tm_dwmXXXXX";
+        char value[64];
+        char *dscp, *prio, *favored, *enabled;
+
+        bzero(trm_dwm, sizeof(netconf_trmgmt_t));
+
+        snprintf(name, sizeof(name), "%stm_dwm%d", prefix, which);
+        if (!nvram_invmatch(name, ""))
+                return FALSE;
+        strncpy(value, nvram_get(name), sizeof(value));
+
+        /* Parse dscp */
+        prio = value;
+        dscp = strsep(&prio, ",");
+        if (!prio)
+                return FALSE;
+        trm_dwm->match.dscp = atoi(dscp);
+
+        /* Parse priority */
+        favored = prio;
+        prio = strsep(&favored, ",");
+        if (!favored)
+                return FALSE;
+        trm_dwm->prio = atoi(prio);
+
+        /* Parse favored */
+        enabled = favored;
+        favored = strsep(&enabled, ",");
+        if (!enabled)
+                return FALSE;
+        trm_dwm->favored = atoi(favored);
+
+        /* Parse enable */
+        if (*enabled == '0')
+                trm_dwm->match.flags = NETCONF_DISABLED;
+
+        return TRUE;
+}
+
+/*
  * Parser for traffic management filter settings,  convert string to  binary structure
  * string format: proto,sr_port,dst_port,mac_adr,priority,favored,enable
  */
@@ -988,6 +1035,47 @@ get_trf_mgmt_port(char *prefix, int which, netconf_trmgmt_t *trm)
 }
 
 /*
+ * Parser for DWM filter, convert binary structure to string
+ * string format: prot,dscp,priority,favored,enabled
+ * e.g.: wlx_trf_mgmt_dwm0=0,8,4,0,1
+ */
+bool
+set_trf_mgmt_dwm(char *prefix, int which, const netconf_trmgmt_t *trm_dwm)
+{
+        char name[] = "wlx_tm_dwmXXXXX";
+        char value[64];
+        char *cur = value;
+        int len;
+
+        /* Set prot,dscp,prio,favored,enabled */
+        snprintf(name, sizeof(name), "%stm_dwm%d", prefix, which);
+        len = sizeof(value);
+
+        /* Set DSCP */
+        cur = safe_snprintf(cur, &len, "%d", trm_dwm->match.dscp);
+        cur = safe_snprintf(cur, &len, ",");
+
+        /* Set Priority */
+        cur = safe_snprintf(cur, &len, "%d", trm_dwm->prio);
+        cur = safe_snprintf(cur, &len, ",");
+
+        /* Set Favored */
+        cur = safe_snprintf(cur, &len, "%d", trm_dwm->favored);
+        cur = safe_snprintf(cur, &len, ",");
+
+        /* Set enable */
+        if (trm_dwm->match.flags & NETCONF_DISABLED)
+                cur = safe_snprintf(cur, &len, "0");
+        else
+                cur = safe_snprintf(cur, &len, "1");
+
+        if (nvram_set(name, value))
+                return FALSE;
+
+        return TRUE;
+}
+
+/*
  * Parser for traffic management filter settings,  convert binary structure to  string
  * string format: proto,sr_port,dst_port,mac_adr,priority,favored,enable
  */
@@ -1041,6 +1129,15 @@ set_trf_mgmt_port(char *prefix, int which, const netconf_trmgmt_t *trm)
 		return FALSE;
 
 	return TRUE;
+}
+
+bool
+del_trf_mgmt_dwm(char *prefix, int which)
+{
+        char name[] = "wlx_tm_dwmXXXXX";
+
+        snprintf(name, sizeof(name), "%stm_dwm%d", prefix, which);
+        return (nvram_unset(name) == 0) ? TRUE : FALSE;
 }
 
 bool

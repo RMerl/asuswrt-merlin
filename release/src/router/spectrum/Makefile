@@ -3,6 +3,9 @@ include ../common.mak
 CFLAGS	= -Os -Wall $(EXTRACFLAGS) #-mips32
 CFLAGS	+= -I$(SRCBASE)/include -I$(TOP)/shared -DRTCONFIG_ISP_METER -DDEBUG
 LDFLAGS	=
+ifeq ($(RTCONFIG_BCMARM),y)
+LDFLAGS += -lgcc_s
+endif
 
 OBJS = spectrum.o
 

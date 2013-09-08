@@ -82,19 +82,6 @@ static int wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit);
 
 #include <dirent.h>
 
-int is_hwnat_loaded()
-{
-	DIR *dir_to_open = NULL;
-
-	dir_to_open = opendir("/sys/module/hw_nat");
-	if (dir_to_open)
-	{
-		closedir(dir_to_open);
-		return 1;
-	}
-		return 0;
-}
-
 /* Dump NAT table <tr><td>destination</td><td>MAC</td><td>IP</td><td>expires</td></tr> format */
 int
 ej_nat_table(int eid, webs_t wp, int argc, char_t **argv)
@@ -110,7 +97,7 @@ ej_nat_table(int eid, webs_t wp, int argc, char_t **argv)
 	if (nvram_match("wan_nat_x", "1"))
 	{
 #ifndef RTCONFIG_DSL
-		ret += websWrite(wp, "Hardware NAT: %s\n", is_hwnat_loaded() ? "Enabled": "Disabled");
+		ret += websWrite(wp, "Hardware NAT: %s\n", module_loaded("hw_nat") ? "Enabled": "Disabled");
 #endif		
 		ret += websWrite(wp, "Software QoS: %s\n", nvram_match("qos_enable", "1") ? "Enabled": "Disabled");
 	}

@@ -162,7 +162,7 @@ setMAC_2G(const char *mac)
 
                 case MODEL_RTAC68U:
                 case MODEL_RTAC56U:
-                case MODEL_RTN18UHP:
+                case MODEL_RTN18U:
                         memset(cmd_l, 0, 64);
                         sprintf(cmd_l, "asuscfeet0macaddr=%s", mac);
                         eval("nvram", "set", cmd_l );
@@ -235,7 +235,7 @@ setCountryCode_2G(const char *cc)
 	switch(model) {
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56U:
-		case MODEL_RTN18UHP:
+		case MODEL_RTN18U:
 			sprintf(cmd, "asuscfe0:ccode=%s", cc);
 			eval("nvram", "set", cmd );
 			puts(nvram_safe_get("0:ccode"));
@@ -323,7 +323,7 @@ setRegrev_2G(const char *regrev)
 
                 case MODEL_RTAC68U:
                 case MODEL_RTAC56U:
-                case MODEL_RTN18UHP:
+                case MODEL_RTN18U:
                         memset(cmd, 0, 32);
                         sprintf(cmd, "asuscfe0:regrev=%s", regrev);
                         eval("nvram", "set", cmd );
@@ -488,7 +488,7 @@ ResetDefault(void)
 	puts("1");
 #else
         int ret=0;
-	if (nvram_contains_word("rc_support", "nandflash"))     /* RT-AC56U/RT-AC68U/RT-N18UHP */
+	if (nvram_contains_word("rc_support", "nandflash"))     /* RT-AC56U/RT-AC68U/RT-N18U */
 		ret = eval("mtd-erase2", "nvram");
         else
                 ret = eval("mtd-erase","-d","nvram");
@@ -771,7 +771,7 @@ GetPhyStatus(void)
                 ports[0]=4; ports[1]=0; ports[2]=1; ports[3]=2; ports[4]=3;
                 break;
         case MODEL_RTAC68U:
-        case MODEL_RTN18UHP:
+        case MODEL_RTN18U:
                 /* WAN L1 L2 L3 L4 */
                 ports[0]=0; ports[1]=1; ports[2]=2; ports[3]=3; ports[4]=4;
                 break;
@@ -876,7 +876,7 @@ setAllLedOn(void)
 			led_control(LED_USB, LED_ON);
 			break;
 		}
-		case MODEL_RTN18UHP:
+		case MODEL_RTN18U:
 		{
 			led_control(LED_USB, LED_ON);
 			led_control(LED_POWER, LED_ON);
@@ -948,10 +948,6 @@ setAllLedOn(void)
 			}
 			break;
 		}
-		case MODEL_RTN10P:
-		{
-			led_control(LED_WPS, LED_ON);
-		}
 		case MODEL_APN12HP:
 		{
 			led_control(LED_POWER, LED_ON);
@@ -960,6 +956,11 @@ setAllLedOn(void)
 			led_control(LED_2G, LED_ON);
 			led_control(LED_WAN, LED_ON);
 			break;
+		}
+		case MODEL_RTN10P:
+		case MODEL_RTN10D1:
+		{
+			led_control(LED_WPS, LED_ON);
 		}
 		case MODEL_RTN12B1:
 		case MODEL_RTN12C1:
@@ -1039,7 +1040,7 @@ setAllLedOff(void)
 			led_control(LED_5G, LED_OFF);
 			break;
 		}
-		case MODEL_RTN18UHP:
+		case MODEL_RTN18U:
 		{
 			led_control(LED_USB, LED_OFF);
 			led_control(LED_POWER, LED_OFF);
@@ -1167,7 +1168,7 @@ setATEModeLedOn(void){
                         led_control(LED_USB, LED_ON);
                         break;
                 }
-                case MODEL_RTN18UHP:
+                case MODEL_RTN18U:
                 {
                         led_control(LED_USB, LED_ON);
                         led_control(LED_POWER, LED_ON);
@@ -1206,6 +1207,7 @@ setATEModeLedOn(void){
                         break;
                 }
                 case MODEL_RTN10P:
+                case MODEL_RTN10D1:
                 {
                         led_control(LED_WPS, LED_ON);
                         break;
@@ -1393,20 +1395,26 @@ int
 getBootVer(void)
 {
 	char buf[32];
-	memset(buf, 0, 32);
 
-	if(get_model()==MODEL_RTN53 ||
-		get_model()==MODEL_RTN10U ||
-		get_model()==MODEL_RTN10P ||
-		get_model()==MODEL_RTN12B1 || get_model()==MODEL_RTN12C1 ||
-		get_model()==MODEL_RTN12D1 || get_model()==MODEL_RTN12HP ||
-		get_model()==MODEL_APN12HP ||
-		get_model()==MODEL_RTN14UHP ||
-		get_model()==MODEL_RTN15U)
-		strcpy(buf, nvram_safe_get("hardware_version"));
-	else
-		sprintf(buf,"%s-%s",get_productid(),nvram_safe_get("bl_version"));
-	puts(buf);
+	switch(get_model()) {
+	case MODEL_RTN53:
+	case MODEL_RTN15U:
+	case MODEL_RTN14UHP:
+	case MODEL_RTN12B1:
+	case MODEL_RTN12C1:
+	case MODEL_RTN12D1:
+	case MODEL_RTN12HP:
+	case MODEL_APN12HP:
+	case MODEL_RTN10U:
+	case MODEL_RTN10P:
+	case MODEL_RTN10D1:
+		puts(nvram_safe_get("hardware_version"));
+		break;
+	default:
+		snprintf(buf, sizeof(buf), "%s-%s", get_productid(), nvram_safe_get("bl_version"));
+		puts(buf);
+		break;
+	}
 	return 0;
 }
 
@@ -1428,7 +1436,7 @@ getCountryCode_2G(void)
         switch(model) {
                 case MODEL_RTAC68U:
                 case MODEL_RTAC56U:
-                case MODEL_RTN18UHP:
+                case MODEL_RTN18U:
                         puts(nvram_safe_get("0:ccode"));
                         break;
                 default:
@@ -1494,7 +1502,7 @@ getRegrev_2G(void)
 
                 case MODEL_RTAC68U:
                 case MODEL_RTAC56U:
-                case MODEL_RTN18UHP:
+                case MODEL_RTN18U:
                         puts(nvram_safe_get("0:regrev"));
                         break;
 	}

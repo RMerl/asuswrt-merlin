@@ -14,6 +14,7 @@ endif
 
 ifeq ($(RTCONFIG_BCMARM),y)
 CFLAGS += -I$(SRCBASE)/shared/bcmwifi/include
+CFLAGS += -I$(SRCBASE)/common/include
 else
 CFLAGS += -I$(SRCBASE)/shared
 endif
@@ -83,7 +84,7 @@ ifeq ($(RTCONFIG_BCMARM),y)
 OBJS += ifaddrs.o
 endif
 
-vpath %.c sysdeps sysdeps/broadcom sysdeps/ralink $(SRCBASE)/shared/ $(WLAN_ComponentSrcDirs)
+vpath %.c sysdeps sysdeps/broadcom sysdeps/ralink $(SRCBASE)/shared/ $(SRCBASE)/shared/bcmwifi/src $(WLAN_ComponentSrcDirs)
 
 all: libshared.so libshared.a
 

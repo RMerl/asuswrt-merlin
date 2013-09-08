@@ -1,0 +1,26 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 99_kfbsd_fstat_patch.dpatch by Michael Stone <mstone@debian.org>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: No description.
+
+@DPATCH@
+diff -urNad '--exclude=CVS' '--exclude=.svn' '--exclude=.git' '--exclude=.arch' '--exclude=.hg' '--exclude=_darcs' '--exclude=.bzr' coreutils-8.5~/lib/fstatat.c coreutils-8.5/lib/fstatat.c
+--- coreutils-8.5~/lib/fstatat.c	2010-04-23 09:44:00.000000000 -0400
++++ coreutils-8.5/lib/fstatat.c	2010-04-27 20:30:37.200596044 -0400
+@@ -107,4 +107,15 @@
+ # undef AT_FUNC_POST_FILE_PARAM_DECLS
+ # undef AT_FUNC_POST_FILE_ARGS
+ 
++#ifdef __FreeBSD_kernel__
++
++int __fxstatat(int version, int fd, const char *file, struct stat *st, int flag)
++{
++  typedef int (*tp)(int, const char *, struct stat *, int);
++  volatile tp f = fstatat;
++  return f(fd, file, st, flag);
++}
++
++#endif
++
+ #endif /* !HAVE_FSTATAT */

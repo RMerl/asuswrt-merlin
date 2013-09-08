@@ -1421,20 +1421,23 @@ static int validate_apply(webs_t wp) {
 			// unit nvram should be in fron of each apply,
 			// seems not a good design
 
-			if(!strcmp(name, "wl_unit") ||
-			   !strcmp(name, "wan_unit") ||
-			   !strcmp(name, "lan_unit")
+			if(!strcmp(name, "wl_unit")
+					|| !strcmp(name, "wan_unit")
+					|| !strcmp(name, "lan_unit")
 #ifdef RTCONFIG_DSL
-			|| !strcmp(name, "dsl_unit")
+					|| !strcmp(name, "dsl_unit")
 #endif
 #ifdef RTCONFIG_OPENVPN
-                        || !strcmp(name, "vpn_server_unit")
-			|| !strcmp(name, "vpn_client_unit")
+		                        || !strcmp(name, "vpn_server_unit")
+					|| !strcmp(name, "vpn_client_unit")
 #endif
 
-) {
-				unit=atoi(value);
-				if(unit!=nvram_get_int(name)) {
+#ifdef RTCONFIG_DISK_MONITOR
+					|| !strcmp(name, "diskmon_usbport")
+#endif
+					) {
+				unit = atoi(value);
+				if(unit != nvram_get_int(name)) {
 					nvram_set_int(name, unit);
 					nvram_modified=1;
 				}
@@ -1446,7 +1449,7 @@ static int validate_apply(webs_t wp) {
 					nvram_modified=1;
 				}
 			}
-			else if(!strncmp(name, "wl_", 3) && unit!=-1) {
+			else if(!strncmp(name, "wl_", 3) && unit != -1) {
 				// convert wl_ to wl[unit], only when wl_unit is parsed
 				if(subunit==-1||subunit==0)
 					snprintf(prefix, sizeof(prefix), "wl%d_", unit);
@@ -1460,7 +1463,7 @@ static int validate_apply(webs_t wp) {
 					_dprintf("set %s=%s\n", tmp, value);
 				}
 			}
-			else if(!strncmp(name, "wan_", 4) && unit!=-1) {
+			else if(!strncmp(name, "wan_", 4) && unit != -1) {
 				snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 				(void)strcat_r(prefix, name+4, tmp);
 
@@ -1470,7 +1473,7 @@ static int validate_apply(webs_t wp) {
 					_dprintf("set %s=%s\n", tmp, value);
 				}
 			}
-			else if(!strncmp(name, "lan_", 4) && unit!=-1) {
+			else if(!strncmp(name, "lan_", 4) && unit != -1) {
 				snprintf(prefix, sizeof(prefix), "lan%d_", unit);
 				(void)strcat_r(prefix, name+4, tmp);
 
@@ -1481,7 +1484,7 @@ static int validate_apply(webs_t wp) {
 				}
 			}
 #ifdef RTCONFIG_DSL
-			else if(!strncmp(name, "dsl_", 4) && unit!=-1) {
+			else if(!strncmp(name, "dsl_", 4) && unit != -1) {
 				snprintf(prefix, sizeof(prefix), "dsl%d_", unit);
 				(void)strcat_r(prefix, name+4, tmp);
 
@@ -1533,6 +1536,18 @@ static int validate_apply(webs_t wp) {
 				nvram_modified = 1;
 				_dprintf("set %s=%s\n", name, tmp);
 			}
+#ifdef RTCONFIG_DISK_MONITOR
+			else if(!strncmp(name, "diskmon_", 8) && unit != -1) {
+				snprintf(prefix, sizeof(prefix), "usb_path%d_diskmon_", unit);
+				(void)strcat_r(prefix, name+8, tmp);
+
+				if(strcmp(nvram_safe_get(tmp), value)) {
+					nvram_set(tmp, value);
+					nvram_modified = 1;
+					_dprintf("set %s=%s\n", tmp, value);
+				}
+			}
+#endif
 			// TODO: add other multiple instance handle here
 			else if(strcmp(nvram_safe_get(name), value)) {
 
@@ -7550,7 +7565,13 @@ int ej_webdavInfo(int eid, webs_t wp, int argc, char **argv) {
 	websWrite(wp, "'%s',", nvram_safe_get("wan0_ipaddr"));
 	websWrite(wp, "'%s',", nvram_safe_get(""));
 	websWrite(wp, "'%s',", nvram_safe_get("x_Setting"));
-	websWrite(wp, "'%s'", nvram_safe_get("webdav_https_port"));
+	websWrite(wp, "'%s',", nvram_safe_get("webdav_https_port"));
+#ifdef RTCONFIG_WEBDAV
+ 	websWrite(wp, "'1'");
+#else
+	if(check_if_file_exist("/opt/etc/init.d/S50aicloud")) websWrite(wp, "'1'");
+	else websWrite(wp, "'0'");
+#endif
 	websWrite(wp, "];\n");
 
 	return 0;

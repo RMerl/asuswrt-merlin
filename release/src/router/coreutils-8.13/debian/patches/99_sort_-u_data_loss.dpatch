@@ -1,0 +1,163 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 99_sort_-u_data_loss.dpatch by Colin Watson <cjwatson@ubuntu.com>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: Fix data-loss and free-memory read bugs in 'sort -u'.
+## DP: http://git.savannah.gnu.org/gitweb/?p=coreutils.git;a=commitdiff;h=eb3f5b3b3de8c6ca005a701f09bff43d778aece7
+## DP: http://git.savannah.gnu.org/gitweb/?p=coreutils.git;a=commitdiff;h=574b7c7dbec8821d03a462796968847783d07c29
+## DP: http://git.savannah.gnu.org/gitweb/?p=coreutils.git;a=commitdiff;h=46444af9e485b95f7ddf24c7fd9ed2586209286c
+
+@DPATCH@
+diff -urNad '--exclude=CVS' '--exclude=.svn' '--exclude=.git' '--exclude=.arch' '--exclude=.hg' '--exclude=_darcs' '--exclude=.bzr' coreutils-8.13~/THANKS.in coreutils-8.13/THANKS.in
+--- coreutils-8.13~/THANKS.in	2011-08-08 09:16:09.000000000 +0100
++++ coreutils-8.13/THANKS.in	2012-11-09 09:53:52.000000000 +0000
+@@ -486,6 +486,7 @@
+ Rainer Orth                         ro@TechFak.Uni-Bielefeld.DE
+ Ralf W. Stephan                     stephan@tmt.de
+ Ralph Loader                        loader@maths.ox.ac.uk
++Rasmus Borup Hansen                 rbh@intomics.com
+ Raul Miller                         moth@magenta.com
+ Raúl Núñez de Arenas Coronado       raul@pleyades.net
+ Richard A Downing                   richard.downing@bcs.org.uk
+diff -urNad '--exclude=CVS' '--exclude=.svn' '--exclude=.git' '--exclude=.arch' '--exclude=.hg' '--exclude=_darcs' '--exclude=.bzr' coreutils-8.13~/src/sort.c coreutils-8.13/src/sort.c
+--- coreutils-8.13~/src/sort.c	2011-07-29 09:12:25.000000000 +0100
++++ coreutils-8.13/src/sort.c	2012-11-09 09:53:52.000000000 +0000
+@@ -263,6 +263,9 @@
+                                    when popping. */
+ };
+ 
++/* Used to implement --unique (-u).  */
++static struct line saved_line;
++
+ /* FIXME: None of these tables work with multibyte character sets.
+    Also, there are many other bugs when handling multibyte characters.
+    One way to fix this is to rewrite `sort' to use wide characters
+@@ -3320,13 +3323,11 @@
+ static void
+ write_unique (struct line const *line, FILE *tfp, char const *temp_output)
+ {
+-  static struct line saved;
+-
+   if (unique)
+     {
+-      if (saved.text && ! compare (line, &saved))
++      if (saved_line.text && ! compare (line, &saved_line))
+         return;
+-      saved = *line;
++      saved_line = *line;
+     }
+ 
+   write_line (line, tfp, temp_output);
+@@ -3831,6 +3832,7 @@
+               break;
+             }
+ 
++          saved_line.text = NULL;
+           line = buffer_linelim (&buf);
+           if (buf.eof && !nfiles && !ntemps && !buf.left)
+             {
+diff -urNad '--exclude=CVS' '--exclude=.svn' '--exclude=.git' '--exclude=.arch' '--exclude=.hg' '--exclude=_darcs' '--exclude=.bzr' coreutils-8.13~/tests/Makefile.am coreutils-8.13/tests/Makefile.am
+--- coreutils-8.13~/tests/Makefile.am	2011-09-02 13:08:40.000000000 +0100
++++ coreutils-8.13/tests/Makefile.am	2012-11-09 09:53:52.000000000 +0000
+@@ -249,6 +249,7 @@
+   misc/sort-unique				\
+   misc/sort-unique-segv				\
+   misc/sort-version				\
++  misc/sort-u-FMR				\
+   split/filter					\
+   split/suffix-length				\
+   split/b-chunk					\
+diff -urNad '--exclude=CVS' '--exclude=.svn' '--exclude=.git' '--exclude=.arch' '--exclude=.hg' '--exclude=_darcs' '--exclude=.bzr' coreutils-8.13~/tests/Makefile.in coreutils-8.13/tests/Makefile.in
+--- coreutils-8.13~/tests/Makefile.in	2012-11-09 09:53:51.000000000 +0000
++++ coreutils-8.13/tests/Makefile.in	2012-11-09 09:53:52.000000000 +0000
+@@ -1603,6 +1603,7 @@
+   misc/sort-unique				\
+   misc/sort-unique-segv				\
+   misc/sort-version				\
++  misc/sort-u-FMR				\
+   split/filter					\
+   split/suffix-length				\
+   split/b-chunk					\
+@@ -2616,6 +2617,8 @@
+ 	@p='misc/sort-unique-segv'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+ misc/sort-version.log: misc/sort-version
+ 	@p='misc/sort-version'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
++misc/sort-u-FMR.log: misc/sort-u-FMR
++	@p='misc/sort-u-FMR'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+ split/filter.log: split/filter
+ 	@p='split/filter'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+ split/suffix-length.log: split/suffix-length
+diff -urNad '--exclude=CVS' '--exclude=.svn' '--exclude=.git' '--exclude=.arch' '--exclude=.hg' '--exclude=_darcs' '--exclude=.bzr' coreutils-8.13~/tests/init.cfg coreutils-8.13/tests/init.cfg
+--- coreutils-8.13~/tests/init.cfg	2012-11-09 09:53:51.000000000 +0000
++++ coreutils-8.13/tests/init.cfg	2012-11-09 09:55:27.000000000 +0000
+@@ -130,6 +130,12 @@
+     skip_ 'strace -qe "'"$1"'" does not work'
+ }
+ 
++# Skip the current test if valgrind doesn't work.
++require_valgrind_()
++{
++  valgrind --help >/dev/null || skip_ "requires valgrind"
++}
++
+ # Require a controlling input `terminal'.
+ require_controlling_input_terminal_()
+ {
+diff -urNad '--exclude=CVS' '--exclude=.svn' '--exclude=.git' '--exclude=.arch' '--exclude=.hg' '--exclude=_darcs' '--exclude=.bzr' coreutils-8.13~/tests/misc/sort coreutils-8.13/tests/misc/sort
+--- coreutils-8.13~/tests/misc/sort	2011-07-28 11:38:27.000000000 +0100
++++ coreutils-8.13/tests/misc/sort	2012-11-09 09:53:52.000000000 +0000
+@@ -227,6 +227,21 @@
+ ["15d", '-i -u', {IN=>"\1a\na\n"}, {OUT=>"\1a\n"}],
+ ["15e", '-i -u', {IN=>"a\n\1\1\1\1\1a\1\1\1\1\n"}, {OUT=>"a\n"}],
+ 
++# This would fail (printing only the 7) for 8.6..8.18.
++# Use --parallel=1 for reproducibility, and a small buffer size
++# to let us trigger the problem with a smaller input.
++["unique-1", '--p=1 -S32b -u', {IN=>"7\n"x11 . "1\n"}, {OUT=>"1\n7\n"}],
++# Demonstrate that 8.19's key-spec-adjusting code is required.
++# These are more finicky in that they are arch-dependent.
++["unique-key-i686",   '-u -k2,2 --p=1 -S32b',
++  {IN=>"a 7\n"x10 . "b 1\n"}, {OUT=>"b 1\na 7\n"}],
++["unique-key-x86_64", '-u -k2,2 --p=1 -S32b',
++  {IN=>"a 7\n"x11 . "b 1\n"}, {OUT=>"b 1\na 7\n"}],
++# Before 8.19, this would trigger a free-memory read.
++["unique-free-mem-read", '-u --p=1 -S32b',
++  {IN=>"a\n"."b"x900 ."\n"},
++ {OUT=>"a\n"."b"x900 ."\n"}],
++
+ # From Erick Branderhorst -- fixed around 1.19e
+ ["16a", '-f',
+  {IN=>"éminence\nüberhaupt\n's-Gravenhage\naëroclub\nAag\naagtappels\n"},
+diff -urNad '--exclude=CVS' '--exclude=.svn' '--exclude=.git' '--exclude=.arch' '--exclude=.hg' '--exclude=_darcs' '--exclude=.bzr' coreutils-8.13~/tests/misc/sort-u-FMR coreutils-8.13/tests/misc/sort-u-FMR
+--- coreutils-8.13~/tests/misc/sort-u-FMR	1970-01-01 01:00:00.000000000 +0100
++++ coreutils-8.13/tests/misc/sort-u-FMR	2012-11-09 09:56:40.000000000 +0000
+@@ -0,0 +1,29 @@
++#!/bin/sh
++# Before 8.19, this would trigger a free-memory read.
++
++# Copyright (C) 2012 Free Software Foundation, Inc.
++
++# This program is free software: you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation, either version 3 of the License, or
++# (at your option) any later version.
++
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++
++# You should have received a copy of the GNU General Public License
++# along with this program.  If not, see <http://www.gnu.org/licenses/>.
++
++. "${srcdir=.}/init.sh"; path_prepend_ ../src
++print_ver_ sort
++require_valgrind_
++
++{ echo 0; printf '%0900d\n' 1; } > in || framework_failure_
++
++valgrind --error-exitcode=1 sort --p=1 -S32b -u in > out || true # fail=1
++
++compare in out || fail=1
++
++Exit $fail

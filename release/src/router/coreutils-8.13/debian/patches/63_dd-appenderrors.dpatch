@@ -1,0 +1,15 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+
+@DPATCH@
+--- coreutils-5.97/src/dd.c.orig	2006-06-26 10:17:02.143014002 -0400
++++ coreutils-6.10/src/dd.c	2006-06-26 10:20:17.456920048 -0400
+@@ -1243,6 +1243,9 @@
+   if (multiple_bits_set (input_flags & (O_DIRECT | O_NOCACHE))
+       || multiple_bits_set (output_flags & (O_DIRECT | O_NOCACHE)))
+     error (EXIT_FAILURE, 0, _("cannot combine direct and nocache"));
++  if ((output_flags & O_APPEND) &&
++      ((conversions_mask & C_NOTRUNC) != C_NOTRUNC))
++    error (0, 0, _("you probably want conv=notrunc with oflag=append"));
+ 
+   if (input_flags & O_NOCACHE)
+     {

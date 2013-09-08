@@ -296,7 +296,7 @@ extern int osifname_to_nvifname(const char *osifname, char *nvifname_buf,
 
 int ure_any_enabled(void);
 
-int is_hwnat_loaded(void);
+#define is_hwnat_loaded() module_loaded("hw_nat")
 
 #define vstrsep(buf, sep, args...) _vstrsep(buf, sep, args, NULL)
 extern int _vstrsep(char *buf, const char *sep, ...);

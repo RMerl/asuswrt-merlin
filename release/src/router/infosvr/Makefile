@@ -21,6 +21,7 @@ endif
 CFLAGS  += -Dlinux -DNO_PARALLEL -DPRNINFO
 LDFLAGS = -L$(TOP)/shared -lshared -L$(TOP)/nvram${BCMEX} -lnvram 
 ifeq ($(RTCONFIG_BCMARM),y)
+CFLAGS += -I$(SRCBASE)/common/include
 LDFLAGS += -lgcc_s
 endif
 

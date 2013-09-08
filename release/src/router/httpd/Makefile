@@ -58,6 +58,7 @@ LIBS = -L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared
 
 ifeq ($(RTCONFIG_BCMARM),y)
 CFLAGS += -I$(SRCBASE)/shared/bcmwifi/include
+CFLAGS += -I$(SRCBASE)/common/include
 LIBS += -lgcc_s
 endif
 

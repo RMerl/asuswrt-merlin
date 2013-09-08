@@ -1,7 +1,7 @@
 /*
  * Registrar protocol TLV
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: reg_prototlv.h 297775 2011-11-21 20:08:50Z $
+ * $Id: reg_prototlv.h 383924 2013-02-08 04:14:39Z $
  */
 
 #ifndef _WPS_REG_PROTO_TLV_
@@ -240,7 +240,7 @@ int tlv_set(void *v, uint16 theType, void *val, uint16 len);
 void tlv_delete_imp(void *b, bool content_only, const char *func, int line);
 int tlv_encrSettingsParse(CTlvEncrSettings *tlv, BufferObj *theBuf);
 void tlv_encrSettingsWrite(CTlvEncrSettings *tlv, BufferObj *theBuf);
-void tlv_oobDevPwdParse(CTlvOobDevPwd *tlv, BufferObj *theBuf);
+int tlv_oobDevPwdParse(CTlvOobDevPwd *tlv, BufferObj *theBuf);
 void tlv_oobDevPwdWrite(CTlvOobDevPwd *tlv, BufferObj *theBuf);
 void tlv_credentialInit(CTlvCredential * tlv);
 void tlv_credentialDelete(CTlvCredential *b, bool content_only);

@@ -1,0 +1,121 @@
+#! /bin/sh
+# Run a test script of the coreutils test scripts, picking up the right
+# interpreter (i.e., perl or the shell) and the right flags for it (e.g.,
+# perl `-T' flag for perl scripts that must run in tainted mode).
+#
+# Copyright (C) 2011 Free Software Foundation, Inc.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+# ---------------------------------- #
+#  Readonly variables and functions  #
+# ---------------------------------- #
+
+# Help to avoid typo-related bugs.
+set -u
+
+me=shell-or-perl
+
+fatal_ ()
+{
+  echo "$me: $*" >&2
+  # Exit with status `99' to inform the testsuite harness that an
+  # hard error occurred.
+  exit 99
+}
+
+print_help_ ()
+{
+  cat <<EOH
+Usage: $me [--help] [--srcdir DIR] [--shell SHELL-CMD] [--perl PERL-CMD]
+       [--test-name NAME-WITHOUT-VPATH] TEST-SCRIPT [ARGS..]
+EOH
+}
+
+# ---------------- #
+#  Option parsing  #
+# ---------------- #
+
+assign_optarg_to_var='
+  test $# -gt 1 || fatal_ "option '\''$1'\'' requires an argument"
+  eval "$var=\$2"
+  shift'
+
+srcdir=${srcdir-.}
+cu_PERL=${PERL-perl}
+cu_SHELL=/bin/sh # Getting $SHELL from the environment is dangerous.
+test_name=
+while test $# -gt 0; do
+  var=
+  case $1 in
+    --help) print_help_; exit $?;;
+    --shell) var=cu_SHELL;;
+    --perl) var=cu_PERL;;
+    --srcdir) var=srcdir;;
+    --test-name) var=test_name;;
+    --) shift; break;;
+    -*) fatal_ "unknown option '$1'";;
+    *) break;;
+  esac
+  test -z "$var" || eval "$assign_optarg_to_var"
+  shift
+done
+
+unset assign_optarg_to_var var
+
+case $# in
+  0) fatal_ "missing argument";;
+  *) test_script=$1; shift;;
+esac
+
+test -z "$test_name" && test_name=$test_script
+
+# --------------------- #
+#  Run the test script  #
+# --------------------- #
+
+test -f "$test_script" && test -r "$test_script" \
+  || fatal_ "test script '$test_script' does not exist, or isn't readable"
+
+read shebang_line < "$test_script" \
+  || fatal_ "cannot read from the test script '$test_script'"
+
+case $shebang_line in
+'#!/usr/bin/perl'*)
+  # The test is a perl script.
+  if $cu_PERL -e 'use warnings' > /dev/null 2>&1; then
+    # Perl is available, see if we must run the test with taint
+    # mode on or not.
+    case $shebang_line in *\ -T*) T_=T;; *) T_=;; esac
+    # Now run it.
+    exec $cu_PERL -w$T_ -I"$srcdir" -MCoreutils -MCuSkip \
+                  -M"CuTmpdir qw($test_name)" \
+                  -- "$test_script" ${1+"$@"}
+  else
+    # Perl is not available, skip the test.
+    echo "$test_name: skip: no usable version of Perl found"
+    exit 77
+  fi
+  ;;
+*)
+  # Assume the test is a shell script.
+  exec $cu_SHELL "$test_script" ${1+"$@"}
+esac
+
+# ------------- #
+#  Not reached  #
+# ------------- #
+
+fatal_ "dead code reached"

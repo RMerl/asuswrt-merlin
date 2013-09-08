@@ -55,7 +55,7 @@ CONFIG_LIBPTHREAD=y
 #
 # Environment
 #
-PLATFORM=mipsel
+PLATFORM=arm
 LINUXDIR=$(SRCBASE)/linux/linux
 LIBDIR=$(TOOLCHAIN)/lib
 USRLIBDIR=$(TOOLCHAIN)/usr/lib

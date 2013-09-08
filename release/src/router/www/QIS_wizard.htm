@@ -71,13 +71,14 @@ if(isMobile() && sw_mode != 2 && qisFlag != "sitesurvey" && qisFlag != "sitesurv
 var parent_macaddr = '<% nvram_get("et0macaddr"); %>';
 var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 
+var isRepeater = true;
 var reduced_internet_type = "disable";
 var targeturl = "/index.htm";
 var firmver = '<% nvram_get("firmver"); %>';
 var w_Setting_tmp = '<% nvram_get("w_Setting"); %>';
 var return_btn = 0;
 var flag_manual = 0;
-var issubmit = 0;
+var isSubmit = false;
 var isrescan = 0;
 var getBand = '<% get_parameter("band"); %>';
 var isFirst = ('<% nvram_get("x_Setting"); %>' == '1') ? false : true;;
@@ -114,7 +115,7 @@ function detect_firmware(){
 				setTimeout("detect_firmware();", 1000);
 		},
  		success: function(){
-			if(retry > 20){
+			if(retry > 10){
 				liveUpdateFinish = true;					
 			}
 			else if(webs_state_update==0){
@@ -244,7 +245,13 @@ function QIS_load_body(){
 				document.QKform.wan_proto.value = "pptp";
 				action = "/qis/QIS_internet_account.htm";
 				submit();
-				break;				
+				break;
+			case "sitesurvey_mb":
+				localAP_support = false;
+				isRepeater = false;
+				action = "/qis/QIS_sitesurvey.htm";
+				submit();
+				break;
 			default:
 				if(showCase.split("?").length == 1)
 					action = "/qis/QIS_" + showCase + ".htm";
@@ -545,6 +552,7 @@ function check_DUT(){
 	<input type="hidden" name="action_mode" value="apply">
 	<input type="hidden" name="action_script" value="start_webs_update">
 	<input type="hidden" name="action_wait" value="12">
+	<input type="hidden" name="x_Setting" value="1">
 </form>
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
 </body>

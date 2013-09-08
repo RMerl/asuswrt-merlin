@@ -42,7 +42,10 @@ a:active {
 var diskOrder = parent.getSelectedDiskOrder();
 var pools = parent.computepools(diskOrder, "name");
 var diskmon_status = '<% nvram_get("diskmon_status"); %>';
-var diskmon_freq_time = '<% nvram_get("diskmon_freq_time"); %>';
+var usb_path1_diskmon_freq = '<% nvram_get("usb_path1_diskmon_freq"); %>';
+var usb_path1_diskmon_freq_time = '<% nvram_get("usb_path1_diskmon_freq_time"); %>';
+var usb_path2_diskmon_freq = '<% nvram_get("usb_path2_diskmon_freq"); %>';
+var usb_path2_diskmon_freq_time = '<% nvram_get("usb_path2_diskmon_freq_time"); %>';
 
 var _apps_pool_error = '<% apps_fsck_ret(); %>';
 if(_apps_pool_error != '')
@@ -55,7 +58,7 @@ var usb_pool_error = ['<% nvram_get("usb_path1_pool_error"); %>', '<% nvram_get(
 var set_diskmon_time = "";
 var progressBar;
 var timer;
-var diskmon_freq_row = diskmon_freq_time.split('&#62');
+var diskmon_freq_row;
 var $j = jQuery.noConflict();
 var stop_flag = 0;
 var scan_done = 0;
@@ -69,6 +72,28 @@ function initial(){
 
 	check_status(apps_pool_error);
 	check_status2(usb_pool_error);
+}
+
+function load_schedule_value(){
+	document.form.diskmon_usbport.value = parent.getDiskPort(diskOrder);
+
+	if(parseInt(parent.getDiskPort(diskOrder)) == 1){
+		document.form.diskmon_freq.value = usb_path1_diskmon_freq;
+		diskmon_freq_row = usb_path1_diskmon_freq_time.split('&#62');
+	}
+	else{
+		document.form.diskmon_freq.value = usb_path2_diskmon_freq;
+		diskmon_freq_row = usb_path2_diskmon_freq_time.split('&#62');
+	}
+
+	for(var i=0; i<3; i++){
+		if(diskmon_freq_row[i] == "" || typeof(diskmon_freq_row[i]) == "undefined")
+			diskmon_freq_row[i] = "1";
+	}
+
+	document.form.freq_mon.value = diskmon_freq_row[0];
+	document.form.freq_week.value = diskmon_freq_row[1];
+	document.form.freq_hour.value = diskmon_freq_row[2];
 }
 
 function freq_change(){
@@ -454,17 +479,6 @@ function check_status2(usb_error){
 	}
 }
 
-function load_schedule_value(){
-	for(var i=0; i<3; i++){
-		if(diskmon_freq_row[i] == "" || typeof(diskmon_freq_row[i]) == "undefined")
-			diskmon_freq_row[i] = "1";
-	}
-
-	document.form.freq_mon.value = diskmon_freq_row[0];
-	document.form.freq_week.value = diskmon_freq_row[1];
-	document.form.freq_hour.value = diskmon_freq_row[2];
-}
-
 function scan_manually(){
 	document.form.diskmon_freq.disabled = true;
 	document.form.diskmon_freq_time.disabled = true;
@@ -500,7 +514,7 @@ function reset_force_stop(){
 <input type="hidden" name="diskmon_force_stop" value="<% nvram_get("diskmon_force_stop"); %>" >
 <input type="hidden" name="diskmon_freq_time" value="<% nvram_get("diskmon_freq_time"); %>">
 <input type="hidden" name="diskmon_policy" value="disk">
-<input type="hidden" name="diskmon_usbport" value="<% nvram_get("diskmon_usbport"); %>">
+<input type="hidden" name="diskmon_usbport" value="">
 <input type="hidden" name="diskmon_part" value="">
 <table height="30px;">
 	<tr>

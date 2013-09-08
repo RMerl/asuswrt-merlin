@@ -1,7 +1,7 @@
 /*
  * WPS ERROR code definition
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: wpserror.h 321622 2012-03-16 04:10:38Z $
+ * $Id: wpserror.h 383924 2013-02-08 04:14:39Z $
  */
 
 #ifndef _WPS_ERROR_
@@ -51,7 +51,7 @@
 #define WPS_SEND_RET_MSG_CONT       WPS_BASE+25 /* Send re-transmittion message and continue */
 #define WPS_SEND_FRAG_CONT          WPS_BASE+26 /* Send fragment and continue */
 #define WPS_SEND_FRAG_ACK_CONT      WPS_BASE+27 /* Send fragment ACK message and continue */
-#define WPS_IGNORE_MSG_CONT         WPS_BASE+28 /* Ignore this message and continue */	
+#define WPS_IGNORE_MSG_CONT         WPS_BASE+28 /* Ignore this message and continue */
 #define WPS_ERR_PBC_OVERLAP         WPS_BASE+29 /* PBC overlap found my M1 UUID mismatch */
 #define WPS_M2D_NACK_CONT           WPS_BASE+30	/* Received NACK reply in M2D state */
 
@@ -104,17 +104,19 @@
 #define TRUPNP_ERR_SENDRECV         TRUPNP_BASE+1
 
 /* RegProtocol */
-#define RPROT_BASE                 0x6000
-#define RPROT_ERR_REQD_TLV_MISSING RPROT_BASE+1
-#define RPROT_ERR_CRYPTO           RPROT_BASE+2
-#define RPROT_ERR_INCOMPATIBLE     RPROT_BASE+3
-#define RPROT_ERR_INVALID_VALUE    RPROT_BASE+4
-#define RPROT_ERR_NONCE_MISMATCH   RPROT_BASE+5
-#define RPROT_ERR_WRONG_MSGTYPE    RPROT_BASE+6
-#define RPROT_ERR_MULTIPLE_M2      RPROT_BASE+7
-#define RPROT_ERR_AUTH_ENC_FLAG    RPROT_BASE+8
-#define RPROT_ERR_ROGUE_SUSPECTED  RPROT_BASE+9 /* WSC 2.0 */
-#define RPROT_ERR_INCOMPATIBLE_WEP RPROT_BASE+10 /* WSC 2.0 */
+#define RPROT_BASE                      0x6000
+#define RPROT_ERR_REQD_TLV_MISSING      RPROT_BASE+1
+#define RPROT_ERR_CRYPTO                RPROT_BASE+2
+#define RPROT_ERR_INCOMPATIBLE          RPROT_BASE+3
+#define RPROT_ERR_INVALID_VALUE         RPROT_BASE+4
+#define RPROT_ERR_NONCE_MISMATCH        RPROT_BASE+5
+#define RPROT_ERR_WRONG_MSGTYPE         RPROT_BASE+6
+#define RPROT_ERR_MULTIPLE_M2           RPROT_BASE+7
+#define RPROT_ERR_AUTH_ENC_FLAG         RPROT_BASE+8
+#define RPROT_ERR_ROGUE_SUSPECTED       RPROT_BASE+9 /* WSC 2.0 */
+#define RPROT_ERR_INCOMPATIBLE_WEP      RPROT_BASE+10 /* WSC 2.0 */
+#define RPROT_ERR_DEV_PW_ID_MISMATCH    RPROT_BASE+11 /* WSC 2.0 + NFC */
+#define RPROT_ERR_PUB_KEY_HASH_MISMATCH RPROT_BASE+11 /* WSC 2.0 + NFC */
 #define WPS_PASSWORD_AUTH_ERROR 18
 
 /* Portability */
@@ -125,4 +127,17 @@
 #define PORTAB_ERR_WAIT_ABANDONED   PORTAB_BASE+4
 #define PORTAB_ERR_WAIT_TIMEOUT     PORTAB_BASE+5
 
+/* NFC */
+#define NFC_BASE                    0x8000
+#define NFC_ERROR                   NFC_BASE+1
+#define NFC_WR_PW_SUCCESS           NFC_BASE+2
+#define NFC_WR_PW_ERROR             NFC_BASE+3
+#define NFC_WR_CFG_SUCCESS          NFC_BASE+4
+#define NFC_WR_CFG_SUCCESS_RESTART  NFC_BASE+5
+#define NFC_WR_CFG_ERROR            NFC_BASE+6
+#define NFC_RD_PW_SUCCESS           NFC_BASE+7
+#define NFC_RD_PW_ERROR             NFC_BASE+8
+#define NFC_RD_CFG_SUCCESS          NFC_BASE+9
+#define NFC_RD_CFG_SUCCESS_RESTART  NFC_BASE+10
+#define NFC_FORMAT_SUCCESS          NFC_BASE+11
 #endif /* _WPS_ERROR_ */

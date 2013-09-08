@@ -1,0 +1,75 @@
+#!/bin/sh
+# test program group handling
+
+# Copyright (C) 2011 Free Software Foundation, Inc.
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+. "${srcdir=.}/init.sh"; path_prepend_ ../src
+print_ver_ timeout
+
+# construct a program group hierarchy as follows:
+#  timeout-group - foreground group
+#    group.sh - separate group
+#      timeout.cmd - same group as group.sh
+#
+# We then send a SIGINT to the "separate group"
+# to simulate what happens when a Ctrl-C
+# is sent to the foreground group.
+
+setsid true || skip_ "setsid required to control groups"
+
+cat > timeout.cmd <<\EOF
+#!/bin/sh
+trap 'touch int.received; exit' INT
+touch timeout.running
+sleep $1
+EOF
+chmod a+x timeout.cmd
+
+cat > group.sh <<\EOF
+#!/bin/sh
+timeout --foreground 5 ./timeout.cmd 10&
+wait
+EOF
+chmod a+x group.sh
+
+# Start above script in its own group.
+# We could use timeout for this, but that assumes an implementation.
+setsid ./group.sh &
+until test -e timeout.running; do sleep .1; done
+# Simulate a Ctrl-C to the group to test timely exit
+# Note dash doesn't support signalling groups (a leading -)
+env kill -INT -- -$!
+wait
+test -e int.received || fail=1
+
+rm -f int.received timeout.running
+
+
+# Ensure cascaded timeouts work
+# or more generally, ensure we timeout
+# commands that create their own group
+# This didn't work before 8.13.
+
+# Note the first timeout must send a signal that
+# the second is handling for it to be propagated to the command.
+# SIGINT, SIGTERM, SIGALRM etc. are implicit.
+timeout -sALRM 2 timeout -sINT 10 ./timeout.cmd 5&
+until test -e timeout.running; do sleep .1; done
+kill -ALRM $!
+wait
+test -e int.received || fail=1
+
+Exit $fail

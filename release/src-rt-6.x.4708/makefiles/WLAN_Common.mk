@@ -198,16 +198,16 @@ include $(WLAN_TreeBaseA)/src-rt-6.x.4708/tools/release/WLAN.usf
 define _common-component-names-to-rel-paths
 $(strip \
   $(patsubst $(WLAN_TreeBaseA)/%,%,$(wildcard $(addprefix $(WLAN_TreeBaseA)/,\
-  $(sort $(foreach name,$(if $1,$1,$(WLAN_AllComponentPaths)),$(filter %/$(name),$(WLAN_AllComponentPaths))))))))
+  $(sort $(foreach name,$(if $1,$1,$(WLAN_COMPONENT_PATHS)),$(filter %/$(name),$(WLAN_COMPONENT_PATHS))))))))
 endef
 
 # If WLAN_ComponentsInUse is unset it defaults to the full set (for now, anyway - TODO).
 # It's also possible to request the full set with a literal '*'.
 ifeq (,$(WLAN_ComponentsInUse))
-  WLAN_ComponentsInUse		:= $(sort $(notdir $(WLAN_AllComponentPaths)))
+  WLAN_ComponentsInUse		:= $(sort $(notdir $(WLAN_COMPONENT_PATHS)))
   # $(call wlan_die,no SW component request)
 else ifeq (*,$(WLAN_ComponentsInUse))
-  WLAN_ComponentsInUse		:= $(sort $(notdir $(WLAN_AllComponentPaths)))
+  WLAN_ComponentsInUse		:= $(sort $(notdir $(WLAN_COMPONENT_PATHS)))
   $(call wlan_info,all SW components requested ("$(WLAN_ComponentsInUse)"))
 else
   WLAN_ComponentsInUse		:= $(sort $(WLAN_ComponentsInUse))
@@ -276,15 +276,14 @@ endif
 WLAN_Perl := perl
 WLAN_Python := python
 WLAN_WINPFX ?= Z:
-WLAN_WINPFX ?= //broadcom/sjca
 
 # These macros are used to stash an extra copy of generated source files,
 # such that when a source release is made those files can be reconstituted
 # from the stash during builds. Required if the generating tools or inputs
 # are not shipped.
 define wlan_copy_to_gen
-  $(if $(WLAN_COPY_GEN),&& mkdir -pv $(subst $(abspath $2),$(abspath $2/$(WLAN_GenBaseDir)),$(dir $1)) && \
-    cp -pv $1 $(subst $(abspath $2),$(abspath $2/$(WLAN_GenBaseDir)),$1.GEN))
+  $(if $(WLAN_COPY_GEN),&& mkdir -p $(subst $(abspath $2),$(abspath $2/$(WLAN_GEN_BASEDIR)),$(dir $(abspath $1))) && \
+    cp -pv $1 $(subst $(abspath $2),$(abspath $2/$(WLAN_GEN_BASEDIR)),$(abspath $1).GEN))
 endef
 
 ################################################################
@@ -325,12 +324,13 @@ vpath wlc_clm_data$4.c $1 $$(abspath $1)
 ifneq (,$(wildcard $(addsuffix /wl/clm/private/wlc_clm_data.xml,$2 $2/../../src $2/../../../src)))
   vpath wlc_clm_data.xml $(wildcard $(addsuffix /wl/clm/private,$5 $2 $2/../../src $2/../../../src))
   vpath %.clm $(addsuffix /wl/clm/types,$2 $2/../../src $2/../../../src)
-  $$(sort $1/wlc_clm_data$4.c ./wlc_clm_data$4.c): wlc_clm_data.xml $$(if $$(CLM_TYPE),$$(CLM_TYPE).clm) ; \
+  $$(sort $1/wlc_clm_data$4.c ./wlc_clm_data$4.c): \
+      wlc_clm_data.xml $2/wl/clm/include/wlc_clm_data.h $$(wildcard $2/wl/clm/bin/ClmCompiler.py) $$(if $$(CLM_TYPE),$$(CLM_TYPE).clm) ; \
     $$(strip $$(abspath $$(<D)/../../../tools/build/ClmCompiler) \
       $$(if $$(CLM_TYPE),--config_file $$(lastword $$^) $3,$$(if $3,$3,$$(CLMCOMPDEFFLAGS))) \
       $(CLMCOMPEXTFLAGS) $$< $$@ $$(call wlan_copy_to_gen,$$@,$2))
 else
-  vpath %.GEN $(subst $(abspath $2),$(abspath $2/$(WLAN_GenBaseDir)),$1) $(sort $(patsubst %/,%,$(dir $(wildcard $(subst $(abspath $2),$(abspath $2/$(WLAN_GenBaseDir)),$(dir $1))*/*.GEN))))
+  vpath %.GEN $(subst $(abspath $2),$(abspath $2/$(WLAN_GEN_BASEDIR)),$1) $(sort $(patsubst %/,%,$(dir $(wildcard $(subst $(abspath $2),$(abspath $2/$(WLAN_GEN_BASEDIR)),$(dir $1))*/*.GEN))))
   $1/%: %.GEN ; cp -pv $$< $$@
 endif
   clm_compiled: $1/wlc_clm_data$4.c

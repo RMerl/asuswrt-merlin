@@ -136,7 +136,7 @@ function initial(){
 
 	cal_agreement_block();
 
-	if('<% nvram_get("rrsut"); %>' != '1')
+	if(!rrsut_support)
 		$("rrsLink").style.display = "none";
 }
 

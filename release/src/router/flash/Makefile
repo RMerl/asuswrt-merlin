@@ -6,20 +6,11 @@ LDFLAGS +=-L$(TOP)/shared -lshared
 EXEC = flash
 OBJS = flash_mtd.o
 
-ifeq ($(RTN14U),y)
-ifneq ($(wildcard ./.prebuilt/$(EXEC)),)
-all:
-	-cp .prebuilt/$(EXEC) $(EXEC)
-else
-all: $(EXEC) 
-endif
-else
 ifneq ($(wildcard ./prebuilt),)
 all:
 	-cp prebuilt/$(EXEC) $(EXEC)
 else
 all: $(EXEC) 
-endif
 endif
 
 $(EXEC): $(OBJS)

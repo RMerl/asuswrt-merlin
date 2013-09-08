@@ -422,7 +422,7 @@ static void * wpa_driver_roboswitch_init(void *ctx, const char *ifname)
 		}
 		vlan = ifv.u.VID;
 	} else
-	if (sscanf(ifname, "vlan%hu", &vlan) == 1) {
+	if (sscanf(ifname, "vlan%hu", &vlan) == 2) {
 		os_strlcpy(drv->ifname, "eth0", sizeof(drv->ifname));
 	} else
 	if (sscanf(ifname, "%16[^.].%hu", drv->ifname, &vlan) != 2) {

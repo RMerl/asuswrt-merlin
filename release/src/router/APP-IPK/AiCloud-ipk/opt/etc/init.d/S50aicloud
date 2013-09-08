@@ -94,6 +94,10 @@ if [ ! -d "/tmp/lighttpd/www" ]; then
 mkdir -p /tmp/lighttpd/www
 fi
 
+if [ -f "/etc/smb.conf" ];then
+cp -f /etc/smb.conf /opt/etc/samba/
+fi
+
 chmod -R 777 /tmp/lighttpd
 chmod -R 777 /tmp/lighttpd/compress
 chmod -R 777 /tmp/lighttpd/uploads

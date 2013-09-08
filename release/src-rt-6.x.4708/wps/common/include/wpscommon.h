@@ -1,7 +1,7 @@
 /*
  * WPS Common
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: wpscommon.h 372004 2012-11-30 03:46:58Z $
+ * $Id: wpscommon.h 383924 2013-02-08 04:14:39Z $
  */
 
 #ifndef _WPS_COMMON_
@@ -81,7 +81,22 @@ typedef enum {
 	WPS_MSGDONE,
 	WPS_PBCOVERLAP,
 	WPS_FIND_PBC_AP,
-	WPS_ASSOCIATING
+	WPS_ASSOCIATING,
+	WPS_NFC_WR_CFG,
+	WPS_NFC_WR_PW,
+	WPS_NFC_WR_CPLT,
+	WPS_NFC_RD_CFG,
+	WPS_NFC_RD_PW,
+	WPS_NFC_RD_CPLT,
+	WPS_NFC_HO_S,
+	WPS_NFC_HO_R,
+	WPS_NFC_HO_NDEF,
+	WPS_NFC_HO_CPLT,
+	WPS_NFC_OP_ERROR,
+	WPS_NFC_OP_STOP,
+	WPS_NFC_OP_TO,
+	WPS_NFC_FM,
+	WPS_NFC_FM_CPLT
 } WPS_SCSTATE;
 
 typedef enum {

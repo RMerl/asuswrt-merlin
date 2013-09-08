@@ -6,3 +6,5 @@
 *.d
 src/mt-daapd
 stamp-h1
+src/lexer.c
+

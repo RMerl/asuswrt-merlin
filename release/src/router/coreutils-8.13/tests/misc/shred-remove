@@ -1,0 +1,36 @@
+#!/bin/sh
+# Exercise a bug that was fixed in shred-4.0l
+
+# Copyright (C) 1999-2000, 2003, 2006-2011 Free Software Foundation, Inc.
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+. "${srcdir=.}/init.sh"; path_prepend_ ../src
+print_ver_ shred
+skip_if_root_
+
+# The length of the basename is what matters.
+# In this case, shred would try to rename the file 256^10 times
+# before terminating.
+file=0123456789
+touch $file || framework_failure_
+chmod u-w $file || framework_failure_
+
+
+# This would take so long that it appears to infloop
+# when using version from fileutils-4.0k.
+# When the command completes, expect it to fail.
+shred -u $file > /dev/null 2>&1 && fail=1 || :
+
+Exit $fail

@@ -1,7 +1,7 @@
 /*
  * WPS TLV
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -21,7 +21,7 @@ extern "C" {
 #include <portability.h>
 #include <wpserror.h>
 
-#ifndef UNDER_CE     /* to be used for everything other than WinCE */
+#ifndef UNDER_CE /* to be used for everything other than WinCE */
 	#ifndef __unaligned
 	#define __unaligned
 	#endif

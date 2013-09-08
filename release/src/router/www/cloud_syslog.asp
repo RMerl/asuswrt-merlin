@@ -27,7 +27,7 @@ wan_proto = '<% nvram_get("wan_proto"); %>';
 function initial(){
 	show_menu();
 
-	if('<% nvram_get("rrsut"); %>' != '1')
+	if(!rrsut_support)
 		$("rrsLink").style.display = "none";
 }
 </script>

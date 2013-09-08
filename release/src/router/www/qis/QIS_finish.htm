@@ -89,6 +89,7 @@ function detect_httpd(){
 			if(dead < 50)
 				setTimeout("detect_httpd();", 1000);
 			else{
+				progressBar = 100;
 				document.getElementById('progress_bar_no').innerHTML = "100%";
 				document.getElementById("updateProgress").style.width = "100%";
 				document.getElementById("newFWgradedFail").style.display = "";
@@ -96,18 +97,21 @@ function detect_httpd(){
 		},
 		success: function(){
 			if(webs_state_error == "1"){
+				progressBar = 100;
 				document.getElementById('progress_bar_no').innerHTML = "100%";
 				document.getElementById("updateProgress").style.width = "100%";
 				document.getElementById("liveUpdateResult").innerHTML = "<#connect_failed#>";
 				document.getElementById("newFWgraded").style.display = "";
 				return false;
 			}else if(webs_state_error == "2"){
+				progressBar = 100;
 				document.getElementById('progress_bar_no').innerHTML = "100%";
 				document.getElementById("updateProgress").style.width = "100%";
 				document.getElementById("liveUpdateResult").innerHTML = "Memory space is NOT enough to upgrade on internet. Please wait for rebooting.<br><#FW_desc1#>";
 				document.getElementById("newFWgraded").style.display = "";
 				return false;				
 			}else if(webs_state_error == "3"){
+				progressBar = 100;
 				document.getElementById('progress_bar_no').innerHTML = "100%";
 				document.getElementById("updateProgress").style.width = "100%";
 				document.getElementById("liveUpdateResult").innerHTML = "<#FIRM_fail_desc#><br><#FW_desc1#>";
@@ -115,6 +119,7 @@ function detect_httpd(){
 			}
 
 			if(webs_state_upgrade == ""){	//after reboot
+				progressBar = 100;
 				document.getElementById('progress_bar_no').innerHTML = "100%";
 				document.getElementById("updateProgress").style.width = "100%";				
 				document.getElementById("newFWgraded").style.display = "";		
@@ -149,6 +154,13 @@ function showLoadingUpdate(){
 }
 
 function QKfinish_load_body(){
+	if(parent.liveUpdateFinish && !parent.new_FW){
+		goto_tutorial();
+		document.getElementById("QISmain").style.display = "none";
+		document.getElementById("liveUpdate_div").style.display = "none";
+		return false;
+	}
+	document.getElementById("QISmain").style.display = "";
 	parent.document.title = "<#Web_Title#> - <#QKSet_all_title#>";
 
 	// Wireless Security
@@ -483,26 +495,37 @@ function QKfinish_load_body(){
 		}
 	}
 	else{
-		if(parent.new_FW){
+		if(parent.liveUpdateFinish){
+			if(parent.new_FW){
+				$("#currentFW")[0].innerHTML = parent.exist_firmver + "_" + parent.current_buildno + "_" + parent.current_extendno; 
+				$("#latestFW")[0].innerHTML = "" 
+				for(var i=0; i<parent.Latest_firm.length; i++){
+					$("#latestFW")[0].innerHTML += parent.Latest_firm.charAt(i);
+					if(i == parent.Latest_firm.length - 1)
+						$("#latestFW")[0].innerHTML += "_";
+					else
+						$("#latestFW")[0].innerHTML += ".";
+				}
+				$("#latestFW")[0].innerHTML += parent.Latest_buildno;
+				$("#latestFW")[0].innerHTML += "_";
+				$("#latestFW")[0].innerHTML += parent.Latest_extendno;
+			}
+			else{
+				goto_tutorial();
+			}
+
 			document.getElementById("QISmain").style.display = "none";
 			document.getElementById("liveUpdate_div").style.display = "";
-			$("#currentFW")[0].innerHTML = parent.exist_firmver + "_" + parent.current_buildno + "_" + parent.current_extendno; 
-			$("#latestFW")[0].innerHTML = "" 
-			for(var i=0; i<parent.Latest_firm.length; i++){
-				$("#latestFW")[0].innerHTML += parent.Latest_firm.charAt(i);
-				if(i == parent.Latest_firm.length - 1)
-					$("#latestFW")[0].innerHTML += "_";
-				else
-					$("#latestFW")[0].innerHTML += ".";
-			}
-			$("#latestFW")[0].innerHTML += parent.Latest_buildno;
-			$("#latestFW")[0].innerHTML += "_";
-			$("#latestFW")[0].innerHTML += parent.Latest_extendno;
+			document.getElementById("nextButton_doLiveUpdate").style.display = "none";
 		}
-	
+		else{
+			document.getElementById("nextButton").style.display = "none";
+			document.getElementById("nextButton_doLiveUpdate").style.display = "";
+			document.getElementById("nextButton_doLiveUpdate").focus();
+		}
+		
 		parent.set_step("t3");
 		parent.$("LoadingBar").style.visibility = 'hidden';
-		document.getElementById("nextButton").focus();
 	}
 }
 
@@ -511,15 +534,16 @@ function gotoASUS(){
 }
 
 function goto_tutorial(){
-	// remove QIS_tutorial
-	/*if(!parent.downsize_4m_support)
-		location.href = "QIS_tutorial.htm";
-	else*/
-		parent.location.href = "/index.asp";
+	parent.location.href = "/index.asp";
 }
 
 function gotoAdvSetting(){
 	parent.location = "/Advanced_Wireless_Content.asp";
+}
+
+function startLiveDetect(){
+	document.getElementById('loadingIcon').style.display='';
+	parent.detect_update();
 }
 
 function addBookmarkForBrowser(sTitle) {
@@ -556,8 +580,9 @@ function redirect_page(redirect_flag){
 	document.redirectForm.submit();
 }
 
-function submitenter(myfield,e)
-{	
+function submitenter(myfield,e){	
+	return false;
+
 	var keycode;
 	if (window.event) keycode = window.event.keyCode;
 	else if (e) keycode = e.which;
@@ -602,7 +627,7 @@ function showclock(){
 <input type="hidden" name="wl1_ssid2" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_ssid"); %>">
 <input type="hidden" name="wl0_wpa_psk" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_wpa_psk"); %>">
 <input type="hidden" name="wl1_wpa_psk" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_wpa_psk"); %>">
-<div class="QISmain" id="QISmain">
+<div class="QISmain" id="QISmain" style="display:none">
 		<div id="descTltle">
 			<table width="100%">
 				<tr>
@@ -784,6 +809,8 @@ function showclock(){
 
 <div id="applyBtn" class="apply_gen" style="margin-top:5px">
 	<input type="button" id="nextButton" value="<#CTL_next#>" onclick="goto_tutorial();" class="button_gen">
+	<input type="button" id="nextButton_doLiveUpdate" value="<#CTL_next#>" onclick="startLiveDetect();" class="button_gen">
+	<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></span>
 </div>
 </div>
 <div id="liveUpdate_div" style="display:none">
@@ -807,7 +834,7 @@ function showclock(){
 
 	<div id="newFWDetected">
 		<div class="QISGeneralFont" style="margin-top:5px;text-align:center;font-size:18px;">
-			<div style="text-align:left;">
+			<div style="text-align:left;" id="showLiveUpdateResult_div">
 			<#exist_new#>
 			<br>
 			<br>
@@ -820,8 +847,8 @@ function showclock(){
 		<br>
 		<br>
 		<div class="apply_gen" style="margin-top:5px">
-			<input type="button" id="nextButton" value="<#CTL_Cancel#>" onclick="showCancel();" class="button_gen">
-			<input type="button" id="nextButton" value="<#checkbox_Yes#>" onclick="doLiveUpdate(true);" class="button_gen">
+			<input type="button" value="<#CTL_Cancel#>" onclick="showCancel();" class="button_gen">
+			<input type="button" value="<#checkbox_Yes#>" onclick="doLiveUpdate(true);" class="button_gen">
 		</div>
 	</div>
 		
@@ -836,7 +863,7 @@ function showclock(){
       <br>
       <br>
       <div class="apply_gen" style="margin-top:5px">
-         <input type="button" id="nextButton" value="OK" onclick="doLiveUpdate(false);" class="button_gen">
+         <input type="button" value="OK" onclick="doLiveUpdate(false);" class="button_gen">
       </div>
   </div>
 
@@ -877,7 +904,7 @@ function showclock(){
 		</div>
 		<br>
 		<div class="apply_gen" style="margin-top:5px">
-			<input type="button" id="nextButton" value="<#CTL_next#>" onclick="doLiveUpdate(false);" class="button_gen">
+			<input type="button" value="<#CTL_next#>" onclick="doLiveUpdate(false);" class="button_gen">
 		</div>
 	</div>
 

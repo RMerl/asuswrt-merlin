@@ -1,7 +1,7 @@
 /*
  * WPS OSL include
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: wps_osl.h 279189 2011-08-23 10:14:21Z $
+ * $Id: wps_osl.h 383924 2013-02-08 04:14:39Z $
  */
 #ifndef __WPS_OSL_H__
 #define __WPS_OSL_H__
@@ -29,6 +29,11 @@ int wps_eap_get_handle();
 int wps_osl_ui_handle_init();
 void wps_osl_ui_handle_deinit(int handle);
 int wps_osl_send_uimsg(wps_hndl_t *hndl, char *buf, int len);
+
+#ifdef WPS_NFC_DEVICE
+/* WPS NFC osl functions */
+int wps_osl_nfc_set_wps_env(wps_hndl_t *hndl, char *buf, int len);
+#endif /* WPS_NFC_DEVICE */
 
 /* Handle all packets */
 wps_hndl_t *wps_osl_wait_for_all_packets(char *buf, unsigned int *buflen, wps_hndl_t *hndl_list);

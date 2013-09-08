@@ -150,6 +150,8 @@ lighttpd:lighttpd/stamp-h2
 Aicloud-ipk/stamp-h2:
 	#touch $@
 	@$(SEP)
+	cp -rf $(CURRENT)/lighttpd-1.4.29/src/external_file/css/* AiCloud-ipk/opt/etc/aicloud_UI/css/
+	cp -rf $(CURRENT)/lighttpd-1.4.29/src/external_file/js/* AiCloud-ipk/opt/etc/aicloud_UI/js/
 
 Aicloud-ipk:Aicloud-ipk/stamp-h2
 	mipsel-linux-strip AiCloud-ipk/opt/tmp/bin/*

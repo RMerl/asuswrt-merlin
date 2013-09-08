@@ -56,6 +56,8 @@ function setScenerion(mode){
 		var pstaDesc = "<#OP_RE_desc#>";
 
 		parent.document.QKform.sw_mode.value = 2;
+		parent.localAP_support = true;
+
 		$j("#Senario").attr("src", "/images/New_ui/re.jpg");
 		$j("#mode_desc").html(pstaDesc);
 		document.form.sw_mode_radio[1].focus();
@@ -76,6 +78,8 @@ function setScenerion(mode){
 		pstaDesc += "<br><br><br>";
 
 		parent.document.QKform.sw_mode.value = 4;
+		parent.localAP_support = false;
+
 		$j("#Senario").attr("src", "/images/New_ui/mb.jpg");
 		$j("#mode_desc").html(pstaDesc);
 		document.form.sw_mode_radio[3].focus();
@@ -98,7 +102,8 @@ function submitForm(){
 		document.form.submit();
 	}
 	else if(parent.document.QKform.sw_mode.value == "4"){
-		document.form.action = "/qis/QIS_sitesurvey_mb.htm";
+		parent.isRepeater = false;
+		document.form.action = "/qis/QIS_sitesurvey.htm";
 		document.form.submit();
 	}
 	else{

@@ -769,7 +769,7 @@ void start_dhcp6s(void)
 
 	p = nvram_safe_get("ipv6_get_domain");
 	if (strlen(p))
-		fprintf(fp,	"option domain-name %s;\n", p);
+		fprintf(fp,	"option domain-name \"%s\";\n", p);
 
 	if (nvram_get_int("ipv6_autoconf_type")) {
 		fprintf(fp,	"host kame {\n"
@@ -1297,6 +1297,44 @@ reset_wps(void)
 	start_wpsfix();
 #endif
 }
+
+#ifdef RTCONFIG_BCMWL6A
+int
+start_hspotap(void)
+{
+#ifdef __CONFIG_HSPOT__         // hold it for tmp
+        char *hs_argv[] = {"/bin/hspotap", NULL};
+        pid_t pid;
+        int wait_time = 3;
+
+        eval("killall", "hspotap");
+        do {
+                if ((pid = get_pid_by_name("/bin/hspotap")) <= 0)
+                        break;
+                wait_time--;
+                sleep(1);
+        } while (wait_time);
+        if (wait_time == 0)
+                dprintf("Unable to kill hspotap!\n");
+
+        if (nvram_match("hspotap_enable", "1"))
+                _eval(hs_argv, NULL, 0, &pid);
+#endif /* __CONFIG_HSPOT__ */
+        return 0;
+}
+
+int
+stop_hspotap(void)
+{
+        int ret = 0;
+
+#ifdef __CONFIG_HSPOT__
+        ret = eval("killall", "hspotap");
+#endif /* __CONFIG_HSPOT__ */
+
+        return ret;
+}
+#endif
 
 #ifdef CONFIG_BCMWL5
 int
@@ -3146,7 +3184,7 @@ again:
 #endif
 		sleep(3);
 		nvram_set(ASUS_STOP_COMMIT, "1");
-		if (nvram_contains_word("rc_support", "nandflash"))     /* RT-AC56U/RT-AC68U/RT-N18UHP */
+		if (nvram_contains_word("rc_support", "nandflash"))     /* RT-AC56U/RT-AC68U/RT-N18U */
 			eval("mtd-erase2", "nvram");
 		else
 			eval("mtd-erase", "-d", "nvram");
@@ -3179,6 +3217,18 @@ again:
 			stop_dhcp6c();
 #endif
 			// TODO free necessary memory here
+#ifdef RTCONFIG_SMALL_FW_UPDATE
+/* TODO should not depend on platform, move to stop_lan_wl()?
+ * cope with stop_usb() above for BRCM AP dependencies */
+#ifdef CONFIG_BCMWL5
+/* TODO should not depend on exact interfaces */
+			eval("wlconf", "eth1", "down");
+			eval("wlconf", "eth2", "down");
+/* TODO fix fini_wl() for BCM USBAP */
+			modprobe_r("wl_high");
+			modprobe_r("wl");
+#endif
+#endif
 		}
 		if(action&RC_SERVICE_START) {
 			char upgrade_file[64] = "/tmp/linux.trx";

@@ -1,7 +1,7 @@
 /*
  * Portability
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: portability.h 292744 2011-10-28 07:54:57Z $
+ * $Id: portability.h 383924 2013-02-08 04:14:39Z $
  */
 
 #ifndef _WPS_PORTAB_
@@ -62,6 +62,14 @@ typedef struct {
 	uint16 wepIndex;
 	bool nwKeyShareable;
 } WpsEnrCred;
+
+typedef struct {
+	uint8  pub_key_hash[SIZE_160_BITS];
+	uint16 devPwdId;
+	uint8  pin[SIZE_32_BYTES];
+	int    pin_len;
+} WpsOobDevPw;
+
 
 bool wps_isSRPBC(IN uint8 *p_data, IN uint32 len);
 bool wps_isWPSS(IN uint8 *p_data, IN uint32 len);

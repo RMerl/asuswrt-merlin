@@ -208,14 +208,10 @@ ifeq ($(BUILD_NAME), RT-N12)
 endif
 
 ifneq ($(RTCONFIG_PROXYSTA),y)
-	rm -rf $(INSTALLDIR)/www/qis/QIS_sitesurvey_mb.htm
 ifneq ($(RTCONFIG_WIRELESSREPEATER),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/re.jpg
-endif
-endif
-
-ifneq ($(RTCONFIG_WIRELESSREPEATER),y)
 	rm -rf $(INSTALLDIR)/www/qis/QIS_sitesurvey.htm
+endif
 endif
 
 ifneq ($(RTCONFIG_YANDEXDNS),y)

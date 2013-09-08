@@ -274,6 +274,17 @@ static int wlconf(char *ifname, int unit, int subunit)
 			eval("wl", "-i", ifname, "ampdu_mpdu", "64");
 		else
 			eval("wl", "-i", ifname, "ampdu_mpdu", "-1");	// driver default setting
+
+		if (nvram_match(strcat_r(prefix, "ampdu_rts", tmp), "1"))
+			eval("wl", "-i", ifname, "ampdu_rts", "1");	// driver default setting
+		else
+			eval("wl", "-i", ifname, "ampdu_rts", "0");
+#ifdef RTCONFIG_BCMARM
+		if (nvram_match(strcat_r(prefix, "itxbf", tmp), "1"))
+			eval("wl", "-i", ifname, "txbf_imp", "1");	// driver default setting
+		else
+			eval("wl", "-i", ifname, "txbf_imp", "0");
+#endif
 #else
 // Disabled since we are still using 5.100
 ///		eval("wl", "-i", ifname, "ampdu_density", "6");		// resolve IOT with Intel STA for BRCM SDK 5.110.27.20012
@@ -304,7 +315,19 @@ static int wlconf(char *ifname, int unit, int subunit)
 					break;
 			}
 #else
+//#ifdef RTCONFIG_BCMWL6
+#ifdef RTCONFIG_PROXYSTA
+			if (is_psta(1 - unit))
+			{
+				eval("wl", "-i", ifname, "closed", "1");
+				eval("wl", "-i", ifname, "maxassoc", "0");
+			}
+#endif
+//#endif
 			set_mrate(ifname, prefix);
+			if (nvram_match(strcat_r(prefix, "ampdu_rts", tmp), "0") &&
+				nvram_match(strcat_r(prefix, "nmode", tmp), "-1"))
+				eval("wl", "-i", ifname, "rtsthresh", "65535");
 #endif
 			txpower = nvram_get_int(wl_nvname("TxPower", unit, 0));
 
@@ -481,41 +504,47 @@ static void stop_emf(char *lan_ifname)
 // -----------------------------------------------------------------------------
 
 /* Set initial QoS mode for all et interfaces that are up. */
-void set_et_qos_mode(int sfd)
-{
 #ifdef CONFIG_BCMWL5
-	int i, qos;
-	caddr_t ifrdata;
+void
+set_et_qos_mode(void)
+{
+	int i, s, qos;
 	struct ifreq ifr;
 	struct ethtool_drvinfo info;
 
+	if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0)
+		return;
+
 	qos = (strcmp(nvram_safe_get("wl_wme"), "off") != 0);
-	for (i = 1; i <= DEV_NUMIFS; i++) {
+
+	for (i = 1; i <= DEV_NUMIFS; i ++) {
 		ifr.ifr_ifindex = i;
-		if (ioctl(sfd, SIOCGIFNAME, &ifr)) continue;
-		if (ioctl(sfd, SIOCGIFHWADDR, &ifr)) continue;
-		if (ifr.ifr_hwaddr.sa_family != ARPHRD_ETHER) continue;
-		/* get flags */
-		if (ioctl(sfd, SIOCGIFFLAGS, &ifr)) continue;
-		/* if up (wan may not be up yet at this point) */
-		if (ifr.ifr_flags & IFF_UP) {
-			ifrdata = ifr.ifr_data;
-			memset(&info, 0, sizeof(info));
-			info.cmd = ETHTOOL_GDRVINFO;
-			ifr.ifr_data = (caddr_t)&info;
-			if (ioctl(sfd, SIOCETHTOOL, &ifr) >= 0) {
-				/* Set QoS for et & bcm57xx devices */
-				if (!strncmp(info.driver, "et", 2) ||
-				    !strncmp(info.driver, "bcm57", 5)) {
-					ifr.ifr_data = (caddr_t)&qos;
-					ioctl(sfd, SIOCSETCQOS, &ifr);
-				}
-			}
-			ifr.ifr_data = ifrdata;
-		}
+		if (ioctl(s, SIOCGIFNAME, &ifr))
+			continue;
+		if (ioctl(s, SIOCGIFHWADDR, &ifr))
+			continue;
+		if (ifr.ifr_hwaddr.sa_family != ARPHRD_ETHER)
+			continue;
+		if (ioctl(s, SIOCGIFFLAGS, &ifr))
+			continue;
+		if (!(ifr.ifr_flags & IFF_UP))
+			continue;
+		/* Set QoS for et & bcm57xx devices */
+		memset(&info, 0, sizeof(info));
+		info.cmd = ETHTOOL_GDRVINFO;
+		ifr.ifr_data = (caddr_t)&info;
+		if (ioctl(s, SIOCETHTOOL, &ifr) < 0)
+			continue;
+		if ((strncmp(info.driver, "et", 2) != 0) &&
+		    (strncmp(info.driver, "bcm57", 5) != 0))
+			continue;
+		ifr.ifr_data = (caddr_t)&qos;
+		ioctl(s, SIOCSETCQOS, &ifr);
 	}
-#endif /* CONFIG_BCMWL5 */
+
+	close(s);
 }
+#endif /* CONFIG_BCMWL5 */
 
 #ifdef CONFIG_BCMWL5
 static void check_afterburner(void)
@@ -580,6 +609,18 @@ void wlconf_pre()
 			}
 		}
 #endif
+		// early convertion for nmode setting
+		generate_wl_para(unit, -1);
+		if (nvram_match(strcat_r(prefix, "nmode", tmp), "-1"))
+		{
+			dbG("set vhtmode 1\n");
+			eval("wl", "-i", word, "vhtmode", "1");
+		}
+		else
+		{
+			dbG("set vhtmode 0\n");
+			eval("wl", "-i", word, "vhtmode", "0");
+		}
 #endif
 		unit++;
 	}
@@ -632,11 +673,9 @@ void start_wl(void)
 					eval("wl", "-i", ifname, "radio", "off");
 				}
 				else
-#if 0
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_PROXYSTA
 				if (!is_psta(1 - unit)) 
-#endif
 #endif
 #endif
 				eval("wlconf", ifname, "start"); /* start wl iface */
@@ -1313,11 +1352,11 @@ void start_lan(void)
 	strlcpy(ifr.ifr_name, lan_ifname, IFNAMSIZ);
 	if (ioctl(sfd, SIOCGIFHWADDR, &ifr) == 0) nvram_set("lan_hwaddr", ether_etoa(ifr.ifr_hwaddr.sa_data, eabuf));
 
-	// Set initial QoS mode for LAN ports
-	set_et_qos_mode(sfd);
-
 	close(sfd);
-
+	/* Set initial QoS mode for LAN ports. */
+#ifdef CONFIG_BCMWL5
+	set_et_qos_mode();
+#endif
 	// bring up and configure LAN interface
 /*#ifdef RTCONFIG_WIRELESSREPEATER
 	if(nvram_get_int("sw_mode") == SW_MODE_REPEATER && nvram_get_int("wlc_state") != WLC_STATE_CONNECTED)
@@ -1560,19 +1599,8 @@ void stop_lan(void)
 	// inform watchdog to stop WPS LED
 	kill_pidfile_s("/var/run/watchdog.pid", SIGUSR2);
 
-#ifdef CONFIG_BCMWL5
-#ifndef RTCONFIG_BRCM_USBAP
-	if ((get_model() == MODEL_RTAC68U) ||
-		(get_model() == MODEL_RTAC66U) ||
-		(get_model() == MODEL_RTN66U))
-	modprobe_r("wl");
-#endif
-	wlconf_pre();
-#endif
-
-#ifdef RTCONFIG_RALINK
 	fini_wl();
-#endif
+
 	init_nvram();	// init nvram lan_ifnames
 	wl_defaults();	// init nvram wlx_ifnames & lan_ifnames
 
@@ -2665,18 +2693,7 @@ void stop_lan_wl(void)
 	// inform watchdog to stop WPS LED
 	kill_pidfile_s("/var/run/watchdog.pid", SIGUSR2);
 
-#ifdef CONFIG_BCMWL5
-#ifndef RTCONFIG_BRCM_USBAP
-	if ((get_model() == MODEL_RTAC68U) ||
-		(get_model() == MODEL_RTAC66U) ||
- 		(get_model() == MODEL_RTN66U))
-	modprobe_r("wl");
-#endif
-#endif
-
-#ifdef RTCONFIG_RALINK
 	fini_wl();
-#endif
 }
 
 #ifdef RTCONFIG_RALINK
@@ -2962,11 +2979,9 @@ void restart_wl(void)
 				eval("wl", "-i", ifname, "radio", "off");
 			}
 			else
-#if 0
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_PROXYSTA
 			if (!is_psta(1 - unit))
-#endif
 #endif
 #endif
 			eval("wlconf", ifname, "start"); /* start wl iface */
@@ -3125,6 +3140,12 @@ void restart_wireless(void)
 	start_acsd();
 #endif
 
+#ifdef RTCONFIG_WL_AUTO_CHANNEL
+	if(nvram_match("AUTO_CHANNEL", "1")){
+		nvram_set("wl_channel", "6");
+		nvram_set("wl0_channel", "6");
+	}
+#endif
 	restart_wl();
 	lanaccess_wl();
 

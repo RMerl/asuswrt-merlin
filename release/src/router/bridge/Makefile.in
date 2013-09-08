@@ -32,4 +32,3 @@ maintainer-clean: distclean
 
 install:
 	for x in $(SUBDIRS); do $(MAKE) $(MFLAGS) -C $$x install; done
-

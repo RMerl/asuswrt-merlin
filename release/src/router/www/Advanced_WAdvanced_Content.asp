@@ -91,13 +91,15 @@ function initial(){
 	inputCtrl(document.form.wl_txbf, 0);
 	inputCtrl(document.form.wl_itxbf, 0);
 	inputCtrl(document.form.usb_usb3, 0);
-
 	if((based_modelid == "RT-AC56U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC66U")){
 		inputCtrl(document.form.wl_ampdu_mpdu, 1);
 		inputCtrl(document.form.wl_ack_ratio, 1);
 
 		if('<% nvram_get("wl_unit"); %>' == '1'){ // 5GHz
 			inputCtrl(document.form.wl_txbf, 1);
+
+			if(based_modelid == "RT-AC56U" || based_modelid == "RT-AC68U")
+				inputCtrl(document.form.wl_itxbf, 1);
 		}
 	}
 	if('<% nvram_get("wl_unit"); %>' != '1'){ // 2GHz
@@ -160,6 +162,8 @@ function initial(){
 	if(svc_ready == "0")
 		$('svc_hint_div').style.display = "";	
 	corrected_timezone();	
+	
+	check_ampdu_rts();
 }
 
 function applyRule(){
@@ -397,6 +401,50 @@ function setFlag_TimeFiled(){
 	}
 
 }
+
+function enable_wme_check(obj){
+	if(obj.value == "off"){
+		inputCtrl(document.form.wl_wme_no_ack, 0);
+		if(!Rawifi_support)
+			inputCtrl(document.form.wl_igs, 0);
+		
+		inputCtrl(document.form.wl_wme_apsd, 0);
+	}
+	else{
+		if(document.form.wl_nmode_x.value == "0" || document.form.wl_nmode_x.value == "1"){	//auto, n only
+			document.form.wl_wme_no_ack.value = "off";
+			inputCtrl(document.form.wl_wme_no_ack, 0);
+		}else		
+			inputCtrl(document.form.wl_wme_no_ack, 1);
+		
+		if(!Rawifi_support)
+			inputCtrl(document.form.wl_igs, 1);
+
+		inputCtrl(document.form.wl_wme_apsd, 1);
+	}
+}
+
+/* AMPDU RTS for AC model, Jieming added at 2013.08.26 */
+function check_ampdu_rts(){
+	var ac_flag = based_modelid.search('AC');    //to check AC model or not
+
+	if(document.form.wl_nmode_x.value != 2 && ac_flag != -1 ){
+		$('ampdu_rts_tr').style.display = "";
+		if(document.form.wl_ampdu_rts.value == 1){
+			document.form.wl_rts.disabled = false;
+			$('rts_threshold').style.display = "";
+		}	
+		else{
+			document.form.wl_rts.disabled = true;
+			$('rts_threshold').style.display = "none";
+		}	
+	}
+	else{
+		document.form.wl_ampdu_rts.disabled = true;
+		$('ampdu_rts_tr').style.display = "none";
+	
+	}
+}
 </script>
 </head>
 
@@ -595,10 +643,19 @@ function setFlag_TimeFiled(){
 					<tr>
 			  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 9);"><#WLANConfig11b_x_Frag_itemname#></a></th>
 			  			<td>
-			  				<input type="text" maxlength="4" name="wl_frag" id="wl_frag" class="input_6_table" value="<% nvram_get("wl_frag"); %>" onKeyPress="return is_number(this,event)" onChange="page_changed()">
+			  				<input type="text" maxlength="4" name="wl_frag" id="wl_frag" class="input_6_table" value="<% nvram_get("wl_frag"); %>" onKeyPress="return is_number(this,event)">
 						</td>
 					</tr>
-					<tr>
+					<tr id='ampdu_rts_tr'>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,30);">AMPDU RTS</a></th>
+						<td>
+							<select name="wl_ampdu_rts" class="input_option" onchange="check_ampdu_rts();">
+								<option value="1" <% nvram_match("wl_ampdu_rts", "1", "selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
+								<option value="0" <% nvram_match("wl_ampdu_rts", "0", "selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+							</select>
+						</td>
+					</tr>
+					<tr id="rts_threshold">
 			  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 10);"><#WLANConfig11b_x_RTS_itemname#></a></th>
 			  			<td>
 			  				<input type="text" maxlength="4" name="wl_rts" class="input_6_table" value="<% nvram_get("wl_rts"); %>" onKeyPress="return is_number(this,event)">
@@ -699,7 +756,7 @@ function setFlag_TimeFiled(){
 					</tr>
 
 					<tr> <!-- MODELDEP: RT-AC68U Only  -->
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,29);">Reduce USB 3.0 interference</a></th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,29);"><#WLANConfig11b_x_ReduceUSB3#></a></th>
 						<td>
 							<select name="usb_usb3" class="input_option">
 								<option value="1" <% nvram_match("usb_usb3", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
@@ -710,7 +767,7 @@ function setFlag_TimeFiled(){
 					
 					<!-- [MODELDEP] for RT-AC68U and RT-AC56U -->
 					<tr>
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,26);">Optimize AMPDU aggregation</a></th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,26);"><#WLANConfig11b_x_AMPDU#></a></th>
 						<td>
 							<select name="wl_ampdu_mpdu" class="input_option">
 									<option value="0" <% nvram_match("wl_ampdu_mpdu", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
@@ -719,7 +776,7 @@ function setFlag_TimeFiled(){
 						</td>
 					</tr>					
 					<tr>
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,27);">Optimize ack suppression</a></th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,27);"><#WLANConfig11b_x_ACK#></a></th>
 						<td>
 							<select name="wl_ack_ratio" class="input_option">
 									<option value="0" <% nvram_match("wl_ack_ratio", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
@@ -728,7 +785,7 @@ function setFlag_TimeFiled(){
 						</td>
 					</tr>
 					<tr>
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,28);">Turbo QAM</a></th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,28);"><#WLANConfig11b_x_TurboQAM#></a></th>
 						<td>
 							<select name="wl_turbo_qam" class="input_option">
 									<option value="0" <% nvram_match("wl_turbo_qam", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
@@ -739,7 +796,7 @@ function setFlag_TimeFiled(){
 					<!-- [MODELDEP] end -->
 
 					<tr>
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,24);">Explicit beamforming</a></th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,24);"><#WLANConfig11b_x_ExpBeam#></a></th>
 						<td>
 							<select name="wl_txbf" class="input_option">
 									<option value="0" <% nvram_match("wl_txbf", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
@@ -748,7 +805,7 @@ function setFlag_TimeFiled(){
 						</td>
 					</tr>					
 					<tr>
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,25);">Implicit beamforming</a></th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,25);"><#WLANConfig11b_x_ImpBeam#></a></th>
 						<td>
 							<select name="wl_itxbf" class="input_option" disabled>
 									<option value="0" <% nvram_match("wl_itxbf", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
@@ -762,7 +819,11 @@ function setFlag_TimeFiled(){
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 17);"><#WLANConfig11b_TxPower_itemname#></a></th>
 						<td>
 		  				<input type="text" maxlength="3" name="wl_TxPower" class="input_3_table" value="<% nvram_get("wl_TxPower"); %>" onKeyPress="return is_number(this, event);"> mW
-							<br><span>Set the capability for transmission power. The maximum value is <span id="maxTxPower">200</span>mW and the real transmission power will be dynamically adjusted to meet regional regulations.</span>
+							<br><span>
+										<#WLANConfig11b_x_maxtxpower1#>
+										<span id="maxTxPower">200</span>mW
+										<#WLANConfig11b_x_maxtxpower2#>
+									</span>
 						</td>
 					</tr>
 					

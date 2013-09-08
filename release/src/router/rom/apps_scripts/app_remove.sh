@@ -62,6 +62,19 @@ elif [ "$1" == "aicloud" ] && [ -z "$is_arm_machine" ]; then
 	fi
 fi
 
+if [ "$need_asuslighttpd" == "1" ]; then
+	dep_on_asuslighttpd=0
+	if [ "$1" == "downloadmaster" ] ; then
+		dep_on_asuslighttpd=`ipkg list_installed|awk '{print $1}'|grep -c mediaserver`
+	elif [ "$1" == "mediaserver" ] ; then
+		dep_on_asuslighttpd=`ipkg list_installed|awk '{print $1}'|grep -c downloadmaster`
+	fi
+
+	if [ "$dep_on_asuslighttpd" != "0" ] ; then
+		echo "asuslighttpd is need by another installed package"
+		need_asuslighttpd=0
+	fi
+fi
 
 nvram set apps_state_remove=1 # REMOVING
 if [ "$need_asuslighttpd" == "1" ]; then

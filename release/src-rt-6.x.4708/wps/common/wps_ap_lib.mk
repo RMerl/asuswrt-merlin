@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012, Broadcom Corporation
+# Copyright (C) 2013, Broadcom Corporation
 # All Rights Reserved.
 # 
 # This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -7,7 +7,7 @@
 # or duplicated in any form, in whole or in part, without the prior
 # written permission of Broadcom Corporation.
 #
-# $Id: wps_ap_lib.mk 315890 2012-02-20 03:24:53Z $
+# $Id: wps_ap_lib.mk 383066 2013-02-05 10:22:22Z $
 # 
 # Linux makefile
 #
@@ -40,7 +40,7 @@ export LDFLAGS = -r
 BRCMBASE = ../..
 UPNPBASE = $(SRCBASE)/router/bcmupnp
 
-export INCLUDE = -I$(TOOLCHAINS)/include -I$(SRCBASE)/include \
+export INCLUDE = -I$(TOOLCHAINS)/include -I$(SRCBASE)/include -I$(SRCBASE)/common/include\
 	-I$(SRCBASE)/router/shared -I$(BRCMBASE)/include -I./include \
 	-I$(UPNPBASE)/include -I$(UPNPBASE)/upnp/linux -I$(UPNPBASE)/device/InternetGatewayDevice -I$(UPNPBASE)/device -I$(UPNPBASE)/device/WFADevice \
 	-I$(SRCBASE)/router/libbcm -I$(SRCBASE)/router/eapd $(WLAN_ComponentIncPathR)

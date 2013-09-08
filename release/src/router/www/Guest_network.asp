@@ -558,7 +558,6 @@ function genBWTable(_unit){
 <input type="hidden" name="wl_macmode" value='<% nvram_get("wl_macmode"); %>'>
 
 <input type="hidden" name="wl_gmode_protection" value="<% nvram_get("wl_gmode_protection"); %>" disabled>
-<input type="hidden" name="wl_wpa_mode" value="<% nvram_get("wl_wpa_mode"); %>" disabled>
 <input type="hidden" name="wl_mode_x" value="<% nvram_get("wl_mode_x"); %>" disabled>
 <select name="wl_subunit" class="input_option" onChange="change_wl_unit();" style="display:none"></select>
 

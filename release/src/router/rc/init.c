@@ -71,6 +71,38 @@ static char *defenv[] = {
 	"PATH=/opt/usr/bin:/opt/bin:/opt/usr/sbin:/opt/sbin:/usr/bin:/bin:/usr/sbin:/sbin",
 	"SHELL=" SHELL,
 	"USER=root",
+#ifdef RTCONFIG_DMALLOC
+/*
+ * # dmalloc -DV
+ * Debug Tokens:
+ * none -- no functionality (0)
+ * log-stats -- log general statistics (0x1)
+ * log-non-free -- log non-freed pointers (0x2)
+ * log-known -- log only known non-freed (0x4)
+ * log-trans -- log memory transactions (0x8)
+ * log-admin -- log administrative info (0x20)
+ * log-bad-space -- dump space from bad pnt (0x100)
+ * log-nonfree-space -- dump space from non-freed pointers (0x200)
+ * log-elapsed-time -- log elapsed-time for allocated pointer (0x40000)
+ * log-current-time -- log current-time for allocated pointer (0x80000)
+ * check-fence -- check fence-post errors (0x400)
+ * check-heap -- check heap adm structs (0x800)
+ * check-blank -- check mem overwritten by alloc-blank, free-blank (0x2000)
+ * check-funcs -- check functions (0x4000)
+ * check-shutdown -- check heap on shutdown (0x8000)
+ * catch-signals -- shutdown program on SIGHUP, SIGINT, SIGTERM (0x20000)
+ * realloc-copy -- copy all re-allocations (0x100000)
+ * free-blank -- overwrite freed memory with \0337 byte (0xdf) (0x200000)
+ * error-abort -- abort immediately on error (0x400000)
+ * alloc-blank -- overwrite allocated memory with \0332 byte (0xda) (0x800000)
+ * print-messages -- write messages to stderr (0x2000000)
+ * catch-null -- abort if no memory available (0x4000000)
+ *
+ * debug=0x4e48503 = log_stats, log-non-free, log-bad-space, log-elapsed-time, check-fence, check-shutdown, free-blank, error-abort, alloc-blank, catch-null
+ * debug=0x3 = log-stats, log-non-free
+ */
+	"DMALLOC_OPTIONS=debug=0x3,inter=100,log=/jffs/dmalloc_%d.log",
+#endif
 	NULL
 };
 
@@ -1485,6 +1517,12 @@ int init_nvram(void)
 		add_rc_support("pwrctrl");
 		nvram_set_int("et_swleds", 0);
 		nvram_set("productid", "AP-N12");
+#ifdef RTCONFIG_WL_AUTO_CHANNEL
+		if(nvram_match("AUTO_CHANNEL", "1")){
+			nvram_set("wl_channel", "6");
+			nvram_set("wl0_channel", "6");
+		}
+#endif
 		/* go to common N12* init */
 		goto case_MODEL_RTN12X;
 
@@ -1498,6 +1536,25 @@ int init_nvram(void)
 		nvram_set_int("led_wan_gpio", 4|GPIO_ACTIVE_LOW);	/* does HP have it */
 		nvram_set_int("sb/1/ledbh5", 2);			/* is active_high? set 7 then */
 		add_rc_support("pwrctrl");
+#ifdef RTCONFIG_WL_AUTO_CHANNEL
+		if(nvram_match("AUTO_CHANNEL", "1")){
+			nvram_set("wl_channel", "6");
+			nvram_set("wl0_channel", "6");
+		}
+#endif
+		if (nvram_match("wl0_country_code", "US"))
+		{
+			if (nvram_match("wl0_country_rev", "37"))
+			{
+				nvram_set("wl0_country_rev", "16");
+			}
+
+			if (nvram_match("sb/1/regrev", "37"))
+			{
+				nvram_set("sb/1/regrev", "16");
+			}
+		}
+
 		/* go to common N12* init */
 		goto case_MODEL_RTN12X;
 
@@ -1717,7 +1774,6 @@ int init_nvram(void)
 		nvram_set_int("led_wan_gpio", 4|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_2g_gpio", 0|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_5g_gpio", 1|GPIO_ACTIVE_LOW);
-		nvram_set("sb/1/ledbh0", "2");
 		/* change lan interface to vlan0 */
 		nvram_set("vlan0hwname", "et0");
 		nvram_set("landevs", "vlan0 wl0 wl1");
@@ -1728,9 +1784,15 @@ int init_nvram(void)
 			nvram_set("ct_max", "2048");
 
 		add_rc_support("2.4G 5G update mssid no5gmssid");
+#ifdef RTCONFIG_WLAN_LED
+		add_rc_support("led_2g");
+		nvram_set("led_5g", "1");
+#endif
 		break;
 
-	case MODEL_RTN18UHP:
+	case MODEL_RTN18U:
+		nvram_set("vlan1hwname", "et0");
+		nvram_set("vlan2hwname", "et0");
 		nvram_set("lan_ifname", "br0");
 		nvram_set("landevs", "vlan1 wl0");
 		if(nvram_match("usb_usb3_disabled_force", "0"))
@@ -1744,8 +1806,6 @@ int init_nvram(void)
 			nvram_set("wandevs", "et0");
 
 		set_lan_phy("vlan1");
-		nvram_set("vlan1hwname", "et0");
-		nvram_set("vlan2hwname", "et0");
 
 		if(!(get_wans_dualwan()&WANSCAP_2G))
 			add_lan_phy("eth1");
@@ -1827,6 +1887,8 @@ int init_nvram(void)
 		break;
 
 	case MODEL_RTAC68U:
+		nvram_set("vlan1hwname", "et0");
+		nvram_set("vlan2hwname", "et0");
 		nvram_set("lan_ifname", "br0");
 		nvram_set("landevs", "vlan1 wl0 wl1");
 #ifdef RTCONFIG_DUALWAN
@@ -1836,8 +1898,6 @@ int init_nvram(void)
 			nvram_set("wandevs", "et0");
 
 		set_lan_phy("vlan1");
-		nvram_set("vlan1hwname", "et0");
-		nvram_set("vlan2hwname", "et0");
 
 		if(!(get_wans_dualwan()&WANSCAP_2G))
 			add_lan_phy("eth1");
@@ -1930,6 +1990,8 @@ int init_nvram(void)
 		break;
 
 	case MODEL_RTAC56U:
+		nvram_set("vlan1hwname", "et0");
+		nvram_set("vlan2hwname", "et0");
 		nvram_set("lan_ifname", "br0");
 		nvram_set("0:ledbh3", "0x87");	  /* since 163.42 */
 		nvram_set("1:ledbh10", "0x87");
@@ -1941,8 +2003,6 @@ int init_nvram(void)
 			nvram_set("wandevs", "et0");
 
 		set_lan_phy("vlan1");
-		nvram_set("vlan1hwname", "et0");
-		nvram_set("vlan2hwname", "et0");
 
 		if(!(get_wans_dualwan()&WANSCAP_2G))
 			add_lan_phy("eth1");
@@ -2171,6 +2231,12 @@ int init_nvram(void)
 		nvram_set_int("led_lan2_gpio", 1|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_lan3_gpio", 2|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_lan4_gpio", 3|GPIO_ACTIVE_LOW);
+#endif
+#ifdef RTCONFIG_WL_AUTO_CHANNEL
+		if(nvram_match("AUTO_CHANNEL", "1")){
+			nvram_set("wl_channel", "6");
+			nvram_set("wl0_channel", "6");
+		}
 #endif
 		nvram_set("ehci_ports", "1-1");
 		nvram_set("ohci_ports", "2-1");
@@ -2631,7 +2697,7 @@ static void sysinit(void)
 	f_write_string("/proc/sys/vm/min_free_kbytes", "512", 0, 0);
 #endif
 #ifdef RTCONFIG_BCMARM
-	f_write_string("/proc/sys/vm/min_free_kbytes", "4096", 0, 0);
+	f_write_string("/proc/sys/vm/min_free_kbytes", "14336", 0, 0);
 #endif
 	force_free_caches();
 
@@ -2697,7 +2763,7 @@ static void sysinit(void)
 	eval("cp", "-rf", "/rom/Beceem_firmware", "/tmp");
 #endif
 #ifdef RTCONFIG_BCMARM
-	if(get_model() == MODEL_RTAC56U || get_model() == MODEL_RTAC68U || get_model() == MODEL_RTN18UHP){
+	if(get_model() == MODEL_RTAC56U || get_model() == MODEL_RTAC68U || get_model() == MODEL_RTN18U){
 #ifdef SMP
 		int fd;
 
@@ -2732,7 +2798,7 @@ int init_main(int argc, char *argv[])
 	int rc_check, dev_check, boot_check; //Power on/off test
 	int boot_fail, dev_fail, dev_fail_count, total_fail_check = 0;
 	char reboot_log[128], dev_log[128];
-	int ret;
+	int ret, led_on_cut;
 
 	sysinit();
 
@@ -3010,19 +3076,23 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 				else {
 					dbG("System boot up success %d times\n", boot_check);
 #ifdef RTCONFIG_BCMARM
-					setATEModeLedOn();
 					ate_commit_bootlog("2");
-					sleep(5);
-					eval("arpstorm");
+					for(led_on_cut=0; led_on_cut<6; led_on_cut++) {
+						sleep(5);
+						setATEModeLedOn();
+					}
 #else
 					ate_commit_bootlog("2");
-					sleep(5);
-					eval("ATE", "Set_StartATEMode"); /* Enter ATE Mode to keep led on */
-					setAllLedOn();
+					for(led_on_cut=0; led_on_cut<6; led_on_cut++) {
+						sleep(5);
+						eval("ATE", "Set_StartATEMode"); /* Enter ATE Mode to keep led on */
+						setAllLedOn();
+					}
 #endif
 #if defined(RTCONFIG_RALINK) && defined(RTN65U)
 					ate_run_in();
 #endif
+					eval("arpstorm");
 				}
 			}
 

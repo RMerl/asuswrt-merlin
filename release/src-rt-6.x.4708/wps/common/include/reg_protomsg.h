@@ -1,7 +1,7 @@
 /*
  * Registrar protocol messages
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: reg_protomsg.h 292703 2011-10-28 03:05:19Z $
+ * $Id: reg_protomsg.h 383924 2013-02-08 04:14:39Z $
  */
 
 #ifndef _WPS_MSG_H
@@ -289,7 +289,8 @@ typedef struct {
 #define ES_TYPE_M8STA	4
 
 void reg_msg_init(void *m, int type);
-int reg_msg_version_check(uint8 msgId, BufferObj *theBuf, TlvObj_uint8 *version, TlvObj_uint8 *msgType);
+int reg_msg_version_check(uint8 msgId, BufferObj *theBuf, TlvObj_uint8 *version,
+	TlvObj_uint8 *msgType);
 void reg_msg_nonce_parse(TlvEsNonce *t, uint16 theType, BufferObj *theBuf, BufferObj *authKey);
 void reg_msg_nonce_write(TlvEsNonce *t, BufferObj *theBuf, BufferObj *authKey);
 

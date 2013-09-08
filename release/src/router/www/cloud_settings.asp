@@ -41,7 +41,7 @@ function initial(){
 		inputCtrl(document.form.webdav_lock_interval, 0);
 	}
 
-	if('<% nvram_get("rrsut"); %>' != '1')
+	if(!rrsut_support)
 		$("rrsLink").style.display = "none";
 
 	if(aicloudipk_support){

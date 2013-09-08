@@ -30,6 +30,9 @@
 /* Maximum  number of Traffic Management rules */
 #define MAX_NUM_TRF_MGMT_RULES 10
 
+/* 20 DSCP + 0x0 default */
+#define MAX_NUM_TRF_MGMT_DWM_RULES 21
+
 #if !defined(AUTOFW_PORT_DEPRECATED)
 /*
  * Automatic (application specific) port forwards are described by a
@@ -81,6 +84,9 @@ extern bool valid_trf_mgmt_port(const netconf_trmgmt_t *trmgmt);
 extern bool set_trf_mgmt_port(char *prefix, int which, const netconf_trmgmt_t *trmgmt);
 extern bool get_trf_mgmt_port(char *prefix, int which, netconf_trmgmt_t *trmgmt);
 extern bool del_trf_mgmt_port(char *prefix, int which);
+extern bool set_trf_mgmt_dwm(char *prefix, int which, const netconf_trmgmt_t *trmgmt);
+extern bool get_trf_mgmt_dwm(char *prefix, int which, netconf_trmgmt_t *trmgmt);
+extern bool del_trf_mgmt_dwm(char *prefix, int which);
 #endif /* TRAFFIC_MGMT */
 
 /*

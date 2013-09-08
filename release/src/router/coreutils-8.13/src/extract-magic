@@ -1,0 +1,134 @@
+#!/usr/bin/perl -w
+# Derive #define directives from specially formatted `case ...:' statements.
+
+# Copyright (C) 2003, 2005, 2009-2011 Free Software Foundation, Inc.
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+use strict;
+
+use Getopt::Long;
+
+(my $VERSION = '$Revision: 1.5 $ ') =~ tr/[0-9].//cd;
+(my $ME = $0) =~ s|.*/||;
+
+END
+{
+  # Nobody ever checks the status of print()s.  That's okay, because
+  # if any do fail, we're guaranteed to get an indicator when we close()
+  # the filehandle.
+  #
+  # Close stdout now, and if there were no errors, return happy status.
+  # If stdout has already been closed by the script, though, do nothing.
+  defined fileno STDOUT
+    or return;
+  close STDOUT
+    and return;
+
+  # Errors closing stdout.  Indicate that, and hope stderr is OK.
+  warn "$ME: closing standard output: $!\n";
+
+  # Don't be so arrogant as to assume that we're the first END handler
+  # defined, and thus the last one invoked.  There may be others yet
+  # to come.  $? will be passed on to them, and to the final _exit().
+  #
+  # If it isn't already an error, make it one (and if it _is_ an error,
+  # preserve the value: it might be important).
+  $? ||= 1;
+}
+
+sub usage ($)
+{
+  my ($exit_code) = @_;
+  my $STREAM = ($exit_code == 0 ? *STDOUT : *STDERR);
+  if ($exit_code != 0)
+    {
+      print $STREAM "Try `$ME --help' for more information.\n";
+    }
+  else
+    {
+      print $STREAM <<EOF;
+Usage: $ME [OPTIONS] FILE
+
+FIXME: describe
+
+OPTIONS:
+
+  Derive #define directives from specially formatted `case ...:' statements.
+
+   --help             display this help and exit
+   --version          output version information and exit
+
+EOF
+    }
+  exit $exit_code;
+}
+
+{
+  GetOptions
+    (
+     help => sub { usage 0 },
+     version => sub { print "$ME version $VERSION\n"; exit },
+    ) or usage 1;
+
+  my $fail = 0;
+
+  @ARGV < 1
+    and (warn "$ME: missing FILE arguments\n"), $fail = 1;
+  1 < @ARGV
+    and (warn "$ME: too many arguments\n"), $fail = 1;
+  $fail
+    and usage 1;
+
+  my $file = $ARGV[0];
+
+  open FH, $file
+    or die "$ME: can't open `$file' for reading: $!\n";
+
+  # For each line like this:
+  #   case S_MAGIC_ROMFS: /* 0x7275 */
+  # emit one like this:
+  #   # define S_MAGIC_ROMFS 0x7275
+  # Fail if there is a `case S_MAGIC_.*' line without
+  # a properly formed comment.
+
+  print <<EOF;
+/* Define the magic numbers as given by statfs(2).
+   Please send additions to bug-coreutils\@gnu.org and meskes\@debian.org.
+   This file is generated automatically from $file. */
+
+#if defined __linux__
+EOF
+
+  while (defined (my $line = <FH>))
+    {
+      $line =~ /^[ \t]+case S_MAGIC_/
+        or next;
+      $line =~ m!^[ \t]+case (S_MAGIC_\w+): /\* (0x[0-9A-Fa-f]+) \*/$!
+        or (warn "$ME:$file:$.: malformed case S_MAGIC_... line"),
+          $fail = 1, next;
+      my $name = $1;
+      my $value = $2;
+      print "# define $name $value\n";
+    }
+
+  print <<\EOF;
+#elif defined __GNU__
+# include <hurd/hurd_types.h>
+#endif
+EOF
+  close FH;
+
+  exit $fail;
+}

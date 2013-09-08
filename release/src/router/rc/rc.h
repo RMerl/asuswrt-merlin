@@ -37,6 +37,8 @@
 #include "sysdeps.h"
 #include <linux/version.h>
 
+#define IFUP (IFF_UP | IFF_RUNNING | IFF_BROADCAST | IFF_MULTICAST)
+
 #define DUT_DOMAIN_NAME "router.asus.com"
 #define OLD_DUT_DOMAIN_NAME1 "www.asusnetwork.net"
 #define OLD_DUT_DOMAIN_NAME2 "www.asusrouter.com"
@@ -313,7 +315,7 @@ extern void stop_wan6(void);
 
 // lan.c
 extern void update_lan_state(int state, int reason);
-extern void set_et_qos_mode(int sfd);
+extern void set_et_qos_mode(void);
 extern void start_wl(void);
 extern void stop_wl(void);
 extern char *get_hwaddr(const char *ifname);

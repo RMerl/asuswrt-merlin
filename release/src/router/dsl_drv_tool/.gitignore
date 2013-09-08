@@ -1,0 +1,5 @@
+*.orig
+*.diff
+*~
+*.o
+*.depend

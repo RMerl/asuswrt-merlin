@@ -1,7 +1,7 @@
 /*
  * TuTrace
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: tutrace.h 241182 2011-02-17 21:50:03Z $
+ * $Id: tutrace.h 383924 2013-02-08 04:14:39Z $
  */
 
 #ifndef _TUTRACE_H
@@ -21,18 +21,24 @@ extern "C" {
 
 typedef void (*WPS_TRACEMSG_OUTPUT_FN)(int is_err, char *traceMsg);
 void wps_set_traceMsg_output_fn(WPS_TRACEMSG_OUTPUT_FN fn);
+void wps_tutrace_set_msglevel(int level);
+int wps_tutrace_get_msglevel();
 
 
 #ifdef _TUDEBUGTRACE
 
-#define TUTRACELEVEL    (TUINFO | TUERR)
+#define TUTRACELEVEL    (TUINFO | TUERR | TUDUMP_HEX | TUNFC)
 
 /* trace levels */
-#define TUINFO  0x0001
-#define TUERR   0x0010
+#define TUINFO		0x0001
+#define TUERR		0x0002
+#define TUDUMP_HEX	0x0004
+#define TUDUMP_IE	0x0008
+#define TUNFC		0x0010
 
 #define TUTRACE_ERR        TUERR, __FUNCTION__, __LINE__
 #define TUTRACE_INFO       TUINFO, __FUNCTION__, __LINE__
+#define TUTRACE_NFC        TUNFC, __FUNCTION__, __LINE__
 
 #define TUTRACE(VARGLST)   print_traceMsg VARGLST
 

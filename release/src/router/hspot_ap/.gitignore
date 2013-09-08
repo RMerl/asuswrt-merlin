@@ -1,0 +1,4 @@
+*.o
+obj
+lib
+hspotap

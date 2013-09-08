@@ -1,7 +1,7 @@
 # Helper makefile for building Broadcom wps libaries
 # This file maps wps feature flags (import) to WPSFLAGS and WPSFILES (export).
 #
-# Copyright (C) 2012, Broadcom Corporation
+# Copyright (C) 2013, Broadcom Corporation
 # All Rights Reserved.
 # 
 # This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -96,6 +96,14 @@ WPS_ROUTERHALFILES += src/wps/brcm_apps/arch/bcm947xx/wps_wl.c
 	WPSFILES += src/wps/brcm_apps/apps/wps_sta.c
 	WPS_ROUTERHALFILES += src/wps/brcm_apps/arch/bcm947xx/wps_sta_wl.c
 	endif
+
+	# NFC support
+	ifeq ($(WPS_NFC_DEVICE), 1)
+	WPSFILES += src/wps/brcm_apps/apps/wps_nfc.c
+	WPSFILES += src/wps/brcm_apps/nfc/app_generic.c
+	WPSFILES += src/wps/brcm_apps/nfc/app_mgt.c
+	WPSFILES += src/wps/brcm_apps/nfc/app_nsa_utils.c
+	endif
 WPSFLAGS += -DWPS_ROUTER
 endif # end WPS ROUTER
 
@@ -113,6 +121,12 @@ WPSFILES += src/bcmcrypto/bn.c
 WPSFILES += src/bcmcrypto/sha256.c
 WPSFILES += src/bcmcrypto/hmac_sha256.c
 WPSFILES += src/bcmcrypto/random.c
+endif
+
+# NFC support
+ifeq ($(WPS_NFC_DEVICE), 1)
+WPSFILES += src/wps/common/shared/nfc_utils.c
+WPSFLAGS += -DWPS_NFC_DEVICE
 endif
 
 export WPS_FLAGS = $(WPSFLAGS)

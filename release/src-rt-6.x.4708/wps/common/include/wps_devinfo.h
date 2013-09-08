@@ -1,7 +1,7 @@
 /*
  * WPS device infomation
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -74,18 +74,30 @@ typedef struct {
 	/* Run time data */
 	int     sc_mode;
 	bool    configap;
-	char    pin[SIZE_8_BYTES+1];
+	char    pin[SIZE_64_BYTES+1]; /* String format */
+	int     flags;
 	DH      *DHSecret;
 	uint8   pre_nonce[SIZE_128_BITS];
 	uint8   pre_privkey[SIZE_PUB_KEY];
 	uint8   peerMacAddr[SIZE_6_BYTES];
 	uint8   pbc_uuids[SIZE_16_BYTES * 2];
+	uint8   pub_key_hash[SIZE_160_BITS];
 
 	void    *mp_tlvEsM7Ap;
 	void    *mp_tlvEsM7Sta;
 	void    *mp_tlvEsM8Ap;
 	void    *mp_tlvEsM8Sta;
 } DevInfo;
+
+typedef enum {
+	WPS_WL_AKM_NONE = 0,
+	WPS_WL_AKM_PSK,
+	WPS_WL_AKM_PSK2,
+	WPS_WL_AKM_BOTH
+} WPS_WL_AKM_E;
+
+#define DEVINFO_FLAG_PRE_NONCE		0x1
+#define DEVINFO_FLAG_PRE_PRIV_KEY	0x2
 
 /* Functions */
 DevInfo *devinfo_new();

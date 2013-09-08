@@ -1,0 +1,37 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 99_kfbsd_build_tests.dpatch by Michael Stone <mstone@debian.org>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: work around build test failures on kfreebsd
+
+@DPATCH@
+diff -urNad '--exclude=CVS' '--exclude=.svn' '--exclude=.git' '--exclude=.arch' '--exclude=.hg' '--exclude=_darcs' '--exclude=.bzr' coreutils-8.4~/gnulib-tests/nap.h coreutils-8.4/gnulib-tests/nap.h
+--- coreutils-8.4~/gnulib-tests/nap.h	2010-01-03 12:09:27.000000000 -0500
++++ coreutils-8.4/gnulib-tests/nap.h	2010-03-05 20:59:52.767912375 -0500
+@@ -60,8 +60,10 @@
+           ASSERT (stat (BASE "tmp", &st2) == 0);
+           ASSERT (unlink (BASE "tmp") == 0);
+         }
+-      if (! (st1.st_mtime == st2.st_mtime
+-             && get_stat_mtime_ns (&st1) < get_stat_mtime_ns (&st2)))
++      if (! ((st1.st_mtime == st2.st_mtime                                     
++             && get_stat_mtime_ns (&st1) < get_stat_mtime_ns (&st2))           
++          && (st1.st_ctime == st2.st_ctime                                     
++             && get_stat_ctime_ns (&st1) < get_stat_ctime_ns (&st2))))         
+         delay = (st1.st_mtime & 1) ? 1000000 : 2000000;
+     }
+   usleep (delay);
+--- coreutils-8.13/tests/init.cfg.org   2011-09-11 20:55:08.767279905 -0400
++++ coreutils-8.13/tests/init.cfg       2011-09-11 20:55:57.931763798 -0400
+@@ -393,6 +393,10 @@
+ # the setgid bit set.
+ skip_if_setgid_()
+ {
++  if [ `uname -s` = 'GNU/kFreeBSD' ]; then
++      skip_ 'GNU/kFreeBSD uses sgid directory behavior'
++  fi
++ 
+   setgid_tmpdir=setgid-$$
+   (umask 77; mkdir $setgid_tmpdir)
+   perms=$(stat --printf %A $setgid_tmpdir)
+

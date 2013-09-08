@@ -22,11 +22,12 @@
  */
 
 //usage:#define udhcpd_trivial_usage
-//usage:       "[-fS]" IF_FEATURE_UDHCP_PORT(" [-P N]") " [CONFFILE]"
+//usage:       "[-fS] [-I ADDR]" IF_FEATURE_UDHCP_PORT(" [-P N]") " [CONFFILE]"
 //usage:#define udhcpd_full_usage "\n\n"
 //usage:       "DHCP server\n"
 //usage:     "\n	-f	Run in foreground"
 //usage:     "\n	-S	Log to syslog too"
+//usage:     "\n	-I ADDR	Local address"
 //usage:	IF_FEATURE_UDHCP_PORT(
 //usage:     "\n	-P N	Use port N (default 67)"
 //usage:	)
@@ -302,6 +303,7 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 	unsigned num_ips;
 	unsigned opt;
 	struct option_set *option;
+	char *str_I = str_I;
 	IF_FEATURE_UDHCP_PORT(char *str_P;)
 
 #if ENABLE_FEATURE_UDHCP_PORT
@@ -312,8 +314,10 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 #if defined CONFIG_UDHCP_DEBUG && CONFIG_UDHCP_DEBUG >= 1
 	opt_complementary = "vv";
 #endif
-	opt = getopt32(argv, "fSv"
-		IF_FEATURE_UDHCP_PORT("P:", &str_P)
+	opt = getopt32(argv, "fSI:v"
+		IF_FEATURE_UDHCP_PORT("P:")
+		, &str_I
+		IF_FEATURE_UDHCP_PORT(, &str_P)
 		IF_UDHCP_VERBOSE(, &dhcp_verbose)
 		);
 	if (!(opt & 1)) { /* no -f */
@@ -326,8 +330,13 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 		openlog(applet_name, LOG_PID, LOG_DAEMON);
 		logmode |= LOGMODE_SYSLOG;
 	}
+	if (opt & 4) { /* -I */
+		len_and_sockaddr *lsa = xhost_and_af2sockaddr(str_I, 0, AF_INET);
+		server_config.server_nip = lsa->u.sin.sin_addr.s_addr;
+		free(lsa);
+	}
 #if ENABLE_FEATURE_UDHCP_PORT
-	if (opt & 8) { /* -P */
+	if (opt & 16) { /* -P */
 		SERVER_PORT = xatou16(str_P);
 		CLIENT_PORT = SERVER_PORT + 1;
 	}
@@ -367,7 +376,7 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 
 	if (udhcp_read_interface(server_config.interface,
 			&server_config.ifindex,
-			&server_config.server_nip,
+			(server_config.server_nip == 0 ? &server_config.server_nip : NULL),
 			server_config.server_mac,
 			NULL)
 	) {
@@ -378,6 +387,7 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 	/* Setup the signal pipe */
 	udhcp_sp_setup();
 
+ continue_with_autotime:
 	timeout_end = monotonic_sec() + server_config.auto_time;
 	while (1) { /* loop until universe collapses */
 		fd_set rfds;
@@ -407,8 +417,7 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 		}
 		if (retval == 0) {
 			write_leases();
-			timeout_end = monotonic_sec() + server_config.auto_time;
-			continue;
+			goto continue_with_autotime;
 		}
 		if (retval < 0 && errno != EINTR) {
 			log1("Error on select");
@@ -420,10 +429,10 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 			bb_info_msg("Received SIGUSR1");
 			write_leases();
 			/* why not just reset the timeout, eh */
-			timeout_end = monotonic_sec() + server_config.auto_time;
-			continue;
+			goto continue_with_autotime;
 		case SIGTERM:
 			bb_info_msg("Received SIGTERM");
+			write_leases();
 			goto ret0;
 		case 0: /* no signal: read a packet */
 			break;

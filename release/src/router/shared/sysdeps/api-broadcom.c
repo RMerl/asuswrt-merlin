@@ -100,24 +100,70 @@ skip:
 	return SWITCH_UNKNOWN;
 }
 
+int robo_ioctl(int fd, int write, int page, int reg, uint32_t *value)
+{
+	static int __ioctl_args[2] = { SIOCGETCROBORD, SIOCSETCROBOWR };
+	struct ifreq ifr;
+	int ret, vecarg[4];
+
+	memset(&ifr, 0, sizeof(ifr));
+	strcpy(ifr.ifr_name, "eth0"); // is it always the same?
+	ifr.ifr_data = (caddr_t) vecarg;
+
+	vecarg[0] = (page << 16) | reg;
+#ifdef BCM5301X
+	vecarg[1] = 0;
+	vecarg[2] = *value;
+#else
+	vecarg[1] = *value;
+#endif
+	ret = ioctl(fd, __ioctl_args[write], (caddr_t)&ifr);
+
+#ifdef BCM5301X
+	*value = vecarg[2];
+#else
+	*value = vecarg[1];
+#endif
+
+	return ret;
+}
+
+int phy_ioctl(int fd, int write, int phy, int reg, uint32_t *value)
+{
+#ifndef BCM5301X
+	static int __ioctl_args[2] = { SIOCGETCPHYRD2, SIOCSETCPHYWR2 };
+	struct ifreq ifr;
+	int ret, vecarg[2];
+
+	memset(&ifr, 0, sizeof(ifr));
+	strcpy(ifr.ifr_name, "eth0"); // is it always the same?
+	ifr.ifr_data = (caddr_t) vecarg;
+
+	vecarg[0] = (phy << 16) | reg;
+	vecarg[1] = *value;
+	ret = ioctl(fd, __ioctl_args[write], (caddr_t)&ifr);
+
+	*value = vecarg[1];
+
+	return ret;
+#else
+	return robo_ioctl(fd, write, 0x10 + phy, reg, value);
+#endif
+}
+
 // !0: connected
 //  0: disconnected
 uint32_t get_phy_status(uint32_t portmask)
 {
 #define RTN15U_WORKAROUND
-	int fd, i, model, vecarg[2];
-	struct ifreq ifr;
-	uint32_t mask = 0;
+	int fd, i, model;
+	uint32_t value, mask = 0;
 
 	model = get_switch();
 	if (model == SWITCH_UNKNOWN) return 0;
 
 	fd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (fd < 0) return 0;
-
-	memset(&ifr, 0, sizeof(ifr));
-	strcpy(ifr.ifr_name, "eth0"); // is it always the same?
-	ifr.ifr_data = (caddr_t) vecarg;
 
 	switch (model) {
 #ifndef BCM5301X
@@ -126,36 +172,34 @@ uint32_t get_phy_status(uint32_t portmask)
 		/* N15U can't read link status from phy sometimes */
 		if (get_model() == MODEL_RTN15U)
 			goto case_SWITCH_ROBORD;
+		/* fall through */
 #endif
 	case SWITCH_BCM53115:
 	case SWITCH_BCM5325:
 		for (i = 0; i < 5 && (portmask >> i); i++) {
-			vecarg[0] = (i << 16) | 0x01;
-			vecarg[1] = 0;
 			if ((portmask & (1U << i)) == 0)
 				continue;
 
-			if (ioctl(fd, SIOCGETCPHYRD2, (caddr_t)&ifr) < 0)
+			if (phy_ioctl(fd, 0, i, 0x01, &value) < 0)
 				continue;
 			/* link is down, but negotiation has started
 			 * read register again, use previous value, if failed */
-			if ((vecarg[1] & 0x22) == 0x20)
-				ioctl(fd, SIOCGETCPHYRD2, (caddr_t)&ifr);
+			if ((value & 0x22) == 0x20)
+				phy_ioctl(fd, 0, i, 0x01, &value);
 
-			if (vecarg[1] & (1U << 2))
+			if (value & (1U << 2))
 				mask |= (1U << i);
 		}
 		break;
 #ifdef RTN15U_WORKAROUND
 	case_SWITCH_ROBORD:
+		/* fall through */
 #endif
 #endif
 	case SWITCH_BCM5301x:
-		vecarg[0] = (0x01 << 16) | 0x00;
-		vecarg[1] = 0;
-		if (ioctl(fd, SIOCGETCROBORD, (caddr_t)&ifr) < 0)
+		if (robo_ioctl(fd, 0, 0x01, 0x00, &value) < 0)
 			_dprintf("et ioctl SIOCGETCROBORD failed!\n");
-		mask = vecarg[1] & portmask & 0x1f;
+		mask = value & portmask & 0x1f;
 		break;
 	}
 	close(fd);
@@ -172,9 +216,7 @@ uint32_t get_phy_status(uint32_t portmask)
 uint32_t get_phy_speed(uint32_t portmask)
 {
 	int fd, model;
-	int vecarg[2] = { (0x01 << 16) | 0x04, 0 };
-	struct ifreq ifr;
-	uint32_t mask = 0;
+	uint32_t value, mask = 0;
 
 	model = get_switch();
 	if (model == SWITCH_UNKNOWN) return 0;
@@ -182,30 +224,27 @@ uint32_t get_phy_speed(uint32_t portmask)
 	fd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (fd < 0) return 0;
 
-	memset(&ifr, 0, sizeof(ifr));
-	strcpy(ifr.ifr_name, "eth0"); // is it always the same?
-	ifr.ifr_data = (caddr_t) vecarg;
-
-	if (ioctl(fd, SIOCGETCROBORD, (caddr_t)&ifr) < 0)
-		vecarg[1] = 0;
+	if (robo_ioctl(fd, 0, 0x01, 0x04, &value) < 0)
+		value = 0;
 	close(fd);
 
 	switch (model) {
 #ifndef BCM5301X
 	case SWITCH_BCM5325:
 		/* 5325E/535x, 1bit: 0=10 Mbps, 1=100Mbps */
-		for (mask = 0; vecarg[1] & 0x1f; vecarg[1] >>= 1) {
-			mask |= (vecarg[1] & 0x01);
+		for (mask = 0; value & 0x1f; value >>= 1) {
+			mask |= (value & 0x01);
 			mask <<= 2;
 		}
 		swapportstatus(mask);
 		break;
 	case SWITCH_BCM53115:
 	case SWITCH_BCM53125:
+		/* fall through */
 #endif
 	case SWITCH_BCM5301x:
 		/* 5301x/53115/53125, 2bit:00=10 Mbps,01=100Mbps,10=1000Mbps */
-		mask = vecarg[1] & portmask & 0x3ff;
+		mask = value & portmask & 0x3ff;
 		break;
 	}
 
@@ -216,11 +255,8 @@ uint32_t get_phy_speed(uint32_t portmask)
 
 uint32_t set_phy_ctrl(uint32_t portmask, uint32_t ctrl)
 {
-	static int __ioctl_args[2][2] = { {SIOCGETCPHYRD2, SIOCGETCROBORD},
-					  {SIOCSETCPHYWR2, SIOCSETCROBOWR} };
-	int fd, i, model, type, vecarg[2];
-	struct ifreq ifr;
-	uint32_t page, reg, mask, off, def;
+	int fd, i, model;
+	uint32_t reg, mask, off, def, value;
 
 	model = get_switch();
 	if (model == SWITCH_UNKNOWN) return 0;
@@ -228,15 +264,9 @@ uint32_t set_phy_ctrl(uint32_t portmask, uint32_t ctrl)
 	fd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (fd < 0) return 0;
 
-	memset(&ifr, 0, sizeof(ifr));
-	strcpy(ifr.ifr_name, "eth0"); // is it always the same?
-	ifr.ifr_data = (caddr_t) vecarg;
-
 	switch (model) {
 #ifndef BCM5301X
 	case SWITCH_BCM5325:
-		type= 0;	/* PHY access */
-		page= 0x00;	/* starts from 0x00 PHY page */
 		reg = 0x1e;
 		mask= 0x0007;
 		off = 0x0008;
@@ -244,17 +274,9 @@ uint32_t set_phy_ctrl(uint32_t portmask, uint32_t ctrl)
 		break;
 	case SWITCH_BCM53115:
 	case SWITCH_BCM53125:
-		type= 0;	/* PHY access */
-		page= 0x00;	/* starts from 0x00 PHY page */
-		reg = 0x00;
-		mask= 0x35c0;
-		off = 0x0800;
-		def = 0x1140;
-		break;
+		/* fall through */
 #endif
 	case SWITCH_BCM5301x:
-		type= 1;	/* ROBO access */
-		page= 0x10;	/* starts from 0x10 ROBO page */
 		reg = 0x00;
 		mask= 0x35c0;
 		off = 0x0800;
@@ -268,16 +290,16 @@ uint32_t set_phy_ctrl(uint32_t portmask, uint32_t ctrl)
 		if ((portmask & (1U << i)) == 0)
 			continue;
 
-		vecarg[0] = ((page + i) << 16) | reg;
-		vecarg[1] = 0;
-		if (ioctl(fd, __ioctl_args[0][type], (caddr_t)&ifr) < 0 ||
-		    vecarg[1] == 0)
-			vecarg[1] = def;
+		/* issue read */
+		value = 0;
+		if (phy_ioctl(fd, 0, i, reg, &value) < 0 ||
+		    value == 0)
+			value = def;
 
-		vecarg[0] = ((page + i) << 16) | reg;
-		vecarg[1] &= mask;
-		vecarg[1] |= ctrl ? 0 : off;
-		ioctl(fd, __ioctl_args[1][type], (caddr_t)&ifr);
+		/* issue write */
+		value &= mask;
+		value |= ctrl ? 0 : off;
+		phy_ioctl(fd, 1, i, reg, &value);
 	}
 
 skip:

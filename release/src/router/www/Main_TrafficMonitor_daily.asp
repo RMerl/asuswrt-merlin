@@ -256,7 +256,7 @@ function switchPage(page){
 												<select class="input_option" style="width:130px" onchange='changeDate(this, "ymd")' id='dafm'>
 													<option value=0>yyyy-mm-dd</option>
 													<option value=1>mm-dd-yyyy</option>
-													<option value=2>mmm, dd, yyyy</option>
+													<option value=2>mm, dd, yyyy</option>
 													<option value=3>dd.mm.yyyy</option>
 												</select>
 											</td>
