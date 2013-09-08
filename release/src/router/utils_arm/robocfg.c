@@ -155,14 +155,16 @@ static void robo_read(robo_t *robo, u8 page, u8 reg, u16 *val, int count)
         int args[5];
         u32 result;
 
-        args[0] = page << 16;;
-        args[0] |= reg & 0xffff;
+        args[0] = page << 16;
+        args[0] |= reg;
+        args[1] = 0;
+        args[2] = 0;
 
         robo->ifr.ifr_data = (caddr_t) args;
 
         for (i = 0; i < count; i++) {
 		if (ioctl(robo->fd, SIOCGETCROBORD, (caddr_t)&robo->ifr) < 0) 
-			val[i] = args[1];
+			val[i] = args[2];
 		args[0] = args[0] + 1;
 	}
 #else	
@@ -179,15 +181,16 @@ static u16 robo_read16(robo_t *robo, u8 page, u8 reg)
 #ifdef BCM5301X
         int args[5];
 
-        args[0] = page << 16;;
-        args[0] |= reg & 0xffff;
-
+	args[0] = page << 16;
+	args[0] |= reg;
+	args[1] = 0;
+	args[2] = 0;
         robo->ifr.ifr_data = (caddr_t) args;
 
         if (ioctl(robo->fd, SIOCGETCROBORD, (caddr_t)&robo->ifr) < 0)
                 return 0;
 
-        return args[1];
+        return args[2];
 #else
 	robo_reg(robo, page, reg, REG_MII_ADDR_READ);
 	
@@ -201,21 +204,23 @@ static u32 robo_read32(robo_t *robo, u8 page, u8 reg)
         int args[5];
 	u32 result;
 
-        args[0] = page << 16;;
-        args[0] |= reg & 0xffff;
+        args[0] = page << 16;
+        args[0] |= reg;
+        args[1] = 0;
+        args[2] = 0;
 
         robo->ifr.ifr_data = (caddr_t) args;
         if (ioctl(robo->fd, SIOCGETCROBORD, (caddr_t)&robo->ifr) < 0)
                 return 0;
-
-	result = args[1];
+	result = args[2];
 	args[0] = args[0] + 1;
 
 	if (ioctl(robo->fd, SIOCGETCROBORD, (caddr_t)&robo->ifr) < 0)
                 return 0;
 
-//        printf("rd32: 0x%08x - 0x%08x (0x%16x)\n", result, args[1], (result | (args[1] << 16)));
-        return (result | (args[1] << 16));
+//        printf("rd32: 0x%08x - 0x%08x (0x%16x)\n", result, args[2], (result | (args[2] << 16)));
+        return (result | (args[2] << 16));
+
 #else
 	robo_reg(robo, page, reg, REG_MII_ADDR_READ);
 	
@@ -256,7 +261,7 @@ static int robo_vlan535x(robo_t *robo, u32 phyid)
 {
 
 	/* Northstar device? */
-	if (robo_read32(robo, ROBO_MGMT_PAGE, ROBO_DEVICE_ID) == 0x53011)
+	if ((robo_read32(robo, ROBO_MGMT_PAGE, ROBO_DEVICE_ID) & 0xFFF0) == 0x3010)
 		return 4;
 
 	/* set vlan access id to 15 and read it back */
