@@ -153,23 +153,19 @@ static void robo_read(robo_t *robo, u8 page, u8 reg, u16 *val, int count)
 
 #ifdef BCM5301X
         int args[5];
-        u32 result;
 
         args[0] = page << 16;
-        args[0] |= reg;
-        args[1] = 0;
+        args[0] |= reg & 0xffff;
+        args[1] = count * 2; // convert to bytes
         args[2] = 0;
 
         robo->ifr.ifr_data = (caddr_t) args;
 
-        for (i = 0; i < count; i++) {
-		if (ioctl(robo->fd, SIOCGETCROBORD, (caddr_t)&robo->ifr) < 0) 
-			val[i] = args[2];
-		args[0] = args[0] + 1;
-	}
-#else	
+	if (ioctl(robo->fd, SIOCGETCROBORD, (caddr_t)&robo->ifr) >= 0) 
+		memcpy(val, &args[2], count * 2);
+#else
 	robo_reg(robo, page, reg, REG_MII_ADDR_READ);
-	
+
 	for (i = 0; i < count; i++)
 		val[i] = mdio_read(robo, ROBO_PHY_ADDR, REG_MII_DATA0 + i);
 #endif
@@ -783,15 +779,9 @@ main(int argc, char *argv[])
 		if (robo535x == 4)
 			printf("jumbo: %s ", jumbo[(robo_read32(&robo, ROBO_JUMBO_PAGE, ROBO_JUMBO_CTRL) >> port[i]) & 1]);
 
-#ifndef BCM5301X
 		robo_read(&robo, ROBO_STAT_PAGE, ROBO_LSA_PORT0 + port[i] * 6, mac, 3);
-
 		printf("mac: %02x:%02x:%02x:%02x:%02x:%02x\n",
 			mac[2] >> 8, mac[2] & 255, mac[1] >> 8, mac[1] & 255, mac[0] >> 8, mac[0] & 255);
-#else
-		printf("mac: ??:??:??:??:??:??\n");
-
-#endif
 	}
 
 	if (novlan) return (0);	// Only show ethernet port states, used by webui
