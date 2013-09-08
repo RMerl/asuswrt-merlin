@@ -484,6 +484,8 @@ History
 -------
 3.9.0.4.374.33 (xx-xxx-2013):
    - NEW: Merged with Asus 374_119 code from RT-AC56U GPL (newer than 374_164 from N66U)
+   - NEW: Added support for last seen devices on Ethernet port status (Tools-> Sysinfo)
+          for RT-AC56U.
    - CHANGED: Enabled Syn Cookies for ARM devices (RT-AC56U)
    - CHANGED: Allow selecting the Download2 folder for media server
               location.
