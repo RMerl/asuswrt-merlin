@@ -8,8 +8,6 @@
 
 #include "pc.h"
 
-//#define BLOCKLOCAL
-
 #define pc_dbg(fmt, args...) do{ \
 		FILE *fp = fopen("/dev/console", "a+"); \
 		if(fp){ \
@@ -410,16 +408,20 @@ pc_s *match_daytime_pc_list(pc_s *pc_list, pc_s **target_list, int target_day, i
 // MAC address in list and not in time period -> DROP.
 void config_daytime_string(FILE *fp, char *logaccept, char *logdrop)
 {
+	// parameters logaccept and logdrop not used !
 	pc_s *pc_list = NULL, *enabled_list = NULL, *follow_pc;
 	pc_event_s *follow_e;
+	
 	char *lan_if = nvram_safe_get("lan_ifname");
+	//char *lan_if = "br0"; // for testing and debugging
 	char *datestr[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+	char *iptables_chain = "FORWARD";
+	char *iptables_target = "PControls";
+	
 	int i;
-	char *default_policy, *ftype, *fftype;
-
-	default_policy = logdrop;
-	ftype = logaccept;
-	fftype = "PControls";
+	int start_hour, end_hour;
+	int start_day, end_day;
+	int daycounter_start, daycounter_end;
 
 	follow_pc = get_all_pc_list(&pc_list);
 	if(follow_pc == NULL){
@@ -433,73 +435,69 @@ void config_daytime_string(FILE *fp, char *logaccept, char *logdrop)
 		pc_dbg("Couldn't get the enabled rules of Parental-control correctly!\n");
 		return;
 	}
-
+	
+	/*
+	// for testing and debugging
+	pc_event_s *rule1 = &(pc_event_s){"rule1",0,3,23,0,NULL};;
+	pc_event_s *rule2 = &(pc_event_s){"rule2",4,0,1,0,NULL};;
+	rule1->next=rule2;
+	enabled_list = &(pc_s){1,"makkiedevice","00:11:22:33:44:55",rule1,NULL};
+	*/
+	
 	for(follow_pc = enabled_list; follow_pc != NULL; follow_pc = follow_pc->next){
 		for(follow_e = follow_pc->events; follow_e != NULL; follow_e = follow_e->next){
-			if(follow_e->start_day == follow_e->end_day){
-#ifdef BLOCKLOCAL
-				fprintf(fp, "-A INPUT -i %s -m time", lan_if);
-				if(follow_e->start_hour > 0)
-					fprintf(fp, " --timestart %d:0", follow_e->start_hour);
-				if(follow_e->end_hour < 24)
-					fprintf(fp, " --timestop %d:0", follow_e->end_hour);
-				fprintf(fp, DAYS_PARAM " %s -m mac --mac-source %s -j %s\n", datestr[follow_e->start_day], follow_pc->mac, ftype);
-#endif
-				fprintf(fp, "-A FORWARD -i %s -m time", lan_if);
-				if(follow_e->start_hour > 0)
-					fprintf(fp, " --timestart %d:0", follow_e->start_hour);
-				if(follow_e->end_hour < 24)
-					fprintf(fp, " --timestop %d:0", follow_e->end_hour);
-				fprintf(fp, DAYS_PARAM " %s -m mac --mac-source %s -j %s\n", datestr[follow_e->start_day], follow_pc->mac, fftype);
+			start_day=follow_e->start_day;
+			start_hour=follow_e->start_hour;
+			end_day=follow_e->end_day;
+			end_hour=follow_e->end_hour;
+
+			if (end_hour==0) {
+				end_hour=24;
+				end_day=end_day-1;
+				if (end_day<0)
+					end_day=end_day+7;
 			}
-			else if(follow_e->start_day > follow_e->end_day)
-				; // Don't care "start_day > end_day".
-			else{ // start_day < end_day.
-				// first interval.
-#ifdef BLOCKLOCAL
-				fprintf(fp, "-A INPUT -i %s -m time", lan_if);
-				if(follow_e->start_hour > 0)
-					fprintf(fp, " --timestart %d:0", follow_e->start_hour);
-				fprintf(fp, DAYS_PARAM " %s -m mac --mac-source %s -j %s\n", datestr[follow_e->start_day], follow_pc->mac, ftype);
-#endif
-				fprintf(fp, "-A FORWARD -i %s -m time", lan_if);
-				if(follow_e->start_hour > 0)
-					fprintf(fp, " --timestart %d:0", follow_e->start_hour);
-				fprintf(fp, DAYS_PARAM " %s -m mac --mac-source %s -j %s\n", datestr[follow_e->start_day], follow_pc->mac, fftype);
 
-				// middle interval.
-				if(follow_e->end_day-follow_e->start_day > 1){
-#ifdef BLOCKLOCAL
-					fprintf(fp, "-A INPUT -i %s -m time " DAYS_PARAM, lan_if);
-					for(i = follow_e->start_day+1; i < follow_e->end_day; ++i)
-						fprintf(fp, "%s%s", (i == follow_e->start_day+1)?" ":",", datestr[i]);
-					fprintf(fp, " -m mac --mac-source %s -j %s\n", follow_pc->mac, ftype);
-#endif
-
-					fprintf(fp, "-A FORWARD -i %s -m time " DAYS_PARAM, lan_if);
-					for(i = follow_e->start_day+1; i < follow_e->end_day; ++i)
-						fprintf(fp, "%s%s", (i == follow_e->start_day+1)?" ":",", datestr[i]);
-					fprintf(fp, " -m mac --mac-source %s -j %s\n", follow_pc->mac, fftype);
-				}
-
-				// end interval.
-				if(follow_e->end_hour > 0){
-#ifdef BLOCKLOCAL
-					fprintf(fp, "-A INPUT -i %s -m time", lan_if);
-					if(follow_e->end_hour < 24)
-						fprintf(fp, " --timestop %d:0", follow_e->end_hour);
-					fprintf(fp, DAYS_PARAM " %s -m mac --mac-source %s -j %s\n", datestr[follow_e->end_day], follow_pc->mac, ftype);
-#endif
-					fprintf(fp, "-A FORWARD -i %s -m time", lan_if);
-					if(follow_e->end_hour < 24)
-						fprintf(fp, " --timestop %d:0", follow_e->end_hour);
-					fprintf(fp, DAYS_PARAM " %s -m mac --mac-source %s -j %s\n", datestr[follow_e->end_day], follow_pc->mac, fftype);
-				}
+			daycounter_start=start_day;
+			daycounter_end=end_day;
+			if (start_hour>0)
+				daycounter_start++;
+			if (end_hour<24)
+				daycounter_end--;
+				
+			if (start_day==end_day) {
+				fprintf(fp, "-A %s -i %s -m time", iptables_chain, lan_if);
+				if (start_hour>0)
+					fprintf(fp, " --timestart %d:0", start_hour);
+				if (end_hour<24)
+					fprintf(fp, " --timestop %d:0", follow_e->end_hour);
+				fprintf(fp, DAYS_PARAM "%s -m mac --mac-source %s -j %s\n", datestr[start_day], follow_pc->mac, iptables_target);	
 			}
+			else {
+				if (start_hour>0) {
+					fprintf(fp, "-A %s -i %s -m time", iptables_chain, lan_if);
+					fprintf(fp, " --timestart %d:0", start_hour);
+					fprintf(fp, DAYS_PARAM "%s -m mac --mac-source %s -j %s\n", datestr[start_day], follow_pc->mac, iptables_target);
+				}
+				
+				if (daycounter_start<=daycounter_end) {
+					fprintf(fp, "-A %s -i %s -m time" DAYS_PARAM, iptables_chain, lan_if);
+					for(i = daycounter_start; i <= daycounter_end; ++i)
+						fprintf(fp, "%s%s", (i == daycounter_start)?"":",", datestr[i]);
+					fprintf(fp, " -m mac --mac-source %s -j %s\n", follow_pc->mac, iptables_target);
+				}
+				
+				if (end_hour<24) {
+					fprintf(fp, "-A %s -i %s -m time", iptables_chain, lan_if);
+					fprintf(fp, " --timestop %d:0", follow_e->end_hour);
+					fprintf(fp, DAYS_PARAM "%s -m mac --mac-source %s -j %s\n", datestr[follow_e->end_day], follow_pc->mac, iptables_target);
+				}	
+			}
+
 		}
 
 		// MAC address in list and not in time period -> DROP.
-		fprintf(fp, "-A FORWARD -i %s -m mac --mac-source %s -j DROP\n", lan_if, follow_pc->mac);
+		fprintf(fp, "-A %s -i %s -m mac --mac-source %s -j DROP\n", iptables_chain, lan_if, follow_pc->mac);
 	}
 
 	free_pc_list(&enabled_list);
