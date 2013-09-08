@@ -34,8 +34,8 @@ Features
 Here is a list of features that Asuswrt-merlin brings over the original firmware:
 
 System:
-   - Based on 3.0.0.4.374_168 sources from Asus
-   - Various bugfixes all over the place
+   - Based on RT-AC56U 3.0.0.4.374_119 sources from Asus
+   - Various bugfixes and optimizations
    - Some components were updated to their latest versions, for improved stability
      and security
    - Persistent JFFS partition
@@ -483,9 +483,13 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 3.9.0.4.374.33 (xx-xxx-2013):
+   - NEW: Merged with Asus 374_119 code from RT-AC56U GPL (newer than 374_164 from N66U)
    - CHANGED: Enabled Syn Cookies for ARM devices (RT-AC56U)
    - CHANGED: Allow selecting the Download2 folder for media server
               location.
+   - CHANGED: MIPS builds optimized for mips32r2 code generation.
+              A quick iperf+openvpn benchmark showed a very measurable
+              performance improvement. (N16/N66/AC66)
    - FIXED: Samba binding to WAN interface would cause warnings
             about WINS/master browser (regression in 374)
    - FIXED: The ARM kernel was missing the Advanced IP Routing option,
