@@ -1217,16 +1217,21 @@ ej_vpn_client_get_parameter(int eid, webs_t wp, int argc, char_t **argv)
 
 
 //2008.08 magic {
-static char post_buf[30000] = { 0 };
-static char post_buf_backup[30000] = { 0 };
+// Largest POST will be the OpenVPN key page:  
+// 2*5 fields + 2*4 fields = 18 fields total
+// Each field can have up to 3500 characters, for a potential
+// total of 63KB.  Going for 64KB to account for additional POST/GET data.
+
+static char post_buf[65535] = { 0 };
+static char post_buf_backup[65535] = { 0 };
 
 static void do_html_post_and_get(char *url, FILE *stream, int len, char *boundary){
 	char *query = NULL;
 
 	init_cgi(NULL);
 
-	memset(post_buf, 0, 30000);
-	memset(post_buf_backup, 0, 30000);
+	memset(post_buf, 0, sizeof(post_buf));
+	memset(post_buf_backup, 0, sizeof(post_buf));
 
 	if (fgets(post_buf, MIN(len+1, sizeof(post_buf)), stream)){
 		len -= strlen(post_buf);
@@ -1387,7 +1392,7 @@ static int validate_apply(webs_t wp) {
 	struct nvram_tuple *t;
 	char *value;
 	char name[64];
-	char tmp[3000], prefix[32];
+	char tmp[3500], prefix[32];
 	int i, j, len;
 	int unit=-1, subunit=-1;
 	int nvram_modified = 0;
