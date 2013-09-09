@@ -120,7 +120,7 @@ function change_page(page){
                 <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 		<div class="formfontdesc">
 			<p>Only paste the content of the <span style="color:#FFCC00;">----- BEGIN xxx ----- </span>/<span style="color:#FFCC00;"> ----- END xxx -----</span> block (including those two lines).
-			<p>Limit: 2999 characters per field
+			<p>Limit: 3499 characters per field
 		</div>
 		<br>
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
@@ -149,31 +149,31 @@ function change_page(page){
 					<tr>
 						<th>Static Key</th>
 						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_server1_static" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_server1_static"); %></textarea>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_server1_static" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server1_static"); %></textarea>
 						</td>
 					</tr>
 					<tr>
 						<th>Certificate Authority</th>
 						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_server1_ca" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_server1_ca"); %></textarea>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_server1_ca" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server1_ca"); %></textarea>
 						</td>
 					</tr>
 					<tr>
 						<th>Server Certificate</th>
 						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_server1_crt" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_server1_crt"); %></textarea>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_server1_crt" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server1_crt"); %></textarea>
 						</td>
 					</tr>
 					<tr>
 						<th>Server Key</th>
 						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_server1_key" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_server1_key"); %></textarea>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_server1_key" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server1_key"); %></textarea>
 						</td>
 					</tr>
 					<tr>
 						<th>Diffie Hellman parameters</th>
 						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_server1_dh" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_server1_dh"); %></textarea>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_server1_dh" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server1_dh"); %></textarea>
 						</td>
 					</tr>
 				</table>
@@ -187,31 +187,31 @@ function change_page(page){
 					<tr>
 						<th>Static Key</th>
 						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_server2_static" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_server2_static"); %></textarea>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_server2_static" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server2_static"); %></textarea>
 						</td>
 					</tr>
 					<tr>
 						<th>Certificate Authority</th>
 						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_server2_ca" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_server2_ca"); %></textarea>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_server2_ca" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server2_ca"); %></textarea>
 						</td>
 					</tr>
 					<tr>
 						<th>Server Certificate</th>
 						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_server2_crt" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_server2_crt"); %></textarea>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_server2_crt" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server2_crt"); %></textarea>
 						</td>
 					</tr>
 					<tr>
 						<th>Server Key</th>
 						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_server2_key" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_server2_key"); %></textarea>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_server2_key" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server2_key"); %></textarea>
 						</td>
 					</tr>
 					<tr>
 						<th>Diffie Hellman parameters</th>
 						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_server2_dh" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_server2_dh"); %></textarea>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_server2_dh" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server2_dh"); %></textarea>
 						</td>
 					</tr>
 				</table>
@@ -226,25 +226,25 @@ function change_page(page){
 					<tr>
 						<th>Static Key</th>
 						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client1_static" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_client1_static"); %></textarea>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client1_static" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_client1_static"); %></textarea>
 						</td>
 					</tr>
 					<tr>
 						<th>Certificate Authority</th>
 						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client1_ca" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_client1_ca"); %></textarea>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client1_ca" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_client1_ca"); %></textarea>
 						</td>
 					</tr>
 					<tr>
 						<th>Client Certificate</th>
 						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client1_crt" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_client1_crt"); %></textarea>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client1_crt" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_client1_crt"); %></textarea>
 						</td>
 					</tr>
 					<tr>
 						<th>Client Key</th>
 						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client1_key" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_client1_key"); %></textarea>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client1_key" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_client1_key"); %></textarea>
 						</td>
 					</tr>
 				</table>
@@ -260,25 +260,25 @@ function change_page(page){
 					<tr>
 						<th>Static Key</th>
 						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client2_static" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_client2_static"); %></textarea>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client2_static" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_client2_static"); %></textarea>
 						</td>
 					</tr>
 					<tr>
 						<th>Certificate Authority</th>
 						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client2_ca" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_client2_ca"); %></textarea>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client2_ca" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_client2_ca"); %></textarea>
 						</td>
 					</tr>
 					<tr>
 						<th>Client Certificate</th>
 						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client2_crt" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_client2_crt"); %></textarea>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client2_crt" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_client2_crt"); %></textarea>
 						</td>
 					</tr>
 					<tr>
 						<th>Client Key</th>
 						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client2_key" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_client2_key"); %></textarea>
+							<textarea rows="8" class="textarea_ssh_table" name="vpn_crt_client2_key" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_client2_key"); %></textarea>
 						</td>
 					</tr>
 
