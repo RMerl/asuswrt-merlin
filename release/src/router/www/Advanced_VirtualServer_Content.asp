@@ -97,7 +97,7 @@ function isChange(){
 function applyRule(){
 
 	if(parent.usb_support){
-		if(!validate_number_range(document.form.vts_ftpport, 0, 65535)){
+		if(!validate_number_range(document.form.vts_ftpport, 1, 65535)){
 			return false;	
 		}	
 	}	
@@ -610,7 +610,6 @@ function changeBgColor(obj, num){
 				<th><#IPConnection_VSList_ftpport#></th>
 				<td>
 			  	<input type="text" maxlength="5" name="vts_ftpport" class="input_6_table" value="<% nvram_get("vts_ftpport"); %>" onkeypress="return is_number(this,event);">
-				<span>(0 = no WAN access)</span>
 				</td>
 		  </tr>
 
