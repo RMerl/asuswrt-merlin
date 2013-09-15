@@ -179,7 +179,7 @@ static u16 robo_read16(robo_t *robo, u8 page, u8 reg)
 
 	args[0] = page << 16;
 	args[0] |= reg;
-	args[1] = 0;
+	args[1] = 2;
 	args[2] = 0;
         robo->ifr.ifr_data = (caddr_t) args;
 
@@ -196,7 +196,7 @@ static u16 robo_read16(robo_t *robo, u8 page, u8 reg)
 
 static u32 robo_read32(robo_t *robo, u8 page, u8 reg)
 {
-#if BCM5301X
+#ifdef BCM5301X
         int args[5];
 
         args[0] = page << 16;
@@ -231,28 +231,56 @@ static void robo_write(robo_t *robo, u8 page, u8 reg, u16 *val, int count)
 
 static void robo_write16(robo_t *robo, u8 page, u8 reg, u16 val16)
 {
+#ifdef BCM5301X
+        int args[5];
+
+        args[0] = page << 16;
+        args[0] |= reg;
+        args[1] = 2;
+        args[2] = val16;
+        robo->ifr.ifr_data = (caddr_t) args;
+
+        ioctl(robo->fd, SIOCSETCROBOWR, (caddr_t)&robo->ifr);
+
+#else
 	/* write data */
 	mdio_write(robo, ROBO_PHY_ADDR, REG_MII_DATA0, val16);
 
 	robo_reg(robo, page, reg, REG_MII_ADDR_WRITE);
+#endif
 }
 
 static void robo_write32(robo_t *robo, u8 page, u8 reg, u32 val32)
 {
+#ifdef BCM5301X
+        int args[5];
+
+        args[0] = page << 16;
+        args[0] |= reg;
+        args[1] = 4;    // len
+        args[2] = val32;    // value
+
+        robo->ifr.ifr_data = (caddr_t) args;
+        ioctl(robo->fd, SIOCSETCROBOWR, (caddr_t)&robo->ifr);
+
+//        printf("rd32: 0x%16x\n", args[2]);
+
+#else
 	/* write data */
 	mdio_write(robo, ROBO_PHY_ADDR, REG_MII_DATA0, (u16 )(val32 & 0xFFFF));
 	mdio_write(robo, ROBO_PHY_ADDR, REG_MII_DATA0 + 1, (u16 )(val32 >> 16));
 	
 	robo_reg(robo, page, reg, REG_MII_ADDR_WRITE);
+#endif
 }
 
-/* checks that attached switch is 5325/5352/5354/5356/5357/53115 */
+/* checks that attached switch is 5325/5352/5354/5356/5357/53115/5301x */
 static int robo_vlan535x(robo_t *robo, u32 phyid)
 {
 
 	/* Northstar device? */
 	if ((robo_read32(robo, ROBO_MGMT_PAGE, ROBO_DEVICE_ID) & 0xFFFFFFF0) == 0x53010)
-		return 4;
+		return 5;
 
 	/* set vlan access id to 15 and read it back */
 	u16 val16 = 15;
@@ -316,22 +344,8 @@ struct {
 
 void usage()
 {
-#ifdef BCM5301X
 	fprintf(stderr, "Broadcom BCM5325/535x/536x/5311x switch configuration utility\n"
 		"BCM5301x partial support added by Eric Sauvageau\n"
-		"Copyright (C) 2005-2008 Oleg I. Vdovikin (oleg@cs.msu.su)\n"
-		"Copyright (C) 2005 Dmitry 'dimss' Ivanov of \"Telecentrs\" (Riga, Latvia)\n\n"
-		"This program is distributed in the hope that it will be useful,\n"
-		"but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-		"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the\n"
-		"GNU General Public License for more details.\n\n");
-
-        fprintf(stderr, "Usage: robocfg <op>\n"
-                        "Operations are as below:\n"
-                        "\tshowports -- show only port config\n");
-
-#else
-	fprintf(stderr, "Broadcom BCM5325/535x/536x/5311x switch configuration utility\n"
 		"Copyright (C) 2005-2008 Oleg I. Vdovikin (oleg@cs.msu.su)\n"
 		"Copyright (C) 2005 Dmitry 'dimss' Ivanov of \"Telecentrs\" (Riga, Latvia)\n\n"
 		"This program is distributed in the hope that it will be useful,\n"
@@ -366,7 +380,6 @@ void usage()
 			media[0].name, media[1].name, media[2].name, media[3].name, media[4].name, media[5].name, media[6].name,
 			mdix[0].name, mdix[1].name, mdix[2].name,
 			jumbo[0], jumbo[1]);
-#endif
 }
 
 int
@@ -376,7 +389,7 @@ main(int argc, char *argv[])
 	u32 val32;
 	u16 mac[3];
 	int i = 0, j;
-	int robo535x = 0; /* 0 - 5365, 1 - 5325/5352/5354, 3 - 5356, 4 - 53115 */
+	int robo535x = 0; /* 0 - 5365, 1 - 5325/5352/5354, 3 - 5356, 4 - 53115, 5 - 5301x */
 	u32 phyid;
 	int novlan = 0;
 	
@@ -436,7 +449,6 @@ main(int argc, char *argv[])
 	//fprintf(stderr, "phyid %08x id %d\n", phyid, robo535x);
 
 	for (i = 1; i < argc;) {
-#ifndef BCM5301X
 		if (strcasecmp(argv[i], "showmacs") == 0)
 		{
 			/* show MAC table of switch */
@@ -450,13 +462,13 @@ main(int argc, char *argv[])
 				"VLAN  MAC                Type     Port\n"
 				"--------------------------------------\n");
 			robo_write16(&robo, ROBO_ARLIO_PAGE, ROBO_ARL_RW_CTRL, 0x81);
-			robo_write16(&robo, ROBO_ARLIO_PAGE, (robo535x == 4) ?
+			robo_write16(&robo, ROBO_ARLIO_PAGE, (robo535x >= 4) ?
 			    ROBO_ARL_SEARCH_CTRL_53115 : ROBO_ARL_SEARCH_CTRL, 0x80);
-			for (idx = 0; idx < ((robo535x == 4) ?
+			for (idx = 0; idx < ((robo535x >= 4) ?
 				NUM_ARL_TABLE_ENTRIES_53115 : robo535x ?
 				NUM_ARL_TABLE_ENTRIES_5350 : NUM_ARL_TABLE_ENTRIES); idx++)
 			{
-				if (robo535x == 4)
+				if (robo535x >= 4)
 				{
 					off = (idx & 0x01) << 4;
 					if (!off && (robo_read16(&robo, ROBO_ARLIO_PAGE,
@@ -468,19 +480,19 @@ main(int argc, char *argv[])
 				} else
 					robo_read(&robo, ROBO_ARLIO_PAGE, ROBO_ARL_SEARCH_RESULT, 
 					    buf, robo535x ? 4 : 5);
-				if ((robo535x == 4) ? (buf[5] & 0x01) : (buf[3] & 0x8000) /* valid */)
+				if ((robo535x >= 4) ? (buf[5] & 0x01) : (buf[3] & 0x8000) /* valid */)
 				{
 					printf("%04i  %02x:%02x:%02x:%02x:%02x:%02x  %7s  %c\n",
-						(base_vlan | (robo535x == 4) ?
+						(base_vlan | (robo535x >= 4) ?
 						    (base_vlan | (buf[3] & 0xfff)) :
 						    ((buf[3] >> 5) & 0x0f) |
 							(robo535x ? 0 : ((buf[4] & 0x0f) << 4))),
 						buf[2] >> 8, buf[2] & 255, 
 						buf[1] >> 8, buf[1] & 255,
 						buf[0] >> 8, buf[0] & 255,
-						((robo535x == 4 ?
+						((robo535x >= 4 ?
 						    (buf[4] & 0x8000) : (buf[3] & 0x4000)) ? "STATIC" : "DYNAMIC"),
-						((robo535x == 4) ?
+						((robo535x >= 4) ?
 						    '0'+(buf[4] & 0x0f) : ports[buf[3] & 0x0f])
 					);
 				}
@@ -516,7 +528,7 @@ main(int argc, char *argv[])
 				} else
 				if (strcasecmp(argv[i], "media") == 0 && ++i < argc) {
 					for (j = 0; j < 7 && strcasecmp(argv[i], media[j].name); j++);
-					if (j < ((robo535x == 4) ? 7 : 5)) {
+					if (j < ((robo535x >= 4) ? 7 : 5)) {
 						/* change media */
                                     		mdio_write(&robo, port[index], MII_BMCR, media[j].bmcr);
 					} else {
@@ -528,7 +540,7 @@ main(int argc, char *argv[])
 					for (j = 0; j < 3 && strcasecmp(argv[i], mdix[j].name); j++);
 					if (j < 3) {
 						/* change mdi-x */
-						if (robo535x == 4) {
+						if (robo535x >= 4) {
 							mdio_write(&robo, port[index], 0x10, mdix[j].value1 |
 							    (mdio_read(&robo, port[index], 0x10) & ~0x4000));
 							mdio_write(&robo, port[index], 0x18, 0x7007);
@@ -551,7 +563,7 @@ main(int argc, char *argv[])
 				} else
 				if (strcasecmp(argv[i], "jumbo") == 0 && ++i < argc) {
 					for (j = 0; j < 2 && strcasecmp(argv[i], jumbo[j]); j++);
-					if (robo535x == 4 && j < 2) {
+					if (robo535x >= 4 && j < 2) {
 						/* change jumbo frame feature */
 						robo_write32(&robo, ROBO_JUMBO_PAGE, ROBO_JUMBO_CTRL,
 							(robo_read32(&robo, ROBO_JUMBO_PAGE, ROBO_JUMBO_CTRL) &
@@ -597,7 +609,7 @@ main(int argc, char *argv[])
 					} else {
 						/* write config now */
 						val16 = (vid) /* vlan */ | (1 << 12) /* write */ | (1 << 13) /* enable */;
-						if (robo535x == 4) {
+						if (robo535x >= 4) {
 							val32 = (untag << 9) | member;
 							/* entry */
 							robo_write32(&robo, ROBO_ARLIO_PAGE, ROBO_VTBL_ENTRY_5395, val32);
@@ -634,7 +646,7 @@ main(int argc, char *argv[])
 		{
 			while (++i < argc) {
 				if (strcasecmp(argv[i], "reset") == 0) {
-					if (robo535x == 4) {
+					if (robo535x >= 4) {
 						robo_write16(&robo, ROBO_ARLIO_PAGE, ROBO_VTBL_ACCESS_5395,
 									 (1 << 7) /* start */ | 2 /* flush */);
 					} else
@@ -675,13 +687,11 @@ main(int argc, char *argv[])
 		{
 			break;
 		} else
-#endif
 		if (strcasecmp(argv[i], "showports") == 0)
 		{
 			novlan = 1;
 			break;
 		} else
-#ifndef BCM5301X
 		if (strncasecmp(argv[i], "robowr", 6) == 0 && (i + 2) < argc)
 		{
 			long pagereg = strtoul(argv[i + 1], NULL, 0);
@@ -743,7 +753,6 @@ main(int argc, char *argv[])
 
 			i = 2;
 		} else
-#endif
 		{
 			fprintf(stderr, "Invalid option %s\n", argv[i]);
 			usage();
@@ -764,11 +773,11 @@ main(int argc, char *argv[])
 	for (i = 0; i < 6; i++) {
 		printf(robo_read16(&robo, ROBO_STAT_PAGE, ROBO_LINK_STAT_SUMMARY) & (1 << port[i]) ?
 			"Port %d: %4s%s " : "Port %d:   DOWN ",
-			(robo535x == 4) ? port[i] : i,
-			speed[(robo535x == 4) ?
+			(robo535x >= 4) ? port[i] : i,
+			speed[(robo535x >= 4) ?
 				(robo_read32(&robo, ROBO_STAT_PAGE, ROBO_SPEED_STAT_SUMMARY) >> port[i] * 2) & 3 :
 				(robo_read16(&robo, ROBO_STAT_PAGE, ROBO_SPEED_STAT_SUMMARY) >> port[i]) & 1],
-			robo_read16(&robo, ROBO_STAT_PAGE, (robo535x == 4) ?
+			robo_read16(&robo, ROBO_STAT_PAGE, (robo535x >= 4) ?
 				ROBO_DUPLEX_STAT_SUMMARY_53115 : ROBO_DUPLEX_STAT_SUMMARY) & (1 << port[i]) ? "FD" : "HD");
 
 		val16 = robo_read16(&robo, ROBO_CTRL_PAGE, port[i]);
@@ -776,7 +785,7 @@ main(int argc, char *argv[])
 		printf("%s stp: %s vlan: %d ", rxtx[val16 & 3], stp[(val16 >> 5) & 7],
 			robo_read16(&robo, ROBO_VLAN_PAGE, ROBO_VLAN_PORT0_DEF_TAG + (i << 1)));
 
-		if (robo535x == 4)
+		if (robo535x >= 4)
 			printf("jumbo: %s ", jumbo[(robo_read32(&robo, ROBO_JUMBO_PAGE, ROBO_JUMBO_CTRL) >> port[i]) & 1]);
 
 		robo_read(&robo, ROBO_STAT_PAGE, ROBO_LSA_PORT0 + port[i] * 6, mac, 3);
@@ -785,23 +794,22 @@ main(int argc, char *argv[])
 	}
 
 	if (novlan) return (0);	// Only show ethernet port states, used by webui
-#ifndef BCM5301X
 	val16 = robo_read16(&robo, ROBO_VLAN_PAGE, ROBO_VLAN_CTRL0);
 	
 	printf("VLANs: %s %sabled%s%s\n", 
-		(robo535x == 4) ? "BCM53115" : (robo535x ? "BCM5325/535x" : "BCM536x"),
+		(robo535x == 5 ? "BCM5301x" : (robo535x == 4 ? "BCM53115" : (robo535x ? "BCM5325/535x" : "BCM536x"))),
 		(val16 & (1 << 7)) ? "en" : "dis", 
 		(val16 & (1 << 6)) ? " mac_check" : "", 
 		(val16 & (1 << 5)) ? " mac_hash" : "");
 	
 	/* scan VLANs */
-	for (i = 0; i <= ((robo535x == 4) ? VLAN_ID_MAX5395 /* slow, needs rework, but how? */ :
+	for (i = 0; i <= ((robo535x >= 4) ? VLAN_ID_MAX5395 /* slow, needs rework, but how? */ :
 			  (robo535x ? VLAN_ID_MAX5350 : VLAN_ID_MAX)); i++)
 	{
 		/* issue read */
 		val16 = (i) /* vlan */ | (0 << 12) /* read */ | (1 << 13) /* enable */;
 		
-		if (robo535x == 4) {
+		if (robo535x >= 4) {
 			/* index */
 			robo_write16(&robo, ROBO_ARLIO_PAGE, ROBO_VTBL_INDX_5395, i);
 			/* access */
@@ -852,6 +860,5 @@ main(int argc, char *argv[])
 			}
 		}
 	}
-#endif
 	return (0);
 }
