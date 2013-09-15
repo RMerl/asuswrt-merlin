@@ -472,6 +472,11 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 3.0.0.4.374.33 Beta 2 (xx-xxx-2013):
+   - NEW: Added bonding.ko kernel module
+   - NEW: YandexDNS support (was originally only in experimental builds).  This is
+          a DNS-based filter list, which can be configured under Parental Control.
+   - CHANGED: robocfg now (almost) completely supports the
+              NorthStar platform (RT-AC56U)
    - FIXED: Device name resolution on Sysinfo page
 
 
