@@ -123,7 +123,7 @@ function showbootTime(){
 
 function show_etherstate(){
 	var state, state2;
-	var hostname, devicename, overlib_str, port;
+	var hostname, devicename, devicemac, overlib_str, port;
 	var tmpPort;
 	var code = '<table cellpadding="0" cellspacing="0" width="100%"><tr><th style="width:15%;">Port</th><th style="width:15%;">VLAN</th><th style="width:25%;">Link State</th>';
 	code += '<th style="width:45%;">Last Device Seen</th></tr>';
@@ -135,6 +135,12 @@ function show_etherstate(){
 
 	for (var i = 0; i < t.length; ++i) {
 		var line = t[i].split(/[\s]+/);
+
+		if (line[11])
+			devicemac = line[11].toUpperCase();
+		else
+			devicemac = "";
+
 		if (line[0] == "Port") {
 			if (line[2] == "DOWN")
 				state2 = "Down";
@@ -145,23 +151,23 @@ function show_etherstate(){
 
 			hostname = "";
 
-			if (line[11] == "00:00:00:00:00:00") {
+			if (devicemac == "00:00:00:00:00:00") {
 				devicename = '<span class="ClientName">&lt;none&gt;</span>';
 			} else {
-				overlib_str = "<p><#MAC_Address#>:</p>" + line[11];
+				overlib_str = "<p><#MAC_Address#>:</p>" + devicemac;
 
 				// Walk down arp cache and retrieve from hostname cache
 				for (var j = 0; j < arplist.length; ++j) {
-					if (arplist[j][3] == line[11].toUpperCase()) {
+					if (arplist[j][3].toUpperCase() == devicemac) {
 						hostname = hostnamecache[arplist[j][0]];
 						break;
 					}
 				}
 
 				if (hostname != "") {
-					devicename = '<span class="ClientName" onclick="oui_query(\'' + line[11] +'\');;overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ hostname +'</span>';
+					devicename = '<span class="ClientName" onclick="oui_query(\'' + devicemac +'\');;overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ hostname +'</span>';
 				} else {
-					devicename = '<span class="ClientName" onclick="oui_query(\'' + line[11] +'\');;overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ line[11] +'</span>'; 
+					devicename = '<span class="ClientName" onclick="oui_query(\'' + devicemac +'\');;overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ devicemac +'</span>'; 
 				}
 			}
 			tmpPort = line[1].replace(":","");

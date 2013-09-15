@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.374.33-Beta1 (9-Sept-2013)
+Asuswrt-Merlin - build 3.0.0.4.374.33-Beta2 (xx-Sept-2013)
 =========================================================
 
 About
@@ -279,10 +279,7 @@ mount \\\\192.168.1.100\\ShareName /cifs1 -t cifs -o "username=User,password=Pas
 
 
 
-* Dual WAN (EXPERIMENTAL) *
-*** Available in separate, experimental builds *** 
-*** This feature is still a work in progress from Asus ***
-
+* Dual WAN *
 Asuswrt originally support using a USB 3G/4G modem as a 
 failover Internet connection.  Dual WAN is the next step, also 
 developped by Asus but left disabled so far in their official 
@@ -419,14 +416,6 @@ NFSv2 has various filesystem-level limitations.
 
 
 
-* Repeater Mode support (Experimental build only) *
-The RTN16 and RT-N66U experimental build also add  Repeater mode 
-support.  Note that this is a feature that is still a 
-work-in-progress by Asus, and might not be working 100% as 
-expected yet.
-
-
-
 * Easy Entware setup *
 Entware is an alternative to Optware.  They are both online 
 software repositories that let you easily install additional 
@@ -482,10 +471,20 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.9.0.4.374.33 Beta 1 (9-Sept-2013):
+3.0.0.4.374.33 Beta 2 (xx-xxx-2013):
+   - FIXED: Device name resolution on Sysinfo page
+
+
+3.0.0.4.374.33 Beta 1 (9-Sept-2013):
    - NEW: Merged with Asus 374_119 code from RT-AC56U GPL (newer than 374_164 from N66U)
    - NEW: Added support for last seen devices on Ethernet port status (Tools-> Sysinfo)
           for RT-AC56U.
+   - NEW: Repeater mode (was originally only in experimental builds, now available
+          in the regular builds for all supported routers)
+   - NEW: Dual WAN (was originally only in experimental builds, now available
+          in the regular builds for all supported routers).
+          Note that there are still a few issues left, such as recovery
+          from failover mode when the primary WAN comes back up.
    - CHANGED: Enabled Syn Cookies for ARM devices (RT-AC56U)
    - CHANGED: Allow selecting the Download2 folder for media server
               location.
