@@ -307,6 +307,10 @@ int main(int argc, char *argv[])
 	fprintf(fp, "kernel oplocks = no\n");
 	fprintf(fp, "wide links = no\n");
 
+	// If we only want name services then skip share definition
+	if (nvram_match("enable_samba", "0"))
+		goto confpage;
+
 	disks_info = read_disk_data();
 	if (disks_info == NULL) {
 		usb_dbg("Couldn't get disk list when writing smb.conf!\n");
