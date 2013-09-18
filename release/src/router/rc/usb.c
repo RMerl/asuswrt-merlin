@@ -1900,21 +1900,17 @@ _dprintf("%s: cmd=%s.\n", __FUNCTION__, cmd);
 		free(nv);
 
 	xstart("nmbd", "-D", "-s", "/etc/smb.conf");
-
-	// Only start smbd if we are sharing files and not just acting as wins/browser
-	if (nvram_match("enable_samba", "1")) {
 #ifdef RTCONFIG_BCMARM
 #ifdef SMP 
-	        if (cpu_num > 1)
-			taskset_ret = cpu_eval(NULL, "1", "ionice", "-c1", "-n0", "smbd", "-D", "-s", "/etc/smb.conf");
-	        else
-			taskset_ret = eval("ionice", "-c1", "-n0", "smbd", "-D", "-s", "/etc/smb.conf");
+        if (cpu_num > 1)
+		taskset_ret = cpu_eval(NULL, "1", "ionice", "-c1", "-n0", "smbd", "-D", "-s", "/etc/smb.conf");
+        else
+		taskset_ret = eval("ionice", "-c1", "-n0", "smbd", "-D", "-s", "/etc/smb.conf");
 
-	        if (taskset_ret != 0)
+        if (taskset_ret != 0)
 #endif
 #endif
-	                xstart("smbd", "-D", "-s", "/etc/smb.conf");
-	}
+                xstart("smbd", "-D", "-s", "/etc/smb.conf");
 
 	logmessage("Samba Server", "daemon is started");
 
