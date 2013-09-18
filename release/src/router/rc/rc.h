@@ -580,6 +580,11 @@ extern void create_custom_passwd(void);
 extern void stop_samba(void);
 extern void start_samba(void);
 #endif
+#ifdef RTCONFIG_NFS
+extern void start_nfsd(void);
+extern void restart_nfsd(void);
+extern void stop_nfsd(void);
+#endif
 #ifdef RTCONFIG_WEBDAV
 extern void stop_webdav(void);
 #endif

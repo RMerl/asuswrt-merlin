@@ -3447,22 +3447,22 @@ int stop_sd_idle(void) {
 #endif
 
 #ifdef RTCONFIG_NFS
-int start_nfsd(void)
+void start_nfsd(void)
 {
 	struct stat	st_buf;
 	FILE 		*fp;
         char *nv, *nvp, *b, *c;
 	char *dir, *access, *options;
 
-	if (nvram_match("nfsd_enable", "0")) return 0;
+	if (nvram_match("nfsd_enable", "0")) return;
 
 	/* create directories/files */
 	mkdir("/var/lib", 0755);
 	mkdir("/var/lib/nfs", 0755);
-# ifdef LINUX26
+#ifdef LINUX26
 	mkdir("/var/lib/nfs/v4recovery", 0755);
 	mount("nfsd", "/proc/fs/nfsd", "nfsd", MS_MGC_VAL, NULL);
-# endif
+#endif
 	close(creat("/var/lib/nfs/etab", 0644));
 	close(creat("/var/lib/nfs/xtab", 0644));
 	close(creat("/var/lib/nfs/rmtab", 0644));
@@ -3474,7 +3474,7 @@ int start_nfsd(void)
 
 	if ((fp = fopen(NFS_EXPORT, "w")) == NULL) {
 		perror(NFS_EXPORT);
-		return 1;
+		return;
 	}
 
 	nv = nvp = strdup(nvram_safe_get("nfsd_exportlist"));
@@ -3510,18 +3510,18 @@ int start_nfsd(void)
 	sleep(1);
 	eval("/usr/sbin/exportfs", "-a");
 
-	return 0;
+	return;
 }
 
-int restart_nfsd(void)
+void restart_nfsd(void)
 {
 	eval("/usr/sbin/exportfs", "-au");
 	eval("/usr/sbin/exportfs", "-a");
 
-	return 0;
+	return;
 }
 
-int stop_nfsd(void)
+void stop_nfsd(void)
 {
 	killall_tk("mountd");
 	killall("nfsd", SIGKILL);
@@ -3532,7 +3532,7 @@ int stop_nfsd(void)
 	umount("/proc/fs/nfsd");
 #endif
 
-	return 0;
+	return;
 }
 
 #endif
