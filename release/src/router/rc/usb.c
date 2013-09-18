@@ -2735,9 +2735,6 @@ void restart_sambaftp(int stop, int start)
 #else
 		system("sh /opt/etc/init.d/S50aicloud scan");
 #endif
-#ifdef RTCONFIG_NFS
-		start_nfsd();
-#endif
 	}
 	
 	if (start) {
