@@ -22,7 +22,7 @@ var g_rescan_samba_timer = 0;
 var g_rescan_samba_count = 0;
 var g_aidisk_name = "usbdisk";
 var g_enable_aidisk = 0;
-var g_support_lan = new Array('zh-tw', 'en-us');
+var g_support_lan = new Array('en-us', 'zh-tw', 'zh-cn', 'cz', 'pl', 'ru', 'de', 'fr', 'tr', 'th', 'ms', 'no', 'fi', 'da', 'sv', 'br', 'jp', 'es', 'it', 'uk');
 var g_bInitialize = false;
 
 var g_showAudioList = false;
@@ -344,11 +344,25 @@ function refreshShareLinkList(){
 			
 			$(".sharelink").empty();
 			
+			var encode_filename = parseInt($(data).find('encode_filename').text());
+			
 			var table_html = ""
 			
 			var i = 0;
 			$(data).find('sharelink').each(function(){
-				var filename = decodeURI($(this).attr("filename"));
+				
+				var filename = "";
+				var filetitle = "";
+					
+				if(encode_filename==1){
+					filename = $(this).attr("filename");				
+					filetitle = decodeURIComponent(filename);
+				}
+				else{
+					filetitle = $(this).attr("filename");				
+					filename = encodeURIComponent($(this).attr("filename"));
+				}
+				
 				var url = window.location.protocol + "//" + window.location.host + "/" + $(this).attr("url") + "/" + filename;
 				var createtime = $(this).attr("createtime");
 				var expiretime = $(this).attr("expiretime");
@@ -357,7 +371,7 @@ function refreshShareLinkList(){
 				var minute = parseInt(lefttime%3600/60);
 				
 				table_html = "<li><a href='#' data-icon='delete'>";
-				table_html += "<h3>" + filename + "</h3>";
+				table_html += "<h3>" + filetitle + "</h3>";
 				//table_html += "<a id='rescan' data-role='button'>test</a>";
 			
 				table_html += "<p class='ui-li-desc'>";
@@ -424,12 +438,6 @@ function openSettingWindow(){
  	  
 	dialog_html += "<div data-role='collapsible-set'>";
 	
-	//- Rescan samba
-	dialog_html += "<div data-role='collapsible' data-collapsed='true'>";
-	dialog_html += "<h2>" + m.getString('title_rescan') + "</h2>";
-	dialog_html += "<a id='rescan' data-role='button'>" + m.getString('btn_rescan') + "</a>";
-	dialog_html += "</div>";
-	
 	//- ShareLink manager
 	dialog_html += "<div data-role='collapsible' data-collapsed='true'>";
 	dialog_html += "<h2>" + m.getString('title_sharelink') + "</h2>";
@@ -461,6 +469,12 @@ function openSettingWindow(){
 	dialog_html += "</div>";
 	dialog_html += "</div>";
 	
+	//- Rescan samba
+	dialog_html += "<a id='rescan' data-role='button'>" + m.getString('title_rescan') + "</a>";
+	
+	//- Desktop View
+	dialog_html += "<a id='desktop_view' data-role='button'>" + m.getString('title_desktop_view') + "</a>";
+	
 	dialog_html += "</div>";
 	
 	dialog_html += "</div>";
@@ -468,11 +482,20 @@ function openSettingWindow(){
 	
 	$("body").append(dialog_html);
 	
-	getLatestVersion();
+	//getLatestVersion();
 	refreshShareLinkList();
 	
 	$("#rescan").click(function(){
-		doRescanSamba();
+		var r=confirm(m.getString('title_desc_rescan'));
+			
+		if (r==true)
+			doRescanSamba();
+	});
+	
+	$("#desktop_view").click(function(){
+		var url = window.location.href;
+		url = url.substr(0, url.lastIndexOf("?"));
+		window.location = url + '?desktop=1';
 	});
 	
 	$("#back").click(function(){
@@ -1181,14 +1204,16 @@ function doPROPFIND(open_url, complete_handler, auth){
 					}
 					
 					//- parent url
-					var parent_url = addPathSlash(open_url);						
+					var parent_url = addPathSlash(open_url);
 					if(parent_url!="/"){
 						parent_url = parent_url.substring(0, parent_url.length-1);
 						parent_url = parent_url.substring(0, parent_url.lastIndexOf("/"));
 						if( parent_url=="" ) parent_url="/";
 					}
 					
-					//- Create list view				
+					if(parent_url=="/"+g_storage.get('modalname')) parent_url = "/";
+
+					//- Create list view					
 					createListView(this_query_type, parent_url, g_folder_array, g_file_array);
 					
 					if(this_query_type==1&&this_isusb==0)
@@ -1718,6 +1743,7 @@ function getRouterInfo(){
 			g_storage.set('ddns_host_name', x.find("ddns_host_name").text());
 			g_storage.set('router_version', x.find("version").text());
 			g_storage.set('aicloud_version', x.find("aicloud_version").text());
+			g_storage.set('modalname', x.find("modalname").text());
 					
 			var login_info = g_storage.get('last_login_info');
 			if(login_info!=""&&login_info!=undefined){

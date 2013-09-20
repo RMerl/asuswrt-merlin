@@ -37,6 +37,7 @@
 #ifdef RTCONFIG_RALINK
 #include <ralink.h>
 #endif
+#include <shared.h>
 
 #include <syslog.h>
 #include <bcmnvram.h>
@@ -65,6 +66,11 @@
 #define SETUP_TIMEOUT_COUNT	SETUP_TIMEOUT * 10 /* 60 times a second */
 #endif // BTN_SETUP
 #define WPS_TIMEOUT_COUNT	121 * 20
+
+#if defined(RTCONFIG_JFFS2LOG) && defined(RTCONFIG_JFFS2)
+#define LOG_COMMIT_PERIOD	2		/* 2 x 30 seconds */
+static int log_commit_count = 0;
+#endif
 
 #if 0
 static int cpu_timer = 0;
@@ -98,7 +104,7 @@ static int LED_status_on = -1;
 #endif
 
 extern int g_wsc_configured;
-extern int g_isEnrollee;
+extern int g_isEnrollee[MAX_NR_WL_IF];
 
 void 
 sys_exit()
@@ -460,11 +466,13 @@ void btn_check(void)
 
 	if (btn_pressed_setup < BTNSETUP_START)
 	{
-		if (!no_need_to_start_wps() && !wps_band_radio_off(0) &&
+		if (button_pressed(BTN_WPS) &&
+		    !no_need_to_start_wps() &&
+		    !wps_band_radio_off(get_radio_band(0)) &&
 #ifndef RTCONFIG_WIFI_TOG_BTN
-		nvram_match("btn_ez_radiotoggle", "0") &&
+		    nvram_match("btn_ez_radiotoggle", "0") &&
 #endif
-			!nvram_match("wps_ign_btn", "1") && button_pressed(BTN_WPS))
+		    !nvram_match("wps_ign_btn", "1"))
 		{
 			TRACE_PT("button WPS pressed\n");
 
@@ -502,7 +510,9 @@ void btn_check(void)
 	else 
 	{
 		if (!nvram_match("wps_ign_btn", "1")) {
-			if (!no_need_to_start_wps() && !wps_band_radio_off(0) && button_pressed(BTN_WPS))
+			if (button_pressed(BTN_WPS) &&
+			    !no_need_to_start_wps() &&
+			    !wps_band_radio_off(get_radio_band(0)))
 			{
 				/* Whenever it is pushed steady, again... */
 				if (++btn_count_setup_second > SETUP_WAIT_COUNT)
@@ -1235,6 +1245,33 @@ void ddns_check(void)
 	return;
 }
 
+#if defined(RTCONFIG_JFFS2LOG) && defined(RTCONFIG_JFFS2)
+void syslog_commit_check(void)
+{
+        struct stat tmp_log_stat, jffs_log_stat;
+	int tmp_stat, jffs_stat;
+
+        tmp_stat = stat("/tmp/syslog.log", &tmp_log_stat);
+	if(tmp_stat == -1) 
+                return;
+
+        if(++log_commit_count >= LOG_COMMIT_PERIOD) {
+
+                jffs_stat = stat("/jffs/syslog.log", &jffs_log_stat);
+		if( jffs_stat == -1) {
+                        eval("cp", "/tmp/syslog.log", "/tmp/syslog.log-1", "/jffs");
+                        return;
+                }
+
+                if(tmp_log_stat.st_size > jffs_log_stat.st_size)
+                        eval("cp", "/tmp/syslog.log", "/tmp/syslog.log-1", "/jffs");
+
+                log_commit_count = 0;
+        }
+        return;
+}
+#endif
+
 /* wathchdog is runned in NORMAL_PERIOD, 1 seconds
  * check in each NORMAL_PERIOD
  *	1. button
@@ -1256,17 +1293,16 @@ void watchdog(int sig)
 		led_check();
 
 #ifdef RTCONFIG_RALINK
-	if(need_restart_wsc)
-	{
-		char word[256], *next;
-		foreach (word, nvram_safe_get("wl_ifnames"), next) {
+	if(need_restart_wsc) {
+		char word[256], *next, ifnames[128];
+
+		strcpy(ifnames, nvram_safe_get("wl_ifnames"));
+		foreach (word, ifnames, next) {
 			eval("iwpriv", word, "set", "WscConfMode=0");
 		}
-		stop_wpsfix();
 
 		need_restart_wsc = 0;
 		start_wsc_pin_enrollee();
-		start_wpsfix();
 	}
 #endif
 #ifdef RTCONFIG_SWMODE_SWITCH
@@ -1293,6 +1329,10 @@ void watchdog(int sig)
 #endif
 	ddns_check();
 
+#if defined(RTCONFIG_JFFS2LOG) && defined(RTCONFIG_JFFS2)
+        syslog_commit_check();
+#endif
+
 	return;
 }
 
@@ -1318,6 +1358,7 @@ watchdog_main(int argc, char *argv[])
 #endif
 
 	/* set the signal handler */
+	signal(SIGCHLD, chld_reap);
 	signal(SIGUSR1, catch_sig);
 	signal(SIGUSR2, catch_sig);
 	signal(SIGTSTP, catch_sig);

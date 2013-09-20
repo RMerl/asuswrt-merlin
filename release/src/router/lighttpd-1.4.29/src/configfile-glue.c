@@ -53,7 +53,7 @@ int config_insert_values_internal(server *srv, array *ca, const config_values_t 
 							 * before mod_fastcgi and friends */
 							buffer_copy_string_buffer(ds->key, ((data_string *)(da->value->data[j]))->key);
 						}
-
+						
 						array_insert_unique(cv[i].destination, (data_unset *)ds);
 					} else {
 						log_error_write(srv, __FILE__, __LINE__, "sssd",
@@ -203,7 +203,7 @@ int config_insert_values_global(server *srv, array *ca, const config_values_t cv
 		buffer_copy_string_len(touched->value, CONST_STR_LEN(""));
 		buffer_copy_string_buffer(touched->key, du->key);
 		
-		array_insert_unique(srv->config_touched, (data_unset *)touched);		
+		array_insert_unique(srv->config_touched, (data_unset *)touched);
 	}
 	
 	return config_insert_values_internal(srv, ca, cv);

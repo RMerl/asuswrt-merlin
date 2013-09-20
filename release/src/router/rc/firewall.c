@@ -1900,6 +1900,26 @@ err:
 }
 #endif
 
+int ruleHasFTPport(void)
+{
+	char *nvp = NULL, *nv = NULL, *b = NULL, *desc = NULL, *port = NULL, *dstip = NULL, *lport = NULL, *proto = NULL;
+
+	nvp = nv = strdup(nvram_safe_get("vts_rulelist"));
+	while (nv && (b = strsep(&nvp, "<")) != NULL) {
+		if ((vstrsep(b, ">", &desc, &port, &dstip, &lport, &proto) != 5))
+		{
+			continue;
+		}
+
+		if(strstr(port, "21"))
+		{
+			return 1;
+		}
+	}
+	free(nv);
+	return 0;
+}
+
 void
 filter_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 {
@@ -2149,7 +2169,7 @@ TRACE_PT("writing Parental Control\n");
 		if (!nvram_match("enable_ftp", "0"))
 		{
 			fprintf(fp, "-A INPUT -p tcp -m tcp --dport 21 -j %s\n", logaccept);
-			if(nvram_match("vts_enable_x", "1") && nvram_get_int("vts_ftpport") != 0 && nvram_get_int("vts_ftpport") != 21)
+			if(nvram_match("vts_enable_x", "1") && nvram_get_int("vts_ftpport") != 0 && nvram_get_int("vts_ftpport") != 21 && ruleHasFTPport() )
 				fprintf(fp, "-A INPUT -p tcp -m tcp --dport %s -j %s\n", nvram_safe_get("vts_ftpport"), logaccept);
 		}
 

@@ -599,6 +599,9 @@ typedef struct {
 	
 	buffer *aidisk_username;
 	buffer *aidisk_passwd;
+
+	buffer *match_smb_ip;
+	buffer *replace_smb_name;
 #endif
 } connection;
 

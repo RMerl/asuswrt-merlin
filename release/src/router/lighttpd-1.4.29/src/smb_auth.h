@@ -34,6 +34,3 @@ size_t smbc_wrapper_write(connection* con, int fd, const void *buf, size_t bufsi
 
 void process_share_link_for_router_sync_use();
 
-
-
-

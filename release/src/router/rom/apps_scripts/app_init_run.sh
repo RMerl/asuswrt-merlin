@@ -65,6 +65,25 @@ for f in $APPS_RUN_DIR/S*; do
 		fi
 	fi
 
+	# If all process of a package are not exist, skip the stop procedure.
+	if [ "$2" == "stop" ]; then
+		proc_list=""
+		if [ "$tmp_apps_name" == "downloadmaster" ] ; then
+			proc_list="\(dm2_amuled\|dm2_snarfmaster\|dm2_transmission-daemon\|dm2_nzbget\|dm2_amuled\)"
+		elif [ "$tmp_apps_name" == "mediaserver" ] ; then
+			proc_list="\(watch_app\|minidlna\)"
+		elif [ "$tmp_apps_name" == "asuslighttpd" ] ; then
+			proc_list="\(asus_lighttpd\)"
+		fi
+
+		if [ "$proc_list" != "" ] ; then
+			if [ "`ps|grep -c $proc_list`" == "0" ] ; then
+				echo "Skip stop procedure of $tmp_apps_name package."
+				continue;
+			fi
+		fi
+	fi
+
 	s="/opt/"`basename $f`.1
 	[ ! -e "$s" ] && s=$f
 

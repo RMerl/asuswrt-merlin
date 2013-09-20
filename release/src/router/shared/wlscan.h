@@ -119,6 +119,7 @@ typedef enum _NDIS_802_11_NETWORK_TYPE
 	Ndis802_11Automode,
 	Ndis802_11OFDM5_N,
 	Ndis802_11OFDM24_N,
+	Ndis802_11OFDM5_VHT,
 	Ndis802_11NetworkTypeMax    // not a real type, defined as an upper bound
 } NDIS_802_11_NETWORK_TYPE;
 

@@ -210,6 +210,7 @@ enum {
 	MODEL_RTN10U,
 	MODEL_RTN10P,
 	MODEL_RTN10D1,
+	MODEL_RTN10PV2,
 	MODEL_GENERIC
 };
 
@@ -342,6 +343,25 @@ extern int f_wait_notexists(const char *name, int max);
 #define HAVE_FAN_OFF			4
 #define	HAVE_FAN_ON			5
 
+#define MAX_NR_WL_IF			2
+static inline int get_wps_multiband(void)
+{
+#if defined(RTCONFIG_WPSMULTIBAND)
+	return nvram_get_int("wps_multiband");
+#else
+	return 0;
+#endif
+}
+
+static inline int get_radio_band(int band)
+{
+#if defined(RTCONFIG_WPSMULTIBAND)
+	return -1;
+#else
+	return band;
+#endif
+}
+
 extern int init_gpio(void);
 extern int set_pwr_usb(int boolOn);
 extern int button_pressed(int which);
@@ -443,6 +463,7 @@ extern int notify_rc(const char *event_name);
 extern int notify_rc_after_wait(const char *event_name);
 extern int notify_rc_after_period_wait(const char *event_name, int wait);
 extern int notify_rc_and_wait(const char *event_name);
+extern int notify_rc_and_wait_1min(const char *event_name);
 extern int notify_rc_and_wait_2min(const char *event_name);
 
 /* rtstate.c */

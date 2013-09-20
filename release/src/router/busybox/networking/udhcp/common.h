@@ -25,6 +25,9 @@ extern const uint8_t MAC_BCAST_ADDR[6] ALIGN2; /* six all-ones */
 #define BOOTREQUEST             1
 #define BOOTREPLY               2
 
+/* Minimal BOOTP message size. See RFC 1542 */
+#define DHCP_MIN_SIZE           300
+
 //TODO: rename ciaddr/yiaddr/chaddr
 struct dhcp_packet {
 	uint8_t op;      /* BOOTREQUEST or BOOTREPLY */

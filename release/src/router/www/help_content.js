@@ -3,14 +3,14 @@ helpcontent[0] = new Array("",
 							 "<#WLANConfig11b_SSID_itemdesc#>",
 						   "<#WLANConfig11b_x_BlockBCSSID_itemdesc#>",						   
 						   "<#WLANConfig11b_Channel_itemdesc#>",
-						   "<#WLANConfig11b_x_Mode11g_itemdesc#>",
+						   "<#WLANConfig11b_x_Mode_itemdesc2#>",
 						   "<#WLANConfig11b_AuthenticationMethod_itemdesc#>",
 						   "<#WLANConfig11b_WPAType_itemdesc#>",
 						   "<#WLANConfig11b_x_PSKKey_itemdesc#>",
 						   "<#WLANConfig11b_x_Phrase_itemdesc#>",
 						   "<#WLANConfig11b_WEPType_itemdesc#>",
 						   "<#WLANConfig11b_WEPDefaultKey_itemdesc#>",
-						   "<#WLANConfig11b_x_Rekey_itemdesc#><#JS_field_wanip_rule3#>",
+						   "<#WLANConfig11b_x_Rekey_itemdesc#><#JS_field_wanip_rule3#>",	//11
 						   "<#WLANConfig11b_WEPKey_itemtype1#>",
 						   "<#WLANConfig11b_WEPKey_itemtype2#>",
 						   "<#WLANConfig11b_ChannelBW_itemdesc#><br/><#WLANConfig11b_Wireless_Speed_itemname_3#>",
@@ -20,15 +20,17 @@ helpcontent[0] = new Array("",
 							 "WEP-64bits: <#WLANConfig11b_WEPKey_itemtype1#><br/>WEP-128bits: <#WLANConfig11b_WEPKey_itemtype2#>",
 							 "<#WLANConfig11b_WEPKey_itemtype1#><br/><#WLANConfig11b_WEPKey_itemtype2#>",
 							 "<#WLANConfig11b_WEPKey_itemtype1#><br/><#WLANConfig11b_WEPKey_itemtype2#>",
-							 "<#WLANConfig11b_WEPKey_itemtype1#><br/><#WLANConfig11b_WEPKey_itemtype2#>",
+							 "<#WLANConfig11b_WEPKey_itemtype1#><br/><#WLANConfig11b_WEPKey_itemtype2#>",	//21
 							 '<div><#qis_wireless_help1#></div><br/><img src="/images/qis/select_wireless.jpg">',
 							 '<div><#qis_wireless_help2#></div><br/><img width="350px" src="/images/qis/security_key.png">',
-							 "<#WLANConfig11n_automode_limition_hint#>"
+							 "<#WLANConfig11n_automode_limition_hint#>"							 
 							 );
 helpcontent[1] = new Array("",
 						   "<#WLANConfig11b_x_APMode_itemdesc#>",
 						   "<#WLANConfig11b_Channel_itemdesc#>",
-						   "<#WLANConfig11b_x_BRApply_itemdesc#>");
+						   "<#WLANConfig11b_x_BRApply_itemdesc#>",
+						   "<#WLANConfig11b_x_Mode_itemdesc5#>",
+							 "<#WLANConfig11b_x_Mode_itemdescAC#>");
 helpcontent[2] = new Array("",
 						   "<#WLANAuthentication11a_ExAuthDBIPAddr_itemdesc#>",
 						   "<#WLANAuthentication11a_ExAuthDBPortNumber_itemdesc#>",

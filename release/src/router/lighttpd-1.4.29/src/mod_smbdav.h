@@ -3,6 +3,7 @@
 
 #if defined(HAVE_LIBXML_H) && defined(HAVE_SQLITE3_H)
 #define USE_PROPPATCH
+#define USE_MINIDLNA_DB
 #include <libxml/tree.h>
 #include <libxml/parser.h>
 
@@ -78,6 +79,13 @@ typedef struct {
 	sqlite3_stmt *stmt_read_lock_by_uri;
 	sqlite3_stmt *stmt_refresh_lock;
 #endif
+
+	//- 20130304 JerryLin add
+	buffer *sqlite_minidlna_db_name;
+#ifdef USE_MINIDLNA_DB
+	sqlite3 *sql_minidlna;
+#endif
+
 } plugin_config;
 
 typedef struct {

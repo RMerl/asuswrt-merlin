@@ -1,0 +1,8 @@
+Jan 4th 2009
+  - Close tempfile before opening editor
+  - Added -no-encoding option to turn off utf-8 encoding
+
+Jan 3rd 2009
+  - Added datarootdir to Makefiles (although still not using it)
+  - Fixed up configure.in.dist file to search for some libs
+  - Fixed up makefiles so compilation will happen properly.

@@ -49,6 +49,12 @@ function initial(){
 		_change_wl_unit('<% nvram_get("wl_unit"); %>');
 	}
 
+	if(band5g_support && band5g_11ac_support && document.form.wl_unit[1].selected == true){
+		document.getElementById('wl_mode_desc').onclick=function(){return openHint(1, 5)};		
+	}else if(band5g_support && document.form.wl_unit[1].selected == true){
+		document.getElementById('wl_mode_desc').onclick=function(){return openHint(1, 4)};
+	}
+
 	// special case after modifing GuestNetwork
 	if("<% nvram_get("wl_unit"); %>" == "-1" && "<% nvram_get("wl_subunit"); %>" == "-1"){
 		change_wl_unit();
@@ -117,12 +123,13 @@ function change_wl_nmode(o){
 		inputCtrl(document.form.wl_bw, 1);
 	*/
 
+	limit_auth_method();
 	if(o.value == "3"){
 		document.form.wl_wme.value = "on";
 	}
 
 	wl_chanspec_list_change();
-	nmode_limitation();
+	//nmode_limitation();
 	automode_hint();
 }
 
@@ -474,7 +481,7 @@ function regen_5G_mode(obj,flag){
 				</tr>
 					  
 			  <tr>
-					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 4);"><#WLANConfig11b_x_Mode11g_itemname#></a></th>
+					<th><a id="wl_mode_desc" class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 4);"><#WLANConfig11b_x_Mode_itemname#></a></th>
 					<td>									
 						<select name="wl_nmode_x" class="input_option" onChange="change_wl_nmode(this);check_NOnly_to_GN();">
 							<option value="0" <% nvram_match("wl_nmode_x", "0","selected"); %>><#Auto#></option>
@@ -484,7 +491,7 @@ function regen_5G_mode(obj,flag){
 						<span id="wl_optimizexbox_span" style="display:none"><input type="checkbox" name="wl_optimizexbox_ckb" id="wl_optimizexbox_ckb" value="<% nvram_get("wl_optimizexbox"); %>" onclick="document.form.wl_optimizexbox.value=(this.checked==true)?1:0;"> Optimized for Xbox</input></span>
 						<span id="wl_gmode_checkbox" style="display:none;"><input type="checkbox" name="wl_gmode_check" id="wl_gmode_check" value="" onClick="return change_common(this, 'WLANConfig11b', 'wl_gmode_check', '1')"> b/g Protection</input></span>
 						<span id="wl_nmode_x_hint" style="display:none;"><br><#WLANConfig11n_automode_limition_hint#><br></span>
-						<span id="wl_NOnly_note" style="display:none;"><br>* [N only] is not compatible with current guest network authentication method(TKIP or WEP),  Please go to <a id="gn_link" href="/Guest_network.asp?af=wl_NOnly_note" target="_blank" style="color:#FFCC00;font-family:Lucida Console;text-decoration:underline;">guest network</a> and change the authentication method.</span>
+						<span id="wl_NOnly_note" style="display:none;"><br>* [N + AC] is not compatible with current guest network authentication method(TKIP or WEP),  Please go to <a id="gn_link" href="/Guest_network.asp?af=wl_NOnly_note" target="_blank" style="color:#FFCC00;font-family:Lucida Console;text-decoration:underline;">guest network</a> and change the authentication method.</span>
 					</td>
 			  </tr>
 

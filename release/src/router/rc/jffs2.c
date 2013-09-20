@@ -135,13 +135,13 @@ _dprintf("*** jffs2 mount error\n");
 
 	if (format) {
 		if (f_write("/jffs/.tomato_do_not_erase", &size, sizeof(size), 0, 0) != sizeof(size)) {
-			stop_jffs2();
+			stop_jffs2(0);
 			error("setting integrity test for");
 			return;
 		}
 	}
 	if ((f_read("/jffs/.tomato_do_not_erase", &test, sizeof(test)) != sizeof(test)) || (test != size)) {
-		stop_jffs2();
+		stop_jffs2(0);
 		error("testing integrity of");
 		return;
 	}
@@ -168,10 +168,10 @@ _dprintf("*** jffs2 mount error\n");
 
 }
 
-void stop_jffs2(void)
+void stop_jffs2(int stop)
 {
 	struct statfs sf;
-#if defined(RTCONFIG_PSISTLOG)
+#if defined(RTCONFIG_PSISTLOG) || defined(RTCONFIG_JFFS2LOG)
 	int restart_syslogd = 0;
 #endif
 
@@ -183,8 +183,8 @@ void stop_jffs2(void)
 		run_nvscript("script_autostop", "/jffs", 5);
 	}
 
-#if defined(RTCONFIG_PSISTLOG)
-	if (!strncmp(get_syslog_fname(0), "/jffs/", 6)) {
+#if defined(RTCONFIG_PSISTLOG) || defined(RTCONFIG_JFFS2LOG)
+	if (!stop && !strncmp(get_syslog_fname(0), "/jffs/", 6)) {
 		restart_syslogd = 1;
 		stop_syslogd();
 		eval("cp", "/jffs/syslog.log", "/jffs/syslog.log-1", "/tmp");
@@ -192,10 +192,12 @@ void stop_jffs2(void)
 #endif
 
 	notice_set("jffs", "Stopped");
-	umount2("/jffs", MNT_DETACH);
-	modprobe_r(JFFS_NAME);
+	if (umount("/jffs"))
+		umount2("/jffs", MNT_DETACH);
+	else
+		modprobe_r(JFFS_NAME);
 
-#if defined(RTCONFIG_PSISTLOG)
+#if defined(RTCONFIG_PSISTLOG) || defined(RTCONFIG_JFFS2LOG)
 	if (restart_syslogd)
 		start_syslogd();
 #endif

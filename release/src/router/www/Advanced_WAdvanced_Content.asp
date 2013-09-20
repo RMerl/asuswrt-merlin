@@ -50,6 +50,10 @@ var mcast_rates = [
 var flag_week = 0;
 var flag_weekend = 0;
 var flag_initial =0;
+var wl_version = "<% nvram_get("wl_version"); %>";
+var sdk_version_array = new Array();
+sdk_version_array = wl_version.split(".");
+var new_sdk = sdk_version_array[0] == "6" ? true:false
 
 function initial(){
 	show_menu();
@@ -85,8 +89,14 @@ function initial(){
 	}
 	
 	// MODELDEP: for AC ser
-	inputCtrl(document.form.wl_ampdu_mpdu, 0);
-	inputCtrl(document.form.wl_ack_ratio, 0);
+	if(new_sdk && !Rawifi_support){		// for BRCM new SDK 6.x
+		inputCtrl(document.form.wl_ampdu_mpdu, 1);
+		inputCtrl(document.form.wl_ack_ratio, 1);
+	}else{
+		inputCtrl(document.form.wl_ampdu_mpdu, 0);
+		inputCtrl(document.form.wl_ack_ratio, 0);
+	}
+	
 	inputCtrl(document.form.wl_turbo_qam, 0);
 	inputCtrl(document.form.wl_txbf, 0);
 	inputCtrl(document.form.wl_itxbf, 0);

@@ -1139,17 +1139,17 @@ function nmode_limitation(){ //Lock add 2009.11.05 for TKIP limitation in n mode
 	}else{
 			var wl_nmode_x_flag = document.form.wl_nmode_x.value;	
 	}
-	
+
 	if(wl_nmode_x_flag == "1"){
-		if((document.form.wl_auth_mode_x.selectedIndex == 0 && (document.form.wl_wep_x.selectedIndex == "1" || document.form.wl_wep_x.selectedIndex == "2")) ||
-			document.form.wl_auth_mode_x.selectedIndex == 1 || 
-			document.form.wl_auth_mode_x.selectedIndex == 2 || 
-			document.form.wl_auth_mode_x.selectedIndex == 8){
+		if((document.form.wl_auth_mode_x.value == "open" && (document.form.wl_wep_x.selectedIndex == "1" || document.form.wl_wep_x.selectedIndex == "2")) ||
+			document.form.wl_auth_mode_x.value == "shared" || 
+			document.form.wl_auth_mode_x.value == "psk" || 
+			document.form.wl_auth_mode_x.value == "radius"){
 		
 			alert("<#WLANConfig11n_nmode_limition_hint#>");
 			document.form.wl_auth_mode_x.selectedIndex = 3;
 		}
-		else if(document.form.wl_auth_mode_x.selectedIndex == 5){
+		else if(document.form.wl_auth_mode_x.value == "wpa"){
 			alert("<#WLANConfig11n_nmode_limition_hint#>");
 			document.form.wl_auth_mode_x.selectedIndex = 6;
 		}
@@ -2669,3 +2669,99 @@ function isPrivateIP(_val){
 		return false;
 }
 
+function change_key_des(){
+	var objs = getElementsByName_iefix("span", "key_des");
+	var wep_type = document.form.wl_wep_x.value;
+	var str = "";
+	
+	if(wep_type == "1")
+		str = "(<#WLANConfig11b_WEPKey_itemtype1#>)";
+	else if(wep_type == "2")
+		str = "(<#WLANConfig11b_WEPKey_itemtype2#>)";
+	
+	for(var i = 0; i < objs.length; ++i)
+		showtext(objs[i], str);
+}
+
+function wl_gmode_protection_check(){
+	if (document.form.wl_gmode_check.checked == true)
+		document.form.wl_gmode_protection.value = "auto";
+	else
+		document.form.wl_gmode_protection.value = "off";
+}
+
+/* Handle WEP key index changed */
+function wep_key_index_change(obj){
+	var selected_key = eval("document.form.wl_key" + obj.value);
+		selected_key.focus();
+		selected_key.select();
+}
+
+/* Handle WEP encryption changed */
+function wep_encryption_change(obj){
+	change_wlweptype(obj, 0);
+	//nmode_limitation();
+	automode_hint();
+}
+
+/* Handle Authentication Method changed */
+function authentication_method_change(obj){
+	wl_auth_mode_change(0);
+	if(obj.value == "psk" || obj.value == "psk2" || obj.value == "pskpsk2" || obj.name == "wl_crypto"){
+		document.form.wl_wpa_psk.focus();
+	}
+	else if(obj.value == "shared"){ 
+		document.form.wl_key.focus();
+	}
+		
+	//nmode_limitation();
+	automode_hint();
+}
+
+/* Handle wireless mode changed */
+function wireless_mode_change(obj){
+	if(obj.value=='0' || obj.value=='2')
+		inputCtrl(document.form.wl_gmode_check, 1);
+	else
+		inputCtrl(document.form.wl_gmode_check, 0);
+		
+	if(obj.value == "2")
+		inputCtrl(document.form.wl_bw, 0);
+	else
+		inputCtrl(document.form.wl_bw, 1);
+
+	handle_11ac_80MHz();
+	insertExtChannelOption();
+	if(obj.value == "3"){
+		document.form.wl_wme.value = "on";
+	}
+
+	limit_auth_method();
+	//nmode_limitation();
+	automode_hint();
+	check_NOnly_to_GN();
+}
+
+/* To hide Shared key, WPA-Personal/Enterprise and RADIUS with 802.1X*/
+function limit_auth_method(){
+	var auth_method_array = document.form.wl_auth_mode_x.value;
+	if(document.form.wl_nmode_x.value != "2"){
+		if(document.form.current_page.value != "Guest_network.asp")
+			var auth_array = [["Open System", "open"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"], ["WPA2-Enterprise", "wpa2"], ["WPA-Auto-Enterprise", "wpawpa2"]];
+		else
+			var auth_array = [["Open System", "open"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"]];
+	}
+	else{
+		var auth_array = [["Open System", "open"], ["Shared Key", "shared"], ["WPA-Personal", "psk"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"], ["WPA-Enterprise", "wpa"], ["WPA2-Enterprise", "wpa2"], ["WPA-Auto-Enterprise", "wpawpa2"], ["Radius with 802.1x", "radius"]];
+	}
+	
+	free_options(document.form.wl_auth_mode_x);
+	for(i = 0; i < auth_array.length; i++){
+		if(auth_method_array  == auth_array[i][1])
+			add_option(document.form.wl_auth_mode_x, auth_array[i][0], auth_array[i][1], 1);
+		else
+			add_option(document.form.wl_auth_mode_x, auth_array[i][0], auth_array[i][1], 0);	
+	}
+		
+	authentication_method_change(document.form.wl_auth_mode_x);
+}

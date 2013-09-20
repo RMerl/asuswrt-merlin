@@ -334,8 +334,8 @@ enum {
 	PART_COUNT
 };
 
-#define PART_JFFS2_MIN 5
-#define PART_JFFS2_GAP 0x40000UL /* 256K, power of 2 */
+#define PART_JFFS2_MIN 8 	 /* 1 MB */
+#define PART_JFFS2_GAP 0x80000UL /* 256K, power of 2 */
 
 struct mtd_partition *
 init_mtd_partitions(struct mtd_info *mtd, size_t size)

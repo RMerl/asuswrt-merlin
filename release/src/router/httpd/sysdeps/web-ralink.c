@@ -947,107 +947,130 @@ unsigned int getAPPIN(int unit)
 int
 wl_wps_info(int eid, webs_t wp, int argc, char_t **argv, int unit)
 {
-	int i;
+	int i, j = -1, u = unit;
 	char tmpstr[128], tmpstr2[256];
 	WSC_CONFIGURED_VALUE result;
 	int retval=0;
 	struct iwreq wrq;
 	char tmp[128], prefix[] = "wlXXXXXXXXXX_";
 	char *wps_sta_pin;
+	char tag1[] = "<wps_infoXXXXXX>", tag2[] = "</wps_infoXXXXXX>";
 
-	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+#if defined(RTCONFIG_WPSMULTIBAND)
+	for (j = -1; j < MAX_NR_WL_IF; ++j) {
+#endif
+		switch (j) {
+		case 0: /* fall through */
+		case 1:
+			u = j;
+			sprintf(tag1, "<wps_info%d>", j);
+			sprintf(tag2, "</wps_info%d>", j);
+			break;
+		case -1: /* fall through */
+		default:
+			u = unit;
+			strcpy(tag1, "<wps_info>");
+			strcpy(tag2, "</wps_info>");
+		}
 
-	wrq.u.data.length = sizeof(WSC_CONFIGURED_VALUE);
-	wrq.u.data.pointer = (caddr_t) &result;
-	wrq.u.data.flags = 0;
-	strcpy((char *)&result, "get_wsc_profile");
+		snprintf(prefix, sizeof(prefix), "wl%d_", u);
+		wrq.u.data.length = sizeof(WSC_CONFIGURED_VALUE);
+		wrq.u.data.pointer = (caddr_t) &result;
+		wrq.u.data.flags = 0;
+		strcpy((char *)&result, "get_wsc_profile");
 
-	if (wl_ioctl(nvram_safe_get(strcat_r(prefix, "ifname", tmp)), RTPRIV_IOCTL_WSC_PROFILE, &wrq) < 0)
-	{
-		fprintf(stderr, "errors in getting WSC profile\n");
-		return 0;
+#if defined(RTCONFIG_WPSMULTIBAND)
+		if (!nvram_get(strcat_r(prefix, "ifname", tmp)))
+			continue;
+#endif
+
+		if (wl_ioctl(nvram_safe_get(strcat_r(prefix, "ifname", tmp)), RTPRIV_IOCTL_WSC_PROFILE, &wrq) < 0) {
+			fprintf(stderr, "errors in getting WSC profile\n");
+			return 0;
+		}
+
+		if (j == -1)
+			retval += websWrite(wp, "<wps>\n");
+
+		//0. WSC Status
+		retval += websWrite(wp, "%s%s%s\n", tag1, getWscStatusStr(getWscStatus(u)), tag2);
+
+		//1. WPSConfigured
+		if (result.WscConfigured==2)
+			retval += websWrite(wp, "%s%s%s\n", tag1, "Yes", tag2);
+		else
+			retval += websWrite(wp, "%s%s%s\n", tag1, "No", tag2);
+
+		//2. WPSSSID
+		memset(tmpstr, 0, sizeof(tmpstr));
+		char_to_ascii(tmpstr, result.WscSsid);
+		retval += websWrite(wp, "%s%s%s\n", tag1, tmpstr, tag2);
+
+		//3. WPSAuthMode
+		memset(tmpstr, 0, sizeof(tmpstr));
+		getWPSAuthMode(&result, tmpstr);
+		retval += websWrite(wp, "%s%s%s\n", tag1, tmpstr, tag2);
+
+		//4. EncrypType
+		memset(tmpstr, 0, sizeof(tmpstr));
+		getWPSEncrypType(&result, tmpstr);
+		retval += websWrite(wp, "%s%s%s\n", tag1, tmpstr, tag2);
+
+		//5. DefaultKeyIdx
+		memset(tmpstr, 0, sizeof(tmpstr));
+		sprintf(tmpstr, "%d", result.DefaultKeyIdx);
+		retval += websWrite(wp, "%s%s%s\n", tag1, tmpstr, tag2);
+
+		//6. WPAKey
+		memset(tmpstr, 0, sizeof(tmpstr));
+		for (i=0; i<64; i++)	// WPA key default length is 64 (defined & hardcode in driver) 
+		{
+			sprintf(tmpstr, "%s%c", tmpstr, result.WscWPAKey[i]);
+		}
+		if (!strlen(tmpstr))
+			retval += websWrite(wp, "%sNone%s\n", tag1, tag2);
+		else
+		{
+			char_to_ascii(tmpstr2, tmpstr);
+			retval += websWrite(wp, "%s%s%s\n", tag1, tmpstr2, tag2);
+		}
+
+		//7. AP PIN Code
+		retval += websWrite(wp, "%s%08d%s\n", tag1, getAPPIN(u), tag2);
+
+		//8. Saved WPAKey
+		if (!strlen(nvram_safe_get(strcat_r(prefix, "wpa_psk", tmp))))
+			retval += websWrite(wp, "%s%s%s\n", tag1, "None", tag2);
+		else
+		{
+			char_to_ascii(tmpstr, nvram_safe_get(strcat_r(prefix, "wpa_psk", tmp)));
+			retval += websWrite(wp, "%s%s%s\n", tag1, tmpstr, tag2);
+		}
+
+		//9. WPS enable?
+		if (!strcmp(nvram_safe_get(strcat_r(prefix, "wps_mode", tmp)), "enabled"))
+			retval += websWrite(wp, "%s%s%s\n", tag1, "None", tag2);
+		else
+			retval += websWrite(wp, "%s%s%s\n", tag1, nvram_safe_get("wps_enable"), tag2);
+
+		//A. WPS mode
+		wps_sta_pin = nvram_safe_get("wps_sta_pin");
+		if (strlen(wps_sta_pin) && strcmp(wps_sta_pin, "00000000"))
+			retval += websWrite(wp, "%s%s%s\n", tag1, "1", tag2);
+		else
+			retval += websWrite(wp, "%s%s%s\n", tag1, "2", tag2);
+
+		//B. current auth mode
+		if (!strlen(nvram_safe_get(strcat_r(prefix, "auth_mode_x", tmp))))
+			retval += websWrite(wp, "%s%s%s\n", tag1, "None", tag2);
+		else
+			retval += websWrite(wp, "%s%s%s\n", tag1, nvram_safe_get(strcat_r(prefix, "auth_mode_x", tmp)), tag2);
+
+		//C. WPS band
+		retval += websWrite(wp, "%s%d%s\n", tag1, u, tag2);
+#if defined(RTCONFIG_WPSMULTIBAND)
 	}
-
-	retval += websWrite(wp, "<wps>\n");
-
-	//0. WSC Status
-	retval += websWrite(wp, "<wps_info>%s</wps_info>\n", getWscStatusStr(getWscStatus(unit)));
-
-	//1. WPSConfigured
-	if (result.WscConfigured==2)
-		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", "Yes");
-	else
-		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", "No");
-	
-	//2. WPSSSID
-	memset(tmpstr, 0, sizeof(tmpstr));
-	char_to_ascii(tmpstr, result.WscSsid);
-	retval += websWrite(wp, "<wps_info>%s</wps_info>\n", tmpstr);
-
-	//3. WPSAuthMode
-	memset(tmpstr, 0, sizeof(tmpstr));
-	getWPSAuthMode(&result, tmpstr);
-	retval += websWrite(wp, "<wps_info>%s</wps_info>\n", tmpstr);
-
-	//4. EncrypType
-	memset(tmpstr, 0, sizeof(tmpstr));
-	getWPSEncrypType(&result, tmpstr);
-	retval += websWrite(wp, "<wps_info>%s</wps_info>\n", tmpstr);
-
-	//5. DefaultKeyIdx
-	memset(tmpstr, 0, sizeof(tmpstr));
-	sprintf(tmpstr, "%d", result.DefaultKeyIdx);
-	retval += websWrite(wp, "<wps_info>%s</wps_info>\n", tmpstr);
-
-	//6. WPAKey
-	memset(tmpstr, 0, sizeof(tmpstr));
-	for (i=0; i<64; i++)	// WPA key default length is 64 (defined & hardcode in driver) 
-	{
-		sprintf(tmpstr, "%s%c", tmpstr, result.WscWPAKey[i]);
-	}
-	if (!strlen(tmpstr))
-		retval += websWrite(wp, "<wps_info>None</wps_info>\n");
-	else
-	{
-		char_to_ascii(tmpstr2, tmpstr);
-		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", tmpstr2);
-	}
-
-	//7. AP PIN Code
-	memset(tmpstr, 0, sizeof(tmpstr));
-	sprintf(tmpstr, "%d", getAPPIN(unit));
-	retval += websWrite(wp, "<wps_info>%s</wps_info>\n", tmpstr);
-
-	//8. Saved WPAKey
-	if (!strlen(nvram_safe_get(strcat_r(prefix, "wpa_psk", tmp))))
-		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", "None");
-	else
-	{
-		char_to_ascii(tmpstr, nvram_safe_get(strcat_r(prefix, "wpa_psk", tmp)));
-		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", tmpstr);
-	}
-
-	//9. WPS enable?
-	if (!strcmp(nvram_safe_get(strcat_r(prefix, "wps_mode", tmp)), "enabled"))
-		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", "None");
-	else
-		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", nvram_safe_get("wps_enable"));
-
-	//A. WPS mode
-	wps_sta_pin = nvram_safe_get("wps_sta_pin");
-	if (strlen(wps_sta_pin) && strcmp(wps_sta_pin, "00000000"))
-		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", "1");
-	else
-		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", "2");
-
-	//B. current auth mode
-	if (!strlen(nvram_safe_get(strcat_r(prefix, "auth_mode_x", tmp))))
-		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", "None");
-	else
-		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", nvram_safe_get(strcat_r(prefix, "auth_mode_x", tmp)));
-
-	//C. WPS band
-	retval += websWrite(wp, "<wps_info>%d</wps_info>\n", nvram_get_int("wps_band"));
+#endif
 
 	retval += websWrite(wp, "</wps>");
 

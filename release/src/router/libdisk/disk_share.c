@@ -785,6 +785,7 @@ extern int get_permission(const char *const account,
 	char *var_file, *var_info;
 	char *target, *follow_info;
 	int len, result;
+	char *f = (char*) folder;
 	
 	// 1. get the var file
 	if(get_var_file_name(account, mount_path, &var_file)){
@@ -812,31 +813,38 @@ extern int get_permission(const char *const account,
 	free(var_file);
 	
 	// 4. get the target in the content
-	if(folder == NULL)
+retry_get_permission:
+	if(f == NULL)
 		len = strlen("*=");
 	else
-		len = strlen("*")+strlen(folder)+strlen("=");
+		len = strlen("*")+strlen(f)+strlen("=");
 	target = (char *)malloc(sizeof(char)*(len+1));
 	if (target == NULL) {
 		usb_dbg("Can't allocate \"target\".\n");
 		free(var_info);
 		return -1;
 	}
-	if(folder == NULL)
+	if(f == NULL)
 		strcpy(target, "*=");
 	else
-		sprintf(target, "*%s=", folder);
+		sprintf(target, "*%s=", f);
 	target[len] = 0;
 	
 	follow_info = upper_strstr(var_info, target);
 	free(target);
 	if (follow_info == NULL) {
 		if(account == NULL)
-			usb_dbg("No right about \"%s\" with the share mode.\n", (folder == NULL?"Pool":folder));
+			usb_dbg("No right about \"%s\" with the share mode.\n", f? f:"Pool");
 		else
-			usb_dbg("No right about \"%s\" with \"%s\".\n", (folder == NULL?"Pool":folder), account);
-		free(var_info);
-		return -1;
+			usb_dbg("No right about \"%s\" with \"%s\".\n", f? f:"Pool", account);
+
+		if (f == NULL) {
+			free(var_info);
+			return -1;
+		} else {
+			f = NULL;
+			goto retry_get_permission;
+		}
 	}
 	
 	follow_info += len;

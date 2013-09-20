@@ -881,27 +881,27 @@ function pass_checked(obj){
           <th width="40%"><#Router_Login_Name#></th>
           <td>
 				  	<div id="http_username_span" name="http_username_span" style="color:#FFFFFF;margin-left:8px;"><% nvram_get("http_username"); %></div>
-						<div><input type="text" id="http_username" name="http_username" style="height:25px;" class="input_15_table" maxlength="20"><br/><span id="alert_msg1"></span></div>
+						<div><input type="text" id="http_username" name="http_username" tabindex="1" style="height:25px;" class="input_15_table" maxlength="20"><br/><span id="alert_msg1"></span></div>
           </td>
         </tr>
 
         <tr>
           <th width="40%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_new#></a></th>
           <td>
-            <input type="password" autocapitalization="off" name="http_passwd2" onKeyPress="return is_string(this, event);" onkeyup="chkPass(this.value, 'http_passwd');" onpaste="return false;" class="input_15_table" maxlength="16" />
+            <input type="password" autocapitalization="off" name="http_passwd2" tabindex="2" onKeyPress="return is_string(this, event);" onkeyup="chkPass(this.value, 'http_passwd');" onpaste="return false;" class="input_15_table" maxlength="16" />
             &nbsp;&nbsp;
             <div id="scorebarBorder" style="margin-left:140px; margin-top:-25px; display:none;" title="<#LANHostConfig_x_Password_itemSecur#>">
             		<div id="score"></div>
             		<div id="scorebar">&nbsp;</div>
             </div>
-            <div style="margin-top:1px;"><input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.http_passwd2);pass_checked(document.form.v_password2);"><#QIS_show_pass#></div>
+            <div style="margin:-25px 0px 0px 270px;"><input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.http_passwd2);pass_checked(document.form.v_password2);"><#QIS_show_pass#></div>
           </td>
         </tr>
 
         <tr>
           <th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_retype#></a></th>
           <td>
-            <input type="password" autocapitalization="off" name="v_password2" onKeyPress="return is_string(this, event);" onpaste="return false;" class="input_15_table" maxlength="16" /><br/><span id="alert_msg2"></span>
+            <input type="password" autocapitalization="off" name="v_password2" tabindex="3" onKeyPress="return is_string(this, event);" onpaste="return false;" class="input_15_table" maxlength="16" /><br/><span id="alert_msg2"></span>
           </td>
         </tr>
       </table>

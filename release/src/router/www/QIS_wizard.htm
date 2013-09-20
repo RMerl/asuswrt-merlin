@@ -125,18 +125,18 @@ function detect_firmware(){
 			else{
 				if(webs_state_error != 1){
 					var Latest_firmver = webs_state_info.split("_");
-					var Latest_firm = Latest_firmver[0];
-					var Latest_buildno = Latest_firmver[1];
+					var Latest_firm = parseInt(Latest_firmver[0]);
+					var Latest_buildno = parseInt(Latest_firmver[1]);
 					var Latest_extendno = Latest_firmver[2];
 					var Latest_extendno_split = Latest_extendno.split("-g");
-	      	var Latest_extendno_comp = Latest_extendno_split[0];
+	      			var Latest_extendno_comp = parseInt(Latest_extendno_split[0]);
 
 					if(Latest_firm && Latest_buildno && Latest_extendno){	//match model FW
 						current_firm = parseInt(exist_firmver.replace(/[.]/gi,""));
-      			current_buildno = parseInt("<% nvram_get("buildno"); %>");
-      			current_extendno = "<% nvram_get("extendno"); %>";
-      			current_extendno_split = current_extendno.split("-g");
-      			current_extendno_comp = current_extendno_split[0];
+      					current_buildno = parseInt("<% nvram_get("buildno"); %>");
+      					current_extendno = "<% nvram_get("extendno"); %>";
+      					current_extendno_split = current_extendno.split("-g");
+      					current_extendno_comp = parseInt(current_extendno_split[0]);
 
 						if((current_buildno < Latest_buildno) || 
       					(current_firm < Latest_firm && current_buildno == Latest_buildno) ||
@@ -154,9 +154,11 @@ function detect_firmware(){
 
 function detect_update(){
 	if(isFirst)
-		var _action_wait = 10000;
+		var _action_wait = 7000;
 	else
-		var _action_wait = 5000;
+		var _action_wait = 4000;
+		
+	document.start_update.action_script.value="restart_time;start_webs_upgrade";	//for detect time zone	
 	setTimeout("document.start_update.submit();", _action_wait);	//delay after restart_time
 }
 

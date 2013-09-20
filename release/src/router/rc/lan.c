@@ -274,12 +274,12 @@ static int wlconf(char *ifname, int unit, int subunit)
 			eval("wl", "-i", ifname, "ampdu_mpdu", "64");
 		else
 			eval("wl", "-i", ifname, "ampdu_mpdu", "-1");	// driver default setting
-
+#ifdef RTCONFIG_BCMARM
 		if (nvram_match(strcat_r(prefix, "ampdu_rts", tmp), "1"))
 			eval("wl", "-i", ifname, "ampdu_rts", "1");	// driver default setting
 		else
 			eval("wl", "-i", ifname, "ampdu_rts", "0");
-#ifdef RTCONFIG_BCMARM
+
 		if (nvram_match(strcat_r(prefix, "itxbf", tmp), "1"))
 			eval("wl", "-i", ifname, "txbf_imp", "1");	// driver default setting
 		else
@@ -325,9 +325,11 @@ static int wlconf(char *ifname, int unit, int subunit)
 #endif
 //#endif
 			set_mrate(ifname, prefix);
+#ifdef RTCONFIG_BCMARM
 			if (nvram_match(strcat_r(prefix, "ampdu_rts", tmp), "0") &&
 				nvram_match(strcat_r(prefix, "nmode", tmp), "-1"))
 				eval("wl", "-i", ifname, "rtsthresh", "65535");
+#endif
 #endif
 			txpower = nvram_get_int(wl_nvname("TxPower", unit, 0));
 
@@ -1532,8 +1534,10 @@ void stop_lan(void)
 	config_ipv6(ipv6_enabled() && is_routing_enabled(), 1);
 #endif
 
-	eval("ebtables", "-F");
-	eval("ebtables", "-t", "broute", "-F");
+	if (module_loaded("ebtables")) {
+		eval("ebtables", "-F");
+		eval("ebtables", "-t", "broute", "-F");
+	}
 
 	if (strncmp(lan_ifname, "br", 2) == 0) {
 #ifdef RTCONFIG_EMF
@@ -2628,8 +2632,10 @@ void stop_lan_wl(void)
 	int unit, subunit;
 #endif
 
-	eval("ebtables", "-F");
-	eval("ebtables", "-t", "broute", "-F");
+	if (module_loaded("ebtables")) {
+		eval("ebtables", "-F");
+		eval("ebtables", "-t", "broute", "-F");
+	}
 
 	lan_ifname = nvram_safe_get("lan_ifname");
 	if ((wl_ifnames = strdup(nvram_safe_get("lan_ifnames"))) != NULL) {

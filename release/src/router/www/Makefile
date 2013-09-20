@@ -75,7 +75,7 @@ ifeq ($(RTCONFIG_4M_SFP),y)
 	rm -rf $(INSTALLDIR)/www/images/qis/iOS*
 	rm -rf $(INSTALLDIR)/www/images/qis/mac.jpg
 	rm -rf $(INSTALLDIR)/www/images/qis/osx_network_icon.jpg
-	rm -rf $(INSTALLDIR)/www/images/qis/router_login.jpg
+#	rm -rf $(INSTALLDIR)/www/images/qis/router_login.jpg
 	rm -rf $(INSTALLDIR)/www/images/qis/security_key.png
 	rm -rf $(INSTALLDIR)/www/images/qis/select_wireless.jpg
 	rm -rf $(INSTALLDIR)/www/images/qis/win7.jpg
@@ -92,7 +92,7 @@ ifeq ($(RTCONFIG_4M_SFP),y)
 	rm -rf $(INSTALLDIR)/www/ure*
 	rm -rf $(INSTALLDIR)/www/disk*
 	rm -rf $(INSTALLDIR)/www/fan.svg
-	rm -rf $(INSTALLDIR)/www/detect_firmware.asp
+#	rm -rf $(INSTALLDIR)/www/detect_firmware.asp
 	rm -rf $(INSTALLDIR)/www/ajax_coretmp.asp
 	rm -rf $(INSTALLDIR)/www/qis/QIS_tutorial.htm
 	rm -rf $(INSTALLDIR)/www/qis/QIS_internet_ruisp.htm
@@ -120,8 +120,15 @@ ifneq ($(RTCONFIG_CLOUDSYNC),y)
 	rm -rf $(INSTALLDIR)/www/*cloud*.asp
 endif
 endif
+else
+	rm -rf $(INSTALLDIR)/www/images/New_ui/rt.jpg
+	rm -rf $(INSTALLDIR)/www/images/New_ui/ap.jpg
 endif
+else
+	rm -rf $(INSTALLDIR)/www/images/New_ui/rt.jpg
+	rm -rf $(INSTALLDIR)/www/images/New_ui/ap.jpg
 endif
+
 ifeq ($(RTCONFIG_NO_USBSTORAGE),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/USBExt
 	rm -rf $(INSTALLDIR)/www/images/New_ui/aidisk

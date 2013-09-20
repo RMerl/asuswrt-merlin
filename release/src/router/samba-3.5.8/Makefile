@@ -7,6 +7,7 @@ SMBCFLAGS = $(EXTRACFLAGS) -Os -ffunction-sections -fdata-sections
 SMBLDFLAGS = -ffunction-sections -fdata-sections -Wl,--gc-sections
 
 ifeq ($(RTCONFIG_BCMARM), y)
+SMBCFLAGS += -DBCMARM
 SMBLDFLAGS += -lgcc_s
 endif
 
@@ -135,13 +136,14 @@ install: all
 	@install -D $(srcdir)/bin/smbd $(INSTALLDIR)/usr/sbin/smbd
 	@install -D $(srcdir)/bin/nmbd $(INSTALLDIR)/usr/sbin/nmbd
 	@install -D $(srcdir)/bin/smbpasswd $(INSTALLDIR)/usr/bin/smbpasswd
-	@install -D $(srcdir)/bin/libsmbclient.so $(INSTALLDIR)/usr/lib/libsmbclient.so
+	@install -D $(srcdir)/bin/libsmbclient.so.0 $(INSTALLDIR)/usr/lib/libsmbclient.so.0
+	@ln -sf libsmbclient.so.0 $(INSTALLDIR)/usr/lib/libsmbclient.so
 #	@install -D $(srcdir)/bin/libbigballofmud.so $(INSTALLDIR)/usr/lib/libbigballofmud.so
 ###############################Charles Modify##########	
 
 	$(STRIP) -s $(INSTALLDIR)/usr/sbin/smbd
 	$(STRIP) -s $(INSTALLDIR)/usr/sbin/nmbd
 	$(STRIP) -s $(INSTALLDIR)/usr/bin/smbpasswd
-	$(STRIP) -s $(INSTALLDIR)/usr/lib/libsmbclient.so
+	$(STRIP) -s $(INSTALLDIR)/usr/lib/libsmbclient.so.0
 	# do not strip shared library, it will be optimized by libfoo.pl
 	# $(STRIP) -s $(INSTALLDIR)/usr/lib/libbigballofmud.so

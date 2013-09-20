@@ -36,6 +36,7 @@
 extern int notify_rc(const char *event_name);
 extern int notify_rc_after_wait(const char *event_name);
 extern int notify_rc_and_wait(const char *event_name);
+extern int notify_rc_and_wait_1min(const char *event_name);
 extern int notify_rc_and_wait_2min(const char *event_name);
 
 

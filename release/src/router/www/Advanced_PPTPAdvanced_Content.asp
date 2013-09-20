@@ -254,8 +254,8 @@ function check_pptpd_clients_range(){
 	
 	if(pptpd_clients_start_ip > pptpd_clients_end_ip){
 		alert(alert_over+document.form._pptpd_clients_start.value);
-		document.form._pptpd_clients_start.focus();
-    document.form._pptpd_clients_start.select();
+		document.form._pptpd_clients_end.focus();
+    document.form._pptpd_clients_end.select();
     setEnd();
 		return false;
 	}

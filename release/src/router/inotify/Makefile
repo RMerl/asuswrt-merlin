@@ -4,16 +4,13 @@
 #
 #***********************************************************************
 
+include ../common.mak
+
 #CFLAGS = -g -rdynamic -DMYDEBUG -DDEBUG
 LIBS = -lpthread
 
 #all: asuswebstorage inotify
-ifeq ($(wildcard $(TOP)/inotify/*.c),)
-all:
-	-cp -f $(TOP)/inotify/prebuild$(BCMEX)/inotify inotify
-else
 all: inotify
-endif
 
 #https: https.o md5.o urlencode.o oauth.o oauth_http.o xmalloc.o
 #asuswebstorage: asuswebstorage.o api.o function.o 

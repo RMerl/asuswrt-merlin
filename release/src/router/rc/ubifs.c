@@ -183,7 +183,7 @@ void start_ubifs(void)
 
 }
 
-void stop_ubifs(void)
+void stop_ubifs(int stop)
 {
 	struct statfs sf;
 #if defined(RTCONFIG_PSISTLOG)
@@ -199,7 +199,7 @@ void stop_ubifs(void)
 		run_nvscript("script_autostop", UBIFS_MNT_DIR, 5);
 	}
 #if defined(RTCONFIG_PSISTLOG)
-	if (!strncmp(get_syslog_fname(0), UBIFS_MNT_DIR "/", sizeof(UBIFS_MNT_DIR) + 1)) {
+	if (!stop && !strncmp(get_syslog_fname(0), UBIFS_MNT_DIR "/", sizeof(UBIFS_MNT_DIR) + 1)) {
 		restart_syslogd = 1;
 		stop_syslogd();
 		eval("cp", UBIFS_MNT_DIR "/syslog.log", UBIFS_MNT_DIR "/syslog.log-1", "/tmp");
@@ -207,7 +207,8 @@ void stop_ubifs(void)
 #endif
 
 	notice_set("ubifs", "Stopped");
-	umount2(UBIFS_MNT_DIR, MNT_DETACH);
+	if (umount(UBIFS_MNT_DIR))
+		umount2(UBIFS_MNT_DIR, MNT_DETACH);
 
 #if defined(RTCONFIG_PSISTLOG)
 	if (restart_syslogd)

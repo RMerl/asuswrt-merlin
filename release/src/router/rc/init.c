@@ -461,33 +461,42 @@ wl_defaults(void)
 
 /* for WPS Reset */
 void
-wl_defaults_wps(void)
+wl_default_wps(int unit)
 {
 	struct nvram_tuple *t;
 	char prefix[]="wlXXXXXX_", tmp[100];
+
+	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+
+	for (t = router_defaults; t->name; t++) {
+		if(strncmp(t->name, "wl_", 3) &&
+			strncmp(t->name, prefix, 4))
+			continue;
+		if(!strcmp(t->name, "wl_ifname"))	// not to clean wl%d_ifname
+			continue;
+
+		if(!strncmp(t->name, "wl_", 3))
+			nvram_set(strcat_r(prefix, &t->name[3], tmp), t->value);
+		else
+			nvram_set(t->name, t->value);
+	}
+}
+
+void
+wl_defaults_wps(void)
+{
 	char word[256], *next;
 	int unit;
 
 	unit = 0;
 	foreach (word, nvram_safe_get("wl_ifnames"), next) {
-		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
-
-		for (t = router_defaults; t->name; t++) {
-			if(strncmp(t->name, "wl_", 3) &&
-				strncmp(t->name, "wl0_", 4) &&
-				strncmp(t->name, "wl1_", 4))
-				continue;
-
-			if(!strncmp(t->name, "wl_", 3))
-				nvram_set(strcat_r(prefix, &t->name[3], tmp), t->value);
-			else
-				nvram_set(t->name, t->value);
-		}
+		wl_default_wps(unit);
 		unit++;
 	}
 }
-void
+
 /* assign none-exist value or inconsist value */
+void
 lan_defaults(void)
 {
 	if(nvram_get_int("sw_mode")==SW_MODE_ROUTER && nvram_invmatch("lan_proto", "static"))
@@ -1108,6 +1117,9 @@ int init_nvram(void)
 	nvram_set("web_redirect", "3");
 
 	conf_swmode_support(model);
+
+	/* reset ntp status */
+	nvram_set("svc_ready", "0");
 
 	switch (model) {
 #ifdef RTCONFIG_RALINK
@@ -1941,7 +1953,11 @@ int init_nvram(void)
 		nvram_set("wl_ifnames", "eth1 eth2");
 		nvram_set("wl0_vifnames", "wl0.1 wl0.2 wl0.3");
 		nvram_set("wl1_vifnames", "wl1.1 wl1.2 wl1.3");
+#ifdef RTCONFIG_USBRESET
 		nvram_set_int("pwr_usb_gpio", 9|GPIO_ACTIVE_LOW);
+#else
+		nvram_set_int("pwr_usb_gpio", 9);
+#endif
 		nvram_set_int("led_usb_gpio", 0|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_pwr_gpio", 3|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_wps_gpio", 3|GPIO_ACTIVE_LOW);
@@ -2046,8 +2062,13 @@ int init_nvram(void)
 		nvram_set("wl_ifnames", "eth1 eth2");
 		nvram_set("wl0_vifnames", "wl0.1 wl0.2 wl0.3");
 		nvram_set("wl1_vifnames", "wl1.1 wl1.2 wl1.3");
+#ifdef RTCONFIG_USBRESET
 		nvram_set_int("pwr_usb_gpio", 9|GPIO_ACTIVE_LOW);
 		nvram_set_int("pwr_usb_gpio2", 10|GPIO_ACTIVE_LOW);	// Use at the first shipment of RT-AC56U.
+#else
+		nvram_set_int("pwr_usb_gpio", 9);
+		nvram_set_int("pwr_usb_gpio2", 10);	// Use at the first shipment of RT-AC56U.
+#endif
 		nvram_set_int("led_usb_gpio", 14|GPIO_ACTIVE_LOW);	// change led gpio(usb2/usb3) to sync the outer case
 		nvram_set_int("led_wan_gpio", 1|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_lan_gpio", 2|GPIO_ACTIVE_LOW);
@@ -2297,6 +2318,7 @@ int init_nvram(void)
 
 	case MODEL_RTN10P:
 	case MODEL_RTN10D1:
+	case MODEL_RTN10PV2:
 		nvram_set("lan_ifname", "br0");
 		nvram_set("lan_ifnames", "vlan0 eth1");
 		nvram_set("wan_ifnames", "eth0");
@@ -2488,6 +2510,10 @@ int init_nvram(void)
 
 #ifdef RTCONFIG_NFS
 	add_rc_support("nfsd");
+#endif
+
+#ifdef RTCONFIG_WPSMULTIBAND
+	add_rc_support("wps_multiband");
 #endif
 
 	return 0;
@@ -2726,7 +2752,7 @@ static void sysinit(void)
 	f_write_string("/proc/sys/net/ipv6/conf/default/disable_ipv6", "1", 0, 0);
 #endif
 
-#ifdef RTCONFIG_PSISTLOG
+#if defined(RTCONFIG_PSISTLOG) || defined(RTCONFIG_JFFS2LOG)
 	f_write_string("/proc/sys/net/unix/max_dgram_qlen", "150", 0, 0);
 #endif
 
@@ -2781,6 +2807,46 @@ static void sysinit(void)
 #endif
 }
 
+#if defined(RTCONFIG_TEMPROOTFS)
+static void sysinit2(void)
+{
+	static int noconsole = 0;
+	static const time_t tm = 0;
+	int i;
+
+	MOUNT("proc", "/proc", "proc", 0, NULL);
+	MOUNT("tmpfs", "/tmp", "tmpfs", 0, NULL);
+
+#ifdef LINUX26
+	MOUNT("sysfs", "/sys", "sysfs", MS_MGC_VAL, NULL);
+	MOUNT("devpts", "/dev/pts", "devpts", MS_MGC_VAL, NULL);
+#endif
+
+	if (console_init()) noconsole = 1;
+
+	stime(&tm);
+
+	f_write("/tmp/settings", NULL, 0, 0, 0644);
+	symlink("/proc/mounts", "/etc/mtab");
+
+	set_action(ACT_IDLE);
+
+	if (!noconsole) {
+		printf("\n\nHit ENTER for new console...\n\n");
+		run_shell(1, 0);
+	}
+
+	for (i = 0; i < sizeof(fatalsigs) / sizeof(fatalsigs[0]); i++) {
+		signal(fatalsigs[i], handle_fatalsigs);
+	}
+	signal(SIGCHLD, handle_reap);
+
+	if (!noconsole) xstart("console");
+}
+#else
+static inline void sysinit2(void) { }
+#endif
+
 void
 Alarm_Led(void) {
 	while(1) {
@@ -2800,25 +2866,33 @@ int init_main(int argc, char *argv[])
 	char reboot_log[128], dev_log[128];
 	int ret, led_on_cut;
 
-	sysinit();
+#if defined(RTCONFIG_TEMPROOTFS)
+	if (argc >= 2 && !strcmp(argv[1], "reboot")) {
+		state = SIGTERM;
+		sysinit2();
+	} else
+#endif
+	{
+		sysinit();
 
-	sigemptyset(&sigset);
-	for (i = 0; i < sizeof(initsigs) / sizeof(initsigs[0]); i++) {
-		sigaddset(&sigset, initsigs[i]);
-	}
-	sigprocmask(SIG_BLOCK, &sigset, NULL);
+		sigemptyset(&sigset);
+		for (i = 0; i < sizeof(initsigs) / sizeof(initsigs[0]); i++) {
+			sigaddset(&sigset, initsigs[i]);
+		}
+		sigprocmask(SIG_BLOCK, &sigset, NULL);
 
-	start_jffs2();
+		start_jffs2();
 
 #ifdef RTN65U
-	extern void asm1042_upgrade(int);
-	asm1042_upgrade(1);	// check whether upgrade firmware of ASM1042
+		extern void asm1042_upgrade(int);
+		asm1042_upgrade(1);	// check whether upgrade firmware of ASM1042
 #endif
 
-	run_custom_script("init-start", NULL);
-	use_custom_config("fstab", "/etc/fstab");
+		run_custom_script("init-start", NULL);
+		use_custom_config("fstab", "/etc/fstab");
 
-	state = SIGUSR2;	/* START */
+		state = SIGUSR2;	/* START */
+	}
 
 	for (;;) {
 		TRACE_PT("main loop signal/state=%d\n", state);
@@ -3107,11 +3181,36 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 			if (nvram_get_int("led_disable")==1)
 				setup_leds();
 
+#ifdef RTCONFIG_USBRESET
 			set_pwr_usb(1);
+#else
+			if(nvram_get_int("usb_usb3") == 0){
+#ifndef RTCONFIG_XHCIMODE
+				_dprintf("USB2: reset USB power to call up the device on the USB 3.0 port.\n");
+				set_pwr_usb(0);
+				sleep(2);
+				set_pwr_usb(1);
+#endif
+			}
+#endif
 
 			nvram_set("success_start_service", "1");
 
-			force_free_caches();		
+			force_free_caches();
+
+if(nvram_match("commit_test", "1")) {
+	int x=0, y=0;
+	while(1) {
+		x++;
+		dbG("Nvram commit: %d\n", x);
+		nvram_set_int("commit_cut", x);
+		nvram_commit();
+		if(nvram_get_int("commit_cut")!=x) {
+			TRACE_PT("\n\n======== NVRAM Commit Failed at: %d =========\n\n", x);
+			break;
+		}			
+	}	
+}
 			break;
 		}
 
@@ -3132,15 +3231,21 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 int reboothalt_main(int argc, char *argv[])
 {
 	int reboot = (strstr(argv[0], "reboot") != NULL);
+	int def_reset_wait = 20;
+
 	cprintf(reboot ? "Rebooting..." : "Shutting down...");
 	kill(1, reboot ? SIGTERM : SIGQUIT);
+
+#if defined(RTN14U) || defined(RTN65U) || defined(RTAC52U)
+	def_reset_wait = 50;
+#endif
 	
 	/* In the case we're hung, we'll get stuck and never actually reboot.
 	 * The only way out is to pull power.
 	 * So after 'reset_wait' seconds (default: 20), forcibly crash & restart.
 	 */
 	if (fork() == 0) {
-		int wait = nvram_get_int("reset_wait") ? : 20;
+		int wait = nvram_get_int("reset_wait") ? : def_reset_wait;
 		if ((wait < 10) || (wait > 120)) wait = 10;
 
 		f_write("/proc/sysrq-trigger", "s", 1, 0 , 0); /* sync disks */

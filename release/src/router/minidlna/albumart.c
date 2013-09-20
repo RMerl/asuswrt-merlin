@@ -264,14 +264,14 @@ end_art:
 //- 20130708 Sungmin add
 int
 filter_image_files(const struct dirent *d)
-{	
-	return ( (*d->d_name != '.') &&			 
-		  ((d->d_type == DT_DIR) ||			 
-		   (d->d_type == DT_LNK) ||			 
-		   (d->d_type == DT_UNKNOWN) ||			 
-		   ((d->d_type == DT_REG) &&			
-			is_image(d->d_name) )			
-		   ) );
+{
+	return ( (*d->d_name != '.') &&
+			 ((d->d_type == DT_DIR) ||
+			 (d->d_type == DT_LNK) ||
+			 (d->d_type == DT_UNKNOWN) ||
+			 ((d->d_type == DT_REG) &&
+			is_image(d->d_name) )
+			) );
 }
 
 static char *
@@ -358,37 +358,37 @@ found_file:
 		}
 	}
 
-	//- 20130708 Sungmin add		
-	int i;		
-	struct dirent **namelist;		
-	int n = scandir(dir, &namelist, filter_image_files, alphasort);		
-	if(n>0)		
-	{			
-		snprintf(file, sizeof(file), "%s/%s", dir, namelist[0]->d_name);			
-		if( access(file, R_OK) == 0 )			
-		{					
-			if( art_cache_exists(file, &art_file) )					
-			{							
-				return art_file;					
-			}					
-			free(art_file);					
-			imsrc = image_new_from_jpeg(file, 1, NULL, 0, 1, ROTATE_NONE);					
-			if( !imsrc )						   
-				return NULL;					
-			width = imsrc->width;					
-			height = imsrc->height;					
-			//DPRINTF(E_WARN, L_METADATA, "imgsrc->size: %s, %d X %d\n", file, width, height);					
-			if( width > 160 || height > 160 )							
-				art_file = save_resized_album_art(imsrc, file);					
-			else							
-				art_file = strdup(file);					
+	//- 20130708 Sungmin add	
+	int i;	
+	struct dirent **namelist;	
+	int n = scandir(dir, &namelist, filter_image_files, alphasort);	
+	if(n>0)	
+	{	   
+		snprintf(file, sizeof(file), "%s/%s", dir, namelist[0]->d_name);	   
+		if( access(file, R_OK) == 0 )	   
+		{		  
+			if( art_cache_exists(file, &art_file) )		  
+			{			
+				return art_file;		  
+			}		  
+			free(art_file);		  
+			imsrc = image_new_from_jpeg(file, 1, NULL, 0, 1, ROTATE_NONE);		  
+			if( !imsrc )			
+			   return NULL;		  
+			width = imsrc->width;		  
+			height = imsrc->height;		  
+			//DPRINTF(E_WARN, L_METADATA, "imgsrc->size: %s, %d X %d\n", file, width, height);		  
+			if( width > 160 || height > 160 )			
+				art_file = save_resized_album_art(imsrc, file);		  
+			else			
+				art_file = strdup(file);		  
 			image_free(imsrc);
 
-			for(i=0; i<n; i++)			
-			{							
-				free(namelist[i]);					
-			}			
-		}	
+			for(i=0; i<n; i++)
+			{			 
+				free(namelist[i]);		  
+			}
+		}
 	}
 
 	return NULL;

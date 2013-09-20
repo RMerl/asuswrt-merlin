@@ -1,0 +1,428 @@
+# Email help file
+
+#############
+# Help with help?  #############
+
+help|h|--help|-help|help|-h
+    
+--help | -help | -h "Module of Help"
+
+  This option can be specified with a module of help
+  topic, or without one.  Without a module of help topic,
+  it will just print a standard help screen with all
+  your possible options.  With a module of help option,
+  it will display a more detailed discription of that
+  module.
+
+  Modules are determined by command line switches.
+  For instance:  if you want to know about the 'encrypt'
+  command line option, you would specify --help 'encrypt'
+  or --help 'e' and help will display the correct module
+  help section.
+          
+  The Help is not statically programmed into email.
+  Instead it is a file in email's home directory called
+  'email.help'.  It is updated regularly and will always
+  be rewritten with every release of email.
+  
+EOH
+
+###########
+# Verbose help
+###########
+
+verbose|V|--verbose|-verbose|-V
+
+--verbose | -verbose | -V
+
+  Displays the progress of communicating with the SMTP
+  server. Tells what's going on and prints a pretty
+  progress bar when sending data.
+
+  This option has replaced the -quiet option which did
+  the exact opposite.
+
+EOH
+
+###########
+# Subject help
+###########
+
+subject|sub|s|--subject|-subject|--sub|-sub|-s
+
+--subject | -subject | -sub | -s "Subject of Email"
+
+  This option should be rather obvious.  You specify the
+  subject of the email with this option.  If you are not
+  redirecting to standard input and you do not specify a
+  subject, email will ask you for the subject.  Null
+  subjects are allowed.
+  
+EOH
+
+###########
+# Encrypt help
+###########
+
+encrypt|e|--encrypt|-encrypt|-e
+
+--encrypt | -encrypt | -e 
+        
+  This options allows you to encrypt your email message
+  using 'gpg'. GPG can be obtained by going to:
+  http://www.gnupg.org.
+  email will use the first person in the recipient list
+  to encrypt the message to. This email address must be
+  in the key list of GPG.  To figure out all of the 
+  UID's that gpg has on your system, you can run the 
+  command 'gpg --list-keys' and it will list them out.
+
+EOH
+
+##########
+# Sign help
+##########
+
+sign|--sign|-sign
+
+--sign | -sign
+          
+  This options will let you "clear sign" your emails
+  on the fly... It uses the 'gpg --detach-sign' option.
+  It will 'sign' the email with your public key.
+
+EOH
+
+##########
+# CC Help
+##########
+
+cc|--cc|-cc
+
+--cc | -cc recipient,recipient,recipient,...
+
+  "Carbon Copy"
+  This option allows you to "carbon copy" a list of
+  recipients. Recipients can be from the address book
+  or just plain email addresses.  They should be comma
+  delimited just as the main recipients will be.  CC
+  recipients *will* be posted in the headers and read
+  by email clients.
+  
+EOH
+
+
+##########
+# Bcc Help
+##########
+
+bcc|--bcc|-bcc
+
+--bcc | -bcc recipient,recipient,recipient,...
+
+  "Blind Carbon Copy"
+  Same as the --cc option, but these recipients will
+  *not* be posted in the headers of the email.  This
+  is a positive solution to if you wanted to "secretly"
+  copy someone on the email without the other recipients
+  knowing so ( Managers usually bcc their boss when
+  sending an email to you about your performance and
+  you'll never know it ;-) )
+  
+EOH
+
+##########
+# Temporary SMTP server
+##########
+
+smtp-server|r|--smtp-server|-smtp-server|-r
+
+--smtp-server | -r server
+
+  This option will let you override the smtp server
+  that is specified in the email.conf file...
+  Pretty easy option here....
+  
+EOH
+
+##########
+# Temporary SMTP port
+##########
+
+smtp-port|p|--smtp-port|-smtp-port|-p
+
+--smtp-port | -p port
+
+  This option will let you specify a temporary port for 
+  email to connect to.  This is helpful when you use the
+  --smtp-server option and you do not have a configuration
+  file.  If you do have a configuration file, this option 
+  wile override what is in the configuration file.
+
+EOH
+
+##########
+# High Priority ?
+##########
+
+high-priority|o|--high-priority|-high-priority|-o
+
+--high-priority | -o
+          
+  This options allows you to take advantage of using
+  the priority option used by some email clients.
+  If the option is specified when sent to a user
+  using MS Outlook, a small exclimation mark will
+  be next to the message as to let the user know
+  this email is important.
+
+EOH
+
+###########
+# HTML ?
+###########
+
+html|--html|-html
+
+--html
+
+  This option allows you to send html emails. As
+  of right now, you need to write your own html.
+  In later versions of email, it will make your
+  html for you...  This is not a high priority
+  issue though, so we will take our time on it.
+  ( Being as the lead developer *hates* html
+  emails being sent to him...  Ugh... )
+  
+EOH
+
+###########
+# Attachments
+###########
+
+attach|a|--attach|-attach|-a
+
+--attach file | -a file
+
+  This option allows you to attach files to your email.
+  It will encode your file with base64 and attach it with
+  standard MIME headers for the encoded file.  You can 
+  specify multiple files by using the attach option 
+  multiple times.
+  
+EOH
+
+##########
+# Conf file
+##########
+
+conf-file|c|--conf-file|-conf-file|-c
+
+--conf-file | -c /path/to/file
+
+  Specify this option if you would like to use a configuration
+  file other than the default configuration.  Email looks for 
+  the email.conf file in /etc/email or ~/.email.conf.  If
+  you want to specify an different location, use this option.
+
+EOH
+
+#########
+# Check config help
+#########
+
+check-config|t|--check-config|-check-config|-t
+
+--check-config | -t
+
+  You use this option if you want to check to make sure that the
+  email.conf file is properly written.  What this means is that
+  the syntax of the file is correct.  Since email will give FATAL
+  errors upon improper syntax of the email.conf file, it's a good
+  idea to check the syntax after making any changes to the file.
+
+  You can specify the --conf-file option before this option to
+  check a specific file for gramatical errors.
+
+EOH
+
+########
+# Blank email help
+########
+
+blank-mail|b|--blank-mail|-blank-mail|-b
+
+--blank-mail | -b
+
+  Use this option if you want to send a message with no content.  
+  This is good if you want to send emails from the command line 
+  with just the headers of the message but no message itself. 
+
+  This option does not put anything in the message including 
+  the signature file.  If you want to send a message with the 
+  signature file, a good idea is to do something like this:
+
+  echo | email -s "Subject of message" name@domain.pos
+
+  This will simply put a newline (\n) in the email and it will
+  let email know that you want to append your signature file
+  too.  
+
+EOH
+
+#######
+# GPG Password
+#######
+
+gpg-pass|gpg-password|g|--gpg-password|--gpg-pass|-gpg-password|-gpg-pass|-g
+
+--gpg-pass pass | -g pass
+
+  If you don't want to keep your gpg password (to use for signing and encryption)
+  in your email.conf file (GPG_PASS), then you can always use this command line 
+  option to specify it.
+
+  Helpful Info: GPG_BIN *must* be specified in email.conf for this option
+  to be effective.
+
+EOH
+
+#######
+# SMTP Username
+#######
+
+smtp-user|smtp-username|u|--smtp-username|--smtp-user|-smtp-user|-smtp-username|-u
+
+--smtp-user name | -u name
+
+  If you don't want to keep your SMTP username (for SMTP Authentication)
+  in your email.conf file (SMTP_AUTH_USER), then you can use this command line
+  option to specify it.
+
+  Helpful Info: SMTP_AUTH still *must* be specified in email.conf for this option
+  to be effective.
+
+EOH
+
+#######
+# SMTP Password
+#######
+
+smtp-pass|smtp-password|i|--smtp-password|--smtp-pass|-smtp-pass|-smtp-password|-i
+
+--smtp-pass pass | -i pass
+
+  If you don't want to keep your SMTP password (for SMTP Authentication)
+  in your email.conf file (SMTP_AUTH_PASS), then you can use this command line
+  option to specify it.
+
+  Helpful Info: SMTP_AUTH *must* be specified in email.conf for this option
+  to be effective.
+
+EOH
+
+######
+# Senders name
+######
+
+--from-name|-from-name|from-name|-n|n
+
+--from-name name | -n name
+
+  You can specify your name with this option.  Typically, you would put this
+  in email.conf under MY_NAME, but, if you are not using a configuration file
+  you can set it option this way.  This is the name the recipient will see
+  in the From: field of their mail client when reading your message.
+
+EOH
+
+######
+# Senders email address
+######
+
+--from-addr|-from-addr|from-addr|-f|f
+
+--from-addr addr | -f addr
+  
+  You can specify your email address with this option.  Typicall, you would 
+  put this in email.conf under MY_EMAIL, but, if you are not using a
+  configuration file, you can set it this way.  This is the email address the
+  recipient will see in the From: field of their mail client when reading your
+  message.
+
+EOH
+
+######
+# SMTP AUTH Type
+######
+
+--smtp-auth|-smtp-auth|smtp-auth|-m|m
+
+  You must specify this option to use SMTP AUTH if you
+  aren't using a configuration file.  'type' is the type
+  of AUTH your server lets you use.  There are two supported
+  AUTH types with email: PLAIN and LOGIN
+
+EOH
+
+######
+# Headers
+######
+
+--header|-header|header|-H|H
+
+--header string | -H string
+  
+  You can specify headers to include in the message. To do this, simply 
+  specify the entire header to this option. To specify multiple headers
+  you can either comma delimit each string, or specify the header option
+  multiple times (or both).
+
+  Example:
+  email --header "X-My-Header: Stuff" --header "X-Another-Header: Other Stuff"
+
+  Example:
+  email --header "X-My-Header: Stuff","X-Another-Header: Other Stuff"
+
+EOH
+
+######
+# TLS
+######
+
+--tls|-tls
+
+-tls
+
+  To turn on TLS, use this option.
+
+EOH
+
+######
+# Timeout
+######
+
+--timeout|-timeout|-x
+
+--timeout secs | -x secs
+
+  Specify a timeout period for sending/receiving on a socket. This is
+  helpful if you'd like the client to stop trying to send and receive
+  on a server that has stopped responding.
+
+EOH
+
+#####
+# Encoding
+#####
+
+--no-encoding|-no-encoding
+
+--no-encoding
+
+  If you don't want eMail to automatically use UTF-8 encoding when finding
+  non ascii characters, use this option.
+
+EOH
+  
+

@@ -854,7 +854,7 @@ function change_wan_state(primary_status, secondary_status){
 				$('secondary_line').className = "secondary_wan_disconnected";
 			}	
 			else if(secondary_status == 'Standby'){
-				$('secondary_line').className = "secondary_wan_disconnected";
+				$('secondary_line').className = "secondary_wan_standby";
 			}	
 			else{
 				$('secondary_line').className = "secondary_wan_connected";

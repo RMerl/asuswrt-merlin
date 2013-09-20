@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <dlinklist.h>
 #include <signal.h>
+#include <string.h>
+#include <assert.h>
 
 #ifdef USE_OPENSSL
 #include <openssl/md5.h>
@@ -2249,6 +2251,9 @@ int smbc_aidisk_account_authentication(connection* con, const char *username, co
 	char * pch;
 	pch = strtok(nvram_acc_list, "<>");	
 
+	buffer* buffer_acc_name = buffer_init();
+	buffer* buffer_acc_pass = buffer_init();
+	
 	while(pch!=NULL){
 		char *name;
 		char *pass;
@@ -2259,40 +2264,132 @@ int smbc_aidisk_account_authentication(connection* con, const char *username, co
 		name = (char*)malloc(len+1);
 		strncpy(name, pch, len);
 		name[len] = '\0';
-				
+		buffer_copy_string(buffer_acc_name, name);
+		buffer_urldecode_path(buffer_acc_name);
+		free(name);
+		
 		//- User Password
 		pch = strtok(NULL,"<>");
 		len = strlen(pch);
 		pass = (char*)malloc(len+1);
 		strncpy(pass, pch, len);
 		pass[len] = '\0';
-		
-		if( strcmp(username, name) == 0 &&
-		    strcmp(password, pass) == 0 ){
+		buffer_copy_string(buffer_acc_pass, pass);
+		buffer_urldecode_path(buffer_acc_pass);
+		free(pass);		
+
+		if( buffer_is_equal_string(buffer_acc_name, username, strlen(username)) &&
+			buffer_is_equal_string(buffer_acc_pass, password, strlen(password)) ){
 			
 			buffer_copy_string(con->aidisk_username, username);
 			buffer_copy_string(con->aidisk_passwd, password);
 				
 			account_right = 1;
-				
-			free(name);
-			free(pass);
 			
 			break;
 		}
 		
-		free(name);
-		free(pass);
-
 		pch = strtok(NULL,"<>");
 	}
-	
+
+	buffer_free(buffer_acc_name);
+	buffer_free(buffer_acc_pass);
 	free(nvram_acc_list);
 		
 	return account_right;
 }
 
 const char* g_temp_sharelink_file = "/tmp/sharelink";
+
+int generate_sharelink(server* srv,
+			               connection *con,
+			               const char* filename, 
+			               const char* url, 
+			               const char* base64_auth, 
+			               int expire, 
+			               int toShare,
+			               buffer** out){
+
+	if(filename==NULL||url==NULL||base64_auth==NULL)
+		return 0;
+	
+#if 1	
+	char * pch;
+	pch = strtok(filename, ";");
+	
+	*out = buffer_init();
+			
+	while(pch!=NULL){
+				
+		char share_link[1024];
+		struct timeval tv;
+		unsigned long long now_utime;
+		gettimeofday(&tv,NULL);
+		now_utime = tv.tv_sec * 1000000 + tv.tv_usec;  
+		sprintf( share_link, "AICLOUD%d", abs(now_utime));
+	
+		share_link_info_t *share_link_info;
+		share_link_info = (share_link_info_t *)calloc(1, sizeof(share_link_info_t));
+								
+		share_link_info->shortpath = buffer_init();
+		buffer_copy_string(share_link_info->shortpath, share_link);
+								
+		share_link_info->realpath = buffer_init();
+		buffer_copy_string(share_link_info->realpath, url);
+		buffer_urldecode_path(share_link_info->realpath);
+			
+		share_link_info->filename = buffer_init();
+		buffer_copy_string(share_link_info->filename, pch);
+		buffer_urldecode_path(share_link_info->filename);
+		
+		share_link_info->auth = buffer_init();
+		buffer_copy_string(share_link_info->auth, base64_auth);
+	
+		share_link_info->createtime = time(NULL);
+		share_link_info->expiretime = (expire==0 ? 0 : share_link_info->createtime + expire);
+		share_link_info->toshare = toShare;
+				
+		DLIST_ADD(share_link_info_list, share_link_info);
+				
+		buffer_append_string(*out, share_link);
+		buffer_append_string_len(*out, CONST_STR_LEN("/"));
+		buffer_append_string(*out, pch);
+				
+		//- Next
+		pch = strtok(NULL,";");
+	
+		if(pch)
+			buffer_append_string_len(*out, CONST_STR_LEN(";"));
+	
+		if(toShare==1)
+			log_sys_write(srv, "sbsbss", "Create share link", share_link_info->realpath , "/", share_link_info->filename, "from ip", con->dst_addr_buf->ptr);
+	
+	}
+#else
+	char mac[20]="\0";
+	get_mac_address("eth0", &mac);
+			
+	char* base64_auth = ldb_base64_encode(auth, strlen(auth));
+	char* base64_key = ldb_base64_encode(mac, strlen(mac));
+	char* urlstr = (char*)malloc(buffer_url->size +  strlen(base64_auth) + strlen(strTime) + 15);
+	sprintf(urlstr, "%s?auth=%s&expire=%s", buffer_url->ptr, base64_auth, strTime);
+	
+	share_link = x123_encode(urlstr, base64_key, &share_link);
+	//share_link = x123_encode("sambapc/sharefolder", "abcdefg", &share_link);
+	free(base64_auth);
+	free(base64_key);
+	free(urlstr);
+	
+	Cdbg(DBE, "do HTTP_METHOD_GSL urlstr=%s, share_link=%s", urlstr, share_link);
+	
+	//char* decode_str;
+	//decode_str = x123_decode(encode_str, ldb_base64_encode(mac, strlen(mac)), &decode_str);
+	//Cdbg(DBE, "do HTTP_METHOD_GSL decode_str=%s", decode_str);
+#endif
+
+	return 1;
+
+}
 
 void save_sharelink_list(){
 
@@ -2340,7 +2437,6 @@ void save_sharelink_list(){
 		buffer_free(temp);
 	}
 
-	Cdbg(1, "sharelink_list = %s", sharelink_list->ptr);
 	nvram_set_sharelink_str(sharelink_list->ptr);
 	buffer_free(sharelink_list);
 #else
@@ -2755,6 +2851,39 @@ int in_the_same_folder(buffer *src, buffer *dst)
 	return (res) ? 0 : 1;
 }
 
+int is_dms_enabled(void){
+	int result = 0;
+	
+#if EMBEDDED_EANBLE
+	char *dms_enable = nvram_get_dms_enable();
+	char *ms_dlna = NULL;
+
+	if(NULL == dms_enable)                
+	{                    
+		ms_dlna = nvram_get_ms_enable();      
+	}
+#else
+	char *dms_enable = "1";
+	char *ms_dlna = NULL;
+#endif
+
+	if(NULL != dms_enable && strcmp( dms_enable, "1" ) == 0) 
+		result = 1;
+	else if(NULL != ms_dlna && strcmp( ms_dlna, "1" ) == 0) 
+		result = 1;
+
+#if EMBEDDED_EANBLE
+#ifdef APP_IPKG
+	if(dms_enable)							  
+		free(dms_enable); 					   
+	if(ms_dlna)							  
+		free(ms_dlna);
+#endif
+#endif	
+
+	return result;
+}
+
 #if 0
 int smbc_host_account_authentication(connection* con, const char *username, const char *password){
 
@@ -2934,22 +3063,24 @@ void process_share_link_for_router_sync_use(){
 				
 				int b_save_arpping_list = 0;
 				char* short_link = strtok_r(NULL, ">", &saveptr2);
-				
-				share_link_info_t* c;
-				for (c = share_link_info_list; c; c = c->next) {
 
-					if(c->toshare != 2)
-						continue;
-					
-					if(buffer_is_equal_string(c->shortpath, short_link, strlen(short_link))){
-						DLIST_REMOVE(share_link_info_list, c);
-						b_save_arpping_list = 1;
-						break;
+				if(short_link!=NULL){
+					share_link_info_t* c;
+					for (c = share_link_info_list; c; c = c->next) {
+
+						if(c->toshare != 2)
+							continue;
+						
+						if(buffer_is_equal_string(c->shortpath, short_link, strlen(short_link))){
+							DLIST_REMOVE(share_link_info_list, c);
+							b_save_arpping_list = 1;
+							break;
+						}
 					}
-				}
 
-				if(b_save_arpping_list)
-					save_sharelink_list();
+					if(b_save_arpping_list)
+						save_sharelink_list();
+				}
 			}
 			else{
 				char* filename = strtok_r(NULL, ">", &saveptr2);			
@@ -3010,3 +3141,391 @@ void process_share_link_for_router_sync_use(){
 	buffer_free(return_sharelink);
 }
 
+#if 0
+int is_utf8_file(const char* file){
+	FILE* fp;
+	unsigned char header[5];
+	int ret = 0;
+	if((fp = fopen(file, "rb")) != NULL){
+		fgets(header, 5, fp);
+		if (header[0] == 0xEF && header[1] == 0xBB && header[2] == 0xBF){
+			ret = 1;
+		}
+						
+		fclose(fp);
+	}
+
+	return ret;
+}
+
+//- Unicode -> ANSI
+char* w2m(const wchar_t* wcs)
+{
+      int len;
+      char* buf;
+      len =wcstombs(NULL,wcs,0);
+      if (len == 0)
+          return NULL;
+      buf = (char *)malloc(sizeof(char)*(len+1));
+      memset(buf, 0, sizeof(char) *(len+1));
+      len =wcstombs(buf,wcs,len+1);
+      return buf;
+}
+
+int ansiToWCHAR(wchar_t* out, int outsize, const char* in, int insize, const char* codepage)
+{
+    if(outsize > 0 && insize > 0 && out && in && setlocale(LC_ALL, codepage))
+    {
+    	Cdbg(1, "ansiToWCHAR, in=%s", in);
+        int size = mbstowcs(out,in,outsize);
+        if(size < outsize - 1){out[size]=0;out[size+1]=0;}
+        return size;
+    }
+    return 0;
+}
+
+//- ANSI -> Unicode
+wchar_t* m2w(const char* mbs)
+{
+    int len;
+    wchar_t* buf;
+	setlocale(LC_ALL, "en_ZW.utf8");
+	
+    len = mbstowcs(0,mbs,0);
+    if (len <= 0){
+		return NULL;
+ 	}
+	Cdbg(1, "mbstowcs len=%d", len);
+	
+#if 0
+	buf = (wchar_t *)malloc(sizeof(wchar_t)*(len/2 + 1));
+	memset(buf, 0, sizeof(wchar_t)*(len/2 + 1));
+    len = mbstowcs(buf, mbs, len/2+1);
+#else		
+	buf = (wchar_t *)malloc(sizeof(wchar_t)*(len+1));
+    memset(buf, 0, sizeof(wchar_t) *(len+1));
+    len = mbstowcs(buf,mbs,len+1);
+#endif
+	Cdbg(1, "len=%d, buf=%s, mbs=%s", len, buf, mbs);
+    return buf;
+}
+
+int enc_unicode_to_utf8_one(unsigned long unic, unsigned char *pOutput,
+        int outSize)
+{
+    //assert(pOutput != NULL);
+    //assert(outSize >= 6);
+
+    if ( unic <= 0x0000007F )
+    {
+        // * U-00000000 - U-0000007F:  0xxxxxxx
+        *pOutput     = (unic & 0x7F);
+        return 1;
+    }
+    else if ( unic >= 0x00000080 && unic <= 0x000007FF )
+    {
+        // * U-00000080 - U-000007FF:  110xxxxx 10xxxxxx
+        *(pOutput+1) = (unic & 0x3F) | 0x80;
+        *pOutput     = ((unic >> 6) & 0x1F) | 0xC0;
+        return 2;
+    }
+    else if ( unic >= 0x00000800 && unic <= 0x0000FFFF )
+    {
+        // * U-00000800 - U-0000FFFF:  1110xxxx 10xxxxxx 10xxxxxx
+        *(pOutput+2) = (unic & 0x3F) | 0x80;
+        *(pOutput+1) = ((unic >> 6) & 0x3F) | 0x80;
+        *pOutput     = ((unic >> 12) & 0x0F) | 0xE0;
+        return 3;
+    }
+    else if ( unic >= 0x00010000 && unic <= 0x001FFFFF )
+    {
+        // * U-00010000 - U-001FFFFF:  11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+        *(pOutput+3) = (unic & 0x3F) | 0x80;
+        *(pOutput+2) = ((unic >> 6) & 0x3F) | 0x80;
+        *(pOutput+1) = ((unic >> 12) & 0x3F) | 0x80;
+        *pOutput     = ((unic >> 18) & 0x07) | 0xF0;
+        return 4;
+    }
+    else if ( unic >= 0x00200000 && unic <= 0x03FFFFFF )
+    {
+        // * U-00200000 - U-03FFFFFF:  111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+        *(pOutput+4) = (unic & 0x3F) | 0x80;
+        *(pOutput+3) = ((unic >> 6) & 0x3F) | 0x80;
+        *(pOutput+2) = ((unic >> 12) & 0x3F) | 0x80;
+        *(pOutput+1) = ((unic >> 18) & 0x3F) | 0x80;
+        *pOutput     = ((unic >> 24) & 0x03) | 0xF8;
+        return 5;
+    }
+    else if ( unic >= 0x04000000 && unic <= 0x7FFFFFFF )
+    {
+        // * U-04000000 - U-7FFFFFFF:  1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+        *(pOutput+5) = (unic & 0x3F) | 0x80;
+        *(pOutput+4) = ((unic >> 6) & 0x3F) | 0x80;
+        *(pOutput+3) = ((unic >> 12) & 0x3F) | 0x80;
+        *(pOutput+2) = ((unic >> 18) & 0x3F) | 0x80;
+        *(pOutput+1) = ((unic >> 24) & 0x3F) | 0x80;
+        *pOutput     = ((unic >> 30) & 0x01) | 0xFC;
+        return 6;
+    }
+
+    return 0;
+}
+
+
+int do_iconv(const char* to_ces, const char* from_ces,
+	 char *inbuf,  size_t inbytesleft,
+	 char *outbuf_orig, size_t outbytesleft_orig)
+{
+#ifdef HAVE_ICONV_H
+	size_t rc;
+	int ret = 1;
+
+	size_t outbytesleft = outbytesleft_orig - 1;
+	char* outbuf = outbuf_orig;
+
+	iconv_t cd  = iconv_open(to_ces, from_ces);
+
+	if(cd == (iconv_t)-1)
+	{
+		return 0;
+	}
+	rc = iconv(cd, &inbuf, &inbytesleft, &outbuf, &outbytesleft);
+	//Cdbg(1, "outbuf=%s", outbuf);
+	if(rc == (size_t)-1)
+	{
+		Cdbg(1, "fail");
+		ret = 0;
+		/*
+		if(errno == E2BIG)
+		{
+			ret = 0;
+		}
+		else
+		{
+			ret = 0;
+			memset(outbuf_orig, '\0', outbytesleft_orig);
+		}
+		*/
+	}
+	iconv_close(cd);
+
+	return ret;
+#else // HAVE_ICONV_H
+	return 0;
+#endif // HAVE_ICONV_H
+}
+
+int enc_get_utf8_size(unsigned char c)
+{
+    unsigned char t = 0x80;
+    unsigned char r = c;
+    int count = 0;
+
+    while ( r & t )
+    {
+        r = r << 1;
+        count++;
+    }
+
+    return count;
+}
+
+int enc_utf8_to_unicode_one(const unsigned char* pInput, unsigned long *Unic)
+{
+    assert(pInput != NULL && Unic != NULL);
+
+    char b1, b2, b3, b4, b5, b6;
+
+    *Unic = 0x0;
+    int utfbytes = enc_get_utf8_size(*pInput);
+    unsigned char *pOutput = (unsigned char *) Unic;
+
+    switch ( utfbytes )
+    {
+        case 0:
+            *pOutput     = *pInput;
+            utfbytes    += 1;
+            break;
+        case 2:
+            b1 = *pInput;
+            b2 = *(pInput + 1);
+            if ( (b2 & 0xE0) != 0x80 )
+                return 0;
+            *pOutput     = (b1 << 6) + (b2 & 0x3F);
+            *(pOutput+1) = (b1 >> 2) & 0x07;
+            break;
+        case 3:
+            b1 = *pInput;
+            b2 = *(pInput + 1);
+            b3 = *(pInput + 2);
+            if ( ((b2 & 0xC0) != 0x80) || ((b3 & 0xC0) != 0x80) )
+                return 0;
+            *pOutput     = (b2 << 6) + (b3 & 0x3F);
+            *(pOutput+1) = (b1 << 4) + ((b2 >> 2) & 0x0F);
+            break;
+        case 4:
+            b1 = *pInput;
+            b2 = *(pInput + 1);
+            b3 = *(pInput + 2);
+            b4 = *(pInput + 3);
+            if ( ((b2 & 0xC0) != 0x80) || ((b3 & 0xC0) != 0x80)
+                    || ((b4 & 0xC0) != 0x80) )
+                return 0;
+            *pOutput     = (b3 << 6) + (b4 & 0x3F);
+            *(pOutput+1) = (b2 << 4) + ((b3 >> 2) & 0x0F);
+            *(pOutput+2) = ((b1 << 2) & 0x1C)  + ((b2 >> 4) & 0x03);
+            break;
+        case 5:
+            b1 = *pInput;
+            b2 = *(pInput + 1);
+            b3 = *(pInput + 2);
+            b4 = *(pInput + 3);
+            b5 = *(pInput + 4);
+            if ( ((b2 & 0xC0) != 0x80) || ((b3 & 0xC0) != 0x80)
+                    || ((b4 & 0xC0) != 0x80) || ((b5 & 0xC0) != 0x80) )
+                return 0;
+            *pOutput     = (b4 << 6) + (b5 & 0x3F);
+            *(pOutput+1) = (b3 << 4) + ((b4 >> 2) & 0x0F);
+            *(pOutput+2) = (b2 << 2) + ((b3 >> 4) & 0x03);
+            *(pOutput+3) = (b1 << 6);
+            break;
+        case 6:
+            b1 = *pInput;
+            b2 = *(pInput + 1);
+            b3 = *(pInput + 2);
+            b4 = *(pInput + 3);
+            b5 = *(pInput + 4);
+            b6 = *(pInput + 5);
+            if ( ((b2 & 0xC0) != 0x80) || ((b3 & 0xC0) != 0x80)
+                    || ((b4 & 0xC0) != 0x80) || ((b5 & 0xC0) != 0x80)
+                    || ((b6 & 0xC0) != 0x80) )
+                return 0;
+            *pOutput     = (b5 << 6) + (b6 & 0x3F);
+            *(pOutput+1) = (b5 << 4) + ((b6 >> 2) & 0x0F);
+            *(pOutput+2) = (b3 << 2) + ((b4 >> 4) & 0x03);
+            *(pOutput+3) = ((b1 << 6) & 0x40) + (b2 & 0x3F);
+            break;
+        default:
+            return 0;
+            break;
+    }
+
+    return utfbytes;
+}
+
+int enc_utf8_to_unicode(const unsigned char* pInput, int nMembIn,unsigned long* pOutput, int* nMembOut)
+{
+    assert(pInput != NULL && pOutput != NULL);
+    assert(*nMembOut >= 1);
+
+    int i, ret, outSize;
+    const unsigned char *pIn     = pInput;
+    unsigned long       *pOutCur = pOutput;
+
+    outSize = *nMembOut;
+    for ( i = 0; i < nMembIn; )
+    {
+        if ( pOutCur - pOutput >= outSize )
+        {
+            *nMembOut = pOutCur - pOutput;
+            return 2; // ?出空?不足
+        }
+
+        ret = enc_utf8_to_unicode_one(pIn, pOutCur);
+        if ( ret == 0 )
+        {
+            *nMembOut = pOutCur - pOutput;
+            return 0; // ?入的字符??不是UTF8
+        }
+
+        i    += ret;
+        pIn  += ret;
+        pOutCur += 1;
+    }
+
+    *nMembOut = pOutCur - pOutput;
+    return 1;
+}
+
+int enc_utf8_to_unicode_str(const unsigned char *pInput,unsigned long *pOutput, int *nMembOut)
+{
+    assert(pInput != NULL && pOutput != NULL);
+    assert(*nMembOut >= 1);
+
+    return enc_utf8_to_unicode(pInput, strlen((const char *)pInput), 
+            pOutput, nMembOut);
+}
+
+int enc_unicode_to_utf8(const unsigned long *pInput, int nMembIn, unsigned char *pOutput, int *nMembOut)
+{
+    assert(pInput != NULL && pOutput != NULL );
+    assert(*nMembOut >= 6);
+
+    int i, ret, outSize, resOutSize;
+    const unsigned long *pIn     = pInput;
+    unsigned char       *pOutCur = pOutput;
+
+    outSize = *nMembOut;
+    for ( i = 0; i < nMembIn; )
+    {
+        resOutSize = outSize - (pOutCur - pOutput);
+        if ( resOutSize < 6 )
+        {
+            *nMembOut = pOutCur - pOutput;
+            return 2;
+        }
+
+        ret = enc_unicode_to_utf8_one(*pIn, pOutCur, resOutSize);
+        if ( ret == 0 )
+        {
+            *nMembOut = pOutCur - pOutput;
+            return 0;
+        }
+
+        i   += 1;
+        pIn += 1;
+        pOutCur += ret;
+    }
+
+    *nMembOut = pOutCur - pOutput;
+    return 1;
+}
+
+int enc_unicode_to_utf8_str(const unsigned long *pInput, unsigned char *pOutput, int *nMembOut)
+{
+    if(pInput == NULL || pOutput == NULL )
+		return 0;
+	
+    if(*nMembOut < 6) 
+		return 0;
+
+    int i, ret, outSize, resOutSize;
+    const unsigned long *pIn     = pInput;
+    unsigned char       *pOutCur = pOutput;
+
+    outSize = *nMembOut;
+    for ( ; *pIn != 0; )
+    {
+        resOutSize = outSize - (pOutCur - pOutput);
+        if ( resOutSize < 6 )
+        {
+            *nMembOut = pOutCur - pOutput;
+            return 2;
+        }
+
+        ret = enc_unicode_to_utf8_one(*pIn, pOutCur, resOutSize);
+        if ( ret == 0 )
+        {
+            *nMembOut = pOutCur - pOutput;
+            return 0;
+        }
+
+        i   += 1;
+        pIn += 1;
+        pOutCur += ret;
+    }
+
+    *nMembOut = pOutCur - pOutput;
+    return 1;
+}
+#endif

@@ -1265,7 +1265,7 @@ text-decoration:none;
 padding:4px 5px 4px 20px;
 }
 .navigation li dd { display:none;}
-.navigation li:hover dd, .navigation li a:hover dd { display:block;}
+/*.navigation li:hover dd, .navigation li a:hover dd { display:block;}*/
 .navigation li:hover,.navigation li a:hover { border:0;}
 .navigation table { border-collapse:collapse; 
 padding:0; 		

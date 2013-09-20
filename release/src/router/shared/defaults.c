@@ -408,6 +408,11 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_wsc_config_state", "0"},				/* config state unconfiged */
 #endif
 	{ "wps_band", "0"},					/* "0": 2.4G, "1": 5G */
+#if defined(RTCONFIG_WPSMULTIBAND)
+	{ "wps_multiband", "1"},				/* Enable WPS on 2.4G and 5G both */
+#else
+	{ "wps_multiband", "0"},
+#endif
 
 // Wireless WDS Mode
 	{ "wl_mode_x", "0"},					// 0/1/2(ap/wds/hybrid)
@@ -660,11 +665,9 @@ struct nvram_tuple router_defaults[] = {
 #ifdef RTCONFIG_DUALWAN // RTCONFIG_DUALWAN
 	{ "wans_mode", "fo" }, 		// off/failover/loadbance/routing(off/fo/lb/rt)
 #ifdef RTCONFIG_DSL
-	{ "wans_dualwan", "dsl usb"},
-	{ "wans_disconn_time", "120" }, /* Paul modify 2013/4/2, DSL takes some time to sync up */
+	{ "wans_dualwan", "dsl none"},
 #else
 	{ "wans_dualwan", "wan none"},
-	{ "wans_disconn_time", "60" }, 	// when disconning, max waited time for switching.
 #endif
 	{ "wans_lanport", "1"},
 	{ "wans_lb_ratio", "3:1" }, 	// only support two wan simultaneously
@@ -674,12 +677,12 @@ struct nvram_tuple router_defaults[] = {
 	{ "wan0_routing_isp", "china_mobile" },
 	{ "wan1_routing_isp_enable", "0" },
 	{ "wan1_routing_isp", "china_mobile" },
-#else
-#ifdef RTCONFIG_DSL
-	{ "wans_disconn_time", "120" }, /* Paul modify 2013/4/2, DSL takes some time to sync up */
-#else
-	{ "wans_disconn_time", "60" }, 	// when disconning, max waited time for switching.
-#endif
+
+	{ "wandog_enable", "0" },
+	{ "wandog_target", "" },
+	{ "wandog_interval", "5" },
+	{ "wandog_maxfail", "12" },
+	{ "wandog_delay", "0" },
 #endif // RTCONFIG_DUALWAN
 
 #ifdef RTCONFIG_DSL
@@ -1466,14 +1469,13 @@ struct nvram_tuple router_defaults[] = {
 	{ "ipv6_ifdev",		"ppp"		},	
 	{ "ipv6_prefix",	""		},	// The global-scope IPv6 prefix to route/advertise
 	{ "ipv6_prefix_length",	"64"		},	// The bit length of the prefix. Used by dhcp6c. For radvd, /64 is always assumed.
-	{ "ipv6_dhcp_pd",	"1"		},	// Enable DHCP-PD by default
+	{ "ipv6_dhcp_pd",	"1"		},	// Enable DHCP-PD (DHCP Prefix Delegation) by default
 	{ "ipv6_rtr_addr",	""		},	// defaults to $ipv6_prefix::1
 	{ "ipv6_prefix_len_wan","64"		},	// used in ipv6_service other
 	{ "ipv6_ipaddr",	""		},	// used in ipv6_service other
 	{ "ipv6_gateway",	""		},	// used in ipv6_service other
 	{ "ipv6_radvd",		"1"		},	// Enable Router Advertisement (radvd)
 	{ "ipv6_accept_ra",	"1"		},	// Accept RA from WAN (0x1) / LAN (0x2)
-	{ "ipv6_dhcppd",	"1"		}, 	// Prefix Deligation
 	{ "ipv6_ifname",	"six0"		},	// The interface facing the rest of the IPv6 world
 	{ "ipv6_relay",		"192.88.99.1"	},	// IPv6 Anycast Address
 	{ "ipv6_tun_v4end",	"0.0.0.0"	},	// Foreign IPv4 endpoint of SIT tunnel

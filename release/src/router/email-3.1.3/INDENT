@@ -1,0 +1,3 @@
+# These are the options used for beautifying email source code.  
+
+indent -i4 -br -brs -cdw -sai -saw -saf -ts4 -cs -cli4 -ci4 -ce -bad -nprs -di1 -nbc -l90 -nut -nbap -nbfda -npcs -nprs $@

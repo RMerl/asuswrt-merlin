@@ -23,6 +23,12 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <dlinklist.h>
+//#include <sys/socket.h>
+
+//#define USE_LIBEXIF
+#ifdef USE_LIBEXIF
+#include <libexif/exif-loader.h>
+#endif
 
 #if EMBEDDED_EANBLE
 #ifndef APP_IPKG
@@ -32,12 +38,13 @@
 
 #if defined(HAVE_LIBXML_H) && defined(HAVE_SQLITE3_H)
 #define USE_PROPPATCH
+#define USE_MINIDLNA_DB
 #include <libxml/tree.h>
 #include <libxml/parser.h>
-
 #include <sqlite3.h>
 #endif
 
+//#include "sql.h"
 /*
 #if defined(HAVE_LIBXML_H) && defined(HAVE_SQLITE3_H) && defined(HAVE_UUID_UUID_H)
 #define USE_LOCKS
@@ -49,6 +56,35 @@ include <uuid/uuid.h>
 #define USE_LOCKS
 #endif
 
+#define MUSIC_ID		"1"
+#define MUSIC_ALL_ID		"1$4"
+#define MUSIC_GENRE_ID		"1$5"
+#define MUSIC_ARTIST_ID		"1$6"
+#define MUSIC_ALBUM_ID		"1$7"
+#define MUSIC_PLIST_ID		"1$F"
+#define MUSIC_DIR_ID		"1$14"
+#define MUSIC_CONTRIB_ARTIST_ID	"1$100"
+#define MUSIC_ALBUM_ARTIST_ID	"1$107"
+#define MUSIC_COMPOSER_ID	"1$108"
+#define MUSIC_RATING_ID		"1$101"
+
+#define VIDEO_ID		"2"
+#define VIDEO_ALL_ID		"2$8"
+#define VIDEO_GENRE_ID		"2$9"
+#define VIDEO_ACTOR_ID		"2$A"
+#define VIDEO_SERIES_ID		"2$E"
+#define VIDEO_PLIST_ID		"2$10"
+#define VIDEO_DIR_ID		"2$15"
+#define VIDEO_RATING_ID		"2$200"
+
+#define IMAGE_ID		"3"
+#define IMAGE_ALL_ID		"3$B"
+#define IMAGE_DATE_ID		"3$C"
+#define IMAGE_ALBUM_ID		"3$D"
+#define IMAGE_CAMERA_ID		"3$D2" // PlaysForSure == Keyword
+#define IMAGE_PLIST_ID		"3$11"
+#define IMAGE_DIR_ID		"3$16"
+#define IMAGE_RATING_ID		"3$300"
 
 /**
  * this is a webdav for a lighttpd plugin
@@ -61,7 +97,7 @@ include <uuid/uuid.h>
 #define WEBDAV_FILE_MODE S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH
 #define WEBDAV_DIR_MODE  S_IRWXU | S_IRWXG | S_IRWXO
 
-#define DBG_ENABLE_MOD_SMBDAV 0
+#define DBG_ENABLE_MOD_SMBDAV 1
 #define DBE	DBG_ENABLE_MOD_SMBDAV
 
 /* plugin config for all request/connections */
@@ -89,6 +125,7 @@ typedef struct {
 	sqlite3_stmt *stmt_read_lock_by_uri;
 	sqlite3_stmt *stmt_refresh_lock;
 #endif
+
 } plugin_config;
 
 typedef struct {
@@ -101,6 +138,12 @@ typedef struct {
 	plugin_config **config_storage;
 
 	plugin_config conf;
+
+	//- 20130304 JerryLin add
+	buffer *minidlna_db_dir;
+	buffer *minidlna_db_file;
+	buffer *minidlna_media_dir;
+	
 } plugin_data;
 
 /* init the plugin data */
@@ -121,6 +164,11 @@ INIT_FUNC(mod_webdav_init) {
 	p->physical.doc_root = buffer_init();
 	p->physical.basedir = buffer_init();
 
+	//- 20130304 JerryLin add
+	p->minidlna_db_dir = buffer_init();
+	p->minidlna_db_file = buffer_init();
+	p->minidlna_media_dir = buffer_init();
+		
 	return p;
 }
 
@@ -175,13 +223,17 @@ FREE_FUNC(mod_webdav_free) {
 
 	buffer_free(p->tmp_buf);
 
+	//- 20130304 JerryLin add
+	buffer_free(p->minidlna_db_dir);
+	buffer_free(p->minidlna_db_file);
+	buffer_free(p->minidlna_media_dir);
+		
 	free(p);
 
 	return HANDLER_GO_ON;
 }
 
 /* handle plugin config and check values */
-
 SETDEFAULTS_FUNC(mod_webdav_set_defaults) {
 	plugin_data *p = p_d;
 	size_t i = 0;
@@ -210,7 +262,7 @@ SETDEFAULTS_FUNC(mod_webdav_set_defaults) {
 		cv[3].destination = &(s->log_xml);
 
 		p->config_storage[i] = s;
-
+		
 		if (0 != config_insert_values_global(srv, ((data_config *)srv->config_context->data[i])->value, cv)) {
 			return HANDLER_ERROR;
 		}
@@ -414,6 +466,7 @@ static int mod_webdav_patch_connection(server *srv, connection *con, plugin_data
 	PATCH_OPTION(stmt_read_lock);
 	PATCH_OPTION(stmt_read_lock_by_uri);
 #endif
+
 	/* skip the first, the global context */
 	for (i = 1; i < srv->config_context->used; i++) {
 		data_config *dc = (data_config *)srv->config_context->data[i];
@@ -487,6 +540,233 @@ URIHANDLER_FUNC(mod_webdav_uri_handler) {
 	/* not found */
 	return HANDLER_GO_ON;
 }
+
+static int get_minidlna_db_path(plugin_data *p){
+
+	if(is_dms_enabled()==0){
+		return 0;
+	}
+	
+	//- 20130603 JerryLin add
+	int bOpenConfigFle = 1;
+#if EMBEDDED_EANBLE
+	char* db_dir = nvram_get_dms_dbcwd();
+	if(db_dir){
+		buffer_copy_string_len(p->minidlna_db_dir, db_dir, strlen(db_dir));
+		buffer_copy_string_len(p->minidlna_db_file, db_dir, strlen(db_dir));		
+		buffer_append_string(p->minidlna_db_file, "/files.db");	
+		bOpenConfigFle = 0;
+	}
+
+	char* media_dir = nvram_get_dms_dir();
+	if(media_dir){
+		buffer_copy_string_len(p->minidlna_media_dir, media_dir, strlen(media_dir));
+		bOpenConfigFle = 0;
+	}
+#endif
+	if(bOpenConfigFle==1){
+		FILE* fp2;
+		char line[128];
+		char* minidla_config_file = NULL;                
+		char* minidla_config_file_tmp = "/etc/minidlna.conf";                
+		if(access(minidla_config_file_tmp,R_OK) == 0)                    
+			minidla_config_file = "/etc/minidlna.conf";                
+		else                    
+			minidla_config_file = "/opt/etc/minidlna.conf";
+		
+		if((fp2 = fopen(minidla_config_file, "r")) != NULL){
+			memset(line, 0, sizeof(line));
+			while(fgets(line, 128, fp2) != NULL){
+				if(strncmp(line, "db_dir=", 7)==0){
+					char tmp[100] = "\0";
+					strncpy(tmp, line + 7, strlen(line)-7);
+					tmp[strlen(tmp)-1]='\0';
+
+					buffer_copy_string_len(p->minidlna_db_dir, tmp, strlen(tmp) );
+					
+					strcat(tmp, "/files.db");
+					buffer_copy_string_len(p->minidlna_db_file, tmp, strlen(tmp) );
+				}
+				else if(strncmp(line, "media_dir=", 10)==0){
+					char tmp[100] = "\0";
+					strncpy(tmp, line + 10, strlen(line)-10);
+					tmp[strlen(tmp)-1]='\0';
+
+					buffer_copy_string_len(p->minidlna_media_dir, tmp, strlen(tmp) );					
+				}
+			}
+			fclose(fp2);
+		}
+	}
+
+#if EMBEDDED_EANBLE
+#ifdef APP_IPKG        
+	if(db_dir)            
+		free(db_dir);
+
+	if(media_dir)
+		free(media_dir);
+#endif
+#endif
+	Cdbg(DBE, ".............................minidlna_db_dir=%s", p->minidlna_db_dir->ptr);
+	Cdbg(DBE, ".............................minidlna_db_file=%s", p->minidlna_db_file->ptr);
+	Cdbg(DBE, ".............................minidlna_media_dir=%s", p->minidlna_media_dir->ptr);
+	
+}
+
+static int get_thumb_image(char* path, plugin_data *p, unsigned char **out){
+	if(is_dms_enabled()==0){
+		return 0;
+	}
+	
+#if EMBEDDED_EANBLE
+	char* thumb_dir = (char *)malloc(PATH_MAX);
+	if(!thumb_dir) return 0;
+
+	if (buffer_is_empty(p->minidlna_db_dir))
+		get_minidlna_db_path(p);
+	
+	strcpy(thumb_dir, p->minidlna_db_dir->ptr);
+	strcat(thumb_dir, "/art_cache/tmp");
+	
+	char* filename = NULL;	
+	extract_filename(path, &filename);
+	const char *dot = strrchr(filename, '.');
+	int len = dot - filename;
+	
+	char* filepath = NULL;
+	extract_filepath(path, &filepath);
+					
+	strcat(thumb_dir, filepath);
+	strncat(thumb_dir, filename, len);
+	strcat(thumb_dir, ".jpg");
+	
+	free(filename);
+	free(filepath);
+#else
+	char* db_dir = "/var/lib/minidlna/";
+	char* thumb_dir = (char *)malloc(PATH_MAX);
+	
+	if(!thumb_dir){
+		return 0;
+	}	
+	strcpy(thumb_dir, db_dir);
+	strcat(thumb_dir, "art_cache");
+	
+	char* filename = NULL;	
+	extract_filename(path, &filename);
+	const char *dot = strrchr(filename, '.');
+	int index = dot - filename;
+	//Cdbg(DBE,"dot = %s, index=%d", dot, index);
+	
+	char* filepath = NULL;
+	extract_filepath(path, &filepath);
+
+	Cdbg(DBE,"filepath=%s, filename=%s", filepath, filename);
+	
+	strcat(thumb_dir, filepath);
+	strncat(thumb_dir, filename, index);
+	strcat(thumb_dir, ".jpg");
+	
+	free(filename);
+	free(filepath);
+	
+#endif
+	Cdbg(DBE,"thumb_dir=%s", thumb_dir);
+
+	int result = 0;
+
+	FILE* fp = fopen(thumb_dir, "rb");
+		
+	if(fp!=NULL){
+		Cdbg(DBE, "success to open thumb_dir=%s", thumb_dir);
+		//Get file length
+       	fseek(fp, 0, SEEK_END);
+       	int fileLen = ftell(fp);
+       	fseek(fp, 0, SEEK_SET);
+			
+		char* buffer = (char *)malloc(fileLen+1);
+		if(buffer){		
+			fread( buffer, fileLen, sizeof(unsigned char), fp );
+			
+			unsigned char* tmp = ldb_base64_encode(buffer, fileLen);			
+			uint32 olen = strlen(tmp) + 1;
+			*out = (char*)malloc(olen);
+			memcpy(*out, tmp, olen);
+				
+			free(tmp);			
+			free(buffer);
+				
+			fclose(fp);
+
+			result = 1;
+		}
+	}
+	
+	free(thumb_dir);	
+	return result;
+}
+
+static int get_album_cover_image(sqlite3 *sql_minidlna, sqlite_int64 plAlbumArt, unsigned char **out){
+	if(is_dms_enabled()==0){
+		return 0;
+	}
+	
+	if(plAlbumArt<=0){
+		return 0;
+	}
+	
+	int rows2;
+	char **result2;
+	char* base64_image = NULL;
+	char sql_query[2048] = "\0";
+	
+	sprintf(sql_query, "SELECT PATH FROM ALBUM_ART WHERE ID = '%lld'", plAlbumArt );
+	if( sql_get_table(sql_minidlna, sql_query, &result2, &rows2, NULL) == SQLITE_OK ){
+		//Cdbg(DBE, "get_album_cover_image, album cover path=%s", result2[1]);
+
+		char* album_cover_file = result2[1];
+									
+		FILE* fp = fopen(album_cover_file, "rb");
+		
+		if(fp!=NULL){
+			//Get file length
+	       	fseek(fp, 0, SEEK_END);
+	       	int fileLen = ftell(fp);
+	       	fseek(fp, 0, SEEK_SET);
+			
+			char* buffer = (char *)malloc(fileLen+1);
+			if(!buffer){
+				return 0;
+			}
+			char* aa = get_filename_ext(album_cover_file);
+			int len = strlen(aa)+1; 		
+			char* file_ext = (char*)malloc(len);
+			memset(file_ext,'\0', len);
+			strcpy(file_ext, aa);
+			for (int i = 0; file_ext[i]; i++)
+				file_ext[i] = tolower(file_ext[i]);
+										
+			fread( buffer, fileLen, sizeof(unsigned char), fp );
+			
+			unsigned char* tmp = ldb_base64_encode(buffer, fileLen);			
+			uint32 olen = strlen(tmp) + 1;
+			*out = (char*)malloc(olen);
+			memcpy(*out, tmp, olen);
+			
+			free(tmp);			
+			free(file_ext);
+			free(buffer);
+			
+			fclose(fp);
+		}
+									
+	}
+	sqlite3_free_table(result2);
+	
+	return 1;
+}					
+
 static int webdav_gen_prop_tag(server *srv, connection *con,
 		char *prop_name,
 		char *prop_ns,
@@ -508,12 +788,12 @@ static int webdav_gen_prop_tag(server *srv, connection *con,
 		buffer_append_string_len(b,CONST_STR_LEN("</"));
 		buffer_append_string(b, prop_name);
 		buffer_append_string_len(b, CONST_STR_LEN(">"));
-	} else {
+	} else {		
 		buffer_append_string_len(b,CONST_STR_LEN("<"));
 		buffer_append_string(b, prop_name);
 		buffer_append_string_len(b, CONST_STR_LEN(" xmlns=\""));
 		buffer_append_string(b, prop_ns);
-		buffer_append_string_len(b, CONST_STR_LEN("\"/>"));
+		buffer_append_string_len(b, CONST_STR_LEN("\"/>"));		
 	}
 
 	return 0;
@@ -850,7 +1130,7 @@ static int webdav_get_live_property(server *srv, connection *con, plugin_data *p
 	int found = 0;
 
 	UNUSED(p);
-		
+	
 	if (HANDLER_ERROR != (stat_cache_get_entry(srv, con, dst->path, &sce))) {
 		char ctime_buf[] = "2005-08-18T07:27:16Z";
 		char mtime_buf[] = "Thu, 18 Aug 2005 07:27:16 GMT";
@@ -883,14 +1163,14 @@ static int webdav_get_live_property(server *srv, connection *con, plugin_data *p
 			}
 		} else if (0 == strcmp(prop_name, "creationdate")) {
 			//buffer_append_string_len(b, CONST_STR_LEN("<D:creationdate ns0:dt=\"dateTime.tz\">"));
-			buffer_append_string_len(b, CONST_STR_LEN("<D:creationdate>"));
+			buffer_append_string_len(b, CONST_STR_LEN("<D:creationdate>"));			
 			strftime(ctime_buf, sizeof(ctime_buf), "%Y-%m-%dT%H:%M:%SZ", gmtime(&(sce->st.st_ctime)));
 			buffer_append_string(b, ctime_buf);
 			buffer_append_string_len(b, CONST_STR_LEN("</D:creationdate>"));
 			found = 1;
 		} else if (0 == strcmp(prop_name, "getlastmodified")) {
 			//buffer_append_string_len(b,CONST_STR_LEN("<D:getlastmodified ns0:dt=\"dateTime.rfc1123\">"));
-			buffer_append_string_len(b,CONST_STR_LEN("<D:getlastmodified>"));
+			buffer_append_string_len(b,CONST_STR_LEN("<D:getlastmodified>"));			
 			strftime(mtime_buf, sizeof(mtime_buf), "%a, %d %b %Y %H:%M:%S GMT", gmtime(&(sce->st.st_mtime)));
 			//strftime(mtime_buf, sizeof(mtime_buf), "%Y/%m/%d %H:%M:%S", localtime(&(sce->st.st_mtime)));
 			buffer_append_string(b, mtime_buf);
@@ -1013,6 +1293,164 @@ static int webdav_get_live_property(server *srv, connection *con, plugin_data *p
 			buffer_append_string_len(b, CONST_STR_LEN("</D:getroutersync>"));
 			found = 1;
 		}
+		else if (0 == strcmp(prop_name, "getmetadata")) {
+#if 1
+			buffer_append_string_len(b,CONST_STR_LEN("<D:getmetadata>"));		
+
+			if(is_dms_enabled()==1){
+		
+				int rows, i;
+				sqlite3 *sql_minidlna = NULL;
+				char **result;
+				char sql_query[2048] = "\0";
+
+				get_minidlna_db_path(p);
+				
+				if (!buffer_is_empty(p->minidlna_db_file)) {			
+					if (SQLITE_OK != sqlite3_open(p->minidlna_db_file->ptr, &(sql_minidlna))) {				
+						Cdbg(DBE, "Fail to open minidlna db %s", p->minidlna_db_file->ptr);
+					}
+				}
+
+				if (sql_minidlna) {
+					
+					int column_count = 11;
+					sprintf(sql_query, "SELECT ID, TITLE, SIZE, TIMESTAMP, THUMBNAIL, RESOLUTION, CREATOR, ARTIST, MIME, ALBUM, ALBUM_ART from DETAILS");
+
+					#if EMBEDDED_EANBLE
+					sprintf(sql_query, "%s WHERE PATH = '/%s%s'", sql_query, "tmp", dst->path->ptr);
+					#else
+					sprintf(sql_query, "%s WHERE PATH = '%s'", sql_query, dst->path->ptr);
+					#endif
+					
+					//Cdbg(DBE, "sql_query=%s", sql_query);
+
+					if( sql_get_table(sql_minidlna, sql_query, &result, &rows, NULL) == SQLITE_OK ){
+						if( rows ){
+							sqlite_int64 plID = strtoll(result[column_count], NULL, 10);
+							char* plname = result[column_count+1];						
+							char* thumbnail = result[column_count+4];
+							char* resolution = result[column_count+5];
+							char* creator = result[column_count+6];	
+							char* artist = result[column_count+7];
+							char* mime = result[column_count+8];
+							char* album = result[column_count+9];
+							char* album_art = result[column_count+10];
+							
+							if(plname){
+								int thumb = atoi(thumbnail);
+
+								buffer_append_string_len(b, CONST_STR_LEN("<D:title>"));
+								buffer_append_string(b, plname);
+								buffer_append_string_len(b, CONST_STR_LEN("</D:title>"));
+
+								buffer_append_string_len(b, CONST_STR_LEN("<D:resolution>"));
+								buffer_append_string(b, resolution);
+								buffer_append_string_len(b, CONST_STR_LEN("</D:resolution>"));
+
+								buffer_append_string_len(b, CONST_STR_LEN("<D:creator>"));
+								buffer_append_string(b, creator);
+								buffer_append_string_len(b, CONST_STR_LEN("</D:creator>"));
+
+								buffer_append_string_len(b, CONST_STR_LEN("<D:artist>"));
+								buffer_append_string(b, artist);
+								buffer_append_string_len(b, CONST_STR_LEN("</D:artist>"));
+
+								buffer_append_string_len(b, CONST_STR_LEN("<D:mime>"));
+								buffer_append_string(b, mime);
+								buffer_append_string_len(b, CONST_STR_LEN("</D:mime>"));
+
+								buffer_append_string_len(b, CONST_STR_LEN("<D:thumb>"));
+								//buffer_append_string(b, thumbnail);
+								buffer_append_string_len(b, CONST_STR_LEN("1"));
+								buffer_append_string_len(b, CONST_STR_LEN("</D:thumb>"));
+								
+								//Cdbg(DBE, "plname=%s, thumb=%d, resolution=%s, creator=%s, artist=%s, mime=%s, album_art=%s", plname, thumb, resolution, creator, artist, mime, album_art);
+
+								#if 0
+								char* image = NULL;
+								if(thumb==1){
+									if(get_thumb_image(dst->path->ptr, &image)==1){
+										buffer_append_string_len(b, CONST_STR_LEN("<D:thumb_image>"));
+										buffer_append_string(b, image);
+										buffer_append_string_len(b, CONST_STR_LEN("</D:thumb_image>"));
+										free(image);
+									}
+								}
+								else{
+									sqlite_int64 plAlbumArt = (album_art ? strtoll(album_art, NULL, 10) : 0);
+									if(get_album_cover_image(sql_minidlna, plAlbumArt, &image)==1){
+										buffer_append_string_len(b, CONST_STR_LEN("<D:thumb_image>"));
+										buffer_append_string(b, image);
+										buffer_append_string_len(b, CONST_STR_LEN("</D:thumb_image>"));
+										free(image);
+									}
+								}
+								#endif
+							}						
+						}
+
+						sqlite3_free_table(result);
+					}
+					
+					sqlite3_close(sql_minidlna);
+				}
+			}
+
+#if 0
+			//- http request test
+			struct sockaddr_in their_addr; /* connector's address information */
+			int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+			if (serverSocket == -1)
+				Cdbg(DBE, "serverSocket == -1" );
+
+			bzero(&(their_addr), sizeof(their_addr)); /* zero the rest of the struct */
+    		their_addr.sin_family = AF_INET; /* host byte order */
+    		their_addr.sin_port = htons(8082); /* short, network byte order */
+   	 		their_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+			bzero(&(their_addr.sin_zero), sizeof(their_addr.sin_zero)); /* zero the rest of the struct */
+		    if (connect(serverSocket, (struct sockaddr *)&their_addr,sizeof(struct sockaddr)) == -1) {
+		                                                              
+		        Cdbg(DBE, "connect error");
+		    }
+	
+			//- http://imdbapi.org/?title=Batman Begins&type=xml
+			char request[1024]="\0";
+			sprintf(request, "GET %s HTTP/1.0\r\nHOST:%s \r\n", "/?title=Batman&type=xml", "http://imdbapi.org/");
+
+			Cdbg(DBE, "request = %s", request );
+			
+			if( send(serverSocket, &request, sizeof(request), 0) < 0 )
+    			Cdbg(DBE, "send()");
+
+			int numbytes;
+			char buf[1024];
+			if ((numbytes=recv(serverSocket, buf, 1024, 0)) == -1) {
+        		Cdbg(DBE, "recv error");
+			}
+
+    		buf[numbytes] = '\0';
+	
+			close(serverSocket);
+			Cdbg(DBE, "buf=%s", buf);
+			////////////////////////////////////
+#endif		
+
+#if 0		
+			
+			char url[1024]="\0";
+			sprintf(url, "%s", "http://imdbapi.org/?title=Batman&type=xml");
+			
+			char init_upload_xml[1024]="/tmp/aaa.xml";
+			int status = sendRequest(init_upload_xml,url,NULL,NULL,NULL);
+#endif
+
+			buffer_append_string_len(b, CONST_STR_LEN("</D:getmetadata>"));
+			
+			found = 1;
+#endif			
+		}
 		/*else if (0 == strcmp(prop_name, "getname")) {
 			//- 20120920 Jerry add			
 			buffer_append_string_len(b,CONST_STR_LEN("<D:getname>"));
@@ -1033,7 +1471,7 @@ static int webdav_get_live_property(server *srv, connection *con, plugin_data *p
 
 static int webdav_get_property(server *srv, connection *con, plugin_data *p, physical *dst, char *prop_name, char *prop_ns, buffer *b) {
 	if (0 == strcmp(prop_ns, "DAV:")) {
-		/* a local 'live' property */
+		/* a local 'live' property */		
 		return webdav_get_live_property(srv, con, p, dst, prop_name, b);
 	} else {
 		int found = 0;
@@ -1100,6 +1538,7 @@ webdav_property live_properties[] = {
 	{ "DAV:", "getpath" },
 	{ "DAV:", "getuseragent" },
 	{ "DAV:", "getroutersync" },
+	{ "DAV:", "getmetadata" },
 
 	{ NULL, NULL }
 };
@@ -1576,7 +2015,7 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 		
 		buffer_append_string_len(b,CONST_STR_LEN("<D:multistatus xmlns:D=\"DAV:\" xmlns:ns0=\"urn:uuid:c2f41010-65b3-11d1-a29f-00aa00c14882/\" "));
 	
-	#if 1
+	#if 0
 		//- Key
 		buffer_append_string_len(b, CONST_STR_LEN(" key=\""));
 		char mac[20]="\0";
@@ -1608,7 +2047,6 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 		char *productid = nvram_get_productid();
 		strcpy(usbdisk_path, "/");
         strcat(usbdisk_path, productid);
-        //strcat(usbdisk_path, nvram_get_productid());
         free(productid);
 		#endif
 		char mnt_path[5] = "/mnt/";
@@ -1718,8 +2156,7 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 			buffer_append_string_len(b,CONST_STR_LEN("</D:response>\n"));
 			
 			break;
-		case 1:		
-			
+		case 1:			
 			if (NULL != (dir = opendir(con->physical.path->ptr))) {
 				struct dirent *de;
 				physical d;
@@ -1737,6 +2174,11 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 					if ( de->d_name[0] == '.' ) {
 						continue;
 						//- ignore the hidden file
+					}
+
+					if ( strcmp(de->d_name, "minidlna")==0 ||
+					 	 strcmp(de->d_name, "asusware")==0) {
+						continue;
 					}
 					
 					buffer_copy_string_buffer(d.path, dst->path);
@@ -1782,22 +2224,6 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 					buffer_append_string_len(b,CONST_STR_LEN("://"));
 					buffer_append_string_buffer(b, con->uri.authority);
 
-#if 0
-					if(con->share_link_type==2){
-						char buff[4096];
-						char* tmp = replace_str(&d.rel_path->ptr[0], 
-							                    (char*)con->share_link_realpath->ptr, 
-							                    (char*)con->share_link_shortpath->ptr, 
-							                    (char *)&buff[0]);
-						
-						buffer_append_string(b, "/");
-						buffer_append_string_encoded(b, tmp, strlen(tmp), ENCODING_REL_URI);
-					
-					}
-					else{
-						buffer_append_string_encoded(b, CONST_BUF_LEN(d.rel_path), ENCODING_REL_URI);
-					}
-#else
 					if(con->share_link_shortpath->used){
 						char buff[4096];
 						char* tmp = replace_str(&d.rel_path->ptr[0], 
@@ -1812,7 +2238,6 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 						Cdbg(DBE, "d.rel_path=%s", d.rel_path->ptr);
 						buffer_append_string_encoded(b, CONST_BUF_LEN(d.rel_path), ENCODING_REL_URI);
 					}
-#endif
 					
 					buffer_append_string_len(b,CONST_STR_LEN("</D:href>\n"));
 					
@@ -3024,140 +3449,6 @@ propmatch_cleanup:
 		con->http_status = 200;
 		return HANDLER_FINISHED;
 	}
-#if 0
-	case HTTP_METHOD_GSL:{
-		buffer *buffer_url = NULL;
-		buffer *buffer_filename = NULL;
-		int expire = 1;
-		int toShare = 1;
-		Cdbg(DBE, "do HTTP_METHOD_GSL....................");
-		
-		if (p->conf.is_readonly) {
-			con->http_status = 403;
-			return HANDLER_FINISHED;
-		}
-
-		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "URL"))) {
-			buffer_url = ds->value;
-		} else {
-			con->http_status = 400;
-			return HANDLER_FINISHED;
-		}
-		
-		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "FILENAME"))) {
-			buffer_filename = ds->value;
-		} else {
-			con->http_status = 400;
-			return HANDLER_FINISHED;
-		}
-		
-		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "EXPIRE"))) {
-			expire = atoi(ds->value->ptr);
-		} else {
-			con->http_status = 400;
-			return HANDLER_FINISHED;
-		}
-		
-		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "TOSHARE"))) {
-			toShare = atoi(ds->value->ptr);
-		}
-		
-		char auth[100]="\0";		
-		if(con->aidisk_username->used && con->aidisk_passwd->used)
-			sprintf(auth, "%s:%s", con->aidisk_username->ptr, con->aidisk_passwd->ptr);
-		else{
-			con->http_status = 400;
-			return HANDLER_FINISHED;
-		}
-		
-		Cdbg(DBE, "do HTTP_METHOD_GSL auth=%s, expire=%d", auth, expire);
-
-		//time_t expire_time = time(NULL) + expire;		
-		//char strTime[25] = {0};
-		//sprintf(strTime, "%lu", (unsigned long)expire_time);		
-		//strftime(strTime, sizeof(strTime), "%Y-%m-%d-%H:%M:%S", localtime(&expire_time));	
-
-		char* base64_auth = ldb_base64_encode(auth, strlen(auth));
-		
-		char* share_link = NULL;
-		
-#if 1
-		share_link = (char*)malloc(1024);
-		struct timeval tv;
-		unsigned long long now_utime;
-		gettimeofday(&tv,NULL);
-		now_utime = tv.tv_sec * 1000000 + tv.tv_usec;  
-		sprintf( share_link, "AICLOUD%d", abs(now_utime));
-		
-		share_link_info_t *share_link_info;
-		share_link_info = (share_link_info_t *)calloc(1, sizeof(share_link_info_t));
-								
-		share_link_info->shortpath = buffer_init();
-		buffer_copy_string(share_link_info->shortpath, share_link);
-								
-		share_link_info->realpath = buffer_init();
-		buffer_copy_string_buffer(share_link_info->realpath, buffer_url);
-		
-		share_link_info->filename = buffer_init();
-		buffer_copy_string_buffer(share_link_info->filename, buffer_filename);
-		
-		share_link_info->auth = buffer_init();
-		buffer_copy_string(share_link_info->auth, base64_auth);
-		
-		share_link_info->expiretime = time(NULL) + expire;	
-		share_link_info->toshare = toShare;
-				
-		DLIST_ADD(share_link_info_list, share_link_info);
-#else
-		char mac[20]="\0";
-		get_mac_address("eth0", &mac);
-		
-		char* base64_auth = ldb_base64_encode(auth, strlen(auth));
-		char* base64_key = ldb_base64_encode(mac, strlen(mac));
-		char* urlstr = (char*)malloc(buffer_url->size +  strlen(base64_auth) + strlen(strTime) + 15);
-		sprintf(urlstr, "%s?auth=%s&expire=%s", buffer_url->ptr, base64_auth, strTime);
-		
-		share_link = x123_encode(urlstr, base64_key, &share_link);
-		//share_link = x123_encode("sambapc/sharefolder", "abcdefg", &share_link);
-		free(base64_auth);
-		free(base64_key);
-		free(urlstr);
-		
-		Cdbg(DBE, "do HTTP_METHOD_GSL urlstr=%s, share_link=%s", urlstr, share_link);
-		
-		//char* decode_str;
-		//decode_str = x123_decode(encode_str, ldb_base64_encode(mac, strlen(mac)), &decode_str);
-		//Cdbg(DBE, "do HTTP_METHOD_GSL decode_str=%s", decode_str);
-
-#endif	
-
-		con->http_status = 200;
-
-		response_header_overwrite(srv, con, CONST_STR_LEN("Content-Type"), CONST_STR_LEN("text/xml; charset=\"utf-8\""));
-
-		b = chunkqueue_get_append_buffer(con->write_queue);
-
-		buffer_copy_string_len(b, CONST_STR_LEN("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"));
-		buffer_append_string_len(b,CONST_STR_LEN("<result>\n"));
-		buffer_append_string_len(b,CONST_STR_LEN("<sharelink>\n"));
-		buffer_append_string(b, share_link);
-		buffer_append_string_len(b,CONST_STR_LEN("/"));
-		buffer_append_string_buffer(b,buffer_filename);
-		buffer_append_string_len(b,CONST_STR_LEN("</sharelink>\n"));
-		buffer_append_string_len(b,CONST_STR_LEN("</result>\n"));
-
-		con->file_finished = 1;
-
-		free(base64_auth);
-		free(share_link);
-#if 1
-		if(toShare==1)
-			save_sharelink_list();
-#endif
-
-		return HANDLER_FINISHED;
-	}
-#endif
 
 	case HTTP_METHOD_GSL:{
 		buffer *buffer_url = NULL;
@@ -3205,85 +3496,20 @@ propmatch_cleanup:
 			return HANDLER_FINISHED;
 		}
 
-		//time_t expire_time = time(NULL) + expire;
-		//char strTime[25] = {0};
-		//sprintf(strTime, "%lu", (unsigned long)expire_time);
-		//strftime(strTime, sizeof(strTime), "%Y-%m-%d-%H:%M:%S", localtime(&expire_time));	
-
 		char* base64_auth = ldb_base64_encode(auth, strlen(auth));
-		
-		char* share_link = NULL;
-#if 1	
-		char * pch;
-		pch = strtok(buffer_filename->ptr, ";");
 
-		buffer_result_share_link = buffer_init();
-		
-		while(pch!=NULL){
-			
-			char share_link[1024];
-			struct timeval tv;
-	  		unsigned long long now_utime;
-	 		gettimeofday(&tv,NULL);
-	 		now_utime = tv.tv_sec * 1000000 + tv.tv_usec;  
-			sprintf( share_link, "AICLOUD%d", abs(now_utime));
-
-			share_link_info_t *share_link_info;
-			share_link_info = (share_link_info_t *)calloc(1, sizeof(share_link_info_t));
-							
-			share_link_info->shortpath = buffer_init();
-			buffer_copy_string(share_link_info->shortpath, share_link);
-							
-			share_link_info->realpath = buffer_init();
-			buffer_copy_string_buffer(share_link_info->realpath, buffer_url);
-
-			share_link_info->filename = buffer_init();
-			buffer_copy_string(share_link_info->filename, pch);
-
-			share_link_info->auth = buffer_init();
-			buffer_copy_string(share_link_info->auth, base64_auth);
-
-			share_link_info->createtime = time(NULL);
-			share_link_info->expiretime = (expire==0 ? 0 : share_link_info->createtime + expire);
-			share_link_info->toshare = toShare;
-			
-			DLIST_ADD(share_link_info_list, share_link_info);
-			
-			buffer_append_string(buffer_result_share_link, share_link);
-			buffer_append_string_len(buffer_result_share_link,CONST_STR_LEN("/"));
-			buffer_append_string(buffer_result_share_link,pch);
-			
-			//- Next
-			pch = strtok(NULL,";");
-
-			if(pch)
-				buffer_append_string_len(buffer_result_share_link,CONST_STR_LEN(";"));
-
-			if(toShare==1)
-				log_sys_write(srv, "sbsbss", "Create share link", share_link_info->realpath , "/", share_link_info->filename, "from ip", con->dst_addr_buf->ptr);
-
+		if( generate_sharelink(srv, 
+			                   con, 
+			                   buffer_filename->ptr, 
+			                   buffer_url->ptr, 
+			                   base64_auth, 
+			                   expire, 
+			                   toShare, 
+			                   &buffer_result_share_link) == 0){
+			free(base64_auth);
+			con->http_status = 400;
+			return HANDLER_FINISHED;
 		}
-#else
-		char mac[20]="\0";
-		get_mac_address("eth0", &mac);
-		
-		char* base64_auth = ldb_base64_encode(auth, strlen(auth));
-		char* base64_key = ldb_base64_encode(mac, strlen(mac));
-		char* urlstr = (char*)malloc(buffer_url->size +  strlen(base64_auth) + strlen(strTime) + 15);
-		sprintf(urlstr, "%s?auth=%s&expire=%s", buffer_url->ptr, base64_auth, strTime);
-
-		share_link = x123_encode(urlstr, base64_key, &share_link);
-		//share_link = x123_encode("sambapc/sharefolder", "abcdefg", &share_link);
-		free(base64_auth);
-		free(base64_key);
-		free(urlstr);
-
-		Cdbg(DBE, "do HTTP_METHOD_GSL urlstr=%s, share_link=%s", urlstr, share_link);
-
-		//char* decode_str;
-		//decode_str = x123_decode(encode_str, ldb_base64_encode(mac, strlen(mac)), &decode_str);
-		//Cdbg(DBE, "do HTTP_METHOD_GSL decode_str=%s", decode_str);
-#endif
 		
 		con->http_status = 200;
 
@@ -3302,7 +3528,6 @@ propmatch_cleanup:
 
 		buffer_free(buffer_result_share_link);
 		free(base64_auth);
-		free(share_link);
 
 		if(toShare==1)
 			save_sharelink_list();
@@ -3427,12 +3652,15 @@ propmatch_cleanup:
 		char* ddns_host_name = nvram_get_ddns_host_name();
 		char* disk_path = "/mnt/";
 		char* wan_ip = nvram_get_wan_ip();
-
+		char *usbdiskname = nvram_get_productid();
+		
 		//- Get aicloud version
 		#ifdef APP_IPKG
 		char* aicloud_version_file = "/opt/lib/ipkg/info/aicloud.control";
+		char* aicloud_app_type = "install";
 		#else
 		char* aicloud_version_file = "/usr/lighttpd/control";
+		char* aicloud_app_type = "embed";
 		#endif
 		char aicloud_version[20]="\0";
 		char *swpjverno = nvram_get_swpjverno();
@@ -3458,13 +3686,17 @@ propmatch_cleanup:
 		char* ddns_host_name = "";
 		char* disk_path = "/mnt/";
 		char* wan_ip = "192.168.1.10";
-
+		char *usbdiskname = "usbdisk";
+						
 		//- Get aicloud version
 		char* aicloud_version_file = "/usr/css/control";
 		char aicloud_version[20]="\0";
 		char *swpjverno = "";
 		char *extendno = "";
+		char* aicloud_app_type = "embed";
 #endif
+
+		int dms_enable = is_dms_enabled();
 
 		//- Parser version file
 		FILE* fp2;
@@ -3478,15 +3710,15 @@ propmatch_cleanup:
 			}
 			fclose(fp2);
 		}
-		
+					
 #ifndef APP_IPKG
 		if( swpjverno!=NULL && strncmp(swpjverno,"", 1)!=0){
 			strcpy(aicloud_version, swpjverno);
 			if(extendno!=NULL && strncmp(extendno,"", 1)!=0)
 			{
-				strcat(aicloud_version, "_");
-				strcat(aicloud_version, extendno);
-			}
+			strcat(aicloud_version, "_");
+			strcat(aicloud_version, extendno);
+		}
 		}
 #endif
 		con->http_status = 200;
@@ -3511,12 +3743,18 @@ propmatch_cleanup:
 		buffer_append_string_len(b,CONST_STR_LEN("<aicloud_version>"));
 		buffer_append_string(b,aicloud_version);
 		buffer_append_string_len(b,CONST_STR_LEN("</aicloud_version>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<aicloud_app_type>"));		
+		buffer_append_string(b,aicloud_app_type);		
+		buffer_append_string_len(b,CONST_STR_LEN("</aicloud_app_type>"));
 		buffer_append_string_len(b,CONST_STR_LEN("<modalname>"));
 		buffer_append_string(b,modal_name);
 		buffer_append_string_len(b,CONST_STR_LEN("</modalname>"));
 		buffer_append_string_len(b,CONST_STR_LEN("<computername>"));
 		buffer_append_string(b,computer_name);
 		buffer_append_string_len(b,CONST_STR_LEN("</computername>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<usbdiskname>"));
+		buffer_append_string(b,usbdiskname);
+		buffer_append_string_len(b,CONST_STR_LEN("</usbdiskname>"));
 		buffer_append_string_len(b,CONST_STR_LEN("<webdav_mode>"));
 		buffer_append_string(b,st_webdav_mode);
 		buffer_append_string_len(b,CONST_STR_LEN("</webdav_mode>"));
@@ -3547,7 +3785,10 @@ propmatch_cleanup:
 		buffer_append_string_len(b,CONST_STR_LEN("<wan_ip>"));
 		buffer_append_string(b,wan_ip);
 		buffer_append_string_len(b,CONST_STR_LEN("</wan_ip>"));
-		
+		buffer_append_string_len(b,CONST_STR_LEN("<dms_enable>"));
+		buffer_append_string(b, ((dms_enable==1) ? "1" : "0"));
+		buffer_append_string_len(b,CONST_STR_LEN("</dms_enable>"));
+				
 		DIR *dir;
 		if (NULL != (dir = opendir(disk_path))) {
 
@@ -3610,13 +3851,14 @@ propmatch_cleanup:
 					}
 					
 				}
-
+				
 				buffer_append_string_len(b,CONST_STR_LEN("</item>"));
 			}
 
 			buffer_append_string_len(b,CONST_STR_LEN("</disk_space>"));
-		}
+
 		closedir(dir);
+		}
 		
 		buffer_append_string_len(b,CONST_STR_LEN("</result>"));
 		
@@ -3638,9 +3880,9 @@ propmatch_cleanup:
 		free(http_enable);
 		free(misc_https_port);
 		if(swpjverno!=NULL)
-			{free(swpjverno);}
-			if(extendno!=NULL)
-			{free(extendno);}
+			free(swpjverno);
+		if(extendno!=NULL)
+			free(extendno);
 #endif
 #endif
 		return HANDLER_FINISHED;
@@ -3657,6 +3899,1171 @@ propmatch_cleanup:
 		unlink("/tmp/arpping_list");
 		#endif
 			
+		con->http_status = 200;
+		con->file_finished = 1;
+		return HANDLER_FINISHED;
+	}
+
+	case HTTP_METHOD_PROPFINDMEDIALIST:{
+
+		int dms_enable = is_dms_enabled();
+
+		if(dms_enable == 0){
+			//- Service Not Available
+			con->http_status = 503;
+			return HANDLER_FINISHED;
+		}
+		
+		/* they want to know the properties of the directory */
+		req_props = NULL;
+				
+		/* is there a content-body ? */ 	
+		switch (stat_cache_get_entry(srv, con, con->physical.path, &sce)) {
+			case HANDLER_ERROR:
+				if (errno == ENOENT) {
+					con->http_status = 404;
+					return HANDLER_FINISHED;
+				}
+				break;
+			default:
+				break;
+		}
+		
+#ifdef USE_PROPPATCH
+		/* any special requests or just allprop ? */
+		if (con->request.content_length) {
+			xmlDocPtr xml;
+			
+			if (1 == webdav_parse_chunkqueue(srv, con, p, con->request_content_queue, &xml)) {
+				xmlNode *rootnode = xmlDocGetRootElement(xml);
+		
+				assert(rootnode);
+				
+				if (0 == xmlStrcmp(rootnode->name, BAD_CAST "propfind")) {
+					xmlNode *cmd;
+		
+					req_props = calloc(1, sizeof(*req_props));
+		
+					for (cmd = rootnode->children; cmd; cmd = cmd->next) {
+		
+						if (0 == xmlStrcmp(cmd->name, BAD_CAST "prop")) {
+							/* get prop by name */
+							xmlNode *prop;
+							for (prop = cmd->children; prop; prop = prop->next) {
+								if (prop->type == XML_TEXT_NODE) continue; /* ignore WS */								
+								if (prop->ns &&
+									(0 == xmlStrcmp(prop->ns->href, BAD_CAST "")) &&
+									(0 != xmlStrcmp(prop->ns->prefix, BAD_CAST ""))) {
+									size_t i;
+									log_error_write(srv, __FILE__, __LINE__, "ss",
+											"no name space for:",
+											prop->name);
+									
+									xmlFreeDoc(xml);
+		
+									for (i = 0; i < req_props->used; i++) {
+										free(req_props->ptr[i]->ns);
+										free(req_props->ptr[i]->prop);
+										free(req_props->ptr[i]);
+									}
+									free(req_props->ptr);
+									free(req_props);									
+									con->http_status = 400;
+									return HANDLER_FINISHED;
+								}
+		
+								/* add property to requested list */
+								if (req_props->size == 0) {
+									req_props->size = 16;
+									req_props->ptr = malloc(sizeof(*(req_props->ptr)) * req_props->size);
+								} else if (req_props->used == req_props->size) {
+									req_props->size += 16;
+									req_props->ptr = realloc(req_props->ptr, sizeof(*(req_props->ptr)) * req_props->size);
+								}
+		
+								req_props->ptr[req_props->used] = malloc(sizeof(webdav_property));
+								req_props->ptr[req_props->used]->ns = (char *)xmlStrdup(prop->ns ? prop->ns->href : (xmlChar *)"");
+								req_props->ptr[req_props->used]->prop = (char *)xmlStrdup(prop->name);
+								req_props->used++;
+							}
+						} else if (0 == xmlStrcmp(cmd->name, BAD_CAST "propname")) {
+							sqlite3_stmt *stmt = p->conf.stmt_select_propnames;
+		
+							if (stmt) {
+								/* get all property names (EMPTY) */
+								sqlite3_reset(stmt);
+								/* bind the values to the insert */
+		
+								sqlite3_bind_text(stmt, 1,
+												  con->uri.path->ptr,
+												  con->uri.path->used - 1,
+												  SQLITE_TRANSIENT);
+		
+								if (SQLITE_DONE != sqlite3_step(stmt)) {
+								}
+							}
+						} else if (0 == xmlStrcmp(cmd->name, BAD_CAST "allprop")) {
+							/* get all properties (EMPTY) */
+							req_props = NULL;
+						}
+					}
+				}
+		
+				xmlFreeDoc(xml);
+			} else {
+				con->http_status = 400;
+				return HANDLER_FINISHED;
+			}
+		}
+#endif
+
+#ifdef USE_MINIDLNA_DB
+		Cdbg(DBE, "do HTTP_METHOD_PROPFINDMEDIALIST");
+		
+		sqlite3 *sql_minidlna = NULL;
+		buffer* media_type = NULL;  //- 0: All(default), 1: Image, 2:Audio, 3:Video
+		buffer* start = NULL;       //- start query index
+		buffer* end = NULL;         //- end query index
+		buffer* keyword = NULL;     //- query keyword
+		buffer* orderby = NULL;     //- query sortby
+		buffer* orderrule = NULL;   //- sort rule: DESC, ASC
+		buffer* parentid = NULL;   //- parentid
+		
+		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "MediaType"))) {
+		 	media_type = ds->value;
+		}
+		else{
+			Cdbg(DBE, "No value 'MediaType' specified!");
+			con->http_status = 207;
+			con->file_finished = 1;
+			return HANDLER_FINISHED;	
+		}
+			
+		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "Start"))) {
+			start = ds->value;
+		}
+
+		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "End"))) {
+			end = ds->value;
+		}
+
+		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "Keyword"))) {
+			keyword = ds->value;
+		}
+
+		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "Orderby"))) {
+			orderby = ds->value;
+		}
+
+		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "Orderrule"))) {
+			orderrule = ds->value;
+		}
+
+		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "Parentid"))) {
+			parentid = ds->value;
+		}
+
+		get_minidlna_db_path(p);
+		
+		if (!buffer_is_empty(p->minidlna_db_file)) {			
+			if (SQLITE_OK != sqlite3_open(p->minidlna_db_file->ptr, &(sql_minidlna))) {				
+				Cdbg(DBE, "Fail to open minidlna db %s", p->minidlna_db_file->ptr);
+			}
+		}
+
+		if (!sql_minidlna) {
+			Cdbg(DBE, "NULL value 'sql_minidlna'!");
+			con->http_status = 207;
+			con->file_finished = 1;
+			return HANDLER_FINISHED;	
+		}
+		
+		int rows, rows2, i;
+		char **result, **result2;
+		sqlite_int64 plID, detailID;
+		char *plpath, *plname, *date, *timestamp, *thumbnail, *resolution;
+		char sql_query[2048] = "\0";
+		
+		int column_count = 7;
+		sprintf(sql_query, "SELECT d.ID as ID, "
+		                   "d.PATH as PATH, "
+		                   "d.TITLE as TITLE, "
+		                   "d.SIZE as SIZE, "
+		                   "d.TIMESTAMP as TIMESTAMP, "
+		                   "d.THUMBNAIL as THUMBNAIL, "
+		                   "d.RESOLUTION as RESOLUTION "
+			               "from DETAILS d ");
+		
+		if(!buffer_is_empty(parentid)){
+			sprintf(sql_query, "%s left join OBJECTS o on (o.DETAIL_ID = d.ID)", sql_query);
+		}
+		
+		if( buffer_is_equal_string(media_type, CONST_STR_LEN("1")) ){
+			sprintf(sql_query, "%s where d.MIME glob 'i*'", sql_query);			
+		}
+		else if( buffer_is_equal_string(media_type, CONST_STR_LEN("2")) ){
+			sprintf(sql_query, "%s where d.MIME glob 'a*'", sql_query);
+		}
+		else if( buffer_is_equal_string(media_type, CONST_STR_LEN("3")) ){
+			sprintf(sql_query, "%s where d.MIME glob 'v*'", sql_query);
+		}
+		else if( buffer_is_equal_string(media_type, CONST_STR_LEN("0")) ){
+			sprintf(sql_query, "%s where d.MIME glob 'i*' or d.MIME glob 'a*' or d.MIME glob 'v*'", sql_query);
+		}
+		
+		if(!buffer_is_empty(keyword)){			
+			buffer_urldecode_path(keyword);
+			sprintf(sql_query, "%s and ( PATH LIKE '%s%s%s' or TITLE LIKE '%s%s%s' )", sql_query, "%", keyword->ptr, "%", "%", keyword->ptr, "%");			
+		}
+
+		if(!buffer_is_empty(parentid)){
+			sprintf(sql_query, "%s and o.PARENT_ID='%s'", sql_query, parentid->ptr );			
+		}
+				
+#if EMBEDDED_EANBLE
+		//- Get mount partition
+		char* disk_path = "/mnt/";
+		DIR *dir;
+		if (NULL != (dir = opendir(disk_path))) {
+			struct dirent *de;
+			while(NULL != (de = readdir(dir))) {
+				if ( de->d_name[0] == '.' && de->d_name[1] == '.' && de->d_name[2] == '\0' ) {
+					continue;
+					//- ignore the parent dir
+				}
+
+				if ( de->d_name[0] == '.' ) {
+					continue;
+					//- ignore the hidden file
+				}
+				
+				char partion_path[100] = "\0";
+				sprintf(partion_path, "%s%s", disk_path, de->d_name);
+
+				if(strstr( con->physical.path->ptr, partion_path )){
+					sprintf(sql_query, "%s and PATH LIKE '%s%s/%s'", sql_query, "%", partion_path, "%");
+					break;
+				}
+			}
+			closedir(dir);
+		}
+#endif
+		
+		Cdbg(DBE, "1. sql_query=%s", sql_query);
+		if( sql_get_table(sql_minidlna, sql_query, &result, &rows, NULL) != SQLITE_OK ){
+			sqlite3_close(sql_minidlna);
+			con->http_status = 207;
+			con->file_finished = 1;
+			Cdbg(DBE, "Fail to sql_get_table");
+			return HANDLER_FINISHED;
+		}
+		#if 0
+		if( !rows ){
+			sqlite3_free_table(result);
+			sqlite3_close(sql_minidlna);
+			con->http_status = 207;
+			con->file_finished = 1;
+			Cdbg(DBE, "rows = 0!");
+			return HANDLER_FINISHED;
+		}
+		#endif
+		////////////////////////////////////////////////////////////////////////////////////
+		
+		response_header_overwrite(srv, con, CONST_STR_LEN("Content-Type"), CONST_STR_LEN("text/xml; charset=\"utf-8\""));
+
+		b = chunkqueue_get_append_buffer(con->write_queue);
+
+		buffer_copy_string_len(b, CONST_STR_LEN("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"));
+		buffer_append_string_len(b,CONST_STR_LEN("<D:multistatus xmlns:D=\"DAV:\" xmlns:ns0=\"urn:uuid:c2f41010-65b3-11d1-a29f-00aa00c14882/\" "));
+
+		//- Total count
+		buffer_append_string_len(b, CONST_STR_LEN(" qcount=\""));
+		char qcount[1024]="\0";
+		sprintf(qcount, "%d", rows);
+		buffer_append_string(b, qcount);
+		buffer_append_string_len(b, CONST_STR_LEN("\""));
+
+		buffer_append_string_len(b, CONST_STR_LEN(" scan_status=\""));
+#if EMBEDDED_EANBLE
+		//- Get scan status
+		char dms_scanfile[64];
+    	FILE *fp;
+
+		if (!buffer_is_empty(p->minidlna_db_dir)) {	    
+	        sprintf(dms_scanfile, "%s/scantag", p->minidlna_db_dir->ptr);
+
+	        fp = fopen(dms_scanfile, "r");
+
+	        if(fp) {
+				buffer_append_string(b, "Scanning");
+	            fclose(fp);
+	        }
+			else
+				buffer_append_string(b, "Idle");
+	    }
+#else
+		buffer_append_string(b, "Scanning");
+#endif
+		buffer_append_string_len(b, CONST_STR_LEN("\""));
+
+		int query_again = 0;		
+		if(!buffer_is_empty(orderby)){
+			if(!buffer_is_empty(orderrule))
+				sprintf(sql_query, "%s ORDER BY %s %s", sql_query, orderby->ptr, orderrule->ptr);
+			else
+				sprintf(sql_query, "%s ORDER BY %s ASC", sql_query, orderby->ptr);
+			
+			query_again = 1;
+		}
+		
+		if(!buffer_is_empty(start) && !buffer_is_empty(end)){
+			sprintf(sql_query, "%s LIMIT %s, %s", sql_query, start->ptr, end->ptr);
+			query_again = 1;
+
+			//- Start Index
+			buffer_append_string_len(b, CONST_STR_LEN(" qstart=\""));			
+			buffer_append_string_buffer(b, start);
+			buffer_append_string_len(b, CONST_STR_LEN("\""));
+
+			//- End Index
+			int query_end = atoi(end->ptr);
+			if( query_end > rows) query_end = rows;
+			buffer_append_string_len(b, CONST_STR_LEN(" qend=\""));	
+			char qend[1024]="\0";
+			sprintf(qend, "%d", query_end);
+			buffer_append_string(b, qend);
+			buffer_append_string_len(b, CONST_STR_LEN("\""));
+		}
+		
+		Cdbg(DBE, "sql_query=%s, qcount=%s", sql_query, qcount);
+			
+		buffer_append_string_len(b,CONST_STR_LEN(">\n"));
+		
+		if(query_again==1){
+			sqlite3_free_table(result);			
+			if( sql_get_table(sql_minidlna, sql_query, &result, &rows, NULL) != SQLITE_OK ){
+				sqlite3_close(sql_minidlna);
+				con->http_status = 207;
+				con->file_finished = 1;
+				Cdbg(DBE, "Fail to sql_get_table 2");
+				return HANDLER_FINISHED;
+			}
+		}
+
+		Cdbg(DBE, "rows=%d", rows);
+		
+		rows++;
+		
+		char* usbdisk_name;
+#if EMBEDDED_EANBLE
+		char *a = nvram_get_productid();
+		int l = strlen(a)+1;
+		usbdisk_name = (char*)malloc(l);
+		memset(usbdisk_name,'\0', l);
+		strcpy(usbdisk_name, a);
+		#ifdef APP_IPKG
+		free(a);
+		#endif
+#else
+		usbdisk_name = (char*)malloc(8);
+		memset(usbdisk_name,'\0', 8);
+		strcpy(usbdisk_name, "usbdisk");
+#endif
+
+		/* allprop */
+		prop_200 = buffer_init();
+		prop_404 = buffer_init();
+		physical d;					
+		d.path = buffer_init();
+		d.rel_path = buffer_init();
+		
+		for( i=column_count; i<rows*column_count; i+=column_count ){
+
+			//- ID, PATH, TITLE, SIZE, TIMESTAMP, THUMBNAIL
+			plID = strtoll(result[i], NULL, 10);
+			plpath = result[i+1];
+			plname = result[i+2];
+			thumbnail = result[i+5];
+			resolution = result[i+6];
+			
+			if(!plpath)
+				continue;
+
+			int thumb = atoi(thumbnail);
+			
+			if(thumb){
+				//Cdbg(DBE, "plpath=%s, thumbnail = %d, resolution = %s", plpath, atoi(thumbnail), resolution);
+
+				#ifdef USE_LIBEXIF
+				ExifLoader *l = exif_loader_new();
+				exif_loader_write_file(l, plpath);
+				ExifData *ed = exif_loader_get_data(l);
+				exif_loader_unref(l);
+
+				if( ed ){
+					//Cdbg(DBE, "success");
+
+					#if 0
+					/* Make sure the image had a thumbnail before trying to write it */
+		            if (ed->data && ed->size) {
+		                FILE *thumb;
+		                char thumb_name[1024];
+
+		                /* Try to create a unique name for the thumbnail file */
+		                snprintf(thumb_name, sizeof(thumb_name),
+		                         "%s_thumb.jpg", plpath);
+
+		                thumb = fopen(thumb_name, "wb");
+		                if (thumb) {
+		                    /* Write the thumbnail image to the file */
+		                    fwrite(ed->data, 1, ed->size, thumb);
+		                    fclose(thumb);
+		                    Cdbg(DBE, "Wrote thumbnail to %s\n", thumb_name);
+		                } else {
+		                    Cdbg(DBE, "Could not create file %s\n", thumb_name);
+		                }
+		            } else {
+		                Cdbg(DBE, "No EXIF thumbnail in file\n");
+		            }
+					#endif
+					
+		            /* Free the EXIF data */
+		            exif_data_unref(ed);
+				}
+				#endif
+			}
+			
+			char buff[4096];
+			#if EMBEDDED_EANBLE
+			char* tmp = replace_str(&plpath[0], 
+			                    	"tmp/mnt", 
+			                    	usbdisk_name, 
+				                	(char *)&buff[0]);
+			#else
+			char* tmp = replace_str(&plpath[0], 
+			                    	"mnt", 
+			                    	usbdisk_name, 
+				                	(char *)&buff[0]);
+			
+			#endif
+
+			//Cdbg(DBE, "tmp=%s, con->url.path=%s", tmp, con->url.path->ptr);
+			
+			buffer_copy_string(d.path, plpath);
+			buffer_copy_string(d.rel_path, plpath);
+						
+			buffer_reset(prop_200);
+			buffer_reset(prop_404);
+
+			//Cdbg(DBE, "d.path=%s", d.path->ptr);
+			//Cdbg(DBE, "d.rel_path=%s", d.rel_path->ptr);
+			
+			webdav_get_props(srv, con, p, &d, req_props, prop_200, prop_404);
+			
+			buffer_append_string_len(b,CONST_STR_LEN("<D:response>\n"));
+			buffer_append_string_len(b,CONST_STR_LEN("<D:href>"));
+			buffer_append_string_buffer(b, con->uri.scheme);
+			buffer_append_string_len(b,CONST_STR_LEN("://"));
+			buffer_append_string_buffer(b, con->uri.authority);
+			buffer_append_string_encoded(b, tmp, strlen(tmp), ENCODING_REL_URI);						
+			buffer_append_string_len(b,CONST_STR_LEN("</D:href>\n"));
+			
+			if (!buffer_is_empty(prop_200)) {
+				buffer_append_string_len(b,CONST_STR_LEN("<D:propstat>\n"));
+				buffer_append_string_len(b,CONST_STR_LEN("<D:prop>\n"));
+				buffer_append_string_buffer(b, prop_200);
+				buffer_append_string_len(b, CONST_STR_LEN("<D:title>"));
+				buffer_append_string(b, plname);
+				buffer_append_string_len(b, CONST_STR_LEN("</D:title>"));
+				buffer_append_string_len(b,CONST_STR_LEN("</D:prop>\n"));
+				buffer_append_string_len(b,CONST_STR_LEN("<D:status>HTTP/1.1 200 OK</D:status>\n"));
+				buffer_append_string_len(b,CONST_STR_LEN("</D:propstat>\n"));
+			}
+			if (!buffer_is_empty(prop_404)) {
+				buffer_append_string_len(b,CONST_STR_LEN("<D:propstat>\n"));
+				buffer_append_string_len(b,CONST_STR_LEN("<D:prop>\n"));
+				buffer_append_string_buffer(b, prop_404);
+
+				//- for test
+				buffer_append_string_len(b, CONST_STR_LEN("<D:mtitle>"));
+				buffer_append_string(b, plname);
+				buffer_append_string_len(b, CONST_STR_LEN("</D:mtitle>"));
+
+				buffer_append_string_len(b,CONST_STR_LEN("</D:prop>\n"));
+				buffer_append_string_len(b,CONST_STR_LEN("<D:status>HTTP/1.1 404 Not Found</D:status>\n"));
+				buffer_append_string_len(b,CONST_STR_LEN("</D:propstat>\n"));
+			}
+				
+			buffer_append_string_len(b,CONST_STR_LEN("</D:response>\n"));
+			
+		}
+		
+		buffer_free(d.path);
+		buffer_free(d.rel_path);
+
+		buffer_free(prop_200);
+		buffer_free(prop_404);
+
+		buffer_append_string_len(b,CONST_STR_LEN("</D:multistatus>\n"));
+
+		sqlite3_free_table(result);
+		/*
+		//- test
+		Cdbg(DBE, "------------------------------");
+
+		//- 專輯
+		column_count = 4;
+		//sprintf(sql_query, "SELECT PATH, TITLE, ALBUM_ART, ARTIST from DETAILS where TITLE='- All Albums -'");				
+		sprintf(sql_query, "SELECT d.PATH as PATH, "
+		                   "d.TITLE as TITLE, "
+		                   "d.ALBUM_ART as ALBUM_ART, "
+		                   "d.ARTIST as ARTIST "
+		                   "from OBJECTS o "
+						   "left join DETAILS d on (o.DETAIL_ID = d.ID)"
+						   " where o.CLASS = 'container.album.musicAlbum'");
+
+		if( sql_get_table(sql_minidlna, sql_query, &result, &rows, NULL) == SQLITE_OK ){
+			Cdbg(DBE, "sql_query=%s, rows=%d", sql_query, rows);
+			int i=0;
+			for( i=column_count; i<rows*column_count; i+=column_count ){
+									
+				Cdbg(DBE, "1, i=%d, PATH=%s, TITLE=%s, ALBUM_ART=%s, ARTIST=%s", 
+					i, result[i], result[i+1], result[i+2], result[i+3]);
+			}
+					
+			sqlite3_free_table(result);
+		}
+		/*
+		//- 演唱者
+		column_count = 4;
+		//sprintf(sql_query, "SELECT PATH, TITLE, ALBUM_ART, ARTIST from DETAILS where TITLE='- All Albums -'");				
+		sprintf(sql_query, "SELECT d.PATH as PATH, d.TITLE as TITLE, d.ALBUM_ART as ALBUM_ART, d.ARTIST as ARTIST from OBJECTS o "
+								   "left join DETAILS d on (o.DETAIL_ID = d.ID)"
+								   " where o.CLASS = 'container.person.musicArtist'");
+
+		if( sql_get_table(sql_minidlna, sql_query, &result, &rows, NULL) == SQLITE_OK ){
+			Cdbg(DBE, "sql_query=%s, rows=%d", sql_query, rows);
+			int i=0;
+			for( i=column_count; i<rows*column_count; i+=column_count ){
+									
+				Cdbg(DBE, "2, i=%d, PATH=%s, TITLE=%s, ALBUM_ART=%s, ARTIST=%s", 
+					i, result[i], result[i+1], result[i+2], result[i+3]);
+			}
+					
+			sqlite3_free_table(result);
+		}
+		
+		column_count = 4;
+		sprintf(sql_query, "SELECT PATH, TITLE, ALBUM_ART, ARTIST from DETAILS");				
+		Cdbg(DBE, "sql_query=%s", sql_query);
+
+		if( sql_get_table(sql_minidlna, sql_query, &result, &rows, NULL) == SQLITE_OK ){
+					
+			int i=0;
+			for( i=column_count; i<rows*column_count; i+=column_count ){
+
+						
+				Cdbg(DBE, "nbbb, i=%d, PATH=%s, TITLE=%s, ALBUM_ART=%s, ARTIST=%s", 
+					i, result[i], result[i+1], result[i+2], result[i+3]);
+			}
+					
+			sqlite3_free_table(result);
+		}
+		
+		
+		column_count = 5;
+		sprintf(sql_query, "SELECT NAME, CLASS, OBJECT_ID, PARENT_ID, REF_ID from OBJECTS");				
+		
+		if( sql_get_table(sql_minidlna, sql_query, &result, &rows, NULL) == SQLITE_OK ){
+			Cdbg(DBE, "sql_query=%s, rows=%d", sql_query, rows);			
+			int i=0;
+			for( i=column_count; i<rows*column_count; i+=column_count ){
+				Cdbg(DBE, "nccc, i=%d, NAME=%s, OBJECT_ID=%s, PARENT_ID=%s, REF_ID=%s", 
+					i, result[i], result[i+2], result[i+3], result[i+4]);
+			}
+					
+			sqlite3_free_table(result);
+		}
+		
+		
+		column_count = 1;
+		sprintf(sql_query, "SELECT PATH from ALBUM_ART");
+		if( sql_get_table(sql_minidlna, sql_query, &result2, &rows2, NULL) == SQLITE_OK ){
+			Cdbg(DBE, "sql_query=%s, rows=%d", sql_query, rows2);
+			int i=0;
+			for( i=column_count; i<rows2*column_count; i+=column_count ){
+				//sqlite_int64 plID = strtoll(result[i], NULL, 10);
+				//char* plpath = result[i+1];			
+				//Cdbg(DBE, "nddd, i=%d, ID=%lld, PATH=%s", i, plID, plpath);
+
+				char* plpath = result2[i];
+				Cdbg(DBE, "nddd, i=%d, PATH=%s", i, plpath);
+			}
+		}
+
+		sqlite3_free_table(result2);
+		//sqlite3_close(sql_minidlna);
+		
+		
+		Cdbg(DBE, "------------------------------");	
+		*/
+		
+		sqlite3_close(sql_minidlna);
+#endif
+		con->http_status = 207;
+		con->file_finished = 1;
+		return HANDLER_FINISHED;
+	}
+
+	case HTTP_METHOD_GETMUSICCLASSIFICATION:{
+		Cdbg(DBE, "do HTTP_METHOD_GETMUSICCLASSIFICATION");
+
+		if(is_dms_enabled() == 0){
+			//- Service Not Available
+			con->http_status = 503;
+			return HANDLER_FINISHED;
+		}		
+		
+		buffer* classify;
+		
+		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "Classify"))) {
+			classify = ds->value;
+		}
+		else{
+			con->http_status = 400;
+			con->file_finished = 1;
+			return HANDLER_FINISHED;
+		}
+		
+#ifdef USE_MINIDLNA_DB
+		sqlite3 *sql_minidlna = NULL;
+		if (!buffer_is_empty(p->minidlna_db_file)) {			
+			if (SQLITE_OK != sqlite3_open(p->minidlna_db_file->ptr, &(sql_minidlna))) { 			
+				Cdbg(DBE, "Fail to open minidlna db %s", p->minidlna_db_file->ptr);
+			}
+		}
+		
+		if (!sql_minidlna) {
+			Cdbg(DBE, "NULL value 'sql_minidlna'!");
+			con->http_status = 207;
+			con->file_finished = 1;
+			return HANDLER_FINISHED;	
+		}
+		
+		int column_count = 5;
+		int rows, i;
+		char **result;
+		char sql_query[2048] = "\0";
+
+		if(buffer_is_equal_string(classify, CONST_STR_LEN("album"))){
+			sprintf(sql_query, "SELECT d.TITLE as TITLE, "
+						   	   "d.ALBUM_ART as ALBUM_ART, "
+						   	   "d.ARTIST as ARTIST, "
+						       "o.PARENT_ID as PARENT_ID, "
+						       "o.OBJECT_ID as OBJECT_ID "
+						       "from OBJECTS o "
+						       "left join DETAILS d on (o.DETAIL_ID = d.ID) "
+						       "where o.CLASS = 'container.album.musicAlbum' "
+						       "and o.PARENT_ID = '%s'", MUSIC_ALBUM_ID);
+		}
+		else if(buffer_is_equal_string(classify, CONST_STR_LEN("artist"))){
+			sprintf(sql_query, "SELECT d.TITLE as TITLE, "
+							   "d.ALBUM_ART as ALBUM_ART, "
+							   "d.ARTIST as ARTIST, "
+                               "o.PARENT_ID as PARENT_ID, "
+                               "o.OBJECT_ID as OBJECT_ID "
+						       "from OBJECTS o "
+						       "left join DETAILS d on (o.DETAIL_ID = d.ID) "
+						       "where o.CLASS = 'container.person.musicArtist'"
+						       "and o.PARENT_ID = '%s'", MUSIC_ARTIST_ID);
+		}
+		else{
+			con->http_status = 400;
+			con->file_finished = 1;
+			sqlite3_close(sql_minidlna);
+			return HANDLER_FINISHED;
+		}
+		
+		response_header_overwrite(srv, con, CONST_STR_LEN("Content-Type"), CONST_STR_LEN("text/xml; charset=\"utf-8\""));
+				
+		b = chunkqueue_get_append_buffer(con->write_queue);
+				
+		buffer_copy_string_len(b, CONST_STR_LEN("<?xml version=\"1.0\" encoding=\"unicode\"?>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<result>"));
+		
+		Cdbg(DBE, "do HTTP_METHOD_GETMUSICCLASSIFICATION, sql_query=%s", sql_query);
+				
+		if( sql_get_table(sql_minidlna, sql_query, &result, &rows, NULL) == SQLITE_OK ){
+			Cdbg(DBE, "sql_query=%s, rows=%d", sql_query, rows);
+			int i=0;
+					
+			for( i=column_count; i<=rows*column_count; i+=column_count ){			
+		
+				char* title = result[i];
+				char* album_art = result[i+1];
+				char* artist = result[i+2];
+				char* parent_id = result[i+3];
+				char* object_id = result[i+4];
+					
+				//Cdbg(DBE, "1, TITLE=%s, ALBUM_ART=%s, ARTIST=%s", title, album_art, artist);
+				buffer_append_string_len(b,CONST_STR_LEN("<item>"));
+				buffer_append_string_len(b,CONST_STR_LEN("<id>"));
+				buffer_append_string(b,object_id);
+				if(buffer_is_equal_string(classify, CONST_STR_LEN("artist")))
+					buffer_append_string(b,"$0");	
+				buffer_append_string_len(b,CONST_STR_LEN("</id>"));
+				buffer_append_string_len(b,CONST_STR_LEN("<title>"));
+				buffer_append_string(b,title);
+				buffer_append_string_len(b,CONST_STR_LEN("</title>"));
+				buffer_append_string_len(b,CONST_STR_LEN("<artist>"));
+				buffer_append_string(b,artist);
+				buffer_append_string_len(b,CONST_STR_LEN("</artist>"));
+		
+				char* image = NULL;
+				sqlite_int64 plAlbumArt = (album_art ? strtoll(album_art, NULL, 10) : 0);
+				if(get_album_cover_image(sql_minidlna, plAlbumArt, &image)==1){
+					buffer_append_string_len(b, CONST_STR_LEN("<thumb_image>"));
+					buffer_append_string(b, image);
+					buffer_append_string_len(b, CONST_STR_LEN("</thumb_image>"));
+					free(image);
+				}
+					
+				buffer_append_string_len(b,CONST_STR_LEN("</item>"));
+			}
+						
+			sqlite3_free_table(result);
+		}
+
+		sqlite3_close(sql_minidlna);
+		buffer_append_string_len(b,CONST_STR_LEN("</result>"));
+#endif
+		
+		con->http_status = 200;
+		con->file_finished = 1;
+		return HANDLER_FINISHED;
+	}
+
+	case HTTP_METHOD_GETMUSICPLAYLIST:{
+		Cdbg(DBE, "do HTTP_METHOD_GETMUSICPLAYLIST");
+
+		if(is_dms_enabled() == 0){
+			//- Service Not Available
+			con->http_status = 503;
+			return HANDLER_FINISHED;
+		}
+
+		buffer* play_id;
+		
+		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "id"))) {
+			play_id = ds->value;
+		}
+		else{
+			con->http_status = 400;
+			con->file_finished = 1;
+			return HANDLER_FINISHED;
+		}
+#ifdef USE_MINIDLNA_DB
+		sqlite3 *sql_minidlna = NULL;
+		if (!buffer_is_empty(p->minidlna_db_file)) {			
+			if (SQLITE_OK != sqlite3_open(p->minidlna_db_file->ptr, &(sql_minidlna))) { 			
+				Cdbg(DBE, "Fail to open minidlna db %s", p->minidlna_db_file->ptr);
+			}
+		}
+		
+		if (!sql_minidlna) {
+			Cdbg(DBE, "NULL value 'sql_minidlna'!");
+			con->http_status = 207;
+			con->file_finished = 1;
+			return HANDLER_FINISHED;	
+		}
+		
+		int column_count = 2;
+		int rows, i;
+		char **result;
+		char sql_query[2048] = "\0";
+
+		sprintf(sql_query, "SELECT d.TITLE as TITLE, "
+						   "d.PATH as PATH "
+						   "from OBJECTS o "
+						   "left join DETAILS d on (o.DETAIL_ID = d.ID) "
+						   "where o.PARENT_ID = '%s'", play_id->ptr);
+		
+		response_header_overwrite(srv, con, CONST_STR_LEN("Content-Type"), CONST_STR_LEN("text/xml; charset=\"utf-8\""));
+				
+		b = chunkqueue_get_append_buffer(con->write_queue);
+				
+		buffer_copy_string_len(b, CONST_STR_LEN("<?xml version=\"1.0\" encoding=\"unicode\"?>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<result>"));
+		
+		Cdbg(DBE, "do HTTP_METHOD_GETMUSICPLAYLIST, sql_query=%s", sql_query);
+
+		char auth[100]="\0";		
+		if(con->aidisk_username->used && con->aidisk_passwd->used)
+			sprintf(auth, "%s:%s", con->aidisk_username->ptr, con->aidisk_passwd->ptr);
+		else{
+			con->http_status = 400;
+			sqlite3_close(sql_minidlna);
+			return HANDLER_FINISHED;
+		}
+
+		char* base64_auth = ldb_base64_encode(auth, strlen(auth));
+		
+		if( sql_get_table(sql_minidlna, sql_query, &result, &rows, NULL) == SQLITE_OK ){
+			Cdbg(DBE, "sql_query=%s, rows=%d", sql_query, rows);
+			int i=0;
+					
+			for( i=column_count; i<=rows*column_count; i+=column_count ){			
+		
+				char* title = result[i];
+				char* path = result[i+1];
+				Cdbg(DBE, "title=%s", title);	
+				Cdbg(DBE, "path=%s", path);	
+				buffer_append_string_len(b,CONST_STR_LEN("<item>"));
+				buffer_append_string_len(b,CONST_STR_LEN("<title>"));
+				if(title) buffer_append_string(b,title);
+				buffer_append_string_len(b,CONST_STR_LEN("</title>"));
+				buffer_append_string_len(b,CONST_STR_LEN("<path>"));
+				if(path) buffer_append_string(b,path);
+				buffer_append_string_len(b,CONST_STR_LEN("</path>"));
+
+				if(path){
+					char* filename = NULL;
+					buffer* buffer_filename = buffer_init();
+					extract_filename(path, &filename);
+					buffer_copy_string(buffer_filename, "");
+					buffer_append_string_encoded(buffer_filename,filename,strlen(filename),ENCODING_REL_URI);
+					free(filename);
+					
+					char* filepath = NULL;
+					extract_filepath(path, &filepath);
+
+					char buff[4096];
+					char* usbdisk_name;
+					
+					#if EMBEDDED_EANBLE
+					char *a = nvram_get_productid();
+					int l = strlen(a)+1;
+					usbdisk_name = (char*)malloc(l);
+					memset(usbdisk_name,'\0', l);
+					strcpy(usbdisk_name, a);
+					#ifdef APP_IPKG
+					free(a);
+					#endif
+					char* tmp = replace_str(&filepath[0], 
+					                    	"tmp/mnt", 
+					                    	usbdisk_name, 
+						                	(char *)&buff[0]);
+					#else
+					usbdisk_name = (char*)malloc(8);
+					memset(usbdisk_name,'\0', 8);
+					strcpy(usbdisk_name, "usbdisk");
+					char* tmp = replace_str(&filepath[0], 
+					                    	"mnt", 
+					                    	usbdisk_name, 
+						                	(char *)&buff[0]);
+					
+					#endif
+				
+					Cdbg(DBE, "filename=%s, filepath=%s", buffer_filename->ptr, tmp);
+					
+					buffer* buffer_result_share_link;
+					if( generate_sharelink(srv, 
+						                   con, 
+						                   buffer_filename->ptr, 
+						                   tmp, 
+						                   base64_auth, 0, 0, 
+						                   &buffer_result_share_link) == 1){
+						buffer_append_string_len(b,CONST_STR_LEN("<sharelink>"));
+						Cdbg(DBE, "sharelink=%s", buffer_result_share_link->ptr);
+						buffer_append_string_buffer(b,buffer_result_share_link);
+						buffer_append_string_len(b,CONST_STR_LEN("</sharelink>"));					
+					}
+
+					free(usbdisk_name);
+					free(filepath);
+					buffer_free(buffer_filename);
+					buffer_free(buffer_result_share_link);
+				}
+				
+				buffer_append_string_len(b,CONST_STR_LEN("</item>"));
+			}
+						
+			sqlite3_free_table(result);
+		}
+
+		sqlite3_close(sql_minidlna);
+		free(base64_auth);
+		
+		buffer_append_string_len(b,CONST_STR_LEN("</result>"));
+#endif
+
+		con->http_status = 200;
+		con->file_finished = 1;
+		return HANDLER_FINISHED;
+	}
+
+	case HTTP_METHOD_GETTHUMBIMAGE:{
+		Cdbg(DBE, "do HTTP_METHOD_GETTHUMBIMAGE");
+		
+		if(is_dms_enabled() == 0){
+			//- Service Not Available
+			con->http_status = 503;
+			return HANDLER_FINISHED;
+		}
+
+		buffer* file;
+		
+		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "File"))) {
+			file = ds->value;
+		}
+		else{
+			con->http_status = 400;
+			con->file_finished = 1;
+			return HANDLER_FINISHED;
+		}
+
+		response_header_overwrite(srv, con, CONST_STR_LEN("Content-Type"), CONST_STR_LEN("text/xml; charset=\"utf-8\""));
+				
+		b = chunkqueue_get_append_buffer(con->write_queue);
+				
+		buffer_copy_string_len(b, CONST_STR_LEN("<?xml version=\"1.0\" encoding=\"unicode\"?>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<result>"));
+		
+		buffer* file_path = buffer_init();
+		buffer_copy_string_buffer(file_path, con->physical.path);
+		buffer_append_string_len(file_path, CONST_STR_LEN("/"));
+		buffer_append_string_buffer(file_path, file);
+		
+		char* image = NULL;
+		Cdbg(DBE, "file_path = %s", file_path->ptr);
+		if(get_thumb_image(file_path->ptr, p, &image)==1){
+			buffer_append_string_len(b, CONST_STR_LEN("<thumb_image>"));
+			buffer_append_string(b, image);
+			buffer_append_string_len(b, CONST_STR_LEN("</thumb_image>"));
+			free(image);
+		}
+
+		buffer_append_string_len(b,CONST_STR_LEN("</result>"));
+
+		buffer_free(file_path);
+		
+		con->http_status = 200;
+		con->file_finished = 1;
+		return HANDLER_FINISHED;
+	}
+	
+	case HTTP_METHOD_GETVIDEOSUBTITLE:{
+		
+		buffer* filename;
+		
+		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "FILENAME"))) {
+			filename = ds->value;
+		} else {
+			con->http_status = 400;
+			return HANDLER_FINISHED;
+		}
+		
+		Cdbg(DBE, "do HTTP_METHOD_GETVIDEOSUBTITLE %s, filename=%s", con->physical.path->ptr, filename->ptr);
+
+		char auth[100]="\0";		
+		if(con->aidisk_username->used && con->aidisk_passwd->used)
+			sprintf(auth, "%s:%s", con->aidisk_username->ptr, con->aidisk_passwd->ptr);
+		else{
+			con->http_status = 400;
+			return HANDLER_FINISHED;
+		}
+
+		char* base64_auth = ldb_base64_encode(auth, strlen(auth));
+		
+		response_header_overwrite(srv, con, CONST_STR_LEN("Content-Type"), CONST_STR_LEN("text/xml; charset=\"utf-8\""));
+		
+		b = chunkqueue_get_append_buffer(con->write_queue);
+		
+		buffer_copy_string_len(b, CONST_STR_LEN("<?xml version=\"1.0\" encoding=\"utf-8\"?>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<result>"));
+		
+		if (NULL != (dir = opendir(con->physical.path->ptr))) {
+			struct dirent *de;
+
+			while(NULL != (de = readdir(dir))) {
+				struct stat st;
+				int status = 0;
+
+				if ((de->d_name[0] == '.' && de->d_name[1] == '\0')  ||
+				    (de->d_name[0] == '.' && de->d_name[1] == '.' && de->d_name[2] == '\0')) {
+					continue;
+					/* ignore the parent dir */
+				}
+
+				char* aa = get_filename_ext(de->d_name);
+				int len = strlen(aa)+1; 		
+				char* file_ext = (char*)malloc(len);
+				memset(file_ext,'\0', len);
+				strcpy(file_ext, aa);
+				for (int i = 0; file_ext[i]; i++)
+					file_ext[i] = tolower(file_ext[i]);
+
+				if( strcmp(file_ext, "srt")==0 &&
+					strncmp(de->d_name, filename->ptr, strlen(filename->ptr)) == 0 ){
+
+				#if 0
+					#define BUF_LEN 256
+					//char utf[1024] = "我的測試字串";
+					unsigned long uni2[BUF_LEN] = {
+				        0x8BF7, 0x4FDD, 0x8BC1, 0x8BE5, 0x6587, 0x4EF6, 0x662F, 0x4EE5,
+				        0x20, 0x75, 0x74, 0x66, 0x2D, 0x38, 0x20, 0x683C, 0x5F0F,
+				        0x5B58, 0x50A8, 0x7684, 0x21, 0x0
+				    };
+					char utf2[BUF_LEN];
+					int utflen2 = BUF_LEN;
+					int ret2 = enc_unicode_to_utf8_str(uni2, (unsigned char *)utf2, &utflen2);
+					if ( ret2 == 1 ){
+				    	Cdbg(DBE, "Ooooooooooooooooooooooooooooooooooook!");
+				        utf2[utflen2] = '\0';
+				        Cdbg(DBE, "utf2=%s", utf2);
+				    }
+				#endif
+#if 0
+					#define BUF_LEN 1024
+					buffer* srt_file = buffer_init();
+					buffer_copy_string_buffer(srt_file, con->physical.path);
+					buffer_append_string(srt_file, "/");	
+					buffer_append_string(srt_file, de->d_name);	
+					Cdbg(DBE, "srt_file=%s", srt_file->ptr);
+					
+					if(!is_utf8_file(srt_file->ptr)){
+					
+						buffer* new_srt_file = buffer_init();
+						
+						buffer_copy_string_buffer(new_srt_file, con->physical.path);
+						buffer_append_string(new_srt_file, "/");	
+						buffer_append_string_buffer(new_srt_file, filename);
+						buffer_append_string(new_srt_file, "_utf8.srt");
+						
+						//buffer_append_string(new_srt_file, "/tmp/out.srt");
+						
+						Cdbg(DBE, "new_srt_file=%s", new_srt_file->ptr);
+						
+						FILE* fp3, *fp4;
+						char line[BUF_LEN];
+							 
+						fp4 = fopen(new_srt_file->ptr, "w");
+
+						//- write utf-8 file header
+						unsigned char utf8_header[3] = {0xEF, 0xBB, 0xBF};
+						fputs(utf8_header,fp4);
+
+						if((fp3 = fopen(srt_file->ptr, "r")) != NULL){
+
+							#if 1
+							memset(line, 0, sizeof(line));
+							while(fgets(line, BUF_LEN, fp3) != NULL){
+								
+								//Cdbg(1, "line=%s", line);
+								//- ANSI to UTF-8
+								char *iconv_buf = (char*)calloc(BUF_LEN, sizeof(char));
+								
+								int rc = do_iconv("UTF-8", "CP950",
+														   line, 
+														   strlen(line), 
+														   iconv_buf, 
+														   BUF_LEN);
+								//Cdbg(1, "iconv_buf=%s", iconv_buf);				 
+								fputs(iconv_buf,fp4); 
+								
+								free(iconv_buf);
+							}
+							#else
+							setlocale(LC_ALL, "");
+							char line2[BUF_LEN];
+							while(fgets(line2, BUF_LEN, fp3) != NULL){
+								
+								//Cdbg(DBE, "line2=%s", line2);
+								
+								char utf2[BUF_LEN];
+								int utflen2 = BUF_LEN;
+								//char uni2[BUF_LEN] = "我的測試字串";
+								/*
+								unsigned long uni2[BUF_LEN] = {
+								        0x8BF7, 0x4FDD, 0x8BC1, 0x8BE5, 0x6587, 0x4EF6, 0x662F, 0x4EE5,
+								        0x20, 0x75, 0x74, 0x66, 0x2D, 0x38, 0x20, 0x683C, 0x5F0F,
+								        0x5B58, 0x50A8, 0x7684, 0x21, 0x0
+								};
+								*/
+
+								#if 0
+								wchar_t wt1[BUF_LEN];
+								int size4 = ansiToWCHAR(wt1, BUF_LEN, line2 ,BUF_LEN+1, "en_ZW.utf8");
+								if(size4>0){
+									int ret2 = enc_unicode_to_utf8_str(wt1, (unsigned char *)utf2, &utflen2);
+									if ( ret2 == 1 ){
+								    	utf2[utflen2] = '\0';
+								        Cdbg(DBE, "utf2=%s", utf2);
+										fputs(utf2,fp4); 
+								    }
+								}
+								#else
+								int ret2 = enc_unicode_to_utf8_str((unsigned long *)m2w(line2), (unsigned char *)utf2, &utflen2);
+								if ( ret2 == 1 ){
+								   	utf2[utflen2] = '\0';
+								    Cdbg(DBE, "utf2=%s", utf2);
+									fputs(utf2,fp4); 
+								}
+								#endif
+							}
+							#endif
+								
+							fclose(fp3);
+						}
+						
+						physical s, d;
+
+						s.path = buffer_init();
+						s.rel_path = buffer_init();
+						buffer_copy_string_buffer(s.path, new_srt_file);
+						
+						d.path = buffer_init();
+						d.rel_path = buffer_init();
+						buffer_copy_string_buffer(d.path,srt_file);
+
+						Cdbg(DBE, "copy=%s -> %s", new_srt_file->ptr, srt_file->ptr);
+						
+						//webdav_copy_file(srv, con, p, &s, &d, 1);
+
+						fclose(fp4);					
+						buffer_free(srt_file);
+						buffer_free(new_srt_file);
+					}
+
+#endif						
+					buffer* buffer_result_share_link;
+					if( generate_sharelink(srv, 
+						                   con, 
+						                   de->d_name, 
+						                   con->url.path->ptr, 
+						                   base64_auth, 0, 0, 
+						                   &buffer_result_share_link) == 1){
+						buffer_append_string_len(b,CONST_STR_LEN("<file>"));
+						buffer_append_string_len(b,CONST_STR_LEN("<name>"));
+						buffer_append_string(b,de->d_name);
+						buffer_append_string_len(b,CONST_STR_LEN("</name>"));
+						buffer_append_string_len(b,CONST_STR_LEN("<sharelink>"));
+						buffer_append_string_buffer(b,buffer_result_share_link);
+						buffer_append_string_len(b,CONST_STR_LEN("</sharelink>"));
+						buffer_append_string_len(b,CONST_STR_LEN("</file>"));
+					}
+					
+					buffer_free(buffer_result_share_link);
+				}
+
+				free(file_ext);
+			}
+
+			closedir(dir);
+		}
+
+		buffer_append_string_len(b,CONST_STR_LEN("</result>"));
+		
 		con->http_status = 200;
 		con->file_finished = 1;
 		return HANDLER_FINISHED;

@@ -1,0 +1,265 @@
+6.7.  Quoted-Printable Content-Transfer-Encoding
+
+   The Quoted-Printable encoding is intended to represent data that
+   largely consists of octets that correspond to printable characters in
+   the US-ASCII character set.  It encodes the data in such a way that
+   the resulting octets are unlikely to be modified by mail transport.
+   If the data being encoded are mostly US-ASCII text, the encoded form
+   of the data remains largely recognizable by humans.  A body which is
+   entirely US-ASCII may also be encoded in Quoted-Printable to ensure
+   the integrity of the data should the message pass through a
+   character-translating, and/or line-wrapping gateway.
+
+   In this encoding, octets are to be represented as determined by the
+   following rules:
+
+    (1)   (General 8bit representation) Any octet, except a CR or
+          LF that is part of a CRLF line break of the canonical
+          (standard) form of the data being encoded, may be
+          represented by an "=" followed by a two digit
+          hexadecimal representation of the octet's value.  The
+          digits of the hexadecimal alphabet, for this purpose,
+          are "0123456789ABCDEF".  Uppercase letters must be
+          used; lowercase letters are not allowed.  Thus, for
+          example, the decimal value 12 (US-ASCII form feed) can
+          be represented by "=0C", and the decimal value 61 (US-
+          ASCII EQUAL SIGN) can be represented by "=3D".  This
+          rule must be followed except when the following rules
+          allow an alternative encoding.
+
+    (2)   (Literal representation) Octets with decimal values of
+          33 through 60 inclusive, and 62 through 126, inclusive,
+          MAY be represented as the US-ASCII characters which
+          correspond to those octets (EXCLAMATION POINT through
+          LESS THAN, and GREATER THAN through TILDE,
+          respectively).
+
+    (3)   (White Space) Octets with values of 9 and 32 MAY be
+          represented as US-ASCII TAB (HT) and SPACE characters,
+
+
+
+Freed & Borenstein          Standards Track                    [Page 19]
+
+RFC 2045                Internet Message Bodies            November 1996
+
+
+          respectively, but MUST NOT be so represented at the end
+          of an encoded line.  Any TAB (HT) or SPACE characters
+          on an encoded line MUST thus be followed on that line
+          by a printable character.  In particular, an "=" at the
+          end of an encoded line, indicating a soft line break
+          (see rule #5) may follow one or more TAB (HT) or SPACE
+          characters.  It follows that an octet with decimal
+          value 9 or 32 appearing at the end of an encoded line
+          must be represented according to Rule #1.  This rule is
+          necessary because some MTAs (Message Transport Agents,
+          programs which transport messages from one user to
+          another, or perform a portion of such transfers) are
+          known to pad lines of text with SPACEs, and others are
+          known to remove "white space" characters from the end
+          of a line.  Therefore, when decoding a Quoted-Printable
+          body, any trailing white space on a line must be
+          deleted, as it will necessarily have been added by
+          intermediate transport agents.
+
+    (4)   (Line Breaks) A line break in a text body, represented
+          as a CRLF sequence in the text canonical form, must be
+          represented by a (RFC 822) line break, which is also a
+          CRLF sequence, in the Quoted-Printable encoding.  Since
+          the canonical representation of media types other than
+          text do not generally include the representation of
+          line breaks as CRLF sequences, no hard line breaks
+          (i.e. line breaks that are intended to be meaningful
+          and to be displayed to the user) can occur in the
+          quoted-printable encoding of such types.  Sequences
+          like "=0D", "=0A", "=0A=0D" and "=0D=0A" will routinely
+          appear in non-text data represented in quoted-
+          printable, of course.
+
+          Note that many implementations may elect to encode the
+          local representation of various content types directly
+          rather than converting to canonical form first,
+          encoding, and then converting back to local
+          representation.  In particular, this may apply to plain
+          text material on systems that use newline conventions
+          other than a CRLF terminator sequence.  Such an
+          implementation optimization is permissible, but only
+          when the combined canonicalization-encoding step is
+          equivalent to performing the three steps separately.
+
+    (5)   (Soft Line Breaks) The Quoted-Printable encoding
+          REQUIRES that encoded lines be no more than 76
+          characters long.  If longer lines are to be encoded
+          with the Quoted-Printable encoding, "soft" line breaks
+
+
+
+Freed & Borenstein          Standards Track                    [Page 20]
+
+RFC 2045                Internet Message Bodies            November 1996
+
+
+          must be used.  An equal sign as the last character on a
+          encoded line indicates such a non-significant ("soft")
+          line break in the encoded text.
+
+   Thus if the "raw" form of the line is a single unencoded line that
+   says:
+
+     Now's the time for all folk to come to the aid of their country.
+
+   This can be represented, in the Quoted-Printable encoding, as:
+
+     Now's the time =
+     for all folk to come=
+      to the aid of their country.
+
+   This provides a mechanism with which long lines are encoded in such a
+   way as to be restored by the user agent.  The 76 character limit does
+   not count the trailing CRLF, but counts all other characters,
+   including any equal signs.
+
+   Since the hyphen character ("-") may be represented as itself in the
+   Quoted-Printable encoding, care must be taken, when encapsulating a
+   quoted-printable encoded body inside one or more multipart entities,
+   to ensure that the boundary delimiter does not appear anywhere in the
+   encoded body.  (A good strategy is to choose a boundary that includes
+   a character sequence such as "=_" which can never appear in a
+   quoted-printable body.  See the definition of multipart messages in
+   RFC 2046.)
+
+   NOTE: The quoted-printable encoding represents something of a
+   compromise between readability and reliability in transport.  Bodies
+   encoded with the quoted-printable encoding will work reliably over
+   most mail gateways, but may not work perfectly over a few gateways,
+   notably those involving translation into EBCDIC.  A higher level of
+   confidence is offered by the base64 Content-Transfer-Encoding.  A way
+   to get reasonably reliable transport through EBCDIC gateways is to
+   also quote the US-ASCII characters
+
+     !"#$@[\]^`{|}~
+
+   according to rule #1.
+
+   Because quoted-printable data is generally assumed to be line-
+   oriented, it is to be expected that the representation of the breaks
+   between the lines of quoted-printable data may be altered in
+   transport, in the same manner that plain text mail has always been
+   altered in Internet mail when passing between systems with differing
+   newline conventions.  If such alterations are likely to constitute a
+
+
+
+Freed & Borenstein          Standards Track                    [Page 21]
+
+RFC 2045                Internet Message Bodies            November 1996
+
+
+   corruption of the data, it is probably more sensible to use the
+   base64 encoding rather than the quoted-printable encoding.
+
+   NOTE: Several kinds of substrings cannot be generated according to
+   the encoding rules for the quoted-printable content-transfer-
+   encoding, and hence are formally illegal if they appear in the output
+   of a quoted-printable encoder. This note enumerates these cases and
+   suggests ways to handle such illegal substrings if any are
+   encountered in quoted-printable data that is to be decoded.
+
+    (1)   An "=" followed by two hexadecimal digits, one or both
+          of which are lowercase letters in "abcdef", is formally
+          illegal. A robust implementation might choose to
+          recognize them as the corresponding uppercase letters.
+
+    (2)   An "=" followed by a character that is neither a
+          hexadecimal digit (including "abcdef") nor the CR
+          character of a CRLF pair is illegal.  This case can be
+          the result of US-ASCII text having been included in a
+          quoted-printable part of a message without itself
+          having been subjected to quoted-printable encoding.  A
+          reasonable approach by a robust implementation might be
+          to include the "=" character and the following
+          character in the decoded data without any
+          transformation and, if possible, indicate to the user
+          that proper decoding was not possible at this point in
+          the data.
+
+    (3)   An "=" cannot be the ultimate or penultimate character
+          in an encoded object.  This could be handled as in case
+          (2) above.
+
+    (4)   Control characters other than TAB, or CR and LF as
+          parts of CRLF pairs, must not appear. The same is true
+          for octets with decimal values greater than 126.  If
+          found in incoming quoted-printable data by a decoder, a
+          robust implementation might exclude them from the
+          decoded data and warn the user that illegal characters
+          were discovered.
+
+    (5)   Encoded lines must not be longer than 76 characters,
+          not counting the trailing CRLF. If longer lines are
+          found in incoming, encoded data, a robust
+          implementation might nevertheless decode the lines, and
+          might report the erroneous encoding to the user.
+
+
+
+
+
+
+Freed & Borenstein          Standards Track                    [Page 22]
+
+RFC 2045                Internet Message Bodies            November 1996
+
+
+   WARNING TO IMPLEMENTORS:  If binary data is encoded in quoted-
+   printable, care must be taken to encode CR and LF characters as "=0D"
+   and "=0A", respectively.  In particular, a CRLF sequence in binary
+   data should be encoded as "=0D=0A".  Otherwise, if CRLF were
+   represented as a hard line break, it might be incorrectly decoded on
+   platforms with different line break conventions.
+
+   For formalists, the syntax of quoted-printable data is described by
+   the following grammar:
+
+     quoted-printable := qp-line *(CRLF qp-line)
+
+     qp-line := *(qp-segment transport-padding CRLF)
+                qp-part transport-padding
+
+     qp-part := qp-section
+                ; Maximum length of 76 characters
+
+     qp-segment := qp-section *(SPACE / TAB) "="
+                   ; Maximum length of 76 characters
+
+     qp-section := [*(ptext / SPACE / TAB) ptext]
+
+     ptext := hex-octet / safe-char
+
+     safe-char := <any octet with decimal value of 33 through
+                  60 inclusive, and 62 through 126>
+                  ; Characters not listed as "mail-safe" in
+                  ; RFC 2049 are also not recommended.
+
+     hex-octet := "=" 2(DIGIT / "A" / "B" / "C" / "D" / "E" / "F")
+                  ; Octet must be used for characters > 127, =,
+                  ; SPACEs or TABs at the ends of lines, and is
+                  ; recommended for any character not listed in
+                  ; RFC 2049 as "mail-safe".
+
+     transport-padding := *LWSP-char
+                          ; Composers MUST NOT generate
+                          ; non-zero length transport
+                          ; padding, but receivers MUST
+                          ; be able to handle padding
+                          ; added by message transports.
+
+   IMPORTANT:  The addition of LWSP between the elements shown in this
+   BNF is NOT allowed since this BNF does not specify a structured
+   header field.
+
+
+
+
+

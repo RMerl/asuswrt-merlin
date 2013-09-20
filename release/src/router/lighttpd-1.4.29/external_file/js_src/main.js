@@ -2,7 +2,6 @@
 var g_reload_page = 1;
 var m = new lang();
 var g_storage = new myStorage();
-var g_listview = (g_storage.get('listview') == undefined) ? 0 : g_storage.get('listview');
 var g_modal_url;
 var g_modal_window_width = 200;
 var g_modal_window_height = 80;
@@ -18,16 +17,13 @@ var g_file_array = null;
 var g_opening_uid = '';
 var g_on_button_animation = 0;
 var g_on_rescan_samba = 0;
-var g_rescan_samba_timer = 0;
-var g_rescan_samba_count = 0;
-var g_aidisk_name = "usbdisk";
-var g_enable_aidisk = 0;
-var g_support_lan = new Array('zh-tw', 'zh-cn', 'en-us', 'jp', 'it', 'fr', 'de', 'br', 'cz', 'da', 'fi', 'ms', 'no', 'pl', 'es', 'sv', 'th', 'tr', 'uk', 'ru');	
+//var g_aidisk_name = "usbdisk";
+var g_support_lan = new Array('en-us', 'zh-tw', 'zh-cn', 'cz', 'pl', 'ru', 'de', 'fr', 'tr', 'th', 'ms', 'no', 'fi', 'da', 'sv', 'br', 'jp', 'es', 'it', 'uk');
 var g_current_locktoken = "";
 var g_mouse_x = 0;
 var g_mouse_y = 0;
 var g_fileview_only = 0;
-var g_medialist_mode = 0;
+var g_btnSelect_right_position = 0;
 
 var client = new davlib.DavClient();
 client.initialize();
@@ -40,204 +36,16 @@ if (window.File && window.FileReader && window.FileList && window.Blob) {
 	g_support_html5 = 0;
 }
 
-function openImageViewer(loc){
-	
-	var image_array = new Array();
-	for(var i=0;i<g_file_array.length;i++){
-   	var file_ext = getFileExt(g_file_array[i].href);			
-		if(file_ext=="jpg"||file_ext=="jpeg"||file_ext=="png"||file_ext=="gif")
-   		image_array.push(g_file_array[i]);
-	}
-	
-	var image_array_count = image_array.length;
-	
-	if(image_array_count==0){
-		alert(m.getString("msg_no_image_list"));
-		return;
-	}
-	
-	var default_index = 0;
-	for(var i=0;i<image_array.length;i++){
-   	if( loc == image_array[i].href )
-   		default_index = i;
-  	}
-		
-	var div_html='';
-	var page_size = getPageSize();
-	
-	div_html += '<div id="image_slide_show" class="barousel unselectable" style="height: 0; width: 0; position: fixed; background-color: rgb(0, 0, 0); left: ' + page_size[0]/2 + 'px; top: ' + page_size[1]/2 + 'px; z-index: 2999;">';
-	
-	div_html += '<div class="barousel_image">';
-	
-	for(var i=0;i<image_array.length;i++){
-		var img_url = window.location.protocol + "//" + window.location.host + image_array[i].href;
-			
-		if(i==default_index)
-			div_html += '<img src="" path="' + img_url + '" alt="" class="default"/>';
-		else
-			div_html += '<img src="" path="' + img_url + '" alt="" class=""/>';
-	}
-	
-	div_html += '</div>';
-	
-	div_html += '<div class="barousel_nav">';
-	
-	//- upload facebook
-	//div_html += '<a class="facebook_upload" href="#" style="color:#fff" file="' + image_array[default_index].href + '">Share</a><br>';
-	
-	//- upload picassa
-	//div_html += '<a class="picassa_upload" href="#" style="color:#fff" file="' + image_array[default_index].href + '">Share Picassa</a>';
-	
-	div_html += '<div class="barousel_content transparent" style="display: block; ">';
-		
-	for(var i=0;i<image_array.length;i++){
-		div_html += '<div class="';
-				
-   		if(i==default_index)
-     		div_html += 'default';
-        	
-		div_html += '" style="display: none; ">';
-			
-		div_html += '<p class="header">' + image_array[i].name + '</p>';
-		div_html += '</div>';
-	}
-		           
-	div_html += '</div>';
-  
-  	div_html += '</div>';
-  
-  	//div_html += '<div class="barousel_nav"></div>';
-                  
-	div_html += '</div>';
-		
-	$(div_html)
-		.animate({width:"100%", height:"100%", left:"0px", top:"0px"},200, null, null )
-  		.appendTo("body");
-  
-	$('#image_slide_show').barousel({				
-		navType: 2,
-	    manualCarousel: 1,
-	    contentResize:0,
-	    startIndex:default_index
-	});
-	
-	$('.facebook_upload').click(function(){
-		
-		var $modalWindow = $("div#modalWindow");
-		
-		var file = $(this).attr("file");
-		var this_file_name = myencodeURI(file.substring(file.lastIndexOf('/')+1, file.length));
-		var this_url = file.substring(0, file.lastIndexOf('/'));
-		var media_hostName = window.location.host;
-		if(media_hostName.indexOf(":")!=-1)
-			media_hostName = media_hostName.substring(0, media_hostName.indexOf(":"));
-		media_hostName = "http://" + media_hostName + ":" + g_storage.get("http_port") + "/";
-		
-		client.GSL(this_url, this_url, this_file_name, 0, 0, function(error, content, statusstring){
-			if(error==200){
-				var data = parseXml(statusstring);
-				var share_link = $(data).find('sharelink').text();
-				var open_url = "";							
-									
-				share_link = media_hostName + share_link;		
-				
-				//g_modal_url = '/smb/css/upload_facebook.html';
-				g_modal_url = 'http://www.efroip.com/efroip/fbtest/fb.html?v=' + share_link + '&b=' + mydecodeURI(this_file_name) + '&d=' + window.location.href;
-				//g_modal_url = 'http://www.efroip.com/facebook/upload_photo.html';
-		
-				g_modal_window_width = 600;
-				g_modal_window_height = 320;
-				$('#jqmMsg').css("display", "none");	
-				$('#jqmTitleText').text("Upload to Facebook");
-				if($modalWindow){
-					$modalWindow.jqmShow();
-				}
-				
-				$("#image_slide_show").remove();
-			}
-		});
-		
-	});
-	
-	$('.picassa_upload').click(function(){
-		var $modalWindow = $("div#modalWindow");
-		
-		var file = $(this).attr("file");
-		var this_file_name = myencodeURI(file.substring(file.lastIndexOf('/')+1, file.length));
-		var this_url = file.substring(0, file.lastIndexOf('/'));
-		var media_hostName = window.location.host;
-		if(media_hostName.indexOf(":")!=-1)
-			media_hostName = media_hostName.substring(0, media_hostName.indexOf(":"));
-		media_hostName = "http://" + media_hostName + ":" + g_storage.get("http_port") + "/";
-		
-		client.GSL(this_url, this_url, this_file_name, 0, 0, function(error, content, statusstring){
-			if(error==200){
-				var data = parseXml(statusstring);
-				var share_link = $(data).find('sharelink').text();
-				var open_url = "";							
-									
-				share_link = media_hostName + share_link;		
-				
-				//g_modal_url = '/smb/css/upload_facebook.html';
-				g_modal_url = 'http://www.efroip.com/efroip/google/index.html?v=' + share_link + '&b=' + mydecodeURI(this_file_name) + '&d=' + window.location.href;
-				//g_modal_url = 'http://www.efroip.com/facebook/upload_photo.html';
-		
-				g_modal_window_width = 600;
-				g_modal_window_height = 320;
-				$('#jqmMsg').css("display", "none");	
-				$('#jqmTitleText').text("Upload to Facebook");
-				if($modalWindow){
-					$modalWindow.jqmShow();
-				}
-				
-				$("#image_slide_show").remove();
-			}
-		});
-		
-	});
-	
-	image_array = null;
+function isListView(){
+	return (g_storage.getl('listview') == undefined) ? 1 : g_storage.getl('listview');
 }
 
-function openAudioPlayer(loc){
-	var audio_array = new Array();
-	for(var i=0;i<g_file_array.length;i++){
-   	var file_ext = getFileExt(g_file_array[i].href);			
-		if(file_ext=="mp3")
-   		audio_array.push(g_file_array[i]);
-	}
-	
-	var audio_array_count = audio_array.length;
-	
-	if(audio_array_count==0){
-		alert(m.getString("msg_no_image_list"));
-		return;
-	}
-	
-	var audio_list = "";
-	var default_index = 0;
-	for(var i=0;i<audio_array.length;i++){
-		var the_loc = audio_array[i].href;
-			
-	 	if( loc == the_loc )
-	 		default_index = i;
-	   			
-	 	audio_list += the_loc;
-	 	if(i!=audio_array.length-1) audio_list += ",";
-	}
-	
-	var $modalWindow = $("div#modalWindow");
-	g_modal_url = '/smb/css/audio.html?a=' + loc + '&alist=' + audio_list + '&index=' + default_index + "&s=1";
-	//g_modal_url = '/smb/css/audio2.html?a=' + loc + '&alist=' + audio_list + '&index=' + default_index;
-	
-	g_modal_window_width = 450;
-	g_modal_window_height = 160;
-	$('#jqmMsg').css("display", "none");	
-	$('#jqmTitleText').text(m.getString('title_audioplayer'));
-	if($modalWindow){
-		$modalWindow.jqmShow();
-	}
-	
+function isAiModeView(){
+	return (g_storage.get('aimode') == undefined) ? -1 : g_storage.get('aimode');
+}
+
+function getAiMode(){
+	return (g_storage.get('aimode') == undefined) ? -1 : g_storage.get('aimode');
 }
 
 function openLoginWindow(open_url){	
@@ -270,7 +78,7 @@ function openLoginWindow(open_url){
 	$('#jqmMsg').css("display", css_display);	
 	
 	var login_html = '';
-	login_html += '<table id="table_login" width="100%" height="100%" border="0" align="center" cellpadding="0" cellspacing="0" style="overflow:hidden;">';	
+	login_html += '<table id="table_login" width="100%" height="100%" border="0" align="center" cellpadding="0" cellspacing="0" style="overflow:hidden;table-layout: fixed;">';	
 	login_html += '<tr>';
 	login_html += '<td>';
   	login_html += '<form name="form_login">';
@@ -328,8 +136,12 @@ function doRescanSamba(){
 	
 	client.RESCANSMBPC(openurl, function(error){	
 		if(error[0]==2){
+			var rescan_samba_timer = g_storage.getl("rescan_samba_timer");
+			if(rescan_samba_timer!=0) clearInterval(rescan_samba_timer);
+			
 			g_storage.setl("onRescanSamba", 1);
 			g_storage.setl("onRescanSambaCount", 0);
+			g_storage.setl("rescan_samba_timer", 0);
 			g_storage.set("HostList", "");
 			doPROPFIND("/");
 		}
@@ -395,12 +207,12 @@ function doRENAME(old_name, new_name){
 	client.LOCK(old_name, '', function(status, statusstring, content, headers){
 		
 		if (status != '201') {
-     	alert(m.getString("msg_already_lock"));
-     	return;
-    }
+     		alert(m.getString("msg_already_lock"));
+			return;
+		}
     
-    var locktoken = getLockToken(content);
-    //alert(locktoken);
+    	var locktoken = getLockToken(content);
+    	//alert(locktoken);
 		client.MOVE(old_name, this_url, function(error){
 			if(error[0]==2){
 				doPROPFIND(openurl);
@@ -431,7 +243,7 @@ function doRENAME(old_name, new_name){
 }
 
 function getFileViewHeight(){
-	return $("#fileview").height();
+	return $("#fileview").height()-20;
 }
 
 function closePopupmenu(){
@@ -453,131 +265,6 @@ function confirmCancelUploadFile(){
 	return 1;
 }
 
-function closeUploadPanel(v){
-	
-	g_upload_mode = 0;
-	g_reload_page=v;
-	
-	g_storage.set('stopLogoutTimer', "0");
-	
-	$("div#btnNewDir").css("display", "block");
-	$("div#btnUpload").css("display", "block");
-	$("div#btnSelect").css("display", "block");
-	$("div#btnPlayImage").css("display", "block");
-		
-	$("div#btnCancelUpload").css("display", "none");
-	
-	$("#function_help").text("");
-	
-	$("#upload_panel").animate({left:"1999px"},"slow", null, function(){
-		$("#upload_panel").css("display", "none");
-		adjustLayout();
-	});
-	
-	if(v==1){
-		var openurl = addPathSlash(g_storage.get('openurl'));
-		doPROPFIND(openurl);
-	}
-}
-
-function cancelSelectMode(){
-	if(g_select_mode==0)
-		return;
-		
-	g_select_mode = 0;
-	g_select_array = null;
-		
-	$("#btnDownload").addClass("disable");			
-	$("#btnShareLink").addClass("disable");
-	$("#btnDeleteSel").addClass("disable");
-	$("#btnRename").addClass("disable");
-	
-	if(g_medialist_mode==1){
-		$("div#btnNewDir").css("display", "none");
-		$("div#btnUpload").css("display", "none");
-		$("div#btnSelect").css("display", "block");
-		$("div#btnPlayImage").css("display", "block");
-		$("div#boxSearch").css("display", "block");
-	}
-	else{
-		$("div#btnNewDir").css("display", "block");
-		$("div#btnUpload").css("display", "block");
-		$("div#btnSelect").css("display", "block");
-		$("div#btnPlayImage").css("display", "block");
-		$("div#boxSearch").css("display", "none");
-	}
-	
-	$("div#btnCancelSelect").css("display", "none");
-		
-	$(".selectDiv").css("display", "none");
-	$(".selectHintDiv").css("display", "none");
-		
-	$("#fileview #fileviewicon").each(function(){
-		$(this).removeClass("select");	
-	});
-		
-	$("#function_help").text("");
-	
-	adjustLayout();
-	
-	$("#button_panel").animate({left:"1999px"},"slow", null, function(){
-		
-	});
-}
-	
-function adjustLayout(){		
-	var page_size = getPageSize();
-	var page_width = page_size[0];
-	var page_height = page_size[1];
-	var mainRegion_height = page_height - 
-							$('#header_region').height() - 											
-							$('#bottom_region').height();
-	$('#main_region').css('height', mainRegion_height);
-	
-	var mainRegion_width = page_size[0];
-	$('#main_region #main_right_region').css('width', mainRegion_width-$('#main_region #main_left_region').width());
-	
-	var hostview_height = $('#main_left_region').height() - $('#infobar').height() - $('#settingbar').height();
-	var hostview_height2 = Math.max(Math.floor(hostview_height/40), 1)*40;
-	$('#hostview').css("height", hostview_height2);
-	$('#settingbar').css("padding-top", hostview_height-hostview_height2);
-	
-	var albutton_width=0;	
-	$("#toolbar .albutton").each(function(){
-		if($(this).css("display")=="block")
-			albutton_width += $(this).width();
-	});
-	
-	if($("#toolbar .alsearch").css("display")=="block")
-		albutton_width += $("#toolbar .alsearch").width();
-		
-	$('#urlregion-url').css("width", $("#toolbar").width()-albutton_width-20);
-	
-	createOpenUrlUI(g_storage.get('openurl'));
-	
-	if(g_select_mode==1){
-		var h = $("#main_right_container").height() - $("#infobar").height() - $("#button_panel").height();
-		$("#fileview").css("height", h);
-	}/*
-	else if(g_upload_mode==1){
-		var h = $("#main_right_container").height() - $("#infobar").height() - $("#button_panel").height();
-		$("#upload_panel").css("width", $("#fileview").width());
-		$("#upload_panel").css("height", h);
-	}*/
-	else{
-		var h = $("#main_right_container").height() - $("#infobar").height();
-		$("#fileview").css("height", h);
-	}
-	
-	$("#function_help").css("left", $("#main_left_region").width());
-	
-	var $modalWindow = $('div#modalWindow');
-	if($modalWindow){
-		var newLeft = (page_width - g_modal_window_width)/2;
-		$modalWindow.css("left", newLeft);
-	}	
-}
-	
 function closeJqmWindow(v){	
 	g_reload_page=v;
 	var $modalWindow = $('div#modalWindow');
@@ -645,58 +332,7 @@ function resetTimer(){
 	}, 1000 );
 }
 
-function createOpenUrlUI(open_url){
-	if(open_url==undefined)
-		open_url = "/";
-		
-	var s = mydecodeURI(open_url);
-	var b = "";
-	var c = "";
-	var tmp = "";
-	var urlregion_width = $("#urlregion-url").width();
-					
-	if(s!="/"){
-		var aa = s.split('/');
-		var bb = open_url.split('/');			
-		
-		for(var i=0; i<aa.length; i++){
-			if(aa[i]==""||
-			   (g_enable_aidisk==1 && aa[i]==g_aidisk_name))
-				continue;
-				
-			c += "/" + bb[i];
-			
-			tmp += " / <a id='url_path' uhref='" + c + "'>" + aa[i] + "</a>";
-			
-			var cur_width = String(tmp).width($("p#openurl").css('font'));
-			if(cur_width>urlregion_width){
-				b += " / ...";
-				break;
-			}
-			
-			if(aa[1]==g_aidisk_name&&g_enable_aidisk==1)
-				b += " / <a id='url_path' uhref='/" + g_aidisk_name + c + "'>" + aa[i] + "</a>";
-			else
-				b += " / <a id='url_path' uhref='" + c + "'>" + aa[i] + "</a>";
-				
-			tmp = b;
-		}
-	}
-		
-	$("p#openurl").empty();
-	$("p#openurl").append(b);
-		
-		
-	//alert($("#urlregion-url").width()+", "+String(b).width($("p#openurl").css('font')));			
-	$("a#url_path").click(function(){
-		if(confirmCancelUploadFile()==0)
-			return;
-			
-		doPROPFIND($(this).attr("uhref"));
-	});
-}
-
-function doPROPFINDMEDIALIST(open_url, append_result, complete_handler, media_type, start, end, keyword, orderby, orderrule){
+function doPROPFINDMEDIALIST(open_url, append_result, complete_handler, media_type, start, end, keyword, orderby, orderrule, parentid){
 	if(client==null)
 		return;
 		
@@ -704,75 +340,120 @@ function doPROPFINDMEDIALIST(open_url, append_result, complete_handler, media_ty
 	
 	try{		
 		client.PROPFINDMEDIALIST(open_url, function(error, statusstring, content){
-			if(error){				
+			if(error){	
 				if(error==207){
 					
 					cancelSelectMode();
 					closeUploadPanel();
 					
-					var xmlDoc = content2XMLDOM(content);					
-					if(xmlDoc){
-						var this_query_type = 1; //- 2: query host, 1: query share, 0: query file
-						var this_query_count = parseInt(xmlDoc.documentElement.getAttribute('qcount'));
-						var this_query_start = parseInt(xmlDoc.documentElement.getAttribute('qstart'));
-						var this_query_end = parseInt(xmlDoc.documentElement.getAttribute('qend'));
+					var xmlDoc = content2XMLDOM(content);
+					var this_query_type = 1; //- 2: query host, 1: query share, 0: query file
+					var this_query_count = 0;
+					var this_query_start = 0;
+					var this_query_end = 0;
+					var this_scan_status = "Idle";
+					
+					if(!append_result){
+						g_folder_array = null;
+						g_folder_array = new Array();
 						
-						parserPropfindXML(xmlDoc, open_url, append_result);
-							
-						//- Create File thumb list				
-						createThumbView(this_query_type, "", g_folder_array, g_file_array);
-						
-						if( this_query_count > this_query_end ){
-							var next_start = this_query_end + 1;
-							var next_end = next_start + 50;
-							if( next_end > this_query_count )
-								next_end = this_query_count;
-								
-							var next_page_html = "<div class='nextDiv' start='" + next_start + "' end='" + next_end + "'><span>";
-							var a = m.getString("title_next_query");
-							a = a.replace("%s", next_end);
-							a = a.replace("%s", this_query_count);
-							next_page_html += a;
-							next_page_html += "</span></div>";
-							$("#main_right_container #fileview").append(next_page_html);
-							
-							$(".nextDiv").click(function(){
-								doPROPFINDMEDIALIST(open_url, true, null, media_type, $(this).attr("start"), $(this).attr("end"), keyword, orderby, orderrule);
-							});
-						}
-						
-						g_medialist_mode = 1;
-						
-						$("div#btnUpload").css("display", "none");
-						$("div#btnSelect").css("display", "block");
-						$("div#btnNewDir").css("display", "none");
-						$("div#btnPlayImage").css("display", "block");
-						$("div#boxSearch").css("display", "block");
-						
-						g_storage.set('openurl', open_url);
-						
-						$("div#hostview").scrollTop(g_storage.get('hostviewscrollTop'));
-						
-						$('div#fileview').scrollLeft(g_storage.get('contentscrollLeft'));
-						$('div#fileview').scrollTop(g_storage.get('contentscrollTop'));
-						
-						$("div#boxSearch").attr("uhref", open_url);
-						$("div#boxSearch").attr("qtype", media_type);
-						
-						adjustLayout();
-						
-						closeJqmWindow(0);
-						
-						if(complete_handler!=undefined){
-							complete_handler();
-						}
+						g_file_array = null;
+						g_file_array = new Array();
 					}
+										
+					if(xmlDoc){	
+						this_query_type = 1; //- 2: query host, 1: query share, 0: query file
+						this_query_count = parseInt(xmlDoc.documentElement.getAttribute('qcount'));
+						this_query_start = parseInt(xmlDoc.documentElement.getAttribute('qstart'));
+						this_query_end = parseInt(xmlDoc.documentElement.getAttribute('qend'));	
+						this_scan_status = xmlDoc.documentElement.getAttribute('scan_status');
+						parserPropfindXML(xmlDoc, open_url, append_result);
+					}
+					
+					var parent_url = "";
+					if(g_ui_mode.get()==6){
+						this_query_type = 0;
+						parent_url = "goto:music_album";
+					}
+					else if(g_ui_mode.get()==7){
+						this_query_type = 0;
+						parent_url = "goto:music_artist";
+					}
+					
+					if(g_list_view.get()==1)
+						createListView( $("#main_right_container #fileview"), 
+						                this_query_type, parent_url, g_folder_array, g_file_array, onMouseDownListDIVHandler);
+					else
+						createThumbView( $("#main_right_container #fileview"),
+						                 this_query_type, parent_url, g_folder_array, g_file_array, onMouseDownThumbDIVHandler);
+											
+					if( this_query_count > this_query_end ){
+						var next_start = this_query_end + 1;
+						var next_end = next_start + 50;
+						if( next_end > this_query_count )
+							next_end = this_query_count;
+						
+						var next_page_html = "<div class='nextDiv' start='" + next_start + "' end='" + next_end + "'><span>";
+						var a = m.getString("title_next_query");
+						a = a.replace("%s", next_end);
+						a = a.replace("%s", this_query_count);
+						next_page_html += a;
+						next_page_html += "</span></div>";
+						$("#main_right_container #fileview").append(next_page_html);
+						
+						$(".nextDiv").click(function(){
+							doPROPFINDMEDIALIST(open_url, true, null, media_type, $(this).attr("start"), $(this).attr("end"), keyword, orderby, orderrule);
+						});
+					}
+					
+					if(this_scan_status=="Scanning"){
+						$("#main_right_container #hintbar").text(m.getString("msg_dms_scanning"));
+						$("#main_right_container #hintbar").show();
+					}
+					else
+						$("#main_right_container #hintbar").hide();
+					
+					//- aimode:
+					//- -1: none
+					//- 1: Ai Photo
+					//- 2: Ai Music
+					//- 3: Ai Movie
+					g_storage.set('aimode', media_type);
+		
+					$("div#btnUpload").css("display", "none");
+					$("div#btnSelect").css("display", "block");
+					$("div#btnNewDir").css("display", "none");
+					$("div#btnPlayImage").css("display", (media_type==1) ? "block" : "none");
+					$("div#boxSearch").css("display", "block");
+					
+					g_storage.set('openurl', open_url);
+						
+					$("div#hostview").scrollTop(g_storage.get('hostviewscrollTop'));
+						
+					$('div#fileview').scrollLeft(g_storage.get('contentscrollLeft'));
+					$('div#fileview').scrollTop(g_storage.get('contentscrollTop'));
+						
+					$("div#boxSearch").attr("uhref", open_url);
+					$("div#boxSearch").attr("qtype", media_type);
+						
+					adjustLayout();
+						
+					closeJqmWindow(0);
+						
+					if(complete_handler!=undefined){
+						complete_handler();
+					}					
 				}
 		  		else if(error==501){
 					doPROPFINDMEDIALIST(open_url);
 				}
+				else if(error==503){
+					show_hint_no_mediaserver();
+				}
 		  		else if(error==401){
-		  			setTimeout(openLoginWindow(open_url), 2000);
+		  			setTimeout( function(){
+						openLoginWindow(open_url)
+					}, 2000);
 				}
 				else{
 					alert(m.getString(error));					
@@ -780,7 +461,7 @@ function doPROPFINDMEDIALIST(open_url, append_result, complete_handler, media_ty
 				
 				showHideLoadStatus(false);
 			}
-		}, null, media_type, start, end, keyword, orderby, orderrule );
+		}, null, media_type, start, end, keyword, orderby, orderrule, parentid );
 		
 		resetTimer();
 	}
@@ -825,6 +506,8 @@ function parserPropfindXML(xmlDoc, open_url, append_result){
 		var this_user_agent = "";
 		var this_router_sync_folder = "0";
 		var this_matadata_title = "";
+		var this_thumb = "0";
+		var this_thumb_image = "";
 		
 		var y = x[i].childNodes;
 		for (j=0;j<y.length;j++){
@@ -883,11 +566,15 @@ function parserPropfindXML(xmlDoc, open_url, append_result){
 							else if(a[l].nodeName=="D:getroutersync"){												
 								this_router_sync_folder = String(a[l].childNodes[0].nodeValue);
 							}
-							else if(a[l].nodeName=="D:getmatadata"){												
+							else if(a[l].nodeName=="D:getmetadata"){												
 								var bb = a[l].childNodes;												
 								for (n=0;n<bb.length;n++){
 									if(bb[n].nodeName=="D:title")
 										this_matadata_title = bb[n].childNodes[0].nodeValue;
+									else if(bb[n].nodeName=="D:thumb")
+										this_thumb = bb[n].childNodes[0].nodeValue;
+									else if(bb[n].nodeName=="D:thumb_image")
+										this_thumb_image = bb[n].childNodes[0].nodeValue;
 								}
 							}
 						}
@@ -918,7 +605,7 @@ function parserPropfindXML(xmlDoc, open_url, append_result){
 						this_name = mydecodeURI(this_name);
 						this_short_name = this_name;
 										
-						var len = (g_listview==0) ? 12 : 45;	
+						var len = (g_list_view.get()==0) ? 12 : 45;	
 														
 						if(this_short_name.length>len){
 							this_short_name = this_short_name.substring(0, len) + "...";
@@ -951,7 +638,8 @@ function parserPropfindXML(xmlDoc, open_url, append_result){
 					                  freadonly: this_attr_readonly,
 					                  fhidden: this_attr_hidden,
 					                  routersyncfolder: this_router_sync_folder,
-									  matadatatitle: this_matadata_title });
+									  matadatatitle: this_matadata_title,
+									  thumb: this_thumb });
 			}
 			else{
 				g_file_array.push({ contenttype: this_contenttype, 
@@ -969,7 +657,8 @@ function parserPropfindXML(xmlDoc, open_url, append_result){
 					                freadonly: this_attr_readonly,
 					                fhidden: this_attr_hidden,
 					                routersyncfolder: this_router_sync_folder,
-									matadatatitle: this_matadata_title });
+									matadatatitle: this_matadata_title,
+									thumb: this_thumb });
 			}
 		}
 	}
@@ -1051,40 +740,31 @@ function doPROPFIND(open_url, complete_handler, auth){
 						}
 						
 						//- Create host list
-						createHostList(this_query_type, g_folder_array);	
+						if(open_url=="/")
+							createHostList(this_query_type, g_folder_array);	
 						
-						//- Create File thumb list				
-						createThumbView(this_query_type, parent_url, g_folder_array, g_file_array);
-						
-						g_medialist_mode = 0;
-						
-						if(this_query_type==0&&g_select_mode==0){
-							$("div#btnUpload").css("display", "block");
-							$("div#btnSelect").css("display", "block");
-							$("div#btnNewDir").css("display", "block");
-							$("div#btnPlayImage").css("display", "block");
-						}
-						else{
-							$("div#btnUpload").css("display", "none");
-							$("div#btnSelect").css("display", "none");
-							$("div#btnNewDir").css("display", "none");
-							$("div#btnPlayImage").css("display", "none");
-						}
-						
-						$("div#boxSearch").css("display", "none");
-						$("div#boxSearch input").val("");
-							
-						if(g_select_mode==1)
-							$("#btnCancelSelect").css("display", "block");
-							
-						if(g_upload_mode==1)
-							$("#btnCancelUpload").css("display", "block");
-						
-						if(this_query_type==1&&this_isusb==0)
-							$("#btnChangeUser").css("display", "block");
+						if(g_list_view.get()==1)
+							createListView( $("#main_right_container #fileview"), 
+							                this_query_type, parent_url, g_folder_array, g_file_array, onMouseDownListDIVHandler);
 						else
-							$("#btnChangeUser").css("display", "none");
+							createThumbView( $("#main_right_container #fileview"),
+							                 this_query_type, parent_url, g_folder_array, g_file_array, onMouseDownThumbDIVHandler);
 						
+						g_thumb_loader.init($("#main_right_container #fileview"));
+						g_thumb_loader.start();
+						
+						//- Refresh UI
+						showHideAiButton( (this_isusb=="1") ? true : false );
+						closeAiMode();
+						$("div#btnThumbView").css("display", (g_list_view.get()==1) ? "block" : "none");
+						$("div#btnListView").css("display", (g_list_view.get()==1) ? "none" : "block");
+						$("div#btnUpload").css("display", (this_query_type==0&&g_select_mode==0) ? "block" : "none");
+						$("div#btnSelect").css("display", (this_query_type==0&&g_select_mode==0) ? "block" : "none");
+						$("div#btnNewDir").css("display", (this_query_type==0&&g_select_mode==0) ? "block" : "none");
+						$("div#btnPlayImage").css("display", (this_query_type==0&&g_select_mode==0) ? "block" : "none");
+						$("#btnCancelSelect").css("display", (g_select_mode==1) ? "block" : "none");
+						$("#btnCancelUpload").css("display", (g_upload_mode==1) ? "block" : "none");
+						$("#btnChangeUser").css("display", (this_query_type==1&&this_isusb==0) ? "block" : "none");						
 						$("span#username").text(this_router_username);
 						
 						g_storage.set('openurl', open_url);
@@ -1093,6 +773,8 @@ function doPROPFIND(open_url, complete_handler, auth){
 						
 						$('div#fileview').scrollLeft(g_storage.get('contentscrollLeft'));
 						$('div#fileview').scrollTop(g_storage.get('contentscrollTop'));
+						
+						$("#main_right_container #hintbar").hide();
 						
 						adjustLayout();
 						
@@ -1108,8 +790,10 @@ function doPROPFIND(open_url, complete_handler, auth){
 		  		else if(error==501){
 					doPROPFIND(open_url);
 				}
-		  		else if(error==401){
-		  			setTimeout(openLoginWindow(open_url), 2000);
+		  		else if(error==401){					
+					setTimeout( function(){
+						openLoginWindow(open_url)
+					}, 2000);
 				}
 				else{
 					alert(m.getString(error));					
@@ -1297,7 +981,7 @@ function refreshHostList(){
 										this_name = mydecodeURI(this_name);
 										this_short_name = this_name;
 										
-										var len = (g_listview==0) ? 12 : 45;	
+										var len = (g_list_view.get()==0) ? 12 : 45;	
 														
 										if(this_short_name.length>len){
 											this_short_name = this_short_name.substring(0, len) + "...";
@@ -1359,394 +1043,6 @@ function refreshHostList(){
 	}
 }
 
-function createHostList(query_type, g_folder_array){
-	
-	var host_item_html = "";
-	$("#hostview").empty();
-	
-	var items = g_storage.get("HostList") ? g_storage.get("HostList").split(/,/) : new Array();
-	var on_rescan_samba = g_storage.getl("onRescanSamba");
-	var on_rescan_samba_count = g_storage.getl("onRescanSambaCount");
-	
-	if(query_type==2){	
-		for(var i=0;i<g_folder_array.length;i++){	
-			var s = g_folder_array[i].href + "|" + 
-							g_folder_array[i].name + "|" + 
-							g_folder_array[i].online + "|" + 
-							g_folder_array[i].ip + "|" + 
-							g_folder_array[i].mac + "|" + 
-							g_folder_array[i].uid + "|" + 
-							g_folder_array[i].freadonly + "|" + 
-							g_folder_array[i].fhidden + "|" + 
-							g_folder_array[i].type;
-							
-			if(!items.contains(s)){    			
-				items.push(s);
-			}
-		
-			g_storage.set("HostList", items.join(','));
-		}
-	}
-					        
-	for(var i=0;i<items.length;i++){	
-		var a = items[i].split('|');
-		
-		host_item_html += "<div class='host_item unselectable";
-		if(a[2]==0) host_item_html += " offline";
-		host_item_html += "' uhref='";
-		host_item_html += a[0];
-		host_item_html += "' title='";
-		host_item_html += a[1] + " - " + a[3];
-		host_item_html += "' online='";
-		host_item_html += a[2];
-		host_item_html += "' isdir='1'";
-		host_item_html += " ip='";
-		host_item_html += a[3];
-		host_item_html += "' mac='";
-		host_item_html += a[4];
-		host_item_html += "' uid='";
-		host_item_html += a[5];
-		host_item_html += "' freadonly='";
-		host_item_html += a[6];
-		host_item_html += "' fhidden='";
-		host_item_html += a[7];	
-							
-		if(a[8] == "usbdisk")
-			host_item_html += "' isusb='1'";
-		else						
-			host_item_html += "' isusb='0'";
-								
-		host_item_html += ">";
-		host_item_html += "<div id='hosticon' class='sicon " + a[8];
-		if(a[2]==0) host_item_html += "off";
-		host_item_html += "'/>";
-		
-		host_item_html += "<div id='hostname' class='unselectable'>";
-		
-		host_item_html += "<p>";
-		host_item_html += a[1];							
-		if(a[2]==0)
-			host_item_html += "(" + m.getString("title_offline") + ")";
-		host_item_html += "</p>";
-		
-		host_item_html += "</div>";
-		host_item_html += "</div>";
-	}
-		
-	if(on_rescan_samba==1){
-		host_item_html += "<div class='scan_item unselectable rescan'>";
-		host_item_html += "<div id='hosticon' class='sicon sambapcrescan'/>";		
-		host_item_html += "<div id='scanlabel' class='unselectable'>";		
-		//host_item_html += "<p>" + m.getString("title_scan") + "(" +  on_rescan_samba_count + ")";
-		host_item_html += "<p>" + m.getString("title_scan");
-		host_item_html += "</p>";
-		host_item_html += "</div>";
-		host_item_html += "</div>";
-		
-		if(g_rescan_samba_timer==0){
-			g_rescan_samba_timer = setInterval(function(){
-				
-				on_rescan_samba_count++;
-				
-				if(on_rescan_samba_count>=10){
-					clearInterval(g_rescan_samba_timer);
-					g_storage.setl("onRescanSamba", 0);
-					g_storage.setl("onRescanSambaCount", 0);
-				}
-				else
-					g_storage.setl("onRescanSambaCount", on_rescan_samba_count);
-				
-				refreshHostList();
-			}, 5000);
-		}
-	}
-
-	$("#hostview").append(host_item_html);
-		
-	var uid = g_storage.get('openhostuid');		
-	$("#hostview .host_item").each(function(){
-		if($(this).attr("uid") == uid){
-			$(this).addClass("select");
-		}
-		else{
-			$(this).removeClass("select");
-		}
-	});
-			
-	//- Add Event Function
-	$("#hostview .host_item").click(function(){
-		
-		if(confirmCancelUploadFile()==0)
-			return;
-			
-		//- Wake on lan
-		if( $(this).attr("online")==0 ){
-			var r=confirm(m.getString('wol_msg'));
-			
-			if (r==true){
-				client.WOL("/", $(this).attr("mac"), function(error){
-					if(error==200)
-						alert(m.getString('wol_ok_msg'));
-					else
-						alert(m.getString('wol_fail_msg'));
-				});
-			}
-								
-			return;
-		}
-		
-		g_opening_uid = $(this).attr("uid");
-		var open_url = $(this).attr("uhref");
-		
-		g_storage.set('opentype', ($(this).attr("type")=="usbdisk")?"1":"0");
-							
-		doPROPFIND(open_url, function(){
-			g_storage.set('openhostuid', g_opening_uid);			
-			$("#hostview .host_item").each(function(){
-				if($(this).attr("uid") == g_opening_uid){
-					$(this).addClass("select");
-				}
-				else{
-					$(this).removeClass("select");
-				}
-			});	
-			g_opening_uid='';
-		}, null);
-		
-	});
-}
-
-function createThumbView(query_type, parent_url, folder_array, file_array){
-	var html = "";
-	
-	$("#main_right_container #fileview").empty();
-	
-	if(query_type==2)
-		return;
-		
-	//- Parent Path
-	if(query_type == 0) {
-		html += '<div class="albumDiv">';
-		html += '<table class="thumb-table-parent">';
-		html += '<tbody>';
-		html += '<tr><td>';
-		html += '<div class="picDiv cb" isParent="1" popupmenu="0" uhref="';
-		html += parent_url;
-		html += '">';
-		html += '<div class="parentDiv bicon"></div></div>';
-		html += '</td></tr>';
-		html += '<tr><td>';
-		html += '<div class="albuminfo">';
-		html += '<a id="list_item" qtype="1" isdir="1" uhref="';
-		html += parent_url;
-		html += '" title="' + m.getString("btn_prevpage") + '" online="0">' + m.getString("btn_prevpage");
-		html += '</a>';
-		html += '</div>';
-		html += '</td></tr>';
-		html += '</tbody>';
-		html += '</table>';
-		html += '</div>';
-	}
-	
-	var isInUSBFolder = 0;
-	
-	//- Folder List
-	for(var i=0; i<folder_array.length; i++){
-		var this_title = m.getString("table_filename") + ": " + folder_array[i].name; 
-		
-		if(folder_array[i].time!="")
-			this_title += "\n" + m.getString("table_time") + ": " + folder_array[i].time;
-		                 							
-		html += '<div class="albumDiv" ';
-		html += ' title="';
-		html += this_title;
-		html += '">';
-		html += '<table class="thumb-table-parent">';
-		html += '<tbody>';
-					
-		html += '<tr><td>';
-		html += '<div class="picDiv cb" popupmenu="';
-									
-		if(query_type == "0")
-			html += '1';
-		else
-			html += '0';
-									
-		html += '" uhref="';
-		html += folder_array[i].href;
-		html += '">';
-		
-		if(query_type == "2"){
-			//- Host Query
-			if( folder_array[i].type == "usbdisk" )
-				html += '<div id="fileviewicon" class="usbDiv bicon">';
-			else{
-				if(folder_array[i].online == "1")
-					html += '<div id="fileviewicon" class="computerDiv bicon">';
-				else
-					html += '<div id="fileviewicon" class="computerOffDiv bicon">';
-			}
-		}
-		else {
-			html += '<div id="fileviewicon" class="folderDiv bicon">';
-		}
-		
-		//- Show router sync icon.
-		if( folder_array[i].routersyncfolder == "1" ){
-			html += '<div id="routersyncicon" class="routersyncDiv sicon"></div>';
-		}
-			
-		html += '<div class="selectDiv sicon"></div>';
-		html += '<div class="selectHintDiv sicon"></div>';
-		html += '</div></div>';								
-		html += '</td></tr>';
-		html += '<tr><td>';
-		html += '<div class="albuminfo">';
-		html += '<a id="list_item" qtype="';
-		html += query_type;
-		html += '" isdir="1" uhref="';
-		html += folder_array[i].href;
-		html += '" title="';
-		html += folder_array[i].name;
-		html += '" online="';
-		html += folder_array[i].online;
-		html += '" ip="" mac="';
-		html += folder_array[i].mac;
-		html += '" uid="';
-		html += folder_array[i].uid;
-		html += '" freadonly="';
-		html += folder_array[i].freadonly;
-		html += '" fhidden="';
-		html += folder_array[i].fhidden;
-		
-		if(folder_array[i].type == "usbdisk")
-			html += '" isusb="1"';
-		else						
-			html += '" isusb="0"';
-								
-		html += '">';
-		
-		html += folder_array[i].shortname;
-								
-		if(folder_array[i].online == "0" && query_type == "2")
-			html += "(" + m.getString("title_offline") + ")";
-									
-		html += '</a>';
-		html += '</div>';
-		html += '</td></tr>';
-		html += '</tbody>';
-		html += '</table>';
-		html += '</div>';
-		
-		if(folder_array[i].type == "usbdisk"&&query_type==1&&g_fileview_only==0){
-			client.GETDISKSPACE("/", folder_array[i].name, function(error, statusstring, content){				
-				if(error==200){
-					var data = parseXml(content);
-					var x = $(data);	
-					
-					var queryTag = $('a#list_item[title="' + x.find("DiskName").text() + '"]').parents(".albumDiv");
-					
-					var title = queryTag.attr("title") + "\n" + m.getString("table_diskusedpercent") + ": " + x.find("DiskUsedPercent").text();
-					queryTag.attr("title", title);
-				}
-			});	
-			
-			isInUSBFolder = 1;				
-		}
-	}
-	
-	//- File List
-	for(var i=0; i<file_array.length; i++){
-		var this_title = m.getString("table_filename") + ": " + file_array[i].name + "\n" + 
-		                 m.getString("table_time") + ": " + file_array[i].time + "\n" + 
-		                 m.getString("table_size") + ": " + file_array[i].size;
-	
-		html += '<div class="albumDiv"';
-		html += ' title="';
-		html += this_title;
-		html += '">';
-		html += '<table class="thumb-table-parent">';
-		html += '<tbody>';									
-									
-		//- get file ext
-		var file_path = String(file_array[i].href);
-		var file_ext = getFileExt(file_path);
-		if(file_ext.length>5)file_ext="";
-																
-		html += '<tr><td>';
-		if(query_type == "0")
-			html += '<div class="picDiv cb" popupmenu="1" uhref="';
-		else
-			html += '<div class="picDiv cb" popupmenu="0" uhref="';
-		html += file_array[i].href;
-		html += '">';
-		
-		if(file_ext=="jpg"||file_ext=="jpeg"||file_ext=="png"||file_ext=="gif"||file_ext=="bmp")
-			html += '<div id="fileviewicon" class="imgfileDiv bicon">';
-		else if(file_ext=="mp3"||file_ext=="m4a"||file_ext=="m4r"||file_ext=="wav")
-			html += '<div id="fileviewicon" class="audiofileDiv bicon">';
-		else if(file_ext=="mp4"||file_ext=="rmvb"||file_ext=="m4v"||file_ext=="wmv"||file_ext=="avi"||file_ext=="mpg"||
-			      file_ext=="mpeg"||file_ext=="mkv"||file_ext=="mov"||file_ext=="flv"||file_ext=="3gp"||file_ext=="m2v"||file_ext=="rm")
-			html += '<div id="fileviewicon" class="videofileDiv bicon">';
-		else if(file_ext=="doc"||file_ext=="docx")
-			html += '<div id="fileviewicon" class="docfileDiv bicon">';
-		else if(file_ext=="ppt"||file_ext=="pptx")
-			html += '<div id="fileviewicon" class="pptfileDiv bicon">';
-		else if(file_ext=="xls"||file_ext=="xlsx")
-			html += '<div id="fileviewicon" class="xlsfileDiv bicon">';
-		else if(file_ext=="pdf")
-			html += '<div id="fileviewicon" class="pdffileDiv bicon">';
-		else{
-			html += '<div id="fileviewicon" class="fileDiv bicon">';
-		}
-		
-		html += '<div class="selectDiv sicon"></div>';
-		html += '<div class="selectHintDiv sicon"></div>';
-		html += '</div></div>';
-		
-		html += '</td></tr>';
-		html += '<tr><td>';
-		html += '<div class="albuminfo" style="font-size:80%">';
-		html += '<a id="list_item" qtype="1" isdir="0" uhref="';
-		html += file_array[i].href;
-		html += '" title="';
-		html += file_array[i].name;
-		html += '" matadatatitle="';
-		html += file_array[i].matadatatitle;
-		html += '" uid="';
-		html += file_array[i].uid;
-		html += '" ext="';
-		html += file_ext;
-		html += '" freadonly="';
-		html += file_array[i].freadonly;
-		html += '" fhidden="';
-		html += file_array[i].fhidden;
-		html += '">';
-		html += file_array[i].shortname;
-		html += '</a>';
-		html += '</div>';
-		html += '</td></tr>';
-		html += '</tbody>';
-		html += '</table>';
-		html += '</div>';
-	}
-		
-	$("#main_right_container #fileview").append(html);
-	
-	$(".cb").mousedown( onMouseDownPicDIVHandler );
-	/*
-	$(".mediaListDiv").mousedown( function(){
-		var item = $(this).parents('.thumb-table-parent').find("a#list_item");
-		var qtype = item.attr("qtype");
-		var uhref = item.attr("uhref");
-		
-		doPROPFINDMEDIALIST(uhref, false, function(){
-			
-		}, qtype, "0", "50", null, "TIMESTAMP", "DESC");
-	});
-	*/
-}
-
 function sortByName(a, b) {
 	var x = a.name.toLowerCase();
   	var y = b.name.toLowerCase();
@@ -1759,14 +1055,7 @@ function arraymove(arr, fromIndex, toIndex) {
 	arr.splice(toIndex,0,element);
 }
 
-function showHideLoadStatus(bshow){
-	if(bshow)
-		$("#loading").css("display", "block");
-	else
-		$("#loading").css("display", "none");
-}
-
-function onMouseDownPicDIVHandler(e){
+function onMouseDownThumbDIVHandler(e){
 	if( e.button == 2 || g_on_button_animation == 1 ) {
 		return false; 
 	}
@@ -1811,25 +1100,22 @@ function onMouseDownPicDIVHandler(e){
     	}
 		});	
 		
-		//$("#btnDownload").removeClass("disable");
-		//$("#btnShareLink").removeClass("disable");
-		
-		if(g_medialist_mode==0){
-			if(select_file_count>0||select_folder_count>0){
-				$("#btnDeleteSel").removeClass("disable");
-				$("#btnDownload").removeClass("disable");
-				$("#btnShareLink").removeClass("disable");
-			}
-			else{
-				$("#btnDeleteSel").addClass("disable");
-				$("#btnDownload").addClass("disable");
-				$("#btnShareLink").addClass("disable");
-			}
-			
-			if(select_file_count+select_folder_count==1)
-				$("#btnRename").removeClass("disable");
-			else	
-				$("#btnRename").addClass("disable");
+		if(select_file_count>0||select_folder_count>0){
+			if(isAiModeView()<0) $("#btnDeleteSel").removeClass("disable");
+			$("#btnDownload").removeClass("disable");
+			$("#btnShareLink").removeClass("disable");
+		}
+		else{
+			$("#btnDeleteSel").addClass("disable");
+			$("#btnDownload").addClass("disable");
+			$("#btnShareLink").addClass("disable");
+		}
+
+		if((select_file_count+select_folder_count==1) && isAiModeView()<0){
+			$("#btnRename").removeClass("disable");
+		}
+		else{
+			$("#btnRename").addClass("disable");
 		}
 		
 		return;
@@ -1838,16 +1124,119 @@ function onMouseDownPicDIVHandler(e){
 	openSelItem($(this).parents('.thumb-table-parent').find("a#list_item"));
 }
 
-function openSelItem(item){	
-	var loc = item.attr("uhref");
-	var qtype = item.attr("qtype");
-	var isdir = item.attr("isdir");
-	var isusb = item.attr("isusb");
-	var this_full_url = item.attr("uhref");
-	var this_file_name = item.attr("title");
+
+function onMouseDownListDIVHandler(e){
+	if( e.button == 2 || g_on_button_animation == 1 ) {
+		return false; 
+	}
 	
-	g_storage.set('openuid', item.attr("uid"));
+	if(g_select_mode==1){		
+		
+		if($(this).attr("isParent")==1){			
+			cancelSelectMode();
+			openSelItem($(this));
+			return;
+		}
+		
+		if($(this).find(".selectListDiv").css("display")=="none"){			
+			$(this).find(".selectListDiv").css("display", "block");
+			$(this).find(".selectListHintDiv").css("display", "none");
+		}
+		else{
+			$(this).find(".selectListDiv").css("display", "none");
+			$(this).find(".selectListHintDiv").css("display", "block");
+		}
+		
+		g_select_array = null;
+		g_select_array = new Array();
+		
+		//- Count select div	
+		var select_file_count=0;
+		var select_folder_count=0;
+		$("#fileview").find(".listDiv").each(function(){
+			if($(this).find(".selectListDiv").css("display")=="block"){
+				var uhref = $(this).attr("uhref");
+				var isdir = $(this).attr("isdir");
+				var title = myencodeURI($(this).attr("title"));
+				
+				if(isdir==1){					
+					select_folder_count++;
+				}
+				else{
+					select_file_count++;
+				}
+				
+				g_select_array.push( { isdir:isdir, uhref:uhref, title:title } );
+    		}
+		});	
+		
+		if(select_file_count>0||select_folder_count>0){
+			if(isAiModeView()<0) $("#btnDeleteSel").removeClass("disable");
+			$("#btnDownload").removeClass("disable");
+			$("#btnShareLink").removeClass("disable");
+		}
+		else{
+			$("#btnDeleteSel").addClass("disable");
+			$("#btnDownload").addClass("disable");
+			$("#btnShareLink").addClass("disable");
+		}
+
+		if((select_file_count+select_folder_count==1) && isAiModeView()<0)		
+			$("#btnRename").removeClass("disable");
+		else	
+			$("#btnRename").addClass("disable");
+		
+		return;
+	}
+	
+	//openSelItem($(this).parents('.thumb-table-parent').find("a#list_item"));
+	openSelItem($(this));
+}
+
+function openSelItem(item){	
+
+	var loc = (item.attr("uhref")==undefined) ? "" : item.attr("uhref");	
+	var qtype = (item.attr("qtype")==undefined) ? 0 : item.attr("qtype");
+	var isdir = (item.attr("isdir")==undefined) ? 0 : item.attr("isdir");
+	var isusb = (item.attr("isusb")==undefined) ? 0 : item.attr("isusb");
+	var this_full_url = (item.attr("uhref")==undefined) ? "" : item.attr("uhref");
+	var this_file_name = (item.attr("title")==undefined) ? "" : item.attr("title");
+	
 	g_storage.set('opentype', isusb);
+	
+	if(loc == "goto:music_album"){
+		
+		if(client==null)
+			return;
+			
+		showHideLoadStatus(true);
+			
+		loc = (g_storage.get('openurl')==undefined) ? "/" : g_storage.get('openurl');
+		
+		client.GETMUSICCLASSIFICATION(loc, 'album', function(error, statusstring, content){				
+			if(error==200) createClassificationView(content, "album");
+			else if(error==503) show_hint_no_mediaserver();			
+			showHideLoadStatus(false);
+		});
+		
+      	return;
+	}
+	else if(loc == "goto:music_artist"){	
+		if(client==null)
+			return;
+			
+		showHideLoadStatus(true);
+			
+		loc = (g_storage.get('openurl')==undefined) ? "/" : g_storage.get('openurl');
+			
+		client.GETMUSICCLASSIFICATION(loc, 'artist', function(error, statusstring, content){
+			if(error==200) createClassificationView(content, "artist");
+			else if(error==503) show_hint_no_mediaserver();
+			showHideLoadStatus(false);
+		});
+		
+		return;	
+	}
 		
 	if(qtype==2){
 		var online = item.attr("online");			
@@ -1893,8 +1282,7 @@ function openSelItem(item){
 		if( webdav_mode==0 || webdav_mode==2 ){
 			  
 			if( isWinOS() ){
-				if( isBrowser("msie") && 
-					getInternetExplorerVersion() <= 7 ){
+				if( isBrowser("msie") && getInternetExplorerVersion() <= 7 ){
 					//- The VLC Plugin doesn't support IE 7 or less
 					alert(m.getString('msg_vlcsupport'));
 				}
@@ -1904,9 +1292,10 @@ function openSelItem(item){
 					this_file_name = myencodeURI(this_file_name);		
 					this_url = this_full_url.substring(0, this_full_url.lastIndexOf('/'));
 						
-					var media_hostName = window.location.host;
-					if(media_hostName.indexOf(":")!=-1)
+					var media_hostName = window.location.host;					
+					if(media_hostName.indexOf(":")!=-1){
 						media_hostName = media_hostName.substring(0, media_hostName.indexOf(":"));
+					}
 					media_hostName = "http://" + media_hostName + ":" + g_storage.get("http_port") + "/";
 					
 					var matadatatitle = item.attr("matadatatitle");
@@ -1914,16 +1303,16 @@ function openSelItem(item){
 					client.GSL(this_url, this_url, this_file_name, 0, 0, function(error, content, statusstring){
 						if(error==200){
 							var data = parseXml(statusstring);
+							var srt_share_link = "";
 							var share_link = $(data).find('sharelink').text();
 							var open_url = "";							
-								
-							share_link = media_hostName + share_link;								
-							open_url = '/smb/css/vlc_video.html?v=' + share_link;
-							open_url += '&t=' + matadatatitle;	
-							open_url += '&showbutton=1';							
+							open_url = '/smb/css/vlc_video.html?v=' + media_hostName + share_link;
+							open_url += '&t=' + matadatatitle;
+							open_url += '&showbutton=1';
+							
 							g_modal_url = open_url;
 							g_modal_window_width = 655;
-							g_modal_window_height = 500;
+							g_modal_window_height = 580;
 							$('#jqmMsg').css("display", "none");
 							$('#jqmTitleText').text(m.getString('title_videoplayer'));
 							if($modalWindow){
@@ -1978,220 +1367,14 @@ function openSelItem(item){
 	    fileExt=="jpeg"||
 	    fileExt=="png" ||
 	    fileExt=="gif" ){
-		openImageViewer(loc);
+		
+		var page_size = getPageSize();
+		g_image_player.show(loc, page_size[0], page_size[1], g_file_array);
+
 		return;
 	}
 	
 	window.open(loc);
-}
-
-function createLayout(){
-	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
-	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
-	lan = m.setLanguage(lan);
-	
-	if( $("body").attr("openurl") != undefined )
-		g_storage.set('openurl', $("body").attr("openurl"));
-	
-	if( $("body").attr("fileview_only") != undefined )
-		g_fileview_only = $("body").attr("fileview_only");
-	
-	var layout_html = "";  
-	
-  	layout_html += "<div id='header_region' class='unselectable' width='100%' border='0'>";
-  	layout_html += "<div id='logo'></div>";
-  
-  	if( g_fileview_only == 0 ){
-		layout_html += "<div id='user'>Welcome home, <span id='username'></span><span id='login_info'></span>";
-	  
-	  	/*
-	  	var login_info = g_storage.get('last_login_info');
-	  	if(login_info!=""&&login_info!=undefined){
-	  	var login_info_array = String(login_info).split(">");  	
-	  	layout_html += "<span id='login_info'>"+m.getString('title_logininfo')+ login_info_array[1] + ", " + m.getString('title_ip') + login_info_array[2] + "</span>";
-		}
-		*/
-		
-		layout_html += "</div>";
-	}
-
-  	layout_html += "<div id='loading'><img src='/smb/css/load.gif'/><div><span>Loading...</span></div></div>";
-  	//layout_html += "<div class='albutton toolbar-button-right' id='btnHelp'><div class='ticon'></div></div>";
-  
-  	layout_html += "<ul class='navigation' id='lan'>";
-	layout_html += "<li>";
-  	layout_html += "<dl>";  
-  	layout_html += "<dt><a id='" + lan + "'>" + m.getString('lan_'+lan) + "</a></dt>";  
-  	for( var i = 0; i < g_support_lan.length; i++ ){
-  		if(g_support_lan[i] != lan){
-  			layout_html += "<dd><a id='" + g_support_lan[i] + "'>" + m.getString('lan_' + g_support_lan[i]) + "</a></dt>";	
-  		}
-	}	
-	layout_html += "</dl>";
-  	layout_html += "</li>"; 
-  	layout_html += "<ul>";
-  
-  	layout_html += "</div>";
-  	layout_html += "<div id='main_region' class='unselectable'>";  	
-	layout_html += "<div style='width: 100%;height:100%;float:left;position: relative;'>";
-	
-  	if( g_fileview_only == 0 ){
-  		layout_html += "<div id='main_left_region' class='unselectable'>";
-  		layout_html += "<div id='infobar' class='unselectable'></div>";
-  		layout_html += "<div id='hostview' class='unselectable'></div>";  
-  		layout_html += "</div>";
-	}
-	else{
-		layout_html += "<div id='main_left_region' class='unselectable hidehostview'>";
-  		layout_html += "</div>";
-	}
-
-  	layout_html += "<div id='main_right_region' class='unselectable'>";
-  
-  	layout_html += "<div id='main_right_container' class='unselectable'>";
-  	layout_html += "<div id='infobar' class='unselectable'>";
-  	layout_html += "<div id='toolbar' class='unselectable'>";  
-  	layout_html += "<div id='urlregion-url'>";
-  	layout_html += "<p id='openurl' align='left' width='150' style='padding-left:10px' ></p>";
-  	layout_html += "</div>";
-  	
-  	if( g_fileview_only == 0 ){
-		layout_html += "<div class='alsearch toolbar-button-right' id='boxSearch' style='display:none'><input type='text'/></div>";
-		layout_html += "<div class='albutton toolbar-button-right' id='btnUpload' style='display:none'><div class='ticon'></div></div>";
-	  	layout_html += "<div class='albutton toolbar-button-right' id='btnPlayImage' style='display:none'><div class='ticon'></div></div>";
-		layout_html += "<div class='albutton toolbar-button-right' id='btnNewDir' style='display:none'><div class='ticon'></div></div>";
-	  	layout_html += "<div class='albutton toolbar-button-right' id='btnSelect' style='display:none'><div class='ticon'></div></div>";
-	  	layout_html += "<div class='albutton toolbar-button-right' id='btnCancelSelect' style='display:none'><div class='ticon'></div></div>";
-	  	layout_html += "<div class='albutton toolbar-button-right' id='btnCancelUpload' style='display:none'><div class='ticon'></div></div>";
-	  	layout_html += "<div class='albutton toolbar-button-right' id='btnChangeUser' style='display:none'><div class='ticon'></div></div>";
-	}
-
-  	layout_html += "</div>";
-  	layout_html += "</div>";
-  	layout_html += "<div id='fileview' class='unselectable'></div>";
-  	
-  	//- button panel
-  	layout_html += "<div id='button_panel' class='unselectable'>";
-  	layout_html += "<div class='abbutton toolbar-button-right disable' id='btnShareLink' style='display:block'><div class='ticon'></div></div>";
-	layout_html += "<div class='abbutton toolbar-button-right disable' id='btnDeleteSel' style='display:block'><div class='ticon'></div></div>";
-  	layout_html += "<div class='abbutton toolbar-button-right disable' id='btnDownload' style='display:block'><div class='ticon'></div></div>";
-	layout_html += "<div class='abbutton toolbar-button-right disable' id='btnRename' style='display:block'><div class='ticon'></div></div>";
-  	//layout_html += "<div class='abbutton toolbar-button-right disable' id='btnUnLock' style='display:block'><div class='ticon'></div></div>";
-  	//layout_html += "<div class='abbutton toolbar-button-right disable' id='btnLock' style='display:block'><div class='ticon'></div></div>";
-  	layout_html += "</div>";
-  
-   	//- upload panel
-  	layout_html += "<div id='upload_panel' class='unselectable'>";
-  	layout_html += "<div style='position:absolute;width:98%;height:100%;padding:10px'>";
-  	layout_html += "<iframe src='' width='100%' height='100%' frameborder='0'/>";  
-  	layout_html += "</div>";
-  	layout_html += "</div>";
-  
-	layout_html += "</div>";
-  	layout_html += "</div>";
-  	layout_html += "</div>";
-	layout_html += "</div>";
-	
-  	layout_html += "<div id='bottom_region' class='unselectable'>";  
-  
-  	if( g_fileview_only == 0 ){
-		//- Setting
-	  	layout_html += "<ul class='navigation' id='setting'>";
-		layout_html += "<li>";
-	  	layout_html += "<dl>";
-	  
-	  	//- for test
-	  	//layout_html += "<dd><a id='test'>" + m.getString('title_test') + "</a></dt>";
-	  
-	  	layout_html += "<dd><a id='help'>" + m.getString('title_help') + "</a></dt>";
-	  	layout_html += "<dd><a id='version'>" + m.getString('title_version') + "</a></dt>";
-	  	layout_html += "<dd><a id='sharelink'>" + m.getString('title_sharelink') + "</a></dt>";
-	  	layout_html += "<dd><a id='rescan_samba'>" + m.getString('title_rescan') + "</a></dt>";
-	  	layout_html += "<dd><a id='config'>" + m.getString('btn_config') + "</a></dt>";
-	  	layout_html += "<dd><a id='favorite'>" + m.getString('btn_favorite') + "</a></dt>";
-		layout_html += "<dd><a id='logout'>" + m.getString('title_logout') + "</a></dt>";
-	  	layout_html += "<dt><a>" + m.getString('title_setting') + "</a></dt>";  
-		layout_html += "</dl>";
-	  	layout_html += "</li>"; 
-	  	layout_html += "</ul>";
-	
-	  	//- Refresh
-	  	layout_html += "<ul class='navigation' id='refresh'>";
-	  	layout_html += "<li>";
-	  	layout_html += "<dl>";
-	  	layout_html += "<dt><a>" + m.getString('btn_refresh') + "</a></dt>";
-	  	layout_html += "</dl>";
-	  	layout_html += "</li>"; 
-	  	layout_html += "</ul>";
-	  	
-	  	//layout_html += "<span class='prompt'><a class='logout'>" + m.getString('title_logout') + "</a></span>";
-	  
-	  	//- Scemes
-		layout_html += "<ul class='themes'>";
-		layout_html += "<span>" + m.getString('title_skin') + "</span>";
-		layout_html += "<span id='skin1' class='themes_ctrl'></span>";
-		layout_html += "<span id='skin2' class='themes_ctrl'></span>";
-		layout_html += "</ul>";
-	}
-	
-	layout_html += "<ul class='func_help'>";
-	layout_html += "<span id='function_help'></span>";
-	layout_html += "</ul>";
-	
-	layout_html += "<span id='right_info'>ASUSTeK Computer Inc. All rights reserved</span>";
-	
-  	layout_html += "</div>";
-  
-  	//- modal window
-	layout_html += "<div id='modalWindow' class='jqmWindow'>";
-	layout_html += "<div id='jqmTitle'>";
-	layout_html += "<span id='jqmTitleText'></span>";
-	layout_html += "</div>";
-	layout_html += "<div id='jqmMsg'>";
-	layout_html += "<span id='jqmMsgText'></span>";
-	layout_html += "</div>";
-	layout_html += "<div id='jqmContent' style='padding;0px;margin:0px'>";
-	layout_html += "</div>";
-	layout_html += "</div>";
-	
-	$("body").empty();
-	$("body").append(layout_html);	
-	
-	$("body").click(function(){
-		closePopupmenu();	
-	});
-	
-	$("span#username").click(function(){
-		var r=confirm(m.getString('msg_logout_confirm'));
-		if (r!=true){
-			return;
-		}
-	
-		doLOGOUT();
-	});	
-	/////////////////////////////////////////////////////////////////////////////////////////
-	
-	var skin = ( g_storage.getl('skin') == undefined ) ? "skin1" : g_storage.getl('skin');
-  	if(skin=="skin1")
-  		$("#mainCss").attr("href","/smb/css/style-theme1.css");
-  	else if(skin=="skin2")
-  		$("#mainCss").attr("href","/smb/css/style-theme2.css");
-  	/////////////////////////////////////////////////////////////////////////////////////////
-  	
-	$("#btnHelp").attr("title", m.getString('title_help'));
-	$("#btnLogout").attr("title", m.getString('title_logout'));
-	$("#btnConfig").attr("title", m.getString('btn_config'));
-	$("#btnUpload").attr("title", m.getString('btn_upload'));
-	$("#btnCancelUpload").attr("title", m.getString('btn_cancelupload'));
-	$("#btnSelect").attr("title", m.getString('btn_select'));
-	$("#btnCancelSelect").attr("title", m.getString('btn_cancelselect'));
-	$("#btnNewDir").attr("title", m.getString('btn_newdir'));
-	$("#btnShareLink").attr("title", m.getString('btn_sharelink'));
-	$("#btnDeleteSel").attr("title", m.getString('btn_delselect'));
-	$("#btnDownload").attr("title", m.getString('func_download'));
-	$("#btnRename").attr("title", m.getString('btn_rename'));
-	$("#btnSetting").attr("title", m.getString('title_setting'));
-	$("#btnRefresh").attr("title", m.getString('btn_refresh'));
 }
 
 function addtoFavorite(){
@@ -2257,6 +1440,20 @@ function getMouseXY(e) {
 }
 
 $(document).ready(function(){
+	
+	if( ( navigator.userAgent.match(/iPhone/i)) || 
+	    ( navigator.userAgent.match(/iPod/i))   ||
+		( navigator.userAgent.match(/Android/i)) && (navigator.userAgent.match(/Mobile/i)) ) {
+		var option = window.location.href;
+		option = option.substr(option.lastIndexOf("?")+1, option.length);
+		
+		if(option.indexOf("desktop=1")!=0){
+			var url = window.location.href;		
+			url = url.substr(0, url.lastIndexOf("?"));
+			window.location = url + '?mobile=1';
+			return;
+		}
+	}
 	
 	document.oncontextmenu = function() {return false;};	
 	document.onmousedown = function(e) {		
@@ -2326,6 +1523,8 @@ $(document).ready(function(){
 		var loc = g_storage.get('openurl');
 		doPROPFIND(loc);
 	}
+	
+	initAudioPlayer();
 	///////////////////////////////////////////////////////////////////////////////
 	
 	function closeModal(hash){
@@ -2471,8 +1670,10 @@ $(document).ready(function(){
     			g_storage.set('router_version', x.find("version").text());
 				g_storage.set('aicloud_version', x.find("aicloud_version").text());
     			g_storage.set('wan_ip', x.find("wan_ip").text());
-				g_storage.set('modalname', x.find("modalname").text());    			
-						
+				g_storage.set('modalname', x.find("modalname").text());
+				g_storage.set('usbdiskname', x.find("usbdiskname").text());
+				g_storage.set('dms_enable', x.find("dms_enable").text());
+				
     			var login_info = g_storage.get('last_login_info');
 				if(login_info!=""&&login_info!=undefined){
 					var login_info_array = String(login_info).split(">");  	
@@ -2506,6 +1707,9 @@ $(document).ready(function(){
 	}
 	
 	$("div#btnDeleteSel").click(function(){
+		if($(this).hasClass("disable"))
+			return false;
+		
 		if(g_select_array.length<=0)
 			return;
 			
@@ -2524,7 +1728,10 @@ $(document).ready(function(){
 		client.DELETE(g_selected_files[0], webdav_delfile_callbackfunction );
 	});
 	
-	$("div#btnNewDir").click(function(){		
+	$("div#btnNewDir").click(function(){	
+		if($(this).hasClass("disable"))
+			return false;
+				
 		var $modalWindow = $("div#modalWindow");
 		g_modal_url = '/smb/css/makedir.html';
 		g_modal_window_width = 500;
@@ -2537,95 +1744,337 @@ $(document).ready(function(){
 	});
 	
 	$("div#btnShareLink").click(function(){	
-		if(g_select_array.length<=0)
-			return;
+		if($(this).hasClass("disable"))
+			return false;
 			
-		var share_link_array = new Array();
-		var complete_count = 0;
-		var eml = "";
-		var subj = "?subject=" + m.getString('email_subject');
-		var bod = "";
-		var selectURL = "";
-		var selectFiles = "";
+		closePopupmenu();
 		
-		for(var i=0; i < g_select_array.length; i++){			  
-		  var this_file_name = g_select_array[i].title;
-			var this_full_url = g_select_array[i].uhref;
-			var this_isdir = g_select_array[i].isdir;
-			var this_url = window.location.href;
+		var popupmeny = "<div class='popupmenu' id='popupmenu'>";
+		
+		//- Share to Facebook	
+		popupmeny += "<div class='menuitem' id='share2facebook'>";
+		popupmeny += "<div class='menuitem-content' style='-webkit-user-select: none;'>";		
+		popupmeny += "<span class='menuitem-icon a-inline-block' style='-webkit-user-select: none;'>&nbsp;</span>";
+		popupmeny += "<span class='menuitem-container a-inline-block' style='-webkit-user-select: none;'>";
+		popupmeny += "<span class='menuitem-caption a-inline-block' style='-webkit-user-select: none;'>";
+		popupmeny += "<div style='-webkit-user-select: none;'>" + m.getString("title_share2facebook") + "</div>";
+		popupmeny += "</span>";		
+		popupmeny += "</span>";
+		popupmeny += "</div>";
+		popupmeny += "</div>";
+	
+		//- Share by Email
+		popupmeny += "<div class='menuitem' id='sharebyemail'>";
+		popupmeny += "<div class='menuitem-content' style='-webkit-user-select: none;'>";		
+		popupmeny += "<span class='menuitem-icon a-inline-block' style='-webkit-user-select: none;'>&nbsp;</span>";
+		popupmeny += "<span class='menuitem-container a-inline-block' style='-webkit-user-select: none;'>";
+		popupmeny += "<span class='menuitem-caption a-inline-block' style='-webkit-user-select: none;'>";
+		popupmeny += "<div style='-webkit-user-select: none;'>" + m.getString("title_gen_sharelink") + "</div>";
+		popupmeny += "</span>";		
+		popupmeny += "</span>";
+		popupmeny += "</div>";
+		popupmeny += "</div>";
+				
+		popupmeny += "</div>";
+		
+		$(popupmeny).appendTo("body");
+		
+		$(".popupmenu").css("left", ( g_mouse_x - $(".popupmenu").width() ) + "px");
+		$(".popupmenu").css("top", ( g_mouse_y - $(".popupmenu").height() ) + "px");
+		
+		$("#share2facebook").click(function(e){
+			closePopupmenu();
 			
-			/*
-			if(this_isdir!=1){
-				this_url = this_full_url.substring(0, this_full_url.lastIndexOf('/'));
-				
-				selectURL = this_url;
-				alert(selectURL+","+this_file_name);
-				selectFiles += this_file_name;
-				selectFiles += ";";
-			}
-			else{
-				this_url = this_full_url.substring(0, this_full_url.lastIndexOf('/'));
-				
-				selectURL = this_url;
-				alert(selectURL+","+this_file_name);
-				selectFiles += this_file_name;
-				selectFiles += ";";
-			}
-			*/
+			var $modalWindow = $("div#modalWindow");
 			
-			this_url = this_full_url.substring(0, this_full_url.lastIndexOf('/'));
+			if(g_select_array.length<=0)
+				return;
 				
-			selectURL = this_url;
+			var ddns_host_name = g_storage.get('ddns_host_name');    
+			var webdav_mode = g_storage.get('webdav_mode');
+
+			var hostName = (ddns_host_name=="") ? window.location.host : ddns_host_name;
+			if(hostName.indexOf(":")!=-1)
+				hostName = hostName.substring(0, hostName.indexOf(":"));
 			
-			selectFiles += this_file_name;
-			selectFiles += ";";
-		}
-		
-		var webdav_mode = g_storage.get('webdav_mode');
-		var ddns_host_name = g_storage.get('ddns_host_name');    
-    			
-		var hostName = (ddns_host_name=="") ? window.location.host : ddns_host_name;
-		if(hostName.indexOf(":")!=-1)
-			hostName = hostName.substring(0, hostName.indexOf(":"));
-		
-		var is_private_ip = isPrivateIP(hostName);
-		
-		if( webdav_mode == 0 ) //- Only enable http
-			hostName = "http://" + hostName + ":" + g_storage.get("http_port");
-		else
-			hostName = "https://" + hostName;
-		//alert(selectURL + ", " + selectFiles);
-		client.GSL(selectURL, selectURL, selectFiles, 86400, 1, function(error, content, statusstring){
-			if(error==200){
-				var data = parseXml(statusstring);				
-				var result = $(data).find('sharelink').text();
-				
-				if(result==''){
-					alert("Fail to parse xml!");
-					return;
-				}
+			//- The array which upload file to facebook.
+			var upload_item = {
+				_array: new Array(),
+				add: function(obj){					
+					this._array.push(obj);
+				},
+				length: function(){
+					return this._array.length;	
+				},
+				get: function(i){
+					if(i<0||i>this._array.length-1)
+						return null;
+					return this._array[i];
+				},
+				remove: function(i){
+					if(i>=0&&i<=this._array.length-1){
+						this._array.splice(i, 1);
+					}
+				},
+				create: function( callback_function ){
+					var _self = this;
+					var this_url = "";
+					var selectFiles= "";					
+					var prefix_url = "http://" + hostName + ":" + g_storage.get("http_port");
+					
+					if(this._array.length<=0){
+						if(callback_function)
+							callback_function("");
+						return;
+					}
+						
+					for(var i=0; i < this._array.length; i++){			  
+						var this_file_name = this._array[i].title;
+						var this_full_url = this._array[i].uhref;
+						
+						this_url = this_full_url.substring(0, this_full_url.lastIndexOf('/'));
+						
+						selectFiles += this_file_name;
+						selectFiles += ";";
+					}
+			
+					client.GSL(this_url, this_url, selectFiles, 0, 0, function(error, content, statusstring){
+						var share_link_url = "";
+						if(error==200){
+							var data = parseXml(statusstring);
+							var share_link = $(data).find('sharelink').text();
+							var array = share_link.split(";");
+							
+							for(var i=0; i<array.length; i++){
+								share_link_url += prefix_url + "/" + array[i];
+								share_link_url += "," + _self._array[i].isdir;
 								
-				var aa = result.split(";");
-				var len = aa.length;
-				
-				for(var i=0; i<len; i++){
-					bod += hostName + "/" + aa[i];
-					if(i!=len-1)
-						bod += "<br><br>";
+								if(i!=array.length-1)
+									share_link_url += ";";
+							}
+							array=null;
+						}
+						
+						if(callback_function)
+							callback_function(share_link_url);
+					});
 				}
-				
-				var $modalWindow = $("div#modalWindow");
-				g_modal_url = '/smb/css/sharelink.html?v='+bod+'&b='+is_private_ip;
-				g_modal_window_width = 600;
-				g_modal_window_height = 500;
-				$('#jqmMsg').css("display", "none");
-				$('#jqmTitleText').text(m.getString('title_sharelink'));
-				if($modalWindow){
-					$modalWindow.jqmShow();
+			};
+			
+			//- Only generate share link and post to facebook
+			var share_item = {
+				_array: new Array(),
+				add: function(obj){					
+					this._array.push(obj);
+				},
+				length: function(){
+					return this._array.length;	
+				},
+				get: function(i){
+					if(i<0||i>this._array.length-1)
+						return null;
+					return this._array[i];
+				},
+				remove: function(i){
+					if(i>=0&&i<=this._array.length-1){
+						this._array.splice(i, 1);
+					}
+				},
+				create: function( callback_function ){
+					var _self = this;
+					var this_url = "";
+					var selectFiles= "";
+					var prefix_url = "";
+					
+					if(this._array.length<=0){
+						if(callback_function)
+							callback_function("");
+						return;
+					}
+					
+					if( webdav_mode == 0 ) //- Only enable http
+						prefix_url = "http://" + hostName + ":" + g_storage.get("http_port");
+					else
+						prefix_url = "https://" + hostName;
+			
+					for(var i=0; i < this._array.length; i++){			  
+						var this_file_name = this._array[i].title;
+						var this_full_url = this._array[i].uhref;
+						
+						this_url = this_full_url.substring(0, this_full_url.lastIndexOf('/'));
+						
+						selectFiles += this_file_name;
+						selectFiles += ";";
+					}
+			
+					client.GSL(this_url, this_url, selectFiles, 86400, 1, function(error, content, statusstring){
+						var share_link_url = "";
+						
+						if(error==200){
+							var data = parseXml(statusstring);
+							var share_link = $(data).find('sharelink').text();
+							var array = share_link.split(";");
+							
+							for(var i=0; i<array.length; i++){
+								share_link_url += prefix_url + "/" + array[i];
+								share_link_url += "," + _self._array[i].isdir;
+								
+								if(i!=array.length-1)
+									share_link_url += ";";
+							}
+							array=null;
+						}
+						
+						if(callback_function)
+							callback_function(share_link_url);
+					});
+				}
+			};
+			
+			for(var i=0; i < g_select_array.length; i++){			  
+				var this_full_url = g_select_array[i].uhref;
+				var filext = getFileExt(this_full_url);
+								
+				if(filext=='jpg'||filext=='jpeg'||filext=='png'||filext=='gif'){
+					upload_item.add(g_select_array[i]);
+				}			
+				else{
+					share_item.add(g_select_array[i]);
 				}
 			}
-		});
+			
+			//- Create share link
+			var share_link_url = '';
+			upload_item.create(function(sharelink){
 				
+				share_link_url += sharelink;
+				
+				share_item.create(function(sharelink){
+					if(share_link_url!="") share_link_url += ";";	
+					share_link_url += sharelink;
+					
+					var proxy_url_href = window.location.href;
+					
+					if(proxy_url_href.indexOf("?") != -1)
+						proxy_url_href = proxy_url_href.substr(0, proxy_url_href.indexOf("?"));
+					
+					if(proxy_url_href.lastIndexOf("/") == -1)
+						proxy_url_href += "/";
+					
+					proxy_url_href += 'smb/css/proxyA.html';
+					
+					g_modal_url = 'http://develop.stage612.url.tw/facebook/upload.html';
+					g_modal_url += '?v=' + share_link_url;
+					g_modal_url += '&d=' + proxy_url_href;
+					g_modal_url += '&l=' + g_storage.get('lan');
+					
+					g_modal_window_width = 600;
+					g_modal_window_height = 350;
+					$('#jqmMsg').css("display", "none");	
+					$('#jqmTitleText').text("Upload to Facebook");
+					if($modalWindow){
+						$modalWindow.jqmShow();
+					}
+							
+					$("#image_slide_show").remove();
+				});	
+			});
+		});
+		
+		$("#sharebyemail").click(function(e){
+			closePopupmenu();
+			
+			if(g_select_array.length<=0)
+				return;
+				
+			var share_link_array = new Array();
+			var complete_count = 0;
+			var eml = "";
+			var subj = "?subject=" + m.getString('email_subject');
+			var bod = "";
+			var selectURL = "";
+			var selectFiles = "";
+			
+			for(var i=0; i < g_select_array.length; i++){			  
+				var this_file_name = g_select_array[i].title;
+				var this_full_url = g_select_array[i].uhref;
+				var this_isdir = g_select_array[i].isdir;
+				var this_url = window.location.href;
+				
+				/*
+				if(this_isdir!=1){
+					this_url = this_full_url.substring(0, this_full_url.lastIndexOf('/'));
+					
+					selectURL = this_url;
+					alert(selectURL+","+this_file_name);
+					selectFiles += this_file_name;
+					selectFiles += ";";
+				}
+				else{
+					this_url = this_full_url.substring(0, this_full_url.lastIndexOf('/'));
+					
+					selectURL = this_url;
+					alert(selectURL+","+this_file_name);
+					selectFiles += this_file_name;
+					selectFiles += ";";
+				}
+				*/
+				
+				this_url = this_full_url.substring(0, this_full_url.lastIndexOf('/'));
+					
+				selectURL = this_url;
+				
+				selectFiles += this_file_name;
+				selectFiles += ";";
+			}
+			
+			var webdav_mode = g_storage.get('webdav_mode');
+			var ddns_host_name = g_storage.get('ddns_host_name');    
+					
+			var hostName = (ddns_host_name=="") ? window.location.host : ddns_host_name;
+			if(hostName.indexOf(":")!=-1)
+				hostName = hostName.substring(0, hostName.indexOf(":"));
+			
+			var is_private_ip = isPrivateIP(hostName);
+			
+			if( webdav_mode == 0 ) //- Only enable http
+				hostName = "http://" + hostName + ":" + g_storage.get("http_port");
+			else
+				hostName = "https://" + hostName;
+			//alert(selectURL + ", " + selectFiles);
+			client.GSL(selectURL, selectURL, selectFiles, 86400, 1, function(error, content, statusstring){
+				if(error==200){
+					var data = parseXml(statusstring);				
+					var result = $(data).find('sharelink').text();
+					
+					if(result==''){
+						alert("Fail to parse xml!");
+						return;
+					}
+									
+					var aa = result.split(";");
+					var len = aa.length;
+					
+					for(var i=0; i<len; i++){
+						bod += hostName + "/" + aa[i];
+						if(i!=len-1)
+							bod += "<br><br>";
+					}
+					
+					var $modalWindow = $("div#modalWindow");
+					g_modal_url = '/smb/css/sharelink.html?v='+bod+'&b='+is_private_ip;
+					g_modal_window_width = 600;
+					g_modal_window_height = 530;
+					$('#jqmMsg').css("display", "none");
+					$('#jqmTitleText').text(m.getString('title_sharelink'));
+					if($modalWindow){
+						$modalWindow.jqmShow();
+					}
+				}
+			});
+		});
+		
+		return false;				
 	});
 	
 	var downloadURL = function downloadURL(url){
@@ -2648,6 +2097,9 @@ $(document).ready(function(){
 	}
 
 	$("div#btnDownload").click(function(e){
+		if($(this).hasClass("disable"))
+			return false;
+			
 		if(g_select_array.length<=0)
 			return;
 		
@@ -2714,6 +2166,9 @@ $(document).ready(function(){
 	});
 	
 	$("div#btnRename").click(function(){
+		if($(this).hasClass("disable"))
+			return false;
+			
 		if(g_select_array.length!=1)
 			return;
 		 
@@ -2734,7 +2189,9 @@ $(document).ready(function(){
 	});
 	
 	$("div#btnLock").click(function(){
-		alert(myencodeURI("("));
+		if($(this).hasClass("disable"))
+			return false;
+			
 		if(g_select_array.length!=1)
 			return;
 		 
@@ -2760,6 +2217,9 @@ $(document).ready(function(){
 	});
 	         
 	$("div#btnUnLock").click(function(){
+		if($(this).hasClass("disable"))
+			return false;
+			
 		if(g_select_array.length!=1)
 			return;
 		 
@@ -2795,25 +2255,30 @@ $(document).ready(function(){
 	$("div#btnSelect").click(function(){
 		g_select_mode = 1;
 		
-		$("div#btnNewDir").css("display", "none");
-		$("div#btnUpload").css("display", "none");
-		$("div#btnSelect").css("display", "none");
-		$("div#btnPlayImage").css("display", "none");
-		$("div#boxSearch").css("display", "none");
+		var position = $("div#btnSelect").position();
+		g_btnSelect_right_position = $("#main_right_container #infobar").width() - ( position.left + $("div#btnSelect").outerWidth() );
 		
-		var r = $("div#btnNewDir").width() + $("div#btnUpload").width() + 5;
+		$("div#boxSearch").css("display", "none");
+		$("div#btnSelect").css("display", "none");
+		$("div#btnNewDir").css("display", "none");
+		$("div#btnPlayImage").css("display", "none");
+		$("div#btnUpload").css("display", "none");
+		$("div#btnThumbView").css("display", "none");
+		$("div#btnListView").css("display", "none");
 		
 		$("div#btnCancelSelect").css("display", "block");
-		$("div#btnCancelSelect").css("right", r);
+		$("div#btnCancelSelect").css("right", g_btnSelect_right_position);
+		
+		showHideEditUIRegion(true);
 		
 		g_on_button_animation = 1;
 		
 		$('div#btnCancelSelect').animate({
-	    	right: 5
+	    	right: 0
 	  	}, 500, function() {
-	    	// Animation complete.
-	    
+	    	// Animation complete.	    
 	    	$(".selectHintDiv").css("display", "block");
+			$(".selectListHintDiv").css("display", "block");
 	    	    
 	    	$("#fileview #fileviewicon").each(function(){
 				$(this).addClass("select");	
@@ -2821,82 +2286,94 @@ $(document).ready(function(){
 			
 			adjustLayout();
 			
-			$("#button_panel").css("left", '1999px');
-			$("#button_panel").css("display", "block");			
-			$("#button_panel").animate({left:"0px"},"slow", null, function(){
-				$("#function_help").text(m.getString('msg_selectmode_help'));			
-			});
-			
 			g_on_button_animation = 0;
 	  	});
-	});
-	
-	$("div#btnSelect2").click(function(){		
-		g_select_mode = 1;
-			
-		$(".selectHintDiv").css("display", "block");
-				
-		$("div#btnNewDir").css("display", "none");
-		$("div#btnUpload").css("display", "none");
-		$("div#btnSelect").css("display", "none");
-		
-		$("div#btnCancelSelect").css("display", "block");
-		
-		$("#fileview #fileviewicon").each(function(){
-			$(this).addClass("select");	
-		});
-		
-		adjustLayout();
-		
-		$("#button_panel").css("left", '1999px');
-		$("#button_panel").css("display", "block");			
-		$("#button_panel").animate({left:"0px"},"slow", null, function(){
-			$("#function_help").text(m.getString('msg_selectmode_help'));			
-		});
 	});
 	
 	$("div#btnCancelSelect").click(function(){
 		
 		$("div#btnCancelSelect").css("display", "none");
 		
-		var r = 5;
-		
 		$("div#btnSelect").css("display", "block");
-		$("div#btnSelect").css("right", r);
+		$("div#btnSelect").css("right", 0);
+		
+		showHideEditUIRegion(false);
 		
 		g_on_button_animation = 1;
 		$('div#btnSelect').animate({
-	    	right: 85
+	    	right: g_btnSelect_right_position
 	  	}, 500, function() {
 	    	// Animation complete.	    	    
 	    	cancelSelectMode();
-			$("div#btnSelect").css("right", 5);
+			$("div#btnSelect").css("right", 0);
 			g_on_button_animation = 0;
 	  	});
 	  		
 	});
 	
-	$("#btnUpload").click(function(e){
+	$("#btnThumbView").click(function(){
 		
+		if(confirmCancelUploadFile()==0)
+			return;
+		
+		g_list_view.set(0);
+		
+		$("#btnThumbView").css("display", "none");
+		$("#btnListView").css("display", "block");
+		
+		var loc = g_storage.get('openurl');
+		loc = (loc==undefined) ? "/" : loc;
+		
+		var media_type = isAiModeView();
+		if( media_type < 0 ){
+			doPROPFIND(loc);
+		}
+		else{
+			var data_id = (g_storage.get('data-id')==undefined)?"":g_storage.get('data-id');
+			var keyword = myencodeURI($("div#boxSearch input").val());
+			doPROPFINDMEDIALIST(loc, false, null, media_type, "0", "50", keyword, "TIMESTAMP", "DESC", data_id);
+		}
+	});
+	
+	$("#btnListView").click(function(){
+		g_list_view.set(1);
+		
+		$("#btnThumbView").css("display", "block");
+		$("#btnListView").css("display", "none");
+		
+		var loc = g_storage.get('openurl');
+		loc = (loc==undefined) ? "/" : loc;
+		
+		var media_type = isAiModeView();		
+		if( media_type < 0 ){
+			doPROPFIND(loc);
+		}
+		else{
+			var data_id = (g_storage.get('data-id')==undefined)?"":g_storage.get('data-id');
+			var keyword = myencodeURI($("div#boxSearch input").val());
+			doPROPFINDMEDIALIST(loc, false, null, media_type, "0", "50", keyword, "TIMESTAMP", "DESC", data_id);
+		}
+	});
+	
+	$("#btnUpload").click(function(e){
+		if($(this).hasClass("disable"))
+			return false;
+			
 		closePopupmenu();
 		
 		var popupmeny = "<div class='popupmenu' id='popupmenu'>";
 		
-		//- Upload file
-		//if( isBrowser("msie") && getInternetExplorerVersion() <= 9 ){
-		//}
-		//else{  	
-			popupmeny += "<div class='menuitem' id='uploadfile'>";
-			popupmeny += "<div class='menuitem-content' style='-webkit-user-select: none;'>";		
-			popupmeny += "<span class='menuitem-icon a-inline-block' style='-webkit-user-select: none;'>&nbsp;</span>";
-			popupmeny += "<span class='menuitem-container a-inline-block' style='-webkit-user-select: none;'>";
-			popupmeny += "<span class='menuitem-caption a-inline-block' style='-webkit-user-select: none;'>";
-			popupmeny += "<div style='-webkit-user-select: none;'>" + m.getString("title_upload_file") + "</div>";
-			popupmeny += "</span>";		
-			popupmeny += "</span>";
-			popupmeny += "</div>";
-			popupmeny += "</div>";
-		//}
+		//- Upload file			
+		popupmeny += "<div class='menuitem' id='uploadfile'>";
+		popupmeny += "<div class='menuitem-content' style='-webkit-user-select: none;'>";		
+		popupmeny += "<span class='menuitem-icon a-inline-block' style='-webkit-user-select: none;'>&nbsp;</span>";
+		popupmeny += "<span class='menuitem-container a-inline-block' style='-webkit-user-select: none;'>";
+		popupmeny += "<span class='menuitem-caption a-inline-block' style='-webkit-user-select: none;'>";
+		popupmeny += "<div style='-webkit-user-select: none;'>" + m.getString("title_upload_file") + "</div>";
+		popupmeny += "</span>";		
+		popupmeny += "</span>";
+		popupmeny += "</div>";
+		popupmeny += "</div>";
 	
 		//- Upload folder
 		popupmeny += "<div class='menuitem' id='uploadfolder'>";
@@ -2939,6 +2416,8 @@ $(document).ready(function(){
 				$("div#btnSelect").css("display", "none");
 				$("div#btnPlayImage").css("display", "none");
 				$("div#boxSearch").css("display", "none");
+				$("div#btnListView").css("display", "none");
+				$("div#btnThumbView").css("display", "none");
 						
 				$("#upload_panel").css("display", "block");
 				
@@ -2965,7 +2444,8 @@ $(document).ready(function(){
 				$("div#btnSelect").css("display", "none");
 				$("div#btnPlayImage").css("display", "none");
 				$("div#boxSearch").css("display", "none");
-				//$("div#btnCancelUpload").css("display", "block");
+				$("div#btnListView").css("display", "none");
+				$("div#btnThumbView").css("display", "none");
 						
 				$("#upload_panel").css("display", "block");
 				
@@ -3023,6 +2503,103 @@ $(document).ready(function(){
 	
 	$("#btnCancelUpload").click(closeUploadPanel);
 	
+	$(".mediaListDiv").mousedown( function(){	
+		if(confirmCancelUploadFile()==0)
+			return;
+		/*
+		if(g_storage.get('dms_enable')=="0"){
+			//alert(m.getString("msg_no_mediaserver"));
+			$("#main_right_container #hintbar").html(m.getString("msg_no_mediaserver"));
+			$("#main_right_container #hintbar").show();
+			return;
+		}
+		*/
+		var qtype = $(this).attr("qtype");
+		var uhref = g_storage.get('openurl');
+		g_storage.set("data-id", "");
+		$(".mediaListDiv").removeClass("down");
+		$(this).addClass("down");
+		
+		g_ui_mode.set(qtype);
+		
+		doPROPFINDMEDIALIST(uhref, false, function(){
+			
+		}, qtype, "0", "50", null, "TIMESTAMP", "DESC");
+	});
+	
+	$("div#btnAiMusicPopupMenu").click( function(e){
+		
+		closePopupmenu();
+		
+		var popupmeny = "<div class='popupmenu' id='popupmenu'>";
+		
+		popupmeny += "<div class='menuitem' id='classifyByAlbum'>";
+		popupmeny += "<div class='menuitem-content' style='-webkit-user-select: none;'>";		
+		popupmeny += "<span class='menuitem-icon a-inline-block' style='-webkit-user-select: none;'>&nbsp;</span>";
+		popupmeny += "<span class='menuitem-container a-inline-block' style='-webkit-user-select: none;'>";
+		popupmeny += "<span class='menuitem-caption a-inline-block' style='-webkit-user-select: none;'>";
+		popupmeny += "<div style='-webkit-user-select: none;'>" + m.getString('title_sort_by_album') + "</div>";
+		popupmeny += "</span>";		
+		popupmeny += "</span>";
+		popupmeny += "</div>";
+		popupmeny += "</div>";
+				
+		popupmeny += "<div class='menuitem' id='classifyByArtist'>";
+		popupmeny += "<div class='menuitem-content' style='-webkit-user-select: none;'>";		
+		popupmeny += "<span class='menuitem-icon a-inline-block' style='-webkit-user-select: none;'>&nbsp;</span>";
+		popupmeny += "<span class='menuitem-container a-inline-block' style='-webkit-user-select: none;'>";
+		popupmeny += "<span class='menuitem-caption a-inline-block' style='-webkit-user-select: none;'>";
+		popupmeny += "<div style='-webkit-user-select: none;'>" + m.getString('title_sort_by_artist') + "</div>";
+		popupmeny += "</span>";		
+		popupmeny += "</span>";
+		popupmeny += "</div>";
+		popupmeny += "</div>";
+		
+		popupmeny += "</div>";
+		
+		$(popupmeny).appendTo("body");
+		
+		$(".popupmenu").css("left", ( g_mouse_x - $(".popupmenu").width() ) + "px");
+		$(".popupmenu").css("top", ( g_mouse_y - $(".popupmenu").height() ) + "px");
+		
+		$("#classifyByAlbum").click(function(e){
+			if(client==null)
+				return;
+			
+			closePopupmenu();
+			showHideLoadStatus(true);
+			
+			var loc = g_storage.get('openurl');
+			loc = (loc==undefined) ? "/" : loc;
+			
+			client.GETMUSICCLASSIFICATION(loc, 'album', function(error, statusstring, content){				
+				if(error==200) createClassificationView(content, "album");
+				else if(error==503) show_hint_no_mediaserver();						
+				showHideLoadStatus(false);
+			});
+			
+			e.preventDefault();
+      		return false;
+		});
+				
+		$("#classifyByArtist").click(function(){
+			if(client==null)
+				return;
+			
+			closePopupmenu();
+			showHideLoadStatus(true);
+			
+			var loc = g_storage.get('openurl');
+			loc = (loc==undefined) ? "/" : loc;
+			
+			client.GETMUSICCLASSIFICATION(loc, 'artist', function(error, statusstring, content){
+				if(error==200) createClassificationView(content, "artist");
+				else if(error==503) show_hint_no_mediaserver();				
+				showHideLoadStatus(false);
+			});
+		});
+	});
+	
 	$("div#hostview").scroll(function(e){
 		g_storage.set('hostviewscrollTop', $(this).scrollTop());
 	});
@@ -3052,6 +2629,11 @@ $(document).ready(function(){
 				return;
 			}	
 			doLOGOUT();
+		}
+		else if(func=="mobile"){
+			var url = window.location.href;
+			url = url.substr(0, url.lastIndexOf("?"));
+			window.location = url + '?mobile=1';
 		}
 		else if(func=="favorite"){
 			addtoFavorite();
@@ -3241,17 +2823,19 @@ $(document).ready(function(){
 	});
 		
 	$("div#btnPlayImage").click(function(){
-		openImageViewer();
+		var page_size = getPageSize();
+		g_image_player.show('', page_size[0], page_size[1], g_file_array);
 	});
 	
 	$("div#boxSearch").keyup(function(){
 		var keyword = myencodeURI($("div#boxSearch input").val());
 		var uhref = $(this).attr("uhref");
 		var qtype = $(this).attr("qtype");
+		var data_id = (g_storage.get('data-id')==undefined)?"":g_storage.get('data-id');
 		
 		doPROPFINDMEDIALIST(uhref, false, function(){
 			
-		}, qtype, "0", "50", keyword, "TIMESTAMP", "DESC");
+		}, qtype, "0", "50", keyword, "TIMESTAMP", "DESC", data_id);
 		
 	});
 	
@@ -3293,3 +2877,7 @@ window.onunload = function (e) {
 		$("#upload_panel iframe")[0].contentWindow.stop_upload();
 	}
 };
+
+function doBackgroundPlay(){
+	alert("doBackgroundPlay");
+}

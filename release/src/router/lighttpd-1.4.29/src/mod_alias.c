@@ -67,7 +67,7 @@ FREE_FUNC(mod_alias_free) {
 SETDEFAULTS_FUNC(mod_alias_set_defaults) {
 	plugin_data *p = p_d;
 	size_t i = 0;
-
+	
 	config_values_t cv[] = {
 		{ "alias.url",                  NULL, T_CONFIG_ARRAY, T_CONFIG_SCOPE_CONNECTION },       /* 0 */
 		{ NULL,                         NULL, T_CONFIG_UNSET,  T_CONFIG_SCOPE_UNSET }
@@ -79,7 +79,7 @@ SETDEFAULTS_FUNC(mod_alias_set_defaults) {
 	
 	for (i = 0; i < srv->config_context->used; i++) {
 		plugin_config *s;
-
+		
 		s = calloc(1, sizeof(plugin_config));
 		s->alias = array_init();
 		cv[0].destination = s->alias;
@@ -93,7 +93,7 @@ SETDEFAULTS_FUNC(mod_alias_set_defaults) {
 		if (s->alias->used >= 2) {
 			const array *a = s->alias;
 			size_t j, k;
-
+			
 			for (j = 0; j < a->used; j ++) {
 				const buffer *prefix = a->data[a->sorted[j]]->key;
 				for (k = j + 1; k < a->used; k ++) {
@@ -126,18 +126,18 @@ static int mod_alias_patch_connection(server *srv, connection *con, plugin_data 
 	plugin_config *s = p->config_storage[0];
 
 	PATCH(alias);
-
+	
 	/* skip the first, the global context */
 	for (i = 1; i < srv->config_context->used; i++) {
 		data_config *dc = (data_config *)srv->config_context->data[i];
 		s = p->config_storage[i];
-
+			
 		/* condition didn't match */
 		if (!config_check_cond(srv, con, dc)) continue;
 
 		/* merge config */
 		for (j = 0; j < dc->value->used; j++) {
-			data_unset *du = dc->value->data[j];
+			data_unset *du = dc->value->data[j];			
 
 			if (buffer_is_equal_string(du->key, CONST_STR_LEN("alias.url"))) {
 				PATCH(alias);

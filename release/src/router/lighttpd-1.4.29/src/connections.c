@@ -458,6 +458,12 @@ static int connection_handle_write_prepare(server *srv, connection *con) {
 		case HTTP_METHOD_REMOVESL:
 		case HTTP_METHOD_GETLATESTVER:
 		case HTTP_METHOD_GETDISKSPACE:
+		case HTTP_METHOD_PROPFINDMEDIALIST:
+		case HTTP_METHOD_GETMUSICCLASSIFICATION:
+		case HTTP_METHOD_GETMUSICPLAYLIST:
+		case HTTP_METHOD_GETTHUMBIMAGE:
+		case HTTP_METHOD_GETPRODUCTICON:
+		case HTTP_METHOD_GETVIDEOSUBTITLE:
 		   	//Cdbg(DBE,"http method= %s break;",connection_get_state(con->request.http_method));
 			break;
 		case HTTP_METHOD_OPTIONS:
@@ -847,10 +853,11 @@ static int parser_share_link(server *srv, connection *con){
 		int is_illegal = 0;
 		int y = strstr (con->request.uri->ptr+1,"/") - (con->request.uri->ptr);
 		
+		//- Not valid share link
 		if( y <= 8 )
 			return -1;
 
-		Cdbg(DBE, "AICLOUD sharelink");
+		Cdbg(DBE, "AICLOUD sharelink, con->request.uri=%s", con->request.uri->ptr);
 		
 		buffer* filename = buffer_init();
 		buffer_copy_string_len(filename, con->request.uri->ptr+y+1, con->request.uri->used-y);
@@ -864,7 +871,6 @@ static int parser_share_link(server *srv, connection *con){
 		share_link_info_t* c=NULL;
 
 		for (c = share_link_info_list; c; c = c->next) {
-			Cdbg(DBE, "c->shortpath=%s, sharepath=%s", c->shortpath->ptr, sharepath->ptr );
 			if(buffer_is_equal(c->shortpath, sharepath)){				
 
 				buffer_reset(con->share_link_basic_auth);	
@@ -879,23 +885,11 @@ static int parser_share_link(server *srv, connection *con){
 					break;
 				}
 
-				Cdbg(DBE, "filename=%s, c->filename=%s", 
-					filename->ptr, 
-					c->filename->ptr);
-
 				buffer* filename2 = buffer_init();
 				buffer_copy_string_buffer(filename2,c->filename);
-				buffer_urldecode_path(filename2);
 				
 				int com_result = strncmp( filename->ptr, filename2->ptr, filename2->used-1) ;
 
-				Cdbg(DBE, "filename=%s, filename2(c->filename)=%s, %d, %d, com_result=%d", 
-					filename->ptr, 
-					filename2->ptr, 
-					strncmp( filename->ptr, filename2->ptr, filename2->used-1),
-					filename2->used,
-					com_result);
-				
 				buffer_free(filename2);
 
 				if( com_result!= 0 ){					
@@ -914,7 +908,6 @@ static int parser_share_link(server *srv, connection *con){
 				con->share_link_type = c->toshare;
 				
 				Cdbg(DBE, "realpath=%s, con->request.uri=%s, toShare=%d", c->realpath->ptr, con->request.uri->ptr, c->toshare);
-				//Cdbg(DBE, "auth=%s", con->share_link_basic_auth->ptr);
 				
 				break;
 			}
@@ -927,9 +920,18 @@ static int parser_share_link(server *srv, connection *con){
 		}
 		
 		buffer_reset(con->request.uri);		
+
+#if 0
 		buffer_copy_string_buffer(con->request.uri, c->realpath);
 		buffer_append_string(con->request.uri, "/");
 		buffer_append_string_buffer(con->request.uri, filename);
+		//buffer_append_string_buffer(con->request.uri, c->filename);
+#else
+		buffer_copy_string(con->request.uri, "");
+		buffer_append_string_encoded(con->request.uri, CONST_BUF_LEN(c->realpath), ENCODING_REL_URI);		
+		buffer_append_string(con->request.uri, "/");
+		buffer_append_string_encoded(con->request.uri, CONST_BUF_LEN(filename), ENCODING_REL_URI);
+#endif
 
 		buffer_free(sharepath);
 		buffer_free(filename);
@@ -1113,498 +1115,6 @@ static void check_available_temp_space(server *srv, connection *con){
 	*/
 #endif
 }
-#if 0
-
-static void get_connection_auth_type(server *srv, connection *con)
-{
-	data_string *ds;
-	int found = 0;
-		
-	check_direct_file(srv, con);
-
-	if(con->mode==DIRECT)
-		return;
-	
-	if (NULL == (ds = (data_string *)array_get_element(con->request.headers, "user-Agent")))
-		return;
-		
-	config_values_t cv[] = {
-		{ "smbdav.auth_ntlm",    NULL, T_CONFIG_ARRAY, T_CONFIG_SCOPE_CONNECTION },       /* 0 */
-		{ NULL,                         NULL, T_CONFIG_UNSET, T_CONFIG_SCOPE_UNSET }
-	};
-	
-	size_t i, j;
-	for (i = 1; i < srv->config_context->used; i++) {
-		int found = 0;
-		array* auth_ntlm_array = array_init();
-		cv[0].destination = auth_ntlm_array;
-	
-		if (0 != config_insert_values_global(srv, ((data_config *)srv->config_context->data[i])->value, cv)) {
-			continue;
-		}
-		
-		for (j = 0; j < auth_ntlm_array->used; j++) {
-			data_string *ds2 = (data_string *)auth_ntlm_array->data[j];
-
-			if(ds2->key->used){
-				/*
-				Cdbg(DBE, "ds2->key=%s, ds2->value=%s", 
-					ds2->key->ptr, 
-					ds2->value->ptr );
-				*/
-				if( strncmp(ds->value->ptr, ds2->value->ptr, ds2->value->used-1) == 0 ){
-					con->mode = SMB_NTLM;
-					found = 1;
-					break;
-				}
-			}
-		}
-
-		array_free(auth_ntlm_array);
-
-		if(found==1)
-			break;
-	}
-
-}
-
-static smb_info_t *smbdav_get_smb_info_from_pool(server *srv, connection *con, plugin_data *p)
-{
-	smb_info_t *c;
-
-	if(p->smb_info_list==NULL||con->mode==DIRECT)
-		return NULL;
-	
-	//- Get user-Agent
-	data_string *ds = (data_string *)array_get_element(con->request.headers, "user-Agent");
-	if(ds==NULL){
-		return NULL;
-	}
-	
-	char pWorkgroup[30]={0};
-	char pServer[64]={0};
-	char pShare[1280]={0};
-	char pPath[1280]={0};
-	
-	smbc_wrapper_parse_path2(con, pWorkgroup, pServer, pShare, pPath);
-
-	buffer* buffer_server = buffer_init();
-	if(pServer[0] != '\0')
-		buffer_append_string(buffer_server,pServer);
-	
-	buffer* buffer_share = buffer_init();
-	if(pShare[0] != '\0')
-		buffer_append_string(buffer_share,pShare);
-	
-	int count = 0;
-		
-	for (c = p->smb_info_list; c; c = c->next) {
-		
-		count++;
-		
-		if(!buffer_is_equal(c->server, buffer_server))
-			continue;
-
-		//Cdbg(DBE, "c->share=[%s], buffer_share=[%s]", c->share->ptr, buffer_share->ptr);
-		//if(con->mode==SMB_BASIC && !buffer_is_equal(c->share, buffer_share))
-		//	continue;
-
-		//Cdbg(DBE, "%d, c->src_ip=[%s], dst_addr_buf=[%s]", count, c->src_ip->ptr, con->dst_addr_buf->ptr);
-		if(!buffer_is_equal(c->src_ip, con->dst_addr_buf))
-			continue;
-		
-		//Cdbg(DBE, "%d, c->user_agent=[%s], user_agent=[%s]", count, c->user_agent->ptr, ds->value->ptr);
-		if(!buffer_is_equal(c->user_agent, ds->value))
-			continue;
-
-		//Cdbg(DBE, "return %d, c->server=[%s]", count, c->server->ptr);
-
-		buffer_free(buffer_server);
-		buffer_free(buffer_share);
-	
-		return c;
-	}
-
-	buffer_free(buffer_server);
-	buffer_free(buffer_share);
-	
-	return NULL;
-}
-
-static void copy_smb_info(connection *con, smb_info_t *smb_info)
-{
-	con->smb_info = calloc(1, sizeof(smb_info_t));
-	con->smb_info->username = buffer_init();
-	con->smb_info->password = buffer_init();
-	con->smb_info->workgroup = buffer_init();
-	con->smb_info->server = buffer_init();
-	con->smb_info->share = buffer_init();
-	con->smb_info->path = buffer_init();
-	con->smb_info->user_agent = buffer_init();
-	con->smb_info->src_ip = buffer_init();
-	
-	buffer_copy_string_buffer(con->smb_info->username, smb_info->username);
-	buffer_copy_string_buffer(con->smb_info->password, smb_info->password);
-	buffer_copy_string_buffer(con->smb_info->workgroup, smb_info->workgroup);
-	buffer_copy_string_buffer(con->smb_info->server, smb_info->server);
-	buffer_copy_string_buffer(con->smb_info->share, smb_info->share);
-	buffer_copy_string_buffer(con->smb_info->path, smb_info->path);
-	buffer_copy_string_buffer(con->smb_info->user_agent, smb_info->user_agent);
-	buffer_copy_string_buffer(con->smb_info->src_ip, smb_info->src_ip);
-}
-
-static int connection_smb_info_init(server *srv, connection *con, plugin_data *p) 
-{
-	UNUSED(srv);
-
-	char pWorkgroup[30]={0};
-	char pServer[64]={0};
-	char pShare[1280]={0};
-	char pPath[1280]={0};
-		
-	smbc_wrapper_parse_path2(con, pWorkgroup, pServer, pShare, pPath);
-	
-	buffer* bworkgroup = buffer_init();
-	buffer* bserver = buffer_init();
-	buffer* bshare = buffer_init();
-	buffer* bpath = buffer_init();
-	URI_QUERY_TYPE qflag = SMB_FILE_QUERY;
-	
-	if(pWorkgroup[0] != '\0')
-		buffer_copy_string(bworkgroup, pWorkgroup);
-	
-	if(pServer[0] != '\0') {
-		int isHost = smbc_check_connectivity(con->physical_auth_url->ptr);
-		if(isHost) {
-			buffer_copy_string(bserver, pServer);
-		}
-		else{
-			buffer_free(bworkgroup);
-			buffer_free(bserver);
-			buffer_free(bshare);
-			buffer_free(bpath);
-			return 2;
-		}
-	} 
-	else {
-		if(qflag == SMB_FILE_QUERY) {
-			qflag = SMB_HOST_QUERY;
-		}
-	}
-	
-	if(pServer[0] != '\0' && pShare[0] != '\0') {
-		buffer_copy_string(bshare, pShare);
-	} 
-	else {
-		if(qflag == SMB_FILE_QUERY)  {
-			qflag = SMB_SHARE_QUERY;
-		}
-	}
-	
-	if(pServer[0] != '\0' && pShare[0] != '\0' && pPath[0] != '\0') {
-		buffer_copy_string(bpath, pPath);
-		qflag = SMB_FILE_QUERY;
-	}
-
-	data_string *ds = (data_string *)array_get_element(con->request.headers, "user-Agent");
-
-	smb_info_t *smb_info;
-	
-	if( ds && 
-	    ( strstr( ds->value->ptr, "Mozilla" ) || 
-	      strstr( ds->value->ptr, "Opera" ) || 
-	      con->mode == SMB_NTLM ) ){
-	    
-		//- From browser, like IE, Chrome, Firefox, Safari		
-		if(smb_info = smbdav_get_smb_info_from_pool(srv, con, p)){ 
-			Cdbg(DBE, "Get smb_info from pool smb_info->qflag=[%d], smb_info->user=[%s], smb_info->pass=[%s]", 
-				smb_info->qflag, smb_info->username->ptr, smb_info->password->ptr);
-		}
-		else{
-			smb_info = calloc(1, sizeof(smb_info_t));
-			smb_info->username = buffer_init();
-			smb_info->password = buffer_init();
-			smb_info->workgroup = buffer_init();
-			smb_info->server = buffer_init();
-			smb_info->share = buffer_init();
-			smb_info->path = buffer_init();
-			smb_info->user_agent = buffer_init();
-			smb_info->src_ip = buffer_init();			
-			
-			if(con->mode == SMB_NTLM){
-				smb_info->cli = smbc_cli_initialize();
-				if(!buffer_is_empty(bserver)){
-					smbc_cli_connect(smb_info->cli, bserver->ptr, SMB_PORT);
-				}
-				smb_info->ntlmssp_state = NULL; 
-				smb_info->state = NTLMSSP_INITIAL;
-			}
-
-			DLIST_ADD(p->smb_info_list, smb_info);			
-		}	
-		con->smb_info = smb_info;
-			
-	}
-	else{		
-		smb_info = calloc(1, sizeof(smb_info_t));
-		smb_info->username = buffer_init();
-		smb_info->password = buffer_init();
-		smb_info->workgroup = buffer_init();
-		smb_info->server = buffer_init();
-		smb_info->share = buffer_init();
-		smb_info->path = buffer_init();
-		smb_info->user_agent = buffer_init();
-		smb_info->src_ip = buffer_init();			
-		
-		con->smb_info = smb_info;
-	}
-	
-	con->smb_info->auth_time = time(NULL);	
-	con->smb_info->auth_right = 0;
-
-	if(ds)
-		buffer_copy_string(con->smb_info->user_agent, ds->value->ptr);
-	
-	con->smb_info->qflag = qflag;
-	buffer_copy_string_buffer(con->smb_info->workgroup, bworkgroup);
-	buffer_copy_string_buffer(con->smb_info->server, bserver);
-	buffer_copy_string_buffer(con->smb_info->share, bshare);
-	buffer_copy_string_buffer(con->smb_info->path, bpath);
-	buffer_copy_string_buffer(con->smb_info->src_ip, con->dst_addr_buf);
-
-	Cdbg(DBE, "con->smb_info->workgroup=[%s]", con->smb_info->workgroup->ptr);
-	Cdbg(DBE, "con->smb_info->server=[%s]", con->smb_info->server->ptr);
-	Cdbg(DBE, "con->smb_info->share=[%s]", con->smb_info->share->ptr);
-	Cdbg(DBE, "con->smb_info->path=[%s]", con->smb_info->path->ptr);
-	Cdbg(DBE, "con->smb_info->user_agent=[%s]", con->smb_info->user_agent->ptr);
-	Cdbg(DBE, "con->smb_info->src_ip=[%s]", con->smb_info->src_ip->ptr);
-		
-	buffer_free(bworkgroup);
-	buffer_free(bserver);
-	buffer_free(bshare);
-	buffer_free(bpath);
-
-	return 1;
-}
-
-static void connection_smb_info_url_patch(server *srv, connection *con)
-{
-	char strr[2048]="\0";
-	char uri[2048]="\0";
-	
-	UNUSED(srv);
-	
-	char* pch = strchr(con->request.uri->ptr,'?');
-	if(pch){	
-		buffer_copy_string_len(con->url_options, pch+1, strlen(pch)-1);
-		int len = pch -con->request.uri->ptr;
-		strncpy(uri,con->request.uri->ptr, len);
-	}
-	else{
-		strcpy(uri,con->request.uri->ptr);
-	}
-
-	if(con->mode == DIRECT){
-		sprintf(strr, "%s", uri);
-	}
-	else {
-		if(con->smb_info&&con->smb_info->server->used) {
-			if(con->mode == SMB_BASIC){
-				if(con->smb_info->username->used&&con->smb_info->password->used){
-					sprintf(strr, "smb://%s:%s@%s", con->smb_info->username->ptr, con->smb_info->password->ptr, uri+1);
-				}
-				else
-					sprintf(strr, "smb://%s", uri+1);
-			}
-			else if(con->mode == SMB_NTLM){
-				sprintf(strr, "smb://%s", uri+1);		
-			}
-		} else {
-			sprintf(strr, "smb://");
-		}
-	}
-	
-	buffer_copy_string(con->url.path, strr);
-	buffer_copy_string(con->url.rel_path, uri);
-}
-
-static int do_QIS_process(server *srv, connection *con)
-{	
-	return 0;
-	
-#if EMBEDDED_EANBLE
-	int ddns_enable = nvram_is_ddns_enable();
-	char* ddns_name = nvram_get_ddns_host_name2();
-#else
-	int ddns_enable = 0;
-	char* ddns_name = NULL;
-#endif
-
-	Cdbg(DBE, "do_QIS_process...");
-	if( ( ddns_enable == 0 || ddns_name == NULL ) && 
-		strncmp(con->request.uri->ptr, "/", 1) == 0 &&
-		con->request.uri->used == 2){
-
-		Cdbg(DBE, "Enter do_QIS_process...");
-		
-		buffer *out;
-		response_header_overwrite(srv, con, CONST_STR_LEN("Content-Type"), CONST_STR_LEN("text/html; charset=UTF-8"));
-					
-		out = chunkqueue_get_append_buffer(con->write_queue);
-
-		buffer_append_string_len(out, CONST_STR_LEN("<div id=\"webdav_info\""));
-		if(ddns_enable==1)
-			buffer_append_string(out, " ddns_enable=\"1\"");
-		else
-			buffer_append_string(out, " ddns_enable=\"0\"");
-
-		buffer_append_string(out, " ddns_host_name=\"");
-		buffer_append_string(out, ddns_name);
-		buffer_append_string(out, "\"");
-
-		Cdbg(DBE, "Enter do_QIS_process...ddns_name=%s", ddns_name);
-		
-		buffer_append_string_len(out, CONST_STR_LEN("></div>\n"));
-					
-		stat_cache_entry *sce = NULL;
-		buffer* html_file = buffer_init();
-	
-		buffer_copy_string(html_file, "/usr/css/QIS/index.html");
-					
-		con->mode = DIRECT;
-		if (HANDLER_ERROR != stat_cache_get_entry(srv, con, html_file, &sce)) {
-			http_chunk_append_file(srv, con, html_file, 0, sce->st.st_size);
-			response_header_overwrite(srv, con, CONST_STR_LEN("Content-Type"), CONST_BUF_LEN(sce->content_type));
-			con->file_finished = 1;
-			con->http_status = 200;
-		}
-		else{
-			con->file_finished = 1;
-			con->http_status = 404;
-		}
-					
-		buffer_free(html_file);
-
-		return 1;
-	}
-
-	if(strncmp(con->request.uri->ptr, "/qis_login", 10)==0){
-
-#if XEMBEDDED_EANBLE
-		//- enable wedav_aidisk
-		nvram_set_webdavaidisk("1");
-
-		//- enable webdav_proxy
-		nvram_set_webdavproxy("1");
-
-		int i, act;
-		for (i = 30; i > 0; --i) {
-			if (((act = check_action()) == ACT_IDLE) || (act == ACT_REBOOT)) break;
-			fprintf(stderr, "Busy with %d. Waiting before shutdown... %d", act, i);
-			sleep(1);
-		}
-
-		//- nvram commit
-		nvram_do_commit();
-#endif
-
-		Cdbg(DBE, "Enter qis_login...ddns_name...");
-		
-
-		buffer *out;
-		
-		response_header_overwrite(srv, con, CONST_STR_LEN("Content-Type"), CONST_STR_LEN("text/xml; charset=\"utf-8\""));
-		
-		out = chunkqueue_get_append_buffer(con->write_queue);
-		
-		buffer_copy_string_len(out, CONST_STR_LEN("<?xml version=\"1.0\" encoding=\"utf-8\"?>"));
-		buffer_append_string_len(out,CONST_STR_LEN("<result>"));
-		buffer_append_string_len(out,CONST_STR_LEN("<return>"));
-		buffer_append_string_len(out,CONST_STR_LEN("LoginSuccess"));
-		buffer_append_string_len(out,CONST_STR_LEN("</return>"));
-		buffer_append_string_len(out,CONST_STR_LEN("<router_ip_address>"));
-		//buffer_append_string_len(out,CONST_STR_LEN("192.168.1.1"));
-		buffer_append_string_len(out,CONST_STR_LEN("www.asusnetwork.net"));
-		buffer_append_string_len(out,CONST_STR_LEN("</router_ip_address>"));
-		buffer_append_string_len(out,CONST_STR_LEN("<ddns_name>"));
-
-		if(ddns_name==NULL){
-			char* result;
-			char mac[20]="\0";
-			get_mac_address("eth0", &mac);		
-			md5String(mac, NULL, &result);				
-			buffer_append_string(out, result);
-			free(result);
-		}
-		else
-			buffer_append_string(out, ddns_name);
-
-		Cdbg(DBE, "Enter qis_login...ddns_name=%s", ddns_name);
-			
-		buffer_append_string_len(out,CONST_STR_LEN("</ddns_name>"));
-		buffer_append_string_len(out,CONST_STR_LEN("</result>"));
-
-		con->http_status = 200;
-		con->file_finished = 1;
-		
-		return 2;
-	}
-	
-	return 0;
-}
-static int do_connection_auth(server *srv, connection *con)
-{	
-	plugin_data *p = p_d;
-	int res = HANDLER_UNSET;
-
-	//- init the plugin data
-	if(p==NULL){
-		p = calloc(1, sizeof(*p));
-		p->tmp_buf = buffer_init();
-		p_d = p;
-	}
-	
-	if(con->mode == DIRECT){
-		connection_smb_info_url_patch(srv, con);
-		return res;
-	}
-
-	Cdbg(DBE,"***************************************");
-	Cdbg(DBE,"enter do_connection_auth..con->mode = %d, con->request.uri=[%s]", con->mode, con->request.uri->ptr);
-	
-	config_cond_cache_reset(srv, con);
-	config_patch_connection(srv, con, COMP_SERVER_SOCKET);
-	config_patch_connection(srv, con, COMP_HTTP_URL);
-		
-	buffer_copy_string_buffer(con->physical_auth_url, con->conf.document_root);
-	buffer_append_string(con->physical_auth_url, con->request.uri->ptr+1);
-	
-	int result = connection_smb_info_init(srv, con, p);	
-	if( result == 0 ){
-		return HANDLER_FINISHED;
-	}
-	else if( result == 2 ){
-		//- Unable to complete the connection, the device is not turned on, or network problems caused!
-		con->http_status = 451;
-		return HANDLER_FINISHED;
-	}
-
-	if(con->mode == SMB_NTLM) {
-		//try to get NTLM authentication information from HTTP request
-		res = ntlm_authentication_handler(srv, con, p);		
-	} else if(con->mode == SMB_BASIC){
-		//try to get username/password from HTTP request
-		res = basic_authentication_handler(srv, con, p);
-	}
-
-	//- 20120202 Jerry add
-	srv->smb_srv_info_list = p->smb_info_list;	
-	connection_smb_info_url_patch(srv, con);
-
-	buffer_reset(con->physical_auth_url);
-	return res;
-}
-#endif
 
 connection *connection_init(server *srv) {
 	connection *con;
@@ -1658,6 +1168,8 @@ connection *connection_init(server *srv) {
 	CLEAN(url_options);
 	CLEAN(aidisk_username);
 	CLEAN(aidisk_passwd);
+	CLEAN(match_smb_ip);
+	CLEAN(replace_smb_name);
 	
 	CLEAN(parse_request);
 	
@@ -1742,6 +1254,8 @@ void connections_free(server *srv) {
 		CLEAN(url_options);
 		CLEAN(aidisk_username);
 		CLEAN(aidisk_passwd);
+		CLEAN(match_smb_ip);
+		CLEAN(replace_smb_name);
 	
 		CLEAN(parse_request);
 		
@@ -1832,6 +1346,8 @@ int connection_reset(server *srv, connection *con) {
 	CLEAN(url_options);
 	CLEAN(aidisk_username);
 	CLEAN(aidisk_passwd);
+	CLEAN(match_smb_ip);
+	CLEAN(replace_smb_name);
 	
 	CLEAN(parse_request);
 	

@@ -66,6 +66,7 @@ var nomedia_support = isSupport("nomedia");
 var cloudsync_support = isSupport("cloudsync"); 
 var yadns_support = isSupport("yadns"); 
 var manualstb_support = isSupport("manual_stb");
+var wps_multiband_support = isSupport("wps_multiband");
 
 //MODELDEP : DSL-N55U、DSL-N55U-B、RT-N56U
 if(based_modelid == "DSL-N55U" || based_modelid == "DSL-N55U-B" || based_modelid == "RT-N56U")
@@ -98,7 +99,7 @@ if(sw_mode == 4)
 	localAP_support = false;
 
 var rrsut_support = false;
-if(based_modelid == "RT-AC56U" || based_modelid == "RT-AC68U") // MODELDEP: RT-AC56U, RT-AC68U
+if(based_modelid == "RT-AC56U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC66U" || based_modelid == "RT-N66U") // MODELDEP
 	rrsut_support = true;
 
 var QISWIZARD = "QIS_wizard.htm";
@@ -522,6 +523,7 @@ function show_menu(){
 	var L1 = 0, L2 = 0, L3 = 0;
 	if(current_url == "") current_url = "index.asp";
 	if (dualWAN_support) {
+		var wans_dualwan_orig = '<% nvram_get("wans_dualwan"); %>';		
 		// fix dualwan showmenu
 		if(current_url == "Advanced_DSL_Content.asp") current_url = "Advanced_WAN_Content.asp";
 		if(current_url == "Advanced_Modem_Content.asp") current_url = "Advanced_WAN_Content.asp";
@@ -1129,8 +1131,9 @@ function show_top_status(){
 		else
 			$("sw_mode_span").innerHTML = "Unknown";	
 
-		if(hwmodeSwitch_support){
+		if(hwmodeSwitch_support){	
 			$("op_link").innerHTML = $("sw_mode_span").innerHTML;	
+			$("op_link").style.cursor= "auto";			
 		}
 	}
 }

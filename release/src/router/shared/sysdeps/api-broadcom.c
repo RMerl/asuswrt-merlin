@@ -253,10 +253,10 @@ uint32_t get_phy_speed(uint32_t portmask)
 	return mask;
 }
 
-uint32_t set_phy_ctrl(uint32_t portmask, uint32_t ctrl)
+uint32_t set_phy_ctrl(uint32_t portmask, int ctrl)
 {
 	int fd, i, model;
-	uint32_t reg, mask, off, def, value;
+	uint32_t value;
 
 	model = get_switch();
 	if (model == SWITCH_UNKNOWN) return 0;
@@ -264,45 +264,36 @@ uint32_t set_phy_ctrl(uint32_t portmask, uint32_t ctrl)
 	fd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (fd < 0) return 0;
 
-	switch (model) {
-#ifndef BCM5301X
-	case SWITCH_BCM5325:
-		reg = 0x1e;
-		mask= 0x0007;
-		off = 0x0008;
-		def = 0x0000;
-		break;
-	case SWITCH_BCM53115:
-	case SWITCH_BCM53125:
-		/* fall through */
-#endif
-	case SWITCH_BCM5301x:
-		reg = 0x00;
-		mask= 0x35c0;
-		off = 0x0800;
-		def = 0x1140;
-		break;
-	default:
-		goto skip;
-	}
-
 	for (i = 0; i < 5 && (portmask >> i); i++) {
 		if ((portmask & (1U << i)) == 0)
 			continue;
 
-		/* issue read */
-		value = 0;
-		if (phy_ioctl(fd, 0, i, reg, &value) < 0 ||
-		    value == 0)
-			value = def;
+		switch (model) {
+#ifndef BCM5301X
+		case SWITCH_BCM5325:
+			if (phy_ioctl(fd, 0, i, 0x1e, &value) < 0)
+				value = 0;
+			value &= 0x0007;
+			value |= ctrl ? 0 : 0x0008;
+			phy_ioctl(fd, 1, i, 0x1e, &value);
+			value = 0x3300;
+			break;
+		case SWITCH_BCM53115:
+		case SWITCH_BCM53125:
+			/* fall through */
+#endif
+		case SWITCH_BCM5301x:
+			value = 0x1340;
+			value |= ctrl ? 0 : 0x0800;
+			break;
+		default:
+			continue;
+		}
 
 		/* issue write */
-		value &= mask;
-		value |= ctrl ? 0 : off;
-		phy_ioctl(fd, 1, i, reg, &value);
+		phy_ioctl(fd, 1, i, 0, &value);
 	}
 
-skip:
 	close(fd);
 
 	return 0;

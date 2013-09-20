@@ -64,6 +64,11 @@ int notify_rc_and_wait(const char *event_name)
 	return notify_rc_internal(event_name, TRUE, 10);
 }
 
+int notify_rc_and_wait_1min(const char *event_name)
+{
+	return notify_rc_internal(event_name, TRUE, 60);
+}
+
 int notify_rc_and_wait_2min(const char *event_name)
 {
 	return notify_rc_internal(event_name, TRUE, 120);

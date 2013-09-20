@@ -75,6 +75,13 @@ void start_wlcscan(void);
 void stop_wlcscan(void);
 
 
+#ifndef MS_MOVE
+# define MS_MOVE     8192
+#endif
+#ifndef MNT_DETACH
+#define MNT_DETACH	0x00000002
+#endif
+
 #ifdef BCMDBG
 #include <assert.h>
 #else
@@ -105,66 +112,296 @@ static int is_wet(int idx, int unit, int subunit, void *param)
 }
 #endif
 
-static int read_files_under_dir_r(const char *dir, char *buf, ssize_t buf_size)
+#define TMP_ROOTFS_MNT_POINT	"/sysroot"
+/* Build temporarily rootfilesystem
+ * @newroot:	Mount point of new root filesystem.
+ * @return:
+ * 	0:	success
+ *     -1:	mount tmp filesystem fail
+ *     -2:	copy files fail
+ *     -3:	make directory fail
+ *
+ * WARNING
+ * ==========================================================================
+ *  YOU HAVE TO HANDLE THIS FUNCTION VERY CAREFUL.  IF YOU MISS FILE(S) THAT
+ *  ARE NEED BY init PROCESS, e.g. /usr/lib/libnvram.so,
+ *  KERNEL REBOOTS SYSTEM IN 3 SECONDS.  ERROR MESSAGE IS SHOWN BELOW:
+ * ==========================================================================
+ * Image successfully flashed
+ * Kernel panic - not syncing: Attempted to kill init!
+ * Rebooting in 3 seconds..
+ * /sbin/init: can't load library 'libnvram.so'
+ */
+#if defined(RTCONFIG_TEMPROOTFS)
+static int remove_tail_char(char *str, char c)
 {
-	int fd;
-	DIR *dh;
-	char path[PATH_MAX];
-	ssize_t r;
-	struct stat s;
-	struct dirent *entry;
+	char *p;
 
-	if (!dir || *dir == '\0' || !buf || buf_size <= 0)
+	if (!str || *str == '\0' || c == '\0')
 		return -1;
 
-	dh = opendir(dir);
-	while ((entry = readdir(dh)) != NULL) {
-		sprintf(path, "%s/%s", dir, entry->d_name);
+	for (p = str + strlen(str); p >= str && *p == c; p--)
+		*p = '\0';
+	if (p == str)
+		return -2;
 
-		if (stat(path, &s))
-			continue;
-
-		if (S_ISDIR(s.st_mode) && strcmp(entry->d_name, ".") && strcmp(entry->d_name, ".."))
-			read_files_under_dir_r(path, buf, buf_size);
-
-		if (!S_ISREG(s.st_mode))
-			continue;
-
-		if ((fd = open(path, O_RDONLY)) < 0) {
-			continue;
-		}
-
-		while ((r = read(fd, buf, buf_size)) > 0) {
-			/* Nothing to do */
-		}
-		close(fd);
-	}
-	closedir(dh);
 	return 0;
 }
 
-static int load_important_file_into_page_cache(void)
+/*
+ * @param:	extra parameter of cp command
+ * @dir:	base directory
+ * @files:	files, e.g., "fileA fileB fileC"
+ * @newroot:	new root directory
+ * @return:
+ * 	0:	success
+ *
+ * 1. cp("", "/bin", "fileA fileB fileC", "/sysroot") equals to below commands:
+ *    a. mkdir -p /sysroot/bin
+ *    b. cp -a /bin/fileA /bin/fileB /bin/fileC /sysroot/bin
+ *
+ * 2. cp("L", "/usr/bin", "" or NULL, "/sysroot") equals to below commands:
+ *    a. if [ -e "/sysroot/usr/bin" ] ; then rmdir "/sysroot/usr/bin" ; fi
+ *    b. mkdir -p `dirname /sysroot/usr/bin`
+ *    c. cp -aL /usr/bin /sysroot
+ */
+static int __cp(const char *param, const char *dir, const char *files, const char *newroot)
 {
-	int i;
-	int memfree = 0;
-	char buf[256 * 1024];
-	char kmod_dir[PATH_MAX];
-	char *d[] = {"/bin", "/sbin", "/lib", "/usr/lib", "/usr/bin", "/usr/sbin", kmod_dir};
-	struct utsname u;
+	struct stat st;
+	const char *sep = "/";
+	int i, l, len = 0, len2 = 0, mode = 0;	/* copy files and sub-directory */
+	char cmd[2048], *f, *p, *token, *ptr1;
+	char d[PATH_MAX], dest_dir[PATH_MAX];
+	char str1[] = "cp -afXXXXXXXXXXXXXYYY";
+	const char delim[] = " ";
 
-	uname(&u);
-	sprintf(kmod_dir, "/lib/modules/%s/kernel", u.release);
-	memfree = get_meminfo_item("MemFree");
-	_dprintf("%s() before load file, free %d kB\n", __func__, memfree);
-	for (i = 0; i < ARRAY_SIZE(d); ++i) {
-		read_files_under_dir_r(d[i], buf, sizeof(buf));
+	if (!dir || !newroot || *newroot == '\0')
+		return -1;
+
+	if (!files || *files == '\0')
+		mode = 1;	/* copy a directory recursive */
+
+	if (!param)
+		param = "";
+
+	sprintf(str1, "cp -af%s", param);
+	if (dir && *dir == '/')
+		sep = "";
+	sprintf(dest_dir, "%s", newroot);
+	if (stat(dest_dir, &st) || !S_ISDIR(st.st_mode))
+		return -2;
+
+	switch (mode) {
+	case 0:	/* copy files and sub-directory */
+		if (!(f = strdup(files)))
+			return -3;
+		if (*dir != '\0') {
+			sprintf(dest_dir, "%s%s%s", newroot, sep, dir);
+			if (!d_exists(dest_dir))
+				eval("mkdir", "-p", dest_dir);
+			else if (!S_ISDIR(st.st_mode)) {
+				_dprintf("%s exist and is not a directory!\n", dest_dir);
+				return -4;
+			}
+		}
+
+		strcpy(cmd, str1);
+		len = strlen(cmd);
+		p = cmd + len;
+		len2 = strlen(dest_dir) + 2;	/* leading space + tail NULL */
+		len += len2;
+		for (i = l = 0, token = strtok_r(f, delim, &ptr1);
+			token != NULL;
+			token = strtok_r(NULL, delim, &ptr1), p += l, len += l)
+		{
+			sprintf(d, "%s/%s", dir, token);
+			/* don't check existence if '?' or '*' exist */
+			if (!strchr(d, '?') && !strchr(d, '*') && stat(d, &st) < 0) {
+				_dprintf("%s: %s not exist, skip!\n", __func__, d);
+				l = 0;
+				continue;
+			}
+
+			l = strlen(d) + 1;
+			if ((len + l) < sizeof(cmd)) {
+				strcat(p, " ");
+				strcat(p, d);
+				++i;
+				continue;
+			}
+
+			/* cmd buffer is not enough, flush */
+			strcat(p, " ");
+			strcat(p, dest_dir);
+			system(cmd);
+
+			strcpy(cmd, str1);
+			len = strlen(cmd);
+			p = cmd + len;
+			len += len2;
+
+			strcat(p, " ");
+			strcat(p, d);
+			i = 1;
+		}
+
+		if (i > 0) {
+			strcat(p, " ");
+			strcat(p, dest_dir);
+			system(cmd);
+		}
+		free(f);
+		break;
+	case 1:	/* copy a directory recursive */
+		/* If /newroot/bin exist and is directory, rmdir /newroot/bin.
+		 * If not, /bin would be copied to newroot/bin/bin.
+		 */
+		if (*dir == '\0')
+			return -10;
+
+		sprintf(dest_dir, "%s%s%s", newroot, sep, dir);
+		if (d_exists(dest_dir)) {
+			_dprintf("%s exist, remove it\n", dest_dir);
+			if (rmdir(dest_dir)) {
+				_dprintf("rmdir %s (%s)\n", dest_dir, strerror(errno));
+				return -11;
+			}
+		}
+
+		/* remove tail '/' */
+		strcpy(d, dest_dir);
+		remove_tail_char(d, '/');
+
+		/* make sure parent directory of destination directory exist */
+		p = strrchr(d, '/');
+		if (p && p != d) {
+			*p = '\0';
+			remove_tail_char(d, '/');
+			if (!d_exists(d))
+				eval("mkdir", "-p", d);
+		}
+		sprintf(cmd, "%s %s %s", str1, dir, dest_dir);
+		system(cmd);
+
+		break;
+	default:
+		_dprintf("%s: mode %d is not defined!\n", __func__, mode);
+		return -4;
 	}
-
-	memfree = get_meminfo_item("MemFree");
-	_dprintf("%s() after load file, free %d kB\n", __func__, memfree);
 
 	return 0;
 }
+
+/* Build a temporary rootfilesystem.
+ *
+ * If you add new binary to temp. rootfilesystem, check whether it needs another library!
+ * For example, iwpriv needs libiw.so.29, libgcc_s.so.1, and libc.so.0:
+ * $ mipsel-linux-objdump -x bin/iwpriv | grep NEED
+ *   NEEDED               libiw.so.29
+ *   NEEDED               libgcc_s.so.1
+ *   NEEDED               libc.so.0
+ *   VERNEED              0x004008d4
+ *   VERNEEDNUM           0x00000001
+ */
+static int build_temp_rootfs(const char *newroot)
+{
+	int i, r;
+	struct stat st;
+	char d1[PATH_MAX], d2[1024];
+	const char *mdir[] = { "/proc", "/tmp", "/sys", "/usr", "/var", "/var/lock" };
+	const char *bin = "ash busybox cat cp dd df grep iwpriv kill ls ps mount nvram ping sh tar umount uname";
+	const char *sbin = "init rc hotplug2 insmod lsmod modprobe reboot rmmod rtkswitch";
+	const char *lib = "librt*.so* libnsl* libdl* libm* ld-* libiw* libgcc* libpthread* libdisk* libc*";
+	const char *usrbin = "killall";
+	const char *usrlib = "libnvram.so libshared.so libcrypto.so* libbcm*";
+	const char *kmod = "find /lib/modules -name '*.ko'|"
+		"grep '\\("
+		"nvram_linux\\)";		/* nvram_linux.ko */
+
+	if (!newroot || *newroot == '\0')
+		newroot = TMP_ROOTFS_MNT_POINT;
+
+	if ((r = mount("tmpfs", newroot, "tmpfs", MS_NOATIME, "")) != 0)
+		return -1;
+
+	_dprintf("Build temp rootfs\n");
+	__cp("", "/dev", "", newroot);
+	__cp("", "/lib/modules", "modules.dep", newroot);
+	__cp("", "/bin", bin, newroot);
+	__cp("", "/sbin", sbin, newroot);
+	__cp("", "/lib", lib, newroot);
+	__cp("", "/lib", "libcrypt*", newroot);
+	__cp("", "/usr/bin", usrbin, newroot);
+	__cp("", "/usr/lib", usrlib, newroot);
+	__cp("L", "/etc", "", newroot);		/* don't creat symbolic link (/tmp/etc/foo) that will be broken soon */
+
+	/* copy mandatory kernel modules */
+	sprintf(d2, "tar cvf - `%s` | tar xf - -C %s", kmod, newroot);
+	system(d2);
+
+	/* make directory, if not exist */
+	for (i = 0; i < ARRAY_SIZE(mdir); ++i) {
+		sprintf(d1, "%s/%s", newroot, mdir[i]);
+		if (stat(d1, &st) && (r = mkdir(d1, 0755) == -1))
+			return -3;
+	}
+
+	return 0;
+}
+
+/* Switch rootfilesystem to newroot.
+ * @newroot:	Mount point of new root filesystem.
+ * @return:
+ * 	-1:	Not init process.
+ * 	-2:	chdir to newroot fail
+ * 	-3:	Newroot is not a mount point
+ * 	-4:	Move mount point to / fail
+ * 	-5:	exec new init process fail
+ */
+static int switch_root(const char *newroot)
+{
+	int r;
+	dev_t rdev;
+	struct stat st;
+	char *const argv[] = { "/sbin/init", "reboot", NULL };
+
+	if (!newroot || *newroot == '\0')
+		newroot = TMP_ROOTFS_MNT_POINT;
+
+	if (getpid() != 1) {
+		_dprintf("%s: PID != 1\n", __func__);
+		return -1;
+	}
+
+	if (chdir(newroot))
+		return -2;
+	stat("/", &st);
+	rdev = st.st_dev;
+	stat(".", &st);
+	if (rdev == st.st_dev)
+		return -3;
+
+	/* emulate switch_root command */
+	if ((r = mount(".", "/", NULL, MS_MOVE, NULL)) != 0)
+		return -4;
+
+	chroot(".");
+	chdir("/");
+
+	/* WARNING:
+	 * If new rootfilesystem lacks libraries that are need by init process,
+	 * kernel reboots system in 3 seconds.
+	 */
+	if ((r = execv(argv[0], argv)))
+		return -5;
+
+	/* NEVER REACH HERE */
+	return 0;
+}
+#else	/* !RTCONFIG_TEMPROOTFS */
+static inline int build_temp_rootfs(const char *newroot) { return -999; }
+static inline int switch_root(const char *newroot) { return -999; }
+#endif	/* RTCONFIG_TEMPROOTFS */
 
 void create_passwd(void)
 {
@@ -1003,18 +1240,21 @@ void start_ipv6(void)
 		nvram_set("ipv6_rtr_addr", "");
 	case IPV6_NATIVE:
 	case IPV6_MANUAL:
+	case IPV6_NATIVE_DHCP:
+		if (get_ipv6_service() == IPV6_NATIVE_DHCP)
+		{
+			nvram_set("ipv6_ll_remote", "");
+			nvram_set("ipv6_prefix", "");
+			if (nvram_get_int("ipv6_dhcp_pd"))
+				nvram_set("ipv6_rtr_addr", "");
+		}
 		add_ip6_lanaddr();
 		break;
-	case IPV6_NATIVE_DHCP:
-		nvram_set("ipv6_ll_remote", "");
 	case IPV6_6TO4:
 	case IPV6_6RD:
 	default:
 		nvram_set("ipv6_prefix", "");
-		if (nvram_get_int("ipv6_dhcp_pd"))
-			add_ip6_lanaddr();
-		else
-			nvram_set("ipv6_rtr_addr", "");
+		nvram_set("ipv6_rtr_addr", "");
 	}
 }
 
@@ -1031,9 +1271,10 @@ void stop_ipv6(void)
 
 int no_need_to_start_wps(void)
 {
-	int i, wps_band;
+	int i, wps_band, multiband = get_wps_multiband();
 	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
-	char word[256], *next;
+	char word[256], *next, ifnames[128];
+	int c = 0, ret = 0;
 
 #ifdef RTCONFIG_DSL
 	if (nvram_match("asus_mfg", "1")) /* Paul add 2012/12/13 */
@@ -1045,53 +1286,58 @@ int no_need_to_start_wps(void)
 
 	i = 0;
 	wps_band = nvram_get_int("wps_band");
-
-	foreach (word, nvram_safe_get("wl_ifnames"), next) {
-		if (i == wps_band) {
-			snprintf(prefix, sizeof(prefix), "wl%d_", i);
-
-			if (	/*(nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "open") &&
-					!nvram_match(strcat_r(prefix, "wep_x", tmp), "0")) ||*/
-				nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "shared") ||
-				/*(strstr(nvram_safe_get(strcat_r(prefix, "auth_mode_x", tmp)), "psk") &&
-					nvram_match(strcat_r(prefix, "crypto", tmp), "tkip")) ||*/
-				strstr(nvram_safe_get(strcat_r(prefix, "auth_mode_x", tmp)), "wpa") ||
-				nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "radius") /*||
-#if 0
-				!get_radio(i, -1)
-#else
-				nvram_match(strcat_r(prefix, "radio", tmp), "0")
-#endif*/
-			)
-				return 1;
+	strcpy(ifnames, nvram_safe_get("wl_ifnames"));
+	foreach (word, ifnames, next) {
+		if (i >= MAX_NR_WL_IF)
+			break;
+		if (!multiband && wps_band != i) {
+			++i;
+			continue;
 		}
+		++c;
+		snprintf(prefix, sizeof(prefix), "wl%d_", i);
+		if (nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "shared") ||
+		    strstr(nvram_safe_get(strcat_r(prefix, "auth_mode_x", tmp)), "wpa") ||
+		    nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "radius"))
+			ret++;
 
 		i++;
 	}
 
-	return 0;
+	if (multiband && ret < c)
+		ret = 0;
+
+	return ret;
 }
 
+/* @wps_band:	if wps_band < 0 and RTCONFIG_WPSMULTIBAND is defined, check radio of all band */
 int wps_band_radio_off(int wps_band)
 {
-	int i;
+	int i, c = 0, ret = 0;
 	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
-	char word[256], *next;
+	char word[256], *next, ifnames[128];
 
 	i = 0;
-
-	foreach (word, nvram_safe_get("wl_ifnames"), next) {
-		if (i == wps_band) {
-			snprintf(prefix, sizeof(prefix), "wl%d_", i);
-
-			if (nvram_match(strcat_r(prefix, "radio", tmp), "0"))
-				return 1;
+	strcpy(ifnames, nvram_safe_get("wl_ifnames"));
+	foreach (word, ifnames, next) {
+		if (i >= MAX_NR_WL_IF)
+			break;
+		if (wps_band >= 0 && wps_band != i) {
+			++i;
+			continue;
 		}
+		++c;
+		snprintf(prefix, sizeof(prefix), "wl%d_", i);
+		if (nvram_match(strcat_r(prefix, "radio", tmp), "0"))
+			ret++;
 
 		i++;
 	}
 
-	return 0;
+	if (wps_band < 0 && ret < c)
+		ret = 0;
+
+	return ret;
 }
 
 int 
@@ -1126,7 +1372,7 @@ wl_wpsPincheck(char *pin_string)
 int 
 start_wps_pbc(int unit)
 {
-	if (wps_band_radio_off(unit)) return 1;
+	if (wps_band_radio_off(get_radio_band(unit))) return 1;
 
 	if (!no_need_to_start_wps() && nvram_match("wps_enable", "0"))
 	{
@@ -1142,12 +1388,16 @@ start_wps_pbc(int unit)
 #endif
 #else
 		stop_wps();
+#if !defined(RTCONFIG_WPSMULTIBAND)
 		nvram_set_int("wps_band", unit);
+#endif
 		start_wps();
 #endif
 	}
 
+#if !defined(RTCONFIG_WPSMULTIBAND)
 	nvram_set_int("wps_band", unit);
+#endif
 	nvram_set("wps_sta_pin", "00000000");
 
 	return start_wps_method();
@@ -1194,7 +1444,7 @@ start_wps(void)
 	pid_t pid;
 	int wait_time = 3;
 #endif
-	if (wps_band_radio_off(nvram_get_int("wps_band")))
+	if (wps_band_radio_off(get_radio_band(nvram_get_int("wps_band"))))
 		return 1;
 
 	if (no_need_to_start_wps())
@@ -1238,7 +1488,6 @@ start_wps(void)
 		_eval(wps_argv, NULL, 0, &pid);
 #elif defined RTCONFIG_RALINK
 		start_wsc_pin_enrollee();
-		start_wpsfix();
 		if (f_exists("/var/run/watchdog.pid"))
 		{
 			doSystem("iwpriv %s set WatchdogPid=`cat %s`", WIF_2G, "/var/run/watchdog.pid");
@@ -1266,8 +1515,7 @@ stop_wps(void)
 	killall_tk("wps_monitor");
 	killall_tk("wps_ap");
 #elif defined RTCONFIG_RALINK
-	stop_wpsfix();
-	stop_wsc();
+	stop_wsc_both();
 #endif
 #endif /* RTCONFIG_WPS */
 	return ret;
@@ -1292,9 +1540,7 @@ reset_wps(void)
 //	start_wps();
 	restart_wireless_wps();
 #elif defined RTCONFIG_RALINK
-	stop_wpsfix();
 	wps_oob_both();
-	start_wpsfix();
 #endif
 }
 
@@ -1530,24 +1776,6 @@ stop_8021x(void)
 				exec_8021x_stop(1, 0);
 		}
 	}
-
-	return 0;
-}
-
-int
-start_wpsfix(void)
-{
-	char *wpsfix_argv[] = {"wpsfix", NULL};
-	pid_t wfpid;
-
-	return _eval(wpsfix_argv, NULL, 0, &wfpid);
-}
-
-int
-stop_wpsfix(void)
-{
-	if (pids("wpsfix"))
-		killall("wpsfix", SIGTERM);
 
 	return 0;
 }
@@ -2130,7 +2358,12 @@ void
 stop_syslogd(void)
 {
 	if (pids("syslogd"))
+	{
 		killall("syslogd", SIGTERM);
+#if defined(RTCONFIG_JFFS2LOG) && defined(RTCONFIG_JFFS2)
+	        eval("cp", "/tmp/syslog.log", "/tmp/syslog.log-1", "/jffs");
+#endif
+	}
 }
 
 void
@@ -2181,6 +2414,10 @@ start_syslogd(void)
 		syslogd_argv[argc++] = addr;
 		syslogd_argv[argc++] = "-L";
 	}
+
+#if defined(RTCONFIG_JFFS2LOG) && defined(RTCONFIG_JFFS2)
+        eval("cp", "/jffs/syslog.log", "/jffs/syslog.log-1", "/tmp");
+#endif
 
 	// TODO: make sure is it necessary?
 	//time_zone_x_mapping();
@@ -2894,9 +3131,9 @@ int start_wanduck(void)
 {	
 	char *argv[] = {"/sbin/wanduck", NULL};
 	pid_t pid;
-#if 0
 	int sw_mode = nvram_get_int("sw_mode");
 
+#if 0
 	if(sw_mode != SW_MODE_ROUTER && sw_mode != SW_MODE_REPEATER)
 		return -1;
 #endif
@@ -3166,7 +3403,9 @@ again:
 		stop_usb();
 		stop_usbled();
 #endif
-
+#if defined(RTCONFIG_JFFS2LOG) && defined(RTCONFIG_JFFS2)
+                eval("cp", "/tmp/syslog.log", "/tmp/syslog.log-1", "/jffs");
+#endif
 		if(strcmp(script,"rebootandrestore")==0) {
 			for(i=1;i<count;i++) {
 				if(cmd[i]) restore_defaults_module(cmd[i]);
@@ -3205,13 +3444,17 @@ again:
 			stop_logger();
 			stop_wanduck();
 			stop_upnp();
+			stop_all_webdav();
 #if defined(RTN56U)
 			stop_if_misc();
 #endif
 #ifdef RTCONFIG_USB
 			stop_usb();
 			stop_usbled();
+			remove_storage_main(1);
+			remove_usb_module();
 #endif
+			remove_conntrack();
 			killall("udhcpc", SIGTERM);
 #ifdef RTCONFIG_IPV6
 			stop_dhcp6c();
@@ -3231,6 +3474,7 @@ again:
 #endif
 		}
 		if(action&RC_SERVICE_START) {
+			int sw = 0, r;
 			char upgrade_file[64] = "/tmp/linux.trx";
 			char *webs_state_info = nvram_safe_get("webs_state_info");
 
@@ -3239,10 +3483,7 @@ again:
 			start_tc_upgrade();
 		#endif
 
-#ifndef RTCONFIG_BCMARM
 			limit_page_cache_ratio(90);
-			load_important_file_into_page_cache();
-#endif
 
 			/* /tmp/linux.trx has the priority */
 			if (!f_exists(upgrade_file) && strlen(webs_state_info) > 5) {
@@ -3259,6 +3500,9 @@ again:
 
 			/* flash it if exists */
 			if (f_exists(upgrade_file)) {
+				if (!(r = build_temp_rootfs(TMP_ROOTFS_MNT_POINT)))
+					sw = 1;
+
 				stop_wan();
 #ifdef RTCONFIG_DUAL_TRX
 				if (!nvram_match("nflash_swecc", "1"))
@@ -3267,13 +3511,41 @@ again:
 					eval("mtd-write", "-i", upgrade_file, "-d", "linux2");
 				}
 #endif
+				/* lighttpd* would be started again by restart_nasapps rc_service
+				 * that is triggered by hotplug.  Kill them or encounter SQUASHFS error.
+				 */
+				stop_all_webdav();
+				stop_jffs2(1);
 				if (nvram_contains_word("rc_support", "nandflash"))	/* RT-AC56U/RT-AC68U/RT-N16UHP */
 					eval("mtd-write2", upgrade_file, "linux");
-				else
+				else {
+#ifdef RTCONFIG_SMALL_FW_UPDATE
+					system("wlconf eth1 down");
+					system("wlconf eth2 down");
+					system("rmmod wl_high");
+					system("rmmod wl");
+					_dprintf("Stop wireless\n");
+					system("ps");
+					system("lsmod");
+					system("free");
+					sleep(1);
+#elif defined(RTCONFIG_TEMPROOTFS)
+					stop_lan_wl();
+#endif
 					eval("mtd-write", "-i", upgrade_file, "-d", "linux");
+				}
 				/* erase trx and free memory on purpose */
 				unlink(upgrade_file);
-				kill(1, SIGTERM);
+				if (sw) {
+					_dprintf("switch to temp rootfilesystem\n");
+					if (!(r = switch_root(TMP_ROOTFS_MNT_POINT))) {
+						/* Do nothing. If switch_root() success, never reach here. */
+					} else {
+						kill(1, SIGTERM);
+					}
+				} else {
+					kill(1, SIGTERM);
+				}
 			}
 			else {
 				// recover? or reboot directly
@@ -4081,11 +4353,13 @@ check_ddr_done:
 				kill_pidfile_s("/var/run/watchdog.pid", SIGUSR2);
 		}
 		if(action&RC_SERVICE_START) {
-			start_wps_method();
-			if(!nvram_match("wps_ign_btn", "1"))
-				kill_pidfile_s("/var/run/watchdog.pid", SIGUSR1);
-			else
-				kill_pidfile_s("/var/run/watchdog.pid", SIGTSTP);
+			if (!wps_band_radio_off(get_radio_band(nvram_get_int("wps_band")))) {
+				start_wps_method();
+				if(!nvram_match("wps_ign_btn", "1"))
+					kill_pidfile_s("/var/run/watchdog.pid", SIGUSR1);
+				else
+					kill_pidfile_s("/var/run/watchdog.pid", SIGTSTP);
+			}
 			nvram_unset("wps_ign_btn");
 		}
 	}

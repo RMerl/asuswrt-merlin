@@ -233,9 +233,6 @@ static const applets_t applets[] = {
 	{ "mtd-unlock",			mtd_unlock_erase_main		},
 #endif
 	{ "watchdog",			watchdog_main			},
-#ifdef RTCONFIG_RALINK
-	{ "wpsfix",			wpsfix_main			},
-#endif
 #ifdef RTCONFIG_FANCTRL
 	{ "phy_tempsense",		phy_tempsense_main		},
 #endif

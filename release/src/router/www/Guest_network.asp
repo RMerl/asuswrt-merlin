@@ -45,7 +45,8 @@ function initial(){
 	$('ACL_disabled_hint').innerHTML = Untranslated.Guest_Network_enable_ACL;
 	$('enable_macfilter').innerHTML = Untranslated.enable_macmode;
 	show_menu();	
-	insertExtChannelOption();		
+	insertExtChannelOption();
+	limit_auth_method();	
 	wl_auth_mode_change(1);
 
 	if(downsize_4m_support)

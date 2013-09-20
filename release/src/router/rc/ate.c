@@ -338,10 +338,14 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 #ifdef RTCONFIG_FANCTRL
 			stop_phy_tempsense();
 #endif
-#ifdef TODO
-			stop_wsc();
+			stop_wpsaide();
+			stop_wps();
+#ifdef RTCONFIG_BCMWL6
+			stop_acsd();
 #endif
+			stop_upnp();
 			stop_lltd();
+			stop_rstats();
 			stop_wanduck();
 			stop_logger();
 			stop_wanduck();
@@ -355,6 +359,10 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 			stop_networkmap();
 #ifdef RTCONFIG_USB
 			stop_usbled();
+#ifdef RTCONFIG_USB_PRINTER
+			stop_lpd();
+			stop_u2ec();
+#endif
 #endif
 		}
 		else
@@ -876,22 +884,22 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 #endif
 
 #ifdef RTCONFIG_WIFI_TOG_BTN
-        else if (!strcmp(command, "Get_WifiButtonStatus")) {
-                puts(nvram_safe_get("btn_wifi_toggle"));
-                return 0;
-        }
+	else if (!strcmp(command, "Get_WifiButtonStatus")) {
+		puts(nvram_safe_get("btn_wifi_toggle"));
+		return 0;
+	}
 #endif
 #ifdef RTCONFIG_TURBO
-        else if (!strcmp(command, "Get_Turbo")) {
-                puts(nvram_safe_get("btn_turbo"));
-                return 0;
-        }
+	else if (!strcmp(command, "Get_Turbo")) {
+		puts(nvram_safe_get("btn_turbo"));
+		return 0;
+	}
 #endif
 #ifdef RTCONFIG_LED_BTN
-        else if (!strcmp(command, "Get_LedButtonStatus")) {
-                puts(nvram_safe_get("btn_led"));
-                return 0;
-        }
+	else if (!strcmp(command, "Get_LedButtonStatus")) {
+		puts(nvram_safe_get("btn_led"));
+		return 0;
+	}
 #endif
 #ifdef CONFIG_BCMWL5
 	else if (!strcmp(command, "Get_WiFiStatus_2G")) {
@@ -978,10 +986,10 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		puts(nvram_safe_get("wait_time"));
 		return 0;
 	}
-        else if (!strcmp(command, "Get_ExtendNo")) {
-                puts(nvram_safe_get("extendno"));
-                return 0;
-        }
+	else if (!strcmp(command, "Get_ExtendNo")) {
+		puts(nvram_safe_get("extendno"));
+		return 0;
+	}
 #ifdef RTCONFIG_RALINK
 	else if (!strcmp(command, "Get_DevFlags")) {
 		if( Get_Device_Flags() < 0)

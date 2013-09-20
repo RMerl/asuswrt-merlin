@@ -274,7 +274,7 @@ static int config_insert(server *srv) {
 		if (0 != (ret = config_insert_values_global(srv, ((data_config *)srv->config_context->data[i])->value, cv))) {
 			break;
 		}
-
+		
 	}
 	
 	if (buffer_is_empty(stat_cache_string)) {
@@ -366,7 +366,7 @@ int config_setup_connection(server *srv, connection *con) {
 
 int config_patch_connection(server *srv, connection *con, comp_key_t comp) {
 	size_t i, j;
-
+	
 	con->conditional_is_valid[comp] = 1;
 
 	/* skip the first, the global context */

@@ -213,6 +213,8 @@ var this_upload_files = new Array();
 
 $("document").ready(function() {
 	
+	document.oncontextmenu = function() {return false;};
+	
 	var this_upload_index = 0;
 	var this_upload_count = 0;
 	var this_upload_total = 0;

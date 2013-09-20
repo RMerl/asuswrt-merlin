@@ -116,13 +116,14 @@ function change_wl_nmode(o){
 	else 
 		inputCtrl(document.form.wl_bw, 1);
 	*/
-
+	
+	limit_auth_method();
 	if(o.value == "3"){
 		document.form.wl_wme.value = "on";
 	}
 
 	wl_chanspec_list_change();
-	nmode_limitation();
+	//nmode_limitation();
 	automode_hint();
 }
 

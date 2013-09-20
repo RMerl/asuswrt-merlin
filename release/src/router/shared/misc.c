@@ -1080,6 +1080,7 @@ void bcmvlan_models(int model, char *vlan)
 	case MODEL_RTN10U:
 	case MODEL_RTN10P:
 	case MODEL_RTN10D1:
+	case MODEL_RTN10PV2:
 		strcpy(vlan, "vlan0");
 		break;
 	default:

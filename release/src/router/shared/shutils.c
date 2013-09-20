@@ -1583,6 +1583,23 @@ int kill_pidfile_s(char *pidfile, int sig)
 	return errno;
 }
 
+int kill_pidfile_s_rm(char *pidfile, int sig)
+{
+	FILE *fp;
+	char buf[256];
+
+	if ((fp = fopen(pidfile, "r")) != NULL) {
+		if (fgets(buf, sizeof(buf), fp)) {
+			pid_t pid = strtoul(buf, NULL, 0);
+			fclose(fp);
+			unlink(pidfile);
+			return kill(pid, sig);
+		}
+		fclose(fp);
+	}
+	return errno;
+}
+
 long uptime(void)
 {
 	struct sysinfo info;

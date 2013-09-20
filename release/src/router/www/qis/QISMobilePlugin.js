@@ -1,4 +1,7 @@
 var child_macaddr = '<% nvram_get("et0macaddr"); %>';
+var sw_mode_orig = '<% nvram_get("sw_mode"); %>';
+if(sw_mode_orig == 3 && '<% nvram_get("wlc_psta"); %>' == 1)
+	sw_mode_orig = 4;
 
 if(parent.parent_macaddr){
 	if(child_macaddr != parent.parent_macaddr){
@@ -14,7 +17,19 @@ function genErrorHint(){
 		htmlCode += '<span class="description_down"><#qis_finish_title1#></span></td><td align="right"></td></tr></table></div>';
 		htmlCode += '<div style="margin:5px;" id="splitLine">';
 		htmlCode += '<img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>';
-		htmlCode += "<br><br><br><p style='font-size:20px;line-height: 25px;color:#FC0;' class='QISGeneralFont'>* The LAN IP of " + parent.productid + " may have been changed.<br>Please close this browser and access router.asus.com again.<br><br>* <#DrSurf_sweet_advise1#></p>";
+		if(sw_mode_orig == "4"){
+				htmlCode += "<br><br><br><p style='font-size:20px;line-height: 25px;color:#FC0;' class='QISGeneralFont'>* "+ parent.productid +" had set as media bridge and IP changed. In media bridge mode, the wireless only connect to the P-AP, client devices need connect to media bridge with network cable.";
+				htmlCode += "<br><br>* For further configuration, please download the <a href='http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/Discovery.zip' target='_blank' style='font-family:Lucida Console;text-decoration:underline;color:#FC0;'>Device Discovery Utility</a> to find the media bridge IP.";
+				htmlCode += "<br><br>* Please check you have unplugged the network cable from WAN port on media bridge mode.";
+		}else{
+				htmlCode += "<br><br><br><p style='font-size:20px;line-height: 25px;color:#FC0;' class='QISGeneralFont'>* The LAN IP of " + parent.productid + " may have been changed.<br>Please close this browser and access router.asus.com again.";
+				htmlCode += "<br><br>* <#DrSurf_sweet_advise1#>";
+		}
+
+		if(sw_mode_orig == "2")
+				htmlCode += "<br><br>* Please check you have unplugged the network cable form WAN port on repeater mode.</p>";
+		else
+				htmlCode += "</p>";
 		document.getElementsByTagName("body")[0].innerHTML = htmlCode;
 	}
 	else{

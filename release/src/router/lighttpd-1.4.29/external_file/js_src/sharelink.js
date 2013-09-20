@@ -67,8 +67,8 @@ function openAudioPlayer(loc){
 	
 	var $modalWindow = $("div#modalWindow");
 	g_modal_url = '/smb/css/audio.html?a=' + loc + '&alist=' + audio_list + '&index=' + default_index + '&s=0';
-		
-	g_modal_window_width = 450;
+	
+	g_modal_window_width = 480;
 	g_modal_window_height = 160;
 	$('#jqmMsg').css("display", "none");	
 	$('#jqmTitleText').text(m.getString('title_audioplayer'));
@@ -186,12 +186,39 @@ function openSelItem(item){
 			}
 			else{
 				var $modalWindow = $("div#modalWindow");
-										
-				open_url = '/smb/css/vlc_video.html?v=' + this_play_full_url;							
+					
+				var media_hostName = window.location.host;					
+				if(media_hostName.indexOf(":")!=-1){
+					media_hostName = media_hostName.substring(0, media_hostName.indexOf(":"));
+				}
+				media_hostName = "http://" + media_hostName + ":" + g_storage.get('slhp');
+				
+				open_url = '/smb/css/vlc_video.html?v=' + media_hostName + this_full_url;							
 				open_url += '&showbutton=1';
+				
+				//- subtitle
+				var array_srt_files = new Array();				
+				for(var i=0;i<g_file_array.length;i++){
+					var file_ext = getFileExt(g_file_array[i].href);
+					if(file_ext=="srt"){
+						array_srt_files.push(g_file_array[i].href);
+					}
+				}
+				
+				if(array_srt_files.length>0){
+					open_url += '&s=';
+					for(var i=0;i<array_srt_files.length;i++){
+						open_url += array_srt_files[i];
+						if(i!=array_srt_files.length-1) open_url += ";";
+					}
+				}
+				array_srt_files=null;
+				
+				//alert(open_url);
+				
 				g_modal_url = open_url;
 				g_modal_window_width = 655;
-				g_modal_window_height = 480;
+				g_modal_window_height = 580;
 				$('#jqmMsg').css("display", "none");
 				$('#jqmTitleText').text(m.getString('title_videoplayer'));
 				if($modalWindow){
@@ -539,7 +566,7 @@ function doPROPFIND(open_url, complete_handler, auth){
 					}
 					else { // Internet Explorer
 						xmlDoc=new ActiveXObject("Microsoft.XMLDOM");
-            xmlDoc.async="false";
+            			xmlDoc.async="false";
 						xmlDoc.loadXML(content);
 						
 						if(!xmlDoc.documentElement){
@@ -808,8 +835,8 @@ $(document).ready(function(){
 		g_show_modal = 1;
 		
 		var sAgent = navigator.userAgent.toLowerCase();
-    var isIE = (sAgent.indexOf("msie")!=-1); //IE
-    var getInternetExplorerVersion = function(){
+    	var isIE = (sAgent.indexOf("msie")!=-1); //IE
+   		var getInternetExplorerVersion = function(){
 		   var rv = -1; // Return value assumes failure.
 		   if (navigator.appName == 'Microsoft Internet Explorer')
 		   {

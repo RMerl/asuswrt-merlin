@@ -1,0 +1,18 @@
+TODO Sheet...
+List things to do for the project here.
+
+* Have mimetypes come from file extensions instead of using the 'file' 
+  command and mime magic. Other clients do this and it keeps it simple.
+* Work on line wrapping at 72 chars.  Possible solution is going to be loading
+  the entire text portion of the email into memory and plucking each character
+  out of memory.  ONLY Possible solution here...
+* Make some sample scripts and add them to the release of email so that people
+  can see how to use email in bash scripts.
+* Fix up our hash functions.  
+* Remove redundant displayed errors.
+
+-- FUTURE WORK --
+* Look into S/MIME Support
+* Implement OpenSSL
+* Reorganize Code
+* Josh Sherman suggested that scripts should be able to run as signature files.

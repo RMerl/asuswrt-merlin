@@ -64,6 +64,15 @@ char* nvram_get_time_zone();
 int nvram_set_share_link_result(const char* result);
 int nvram_wan_primary_ifunit();
 char* nvram_get_wan_ip();
+char* nvram_get_swpjverno();
+char* nvram_get_extendno();
+char* nvram_get_dms_enable();
+char* nvram_get_dms_dbcwd();
+char* nvram_get_dms_dir();
+char* nvram_get_ms_enable();
+
+
+
 
 
 

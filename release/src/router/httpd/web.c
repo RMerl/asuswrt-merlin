@@ -4435,9 +4435,12 @@ apply_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 	else if (!strcmp(action_mode, "change_wps_unit"))
 	{
 		action_para = websGetVar(wp, "wps_band","");
-
 		if(action_para) 
 			nvram_set("wps_band", action_para);
+#if defined(RTCONFIG_WPSMULTIBAND)
+		if ((action_para = websGetVar(wp, "wps_multiband","")))
+			nvram_set("wps_multiband", action_para);
+#endif
 
 		websRedirect(wp, current_url);
 	}
@@ -4457,6 +4460,10 @@ apply_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 		if(action_para) 
 			nvram_set("wps_sta_pin", action_para);
 		else goto wps_finish;
+#if defined(RTCONFIG_WPSMULTIBAND)
+		if ((action_para = websGetVar(wp, "wps_multiband","")))
+			nvram_set("wps_multiband", action_para);
+#endif
 
 		notify_rc("start_wps_method");
 
@@ -4466,9 +4473,12 @@ wps_finish:
 	else if (!strcmp(action_mode, "wps_reset"))
 	{
 		action_para = websGetVar(wp, "wps_band","");
-
 		if(action_para) 
 			nvram_set("wps_band", action_para);
+#if defined(RTCONFIG_WPSMULTIBAND)
+		if ((action_para = websGetVar(wp, "wps_multiband","")))
+			nvram_set("wps_multiband", action_para);
+#endif
 
 		notify_rc("reset_wps");
 
@@ -4773,8 +4783,10 @@ do_upgrade_post(char *url, FILE *stream, int len, char *boundary)
 	int offset;
 
 	upgrade_err=1;
-
+	eval("/sbin/ejusb", "-1", "0");
+#if defined(RTCONFIG_SMALL_FW_UPDATE)
 	notify_rc("stop_upgrade");
+#endif
 
 	/* Look for our part */
 	while (len > 0) 
@@ -4902,6 +4914,9 @@ do_upgrade_post(char *url, FILE *stream, int len, char *boundary)
 		goto err;
 #endif 
 	upgrade_err = 0;
+#if !defined(RTCONFIG_SMALL_FW_UPDATE)
+	notify_rc("stop_upgrade");
+#endif
 
 err:
 	if (fifo)
@@ -4948,13 +4963,13 @@ do_upgrade_cgi(char *url, FILE *stream)
 		}
 #endif
 		shutdown(fileno(stream), SHUT_RDWR);
+		notify_rc_after_period_wait("start_upgrade", 60);
 	}
 	else    
 	{
 	   	websApply(stream, "UpdateError.asp");
 		unlink("/tmp/linux.trx");
 	}
-	notify_rc_after_period_wait("start_upgrade", 60);
 }
 
 static void
@@ -5782,8 +5797,7 @@ static int ej_safely_remove_disk(int eid, webs_t wp, int argc, char_t **argv){
 	csprintf("disk_port = %s\n", disk_port);
 
 	if(!strcmp(disk_port, "all")){
-		result = eval("/sbin/ejusb", "1", "0");
-		result = result + eval("/sbin/ejusb", "2", "0");
+		result = eval("/sbin/ejusb", "-1", "0");
 	}
 	else{
 		result = eval("/sbin/ejusb", disk_port, "0");
@@ -8505,14 +8519,6 @@ write_ver:
 	nvram_set_f("general.log", "productid", productid);
 	nvram_set_f("general.log", "firmver", fwver);
 }
-
-#ifdef DLM
-void
-umount_disc_parts(int usb_port)
-{
-	eval("ejusb");
-}
-#endif
 
 int
 get_nat_vserver_table(int eid, webs_t wp, int argc, char_t **argv)

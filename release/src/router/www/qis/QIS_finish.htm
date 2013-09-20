@@ -521,7 +521,6 @@ function QKfinish_load_body(){
 		else{
 			document.getElementById("nextButton").style.display = "none";
 			document.getElementById("nextButton_doLiveUpdate").style.display = "";
-			document.getElementById("nextButton_doLiveUpdate").focus();
 		}
 		
 		parent.set_step("t3");
@@ -580,25 +579,29 @@ function redirect_page(redirect_flag){
 	document.redirectForm.submit();
 }
 
-function submitenter(myfield,e){	
-	return false;
-
-	var keycode;
-	if (window.event) keycode = window.event.keyCode;
-	else if (e) keycode = e.which;
-	else return true;
-
-	if (keycode == 13){
-		goto_tutorial();
-   	return false;
-  }
+function submitenter(myfield,event){
+	var keyPressed;
+	keyPressed = event.keyCode ? event.keyCode : event.which;
+	if (keyPressed == 13){
+		startLiveDetect();
+	}
 	else
-   	return true;
+		return true;
+}
+
+function set_timezone(){
+	var systime = new Date();
+	var system_timezone = parseInt(document.form.time_zone_x.value.substring(3));
+	var client_timezone = systime.getTimezoneOffset();
+	if(parent.isFirst && (system_timezone*60 != client_timezone)){
+		systime_millsec += (-client_timezone*60000);
+	}	
+	
+	showclock();
 }
 function showclock(){
 	JS_timeObj.setTime(systime_millsec);
 	systime_millsec += 1000;
-	
 	JS_timeObj2 = JS_timeObj.toString();	
 	JS_timeObj2 = JS_timeObj2.substring(0,3) + ", " +
 	              JS_timeObj2.substring(4,10) + "  " +
@@ -612,7 +615,7 @@ function showclock(){
 </script>
 </head>
 
-<body onLoad="QKfinish_load_body();showclock();" onKeyPress="submitenter(this,event)">
+<body onLoad="QKfinish_load_body();set_timezone();" onKeyPress="submitenter(this,event)">
 <form method="post" name="redirectForm" action="" target="">
 <input type="hidden" name="prev_page" value="">
 <input type="hidden" name="current_page" value="/qis/QIS_fail.htm">
@@ -627,6 +630,7 @@ function showclock(){
 <input type="hidden" name="wl1_ssid2" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_ssid"); %>">
 <input type="hidden" name="wl0_wpa_psk" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_wpa_psk"); %>">
 <input type="hidden" name="wl1_wpa_psk" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_wpa_psk"); %>">
+<input type="hidden" name="time_zone_x" value="<% nvram_get("time_zone_x"); %>" disabled>
 <div class="QISmain" id="QISmain" style="display:none">
 		<div id="descTltle">
 			<table width="100%">

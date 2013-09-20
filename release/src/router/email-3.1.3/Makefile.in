@@ -1,0 +1,50 @@
+MAKE = make
+VERSION = @ver@
+SRCDIR = src/
+DESTDIR = 
+CC = @CC@
+CFLAGS = @CFLAGS@ @DEFS@
+LDFLAGS = @LDFLAGS@
+LIBS = @LIBS@
+DLIB = dlib/
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+sbindir = @sbindir@
+mandir = @mandir@
+docdir = @docdir@
+sysconfdir = @sysconfdir@
+datarootdir = @datarootdir@
+
+bin_suffix = @EXEEXT@
+
+.PHONY: all clean-all clean distclean install uninstall
+
+all:
+	cd $(DLIB) && $(MAKE)
+	cd $(SRCDIR) && $(MAKE)
+
+install:
+	./install.sh --bindir "$(DESTDIR)$(bindir)" --sysconfdir "$(DESTDIR)$(sysconfdir)" \
+		--mandir "$(DESTDIR)$(mandir)" --binext "$(bin_suffix)" --version "$(VERSION)" \
+        --docdir "$(DESTDIR)$(docdir)"
+
+distclean:
+	cd $(SRCDIR) && $(MAKE) clean-all
+	rm -rf Makefile config.status VERSION email.help email.1
+
+clean:
+	cd $(SRCDIR) && $(MAKE) clean
+	cd $(DLIB) && $(MAKE) clean
+
+clean-all:
+	cd $(SRCDIR) && $(MAKE) clean-all
+	rm -rf autom4* Makefile config.status VERSION email.help email.1 configure \
+    config.log configure.in
+
+uninstall:
+	./uninstall.sh --bindir "$(DEST_DIR)$(bindir)" --sysconfdir "$(DEST_DIR)$(sysconfdir)" \
+	    --mandir "$(DEST_DIR)$(mandir)" --docdir "$(DEST_DIR)$(docdir)" --version "$(VERSION)"
+
+

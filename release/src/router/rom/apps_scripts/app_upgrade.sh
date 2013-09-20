@@ -233,21 +233,39 @@ fi
 APPS_INSTALL_PATH=$APPS_MOUNTED_PATH/$APPS_INSTALL_FOLDER
 
 need_asuslighttpd=0
+need_asusffmpeg=0
 need_smartsync=0
-if [ "$1" == "downloadmaster" ] || [ "$1" == "mediaserver" ]; then
+if [ "$1" == "downloadmaster" ] && [ -z "$is_arm_machine" ]; then
 	DM_version1=`app_get_field.sh downloadmaster Version 2 |awk '{FS=".";print $1}'`
 	DM_version4=`app_get_field.sh downloadmaster Version 2 |awk '{FS=".";print $4}'`
-	MS_version=`app_get_field.sh mediaserver Version 2 |awk '{FS=".";print $4}'`
 
-	if [ "$1" == "downloadmaster" ] && [ "$DM_version1" -gt "2" ] && [ "$DM_version4" -gt "59" ]; then
+	if [ "$DM_version1" -gt "3" ]; then
 		need_asuslighttpd=1
-	elif [ "$1" == "mediaserver" ] && [ "$MS_version" -gt "15" ]; then
+	elif [ "$DM_version1" -eq "3" ] && [ "$DM_version4" -gt "59" ]; then
 		need_asuslighttpd=1
 	fi
-elif [ "$1" == "aicloud" ] && [ -z "$is_arm_machine" ]; then
-	AC_version=`app_get_field.sh aicloud Version 2 |awk '{FS=".";print $4}'`
+elif [ "$1" == "mediaserver" ] && [ -z "$is_arm_machine" ]; then
+	MS_version1=`app_get_field.sh mediaserver Version 2 |awk '{FS=".";print $1}'`
+	MS_version4=`app_get_field.sh mediaserver Version 2 |awk '{FS=".";print $4}'`
 
-	if [ "$AC_version" -gt "4" ]; then
+	if [ "$MS_version1" -gt "1" ]; then
+		need_asuslighttpd=1
+	elif [ "$MS_version1" -eq "1" ] && [ "$MS_version4" -gt "15" ]; then
+		need_asuslighttpd=1
+	fi
+
+	if [ "$MS_version1" -gt "1" ]; then
+		need_asusffmpeg=1
+	elif [ "$MS_version1" -eq "1" ] && [ "$MS_version4" -ge "30" ]; then
+		need_asusffmpeg=1
+	fi
+elif [ "$1" == "aicloud" ] && [ -z "$is_arm_machine" ]; then
+	AC_version1=`app_get_field.sh aicloud Version 2 |awk '{FS=".";print $1}'`
+	AC_version4=`app_get_field.sh aicloud Version 2 |awk '{FS=".";print $4}'`
+
+	if [ "$AC_version1" -gt "1" ]; then
+		need_smartsync=1
+	elif [ "$AC_version1" -eq "1" ] && [ "$AC_version4" -gt "4" ]; then
 		need_smartsync=1
 	fi
 fi
@@ -267,7 +285,21 @@ if [ "$need_asuslighttpd" == "1" ]; then
 	else
 		target_file=$target_file" $APPS_INSTALL_PATH/tmp/$download_file"
 	fi
-elif [ "$need_smartsync" == "1" ]; then
+fi
+if [ "$need_asusffmpeg" == "1" ]; then
+	echo "Downloading the dependent package: asusffmpeg..."
+	_download_package asusffmpeg $APPS_INSTALL_PATH/tmp
+	if [ "$?" != "0" ]; then
+		# apps_state_error was already set by _download_package().
+		exit 1
+	fi
+	if [ -z "$target_file" ]; then
+		target_file=$APPS_INSTALL_PATH/tmp/$download_file
+	else
+		target_file=$target_file" $APPS_INSTALL_PATH/tmp/$download_file"
+	fi
+fi
+if [ "$need_smartsync" == "1" ]; then
 	if [ -n "$apps_ipkg_old" ] && [ "$apps_ipkg_old" == "1" ]; then
 		deps=`app_get_field.sh smartsync Depends 2 |sed 's/,/ /g'`
 
@@ -356,7 +388,12 @@ fi
 if [ "$need_asuslighttpd" == "1" ]; then
 	echo "Enabling the dependent package: asuslighttpd..."
 	app_set_enabled.sh asuslighttpd "yes"
-elif [ "$need_smartsync" == "1" ]; then
+fi
+if [ "$need_asusffmpeg" == "1" ]; then
+	echo "Enabling the dependent package: asusffmpeg..."
+	app_set_enabled.sh asusffmpeg "yes"
+fi
+if [ "$need_smartsync" == "1" ]; then
 	if [ -n "$apps_ipkg_old" ] && [ "$apps_ipkg_old" == "1" ]; then
 		deps=`app_get_field.sh smartsync Depends 2 |sed 's/,/ /g'`
 

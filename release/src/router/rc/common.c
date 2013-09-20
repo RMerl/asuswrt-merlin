@@ -971,6 +971,17 @@ void setup_pt_conntrack(void)
 #endif
 }
 
+void remove_conntrack(void)
+{
+	ct_modprobe_r("pptp");
+	ct_modprobe_r("ftp");
+	ct_modprobe_r("rtsp");
+	ct_modprobe_r("h323");
+#ifdef LINUX26
+	ct_modprobe_r("sip");
+#endif
+}
+
 void inc_mac(char *mac, int plus)
 {
 	unsigned char m[6];

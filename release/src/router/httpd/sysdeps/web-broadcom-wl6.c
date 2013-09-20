@@ -2637,7 +2637,12 @@ ej_SiteSurvey(int eid, webs_t wp, int argc, char_t **argv)
 					if (info->n_cap)
 					{
 						if (NetWorkType == Ndis802_11OFDM5)
-							NetWorkType = Ndis802_11OFDM5_N;
+						{
+							if (info->vht_cap)
+								NetWorkType = Ndis802_11OFDM5_VHT;
+							else
+								NetWorkType = Ndis802_11OFDM5_N;
+						}
 						else
 							NetWorkType = Ndis802_11OFDM24_N;
 					}
@@ -2710,6 +2715,8 @@ next_info:
 				fprintf(stderr, "%-7s", "11a");
 			else if (apinfos[k].NetworkType == Ndis802_11OFDM5_N)
 				fprintf(stderr, "%-7s", "11a/n");
+			else if (apinfos[k].NetworkType == Ndis802_11OFDM5_VHT)
+				fprintf(stderr, "%-7s", "11ac");
 			else if (apinfos[k].NetworkType == Ndis802_11OFDM24)
 				fprintf(stderr, "%-7s", "11b/g");
 			else if (apinfos[k].NetworkType == Ndis802_11OFDM24_N)
@@ -2719,7 +2726,7 @@ next_info:
 
 			fprintf(stderr, "%3d", apinfos[k].ctl_ch);
 
-			if (	((apinfos[k].NetworkType == Ndis802_11OFDM5_N) || (apinfos[k].NetworkType == Ndis802_11OFDM24_N)) &&
+			if (	((apinfos[k].NetworkType == Ndis802_11OFDM5_VHT) || (apinfos[k].NetworkType == Ndis802_11OFDM5_N) || (apinfos[k].NetworkType == Ndis802_11OFDM24_N)) &&
 				(apinfos[k].channel != apinfos[k].ctl_ch))
 			{
 				if (apinfos[k].ctl_ch < apinfos[k].channel)
@@ -2835,6 +2842,8 @@ next_info:
 			retval += websWrite(wp, "\"%s\", ", "a");
 		else if (apinfos[i].NetworkType == Ndis802_11OFDM5_N)
 			retval += websWrite(wp, "\"%s\", ", "an");
+                else if (apinfos[i].NetworkType == Ndis802_11OFDM5_VHT)
+                        retval += websWrite(wp, "\"%s\", ", "ac");
 		else if (apinfos[i].NetworkType == Ndis802_11OFDM24)
 			retval += websWrite(wp, "\"%s\", ", "bg");
 		else if (apinfos[i].NetworkType == Ndis802_11OFDM24_N)

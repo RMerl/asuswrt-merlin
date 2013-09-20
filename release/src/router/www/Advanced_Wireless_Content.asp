@@ -38,9 +38,14 @@ function initial(){
 	if((sw_mode == 2 || sw_mode == 4) && '<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>' && '<% nvram_get("wl_subunit"); %>' != '1'){
 		_change_wl_unit('<% nvram_get("wl_unit"); %>');
 	}
+
 	if(band5g_support && band5g_11ac_support && document.form.wl_unit[1].selected == true){
-		document.form.wl_nmode_x[1].text = "N + AC";
+		document.form.wl_nmode_x[1].text = "N + AC";	
+		document.getElementById('wl_mode_desc').onclick=function(){return openHint(1, 5)};		
+	}else if(band5g_support && document.form.wl_unit[1].selected == true){
+		document.getElementById('wl_mode_desc').onclick=function(){return openHint(1, 4)};
 	}
+
 	// special case after modifing GuestNetwork
 	if("<% nvram_get("wl_unit"); %>" == "-1" && "<% nvram_get("wl_subunit"); %>" == "-1"){
 		change_wl_unit();
@@ -54,6 +59,7 @@ function initial(){
 	else
 		check_channel_2g();
 
+	limit_auth_method();	
 	wl_auth_mode_change(1);
 	//mbss_display_ctrl();
 
@@ -501,7 +507,7 @@ function high_power_auto_channel(){
 				</tr>
 					  
 			  <tr>
-					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 4);"><#WLANConfig11b_x_Mode11g_itemname#></a></th>
+					<th><a id="wl_mode_desc" class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 4);"><#WLANConfig11b_x_Mode_itemname#></a></th>
 					<td>									
 						<select name="wl_nmode_x" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_nmode_x');">
 							<option value="0" <% nvram_match("wl_nmode_x", "0","selected"); %>><#Auto#></option>

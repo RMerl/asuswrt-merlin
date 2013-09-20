@@ -96,7 +96,7 @@ function initial(){
       					document.form.wl_auth_mode_x.remove(i);      									
   		}
   }
-	
+	limit_auth_method();
 	wl_auth_mode_change(1);
 	show_LAN_info();
 	if(parent.sw_mode == 4)
@@ -296,7 +296,7 @@ function change_wlweptype(wep_type_obj){
 	}
 	else{
 		if(document.form.wl_nmode_x.value == 1 && document.form.wl_wep_x.value != 0){
-			nmode_limitation();
+			//nmode_limitation();
 			wl_auth_mode_change(1);
 		}
 		$("all_wep_key").style.display = "";

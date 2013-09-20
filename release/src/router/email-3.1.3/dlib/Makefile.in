@@ -1,0 +1,40 @@
+# Dlib makefile
+MAKE = make
+VERSION = @ver@
+SRCDIR = src/
+DESTDIR = 
+CC = @CC@
+CFLAGS = @CFLAGS@ @DEFS@
+LDFLAGS = @LDFLAGS@
+LIBS = @LIBS@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+sbindir = @sbindir@
+mandir = @mandir@
+docdir = @docdir@
+sysconfdir = @sysconfdir@
+datarootdir = @datarootdir@
+
+bin_suffix = @EXEEXT@
+
+FILES = src/dnet.o src/dhash.o src/dlist.o src/dstrbuf.o src/dutil.o src/dvector.o
+
+.PHONY: all clean-all clean distclean install uninstall
+
+all: $(FILES)
+	ar rc libdlib.a $(FILES)
+
+test:
+	$(CC) $(CFLAGS) -o test test.c libdlib.a -lm
+
+dlisttest:
+	$(CC) $(CFLAGS) -o dlisttest dlisttest.c libdlib.a -lm
+
+dhashtest:
+	$(CC) $(CFLAGS) -o dhashtest dhashtest.c libdlib.a -lm
+
+clean:
+	rm -f src/*.o *.so *.a test
+

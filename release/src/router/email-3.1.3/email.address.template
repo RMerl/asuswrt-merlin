@@ -1,0 +1,23 @@
+# This is the Address book for 'email'
+# Groups should be comma delimited email addresses with 
+# Spaces are allowed, and newline escapes are too. Newline escapes are '\'
+#
+# Example:
+#group: MyGroup = Dean, John, Geekoid \ 
+#                 Scott, Josh, John
+#
+# See? The newline escape char let's you specify stuff on a seperate line.  kinda cool, eh?
+# Have fun!
+#
+
+# These are regular email addresses
+single: Tim               = tim@somedomain.org        #This is me!
+single: Someone            = someone@somedomain.org   #Just someone...
+single: Her                = hot_girl@somedomain.org  #Yeah right...
+single: "Geekoid Software" = software@somedomain.org
+
+# This is my group of friends...
+group: All = Dean, 'Geekoid Software', \
+		Someone, Her
+
+

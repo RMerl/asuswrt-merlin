@@ -54,19 +54,23 @@ function QKInternet_load_body(){
 function setScenerion(mode){
 	if(mode == '2'){
 		var pstaDesc = "<#OP_RE_desc#>";
-
+		pstaDesc += "<br><span style=\"color:#FC0\"><#use_DevDiscoveryUtil#></span>";
+		
 		parent.document.QKform.sw_mode.value = 2;
 		parent.localAP_support = true;
-
 		$j("#Senario").attr("src", "/images/New_ui/re.jpg");
-		$j("#mode_desc").html(pstaDesc);
+		$j("#Senario").attr("style", "height:132px");
+		$j("#mode_desc").html(pstaDesc);	
 		document.form.sw_mode_radio[1].focus();
+		document.form.sw_mode_radio[1].checked = true;
 	}
 	else if(mode == '3'){
 		parent.document.QKform.sw_mode.value = 3;
 		$j("#Senario").attr("src", "/images/New_ui/ap.jpg");
-		$j("#mode_desc").html("<#OP_AP_desc#>");
+		$j("#Senario").attr("style", "height:132px");
+		$j("#mode_desc").html("<#OP_AP_desc#><br><span style=\"color:#FC0\"><#deviceDiscorvy#></span>");		
 		document.form.sw_mode_radio[2].focus();
+		document.form.sw_mode_radio[2].checked = true;
 	}
 	else if(mode == '4'){
 		var pstaDesc = "";
@@ -75,20 +79,23 @@ function setScenerion(mode){
 		pstaDesc += "<#OP_MB_desc3#>";
 		pstaDesc += "<#OP_MB_desc4#>";
 		pstaDesc += "<#OP_MB_desc5#>";
-		pstaDesc += "<br><br><br>";
+		pstaDesc += "<br><span style=\"color:#FC0\"><#use_DevDiscoveryUtil#></span>";
 
 		parent.document.QKform.sw_mode.value = 4;
-		parent.localAP_support = false;
-
+		parent.localAP_support = false;		
 		$j("#Senario").attr("src", "/images/New_ui/mb.jpg");
+		$j("#Senario").attr("style", "height:190px");
 		$j("#mode_desc").html(pstaDesc);
 		document.form.sw_mode_radio[3].focus();
+		document.form.sw_mode_radio[3].checked = true;
 	}
 	else{
 		parent.document.QKform.sw_mode.value = 1;
 		$j("#Senario").attr("src", "/images/New_ui/rt.jpg");
+		$j("#Senario").attr("style", "height:132px");
 		$j("#mode_desc").html("<#OP_GW_desc#>");
 		document.form.sw_mode_radio[0].focus();
+		document.form.sw_mode_radio[0].checked = true;
 	}
 }
 
@@ -120,10 +127,10 @@ function submitenter(myfield,e){
 
 	if (keycode == 13){
 		submitForm();
-   	return false;
-  }
+		return false;
+	}
 	else
-   	return true;
+		return true;
 }
 </script>
 </head>
@@ -174,9 +181,9 @@ function submitenter(myfield,e){
 			<#OP_GW_desc#>
 	</div>
 	<br/>
-	<div style="margin-top:40px;margin-bottom:60px;"><img id="Senario" width="100%" height="132px" src="/images/New_ui/rt.jpg">
+	<div style="margin-top:55px;margin-bottom:50px;"><img id="Senario" width="100%" src="/images/New_ui/rt.jpg">
 	</div>	
-	<div id="applyBtn" class="apply_gen" style="margin-top:30px">
+	<div id="applyBtn" class="apply_gen">
 		<input type="submit" id="nextButton" value="<#CTL_next#>" class="button_gen" >
 	</div>
 </div>

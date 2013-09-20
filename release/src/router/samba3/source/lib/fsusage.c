@@ -45,7 +45,7 @@ static SMB_BIG_UINT adjust_blocks(SMB_BIG_UINT blocks, SMB_BIG_UINT fromsize, SM
 
    results are returned in *dfree and *dsize, in 512 byte units
 */
-int sys_fsusage(const char *path, SMB_BIG_UINT *dfree, SMB_BIG_UINT *dsize)
+int sys_fsusage(const char *path, SMB_BIG_UINT *dfree, SMB_BIG_UINT *dsize, SMB_BIG_UINT *bsize)
 {
 #ifdef STAT_STATFS3_OSF1
 #define CONVERT_BLOCKS(B) adjust_blocks ((SMB_BIG_UINT)(B), (SMB_BIG_UINT)fsd.f_fsize, (SMB_BIG_UINT)512)
@@ -124,7 +124,7 @@ int sys_fsusage(const char *path, SMB_BIG_UINT *dfree, SMB_BIG_UINT *dsize)
 
 #if defined(STAT_STATVFS) || defined(STAT_STATVFS64)		/* SVR4 */
 # define CONVERT_BLOCKS(B) \
-	adjust_blocks ((SMB_BIG_UINT)(B), fsd.f_frsize ? (SMB_BIG_UINT)fsd.f_frsize : (SMB_BIG_UINT)fsd.f_bsize, (SMB_BIG_UINT)512)
+	adjust_blocks ((SMB_BIG_UINT)(B), fsd.f_frsize ? (SMB_BIG_UINT)fsd.f_frsize : (SMB_BIG_UINT)fsd.f_bsize, (SMB_BIG_UINT)fsd.f_bsize)
 
 #ifdef STAT_STATVFS64
 	struct statvfs64 fsd;
@@ -144,6 +144,7 @@ int sys_fsusage(const char *path, SMB_BIG_UINT *dfree, SMB_BIG_UINT *dsize)
 #else
 #if !defined(STAT_STATFS2_FS_DATA)
 	/* !Ultrix */
+	(*bsize) = fsd.f_bsize;
 	(*dsize) = CONVERT_BLOCKS (fsd.f_blocks);
 	(*dfree) = CONVERT_BLOCKS (fsd.f_bavail);
 #endif /* not STAT_STATFS2_FS_DATA */

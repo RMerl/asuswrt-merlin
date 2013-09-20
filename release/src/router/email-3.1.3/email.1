@@ -1,0 +1,466 @@
+.TH EMAIL 1
+
+.SH NAME
+email \- Encrypted SMTP email via Command line
+
+.SH SYNOPSIS
+
+email [options] recipient1,recipient2,recipient3,...
+
+.SH DESCRIPTION
+
+Email is a command line email client similiar to 'mailx'.
+Added features make this a more advanced client for
+sending email via the command line.  Email works with
+sendmail, just as 'mailx'
+does, but email also allows sending to remote smtp
+servers for your email delivery.  It also works with
+GPG for encrypting and signing the emails on the fly.
+
+Email also incorporates a few other features as well.
+These features include signature files with wildcard
+options to specify the data, time, day, version,
+system, and even a 'fortune' with the help of the
+.I 'fortune' 
+command.  Email also supports a very
+configurable address book.  This way you can specify
+a persons name with an email address and also place
+a group of names into one group for sending.
+
+Email also supports attachments.  It will accept N attachments
+via a command line option and encode them with Base64 before
+sending them with the email.  
+
+Email works with a configuration file named email.conf
+which is found in /etc/email/email.conf
+although can be changed by specifying the --sysconfdir option
+during the ./configure.  If you do not have or want a 
+configuration file, you can specify the -r option to 
+specify your smtp server and this will allow you to bypass
+using a configuration file and use default values. If you
+specify the -r option (listed below) and you do have a 
+configuration file, it will still use the configuration
+file but override the SMTP_SERVER variable with what is
+used at the command line.  
+
+.SH OPTIONS
+There are a few possible options to email.  I have listed
+them in order of relevance of usage:
+.TP
+.B \-\-help module | \-h "Module of Help"
+This option can be specified with a module of help
+topic, or without one.  Without a module of help topic,
+it will just print a standard help screen with all
+your possible options.  With a module of help option,
+it will display a more detailed discription of that
+module.
+
+Modules are determined by command line switches.
+For instance:  if you want to know about the 'encrypt'
+command line option, you would specify \-\-help 'encrypt'
+or \-\-help 'e' and help will display the correct module
+help section.
+
+The Help is not statically programmed into email.
+Instead it is a file in email's home directory called
+'email.help'.  It is updated regularly and will always
+be rewritten with every release of email.
+
+.TP
+.B \-\-verbose | \-V
+This option will display the progress of communicating
+with the SMTP server. A pretty progress bar will be 
+displayed when data is sent. This option is replacing
+the old \-quiet option that would do the exact opposite.
+
+.TP
+.B \-\-blank-mail | \-blank-mail | \-b
+Use this option if you would like to send a blank email
+from the command line.  This is good if you just want to 
+send a message with only the headers and no content.
+
+.TP
+.B \-\-subject subject | \-subject subject | \-s "Subject of Email"
+This option should be rather obvious.  You specify the
+subject of the email with this option.  If you are not
+redirecting to standard input and you do not specify a
+subject, email will ask you for the subject.  Null
+subjects are allowed.
+
+.TP
+.B \-\-encrypt | \-encrypt | \-e  
+This options allows you to encrypt your email message
+using 'gpg'. GPG can be obtained by going to:
+.URL http://www.gnupg.org.
+When this option is specified, it will get the first
+recipient from the recipient list and it will encrypt
+the message using their key.  This key MUST be present
+in order for the encryption to work properly.
+
+.TP
+.B \-\-sign | \-sign
+This options will let you sign your emails
+on the fly... It uses the 'gpg --detach-sign' option.
+It will 'sign' the email with your public key.
+
+.TP
+.B \-\-cc recipient | \-cc recipient1,recipient2,recipient3,...
+This option allows you to "curtosy copy" a list of
+recipients. Recipients can be from the address book
+or just plain email addresses.  They should be comma
+delimited just as the main recipients will be.  CC
+recipients *will* be posted in the headers and read
+by email clients.
+
+.TP
+.B \-\-bcc receipient | \-bcc recipient1,recipient2,recipient3,...
+Same as the --cc option, but these recipients will
+.B *not* 
+be posted in the headers of the email.  This
+is a positive solution to "secretly"
+copy someone on the email without the other recipients
+knowing so (Managers usually bcc their boss when
+sending an email to you about your performance and
+you'll never know it 
+.B)
+)
+
+.TP
+.B \-\-attach file | \-a file
+Attach a binary file.  This option will allow you 
+to attach N files to your email and will be base64
+encoded upon delivery.  This option is helpful if
+you need to send any type of file that is not plain
+ascii text. This option can be used multiple times
+to add multiple files to attach.
+
+.TP
+.B \-\-smtp-server server | \-r server
+This option will let you override the smtp server
+that is specified in the email.conf file... You can
+use this option if you do not have an email.conf
+file.  It will allow you to use email without a 
+configuration file. A helpful option to add with
+this option would be the \-\-smtp-port option, 
+however, it is not needed.
+
+.TP
+.B \-\-smtp-port port | \-p port
+This option works well with the above option as it
+will allow you to bypass the configuration file and 
+specify a port on the command line.  This is helpful
+if you don't have a configuration file yet need to 
+specify an smtp server and a port.  The default port
+is always port 25, so that if you don't specify this
+option, and you don't have an email.conf file, it will
+default to port 25 for you.
+
+.TP
+.B \-\-smtp-auth type | -m type
+You must specify this option to use SMTP AUTH if you
+aren't using a configuration file.  'type' is the type
+of AUTH your server lets you use.  There are two supported
+AUTH types with email: PLAIN and LOGIN.  
+
+.TP
+.B \-\-smtp-user user | -u user
+If you don't want to keep your SMTP username in your
+email.conf file (SMTP_AUTH_USER), then you can use this
+command line option to specify it.
+
+.TP
+.B \-\-smtp-pass pass | -i pass
+If you don't want to keep your SMTP password in your
+email.conf file (SMTP_AUTH_PASS), then you can use this
+command line option to specify it.
+
+.TP
+.B \-\-from-name name | -n name
+This option will override MY_NAME in email.conf.
+This is what the recipient will see in the from
+field of their email client.
+
+.TP
+.B \-\-from-addr addr | -f addr
+This option will override MY_EMAIL in email.conf.
+This is what the recipient will see in the from
+field of their email client as your email address.
+
+.TP
+.B \-\-conf-file file
+Use this option to specify a configuration file other
+than ~/.email.conf or /etc/email/email.conf.  
+
+.TP
+.B \-\-header string | \-H string,string,string,...
+If you would like to append headers to the message 
+that you are sending, you can use this option multiple
+times and specify the header you would like to append
+as well as delimit each header string with a comma for
+multiple headers.
+
+An example of a header string would look like:
+--header "X-My-Header: Stuff goes here"
+
+.TP
+.B \-\-timeout secs | \-x secs
+Set a timeout (in seconds) on the socket. This is
+helpful if you would like to have the client stop
+trying to send/recv data from the SMTP server if
+it hangs after a period of time.
+
+.TP
+.B \-\-high-priority | \-o
+This options allows you to take advantage of using
+the priority option used by some email clients.
+If the option is specified when sent to a user
+using MS Outlook, a small exclimation mark will
+be next to the message as to let the user know
+this email is important.
+
+.TP
+.B \-\-html
+This option allows you to send html emails. As
+of right now, you need to write your own html.
+
+.TP
+.B \-\-gpg-pass , -g pass
+If you don't want to keep your GPG password in your
+email.conf file (GPG_PASS), then you can use this 
+command line option to specify it.
+
+.TP
+.B \-\-tls
+If you'd like to use TLS/SSL communication with the
+smtp server, use this option (if it's not already
+set in the config file.)
+
+.TP
+.B \-\-no-encoding
+If you don't want eMail to automatically use UTF-8 encoding when finding
+non ascii characters, use this option.
+
+.SH CONFIGURATION
+Configuration of email is fairly simple.  Just open
+the default configuration file.  If you did not specify
+an email home directory during your compilation of email
+then this will be in /etc/email and the file
+is called 'email.conf'.  The configuration options are
+listed below.  
+
+
+  SMTP_SERVER       : Server name, or IP
+  SMTP_PORT         : Servers port number
+  SENDMAIL_BIN      : Specify the sendmail binary path and options
+  MY_NAME           : Specify your Name
+  MY_EMAIL          : Specify your email address
+  REPLY_TO          : Seperate reply to address
+  SIGNATURE_FILE    : Your signature file
+  SIGNATURE_DIVIDE  : A design for a divider
+  ADDRESS_BOOK      : Location of your address book file
+  SAVE_SENT_MAIL    : Directory to save email.sent file
+  GPG_BIN           : Full path to gpg binary
+  GPG_PASS          : Optional passphrase for gpg
+  TEMP_DIR          : Specify where to store temp files
+  SMTP_AUTH         : Specify what type of authentication 
+                      for your smtp server.
+  SMTP_AUTH_USER    : Specify a username login for SMTP AUTH
+  SMTP_AUTH_PASS    : Specify a password for SMTP AUTH
+  USE_TLS           : Boolean (true/false) if you want to use TLS/SSL
+  VCARD             : Specify a vcard to attach to each message.
+.br
+
+You can choose to use sendmail instead of a remote smtp
+server.  All you have to do is input the path of where
+you have sendmail located in the SENDMAIL_BIN variable.
+You may also provide options to pass sendmail.  The best
+values for this would be /usr/lib/sendmail -t -i. If you
+have both SENDMAIL_BIN and SMTP_SERVER uncommented and
+both have values, then SMTP_SERVER will take presedence
+over SENDMAIL_BIN and 'email' will try to contact the
+SMTP server provided. 
+
+You can create your own email.conf file in your home
+directory.  It must be a hidden file.  For instance:
+~/.email.conf
+
+Email will look in your home directory before it looks
+for a global configuration file.  The easiest thing
+to do is simply copy your global config file to your
+home directory as .email.conf and edit it as needed.
+
+If you do not have a global config file or a personal
+config file, email will choose defaults according to
+your current login on the system. So a configuration
+file is not manditory, it just helps you customize
+email.
+
+You can look at the basic configuration file for more
+information on the configuration of 'email'.
+
+.SH SMTP AUTH
+
+Email now support SMTP AUTH.  I will briefly describe
+how it works here.
+
+To use email with an SMTP server that expects authentication
+you must set a few options in your email.conf file. These
+options are: SMTP_AUTH, SMTP_AUTH_USER, SMTP_AUTH_PASS.
+
+SMTP_AUTH:
+    This option must be set to one of the two: LOGIN or
+    PLAIN. LOGIN and PLAIN are standard RFC compliant SMTP AUTH
+    protocols.  If you are unsure which options to choose, 
+    ask your ISP or SMTP Administrator if any of these are 
+    supported. Usually it's a safe bet to use LOGIN for 
+    SMTP AUTH.  Most AUTH servers support LOGIN.
+
+SMTP_AUTH_USER:
+    If you're using SMTP AUTH, please specify your username
+    here.  This option is
+.B MANDITORY
+if you're using SMTP AUTH.
+
+SMTP_AUTH_PASS:
+    You can choose to set this option or not.  However, if
+    you don't set this option, email will prompt you for your
+    password before proceeding.  So if you're using email from
+    a cron job and don't expect any interaction with email,
+    please set this option!
+
+USE_TLS:
+    This option allows you to use TLS/SSL to communicate with
+    your SMTP server. This is the most basic use of TLS/SSL
+    possible. Please be advised that not much is done to 
+    verify the certificate from the server. Also, currently
+    there is no support for providing your own certificate for
+    the server to authenticate since typical TLS does not do this.
+    
+.SH ENVIRONMENT VARIABLES
+
+Two environment variables can be set that email will
+check.  
+
+EDITOR will allow you to specify your favorite
+editor to use with email for constructing messages. If
+this variable is not set, it will default to vi.  
+
+TMPDIR can be set to specify a temporary directory to
+place your temp files while email is working.  This is
+analogous to the TEMP_DIR variable in email.conf.  
+'email' will check TEMP_DIR first, then check your 
+environment variable TMPDIR for a temporary directory.
+If neither contains a value, email defaults to /tmp.
+
+
+.SH ADDRESS BOOK
+
+The address book for email takes on the format as
+described below.  It will check for any syntax errors
+in the address book and completely stop email if it
+finds any, so try to keep the same gramatical syntax.
+A single entry in the address book will look like:
+
+  single: Tim = tim@somedomain.org   #Comments allowed
+
+You are welcome to use a whole name with spaces as
+long as you use a single quote closing the name
+with another single quote.  You may also use double
+quotes in place of the single quotes.  Example:
+
+   single: 'Tim Gahan' = tim@somedomain.org
+
+Groups are allowed and can only consist of comma
+delimited single entries from the file and may
+contain spaces.  You can *not* recursively specify
+groups.  You may, however specify single email addresses
+that are not part of the address book.
+
+If you would like to break one line into two lines, you
+should use the '\\' as a newline escape mark. Examples:
+
+   group: Mygroup = 'Tim Gahan', John, Sam, Bob, \\
+                       tookie@somedomain.org
+                        
+This example will specify a group with the single entries
+of 'Dean Jones', John, Sam, Bob, and the unadded email
+address of 'software@somedomain.org'.
+
+
+.SH SIGNATURE FILE
+
+The signature file is specified in the configuration
+file.  You will also have the option to specify a
+signature divider.  This is by default '---'.  This just
+divides the signature file from the rest of the email.
+
+There are a few wild cards that you can specify in
+writing your signature file that will allow your signature
+file to obtain dynamic options when sending your email.
+
+.TP 
+%v    
+This will show the version of email
+.TP 
+%t    
+This will show the time the email was sent
+.TP 
+%d    
+This will display the date the email was sent
+.TP 
+%c    
+This will display a completely formated date and time
+.TP 
+%h    
+This will display the host type
+.TP 
+%f    
+This will display the output of the 'fortune' command
+.SH SIGNATURE EXAMPLE
+Example of a signature file is below:
+
+    This email was sent with 'email %v'
+    Sent on host: %h
+    At the time : %c
+    Your fortune for today is:
+    %f
+
+This will end up replacing the %v, %h, %c, and %f with
+their corresponding equivalents above respectively.
+
+
+.SH EXAMPLES OF USAGE
+
+.TP 
+# Redirect your message to email
+email \-s "Sending this.txt" tim@somedomain.org < this.txt
+.TP 
+# Make your message with email
+email \-s "Subject" tim@somedomain.org
+.TP 
+# Encrypt and email to "Dean Jones"
+email \-s "Encryted" \-encrypt tim@somedomain.org
+.TP 
+# Multiple Recipients from address book
+email \-s "no subject" Dean,Jeff,Tom,Bob \-cc Josh,Carl
+.TP
+# Attach some files with your message
+email \-s "files attached" Dean,Jeff --attach stuff.tar.gz,readme.doc
+
+.SH BUGS
+
+If you find any in this program, please submit them to 
+.TP
+.B http://www.cleancode.org/projects/email/contact
+
+.SH AUTHORS
+
+.B Dean Jones   - http://www.cleancode.org/projects/email/contact
+
+.SH THANKS FOR RELEASE V3.0
+.B Philip Lewis - Helped in debugging.
+
+.SH COPYRIGHT
+
+.B (C) 2001 - 2008
+

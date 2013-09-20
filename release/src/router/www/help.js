@@ -271,19 +271,19 @@ function overHint(itemNum){
 		}
 		else{
 			if(sw_mode == 1){
-				if(link_auxstatus == 1)
+				if(link_auxstatus == "1")
 					statusmenu = "<span class='StatusHint'><#QKSet_detect_wanconnfault#></span>";
-				else if(link_sbstatus == 1)
+				else if(link_sbstatus == "1")
 					statusmenu = "<span class='StatusHint'><#web_redirect_reason3_2#></span>";
-				else if(link_sbstatus == 2)
+				else if(link_sbstatus == "2")
 					statusmenu = "<span class='StatusHint'><#QKSet_Internet_Setup_fail_reason2#></span>";
-				else if(link_sbstatus == 3)
+				else if(link_sbstatus == "3")
 					statusmenu = "<span class='StatusHint'><#QKSet_Internet_Setup_fail_reason1#></span>";
-				else if(link_sbstatus == 4)
+				else if(link_sbstatus == "4")
 					statusmenu = "<span class='StatusHint'><#web_redirect_reason5_2#></span>";
-				else if(link_sbstatus == 5)
+				else if(link_sbstatus == "5")
 					statusmenu = "<span class='StatusHint'><#web_redirect_reason5_1#></span>";
-				else if(link_sbstatus == 6)
+				else if(link_sbstatus == "6")
 					statusmenu = "<span class='StatusHint'>WAN_STOPPED_SYSTEM_ERROR</span>";
 				else
 					statusmenu = "<span class='StatusHint'><#web_redirect_reason2_2#></span>";
@@ -376,25 +376,35 @@ function openHint(hint_array_id, hint_show_id, flag){
 			_caption = "Guest Network";
 		}
 		else if(hint_show_id == 3){
-			if(sw_mode == 1){
-				if((link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2"))
-					statusmenu = "<span class='StatusClickHint' onclick='suspendconn(0);' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#disconnect_internet#></span>";
-				else if(link_status == 5)
+			if(sw_mode == 1){				
+				if(!dualWAN_support && 
+						((link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2"))
+				)
+					statusmenu = "<span class='StatusClickHint' onclick='suspendconn(0);' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#disconnect_internet#></span>";	
+				else if(dualWAN_support && 
+						((link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2"))
+				){
+					if(wans_dualwan_orig.search("none")<0)					
+						statusmenu = "<span class='StatusClickHint' onclick='goToWAN();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#btn_to_WAN#></span>";
+					else
+						statusmenu = "<span class='StatusClickHint' onclick='suspendconn(0);' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#disconnect_internet#></span>";		
+				}					
+				else if(link_status == "5")
 					statusmenu = "<span class='StatusClickHint' onclick='suspendconn(1);' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>Resume internet</span>";
 				else{
-					if(link_auxstatus == 1)
+					if(link_auxstatus == "1")
 						statusmenu = "<span class='StatusHint'><#QKSet_detect_wanconnfault#></span>";
-					else if(link_sbstatus == 1)
+					else if(link_sbstatus == "1")
 						statusmenu = "<span class='StatusHint'><#web_redirect_reason3_2#></span>";
-					else if(link_sbstatus == 2)
+					else if(link_sbstatus == "2")
 						statusmenu = "<span class='StatusHint'><#QKSet_Internet_Setup_fail_reason2#></span>";
-					else if(link_sbstatus == 3)
+					else if(link_sbstatus == "3")
 						statusmenu = "<span class='StatusHint'><#QKSet_Internet_Setup_fail_reason1#></span>";
-					else if(link_sbstatus == 4)
+					else if(link_sbstatus == "4")
 						statusmenu = "<span class='StatusHint'><#web_redirect_reason5_2#></span>";
-					else if(link_sbstatus == 5)
+					else if(link_sbstatus == "5")
 						statusmenu = "<span class='StatusHint'><#web_redirect_reason5_1#></span>";
-					else if(link_sbstatus == 6)
+					else if(link_sbstatus == "6")
 						statusmenu = "<span class='StatusHint'>WAN_STOPPED_SYSTEM_ERROR</span>";
 					else
 						statusmenu = "<span class='StatusHint'><#web_redirect_reason2_2#></span>";
@@ -2236,3 +2246,10 @@ String.prototype.strReverse = function() {
 };
 
 // ---------- Viz add for pwd strength check [End] 2012.12 -----
+
+function goToWAN(){
+	if(dualWAN_support)
+		parent.location.href = '/Advanced_WANPort_Content.asp';
+	else	
+		parent.location.href = '/Advanced_WAN_Content.asp';
+}

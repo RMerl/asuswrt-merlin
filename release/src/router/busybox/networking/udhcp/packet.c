@@ -145,6 +145,7 @@ int FAST_FUNC udhcp_send_raw_packet(struct dhcp_packet *dhcp_pkt,
 	 * we truncate packets after end option byte.
 	 */
 	padding = DHCP_OPTIONS_BUFSIZE - 1 - udhcp_end_option(packet.data.options);
+	padding = MIN(DHCP_SIZE - DHCP_MIN_SIZE, padding);
 
 	packet.ip.protocol = IPPROTO_UDP;
 	packet.ip.saddr = source_nip;
@@ -215,6 +216,7 @@ int FAST_FUNC udhcp_send_kernel_packet(struct dhcp_packet *dhcp_pkt,
 
 	udhcp_dump_packet(dhcp_pkt);
 	padding = DHCP_OPTIONS_BUFSIZE - 1 - udhcp_end_option(dhcp_pkt->options);
+	padding = MIN(DHCP_SIZE - DHCP_MIN_SIZE, padding);
 	result = safe_write(fd, dhcp_pkt, DHCP_SIZE - padding);
 	msg = "write";
  ret_close:

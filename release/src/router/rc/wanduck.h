@@ -45,22 +45,17 @@
 #include <disk_io_tools.h>
 #endif
 
-#define SCAN_INTERVAL 5
+#define DEFAULT_SCAN_INTERVAL 5
 #define TCPCHECK_TIMEOUT 3
 #define PING_RESULT_FILE "/tmp/ping_success"
 #define RX_THRESHOLD 40
 
 /* Paul modify 2013/4/2, DSL takes some time to sync up */
 #ifdef RTCONFIG_DSL
-	#define MAX_WAIT_TIME 120
+#define DEFAULT_MAX_DISCONN_COUNT 24
 #else
-	#define MAX_WAIT_TIME 60
+#define DEFAULT_MAX_DISCONN_COUNT 12
 #endif
-
-#define MAX_DISCONN_COUNT MAX_WAIT_TIME/SCAN_INTERVAL
-
-int max_wait_time = MAX_WAIT_TIME;
-int max_disconn_count = MAX_DISCONN_COUNT;
 
 #define PROC_NET_DEV "/proc/net/dev"
 #define WANDUCK_PID_FILE "/var/run/wanduck.pid"
@@ -161,7 +156,15 @@ char router_name[PATHLEN];
 int sw_mode, isFirstUse;
 #ifdef RTCONFIG_DUALWAN
 char dualwan_mode[8];
+
+char wandog_target[PATH_MAX];
+int wandog_delay, delay_detect;
 #endif
+
+int scan_interval;
+int wandog_enable, wandog_maxfail;
+int max_disconn_count;
+int max_wait_time;
 
 int http_sock, dns_sock, maxfd;
 clients client[MAX_USER];

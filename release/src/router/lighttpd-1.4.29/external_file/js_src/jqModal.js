@@ -52,7 +52,7 @@ open:function(s,t){var h=H[s],c=h.c,cc='.'+c.closeClass,z=(parseInt(h.w.css('z-i
  (c.onShow)?c.onShow(h):h.w.show();e(h);return F;
 },
 close:function(s){
-	var h=H[s];
+	var h=H[s];	
 	if(!h.a)return F;h.a=F;
  if(A[0]){A.pop();if(!A[0])L('unbind');}
  if(h.c.toTop&&h.o)$('#jqmP'+h.w[0]._jqm).after(h.w).remove();

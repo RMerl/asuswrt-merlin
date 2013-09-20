@@ -69,7 +69,7 @@ uint32_t get_phy_speed(uint32_t portmask)
 	return 1;
 }
 
-uint32_t set_phy_ctrl(uint32_t portmask, uint32_t ctrl)
+uint32_t set_phy_ctrl(uint32_t portmask, int ctrl)
 {
 	// TODO
 	return 1;

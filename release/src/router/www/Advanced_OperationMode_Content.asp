@@ -29,7 +29,7 @@
 	-webkit-border-radius: 5px;
 	-moz-border-radius: 5px;
 	border-radius: 5px;
-	z-index:2000;
+	z-index:200;
 	background-color:#2B373B;
 	display:none;
 	behavior: url(/PIE.htc);
@@ -38,7 +38,7 @@
 	width:730px;
 	/*font-family:Verdana, Arial, Helvetica, sans-serif;*/
 	font-size:14px;
-	z-index:2000;
+	z-index:200;
 	position:relative;
 	background-color:balck:
 }	
@@ -297,7 +297,7 @@ function setScenerion(mode){
 		$j("#Internet_span").css("display", "block");
 		$j("#ap-line").css("display", "none");
 		$j("#AP").html("<#Device_type_02_RT#>");
-		$j("#mode_desc").html("<#OP_RE_desc#>");
+		$j("#mode_desc").html("<#OP_RE_desc#><br/><span style=\"color:#FC0\"><#use_DevDiscoveryUtil#></span>");
 		$j("#nextButton").attr("value","<#CTL_next#>");
 		clearTimeout(id_WANunplungHint);
 		$j("#Unplug-hint").css("display", "none");

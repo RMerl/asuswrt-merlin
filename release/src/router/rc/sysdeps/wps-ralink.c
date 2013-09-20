@@ -50,53 +50,102 @@ start_wps_method(void)
 int 
 stop_wps_method(void)
 {
+	char prefix[] = "wlXXXXXXXXXX_", word[256], *next, ifnames[128];
+	int i, wps_band = nvram_get_int("wps_band"), multiband = get_wps_multiband();
+
 	if(getpid()!=1) {
 		notify_rc("stop_wps_method");
 		return 0;
 	}
 
-//	doSystem("iwpriv %s set WscConfMode=%d", get_wpsifname(), 0);	// WPS disabled
-	doSystem("iwpriv %s set WscStatus=%d", get_wpsifname(), 0);	// Not Used
-//	doSystem("iwpriv %s set WscConfMode=%d", get_non_wpsifname(), 7);	// trigger Windows OS to give a popup about WPS PBC AP
+	i = 0;
+	strcpy(ifnames, nvram_safe_get("wl_ifnames"));
+	foreach (word, ifnames, next) {
+		if (i >= MAX_NR_WL_IF)
+			break;
+		if (!multiband && wps_band != i) {
+			++i;
+			continue;
+		}
+		snprintf(prefix, sizeof(prefix), "wl%d_", i);
+
+		if (!multiband) {
+//			doSystem("iwpriv %s set WscConfMode=%d", get_wpsifname(), 0);		// WPS disabled
+			doSystem("iwpriv %s set WscStatus=%d", get_wifname(i), 0);	// Not Used
+//			doSystem("iwpriv %s set WscConfMode=%d", get_non_wpsifname(), 7);	// trigger Windows OS to give a popup about WPS PBC AP
+		} else {
+			/* Make sure WPS on all band are turned off */
+			doSystem("iwpriv %s set WscConfMode=%d", get_wifname(i), 0);	// WPS disabled
+			doSystem("iwpriv %s set WscStatus=%d", get_wifname(i), 0);	// Not Used
+			doSystem("iwpriv %s set WscConfMode=%d", get_wifname(i), 7);	// trigger Windows OS to give a popup about WPS PBC AP
+		}
+
+		++i;
+	}
 
 	return 0;
 }
 
-extern int g_isEnrollee;
-int count = 0;
+extern int g_isEnrollee[MAX_NR_WL_IF];
+int count[MAX_NR_WL_IF] = { 0, 0 };
 
 int is_wps_stopped(void)
 {
-	int status, ret = 1;
-	status = getWscStatus();
-	if (status != 1)
-		count = 0;
-	else
-		count++;
+	int i, status, ret = 1;
+	char tmp[128], prefix[] = "wlXXXXXXXXXX_", word[256], *next, ifnames[128];
+	int wps_band = nvram_get_int("wps_band"), multiband = get_wps_multiband();
 
-//	dbG("wps status: %d, count: %d\n", status, count);
-
-	switch (status) {
-		case 1:		/* Idle */
-			if (strstr("start_wps_method", nvram_safe_get("rc_service")) != NULL)
-				count = 0;
-			if (count < 15) ret = 0; // 15 would delay 750ms to avoid error since WPS not start yet.
+	i = 0;
+	strcpy(ifnames, nvram_safe_get("wl_ifnames"));
+	foreach (word, ifnames, next) {
+		if (i >= MAX_NR_WL_IF)
 			break;
-		case 34:	/* Configured */
-			dbG("\nWPS Configured\n");
-			break;
-		case 0x109:	/* PBC_SESSION_OVERLAP */
-			dbG("\nWPS PBC SESSION OVERLAP\n");
-			break;
-		case 2:		/* Failed */
-			if (!g_isEnrollee)
-			{
-				dbG("\nWPS Failed\n");
-				break;
-			}
-		default:
+		if (!multiband && wps_band != i) {
+			++i;
+			continue;
+		}
+		snprintf(prefix, sizeof(prefix), "wl%d_", i);
+		if (!__need_to_start_wps_band(prefix) || nvram_match(strcat_r(prefix, "radio", tmp), "0")) {
 			ret = 0;
+			++i;
+			continue;
+		}
+			
+		status = getWscStatus(i);
+		if (status != 1)
+			count[i] = 0;
+		else
+			count[i]++;
+
+//		dbG("band %d wps status: %d, count: %d\n", i, status, count[i]);
+		switch (status) {
+			case 1:		/* Idle */
+				if (strstr(nvram_safe_get("rc_service"), "start_wps_method") != NULL)
+					count[i] = 0;
+				if (count[i] < 15) ret = 0; // 15 would delay 750ms to avoid error since WPS not start yet.
+				break;
+			case 34:	/* Configured */
+				dbG("\nWPS Configured\n");
+				ret = 1;
+				break;
+			case 0x109:	/* PBC_SESSION_OVERLAP */
+				dbG("\nWPS PBC SESSION OVERLAP\n");
+				ret = 1;
+				break;
+			case 2:		/* Failed */
+				if (!g_isEnrollee[i]) {
+					dbG("\nWPS Failed\n");
+					break;
+				}
+			default:
+				ret = 0;
+				break;
+		}
+
+		if (ret)
 			break;
+
+		++i;
 	}
 
 	return ret;

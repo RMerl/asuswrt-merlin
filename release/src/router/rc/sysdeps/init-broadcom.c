@@ -235,6 +235,7 @@ void generate_switch_para(void)
 		case MODEL_RTN12HP:
 		case MODEL_RTN10P:
 		case MODEL_RTN10D1:
+		case MODEL_RTN10PV2:
 		{					/* WAN L1 L2 L3 L4 CPU */
 			const int ports[SWPORT_COUNT] = { 4, 3, 2, 1, 0, 5 };
 			/* TODO: switch_wantag? */
@@ -788,6 +789,7 @@ reset_mssid_hwaddr(int unit)
 			case MODEL_RTN10U:
 			case MODEL_RTN10P:
 			case MODEL_RTN10D1:
+			case MODEL_RTN10PV2:
 				if (unit == 0)	/* 2.4G */
 					snprintf(macaddr_str, sizeof(macaddr_str), "sb/1/macaddr");
 				else		/* 5G */
@@ -970,6 +972,7 @@ void init_syspara(void)
 		case MODEL_RTN10U:
 		case MODEL_RTN10P:
 		case MODEL_RTN10D1:
+		case MODEL_RTN10PV2:
 			if (!nvram_get("et0macaddr"))	// eth0, eth1
 				nvram_set("et0macaddr", "00:22:15:A5:03:00");
 			if (!nvram_get("0:macaddr"))	// eth2(5G)
@@ -1046,7 +1049,6 @@ void init_syspara(void)
 			break;
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56U:
-			nvram_set("watchdog", "3000");	// tmp add 
 			if (!nvram_get("et0macaddr"))	//eth0, eth1
 				nvram_set("et0macaddr", "00:22:15:A5:03:00");
 			if (!nvram_get("1:macaddr"))	//eth2(5G)
@@ -1317,6 +1319,7 @@ int set_wltxpower()
 			case MODEL_RTN10U:
 			case MODEL_RTN10P:
 			case MODEL_RTN10D1:
+			case MODEL_RTN10PV2:
 			{
 				if(unit == 0){	/* 2.4G */
 					snprintf(prefix2, sizeof(prefix2), "sb/1/");
@@ -2762,6 +2765,8 @@ void generate_wl_para(int unit, int subunit)
 		/* Disable all VIFS wlX.2 onwards */
 		if (is_psta(unit) || is_psr(unit))
 		{
+			nvram_set(strcat_r(prefix, "bss_enabled", tmp), "1");
+
 			strncpy(interface_list, nvram_safe_get(lan_ifnames), interface_list_size);
 
 			/* While enabling proxy sta or repeater modes on second wl interface
@@ -3229,7 +3234,7 @@ void generate_wl_para(int unit, int subunit)
 
 		sprintf(tmp2, "%d", atoi(nvram_safe_get(strcat_r(prefix, "pmk_cache", tmp))) * 60);
 		nvram_set(strcat_r(prefix, "net_reauth", tmp), tmp2);
-
+#if 0
 		if (get_model() == MODEL_RTAC68U)
 		{
 			if (unit && nvram_match(strcat_r(prefix, "country_code", tmp), "EU"))
@@ -3243,7 +3248,7 @@ void generate_wl_para(int unit, int subunit)
 				nvram_set(strcat_r(prefix, "radarthrs", tmp), "0 0x6a8 0x6c8 0x6ac 0x6c7");
 			}
 		}
-
+#endif
 		dbG("bw: %s\n", nvram_safe_get(strcat_r(prefix, "bw", tmp)));
 #ifdef RTCONFIG_BCMWL6
 		dbG("chanspec: %s\n", nvram_safe_get(strcat_r(prefix, "chanspec", tmp)));
@@ -3337,6 +3342,7 @@ set_wan_tag(char *interface) {
 	case MODEL_APN12HP:
 	case MODEL_RTN10P:
 	case MODEL_RTN10D1:
+	case MODEL_RTN10PV2:
 		/* Reset vlan 1 */
 		eval("vconfig", "rem", "vlan1");
 		eval("et", "robowr", "0x34", "0x8", "0x01001000");

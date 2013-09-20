@@ -110,12 +110,12 @@ function gen_list(){
 		passlist = new Array("", "", "", "", "");
 	}
 	else if(country == "PO"){
-		protolist = new Array("1", "1");
-		isplist = new Array("TMN", "Optimus");
-		apnlist = new Array("internet", "myconnection");
-		daillist = new Array("*99#", "*99#");
-		userlist = new Array("", "");
-		passlist = new Array("", "");
+		protolist = new Array("1", "1", "1");
+		isplist = new Array("TMN", "Optimus", "Vodafone");
+		apnlist = new Array("internet", "myconnection", "net2.vodafone.pt");
+		daillist = new Array("*99#", "*99#", "*99#");
+		userlist = new Array("", "", "vodafone");
+		passlist = new Array("", "", "vodafone");
 	}
 	else if(country == "UK"){
 		protolist = new Array("1", "1", "1", "1");
