@@ -692,6 +692,27 @@ define RouterOptions
 		sed -i "/RTCONFIG_DYN_DICT_NAME/d" $(1); \
 		echo "RTCONFIG_DYN_DICT_NAME=y" >>$(1); \
 	fi; \
+	if [ "$(TEMPROOTFS)" = "y" ]; then \
+		sed -i "/RTCONFIG_TEMPROOTFS/d" $(1); \
+		echo "RTCONFIG_TEMPROOTFS=y" >>$(1); \
+	else \
+		sed -i "/RTCONFIG_TEMPROOTFS/d" $(1); \
+		echo "# RTCONFIG_TEMPROOTFS is not set" >>$(1); \
+	fi; \
+	if [ "$(JFFS2LOG)" = "y" ]; then \
+		sed -i "/RTCONFIG_JFFS2LOG/d" $(1); \
+		echo "RTCONFIG_JFFS2LOG=y" >>$(1); \
+	else \
+		sed -i "/RTCONFIG_JFFS2LOG/d" $(1); \
+		echo "# RTCONFIG_JFFS2LOG is not set" >>$(1); \
+	fi; \
+	if [ "$(WPSMULTIBAND)" = "y" ]; then \
+		sed -i "/RTCONFIG_WPSMULTIBAND/d" $(1); \
+		echo "RTCONFIG_WPSMULTIBAND=y" >>$(1); \
+	else \
+		sed -i "/RTCONFIG_WPSMULTIBAND/d" $(1); \
+		echo "# RTCONFIG_WPSMULTIBAND is not set" >>$(1); \
+	fi; \
 	)
 
 	$(call platformRouterOptions, $(1))
