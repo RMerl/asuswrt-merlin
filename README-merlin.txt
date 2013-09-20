@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 3.0.0.4.374.33-Beta2 (xx-Sept-2013)
-=========================================================
+Asuswrt-Merlin - build 3.0.0.4.374.33-Beta3 (xx-Sept-2013)
+==========================================================
 
 About
 -----
@@ -34,7 +34,7 @@ Features
 Here is a list of features that Asuswrt-merlin brings over the original firmware:
 
 System:
-   - Based on RT-AC56U 3.0.0.4.374_119 sources from Asus
+   - Based on RT-AC56U 3.0.0.4.374_720 sources from Asus
    - Various bugfixes and optimizations
    - Some components were updated to their latest versions, for improved stability
      and security
@@ -91,6 +91,9 @@ integrated/enabled in the official firmware:
 - clickable MACs on the client list for lookup in the OUI database
 - Display active/tracked network connections
 - VPN Status page
+- DualWAN and Repeater mode (as it was still in development
+  by Asus)
+
 
 
 Installation
@@ -171,15 +174,6 @@ Don't forget to set them as executable:
 And like any Linux script, they need to start with a shebang:
 
    #!/bin/sh
-
-
-
-* WakeOnLan *
-There's a WOL tab under the new Tools menu.  From there you can enter a
-target computer's MAC address to send it a WakeOnLan packet.  You can also
-create a list of MAC addresses that will be stored in nvram, and on
-which you can click afterward to wake up one of the listed computers, without 
-having to remember their MAC addresses.
 
 
 
@@ -276,25 +270,6 @@ be something like this:
 mount \\\\192.168.1.100\\ShareName /cifs1 -t cifs -o "username=User,password=Pass"
 
 (backslashes must be doubled.)
-
-
-
-* Dual WAN *
-Asuswrt originally support using a USB 3G/4G modem as a 
-failover Internet connection.  Dual WAN is the next step, also 
-developped by Asus but left disabled so far in their official 
-releases (probably because this is still work in progress).  
-
-The first improvement over USB failover is that it works not only 
-with USB but with other ethernet devices, which can be plugged 
-on one of the LAN ports that you will select as the secondary WAN 
-interface.  The second difference is that in addition to failover 
-mode, Dual WAN also supports a load balancing mode, allowing 
-you to share both connections at once.
-
-Keep in mind that Dual WAN is still an EXPERIMENTAL and UNSUPPORTED 
-feature, until the time Asus finishes developping and testing it.  
-Some things are expected to not work properly.
 
 
 
@@ -442,7 +417,7 @@ RT-AC56U.
 
 
 
-* YandexDNS filtering (Experimental builds only) *
+* YandexDNS filtering *
 Asus is implementing support for the YandexDNS DNS-based 
 filtering.  This service allows you to filter out 
 dangerous websites at the DNS level.  You can configure 
@@ -450,11 +425,6 @@ which computer will make use of this service if you
 want, for example, to only filter your children's 
 computer.  The settings can be found under 
 Parental Control.
-
-This feature is a work-in-progress by Asus, so it is 
-only available in the Experimental builds of this 
-firmware at this time, and might not be 100% working 
-yet.
 
 For more information visit http://dns.yandex.ru/ .
 
@@ -471,13 +441,18 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.4.374.33 Beta 2 (xx-xxx-2013):
+3.0.0.4.374.33 Beta 3 (xx-xxx-2013):
+   - NEW: Merged with Asus 374_720 code from RT-N66U GPL, which includes 
+          amongst other things more up-to-date AiCloud 2.0 code, and the
+          official switch of the RT-N66U to SDK6.x.
    - NEW: Added bonding.ko kernel module
    - NEW: YandexDNS support (was originally only in experimental builds).  This is
           a DNS-based filter list, which can be configured under Parental Control.
    - CHANGED: robocfg now (almost) completely supports the
               NorthStar platform (RT-AC56U)
-   - FIXED: Device name resolution on Sysinfo page
+   - FIXED: Device name resolution on Sysinfo page (Beta 1 regression)
+   - FIXED: Samba would start sharing local disks even if all you wanted was its
+            WINS/Browser services.
 
 
 3.0.0.4.374.33 Beta 1 (9-Sept-2013):
