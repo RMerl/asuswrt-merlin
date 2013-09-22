@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.374.33-Beta3 (xx-Sept-2013)
+Asuswrt-Merlin - build 3.0.0.4.374.33-Beta3 (21-Sept-2013)
 ==========================================================
 
 About
@@ -91,7 +91,7 @@ integrated/enabled in the official firmware:
 - clickable MACs on the client list for lookup in the OUI database
 - Display active/tracked network connections
 - VPN Status page
-- DualWAN and Repeater mode (as it was still in development
+- DualWAN and Repeater mode (while it was still under development
   by Asus)
 
 
@@ -110,9 +110,10 @@ wipe ALL your current settings and revert back to factory default!
 This is required to upgrade the nvram storage to 64 KB.
 
 It's also strongly recommended to reset to factory defaults if 
-upgrading from 3.0.0.4.2xx to 3.0.0.4.3xx, to ensure that the 
-new wireless driver used in these builds inherit the new 
-low-level default values.
+upgrading from a much older firmware, especially one that was 
+using a different wireless driver (see the changelog for more 
+details)
+
 
 
 Usage
@@ -243,16 +244,6 @@ The monitoring is done per IP, NOT per MAC.
 
 
 
-* Display active NAT connections *
-On the System Log -> Connections tab you can view the list 
-of the currently tracked connections.  You can enable name 
-resolution for IPs on the Tools menu,  under "Other Settings".  
-Note that name resolution can slow down the loading of this 
-page, especially if you have a lot of tracked connections 
-(for instance while torrenting).
-
-
-
 * Adjust TCP/IP connection tracking settings *
 Under Tools -> Other Settings there are various parameters 
 that lets you tweak the timeout values related to connection 
@@ -357,6 +348,7 @@ server instance's ccd directory when the server is started.
 
 
 * NFS Exports *
+IMPORTANT: NFS sharing is still a bit unstable.
 In addition to SMB and FTP, you can now also share any plugged 
 hard disk through NFS.  The NFS Exports interface can be accessed 
 from the USB Applications section, under Servers Center.  
@@ -413,7 +405,7 @@ and an ext2/ext3 formatted USB disk (NTFS and FAT32 are
 not supported).
 
 Also note that Entware is not available for the 
-RT-AC56U.
+RT-AC56U, due to the different CPU architecture.
 
 
 
@@ -441,10 +433,15 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.4.374.33 Beta 3 (xx-xxx-2013):
+3.0.0.4.374.33 Beta 3 (21-Sept-2013):
    - NEW: Merged with Asus 374_720 code from RT-N66U GPL, which includes 
           amongst other things more up-to-date AiCloud 2.0 code, and the
           official switch of the RT-N66U to SDK6.x.
+          Note: The RT-Ac56U is still running older AiCloud 2.0 code, due 
+                to some remaining issues with the newer code on that platform.
+   - NEW: RT-N66U is now based on SDK6.x code (like Asus's own releases).
+          A separate SDK5 based on the old 5.100 driver from FW 270 is still
+          available in the Experimental folder on the download site.
    - NEW: Added bonding.ko kernel module
    - NEW: YandexDNS support (was originally only in experimental builds).  This is
           a DNS-based filter list, which can be configured under Parental Control.
