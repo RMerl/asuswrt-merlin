@@ -492,15 +492,15 @@ void set_radio(int on, int unit, int subunit)
 	}
 #endif
 
-        if (nvram_get_int("led_disable")==1) {
-                led_control(LED_2G, LED_OFF);
-                led_control(LED_5G, LED_OFF);
-	}
-
 	if(subunit>0) {
 		sprintf(tmpstr, "%d", subunit);
 		if(on) eval("wl", "-i", nvram_safe_get(wl_nvname("ifname", unit, 0)), "bss", "-C", tmpstr, "up");
 		else eval("wl", "-i", nvram_safe_get(wl_nvname("ifname", unit, 0)), "bss", "-C", tmpstr, "down");
+
+		if (nvram_get_int("led_disable")==1) {
+			led_control(LED_2G, LED_OFF);
+			led_control(LED_5G, LED_OFF);
+		}
 		return;
 	}
 
@@ -522,5 +522,10 @@ void set_radio(int on, int unit, int subunit)
 		//led(LED_DIAG, 0);
 	}
 #endif
+
+	if (nvram_get_int("led_disable")==1) {
+		led_control(LED_2G, LED_OFF);
+		led_control(LED_5G, LED_OFF);
+	}
 }
 
