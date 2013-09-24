@@ -3192,6 +3192,7 @@ void restart_wireless(void)
 	}
 #endif
 
+	setup_leds();   // Refresh LED state if in Stealth Mode
 	nvram_set_int("wlready", 1);
 
 	file_unlock(lock);
