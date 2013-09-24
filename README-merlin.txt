@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.374.33-Beta3 (21-Sept-2013)
+Asuswrt-Merlin - build 3.0.0.4.374.33-Beta4 (xx-xxx-2013)
 ==========================================================
 
 About
@@ -433,6 +433,11 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.4.374.33 Beta 4 (xx-xxxx-2013):
+   - FIXED: Restarting the wireless service would break
+            stealth mode.
+
+
 3.0.0.4.374.33 Beta 3 (21-Sept-2013):
    - NEW: Merged with Asus 374_720 code from RT-N66U GPL, which includes 
           amongst other things more up-to-date AiCloud 2.0 code, and the
