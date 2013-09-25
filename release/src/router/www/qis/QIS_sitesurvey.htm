@@ -291,13 +291,19 @@ var btnAction = {
 		saveToForm.wlClient(new wlcKey(wlclient));
 
 		if(!parent.isRepeater){
-			if(parent.localAP_support)
+			if(parent.localAP_support){
+				parent.document.QKform.sw_mode.value = 3;
 				viewHandler.displayObj(["localAP", "btnPre", "btnSubmit"]);
-			else
+			}else{
+				parent.document.QKform.sw_mode.value = 4;
+				sw_mode_submit = 4;
 				btnAction.submitForm();
+			}
 		}
-		else
+		else{
+			parent.document.QKform.sw_mode.value = 2;
 			location.href = '/qis/QIS_wireless.htm';
+		}
 	},
 
 	"goPreStage" : function(){

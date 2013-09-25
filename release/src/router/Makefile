@@ -1491,10 +1491,10 @@ util-linux-clean:
 
 radvd/stamp-h1:
 	cd radvd && CFLAGS="-Os $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \
-	LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections" \
+	LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections $(EXTRALDFLAGS)" \
 	$(CONFIGURE) --prefix="" --disable-dependency-tracking \
 	DAEMON_CFLAGS="-I$(TOP)/libdaemon" \
-	DAEMON_LIBS="-ldaemon -L$(TOP)/libdaemon/libdaemon/.libs"
+	DAEMON_LIBS="-ldaemon -L$(TOP)/libdaemon/libdaemon/.libs $(EXTRALDFLAGS2)"
 	-@$(MAKE) -C radvd clean
 	@touch $@
 
@@ -2061,7 +2061,7 @@ endif
 
 zlib/stamp-h1:
 	cd zlib && \
-	CC=$(CC) AR="ar rc" RANLIB=$(RANLIB) LD=$(LD) CFLAGS="-Os -Wall $(EXTRACFLAGS) -fPIC" \
+	CC=$(CC) AR="ar rc" RANLIB=$(RANLIB) LD=$(LD) CFLAGS="-Os -Wall $(EXTRACFLAGS) -fPIC" LDSHAREDLIBC="$(EXTRALDFLAGS)" \
 	./configure --shared --prefix=/usr --libdir=/usr/lib
 	touch $@
 
@@ -2486,7 +2486,7 @@ pcre-8.12-clean:
 
 pcre-8.31/stamp-h1:
 	cd pcre-8.31 && \
-	CC=$(CC) CXX=$(CXX) AR=$(AR) RANLIB=$(RANLIB) LD=$(LD) CFLAGS="-Os -Wall $(EXTRACFLAGS)" \
+	CC=$(CC) CXX=$(CXX) AR=$(AR) RANLIB=$(RANLIB) LD=$(LD) CFLAGS="-Os -Wall $(EXTRACFLAGS)" LIBS="$(EXTRALDFLAGS)" \
 	./$(CONFIGURE) --prefix=/usr --disable-dependency-tracking
 	touch $@
 	[ -d pcre-8.31/m4 ] || mkdir pcre-8.31/m4
