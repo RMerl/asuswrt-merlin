@@ -2707,12 +2707,14 @@ function wep_encryption_change(obj){
 /* Handle Authentication Method changed */
 function authentication_method_change(obj){
 	wl_auth_mode_change(0);
+/*
 	if(obj.value == "psk" || obj.value == "psk2" || obj.value == "pskpsk2" || obj.name == "wl_crypto"){
 		document.form.wl_wpa_psk.focus();
 	}
 	else if(obj.value == "shared"){ 
 		document.form.wl_key.focus();
 	}
+*/
 		
 	//nmode_limitation();
 	automode_hint();
