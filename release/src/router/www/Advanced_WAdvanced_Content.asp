@@ -824,6 +824,18 @@ function check_ampdu_rts(){
 						</td>
 					</tr>					
 
+					<tr>
+						<th>Regulation mode</th>
+						<td>
+							<select name="wl_reg_mode" class="input_option">
+									<option value="off" <% nvram_match("wl_reg_mode", "off","selected"); %> >Off (default)</option>
+									<option value="d" <% nvram_match("wl_reg_mode", "d","selected"); %> >802.11d</option>
+									<option value="strict_h" <% nvram_match("wl_reg_mode", "strict_h","selected"); %> >802.11h</option>
+									<option value="h" <% nvram_match("wl_reg_mode", "h","selected"); %> >802.11d+h</option>
+								</select>
+						</td>
+					</tr>					
+
 					<!-- BRCM Only : By Viz 2013.05 -->
 					<tr>
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 17);"><#WLANConfig11b_TxPower_itemname#></a></th>
