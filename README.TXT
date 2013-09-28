@@ -8,34 +8,32 @@ Set Up Environment (Tested in Fedora 8/9 and Ubuntu 10.04/12.04 LTS amd64)
 	a. Ubuntu
 		Install these packages (I used synaptic: "sudo synaptic")
 
-		bison
-		flex
-		g++
-		g++-4.4
-		g++-multilib
-		gawk
-		gcc-multilib
-		gconf (or gconf-editor)
-		gitk
-		lib32z1-dev
 		libncurses5
 		libncurses5-dev
-		libstdc++6-4.4-dev
-		libtool
 		m4
-		pkg-config
+		bison
+		gawk
+		flex
+		libstdc++6-4.4-dev
+		g++-4.4-multilib
+		g++
+		git
+		gitk
 		zlib1g-dev
 		autoconf
 		autopoint
 		libtool
 		shtool
 		autogen
-		gperf
+		mtd-utils
+		gcc-multilib
+		gconf (or gconf-editor)
 		lib32z1-dev
+		pkg-config
+		gperf
 		libssl-dev
 		libxml2-dev
 		libelf1:i386
-		mtd-utils
 
 	b. Fedora
 		sudo yum groupinstall "Development Tools"
@@ -57,28 +55,21 @@ Set Up Environment (Tested in Fedora 8/9 and Ubuntu 10.04/12.04 LTS amd64)
    3. setup development system
 
 	ln -s $HOME/asuswrt/tools/brcm /opt/brcm
-	export PATH=$PATH:/opt/brcm/hndtools-mipsel-linux/bin:/opt/brcm/hndtools-mipsel-uclibc/bin:/opt/asuswrt/tools/brcm/hndtools-arm-linux/bin
+	ln -s $HOME/asuswrt/release/src-rt-6.x.4708/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3 /opt/brcm-arm
+        export PATH=$PATH:/opt/brcm/hndtools-mipsel-linux/bin:/opt/brcm/hndtools-mipsel-uclibc/bin:/opt/brcm-arm/bin
 
-	Note: Broadcom/Ralink platform use the same toolchain for user space program, so please set PATH to the same directory as above
+	Note: Broadcom (except 4708 series) platform use the same toolchain for user space program, so please set PATH to the same directory as above
    
   4. build firmware.
 	a. rt-n16
 		cd release/src-rt
 		make rt-n16
 
-	b. rt-n56u
-		cd release/src-ra
-		make rt-n56u
+	b. rt-ac66u
+		cd release/src-rt-6.x
+		make rt-ac66u
 
-	c. rt-n65u
-		cd release/src-ra-3.0
-		make rt-n65u
-
- 	d. rt-n14u
- 		cd release/src-ra-mt7620
- 		make rt-n14u
- 
- 	e. rt-ac56u (/ rt-ac68u / rt-n18uhp)
+ 	c. rt-ac56u (/ rt-ac68u / rt-n18uhp)
  		cd release/src-rt-6.x.4708
  		make rt-ac56u
  		( make rt-ac68u  )
