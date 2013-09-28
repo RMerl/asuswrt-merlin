@@ -434,8 +434,14 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 3.0.0.4.374.33 Beta 4 (xx-xxxx-2013):
+   - NEW: Option to control 802.11 extensions that deal with
+          regulations.  On the Wireless Professional page
+          you can now enable 802.11d and 802.11h support.
    - FIXED: Restarting the wireless service would break
             stealth mode.
+   - FIXED: The new thumbnail cache code Asus added in build 720's
+            minidlna will prevent scanning from completing on very
+            large collections.  Reverted that code for now.
 
 
 3.0.0.4.374.33 Beta 3 (21-Sept-2013):
