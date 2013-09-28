@@ -26,6 +26,7 @@ static char const RCSID[] =
 #include <linux/if_ether.h>
 #include <linux/if_pppol2tp.h>
 #include <linux/if_pppox.h>
+#include <linux/version.h>
 
 #define HANDLER_NAME "sync-pppd"
 
@@ -34,7 +35,7 @@ static char const RCSID[] =
 #define MAX_FDS 256
 
 /* Use management tunnel socket under 2.6.23+ */
-#if defined(LINUX30)
+#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,23)
 #define PPPOL2TP_V1
 #endif
 
