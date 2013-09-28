@@ -437,18 +437,24 @@ History
    - NEW: Option to control 802.11 extensions that deal with
           regulations.  On the Wireless Professional page
           you can now enable 802.11d and 802.11h support.
+   - CHANGED: More openssl backports from 1.0.2, adding 
+              mips32r2 support, improving performance
+              especially for sha1 (RT-N16/N66/AC66)
    - FIXED: Restarting the wireless service would break
             stealth mode.
    - FIXED: The new thumbnail cache code Asus added in build 720's
             minidlna will prevent scanning from completing on very
             large collections.  Reverted that code for now.
+   - FIXED: Do not autofocus key field when loading a page
+            with a wireless key field (issue introduced in
+            374_720).
 
 
 3.0.0.4.374.33 Beta 3 (21-Sept-2013):
    - NEW: Merged with Asus 374_720 code from RT-N66U GPL, which includes 
           amongst other things more up-to-date AiCloud 2.0 code, and the
           official switch of the RT-N66U to SDK6.x.
-          Note: The RT-Ac56U is still running older AiCloud 2.0 code, due 
+          Note: The RT-AC56U is still running older AiCloud 2.0 code, due 
                 to some remaining issues with the newer code on that platform.
    - NEW: RT-N66U is now based on SDK6.x code (like Asus's own releases).
           A separate SDK5 based on the old 5.100 driver from FW 270 is still
@@ -457,7 +463,7 @@ History
    - NEW: YandexDNS support (was originally only in experimental builds).  This is
           a DNS-based filter list, which can be configured under Parental Control.
    - CHANGED: robocfg now (almost) completely supports the
-              NorthStar platform (RT-AC56U)
+              Northstar platform (RT-AC56U)
    - FIXED: Device name resolution on Sysinfo page (Beta 1 regression)
    - FIXED: Samba would start sharing local disks even if all you wanted was its
             WINS/Browser services.
