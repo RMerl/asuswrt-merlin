@@ -448,6 +448,12 @@ History
    - FIXED: Do not autofocus key field when loading a page
             with a wireless key field (issue introduced in
             374_720).
+  - FIXED: Router crash when using a key/cert larger than 2999 bytes.
+  - FIXED: Router believed that NTP wasn't properly working after a
+           LAN or wireless service restart (issue introduced in
+           374_720).
+  - FIXED: IPv6 client list was incorrectly displayed if a client
+           didn't have a known hostname (Asus bug)
 
 
 3.0.0.4.374.33 Beta 3 (21-Sept-2013):
