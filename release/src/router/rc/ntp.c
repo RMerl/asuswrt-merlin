@@ -141,6 +141,8 @@ int ntp_main(int argc, char *argv[])
 			if(nvram_get_int("ntp_ready"))
 			{
 				nvram_set("ntp_ready", "0");
+				// Time has just been synced - services depending on time can now use it
+				nvram_set("svc_ready", "1");
 
 				/* ntp sync every hour when time_zone set as "DST" */
 				if(strstr(nvram_safe_get("time_zone_x"), "DST")) {
