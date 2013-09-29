@@ -50,7 +50,7 @@ void start_vpnclient(int clientNum)
 	FILE *fp;
 	char iface[IF_SIZE];
 	char buffer[BUF_SIZE];
-	char buffer2[3000];
+	char buffer2[4000];
 	char *argv[6];
 	int argc = 0;
 	enum { TLS, SECRET, CUSTOM } cryptMode = CUSTOM;
@@ -537,7 +537,7 @@ void start_vpnserver(int serverNum)
 	FILE *fp, *ccd;
 	char iface[IF_SIZE];
 	char buffer[BUF_SIZE];
-	char buffer2[3000];
+	char buffer2[4000];
 	char *argv[6], *chp, *route;
 	int argc = 0;
 	int c2c = 0;
