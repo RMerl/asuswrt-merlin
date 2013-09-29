@@ -1118,9 +1118,6 @@ int init_nvram(void)
 
 	conf_swmode_support(model);
 
-	/* reset ntp status */
-	nvram_set("svc_ready", "0");
-
 	switch (model) {
 #ifdef RTCONFIG_RALINK
 	case MODEL_EAN66:
