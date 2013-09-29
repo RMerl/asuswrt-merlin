@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.374.33-Beta4 (xx-xxx-2013)
+Asuswrt-Merlin - build 3.0.0.4.374.33-Beta5 (29-Sept-2013)
 ==========================================================
 
 About
@@ -433,7 +433,7 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.4.374.33 Beta 4 (xx-xxxx-2013):
+3.0.0.4.374.33 Beta 5 (29-Sept-2013):
    - NEW: Option to control 802.11 extensions that deal with
           regulations.  On the Wireless Professional page
           you can now enable 802.11d and 802.11h support.
