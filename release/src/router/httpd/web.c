@@ -3034,7 +3034,7 @@ static void find_hostname_by_mac(char *mac, char *hostname)
 	}
 	fclose(fp);
 END:
-	strcpy(hostname, "");
+	strcpy(hostname, "<unknown>");
 }
 
 static void get_ipv6_client_info()
