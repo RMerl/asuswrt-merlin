@@ -55,12 +55,11 @@ void start_jffs2(void)
 _dprintf("*** jffs2: %d, %d\n", part, size);
 	if (nvram_match("jffs2_format", "1")) {
 		nvram_set("jffs2_format", "0");
-
+		nvram_commit_x();
 		result = mtd_erase(JFFS_NAME);
 
 		if (!result) {
 			error("formatting");
-			nvram_commit_x();
 			return;
 		}
 
