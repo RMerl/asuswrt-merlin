@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.374.33-Beta5 (29-Sept-2013)
+Asuswrt-Merlin - build 3.0.0.4.374.33-Beta6 (xx-xxx-2013)
 ==========================================================
 
 About
@@ -433,6 +433,15 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.4.374.33 Beta 6 (xx-xxx-2013):
+   - CHANGED: Updated AiCloud component for RT-AC56U to be
+              in sync with the other routers.
+   - FIXED: The JFFS formatting code could encounter a case
+            where it wouldn't write back its cleared
+            format flag.
+  - FIXED: AiCloud crashes if the DLNA media server was enabled
+
+
 3.0.0.4.374.33 Beta 5 (29-Sept-2013):
    - NEW: Option to control 802.11 extensions that deal with
           regulations.  On the Wireless Professional page
