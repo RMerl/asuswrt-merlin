@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.374.33-Beta6 (xx-xxx-2013)
+Asuswrt-Merlin - build 3.0.0.4.374.33-Beta6 (1-Oct-2013)
 ==========================================================
 
 About
@@ -34,7 +34,7 @@ Features
 Here is a list of features that Asuswrt-merlin brings over the original firmware:
 
 System:
-   - Based on RT-AC56U 3.0.0.4.374_720 sources from Asus
+   - Based on RT-AC56U 3.0.0.4.374_726 sources from Asus
    - Various bugfixes and optimizations
    - Some components were updated to their latest versions, for improved stability
      and security
@@ -50,6 +50,7 @@ Disk sharing:
    - Enable/disable the use of shorter share names
    - Disk spindown after user-configurable inactivity timeout
    - NFS sharing (through webui)
+   - Better compatibility with 3TB+ and Advanced Format HDDs
 
 Networking:
    - Force acting as a Master Browser
@@ -61,8 +62,7 @@ Networking:
    - User-defined options for WAN DHCP queries (required by some ISPs)
    - Improved NAT loopback (based on code from phuzi0n from the DD-WRT forums)
    - OpenVPN client and server, based on code originally written by
-     Keith Moyer for Tomato and reused with his permission. (RT-N66U, RT-AC66U)
-   - Option to control Spanning-Tree Protocol support.
+     Keith Moyer for Tomato and reused with his permission. (All models except RT-N16)
    - Netfilter ipset module, for efficient blacklist implemetnation
    - Configurable IPv6 firewall
 
@@ -83,7 +83,7 @@ Web interface:
 A few features that first debuted in Asuswrt-Merlin have since been 
 integrated/enabled in the official firmware:
 
-- 64K NVRAM (RT-N66U)
+- 64K NVRAM for the RT-N66U
 - HTTPS
 - Turning WPS button into a radio on/off toggle
 - Use shorter share names (folder name only)
@@ -98,21 +98,25 @@ integrated/enabled in the official firmware:
 
 Installation
 ------------
-Simply flash it like any regular update.  You should not need to reset to 
-factory defaults (see note below for one exception).  
+Simply flash it like any regular update.  You should not need to 
+reset to factory defaults (see note below for exceptions).
 You can revert back to an original Asus firmware at any time just
 by flashing a firmware downloaded from Asus's website.
 
-NOTE: If you were still running a 32KB nvram firmware on an RT-N66U (which 
-usually mean an original firmware older than 3.0.0.4.220), the first time 
-you flash a 64KB-enabled firmware (such as Asuswrt-merlin) it will 
-wipe ALL your current settings and revert back to factory default!
-This is required to upgrade the nvram storage to 64 KB.
+NOTE: resetting to factory default after flashing is 
+strongly recommended for the following cases:
 
-It's also strongly recommended to reset to factory defaults if 
-upgrading from a much older firmware, especially one that was 
-using a different wireless driver (see the changelog for more 
-details)
+- Switching between an SDK5 build and a regular build (RT-N66U)
+- Upgrading from anything older than 3.0.0.4.374 on the RT-N66U
+- Coming from another firmware (with the exception of Asus's original FW)
+
+If upgrading from anything older and you experience issues, then 
+consider doing a factory default reset then as well.
+
+In all of these cases, do NOT load a saved copy of your settings!
+This would be the same thing as NOT resetting at all, as you will 
+simply re-enter any invalid setting you wanted to get rid of.  Make 
+sure to create a new backup of your settings after reconfiguring.
 
 
 
@@ -433,13 +437,13 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.4.374.33 Beta 6 (xx-xxx-2013):
+3.0.0.4.374.33 Beta 6 (1-Oct-2013):
    - CHANGED: Updated AiCloud component for RT-AC56U to be
               in sync with the other routers.
    - FIXED: The JFFS formatting code could encounter a case
             where it wouldn't write back its cleared
             format flag.
-  - FIXED: AiCloud crashes if the DLNA media server was enabled
+   - FIXED: AiCloud crashes if the DLNA media server was enabled
 
 
 3.0.0.4.374.33 Beta 5 (29-Sept-2013):
