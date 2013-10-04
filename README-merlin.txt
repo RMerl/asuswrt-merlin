@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 3.0.0.4.374.33-Beta6 (1-Oct-2013)
-==========================================================
+Asuswrt-Merlin - build 3.0.0.4.374.33 (3-Oct-2013)
+==================================================
 
 About
 -----
@@ -34,7 +34,7 @@ Features
 Here is a list of features that Asuswrt-merlin brings over the original firmware:
 
 System:
-   - Based on RT-AC56U 3.0.0.4.374_726 sources from Asus
+   - Based on RT-AC66U 3.0.0.4.374_726 sources from Asus
    - Various bugfixes and optimizations
    - Some components were updated to their latest versions, for improved stability
      and security
@@ -437,93 +437,80 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.4.374.33 Beta 6 (1-Oct-2013):
-   - CHANGED: Updated AiCloud component for RT-AC56U to be
-              in sync with the other routers.
-   - FIXED: The JFFS formatting code could encounter a case
-            where it wouldn't write back its cleared
-            format flag.
-   - FIXED: AiCloud crashes if the DLNA media server was enabled
+3.0.0.4.374.33 (3-Oct-2013):
+ * IMPORTANT *: RT-N66U users must revert back to factory defaults and
+                manually reconfigure their settings if coming from a FW
+                older than 3.0.0.4.374.xxx (applies to both Asus or
+                Asuswrt-Merlin).
 
-
-3.0.0.4.374.33 Beta 5 (29-Sept-2013):
+   - NEW: Merged with Asus 374_726 code from RT-AC66U GPL.  Notable changes:
+            * RT-N66U now based on the SDK6 driver.  This resolved the
+              numerous connectivity issues, at the expense of a shorter
+              range (a separate SDK5 build based on driver 5.100 is available 
+              in the Experimental folder as an alternative).
+            * AiCloud 2.0
+   - NEW: Added bonding.ko kernel module.
+   - NEW: Repeater mode moved into regular builds.
+   - NEW: Dual WAN moved into regular builds.
+          Note that there are still a few issues left, such as recovery
+          from failover mode when the primary WAN comes back up.
+   - NEW: YandexDNS support moved into regular builds.  This is
+          a DNS-based filter list, which can be configured under 
+          Parental Control.
+   - NEW: Added support for last seen devices on Ethernet port status 
+          (Tools-> Sysinfo) for RT-AC56U.
    - NEW: Option to control 802.11 extensions that deal with
           regulations.  On the Wireless Professional page
           you can now enable 802.11d and 802.11h support.
-   - CHANGED: More openssl backports from 1.0.2, adding 
-              mips32r2 support, improving performance
-              especially for sha1 (RT-N16/N66/AC66)
-   - FIXED: Restarting the wireless service would break
-            stealth mode.
-   - FIXED: The new thumbnail cache code Asus added in build 720's
-            minidlna will prevent scanning from completing on very
-            large collections.  Reverted that code for now.
-   - FIXED: Do not autofocus key field when loading a page
-            with a wireless key field (issue introduced in
-            374_720).
-  - FIXED: Router crash when using a key/cert larger than 2999 bytes.
-  - FIXED: Router believed that NTP wasn't properly working after a
-           LAN or wireless service restart (issue introduced in
-           374_720).
-  - FIXED: IPv6 client list was incorrectly displayed if a client
-           didn't have a known hostname (Asus bug)
-
-
-3.0.0.4.374.33 Beta 3 (21-Sept-2013):
-   - NEW: Merged with Asus 374_720 code from RT-N66U GPL, which includes 
-          amongst other things more up-to-date AiCloud 2.0 code, and the
-          official switch of the RT-N66U to SDK6.x.
-          Note: The RT-AC56U is still running older AiCloud 2.0 code, due 
-                to some remaining issues with the newer code on that platform.
-   - NEW: RT-N66U is now based on SDK6.x code (like Asus's own releases).
-          A separate SDK5 based on the old 5.100 driver from FW 270 is still
-          available in the Experimental folder on the download site.
-   - NEW: Added bonding.ko kernel module
-   - NEW: YandexDNS support (was originally only in experimental builds).  This is
-          a DNS-based filter list, which can be configured under Parental Control.
    - CHANGED: robocfg now (almost) completely supports the
               Northstar platform (RT-AC56U)
-   - FIXED: Device name resolution on Sysinfo page (Beta 1 regression)
-   - FIXED: Samba would start sharing local disks even if all you wanted was its
-            WINS/Browser services.
-
-
-3.0.0.4.374.33 Beta 1 (9-Sept-2013):
-   - NEW: Merged with Asus 374_119 code from RT-AC56U GPL (newer than 374_164 from N66U)
-   - NEW: Added support for last seen devices on Ethernet port status (Tools-> Sysinfo)
-          for RT-AC56U.
-   - NEW: Repeater mode (was originally only in experimental builds, now available
-          in the regular builds for all supported routers)
-   - NEW: Dual WAN (was originally only in experimental builds, now available
-          in the regular builds for all supported routers).
-          Note that there are still a few issues left, such as recovery
-          from failover mode when the primary WAN comes back up.
    - CHANGED: Enabled Syn Cookies for ARM devices (RT-AC56U)
    - CHANGED: Allow selecting the Download2 folder for media server
               location.
-   - CHANGED: MIPS builds optimized for mips32r2 code generation.
-              A quick iperf+openvpn benchmark showed a very measurable
-              performance improvement. (N16/N66/AC66)
-   - CHANGED: Increased OpenVPN crt/key fields to allow up to 
-              3499 characters - enough to accomodate even a 4096-bit key.
+   - CHANGED: MIPS builds optimized for mips32r2 code generation, which
+              should improve general performance. (N16/N66/AC66)
+   - CHANGED: More openssl backports from 1.0.2, adding
+              mips32r2 support, improving performance
+              especially for sha1 (RT-N16/N66/AC66)
+   - CHANGED: Increased OpenVPN crt/key fields to allow up to 3499 
+              characters - enough to accomodate even a 4096 bits key.
+   - CHANGED: Removed the firewall rules for acsd since it no longer
+              listens on a TCP socket.
    - FIXED: Samba binding to WAN interface would cause warnings
             about WINS/master browser (regression in 374)
    - FIXED: The ARM kernel was missing the Advanced IP Routing option,
             preventing some of the "ip" command functions from
             working (was breaking Astrill's plugin) (RT-AC56U)
-   - FIXED: Build 374 fixed the Samba priority which was set too
-            high, by setting it to the lowest possible, resulting in
-            low average Samba performance (and even lower under higher
-            CPU load).  Now Samba will run with a default priority of
-            0, providing more balanced performance. (N16/N66/AC66)
-  - FIXED: Some fields would allow invalid characters (such as
+   - FIXED: With FW 374 Asus changed the Samba priority from too high to
+            too low (-19), resulting in poor sharing performance.
+            I changed it to a priority of 0, providing more balanced 
+            performance. (N16/N66/AC66)
+   - FIXED: Some fields would allow invalid characters (such as
            single quotes) which might break the webui JS.  There might 
            still be a few unprotected fields.
-  - FIXED: Memory leak in httpd service (Asus bug)
-  - FIXED: Incorrect firewall rules were created with certain schedules
-           on Parental Control (patch provided by Makkie2002)
-  - FIXED: Potential key truncation in httpd if one was to use very 
-           large OpenVPN keys and certs in all fields of all four instances.
+   - FIXED: Memory leak in httpd service (Asus bug)
+   - FIXED: Parental Control not working with certain schedules
+            (patch provided by Makkie2002)
+   - FIXED: Potential key truncation in httpd if one was to use very 
+            large OpenVPN keys and certs in all fields of all four instances.
+   - FIXED: Samba would start sharing local disks even if all you wanted was 
+            its WINS/Browser services.
+   - FIXED: The JFFS formatting code could encounter a case
+            where it wouldn't write back its cleared
+            format flag.
+   - FIXED: Restarting the wireless service would break
+            stealth mode.
+   - FIXED: The new thumbnail cache code Asus added in build 720's
+            minidlna will prevent scanning from completing on very
+            large collections.  Reverted that code for now.
+   - FIXED: Wireless key field was automatically activated on
+            page load, which could lead to accidental changes
+            (issue introduced in 374_720).
+   - FIXED: Router believed that NTP wasn't properly working after a
+            LAN or wireless service restart (issue introduced in
+            374_720).
+   - FIXED: IPv6 client list was incorrectly displayed if a client
+            didn't have a known hostname (Asus bug)
 
 
 3.0.0.4.374.32 (24-Aug-2013):
@@ -556,7 +543,7 @@ History
             gain shell access to the router.  TCP connections to
             ACSD are now blocked by the firewall.
    - FIXED: You could not define time periods on the Parental
-            Control calendar under IE (backported from 374)
+            Control calendar under IE.
    - FIXED: Wireless client list would sometime return incorrect
             hostname or be missing IP.
    - FIXED: Security issue with Samba and symlinks
