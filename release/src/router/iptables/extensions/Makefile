@@ -18,6 +18,7 @@ PF_EXT_SLIB+=IMQ ipp2p
 PF_EXT_SLIB+=conntrack
 PF_EXT_SLIB+=layer7
 PF_EXT_SLIB+=set
+PF_EXT_SLIB+=policy
 ifeq ($(CONFIG_LINUX26),y)
 PF_EXT_SLIB+=hashlimit NFQUEUE
 endif
@@ -26,6 +27,7 @@ PF_EXT_SLIB+=account
 ifeq ($(DO_IPV6), 1)
 PF6_EXT_SLIB:=connmark icmp6 length limit mac mark multiport standard state rt hl
 PF6_EXT_SLIB+=tcp udp CONNMARK LOG MARK REJECT IMQ TCPMSS
+PF6_EXT_SLIB+=policy
 ifeq ($(CONFIG_LINUX26),y)
 PF6_EXT_SLIB+=connlimit hashlimit recent NFQUEUE ROUTE HL connbytes
 endif
