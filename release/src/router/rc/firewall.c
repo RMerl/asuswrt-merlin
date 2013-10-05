@@ -1139,18 +1139,6 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 #endif
 	}
 
-	if (is_nat_enabled() && nvram_match("upnp_enable", "1"))
-	{
-#if 1
-		/* call UPNP chain */
-		fprintf(fp, "-A VSERVER -j VUPNP\n");
-#else
-		// upnp port forward
-		//write_upnp_forward(fp, fp1, wan_if, wan_ip, lan_if, lan_ip, lan_class, logaccept, logdrop);
-		write_upnp_forward(fp, wan_if, wan_ip, lan_if, lan_ip, lan_class, logaccept, logdrop);	// oleg patch
-#endif
-	}
-
 	// Port forwarding or Virtual Server
 	if (is_nat_enabled() && nvram_match("vts_enable_x", "1"))
 	{
@@ -1192,6 +1180,18 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 	{
 		/* Trigger port setting */
 		write_porttrigger(fp, wan_if, 1);
+	}
+
+        if (is_nat_enabled() && nvram_match("upnp_enable", "1"))
+        {
+#if 1
+		/* call UPNP chain */
+		fprintf(fp, "-A VSERVER -j VUPNP\n");
+#else
+		// upnp port forward
+		//write_upnp_forward(fp, fp1, wan_if, wan_ip, lan_if, lan_ip, lan_class, logaccept, logdrop);
+		write_upnp_forward(fp, wan_if, wan_ip, lan_if, lan_ip, lan_class, logaccept, logdrop);  // oleg patch
+#endif
 	}
 
 #if 0	
@@ -1376,27 +1376,6 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 #endif
 	}
 
-	if (is_nat_enabled() && nvram_match("upnp_enable", "1"))
-	{
-#if 1
-		/* call UPNP chain */
-		fprintf(fp, "-A VSERVER -j VUPNP\n");
-#else
-		for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
-			snprintf(prefix, sizeof(prefix), "wan%d_", unit);
-			if(nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
-				continue;
-
-			wan_if = get_wan_ifname(unit);
-			wan_ip = nvram_safe_get(strcat_r(prefix, "ipaddr", tmp));
-
-			// upnp port forward
-			//write_upnp_forward(fp, fp1, wan_if, wan_ip, lan_if, lan_ip, lan_class, logaccept, logdrop);
-			write_upnp_forward(fp, wan_if, wan_ip, lan_if, lan_ip, lan_class, logaccept, logdrop);	// oleg patch
-		}
-#endif
-	}
-
 	// Port forwarding or Virtual Server
 	if (is_nat_enabled() && nvram_match("vts_enable_x", "1"))
 	{
@@ -1444,6 +1423,26 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 		}
 	}
 
+        if (is_nat_enabled() && nvram_match("upnp_enable", "1"))
+        {
+#if 1
+                /* call UPNP chain */
+                fprintf(fp, "-A VSERVER -j VUPNP\n");
+#else
+                for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
+                        snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+                        if(nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
+                                continue;
+
+                        wan_if = get_wan_ifname(unit);
+                        wan_ip = nvram_safe_get(strcat_r(prefix, "ipaddr", tmp));
+
+                        // upnp port forward
+                        //write_upnp_forward(fp, fp1, wan_if, wan_ip, lan_if, lan_ip, lan_class, logaccept, logdrop);
+                        write_upnp_forward(fp, wan_if, wan_ip, lan_if, lan_ip, lan_class, logaccept, logdrop);  // oleg patch
+		}
+#endif
+	}
 #if 0
 	if (is_nat_enabled() && !nvram_match("sp_battle_ips", "0") && inet_addr_(wan_ip))	// oleg patch
 	{
