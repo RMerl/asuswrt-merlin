@@ -275,6 +275,12 @@ function validForm(){
 				|| !validate_string(document.form.wan_pppoe_ac))
 			return false;
 	}
+
+        if((document.form.wan_proto.value == "dhcp")
+		|| (document.form.wan_proto.value == "static")){
+			if(!validate_number_range(document.form.wan_mtu, 576, 9000))
+				return false;
+	}
 	
 	if(document.form.wan_hostname.value.length > 0)
 		 if(!validate_string(document.form.wan_hostname))
@@ -318,6 +324,7 @@ function change_wan_type(wan_type, flag){
 		inputCtrl(document.form.wan_pppoe_service, 1);
 		inputCtrl(document.form.wan_pppoe_ac, 1);
 		inputCtrl(document.form.dhcpc_mode, 0);
+		inputCtrl(document.form.wan_mtu, 0);
 		
 		// 2008.03 James. patch for Oleg's patch. {
 		inputCtrl(document.form.wan_pppoe_options_x, 1);
@@ -341,6 +348,7 @@ function change_wan_type(wan_type, flag){
 		inputCtrl(document.form.wan_pppoe_service, 0);
 		inputCtrl(document.form.wan_pppoe_ac, 0);
 		inputCtrl(document.form.dhcpc_mode, 0);
+		inputCtrl(document.form.wan_mtu, 0);
 		
 		// 2008.03 James. patch for Oleg's patch. {
 		inputCtrl(document.form.wan_pppoe_options_x, 1);
@@ -364,6 +372,7 @@ function change_wan_type(wan_type, flag){
 		inputCtrl(document.form.wan_pppoe_service, 0);
 		inputCtrl(document.form.wan_pppoe_ac, 0);
 		inputCtrl(document.form.dhcpc_mode, 0);
+		inputCtrl(document.form.wan_mtu, 0);
 		
 		// 2008.03 James. patch for Oleg's patch. {
 		inputCtrl(document.form.wan_pppoe_options_x, 1);
@@ -387,6 +396,7 @@ function change_wan_type(wan_type, flag){
 		inputCtrl(document.form.wan_pppoe_service, 0);
 		inputCtrl(document.form.wan_pppoe_ac, 0);
 		inputCtrl(document.form.dhcpc_mode, 0);
+		inputCtrl(document.form.wan_mtu, 1);
 		
 		// 2008.03 James. patch for Oleg's patch. {
 		inputCtrl(document.form.wan_pppoe_options_x, 0);
@@ -412,6 +422,7 @@ function change_wan_type(wan_type, flag){
 		inputCtrl(document.form.wan_pppoe_service, 0);
 		inputCtrl(document.form.wan_pppoe_ac, 0);
 		inputCtrl(document.form.dhcpc_mode, 1);
+		inputCtrl(document.form.wan_mtu, 1);
 		
 		// 2008.03 James. patch for Oleg's patch. {
 		inputCtrl(document.form.wan_pppoe_options_x, 0);
@@ -815,6 +826,9 @@ function pass_checked(obj){
               	<td colspan="2"><#PPPConnection_UserName_sectionname#></td>
             	</tr>
             	</thead>
+                <th>MTU</th>
+                <td><input type="text" maxlength="5" name="wan_mtu" class="input_6_table" value="<% nvram_get("wan_mtu"); %>" onKeyPress="return is_number(this,event);"/></td>
+                </tr>
             	<tr>
 							<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,29);"><#PPPConnection_Authentication_itemname#></a></th>
 							<td align="left">

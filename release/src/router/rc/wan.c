@@ -1040,6 +1040,7 @@ start_wan_if(int unit)
 #ifdef RTCONFIG_USB_BECEEM
 	char uvid[8], upid[8];
 #endif
+	int mtu;
 
 	_dprintf("%s(%d)\n", __FUNCTION__, unit);
 	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
@@ -1550,6 +1551,25 @@ TRACE_PT("3g end.\n");
 #ifdef RTCONFIG_DSL
 			nvram_set(strcat_r(prefix, "clientid", tmp), nvram_safe_get("dslx_dhcp_clientid"));
 #endif
+
+			/* MTU */
+                        if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) >= 0) {
+				mtu = nvram_get_int(strcat_r(prefix, "mtu", tmp));
+				if (mtu < 576)
+					mtu = 576;
+
+				if (mtu > 9000)
+					mtu = 9000;	// Limit to a sane value
+
+				ifr.ifr_mtu = mtu;
+				strncpy(ifr.ifr_name, wan_ifname, IFNAMSIZ);
+				if (ioctl(s, SIOCSIFMTU, &ifr)) {
+					perror(wan_ifname);
+					logmessage("start_wan_if()","Error setting MTU on %s to %d", wan_ifname, mtu);
+				}
+				close(s);
+			}
+
 			/* Start pre-authenticator */
 			if (start_auth(unit, 0) == 0) {
 				update_wan_state(prefix, WAN_STATE_CONNECTING, 0);
@@ -1585,6 +1605,24 @@ TRACE_PT("3g end.\n");
 					start_ipoa();
 				}
 #endif
+
+			/* MTU */
+			if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) >= 0) {
+				mtu = nvram_get_int(strcat_r(prefix, "mtu", tmp));
+				if (mtu < 576)
+					mtu = 576;
+
+				if (mtu > 9000)
+					mtu = 9000;     // Limit to a sane value
+
+				ifr.ifr_mtu = mtu;
+				strncpy(ifr.ifr_name, wan_ifname, IFNAMSIZ);
+				if (ioctl(s, SIOCSIFMTU, &ifr)) {
+					perror(wan_ifname);
+					logmessage("start_wan_if()","Error setting MTU on %s to %d", wan_ifname, mtu);
+				}
+				close(s);
+			}
 
 			/* Start pre-authenticator */
 			if (start_auth(unit, 0) == 0) {
