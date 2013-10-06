@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 3.0.0.4.374.33 (3-Oct-2013)
-==================================================
+Asuswrt-Merlin - build 3.0.0.4.374.34 (xx-xxx-2013)
+===================================================
 
 About
 -----
@@ -437,6 +437,18 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.4.374.34 (xx-xxx-2013):
+   - NEW: Added IPSEC support to the kernel.  Userspace tools 
+          such as StrongWAN must be installed from Optware/Entware,
+          and manually configured.  (Patch provided by saintdev)
+   - NEW: Adjustable MTU for DHCP/static IP WAN users
+   - CHANGED: UPNP rules will now be processed after manual 
+              forwards and port trigger rules.
+   - FIXED: Some Traffic Monitor pages were missing the page tabs.
+   - FIXED: The webui would allow you to enable SSHD while not 
+            setting an authkey or enabling password-based authentication.
+
+
 3.0.0.4.374.33 (3-Oct-2013):
  * IMPORTANT *: RT-N66U users must revert back to factory defaults and
                 manually reconfigure their settings if coming from a FW
