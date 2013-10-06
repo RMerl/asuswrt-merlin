@@ -235,6 +235,11 @@ function validForm(){
 
 	document.form.http_username.value = trim(document.form.http_username.value);
 
+	if((document.form.sshd_enable[0].checked) && (document.form.sshd_authkeys.value.length == 0) && (!document.form.sshd_pass[0].checked)){
+		alert("You must configure at least one SSH authentication method!");
+		return false;
+	}
+
 	if(document.form.http_username.value.length == 0){
 		showtext($("alert_msg1"), "<#File_Pop_content_alert_desc1#>");
 		document.form.http_username.focus();
