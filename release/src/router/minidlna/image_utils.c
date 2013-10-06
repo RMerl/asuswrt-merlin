@@ -488,6 +488,7 @@ image_new_from_jpeg(const char * path, int is_file, const char * buf, int size, 
 	if(cinfo.rec_outbuf_height > 16)
 	{
 		DPRINTF(E_WARN, L_METADATA, "ERROR image_from_jpeg : (image_from_jpeg.c) JPEG uses line buffers > 16. Cannot load.\n");
+		jpeg_destroy_decompress(&cinfo);
 		image_free(vimage);
 		if( is_file )
 			fclose(file);
@@ -501,6 +502,7 @@ image_new_from_jpeg(const char * path, int is_file, const char * buf, int size, 
 		if((ptr = malloc(w * 3 * cinfo.rec_outbuf_height + 16)) == NULL)
 		{
 			DPRINTF(E_WARN, L_METADATA, "malloc failed\n");
+			jpeg_destroy_decompress(&cinfo);
 			image_free(vimage);
 			if( is_file )
 				fclose(file);
