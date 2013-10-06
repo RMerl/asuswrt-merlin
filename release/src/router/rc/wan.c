@@ -1553,7 +1553,7 @@ TRACE_PT("3g end.\n");
 #endif
 
 			/* MTU */
-                        if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) >= 0) {
+			if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) >= 0) {
 				mtu = nvram_get_int(strcat_r(prefix, "mtu", tmp));
 				if (mtu < 576)
 					mtu = 576;
