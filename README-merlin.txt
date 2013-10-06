@@ -65,6 +65,7 @@ Networking:
      Keith Moyer for Tomato and reused with his permission. (All models except RT-N16)
    - Netfilter ipset module, for efficient blacklist implemetnation
    - Configurable IPv6 firewall
+   - Configurable min/max UPNP ports
 
 Web interface:
    - Improved client list, with DHCP hostnames
@@ -155,6 +156,7 @@ certain events occur.  Those scripts must be saved in /jffs/scripts/
 - wan-start:  WAN interface just come up (includes if it went down and back up)
               The WAN unit number will be passed as argument (0 = primary WAN)
 - firewall-start:  Firewall is started (filter rules have been applied)
+                   The WAN interface will be passed as argument (for example. "eth0")
 - nat-start: nat rules (i.e. port forwards and such) have been applied (nat table)
 - init-start:  Right after jffs is mounted, before any of the services get started
 - pre-mount:  Just before a partition is mounted.  Be careful with 
@@ -442,11 +444,17 @@ History
           such as StrongWAN must be installed from Optware/Entware,
           and manually configured.  (Patch provided by saintdev)
    - NEW: Adjustable MTU for DHCP/static IP WAN users
+   - NEW: WAN interface name passed as argument to firewall-start
+   - NEW: Configurable min/max ports allowed to be redirected by UPNP.
+          This allows WHS users to change the min allowed port from 
+          the default value of 1024 to allow UPNP forwarding of 
+          HTTP/HTTPS.
    - CHANGED: UPNP rules will now be processed after manual 
               forwards and port trigger rules.
    - FIXED: Some Traffic Monitor pages were missing the page tabs.
    - FIXED: The webui would allow you to enable SSHD while not 
             setting an authkey or enabling password-based authentication.
+   - FIXED: 802.11h options should only be available on the 5 GHz band.
 
 
 3.0.0.4.374.33 (3-Oct-2013):
