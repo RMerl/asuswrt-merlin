@@ -133,6 +133,15 @@ function initial(){
 			(mcast_rate == mcast_rates[i][1]) ? 1 : 0);
 	}
 
+	if('<% nvram_get("wl_unit"); %>' == '1'){ // 5GHz
+		var reg_mode = '<% nvram_get("wl_reg_mode"); %>';
+	        add_option(document.form.wl_reg_mode, "802.11h", "strict_h",
+	                (reg_mode == "strict_h") ? 1 : 0);
+	        add_option(document.form.wl_reg_mode, "802.11d+h", "h",
+	                (reg_mode == "h") ? 1 : 0);
+	}
+
+
 	if(repeater_support || psta_support){		//with RE mode
 		$("DLSCapable").style.display = "none";	
 	}	
@@ -830,8 +839,6 @@ function check_ampdu_rts(){
 							<select name="wl_reg_mode" class="input_option">
 									<option value="off" <% nvram_match("wl_reg_mode", "off","selected"); %> >Off (default)</option>
 									<option value="d" <% nvram_match("wl_reg_mode", "d","selected"); %> >802.11d</option>
-									<option value="strict_h" <% nvram_match("wl_reg_mode", "strict_h","selected"); %> >802.11h</option>
-									<option value="h" <% nvram_match("wl_reg_mode", "h","selected"); %> >802.11d+h</option>
 								</select>
 						</td>
 					</tr>					
