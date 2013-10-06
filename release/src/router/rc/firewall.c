@@ -4500,7 +4500,7 @@ int start_firewall(int wanunit, int lanunit)
 	if (pids("smbd")) add_samba_rules();
 #endif
 
-	run_custom_script("firewall-start", NULL);
+	run_custom_script("firewall-start", wan_if);
 
 	return 0;
 }
