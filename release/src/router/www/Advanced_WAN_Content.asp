@@ -84,6 +84,13 @@ function initial(){
 			document.form.wan_pppoe_username.value = decodeURIComponent('<% nvram_char_to_ascii("", "wan_pppoe_username"); %>');
 			document.form.wan_pppoe_passwd.value = decodeURIComponent('<% nvram_char_to_ascii("", "wan_pppoe_passwd"); %>');
 	}
+
+	display_upnp_range();
+}
+
+function display_upnp_range(){
+	$("upnp_range_int").style.display = (document.form.wan_upnp_enable[0].checked) ? "" : "none";
+	$("upnp_range_ext").style.display = (document.form.wan_upnp_enable[0].checked) ? "" : "none";
 }
 
 function change_wan_unit(){
@@ -292,6 +299,21 @@ function validForm(){
 					document.form.wan_hwaddr_x.focus();
 		 	return false;
 			}		 	
+
+	if (document.form.wan_upnp_enable[0].checked) {
+		if((!validate_number_range(document.form.upnp_min_port_int, 1, 65535))
+			|| (!validate_number_range(document.form.upnp_max_port_int, 1, 65535))
+			|| (!validate_number_range(document.form.upnp_min_port_ext, 1, 65535))
+			|| (!validate_number_range(document.form.upnp_max_port_ext, 1, 65535))) {
+				return false;
+		}
+
+		if((document.form.upnp_max_port_int.value < document.form.upnp_min_port_int.value)
+			|| (document.form.upnp_max_port_ext.value < document.form.upnp_min_port_ext.value)) {
+				alert("Invalid UPNP ports!  First port must be lower than last port value.");
+	                        return false;
+		}
+	}
 	
 	if(document.form.wan_heartbeat_x.value.length > 0)
 		 if(!validate_string(document.form.wan_heartbeat_x))
@@ -759,10 +781,28 @@ function pass_checked(obj){
 							<tr>
 								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,23);"><#BasicConfig_EnableMediaServer_itemname#></a>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<a id="faq" href="" target="_blank" style="font-family:Lucida Console;text-decoration:underline;">UPnP&nbspFAQ</a></th>
 								<td>
-									<input type="radio" name="wan_upnp_enable" class="input" value="1" onclick="return change_common_radio(this, 'LANHostConfig', 'wan_upnp_enable', '1')" <% nvram_match("wan_upnp_enable", "1", "checked"); %>><#checkbox_Yes#>
-									<input type="radio" name="wan_upnp_enable" class="input" value="0" onclick="return change_common_radio(this, 'LANHostConfig', 'wan_upnp_enable', '0')" <% nvram_match("wan_upnp_enable", "0", "checked"); %>><#checkbox_No#>
+									<input type="radio" name="wan_upnp_enable" class="input" value="1" onclick="display_upnp_range();return change_common_radio(this, 'LANHostConfig', 'wan_upnp_enable', '1')" <% nvram_match("wan_upnp_enable", "1", "checked"); %>><#checkbox_Yes#>
+									<input type="radio" name="wan_upnp_enable" class="input" value="0" onclick="display_upnp_range();return change_common_radio(this, 'LANHostConfig', 'wan_upnp_enable', '0')" <% nvram_match("wan_upnp_enable", "0", "checked"); %>><#checkbox_No#>
 								</td>
 							</tr>			
+							<tr id="upnp_range_int">
+								<th>UPNP: Allowed internal port range</th>
+									<td>
+										<input type="text" maxlength="5" name="upnp_min_port_int" class="input_6_table" value="<% nvram_get("upnp_min_port_int"); %>" onkeypress="return is_number(this,event);">
+											to
+										<input type="text" maxlength="5" name="upnp_max_port_int" class="input_6_table" value="<% nvram_get("upnp_max_port_int"); %>" onkeypress="return is_number(this,event);">
+									</td>
+							</tr>
+							<tr id="upnp_range_ext">
+
+								<th>UPNP: Allowed external port range</th>
+									<td>
+										<input type="text" maxlength="5" name="upnp_min_port_ext" class="input_6_table" value="<% nvram_get("upnp_min_port_ext"); %>" onkeypress="return is_number(this,event);">
+											to
+										<input type="text" maxlength="5" name="upnp_max_port_ext" class="input_6_table" value="<% nvram_get("upnp_max_port_ext"); %>" onkeypress="return is_number(this,event);">
+									</td>
+							</tr>
+
 						</table>
 
 						<table id="IPsetting" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
