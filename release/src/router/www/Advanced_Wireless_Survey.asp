@@ -204,23 +204,23 @@ function showSiteTable(){
 
 				//ssid
 				htmlCode += '<td id="ssid" onclick="oui_query(\'' + aplist[i][6] +'\');overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">' + decodeURIComponent(aplist[i][1]);
-				htmlCode +=	'</td>';
+				htmlCode += '</td>';
 
 				// channel
-				htmlCode +=	'<td width="15%" style="text-align:center;">' + aplist[i][2] + '</td>';
+				htmlCode += '<td width="15%" style="text-align:center;">' + aplist[i][2] + ' (' + aplist[i][7] + ')</td>';
 
  				// security
 				if(aplist[i][3] == "Open System" && aplist[i][4] == "NONE")
-					htmlCode +=	'<td width="27%">' + aplist[i][3] + '<img src="/images/New_ui/networkmap/unlock.png"></td>';
+					htmlCode += '<td width="27%">' + aplist[i][3] + '<img src="/images/New_ui/networkmap/unlock.png"></td>';
 				else if(aplist[i][4] == "WEP")
-					htmlCode +=	'<td width="27%">WEP</td>';
+					htmlCode += '<td width="27%">WEP</td>';
 				else
-					htmlCode +=	'<td width="27%">' + aplist[i][3] +' (' + aplist[i][4] + ')</td>';
+					htmlCode += '<td width="27%">' + aplist[i][3] +' (' + aplist[i][4] + ')</td>';
 				// band
 				if(aplist[i][0] == "2G")
-					htmlCode +=	'<td width="10%" style="text-align:center;">2.4GHz</td>';
+					htmlCode += '<td width="10%" style="text-align:center;">2.4GHz</td>';
 				else
-					htmlCode +=	'<td width="10%" style="text-align:center;">5GHz</td>';
+					htmlCode += '<td width="10%" style="text-align:center;">5GHz</td>';
 
 				// signal
 				htmlCode += '<td width="10%" style="text-align:center;"><span title="' + aplist[i][5] + '%"><div style="margin-left:13px;" id="radio_'+ Math.ceil(aplist[i][5]/20) +'"></div></span></td></tr>';
