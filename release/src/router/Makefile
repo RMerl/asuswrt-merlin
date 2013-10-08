@@ -2328,10 +2328,11 @@ lzo-install: lzo
 
 openvpn/stamp-h1:
 	cd openvpn && CFLAGS="-O3 -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \
-	LDFLAGS="-L$(TOP)/openssl -L$(TOP)/lzo/src/.libs -ffunction-sections -fdata-sections -Wl,--gc-sections" \
-	CPPFLAGS="-I$(TOP)/lzo/include -I$(TOP)/openssl/include -L$(TOP)/lzo -L$(TOP)/openssl -L$(TOP)/lzo/src/.libs" \
+	LDFLAGS="-L$(TOP)/lzo/src/.libs -ffunction-sections -fdata-sections -Wl,--gc-sections" \
+	CPPFLAGS="-I$(TOP)/lzo/include -L$(TOP)/lzo -L$(TOP)/lzo/src/.libs" \
 	IPROUTE="/usr/sbin/ip" \
-	OPENSSL_CRYPTO_LIBS="-lcrypto" \
+	OPENSSL_CRYPTO_CFLAGS="-I$(TOP)/openssl/include" OPENSSL_CRYPTO_LIBS="-L$(TOP)/openssl -lcrypto" \
+	OPENSSL_SSL_CFLAGS="-I$(TOP)/openssl/include" OPENSSL_SSL_LIBS="-L$(TOP)/openssl -lssl -lcrypto" \
 	$(CONFIGURE) --prefix= \
 	--disable-debug --disable-plugins --enable-management --enable-small \
 	--disable-selinux --disable-socks --enable-password-save \
