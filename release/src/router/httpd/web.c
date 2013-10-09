@@ -3553,7 +3553,7 @@ static int ej_get_client_detail_info(int eid, webs_t wp, int argc, char_t **argv
 	int j, len;
 
 	lock = file_lock("networkmap");
-	shm_client_info_id = shmget((key_t)1001, sizeof(CLIENT_DETAIL_INFO_TABLE), 0666);
+	shm_client_info_id = shmget((key_t)1001, sizeof(CLIENT_DETAIL_INFO_TABLE), 0666|IPC_CREAT);
 	if (shm_client_info_id == -1){
 	    fprintf(stderr,"shmget failed\n");
 	    file_unlock(lock);
