@@ -2333,7 +2333,7 @@ openvpn/stamp-h1:
 	IPROUTE="/usr/sbin/ip" \
 	OPENSSL_CRYPTO_CFLAGS="-I$(TOP)/openssl/include" OPENSSL_CRYPTO_LIBS="-L$(TOP)/openssl -lcrypto" \
 	OPENSSL_SSL_CFLAGS="-I$(TOP)/openssl/include" OPENSSL_SSL_LIBS="-L$(TOP)/openssl -lssl -lcrypto" \
-	$(CONFIGURE) --prefix= \
+	$(CONFIGURE) --prefix=  --enable-iproute2 \
 	--disable-debug --disable-plugins --enable-management --enable-small \
 	--disable-selinux --disable-socks --enable-password-save \
 	ac_cv_lib_resolv_gethostbyname=no
