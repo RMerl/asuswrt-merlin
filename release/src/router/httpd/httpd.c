@@ -258,8 +258,7 @@ void sethost(char *host)
 
 	strcpy(host_name, host);
 
-	cp = host_name;
-	for ( cp = cp + 9; *cp && *cp != '\r' && *cp != '\n'; cp++ );
+	for ( cp = host_name; *cp && *cp != '\r' && *cp != '\n'; cp++ );
 	*cp = '\0';
 }
 
