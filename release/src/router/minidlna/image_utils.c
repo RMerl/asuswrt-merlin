@@ -817,7 +817,7 @@ image_save_to_jpeg_buf(image_s * pimage, int * size)
 	if((data = malloc(row_stride)) == NULL)
 	{
 		DPRINTF(E_WARN, L_METADATA, "malloc failed\n");
-		jpeg_destroy_compress(&cinfo)
+		jpeg_destroy_compress(&cinfo);
 		return NULL;
 	}
 	i = 0;
