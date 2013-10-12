@@ -1068,7 +1068,7 @@ define KernelConfig
 		sed -i "/CONFIG_NR_CPUS=2/d" $(1); \
 		sed -i "/# CONFIG_HOTPLUG_CPU is not set/d" $(1); \
 		sed -i "/CONFIG_RPS=y/d" $(1); \
-	fi \
+	fi; \
 	if [ "$(IPSEC)" = "y" ]; then \
 		sed -i "/CONFIG_XFRM_USER/d" $(1); \
 		echo "CONFIG_XFRM_USER=m" >>$(1); \
@@ -1105,7 +1105,7 @@ define KernelConfig
 			sed -i "/CONFIG_INET6_XFRM_MODE_BEET/d" $(1); \
 			echo "CONFIG_INET6_XFRM_MODE_BEET=m" >>$(1); \
 		fi; \
-	fi; \
+	fi \
 	)
 	$(call platformKernelConfig, $(1))
 endef
