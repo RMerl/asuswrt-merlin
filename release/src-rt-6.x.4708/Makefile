@@ -1074,6 +1074,7 @@ define KernelConfig
 		echo "CONFIG_XFRM_USER=m" >>$(1); \
 		echo "# CONFIG_XFRM_SUB_POLICY is not set" >>$(1); \
 		echo "# CONFIG_XFRM_MIGRATE is not set" >>$(1); \
+		echo "# CONFIG_XFRM_STATISTICS is not set" >>$(1); \
 		sed -i "/CONFIG_NET_KEY/d" $(1); \
 		echo "CONFIG_NET_KEY=m" >>$(1); \
 		echo "# CONFIG_NET_KEY_MIGRATE is not set" >>$(1); \
