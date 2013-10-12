@@ -92,6 +92,10 @@ config RTCONFIG_OPENVPN
 	depends on RTCONFIG_LZO
 	default n
 
+config RTCONFIG_IPSEC
+	bool "IPsec"
+	default n
+
 # !!TB
 config RTCONFIG_IPV6
 	bool "IPv6 Support"
