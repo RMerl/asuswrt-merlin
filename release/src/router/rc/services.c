@@ -4952,7 +4952,7 @@ void setup_leds()
 	model = get_model();
 
 	if (nvram_get_int("led_disable")==1) {
-		if (model == MODEL_RTAC56U) {
+		if ((model == MODEL_RTAC56U) || (model == MODEL_RTAC68U)) {
 			setAllLedOff();
 		} else {        // TODO: Can other routers also use the same code?
 
@@ -4969,7 +4969,7 @@ void setup_leds()
 		}
 
 	} else {
-		if (model == MODEL_RTAC56U) {
+		if ((model == MODEL_RTAC56U) || (model == MODEL_RTAC68U)) {
 /* In original 372, setAllLedOff() uses LED_ALL on this router without checking if
    RTCONFIG_LED_ALL is set (it ain't).  Keep an eye in case it eventually gets fixed
    by making it also conditional to that flag being set - in   which case I will 
