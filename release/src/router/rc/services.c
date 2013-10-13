@@ -4951,7 +4951,7 @@ void setup_leds()
 
 	model = get_model();
 
-	if (nvram_get_int("led_disable")==1) {
+	if (nvram_get_int("led_disable") == 1) {
 		if ((model == MODEL_RTAC56U) || (model == MODEL_RTAC68U)) {
 			setAllLedOff();
 		} else {        // TODO: Can other routers also use the same code?
@@ -4977,23 +4977,19 @@ void setup_leds()
 #ifdef RTCONFIG_LED_ALL
 			led_control(LED_ALL, LED_ON);
 #endif
-// TODO: Alternative to LED_ALL for this router?
-			eval("wl", "ledbh", "3", "7");
-			eval("wl", "-i", "eth2", "ledbh", "10", "7");
-
 			if (nvram_match("wl1_radio", "1")) {
 				nvram_set("led_5g", "1");
 				led_control(LED_5G, LED_ON);
 			}
 			kill_pidfile_s("/var/run/usbled.pid", SIGTSTP); // inform usbled to reset status
 		} else {
-			led_control(LED_2G, LED_ON);
 			led_control(LED_5G, LED_ON);
 #ifdef RTCONFIG_USB
 			start_usbled();
 #endif
 		}
 
+		led_control(LED_2G, LED_ON);
 		led_control(LED_SWITCH, LED_ON);
 		led_control(LED_POWER, LED_ON);
         }
