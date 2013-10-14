@@ -2930,10 +2930,10 @@ static char *value(FILE *fp, int line, int token)
 	}
 	memset(buffer, 0, sizeof(buffer));
 	switch (token) {
-		case MAC:
+		case HOSTNAME:
 			get_stok(temp, buffer, ' ');
 			break;
-		case HOSTNAME:
+		case MAC:
 			ptr = get_stok(temp, buffer, ' ');
 			if (ptr)
 				get_stok(ptr, buffer, ' ');
