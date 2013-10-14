@@ -1568,6 +1568,7 @@ int init_nvram(void)
 		goto case_MODEL_RTN12X;
 
 	case MODEL_RTN12D1:
+	case MODEL_RTN12VP:
 		nvram_set("wl0_vifnames", "wl0.1 wl0.2 wl0.3");
 		add_rc_support("2.4G mssid");
 		nvram_set_int("btn_rst_gpio", 22|GPIO_ACTIVE_LOW);
@@ -2112,6 +2113,13 @@ int init_nvram(void)
 
 	case MODEL_RTN66U:
 		nvram_set_int("btn_radio_gpio", 13|GPIO_ACTIVE_LOW);	// ? should not used by Louis
+		if(nvram_match("pci/1/1/ccode", "JP") && nvram_match("pci/1/1/regrev", "42") && !nvram_match("watchdog", "20000")){
+			_dprintf("force set watchdog as 20s\n");
+			nvram_set("watchdog", "20000");
+			nvram_commit();
+			reboot(0);
+		}
+
 	case MODEL_RTAC66U:
 		nvram_set("lan_ifname", "br0");
 
@@ -2513,6 +2521,9 @@ int init_nvram(void)
 	add_rc_support("wps_multiband");
 #endif
 
+#ifdef RTCONFIG_USER_LOW_RSSI
+	add_rc_support("user_low_rssi");
+#endif
 	return 0;
 }
 
@@ -2736,7 +2747,7 @@ static void sysinit(void)
 	if(model==MODEL_RTN53 ||
 		model==MODEL_RTN10U ||
 		model==MODEL_RTN12B1 || model==MODEL_RTN12C1 ||
-		model==MODEL_RTN12D1 || model==MODEL_RTN12HP ||
+		model==MODEL_RTN12D1 || model==MODEL_RTN12VP || model==MODEL_RTN12HP ||
 		model==MODEL_RTN15U){
 
 		f_write_string("/proc/sys/vm/panic_on_oom", "1", 0, 0);
@@ -3139,9 +3150,10 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 				nvram_set("Ate_boot_fail", "0");
 
 				if(boot_check < nvram_get_int("Ate_reboot_count")) {
+					int delay = nvram_get_int("Ate_reboot_delay");
 					nvram_commit();
-					dbG("System boot up %d times, reboot...\n", boot_check);
-					sleep(1);
+					dbG("System boot up %d times,  delay %d secs & reboot...\n", boot_check, delay);
+					sleep(delay);
 					reboot(RB_AUTOBOOT);
 				}
 				else {
@@ -3174,13 +3186,14 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 				notify_rc_and_wait("reboot");
 				return 0;
 			}
-#endif//*/
+#endif// */
 			if (nvram_get_int("led_disable")==1)
 				setup_leds();
 
 #ifdef RTCONFIG_USBRESET
 			set_pwr_usb(1);
 #else
+#if defined (RTCONFIG_USB_XHCI) || defined (RTCONFIG_USB_2XHCI2)
 			if(nvram_get_int("usb_usb3") == 0){
 #ifndef RTCONFIG_XHCIMODE
 				_dprintf("USB2: reset USB power to call up the device on the USB 3.0 port.\n");
@@ -3189,6 +3202,7 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 				set_pwr_usb(1);
 #endif
 			}
+#endif
 #endif
 
 			nvram_set("success_start_service", "1");

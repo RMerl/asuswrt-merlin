@@ -10,7 +10,6 @@
 <link href="/NM_style.css" rel="stylesheet" type="text/css" />
 <link href="/form_style.css" rel="stylesheet" type="text/css" />
 <script type="text/javascript" src="/general.js"></script>
-<script type="text/javascript" src="formcontrol.js"></script>
 <script type="text/javascript" src="/ajax.js"></script>
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
@@ -267,8 +266,14 @@ function change_wep_type(mode){
 		value_array = new Array("1", "2");
 	}
 	else{
-		wep_type_array = new Array("None", "WEP-64bits", "WEP-128bits");
-		value_array = new Array("0", "1", "2");
+		if(document.form.wl_nmode_x.value != 2){
+			wep_type_array = new Array("None");
+			value_array = new Array("0");	
+		}
+		else{
+			wep_type_array = new Array("None", "WEP-64bits", "WEP-128bits");
+			value_array = new Array("0", "1", "2");
+		}
 	}
 	
 	add_options_x2(document.form.wl_wep_x, wep_type_array, value_array, cur_wep);
@@ -339,23 +344,6 @@ function wl_wep_change(){
 			show_key();
 		}
 	}
-	change_key_des();
-}
-
-function change_key_des(){
-	var objs = getElementsByName_iefix("span", "key_des");
-	var wep_type = document.form.wl_wep_x.value;
-	var str = "";
-	
-	if(wep_type == "1")
-		str = " (<#WLANConfig11b_WEPKey_itemtype1#>)";
-	else if(wep_type == "2")
-		str = " (<#WLANConfig11b_WEPKey_itemtype2#>)";
-	
-	str += ":";
-	
-	for(var i = 0; i < objs.length; ++i)
-		showtext(objs[i], str);
 }
 
 function show_key(){
@@ -552,7 +540,7 @@ function manualSetup(){
   		<tr>
     			<td style="padding:5px 10px 0px 10px; *padding:1px 10px 0px 10px;">
     					<p class="formfonttitle_nwm" ><#WLANConfig11b_AuthenticationMethod_itemname#></p>
-				  		<select style="*margin-top:-7px;" name="wl_auth_mode_x" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_auth_mode_x');">
+				  		<select style="*margin-top:-7px;" name="wl_auth_mode_x" class="input_option" onChange="authentication_method_change(this);">
 							<option value="open"    <% nvram_match("wl_auth_mode_x", "open",   "selected"); %>>Open System</option>
 							<option value="shared"  <% nvram_match("wl_auth_mode_x", "shared", "selected"); %>>Shared Key</option>
 							<option value="psk"     <% nvram_match("wl_auth_mode_x", "psk",    "selected"); %>>WPA-Personal</option>

@@ -2408,12 +2408,12 @@ void stop_webdav(void)
 
 		unlink("/tmp/lighttpd/lighttpd.pid");
 	}
-/*
+
 	if (pids("lighttpd-arpping")){
 		kill_pidfile_tk("/tmp/lighttpd/lighttpd-arpping.pid");
 		unlink("/tmp/lighttpd/lighttpd-arpping.pid");
 	}
-*/
+
 	logmessage("WEBDAV Server", "daemon is stoped");
 #endif
 }

@@ -4,21 +4,8 @@
 #
 #***********************************************************************
 
-include ../common.mak
-
-#CFLAGS = -g -rdynamic -DMYDEBUG -DDEBUG
-LIBS = -lpthread
-
-#all: asuswebstorage inotify
-all: inotify
-
-#https: https.o md5.o urlencode.o oauth.o oauth_http.o xmalloc.o
-#asuswebstorage: asuswebstorage.o api.o function.o 
-	#$(CC) $(CFLAGS) $(LIBS)  $^ -o $@ 
-
-inotify: event_queue.o inotify_utils.o inotify.o
-	$(CC) $(CFLAGS) $(LIBS)  $^ -o $@
-
+all:
+	-cp prebuild/inotify inotify
 
 .PHONY: clean
 clean:

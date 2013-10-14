@@ -53,7 +53,7 @@ for f in $APPS_RUN_DIR/S*; do
 		continue
 	fi
 
-	if [ "$2" == "start" ]; then
+	if [ "$2" == "start" ] || [ "$2" == "firewall-start" ]; then
 		app_enable=`app_get_field.sh $tmp_apps_name "Enabled" 1`
 		if [ "$app_enable" != "yes" ]; then
 			if [ "$1" != "allpkg" ] && [ "$1" == "$tmp_apps_name" ]; then
@@ -94,6 +94,23 @@ for f in $APPS_RUN_DIR/S*; do
 
 	echo "$nice_cmd sh $s $2" | logger -c
 	$nice_cmd sh $s $2
+
+	if [ "$tmp_apps_name" == "mediaserver" ] && [ "$2" == "stop" ] ; then
+		sleep 1
+		ms_pid=`pidof minidlna`
+		i=0
+		while [ ! -z "$ms_pid" ] && [ $i -lt 10 ] ; do
+			i=$(($i+1))
+			echo "$i: $nice_cmd sh $s $2" | logger -c
+			$nice_cmd sh $s $2
+			sleep 1
+			ms_pid=`pidof minidlna`
+		done
+		ms_pid=`pidof minidlna`
+		if [ ! -z "$ms_pid" ] ; then
+			killall -9 minidlna
+		fi
+	fi
 
 	if [ "$1" != "allpkg" ] && [ "$1" == "$tmp_apps_name" ]; then
 		break

@@ -949,7 +949,7 @@ void reinit_hwnat()
 			(nvram_match("wl1_radio", "0") || !nvram_get_int("wl1_mrate_x"))*/) {
 
 #if !defined(RTCONFIG_DUALWAN)
-#if defined(RTN65U) || defined(RTN56U)
+#if defined(RTN65U) || defined(RTN56U) || defined(RTN14U) || defined(RTAC52U)
 			char primary[] = "wan1_primaryXXXXXX";
 
 			sprintf(primary, "wan%d_primary", WAN_UNIT_SECOND);

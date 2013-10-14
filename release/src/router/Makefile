@@ -192,6 +192,11 @@ obj-$(RTCONFIG_USB_BECEEM) += zlib # for GCT WiMAX
 obj-$(RTCONFIG_USB_BECEEM) += gctwimax-0.0.3rc4 # for GCT WiMAX
 
 obj-y += libdisk
+obj-$(RTCONFIG_EMAIL) += push_log
+ifeq ($(RTCONFIG_EMAIL),y)
+PUSH_LOG=push_log
+endif
+
 obj-y += e2fsprogs
 obj-$(RTCONFIG_NFS) += nfs-utils
 obj-$(RTCONFIG_NFS) += portmap
@@ -1062,7 +1067,7 @@ mssl:	openssl
 mdu:	shared mssl
 
 
-rc: nvram$(BCMEX) shared libbcmcrypto libdisk
+rc: nvram$(BCMEX) shared libbcmcrypto libdisk $(PUSH_LOG)
 
 bridge/stamp-h1:
 	cd bridge && CFLAGS="-Os -g $(EXTRACFLAGS)" \
@@ -1111,9 +1116,11 @@ dmalloc-clean:
 dnsmasq:
 	@$(SEP)
 	@$(MAKE) -C dnsmasq \
-	COPTS="-DHAVE_BROKEN_RTC -DHAVE_LEASEFILE_EXPIRE $(if $(RTCONFIG_IPV6),-DUSE_IPV6,-DNO_IPV6) $(if $(RTCONFIG_USB_EXTRAS),,-DNO_SCRIPT -DNO_TFTP)" \
-	CFLAGS="-Os $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \
-	LDFLAGS="-Wl,--gc-sections -fPIC"
+	COPTS="-DHAVE_BROKEN_RTC -DHAVE_LEASEFILE_EXPIRE -DNO_AUTH -DNO_IPSET \
+	    $(if $(RTCONFIG_IPV6),-DUSE_IPV6,-DNO_IPV6) \
+	    $(if $(RTCONFIG_USB_EXTRAS),,-DNO_SCRIPT -DNO_TFTP)" \
+	CFLAGS="-Os -ffunction-sections -fdata-sections $(EXTRACFLAGS)" \
+	LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections"
 
 dnsmasq-install:
 	install -D dnsmasq/src/dnsmasq $(INSTALLDIR)/dnsmasq/usr/sbin/dnsmasq
@@ -1579,8 +1586,7 @@ else
 endif
 
 accel-pptpd-clean:
-	-@$(MAKE) -C accel-pptpd clean
-	@rm -rf accel-pptpd/pptpd-1.3.3/Makefile
+	-@$(MAKE) -C accel-pptpd distclean
 
 accel-pptpd-install: accel-pptpd
 	$(MAKE) -C accel-pptpd server_install

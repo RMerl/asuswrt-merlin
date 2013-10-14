@@ -105,7 +105,7 @@ helpcontent[7] = new Array("",
 							 "<#PPPConnection_x_PPPoEMRU_itemdesc#>",
 							 "<#PPPConnection_x_ServiceName_itemdesc#>",
 							 "<#PPPConnection_x_AccessConcentrator_itemdesc#>",
-							 "<#PPPConnection_x_PPPoERelay_itemdesc#>",
+							 "<#PPPConnection_x_PPPoERelay_itemdesc#>",	//11
 							 "<#IPConnection_x_DNSServerEnable_itemdesc#>",
 							 "<#IPConnection_x_DNSServer1_itemdesc#>",
 							 "<#IPConnection_x_DNSServer2_itemdesc#>",
@@ -116,7 +116,7 @@ helpcontent[7] = new Array("",
 							 "<#BOP_isp_heart_desc#>",
 							 "<#IPConnection_BattleNet_itemdesc#>",
 							 "<#Layer3Forwarding_x_STB_itemdesc#>",
-							 "<#hwnat_desc#>",
+							 "<#hwnat_desc#>",	//21
 							 "<#IPConnection_UPnP_itemdesc#>",
 							 "<#IPConnection_PortRange_itemdesc#>",
 							 "<#IPConnection_LocalIP_itemdesc#>",
@@ -148,7 +148,7 @@ helpcontent[11] = new Array("",
 							"<#LANHostConfig_x_ServerLogEnable_itemdesc#>",
 							"<#LANHostConfig_x_TimeZone_itemdesc#>",
 							"<#LANHostConfig_x_NTPServer_itemdesc#>",
-							"<#LANHostConfig_x_Password_itemdesc#>");
+							"<#QIS_pass_desc2#> <#LANHostConfig_x_Password_itemdesc#>");
 //Log
 helpcontent[12] = new Array("",
 							"<#General_x_SystemUpTime_itemdesc#>",
@@ -248,3 +248,11 @@ helpcontent[24] = new Array("",
 helpcontent[25] = new Array("",
 							"<#DSL_Stab_Adjustment#>",			//Stability Adjustment
 							"<#DSL_SRA_itemdesc#>");		//SRA(Seamless Rate Adaptation)
+							
+//DualWAN
+helpcontent[26] = new Array("",
+							"<#dualwan_pingtime_desc#>",
+							"<#dualwan_pingtime_target#>",
+							"<#dualwan_pingtime_interval#>",
+							"<#dualwan_pingtime_delay#>",
+							"<#dualwan_pingtime_upper#>");

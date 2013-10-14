@@ -184,6 +184,7 @@ int main()
 	shm_client_detail_info_id = shmget((key_t)1001, sizeof(CLIENT_DETAIL_INFO_TABLE), 0666|IPC_CREAT);
         if (shm_client_detail_info_id == -1){
     	    fprintf(stderr,"shmget failed\n");
+	    file_unlock(lock);
             exit(1);
     	}
 

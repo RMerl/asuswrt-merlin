@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2012 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2013 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -91,16 +91,19 @@ static dbus_bool_t add_watch(DBusWatch *watch, void *data)
 
 static void remove_watch(DBusWatch *watch, void *data)
 {
-  struct watch **up, *w;  
+  struct watch **up, *w, *tmp;  
   
-  for (up = &(daemon->watches), w = daemon->watches; w; w = w->next)
-    if (w->watch == watch)
-      {
-        *up = w->next;
-        free(w);
-      }
-    else
-      up = &(w->next);
+  for (up = &(daemon->watches), w = daemon->watches; w; w = tmp)
+    {
+      tmp = w->next;
+      if (w->watch == watch)
+	{
+	  *up = tmp;
+	  free(w);
+	}
+      else
+	up = &(w->next);
+    }
 
   w = data; /* no warning */
 }
@@ -302,8 +305,6 @@ static DBusMessage* dbus_read_servers_ex(DBusMessage *message, int strings)
   const char *addr_err;
   char *dup = NULL;
   
-  my_syslog(LOG_INFO, _("setting upstream servers from DBus"));
-  
   if (!dbus_message_iter_init(message, &iter))
     {
       return dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
@@ -340,9 +341,11 @@ static DBusMessage* dbus_read_servers_ex(DBusMessage *message, int strings)
 	    }
 	  
 	  /* dup the string because it gets modified during parsing */
+	  if (dup)
+	    free(dup);
 	  if (!(dup = str_domain = whine_malloc(strlen(str)+1)))
 	    break;
-
+	  
 	  strcpy(str_domain, str);
 
 	  /* point to address part of old string for error message */
@@ -400,9 +403,11 @@ static DBusMessage* dbus_read_servers_ex(DBusMessage *message, int strings)
 	    }
 	  
 	  /* dup the string because it gets modified during parsing */
+	  if (dup)
+	    free(dup);
 	  if (!(dup = str_addr = whine_malloc(strlen(str)+1)))
 	    break;
-	   
+	  
 	  strcpy(str_addr, str);
 	}
 
@@ -471,6 +476,7 @@ DBusHandlerResult message_handler(DBusConnection *connection,
 {
   char *method = (char *)dbus_message_get_member(message);
   DBusMessage *reply = NULL;
+  int clear_cache = 0, new_servers = 0;
     
   if (dbus_message_is_method_call(message, DBUS_INTERFACE_INTROSPECTABLE, "Introspect"))
     {
@@ -494,24 +500,34 @@ DBusHandlerResult message_handler(DBusConnection *connection,
     }
   else if (strcmp(method, "SetServers") == 0)
     {
-      my_syslog(LOG_INFO, _("setting upstream servers from DBus"));
       dbus_read_servers(message);
-      check_servers();
+      new_servers = 1;
     }
   else if (strcmp(method, "SetServersEx") == 0)
     {
       reply = dbus_read_servers_ex(message, 0);
-      check_servers();
+      new_servers = 1;
     }
   else if (strcmp(method, "SetDomainServers") == 0)
     {
       reply = dbus_read_servers_ex(message, 1);
-      check_servers();
+      new_servers = 1;
     }
   else if (strcmp(method, "ClearCache") == 0)
-    clear_cache_and_reload(dnsmasq_time());
+    clear_cache = 1;
   else
     return (DBUS_HANDLER_RESULT_NOT_YET_HANDLED);
+   
+  if (new_servers)
+    {
+      my_syslog(LOG_INFO, _("setting upstream servers from DBus"));
+      check_servers();
+      if (option_bool(OPT_RELOAD))
+	clear_cache = 1;
+    }
+
+  if (clear_cache)
+    clear_cache_and_reload(dnsmasq_time());
   
   method = user_data; /* no warning */
 

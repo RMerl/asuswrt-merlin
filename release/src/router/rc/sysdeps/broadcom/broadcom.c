@@ -132,6 +132,7 @@ setMAC_2G(const char *mac)
 		case MODEL_RTN12B1:
 		case MODEL_RTN12C1:
 		case MODEL_RTN12D1:
+		case MODEL_RTN12VP:
 		case MODEL_RTN12HP:
 		case MODEL_APN12HP:
 		case MODEL_RTN14UHP:
@@ -298,6 +299,7 @@ setRegrev_2G(const char *regrev)
 		case MODEL_RTN12B1:
 		case MODEL_RTN12C1:
 		case MODEL_RTN12D1:
+		case MODEL_RTN12VP:
 		case MODEL_RTN12HP:
 		case MODEL_APN12HP:
 		case MODEL_RTN14UHP:
@@ -756,6 +758,7 @@ GetPhyStatus(void)
 	case MODEL_RTN12B1:
 	case MODEL_RTN12C1:
 	case MODEL_RTN12D1:
+	case MODEL_RTN12VP:
 	case MODEL_RTN12HP:
 	case MODEL_APN12HP:
 	case MODEL_RTN10P:
@@ -969,6 +972,7 @@ setAllLedOn(void)
 		case MODEL_RTN12B1:
 		case MODEL_RTN12C1:
 		case MODEL_RTN12D1:
+		case MODEL_RTN12VP:
 		case MODEL_RTN12HP:
 		{
 			eval("et", "robowr", "00", "0x12", "0xfd55");
@@ -1114,6 +1118,7 @@ setAllLedOff(void)
 		case MODEL_RTN12B1:
 		case MODEL_RTN12C1:
 		case MODEL_RTN12D1:
+		case MODEL_RTN12VP:
 		case MODEL_RTN12HP:
 		{
 			eval("et", "robowr", "00", "0x12", "0xf800");
@@ -1227,6 +1232,7 @@ setATEModeLedOn(void){
 		case MODEL_RTN12B1:
 		case MODEL_RTN12C1:
 		case MODEL_RTN12D1:
+		case MODEL_RTN12VP:
 		case MODEL_RTN12HP:
 		{
 			eval("et", "robowr", "00", "0x12", "0xfd55");
@@ -1408,6 +1414,7 @@ getBootVer(void)
 	case MODEL_RTN12B1:
 	case MODEL_RTN12C1:
 	case MODEL_RTN12D1:
+	case MODEL_RTN12VP:
 	case MODEL_RTN12HP:
 	case MODEL_APN12HP:
 	case MODEL_RTN10U:
@@ -1485,6 +1492,7 @@ getRegrev_2G(void)
 		case MODEL_RTN12B1:
 		case MODEL_RTN12C1:
 		case MODEL_RTN12D1:
+		case MODEL_RTN12VP:
 		case MODEL_RTN12HP:
 		case MODEL_APN12HP:
 		case MODEL_RTN14UHP:

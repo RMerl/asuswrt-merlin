@@ -1,4 +1,4 @@
-﻿var change;
+﻿
 var keyPressed;
 var wItem;
 var ip = "";
@@ -87,12 +87,6 @@ function getSubnet(ip_str, mask_str, flag){
 	else
 		return sub_end;
 }
-// 2010.07 James. }
-
-function changeDate(){
-	pageChanged = 1;
-	return true;
-}
 
 function str2val(v){
 	for(i=0; i<v.length; i++){
@@ -145,8 +139,7 @@ function portrange_max(o, v){
 	return num;
 }
 
-function entry_cmp(entry, match, len){  //compare string length function
-	
+function entry_cmp(entry, match, len){  //compare string length function	
 	var j;
 	
 	if(entry.length < match.length)
@@ -301,20 +294,24 @@ function is_number(o,event){
 	}
 }
 
-function validate_range(o, min, max) {
-	for(i=0; i<o.value.length; i++){
-		if ((o.value.charAt(i)<'0' || o.value.charAt(i)>'9') && o.value.charAt(i) != "-"){
-			alert('<#JS_validrange#> ' + min + ' <#JS_validrange_to#> ' + max);
-			//o.value = max;
-			o.focus();
-			o.select();
-			return false;
-		}
+function validate_range(o, _min, _max) {
+	if(isNaN(o.value)){
+		alert('<#JS_validrange#> ' + _min + ' <#JS_validrange_to#> ' + _max);
+		o.focus();
+		o.select();
+		return false;
 	}
 	
-	if(o.value<min || o.value>max) {
-		alert('<#JS_validrange#> ' + min + ' <#JS_validrange_to#> ' + max);
-		//o.value = max;
+	if(_min > _max){
+		var tmpNum = "";
+	
+		tmpNum = _min;
+		_min = _max;
+		_max = tmpNum;
+	}
+
+	if(o.value < _min || o.value > _max) {
+		alert('<#JS_validrange#> ' + _min + ' <#JS_validrange_to#> ' + _max);
 		o.focus();
 		o.select();
 		return false;
@@ -828,12 +825,6 @@ function add_options_x2(o, arr, varr, orig){
 	}
 }
 
-function add_a_option(o, i, s)
-{tail = o.options.length;
-	o.options[tail] = new Option(s);
-	o.options[tail].value = i;
-}
-
 function rcheck(o){
 	if(o.value == "1")
 		return("1");
@@ -882,9 +873,9 @@ function setTimeRange(sh, sm, eh, em){
 
 function load_body(){
 	document.form.next_host.value = location.host;
-	
+
 	if(document.form.current_page.value == "Advanced_WMode_Content.asp"){		
-		change_wireless_bridge(document.form.wl_mode_x.value, rcheck(document.form.wl_wdsapply_x), 0, 0);		
+		change_wireless_bridge(document.form.wl_mode_x.value);		
 	}
 	else if(document.form.current_page.value == "Advanced_PortTrigger_Content.asp"){
 		wItem = new Array(new Array("Quicktime 4 Client", "554", "TCP", "6970:32000", "UDP"),new Array("Real Audio", "7070", "TCP", "6970:7170", "UDP"));
@@ -937,8 +928,6 @@ function load_body(){
 		document.form.url_time_x_endhour_1.value = getTimeRange(document.form.url_time_x_1.value, 2);
 		document.form.url_time_x_endmin_1.value = getTimeRange(document.form.url_time_x_1.value, 3);
 	}
-
-	change = 0;
 }
 
 function change_firewall(r){
@@ -955,94 +944,34 @@ function change_firewall(r){
 		inputRCtrl1(document.form.misc_ping_x, 1);
 	}
 }
-function change_wireless_bridge(m, a, r, mflag)
-{
+function change_wireless_bridge(m){
 	if (m == "0"){
 		inputRCtrl2(document.form.wl_wdsapply_x, 1);
 		inputRCtrl1(document.form.wl_wdsapply_x, 0);
 	}else if (m == "1" && Rawifi_support){	 // N66U-spec
 		inputRCtrl2(document.form.wl_wdsapply_x, 0);
 		inputRCtrl1(document.form.wl_wdsapply_x, 0);
-		if (document.form.wl_channel_orig.value == "0" && document.form.wl_channel.options[0].selected == 1){
-				alert("<#JS_fixchannel#>");		
+		/*if (document.form.wl_channel_orig.value == "0" && document.form.wl_channel.options[0].selected == 1){
+			alert("<#JS_fixchannel#>");		
+			document.form.wl_channel.options[0].selected = 0;
+			document.form.wl_channel.options[1].selected = 1;
+		}*/
+	}else{
+		inputRCtrl1(document.form.wl_wdsapply_x, 1);
+		/*if (m != 0) {
+			if (document.form.wl_channel_orig.value == "0" && document.form.wl_channel.options[0].selected == 1){
+				alert("<#JS_fixchannel#>");
 				document.form.wl_channel.options[0].selected = 0;
 				document.form.wl_channel.options[1].selected = 1;
-		}
-	}else{
-			inputRCtrl1(document.form.wl_wdsapply_x, 1);
-			if (m != 0) {
-				if (document.form.wl_channel_orig.value == "0" && document.form.wl_channel.options[0].selected == 1){
-					alert("<#JS_fixchannel#>");
-					document.form.wl_channel.options[0].selected = 0;
-					document.form.wl_channel.options[1].selected = 1;
-					document.form.wl_channel.focus();
-				}
+				document.form.wl_channel.focus();
 			}
+		}*/
 	}
-	return;
-	if (a=="0" && r == "0" && mflag != 1)
-	{document.form.wl_mode_x.value = "0";
-	m = "0";
-	}
-
-	if (m == "0") 
-	{
-	wdsimage = "wds_ap";
-	inputRCtrl2(document.form.wl_wdsapply_x, 1);
-	inputRCtrl1(document.form.wl_wdsapply_x, 0);
-	}
-	else if (m == "1") // N66U-spec
-	{
-	inputRCtrl2(document.form.wl_wdsapply_x, 0);
-	inputRCtrl1(document.form.wl_wdsapply_x, 0);
-	if (document.form.wl_channel.value == "0")
-	{alert("<#JS_fixchannel#>");
-	document.form.wl_channel.options[0].selected = 0;
-	document.form.wl_channel.options[1].selected = 1;
-	}
-	}
-	else
-	{if (a=="0" && r == "0")
-	{
-	inputRCtrl2(document.form.wl_wdsapply_x, 0);
-	}
-	inputRCtrl1(document.form.wl_wdsapply_x, 1);
-	if (m == "1")
-	wdsimage = "wds_wds";
-	else
-	wdsimage = "wds_mixed";
-	if (a == "0")
-	{if (r == "0")
-	wdsimage += "_connect";
-	else
-	wdsimage += "_anony";
-	}
-	else
-	{if (r == "0")
-	wdsimage += "_connect";
-	else
-	wdsimage += "_both";
-	}
-	if (document.form.wl_channel.value == "0")
-	{alert("<#JS_fixchannel#>");
-	document.form.wl_channel.options[0].selected = 0;
-	document.form.wl_channel.options[1].selected = 1;
-	}
-	}
-	wdsimage = "graph/" + wdsimage + ".gif";
-}
-
-function onSubmit(){
-	change = 0;
-	pageChanged = 0;
-	pageChangedCount = 0;
-
-	return true;
 }
 
 function onSubmitCtrl(o, s) {
 	document.form.action_mode.value = s;
-	return (onSubmit());
+	return true;
 }
 
 function onSubmitCtrlOnly(o, s){
@@ -1065,8 +994,6 @@ function onSubmitCtrlOnly(o, s){
 }
 
 function onSubmitApply(s){
-	pageChanged = 0;
-	pageChangedCount = 0;
 	if(document.form.current_page.value == "Advanced_ASUSDDNS_Content.asp"){
 		if(s == "hostname_check"){
 			showLoading();
@@ -1091,7 +1018,7 @@ function automode_hint(){ //Lock add 2009.11.05 for 54Mbps limitation in auto mo
 	}else{
 			var wl_nmode_flag = document.form.wl_nmode_x.value;
 	}		
-	
+
 	//alert(wl_nmode_flag+" ; "+document.form.wl_unit.value+" , "+document.form.wl_auth_mode_x.value+" , "+document.form.wl_wep_x.value+" , "+document.form.wl_crypto.value);
 	if(wl_nmode_flag == "0" && 
 	  	( 
@@ -1169,137 +1096,6 @@ function handle_11ac_80MHz(){
 	}
 }
 
-function change_common(o, s, v){
-	change = 1;
-	pageChanged = 1;
-	if(v == "wl_auth_mode_x"){ /* Handle AuthenticationMethod Change */
-		wl_auth_mode_change(0);
-
-		if(o.value == "psk" || o.value == "psk2" || o.value == "pskpsk2"){
-			document.form.wl_wpa_psk.focus();
-		}
-		else if(o.value == "shared"){ 
-			document.form.wl_key.focus();
-		}
-	
-		nmode_limitation();
-		automode_hint();
-	}
-	else if (v == "wl_crypto"){
-		wl_auth_mode_change(0);
-		nmode_limitation();
-		automode_hint();
-	}
-	else if(v == "wl_wep_x"){ /* Handle AuthenticationMethod Change */
-		change_wlweptype(o, "WLANConfig11b");
-		nmode_limitation();
-		automode_hint();
-	}
-	else if(v == "wl_key"){ /* Handle AuthenticationMethod Change */
-		var selected_key = eval("document.form.wl_key"+o.value);		
-		selected_key.focus();
-		selected_key.select();
-	}
-	else if (s=="WLANConfig11b" && v=="wl_channel" && document.form.current_page.value=="Advanced_WMode_Content.asp"){  // only for AP mode case of WDS page
-		if(document.form.wl_mode_x.value != 0 && o.value == 0){
-			alert("<#JS_fixchannel#>");
-			document.form.wl_channel.options[0].selected = 0;
-			document.form.wl_channel.options[1].selected = 1;
-			document.form.wl_channel.focus();
-		}
-	}
-	else if(s=="WLANConfig11b" && v == "wl_channel"){
-		insertExtChannelOption();
-	}
-	else if(s=="WLANConfig11b" && v == "wl_bw"){
-		insertExtChannelOption();
-	}
-	else if (s=="WLANConfig11b" && v=="wl_gmode_check"){
-		if (document.form.wl_gmode_check.checked == true)
-			document.form.wl_gmode_protection.value = "auto";
-		else
-			document.form.wl_gmode_protection.value = "off";
-	}
-	else if(s=="WLANConfig11b" && v == "wl_nmode_x"){
-		if(o.value=='0' || o.value=='2')
-			inputCtrl(document.form.wl_gmode_check, 1);
-		else
-			inputCtrl(document.form.wl_gmode_check, 0);
-		
-		if(o.value == "2")
-			inputCtrl(document.form.wl_bw, 0);
-		else
-			inputCtrl(document.form.wl_bw, 1);
-
-		handle_11ac_80MHz();
-
-		insertExtChannelOption();
-		if(o.value == "3"){
-			document.form.wl_wme.value = "on";
-		}
-		nmode_limitation();
-		automode_hint();
-		check_NOnly_to_GN();
-	}
-	else if (v == "wl_mode_x"){
-		change_wireless_bridge(o.value, rcheck(document.form.wl_wdsapply_x), 0, 1);
-	}	
-	else if (v=="ddns_server_x"){
-		change_ddns_setting(o.value);
-	}
-	else if (v == "wl_wme"){
-		if(o.value == "off"){
-			inputCtrl(document.form.wl_wme_no_ack, 0);
-			if(!Rawifi_support)
-				inputCtrl(document.form.wl_igs, 0);
-			inputCtrl(document.form.wl_wme_apsd, 0);
-		}
-		else{
-			if(document.form.wl_nmode_x.value == "0" || document.form.wl_nmode_x.value == "1"){	//auto, n only
-				document.form.wl_wme_no_ack.value = "off";
-				inputCtrl(document.form.wl_wme_no_ack, 0);
-			}else		
-				inputCtrl(document.form.wl_wme_no_ack, 1);
-			if(!Rawifi_support)
-				inputCtrl(document.form.wl_igs, 1);
-			inputCtrl(document.form.wl_wme_apsd, 1);
-		}
-	}else if (v == "time_zone_select"){
-		var tzdst = new RegExp("^[a-z]+[0-9\-\.:]+[a-z]+", "i");
-			// match "[std name][offset][dst name]"
-		if(o.value.match(tzdst)){
-			document.getElementById("chkbox_time_zone_dst").style.display="";	
-			document.getElementById("adj_dst").innerHTML = "<#System_Change_TimeZone_manual#>";
-			if(!document.getElementById("time_zone_dst_chk").checked){
-				document.form.time_zone_dst.value=0;
-				document.getElementById("dst_start").style.display="none";
-				document.getElementById("dst_end").style.display="none";
-			}else{
-				document.form.time_zone_dst.value=1;
-				document.getElementById("dst_start").style.display="";	
-				document.getElementById("dst_end").style.display="";						
-			}
-		}else{
-			document.getElementById("chkbox_time_zone_dst").style.display="none";	
-			document.getElementById("time_zone_dst_chk").checked = false;
-			document.form.time_zone_dst.value=0;			
-			document.getElementById("dst_start").style.display="none";
-			document.getElementById("dst_end").style.display="none";
-		}		
-	}else if (v == "time_zone_dst_chk"){
-		if (document.form.time_zone_dst_chk.checked){
-			document.form.time_zone_dst.value = "1";
-			document.getElementById("dst_start").style.display="";	
-			document.getElementById("dst_end").style.display="";					
-		}else{
-			document.form.time_zone_dst.value = "0";	
-			document.getElementById("dst_start").style.display="none";	
-			document.getElementById("dst_end").style.display="none";
-		}		
-	}
-	return true;
-}
-
 function change_ddns_setting(v){
 		var hostname_x = '<% nvram_get("ddns_hostname_x"); %>';
 		if (v == "WWW.ASUS.COM"){
@@ -1340,8 +1136,6 @@ function change_ddns_setting(v){
 }
 
 function change_common_radio(o, s, v, r){
-	change = 1;
-	pageChanged = 1;
 	if (v=='wl_radio'){
 		if(sw_mode != "3"){
 			if(document.form.wl_radio[0].checked==true){
@@ -1434,23 +1228,15 @@ function valid_WPAPSK(o){
 	return true;
 }
 
-function change_wlweptype(o, s, isload){
+function change_wlweptype(o, isload){
 	var wflag = 0;
 
 	if(o.value != "0"){
 		wflag = 1;
-		
 		if(document.form.wl_phrase_x.value.length > 0 && isload == 0)
 			is_wlphrase("WLANConfig11b", "wl_phrase_x", document.form.wl_phrase_x);
 	}
 
-	inputCtrl(document.form.wl_phrase_x, wflag);
-	inputCtrl(document.form.wl_key1, wflag);
-	inputCtrl(document.form.wl_key2, wflag);
-	inputCtrl(document.form.wl_key3, wflag);
-	inputCtrl(document.form.wl_key4, wflag);
-	inputCtrl(document.form.wl_key, wflag);
-	
 	wl_wep_change();
 }
 
@@ -1649,7 +1435,7 @@ function is_wlphrase(s, v, o){
 		
 		wepKey4.value = binl2hex_c(wep_key);
 	}
-	else if(wepType == "2" || wepType == "3"){
+	else if(wepType == "2"){
 		password = "";
 		
 		if(phrase.length > 0){
@@ -1659,17 +1445,17 @@ function is_wlphrase(s, v, o){
 			}
 		}
 		
-		password = calcMD5(password);
-		if(wepType == "2"){
-			wepKey1.value = password.substr(0, 26);
+		for(i=0;i<4;i++){
+			password = calcMD5(password);
+			if(i == 0)
+				wepKey1.value = password.substr(0, 26);
+			else if(i == 1)
+				wepKey2.value = password.substr(0, 26);
+			else if(i == 2)
+				wepKey3.value = password.substr(0, 26);
+			else
+				wepKey4.value = password.substr(0, 26);
 		}
-		else{
-			wepKey1.value = password.substr(0, 32);
-		}
-		
-		wepKey2.value = wepKey1.value;
-		wepKey3.value = wepKey1.value;
-		wepKey4.value = wepKey1.value;
 	}
 	
 	return true;
@@ -1678,7 +1464,7 @@ function is_wlphrase(s, v, o){
 function wl_wep_change(){
 	var mode = document.form.wl_auth_mode_x.value;
 	var wep = document.form.wl_wep_x.value;
-	
+
 	if(mode == "psk" || mode == "psk2" || mode == "pskpsk2" || mode == "wpa" || mode == "wpa2" || mode == "wpawpa2"){
 		if(mode != "wpa" && mode != "wpa2" && mode != "wpawpa2"){
 			inputCtrl(document.form.wl_crypto, 1);
@@ -1737,22 +1523,27 @@ function change_wep_type(mode, isload){
 	var value_array;
 	
 	free_options(document.form.wl_wep_x);
-	
-	//if(mode == "shared" || mode == "radius"){ //2009.03 magic
 	if(mode == "shared"){ //2009.0310 Lock
 		wep_type_array = new Array("WEP-64bits", "WEP-128bits");
 		value_array = new Array("1", "2");
 	}
 	else{
-		wep_type_array = new Array("None", "WEP-64bits", "WEP-128bits");
-		value_array = new Array("0", "1", "2");
+		if(document.form.wl_nmode_x.value != 2){
+			wep_type_array = new Array("None");
+			value_array = new Array("0");	
+		}
+		else{
+			wep_type_array = new Array("None", "WEP-64bits", "WEP-128bits");
+			value_array = new Array("0", "1", "2");
+		}
 	}
 
 	add_options_x2(document.form.wl_wep_x, wep_type_array, value_array, cur_wep);
 	
 	if(mode == "psk" || mode == "psk2" || mode == "pskpsk2" || mode == "wpa" || mode == "wpa2" || mode == "wpawpa2" || mode == "radius") //2009.03 magic
 		document.form.wl_wep_x.value = "0";
-	change_wlweptype(document.form.wl_wep_x, "WLANConfig11b", isload);
+		
+	change_wlweptype(document.form.wl_wep_x, isload);
 }
 
 function insertExtChannelOption(){
@@ -2151,7 +1942,7 @@ function insertExtChannelOption_5g(){
 				var x = document.form.wl_nctrlsb;
 				//x.remove(x.selectedIndex);
 				free_options(x);
-				add_a_option(x, "lower", "<#Auto#>");
+				add_option(x, "<#Auto#>", "lower");
 				x.selectedIndex = 0;
 }
 
@@ -2193,7 +1984,7 @@ function insertExtChannelOption_2g(){
 		else if ((CurrentCh >= 5) && (CurrentCh <= 7)){
 			x.options[0].text = "Lower";
 			x.options[0].value = "lower";
-			add_a_option(document.form.wl_nctrlsb, "upper", "Upper");
+			add_option(document.form.wl_nctrlsb, "Upper", "upper");
 			if (document.form.wl_nctrlsb_old.value == "upper")
 				document.form.wl_nctrlsb.options.selectedIndex=1;
 			
@@ -2206,7 +1997,7 @@ function insertExtChannelOption_2g(){
 			x.options[0].text = "Upper";
 			x.options[0].value = "upper";
 			if (option_length >=14){
-				add_a_option(document.form.wl_nctrlsb, "lower", "Lower");
+				add_option(document.form.wl_nctrlsb, "Lower", "lower");
 				if (document.form.wl_nctrlsb_old.value == "lower")
 					document.form.wl_nctrlsb.options.selectedIndex=1;
 			}
@@ -2215,7 +2006,7 @@ function insertExtChannelOption_2g(){
 			x.options[0].text = "Upper";
 			x.options[0].value = "upper";
 			if (option_length > 14){
-				add_a_option(document.form.wl_nctrlsb, "lower", "Lower");
+				add_option(document.form.wl_nctrlsb, "Lower", "lower");
 				if (document.form.wl_nctrlsb_old.value == "lower")
 					document.form.wl_nctrlsb.options.selectedIndex=1;
 			}
@@ -2235,9 +2026,10 @@ function insertExtChannelOption_2g(){
 
 function wl_auth_mode_change(isload){
 	var mode = document.form.wl_auth_mode_x.value;
+	var wireless_mode = document.form.wl_nmode_x.value;
 	var i, cur, algos;
 	inputCtrl(document.form.wl_wep_x,  1);
-	
+
 	/* enable/disable crypto algorithm */
 	if(mode == "wpa" || mode == "wpa2" || mode == "wpawpa2" || mode == "psk" || mode == "psk2" || mode == "pskpsk2")
 		inputCtrl(document.form.wl_crypto,  1);
@@ -2251,7 +2043,7 @@ function wl_auth_mode_change(isload){
 		inputCtrl(document.form.wl_wpa_psk,  0);
 
 	/* update wl_crypto */
-	if(mode == "psk" || mode == "psk2" || mode == "pskpsk2"){
+	if(mode == "psk" || mode == "psk2" || mode == "pskpsk2" || mode == "wpa" || mode == "wpa2" ||mode == "wpawpa2"){
 		/* Save current crypto algorithm */
 		for(var i = 0; i < document.form.wl_crypto.length; i++){
 			if(document.form.wl_crypto[i].selected){
@@ -2259,66 +2051,20 @@ function wl_auth_mode_change(isload){
 				break;
 			}
 		}
-		
-			opts = document.form.wl_auth_mode_x.options;
-			
-			if(opts[opts.selectedIndex].text == "WPA-Personal")
-				algos = new Array("TKIP");
-			else if(opts[opts.selectedIndex].text == "WPA2-Personal")
-				algos = new Array("AES");
-			else
-				algos = new Array("AES", "TKIP+AES");
-				//algos = new Array("TKIP", "AES", "TKIP+AES");
+
+		opts = document.form.wl_auth_mode_x.options;
+		if(opts[opts.selectedIndex].text == "WPA-Personal" || opts[opts.selectedIndex].text == "WPA-Enterprise")
+			algos = new Array("TKIP");
+		else if(opts[opts.selectedIndex].text == "WPA2-Personal" || opts[opts.selectedIndex].text == "WPA2-Enterprise")
+			algos = new Array("AES");
+		else
+			algos = new Array("AES", "TKIP+AES");
 		
 		/* Reconstruct algorithm array from new crypto algorithms */
 		document.form.wl_crypto.length = algos.length;
 		for(i=0; i<algos.length; i++){
 			document.form.wl_crypto[i] = new Option(algos[i], algos[i].toLowerCase());
-			document.form.wl_crypto[i].value = algos[i].toLowerCase();
-			
-			if(algos[i].toLowerCase() == cur)
-				document.form.wl_crypto[i].selected = true;
-		}
-	}
-	else if(mode == "wpa" || mode == "wpawpa2"){
-		for(var i = 0; i < document.form.wl_crypto.length; i++){
-			if(document.form.wl_crypto[i].selected){
-				cur = document.form.wl_crypto[i].value;
-				break;
-			}
-		}
-		
-		opts = document.form.wl_auth_mode_x.options;
-		if(opts[opts.selectedIndex].text == "WPA-Enterprise")
-			algos = new Array("TKIP");
-		else
-			algos = new Array("AES", "TKIP+AES");
-			//algos = new Array("TKIP", "AES", "TKIP+AES");
-		
-		document.form.wl_crypto.length = algos.length;
-		for(i=0; i<algos.length; i++){
-			document.form.wl_crypto[i] = new Option(algos[i], algos[i].toLowerCase());
-			document.form.wl_crypto[i].value = algos[i].toLowerCase();
-			
-			if(algos[i].toLowerCase() == cur)
-				document.form.wl_crypto[i].selected = true;
-		}
-	}
-	else if(mode == "wpa2"){
-		for(var i = 0; i < document.form.wl_crypto.length; i++){
-			if(document.form.wl_crypto[i].selected){
-				cur = document.form.wl_crypto[i].value;
-				break;
-			}
-		}
-		
-		algos = new Array("AES");
-		
-		document.form.wl_crypto.length = algos.length;
-		for(i=0; i<algos.length; i++){
-			document.form.wl_crypto[i] = new Option(algos[i], algos[i].toLowerCase());
-			document.form.wl_crypto[i].value = algos[i].toLowerCase();
-			
+			document.form.wl_crypto[i].value = algos[i].toLowerCase();	
 			if(algos[i].toLowerCase() == cur)
 				document.form.wl_crypto[i].selected = true;
 		}
@@ -2375,9 +2121,6 @@ function showhide(element, sh)
 		document.layers[element].display = status;
 	}
 }
-
-var pageChanged = 0;
-var pageChangedCount = 0;
 
 function valid_IP_form(obj, flag){
 	if(obj.value == ""){
@@ -2707,14 +2450,14 @@ function wep_encryption_change(obj){
 /* Handle Authentication Method changed */
 function authentication_method_change(obj){
 	wl_auth_mode_change(0);
-/*
-	if(obj.value == "psk" || obj.value == "psk2" || obj.value == "pskpsk2" || obj.name == "wl_crypto"){
+	
+	//disable temporary, Jieming added
+	/*if(obj.value == "psk" || obj.value == "psk2" || obj.value == "pskpsk2" || obj.name == "wl_crypto"){
 		document.form.wl_wpa_psk.focus();
 	}
 	else if(obj.value == "shared"){ 
 		document.form.wl_key.focus();
-	}
-*/
+	}*/
 		
 	//nmode_limitation();
 	automode_hint();

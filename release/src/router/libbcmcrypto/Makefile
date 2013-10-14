@@ -14,7 +14,7 @@
 
 include $(TOP)/.config
 
-CFLAGS	+= -Wsign-compare -I. -I../httpd -I$(SRCBASE)/include -Wall -fPIC
+CFLAGS	+= -Wsign-compare -I. -I$(SRCBASE)/common/include -I../httpd -I$(SRCBASE)/include -Wall -fPIC
 ifeq ($(RTCONFIG_BCMARM),y)
 CFLAGS	+= -I$(SRCBASE)/common/include
 endif

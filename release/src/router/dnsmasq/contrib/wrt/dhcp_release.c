@@ -255,10 +255,6 @@ int main(int argc, char **argv)
   struct ifreq ifr;
   int fd = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
   int nl = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
-  struct iovec iov;
- 
-  iov.iov_len = 200;
-  iov.iov_base = malloc(iov.iov_len);
 
   if (argc < 4 || argc > 5)
     { 

@@ -156,6 +156,17 @@ function initial(){
 	}
 	else{
 		if(next_page == "/qis/QIS_finish.htm"){
+			if(parent.parent.isWLclient()){		// for wireless client and without page modifying
+				if(parent.parent.ISMOBILE){
+					alert("<#DrSurf_sweet_advise1#>");
+				}
+				else{
+					parent.parent.dr_advise();
+					setTimeout("showdr_advise();", 10000);
+					return false;
+				}
+			}
+			
 			if(navigator.userAgent.indexOf("Opera")  >= 0)
 				setTimeout("qis_delay_redirect('/qis/QIS_finish.htm');", restart_time*1000);
 			else	

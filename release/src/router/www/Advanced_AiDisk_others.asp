@@ -244,7 +244,7 @@ function done_validating(action){
                                         		<a class="hintstyle" href="javascript:void(0);" onClick="openHint(17,9);"><#ShareNode_FTPLANG_itemname#></a>
                                         </th>
                                         <td>
-                                                <select name="ftp_lang" class="input_option" onChange="return change_common(this, 'Storage', 'ftp_lang');">
+                                                <select name="ftp_lang" class="input_option">
                                                         <option value="CN" <% nvram_match("ftp_lang", "CN", "selected"); %>>GBK</option><!-- <#ShareNode_FTPLANG_optionname3#> -->
                                                         <option value="TW" <% nvram_match("ftp_lang", "TW", "selected"); %>>Big5</option><!-- <#ShareNode_FTPLANG_optionname2#> -->
                                                         <option value="EN" <% nvram_match("ftp_lang", "EN", "selected"); %>>UTF-8</option><!--<#ShareNode_FTPLANG_optionname1#>-->

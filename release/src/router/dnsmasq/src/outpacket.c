@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2012 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2013 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -70,9 +70,9 @@ void *put_opt6(void *data, size_t len)
 {
   void *p;
 
-  if ((p = expand(len)))
+  if ((p = expand(len)) && data)
     memcpy(p, data, len);   
-
+  
   return p;
 }
   

@@ -42,7 +42,7 @@
 
 #include "sys-socket.h"
 
-#define DBG_ENABLE_CONNECTIONS 1
+#define DBG_ENABLE_CONNECTIONS 0
 #define DBE DBG_ENABLE_CONNECTIONS
 
 typedef struct {
@@ -454,6 +454,7 @@ static int connection_handle_write_prepare(server *srv, connection *con) {
 		case HTTP_METHOD_GETROUTERMAC:
 		case HTTP_METHOD_GETFIRMVER:
 		case HTTP_METHOD_GETROUTERINFO:
+		case HTTP_METHOD_GETNOTICE:
 		case HTTP_METHOD_GSLL:
 		case HTTP_METHOD_REMOVESL:
 		case HTTP_METHOD_GETLATESTVER:
@@ -464,6 +465,8 @@ static int connection_handle_write_prepare(server *srv, connection *con) {
 		case HTTP_METHOD_GETTHUMBIMAGE:
 		case HTTP_METHOD_GETPRODUCTICON:
 		case HTTP_METHOD_GETVIDEOSUBTITLE:
+		case HTTP_METHOD_UPLOADTOFACEBOOK:
+		case HTTP_METHOD_UPLOADTOFLICKR:
 		   	//Cdbg(DBE,"http method= %s break;",connection_get_state(con->request.http_method));
 			break;
 		case HTTP_METHOD_OPTIONS:

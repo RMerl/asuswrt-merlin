@@ -27,18 +27,17 @@
 
 #include "rc.h"
 
-#include<stdlib.h>
-#include<stdio.h>
-#include<net/if_arp.h>
-#include<time.h>
-#include<signal.h>
-#include<bcmnvram.h>
-#include<shutils.h>
-#include<sys/time.h>
-#include<sys/ioctl.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <net/if_arp.h>
+#include <time.h>
+#include <signal.h>
+#include <bcmnvram.h>
+#include <shutils.h>
+#include <sys/time.h>
+#include <sys/ioctl.h>
 #include <sys/sysinfo.h>
-#include<syslog.h>
-#include<stdarg.h>
+#include <stdarg.h>
 #include <arpa/inet.h>	// oleg patch
 #include <string.h>	// oleg patch
 #include <bcmdevs.h>
@@ -382,20 +381,6 @@ int pppstatus(void)
 	else if(strstr(buf, "Failed to authenticate ourselves to peer")) return WAN_STOPPED_REASON_PPP_AUTH_FAIL;
 	else if(strstr(buf, "Terminating connection due to lack of activity")) return WAN_STOPPED_REASON_PPP_LACK_ACTIVITY;
 	else return WAN_STOPPED_REASON_NONE;
-}
-
-void logmessage(char *logheader, char *fmt, ...)
-{
-	va_list args;
-	char buf[512];
-
-	va_start(args, fmt);
-
-	vsnprintf(buf, sizeof(buf), fmt, args);
-	openlog(logheader, 0, 0);
-	syslog(0, buf);
-	closelog();
-	va_end(args);
 }
 
 void usage_exit(const char *cmd, const char *help)

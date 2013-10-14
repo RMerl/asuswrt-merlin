@@ -4121,73 +4121,76 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 void
 del_samba_rules(void)
 {
-	char ifname[IFNAMSIZ];
+        char ifname[IFNAMSIZ];
+	char *lan_ip = nvram_safe_get("lan_ipaddr");
 
-	strncpy(ifname, nvram_safe_get("lan_ifname"), IFNAMSIZ);
+        strncpy(ifname, nvram_safe_get("lan_ifname"), IFNAMSIZ);
 
-	/* delete existed rules */
-	eval("iptables", "-t", "raw", "-D", "PREROUTING", "-i", ifname, "-p", "tcp",
-		"--dport", "137:139", "-j", "NOTRACK");
-	eval("iptables", "-t", "raw", "-D", "PREROUTING", "-i", ifname, "-p", "tcp",
-		"--dport", "445", "-j", "NOTRACK");
-	eval("iptables", "-t", "raw", "-D", "PREROUTING", "-i", ifname, "-p", "udp",
-		"--dport", "137:139", "-j", "NOTRACK");
-	eval("iptables", "-t", "raw", "-D", "PREROUTING", "-i", ifname, "-p", "udp",
-		"--dport", "445", "-j", "NOTRACK");
-	eval("iptables", "-t", "raw", "-D", "OUTPUT", "-o", ifname, "-p", "tcp",
-		"--sport", "137:139", "-j", "NOTRACK");
-	eval("iptables", "-t", "raw", "-D", "OUTPUT", "-o", ifname, "-p", "tcp",
-		"--sport", "445", "-j", "NOTRACK");
-	eval("iptables", "-t", "raw", "-D", "OUTPUT", "-o", ifname, "-p", "udp",
-		"--sport", "137:139", "-j", "NOTRACK");
-	eval("iptables", "-t", "raw", "-D", "OUTPUT", "-o", ifname, "-p", "udp",
-		"--sport", "445", "-j", "NOTRACK");
-
-	eval("iptables", "-t", "filter", "-D", "INPUT", "-i", ifname, "-p", "udp",
-		"--dport", "137:139", "-j", "ACCEPT");
-	eval("iptables", "-t", "filter", "-D", "INPUT", "-i", ifname, "-p", "udp",
-		"--dport", "445", "-j", "ACCEPT");
-	eval("iptables", "-t", "filter", "-D", "INPUT", "-i", ifname, "-p", "tcp",
-		"--dport", "137:139", "-j", "ACCEPT");
-	eval("iptables", "-t", "filter", "-D", "INPUT", "-i", ifname, "-p", "tcp",
-		"--dport", "445", "-j", "ACCEPT");
+        /* delete existed rules */
+        eval("iptables", "-t", "raw", "-D", "PREROUTING", "-i", ifname, "-d", lan_ip, "-p", "tcp",
+                "--dport", "137:139", "-j", "NOTRACK");
+        eval("iptables", "-t", "raw", "-D", "PREROUTING", "-i", ifname, "-d", lan_ip, "-p", "tcp",
+                "--dport", "445", "-j", "NOTRACK");
+        eval("iptables", "-t", "raw", "-D", "PREROUTING", "-i", ifname, "-d", lan_ip, "-p", "udp",
+                "--dport", "137:139", "-j", "NOTRACK");
+        eval("iptables", "-t", "raw", "-D", "PREROUTING", "-i", ifname, "-d", lan_ip, "-p", "udp",
+                "--dport", "445", "-j", "NOTRACK");
+        eval("iptables", "-t", "raw", "-D", "OUTPUT", "-p", "tcp",
+                "--sport", "137:139", "-j", "NOTRACK");
+        eval("iptables", "-t", "raw", "-D", "OUTPUT", "-p", "tcp",
+                "--sport", "445", "-j", "NOTRACK");
+        eval("iptables", "-t", "raw", "-D", "OUTPUT", "-p", "udp",
+                "--sport", "137:139", "-j", "NOTRACK");
+        eval("iptables", "-t", "raw", "-D", "OUTPUT", "-p", "udp",
+                "--sport", "445", "-j", "NOTRACK");
+/*
+        eval("iptables", "-t", "filter", "-D", "INPUT", "-i", ifname, "-p", "udp",
+                "--dport", "137:139", "-j", "ACCEPT");
+        eval("iptables", "-t", "filter", "-D", "INPUT", "-i", ifname, "-p", "udp",
+                "--dport", "445", "-j", "ACCEPT");
+        eval("iptables", "-t", "filter", "-D", "INPUT", "-i", ifname, "-p", "tcp",
+                "--dport", "137:139", "-j", "ACCEPT");
+        eval("iptables", "-t", "filter", "-D", "INPUT", "-i", ifname, "-p", "tcp",
+                "--dport", "445", "-j", "ACCEPT");
+*/
 }
 
-void
 add_samba_rules(void)
 {
-	char ifname[IFNAMSIZ];
+        char ifname[IFNAMSIZ];
+	char *lan_ip = nvram_safe_get("lan_ipaddr");
 
-	strncpy(ifname, nvram_safe_get("lan_ifname"), IFNAMSIZ);
+        strncpy(ifname, nvram_safe_get("lan_ifname"), IFNAMSIZ);
 
         /* Add rules to disable conntrack on SMB ports to reduce CPU loading
 	 * for SAMBA storage application
 	 */
-	eval("iptables", "-t", "raw", "-A", "PREROUTING", "-i", ifname, "-p", "tcp",
-		"--dport", "137:139", "-j", "NOTRACK");
-	eval("iptables", "-t", "raw", "-A", "PREROUTING", "-i", ifname, "-p", "tcp",
-		"--dport", "445", "-j", "NOTRACK");
-	eval("iptables", "-t", "raw", "-A", "PREROUTING", "-i", ifname, "-p", "udp",
-		"--dport", "137:139", "-j", "NOTRACK");
-	eval("iptables", "-t", "raw", "-A", "PREROUTING", "-i", ifname, "-p", "udp",
-		"--dport", "445", "-j", "NOTRACK");
-	eval("iptables", "-t", "raw", "-A", "OUTPUT", "-o", ifname, "-p", "tcp",
-		"--sport", "137:139", "-j", "NOTRACK");
-	eval("iptables", "-t", "raw", "-A", "OUTPUT", "-o", ifname, "-p", "tcp",
-		"--sport", "445", "-j", "NOTRACK");
-	eval("iptables", "-t", "raw", "-A", "OUTPUT", "-o", ifname, "-p", "udp",
-		"--sport", "137:139", "-j", "NOTRACK");
-	eval("iptables", "-t", "raw", "-A", "OUTPUT", "-o", ifname, "-p", "udp",
-		"--sport", "445", "-j", "NOTRACK");
-
-	eval("iptables", "-t", "filter", "-I", "INPUT", "-i", ifname, "-p", "udp",
-		"--dport", "137:139", "-j", "ACCEPT");
-	eval("iptables", "-t", "filter", "-I", "INPUT", "-i", ifname, "-p", "udp",
+        eval("iptables", "-t", "raw", "-A", "PREROUTING", "-i", ifname, "-d", lan_ip, "-p", "tcp",
+                "--dport", "137:139", "-j", "NOTRACK");
+        eval("iptables", "-t", "raw", "-A", "PREROUTING", "-i", ifname, "-d", lan_ip, "-p", "tcp",
+                "--dport", "445", "-j", "NOTRACK");
+        eval("iptables", "-t", "raw", "-A", "PREROUTING", "-i", ifname, "-d", lan_ip, "-p", "udp",
+                "--dport", "137:139", "-j", "NOTRACK");
+        eval("iptables", "-t", "raw", "-A", "PREROUTING", "-i", ifname, "-d", lan_ip, "-p", "udp",
+                "--dport", "445", "-j", "NOTRACK");
+        eval("iptables", "-t", "raw", "-A", "OUTPUT", "-p", "tcp",
+                "--sport", "137:139", "-j", "NOTRACK");
+        eval("iptables", "-t", "raw", "-A", "OUTPUT", "-p", "tcp",
+                "--sport", "445", "-j", "NOTRACK");
+        eval("iptables", "-t", "raw", "-A", "OUTPUT", "-p", "udp",
+                "--sport", "137:139", "-j", "NOTRACK");
+        eval("iptables", "-t", "raw", "-A", "OUTPUT", "-p", "udp",
+                "--sport", "445", "-j", "NOTRACK");
+/*
+        eval("iptables", "-t", "filter", "-I", "INPUT", "-i", ifname, "-p", "udp",
+                "--dport", "137:139", "-j", "ACCEPT");
+        eval("iptables", "-t", "filter", "-I", "INPUT", "-i", ifname, "-p", "udp",
+                "--dport", "445", "-j", "ACCEPT");
+        eval("iptables", "-t", "filter", "-I", "INPUT", "-i", ifname, "-p", "tcp",
+                "--dport", "137:139", "-j", "ACCEPT");
+        eval("iptables", "-t", "filter", "-I", "INPUT", "-i", ifname, "-p", "tcp",
 		"--dport", "445", "-j", "ACCEPT");
-	eval("iptables", "-t", "filter", "-I", "INPUT", "-i", ifname, "-p", "tcp",
-		"--dport", "137:139", "-j", "ACCEPT");
-	eval("iptables", "-t", "filter", "-I", "INPUT", "-i", ifname, "-p", "tcp",
-		"--dport", "445", "-j", "ACCEPT");
+*/
 }
 #endif
 

@@ -7,7 +7,7 @@ Maintainer: ASUS
 Source: http://nw-dlcdnet.asus.com/asusware/mipsel/stable
 URL: https://192.168.1.1:443
 Description: webdav server
-Depends: uclibc-opt,pcre,sqlite,libxml2,openssl,libuclibc++,smartsync
+Depends: uclibc-opt,pcre,sqlite,libxml2,openssl,libuclibc++,smartsync,libcurl
 Suggests: 
 Conflicts: 
 Enabled: yes

@@ -348,7 +348,6 @@ extern void start_lan_wlport(void);
 extern void stop_lan_wlport(void);
 extern int wl_dev_exist(void);
 #ifdef RTCONFIG_RALINK
-extern char *wif_to_vif(char *wif);
 extern pid_t pid_from_file(char *pidfile);
 #endif
 #ifdef RTCONFIG_IPV6

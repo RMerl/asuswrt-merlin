@@ -599,6 +599,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_EMAIL/d" $(1); \
 		echo "RTCONFIG_EMAIL=y" >>$(1); \
 	fi; \
+	if [ "$(USER_LOW_RSSI)" = "y" ]; then \
+		sed -i "/RTCONFIG_USER_LOW_RSSI/d" $(1); \
+		echo "RTCONFIG_USER_LOW_RSSI=y" >>$(1); \
+	fi; \
 	if [ "$(USB)" = "USB" ]; then \
 		sed -i "/RTCONFIG_USB is not set/d" $(1); \
 		echo "RTCONFIG_USB=y" >>$(1); \

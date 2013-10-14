@@ -163,6 +163,10 @@ case "$1" in
 			ln -sf $APP_LIB/libssl.so.1.0.0 $APP_LINK_LIB/libssl.so.1
 			ln -sf $APP_LIB/libssl.so.1.0.0 $APP_LINK_LIB/libssl.so
 
+			#libcurl
+			ln -sf $APP_LIB/libcurl.so.4.2.0 $APP_LINK_LIB/libcurl.so.4
+			ln -sf $APP_LIB/libcurl.so.4.2.0 $APP_LINK_LIB/libcurl.so
+
 			killall -9 lighttpd-monitor&
 			killall -9 lighttpd&
 			killall -9 lighttpd-arpping&
@@ -278,6 +282,10 @@ case "$1" in
 
 		#libsmbclient
 		ln -sf $APP_LIB/libsmbclient.so.0 $APP_LINK_LIB/libsmbclient.so
+
+		#libcurl
+		ln -sf $APP_LIB/libcurl.so.4.2.0 $APP_LINK_LIB/libcurl.so.4
+		ln -sf $APP_LIB/libcurl.so.4.2.0 $APP_LINK_LIB/libcurl.so
 
 		killall -9 lighttpd-monitor&
 		killall -9 lighttpd&

@@ -3,9 +3,9 @@
 #PPPD := $(patsubst version,,$(PPPD))
 #PPPD := $(strip $(PPPD))
 
-default:  plugin pptpd
-client:  plugin
-server: default
+default: module plugin pptpd
+client: module plugin
+server: pptpd
 
 module:
 	echo Building kernel module
@@ -46,11 +46,11 @@ server_install: server
 	$(STRIP) $(INSTALLDIR)/accel-pptpd/usr/sbin/pptpctrl
 
 clean:
-	(cd kernel/driver; make clean)
-	(cd pppd_plugin; make clean)
-	(cd pptpd-1.3.3; make clean) || true
+	-(cd kernel/driver; make clean)
+	-(cd pppd_plugin; make clean)
+	-(cd pptpd-1.3.3; make clean)
 
 distclean:
-	(cd kernel/driver; make clean)
-	(cd pppd_plugin; make distclean)
-	(cd pptpd-1.3.3; make distclean) || true
+	-(cd kernel/driver; make clean)
+	-(cd pppd_plugin; make distclean)
+	-(cd pptpd-1.3.3; make distclean)

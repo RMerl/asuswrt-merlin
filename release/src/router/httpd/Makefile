@@ -3,7 +3,7 @@ include ../common.mak
 CFLAGS = -Os -Wall $(EXTRACFLAGS)
 CFLAGS += -I$(SRCBASE) -I$(SRCBASE)/include -I. -I$(TOP)/shared -I$(TOP)/zlib
 CFLAGS += -DASUS_DDNS -DTRANSLATE_ON_FLY -DFLASH_EMULATOR -DLinux -DWSC 
-
+CFLAGS += -I$(TOP)/push_log
 
 ifeq ($(RTCONFIG_RALINK),y)
 CFLAGS += -DRalink_WPS

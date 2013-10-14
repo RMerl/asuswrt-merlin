@@ -9,7 +9,7 @@ font-weight:lighter;
 background-color:#000;
 }
 
-.sicon, .bicon, .picon, .button, .ocButton, .ticon, #logo, #treeBanner, #help_image, .navigation li dt, .themes_ctrl, .alsearch, .image-inner-wrapper {
+.sicon, .bicon, .picon, .button, .ocButton, .ticon, #logo, #treeBanner, #help_image, .navigation li dt, .themes_ctrl, .alsearch, .image-inner-wrapper, .ui-icon {
 background:transparent url("style-theme.png") no-repeat top left;
 }
 
@@ -453,7 +453,7 @@ position:absolute;
 display:block;
 background-image:url("images/button_panel_bg.png");
 background-repeat:repeat-x;
-z-index:15;
+z-index:0;
 bottom:0px;
 border-left:1px solid;
 }
@@ -517,9 +517,11 @@ position:relative;
 background-position: -80px -175px;
 cursor:pointer;
 }
+/*
 #fileview .folderDiv.select {
 background-position: -80px -235px;
 }
+*/
 #fileview .folderDiv.sicon {
 background-position: 0 -430px;
 cursor:pointer;
@@ -531,57 +533,23 @@ position: absolute;
 left: 35px;
 top: 15px;
 }
-#fileview .selectDiv {
-background-position: -40px -390px;
-cursor:pointer;
-position: absolute;
-left: 25px;
-top: 10px;
-display:none;
-}
-
-#fileview .selectHintDiv {
-background-position: 0 -390px;
-position: absolute;
-left: 25px;
-top: 10px;
-display:none;
-}
 
 #fileview .checklist{
 position:relative;
 width:30px;
 height:40px;
-}
-
-#fileview .selectListDiv {
-background-position: -120px -390px;
-cursor:pointer;
-position: absolute;
-left: 0px;
-top: 0px;
-width:30px;
-height:40px;
-display:none;
-}
-
-#fileview .selectListHintDiv {
-background-position: -80px -390px;
-position: absolute;
-left: 0px;
-top: 0px;
-width:30px;
-height:40px;
-display:none;
+margin-top:7px;
 }
 
 #fileview .fileDiv {
 background-position: -160px -175px;
 cursor:pointer;
 }
+/*
 #fileview .fileDiv.select {
 background-position: -160px -235px;
 }
+*/
 #fileview .fileDiv.sicon {
 background-position: -40px -430px;
 cursor:pointer;
@@ -599,9 +567,11 @@ text-align:center;
 background-position: -240px -175px;
 cursor:pointer;
 }
+/*
 #fileview .imgfileDiv.select {
 background-position: -240px -235px;
 }
+*/
 #fileview .imgfileDiv.sicon {
 background-position: -80px -430px;
 cursor:pointer;
@@ -611,9 +581,11 @@ cursor:pointer;
 background-position: -320px -175px;
 cursor:pointer;
 }
+/*
 #fileview .videofileDiv.select {
 background-position: -320px -235px;
 }
+*/
 #fileview .videofileDiv.sicon {
 background-position: -120px -430px;
 cursor:pointer;
@@ -623,9 +595,10 @@ cursor:pointer;
 background-position: -400px -175px;
 cursor:pointer;
 }
+/*
 #fileview .audiofileDiv.select {
 background-position: -400px -235px;
-}
+}*/
 #fileview .audiofileDiv.sicon {
 background-position: -160px -430px;
 cursor:pointer;
@@ -634,10 +607,10 @@ cursor:pointer;
 #fileview .pptfileDiv {
 background-position: -480px -175px;
 cursor:pointer;
-}
+}/*
 #fileview .pptfileDiv.select {
 background-position: -480px -235px;
-}
+}*/
 #fileview .pptfileDiv.sicon {
 background-position: -200px -430px;
 cursor:pointer;
@@ -646,10 +619,10 @@ cursor:pointer;
 #fileview .docfileDiv {
 background-position: -560px -175px;
 cursor:pointer;
-}
+}/*
 #fileview .docfileDiv.select {
 background-position: -560px -235px;
-}
+}*/
 #fileview .docfileDiv.sicon {
 background-position: -240px -430px;
 cursor:pointer;
@@ -659,10 +632,10 @@ cursor:pointer;
 #fileview .xlsfileDiv {
 background-position: -640px -175px;
 cursor:pointer;
-}
+}/*
 #fileview .xlsfileDiv.select {
 background-position: -640px -235px;
-}
+}*/
 #fileview .xlsfileDiv.sicon {
 background-position: -280px -430px;
 cursor:pointer;
@@ -671,10 +644,10 @@ cursor:pointer;
 #fileview .pdffileDiv {
 background-position: -720px -175px;
 cursor:pointer;
-}
+}/*
 #fileview .pdffileDiv.select {
 background-position: -720px -235px;
-}
+}*/
 #fileview .pdffileDiv.sicon {
 background-position: -320px -430px;
 cursor:pointer;
@@ -724,6 +697,7 @@ width:120px;
 height:100px;
 text-align:center;
 margin:10px;
+position:relative;
 }
 
 #fileview .albumDiv:hover {
@@ -731,7 +705,6 @@ background-color:#00C2EB;
 }
 
 #fileview .albuminfo {
-/*width:120px;*/
 width:100%;
 height:20px;
 }
@@ -754,6 +727,7 @@ white-space: nowrap;
 width:100%;
 height:100%;
 table-layout: fixed;
+cursor:pointer;
 }
 
 #fileview .music-album {
@@ -764,6 +738,36 @@ height:200px;
 #fileview .music-album-x {
 width:160px;
 height:120px;
+}
+
+.item-check{
+position: absolute;
+left:5px;
+top:5px;
+width: 20px;
+height: 20px;
+display:none;
+background-position: -480px -430px;
+cursor: pointer;
+}
+.item-check:hover{
+background-position: -480px -450px;
+}
+.x-view-selected{
+background-position: -480px -470px;	
+}
+.x-view-selected:hover{
+background-position: -480px -490px;	
+}
+.item-menu{
+position: absolute;
+right:5px;
+top:5px;
+width: 20px;
+height: 20px;
+display:none;
+background-position: -500px -430px;	
+cursor: pointer;
 }
 /*--------------------------------------*/
 
@@ -1514,4 +1518,205 @@ line-height: 16px;
 height: 16px;
 color: #ccc;
 margin: 1px 0;
+}
+/*--------------------------------------------*/
+
+.select-window {
+position: absolute;
+z-index: 1000;
+visibility: visible;
+left: 50%;
+top: 1px;
+width: 350px;
+height: 30px;
+background-color: #F9EDBE;
+border-radius: 7px;
+border: solid 1px #F5B438;
+display:none;
+}
+
+.select-window-panel{
+width:100%;
+padding: 1px;
+margin: 0;
+overflow: hidden;
+}
+
+.select-window-toolbar-ct{
+width:100%;	
+height: 28px;
+}
+
+.select-window-toolbar-right{
+padding-right:10px;
+}
+
+.select-window-toolbar-ct td{
+font: 12px verdana, tahoma, arial, helvetica, sans-serif;
+white-space: nowrap;
+}
+
+.select-window .selected-desc-text {
+font-size: 12px;
+color: rgb(60, 70, 80);
+padding-left: 18px;
+}
+
+.x-btn-text {
+height: 16px;
+font-size: 12px;
+color: #E79800;
+text-decoration: underline;
+border: 0 none;
+background-color: transparent;
+padding-left: 3px;
+padding-right: 3px;
+cursor: pointer;
+margin: 0;
+overflow: visible;
+width: auto;
+-moz-outline: 0 none;
+outline: 0 none;
+}
+.x-btn-text:hover{
+color:#ff0000;	
+}
+
+/*!
+ * jQuery contextMenu - Plugin for simple contextMenu handling
+ *
+ * Version: git-master
+ *
+ * Authors: Rodney Rehm, Addy Osmani (patches for FF)
+ * Web: http://medialize.github.com/jQuery-contextMenu/
+ *
+ * Licensed under
+ *   MIT License http://www.opensource.org/licenses/mit-license
+ *   GPL v3 http://opensource.org/licenses/GPL-3.0
+ *
+ */
+
+.context-menu-list {
+margin:0; 
+padding:0;
+min-width: 120px;
+max-width: 250px;
+display: inline-block;
+position: absolute;
+list-style-type: none;
+border: 1px solid #DDD;
+background: #EEE;    
+-webkit-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+-moz-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+-ms-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+-o-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+font-family: Verdana, Arial, Helvetica, sans-serif;
+font-size: 11px;
+}
+
+.context-menu-item {
+padding: 2px 24px 2px 24px;
+background-color: #EEE;
+position: relative;
+-webkit-user-select: none;
+-moz-user-select: -moz-none;
+-ms-user-select: none;
+user-select: none;
+}
+
+.context-menu-separator {
+padding-bottom:0;
+border-bottom: 1px solid #DDD;
+}
+
+.context-menu-item > label > input,
+.context-menu-item > label > textarea {
+-webkit-user-select: text;
+-moz-user-select: text;
+-ms-user-select: text;
+user-select: text;
+}
+
+.context-menu-item.hover {
+cursor: pointer;
+background-color: #00BFFF;
+}
+
+.context-menu-item.disabled {
+color: #666;
+}
+
+.context-menu-input.hover,
+.context-menu-item.disabled.hover {
+cursor: default;
+background-color: #EEE;
+}
+
+.context-menu-submenu:after {
+content: ">";
+color: #666;
+position: absolute;
+top: 0;
+right: 3px;
+z-index: 1;
+}
+
+/* icons
+    #protip:
+    In case you want to use sprites for icons (which I would suggest you do) have a look at
+    http://css-tricks.com/13224-pseudo-spriting/ to get an idea of how to implement 
+    .context-menu-item.icon:before {}
+ */
+.context-menu-item.icon { min-height: 18px; background-repeat: no-repeat; background-position: 4px 2px; }
+.context-menu-item.icon-edit { background-image: url(images/page_white_edit.png); }
+.context-menu-item.icon-cut { background-image: url(images/cut.png); }
+.context-menu-item.icon-copy { background-image: url(images/page_white_copy.png); }
+.context-menu-item.icon-paste { background-image: url(images/page_white_paste.png); }
+.context-menu-item.icon-delete { background-image: url(images/page_white_delete.png); }
+.context-menu-item.icon-add { background-image: url(images/page_white_add.png); }
+.context-menu-item.icon-quit { background-image: url(images/door.png); }
+
+/* vertically align inside labels */
+.context-menu-input > label > * { vertical-align: top; }
+
+/* position checkboxes and radios as icons */
+.context-menu-input > label > input[type="checkbox"],
+.context-menu-input > label > input[type="radio"] {
+    margin-left: -17px;
+}
+.context-menu-input > label > span {
+    margin-left: 5px;
+}
+
+.context-menu-input > label,
+.context-menu-input > label > input[type="text"],
+.context-menu-input > label > textarea,
+.context-menu-input > label > select {
+    display: block;
+    width: 100%;
+    
+    -webkit-box-sizing: border-box;
+       -moz-box-sizing: border-box;
+        -ms-box-sizing: border-box;
+         -o-box-sizing: border-box;
+            box-sizing: border-box;
+}
+
+.context-menu-input > label > textarea {
+    height: 100px;
+}
+.context-menu-item > .context-menu-list {
+    display: none;
+    /* re-positioned by js */
+    right: -5px;
+    top: 5px;
+}
+
+.context-menu-item.hover > .context-menu-list {
+    display: block;
+}
+
+.context-menu-accesskey {
+    text-decoration: underline;
 }

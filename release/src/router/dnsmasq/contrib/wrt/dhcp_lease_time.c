@@ -20,7 +20,7 @@
    nothing is sent to stdout a message is sent to stderr and a
    non-zero error code is returned.
 
-   Requires dnsmasq 2.40 or later. 
+   This version requires dnsmasq 2.67 or later. 
 */
 
 #include <sys/types.h> 
@@ -46,6 +46,7 @@
 #define OPTION_LEASE_TIME        51
 #define OPTION_OVERLOAD          52
 #define OPTION_MESSAGE_TYPE      53
+#define OPTION_REQUESTED_OPTIONS 55
 #define OPTION_END               255
 #define DHCPINFORM               8
 #define DHCP_SERVER_PORT         67
@@ -167,6 +168,12 @@ int main(int argc, char **argv)
   *(p++) = 1;
   *(p++) = DHCPINFORM;
 
+  /* Explicity request the lease time, it won't be sent otherwise:
+     this is a dnsmasq extension, not standard. */
+  *(p++) = OPTION_REQUESTED_OPTIONS;
+  *(p++) = 1;
+  *(p++) = OPTION_LEASE_TIME;
+  
   *(p++) = OPTION_END;
  
   dest.sin_family = AF_INET; 

@@ -59,7 +59,7 @@ function setScenerion(mode){
 		parent.document.QKform.sw_mode.value = 2;
 		parent.localAP_support = true;
 		$j("#Senario").attr("src", "/images/New_ui/re.jpg");
-		$j("#Senario").attr("style", "height:132px");
+		$j("#Senario").attr("style", "height:");
 		$j("#mode_desc").html(pstaDesc);	
 		document.form.sw_mode_radio[1].focus();
 		document.form.sw_mode_radio[1].checked = true;
@@ -67,7 +67,7 @@ function setScenerion(mode){
 	else if(mode == '3'){
 		parent.document.QKform.sw_mode.value = 3;
 		$j("#Senario").attr("src", "/images/New_ui/ap.jpg");
-		$j("#Senario").attr("style", "height:132px");
+		$j("#Senario").attr("style", "height:");
 		$j("#mode_desc").html("<#OP_AP_desc#><br><span style=\"color:#FC0\"><#deviceDiscorvy#></span>");		
 		document.form.sw_mode_radio[2].focus();
 		document.form.sw_mode_radio[2].checked = true;
@@ -79,12 +79,13 @@ function setScenerion(mode){
 		pstaDesc += "<#OP_MB_desc3#>";
 		pstaDesc += "<#OP_MB_desc4#>";
 		pstaDesc += "<#OP_MB_desc5#>";
+		pstaDesc += "<br>In media bridge mode, the wireless only connect to the P-AP, client devices need connect to media bridge with network cable.";
 		pstaDesc += "<br><span style=\"color:#FC0\"><#use_DevDiscoveryUtil#></span>";
 
 		parent.document.QKform.sw_mode.value = 4;
 		parent.localAP_support = false;		
 		$j("#Senario").attr("src", "/images/New_ui/mb.jpg");
-		$j("#Senario").attr("style", "height:190px");
+		$j("#Senario").attr("style", "height:170px");
 		$j("#mode_desc").html(pstaDesc);
 		document.form.sw_mode_radio[3].focus();
 		document.form.sw_mode_radio[3].checked = true;
@@ -92,7 +93,7 @@ function setScenerion(mode){
 	else{
 		parent.document.QKform.sw_mode.value = 1;
 		$j("#Senario").attr("src", "/images/New_ui/rt.jpg");
-		$j("#Senario").attr("style", "height:132px");
+		$j("#Senario").attr("style", "height:");
 		$j("#mode_desc").html("<#OP_GW_desc#>");
 		document.form.sw_mode_radio[0].focus();
 		document.form.sw_mode_radio[0].checked = true;
@@ -146,46 +147,61 @@ function submitenter(myfield,e){
 			<table width="100%">
 				<tr>
 					<td align="left">
-						<span class="description_down"><#OP_desc1#></span>
+						<div class="description_down"><#OP_desc1#></div>
 					</td>
-					<td align="right">
+					<!--td align="right">
 						<img onclick="parent.gotoIndex();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'">
-					</td>
+					</td-->
 				</tr>
 			</table>
 		</div>
 		<div style="margin:5px;" id="splitLine"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
 </div>
-<br/>
 
-	<div style="width:95%; margin:0 auto; padding-bottom:3px;" id="field_general">
-		<span style="font-size:16px; font-weight:bold;color:white;text-shadow: 1px 1px 0px black">
-			<span id="routerMode">
-				<input type="radio" name="sw_mode_radio" class="input" value="1" onclick="setScenerion(1);" <% nvram_match("sw_mode", "1", "checked"); %>><#OP_GW_item#>
-			</span>
-				&nbsp;&nbsp;
-			<span id="repeaterMode">
-				<input type="radio" name="sw_mode_radio" class="input" value="2" onclick="setScenerion(2);" <% nvram_match("sw_mode", "2", "checked"); %>>
-				<span id="repeaterMode_desc"><#OP_RE_item#></span>
-			</span>
-			&nbsp;&nbsp;
-			<span id="APMode">
-				<input type="radio" name="sw_mode_radio" class="input" value="3" onclick="setScenerion(3);" <% nvram_match("sw_mode", "3", "checked"); %>><#OP_AP_item#>
-			</span>
-			&nbsp;&nbsp;
-			<span id="MBMode">
-				<input type="radio" name="sw_mode_radio" class="input" value="4" onclick="setScenerion(4);" <% nvram_match("sw_mode", "4", "checked"); %>>Media bridge
-			</span>
+<div style="width:95%; margin:0 auto; padding-bottom:3px;" id="field_general">
+	<span style="font-size:16px; font-weight:bold;color:white;text-shadow: 1px 1px 0px black">
+		<span id="routerMode">
+			<input type="radio" name="sw_mode_radio" class="input" value="1" onclick="setScenerion(1);" <% nvram_match("sw_mode", "1", "checked"); %>><#OP_GW_item#>
 		</span>
-	<div id="mode_desc" style="font-family:Segoe UI, Arial, sans-serif;position:relative;display:block;margin-top:10px;margin-left:5px;height:60px;z-index:90;">
-			<#OP_GW_desc#>
-	</div>
-	<br/>
-	<div style="margin-top:55px;margin-bottom:50px;"><img id="Senario" width="100%" src="/images/New_ui/rt.jpg">
-	</div>	
-	<div id="applyBtn" class="apply_gen">
-		<input type="submit" id="nextButton" value="<#CTL_next#>" class="button_gen" >
-	</div>
+			&nbsp;&nbsp;
+		<span id="repeaterMode">
+			<input type="radio" name="sw_mode_radio" class="input" value="2" onclick="setScenerion(2);" <% nvram_match("sw_mode", "2", "checked"); %>>
+			<span id="repeaterMode_desc"><#OP_RE_item#></span>
+		</span>
+		&nbsp;&nbsp;
+		<span id="APMode">
+			<input type="radio" name="sw_mode_radio" class="input" value="3" onclick="setScenerion(3);" <% nvram_match("sw_mode", "3", "checked"); %>><#OP_AP_item#>
+		</span>
+		&nbsp;&nbsp;
+		<span id="MBMode">
+			<input type="radio" name="sw_mode_radio" class="input" value="4" onclick="setScenerion(4);" <% nvram_match("sw_mode", "4", "checked"); %>>Media bridge
+		</span>
+	</span>
+
+	<table height="350px">
+		<tr valign="top">
+			<td>
+				<div id="mode_desc" style="line-height: 18px;font-size:12px;font-family:Segoe UI, Arial, sans-serif;position:relative;display:block;margin-top:10px;margin-left:5px;z-index:90;">
+					<#OP_GW_desc#>
+				</div>
+			</td>
+		</tr>
+	
+		<tr>
+			<td>
+				<img style="margin-top: 10px;margin-bottom: 10px;" id="Senario" width="100%" src="/images/New_ui/rt.jpg">
+			</td>
+		</tr>
+	
+		<tr>
+			<td>
+				<div id="applyBtn" class="apply_gen">
+					<input type="submit" id="nextButton" value="<#CTL_next#>" class="button_gen" >
+				</div>
+			</td>
+		</tr>
+	</table>
+		
 </div>
 
 <div style="display:none;margin-top:-20px;" id="field_mobile">

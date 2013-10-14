@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2012 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2013 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -233,6 +233,29 @@ char *cache_get_name(struct crec *crecp)
     return crecp->name.namep;
   
   return crecp->name.sname;
+}
+
+struct crec *cache_enumerate(int init)
+{
+  static int bucket;
+  static struct crec *cache;
+
+  if (init)
+    {
+      bucket = 0;
+      cache = NULL;
+    }
+  else if (cache && cache->hash_next)
+    cache = cache->hash_next;
+  else
+    {
+       cache = NULL; 
+       while (bucket < hash_size)
+	 if ((cache = hash_table[bucket++]))
+	   break;
+    }
+  
+  return cache;
 }
 
 static int is_outdated_cname_pointer(struct crec *crecp)
@@ -948,38 +971,6 @@ void cache_reload(void)
       total_size = read_hostsfile(ah->fname, ah->index, total_size, (struct crec **)daemon->packet, revhashsz);
 } 
 
-char *get_domain(struct in_addr addr)
-{
-  struct cond_domain *c;
-
-  for (c = daemon->cond_domain; c; c = c->next)
-    if (!c->is6 &&
-	ntohl(addr.s_addr) >= ntohl(c->start.s_addr) &&
-        ntohl(addr.s_addr) <= ntohl(c->end.s_addr))
-      return c->domain;
-
-  return daemon->domain_suffix;
-}
-
-
-#ifdef HAVE_IPV6
-char *get_domain6(struct in6_addr *addr)
-{
-  struct cond_domain *c;
-
-  u64 addrpart = addr6part(addr);
-  
-  for (c = daemon->cond_domain; c; c = c->next)
-    if (c->is6 &&
-	is_same_net6(addr, &c->start6, 64) &&
-	addrpart >= addr6part(&c->start6) &&
-        addrpart <= addr6part(&c->end6))
-      return c->domain;
-  
-  return daemon->domain_suffix;
-}
-#endif
-
 #ifdef HAVE_DHCP
 struct in_addr a_record_from_hosts(char *name, time_t now)
 {
@@ -1248,14 +1239,14 @@ char *record_source(int index)
   return "<unknown>";
 }
 
-void querystr(char *str, unsigned short type)
+void querystr(char *desc, char *str, unsigned short type)
 {
   unsigned int i;
   
-  sprintf(str, "query[type=%d]", type); 
+  sprintf(str, "%s[type=%d]", desc, type); 
   for (i = 0; i < (sizeof(typestr)/sizeof(typestr[0])); i++)
     if (typestr[i].type == type)
-      sprintf(str,"query[%s]", typestr[i].name);
+      sprintf(str,"%s[%s]", desc, typestr[i].name);
 }
 
 void log_query(unsigned int flags, char *name, struct all_addr *addr, char *arg)
@@ -1316,6 +1307,8 @@ void log_query(unsigned int flags, char *name, struct all_addr *addr, char *arg)
     source = arg;
   else if (flags & F_UPSTREAM)
     source = "reply";
+  else if (flags & F_AUTH)
+    source = "auth";
   else if (flags & F_SERVER)
     {
       source = "forwarded";

@@ -27,5 +27,5 @@ clean:
 
 install:
 	install -d $(INSTDIR)
-	for i in $(ra_dir_y) ; do install -D .prebuilt/$$i $(INSTDIR) ; done
-	install -D .prebuilt/asus-raether $(INSTDIR)
+	for i in $(ra_dir_y) ; do install -D prebuild/$$i $(INSTDIR) ; done
+	install -D prebuild/asus-raether $(INSTDIR)

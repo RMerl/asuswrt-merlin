@@ -33,8 +33,6 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <time.h>
-#include <syslog.h>
-#include <sys/klog.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
 #include <linux/if.h>

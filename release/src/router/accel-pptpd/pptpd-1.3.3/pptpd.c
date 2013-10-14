@@ -81,8 +81,6 @@ static char *lookup(char *);
 
 #ifdef BCRELAY
 static void launch_bcrelay();
-static void launch_bcrelay_br0();
-static void launch_bcrelay_ppp();
 static pid_t bcrelayfork;
 #endif
 
@@ -438,46 +436,6 @@ int main(int argc, char **argv)
 	}
 
 #ifdef BCRELAY
-#if 1 //Yau modified for dual way broadcast
-      if (strstr(bcrelay, "br0")) {
-             syslog(LOG_DEBUG, "CTRL: BCrelay incoming interface is %s", bcrelay);
-             /* Launch BCrelay  */
-#ifndef HAVE_FORK
-             switch(bcrelayfork = vfork()){
-#else
-             switch(bcrelayfork = fork()){
-#endif
-             case -1:        /* fork() error */
-                   syslog(LOG_ERR, "CTRL: Error forking to exec bcrelay");
-                   _exit(1);
-
-             case 0:         /* child */
-                   syslog(LOG_DEBUG, "CTRL (BCrelay Launcher): Launching BCrelay with pid %i", bcrelayfork);
-                   launch_bcrelay_br0();
-                   syslog(LOG_ERR, "CTRL (BCrelay Launcher): Failed to launch BCrelay.");
-                   _exit(1);
-             }
-         }
-         if (strstr(bcrelay, "ppp")) {
-             syslog(LOG_DEBUG, "CTRL: BCrelay incoming interface is %s", bcrelay);
-             /* Launch BCrelay  */
-#ifndef HAVE_FORK
-             switch(bcrelayfork = vfork()){
-#else
-             switch(bcrelayfork = fork()){
-#endif
-             case -1:        /* fork() error */
-                   syslog(LOG_ERR, "CTRL: Error forking to exec bcrelay");
-                   _exit(1);
-
-             case 0:         /* child */
-                   syslog(LOG_DEBUG, "CTRL (BCrelay Launcher): Launching BCrelay with pid %i", bcrelayfork);
-                   launch_bcrelay_ppp();
-                   syslog(LOG_ERR, "CTRL (BCrelay Launcher): Failed to launch BCrelay.");
-                   _exit(1);
-             }
-      }
-#else
       if (bcrelay) {
              syslog(LOG_DEBUG, "CTRL: BCrelay incoming interface is %s", bcrelay);
              /* Launch BCrelay  */
@@ -497,7 +455,6 @@ int main(int argc, char **argv)
                    _exit(1);
              }
        } /* End bcrelay */
-#endif
 #endif
 
 #ifdef CONFIG_NETtel
@@ -853,14 +810,19 @@ static void launch_bcrelay() {
   int an = 0;
 
       if (bcrelay) {
+	   char *outif = strchr(bcrelay, ',');
+	   if (outif == NULL)
+	         outif = "ppp[0-9].*";
+	   else *outif++ = '\0';
+
            syslog(LOG_DEBUG, "MGR: BCrelay incoming interface is %s", bcrelay);
-           syslog(LOG_DEBUG, "MGR: BCrelay outgoing interface is regexp ppp[0-9].*");
+           syslog(LOG_DEBUG, "MGR: BCrelay outgoing interface is regexp %s", outif);
 
 	   bcrelay_argv[an++] = BCRELAY_BIN;
 	   bcrelay_argv[an++] = "-i";
 	   bcrelay_argv[an++] = bcrelay;
 	   bcrelay_argv[an++] = "-o";
-	   bcrelay_argv[an++] = "ppp[0-9].*";
+	   bcrelay_argv[an++] = outif;
            if (!pptp_debug) {
 	         bcrelay_argv[an++] = "-n";
            }
@@ -868,50 +830,5 @@ static void launch_bcrelay() {
 
            execvp(bcrelay_argv[0], bcrelay_argv);
       }
-}
-//Yau add
-static void launch_bcrelay_br0() {
-  char *bcrelay_argv[8];
-  int an = 0;
-
-      if (strstr(bcrelay, "br0")) {
-           syslog(LOG_DEBUG, "MGR: BCrelay incoming interface is br0");
-           syslog(LOG_DEBUG, "MGR: BCrelay outgoing interface is regexp ppp[0-9].*");
-
-           bcrelay_argv[an++] = BCRELAY_BIN;
-           bcrelay_argv[an++] = "-i";
-           bcrelay_argv[an++] = "br0";
-           bcrelay_argv[an++] = "-o";
-           bcrelay_argv[an++] = "ppp[0-9].*";
-           if (!pptp_debug) {
-                 bcrelay_argv[an++] = "-n";
-           }
-           bcrelay_argv[an++] = NULL;
-
-           execvp(bcrelay_argv[0], bcrelay_argv);
-      }
-}
-
-static void launch_bcrelay_ppp() {
-  char *bcrelay_argv[8];
-  int an = 0;
-
-      if (strstr(bcrelay, "ppp")) {
-           syslog(LOG_DEBUG, "MGR: BCrelay incoming interface is regexp ppp[0-9].*");
-           syslog(LOG_DEBUG, "MGR: BCrelay outgoing interface is br0");
-
-           bcrelay_argv[an++] = BCRELAY_BIN;
-           bcrelay_argv[an++] = "-i";
-           bcrelay_argv[an++] = "ppp[0-9].*";
-           bcrelay_argv[an++] = "-o";
-           bcrelay_argv[an++] = "br0";
-           if (!pptp_debug) {
-                 bcrelay_argv[an++] = "-n";
-           }
-           bcrelay_argv[an++] = NULL;
-
-           execvp(bcrelay_argv[0], bcrelay_argv);
-      }
-
 }
 #endif

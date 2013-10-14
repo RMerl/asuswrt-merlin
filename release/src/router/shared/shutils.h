@@ -182,6 +182,20 @@ static inline char * strcat_r(const char *s1, const char *s2, char *buf)
 	     word[sizeof(word) - 1] = '\0', \
 	     next = strchr(next, ' '))
 
+/* Copy each token in wordlist delimited by ascii_58 into word */
+#define foreach_58(word, wordlist, next) \
+		for (next = &wordlist[strspn(wordlist, ":")], \
+				strncpy(word, next, sizeof(word)), \
+				word[strcspn(word, ":")] = '\0', \
+				word[sizeof(word) - 1] = '\0', \
+				next = strchr(next, ':'); \
+				strlen(word); \
+				next = next ? &next[strspn(next, ":")] : "", \
+				strncpy(word, next, sizeof(word)), \
+				word[strcspn(word, ":")] = '\0', \
+				word[sizeof(word) - 1] = '\0', \
+				next = strchr(next, ':'))
+
 /* Copy each token in wordlist delimited by ascii_60 into word */
 #define foreach_60(word, wordlist, next) \
 	for (next = &wordlist[strspn(wordlist, "<")], \

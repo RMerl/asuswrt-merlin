@@ -12,7 +12,7 @@
 # first. This favours, eg v2.63 over 2.63rc6.
 
 if which git >/dev/null 2>&1 && [ -d $1/.git ]; then
-     cd $1; git describe
+     cd $1; git describe | sed 's/^v//'
 elif grep '\$Format:%d\$' $1/VERSION >/dev/null 2>&1; then
 # unsubstituted VERSION, but no git available.
     echo UNKNOWN

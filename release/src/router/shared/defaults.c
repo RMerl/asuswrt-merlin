@@ -308,6 +308,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_phrase_x",		""	},	// Passphrase	// Add
 	{ "wl_lanaccess", 		"off"	},
 	{ "wl_expire", 			"0"	},
+	{ "wl_mbss", 		""	},
 #ifdef RTCONFIG_RALINK
 	{ "wl_TxPower",			"100" 	},
 #else
@@ -1528,7 +1529,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "isp_connect_time",		"0"},
 #endif
 	{ "Ate_version",		"1.0"},
-	{ "Ate_power_on_off_ver",	"2.3"},
+	{ "Ate_power_on_off_ver",	"2.4"},
 	{ "Ate_power_on_off_enable",	"0"},
 	{ "Ate_reboot_count",		"100"},
 	{ "Ate_rc_check",		"0"},
@@ -1541,8 +1542,15 @@ struct nvram_tuple router_defaults[] = {
 	{ "Ate_continue_fail",		"3"},
 	{ "dev_fail_reboot",		"3"},
 	{ "Ate_fw_fail",		"10"},
-	// Wireless parameters
-
+	{ "Ate_reboot_delay",		"1"},
+#ifdef RTCONFIG_EMAIL
+	{ "pushnotify_httplogin",		"1"},
+	{ "pushnotify_diskmonitor",		"1"},
+#endif
+#ifdef RTCONFIG_USER_LOW_RSSI
+	{ "wl_user_rssi",		"0"},		/* disabled by default, setting range: -70 ~ -90 */
+	{ "wl_lrc",			"2"},
+#endif
 	{ "webui_resolve_conn", "0"},
 	{ "led_disable", "0"},
 

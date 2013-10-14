@@ -142,7 +142,6 @@ var cloud_sync =decodeURIComponent('<% nvram_char_to_ascii("","share_link_host")
 /* type>user>password>url>rule>dir>enable */
 var cloud_synclist_array = cloud_sync.replace(/>/g, "&#62").replace(/</g, "&#60"); 
 var cloud_synclist_all = new Array(); 
-var isEdit = 0;
 
 var maxrulenum = 1;
 var rulenum = 1;
@@ -183,7 +182,6 @@ function initial(){
 	check_aicloud();
 	decode_router_synclist();
 	show_menu();
-	showAddTable();
 	showcloud_synclist();
 	document.aidiskForm.protocol.value = PROTOCOL;
 	initial_dir();
@@ -301,9 +299,9 @@ function showcloud_synclist(){
 						code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><img width="30px" src="/images/cloudsync/rssync.png"></td>';
 					else if(j == 1){
 						if(cloud_synclist_col[j].length > 18)
-							code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><span style="font-size:16px;font-family: Calibri;font-weight: bolder;"  onclick="isEdit=1;showAddTable();" title="'+ cloud_synclist_col[j] +'">'+ cloud_synclist_col[j].substring(0,15) + '...</span></td>';
+							code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><span style="font-size:16px;font-family: Calibri;font-weight: bolder;" title="'+ cloud_synclist_col[j] +'">'+ cloud_synclist_col[j].substring(0,15) + '...</span></td>';
 						else
-							code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><span style="font-size:16px;font-family: Calibri;font-weight: bolder;"  onclick="isEdit=1;showAddTable();">'+ cloud_synclist_col[j] +'</span></td>';
+							code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><span style="font-size:16px;font-family: Calibri;font-weight: bolder;">'+ cloud_synclist_col[j] +'</span></td>';
 						}
 					else if(j == 3){
 						curRule = cloud_synclist_col[j];
@@ -352,28 +350,6 @@ function validform(){
 		return false;
 	}
 	return true;
-}
-
-function showAddTable(){
-	if(isEdit == 1){ // edit
-		//$j("#cloudAddTable").fadeIn();
-		//$("creatBtn").style.display = "none";
-		//$j("#applyBtn").fadeIn();
-		if(cloud_synclist_array != ""){
-			edit_Row(0);
-		}
-	}
-	else{ // list
-		//$("cloudAddTable").style.display = "none";
-		if(cloud_synclist_array == ""){
-			//$j("#creatBtn").fadeIn();
-			//$("applyBtn").style.display = "none";
-		}
-		else{
-			//$("creatBtn").style.display = "none";
-			//$("applyBtn").style.display = "none";			
-		}
-	}
 }
 
 // get folder tree
@@ -1098,7 +1074,6 @@ hint_string += "<#routerSync_rule_CtoS#>";
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="current_page" value="cloud_router_sync.asp">
 <input type="hidden" name="next_page" value="cloud_router_sync.asp">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="">
@@ -1310,7 +1285,6 @@ hint_string += "<#routerSync_rule_CtoS#>";
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="current_page" value="cloud_sync.asp">
 <input type="hidden" name="next_page" value="cloud_sync.asp">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="restart_cloudsync">

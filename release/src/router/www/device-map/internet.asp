@@ -9,7 +9,7 @@
 <title>Untitled Document</title>
 <link rel="stylesheet" type="text/css" href="../NM_style.css">
 <link rel="stylesheet" type="text/css" href="../form_style.css">
-<script type="text/javascript" src="formcontrol.js"></script>
+<script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
@@ -138,19 +138,26 @@ function initial(){
 		$('primary_expires_ctrl').style.display = "";
 		}
 	}
-
+ 
 	if(sw_mode == 1){
 		setTimeout("update_wanip();", 1);
 		$('goSetting').style.display = "";
-
-		if(parent.document.form.dual_wan_flag.value == 0 || (dualWAN_support && !parent.wans_flag)){
-			$("goDualWANSetting").style.display = "none";
-			$("dualwan_enable_button").style.display = "";
+		
+		if(dualWAN_support){
+			if(parent.document.form.dual_wan_flag.value == 0){
+				$("goDualWANSetting").style.display = "none";
+				$("dualwan_enable_button").style.display = "";
+			}
+			else{
+				$("goDualWANSetting").style.display = "";
+				$("dualwan_enable_button").style.display = "none";		
+			}
 		}
 		else{
-			$("goDualWANSetting").style.display = "";
-			$("dualwan_enable_button").style.display = "none";
+			$("goDualWANSetting").style.display = "none";
+			$("dualwan_enable_button").style.display = "none";		
 		}
+		
 	}
 	else{
 		$("rt_table").style.display = "none";
@@ -547,7 +554,7 @@ function manualSetup(){
 <table width="95%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="table1px" id="rt_table">
 <tr id="wan_enable_button">
     <td height="50" style="padding:10px 15px 0px 15px;">
-    		<p class="formfonttitle_nwm" style="float:left;width:98px;">Internet connection</p>
+    		<p class="formfonttitle_nwm" style="float:left;width:98px;"><#menu5_3_1#></p>
     		<div class="left" style="width:94px; float:right;" id="radio_wan_enable"></div>
 				<div class="clear"></div>
 				<script type="text/javascript">

@@ -99,10 +99,6 @@ function addRow(obj, upper){
 	}	
 }
 
-function cross_midnight(){
-	return changeDate();
-}
-
 function applyRule(){
 		var rule_num = $('url_rulelist_table').rows.length;
 		var item_num = $('url_rulelist_table').rows[0].cells.length;
@@ -292,15 +288,15 @@ function updateDateTime(){
         
         <tr>
           <th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(9,1);"><#FirewallConfig_URLActiveDate_itemname#></a></th>
-          <td>
-		  				<input type="checkbox" name="url_date_x_Sun" class="input" onChange="return changeDate();"><#date_Sun_itemdesc#>
-							<input type="checkbox" name="url_date_x_Mon" class="input" onChange="return changeDate();"><#date_Mon_itemdesc#>
-							<input type="checkbox" name="url_date_x_Tue" class="input" onChange="return changeDate();"><#date_Tue_itemdesc#>
-							<input type="checkbox" name="url_date_x_Wed" class="input" onChange="return changeDate();"><#date_Wed_itemdesc#>
-							<input type="checkbox" name="url_date_x_Thu" class="input" onChange="return changeDate();"><#date_Thu_itemdesc#>
-							<input type="checkbox" name="url_date_x_Fri" class="input" onChange="return changeDate();"><#date_Fri_itemdesc#>
-							<input type="checkbox" name="url_date_x_Sat" class="input" onChange="return changeDate();"><#date_Sat_itemdesc#>
-		  		</td>
+			<td>
+		  		<input type="checkbox" name="url_date_x_Sun" class="input"><#date_Sun_itemdesc#>
+				<input type="checkbox" name="url_date_x_Mon" class="input"><#date_Mon_itemdesc#>
+				<input type="checkbox" name="url_date_x_Tue" class="input"><#date_Tue_itemdesc#>
+				<input type="checkbox" name="url_date_x_Wed" class="input"><#date_Wed_itemdesc#>
+				<input type="checkbox" name="url_date_x_Thu" class="input"><#date_Thu_itemdesc#>
+				<input type="checkbox" name="url_date_x_Fri" class="input"><#date_Fri_itemdesc#>
+				<input type="checkbox" name="url_date_x_Sat" class="input"><#date_Sat_itemdesc#>
+		  	</td>
         </tr>
         
         <!--tr>

@@ -245,7 +245,7 @@ function check_macaddr(obj,flag){ //control hint of input mac address
         	<tr>
         		<th width="30%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(18,1);"><#FirewallConfig_MFMethod_itemname#></a></th>
           		<td>
-          			<select name="macfilter_enable_x" class="input_option" onchange="return change_common(this, 'FirewallConfig', 'macfilter_enable_x')">
+          			<select name="macfilter_enable_x" class="input_option">
               			<option value="0" <% nvram_match("macfilter_enable_x", "0","selected"); %>><#CTL_Disabled#></option>
               			<option value="1" <% nvram_match("macfilter_enable_x", "1","selected"); %>><#FirewallConfig_MFMethod_item1#></option>
               			<option value="2" <% nvram_match("macfilter_enable_x", "2","selected"); %>><#FirewallConfig_MFMethod_item2#></option>

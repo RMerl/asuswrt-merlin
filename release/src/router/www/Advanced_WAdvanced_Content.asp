@@ -54,14 +54,28 @@ var wl_version = "<% nvram_get("wl_version"); %>";
 var sdk_version_array = new Array();
 sdk_version_array = wl_version.split(".");
 var new_sdk = sdk_version_array[0] == "6" ? true:false
+var wl_user_rssi_onload = '<% nvram_get("wl_user_rssi"); %>';
 
 function initial(){
 	show_menu();
 	load_body();
 	
+	if(userRSSI_support)
+		changeRSSI(wl_user_rssi_onload);
+	else
+		$("rssiTr").style.display = "none";
+
 	if(sw_mode == "2"){
-		disableAdvFn(17);
-		change_common(document.form.wl_wme, "WLANConfig11b", "wl_wme");
+		var _rows = $("WAdvTable").rows;
+		for(var i=0; i<_rows.length; i++){
+			if(_rows[i].className.search("rept") == -1){
+				_rows[i].style.display = "none";
+				_rows[i].disabled = true;
+			}
+		}
+
+		// enable_wme_check(document.form.wl_wme);
+		return false;
 	}
 
 	$("wl_rate").style.display = "none";
@@ -101,13 +115,14 @@ function initial(){
 	inputCtrl(document.form.wl_txbf, 0);
 	inputCtrl(document.form.wl_itxbf, 0);
 	inputCtrl(document.form.usb_usb3, 0);
+
 	if((based_modelid == "RT-AC56U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC66U")){
 		inputCtrl(document.form.wl_ampdu_mpdu, 1);
 		inputCtrl(document.form.wl_ack_ratio, 1);
 
 		if('<% nvram_get("wl_unit"); %>' == '1'){ // 5GHz
 			inputCtrl(document.form.wl_txbf, 1);
-
+			
 			if(based_modelid == "RT-AC56U" || based_modelid == "RT-AC68U")
 				inputCtrl(document.form.wl_itxbf, 1);
 		}
@@ -185,6 +200,20 @@ function initial(){
 	check_ampdu_rts();
 }
 
+function changeRSSI(_switch){
+	if(_switch == 0){
+		document.getElementById("rssiDbm").style.display = "none";
+		document.form.wl_user_rssi.value = 0;
+	}
+	else{
+		document.getElementById("rssiDbm").style.display = "";
+		if(wl_user_rssi_onload == 0)
+			document.form.wl_user_rssi.value = "-70";
+		else
+			document.form.wl_user_rssi.value = wl_user_rssi_onload;
+	}
+}
+
 function applyRule(){
 	if(validForm()){
 		if(wifi_hw_sw_support) { //For N55U
@@ -225,19 +254,6 @@ function validForm(){
 			)
 		return false;
 	
-	/*if(document.form.wl_radio[0].checked == true 
-			&& document.form.wl_radio_date_x_Sun.checked == false
-			&& document.form.wl_radio_date_x_Mon.checked == false
-			&& document.form.wl_radio_date_x_Tue.checked == false
-			&& document.form.wl_radio_date_x_Wed.checked == false
-			&& document.form.wl_radio_date_x_Thu.checked == false
-			&& document.form.wl_radio_date_x_Fri.checked == false
-			&& document.form.wl_radio_date_x_Sat.checked == false){
-				document.form.wl_radio_date_x_Sun.focus();
-				$('blank_warn').style.display = "";
-				return false;
-	}*/
-		
 	if(power_support && !Rawifi_support){
 		// CE@2.4GHz
 		if(document.form.wl0_country_code.value == "EU" && document.form.wl_unit.value == 0){
@@ -274,6 +290,15 @@ function validForm(){
 			return false;
 		}  	
   }
+
+	if(userRSSI_support){
+		if(document.form.wl_user_rssi.value != 0){
+			if(!validate_range(document.form.wl_user_rssi, -90, -70)){
+				document.form.wl_user_rssi.focus();
+				return false;			
+			}
+		}
+	}
 	
 	updateDateTime();	
 	return true;
@@ -525,12 +550,12 @@ function check_ampdu_rts(){
 		  			<div class="formfonttitle"><#menu5_1#> - <#menu5_1_6#></div>
 		  			<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 		 				<div class="formfontdesc"><#WLANConfig11b_display5_sectiondesc#></div>
-		 				<div id="svc_hint_div" style="display:none;"><span onClick="location.href='Advanced_System_Content.asp?af=ntp_server0'" style="color:#FFCC00;text-decoration:underline;cursor:pointer;">* Remind: Did not synchronize your system time with NTP server yet.</span></div>
-		  			<div id="timezone_hint_div" style="display:none;"><span id="timezone_hint" onclick="location.href='Advanced_System_Content.asp?af=time_zone_select'" style="color:#FFCC00;text-decoration:underline;cursor:pointer;"></span></div>	
+		 				<div id="svc_hint_div" style="display:none;margin-left:5px;"><span onClick="location.href='Advanced_System_Content.asp?af=ntp_server0'" style="color:#FFCC00;text-decoration:underline;cursor:pointer;">* Remind: Did not synchronize your system time with NTP server yet.</span></div>
+		  			<div id="timezone_hint_div" style="margin-left:5px;display:none;"><span id="timezone_hint" onclick="location.href='Advanced_System_Content.asp?af=time_zone_select'" style="color:#FFCC00;text-decoration:underline;cursor:pointer;"></span></div>	
 
 					<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable" id="WAdvTable">	
 
-					<tr id="wl_unit_field">
+					<tr id="wl_unit_field" class="rept">
 						<th><#Interface#></th>
 						<td>
 							<select name="wl_unit" class="input_option" onChange="change_wl_unit();">
@@ -559,11 +584,11 @@ function check_ampdu_rts(){
 			  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 2);"><#WLANConfig11b_x_RadioEnableDate_itemname#> (week days)</a></th>
 			  			<td>
 								
-							<input type="checkbox" class="input" name="wl_radio_date_x_Mon" onChange="return changeDate();" onclick="check_Timefield_checkbox()"><#date_Mon_itemdesc#>
-							<input type="checkbox" class="input" name="wl_radio_date_x_Tue" onChange="return changeDate();" onclick="check_Timefield_checkbox()"><#date_Tue_itemdesc#>
-							<input type="checkbox" class="input" name="wl_radio_date_x_Wed" onChange="return changeDate();" onclick="check_Timefield_checkbox()"><#date_Wed_itemdesc#>
-							<input type="checkbox" class="input" name="wl_radio_date_x_Thu" onChange="return changeDate();" onclick="check_Timefield_checkbox()"><#date_Thu_itemdesc#>
-							<input type="checkbox" class="input" name="wl_radio_date_x_Fri" onChange="return changeDate();" onclick="check_Timefield_checkbox()"><#date_Fri_itemdesc#>						
+							<input type="checkbox" class="input" name="wl_radio_date_x_Mon" onclick="check_Timefield_checkbox()"><#date_Mon_itemdesc#>
+							<input type="checkbox" class="input" name="wl_radio_date_x_Tue" onclick="check_Timefield_checkbox()"><#date_Tue_itemdesc#>
+							<input type="checkbox" class="input" name="wl_radio_date_x_Wed" onclick="check_Timefield_checkbox()"><#date_Wed_itemdesc#>
+							<input type="checkbox" class="input" name="wl_radio_date_x_Thu" onclick="check_Timefield_checkbox()"><#date_Thu_itemdesc#>
+							<input type="checkbox" class="input" name="wl_radio_date_x_Fri" onclick="check_Timefield_checkbox()"><#date_Fri_itemdesc#>						
 							<span id="blank_warn" style="display:none;"><#JS_Shareblanktest#></span>	
 			  			</td>
 					</tr>
@@ -579,8 +604,8 @@ function check_ampdu_rts(){
 					<tr id="enable_date_weekend_tr">
 			  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 2);"><#WLANConfig11b_x_RadioEnableDate_itemname#> (weekend)</a></th>
 			  			<td>
-							<input type="checkbox" class="input" name="wl_radio_date_x_Sat" onChange="return changeDate();" onclick="check_Timefield_checkbox()"><#date_Sat_itemdesc#>
-							<input type="checkbox" class="input" name="wl_radio_date_x_Sun" onChange="return changeDate();" onclick="check_Timefield_checkbox()"><#date_Sun_itemdesc#>					
+							<input type="checkbox" class="input" name="wl_radio_date_x_Sat" onclick="check_Timefield_checkbox()"><#date_Sat_itemdesc#>
+							<input type="checkbox" class="input" name="wl_radio_date_x_Sun" onclick="check_Timefield_checkbox()"><#date_Sun_itemdesc#>					
 							<span id="blank_warn" style="display:none;"><#JS_Shareblanktest#></span>	
 			  			</td>
 					</tr>
@@ -605,7 +630,7 @@ function check_ampdu_rts(){
 					<tr id="wl_rate">
 			  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 6);"><#WLANConfig11b_DataRateAll_itemname#></a></th>
 			  			<td>
-							<select name="wl_rate" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_rate')">
+							<select name="wl_rate" class="input_option">
 				  				<option value="0" <% nvram_match("wl_rate", "0","selected"); %>><#Auto#></option>
 				  				<option value="1000000" <% nvram_match("wl_rate", "1000000","selected"); %>>1</option>
 				  				<option value="2000000" <% nvram_match("wl_rate", "2000000","selected"); %>>2</option>
@@ -622,10 +647,26 @@ function check_ampdu_rts(){
 							</div>
 			  			</td>
 					</tr>
+
+					<tr id="rssiTr" class="rept">
+						<th>Minimum RSSI</th>
+						<td>
+							<select id="wl_user_rssi_option" class="input_option" onchange="changeRSSI(this.value);">
+								<option value="1"><#WLANConfig11b_WirelessCtrl_button1name#></option>
+								<option value="0" <% nvram_match("wl_user_rssi", "0","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+							</select>
+							<span id="rssiDbm" style="color:#FFF">
+								Disconnect clients with RSSI lower than
+			  				<input type="text" maxlength="3" name="wl_user_rssi" class="input_3_table" value="<% nvram_get("wl_user_rssi"); %>">
+								dB
+							</span>
+						</td>
+					</tr>
+
 					<tr>
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 22);"><#WLANConfig11b_x_IgmpSnEnable_itemname#></a></th>
 						<td>
-							<select name="wl_igs" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_igs')">
+							<select name="wl_igs" class="input_option">
 								<option value="1" <% nvram_match("wl_igs", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
 								<option value="0" <% nvram_match("wl_igs", "0","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
 							</select>
@@ -634,7 +675,7 @@ function check_ampdu_rts(){
 					<tr id="wl_mrate_select">
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 7);"><#WLANConfig11b_MultiRateAll_itemname#></a></th>
 						<td>
-							<select name="wl_mrate_x" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_mrate_x')">
+							<select name="wl_mrate_x" class="input_option">
 								<option value="0" <% nvram_match("wl_mrate_x", "0", "selected"); %>><#Auto#></option>
 							</select>
 						</td>
@@ -642,7 +683,7 @@ function check_ampdu_rts(){
 					<tr style="display:none;">
 			  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 8);"><#WLANConfig11b_DataRate_itemname#></a></th>
 			  			<td>
-			  				<select name="wl_rateset" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_rateset')">
+			  				<select name="wl_rateset" class="input_option">
 				  				<option value="default" <% nvram_match("wl_rateset", "default","selected"); %>>Default</option>
 				  				<option value="all" <% nvram_match("wl_rateset", "all","selected"); %>>All</option>
 				  				<option value="12" <% nvram_match("wl_rateset", "12","selected"); %>>1, 2 Mbps</option>
@@ -652,7 +693,7 @@ function check_ampdu_rts(){
 					<tr>
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,20);"><#WLANConfig11n_PremblesType_itemname#></a></th>
 						<td>
-						<select name="wl_plcphdr" class="input_option" onchange="return change_common(this, 'WLANConfig11b', 'wl_plcphdr')">
+						<select name="wl_plcphdr" class="input_option">
 							<option value="long" <% nvram_match("wl_plcphdr", "long", "selected"); %>>Long</option>
 							<option value="short" <% nvram_match("wl_plcphdr", "short", "selected"); %>>Short</option>
 							<option value="auto" <% nvram_match("wl_plcphdr", "auto", "selected"); %>><#Auto#></option>
@@ -695,7 +736,7 @@ function check_ampdu_rts(){
 					<tr>
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 13);"><#WLANConfig11b_x_TxBurst_itemname#></a></th>
 						<td>
-							<select name="wl_frameburst" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_frameburst')">
+							<select name="wl_frameburst" class="input_option">
 								<option value="off" <% nvram_match("wl_frameburst", "off","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
 								<option value="on" <% nvram_match("wl_frameburst", "on","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
 							</select>
@@ -704,30 +745,18 @@ function check_ampdu_rts(){
 					<tr id="PktAggregate"><!-- RaLink Only -->
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 16);"><#WLANConfig11b_x_PktAggregate_itemname#></a></th>
 						<td>
-							<select name="wl_PktAggregate" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_PktAggregate')">
+							<select name="wl_PktAggregate" class="input_option">
 								<option value="0" <% nvram_match("wl_PktAggregate", "0","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
 								<option value="1" <% nvram_match("wl_PktAggregate", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
 							</select>
 						</td>
 					</tr>
 
-			<!--Greenfield by Lock Add in 2008.10.01 -->
-					<!-- RaLink Only tr>
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 19);"><#WLANConfig11b_x_HT_OpMode_itemname#></a></th>
-						<td>
-							<select id="wl_HT_OpMode" class="input_option" name="wl_HT_OpMode" onChange="return change_common(this, 'WLANConfig11b', 'wl_HT_OpMode')">
-								<option value="0" <% nvram_match("wl_HT_OpMode", "0","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
-								<option value="1" <% nvram_match("wl_HT_OpMode", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
-							</select>
-							</div>
-						</td>
-					</tr-->
-			<!--Greenfield by Lock Add in 2008.10.01 -->
 					<!-- WMM setting start  -->
 					<tr>
 			  			<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(3, 14);"><#WLANConfig11b_x_WMM_itemname#></a></th>
 			  			<td>
-							<select name="wl_wme" id="wl_wme" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_wme')">			  	  				
+							<select name="wl_wme" id="wl_wme" class="input_option" onChange="enable_wme_check(this);">			  	  				
 			  	  				<option value="auto" <% nvram_match("wl_wme", "auto", "selected"); %>><#Auto#></option>
 			  	  				<option value="on" <% nvram_match("wl_wme", "on", "selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
 			  	  				<option value="off" <% nvram_match("wl_wme", "off", "selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>			  	  			
@@ -737,7 +766,7 @@ function check_ampdu_rts(){
 					<tr>
 			  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,15);"><#WLANConfig11b_x_NOACK_itemname#></a></th>
 			  			<td>
-							<select name="wl_wme_no_ack" id="wl_wme_no_ack" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_wme_no_ack')">
+							<select name="wl_wme_no_ack" id="wl_wme_no_ack" class="input_option">
 			  	  				<option value="off" <% nvram_match("wl_wme_no_ack", "off","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
 			  	  				<option value="on" <% nvram_match("wl_wme_no_ack", "on","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
 							</select>
@@ -746,7 +775,7 @@ function check_ampdu_rts(){
 					<tr>
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,17);"><#WLANConfig11b_x_APSD_itemname#></a></th>
 						<td>
-                  				<select name="wl_wme_apsd" class="input_option" onchange="return change_common(this, 'WLANConfig11b', 'wl_wme_apsd')">
+                  				<select name="wl_wme_apsd" class="input_option">
                     					<option value="off" <% nvram_match("wl_wme_apsd", "off","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
                     					<option value="on" <% nvram_match("wl_wme_apsd", "on","selected"); %> ><#WLANConfig11b_WirelessCtrl_button1name#></option>
                   				</select>
@@ -757,7 +786,7 @@ function check_ampdu_rts(){
 					<tr id="DLSCapable"> <!-- RaLink Only  -->
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,18);"><#WLANConfig11b_x_DLS_itemname#></a></th>
 						<td>
-							<select name="wl_DLSCapable" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_DLSCapable')">
+							<select name="wl_DLSCapable" class="input_option">
 								<option value="0" <% nvram_match("wl_DLSCapable", "0","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
 								<option value="1" <% nvram_match("wl_DLSCapable", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
 							</select>
