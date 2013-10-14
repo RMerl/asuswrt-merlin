@@ -4,8 +4,10 @@
 #
 #***********************************************************************
 
+include ../common.mak
+
 all:
-	-cp prebuild/inotify inotify
+	-cp prebuild$(BCMEX)/inotify inotify
 
 .PHONY: clean
 clean:
