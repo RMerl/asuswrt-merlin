@@ -193,10 +193,10 @@ window.onresize = cal_panel_block;
 
 function initial(){
 	show_menu();	
-	showcloud_synclist();
 	showAddTable();
 	document.aidiskForm.protocol.value = PROTOCOL;
 	initial_dir();
+	setTimeout("showcloud_synclist();", 300);
 
 	if(!rrsut_support)
 		$("rrsLink").style.display = "none";
@@ -416,8 +416,12 @@ function showcloud_synclist(){
 					else{
 						if(j == 0)
 							code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><img width="30px" src="/images/cloudsync/ASUS-WebStorage.png"></td>';
-						else if(j == 1)
-							code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><span style="font-size:16px;font-family: Calibri;font-weight: bolder;text-decoration:underline; cursor:pointer"  onclick="isonEdit='+rulenum+';showEditTable=1;showAddTable('+rulenum+');">'+ cloud_synclist_col[j] +'</span></td>';
+						else if(j == 1){
+							if(cloud_synclist_col[j].length > 20)
+								code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><span style="font-size:16px;font-family: Calibri;font-weight: bolder;text-decoration:underline; cursor:pointer"  onclick="isonEdit='+rulenum+';showEditTable=1;showAddTable('+rulenum+');" title='+cloud_synclist_col[j]+'>'+ cloud_synclist_col[j].substring(0, 17) +'...</span></td>';
+							else
+								code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><span style="font-size:16px;font-family: Calibri;font-weight: bolder;text-decoration:underline; cursor:pointer"  onclick="isonEdit='+rulenum+';showEditTable=1;showAddTable('+rulenum+');">'+ cloud_synclist_col[j] +'</span></td>';
+						}	
 						else if(j == 4){
 							curRule = cloud_synclist_col[j];
 							if(cloud_synclist_col[j] == 2)
@@ -432,12 +436,14 @@ function showcloud_synclist(){
 						}
 						else{
 							dir_temp = cloud_synclist_col[j].split("/");
-							if(dir_temp[dir_temp.length-1].length > 21)
+							if(dir_temp[dir_temp.length-1].length > 21){
 								dir_path = "/" + dir_temp[3] + "/" +dir_temp[4].substring(0,18) + "...";
-							else
+								code +='<td width="'+wid[j]+'%"><span style="display:none;">'+ cloud_synclist_col[j] +'</span><span style="word-break:break-all;" title='+cloud_synclist_col[j].substr(8, cloud_synclist_col[j].length)+'>'+ dir_path +'</span></td>';
+							}	
+							else{
 								dir_path = cloud_synclist_col[j].substr(8, cloud_synclist_col[j].length);
-									
-							code +='<td width="'+wid[j]+'%"><span style="display:none;">'+ cloud_synclist_col[j] +'</span><span style="word-break:break-all;">'+ dir_path +'</span></td>';
+								code +='<td width="'+wid[j]+'%"><span style="display:none;">'+ cloud_synclist_col[j] +'</span><span style="word-break:break-all;" >'+ dir_path +'</span></td>';
+							}		
 						}
 					}
 				}
@@ -1189,7 +1195,15 @@ function cal_panel_block(){
 
 						</table>
 	
-						<div id="cloud_synclist_Block"></div>
+						<div id="cloud_synclist_Block">
+							<table width="99%" cellspacing="0" cellpadding="4" align="center" class="list_table" id="cloud_synclist_table">
+								<tbody>
+									<tr height="55px">
+										<td style="color:#FFCC00;" colspan="6">Detecting...</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
 
 					  <table width="99%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="cloudAddTable" style="margin-top:10px;display:none;">
 	  					<thead>

@@ -138,6 +138,13 @@ int init_gpio(void)
 int set_pwr_usb(int boolOn){
 	int use_gpio, gpio_pin;
 
+        switch(get_model()) {
+                case MODEL_RTAC68U:
+			if(atoi(nvram_safe_get("HW_ver"))!=170)
+				return;
+                        break;
+        }
+
 	if((gpio_pin = (use_gpio = nvram_get_int("pwr_usb_gpio"))&0xff) != 0xff){
 		if(boolOn)
 			set_gpio(gpio_pin, 1);

@@ -12,9 +12,11 @@ If an error occurs or no lease exists for the given address,
 nothing is sent to stdout a message is sent to stderr and a
 non-zero error code is returned.
 
-Requires dnsmasq 2.40 or later and may not work with other DHCP servers.
+Requires dnsmasq 2.67 or later and may not work with other DHCP servers.
 
-The address argument is a dotted-quad IP addresses and mandatory. 
+The address argument is a dotted-quad IP addresses and mandatory.
+.SH LIMITATIONS
+Only works with IPv4 addresses and DHCP leases. 
 .SH SEE ALSO
 .BR dnsmasq (8)
 .SH AUTHOR

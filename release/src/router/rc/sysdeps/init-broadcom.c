@@ -232,6 +232,7 @@ void generate_switch_para(void)
 		case MODEL_RTN12B1:
 		case MODEL_RTN12C1:
 		case MODEL_RTN12D1:
+		case MODEL_RTN12VP:
 		case MODEL_RTN12HP:
 		case MODEL_RTN10P:
 		case MODEL_RTN10D1:
@@ -783,6 +784,7 @@ reset_mssid_hwaddr(int unit)
 			case MODEL_RTN12B1:
 			case MODEL_RTN12C1:
 			case MODEL_RTN12D1:
+			case MODEL_RTN12VP:
 			case MODEL_RTN12HP:
 			case MODEL_APN12HP:
 			case MODEL_RTN14UHP:
@@ -966,6 +968,7 @@ void init_syspara(void)
 		case MODEL_RTN12B1:
 		case MODEL_RTN12C1:
 		case MODEL_RTN12D1:
+		case MODEL_RTN12VP:
 		case MODEL_RTN12HP:
 		case MODEL_APN12HP:
 		case MODEL_RTN14UHP:
@@ -1313,6 +1316,7 @@ int set_wltxpower()
 			case MODEL_RTN12B1:
 			case MODEL_RTN12C1:
 			case MODEL_RTN12D1:
+			case MODEL_RTN12VP:
 			case MODEL_RTN12HP:
 			case MODEL_APN12HP:
 			case MODEL_RTN14UHP:
@@ -2670,33 +2674,7 @@ int is_ure(int unit)
 	return 0;
 }
 #endif
-#ifdef RTCONFIG_BCMWL6
-#ifdef RTCONFIG_PROXYSTA
-int is_psta(int unit)
-{
-	if (unit < 0) return 0;
 
-	if ((nvram_get_int("sw_mode") == SW_MODE_AP) &&
-		(nvram_get_int("wlc_psta") == 1) &&
-		(nvram_get_int("wlc_band") == unit))
-		return 1;
-
-	return 0;
-}
-
-int is_psr(int unit)
-{
-	if (unit < 0) return 0;
-
-	if ((nvram_get_int("sw_mode") == SW_MODE_AP) &&
-		(nvram_get_int("wlc_psta") == 2) &&
-		(nvram_get_int("wlc_band") == unit))
-		return 1;
-
-	return 0;
-}
-#endif
-#endif
 int wl_max_no_vifs(int unit)
 {
 	char nv_interface[NVRAM_MAX_PARAM_LEN];
@@ -3338,6 +3316,7 @@ set_wan_tag(char *interface) {
 	case MODEL_RTN12B1:
 	case MODEL_RTN12C1:
 	case MODEL_RTN12D1:
+	case MODEL_RTN12VP:
 	case MODEL_RTN12HP:
 	case MODEL_APN12HP:
 	case MODEL_RTN10P:

@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2012 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2013 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -61,6 +61,7 @@ void tftp_request(struct listener *listen, time_t now)
   char *name = NULL;
   char *prefix = daemon->tftp_prefix;
   struct tftp_prefix *pref;
+  struct all_addr addra;
 
   union {
     struct cmsghdr align; /* this ensures alignment */
@@ -189,25 +190,44 @@ void tftp_request(struct listener *listen, time_t now)
 	return;
 
       name = namebuff;
+      
+      addra.addr.addr4 = addr.in.sin_addr;
 
 #ifdef HAVE_IPV6
       if (listen->family == AF_INET6)
+	addra.addr.addr6 = addr.in6.sin6_addr;
+#endif
+
+      if (daemon->tftp_interfaces)
 	{
-	  if (!iface_check(AF_INET6, (struct all_addr *)&addr.in6.sin6_addr, name))
+	  /* dedicated tftp interface list */
+	  for (tmp = daemon->tftp_interfaces; tmp; tmp = tmp->next)
+	    if (tmp->name && wildcard_match(tmp->name, name))
+	      break;
+
+	  if (!tmp)
 	    return;
 	}
       else
-#endif
-        if (!iface_check(AF_INET, (struct all_addr *)&addr.in.sin_addr, name))
-	  return;
-
+	{
+	  /* Do the same as DHCP */
+	  if (!iface_check(listen->family, &addra, name, NULL))
+	    {
+	      if (!option_bool(OPT_CLEVERBIND))
+		enumerate_interfaces(0); 
+	      if (!loopback_exception(listen->tftpfd, listen->family, &addra, name) &&
+		  !label_exception(if_index, listen->family, &addra) )
+		return;
+	    }
+	  
 #ifdef HAVE_DHCP      
-      /* allowed interfaces are the same as for DHCP */
-      for (tmp = daemon->dhcp_except; tmp; tmp = tmp->next)
-	if (tmp->name && (strcmp(tmp->name, name) == 0))
-	  return;
+	  /* allowed interfaces are the same as for DHCP */
+	  for (tmp = daemon->dhcp_except; tmp; tmp = tmp->next)
+	    if (tmp->name && wildcard_match(tmp->name, name))
+	      return;
 #endif
-      
+	}
+
       strncpy(ifr.ifr_name, name, IF_NAMESIZE);
       if (ioctl(listen->tftpfd, SIOCGIFMTU, &ifr) != -1)
 	mtu = ifr.ifr_mtu;      
@@ -549,7 +569,7 @@ void check_tftp_listeners(fd_set *rset, time_t now)
 	    }
 	  /* don't complain about timeout when we're awaiting the last
 	     ACK, some clients never send it */
-	  else if (++transfer->backoff > 5 && len != 0)
+	  else if (++transfer->backoff > 7 && len != 0)
 	    {
 	      endcon = 1;
 	      len = 0;

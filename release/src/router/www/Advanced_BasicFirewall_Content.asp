@@ -155,7 +155,7 @@ function done_validating(action){
           	<tr>
           		<th align="right"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(8,1);"><#FirewallConfig_WanLanLog_itemname#></a></th>
             	<td>
-              		<select name="fw_log_x" class="input_option" onchange="return change_common(this, 'FirewallConfig', 'fw_log_x')">
+              		<select name="fw_log_x" class="input_option">
                 			<option value="none" <% nvram_match("fw_log_x", "none","selected"); %>><#wl_securitylevel_0#></option>
                 			<option value="drop" <% nvram_match("fw_log_x", "drop","selected"); %>>Dropped</option>
                 			<option value="accept" <% nvram_match("fw_log_x", "accept","selected"); %>>Accepted</option>

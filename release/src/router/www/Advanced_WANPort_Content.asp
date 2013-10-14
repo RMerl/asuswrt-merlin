@@ -15,6 +15,43 @@
 .ISPProfile{
 	display:none;
 }
+#ClientList_Block_PC{
+	border:1px outset #999;
+	background-color:#576D73;
+	position:absolute;
+	*margin-top:26px;	
+	margin-left:2px;
+	*margin-left:-353px;
+	width:346px;
+	text-align:left;	
+	height:auto;
+	overflow-y:auto;
+	z-index:200;
+	padding: 1px;
+	display:none;
+}
+#ClientList_Block_PC div{
+	background-color:#576D73;
+	height:auto;
+	*height:20px;
+	line-height:20px;
+	text-decoration:none;
+	font-family: Lucida Console;
+	padding-left:2px;
+}
+
+#ClientList_Block_PC a{
+	background-color:#EFEFEF;
+	color:#FFF;
+	font-size:12px;
+	font-family:Arial, Helvetica, sans-serif;
+	text-decoration:none;	
+}
+#ClientList_Block_PC div:hover{
+	background-color:#3366FF;
+	color:#FFFFFF;
+	cursor:default;
+}	
 </style>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
@@ -54,7 +91,10 @@ function initial(){
 	//addWANOption(document.form.wans_second, wans_caps_secondary.split(" ").filter(function(x){return x!="dsl"}));
 	addWANOption(document.form.wans_second, wans_caps_secondary.split(" "));
 	document.form.wans_primary.value = wans_dualwan_orig.split(" ")[0];	
-	form_show(wans_flag);		
+	form_show(wans_flag);
+		
+	$('pull_arrow').title = Untranslated.select_network_host;
+	showLANIPList();	
 }
 
 function form_show(v){
@@ -77,6 +117,10 @@ function form_show(v){
 		$('wans_RoutingRules_Block').style.display = "none";	
 		document.form.wans_primary.value = wans_dualwan_orig.split(" ")[0];	
 		appendLANoption1(document.form.wans_primary);
+		appendModeOption2("0");
+		document.form.wandog_enable_radio[1].checked = true;		
+		document.form.wandog_enable_radio[0].disabled = true;
+		document.form.wandog_enable_radio[1].disabled = true;
 	}else if(v == 1){
 		document.form.wans_primary.value = wans_dualwan_orig.split(" ")[0];
 		if(wans_dualwan_orig.split(" ")[1] == "none"){
@@ -105,7 +149,7 @@ function applyRule(){
 				else
 					document.form.wans_lb_ratio_1.focus();
 				
-				alert("LoadBalance ratio value cloundn't be 0");
+				alert("Load Balance ratio value cloundn't be 0");
 				return false;
 			}
 			
@@ -130,6 +174,10 @@ function applyRule(){
 			document.form.wan1_routing_isp_enable.disabled = true;
 			document.form.wan1_routing_isp.disabled = true;
 			document.form.wans_routing_rulelist.disabled =true;	
+			if(document.form.wandog_enable_radio[0].checked)
+				document.form.wandog_enable.value = "1";
+			else
+				document.form.wandog_enable.value = "0";
 		}		
 	}
 	else{
@@ -140,6 +188,8 @@ function applyRule(){
 		document.form.wan1_routing_isp.disabled = true;
 		document.form.wans_routing_rulelist.disabled =true;		
 		document.form.wans_dualwan.value = document.form.wans_primary.value + " none";
+		document.form.wandog_enable.value = "0";
+		
 	}	
 
 	if(document.form.wans_primary.value == "lan")
@@ -289,6 +339,7 @@ function appendLANoption2(obj){
 }
 
 function appendModeOption(v){
+		var wandog_enable_orig = "<% nvram_get("wandog_enable"); %>";
 		if(v == "fo"){
 			inputCtrl(document.form.wans_lb_ratio_0, 0);
 			inputCtrl(document.form.wans_lb_ratio_1, 0);
@@ -304,6 +355,14 @@ function appendModeOption(v){
 			document.form.wans_routing_enable[1].disabled = true;
 			$('Routing_rules_table').style.display = "none";
 			$('wans_RoutingRules_Block').style.display = "none";
+			
+			document.form.wandog_enable_radio[0].disabled = false;
+			document.form.wandog_enable_radio[1].disabled = false;
+			if(wandog_enable_orig == "1")
+				document.form.wandog_enable_radio[0].checked = true;
+			else
+				document.form.wandog_enable_radio[1].checked = true;
+			appendModeOption2(wandog_enable_orig);
 		}else{	//lb, rt
 			inputCtrl(document.form.wans_lb_ratio_0, 1);
 			inputCtrl(document.form.wans_lb_ratio_1, 1);
@@ -334,8 +393,27 @@ function appendModeOption(v){
 				document.form.wans_routing_enable[1].checked = true;	
 				
 			$('Routing_rules_table').style.display = "";
-			$('wans_RoutingRules_Block').style.display = "";				
+			$('wans_RoutingRules_Block').style.display = "";
+			
+			appendModeOption2("0");
+			document.form.wandog_enable_radio[1].checked = true;				
+			document.form.wandog_enable_radio[0].disabled = true;
+			document.form.wandog_enable_radio[1].disabled = true;
 		}
+}
+
+function appendModeOption2(v){
+	if(v == "1"){			
+			inputCtrl(document.form.wandog_target, 1);
+			inputCtrl(document.form.wandog_interval, 1);
+			inputCtrl(document.form.wandog_delay, 1);
+			inputCtrl(document.form.wandog_maxfail, 1);
+	}else{
+			inputCtrl(document.form.wandog_target, 0);
+			inputCtrl(document.form.wandog_interval, 0);
+			inputCtrl(document.form.wandog_delay, 0);
+			inputCtrl(document.form.wandog_maxfail, 0);
+	}	
 }
 
 function addRow_Group(upper){
@@ -598,6 +676,46 @@ function del_Row(obj){
 		show_wans_rules();
 }
 
+//copy array from Main_Analysis page
+var client_list_array = [["Google ", "www.google.com"], ["Facebook", "www.facebook.com"], ["Youtube", "www.youtube.com"], ["Yahoo", "www.yahoo.com"],
+												 ["Baidu", "www.baidu.com"], ["Wikipedia", "www.wikipedia.org"], ["Windows Live", "www.live.com"], ["QQ", "www.qq.com"],
+												 ["Amazon", "www.amazon.com"], ["Twitter", "www.twitter.com"], ["Taobao", "www.taobao.com"], ["Blogspot", "www.blogspot.com"], 
+												 ["Linkedin", "www.linkedin.com"], ["Sina", "www.sina.com"], ["eBay", "www.ebay.com"], ["MSN", "msn.com"], ["Bing", "www.bing.com"], 
+												 ["Яндекс", "www.yandex.ru"], ["WordPress", "www.wordpress.com"], ["ВКонтакте", "www.vk.com"]];
+
+function showLANIPList(){
+	var code = "";
+	for(var i = 0; i < client_list_array.length; i++){
+		code += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\''+client_list_array[i][1]+'\');"><strong>'+client_list_array[i][0]+'</strong></div></a>';
+	}
+	code +='<!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
+	$("ClientList_Block_PC").innerHTML = code;
+}
+
+function setClientIP(ipaddr){
+	document.form.wandog_target.value = ipaddr;
+	hideClients_Block();
+	over_var = 0;
+}
+
+var over_var = 0;
+var isMenuopen = 0;
+function hideClients_Block(){
+	$("pull_arrow").src = "/images/arrow-down.gif";
+	$('ClientList_Block_PC').style.display='none';
+	isMenuopen = 0;
+}
+
+function pullLANIPList(obj){
+	if(isMenuopen == 0){		
+		obj.src = "/images/arrow-top.gif"
+		$("ClientList_Block_PC").style.display = 'block';		
+		document.form.wandog_target.focus();		
+		isMenuopen = 1;
+	}
+	else
+		hideClients_Block();
+}
 </script>
 </head>
 <body onload="initial();">
@@ -618,6 +736,7 @@ function del_Row(obj){
 <input type="hidden" name="wans_dualwan" value="<% nvram_get("wans_dualwan"); %>">
 <input type="hidden" name="wans_lanport" value="<% nvram_get("wans_lanport"); %>">
 <input type="hidden" name="wans_lb_ratio" value="<% nvram_get("wans_lb_ratio"); %>">
+<input type="hidden" name="wandog_enable" value="<% nvram_get("wandog_enable"); %>">
 <input type="hidden" name="wan0_routing_isp_enable" value="<% nvram_get("wan0_routing_isp_enable"); %>">
 <input type="hidden" name="wan0_routing_isp" value="<% nvram_get("wan0_routing_isp"); %>">
 <input type="hidden" name="wan1_routing_isp_enable" value="<% nvram_get("wan0_routing_isp_enable"); %>">
@@ -728,7 +847,7 @@ function del_Row(obj){
 											<td>
 												<select name="wans_mode" class="input_option" onchange="appendModeOption(this.value);">
 													<option value="fo" <% nvram_match("wans_mode", "fo", "selected"); %>><#dualwan_mode_fo#></option>
-													<option value="lb" <% nvram_match("wans_mode", "lb", "selected"); %>>LoadBalance</option>
+													<option value="lb" <% nvram_match("wans_mode", "lb", "selected"); %>><#dualwan_mode_lb#></option>
 													<!--option value="rt" <% nvram_match("wans_mode", "rt", "selected"); %>>Routing</option-->
 												</select>			
 											</td>
@@ -769,23 +888,66 @@ function del_Row(obj){
 			          		</tr>			          		
 			          		
 									</table>
-				<!-- -----------Enable Routing rules table ----------------------- -->
-					<br>
-	    		<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable">
+									
+	<!-- -----------Enable Ping time watch dog start----------------------- -->			
+				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable" style="margin-top:8px;">
+					<thead>
+					<tr>
+						<td colspan="2">Ping Time Watch Dog</td>
+					</tr>
+					</thead>
+					<tr>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,1);">Enable Watch Dog</a></th>
+            <td>
+						 		<input type="radio" value="1" name="wandog_enable_radio" class="content_input_fd" <% nvram_match("wandog_enable", "1", "checked"); %> onClick="appendModeOption2(this.value);"><#checkbox_Yes#>
+		 						<input type="radio" value="0" name="wandog_enable_radio" class="content_input_fd" <% nvram_match("wandog_enable", "0", "checked"); %> onClick="appendModeOption2(this.value);"><#checkbox_No#>
+						</td>
+					</tr>	
+					<tr>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,2);"><#NetworkTools_target#></a></th>
+						<td>
+								<input type="text" class="input_32_table" name="wandog_target" maxlength="100" value="<% nvram_get("wandog_target"); %>" placeholder="ex: www.google.com">
+								<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="" onmouseover="over_var=1;" onmouseout="over_var=0;">
+								<div id="ClientList_Block_PC" class="ClientList_Block_PC" style="display:none;"></div>
+						</td>
+					</tr>
+					<tr>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,3);">Interval</a></th>
+						<td>
+		        		<input type="text" name="wandog_interval" class="input_3_table" maxlength="1" value="<% nvram_get("wandog_interval"); %>" onKeyPress="return is_number(this, event);" placeholder="5">&nbsp;&nbsp;<#Second#>
+						</td>
+					</tr>	
+					<tr>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,4);">Delay</a></th>
+						<td>
+		        		<input type="text" name="wandog_delay" class="input_3_table" maxlength="2" value="<% nvram_get("wandog_delay"); %>" onKeyPress="return is_number(this, event);" placeholder="0">&nbsp;&nbsp;<#Second#>
+						</td>
+					</tr>
+					<tr>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,5);">Fail Count</a></th>
+						<td>
+		        		<input type="text" name="wandog_maxfail" class="input_3_table" maxlength="2" value="<% nvram_get("wandog_maxfail"); %>" onKeyPress="return is_number(this, event);" placeholder="12">
+						</td>
+					</tr>
+				</table>
+				<!-- -----------Enable Ping time watch dog end----------------------- -->									
+												
+				<!-- -----------Enable Routing rules table start----------------------- -->				
+	    		<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable" style="margin-top:8px;">
 					  <thead>
 					  <tr>
-						<td colspan="2">Enable Routing rules for dual WAN</td>
+						<td colspan="2">Routing rules for dual WAN</td>
 					  </tr>
 					  </thead>		
 
-          	<tr>
-            	<th>Enable the Routing rules</th>
-            	<td>
+          				<tr>
+            				<th>Enable the Routing rules</th>
+            				<td>
 						  		<input type="radio" value="1" name="wans_routing_enable" class="content_input_fd" <% nvram_match("wans_routing_enable", "1", "checked"); %>><#checkbox_Yes#>
 		 							<input type="radio" value="0" name="wans_routing_enable" class="content_input_fd" <% nvram_match("wans_routing_enable", "0", "checked"); %>><#checkbox_No#>
 							</td>
 		  			</tr>		  			  				
-          </table>									
+          		</table>									
 									
 				<!-- ----------Routing Rules Table  ---------------- -->
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;" id="Routing_rules_table">
@@ -824,7 +986,8 @@ function del_Row(obj){
         			
 			  <div id="wans_RoutingRules_Block"></div>
         			
-        	<!-- manually assigned the DHCP List end-->		
+        	<!-- manually assigned the DHCP List end-->			
+	
 					<div class="apply_gen">
 						<input class="button_gen" onclick="applyRule()" type="button" value="<#CTL_apply#>"/>
 					</div>		

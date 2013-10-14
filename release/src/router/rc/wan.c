@@ -2126,7 +2126,7 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 	}
 #endif
 
-#if defined(RTN65U) || defined(RTN56U)
+#if defined(RTN65U) || defined(RTN56U) || defined(RTN14U) || defined(RTAC52U)
 	switch (wan_unit) {
 	case WAN_UNIT_FIRST:
 		if (wan_unit == wan_primary_ifunit()) {
@@ -2709,9 +2709,13 @@ autodet_main(int argc, char *argv[])
 
 	i = 0;
 	while(i < mac_num && get_wan_state(unit) != WAN_STATE_CONNECTED){
-		_dprintf("try clone %s\n", mac_clone[i]);
-
-		nvram_set(strcat_r(prefix, "hwaddr_x", tmp), mac_clone[i]);
+		if( !(nvram_match("wl_country_code", "SG") || //RT-N56U format
+		      nvram_match("regulation_domain", "SG") || //RT-N66U/AC66U format
+		      nvram_match("0:ccode", "SG")) //RT-AC56U/AC68U format 
+		) { // Singpore do not auto clone
+			_dprintf("try clone %s\n", mac_clone[i]);
+			nvram_set(strcat_r(prefix, "hwaddr_x", tmp), mac_clone[i]);
+		}
 		notify_rc_and_wait("restart_wan");
 		_dprintf("%s: wait a IP during %d seconds...\n", __FUNCTION__, waitsec);
 		int count = 0;
@@ -2722,6 +2726,7 @@ autodet_main(int argc, char *argv[])
 		}
 		++i;
 	}
+
 
 	if(i == mac_num){
 		nvram_set_int("autodet_state", AUTODET_STATE_FINISHED_FAIL);

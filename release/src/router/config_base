@@ -39,6 +39,8 @@ RTCONFIG_L7PAT=y
 # RTCONFIG_DSL is not set
 # RTCONFIG_DSL_ANNEX_B is not set
 # RTCONFIG_DUALWAN is not set
+# RTCONFIG_USER_LOW_RSSI is not set
+# RTCONFIG_EMAIL is not set
 # RTCONFIG_SHP is not set
 # RTCONFIG_SFP is not set
 # RTCONFIG_4M_SFP is not set
@@ -53,6 +55,7 @@ RTCONFIG_L7PAT=y
 # RTCONFIG_TURBO is not set
 # RTCONFIG_LED_BTN is not set
 # RTCONFIG_LED_BTN_MODE is not set
+# RTCONFIG_USBEJECT is not set
 # RTCONFIG_WIFI_TOG_BTN is not set
 # RTCONFIG_4352_5G is not set
 RTCONFIG_AUTODICT=n
@@ -116,4 +119,5 @@ RTCONFIG_WPS=y
 # RTCONFIG_TEMPROOTFS is not set
 # RTCONFIG_JFFS2LOG is not set
 # RTCONFIG_WPSMULTIBAND is not set
+# RTCONFIG_EMAIL is not set
 

@@ -1168,7 +1168,7 @@ int is_usb_modem_ready(void)
 		strcpy(usb_vid, nvram_safe_get(strcat_r(prefix, "_vid", tmp)));
 
 		if(nvram_match(prefix, "modem") && strlen(usb_act) != 0){
-			// for the router dongle: Huawei E353.
+			// for the router dongle: Huawei E353, E3131.
 			if(!strncmp(usb_act, "eth", 3) && !strcmp(usb_vid, "12d1")){
 				if(!strncmp(nvram_safe_get("lan_ipaddr"), "192.168.1.", 10))
 					return 2;

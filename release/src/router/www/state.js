@@ -93,6 +93,7 @@ var band5g_11ac_support = isSupport("11AC");
 var optimizeXbox_support = isSupport("optimize_xbox");
 var spectrum_support = isSupport("spectrum");
 var mediareview_support = '<% nvram_get("wlopmode"); %>' == 7 ? true : false;
+var userRSSI_support = isSupport("user_low_rssi");
 
 var localAP_support = true;
 if(sw_mode == 4)
@@ -205,26 +206,25 @@ function show_banner(L3){// L3 = The third Level of Menu
 	banner_code +='</td>\n';
 
 //	if(wifi_hw_sw_support)
-		banner_code +='<td width="30"><div id="wifi_hw_sw_status"></div></td>\n';
+		banner_code +='<td width="30"><div id="wifi_hw_sw_status" class="wifihwswstatusoff"></div></td>\n';
 
 	if(cooler_support)
-		banner_code +='<td width="30"><div id="cooler_status"" style="display:none;"></div></td>\n';
+		banner_code +='<td width="30"><div id="cooler_status" class="" style="display:none;"></div></td>\n';
 
 	if(multissid_support != -1)
-		banner_code +='<td width="30"><div id="guestnetwork_status""></div></td>\n';
+		banner_code +='<td width="30"><div id="guestnetwork_status" class="guestnetworkstatusoff"></div></td>\n';
 
-	//Viz add 2013.04 for dsl sync status
 	if(dsl_support)
-		banner_code +='<td width="30"><div id="adsl_line_status"></div></td>\n';
+		banner_code +='<td width="30"><div id="adsl_line_status" class="linestatusdown"></div></td>\n';
 
 	if(sw_mode != 3)
-	  banner_code +='<td width="30"><div id="connect_status"></div></td>\n';
+		banner_code +='<td width="30"><div id="connect_status" class="connectstatusoff"></div></td>\n';
 
 	if(usb_support)
 		banner_code +='<td width="30"><div id="usb_status"></div></td>\n';
 	
 	if(printer_support)
-	  banner_code +='<td width="30"><div id="printer_status"></div></td>\n';
+		banner_code +='<td width="30"><div id="printer_status" class="printstatusoff"></div></td>\n';
 
 	banner_code +='<td width="17"></td>\n';
 	banner_code +='</tr></tbody></table></td></tr></table>\n';
@@ -341,8 +341,23 @@ function remove_url(){
 		menuL1_title[6] ="";
 		menuL1_link[6] ="";				
 		// Wireless
-		menuL2_title[1]="";
-		menuL2_link[1]="";
+		if(sw_mode == 4){
+			menuL2_title[1]="";
+			menuL2_link[1]="";
+		}
+		else if(sw_mode == 2){
+			if(userRSSI_support){
+				remove_menu_item(0, "Advanced_Wireless_Content.asp");
+				remove_menu_item(0, "Advanced_WWPS_Content.asp");
+				remove_menu_item(0, "Advanced_WMode_Content.asp");								
+				remove_menu_item(0, "Advanced_ACL_Content.asp");
+				remove_menu_item(0, "Advanced_WSecurity_Content.asp");
+			}
+			else{
+				menuL2_title[1]="";
+				menuL2_link[1]="";
+			}
+		}
 		// WAN
 		menuL2_title[3]="";
 		menuL2_link[3]="";	
@@ -2058,10 +2073,7 @@ function refresh_info_status(xmldoc)
 		}
 		else{
 			$("connect_status").className = "connectstatusoff";
-			if(_wlc_sbstate == "wlc_sbstate=2")
-				$("connect_status").onclick = function(){openHint(24,3);}
-			else
-				$("connect_status").onclick = function(){overHint(3);}
+			$("connect_status").onclick = function(){openHint(24,3);}
 
 			if(location.pathname == "/" || location.pathname == "/index.asp"){
 				$("NM_connect_status").innerHTML = '<a style="color:#FFF;text-decoration:underline;" href="/'+ QISWIZARD +'?flag=detect"><#Disconnected#></a>';

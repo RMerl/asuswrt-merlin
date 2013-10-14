@@ -451,7 +451,7 @@ function updateDateTime(){
         					<tr>
           						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(10,3);"><#FirewallConfig_LanWanDefaultAct_itemname#></a></th>
           						<td>
-          							<select name="filter_lw_default_x" class="input_option" onChange="return change_common(this, 'FirewallConfig', 'filter_lw_default_x')">
+          							<select name="filter_lw_default_x" class="input_option">
           								<option value="DROP" <% nvram_match("filter_lw_default_x", "DROP","selected"); %>><#WhiteList#></option>
           								<option value="ACCEPT" <% nvram_match("filter_lw_default_x", "ACCEPT","selected"); %>><#BlackList#></option>
           							</select>
@@ -470,11 +470,11 @@ function updateDateTime(){
           					<tr>
           						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(10,1);"><#FirewallConfig_LanWanActiveDate_itemname#></a></th>
           						<td>
-								<input type="checkbox" name="filter_lw_date_x_Mon" class="input" onChange="return changeDate();" onclick="check_Timefield_checkbox()"><#date_Mon_itemdesc#>
-								<input type="checkbox" name="filter_lw_date_x_Tue" class="input" onChange="return changeDate();" onclick="check_Timefield_checkbox()"><#date_Tue_itemdesc#>
-								<input type="checkbox" name="filter_lw_date_x_Wed" class="input" onChange="return changeDate();" onclick="check_Timefield_checkbox()"><#date_Wed_itemdesc#>
-								<input type="checkbox" name="filter_lw_date_x_Thu" class="input" onChange="return changeDate();" onclick="check_Timefield_checkbox()"><#date_Thu_itemdesc#>
-								<input type="checkbox" name="filter_lw_date_x_Fri" class="input" onChange="return changeDate();" onclick="check_Timefield_checkbox()"><#date_Fri_itemdesc#>
+								<input type="checkbox" name="filter_lw_date_x_Mon" class="input" onclick="check_Timefield_checkbox()"><#date_Mon_itemdesc#>
+								<input type="checkbox" name="filter_lw_date_x_Tue" class="input" onclick="check_Timefield_checkbox()"><#date_Tue_itemdesc#>
+								<input type="checkbox" name="filter_lw_date_x_Wed" class="input" onclick="check_Timefield_checkbox()"><#date_Wed_itemdesc#>
+								<input type="checkbox" name="filter_lw_date_x_Thu" class="input" onclick="check_Timefield_checkbox()"><#date_Thu_itemdesc#>
+								<input type="checkbox" name="filter_lw_date_x_Fri" class="input" onclick="check_Timefield_checkbox()"><#date_Fri_itemdesc#>
 		  					</td>
         					</tr>
         					<tr id="enable_time_week_tr">
@@ -489,8 +489,8 @@ function updateDateTime(){
 							<tr>
           						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(10,1);"><#FirewallConfig_LanWanActiveDate_itemname#></a></th>
           						<td>
-								<input type="checkbox" name="filter_lw_date_x_Sat" class="input" onChange="return changeDate();" onclick="check_Timefield_checkbox()"><#date_Sat_itemdesc#>
-								<input type="checkbox" name="filter_lw_date_x_Sun" class="input" onChange="return changeDate();" onclick="check_Timefield_checkbox()"><#date_Sun_itemdesc#>														
+								<input type="checkbox" name="filter_lw_date_x_Sat" class="input" onclick="check_Timefield_checkbox()"><#date_Sat_itemdesc#>
+								<input type="checkbox" name="filter_lw_date_x_Sun" class="input" onclick="check_Timefield_checkbox()"><#date_Sun_itemdesc#>														
 		  					</td>
         					</tr>
 							<tr id="enable_time_weekend_tr">

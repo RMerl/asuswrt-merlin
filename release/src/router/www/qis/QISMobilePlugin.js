@@ -14,7 +14,7 @@ function genErrorHint(){
 		var htmlCode = "";
 		htmlCode += '<div class="QISmain" id="QISmain">';
 		htmlCode += '<div id="descTltle"><table width="100%"><tr><td align="left">';
-		htmlCode += '<span class="description_down"><#qis_finish_title1#></span></td><td align="right"></td></tr></table></div>';
+		htmlCode += '<div class="description_down"><#qis_finish_title1#></div></td><td align="right"></td></tr></table></div>';
 		htmlCode += '<div style="margin:5px;" id="splitLine">';
 		htmlCode += '<img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>';
 		if(sw_mode_submit == "4"){

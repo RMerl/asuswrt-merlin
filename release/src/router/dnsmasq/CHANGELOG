@@ -1,3 +1,188 @@
+version 2.67
+	    Fix crash if upstream server returns SERVFAIL when
+	    --conntrack in use. Thanks to Giacomo Tazzari for finding
+	    this and supplying the patch. 
+
+	    Repair regression in 2.64. That release stopped sending
+	    lease-time information in the reply to DHCPINFORM
+	    requests, on the correct grounds that it was a standards
+	    violation. However, this broke the dnsmasq-specific
+	    dhcp_lease_time utility. Now, DHCPINFORM returns
+	    lease-time only if it's specifically requested
+	    (maintaining standards) and the dhcp_lease_time utility
+	    has been taught to ask for it (restoring functionality). 
+
+	    Fix --dhcp-match, --dhcp-vendorclass and --dhcp-userclass
+	    to work with BOOTP and well as DHCP. Thanks to Peter
+	    Korsgaard for spotting the problem. 
+
+	    Add --synth-domain. Thanks to Vishvananda Ishaya for
+	    suggesting this.
+
+	    Fix failure to compile ipset.c if old kernel headers are
+	    in use. Thanks to Eugene Rudoy for pointing this out.
+
+	    Handle IPv4 interface-address labels in Linux. These are
+	    often used to emulate the old IP-alias addresses. Before,
+	    using --interface=eth0 would service all the addresses of
+	    eth0, including ones configured as aliases, which appear
+	    in ifconfig as eth0:0. Now, only addresses with the label
+	    eth0 are active. This is not backwards compatible: if you
+	    want to continue to bind the aliases too, you need to add
+	    eg. --interface=eth0:0 to the config. 
+	
+	    Fix "failed to set SO_BINDTODEVICE on DHCP socket: Socket 
+	    operation on non-socket" error on startup with
+	    configurations which have exactly one --interface option
+	    and do RA but _not_ DHCPv6. Thanks to Trever Adams for the
+	    bug report.
+
+	    Generalise --interface-name to cope with IPv6 addresses
+	    and multiple addresses per interface per address family.
+
+	    Fix option parsing for --dhcp-host, which was generating a
+	    spurious error when all seven possible items were
+	    included. Thanks to Zhiqiang Wang for the bug report.
+
+	    Remove restriction on prefix-length in --auth-zone. Thanks
+	    to Toke Hoiland-Jorgensen for suggesting this.
+
+	    Log when the maximum number of concurrent DNS queries is
+	    reached. Thanks to Marcelo Salhab Brogliato for the patch.
+
+	    If wildcards are used in --interface, don't assume that 
+	    there will only ever be one available interface for DHCP
+	    just because there is one at start-up. More may appear, so
+	    we can't use SO_BINDTODEVICE. Thanks to Natrio for the bug
+	    report. 
+
+	    Increase timeout/number of retries in TFTP to accomodate
+	    AudioCodes Voice Gateways doing streaming writes to flash.
+	    Thanks to Damian Kaczkowski for spotting the problem.
+
+	    Fix crash with empty DHCP string options when adding zero
+	    terminator. Thanks to Patrick McLean for the bug report.
+
+	    Allow hostnames to start with a number, as allowed in
+	    RFC-1123. Thanks to Kyle Mestery for the patch. 
+
+	    Fixes to DHCP FQDN option handling: don't terminate FQDN
+	    if domain not known and allow a FQDN option with blank
+	    name to request that a FQDN option is returned in the
+	    reply. Thanks to Roy Marples for the patch.
+
+	    Make --clear-on-reload apply to setting upstream servers
+	    via DBus too.
+
+	    When the address which triggered the construction of an
+	    advertised IPv6 prefix disappears, continue to advertise 
+	    the prefix for up to 2 hours, with the preferred lifetime
+	    set to zero. This satisfies RFC 6204 4.3 L-13 and makes
+	    things work better if a prefix disappears without being
+	    deprecated first. Thanks to Uwe Schindler for persuasively
+	    arguing for this.
+
+	    Fix MAC address enumeration on *BSD. Thanks to Brad Smith
+	    for the bug report.
+
+	    Support RFC-4242 information-refresh-time options in the 
+	    reply to DHCPv6 information-request. The lease time of the
+            smallest valid dhcp-range is sent. Thanks to Uwe Schindler 
+	    for suggesting this.
+
+	    Add --force-fast-ra option. Another thanks to Uwe Schindler.  
+
+	    Make --listen-address higher priority than --except-interface
+	    in all circumstances. Thanks to Thomas Hood for the bugreport.
+
+	    Provide independent control over which interfaces get TFTP 
+	    service. If enable-tftp is given a list of interfaces, then TFTP 
+	    is provided on those. Without the list, the previous behaviour
+	    (provide TFTP to the same interfaces we provide DHCP to) 
+	    is retained. Thanks to Lonnie Abelbeck for the suggestion.
+
+	    Add --dhcp-relay config option. Many thanks to vtsl.net
+	    for sponsoring this development.
+
+	    Fix crash with empty tag: in --dhcp-range. Thanks to
+	    Kaspar Schleiser for the bug report.
+
+	    Add "baseline" and "bloatcheck" makefile targets, for 
+	    revealing size changes during development. Thanks to
+	    Vladislav Grishenko for the patch. 
+
+	    Cope with DHCPv6 clients which send REQUESTs without
+	    address options - treat them as SOLICIT with rapid commit.
+
+
+version 2.66
+            Add the ability to act as an authoritative DNS
+            server. Dnsmasq can now answer queries from the wider 'net
+            with local data, as long as the correct NS records are set
+            up. Only local data is provided, to avoid creating an open
+            DNS relay. Zone transfer is supported, to allow secondary
+            servers to be configured.
+
+	    Add "constructed DHCP ranges" for DHCPv6. This is intended
+	    for IPv6 routers which get prefixes dynamically via prefix
+	    delegation. With suitable configuration, stateful DHCPv6
+	    and RA can happen automatically as prefixes are delegated
+	    and then deprecated, without having  to re-write the
+	    dnsmasq configuration file or restart the daemon. Thanks to
+	    Steven Barth for extensive testing and development work on
+	    this idea.
+
+	    Fix crash on startup on Solaris 11. Regression probably
+	    introduced in 2.61.  Thanks to Geoff Johnstone for the
+	    patch.
+
+	    Add code to make behaviour for TCP DNS requests that same
+	    as for UDP requests, when a request arrives for an allowed 
+	    address, but via a banned interface. This change is only
+	    active on Linux, since the relevant API is missing (AFAIK)
+	    on other platforms. Many thanks to Tomas Hozza for
+	    spotting the problem, and doing invaluable discovery of
+	    the obscure and undocumented API required for the solution.
+
+	    Don't send the default DHCP option advertising dnsmasq as
+	    the local DNS server if dnsmasq is configured to not act
+	    as DNS server, or it's configured to a non-standard port.
+ 
+            Add DNSMASQ_CIRCUIT_ID, DNSMASQ_SUBCRIBER_ID,
+            DNSMASQ_REMOTE_ID variables to the environment of the
+            lease-change script (and the corresponding Lua). These hold
+            information inserted into the DHCP request by a DHCP relay
+            agent. Thanks to Lakefield Communications for providing a
+            bounty for this addition.
+ 
+	    Fixed crash, introduced in 2.64, whilst handling DHCPv6
+	    information-requests with some common configurations.
+	    Thanks to Robert M. Albrecht for the bug report and 
+	    chasing the problem.
+
+	    Add --ipset option. Thanks to Jason A. Donenfeld for the 
+	    patch.
+
+	    Don't erroneously reject some option names in --dhcp-match
+	    options. Thanks to Benedikt Hochstrasser for the bug report.
+	    
+	    Allow a trailing '*' wildcard in all interface-name
+	    configurations. Thanks to Christian Parpart for the patch.
+
+	    Handle the situation where libc headers define
+	    SO_REUSEPORT, but the kernel in use doesn't, to cope with
+	    the introduction of this option to Linux. Thanks to Rich
+	    Felker for the bug report.
+
+	    Update Polish translation. Thanks to Jan Psota.
+
+	    Fix crash if the configured DHCP lease limit is
+	    reached. Regression occurred in 2.61. Thanks to Tsachi for
+	    the bug report. 
+	    
+	    Update the French translation. Thanks to Gildas le Nadan.
+
+  
 version 2.65
 	    Fix regression which broke forwarding of queries sent via
 	    TCP which are not for A and AAAA and which were directed to

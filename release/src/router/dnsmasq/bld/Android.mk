@@ -8,7 +8,7 @@ LOCAL_SRC_FILES :=  bpf.c cache.c dbus.c dhcp.c dnsmasq.c \
                     netlink.c network.c option.c rfc1035.c \
 		    rfc2131.c tftp.c util.c conntrack.c \
 		    dhcp6.c rfc3315.c dhcp-common.c outpacket.c \
-		    radv.c slaac.c
+		    radv.c slaac.c auth.c ipset.c domain.c
 
 LOCAL_MODULE := dnsmasq
 

@@ -99,6 +99,10 @@
 #include <netinet/tcp.h>
 #include <dirent.h>
 
+#ifdef __linux__
+#include <linux/filter.h>
+#endif
+
 #include "defaults.h"
 #include "our_syslog.h"
 #include "our_getopt.h"
@@ -188,7 +192,7 @@ struct ifsnr {
 
 static void copy_ifsnr(struct ifsnr *from, struct ifsnr *to);
 static int find_sock_nr(struct ifsnr *l, int ifidx);
-struct iflist *discoverActiveInterfaces(int s);
+struct iflist *discoverActiveInterfaces(void);
 void ip_update_checksum(unsigned char *ippdu);
 static char *IpProtToString( unsigned char prot );
 static char *iflistToString( struct iflist *ifp );
@@ -381,12 +385,12 @@ int main(int argc, char **argv) {
                         return 1;
                 }
   }
-  if (ifin == "") {
+  if (!(ifin && *ifin)) {
        syslog(LOG_INFO,"Incoming interface required!");
        showusage(argv[0]);
        _exit(1);
   }
-  if (ifout == "" && ipsec == "") {
+  if (!(ifout && *ifout) && !(ipsec && *ipsec)) {
        syslog(LOG_INFO,"Listen-mode or outgoing or IPsec interface required!");
        showusage(argv[0]);
        _exit(1);
@@ -420,7 +424,7 @@ int main(int argc, char **argv) {
 static void mainloop(int argc, char **argv)
 {
   socklen_t salen = sizeof(struct sockaddr_ll);
-  int i, s, rcg, j, no_discifs_cntr, ifs_change;
+  int i, rcg, j, no_discifs_cntr, ifs_change;
   int logstr_cntr;
   struct iflist *iflist = NULL;         // Initialised after the 1st packet
   struct sockaddr_ll sa;
@@ -437,20 +441,13 @@ static void mainloop(int argc, char **argv)
   ifs_change = 0;
 
   /*
-   * Open general ethernet socket, only used to discover interfaces.
-   */
-  if ((s = socket(PF_PACKET, SOCK_DGRAM, htons(ETH_P_ALL))) < 0)
-    syslog(LOG_INFO,"%s: Error creating socket", *argv);
-
-
-  /*
    * Discover interfaces (initial set) and create a dedicated socket bound to the interface
    */
   memset(old_ifsnr, -1, sizeof(old_ifsnr));
   memset(cur_ifsnr, -1, sizeof(cur_ifsnr));
-  iflist = discoverActiveInterfaces(s);
+  iflist = discoverActiveInterfaces();
   for (i=0; iflist[i].index; ++i) {
-    if ((cur_ifsnr[i].sock_nr = socket(PF_PACKET, SOCK_DGRAM, htons(ETH_P_ALL))) < 0) {
+    if ((cur_ifsnr[i].sock_nr = socket(PF_PACKET, SOCK_DGRAM, htons(ETH_P_IP))) < 0) {
       syslog(LOG_ERR, "mainloop: Error, socket error! (rv=%d, errno=%d)", cur_ifsnr[i].sock_nr, errno);
       exit(1);
     }
@@ -509,7 +506,7 @@ static void mainloop(int argc, char **argv)
       NVBCR_PRINTF(("Select timeout, rediscover interfaces\n"));
       copy_ifsnr(cur_ifsnr, old_ifsnr);
       memset(cur_ifsnr, -1, sizeof(cur_ifsnr));
-      iflist = discoverActiveInterfaces(s);
+      iflist = discoverActiveInterfaces();
       /*
        * Build new cur_ifsnr list.
        * Make iflist[i] correspond with cur_ifsnr[i], so iflist[i].index == cur_ifsnr[i].ifindex
@@ -520,7 +517,7 @@ static void mainloop(int argc, char **argv)
         int fsnr = find_sock_nr(old_ifsnr, iflist[i].index);
         if (fsnr == -1) {
           /* found new interface, open dedicated socket and bind it to the interface */
-          if ((cur_ifsnr[i].sock_nr = socket(PF_PACKET, SOCK_DGRAM, htons(ETH_P_ALL))) < 0) {
+          if ((cur_ifsnr[i].sock_nr = socket(PF_PACKET, SOCK_DGRAM, htons(ETH_P_IP))) < 0) {
             syslog(LOG_ERR, "mainloop: Error, socket error! (rv=%d, errno=%d)", cur_ifsnr[i].sock_nr, errno);
             exit(1);
           }
@@ -700,7 +697,7 @@ static void mainloop(int argc, char **argv)
         NVBCR_PRINTF(("no_discifs_cntr became 0, rediscover interfaces\n"));
         copy_ifsnr(cur_ifsnr, old_ifsnr);
         memset(cur_ifsnr, -1, sizeof(cur_ifsnr));
-        iflist = discoverActiveInterfaces(s);
+        iflist = discoverActiveInterfaces();
         /*
          * Build new cur_ifsnr list.
          * Make iflist[i] correspond with cur_ifsnr[i], so iflist[i].index == cur_ifsnr[i].ifindex
@@ -711,7 +708,7 @@ static void mainloop(int argc, char **argv)
           int fsnr = find_sock_nr(old_ifsnr, iflist[i].index);
           if (fsnr == -1) {
             /* found new interface, open dedicated socket and bind it to the interface */
-            if ((cur_ifsnr[i].sock_nr = socket(PF_PACKET, SOCK_DGRAM, htons(ETH_P_ALL))) < 0) {
+            if ((cur_ifsnr[i].sock_nr = socket(PF_PACKET, SOCK_DGRAM, htons(ETH_P_IP))) < 0) {
               syslog(LOG_ERR, "mainloop: Error, socket error! (rv=%d, errno=%d)", cur_ifsnr[i].sock_nr, errno);
               exit(1);
             }
@@ -770,7 +767,8 @@ static void mainloop(int argc, char **argv)
 
 // Discover active interfaces
 struct iflist *
-discoverActiveInterfaces(int s) {
+discoverActiveInterfaces(void) {
+  int s;
   static struct iflist iflist[MAXIF+1];         // Allow for MAXIF interfaces
   static struct ifconf ifs;
   int i, j, cntr = 0;
@@ -782,6 +780,14 @@ discoverActiveInterfaces(int s) {
   memset(iflist, 0, sizeof(iflist));
   /* Reset ifs */
   memset(&ifs, 0, sizeof(ifs));
+
+  /*
+   * Open general ethernet socket, only used to discover interfaces.
+   */
+  if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+    syslog(LOG_INFO,"bcrelay: Error creating socket");
+    return iflist;
+  }
 
   //regcomp(&preg, argv[1], REG_ICASE|REG_EXTENDED);
   regcomp(&preg, interfaces, REG_ICASE|REG_EXTENDED);
@@ -870,7 +876,7 @@ discoverActiveInterfaces(int s) {
     // IPSEC tunnels are a fun one.  We must change the destination address
     // so that it will be routed to the correct tunnel end point.
     // We can define several tunnel end points for the same ipsec interface.
-    } else if (ipsec != "" && strncmp(ifs.ifc_req[i].ifr_name, "ipsec", 5) == 0) {
+    } else if (ipsec && *ipsec && strncmp(ifs.ifc_req[i].ifr_name, "ipsec", 5) == 0) {
       if (strncmp(ifs.ifc_req[i].ifr_name, ipsec, 6) == 0) {
         struct hostent *hp = gethostbyname(ipsec+7);
         ioctl(s, SIOCGIFINDEX, &ifs.ifc_req[i]);
@@ -883,6 +889,8 @@ discoverActiveInterfaces(int s) {
   iflist[cntr].index = 0;                       // Terminate list
   free(ifs.ifc_req);                            // Stop that leak.
   regfree(&preg);
+  if (s >= 0)
+    close(s);
 
   return iflist;
 }
@@ -978,17 +986,48 @@ static char *iflistLogIToString( struct iflist *ifp, int idx, struct ifsnr *ifnr
 
 static void bind_to_iface(int fd, int ifindex)
 {
+#ifdef __linux__
+  static const struct sock_filter filter_instr[] = {
+    /* ip.protocol == IPPROTO_UDP */
+    BPF_STMT(BPF_LD|BPF_B|BPF_ABS, 9),
+    BPF_JUMP(BPF_JMP|BPF_JEQ|BPF_K, IPPROTO_UDP, 0, 9),
+    /* ip.daddr & 0x000000ff == 0x000000ff */
+    BPF_STMT(BPF_LD|BPF_W|BPF_ABS, 16),
+    BPF_STMT(BPF_ALU|BPF_AND|BPF_K, 0x000000ff),
+    BPF_JUMP(BPF_JMP|BPF_JEQ|BPF_K, 0x000000ff, 0, 6),
+    /* ip.ttl != 1 */
+    BPF_STMT(BPF_LD|BPF_B|BPF_ABS, 8),
+    BPF_JUMP(BPF_JMP|BPF_JEQ|BPF_K, 1, 4, 0),
+    /* udp.checksum != 0 */
+    BPF_STMT(BPF_LDX|BPF_B|BPF_MSH, 0),
+    BPF_STMT(BPF_LD|BPF_H|BPF_IND, 6),
+    BPF_JUMP(BPF_JMP|BPF_JEQ|BPF_K, 0, 1, 0),
+    /* accept packet */
+    BPF_STMT(BPF_RET|BPF_K, 0xffffffff),
+    /* discard packet */
+    BPF_STMT(BPF_RET|BPF_K, 0),
+  };
+  static const struct sock_fprog filter = {
+    .len = sizeof(filter_instr) / sizeof(filter_instr[0]),
+    .filter = (struct sock_filter *) filter_instr,
+  };
+#endif
   struct sockaddr_ll      sll;
 
   memset(&sll, 0, sizeof(sll));
   sll.sll_family          = AF_PACKET;
   sll.sll_ifindex         = ifindex;
-  sll.sll_protocol        = htons(ETH_P_ALL);
+  sll.sll_protocol        = htons(ETH_P_IP);
 
   if (bind(fd, (struct sockaddr *) &sll, sizeof(sll)) == -1) {
     syslog(LOG_ERR, "bind_to_iface: Error, bind failed! (rv=-1, errno=%d)", errno);
     exit(1);
   }
+
+#ifdef __linux__
+  /* Ignoring error (kernel may lack support for this) */
+  setsockopt(fd, SOL_SOCKET, SO_ATTACH_FILTER, &filter, sizeof(filter));
+#endif
 }
 
 static void copy_ifsnr(struct ifsnr *from, struct ifsnr *to)

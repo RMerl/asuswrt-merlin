@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2012 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2013 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -25,6 +25,10 @@
 #include <net/route.h>
 #include <net/if_dl.h>
 #include <netinet/if_ether.h>
+#if defined(__FreeBSD__)
+#  include <net/if_var.h> 
+#endif
+#include <netinet/in_var.h>
 
 #ifndef SA_SIZE
 #define SA_SIZE(sa)                                             \
@@ -89,7 +93,7 @@ int arp_enumerate(void *parm, int (*callback)())
 int iface_enumerate(int family, void *parm, int (*callback)())
 {
   struct ifaddrs *head, *addrs;
-  int errsav, ret = 0;
+  int errsav, fd = -1, ret = 0;
 
   if (family == AF_UNSPEC)
 #if defined(HAVE_BSD_NETWORK) && !defined(__APPLE__)
@@ -105,13 +109,19 @@ int iface_enumerate(int family, void *parm, int (*callback)())
   if (getifaddrs(&head) == -1)
     return 0;
 
+#if defined(HAVE_BSD_NETWORK) && defined(HAVE_IPV6)
+  if (family == AF_INET6)
+    fd = socket(PF_INET6, SOCK_DGRAM, 0);
+#endif
+  
   for (addrs = head; addrs; addrs = addrs->ifa_next)
     {
       if (addrs->ifa_addr->sa_family == family)
 	{
 	  int iface_index = if_nametoindex(addrs->ifa_name);
 
-	  if (iface_index == 0)
+	  if (iface_index == 0 || !addrs->ifa_addr || 
+	      (!addrs->ifa_netmask && family != AF_LINK))
 	    continue;
 
 	  if (family == AF_INET)
@@ -119,8 +129,11 @@ int iface_enumerate(int family, void *parm, int (*callback)())
 	      struct in_addr addr, netmask, broadcast;
 	      addr = ((struct sockaddr_in *) addrs->ifa_addr)->sin_addr;
 	      netmask = ((struct sockaddr_in *) addrs->ifa_netmask)->sin_addr;
-	      broadcast = ((struct sockaddr_in *) addrs->ifa_broadaddr)->sin_addr; 
-	      if (!((*callback)(addr, iface_index, netmask, broadcast, parm)))
+	      if (addrs->ifa_broadaddr)
+		broadcast = ((struct sockaddr_in *) addrs->ifa_broadaddr)->sin_addr; 
+	      else 
+		broadcast.s_addr = 0;	      
+	      if (!((*callback)(addr, iface_index, NULL, netmask, broadcast, parm)))
 		goto err;
 	    }
 #ifdef HAVE_IPV6
@@ -130,11 +143,40 @@ int iface_enumerate(int family, void *parm, int (*callback)())
 	      unsigned char *netmask = (unsigned char *) &((struct sockaddr_in6 *) addrs->ifa_netmask)->sin6_addr;
 	      int scope_id = ((struct sockaddr_in6 *) addrs->ifa_addr)->sin6_scope_id;
 	      int i, j, prefix = 0;
+	      u32 valid = 0xffffffff, preferred = 0xffffffff;
+	      int flags = 0;
+#ifdef HAVE_BSD_NETWORK
+	      struct in6_ifreq ifr6;
+
+	      memset(&ifr6, 0, sizeof(ifr6));
+	      strncpy(ifr6.ifr_name, addrs->ifa_name, sizeof(ifr6.ifr_name));
 	      
+	      ifr6.ifr_addr = *((struct sockaddr_in6 *) addrs->ifa_addr);
+	      if (fd != -1 && ioctl(fd, SIOCGIFAFLAG_IN6, &ifr6) != -1)
+		{
+		  if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_TENTATIVE)
+		    flags |= IFACE_TENTATIVE;
+		  
+		  if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_DEPRECATED)
+		    flags |= IFACE_DEPRECATED;
+
+		  if (!(ifr6.ifr_ifru.ifru_flags6 & (IN6_IFF_AUTOCONF | IN6_IFF_TEMPORARY)))
+		    flags |= IFACE_PERMANENT;
+
+		}
+	      
+	      ifr6.ifr_addr = *((struct sockaddr_in6 *) addrs->ifa_addr);
+	      if (fd != -1 && ioctl(fd, SIOCGIFALIFETIME_IN6, &ifr6) != -1)
+		{
+		  valid = ifr6.ifr_ifru.ifru_lifetime.ia6t_vltime;
+		  preferred = ifr6.ifr_ifru.ifru_lifetime.ia6t_pltime;
+		}
+#endif
+	      	      
 	      for (i = 0; i < IN6ADDRSZ; i++, prefix += 8) 
                 if (netmask[i] != 0xff)
 		  break;
-       
+	      
 	      if (i != IN6ADDRSZ && netmask[i]) 
                 for (j = 7; j > 0; j--, prefix++) 
 		  if ((netmask[i] & (1 << j)) == 0)
@@ -145,12 +187,14 @@ int iface_enumerate(int family, void *parm, int (*callback)())
 		{
 		  addr->s6_addr[2] = 0;
 		  addr->s6_addr[3] = 0;
-		}
-	      
-	      if (!((*callback)(addr, prefix, scope_id, iface_index, 0, parm)))
-		goto err;
-	}
-#endif
+		} 
+	     
+	      if (!((*callback)(addr, prefix, scope_id, iface_index, flags,
+				(int) preferred, (int)valid, parm)))
+		goto err;	      
+	    }
+#endif /* HAVE_IPV6 */
+
 #ifdef HAVE_DHCP6      
 	  else if (family == AF_LINK)
 	    { 
@@ -168,7 +212,9 @@ int iface_enumerate(int family, void *parm, int (*callback)())
 
  err:
   errsav = errno;
-  freeifaddrs(head);  
+  freeifaddrs(head); 
+  if (fd != -1)
+    close(fd);
   errno = errsav;
 
   return ret;

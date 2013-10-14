@@ -3584,6 +3584,12 @@ int asus_tty(const char *device_name, const char *action){
 				memset(current_def, 0, 16);
 				strcpy(current_def, "1");
 			}
+			else if(!strcmp(device_name, "ttyUSB0") && get_device_type_by_device(current_value) == DEVICE_TYPE_DISK){
+				usb_dbg("(%s)2: set_default_node!\n", device_name);
+				nvram_set(nvram_def, "1");
+				memset(current_def, 0, 16);
+				strcpy(current_def, "1");
+			}
 			else{
 				usb_dbg("(%s): No Int endpoint!\n", device_name);
 				file_unlock(isLock);
@@ -3676,15 +3682,15 @@ usb_dbg("(%s): cur_val=%d, tmp_val=%d.\n", device_name, cur_val, tmp_val);
 #endif
 
 #if 0
-	// TODO: for the bad CTF. After updating CTF, need to mark these codes.
-	if(nvram_invmatch("ctf_disable", "1") && nvram_invmatch("ctf_disable_modem", "1")){
-		nvram_set("ctf_disable_modem", "1");
-		nvram_commit();
-		notify_rc_and_wait("reboot");
-		file_unlock(isLock);
+			// TODO: for the bad CTF. After updating CTF, need to mark these codes.
+			if(nvram_invmatch("ctf_disable", "1") && nvram_invmatch("ctf_disable_modem", "1")){
+				nvram_set("ctf_disable_modem", "1");
+				nvram_commit();
+				notify_rc_and_wait("reboot");
+				file_unlock(isLock);
 
-		return 0;
-	}
+				return 0;
+			}
 #endif
 
 #ifndef RTCONFIG_USB_MODEM_PIN

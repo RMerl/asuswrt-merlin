@@ -281,7 +281,7 @@ function check_appstate(){
 		else if(apps_state_error == 2)
 			$("apps_state_desc").innerHTML = "<#USB_Application_No_Internet#>";
 		else
-			$("apps_state_desc").innerHTML = "Updating...";
+			$("apps_state_desc").innerHTML = "<#upgrade_processing#>";
 	}
 	else if(apps_state_remove != 2 && apps_state_remove != ""){
 		errorcode = "apps_state_remove = " + apps_state_remove;

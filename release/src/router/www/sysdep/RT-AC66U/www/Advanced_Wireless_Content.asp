@@ -268,20 +268,6 @@ function done_validating(action){
 	refreshpage();
 }
 
-function change_key_des(){
-	var objs = getElementsByName_iefix("span", "key_des");
-	var wep_type = document.form.wl_wep_x.value;
-	var str = "";
-
-	if(wep_type == "1")
-		str = "(<#WLANConfig11b_WEPKey_itemtype1#>)";
-	else if(wep_type == "2")
-		str = "(<#WLANConfig11b_WEPKey_itemtype2#>)";
-	
-	for(var i = 0; i < objs.length; ++i)
-		showtext(objs[i], str);
-}
-
 function validate_wlphrase(s, v, obj){
 	if(!validate_string(obj)){
 		is_wlphrase(s, v, obj);
@@ -489,7 +475,7 @@ function regen_5G_mode(obj,flag){
 							<option value="2" <% nvram_match("wl_nmode_x", "2","selected"); %>>Legacy</option>
 						</select>
 						<span id="wl_optimizexbox_span" style="display:none"><input type="checkbox" name="wl_optimizexbox_ckb" id="wl_optimizexbox_ckb" value="<% nvram_get("wl_optimizexbox"); %>" onclick="document.form.wl_optimizexbox.value=(this.checked==true)?1:0;"> Optimized for Xbox</input></span>
-						<span id="wl_gmode_checkbox" style="display:none;"><input type="checkbox" name="wl_gmode_check" id="wl_gmode_check" value="" onClick="return change_common(this, 'WLANConfig11b', 'wl_gmode_check', '1')"> b/g Protection</input></span>
+						<span id="wl_gmode_checkbox" style="display:none;"><input type="checkbox" name="wl_gmode_check" id="wl_gmode_check" value="" onClick="wl_gmode_protection_check();"> b/g Protection</input></span>
 						<span id="wl_nmode_x_hint" style="display:none;"><br><#WLANConfig11n_automode_limition_hint#><br></span>
 						<span id="wl_NOnly_note" style="display:none;"><br>* [N + AC] is not compatible with current guest network authentication method(TKIP or WEP),  Please go to <a id="gn_link" href="/Guest_network.asp?af=wl_NOnly_note" target="_blank" style="color:#FFCC00;font-family:Lucida Console;text-decoration:underline;">guest network</a> and change the authentication method.</span>
 					</td>
@@ -510,7 +496,7 @@ function regen_5G_mode(obj,flag){
 				<tr id="wl_channel_field" style="display:none">
 					<th><a id="wl_channel_select" class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 3);"><#WLANConfig11b_Channel_itemname#></a></th>
 					<td>
-				 		<select name="wl_channel" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_channel')" disabled>
+				 		<select name="wl_channel" class="input_option" onChange="insertExtChannelOption();" disabled>
 				 		</select>
 					</td>
 			  </tr>
@@ -536,7 +522,7 @@ function regen_5G_mode(obj,flag){
 			  <tr>
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 5);"><#WLANConfig11b_AuthenticationMethod_itemname#></a></th>
 					<td>
-				  		<select name="wl_auth_mode_x" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_auth_mode_x');">
+				  		<select name="wl_auth_mode_x" class="input_option" onChange="authentication_method_change(this);">
 							<option value="open"    <% nvram_match("wl_auth_mode_x", "open",   "selected"); %>>Open System</option>
 							<option value="shared"  <% nvram_match("wl_auth_mode_x", "shared", "selected"); %>>Shared Key</option>
 							<option value="psk"     <% nvram_match("wl_auth_mode_x", "psk",    "selected"); %>>WPA-Personal</option>
@@ -570,7 +556,7 @@ function regen_5G_mode(obj,flag){
 			  	<tr>
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 9);"><#WLANConfig11b_WEPType_itemname#></a></th>
 					<td>
-				  		<select name="wl_wep_x" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_wep_x');">
+				  		<select name="wl_wep_x" class="input_option" onChange="wep_encryption_change(this);">
 								<option value="0" <% nvram_match("wl_wep_x", "0", "selected"); %>><#wl_securitylevel_0#></option>
 								<option value="1" <% nvram_match("wl_wep_x", "1", "selected"); %>>WEP-64bits</option>
 								<option value="2" <% nvram_match("wl_wep_x", "2", "selected"); %>>WEP-128bits</option>
@@ -582,7 +568,7 @@ function regen_5G_mode(obj,flag){
 			  	<tr>
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 10);"><#WLANConfig11b_WEPDefaultKey_itemname#></a></th>
 					<td>		
-				  		<select name="wl_key" class="input_option"  onChange="return change_common(this, 'WLANConfig11b', 'wl_key');">
+				  		<select name="wl_key" class="input_option"  onChange="wep_key_index_change(this);">
 							<option value="1" <% nvram_match("wl_key", "1","selected"); %>>1</option>
 							<option value="2" <% nvram_match("wl_key", "2","selected"); %>>2</option>
 							<option value="3" <% nvram_match("wl_key", "3","selected"); %>>3</option>

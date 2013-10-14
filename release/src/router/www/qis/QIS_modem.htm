@@ -93,7 +93,9 @@ function QKInternet_load_body(){
 			}
 		}
   }
-	// check_dongle_status();	
+
+	if(!dualWAN_support)
+		document.form.wans_dualwan.disabled = true;
 }
 
 function check_dongle_status(){
@@ -596,17 +598,18 @@ function submitenter(myfield,e)
 <input type="hidden" name="modem_enable" value="<% nvram_get("modem_enable"); %>">
 <input type="hidden" name="http_username" value="<% nvram_get("http_username"); %>">
 <input type="hidden" name="http_passwd" value="<% nvram_get("http_passwd"); %>">
+<input type="hidden" name="wans_dualwan" value="wan usb">
 <div class="QISmain" id="QISmain">
 	<div class="formfonttitle" style="padding:6 0 0 10;">
 		<div id="descTltle">
 			<table width="100%">
 				<tr>
 					<td align="left">
-						<span class="description_down"><#menu5_4_4#></span>
+						<div class="description_down"><#menu5_4_4#></div>
 					</td>
-					<td align="right">
+					<!--td align="right">
 						<img onclick="parent.gotoIndex();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'">
-					</td>
+					</td-->
 				</tr>
 			</table>
 		</div>

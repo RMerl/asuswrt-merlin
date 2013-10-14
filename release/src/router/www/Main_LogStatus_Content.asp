@@ -59,11 +59,20 @@ function clearLog(){
 	location.href = location.href;
 }
 
+function showDST(){
+	var system_timezone_dut = "<% nvram_get("time_zone"); %>";
+	if(system_timezone_dut.search("DST") >= 0 && "<% nvram_get("time_zone_dst"); %>" == "1"){
+		document.getElementById('dstzone').style.display = "";
+		document.getElementById('dstzone').innerHTML = "* Daylight saving time is implemented in this time zone.";
+	}
+}
+
 function initial(){
 	show_menu();
 	load_body();
 	showclock();
 	showbootTime();
+	showDST();
 	document.getElementById('textarea').scrollTop = 9999999;//make Scroll_y bottom
 }
 </script>
@@ -112,6 +121,7 @@ function initial(){
 											<th width="20%"><#General_x_SystemTime_itemname#></th>
 											<td>
 												<input type="text" id="system_time" name="system_time" size="40" class="devicepin" value="" readonly="1" style="font-size:12px;">
+												<br><span id="dstzone" style="display:none;margin-left:5px;color:#FFFFFF;"></span>
 											</td>										
 										</tr>
 										<tr>

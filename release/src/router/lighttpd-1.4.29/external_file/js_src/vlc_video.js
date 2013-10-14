@@ -567,6 +567,7 @@ function createVLC() {
 	
 	var this_showbutton = getUrlVars()["showbutton"];
 	var this_video = getUrlVars()["v"];
+	var this_url = getUrlVars()["u"];
 	
 	g_this_video = this_video;
 	g_this_video_name = this_video.substring(this_video.lastIndexOf("/")+1, this_video.lastIndexOf("."));
@@ -764,7 +765,8 @@ function createVLC() {
 			var select_option_html = "<option value=''>" + m.getString('title_no_subtitle') + "</option>";
 			var client = new davlib.DavClient();
 			client.initialize();
-			var open_url = g_storage.get('openurl');
+			//var open_url = g_storage.get('openurl');
+			var open_url = this_url;
 			
 			client.GETVIDEOSUBTITLE(open_url, g_this_video_name, function(error, statusstring, content){
 				if(error==200){

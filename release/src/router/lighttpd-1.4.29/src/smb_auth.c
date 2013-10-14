@@ -2858,7 +2858,7 @@ int is_dms_enabled(void){
 	char *dms_enable = nvram_get_dms_enable();
 	char *ms_dlna = NULL;
 
-	if(NULL == dms_enable)                
+	if(NULL == dms_enable || strcmp(dms_enable, "") == 0)                
 	{                    
 		ms_dlna = nvram_get_ms_enable();      
 	}
