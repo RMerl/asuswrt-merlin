@@ -71,7 +71,9 @@ static void cli_chansessreq(struct Channel *channel) {
 		TRACE(("got exit-signal, ignoring it"))
 	} else {
 		TRACE(("unknown request '%s'", type))
-		send_msg_channel_failure(channel);
+		if (wantreply) {
+			send_msg_channel_failure(channel);
+		}
 		goto out;
 	}
 		

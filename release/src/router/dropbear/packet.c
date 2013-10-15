@@ -42,7 +42,7 @@ static void make_mac(unsigned int seqno, const struct key_context_directional * 
 static int checkmac();
 
 #define ZLIB_COMPRESS_INCR 100
-#define ZLIB_DECOMPRESS_INCR 100
+#define ZLIB_DECOMPRESS_INCR 1024
 #ifndef DISABLE_ZLIB
 static buffer* buf_decompress(buffer* buf, unsigned int len);
 static void buf_compress(buffer * dest, buffer * src, unsigned int len);
@@ -376,7 +376,7 @@ static int checkmac() {
 
 	/* compare the hash */
 	buf_setpos(ses.readbuf, contents_len);
-	if (memcmp(mac_bytes, buf_getptr(ses.readbuf, mac_size), mac_size) != 0) {
+	if (constant_time_memcmp(mac_bytes, buf_getptr(ses.readbuf, mac_size), mac_size) != 0) {
 		return DROPBEAR_FAILURE;
 	} else {
 		return DROPBEAR_SUCCESS;
@@ -420,7 +420,12 @@ static buffer* buf_decompress(buffer* buf, unsigned int len) {
 		}
 
 		if (zstream->avail_out == 0) {
-			buf_resize(ret, ret->size + ZLIB_DECOMPRESS_INCR);
+			int new_size = 0;
+			if (ret->size >= RECV_MAX_PAYLOAD_LEN) {
+				dropbear_exit("bad packet, oversized decompressed");
+			}
+			new_size = MIN(RECV_MAX_PAYLOAD_LEN, ret->size + ZLIB_DECOMPRESS_INCR);
+			buf_resize(ret, new_size);
 		}
 	}
 }

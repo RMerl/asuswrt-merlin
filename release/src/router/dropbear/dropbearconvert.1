@@ -1,0 +1,50 @@
+.TH dropbearconvert 1
+.SH NAME
+dropbearconvert \- convert between Dropbear and OpenSSH private key formats
+.SH SYNOPSIS
+.B dropbearconvert
+.I input_type
+.I output_type
+.I input_file
+.I output_file
+.SH DESCRIPTION
+.B Dropbear
+and 
+.B OpenSSH
+SSH implementations have different private key formats.
+.B dropbearconvert
+can convert between the two.
+.P
+Dropbear uses the same SSH public key format as OpenSSH, it can be extracted
+from a private key by using
+.B dropbearkey \-y
+.P
+Encrypted private keys are not supported, use ssh-keygen(1) to decrypt them
+first.
+.SH OPTIONS
+.TP
+.B input type
+Either 
+.I dropbear
+or 
+.I openssh
+.TP
+.B output type
+Either 
+.I dropbear
+or 
+.I openssh
+.TP
+.B input file
+An existing Dropbear or OpenSSH private key file
+.TP
+.B output file
+The path to write the converted private key file
+.SH EXAMPLE
+ # dropbearconvert openssh dropbear ~/.ssh/id_rsa ~/.ssh/dropbear_priv
+.SH AUTHOR
+Matt Johnston (matt@ucc.asn.au).
+.SH SEE ALSO
+ dropbearkey(1), ssh-keygen(1)
+.P
+https://matt.ucc.asn.au/dropbear/dropbear.html

@@ -94,4 +94,7 @@ int m_str_to_uint(const char* str, unsigned int *val);
 /* Dropbear assertion */
 #define dropbear_assert(X) do { if (!(X)) { fail_assert(#X, __FILE__, __LINE__); } } while (0)
 
+/* Returns 0 if a and b have the same contents */
+int constant_time_memcmp(const void* a, const void *b, size_t n);
+
 #endif /* _DBUTIL_H_ */

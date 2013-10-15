@@ -1,6 +1,6 @@
 .TH dropbear 8
 .SH NAME
-dropbear \- lightweight SSH2 server
+dropbear \- lightweight SSH server
 .SH SYNOPSIS
 .B dropbear
 [\-FEmwsgjki] [\-b
@@ -10,7 +10,7 @@ dropbear \- lightweight SSH2 server
 .IR [address:]port ]
 .SH DESCRIPTION
 .B dropbear
-is a SSH 2 server designed to be small enough to be used in small memory
+is a SSH server designed to be small enough to be used in small memory
 environments, while still being functional and secure enough for general use.
 .SH OPTIONS
 .TP
@@ -29,7 +29,7 @@ Note that
 some SSH implementations
 use the term "DSA" rather than "DSS", they mean the same thing.
 This file is generated with
-.BR dropbearkey (8).
+.BR dropbearkey (1).
 .TP
 .B \-r \fIrsakey
 rsakeyfile.
@@ -37,7 +37,7 @@ Use the contents of the file
 .I rsakey
 for the rsa host key (default: /etc/dropbear/dropbear_rsa_host_key).
 This file is generated with
-.BR dropbearkey (8).
+.BR dropbearkey (1).
 .TP
 .B \-F
 Don't fork into background.
@@ -180,13 +180,14 @@ in this variable. If a shell was requested this is set to an empty value.
 .B SSH_AUTH_SOCK
 Set to a forwarded ssh-agent connection.
 
-
+.SH NOTES
+Dropbear only supports SSH protocol version 2.
 
 .SH AUTHOR
 Matt Johnston (matt@ucc.asn.au).
 .br
 Gerrit Pape (pape@smarden.org) wrote this manual page.
 .SH SEE ALSO
-dropbearkey(8), dbclient(1)
+dropbearkey(1), dbclient(1), dropbearconvert(1)
 .P
 https://matt.ucc.asn.au/dropbear/dropbear.html

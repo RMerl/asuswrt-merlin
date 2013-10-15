@@ -1,3 +1,10 @@
+dropbear (2013.59-0.1) unstable; urgency=low
+
+  * New upstream release.
+  * Build with DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+ -- Matt Johnston <matt@ucc.asn.au>  Fri, 4 Oct 2013 22:54:00 +0800
+
 dropbear (2013.58-0.1) unstable; urgency=low
 
   * New upstream release.
