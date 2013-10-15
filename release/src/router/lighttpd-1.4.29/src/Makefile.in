@@ -149,14 +149,6 @@ liblightcomp_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(LDFLAGS) -o $@
 @NO_RDYNAMIC_TRUE@am_liblightcomp_la_rpath = -rpath $(libdir)
 @NO_RDYNAMIC_TRUE@am__DEPENDENCIES_2 = liblightcomp.la
-liblightsql_la_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_1)
-am_liblightsql_la_OBJECTS = liblightsql_la-sql.lo
-liblightsql_la_OBJECTS = $(am_liblightsql_la_OBJECTS)
-liblightsql_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
-	$(liblightsql_la_CFLAGS) $(CFLAGS) $(liblightsql_la_LDFLAGS) \
-	$(LDFLAGS) -o $@
 mod_access_la_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am_mod_access_la_OBJECTS = mod_access.lo
 mod_access_la_OBJECTS = $(am_mod_access_la_OBJECTS)
@@ -384,7 +376,7 @@ mod_usertrack_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	-o $@
 mod_webdav_la_DEPENDENCIES = $(am__DEPENDENCIES_2) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(sql_libadd)
+	$(am__DEPENDENCIES_1)
 am_mod_webdav_la_OBJECTS = mod_webdav_la-mod_webdav.lo
 mod_webdav_la_OBJECTS = $(am_mod_webdav_la_OBJECTS)
 mod_webdav_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
@@ -489,11 +481,10 @@ am__v_CCLD_0 = @echo "  CCLD  " $@;
 AM_V_GEN = $(am__v_GEN_@AM_V@)
 am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
 am__v_GEN_0 = @echo "  GEN   " $@;
-SOURCES = $(liblightcomp_la_SOURCES) $(liblightsql_la_SOURCES) \
-	$(mod_access_la_SOURCES) $(mod_accesslog_la_SOURCES) \
-	$(mod_alias_la_SOURCES) $(mod_auth_la_SOURCES) \
-	$(mod_cgi_la_SOURCES) $(mod_cml_la_SOURCES) \
-	$(mod_compress_la_SOURCES) \
+SOURCES = $(liblightcomp_la_SOURCES) $(mod_access_la_SOURCES) \
+	$(mod_accesslog_la_SOURCES) $(mod_alias_la_SOURCES) \
+	$(mod_auth_la_SOURCES) $(mod_cgi_la_SOURCES) \
+	$(mod_cml_la_SOURCES) $(mod_compress_la_SOURCES) \
 	$(mod_create_captcha_image_la_SOURCES) \
 	$(mod_dirlisting_la_SOURCES) $(mod_evasive_la_SOURCES) \
 	$(mod_evhost_la_SOURCES) $(mod_expire_la_SOURCES) \
@@ -511,10 +502,10 @@ SOURCES = $(liblightcomp_la_SOURCES) $(liblightsql_la_SOURCES) \
 	$(lighttpd_angel_SOURCES) $(lighttpd_arpping_SOURCES) \
 	$(lighttpd_monitor_SOURCES) $(proc_open_SOURCES)
 DIST_SOURCES = $(am__liblightcomp_la_SOURCES_DIST) \
-	$(liblightsql_la_SOURCES) $(mod_access_la_SOURCES) \
-	$(mod_accesslog_la_SOURCES) $(mod_alias_la_SOURCES) \
-	$(mod_auth_la_SOURCES) $(mod_cgi_la_SOURCES) \
-	$(mod_cml_la_SOURCES) $(mod_compress_la_SOURCES) \
+	$(mod_access_la_SOURCES) $(mod_accesslog_la_SOURCES) \
+	$(mod_alias_la_SOURCES) $(mod_auth_la_SOURCES) \
+	$(mod_cgi_la_SOURCES) $(mod_cml_la_SOURCES) \
+	$(mod_compress_la_SOURCES) \
 	$(mod_create_captcha_image_la_SOURCES) \
 	$(mod_dirlisting_la_SOURCES) $(mod_evasive_la_SOURCES) \
 	$(mod_evhost_la_SOURCES) $(mod_expire_la_SOURCES) \
@@ -555,6 +546,7 @@ CRYPT_LIB = @CRYPT_LIB@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@ -DHAVE_VERSION_H -DLIBRARY_DIR="\"$(libdir)\"" -DSBIN_DIR="\"$(sbindir)\""
 DEPDIR = @DEPDIR@
+DLLTOOL = @DLLTOOL@
 DL_LIB = @DL_LIB@
 DSYMUTIL = @DSYMUTIL@
 DUMPBIN = @DUMPBIN@
@@ -590,6 +582,7 @@ LTLIBOBJS = @LTLIBOBJS@
 LUA_CFLAGS = @LUA_CFLAGS@
 LUA_LIBS = @LUA_LIBS@
 MAKEINFO = @MAKEINFO@
+MANIFEST_TOOL = @MANIFEST_TOOL@
 MEMCACHE_LIB = @MEMCACHE_LIB@
 MKDIR_P = @MKDIR_P@
 MYSQL_CONFIG = @MYSQL_CONFIG@
@@ -621,6 +614,8 @@ SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 SQLITE_CFLAGS = @SQLITE_CFLAGS@
 SQLITE_LIBS = @SQLITE_LIBS@
+CURL_LIBS = @CURL_LIBS@
+CURL_CFLAGS = @CURL_CFLAGS@
 SSL_LIB = @SSL_LIB@
 STRIP = @STRIP@
 U = @U@
@@ -633,6 +628,7 @@ abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
+ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
 am__include = @am__include@
@@ -691,9 +687,8 @@ lemon_SOURCES = lemon.c
 lighttpd_angel_SOURCES = lighttpd-angel.c
 lighttpd_monitor_SOURCES = log.c buffer.c lighttpd-monitor.c nvram_control.c
 lighttpd_arpping_SOURCES = log.c buffer.c arpping_thread.c nvram_control.c
-#lighttpd_arpping_CFLAGS = $(AM_CFLAGS) $(LIBSMBCLIENT_CFLAGS)
 lighttpd_arpping_LDFLAGS = -lsmbclient
-BUILT_SOURCES = parsers versionstamp
+BUILT_SOURCES = parsers versionstamp 
 MAINTAINERCLEANFILES = configparser.c configparser.h mod_ssi_exprparser.c mod_ssi_exprparser.h
 CLEANFILES = versionstamp.h versionstamp.h.tmp
 common_src = buffer.c log.c \
@@ -724,13 +719,12 @@ src = server.c response.c connections.c network.c configfile.c \
 #mod_httptls_la_SOURCES = mod_httptls.c
 #mod_httptls_la_LDFLAGS = -module -export-dynamic -avoid-version -no-undefined
 #mod_httptls_la_LIBADD = $(common_libadd)
-lib_LTLIBRARIES = $(am__append_1) liblightsql.la mod_flv_streaming.la \
-	mod_evasive.la mod_webdav.la mod_magnet.la \
-	mod_cml.la mod_trigger_b4_dl.la mod_mysql_vhost.la mod_cgi.la \
-	mod_scgi.la mod_staticfile.la mod_dirlisting.la \
-	mod_indexfile.la mod_setenv.la mod_alias.la mod_userdir.la \
-	mod_rrdtool.la mod_usertrack.la mod_proxy.la mod_ssi.la \
-	mod_secdownload.la mod_expire.la mod_evhost.la \
+lib_LTLIBRARIES = $(am__append_1) mod_flv_streaming.la mod_evasive.la \
+	mod_webdav.la mod_magnet.la mod_cml.la mod_trigger_b4_dl.la \
+	mod_mysql_vhost.la mod_cgi.la mod_scgi.la mod_staticfile.la \
+	mod_dirlisting.la mod_indexfile.la mod_setenv.la mod_alias.la \
+	mod_userdir.la mod_rrdtool.la mod_usertrack.la mod_proxy.la \
+	mod_ssi.la mod_secdownload.la mod_expire.la mod_evhost.la \
 	mod_simple_vhost.la mod_fastcgi.la mod_extforward.la \
 	mod_access.la mod_compress.la mod_auth.la mod_rewrite.la \
 	mod_redirect.la mod_status.la mod_accesslog.la \
@@ -741,11 +735,6 @@ lib_LTLIBRARIES = $(am__append_1) liblightsql.la mod_flv_streaming.la \
 @NO_RDYNAMIC_TRUE@liblightcomp_la_LIBADD = $(PCRE_LIB) $(SSL_LIB) $(FAM_LIBS) $(LIBEV_LIBS)
 @NO_RDYNAMIC_FALSE@common_libadd = 
 @NO_RDYNAMIC_TRUE@common_libadd = liblightcomp.la
-liblightsql_la_SOURCES = sql.c
-liblightsql_la_CFLAGS = $(SQLITE_CFLAGS)
-liblightsql_la_LDFLAGS = -module -export-dynamic -avoid-version -no-undefined
-liblightsql_la_LIBADD = $(common_libadd) $(SQLITE_LIBS)
-sql_libadd = liblightsql.la
 mod_flv_streaming_la_SOURCES = mod_flv_streaming.c
 mod_flv_streaming_la_LDFLAGS = -module -export-dynamic -avoid-version -no-undefined
 mod_flv_streaming_la_LIBADD = $(common_libadd)
@@ -753,9 +742,9 @@ mod_evasive_la_SOURCES = mod_evasive.c
 mod_evasive_la_LDFLAGS = -module -export-dynamic -avoid-version -no-undefined
 mod_evasive_la_LIBADD = $(common_libadd)
 mod_webdav_la_SOURCES = mod_webdav.c
-mod_webdav_la_CFLAGS = $(AM_CFLAGS) $(XML_CFLAGS) $(SQLITE_CFLAGS) 
+mod_webdav_la_CFLAGS = $(AM_CFLAGS) $(XML_CFLAGS) $(SQLITE_CFLAGS)  $(CURL_CFLAGS)
 mod_webdav_la_LDFLAGS = -module -export-dynamic -avoid-version -no-undefined
-mod_webdav_la_LIBADD = $(common_libadd) $(XML_LIBS) $(SQLITE_LIBS) $(UUID_LIBS) $(sql_libadd)
+mod_webdav_la_LIBADD = $(common_libadd) $(XML_LIBS) $(SQLITE_LIBS) $(UUID_LIBS) $(CURL_LIBS)
 mod_magnet_la_SOURCES = mod_magnet.c mod_magnet_cache.c
 mod_magnet_la_CFLAGS = $(AM_CFLAGS) $(LUA_CFLAGS)
 mod_magnet_la_LDFLAGS = -module -export-dynamic -avoid-version -no-undefined
@@ -953,8 +942,6 @@ clean-libLTLIBRARIES:
 	done
 liblightcomp.la: $(liblightcomp_la_OBJECTS) $(liblightcomp_la_DEPENDENCIES) $(EXTRA_liblightcomp_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(liblightcomp_la_LINK) $(am_liblightcomp_la_rpath) $(liblightcomp_la_OBJECTS) $(liblightcomp_la_LIBADD) $(LIBS)
-liblightsql.la: $(liblightsql_la_OBJECTS) $(liblightsql_la_DEPENDENCIES) $(EXTRA_liblightsql_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(liblightsql_la_LINK) -rpath $(libdir) $(liblightsql_la_OBJECTS) $(liblightsql_la_LIBADD) $(LIBS)
 mod_access.la: $(mod_access_la_OBJECTS) $(mod_access_la_DEPENDENCIES) $(EXTRA_mod_access_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(mod_access_la_LINK) -rpath $(libdir) $(mod_access_la_OBJECTS) $(mod_access_la_LIBADD) $(LIBS)
 mod_accesslog.la: $(mod_accesslog_la_OBJECTS) $(mod_accesslog_la_DEPENDENCIES) $(EXTRA_mod_accesslog_la_DEPENDENCIES) 
@@ -1178,7 +1165,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/liblightcomp_la-stat_cache.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/liblightcomp_la-status_counter.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/liblightcomp_la-stream.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/liblightsql_la-sql.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lighttpd-angel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lighttpd-monitor.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/log.Po@am__quote@
@@ -1213,7 +1199,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_setenv.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_simple_vhost.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_smbdav_basic.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_smbdav_la-mod_smbdav.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_smbdav_ntlm.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_ssi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_ssi_expr.Plo@am__quote@
@@ -1581,13 +1566,6 @@ liblightcomp_la-nvram_control.lo: nvram_control.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(liblightcomp_la_CFLAGS) $(CFLAGS) -c -o liblightcomp_la-nvram_control.lo `test -f 'nvram_control.c' || echo '$(srcdir)/'`nvram_control.c
 
-liblightsql_la-sql.lo: sql.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(liblightsql_la_CFLAGS) $(CFLAGS) -MT liblightsql_la-sql.lo -MD -MP -MF $(DEPDIR)/liblightsql_la-sql.Tpo -c -o liblightsql_la-sql.lo `test -f 'sql.c' || echo '$(srcdir)/'`sql.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/liblightsql_la-sql.Tpo $(DEPDIR)/liblightsql_la-sql.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='sql.c' object='liblightsql_la-sql.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(liblightsql_la_CFLAGS) $(CFLAGS) -c -o liblightsql_la-sql.lo `test -f 'sql.c' || echo '$(srcdir)/'`sql.c
-
 mod_cml_la-mod_cml.lo: mod_cml.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mod_cml_la_CFLAGS) $(CFLAGS) -MT mod_cml_la-mod_cml.lo -MD -MP -MF $(DEPDIR)/mod_cml_la-mod_cml.Tpo -c -o mod_cml_la-mod_cml.lo `test -f 'mod_cml.c' || echo '$(srcdir)/'`mod_cml.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/mod_cml_la-mod_cml.Tpo $(DEPDIR)/mod_cml_la-mod_cml.Plo
@@ -1942,7 +1920,6 @@ copy-prebuild-arm:
 		cp ../prebuild_arm/mod_sharelink.so.l .libs/mod_sharelink.so; \
 		cp ../prebuild_arm/mod_aicloud_auth.so.l .libs/mod_aicloud_auth.so; \
 	fi
-
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
