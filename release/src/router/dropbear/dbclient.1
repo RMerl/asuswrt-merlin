@@ -1,6 +1,6 @@
 .TH dbclient 1
 .SH NAME
-dbclient \- lightweight SSH2 client
+dbclient \- lightweight SSH client
 .SH SYNOPSIS
 .B dbclient
 [\-Tt] [\-p
@@ -19,7 +19,7 @@ dbclient \- lightweight SSH2 client
 
 .SH DESCRIPTION
 .B dbclient
-is a SSH 2 client designed to be small enough to be used in small memory
+is a SSH client designed to be small enough to be used in small memory
 environments, while still being functional and secure enough for general use.
 .SH OPTIONS
 .TP
@@ -31,9 +31,10 @@ Default is 22.
 .TP
 .B \-i \fIidfile
 Identity file.
-Read the identity from file
+Read the identity key from file
 .I idfile
-(multiple allowed).
+(multiple allowed). This file is created with dropbearkey(1) or converted
+from OpenSSH with dropbearconvert(1).
 .TP
 .B \-L [\fIlistenaddress\fR]:\fIlistenport\fR:\fIhost\fR:\fIport\fR
 Local port forwarding.
@@ -161,6 +162,6 @@ Mihnea Stoenescu wrote initial Dropbear client support
 .br
 Gerrit Pape (pape@smarden.org) wrote this manual page.
 .SH SEE ALSO
-dropbear(8), dropbearkey(8)
+dropbear(8), dropbearkey(1)
 .P
 https://matt.ucc.asn.au/dropbear/dropbear.html

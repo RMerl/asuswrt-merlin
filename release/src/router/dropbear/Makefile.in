@@ -66,9 +66,10 @@ VPATH=@srcdir@
 srcdir=@srcdir@
 
 prefix=@prefix@
-exec_prefix=${prefix}
-bindir=${exec_prefix}/bin
-sbindir=${exec_prefix}/sbin
+datarootdir = @datarootdir@
+bindir=@bindir@
+sbindir=@sbindir@
+mandir=@mandir@
 
 CC=@CC@
 AR=@AR@
@@ -123,33 +124,31 @@ install: $(addprefix inst_, $(TARGETS))
 installdropbearmulti: insdbmulti $(addprefix insmulti, $(PROGRAMS)) 
 
 insdbmulti: dropbearmulti
-	$(INSTALL) -d -m 755 $(DESTDIR)$(bindir)
-	$(INSTALL) -m 755 dropbearmulti$(EXEEXT) $(DESTDIR)$(bindir)
-	-chown root $(DESTDIR)$(bindir)/dropbearmulti$(EXEEXT)
-	-chgrp 0 $(DESTDIR)$(bindir)/dropbearmulti$(EXEEXT)
+	$(INSTALL) -d $(DESTDIR)$(bindir)
+	$(INSTALL) dropbearmulti$(EXEEXT) $(DESTDIR)$(bindir)
 
 insmultidropbear: dropbearmulti
-	$(INSTALL) -d -m 755 $(DESTDIR)$(sbindir)
+	$(INSTALL) -d $(DESTDIR)$(sbindir)
 	-rm -f $(DESTDIR)$(sbindir)/dropbear$(EXEEXT)
 	-ln -s $(bindir)/dropbearmulti$(EXEEXT) $(DESTDIR)$(sbindir)/dropbear$(EXEEXT) 
 
 insmulti%: dropbearmulti
-	$(INSTALL) -d -m 755 $(DESTDIR)$(bindir)
+	$(INSTALL) -d $(DESTDIR)$(bindir)
 	-rm -f $(DESTDIR)$(bindir)/$*$(EXEEXT) 
 	-ln -s $(bindir)/dropbearmulti$(EXEEXT) $(DESTDIR)$(bindir)/$*$(EXEEXT) 
 
 # dropbear should go in sbin, so it needs a seperate rule
 inst_dropbear: dropbear
-	$(INSTALL) -d -m 755 $(DESTDIR)$(sbindir)
-	$(INSTALL) -m 755 dropbear$(EXEEXT) $(DESTDIR)$(sbindir)
-	-chown root $(DESTDIR)$(sbindir)/dropbear$(EXEEXT)
-	-chgrp 0 $(DESTDIR)$(sbindir)/dropbear$(EXEEXT)
+	$(INSTALL) -d $(DESTDIR)$(sbindir)
+	$(INSTALL) dropbear$(EXEEXT) $(DESTDIR)$(sbindir)
+	$(INSTALL) -d $(DESTDIR)$(mandir)/man8
+	$(INSTALL) -m 644 dropbear.8  $(DESTDIR)$(mandir)/man8/dropbear.8
 
 inst_%: $*
-	$(INSTALL) -d -m 755 $(DESTDIR)$(bindir)
-	$(INSTALL) -m 755 $*$(EXEEXT) $(DESTDIR)$(bindir)
-	-chown root $(DESTDIR)$(bindir)/$*$(EXEEXT)
-	-chgrp 0 $(DESTDIR)$(bindir)/$*$(EXEEXT)
+	$(INSTALL) -d $(DESTDIR)$(bindir)
+	$(INSTALL) $*$(EXEEXT) $(DESTDIR)$(bindir)
+	$(INSTALL) -d $(DESTDIR)$(mandir)/man1
+	$(INSTALL) -m 644 $*.1  $(DESTDIR)$(mandir)/man1/$*.1
 
 
 # for some reason the rule further down doesn't like $($@objs) as a prereq.

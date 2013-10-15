@@ -307,7 +307,9 @@ static void check_close(struct Channel *channel) {
 		return;
 	}
 
-	if (channel->recv_eof && !write_pending(channel)) {
+	if ((channel->recv_eof && !write_pending(channel))
+		/* have a server "session" and child has exited */
+		|| (channel->type->check_close && close_allowed)) {
 		close_chan_fd(channel, channel->writefd, SHUT_WR);
 	}
 
@@ -336,6 +338,7 @@ static void check_close(struct Channel *channel) {
 
 	/* And if we can't receive any more data from them either, close up */
 	if (channel->readfd == FD_CLOSED
+			&& channel->writefd == FD_CLOSED
 			&& (ERRFD_IS_WRITE(channel) || channel->errfd == FD_CLOSED)
 			&& !channel->sent_close
 			&& close_allowed

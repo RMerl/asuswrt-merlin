@@ -383,6 +383,13 @@ void cli_getopts(int argc, char ** argv) {
 		exit(EXIT_FAILURE);
 	}
 
+#ifdef ENABLE_CLI_PROXYCMD                                                                                                                                   
+	if (cli_opts.proxycmd) {
+		/* To match the common path of m_freeing it */
+		cli_opts.proxycmd = m_strdup(cli_opts.proxycmd);
+	}
+#endif
+
 	if (cli_opts.remoteport == NULL) {
 		cli_opts.remoteport = "22";
 	}

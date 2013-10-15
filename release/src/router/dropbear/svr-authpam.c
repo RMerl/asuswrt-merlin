@@ -142,6 +142,22 @@ pamConvFunc(int num_msg,
 			(*respp) = resp;
 			break;
 
+		case PAM_ERROR_MSG:
+		case PAM_TEXT_INFO:
+
+			if (msg_len > 0) {
+				buffer * pam_err = buf_new(msg_len + 4);
+				buf_setpos(pam_err, 0);
+				buf_putbytes(pam_err, "\r\n", 2);
+				buf_putbytes(pam_err, (*msg)->msg, msg_len);
+				buf_putbytes(pam_err, "\r\n", 2);
+				buf_setpos(pam_err, 0);
+
+				send_msg_userauth_banner(pam_err);
+				buf_free(pam_err);
+			}
+			break;
+
 		default:
 			TRACE(("Unknown message type"))
 			rc = PAM_CONV_ERR;
@@ -196,14 +212,14 @@ void svr_auth_pam() {
 
 	/* Init pam */
 	if ((rc = pam_start("sshd", NULL, &pamConv, &pamHandlep)) != PAM_SUCCESS) {
-		dropbear_log(LOG_WARNING, "pam_start() failed, rc=%d, %s\n", 
+		dropbear_log(LOG_WARNING, "pam_start() failed, rc=%d, %s", 
 				rc, pam_strerror(pamHandlep, rc));
 		goto cleanup;
 	}
 
 	/* just to set it to something */
 	if ((rc = pam_set_item(pamHandlep, PAM_TTY, "ssh") != PAM_SUCCESS)) {
-		dropbear_log(LOG_WARNING, "pam_set_item() failed, rc=%d, %s\n", 
+		dropbear_log(LOG_WARNING, "pam_set_item() failed, rc=%d, %s",
 				rc, pam_strerror(pamHandlep, rc));
 		goto cleanup;
 	}
@@ -216,7 +232,7 @@ void svr_auth_pam() {
 	/* (void) pam_set_item(pamHandlep, PAM_FAIL_DELAY, (void*) pamDelayFunc); */
 
 	if ((rc = pam_authenticate(pamHandlep, 0)) != PAM_SUCCESS) {
-		dropbear_log(LOG_WARNING, "pam_authenticate() failed, rc=%d, %s\n", 
+		dropbear_log(LOG_WARNING, "pam_authenticate() failed, rc=%d, %s", 
 				rc, pam_strerror(pamHandlep, rc));
 		dropbear_log(LOG_WARNING,
 				"Bad PAM password attempt for '%s' from %s",
@@ -227,7 +243,7 @@ void svr_auth_pam() {
 	}
 
 	if ((rc = pam_acct_mgmt(pamHandlep, 0)) != PAM_SUCCESS) {
-		dropbear_log(LOG_WARNING, "pam_acct_mgmt() failed, rc=%d, %s\n", 
+		dropbear_log(LOG_WARNING, "pam_acct_mgmt() failed, rc=%d, %s", 
 				rc, pam_strerror(pamHandlep, rc));
 		dropbear_log(LOG_WARNING,
 				"Bad PAM password attempt for '%s' from %s",
