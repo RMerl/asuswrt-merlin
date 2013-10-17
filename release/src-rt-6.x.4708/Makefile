@@ -713,6 +713,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_WPSMULTIBAND/d" $(1); \
 		echo "# RTCONFIG_WPSMULTIBAND is not set" >>$(1); \
 	fi; \
+	if [ "$(IPSEC)" = "y" ]; then \
+		sed -i "/RTCONFIG_IPSEC/d" $(1); \
+		echo "RTCONFIG_IPSEC=y" >>$(1); \
+	fi; \
 	)
 
 	$(call platformRouterOptions, $(1))
@@ -1092,6 +1096,19 @@ define KernelConfig
 		echo "CONFIG_INET_XFRM_MODE_BEET=m" >>$(1); \
 		sed -i "/CONFIG_NETFILTER_XT_MATCH_POLICY/d" $(1); \
 		echo "CONFIG_NETFILTER_XT_MATCH_POLICY=m" >>$(1); \
+		echo "CONFIG_AEAD=m" >>$(1); \
+		sed -i "/CONFIG_CRYPTO_GF128MUL/d" $(1); \
+		echo "CONFIG_CRYPTO_GF128MUL=m" >>$(1); \
+		sed -i "/CONFIG_CRYPTO_CCM/d" $(1); \
+		echo "CONFIG_CRYPTO_CCM=m" >>$(1); \
+		sed -i "/CONFIG_CRYPTO_GCM/d" $(1); \
+		echo "CONFIG_CRYPTO_GCM=m" >>$(1); \
+		sed -i "/CONFIG_CRYPTO_SEQIV/d" $(1); \
+		echo "CONFIG_CRYPTO_SEQIV=m" >>$(1); \
+		sed -i "/CONFIG_CRYPTO_CTR/d" $(1); \
+		echo "CONFIG_CRYPTO_CTR=m" >>$(1); \
+		sed -i "/CONFIG_CRYPTO_GHASH/d" $(1); \
+		echo "CONFIG_CRYPTO_GHASH=m" >>$(1); \
 		if [ "$(IPV6SUPP)" = "y" ]; then \
 			sed -i "/CONFIG_INET6_AH/d" $(1); \
 			echo "CONFIG_INET6_AH=m" >>$(1); \

@@ -258,6 +258,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_APP_PREINSTALLED/d" $(1); \
 		echo "# RTCONFIG_APP_PREINSTALLED is not set" >>$(1); \
 	fi; \
+	if [ "$(IPSEC)" = "y" ]; then \
+		sed -i "/RTCONFIG_IPSEC/d" $(1); \
+		echo "RTCONFIG_IPSEC=y" >>$(1); \
+	fi; \
 	)
 endef
 
