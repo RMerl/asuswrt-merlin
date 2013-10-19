@@ -132,7 +132,7 @@ function initial(){
 }
 
 var listFlag = 0;
-var itemperpage = 14;
+var itemperpage = 12;
 function _showNextItem(num){
 	$("client_list_Block").style.display = "";
 	var _client_list_row_length = client_list_row.length-1;
