@@ -4143,7 +4143,7 @@ del_samba_rules(void)
                 "--sport", "137:139", "-j", "NOTRACK");
         eval("iptables", "-t", "raw", "-D", "OUTPUT", "-p", "udp",
                 "--sport", "445", "-j", "NOTRACK");
-/*
+
         eval("iptables", "-t", "filter", "-D", "INPUT", "-i", ifname, "-p", "udp",
                 "--dport", "137:139", "-j", "ACCEPT");
         eval("iptables", "-t", "filter", "-D", "INPUT", "-i", ifname, "-p", "udp",
@@ -4152,7 +4152,7 @@ del_samba_rules(void)
                 "--dport", "137:139", "-j", "ACCEPT");
         eval("iptables", "-t", "filter", "-D", "INPUT", "-i", ifname, "-p", "tcp",
                 "--dport", "445", "-j", "ACCEPT");
-*/
+
 }
 
 add_samba_rules(void)
@@ -4181,7 +4181,7 @@ add_samba_rules(void)
                 "--sport", "137:139", "-j", "NOTRACK");
         eval("iptables", "-t", "raw", "-A", "OUTPUT", "-p", "udp",
                 "--sport", "445", "-j", "NOTRACK");
-/*
+
         eval("iptables", "-t", "filter", "-I", "INPUT", "-i", ifname, "-p", "udp",
                 "--dport", "137:139", "-j", "ACCEPT");
         eval("iptables", "-t", "filter", "-I", "INPUT", "-i", ifname, "-p", "udp",
@@ -4190,7 +4190,7 @@ add_samba_rules(void)
                 "--dport", "137:139", "-j", "ACCEPT");
         eval("iptables", "-t", "filter", "-I", "INPUT", "-i", ifname, "-p", "tcp",
 		"--dport", "445", "-j", "ACCEPT");
-*/
+
 }
 #endif
 
