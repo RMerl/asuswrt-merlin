@@ -367,6 +367,10 @@ found_file:
 	if(n>0)	
 	{	   
 		snprintf(file, sizeof(file), "%s/%s", dir, namelist[0]->d_name);	   
+		for(i=0; i<n; i++)
+			{
+			free(namelist[i]);
+		}
 		if( access(file, R_OK) == 0 )	   
 		{		  
 			if( art_cache_exists(file, &art_file) )		  
@@ -386,10 +390,6 @@ found_file:
 				art_file = strdup(file);		  
 			image_free(imsrc);
 
-			for(i=0; i<n; i++)
-			{			 
-				free(namelist[i]);		  
-			}
 			return art_file;
 		}
 	}
