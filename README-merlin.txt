@@ -471,6 +471,8 @@ History
    - FIXED: IPv6 clients list failed to properly merge IPs from similar MACs
             (Asus bug)
    - FIXED: Minor layout issues with the Clients list
+   - FIXED: Samba wasn't started at boot time if browser master or WINS
+            was enabled and we had no USB disk plugged in.
 
 
 3.0.0.4.374.33 (3-Oct-2013):
