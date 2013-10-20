@@ -473,6 +473,9 @@ History
    - FIXED: Minor layout issues with the Clients list
    - FIXED: Samba wasn't started at boot time if browser master or WINS
             was enabled and we had no USB disk plugged in.
+   - FIXED: Router/minidlna crashes when processing very large image
+            collections - various memory leaks plugged.
+            (patches provided by Paulo Capani)
 
 
 3.0.0.4.374.33 (3-Oct-2013):
