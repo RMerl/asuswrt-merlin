@@ -24,10 +24,14 @@ Supported Devices
 -----------------
 Supported devices are:
  * RT-N16
- * RT-N66U and RT-N66R
- * RT-AC66U and RT-AC66R
+ * RT-N66U
+ * RT-AC66U
  * RT-AC56U
  * RT-AC68U
+
+NOTE: all the "R" versions (for example RT-N66R) the same as their "U" counterparts, 
+they are just different packages aimed at large retailers.  Firmware is 100% 
+compatible with both U and R versions of the routers.
 
 
 Features
