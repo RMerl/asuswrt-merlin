@@ -87,6 +87,8 @@ save_resized_album_art(image_s *imsrc, const char *path)
 		image_free(imdst);
 		return cache_file;
 	}
+	else
+		image_free(imdst);
 error:
 	free(cache_file);
 	return NULL;
@@ -388,6 +390,7 @@ found_file:
 			{			 
 				free(namelist[i]);		  
 			}
+			return art_file;
 		}
 	}
 

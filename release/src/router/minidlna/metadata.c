@@ -678,6 +678,7 @@ GetImageMetadata(const char *path, char *name)
 						fclose(thumb);					
 					}
 				}
+				free(art_file);
 			}
 
 		}
