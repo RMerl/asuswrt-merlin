@@ -245,10 +245,17 @@ function showAccountMenu(){
 	else
 		for(var i = 0; i < this.accounts.length; ++i){
 			account_menu_code += '<div class="userIcon" id="';
-			account_menu_code += "account"+i;
-			account_menu_code += '" onClick="setSelectAccount('+i+');">'
-			account_menu_code += decodeURIComponent(this.accounts[i]);
-			account_menu_code += '</div>\n';
+			account_menu_code += "account"+i;		
+			if(decodeURIComponent(this.accounts[i]).length > 18){
+				account_menu_code += '" onClick="setSelectAccount('+i+');" style="white-space:nowrap;font-family:Courier New, Courier, mono;" title='+decodeURIComponent(this.accounts[i])+'>'
+				account_menu_code += decodeURIComponent(this.accounts[i]).substring(0,15) + '...';
+			}	
+			else{
+				account_menu_code += '" onClick="setSelectAccount('+i+');" style="white-space:nowrap;font-family:Courier New, Courier, mono;">'
+				account_menu_code += decodeURIComponent(this.accounts[i]);		
+			}
+			
+			account_menu_code += '</div>\n';	
 		}
 	
 	$("account_menu").innerHTML = account_menu_code;

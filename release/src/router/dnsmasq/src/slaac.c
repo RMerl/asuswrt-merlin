@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2012 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2013 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,7 +20,6 @@
 
 #include <netinet/icmp6.h>
 
-static int map_rebuild = 0;
 static int ping_id = 0;
 
 void slaac_add_addrs(struct dhcp_lease *lease, time_t now, int force)
@@ -38,8 +37,10 @@ void slaac_add_addrs(struct dhcp_lease *lease, time_t now, int force)
   old = lease->slaac_address;
   lease->slaac_address = NULL;
 
-  for (context = daemon->ra_contexts; context; context = context->next) 
-    if ((context->flags & CONTEXT_RA_NAME) && lease->last_interface == context->if_index)
+  for (context = daemon->dhcp6; context; context = context->next) 
+    if ((context->flags & CONTEXT_RA_NAME) && 
+	!(context->flags & CONTEXT_OLD) &&
+	lease->last_interface == context->if_index)
       {
 	struct in6_addr addr = context->start6;
 	if (lease->hwaddr_len == 6 &&
@@ -123,8 +124,8 @@ time_t periodic_slaac(time_t now, struct dhcp_lease *leases)
   struct slaac_address *slaac;
   time_t next_event = 0;
   
-  for (context = daemon->ra_contexts; context; context = context->next)
-    if ((context->flags & CONTEXT_RA_NAME))
+  for (context = daemon->dhcp6; context; context = context->next)
+    if ((context->flags & CONTEXT_RA_NAME) && !(context->flags & CONTEXT_OLD))
       break;
 
   /* nothing configured */
@@ -133,12 +134,6 @@ time_t periodic_slaac(time_t now, struct dhcp_lease *leases)
 
   while (ping_id == 0)
     ping_id = rand16();
-
-  if (map_rebuild)
-    {
-      map_rebuild = 0;
-      build_subnet_map();
-    }
 
   for (lease = leases; lease; lease = lease->next)
     for (slaac = lease->slaac_address; slaac; slaac = slaac->next)
@@ -211,51 +206,4 @@ void slaac_ping_reply(struct in6_addr *sender, unsigned char *packet, char *inte
   lease_update_dns(gotone);
 }
 	
-/* Build a map from ra-names subnets to corresponding interfaces. This
-   is used to go from DHCPv4 leases to SLAAC addresses, 
-   interface->IPv6-subnet, IPv6-subnet + MAC address -> SLAAC.
-*/	      
-static int add_subnet(struct in6_addr *local,  int prefix,
-		      int scope, int if_index, int dad, void *vparam)
-{ 
-  struct dhcp_context *context;
- 
-  (void)scope;
-  (void)dad;
-  (void)vparam;
-
-  for (context = daemon->ra_contexts; context; context = context->next)
-    if ((context->flags & CONTEXT_RA_NAME) &&
-	prefix == context->prefix &&
-	is_same_net6(local, &context->start6, prefix) &&
-	is_same_net6(local, &context->end6, prefix))
-      {
-	context->if_index = if_index;
-	context->local6 = *local;
-      }
-
-  return 1;
-}
-
-void build_subnet_map(void)
-{
-  struct dhcp_context *context;
-  int ok = 0;
-
-  for (context = daemon->ra_contexts; context; context = context->next)
-    {
-      context->if_index = 0;
-      if ((context->flags & CONTEXT_RA_NAME))
-	ok = 1;
-    }
-
-  /* ra-names configured */
-  if (ok)
-    iface_enumerate(AF_INET6, NULL, add_subnet);
-}
-
-void schedule_subnet_map(void)
-{
-  map_rebuild = 1; 
-}
 #endif

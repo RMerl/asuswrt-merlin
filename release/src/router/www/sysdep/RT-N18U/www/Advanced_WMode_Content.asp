@@ -75,6 +75,7 @@ var wds_aplist = "";
 var $j = jQuery.noConflict();
 
 function initial(){
+	$('pull_arrow').title = Untranslated.select_AP;
 	show_menu();
 	load_body();	
 
@@ -94,7 +95,7 @@ function initial(){
 		$("wl_5g_mac").style.display = "none";
 		$("wl_unit_field").style.display = "none";
 	}	
-	wl_bw_hint();
+	wl_bwch_hint();
 	setTimeout("wds_scan();", 500);
 }
 
@@ -304,13 +305,20 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 		return true;
 	} 	
 }
-function wl_bw_hint(){  //Control display chanspec hint when wl_bw=0 or not
-	if(document.form.wl_bw.value == 0)
-		$("wl_bw_hint").style.display="";
-	else
-		$("wl_bw_hint").style.display="none";
-}
 /*---------- Site Survey End -----------------*/
+
+function wl_bwch_hint(){  //Control display chanspec hint when wl_bw=0 or wl_channel=0(Auto)
+	if(document.form.wl_bw.value == "0"){
+		$("wl_bw_hint").style.display="";
+		$("wl_ch_hint").style.display="none";
+	}else if(document.form.wl_channel.value == "0"){
+		$("wl_bw_hint").style.display="none";
+		$("wl_ch_hint").style.display="";
+	}else{
+		$("wl_bw_hint").style.display="none";
+		$("wl_ch_hint").style.display="none";
+	}
+}
 </script>
 </head>
 
@@ -342,6 +350,7 @@ function wl_bw_hint(){  //Control display chanspec hint when wl_bw=0 or not
 <input type="hidden" name="wl_channel_orig" value='<% nvram_get("wl_channel"); %>'>
 <input type="hidden" name="wl_nmode_x" value='<% nvram_get("wl_nmode_x"); %>'>
 <input type="hidden" name="wl_bw" value='<% nvram_get("wl_bw"); %>'>
+<input type="hidden" name="wl_channel" value='<% nvram_get("wl_channel"); %>'>
 <input type="hidden" name="wl_nctrlsb_old" value='<% nvram_get("wl_nctrlsb"); %>'>
 <input type="hidden" name="wl_wdslist" value=''>
 <input type="hidden" name="wl_subunit" value="-1">
@@ -373,7 +382,9 @@ function wl_bw_hint(){  //Control display chanspec hint when wl_bw=0 or not
 		  	<div class="formfontdesc"><#WLANConfig11b_display31_sectiondesc#></div>
 		  	<div class="formfontdesc" style="color:#FFCC00;"><#ADSL_FW_note#><#WLANConfig11b_display32_sectiondesc#></div>
 		  	<div class="formfontdesc"><#WLANConfig11b_display33_sectiondesc#></div>
+			<div id="wds_desc4" class="formfontdesc" style="margin-left:28px;"></div>	
 		  	<div id="wl_bw_hint" style="font-size:13px;font-family: Arial, Helvetica, sans-serif;color:#FC0;margin-left:28px;">5. You are currently using the Auto channel. Click <a style="font-size:13px;font-family: Lucida Console;color:#FC0;text-decoration:underline;" href="/Advanced_Wireless_Content.asp?af=wl_bw">Here</a> to modify.</div>
+			<div id="wl_ch_hint" style="font-size:13px;font-family: Arial, Helvetica, sans-serif;color:#FC0;margin-left:28px;">5. You are currently using the Auto channel. Click <a style="font-size:13px;font-family: Lucida Console;color:#FC0;text-decoration:underline;" href="/Advanced_Wireless_Content.asp?af=wl_channel">Here</a> to modify.</div>
 			
 			<table id="MainTable1" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 			  <thead>
@@ -417,7 +428,7 @@ function wl_bw_hint(){  //Control display chanspec hint when wl_bw=0 or not
 						<#WLANConfig11b_x_APMode_itemname#></a>
 					</th>
 					<td>
-						<select name="wl_mode_x" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_mode_x');">
+						<select name="wl_mode_x" class="input_option" onChange="change_wireless_bridge(this.value);">
 							<option value="0" <% nvram_match("wl_mode_x", "0","selected"); %>>AP Only</option>
 							<option value="1" <% nvram_match("wl_mode_x", "1","selected"); %>>WDS Only</option>
 							<option value="2" <% nvram_match("wl_mode_x", "2","selected"); %>>Hybrid</option>
@@ -455,7 +466,7 @@ function wl_bw_hint(){  //Control display chanspec hint when wl_bw=0 or not
           		<tr>
             		<td width="80%">
               		<input type="text" style="margin-left:220px;float:left;" maxlength="17" class="input_macaddr_table" name="wl_wdslist_0" onKeyPress="return is_hwaddr(this,event)">
-									<img style="float:left;" id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="Select the Access Point" onmouseover="over_var=1;" onmouseout="over_var=0;">
+									<img style="float:left;" id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="" onmouseover="over_var=1;" onmouseout="over_var=0;">
 									<div id="WDSAPList" class="WDSAPList">
 										<div style="width:98px">
 											<img height="15px" style="margin-left:5px;margin-top:2px;" src="/images/InternetScan.gif">

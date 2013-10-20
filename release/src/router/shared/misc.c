@@ -272,98 +272,48 @@ const char *ipv6_prefix(struct in6_addr *in6addr)
 
 void reset_ipv6_linklocal_addr(const char *ifname, int flush)
 {
-	int sockfd;
+	static char buf[INET6_ADDRSTRLEN];
+	struct in6_addr addr;
 	struct ifreq ifr;
-	char mac[6];
-	unsigned char eui64[8];
-	static char ipv6_lla[32];
+	unsigned char *mac;
+	int fd;
 
-	if (!ifname)
+	if (!ifname ||
+	    !strcmp(ifname, "lo") || !strncmp(ifname, "ppp", 3))
 		return;
 
-	if (!strcmp(ifname, "lo") || !strncmp(ifname, "ppp", 3))
+	if ((fd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0)
 		return;
 
-	if ((sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0)
-	return;
+	memset(&ifr, 0, sizeof(ifr));
+	strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+	mac = (ioctl(fd, SIOCGIFHWADDR, &ifr) < 0) ?
+		NULL : ifr.ifr_hwaddr.sa_data;
+	close(fd);
 
-	strcpy(ifr.ifr_name, ifname);
-	if (ioctl(sockfd, SIOCGIFHWADDR, &ifr) < 0) {
-		close(sockfd);
+	if (mac == NULL)
 		return;
-	}
 
-	close(sockfd);
-
-	memcpy(mac, ifr.ifr_hwaddr.sa_data, 6);
-	memset(eui64, 0, sizeof(eui64));
-	memcpy(eui64, mac, 3);
-	memcpy(eui64 + 5, mac + 3, 3);
-	eui64[3] = 0xff;
-	eui64[4] = 0xfe;
-	eui64[0] ^= 0x02;
-
-	snprintf(ipv6_lla, 32, "fe80::%x%02x:%x%02x:%x%02x:%x%02x/64",
-		eui64[0], eui64[1], eui64[2], eui64[3],
-		eui64[4], eui64[5], eui64[6], eui64[7]);
+	addr.s6_addr32[0] = htonl(0xfe800000);
+	addr.s6_addr32[1] = 0;
+	memcpy(&addr.s6_addr[8], mac, 3);
+	memcpy(&addr.s6_addr[13], mac + 3, 3);
+	addr.s6_addr[8] ^= 0x02;
+	addr.s6_addr[11] = 0xff;
+	addr.s6_addr[12] = 0xfe;
 
 	if (flush)
-	doSystem("ip -6 addr flush dev %s", ifname);
-	doSystem("ip -6 addr add %s dev %s", ipv6_lla, ifname);
+		eval("ip", "-6", "addr", "flush", "dev", (char *) ifname);
+	if (inet_ntop(AF_INET6, &addr, buf, sizeof(buf)))
+		eval("ip", "-6", "addr", "add", buf, "dev", (char *) ifname);
 }
-
-#define PATH_PROC_NET_IF_INET6	"/proc/net/if_inet6"
-#ifndef IPV6_ADDR_LINKLOCAL
-#define IPV6_ADDR_LINKLOCAL	0x0020U
-#endif
 
 int with_ipv6_linklocal_addr(const char *ifname)
 {
-	FILE *fp;
-	char str_addr[40];
-	unsigned int plen, scope, dad_status, if_idx;
-	char devname[IFNAMSIZ];
-	struct in6_addr if_addr;
-
-	if (!ifname)
-		return 0;
-
-	if ((fp = fopen(PATH_PROC_NET_IF_INET6, "r")) == NULL)
-	{
-		dbg("can't open %s: %s", PATH_PROC_NET_IF_INET6,
-			strerror(errno));
-		return 0;
-	}
-
-	while (fscanf(fp, "%32s %x %02x %02x %02x %15s\n",
-		      str_addr, &if_idx, &plen, &scope, &dad_status,
-		      devname) != EOF)
-	{
-		if (scope == IPV6_ADDR_LINKLOCAL &&
-		    strcmp(devname, ifname) == 0)
-		{
-			struct in6_addr addr;
-			unsigned int ap;
-			int i;
-
-			for (i=0; i<16; i++)
-			{
-				sscanf(str_addr + i * 2, "%02x", &ap);
-				addr.s6_addr[i] = (unsigned char)ap;
-			}
-			memcpy(&if_addr, &addr, sizeof(if_addr));
-
-			fclose(fp);
-//			dbg("found linklocal address configured for %s\n", ifname);
-			return 1;
-		}
-	}
-
-	dbg("no linklocal address configured for %s\n", ifname);
-	fclose(fp);
-	return 0;
+	return (getifaddr((char *) ifname, AF_INET6, GIF_LINKLOCAL) != NULL);
 }
 
+#if 1 /* temporary till httpd route table redo */
 static const unsigned flagvals[] = { /* Must agree with flagchars[]. */
 	RTF_GATEWAY,
 	RTF_HOST,
@@ -424,7 +374,7 @@ char* INET6_rresolve(struct sockaddr_in6 *sin6, int numeric)
 	return strdup(name);
 }
 
-const char *ipv6_gateway_address()
+const char *ipv6_gateway_address(void)
 {
 	char addr6[128], *naddr6;
 	/* In addr6x, we store both 40-byte ':'-delimited ipv6 addresses.
@@ -520,6 +470,69 @@ const char *ipv6_gateway_address()
 
 	return buf;
 }
+#else
+static int ipv6_expand(char *buf, char *str, struct in6_addr *addr)
+{
+	char *dst = buf;
+	char *src = str;
+	int i;
+
+	for (i = 1; dst < src && *src; i++) {
+		*dst++ = *src++;
+		if (i % 4 == 0) *dst++ = ':';
+	}
+	return inet_pton(AF_INET6, buf, addr);
+}
+
+const char *ipv6_gateway_address(void)
+{
+	static char buf[INET6_ADDRSTRLEN] = "";
+	FILE *fp;
+	struct in6_addr addr;
+	char dest[41], nexthop[41], dev[17];
+	int mask, prefix, metric, flags;
+	int maxprefix, minmetric = minmetric;
+
+	fp = fopen("/proc/net/ipv6_route", "r");
+	if (fp == NULL) {
+		perror("/proc/net/ipv6_route");
+		return buf;
+	}
+
+	maxprefix = -1;
+	while (fscanf(fp, "%32s %x %*s %*x %32s %x %*x %*x %x %16s\n",
+		      &dest[7], &prefix, &nexthop[7], &metric, &flags, dev) == 6) {
+		/* Skip interfaces that are down and host routes */
+		if ((flags & (RTF_UP | RTF_HOST)) != RTF_UP)
+			continue;
+		if (ipv6_expand(dest, &dest[7], &addr) <= 0)
+			continue;
+
+		/* Skip dst not in "::/0 - 2000::/3" */
+		if (prefix > 3)
+			continue;
+		mask = htons((0xffff0000 >> prefix) & 0xffff);
+		if ((addr.s6_addr16[0] & mask) != (htons(0x2000) & mask))
+			continue;
+
+		/* Skip dups & worse routes */
+		if ((maxprefix > prefix) ||
+		    (maxprefix == prefix && minmetric <= metric))
+			continue;
+
+		if (flags & RTF_GATEWAY) {
+			if (ipv6_expand(nexthop, &nexthop[7], &addr) <= 0)
+				continue;
+			inet_ntop(AF_INET6, &addr, buf, sizeof(buf));
+		} else
+			snprintf(buf, sizeof(buf), "::");
+		maxprefix = prefix;
+		minmetric = metric;
+	}
+
+	return buf;
+}
+#endif
 #endif
 
 int wl_client(int unit, int subunit)
@@ -739,11 +752,12 @@ int update_6rd_info(void)
 }
 #endif
 
-const char *getifaddr(char *ifname, int family, int linklocal)
+const char *getifaddr(char *ifname, int family, int flags)
 {
 	static char buf[INET6_ADDRSTRLEN];
-	void *addr = NULL;
 	struct ifaddrs *ifap, *ifa;
+	unsigned char *addr, *netmask;
+	int i, maxlen = 0;
 
 	if (getifaddrs(&ifap) != 0) {
 		_dprintf("getifaddrs failed: %s\n", strerror(errno));
@@ -751,26 +765,42 @@ const char *getifaddr(char *ifname, int family, int linklocal)
 	}
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-		if ((ifa->ifa_addr == NULL) ||
-		    (strncmp(ifa->ifa_name, ifname, IFNAMSIZ) != 0) ||
-		    (ifa->ifa_addr->sa_family != family))
+		if (ifa->ifa_addr == NULL ||
+		    ifa->ifa_addr->sa_family != family ||
+		    strncmp(ifa->ifa_name, ifname, IFNAMSIZ) != 0)
 			continue;
 
+		switch (ifa->ifa_addr->sa_family) {
 #ifdef RTCONFIG_IPV6
-		if (ifa->ifa_addr->sa_family == AF_INET6) {
-			struct sockaddr_in6 *s6 = (struct sockaddr_in6 *)(ifa->ifa_addr);
-			if (IN6_IS_ADDR_LINKLOCAL(&s6->sin6_addr) ^ linklocal)
+		case AF_INET6: {
+			addr = (void *) &((struct sockaddr_in6 *) ifa->ifa_addr)->sin6_addr;
+			netmask = (void *) &((struct sockaddr_in6 *) ifa->ifa_netmask)->sin6_addr;
+			maxlen = 128;
+			if (IN6_IS_ADDR_LINKLOCAL(addr) ^ !!(flags & GIF_LINKLOCAL))
 				continue;
-			addr = (void *)&(s6->sin6_addr);
+			break;
 		}
-		else
 #endif
-		{
-			struct sockaddr_in *s = (struct sockaddr_in *)(ifa->ifa_addr);
-			addr = (void *)&(s->sin_addr);
+		case AF_INET: {
+			addr = (void *) &((struct sockaddr_in *) ifa->ifa_addr)->sin_addr;
+			netmask = (void *) &((struct sockaddr_in *) ifa->ifa_netmask)->sin_addr;
+			maxlen = 32;
+			break;
+		}
+		default:
+			continue;
 		}
 
-		if ((addr) && inet_ntop(ifa->ifa_addr->sa_family, addr, buf, sizeof(buf)) != NULL) {
+		if (addr && inet_ntop(ifa->ifa_addr->sa_family, addr, buf, sizeof(buf)) != NULL) {
+			if (netmask && (flags & GIF_PREFIXLEN)) {
+				int len = 0;
+				for (i = 0; netmask[i] == 0xff && len < maxlen; i++)
+					len += 8;
+				for (i = netmask[i]; i && len < maxlen; i <<= 1)
+					len++;
+				i = strlen(buf);
+				snprintf(&buf[i], sizeof(buf)-i, "/%d", len);
+			}
 			freeifaddrs(ifap);
 			return buf;
 		}
@@ -1075,6 +1105,7 @@ void bcmvlan_models(int model, char *vlan)
 	case MODEL_RTN12B1:
 	case MODEL_RTN12C1:
 	case MODEL_RTN12D1:
+	case MODEL_RTN12VP:
 	case MODEL_RTN12HP:
 	case MODEL_RTN14UHP:
 	case MODEL_RTN10U:
@@ -1133,11 +1164,7 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 			sprintf(tmp, "wl%d_vifnames", i);
 			j = 0;
 			foreach(word1, nvram_safe_get(tmp), next1) {
-#ifdef RTCONFIG_RALINK
 				if(strcmp(word1, wif_to_vif(ifname))==0)
-#else
-				if(strcmp(word1, ifname)==0)
-#endif
 				{
 					sprintf(ifname_desc, "WIRELESS%d.%d", i, j);
 					return 1;
@@ -1211,7 +1238,8 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 		}
 	}
 #if !defined(RTCONFIG_DUALWAN)
-	else if(nvram_match("wan1_primary", "1") && !strcmp(nvram_safe_get("wan1_pppoe_ifname"), ifname))
+	else if(nvram_match("wan1_primary", "1") &&
+		(!strcmp(nvram_safe_get("wan1_pppoe_ifname"), ifname) || !strcmp(nvram_safe_get("wan1_ifname"), ifname)))
 	{
 		strcpy(ifname_desc, "INTERNET");
 		return 1;
@@ -1308,6 +1336,24 @@ _dprintf("%s: Finish.\n", __FUNCTION__);
 	return 0;
 }
 
+void logmessage(char *logheader, char *fmt, ...){
+  va_list args;
+  char buf[512];
+
+  va_start(args, fmt);
+
+  vsnprintf(buf, sizeof(buf), fmt, args);
+
+#ifdef RTCONFIG_EMAIL
+	// TODO: check logheader and notify the APP server.
+#endif
+
+  openlog(logheader, 0, 0);
+  syslog(0, buf);
+  closelog();
+  va_end(args);
+}
+
 char *get_logfile_path(void)
 {
 	static char prefix[] = "/jffsXXXXXX";
@@ -1347,3 +1393,31 @@ char *get_syslog_fname(unsigned int idx)
 
 	return buf;
 }
+
+#ifdef RTCONFIG_BCMWL6
+#ifdef RTCONFIG_PROXYSTA
+int is_psta(int unit)
+{
+	if (unit < 0) return 0;
+
+	if ((nvram_get_int("sw_mode") == SW_MODE_AP) &&
+		(nvram_get_int("wlc_psta") == 1) &&
+		(nvram_get_int("wlc_band") == unit))
+		return 1;
+
+	return 0;
+}
+
+int is_psr(int unit)
+{
+	if (unit < 0) return 0;
+
+	if ((nvram_get_int("sw_mode") == SW_MODE_AP) &&
+		(nvram_get_int("wlc_psta") == 2) &&
+		(nvram_get_int("wlc_band") == unit))
+		return 1;
+
+	return 0;
+}
+#endif
+#endif

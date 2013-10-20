@@ -158,7 +158,7 @@ function detect_update(){
 	else
 		var _action_wait = 4000;
 		
-	document.start_update.action_script.value="restart_time;start_webs_upgrade";	//for detect time zone	
+	document.start_update.action_script.value="restart_time;start_webs_update";	//for detect time zone	
 	setTimeout("document.start_update.submit();", _action_wait);	//delay after restart_time
 }
 
@@ -455,7 +455,8 @@ function check_DUT(){
 <table width="998px"  border="0" align="center" cellpadding="0" cellspacing="0" background="/images/New_ui/middown_bg.png">
   <tr>
 		<td style="width:218px;*width:263px;" valign="top">
-			<div class="lefttabhead" style="margin-left:15px;margin-top:-130px;" id="option0"><table width="192px" height="37px"><tbody><tr><td><#QIS_title#></td></tr></tbody></table></div>
+			<div class="m_qis_r" style="margin-left: 15px;margin-top: -160px;cursor:pointer;" onclick="gotoIndex();"><table><tbody><tr><td><div id="index_img1"></div></td><td><div><#CTL_Setting#></div></td></tr></tbody></table></div>
+			<div class="lefttabhead" style="margin-left:15px;" id="option0"><table width="192px" height="37px"><tbody><tr><td><#QIS_title#></td></tr></tbody></table></div>
 			<div class="lefttabmid" id="t1" style="margin-left:15px;"><table height="52px"><tbody><tr><td><img style="margin-left:3px;" border="0" src="/images/qis/qisStep1.png"></td><td><div class="qismenu"><#QIS_step2#></div></td></tr></tbody></table></div>
 			<div class="lefttabmid" id="t2" style="margin-left:15px;"><table height="52px"><tbody><tr><td><img style="margin-left:3px;" border="0" src="/images/qis/qisStep2.png"></td><td><div class="qismenu"><#QIS_step3#></div></td></tr></tbody></table></div>
 			<div class="lefttabmid" id="t3" style="margin-left:15px;"><table height="52px"><tbody><tr><td><img style="margin-left:3px;" border="0" src="/images/qis/qisStep3.png"></td><td><div class="qismenu"><#QIS_step4#></div></td></tr></tbody></table></div>

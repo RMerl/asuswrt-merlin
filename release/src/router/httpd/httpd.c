@@ -72,6 +72,7 @@ typedef unsigned int __u32;   // 1225 ham
 #include <sys/signal.h>
 #include <sys/wait.h>
 #include <shared.h>
+#include <push_log.h>
 
 #define ETCPHYRD	14
 #define SIOCGETCPHYRD   0x89FE
@@ -226,11 +227,14 @@ int http_port=SERVER_PORT;
 /* Added by Joey for handle one people at the same time */
 unsigned int login_ip=0; // the logined ip
 time_t login_timestamp=0; // the timestamp of the logined ip
+time_t login_timestamp_tmp=0; // the timestamp of the current session.
+time_t last_login_timestamp=0; // the timestamp of the current session.
 unsigned int login_ip_tmp=0; // the ip of the current session.
 unsigned int login_try=0;
 unsigned int last_login_ip = 0;	// the last logined ip 2008.08 magic
 /* limit login IP addr; 2012.03 Yau */
 unsigned int access_ip[4]; 
+unsigned int MAX_login;
 
 // 2008.08 magic {
 time_t request_timestamp = 0;
@@ -317,78 +321,98 @@ initialize_listen_socket( usockaddr* usaP )
     return listen_fd;
     }
 
-
 static int
 auth_check( char* dirname, char* authorization ,char* url)
-    {
-    char authinfo[500];
-    char* authpass;
-    int l;
+{
+	char authinfo[500];
+	char* authpass;
+	int l;
+	struct in_addr temp_ip_addr;
+	char *temp_ip_str;
+
+	login_timestamp_tmp = uptime();
+	if(last_login_timestamp != 0 && login_timestamp_tmp-last_login_timestamp > 60){
+		login_try = 0;
+		last_login_timestamp = 0;
+	}
+
+	if(login_try >= MAX_login){
+		temp_ip_addr.s_addr = login_ip_tmp;
+		temp_ip_str = inet_ntoa(temp_ip_addr);
+
+		if(login_try%MAX_login == 0)		
+			logmessage(HEAD_HTTP_LOGIN, "Detect abnormal logins at %d times. The newest one was from %s.", login_try, temp_ip_str);
+
+		send_authenticate( dirname );
+		return 0;
+	}
 
 	//printf("[httpd] auth chk:%s, %s\n", dirname, url);	// tmp test
-    /* Is this directory unprotected? */
-    if ( !strlen(auth_passwd) )
-	/* Yes, let the request go through. */
-	return 1;
+	/* Is this directory unprotected? */
+	if ( !strlen(auth_passwd) )
+		/* Yes, let the request go through. */
+		return 1;
 
-    /* Basic authorization info? */
-    if ( !authorization || strncmp( authorization, "Basic ", 6 ) != 0) 
-    {
+	/* Basic authorization info? */
+	if ( !authorization || strncmp( authorization, "Basic ", 6 ) != 0) 
+	{
+		send_authenticate( dirname );
+		return 0;
+	}
+
+	/* Decode it. */
+	l = b64_decode( &(authorization[6]), authinfo, sizeof(authinfo) );
+	authinfo[l] = '\0';
+	/* Split into user and password. */
+	authpass = strchr( authinfo, ':' );
+	if ( authpass == (char*) 0 ) {
+		/* No colon?  Bogus auth info. */
+		send_authenticate( dirname );
+		return 0;
+	}
+	*authpass++ = '\0';
+
+	/* Is this the right user and password? */
+	if ( strcmp( auth_userid, authinfo ) == 0 && strcmp( auth_passwd, authpass ) == 0)
+	{
+		//fprintf(stderr, "login check : %x %x\n", login_ip, last_login_ip);
+		/* Is this is the first login after logout */
+		//if (login_ip==0 && last_login_ip==login_ip_tmp)
+		//{
+		//	send_authenticate(dirname);
+		//	last_login_ip=0;
+		//	return 0;
+		//}
+		login_try = 0;
+		last_login_timestamp = 0;
+		return 1;
+	}
+
 	send_authenticate( dirname );
 	return 0;
-    }
-
-    /* Decode it. */
-    l = b64_decode( &(authorization[6]), authinfo, sizeof(authinfo) );
-    authinfo[l] = '\0';
-    /* Split into user and password. */
-    authpass = strchr( authinfo, ':' );
-    if ( authpass == (char*) 0 ) {
-	/* No colon?  Bogus auth info. */
-	send_authenticate( dirname );
-	return 0;
-    }
-    *authpass++ = '\0';
-
-    /* Is this the right user and password? */
-    if ( strcmp( auth_userid, authinfo ) == 0 && strcmp( auth_passwd, authpass ) == 0 )
-    {
-    	//fprintf(stderr, "login check : %x %x\n", login_ip, last_login_ip);
-    	/* Is this is the first login after logout */
-    	//if (login_ip==0 && last_login_ip==login_ip_tmp)
-    	//{
-	//	send_authenticate(dirname);
-	//	last_login_ip=0;
-	//	return 0;
-    	//}
-	return 1;
-    }
-
-    send_authenticate( dirname );
-    return 0;
-    }
-
+}
 
 static void
 send_authenticate( char* realm )
-    {
-    char header[10000];
+{
+	char header[10000];
 
-    (void) snprintf(
-	header, sizeof(header), "WWW-Authenticate: Basic realm=\"%s\"", realm );
-    send_error( 401, "Unauthorized", header, "Authorization required." );
-    }
+	login_try++;
+	last_login_timestamp = login_timestamp_tmp;
 
+	(void) snprintf(header, sizeof(header), "WWW-Authenticate: Basic realm=\"%s\"", realm);
+	send_error( 401, "Unauthorized", header, "Authorization required." );
+}
 
 static void
 send_error( int status, char* title, char* extra_header, char* text )
-    {
-    send_headers( status, title, extra_header, "text/html" );
-    (void) fprintf( conn_fp, "<HTML><HEAD><TITLE>%d %s</TITLE></HEAD>\n<BODY BGCOLOR=\"#cc9999\"><H4>%d %s</H4>\n", status, title, status, title );
-    (void) fprintf( conn_fp, "%s\n", text );
-    (void) fprintf( conn_fp, "</BODY></HTML>\n" );
-    (void) fflush( conn_fp );
-    }
+{
+	send_headers( status, title, extra_header, "text/html" );
+	(void) fprintf( conn_fp, "<HTML><HEAD><TITLE>%d %s</TITLE></HEAD>\n<BODY BGCOLOR=\"#cc9999\"><H4>%d %s</H4>\n", status, title, status, title );
+	(void) fprintf( conn_fp, "%s\n", text );
+	(void) fprintf( conn_fp, "</BODY></HTML>\n" );
+	(void) fflush( conn_fp );
+}
 
 //#ifdef RTCONFIG_CLOUDSYNC
 static void
@@ -630,165 +654,161 @@ char detect_timestampstr[32];
 static void
 handle_request(void)
 {
-    char line[10000], *cur;
-    char *method, *path, *protocol, *authorization, *boundary, *alang;
-    char *cp;
-    char *file;
-    int len;
-    struct mime_handler *handler;
-    struct except_mime_handler *exhandler;
-    int mime_exception, login_state;
-    int fromapp=0;
-    int cl = 0, flags;
+	char line[10000], *cur;
+	char *method, *path, *protocol, *authorization, *boundary, *alang;
+	char *cp;
+	char *file;
+	int len;
+	struct mime_handler *handler;
+	struct except_mime_handler *exhandler;
+	int mime_exception, login_state;
+	int fromapp=0;
+	int cl = 0, flags;
 
-    /* Initialize the request variables. */
-    authorization = boundary = NULL;
-    host_name[0] = 0;
-    bzero( line, sizeof line );
+	/* Initialize the request variables. */
+	authorization = boundary = NULL;
+	host_name[0] = 0;
+	bzero( line, sizeof line );
 
-    /* Parse the first line of the request. */
-    if ( fgets( line, sizeof(line), conn_fp ) == (char*) 0 ) {
-	send_error( 400, "Bad Request", (char*) 0, "No request found." );
-	return;
-    }
+	/* Parse the first line of the request. */
+	if ( fgets( line, sizeof(line), conn_fp ) == (char*) 0 ) {
+		send_error( 400, "Bad Request", (char*) 0, "No request found." );
+		return;
+	}
 
-    method = path = line;
-    strsep(&path, " ");
-    //while (*path == ' ') path++;
-    while (path && *path == ' ') path++;	// oleg patch
-    protocol = path;
-    strsep(&protocol, " ");
-    //while (*protocol == ' ') protocol++;
-    while (protocol && *protocol == ' ') protocol++;    // oleg pat
-    cp = protocol;
-    strsep(&cp, " ");
-    if ( !method || !path || !protocol ) {
-	send_error( 400, "Bad Request", (char*) 0, "Can't parse request." );
-	return;
-    }
-    cur = protocol + strlen(protocol) + 1;
+	method = path = line;
+	strsep(&path, " ");
+	//while (*path == ' ') path++;
+	while (path && *path == ' ') path++;	// oleg patch
+	protocol = path;
+	strsep(&protocol, " ");
+	//while (*protocol == ' ') protocol++;
+	while (protocol && *protocol == ' ') protocol++;    // oleg pat
+	cp = protocol;
+	strsep(&cp, " ");
+	if ( !method || !path || !protocol ) {
+		send_error( 400, "Bad Request", (char*) 0, "Can't parse request." );
+		return;
+	}
+	cur = protocol + strlen(protocol) + 1;
 
 #ifdef TRANSLATE_ON_FLY
-    memset(Accept_Language, 0, sizeof(Accept_Language));
+	memset(Accept_Language, 0, sizeof(Accept_Language));
 #endif
 
-
-    
-    /* Parse the rest of the request headers. */
-    while ( fgets( cur, line + sizeof(line) - cur, conn_fp ) != (char*) 0 )
+	/* Parse the rest of the request headers. */
+	while ( fgets( cur, line + sizeof(line) - cur, conn_fp ) != (char*) 0 )
 	{
-		
-
-	if ( strcmp( cur, "\n" ) == 0 || strcmp( cur, "\r\n" ) == 0 ) {
-	    break;
-	}
+		if ( strcmp( cur, "\n" ) == 0 || strcmp( cur, "\r\n" ) == 0 ) {
+			break;
+		}
 #ifdef TRANSLATE_ON_FLY
-	else if ( strncasecmp( cur, "Accept-Language:",16) ==0) {
-		char *p;
-		struct language_table *pLang;
-		char lang_buf[256];
-		memset(lang_buf, 0, sizeof(lang_buf));
-		alang = &cur[16];
-		strcpy(lang_buf, alang);
-		p = lang_buf;
-		while (p != NULL)
-		{
-			p = strtok (p, "\r\n ,;");
-			if (p == NULL)  break;
-			//2008.11 magic{
-			int i, len=strlen(p);
-										
-			for (i=0;i<len;++i)
-				if (isupper(p[i])) {
-					p[i]=tolower(p[i]);
+		else if ( strncasecmp( cur, "Accept-Language:",16) ==0) {
+			char *p;
+			struct language_table *pLang;
+			char lang_buf[256];
+			memset(lang_buf, 0, sizeof(lang_buf));
+			alang = &cur[16];
+			strcpy(lang_buf, alang);
+			p = lang_buf;
+			while (p != NULL)
+			{
+				p = strtok (p, "\r\n ,;");
+				if (p == NULL)  break;
+				//2008.11 magic{
+				int i, len=strlen(p);
+
+				for (i=0;i<len;++i)
+					if (isupper(p[i])) {
+						p[i]=tolower(p[i]);
+					}
+
+				//2008.11 magic}
+				for (pLang = language_tables; pLang->Lang != NULL; ++pLang)
+				{
+					if (strcasecmp(p, pLang->Lang)==0)
+					{
+						snprintf(Accept_Language,sizeof(Accept_Language),"%s",pLang->Target_Lang);
+						if (is_firsttime ())    {
+							nvram_set("preferred_lang", Accept_Language);
+						}
+						break;
+					}
 				}
 
-			//2008.11 magic}
-			for (pLang = language_tables; pLang->Lang != NULL; ++pLang)
-			{
-				if (strcasecmp(p, pLang->Lang)==0)
-				{
-					snprintf(Accept_Language,sizeof(Accept_Language),"%s",pLang->Target_Lang);
-					if (is_firsttime ())    {
-						nvram_set("preferred_lang", Accept_Language);
-					}
+				if (Accept_Language[0] != 0) {
 					break;
 				}
+				p+=strlen(p)+1;
 			}
 
-			if (Accept_Language[0] != 0)    {
-				break;
-			}
-			p+=strlen(p)+1;
-		}
+			if (Accept_Language[0] == 0)    {
+				// If all language setting of user's browser are not supported, use English.
+				//printf ("Auto detect language failed. Use English.\n");
+				strcpy (Accept_Language, "EN");
 
-		if (Accept_Language[0] == 0)    {
-			// If all language setting of user's browser are not supported, use English.
-//			printf ("Auto detect language failed. Use English.\n");			
-			strcpy (Accept_Language, "EN");
-
-	// 2008.10 magic {
+				// 2008.10 magic {
 				if (is_firsttime())
 					nvram_set("preferred_lang", "EN");
-	// 2008.10 magic }
+				// 2008.10 magic }
+			}
+		}
+#endif
+		else if ( strncasecmp( cur, "Authorization:", 14 ) == 0 )
+		{
+			cp = &cur[14];
+			cp += strspn( cp, " \t" );
+			authorization = cp;
+			cur = cp + strlen(cp) + 1;
+		}
+		else if ( strncasecmp( cur, "Host:", 5 ) == 0 )
+		{
+			cp = &cur[5];
+			cp += strspn( cp, " \t" );
+			sethost(cp);
+			cur = cp + strlen(cp) + 1;
+		}
+		else if (strncasecmp( cur, "Content-Length:", 15 ) == 0) {
+			cp = &cur[15];
+			cp += strspn( cp, " \t" );
+			cl = strtoul( cp, NULL, 0 );
+		}
+		else if ((cp = strstr( cur, "boundary=" ))) {
+			boundary = &cp[9];
+			for ( cp = cp + 9; *cp && *cp != '\r' && *cp != '\n'; cp++ );
+			*cp = '\0';
+			cur = ++cp;
 		}
 	}
-#endif
-	else if ( strncasecmp( cur, "Authorization:", 14 ) == 0 )
-	    {
-	    cp = &cur[14];
-	    cp += strspn( cp, " \t" );
-	    authorization = cp;
-	    cur = cp + strlen(cp) + 1;
-	    }
-	else if ( strncasecmp( cur, "Host:", 5 ) == 0 )
-	    {
-	    cp = &cur[5];
-	    cp += strspn( cp, " \t" );
-	    sethost(cp);
-	    cur = cp + strlen(cp) + 1;
-	    }
-	else if (strncasecmp( cur, "Content-Length:", 15 ) == 0) {
-		cp = &cur[15];
-		cp += strspn( cp, " \t" );
-		cl = strtoul( cp, NULL, 0 );
-	}
-	else if ((cp = strstr( cur, "boundary=" ))) {
-	    boundary = &cp[9];
-	    for ( cp = cp + 9; *cp && *cp != '\r' && *cp != '\n'; cp++ );
-	    *cp = '\0';
-	    cur = ++cp;
+
+	if ( strcasecmp( method, "get" ) != 0 && strcasecmp(method, "post") != 0 && strcasecmp(method, "head") != 0 ) {
+		send_error( 501, "Not Implemented", (char*) 0, "That method is not implemented." );
+		return;
 	}
 
+	if ( path[0] != '/' ) {
+		send_error( 400, "Bad Request", (char*) 0, "Bad filename." );
+		return;
 	}
-
-    if ( strcasecmp( method, "get" ) != 0 && strcasecmp(method, "post") != 0 && strcasecmp(method, "head") != 0 ) {
-	send_error( 501, "Not Implemented", (char*) 0, "That method is not implemented." );
-	return;
-    }
-    if ( path[0] != '/' ) {
-	send_error( 400, "Bad Request", (char*) 0, "Bad filename." );
-	return;
-    }
-    file = &(path[1]);
-    len = strlen( file );
-    if ( file[0] == '/' || strcmp( file, ".." ) == 0 || strncmp( file, "../", 3 ) == 0 || strstr( file, "/../" ) != (char*) 0 || strcmp( &(file[len-3]), "/.." ) == 0 ) {
-	send_error( 400, "Bad Request", (char*) 0, "Illegal filename." );
-	return;
-    }
+	file = &(path[1]);
+	len = strlen( file );
+	if ( file[0] == '/' || strcmp( file, ".." ) == 0 || strncmp( file, "../", 3 ) == 0 || strstr( file, "/../" ) != (char*) 0 || strcmp( &(file[len-3]), "/.." ) == 0 ) {
+		send_error( 400, "Bad Request", (char*) 0, "Illegal filename." );
+		return;
+	}
 
 //2008.08 magic{
 	if (file[0] == '\0' || file[len-1] == '/')
 		file = "index.asp";
-	
+
 // 2007.11 James. {
 	char *query;
 	int file_len;
-	
+
 	memset(url, 0, 128);
 	if ((query = index(file, '?')) != NULL) {
 		file_len = strlen(file)-strlen(query);
-		
+
 		strncpy(url, file, file_len);
 	}
 	else
@@ -803,9 +823,9 @@ handle_request(void)
 		strcpy(url, url+strlen(GETAPPSTR));
 		file += strlen(GETAPPSTR);
 	}
-	
+
 	//printf("httpd url: %s file: %s\n", url, file);
-	
+
 	mime_exception = 0;
 
 	if(!fromapp) {
@@ -813,7 +833,7 @@ handle_request(void)
 		login_state = http_login_check();
 
 		// for each page, mime_exception is defined to do exception handler
-		
+
 		mime_exception = 0;
 
 		// check exception first
@@ -823,8 +843,8 @@ handle_request(void)
 				mime_exception = exhandler->flag;
 				break;
 			}
-		}	
-	
+		}
+
 		if(login_state==1)
 		{
 			x_Setting = nvram_get_int("x_Setting");
@@ -839,10 +859,10 @@ handle_request(void)
 		}
 	}
 	else { // Jerry5 fix AiCloud login issue. 20120815
-                        x_Setting = nvram_get_int("x_Setting");
-                        skip_auth = 0;
+		x_Setting = nvram_get_int("x_Setting");
+		skip_auth = 0;
 	}
-			
+
 	for (handler = &mime_handlers[0]; handler->pattern; handler++) {
 		if (match(handler->pattern, url))
 		{
@@ -863,6 +883,7 @@ handle_request(void)
 						return;
 					}
 				}
+
 				if(!fromapp) {
 					if (	!strstr(url, "QIS_") 
 							&& !strstr(url, ".js")
@@ -870,15 +891,15 @@ handle_request(void)
 							&& !strstr(url, ".gif") 
 							&& !strstr(url, ".png"))
 						http_login(login_ip_tmp, url);
-					}
+				}
 			}
-			
+
 			if (strcasecmp(method, "post") == 0 && !handler->input) {
 				send_error(501, "Not Implemented", NULL, "That method is not implemented.");
 				return;
 			}
 // 2007.11 James. for QISxxx.htm pages }
-			
+
 			if (handler->input) {
 				handler->input(file, conn_fp, cl, boundary);
 #if defined(linux)
@@ -887,7 +908,7 @@ handle_request(void)
 					/* Read up to two more characters */
 					if (fgetc(conn_fp) != EOF)
 						(void)fgetc(conn_fp);
-					
+
 					fcntl(fileno(conn_fp), F_SETFL, flags);
 				}
 #elif defined(vxworks)
@@ -901,7 +922,7 @@ handle_request(void)
 				}
 #endif
 			}
-			
+
 			if(!strstr(file, ".cgi") && !strstr(file, "syslog.txt") && !(strstr(file,".cgi")) && !check_if_file_exist(file)){
 				send_error( 404, "Not Found", (char*) 0, "File not found." );
 				return;
@@ -915,7 +936,7 @@ handle_request(void)
 			break;
 		}
 	}
-	
+
 	if (!handler->pattern){
 //#ifdef RTCONFIG_CLOUDSYNC
 		// Todo: verify invite code
@@ -985,13 +1006,13 @@ void http_login(unsigned int ip, char *url) {
 
 	login_ip = ip;
 	last_login_ip = 0;
-	
+
 	login_ip_addr.s_addr = login_ip;
 	login_ip_str = inet_ntoa(login_ip_addr);
 	nvram_set("login_ip_str", login_ip_str);
 
 	login_timestamp = uptime();
-	
+
 	memset(login_ipstr, 0, 32);
 	sprintf(login_ipstr, "%u", login_ip);
 	nvram_set("login_ip", login_ipstr);
@@ -1552,6 +1573,9 @@ int main(int argc, char **argv)
 	nvram_unset("login_ip");
 	nvram_unset("login_ip_str");
 	nvram_unset("login_port");
+	MAX_login = nvram_get_int("login_max_num");
+	if(MAX_login <= 0)
+		MAX_login = 5;
 
 	detect_timestamp_old = 0;
 	detect_timestamp = 0;

@@ -1,4 +1,4 @@
-# dnsmasq is Copyright (c) 2000-2012 Simon Kelley
+# dnsmasq is Copyright (c) 2000-2013 Simon Kelley
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -68,7 +68,7 @@ version =     -DVERSION='\"`$(top)/bld/get-version $(top)`\"'
 objs = cache.o rfc1035.o util.o option.o forward.o network.o \
        dnsmasq.o dhcp.o lease.o rfc2131.o netlink.o dbus.o bpf.o \
        helper.o tftp.o log.o conntrack.o dhcp6.o rfc3315.o \
-       dhcp-common.o outpacket.o radv.o slaac.o
+       dhcp-common.o outpacket.o radv.o slaac.o auth.o ipset.o domain.o
 
 hdrs = dnsmasq.h config.h dhcp-protocol.h dhcp6-protocol.h \
        dns-protocol.h radv-protocol.h
@@ -80,10 +80,14 @@ all : $(BUILDDIR)
  build_libs="$(dbus_libs) $(idn_libs) $(ct_libs) $(lua_libs) $(sunos_libs)" \
  -f $(top)/Makefile dnsmasq 
 
-clean :
-	rm -f *~ $(BUILDDIR)/*.mo contrib/*/*~ */*~ $(BUILDDIR)/*.pot 
+mostly_clean :
+	rm -f $(BUILDDIR)/*.mo $(BUILDDIR)/*.pot 
 	rm -f $(BUILDDIR)/.configured $(BUILDDIR)/*.o $(BUILDDIR)/dnsmasq.a $(BUILDDIR)/dnsmasq 
-	rm -rf core */core
+
+clean : mostly_clean
+	rm -f $(BUILDDIR)/dnsmasq_baseline
+	rm -f core */core
+	rm -f *~ contrib/*/*~ */*~
 
 install : all install-common
 
@@ -116,6 +120,16 @@ merge :
 $(BUILDDIR):
 	mkdir -p $(BUILDDIR)
 
+# rules below are helpers for size tracking
+
+baseline : mostly_clean all
+	@cd $(BUILDDIR) && \
+	   mv dnsmasq dnsmasq_baseline
+
+bloatcheck : $(BUILDDIR)/dnsmasq_baseline mostly_clean all
+	@cd $(BUILDDIR) && \
+           $(top)/bld/bloat-o-meter dnsmasq_baseline dnsmasq; \
+           size dnsmasq_baseline dnsmasq
 
 # rules below are targets in recusive makes with cwd=$(BUILDDIR)
 
@@ -129,7 +143,7 @@ $(objs:.o=.c) $(hdrs):
 .c.o:
 	$(CC) $(CFLAGS) $(COPTS) $(i18n) $(build_cflags) $(RPM_OPT_FLAGS) -c $<	
 
-dnsmasq : .configured $(hdrs) $(objs) 
+dnsmasq : .configured $(hdrs) $(objs)
 	$(CC) $(LDFLAGS) -o $@ $(objs) $(build_libs) $(LIBS) 
 
 dnsmasq.pot : $(objs:.o=.c) $(hdrs)
@@ -138,5 +152,4 @@ dnsmasq.pot : $(objs:.o=.c) $(hdrs)
 %.mo : $(top)/$(PO)/%.po dnsmasq.pot
 	$(MSGMERGE) -o - $(top)/$(PO)/$*.po dnsmasq.pot | $(MSGFMT) -o $*.mo -
 
-
-.PHONY : all clean install install-common all-i18n install-i18n merge 
+.PHONY : all clean mostly_clean install install-common all-i18n install-i18n merge baseline bloatcheck

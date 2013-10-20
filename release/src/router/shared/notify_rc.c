@@ -35,9 +35,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <typedefs.h>
-#include<stdarg.h>
 #include <bcmnvram.h>
-#include <syslog.h>
 #include "shutils.h"
 #include "shared.h"
 #include "notify_rc.h"
@@ -72,20 +70,6 @@ int notify_rc_and_wait_1min(const char *event_name)
 int notify_rc_and_wait_2min(const char *event_name)
 {
 	return notify_rc_internal(event_name, TRUE, 120);
-}
-
-static void logmessage(char *logheader, char *fmt, ...)
-{
-  va_list args;
-  char buf[512];
-
-  va_start(args, fmt);
-
-  vsnprintf(buf, sizeof(buf), fmt, args);
-  openlog(logheader, 0, 0);
-  syslog(0, buf);
-  closelog();
-  va_end(args);
 }
 
 /* @return:

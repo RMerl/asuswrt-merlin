@@ -33,6 +33,17 @@
 
 #ifdef ENABLE_SVR_PASSWORD_AUTH
 
+static int constant_time_strcmp(const char* a, const char* b) {
+	size_t la = strlen(a);
+	size_t lb = strlen(b);
+
+	if (la != lb) {
+		return 1;
+	}
+
+	return constant_time_memcmp(a, b, la);
+}
+
 /* Process a password auth request, sending success or failure messages as
  * appropriate */
 void svr_auth_password() {
@@ -66,6 +77,14 @@ void svr_auth_password() {
 	m_burn(password, passwordlen);
 	m_free(password);
 
+	if (testcrypt == NULL) {
+		/* crypt() with an invalid salt like "!!" */
+		dropbear_log(LOG_WARNING, "User account '%s' is locked",
+				ses.authstate.pw_name);
+		send_msg_userauth_failure(0, 1);
+		return;
+	}
+
 	/* check for empty password */
 	if (passwdcrypt[0] == '\0') {
 		dropbear_log(LOG_WARNING, "User '%s' has blank password, rejected",
@@ -74,7 +93,7 @@ void svr_auth_password() {
 		return;
 	}
 
-	if (strcmp(testcrypt, passwdcrypt) == 0) {
+	if (constant_time_strcmp(testcrypt, passwdcrypt) == 0) {
 		/* successful authentication */
 		dropbear_log(LOG_NOTICE, 
 				"Password auth succeeded for '%s' from %s",

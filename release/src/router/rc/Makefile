@@ -47,6 +47,11 @@ CFLAGS += -DU2EC
 LDFLAGS += -L$(TOP)/libdisk -ldisk
 endif
 
+ifeq ($(RTCONFIG_EMAIL),y)
+CFLAGS += -I$(TOP)/push_log
+LDFLAGS += -L$(TOP)/push_log -lpush_log
+endif
+
 ifeq ($(RTAC66U), y)
 CFLAGS += -DRTAC66U
 endif

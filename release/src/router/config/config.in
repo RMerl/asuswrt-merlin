@@ -92,6 +92,10 @@ config RTCONFIG_OPENVPN
 	depends on RTCONFIG_LZO
 	default n
 
+config RTCONFIG_IPSEC
+	bool "IPsec"
+	default n
+
 # !!TB
 config RTCONFIG_IPV6
 	bool "IPv6 Support"
@@ -164,6 +168,14 @@ config RTCONFIG_DSL_ANNEX_B
 
 config RTCONFIG_DUALWAN
 	bool "Dual WAN Support"
+	default n
+
+config RTCONFIG_USER_LOW_RSSI
+	bool "User specified accepted min rssi"
+	default n
+
+config RTCONFIG_EMAIL
+	bool "Push Mail Service Support"
 	default n
 
 config RTCONFIG_USB
@@ -404,6 +416,10 @@ config RTCONFIG_LED_BTN_MODE
 	depends on RTCONFIG_LED_BTN
 	default n
 
+config RTCONFIG_USBEJECT
+	bool "HW LED Button usage"
+	default n
+
 config RTCONFIG_AUTODICT
 	bool "AUTO DICTIONARY TOOLS"
 	default n
@@ -498,4 +514,8 @@ config RTCONFIG_JFFS2LOG
 
 config RTCONFIG_WPSMULTIBAND
 	bool "Multi-band WPS"
+	default n
+
+config RTCONFIG_EMAIL
+	bool "notify by E-Mail"
 	default n

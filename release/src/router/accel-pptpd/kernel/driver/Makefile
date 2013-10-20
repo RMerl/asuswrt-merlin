@@ -1,7 +1,7 @@
 MDIR = extra
 
 KDIR ?= $(shell sh find_kernel_headers)
-KDIR = /home/boyau/asuswrt/release/src-rt/linux/linux-2.6
+
 obj-m      += pptp.o
 #obj-m      += gre.o
 
@@ -20,7 +20,7 @@ install:
 	fi; \
 	cp -v $(TARGET).o /lib/modules/$(CURRENT)/extra/$(TARGET).o && /sbin/depmod -a
 else
-install:
+install:	
 	make -C $(KDIR) M=$(PWD) modules_install
 endif
 

@@ -555,6 +555,7 @@ CRYPT_LIB = @CRYPT_LIB@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@ -DHAVE_VERSION_H -DLIBRARY_DIR="\"$(libdir)\"" -DSBIN_DIR="\"$(sbindir)\""
 DEPDIR = @DEPDIR@
+DLLTOOL = @DLLTOOL@
 DL_LIB = @DL_LIB@
 DSYMUTIL = @DSYMUTIL@
 DUMPBIN = @DUMPBIN@
@@ -590,6 +591,7 @@ LTLIBOBJS = @LTLIBOBJS@
 LUA_CFLAGS = @LUA_CFLAGS@
 LUA_LIBS = @LUA_LIBS@
 MAKEINFO = @MAKEINFO@
+MANIFEST_TOOL = @MANIFEST_TOOL@
 MEMCACHE_LIB = @MEMCACHE_LIB@
 MKDIR_P = @MKDIR_P@
 MYSQL_CONFIG = @MYSQL_CONFIG@
@@ -633,6 +635,7 @@ abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
+ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
 am__include = @am__include@
@@ -691,9 +694,8 @@ lemon_SOURCES = lemon.c
 lighttpd_angel_SOURCES = lighttpd-angel.c
 lighttpd_monitor_SOURCES = log.c buffer.c lighttpd-monitor.c nvram_control.c
 lighttpd_arpping_SOURCES = log.c buffer.c arpping_thread.c nvram_control.c
-#lighttpd_arpping_CFLAGS = $(AM_CFLAGS) $(LIBSMBCLIENT_CFLAGS)
 lighttpd_arpping_LDFLAGS = -lsmbclient
-BUILT_SOURCES = parsers versionstamp
+BUILT_SOURCES = parsers versionstamp 
 MAINTAINERCLEANFILES = configparser.c configparser.h mod_ssi_exprparser.c mod_ssi_exprparser.h
 CLEANFILES = versionstamp.h versionstamp.h.tmp
 common_src = buffer.c log.c \
@@ -725,15 +727,14 @@ src = server.c response.c connections.c network.c configfile.c \
 #mod_httptls_la_LDFLAGS = -module -export-dynamic -avoid-version -no-undefined
 #mod_httptls_la_LIBADD = $(common_libadd)
 lib_LTLIBRARIES = $(am__append_1) liblightsql.la mod_flv_streaming.la \
-	mod_evasive.la mod_webdav.la mod_magnet.la \
-	mod_cml.la mod_trigger_b4_dl.la mod_mysql_vhost.la mod_cgi.la \
-	mod_scgi.la mod_staticfile.la mod_dirlisting.la \
-	mod_indexfile.la mod_setenv.la mod_alias.la mod_userdir.la \
-	mod_rrdtool.la mod_usertrack.la mod_proxy.la mod_ssi.la \
-	mod_secdownload.la mod_expire.la mod_evhost.la \
-	mod_simple_vhost.la mod_fastcgi.la mod_extforward.la \
-	mod_access.la mod_compress.la mod_auth.la mod_rewrite.la \
-	mod_redirect.la mod_status.la mod_accesslog.la \
+	mod_evasive.la mod_webdav.la mod_magnet.la mod_cml.la \
+	mod_trigger_b4_dl.la mod_mysql_vhost.la mod_cgi.la mod_scgi.la \
+	mod_staticfile.la mod_dirlisting.la mod_indexfile.la \
+	mod_setenv.la mod_alias.la mod_userdir.la mod_rrdtool.la \
+	mod_usertrack.la mod_proxy.la mod_ssi.la mod_secdownload.la \
+	mod_expire.la mod_evhost.la mod_simple_vhost.la mod_fastcgi.la \
+	mod_extforward.la mod_access.la mod_compress.la mod_auth.la \
+	mod_rewrite.la mod_redirect.la mod_status.la mod_accesslog.la \
 	mod_create_captcha_image.la
 @NO_RDYNAMIC_TRUE@liblightcomp_la_SOURCES = $(common_src)
 @NO_RDYNAMIC_TRUE@liblightcomp_la_CFLAGS = $(AM_CFLAGS) $(LIBEV_CFLAGS)
@@ -753,9 +754,9 @@ mod_evasive_la_SOURCES = mod_evasive.c
 mod_evasive_la_LDFLAGS = -module -export-dynamic -avoid-version -no-undefined
 mod_evasive_la_LIBADD = $(common_libadd)
 mod_webdav_la_SOURCES = mod_webdav.c
-mod_webdav_la_CFLAGS = $(AM_CFLAGS) $(XML_CFLAGS) $(SQLITE_CFLAGS) 
+mod_webdav_la_CFLAGS = $(AM_CFLAGS) $(XML_CFLAGS) $(SQLITE_CFLAGS) $(CURL_CFLAGS)
 mod_webdav_la_LDFLAGS = -module -export-dynamic -avoid-version -no-undefined
-mod_webdav_la_LIBADD = $(common_libadd) $(XML_LIBS) $(SQLITE_LIBS) $(UUID_LIBS) $(sql_libadd)
+mod_webdav_la_LIBADD = $(common_libadd) $(XML_LIBS) $(SQLITE_LIBS) $(UUID_LIBS) $(sql_libadd) $(CURL_LIBS)
 mod_magnet_la_SOURCES = mod_magnet.c mod_magnet_cache.c
 mod_magnet_la_CFLAGS = $(AM_CFLAGS) $(LUA_CFLAGS)
 mod_magnet_la_LDFLAGS = -module -export-dynamic -avoid-version -no-undefined
@@ -1213,7 +1214,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_setenv.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_simple_vhost.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_smbdav_basic.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_smbdav_la-mod_smbdav.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_smbdav_ntlm.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_ssi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_ssi_expr.Plo@am__quote@
@@ -1942,7 +1942,6 @@ copy-prebuild-arm:
 		cp ../prebuild_arm/mod_sharelink.so.l .libs/mod_sharelink.so; \
 		cp ../prebuild_arm/mod_aicloud_auth.so.l .libs/mod_aicloud_auth.so; \
 	fi
-
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

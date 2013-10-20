@@ -77,7 +77,7 @@ process_file(hash_state *hs, const char *filename,
 	while (len == 0 || readcount < len)
 	{
 		int readlen, wantread;
-		unsigned char readbuf[2048];
+		unsigned char readbuf[4096];
 		if (!already_blocked)
 		{
 			int ret;
@@ -208,12 +208,13 @@ void seedrandom() {
 	process_file(&hs, "/proc/loadavg", 0, 0);
 	process_file(&hs, "/proc/sys/kernel/random/entropy_avail", 0, 0);
 
-	/* Mostly network visible but useful in some situations */
-	process_file(&hs, "/proc/net/netstat", 0, 0);
-	process_file(&hs, "/proc/net/dev", 0, 0);
-	process_file(&hs, "/proc/net/tcp", 0, 0);
+	/* Mostly network visible but useful in some situations.
+	 * Limit size to avoid slowdowns on systems with lots of routes */
+	process_file(&hs, "/proc/net/netstat", 4096, 0);
+	process_file(&hs, "/proc/net/dev", 4096, 0);
+	process_file(&hs, "/proc/net/tcp", 4096, 0);
 	/* Also includes interface lo */
-	process_file(&hs, "/proc/net/rt_cache", 0, 0);
+	process_file(&hs, "/proc/net/rt_cache", 4096, 0);
 	process_file(&hs, "/proc/vmstat", 0, 0);
 #endif
 

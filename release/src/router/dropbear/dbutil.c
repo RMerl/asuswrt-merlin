@@ -884,3 +884,16 @@ int m_str_to_uint(const char* str, unsigned int *val) {
 		return DROPBEAR_SUCCESS;
 	}
 }
+
+int constant_time_memcmp(const void* a, const void *b, size_t n)
+{
+	const char *xa = a, *xb = b;
+	uint8_t c = 0;
+	size_t i;
+	for (i = 0; i < n; i++)
+	{
+		c |= (xa[i] ^ xb[i]);
+	}
+	return c;
+}
+

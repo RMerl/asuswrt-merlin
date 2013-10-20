@@ -791,7 +791,7 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	if (nvram_match(strcat_r(prefix, "mode", tmp), "wds")) {
 		// dump static info only for wds mode:
 		// ret += websWrite(wp, "SSID: %s\n", nvram_safe_get(strcat_r(prefix, "ssid", tmp)));
-		ret += websWrite(wp, "Channel: %s\n", nvram_safe_get(strcat_r(prefix, "channel", tmp)));
+		ret += websWrite(wp, "Channel: %d\n", wl_control_channel(unit));
 	}
 	else {
 		ret += wl_status(eid, wp, argc, argv, unit);
@@ -1171,7 +1171,7 @@ ej_wl_extent_channel(int eid, webs_t wp, int argc, char_t **argv)
 
 
 
-static int
+int
 wl_control_channel(int unit)
 {
 	int ret;

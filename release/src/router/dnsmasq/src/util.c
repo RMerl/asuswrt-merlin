@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2012 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2013 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -142,17 +142,20 @@ static int check_name(char *in)
 int legal_hostname(char *name)
 {
   char c;
+  int first;
 
   if (!check_name(name))
     return 0;
 
-  for (; (c = *name); name++)
+  for (first = 1; (c = *name); name++, first = 0)
     /* check for legal char a-z A-Z 0-9 - _ . */
     {
       if ((c >= 'A' && c <= 'Z') ||
 	  (c >= 'a' && c <= 'z') ||
-	  (c >= '0' && c <= '9') ||
-	  c == '-' || c == '_')
+	  (c >= '0' && c <= '9'))
+	continue;
+
+      if (!first && (c == '-' || c == '_'))
 	continue;
       
       /* end of hostname part */
@@ -581,3 +584,20 @@ int read_write(int fd, unsigned char *packet, int size, int rw)
   return 1;
 }
 
+/* Basically match a string value against a wildcard pattern.  */
+int wildcard_match(const char* wildcard, const char* match)
+{
+  while (*wildcard && *match)
+    {
+      if (*wildcard == '*')
+        return 1;
+
+      if (*wildcard != *match)
+        return 0; 
+
+      ++wildcard;
+      ++match;
+    }
+
+  return *wildcard == *match;
+}

@@ -91,6 +91,10 @@ function initial(){
 	load_dst_h_Options();
 	document.form.http_passwd2.value = "";
 	chkPass("<% nvram_get("http_passwd"); %>", 'http_passwd');
+	
+	if(svc_ready == "0")
+		$('svc_hint_div').style.display = "";	
+
 	if(!HTTPS_support){
 		$("https_tr").style.display = "none";
 		$("https_lanport").style.display = "none";
@@ -423,7 +427,8 @@ var timezones = [
 	["NORO2DST",	"(GMT-02:00) <#TZ24#>"],
 	["EUT1DST",	"(GMT-01:00) <#TZ25#>"],
 	["UTC1",	"(GMT-01:00) <#TZ26#>"],
-	["GMT0DST_1",	"(GMT) <#TZ27#>"],
+	["GMT0",	"(GMT) <#TZ27#>"],
+	["GMT0DST_1",	"(GMT) <#TZ27_2#>"],
 	["GMT0DST_2",	"(GMT) <#TZ28#>"],
 	/*["GMT0DST_3",	"(GMT) <#TZ85#>"],	use adj_dst to desc*/
 	["UTC-1DST_1",	"(GMT+01:00) <#TZ29#>"],
@@ -487,7 +492,7 @@ var timezones = [
 function load_timezones(){
 	free_options(document.form.time_zone_select);
 	for(var i = 0; i < timezones.length; i++){
-		add_tz_option(document.form.time_zone_select,
+		add_option(document.form.time_zone_select,
 			timezones[i][1], timezones[i][0],
 			(document.form.time_zone.value == timezones[i][0]));
 	}
@@ -627,23 +632,6 @@ function load_dst_h_Options(){
 	}	
 }
 
-function add_tz_option(selectObj, str, value, selected){
-	var tail = selectObj.options.length;
-	
-	if(typeof(str) != "undefined")
-		selectObj.options[tail] = new Option(str);
-	else
-		selectObj.options[tail] = new Option();
-	
-	if(typeof(value) != "undefined")
-		selectObj.options[tail].value = value;
-	else
-		selectObj.options[tail].value = "";
-	
-	if(selected)
-		selectObj.options[tail].selected = 1;
-}
-
 function hide_https_lanport(_value){
 	if(sw_mode == '1' || sw_mode == '2'){
 		var https_lanport_num = "<% nvram_get("https_lanport"); %>";
@@ -743,7 +731,6 @@ function keyBoardListener(evt){
 		addRow(document.form.http_client_ip_x_0, 4);
 }
 
-
 //Viz add 2012.02 LAN client ip { start
 
 function showLANIPList(){
@@ -822,6 +809,41 @@ function pass_checked(obj){
 	switchType(obj, document.form.show_pass_1.checked, true);
 }
 
+function daylight_save_check(){
+	if (document.form.time_zone_dst_chk.checked){
+		document.form.time_zone_dst.value = "1";
+		document.getElementById("dst_start").style.display="";	
+		document.getElementById("dst_end").style.display="";					
+	}else{
+		document.form.time_zone_dst.value = "0";	
+		document.getElementById("dst_start").style.display="none";	
+		document.getElementById("dst_end").style.display="none";
+	}
+}
+
+function select_time_zone(){
+	var tzdst = new RegExp("^[a-z]+[0-9\-\.:]+[a-z]+", "i"); // match "[std name][offset][dst name]"
+
+	if(document.form.time_zone_select.value.match(tzdst)){
+		document.getElementById("chkbox_time_zone_dst").style.display="";	
+		document.getElementById("adj_dst").innerHTML = "<#System_Change_TimeZone_manual#>";
+		if(!document.getElementById("time_zone_dst_chk").checked){
+			document.form.time_zone_dst.value=0;
+			document.getElementById("dst_start").style.display="none";
+			document.getElementById("dst_end").style.display="none";
+		}else{
+			document.form.time_zone_dst.value=1;
+			document.getElementById("dst_start").style.display="";	
+			document.getElementById("dst_end").style.display="";						
+		}
+	}else{
+		document.getElementById("chkbox_time_zone_dst").style.display="none";	
+		document.getElementById("time_zone_dst_chk").checked = false;
+		document.form.time_zone_dst.value=0;			
+		document.getElementById("dst_start").style.display="none";
+		document.getElementById("dst_end").style.display="none";
+	}
+}
 </script>
 </head>
 
@@ -953,12 +975,11 @@ function pass_checked(obj){
         <tr>
           <th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,2)"><#LANHostConfig_x_TimeZone_itemname#></a></th>
           <td>
-            <select name="time_zone_select" class="input_option" onchange="return change_common(this, 'LANHostConfig', 'time_zone_select')">
-           		<option value="<% nvram_get("time_zone"); %>" selected><% nvram_get("time_zone"); %></option>
+            <select name="time_zone_select" class="input_option" onchange="select_time_zone();">          
             </select>
           	<div>
           		<span id="chkbox_time_zone_dst" style="color:white;display:none;">
-          			<input type="checkbox" name="time_zone_dst_chk" id="time_zone_dst_chk" <% nvram_match("time_zone_dst", "1", "checked"); %> class="input" onClick="return change_common(this,'LANHostConfig','time_zone_dst_chk')">
+          			<input type="checkbox" name="time_zone_dst_chk" id="time_zone_dst_chk" <% nvram_match("time_zone_dst", "1", "checked"); %> class="input" onClick="daylight_save_check();">
           			<label for="time_zone_dst_chk"><span id="adj_dst"></span></label>
           			<br>
           		</span>	
@@ -983,10 +1004,11 @@ function pass_checked(obj){
             </td>
         </tr>
         <tr>
-          <th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,3)"><#LANHostConfig_x_NTPServer_itemname#></a></th>
-          <td>
-						<input type="text" maxlength="256" class="input_32_table" name="ntp_server0" value="<% nvram_get("ntp_server0"); %>" onKeyPress="return is_string(this, event);">
-    	      <a href="javascript:openLink('x_NTPServer1')"  name="x_NTPServer1_link" style=" margin-left:5px; text-decoration: underline;"><#LANHostConfig_x_NTPServer1_linkname#>
+        	<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,3)"><#LANHostConfig_x_NTPServer_itemname#></a></th>
+        	<td>
+				<input type="text" maxlength="256" class="input_32_table" name="ntp_server0" value="<% nvram_get("ntp_server0"); %>" onKeyPress="return is_string(this, event);">
+    	      	<a href="javascript:openLink('x_NTPServer1')"  name="x_NTPServer1_link" style=" margin-left:5px; text-decoration: underline;"><#LANHostConfig_x_NTPServer1_linkname#></a>
+				<div id="svc_hint_div" style="display:none;"><span style="color:#FFCC00;">* Remind: Did not synchronize your system time with NTP server yet.</span></div>
 			</td>
         </tr>
 

@@ -368,18 +368,18 @@ function gen_lantowanTable(client){
 	code +='</td></tr><tr>';
 	code +='<th width="40%" height="25px;" align="right">Allowed access date</th>';
 	code +='<td align="left" style="color:#FFF">';
-	code +='<input type="checkbox" id="url_date_x_Sun" class="input" onChange="return changeDate();" '+genChecked(MULTIFILTER_MACFILTER_DAYTIME_row[client].substr(0,1))+'><#date_Sun_itemdesc#>';
-	code +='<input type="checkbox" id="url_date_x_Mon" class="input" onChange="return changeDate();" '+genChecked(MULTIFILTER_MACFILTER_DAYTIME_row[client].substr(1,1))+'><#date_Mon_itemdesc#>';		
-	code +='<input type="checkbox" id="url_date_x_Tue" class="input" onChange="return changeDate();" '+genChecked(MULTIFILTER_MACFILTER_DAYTIME_row[client].substr(2,1))+'><#date_Tue_itemdesc#>';
-	code +='<input type="checkbox" id="url_date_x_Wed" class="input" onChange="return changeDate();" '+genChecked(MULTIFILTER_MACFILTER_DAYTIME_row[client].substr(3,1))+'><#date_Wed_itemdesc#>';
-	code +='<input type="checkbox" id="url_date_x_Thu" class="input" onChange="return changeDate();" '+genChecked(MULTIFILTER_MACFILTER_DAYTIME_row[client].substr(4,1))+'><#date_Thu_itemdesc#>';
-	code +='<input type="checkbox" id="url_date_x_Fri" class="input" onChange="return changeDate();" '+genChecked(MULTIFILTER_MACFILTER_DAYTIME_row[client].substr(5,1))+'><#date_Fri_itemdesc#>';
-	code +='<input type="checkbox" id="url_date_x_Sat" class="input" onChange="return changeDate();" '+genChecked(MULTIFILTER_MACFILTER_DAYTIME_row[client].substr(6,1))+'><#date_Sat_itemdesc#>';
+	code +='<input type="checkbox" id="url_date_x_Sun" class="input" '+genChecked(MULTIFILTER_MACFILTER_DAYTIME_row[client].substr(0,1))+'><#date_Sun_itemdesc#>';
+	code +='<input type="checkbox" id="url_date_x_Mon" class="input" '+genChecked(MULTIFILTER_MACFILTER_DAYTIME_row[client].substr(1,1))+'><#date_Mon_itemdesc#>';		
+	code +='<input type="checkbox" id="url_date_x_Tue" class="input" '+genChecked(MULTIFILTER_MACFILTER_DAYTIME_row[client].substr(2,1))+'><#date_Tue_itemdesc#>';
+	code +='<input type="checkbox" id="url_date_x_Wed" class="input" '+genChecked(MULTIFILTER_MACFILTER_DAYTIME_row[client].substr(3,1))+'><#date_Wed_itemdesc#>';
+	code +='<input type="checkbox" id="url_date_x_Thu" class="input" '+genChecked(MULTIFILTER_MACFILTER_DAYTIME_row[client].substr(4,1))+'><#date_Thu_itemdesc#>';
+	code +='<input type="checkbox" id="url_date_x_Fri" class="input" '+genChecked(MULTIFILTER_MACFILTER_DAYTIME_row[client].substr(5,1))+'><#date_Fri_itemdesc#>';
+	code +='<input type="checkbox" id="url_date_x_Sat" class="input" '+genChecked(MULTIFILTER_MACFILTER_DAYTIME_row[client].substr(6,1))+'><#date_Sat_itemdesc#>';
 	code +='</td></tr></table>';
 
 	code +='<table width="100%" style="margin-top:10px;display:none;" border="1" cellspacing="0" cellpadding="4" align="center" class="PC_table" id="lantowanTable_table">';
 	code +='<thead><tr><td colspan="6" id="LWFilterList">LAN to WAN Filter Table</td></tr></thead>';
-  code +='<tr><th width="5%" height="30px;"><input id="selAll" type=\"checkbox\" onclick=\"selectAll(this, 1);\"/></th>';
+	code +='<tr><th width="5%" height="30px;"><input id="selAll" type=\"checkbox\" onclick=\"selectAll(this, 1);\"/></th>';
 	code +='<th width="35%"><#BM_UserList1#></th>';
 	code +='<th width="30%"><#FirewallConfig_LanWanSrcPort_itemname#></th>';
 	code +='<th width="20%"><#IPConnection_VServerProto_itemname#></th>';

@@ -104,7 +104,7 @@ var g_image_player = {
 				media_hostName = media_hostName.substring(0, media_hostName.indexOf(":"));
 			media_hostName = "http://" + media_hostName + ":" + g_storage.get("http_port") + "/";
 			
-			client.GSL(this_url, this_url, this_file_name, 0, 0, function(error, content, statusstring){
+			g_webdav_client.GSL(this_url, this_url, this_file_name, 0, 0, function(error, content, statusstring){
 				if(error==200){
 					var data = parseXml(statusstring);
 					var share_link = $(data).find('sharelink').text();
@@ -141,7 +141,7 @@ var g_image_player = {
 				media_hostName = media_hostName.substring(0, media_hostName.indexOf(":"));
 			media_hostName = "http://" + media_hostName + ":" + g_storage.get("http_port") + "/";
 			
-			client.GSL(this_url, this_url, this_file_name, 0, 0, function(error, content, statusstring){
+			g_webdav_client.GSL(this_url, this_url, this_file_name, 0, 0, function(error, content, statusstring){
 				if(error==200){
 					var data = parseXml(statusstring);
 					var share_link = $(data).find('sharelink').text();

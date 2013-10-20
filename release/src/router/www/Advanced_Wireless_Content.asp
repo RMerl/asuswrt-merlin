@@ -107,8 +107,8 @@ function initial(){
 	if("<% nvram_get("wl_closed"); %>" == 1){
 		$('WPS_hideSSID_hint').style.display = "";	
 	}	
-		
-	automode_hint();	
+	
+	automode_hint();
 }
 
 function check_channel_2g(){
@@ -129,7 +129,7 @@ function check_channel_2g(){
 	
     if(ch_v2[0] == "0")
         wl_channel_list_2g[0] = "<#Auto#>";	
-		
+
 	add_options_x2(document.form.wl_channel, wl_channel_list_2g, ch_v2, CurrentCh);
 	var option_length = document.form.wl_channel.options.length;	
 	if ((wmode == "0"||wmode == "1") && document.form.wl_bw.value != "0"){
@@ -148,7 +148,7 @@ function check_channel_2g(){
 		else if ((CurrentCh >= 5) && (CurrentCh <= 7)){
 			x.options[0].text = "Lower";
 			x.options[0].value = "lower";
-			add_a_option(document.form.wl_nctrlsb, "upper", "Upper");
+			add_option(document.form.wl_nctrlsb, "Upper", "upper");
 			if (document.form.wl_nctrlsb_old.value == "upper")
 				document.form.wl_nctrlsb.options.selectedIndex=1;
 				
@@ -157,20 +157,11 @@ function check_channel_2g(){
 			else if(is_high_power && CurrentCh == 7)
 				document.form.wl_nctrlsb.remove(0);	
 		}
-		else if ((CurrentCh >= 8) && (CurrentCh <= 9)){
+		else if ((CurrentCh >= 8) && (CurrentCh <= 10)){
 			x.options[0].text = "Upper";
 			x.options[0].value = "upper";
 			if (option_length >=14){
-				add_a_option(document.form.wl_nctrlsb, "lower", "Lower");
-				if (document.form.wl_nctrlsb_old.value == "lower")
-					document.form.wl_nctrlsb.options.selectedIndex=1;
-			}
-		}
-		else if (CurrentCh == 10){
-			x.options[0].text = "Upper";
-			x.options[0].value = "upper";
-			if (option_length > 14){
-				add_a_option(document.form.wl_nctrlsb, "lower", "Lower");
+				add_option(document.form.wl_nctrlsb, "Lower", "lower");
 				if (document.form.wl_nctrlsb_old.value == "lower")
 					document.form.wl_nctrlsb.options.selectedIndex=1;
 			}
@@ -288,20 +279,6 @@ function validForm(){
 
 function done_validating(action){
 	refreshpage();
-}
-
-function change_key_des(){
-	var objs = getElementsByName_iefix("span", "key_des");
-	var wep_type = document.form.wl_wep_x.value;
-	var str = "";
-
-	if(wep_type == "1")
-		str = "(<#WLANConfig11b_WEPKey_itemtype1#>)";
-	else if(wep_type == "2")
-		str = "(<#WLANConfig11b_WEPKey_itemtype2#>)";
-	
-	for(var i = 0; i < objs.length; ++i)
-		showtext(objs[i], str);
 }
 
 function validate_wlphrase(s, v, obj){
@@ -509,13 +486,13 @@ function high_power_auto_channel(){
 			  <tr>
 					<th><a id="wl_mode_desc" class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 4);"><#WLANConfig11b_x_Mode_itemname#></a></th>
 					<td>									
-						<select name="wl_nmode_x" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_nmode_x');">
+						<select name="wl_nmode_x" class="input_option" onChange="wireless_mode_change(this);">
 							<option value="0" <% nvram_match("wl_nmode_x", "0","selected"); %>><#Auto#></option>
 							<option value="1" <% nvram_match("wl_nmode_x", "1","selected"); %>>N Only</option>
 							<option value="2" <% nvram_match("wl_nmode_x", "2","selected"); %>>Legacy</option>
 						</select>
 						<span id="wl_optimizexbox_span" style="display:none"><input type="checkbox" name="wl_optimizexbox_ckb" id="wl_optimizexbox_ckb" value="<% nvram_get("wl_optimizexbox"); %>" onclick="document.form.wl_optimizexbox.value=(this.checked==true)?1:0;"> Optimized for Xbox</input></span>
-						<span id="wl_gmode_checkbox" style="display:none;"><input type="checkbox" name="wl_gmode_check" id="wl_gmode_check" value="" onClick="return change_common(this, 'WLANConfig11b', 'wl_gmode_check', '1')"> b/g Protection</input></span>
+						<span id="wl_gmode_checkbox" style="display:none;"><input type="checkbox" name="wl_gmode_check" id="wl_gmode_check" value="" onClick="wl_gmode_protection_check();"> b/g Protection</input></span>
 						<span id="wl_nmode_x_hint" style="display:none;"><br><#WLANConfig11n_automode_limition_hint#><br></span>
 						<span id="wl_NOnly_note" style="display:none;"><br>* [N only] is not compatible with current guest network authentication method(TKIP or WEP),  Please go to <a id="gn_link" href="/Guest_network.asp?af=wl_NOnly_note" target="_blank" style="color:#FFCC00;font-family:Lucida Console;text-decoration:underline;">guest network</a> and change the authentication method.</span>
 					</td>
@@ -524,7 +501,7 @@ function high_power_auto_channel(){
 			 	<tr id="wl_bw_field">
 			   	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 14);"><#WLANConfig11b_ChannelBW_itemname#></a></th>
 			   	<td>				    			
-						<select name="wl_bw" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_bw')">
+						<select name="wl_bw" class="input_option" onChange="insertExtChannelOption();">
 							<option class="content_input_fd" value="1" <% nvram_match("wl_bw", "1","selected"); %>>20/40/80 MHz</option>
 							<option class="content_input_fd" value="0" <% nvram_match("wl_bw", "0","selected"); %>>20 MHz</option>
 							<option class="content_input_fd" value="2" <% nvram_match("wl_bw", "2","selected"); %>>40 MHz</option>
@@ -536,7 +513,7 @@ function high_power_auto_channel(){
 				<tr id="wl_channel_field">
 					<th><a id="wl_channel_select" class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 3);"><#WLANConfig11b_Channel_itemname#></a></th>
 					<td>
-				 		<select name="wl_channel" class="input_option" onChange="high_power_auto_channel();return change_common(this, 'WLANConfig11b', 'wl_channel')"></select>
+				 		<select name="wl_channel" class="input_option" onChange="high_power_auto_channel();insertExtChannelOption();"></select>
 					</td>
 			  </tr>			 
 
@@ -553,7 +530,7 @@ function high_power_auto_channel(){
 			  	<tr>
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 5);"><#WLANConfig11b_AuthenticationMethod_itemname#></a></th>
 					<td>
-				  		<select name="wl_auth_mode_x" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_auth_mode_x');">
+				  		<select name="wl_auth_mode_x" class="input_option" onChange="authentication_method_change(this);">
 							<option value="open"    <% nvram_match("wl_auth_mode_x", "open",   "selected"); %>>Open System</option>
 							<option value="shared"  <% nvram_match("wl_auth_mode_x", "shared", "selected"); %>>Shared Key</option>
 							<option value="psk"     <% nvram_match("wl_auth_mode_x", "psk",    "selected"); %>>WPA-Personal</option>
@@ -587,7 +564,7 @@ function high_power_auto_channel(){
 			  	<tr>
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 9);"><#WLANConfig11b_WEPType_itemname#></a></th>
 					<td>
-				  		<select name="wl_wep_x" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_wep_x');">
+				  		<select name="wl_wep_x" class="input_option" onChange="wep_encryption_change(this);">
 								<option value="0" <% nvram_match("wl_wep_x", "0", "selected"); %>><#wl_securitylevel_0#></option>
 								<option value="1" <% nvram_match("wl_wep_x", "1", "selected"); %>>WEP-64bits</option>
 								<option value="2" <% nvram_match("wl_wep_x", "2", "selected"); %>>WEP-128bits</option>
@@ -599,7 +576,7 @@ function high_power_auto_channel(){
 			  	<tr>
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 10);"><#WLANConfig11b_WEPDefaultKey_itemname#></a></th>
 					<td>		
-				  		<select name="wl_key" class="input_option"  onChange="return change_common(this, 'WLANConfig11b', 'wl_key');">
+				  		<select name="wl_key" class="input_option"  onChange="wep_key_index_change(this);">
 							<option value="1" <% nvram_match("wl_key", "1","selected"); %>>1</option>
 							<option value="2" <% nvram_match("wl_key", "2","selected"); %>>2</option>
 							<option value="3" <% nvram_match("wl_key", "3","selected"); %>>3</option>

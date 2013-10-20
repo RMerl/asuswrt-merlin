@@ -121,6 +121,13 @@ src += $(common_src)
 common_libadd =
 endif
 
+lib_LTLIBRARIES += liblightsql.la
+liblightsql_la_SOURCES = sql.c
+liblightsql_la_CFLAGS=$(SQLITE_CFLAGS)
+liblightsql_la_LDFLAGS = -module -export-dynamic -avoid-version -no-undefined
+liblightsql_la_LIBADD = $(common_libadd) $(SQLITE_LIBS)
+sql_libadd = liblightsql.la
+
 lib_LTLIBRARIES += mod_flv_streaming.la
 mod_flv_streaming_la_SOURCES = mod_flv_streaming.c
 mod_flv_streaming_la_LDFLAGS = -module -export-dynamic -avoid-version -no-undefined
@@ -133,9 +140,9 @@ mod_evasive_la_LIBADD = $(common_libadd)
 
 lib_LTLIBRARIES += mod_webdav.la
 mod_webdav_la_SOURCES = mod_webdav.c
-mod_webdav_la_CFLAGS = $(AM_CFLAGS) $(XML_CFLAGS) $(SQLITE_CFLAGS) 
+mod_webdav_la_CFLAGS = $(AM_CFLAGS) $(XML_CFLAGS) $(SQLITE_CFLAGS) $(CURL_CFLAGS)
 mod_webdav_la_LDFLAGS = -module -export-dynamic -avoid-version -no-undefined
-mod_webdav_la_LIBADD = $(common_libadd) $(XML_LIBS) $(SQLITE_LIBS) $(UUID_LIBS)
+mod_webdav_la_LIBADD = $(common_libadd) $(XML_LIBS) $(SQLITE_LIBS) $(UUID_LIBS) $(sql_libadd) $(CURL_LIBS)
 
 LIBS += $(LIBSMBCLIENT_LIBS) $(XML_LIBS) $(SHARED_LIBS)
 CFLAGS += $(LIBSMBCLIENT_CFLAGS) $(XML_CFLAGS)

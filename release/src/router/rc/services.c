@@ -580,6 +580,7 @@ void start_dnsmasq(int force)
 		"resolv-file=%s\n"		// the real stuff is here
 		"no-poll\n"			// don't poll resolv file
 		"interface=%s\n"		// dns & dhcp only on LAN interface
+		"bind-dynamic\n"		// listen on addrs if LAN interface & lo
 		"min-port=%u\n",		// min port used for random src port
 #ifdef RTCONFIG_YANDEXDNS
 		nvram_get_int("yadns_enable_x") ? "" : // no resolv.conf
@@ -700,10 +701,6 @@ void start_dnsmasq(int force)
 
 		write_static_leases("/etc/ethers");
 	}
-
-	/* Listen to PPTPD clients */
-	if (nvram_match("pptpd_enable","1"))
-		fprintf(fp,"listen-address=%s,127.0.0.1\n",lan_ipaddr);
 
 	/* Don't log DHCP queries */
 	if (nvram_match("dhcpd_querylog","0")) {
@@ -982,7 +979,7 @@ void start_dhcp6s(void)
 #if 0
 		p = nvram_invmatch("ipv6_get_dns", "") ?
 			nvram_safe_get("ipv6_get_dns") :
-			getifaddr(nvram_safe_get("lan_ifname"), AF_INET6, 1) ? : "";
+			getifaddr(nvram_safe_get("lan_ifname"), AF_INET6, GIF_LINKLOCAL) ? : "";
 #else
 		p = nvram_safe_get("ipv6_get_dns");
 #endif
@@ -1102,7 +1099,7 @@ void start_radvd(void)
 #if 0
 		ip = (char *)ipv6_router_address(NULL);
 #else
-		ip = getifaddr(nvram_safe_get("lan_ifname"), AF_INET6, 1) ? : "";
+		ip = getifaddr(nvram_safe_get("lan_ifname"), AF_INET6, GIF_LINKLOCAL) ? : "";
 #endif
 #if 0
 		do_dns = (*ip);
@@ -3459,19 +3456,8 @@ again:
 #ifdef RTCONFIG_IPV6
 			stop_dhcp6c();
 #endif
+			stop_jffs2(1);
 			// TODO free necessary memory here
-#ifdef RTCONFIG_SMALL_FW_UPDATE
-/* TODO should not depend on platform, move to stop_lan_wl()?
- * cope with stop_usb() above for BRCM AP dependencies */
-#ifdef CONFIG_BCMWL5
-/* TODO should not depend on exact interfaces */
-			eval("wlconf", "eth1", "down");
-			eval("wlconf", "eth2", "down");
-/* TODO fix fini_wl() for BCM USBAP */
-			modprobe_r("wl_high");
-			modprobe_r("wl");
-#endif
-#endif
 		}
 		if(action&RC_SERVICE_START) {
 			int sw = 0, r;
@@ -3500,9 +3486,26 @@ again:
 
 			/* flash it if exists */
 			if (f_exists(upgrade_file)) {
+				/* stop wireless here */
+#ifdef RTCONFIG_SMALL_FW_UPDATE
+/* TODO should not depend on platform, move to stop_lan_wl()?
+ * cope with stop_usb() above for BRCM AP dependencies */
+#ifdef CONFIG_BCMWL5
+/* TODO should not depend on exact interfaces */
+				eval("wlconf", "eth1", "down");
+				eval("wlconf", "eth2", "down");
+/* TODO fix fini_wl() for BCM USBAP */
+				modprobe_r("wl_high");
+				modprobe_r("wl");
+#endif
+#elif defined(RTCONFIG_TEMPROOTFS)
+				stop_lan_wl();
+#endif
+
 				if (!(r = build_temp_rootfs(TMP_ROOTFS_MNT_POINT)))
 					sw = 1;
 
+				/* isn't it already stopped in stop_uprage above? */
 				stop_wan();
 #ifdef RTCONFIG_DUAL_TRX
 				if (!nvram_match("nflash_swecc", "1"))
@@ -3515,25 +3518,12 @@ again:
 				 * that is triggered by hotplug.  Kill them or encounter SQUASHFS error.
 				 */
 				stop_all_webdav();
-				stop_jffs2(1);
+
 				if (nvram_contains_word("rc_support", "nandflash"))	/* RT-AC56U/RT-AC68U/RT-N16UHP */
 					eval("mtd-write2", upgrade_file, "linux");
-				else {
-#ifdef RTCONFIG_SMALL_FW_UPDATE
-					system("wlconf eth1 down");
-					system("wlconf eth2 down");
-					system("rmmod wl_high");
-					system("rmmod wl");
-					_dprintf("Stop wireless\n");
-					system("ps");
-					system("lsmod");
-					system("free");
-					sleep(1);
-#elif defined(RTCONFIG_TEMPROOTFS)
-					stop_lan_wl();
-#endif
+				else
 					eval("mtd-write", "-i", upgrade_file, "-d", "linux");
-				}
+
 				/* erase trx and free memory on purpose */
 				unlink(upgrade_file);
 				if (sw) {
@@ -3759,8 +3749,7 @@ again:
 #elif defined RTCONFIG_RALINK
 			start_8021x();
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
-			if(nvram_match("pptpd_enable", "1"))
-				start_pptpd();
+			start_pptpd();
 #endif
 #endif
 			start_wps();
@@ -4468,14 +4457,11 @@ check_ddr_done:
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
 	else if (strcmp(script, "pptpd") == 0)
 	{
-		if(action&RC_SERVICE_STOP) stop_pptpd();
-		if(action&RC_SERVICE_START) {
+		if (action & RC_SERVICE_STOP)
+			stop_pptpd();
+		if (action & RC_SERVICE_START)
+		{
 			start_pptpd();
-#ifdef RTCONFIG_DNSMASQ
-			restart_dnsmasq(0);
-#else
-			restart_dns();
-#endif
 			start_firewall(wan_primary_ifunit(), 0);
 		}
 	}
@@ -4951,7 +4937,7 @@ void setup_leds()
 
 	model = get_model();
 
-	if (nvram_get_int("led_disable")==1) {
+	if (nvram_get_int("led_disable") == 1) {
 		if ((model == MODEL_RTAC56U) || (model == MODEL_RTAC68U)) {
 			setAllLedOff();
 		} else {        // TODO: Can other routers also use the same code?
@@ -4977,23 +4963,19 @@ void setup_leds()
 #ifdef RTCONFIG_LED_ALL
 			led_control(LED_ALL, LED_ON);
 #endif
-// TODO: Alternative to LED_ALL for this router?
-			eval("wl", "ledbh", "3", "7");
-			eval("wl", "-i", "eth2", "ledbh", "10", "7");
-
 			if (nvram_match("wl1_radio", "1")) {
 				nvram_set("led_5g", "1");
 				led_control(LED_5G, LED_ON);
 			}
 			kill_pidfile_s("/var/run/usbled.pid", SIGTSTP); // inform usbled to reset status
 		} else {
-			led_control(LED_2G, LED_ON);
 			led_control(LED_5G, LED_ON);
 #ifdef RTCONFIG_USB
 			start_usbled();
 #endif
 		}
 
+		led_control(LED_2G, LED_ON);
 		led_control(LED_SWITCH, LED_ON);
 		led_control(LED_POWER, LED_ON);
         }

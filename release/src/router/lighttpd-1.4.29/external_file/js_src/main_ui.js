@@ -229,8 +229,6 @@ function createLayout(){
 		layout_html += "<div class='albutton toolbar-button-right' id='btnUpload' style='display:none'><div class='ticon'></div></div>";
 	  	layout_html += "<div class='albutton toolbar-button-right' id='btnPlayImage' style='display:none'><div class='ticon'></div></div>";
 		layout_html += "<div class='albutton toolbar-button-right' id='btnNewDir' style='display:none'><div class='ticon'></div></div>";
-	  	layout_html += "<div class='albutton toolbar-button-right' id='btnSelect' style='display:none'><div class='ticon'></div></div>";
-	  	layout_html += "<div class='albutton toolbar-button-right' id='btnCancelSelect' style='display:none'><div class='ticon'></div></div>";
 	  	layout_html += "<div class='albutton toolbar-button-right' id='btnCancelUpload' style='display:none'><div class='ticon'></div></div>";
 	  	layout_html += "<div class='albutton toolbar-button-right' id='btnChangeUser' style='display:none'><div class='ticon'></div></div>";
 		layout_html += "<div class='alsearch toolbar-button-right' id='boxSearch' style='display:none'><input type='text'/></div>";
@@ -241,7 +239,7 @@ function createLayout(){
 	
 	layout_html += "<div id='hintbar' class='unselectable'></div>";
 	
-  	layout_html += "<div id='fileview' class='unselectable'></div>";
+  	layout_html += "<div id='fileview' class='unselectable context-menu-one'></div>";
   	
    	//- upload panel
   	layout_html += "<div id='upload_panel' class='unselectable'>";
@@ -360,13 +358,42 @@ function createLayout(){
 	layout_html += "<div id='jqmContent' style='padding;0px;margin:0px'>";
 	layout_html += "</div>";
 	layout_html += "</div>";
+	//////////////////////////////////////////////////////////////////////////
+	
+	//- select window
+	layout_html += "<div id='selectWindow' class='select-window'>";
+	layout_html += "<div class='select-window-panel'>";
+	layout_html += "<table cellspacing='0' class='select-window-toolbar-ct'><tbody><tr>";
+	
+	//- select window left
+	layout_html += "<td class='select-window-toolbar-left' alight='left' width='100%'>";
+	layout_html += "<table cellspacing='0'><tbody><tr class='toolbar-left-row'><td class='toolbar-cell'>";
+	layout_html += "<label class='selected-desc-text'></label>";
+	layout_html += "</td></tr></tbody></table>";
+	layout_html += "</td>";
+	
+	//- select window right
+	layout_html += "<td class='select-window-toolbar-right' alight='right'>";
+	layout_html += "<table cellspacing='0'><tbody><tr class='toolbar-right-row'><td class='toolbar-cell'>";
+	layout_html += "<table cellspacing='0'><tbody><tr>";
+	layout_html += "<td class='toolbar-cell'><button type='button' id='button-select-all' class='x-btn-text'>" + m.getString("btn_select_all") + "</button></td>";
+	layout_html += "<td class='toolbar-cell'></td>";
+	layout_html += "<td class='toolbar-cell'><button type='button' id='button-unselect-all' class='x-btn-text'>" + m.getString("btn_deselect") + "</button></td>";
+	layout_html += "</tr></tbody></table>";
+	layout_html += "</td></tr></tbody></table>";
+	layout_html += "</td>";
+	
+	layout_html += "</tr></tbody></table>";
+	layout_html += "</div>";
+	layout_html += "</div>";
+	//////////////////////////////////////////////////////////////////////////
 	
 	layout_html += getAudioPlayerLayout();
 	
 	$("body").empty();
 	$("body").append(layout_html);	
 	
-	client.GETPRODUCTICON("/", function(error, statusstring, content){
+	g_webdav_client.GETPRODUCTICON("/", function(error, statusstring, content){
 		if(error==200){
 			var data = parseXml(content);
 			var x = $(data);		
@@ -375,7 +402,7 @@ function createLayout(){
 	});
 	
 	$("#main_region").mousedown(function(e){
-		closePopupmenu();
+		
 		//e.preventDefault();
       	//return false;
 	});
@@ -395,7 +422,7 @@ function createLayout(){
 	
 	$(".navigation li, .navigation li a").mouseleave(function(){
 		$(this).find("dd").fadeOut("fast");
-	});
+	});	
 	/////////////////////////////////////////////////////////////////////////////////////////
 	
 	$("#mainCss").attr("href","/smb/css/style-theme.css");
@@ -406,8 +433,6 @@ function createLayout(){
 	$("#btnConfig").attr("title", m.getString('btn_config'));
 	$("#btnUpload").attr("title", m.getString('btn_upload'));
 	$("#btnCancelUpload").attr("title", m.getString('btn_cancelupload'));
-	$("#btnSelect").attr("title", m.getString('btn_select'));
-	$("#btnCancelSelect").attr("title", m.getString('btn_cancelselect'));
 	$("#btnNewDir").attr("title", m.getString('btn_newdir'));
 	$("#btnShareLink").attr("title", m.getString('btn_sharelink'));
 	$("#btnDeleteSel").attr("title", m.getString('btn_delselect'));
@@ -571,7 +596,7 @@ function createHostList(query_type, g_folder_array){
 			var r=confirm(m.getString('wol_msg'));
 			
 			if (r==true){
-				client.WOL("/", $(this).attr("mac"), function(error){
+				g_webdav_client.WOL("/", $(this).attr("mac"), function(error){
 					if(error==200)
 						alert(m.getString('wol_ok_msg'));
 					else
@@ -601,449 +626,6 @@ function createHostList(query_type, g_folder_array){
 		}, null);
 		
 	});
-}
-
-function createListView(container, query_type, parent_url, folder_array, file_array, mousedown_item_handler){
-	var html = "";
-	
-	//$("#main_right_container #fileview").empty();
-	container.empty();
-	
-	if(query_type==2)
-		return;
-	
-	html += '<table id="ntl" class="table-file-list">';
-	html += '<thead>';
-	html += '<tr>';
-	html += '<th style="width:3%"></th>';
-	html += '<th style="width:4%"></th>';
-	html += '<th style="width:58%">' + m.getString('table_filename') + '</th>';
-	html += '<th style="width:25%">' + m.getString('table_time') + '</th>';
-	html += '<th style="width:10%">' + m.getString('table_size') + '</th>';
-	html += '</tr>';
-	html += '</thead>';
-	
-	html += '<tbody>';
-	
-	//- Parent Path
-	if(query_type == 0) {
-		
-		html += '<tr class="listDiv cb cbp" ';
-		html += 'qtype="1" isParent="1" isdir="1" uhref="';
-		html += parent_url;
-		html += '" title="' + m.getString("btn_prevpage") + '" online="0">';
-		html += '<td field="check"></td>';
-		html += '<td field="icon"><div id="fileviewicon" class="parentDiv sicon"></td>';
-		html += '<td field="filename" align="left">' + m.getString("btn_prevpage") + '</td>';
-		html += '<td field="time" align="left"></td>';
-		html += '<td field="size" align="left"></td>';
-		html += '</tr>';
-	}
-			
-	var isInUSBFolder = 0;
-	
-	//- Folder List
-	for(var i=0; i<folder_array.length; i++){
-		
-		html += '<tr class="listDiv cb"';
-		html += ' id="list_item" qtype="';
-		html += query_type;
-		html += '" isdir="1" uhref="';
-		html += folder_array[i].href;
-		html += '" title="';
-		html += folder_array[i].name;
-		html += '" online="';
-		html += folder_array[i].online;
-		html += '" ip="" mac="';
-		html += folder_array[i].mac;
-		html += '" uid="';
-		html += folder_array[i].uid;
-		html += '" freadonly="';
-		html += folder_array[i].freadonly;
-		html += '" fhidden="';
-		html += folder_array[i].fhidden;
-		html += '" data-thumb="';
-		html += folder_array[i].thumb;
-		html += '" data-name="';
-		html += folder_array[i].name;
-				
-		if(folder_array[i].type == "usbdisk")
-			html += '" isusb="1"';
-		else						
-			html += '" isusb="0"';
-		
-		html += '">';
-		              							
-		//html += '<td field="check"><input type="checkbox" id="check_del" name="check_del" class="check_del"></td>';
-		html += '<td field="check">';
-		html += '<div class="checklist">';
-		html += '<div class="selectListDiv sicon"></div>';
-		html += '<div class="selectListHintDiv sicon"></div>';
-		html += '</div>';
-		html += '</td>';
-		
-		html += '<td field="icon">';		
-		if(query_type == "2"){
-			//- Host Query
-			if( folder_array[i].type == "usbdisk" )
-				html += '<div id="fileviewicon" class="usbDiv sicon">';
-			else{
-				if(folder_array[i].online == "1")
-					html += '<div id="fileviewicon" class="computerDiv sicon">';
-				else
-					html += '<div id="fileviewicon" class="computerOffDiv sicon">';
-			}
-		}
-		else {
-			html += '<div id="fileviewicon" class="folderDiv sicon">';
-		}
-		html += '</td>';
-		
-		html += '<td field="filename" align="left">' + folder_array[i].name + '</td>';
-		html += '<td field="time" align="left">' + folder_array[i].time + '</td>';
-		html += '<td field="size" align="left"></td>';
-		html += '</tr>';		
-	}
-	
-	//- File List
-	for(var i=0; i<file_array.length; i++){
-		
-		//- get file ext
-		var file_path = String(file_array[i].href);
-		var file_ext = getFileExt(file_path);
-		if(file_ext.length>5)file_ext="";
-		
-		html += '<tr class="listDiv cb"';		
-		html += ' id="list_item" qtype="1" isdir="0" uhref="';
-		html += file_array[i].href;
-		html += '" title="';
-		html += file_array[i].name;
-		html += '" matadatatitle="';
-		html += file_array[i].matadatatitle;
-		html += '" uid="';
-		html += file_array[i].uid;
-		html += '" ext="';
-		html += file_ext;
-		html += '" freadonly="';
-		html += file_array[i].freadonly;
-		html += '" fhidden="';
-		html += file_array[i].fhidden;
-		html += '" data-thumb="';
-		html += file_array[i].thumb;
-		html += '" data-name="';
-		html += file_array[i].name;
-		html += '">';
-		
-		//html += '<td field="check"><input type="checkbox" id="check_del" name="check_del" class="check_del"></td>';
-		
-		html += '<td field="check">';
-		//<input type="checkbox" id="check_del" name="check_del" class="check_del">';
-		html += '<div class="checklist">';
-		html += '<div class="selectListDiv sicon"></div>';
-		html += '<div class="selectListHintDiv sicon"></div>';
-		html += '</div>';
-		html += '</td>';
-		
-		html += '<td field="icon">';
-		
-		if(file_ext=="jpg"||file_ext=="jpeg"||file_ext=="png"||file_ext=="gif"||file_ext=="bmp")
-			html += '<div id="fileviewicon" class="imgfileDiv sicon">';
-		else if(file_ext=="mp3"||file_ext=="m4a"||file_ext=="m4r"||file_ext=="wav")
-			html += '<div id="fileviewicon" class="audiofileDiv sicon">';
-		else if(file_ext=="mp4"||file_ext=="rmvb"||file_ext=="m4v"||file_ext=="wmv"||file_ext=="avi"||file_ext=="mpg"||
-				  file_ext=="mpeg"||file_ext=="mkv"||file_ext=="mov"||file_ext=="flv"||file_ext=="3gp"||file_ext=="m2v"||file_ext=="rm")
-			html += '<div id="fileviewicon" class="videofileDiv sicon">';
-		else if(file_ext=="doc"||file_ext=="docx")
-			html += '<div id="fileviewicon" class="docfileDiv sicon">';
-		else if(file_ext=="ppt"||file_ext=="pptx")
-			html += '<div id="fileviewicon" class="pptfileDiv sicon">';
-		else if(file_ext=="xls"||file_ext=="xlsx")
-			html += '<div id="fileviewicon" class="xlsfileDiv sicon">';
-		else if(file_ext=="pdf")
-			html += '<div id="fileviewicon" class="pdffileDiv sicon">';
-		else{
-			html += '<div id="fileviewicon" class="fileDiv sicon">';
-		}
-			
-		html += '</td>';
-		
-		html += '<td field="filename" align="left">' + file_array[i].name + '</td>';
-		html += '<td field="time" align="left">' + file_array[i].time + '</td>';
-		html += '<td field="size" align="left">' + file_array[i].size + '</td>';
-		html += '</tr>';
-	}
-	
-	html += '</tbody>';
-	html += '</table>';
-	
-	html += '<table id="header-fixed" class="table-file-list"></table>';
-		
-	container.append(html);
-	
-	$(".cb").mousedown( mousedown_item_handler );
-	
-	var tableOffset = $("#ntl").offset().top;
-	var $header = $("#ntl > thead").clone();
-	var $fixedHeader = $("#header-fixed").append($header);
-	$("#header-fixed").css("width", $("#ntl").width());
-	
-	$("#fileview").bind("scroll", function() {
-		var offset = $(this).scrollTop();
-		if (offset >= tableOffset && $fixedHeader.is(":hidden")) {
-			$fixedHeader.show();
-		}
-		else if (offset < tableOffset) {
-			$fixedHeader.hide();
-		}
-	});
-}
-
-function createThumbView(container, query_type, parent_url, folder_array, file_array, mousedown_item_handler){
-	var html = "";
-	
-	container.empty();
-	
-	if(query_type==2)
-		return;
-		
-	//- Parent Path
-	if(query_type == 0) {
-		html += '<div class="albumDiv">';
-		html += '<table class="thumb-table-parent">';
-		html += '<tbody>';
-		html += '<tr><td>';
-		html += '<div class="picDiv cb" isParent="1" popupmenu="0" uhref="';
-		html += parent_url;
-		html += '">';
-		html += '<div class="parentDiv bicon"></div></div>';
-		html += '</td></tr>';
-		html += '<tr><td>';
-		html += '<div class="albuminfo">';
-		html += '<a id="list_item" qtype="1" isdir="1" uhref="';
-		html += parent_url;
-		html += '" title="' + m.getString("btn_prevpage") + '" online="0">' + m.getString("btn_prevpage");
-		html += '</a>';
-		html += '</div>';
-		html += '</td></tr>';
-		html += '</tbody>';
-		html += '</table>';
-		html += '</div>';
-	}
-		
-	var isInUSBFolder = 0;
-	
-	//- Folder List
-	for(var i=0; i<folder_array.length; i++){
-		var this_title = m.getString("table_filename") + ": " + folder_array[i].name; 
-		
-		if(folder_array[i].time!="")
-			this_title += "\n" + m.getString("table_time") + ": " + folder_array[i].time;
-		                 							
-		html += '<div class="albumDiv" ';
-		html += ' title="';
-		html += this_title;
-		html += '">';
-		html += '<table class="thumb-table-parent">';
-		html += '<tbody>';
-					
-		html += '<tr><td>';
-		html += '<div class="picDiv cb" popupmenu="';
-									
-		if(query_type == "0")
-			html += '1';
-		else
-			html += '0';
-									
-		html += '" uhref="';
-		html += folder_array[i].href;
-		html += '" data-thumb="';
-		html += folder_array[i].thumb;
-		html += '" data-name="';
-		html += folder_array[i].name;
-		html += '">';
-		
-		if(query_type == "2"){
-			//- Host Query
-			if( folder_array[i].type == "usbdisk" )
-				html += '<div id="fileviewicon" class="usbDiv bicon">';
-			else{
-				if(folder_array[i].online == "1")
-					html += '<div id="fileviewicon" class="computerDiv bicon">';
-				else
-					html += '<div id="fileviewicon" class="computerOffDiv bicon">';
-			}
-		}
-		else {
-			/*
-			if(folder_array[i].thumb=="1"){
-				html += '<div id="fileviewicon">';
-				html += '<img src="data:image/jpeg;base64,' + folder_array[i].thumb + '" width="80px" height="60px" onload="javascript:DrawImage(this,80,60);"></img>';
-			}
-			else{
-				html += '<div id="fileviewicon" class="folderDiv bicon">';
-			}
-			*/
-			html += '<div id="fileviewicon" class="folderDiv bicon">';
-		}
-		
-		//- Show router sync icon.
-		if( folder_array[i].routersyncfolder == "1" ){
-			html += '<div id="routersyncicon" class="routersyncDiv sicon"></div>';
-		}
-			
-		html += '<div class="selectDiv sicon"></div>';
-		html += '<div class="selectHintDiv sicon"></div>';
-		html += '</div></div>';								
-		html += '</td></tr>';
-		html += '<tr><td>';
-		html += '<div class="albuminfo">';
-		html += '<a id="list_item" qtype="';
-		html += query_type;
-		html += '" isdir="1" uhref="';
-		html += folder_array[i].href;
-		html += '" title="';
-		html += folder_array[i].name;
-		html += '" online="';
-		html += folder_array[i].online;
-		html += '" ip="" mac="';
-		html += folder_array[i].mac;
-		html += '" uid="';
-		html += folder_array[i].uid;
-		html += '" freadonly="';
-		html += folder_array[i].freadonly;
-		html += '" fhidden="';
-		html += folder_array[i].fhidden;
-		
-		if(folder_array[i].type == "usbdisk")
-			html += '" isusb="1"';
-		else						
-			html += '" isusb="0"';
-								
-		html += '">';
-		
-		html += folder_array[i].shortname;
-								
-		if(folder_array[i].online == "0" && query_type == "2")
-			html += "(" + m.getString("title_offline") + ")";
-									
-		html += '</a>';
-		html += '</div>';
-		html += '</td></tr>';
-		html += '</tbody>';
-		html += '</table>';
-		html += '</div>';
-		/*
-		if(folder_array[i].type == "usbdisk"&&query_type==1&&g_fileview_only==0){
-			client.GETDISKSPACE("/", folder_array[i].name, function(error, statusstring, content){				
-				if(error==200){
-					var data = parseXml(content);
-					var x = $(data);	
-					
-					var queryTag = $('a#list_item[title="' + x.find("DiskName").text() + '"]').parents(".albumDiv");
-					
-					var title = queryTag.attr("title") + "\n" + m.getString("table_diskusedpercent") + ": " + x.find("DiskUsedPercent").text();
-					queryTag.attr("title", title);
-				}
-			});	
-			
-			isInUSBFolder = 1;				
-		}
-		*/
-	}
-	
-	//- File List
-	for(var i=0; i<file_array.length; i++){
-		var this_title = m.getString("table_filename") + ": " + file_array[i].name + "\n" + 
-		                 m.getString("table_time") + ": " + file_array[i].time + "\n" + 
-		                 m.getString("table_size") + ": " + file_array[i].size;
-	
-		html += '<div class="albumDiv"';
-		html += ' title="';
-		html += this_title;
-		html += '">';
-		html += '<table class="thumb-table-parent">';
-		html += '<tbody>';									
-									
-		//- get file ext
-		var file_path = String(file_array[i].href);
-		var file_ext = getFileExt(file_path);
-		if(file_ext.length>5)file_ext="";
-																
-		html += '<tr><td>';
-		if(query_type == "0")
-			html += '<div class="picDiv cb" popupmenu="1" uhref="';
-		else
-			html += '<div class="picDiv cb" popupmenu="0" uhref="';
-		html += file_array[i].href;
-		html += '" data-thumb="';
-		html += file_array[i].thumb;
-		html += '" data-name="';
-		html += file_array[i].name;
-		html += '">';
-		
-		/*
-		if(file_array[i].thumb=="1"){
-			html += '<div id="fileviewicon">';
-			html += '<img src="data:image/jpeg;base64,' + file_array[i].thumb + '" width="80px" height="60px" onload="javascript:DrawImage(this,80,60);"></img>';
-		}
-		else{
-		*/
-		
-		if(file_ext=="jpg"||file_ext=="jpeg"||file_ext=="png"||file_ext=="gif"||file_ext=="bmp")
-			html += '<div id="fileviewicon" class="imgfileDiv bicon">';
-		else if(file_ext=="mp3"||file_ext=="m4a"||file_ext=="m4r"||file_ext=="wav")
-			html += '<div id="fileviewicon" class="audiofileDiv bicon">';
-		else if(file_ext=="mp4"||file_ext=="rmvb"||file_ext=="m4v"||file_ext=="wmv"||file_ext=="avi"||file_ext=="mpg"||
-			      file_ext=="mpeg"||file_ext=="mkv"||file_ext=="mov"||file_ext=="flv"||file_ext=="3gp"||file_ext=="m2v"||file_ext=="rm")
-			html += '<div id="fileviewicon" class="videofileDiv bicon">';
-		else if(file_ext=="doc"||file_ext=="docx")
-			html += '<div id="fileviewicon" class="docfileDiv bicon">';
-		else if(file_ext=="ppt"||file_ext=="pptx")
-			html += '<div id="fileviewicon" class="pptfileDiv bicon">';
-
-		else if(file_ext=="xls"||file_ext=="xlsx")
-			html += '<div id="fileviewicon" class="xlsfileDiv bicon">';
-		else if(file_ext=="pdf")
-			html += '<div id="fileviewicon" class="pdffileDiv bicon">';
-		else{
-			html += '<div id="fileviewicon" class="fileDiv bicon">';
-		}
-		//}
-			
-		html += '<div class="selectDiv sicon"></div>';
-		html += '<div class="selectHintDiv sicon"></div>';
-		html += '</div></div>';
-		
-		html += '</td></tr>';
-		html += '<tr><td>';
-		html += '<div class="albuminfo" style="font-size:80%">';
-		html += '<a id="list_item" qtype="1" isdir="0" uhref="';
-		html += file_array[i].href;
-		html += '" title="';
-		html += file_array[i].name;
-		html += '" matadatatitle="';
-		html += file_array[i].matadatatitle;
-		html += '" uid="';
-		html += file_array[i].uid;
-		html += '" ext="';
-		html += file_ext;
-		html += '" freadonly="';
-		html += file_array[i].freadonly;
-		html += '" fhidden="';
-		html += file_array[i].fhidden;
-		html += '">';
-		html += file_array[i].shortname;
-		html += '</a>';
-		html += '</div>';
-		html += '</td></tr>';
-		html += '</tbody>';
-		html += '</table>';
-		html += '</div>';
-	}
-		
-	container.append(html);
-	
-	$(".cb").mousedown( mousedown_item_handler );	
 }
 
 function createClassificationView(content, type){
@@ -1093,7 +675,6 @@ function createClassificationView(content, type){
 	$("div#btnThumbView").css("display", "none");
 	$("div#btnListView").css("display", "none");
 	$("div#btnUpload").css("display", "none");
-	$("div#btnSelect").css("display", "none");
 	$("div#btnNewDir").css("display", "none");
 	$("div#btnPlayImage").css("display", "none");
 	$("div#boxSearch").css("display", "none");
@@ -1132,7 +713,7 @@ function createClassificationView(content, type){
 		}
 		media_hostName = "http://" + media_hostName + ":" + g_storage.get("http_port") + "/";
 				
-		client.GETMUSICPLAYLIST(loc, $(this).attr("data-id"), function(error, statusstring, content){
+		g_webdav_client.GETMUSICPLAYLIST(loc, $(this).attr("data-id"), function(error, statusstring, content){
 			if(error==200){
 				var data = parseXml(content);
 				var x = $(data);
@@ -1252,6 +833,9 @@ function adjustLayout(){
 		$modalWindow.css("left", newLeft);
 	}	
 	
+	var newLeft = (page_width - $(".select-window").width())/2;
+	$(".select-window").css("left", newLeft);
+	
 	$("#header-fixed").css("width", $("#ntl").width());
 	
 	var header_fixed_top = $("#header_region").height() + $("#main_right_region #infobar").height() + 2;
@@ -1301,7 +885,44 @@ function showHideEditUIRegion(show){
 		}
 	}
 	
+	if(g_select_file_count>0||g_select_folder_count>0){
+			
+		//showHideEditUIRegion(true);
+			
+		if(isAiModeView()<0) $("#btnDeleteSel").removeClass("disable");
+		$("#btnDownload").removeClass("disable");
+		$("#btnShareLink").removeClass("disable");
+	}
+	else{
+		$("#btnDeleteSel").addClass("disable");
+		$("#btnDownload").addClass("disable");
+		$("#btnShareLink").addClass("disable");
+	}
+
+	if((g_select_file_count+g_select_folder_count==1) && isAiModeView()<0){
+		$("#btnRename").removeClass("disable");
+	}
+	else{
+		$("#btnRename").addClass("disable");
+	}
+		
 	g_bshowHideEditUIRegion = show;
+}
+
+function refreshSelectWindow(){
+	
+	if(g_select_folder_count>0 || g_select_file_count>0){
+		var desc_text = m.getString("btn_select");
+		if(g_select_folder_count>0) desc_text += " [" + g_select_folder_count + m.getString("title_folder_unit") + "]";
+		if(g_select_file_count>0) desc_text += " [" + g_select_file_count + m.getString("title_file_unit") + "]";
+		$('.select-window .selected-desc-text').text(desc_text);
+		$('.select-window').fadeIn("fast");		
+		showHideSelectModeUI(true);
+	}
+	else{
+		$('.select-window').fadeOut("fast");	
+		showHideSelectModeUI(false);
+	}
 }
 
 function closeAiMode(){
@@ -1320,7 +941,6 @@ function closeUploadPanel(v){
 	
 	$("div#btnNewDir").css("display", "block");
 	$("div#btnUpload").css("display", "block");
-	$("div#btnSelect").css("display", "block");
 	$("div#btnPlayImage").css("display", "block");
 	
 	if(g_list_view.get()==1){
@@ -1345,60 +965,6 @@ function closeUploadPanel(v){
 		var openurl = addPathSlash(g_storage.get('openurl'));
 		doPROPFIND(openurl);
 	}
-}
-
-function cancelSelectMode(){
-	if(g_select_mode==0)
-		return;
-		
-	g_select_mode = 0;
-	g_select_array = null;
-		
-	$("#btnDownload").addClass("disable");			
-	$("#btnShareLink").addClass("disable");
-	$("#btnDeleteSel").addClass("disable");
-	$("#btnRename").addClass("disable");
-	
-	if(isAiModeView()>=0){
-		$("div#btnNewDir").css("display", "none");
-		$("div#btnUpload").css("display", "none");
-		$("div#btnSelect").css("display", "block");
-		$("div#btnPlayImage").css("display", (getAiMode()==1) ? "block" : "none");
-		$("div#boxSearch").css("display", "block");
-	}
-	else{
-		$("div#btnNewDir").css("display", "block");
-		$("div#btnUpload").css("display", "block");
-		$("div#btnSelect").css("display", "block");
-		$("div#btnPlayImage").css("display", "block");
-		$("div#boxSearch").css("display", "none");
-	}
-	
-	$("div#btnCancelSelect").css("display", "none");
-	$("div#btnThumbView").css("display", "block");
-	
-	if(g_list_view.get()==1){
-		$("div#btnThumbView").css("display", "block");
-		$("div#btnListView").css("display", "none");
-	}
-	else{
-		$("div#btnThumbView").css("display", "none");
-		$("div#btnListView").css("display", "block");
-	}
-							
-	$(".selectDiv").css("display", "none");
-	$(".selectHintDiv").css("display", "none");
-	
-	$(".selectListDiv").css("display", "none");
-	$(".selectListHintDiv").css("display", "none");
-	
-	$("#fileview #fileviewicon").each(function(){
-		$(this).removeClass("select");	
-	});
-		
-	$("#function_help").text("");
-	
-	adjustLayout();
 }
 
 function showHideLoadStatus(bshow){
@@ -1446,10 +1012,81 @@ function show_hint_no_mediaserver(){
 	  	if(misc_port!="")
 	  		url += ":" + misc_port; 
 	}
-	  	
-	url += "/mediaserver.asp";
+	 
+	var app_installation_url = g_storage.get('app_installation_url');
+	
+	if(app_installation_url=="")
+		url += "/APP_Installation.asp";
+	else{
+		if(app_installation_url.indexOf("/")!=0) app_installation_url = "/" + app_installation_url;			
+		url += app_installation_url;
+	}
 	
 	var html = "<a href='" + url + "' target='_blank'>" + m.getString("msg_no_mediaserver") + "</a>";
 	$("#main_right_container #hintbar").html(html);
 	$("#main_right_container #hintbar").show();	
+}
+
+function showHideSelectModeUI(bShow){
+	
+	if(bShow){
+		$("div#boxSearch").hide();
+		$("div#btnNewDir").hide();
+		$("div#btnPlayImage").hide();
+		$("div#btnUpload").hide();
+		$("div#btnThumbView").hide();
+		$("div#btnListView").hide();
+		
+		showHideEditUIRegion(true);
+	}
+	else{
+		$("#btnDownload").addClass("disable");			
+		$("#btnShareLink").addClass("disable");
+		$("#btnDeleteSel").addClass("disable");
+		$("#btnRename").addClass("disable");
+	
+		if(isAiModeView()>=0){
+			$("div#btnNewDir").hide();
+			$("div#btnUpload").hide();
+			
+			if(getAiMode()==1) $("div#btnPlayImage").show();
+			else  $("div#btnPlayImage").hide();
+
+			$("div#boxSearch").show();
+		}
+		else{
+			$("div#btnNewDir").show();
+			$("div#btnUpload").show();
+			$("div#btnPlayImage").show();
+			$("div#boxSearch").hide();
+		}
+	
+		$("div#btnThumbView").show();
+		
+		if(g_list_view.get()==1){
+			$("div#btnThumbView").show();
+			$("div#btnListView").hide();
+		}
+		else{
+			$("div#btnThumbView").hide();
+			$("div#btnListView").show();
+		}
+	
+		$(".item-check").removeClass("x-view-selected");
+		$(".item-check").hide();
+		
+		$('.select-window').fadeOut('fast');
+		
+		showHideEditUIRegion(false);
+		
+		$("#function_help").text("");
+		
+		adjustLayout();
+			
+		g_select_array = null;
+		g_select_folder_count = 0;
+		g_select_file_count = 0;
+	}
+	
+	g_select_mode = (bShow) ? 1 : 0;
 }

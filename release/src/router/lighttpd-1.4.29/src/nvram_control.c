@@ -6,14 +6,73 @@
 #include "nvram_control.h"
 #include "log.h"
 
-#ifndef APP_IPKG
+#if defined APP_IPKG
+#include<stdlib.h> //for system cmd by zero added
+#elif defined USE_TCAPI
 #include <utils.h>
 #include <shutils.h>
 #include <shared.h>
+#include "libtcapi.h"
+#include "tcapi.h"
 #else
-#include<stdlib.h> //for system cmd by zero added
+#include <utils.h>
+#include <shutils.h>
+#include <shared.h>
 #endif
 
+#ifdef USE_TCAPI
+#define WEBDAV	"AiCloud_Entry"
+#define APPS	"Apps_Entry"
+#define DDNS	"Ddns_Entry"
+#define SAMBA	"Samba_Entry"
+#define ACCOUNT "Account_Entry0"
+#define SYSINFO "SysInfo_Entry"
+#define INFOETH	"Info_Ether"
+#define DEVICEINFO "DeviceInfo"
+#define TIMEZONE "Timezone_Entry"
+#define FIREWALL "Firewall_Entry"
+#define DDNS_ENANBLE_X	"Active"	// #define DDNS_ENANBLE_X	"ddns_enable_x"
+#define DDNS_SERVER_X	"SERVERNAME"	// #define DDNS_SERVER_X	"ddns_server_x"
+#define DDNS_HOST_NAME_X	"MYHOST"	// #define DDNS_HOST_NAME_X	"ddns_hostname_x"
+#define WEBDAV_SMB_PC	"webdav_smb_pc"
+#define PRODUCT_ID "productid"
+#define COMPUTER_NAME "NetBiosName"
+#define ACC_LIST "acc_list"
+#define ACC_WEBDAVPROXY "acc_webdavproxy"
+#define ST_SAMBA_MODE "st_samba_mode"
+#define HTTP_USERNAME "username"	// #define HTTP_USERNAME "http_username"
+#define HTTP_PASSWD "web_passwd"	// #define HTTP_PASSWD "http_passwd"
+#define WEBDAVAIDISK "webdav_aidisk"
+#define WEBDAVPROXY "webdav_proxy"
+#define SHARELINK "share_link"
+#define ETHMACADDR "mac"	// #define ETHMACADDR "et0macaddr"
+#define FIRMVER "FwVer"	// #define FIRMVER "firmver"
+#define BUILDNO "buildno"
+#define ST_WEBDAV_MODE "st_webdav_mode"
+#define WEBDAV_HTTP_PORT "webdav_http_port"
+#define WEBDAV_HTTPS_PORT "webdav_https_port"
+#define MISC_HTTP_X "misc_http_x"
+#define MISC_HTTP_PORT "misc_httpport_x"
+#define MISC_HTTPS_PORT "misc_httpsport_x"
+#define ENABLE_WEBDAV_CAPTCHA "enable_webdav_captcha"
+#define ENABLE_WEBDAV_LOCK "enable_webdav_lock"
+#define WEBDAV_ACC_LOCK "webdav_acc_lock"
+#define WEBDAV_LOCK_INTERVAL "webdav_lock_interval"
+#define WEBDAV_LOCK_TIMES "webdav_lock_times"
+#define WEBDAV_LAST_LOGININFO "webdav_last_login_info"
+#define WEBS_STATE_INFO "webs_state_info"
+#define WEBS_STATE_ERROR "webs_state_error"
+#define SHARE_LINK_PARAM "share_link_param"
+#define SHARE_LINK_RESULT "share_link_result"
+#define TIME_ZONE_X "TZ"
+#define SWPJVERNO "swpjverno"
+#define EXTENDNO "extendno"
+#define DMS_ENABLE "dms_enable"
+#define MS_DLNA "ms_dlna"
+#define MS_PATH "ms_path"
+#define DMS_DBCWD "dms_dbcwd"
+#define DMS_DIR "dms_dir"
+#else
 #define DDNS_ENANBLE_X	"ddns_enable_x"
 #define DDNS_SERVER_X	"ddns_server_x"
 #define DDNS_HOST_NAME_X	"ddns_hostname_x"
@@ -55,10 +114,11 @@
 #define MS_DLNA "ms_dlna"
 #define DMS_DBCWD "dms_dbcwd"
 #define DMS_DIR "dms_dir"
+#endif
 
 #define DBE 0
 
-#ifdef APP_IPKG
+#if defined APP_IPKG
 static inline char * strcat_r(const char *s1, const char *s2, char *buf)
 {
         strcpy(buf, s1);
@@ -312,15 +372,28 @@ int nvram_commit(void)
         system(cmd);
         return 1;
 }
+#elif defined USE_TCAPI
+
 #else
 extern char *nvram_get(const char *name);
 extern int nvram_set(const char *name, const char *value);
 extern int nvram_commit(void);
 #endif
-int nvram_smbdav_pc_append(const char* ap_str )
+
+int nvram_smbdav_pc_append(const char* ap_str)
 {
+#ifdef USE_TCAPI
+	char nv_var_val[MAXLEN_TCAPI_MSG] = {0};
+	if( tcapi_get(WEBDAV, WEBDAV_SMB_PC, nv_var_val) ){
+		Cdbg(1,"nv_var get null");
+		return -1;
+	}
+	char tmp_nv_var_val[120]={0};
+	strcpy(tmp_nv_var_val, nv_var_val);
+	strcat(tmp_nv_var_val, ap_str);
+	tcapi_set(WEBDAV, WEBDAV_SMB_PC, tmp_nv_var_val);
+#else
 	char* nv_var_val=NULL;
-	Cdbg(1,"call nvram_get");
 	if( !( nv_var_val = nvram_get(WEBDAV_SMB_PC)) ){
 	   Cdbg(1,"nv_var get null");
 	   return -1;
@@ -332,39 +405,76 @@ int nvram_smbdav_pc_append(const char* ap_str )
 	free(nv_var_val);
 #endif
 	nvram_set(WEBDAV_SMB_PC, tmp_nv_var_val);
-//	char * test_str = nvram_get(nv_var);
+#endif
+
 	return 0;
 }
 
-char*  nvram_get_smbdav_str(void)
+char* nvram_get_smbdav_str(void)
 {	
-   return  nvram_get(WEBDAV_SMB_PC);
+#ifdef USE_TCAPI
+	static char smbdav_str[MAXLEN_TCAPI_MSG] = {0};
+	tcapi_get(WEBDAV, WEBDAV_SMB_PC, smbdav_str);
+	return smbdav_str;
+#else
+	return nvram_get(WEBDAV_SMB_PC);
+#endif
 }
 
 int nvram_set_smbdav_str(const char* pc_info)
 {
+#ifdef USE_TCAPI
+	return tcapi_set(WEBDAV, WEBDAV_SMB_PC, pc_info);
+#else
 	return nvram_set(WEBDAV_SMB_PC, pc_info);
+#endif
 }
 
-char*  nvram_get_sharelink_str(void)
-{	
-   return  nvram_get(SHARELINK);
+char* nvram_get_sharelink_str(void)
+{
+#ifdef USE_TCAPI
+	static char sharelink_str[MAXLEN_TCAPI_MSG] = {0};
+	tcapi_get(WEBDAV, SHARELINK, sharelink_str);
+	return sharelink_str;
+#else
+	return nvram_get(SHARELINK);
+#endif
 }
 
 int nvram_set_sharelink_str(const char* share_info)
 {
+#ifdef USE_TCAPI
+	return tcapi_set(WEBDAV, SHARELINK, share_info);
+#else
 	return nvram_set(SHARELINK, share_info);
+#endif
 }
 
 int nvram_do_commit(void){
+#ifdef USE_TCAPI
+	tcapi_commit(WEBDAV);
+#else
 	nvram_commit();
+#endif
 	return 1;
 }
 
 int nvram_is_ddns_enable(void)
 {
-	char*	ddns_e=NULL;
-	int		ddns_enable_x=0;
+#ifdef USE_TCAPI
+	char	ddns_e[4] = {0};
+	int	ddns_enable_x=0;
+	if( tcapi_get(DDNS, DDNS_ENANBLE_X, ddns_e) ) {
+		ddns_enable_x = atoi(ddns_e);
+		Cdbg(DBE," ddns_e = %s", ddns_e);
+	}
+	if(ddns_enable_x)
+		return 1;
+	else	
+		return 0;
+#else
+	char*	ddns_e = NULL;
+	int		ddns_enable_x = 0;
 	if( (ddns_e = nvram_get(DDNS_ENANBLE_X))!=NULL ){
 		ddns_enable_x = atoi(ddns_e);
 		Cdbg(DBE," ddns_e = %s", ddns_e);
@@ -374,15 +484,32 @@ int nvram_is_ddns_enable(void)
 	}
 	if(ddns_enable_x)	return 1;
 	else				return 0;
+#endif
 }
 
 char* nvram_get_ddns_server_name(void)
 {
+#ifdef USE_TCAPI
+	static char ddns_server_name[64] = {0};
+	tcapi_get(DDNS, DDNS_SERVER_X, ddns_server_name);
+	return ddns_server_name;
+#else
 	return nvram_get(DDNS_SERVER_X);
+#endif
 }
 
 char* nvram_get_ddns_host_name(void)
 {
+#ifdef USE_TCAPI
+	static char ddns_host_name_x[MAXLEN_TCAPI_MSG] = {0};
+	if(tcapi_get(DDNS, DDNS_HOST_NAME_X, ddns_host_name_x)) {
+		Cdbg(DBE,"ddns_hostname_x = %s", ddns_host_name_x);
+		return NULL;
+	}
+	else
+		return ddns_host_name_x;
+#else
+
 	/*
 	nvram get/set ddns_enable_x
 	nvram get/set ddns_server_x (WWW.ASUS.COM)
@@ -399,13 +526,20 @@ char* nvram_get_ddns_host_name(void)
 nvram_get_ddns_host_name_EXIT:
 	Cdbg(DBE,"ddns_hostname_x = %s", ddns_host_name_x);
 	return ddns_host_name_x;
+#endif
 }
 
 char* nvram_get_ddns_host_name2(void)
 {
-	char* ddns_host_name_x=NULL;
-	ddns_host_name_x= nvram_get(DDNS_HOST_NAME_X);
+#ifdef USE_TCAPI
+	static char ddns_host_name_x[MAXLEN_TCAPI_MSG] = {0};
+	tcapi_get(DDNS, DDNS_HOST_NAME_X, ddns_host_name_x);
 	return ddns_host_name_x;
+#else
+	char* ddns_host_name_x = NULL;
+	ddns_host_name_x = nvram_get(DDNS_HOST_NAME_X);
+	return ddns_host_name_x;
+#endif
 }
 
 char* nvram_get_productid(void)
@@ -415,89 +549,181 @@ char* nvram_get_productid(void)
 
 char* nvram_get_acc_list(void)
 {
+#ifdef USE_TCAPI
+	static char acc_list[MAXLEN_TCAPI_MSG] = {0};
+	tcapi_get(SAMBA, ACC_LIST, acc_list);
+	return acc_list;
+#else
 	return nvram_get(ACC_LIST);
+#endif
 }
 
 char* nvram_get_webdavaidisk(void)
 {
+#ifdef USE_TCAPI
+	static char webdavaidisk[4] = {0};
+	tcapi_get(WEBDAV, WEBDAVAIDISK, webdavaidisk);
+	return webdavaidisk;
+#else
 	return nvram_get(WEBDAVAIDISK);
+#endif
 }
 
 int nvram_set_webdavaidisk(const char* enable)
 {
+#ifdef USE_TCAPI
+	tcapi_set(WEBDAV, WEBDAVAIDISK, enable);
+#else
 	nvram_set(WEBDAVAIDISK, enable);
+#endif
 	return 1;
 }
 
 char* nvram_get_webdavproxy(void)
 {
+#ifdef USE_TCAPI
+	static char webdavproxy[4] = {0};
+	tcapi_get(WEBDAV, WEBDAVPROXY, webdavproxy);
+	return webdavproxy;
+#else
 	return nvram_get(WEBDAVPROXY);
+#endif
 }
 
 int nvram_set_webdavproxy(const char* enable)
 {
+#ifdef USE_TCAPI
+	tcapi_set(WEBDAV, WEBDAVPROXY, enable);
+#else
 	nvram_set(WEBDAVPROXY, enable);
+#endif
 	return 1;
 }
 
 char* nvram_get_acc_webdavproxy(void)
 {
+#ifdef USE_TCAPI
+	static char acc_webdavproxy[MAXLEN_TCAPI_MSG] = {0};
+	tcapi_get(WEBDAV, ACC_WEBDAVPROXY, acc_webdavproxy);
+	return acc_webdavproxy;
+#else
 	return nvram_get(ACC_WEBDAVPROXY);
+#endif
 }
 
 int nvram_get_st_samba_mode(void)
 {
+#ifdef USE_TCAPI
+	char st_samba_mode[4] ={0};
+	int a = 0;
+	tcapi_get(SAMBA, ST_SAMBA_MODE, st_samba_mode);
+	a = atoi(st_samba_mode);
+	return a;
+#else
 	char* res = nvram_get(ST_SAMBA_MODE);
 	int a = atoi(res);
 #ifdef APP_IPKG
 	free(res);
 #endif
 	return a;
+#endif
 }
 
 char* nvram_get_http_username(void)
 {
+#ifdef USE_TCAPI
+	static char http_username[32] = {0};
+	tcapi_get(ACCOUNT, HTTP_USERNAME, http_username);
+	return http_username;
+#else
 	return nvram_get(HTTP_USERNAME);
+#endif
 }
 
 char* nvram_get_http_passwd(void)
 {
+#ifdef USE_TCAPI
+	static char http_passwd[32] = {0};
+	tcapi_get(ACCOUNT, HTTP_PASSWD, http_passwd);
+	return http_passwd;
+#else
 	return nvram_get(HTTP_PASSWD);
+#endif
 }
 
 char* nvram_get_computer_name(void)
 {
+#ifdef USE_TCAPI
+	static char computer_name[16] = {0};
+	tcapi_get(SAMBA, COMPUTER_NAME, computer_name);
+	return computer_name;
+#else
 	return nvram_get(COMPUTER_NAME);
+#endif
 }
 
 char* nvram_get_router_mac(void)
 {
+#ifdef USE_TCAPI
+	static char router_mac[32] = {0};
+	tcapi_get(INFOETH, ETHMACADDR, router_mac);
+	return router_mac;
+#else
 	return nvram_get(ETHMACADDR);
+#endif
 }
 
 char* nvram_get_firmware_version(void)
 {
+#ifdef USE_TCAPI
+	static char firmware_version[16] = {0};
+	tcapi_get(DEVICEINFO, FIRMVER, firmware_version);
+	return firmware_version;
+#else
 	return nvram_get(FIRMVER);
+#endif
 }
 
 char* nvram_get_build_no(void)
 {
+#ifdef USE_TCAPI
+	return 0;
+#else
 	return nvram_get(BUILDNO);
+#endif
 }
 
 char* nvram_get_st_webdav_mode(void)
 {
+#ifdef USE_TCAPI
+	static char st_webdav_mode[4] = {0};
+	tcapi_get(WEBDAV, ST_WEBDAV_MODE, st_webdav_mode);
+	return st_webdav_mode;
+#else
 	return nvram_get(ST_WEBDAV_MODE);
+#endif
 }
 
 char* nvram_get_webdav_http_port(void)
 {
+#ifdef USE_TCAPI
+	static char webdav_http_port[8] = {0};
+	tcapi_get(WEBDAV, WEBDAV_HTTP_PORT, webdav_http_port);
+	return webdav_http_port;
+#else
 	return nvram_get(WEBDAV_HTTP_PORT);
+#endif
 }
 
 char* nvram_get_webdav_https_port(void)
 {
+#ifdef USE_TCAPI
+	static char webdav_https_port[8] = {0};
+	tcapi_get(WEBDAV, WEBDAV_HTTPS_PORT, webdav_https_port);
+	return webdav_https_port;
+#else
 	return nvram_get(WEBDAV_HTTPS_PORT);
+#endif
 }
 
 char* nvram_get_http_enable(void)
@@ -505,99 +731,207 @@ char* nvram_get_http_enable(void)
 	// 0 --> http
     // 1 --> https
     // 2 --> both
+#ifdef USE_TCAPI
+	return 0;
+#else
 	return nvram_get(HTTP_ENABLE);
+#endif
 }
 
 char* nvram_get_misc_http_x(void)
 {
+#ifdef USE_TCAPI
+	static char misc_http_x[4] = {0};
+	tcapi_get(FIREWALL, MISC_HTTP_X, misc_http_x);
+	return misc_http_x;
+#else
 	return nvram_get(MISC_HTTP_X);
+#endif
 }
 
 char* nvram_get_misc_http_port(void)
 {
+#ifdef USE_TCAPI
+	static char misc_http_port[8] = {0};
+	tcapi_get(FIREWALL, MISC_HTTP_PORT, misc_http_port);
+	return misc_http_port;
+#else
 	return nvram_get(MISC_HTTP_PORT);
+#endif
 }
 
 char* nvram_get_misc_https_port(void)
 {
+#ifdef USE_TCAPI
+	static char misc_https_port[8] = {0};
+	tcapi_get(FIREWALL, MISC_HTTPS_PORT, misc_https_port);
+	return misc_https_port;
+#else
 	return nvram_get(MISC_HTTPS_PORT);
+#endif
 }
 
 char* nvram_get_enable_webdav_captcha(void)
 {
+#ifdef USE_TCAPI
+	static char enable_webdav_captcha[4] = {0};
+	tcapi_get(WEBDAV, ENABLE_WEBDAV_CAPTCHA, enable_webdav_captcha);
+	return enable_webdav_captcha;
+#else
 	return nvram_get(ENABLE_WEBDAV_CAPTCHA);
+#endif
 }
 
 char* nvram_get_enable_webdav_lock(void)
 {
+#ifdef USE_TCAPI
+	static char enable_webdav_lock[4] = {0};
+	tcapi_get(WEBDAV, ENABLE_WEBDAV_LOCK, enable_webdav_lock);
+	return enable_webdav_lock;
+#else
 	return nvram_get(ENABLE_WEBDAV_LOCK);
+#endif
 }
 
 char* nvram_get_webdav_acc_lock(void)
 {
+#ifdef USE_TCAPI
+	static char webdav_acc_lock[4] = {0};
+	tcapi_get(WEBDAV, WEBDAV_ACC_LOCK, webdav_acc_lock);
+	return webdav_acc_lock;
+#else
 	return nvram_get(WEBDAV_ACC_LOCK);
+#endif
 }
 
 int nvram_set_webdav_acc_lock(const char* acc_lock)
 {
+#ifdef USE_TCAPI
+	tcapi_set(WEBDAV, WEBDAV_ACC_LOCK, acc_lock);
+#else
 	nvram_set(WEBDAV_ACC_LOCK, acc_lock);
+#endif
 	return 1;
 }
 
 char* nvram_get_webdav_lock_interval(void)
 {
+#ifdef USE_TCAPI
+	static char webdav_lock_interval[4] = {0};
+	tcapi_get(WEBDAV, WEBDAV_LOCK_INTERVAL, webdav_lock_interval);
+	return webdav_lock_interval;
+#else
 	return nvram_get(WEBDAV_LOCK_INTERVAL);
+#endif
 }
 
 char* nvram_get_webdav_lock_times(void)
 {
+#ifdef USE_TCAPI
+	static char webdav_lock_times[4] = {0};
+	tcapi_get(WEBDAV, WEBDAV_LOCK_TIMES, webdav_lock_times);
+	return webdav_lock_times;
+#else
 	return nvram_get(WEBDAV_LOCK_TIMES);
+#endif
 }
 
 char* nvram_get_webdav_last_login_info(void)
 {
+#ifdef USE_TCAPI
+	static char webdav_last_login_info[MAXLEN_TCAPI_MSG] = {0};
+	tcapi_get(WEBDAV, WEBDAV_LAST_LOGININFO, webdav_last_login_info);
+	return webdav_last_login_info;
+#else
 	return nvram_get(WEBDAV_LAST_LOGININFO);
+#endif
 }
 
 int nvram_set_webdav_last_login_info(const char* last_login_info)
 {
+#ifdef USE_TCAPI
+	return tcapi_set(WEBDAV, WEBDAV_LAST_LOGININFO, last_login_info);
+#else
 	return nvram_set(WEBDAV_LAST_LOGININFO, last_login_info);
+#endif
 }
 
 char* nvram_get_latest_version(void)
 {
+#ifdef USE_TCAPI
+	static char latest_version[16] = {0};
+	tcapi_get(WEBDAV, WEBS_STATE_INFO, latest_version);
+	return latest_version;
+#else
 	return nvram_get(WEBS_STATE_INFO);
+#endif
 }
 
 int nvram_get_webs_state_error(void)
 {
+#ifdef USE_TCAPI
+	char webs_state_error[4] = {0};
+	int a = 0;
+	tcapi_get(WEBDAV, WEBS_STATE_ERROR, webs_state_error);
+	a = atoi(webs_state_error);
+	return a;
+#else
 	char* res = nvram_get(WEBS_STATE_ERROR);
 	int a = atoi(res);
 #ifdef APP_IPKG
 	free(res);
 #endif
 	return a;
+#endif
 }
 
 char* nvram_get_share_link_param(void)
 {
+#ifdef USE_TCAPI
+	static char share_link_param[MAXLEN_TCAPI_MSG] = {0};
+	tcapi_get(WEBDAV, SHARE_LINK_PARAM, share_link_param);
+	return share_link_param;
+#else
 	return nvram_get(SHARE_LINK_PARAM);
+#endif
 }
 
 char* nvram_get_time_zone(void)
 {
+#ifdef USE_TCAPI
+	static char time_zone[MAXLEN_TCAPI_MSG] = {0};
+	tcapi_get(TIMEZONE, TIME_ZONE_X, time_zone);
+	return time_zone;
+#else
 	return nvram_get(TIME_ZONE_X);
+#endif
 }
 
 
 int nvram_set_share_link_result(const char* result)
 {
+#ifdef USE_TCAPI
+	tcapi_set(WEBDAV, SHARE_LINK_RESULT, result);
+#else
 	nvram_set(SHARE_LINK_RESULT, result);
+#endif
 	return 1;
 }
 
 int nvram_wan_primary_ifunit(void)
 {	
+#ifdef USE_TCAPI
+	char tmp[4], prefix[16] = {0};
+	int unit;	
+	for (unit = 0; unit < 12; unit ++) {		
+		if( unit > 0 && unit < 8 )	//ignore nas1~7 which should be bridge mode for ADSL
+			continue;	
+		snprintf(prefix, sizeof(prefix), "Wan_PVC%d", unit);
+		tcapi_get(prefix, "Active", tmp);
+		if (!strcmp(tmp, "Yes"))
+			return unit;
+	}
+#else
 	int unit;	
 	for (unit = 0; unit < 10; unit ++) {		
 		char tmp[100], prefix[] = "wanXXXXXXXXXX_";		
@@ -605,47 +939,109 @@ int nvram_wan_primary_ifunit(void)
 		char* res = strcat_r(prefix, "primary", tmp);		
 		if (strncmp(res, "1", 1)==0)			
 			return unit;	
-	}	
+	}
+#endif
 	return 0;
 }
 
-char* nvram_get_wan_ip(void){
+char* nvram_get_wan_ip(void)
+{
+#ifdef USE_TCAPI
+	static char wan_ip[16]= {0};
+	char prefix[32] = {0};
+	int unit = nvram_wan_primary_ifunit();
+	snprintf(prefix, sizeof(prefix), "%s_PVC%d", DEVICEINFO, unit);
+	tcapi_get(prefix, "WanIP", wan_ip);
+	return wan_ip;
+#else
 	char *wan_ip;
 	char tmp[32], prefix[] = "wanXXXXXXXXXX_";
 	int unit = nvram_wan_primary_ifunit();
 	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 	wan_ip = nvram_get(strcat_r(prefix, "ipaddr", tmp));
 	return wan_ip;
+#endif
 }
 
-char* nvram_get_swpjverno(void){
+char* nvram_get_swpjverno(void)
+{
+#ifdef USE_TCAPI
+	static char swpjverno[MAXLEN_TCAPI_MSG] = {0};
+	tcapi_get(WEBDAV, SWPJVERNO, swpjverno);
+	return swpjverno;
+#else
 	return nvram_get(SWPJVERNO);
+#endif
 }
 
-char* nvram_get_extendno(void){
+char* nvram_get_extendno(void)
+{
+#ifdef USE_TCAPI
+	static char extendno[MAXLEN_TCAPI_MSG] = {0};
+	tcapi_get(WEBDAV, EXTENDNO, extendno);
+	return extendno;
+#else	
 	return nvram_get(EXTENDNO);
+#endif
 }
 
 char* nvram_get_dms_enable(void)
 {
 	// 0 --> off
     // 1 --> on
+#ifdef USE_TCAPI
+	static char dms_enable[MAXLEN_TCAPI_MSG] = {0};
+	tcapi_get(WEBDAV, DMS_ENABLE, dms_enable);
+	return dms_enable;
+#else
 	return nvram_get(DMS_ENABLE);
+#endif
 }
 
 char* nvram_get_dms_dbcwd(void)
 {
+#ifdef USE_TCAPI
+	/*
+	static char dms_dbcwd[MAXLEN_TCAPI_MSG] = {0};
+	tcapi_get(APPS, MS_PATH, dms_dbcwd);
+	strcat(dms_dbcwd, "/minidlna");
+	return dms_dbcwd;
+	*/
+	return NULL;
+#else
 	return nvram_get(DMS_DBCWD);
+#endif
 }
 
 char* nvram_get_dms_dir(void)
 {
+#ifdef USE_TCAPI
+	/*
+	static char dms_dir[MAXLEN_TCAPI_MSG] = {0};
+	tcapi_get(APPS, MS_PATH, dms_dir);
+	return dms_dir;
+	*/
+	return NULL;
+#else
 	return nvram_get(DMS_DIR);
+#endif
 }
 
 char* nvram_get_ms_enable(void)
-{        
+{
+#if EMBEDDED_EANBLE
+
+#ifdef USE_TCAPI
+	static char ms_enable[MAXLEN_TCAPI_MSG] = {0};
+	tcapi_get(APPS, MS_DLNA, ms_enable);
+	return ms_enable;
+#else
 	return nvram_get(MS_DLNA);
+#endif
+
+#else
+	return "1";
+#endif
 }
 
 #endif

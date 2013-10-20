@@ -132,7 +132,7 @@ function initial(){
 }
 
 var listFlag = 0;
-var itemperpage = 14;
+var itemperpage = 12;
 function _showNextItem(num){
 	$("client_list_Block").style.display = "";
 	var _client_list_row_length = client_list_row.length-1;
@@ -417,6 +417,6 @@ function networkmap_update(){
 <img height="25" id="leftBtn" onclick="showNextItem(0);" style="visibility:hidden;cursor:pointer;margin-left:10px;" src="/images/arrow-left.png">
 <input type="button" id="refresh_list" class="button_gen" onclick="networkmap_update();" value="<#CTL_refresh#>" style="margin-left:70px;">
 <img id="loadingIcon" src="/images/InternetScan.gif">
-<img height="25" id="rightBtn" onclick="showNextItem(1);" style="visibility:hidden;cursor:pointer;margin-left:50px;" src="/images/arrow-right.png">
+<img height="25" id="rightBtn" onclick="showNextItem(1);" style="visibility:hidden;cursor:pointer;float:right;" src="/images/arrow-right.png">
 </body>
 </html>

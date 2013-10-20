@@ -4992,7 +4992,7 @@ $as_echo "#define HAVE_SYS_WAIT_H 1" >>confdefs.h
 
 fi
 
-for ac_header in fcntl.h limits.h netinet/in.h netinet/tcp.h stdlib.h string.h sys/socket.h sys/time.h termios.h unistd.h crypt.h pty.h ioctl.h libutil.h libgen.h inttypes.h stropts.h utmp.h utmpx.h lastlog.h paths.h util.h netdb.h security/pam_appl.h pam/pam_appl.h netinet/in_systm.h, sys/uio.h
+for ac_header in fcntl.h limits.h netinet/in.h netinet/tcp.h stdlib.h string.h sys/socket.h sys/time.h termios.h unistd.h crypt.h pty.h ioctl.h libutil.h libgen.h inttypes.h stropts.h utmp.h utmpx.h lastlog.h paths.h util.h netdb.h security/pam_appl.h pam/pam_appl.h netinet/in_systm.h sys/uio.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"

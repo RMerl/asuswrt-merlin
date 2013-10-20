@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2012 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2013 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -42,7 +42,12 @@
 #define EDNS0_OPTION_MAC 5 /* dyndns.org temporary assignment */
 #define DNSMASQ_SERVICE "uk.org.thekelleys.dnsmasq" /* Default - may be overridden by config */
 #define DNSMASQ_PATH "/uk/org/thekelleys/dnsmasq"
-
+#define AUTH_TTL 600 /* default TTL for auth DNS */
+#define SOA_REFRESH 1200 /* SOA refresh default */
+#define SOA_RETRY 180 /* SOA retry default */
+#define SOA_EXPIRY 1209600 /* SOA expiry default */
+#define RA_INTERVAL 600 /* Send unsolicited RA's this often when not provoked. */
+ 
 /* compile-time options: uncomment below to enable or do eg.
    make COPTS=-DHAVE_BROKEN_RTC
 
@@ -98,12 +103,23 @@ HAVE_CONNTRACK
    a build-dependency on libnetfilter_conntrack, but the resulting binary will
    still run happily on a kernel without conntrack support.
 
+HAVE_IPSET
+    define this to include the ability to selectively add resolved ip addresses
+    to given ipsets.
+
+HAVE_AUTH
+   define this to include the facility to act as an authoritative DNS
+   server for one or more zones.
+
+
 NO_IPV6
 NO_TFTP
 NO_DHCP
 NO_DHCP6
 NO_SCRIPT
 NO_LARGEFILE
+NO_AUTH
+NO_IPSET
    these are avilable to explictly disable compile time options which would 
    otherwise be enabled automatically (HAVE_IPV6, >2Gb file sizes) or 
    which are enabled  by default in the distributed source tree. Building dnsmasq
@@ -125,13 +141,14 @@ RESOLVFILE
 #define HAVE_DHCP6 
 #define HAVE_TFTP
 #define HAVE_SCRIPT
+#define HAVE_AUTH
+#define HAVE_IPSET 
 /* #define HAVE_LUASCRIPT */
 /* #define HAVE_BROKEN_RTC */
 /* #define HAVE_LEASEFILE_EXPIRE */
 /* #define HAVE_DBUS */
 /* #define HAVE_IDN */
 /* #define HAVE_CONNTRACK */
-
 
 
 /* Default locations for important system files. */
@@ -272,12 +289,12 @@ HAVE_SOCKADDR_SA_LEN
 #if defined(INET6_ADDRSTRLEN) && defined(IPV6_V6ONLY)
 #  define HAVE_IPV6
 #  define ADDRSTRLEN INET6_ADDRSTRLEN
-#elif defined(INET_ADDRSTRLEN)
+#else
+#  if !defined(INET_ADDRSTRLEN)
+#      define INET_ADDRSTRLEN 16 /* 4*3 + 3 dots + NULL */
+#  endif
 #  undef HAVE_IPV6
 #  define ADDRSTRLEN INET_ADDRSTRLEN
-#else
-#  undef HAVE_IPV6
-#  define ADDRSTRLEN 16 /* 4*3 + 3 dots + NULL */
 #endif
 
 
@@ -316,6 +333,13 @@ HAVE_SOCKADDR_SA_LEN
 #define HAVE_SCRIPT
 #endif
 
+#ifdef NO_AUTH
+#undef HAVE_AUTH
+#endif
+
+#if defined(NO_IPSET) || !defined(HAVE_LINUX_NETWORK)
+#undef HAVE_IPSET
+#endif
 
 /* Define a string indicating which options are in use.
    DNSMASQP_COMPILE_OPTS is only defined in dnsmasq.c */
@@ -374,7 +398,15 @@ static char *compile_opts =
 #ifndef HAVE_CONNTRACK
 "no-"
 #endif
-"conntrack";
+"conntrack "
+#ifndef HAVE_IPSET
+"no-"
+#endif
+"ipset "
+#ifndef HAVE_AUTH
+"no-"
+#endif
+  "auth";
 
 #endif
 

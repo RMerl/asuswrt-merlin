@@ -28,13 +28,14 @@ wan_proto = '<% nvram_get("wan_proto"); %>';
 <% login_state_hook(); %>
 var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 var origin_lan_ip = '<% nvram_get("lan_ipaddr"); %>';
-var pptpd_clients = '<% nvram_get("pptpd_clients"); %>';
-var pptpd_clients_subnet = pptpd_clients.split(".")[0]
-															+"."+pptpd_clients.split(".")[1]
-															+"."+pptpd_clients.split(".")[2]
-															+".";	
+if(pptpd_support){	
+	var pptpd_clients = '<% nvram_get("pptpd_clients"); %>';
+	var pptpd_clients_subnet = pptpd_clients.split(".")[0]+"."
+				+pptpd_clients.split(".")[1]+"."
+				+pptpd_clients.split(".")[2]+".";
 	var pptpd_clients_start_ip = parseInt(pptpd_clients.split(".")[3].split("-")[0]);
 	var pptpd_clients_end_ip = parseInt(pptpd_clients.split("-")[1]);
+}
 
 
 function initial(){
@@ -47,9 +48,11 @@ function initial(){
 		 $("table_dns1").style.display = "none";
 		 $("table_dns2").style.display = "none";
 		 /*  Not needed to show out. Viz 2012.04
-		 var chk_vpn = check_vpn();
-		 if(chk_vpn){
+		 if(pptpd_support){
+		 	var chk_vpn = check_vpn();
+			 if(chk_vpn){
 		 		$("VPN_conflict").style.display = "";	
+			 }
 		 }*/
 	}
 	else{

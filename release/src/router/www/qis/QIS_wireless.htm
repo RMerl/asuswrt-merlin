@@ -32,7 +32,7 @@ var timezones = {
 	"180":"EBST3DST_1",
 	"120":"NORO2DST",
 	"60":"EUT1DST",
-	"0":"GMT0DST_1",
+	"0":"GMT0",
 	"-60":"MET-1DST_1",
 	"-120":"UTC-2DST",
 	"-180":"UTC-3_1",
@@ -79,9 +79,6 @@ function QKWireless_load_body(){
 		hideLinkTag();
 		flash_button();
 		show_prev_button();
-	
-		if(parent.w_Setting_tmp == '0')
-			$("HomeImg").style.display = "none";
 	
 		if(!band5g_support){
 			$("wl_unit_field_1").style.display = "none";
@@ -767,11 +764,11 @@ function detect_LANStatus(_flag){
 					<table width="100%">
 						<tr>
 							<td align="left">
-								<span class="description_down"><#QKSet_wireless_webtitle#></span>
+								<div class="description_down"><#QKSet_wireless_webtitle#></div>
 							</td>
-							<td align="right">
+							<!--td align="right">
 								<img id="HomeImg" onclick="gotoIndex_wireless();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'">
-							</td>
+							</td-->
 						</tr>
 					</table>
 				</div>

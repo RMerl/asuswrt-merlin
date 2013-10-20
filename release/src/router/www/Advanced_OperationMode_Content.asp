@@ -325,6 +325,7 @@ function setScenerion(mode){
 				pstaDesc += "<#OP_MB_desc3#>";
 				pstaDesc += "<#OP_MB_desc4#>";
 				pstaDesc += "<#OP_MB_desc5#>";
+				pstaDesc += "<br>In media bridge mode, the wireless only connect to the P-AP, client devices need connect to media bridge with network cable.";
 				pstaDesc += "<br/><span style=\"color:#FC0\"><#use_DevDiscoveryUtil#></span>";
 
 		$j("#Senario").css("height", "300px");

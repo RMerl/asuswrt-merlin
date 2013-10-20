@@ -699,8 +699,6 @@ static int noptycommand(struct Channel *channel, struct ChanSess *chansess) {
 	ses.maxfd = MAX(ses.maxfd, channel->readfd);
 	ses.maxfd = MAX(ses.maxfd, channel->errfd);
 
-	sleep(1);
-
 	addchildpid(chansess, chansess->pid);
 
 	if (svr_ses.lastexit.exitpid != -1) {

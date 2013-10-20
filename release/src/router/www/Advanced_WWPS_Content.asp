@@ -43,6 +43,14 @@ function reject_wps(auth_mode, wep){
 	return (auth_mode == "open" && wep != "0") || auth_mode == "shared" || auth_mode == "psk" || auth_mode == "wpa" || auth_mode == "wpa2" || auth_mode == "wpawpa2" || auth_mode == "radius";
 }
 
+function get_band_str(band){
+	if(band == 0)
+		return "2.4GHz";
+	else if(band == 1)
+		return "5GHz";
+	return "";
+}
+
 function initial(){
 	show_menu();
 
@@ -52,19 +60,14 @@ function initial(){
 	}else{										//Dual band
 		$("wps_band_tr").style.display = "";
 		if(!wps_multiband_support || document.form.wps_multiband.value == "0") {
-			if(document.form.wps_band.value == 1){
-				$("wps_band_word").innerHTML = "5GHz";
-			}
-			else if(document.form.wps_band.value == 0){
-				$("wps_band_word").innerHTML = "2.4GHz";
-			}
+			$("wps_band_word").innerHTML = get_band_str(document.form.wps_band.value);
 		}
 
 		if (wps_multiband_support && document.form.wps_multiband.value == "1"){
 			var rej0 = reject_wps(document.form.wl0_auth_mode_x.value, document.form.wl0_wep_x.value);
 			var rej1 = reject_wps(document.form.wl1_auth_mode_x.value, document.form.wl1_wep_x.value);
-			band0 = "2.4GHz";
-			band1 = "5GHz";
+			band0 = get_band_str(0);
+			band1 = get_band_str(1);
 			if (rej0)
 				band0 = "<del>" + band0 + "</del>";
 			if (rej1)
@@ -317,7 +320,7 @@ function show_wsc_status(wps_infos){
 	}
 
 	if (reject_wps(wps_infos[11].firstChild.nodeValue, wep)){
-		$("wps_enable_hint").innerHTML = "<#WPS_weptkip_hint#><br><#wsc_mode_hint1#> <a style='color:#FC0; text-decoration: underline; font-family:Lucida Console;' href=\"Advanced_Wireless_Content.asp?af=wl_auth_mode_x\"><#menu5_1_1#></a> <#wsc_mode_hint2#>"
+		$("wps_enable_hint").innerHTML = "<#WPS_weptkip_hint#><br><#wsc_mode_hint1#> <a style='color:#FC0; text-decoration: underline; font-family:Lucida Console;cursor:pointer;' onclick=\"_change_wl_unit_status(" + wps_infos[12].firstChild.nodeValue + ");\"><#menu5_1_1#></a> <#wsc_mode_hint2#>"
 		$("wps_state_tr").style.display = "none";
 		$("devicePIN_tr").style.display = "none";
 		$("wpsmethod_tr").style.display = "none";
@@ -410,21 +413,8 @@ function show_wsc_status2(wps_infos0, wps_infos1){
 		$("wps_enable_word").innerHTML = "<#btn_Disabled#>"
 		$("enableWPSbtn").value = "<#WLANConfig11b_WirelessCtrl_button1name#>";
 
-		band0="";
-		if(wps_infos0[12].firstChild.nodeValue == 0){
-			band0 = "2.4GHz";
-		}
-		else if(wps_infos0[12].firstChild.nodeValue == 1){
-			band0 = "5GHz";
-		}
-
-		band1=""
-		if(wps_infos1[12].firstChild.nodeValue == 0){
-			band1 = "2.4GHz";
-		}
-		else if(wps_infos1[12].firstChild.nodeValue == 1){
-			band1 = "5GHz";
-		}
+		band0 = get_band_str(wps_infos0[12].firstChild.nodeValue);
+		band1 = get_band_str(wps_infos1[12].firstChild.nodeValue);
 
 		if (rej0)
 			band0 = "<del>" + band0 + "</del>";
@@ -435,7 +425,13 @@ function show_wsc_status2(wps_infos0, wps_infos1){
 	}
 
 	if(rej0 || rej1){
-		$("wps_enable_hint").innerHTML = "<#WPS_weptkip_hint#><br><#wsc_mode_hint1#> <a style='color:#FC0; text-decoration: underline; font-family:Lucida Console;' href=\"Advanced_Wireless_Content.asp?af=wl_auth_mode_x\"><#menu5_1_1#></a> <#wsc_mode_hint2#>";
+		var band_link = "";
+		if(rej0)
+			band_link += "<a style='color:#FC0; text-decoration: underline; font-family:Lucida Console;cursor:pointer;' onclick=\"_change_wl_unit_status(0);\"><#menu5_1_1#> " + get_band_str(wps_infos0[12].firstChild.nodeValue) + "</a> ";
+		if(rej1)
+			band_link += "<a style='color:#FC0; text-decoration: underline; font-family:Lucida Console;cursor:pointer;' onclick=\"_change_wl_unit_status(1);\"><#menu5_1_1#> " + get_band_str(wps_infos1[12].firstChild.nodeValue) + "</a> ";
+
+		$("wps_enable_hint").innerHTML = "<#WPS_weptkip_hint#><br><#wsc_mode_hint1#> " + band_link + " <#wsc_mode_hint2#>";
 
 		if (rej0 && rej1){
 			$("wps_state_tr").style.display = "none";
@@ -505,6 +501,12 @@ function changemethod(wpsmethod){
 		$("starBtn").style.marginTop = "5px";
 		$("wps_sta_pin").style.display = "";
 	}
+}
+
+function _change_wl_unit_status(__unit){
+	document.titleForm.current_page.value = "Advanced_Wireless_Content.asp?af=wl_auth_mode_x";
+	document.titleForm.next_page.value = "Advanced_Wireless_Content.asp?af=wl_auth_mode_x";
+	change_wl_unit_status(__unit);
 }
 </script>
 </head>

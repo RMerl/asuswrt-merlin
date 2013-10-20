@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2012 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2013 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -229,13 +229,6 @@ int create_helper(int event_fd, int err_fd, uid_t uid, gid_t gid, long max_fd)
 	    }
 	}
        
-      /* expiry or length into dhcp_buff2 */
-#ifdef HAVE_BROKEN_RTC
-      sprintf(daemon->dhcp_buff2, "%u", data.length);
-#else
-      sprintf(daemon->dhcp_buff2, "%lu", (unsigned long)data.expires);
-#endif
-           
       /* supplied data may just exceed normal buffer (unlikely) */
       if ((data.hostname_len + data.ed_len + data.clid_len) > MAXDNAME && 
 	  !(alloc_buff = buf = malloc(data.hostname_len + data.ed_len + data.clid_len)))
@@ -397,6 +390,9 @@ int create_helper(int event_fd, int err_fd, uid_t uid, gid_t gid, long max_fd)
 		  buf = grab_extradata_lua(buf, end, "cpewan_oui");
 		  buf = grab_extradata_lua(buf, end, "cpewan_serial");   
 		  buf = grab_extradata_lua(buf, end, "cpewan_class");
+		  buf = grab_extradata_lua(buf, end, "circuit_id");
+		  buf = grab_extradata_lua(buf, end, "subscriber_id");
+		  buf = grab_extradata_lua(buf, end, "remote_id");
 		}
 	      
 	      buf = grab_extradata_lua(buf, end, "tags");
@@ -493,8 +489,10 @@ int create_helper(int event_fd, int err_fd, uid_t uid, gid_t gid, long max_fd)
 	    my_setenv("DNSMASQ_INTERFACE", data.interface, &err);
 	  
 #ifdef HAVE_BROKEN_RTC
+	  sprintf(daemon->dhcp_buff2, "%u", data.length);
 	  my_setenv("DNSMASQ_LEASE_LENGTH", daemon->dhcp_buff2, &err);
 #else
+	  sprintf(daemon->dhcp_buff2, "%lu", (unsigned long)data.expires);
 	  my_setenv("DNSMASQ_LEASE_EXPIRES", daemon->dhcp_buff2, &err); 
 #endif
 	  
@@ -528,10 +526,13 @@ int create_helper(int event_fd, int err_fd, uid_t uid, gid_t gid, long max_fd)
 	      buf = grab_extradata(buf, end, "DNSMASQ_CPEWAN_OUI", &err);
 	      buf = grab_extradata(buf, end, "DNSMASQ_CPEWAN_SERIAL", &err);   
 	      buf = grab_extradata(buf, end, "DNSMASQ_CPEWAN_CLASS", &err);
+	      buf = grab_extradata(buf, end, "DNSMASQ_CIRCUIT_ID", &err);
+	      buf = grab_extradata(buf, end, "DNSMASQ_SUBSCRIBER_ID", &err);
+	      buf = grab_extradata(buf, end, "DNSMASQ_REMOTE_ID", &err);
 	    }
 	  
 	  buf = grab_extradata(buf, end, "DNSMASQ_TAGS", &err);
-	  
+
 	  if (is6)
 	    buf = grab_extradata(buf, end, "DNSMASQ_RELAY_ADDRESS", &err);
 	  else if (data.giaddr.s_addr != 0)
@@ -654,8 +655,9 @@ void queue_script(int action, struct dhcp_lease *lease, char *hostname, time_t n
   unsigned char *p;
   unsigned int hostname_len = 0, clid_len = 0, ed_len = 0;
   int fd = daemon->dhcpfd;
+#ifdef HAVE_DHCP6 
+  int is6 = !!(lease->flags & (LEASE_TA | LEASE_NA));
 
-#ifdef HAVE_DHCP6
   if (!daemon->dhcp)
     fd = daemon->dhcp6fd;
 #endif
@@ -675,7 +677,12 @@ void queue_script(int action, struct dhcp_lease *lease, char *hostname, time_t n
 
   buf->action = action;
   buf->flags = lease->flags;
-  buf->hwaddr_len = lease->hwaddr_len;
+#ifdef HAVE_DHCP6 
+  if (is6)
+    buf->hwaddr_len = lease->vendorclass_count;
+  else
+#endif
+    buf->hwaddr_len = lease->hwaddr_len;
   buf->hwaddr_type = lease->hwaddr_type;
   buf->clid_len = clid_len;
   buf->ed_len = ed_len;

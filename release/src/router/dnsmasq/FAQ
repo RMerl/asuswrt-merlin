@@ -22,7 +22,7 @@ A: The high ports that dnsmasq opens are for replies from the upstream
    now uses a new, randomly selected, port for each query. The old
    default behaviour (use one port allocated by the OS) is available by
    setting --query-port=0, and setting the query port to a positive
-   value is still works. You should think hard and know what you are
+   value still works. You should think hard and know what you are
    doing before using either of these options.
  
 Q: Why doesn't dnsmasq support DNS queries over TCP? Don't the RFC's specify
@@ -112,7 +112,7 @@ A: Resolver code sometime does strange things when given names without
    hostname  will fix things. (ie "ping myhost" fails, but "ping
    myhost." works. The solution is to make sure that all your hosts
    have a domain set ("domain" in resolv.conf, or set a domain in 
-   your DHCP server, see below fr Windows XP and Mac OS X). 
+   your DHCP server, see below for Windows XP and Mac OS X). 
    Any domain  will do, but "localnet" is traditional. Now when you
    resolve "myhost" the resolver will attempt to look up 
    "myhost.localnet" so you need to have dnsmasq reply to that name. 

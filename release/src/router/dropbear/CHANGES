@@ -1,3 +1,35 @@
+2013.59 - Friday 4 October 2013
+
+- Fix crash from -J command 
+  Thanks to LluÃ­s Batlle i Rossell and Arnaud Mouiche for patches
+
+- Avoid reading too much from /proc/net/rt_cache since that causes
+  system slowness. 
+
+- Improve EOF handling for half-closed connections
+  Thanks to Catalin Patulea
+
+- Send a banner message to report PAM error messages intended for the user
+  Patch from Martin Donnelly
+
+- Limit the size of decompressed payloads, avoids memory exhaustion denial
+  of service 
+  Thanks to Logan Lamb for reporting and investigating it
+
+- Avoid disclosing existence of valid users through inconsistent delays
+  Thanks to Logan Lamb for reporting
+
+- Update config.guess and config.sub for newer architectures
+
+- Avoid segfault in server for locked accounts
+
+- "make install" now installs manpages
+  dropbearkey.8 has been renamed to dropbearkey.1
+  manpage added for dropbearconvert
+
+- Get rid of one second delay when running non-interactive commands
+
+
 2013.58 - Thursday 18 April 2013
 
 - Fix building with Zlib disabled, thanks to Hans Harder and cuma@freetz
@@ -31,7 +63,7 @@
   ~^Z (background session)
 
 - Server will more reliably clean up utmp when connection is closed, reported by
-  Mattias Walström
+  Mattias WalstrÃ¶m
 
 - Don't crash if /dev/urandom isn't writable (RHEL5), thanks to Scott Case
 
@@ -71,10 +103,10 @@ though probably will be soon
 
 - Allow using IPv6 bracket notation for addresses in server "-p" option, from Ben Jencks
 
-- A few improvements for Android from Reimar Döffinger
+- A few improvements for Android from Reimar DÃ¶ffinger
 
 - Fix memory leak for TCP forwarded connections to hosts that timed out,
-  reported by Norbert Benczúr. Appears to be a very long-standing bug.
+  reported by Norbert BenczÃºr. Appears to be a very long-standing bug.
 
 - Fix "make clean" for out of tree builds
 
@@ -700,7 +732,7 @@ https://secure.ucc.asn.au/hg/dropbear/graph/default
   Lobenstock and Mihnea Stoenescu
 
 - Use daemon() function if available (or our own copy) rather than separate
-  code (thanks to Frédéric Lavernhe for the report and debugging, and Bernard
+  code (thanks to FrÃ©dÃ©ric Lavernhe for the report and debugging, and Bernard
   Blackham for his suggestion on what to look at)
 
 - Fixed up support for first_kex_packet_follows, required to talk to ssh.com
@@ -819,7 +851,7 @@ https://secure.ucc.asn.au/hg/dropbear/graph/default
 - Various signedness fixes
 - Can listen on multiple ports
 - added option to disable openpty with configure script,
-  (from K.-P. Kirchdörfer <kapeka at epost.de>)
+  (from K.-P. KirchdÃ¶rfer <kapeka at epost.de>)
 - Various cleanups to bignum code
   (thanks to Tom St Denis <tomstdenis at iahu.ca>)
 - Fix compile error when disabling RSA

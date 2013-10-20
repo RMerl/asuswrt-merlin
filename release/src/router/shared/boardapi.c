@@ -138,6 +138,13 @@ int init_gpio(void)
 int set_pwr_usb(int boolOn){
 	int use_gpio, gpio_pin;
 
+        switch(get_model()) {
+                case MODEL_RTAC68U:
+			if(atoi(nvram_safe_get("HW_ver"))!=170)
+				return;
+                        break;
+        }
+
 	if((gpio_pin = (use_gpio = nvram_get_int("pwr_usb_gpio"))&0xff) != 0xff){
 		if(boolOn)
 			set_gpio(gpio_pin, 1);
@@ -312,11 +319,16 @@ int led_control(int which, int mode)
 				else if (mode == LED_OFF)
 					eval("wl", "-i", "eth1", "leddc", "1");
 				use_gpio = 0xff;
-			} else if ((model == MODEL_RTAC56U) || (model == MODEL_RTAC68U)) {
+			} else if (model == MODEL_RTAC56U) {
 				if (mode == LED_ON)
 					eval("wl", "-i", "eth1", "ledbh", "3", "7");
 				else if (mode == LED_OFF)
 					eval("wl", "-i", "eth1", "ledbh", "3", "0");
+			} else if (model == MODEL_RTAC68U) {
+				if (mode == LED_ON)
+					eval("wl", "ledbh", "10", "7");
+				else if (mode == LED_OFF)
+					eval("wl", "ledbh", "10", "0");
 			} else {
 				use_gpio = led_2g_gpio;
 			}
@@ -328,11 +340,20 @@ int led_control(int which, int mode)
                                 else if (mode == LED_OFF)
                                         eval("wl", "-i", "eth2", "leddc", "1");
 				use_gpio = 0xff;
-			} else if ((model == MODEL_RTAC66U) || (model == MODEL_RTAC56U) || (model == MODEL_RTAC68U)) {
+			} else if ((model == MODEL_RTAC66U) || (model == MODEL_RTAC56U)) {
 				if (mode == LED_ON)
 					nvram_set("led_5g", "1");
 				else if (mode == LED_OFF)
 					nvram_set("led_5g", "0");
+				use_gpio = led_5g_gpio;
+			} else if (model == MODEL_RTAC68U) {
+				if (mode == LED_ON) {
+					nvram_set("led_5g", "1");
+					eval("wl", "-i", "eth2", "ledbh", "10", "7");
+				} else if (mode == LED_OFF) {
+					nvram_set("led_5g", "0");
+					eval("wl", "-i", "eth2", "ledbh", "10", "0");
+				}
 				use_gpio = led_5g_gpio;
                         } else {
                                 use_gpio = led_5g_gpio;
@@ -366,15 +387,15 @@ int led_control(int which, int mode)
 			use_gpio = have_fan_gpio;
 			break;
 		case LED_SWITCH:
-			if ((model == MODEL_RTN66U) || (model == MODEL_RTAC66U) || (model == MODEL_RTN16) || (model == MODEL_RTAC56U) || (model = MODEL_RTAC68U)) {
+			if ((model == MODEL_RTN66U) || (model == MODEL_RTAC66U) || (model == MODEL_RTN16) || (model == MODEL_RTAC56U) || (model == MODEL_RTAC68U)) {
 				if (mode == LED_ON)
 				{
-					eval("et", "robowr", "0x00", "0x18", "0x1ff");
-					eval("et", "robowr", "0x00", "0x1a", "0x1ff");
+					eval("et", "robowr", "0x00", "0x18", "0x01ff");
+					eval("et", "robowr", "0x00", "0x1a", "0x01ff");
 				} else if (mode == LED_OFF)
 				{
-					eval("et", "robowr", "0x00", "0x18", "0x1e0");
-					eval("et", "robowr", "0x00", "0x1a", "0x1e0");
+					eval("et", "robowr", "0x00", "0x18", "0x01e0");
+					eval("et", "robowr", "0x00", "0x1a", "0x01e0");
 				}
 			}
 			use_gpio = 0xff;

@@ -147,6 +147,7 @@ function initial(){
 		$("bgimg").options[NM_table_img[4]].selected = 1;
 	}
 	update_wan_status();
+	
 }
 
 function show_ddns_status(){
@@ -655,10 +656,10 @@ function showstausframe(page){
 	if(page == "Client")
 		page = "clients";
 	else if(page.indexOf('Internet') == 0){
-		if(page == "Internet_primary")
-			document.form.dual_wan_flag.value = 0;
-		else	
+		if(page == "Internet_secondary")
 			document.form.dual_wan_flag.value = 1;
+		else	
+			document.form.dual_wan_flag.value = 0;
 			
 		page = "Internet";
 	}

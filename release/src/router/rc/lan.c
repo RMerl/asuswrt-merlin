@@ -650,11 +650,7 @@ void start_wl(void)
 				// ignore disabled wl vifs
 				if (strncmp(ifname, "wl", 2) == 0 && strchr(ifname, '.')) {
 					char nv[40];
-#ifdef RTCONFIG_RALINK
 					snprintf(nv, sizeof(nv) - 1, "%s_bss_enabled", wif_to_vif(ifname));
-#else
-					snprintf(nv, sizeof(nv) - 1, "%s_bss_enabled", ifname);
-#endif
 					if (!nvram_get_int(nv))
 						continue;
 					if (get_ifname_unit(ifname, &unit, &subunit) < 0)
@@ -1195,39 +1191,12 @@ void start_lan(void)
 				{
 					char nv[40];
 					char nv2[40];
-					char nv3[40];
-#ifdef RTCONFIG_RALINK
 					snprintf(nv, sizeof(nv) - 1, "%s_bss_enabled", wif_to_vif(ifname));
-#else
-					snprintf(nv, sizeof(nv) - 1, "%s_bss_enabled", ifname);
-#endif
-#ifdef RTCONFIG_RALINK
 					snprintf(nv2, sizeof(nv2) - 1, "%s_expire", wif_to_vif(ifname));
-#else
-					snprintf(nv2, sizeof(nv2) - 1, "%s_expire", ifname);
-#endif
-					if (nvram_get_int(nv2))
+					if (nvram_get_int(nv2) && nvram_get_int("success_start_service")==0)
 					{
 						nvram_set(nv, "0");
-#ifdef RTCONFIG_RALINK
-						snprintf(nv3, sizeof(nv3) - 1, "%s_lanaccess", wif_to_vif(ifname));
-#else
-						snprintf(nv3, sizeof(nv3) - 1, "%s_lanaccess", ifname);
-#endif
-						nvram_set(nv3, "off");
 					}
-#ifdef RTCONFIG_RALINK
-					snprintf(nv2, sizeof(nv2) - 1, "%s_expire", wif_to_vif(ifname));
-#else
-					snprintf(nv2, sizeof(nv2) - 1, "%s_expire", ifname);
-#endif
-					nvram_set(nv2, "0");
-#ifdef RTCONFIG_RALINK
-					snprintf(nv2, sizeof(nv2) - 1, "%s_expire_tmp", wif_to_vif(ifname));
-#else
-					snprintf(nv2, sizeof(nv2) - 1, "%s_expire_tmp", ifname);
-#endif
-					nvram_set(nv2, "0");
 
 					if (!nvram_get_int(nv))
 						continue;
@@ -2799,25 +2768,9 @@ void start_lan_wl(void)
 					char nv[40];
 					char nv2[40];
 					char nv3[40];
-#ifdef RTCONFIG_RALINK
 					snprintf(nv, sizeof(nv) - 1, "%s_bss_enabled", wif_to_vif(ifname));
-#else
-					snprintf(nv, sizeof(nv) - 1, "%s_bss_enabled", ifname);
-#endif
 					if (!nvram_get_int(nv))
 					{
-#ifdef RTCONFIG_RALINK
-						snprintf(nv2, sizeof(nv2) - 1, "%s_lanaccess", wif_to_vif(ifname));
-#else
-						snprintf(nv2, sizeof(nv2) - 1, "%s_lanaccess", ifname);
-#endif
-						nvram_set(nv2, "off");
-#ifdef RTCONFIG_RALINK
-						snprintf(nv2, sizeof(nv2) - 1, "%s_expire", wif_to_vif(ifname));
-#else
-						snprintf(nv2, sizeof(nv2) - 1, "%s_expire", ifname);
-#endif
-						nvram_set(nv2, "0");
 						continue;
 					}
 					else
@@ -2827,19 +2780,10 @@ void start_lan_wl(void)
 
 						if ((nvram_get_int("wl_unit") >= 0) && (nvram_get_int("wl_subunit") > 0))
 						{
-#ifdef RTCONFIG_RALINK
 							snprintf(nv, sizeof(nv) - 1, "%s_expire", wif_to_vif(ifname));
 							snprintf(nv2, sizeof(nv2) - 1, "%s_expire_tmp", wif_to_vif(ifname));
-#else
-							snprintf(nv, sizeof(nv) - 1, "%s_expire", ifname);
-							snprintf(nv2, sizeof(nv2) - 1, "%s_expire_tmp", ifname);
-#endif
 							snprintf(nv3, sizeof(nv3) - 1, "wl%d.%d", nvram_get_int("wl_unit"), nvram_get_int("wl_subunit"));
-#ifdef RTCONFIG_RALINK
 							if (!strcmp(nv3, wif_to_vif(ifname)))
-#else
-							if (!strcmp(nv3, ifname))
-#endif
 							{
 								nvram_set(nv2, nvram_safe_get(nv));
 								nvram_set("wl_unit", "-1");
@@ -2960,11 +2904,7 @@ void restart_wl(void)
 			// ignore disabled wl vifs
 			if (strncmp(ifname, "wl", 2) == 0 && strchr(ifname, '.')) {
 				char nv[40];
-#ifdef RTCONFIG_RALINK
-					snprintf(nv, sizeof(nv) - 1, "%s_bss_enabled", wif_to_vif(ifname));
-#else
-					snprintf(nv, sizeof(nv) - 1, "%s_bss_enabled", ifname);
-#endif
+				snprintf(nv, sizeof(nv) - 1, "%s_bss_enabled", wif_to_vif(ifname));
 				if (!nvram_get_int(nv))
 					continue;
 				if (get_ifname_unit(ifname, &unit, &subunit) < 0)
@@ -3082,11 +3022,7 @@ void lanaccess_wl(void)
 #endif
 
 			char nv[40];
-#ifdef RTCONFIG_RALINK
 			snprintf(nv, sizeof(nv) - 1, "%s_lanaccess", wif_to_vif(ifname));
-#else
-			snprintf(nv, sizeof(nv) - 1, "%s_lanaccess", ifname);
-#endif
 			if (!strcmp(nvram_safe_get(nv), "off"))
 				lanaccess_mssid_ban(ifname);
 		}
@@ -3104,6 +3040,7 @@ void lanaccess_wl(void)
 		free(wl_ifnames);
 	}
 #endif
+	setup_leds();   // Refresh LED state if in Stealth Mode
 }
 
 void restart_wireless(void)
@@ -3192,7 +3129,6 @@ void restart_wireless(void)
 	}
 #endif
 
-	setup_leds();   // Refresh LED state if in Stealth Mode
 	nvram_set_int("wlready", 1);
 
 	file_unlock(lock);

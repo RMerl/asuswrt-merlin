@@ -43,7 +43,7 @@
 	font-family:Arial, Helvetica, sans-serif;
 	text-decoration:none;	
 }
-#ClientList_Block_PC div:hover, #ClientList_Block a:hover{
+#ClientList_Block_PC div:hover{
 	background-color:#3366FF;
 	color:#FFFFFF;
 	cursor:default;
@@ -243,16 +243,16 @@ function pullLANIPList(obj){
 										<tr>
 											<th width="20%"><#NetworkTools_target#></th>
 											<td>
-												<input type="text" class="input_32_table" name="destIP" value="" placeholder="ex: www.google.com">
+												<input type="text" class="input_32_table" name="destIP" maxlength="100" value="" placeholder="ex: www.google.com">
 												<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="" onmouseover="over_var=1;" onmouseout="over_var=0;">						
 												<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
-											</td>										
+											</td>
 										</tr>
 										<tr id="pingCNT_tr">
 											<th width="20%"><#NetworkTools_Count#></th>
 											<td>
-		              			<input type="text" name="pingCNT" class="input_3_table" maxlength="1" value="" onblur="" onKeyPress="is_number(this, event);" placeholder="5">
-											</td>										
+		              			<input type="text" name="pingCNT" class="input_3_table" maxlength="1" value="" onblur="" onKeyPress="return is_number(this, event);" placeholder="5">
+											</td>
 										</tr>
 									</table>
 

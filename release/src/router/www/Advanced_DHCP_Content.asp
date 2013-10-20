@@ -66,13 +66,15 @@ wan_proto = '<% nvram_get("wan_proto"); %>';
 var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 var dhcp_staticlist_array = '<% nvram_get("dhcp_staticlist"); %>';
 
-var pptpd_clients = '<% nvram_get("pptpd_clients"); %>';
-var pptpd_clients_subnet = pptpd_clients.split(".")[0]
-															+"."+pptpd_clients.split(".")[1]
-															+"."+pptpd_clients.split(".")[2]
-															+".";	
-var pptpd_clients_start_ip = parseInt(pptpd_clients.split(".")[3].split("-")[0]);
-var pptpd_clients_end_ip = parseInt(pptpd_clients.split("-")[1]);
+if(pptpd_support){
+	var pptpd_clients = '<% nvram_get("pptpd_clients"); %>';
+	var pptpd_clients_subnet = pptpd_clients.split(".")[0]+"."
+				+pptpd_clients.split(".")[1]+"."
+				+pptpd_clients.split(".")[2]+".";
+
+	var pptpd_clients_start_ip = parseInt(pptpd_clients.split(".")[3].split("-")[0]);
+	var pptpd_clients_end_ip = parseInt(pptpd_clients.split("-")[1]);
+}
 
 var dhcp_enable = '<% nvram_get("dhcp_enable_x"); %>';
 var pool_start = '<% nvram_get("dhcp_start"); %>';
@@ -109,11 +111,13 @@ function initial(){
 	//}Viz 2011.10
 	showdhcp_staticlist();
 	showLANIPList();
-		 
-	var chk_vpn = check_vpn();
-	if(chk_vpn == true){
+	
+	if(pptpd_support){	 
+		var chk_vpn = check_vpn();
+		if(chk_vpn == true){
 	 		$("VPN_conflict").style.display = "";
 	 		$("VPN_conflict_span").innerHTML = "<#vpn_conflict_dhcp#>"+pptpd_clients;
+		}
 	}	
 
 	addOnlineHelp($("faq"), ["set", "up", "specific", "IP", "address"]);
