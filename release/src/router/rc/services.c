@@ -3041,6 +3041,10 @@ start_services(void)
 	system("sh /opt/etc/init.d/S50aicloud scan");
 #endif
 
+#ifdef RTCONFIG_SAMBASRV
+	start_samba();	// We might need it for wins/browsing services
+#endif
+
 	run_custom_script("services-start", NULL);
 
 	return 0;
