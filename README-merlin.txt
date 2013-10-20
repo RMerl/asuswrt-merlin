@@ -27,6 +27,7 @@ Supported devices are:
  * RT-N66U and RT-N66R
  * RT-AC66U and RT-AC66R
  * RT-AC56U
+ * RT-AC68U
 
 
 Features
@@ -34,7 +35,7 @@ Features
 Here is a list of features that Asuswrt-merlin brings over the original firmware:
 
 System:
-   - Based on RT-AC66U 3.0.0.4.374_726 sources from Asus
+   - Based on RT-AC66U 3.0.0.4.374_979 sources from Asus
    - Various bugfixes and optimizations
    - Some components were updated to their latest versions, for improved stability
      and security
@@ -66,6 +67,7 @@ Networking:
    - Netfilter ipset module, for efficient blacklist implemetnation
    - Configurable IPv6 firewall
    - Configurable min/max UPNP ports
+   - IPSec kernel support
 
 Web interface:
    - Improved client list, with DHCP hostnames
@@ -440,7 +442,10 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 3.0.0.4.374.34 (xx-xxx-2013):
-   - NEW: Added IPSEC support to the kernel.  Userspace tools 
+   - NEW: Merged with Asus 374_979 (from RT-N66U).  AC56/AC68
+          AiCloud components taken from 374_217.
+   - NEW: Added RT-AC68U support.
+   - NEW: Added IPSec support to the kernel.  Userspace tools 
           such as StrongWAN must be installed from Optware/Entware,
           and manually configured.  (Patch provided by saintdev)
    - NEW: Adjustable MTU for DHCP/static IP WAN users
@@ -449,12 +454,19 @@ History
           This allows WHS users to change the min allowed port from 
           the default value of 1024 to allow UPNP forwarding of 
           HTTP/HTTPS.
-   - CHANGED: UPNP rules will now be processed after manual 
+   - CHANGED: UPnP rules will now be processed after manual 
               forwards and port trigger rules.
+   - CHANGED: Site Survey now reports supported protocol.
+   - CHANGED: Updated Dropbear to 2013.60.
    - FIXED: Some Traffic Monitor pages were missing the page tabs.
    - FIXED: The webui would allow you to enable SSHD while not 
             setting an authkey or enabling password-based authentication.
    - FIXED: 802.11h options should only be available on the 5 GHz band.
+   - FIXED: Wifi icon hover would report 5G channel as undefined if
+            2.4GHz radio was disabled.
+   - FIXED: IPv6 clients list failed to properly merge IPs from similar MACs
+            (Asus bug)
+   - FIXED: Minor layout issues with the Clients list
 
 
 3.0.0.4.374.33 (3-Oct-2013):
