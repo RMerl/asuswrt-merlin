@@ -49,9 +49,7 @@ void tftp_request(struct listener *listen, time_t now)
   struct iovec iov;
   struct ifreq ifr;
   int is_err = 1, if_index = 0, mtu = 0;
-#ifdef HAVE_DHCP
   struct iname *tmp;
-#endif
   struct tftp_transfer *transfer;
   int port = daemon->start_tftp_port; /* may be zero to use ephemeral port */
 #if defined(IP_MTU_DISCOVER) && defined(IP_PMTUDISC_DONT)

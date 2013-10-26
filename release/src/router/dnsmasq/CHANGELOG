@@ -90,8 +90,6 @@ version 2.67
             smallest valid dhcp-range is sent. Thanks to Uwe Schindler 
 	    for suggesting this.
 
-	    Add --force-fast-ra option. Another thanks to Uwe Schindler.  
-
 	    Make --listen-address higher priority than --except-interface
 	    in all circumstances. Thanks to Thomas Hood for the bugreport.
 
@@ -114,7 +112,47 @@ version 2.67
 	    Cope with DHCPv6 clients which send REQUESTs without
 	    address options - treat them as SOLICIT with rapid commit.
 
+	    Support identification of clients by MAC address in
+	    DHCPv6. When using a relay, the relay must support RFC
+	    6939 for this to work. It always works for directly
+	    connected clients. Thanks to Vladislav Grishenko
+	    for prompting this feature.
+	    
+	    Remove the rule for constructed DHCP ranges that the local
+	    address must be either the first or last address in the
+	    range. This was originally to avoid SLAAC addresses, but
+	    we now explicitly autoconfig and privacy addresses instead.  
 
+	    Update Polish translation. Thanks to Jan Psota.
+
+	    Fix problem in DHCPv6 vendorclass/userclass matching
+	    code. Thanks to Tanguy Bouzeloc for the patch.
+
+ 	    Update Spanish transalation. Thanks to Vicente Soriano.
+
+	    Add --ra-param option. Thanks to Vladislav Grishenko for
+	    inspiration on this.
+
+	    Add --add-subnet configuration, to tell upstream DNS
+	    servers where the original client is. Thanks to DNSthingy
+	    for sponsoring this feature.
+
+	    Add --quiet-dhcp, --quiet-dhcp6 and --quiet-ra. Thanks to
+	    Kevin Darbyshire-Bryant for the initial patch.
+
+	    Allow A/AAAA records created by --interface-name to be the
+	    target of --cname. Thanks to Hadmut Danisch for the
+	    suggestion. 
+
+	    Avoid treating a --dhcp-host which has an IPv6 address
+	    as eligable for use with DHCPv4 on the grounds that it has
+	    no address, and vice-versa. Thanks to Yury Konovalov for
+	    spotting the problem.
+
+	    Do a better job caching dangling CNAMEs. Thanks to Yves
+	    Dorfsman for spotting the problem.
+
+ 
 version 2.66
             Add the ability to act as an authoritative DNS
             server. Dnsmasq can now answer queries from the wider 'net

@@ -33,6 +33,13 @@ struct ra_packet {
   u32 retrans_time;
 };
 
+struct neigh_packet {
+  u8 type, code;
+  u16 checksum;
+  u16 reserved;
+  struct in6_addr target;
+};
+
 struct prefix_opt {
   u8 type, len, prefix_len, flags;
   u32 valid_lifetime, preferred_lifetime, reserved;

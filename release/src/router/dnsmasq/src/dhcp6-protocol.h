@@ -59,6 +59,7 @@
 #define OPTION6_REMOTE_ID       37
 #define OPTION6_SUBSCRIBER_ID   38
 #define OPTION6_FQDN            39
+#define OPTION6_CLIENT_MAC      79
 
 /* replace this with the real number when allocated.
    defining this also enables the relevant code. */ 

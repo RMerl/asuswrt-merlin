@@ -403,7 +403,8 @@ noms de domains entourés par des '/', selon une syntaxe similaire à l'option
 Ne pas vérifier régulièrement si le fichier /etc/resolv.conf a été modifié.
 .TP
 .B --clear-on-reload
-Lorsque le fichier /etc/resolv.conf est relu, vider le cache DNS.
+Lorsque le fichier /etc/resolv.conf est relu, ou si les serveurs amonts sont
+configurés via DBus, vider le cache DNS.
 Cela est utile si les nouveaux serveurs sont susceptibles d'avoir des données
 différentes de celles stockées dans le cache.
 .TP
@@ -596,9 +597,9 @@ Retourne un enregistrement de type NAPTR, tel que spécifié dans le RFC3403.
 .TP
 .B --cname=<cname>,<cible>
 Retourne un enregistrement de type CNAME qui indique que <cname> est en
-réalité <cible>. Il existe des contraintes significatives sur la valeur
-de cible; il doit s'agir d'un nom DNS qui est connu de dnsmasq via /etc/hosts
-(ou un fichier hôtes additionnel), ou via DHCP, ou par un autre
+réalité <cible>. Il existe des contraintes importantes sur la valeur
+cible; il doit s'agir d'un nom DNS qui est connu de dnsmasq via /etc/hosts
+(ou un fichier hôtes additionnel), via DHCP, via interface--name ou par un autre
 .B --cname.
 Si une cible ne satisfait pas ces critères, le CNAME est ignoré. Le CNAME
 doit être unique, mais il est autorisé d'avoir plus d'un CNAME pointant
@@ -622,6 +623,24 @@ Plus d'un nom peut être associé à une interface donnée en répétant cette o
 plusieurs fois; dans ce cas, l'enregistrement inverse pointe vers le nom fourni
 dans la première instance de cette option.
 .TP
+.B --synth-domain=<domaine>,<plage d'adresses>[,<préfixe>]
+Créé des enregistrements A/AAAA ou PTR pour une plage d'adresses. Les
+enregistrements utilisent l'adresse ainsi que les points (ou les deux points
+dans le cas d'IPv6) remplacés par des tirets.
+
+Un exemple devrait rendre cela plus clair :
+La configuration
+.B --synth-domain=thekelleys.org.uk,192.168.0.0/24,internal-
+permet de retourner internal-192-168-0-56.thekelleys.org.uk lors d'une requête
+sur l'adresse 192.168.0.56 et vice-versa pour la requête inverse. La même
+logique s'applique pour IPv6, avec la particularité suivante : les adresses
+IPv6 pouvant commencer par '::', mais les noms DNS ne pouvant pas commencer
+par '-', si aucun préfixe n'est donné, un zéro est ajouté en début de nom.
+Ainsi, ::1 devient 0--1.
+
+La plage d'adresses peut-être de la forme
+<adresse IP>,<adresse IP> ou <adresse IP>/<masque réseau>
+.TP
 .B --add-mac
 Ajoute l'adresse MAC du requêteur aux requêtes DNS transmises aux serveurs
 amonts. Cela peut être utilisé dans un but de filtrage DNS par les serveurs
@@ -630,7 +649,20 @@ même sous-réseau que le serveur dnsmasq. Veuillez noter que le mécanisme
 utilisé pour effectuer cela (une option EDNS0) n'est pas encore standardisée,
 aussi cette fonctionalité doit être considérée comme expérimentale. Notez
 également qu'exposer les adresses MAC de la sorte peut avoir des implications
-en termes de sécurité et de vie privée.
+en termes de sécurité et de vie privée. L'avertissement donné pour --add-subnet
+s'applique également ici.
+.TP
+.B --add-subnet[[=<longueur de préfixe IPv4>],<longueur de préfixe IPv6>]
+Rajoute l'adresse de sous-réseau du requêteur aux requêtes DNS transmises
+aux serveurs amonts. La quantité d'adresses transmises dépend du paramètre
+longueur du préfixe : 32 (ou 128 dans le cas d'IPv6) transmet la totalité
+de l'adresse, 0 n'en transmet aucun mais marque néanmoins la requête ce qui
+fait qu'aucun serveur amont ne rajoutera d'adresse client. La valeur par
+défaut est zéro et pour IPv4 et pour IPv6. A noter que les serveurs amonts
+peuvent-être configurés pour retourner des valeurs différentes en fonction
+de cette information mais que le cache de dnsmasq n'en tient pas compte.
+Si une instance de dnsmasq est configurée de telle maniêre que des valeurs
+différentes pourraient-être rencontrés, alors le cache devrait être désactivé.
 .TP
 .B \-c, --cache-size=<taille>
 Définit la taille du cache de Dnsmasq. La valeur par défaut est de 150 noms.
@@ -665,15 +697,20 @@ Si vous utilisez le premier mode DNSSEC, la validation par le resolveur des
 clients, cette option n'est pas requise. Dnsmasq retourne toujours toutes les
 données nécessaires par un client pour effectuer la validation lui-même.
 .TP
-.B --auth-zone=<domaine>[,<sous-réseau>[,<sous-réseau>.....]]
+
+.B --auth-zone=<domaine>[,<sous-réseau>[/<longueur de préfixe>][,<sous-réseau>[/<longueur de préfixe>].....]]
 Définie une zone DNS pour laquelle dnsmasq agit en temps que serveur faisant
 autorité. Les enregistrements DNS définis localement et correspondant à ce
-domaine seront fournis, à ceci près que les enregistrements A et AAAA doivent
-se situer dans l'un des sous-réseaux précisés si ceux-ci sont définis, ou dans
-un réseau correspondant à une plage DHCP. Le ou les sous-réseaux sont également
-utilisé pour définir les domaines in-addr.arpa et ipv6.arpa servant à
-l'interrogation DNS inverse. Dans le cas d'IPv4, la longueur du masque de
-réseau doit être de 8, 16 ou 24.
+domaine seront fournis. Les enregistrements A et AAAA doivent se situer dans
+l'un des sous-réseaux définis, ou dans un réseau correspondant à une plage DHCP
+(ce comportement peut-être désactivé par
+.B constructor-noauth:
+). Le ou les sous-réseaux sont également utilisé(s) pour définir les domaines
+in-addr.arpa et ipv6.arpa servant à l'interrogation DNS inverse. Si la longueur
+de préfixe n'est pas spécifiée, elle sera par défaut de 24 pour IPv4 et 64 pour
+IPv6. Dans le cas d'IPv4, la longueur du masque de réseau devrait-être de 8, 16
+ou 24, sauf si en cas de mise en place d'une délégation de la zone in-addr.arpa
+conforme au RFC 2317.
 .TP
 .B --auth-soa=<numéro de série>[,<mainteneur de zone (hostmaster)>[,<rafraichissement>[,<nombre de réessais>[,<expiration>]]]]
 Spécifie les champs de l'enregistrement de type SOA (Start Of Authority)
@@ -761,6 +798,27 @@ plus d'un réseau, les plages correspondantes seront automatiquement créées,
 rendues obsolètes puis supprimées lorsque l'adress est rendue obsolète puis
 supprimée. Le nom de l'interface peut être spécifié avec un caractère joker '*'
 final.
+
+provoque la recherche d'adresses sur eth0 et crée une plage allant de
+<réseau>::1 à <réseau>:400. Si l'interface est assignée à
+plus d'un réseau, les plages correspondantes seront respectivement
+automatiquement créées, rendues obsolètes et supprimées lorsque l'adresse
+est rendue obsolète et supprimée. Le nom de l'interface peut être spécifié avec
+un caractère joker '*' final. Les adresses autoconfigurées, privées ou
+obsolètes ne conviennent pas.
+
+Si une plage dhcp-range est uniquement utilisée pour du DHCP sans-état
+("stateless") ou de l'autoconfiguration sans état ("SLAAC"), alors l'adresse
+peut-être indiquée sous la forme '::'
+
+.B --dhcp-range=::,constructor:eth0
+
+Il existe une variante de la syntaxe constructor: qui consiste en l'utilisation
+du mot-clef
+.B constructor-noauth.
+Voir
+.B --auth-zone
+pour des explications à ce sujet.
 
 L'identifiant de label optionnel
 .B set:<label>
@@ -853,9 +911,9 @@ sous-réseau qu'une plage dhcp-range valide. Pour les sous-réseaux qui n'ont pa
 besoin d'adresses dynamiquement allouées, utiliser le mot-clef "static" dans la
 déclaration de plage d'adresses dhcp-range.
 
-Il est possible
-d'utiliser des identifiants clients plutôt que des adresses matérielles pour
-identifier les hôtes, en préfixant par ceux-ci par 'id:'. Ainsi, 
+Il est possible d'utiliser des identifiants clients (appellé "DUID client" dans
+le monde IPv6) plutôt que des adresses matérielles pour identifier les hôtes,
+en préfixant ceux-ci par 'id:'. Ainsi, 
 .B --dhcp-host=id:01:02:03:04,..... 
 réfère à l'hôte d'identifiant 01:02:03:04. Il est également possible de
 spécifier l'identifiant client sous la forme d'une chaîne de caractères, comme
@@ -871,11 +929,13 @@ Les adresses IPv6 peuvent ne contenir que la partie identifiant de client :
 .B --dhcp-host=laptop,[::56]
 Dans ce cas, lorsque des plages dhcp sont définies automatiquement par le biais
 de constructeurs, la partie réseau correspondante est rajoutée à l'adresse.
-A noter que pour le DHCP IPv6, l'adresse matérielle n'est en principe pas
-disponible, aussi un client doit-être identifié par un identifiant de client
-(appellé "DUID client") ou un nom d'hôte.
 
-L'option spéciale id:* signifie : "ignorer tout identifiant client et n'utiliser
+A noter que pour le DHCP IPv6, l'adresse matérielle n'est pas toujours
+disponible, bien que ce soit toujours le cas pour des clients directement
+connectés (sur le même domaine de broadcast) ou pour des clients utilisant
+des relais DHCP qui supportent la RFC 6939.
+
+En DHCPv4, l'option spéciale id:* signifie : "ignorer tout identifiant client et n'utiliser
 que l'adresse matérielle". Cela est utile lorsqu'un client présente un
 identifiant client mais pas les autres.
 
@@ -1079,6 +1139,40 @@ quelques rares cas, perturber des clients vieux ou défectueux. Cette
 option force le comportement à l'utilisation des valeurs "simples et sûres"
 afin d'éviter des problèmes dans de tels cas.
 .TP
+.B --dhcp-relay=<adresse locale>,<adresse de serveur>[,<interface]
+Configure dnsmasq en temps que relais DHCP.  L'adresse locale est une
+adresse allouée à l'une interface de la machine sur laquelle tourne dnsmasq.
+Toutes les requêtes DHCP arrivant sur cette interface seront relayées au
+serveur DHCP distant correspondant à l'adresse de serveur indiquée. Il est
+possible de relayer depuis une unique adresse locale vers différents serveurs
+distant en spécifiant plusieurs fois l'option dhcp-relay avec la même adresse
+locale et différentes adresses de serveur. L'adresse de serveur doit-être
+sous forme numérique. Dans le cas de DHCPv6, l'adresse de serveur peut-être
+l'adresse de multicast ff05::1:3 correspondant à tous les serveurs DHCP. Dans
+ce cas, l'interface doit-étre spécifiée et ne peut comporter de caractère
+joker. Elle sera utilisée pour indiquer l'interface à partir de laquelle le
+multicast pourra atteindre le serveur DHCP.
+
+Le contrôle d'accès pour les clients DHCP suivent les mêmes règles que pour
+les serveurs DHCP : voir --interface, --except-interface, etc. Le nom
+d'interface optionel dans l'option dhcp-relay comporte une autre fonction :
+il contrôle l'interface sur laquelle la réponse du serveur sera acceptée. Cela
+sert par exemple dans des configurations à 3 interfaces : une à partir de
+laquelle les requêtes sont relayées, une seconde permettant de se connecter à
+un serveur DHCP, et une troisième reliée à un réseau non-sécurisé tel
+qu'internet. Cela permet d'éviter l'arrivée de requêtes usurpées via cette
+troisième interface.
+
+Il est permis de configurer dnsmasq pour fonctionner comme serveur DHCP sur
+certaines interfaces et en temps que relais sur d'autres. Cependant, même s'il
+est possible de configurer dnsmasq de telle manière qu'il soit à la fois
+serveur et relais pour une même interface, cela n'est pas supporté et la
+fonction de relais prendra le dessus.
+
+Le relais DHCPv4 et le relais DHCPv6 sont tous les deux supportés, mais il
+n'est pas possible de relayer des requêtes DHCPv4 à un serveur DHCPv6 et
+vice-versa.
+.TP
 .B \-U, --dhcp-vendorclass=set:<label>,[enterprise:<numéro IANA d'enterprise>,]<classe de vendeur>
 
 Associe une chaîne de classe de vendeur à un label. La plupart
@@ -1113,7 +1207,7 @@ d'impression différent pour les hôtes de la classe "comptes" et ceux de la
 classe "ingénierie".
 .TP
 .B \-4, --dhcp-mac=set:<label>,<adresse MAC>
-(IPv4 uniquement) Associe une adresse matérielle (MAC) à un label. L'adresse
+Associe une adresse matérielle (MAC) à un label. L'adresse
 matérielle peut inclure des jokers. Par exemple
 .B --dhcp-mac=set:3com,01:34:23:*:*:*
 permet de définir le label "3com" pour n'importe quel hôte dont l'adresse
@@ -1354,6 +1448,11 @@ Traces additionnelles pour le service DHCP : enregistre toutes les options
 envoyées aux clients DHCP et les labels utilisés pour la
 détermination de celles-ci.
 .TP
+.B --quiet-dhcp, --quiet-dhcp6, --quiet-ra
+Supprime les logs des opérations de routine des protocoles concernés. Les
+erreurs et les problèmes seront toujours enregistrés. L'option --log-dhcp
+prends le pas sur --quiet-dhcp et quiet-dhcp6.
+.TP
 .B \-l, --dhcp-leasefile=<chemin de fichier>
 Utilise le fichier dont le chemin est fourni pour stocker les informations de
 baux DHCP.
@@ -1446,6 +1545,8 @@ pour chaque appel au script.
 
 DNSMASQ_IAID contenant l'IAID pour le bail. Si le bail est une allocation
 temporaire, cela est préfixé par le caractère 'T'.
+
+DNSMASQ_MAC contient l'adresse MAC du client, si celle-ci est connue.
 
 A noter que le nom d'hôte fourni, la classe de vendeur ou les données de classe
 d'utilisateur sont uniquement fournies pour les actions "add" ou l'action "old"
@@ -1649,11 +1750,30 @@ dnsmasq est spécifiée comme DNS récursif. Si elles sont fournies, les
 options dns-server et domain-search sont utilisées respectivement pour RDNSS et
 DNSSL.
 .TP
-.B --enable-tftp
+.B --ra-param=<interface>,[high|low],[[<intervalle d'annonce routeur>],<durée de vie route>]
+Configure pour une interface donnée des valeurs pour les annonces routeurs
+différentes des valeurs par défaut. La valeur par défaut du champ priorité
+pour le routeur peut-être changée de "medium" (moyen) à "high" (haute) ou
+"low" (basse). Par exemple :
+.B --ra-param=eth0,high.
+Un intervalle (en secondes) entre les annonces routeur peut-être fourni par :
+.B --ra-param=eth0,60.
+La durée de vie de la route peut-être changée ou mise à zéro, auquel cas 
+le routeur peut annoncer les préfixes mais pas de route :
+.B --ra-parm=eth0,0,0
+(une valeur de zéro pour l'intervalle signifie qu'il garde la valeur par défaut).
+Ces trois paramètres peuvent-être configurés en une fois :
+.B --ra-param=low,60,1200
+La valeur pour l'interface peut inclure un caractère joker.
+.TP
+.B --enable-tftp[=<interface>[,<interface>]]
 Active la fonction serveur TFTP. Celui-ci est de manière délibérée limité aux
 fonctions nécessaires au démarrage par le réseau ("net-boot") d'un client. Seul
 un accès en lecture est possible; les extensions tsize et blksize sont supportées
-(tsize est seulement supporté en mode octet).
+(tsize est seulement supporté en mode octet). Sans argument optionel, le service
+TFTP est fourni sur les mêmes interfaces que le service DHCP. Si une liste
+d'interfaces est fournie, cela définit les interfaces sur lesquelles le
+service TFTP sera activé.
 .TP
 .B --tftp-root=<répertoire>[,<interface>]
 Les fichiers à fournir dans les transferts TFTP seront cherchés en prenant le

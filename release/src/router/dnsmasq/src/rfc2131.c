@@ -34,7 +34,7 @@ static void option_put_string(struct dhcp_packet *mess, unsigned char *end,
 static struct in_addr option_addr(unsigned char *opt);
 static unsigned int option_uint(unsigned char *opt, int i, int size);
 static void log_packet(char *type, void *addr, unsigned char *ext_mac, 
-		       int mac_len, char *interface, char *string, u32 xid);
+		       int mac_len, char *interface, char *string, char *err, u32 xid);
 static unsigned char *option_find(struct dhcp_packet *mess, size_t size, int opt_type, int minsize);
 static unsigned char *option_find1(unsigned char *p, unsigned char *end, int opt, int minsize);
 static size_t dhcp_packet_size(struct dhcp_packet *mess, unsigned char *agent_id, unsigned char *real_end);
@@ -610,7 +610,7 @@ size_t dhcp_reply(struct dhcp_context *context, char *iface_name, int int_index,
 	    }
 	}
       
-      log_packet("BOOTP", logaddr, mess->chaddr, mess->hlen, iface_name, message, mess->xid);
+      log_packet("BOOTP", logaddr, mess->chaddr, mess->hlen, iface_name, NULL, message, mess->xid);
       
       return message ? 0 : dhcp_packet_size(mess, agent_id, real_end);
     }
@@ -827,7 +827,7 @@ size_t dhcp_reply(struct dhcp_context *context, char *iface_name, int int_index,
 	  opt71.next = daemon->dhcp_opts;
 	  do_encap_opts(&opt71, OPTION_VENDOR_CLASS_OPT, DHOPT_VENDOR_MATCH, mess, end, 0);
 	  
-	  log_packet("PXE", &mess->yiaddr, emac, emac_len, iface_name, (char *)mess->file, mess->xid);
+	  log_packet("PXE", &mess->yiaddr, emac, emac_len, iface_name, (char *)mess->file, NULL, mess->xid);
 	  log_tags(tagif_netid, ntohl(mess->xid));
 	  return dhcp_packet_size(mess, agent_id, real_end);	  
 	}
@@ -887,7 +887,7 @@ size_t dhcp_reply(struct dhcp_context *context, char *iface_name, int int_index,
 		  prune_vendor_opts(tagif_netid);
 		  do_encap_opts(pxe_opts(pxearch, tagif_netid, context->local, now), OPTION_VENDOR_CLASS_OPT, DHOPT_VENDOR_MATCH, mess, end, 0);
 		  
-		  log_packet("PXE", NULL, emac, emac_len, iface_name, ignore ? "proxy-ignored" : "proxy", mess->xid);
+		  log_packet("PXE", NULL, emac, emac_len, iface_name, ignore ? "proxy-ignored" : "proxy", NULL, mess->xid);
 		  log_tags(tagif_netid, ntohl(mess->xid));
 		  return ignore ? 0 : dhcp_packet_size(mess, agent_id, real_end);	  
 		}
@@ -919,7 +919,7 @@ size_t dhcp_reply(struct dhcp_context *context, char *iface_name, int int_index,
       if (!(opt = option_find(mess, sz, OPTION_REQUESTED_IP, INADDRSZ)))
 	return 0;
       
-      log_packet("DHCPDECLINE", option_ptr(opt, 0), emac, emac_len, iface_name, daemon->dhcp_buff, mess->xid);
+      log_packet("DHCPDECLINE", option_ptr(opt, 0), emac, emac_len, iface_name, NULL, daemon->dhcp_buff, mess->xid);
       
       if (lease && lease->addr.s_addr == option_addr(opt).s_addr)
 	lease_prune(lease, now);
@@ -951,7 +951,7 @@ size_t dhcp_reply(struct dhcp_context *context, char *iface_name, int int_index,
       else
 	message = _("unknown lease");
 
-      log_packet("DHCPRELEASE", &mess->ciaddr, emac, emac_len, iface_name, message, mess->xid);
+      log_packet("DHCPRELEASE", &mess->ciaddr, emac, emac_len, iface_name, NULL, message, mess->xid);
 	
       return 0;
       
@@ -1015,7 +1015,7 @@ size_t dhcp_reply(struct dhcp_context *context, char *iface_name, int int_index,
 	    message = _("no address available");      
 	}
       
-      log_packet("DHCPDISCOVER", opt ? option_ptr(opt, 0) : NULL, emac, emac_len, iface_name, message, mess->xid); 
+      log_packet("DHCPDISCOVER", opt ? option_ptr(opt, 0) : NULL, emac, emac_len, iface_name, NULL, message, mess->xid); 
 
       if (message || !(context = narrow_context(context, mess->yiaddr, tagif_netid)))
 	return 0;
@@ -1028,7 +1028,7 @@ size_t dhcp_reply(struct dhcp_context *context, char *iface_name, int int_index,
 
       log_tags(tagif_netid, ntohl(mess->xid));
       
-      log_packet("DHCPOFFER" , &mess->yiaddr, emac, emac_len, iface_name, NULL, mess->xid);
+      log_packet("DHCPOFFER" , &mess->yiaddr, emac, emac_len, iface_name, NULL, NULL, mess->xid);
       
       time = calc_time(context, config, option_find(mess, sz, OPTION_LEASE_TIME, 4));
       clear_packet(mess, end);
@@ -1144,7 +1144,7 @@ size_t dhcp_reply(struct dhcp_context *context, char *iface_name, int int_index,
 	  mess->yiaddr = mess->ciaddr;
 	}
       
-      log_packet("DHCPREQUEST", &mess->yiaddr, emac, emac_len, iface_name, NULL, mess->xid);
+      log_packet("DHCPREQUEST", &mess->yiaddr, emac, emac_len, iface_name, NULL, NULL, mess->xid);
  
       if (!message)
 	{
@@ -1216,7 +1216,7 @@ size_t dhcp_reply(struct dhcp_context *context, char *iface_name, int int_index,
 
       if (message)
 	{
-	  log_packet("DHCPNAK", &mess->yiaddr, emac, emac_len, iface_name, message, mess->xid);
+	  log_packet("DHCPNAK", &mess->yiaddr, emac, emac_len, iface_name, NULL, message, mess->xid);
 	  
 	  mess->yiaddr.s_addr = 0;
 	  clear_packet(mess, end);
@@ -1355,7 +1355,7 @@ size_t dhcp_reply(struct dhcp_context *context, char *iface_name, int int_index,
 	  else
 	    override = lease->override;
 
-	  log_packet("DHCPACK", &mess->yiaddr, emac, emac_len, iface_name, hostname, mess->xid);  
+	  log_packet("DHCPACK", &mess->yiaddr, emac, emac_len, iface_name, hostname, NULL, mess->xid);  
 	  
 	  clear_packet(mess, end);
 	  option_put(mess, end, OPTION_MESSAGE_TYPE, 1, DHCPACK);
@@ -1378,7 +1378,7 @@ size_t dhcp_reply(struct dhcp_context *context, char *iface_name, int int_index,
       if (ignore || have_config(config, CONFIG_DISABLE))
 	message = _("ignored");
       
-      log_packet("DHCPINFORM", &mess->ciaddr, emac, emac_len, iface_name, message, mess->xid);
+      log_packet("DHCPINFORM", &mess->ciaddr, emac, emac_len, iface_name, message, NULL, mess->xid);
      
       if (message || mess->ciaddr.s_addr == 0)
 	return 0;
@@ -1404,7 +1404,7 @@ size_t dhcp_reply(struct dhcp_context *context, char *iface_name, int int_index,
 
       log_tags(tagif_netid, ntohl(mess->xid));
       
-      log_packet("DHCPACK", &mess->ciaddr, emac, emac_len, iface_name, hostname, mess->xid);
+      log_packet("DHCPACK", &mess->ciaddr, emac, emac_len, iface_name, hostname, NULL, mess->xid);
       
       if (lease)
 	{
@@ -1538,13 +1538,14 @@ static void add_extradata_opt(struct dhcp_lease *lease, unsigned char *opt)
 #endif
 
 static void log_packet(char *type, void *addr, unsigned char *ext_mac, 
-		       int mac_len, char *interface, char *string, u32 xid)
+		       int mac_len, char *interface, char *string, char *err, u32 xid)
 {
   struct in_addr a;
  
   /* option to reduce excessive logging for DHCP packets */
-  if (option_bool(OPT_QUIET_DHCP) && strncmp(type, "DHCP", 4) == 0)
-    return;
+  if (!err && !option_bool(OPT_LOG_OPTS) && option_bool(OPT_QUIET_DHCP))
+     return;
+
 
   /* addr may be misaligned */
   if (addr)
@@ -1553,22 +1554,24 @@ static void log_packet(char *type, void *addr, unsigned char *ext_mac,
   print_mac(daemon->namebuff, ext_mac, mac_len);
   
   if(option_bool(OPT_LOG_OPTS))
-     my_syslog(MS_DHCP | LOG_INFO, "%u %s(%s) %s%s%s %s",
+     my_syslog(MS_DHCP | LOG_INFO, "%u %s(%s) %s%s%s %s%s",
 	       ntohl(xid), 
 	       type,
 	       interface, 
 	       addr ? inet_ntoa(a) : "",
 	       addr ? " " : "",
 	       daemon->namebuff,
-	       string ? string : "");
+	       string ? string : "",
+	       err ? err : "");
   else
-    my_syslog(MS_DHCP | LOG_INFO, "%s(%s) %s%s%s %s",
+    my_syslog(MS_DHCP | LOG_INFO, "%s(%s) %s%s%s %s%s",
 	      type,
 	      interface, 
 	      addr ? inet_ntoa(a) : "",
 	      addr ? " " : "",
 	      daemon->namebuff,
-	      string ? string : "");
+	      string ? string : "",
+	      err ? err : "");
 }
 
 static void log_options(unsigned char *start, u32 xid)

@@ -62,7 +62,7 @@ static int filter_constructed_dhcp(struct auth_zone *zone, int flag, struct all_
   return filter_zone(zone, flag, addr_u) != NULL;
 }
 
-static int in_zone(struct auth_zone *zone, char *name, char **cut)
+int in_zone(struct auth_zone *zone, char *name, char **cut)
 {
   size_t namelen = strlen(name);
   size_t domainlen = strlen(zone->domain);
@@ -89,7 +89,7 @@ static int in_zone(struct auth_zone *zone, char *name, char **cut)
 }
 
 
-size_t answer_auth(struct dns_header *header, char *limit, size_t qlen, time_t now, union mysockaddr *peer_addr) 
+size_t answer_auth(struct dns_header *header, char *limit, size_t qlen, time_t now, union mysockaddr *peer_addr, int local_query) 
 {
   char *name = daemon->namebuff;
   unsigned char *p, *ansp;
@@ -97,7 +97,7 @@ size_t answer_auth(struct dns_header *header, char *limit, size_t qlen, time_t n
   int nameoffset, axfroffset = 0;
   int q, anscount = 0, authcount = 0;
   struct crec *crecp;
-  int  auth = 1, trunc = 0, nxdomain = 1, soa = 0, ns = 0, axfr = 0;
+  int  auth = !local_query, trunc = 0, nxdomain = 1, soa = 0, ns = 0, axfr = 0;
   struct auth_zone *zone = NULL;
   struct subnet *subnet = NULL;
   char *cut;
@@ -110,7 +110,7 @@ size_t answer_auth(struct dns_header *header, char *limit, size_t qlen, time_t n
   
   if (ntohs(header->qdcount) == 0 || OPCODE(header) != QUERY )
     return 0;
-  
+
   /* determine end of question section (we put answers there) */
   if (!(ansp = skip_questions(header, qlen)))
     return 0; /* bad packet */
@@ -144,16 +144,19 @@ size_t answer_auth(struct dns_header *header, char *limit, size_t qlen, time_t n
 	  if (!(flag = in_arpa_name_2_addr(name, &addr)))
 	    continue;
 
-	  for (zone = daemon->auth_zones; zone; zone = zone->next)
-	    if ((subnet = filter_zone(zone, flag, &addr)))
-	      break;
-
-	  if (!zone)
+	  if (!local_query)
 	    {
-	      auth = 0;
-	      continue;
+	      for (zone = daemon->auth_zones; zone; zone = zone->next)
+		if ((subnet = filter_zone(zone, flag, &addr)))
+		  break;
+	      
+	      if (!zone)
+		{
+		  auth = 0;
+		  continue;
+		}
 	    }
-	  
+
 	  intr = NULL;
 
 	  if (flag == F_IPV4)
@@ -194,7 +197,7 @@ size_t answer_auth(struct dns_header *header, char *limit, size_t qlen, time_t n
 	      if (in_zone(zone, intr->name, NULL))
 		{	
 		  found = 1;
-		  log_query(flag| F_REVERSE | F_CONFIG, intr->name, &addr, NULL);
+		  log_query(flag | F_REVERSE | F_CONFIG, intr->name, &addr, NULL);
 		  if (add_resource_record(header, limit, &trunc, nameoffset, &ansp, 
 					  daemon->auth_ttl, NULL,
 					  T_PTR, C_IN, "d", intr->name))
@@ -358,25 +361,26 @@ size_t answer_auth(struct dns_header *header, char *limit, size_t qlen, time_t n
 	 if (hostname_isequal(name, intr->name))
 	   {
 	     struct addrlist *addrlist;
-
+	     
 	     addrlist = intr->addr4;
 #ifdef HAVE_IPV6
 	     if (qtype == T_AAAA)
 	       addrlist = intr->addr6;
 #endif	
 	     nxdomain = 0;
-	
-	     for (; addrlist; addrlist = addrlist->next)  
-	       if (filter_constructed_dhcp(zone, flag, &addrlist->addr))
-		 {
-		   found = 1;
-		   log_query(F_FORWARD | F_CONFIG | flag, name, &addrlist->addr, NULL);
-		   if (add_resource_record(header, limit, &trunc, nameoffset, &ansp, 
-					   daemon->auth_ttl, NULL, qtype, C_IN, 
-					   qtype == T_A ? "4" : "6", &addrlist->addr))
-		     anscount++;
-		 }
-	   }
+	     
+	     if (flag)
+	       for (; addrlist; addrlist = addrlist->next)  
+		 if (local_query || filter_constructed_dhcp(zone, flag, &addrlist->addr))
+		   {
+		     found = 1;
+		     log_query(F_FORWARD | F_CONFIG | flag, name, &addrlist->addr, NULL);
+		     if (add_resource_record(header, limit, &trunc, nameoffset, &ansp, 
+					     daemon->auth_ttl, NULL, qtype, C_IN, 
+					     qtype == T_A ? "4" : "6", &addrlist->addr))
+		       anscount++;
+		   }
+	     }
        
        for (a = daemon->cnames; a; a = a->next)
 	 if (hostname_isequal(name, a->alias) )
@@ -390,7 +394,7 @@ size_t answer_auth(struct dns_header *header, char *limit, size_t qlen, time_t n
 	       }
 	     found = 1;
 	     if (add_resource_record(header, limit, &trunc, nameoffset, &ansp, 
-				     daemon->auth_ttl, NULL,
+				     daemon->auth_ttl, &nameoffset,
 				     T_CNAME, C_IN, "d", name))
 	       anscount++;
 	     
@@ -403,7 +407,7 @@ size_t answer_auth(struct dns_header *header, char *limit, size_t qlen, time_t n
 	  
 	  if (qtype == T_SOA)
 	    {
-	      soa = 1; /* inhibits auth section */
+	      auth = soa = 1; /* inhibits auth section */
 	      found = 1;
 	      log_query(F_RRNAME | F_AUTH, zone->domain, NULL, "<SOA>");
 	    }
@@ -436,6 +440,7 @@ size_t answer_auth(struct dns_header *header, char *limit, size_t qlen, time_t n
 		  return 0;
 		}
 	       	      
+	      auth = 1;
 	      soa = 1; /* inhibits auth section */
 	      ns = 1; /* ensure we include NS records! */
 	      axfr = 1;
@@ -445,6 +450,7 @@ size_t answer_auth(struct dns_header *header, char *limit, size_t qlen, time_t n
 	    }
       	  else if (qtype == T_NS)
 	    {
+	      auth = 1;
 	      ns = 1; /* inhibits auth section */
 	      found = 1;
 	      log_query(F_RRNAME | F_AUTH, zone->domain, NULL, "<NS>"); 
@@ -462,7 +468,7 @@ size_t answer_auth(struct dns_header *header, char *limit, size_t qlen, time_t n
 		  { 
 		    nxdomain = 0;
 		    if ((crecp->flags & flag) && 
-			(filter_constructed_dhcp(zone, flag, &(crecp->addr.addr))))
+			(local_query || filter_constructed_dhcp(zone, flag, &(crecp->addr.addr))))
 		      {
 			*cut = '.'; /* restore domain part */
 			log_query(crecp->flags, name, &crecp->addr.addr, record_source(crecp->uid));
@@ -485,7 +491,7 @@ size_t answer_auth(struct dns_header *header, char *limit, size_t qlen, time_t n
 	    do
 	      { 
 		 nxdomain = 0;
-		 if ((crecp->flags & flag) && filter_constructed_dhcp(zone, flag, &(crecp->addr.addr)))
+		 if ((crecp->flags & flag) && (local_query || filter_constructed_dhcp(zone, flag, &(crecp->addr.addr))))
 		   {
 		     log_query(crecp->flags, name, &crecp->addr.addr, record_source(crecp->uid));
 		     found = 1;
@@ -675,14 +681,14 @@ size_t answer_auth(struct dns_header *header, char *limit, size_t qlen, time_t n
 		  *cut = 0;
 		
 		for (addrlist = intr->addr4; addrlist; addrlist = addrlist->next) 
-		  if (filter_constructed_dhcp(zone, F_IPV4,  &addrlist->addr) && 
+		  if ((local_query || filter_constructed_dhcp(zone, F_IPV4,  &addrlist->addr)) && 
 		      add_resource_record(header, limit, &trunc, -axfroffset, &ansp, 
 					  daemon->auth_ttl, NULL, T_A, C_IN, "4", cut ? intr->name : NULL, &addrlist->addr))
 		    anscount++;
 		
 #ifdef HAVE_IPV6
 		for (addrlist = intr->addr6; addrlist; addrlist = addrlist->next) 
-		  if (filter_constructed_dhcp(zone, F_IPV6,  &addrlist->addr) &&
+		  if ((local_query || filter_constructed_dhcp(zone, F_IPV6,  &addrlist->addr)) &&
 		      add_resource_record(header, limit, &trunc, -axfroffset, &ansp, 
 					  daemon->auth_ttl, NULL, T_AAAA, C_IN, "6", cut ? intr->name : NULL, &addrlist->addr))
 		    anscount++;
@@ -722,7 +728,8 @@ size_t answer_auth(struct dns_header *header, char *limit, size_t qlen, time_t n
 		  if ((crecp->flags & F_DHCP) && !option_bool(OPT_DHCP_FQDN))
 		    {
 		      char *cache_name = cache_get_name(crecp);
-		      if (!strchr(cache_name, '.') && filter_constructed_dhcp(zone, (crecp->flags & (F_IPV6 | F_IPV4)), &(crecp->addr.addr)))
+		      if (!strchr(cache_name, '.') && 
+			  (local_query || filter_constructed_dhcp(zone, (crecp->flags & (F_IPV6 | F_IPV4)), &(crecp->addr.addr))))
 			{
 			  qtype = T_A;
 #ifdef HAVE_IPV6
@@ -739,7 +746,8 @@ size_t answer_auth(struct dns_header *header, char *limit, size_t qlen, time_t n
 		  if ((crecp->flags & F_HOSTS) || (((crecp->flags & F_DHCP) && option_bool(OPT_DHCP_FQDN))))
 		    {
 		      strcpy(name, cache_get_name(crecp));
-		      if (in_zone(zone, name, &cut) && filter_constructed_dhcp(zone, (crecp->flags & (F_IPV6 | F_IPV4)), &(crecp->addr.addr)))
+		      if (in_zone(zone, name, &cut) && 
+			  (local_query || filter_constructed_dhcp(zone, (crecp->flags & (F_IPV6 | F_IPV4)), &(crecp->addr.addr))))
 			{
 			  qtype = T_A;
 #ifdef HAVE_IPV6
@@ -774,8 +782,17 @@ size_t answer_auth(struct dns_header *header, char *limit, size_t qlen, time_t n
   /* done all questions, set up header and return length of result */
   /* clear authoritative and truncated flags, set QR flag */
   header->hb3 = (header->hb3 & ~(HB3_AA | HB3_TC)) | HB3_QR;
-  /* clear RA flag */
-  header->hb4 &= ~HB4_RA;
+
+  if (local_query)
+    {
+      /* set RA flag */
+      header->hb4 |= HB4_RA;
+    }
+  else
+    {
+      /* clear RA flag */
+      header->hb4 &= ~HB4_RA;
+    }
 
   /* authoritive */
   if (auth)
@@ -785,7 +802,7 @@ size_t answer_auth(struct dns_header *header, char *limit, size_t qlen, time_t n
   if (trunc)
     header->hb3 |= HB3_TC;
   
-  if (anscount == 0 && auth && nxdomain)
+  if ((auth || local_query) && nxdomain)
     SET_RCODE(header, NXDOMAIN);
   else
     SET_RCODE(header, NOERROR); /* no error */

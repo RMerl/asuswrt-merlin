@@ -160,9 +160,15 @@ int iface_enumerate(int family, void *parm, int (*callback)())
 		  if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_DEPRECATED)
 		    flags |= IFACE_DEPRECATED;
 
+#ifdef IN6_IFF_TEMPORARY
 		  if (!(ifr6.ifr_ifru.ifru_flags6 & (IN6_IFF_AUTOCONF | IN6_IFF_TEMPORARY)))
 		    flags |= IFACE_PERMANENT;
+#endif
 
+#ifdef IN6_IFF_PRIVACY
+		  if (!(ifr6.ifr_ifru.ifru_flags6 & (IN6_IFF_AUTOCONF | IN6_IFF_PRIVACY)))
+		    flags |= IFACE_PERMANENT;
+#endif
 		}
 	      
 	      ifr6.ifr_addr = *((struct sockaddr_in6 *) addrs->ifa_addr);

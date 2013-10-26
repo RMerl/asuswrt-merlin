@@ -1,0 +1,36 @@
+#!/bin/bash
+
+STATUS_FILE="/tmp/dnsmasq-ip-mac.status"
+
+# Script for dnsmasq lease-change hook.
+# Maintains the above file with a IP address/MAC address pairs,
+# one lease per line. Works with IPv4 and IPv6 leases, file is
+# atomically updated, so no races for users of the data.
+
+action="$1"
+mac="$2"   # IPv4
+ip="$3"
+
+# ensure it always exists.
+
+if [ ! -f "$STATUS_FILE" ]; then
+  touch "$STATUS_FILE"
+fi
+
+if [  -n "$DNSMASQ_IAID" ]; then
+    mac="$DNSMASQ_MAC"   # IPv6
+fi
+
+# worry about an add or old action when the MAC address is not known:
+# leave any old one in place in that case.
+
+if [ "$action" = "add" -o "$action" = "old" -o "$action" = "del" ]; then
+  if [ -n "$mac" -o "$action" = "del" ]; then
+    sed "/^${ip//./\.} / d" "$STATUS_FILE" > "$STATUS_FILE".new
+  
+    if [ "$action" = "add" -o "$action" = "old" ]; then
+       echo "$ip $mac" >> "$STATUS_FILE".new
+    fi
+    mv  "$STATUS_FILE".new "$STATUS_FILE" # atomic update.
+  fi
+fi

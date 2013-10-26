@@ -402,6 +402,8 @@ static int nl_async(struct nlmsghdr *h)
   	
 static void nl_newaddress(time_t now)
 {
+  (void)now;
+
   if (option_bool(OPT_CLEVERBIND) || daemon->doing_dhcp6 || daemon->relay6 || daemon->doing_ra)
     enumerate_interfaces(0);
   

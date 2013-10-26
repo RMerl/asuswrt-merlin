@@ -16,6 +16,10 @@
 
 #include "dnsmasq.h"
 
+#ifndef IN6_IS_ADDR_ULA
+#define IN6_IS_ADDR_ULA(a) ((((__const uint32_t *) (a))[0] & htonl (0xfe00000)) == htonl (0xfc000000))
+#endif
+
 #ifdef HAVE_LINUX_NETWORK
 
 int indextoname(int fd, int index, char *name)
@@ -115,7 +119,9 @@ int iface_check(int family, struct all_addr *addr, char *name, int *auth)
   int ret = 1, match_addr = 0;
 
   /* Note: have to check all and not bail out early, so that we set the
-     "used" flags. */
+     "used" flags.
+
+     May be called with family == AF_LOCALto check interface by name only. */
   
   if (auth)
     *auth = 0;
@@ -241,7 +247,7 @@ static int iface_allowed(struct iface_param *param, int if_index, char *label,
   int tftp_ok = !!option_bool(OPT_TFTP);
   int dhcp_ok = 1;
   int auth_dns = 0;
-#ifdef HAVE_DHCP
+#if defined(HAVE_DHCP) || defined(HAVE_TFTP)
   struct iname *tmp;
 #endif
 
@@ -360,6 +366,7 @@ static int iface_allowed(struct iface_param *param, int if_index, char *label,
 #endif
  
   
+#ifdef HAVE_TFTP
   if (daemon->tftp_interfaces)
     {
       /* dedicated tftp interface list */
@@ -368,6 +375,7 @@ static int iface_allowed(struct iface_param *param, int if_index, char *label,
 	if (tmp->name && wildcard_match(tmp->name, ifr.ifr_name))
 	  tftp_ok = 1;
     }
+#endif
   
   /* add to list */
   if ((iface = whine_malloc(sizeof(struct irec))))
@@ -379,7 +387,7 @@ static int iface_allowed(struct iface_param *param, int if_index, char *label,
       iface->dns_auth = auth_dns;
       iface->mtu = mtu;
       iface->dad = dad;
-      iface->done = iface->multicast_done = 0;
+      iface->done = iface->multicast_done = iface->warned = 0;
       iface->index = if_index;
       if ((iface->name = whine_malloc(strlen(ifr.ifr_name)+1)))
 	{
@@ -705,6 +713,8 @@ static struct listener *create_listeners(union mysockaddr *addr, int do_tftp, in
   struct listener *l = NULL;
   int fd = -1, tcpfd = -1, tftpfd = -1;
 
+  (void)do_tftp;
+
   if (daemon->port != 0)
     {
       fd = make_sock(addr, SOCK_DGRAM, dienow);
@@ -816,6 +826,59 @@ void create_bound_listeners(int dienow)
 	new->next = daemon->listeners;
 	daemon->listeners = new;
       }
+}
+
+/* In --bind-interfaces, the only access control is the addresses we're listening on. 
+   There's nothing to avoid a query to the address of an internal interface arriving via
+   an external interface where we don't want to accept queries, except that in the usual 
+   case the addresses of internal interfaces are RFC1918. When bind-interfaces in use, 
+   and we listen on an address that looks like it's probably globally routeable, shout.
+
+   The fix is to use --bind-dynamic, which actually checks the arrival interface too.
+   Tough if your platform doesn't support this.
+*/
+
+void warn_bound_listeners(void)
+{
+  struct irec *iface; 	
+  int advice = 0;
+
+  for (iface = daemon->interfaces; iface; iface = iface->next)
+    if (option_bool(OPT_NOWILD) && !iface->dns_auth)
+      {
+	int warn = 0;
+	if (iface->addr.sa.sa_family == AF_INET)
+	  {
+	    if (!private_net(iface->addr.in.sin_addr, 1))
+	      {
+		inet_ntop(AF_INET, &iface->addr.in.sin_addr, daemon->addrbuff, ADDRSTRLEN);
+		warn = 1;
+	      }
+	  }
+#ifdef HAVE_IPV6
+	else
+	  {
+	    if (!IN6_IS_ADDR_LINKLOCAL(&iface->addr.in6.sin6_addr) &&
+		!IN6_IS_ADDR_SITELOCAL(&iface->addr.in6.sin6_addr) &&
+		!IN6_IS_ADDR_ULA(&iface->addr.in6.sin6_addr) &&
+		!IN6_IS_ADDR_LOOPBACK(&iface->addr.in6.sin6_addr))
+	      {
+		inet_ntop(AF_INET6, &iface->addr.in6.sin6_addr, daemon->addrbuff, ADDRSTRLEN);
+		warn = 1;
+	      }
+	  }
+#endif
+	if (warn)
+	  {
+	    iface->warned = advice = 1;
+	    my_syslog(LOG_WARNING, 
+		      _("LOUD WARNING: listening on %s may accept requests via interfaces other than %s. "),
+		      daemon->addrbuff, iface->name);
+	  }
+      }
+  
+  if (advice)
+    my_syslog(LOG_WARNING, _("LOUD WARNING: use --bind-dynamic rather than --bind-interfaces to avoid DNS amplification attacks via these interface(s).")); 
 }
 
 int is_dad_listeners(void)
