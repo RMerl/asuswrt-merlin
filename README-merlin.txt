@@ -462,6 +462,7 @@ History
               forwards and port trigger rules.
    - CHANGED: Site Survey now reports supported protocol.
    - CHANGED: Updated Dropbear to 2013.60.
+   - CHANGED: Updated dnsmasq to 2.67 final.
    - FIXED: Some Traffic Monitor pages were missing the page tabs.
    - FIXED: The webui would allow you to enable SSHD while not 
             setting an authkey or enabling password-based authentication.
