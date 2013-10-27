@@ -177,10 +177,13 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 
 		} else if(strncmp(type,"temperature",11) == 0) {
 			unsigned int temperature;
-			int radio=0;
+			int radio;
 
-                        sscanf(type,"temperature.%d", &radio);
-			temperature = get_phy_temperature(radio);
+                        if (sscanf(type,"temperature.%d", &radio) != 1)
+				temperature = 0;
+			else
+				temperature = get_phy_temperature(radio);
+
 			if (temperature == 0)
 				strcpy(result,"<i>disabled</i>");
 			else
@@ -191,9 +194,9 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 
 			fp = fopen ("/proc/sys/net/ipv4/netfilter/ip_conntrack_count", "r");
 			if (fp) {
-				if (fgets(result, sizeof(result), fp) != NULL) {
-					fclose(fp);
-				}
+				if (fgets(result, sizeof(result), fp) == NULL)
+					strcpy(result, "error");
+				fclose(fp);
 			}
 		} else if(strcmp(type,"conn.active") == 0) {
 			char buf[256];
@@ -215,9 +218,9 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 
 			fp = fopen ("/proc/sys/net/ipv4/netfilter/ip_conntrack_max", "r");
 			if (fp) {
-				if (fgets(result, sizeof(result), fp) != NULL) {
-					fclose(fp);
-				}
+				if (fgets(result, sizeof(result), fp) == NULL)
+					strcpy(result, "error");
+				fclose(fp);
 			}
 		} else if(strncmp(type,"conn.wifi",9) == 0) {
 			int count, radio;
