@@ -41,23 +41,37 @@ function initial(){
 	show_menu();
 	document.form.fanctrl_fullspeed_temp_unit.selectedIndex = getCookie("CoreTmpUnit");
 	update_coretmp();
-
-	if(getCookie("CoreTmpUnit") == 1){
-		$("unitDisplay1").innerHTML = "°F";
-		$("unitDisplay2").innerHTML = "°F";
-		document.form.fanctrl_fullspeed_temp.value = fanctrl_fullspeed_temp_orig_F;
-		document.form.fanctrl_period_temp.value = fanctrl_period_temp_orig_F;
-	}		
-	else{
-		$("unitDisplay1").innerHTML = "°C";
-		$("unitDisplay2").innerHTML = "°C";
-		document.form.fanctrl_fullspeed_temp.value = fanctrl_fullspeed_temp_orig;
-		document.form.fanctrl_period_temp.value = fanctrl_period_temp_orig;
-	}
-
 	if(!power_support){
 		inputHideCtrl(document.form.wl0_TxPower, 0);
 		inputHideCtrl(document.form.wl1_TxPower, 0);
+	}
+
+	if(based_modelid == "RT-AC68U"){
+		document.form.selLED.onchange = function(){
+			document.form.btn_led_mode.value = 0;
+			document.form.selCLK.checked = false;
+			$j("#btnDescTr").fadeOut(100);
+		}
+	
+		document.form.selCLK.onchange = function(){
+			document.form.btn_led_mode.value = 1;
+			document.form.selLED.checked = false;
+			$j("#btnDescTr").fadeIn(300);
+			scrollTo(1000, 1000);
+			setTimeout('$("alertHint").style.visibility="hidden"', 500);
+			setTimeout('$("alertHint").style.visibility=""', 1000);
+			setTimeout('$("alertHint").style.visibility="hidden"', 1500);
+			setTimeout('$("alertHint").style.visibility=""', 2000);
+			setTimeout('$("alertHint").style.visibility="hidden"', 2500);
+			setTimeout('$("alertHint").style.visibility=""', 3000);
+		}
+	
+		$("btnCtrlTr").style.display = "";
+		$("btnDescTr").style.display = "";
+		if(document.form.btn_led_mode.value == 1)
+			document.form.selCLK.click();
+		else
+			document.form.selLED.click();
 	}
 }
 
@@ -135,25 +149,6 @@ function applyRule(){
 		return false;
 	}
 
-	/*if(validate_number_range(document.form.fanctrl_fullspeed_temp, 25, 70) 
-		&& validate_number_range(document.form.fanctrl_period_temp, 25, 55)){
-		document.form.fanctrl_fullspeed_temp.value = convertTemp(document.form.fanctrl_fullspeed_temp.value, 0, 1);
-		document.form.fanctrl_period_temp.value = convertTemp(document.form.fanctrl_period_temp.value, 0, 1);
-		Math.round(document.form.fanctrl_fullspeed_temp.value);
-		Math.round(document.form.fanctrl_period_temp.value);
-		showLoading();
-		document.form.submit();
-	}
-	else{
-		if(document.form.fanctrl_fullspeed_temp_unit.value == "1"){
-			document.form.fanctrl_fullspeed_temp.value = fanctrl_fullspeed_temp_orig_F;
-			document.form.fanctrl_period_temp.value = fanctrl_period_temp_orig_F;
-		}
-		else{
-			document.form.fanctrl_fullspeed_temp.value = fanctrl_fullspeed_temp_orig;
-			document.form.fanctrl_period_temp.value = fanctrl_period_temp_orig;
-		}
-	}*/
 	showLoading();
 	document.form.submit();
 }
@@ -211,7 +206,7 @@ function getCookie(c_name)
 			<input type="hidden" name="wl_ssid" value="<% nvram_get("wl_ssid"); %>">
 			<input type="hidden" name="wl0_TxPower_orig" value="<% nvram_get("wl0_TxPower"); %>" disabled>
 			<input type="hidden" name="wl1_TxPower_orig" value="<% nvram_get("wl1_TxPower"); %>" disabled>
-
+			<input type="hidden" name="btn_led_mode" value="<% nvram_get("btn_led_mode"); %>">
 			<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
 				<tr>
 					<td valign="top">
@@ -242,11 +237,11 @@ function getCookie(c_name)
 														<!--========= svg =========-->
 														<!--[if IE]>
 															<div id="svg-table" align="left">
-															<object id="graph" src="fan.svg" classid="image/svg+xml" width="740" height="300">
+															<object id="graph" src="fan.svg" classid="image/svg+xml" width="740" height="400">
 															</div>
 														<![endif]-->
 														<!--[if !IE]>-->
-															<object id="graph" data="fan.svg" type="image/svg+xml" width="740" height="300">
+															<object id="graph" data="fan.svg" type="image/svg+xml" width="740" height="400">
 														<!--<![endif]-->
 															</object>
 											 			<!--========= svg =========-->
@@ -267,24 +262,7 @@ function getCookie(c_name)
 												<td colspan="2">System adjustment</td>
 											</tr>
 											</thead>
-<!--
-											
-											<tr>
-												<th>2.4GHz Transmit radio power</th>
-												<td>
-													<input type="text" name="wl0_TxPower" maxlength="3" class="input_3_table" value="<% nvram_get("wl0_TxPower"); %>"> mW
-													<span id="TxPowerHint_2" style="margin-left:10px;display:none;">This value could not exceed 80</span>
-												</td>
-											</tr>
-				            
-											<tr>
-												<th>5GHz Transmit radio power</th>
-												<td>
-													<input type="text" name="wl1_TxPower" maxlength="3" class="input_3_table" value="<% nvram_get("wl1_TxPower"); %>"> mW
-													<span id="TxPowerHint_5" style="margin-left:10px;display:none;">This value could not exceed 80</span>
-												</td> 
-											</tr>
--->
+
 											<tr>
 												<th>Temperature unit</th>
 												<td>
@@ -294,19 +272,104 @@ function getCookie(c_name)
 													</select>
 												</td>
 											</tr>
-											
 										</table>
-										<!-- div class="apply_gen">
-											<input class="button_gen" onclick="applyRule();" type="button" value="<#CTL_apply#>"/>
-										</div -->
 									</td>
-					  		</tr>
-							<tr valign="top">
-								<td bgcolor="#4D595D" valign="top">
-								<div>
-								</div>
-								</td>
-                                                        </tr>
+								</tr>
+								<tr valign="top" style="height:10px;display:none;" id="btnCtrlTr">
+									<td bgcolor="#4D595D" valign="top">
+										<table width="99%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+											<thead>
+											<tr>
+												<td colspan="2">LED button Behavior</td>
+											</tr>
+											</thead>
+											
+											<tr>
+												<th style="height:120px"><div align="center"><img src="/images/position.png"></div></th>
+												<td>
+													<div style="cursor:pointer;" onclick="document.form.selLED.click();"><input type="radio" name="selLED" class="input" <% nvram_match("wl_ap_isolate", "1", "checked"); %>>
+														LED: <span style="color:#FC0">Press to turn on and off the LED.</span>
+													</div>
+													<br>
+													<div style="cursor:pointer;" onclick="document.form.selCLK.click();"><input type="radio" name="selCLK" class="input" <% nvram_match("wl_ap_isolate", "0", "checked"); %>>
+														OverClock: <span style="color:#FC0">Press the button to turn on overclock, release the button to turn off.</span>
+													</div>
+												</td>
+											</tr>
+										</table>
+
+									</td>
+								</tr>
+
+								<tr valign="top" style="height:1px;display:none;" id="btnDescTr">
+									<td bgcolor="#4D595D" valign="top" align="center">
+										<br/>
+										<table style="width:90%">
+											<tr height="10px">
+												<td width="20%" valign="center" align="right">
+													<img src="/images/btnReleased.png">
+												</td>
+												<td width="5%"></td>
+												<td align="left" width="75%" valign="center">
+													<table>
+														<tr height="30px">
+															<td valign="middle">
+																<div class="btnTitle">Released</div>
+															</td>
+														</tr>
+														<tr height="50px">
+															<td valign="top">
+																<div id="btnReleased" class="btnDesc">Release the button to turn off overclock, RT-AC68U will reboot automatically.</div>	
+															</td>
+														</tr>	
+													</table>
+												</td>
+											</tr>
+
+											<tr height="10px"></tr>
+
+											<tr height="10px">
+												<td width="20%" valign="center" align="right">
+													<img src="/images/btnPressed.png">
+												</td>
+												<td width="5%"></td>
+												<td align="left" width="75%" valign="center">
+													<table>
+														<tr height="30px">
+															<td valign="middle">
+																<div class="btnTitle">Pressed</div>		
+															</td>
+														</tr>	
+														<tr height="90px">
+															<td valign="top">
+																<div id="btnPressed" class="btnDesc">
+																	Press the button to turn on overclock, this process will increase the clock frequency of your RT-AC68U to 1000Mhz and reboot automatically.
+																	<div id='alertHint' style='color: #FF1F00;'>If RT-AC68U does not respond when you turn on overclock, please turn off overclock, power off and on to reboot RT-AC68U.</div>
+																</div>		
+															</td>
+														</tr>	
+													</table>
+												</td>
+											</tr>
+
+										</table>
+									</td>
+								</tr>
+
+								<tr valign="top" style="height:10px">
+									<td bgcolor="#4D595D" valign="top">
+										<div class="apply_gen">
+											<input class="button_gen" onclick="applyRule();" type="button" value="<#CTL_apply#>"/>
+										</div>
+									</td>
+								</tr>
+
+								<tr valign="top">
+									<td bgcolor="#4D595D" valign="top">
+										<div>
+										</div>
+									</td>
+								</tr>
 							</tbody>
 						</table>
 					</td>
