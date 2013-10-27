@@ -4,3 +4,6 @@ curr_coreTmp_2 = (curr_coreTmp_2_raw.indexOf("disabled") > 0 ? 0 : curr_coreTmp_
 
 curr_coreTmp_5_raw = "<% sysinfo("temperature.5"); %>";
 curr_coreTmp_5 = (curr_coreTmp_5_raw.indexOf("disabled") > 0 ? 0 : curr_coreTmp_5_raw.replace("&deg;C", ""));
+
+cpuTemp = "<% get_cpu_temperature(); %>";
+

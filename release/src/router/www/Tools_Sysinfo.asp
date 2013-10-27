@@ -70,6 +70,9 @@ function update_temperatures(){
 			if (band5g_support) {
 				code += "&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz:</b> <span>" + curr_coreTmp_5_raw + "</span>";
 			}
+			if ((productid == "RT-AC56U") || (productid == "RT-AC68U")) {
+				code +="&nbsp;&nbsp;-&nbsp;&nbsp;<b>CPU:</b> <span>" + cpuTemp +"&deg;C</span>";
+			}
 			$("temp_td").innerHTML = code;
 			setTimeout("update_temperatures();", 3000);
 		}
@@ -279,7 +282,7 @@ function show_etherstate(){
 					</tr>
 
 					<tr>
-						<th>Radios temperature</th>
+						<th>Temperatures</th>
 						<td id="temp_td"></td>
 					</tr>
 				</table>
