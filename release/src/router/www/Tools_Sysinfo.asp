@@ -71,7 +71,7 @@ function update_temperatures(){
 				code += "&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz:</b> <span>" + curr_coreTmp_5_raw + "</span>";
 			}
 			if ((productid == "RT-AC56U") || (productid == "RT-AC68U")) {
-				code +="&nbsp;&nbsp;-&nbsp;&nbsp;<b>CPU:</b> <span>" + cpuTemp +"&deg;C</span>";
+				code +="&nbsp;&nbsp;-&nbsp;&nbsp;<b>CPU:</b> <span>" + curr_coreTmp_cpu +"&deg;C</span>";
 			}
 			$("temp_td").innerHTML = code;
 			setTimeout("update_temperatures();", 3000);
