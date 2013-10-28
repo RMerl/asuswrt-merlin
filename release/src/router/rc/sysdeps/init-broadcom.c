@@ -2710,7 +2710,7 @@ void generate_wl_para(int unit, int subunit)
 
 	char tmp[100], prefix[]="wlXXXXXXX_";
 	char tmp2[100], prefix2[]="wlXXXXXXX_";
-	char list[640];
+	char list[1200];
 	char *nv, *nvp, *b, *c;
 #ifndef RTCONFIG_BCMWL6
 	char word[256], *next;
