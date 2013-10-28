@@ -24,10 +24,13 @@ wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 curr_coreTmp_2 = "<% sysinfo("temperature.2"); %>".replace("&deg;C", "");
 curr_coreTmp_5 = "<% sysinfo("temperature.5"); %>".replace("&deg;C", ""); 
+curr_coreTmp_cpu = "<% get_cpu_temperature(); %>";
 var coreTmp_2 = new Array();
 var coreTmp_5 = new Array();
+var coreTmp_cpu = new Array();
 coreTmp_2 = [curr_coreTmp_2];
 coreTmp_5 = [curr_coreTmp_5];
+coreTmp_cpu = [curr_coreTmp_cpu];
 var wl_control_channel = <% wl_control_channel(); %>;
 var $j = jQuery.noConflict();
 var MaxTxPower_2;
@@ -38,6 +41,7 @@ var HW_MAX_LIMITATION_5 = 251;
 var HW_MIN_LIMITATION_5 = 9;
 
 function initial(){
+	var code1, code2;
 	show_menu();
 	document.form.fanctrl_fullspeed_temp_unit.selectedIndex = getCookie("CoreTmpUnit");
 	update_coretmp();
@@ -45,6 +49,16 @@ function initial(){
 		inputHideCtrl(document.form.wl0_TxPower, 0);
 		inputHideCtrl(document.form.wl1_TxPower, 0);
 	}
+
+	code1 = '<br>Legend: <span style="color: #FF9900;">2.4 GHz</span> - <span style="color: #33CCFF;">5 GHz</span>';
+	code2 = '<br>Current Temperatures: <span id="coreTemp_2" style="text-align:center; font-weight:bold;color:#FF9900"></span> - <span id="coreTemp_5" style="text-align:center; font-weight:bold;color:#33CCFF"></span>';
+
+        if(curr_coreTmp_cpu != "") {
+                code1 += ' - <span style="color: #00FF33;">CPU</span>';
+		code2 += ' - <span id="coreTemp_cpu" style="text-align:center; font-weight:bold;color:#00FF33"></span>';
+	}
+
+	$("legend").innerHTML = code1 + code2;
 
 	if(based_modelid == "RT-AC68U"){
 		document.form.selLED.onchange = function(){
@@ -84,22 +98,26 @@ function update_coretmp(e){
       update_coretmp();
     },
     success: function(response){
-			updateNum(curr_coreTmp_2, curr_coreTmp_5);
+			updateNum(curr_coreTmp_2, curr_coreTmp_5, curr_coreTmp_cpu);
 			setTimeout("update_coretmp();", 5000);
 		}    
   });
 }
 
 
-function updateNum(_coreTmp_2, _coreTmp_5){
+function updateNum(_coreTmp_2, _coreTmp_5, _cpuTemp){
 
 	if(document.form.fanctrl_fullspeed_temp_unit.value == 1){
 		$("coreTemp_2").innerHTML = (_coreTmp_2 == 0 ? "disabled" : Math.round(_coreTmp_2*9/5+32) + " °F");
 		$("coreTemp_5").innerHTML = (_coreTmp_5 == 0 ? "disabled" : Math.round(_coreTmp_5*9/5+32) + " °F");
+		if (_cpuTemp != "")
+			$("coreTemp_cpu").innerHTML = Math.round(_cpuTemp*9/5+32) + " °F";
 	}
 	else{
 		$("coreTemp_2").innerHTML = (_coreTmp_2 == 0 ? "disabled" : _coreTmp_2 + " °C");
 		$("coreTemp_5").innerHTML = (_coreTmp_5 == 0 ? "disabled" : _coreTmp_5 + " °C");
+		if (_cpuTemp != "")
+			$("coreTemp_cpu").innerHTML = _cpuTemp + " °C";
 	}
 }
 
@@ -249,9 +267,7 @@ function getCookie(c_name)
 												</td>
 											</tr>
 										</table>
-										<br>Legend: <span style="color: #FF9900;">2.4 GHz</span> - <span style="color: #33CCFF;">5 GHz</span>
-										<br>Current Temperatures: <span id="coreTemp_2" style="text-align:center; font-weight:bold;color:#FF9900"></span> - <span id="coreTemp_5" style="text-align:center; font-weight:bold;color:#33CCFF"></span>
-
+										<div id="legend"></div>
 									</td>
 								</tr>
 								<tr>
