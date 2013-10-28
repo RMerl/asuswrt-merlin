@@ -53,8 +53,8 @@ function initial(){
 	code1 = '<br>Legend: <span style="color: #FF9900;">2.4 GHz</span> - <span style="color: #33CCFF;">5 GHz</span>';
 	code2 = '<br>Current Temperatures: <span id="coreTemp_2" style="text-align:center; font-weight:bold;color:#FF9900"></span> - <span id="coreTemp_5" style="text-align:center; font-weight:bold;color:#33CCFF"></span>';
 
-        if(curr_coreTmp_cpu != "") {
-                code1 += ' - <span style="color: #00FF33;">CPU</span>';
+	if(curr_coreTmp_cpu != "") {
+		code1 += ' - <span style="color: #00FF33;">CPU</span>';
 		code2 += ' - <span id="coreTemp_cpu" style="text-align:center; font-weight:bold;color:#00FF33"></span>';
 	}
 
@@ -66,7 +66,7 @@ function initial(){
 			document.form.selCLK.checked = false;
 			$j("#btnDescTr").fadeOut(100);
 		}
-	
+
 		document.form.selCLK.onchange = function(){
 			document.form.btn_led_mode.value = 1;
 			document.form.selLED.checked = false;
@@ -79,7 +79,7 @@ function initial(){
 			setTimeout('$("alertHint").style.visibility="hidden"', 2500);
 			setTimeout('$("alertHint").style.visibility=""', 3000);
 		}
-	
+
 		$("btnCtrlTr").style.display = "";
 		$("btnDescTr").style.display = "";
 		if(document.form.btn_led_mode.value == 1)

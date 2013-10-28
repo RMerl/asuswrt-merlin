@@ -184,7 +184,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			unsigned int temperature;
 			int radio;
 
-                        if (sscanf(type,"temperature.%d", &radio) != 1)
+			if (sscanf(type,"temperature.%d", &radio) != 1)
 				temperature = 0;
 			else
 				temperature = get_phy_temperature(radio);
