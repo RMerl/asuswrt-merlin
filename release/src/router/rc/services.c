@@ -2210,6 +2210,8 @@ start_ddns(void)
 		service = "heipv6tb";
 	else if (strcmp(server, "WWW.NO-IP.COM")==0)
 		service = "noip";
+	else if (strcmp(server, "WWW.NAMECHEAP.COM")==0)
+		service = "namecheap";
 	else if (strcmp(server, "WWW.ASUS.COM")==0) {
 		service = "dyndns", asus_ddns = 1;
 	} else {
