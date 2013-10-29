@@ -1,0 +1,8 @@
+*.o
+tcpdump
+Makefile
+config.h
+config.log
+config.status
+tcpdump.1
+version.c

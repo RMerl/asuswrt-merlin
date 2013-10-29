@@ -1,0 +1,7 @@
+*.o
+Makefile
+config.h
+config.log
+config.status
+*.a
+libpcap.so.1.4.0
