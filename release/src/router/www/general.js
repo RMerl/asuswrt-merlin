@@ -1119,10 +1119,12 @@ function change_ddns_setting(v){
 				document.form.DDNSName.parentNode.style.display = "none";
 				inputCtrl(document.form.ddns_username_x, 1);
 				inputCtrl(document.form.ddns_passwd_x, 1);
-				var disable_wild = (v == "WWW.TUNNELBROKER.NET") ? 1 : 0;
+				var disable_wild = 0;
+				if(v == "WWW.TUNNELBROKER.NET" || v == "WWW.NAMECHEAP.COM")
+					disable_wild = 1;
 				document.form.ddns_wildcard_x[0].disabled= disable_wild;
 				document.form.ddns_wildcard_x[1].disabled= disable_wild;
-				if(v == "WWW.ZONEEDIT.COM"){			 // Jieming added at 2013/03/06, remove free trail of zoneedit and add a link to direct to zoneedit 
+				if(v == "WWW.ZONEEDIT.COM" || v == "WWW.NAMECHEAP.COM"){	 // Jieming added at 2013/03/06, remove free trail of zoneedit and add a link to direct to zoneedit 
 					showhide("link", 0);
 					showhide("linkToHome", 1);
 				}
@@ -1373,6 +1375,8 @@ function openLink(s){
 			tourl = "";
 		else if (document.form.ddns_server_x.value == 'WWW.NO-IP.COM')
 			tourl = "http://www.no-ip.com/newUser.php";
+		else if (document.form.ddns_server_x.value == 'WWW.NAMECHEAP.COM')
+			tourl = "https://www.namecheap.com";
 		else	tourl = "";
 		link = window.open(tourl, "DDNSLink","toolbar=yes,location=yes,directories=no,status=yes,menubar=yes,scrollbars=yes,resizable=yes,copyhistory=no,width=640,height=480");
 	}
