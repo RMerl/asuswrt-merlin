@@ -33,22 +33,12 @@ coreTmp_5 = [curr_coreTmp_5];
 coreTmp_cpu = [curr_coreTmp_cpu];
 var wl_control_channel = <% wl_control_channel(); %>;
 var $j = jQuery.noConflict();
-var MaxTxPower_2;
-var MaxTxPower_5;
-var HW_MAX_LIMITATION_2 = 501;
-var HW_MIN_LIMITATION_2 = 9;
-var HW_MAX_LIMITATION_5 = 251;
-var HW_MIN_LIMITATION_5 = 9;
 
 function initial(){
 	var code1, code2;
 	show_menu();
 	document.form.fanctrl_fullspeed_temp_unit.selectedIndex = getCookie("CoreTmpUnit");
 	update_coretmp();
-	if(!power_support){
-		inputHideCtrl(document.form.wl0_TxPower, 0);
-		inputHideCtrl(document.form.wl1_TxPower, 0);
-	}
 
 	code1 = '<br>Legend: <span style="color: #FF9900;">2.4 GHz</span> - <span style="color: #33CCFF;">5 GHz</span>';
 	code2 = '<br>Current Temperatures: <span id="coreTemp_2" style="text-align:center; font-weight:bold;color:#FF9900"></span> - <span id="coreTemp_5" style="text-align:center; font-weight:bold;color:#33CCFF"></span>';
@@ -122,50 +112,6 @@ function updateNum(_coreTmp_2, _coreTmp_5, _cpuTemp){
 }
 
 function applyRule(){
-	if(parseInt(document.form.wl0_TxPower.value) > HW_MAX_LIMITATION_2){
-		$("TxPowerHint_2").style.display = "";
-		document.form.wl0_TxPower.focus();
-		return false;
-	}
-
-	var wlcountry = '<% nvram_get("wl0_country_code"); %>';
-	if(wlcountry == 'US' || wlcountry == 'CN' || wlcountry == 'TW')
-		HW_MAX_LIMITATION_5 = 501;
-	else
-		HW_MAX_LIMITATION_5 = 251;
-
-	if(parseInt(document.form.wl1_TxPower.value) > HW_MAX_LIMITATION_5){
-		$("TxPowerHint_5").style.display = "";
-		document.form.wl1_TxPower.focus();
-		return false;
-	}
-
-	$("TxPowerHint_2").style.display = "none";
-	$("TxPowerHint_5").style.display = "none";
-
-	if(parseInt(document.form.wl0_TxPower.value) > parseInt(document.form.wl0_TxPower_orig.value) 
-		|| parseInt(document.form.wl1_TxPower.value) > parseInt(document.form.wl1_TxPower_orig.value))
-	  FormActions("start_apply.htm", "apply", "set_wltxpower;reboot", "<% get_default_reboot_time(); %>");
-	else{
-		if(document.form.wl0_TxPower.value != document.form.wl0_TxPower_orig.value 
-			|| document.form.wl1_TxPower.value != document.form.wl1_TxPower_orig.value)
-			document.form.action_script.value = "restart_wireless";
-	
-		if(document.form.fanctrl_mode.value != document.form.fanctrl_mode_orig.value 
-			|| document.form.fanctrl_fullspeed_temp.value != document.form.fanctrl_fullspeed_temp_orig.value
-			|| document.form.fanctrl_period_temp.value != document.form.fanctrl_period_temp_orig.value
-			|| document.form.fanctrl_dutycycle.value != document.form.fanctrl_dutycycle_orig.value){
-			if(document.form.action_script.value != "")
-				document.form.action_script.value += ";";
-			document.form.action_script.value += "restart_fanctrl";
-		}
-	}
-	
-	if(parseInt(document.form.fanctrl_period_temp.value) > parseInt(document.form.fanctrl_fullspeed_temp.value)){
-		alert("This value could not exceed "+document.form.fanctrl_fullspeed_temp.value);
-		document.form.fanctrl_period_temp.focus();
-		return false;
-	}
 
 	showLoading();
 	document.form.submit();
