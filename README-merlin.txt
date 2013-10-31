@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.374.34 (xx-xxx-2013)
+Asuswrt-Merlin - build 3.0.0.4.374.34 (30-Oct-2013)
 ===================================================
 
 About
@@ -445,9 +445,9 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.4.374.34 (xx-xxx-2013):
-   - NEW: Merged with Asus 374_979 (from RT-N66U).  AC56/AC68
-          AiCloud components taken from 374_217.
+3.0.0.4.374.34 (30-Oct-2013):
+   - NEW: Merged with Asus 374_979 (from RT-N66U).  
+          AC56/AC68 AiCloud components taken from 374_217.
    - NEW: Added RT-AC68U support.
    - NEW: Added IPSec support to the kernel.  Userspace tools 
           such as StrongWAN must be installed from Optware/Entware,
@@ -458,6 +458,8 @@ History
           This allows WHS users to change the min allowed port from 
           the default value of 1024 to allow UPNP forwarding of 
           HTTP/HTTPS.
+   - NEW: Display CPU temperature on Sysinfo page (AC56 and AC68)
+   - NEW: Display CPU chart on Performance page (AC56 and AC68)
    - CHANGED: UPnP rules will now be processed after manual 
               forwards and port trigger rules.
    - CHANGED: Site Survey now reports supported protocol.
@@ -477,6 +479,8 @@ History
    - FIXED: Router/minidlna crashes when processing very large image
             collections - various memory leaks plugged.
             (patches provided by Paulo Capani)
+   - FIXED: Buffer overrun when entering more than 35 MACs on the
+            filter list.  We now support up to 64 MACs.
 
 
 3.0.0.4.374.33 (3-Oct-2013):
