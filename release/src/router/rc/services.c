@@ -579,7 +579,7 @@ void start_dnsmasq(int force)
 		"user=nobody\n"
 		"resolv-file=%s\n"		// the real stuff is here
 		"no-poll\n"			// don't poll resolv file
-		"interface=%s,ppp*,tun*,tap*\n"         // dns & dhcp only on LAN and VPN interfaces
+		"interface=%s,ppp*\n"		// dns & dhcp only on LAN and VPN interfaces
 		"bind-dynamic\n"		// listen on addrs if LAN interface & lo
 		"min-port=%u\n",		// min port used for random src port
 #ifdef RTCONFIG_YANDEXDNS
