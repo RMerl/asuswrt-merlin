@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 3.0.0.4.374.34 (30-Oct-2013)
-===================================================
+Asuswrt-Merlin - build 3.0.0.4.374.34_2 (01-Nov-2013)
+=====================================================
 
 About
 -----
@@ -445,6 +445,13 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.4.374.34_2 (01-Nov-2013):
+   - FIXED: DNS resolution not working for VPN clients
+            (bug in Asus 374_979)
+   - FIXED: USB disk detection on AC56/AC68.
+   - FIXED: Turbo mode option couldn't be saved (RT-AC68)
+
+
 3.0.0.4.374.34 (30-Oct-2013):
    - NEW: Merged with Asus 374_979 (from RT-N66U).  
           AC56/AC68 AiCloud components taken from 374_217.
