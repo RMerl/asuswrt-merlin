@@ -212,11 +212,12 @@ _dprintf("%s: unit=%d.\n", __FUNCTION__, unit);
 
 #ifdef RTCONFIG_IPV6
 	switch (get_ipv6_service()) {
-		case IPV6_NATIVE:
-		case IPV6_NATIVE_DHCP:
-		case IPV6_MANUAL:
+	case IPV6_NATIVE:
+	case IPV6_NATIVE_DHCP:
+	case IPV6_MANUAL:
+		if (nvram_match("ipv6_ifdev", "ppp"))
 			fprintf(fp, "+ipv6\n");
-			break;
+		break;
         }
 #endif
 

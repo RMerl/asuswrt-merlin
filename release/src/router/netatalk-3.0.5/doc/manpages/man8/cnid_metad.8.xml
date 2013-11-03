@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry id="cnid_metad.8">
+  <refmeta>
+    <refentrytitle>cnid_metad</refentrytitle>
+
+    <manvolnum>8</manvolnum>
+
+    <refmiscinfo class="date">23 Mar 2012</refmiscinfo>
+
+    <refmiscinfo class="source">@NETATALK_VERSION@</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>cnid_metad</refname>
+
+    <refpurpose>start cnid_dbd daemons on request</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>cnid_metad<indexterm>
+          <primary>cnid_metad</primary>
+        </indexterm></command>
+
+      <arg choice="opt">-d</arg>
+
+      <arg choice="opt"><arg choice="plain">-F </arg><arg
+      choice="plain"><replaceable>configuration file</replaceable></arg></arg>
+
+      <sbr />
+
+      <command>cnid_metad<indexterm>
+          <primary>cnid_metad</primary>
+        </indexterm></command>
+
+	<group choice="plain">
+	  <arg choice="plain">-v</arg>
+	  <arg choice="plain">-V</arg>
+	</group>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>DESCRIPTION</title>
+
+    <para><command>cnid_metad</command> waits for requests from <emphasis
+    remap="B">afpd</emphasis> to start up instances of the <emphasis
+    remap="B">cnid_dbd</emphasis> daemon. It keeps track of the status of a
+    <emphasis remap="B">cnid_dbd</emphasis> instance once started and will
+    restart it if necessary. <command>cnid_metad</command> is normally started
+    at boot time by <command>netatalk</command>(8) and runs
+    until shutdown.</para>
+  </refsect1>
+
+  <refsect1>
+    <title>OPTIONS</title>
+
+    <variablelist remap="TP">
+ 
+     <varlistentry>
+        <term><option>-d</option></term>
+
+        <listitem>
+          <para><emphasis remap="B">cnid_metad will remain in the foreground
+          and</emphasis> will also leave the standard input, standard output
+          and standard error file descriptors open. Useful for
+          debugging.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-F</option> <replaceable>configuration file</replaceable></term>
+
+        <listitem>
+          <para>Use <emphasis remap="I">configuration file</emphasis> as the
+            configuration file. The default is
+            <emphasis remap="I">@pkgconfdir@/afp.conf</emphasis>.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-v, -V</option></term>
+
+        <listitem>
+          <para>Show version and exit.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>CAVEATS</title>
+
+    <para><command>cnid_metad</command> does not block or catch any signals
+    apart from SIGPIPE. It will therefore exit on most signals received. This
+    will also cause all instances of <emphasis remap="B">cnid_dbd's</emphasis>
+    started by that <command>cnid_metad</command> to exit gracefully. Since
+    state about and IPC access to the subprocesses is only maintained in
+    memory by <command>cnid_metad</command> this is desired behaviour. As soon
+    as <command>cnid_metad</command> is restarted <emphasis
+    remap="B">afpd</emphasis> processes will transparently reconnect.</para>
+  </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+
+    <para><citerefentry>
+        <refentrytitle>netatalk</refentrytitle>
+
+        <manvolnum>8</manvolnum>
+      </citerefentry>, <citerefentry>
+        <refentrytitle>cnid_dbd</refentrytitle>
+
+        <manvolnum>8</manvolnum>
+      </citerefentry>, <citerefentry>
+        <refentrytitle>afpd</refentrytitle>
+
+        <manvolnum>8</manvolnum>
+      </citerefentry>, <citerefentry>
+        <refentrytitle>dbd</refentrytitle>
+
+        <manvolnum>1</manvolnum>
+      </citerefentry>, <citerefentry>
+        <refentrytitle>afp.conf</refentrytitle>
+
+        <manvolnum>5</manvolnum>
+      </citerefentry></para>
+  </refsect1>
+</refentry>

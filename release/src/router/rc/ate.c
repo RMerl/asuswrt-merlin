@@ -338,6 +338,9 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 #ifdef RTCONFIG_FANCTRL
 			stop_phy_tempsense();
 #endif
+#ifdef RTCONFIG_BCMARM
+			stop_wlaide();
+#endif
 			stop_wpsaide();
 			stop_wps();
 #ifdef RTCONFIG_BCMWL6

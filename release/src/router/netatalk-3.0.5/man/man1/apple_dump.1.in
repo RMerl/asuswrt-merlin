@@ -1,0 +1,114 @@
+'\" t
+.\"     Title: apple_dump
+.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
+.\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
+.\"      Date: 16 Jul 2012
+.\"    Manual: @NETATALK_VERSION@
+.\"    Source: @NETATALK_VERSION@
+.\"  Language: English
+.\"
+.TH "APPLE_DUMP" "1" "16 Jul 2012" "@NETATALK_VERSION@" "@NETATALK_VERSION@"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+apple_dump \- Dump AppleSingle/AppleDouble format data
+.SH "SYNOPSIS"
+.HP \w'\fBapple_dump\fR\fB\fR\fBapple_dump\fR\fB\fR\fBapple_dump\fR\fB\fR\fBapple_dump\fR\fB\fR\fBapple_dump\fR\fB\fR\fBapple_dump\fR\fB\fR\ 'u
+\fBapple_dump\fR\fB\fR [\-a] [\fIFILE\fR | \fIDIR\fR]
+.br
+\fBapple_dump\fR\fB\fR \-e \fIFILE\fR | \fIDIR\fR 
+.br
+\fBapple_dump\fR\fB\fR \-f [\fIFILE\fR]
+.br
+\fBapple_dump\fR\fB\fR \-d [\fIFILE\fR]
+.br
+\fBapple_dump\fR\fB\fR \-h | \-help | \-\-help 
+.br
+\fBapple_dump\fR\fB\fR \-v | \-version | \-\-version 
+.SH "DESCRIPTION"
+.PP
+\fBapple_dump\fR
+is a perl script to dump AppleSingle/AppleDouble format data\&.
+.PP
+This script can dump various AppleSingle/AppleDouble data created by mailer, archiver, Mac OS X, Netatalk and so on\&.
+.PP
+With no
+\fIFILE\fR|\fIDIR\fR, or when
+\fIFILE\fR|\fIDIR\fR
+is \-, read standard input\&.
+.SH "OPTIONS"
+.PP
+\fB\-a\fR [\fIFILE\fR|\fIDIR\fR]
+.RS 4
+This is default\&. Dump a AppleSingle/AppleDouble file for
+\fIFILE\fR
+or
+\fIDIR\fR
+automatically\&. If FILE is not AppleSingle/AppleDouble format, look for extended attribute,
+\fI\&.AppleDouble/FILE\fR
+and
+\fI\&._FILE\fR\&. If
+\fIDIR\fR, look for extended attribute,
+\fIDIR/\&.AppleDouble/\&.Parent\fR
+and
+\fI\&._DIR\fR\&.
+.RE
+.PP
+\fB\-e\fR \fIFILE\fR|\fIDIR\fR
+.RS 4
+Dump extended attribute of\fIFILE\fR
+or
+\fIDIR\fR\&.
+.RE
+.PP
+\fB\-f\fR [\fIFILE\fR]
+.RS 4
+Dump
+\fIFILE\fR\&. Assume FinderInfo to be FileInfo\&.
+.RE
+.PP
+\fB\-d\fR [\fIFILE\fR]
+.RS 4
+Dump
+\fIFILE\fR\&. Assume FinderInfo to be DirInfo\&.
+.RE
+.PP
+\fB\-h, \-help, \-\-help\fR
+.RS 4
+Display the help and exit
+.RE
+.PP
+\fB\-v, \-version, \-\-version\fR
+.RS 4
+Show version and exit
+.RE
+.SH "NOTE"
+.PP
+There is no way to detect whether FinderInfo is FileInfo or DirInfo\&. By default, apple_dump examines whether file or directory, a parent directory is \&.AppleDouble, filename is \&._*, filename is \&.Parent, and so on\&.
+.PP
+If setting option \-e, \-f or \-d, assume FinderInfo and doesn\*(Aqt look for another file\&.
+.SH "SEE ALSO"
+.PP
+\fBad\fR(1),
+\fBgetfattr\fR(1),
+\fBattr\fR(1),
+\fBrunat\fR(1),
+\fBgetextattr\fR(8),
+\fBlsextattr\fR(8)

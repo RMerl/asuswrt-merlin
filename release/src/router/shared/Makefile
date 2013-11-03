@@ -5,14 +5,14 @@ CFLAGS += -I. -I$(TOP)/shared -I$(SRCBASE)/include
 CFLAGS += -I$(LINUXDIR)/include
 
 ifeq ($(RTCONFIG_SHP),y)
-CFLAGS += -DMEDIA_REVIEW
+CFLAGS += -DSHP
 endif
 
 ifeq ($(RTCONFIG_RALINK),y)
 CFLAGS += -I./sysdeps/ralink -I$(TOP)/wireless_tools/ -DWE_NOLIBM 
 endif
 
-ifeq ($(RTCONFIG_BCMARM),y)
+ifeq ($(RTCONFIG_BCMWL6),y)
 CFLAGS += -I$(SRCBASE)/shared/bcmwifi/include
 CFLAGS += -I$(SRCBASE)/common/include
 else
@@ -29,6 +29,10 @@ endif
 
 ifeq ($(RTAC66U), y)
 CFLAGS += -DRTAC66U
+endif
+
+ifeq ($(RTAC53U), y)
+CFLAGS += -DRTAC53U
 endif
 
 ifeq ($(RTCONFIG_4352_5G),y)

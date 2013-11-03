@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<node name="/org/netatalk/AFPStats">
+  <interface name="org.netatalk.AFPStats">
+    <method name="GetUsers">
+       <arg name="ret" type="as" direction="out"/>
+    </method>
+  </interface>
+</node>

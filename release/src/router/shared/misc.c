@@ -373,104 +373,8 @@ char* INET6_rresolve(struct sockaddr_in6 *sin6, int numeric)
 	}
 	return strdup(name);
 }
+#endif
 
-const char *ipv6_gateway_address(void)
-{
-	char addr6[128], *naddr6;
-	/* In addr6x, we store both 40-byte ':'-delimited ipv6 addresses.
-	 * We read the non-delimited strings into the tail of the buffer
-	 * using fscanf and then modify the buffer by shifting forward
-	 * while inserting ':'s and the nul terminator for the first string.
-	 * Hence the strings are at addr6x and addr6x+40.  This generates
-	 * _much_ less code than the previous (upstream) approach. */
-	char addr6x[80];
-	char iface[16], flags[16];
-	int iflags, metric, refcnt, use, prefix_len, slen;
-	struct sockaddr_in6 snaddr6;
-	static char buf[INET6_ADDRSTRLEN];
-	struct in6_addr addr;
-	int found = 0;
-
-	FILE *fp = fopen("/proc/net/ipv6_route", "r");
-
-	memset(buf, 0, sizeof(buf));
-
-	while (1) {
-		int r;
-		r = fscanf(fp, "%32s%x%*s%x%32s%x%x%x%x%s\n",
-				addr6x+14, &prefix_len, &slen, addr6x+40+7,
-				&metric, &use, &refcnt, &iflags, iface);
-		if (r != 9) {
-			if ((r < 0) && feof(fp)) { /* EOF with no (nonspace) chars read. */
-				break;
-			}
- ERROR:
-			perror("fscanf");
-			return buf;
-		}
-
-		/* Do the addr6x shift-and-insert changes to ':'-delimit addresses.
-		 * For now, always do this to validate the proc route format, even
-		 * if the interface is down. */
-		{
-			int i = 0;
-			char *p = addr6x+14;
-
-			do {
-				if (!*p) {
-					if (i == 40) { /* nul terminator for 1st address? */
-						addr6x[39] = 0;	/* Fixup... need 0 instead of ':'. */
-						++p;	/* Skip and continue. */
-						continue;
-					}
-					goto ERROR;
-				}
-				addr6x[i++] = *p++;
-				if (!((i+1) % 5)) {
-					addr6x[i++] = ':';
-				}
-			} while (i < 40+28+7);
-		}
-
-		if (!(iflags & RTF_UP)) { /* Skip interfaces that are down. */
-			continue;
-		}
-
-		ipv6_set_flags(flags, (iflags & IPV6_MASK));
-
-		r = 0;
-		do {
-			inet_pton(AF_INET6, addr6x + r,
-				  (struct sockaddr *) &snaddr6.sin6_addr);
-			snaddr6.sin6_family = AF_INET6;
-			naddr6 = INET6_rresolve((struct sockaddr_in6 *) &snaddr6,
-						0x0fff /* Apparently, upstream never resolves. */
-						);
-			inet_pton(AF_INET6, naddr6, &addr);
-
-			if (!r) {			/* 1st pass */
-				snprintf(addr6, sizeof(addr6), "%s/%d", naddr6, prefix_len);
-				r += 40;
-				free(naddr6);
-			} else {			/* 2nd pass */
-				if (!strcmp(addr6, "::/0") && !strcmp(flags, "UGDA") &&
-				    !strcmp(get_wan6face(), iface) &&
-				    IN6_IS_ADDR_LINKLOCAL(&addr))
-				{
-					found = 1;
-					snprintf(buf, sizeof(buf), "%s %s", naddr6, iface);
-				}
-				free(naddr6);
-				if (found)
-					return buf;
-				break;
-			}
-		} while (1);
-	}
-
-	return buf;
-}
-#else
 static int ipv6_expand(char *buf, char *str, struct in6_addr *addr)
 {
 	char *dst = buf;
@@ -496,20 +400,20 @@ const char *ipv6_gateway_address(void)
 	fp = fopen("/proc/net/ipv6_route", "r");
 	if (fp == NULL) {
 		perror("/proc/net/ipv6_route");
-		return buf;
+		return NULL;
 	}
 
 	maxprefix = -1;
-	while (fscanf(fp, "%32s %x %*s %*x %32s %x %*x %*x %x %16s\n",
+	while (fscanf(fp, "%32s%x%*s%*x%32s%x%*x%*x%x%16s\n",
 		      &dest[7], &prefix, &nexthop[7], &metric, &flags, dev) == 6) {
 		/* Skip interfaces that are down and host routes */
 		if ((flags & (RTF_UP | RTF_HOST)) != RTF_UP)
 			continue;
-		if (ipv6_expand(dest, &dest[7], &addr) <= 0)
-			continue;
 
 		/* Skip dst not in "::/0 - 2000::/3" */
 		if (prefix > 3)
+			continue;
+		if (ipv6_expand(dest, &dest[7], &addr) <= 0)
 			continue;
 		mask = htons((0xffff0000 >> prefix) & 0xffff);
 		if ((addr.s6_addr16[0] & mask) != (htons(0x2000) & mask))
@@ -528,11 +432,14 @@ const char *ipv6_gateway_address(void)
 			snprintf(buf, sizeof(buf), "::");
 		maxprefix = prefix;
 		minmetric = metric;
-	}
 
-	return buf;
+		if (prefix == 0)
+			break;
+	}
+	fclose(fp);
+
+	return *buf ? buf : NULL;
 }
-#endif
 #endif
 
 int wl_client(int unit, int subunit)
@@ -798,8 +705,10 @@ const char *getifaddr(char *ifname, int family, int flags)
 					len += 8;
 				for (i = netmask[i]; i && len < maxlen; i <<= 1)
 					len++;
-				i = strlen(buf);
-				snprintf(&buf[i], sizeof(buf)-i, "/%d", len);
+				if (len < maxlen) {
+					i = strlen(buf);
+					snprintf(&buf[i], sizeof(buf)-i, "/%d", len);
+				}
 			}
 			freeifaddrs(ifap);
 			return buf;
@@ -1098,6 +1007,7 @@ void bcmvlan_models(int model, char *vlan)
 	case MODEL_RTN16:
 	case MODEL_RTN18U:
 	case MODEL_RTN15U:
+	case MODEL_RTAC53U:
 		strcpy(vlan, "vlan1");
 		break;
 	case MODEL_RTN53:
@@ -1107,6 +1017,7 @@ void bcmvlan_models(int model, char *vlan)
 	case MODEL_RTN12D1:
 	case MODEL_RTN12VP:
 	case MODEL_RTN12HP:
+	case MODEL_RTN12HP_B1:
 	case MODEL_RTN14UHP:
 	case MODEL_RTN10U:
 	case MODEL_RTN10P:
@@ -1336,17 +1247,13 @@ _dprintf("%s: Finish.\n", __FUNCTION__);
 	return 0;
 }
 
-void logmessage(char *logheader, char *fmt, ...){
+void logmessage_normal(char *logheader, char *fmt, ...){
   va_list args;
   char buf[512];
 
   va_start(args, fmt);
 
   vsnprintf(buf, sizeof(buf), fmt, args);
-
-#ifdef RTCONFIG_EMAIL
-	// TODO: check logheader and notify the APP server.
-#endif
 
   openlog(logheader, 0, 0);
   syslog(0, buf);
@@ -1420,4 +1327,64 @@ int is_psr(int unit)
 	return 0;
 }
 #endif
+#endif
+
+#ifdef RTCONFIG_OPENVPN
+char *get_parsed_crt(const char *name, char *buf)
+{
+	char *value;
+	int len, i;
+
+	value = nvram_safe_get(name);
+
+	len = strlen(value);
+
+	for (i=0; (i < len); i++) {
+		if (value[i] == '>')
+			buf[i] = '\n';
+		else
+			buf[i] = value[i];
+	}
+
+	buf[i] = '\0';
+
+	return buf;
+}
+
+int set_crt_parsed(const char *name, char *file_path)
+{
+	FILE *fp=fopen(file_path, "r");
+	char buffer[4000] = {0};
+	char buffer2[256] = {0};
+	char *p = buffer;
+
+// TODO: Ensure that Asus's routine can handle CRLF too, otherwise revert to
+//       the code we currently use in httpd.
+
+	if(fp) {
+		while(fgets(buffer, sizeof(buffer), fp)) {
+			if(!strncmp(buffer, "-----BEGIN", 10))
+				break;
+		}
+		if(feof(fp)) {
+			fclose(fp);
+			return -EINVAL;
+		}
+		p += strlen(buffer);
+		if( *(p-1) == '\n' )
+			*(p-1) = '>';
+		while(fgets(buffer2, sizeof(buffer2), fp)) {
+			strncpy(p, buffer2, strlen(buffer2));
+			p += strlen(buffer2);
+			if( *(p-1) == '\n' )
+				*(p-1) = '>';
+		}
+		*p = '\0';
+		nvram_set(name, buffer);
+		fclose(fp);
+		return 0;
+	}
+	else
+		return -ENOENT;
+}
 #endif

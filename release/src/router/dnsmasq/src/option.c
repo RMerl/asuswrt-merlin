@@ -140,8 +140,6 @@ struct myoption {
 #define LOPT_QUIET_RA     328
 
 
-#define LOPT_QUIET_DHCP 400
-
 #ifdef HAVE_GETOPT_LONG
 static const struct option opts[] =  
 #else

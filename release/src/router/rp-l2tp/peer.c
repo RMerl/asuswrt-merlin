@@ -60,6 +60,9 @@ static l2tp_opt_descriptor peer_opts[] = {
     { "holdoff",           OPT_TYPE_INT,      &prototype.holdoff},
     { "maxfail",           OPT_TYPE_INT,      &prototype.maxfail},
     { "strict-ip-check",   OPT_TYPE_BOOL,     &prototype.validate_peer_ip},
+#ifdef RTCONFIG_VPNC
+    { "vpnc",         OPT_TYPE_INT,      &vpnc},
+#endif
     { NULL,                OPT_TYPE_BOOL,     NULL }
 };
 

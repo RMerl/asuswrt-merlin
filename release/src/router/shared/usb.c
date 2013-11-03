@@ -103,6 +103,15 @@ char *detect_fs_type(char *device)
 		else
 			return "ext2";
 	}
+	/* detect hfs */
+	else if(buf[1024] == 0x48){
+		if(buf[1032] == 0x48 && buf[1033] == 0x46 && buf[1034] == 0x53 && buf[1035] == 0x4A)
+			return "hfsj";
+		else if(buf[1025] == 0x2B || buf[1025] == 0x58)
+			return "hfs+";
+		else
+			return "hfs";
+	}
 	/* detect ntfs */
 	else if (buf[510] == 0x55 && buf[511] == 0xAA && /* signature */
 		memcmp(buf + 3, "NTFS    ", 8) == 0)

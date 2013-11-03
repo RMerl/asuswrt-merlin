@@ -1,0 +1,72 @@
+#!/bin/bash
+
+# This file is part of avahi.
+#
+# avahi is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# avahi is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public
+# License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with avahi; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+# USA.
+
+#
+# Authors:      <lathiat@bur.st>
+#
+
+
+# general config
+. /etc/rc.conf
+. /etc/rc.d/functions
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+DESC="Avahi mDNS/DNS-SD Daemon"
+NAME="avahi-daemon"
+DAEMON="@sbindir@/$NAME"
+
+case "$1" in
+    start)
+        stat_busy "Starting $DESC"
+        $DAEMON -D > /dev/null 2>&1
+        if [ $? -gt 0 ]; then
+            stat_fail
+        else
+            add_daemon $NAME
+            stat_done
+        fi
+        ;;
+    stop)
+        stat_busy "Stopping $DESC"
+        $DAEMON -k > /dev/null 2>&1
+        if [ $? -gt 0 ]; then
+            stat_fail
+        else
+            rm_daemon $NAME
+            stat_done
+        fi
+        ;;
+    restart)
+        $0 stop
+        $0 start
+        ;;
+    reload)
+        stat_busy "Reloading services for $DESC"
+        $DAEMON -r > /dev/null 2>&1
+        if [ $? -gt 0 ]; then
+            stat_fail
+        else
+            stat_done
+        fi
+        ;;
+    *)
+        echo "usage: $0 {start|stop|restart|reload}"
+	;;
+esac
+exit 0

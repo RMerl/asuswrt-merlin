@@ -1,0 +1,60 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides:       netatalk
+# Required-Start: $local_fs
+# Required-Stop: $local_fs
+# Should-Start:  $network $named $remote_fs $syslog avahi-daemon
+# Should-Stop:   $remote_fs $network $syslog
+# Default-Start:  3 5
+# Default-Stop:
+# Description:    Netatalk AFP fileserver for Macintosh clients
+### END INIT INFO
+
+# Netatalk :NETATALK_VERSION:
+
+. /etc/rc.status
+
+# startup code for everything
+netatalk_startup() {
+    if [ -x :SBINDIR:/netatalk ] ; then
+        echo -n "  Starting netatalk "
+        startproc :SBINDIR:/netatalk
+        rc_status -v
+    fi
+
+    touch /var/lock/subsys/netatalk 
+}
+
+case "$1" in
+    start)
+        if test ! -z "$UID" -a "$UID" != 0 ; then
+            echo "you have to be root to start netatalk daemons"
+            rc_failed
+        else
+            echo "Starting netatalk..."
+            netatalk_startup
+        fi
+        ;;
+    stop)
+        echo -n "Shutting down netatalk"
+        killproc -TERM :SBINDIR:/netatalk
+        rc_status -v
+        ;;
+    restart|reload|force-reload)
+        $0 stop
+        $0 start
+        rc_status
+        ;;
+    status)
+        echo "Checking for netatalk services"
+        checkproc :SBINDIR:/netatalk && echo "netatalk: OK" || echo "netatalk: No process"
+        checkproc :SBINDIR:/netatalk
+        rc_status -v
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart|status}"
+        exit 1
+        ;;
+esac
+
+rc_exit

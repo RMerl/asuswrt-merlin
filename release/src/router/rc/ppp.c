@@ -135,6 +135,10 @@ ipup_main(int argc, char **argv)
 
 	wan_up(wan_ifname);
 
+#ifdef RTCONFIG_VPNC
+	start_vpnc();
+#endif
+
 	_dprintf("%s:: done\n", __FUNCTION__);
 	return 0;
 }
@@ -211,12 +215,9 @@ ippreup_main(int argc, char **argv)
 int ip6up_main(int argc, char **argv)
 {
 	char *wan_ifname = safe_getenv("IFNAME");
-	char *llremote = safe_getenv("LLREMOTE");
 
 	if (!wan_ifname || strlen(wan_ifname) <= 0)
 		return 0;
-
-	nvram_set("ipv6_ll_remote", llremote);
 
         switch (get_ipv6_service()) {
                 case IPV6_NATIVE:

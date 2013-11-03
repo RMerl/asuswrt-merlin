@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry id="afpd.8">
+  <refmeta>
+    <refentrytitle>afpd</refentrytitle>
+
+    <manvolnum>8</manvolnum>
+
+    <refmiscinfo class="date">19 Jan 2013</refmiscinfo>
+
+    <refmiscinfo class="source">@NETATALK_VERSION@</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>afpd</refname>
+
+    <refpurpose>Apple Filing Protocol daemon</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>afpd<indexterm>
+          <primary>afpd</primary>
+        </indexterm></command>
+
+      <arg choice="opt">-d</arg>
+
+      <arg choice="opt">-F <replaceable>configfile</replaceable></arg>
+
+      <sbr />
+
+      <command>afpd<indexterm>
+          <primary>afpd</primary>
+        </indexterm></command>
+
+      <group choice="plain">
+        <arg choice="plain">-v</arg>
+        <arg choice="plain">-V</arg>
+        <arg choice="plain">-h</arg>
+      </group>
+
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>Description</title>
+
+    <para><command>afpd</command> provides an Apple Filing Protocol (AFP)
+    interface to the Unix file system. It is normally started at boot time
+    by <command>netatalk</command>(8).</para>
+
+    <para><filename>@pkgconfdir@/afp.conf</filename> is the configuration file
+    used by <command>afpd</command> to determine the behavior and
+    configuration of a file server.</para>
+
+  </refsect1>
+
+  <refsect1>
+    <title>Options</title>
+
+    <variablelist>
+      <varlistentry>
+        <term>-d</term>
+
+        <listitem>
+          <para>Specifies that the daemon should not fork.</para>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
+        <term>-v</term>
+
+        <listitem>
+          <para>Print version information and exit.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-V</term>
+
+        <listitem>
+          <para>Print verbose information and exit.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-h</term>
+
+        <listitem>
+          <para>Print help and exit.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-F <replaceable>configfile</replaceable></term>
+
+        <listitem>
+          <para>Specifies the configuration file to use. (Defaults to
+          <filename>@pkgconfdir@/afp.conf</filename>.)</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>SIGNALS</title>
+
+    <para>To shut down a user's <command>afpd</command> process it is
+      recommended that <command>SIGKILL (-9)</command>
+      <emphasis>NOT</emphasis> be used, except as a last resort, as this
+      may leave the CNID database in an inconsistent state. The safe way
+      to terminate an <command>afpd</command> is to send it a
+      <command>SIGTERM (-15)</command> signal and wait for it to die on
+      its own.</para>
+    <para>SIGTERM and SIGUSR1 signals that are sent to the main <command>afpd</command> process
+    are propagated to the children, so all will be affected.</para>
+
+    <variablelist>
+      <varlistentry>
+        <term>SIGTERM</term>
+        <listitem>
+          <para>Clean exit. Propagates from master to childs.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>SIGQUIT</term>
+        <listitem>
+          <para>Send this to the master <command>afpd</command>, it will
+          exit leaving all children running! Can be used to implement
+          AFP service without downtime.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>SIGHUP</term>
+        <listitem>
+          <para>Sending a <command>SIGHUP</command> to afpd will cause it to
+          reload its configuration files.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>SIGINT</term>
+        <listitem>
+          <para>Sending a <command>SIGINT</command> to a child
+          <command>afpd</command> enables <emphasis>max_debug</emphasis>
+          logging for this process. The log is sent to the file
+          <filename>/tmp/afpd.PID.XXXXXX</filename>. Sending another
+          <command>SIGINT</command> will revert to the original log settings.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>SIGUSR1</term>
+        <listitem>
+          <para>The <command>afpd</command> process will send the message "The
+          server is going down for maintenance." to the client and shut itself
+          down in 5 minutes. New connections are not allowed. If this is sent
+          to a child afpd, the other children are not affected. However, the
+          main process will still exit, disabling all new connections.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>SIGUSR2</term>
+        <listitem>
+          <para>The <command>afpd</command> process will look in the message
+          directory configured at build time for a file named message.pid. For
+          each one found, a the contents will be sent as a message to the
+          associated AFP client. The file is removed after the message is
+          sent. This should only be sent to a child
+          <command>afpd</command>.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>FILES</title>
+
+    <variablelist>
+      <varlistentry>
+        <term><filename>@pkgconfdir@/afp.conf</filename></term>
+
+        <listitem>
+          <para>configuration file used by afpd</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><filename>@localstatedir@/netatalk/afp_signature.conf</filename></term>
+
+        <listitem>
+          <para>list of server signature</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><filename>@localstatedir@/netatalk/afp_voluuid.conf</filename></term>
+
+        <listitem>
+          <para>list of UUID for Time Machine volume</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><filename>@pkgconfdir@/extmap.conf</filename></term>
+
+        <listitem>
+          <para>file name extension mapping</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><filename>@pkgconfdir@/msg/message.pid</filename></term>
+
+        <listitem>
+          <para>contains messages to be sent to users.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+
+    <para><citerefentry>
+        <refentrytitle>netatalk</refentrytitle>
+
+        <manvolnum>8</manvolnum>
+      </citerefentry>, <citerefentry>
+        <refentrytitle>hosts_access</refentrytitle>
+
+        <manvolnum>5</manvolnum>
+      </citerefentry>, <citerefentry>
+        <refentrytitle>afp.conf</refentrytitle>
+
+        <manvolnum>5</manvolnum>
+      </citerefentry>, <citerefentry>
+        <refentrytitle>afp_signature.conf</refentrytitle>
+
+        <manvolnum>5</manvolnum>
+      </citerefentry>, <citerefentry>
+        <refentrytitle>afp_voluuid.conf</refentrytitle>
+
+        <manvolnum>5</manvolnum>
+      </citerefentry>, <citerefentry>
+        <refentrytitle>extmap.conf</refentrytitle>
+
+        <manvolnum>5</manvolnum>
+      </citerefentry>, <citerefentry>
+        <refentrytitle>dbd</refentrytitle>
+
+        <manvolnum>1</manvolnum>
+      </citerefentry>.</para>
+  </refsect1>
+</refentry>

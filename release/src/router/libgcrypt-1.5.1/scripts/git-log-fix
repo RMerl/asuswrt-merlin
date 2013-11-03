@@ -1,0 +1,3 @@
+# This file is expected to be used via gitlog-to-changelog's --amend=FILE
+# option.  It specifies what changes to make to each given SHA1's commit
+# log and metadata, using Perl-eval'able expressions.

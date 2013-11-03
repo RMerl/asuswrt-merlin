@@ -841,7 +841,7 @@ struct speed {
     { 76800, B76800 },
 #endif
 #ifdef B115200
-    //{ 115200, B115200 },
+    { 115200, B115200 },
 #endif
 #ifdef EXTA
     { 19200, EXTA },

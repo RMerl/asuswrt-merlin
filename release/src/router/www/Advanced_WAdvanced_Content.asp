@@ -53,7 +53,7 @@ var flag_initial =0;
 var wl_version = "<% nvram_get("wl_version"); %>";
 var sdk_version_array = new Array();
 sdk_version_array = wl_version.split(".");
-var new_sdk = sdk_version_array[0] == "6" ? true:false
+var sdk_6 = sdk_version_array[0] == "6" ? true:false
 var wl_user_rssi_onload = '<% nvram_get("wl_user_rssi"); %>';
 
 function initial(){
@@ -103,7 +103,7 @@ function initial(){
 	}
 	
 	// MODELDEP: for AC ser
-	if(new_sdk && !Rawifi_support){		// for BRCM new SDK 6.x
+	if(sdk_6 && !Rawifi_support){		// for BRCM new SDK 6.x
 		inputCtrl(document.form.wl_ampdu_mpdu, 1);
 		inputCtrl(document.form.wl_ack_ratio, 1);
 	}else{
@@ -130,8 +130,11 @@ function initial(){
 	if('<% nvram_get("wl_unit"); %>' != '1'){ // 2GHz
 		if(based_modelid == "RT-AC68U"){
 			inputCtrl(document.form.wl_turbo_qam, 1);
+			inputCtrl(document.form.wl_txbf, 1);
+			inputCtrl(document.form.wl_itxbf, 1);
+			inputCtrl(document.form.usb_usb3, 1);
 		}
-		if(based_modelid == "RT-AC68U" || based_modelid == "RT-AC56U" || based_modelid == "RT-N65U"){
+		else if(based_modelid == "RT-AC56U" || based_modelid == "RT-N65U"){
 			inputCtrl(document.form.usb_usb3, 1);
 		}
 	}
@@ -649,7 +652,7 @@ function check_ampdu_rts(){
 					</tr>
 
 					<tr id="rssiTr" class="rept">
-						<th>Minimum RSSI</th>
+		  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 31);">Roaming assistant</a></th>
 						<td>
 							<select id="wl_user_rssi_option" class="input_option" onchange="changeRSSI(this.value);">
 								<option value="1"><#WLANConfig11b_WirelessCtrl_button1name#></option>

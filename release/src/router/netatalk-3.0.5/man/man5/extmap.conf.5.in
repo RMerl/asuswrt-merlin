@@ -1,0 +1,77 @@
+'\" t
+.\"     Title: extmap.conf
+.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
+.\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
+.\"      Date: 19 Jan 2013
+.\"    Manual: @NETATALK_VERSION@
+.\"    Source: @NETATALK_VERSION@
+.\"  Language: English
+.\"
+.TH "EXTMAP\&.CONF" "5" "19 Jan 2013" "@NETATALK_VERSION@" "@NETATALK_VERSION@"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+extmap.conf \- Configuration file used by afpd(8) to specify file name extension mappings\&.
+.SH "SYNOPSIS"
+.HP \w'\fB@pkgconfdir@/extmap\&.conf\fR\fB\fR\ 'u
+\fB@pkgconfdir@/extmap\&.conf\fR\fB\fR
+.SH "DESCRIPTION"
+.PP
+
+@pkgconfdir@/extmap\&.conf
+is the configuration file used by
+\fBafpd\fR
+to specify file name extension mappings\&.
+.PP
+The configuration lines are composed like:
+.PP
+\&.extension
+\fI[ type [ creator ] ]\fR
+.PP
+Any line beginning with a hash (\(lq#\(rq) character is ignored\&. The leading\-dot lines specify file name extension mappings\&. The extension \*(Aq\&.\*(Aq sets the default creator and type for otherwise untyped Unix files\&.
+.SH "EXAMPLES"
+.PP
+\fBExample.\ \&Extension is jpg. Type is "JPEG". Creator is "ogle".\fR
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\&.jpg "JPEG" "ogle"
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fBExample.\ \&Extension is lzh. Type is "LHA ". Creator is not defined.\fR
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\&.lzh "LHA "
+.fi
+.if n \{\
+.RE
+.\}
+.SH "SEE ALSO"
+.PP
+\fBafp.conf\fR(5),
+\fBafpd\fR(8)

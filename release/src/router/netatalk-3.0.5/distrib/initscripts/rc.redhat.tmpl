@@ -1,0 +1,95 @@
+#! /bin/sh
+# chkconfig: - 91 35
+# description: Netatalk AFP fileserver for Macintosh clients
+#
+# Netatalk :NETATALK_VERSION:
+
+NETATALK_CONF_DIR=:ETCDIR:
+NETATALK_SBIN=:SBINDIR:
+prog=netatalk
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# Source networking configuration.
+. /etc/sysconfig/network
+
+# initialize return values
+RETVAL=1
+
+# startup code for everything
+netatalk_startup() {
+    # Check that networking is up.
+    if [ ${NETWORKING} = "no" ]; then
+        echo "[Network isn't started]";
+        exit 1;
+    fi
+
+    if [ -x ${NETATALK_SBIN}/netatalk ] ; then
+        echo -n $"Starting $prog: "
+        daemon ${NETATALK_SBIN}/netatalk
+        RETVAL=$?
+        echo
+    fi
+
+    if [ $RETVAL -eq 0 ]; then
+        touch /var/lock/subsys/netatalk || RETVAL=1
+    fi
+}
+
+# stop code for everything
+netatalk_stop() {
+    if [ -x ${NETATALK_SBIN}/netatalk ]; then
+        echo -n $"Stopping $prog: "
+        killproc netatalk
+        RETVAL=$?
+        echo
+    fi
+
+    if [ $RETVAL -eq 0 ] ; then
+        rm -f /var/lock/subsys/netatalk || RETVAL=1
+    fi
+}
+
+# restart code
+netatalk_restart() {
+    netatalk_stop
+    netatalk_startup
+}
+
+# reload config files
+netatalk_reload() {
+    if [ -x ${NETATALK_SBIN}/netatalk ]; then
+        echo -n $"Reloading $prog: "
+        killproc netatalk -HUP
+        RETVAL=$?
+        echo
+    fi
+}
+
+case "$1" in
+    'start')
+        netatalk_startup
+        ;;
+    'stop')
+        netatalk_stop
+        ;;
+    'restart')
+        netatalk_restart
+        ;;
+    'reload'|'graceful')
+        netatalk_reload
+        ;;
+    'status')
+        status netatalk
+        RETVAL=$?
+        ;;
+    'condrestart')
+        [ -f /var/lock/subsys/netatalk ] && netatalk_restart || :
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart|reload|status|condrestart}"
+        exit 2
+esac
+
+exit $RETVAL

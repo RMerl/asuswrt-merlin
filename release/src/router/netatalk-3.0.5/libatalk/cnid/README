@@ -1,0 +1,50 @@
+  
+  CNID back-end refactoring
+  
+This patch allows to compile all DID schemes into 
+afpd  binary and then select desired schemes at runtime,
+per volume.
+
+
+Changes:
+
+Libatalk/cnid directory as been restructured. Now it contains
+subdirectories representing particular back-end types and a
+simple cnid-object factory (cnid.c and cnid_init.c).
+
+All CNID functions have been grouped into a structure which 
+contains function pointers and some data. Main afpd code uses
+them in a object manner rather than structural: it calls cnid 
+functions through fields of cnid_db structure. 
+
+Actually there are standard backends: transactional db3, cdb, 
+last and mtab (I'm not sure how to call mtab - it does some magic
+with dev/inode numbers, but mtab has been removed some time ago).
+
+Changes in ./configure options:
+
+Options --with-did=xxx, --with-cdb have been removed.
+
+Instead, there are following options:
+--with-cnid-cdb-backend    - compile DB3 Concurrent Datastore backend
+--with-cnid-db3-backend    - compile DB3 transactional backend
+--with-cnid-last-backend   - compile LAST backend
+--with-cnid-mtab-backend   - compile MTAB backend
+--with-cnid-default-backend={cdb|db3|last|mtab}
+
+Some of the backend names should be (propably) changed (mtab? db3?).
+
+AppleVolumes.default file has a new option: -cnidscheme:{db3|cdb|last|mtab}
+
+Again, sorry for this weird naming. I didn't care about it while coding,
+some cleanups have to be done later.
+
+Was tested mainly against test-suite and against MacOS 9 client.
+
+Things to do:
+- some really reliable kind of backend should be developed
+- file-name mangling should be runtime option
+- naming- and code cleanups are still needed
+- optional dynamic CNID backend loading - lower priority, static linking
+option has still to be available
+

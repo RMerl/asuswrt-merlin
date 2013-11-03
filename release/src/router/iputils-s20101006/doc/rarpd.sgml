@@ -1,0 +1,170 @@
+<refentry id="rarpd">
+
+<refmeta>
+<refentrytitle>rarpd</refentrytitle>
+<manvolnum>8</manvolnum>
+<refmiscinfo>iputils-&snapshot;</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>rarpd</refname>
+<refpurpose>answer RARP REQUESTs</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>arping</command>
+<arg choice="opt"><option>-aAvde</option></arg>
+<arg choice="opt">-b <replaceable/bootdir/</arg>
+<arg choice="opt"><replaceable/interface/</arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1><title>DESCRIPTION</title>
+<para>
+Listens
+<ulink url="ftp://ftp.isi.edu/in-notes/rfc903.txt">RARP</ulink>
+requests from clients. Provided MAC address of client
+is found in <filename>/etc/ethers</filename> database and
+obtained host name is resolvable to an IP address appropriate
+for attached network, <command/rarpd/ answers to client with RARPD
+reply carrying an IP address.
+</para>
+<para>
+To allow multiple boot servers on the network <command/rarpd/
+optionally checks for presence Sun-like bootable image in TFTP directory.
+It should have form <userinput/Hexadecimal_IP.ARCH/, f.e. to load
+sparc 193.233.7.98 <filename/C1E90762.SUN4M/ is linked to
+an image appropriate for SUM4M in directory <filename>/etc/tftpboot</filename>.
+</para>
+</refsect1>
+
+<refsect1><title>WARNING</title>
+<para>
+This facility is deeply obsoleted by
+<ulink url="ftp://ftp.isi.edu/in-notes/rfc951.txt">BOOTP</ulink>
+and later
+<ulink url="ftp://ftp.isi.edu/in-notes/rfc2131.txt">DHCP</ulink> protocols.
+However, some clients really still need this to boot.
+</para>
+</refsect1>
+
+
+<refsect1><title>OPTIONS</title>
+
+<variablelist>
+
+ <varlistentry>
+  <term><option/-a/</term>
+  <listitem><para>
+Listen on all the interfaces. Currently it is an internal
+option, its function is overridden with <replaceable/interface/
+argument. It should not be used.
+  </para></listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term><option/-A/</term>
+  <listitem><para>
+Listen not only RARP but also ARP messages, some rare clients
+use ARP by some unknown reason.
+  </para></listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term><option/-v/</term>
+  <listitem><para>
+Be verbose.
+  </para></listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term><option/-d/</term>
+  <listitem><para>
+Debug mode. Do not go to background.
+  </para></listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term><option/-e/</term>
+  <listitem><para>
+Do not check for presence of a boot image, reply if MAC address
+resolves to a valid IP address using <filename>/etc/ethers</filename>
+database and DNS. 
+  </para></listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term><option>-b <replaceable/bootdir/</option></term>
+  <listitem><para>
+TFTP boot directory. Default is <filename>/etc/tftpboot</filename>
+  </para></listitem>
+ </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para>
+<link linkend="arping">
+<citerefentry><refentrytitle/arping/<manvolnum/8/</citerefentry></link>,
+<link linkend="tftpd">
+<citerefentry><refentrytitle/tftpd/<manvolnum/8/</citerefentry></link>.
+</para>
+</refsect1>
+
+<refsect1><title>AUTHOR</title>
+<para>
+<command/rarpd/ was written by
+<ulink url="mailto:kuznet@ms2.inr.ac.ru">Alexey Kuznetsov
+&lt;kuznet@ms2.inr.ac.ru&gt;</ulink>.
+It is now maintained by
+<ulink url="mailto:yoshfuji@skbuff.net">YOSHIFUJI Hideaki
+&lt;yoshfuji@skbuff.net&gt;</ulink>.
+</para>
+</refsect1>
+
+<refsect1><title>SECURITY</title>
+<para>
+<command/rarpd/ requires <constant/CAP_NET_RAWIO/ capability
+to listen and send RARP and ARP packets. It also needs <constant/CAP_NET_ADMIN/
+to give to kernel hint for ARP resolution; this is not strictly required,
+but some (most of, to be more exact) clients are so badly broken that
+are not able to answer ARP before they are finally booted. This is
+not wonderful taking into account that clients using RARPD in 2002
+are all unsupported relic creatures of 90's and even earlier.
+</para>
+</refsect1>
+
+<refsect1><title>AVAILABILITY</title>
+<para>
+<command/rarpd/ is part of <filename/iputils/ package
+and the latest versions are  available in source form at
+<ulink url="http://www.skbuff.net/iputils/iputils-current.tar.bz2">
+http://www.skbuff.net/iputils/iputils-current.tar.bz2</ulink>.
+</para>
+</refsect1>
+
+<![IGNORE[
+<refsect1><title>COPYING</title>
+<para>
+<literallayout>
+This documentation is free software; you can redistribute
+it and/or modify it under the terms of the GNU General Public
+License Version 2.
+
+This program is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU General Public License for more details.
+ 
+For more details see the file COPYING in the source
+distribution of Linux kernel of version 2.4.
+</literallayout>
+</para>
+</refsect1>
+]]>
+
+
+
+
+</refentry>

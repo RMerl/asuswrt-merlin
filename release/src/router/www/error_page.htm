@@ -389,7 +389,7 @@ function check_system_ready(){
 		$("#proceeding_img_text")[0].innerHTML = "<#Main_alert_proceeding_desc3#>";
 		$("#proceeding_action")[0].innerHTML = "<#APSurvey_action_renew_success#>";
 
-		if('<% nvram_get("w_Setting"); %>' == '0' || '<% nvram_get("http_passwd"); %>' == 'admin')
+		if('<% nvram_get("x_Setting"); %>' == '0')
 			setTimeout("parent.location = \"http://"+new_lan_ip+"/QIS_wizard.htm?flag=welcome\"", 2*1000);
 		else
 			setTimeout("parent.location = \"http://"+new_lan_ip+"/QIS_wizard.htm?flag=detect\"", 2*1000);

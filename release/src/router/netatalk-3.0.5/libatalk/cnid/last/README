@@ -1,0 +1,4 @@
+This is [last] DID scheme implementation. 
+
+TODO: this scheme doesn't exactly mimic real, persistent CNID schemes, so 
+      things like name mangling won't work. 

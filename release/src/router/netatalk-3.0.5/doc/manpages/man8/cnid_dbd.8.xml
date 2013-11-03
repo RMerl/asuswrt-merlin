@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry id="cnid_dbd.8">
+  <refmeta>
+    <refentrytitle>cnid_dbd</refentrytitle>
+
+    <manvolnum>8</manvolnum>
+
+    <refmiscinfo class="date">01 Jan 2012</refmiscinfo>
+
+    <refmiscinfo class="source">@NETATALK_VERSION@</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>cnid_dbd</refname>
+
+    <refpurpose>implement access to CNID databases through a dedicated daemon
+    process</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>cnid_dbd<indexterm>
+          <primary>cnid_dbd</primary>
+        </indexterm><indexterm>
+          <primary>CNID backend</primary>
+        </indexterm><indexterm>
+          <primary>NFS</primary>
+
+          <secondary>Network File System</secondary>
+        </indexterm></command>
+
+      <sbr />
+
+      <command>cnid_dbd<indexterm>
+          <primary>cnid_dbd</primary>
+        </indexterm></command>
+
+        <group choice="plain">
+          <arg choice="plain">-v</arg>
+          <arg choice="plain">-V</arg>
+        </group>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>DESCRIPTION</title>
+
+    <para><command>cnid_dbd</command> provides an interface for storage and
+    retrieval of catalog node IDs (CNIDs) and related information to the
+    <emphasis remap="B">afpd</emphasis> daemon. CNIDs are a component of
+    Macintosh based file systems with semantics that map not easily onto Unix
+    file systems. This makes separate storage in a database necessary.
+    <command>cnid_dbd</command> is part of the <emphasis remap="B">CNID
+    backend</emphasis> framework of <emphasis remap="B">afpd</emphasis> and
+    implements the <emphasis remap="B">dbd</emphasis> backend.</para>
+
+    <para><command>cnid_dbd</command> is never started via the command line or
+    system startup scripts but only by the <emphasis
+    remap="B">cnid_metad</emphasis> daemon. There is one instance of
+    <command>cnid_dbd</command> per netatalk volume.</para>
+
+    <para><command>cnid_dbd</command> uses the <emphasis remap="B">Berkeley
+    DB</emphasis> database library and uses transactionally protected updates.
+    The <emphasis remap="B">dbd</emphasis> backend with transactions will
+    avoid corruption of the CNID database even if the system crashes
+    unexpectedly.</para>
+
+    <para><command>cnid_dbd</command> inherits the effective userid and
+    groupid from <emphasis remap="B">cnid_metad</emphasis> on startup, which
+    is normally caused by <emphasis remap="B">afpd</emphasis> serving a
+    netatalk volume to a client. It changes to the <emphasis
+    remap="B">Berkeley DB</emphasis> database home directory <emphasis
+    remap="I">dbdir</emphasis> that is associated with the volume. If the
+    userid inherited from <emphasis remap="B">cnid_metad</emphasis> is 0
+    (root), <command>cnid_dbd</command> will change userid and groupid to the
+    owner and group of the database home directory. Otherwise, it will
+    continue to use the inherited values. <command>cnid_dbd</command> will
+    then attempt to open the database and start serving requests using
+    filedescriptor <emphasis remap="I">clntfd</emphasis>. Subsequent instances
+    of <emphasis remap="B">afpd</emphasis> that want to access the same volume
+    are redirected to the running <command>cnid_dbd</command> process by
+    <emphasis remap="B">cnid_metad</emphasis> via the filedescriptor <emphasis
+    remap="I">ctrlfd</emphasis>.</para>
+
+    <para><command>cnid_dbd</command> can be configured to run forever or to
+    exit after a period of inactivity. If <command>cnid_dbd</command> receives
+    a TERM or an INT signal it will exit cleanly after flushing dirty database
+    buffers to disk and closing <emphasis remap="B">Berkeley DB</emphasis>
+    database environments. It is safe to terminate <command>cnid_dbd</command>
+    this way, it will be restarted when necessary. Other signals are not
+    handled and will cause an immediate exit, possibly leaving the CNID
+    database in an inconsistent state (no transactions) or losing recent
+    updates during recovery (transactions).</para>
+
+    <para>The <emphasis remap="B">Berkeley DB</emphasis> database subsystem
+    will create files named log.xxxxxxxxxx in the database home directory
+    <emphasis remap="I">dbdir</emphasis>, where xxxxxxxxxx is a monotonically
+    increasing integer. These files contain the transactional database
+    changes. They will be removed regularly, unless the <emphasis
+    remap="B">logfile_autoremove</emphasis> option is specified in the
+    <emphasis remap="I">db_param</emphasis> configuration file (see
+    below) with a value of 0 (default 1).</para>
+  </refsect1>
+
+  <refsect1>
+    <title>OPTIONS</title>
+
+    <variablelist remap="TP">
+      <varlistentry>
+        <term><option>-v, -V</option></term>
+	
+        <listitem>
+          <para>Show version and exit.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>CONFIGURATION</title>
+
+    <para><command>cnid_dbd</command> reads configuration information from the
+    file <emphasis remap="I">db_param</emphasis> in the database directory
+    <emphasis remap="I">dbdir</emphasis> on startup. If the file does not
+    exist or a parameter is not listed, suitable default values are used. The
+    format for a single parameter is the parameter name, followed by one or
+    more spaces, followed by the parameter value, followed by a newline. The
+    following parameters are currently recognized:</para>
+
+    <variablelist remap="TP">
+      <varlistentry>
+        <term><emphasis remap="B">logfile_autoremove</emphasis></term>
+
+        <listitem>
+          <para>If set to 0, unused Berkeley DB transactional logfiles
+          (log.xxxxxxxxxx in the database home directory) are not removed on
+          startup of <command>cnid_dbd</command> and on a regular basis.
+          Default: 1.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><emphasis remap="B">cachesize</emphasis></term>
+
+        <listitem>
+          <para>Determines the size of the Berkeley DB cache in kilobytes.
+          Default: 8192. Each <command>cnid_dbd</command> process grabs that
+          much memory on top of its normal memory footprint. It can be used to
+          tune database performance. The <emphasis
+          remap="B">db_stat</emphasis> utility with the <option>-m</option>
+          option that comes with Berkley DB can help you determine ether you
+          need to change this value. The default is pretty conservative so
+          that a large percentage of requests should be satisfied from the
+          cache directly. If memory is not a bottleneck on your system you
+          might want to leave it at that value. The <emphasis
+          remap="B">Berkeley DB Tutorial and Reference Guide</emphasis> has a
+          section <emphasis remap="B">Selecting a cache size</emphasis> that
+          gives more detailed information.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><emphasis remap="B">flush_frequency</emphasis></term>
+
+        <term><emphasis remap="B">flush_interval</emphasis></term>
+
+        <listitem>
+          <para><emphasis remap="I">flush_frequency</emphasis> (Default: 1000)
+          and <emphasis remap="I">flush_interval</emphasis> (Default: 1800)
+          control how often changes to the database are checkpointed. Both of
+          these operations are performed if either i) more than <emphasis
+          remap="I">flush_frequency</emphasis> requests have been received or
+          ii) more than <emphasis remap="I">flush_interval</emphasis> seconds
+          have elapsed since the last save/checkpoint. Be careful to check
+          your harddisk configuration for on disk cache settings. Many IDE
+          disks just cache writes as the default behaviour, so even flushing
+          database files to disk will not have the desired effect.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><emphasis remap="B">fd_table_size</emphasis></term>
+
+        <listitem>
+          <para>is the maximum number of connections (filedescriptors) that
+          can be open for <emphasis remap="B">afpd</emphasis> client processes
+          in <emphasis remap="B">cnid_dbd.</emphasis> Default: 512. If this
+          number is exceeded, one of the existing connections is closed and
+          reused. The affected <emphasis remap="B">afpd</emphasis> process
+          will transparently reconnect later, which causes slight overhead. On
+          the other hand, setting this parameter too high could affect
+          performance in <command>cnid_dbd</command> since all descriptors
+          have to be checked in a <function>select()</function> system call,
+          or worse, you might exceed the per process limit of open file
+          descriptors on your system. It is safe to set the value to 1 on
+          volumes where only one <emphasis remap="B">afpd</emphasis> client
+          process is expected to run, e.g. home directories.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><emphasis remap="B">idle_timeout</emphasis></term>
+
+        <listitem>
+          <para>is the number of seconds of inactivity before an idle
+          <command>cnid_dbd</command> exits. Default: 600. Set this to 0 to
+          disable the timeout.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>UPDATING</title>
+
+    <para>Note that the first version to appear <emphasis>after</emphasis>
+    Netatalk 2.1 ie Netatalk 2.1.1, will support BerkeleyDB updates on the fly
+    without manual intervention. In other words Netatalk 2.1 does contain code
+    to prepare the BerkeleyDB database for upgrades and to upgrade it in case
+    it has been prepared before. That means it can't upgrade a 2.0.x version
+    because that one didn't prepare the database.</para>
+
+    <para>In order to update between older Netatalk releases using different
+    BerkeleyDB library versions, follow this steps:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>Stop the to be upgraded old version of Netatalk</para>
+      </listitem>
+
+      <listitem>
+        <para>Using the old BerkeleyDB utilities run <command>db_recover -h
+        &lt;path to .AppleDB&gt;</command></para>
+      </listitem>
+
+      <listitem>
+        <para>Using the new BerkeleyDB utilities run <command>db_upgrade -v -h
+        &lt;path to .AppleDB&gt; -f cnid2.db</command></para>
+      </listitem>
+
+      <listitem>
+        <para>Again using the new BerkeleyDB utilities run
+        <command>db_checkpoint -1 -h &lt;path to .AppleDB&gt;</command></para>
+      </listitem>
+
+      <listitem>
+        <para>Start the the new version of Netatalk</para>
+      </listitem>
+    </itemizedlist>
+
+  </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+
+    <para><citerefentry>
+        <refentrytitle>cnid_metad</refentrytitle>
+
+        <manvolnum>8</manvolnum>
+      </citerefentry>, <citerefentry>
+        <refentrytitle>afpd</refentrytitle>
+
+        <manvolnum>8</manvolnum>
+      </citerefentry>, <citerefentry>
+        <refentrytitle>dbd</refentrytitle>
+
+        <manvolnum>1</manvolnum>
+      </citerefentry></para>
+  </refsect1>
+</refentry>

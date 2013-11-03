@@ -1764,6 +1764,58 @@ ej_wl_channel_list_5g(int eid, webs_t wp, int argc, char_t **argv)
 	return ej_wl_channel_list(eid, wp, argc, argv, 1);
 }
 
+static int ej_wl_rate(int eid, webs_t wp, int argc, char_t **argv, int unit)
+{
+	int retval = 0;
+	char tmp[256], prefix[] = "wlXXXXXXXXXX_";
+	char *name;
+	char word[256], *next;
+	int unit_max = 0;
+	int rate = 0;
+	char rate_buf[32];
+
+	sprintf(rate_buf, "0 Mbps");
+
+	foreach (word, nvram_safe_get("wl_ifnames"), next)
+		unit_max++;
+
+	if (unit > (unit_max - 1))
+		goto ERROR;
+
+	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
+
+        if (wl_ioctl(name, WLC_GET_RATE, &rate, sizeof(int)))
+	{
+                dbG("can not get rate info of %s\n", name);
+		goto ERROR;
+	}
+        else
+        {
+                rate = dtoh32(rate);
+		if ((rate == -1) || (rate == 0))
+			sprintf(rate_buf, "auto");
+		else
+			sprintf(rate_buf, "%d%s Mbps", (rate / 2), (rate & 1) ? ".5" : "");
+        }
+
+ERROR:
+	retval += websWrite(wp, "%s", rate_buf);
+	return retval;
+}
+
+int
+ej_wl_rate_2g(int eid, webs_t wp, int argc, char_t **argv)
+{
+	return ej_wl_rate(eid, wp, argc, argv, 0);
+}
+
+int
+ej_wl_rate_5g(int eid, webs_t wp, int argc, char_t **argv)
+{
+	return ej_wl_rate(eid, wp, argc, argv, 1);
+}
+
 static int wps_error_count = 0;
 
 char *
@@ -2822,8 +2874,8 @@ next_info:
 			retval += websWrite(wp, "\"%s\", ", "a");
 		else if (apinfos[i].NetworkType == Ndis802_11OFDM5_N)
 			retval += websWrite(wp, "\"%s\", ", "an");
-                else if (apinfos[i].NetworkType == Ndis802_11OFDM5_VHT)
-                        retval += websWrite(wp, "\"%s\", ", "ac");
+		else if (apinfos[i].NetworkType == Ndis802_11OFDM5_VHT)
+			retval += websWrite(wp, "\"%s\", ", "ac");
 		else if (apinfos[i].NetworkType == Ndis802_11OFDM24)
 			retval += websWrite(wp, "\"%s\", ", "bg");
 		else if (apinfos[i].NetworkType == Ndis802_11OFDM24_N)

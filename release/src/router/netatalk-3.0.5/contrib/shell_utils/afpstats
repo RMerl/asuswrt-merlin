@@ -1,0 +1,29 @@
+#!/usr/bin/env python
+
+usage = """Usage:
+python afpstats.py
+"""
+
+import sys
+from traceback import print_exc
+import dbus
+
+def main():
+    bus = dbus.SystemBus()
+
+    try:
+        remote_object = bus.get_object("org.netatalk.AFPStats",
+                                       "/org/netatalk/AFPStats")
+
+    except dbus.DBusException:
+        print_exc()
+        sys.exit(1)
+
+    iface = dbus.Interface(remote_object, "org.netatalk.AFPStats")
+
+    reply = iface.GetUsers()
+    for name in reply:
+        print name
+
+if __name__ == '__main__':
+    main()

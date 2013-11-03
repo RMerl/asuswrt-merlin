@@ -20,7 +20,7 @@
 
 var RetryCountDown_fail = 5;
 var det_status = '<% nvram_get("dsltmp_autodet_state"); %>';
-
+var w_Setting = "<% nvram_get("w_Setting"); %>";
 
 function QKDetect_load_body(){
 	// left side step indication
@@ -78,13 +78,18 @@ function redirect_page(redirect_flag){
 }
 
 function gotoIndex(){
+	if (w_Setting == "0") {
+		alert("<#QIS_recommand_encryption#>");	
+		location.href = '/qis/QIS_wireless.htm';
+	}
+	else {
 		parent.location.href = '/index.asp';
+	}
 }
 
 function gotoUserManualSet(){
 	location.href = '/qis/QIS_manual_setting.htm';
 }
-
 </script>
 </head>
 
@@ -103,6 +108,11 @@ function gotoUserManualSet(){
 				<tr>
 					<td align="left">
 						<span class="description_down"><#QKSet_detect_desc1#></span>
+					</td>
+				</tr>
+				<tr id="home_button">
+					<td align="right">
+						<img onclick="gotoIndex();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'">
 					</td>
 				</tr>
 			</table>

@@ -1,0 +1,39 @@
+'\" t
+.\" (The preceding line is a note to broken versions of man to tell
+.\" them to pre-process this man page with tbl)
+.\" Man page for pmap.
+.\" Licensed under version 2 of the GNU General Public License.
+.\" Written by Albert Cahalan.
+.\"
+.TH PMAP 1 "October 26, 2002" "Linux" "Linux User's Manual"
+.SH NAME
+pmap \- report memory map of a process
+
+.SH SYNOPSIS
+.nf
+pmap [ -x | -d ] [ -q ] pids...
+pmap -V
+.fi
+
+.SH DESCRIPTION
+The pmap command reports the memory map of a process or processes.
+
+.SH "GENERAL OPTIONS"
+.TS
+l l l.
+-x	extended	Show the extended format.
+-d	device	Show the device format.
+-q	quiet	Do not display some header/footer lines.
+-V	show version	Displays version of program.
+.TE
+
+.SH "SEE ALSO"
+ps(1) pgrep(1)
+
+.SH STANDARDS
+No standards apply, but pmap looks an awful lot like a SunOS command.
+
+.SH AUTHOR
+Albert Cahalan <albert@users.sf.net> wrote pmap in 2002, and is the current
+maintainer of the procps collection. Please send bug reports
+to <procps-feedback@lists.sf.net>.

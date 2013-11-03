@@ -1,0 +1,87 @@
+.TH WATCH 1 "1999 Apr 3" " " "Linux User's Manual"
+.SH NAME
+watch \- execute a program periodically, showing output fullscreen
+.SH SYNOPSIS
+.B watch
+.I [\-dhvt] [\-n <seconds>] [\-\-differences[=cumulative]] [\-\-help] [\-\-interval=<seconds>] [\-\-no\-title] [\-\-version] <command>
+.SH DESCRIPTION
+.BR watch
+runs
+.I command
+repeatedly, displaying its output (the first screenfull).  This allows you to
+watch the program output change over time.  By default, the program is run
+every 2 seconds; use 
+.I -n
+or
+.I --interval
+to specify a different interval.
+.PP
+The
+.I -d
+or
+.I --differences
+flag will highlight the differences between successive updates.  The 
+.I --cumulative
+option makes highlighting "sticky", presenting a running display of all
+positions that have ever changed.  The
+.I -t
+or
+.I --no-title
+option turns off the header showing the interval, command, and current
+time at the top of the display, as well as the following blank line.
+.PP
+.BR watch
+will run until interrupted.
+.SH NOTE
+Note that
+.I command
+is given to "sh -c"
+which means that you may need to use extra quoting to get the desired effect.
+.PP
+Note that POSIX option processing is used (i.e., option processing stops at
+the first non-option argument).  This means that flags after
+.I command
+don't get interpreted by
+.BR watch
+itself.
+.SH EXAMPLES
+.PP
+To watch for mail, you might do
+.IP
+watch \-n 60 from
+.PP
+To watch the contents of a directory change, you could use
+.IP
+watch \-d ls \-l
+.PP
+If you're only interested in files owned by user joe, you might use 
+.IP
+watch \-d 'ls \-l | fgrep joe'
+.PP
+To see the effects of quoting, try these out
+.IP
+watch echo $$
+.IP
+watch echo '$$'
+.IP
+watch echo "'"'$$'"'"
+.PP
+You can watch for your administrator to install the latest kernel with
+.IP
+watch uname -r
+.PP
+(Just kidding.)
+.SH BUGS
+Upon terminal resize, the screen will not be correctly repainted until the
+next scheduled update.  All
+.I --differences
+highlighting is lost on that update as well.
+.PP
+Non-printing characters are stripped from program output.  Use "cat -v" as
+part of the command pipeline if you want to see them.
+.SH AUTHORS
+The original
+.B watch
+was written by Tony Rems <rembo@unisoft.com> in 1991, with mods and
+corrections by Francois Pinard.  It was reworked and new features added by
+Mike Coleman <mkc@acm.org> in 1999.

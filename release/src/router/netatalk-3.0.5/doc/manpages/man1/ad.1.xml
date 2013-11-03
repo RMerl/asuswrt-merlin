@@ -1,0 +1,402 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry id="ad.1">
+  <refmeta>
+    <refentrytitle>ad</refentrytitle>
+
+    <manvolnum>1</manvolnum>
+
+    <refmiscinfo class="date">02 Sep 2011</refmiscinfo>
+
+    <refmiscinfo class="source">@NETATALK_VERSION@</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>ad</refname>
+
+    <refpurpose>Netatalk compatible UNIX file utility suite.</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>ad</command>
+
+      <arg choice="req">ls | cp | mv | rm</arg>
+
+      <arg>...</arg>
+    </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>ad</command>
+
+      <arg choice="req">-v | --version</arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>Description</title>
+
+    <para><command>ad</command> is a UNIX file utility suite with Netatalk
+    compatibility. AppleDouble<indexterm>
+        <primary>AppleDouble</primary>
+      </indexterm> files in <filename>.AppleDouble</filename> directories and
+    the CNID databases are updated as appropriate.</para>
+  </refsect1>
+
+  <refsect1>
+    <title>Available Commands</title>
+
+    <cmdsynopsis>
+      <command>ad ls</command>
+
+      <arg>-dRl<arg>u</arg></arg>
+
+      <arg choice="req">file|dir <arg>...</arg></arg>
+    </cmdsynopsis>
+
+    <para>List files and directories.</para>
+
+    <cmdsynopsis>
+      <command>ad cp</command>
+
+      <arg choice="opt">-aipvf</arg>
+
+      <arg choice="req">src_file</arg>
+
+      <arg choice="req">dst_file</arg>
+    </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>ad cp -R</command>
+
+      <arg choice="opt">-aipvf</arg>
+
+      <arg choice="req">src_file|src_directory ...</arg>
+
+      <arg choice="req">dst_directory</arg>
+    </cmdsynopsis>
+
+    <para>Copy files and directories.</para>
+
+    <cmdsynopsis>
+      <command>ad mv</command>
+
+      <arg choice="opt">-finv</arg>
+
+      <arg choice="req">src_file</arg>
+
+      <arg choice="req">dst_file</arg>
+    </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>ad mv</command>
+
+      <arg choice="opt">-finv</arg>
+
+      <arg choice="req">src_file|src_directory ...</arg>
+
+      <arg choice="req">dst_directory</arg>
+    </cmdsynopsis>
+
+    <para>Move files and directories.</para>
+
+    <cmdsynopsis>
+      <command>ad rm</command>
+
+      <arg choice="opt">-Rv</arg>
+
+      <arg choice="req">file|directory</arg>
+    </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>ad -v|--version</command>
+    </cmdsynopsis>
+
+    <para>Show version.</para>
+  </refsect1>
+
+  <refsect1>
+    <title>ad ls</title>
+
+    <para>List files and directories. Options:</para>
+
+    <variablelist>
+      <varlistentry>
+        <term>-d</term>
+
+        <listitem>
+          <para>Directories are listed as plain files</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-R</term>
+
+        <listitem>
+          <para>list subdirectories recursively</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-l</term>
+
+        <listitem>
+          <para>Long output, list AFP info</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-u</term>
+
+        <listitem>
+          <para>List UNIX info</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    <para><emphasis>Long output description</emphasis></para>
+
+    <programlisting>&lt;unixinfo&gt; &lt;FinderFlags&gt; &lt;AFP Attributes&gt; &lt;Color&gt; &lt;Type&gt; &lt;Creator&gt; &lt;CNID from AppleDouble&gt; &lt;name&gt;
+
+FinderFlags (valid for (f)iles and/or (d)irectories):
+
+  d = On Desktop                      (f/d)
+  e = Hidden extension                (f/d)
+  m = Shared (can run multiple times) (f)
+  n = No INIT resources               (f)
+  i = Inited                          (f/d)
+  c = Custom icon                     (f/d)
+  t = Stationery                      (f)
+  s = Name locked                     (f/d)
+  b = Bundle                          (f/d)
+  v = Invisible                       (f/d)
+  a = Alias file                      (f/d)
+
+AFP Attributes:
+
+  y = System                          (f/d)
+  w = No write                        (f)
+  p = Needs backup                    (f/d)
+  r = No rename                       (f/d)
+  l = No delete                       (f/d)
+  o = No copy                         (f)
+
+Note: any letter appearing in uppercase means the flag is set but it's a directory for which the flag is not allowed.</programlisting>
+  </refsect1>
+
+  <refsect1>
+    <title>ad cp</title>
+
+    <para>Copy files and directories.</para>
+
+    <para>In the first synopsis form, the cp utility copies the contents of
+    the source_file to the target_file. In the second synopsis form, the
+    contents of each named source_file is copied to the destination
+    target_directory. The names of the files themselves are not changed. If cp
+    detects an attempt to copy a file to itself, the copy will fail.</para>
+
+    <para>Netatalk AFP volumes are detected by means of their ".AppleDesktop"
+    directory which is located in their volume root. When a copy targeting an
+    AFP volume is detected, its CNID database daemon is connected and all
+    copies will also go through the CNID database. AppleDouble files are also
+    copied and created as needed when the target is an AFP volume.</para>
+
+    <para>Options:</para>
+
+    <variablelist>
+      <varlistentry>
+        <term>-a</term>
+
+        <listitem>
+          <para>Archive mode. Same as -Rp.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-f</term>
+
+        <listitem>
+          <para>For each existing destination pathname, remove it and create a
+          new file, without prompting for confirmation regardless of its
+          permis- sions. (The -f option overrides any previous -i or -n
+          options.)</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-i</term>
+
+        <listitem>
+          <para>Cause cp to write a prompt to the standard error output before
+          copying a file that would overwrite an existing file. If the
+          response from the standard input begins with the character 'y' or
+          'Y', the file copy is attempted. (The -i option overrides any pre-
+          vious -f or -n options.)</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-n</term>
+
+        <listitem>
+          <para>Do not overwrite an existing file. (The -n option overrides
+          any previous -f or -i options.)</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-p</term>
+
+        <listitem>
+          <para>Cause cp to preserve the following attributes of each source
+          file in the copy: modification time, access time, file flags, file
+          mode, user ID, and group ID, as allowed by permissions. If the user
+          ID and group ID cannot be preserved, no error message is displayed
+          and the exit value is not altered.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-R</term>
+
+        <listitem>
+          <para>If source_file designates a directory, cp copies the directory
+          and the entire subtree connected at that point.If the source_file
+          ends in a /, the contents of the directory are copied rather than
+          the directory itself.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-v</term>
+
+        <listitem>
+          <para>Cause cp to be verbose, showing files as they are
+          copied.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-x</term>
+
+        <listitem>
+          <para>File system mount points are not traversed.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>ad mv</title>
+
+    <para>Move files and directories.</para>
+
+    <para>Move files around within an AFP volume, updating the CNID database
+    as needed. If either:<itemizedlist>
+        <listitem>
+          <para>source or destination is not an AFP volume</para>
+        </listitem>
+
+        <listitem>
+          <para>source AFP volume != destination AFP volume</para>
+        </listitem>
+      </itemizedlist>the files are copied and removed from the source.</para>
+
+    <para>Options:</para>
+
+    <variablelist>
+      <varlistentry>
+        <term>-f</term>
+
+        <listitem>
+          <para>Do not prompt for confirmation before overwriting the
+          destination path. (The -f option overrides any previous -i or -n
+          options.)</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-i</term>
+
+        <listitem>
+          <para>Cause mv to write a prompt to standard error before moving a
+          file that would overwrite an existing file. If the response from the
+          standard input begins with the character `y' or `Y', the move is
+          attempted. (The -i option overrides any previous -f or -n
+          options.)</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-n</term>
+
+        <listitem>
+          <para>Do not overwrite an existing file. (The -n option overrides
+          any previous -f or -i options.)</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-v</term>
+
+        <listitem>
+          <para>Cause mv to be verbose, showing files after they are
+          moved.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>ad rm</title>
+
+    <para>Remove files and directories.</para>
+
+    <para>The rm utility attempts to remove the non-directory type files
+    specified on the command line. If the files and directories reside on an
+    AFP volume, the corresponding CNIDs are deleted from the volumes
+    database.</para>
+
+    <para>The options are as follows:</para>
+
+    <variablelist>
+      <varlistentry>
+        <term>-R</term>
+
+        <listitem>
+          <para>Attempt to remove the file hierarchy rooted in each file
+          argument.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-v</term>
+
+        <listitem>
+          <para>Be verbose when deleting files, showing them as they are
+          removed.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>Reporting Bugs</title>
+
+    <para>Report bugs to the Netatalk-devel list
+    &lt;netatalk-devel@lists.sourceforge.net&gt;.</para>
+  </refsect1>
+
+  <refsect1>
+    <title>See also</title>
+
+    <para><citerefentry>
+        <refentrytitle>dbd</refentrytitle>
+
+        <manvolnum>1</manvolnum>
+      </citerefentry>, <citerefentry>
+        <refentrytitle>apple_dump</refentrytitle>
+
+        <manvolnum>1</manvolnum>
+      </citerefentry>.</para>
+  </refsect1>
+</refentry>

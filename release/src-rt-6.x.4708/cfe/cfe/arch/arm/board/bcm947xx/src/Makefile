@@ -1,7 +1,7 @@
 #
 # Makefile for Broadcom BCM947XX (ARM) boards
 #
-# Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+# Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
 # 
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -42,6 +42,7 @@ ALLOBJS         += siutils.o hndarm_ca9.o hndchipc.o sromstubs.o \
 		   bcmstdlib.o aisdram_ca9.o pcieinit_ca9.o aiutils.o hndsoc.o
 
 CFLAGS		+= -DBCMCHIPTYPE=3 -DBCMPMUCTL=0
+CFLAGS		+= -DBCM47XX
 
 # SHMOO argorithm takes about 1.5 seconds
 ifeq ($(strip $(CFG_SHMOO)), 1)
@@ -62,7 +63,7 @@ endif
 
 # BCM4704 used in dev/dev_ns16550.c
 CFLAGS += -DBCM4704 -DBCMDRIVER
-CFLAGS += -I$(SRCBASE)/include
+CFLAGS += -I$(SRCBASE)/include -I$(SRCBASE)/common/include
 
 vpath %.c $(SRCBASE)/shared $(SRCBASE)/shared/nvram
 vpath %.S $(SRCBASE)/shared

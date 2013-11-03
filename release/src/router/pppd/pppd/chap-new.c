@@ -58,6 +58,7 @@ int (*chap_verify_hook)(char *name, char *ourname, int id,
 int chap_timeout_time = 3;
 int chap_max_transmits = 10;
 int chap_rechallenge_time = 0;
+int chapms_strip_domain = 0;
 
 /*
  * Command-line options.
@@ -69,6 +70,8 @@ static option_t chap_option_list[] = {
 	  "Set max #xmits for challenge", OPT_PRIO },
 	{ "chap-interval", o_int, &chap_rechallenge_time,
 	  "Set interval for rechallenge", OPT_PRIO },
+	{ "chapms-strip-domain", o_bool, &chapms_strip_domain,
+	  "Strip the domain prefix before the Username", 1 },
 	{ NULL }
 };
 
@@ -336,6 +339,14 @@ chap_handle_response(struct chap_server_state *ss, int id,
 			/* Null terminate and clean remote name. */
 			slprintf(rname, sizeof(rname), "%.*v", len, name);
 			name = rname;
+
+			/* strip the MS domain name */
+			if (chapms_strip_domain && strrchr(rname, '\\')) {
+				char tmp[MAXNAMELEN+1];
+
+				strcpy(tmp, strrchr(rname, '\\') + 1);
+				strcpy(rname, tmp);
+			}
 		}
 
 		if (chap_verify_hook)
@@ -414,13 +425,7 @@ chap_verify_response(char *name, char *ourname, int id,
 	int ok;
 	unsigned char secret[MAXSECRETLEN];
 	int secret_len;
-#ifdef CHAPMS
-    char nametmp[MAXNAMELEN];
-    	if (ms_ignore_domain && strrchr(name, '\\')) {
-		strcpy(nametmp, strrchr(name, '\\') + 1);
-		strcpy(name, nametmp);
-	}
-#endif
+
 	/* Get the secret that the peer is supposed to know */
 	if (!get_secret(0, name, ourname, (char *)secret, &secret_len, 1)) {
 		error("No CHAP secret found for authenticating %q", name);

@@ -494,4 +494,9 @@ int l2tp_option_set(EventSelector *es,
 void l2tp_option_register_section(option_handler *h);
 char const *l2tp_chomp_word(char const *line, char *word);
 
+/* tunnel.c */
+#ifdef RTCONFIG_VPNC
+extern int vpnc;
+#endif
+
 #endif

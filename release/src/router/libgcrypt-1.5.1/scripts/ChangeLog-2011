@@ -1,0 +1,165 @@
+2011-12-01  Werner Koch  <wk@g10code.com>
+
+        NB: ChangeLog files are no longer manually maintained.  Starting
+        on December 1st, 2011 we put change information only in the GIT
+        commit log, and generate a top-level ChangeLog file from logs at
+        "make dist".  See doc/HACKING for details.
+
+2003-12-08  Werner Koch  <wk@gnupg.org>
+
+	* autogen.sh, config.sub, install-sh, mkinstalldirs, config.guess,
+	* missing: Removed
+
+2003-10-31  Werner Koch  <wk@gnupg.org>
+
+	* autogen.sh: Allow to override the tool name.  Do not run
+	libtoolize. Update required version numbers.
+
+2003-07-30  Werner Koch  <wk@gnupg.org>
+
+	* config.guess, config.sub: Updated from ftp.gnu.org/gnu/config/
+
+2003-07-07  Moritz Schulte  <moritz@g10code.com>
+
+	* autogen.sh: Undo last change.
+	* autogen.sh: Remove -a argument for automake.
+
+2003-03-06  Moritz Schulte  <mo@g10code.com>
+
+	* autogen.sh (run): New function.
+	Let automake run with -a for adding missing files automatically
+
+2002-11-12  Werner Koch  <wk@gnupg.org>
+
+	* config.sub, config.guess: Updated from ftp.gnu.org/gnu/config
+	to version 2002-11-08.
+
+2002-05-14  Werner Koch  <wk@gnupg.org>
+
+	* autogen.sh: Require version 2.53 of autoconf
+
+2001-12-18  Werner Koch  <wk@gnupg.org>
+
+	* distfiles: Remove files which are automatically added by automake.
+
+2001-08-06  Werner Koch  <wk@gnupg.org>
+
+	* autogen.sh: Added --build-w32 option.
+
+2001-05-28  Werner Koch  <wk@gnupg.org>
+
+	* db2html.in: Removed.
+	* db2any: New.  Taken from GPH
+
+Mon Jul 17 16:35:47 CEST 2000  Werner Koch  <wk@>
+
+        * config.gues, config.sub: Support for s390-ibm-linux-gnu; thanks
+        to Holger Smolinski.  Add support for QNX; by Sam Roberts.
+
+Tue Oct 26 14:10:21 CEST 1999  Werner Koch  <wk@gnupg.de>
+
+	* commit: Remove leading and trailing empty lines when copying
+	Changes to Changelog
+
+Wed Sep 15 16:22:17 CEST 1999  Werner Koch  <wk@isil.d.shuttle.de>
+
+	* gnupg.spec: Add Portuguese description
+
+Thu Sep  2 16:40:55 CEST 1999  Werner Koch  <wk@isil.d.shuttle.de>
+
+	* mkdiff: changed format of diff file name and made script more
+	general.
+
+Wed Aug  4 10:34:18 CEST 1999  Werner Koch  <wk@isil.d.shuttle.de>
+
+	* config.guess: Updated from gnu/common and applied my emx patch again.
+	* config.sub: Updated from gnu/common.
+
+Wed Jul 14 19:42:08 CEST 1999  Werner Koch  <wk@isil.d.shuttle.de>
+
+	* ltmain.sh, ltconfig.sh : Updated to libtool 1.3.3
+
+Mon Jul 12 14:55:34 CEST 1999  Werner Koch  <wk@isil.d.shuttle.de>
+
+	* autogen.sh: Run libtoolize
+
+Sat May 22 22:47:26 CEST 1999  Werner Koch  <wk@isil.d.shuttle.de>
+
+	* autogen.sh: Fixed the error message for a missing libtool.
+
+Sat May  8 19:28:08 CEST 1999  Werner Koch  <wk@isil.d.shuttle.de>
+
+	* mkinstalldirs, install-sh: New from GNU repository
+	* config.sub, config.guess: Merged with rep version.
+
+Sun Mar 14 19:34:36 CET 1999  Werner Koch  <wk@isil.d.shuttle.de>
+
+	* autogen.sh: Add a check for libtool because some autoconf macros
+	are needed.
+
+Mon Feb 22 20:04:00 CET 1999  Werner Koch  <wk@isil.d.shuttle.de>
+
+	* autogen.sh: Enhanced the version testing code (Philippe Laliberte)
+
+	* mkwebpage: Edits the buglist.
+
+Sat Feb 13 12:04:43 CET 1999  Werner Koch  <wk@isil.d.shuttle.de>
+
+	* autogen.sh: Now uses gettextize
+
+Wed Feb 10 17:15:39 CET 1999  Werner Koch  <wk@isil.d.shuttle.de>
+
+	* config.sub, config.guess: Support i386-emx-os2
+
+Sun Jan 17 11:04:33 CET 1999  Werner Koch  <wk@isil.d.shuttle.de>
+
+	* autogen.sh: Now checks for installed gettext
+
+Sat Jan 16 09:27:30 CET 1999  Werner Koch  <wk@isil.d.shuttle.de>
+
+	* config.guess (m68k-atari-mint): New.
+	* config.sub: Add support for atarist-MiNT
+
+Wed Jan 13 12:49:36 CET 1999  Werner Koch  <wk@isil.d.shuttle.de>
+
+	* gnupg.spec.in: New
+	* gnupg.spec: Removed
+
+Wed Dec 23 13:18:14 CET 1998  Werner Koch  <wk@isil.d.shuttle.de>
+
+	* gnupg.spec: Updated version by Fabio Coatti
+
+Thu Dec 17 18:31:15 CET 1998  Werner Koch  <wk@isil.d.shuttle.de>
+
+	* gnupg.spec: New version by Reuben Sumner and did some more
+	changes.
+
+Fri Nov 27 12:39:29 CET 1998  Werner Koch  <wk@isil.d.shuttle.de>
+
+
+	* commit: New
+
+
+Fri Nov 20 12:01:57 1998  Werner Koch  (wk@isil.d.shuttle.de)
+
+	* mkdiff: signs the patch file
+
+Sat Oct 17 16:10:16 1998  Werner Koch  (wk@isil.d.shuttle.de)
+
+	* autogen.sh: New.
+
+Wed Oct 14 09:55:25 1998  Werner Koch  (wk@isil.d.shuttle.de)
+
+	* config.guess (FreeBSD): Changes from Jun Kuriyama to support ELF
+	* config.sub: (freebsd): Add to maybe_os
+
+
+  Copyright 1998,1999,2000,2001,2002 Free Software Foundation, Inc.
+
+ This file is free software; as a special exception the author gives
+ unlimited permission to copy and/or distribute it, with or without
+ modifications, as long as this notice is preserved.
+
+ This file is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
+ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.

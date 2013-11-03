@@ -1,0 +1,133 @@
+2013-03-18  Werner Koch  <wk@gnupg.org>
+
+	Release 1.5.1.
+
+	Allow building with w64-mingw32.
+	* autogen.sh <--build-w32>: Support the w64-mingw32 toolchain.  Also
+	prepare for 64 bit building.
+	<git-setup>: Remove option -c from chmod.
+
+	Update LT version for the next release.
+	* configure.ac: Set LT version to C19/A8/R0.
+
+	Update helper scripts.
+	* compile, config.guess, config.rpath, config.sub, depcomp,
+	* install-sh, mkinstalldirs: Update to Feb 25 versions from gnulib.
+
+	Provide a GCRYPT_VERSION_NUMBER macro.
+	* src/gcrypt.h.in (GCRYPT_VERSION_NUMBER): New.
+	* configure.ac (VERSION_NUMBER): New ac_subst.
+	* compat/compat.c (_gcry_compat_identification): Include revision and
+	timestamp.
+	* src/global.c (_gcry_vcontrol): Move call to above function ...
+	(gcry_check_version): .. here.
+
+	Update to libtool 2.4.2.
+
+	Generate the ChangeLog from commit logs.
+	* scripts/git-log-fix: New file.
+	* scripts/git-log-footer: New file.
+	* doc/HACKING: Describe the ChangeLog policy
+	* ChangeLog: New file.
+	* Makefile.am (EXTRA_DIST): Add new files.
+	(gen-ChangeLog): New.
+	(dist-hook): Run gen-ChangeLog.
+
+	Rename all ChangeLog files to ChangeLog-2011.
+
+	Switch to the new automagic beta numbering scheme.
+	* configure.ac: Add all the required m4 magic.  Add some autoconf
+	portability fixes.
+
+	Remove build hacks for FreeBSD.
+	* configure.ac [freebsd]: Do not add /usr/local to CPPFLAGS and
+	LDFLAGS.
+
+	mpi: Support the x32 ABI.
+	* mpi/amd64/mpi-asm-defs.h: New.
+
+2013-03-18  Benjamin Pousse  <benjamin.pousse@member.fsf.org>
+
+	Fix malfunction of gcry_sexp_car.
+	* src/sexp.c (gcry_sexp_nth): Return a proper list for ST_DATA.
+
+2013-03-18  Werner Koch  <wk@gnupg.org>
+
+	mpi: Make using gcc's -Ofast easier.
+	* cipher/Makefile.am (o_flag_munging): Take -Ofast in account.
+
+2013-02-19  Jussi Kivilinna  <jussi.kivilinna@mbnet.fi>
+
+	libgcrypt-1.5: rinjdael: Fix use of SSE2 outside USE_AESNI/ctx->use_aesni
+	* cipher/rijndael.c (_gcry_aes_cbc_enc, _gcry_aes_cbc_dec): Check if
+	AES-NI is enabled before calling aesni_prepare() and aesni_cleanup().
+
+2012-11-21  Werner Koch  <wk@gnupg.org>
+
+	Fix segv with AES-NI on some platforms.
+	* cipher/rijndael.c (RIJNDAEL_context): Align on 16 bytes.
+
+2012-11-16  Werner Koch  <wk@gnupg.org>
+
+	Improve parsing of the GIT revision number.
+	* configure.ac (git_revision): Use git rev-parse.
+
+	Fix non-portable use of chmod in autogen.sh.
+	* autogen.sh: Remove option -c from chmod.
+
+2012-11-08  Werner Koch  <wk@gnupg.org>
+
+	Fix extern inline use for gcc > 4.3 in c99 mode.
+	* mpi/mpi-inline.h [!G10_MPI_INLINE_DECL]: Take care of changed extern
+	inline semantics in gcc.
+
+2012-11-07  Werner Koch  <wk@gnupg.org>
+
+	Fix memory leak in gcry_pk_testkey for ECC.
+	* cipher/ecc.c (check_secret_key): Restructure for easier allocation
+	tracking.  Fix memory leak.
+
+2012-11-05  Milan Broz  <mbroz@redhat.com>
+
+	PBKDF2: Allow empty passphrase.
+	* cipher/kdf.c (gcry_kdf_derive): Allow empty passphrase for PBKDF2.
+	* tests/t-kdf.c (check_pbkdf2): Add test case for above.
+
+2012-11-05  Werner Koch  <wk@gnupg.org>
+
+	Avoid dereferencing pointer right after the end.
+	* mpi/mpicoder.c (do_get_buffer): Check the length before derefing P.
+
+2012-04-25  Werner Koch  <wk@gnupg.org>
+
+	Add alignment tests for the cipher tests.
+	* tests/basic.c (check_one_cipher): Factor most code out to
+	check_one_cipher_core.  Call that core function several times using
+	different alignment settings.
+	(check_one_cipher_core): New.  Add extra args to allow alignment
+	testing.
+
+2012-04-04  Tomas Mraz  <tmraz@fedoraproject.org>
+
+	Add GCRYCTL_SET_ENFORCED_FIPS_FLAG command.
+	* doc/gcrypt.texi: Add documentation of the new command.
+	* src/fips.c (_gcry_enforced_fips_mode): Report the enforced fips mode
+	only when fips mode is enabled.
+	(_gcry_set_enforced_fips_mode): New function.
+	* src/g10lib.h: Add the _gcry_set_enforced_fips_mode prototype.
+	* src/gcrypt.h.in: Add the GCRYCTL_SET_ENFORCED_FIPS_FLAG.
+	* src/global.c (_gcry_vcontrol): Handle the new command.
+
+2011-12-01  Werner Koch  <wk@gnupg.org>
+
+	NB: Changes done before December 1st, 2011 are described in
+	per directory files named ChangeLog-2011.  See doc/HACKING for
+	details.
+
+        -----
+	Copyright (C) 2011 Free Software Foundation, Inc.
+
+	Copying and distribution of this file and/or the original GIT
+	commit log messages, with or without modification, are
+	permitted provided the copyright notice and this notice are
+	preserved.

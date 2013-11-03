@@ -33,6 +33,11 @@ function initial(){
 	$("option5").innerHTML = '<table><tbody><tr><td><div id="index_img5"></div></td><td><div style="width:120px;"><#Menu_usb_application#></div></td></tr></tbody></table>';
 	$("option5").className = "m5_r";
 
+	if (!ufsd_support)
+		$('ntfs_sparse_files').style.display = "none";
+	else
+		$('ntfs_sparse_files').style.display = "";
+
 	xfr();
   /*	Viz 2011.09
   if(ddns_enable == '1' && ddns_server == 'WWW.ASUS.COM' && ddns_hostname.length > '.asuscomm.com'.length){
@@ -255,7 +260,7 @@ function done_validating(action){
                                         </td>
                                 </tr>
 
-				<tr>
+				<tr id = "ntfs_sparse_files" style="">
 					<th>NTFS Sparse Files support</th>
 					<td>
 						<select name="usb_fs_ntfs_sparse" class="input_option">

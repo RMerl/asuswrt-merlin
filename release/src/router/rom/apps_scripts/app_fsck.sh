@@ -45,7 +45,10 @@ log_file=`_get_fsck_logfile $2`
 log_option="> $log_file 2>&1"
 
 if [ "$autofix" == "1" ]; then
-	if [ "$1" == "ntfs" ] || [ "$1" == "ufsd" ]; then
+	if [ "$1" == "ntfs" ]; then
+		autocheck_option="-a"
+		autofix_option="-f"
+	elif [ "$1" == "hfs" ] || [ "$1" == "hfs+" ] || [ "$1" == "hfsj" ]; then
 		autocheck_option="-a"
 		autofix_option="-f"
 	else
@@ -53,7 +56,10 @@ if [ "$autofix" == "1" ]; then
 		autofix_option=p
 	fi
 else
-	if [ "$1" == "ntfs" ] || [ "$1" == "ufsd" ]; then
+	if [ "$1" == "ntfs" ]; then
+		autocheck_option="-a"
+		autofix_option=
+	elif [ "$1" == "hfs" ] || [ "$1" == "hfs+" ] || [ "$1" == "hfsj" ]; then
 		autocheck_option="-a"
 		autofix_option=
 	else
@@ -65,12 +71,23 @@ fi
 free_caches -w 0
 set -o pipefail
 _set_fsck_code $2 2
-if [ "$1" == "ntfs" ] || [ "$1" == "ufsd" ]; then
+if [ "$1" == "ntfs" ]; then
 	c=0
 	RET=1
 	while [ ${c} -lt 4 -a ${RET} -ne 0 ] ; do
 		c=$((${c} + 1))
 		eval chkntfs $autocheck_option $autofix_option --verbose $2 $log_option
+		RET=$?
+		if [ ${RET} -ge 251 -a ${RET} -le 254 ] ; then
+			break;
+		fi
+	done
+elif [ "$1" == "hfs" ] || [ "$1" == "hfs+" ] || [ "$1" == "hfsj" ]; then
+	c=0
+	RET=1
+	while [ ${c} -lt 4 -a ${RET} -ne 0 ] ; do
+		c=$((${c} + 1))
+		eval chkhfs $autocheck_option $autofix_option --verbose $2 $log_option
 		RET=$?
 		if [ ${RET} -ge 251 -a ${RET} -le 254 ] ; then
 			break;
@@ -87,3 +104,4 @@ if [ "${RET}" != "0" ]; then
 else
 	_set_fsck_code $2 0
 fi
+

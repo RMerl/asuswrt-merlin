@@ -1,0 +1,90 @@
+'\" t
+.\"     Title: cnid_metad
+.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
+.\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
+.\"      Date: 23 Mar 2012
+.\"    Manual: @NETATALK_VERSION@
+.\"    Source: @NETATALK_VERSION@
+.\"  Language: English
+.\"
+.TH "CNID_METAD" "8" "23 Mar 2012" "@NETATALK_VERSION@" "@NETATALK_VERSION@"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+cnid_metad \- start cnid_dbd daemons on request
+.SH "SYNOPSIS"
+.HP \w'\fBcnid_metad\fR\fB\fR\fBcnid_metad\fR\fB\fR\ 'u
+\fBcnid_metad\fR\fB\fR [\-d] [\-F\ \fIconfiguration\ file\fR]
+.br
+\fBcnid_metad\fR\fB\fR \-v | \-V 
+.SH "DESCRIPTION"
+.PP
+\fBcnid_metad\fR
+waits for requests from
+\fBafpd\fR
+to start up instances of the
+\fBcnid_dbd\fR
+daemon\&. It keeps track of the status of a
+\fBcnid_dbd\fR
+instance once started and will restart it if necessary\&.
+\fBcnid_metad\fR
+is normally started at boot time by
+\fBnetatalk\fR(8) and runs until shutdown\&.
+.SH "OPTIONS"
+.PP
+\fB\-d\fR
+.RS 4
+\fBcnid_metad will remain in the foreground and\fR
+will also leave the standard input, standard output and standard error file descriptors open\&. Useful for debugging\&.
+.RE
+.PP
+\fB\-F\fR \fIconfiguration file\fR
+.RS 4
+Use
+\fIconfiguration file\fR
+as the configuration file\&. The default is
+\fI@pkgconfdir@/afp\&.conf\fR\&.
+.RE
+.PP
+\fB\-v, \-V\fR
+.RS 4
+Show version and exit\&.
+.RE
+.SH "CAVEATS"
+.PP
+\fBcnid_metad\fR
+does not block or catch any signals apart from SIGPIPE\&. It will therefore exit on most signals received\&. This will also cause all instances of
+\fBcnid_dbd\*(Aqs\fR
+started by that
+\fBcnid_metad\fR
+to exit gracefully\&. Since state about and IPC access to the subprocesses is only maintained in memory by
+\fBcnid_metad\fR
+this is desired behaviour\&. As soon as
+\fBcnid_metad\fR
+is restarted
+\fBafpd\fR
+processes will transparently reconnect\&.
+.SH "SEE ALSO"
+.PP
+\fBnetatalk\fR(8),
+\fBcnid_dbd\fR(8),
+\fBafpd\fR(8),
+\fBdbd\fR(1),
+\fBafp.conf\fR(5)

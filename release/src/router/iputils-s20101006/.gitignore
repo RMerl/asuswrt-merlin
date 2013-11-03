@@ -1,0 +1,6 @@
+*.o
+clockdiff
+ping6
+tracepath
+tracepath6
+traceroute6

@@ -219,6 +219,12 @@ static const applets_t applets[] = {
 	{ "ipv6-down",			ip6down_main				},
 #endif
 	{ "auth-fail",			authfail_main				},
+#ifdef RTCONFIG_VPNC
+	{ "vpnc-ip-up",			vpnc_ipup_main				},
+	{ "vpnc-ip-down",		vpnc_ipdown_main				},
+	{ "vpnc-ip-pre-up",		vpnc_ippreup_main				},
+	{ "vpnc-auth-fail",		vpnc_authfail_main				},
+#endif
 #ifdef RTCONFIG_EAPOL
 	{ "wpa_cli",			wpacli_main			},
 #endif
@@ -227,6 +233,7 @@ static const applets_t applets[] = {
         { "mtd-write",                  mtd_write_main_old                      },
         { "mtd-erase",                  mtd_unlock_erase_main_old               },
         { "mtd-unlock",                 mtd_unlock_erase_main_old               },
+	{ "wlaide",			wlaide_main				},
 #else
 	{ "mtd-write",			mtd_write_main			},
 	{ "mtd-erase",			mtd_unlock_erase_main		},
@@ -252,7 +259,6 @@ static const applets_t applets[] = {
 	{ "zcip",			zcip_wan			},
 #ifdef RTCONFIG_IPV6
 	{ "dhcp6c-state",		dhcp6c_state_main		},
-	{ "ipv6aide",			ipv6aide_main			},
 #endif
 #ifdef RTCONFIG_WPS
 	{ "wpsaide",			wpsaide_main			},
@@ -606,7 +612,7 @@ int main(int argc, char **argv)
 		return 0;
 	}
 #endif
-#ifdef CONFIG_BCMWL5
+#if defined(CONFIG_BCMWL5) || defined(MTK_APCLI)
 	else if (!strcmp(base, "wlcscan")) {
 		return wlcscan_main();
 	}

@@ -1,0 +1,67 @@
+'\" t
+.\"     Title: netatalk
+.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
+.\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
+.\"      Date: 22 Mar 2012
+.\"    Manual: @NETATALK_VERSION@
+.\"    Source: @NETATALK_VERSION@
+.\"  Language: English
+.\"
+.TH "NETATALK" "8" "22 Mar 2012" "@NETATALK_VERSION@" "@NETATALK_VERSION@"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+netatalk \- Netatalk AFP server service controller daemon
+.SH "SYNOPSIS"
+.HP \w'\fBnetatalk\fR\fB\fR\fBnetatalk\fR\fB\fR\ 'u
+\fBnetatalk\fR\fB\fR
+.br
+\fBnetatalk\fR\fB\fR
+.SH "DESCRIPTION"
+.PP
+\fBnetatalk\fR
+is the service controller daemon responsible for starting and restarting the AFP daemon
+\fBafpd\fR
+and the CNID daemon
+\fBcnid_metad\fR\&. It is normally started at boot time from /etc/rc\&.
+.SH "SIGNALS"
+.PP
+SIGTERM
+.RS 4
+Stop Netatalk service, AFP and CNID daemons
+.RE
+.PP
+SIGHUP
+.RS 4
+Sending a
+\fBSIGHUP\fR
+will cause the AFP daemon reload its configuration file\&.
+.RE
+.SH "FILES"
+.PP
+@pkgconfdir@/afp\&.conf
+.RS 4
+configuration file used by afpd and cnid_metad
+.RE
+.SH "SEE ALSO"
+.PP
+\fBafpd\fR(8),
+\fBcnid_metad\fR(8),
+\fBafp.conf\fR(5)\&.

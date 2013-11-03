@@ -1,0 +1,106 @@
+Lots of thanks to the following people who've made Netatalk what it is
+with their contributions. Cheers. 
+
+Original Authors, pre-Sourceforge. 
+
+Thanks a bunch folks, where ever you are.
+
+	Wesley Craig <wesley.craig@umich.edu>
+	Adrian Sun <asun@cobaltnet.com>
+	Steve Hirsch: ProDOS II support/initial Randnum support
+	Robert Marinchick: initial rquota patch
+	Frank Morton: megatron information patch
+	Tim Carlson: Solaris testing
+	iNOUE Koichi: RPM for RedHat systems
+	Stefan Bethke: FreeBSD
+	Leland Wallace
+
+Recent Contributors since Sourceforge
+
+Sourceforge Administration:
+	Jeffrey Buchbinder <jeff@univrel.pr.uconn.edu>
+	Matthew Keller <kellermg@potsdam.edu>
+
+Developers: Version 1.4.99 - 1.5
+	Alain Richard <alain.richard@equation.fr>	
+	David R Bosso <dbosso@ltsc.ucsb.edu>
+	Joe Clarke <marcus@marcuscom.com>
+	Jonathan Newman <jnewman@mudpup.com>
+	Lance Levsen <l.levsen@printwest.com>
+	Matthew Keller <kellermg@potsdam.edu>
+	Andrew Morgan <morgan@orst.edu>
+	Daniel E. Lautenschleger <dan@bocklabs.wisc.edu>
+	Jeffrey Buchbinder <jeff@univrel.pr.uconn.edu>
+	Sam Noble <ns@shadow.org>
+	Simon Bazley <sibaz@sibaz.com>
+	Sebastian Rittau <srittau@jroger.in-berlin.de>
+	Steve Freitas <sflist@ihonk.com>
+	Uwe Hees <uwe.hees@rz-online.de>
+	Benjamin Heitmann <bheitman@ebios.de>
+	Bob Rogers <rogers-netatalk-devel@rgrjr.dyndns.org>
+	Burkhard Schmidt <bs@cpfs.mpg.de>
+	Glenn Trewitt <glenn@trewitt.org>
+	Olaf Hering <olh@suse.de>
+	Robert Cohen <robert.cohen@anu.edu.au>
+	Robert Stickel <rstickel@connex.com>
+ 	Sumit <sbose@hbv.de>
+
+Webmin Module:
+	Matthew Keller <kellermg@potsdam.edu>
+
+Package Maintainers:
+	Sebastian Rittau <srittau@jroger.in-berlin.de> (RPM, Debian)
+	Joe Clarke <marcus@marcuscom.com> (FreeBSD)
+
+Sourceforge Website Maintainers:
+	Andrew Morgan <morgan@orst.edu>	
+
+Documentation: Version 1.4.99 - 1.5
+	Steve Freitas <sflist@ihonk.com>
+	Karen A Swanberg <swanberg@tc.umn.edu>
+	Lance Levsen <l.levsen@printwest.com>
+	Andrew Morgan <morgan@orst.edu>
+	Jeffrey Buchbinder <jeff@univrel.pr.uconn.edu>
+	Gjermund G Thorsen <gjermund@mac.com>
+	Paul Krohn <pkrohn@daemonize.com>
+	Ryan McBeth <ryan@mobiusnm.com>
+	Simon Bazley <Sibaz@sibaz.com>
+	Rob Lineweaver <rbline@wm.edu>
+	Alistair Riddell <ali@gwc.org.uk>
+	Edmund Lam <epl@unimelb.edu.au>
+
+Bug Reports: Version 1.4.99 - 1.5
+	Ryan Dooley <dooleyr@missouri.edu>
+	Don Jessup <DJessup@tricord.com>
+	Kevin M. Myer <kevin_myer@iu13.k12.pa.us>
+	Lawrence Farr" <netatalk@epcdirect.co.uk>
+	Ralph Hackl <ralph.hackl@cancom.at>
+	Adrian Moir <adrianm@siliconsystems.co.uk>
+	Akop Pogosian <akopps@CSUA.Berkeley.EDU>
+	Alistair Riddell <ali@gwc.org.uk>
+	Axel Rose <rose@sj.com>
+	Benjamin Lee <benjaminlee@consultant.com>
+	Brice D Ruth <brice@webprojkt.com>
+	Carsten Rogas <crogas@rogas.de>
+	Daniel Resare <noa@metamatrix.se>
+	Derrik Pates <dpates@dsdk12.net>
+	Edmund Lam <epl@unimelb.edu.au>
+	Gjermund Gusland Thorsen <90167484@mobilpost.com>
+	Ian Wehrman <ian@labfire.com>
+	Magnus Stenman <stone@hkust.se>
+	Mark Guertin <mark@artshouse.com>
+	Matthew Geier <matthew@arts.usyd.edu.au>
+	Miro Jurisic <meeroh@MIT.EDU>
+	Roland Schulz <atalk@abarrach.franken.de>
+	Simon Roberts <simonr@siliconsystems.co.uk>
+	Steven Karel <karelsf@brandeis.edu>
+	Thomas Schierle <ts@visual-s.de>
+	<mikko@fs.sorl.net>
+	Roger <roger.day@globalgraphics.com>
+
+
+And thanks to everyone on the netatalk-devel and netatalk-docs
+lists. If you feel you should be listed here and aren't, please let me
+know, Lance Levsen, l.levsen@printwest.com
+
+Cheers.

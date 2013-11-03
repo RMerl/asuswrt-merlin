@@ -1,0 +1,35 @@
+the catalog database keeps track of three mappings:
+    CNID     -> dev/ino and did/name
+    dev/ino  -> CNID
+    did/name -> CNID
+
+dev/ino is used to keep track of magically moved files. did/name is
+for quick lookups of CNIDs. 
+
+NOTE: the database will append a nul byte to the end of name. in
+addition, name should be given as it appears on disk. this allows the
+creation of cnid updating/cleaning programs that don't have to deal
+with knowing what the particular codepage is.
+
+here's the ritual:
+	1) open a volume. call cnid_open.
+	2) every time you need a CNID, call cnid_add(). it will
+	   automatically look for an existing cnid and add a new one
+	   if one isn't already there. you can pass a hint if you
+	   want. the only use this has right now is to enable
+	   consistency between AFP and HFS. in the future, it would
+	   allow people to write conversion utilities that
+	   pre-instantiate a database without needing to re-assign
+	   CNIDs.
+	3) if you want to just look for a CNID without automatically
+	   adding one in, you have two choices:
+	     a) cnid_resolve takes a CNID, returns name, and
+	        over-writes the CNID given with the parent DID. this
+	        is good for FPResolveID.
+             b) cnid_lookup returns a CNID corresponding to the
+	        dev/ino,did/name keys. it will auto-update the catalog
+		database if there's a discrepancy. 
+		NOTE: cnid_add calls this before adding a new CNID. 
+	4) when you delete a file or directory, you need to call
+	   cnid_delete with the CNID for that file/directory.
+	5) call cnid_close when closing the volume.

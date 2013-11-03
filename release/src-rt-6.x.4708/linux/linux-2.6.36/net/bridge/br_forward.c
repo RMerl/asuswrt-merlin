@@ -30,6 +30,16 @@ static int deliver_clone(const struct net_bridge_port *prev,
 static inline int should_deliver(const struct net_bridge_port *p,
 				 const struct sk_buff *skb)
 {
+#ifdef CATHY_BRNF_SAME_BR_PATCH
+#ifdef CONFIG_BRIDGE_NETFILTER
+	if ((skb->dev == p->dev) && skb->nf_bridge &&
+		(skb->nf_bridge->mask & BRNF_BRIDGED_DNAT) &&
+		(p->state == BR_STATE_FORWARDING)) {
+		skb->nf_bridge->mask |= BRNF_BRIDGED_DNAT_SAME_BR;
+		return 1;
+	}
+#endif /* CONFIG_BRIDGE_NETFILTER */
+#endif /* CATHY_BRNF_SAME_BR_PATCH */
 	return (((p->flags & BR_HAIRPIN_MODE) || skb->dev != p->dev) &&
 		p->state == BR_STATE_FORWARDING);
 }
@@ -243,18 +253,6 @@ static void br_multicast_flood(struct net_bridge_mdb_entry *mdst,
 			p = rcu_dereference(p->next);
 		if ((unsigned long)rport >= (unsigned long)port)
 			rp = rcu_dereference(rp->next);
-	}
-
-	if (!prev &&
-	    skb->protocol == htons(ETH_P_IP) &&
-	    ip_hdr(skb)->daddr == in_aton("239.255.255.250")) {
-		struct net_bridge_port *port;
-
-		list_for_each_entry_rcu(port, &br->port_list, list) {
-			prev = maybe_deliver(prev, port, skb, __packet_hook);
-			if (IS_ERR(prev))
-				goto out;
-		}
 	}
 
 	if (!prev)

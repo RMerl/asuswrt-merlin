@@ -1,0 +1,187 @@
+2011-12-01  Werner Koch  <wk@g10code.com>
+
+        NB: ChangeLog files are no longer manually maintained.  Starting
+        on December 1st, 2011 we put change information only in the GIT
+        commit log, and generate a top-level ChangeLog file from logs at
+        "make dist".  See doc/HACKING for details.
+
+2011-09-08  Werner Koch  <wk@g10code.com>
+
+	* rndlinux.c (_gcry_rndlinux_gather_random): Don't use select if
+	the fd number is too high.  Reported by Jakub Bogusz.
+
+2010-10-18  Werner Koch  <wk@g10code.com>
+
+	* rndw32.c (registry_poll): Disable performace fata gathering if
+	GNUPG_RNDW32_NOPERF has been set.
+
+2010-04-27  Marcus Brinkmann  <marcus@g10code.de>
+
+	* rndw32ce.c (fillup_buffer): Rewrite without using nested
+	functions, which are broken on arm/cegcc.
+
+2010-04-12  Brad Hards  <bradh@frogmouth.net>  (wk)
+
+	Spelling fixes.
+
+2010-03-24  Werner Koch  <wk@g10code.com>
+
+	* rndw32.c: Revert all changes from 2010-01-21.
+
+	* rndw32ce.c: New.
+	* Makefile.am (EXTRA_librandom_la_SOURCES): Add it.
+	* random-csprng.c (getfnc_gather_random)
+	(getfnc_fast_random_poll) [USE_RNDW32CE]: Use rndw32ce.
+
+2010-01-21  Werner Koch  <wk@g10code.com>
+
+	* rndw32.c (read_mbm_data) [W32CE]: Do not build.
+	(slow_gatherer) [W32CE]: Do not call read_mbm_data.
+	(_gcry_rndw32_gather_random_fast) [W32CE]: Exclude some calls.
+	(_gcry_rndw32_gather_random): Adjust version test for WindowsCE.
+
+2009-12-10  Werner Koch  <wk@g10code.com>
+
+	* rndw32.c (system_is_w2000): New.
+	(_gcry_rndw32_gather_random): Set it.
+	(slow_gatherer): Ignore SystemObjectInformation on W2000.  Fixes
+	bug#1167.
+
+2009-07-09  Werner Koch  <wk@g10code.com>
+
+	* rndlinux.c (_gcry_rndlinux_gather_random): Print real values for
+	the progess function and call it before blocking.  Suggested by
+	Christian Grothoff.
+	* rndunix.c (slow_poll): Add similar, but not yet functional, code.
+
+2009-07-02  Werner Koch  <wk@g10code.com>
+
+	* rndhw.c (poll_padlock): Asm change from Fedora.
+
+2009-01-22  Werner Koch  <wk@g10code.com>
+
+	* random.c (_gcry_random_deinit_external_test): Do not return a
+	value.  Reported Albert Chin.
+
+2008-09-16  Werner Koch  <wk@g10code.com>
+
+	* random-fips.c (x931_aes_driver): No re-seeding with test contexts.
+	(_gcry_rngfips_init_external_test): Fix setting of test_dt_ptr.
+	(struct rng_context): Add flag TEST_NO_DUP_CHECK.
+	(x931_aes_driver): Use that flag.
+	(_gcry_rngfips_init_external_test): Add arg FLAGS and use it to
+	modify the test.
+	* random.c (_gcry_random_init_external_test): Pass FLAGS.
+
+2008-09-15  Werner Koch  <wk@g10code.com>
+
+	* random.c (_gcry_random_init_external_test): New.
+	(_gcry_random_run_external_test): New.
+	(_gcry_random_deinit_external_test): New.
+	* random-fips.c (struct rng_context): Turn TEST_DT_COUNTER into a
+	32 bit integer.
+	(x931_get_dt): Ditto.
+	(selftest_kat): Intialize it accordingly.
+	(_gcry_rngfips_init_external_test): New.
+	(_gcry_rngfips_run_external_test): New.
+	(_gcry_rngfips_deinit_external_test): New.
+
+2008-09-05  Werner Koch  <wk@g10code.com>
+
+	* random.c (_gcry_random_selftest): Return success if not in fips
+	mode.
+
+2008-09-01  Werner Koch  <wk@g10code.com>
+
+	* random-fips.c (x931_get_dt) [W32]: Do not use getppid.
+	(get_entropy): Prepare for use under Windows.
+	(_gcry_rngfips_selftest): Ditto.
+	(entropy_collect_cb): Make sure that the gatherer never overflows
+	the buffers.
+
+2008-08-29  Werner Koch  <wk@g10code.com>
+
+	* random-fips.c (SEED_TTL): New.
+	(struct rng_context): Add USE_COUNTER, remove NEED_STRONG_ENTROPY.
+	(x931_aes_driver): Do re-seeding if required.
+	(x931_generate_key, x931_generate_seed): Factor common code out to ..
+	(get_entropy): .. new.  Always use /dev/random.
+	(x931_generate_key): Seed key for nonce_context from std_rng_context.
+	(x931_reseed): New. Seed nonce context from std_rng_context.
+	(get_random): Use x931_reseed.
+	(_gcry_rngfips_selftest): Return an error if no /dev/radom support
+	has been compiled in.
+	(get_random): Remove locking.
+	(_gcry_rngfips_randomize, _gcry_rngfips_create_nonce): Lock here.
+
+2008-08-28  Werner Koch  <wk@g10code.com>
+
+	* random-daemon.c (connect_to_socket): Use GPG_ERR_ENAMETOOLONG.
+
+2008-08-25  Werner Koch  <wk@g10code.com>
+
+	* random-fips.c (x931_aes): Take datetime_GT from an arg.
+	(x931_aes_driver): Call x931_get_dt here.
+	(x931_get_dt): Implement the KAT hack.
+	(x931_generate_seed): Copy the seed value to the provided buffer.
+	(selftest_kat): New.
+
+2008-08-22  Werner Koch  <wk@g10code.com>
+
+	* random.c (_gcry_update_random_seed_file): Move operational check
+	to _gcry_vcontrol.
+	(_gcry_fast_random_poll): Ditto.
+	(_gcry_random_selftest): New.
+	* random-fips.c (_gcry_rngfips_selftest): New.
+
+2008-08-21  Werner Koch  <wk@g10code.com>
+
+	* random-fips.c: Finish implementation.
+
+2008-08-15  Werner Koch  <wk@g10code.com>
+
+	* random-fips.c: New.
+
+	* random-csprng.c (process-cb, progress_cb_data): Move to
+	random.c.
+	(_gcry_register_random_progress, _gcry_random_progress): Ditto.
+	(_gcry_random_initialize): Rename to _gcry_rngcsprng_initialize.
+	(_gcry_random_dump_stats): Rename to _gcry_rngcsprng_dump_stats.
+	(_gcry_secure_random_alloc): Rename to
+	_gcry_rngcsprng_secure_alloc.
+	(_gcry_enable_quick_random_gen): Rename to
+	_gcry_rngcsprng_enable_quick_gen.
+	(_gcry_set_random_daemon_socket): Rename to
+	_gcry_rngcsprng_set_daemon_socket.
+	(_gcry_use_random_daemon): Rename to _gcry_rngcsprng_use_daemon.
+	(_gcry_random_is_faked): Rename to _gcry_rngcsprng_is_faked.
+	(gcry_random_add_bytes): Rename to _gcry_rngcsprng_add_bytes.
+	(gcry_random_bytes): Remove
+	(gcry_random_bytes_secure): Remove.
+	(gcry_randomize): Rename to _gcry_rngcsprng_randomize.
+	(_gcry_set_random_seed_file): Rename to
+	_gcry_rngcsprng_set_seed_file.
+	(_gcry_update_random_seed_file): Rename to
+	_gcry_rngcsprng_update_seed_file.
+	(_gcry_fast_random_poll): Rename to _gcry_rngcsprng_fast_poll.
+	(gcry_create_nonce): Rename to _gcry_rngcsprng_create_nonce.
+
+	* random.c: Factor all code out to random-csprng.c and implement
+	wrapper functions.
+
+2008-07-05  Werner Koch  <wk@g10code.com>
+
+	* random-daemon.c, random.h, rndhw.c, rndunix.c, rand-internal.h *
+	random.c, rndegd.c, rndlinux.c, rndw32.c: Move from ../cipher/ to
+	here.
+	* Makefile.am: New.
+
+ Copyright 2008, 2009 Free Software Foundation, Inc.
+
+ This file is free software; as a special exception the author gives
+ unlimited permission to copy and/or distribute it, with or without
+ modifications, as long as this notice is preserved.
+
+ This file is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
+ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.

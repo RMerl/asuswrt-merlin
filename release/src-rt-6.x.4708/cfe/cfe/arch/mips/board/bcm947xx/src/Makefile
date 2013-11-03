@@ -1,7 +1,7 @@
 #
 # Makefile for Broadcom BCM947XX boards
 #
-# Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+# Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
 # 
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
 # OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
-# $Id: Makefile 376109 2012-12-21 08:38:43Z $
+# $Id: Makefile 382649 2013-02-03 04:37:52Z $
 #
 
 # Max sizes for vanilla external
@@ -58,7 +58,7 @@ ifeq ($(CFG_BCMHND74K), 1)
 CFLAGS += -DBCMHND74K
 endif
 
-CFLAGS += -I$(SRCBASE)/include
+CFLAGS += -I$(SRCBASE)/include -I$(SRCBASE)/common/include
 CFLAGS += -I$(SRCBASE)/tools/misc/lzma_src/C
 
 vpath %.c $(SRCBASE)/shared $(SRCBASE)/shared/nvram

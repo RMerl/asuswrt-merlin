@@ -178,9 +178,13 @@ checkcrc(char *fname)
 		goto checkcrc_fail;
 	}
 
-	/* check body crc */
 	len = SWAP_LONG(hdr->ih_size);
+	if (sbuf.st_size < (len + sizeof(image_header_t))) {
+		_dprintf("Size mismatch %lx/%lx !!!\n", sbuf.st_size, (len + sizeof(image_header_t)));
+		goto checkcrc_fail;
+	}
 
+	/* check body crc */
 	_dprintf("Verifying Checksum ... ");
 	checksum = crc_calc(0, (const char *)ptr + sizeof(image_header_t), len);
 	if(checksum != SWAP_LONG(hdr->ih_dcrc))

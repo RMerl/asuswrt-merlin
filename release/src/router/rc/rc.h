@@ -310,8 +310,10 @@ extern void start_wan_if(int unit);
 extern void stop_wan_if(int unit);
 #ifdef RTCONFIG_IPV6
 extern void stop_wan6(void);
+#if 0
 extern void start_ecmh(const char *wan_ifname);
 extern void stop_ecmh(void);
+#endif
 extern void wan6_up(const char *wan_ifname);
 extern void wan6_down(const char *wan_ifname);
 extern void start_wan6(void);
@@ -400,6 +402,15 @@ extern int start_demand_ppp(int unit, int wait);
 extern int start_pppoe_relay(char *wan_if);
 extern void stop_pppoe_relay(void);
 
+// vpnc.c
+#ifdef RTCONFIG_VPNC
+extern int vpnc_ipup_main(int argc, char **argv);
+extern int vpnc_ipdown_main(int argc, char **argv);
+extern int vpnc_ippreup_main(int argc, char **argv);
+extern int vpnc_authfail_main(int argc, char **argv);
+extern void update_vpnc_state(char *prefix, int state, int reason);
+#endif
+
 // network.c
 extern void set_host_domain_name(void);
 extern void start_lan(void);
@@ -434,7 +445,6 @@ extern int start_zcip(char *wan_ifname);
 extern int dhcp6c_state_main(int argc, char **argv);
 extern int start_dhcp6c(void);
 extern void stop_dhcp6c(void);
-extern int ipv6aide_main(int argc, char *argv[]);
 #endif
 
 #ifdef RTCONFIG_WPS
@@ -457,6 +467,7 @@ extern int mtd_erase_old(const char *mtdname);
 extern int mtd_write_main_old(int argc, char *argv[]);
 extern int mtd_unlock_erase_main_old(int argc, char *argv[]);
 extern int mtd_write(const char *path, const char *mtd);
+extern int wlaide_main(int argc, char *argv[]);
 #else
 extern int mtd_write_main(int argc, char *argv[]);
 extern int mtd_unlock_erase_main(int argc, char *argv[]);
@@ -468,7 +479,7 @@ extern void start_ubifs(void);
 extern void stop_ubifs(int stop);
 static inline void start_jffs2(void) { start_ubifs(); }
 static inline void stop_jffs2(int stop) { stop_ubifs(stop); }
-#elif defined(RTCONFIG_JFFS2) || defined(RTCONFIG_JFFSV1)
+#elif defined(RTCONFIG_JFFS2) || defined(RTCONFIG_JFFSV1) || defined(RTCONFIG_BRCM_NAND_JFFS2)
 extern void start_jffs2(void);
 extern void stop_jffs2(int stop);
 #else
@@ -633,6 +644,13 @@ extern int linkmonitor_main(int argc, char *argv[]);
 // vpn.c
 extern void start_pptpd(void);
 extern void stop_pptpd(void);
+
+// vpnc.c
+#ifdef RTCONFIG_VPNC
+extern int start_vpnc(void);
+extern void stop_vpnc(void);
+#endif
+
 #ifdef RTCONFIG_OPENVPN
 extern void start_vpnclient(int clientNum);
 extern void stop_vpnclient(int clientNum);
@@ -643,6 +661,7 @@ extern void stop_vpn_eas(void);
 extern void run_vpn_firewall_scripts();
 extern void write_vpn_dnsmasq_config(FILE*);
 extern int write_vpn_resolv(FILE*);
+extern void create_openvpn_passwd();
 #endif
 
 // wanduck.c
@@ -716,6 +735,22 @@ void stop_cstats(void);
 
 // lan.c
 extern void set_device_hostname(void);
+
+#ifdef RTCONFIG_TIMEMACHINE
+extern int start_timemachine(void);
+extern void stop_timemachine(void);
+extern int start_afpd(void);
+extern void stop_afpd(void);
+extern int start_cnid_metad(void);
+extern void stop_cnid_metad(void);
+extern int start_avahi_daemon(void);
+extern void stop_avahi_daemon(void);
+#endif
+
+#ifdef RTCONFIG_MDNS
+extern int start_mdns(void);
+extern void stop_mdns(void);
+#endif
 
 #ifdef BTN_SETUP
 enum BTNSETUP_STATE

@@ -274,6 +274,12 @@ static void get_mt7620_esw_WAN_linkStatus(int type, unsigned int *linkStatus)
 {
 	int i;
 	unsigned int value = 0;
+	const int sw_mode = nvram_get_int("sw_mode");
+
+	if (sw_mode == SW_MODE_AP) {
+		*linkStatus = 0;
+		return;
+	}
 
 	if (switch_init() < 0)
 		return;
@@ -295,12 +301,13 @@ static void get_mt7620_esw_LAN_linkStatus(int type, unsigned int *linkStatus)
 {
 	int i;
 	unsigned int value = 0;
+	const int sw_mode = nvram_get_int("sw_mode");
 
 	if (switch_init() < 0)
 		return;
 
 	for (i = 4; i >= 0; i--) {
-		if (lan_wan_partition[type][i] == 0)
+		if (lan_wan_partition[type][i] == 0 && sw_mode != SW_MODE_AP)
 			continue;
 		mt7620_reg_read((REG_ESW_MAC_PMSR_P0 + 0x100*i), &value);
 		value &= 0x1;

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+
+<!ENTITY Intro SYSTEM "intro.xml">
+<!ENTITY Install SYSTEM "install.xml">
+<!ENTITY Upgrade SYSTEM "upgrade.xml">
+<!ENTITY Configuration SYSTEM "configuration.xml">
+
+<!ENTITY ad.1 SYSTEM "../manpages/man1/ad.1.xml">
+<!ENTITY afpd.8 SYSTEM "../manpages//man8/afpd.8.xml">
+<!ENTITY cnid_dbd.8 SYSTEM "../manpages//man8/cnid_dbd.8.xml">
+<!ENTITY cnid_metad.8 SYSTEM "../manpages//man8/cnid_metad.8.xml">
+<!ENTITY afp.conf.5 SYSTEM "../manpages//man5/afp.conf.5.xml">
+<!ENTITY afp_signature.conf.5 SYSTEM "../manpages//man5/afp_signature.conf.5.xml">
+<!ENTITY afp_voluuid.conf.5 SYSTEM "../manpages//man5/afp_voluuid.conf.5.xml">
+<!ENTITY afpldaptest.1 SYSTEM "../manpages//man1/afpldaptest.1.xml">
+<!ENTITY afppasswd.1 SYSTEM "../manpages//man1/afppasswd.1.xml">
+<!ENTITY afpstats.1 SYSTEM "../manpages//man1/afpstats.1.xml">
+<!ENTITY apple_dump.1 SYSTEM "../manpages//man1/apple_dump.1.xml">
+<!ENTITY extmap.conf.5 SYSTEM "../manpages//man5/extmap.conf.5.xml">
+<!ENTITY macusers.1 SYSTEM "../manpages//man1/macusers.1.xml">
+<!ENTITY megatron.1 SYSTEM "../manpages//man1/megatron.1.xml">
+<!ENTITY netatalk.8 SYSTEM "../manpages//man8/netatalk.8.xml">
+<!ENTITY netatalk-config.1 SYSTEM "../manpages//man1/netatalk-config.1.xml">
+<!ENTITY uniconv.1 SYSTEM "../manpages//man1/uniconv.1.xml">
+<!ENTITY asip-status.pl.1 SYSTEM "../manpages//man1/asip-status.pl.1.xml">
+<!ENTITY dbd.1 SYSTEM "../manpages//man1/dbd.1.xml">
+]>
+<book id="netatalk-manual">
+  <title>Netatalk 3.0 Manual</title>
+  
+  <bookinfo>
+    <date>03-24-2013</date>
+    <releaseinfo>@NETATALK_VERSION@</releaseinfo>
+  </bookinfo>
+
+ <?latex \setcounter{page}{3} ?>
+<preface>
+        <title>Legal Notice</title>
+<para>
+This documentation is distributed under the GNU General Public License (GPL) version 2.  
+A copy of the license is included in this documentation, as well as within the Netatalk source
+distribution.  An on-line copy can be found at <ulink
+url="http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt">http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt</ulink>
+</para>
+</preface>
+
+  <?latex \cleardoublepage ?>
+  <!-- Contents -->
+  <toc/>
+  <?latex \cleardoublepage ?>
+  <?latex \pagenumbering{arabic} ?>
+
+  &Intro;
+  <?latex \cleardoublepage ?>
+
+  &Install;
+  <?latex \cleardoublepage ?>
+
+  &Configuration;
+  <?latex \cleardoublepage ?>
+
+  &Upgrade;
+  <?latex \cleardoublepage ?>
+
+  <chapter id="man-pages">
+    <title>Manual Pages</title>
+
+    <para>This is a collection of the man pages delivered with Netatalk.</para>
+
+    &ad.1;
+
+    &afp.conf.5;
+
+    &afp_signature.conf.5;
+
+    &afp_voluuid.conf.5;
+
+    &afpd.8;
+
+    &afpldaptest.1;
+
+    &afppasswd.1;
+
+    &afpstats.1;
+
+    &apple_dump.1;
+
+    &asip-status.pl.1;
+
+    &cnid_dbd.8;
+
+    &cnid_metad.8;
+
+    &dbd.1;
+
+    &extmap.conf.5;
+
+    &macusers.1;
+
+    &megatron.1;
+
+    &netatalk.8;
+
+    &netatalk-config.1;
+
+    &uniconv.1;
+  </chapter>
+  <?latex \cleardoublepage ?>
+
+  <?latex \include{gpl}?>
+  <?latex \cleardoublepage ?>
+
+  <index id="manual-index"><title>Index</title></index>
+</book>

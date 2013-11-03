@@ -1,0 +1,1213 @@
+'\" t
+.\"     Title: afp.conf
+.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
+.\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
+.\"      Date: 30 Apr 2013
+.\"    Manual: @NETATALK_VERSION@
+.\"    Source: @NETATALK_VERSION@
+.\"  Language: English
+.\"
+.TH "AFP\&.CONF" "5" "30 Apr 2013" "@NETATALK_VERSION@" "@NETATALK_VERSION@"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+afp.conf \- Netatalk configuration file
+.SH "SYNOPSIS"
+.PP
+The
+afp\&.conf
+file is the configuration file for the
+\fBNetatalk\fR
+AFP file server\&.
+.PP
+All AFP specific configuration and AFP volume definitions are done via this file\&.
+.SH "FILE FORMAT"
+.PP
+The file consists of sections and parameters\&. A section begins with the name of the section in square brackets and continues until the next section begins\&. Sections contain parameters of the form:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+    \fIname\fR = \fIvalue \fR
+    
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+The file is line\-based \- that is, each newline\-terminated line represents either a comment, a section name or a parameter\&.
+.PP
+Section and parameter names are case sensitive\&.
+.PP
+Only the first equals sign in a parameter is significant\&. Whitespace before or after the first equals sign is discarded\&. Leading, trailing and internal whitespace in section and parameter names is irrelevant\&. Leading and trailing whitespace in a parameter value is discarded\&. Internal whitespace within a parameter value is retained verbatim\&.
+.PP
+Any line beginning with a semicolon (\(lq;\(rq) or a hash (\(lq#\(rq) character is ignored, as are lines containing only whitespace\&.
+.PP
+Any line ending in a
+\(lq \e \(rq
+is continued on the next line in the customary UNIX fashion\&.
+.PP
+The values following the equals sign in parameters are all either a string (no quotes needed) or a boolean, which may be given as yes/no, 1/0 or true/false\&. Case is not significant in boolean values, but is preserved in string values\&. Some items such as create masks are numeric\&.
+.PP
+The parameter
+\fBinclude = \fR\fB\fIpath\fR\fR
+allows you to include one config file inside another\&. The file is included literally, as though typed in place\&. Nested includes are not supported\&.
+.SH "SECTION DESCRIPTIONS"
+.PP
+Each section in the configuration file (except for the [Global] section) describes a shared resource (known as a
+\(lqvolume\(rq)\&. The section name is the name of the volume and the parameters within the section define the volume attributes and options\&.
+.PP
+There are two special sections, [Global] and [Homes], which are described under
+\fIspecial sections\fR\&. The following notes apply to ordinary section descriptions\&.
+.PP
+A volume consists of a directory to which access is being given plus a description of the access rights which are granted to the user of the service\&. For volumes the
+\fBpath\fR
+option must specify the directory to share\&.
+.PP
+Any volume section without
+\fBpath\fR
+option is considered a
+\fIvol preset\fR
+which can be selected in other volume sections via the
+\fBvol preset\fR
+option and constitutes defaults for the volume\&. For any option specified both in a preset
+\fIand\fR
+in a volume section the volume section setting completely substitutes the preset option\&.
+.PP
+The access rights granted by the server are masked by the access rights granted to the specified or guest UNIX user by the host system\&. The server does not grant more access than the host system grants\&.
+.PP
+The following sample section defines an AFP volume\&. The user has full access to the path
+/foo/bar\&. The share is accessed via the share name
+baz:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+ [baz]
+    path = /foo/bar 
+.fi
+.if n \{\
+.RE
+.\}
+.SH "SPECIAL SECTIONS"
+.SS "The [Global] section"
+.PP
+Parameters in this section apply to the server as a whole\&. Parameters denoted by a (G) below are must be set in this section\&.
+.SS "The [Homes] section"
+.PP
+This section enable sharing of the UNIX server user home directories\&. Specifying an optional
+\fBpath\fR
+parameter means that not the whole user home will be shared but the subdirectory
+\fBpath\fR\&. It is necessary to define the
+\fBbasedir regex\fR
+option\&. It should be a regex which matches the parent directory of the user homes\&. Parameters denoted by a (H) belong to volume sections\&. The optional parameter
+\fBhome name\fR
+can be used to change the AFP volume name which
+\fI$u\*(Aqs home\fR
+by default\&. See below under VARIABLE SUBSTITUTIONS\&.
+.PP
+The following example illustrates this\&. Given all user home directories are stored under
+/home:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+ [Homes]
+      path = afp\-data
+      basedir regex = /home
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+For a user
+\fIjohn\fR
+this results in an AFP home volume with a path of
+/home/john/afp\-data\&.
+.PP
+If
+\fBbasedir regex\fR
+contains symlink, set the canonicalized absolute path\&. When
+/home
+links to
+/usr/home:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+ [Homes]
+      basedir regex = /usr/home
+.fi
+.if n \{\
+.RE
+.\}
+.SH "PARAMETERS"
+.PP
+Parameters define the specific attributes of sections\&.
+.PP
+Some parameters are specific to the [Global] section (e\&.g\&.,
+\fIlog type\fR)\&. All others are permissible only in volume sections\&. The letter
+\fIG\fR
+in parentheses indicates that a parameter is specific to the [Global] section\&. The letter
+\fIV\fR
+indicates that a parameter can be specified in a volume specific section\&.
+.SH "VARIABLE SUBSTITUTIONS"
+.PP
+You can use variables in volume names\&. The use of variables in paths is not supported for now\&.
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 1.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  1." 4.2
+.\}
+if you specify an unknown variable, it will not get converted\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 2.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  2." 4.2
+.\}
+if you specify a known variable, but that variable doesn\*(Aqt have a value, it will get ignored\&.
+.RE
+.PP
+The variables which can be used for substitutions are:
+.PP
+$b
+.RS 4
+basename
+.RE
+.PP
+$c
+.RS 4
+client\*(Aqs ip address
+.RE
+.PP
+$d
+.RS 4
+volume pathname on server
+.RE
+.PP
+$f
+.RS 4
+full name (contents of the gecos field in the passwd file)
+.RE
+.PP
+$g
+.RS 4
+group name
+.RE
+.PP
+$h
+.RS 4
+hostname
+.RE
+.PP
+$i
+.RS 4
+client\*(Aqs ip, without port
+.RE
+.PP
+$s
+.RS 4
+server name (this can be the hostname)
+.RE
+.PP
+$u
+.RS 4
+user name (if guest, it is the user that guest is running as)
+.RE
+.PP
+$v
+.RS 4
+volume name
+.RE
+.PP
+$$
+.RS 4
+prints dollar sign ($)
+.RE
+.SH "EXPLANATION OF GLOBAL PARAMETERS"
+.SS "Authentication Options"
+.PP
+ad domain = \fIDOMAIN\fR \fB(G)\fR
+.RS 4
+Append @DOMAIN to username when authenticating\&. Useful in Active Directory environments that otherwise would require the user to enter the full user@domain string\&.
+.RE
+.PP
+admin auth user = \fIuser\fR \fB(G)\fR
+.RS 4
+Specifying eg "\fBadmin auth user = root\fR" whenever a normal user login fails, afpd will try to authenticate as the specified
+\fBadmin auth user\fR\&. If this succeeds, a normal session is created for the original connecting user\&. Said differently: if you know the password of
+\fBadmin auth user\fR, you can authenticate as any other user\&.
+.RE
+.PP
+k5 keytab = \fIpath\fR \fB(G)\fR, k5 service = \fIservice\fR \fB(G)\fR, k5 realm = \fIrealm\fR \fB(G)\fR
+.RS 4
+These are required if the server supports the Kerberos 5 authentication UAM\&.
+.RE
+.PP
+nt domain = \fIDOMAIN\fR \fB(G)\fR, nt separator = \fISEPARATOR\fR \fB(G)\fR
+.RS 4
+Use for eg\&. winbind authentication, prepends both strings before the username from login and then tries to authenticate with the result through the available and active UAM authentication modules\&.
+.RE
+.PP
+save password = \fIBOOLEAN\fR (default: \fIyes\fR) \fB(G)\fR
+.RS 4
+Enables or disables the ability of clients to save passwords locally\&.
+.RE
+.PP
+set password = \fIBOOLEAN\fR (default: \fIno\fR) \fB(G)\fR
+.RS 4
+Enables or disables the ability of clients to change their passwords via chooser or the "connect to server" dialog\&.
+.RE
+.PP
+uam list = \fIuam list\fR \fB(G)\fR
+.RS 4
+Space or comma separated list of UAMs\&. (The default is "uams_dhx\&.so uams_dhx2\&.so")\&.
+.sp
+The most commonly used UAMs are:
+.PP
+uams_guest\&.so
+.RS 4
+allows guest logins
+.RE
+.PP
+uams_clrtxt\&.so
+.RS 4
+(uams_pam\&.so or uams_passwd\&.so) Allow logins with passwords transmitted in the clear\&. (legacy)
+.RE
+.PP
+uams_randum\&.so
+.RS 4
+allows Random Number and Two\-Way Random Number Exchange for authentication (requires a separate file containing the passwords, either @pkgconfdir@/afppasswd file or the one specified via "\fBpasswd file\fR"\&. See
+\fBafppasswd\fR(1)
+for details\&. (legacy)
+.RE
+.PP
+uams_dhx\&.so
+.RS 4
+(uams_dhx_pam\&.so or uams_dhx_passwd\&.so) Allow Diffie\-Hellman eXchange (DHX) for authentication\&.
+.RE
+.PP
+uams_dhx2\&.so
+.RS 4
+(uams_dhx2_pam\&.so or uams_dhx2_passwd\&.so) Allow Diffie\-Hellman eXchange 2 (DHX2) for authentication\&.
+.RE
+.PP
+uam_gss\&.so
+.RS 4
+Allow Kerberos V for authentication (optional)
+.RE
+.RE
+.PP
+uam path = \fIpath\fR \fB(G)\fR
+.RS 4
+Sets the default path for UAMs for this server (default is @libdir@/netatalk)\&.
+.RE
+.SS "Charset Options"
+.PP
+With OS X Apple introduced the AFP3 protocol\&. One of the big changes was, that AFP3 uses Unicode names encoded as Decomposed UTF\-8 (UTF8\-MAC)\&. Previous AFP/OS versions used charsets like MacRoman, MacCentralEurope, etc\&.
+.PP
+To be able to serve AFP3 and older clients at the same time,
+\fBafpd\fR
+needs to be able to convert between UTF\-8 and Mac charsets\&. Even OS X clients partly still rely on the mac charset\&. As there\*(Aqs no way,
+\fBafpd\fR
+can detect the codepage a pre AFP3 client uses, you have to specify it using the
+\fBmac charset\fR
+option\&. The default is MacRoman, which should be fine for most western users\&.
+.PP
+As
+\fBafpd\fR
+needs to interact with UNIX operating system as well, it need\*(Aqs to be able to convert from UTF8\-MAC / Mac charset to the UNIX charset\&. By default
+\fBafpd\fR
+uses
+\fIUTF8\fR\&. You can set the UNIX charset using the
+\fBunix charset\fR
+option\&. If you\*(Aqre using extended characters in the configuration files for
+\fBafpd\fR, make sure your terminal matches the
+\fBunix charset\fR\&.
+.PP
+mac charset = \fICHARSET\fR \fB(G)/(V)\fR
+.RS 4
+Specifies the Mac clients charset, e\&.g\&.
+\fIMAC_ROMAN\fR\&. This is used to convert strings and filenames to the clients codepage for OS9 and Classic, i\&.e\&. for authentication and AFP messages (SIGUSR2 messaging)\&. This will also be the default for the volumes
+\fBmac charset\fR\&. Defaults to
+\fIMAC_ROMAN\fR\&.
+.RE
+.PP
+unix charset = \fICHARSET\fR \fB(G)\fR
+.RS 4
+Specifies the servers unix charset, e\&.g\&.
+\fIISO\-8859\-15\fR
+or
+\fIEUC\-JP\fR\&. This is used to convert strings to/from the systems locale, e\&.g\&. for authentication, server messages and volume names\&. If
+\fILOCALE\fR
+is set, the systems locale is used\&. Defaults to
+\fIUTF8\fR\&.
+.RE
+.PP
+vol charset = \fICHARSET\fR \fB(G)/(V)\fR
+.RS 4
+Specifies the encoding of the volumes filesystem\&. By default, it is the same as
+\fBunix charset\fR\&.
+.RE
+.SS "Password Options"
+.PP
+passwd file = \fIpath\fR \fB(G)\fR
+.RS 4
+Sets the path to the Randnum UAM passwd file for this server (default is @pkgconfdir@/afppasswd)\&.
+.RE
+.PP
+passwd minlen = \fInumber\fR \fB(G)\fR
+.RS 4
+Sets the minimum password length, if supported by the UAM
+.RE
+.SS "Network Options"
+.PP
+advertise ssh = \fIBOOLEAN\fR (default: \fIno\fR) \fB(G)\fR
+.RS 4
+Allows old Mac OS X clients (10\&.3\&.3\-10\&.4) to automagically establish a tunneled AFP connection through SSH\&. If this option is set, the server\*(Aqs answers to client\*(Aqs FPGetSrvrInfo requests contain an additional entry\&. It depends on both client\*(Aqs settings and a correctly configured and running
+\fBsshd\fR(8)
+on the server to let things work\&.
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+Setting this option is not recommended since globally encrypting AFP connections via SSH will increase the server\*(Aqs load significantly\&. On the other hand, Apple\*(Aqs client side implementation of this feature in MacOS X versions prior to 10\&.3\&.4 contained a security flaw\&.
+.sp .5v
+.RE
+.RE
+.PP
+afp interfaces = \fIname [name \&.\&.\&.]\fR \fB(G)\fR
+.RS 4
+Specifies the network interfaces that the server should listens on\&. The default is advertise the first IP address of the system, but to listen for any incoming request\&.
+.RE
+.PP
+afp listen = \fIip address[:port] [ip address[:port] \&.\&.\&.]\fR \fB(G)\fR
+.RS 4
+Specifies the IP address that the server should advertise
+\fBand\fR
+listens to\&. The default is advertise the first IP address of the system, but to listen for any incoming request\&. The network address may be specified either in dotted\-decimal format for IPv4 or in hexadecimal format for IPv6\&.
+.sp
+IPv6 address + port combination must use URL the format using square brackets [IPv6]:port
+.RE
+.PP
+afp port = \fIport number\fR \fB(G)\fR
+.RS 4
+Allows a different TCP port to be used for AFP\&. The default is 548\&. Also sets the default port applied when none specified in an
+\fBafp listen\fR
+option\&.
+.RE
+.PP
+cnid listen = \fIip address[:port] [ip address[:port] \&.\&.\&.]\fR \fB(G)\fR
+.RS 4
+Specifies the IP address that the CNID server should listen on\&. The default is
+\fBlocalhost:4700\fR\&.
+.RE
+.PP
+disconnect time = \fInumber\fR \fB(G)\fR
+.RS 4
+Keep disconnected AFP sessions for
+\fInumber\fR
+hours before dropping them\&. Default is 24 hours\&.
+.RE
+.PP
+dsireadbuf = \fInumber\fR \fB(G)\fR
+.RS 4
+Scale factor that determines the size of the DSI/TCP readahead buffer, default is 12\&. This is multiplies with the DSI server quantum (default ~300k) to give the size of the buffer\&. Increasing this value might increase throughput in fast local networks for volume to volume copies\&.
+\fINote\fR: This buffer is allocated per afpd child process, so specifying large values will eat up large amount of memory (buffer size * number of clients)\&.
+.RE
+.PP
+fqdn = \fIname:port\fR \fB(G)\fR
+.RS 4
+Specifies a fully\-qualified domain name, with an optional port\&. This is discarded if the server cannot resolve it\&. This option is not honored by AppleShare clients <= 3\&.8\&.3\&. This option is disabled by default\&. Use with caution as this will involve a second name resolution step on the client side\&. Also note that afpd will advertise this name:port combination but not automatically listen to it\&.
+.RE
+.PP
+hostname = \fIname\fR \fB(G)\fR
+.RS 4
+Use this instead of the result from calling hostname for determining which IP address to advertise, therefore the hostname is resolved to an IP which is the advertised\&. This is NOT used for listening and it is also overwritten by
+\fBafp listen\fR\&.
+.RE
+.PP
+max connections = \fInumber\fR \fB(G)\fR
+.RS 4
+Sets the maximum number of clients that can simultaneously connect to the server (default is 200)\&.
+.RE
+.PP
+server quantum = \fInumber\fR \fB(G)\fR
+.RS 4
+This specifies the DSI server quantum\&. The default value is 1 MB\&. The maximum value is 0xFFFFFFFFF, the minimum is 32000\&. If you specify a value that is out of range, the default value will be set\&. Do not change this value unless you\*(Aqre absolutely sure, what you\*(Aqre doing
+.RE
+.PP
+sleep time = \fInumber\fR \fB(G)\fR
+.RS 4
+Keep sleeping AFP sessions for
+\fInumber\fR
+hours before disconnecting clients in sleep mode\&. Default is 10 hours\&.
+.RE
+.PP
+tcprcvbuf = \fInumber\fR \fB(G)\fR
+.RS 4
+Try to set TCP receive buffer using setsockpt()\&. Often OSes impose restrictions on the applications ability to set this value\&.
+.RE
+.PP
+tcpsndbuf = \fInumber\fR \fB(G)\fR
+.RS 4
+Try to set TCP send buffer using setsockpt()\&. Often OSes impose restrictions on the applications ability to set this value\&.
+.RE
+.PP
+use sendfile = \fIBOOLEAN\fR (default: \fIyes\fR) \fB(G)\fR
+.RS 4
+Whether to use sendfile
+syscall for sending file data to clients\&.
+.RE
+.PP
+zeroconf = \fIBOOLEAN\fR (default: \fIyes\fR) \fB(G)\fR
+.RS 4
+Whether to use automatic Zeroconf
+service registration if Avahi or mDNSResponder were compiled in\&.
+.RE
+.SS "Miscellaneous Options"
+.PP
+admin group = \fIgroup\fR \fB(G)\fR
+.RS 4
+Allows users of a certain group to be seen as the superuser when they log in\&. This option is disabled by default\&.
+.RE
+.PP
+afp read locks = \fIBOOLEAN\fR (default: \fIno\fR) \fB(G)\fR
+.RS 4
+Whether to apply locks to the byte region read in FPRead calls\&. The AFP spec mandates this, but it\*(Aqs not really in line with UNIX semantics and is a performance hug\&.
+.RE
+.PP
+afpstats = \fIBOOLEAN\fR (default: \fIno\fR) \fB(G)\fR
+.RS 4
+Whether to provide AFP runtime statistics (connected users, open volumes) via dbus\&.
+.RE
+.PP
+basedir regex = \fIregex\fR \fB(H)\fR
+.RS 4
+Regular expression which matches the parent directory of the user homes\&. If
+\fBbasedir regex\fR
+contains symlink, you must set the canonicalized absolute path\&. In the simple case this is just a path ie
+\fBbasedir regex = /home\fR
+.RE
+.PP
+close vol = \fIBOOLEAN\fR (default: \fIno\fR) \fB(G)\fR
+.RS 4
+Whether to close volumes possibly opened by clients when they\*(Aqre removed from the configuration and the configuration is reloaded\&.
+.RE
+.PP
+cnid server = \fIipaddress[:port]\fR \fB(G)/(V)\fR
+.RS 4
+Specifies the IP address and port of a cnid_metad server, required for CNID dbd backend\&. Defaults to localhost:4700\&. The network address may be specified either in dotted\-decimal format for IPv4 or in hexadecimal format for IPv6\&.\-
+.RE
+.PP
+dircachesize = \fInumber\fR \fB(G)\fR
+.RS 4
+Maximum possible entries in the directory cache\&. The cache stores directories and files\&. It is used to cache the full path to directories and CNIDs which considerably speeds up directory enumeration\&.
+.sp
+Default size is 8192, maximum size is 131072\&. Given value is rounded up to nearest power of 2\&. Each entry takes about 100 bytes, which is not much, but remember that every afpd child process for every connected user has its cache\&.
+.RE
+.PP
+extmap file = \fIpath\fR \fB(G)\fR
+.RS 4
+Sets the path to the file which defines file extension type/creator mappings\&. (default is @pkgconfdir@/extmap\&.conf)\&.
+.RE
+.PP
+guest account = \fIname\fR \fB(G)\fR
+.RS 4
+Specifies the user that guests should use (default is "nobody")\&. The name should be quoted\&.
+.RE
+.PP
+home name = \fIname\fR \fB(H)\fR
+.RS 4
+AFP user home volume name\&. The default is
+\fIuser\*(Aqs home\fR\&.
+.RE
+.PP
+login message = \fImessage\fR \fB(G)/(V)\fR
+.RS 4
+Sets a message to be displayed when clients logon to the server\&. The message should be in
+\fBunix charset\fR
+and should be quoted\&. Extended characters are allowed\&.
+.RE
+.PP
+ignored attributes = \fIall | nowrite | nodelete | norename\fR \fB(G)/(V)\fR
+.RS 4
+Speficy a set of file and directory attributes that shall be ignored by the server,
+<attribute>all</attribute>
+includes all the other options\&.
+.sp
+In OS X when the Finder sets a lock on a file/directory or you set the BSD uchg flag in the Terminal, all three attributes are used\&. Thus in order to ignore the Finder lock/BSD uchg flag, add set
+\fIignored attributes = all\fR\&.
+.RE
+.PP
+mimic model = \fImodel\fR \fB(G)\fR
+.RS 4
+Specifies the icon model that appears on clients\&. Defaults to off\&. Note that afpd must support Zeroconf\&. Examples: RackMac (same as Xserve), PowerBook, PowerMac, Macmini, iMac, MacBook, MacBookPro, MacBookAir, MacPro, AppleTV1,1, AirPort\&.
+.RE
+.PP
+signature = <text> \fB(G)\fR
+.RS 4
+Specify a server signature\&. The maximum length is 16 characters\&. This option is useful for clustered environments, to provide fault isolation etc\&. By default, afpd generate signature and saving it to
+@localstatedir@/netatalk/afp_signature\&.conf
+automatically (based on random number)\&. See also asip\-status\&.pl(1)\&.
+.RE
+.PP
+solaris share reservations = \fIBOOLEAN\fR (default: \fIyes\fR) \fB(G)\fR
+.RS 4
+Use share reservations on Solaris\&. Solaris CIFS server uses this too, so this makes a lock coherent multi protocol server\&.
+.RE
+.PP
+veto message = \fIBOOLEAN\fR (default: \fIno\fR) \fB(G)\fR
+.RS 4
+Use section
+\fBname\fR
+as option preset for all volumes (when set in the [Global] section) or for one volume (when set in that volume\*(Aqs section)\&.
+.RE
+.PP
+vol dbpath = \fIpath\fR \fB(G)\fR
+.RS 4
+Sets the database information to be stored in path\&. You have to specify a writable location, even if the volume is read only\&. The default is
+@localstatedir@/netatalk/CNID/\&.
+.RE
+.PP
+volnamelen = \fInumber\fR \fB(G)\fR
+.RS 4
+Max length of UTF8\-MAC volume name for Mac OS X\&. Note that Hangul is especially sensitive to this\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+ 73: limit of Mac OS X 10\&.1 80: limit of Mac
+            OS X 10\&.4/10\&.5 (default) 255: limit of recent Mac OS
+            X
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+Mac OS 9 and earlier are not influenced by this, because Maccharset volume name is always limited to 27 bytes\&.
+.RE
+.PP
+vol preset = \fIname\fR \fB(G)/(V)\fR
+.RS 4
+Use section
+\fBname\fR
+as option preset for all volumes (when set in the [Global] section) or for one volume (when set in that volume\*(Aqs section)\&.
+.RE
+.SS "Logging Options"
+.PP
+log file = \fIlogfile\fR \fB(G)\fR
+.RS 4
+If not specified Netatalk logs to syslogs daemon facility\&. Otherwise it logs to
+\fBlogfile\fR\&.
+.RE
+.PP
+log level = \fItype:level [type:level \&.\&.\&.]\fR \fB(G)\fR, log level = \fItype:level,[type:level, \&.\&.\&.]\fR \fB(G)\fR
+.RS 4
+Specify that any message of a loglevel up to the given
+\fBlog level\fR
+should be logged\&.
+.sp
+By default afpd logs to syslog with a default logging setup equivalent to
+\fBdefault:note\fR
+.sp
+logtypes: default, afpdaemon, logger, uamsdaemon
+.sp
+loglevels: severe, error, warn, note, info, debug, debug6, debug7, debug8, debug9, maxdebug
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+Both logtype and loglevels are case insensitive\&.
+.sp .5v
+.RE
+.RE
+.SS "Filesystem Change Events (FCE)"
+.PP
+Netatalk includes a nifty filesystem change event mechanism where afpd processes notify interested listeners about certain filesystem event by UDP network datagrams\&.
+.PP
+fce listener = \fIhost[:port]\fR \fB(G)\fR
+.RS 4
+Enables sending FCE events to the specified
+\fIhost\fR, default
+\fIport\fR
+is 12250 if not specified\&. Specifying multiple listeners is done by having this option once for each of them\&.
+.RE
+.PP
+fce events = \fIfmod,fdel,ddel,fcre,dcre,tmsz\fR \fB(G)\fR
+.RS 4
+Specifies which FCE events are active, default is
+\fIfmod,fdel,ddel,fcre,dcre\fR\&.
+.RE
+.PP
+fce coalesce = \fIall|delete|create\fR \fB(G)\fR
+.RS 4
+Coalesce FCE events\&.
+.RE
+.PP
+fce holdfmod = \fIseconds\fR \fB(G)\fR
+.RS 4
+This determines the time delay in seconds which is always waited if another file modification for the same file is done by a client before sending an FCE file modification event (fmod)\&. For example saving a file in Photoshop would generate multiple events by itself because the application is opening, modifying and closing a file multiple times for every "save"\&. Default: 60 seconds\&.
+.RE
+.SS "Debug Parameters"
+.PP
+These options are useful for debugging only\&.
+.PP
+tickleval = \fInumber\fR \fB(G)\fR
+.RS 4
+Sets the tickle timeout interval (in seconds)\&. Defaults to 30\&.
+.RE
+.PP
+timeout = \fInumber\fR \fB(G)\fR
+.RS 4
+Specify the number of tickles to send before timing out a connection\&. The default is 4, therefore a connection will timeout after 2 minutes\&.
+.RE
+.PP
+client polling = \fIBOOLEAN\fR (default: \fIno\fR) \fB(G)\fR
+.RS 4
+With this option enabled, afpd won\*(Aqt advertise that it is capable of server notifications, so that connected clients poll the server every 10 seconds to detect changes in opened server windows\&.
+\fINote\fR: Depending on the number of simultaneously connected clients and the network\*(Aqs speed, this can lead to a significant higher load on your network!
+.sp
+Do not use this option any longer as present Netatalk correctly supports server notifications, allowing connected clients to update folder listings in case another client changed the contents\&.
+.RE
+.SS "Options for ACL handling"
+.PP
+By default, the effective permission of the authenticated user are only mapped to the mentioned UARights permission structure, not the UNIX mode\&. You can adjust this behaviour with the configuration option
+\fBmac acls\fR:
+.PP
+map acls = \fInone|rights|mode\fR \fB(G)\fR
+.RS 4
+.PP
+none
+.RS 4
+no mapping of ACLs
+.RE
+.PP
+rights
+.RS 4
+effective permissions are mapped to UARights structure\&. This is the default\&.
+.RE
+.PP
+mode
+.RS 4
+ACLs are additionally mapped to the UNIX mode of the filesystem object\&.
+.RE
+.RE
+.PP
+If you want to be able to display ACLs on the client, you must setup both client and server as part on a authentication domain (directory service, eg LDAP, Open Directory, Active Directory)\&. The reason is, in OS X ACLs are bound to UUIDs, not just uid\*(Aqs or gid\*(Aqs\&. Therefor Netatalk must be able to map every filesystem uid and gid to a UUID so that it can return the server side ACLs which are bound to UNIX uid and gid mapped to OS X UUIDs\&.
+.PP
+Netatalk can query a directory server using LDAP queries\&. Either the directory server already provides an UUID attribute for user and groups (Active Directory, Open Directory) or you reuse an unused attribute (or add a new one) to you directory server (eg OpenLDAP)\&.
+.PP
+The following LDAP options must be configured for Netatalk:
+.PP
+ldap auth method = \fInone|simple|sasl\fR \fB(G)\fR
+.RS 4
+Authentication method:
+\fBnone | simple | sasl\fR
+.PP
+none
+.RS 4
+anonymous LDAP bind
+.RE
+.PP
+simple
+.RS 4
+simple LDAP bind
+.RE
+.PP
+sasl
+.RS 4
+SASL\&. Not yet supported !
+.RE
+.RE
+.PP
+ldap auth dn = \fIdn\fR \fB(G)\fR
+.RS 4
+Distinguished Name of the user for simple bind\&.
+.RE
+.PP
+ldap auth pw = \fIpassword\fR \fB(G)\fR
+.RS 4
+Distinguished Name of the user for simple bind\&.
+.RE
+.PP
+ldap server = \fIhost\fR \fB(G)\fR
+.RS 4
+Name or IP address of your LDAP Server\&. This is only needed for explicit ACL support in order to be able to query LDAP for UUIDs\&.
+.sp
+You can use
+\fBafpldaptest\fR(1)
+to syntactically check your config\&.
+.RE
+.PP
+ldap userbase = \fIbase dn\fR \fB(G)\fR
+.RS 4
+DN of the user container in LDAP\&.
+.RE
+.PP
+ldap userscope = \fIscope\fR \fB(G)\fR
+.RS 4
+Search scope for user search:
+\fBbase | one | sub\fR
+.RE
+.PP
+ldap groupbase = \fIbase dn\fR \fB(G)\fR
+.RS 4
+DN of the group container in LDAP\&.
+.RE
+.PP
+ldap groupscope = \fIscope\fR \fB(G)\fR
+.RS 4
+Search scope for user search:
+\fBbase | one | sub\fR
+.RE
+.PP
+ldap uuid attr = \fIdn\fR \fB(G)\fR
+.RS 4
+Name of the LDAP attribute with the UUIDs\&.
+.sp
+Note: this is used both for users and groups\&.
+.RE
+.PP
+ldap name attr = \fIdn\fR \fB(G)\fR
+.RS 4
+Name of the LDAP attribute with the users short name\&.
+.RE
+.PP
+ldap uuid string = \fISTRING\fR \fB(G)\fR
+.RS 4
+Format of the uuid string in the directory\&. A series of x and \-, where every x denotes a value 0\-9a\-f and every \- is a separator\&.
+.sp
+Default: xxxxxxxx\-xxxx\-xxxx\-xxxx\-xxxxxxxxxxxx
+.RE
+.PP
+ldap uuid encoding = \fIstring | ms\-guid (default: string)\fR \fB(G)\fR
+.RS 4
+Format of the UUID of the LDAP attribute, allows usage of the binary objectGUID fields from Active Directory\&. If left unspecified, string is the default, which passes through the ASCII UUID returned by most other LDAP stores\&. If set to ms\-guid, the internal UUID representation is converted to and from the binary format used in the objectGUID attribute found on objects in Active Directory when interacting with the server\&.
+.PP
+string
+.RS 4
+UUID is a string, use with eg OpenDirectory\&.
+.RE
+.PP
+ms\-guid
+.RS 4
+Binary objectGUID from Active Directory
+.RE
+.RE
+.PP
+ldap group attr = \fIdn\fR \fB(G)\fR
+.RS 4
+Name of the LDAP attribute with the groups short name\&.
+.RE
+.SH "EXPLANATION OF VOLUME PARAMETERS"
+.SS "Parameters"
+.PP
+The section name defines the volume name\&. No two volumes may have the same name\&. The volume name cannot contain the
+\*(Aq:\*(Aq
+character\&. The volume name is mangled if it is very long\&. Mac charset volume name is limited to 27 characters\&. UTF8\-MAC volume name is limited to volnamelen parameter\&.
+.PP
+path = \fIPATH\fR \fB(V)\fR
+.RS 4
+The path name must be a fully qualified path name\&.
+.RE
+.PP
+appledouble = \fIea|v2\fR \fB(V)\fR
+.RS 4
+Specify the format of the metadata files, which are used for saving Mac resource fork as well\&. Earlier versions used AppleDouble v2, the new default format is
+\fBea\fR\&.
+.RE
+.PP
+vol size limit = \fIsize in MiB\fR \fB(V)\fR
+.RS 4
+Useful for Time Machine: limits the reported volume size, thus preventing Time Machine from using the whole real disk space for backup\&. Example: "vol size limit = 1000" would limit the reported disk space to 1 GB\&.
+\fBIMPORTANT: \fR
+This is an approximated calculation taking into account the contents of Time Machine sparsebundle images\&. Therefor you MUST NOT use this volume to store other content when using this option, because it would NOT be accounted\&. The calculation works by reading the band size from the Info\&.plist XML file of the sparsebundle, reading the bands/ directory counting the number of band files, and then multiplying one with the other\&.
+.RE
+.PP
+valid users = \fIuser @group\fR \fB(V)\fR
+.RS 4
+The allow option allows the users and groups that access a share to be specified\&. Users and groups are specified, delimited by spaces or commas\&. Groups are designated by a @ prefix\&. Names may be quoted in order to allow for spaces in names\&. Example:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+valid users = user "user 2" @group \(lq@group 2"
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+invalid users = \fIusers/groups\fR \fB(V)\fR
+.RS 4
+The deny option specifies users and groups who are not allowed access to the share\&. It follows the same format as the "valid users" option\&.
+.RE
+.PP
+hosts allow = \fIIP host address/IP netmask bits [ \&.\&.\&. ]\fR \fB(V)\fR
+.RS 4
+Only listed hosts and networks are allowed, all others are rejected\&. The network address may be specified either in dotted\-decimal format for IPv4 or in hexadecimal format for IPv6\&.
+.sp
+Example: hosts allow = 10\&.1\&.0\&.0/16 10\&.2\&.1\&.100 2001:0db8:1234::/48
+.RE
+.PP
+hosts deny = \fIIP host address/IP netmask bits [ \&.\&.\&. ]\fR \fB(V)\fR
+.RS 4
+Listed hosts and nets are rejected, all others are allowed\&.
+.sp
+Example: hosts deny = 192\&.168\&.100/24 10\&.1\&.1\&.1 2001:db8::1428:57ab
+.RE
+.PP
+cnid scheme = \fIbackend\fR \fB(V)\fR
+.RS 4
+set the CNID backend to be used for the volume, default is [@DEFAULT_CNID_SCHEME@] available schemes: [@compiled_backends@]
+.RE
+.PP
+ea = \fInone|auto|sys|ad\fR \fB(V)\fR
+.RS 4
+Specify how Extended Attributes
+are stored\&.
+\fBauto\fR
+is the default\&.
+.PP
+auto
+.RS 4
+Try
+\fBsys\fR
+(by setting an EA on the shared directory itself), fallback to
+\fBad\fR\&. Requires writable volume for performing test\&. "\fBread only = yes\fR" overwrites
+\fBauto\fR
+with
+\fBnone\fR\&. Use explicit "\fBea = sys|ad\fR" for read\-only volumes where appropriate\&.
+.RE
+.PP
+sys
+.RS 4
+Use filesystem Extended Attributes\&.
+.RE
+.PP
+ad
+.RS 4
+Use files in
+\fI\&.AppleDouble\fR
+directories\&.
+.RE
+.PP
+none
+.RS 4
+No Extended Attributes support\&.
+.RE
+.RE
+.PP
+mac charset = \fICHARSET\fR \fB(V)\fR
+.RS 4
+specifies the Mac client charset for this Volume, e\&.g\&.
+\fIMAC_ROMAN\fR,
+\fIMAC_CYRILLIC\fR\&. If not specified the global setting is applied\&. This setting is only required if you need volumes, where the Mac charset differs from the one globally set in the [Global] section\&.
+.RE
+.PP
+casefold = \fBoption\fR \fB(V)\fR
+.RS 4
+The casefold option handles, if the case of filenames should be changed\&. The available options are:
+.sp
+\fBtolower\fR
+\- Lowercases names in both directions\&.
+.sp
+\fBtoupper\fR
+\- Uppercases names in both directions\&.
+.sp
+\fBxlatelower\fR
+\- Client sees lowercase, server sees uppercase\&.
+.sp
+\fBxlateupper\fR
+\- Client sees uppercase, server sees lowercase\&.
+.RE
+.PP
+password = \fIpassword\fR \fB(V)\fR
+.RS 4
+This option allows you to set a volume password, which can be a maximum of 8 characters long (using ASCII strongly recommended at the time of this writing)\&.
+.RE
+.PP
+file perm = \fImode\fR \fB(V)\fR, directory perm = \fImode\fR \fB(V)\fR
+.RS 4
+Add(or) with the client requested permissions:
+\fBfile perm\fR
+is for files only,
+\fBdirectory perm\fR
+is for directories only\&. Don\*(Aqt use with "\fBunix priv = no\fR"\&.
+.PP
+\fBExample.\ \&Volume for a collaborative workgroup\fR
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+file perm = 0660 directory perm =
+              0770
+.fi
+.if n \{\
+.RE
+.\}
+
+.RE
+.PP
+umask = \fImode\fR \fB(V)\fR
+.RS 4
+set perm mask\&. Don\*(Aqt use with "\fBunix priv = no\fR"\&.
+.RE
+.PP
+preexec = \fIcommand\fR \fB(V)\fR
+.RS 4
+command to be run when the volume is mounted, ignored for user defined volumes
+.RE
+.PP
+postexec = \fIcommand\fR \fB(V)\fR
+.RS 4
+command to be run when the volume is closed, ignored for user defined volumes
+.RE
+.PP
+root preexec = \fIcommand\fR \fB(V)\fR
+.RS 4
+command to be run as root when the volume is mounted, ignored for user defined volumes
+.RE
+.PP
+root postexec = \fIcommand\fR \fB(V)\fR
+.RS 4
+command to be run as root when the volume is closed, ignored for user defined volumes
+.RE
+.PP
+rolist = \fBusers/groups\fR \fB(V)\fR
+.RS 4
+Allows certain users and groups to have read\-only access to a share\&. This follows the allow option format\&.
+.RE
+.PP
+rwlist = \fIusers/groups\fR \fB(V)\fR
+.RS 4
+Allows certain users and groups to have read/write access to a share\&. This follows the allow option format\&.
+.RE
+.PP
+veto files = \fIvetoed names\fR \fB(V)\fR
+.RS 4
+hide files and directories,where the path matches one of the \*(Aq/\*(Aq delimited vetoed names\&. The veto string must always be terminated with a \*(Aq/\*(Aq, eg\&. "veto1/", "veto1/veto2/"\&.
+.RE
+.SS "Volume options"
+.PP
+Boolean volume options\&.
+.PP
+acls = \fIBOOLEAN\fR (default: \fIyes\fR) \fB(V)\fR
+.RS 4
+Whether to flag volumes as supporting ACLs\&. If ACL support is compiled in, this is yes by default\&.
+.RE
+.PP
+cnid dev = \fIBOOLEAN\fR (default: \fIyes\fR) \fB(V)\fR
+.RS 4
+Whether to use the device number in the CNID backends\&. Helps when the device number is not constant across a reboot, eg cluster, \&.\&.\&.
+.RE
+.PP
+convert appledouble = \fIBOOLEAN\fR (default: \fIyes\fR) \fB(V)\fR
+.RS 4
+Whether automatic conversion from
+\fBappledouble = v2\fR
+to
+\fBappledouble = ea\fR
+is performed when accessing filesystems from clients\&. This is generally useful, but costs some performance\&. It\*(Aqs recommendable to run
+\fBdbd\fR
+on volumes and do the conversion with that\&. Then this option can be set to no\&.
+.RE
+.PP
+delete veto files = \fIBOOLEAN\fR (default: \fIno\fR) \fB(V)\fR
+.RS 4
+This option is used when Netatalk is attempting to delete a directory that contains one or more vetoed files or directories (see the veto files option)\&. If this option is set to no (the default) then if a directory contains any non\-vetoed files or directories then the directory delete will fail\&. This is usually what you want\&.
+.sp
+If this option is set to yes, then Netatalk will attempt to recursively delete any files and directories within the vetoed directory\&.
+.RE
+.PP
+follow symlinks = \fIBOOLEAN\fR (default: \fIno\fR) \fB(V)\fR
+.RS 4
+The default setting is false thus symlinks are not followed on the server\&. This is the same behaviour as OS X\*(Aqs AFP server\&. Setting the option to true causes afpd to follow symlinks on the server\&. symlinks may point outside of the AFP volume, currently afpd doesn\*(Aqt do any checks for "wide symlinks"\&.
+.RE
+.PP
+invisible dots = \fIBOOLEAN\fR (default: \fIno\fR) \fB(V)\fR
+.RS 4
+make dot files invisible\&. WARNING: enabling this option will lead to unwanted sideeffects were OS X applications when saving files to a temporary file starting with a dot first, then renaming the temp file to its final name, result in the saved file being invisible\&. The only thing this option is useful for is making files that start with a dot invisible on Mac OS 9\&. It\*(Aqs completely useless on Mac OS X, as both in Finder and in Terminal files starting with a dot are hidden anyway\&.
+.RE
+.PP
+network ids = \fIBOOLEAN\fR (default: \fIyes\fR) \fB(V)\fR
+.RS 4
+Whether the server support network ids\&. Setting this to
+\fIno\fR
+will result in the client not using ACL AFP functions\&.
+.RE
+.PP
+preexec close = \fIBOOLEAN\fR (default: \fIno\fR) \fB(V)\fR
+.RS 4
+A non\-zero return code from preexec close the volume being immediately, preventing clients to mount/see the volume in question\&.
+.RE
+.PP
+read only = \fIBOOLEAN\fR (default: \fIno\fR) \fB(V)\fR
+.RS 4
+Specifies the share as being read only for all users\&. Overwrites
+\fBea = auto\fR
+with
+\fBea = none\fR
+.RE
+.PP
+root preexec close= \fIBOOLEAN\fR (default: \fIno\fR) \fB(V)\fR
+.RS 4
+A non\-zero return code from root_preexec closes the volume immediately, preventing clients to mount/see the volume in question\&.
+.RE
+.PP
+search db = \fIBOOLEAN\fR (default: \fIno\fR) \fB(V)\fR
+.RS 4
+Use fast CNID database namesearch instead of slow recursive filesystem search\&. Relies on a consistent CNID database, ie Samba or local filesystem access lead to inaccurate or wrong results\&. Works only for "dbd" CNID db volumes\&.
+.RE
+.PP
+stat vol = \fIBOOLEAN\fR (default: \fIyes\fR) \fB(V)\fR
+.RS 4
+Whether to stat volume path when enumerating volumes list, useful for automounting or volumes created by a preexec script\&.
+.RE
+.PP
+time machine = \fIBOOLEAN\fR (default: \fIno\fR) \fB(V)\fR
+.RS 4
+Whether to enable Time Machine support for this volume\&.
+.RE
+.PP
+unix priv = \fIBOOLEAN\fR (default: \fIyes\fR) \fB(V)\fR
+.RS 4
+Whether to use AFP3 UNIX privileges\&. This should be set for OS X clients\&. See also:
+\fBfile perm\fR,
+\fBdirectory perm\fR
+and
+\fBumask\fR\&.
+.RE
+.SH "CNID BACKENDS"
+.PP
+The AFP protocol mostly refers to files and directories by ID and not by name\&. Netatalk needs a way to store these ID\*(Aqs in a persistent way, to achieve this several different CNID backends are available\&. The CNID Databases are by default located in the
+@localstatedir@/netatalk/CNID/(volumename)/\&.AppleDB/
+directory\&.
+.PP
+cdb
+.RS 4
+"Concurrent database", backend is based on Oracle Berkley DB\&. With this backend several
+\fBafpd\fR
+daemons access the CNID database directly\&. Berkeley DB locking is used to synchronize access, if more than one
+\fBafpd\fR
+process is active for a volume\&. The drawback is, that the crash of a single
+\fBafpd\fR
+process might corrupt the database\&.
+.RE
+.PP
+dbd
+.RS 4
+Access to the CNID database is restricted to the
+\fBcnid_metad\fR
+daemon process\&.
+\fBafpd\fR
+processes communicate with the daemon for database reads and updates\&. If built with Berkeley DB transactions the probability for database corruption is practically zero, but performance can be slower than with
+\fBcdb\fR
+.RE
+.PP
+last
+.RS 4
+This backend is an exception, in terms of ID persistency\&. ID\*(Aqs are only valid for the current session\&. This is basically what
+\fBafpd\fR
+did in the 1\&.5 (and 1\&.6) versions\&. This backend is still available, as it is useful for e\&.g\&. sharing cdroms\&. Starting with Netatalk 3\&.0, it becomes the
+\fIread only mode\fR
+automatically\&.
+.sp
+\fBWarning\fR: It is
+\fINOT\fR
+recommended to use this backend for volumes anymore, as
+\fBafpd\fR
+now relies heavily on a persistent ID database\&. Aliases will likely not work and filename mangling is not supported\&.
+.RE
+.PP
+Even though
+\fB\&./configure \-\-help\fR
+might show that there are other CNID backends available, be warned those are likely broken or mainly used for testing\&. Don\*(Aqt use them unless you know what you\*(Aqre doing, they may be removed without further notice from future versions\&.
+.SH "CHARSET OPTIONS"
+.PP
+With OS X Apple introduced the AFP3 protocol\&. One of the most important changes was that AFP3 uses unicode names encoded as UTF\-8 decomposed\&. Previous AFP/OS versions used codepages, like MacRoman, MacCentralEurope, etc\&.
+.PP
+\fBafpd\fR
+needs a way to preserve extended Macintosh characters, or characters illegal in unix filenames, when saving files on a unix filesystem\&. Earlier versions used the the so called CAP encoding\&. An extended character (>0x7F) would be converted to a :xx sequence, e\&.g\&. the Apple Logo (MacRoman: 0xF0) was saved as
+:f0\&. Some special characters will be converted as to :xx notation as well\&. \*(Aq/\*(Aq will be encoded to
+:2f, if
+\fBusedots\fR
+is not specified, a leading dot \*(Aq\&.\*(Aq will be encoded as
+:2e\&.
+.PP
+This version now uses UTF\-8 as the default encoding for names\&. \*(Aq/\*(Aq will be converted to \*(Aq:\*(Aq\&.
+.PP
+The
+\fBvol charset\fR
+option will allow you to select another volume encoding\&. E\&.g\&. for western users another useful setting could be vol charset ISO\-8859\-15\&.
+\fBafpd\fR
+will accept any
+\fBiconv\fR(1)
+provided charset\&. If a character cannot be converted from the
+\fBmac charset\fR
+to the selected
+\fBvol charset\fR, afpd will save it as a CAP encoded character\&. For AFP3 clients,
+\fBafpd\fR
+will convert the UTF\-8
+character to
+\fBmac charset\fR
+first\&. If this conversion fails, you\*(Aqll receive a \-50 error on the mac\&.
+.PP
+\fINote\fR: Whenever you can, please stick with the default UTF\-8 volume format\&.
+.SH "SEE ALSO"
+.PP
+\fBafpd\fR(8),
+\fBafppasswd\fR(5),
+\fBafp_signature.conf\fR(5),
+\fBextmap.conf\fR(5),
+\fBcnid_metad\fR(8)

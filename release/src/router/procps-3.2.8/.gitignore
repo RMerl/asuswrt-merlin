@@ -1,0 +1,6 @@
+*.o
+vmstat
+pmap
+proc/.depend
+proc/libproc-3.2.8.so
+ps/ps

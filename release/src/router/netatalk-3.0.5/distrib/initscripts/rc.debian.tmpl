@@ -1,0 +1,67 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          netatalk
+# Required-Start:    $remote_fs $syslog
+# Should-Start:      avahi-daemon
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      1
+### END INIT INFO
+#
+# netatalk      Netatalk :NETATALK_VERSION: initscript
+#
+
+set -e
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DESC="Netatalk"
+NAME=netatalk
+SCRIPTNAME=/etc/init.d/$NAME
+
+# Guard to prevent execution if netatalk was removed.
+test -x :SBINDIR:/netatalk || exit 0
+
+# Start Netatalk servers.
+netatalk_startup() {
+    if [ -x :SBINDIR:/netatalk ] ; then
+        :SBINDIR:/netatalk
+        echo -n " netatalk"
+    fi
+    
+}
+
+case "$1" in
+    start)
+        echo -n "Starting Netatalk services: "
+        netatalk_startup
+        echo "."
+        ;;
+    
+    stop)
+        echo -n "Stopping Netatalk Daemons:"
+        echo -n " netatalk"
+        start-stop-daemon --stop --quiet --oknodo --exec :SBINDIR:/netatalk
+        
+        echo "."
+        ;;
+    
+    restart)
+        $0 force-reload
+        ;;
+    
+    force-reload)
+        echo -n "Restarting Netatalk Daemons"
+        $0 stop
+        echo -n "."
+        sleep 2
+        echo -n "."
+        if $0 start; then
+            echo "done."
+        fi
+        ;;
+    
+    *)
+        echo "Usage: $0 {start|stop|restart|force-reload}" >&2
+        exit 1
+        ;;
+esac

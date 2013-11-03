@@ -439,7 +439,9 @@ struct nvram_tuple router_defaults[] = {
 
 	/* Tx Beamforming */
 	{ "wl_txbf_bfr_cap", "1", 0 },
+	{ "wl1_txbf_bfr_cap", "1", 0 },
 	{ "wl_txbf_bfe_cap", "1", 0 },
+	{ "wl1_txbf_bfe_cap", "1", 0 },
 #ifndef RTCONFIG_BCMARM
 	{ "wl_txbf_timer", "25", 0 },
 #endif
@@ -691,10 +693,31 @@ struct nvram_tuple router_defaults[] = {
 	{ "dslx_modulation", "5" }, // multiple mode
 	{ "dslx_snrm_offset", "0" }, /* Paul add 2012/9/24, for SNR Margin tweaking. */
 	{ "dslx_sra", "1" }, /* Paul add 2012/10/15, for setting SRA. */
+	{ "dslx_bitswap", "1" }, /* Paul add 2013/10/23, for Bitswap control. */
 #ifdef RTCONFIG_DSL_ANNEX_B //Paul add 2012/8/21
 	{ "dslx_annex", "0" }, // Annex B
 #else
 	{ "dslx_annex", "4" }, // Annex AIJLM
+#endif
+
+#ifdef RTCONFIG_PUSH_EMAIL
+	{ "PM_enable", "0"},			/* Enable Push Mail feature. */
+	{ "PM_type", "0"},				/* Send the tracking to the of xDSL team's official gmail.  */
+	{ "PM_SMTP_SERVER", ""},
+	{ "PM_SMTP_PORT", ""},
+	{ "PM_MY_NAME", ""},
+	{ "PM_MY_EMAIL", ""},
+	{ "PM_USE_TLS", "true"},
+	{ "PM_SMTP_AUTH", "LOGIN"},
+	{ "PM_SMTP_AUTH_USER", ""},
+	{ "PM_SMTP_AUTH_PASS", ""},
+	{ "PM_title", ""},				/* The title of mail. */
+	{ "PM_target", ""},				/* The address of Mail Server. */
+	{ "PM_restart", "0"},			/* reset the Push Mail Service. */
+	{ "PM_freq", "0"},				/* 0:daily, 1:weekly, 2:monthly. */
+	{ "PM_mon", "0"},				/* months since January (0 to 11). */
+	{ "PM_day", "0"},				/* days since Sunday (0 to 6 Sunday=0). */
+	{ "PM_hour", "0"},				/* hours since midnight (0 to 23). */
 #endif
 
 // the following variables suppose can be removed
@@ -971,11 +994,15 @@ struct nvram_tuple router_defaults[] = {
 	{ "usb_ext_opt", ""},
 	{ "usb_fat_opt", ""},
 	{ "usb_ntfs_opt", ""},
+	{ "usb_hfs_opt", ""},
 	{ "usb_fs_ext3", "1"},
 	{ "usb_fs_fat", "1"},
 #ifdef RTCONFIG_NTFS
 	{ "usb_fs_ntfs", "1"},
 	{ "usb_fs_ntfs_sparse", "0"},
+#endif
+#ifdef RTCONFIG_HFS
+	{ "usb_fs_hfs", "1"},
 #endif
 	{ "usb_automount", "1"},
 #ifdef LINUX26
@@ -1012,7 +1039,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "log_level", "7" },		/* <  LOG_DEBUG */
 	{ "console_loglevel", "5"},	/* <  KERN_INFO */
 
-#ifdef RTCONFIG_JFFS2
+#if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2)
 	{ "jffs2_on", "0" },
 	{ "jffs2_exec", "" },
 	{ "jffs2_format", "0" },
@@ -1277,7 +1304,35 @@ struct nvram_tuple router_defaults[] = {
 	{"pptpd_mtu",		"1450"},
 #endif
 
+#if defined(RTCONFIG_VPNC)
+	{ "vpnc_proto", "disable"},
+	{ "vpnc_pppoe_username", ""},
+	{ "vpnc_pppoe_passwd", ""},
+	{ "vpnc_heartbeat_x", ""},
+	{ "vpnc_dnsenable_x", "1"},
+	{ "vpnc_pppoe_options_x", ""},
+	{ "vpnc_pptp_options_x", ""},
+	{ "vpnc_state_t", "0"},
+	{ "vpnc_sbstate_t", "0"},
+	{ "vpnc_clientlist", ""},
+	{ "vpnc_connect_row", ""},
+#endif
+
+#if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD) || defined(RTCONFIG_OPENVPN)
+	{"VPNServer_enable",	"0"},
+	{"VPNServer_mode",	"pptpd"},
+	{"VPNClient_rule",	""},
+#endif
+
+#if defined(RTCONFIG_VPNC) || defined(RTCONFIG_OPENVPN)
+	{"VPNClient_enable",	"0"},
+	{"VPNClient_rule",      ""},
+#endif
+
 #ifdef RTCONFIG_OPENVPN
+	{ "vpn_upload_state",		""		},
+	{ "vpn_upload_unit",		""		},
+	{ "vpn_upload_type",		""		},
 	// openvpn
 	{ "vpn_debug",			"0"		},
 	{ "vpn_loglevel",		"3"		},
@@ -1309,6 +1364,8 @@ struct nvram_tuple router_defaults[] = {
 	{ "vpn_server_pdns",		"0"		},
 	{ "vpn_server_rgw",		"0"		},
 	{ "vpn_server_custom",		""		},
+	{ "vpn_server_igncrt",		"1"		},
+	{ "vpn_server_clientlist",	""		},
 	{ "vpn_server1_poll",		"0"		},
 	{ "vpn_server1_if",		"tun"		},
 	{ "vpn_server1_proto",		"udp"		},
@@ -1334,10 +1391,15 @@ struct nvram_tuple router_defaults[] = {
 	{ "vpn_server1_pdns",		"0"		},
 	{ "vpn_server1_rgw",		"0"		},
 	{ "vpn_server1_custom",		""		},
+	{ "vpn_server1_igncrt",		"1"		},
+	{ "vpn_server1_state",		"0"		},
 	{ "vpn_crt_server1_static",	""		},
 	{ "vpn_crt_server1_ca",		""		},
+	{ "vpn_crt_server1_ca_key",	""		},
 	{ "vpn_crt_server1_crt",	""		},
 	{ "vpn_crt_server1_key",	""		},
+	{ "vpn_crt_server1_client_crt",	""		},
+	{ "vpn_crt_server1_client_key",	""		},
 	{ "vpn_crt_server1_dh",		""		},
 	{ "vpn_server2_poll",		"0"		},
 	{ "vpn_server2_if",		"tun"		},
@@ -1364,10 +1426,15 @@ struct nvram_tuple router_defaults[] = {
 	{ "vpn_server2_pdns",		"0"		},
 	{ "vpn_server2_rgw",		"0"		},
 	{ "vpn_server2_custom",		""		},
+	{ "vpn_server2_igncrt",		"1"		},
+	{ "vpn_server2_state",		"0"		},
 	{ "vpn_crt_server2_static",	""		},
 	{ "vpn_crt_server2_ca",		""		},
+	{ "vpn_crt_server2_ca_key",	""		},
 	{ "vpn_crt_server2_crt",	""		},
 	{ "vpn_crt_server2_key",	""		},
+	{ "vpn_crt_server2_client_crt",	""		},
+	{ "vpn_crt_server2_client_key",	""		},
 	{ "vpn_crt_server2_dh",		""		},
 	{ "vpn_client_unit",		"1"		},
 	{ "vpn_clientx_eas",		""		},
@@ -1403,6 +1470,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "vpn_client1_username",	""		},
 	{ "vpn_client1_password",	""		},
 	{ "vpn_client1_useronly",	"0"		},
+	{ "vpn_client1_state",		"0"		},
 	{ "vpn_client2_poll",		"0"		},
 	{ "vpn_client2_if",		"tun"		},
 	{ "vpn_client2_bridge",		"1"		},
@@ -1435,6 +1503,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "vpn_client2_userauth",	"0"		},
 	{ "vpn_client2_username",	""		},
 	{ "vpn_client2_password",	""		},
+	{ "vpn_client2_state",		"0"		},
 	{ "vpn_client_poll",		"0"		},
 	{ "vpn_client_if",		"tun"		},
 	{ "vpn_client_bridge",		"1"		},
@@ -1541,9 +1610,21 @@ struct nvram_tuple router_defaults[] = {
 	{ "Ate_total_fail",		"10"},
 	{ "Ate_continue_fail",		"3"},
 	{ "dev_fail_reboot",		"3"},
+	// Wireless parameters
+#if RTCONFIG_TIMEMACHINE
+	{"timemachine_enable", 		"0"},
+	{"tm_device_name", 		""},
+	{"tm_vol_size", 		"0"},
+	{"tm_partition_num", 		""},
+	{"tm_ui_setting", 		"0"},
+	{"tm_usb_path_vid", 		""},
+	{"tm_usb_path_pid", 		""},
+	{"tm_usb_path_serial", 		""},
+	{"tm_debug", 			"0"},
+#endif
 	{ "Ate_fw_fail",		"10"},
 	{ "Ate_reboot_delay",		"1"},
-#ifdef RTCONFIG_EMAIL
+#ifdef RTCONFIG_PUSH_EMAIL
 	{ "pushnotify_httplogin",		"1"},
 	{ "pushnotify_diskmonitor",		"1"},
 #endif
@@ -1880,9 +1961,9 @@ const defaults_t if_vlan[] = {
 struct nvram_tuple bcm4360ac_defaults[] = {
 	{ "pci/2/1/aa2g", "0", 0 },
 	{ "pci/2/1/aa5g", "7", 0 },
-	{ "pci/2/1/aga0", "71", 0 },
-	{ "pci/2/1/aga1", "71", 0 },
-	{ "pci/2/1/aga2", "71", 0 },
+	{ "pci/2/1/aga0", "0", 0 },
+	{ "pci/2/1/aga1", "0", 0 },
+	{ "pci/2/1/aga2", "0", 0 },
 	{ "pci/2/1/agbg0", "133", 0 },
 	{ "pci/2/1/agbg1", "133", 0 },
 	{ "pci/2/1/agbg2", "133", 0 },

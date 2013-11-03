@@ -216,6 +216,10 @@ bound(void)
 		nvram_get_int(strcat_r(prefix, "lease", tmp))
 		);
 
+#ifdef RTCONFIG_VPNC
+	start_vpnc();
+#endif
+
 	_dprintf("udhcpc:: %s done\n", __FUNCTION__);
 	return 0;
 }
@@ -657,8 +661,6 @@ int dhcp6c_state_main(int argc, char **argv)
 	if (nvram_get_int("ipv6_dhcp_pd"))
 	nvram_set("ipv6_rtr_addr", getifaddr(nvram_safe_get("lan_ifname"), AF_INET6, 0));
 
-	if (argv[1]) nvram_set("ipv6_gw_addr", argv[1]);
-
 	if (nvram_get_int("ipv6_dhcp_pd")) {
 		p = ipv6_prefix(NULL);
 		if (*p) nvram_set("ipv6_prefix", p);
@@ -713,7 +715,6 @@ start_dhcp6c(void)
 		nvram_set("ipv6_rtr_addr", "");
 		nvram_set("ipv6_prefix", "");
 	}
-	nvram_set("ipv6_gw_addr", "");
 
 	prefix_len = 64 - (nvram_get_int("ipv6_prefix_length") ? : 64);
 	if (prefix_len < 0)
@@ -787,7 +788,6 @@ void stop_dhcp6c(void)
 	killall_tk("dhcp6c");
 
 	eval("ip", "-6", "addr", "flush", "scope", "global", "dev", lan_ifname);
-	eval("ip", "-6", "route", "flush", "root", "2000::/3", "dev", wan6face);
 	eval("ip", "-6", "neigh", "flush", "dev", lan_ifname);
 
 	TRACE_PT("end\n");

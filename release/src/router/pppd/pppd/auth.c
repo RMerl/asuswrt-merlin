@@ -227,7 +227,6 @@ bool refuse_eap = 0;		/* Don't wanna auth. ourselves with EAP */
 #ifdef CHAPMS
 bool refuse_mschap = 0;		/* Don't wanna auth. ourselves with MS-CHAP */
 bool refuse_mschap_v2 = 0;	/* Don't wanna auth. ourselves with MS-CHAPv2 */
-bool ms_ignore_domain = 0;
 #else
 bool refuse_mschap = 1;		/* Don't wanna auth. ourselves with MS-CHAP */
 bool refuse_mschap_v2 = 1;	/* Don't wanna auth. ourselves with MS-CHAPv2 */
@@ -241,6 +240,10 @@ bool explicit_passwd = 0;	/* Set if "password" option supplied */
 char remote_name[MAXNAMELEN];	/* Peer's name for authentication */
 
 static char *uafname;		/* name of most recent +ua file */
+static char *path_chapfile = _PATH_CHAPFILE;	/* pathname of chap-secrets file */
+static char *path_authup = _PATH_AUTHUP;	/* pathname of auth-up script */
+static char *path_authdown = _PATH_AUTHDOWN;	/* pathname of auth-down script */
+static char *path_authfail = _PATH_AUTHFAIL;	/* pathname of auth-fail script */
 
 extern char *crypt __P((const char *, const char *));
 
@@ -298,8 +301,6 @@ option_t auth_options[] = {
       "Require CHAP authentication from peer",
       OPT_ALIAS | OPT_PRIOSUB | OPT_A2OR | MDTYPE_MD5,
       &lcp_wantoptions[0].chap_mdtype },
-    { "chap-secrets", o_string, &chapseccustom,
-      "Specify custom chap-secrets file", OPT_PRIO },
 #ifdef CHAPMS
     { "require-mschap", o_bool, &auth_required,
       "Require MS-CHAP authentication from peer",
@@ -317,9 +318,6 @@ option_t auth_options[] = {
       "Require MS-CHAPv2 authentication from peer",
       OPT_ALIAS | OPT_PRIOSUB | OPT_A2OR | MDTYPE_MICROSOFT_V2,
       &lcp_wantoptions[0].chap_mdtype },
-    { "ms-ignore-domain", o_bool, &ms_ignore_domain,
-      "Ignore any MS domain prefix in the username", 1 },
-
 #endif
 
     { "refuse-pap", o_bool, &refuse_pap,
@@ -406,6 +404,16 @@ option_t auth_options[] = {
     { "allow-number", o_special, (void *)set_permitted_number,
       "Set telephone number(s) which are allowed to connect",
       OPT_PRIV | OPT_A2LIST },
+
+    { "chap-secrets", o_string, &path_chapfile,
+      "Set pathname of chap-secrets file", OPT_PRIO },
+
+    { "auth-up-script", o_string, &path_authup,
+      "Set pathname of auth-up script", OPT_PRIV },
+    { "auth-down-script", o_string, &path_authdown,
+      "Set pathname of auth-down script", OPT_PRIV },
+    { "auth-fail-script", o_string, &path_authfail,
+      "Set pathname of auth-fail script", OPT_PRIV },
 
     { NULL }
 };
@@ -559,8 +567,6 @@ link_required(unit)
 void start_link(unit)
     int unit;
 {
-    char *msg;
-
      /* we are called via link_terminated, must be ignored */
     if (phase == PHASE_DISCONNECT)
 	return;
@@ -569,7 +575,6 @@ void start_link(unit)
 
     hungup = 0;
     devfd = the_channel->connect();
-    msg = "Connect script failed";
     if (devfd < 0)
 	goto fail;
 
@@ -582,7 +587,6 @@ void start_link(unit)
      * gives us.  Thus we don't need the tdb_writelock/tdb_writeunlock.
      */
     fd_ppp = the_channel->establish_ppp(devfd);
-    msg = "ppp establishment failed";
     if (fd_ppp < 0) {
 	status = EXIT_FATAL_ERROR;
 	goto disconnect;
@@ -700,7 +704,7 @@ link_down(unit)
 	if (auth_script_state == s_up && auth_script_pid == 0) {
 	    update_link_stats(unit);
 	    auth_script_state = s_down;
-	    auth_script(_PATH_AUTHDOWN, 0);
+	    auth_script(path_authdown, 0);
 	}
     }
     if (!doing_multilink) {
@@ -832,7 +836,7 @@ network_phase(unit)
 	auth_state = s_up;
 	if (auth_script_state == s_down && auth_script_pid == 0) {
 	    auth_script_state = s_up;
-	    auth_script(_PATH_AUTHUP, 0);
+	    auth_script(path_authup, 0);
 	}
     }
 
@@ -933,7 +937,7 @@ auth_peer_fail(unit, protocol)
      * Authentication failure: take the link down
      */
     status = EXIT_PEER_AUTH_FAILED;
-    auth_script(_PATH_AUTHFAIL, 1);
+    auth_script(path_authfail, 1);
     lcp_close(unit, "Authentication failed");
 }
 
@@ -1012,7 +1016,7 @@ auth_withpeer_fail(unit, protocol)
      * authentication secrets.
      */
     status = EXIT_AUTH_TOPEER_FAILED;
-    auth_script(_PATH_AUTHFAIL, 1);
+    auth_script(path_authfail, 1);
     lcp_close(unit, "Failed to authenticate ourselves to peer");
 }
 
@@ -1658,7 +1662,7 @@ have_chap_secret(client, server, need_ip, lacks_ipp)
 	}
     }
 
-    filename = chapseccustom ? chapseccustom : _PATH_CHAPFILE;
+    filename = path_chapfile;
     f = fopen(filename, "r");
     if (f == NULL)
 	return 0;
@@ -1753,7 +1757,7 @@ get_secret(unit, client, server, secret, secret_len, am_server)
 	    return 0;
 	}
     } else {
-	filename = chapseccustom ? chapseccustom : _PATH_CHAPFILE;
+	filename = path_chapfile;
 	addrs = NULL;
 	secbuf[0] = 0;
 
@@ -2332,13 +2336,13 @@ auth_script_done(arg)
     case s_up:
 	if (auth_state == s_down) {
 	    auth_script_state = s_down;
-	    auth_script(_PATH_AUTHDOWN, 0);
+	    auth_script(path_authdown, 0);
 	}
 	break;
     case s_down:
 	if (auth_state == s_up) {
 	    auth_script_state = s_up;
-	    auth_script(_PATH_AUTHUP, 0);
+	    auth_script(path_authup, 0);
 	}
 	break;
     }

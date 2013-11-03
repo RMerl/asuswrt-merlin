@@ -1,0 +1,361 @@
+#!@PERL@
+
+#
+# Upgrade version 1 CNID databases to version 2
+#
+#
+# Copyright (C) Joerg Lenneis 2003
+# All Rights Reserved.  See COPYING.
+#
+#
+
+use strict;
+
+
+### Globals
+
+my $toplevel = $ARGV[0];
+
+# Assume our current directory is .AppleDB in the share directory as the default. 
+
+$toplevel = ".." unless $toplevel;
+
+# Main file information data structure. Each entry in did_table points
+# to a list of hashes. Key is a DID and each list member is a hash
+# describing a file or directory in the directory corresponding to the
+# DID. n_entries is the number of items found, output_list contains
+# all entries that are eventually written to the output file.
+
+my %did_table;
+my $n_entries;
+my @output_list;
+
+# RootInfo values in the new format
+
+my $ri_cnid    = "00000000";
+my $ri_dev     = "1122334400000000";
+my $ri_ino     = "0000000000000000";
+my $ri_did     = "00000000";
+my $ri_hexname = "526f6f74496e666f00";  # RootInfo\0
+
+
+# Current CNID found in didname.db
+my $current_cnid;
+
+# Largest CNID from cnid.db, used if we cannot find the current CNID in didname.db 
+my $max_cnid;
+
+# Number of bogus/invalid entries found in the DB 
+my $errors_found;
+
+# Filenames
+
+my $didname_dump = "didname.dump";
+my $cnid_dump    = "cnid.dump";
+my $cnid2_dump   = "cnid2.dump";
+
+### Subroutines
+
+sub skip_header($)
+{
+    my $handle = shift;
+    my $header_ok;
+
+    while (<$handle>) {
+	chomp;
+	if ($_ eq "HEADER=END") {
+	    $header_ok = 1;
+	    last;
+	}
+    }
+    die "No valid header found, invalid input file?" unless $header_ok;
+}
+
+sub print_eentry($$)
+{
+    my $reason = shift;
+    my $entry  = shift;
+
+    printf "??:%s %-9s%-9s%-9s%-9s%s\n",
+    $reason,
+    $entry->{cnid},
+    $entry->{dev},
+    $entry->{ino},
+    $entry->{did},
+    $entry->{name};
+    
+    $errors_found++;
+}
+
+sub find_current_cnid()
+{
+    my $key;
+    my $val;
+    my $cnid;
+    my $compare = " " . $ri_did . $ri_hexname;
+
+    # get rid of "00" at the end, RootInfo in the old format does not have a trailing \0
+
+    $compare =~ s/00$//;
+    
+    open DIDNAME, "< $didname_dump" or die "Unable to open $didname_dump: $!";
+    skip_header(*DIDNAME);
+
+    while (1) {
+	$key = <DIDNAME>;
+	chomp $key;
+	last if $key eq "DATA=END";
+	$val = <DIDNAME>;
+	chomp $val;
+	last unless defined($key) and defined($val);	
+	if ($key eq $compare) {
+	    # \00\00\00\00RootInfo
+	    $val =~ s/^ //;
+	    $cnid = $val;
+	    last;
+	}	
+    }
+    close DIDNAME;
+    return $cnid;
+}
+
+sub verify_entry($)
+{
+    my $entry = shift;
+
+    if (length($entry->{cnid}) != 8 or length($entry->{name}) == 0) {
+	print_eentry("fmt", $entry);
+	return 0;
+    } else {
+	return 1;
+    }
+}
+
+sub create_did_table()
+{    
+    my $data_ok;
+    my $key;
+    my $val;
+    my $len;    
+    my $i;
+    my $name;
+    my $cmax;
+
+    open CNID, "< $cnid_dump" or die "Unable to open $cnid_dump: $!";
+    skip_header(*CNID);
+
+    while (1) {
+	$key = <CNID>;
+	chomp $key;
+	$key =~ s/^ //;
+	if ($key eq "DATA=END") {
+	    $data_ok = 1;
+	    last;
+	}
+	my $val = <CNID>;
+	chomp $val;
+	$val =~ s/^ //;
+
+	last unless defined($key) and defined($val);
+    
+	# We do not worry about converting any of the
+	# integer values into binary form. They are in network byte order, 
+	# so we know how to extend them. We just treat them as hexadecimal ASCII strings.
+	# The file name is also stored as a proper string, since we need to 
+	# look for it in the file system.
+
+	my $entry;
+    
+	$entry->{cnid}    = $key;
+	$entry->{dev}     = substr($val, 0,   8);
+	$entry->{ino}     = substr($val, 8,   8);
+	$entry->{did}     = substr($val, 16,  8);
+	$entry->{hexname} = substr($val, 24);
+    
+	$len = length($entry->{hexname}) - 2;
+	$i = 0;
+	$name = '';
+	while ($i < $len) {
+	    $name .= chr(hex(substr($entry->{hexname}, $i, 2)));
+	    $i += 2;
+	}
+	$entry->{name} = $name;
+
+	if (verify_entry($entry)) {
+	    push @{$did_table{$entry->{did}}}, $entry;
+	    $n_entries++;
+	    $cmax = $entry->{cnid} if $entry->{cnid} gt $cmax;
+	}
+    }
+    close CNID;
+    die "No valid end of data found, invalid input file?" unless $data_ok;
+    return $cmax;
+}
+
+sub output_header($$$)
+{
+    my $handle = shift;
+    my $dbname = shift;
+    my $n      = shift;
+    
+    printf $handle "VERSION=3\nformat=bytevalue\ndatabase=%s\ntype=btree\nHEADER=END\n", $dbname;
+}
+
+sub expand_did_table($$)
+{
+    my $did = shift;
+    my $basename = shift;
+    my $entry;
+    my $name;
+
+    foreach $entry (@{$did_table{$did}}) {
+	$name = $basename . "/" . $entry->{name};
+
+	if ( -e $name ) { 
+	    if ( -d $name ) { 
+		$entry->{type} = "00000001"; 
+	    } else { 
+		$entry->{type} = "00000000"; 
+	    } 
+	} else { 
+	    
+            # The file/dir does not exist in the file system. This could result
+	    # from a non-afpd rename that has not yet been picked up by afpd and is
+	    # fixable. We need a guess at the type, though.
+	    
+	    if ($did_table{$entry->{cnid}} and scalar(@{$did_table{$entry->{cnid}}}) > 0) {
+
+		# We have entries hanging off this entry in our table,
+		# so this must be a directory
+		$entry->{type} = "00000001";
+	    } else {
+		# If this is actually an empty directory that was renamed, 
+		# the entry will be deleted by afpd on the next access, 
+		# so this should be safe 
+		$entry->{type} = "00000000";		
+	    }
+	}
+
+	$entry->{reached} = 1;
+	push @output_list, $entry;
+	expand_did_table($entry->{cnid}, $name);
+    }
+}
+
+sub find_unreachable()
+{
+    my $did;
+    my $list;
+    my $entry;
+
+    while (($did, $list) = each %did_table) {
+	foreach $entry (@{$list}) {
+	    print_eentry("reach", $entry) unless $entry->{reached};
+	}
+    }
+}
+
+sub find_duplicates()
+{
+    my %seen_cnid;
+    my %seen_devino;
+    my %seen_didname;    
+    my $cnid;
+    my $devino;
+    my $didname;
+    my $err;
+    my $entry;
+    
+    for (my $i = 0; $i < scalar(@output_list); $i++) {
+	$err = 0;
+	$entry = $output_list[$i];
+	$cnid = $entry->{cnid};
+	$devino = $entry->{dev} . $entry->{ino};
+	$didname = $entry->{did} . $entry->{name};
+	if ($seen_cnid{$cnid}) {
+	    print_eentry("exist_cnid", $entry);
+	    $err++;
+	}
+	if ($seen_cnid{$cnid}) {
+	    print_eentry("dupl_cnid", $entry);
+	    $err++;
+	}
+	if ($seen_devino{$devino}) {
+	    print_eentry("dupl_devino", $entry);
+	    $err++;
+	}
+	if ($seen_didname{$didname}) {
+	    print_eentry("dupl_didname", $entry);
+	    $err++;
+	}
+	if ($err) {
+	    splice(@output_list, $i, 1);
+	} else {
+	    $seen_cnid{$cnid} = 1;
+	    $seen_devino{$devino} = 1;
+	    $seen_didname{$didname} = 1;
+	}
+    }
+}
+
+
+print "Finding the current CNID from $didname_dump\n";
+$current_cnid = find_current_cnid();
+print "Reading in entries from $cnid_dump\n";
+$max_cnid = create_did_table();
+print "Found $n_entries entries\n";
+
+if (not $current_cnid) {
+    print "Warning: could not find a valid entry for the current CNID in $didname_dump.\n";
+    print "Using maximum CNID value $max_cnid from $cnid_dump instead\n";
+    $current_cnid = $max_cnid;
+} else {
+    print "Current CNID is $current_cnid\n";
+}
+
+print "Building directory tree according to cnid.db\n";
+expand_did_table("00000002", $toplevel);
+
+if ($n_entries > scalar(@output_list)) {
+    print "Looking for unreachable nodes in the directory tree:\n";
+    find_unreachable();
+}
+
+print "Looking for duplicate entries\n";
+find_duplicates();
+
+print "Creating $cnid2_dump\n";
+open CNID2, "> $cnid2_dump" or die "Unable to open $cnid2_dump for writing: $!";
+output_header(*CNID2, "cnid2.db", scalar(@output_list) + 1);
+foreach my $entry (@output_list) {
+    print CNID2 " ", $entry->{cnid}, "\n";
+    print CNID2 " ", $entry->{cnid}, 
+                     "00000000", $entry->{dev}, "00000000", $entry->{ino},
+                     $entry->{type},
+                     $entry->{did}, $entry->{hexname}, "\n";
+}
+print CNID2 " ", $ri_cnid, "\n";
+print CNID2 " ", $ri_cnid, $ri_dev, $ri_ino, $current_cnid, $ri_did, $ri_hexname, "\n";
+print CNID2 "DATA=END\n";
+
+output_header(*CNID2, "devino.db", scalar(@output_list) + 1);
+foreach my $entry (@output_list) {
+    print CNID2 " ", "00000000", $entry->{dev}, "00000000", $entry->{ino}, "\n";
+    print CNID2 " ", $entry->{cnid}, "\n";
+}
+print CNID2 " ", $ri_dev, $ri_ino, "\n";
+print CNID2 " ", $ri_cnid, "\n";
+print CNID2 "DATA=END\n";
+
+output_header(*CNID2, "didname.db", scalar(@output_list) + 1);
+foreach my $entry (@output_list) {
+    print CNID2 " ", $entry->{did}, $entry->{hexname}, "\n";
+    print CNID2 " ", $entry->{cnid}, "\n";
+}
+print CNID2 " ", $ri_did, $ri_hexname, "\n";
+print CNID2 " ", $ri_cnid, "\n";
+print CNID2 "DATA=END\n";
+
+close CNID2;
+
+exit 0;

@@ -89,6 +89,10 @@ extern bool get_trf_mgmt_dwm(char *prefix, int which, netconf_trmgmt_t *trmgmt);
 extern bool del_trf_mgmt_dwm(char *prefix, int which);
 #endif /* TRAFFIC_MGMT */
 
+extern bool set_trf_mgmt_dwm(char *prefix, int which, const netconf_trmgmt_t *trmgmt);
+extern bool get_trf_mgmt_dwm(char *prefix, int which, netconf_trmgmt_t *trmgmt);
+extern bool del_trf_mgmt_dwm(char *prefix, int which);
+
 /*
 * WPA/WDS per link configuration. Parameters after 'auth' are
 * authentication algorithm dependant:

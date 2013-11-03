@@ -179,7 +179,7 @@ static int connect_pppol2tp(void)
 	}
 
 	getsockname(pppol2tp_fd, (struct sockaddr *)&sax, &len);
-	sprintf(ppp_devnam,"l2tp (%s)",inet_ntoa(sax.pppol2tp.addr.sin_addr));
+	sprintf(ppp_devnam, "l2tp (%s)", inet_ntoa(sax.pppol2tp.addr.sin_addr));
 
 	return pppol2tp_fd;
 }

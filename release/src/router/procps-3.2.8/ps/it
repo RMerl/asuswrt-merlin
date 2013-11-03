@@ -1,0 +1,35 @@
+From ddainese@dsi.unive.it Sun Apr 18 14:12:27 1999
+
+here is a first translation of the text:
+---------------------------------------------------------------------
+const char *help_message =
+"****** seleziona i processi *******   * seleziona una lista specificando: *\n"
+"-A tutti                              -C il nome del comando\n"
+"-N nega la selezione                  -G il real group ID (supporta i nomi)\n"
+"-a con tty, tranne i session leader   -U il real user ID (supporta i nomi)\n"
+"-d tutti, tranne i session leader     -g il session leader OPPURE il gruppo\n"
+"-e tutti                              -p l'ID del processo\n"
+"T  su questo terminale                -s la sessione\n"
+"a  con tty, di tutti gli utenti       -t il tty\n"
+"g  tutti, anche i leader di gruppo    -u l'effective user ID (supporta i nomi)\n"
+"r  in stato running                   U  una lista di utenti\n"
+"x  senza tty                          t  il tty\n"
+"******** formato dell'output ******   ********** opzioni lunghe **********\n"
+"-o,o definito dall'utente                --Group --User --pid --cols\n"
+"-j,j job              s segnali          --group --user --sid --rows\n"
+"-O,O -o preimpostato  v memoria virtuale --cumulative --format --deselect\n"
+"-l,l lungo            u utenti           --sort --tty --forest --version\n"
+"-f   completo         X registri         --heading --no-heading\n"
+"                    ******** opzioni varie *********\n"
+"-V,V versione           L  codici di formato       f  foresta di ASCII\n"
+"-m,m vista ad albero    S  figli in sum           -y  cambia il formato -l\n"
+"-n,N namelist file      c  nome reale del comando  n  WCHAN,UID numerici\n"
+"-w,w output ampio       e  mostra l'environment   -H  gerarchia dei processi\n"
+;
+---------------------------------------------------------------------
+
+Unfortunately it isn't really understandable for a newbie, because
+there is too little space for a good translation; to make it more
+meaningful, I would need about an entire line for every option, thus
+if you really want the help text stays under 22 lines, it must
+contains only 22 options. What do you think about it?

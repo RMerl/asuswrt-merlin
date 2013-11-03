@@ -1,0 +1,135 @@
+'\" t
+.\"     Title: asip-status.pl
+.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
+.\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
+.\"      Date: 24 Jul 2012
+.\"    Manual: @NETATALK_VERSION@
+.\"    Source: @NETATALK_VERSION@
+.\"  Language: English
+.\"
+.TH "ASIP\-STATUS\&.PL" "1" "24 Jul 2012" "@NETATALK_VERSION@" "@NETATALK_VERSION@"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+asip-status.pl \- Queries AFP servers for their capabilities
+.SH "SYNOPSIS"
+.HP \w'\fBasip\-status\&.pl\fR\fB\fR\ 'u
+\fBasip\-status\&.pl\fR\fB\fR [\-d] [\-i] [\-x] HOSTNAME[:PORT]
+
+.br
+.HP \w'\fBasip\-status\&.pl\fR\fB\fR\ 'u
+\fBasip\-status\&.pl\fR\fB\fR \-v | \-version | \-\-version 
+.SH "DESCRIPTION"
+.PP
+\fBasip\-status\&.pl\fR
+is a perl script that sends a FPGetSrvrInfo request to an AFP server at HOSTNAME:PORT and displays the results, namely "Machine type", the server\*(Aqs name, supported AFP versions, UAMs and AFP flags, the "server signature" and the network addresses, the server provides AFP services on\&.
+.PP
+When you don\*(Aqt supply :PORT, then the default AFP port, 548, will be used\&.
+.SH "OPTIONS"
+.PP
+\fB\-d\fR
+.RS 4
+Enable debug output\&.
+.RE
+.PP
+\fB\-i\fR
+.RS 4
+Show icon if it exists\&.
+.RE
+.PP
+\fB\-x\fR
+.RS 4
+Enable hex dump output\&.
+.RE
+.PP
+\fB\-v, \-version, \-\-version\fR
+.RS 4
+Show version\&.
+.RE
+.SH "EXAMPLES"
+.PP
+.if n \{\
+.RS 4
+.\}
+.nf
+\fBasip\-status\&.pl\fR 192\&.168\&.1\&.15
+AFP reply from 192\&.168\&.1\&.15:548
+Flags: 1  Cmd: 3  ID: 57005
+Reply: DSIGetStatus
+Request ID: 57005
+Machine type: Macintosh
+AFP versions: AFPVersion 1\&.1,AFPVersion 2\&.0,AFPVersion 2\&.1,AFP2\&.2
+UAMs: Cleartxt passwrd,Randnum exchange,2\-Way Randnum exchange
+Volume Icon & Mask: Yes
+Flags: 
+    SupportsCopyFile
+    SupportsChgPwd
+    SupportsServerMessages
+    SupportsServerSignature
+    SupportsTCP/IP
+    SupportsSuperClient
+Server name: bookchan
+Signature:
+04 1d 65 23 04 1d 65 23 04 1d 65 23 04 1d 65 23  \&.\&.e#\&.\&.e#\&.\&.e#\&.\&.e#
+                                                  
+Network address: 192\&.168\&.1\&.15:548 (TCP/IP address and port)
+Network address: 65280\&.128 (ddp address)
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+.if n \{\
+.RS 4
+.\}
+.nf
+\fBasip\-status\&.pl\fR myserver:10548
+AFP reply from myserver:10548
+Flags: 1  Cmd: 3  ID: 57005
+Reply: DSIGetStatus
+Request ID: 57005
+Machine type: Netatalk3\&.0
+AFP versions: AFP2\&.2,AFPX03,AFP3\&.1,AFP3\&.2,AFP3\&.3
+UAMs: DHX2,DHCAST128
+Volume Icon & Mask: Yes
+Flags: 
+    SupportsCopyFile
+    SupportsServerMessages
+    SupportsServerSignature
+    SupportsTCP/IP
+    SupportsSrvrNotifications
+    SupportsOpenDirectory
+    SupportsUTF8Servername
+    SupportsUUIDs
+    SupportsExtSleep
+    SupportsSuperClient
+Server name: myserver
+Signature:
+8a c6 12 3a 0e d9 95 3e 6f 31 e3 a9 17 f5 70 f6  \&.\&.\&.:\&.\&.\&.>o1\&.\&.\&.\&.p\&.
+                                                  
+Network address: 192\&.168\&.1\&.154:10548 (TCP/IP address and port)
+UTF8 Servername: myserver
+.fi
+.if n \{\
+.RE
+.\}
+.SH "REPORTING BUGS"
+.PP
+Report bugs to the Netatalk\-devel list <netatalk\-devel@lists\&.sourceforge\&.net>\&.

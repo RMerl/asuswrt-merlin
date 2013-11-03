@@ -1,0 +1,1540 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<chapter id="upgrade">
+  <chapterinfo>
+    <date>7.29.2013</date>
+
+    <author>
+      <firstname>Frank</firstname>
+
+      <surname>Lahm</surname>
+    </author>
+
+    <pubdate>29 Jul, 2013</pubdate>
+  </chapterinfo>
+
+  <title>Upgrading from Netatalk 2</title>
+
+  <sect1>
+    <title>Overview</title>
+
+    <para>There are two major changes in Netatalk:<orderedlist>
+        <listitem>
+          <para>New configuration file <filename><link
+          linkend="afp.conf.5">afp.conf</link></filename>, obsoleting all
+          previous configuration files</para>
+        </listitem>
+
+        <listitem>
+          <para>New AppleDouble backend "<option>appledouble = ea</option>"
+          which stores Mac metadata and resource forks in extended attributes
+          of the filesystem</para>
+        </listitem>
+      </orderedlist></para>
+
+    <sect2>
+      <title>New configuration</title>
+
+      <para><itemizedlist>
+          <listitem>
+            <para>ini style syntax (like Samba’s smb.conf)</para>
+          </listitem>
+
+          <listitem>
+            <para>one to rule them all: configure AFP settings and volumes in
+            one file</para>
+          </listitem>
+
+          <listitem>
+            <para>obsoletes <filename>afpd.conf</filename>,
+            <filename>netatalk.conf</filename>,
+            <filename>AppleVolumes.default</filename> and
+            <filename>afp_ldap.conf</filename></para>
+          </listitem>
+        </itemizedlist><warning>
+          <para>most option names have changed, read the full manpage <link
+          linkend="afp.conf.5">afp.conf</link> for details</para>
+        </warning></para>
+    </sect2>
+
+    <sect2>
+      <title>New AppleDouble backend</title>
+
+      <para>New AppleDouble backend "<option>appledouble = ea</option>" which
+      stores Mac metadata and resource forks in extended attributes of the
+      filesystem.<itemizedlist>
+          <listitem>
+            <para>default backend (!)</para>
+          </listitem>
+
+          <listitem>
+            <para>requires a filesystem with Extended Attributes, fallback is
+            "<option>appledouble = v2</option>"</para>
+          </listitem>
+
+          <listitem>
+            <para>converts filesystems from "<option>appledouble = v2</option>"
+            to "<option>appledouble = ea</option>" on the fly when accessed
+            (can be disabled)</para>
+          </listitem>
+
+          <listitem>
+            <para><command><link linkend="dbd.1">dbd</link></command> can be
+            used to do conversion in one shot</para>
+          </listitem>
+        </itemizedlist></para>
+
+      <para>Implementation details:<itemizedlist>
+          <listitem>
+            <para>stores Mac Metadata (eg FinderInfo, AFP Flags, Comment,
+            CNID) in an Extended Attributed named
+            “<filename>org.netatalk.Metadata</filename>”</para>
+          </listitem>
+
+          <listitem>
+            <para>stores Mac ResourceFork either in<itemizedlist>
+                <listitem>
+                  <para>an Extended Attribute named
+                  “<filename>org.netatalk.ResourceFork</filename>”
+                  on Solaris w. ZFS, or in</para>
+                </listitem>
+
+                <listitem>
+                  <para>an extra AppleDouble file named “<filename>._file</filename>” for a file
+                  named “<filename>file</filename>”</para>
+                </listitem>
+              </itemizedlist></para>
+          </listitem>
+
+          <listitem>
+            <para>the format of the ._ file is exactly as the Mac’s CIFS
+            client expects it when accessing the same filesystem via a CIFS
+            server (Samba), thus you can have parallel access from Macs to the
+            same dataset via AFP and CIFS without the risk of loosing data
+            (resources or metadata). Accessing the same dataset with CIFS
+            from Windows clients will still break the coupling of
+            “<filename>file</filename>” and “<filename>._file</filename>”
+            on non ZFS filesystems (see above), so for this we still
+            need an enhanced Samba VFS module (in the works).</para>
+          </listitem>
+        </itemizedlist></para>
+
+      <para>As these days the only applications making use of Resource Forks
+      are Adobe Photoshop (image preview) and Postscript Type 1 fonts, even on
+      eg Linux you’ll get rid of 99% of any extra Netatalk AppleDouble files
+      (and folders).</para>
+    </sect2>
+
+    <sect2>
+      <title>Other major changes</title>
+
+      <para><itemizedlist>
+          <listitem>
+            <para>New service controller daemon <link
+            linkend="netatalk.8">netatalk</link> which is responsible for
+            starting and restarting the AFP and CNID daemons. All bundled
+            start scripts have been updated, make sure to update yours!</para>
+          </listitem>
+
+          <listitem>
+            <para>The CNID databases are now stored under
+              <filename>/var/netatalk/CNID/</filename>
+              by default. You can use configure --localstatedir=PATH at
+              compile time to change the location.</para>
+          </listitem>
+
+          <listitem>
+            <para>Netatalk 2.x volume options “usedots” and “upriv” now
+            enabled by default</para>
+          </listitem>
+
+          <listitem>
+            <para>Removed SLP and AFP proxy support</para>
+          </listitem>
+
+          <listitem>
+            <para>Removed type/creator extension mapping
+            support</para>
+          </listitem>
+        </itemizedlist></para>
+    </sect2>
+  </sect1>
+
+  <sect1>
+    <title>Upgrading</title>
+
+    <para><orderedlist>
+        <listitem>
+          <para>Stop Netatalk 2.x</para>
+        </listitem>
+
+        <listitem>
+          <para>Install Netatalk 3</para>
+        </listitem>
+
+        <listitem>
+          <para>Manually recreate configuration in
+          <option>afp.conf</option> and <option>extmap.conf</option></para>
+        </listitem>
+
+        <listitem>
+          <para>Update your Netatalk start script (SMF, systemd, whatever...)
+          to only start <link linkend="netatalk.8">netatalk</link></para>
+        </listitem>
+
+        <listitem>
+          <para>Move <filename>afp_voluuid.conf</filename> and
+          <filename>afp_signature.conf</filename> to the localstate directory (default
+          <filename>/var/netatalk/</filename>), you can use <command>afpd -v</command>
+          in order to find the correct path</para>
+        </listitem>
+
+        <listitem>
+          <para>Start Netatalk 3</para>
+        </listitem>
+      </orderedlist></para>
+  </sect1>
+
+  <sect1>
+    <title>Table with old and new configuration file names</title>
+    <para><table frame="all">
+        <title>old and new configuration file names</title>
+        <tgroup cols="3">
+          <colspec colname="c1" colnum="1" colwidth="1.0*"/>
+          <colspec colname="c2" colnum="2" colwidth="1.0*"/>
+          <colspec colname="c3" colnum="3" colwidth="1.0*"/>
+          <thead>
+            <row>
+              <entry>Old File Name</entry>
+              <entry>New File Name</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>-</entry>
+              <entry><filename>etc/afp.conf</filename></entry>
+              <entry>new ini-style format</entry>
+            </row>
+            <row>
+              <entry>-</entry>
+              <entry><filename>etc/extmap.conf</filename></entry>
+              <entry>starting with netatalk 3.0.2</entry>
+            </row>
+            <row>
+              <entry><filename>etc/netatalk/afp_signature.conf</filename></entry>
+              <entry><filename>var/netatalk/afp_signature.conf</filename></entry>
+              <entry>moved to $localstatedir</entry>
+            </row>
+            <row>
+              <entry><filename>etc/netatalk/afp_voluuid.conf</filename></entry>
+              <entry><filename>var/netatalk/afp_voluuid.conf</filename></entry>
+              <entry>moved to $localstatedir</entry>
+            </row>
+            <row>
+              <entry><filename>etc/netatalk/netatalk.conf</filename>
+              (<filename>/etc/default/netatalk</filename>)</entry>
+              <entry>-</entry>
+              <entry>obsolete</entry>
+            </row>
+            <row>
+              <entry><filename>etc/netatalk/afpd.conf</filename></entry>
+              <entry>-</entry>
+              <entry>obsolete</entry>
+            </row>
+            <row>
+              <entry><filename>etc/netatalk/afp_ldap.conf</filename></entry>
+              <entry>-</entry>
+              <entry>obsolete</entry>
+            </row>
+            <row>
+              <entry><filename>etc/netatalk/AppleVolumes.default</filename></entry>
+              <entry>-</entry>
+              <entry>obsolete</entry>
+            </row>
+            <row>
+              <entry><filename>etc/netatalk/AppleVolumes.system</filename></entry>
+              <entry>-</entry>
+              <entry>obsolete</entry>
+            </row>
+            <row>
+              <entry><filename>~/.AppleVolumes</filename></entry>
+              <entry>-</entry>
+              <entry>obsolete</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table></para>
+  </sect1>
+
+  <sect1>
+    <title>Table with old and new option names</title>
+    <para><table frame="all">
+        <title>from netatalk.conf (/etc/default/netatalk) to afp.conf</title>
+        <tgroup cols="6">
+          <colspec colname="c1" colnum="1" colwidth="1.0*"/>
+          <colspec colname="c2" colnum="2" colwidth="1.0*"/>
+          <colspec colname="c3" colnum="3" colwidth="1.0*"/>
+          <colspec colname="c4" colnum="4" colwidth="1.0*"/>
+          <colspec colname="c5" colnum="5" colwidth="1.0*"/>
+          <colspec colname="c6" colnum="6" colwidth="1.0*"/>
+          <thead>
+            <row>
+              <entry>Old netatalk.conf</entry>
+              <entry>New afp.conf</entry>
+              <entry>Old Default Value</entry>
+              <entry>New Default Value</entry>
+              <entry>Section</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>ATALK_NAME</entry>
+              <entry>hostname</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>use gethostname() by default</entry>
+            </row>
+            <row>
+              <entry>ATALK_UNIX_CHARSET</entry>
+              <entry>unix charset</entry>
+              <entry><emphasis role="bold">LOCALE</emphasis></entry>
+              <entry><emphasis role="bold">UTF8</emphasis></entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>ATALK_MAC_CHARSET</entry>
+              <entry>mac charset</entry>
+              <entry>MAC_ROMAN</entry>
+              <entry>MAC_ROMAN</entry>
+              <entry>(G)/(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>CNID_METAD_RUN</entry>
+              <entry>-</entry>
+              <entry>yes</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>controlled by netatalk(8)</entry>
+            </row>
+            <row>
+              <entry>AFPD_RUN</entry>
+              <entry>-</entry>
+              <entry>yes</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>controlled by netatalk(8)</entry>
+            </row>
+            <row>
+              <entry>AFPD_MAX_CLIENTS</entry>
+              <entry>max connections</entry>
+              <entry><emphasis role="bold">20</emphasis></entry>
+              <entry><emphasis role="bold">200</emphasis></entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>AFPD_UAMLIST</entry>
+              <entry>uam list</entry>
+              <entry>-U uams_dhx.so,uams_dhx2.so</entry>
+              <entry>uams_dhx.so uams_dhx2.so</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>AFPD_GUEST</entry>
+              <entry>guest account</entry>
+              <entry>nobody</entry>
+              <entry>nobody</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>CNID_CONFIG</entry>
+              <entry>log level</entry>
+              <entry>-l log_note</entry>
+              <entry>cnid:note</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>CNID_CONFIG</entry>
+              <entry>log file</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>ATALKD_RUN</entry>
+              <entry>-</entry>
+              <entry>no</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>AppleTalk is obsoleted</entry>
+            </row>
+            <row>
+              <entry>PAPD_RUN</entry>
+              <entry>-</entry>
+              <entry>no</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>AppleTalk is obsoleted</entry>
+            </row>
+            <row>
+              <entry>TIMELORD_RUN</entry>
+              <entry>-</entry>
+              <entry>no</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>AppleTalk is obsoleted</entry>
+            </row>
+            <row>
+              <entry>A2BOOT_RUN</entry>
+              <entry>-</entry>
+              <entry>no</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>AppleTalk is obsoleted</entry>
+            </row>
+            <row>
+              <entry>ATALK_BGROUND</entry>
+              <entry>-</entry>
+              <entry>no</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>AppleTalk is obsoleted</entry>
+            </row>
+            <row>
+              <entry>ATALK_ZONE</entry>
+              <entry>-</entry>
+              <entry>no</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>AppleTalk is obsoleted</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table><table frame="all">
+        <title>from afpd.conf to afp.conf</title>
+        <tgroup cols="6">
+          <colspec colname="c1" colnum="1" colwidth="1.0*"/>
+          <colspec colname="c2" colnum="2" colwidth="1.0*"/>
+          <colspec colname="c3" colnum="3" colwidth="1.0*"/>
+          <colspec colname="c4" colnum="4" colwidth="1.0*"/>
+          <colspec colname="c5" colnum="5" colwidth="1.0*"/>
+          <colspec colname="c6" colnum="6" colwidth="1.0*"/>
+          <thead>
+            <row>
+              <entry>Old afpd.conf</entry>
+              <entry>New afp.conf</entry>
+              <entry>Old Default Value</entry>
+              <entry>New Default Value</entry>
+              <entry>Section</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>1st field ("-" or "server name")</entry>
+              <entry>hostname</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>use gethostname() by default</entry>
+            </row>
+            <row>
+              <entry>-uamlist</entry>
+              <entry>uam list</entry>
+              <entry>-U uams_dhx.so,uams_dhx2.so</entry>
+              <entry>uams_dhx.so uams_dhx2.so</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-nozeroconf</entry>
+              <entry>zeroconf</entry>
+              <entry>-</entry>
+              <entry>yes (if supported)</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-advertise_ssh</entry>
+              <entry>advertise ssh</entry>
+              <entry>-</entry>
+              <entry>no</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-[no]savepassword</entry>
+              <entry>save password</entry>
+              <entry>-savepassword</entry>
+              <entry>yes</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-[no]setpassword</entry>
+              <entry>set password</entry>
+              <entry>-nosetpassword</entry>
+              <entry>no</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-client_polling</entry>
+              <entry>client polling</entry>
+              <entry>-</entry>
+              <entry>no</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-hostname</entry>
+              <entry>hostname</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>use gethostname() by default</entry>
+            </row>
+            <row>
+              <entry>-loginmesg</entry>
+              <entry>login message</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)/(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-guestname</entry>
+              <entry>guest account</entry>
+              <entry>nobody</entry>
+              <entry>nobody</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-passwdfile</entry>
+              <entry>passwd file</entry>
+              <entry>afppasswd</entry>
+              <entry>afppasswd</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-passwdminlen</entry>
+              <entry>passwd minlen</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-tickleval</entry>
+              <entry>tickleval</entry>
+              <entry>30</entry>
+              <entry>30</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-timeout</entry>
+              <entry>timeout</entry>
+              <entry>4</entry>
+              <entry>4</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-sleep</entry>
+              <entry>sleep time</entry>
+              <entry>10</entry>
+              <entry>10</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-dsireadbuf</entry>
+              <entry>dsireadbuf</entry>
+              <entry>12</entry>
+              <entry>12</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-server_quantum</entry>
+              <entry>server quantum</entry>
+              <entry>303840</entry>
+              <entry>303840</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-volnamelen</entry>
+              <entry>volnamelen</entry>
+              <entry>80</entry>
+              <entry>80</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-setuplog</entry>
+              <entry>log level</entry>
+              <entry>default log_note</entry>
+              <entry>default:note</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-setuplog</entry>
+              <entry>log file</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-admingroup</entry>
+              <entry>admingroup</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-k5service</entry>
+              <entry>k5 service</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-k5realm</entry>
+              <entry>k5 realm</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-k5keytab</entry>
+              <entry>k5 keytab</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-uampath</entry>
+              <entry>uam path</entry>
+              <entry><emphasis role="bold">etc/netatalk/uams/</emphasis></entry>
+              <entry><emphasis role="bold">lib/netatalk/</emphasis></entry>
+              <entry>(G)</entry>
+              <entry>moved to $libdir</entry>
+            </row>
+            <row>
+              <entry>-ipaddr</entry>
+              <entry>afp listen</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-cnidserver</entry>
+              <entry>cnid server</entry>
+              <entry>localhost:4700</entry>
+              <entry>localhost:4700</entry>
+              <entry>(G)/(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-port</entry>
+              <entry>port</entry>
+              <entry>548</entry>
+              <entry>548</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-signature</entry>
+              <entry>signature</entry>
+              <entry>auto</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-fqdn</entry>
+              <entry>fqdn</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-unixcodepage</entry>
+              <entry>unix charset</entry>
+              <entry><emphasis role="bold">LOCALE</emphasis></entry>
+              <entry><emphasis role="bold">UTF8</emphasis></entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-maccodepage</entry>
+              <entry>mac charset</entry>
+              <entry>MAC_ROMAN</entry>
+              <entry>MAC_ROMAN</entry>
+              <entry>(G)/(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-closevol</entry>
+              <entry>close vol</entry>
+              <entry>-</entry>
+              <entry>no</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-ntdomain</entry>
+              <entry>nt domain</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-ntseparator</entry>
+              <entry>nt separator</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-dircachesize</entry>
+              <entry>dircachesize</entry>
+              <entry>8192</entry>
+              <entry>8192</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-tcpsndbuf</entry>
+              <entry>tcpsndbuf</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>OS default</entry>
+            </row>
+            <row>
+              <entry>-tcprcvbuf</entry>
+              <entry>tcprcvbuf</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>OS default</entry>
+            </row>
+            <row>
+              <entry>-fcelistener</entry>
+              <entry>fce listener</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-fcecoalesce</entry>
+              <entry>fce coalesce</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-fceevents</entry>
+              <entry>fce events</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-fceholdfmod</entry>
+              <entry>fce holdfmod</entry>
+              <entry>60</entry>
+              <entry>60</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-mimicmodel</entry>
+              <entry>mimic model</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-adminauthuser</entry>
+              <entry>admin auth user</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-noacl2maccess</entry>
+              <entry>map acls</entry>
+              <entry>-</entry>
+              <entry>rights</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>-[no]tcp</entry>
+              <entry>-</entry>
+              <entry>-tcp</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>always TCP only</entry>
+            </row>
+            <row>
+              <entry>-[no]ddp</entry>
+              <entry>-</entry>
+              <entry>-noddp</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>AppleTalk is obsoleted</entry>
+            </row>
+            <row>
+              <entry>-[no]transall</entry>
+              <entry>-</entry>
+              <entry>-tcp -noddp</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>always TCP only</entry>
+            </row>
+            <row>
+              <entry>-nodebug</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>obsolete</entry>
+            </row>
+            <row>
+              <entry>-[no]slp</entry>
+              <entry>-</entry>
+              <entry>-noslp</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>SLP support is obsoleted</entry>
+            </row>
+            <row>
+              <entry>-[no]uservolfirst</entry>
+              <entry>-</entry>
+              <entry>-nouservolfirst</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>uservol is obsoleted</entry>
+            </row>
+            <row>
+              <entry>-[no]uservol</entry>
+              <entry>-</entry>
+              <entry>-uservol</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>uservol is obsoleted</entry>
+            </row>
+            <row>
+              <entry>-proxy</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>AppleTalk is obsoleted</entry>
+            </row>
+            <row>
+              <entry>-defaultvol</entry>
+              <entry>-</entry>
+              <entry>AppleVolumes.default</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>afp.conf only</entry>
+            </row>
+            <row>
+              <entry>-systemvol</entry>
+              <entry>-</entry>
+              <entry>AppleVolumes.system</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>afp.conf only</entry>
+            </row>
+            <row>
+              <entry>-loginmaxfail</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>not supported from the biginning</entry>
+            </row>
+            <row>
+              <entry>-unsetuplog</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>obsolete</entry>
+            </row>
+            <row>
+              <entry>-authprintdir</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>AppleTalk is obsoleted</entry>
+            </row>
+            <row>
+              <entry>-ddpaddr</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>AppleTalk is obsoleted</entry>
+            </row>
+            <row>
+              <entry>-[no]icon</entry>
+              <entry>-</entry>
+              <entry>-noicon</entry>
+              <entry></entry>
+              <entry>-</entry>
+              <entry>obsolete</entry>
+            </row>
+            <row>
+              <entry>-keepsessions</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>obsolete. Use kill -HUP.</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table><table frame="all">
+        <title>from afp_ldap.conf to afp.conf</title>
+        <tgroup cols="6">
+          <colspec colname="c1" colnum="1" colwidth="1.0*"/>
+          <colspec colname="c2" colnum="2" colwidth="1.0*"/>
+          <colspec colname="c3" colnum="3" colwidth="1.0*"/>
+          <colspec colname="c4" colnum="4" colwidth="1.0*"/>
+          <colspec colname="c5" colnum="5" colwidth="1.0*"/>
+          <colspec colname="c6" colnum="6" colwidth="1.0*"/>
+          <thead>
+            <row>
+              <entry>Old afp_ldap.conf</entry>
+              <entry>New afp.conf</entry>
+              <entry>Old Default Value</entry>
+              <entry>New Defalut Value</entry>
+              <entry>Section</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>ldap_server</entry>
+              <entry>ldap server</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>ldap_auth_method</entry>
+              <entry>ldap auth method</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>ldap_auth_dn</entry>
+              <entry>ldap auth dn</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>ldap_auth_pw</entry>
+              <entry>ldap auth pw</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>ldap_userbase</entry>
+              <entry>ldap userbase</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>ldap_userscope</entry>
+              <entry>ldap userscope</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>ldap_groupbase</entry>
+              <entry>ldap groupbase</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>ldap_groupscope</entry>
+              <entry>ldap groupscope</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>ldap_uuid_attr</entry>
+              <entry>ldap uuid attr</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>ldap_uuid_string</entry>
+              <entry>ldap uuid string</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>ldap_name_attr</entry>
+              <entry>ldap name attr</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry> ldap_group_attr</entry>
+              <entry>ldap group attr</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(G)</entry>
+              <entry>-</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table><table frame="all">
+        <title>from AppleVolumes.* to afp.conf</title>
+        <tgroup cols="6">
+          <colspec colname="c1" colnum="1" colwidth="1.0*"/>
+          <colspec colname="c2" colnum="2" colwidth="1.0*"/>
+          <colspec colname="c3" colnum="3" colwidth="1.0*"/>
+          <colspec colname="c4" colnum="4" colwidth="1.0*"/>
+          <colspec colname="c5" colnum="5" colwidth="1.0*"/>
+          <colspec colname="c6" colnum="6" colwidth="1.0*"/>
+          <thead>
+            <row>
+              <entry>Old AppleVolumes.*</entry>
+              <entry>New afp.conf</entry>
+              <entry>Old Default Value</entry>
+              <entry>New Defalut Value</entry>
+              <entry>Section</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>(leading-dot lines)</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>move to extmap.conf</entry>
+            </row>
+            <row>
+              <entry>:DEFAULT:</entry>
+              <entry>-</entry>
+              <entry>options:upriv,usedots</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>use "vol preset ="</entry>
+            </row>
+            <row>
+              <entry>1st field ("~")</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>use [Homes] section</entry>
+            </row>
+            <row>
+              <entry>1st field ("/path")</entry>
+              <entry>path</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>2nd field</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>use section name</entry>
+            </row>
+            <row>
+              <entry>allow:</entry>
+              <entry>valid users</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>deny:</entry>
+              <entry>invalid users</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>rwlist:</entry>
+              <entry>rwlist</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>rolist:</entry>
+              <entry>rolist</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>volcharset:</entry>
+              <entry>vol charset</entry>
+              <entry><emphasis role="bold">UTF8</emphasis></entry>
+              <entry><emphasis role="bold">(same as unix charset)</emphasis></entry>
+              <entry>(G)/(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>maccharset:</entry>
+              <entry>mac charset</entry>
+              <entry>MAC_ROMAN</entry>
+              <entry>MAC_ROMAN</entry>
+              <entry>(G)/(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>veto:</entry>
+              <entry>veto files</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>cnidscheme:</entry>
+              <entry>cnid scheme</entry>
+              <entry>dbd</entry>
+              <entry>dbd</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>casefold:</entry>
+              <entry>casefold</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>adouble:</entry>
+              <entry>appledouble</entry>
+              <entry><emphasis role="bold">v2</emphasis></entry>
+              <entry><emphasis role="bold">ea</emphasis></entry>
+              <entry>(V)</entry>
+              <entry>v1, osx and sfm are obsoleted</entry>
+            </row>
+            <row>
+              <entry>cnidserver:</entry>
+              <entry>cnid server</entry>
+              <entry>localhost:4700</entry>
+              <entry>localhost:4700</entry>
+              <entry>(G)/(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>dbpath:</entry>
+              <entry>vol dbpath</entry>
+              <entry><emphasis role="bold">(volume directory)</emphasis></entry>
+              <entry><emphasis role="bold">var/netatalk/CNID/</emphasis></entry>
+              <entry>(G)</entry>
+              <entry>moved to $localstatedir</entry>
+            </row>
+            <row>
+              <entry>umask:</entry>
+              <entry>umask</entry>
+              <entry>0000</entry>
+              <entry>0000</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>dperm:</entry>
+              <entry>directory perm</entry>
+              <entry>0000</entry>
+              <entry>0000</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>fperm:</entry>
+              <entry>file perm</entry>
+              <entry>0000</entry>
+              <entry>0000</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>password:</entry>
+              <entry>password</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>root_preexec:</entry>
+              <entry>root preexec</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>preexec:</entry>
+              <entry>preexec</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>root_postexec:</entry>
+              <entry>root postexec</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>postexec:</entry>
+              <entry>postexec</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>allowed_hosts:</entry>
+              <entry>hosts allow</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>denied_hosts:</entry>
+              <entry>hosts deny</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>ea:</entry>
+              <entry>ea</entry>
+              <entry>auto</entry>
+              <entry>auto</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>volsizelimit:</entry>
+              <entry>vol size limit</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>perm:</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>Use "directory perm" and "file perm"</entry>
+            </row>
+            <row>
+              <entry>forceuid:</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>obsolete</entry>
+            </row>
+            <row>
+              <entry>forcegid:</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>obsolete</entry>
+            </row>
+            <row>
+              <entry>options:ro</entry>
+              <entry>read only</entry>
+              <entry>-</entry>
+              <entry>no</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>options:invisibledots</entry>
+              <entry>invisible dots</entry>
+              <entry>-</entry>
+              <entry>no</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>options:nostat</entry>
+              <entry>stat vol</entry>
+              <entry>-</entry>
+              <entry>yes</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>options:preexec_close</entry>
+              <entry>preexec close</entry>
+              <entry>-</entry>
+              <entry>no</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>options:root_preexec_close</entry>
+              <entry>root preexec close</entry>
+              <entry>-</entry>
+              <entry>no</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>options:upriv</entry>
+              <entry>unix priv</entry>
+              <entry>-</entry>
+              <entry><emphasis role="bold">yes</emphasis></entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>options:nodev</entry>
+              <entry>cnid dev</entry>
+              <entry>-</entry>
+              <entry>yes</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>options:illegalseq</entry>
+              <entry>illegal seq</entry>
+              <entry>-</entry>
+              <entry>no</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>options:tm</entry>
+              <entry>time machine</entry>
+              <entry>-</entry>
+              <entry>no</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>options:searchdb</entry>
+              <entry>search db</entry>
+              <entry>-</entry>
+              <entry>no</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>options:nonetids</entry>
+              <entry>network ids</entry>
+              <entry>-</entry>
+              <entry>yes</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>options:noacls</entry>
+              <entry>acls</entry>
+              <entry>-</entry>
+              <entry>yes</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>options:followsymlinks</entry>
+              <entry>follow symlinks</entry>
+              <entry>-</entry>
+              <entry>no</entry>
+              <entry>(V)</entry>
+              <entry>-</entry>
+            </row>
+            <row>
+              <entry>options:nohex</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>auto-convert from ":2f" to ":"</entry>
+            </row>
+            <row>
+              <entry>options:usedots</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>auto-convert from ":2e" to "."</entry>
+            </row>
+            <row>
+              <entry>options:nofileid</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>obsolete</entry>
+            </row>
+            <row>
+              <entry>options:prodos</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>obsolete</entry>
+            </row>
+            <row>
+              <entry>options:mswindows</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>obsolete</entry>
+            </row>
+            <row>
+              <entry>options:crlf</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>obsolete</entry>
+            </row>
+            <row>
+              <entry>options:noadouble</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>obsolete</entry>
+            </row>
+            <row>
+              <entry>options:limitsize</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>obsolete</entry>
+            </row>
+            <row>
+              <entry>options:dropbox</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>obsolete</entry>
+            </row>
+            <row>
+              <entry>options:dropkludge</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>obsolete</entry>
+            </row>
+            <row>
+              <entry>options:nocnidcache</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>obsolete</entry>
+            </row>
+            <row>
+              <entry>options:caseinsensitive</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>-</entry>
+              <entry>obsolete</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table></para>
+  </sect1>
+
+  <sect1>
+    <title>To Do</title>
+
+    <para><itemizedlist>
+        <listitem>
+          <para>test <command>ad</command> utils with <option>appledouble =
+          ea</option></para>
+        </listitem>
+      </itemizedlist></para>
+  </sect1>
+</chapter>

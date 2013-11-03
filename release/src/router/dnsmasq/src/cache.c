@@ -330,7 +330,7 @@ static int cache_scan_free(char *name, struct all_addr *addr, time_t now, unsign
 		 ((flags & crecp->flags & F_TYPE) || ((crecp->flags | flags) & F_CNAME)) &&
 		 hostname_isequal(cache_get_name(crecp), name))
 	  {
-	    if (crecp->flags & (F_HOSTS | F_DHCP))
+	    if (crecp->flags & (F_HOSTS | F_DHCP | F_CONFIG))
 	      return 0;
 	    *up = crecp->hash_next;
 	    cache_unlink(crecp);

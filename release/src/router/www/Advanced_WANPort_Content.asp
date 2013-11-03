@@ -222,6 +222,9 @@ function applyRule(){
 	if (document.form.wans_primary.value == "lan") document.form.next_page.value = "Advanced_WAN_Content.asp";
 	if (document.form.wans_primary.value == "usb") document.form.next_page.value = "Advanced_Modem_Content.asp";
 
+	if(wans_dualwan_orig.split(" ")[1] == "none")
+		document.form.wan_unit.value = 0;
+
 	showLoading();
 	document.form.submit();
 }
@@ -733,6 +736,7 @@ function pullLANIPList(obj){
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="wl_ssid" value="<% nvram_get("wl_ssid"); %>">
+<input type="hidden" name="wan_unit" value="<% nvram_get("wan_unit"); %>">
 <input type="hidden" name="wans_dualwan" value="<% nvram_get("wans_dualwan"); %>">
 <input type="hidden" name="wans_lanport" value="<% nvram_get("wans_lanport"); %>">
 <input type="hidden" name="wans_lb_ratio" value="<% nvram_get("wans_lb_ratio"); %>">

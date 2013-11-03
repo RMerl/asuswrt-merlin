@@ -3394,6 +3394,7 @@ int asus_tty(const char *device_name, const char *action){
 	char cmd[32];
 #endif
 	int wan_unit;
+	char *active_device;
 	usb_dbg("(%s): action=%s.\n", device_name, action);
 
 	if(!strcmp(nvram_safe_get("stop_modem"), "1")){
@@ -3590,7 +3591,7 @@ int asus_tty(const char *device_name, const char *action){
 				memset(current_def, 0, 16);
 				strcpy(current_def, "1");
 			}
-			else{
+			else if(strcmp(device_name, "ttyUSB0")){
 				usb_dbg("(%s): No Int endpoint!\n", device_name);
 				file_unlock(isLock);
 				return 0;
@@ -3637,8 +3638,19 @@ usb_dbg("(%s): cur_val=%d, tmp_val=%d.\n", device_name, cur_val, tmp_val);
 			}
 		}
 
+		// Only let ttyUSB0 trigger the dial procedure and avoid the wrong node to write the PPP conf.
+		if(strcmp(device_name, "ttyUSB0")){
+			usb_dbg("(%s): Success!\n", device_name);
+			file_unlock(isLock);
+			return 0;
+		}
+
+		// Wait all ttyUSB nodes to ready.
+		sleep(1);
+
 		// Write dial config file.
-		if(!write_3g_ppp_conf(device_name)){
+		active_device = nvram_safe_get(nvram_name);
+		if(!write_3g_ppp_conf(active_device)){
 			usb_dbg("(%s): Fail to write PPP's conf for 3G process!\n", device_name);
 			file_unlock(isLock);
 			return 0;
@@ -3654,6 +3666,7 @@ usb_dbg("(%s): cur_val=%d, tmp_val=%d.\n", device_name, cur_val, tmp_val);
 
 		if(!strcmp(device_name, "ttyACM0")){
 			nvram_set(nvram_name, device_name);
+			active_device = device_name;
 
 			// Write dial config file.
 			if(!write_3g_ppp_conf(device_name)){

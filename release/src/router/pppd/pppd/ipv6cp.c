@@ -260,7 +260,7 @@ static option_t ipv6cp_option_list[] = {
     { "ipv6-up-script", o_string, &path_ipv6up,
       "Set pathname of ipv6-up script", OPT_PRIV },
     { "ipv6-down-script", o_string, &path_ipv6down,
-      "Set pathname of ipv6-down script",OPT_PRIV },
+      "Set pathname of ipv6-down script", OPT_PRIV },
 
    { NULL }
 };

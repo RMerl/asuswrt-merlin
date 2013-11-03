@@ -39,6 +39,10 @@ typedef u_int8_t u8;
 #include <arpa/inet.h>
 #include <dirent.h>
 
+#ifdef MTK_APCLI
+#include <rtstate.h>
+#endif
+
 #include <wlutils.h>
 #ifdef CONFIG_BCMWL5
 #include <bcmparams.h>
@@ -629,6 +633,29 @@ void wlconf_pre()
 }
 #endif
 
+
+void apcli_start(void)          
+{       
+#ifdef RTCONFIG_RALINK     
+//repeater mode :sitesurvey channel and apclienable=1
+	int ch;
+	char *aif;
+	if(atoi(nvram_safe_get("sw_mode"))==2) 
+	{   
+	   	aif=nvram_safe_get("wl0_ifname");	
+		ch=site_survey_for_channel(0,aif, "1");
+		if(ch!=-1)
+		{   
+			doSystem("iwpriv apcli0 set Channel=%d", ch);
+			doSystem("iwpriv apcli0 set ApCliEnable=1");
+			fprintf(stderr,"##set channel=%d, enable apcli ..#\n",ch);
+		}	
+		else
+		   	fprintf(stderr,"## Can not find pap's ssid ##\n");
+	}	
+#endif	
+}
+
 void start_wl(void)
 {
 #ifdef CONFIG_BCMWL5
@@ -904,82 +931,45 @@ wlconf_ra(const char* wif)
 #endif
 
 #ifdef RTCONFIG_IPV6
+void ipv6_sysconf(const char *ifname, const char *name, int value)
+{
+	char path[PATH_MAX], sval[16];
+
+	if (ifname == NULL)
+		return;
+
+	snprintf(path, sizeof(path), "/proc/sys/net/ipv6/conf/%s/%s", ifname, name);
+	snprintf(sval, sizeof(sval), "%d", value);
+	f_write_string(path, sval, 0, 0);
+}
+
 void set_default_accept_ra(int flag)
 {
-	if (flag)
-	{
-		system("echo 2 > /proc/sys/net/ipv6/conf/all/accept_ra");
-		system("echo 2 > /proc/sys/net/ipv6/conf/default/accept_ra");
-	}
-	else
-	{
-		system("echo 0 > /proc/sys/net/ipv6/conf/all/accept_ra");
-		system("echo 0 > /proc/sys/net/ipv6/conf/default/accept_ra");
-	}
+	ipv6_sysconf("all", "accept_ra", flag ? 2 : 0);
+	ipv6_sysconf("default", "accept_ra", flag ? 2 : 0);
 }
 
 void set_intf_ipv6_accept_ra(const char *ifname, int flag)
 {
-	char s[256];
-
-	if (flag)
-	{
-		sprintf(s, "/proc/sys/net/ipv6/conf/%s/accept_ra", ifname);
-		f_write_string(s, "2", 0, 0);
-
-		sprintf(s, "/proc/sys/net/ipv6/conf/%s/forwarding", ifname);
-		f_write_string(s, "2", 0, 0);
-	}
-	else
-	{
-		sprintf(s, "/proc/sys/net/ipv6/conf/%s/accept_ra", ifname);
-		f_write_string(s, "0", 0, 0);
-
-		sprintf(s, "/proc/sys/net/ipv6/conf/%s/forwarding", ifname);
-		f_write_string(s, "0", 0, 0);
-	}
+	ipv6_sysconf(ifname, "accept_ra", flag ? 2 : 0);
+	ipv6_sysconf(ifname, "forwarding", flag ? 2 : 0);
 }
 
 void set_intf_ipv6_dad(const char *ifname, int bridge, int flag)
 {
-	char s[256];
-
+	ipv6_sysconf(ifname, "accept_dad", flag ? 1 : 0);
 	if (flag)
-	{
-		sprintf(s, "/proc/sys/net/ipv6/conf/%s/accept_dad", ifname);
-		f_write_string(s, "1", 0, 0);
-
-		sprintf(s, "/proc/sys/net/ipv6/conf/%s/dad_transmits", ifname);
-		if (bridge)
-			f_write_string(s, "2", 0, 0);
-		else
-			f_write_string(s, "1", 0, 0);
-	}
-	else
-	{
-		sprintf(s, "/proc/sys/net/ipv6/conf/%s/accept_dad", ifname);
-		f_write_string(s, "0", 0, 0);
-	}
+		ipv6_sysconf(ifname, "dad_transmits", bridge ? 2 : 1);
 }
 
 void enable_ipv6(const char *ifname)
 {
-	char s[256];
-
-	if (!ifname) return;
-
-	sprintf(s, "/proc/sys/net/ipv6/conf/%s/disable_ipv6", ifname);
-	f_write_string(s, "0", 0, 0);
+	ipv6_sysconf(ifname, "disable_ipv6", 0);
 }
 
 void disable_ipv6(const char *ifname)
 {
-	char s[256];
-
-	if (!ifname) return;
-
-	sprintf(s, "/proc/sys/net/ipv6/conf/%s/disable_ipv6", ifname);
-	f_write_string(s, "1", 0, 0);
+	ipv6_sysconf(ifname, "disable_ipv6", 1);
 }
 
 void config_ipv6(int enable, int incl_wan)
@@ -1081,6 +1071,8 @@ void start_lan(void)
 #ifndef RTCONFIG_BRCM_USBAP
 	if ((get_model() == MODEL_RTAC68U) ||
 		(get_model() == MODEL_RTAC66U) ||
+		(get_model() == MODEL_RTAC53U) ||
+		(get_model() == MODEL_RTAC53U) ||
 		(get_model() == MODEL_RTN66U))
 	modprobe("wl");
 #endif

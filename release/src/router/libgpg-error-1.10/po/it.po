@@ -1,0 +1,1102 @@
+# Italian translation of libgpg-error.
+# Copyright (C) 2003 g10 Code GmbH
+# This file is distributed under the same license as the libgpg-error package.
+# Francesco Groccia <fgr＠anche｡no>, 2009.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: libgpg-error 1.7\n"
+"Report-Msgid-Bugs-To: translations@gnupg.org\n"
+"POT-Creation-Date: 2010-10-26 11:22+0200\n"
+"PO-Revision-Date: 2009-06-21 15:24+0200\n"
+"Last-Translator: Francesco Groccia <fgr＠anche｡no>\n"
+"Language-Team: Italian <tp@lists.linux.it>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/err-sources.h:28
+msgid "Unspecified source"
+msgstr "Sorgente non specificata"
+
+#: src/err-sources.h:29
+msgid "gcrypt"
+msgstr "gcrypt"
+
+#: src/err-sources.h:30
+msgid "GnuPG"
+msgstr "GPG"
+
+#: src/err-sources.h:31
+msgid "GpgSM"
+msgstr "GpgSM"
+
+#: src/err-sources.h:32
+msgid "GPG Agent"
+msgstr "GPG Agent"
+
+#: src/err-sources.h:33
+msgid "Pinentry"
+msgstr "Pinentry"
+
+#: src/err-sources.h:34
+msgid "SCD"
+msgstr "SCD"
+
+#: src/err-sources.h:35
+msgid "GPGME"
+msgstr "GPGME"
+
+#: src/err-sources.h:36
+msgid "Keybox"
+msgstr "Keybox"
+
+#: src/err-sources.h:37
+msgid "KSBA"
+msgstr "KSBA"
+
+#: src/err-sources.h:38
+msgid "Dirmngr"
+msgstr "Dirmngr"
+
+#: src/err-sources.h:39
+msgid "GSTI"
+msgstr "GSTI"
+
+#: src/err-sources.h:40
+msgid "GPA"
+msgstr "GPA"
+
+#: src/err-sources.h:41
+msgid "Kleopatra"
+msgstr "Kleopatra"
+
+#: src/err-sources.h:42
+msgid "G13"
+msgstr ""
+
+#: src/err-sources.h:43
+msgid "Any source"
+msgstr "Qualsiasi fonte"
+
+#: src/err-sources.h:44
+msgid "User defined source 1"
+msgstr "Fonte 1 definita dall'utente"
+
+#: src/err-sources.h:45
+msgid "User defined source 2"
+msgstr "Fonte 2 definita dall'utente"
+
+#: src/err-sources.h:46
+msgid "User defined source 3"
+msgstr "Fonte 3 definita dall'utente"
+
+#: src/err-sources.h:47
+msgid "User defined source 4"
+msgstr "Fonte 4 definita dall'utente"
+
+#: src/err-sources.h:48
+msgid "Unknown source"
+msgstr "Fonte sconosciuta"
+
+#: src/err-codes.h:28
+msgid "Success"
+msgstr "Eseguito"
+
+#: src/err-codes.h:29
+msgid "General error"
+msgstr "Errore generale"
+
+#: src/err-codes.h:30
+msgid "Unknown packet"
+msgstr "Pacchetto sconosciuto"
+
+#: src/err-codes.h:31
+msgid "Unknown version in packet"
+msgstr "Versione sconosciuta nel pacchetto"
+
+#: src/err-codes.h:32
+msgid "Invalid public key algorithm"
+msgstr "Algoritmo a chiave pubblica non valido"
+
+#: src/err-codes.h:33
+msgid "Invalid digest algorithm"
+msgstr "Algoritmo di digest non valido"
+
+#: src/err-codes.h:34
+msgid "Bad public key"
+msgstr "Chiave pubblica errata"
+
+#: src/err-codes.h:35
+msgid "Bad secret key"
+msgstr "Chiave segreta errata"
+
+#: src/err-codes.h:36
+msgid "Bad signature"
+msgstr "Firma digitale errata"
+
+#: src/err-codes.h:37
+msgid "No public key"
+msgstr "Nessuna chiave pubblica"
+
+#: src/err-codes.h:38
+msgid "Checksum error"
+msgstr "Errore nel codice di controllo"
+
+#: src/err-codes.h:39
+msgid "Bad passphrase"
+msgstr "Passphrase errata"
+
+#: src/err-codes.h:40
+msgid "Invalid cipher algorithm"
+msgstr "Algoritmo di cifratura non valido"
+
+#: src/err-codes.h:41
+msgid "Keyring open"
+msgstr "Apertura del portachiavi"
+
+#: src/err-codes.h:42
+msgid "Invalid packet"
+msgstr "Pacchetto non valido"
+
+#: src/err-codes.h:43
+msgid "Invalid armor"
+msgstr "Armatura non valida"
+
+#: src/err-codes.h:44
+msgid "No user ID"
+msgstr "Nessun identificativo utente"
+
+#: src/err-codes.h:45
+msgid "No secret key"
+msgstr "Nessuna chiave segreta"
+
+#: src/err-codes.h:46
+msgid "Wrong secret key used"
+msgstr "È stata usata una chiave segreta errata"
+
+#: src/err-codes.h:47
+msgid "Bad session key"
+msgstr "Chiave di sessione errata"
+
+#: src/err-codes.h:48
+msgid "Unknown compression algorithm"
+msgstr "Algoritmo di compressione sconosciuto"
+
+#: src/err-codes.h:49
+msgid "Number is not prime"
+msgstr "Non è un numero primo"
+
+#: src/err-codes.h:50
+msgid "Invalid encoding method"
+msgstr "Metodo di codifica non valido"
+
+#: src/err-codes.h:51
+msgid "Invalid encryption scheme"
+msgstr "Schema di cifratura non valido"
+
+#: src/err-codes.h:52
+msgid "Invalid signature scheme"
+msgstr "Schema di firma digitale non valido"
+
+#: src/err-codes.h:53
+msgid "Invalid attribute"
+msgstr "Attributo non valido"
+
+#: src/err-codes.h:54
+msgid "No value"
+msgstr "Nessun valore"
+
+#: src/err-codes.h:55
+msgid "Not found"
+msgstr "Non trovato"
+
+#: src/err-codes.h:56
+msgid "Value not found"
+msgstr "Valore non trovato"
+
+#: src/err-codes.h:57
+msgid "Syntax error"
+msgstr "Errore di sintassi"
+
+#: src/err-codes.h:58
+msgid "Bad MPI value"
+msgstr "Valore MPI errato"
+
+#: src/err-codes.h:59
+msgid "Invalid passphrase"
+msgstr "Passphrase non valida"
+
+#: src/err-codes.h:60
+msgid "Invalid signature class"
+msgstr "Classe di firma non valida"
+
+#: src/err-codes.h:61
+msgid "Resources exhausted"
+msgstr "Risorse esaurite"
+
+#: src/err-codes.h:62
+msgid "Invalid keyring"
+msgstr "Portachiavi non valido"
+
+#: src/err-codes.h:63
+msgid "Trust DB error"
+msgstr "Errore nel database della fiducia"
+
+#: src/err-codes.h:64
+msgid "Bad certificate"
+msgstr "Certificato errato"
+
+#: src/err-codes.h:65
+msgid "Invalid user ID"
+msgstr "Identificativo utente non valido"
+
+#: src/err-codes.h:66
+msgid "Unexpected error"
+msgstr "Errore inaspettato"
+
+#: src/err-codes.h:67
+msgid "Time conflict"
+msgstr "Data e ora in conflitto"
+
+#: src/err-codes.h:68
+msgid "Keyserver error"
+msgstr "Errore del server delle chiavi"
+
+#: src/err-codes.h:69
+msgid "Wrong public key algorithm"
+msgstr "Algoritmo a chiave pubblica errato"
+
+#: src/err-codes.h:70
+msgid "Tribute to D. A."
+msgstr "Tributo a D. A."
+
+#: src/err-codes.h:71
+msgid "Weak encryption key"
+msgstr "Chiave di cifratura debole"
+
+#: src/err-codes.h:72
+msgid "Invalid key length"
+msgstr "Lunghezza chiave non valida"
+
+#: src/err-codes.h:73
+msgid "Invalid argument"
+msgstr "Argomento non valido"
+
+#: src/err-codes.h:74
+msgid "Syntax error in URI"
+msgstr "Errore di sintassi nell'URI"
+
+#: src/err-codes.h:75
+msgid "Invalid URI"
+msgstr "URI non valido"
+
+#: src/err-codes.h:76
+msgid "Network error"
+msgstr "Errore di rete"
+
+#: src/err-codes.h:77
+msgid "Unknown host"
+msgstr "Host sconosciuto"
+
+#: src/err-codes.h:78
+msgid "Selftest failed"
+msgstr "Autodiagnosi non riuscito"
+
+#: src/err-codes.h:79
+msgid "Data not encrypted"
+msgstr "Dati non cifrati"
+
+#: src/err-codes.h:80
+msgid "Data not processed"
+msgstr "Dati non elaborati"
+
+#: src/err-codes.h:81
+msgid "Unusable public key"
+msgstr "Chiave pubblica non utilizzabile"
+
+#: src/err-codes.h:82
+msgid "Unusable secret key"
+msgstr "Chiave segreta non utilizzabile"
+
+#: src/err-codes.h:83
+msgid "Invalid value"
+msgstr "Valore non valido"
+
+#: src/err-codes.h:84
+msgid "Bad certificate chain"
+msgstr "Catena del certificato errata"
+
+#: src/err-codes.h:85
+msgid "Missing certificate"
+msgstr "Certificato mancante"
+
+#: src/err-codes.h:86
+msgid "No data"
+msgstr "Dati assenti"
+
+#: src/err-codes.h:87
+msgid "Bug"
+msgstr "Bug"
+
+#: src/err-codes.h:88
+msgid "Not supported"
+msgstr "Non supportato"
+
+#: src/err-codes.h:89
+msgid "Invalid operation code"
+msgstr "Codice di operazione non valido"
+
+#: src/err-codes.h:90
+msgid "Timeout"
+msgstr "Tempo scaduto"
+
+#: src/err-codes.h:91
+msgid "Internal error"
+msgstr "Errore interno"
+
+#: src/err-codes.h:92
+msgid "EOF (gcrypt)"
+msgstr "EOF (gcrypt)"
+
+#: src/err-codes.h:93
+msgid "Invalid object"
+msgstr "Oggetto non valido"
+
+#: src/err-codes.h:94
+msgid "Provided object is too short"
+msgstr "L'oggetto fornito è troppo piccolo"
+
+#: src/err-codes.h:95
+msgid "Provided object is too large"
+msgstr "L'oggetto fornito è troppo grande"
+
+#: src/err-codes.h:96
+msgid "Missing item in object"
+msgstr "Voce mancante nell'oggetto"
+
+#: src/err-codes.h:97
+msgid "Not implemented"
+msgstr "Non implementato"
+
+#: src/err-codes.h:98
+msgid "Conflicting use"
+msgstr "Uso in conflitto"
+
+#: src/err-codes.h:99
+msgid "Invalid cipher mode"
+msgstr "Modo di cifratura non valido"
+
+#: src/err-codes.h:100
+msgid "Invalid flag"
+msgstr "Indicatore non valido"
+
+#: src/err-codes.h:101
+msgid "Invalid handle"
+msgstr "Handle non valido"
+
+#: src/err-codes.h:102
+msgid "Result truncated"
+msgstr "Risultato troncato"
+
+#: src/err-codes.h:103
+msgid "Incomplete line"
+msgstr "Riga incompleta"
+
+#: src/err-codes.h:104
+msgid "Invalid response"
+msgstr "Risposta non valida"
+
+#: src/err-codes.h:105
+msgid "No agent running"
+msgstr "Nessun agente in esecuzione"
+
+#: src/err-codes.h:106
+msgid "agent error"
+msgstr "errore dell'agente"
+
+#: src/err-codes.h:107
+msgid "Invalid data"
+msgstr "Dati non validi"
+
+#: src/err-codes.h:108
+msgid "Unspecific Assuan server fault"
+msgstr "Fallimento non specificato del server Assuan"
+
+#: src/err-codes.h:109
+msgid "General Assuan error"
+msgstr "Errore generale per Assuan"
+
+#: src/err-codes.h:110
+msgid "Invalid session key"
+msgstr "Chiave di sessione non valida"
+
+#: src/err-codes.h:111
+msgid "Invalid S-expression"
+msgstr "S-expression non valida"
+
+#: src/err-codes.h:112
+msgid "Unsupported algorithm"
+msgstr "Algoritmo non supportato"
+
+#: src/err-codes.h:113
+msgid "No pinentry"
+msgstr "pinentry non è installato"
+
+#: src/err-codes.h:114
+msgid "pinentry error"
+msgstr "Errore di pinentry"
+
+#: src/err-codes.h:115
+msgid "Bad PIN"
+msgstr "PIN errato"
+
+#: src/err-codes.h:116
+msgid "Invalid name"
+msgstr "Nome non valido"
+
+#: src/err-codes.h:117
+msgid "Bad data"
+msgstr "Dati errati"
+
+#: src/err-codes.h:118
+msgid "Invalid parameter"
+msgstr "Parametro non valido"
+
+#: src/err-codes.h:119
+msgid "Wrong card"
+msgstr "Scheda errata"
+
+#: src/err-codes.h:120
+msgid "No dirmngr"
+msgstr "dirmngr non è installato"
+
+#: src/err-codes.h:121
+msgid "dirmngr error"
+msgstr "Errore di dirmngr"
+
+#: src/err-codes.h:122
+msgid "Certificate revoked"
+msgstr "Certificato revocato"
+
+#: src/err-codes.h:123
+msgid "No CRL known"
+msgstr "Nessun CRL conosciuto"
+
+#: src/err-codes.h:124
+msgid "CRL too old"
+msgstr "CRL troppo vecchio"
+
+#: src/err-codes.h:125
+msgid "Line too long"
+msgstr "Riga troppo lunga"
+
+#: src/err-codes.h:126
+msgid "Not trusted"
+msgstr "Non affidabile"
+
+#: src/err-codes.h:127
+msgid "Operation cancelled"
+msgstr "Operazione annullata"
+
+#: src/err-codes.h:128
+msgid "Bad CA certificate"
+msgstr "Certificato CA errato"
+
+#: src/err-codes.h:129
+msgid "Certificate expired"
+msgstr "Certificato scaduto"
+
+#: src/err-codes.h:130
+msgid "Certificate too young"
+msgstr "Certificato troppo nuovo"
+
+#: src/err-codes.h:131
+msgid "Unsupported certificate"
+msgstr "Certificato non supportato"
+
+#: src/err-codes.h:132
+msgid "Unknown S-expression"
+msgstr "S-expression sconosciuta"
+
+#: src/err-codes.h:133
+msgid "Unsupported protection"
+msgstr "Protezione non supportata"
+
+#: src/err-codes.h:134
+msgid "Corrupted protection"
+msgstr "Protezione danneggiata"
+
+#: src/err-codes.h:135
+msgid "Ambiguous name"
+msgstr "Nome ambiguo"
+
+#: src/err-codes.h:136
+msgid "Card error"
+msgstr "Errore della scheda"
+
+#: src/err-codes.h:137
+msgid "Card reset required"
+msgstr "È richiesto il riavvio della scheda"
+
+#: src/err-codes.h:138
+msgid "Card removed"
+msgstr "Scheda rimossa"
+
+#: src/err-codes.h:139
+msgid "Invalid card"
+msgstr "Scheda non valida"
+
+#: src/err-codes.h:140
+msgid "Card not present"
+msgstr "Scheda non presente"
+
+#: src/err-codes.h:141
+msgid "No PKCS15 application"
+msgstr "Non esiste un'applicazione per PKCS15"
+
+#: src/err-codes.h:142
+msgid "Not confirmed"
+msgstr "Non confermato"
+
+#: src/err-codes.h:143
+msgid "Configuration error"
+msgstr "Errore di configurazione"
+
+#: src/err-codes.h:144
+msgid "No policy match"
+msgstr "Nessuna politica corrispondente"
+
+#: src/err-codes.h:145
+msgid "Invalid index"
+msgstr "Indice non valido"
+
+#: src/err-codes.h:146
+msgid "Invalid ID"
+msgstr "Identificativo non valido"
+
+#: src/err-codes.h:147
+msgid "No SmartCard daemon"
+msgstr "Nessun demone per la SmartCard"
+
+#: src/err-codes.h:148
+msgid "SmartCard daemon error"
+msgstr "Errore del demone della SmartCard"
+
+#: src/err-codes.h:149
+msgid "Unsupported protocol"
+msgstr "Protocollo non supportato"
+
+#: src/err-codes.h:150
+msgid "Bad PIN method"
+msgstr "Sistema personale di identificazione non valido"
+
+#: src/err-codes.h:151
+msgid "Card not initialized"
+msgstr "La scheda non è stata inizializzata"
+
+#: src/err-codes.h:152
+msgid "Unsupported operation"
+msgstr "Operazione non supportata"
+
+#: src/err-codes.h:153
+msgid "Wrong key usage"
+msgstr "Uso errato della chiave"
+
+#: src/err-codes.h:154
+msgid "Nothing found"
+msgstr "Non è stato trovato nulla"
+
+#: src/err-codes.h:155
+msgid "Wrong blob type"
+msgstr "Tipo blob errato"
+
+#: src/err-codes.h:156
+msgid "Missing value"
+msgstr "Valore assente"
+
+#: src/err-codes.h:157
+msgid "Hardware problem"
+msgstr "Problema hardware"
+
+#: src/err-codes.h:158
+msgid "PIN blocked"
+msgstr "PIN bloccato"
+
+#: src/err-codes.h:159
+msgid "Conditions of use not satisfied"
+msgstr "Le condizioni d'uso non sono state soddisfatte"
+
+#: src/err-codes.h:160
+msgid "PINs are not synced"
+msgstr "I PIN non sono stati sincronizzati"
+
+#: src/err-codes.h:161
+msgid "Invalid CRL"
+msgstr "CRL non valido"
+
+#: src/err-codes.h:162
+msgid "BER error"
+msgstr "Errore BER"
+
+#: src/err-codes.h:163
+msgid "Invalid BER"
+msgstr "BER non valido"
+
+#: src/err-codes.h:164
+msgid "Element not found"
+msgstr "Elemento non trovato"
+
+#: src/err-codes.h:165
+msgid "Identifier not found"
+msgstr "Identificatore non trovato"
+
+#: src/err-codes.h:166
+msgid "Invalid tag"
+msgstr "Etichetta non valida"
+
+#: src/err-codes.h:167
+msgid "Invalid length"
+msgstr "Lunghezza non valida"
+
+#: src/err-codes.h:168
+msgid "Invalid key info"
+msgstr "Informazioni della chiave non valide"
+
+#: src/err-codes.h:169
+msgid "Unexpected tag"
+msgstr "Etichetta inaspettata"
+
+#: src/err-codes.h:170
+msgid "Not DER encoded"
+msgstr "Non è un codificato DER"
+
+#: src/err-codes.h:171
+msgid "No CMS object"
+msgstr "Non esiste alcun oggetto CMS"
+
+#: src/err-codes.h:172
+msgid "Invalid CMS object"
+msgstr "Oggetto CMS non valido"
+
+#: src/err-codes.h:173
+msgid "Unknown CMS object"
+msgstr "Oggetto CMS sconosciuto"
+
+#: src/err-codes.h:174
+msgid "Unsupported CMS object"
+msgstr "Oggetto CMS non supportato"
+
+#: src/err-codes.h:175
+msgid "Unsupported encoding"
+msgstr "Codifica non supportata"
+
+#: src/err-codes.h:176
+msgid "Unsupported CMS version"
+msgstr "Versione CMS non supportata"
+
+#: src/err-codes.h:177
+msgid "Unknown algorithm"
+msgstr "Algoritmo sconosciuto"
+
+#: src/err-codes.h:178
+msgid "Invalid crypto engine"
+msgstr "Motore crittografico non valido"
+
+#: src/err-codes.h:179
+msgid "Public key not trusted"
+msgstr "Chiave pubblica non affidabile"
+
+#: src/err-codes.h:180
+msgid "Decryption failed"
+msgstr "Decifratura non riuscita"
+
+#: src/err-codes.h:181
+msgid "Key expired"
+msgstr "Chiave scaduta"
+
+#: src/err-codes.h:182
+msgid "Signature expired"
+msgstr "Firma scaduta"
+
+#: src/err-codes.h:183
+msgid "Encoding problem"
+msgstr "Problema nella codifica"
+
+#: src/err-codes.h:184
+msgid "Invalid state"
+msgstr "Stato non valido"
+
+#: src/err-codes.h:185
+msgid "Duplicated value"
+msgstr "Valore duplicato"
+
+#: src/err-codes.h:186
+msgid "Missing action"
+msgstr "Azione mancante"
+
+#: src/err-codes.h:187
+msgid "ASN.1 module not found"
+msgstr "Modulo ASN.1 non trovato"
+
+#: src/err-codes.h:188
+msgid "Invalid OID string"
+msgstr "Testo per l'OID non valido"
+
+#: src/err-codes.h:189
+msgid "Invalid time"
+msgstr "Data non valida"
+
+#: src/err-codes.h:190
+msgid "Invalid CRL object"
+msgstr "Oggetto CRL non valido"
+
+#: src/err-codes.h:191
+msgid "Unsupported CRL version"
+msgstr "Versione CRL non supportata"
+
+#: src/err-codes.h:192
+msgid "Invalid certificate object"
+msgstr "Certificato dell'oggetto non valido"
+
+#: src/err-codes.h:193
+msgid "Unknown name"
+msgstr "Nome sconosciuto"
+
+#: src/err-codes.h:194
+msgid "A locale function failed"
+msgstr "Funzione locale ha fallito"
+
+#: src/err-codes.h:195
+msgid "Not locked"
+msgstr "Non bloccato"
+
+#: src/err-codes.h:196
+msgid "Protocol violation"
+msgstr "Violazione del protocollo"
+
+#: src/err-codes.h:197
+msgid "Invalid MAC"
+msgstr "MAC non valido"
+
+#: src/err-codes.h:198
+msgid "Invalid request"
+msgstr "Richiesta non valida"
+
+#: src/err-codes.h:199
+msgid "Unknown extension"
+msgstr "Estensione sconosciuta"
+
+#: src/err-codes.h:200
+msgid "Unknown critical extension"
+msgstr "Estensione critica sconosciuta"
+
+#: src/err-codes.h:201
+msgid "Locked"
+msgstr "Bloccato"
+
+#: src/err-codes.h:202
+msgid "Unknown option"
+msgstr "Opzione sconosciuta"
+
+#: src/err-codes.h:203
+msgid "Unknown command"
+msgstr "Comando sconosciuto"
+
+#: src/err-codes.h:204
+msgid "Not operational"
+msgstr "Non è in funzione"
+
+#: src/err-codes.h:205
+msgid "No passphrase given"
+msgstr "Nessuna passphrase fornita"
+
+#: src/err-codes.h:206
+msgid "No PIN given"
+msgstr "Nessun PIN fornito"
+
+#: src/err-codes.h:207
+#, fuzzy
+msgid "Not enabled"
+msgstr "Non bloccato"
+
+#: src/err-codes.h:208
+#, fuzzy
+msgid "No crypto engine"
+msgstr "Motore crittografico non valido"
+
+#: src/err-codes.h:209
+#, fuzzy
+msgid "Missing key"
+msgstr "Valore assente"
+
+#: src/err-codes.h:210
+#, fuzzy
+msgid "Too many objects"
+msgstr "Non esiste alcun oggetto CMS"
+
+#: src/err-codes.h:211
+msgid "Limit reached"
+msgstr ""
+
+#: src/err-codes.h:212
+#, fuzzy
+msgid "Not initialized"
+msgstr "La scheda non è stata inizializzata"
+
+#: src/err-codes.h:213
+#, fuzzy
+msgid "Missing issuer certificate"
+msgstr "Certificato mancante"
+
+#: src/err-codes.h:214
+#, fuzzy
+msgid "Operation fully cancelled"
+msgstr "Operazione annullata"
+
+#: src/err-codes.h:215
+msgid "Operation not yet finished"
+msgstr "Operazione non ancora terminata"
+
+#: src/err-codes.h:216
+msgid "Buffer too short"
+msgstr "Buffer troppo breve"
+
+#: src/err-codes.h:217
+msgid "Invalid length specifier in S-expression"
+msgstr "Lunghezza dello specificatore in S-expression non valida"
+
+#: src/err-codes.h:218
+msgid "String too long in S-expression"
+msgstr "Testo troppo lungo in S-expression"
+
+#: src/err-codes.h:219
+msgid "Unmatched parentheses in S-expression"
+msgstr "Parentesi non corrispondenti in S-expression"
+
+#: src/err-codes.h:220
+msgid "S-expression not canonical"
+msgstr "S-expression non canonica"
+
+#: src/err-codes.h:221
+msgid "Bad character in S-expression"
+msgstr "Carattere errato in S-expression"
+
+#: src/err-codes.h:222
+msgid "Bad quotation in S-expression"
+msgstr "Citazione errata in S-expression"
+
+#: src/err-codes.h:223
+msgid "Zero prefix in S-expression"
+msgstr "Prefisso zero in S-expression"
+
+#: src/err-codes.h:224
+msgid "Nested display hints in S-expression"
+msgstr "Suggerimenti mostrati nidificati in S-expression"
+
+#: src/err-codes.h:225
+msgid "Unmatched display hints"
+msgstr "Suggerimenti mostrati non corrispondenti"
+
+#: src/err-codes.h:226
+msgid "Unexpected reserved punctuation in S-expression"
+msgstr "Punteggiatura riservata inaspettata in S-expression"
+
+#: src/err-codes.h:227
+msgid "Bad hexadecimal character in S-expression"
+msgstr "Carattere esadecimale errato in S-expression"
+
+#: src/err-codes.h:228
+msgid "Odd hexadecimal numbers in S-expression"
+msgstr "Numeri esadecimali dispari in S-expression"
+
+#: src/err-codes.h:229
+#, fuzzy
+msgid "Bad octal character in S-expression"
+msgstr "Carattere ottale errato in S-expression"
+
+#: src/err-codes.h:230
+msgid "General IPC error"
+msgstr "Errore IPC generale"
+
+#: src/err-codes.h:231
+msgid "IPC accept call failed"
+msgstr "Chiamata \"accept\" IPC non riuscita"
+
+#: src/err-codes.h:232
+msgid "IPC connect call failed"
+msgstr "Chiamata \"connect\" IPC non riuscita"
+
+#: src/err-codes.h:233
+msgid "Invalid IPC response"
+msgstr "Risposta IPC non valida"
+
+#: src/err-codes.h:234
+msgid "Invalid value passed to IPC"
+msgstr "Valore non valido passato a IPC"
+
+#: src/err-codes.h:235
+msgid "Incomplete line passed to IPC"
+msgstr "Riga incompleta passata a IPC"
+
+#: src/err-codes.h:236
+msgid "Line passed to IPC too long"
+msgstr "Riga passata a IPC troppo lunga"
+
+#: src/err-codes.h:237
+msgid "Nested IPC commands"
+msgstr "Comandi IPC nidificati"
+
+#: src/err-codes.h:238
+msgid "No data callback in IPC"
+msgstr "Nessun callback \"data\" in IPC"
+
+#: src/err-codes.h:239
+msgid "No inquire callback in IPC"
+msgstr "Nessun callback \"inquire\" in IPC"
+
+#: src/err-codes.h:240
+msgid "Not an IPC server"
+msgstr "Non è un server IPC"
+
+#: src/err-codes.h:241
+msgid "Not an IPC client"
+msgstr "Non è un client IPC"
+
+#: src/err-codes.h:242
+msgid "Problem starting IPC server"
+msgstr "Problema nell'avviare il server IPC"
+
+#: src/err-codes.h:243
+msgid "IPC read error"
+msgstr "errore di lettura IPC"
+
+#: src/err-codes.h:244
+msgid "IPC write error"
+msgstr "errore di scrittura IPC"
+
+#: src/err-codes.h:245
+msgid "Too much data for IPC layer"
+msgstr "Troppi dati per il livello IPC"
+
+#: src/err-codes.h:246
+msgid "Unexpected IPC command"
+msgstr "Comando IPC inaspettato"
+
+#: src/err-codes.h:247
+msgid "Unknown IPC command"
+msgstr "Comando IPC sconosciuto"
+
+#: src/err-codes.h:248
+msgid "IPC syntax error"
+msgstr "errore di sintassi IPC"
+
+#: src/err-codes.h:249
+msgid "IPC call has been cancelled"
+msgstr "La chiamata IPC è stata annullata"
+
+#: src/err-codes.h:250
+msgid "No input source for IPC"
+msgstr "Nessuna sorgente in entrata per IPC"
+
+#: src/err-codes.h:251
+msgid "No output source for IPC"
+msgstr "Nessuna sorgente in uscita per IPC"
+
+#: src/err-codes.h:252
+msgid "IPC parameter error"
+msgstr "Errore per il parametro IPC"
+
+#: src/err-codes.h:253
+msgid "Unknown IPC inquire"
+msgstr "Richiesta IPC sconosciuta"
+
+#: src/err-codes.h:254
+msgid "User defined error code 1"
+msgstr "Codice errore 1 definito dall'utente"
+
+#: src/err-codes.h:255
+msgid "User defined error code 2"
+msgstr "Codice errore 2 definito dall'utente"
+
+#: src/err-codes.h:256
+msgid "User defined error code 3"
+msgstr "Codice errore 3 definito dall'utente"
+
+#: src/err-codes.h:257
+msgid "User defined error code 4"
+msgstr "Codice errore 4 definito dall'utente"
+
+#: src/err-codes.h:258
+msgid "User defined error code 5"
+msgstr "Codice errore 5 definito dall'utente"
+
+#: src/err-codes.h:259
+msgid "User defined error code 6"
+msgstr "Codice errore 6 definito dall'utente"
+
+#: src/err-codes.h:260
+msgid "User defined error code 7"
+msgstr "Codice errore 7 definito dall'utente"
+
+#: src/err-codes.h:261
+msgid "User defined error code 8"
+msgstr "Codice errore 8 definito dall'utente"
+
+#: src/err-codes.h:262
+msgid "User defined error code 9"
+msgstr "Codice errore 9 definito dall'utente"
+
+#: src/err-codes.h:263
+msgid "User defined error code 10"
+msgstr "Codice errore 10 definito dall'utente"
+
+#: src/err-codes.h:264
+msgid "User defined error code 11"
+msgstr "Codice errore 11 definito dall'utente"
+
+#: src/err-codes.h:265
+msgid "User defined error code 12"
+msgstr "Codice errore 12 definito dall'utente"
+
+#: src/err-codes.h:266
+msgid "User defined error code 13"
+msgstr "Codice errore 13 definito dall'utente"
+
+#: src/err-codes.h:267
+msgid "User defined error code 14"
+msgstr "Codice errore 14 definito dall'utente"
+
+#: src/err-codes.h:268
+msgid "User defined error code 15"
+msgstr "Codice errore 15 definito dall'utente"
+
+#: src/err-codes.h:269
+msgid "User defined error code 16"
+msgstr "Codice errore 16 definito dall'utente"
+
+#: src/err-codes.h:270
+msgid "System error w/o errno"
+msgstr "Errore di sistema senza errno"
+
+#: src/err-codes.h:271
+msgid "Unknown system error"
+msgstr "Errore di sistema sconosciuto"
+
+#: src/err-codes.h:272
+msgid "End of file"
+msgstr "Fine del file"
+
+#: src/err-codes.h:273
+msgid "Unknown error code"
+msgstr "Codice di errore sconosciuto"
+
+#: src/gpg-error.c:392
+#, c-format
+msgid "Usage: %s GPG-ERROR [...]\n"
+msgstr "Uso: %s GPG-ERROR [...]\n"
+
+#: src/gpg-error.c:448
+#, c-format
+msgid "%s: warning: could not recognize %s\n"
+msgstr "%s: avviso: impossibile riconoscere %s\n"

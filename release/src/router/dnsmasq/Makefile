@@ -30,9 +30,6 @@ COPTS         =
 RPM_OPT_FLAGS = 
 LIBS          = 
 
-ifeq ($(RTCONFIG_BCMARM),y)
-ASUS_LDFLAGS += -lgcc_s
-endif
 #################################################################
 
 # Variables you might want to override.

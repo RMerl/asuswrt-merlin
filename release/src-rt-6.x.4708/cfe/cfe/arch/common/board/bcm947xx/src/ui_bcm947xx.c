@@ -52,7 +52,7 @@ extern void GPIO_INIT(void);
 extern void FANON(void);
 
 /* define GPIOs*/
-#ifdef RTN18UHP
+#ifdef RTN18U
 #define PWR_LED_GPIO	(1 << 0)	// GPIO 0
 #define RST_BTN_GPIO	(1 << 7)	// GPIO 7
 #else
@@ -68,7 +68,7 @@ extern void FANON(void);
 #endif
 #define WPS_BTN_GPIO	(1 << 7)	// GPIO 7
 #else
-#ifdef RTN18UHP
+#ifdef RTN18U
 #define WPS_BTN_GPIO	(1 << 11)	// GPIO 11
 #else
 #define WPS_BTN_GPIO	(1 << 15)	// GPIO 15

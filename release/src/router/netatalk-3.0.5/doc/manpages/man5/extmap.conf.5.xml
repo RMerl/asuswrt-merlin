@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry id="extmap.conf.5">
+  <refmeta>
+    <refentrytitle>extmap.conf</refentrytitle>
+
+    <manvolnum>5</manvolnum>
+
+    <refmiscinfo class="date">19 Jan 2013</refmiscinfo>
+
+    <refmiscinfo class="source">@NETATALK_VERSION@</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>extmap.conf</refname>
+
+    <refpurpose>Configuration file used by afpd(8) to
+    specify file name extension mappings.<indexterm>
+        <primary>extmap.conf</primary>
+      </indexterm>
+      </refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv id="synopsis">
+    <cmdsynopsis>
+      <command>@pkgconfdir@/extmap.conf<indexterm><primary>extmap.conf</primary></indexterm></command>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>Description</title>
+
+    <para>
+    <filename>@pkgconfdir@/extmap.conf</filename> is the
+    configuration file used by <command>afpd</command> to
+    specify file name extension mappings.</para>
+
+    <para>The configuration lines are composed like:</para>
+
+    <para><filename>.extension</filename> <replaceable>[ type [
+    creator ] ]</replaceable></para>
+
+    <para>Any line beginning with a hash (“#”) character is ignored.
+    The leading-dot lines specify file name extension mappings.
+    The extension '.' sets the default creator and type for otherwise
+    untyped Unix files.</para>
+
+  </refsect1>
+
+  <refsect1>
+    <title>Examples</title>
+
+    <example>
+      <title>Extension is jpg. Type is "JPEG". Creator is "ogle".</title>
+
+            <programlisting>.jpg "JPEG" "ogle"</programlisting>
+          </example>
+
+    <example>
+      <title>Extension is lzh. Type is "LHA ". Creator is not defined.</title>
+
+            <programlisting>.lzh "LHA "</programlisting>
+          </example>
+
+  </refsect1>
+
+  <refsect1>
+    <title>See Also</title>
+
+    <para><citerefentry>
+        <refentrytitle>afp.conf</refentrytitle>
+
+        <manvolnum>5</manvolnum>
+      </citerefentry>, <citerefentry>
+        <refentrytitle>afpd</refentrytitle>
+
+        <manvolnum>8</manvolnum>
+      </citerefentry></para>
+  </refsect1>
+</refentry>

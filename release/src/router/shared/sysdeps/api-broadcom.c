@@ -443,7 +443,7 @@ int check_imagefile(char *fname)
 
 	/* common RT-N12 productid FW image */
 	if ((model == MODEL_RTN12B1 || model == MODEL_RTN12C1 ||
-	     model == MODEL_RTN12D1 || model == MODEL_RTN12VP || model == MODEL_RTN12HP || model == MODEL_APN12HP) &&
+	     model == MODEL_RTN12D1 || model == MODEL_RTN12VP || model == MODEL_RTN12HP || model == MODEL_RTN12HP_B1 ||model == MODEL_APN12HP) &&
 	     strncmp(get_modelid(MODEL_RTN12), version.pid, MAX_PID_LEN) == 0)
 		return 1;
 

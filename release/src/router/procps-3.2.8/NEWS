@@ -1,0 +1,368 @@
+procps-3.2.7 --> procps-3.2.8
+
+ps: allow "+" in sort specifications, as in man page     rh208217
+ps: recognize SCHED_ISO and SCHED_IDLE
+ps: document SCHED_BATCH and add a "see also" for stime
+ps: man page less ambiguous
+top: normal exit code should be 0          #341272 #354255 rh199174
+top: misc fixes
+pgrep: usage error should exit with 2       #413383
+vmstat: use EXIT_FAILURE -- thanks Yoshio Nakamura   #425492
+sysctl: fix crash -- thanks Steinar Gunderson      #423704
+watch: tolerate umlauts                          #207103
+pmap: range limits with -A low,high
+update /dev/tty* info to May 2009 devices.txt
+don't read off end of string const                rh469495 rh498182
+
+procps-3.2.6 --> procps-3.2.7
+
+top: document H option -- thanks Tony Ernst
+top: terabytes -- thanks Tony Ernst
+top: CPU usage column width fixes -- thanks Tony Ernst
+top: *roff change                                   #326517
+ps: SCHED_BATCH is B
+ps: fix s format (signals) output with thread display
+watch: avoid integer overflow for the time delay
+pwdx: buffer overflow fixed -- thanks Ulf Harnhammar
+procps.spec needed a slash -- thanks Jesse Brandeburg
+w: stale utmp entries snuck in via uninitialized var -- thanks Robert A Basch
+pgrep/pkill: fix some realloc-related crashes       #353894
+pgrep/pkill: g is criteria (PLD Linux, patch found in locked filing cabinet)
+sysctl: use - for stdin (PLD Linux: beware of the leopard)
+top: show CPU time stolen from a virtual machine
+
+procps-3.2.5 --> procps-3.2.6
+
+vmstat: /proc/stat buffer big enough for 1024 CPUs
+dietlibc needs termios.h for struct winsize -- thanks Thomas Ogrisegg
+top: can do per-task display -- thanks John Blackwood     rh114012
+more MIPS crud  -- thanks Jim Gifford and Ryan Oliver
+begin prep for setuid
+top: fix %CPU max on 2..9 CPU SMP -- thanks Ga*tan LEURENT  rh110555
+ps: fix crash related to realloc -- thanks David Houlder
+ps: man page more detailed                         #334682
+spelling fixes                       #300333 #334684 #334685
+top: crash on resize fixed -- thanks Michal Maruska   #320289
+vmstat: -p handles /dev/ and does not overflow  #319523 #330969
+
+procps-3.2.4 --> procps-3.2.5
+
+display problem on 64-bit systems fixed   #287947
+top: variable-width PID and PPID
+top: variable-width %CPU                   rh110555
+sysctl: better error messages
+ps: security labels can contain any printable ASCII
+top: help and version message on stdout, with exit(0)    #283541
+ps: SIGTSTP and SIGTTOU shouldn't print bug email address    #246123
+slabtop: compile with glibc 2.2.17 (and older, likely)
+slabtop: fix overflow on huge NUMA boxes                #264640
+slabtop: accept any slabinfo 2.x format        g77301  #287691 rh145369 rh145906
+ps: alignment after WCHAN fixed                            ub5385
+pmap: when no -x or -d option, show full path        rh142751
+
+procps-3.2.3 --> procps-3.2.4
+
+support 64-bit MIPS with n32 binary
+sparc32 optimized for sparc32 again
+pwdx: new command -- thanks Nicholas Miell
+ps: UTF-8 username + command -- thanks Karel Zak rh134763,rh112518,rh134780
+ps: more room for some columns
+ps: tolerate SubDomain security module CONTEXT/LABEL data    #277401
+watch: passes COLUMNS and LINES in environment
+top: in batch mode, tolerate unknown $TERM -- thanks Daniel Walsh
+pkill: quiet about processes that die before kill()
+
+procps-3.2.2 --> procps-3.2.3
+
+avoid truncating long usernames
+avoid warning about -lncurses when not linking (more)
+new names for shared libraries (packagers: watch out!)
+"make install" no longer rebuilds everything
+wchan now '*' for multi-threaded processes
+ps: new man page -- thanks Nicolas Francois
+ps: STAT shows l for multi-threaded processes
+vmstat: some overflow problems fixed -- thanks Holger Kiehl
+sysctl: man page fix
+
+procps-3.2.1 --> procps-3.2.2
+
+new packager (downstream maintainer) guidelines in README
+move striping from install command to CFLAGS
+new gcc options in use: -fweb, -frename-registers, etc.
+avoid warning about -lncurses when not linking -- thanks FLWM
+tolerate IA-64 headers without PAGE_SIZE
+ps: k option, same as --sort
+ps: personality-specific -x support (HP-UX and SVR4-MP)
+pgrep: man page SEE ALSO updated                    #226817
+sysctl: -q and -N options
+sysctl: better error handling of failed writes
+top: tolerate sparse CPU numbering
+top: try to handle terminals lacking rmam and smam     #235003
+top: xterm dislikes clear-to-eol at eol (char lost)
+vmstat: fixed -d
+watch: allow sub-second intervals -- thanks Thomas Stewart
+
+procps-3.2.0 --> procps-3.2.1
+
+build even w/ curses in an odd location -- thanks to Segher Boessenkool
+ps: STAT flags for fg process group and session leader
+ps: STAT flags for swapped out process dropped (was broken)
+ps: new -M and Z options for security data (SE Linux, etc.)
+slabtop: detect broken /proc/slabinfo -- thanks to Fabian Frederick
+slabtop: ensure that error messages show up on the screen -- FF again
+
+procps-3.1.15 --> procps-3.2.0
+
+build on IA-64 again                            #227933
+pmap: output like Solaris 9, not Solaris 7
+ps: also handle SELinux on the 2.4.xx kernels
+top: during a ^Z, the terminal was messed up     #228822
+future-proof the tty handling   (thanks to Zhou Wei)
+slabtop  (Chris Rivera and Robert Love)          #226778
+pmap: detect the primary stack
+pmap: -d format
+free: report high and low memory
+
+procps-3.1.14 --> procps-3.1.15
+
+install to /lib64 if it exists
+hide kernel PID bug (Linux 2.4.13-pre1 to 2.4.MAX)   #217278 #219730 #217525 #224470
+ps: faster threaded display
+top: auto-margin problem                           #217559
+ps: support NSA SELinux, all builds, Linux 2.6+    #193648
+sysctl: tweak man page for ESR's broken parser
+
+procps-3.1.13 --> procps-3.1.14
+
+top: displays on more genuine serial terminals
+handle 32-bit dev_t of Linux 2.6
+ps: finally, m and -m satisfy the original design
+ps: distinct per-thread and whole-process pending signals
+
+procps-3.1.12 --> procps-3.1.13
+
+ps: can display NPTL threads w/ kernel patch
+no seLinux for now (new kernel interface)
+
+procps-3.1.11 --> procps-3.1.12
+
+ps: explicit width ("ps -o pid,wchan:42,args")
+ps: $PS_FORMAT works properly                    #201575
+top: new Linux 2.6.0-test4 CPU stats shown
+top: multiple -p options work again
+top: fixed 4 GB wrap-around
+ps: has a set of tests to ensure correctness
+man page: /var/run/utmp, not /etc/utmp           #206583
+required flags moved out of CFLAGS               #205429
+RPM generation handles /lib64
+WCHAN skips leading '.'
+vmstat: numerous new features
+
+procps-3.1.10 --> procps-3.1.11
+
+compile with gcc 2.95 again (C99 issue)
+
+procps-3.1.9 --> procps-3.1.10
+
+handle GPLONLY_ symbols                       #143549 #188374
+kill: better man page
+skill: better man page
+ps: PID-like columns change width as needed
+top: COMMAND instead of Command
+vmstat: -m displays slabinfo
+vmstat: -d displays disk stats
+
+procps-3.1.8 --> procps-3.1.9
+
+memory sizes fixed for 64-bit w/ gcc 3.x      #194376 #191933
+ps: detect broken OS install w/o /proc mounted        #172735
+top: fix suspend/resume behavior
+top: ditch warning until a GOOD interface is found    #188271
+kill: more info in the man page                       #182414
+ps: document the -o, o, -O, and O options             #169301
+vmstat: choose units you like: 1000, 1024, 1000000...
+
+procps-3.1.7 --> procps-3.1.8
+
+top: fix keyboard handling (help screen, etc.)
+
+procps-3.1.6 --> procps-3.1.7
+
+Makefile: made SKIP feature easier to use
+watch: --help now explains -t, --no-title    #182246
+ps: warning directs users to the FAQ
+top: batch mode can refresh by fractional seconds
+top: faster start-up
+top: do not refresh like crazy
+ps: better crash message
+
+procps-3.1.5 --> procps-3.1.6
+
+handle the 2.5.61 kernel
+top: memory leak fixed
+ps: new --ppid option selects by PPID
+watch: new --no-title option              #179862
+handle SPARC Linux badness
+rare crash fixed
+compile with gcc 2.91.xx again
+more informative "ps --info"
+README update
+ps: compare more with "ps -C verylongname"     #178127
+
+procps-3.1.4 --> procps-3.1.5
+
+ancient (2.x.xx era) data corruption fixed
+serious hidden-process problem (3.1.3+) fixed
+w: escape sequence vulnerability fixed
+
+procps-3.1.3 --> procps-3.1.4
+
+top: was trashing every "3" in a command name
+top: when killing a process, the PID was cut at a "3"
+top: more reliable %CPU
+update copyright dates (GPL & LGPL require this)
+RPM generation works now
+
+procps-3.1.2 --> procps-3.1.3
+
+uses /proc/*/wchan files when available
+top: user selection
+sysctl: add -e for Red Hat 8.0 boot scripts
+sysctl: the obvious --help, -V, and --version
+sysctl: some command line error checking
+w: stdout, not stderr -- thanks to Sander van Malssen
+
+procps-3.1.1 --> procps-3.1.2
+
+better RPM generation
+use C99 features
+some seLinux fixes
+now count Inact_laundry as needed  #172163
+ps: fewer globals
+ps: hardware-enforced buffer protection
+ps: 1 kB smaller
+top: B command added (for bold on/off)
+top: handle old (and future) config files
+top: man page tweak
+top: old sort keys     #167249
+top: out-of-bounds RT as "RT"
+top: several times faster
+top: t command fixed
+vmstat: -f
+vmstat: -s
+w: much faster
+watch: don't drop empty lines   #171005
+watch: re-indented
+
+procps-3.1.0 --> procps-3.1.1
+
+vmstat faster on 2.5.xx kernels
+vmstat header fixed
+vmstat -a re-fixed
+
+procps-3.0.5 --> procps-3.1.0
+
+vmstat displays IO-wait time instead of bogus "w"
+can build w/o shared library (set SHARED=0)
+when IO-wait hidden, count as idle, not as sys
+pmap command added (like Sun has)
+do not crash GNU make 3.79
+top slightly faster
+
+procps-3.0.4 --> procps-3.0.5
+
+top tolerates super-wide displays
+better (?) RPM generation
+XConsole and top.desktop removed
+old build system removed
+code cleanup
+pgrep and pkill get "-o" (oldest matching process)
+had vmstat "bi" and "bo" output interchanged on 2.5.xx
+fix man page tbl directives
+top man page cleaned up
+
+procps-3.0.3 --> procps-3.0.4
+
+make top go faster
+Linux 2.2.xx ELF note warning removed
+only show IO-wait on recent kernels
+fix top's SMP stats
+fix top for "dumb" and "vt510" terminals
+in top, limit the priority values to -99 ... 99
+
+procps-3.0.2 --> procps-3.0.3
+
+more "make install" fixes
+lib CFLAGS working again
+top.1 codes fixed
+bad (int*) cast in top removed
+top runs faster
+libproc memory corruption fixed
+rant moved out of top.1 man page
+ability to SKIP installing things
+fixed ps --sort crash
+
+procps-3.0.1 --> procps-3.0.2
+
+top defaults to the old layout
+top defaults to sorting by %CPU
+fix top for non-SMP 2.2.xx and 2.0.xx
+new "make install" fixed
+vmstat -a fixed
+vmstat compiles with latest gcc-3.x
+vmstat does 64-bit time
+
+procps-3.0.0 --> procps-3.0.1
+
+sysctl handles net/ipv4/conf/eth1.0123/tag (VLAN interface)
+sysctl handles net.ipv4.conf.eth1/0123.tag (VLAN interface)
+"ps" is now about 2x faster than in procps-2.x.x
+"ps -F" now documented
+w works in KOI8-R locale
+vmstat documentation update
+"skill -n blah blah blah" lets you test options
+simple "make && make install" now
+
+procps-2.x.x --> procps-3.0.0
+
+designed to support Linux 2.0 through 2.5.41 and beyond
+new top, with optional: color, windowing, SMP stats
+runs faster
+more "it crashes" bugs fixed
+top shows IO-wait time
+vmstat can show active/inactive memory stats
+real-time info supported in ps
+correct "ps -o size" and "ps --sort size"
+new maintainers
+reduced memory usage for ps
+allow large PIDs to be specified
+SELINUX support is just a recompile away
+the "F" column shrank, so "ps -l" has more command name room
+64-bit time reduces the overflow problem
+support S/390, IA-64 emulator, and user-mode Linux
+oldps is gone
+configure script -- use "make -f Makefile.noam" as a backup
+"w" program better at determining what a user is doing
+more stable
+code at http://procps.sf.net/ now (SourceForge)
+
+Earlier changes, for those not using Debian already:
+
+more stable
+runs faster
+-F format option
+better error reporting in ps for unknown format specifiers
+BSD's sysctl options -b and -X
+top displays well on large-memory systems
+old BSD-style select-by-PID ("ps l$$")
+15-character user names
+ps 'f' ASCII art forest fixed
+add SIGSYS on i386
+top reports real RSS value
+large-memory systems work
+minimal ps program for embedded systems (minimal.c)
+BSD personality process selection fixed
+support locale (French) with ',' and '.' mixed up
+pgrep program
+includes the "kill" and "nice" programs
+don't chop non-tty ps output at 80 columns

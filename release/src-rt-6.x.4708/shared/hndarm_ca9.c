@@ -29,6 +29,8 @@
 #include <armca9_core.h>
 #include <ddr_core.h>
 
+#define	NO_DDRCLK_LIMIT	1
+
 uint
 BCMINITFN(si_irq)(si_t *sih)
 {
@@ -116,7 +118,11 @@ BCMINITFN(si_arm_setclock)(si_t *sih, uint32 armclock, uint32 ddrclock, uint32 a
 	bool ret = TRUE;
 	int idx;
 	int bootdev;
+#ifdef NO_DDRCLK_LIMIT
+	uint32 *ddrclk;
+#else
 	uint32 *ddrclk, ddrclk_limit = 0;
+#endif
 	static uint32 BCMINITDATA(arm_pll_table)[][2] = {
 		{ 600,	0x1003001 },
 		{ 800,	0x1004001 },
@@ -140,6 +146,9 @@ BCMINITFN(si_arm_setclock)(si_t *sih, uint32 armclock, uint32 ddrclock, uint32 a
 				if (ddrclock == ddr_clock_table[idx])
 					break;
 			}
+#ifdef NO_DDRCLK_LIMIT
+			if (ddr_clock_table[idx] != 0) {
+#else
 			if (CHIPID(sih->chip) == BCM4707_CHIP_ID &&
 				sih->chippkg != BCM4709_PKG_ID) {
 				void *regs = (void *)si_setcore(sih, NS_DDR23_CORE_ID, 0);
@@ -155,6 +164,7 @@ BCMINITFN(si_arm_setclock)(si_t *sih, uint32 armclock, uint32 ddrclock, uint32 a
 			}
 			if (ddr_clock_table[idx] != 0 &&
 				(ddrclk_limit == 0 || ddrclock <= ddrclk_limit)) {
+#endif
 				ddrclk = (uint32 *)(0x1000 + BISZ_OFFSET - 4);
 				*ddrclk = ddrclock;
 				bootdev = soc_boot_dev((void *)sih);

@@ -126,8 +126,8 @@ endif
 ifeq ($(strip $(RTAC68U)),1)
 CFLAGS += -DRTAC68U
 endif
-ifeq ($(strip $(RTN18UHP)),1)
-CFLAGS += -DRTN18UHP
+ifeq ($(strip $(RTN18U)),1)
+CFLAGS += -DRTN18U
 endif
 ifeq ($(strip $(COMPRESSED_CFE)),1)
 CFLAGS += -DCOMPRESSED_CFE

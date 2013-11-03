@@ -1,0 +1,151 @@
+-------------------------- general ------------------------
+
+Consider using glibc obstacks for memory allocation.
+
+Implement /usr/proc/bin tools like Solaris has.
+The prstat command is interesting, like top in batch mode.
+SCO has a pstat command.
+
+Don't these really belong in the procps package?
+         killall   pstree   fuser   lsof   who
+(they are maintained elsewhere, which causes version problems)
+
+OpenBSD has a pfind command.
+
+Cache results of dev_to_tty.
+
+---------------------- kernel -------------------------
+
+Add an "adopted child" flag to mark processes that are not
+natural children of init. This can make --forest work better.
+
+Supply better data for top's CPU state display. Currently top has
+to subtract old numbers from new numbers and divide that result by
+the number of processors. The kernel won't even supply the number
+of processors in a portable way.
+
+Supply data for the ADDR and JOBC fields.
+
+Support & supply data for SL and RE.
+
+Add a /proc/*/tty symlink to eliminate guessing when /proc/*/fd is
+not accessable.
+
+Add /proc/*/.bindata files to avoid string parsing. It should be an array
+of 64-bit values on all machines. New entries go on the end and obsolete
+ones get filled in with something logical -- entries must never be deleted!
+
+Add all the stuff Solaris has. This would also replace ptrace.
+
+---------------------- watch --------------------------
+
+Tolerate UTF-8.
+
+Tolerate color, bold, underline, etc. #129334
+
+Tolerate stderr.  #420377 #155227 #225549
+
+Tolerate VT100 line-drawing characters. Maybe translate them.
+
+---------------------- w --------------------------
+
+The LOGIN@ column sometimes has a space in it. This makes correct
+scripting difficult.
+
+Time formats are demented.
+
+---------------------- vmstat --------------------------
+
+Extract /proc/diskstats parsing from vmstat into libproc somewhere.
+
+--------------------- libproc ----------------------
+
+Stop storing fields with duplicate info (often different
+units: kB and pages, seconds and jiffies) in the proc_t struct.
+
+Use own readdir code (assembly language) because glibc sucks ass.
+
+---------------------- top -------------------------
+
+Share more stuff with ps.
+
+don't truncate long usernames
+
+have a --config option
+
+---------------- ps for now, maybe move to libproc ------------------
+
+With forest output and a tty named /dev/this_is_my_tty, the position
+of the command name gets messed up. (we print too many spaces) (fixed?)
+
+Fix missing stuff for these formats: FB_j FB_l FB_v HP_f HP_l HP_fl JFMT OL_m
+(jobc,cpu,sl,re,cpu,prmgrp,m_swap,m_share,vm_lib,m_dt)
+Note that "cpu" has two meanings.
+
+Add Beowulf support. This is ugly, since the current patches use a
+daemon to collect info and add a HOST field after the PID field.
+
+Query optimizer, put cheap/required process selection first.
+
+Avoid reading both /proc/*/status and /proc/*/stat.
+
+Support printing the client hostname (the FROM that w(1) uses) in place
+of a pty.
+
+Disambiguate narrow tty info. (/dev/tty7 == /dev/pts/7 now)
+1------8     1--4
+ttyS2        S2
+ttyI31       I31
+pts/7        7        Short form could be /999.
+pts/9999     9999     Short form could just be trunctuated to /999.
+tty7         7        Short form could be vc-7.
+tty63        63       Short form could be vc63.
+
+Internationalization, as specified by XPG3, Volume 1, Commands and Utilities.
+(and suggested by Unix98) LC_TIME affects date format.
+
+----------------------- ps -----------------------
+
+Add an option to select all processes that a user can kill.
+(related to RUID, EUID, tty, etc. -- but maybe ignore root power)
+
+Add a nice display option for killing things.
+ruser,euser,ppid,pid,pmem,stime,args
+
+For RT stuff:
+pid,tid,class,rtprio,ni,pri,psr,pcpu,stat,wchan:14,comm
+
+For job control:
+stat,euid,ruid,tty,tpgid,sess,pgrp,ppid,pid,pcpu,comm
+
+Make the column alignment algorithm support this:
+    FOO BAR
+    8 44444
+    453  45
+    45 2989
+    63666 0
+    34  333
+(useful for the UNIX tty and time values, since the time might look
+like 100-10:40:32 for old processes and the tty might have extra room)
+
+Improve long sort/format specifiers documentation and fill in the missing
+code as much as the kernel can support. Make sure that memory amounts are in
+pages when they should be and in kB when they should be, not backwards.
+
+output encoding: UTF8 --nul --null
+
+Make BSD formats use non-standard BSD time format, at least when it
+doesn't violate the "no whitespace" rule.
+
+Better unmangling of '?' as a tty. The shell destroys '?' when there
+is a filename that matches. If the argument seems like garbage,
+check for a file that might have screwed up the '?'.
+
+If the 'O' option is given something already implied by 'O',
+assume the user wanted a sorting option.
+
+Conflict:
+Digital THREAD is user,pcpu,pri,scnt,wchan,usertime,systime
+AIX     THREAD is uname,pid,ppid,tid,S,C,PRI,scount,WCHAN,F,tty,bnd,comm
+AIX looks like this:
+         USER   PID  PPID  TID S  C PRI SC   WCHAN   FLAG   TTY BND  CMD

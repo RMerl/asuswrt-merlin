@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry id="dbd.1">
+  <refmeta>
+    <refentrytitle>dbd</refentrytitle>
+
+    <manvolnum>1</manvolnum>
+
+    <refmiscinfo class="date">28 Dec 2012</refmiscinfo>
+
+    <refmiscinfo class="source">@NETATALK_VERSION@</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>dbd</refname>
+
+    <refpurpose>CNID database maintenance</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>dbd<indexterm>
+          <primary>dbd</primary>
+        </indexterm></command>
+
+      <arg choice="opt">-fsv</arg>
+
+      <arg choice="plain"><replaceable>volumepath</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>Description</title>
+
+    <para><command>dbd</command> scans all file and directories of AFP
+    volumes, updating the CNID database of the volume. It must be run with
+    appropriate permissions i.e. as root..</para>
+  </refsect1>
+
+  <refsect1>
+    <title>Options</title>
+
+    <variablelist>
+      <varlistentry>
+        <term>-c</term>
+
+        <listitem>
+          <para>convert from adouble:v2 to adouble:ea</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-f</term>
+
+        <listitem>
+          <para>delete and recreate CNID database</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-F</term>
+
+        <listitem>
+          <para>location of the afp.conf config file</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-s</term>
+
+        <listitem>
+          <para>scan volume: treat the volume as read only and don't perform
+          any filesystem modifications</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-t</term>
+
+        <listitem>
+          <para>show statistics while running</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-v</term>
+
+        <listitem>
+          <para>verbose</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-V</term>
+
+        <listitem>
+          <para>display version info</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>CNID background</title>
+
+    <para>The CNID backends maintains name to ID mappings. If you change a
+    filename outside afpd(8) (shell, samba), the CNID database will not
+    reflect that change. Netatalk tries to recover from such inconsistencies
+    as gracefully as possible.</para>
+  </refsect1>
+
+  <refsect1>
+    <title>See also</title>
+
+    <para><citerefentry>
+        <refentrytitle>cnid_metad</refentrytitle>
+
+        <manvolnum>8</manvolnum>
+      </citerefentry>, <citerefentry>
+        <refentrytitle>cnid_dbd</refentrytitle>
+
+        <manvolnum>8</manvolnum>
+      </citerefentry></para>
+  </refsect1>
+</refentry>

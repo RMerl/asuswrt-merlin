@@ -1,0 +1,739 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Define if building universal (internal helper macro) */
+#undef AC_APPLE_UNIVERSAL_BUILD
+
+/* Define if the admin group should be enabled */
+#undef ADMIN_GRP
+
+/* Define if AFS should be used */
+#undef AFS
+
+/* Does extattr API work */
+#undef BROKEN_EXTATTR
+
+/* BSD compatiblity macro */
+#undef BSD4_4
+
+/* Define if CNID Concurrent BDB backend should be compiled. */
+#undef CNID_BACKEND_CDB
+
+/* Define if CNID Database Daemon backend should be compiled. */
+#undef CNID_BACKEND_DBD
+
+/* Define if CNID LAST scheme backend should be compiled. */
+#undef CNID_BACKEND_LAST
+
+/* Define if CNID TDB scheme backend should be compiled. */
+#undef CNID_BACKEND_TDB
+
+/* Required BDB version, major */
+#undef DB_MAJOR_REQ
+
+/* Required BDB version, minor */
+#undef DB_MINOR_REQ
+
+/* Required BDB version, patch */
+#undef DB_PATCH_REQ
+
+/* Define if verbose debugging information should be included */
+#undef DEBUG
+
+/* Define if you want to disable SIGALRM timers and DSI tickles */
+#undef DEBUGGING
+
+/* Default CNID scheme to be used */
+#undef DEFAULT_CNID_SCHEME
+
+/* Define if shell check should be disabled */
+#undef DISABLE_SHELLCHECK
+
+/* BSD compatibility macro */
+#undef DLSYM_PREPEND_UNDERSCORE
+
+/* Available Extended Attributes modules */
+#undef EA_MODULES
+
+/* Define if you want compatibily with the FHS */
+#undef FHS_COMPATIBILITY
+
+/* Define if OS is FreeBSD */
+#undef FREEBSD
+
+/* Whether ACLs support is available */
+#undef HAVE_ACLS
+
+/* Whether acl_from_mode() is available */
+#undef HAVE_ACL_FROM_MODE
+
+/* Whether acl_get_perm_np() is available */
+#undef HAVE_ACL_GET_PERM_NP
+
+/* Define to 1 if you have the <acl/libacl.h> header file. */
+#undef HAVE_ACL_LIBACL_H
+
+/* Define to 1 if you have the `add_proplist_entry' function. */
+#undef HAVE_ADD_PROPLIST_ENTRY
+
+/* Whether AIX ACLs are available */
+#undef HAVE_AIX_ACLS
+
+/* whether at funcs are available */
+#undef HAVE_ATFUNCS
+
+/* Define to 1 if you have the `attropen' function. */
+#undef HAVE_ATTROPEN
+
+/* Define to 1 if you have the `attr_get' function. */
+#undef HAVE_ATTR_GET
+
+/* Define to 1 if you have the `attr_getf' function. */
+#undef HAVE_ATTR_GETF
+
+/* Define to 1 if you have the `attr_list' function. */
+#undef HAVE_ATTR_LIST
+
+/* Define to 1 if you have the `attr_listf' function. */
+#undef HAVE_ATTR_LISTF
+
+/* Define to 1 if you have the `attr_remove' function. */
+#undef HAVE_ATTR_REMOVE
+
+/* Define to 1 if you have the `attr_removef' function. */
+#undef HAVE_ATTR_REMOVEF
+
+/* Define to 1 if you have the `attr_set' function. */
+#undef HAVE_ATTR_SET
+
+/* Define to 1 if you have the `attr_setf' function. */
+#undef HAVE_ATTR_SETF
+
+/* Define to 1 if you have the <attr/xattr.h> header file. */
+#undef HAVE_ATTR_XATTR_H
+
+/* Use Avahi/DNS-SD registration */
+#undef HAVE_AVAHI
+
+/* Uses Avahis threaded poll implementation */
+#undef HAVE_AVAHI_THREADED_POLL
+
+/* Define to 1 if you have the `backtrace_symbols' function. */
+#undef HAVE_BACKTRACE_SYMBOLS
+
+/* Define if dbtob is broken */
+#undef HAVE_BROKEN_DBTOB
+
+/* Define to 1 if you have the <crypt.h> header file. */
+#undef HAVE_CRYPT_H
+
+/* Define if support for dbus-glib was found */
+#undef HAVE_DBUS_GLIB
+
+/* Define to 1 if you have the declaration of `cygwin_conv_path', and to 0 if
+   you don't. */
+#undef HAVE_DECL_CYGWIN_CONV_PATH
+
+/* Define to 1 if you have the `delproplist' function. */
+#undef HAVE_DELPROPLIST
+
+/* Define to 1 if you have the `dirfd' function. */
+#undef HAVE_DIRFD
+
+/* Define to 1 if you have the `dlclose' function. */
+#undef HAVE_DLCLOSE
+
+/* Define if you have the GNU dld library. */
+#undef HAVE_DLD
+
+/* Define to 1 if you have the `dlerror' function. */
+#undef HAVE_DLERROR
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#undef HAVE_DLFCN_H
+
+/* Define to 1 if you have the `dlopen' function. */
+#undef HAVE_DLOPEN
+
+/* Define to 1 if you have the `dlsym' function. */
+#undef HAVE_DLSYM
+
+/* Define if you have the _dyld_func_lookup function. */
+#undef HAVE_DYLD
+
+/* extattr API has full fledged fds for EAs */
+#undef HAVE_EAFD
+
+/* Define to 1 if you have the `extattr_delete_fd' function. */
+#undef HAVE_EXTATTR_DELETE_FD
+
+/* Define to 1 if you have the `extattr_delete_file' function. */
+#undef HAVE_EXTATTR_DELETE_FILE
+
+/* Define to 1 if you have the `extattr_delete_link' function. */
+#undef HAVE_EXTATTR_DELETE_LINK
+
+/* Define to 1 if you have the `extattr_get_fd' function. */
+#undef HAVE_EXTATTR_GET_FD
+
+/* Define to 1 if you have the `extattr_get_file' function. */
+#undef HAVE_EXTATTR_GET_FILE
+
+/* Define to 1 if you have the `extattr_get_link' function. */
+#undef HAVE_EXTATTR_GET_LINK
+
+/* Define to 1 if you have the `extattr_list_fd' function. */
+#undef HAVE_EXTATTR_LIST_FD
+
+/* Define to 1 if you have the `extattr_list_file' function. */
+#undef HAVE_EXTATTR_LIST_FILE
+
+/* Define to 1 if you have the `extattr_list_link' function. */
+#undef HAVE_EXTATTR_LIST_LINK
+
+/* Define to 1 if you have the `extattr_set_fd' function. */
+#undef HAVE_EXTATTR_SET_FD
+
+/* Define to 1 if you have the `extattr_set_file' function. */
+#undef HAVE_EXTATTR_SET_FILE
+
+/* Define to 1 if you have the `extattr_set_link' function. */
+#undef HAVE_EXTATTR_SET_LINK
+
+/* Define to 1 if you have the `fdelproplist' function. */
+#undef HAVE_FDELPROPLIST
+
+/* Define to 1 if you have the `fgetea' function. */
+#undef HAVE_FGETEA
+
+/* Define to 1 if you have the `fgetproplist' function. */
+#undef HAVE_FGETPROPLIST
+
+/* Define to 1 if you have the `fgetxattr' function. */
+#undef HAVE_FGETXATTR
+
+/* Define to 1 if you have the `flistea' function. */
+#undef HAVE_FLISTEA
+
+/* Define to 1 if you have the `flistxattr' function. */
+#undef HAVE_FLISTXATTR
+
+/* Define to 1 if you have the `fremoveea' function. */
+#undef HAVE_FREMOVEEA
+
+/* Define to 1 if you have the `fremovexattr' function. */
+#undef HAVE_FREMOVEXATTR
+
+/* Define to 1 if you have the `fsetea' function. */
+#undef HAVE_FSETEA
+
+/* Define to 1 if you have the `fsetproplist' function. */
+#undef HAVE_FSETPROPLIST
+
+/* Define to 1 if you have the `fsetxattr' function. */
+#undef HAVE_FSETXATTR
+
+/* Define to 1 if the system has the type `fshare_t'. */
+#undef HAVE_FSHARE_T
+
+/* Define to 1 if you have the `fstatat' function. */
+#undef HAVE_FSTATAT
+
+/* Define to 1 if you have the `getea' function. */
+#undef HAVE_GETEA
+
+/* Define to 1 if you have the `getifaddrs' function. */
+#undef HAVE_GETIFADDRS
+
+/* Define to 1 if you have the `getpagesize' function. */
+#undef HAVE_GETPAGESIZE
+
+/* Define to 1 if you have the `getproplist' function. */
+#undef HAVE_GETPROPLIST
+
+/* Define to 1 if you have the `getusershell' function. */
+#undef HAVE_GETUSERSHELL
+
+/* Define to 1 if you have the `getxattr' function. */
+#undef HAVE_GETXATTR
+
+/* Define to 1 if you have the `get_proplist_entry' function. */
+#undef HAVE_GET_PROPLIST_ENTRY
+
+/* Whether to enable GSSAPI support */
+#undef HAVE_GSSAPI
+
+/* Define to 1 if you have the <gssapi/gssapi_generic.h> header file. */
+#undef HAVE_GSSAPI_GSSAPI_GENERIC_H
+
+/* Define to 1 if you have the <gssapi/gssapi.h> header file. */
+#undef HAVE_GSSAPI_GSSAPI_H
+
+/* Define to 1 if you have the <gssapi/gssapi_krb5.h> header file. */
+#undef HAVE_GSSAPI_GSSAPI_KRB5_H
+
+/* Define to 1 if you have the <gssapi.h> header file. */
+#undef HAVE_GSSAPI_H
+
+/* Wheter GSS_C_NT_HOSTBASED_SERVICE is in gssapi.h */
+#undef HAVE_GSS_C_NT_HOSTBASED_SERVICE
+
+/* Whether HPUX ACLs are available */
+#undef HAVE_HPUX_ACLS
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Whether IRIX ACLs are available */
+#undef HAVE_IRIX_ACLS
+
+/* Define if Kerberos 5 is available */
+#undef HAVE_KERBEROS
+
+/* Define to 1 if you have the `krb5_free_error_message' function. */
+#undef HAVE_KRB5_FREE_ERROR_MESSAGE
+
+/* Define to 1 if you have the `krb5_free_keytab_entry_contents' function. */
+#undef HAVE_KRB5_FREE_KEYTAB_ENTRY_CONTENTS
+
+/* Define to 1 if you have the `krb5_free_unparsed_name' function. */
+#undef HAVE_KRB5_FREE_UNPARSED_NAME
+
+/* Define to 1 if you have the <krb5.h> header file. */
+#undef HAVE_KRB5_H
+
+/* Define to 1 if you have the <krb5/krb5.h> header file. */
+#undef HAVE_KRB5_KRB5_H
+
+/* Define to 1 if you have the `krb5_kt_free_entry' function. */
+#undef HAVE_KRB5_KT_FREE_ENTRY
+
+/* Define to 1 if you have the <langinfo.h> header file. */
+#undef HAVE_LANGINFO_H
+
+/* LARGEFILE support */
+#undef HAVE_LARGEFILE_SUPPORT
+
+/* Whether LDAP is available */
+#undef HAVE_LDAP
+
+/* Define to 1 if you have the `lgetea' function. */
+#undef HAVE_LGETEA
+
+/* Define to 1 if you have the `lgetxattr' function. */
+#undef HAVE_LGETXATTR
+
+/* Define to 1 if you have the `crypt' library (-lcrypt). */
+#undef HAVE_LIBCRYPT
+
+/* Define to 1 if you have the `crypto' library (-lcrypto). */
+#undef HAVE_LIBCRYPTO
+
+/* Define to 1 if you have the `des' library (-ldes). */
+#undef HAVE_LIBDES
+
+/* Define if you have the libdl library or equivalent. */
+#undef HAVE_LIBDL
+
+/* Define if libdlloader will be built on this platform */
+#undef HAVE_LIBDLLOADER
+
+/* Define if the DHX2 modules should be built with libgcrypt */
+#undef HAVE_LIBGCRYPT
+
+/* define if you have libquota */
+#undef HAVE_LIBQUOTA
+
+/* Define to 1 if you have the <linux/dqblk_xfs.h> header file. */
+#undef HAVE_LINUX_DQBLK_XFS_H
+
+/* Define to 1 if you have the <linux/xfs_fs.h> header file. */
+#undef HAVE_LINUX_XFS_FS_H
+
+/* Define to 1 if you have the <linux/xqm.h> header file. */
+#undef HAVE_LINUX_XQM_H
+
+/* Define to 1 if you have the `listea' function. */
+#undef HAVE_LISTEA
+
+/* Define to 1 if you have the `listxattr' function. */
+#undef HAVE_LISTXATTR
+
+/* Define to 1 if you have the `llistea' function. */
+#undef HAVE_LLISTEA
+
+/* Define to 1 if you have the `llistxattr' function. */
+#undef HAVE_LLISTXATTR
+
+/* Define to 1 if you have the <locale.h> header file. */
+#undef HAVE_LOCALE_H
+
+/* Define to 1 if you have the `lremoveea' function. */
+#undef HAVE_LREMOVEEA
+
+/* Define to 1 if you have the `lremovexattr' function. */
+#undef HAVE_LREMOVEXATTR
+
+/* Define to 1 if you have the `lsetea' function. */
+#undef HAVE_LSETEA
+
+/* Define to 1 if you have the `lsetxattr' function. */
+#undef HAVE_LSETXATTR
+
+/* Use mDNSRespnder/DNS-SD registration */
+#undef HAVE_MDNS
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the `mempcpy' function. */
+#undef HAVE_MEMPCPY
+
+/* Define to 1 if you have the `mmap' function. */
+#undef HAVE_MMAP
+
+/* Define to 1 if you have the <mntent.h> header file. */
+#undef HAVE_MNTENT_H
+
+/* Define to 1 if you have the <netdb.h> header file. */
+#undef HAVE_NETDB_H
+
+/* Whether no ACLs support is available */
+#undef HAVE_NO_ACLS
+
+/* Define to 1 if you have the `openat' function. */
+#undef HAVE_OPENAT
+
+/* Define to 1 if you have the <pam/pam_appl.h> header file. */
+#undef HAVE_PAM_PAM_APPL_H
+
+/* Whether POSIX ACLs are available */
+#undef HAVE_POSIX_ACLS
+
+/* Define to 1 if you have the `pread' function. */
+#undef HAVE_PREAD
+
+/* Define to 1 if you have the `pselect' function. */
+#undef HAVE_PSELECT
+
+/* Define if you have POSIX threads libraries and header files. */
+#undef HAVE_PTHREAD
+
+/* Have PTHREAD_PRIO_INHERIT. */
+#undef HAVE_PTHREAD_PRIO_INHERIT
+
+/* Define to 1 if you have the `pwrite' function. */
+#undef HAVE_PWRITE
+
+/* Define to 1 if you have the `removeea' function. */
+#undef HAVE_REMOVEEA
+
+/* Define to 1 if you have the `removexattr' function. */
+#undef HAVE_REMOVEXATTR
+
+/* Define to 1 if you have the `renameat' function. */
+#undef HAVE_RENAMEAT
+
+/* Define to 1 if you have the <rpcsvc/rquota.h> header file. */
+#undef HAVE_RPCSVC_RQUOTA_H
+
+/* Define to 1 if you have the <rpc/pmap_prot.h> header file. */
+#undef HAVE_RPC_PMAP_PROT_H
+
+/* Define to 1 if you have the <rpc/rpc.h> header file. */
+#undef HAVE_RPC_RPC_H
+
+/* Define to 1 if you have the <security/pam_appl.h> header file. */
+#undef HAVE_SECURITY_PAM_APPL_H
+
+/* Define to 1 if you have the `sendfilev' function. */
+#undef HAVE_SENDFILEV
+
+/* Define to 1 if you have the `setea' function. */
+#undef HAVE_SETEA
+
+/* Define to 1 if you have the `setlinebuf' function. */
+#undef HAVE_SETLINEBUF
+
+/* Define to 1 if you have the `setproplist' function. */
+#undef HAVE_SETPROPLIST
+
+/* Define to 1 if you have the `setxattr' function. */
+#undef HAVE_SETXATTR
+
+/* Define to 1 if you have the <sgtty.h> header file. */
+#undef HAVE_SGTTY_H
+
+/* Define if you have the shl_load function. */
+#undef HAVE_SHL_LOAD
+
+/* Define to 1 if you have the `sizeof_proplist_entry' function. */
+#undef HAVE_SIZEOF_PROPLIST_ENTRY
+
+/* Whether solaris ACLs are available */
+#undef HAVE_SOLARIS_ACLS
+
+/* Define to 1 if you have the <statfs.h> header file. */
+#undef HAVE_STATFS_H
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the `strlcat' function. */
+#undef HAVE_STRLCAT
+
+/* Define to 1 if you have the `strlcpy' function. */
+#undef HAVE_STRLCPY
+
+/* Define to 1 if you have the `strnlen' function. */
+#undef HAVE_STRNLEN
+
+/* Define to 1 if `tm_gmtoff' is a member of `struct tm'. */
+#undef HAVE_STRUCT_TM_TM_GMTOFF
+
+/* Define to 1 if you have the <sys/attributes.h> header file. */
+#undef HAVE_SYS_ATTRIBUTES_H
+
+/* Define to 1 if you have the <sys/ea.h> header file. */
+#undef HAVE_SYS_EA_H
+
+/* Define to 1 if you have the <sys/extattr.h> header file. */
+#undef HAVE_SYS_EXTATTR_H
+
+/* Define to 1 if you have the <sys/fcntl.h> header file. */
+#undef HAVE_SYS_FCNTL_H
+
+/* Define to 1 if you have the <sys/mnttab.h> header file. */
+#undef HAVE_SYS_MNTTAB_H
+
+/* Define to 1 if you have the <sys/mount.h> header file. */
+#undef HAVE_SYS_MOUNT_H
+
+/* Define to 1 if you have the <sys/param.h> header file. */
+#undef HAVE_SYS_PARAM_H
+
+/* Define to 1 if you have the <sys/statvfs.h> header file. */
+#undef HAVE_SYS_STATVFS_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/termios.h> header file. */
+#undef HAVE_SYS_TERMIOS_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <sys/uio.h> header file. */
+#undef HAVE_SYS_UIO_H
+
+/* Define to 1 if you have the <sys/vfs.h> header file. */
+#undef HAVE_SYS_VFS_H
+
+/* Define to 1 if you have the <sys/xattr.h> header file. */
+#undef HAVE_SYS_XATTR_H
+
+/* Define to 1 if you have the <termios.h> header file. */
+#undef HAVE_TERMIOS_H
+
+/* Whether Tru64 ACLs are available */
+#undef HAVE_TRU64_ACLS
+
+/* Whether UCS-2-INTERNAL is supported */
+#undef HAVE_UCS2INTERNAL
+
+/* Define to 1 if you have the <ufs/quota.h> header file. */
+#undef HAVE_UFS_QUOTA_H
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Whether UnixWare ACLs are available */
+#undef HAVE_UNIXWARE_ACLS
+
+/* Define to 1 if you have the `unlinkat' function. */
+#undef HAVE_UNLINKAT
+
+/* Whether to use native iconv */
+#undef HAVE_USABLE_ICONV
+
+/* Define to 1 if you have the `utime' function. */
+#undef HAVE_UTIME
+
+/* Define to 1 if you have the <xfs/libxfs.h> header file. */
+#undef HAVE_XFS_LIBXFS_H
+
+/* Define to 1 if you have the <xfs/xfs_fs.h> header file. */
+#undef HAVE_XFS_XFS_FS_H
+
+/* Define to 1 if you have the <xfs/xqm.h> header file. */
+#undef HAVE_XFS_XQM_H
+
+/* Define as const if the declaration of iconv() needs const. */
+#undef ICONV_CONST
+
+/* OS is Linux */
+#undef LINUX
+
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
+
+/* Disable assertions */
+#undef NDEBUG
+
+/* Define if dlsym() requires a leading underscore in symbol names. */
+#undef NEED_USCORE
+
+/* Define if OS is NetBSD */
+#undef NETBSD
+
+/* Define to 1 if your C compiler doesn't accept -c and -o together. */
+#undef NO_MINUS_C_MINUS_O
+
+/* Define if quota support should not compiled */
+#undef NO_QUOTA_SUPPORT
+
+/* Define if the gmtoff member of struct tm is not available */
+#undef NO_STRUCT_TM_GMTOFF
+
+/* Define if the OpenSSL DHX modules should be built */
+#undef OPENSSL_DHX
+
+/* errno returned by open with O_NOFOLLOW */
+#undef OPEN_NOFOLLOW_ERRNO
+
+/* Name of package */
+#undef PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* netatalk lockfile path */
+#undef PATH_NETATALK_LOCK
+
+/* Define to necessary symbol if this constant uses a non-standard name on
+   your system. */
+#undef PTHREAD_CREATE_JOINABLE
+
+/* Whether the realpath function allows NULL */
+#undef REALPATH_TAKES_NULL
+
+/* Define if the sendfile() function uses BSD semantics */
+#undef SENDFILE_FLAVOR_BSD
+
+/* Whether linux sendfile() API is available */
+#undef SENDFILE_FLAVOR_LINUX
+
+/* Solaris sendfile() */
+#undef SENDFILE_FLAVOR_SOLARIS
+
+/* Define if shadow passwords should be used */
+#undef SHADOWPW
+
+/* Solaris compatibility macro */
+#undef SOLARIS
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* Define if TCP wrappers should be used */
+#undef TCPWRAP
+
+/* Define if the DHX UAM modules should be compiled */
+#undef UAM_DHX
+
+/* Define if the DHX2 UAM modules should be compiled */
+#undef UAM_DHX2
+
+/* Define if the PGP UAM module should be compiled */
+#undef UAM_PGP
+
+/* Define if cracklib should be used */
+#undef USE_CRACKLIB
+
+/* Define to enable PAM support */
+#undef USE_PAM
+
+/* Define to enable Zeroconf support */
+#undef USE_ZEROCONF
+
+/* Version number of package */
+#undef VERSION
+
+/* dtrace probes */
+#undef WITH_DTRACE
+
+/* Whether sendfile() should be used */
+#undef WITH_SENDFILE
+
+/* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
+   significant byte first (like Motorola and SPARC, unlike Intel). */
+#if defined AC_APPLE_UNIVERSAL_BUILD
+# if defined __BIG_ENDIAN__
+#  define WORDS_BIGENDIAN 1
+# endif
+#else
+# ifndef WORDS_BIGENDIAN
+#  undef WORDS_BIGENDIAN
+# endif
+#endif
+
+/* xattr functions have additional options */
+#undef XATTR_ADD_OPT
+
+/* AT file source */
+#undef _ATFILE_SOURCE
+
+/* _FILE_OFFSET_BITS (for LARGEFILE support) */
+#undef _FILE_OFFSET_BITS
+
+/* Whether to use GNU libc extensions */
+#undef _GNU_SOURCE
+
+/* Compatibility macro */
+#undef _ISOC9X_SOURCE
+
+/* _LARGE_FILES (for LARGEFILE support) */
+#undef _LARGE_FILES
+
+/* path to cracklib dictionary */
+#undef _PATH_CRACKLIB
+
+/* Solaris compilation environment */
+#undef _XOPEN_SOURCE
+
+/* Solaris compilation environment */
+#undef __EXTENSIONS__
+
+/* Solaris compatibility macro */
+#undef __svr4__
+
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
+#undef inline
+#endif

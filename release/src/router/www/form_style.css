@@ -1756,6 +1756,38 @@ padding-top:1px;
 	border-style:bevel;
 	color:#FFFFFF;
 }
+.vpnstatuson{
+	background-image:url(/images/New_ui/vpnstatus.png);
+	background-repeat:no-repeat;	
+	background-position:2px 2px;
+	height:29px;
+	width:30px;
+	cursor: pointer;
+	display: none;
+}
+.vpnstatusoff{
+	background-image:url(/images/New_ui/vpnstatus.png);
+	background-repeat:no-repeat;	
+	background-position:2px -48px;
+	height:29px;
+	width:30px;
+	cursor: pointer;
+	display: none;
+}
+.vpnClientTitle_td_unclick{
+	background-color: #000;
+	height: 30px;
+	cursor: pointer;
+	border: 1px solid #222;
+}
+
+.vpnClientTitle_td_click{
+	background-color: #4D595D;
+	height: 30px;
+	cursor: pointer;
+	border: 1px solid #222;
+}
+
 .traffictable th{
 	height:30px;
 	background-image: url(images/general_th.gif);

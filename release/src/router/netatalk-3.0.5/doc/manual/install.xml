@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<chapter id="installation">
+  <chapterinfo>
+    <date>24.8.2012</date>
+  </chapterinfo>
+
+  <title>Installation</title>
+
+  <warning>
+    <para>If you have previously used an older version of Netatalk, please
+    read the chapter about <link linkend="upgrade">upgrading</link> first
+    !!!</para>
+  </warning>
+
+  <para></para>
+
+  <sect1>
+    <title>How to obtain Netatalk</title>
+
+    <para>Please have a look at the netatalk page on sourceforge for the most
+    recent informations on this issue.</para>
+
+    <para><ulink
+    url="http://sourceforge.net/projects/netatalk/">http://sourceforge.net/projects/netatalk/</ulink></para>
+
+    <sect2>
+      <title>Binary packages</title>
+
+      <para>Binary packages of Netatalk are included in some Linux and UNIX
+      distributions. You might want to have a look at the usual locations,
+      too.</para>
+
+      <para>Ubuntu package: <ulink
+      url="https://launchpad.net/ubuntu">https://launchpad.net/ubuntu
+      </ulink></para>
+
+      <para>Debian package: <ulink
+      url="http://packages.debian.org/">http://packages.debian.org/
+      </ulink></para>
+
+      <para>various RPM package: <ulink
+      url="http://rpmfind.net/">http://rpmfind.net/ </ulink></para>
+
+      <para>Fedora/RHEL package: <ulink
+      url="http://koji.fedoraproject.org/koji/search">http://koji.fedoraproject.org/koji/search
+      </ulink></para>
+
+      <para>Gentoo package: <ulink
+      url="http://packages.gentoo.org/">http://packages.gentoo.org/
+      </ulink></para>
+
+      <para>openSUSE package: <ulink
+      url="http://software.opensuse.org/">http://software.opensuse.org/
+      </ulink></para>
+
+      <para>Solaris package: <ulink
+      url="http://www.blastwave.org/">http://www.blastwave.org/
+      </ulink></para>
+
+      <para>FreeBSD ports: <ulink
+      url="http://www.freebsd.org/ports/index.html">http://www.freebsd.org/ports/index.html
+      </ulink></para>
+
+      <para>NetBSD pkgsrc: <ulink
+      url="http://pkgsrc.se/search.php">http://pkgsrc.se/search.php
+      </ulink></para>
+
+      <para>OpenBSD ports:<ulink
+      url="http://openports.se/search.php">http://openports.se/search.php
+      </ulink></para>
+
+      <para>etc.<indexterm>
+          <primary>RPM</primary>
+
+          <secondary>Red Hat Package Manager package</secondary>
+        </indexterm><indexterm>
+          <primary>Deb</primary>
+
+          <secondary>Debian package</secondary>
+        </indexterm><indexterm>
+          <primary>Ports</primary>
+
+          <secondary>FreeBSD port</secondary>
+        </indexterm></para>
+    </sect2>
+
+    <sect2>
+      <title>Source packages</title>
+
+      <sect3>
+        <title>Tarballs</title>
+
+        <para>Prepacked tarballs in .tar.gz and tar.bz2 format are available
+        on the netatalk page on <ulink
+        url="http://netatalk.sourceforge.net/">sourceforge</ulink>.</para>
+      </sect3>
+
+      <sect3>
+        <title>Git</title>
+
+        <para>Downloading the Git repository can be done quickly and
+        easily.</para>
+
+        <orderedlist>
+          <listitem>
+            <para>Make sure you have Git installed. <command>which
+            git</command> should produce a path to git.</para>
+
+            <screen><prompt>$&gt;</prompt> <userinput>which git</userinput>
+<computeroutput>/usr/bin/git</computeroutput></screen>
+          </listitem>
+
+          <listitem>
+            <para>If you don't have one make a source directory.
+            <command>cd</command> to this directory.</para>
+
+            <screen><prompt>$&gt;</prompt> <userinput>mkdir /path/to/new/source/dir</userinput>
+<prompt>$&gt;</prompt> <userinput>cd /path/to/new/source/dir</userinput></screen>
+          </listitem>
+
+          <listitem>
+            <para>Now get the source:</para>
+
+            <screen><prompt>$&gt;</prompt> <userinput>git clone git://git.code.sf.net/p/netatalk/code netatalk-code
+</userinput><computeroutput>Initialized empty Git repository in /path/to/new/source/dir/netatalk/.git/
+remote: Counting objects: 2503, done.
+...
+</computeroutput></screen>
+
+            <para>This will create a local directory called "netatalk-code"
+            containing a complete and fresh copy of the whole Netatalk source
+            from the Git repository.</para>
+          </listitem>
+
+          <listitem>
+            <para>In order to keep your repository copy updated, occasionally
+            run:</para>
+
+            <screen><prompt>$&gt;</prompt> <userinput>git pull</userinput></screen>
+          </listitem>
+
+          <listitem>
+            <para>Now <command>cd</command> to the netatalk directory and run
+            <command>./bootstrap</command>. This will create the
+            <filename>configure</filename> script required in the next
+            step.</para>
+
+            <screen><prompt>$&gt;</prompt> <userinput>./bootstrap</userinput></screen>
+          </listitem>
+        </orderedlist>
+
+        <para></para>
+      </sect3>
+    </sect2>
+  </sect1>
+
+  <sect1>
+    <title>Compiling Netatalk</title>
+
+    <sect2>
+      <title>Prerequisites</title>
+
+      <sect3>
+        <title>Required third party software</title>
+
+        <itemizedlist>
+          <listitem>
+            <para>Berkeley DB<indexterm>
+                <primary>BDB</primary>
+
+                <secondary>Berkeley DB</secondary>
+              </indexterm>.</para>
+
+            <para>At the time of writing, the following versions are
+            supported:</para>
+
+            <itemizedlist>
+              <listitem>
+                <para>minimum 4.6.x</para>
+              </listitem>
+            </itemizedlist>
+
+            <para>In case Berkeley DB is not installed on your system, please
+            download it from:</para>
+
+            <para><ulink
+            url="http://www.oracle.com/technetwork/products/berkeleydb/downloads/index.html">
+            http://www.oracle.com/technetwork/products/berkeleydb/downloads/index.html</ulink></para>
+
+            <para>and follow the <link linkend="build-bdb">installation
+            instructions</link>.</para>
+          </listitem>
+
+          <listitem>
+            <para>Libgcrypt</para>
+
+            <para>Required for OS X 10.7 and later. Libgcrypt is needed for
+            DHX2.</para>
+
+            <para>Libgcrypt can be downloaded from: <ulink
+            url="http://directory.fsf.org/wiki/Libgcrypt">
+            http://directory.fsf.org/wiki/Libgcrypt</ulink>.</para>
+          </listitem>
+        </itemizedlist>
+      </sect3>
+
+      <sect3>
+        <title>Optional third party software</title>
+
+        <para>Netatalk can use the following third party software to enhance
+        it's functionality.</para>
+
+        <itemizedlist>
+          <listitem>
+            <para>mDNSresponderPOSIX or Avahi for Bonjour (aka
+            Zeroconf)</para>
+
+            <para>Mac OS X 10.2 and later use Bonjour (aka Zeroconf) for
+            service discovery.</para>
+
+            <para>Avahi must be build with DBUS support (
+            <userinput>--enable-dbus</userinput>).</para>
+
+            <para>You can download Avahi from: <ulink
+            url="http://www.avahi.org/">http://www.avahi.org/</ulink>.</para>
+
+            <para>You can download mDNSresponder from: <ulink
+            url="http://opensource.apple.com/tarballs/mDNSResponder/">http://opensource.apple.com/tarballs/mDNSResponder/</ulink>.</para>
+          </listitem>
+
+          <listitem>
+            <para>TCP wrappers</para>
+
+            <para>Wietse Venema's network logger, also known as TCPD or
+            LOG_TCP.</para>
+
+            <para>Security options are: access control per host, domain and/or
+            service; detection of host name spoofing or host address spoofing;
+            booby traps to implement an early-warning system.</para>
+
+            <para>TCP Wrappers can be downloaded from: <ulink
+            url="ftp://ftp.porcupine.org/pub/security">ftp://ftp.porcupine.org/pub/security</ulink>/</para>
+          </listitem>
+
+          <listitem>
+            <para>PAM<indexterm>
+                <primary>PAM</primary>
+
+                <secondary>Pluggable Authentication Modules</secondary>
+              </indexterm></para>
+
+            <para>PAM provides a flexible mechanism for authenticating users.
+            PAM was invented by SUN<indexterm>
+                <primary>SUN</primary>
+
+                <secondary>Sun Microsystems</secondary>
+              </indexterm> Microsystems. Linux-PAM is a suite of shared
+            libraries that enable the local system administrator to choose how
+            applications authenticate users.</para>
+
+            <para>You can get the Linux PAM documentation and sources from
+            <ulink
+            url="http://www.kernel.org/pub/linux/libs/pam/">http://www.kernel.org/pub/linux/libs/pam/</ulink>.</para>
+          </listitem>
+
+          <listitem>
+            <para>iconv</para>
+
+            <para>iconv provides conversion routines for many character
+            encodings. Netatalk uses it to provide charsets it does not have
+            built in conversions for, like ISO-8859-1. On glibc systems,
+            Netatalk can use the glibc provided iconv implementation.
+            Otherwise you can use the GNU libiconv implementation.</para>
+
+            <para>You can download GNU libiconv from: <olink><ulink
+            url="http://www.gnu.org/software/libiconv/">http://www.gnu.org/software/libiconv/</ulink></olink>.</para>
+          </listitem>
+        </itemizedlist>
+      </sect3>
+    </sect2>
+
+    <sect2 id="compiling-netatalk">
+      <title>Compiling<indexterm>
+          <primary>Compile</primary>
+
+          <secondary>Compiling Netatalk from Source</secondary>
+        </indexterm> Netatalk</title>
+
+      <sect3>
+        <title>Configuring the build</title>
+
+        <para>To build the binaries, first run the program
+        <command>./configure</command> in the source directory. This should
+        automatically configure Netatalk for your operating system. If you
+        have unusual needs, then you may wish to run</para>
+
+        <screen>$&gt; <userinput>./configure --help</userinput></screen>
+
+        <para>to see what special options you can enable.</para>
+
+        <para>The most used configure options are:</para>
+
+        <itemizedlist>
+          <listitem>
+            <para><option>--with-init-style</option>=redhat-sysv|redhat-systemd|suse-sysv|suse-systemd|gentoo|netbsd|debian|solaris|systemd</para>
+
+            <para>This option helps netatalk to determine where to install the
+            start scripts.</para>
+          </listitem>
+
+          <listitem>
+            <para><option>--with-bdb</option>=<replaceable>/path/to/bdb/installation/</replaceable></para>
+
+            <para>In case you installed Berkeley DB in a non-standard
+            location, you will <emphasis>have</emphasis> to give the install
+            location to netatalk, using this switch.</para>
+          </listitem>
+        </itemizedlist>
+
+        <para>Now run configure with any options you need</para>
+
+        <screen><prompt>$&gt;</prompt> <userinput>./configure [arguments]</userinput></screen>
+
+        <para>Configure will end up in an overview showing the settings the
+        Netatalk Makefiles have been created with.</para>
+
+        <para>If this step fails please visit the <ulink
+        url="http://netatalk.sourceforge.net/wiki/index.php/Troubleshooting">troubleshooting
+        guide</ulink>.</para>
+
+        <para>Next, running</para>
+
+        <screen><prompt>$&gt;</prompt> <userinput>make</userinput></screen>
+
+        <para>should produce the Netatalk binaries (this step can take several
+        minutes to complete).</para>
+
+        <para>When the process finished you can use</para>
+
+        <screen><prompt>$&gt;</prompt> <userinput>make install</userinput></screen>
+
+        <para>to install the binaries and documentation (must be done as
+        "root" when using default locations).</para>
+      </sect3>
+    </sect2>
+  </sect1>
+</chapter>

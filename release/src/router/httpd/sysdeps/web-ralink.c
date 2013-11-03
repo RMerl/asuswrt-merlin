@@ -1233,7 +1233,7 @@ static int wl_scan(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	}
 	memset(header, 0, sizeof(header));
 	//sprintf(header, "%-3s%-33s%-18s%-8s%-15s%-9s%-8s%-2s\n", "Ch", "SSID", "BSSID", "Enc", "Auth", "Siganl(%)", "W-Mode", "NT");
-#if defined(RTN14U)
+#if 0// defined(RTN14U)
 	sprintf(header, "%-4s%-33s%-18s%-9s%-16s%-9s%-8s%-4s%-5s\n", "Ch", "SSID", "BSSID", "Enc", "Auth", "Siganl(%)", "W-Mode"," WPS", " DPID");
 #else
 	sprintf(header, "%-4s%-33s%-18s%-9s%-16s%-9s%-8s\n", "Ch", "SSID", "BSSID", "Enc", "Auth", "Siganl(%)", "W-Mode");
@@ -1317,7 +1317,7 @@ static int wl_scan(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			ssap->SiteSurvey[i].authmode[15] = '\0';
 			ssap->SiteSurvey[i].signal[8] = '\0';
 			ssap->SiteSurvey[i].wmode[7] = '\0';
-#if defined(RTN14U)
+#if 0//defined(RTN14U)
 			ssap->SiteSurvey[i].wps[3] = '\0';
 			ssap->SiteSurvey[i].dpid[4] = '\0';
 #endif
@@ -1329,8 +1329,9 @@ static int wl_scan(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			retval += websWrite(wp, "[");
 			for (i = 0; i < apCount; i++)
 			{
+			   	dbg("\napCount=%d\n",i);
 				dbg(
-#if defined(RTN14U)
+#if 0//defined(RTN14U)
 				"%-4s%-33s%-18s%-9s%-16s%-9s%-8s%-4s%-5s\n",
 #else
 				"%-4s%-33s%-18s%-9s%-16s%-9s%-8s\n",
@@ -1342,7 +1343,7 @@ static int wl_scan(int eid, webs_t wp, int argc, char_t **argv, int unit)
 					ssap->SiteSurvey[i].authmode,
 					ssap->SiteSurvey[i].signal,
 					ssap->SiteSurvey[i].wmode
-#if defined(RTN14U)
+#if 0//defined(RTN14U)
 					, ssap->SiteSurvey[i].wps
 					, ssap->SiteSurvey[i].dpid
 #endif

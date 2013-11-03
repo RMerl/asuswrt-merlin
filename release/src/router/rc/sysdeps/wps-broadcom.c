@@ -124,7 +124,7 @@ start_wps_method(void)
 	wps_sta_pin = nvram_safe_get("wps_sta_pin");
 
 	if(strlen(wps_sta_pin) && strcmp(wps_sta_pin, "00000000") && (wl_wpsPincheck(wps_sta_pin) == 0))
-		len += sprintf(buf + len, "wps_method=%d ", WPS_UI_METHOD_PIN);	
+		len += sprintf(buf + len, "wps_method=%d ", WPS_UI_METHOD_PIN);
 	else
 		len += sprintf(buf + len, "wps_method=%d ", WPS_UI_METHOD_PBC);
 	
@@ -163,6 +163,45 @@ start_wps_method(void)
 	return 0;
 }
 
+void
+restart_wps_monitor(void)
+{
+	int unit;
+	char word[256], *next;
+	char tmp[100], prefix[]="wlXXXXXXX_";
+	char *wps_argv[] = {"/bin/wps_monitor", NULL};
+	pid_t pid;
+	int wait_time = 3;
+
+	unlink("/tmp/wps_monitor.pid");
+
+	if (nvram_match("wps_enable", "1"))
+	{
+		unit = 0;
+		foreach(word, nvram_safe_get("wl_ifnames"), next)
+		{
+			snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+			nvram_set(strcat_r(prefix, "wps_mode", tmp), "enabled");
+
+			unit++;
+		}
+
+		eval("killall", "wps_monitor");
+
+		do {
+			if ((pid = get_pid_by_name("/bin/wps_monitor")) <= 0)
+				break;
+			wait_time--;
+			sleep(1);
+		} while (wait_time);
+
+		if (wait_time == 0)
+			dbG("Unable to kill wps_monitor!\n");
+
+		_eval(wps_argv, NULL, 0, &pid);
+	}
+}
+
 int 
 stop_wps_method(void)
 {
@@ -178,6 +217,10 @@ stop_wps_method(void)
 	len += sprintf(buf + len, "wps_action=%d ", WPS_UI_ACT_NONE);
 
 	set_wps_env(buf);
+
+	usleep(100*1000);
+
+	restart_wps_monitor();
 
 	return 0;
 }

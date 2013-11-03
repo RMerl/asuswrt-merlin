@@ -1,0 +1,101 @@
+If you start a new file, you get to choose the style.
+If you change an existing file, follow the existing style.
+
+Hard tabs are OK, as long as you consider the tab stops to
+be every 8 characters. You can also use 2, 3, or 4 spaces.
+Tabs are kind of yucky, since cut-and-paste mangles them
+sometimes and they make "diff -Naurd old new" output less
+readable.
+
+Spaces within a line don't matter much, and won't be
+considered part of the style. Just make it readable:
+
+if(x){            // OK
+if( x ){           // OK
+if (x) {            // OK
+if(x==y && a==b){     // OK
+if(x == y && a == b){ // poor
+if(x==y&&a==b){       // poor
+
+This is evil:
+
+szWinStallman
+FoulCodingStyle (int iInsanity)
+  {
+     if (iInsanity)
+       {
+          GoHackEmacs () ;
+       }
+          else
+       {
+          SeekHelpForYourLisp () ;
+       }
+  }
+
+
+Curly braces belong at the end of a line. If you must, go ahead
+and make function bodies an exception to that rule. (as Linus does)
+
+Big fprintf() calls and similar go like this:
+
+fprintf(fd, "%d %d %d %d %d %d\n",
+  sdfsdf_sdfsdf + sdfs_iii,     // not an example of good names!
+  iijjij,
+  kjfkkj_sdfssss_sfff,
+  sdflkjfdskj + sdf - sfds,
+  jksss,
+  sfssss + wwwwfwfw
+);
+
+Keep these distinct: NULL, '\0', 0, 0.0
+
+Command-line parsers need to be bomb-proof. It is not acceptable
+to crash due to a messed up command-line. For an option "-x" that
+takes an argument, accept both "-x arg" and "-xarg". Remember to
+support "--" and "--version".
+
+Be extremely careful when handling data from other users.
+For example, it is a security hole if /proc/123/cmdline can
+overflow an array. It is often a security hole if you allow
+non-ASCII characters to be printed. Assuming the console is
+not in UTF-8 mode, all of these are bad: "\b\e\f\n\r\t\v\x9b".
+(the "\x9b" is valid in UTF-8 mode, but equivalent to "\e["
+when not in UTF-8 mode -- which gives control of terminal
+settings) It's best if you consider user-supplied data to
+be unsafe, since this makes for less work in case the code
+ends up needing to run setuid. Termcap data is user-supplied.
+Except for the above security issues, don't bother to check
+for something you can't handle... like printf() failing.
+It is expected that /dev exists and so on.
+
+Remember that a read() may return early, with partial data
+or with -1 and errno set to EINTR. You then must try again.
+
+char:      may be signed or unsigned by default
+int:       always 32-bit
+long long: always 64-bit
+pointer:   either 32-bit or 64-bit
+long:      same size as a pointer
+KLONG:     same size as a pointer or long IN THE KERNEL
+
+Functions used in just one file must be marked static.
+Use the "const" and "restrict" keywords wherever you can.
+
+Put main() at the bottom of a file so you don't need all
+those ugly forward declarations.
+
+Avoid the strcat() function. It is slow. For some odd
+reason, snprintf() is faster than sprintf().
+
+Reuse memory allocations when you can. When using realloc(),
+do your increments by more than one. 25% is a nice amount.
+
+Avoid compile-time choices. They make documentation difficult,
+and they are not friendly to binary distribution.
+
+Write programs that can handle a million processes without
+getting hopelessly slow. Allow for /proc/123/cmdline to
+be at least 128 kB.
+
+The LGPL license is strongly preferred. This allows use of
+the code in the library.

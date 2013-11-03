@@ -16,9 +16,11 @@ MODULE_OBJECTS := $(MODULE_SRC)/ufsdvfs.o $(MODULE_SRC)/vfsdebug.o
 
 MODULE_EXTRA_FLAGS := -include $(src)$(MODULE_SRC)/fs_conf.h -DUFSD_DEVICE=ufsd -DUFSD_USE_ASM_DIV64
 ifeq (@BUILD_WITH_DEBUG@,1)
-MODULE_EXTRA_FLAGS += -DUFSD_DEBUG
+MODULE_EXTRA_FLAGS += -DUFSD_DEBUG -g3
+LDFLAGS   += -d
 else
 MODULE_EXTRA_FLAGS += -DNDEBUG -g0
+LDFLAGS   += -s -O2 -d -x -X
 endif
 
 ifndef CONFIG_UFSD_FS
@@ -61,7 +63,6 @@ ifdef EXT_MODULE_FLAGS
 EXTRA_CFLAGS += $(EXT_MODULE_FLAGS)
 endif
 
-LDFLAGS   += -s -O2 -d -x -X
 
 $(src)$(MODULE_SRC)/$(MODULE_LIBNAME).bin:
 	@@LN_S@ "@UFSD_LIBRARY@" "$(src)$(MODULE_SRC)/$(MODULE_LIBNAME).bin"

@@ -1,0 +1,86 @@
+'\" t
+.\"     Title: afp_signature.conf
+.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
+.\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
+.\"      Date: 23 Mar 2012
+.\"    Manual: @NETATALK_VERSION@
+.\"    Source: @NETATALK_VERSION@
+.\"  Language: English
+.\"
+.TH "AFP_SIGNATURE\&.CONF" "5" "23 Mar 2012" "@NETATALK_VERSION@" "@NETATALK_VERSION@"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+afp_signature.conf \- Configuration file used by afpd(8) to specify server signature
+.SH "DESCRIPTION"
+.PP
+@localstatedir@/netatalk/afp_signature\&.conf
+is the configuration file used by
+\fBafpd\fR
+to specify server signature automagically\&. The configuration lines are composed like:
+.PP
+\fI"server name"\fR
+\fIhexa\-string\fR
+.PP
+The first field is server name\&. Server names must be quoted if they contain spaces\&. The second field is the hexadecimal string of 32 characters for 16\-bytes server signature\&.
+.PP
+The leading spaces and tabs are ignored\&. Blank lines are ignored\&. The lines prefixed with # are ignored\&. The illegal lines are ignored\&.
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+.PP
+Server Signature is unique 16\-bytes identifier used to prevent logging on to the same server twice\&.
+.PP
+Netatalk 2\&.0 and earlier generated server signature by using gethostid()\&. There was a problem that another servers have the same signature because the hostid is not unique enough\&.
+.PP
+Current netatalk generates the signature from random numbers and saves it into afp_signature\&.conf\&. When starting next time, it is read from this file\&.
+.PP
+This file should not be thoughtlessly edited and be copied onto another server\&. If it wants to set the signature intentionally, use the option "signature =" in afp\&.conf\&. In this case, afp_signature\&.conf is not used\&.
+.sp .5v
+.RE
+.PP
+.SH "EXAMPLES"
+.PP
+\fBExample.\ \&afp_signature.conf\fR
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+# This is a comment\&.
+"My Server" 74A0BB94EC8C13988B2E75042347E528
+.fi
+.if n \{\
+.RE
+.\}
+.SH "SEE ALSO"
+.PP
+\fBafpd\fR(8),
+\fBafp.conf\fR(5),
+\fBasip-status.pl\fR(1)

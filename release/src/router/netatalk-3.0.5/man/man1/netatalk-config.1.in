@@ -1,0 +1,110 @@
+'\" t
+.\"     Title: netatalk-config
+.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
+.\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
+.\"      Date: 09 June 2001
+.\"    Manual: The Netatalk Project
+.\"    Source: @NETATALK_VERSION@
+.\"  Language: English
+.\"
+.TH "NETATALK\-CONFIG" "1" "09 June 2001" "@NETATALK_VERSION@" "The Netatalk Project"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+netatalk-config \- script to get information about the installed version of netatalk
+.SH "SYNOPSIS"
+.HP \w'\fBnetatalk\-config\fR\fB\fR\ 'u
+\fBnetatalk\-config\fR\fB\fR [\-\-prefix\ [\fI=DIR\fR]] [\-\-exec_prefix\ [\fI=DIR\fR]] [\-\-help] [\-\-version] [\-\-libs] [\-\-libs\-dirs] [\-\-libs\-names] [\-\-cflags] [\-\-macros]
+.SH "DESCRIPTION"
+.PP
+\fBnetatalk\-config\fR
+is a tool that is used to determine the compiler and linker flags that should be used to compile and link programs that use the
+\fInetatalk\fR
+run\-time libraries\&.
+.SH "OPTIONS"
+.PP
+\fBnetatalk\-config\fR
+accepts the following options:
+.PP
+\fB\-\-help\fR
+.RS 4
+Print a short help for this command and exit\&.
+.RE
+.PP
+\fB\-\-version\fR
+.RS 4
+Print the currently installed version of
+\fInetatalk\fR
+on the standard output\&.
+.RE
+.PP
+\fB\-\-libs\fR
+.RS 4
+Print the linker flags that are necessary to link against the
+\fInetatalk\fR
+run\-time libraries\&.
+.RE
+.PP
+\fB\-\-libs\-dirs\fR
+.RS 4
+Print only the \-l/\-R part of \-\-libs\&.
+.RE
+.PP
+\fB\-\-libs\-names\fR
+.RS 4
+Print only the \-l part of \-\-libs\&.
+.RE
+.PP
+\fB\-\-cflags\fR
+.RS 4
+Print the compiler flags that are necessary to compile a program linked against the
+\fInetatalk\fR
+run\-time libraries\&.
+.RE
+.PP
+\fB\-\-macros\fR
+.RS 4
+Print the
+\fInetatalk\fR
+m4 directory\&.
+.RE
+.PP
+\fB\-\-prefix=PREFIX\fR
+.RS 4
+If specified, use PREFIX instead of the installation prefix that
+\fInetatalk\fR
+was built with when computing the output for the \-\-cflags and \-\-libs options\&. This option is also used for the exec prefix if \-\-exec\-prefix was not specified\&. This option must be specified before any \-\-libs or \-\-cflags options\&.
+.RE
+.PP
+\fB\-\-exec\e_prefix=PREFIX\fR
+.RS 4
+If specified, use PREFIX instead of the installation exec prefix that
+\fInetatalk\fR
+was built with when computing the output for the \-\-cflags and \-\-libs options\&. This option must be specified before any \-\-libs or \-\-cflags options\&.
+.RE
+.SH "COPYRIGHT"
+.PP
+Copyright \(co 1998 Owen Taylor
+.PP
+Permission to use, copy, modify, and distribute this software and its documentation for any purpose and without fee is hereby granted, provided that the above copyright notice appear in all copies and that both that copyright notice and this permission notice appear in supporting documentation\&.
+.PP
+Man page adapted for
+\fBnetatalk\-config\fR
+by Sebastian Rittau in 2001\&.

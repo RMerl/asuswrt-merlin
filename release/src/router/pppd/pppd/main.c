@@ -1309,32 +1309,33 @@ static int uptime_diff_set = 0;
 
 static void check_time(void)
 {
-	long new_diff;
-	struct timeval t;
-	struct sysinfo i;
+    long new_diff;
+    struct timeval t;
+    struct sysinfo i;
     struct callout *p;
 
-	if(nochecktime)
-		return;
+    if (nochecktime)
+	return;
 
-	gettimeofday(&t, NULL);
-	sysinfo(&i);
-	new_diff = t.tv_sec - i.uptime;
-	
-	if (!uptime_diff_set) {
-		uptime_diff = new_diff;
-		uptime_diff_set = 1;
-		return;
-	}
+    gettimeofday(&t, NULL);
+    sysinfo(&i);
+    new_diff = t.tv_sec - i.uptime;
 
-	if ((new_diff - 5 > uptime_diff) || (new_diff + 5 < uptime_diff)) {
-		/* system time has changed, update counters and timeouts */
-		info("System time change detected.");
-		start_time.tv_sec += new_diff - uptime_diff;
-    	for (p = callout; p != NULL; p = p->c_next)
-			p->c_time.tv_sec += new_diff - uptime_diff;
-	}
+    if (!uptime_diff_set) {
 	uptime_diff = new_diff;
+	uptime_diff_set = 1;
+	return;
+    }
+
+    if ((new_diff - 5 > uptime_diff) || (new_diff + 5 < uptime_diff)) {
+	/* system time has changed, update counters and timeouts */
+	info("System time change detected.");
+	start_time.tv_sec += new_diff - uptime_diff;
+
+	for (p = callout; p != NULL; p = p->c_next)
+	    p->c_time.tv_sec += new_diff - uptime_diff;
+    }
+    uptime_diff = new_diff;
 }
 
 /*
@@ -1406,8 +1407,8 @@ calltimeout()
 {
     struct callout *p;
 
-	check_time();
-	
+    check_time();
+
     while (callout != NULL) {
 	p = callout;
 
@@ -1436,7 +1437,7 @@ timeleft(tvp)
     if (callout == NULL)
 	return NULL;
 
-	check_time();
+    check_time();
 
     gettimeofday(&timenow, NULL);
     tvp->tv_sec = callout->c_time.tv_sec - timenow.tv_sec;

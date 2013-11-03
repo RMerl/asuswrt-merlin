@@ -88,7 +88,9 @@ if(wans_dualwan_orig.search(" ") == -1)
 else
 	var wans_flag = (wans_dualwan_orig.search("none") == -1) ? 1:0;
 
-function initial(){
+var wlc_band = '<% nvram_get("wlc_band"); %>';
+	
+function initial(){   
 	show_menu();
 	var isIE6 = navigator.userAgent.search("MSIE 6") > -1;
 	if(isIE6)
@@ -131,6 +133,15 @@ function initial(){
 		$("ddnsHostName_div").style.display = "none";
 		$("NM_connect_title").style.fontSize = "14px";
 		$("NM_connect_status").style.fontSize = "20px";
+		if(sw_mode == 2 || sw_mode == 4){
+			$('wlc_band_div').style.display = "";
+			$('dataRate_div').style.display = "";
+			if(wlc_band == 0)
+				$('wlc_band_status').innerHTML = "2.4GHz"; 
+			else	
+				$('wlc_band_status').innerHTML = "5GHz";
+		}
+		$('NM_connect_title').innerHTML = Untranslated.parent_AP_status + ":";
 	}
 	else{
 		$("index_status").innerHTML = '<span style="word-break:break-all;">' + wanlink_ipaddr() + '</span>'
@@ -903,6 +914,8 @@ function change_wan_state(primary_status, secondary_status){
 		}	
 	}
 }
+
+
 </script>
 </head>
 
@@ -924,7 +937,11 @@ function change_wan_state(primary_status, secondary_status){
 				<br>
 				<br>
 		    </div>
-		  <div class="drImg"><img src="images/alertImg.png"></div>
+			<div id="wireless_client_detect" style="margin-left:10px;position:absolute;display:none">
+				<img src="images/loading.gif">
+				<div style="margin:-45px 0 0 75px;"><#QKSet_Internet_Setup_fail_method1#></div>
+			</div> 
+			<div class="drImg"><img src="images/alertImg.png"></div>
 			<div style="height:70px; "></div>
 		</td>
 		</tr>
@@ -990,6 +1007,7 @@ function change_wan_state(primary_status, secondary_status){
 					<td id="single_wan_status" colspan="2" valign="middle" bgcolor="#444f53" class="NM_radius_right" onclick="" style="padding:5px;cursor:auto;">
 						<div>
 							<span id="NM_connect_title" style="font-size:12px;font-family: Verdana, Arial, Helvetica, sans-serif;"><#statusTitle_Internet#>:</span>
+							<br>
 							<strong id="NM_connect_status" class="index_status" style="font-size:14px;"><#QKSet_Internet_Setup_fail_method1#>...</strong>
 						</div>
 						<div id="wanIP_div" style="margin-top:5px;">
@@ -1001,6 +1019,15 @@ function change_wan_state(primary_status, secondary_status){
 							<strong id="ddnsHostName" class="index_status" style="font-size:14px;"><#QIS_detectWAN_desc2#></strong>
 							<span id="ddns_fail_hint" class="notificationoff" style="position: absolute;margin-top:-5px;" onClick="show_ddns_fail_hint();" onMouseOut="nd();"></span>
 						</div>
+						<div id="wlc_band_div" style="margin-top:5px;display:none">
+							<span style="font-size:14px;font-family: Verdana, Arial, Helvetica, sans-serif;"><#Interface#>:</span>
+							<strong id="wlc_band_status" class="index_status" style="font-size:14px;"></strong>
+						</div>
+						<div id="dataRate_div" style="margin-top:5px;display:none">
+							<span style="font-size:14px;font-family: Verdana, Arial, Helvetica, sans-serif;">Link rate:</span>
+							<strong id="speed_status" class="index_status" style="font-size:14px;"></strong>
+						</div>
+						
 					</td>
 					<td width="40px" rowspan="11" valign="top">
 						<div class="statusTitle" id="statusTitle_NM">
@@ -1029,9 +1056,13 @@ function change_wan_state(primary_status, secondary_status){
 						<a href="device-map/router.asp" target="statusframe"><div id="iconRouter" onclick="clickEvent(this);"></div></a>
 					</td>
 					<td colspan="2" valign="middle" bgcolor="#444f53" class="NM_radius_right" onclick="showstausframe('Router');">
-						<span style="font-size:14px;font-family: Verdana, Arial, Helvetica, sans-serif;"><#Security_Level#>: </span><br/><br/><strong id="wl_securitylevel_span" class="index_status"></strong>
+						<span style="font-size:14px;font-family: Verdana, Arial, Helvetica, sans-serif;"><#Security_Level#>: </span>
+						<br/>  
+						<strong id="wl_securitylevel_span" class="index_status"></strong>
 						<img id="iflock">
+						
 					</td>
+
 				</tr>			
 				<tr>
 					<td id="line3_td" colspan="3" align="center" height="52px">

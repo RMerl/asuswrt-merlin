@@ -82,9 +82,7 @@ ifeq ($(RTCONFIG_4M_SFP),y)
 	rm -rf $(INSTALLDIR)/www/images/qis/win7_network_icon1.jpg
 	rm -rf $(INSTALLDIR)/www/images/qis/win7_network_icon2.jpg
 	rm -rf $(INSTALLDIR)/www/images/qis/winxp.jpg
-	rm -rf $(INSTALLDIR)/www/Advanced_WANPort_Content.asp
-	rm -rf $(INSTALLDIR)/www/Advanced_PPTPAdvanced_Content.asp
-	rm -rf $(INSTALLDIR)/www/Advanced_PPTP_Content.asp
+#	rm -rf $(INSTALLDIR)/www/Advanced_WANPort_Content.asp
 	rm -rf $(INSTALLDIR)/www/mediaserver.asp
 	rm -rf $(INSTALLDIR)/www/Advanced_PerformanceTuning_Content.asp
 	rm -rf $(INSTALLDIR)/www/Advanced_IPv6_Content.asp
@@ -104,7 +102,10 @@ ifeq ($(RTCONFIG_4M_SFP),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/re.jpg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/ap.jpg
 endif
-
+ifeq ($(RTCONFIG_DSL),y)
+	rm -rf $(INSTALLDIR)/www/images/Model_producticon.png
+	rm -rf $(INSTALLDIR)/www/qis/QIS_welcome.htm
+endif
 ifneq ($(BUILD_NAME),DSL-N55U)
 ifneq ($(BUILD_NAME),DSL-N55U-B)
 	rm -rf $(INSTALLDIR)/www/Main_Spectrum_Content.asp
@@ -195,25 +196,31 @@ ifneq ($(RTCONFIG_USB),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/USB_2.png
 endif
 endif
-	cd $(INSTALLDIR)/www && ln -sf ../tmp/settings Settings_$(BUILD_NAME).CFG && cd $(TOP)/www 
-ifeq ($(RTCONFIG_ODMPID), y)
-ifeq ($(BUILD_NAME), RT-AC66U)
-	cd $(INSTALLDIR)/www && ln -sf ../tmp/settings Settings_RT-AC66R.CFG && cd $(TOP)/www
-endif
-ifeq ($(BUILD_NAME), RT-N66U)
-	cd $(INSTALLDIR)/www && ln -sf ../tmp/settings Settings_RT-N66R.CFG && cd $(TOP)/www
-endif
-ifeq ($(BUILD_NAME), RT-N65U)
-	cd $(INSTALLDIR)/www && ln -sf ../tmp/settings Settings_RT-N65R.CFG && cd $(TOP)/www
-endif
-ifeq ($(BUILD_NAME), RT-N56U)
-	cd $(INSTALLDIR)/www && ln -sf ../tmp/settings Settings_RT-N56R.CFG && cd $(TOP)/www
-endif
-endif
+
 ifeq ($(BUILD_NAME), RT-N12)
 	cd $(INSTALLDIR)/www && find . -name "*.dict"|xargs -n 1 -I @ sed -i "s/RT-N12/ZVDYNMODELVZ/g" @
 endif
 
+ifeq ($(RTCONFIG_OPENVPN), y)
+	cd $(INSTALLDIR)/www && ln -sf ../etc/openvpn/server1/client.ovpn && cd $(TOP)/www
+else
+ifneq ($(RTCONFIG_PPTPD), y)
+	rm -rf $(INSTALLDIR)/www/images/New_ui/vpnstatus.png
+	rm -rf $(INSTALLDIR)/www/merlin.js
+	rm -rf $(INSTALLDIR)/www/ajax_openvpn_server.asp
+	rm -rf $(INSTALLDIR)/www/Advanced_VPNAdvanced_Content.asp
+	rm -rf $(INSTALLDIR)/www/Advanced_VPN_Content.asp
+	rm -rf $(INSTALLDIR)/www/Advanced_VPNStatus.asp
+endif
+ifneq ($(RTCONFIG_VPNC), y)	
+	rm -rf $(INSTALLDIR)/www/Advanced_VPNClient_Content.asp
+endif	
+endif
+ifneq ($(RTCONFIG_TIMEMACHINE),y)
+	rm -rf $(INSTALLDIR)/www/Advanced_TimeMachine.asp
+	rm -rf $(INSTALLDIR)/www/images/New_ui/USBExt/time_machine_banner.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/USBExt/TimeMachine.png
+endif
 ifneq ($(RTCONFIG_PROXYSTA),y)
 ifneq ($(RTCONFIG_WIRELESSREPEATER),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/re.jpg
@@ -224,4 +231,7 @@ endif
 ifneq ($(RTCONFIG_YANDEXDNS),y)
 	rm -rf $(INSTALLDIR)/www/YandexDNS.asp
 	rm -rf $(INSTALLDIR)/www/images/New_ui/yandex*.png
+endif
+ifneq ($(RTCONFIG_KYIVSTAR),y)
+	rm -rf $(INSTALLDIR)/www/userRpm/SoftwareUpgradeRpm.htm
 endif

@@ -203,7 +203,7 @@ function valid_form(){
 		<tr>
 		<td>
 			<select id="" class="input_option" name="dslx_snrm_offset">
-				<option value="0" <% nvram_match("dslx_snrm_offset", "0", "selected"); %>>Disabled</option>
+				<option value="0" <% nvram_match("dslx_snrm_offset", "0", "selected"); %>><#btn_Disabled#></option>
 				<option value="2560" <% nvram_match("dslx_snrm_offset", "2560", "selected"); %>>5 dB</option>
 				<option value="2048" <% nvram_match("dslx_snrm_offset", "2048", "selected"); %>>4 dB</option>
 				<option value="1536" <% nvram_match("dslx_snrm_offset", "1536", "selected"); %>>3 dB</option>
@@ -214,6 +214,11 @@ function valid_form(){
 				<option value="-1536" <% nvram_match("dslx_snrm_offset", "-1536", "selected"); %>>-3 dB</option>
 				<option value="-2048" <% nvram_match("dslx_snrm_offset", "-2048", "selected"); %>>-4 dB</option>
 				<option value="-2560" <% nvram_match("dslx_snrm_offset", "-2560", "selected"); %>>-5 dB</option>
+				<option value="-3072" <% nvram_match("dslx_snrm_offset", "-3072", "selected"); %>>-6 dB</option>
+				<option value="-3584" <% nvram_match("dslx_snrm_offset", "-3584", "selected"); %>>-7 dB</option>
+				<option value="-4096" <% nvram_match("dslx_snrm_offset", "-4096", "selected"); %>>-8 dB</option>
+				<option value="-4608" <% nvram_match("dslx_snrm_offset", "-4608", "selected"); %>>-9 dB</option>
+				<option value="-5120" <% nvram_match("dslx_snrm_offset", "-5120", "selected"); %>>-10 dB</option>
 			</select>
 		</td>
 		</tr>
@@ -222,14 +227,30 @@ function valid_form(){
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 		<thead>
 		<tr>
-		<td colspan="7"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(25,2);">SRA(Seamless Rate Adaptation)</a></td>
+		<td colspan="7"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(25,2);">SRA (Seamless Rate Adaptation)</a></td>
 		</tr>
 		</thead>
 		<tr>
 		<td>
 			<select id="" class="input_option" name="dslx_sra">
-				<option value="0" <% nvram_match("dslx_sra", "0", "selected"); %>>Disabled</option>
-				<option value="1" <% nvram_match("dslx_sra", "1", "selected"); %>>Enabled</option>
+				<option value="1" <% nvram_match("dslx_sra", "1", "selected"); %>><#btn_Enabled#></option>
+				<option value="0" <% nvram_match("dslx_sra", "0", "selected"); %>><#btn_Disabled#></option>
+			</select>
+		</td>
+		</tr>
+</table>
+		<br>
+<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+		<thead>
+		<tr>
+		<td colspan="7"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(25,3);">Bitswap</a></td>
+		</tr>
+		</thead>
+		<tr>
+		<td>
+			<select id="" class="input_option" name="dslx_bitswap">
+				<option value="1" <% nvram_match("dslx_bitswap", "1", "selected"); %>><#btn_Enabled#></option>
+				<option value="0" <% nvram_match("dslx_bitswap", "0", "selected"); %>><#btn_Disabled#></option>
 			</select>
 		</td>
 		</tr>

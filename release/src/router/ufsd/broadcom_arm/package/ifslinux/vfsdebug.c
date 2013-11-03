@@ -32,9 +32,14 @@ Revision History:
 #include "config.h"
 #include "ufsdapi.h"
 
+//
+// Endianess test
+//
 static const unsigned short szTstEnd[3] __attribute__ ((used)) = {0x694C,0x4274,0x6769};
 
-#if defined UFSD_DEBUG
+#if defined UFSD_TRACE
+
+char ufsd_trace_level[16] = "";
 
 //
 // Activate this define to build driver with predefined trace and log
@@ -42,16 +47,16 @@ static const unsigned short szTstEnd[3] __attribute__ ((used)) = {0x694C,0x4274,
 // #define UFSD_DEFAULT_LOGTO  "/ufsd/ufsd.log"
 
 #ifdef UFSD_DEFAULT_LOGTO
-  static const char s_LogTo[] = UFSD_DEFAULT_LOGTO;
-  long UFSD_DebugTraceLevel   = ~(DEBUG_TRACE_VFS_WBWE|DEBUG_TRACE_MEMMNGR|DEBUG_TRACE_IO|DEBUG_TRACE_UFSDAPI);
-  static int s_CycleBytes     = 25*1024*1024;
+  char ufsd_trace_file[128]     = UFSD_DEFAULT_LOGTO;
+  unsigned long UFSD_TraceLevel = ~(UFSD_LEVEL_VFS_WBWE|UFSD_LEVEL_MEMMNGR|UFSD_LEVEL_IO|UFSD_LEVEL_UFSDAPI);
+  unsigned long UFSD_CycleMB    = 25;
 #else
-  static char* s_LogTo        = NULL;
-  long UFSD_DebugTraceLevel   = DEBUG_TRACE_DEFAULT;
-  static int s_CycleBytes     = 0;
+  char ufsd_trace_file[128]     = "";
+  unsigned long UFSD_TraceLevel = UFSD_LEVEL_DEFAULT;
+  unsigned long UFSD_CycleMB    = 0;
 #endif
 
-static atomic_t UFSD_DebugTraceIndent;
+static atomic_t UFSD_TraceIndent;
 static struct file* log_file;
 static int log_file_opened;
 static int log_file_error;
@@ -59,17 +64,18 @@ static int log_file_error;
 static void ufsd_vlog( const char*  fmt, va_list ap );
 
 ///////////////////////////////////////////////////////////
-// UFSD_DebugInc
+// UFSD_TraceInc
 //
 //
 ///////////////////////////////////////////////////////////
 UFSDAPI_CALL void
-UFSD_DebugInc(
+UFSD_TraceInc(
     IN int Indent
     )
 {
-  atomic_add( Indent, &UFSD_DebugTraceIndent );
+  atomic_add( Indent, &UFSD_TraceIndent );
 }
+
 
 ///////////////////////////////////////////////////////////
 // ufsd_log
@@ -85,19 +91,13 @@ ufsd_log(
   if ( len <= 0 || 0 == fmt[0] )
     return;
 
-  if ( !log_file_opened
-#ifndef UFSD_DEFAULT_LOGTO
-    && NULL != s_LogTo
-#endif
-     ) {
-
+  if ( !log_file_opened && 0 != ufsd_trace_file[0] ) {
     log_file_opened = 1;
-
-    log_file = filp_open( s_LogTo, O_WRONLY | O_CREAT | O_TRUNC, S_IRUGO | S_IWUGO );
+    log_file = filp_open( ufsd_trace_file, O_WRONLY | O_CREAT | O_TRUNC, S_IRUGO | S_IWUGO );
     if ( IS_ERR(log_file) ) {
       long error = PTR_ERR(log_file);
       log_file = NULL;
-      printk(KERN_NOTICE  QUOTED_UFSD_DEVICE": failed to start log to '%s' (errno=%ld), using system log\n", s_LogTo, -error);
+      printk(KERN_NOTICE  QUOTED_UFSD_DEVICE": failed to start log to '%s' (errno=%ld), using system log\n", ufsd_trace_file, -error);
     }
     else {
       ASSERT(NULL != log_file);
@@ -111,8 +111,9 @@ ufsd_log(
 
     set_fs(KERNEL_DS);
 
-    if ( 0 != s_CycleBytes ) {
-      int to_write = log_file->f_pos + len > s_CycleBytes? (s_CycleBytes - log_file->f_pos) : len;
+    if ( 0 != UFSD_CycleMB ) {
+      size_t bytes = UFSD_CycleMB << 20;
+      int to_write = log_file->f_pos + len > bytes? (bytes - log_file->f_pos) : len;
       ASSERT( to_write >= 0 );
       if ( to_write <= 0 )
         to_write = 0;
@@ -162,86 +163,30 @@ ufsd_log(
 
 
 ///////////////////////////////////////////////////////////
-// InitTrace
-//
-//
-///////////////////////////////////////////////////////////
-UFSDAPI_CALL void
-InitTrace( void )
-{
-}
-
-
-///////////////////////////////////////////////////////////
 // CloseTrace
 //
 //
 ///////////////////////////////////////////////////////////
-UFSDAPI_CALL void
+//UFSDAPI_CALL void
+void
 CloseTrace( void )
 {
   if ( NULL != log_file ){
     filp_close(log_file, NULL);
     log_file = NULL;
     log_file_error = 0;
+    log_file_opened = 0;
   }
-
-#ifndef UFSD_DEFAULT_LOGTO
-  if ( NULL != s_LogTo ){
-    kfree( s_LogTo );
-    s_LogTo = NULL;
-  }
-#endif
 }
 
 
 ///////////////////////////////////////////////////////////
-// SetTrace
-//
-//
-///////////////////////////////////////////////////////////
-UFSDAPI_CALL void
-SetTrace(
-    IN const char* TraceFile
-    )
-{
-#ifdef UFSD_DEFAULT_LOGTO
-  UNREFERENCED_PARAMETER( TraceFile );
-#else
-  int len;
-  if ( NULL != log_file )
-    return;
-
-  len = strlen( TraceFile );
-  s_LogTo = kmalloc( len + 1, GFP_NOFS);
-  if ( NULL != s_LogTo )
-    memcpy( s_LogTo, TraceFile, len + 1 );
-#endif
-}
-
-
-///////////////////////////////////////////////////////////
-// SetCycle
-//
-//
-///////////////////////////////////////////////////////////
-UFSDAPI_CALL void
-SetCycle(
-    IN int  CycleBytes
-    )
-{
-  // Align on 256KB
-  s_CycleBytes = ((CycleBytes + 256*1024 - 1) >> 18) << 18;
-}
-
-
-///////////////////////////////////////////////////////////
-// UFSD_DebugPrintf
+// _UFSDTrace
 //
 //
 ///////////////////////////////////////////////////////////
 UFSDAPI_CALLv void
-UFSD_DebugPrintf( const char *fmt, ... )
+_UFSDTrace( const char* fmt, ... )
 {
   va_list ap;
   va_start( ap,fmt );
@@ -250,8 +195,10 @@ UFSD_DebugPrintf( const char *fmt, ... )
   // bug on asserts
 //  BUG_ON( '*' == fmt[0] && '*' == fmt[1] && '*' == fmt[2] && '*' == fmt[3] );
 #if defined HAVE_DECL_VPRINTK && HAVE_DECL_VPRINTK
-  if ( '*' == fmt[0] && '*' == fmt[1] && '*' == fmt[2] && '*' == fmt[3] )
+  if ( '*' == fmt[0] && '*' == fmt[1] && '*' == fmt[2] && '*' == fmt[3] ) {
+    printk( "%s: ", current->comm );
     vprintk( fmt, ap );
+  }
 #endif
   va_end( ap );
 }
@@ -265,38 +212,17 @@ UFSD_DebugPrintf( const char *fmt, ... )
 UFSDAPI_CALL void
 UFSDError( int Err, const char* FileName, int Line )
 {
-  long Level = UFSD_DebugTraceLevel;
+  long Level = UFSD_TraceLevel;
   const char* Name = strrchr( FileName, '/' );
   if ( NULL == Name )
     Name = FileName - 1;
 
-  UFSD_DebugTraceLevel |= DEBUG_TRACE_ERROR | DEBUG_TRACE_UFSD;
-  DebugTrace(0, DEBUG_TRACE_ERROR, ("\"%s\": UFSD error 0x%x, %s, %d\n", current->comm, Err, Name + 1, Line));
-  UFSD_DebugTraceLevel = Level;
+  UFSD_TraceLevel |= UFSD_LEVEL_ERROR | UFSD_LEVEL_UFSD;
+  DebugTrace(0, UFSD_LEVEL_ERROR, ("\"%s\": UFSD error 0x%x, %s, %d\n", current->comm, Err, Name + 1, Line));
+  UFSD_TraceLevel = Level;
 //  BUG_ON( 1 );
 }
 
-
-#if defined UFSD_TRACE
-
-///////////////////////////////////////////////////////////
-// _UFSDTrace
-//
-//
-///////////////////////////////////////////////////////////
-UFSDAPI_CALLv void
-_UFSDTrace( const char* fmt, ... )
-{
-  if ( (UFSD_DebugTraceLevel & DEBUG_TRACE_UFSD)
-    || '\5' == fmt[0] ){
-    va_list ap;
-    va_start(ap,fmt);
-    ufsd_vlog( fmt, ap );
-    va_end(ap);
-  }
-}
-
-#endif // #if defined UFSD_TRACE
 
 ///////////////////////////////////////////////////////////
 // ufsd_vlog
@@ -310,7 +236,7 @@ ufsd_vlog(
     )
 {
   char buf[160];
-  int len = atomic_read( &UFSD_DebugTraceIndent );
+  int len = atomic_read( &UFSD_TraceIndent );
 
   if ( len > 0 && len < 20 )
     memset( buf, ' ', len );
@@ -328,10 +254,27 @@ ufsd_vlog(
 
   if ( '\5' == fmt[0] )
     printk( KERN_NOTICE  QUOTED_UFSD_DEVICE":%s", fmt + 1 );
-  else
+  else {
+
+    if ( '*' == fmt[0] && '*' == fmt[1] && '*' == fmt[2] && '*' == fmt[3] && len < sizeof(buf) ) {
+      int ln = strlen( current->comm );
+      if ( ln + len >= sizeof(buf) )
+        ln = sizeof(buf) - len - 1;
+      if ( ln > 0 ) {
+        memmove( buf + ln, buf, len + 1 );
+        memcpy( buf, current->comm, ln );
+        len += ln;
+      }
+    }
+
     ufsd_log( buf, len );
+  }
 }
 
+#endif // #if defined UFSD_TRACE
+
+
+#ifdef UFSD_DEBUG
 
 ///////////////////////////////////////////////////////////
 // UFSD_DumpStack
@@ -344,29 +287,67 @@ UFSD_DumpStack( void )
   dump_stack();
 }
 
-#else
+static long UFSD_TraceLevel_Old;
 
 ///////////////////////////////////////////////////////////
-// UFSDError
+// _UFSD_TurnOnTraceLevel
 //
 //
 ///////////////////////////////////////////////////////////
 UFSDAPI_CALL void
-UFSDError( int Err, const char* FileName, int Line )
+_UFSD_TurnOnTraceLevel( void )
 {
-  const char* Name = strrchr( FileName, '/' );
-  if ( NULL == Name )
-    Name = FileName - 1;
-  printk( KERN_NOTICE  QUOTED_UFSD_DEVICE "\"%s\": UFSD error 0x%x, %s, %d\n", current->comm, Err, Name + 1, Line );
+  UFSD_TraceLevel_Old = UFSD_TraceLevel;
+  UFSD_TraceLevel = -1;
 }
 
-#endif // UFSD_DEBUG
+
+///////////////////////////////////////////////////////////
+// _UFSD_RevertTraceLevel
+//
+//
+///////////////////////////////////////////////////////////
+UFSDAPI_CALL void
+_UFSD_RevertTraceLevel( void )
+{
+  UFSD_TraceLevel  = UFSD_TraceLevel_Old;
+}
+
+
+///////////////////////////////////////////////////////////
+// IsZero
+//
+//
+///////////////////////////////////////////////////////////
+int
+IsZero(
+    IN const char*  data,
+    IN size_t       bytes
+    )
+{
+  if ( 0 == (((size_t)data)%sizeof(int)) ) {
+    while( bytes >= sizeof(int) ) {
+      if ( 0 != *(int*)data )
+        return 0;
+      bytes -= sizeof(int);
+      data  += sizeof(int);
+    }
+  }
+
+  while( 0 != bytes-- ) {
+    if ( 0 != *data++ )
+      return 0;
+  }
+  return 1;
+}
+
+#endif // #ifdef UFSD_DEBUG
 
 
 ///////////////////////////////////////////////////////////
 // UFSD_printk
 //
-// Used to show errors while converting strings in library
+// Used to show errors from library
 ///////////////////////////////////////////////////////////
 UFSDAPI_CALLv int
 UFSD_printk(
@@ -388,3 +369,4 @@ UFSD_printk(
   return 0;
 #endif
 }
+

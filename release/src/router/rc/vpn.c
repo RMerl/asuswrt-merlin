@@ -166,7 +166,7 @@ void start_pptpd(void)
 	} else
   		fprintf(fp, "nomppe nomppc\n");
 
-	fprintf(fp, "ms-ignore-domain\n"
+	fprintf(fp, "chapms-strip-domain\n"
 		"chap-secrets /tmp/pptpd/chap-secrets\n"
 		"ip-up-script /tmp/pptpd/ip-up\n"
 		"ip-down-script /tmp/pptpd/ip-down\n"

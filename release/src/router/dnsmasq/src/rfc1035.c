@@ -1221,7 +1221,7 @@ int check_for_local_domain(char *name, time_t now)
   struct naptr *naptr;
 
   if ((crecp = cache_find_by_name(NULL, name, now, F_IPV4 | F_IPV6 | F_CNAME)) &&
-      (crecp->flags & (F_HOSTS | F_DHCP)))
+      (crecp->flags & (F_HOSTS | F_DHCP | F_CONFIG)))
     return 1;
   
   for (naptr = daemon->naptr; naptr; naptr = naptr->next)
@@ -1861,7 +1861,7 @@ size_t answer_request(struct dns_header *header, char *limit, size_t qlen,
 	  if (qtype == T_CNAME || qtype == T_ANY)
 	    {
 	      if ((crecp = cache_find_by_name(NULL, name, now, F_CNAME)) &&
-		  (qtype == T_CNAME || (crecp->flags & (F_HOSTS | F_DHCP))))
+		  (qtype == T_CNAME || (crecp->flags & (F_HOSTS | F_DHCP | F_CONFIG))))
 		{
 		  ans = 1;
 		  if (!dryrun)

@@ -723,9 +723,14 @@ static int vfswrap_ftruncate(vfs_handle_struct *handle, files_struct *fsp, int f
 	   expansion and some that don't! On Linux fat can't do
 	   ftruncate extend but ext2 can. */
 
+#if 0
 	result = sys_ftruncate(fd, len);
 	if (result == 0)
 		goto done;
+#else
+	result = 0;
+	goto done;
+#endif
 
 	/* According to W. R. Stevens advanced UNIX prog. Pure 4.3 BSD cannot
 	   extend a file with ftruncate. Provide alternate implementation

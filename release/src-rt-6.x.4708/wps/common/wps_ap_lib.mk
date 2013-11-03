@@ -43,7 +43,7 @@ UPNPBASE = $(SRCBASE)/router/bcmupnp
 export INCLUDE = -I$(TOOLCHAINS)/include -I$(SRCBASE)/include -I$(SRCBASE)/common/include\
 	-I$(SRCBASE)/router/shared -I$(BRCMBASE)/include -I./include \
 	-I$(UPNPBASE)/include -I$(UPNPBASE)/upnp/linux -I$(UPNPBASE)/device/InternetGatewayDevice -I$(UPNPBASE)/device -I$(UPNPBASE)/device/WFADevice \
-	-I$(SRCBASE)/router/libbcm -I$(SRCBASE)/router/eapd $(WLAN_ComponentIncPathR)
+	-I$(SRCBASE)/router/libbcm -I$(SRCBASE)/router/eapd${BCMEX} $(WLAN_ComponentIncPathR)
 
 # Include external openssl path
 ifeq ($(EXTERNAL_OPENSSL),1)

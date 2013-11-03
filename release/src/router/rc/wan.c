@@ -73,6 +73,69 @@ static char mac_clone[MAX_MAC_NUM][18];
 
 void convert_wan_nvram(char *prefix, int unit);
 
+#if defined(DSL_N55U) || defined(DSL_N55U_B)
+int classATargetTable[]={
+	1,
+	14,
+	27,
+	36,
+	39,
+	42,
+	49,
+	58,
+	59,
+	60,
+	61,
+	101,
+	103,
+	106,
+	110,
+	111,
+	112,
+	113,
+	114,
+	115,
+	116,
+	117,
+	118,
+	119,
+	120,
+	121,
+	122,
+	123,
+	124,
+	125,
+	126,
+	175,
+	180,
+	182,
+	183,
+	202,
+	203,
+	210,
+	211,
+	218,
+	219,
+	220,
+	221,
+	222,
+	223
+};
+
+int isTargetArea()
+{
+	int i;
+	char *ip = get_wanip();
+	int prefixA = inet_network(ip) >> 24;
+_dprintf("==>%s ip: %s, prefix: %d\n", __func__, ip, prefixA);
+	for(i=0; i<sizeof(classATargetTable); i++) {
+		if( prefixA == classATargetTable[i] )
+			return 1;
+	}
+	return 0;
+}
+#endif
+
 #define WAN0_ROUTE_TABLE 100
 #define WAN1_ROUTE_TABLE 200
 
@@ -534,6 +597,7 @@ del_routes(char *prefix, char *var, char *ifname)
 	return 0;
 }
 
+#if 0
 #ifdef RTCONFIG_IPV6
 void
 stop_ecmh(void)
@@ -566,6 +630,7 @@ start_ecmh(const char *wan_ifname)
 		break;
 	}
 }
+#endif
 #endif
 
 void
@@ -1337,10 +1402,11 @@ TRACE_PT("3g end.\n");
 			return;
 		}
 #ifdef RTCONFIG_IPV6
-		if ((nvram_match(strcat_r(prefix, "proto", tmp), "dhcp") ||
-			nvram_match(strcat_r(prefix, "proto", tmp), "static")) &&
-			nvram_match("ipv6_ifdev", "ppp"))
+		if (nvram_match("ipv6_ifdev", "ppp") &&
+		    (strcmp(wan_proto, "dhcp") == 0 ||
+		     strcmp(wan_proto, "static") == 0)) {
 			nvram_set("ipv6_ifdev", "eth");
+		}
 
 		if ((get_ipv6_service() != IPV6_DISABLED))
 		{
@@ -1631,6 +1697,10 @@ TRACE_PT("3g end.\n");
 
 			/* We are done configuration */
 			wan_up(wan_ifname);
+
+#ifdef RTCONFIG_VPNC
+			start_vpnc();
+#endif
 		}
 	}
 	else
@@ -1679,10 +1749,10 @@ stop_wan_if(int unit)
 
 #ifdef RTCONFIG_IPV6
 		if (nvram_match("ipv6_ifdev", "eth") ||
-			((get_ipv6_service() != IPV6_NATIVE) && (get_ipv6_service() != IPV6_NATIVE_DHCP)))
-		stop_wan6();
+		    ((get_ipv6_service() != IPV6_NATIVE) &&
+		     (get_ipv6_service() != IPV6_NATIVE_DHCP)))
+			stop_wan6();
 #endif
-
 		/* Shutdown and kill all possible tasks */
 #if 0
 		killall_tk("ip-up");
@@ -1699,6 +1769,11 @@ stop_wan_if(int unit)
 
 		killall("zcip", SIGTERM);
 	}
+
+#ifdef RTCONFIG_VPNC
+	/* Stop VPN client */
+	stop_vpnc();
+#endif
 
 	/* Stop l2tp */
 	if (strcmp(wan_proto, "l2tp") == 0) {
@@ -1882,12 +1957,8 @@ void wan6_up(const char *wan_ifname)
 
 	switch (service) {
 	case IPV6_NATIVE:
-		eval("ip", "-6", "route", "add", "::/0", "dev", (char *)wan_ifname, "metric", "2048");
 		break;
 	case IPV6_NATIVE_DHCP:
-		eval("ip", "-6", "route", "add", "::/0", "dev", (char *)wan_ifname);
-		if (nvram_match("ipv6_ifdev", "ppp") && strlen(nvram_safe_get("ipv6_ll_remote")))
-			eval("route", "-A", "inet6", "add", "2000::/3", "gw", nvram_safe_get("ipv6_ll_remote"), "dev", (char*)wan_ifname);
 		stop_dhcp6c();
 		start_dhcp6c();
 		break;
@@ -1956,12 +2027,16 @@ void wan6_up(const char *wan_ifname)
 	if (get_ipv6_service() != IPV6_NATIVE_DHCP)
 		start_radvd();
 
+#if 0
 	start_ecmh(wan_ifname);
+#endif
 }
 
 void wan6_down(const char *wan_ifname)
 {
+#if 0
 	stop_ecmh();
+#endif
 	stop_radvd();
 	stop_ipv6_tunnel();
 	stop_dhcp6c();
@@ -1977,15 +2052,16 @@ void start_wan6(void)
 	char prefix[] = "wanXXXXXXXXXX_";
 	snprintf(prefix, sizeof(prefix), "wan%d_", 0);
 
-	if ((nvram_match(strcat_r(prefix, "proto", tmp), "dhcp") ||
-		nvram_match(strcat_r(prefix, "proto", tmp), "static")) &&
-		nvram_match("ipv6_ifdev", "ppp"))
+	if (nvram_match("ipv6_ifdev", "ppp") &&
+	    (nvram_match(strcat_r(prefix, "proto", tmp), "dhcp") ||
+	     nvram_match(strcat_r(prefix, "proto", tmp), "static"))) {
 		nvram_set("ipv6_ifdev", "eth");
-
+	}
 	if (nvram_match("ipv6_ifdev", "eth") ||
-		((get_ipv6_service() != IPV6_NATIVE) &&
-		(get_ipv6_service() != IPV6_NATIVE_DHCP)))
-	wan6_up(get_wan6face());
+	    ((get_ipv6_service() != IPV6_NATIVE) &&
+	     (get_ipv6_service() != IPV6_NATIVE_DHCP))) {
+		wan6_up(get_wan6face());
+	}
 }
 
 void stop_wan6(void)
@@ -2021,10 +2097,10 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 #ifdef RTCONFIG_IPV6
 		wan_proto = nvram_safe_get(strcat_r(prefix, "proto", tmp));
 		if (wan_unit == wan_primary_ifunit()) {
-			if (strcmp(wan_proto, "dhcp") == 0 || strcmp(wan_proto, "static") == 0) {
-				/* override ipv6 interface, impossible for wanx! */
-				if (nvram_match("ipv6_ifdev", "ppp"))
-					nvram_set("ipv6_ifdev", "eth");
+			if (nvram_match("ipv6_ifdev", "ppp") &&
+			    (strcmp(wan_proto, "dhcp") == 0 ||
+			     strcmp(wan_proto, "static") == 0)) {
+				nvram_set("ipv6_ifdev", "eth");
 			}
 			if (nvram_match("ipv6_ifdev", "eth") ||
 			    ((get_ipv6_service() != IPV6_NATIVE) &&
@@ -2113,10 +2189,10 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 
 #ifdef RTCONFIG_IPV6
 	if (wan_unit == wan_primary_ifunit()) {
-		if (strcmp(wan_proto, "dhcp") == 0 || strcmp(wan_proto, "static") == 0) {
-			/* override ipv6 interface, impossible for wanx! */
-			if (nvram_match("ipv6_ifdev", "ppp"))
-				nvram_set("ipv6_ifdev", "eth");
+		if (nvram_match("ipv6_ifdev", "ppp") &&
+		    (strcmp(wan_proto, "dhcp") == 0 ||
+		     strcmp(wan_proto, "static") == 0)) {
+			nvram_set("ipv6_ifdev", "eth");
 		}
 		if (nvram_match("ipv6_ifdev", "eth") ||
 		    ((get_ipv6_service() != IPV6_NATIVE) &&
@@ -2147,6 +2223,15 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 		break;
 	default:
 		_dprintf("%s(%s,%d) unknown wan_unit\n", __func__, wan_ifname, wan_unit);
+	}
+#endif
+
+#if defined(DSL_N55U) || defined(DSL_N55U_B)
+	if(nvram_match("wl0_country_code", "GB")) {
+		if(isTargetArea()) {
+			system("ATE Set_RegulationDomain_2G SG");
+			//system("ATE Set_RegulationDomain_5G SG");
+		}
 	}
 #endif
 
@@ -2183,14 +2268,18 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 	stop_ddns();
 	start_ddns();
 
-#ifdef RTCONFIG_OPENVPN
-	start_vpn_eas();
-#endif
-
 	if(strcmp(wan_proto, "static")){
 		/* Sync time */
 		refresh_ntpc();
 	}
+
+#ifdef RTCONFIG_OPENVPN
+	start_vpn_eas();
+#endif
+
+#ifdef RTCONFIG_OPENVPN
+	start_vpn_eas();
+#endif
 
 _dprintf("%s(%s): done.\n", __FUNCTION__, wan_ifname);
 }
@@ -2418,13 +2507,27 @@ found_default_route(int wan_unit)
 			if (device[0] != '\0' && dest == 0 && mask == 0)
 			{
 //				fprintf(stderr, "default route dev: %s\n", device);
-				found = 1;
-				break;
+				//found = 1;
+				//break;
+				wanif = get_wan_ifname(wan_unit);
+				if (!strcmp(wanif, device))
+				{
+		//			fprintf(stderr, "got default route!\n");
+					found = 1;
+					break;
+				}
 			}
 		}
 
 		fclose(f);
 
+		if (found)
+		{
+//			fprintf(stderr, "got default route!\n");
+			return 1;
+		}
+
+#if 0
 		wanif = get_wan_ifname(wan_unit);
 
 		if (found && !strcmp(wanif, device))
@@ -2437,6 +2540,7 @@ found_default_route(int wan_unit)
 			fprintf(stderr, "no default route!\n");
 			return 0;
 		}
+#endif
 	}
 
 	fprintf(stderr, "no default route!!!\n");
@@ -2492,6 +2596,12 @@ start_wan(void)
 	symlink("/sbin/rc", "/tmp/ppp/ipv6-down");
 #endif
 	symlink("/sbin/rc", "/tmp/ppp/auth-fail");
+#ifdef RTCONFIG_VPNC
+	symlink("/sbin/rc", "/tmp/ppp/vpnc-ip-up");
+	symlink("/sbin/rc", "/tmp/ppp/vpnc-ip-down");
+	symlink("/sbin/rc", "/tmp/ppp/vpnc-ip-pre-up");
+	symlink("/sbin/rc", "/tmp/ppp/vpnc-auth-fail");
+#endif
 	symlink("/sbin/rc", "/tmp/udhcpc");
 	symlink("/sbin/rc", "/tmp/zcip");
 #ifdef RTCONFIG_EAPOL
@@ -2555,6 +2665,10 @@ stop_wan(void)
 	stop_vpn_eas();
 #endif
 
+#ifdef RTCONFIG_OPENVPN
+	stop_vpn_eas();
+#endif
+
 	/* Remove dynamically created links */
 #ifdef RTCONFIG_EAPOL
 	unlink("/tmp/wpa_cli");
@@ -2569,6 +2683,12 @@ stop_wan(void)
 	unlink("/tmp/ppp/ipv6-down");
 #endif
 	unlink("/tmp/ppp/auth-fail");
+#ifdef RTCONFIG_VPNC
+	unlink("/tmp/ppp/vpnc-ip-up");
+	unlink("/tmp/ppp/vpnc-ip-down");
+	unlink("/tmp/ppp/vpnc-ip-pre-up");
+	unlink("/tmp/ppp/vpnc-auth-fail");
+#endif
 	rmdir("/tmp/ppp");
 }
 

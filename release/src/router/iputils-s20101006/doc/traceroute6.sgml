@@ -1,0 +1,97 @@
+<refentry id="traceroute6">
+
+<refmeta>
+<refentrytitle>traceroute6</refentrytitle>
+<manvolnum>8</manvolnum>
+<refmiscinfo>iputils-&snapshot;</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>traceroute6</refname>
+<refpurpose>traces path to a network host</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>traceroute6</command>
+<arg choice="opt"><option>-dnrvV</option></arg>
+<arg choice="opt">-i <replaceable/interface/</arg>
+<arg choice="opt">-m <replaceable/max_ttl/</arg>
+<arg choice="opt">-p <replaceable/port/</arg>
+<arg choice="opt">-q <replaceable/max_probes/</arg>
+<arg choice="opt">-s <replaceable/source/</arg>
+<arg choice="opt">-w <replaceable/wait time/</arg>
+<arg choice="req"><replaceable/destination/</arg>
+<arg choice="opt"><replaceable/size/</arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1><title>DESCRIPTION</title>
+<para>
+Description can be found in 
+<citerefentry><refentrytitle/traceroute/<manvolnum/8/</citerefentry>,
+all the references to IP replaced to IPv6. It is needless to copy
+the description from there.
+</para>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para>
+<citerefentry><refentrytitle/traceroute/<manvolnum/8/</citerefentry>,
+<citerefentry><refentrytitle/tracepath/<manvolnum/8/</citerefentry>,
+<citerefentry><refentrytitle/ping/<manvolnum/8/</citerefentry>.
+</para>
+</refsect1>
+
+<refsect1><title>HISTORY</title>
+<para>
+This program has long history. Author of <command/traceroute/
+is Van Jacobson and it first appeared in 1988. This clone is
+based on a port of <command/traceroute/ to IPv6 published
+in NRL IPv6 distribution in 1996. In turn, it was ported
+to Linux by Pedro Roque. After this it was kept in sync by    
+<ulink url="mailto:kuznet@ms2.inr.ac.ru">Alexey Kuznetsov
+&lt;kuznet@ms2.inr.ac.ru&gt;</ulink>. And eventually entered
+<command/iputils/ package.
+</para>
+</refsect1>
+
+<refsect1><title>SECURITY</title>
+<para>
+<command/tracepath6/ requires <constant/CAP_NET_RAWIO/ capability
+to be executed. It is safe to be used as set-uid root.
+</para>
+</refsect1>
+
+<refsect1><title>AVAILABILITY</title>
+<para>
+<command/traceroute6/ is part of <filename/iputils/ package
+and the latest versions are  available in source form at
+<ulink url="http://www.skbuff.net/iputils/iputils-current.tar.bz2">
+http://www.skbuff.net/iputils/iputils-current.tar.bz2</ulink>.
+</para>
+</refsect1>
+
+<![IGNORE[
+<refsect1><title>COPYING</title>
+<para>
+<literallayout>
+This documentation is free software; you can redistribute
+it and/or modify it under the terms of the GNU General Public
+License Version 2.
+
+This program is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU General Public License for more details.
+ 
+For more details see the file COPYING in the source
+distribution of Linux kernel of version 2.4.
+</literallayout>
+</para>
+</refsect1>
+]]>
+
+
+
+</refentry>

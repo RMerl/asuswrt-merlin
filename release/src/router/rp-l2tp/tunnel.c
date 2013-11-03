@@ -79,6 +79,10 @@ static char *state_names[] = {
     "received-stop-ccn", "sent-stop-ccn"
 };
 
+#ifdef RTCONFIG_VPNC
+int vpnc = 0;
+#endif
+
 #define VENDOR_STR "Roaring Penguin Software Inc."
 
 /* Comparison of serial numbers according to RFC 1982 */
@@ -2076,7 +2080,11 @@ route_add(const struct in_addr inetaddr, struct rtentry *rt)
 			&gateway, &flags, &metric, &mask) != 6)
 			continue;
 		if ((flags & RTF_UP) == (RTF_UP) && (inetaddr.s_addr & mask) == dest &&
-		    (dest || strncmp(dev, "ppp", 3)) /* avoid default via pppX to avoid on-demand loops*/)
+#ifdef RTCONFIG_VPNC
+		    (dest || strncmp(dev, "ppp", 3) || vpnc) /* avoid default via pppX to avoid on-demand loops*/)
+#else
+		    (dest || strncmp(dev, "ppp", 3)) /* avoid default via pppX to avoid on-demand loops*/)		
+#endif
 		{
 			if ((mask | bestmask) == bestmask && rt->rt_gateway.sa_family)
 				continue;

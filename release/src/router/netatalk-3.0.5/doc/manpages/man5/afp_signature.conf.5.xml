@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry id="afp_signature.conf.5">
+
+  <refmeta>
+    <refentrytitle>afp_signature.conf</refentrytitle>
+
+    <manvolnum>5</manvolnum>
+
+    <refmiscinfo class="date">23 Mar 2012</refmiscinfo>
+
+    <refmiscinfo class="source">@NETATALK_VERSION@</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>afp_signature.conf</refname>
+
+    <refpurpose>Configuration file used by afpd(8) to specify server
+        signature<indexterm>
+        <primary>afp_signature.conf</primary>
+      </indexterm></refpurpose>
+  </refnamediv>
+
+  <refsect1>
+    <title>Description</title>
+
+    <para><filename>@localstatedir@/netatalk/afp_signature.conf</filename> is the
+    configuration file used by <command>afpd</command> to specify
+    server signature automagically. The configuration lines are
+    composed like:</para>
+
+    <para><replaceable>"server name"</replaceable>
+    <replaceable>hexa-string</replaceable></para>
+
+    <para>The first field is server name. Server names must be quoted
+    if they contain spaces. The second field is the hexadecimal string
+    of 32 characters for 16-bytes server signature.</para>
+    <para>The leading spaces and tabs are ignored. Blank lines are ignored.
+    The lines prefixed with # are ignored. The illegal lines are ignored.
+    </para>
+
+    <note>
+        <para>Server Signature is unique 16-bytes identifier used to
+        prevent logging on to the same server twice. </para>
+        <para>Netatalk 2.0 and earlier generated server signature by using
+        gethostid(). There was a problem that another servers have the same
+        signature because the hostid is not unique enough.</para>
+        <para>Current netatalk generates the signature from random numbers and
+        saves it into afp_signature.conf. When starting next time, it
+        is read from this file. </para>
+        <para>This file should not be thoughtlessly edited and be copied
+        onto another server. If it wants to set the signature intentionally,
+        use the option "signature ="  in afp.conf. In this case,
+        afp_signature.conf is not used.</para>
+    </note>
+
+    <para></para>
+  </refsect1>
+
+  <refsect1>
+    <title>Examples</title>
+
+    <example>
+      <title>afp_signature.conf</title>
+
+      <programlisting># This is a comment.
+"My Server" 74A0BB94EC8C13988B2E75042347E528</programlisting>
+    </example>
+  </refsect1>
+
+  <refsect1>
+    <title>See also</title>
+
+    <para><citerefentry>
+        <refentrytitle>afpd</refentrytitle>
+
+        <manvolnum>8</manvolnum>
+      </citerefentry>, <citerefentry>
+        <refentrytitle>afp.conf</refentrytitle>
+
+        <manvolnum>5</manvolnum>
+      </citerefentry>, <citerefentry>
+        <refentrytitle>asip-status.pl</refentrytitle>
+
+        <manvolnum>1</manvolnum>
+      </citerefentry></para>
+  </refsect1>
+</refentry>

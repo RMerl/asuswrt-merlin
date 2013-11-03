@@ -752,6 +752,17 @@ restore_defaults(void)
 		if ((nvram_get_int("wlopmode") == 7) || nvram_match("ATEMODE", "1"))
 			nvram_set("usb_usb3", "1");
 #endif
+		if (nvram_get_int("wlopmode") == 7){
+			switch (get_model()) {
+				case MODEL_RTAC56U:
+					nvram_set("clkfreq", "800,666");
+					break;
+				case MODEL_RTAC68U:
+					if (!nvram_match("bl_version", "1.0.1.1"))
+					nvram_set("clkfreq", "800,666");
+                        		break;
+			}
+		}
 	}
 
 	/* Commit values */
@@ -759,7 +770,20 @@ restore_defaults(void)
 		nvram_commit();		
 		fprintf(stderr, "done\n");
 	}
-
+#ifdef RTCONFIG_BCMARM
+	if (!nvram_match("extendno_org", nvram_safe_get("extendno")))
+	{
+		dbg("Reset TxBF settings...\n");
+		nvram_set("extendno_org", nvram_safe_get("extendno"));
+		nvram_set("wl_txbf", "1");
+		nvram_set("wl0_txbf", "1");
+		nvram_set("wl1_txbf", "1");
+		nvram_set("wl_itxbf", "1");
+		nvram_set("wl0_itxbf", "1");
+		nvram_set("wl1_itxbf", "1");
+		nvram_commit();
+	}
+#endif
 	/* default for state control variables */
 	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
 		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
@@ -818,6 +842,8 @@ restore_defaults(void)
 			nvram_set("smbd_cpage", "950");
 	}
 #endif
+	/* reset ntp status */
+	nvram_set("svc_ready", "0");
 
 /*
 	if (restore_defaults)
@@ -1038,6 +1064,7 @@ void conf_swmode_support(int model)
 {
 	switch (model) {
 		case MODEL_RTAC66U:
+		case MODEL_RTAC53U:
 			nvram_set("swmode_support", "router repeater ap psta");
 			dbg("%s: swmode: router repeater ap psta", LOGNAME);
 			break;
@@ -1117,6 +1144,14 @@ int init_nvram(void)
 	nvram_set("web_redirect", "3");
 
 	conf_swmode_support(model);
+
+#ifdef RTCONFIG_OPENVPN
+	nvram_set("vpn_server1_state", "0");
+	nvram_set("vpn_server2_state", "0");
+	nvram_set("vpn_client1_state", "0");
+	nvram_set("vpn_client2_state", "0");
+	nvram_set("vpn_upload_state", "");
+#endif
 
 	switch (model) {
 #ifdef RTCONFIG_RALINK
@@ -1315,7 +1350,7 @@ int init_nvram(void)
 		}
 		nvram_set("wl_ifnames","ra0");
 		// it is virtual id only for ui control
-		nvram_set("wl0_vifnames", "wl0.1 wl0.2 wl0.3");
+		nvram_set("wl0_vifnames", "apcli0 wl0.1 wl0.2 wl0.3");
 		nvram_set("wl1_vifnames", "");
 
 		nvram_set_int("btn_rst_gpio", 1|GPIO_ACTIVE_LOW);
@@ -1536,6 +1571,7 @@ int init_nvram(void)
 		goto case_MODEL_RTN12X;
 
 	case MODEL_RTN12HP:
+	case MODEL_RTN12HP_B1:
 		nvram_set("wl0_vifnames", "wl0.1 wl0.2 wl0.3");
 		add_rc_support("2.4G mssid");
 		nvram_set_int("btn_rst_gpio", 22|GPIO_ACTIVE_LOW);
@@ -2001,6 +2037,9 @@ int init_nvram(void)
 #ifdef RTCONFIG_LED_BTN
 		nvram_set_int("AllLED", 1);
 #endif
+		nvram_set("0:mcsbw202gpo", "0xE8630000");
+		nvram_set("0:mcsbw402gpo", "0xE8630000");
+
 		break;
 
 	case MODEL_RTAC56U:
@@ -2325,8 +2364,39 @@ int init_nvram(void)
 	case MODEL_RTN10D1:
 	case MODEL_RTN10PV2:
 		nvram_set("lan_ifname", "br0");
+#ifdef RTCONFIG_DUALWAN
+		set_lan_phy("vlan0");
+
+		if(!(get_wans_dualwan()&WANSCAP_2G))
+			add_lan_phy("eth1");
+
+		if(nvram_get("wans_dualwan")){
+			set_wan_phy("");
+			for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
+				if(get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_LAN)
+					add_wan_phy("vlan2");
+				else if(get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_2G)
+					add_wan_phy("eth1");
+				else if(get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_WAN){
+					if(nvram_get("switch_wantag") && !nvram_match("switch_wantag", "") && !nvram_match("switch_wantag", "none")){
+						sprintf(wan_if, "vlan%s", nvram_safe_get("switch_wan0tagid"));
+						add_wan_phy(wan_if);
+					}
+					else if(get_wans_dualwan()&WANSCAP_LAN)
+						add_wan_phy("vlan1");
+					else
+						add_wan_phy("eth0");
+				}
+				else if(get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_USB)
+					add_wan_phy("usb");
+			}
+		}
+		else
+			nvram_set("wan_ifnames", "eth0 usb");
+#else
 		nvram_set("lan_ifnames", "vlan0 eth1");
 		nvram_set("wan_ifnames", "eth0");
+#endif
 		nvram_set("wl_ifnames", "eth1");
 		nvram_set("wl0_vifnames", "wl0.1 wl0.2 wl0.3");
 		nvram_set("wl1_vifnames", "");
@@ -2341,6 +2411,32 @@ int init_nvram(void)
 				nvram_set_int("ct_max", 1024);
 		}
 		add_rc_support("2.4G mssid");
+#ifdef RTCONFIG_KYIVSTAR
+		add_rc_support("kyivstar");
+#endif
+		break;
+	case MODEL_RTAC53U:
+		nvram_set("lan_ifname", "br0");
+		nvram_set("lan_ifnames", "vlan1 eth1 eth2");
+		nvram_set("wan_ifnames", "eth0");
+		nvram_set("wl_ifnames", "eth1 eth2");
+		nvram_set("wl0_vifnames", "wl0.1 wl0.2 wl0.3");
+		nvram_set("wl1_vifnames", "wl1.1 wl1.2 wl1.3");
+		nvram_set_int("led_pwr_gpio", 0|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_wan_gpio", 1|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_lan_gpio", 2|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_2g_gpio",  3|GPIO_ACTIVE_LOW);
+		nvram_set_int("btn_wps_gpio", 7|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_usb_gpio", 8|GPIO_ACTIVE_LOW);
+		nvram_set_int("btn_rst_gpio",22|GPIO_ACTIVE_LOW);
+		nvram_set("ehci_ports", "1-1.4");
+		nvram_set("ohci_ports", "2-1.4");
+		if(!nvram_get("ct_max")) 
+			nvram_set("ct_max", "2048");
+		add_rc_support("2.4G 5G mssid usbX1");
+#ifdef RTCONFIG_WLAN_LED
+		add_rc_support("led_2g");
+#endif
 		break;
 #endif // CONFIG_BCMWL5
 	}
@@ -2445,12 +2541,12 @@ int init_nvram(void)
 	add_rc_support("ispmeter");
 #endif
 
-#ifdef RTCONFIG_APP_PREINSTALLED
-	add_rc_support("appbase");
-
 #ifdef RTCONFIG_MEDIA_SERVER
 	add_rc_support("media");
 #endif
+
+#ifdef RTCONFIG_APP_PREINSTALLED
+	add_rc_support("appbase");
 #endif // RTCONFIG_APP_PREINSTALLED
 
 #ifdef RTCONFIG_APP_NETINSTALLED
@@ -2464,6 +2560,14 @@ int init_nvram(void)
 //#endif
 //#endif
 #endif // RTCONFIG_APP_NETINSTALLED
+
+#ifdef RTCONFIG_VPNC
+	add_rc_support("vpnc");
+#endif
+
+#if RTCONFIG_TIMEMACHINE
+	add_rc_support("timemachine");
+#endif
 
 #if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
 #ifdef RTCONFIG_BCMARM
@@ -2523,6 +2627,10 @@ int init_nvram(void)
 
 #ifdef RTCONFIG_USER_LOW_RSSI
 	add_rc_support("user_low_rssi");
+#endif
+
+#if defined(RTCONFIG_NTFS) && !defined(RTCONFIG_NTFS3G)
+	add_rc_support("ufsd");
 #endif
 	return 0;
 }
@@ -2747,7 +2855,7 @@ static void sysinit(void)
 	if(model==MODEL_RTN53 ||
 		model==MODEL_RTN10U ||
 		model==MODEL_RTN12B1 || model==MODEL_RTN12C1 ||
-		model==MODEL_RTN12D1 || model==MODEL_RTN12VP || model==MODEL_RTN12HP ||
+		model==MODEL_RTN12D1 || model==MODEL_RTN12VP || model==MODEL_RTN12HP || model==MODEL_RTN12HP_B1 ||
 		model==MODEL_RTN15U){
 
 		f_write_string("/proc/sys/vm/panic_on_oom", "1", 0, 0);
@@ -3044,6 +3152,7 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 					(get_model() == MODEL_RTAC56U) ||
 					(get_model() == MODEL_RTAC68U) ||
 					(get_model() == MODEL_RTN12HP) ||
+					(get_model() == MODEL_RTN12HP_B1) ||
 					(get_model() == MODEL_RTN66U)){
 					set_wltxpower();
 				}else if (nvram_contains_word("rc_support", "pwrctrl")) {

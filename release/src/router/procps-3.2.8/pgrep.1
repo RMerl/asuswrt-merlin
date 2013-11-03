@@ -1,0 +1,162 @@
+.\" Manual page for pgrep / pkill.
+.\" Licensed under version 2 of the GNU General Public License.
+.\" Copyright 2000 Kjetil Torgrim Homme
+.\"
+.TH PGREP 1 "June 25, 2000" "Linux" "Linux User's Manual"
+.SH NAME
+pgrep, pkill \- look up or signal processes based on name and other attributes
+
+.SH SYNOPSIS
+pgrep [\-flvx] [\-d \fIdelimiter\fP] [\-n|\-o] [\-P \fIppid\fP,...] [\-g \fIpgrp\fP,...]
+.br
+	[\-s \fIsid\fP,...] [\-u \fIeuid\fP,...] [\-U \fIuid\fP,...] [\-G \fIgid\fP,...]
+.br
+	[\-t \fIterm\fP,...] [\fIpattern\fP]
+
+pkill [\-\fIsignal\fP] [\-fvx] [\-n|\-o] [\-P \fIppid\fP,...] [\-g \fIpgrp\fP,...]
+.br
+	[\-s \fIsid\fP,...] [\-u \fIeuid\fP,...] [\-U \fIuid\fP,...] [\-G \fIgid\fP,...]
+.br
+	[\-t \fIterm\fP,...] [\fIpattern\fP]
+
+.SH DESCRIPTION
+\fBpgrep\fP looks through the currently running processes and lists the
+process IDs which matches the selection criteria to stdout.  All
+the criteria have to match.  For example,
+
+pgrep -u root sshd
+
+will only list the processes called \fBsshd\fP AND owned by \fBroot\fP.
+On the other hand,
+
+pgrep -u root,daemon
+
+will list the processes owned by \fBroot\fP OR \fBdaemon\fP.
+
+\fBpkill\fP will send the specified signal (by default \fBSIGTERM\fP)
+to each process instead of listing them on stdout.
+
+.SH OPTIONS
+.TP
+\-d \fIdelimiter\fP
+Sets the string used to delimit each process ID in the output (by
+default a newline).  (\fBpgrep\fP only.)
+.TP
+\-f
+The \fIpattern\fP is normally only matched against the process name.
+When \-f is set, the full command line is used.
+.TP
+\-g \fIpgrp\fP,...
+Only match processes in the process group IDs listed.  Process group 0
+is translated into \fBpgrep\fP's or \fBpkill\fP's own process group.
+.TP
+\-G \fIgid\fP,...
+Only match processes whose real group ID is listed.  Either the
+numerical or symbolical value may be used.
+.TP
+\-l
+List the process name as well as the process ID. (\fBpgrep\fP only.)
+.TP
+\-n
+Select only the newest (most recently started) of the matching
+processes.
+.TP
+\-o
+Select only the oldest (least recently started) of the matching
+processes.
+.TP
+\-P \fIppid\fP,...
+Only match processes whose parent process ID is listed.
+.TP
+\-s \fIsid\fP,...
+Only match processes whose process session ID is listed.  Session ID 0
+is translated into \fBpgrep\fP's or \fBpkill\fP's own session ID.
+.TP
+\-t \fIterm\fP,...
+Only match processes whose controlling terminal is listed.  The
+terminal name should be specified without the "/dev/" prefix.
+.TP
+\-u \fIeuid\fP,...
+Only match processes whose effective user ID is listed.  Either the
+numerical or symbolical value may be used.
+.TP
+\-U \fIuid\fP,...
+Only match processes whose real user ID is listed.  Either the
+numerical or symbolical value may be used.
+.TP
+\-v
+Negates the matching.
+.TP
+\-x
+Only match processes whose name (or command line if \-f is specified)
+\fBexactly\fP match the \fIpattern\fP.
+.TP
+\-\fIsignal\fP
+Defines the signal to send to each matched process.  Either the
+numeric or the symbolic signal name can be used.  (\fBpkill\fP only.)
+
+.SH OPERANDS
+.TP
+\fIpattern\fP
+Specifies an Extended Regular Expression for matching against the
+process names or command lines.
+
+.SH EXAMPLES
+Example 1: Find the process ID of the \fBnamed\fP daemon:
+
+unix$ pgrep \-u root named
+
+Example 2: Make \fBsyslog\fP reread its configuration file:
+
+unix$ pkill \-HUP syslogd
+
+Example 3: Give detailed information on all \fBxterm\fP processes:
+
+unix$ ps \-fp $(pgrep \-d, \-x xterm)
+
+Example 4: Make all \fBnetscape\fP processes run nicer:
+
+unix$ renice +4 `pgrep netscape`
+
+.SH "EXIT STATUS"
+.TP
+.I "0"
+One or more processes matched the criteria.
+.TP
+.I "1"
+No processes matched.
+.TP
+.I "2"
+Syntax error in the command line.
+.TP
+.I "3"
+Fatal error: out of memory etc.
+
+.SH NOTES
+The process name used for matching is limited to the 15 characters
+present in the output of /proc/\fIpid\fP/stat.  Use the \-f option to
+match against the complete command line, /proc/\fIpid\fP/cmdline.
+
+The running \fBpgrep\fP or \fBpkill\fP process will never report
+itself as a match.
+
+.SH BUGS
+The options \-n and \-o and \-v can not be combined.  Let me know if
+you need to do this.
+
+Defunct processes are reported.
+
+.SH "SEE ALSO"
+ps(1) regex(7) signal(7) killall(1) skill(1) kill(1) kill(2)
+
+.SH STANDARDS
+\fBpkill\fP and \fBpgrep\fP were introduced in Sun's Solaris 7.  This
+implementation is fully compatible.
+
+.SH AUTHOR
+Kjetil Torgrim Homme <kjetilho@ifi.uio.no>
+
+Albert Cahalan <albert@users.sf.net> is the current maintainer of
+the procps package.
+
+Please send bug reports to <procps-feedback@lists.sf.net>

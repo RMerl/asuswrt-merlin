@@ -1,0 +1,64 @@
+#!/bin/sh
+# potomo - Convert a .po file to an utf-8 encoded .mo file.
+# Copyright 2008 g10 Code GmbH
+# Copyright 2010 Free Software Foundation, Inc.
+#
+# This file is free software; as a special exception the author gives
+# unlimited permission to copy and/or distribute it, with or without
+# modifications, as long as this notice is preserved.
+#
+# This file is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+# This script is used to create the mo files for applications using
+# the simple gettext implementation provided by libgpg-error.  That
+# gettext can only cope with utf-8 encoded mo files; thus we make this
+# sure while creating the mo.  A conversion is not done if the source
+# file does not exist or if it is not newer than the mo file.
+
+if [ "$1" = "--get-linguas" -a $# -eq 2 ]; then
+   if [ ! -f "$2/LINGUAS" ]; then
+       echo "potomo: directory '$2' has no LINGUAS file" >&2
+       exit 1
+   fi
+   echo $(sed -e "/^#/d" -e "s/#.*//" "$2"/LINGUAS)
+   exit 0
+fi
+
+if [ $# -ne 2 ]; then
+  echo "usage: potomo INFILE.PO OUTFILE.MO" >&2
+  echo "       potomo --get-linguas DIR"    >&2
+  exit 1
+fi
+infile="$1"
+outfile="$2"
+
+if [ ! -f "$infile" ]; then
+  echo "potomo: '$infile' not found - ignored" 2>&1
+  exit 0
+fi
+
+if [ "$outfile" -nt "$infile" ]; then
+  echo "potomo: '$outfile' is newer than source - keeping" 2>&1
+  exit 0
+fi
+  
+# Note that we could use the newer msgconv.  However this tool was not
+# widely available back in 2008.
+
+fromset=`sed -n '/^"Content-Type:/ s/.*charset=\([a-zA-Z0-9_-]*\).*/\1/p' \
+         "$infile"`
+
+case "$fromset" in 
+    utf8|utf-8|UTF8|UTF-8) 
+        echo "potomo: '$infile' keeping $fromset" >&2 
+        msgfmt --output-file="$outfile" "$infile"
+        ;;   
+    *)
+        echo "potomo: '$infile' converting from $fromset to utf-8" >&2
+        iconv --silent --from-code=$fromset --to-code=utf-8 < "$infile" |\
+            sed "/^\"Content-Type:/ s/charset=[a-zA-Z0-9_-]*/charset=utf-8/"|\
+            msgfmt --output-file="$outfile" -
+        ;;
+esac

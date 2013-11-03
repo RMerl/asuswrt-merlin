@@ -20,7 +20,9 @@
 	WLANConfig11b_Channel_HighPower_desc2 : "Due to local regulator limitation, Channel 1 can’t provide the best wireless coverage. If you insist to access Channel 1, please click 'OK'. If not, it will set to channel 2. Please click 'Cancel'",
 	WLANConfig11b_Channel_HighPower_desc3 : "To ensure the best wireless signal, we suggest to set the router channel with channel 10. If agree to access Channel 10, please click 'OK'. If disagree, please click 'Cancel'",
 	WLANConfig11b_Channel_HighPower_desc4 : "Due to local regulator limitation, Channel 11 can’t provide the best wireless coverage. If you insist to access Channel 11, please click 'OK'. If not, it will set to channel 10. Please click 'Cancel'",
-	WLANConfig11b_WDS_sectiondesc4 : "4. To get best performance, please go to advanced settings -> wireless -> general and make sure that every router in the network has the same channel bandwidth, control channel and extension channel."
+	WLANConfig11b_WDS_sectiondesc4 : "4. To get best performance, please go to advanced settings -> wireless -> general and make sure that every router in the network has the same channel bandwidth, control channel and extension channel.",
+	parent_AP_status : "Parent AP status",
+	link_rate : "Link rate"
 };
 var clicked_help_string = "<#Help_init_word1#> <a class=\"hintstyle\" style=\"background-color:#7aa3bd\"><#Help_init_word2#></a> <#Help_init_word3#>";
 
@@ -31,6 +33,17 @@ function addNewScript_help(scriptName){
 	script.src = scriptName;
 	document.getElementsByTagName("head")[0].appendChild(script);
 }
+
+/* convert some special character for shown string */
+function handle_show_str(show_str)
+{
+	show_str = show_str.replace(/\&/g, "&amp;");
+	show_str = show_str.replace(/\</g, "&lt;");
+	show_str = show_str.replace(/\>/g, "&gt;");
+	show_str = show_str.replace(/\ /g, "&nbsp;");
+	return show_str;
+}
+
 function isMobile_help(){
 	return false; //disable mobile QIS temporary, Jieming added at 2013.08.12
 	
@@ -203,9 +216,7 @@ function overHint(itemNum){
 
 				var show_str = gn_array_2g[i][1];
 				show_str = decodeURIComponent(show_str);
-				show_str = show_str.replace(/\&/g,"&amp;");
-				show_str = show_str.replace(/\</g,"&lt;");
-				show_str = show_str.replace(/\>/g,"&gt;");
+				show_str = handle_show_str(show_str);
 				statusmenu += "<span>" + show_str + " (";
 
 				if(gn_array_2g[i][11] == 0)
@@ -236,9 +247,7 @@ function overHint(itemNum){
 	
 					var show_str = gn_array_5g[i][1];
 					show_str = decodeURIComponent(show_str);
-					show_str = show_str.replace(/\&/g,"&amp;");
-					show_str = show_str.replace(/\</g,"&lt;");
-					show_str = show_str.replace(/\>/g,"&gt;");
+					show_str = handle_show_str(show_str);
 					statusmenu += "<span>" + show_str + " (";
 
 					if(gn_array_5g[i][11] == 0)
@@ -290,8 +299,13 @@ function overHint(itemNum){
 					statusmenu = "<span class='StatusHint'><#web_redirect_reason2_2#></span>";
 			}
 			else if(sw_mode == 2 || sw_mode == 4){
-				if(_wlc_state == "wlc_state=2")
-					statusmenu = "<span class='StatusHint'><#APSurvey_msg_connected#></span>";
+				if(_wlc_state == "wlc_state=2"){
+					statusmenu = "<span class='StatusHint'><#APSurvey_msg_connected#></span><br><br>";
+					if(wlc_band == 0)	
+						statusmenu += "<b>Link rate: </b>"+ data_rate_info_2g;
+					else
+						statusmenu += "<b>Link rate: </b>"+ data_rate_info_5g;
+				}	
 				else{
 					if(_wlc_sbstate == "wlc_sbstate=2")
 						statusmenu = "<span class='StatusHint'><#APSurvey_action_ConnectingStatus1#></span>";

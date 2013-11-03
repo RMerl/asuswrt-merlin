@@ -1,0 +1,250 @@
+'\" t
+.\"     Title: ad
+.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
+.\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
+.\"      Date: 02 Sep 2011
+.\"    Manual: @NETATALK_VERSION@
+.\"    Source: @NETATALK_VERSION@
+.\"  Language: English
+.\"
+.TH "AD" "1" "02 Sep 2011" "@NETATALK_VERSION@" "@NETATALK_VERSION@"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ad \- Netatalk compatible UNIX file utility suite\&.
+.SH "SYNOPSIS"
+.HP \w'\fBad\fR\ 'u
+\fBad\fR {ls\ |\ cp\ |\ mv\ |\ rm} [\&.\&.\&.]
+.HP \w'\fBad\fR\ 'u
+\fBad\fR {\-v\ |\ \-\-version}
+.SH "DESCRIPTION"
+.PP
+\fBad\fR
+is a UNIX file utility suite with Netatalk compatibility\&. AppleDouble
+files in
+\&.AppleDouble
+directories and the CNID databases are updated as appropriate\&.
+.SH "AVAILABLE COMMANDS"
+.HP \w'\fBad\ ls\fR\ 'u
+\fBad ls\fR [\-dRl\ [u]] {file|dir\ [\&.\&.\&.]}
+.PP
+List files and directories\&.
+.HP \w'\fBad\ cp\fR\ 'u
+\fBad cp\fR [\-aipvf] {src_file} {dst_file}
+.HP \w'\fBad\ cp\ \-R\fR\ 'u
+\fBad cp \-R\fR [\-aipvf] {src_file|src_directory\ \&.\&.\&.} {dst_directory}
+.PP
+Copy files and directories\&.
+.HP \w'\fBad\ mv\fR\ 'u
+\fBad mv\fR [\-finv] {src_file} {dst_file}
+.HP \w'\fBad\ mv\fR\ 'u
+\fBad mv\fR [\-finv] {src_file|src_directory\ \&.\&.\&.} {dst_directory}
+.PP
+Move files and directories\&.
+.HP \w'\fBad\ rm\fR\ 'u
+\fBad rm\fR [\-Rv] {file|directory}
+.HP \w'\fBad\ \-v|\-\-version\fR\ 'u
+\fBad \-v|\-\-version\fR
+.PP
+Show version\&.
+.SH "AD LS"
+.PP
+List files and directories\&. Options:
+.PP
+\-d
+.RS 4
+Directories are listed as plain files
+.RE
+.PP
+\-R
+.RS 4
+list subdirectories recursively
+.RE
+.PP
+\-l
+.RS 4
+Long output, list AFP info
+.RE
+.PP
+\-u
+.RS 4
+List UNIX info
+.RE
+.PP
+\fILong output description\fR
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+<unixinfo> <FinderFlags> <AFP Attributes> <Color> <Type> <Creator> <CNID from AppleDouble> <name>
+
+FinderFlags (valid for (f)iles and/or (d)irectories):
+
+  d = On Desktop                      (f/d)
+  e = Hidden extension                (f/d)
+  m = Shared (can run multiple times) (f)
+  n = No INIT resources               (f)
+  i = Inited                          (f/d)
+  c = Custom icon                     (f/d)
+  t = Stationery                      (f)
+  s = Name locked                     (f/d)
+  b = Bundle                          (f/d)
+  v = Invisible                       (f/d)
+  a = Alias file                      (f/d)
+
+AFP Attributes:
+
+  y = System                          (f/d)
+  w = No write                        (f)
+  p = Needs backup                    (f/d)
+  r = No rename                       (f/d)
+  l = No delete                       (f/d)
+  o = No copy                         (f)
+
+Note: any letter appearing in uppercase means the flag is set but it\*(Aqs a directory for which the flag is not allowed\&.
+.fi
+.if n \{\
+.RE
+.\}
+.SH "AD CP"
+.PP
+Copy files and directories\&.
+.PP
+In the first synopsis form, the cp utility copies the contents of the source_file to the target_file\&. In the second synopsis form, the contents of each named source_file is copied to the destination target_directory\&. The names of the files themselves are not changed\&. If cp detects an attempt to copy a file to itself, the copy will fail\&.
+.PP
+Netatalk AFP volumes are detected by means of their "\&.AppleDesktop" directory which is located in their volume root\&. When a copy targeting an AFP volume is detected, its CNID database daemon is connected and all copies will also go through the CNID database\&. AppleDouble files are also copied and created as needed when the target is an AFP volume\&.
+.PP
+Options:
+.PP
+\-a
+.RS 4
+Archive mode\&. Same as \-Rp\&.
+.RE
+.PP
+\-f
+.RS 4
+For each existing destination pathname, remove it and create a new file, without prompting for confirmation regardless of its permis\- sions\&. (The \-f option overrides any previous \-i or \-n options\&.)
+.RE
+.PP
+\-i
+.RS 4
+Cause cp to write a prompt to the standard error output before copying a file that would overwrite an existing file\&. If the response from the standard input begins with the character \*(Aqy\*(Aq or \*(AqY\*(Aq, the file copy is attempted\&. (The \-i option overrides any pre\- vious \-f or \-n options\&.)
+.RE
+.PP
+\-n
+.RS 4
+Do not overwrite an existing file\&. (The \-n option overrides any previous \-f or \-i options\&.)
+.RE
+.PP
+\-p
+.RS 4
+Cause cp to preserve the following attributes of each source file in the copy: modification time, access time, file flags, file mode, user ID, and group ID, as allowed by permissions\&. If the user ID and group ID cannot be preserved, no error message is displayed and the exit value is not altered\&.
+.RE
+.PP
+\-R
+.RS 4
+If source_file designates a directory, cp copies the directory and the entire subtree connected at that point\&.If the source_file ends in a /, the contents of the directory are copied rather than the directory itself\&.
+.RE
+.PP
+\-v
+.RS 4
+Cause cp to be verbose, showing files as they are copied\&.
+.RE
+.PP
+\-x
+.RS 4
+File system mount points are not traversed\&.
+.RE
+.SH "AD MV"
+.PP
+Move files and directories\&.
+.PP
+Move files around within an AFP volume, updating the CNID database as needed\&. If either:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+source or destination is not an AFP volume
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+source AFP volume != destination AFP volume
+.RE
+.sp
+the files are copied and removed from the source\&.
+.PP
+Options:
+.PP
+\-f
+.RS 4
+Do not prompt for confirmation before overwriting the destination path\&. (The \-f option overrides any previous \-i or \-n options\&.)
+.RE
+.PP
+\-i
+.RS 4
+Cause mv to write a prompt to standard error before moving a file that would overwrite an existing file\&. If the response from the standard input begins with the character `y\*(Aq or `Y\*(Aq, the move is attempted\&. (The \-i option overrides any previous \-f or \-n options\&.)
+.RE
+.PP
+\-n
+.RS 4
+Do not overwrite an existing file\&. (The \-n option overrides any previous \-f or \-i options\&.)
+.RE
+.PP
+\-v
+.RS 4
+Cause mv to be verbose, showing files after they are moved\&.
+.RE
+.SH "AD RM"
+.PP
+Remove files and directories\&.
+.PP
+The rm utility attempts to remove the non\-directory type files specified on the command line\&. If the files and directories reside on an AFP volume, the corresponding CNIDs are deleted from the volumes database\&.
+.PP
+The options are as follows:
+.PP
+\-R
+.RS 4
+Attempt to remove the file hierarchy rooted in each file argument\&.
+.RE
+.PP
+\-v
+.RS 4
+Be verbose when deleting files, showing them as they are removed\&.
+.RE
+.SH "REPORTING BUGS"
+.PP
+Report bugs to the Netatalk\-devel list <netatalk\-devel@lists\&.sourceforge\&.net>\&.
+.SH "SEE ALSO"
+.PP
+\fBdbd\fR(1),
+\fBapple_dump\fR(1)\&.

@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry id="netatalkconfig.1">
+  <refmeta>
+    <refentrytitle>netatalk-config</refentrytitle>
+
+    <manvolnum>1</manvolnum>
+
+    <refmiscinfo class="date">09 June 2001</refmiscinfo>
+
+    <refmiscinfo class="source">@NETATALK_VERSION@</refmiscinfo>
+
+    <refmiscinfo class="manual">The Netatalk Project</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>netatalk-config</refname>
+
+    <refpurpose>script to get information about the installed version of
+    netatalk</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>netatalk-config<indexterm><primary>netatalk-config</primary></indexterm></command>
+
+      <arg choice="opt"><arg choice="plain">--prefix </arg><arg choice="opt"><replaceable>=DIR</replaceable></arg></arg>
+
+      <arg choice="opt"><arg choice="plain">--exec_prefix </arg><arg
+      choice="opt"><replaceable>=DIR</replaceable></arg></arg>
+
+      <arg choice="opt">--help</arg>
+
+      <arg choice="opt">--version</arg>
+
+      <arg choice="opt">--libs</arg>
+
+      <arg choice="opt">--libs-dirs</arg>
+
+      <arg choice="opt">--libs-names</arg>
+
+      <arg choice="opt">--cflags</arg>
+
+      <arg choice="opt">--macros</arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>DESCRIPTION</title>
+
+    <para><command>netatalk-config</command> is a tool that is used to
+    determine the compiler and linker flags that should be used
+    to compile and link programs that use the <emphasis remap="I">netatalk</emphasis>
+    run-time libraries.</para>
+  </refsect1>
+
+  <refsect1>
+    <title>OPTIONS</title>
+
+    <para><command>netatalk-config</command> accepts the following options:</para>
+
+    <variablelist remap="TP">
+      <varlistentry>
+        <term><option>--help</option></term>
+
+        <listitem>
+          <para>Print a short help for this command and exit.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--version</option></term>
+
+        <listitem>
+          <para>Print the currently installed version of <emphasis remap="I">netatalk</emphasis>
+          on the standard output.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--libs</option></term>
+
+        <listitem>
+          <para>Print the linker flags that are necessary to link against the
+          <emphasis remap="I">netatalk</emphasis> run-time libraries.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--libs-dirs</option></term>
+
+        <listitem>
+          <para>Print only the -l/-R part of --libs.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--libs-names</option></term>
+
+        <listitem>
+          <para>Print only the -l part of --libs.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--cflags</option></term>
+
+        <listitem>
+          <para>Print the compiler flags that are necessary to compile a
+          program linked against the <emphasis remap="I">netatalk</emphasis>
+          run-time libraries.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--macros</option></term>
+
+        <listitem>
+          <para>Print the <emphasis remap="I">netatalk</emphasis> m4
+          directory.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--prefix=PREFIX</option></term>
+
+        <listitem>
+          <para>If specified, use PREFIX instead of the installation prefix
+          that <emphasis remap="I">netatalk</emphasis> was built with when
+          computing the output for the --cflags and --libs options. This
+          option is also used for the exec prefix if --exec-prefix was not
+          specified. This option must be specified before any --libs or
+          --cflags options.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--exec\_prefix=PREFIX</option></term>
+
+        <listitem>
+          <para>If specified, use PREFIX instead of the installation exec
+          prefix that <emphasis remap="I">netatalk</emphasis> was built with
+          when computing the output for the --cflags and --libs options. This
+          option must be specified before any --libs or --cflags options.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>COPYRIGHT</title>
+
+    <para>Copyright © 1998 Owen Taylor</para>
+
+    <para>Permission to use, copy, modify, and distribute this software and
+    its documentation for any purpose and without fee is hereby granted,
+    provided that the above copyright notice appear in all copies and that
+    both that copyright notice and this permission notice appear in supporting
+    documentation.</para>
+
+    <para>Man page adapted for <command>netatalk-config</command> by Sebastian
+    Rittau in 2001.</para>
+  </refsect1>
+</refentry>

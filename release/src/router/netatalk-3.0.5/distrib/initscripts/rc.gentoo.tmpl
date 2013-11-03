@@ -1,0 +1,14 @@
+#!/sbin/runscript
+# Copyright 1999-2012 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+#
+# Netatalk :NETATALK_VERSION: daemons.
+
+command=":SBINDIR:/${SVCNAME}"
+
+depend() {
+	need net
+	use avahi-daemon
+	use logger dns
+	after entropy
+}

@@ -13,6 +13,12 @@
 #include <mntent.h>	// !!TB
 #endif
 
+#ifdef RTCONFIG_PUSH_EMAIL
+#define logmessage logmessage_push
+#else
+#define logmessage logmessage_normal
+#endif
+
 #define Y2K			946684800UL		// seconds since 1970
 
 #define ASIZE(array)	(sizeof(array) / sizeof(array[0]))
@@ -203,6 +209,7 @@ enum {
 	MODEL_RTN12D1,
 	MODEL_RTN12VP,
 	MODEL_RTN12HP,
+	MODEL_RTN12HP_B1,
 	MODEL_APN12,
 	MODEL_APN12HP,
 	MODEL_RTN16,
@@ -213,6 +220,7 @@ enum {
 	MODEL_RTAC66U,
 	MODEL_RTAC68U,
 	MODEL_RTAC56U,
+	MODEL_RTAC53U,
 	MODEL_RTN14UHP,
 	MODEL_RTN10U,
 	MODEL_RTN10P,
@@ -436,7 +444,7 @@ extern int check_if_dir_writable(const char *dir);
 
 /* misc.c */
 extern char *get_productid(void);
-extern void logmessage(char *logheader, char *fmt, ...);
+extern void logmessage_normal(char *logheader, char *fmt, ...);
 extern char *get_logfile_path(void);
 extern char *get_syslog_fname(unsigned int idx);
 #if defined(RTCONFIG_SSH) || defined(RTCONFIG_HTTPS)
@@ -465,6 +473,10 @@ extern void ipv6_set_flags(char *flagstr, int flags);
 extern char* INET6_rresolve(struct sockaddr_in6 *sin6, int numeric);
 #endif
 extern const char *ipv6_gateway_address(void);
+#endif
+#ifdef RTCONFIG_OPENVPN
+extern char *get_parsed_crt(const char *name, char *buf);
+extern int set_crt_parsed(const char *name, char *file_path);
 #endif
 
 /* mt7620.c */

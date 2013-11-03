@@ -32,6 +32,10 @@
 /* Basic authorization userid and passwd limit */
 #define AUTH_MAX 64
 
+#define DEFAULT_LOGIN_MAX_NUM	5
+
+#define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+
 /* Generic MIME type handler */
 struct mime_handler {
 	char *pattern;

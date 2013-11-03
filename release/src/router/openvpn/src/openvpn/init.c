@@ -50,6 +50,8 @@
 
 static struct context *static_context; /* GLOBAL */
 
+extern void update_nvram_state(int st);
+
 /*
  * Crypto initialization flags
  */
@@ -1258,6 +1260,8 @@ initialization_sequence_completed (struct context *c, const unsigned int flags)
     }
   else
     msg (M_INFO, "%s", message);
+
+    update_nvram_state(1);	//Sam, 2013/10/22
 
   /* Flag connection_list that we initialized */
   if ((flags & (ISC_ERRORS|ISC_SERVER)) == 0 && connection_list_defined (&c->options))

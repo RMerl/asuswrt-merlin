@@ -77,6 +77,10 @@ static int callmgr_sock;
 static int pptp_fd;
 int call_ID;
 
+#ifdef RTCONFIG_VPNC
+int vpnc = 0;
+#endif
+
 //static struct in_addr get_ip_address(char *name);
 static int open_callmgr(int call_id,struct in_addr inetaddr, char *phonenr,int window);
 static void launch_callmgr(int call_is,struct in_addr inetaddr, char *phonenr,int window);
@@ -101,6 +105,10 @@ static option_t Options[] =
       "PPTP Phone number" },
     { "loglevel", o_int, &log_level,
       "debugging level (0=low, 1=default, 2=high)"},
+#ifdef RTCONFIG_VPNC
+    { "vpnc",o_int, &vpnc,
+      "VPN client" },
+#endif
     { NULL }
 };
 
@@ -431,7 +439,11 @@ route_add(const struct in_addr inetaddr, struct rtentry *rt)
 			&gateway, &flags, &metric, &mask) != 6)
 			continue;
 		if ((flags & RTF_UP) == (RTF_UP) && (inetaddr.s_addr & mask) == dest &&
+#ifdef RTCONFIG_VPNC
+		    (dest || strncmp(dev, "ppp", 3) || vpnc) /* avoid default via pppX to avoid on-demand loops*/)
+#else
 		    (dest || strncmp(dev, "ppp", 3)) /* avoid default via pppX to avoid on-demand loops*/)
+#endif
 		{
 			if ((mask | bestmask) == bestmask && rt->rt_gateway.sa_family)
 				continue;

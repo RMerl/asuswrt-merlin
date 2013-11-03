@@ -1,8 +1,9 @@
 include ../common.mak
 
-CFLAGS = -Wall -Os $(EXTRACFLAGS)
+CFLAGS += -Wall -Os $(EXTRACFLAGS)
 CFLAGS += -I. -I$(TOP)/shared -I$(SRCBASE)/include -idirafter$(LINUXDIR)/include
 CFLAGS += -I$(TOP)/openssl/include
+CFLAGS += -I$(TOP)/push_log
 CFLAGS += -ffunction-sections -fdata-sections
 CFLAGS += -DDLM -DASUS_DDNS -DASUS_EXT -DBTN_SETUP -DWEB_REDIRECT -DRTCONFIG_CROND
 
@@ -47,8 +48,11 @@ CFLAGS += -DU2EC
 LDFLAGS += -L$(TOP)/libdisk -ldisk
 endif
 
-ifeq ($(RTCONFIG_EMAIL),y)
-CFLAGS += -I$(TOP)/push_log
+ifeq ($(RTCONFIG_PUSH_EMAIL),y)
+LDFLAGS += -L$(TOP)/openssl -lcrypto -lssl
+LDFLAGS += -L$(TOP)/curl-7.21.7/lib/.libs -lcurl
+LDFLAGS += -L$(TOP)/libxml2/.libs -lxml2 -lpthread
+LDFLAGS += -L$(TOP)/wb -lws
 LDFLAGS += -L$(TOP)/push_log -lpush_log
 endif
 
@@ -60,6 +64,12 @@ CFLAGS += -DRTN65U
 endif
 ifeq ($(RTN56U), y)
 CFLAGS += -DRTN56U
+endif
+ifeq ($(BUILD_NAME), DSL-N55U)
+CFLAGS += -DDSL_N55U
+endif
+ifeq ($(BUILD_NAME), DSL-N55U-B)
+CFLAGS += -DDSL_N55U_B
 endif
 
 ifeq ($(RTCONFIG_ODMPID),y)
@@ -97,6 +107,7 @@ OBJS += phy_tempsense.o
 endif
 ifeq ($(RTCONFIG_BCMARM),y)
 OBJS += bcmutils.o
+OBJS += wlaide.o
 endif
 
 ifeq ($(RTCONFIG_RALINK),y)
@@ -120,6 +131,10 @@ OBJS += usb_devices.o
 endif
 
 ifeq ($(RTCONFIG_JFFS2),y)
+OBJS += jffs2.o
+endif
+
+ifeq ($(RTCONFIG_BRCM_NAND_JFFS2),y)
 OBJS += jffs2.o
 endif
 
@@ -160,10 +175,6 @@ OBJS += dsl.o
 OBJS += dsl-upg.o
 endif
 
-ifeq ($(RTCONFIG_IPV6),y)
-OBJS += ipv6aide.o
-endif
-
 ifeq ($(RTCONFIG_BCMWL6),y)
 ifeq ($(RTCONFIG_PROXYSTA),y)
 OBJS += psta_monitor.o
@@ -178,9 +189,16 @@ ifeq ($(RTN65U),y)
 OBJS += asm1042.o
 endif
 
+ifeq ($(RTCONFIG_VPNC),y)
+OBJS += vpnc.o
+endif
 
 ifeq ($(RTCONFIG_SHP),y)
-export CFLAGS += -DMEDIA_REVIEW
+export CFLAGS += -DSHP
+endif
+
+ifeq ($(RTCONFIG_TIMEMACHINE),y)
+OBJS += timemachine.o
 endif
 
 ifeq ($(RTCONFIG_BCMARM),y)
@@ -245,7 +263,6 @@ endif
 
 ifeq ($(RTCONFIG_IPV6),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc dhcp6c-state
-	@cd $(INSTALLDIR)/sbin && ln -sf rc ipv6aide
 endif
 ifeq ($(RTCONFIG_WPS),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc wpsaide
@@ -310,12 +327,6 @@ endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc run_telnetd 
 	@cd $(INSTALLDIR)/sbin && ln -sf rc run_pptpd
 
-ifeq ($(RTCONFIG_OPENVPN),y)
-	@mkdir -p $(INSTALLDIR)/rom/openvpn
-	@cp openvpn-updown.sh $(INSTALLDIR)/rom/openvpn/updown.sh
-	@chmod 0755 $(INSTALLDIR)/rom/openvpn/updown.sh
-endif
-
 ifeq ($(RTCONFIG_PARENTALCTRL),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc pc
 endif
@@ -331,6 +342,9 @@ endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc get_phy_status
 	@cd $(INSTALLDIR)/sbin && ln -sf rc get_phy_speed
 	@cd $(INSTALLDIR)/sbin && ln -sf rc firmware_check
+ifeq ($(RTCONFIG_BCMARM),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc wlaide
+endif
 
 clean:
 	rm -f rc *.o .*.depend

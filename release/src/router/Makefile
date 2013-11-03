@@ -16,9 +16,15 @@ include common.mak
 ifneq ($(RTCONFIG_RALINK),y)
 export CFLAGS += -DBCMWPA2
 ifeq ($(RTCONFIG_BCMWL6),y)
+export CFLAGS += -DBCMQOS
 export CFLAGS += -DBCM_DCS
 export CFLAGS += -DEXT_ACS
 export CFLAGS += -DD11AC_IOTYPES
+export CFLAGS += -DNAS_GTK_PER_STA
+export CFLAGS += -DPHYMON
+export CFLAGS += -DPROXYARP
+export CFLAGS += -DTRAFFIC_MGMT
+export CFLAGS += -DTRAFFIC_MGMT_RSSI_POLICY
 endif
 export CFLAGS += $(EXTRACFLAGS)
 endif
@@ -47,12 +53,19 @@ export CFLAGS += -O2
 export OPTCFLAGS = -O2
 WLCFGDIR=$(SRCBASE)/wl/config
 
-export CFLAGS += -DBCMQOS
-export CFLAGS += -D__CONFIG_EMF__
 ROOT_IMG := target.squashfs
 CRAMFSDIR := cramfs
 
 export MKSYM := $(shell which $(TOP)/misc/mksym.pl)
+endif
+
+ifeq ($(RTCONFIG_BCMWL6),$(RTAC53U),y)
+ifeq ($(RTCONFIG_BCMWL6), y)
+WLAN_ComponentsInUse := bcmwifi clm ppr
+else ifeq ($(RTAC53U),y)
+WLAN_ComponentsInUse := bcmwifi clm ppr olpc
+endif
+include ../../$(SRCBASE)/makefiles/WLAN_Common.mk
 endif
 
 ifneq ($(RTCONFIG_BCMARM),y)
@@ -60,6 +73,8 @@ KDIR=$(TOP)/kernel_header
 else
 KDIR=$(LINUXDIR)
 endif
+
+export CFLAGS += -D__CONFIG_EMF__
 
 ifeq ($(RTCONFIG_WPS),y)
 export CFLAGS += -D__CONFIG_WPS__
@@ -107,8 +122,13 @@ ifneq ($(or $(findstring linux-2.6.36,$(LINUXDIR)),$(findstring linux-3.x,$(LINU
 obj-y += iptables-1.4.x
 obj-y += iproute2-3.x
 else
+ifeq ($(RTAC53U),y)
+obj-y += iptables-1.4.x
+obj-y += iproute2-3.x
+else
 obj-y += iptables
 obj-y += iproute2
+endif
 endif
 
 obj-y += rc
@@ -192,10 +212,6 @@ obj-$(RTCONFIG_USB_BECEEM) += zlib # for GCT WiMAX
 obj-$(RTCONFIG_USB_BECEEM) += gctwimax-0.0.3rc4 # for GCT WiMAX
 
 obj-y += libdisk
-obj-$(RTCONFIG_EMAIL) += push_log
-ifeq ($(RTCONFIG_EMAIL),y)
-PUSH_LOG=push_log
-endif
 
 obj-y += e2fsprogs
 obj-$(RTCONFIG_NFS) += nfs-utils
@@ -243,11 +259,12 @@ obj-$(RTCONFIG_NTFS) += ntfs-3g
 else
 obj-$(RTCONFIG_NTFS) += ufsd
 endif
+obj-$(RTCONFIG_HFS) += ufsd
 obj-$(RTCONFIG_EBTABLES) += ebtables
 obj-$(RTCONFIG_IPV6) += libdaemon
 obj-$(RTCONFIG_IPV6) += radvd
 obj-$(RTCONFIG_IPV6) += dhcpv6
-obj-$(RTCONFIG_IPV6) += ecmh
+#obj-$(RTCONFIG_IPV6) += ecmh
 
 obj-$(RTCONFIG_MEDIA_SERVER) += zlib
 obj-$(RTCONFIG_MEDIA_SERVER) += sqlite
@@ -277,6 +294,19 @@ obj-$(RTCONFIG_CLOUDSYNC) += zlib # for neon
 obj-$(RTCONFIG_CLOUDSYNC) += neon
 obj-$(RTCONFIG_CLOUDSYNC) += webdav_client$(BCMEX)
 
+#For timemachine
+obj-$(RTCONFIG_TIMEMACHINE) += openssl
+obj-$(RTCONFIG_TIMEMACHINE) += libgpg-error-1.10
+obj-$(RTCONFIG_TIMEMACHINE) += libgcrypt-1.5.1
+obj-$(RTCONFIG_TIMEMACHINE) += db-4.8.30
+obj-$(RTCONFIG_TIMEMACHINE) += netatalk-3.0.5
+ifeq ($(RTCONFIG_TIMEMACHINE),y)
+obj-$(RTCONFIG_TIMEMACHINE) += avahi-0.6.31
+obj-$(RTCONFIG_TIMEMACHINE) += expat-2.0.1
+else
+obj-$(RTCONFIG_MDNS) += avahi-0.6.31
+obj-$(RTCONFIG_MDNS) += expat-2.0.1
+endif
 
 #
 # configurable packages
@@ -291,6 +321,7 @@ obj-$(RTCONFIG_SSH) += dropbear
 #obj-$(RTCONFIG_ZEBRA) += zebra
 #	obj-$(RTCONFIG_IPP2P) += ipp2p
 obj-$(RTCONFIG_LZO) += lzo
+obj-$(RTCONFIG_OPENVPN) += openpam
 obj-$(RTCONFIG_OPENVPN) += openvpn
 
 obj-$(CONFIG_LINUX26) += hotplug2
@@ -336,9 +367,15 @@ obj-$(RTCONFIG_GDB) += gdb
 obj-n += lsof
 obj-$(RTCONFIG_IPERF) += iperf
 
-ifeq ($(EMAIL), y)
-obj-y += openssl
-obj-y += email-3.1.3
+obj-$(RTCONFIG_PUSH_EMAIL) += zlib # for libxml2, curl.
+obj-$(RTCONFIG_PUSH_EMAIL) += openssl
+obj-$(RTCONFIG_PUSH_EMAIL) += libxml2
+obj-$(RTCONFIG_PUSH_EMAIL) += curl-7.21.7
+obj-$(RTCONFIG_PUSH_EMAIL) += wb
+obj-$(RTCONFIG_PUSH_EMAIL) += email-3.1.3
+obj-$(RTCONFIG_PUSH_EMAIL) += push_log
+ifeq ($(RTCONFIG_PUSH_EMAIL),y)
+PUSH_LOG=push_log
 endif
 
 #obj-y += lighttpd-1.4.28
@@ -535,6 +572,7 @@ else
 	cd $(TARGETDIR)/lib/modules/*/kernel/drivers/net && mv et/* . && rm -rf et || true
 ifeq ($(RTCONFIG_BRCM_USBAP),y)
 	cd $(TARGETDIR)/lib/modules/*/kernel/drivers/net && mv wl/wl_high.ko . || true
+	cd $(TARGETDIR)/lib/modules/*/kernel/drivers/net && mv wl/wl_high/wl_high.ko . || true
 endif
 	cd $(TARGETDIR)/lib/modules/*/kernel/drivers/net && mv wl/wl.ko . && rm -rf wl || true
 endif
@@ -588,7 +626,11 @@ endif
 	cd $(TARGETDIR)/lib/modules/*/kernel/drivers/net && mv bcm57xx/* . && rm -rf bcm57xx || true
 	cd $(TARGETDIR)/lib/modules/*/kernel/drivers/net && mv emf$(BCMEX)/* . && rm -rf emf$(BCMEX) || true
 	cd $(TARGETDIR)/lib/modules/*/kernel/drivers/net && mv igs$(BCMEX)/* . && rm -rf igs$(BCMEX) || true
+ifeq ($(RTAC53U),y)
+	cd $(TARGETDIR)/lib/modules/*/kernel/drivers/net && mv ctf_5358/* . && rm -rf ctf_5358 || true
+else
 	cd $(TARGETDIR)/lib/modules/*/kernel/drivers/net && mv ctf$(BCMEX)/* . && rm -rf ctf$(BCMEX) || true
+endif
 	cd $(TARGETDIR)/lib/modules && rm -f */source || true
 
 # misc
@@ -738,9 +780,9 @@ ifneq ($(RTCONFIG_USB_EXTRAS),y)
 endif
 #	$(if $(RTCONFIG_CIFS),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/fs/cifs.*o $(PLATFORMDIR)/extras/ || true
 	@cp -f $(TARGETDIR)/lib/modules/*/kernel/fs/cifs.*o $(PLATFORMDIR)/extras/ || true
-	$(if $(RTCONFIG_JFFS2),$(if $(RTCONFIG_JFFSV1),@mv,@cp -f),@mv) $(TARGETDIR)/lib/modules/*/kernel/fs/jffs2.*o $(PLATFORMDIR)/extras/ || true
-	$(if $(RTCONFIG_JFFS2),$(if $(RTCONFIG_JFFSV1),@mv,@cp -f),@mv) $(TARGETDIR)/lib/modules/*/kernel/lib/zlib_*.*o $(PLATFORMDIR)/extras/ || true
-	$(if $(RTCONFIG_JFFS2),$(if $(RTCONFIG_JFFSV1),@cp -f,@mv),@mv) $(TARGETDIR)/lib/modules/*/kernel/fs/jffs.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(RTCONFIG_BRCM_NAND_JFFS2),$(RTCONFIG_JFFS2),$(if $(RTCONFIG_JFFSV1),@mv,@cp -f),@mv) $(TARGETDIR)/lib/modules/*/kernel/fs/jffs2.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(RTCONFIG_BRCM_NAND_JFFS2),$(RTCONFIG_JFFS2),$(if $(RTCONFIG_JFFSV1),@mv,@cp -f),@mv) $(TARGETDIR)/lib/modules/*/kernel/lib/zlib_*.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(RTCONFIG_BRCM_NAND_JFFS2),$(RTCONFIG_JFFS2),$(if $(RTCONFIG_JFFSV1),@cp -f,@mv),@mv) $(TARGETDIR)/lib/modules/*/kernel/fs/jffs.*o $(PLATFORMDIR)/extras/ || true
 	[ ! -f $(TARGETDIR)/lib/modules/*/kernel/lib/* ] && rm -rf $(TARGETDIR)/lib/modules/*/kernel/lib || true
 	$(if $(RTCONFIG_L7),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/net/ipv4/netfilter/ipt_layer7.*o $(PLATFORMDIR)/extras/ || true
 	$(if $(RTCONFIG_L7),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/net/netfilter/xt_layer7.*o $(PLATFORMDIR)/extras/ || true
@@ -839,7 +881,7 @@ rmconf: config/mconf
 roldconf: config/conf
 	config/conf -o $(CONFIG_IN)
 	$(MAKE) shared-clean rc-clean nvram$(BCMEX)-clean httpd-clean prebuilt-clean libbcmcrypto-clean
-#	@$(MAKE) iptables-clean ebtables-clean pppd-clean zebra-clean openssl-clean mssl-clean mdu-clean ppp-clean
+#	@$(MAKE) iptables-clean ebtables-clean pppd-clean zebra-clean openssl-clean mssl-clean mdu-clean pppd-clean
 	$(MAKE) dnsmasq-clean iproute2-clean
 ifeq ($(RTCONFIG_BCMARM),y)
 	$(MAKE) compressed-clean
@@ -935,7 +977,7 @@ endif
 
 infosvr: shared nvram${BCMEX}
 
-httpd: shared nvram$(BCMEX) libdisk $(if $(RTCONFIG_HTTPS),mssl)
+httpd: shared nvram$(BCMEX) libdisk $(if $(RTCONFIG_HTTPS),mssl) $(PUSH_LOG)
 	@$(SEP)
 	@$(MAKE) -C httpd
 
@@ -1066,6 +1108,9 @@ mssl:	openssl
 
 mdu:	shared mssl
 
+wb: openssl libxml2 curl-7.21.7
+
+push_log: wb
 
 rc: nvram$(BCMEX) shared libbcmcrypto libdisk $(PUSH_LOG)
 
@@ -1630,7 +1675,7 @@ rp-pppoe-install: rp-pppoe
 	$(STRIP) $(INSTALLDIR)/rp-pppoe/usr/sbin/pppoe-relay
 
 rp-l2tp/stamp-h1: kernel_header
-	cd rp-l2tp && CFLAGS="-O2 -Wall -I$(TOP)/kernel_header/include $(EXTRACFLAGS)" \
+	cd rp-l2tp && CFLAGS="-O2 -Wall -I$(TOP)/kernel_header/include $(EXTRACFLAGS) $(if $(RTCONFIG_VPNC), -DRTCONFIG_VPNC,)" \
 	$(CONFIGURE) --prefix=/usr --sysconfdir=/tmp
 	touch $@
 
@@ -1663,10 +1708,10 @@ pptp-client-install:
 
 accel-pptp/stamp-h1: kernel_header $(LINUXDIR)/include/linux/version.h
 ifeq ($(RTCONFIG_BCMARM),y)
-	cd accel-pptp && CFLAGS="-g -O2 $(EXTRACFLAGS)" \
+	cd accel-pptp && CFLAGS="-g -O2 $(EXTRACFLAGS) $(if $(RTCONFIG_VPNC), -DRTCONFIG_VPNC,)" \
 	$(CONFIGURE) --prefix=/usr KDIR=$(KDIR) PPPDIR=$(TOP)/pppd
 else
-	cd accel-pptp && CFLAGS="-g -O2 $(EXTRACFLAGS)" \
+	cd accel-pptp && CFLAGS="-g -O2 $(EXTRACFLAGS) $(if $(RTCONFIG_VPNC), -DRTCONFIG_VPNC,)" \
 	$(CONFIGURE) --prefix=/usr KDIR=$(TOP)/kernel_header PPPDIR=$(TOP)/pppd
 endif
 	touch $@
@@ -1688,7 +1733,7 @@ pppd/stamp-h1:
 
 pppd: pppd/stamp-h1
 	@$(SEP)
-	@$(MAKE) -C pppd MFLAGS='$(if $(RTCONFIG_IPV6),HAVE_INET6=y,) EXTRACFLAGS="$(EXTRACFLAGS)"'
+	@$(MAKE) -C pppd MFLAGS='$(if $(RTCONFIG_IPV6),HAVE_INET6=y,) EXTRACFLAGS="$(EXTRACFLAGS) $(if $(RTCONFIG_VPNC), -DRTCONFIG_VPNC,)"'
 
 pppd-clean:
 	-@$(MAKE) -C pppd clean
@@ -1801,7 +1846,7 @@ libpcap-install: libpcap
 	#cd $(INSTALLDIR)/libpcap/usr/lib && ln -sf libpcap.so.1.4.0 libpcap.so
 
 libpcap-clean:
-	-@$(MAKE) -C libpcap clean
+	[ ! -f libpcap/Makefile ] || -@$(MAKE) -C libpcap clean
 	@rm -f libpcap/stamp-h1
 
 tcpdump-4.4.0/stamp-h1:
@@ -1817,7 +1862,7 @@ tcpdump-4.4.0-install: tcpdump-4.4.0
 	$(STRIP) $(INSTALLDIR)/tcpdump-4.4.0/usr/sbin/tcpdump
 
 tcpdump-4.4.0-clean:
-	-@$(MAKE) -C tcpdump-4.4.0 clean
+	[ ! -f tcpdump-4.4.0/Makefile ] || -@$(MAKE) -C tcpdump-4.4.0 clean
 	@rm -f tcpdump-4.4.0/stamp-h1
 
 libbcm:
@@ -2086,7 +2131,7 @@ ifneq ($(MEDIA_SERVER_STATIC),y)
 	install -D zlib/libz.so.1 $(INSTALLDIR)/zlib/usr/lib/
 	$(STRIP) $(INSTALLDIR)/zlib/usr/lib/libz.so.1
 endif
-ifeq ($(RTCONFIG_USB_BECEEM),y)
+ifeq ($(or $(RTCONFIG_USB_BECEEM),$(RTCONFIG_MEDIA_SERVER),$(RTCONFIG_CLOUDSYNC),$(RTCONFIG_PUSH_EMAIL)),y)
 	install -d $(INSTALLDIR)/zlib/usr/lib
 	install -D zlib/libz.so.1 $(INSTALLDIR)/zlib/usr/lib/
 	$(STRIP) $(INSTALLDIR)/zlib/usr/lib/libz.so.1
@@ -2331,21 +2376,36 @@ lzo-install: lzo
 	$(STRIP) $(INSTALLDIR)/lzo/usr/lib/liblzo2.so.2
 	cd $(INSTALLDIR)/lzo/usr/lib && ln -sf liblzo2.so.2 liblzo2.so
 
+openpam/stamp-h1:
+	cd openpam && ./autogen.sh && \
+	$(CONFIGURE) --without-doc
+	touch $@
+
+openpam: openpam/stamp-h1
+	$(MAKE) -C openpam
+
+openpam-install: openpam
+	install -D openpam/lib/libpam/.libs/libpam.so.2.0.0 $(INSTALLDIR)/openpam/usr/lib/libpam.so
+	$(STRIP) -s $(INSTALLDIR)/openpam/usr/lib/libpam.so
+
+openpam-clean:
+	-@$(MAKE) -C openpam clean
+	@rm -f openpam/stamp-h1
 
 openvpn/stamp-h1:
 	cd openvpn && CFLAGS="-O3 -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \
-	LDFLAGS="-L$(TOP)/lzo/src/.libs -ffunction-sections -fdata-sections -Wl,--gc-sections" \
-	CPPFLAGS="-I$(TOP)/lzo/include -L$(TOP)/lzo -L$(TOP)/lzo/src/.libs" \
+	LDFLAGS="$(EXTRALDFLAGS) -L$(TOP)/nvram$(BCMEX) -lnvram -L$(TOP)/shared -lshared -L$(TOP)/openssl -L$(TOP)/zlib -lz -L$(TOP)/lzo/src/.libs -L$(TOP)/openpam/lib/libpam/.libs -ffunction-sections -fdata-sections -Wl,--gc-sections" \
+	CPPFLAGS="-I$(TOP)/lzo/include -I$(TOP)/openssl/include -I$(TOP)/openpam/include -I$(TOP)/shared -I$(SRCBASE)/include" \
 	IPROUTE="/usr/sbin/ip" \
-	OPENSSL_CRYPTO_CFLAGS="-I$(TOP)/openssl/include" OPENSSL_CRYPTO_LIBS="-L$(TOP)/openssl -lcrypto" \
-	OPENSSL_SSL_CFLAGS="-I$(TOP)/openssl/include" OPENSSL_SSL_LIBS="-L$(TOP)/openssl -lssl -lcrypto" \
+	OPENSSL_CRYPTO_LIBS="-lcrypto" \
 	$(CONFIGURE) --prefix=  --enable-iproute2 \
-	--disable-debug --disable-plugins --enable-management --enable-small \
+	--disable-debug --enable-management --disable-small \
 	--disable-selinux --disable-socks --enable-password-save \
+	--enable-plugin-auth-pam \
 	ac_cv_lib_resolv_gethostbyname=no
 	touch $@
 
-openvpn: openvpn/stamp-h1 openssl lzo
+openvpn: openvpn/stamp-h1 shared openssl lzo openpam zlib
 
 openvpn-clean:
 	-@$(MAKE) -C openvpn clean
@@ -2355,8 +2415,10 @@ openvpn-install: openvpn
 	install -D openvpn/src/openvpn/.libs/openvpn $(INSTALLDIR)/openvpn/usr/sbin/openvpn
 	$(STRIP) -s $(INSTALLDIR)/openvpn/usr/sbin/openvpn
 	chmod 0500 $(INSTALLDIR)/openvpn/usr/sbin/openvpn
+	install -D openvpn/src/plugins/auth-pam/.libs/openvpn-plugin-auth-pam.so $(INSTALLDIR)/openvpn/usr/lib/openvpn-plugin-auth-pam.so
+	$(STRIP) -s $(INSTALLDIR)/openvpn/usr/lib/openvpn-plugin-auth-pam.so
 	@mkdir -p $(TARGETDIR)/rom/easy-rsa
-	install -m 0644 openvpn/easy-rsa/2.0/* $(TARGETDIR)/rom/easy-rsa
+	install openvpn/easy-rsa/2.0/* $(TARGETDIR)/rom/easy-rsa
 
 sdparm-1.02/stamp-h1:
 	cd $(TOP)/sdparm-1.02 && $(CONFIGURE) --prefix=$(INSTALLDIR)/sdparm-1.02
@@ -2607,6 +2669,141 @@ inotify-install: inotify
 inotify-clean:
 	-@$(MAKE) -C inotify clean
 
+#libgpg-error-1.10
+libgpg-error-1.10/stamp-h1:
+	cd $(TOP)/libgpg-error-1.10 && \
+	$(CONFIGURE) --prefix=$(INSTALLDIR)/libgpg-error-1.10/usr
+	touch $@
+
+libgpg-error-1.10: libgpg-error-1.10/stamp-h1
+	@$(SEP)
+	@$(MAKE) -C libgpg-error-1.10
+
+libgpg-error-1.10-install: libgpg-error-1.10
+	@$(MAKE) -C libgpg-error-1.10 install
+
+libgpg-error-1.10-clean:
+	-@$(MAKE) -C libgpg-error-1.10 clean
+	@rm -f libgpg-error-1.10/stamp-h1
+
+#libgcrypt-1.5.1
+libgcrypt-1.5.1/stamp-h1: libgpg-error-1.10
+	cd $(TOP)/libgcrypt-1.5.1 && \
+	$(CONFIGURE) --prefix=$(INSTALLDIR)/libgcrypt-1.5.1/usr --with-gpg-error-prefix=$(TOP)/libgpg-error-1.10/src \
+	LDFLAGS="-L$(TOP)/libgpg-error-1.10/src/.libs"
+	touch $@
+
+libgcrypt-1.5.1: libgcrypt-1.5.1/stamp-h1
+	@$(SEP)
+	@$(MAKE) -C libgcrypt-1.5.1
+
+libgcrypt-1.5.1-install: libgcrypt-1.5.1
+	@$(MAKE) -C libgcrypt-1.5.1 install
+
+libgcrypt-1.5.1-clean:
+	-@$(MAKE) -C libgcrypt-1.5.1 clean
+	@rm -f libgcrypt-1.5.1/stamp-h1
+
+#db-4.8.30
+db-4.8.30/build_unix/stamp-h1:
+	cd $(TOP)/db-4.8.30/build_unix && \
+	../dist/$(CONFIGURE) --prefix=$(INSTALLDIR)/db-4.8.30/usr \
+	--enable-cxx CFLAGS="-Os" \
+	--disable-cryptography \
+	--disable-hash \
+	--disable-queue \
+	--disable-replication \
+	--disable-statistics \
+	--disable-verify \
+	--disable-compat185 \
+	--disable-cxx \
+	--disable-diagnostic \
+	--disable-dump185 \
+	--disable-java \
+	--disable-mingw \
+	--disable-o_direct \
+	--enable-posixmutexes \
+	--disable-smallbuild \
+	--disable-tcl \
+	--disable-test \
+	--disable-uimutexes \
+	--enable-umrw \
+	--disable-libtool-lock
+	touch $@
+
+##	--enable-compat185 --enable-dbm --enable-cxx CFLAGS="-Os" --disable-mutexsupport
+
+db-4.8.30: db-4.8.30/build_unix/stamp-h1
+	@$(SEP)
+	@$(MAKE) -C db-4.8.30/build_unix
+	
+db-4.8.30-install: db-4.8.30
+	@$(MAKE) -C db-4.8.30/build_unix install
+
+db-4.8.30-clean:
+	-@$(MAKE) -C db-4.8.30 clean
+	-@$(MAKE) -C db-4.8.30/build_unix clean
+	@rm -f db-4.8.30/build_unix/stamp-h1
+
+#netatalk-3.0.5
+netatalk-3.0.5/stamp-h1: openssl libgcrypt-1.5.1 db-4.8.30
+	touch $(TOP)/netatalk-3.0.5/*
+	cd $(TOP)/netatalk-3.0.5 && \
+	$(CONFIGURE) CPPFLAGS="-I$(TOP)/db-4.8.30/build_unix -I$(TOP)/libgcrypt-1.5.1/src" \
+	LDFLAGS="-L$(TOP)/db-4.8.30/build_unix/.libs -L$(TOP)/libgcrypt-1.5.1/src/.libs" \
+	LIBS="-L$(TOP)/libgpg-error-1.10/src/.libs -lgpg-error -L$(TOP)/libgcrypt-1.5.1/src/.libs -lgcrypt" \
+	--without-kerberos \
+	--with-bdb=$(TOP)/db-4.8.30/build_unix \
+	--prefix=$(INSTALLDIR)/netatalk-3.0.5/usr \
+	--with-ssl-dir=$(TOP)/openssl \
+	--with-libgcrypt-dir=$(TOP)/libgcrypt-1.5.1 \
+	--with-ld-library-path=$(SRCBASE)/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3/lib
+	touch $@
+
+netatalk-3.0.5: netatalk-3.0.5/stamp-h1
+	@$(SEP)
+	@$(MAKE) -C netatalk-3.0.5
+
+netatalk-3.0.5-install: netatalk-3.0.5
+	@$(MAKE) -C netatalk-3.0.5 install
+
+netatalk-3.0.5-clean:
+	-@$(MAKE) -C netatalk-3.0.5 clean
+	@rm -f netatalk-3.0.5/stamp-h1
+
+#expat-2.0.1
+expat-2.0.1/stamp-h1:
+	cd $(TOP)/expat-2.0.1 && \
+	$(CONFIGURE) --build=i686-linux --prefix=$(INSTALLDIR)/expat-2.0.1/usr
+	touch $@
+
+expat-2.0.1: expat-2.0.1/stamp-h1
+	@$(SEP)
+	@$(MAKE) -C expat-2.0.1
+
+expat-2.0.1-install: expat-2.0.1
+	@$(MAKE) -C expat-2.0.1 install
+
+expat-2.0.1-clean:
+	-@$(MAKE) -C expat-2.0.1 clean
+	@rm -f expat-2.0.1/stamp-h1
+
+#avahi-0.6.31
+avahi-0.6.31/stamp-h1: shared nvram$(BCMEX) expat-2.0.1 libdaemon
+	cd $(TOP)/avahi-0.6.31 && \
+	$(CONFIGURE) LDFLAGS="-L$(TOP)/expat-2.0.1/.libs" CFLAGS="-I$(TOP)/expat-2.0.1/lib -I$(TOP)/shared -I$(SRCBASE)/include" --prefix=$(INSTALLDIR)/avahi-0.6.31/usr --with-distro=archlinux --disable-glib --disable-gobject --disable-qt3 --disable-qt4 --disable-gtk --disable-dbus --disable-expat --disable-gdbm --disable-python --disable-pygtk --disable-python-dbus --disable-mono --disable-monodoc --disable-gtk3 --with-xml=none  LIBDAEMON_LIBS="-L$(TOP)/libdaemon/libdaemon/.libs -ldaemon -L$(TOP)/nvram$(BCMEX) -lnvram -L$(TOP)/shared -lshared" LIBDAEMON_CFLAGS="-I$(TOP)/libdaemon" --disable-autoipd --with-xml=expat --disable-stack-protector --with-avahi-user="admin" --with-avahi-group="root"
+	touch $@
+
+avahi-0.6.31: avahi-0.6.31/stamp-h1
+	@$(SEP)
+	@$(MAKE) -C avahi-0.6.31
+
+avahi-0.6.31-install: avahi-0.6.31
+	@$(MAKE) -C avahi-0.6.31 install
+
+avahi-0.6.31-clean:
+	-@$(MAKE) -C avahi-0.6.31 clean
+	@rm -f avahi-0.6.31/stamp-h1
 
 madwimax-0.1.1/stamp-h1:
 	cd $(TOP)/madwimax-0.1.1 && \
@@ -2738,31 +2935,6 @@ email-3.1.3-clean:
 email-3.1.3-install: email-3.1.3
 	install -D email-3.1.3/src/email $(INSTALLDIR)/email-3.1.3/usr/sbin/email
 	$(STRIP) $(INSTALLDIR)/email-3.1.3/usr/sbin/email
-
-valgrind: valgrind/Makefile
-	$(MAKE) -C $@
-
-valgrind/Makefile: valgrind/configure
-	$(MAKE) valgrind-configure
-
-valgrind/configure:
-	( cd valgrind ; ./autogen.sh )
-
-valgrind-configure:
-	( cd valgrind ; \
-		$(CONFIGURE) \
-		--prefix=/usr \
-		--libdir=/usr/lib \
-		--enable-only32bit --with-pagesize=4 \
-		--disable-drd --without-drd \
-		CFLAGS="-mips32r2" \
-	)
-
-valgrind-install:
-	# FIXME
-
-valgrind-clean:
-	[ ! -f valgrind/Makefile ] || $(MAKE) -C valgrind distclean
 
 #
 # Generic rules

@@ -1104,6 +1104,12 @@ USEPEERDNS will be set to 1.  In addition, pppd will create an
 /etc/ppp/resolv.conf file containing one or two nameserver lines with
 the address(es) supplied by the peer.
 .TP
+.B usepeerwins
+Ask the peer for up to 2 WINS server addresses.  The addresses supplied
+by the peer (if any) are passed to the /etc/ppp/ip\-up script in the
+environment variables WINS1 and WINS2, and the environment variable
+USEPEERWINS will be set to 1.
+.TP
 .B user \fIname
 Sets the name used for authenticating the local system to the peer to
 \fIname\fR.
@@ -1650,6 +1656,15 @@ first DNS server address supplied.
 .B DNS2
 If the peer supplies DNS server addresses, this variable is set to the
 second DNS server address supplied.
+.TP
+.B WINS1
+If the peer supplies WINS server addresses, this variable is set to the
+first WINS server address supplied.
+.TP
+.B WINS2
+If the peer supplies WINS server addresses, this variable is set to the
+second WINS server address supplied.
+.P
 .P
 Pppd invokes the following scripts, if they exist.  It is not an error
 if they don't exist.

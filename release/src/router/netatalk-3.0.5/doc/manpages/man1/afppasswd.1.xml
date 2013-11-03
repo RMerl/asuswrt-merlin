@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry id="afppasswd.1">
+  <refmeta>
+    <refentrytitle>afppasswd</refentrytitle>
+
+    <manvolnum>1</manvolnum>
+
+    <refmiscinfo class="date">22 Mar 2012</refmiscinfo>
+
+    <refmiscinfo class="source">@NETATALK_VERSION@</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>afppasswd</refname>
+
+    <refpurpose>netatalk password maintenance utility</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>afppasswd<indexterm>
+          <primary>afppasswd</primary>
+        </indexterm><indexterm>
+          <primary>UAM</primary>
+
+          <secondary>User Authentication Module</secondary>
+        </indexterm></command>
+
+      <arg choice="opt">-acfn</arg>
+
+      <arg choice="opt"><arg choice="plain">-p
+      <replaceable>passwd</replaceable></arg><arg
+      choice="plain"><replaceable>file</replaceable></arg></arg>
+
+      <arg choice="opt"><arg choice="plain">-u
+      <replaceable>minimum</replaceable></arg><arg
+      choice="plain"><replaceable>uid</replaceable></arg></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>DESCRIPTION</title>
+
+    <para><command>afppasswd</command> allows the maintenance of afppasswd
+    files created by netatalk for use by the uams_randnum.so UAM (providing
+    the "Randnum exchange" and "2-Way Randnum exchange" User Authentication
+    Modules).</para>
+
+    <para><command>afppasswd</command> can either be called by root with
+    parameters, or can be called by local system users with no parameters to
+    change their AFP passwords.</para>
+
+    <note>
+      <para>With this utility you can only change the passwords used by two
+      specific UAMs. As they provide only weak password encryption, the use of
+      the "Randnum exchange" and "2-Way Randnum exchange" UAMs is deprecated
+      unless one has to support very old AFP clients, that can not deal with
+      the more secure "DHCAST128" and "DHX2" UAM instead. Please compare with
+      the <link linkend="authentication">Authentication chapter</link> inside
+      Netatalk's documentation.</para>
+    </note>
+  </refsect1>
+
+  <refsect1>
+    <title>EXAMPLE</title>
+
+    <para>Local user changing their own password:</para>
+
+    <screen><prompt>example%</prompt> <userinput>afppasswd</userinput>
+<computeroutput>Enter NEW AFP password:</computeroutput> <userinput>(hidden)</userinput>
+<computeroutput>Enter NEW AFP password again:</computeroutput> <userinput>(hidden)</userinput>
+<computeroutput>afppasswd: updated password.</computeroutput>
+</screen>
+  </refsect1>
+
+  <refsect1>
+    <title>OPTIONS</title>
+
+    <variablelist remap="TP">
+      <varlistentry>
+        <term><option>-a</option></term>
+
+        <listitem>
+          <para>Add a new user to the <command>afppasswd</command>
+          file.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-c</option></term>
+
+        <listitem>
+          <para>Create and/or initialize <command>afppasswd</command> file or
+          specific user.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-f</option></term>
+
+        <listitem>
+          <para>Force the current action.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-p</option><replaceable> path</replaceable></term>
+
+        <listitem>
+          <para>Path to <command>afppasswd</command> file.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-n</option></term>
+
+        <listitem>
+          <para>If cracklib support is built into <emphasis
+          remap="B">netatalk</emphasis> this option will cause cracklib
+          checking to be disabled, if the superuser does not want to have the
+          password run against the cracklib dictionary.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-u</option><replaceable> minimum
+        uid</replaceable></term>
+
+        <listitem>
+          <para>This is the minimum <emphasis remap="I">user id</emphasis>
+          (uid) that <command>afppasswd</command> will use when creating
+          users.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+
+    <para><citerefentry>
+        <refentrytitle>afpd</refentrytitle>
+
+        <manvolnum>8</manvolnum>
+      </citerefentry>, <citerefentry>
+        <refentrytitle>afp.conf</refentrytitle>
+
+        <manvolnum>5</manvolnum>
+      </citerefentry>.</para>
+  </refsect1>
+</refentry>

@@ -1,0 +1,19 @@
+# This file is part of netatalk :NETATALK_VERSION:.
+
+[Unit]
+Description=Netatalk AFP fileserver for Macintosh clients
+Documentation=man:afp.conf(5) man:netatalk(8) man:afpd(8) man:cnid_metad(8) man:cnid_dbd(8)
+Documentation=http://netatalk.sourceforge.net/
+After=syslog.target network.target avahi-daemon.service
+
+[Service]
+Type=forking
+GuessMainPID=no
+ExecStart=:SBINDIR:/netatalk
+PIDFile=:PATH_NETATALK_LOCK:
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=multi-user.target

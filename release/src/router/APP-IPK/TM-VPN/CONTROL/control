@@ -1,0 +1,13 @@
+Package: timemachine
+Architecture: mipsel
+Priority: optional
+Section: net
+Version: 1.0.0.2
+Maintainer: ASUS
+Source: 
+URL: http://192.168.1.1
+Description: merge swpj-openvpn intoswpj-timemachine
+Depends: 
+Suggests: 
+Conflicts: 
+Enabled: yes

@@ -1,0 +1,249 @@
+'\" t
+.\"     Title: cnid_dbd
+.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
+.\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
+.\"      Date: 01 Jan 2012
+.\"    Manual: @NETATALK_VERSION@
+.\"    Source: @NETATALK_VERSION@
+.\"  Language: English
+.\"
+.TH "CNID_DBD" "8" "01 Jan 2012" "@NETATALK_VERSION@" "@NETATALK_VERSION@"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+cnid_dbd \- implement access to CNID databases through a dedicated daemon process
+.SH "SYNOPSIS"
+.HP \w'\fBcnid_dbd\fR\fB\fR\fB\fR\fB\fR\fBcnid_dbd\fR\fB\fR\ 'u
+\fBcnid_dbd\fR\fB\fR\fB\fR\fB\fR
+.br
+\fBcnid_dbd\fR\fB\fR \-v | \-V 
+.SH "DESCRIPTION"
+.PP
+\fBcnid_dbd\fR
+provides an interface for storage and retrieval of catalog node IDs (CNIDs) and related information to the
+\fBafpd\fR
+daemon\&. CNIDs are a component of Macintosh based file systems with semantics that map not easily onto Unix file systems\&. This makes separate storage in a database necessary\&.
+\fBcnid_dbd\fR
+is part of the
+\fBCNID backend\fR
+framework of
+\fBafpd\fR
+and implements the
+\fBdbd\fR
+backend\&.
+.PP
+\fBcnid_dbd\fR
+is never started via the command line or system startup scripts but only by the
+\fBcnid_metad\fR
+daemon\&. There is one instance of
+\fBcnid_dbd\fR
+per netatalk volume\&.
+.PP
+\fBcnid_dbd\fR
+uses the
+\fBBerkeley DB\fR
+database library and uses transactionally protected updates\&. The
+\fBdbd\fR
+backend with transactions will avoid corruption of the CNID database even if the system crashes unexpectedly\&.
+.PP
+\fBcnid_dbd\fR
+inherits the effective userid and groupid from
+\fBcnid_metad\fR
+on startup, which is normally caused by
+\fBafpd\fR
+serving a netatalk volume to a client\&. It changes to the
+\fBBerkeley DB\fR
+database home directory
+\fIdbdir\fR
+that is associated with the volume\&. If the userid inherited from
+\fBcnid_metad\fR
+is 0 (root),
+\fBcnid_dbd\fR
+will change userid and groupid to the owner and group of the database home directory\&. Otherwise, it will continue to use the inherited values\&.
+\fBcnid_dbd\fR
+will then attempt to open the database and start serving requests using filedescriptor
+\fIclntfd\fR\&. Subsequent instances of
+\fBafpd\fR
+that want to access the same volume are redirected to the running
+\fBcnid_dbd\fR
+process by
+\fBcnid_metad\fR
+via the filedescriptor
+\fIctrlfd\fR\&.
+.PP
+\fBcnid_dbd\fR
+can be configured to run forever or to exit after a period of inactivity\&. If
+\fBcnid_dbd\fR
+receives a TERM or an INT signal it will exit cleanly after flushing dirty database buffers to disk and closing
+\fBBerkeley DB\fR
+database environments\&. It is safe to terminate
+\fBcnid_dbd\fR
+this way, it will be restarted when necessary\&. Other signals are not handled and will cause an immediate exit, possibly leaving the CNID database in an inconsistent state (no transactions) or losing recent updates during recovery (transactions)\&.
+.PP
+The
+\fBBerkeley DB\fR
+database subsystem will create files named log\&.xxxxxxxxxx in the database home directory
+\fIdbdir\fR, where xxxxxxxxxx is a monotonically increasing integer\&. These files contain the transactional database changes\&. They will be removed regularly, unless the
+\fBlogfile_autoremove\fR
+option is specified in the
+\fIdb_param\fR
+configuration file (see below) with a value of 0 (default 1)\&.
+.SH "OPTIONS"
+.PP
+\fB\-v, \-V\fR
+.RS 4
+Show version and exit\&.
+.RE
+.SH "CONFIGURATION"
+.PP
+\fBcnid_dbd\fR
+reads configuration information from the file
+\fIdb_param\fR
+in the database directory
+\fIdbdir\fR
+on startup\&. If the file does not exist or a parameter is not listed, suitable default values are used\&. The format for a single parameter is the parameter name, followed by one or more spaces, followed by the parameter value, followed by a newline\&. The following parameters are currently recognized:
+.PP
+\fBlogfile_autoremove\fR
+.RS 4
+If set to 0, unused Berkeley DB transactional logfiles (log\&.xxxxxxxxxx in the database home directory) are not removed on startup of
+\fBcnid_dbd\fR
+and on a regular basis\&. Default: 1\&.
+.RE
+.PP
+\fBcachesize\fR
+.RS 4
+Determines the size of the Berkeley DB cache in kilobytes\&. Default: 8192\&. Each
+\fBcnid_dbd\fR
+process grabs that much memory on top of its normal memory footprint\&. It can be used to tune database performance\&. The
+\fBdb_stat\fR
+utility with the
+\fB\-m\fR
+option that comes with Berkley DB can help you determine ether you need to change this value\&. The default is pretty conservative so that a large percentage of requests should be satisfied from the cache directly\&. If memory is not a bottleneck on your system you might want to leave it at that value\&. The
+\fBBerkeley DB Tutorial and Reference Guide\fR
+has a section
+\fBSelecting a cache size\fR
+that gives more detailed information\&.
+.RE
+.PP
+\fBflush_frequency\fR, \fBflush_interval\fR
+.RS 4
+\fIflush_frequency\fR
+(Default: 1000) and
+\fIflush_interval\fR
+(Default: 1800) control how often changes to the database are checkpointed\&. Both of these operations are performed if either i) more than
+\fIflush_frequency\fR
+requests have been received or ii) more than
+\fIflush_interval\fR
+seconds have elapsed since the last save/checkpoint\&. Be careful to check your harddisk configuration for on disk cache settings\&. Many IDE disks just cache writes as the default behaviour, so even flushing database files to disk will not have the desired effect\&.
+.RE
+.PP
+\fBfd_table_size\fR
+.RS 4
+is the maximum number of connections (filedescriptors) that can be open for
+\fBafpd\fR
+client processes in
+\fBcnid_dbd\&.\fR
+Default: 512\&. If this number is exceeded, one of the existing connections is closed and reused\&. The affected
+\fBafpd\fR
+process will transparently reconnect later, which causes slight overhead\&. On the other hand, setting this parameter too high could affect performance in
+\fBcnid_dbd\fR
+since all descriptors have to be checked in a
+\fBselect()\fR
+system call, or worse, you might exceed the per process limit of open file descriptors on your system\&. It is safe to set the value to 1 on volumes where only one
+\fBafpd\fR
+client process is expected to run, e\&.g\&. home directories\&.
+.RE
+.PP
+\fBidle_timeout\fR
+.RS 4
+is the number of seconds of inactivity before an idle
+\fBcnid_dbd\fR
+exits\&. Default: 600\&. Set this to 0 to disable the timeout\&.
+.RE
+.SH "UPDATING"
+.PP
+Note that the first version to appear
+\fIafter\fR
+Netatalk 2\&.1 ie Netatalk 2\&.1\&.1, will support BerkeleyDB updates on the fly without manual intervention\&. In other words Netatalk 2\&.1 does contain code to prepare the BerkeleyDB database for upgrades and to upgrade it in case it has been prepared before\&. That means it can\*(Aqt upgrade a 2\&.0\&.x version because that one didn\*(Aqt prepare the database\&.
+.PP
+In order to update between older Netatalk releases using different BerkeleyDB library versions, follow this steps:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Stop the to be upgraded old version of Netatalk
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Using the old BerkeleyDB utilities run
+\fBdb_recover \-h <path to \&.AppleDB>\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Using the new BerkeleyDB utilities run
+\fBdb_upgrade \-v \-h <path to \&.AppleDB> \-f cnid2\&.db\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Again using the new BerkeleyDB utilities run
+\fBdb_checkpoint \-1 \-h <path to \&.AppleDB>\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Start the the new version of Netatalk
+.RE
+.SH "SEE ALSO"
+.PP
+\fBcnid_metad\fR(8),
+\fBafpd\fR(8),
+\fBdbd\fR(1)

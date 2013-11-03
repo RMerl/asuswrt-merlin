@@ -110,9 +110,9 @@ ifeq ($(RTAC68U), 1)
 	../../../../../ctools/nvserial -i cfez.bin -o cfe_rt-ac68u.bin -s 00 rt-ac68u_nvram.txt
 	cp cfe_rt-ac68u.bin ../../../..
 else
-ifeq ($(RTN18UHP), 1)
-		../../../../../ctools/nvserial -i cfez.bin -o cfe_rt-n18uhp.bin -s 00 rt-n18uhp_nvram.txt
-		cp cfe_rt-n18uhp.bin ../../../..
+ifeq ($(RTN18U), 1)
+		../../../../../ctools/nvserial -i cfez.bin -o cfe_rt-n18u.bin -s 00 rt-n18u_nvram.txt
+		cp cfe_rt-n18u.bin ../../../..
 else
 		../../../../../ctools/nvserial -i cfez.bin -o cfe_rt-ac56u.bin -s 00 rt-ac56u_nvram.txt
 		cp cfe_rt-ac56u.bin ../../../..
@@ -125,10 +125,10 @@ ifeq ($(RTAC68U), 1)
 		fi ; \
 	fi
 else
-ifeq ($(RTN18UHP), 1)
+ifeq ($(RTN18U), 1)
 	@if [ "$(CFEZ_MAXSIZE)" != "" ]; then \
-		if [ "`wc -c < cfe_rt-n18uhp.bin`" -gt "$(CFEZ_MAXSIZE)" ]; then \
-			echo "*** ERROR *** : cfe_rt-n18uhp.bin bootrom image size: `wc -c < cfe_rt-n18uhp.bin` exceeds limit: $(CFEZ_MAXSIZE)"; \
+		if [ "`wc -c < cfe_rt-n18u.bin`" -gt "$(CFEZ_MAXSIZE)" ]; then \
+			echo "*** ERROR *** : cfe_rt-n18u.bin bootrom image size: `wc -c < cfe_rt-n18u.bin` exceeds limit: $(CFEZ_MAXSIZE)"; \
 		fi ; \
 	fi
 else

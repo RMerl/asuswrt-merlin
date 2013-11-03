@@ -1,0 +1,19 @@
+#!/bin/sh
+#
+# PROVIDE: netatalk
+# KEYWORD: shutdown
+#
+# AFP fileserver for Macintosh clients (netatalk :NETATALK_VERSION:)
+#
+
+. /etc/rc.subr
+
+name="netatalk"
+rcvar=$name
+command=":SBINDIR:/netatalk"
+etcdir=":ETCDIR:"
+pidfile="/var/run/${name}.pid"
+required_files="$etcdir/afp.conf"
+
+load_rc_config $name
+run_rc_command "$1"

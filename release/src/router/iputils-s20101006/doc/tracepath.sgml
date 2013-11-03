@@ -1,0 +1,185 @@
+<refentry id="tracepath">
+
+<refmeta>
+<refentrytitle>tracepath</refentrytitle>
+<manvolnum>8</manvolnum>
+<refmiscinfo>iputils-&snapshot;</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>tracepath, tracepath6</refname>
+<refpurpose>
+traces path to a network host discovering MTU along this path</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>tracepath</command>
+<arg choice="opt">-n</arg>
+<arg choice="opt">-b</arg>
+<arg choice="opt">-l <replaceable/pktlen/</arg>
+<arg choice="req"><replaceable/destination/</arg>
+<arg choice="opt"><replaceable/port/</arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1><title>DESCRIPTION</title>
+<para>
+It traces path to <replaceable/destination/ discovering MTU along this path.
+It uses UDP port <replaceable/port/ or some random port.
+It is similar to <command/traceroute/, only does not require superuser
+privileges and has no fancy options.
+</para>
+
+<para>
+<command/tracepath6/ is good replacement for <command/traceroute6/
+and classic example of application of Linux error queues.
+The situation with IPv4 is worse, because commercial
+IP routers do not return enough information in icmp error messages.
+Probably, it will change, when they will be updated.
+For now it uses Van Jacobson's trick, sweeping a range
+of UDP ports to maintain trace history.
+</para>
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+<variablelist>
+
+ <varlistentry>
+  <term><option/-n/</term>
+  <listitem><para>
+Print primarily IP addresses numerically.
+  </para></listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term><option/-b/</term>
+  <listitem><para>
+Print both of host names and IP addresses.
+  </para></listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term><option/-l/</term>
+  <listitem><para>
+Sets the initial packet length to <replaceable/pktlen/ instead of
+65536 for <command/tracepath/ or 128000 for <command/tracepath6/.
+  </para></listitem>
+ </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1><title>OUTPUT</title>
+<para>
+<literallayout>
+root@mops:~ # tracepath6 3ffe:2400:0:109::2
+ 1?: [LOCALHOST]                              pmtu 1500
+ 1:  dust.inr.ac.ru                   0.411ms
+ 2:  dust.inr.ac.ru        asymm  1   0.390ms pmtu 1480
+ 2:  3ffe:2400:0:109::2               463.514ms reached
+     Resume: pmtu 1480 hops 2 back 2
+</literallayout>
+</para>
+
+<para>
+The first column shows <literal/TTL/ of the probe, followed by colon.
+Usually value of <literal/TTL/ is obtained from reply from network,
+but sometimes reply does not contain necessary information and
+we have to guess it. In this case the number is followed by ?.
+</para>
+
+<para>
+The second column shows the network hop, which replied to the probe.
+It is either address of router or word <literal/[LOCALHOST]/, if
+the probe was not sent to the network.
+</para>
+
+<para>
+The rest of line shows miscellaneous information about path to
+the correspinding hetwork hop. As rule it contains value of RTT.
+Additionally, it can show Path MTU, when it changes.
+If the path is asymmetric
+or the probe finishes before it reach prescribed hop, difference
+between number of hops in forward and backward direction is shown
+following keyword <literal/async/. This information is not reliable.
+F.e. the third line shows asymmetry of 1, it is because the first probe
+with TTL of 2 was rejected at the first hop due to Path MTU Discovery.
+</para>
+
+<para>
+The last line summarizes information about all the path to the destination,
+it shows detected Path MTU, amount of hops to the destination and our
+guess about amount of hops from the destination to us, which can be
+different when the path is asymmetric.
+</para>
+
+</refsect1>
+
+
+
+
+<refsect1><title>SEE ALSO</title>
+<para>
+<citerefentry><refentrytitle/traceroute/<manvolnum/8/</citerefentry>,
+<link linkend="traceroute6">
+<citerefentry><refentrytitle/traceroute6/<manvolnum/8/</citerefentry></link>,
+<link linkend="ping">
+<citerefentry><refentrytitle/ping/<manvolnum/8/</citerefentry></link>.
+</para>
+</refsect1>
+
+<refsect1><title>AUTHOR</title>
+<para>
+<command/tracepath/ was written by
+<ulink url="mailto:kuznet@ms2.inr.ac.ru">Alexey Kuznetsov
+&lt;kuznet@ms2.inr.ac.ru&gt;</ulink>.
+</para>
+</refsect1>
+
+<refsect1><title>SECURITY</title>
+<para>
+No security issues.
+</para>
+<para>
+This lapidary deserves to be elaborated.
+<command/tracepath/ is not a privileged program, unlike
+<command/traceroute/, <command/ping/ and other beasts of this kind.
+<command/tracepath/ may be executed by everyone who has some access
+to network, enough to send UDP datagrams to investigated destination
+using given port.
+</para>
+</refsect1>
+
+<refsect1><title>AVAILABILITY</title>
+<para>
+<command/tracepath/ is part of <filename/iputils/ package
+and the latest versions are  available in source form at
+<ulink url="http://www.skbuff.net/iputils/iputils-current.tar.bz2">
+http://www.skbuff.net/iputils/iputils-current.tar.bz2</ulink>.
+</para>
+</refsect1>
+
+<![IGNORE[
+<refsect1><title>COPYING</title>
+<para>
+<literallayout>
+This documentation is free software; you can redistribute
+it and/or modify it under the terms of the GNU General Public
+License Version 2.
+
+This program is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU General Public License for more details.
+ 
+For more details see the file COPYING in the source
+distribution of Linux kernel of version 2.4.
+</literallayout>
+</para>
+</refsect1>
+]]>
+
+
+
+
+</refentry>

@@ -53,9 +53,13 @@ config RTCONFIG_CIFS
 	bool "CIFS Client"
 	default y
 
+config RTCONFIG_BRCM_NAND_JFFS2
+	bool "JFFS Support on BRCM Nand Flash Partition"
+	default n
+
 config RTCONFIG_JFFS2
 	bool "JFFS Support"
-	default y
+	default n
 
 config RTCONFIG_DISKTEST
 	bool "Disk test tools"
@@ -174,7 +178,7 @@ config RTCONFIG_USER_LOW_RSSI
 	bool "User specified accepted min rssi"
 	default n
 
-config RTCONFIG_EMAIL
+config RTCONFIG_PUSH_EMAIL
 	bool "Push Mail Service Support"
 	default n
 
@@ -237,6 +241,11 @@ config RTCONFIG_USB_EXTRAS
 
 config RTCONFIG_NTFS
 	bool "NTFS Support"
+	depends on RTCONFIG_USB
+	default n
+
+config RTCONFIG_HFS
+	bool "HFS Support"
 	depends on RTCONFIG_USB
 	default n
 
@@ -325,6 +334,14 @@ config RTCONFIG_LOCALE2012
 
 config RTCONFIG_ODMPID
 	bool "ODM Product ID"
+	default n
+
+config RTCONFIG_TIMEMACHINE
+	bool "Timemachine Support"
+	default n
+
+config RTCONFIG_MDNS
+	bool "MDNS Support"
 	default n
 
 config RTCONFIG_LED_ALL
@@ -496,10 +513,6 @@ config RTCONFIG_EXT4FS
 	bool "ext4 filesystem"
 	default n
 
-config RTCONFIG_VALGRIND
-	bool "valgrind"
-	default n
-
 config RTCONFIG_DMALLOC
 	bool "dmalloc"
 	default n
@@ -509,13 +522,22 @@ config RTCONFIG_TEMPROOTFS
 	default n
 
 config RTCONFIG_JFFS2LOG
-        bool "Backup syslog to jffs2"
-        default n
+	bool "Backup syslog to jffs2"
+	depends on RTCONFIG_JFFS2 || RTCONFIG_BRCM_NAND_JFFS2
+	default n
 
 config RTCONFIG_WPSMULTIBAND
 	bool "Multi-band WPS"
 	default n
 
-config RTCONFIG_EMAIL
-	bool "notify by E-Mail"
+config RTCONFIG_ENGINEERING_MODE
+	bool "Engineering Mode"
+	default n
+
+config RTCONFIG_VPNC
+	bool "VPNC"
+	default n
+
+config RTCONFIG_KYIVSTAR
+	bool "KYIVSTAR specified"
 	default n

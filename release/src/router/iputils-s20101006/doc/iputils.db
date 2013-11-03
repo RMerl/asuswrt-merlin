@@ -1,0 +1,209 @@
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook V3.1//EN"[]>
+<article id="iputils">
+ <artheader>
+  <title>iputils: documentation directory</title>
+ </artheader>
+
+<sect1>
+<title>Index</title>
+
+<itemizedlist>
+ <listitem><para>
+  <ulink url="ping.html">ping, ping6</ulink>.
+ </para></listitem>
+ <listitem><para>
+  <ulink url="arping.html">arping</ulink>.
+ </para></listitem>
+ <listitem><para>
+  <ulink url="clockdiff.html">clockdiff</ulink>.
+ </para></listitem>
+ <listitem><para>
+  <ulink url="rarpd.html">rarpd</ulink>.
+ </para></listitem>
+ <listitem><para>
+  <ulink url="tracepath.html">tracepath, tracepath6</ulink>.
+ </para></listitem>
+ <listitem><para>
+  <ulink url="traceroute6.html">traceroute6</ulink>.
+ </para></listitem>
+ <listitem><para>
+  <ulink url="rdisc.html">rdisc</ulink>.
+ </para></listitem>
+ <listitem><para>
+  <ulink url="tftpd.html">tftpd</ulink>.
+ </para></listitem>
+ <listitem><para>
+  <ulink url="pg3.html">pg3, ipg, pgset</ulink>.
+ </para></listitem>
+</itemizedlist>
+</sect1>
+
+<sect1>
+<title>Historical notes</title>
+
+<para>
+This package appeared as a desperate attempt to bring some life
+to state of basic networking applets: <command/ping/, <command/traceroute/
+etc. Though it was known that port of BSD <command/ping/ to Linux
+was basically broken, neither maintainers of well known (and superb)
+Linux net-tools package nor maintainers of Linux distributions
+worried about fixing well known bugs, which were reported in linux-kernel
+and linux-net mail lists for ages, were identified and nevertheless
+not repaired. So, one day 1001th resuming of the subject happened
+to be the last straw to break camel's back, I just parsed my hard disks
+and collected a set of utilities, which shared the following properties:
+</para>
+
+<itemizedlist>
+ <listitem><para>
+Small
+ </para></listitem>
+ <listitem><para>
+Useful despite of this
+ </para></listitem>
+ <listitem><para>
+I never seen it was made right
+ </para></listitem>
+ <listitem><para>
+Not quite trivial
+ </para></listitem>
+ <listitem><para>
+Demonstrating some important feature of Linux 
+ </para></listitem>
+ <listitem><para>
+The last but not the least, I use it more or less regularly
+ </para></listitem>
+</itemizedlist>
+
+<para>
+This utility set was not supposed to be a reference set or something like
+that. Most of them were cloned from some originals:
+<informaltable>
+ <tgroup cols=2><tbody>
+ <row>
+  <entry>ping</entry>
+  <entry>cloned of an ancient NetTools-B-xx</entry>
+ </row>
+ <row>
+  <entry>ping6</entry>
+  <entry>cloned of a very old Pedro's utility set</entry>
+ </row>
+ <row>
+  <entry>traceroute6</entry>
+  <entry>cloned of NRL Sep 96 distribution</entry>
+ </row>
+ <row>
+  <entry>rdisc</entry>
+  <entry>cloned of SUN in.rdisc</entry>
+ </row>
+ <row>
+  <entry>clockdiff</entry>
+  <entry>broken out of some BSD timed</entry>
+ </row>
+ <row>
+  <entry>tftpd</entry>
+  <entry>it is clone of some ancient NetKit package</entry>
+ </row>
+ </tbody></tgroup>
+</informaltable>
+</para>
+
+<para>
+Also I added some utilities written from scratch, namely
+<command/tracepath/, <command/arping/ and later <command/rarpd/
+(the last one does not satisfy all the criteria, I used it two or three
+times).
+</para>
+
+<para>
+Hesitated a bit I overcame temptation to add <command/traceroute/.
+The variant released by LBNL to that time was mostly sane and bugs
+in it were mostly not specific to Linux, but main reason was that
+the latest version of LBNL <command/traceroute/ was not 
+<emphasis/small/, it consisted of several files,
+used a wicked (and failing with Linux :-)) autoconfiguration etc.
+So, instead I assembled to iputils a simplistic <command/tracepath/ utility
+and IPv6 version of traceroute, and published my 
+<ulink url="ftp://ftp.inr.ac.ru/ip-routing/lbl-tools"> patches</ulink>.
+to LBNL <command/traceroute/ separately.<footnote><para>This was mistake.
+Due to this <command/traceroute/ was in a sad state until recently.
+Good news, redhat-7.2 seems to add these patches to their traceroute
+rpm eventually. So, I think I will refrain of suicide for awhile.
+</para></footnote>
+</para>
+
+</sect1>
+
+<sect1>
+<title>Installation notes</title>
+<para>
+<userinput/make/ to compile utilities. <userinput/make html/ to prepare
+html documentation, <userinput/make man/ if you prefer man pages.
+Nothing fancy, provided you have DocBook package installed.
+</para>
+
+<para>
+<userinput/make install/ installs <emphasis/only/ HTML documentation
+to <filename>/usr/doc/iputils</filename>. It even does not try
+to install binaries and man pages. If you read historical
+notes above, the reason should be evident. Most of utilities
+intersect with utilities distributed in another packages, and
+making such target rewriting existing installation would be a crime
+from my side. The decision what variant of <command/ping/ is preferred,
+how to resolve the conflicts etc. is left to you or to person who
+assembled an rpm. I vote for variant from <command/iputils/ of course.
+</para>
+
+<para>
+Anyway, select utilities which you like and install them to the places
+which you prefer together with their man pages.
+</para>
+
+
+<para>
+It is possible that compilation will fail, if you use some
+funny Linux distribution mangling header files in some unexpected ways
+(expected ones are the ways of redhat of course :-)).
+I validate iputils against <ulink url="http://www.asplinux.ru">asplinux</ulink>
+distribution, which is inevitably followed by validity with respect
+to <ulink url="http://www.redhat.com">redhat</ulink>.
+If your distribution is one of widely known ones, suse or debian,
+it also will compile provided snapshot is elder than month or so and
+someone reported all the problems, if they took place at all.
+</para>
+
+<para>
+<emphasis>
+Anyway, please, do not abuse me complaining about some compilation problems
+in any distribution different of asplinux or redhat.
+If you have a fix, please, send it to
+<ulink url="mailto:kuznet@ms2.inr.ac.ru">me</ulink>,
+I will check that it does not break distributions mentioned above
+and apply it. But I am not going to undertake any investigations,
+bare reports are deemed to be routed to <filename>/dev/null</filename>.
+</emphasis>
+</para>
+
+</sect1>
+
+<sect1><title>Availability</title>
+
+<para>
+The collection of documents is part of <filename/iputils/ package
+and the latest versions are  available in source form at
+<ulink url="http://www.skbuff.net/iputils/iputils-current.tar.bz2">
+http://www.skbuff.net/iputils/iputils-current.tar.bz2</ulink>.
+</para>
+</sect1>
+
+
+<sect1>
+<title>Copying</title>
+<para>
+Different files are copyrighted by different persons and organizations
+and distributed under different licenses. For details look into corresponding
+source files.
+</para>
+</sect1>
+
+</article>

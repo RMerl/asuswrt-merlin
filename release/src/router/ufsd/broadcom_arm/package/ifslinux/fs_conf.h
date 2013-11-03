@@ -145,34 +145,19 @@ Revision History:
   #endif
 #endif
 
+//
+// Force to activate trace
+//
+#define UFSD_TRACE
+
+//#define UFSD_SMART_TRACE
+
 #if !defined UFSD_DEBUG && !defined NDEBUG
   #define UFSD_DEBUG 1
 #endif
 
 #if defined UFSD_DEBUG && !defined UFSD_TRACE
-#define UFSD_TRACE
-#endif
-
-#if defined UFSD_DEBUG && defined UFSD_TRACE
-  #define UFSD_TRACE_NTFS_RW      // trace read/write operation (Used by UFSD_SDK).
-  #define UFSD_TRACE_NTFS_DIR     // trace directory enumeration (Used by UFSD_SDK).
-  #define UFSD_NTFS_EXTRA_LOG
-  #define UFSD_TRACE_NTFS_JOURNAL
-  #define UFSD_TRACE_HFS_RW
-  #define UFSD_TRACE_HFS_DIR
-  #define UFSD_TRACE_HFS_JOURNAL
-  #define UFSD_TRACE_FAT_DIR
-  #define UFSD_TRACE_EXFAT_RW
-//  #define UFSD_TRACE_EXFAT_DIR
-  #define UFSD_EXFAT_EXTRA_LOG
-  #define UFSD_PROFILE          // Profiler puts results into trace
-#endif
-
-#if defined UFSD_TRACE
-  #define UFSD_NTFS_LOG
-  #define UFSD_FAT_LOG
-  #define UFSD_EXFAT_LOG
-  #define UFSD_HFS_LOG
+  #define UFSD_TRACE
 #endif
 
 //#define UFSD_NTFS_JNL                 // Include NTFS journal
@@ -195,47 +180,142 @@ Revision History:
 
 
 //
-// _UFSDTrace is used to trace messages from UFSD
-// UFSDError is called when error occurs
+// Trace message in system log
 //
-EXTERN_C UFSDAPI_CALL void UFSDError( int Err, const char* FileName, int Line );
-EXTERN_C UFSDAPI_CALLv void _UFSDTrace( const char* fmt, ... ) __attribute__ ((format (printf, 1, 2)));
-
-#if defined UFSD_TRACE
-  #define UFSDTrace(a) _UFSDTrace a
-#else
-  #define UFSDTrace(a) do{}while((void)0,0)
-#endif
-
-#define UFSD_ERROR_DEFINED // UFSDError is already declared
-#define _VERSIONS_H_       // Exclude configuration part of file versions.h
-
-
-// Trace messages even in release version
 EXTERN_C UFSDAPI_CALLv int UFSD_printk( const char* fmt, ... ) __attribute__ ((format (printf, 1, 2)));
 
 #define UFSDTracek(a) UFSD_printk a
 
 
-#ifdef UFSD_DEBUG
-// Usefull to debug some cases
-EXTERN_C UFSDAPI_CALL void UFSD_DumpStack( void );
+#ifdef UFSD_TRACE
+
+  //
+  // _UFSDTrace is used to trace messages from UFSD
+  // UFSDError is called when error occurs
+  //
+
+  EXTERN_C UFSDAPI_CALL void UFSDError( int Err, const char* FileName, int Line );
+  EXTERN_C UFSDAPI_CALLv void _UFSDTrace( const char* fmt, ... ) __attribute__ ((format (printf, 1, 2)));
+
+  extern char ufsd_trace_file[128];
+  extern char ufsd_trace_level[16];
+  extern unsigned long UFSD_TraceLevel;
+  extern unsigned long UFSD_CycleMB;
+
+  #define UFSD_TRACE_NTFS_RW      // trace read/write operation (Used by UFSD_SDK).
+  #define UFSD_TRACE_NTFS_DIR     // trace directory enumeration (Used by UFSD_SDK).
+  #define UFSD_NTFS_EXTRA_LOG
+  #define UFSD_TRACE_NTFS_JOURNAL
+  #define UFSD_TRACE_HFS_RW
+  #define UFSD_TRACE_HFS_DIR
+  #define UFSD_TRACE_HFS_JOURNAL
+  #define UFSD_TRACE_FAT_DIR
+  #define UFSD_TRACE_EXFAT_RW
+  #define UFSD_TRACE_EXFAT_DIR
+  #define UFSD_EXFAT_EXTRA_LOG
+  #define UFSD_TRACE_REFS_DIR
+  #define UFSD_TRACE_REFS_RW
+
+  #ifdef UFSD_DEBUG
+    #define UFSD_NTFS_LOG
+    #define UFSD_FAT_LOG
+    #define UFSD_EXFAT_LOG
+    #define UFSD_HFS_LOG
+    #define UFSD_PROFILE          // Profiler puts results into trace
+  #endif
+
+  #define UFSD_LEVEL_ALWAYS         0x00000000
+  #define UFSD_LEVEL_ERROR          0x00000001
+  #define UFSD_LEVEL_DEBUG_HOOKS    0x00000002
+  #define UFSD_LEVEL_UFSD           0x00000010
+  #define UFSD_LEVEL_UFSDAPI        0x00000080
+  #define UFSD_LEVEL_VFS            0x00002000
+  #define UFSD_LEVEL_VFS_WBWE       0x00004000
+  #define UFSD_LEVEL_VFS_GETBLK     0x00008000
+  // highest one contains VERY expensive log.
+  #define UFSD_LEVEL_PAGE_BH        0x10000000
+  #define UFSD_LEVEL_IO             0x20000000
+  #define UFSD_LEVEL_SEMA           0x40000000
+  #define UFSD_LEVEL_MEMMNGR        0x80000000
+
+  // "all"
+  #define UFSD_LEVEL_STR_ALL        ~(UFSD_LEVEL_VFS_WBWE|UFSD_LEVEL_MEMMNGR|UFSD_LEVEL_IO|UFSD_LEVEL_UFSDAPI)
+  // "vfs"
+  #define UFSD_LEVEL_STR_VFS        (UFSD_LEVEL_SEMA|UFSD_LEVEL_PAGE_BH|UFSD_LEVEL_VFS|UFSD_LEVEL_VFS_GETBLK|UFSD_LEVEL_ERROR)
+  // "lib"
+  #define UFSD_LEVEL_STR_LIB        (UFSD_LEVEL_UFSD|UFSD_LEVEL_ERROR)
+  // "mid"
+  #define UFSD_LEVEL_STR_MID        (UFSD_LEVEL_VFS|UFSD_LEVEL_UFSD|UFSD_LEVEL_ERROR)
+
+  #define UFSD_LEVEL_DEFAULT        0x0000000f
+
+  EXTERN_C UFSDAPI_CALL void UFSD_TraceInc( int Indent );
+
+  #define UFSDTrace(a)                          \
+    do {                                        \
+      if ( UFSD_TraceLevel & UFSD_LEVEL_UFSD )  \
+        _UFSDTrace a;                           \
+    } while((void)0,0)
+
+  #define DebugTrace(INDENT,LEVEL,X)                        \
+    do {                                                    \
+      if ( 0 != (LEVEL) && !( UFSD_TraceLevel & (LEVEL) ) ) \
+        break;                                              \
+      if ( (INDENT) < 0 )                                   \
+        UFSD_TraceInc( (INDENT) );                          \
+      _UFSDTrace X;                                         \
+      if ( (INDENT) > 0 )                                   \
+        UFSD_TraceInc( (INDENT) );                          \
+    } while((void)0,0)
+
+  #define TRACE_ONLY(e) e
+
 #else
-#define UFSD_DumpStack()
+
+  #define UFSDTrace(a) do{}while((void)0,0)
+  #define DebugTrace(i, l, x) do{}while((void)0,0)
+  #define TRACE_ONLY(e)
+
+#endif /* UFSD_TRACE */
+
+
+#define UFSD_ERROR_DEFINED // UFSDError is already declared
+#define _VERSIONS_H_       // Exclude configuration part of file versions.h
+
+#ifdef UFSD_DEBUG
+  // Usefull to debug some cases
+  EXTERN_C UFSDAPI_CALL void UFSD_DumpStack( void );
+#else
+  #define UFSD_DumpStack()
 #endif
 
 
-#ifndef NDEBUG
+#ifdef UFSD_DEBUG
 
-EXTERN_C UFSDAPI_CALLv void UFSD_DebugPrintf( const char* fmt, ...)  __attribute__ ((format (printf, 1, 2)));
+  #define ASSERT(cond) {                                           \
+    if (!(cond)) {                                                 \
+      _UFSDTrace( "***** assertion failed at "               \
+              __FILE__", %u: '%s'\n", __LINE__ , #cond);           \
+    }                                                              \
+  }
 
-#define assert(cond) {                                           \
-  if (!(cond)) {                                                 \
-    UFSD_DebugPrintf( "***** assertion failed at "               \
-            __FILE__", %u: '%s'\n", __LINE__ , #cond);           \
-  }                                                              \
-}
-#endif
+  #define assert(cond) {                                           \
+    if (!(cond)) {                                                 \
+      _UFSDTrace( "***** assertion failed at "               \
+              __FILE__", %u: '%s'\n", __LINE__ , #cond);           \
+    }                                                              \
+  }
+
+  #define DEBUG_ONLY(e) e
+  #define VERIFY(cond) ASSERT(cond)
+
+#else
+
+  #define ASSERT(cond)
+  #define DEBUG_ONLY(e)
+  #define VERIFY(cond) {(void)(cond);}
+
+#endif /* UFSD_DEBUG */
 
 
 #define PIN_BUFFER          ((const void*)(size_t)0)
@@ -246,3 +326,10 @@ EXTERN_C UFSDAPI_CALLv void UFSD_DebugPrintf( const char* fmt, ...)  __attribute
   #define Add2Ptr(P,I)   ((unsigned char*)(P) + (I))
   #define PtrOffset(B,O) ((size_t)((size_t)(O) - (size_t)(B)))
 #endif
+
+#define C_ASSERT(e) typedef char _C_ASSERT_[(e)?1:-1]
+
+#ifndef UNREFERENCED_PARAMETER
+  #define UNREFERENCED_PARAMETER(P)         {(void)(P);}
+#endif
+

@@ -210,7 +210,7 @@ typedef struct _SITE_SURVEY
 	char authmode[16];
 	char signal[9];
 	char wmode[8];
-#if defined(RTN14U)
+#if 0//defined(RTN14U)
 	char wps[4];
 	char dpid[5];
 #endif

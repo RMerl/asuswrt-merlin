@@ -62,6 +62,8 @@
 #define __CONFIG_EMF__ 1
 #define __CONFIG_IGMP_PROXY__ 1
 #undef __CONFIG_WL_ACI__
+#define __CONFIG_TRAFFIC_MGMT__ 1
+#define __CONFIG_TRAFFIC_MGMT_RSSI_POLICY__ 1
 #undef __CONFIG_MEDIA_IPTV__
 #define __CONFIG_PHYMON_UTILITY__ 1
 #undef __CONFIG_SHRINK_MEMORY__

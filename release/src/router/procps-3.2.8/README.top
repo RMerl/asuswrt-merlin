@@ -1,0 +1,545 @@
+Credit for this belongs to:
+Jim / James C. Warner, <warnerjc@worldnet.att.net>
+
+----------------------------------
+
+Ok, ok, I yield -- most of what follows has been removed from the manual page
+and packaged separately as this README (hey, it was only TEMPORARY insanity).
+
+Of course, that means that now absolutely nobody will ever read it.
+
+This is probably a good thing...
+
+
+## Table of Contents ---------------------------------------------------##
+      # the only darn thing that wasn't in the man page
+   CUSTOMIZING the Sources
+      # the following carry their original topic numbers
+   DIFFERENCES / New Features
+      Interface Etiquette
+      Expanded Configurable Display Support
+      Enhanced Field/Column Management
+      Customization Flexibility
+   NOTES and Rantings
+      The top Binary
+      Comparing Performance
+      Cost of Stuff
+      The top Sources
+   EXAMPLES of Windows
+      The 'A' Mode Command Toggle
+      STACKIN' & WHACKIN' Windows
+      ALL TOGETHER Now, Window(s)
+
+
+## CUSTOMIZING the Sources ---------------------------------------------##
+
+Listed below are the conditionals available should you wish to recompile
+this top.  The author's favorite is:  PRETEND4CPUS.
+
+That's the #define allowing you to simulate an SMP environment, and
+(perhaps) impress your friends.  It's currently set to display four
+separate CPUs, but could easily be changed.
+
+   Caution: do NOT use this provision in an effort to impress someone
+            who truly possesses such a machine!  The fact that all 4
+            CPUs show the same dynamic results will likely have the
+            opposite effect.
+
+
+//#define ATEOJ_REPORT            /* report a bunch of stuff, at end-of-job  */
+//#define CASEUP_HEXES            /* show any hex values in upper case       */
+//#define CASEUP_SCALE            /* show scaled time/num suffix upper case  */
+//#define CASEUP_SUMMK            /* show memory summary kilobytes with 'K'  */
+//#define POSIX_CMDLIN            /* use '[ ]' for kernel threads, not '( )' */
+//#define PRETEND2_5_X            /* pretend we're linux 2.5.x (for IO-wait) */
+//#define PRETEND4CPUS            /* pretend we're smp with 4 ticsers (sic)  */
+//#define PRETENDNOCAP            /* use a terminal without essential caps   */
+//#define SORT_SUPRESS            /* *attempt* to reduce qsort overhead      */
+//#define STDOUT_IOLBF            /* disable our own stdout _IOFBF override  */
+//#define USE_LIB_STA3            /* use lib status (3 ch) vs. proc_t (1 ch) */
+//#define WARN_NOT_SMP            /* restrict '1' & 'I' commands to true smp */
+
+
+## 6. DIFFERENCES / New Features ---------------------------------------##
+       The  following  summarizes  differences  between this top and your
+       former top.  It was originally based  on  procps-2.0.7.   However,
+       except  for  the separate/summary CPU toggle, all of these differ-
+       ences also apply through procps-2.0.10.
+
+   6a. Interface Etiquette
+       -*-  Input and  output  are  far  more  carefully  implemented  in
+            this top.   You won't be subjected to 4 - 5 'Unknown command'
+            messages should you press the wrong key.
+
+       -*-  You need suffer a confirmation message only when the  results
+            of a command are not obvious by their effects on the display.
+
+       -*-  The Help screen will no longer overflow,  even  when  running
+            with a 24 row xterm (vt100).
+
+       -*-  The  fields  selection/ordering  screens  do  not  carelessly
+            destroy important information through unintended line  wraps.
+
+       -*-  Should  you  narrow  a  xterm  window to less than 80 columns
+            while this top is running, you  will  not  be  left  with  an
+            utterly worthless, embarrassing display.
+
+   6b. Expanded Configurable Display Support
+       -*-  In  an SMP environment, you can choose between a summary dis-
+            play or you may show each cpu  separately.   No  longer  must
+            this choice be irrevocably made at startup.
+
+       -*-  There  are  new  fields  and  with  this top,  any  field  is
+            selectable for sorting.  Plus,  your  sorted  column  can  be
+            instantly reversed with just a single keystroke.
+
+       -*-  You  may optionally apply 2 distinct types of highlighting to
+            running tasks and/or sorted columns.  With  this top,  you'll
+            be  able  to instantly spot running tasks and always know the
+            current sort field.
+
+       -*-  While you could  continue  to  use  the  more  familiar  (and
+            boring)  monochrome display, you might want to try this top's
+            new color display.  You can even create your own unique  col-
+            ors  used in summaries, messages, headings and tasks, each of
+            which can be made persistent until you choose to change them.
+
+       -*-  Up  to four separate windows can be displayed simultaneously,
+            giving you four separate ways to sort and view the tasks cur-
+            rently cluttering up your system.  You could have one view by
+            pids, another by cpu usage, yet another showing  memory  con-
+            sumption.  You get the idea...
+
+       -*-  Each window comes with pre-configured (but user configurable)
+            fields and you can size each window individually.
+
+       -*-  Virtually every one of this top's options (summaries, fields,
+            colors,  sorted  column, etc.) is separately configurable for
+            each of those four windows.
+
+            Heck, you can even change a window's name, if you don't  care
+            for  top's  choices.  Your changes will be reflected not only
+            when you're in what top calls alternate-display mode but also
+            on his special new 'Windows' help screen.
+
+       -*-  And,  [ ** Drum-Roll + Ta-Da ** ] with just one keystroke you
+            can quickly switch between full-screen  and  multiple  window
+            modes!   Or, with a different keystroke, toggle a single win-
+            dow Off for now, then On again later!!
+
+   6c. Enhanced Field/Column Management
+       -*-  Many Field/Column names have been changed to make  them  more
+            intuitive,  more  self-descriptive.   And  with  this top you
+            won't be fooled with field choices that are "not  yet  imple-
+            mented".
+
+       -*-  Task memory statistics are more meaningful and more accurate.
+
+       -*-  You'll finally have complete display integrity regardless  of
+            field  selections,  their  order  or  screen width.  And that
+            means the command column no longer need be kept as the right-
+            most  field,  lest  your  screen turn to <bleep> when all the
+            following columns get misaligned.
+
+   6d. Customization Flexibility
+       -*-  You have complete program naming  freedom  with  no  internal
+            ties  to  a  specific  personal configuration file.  Symbolic
+            links could be  used  to  establish  different  configuration
+            files  reflecting  the  different  personalities of your cus-
+            tomized "tops", under whatever aliases you've used.
+
+            Thus, you could have an  alias  for  running  top  in  'Batch
+            mode',  another  for when you work from the Linux console and
+            maybe a third used with X-Windows.  All of  that,  yet  still
+            just a single binary image!
+
+       -*-  All  of your configuration choices can be preserved in a per-
+            sonal configuration file, including any  changes  made  on  a
+            per-window  basis.   Thus,  once  you personalize things they
+            remain personalized until you decide to  change  them  again.
+            This top has been completely cured of:
+                     i-cant-remember-so-please-do-that-all-over-again
+                                         ( and again, and again ... )
+
+            The  bottom  line  is  this:  if  you save your configuration
+            before quitting top, upon restart  the  display  will  appear
+            exactly as you left it.  And that means you no longer have to
+            keep top  running  until-the-end-of-time  (ok,  a  long  time
+            anyway), lest your customizations go bye-bye.
+
+
+## 7. NOTES and Rantings -----------------------------------------------##
+   7a. The top Binary
+       To  whom  it may (should) concern:  this top, even with its vastly
+       expanded capabilities, is only slightly larger than the  old  top.
+       Were it not for extensive help text and additional sort callbacks,
+       it would be smaller.
+                       Throw source carelessly at objectives, it will
+                       produce equally careless machine instructions.
+                       example: (num_pages - an_address)/1024 == duh?
+                       kicker: document result as broken, due to elf!
+                       ----------------------------------------------
+                       I know you're out there, are you getting this?
+
+       Now, as for all those new capabilities like colors and windows and
+       highlighting, you'd expect this top to be the "mother of all pigs"
+       compared to old top  --  right?
+
+       Yea, with this top expect following piglets:
+        . A smaller virtual image and resident footprint
+        . Slightly fewer major page faults
+        . A large reduction in minor page faults for SMP
+        . The same or better response time
+        . The same or even less CPU costs
+
+       Ideally any comparison of the old and new top  should  be  against
+       the  same libproc format (32-bit or 64-bit tics) and run in a true
+       or simulated SMP environment (producing separate CPU stats).  This
+       latter  requirement  will  coax  old  top  into  handling  his own
+       '/proc/stat' access  --  something this top always does, but  with
+       less cost.
+
+   7b. Comparing Performance
+       Even  with equivalent libraries and '/proc/stat' access, it's dif-
+       ficult to  accurately  compare  tops  using  their  own  displays.
+       Results  for  these  cpu-intensive programs (who frequently exceed
+       their time-slice) generally show a wide disparity in  %CPU.   This
+       is due to differing call patterns, kernel preemptions and the tim-
+       ing of process snapshots.  For slightly better results, start each
+       program with the following commands:
+            ./old-top -d 0.5
+            nice -n-10 ./new-top -d 0.4
+
+       While actually putting this top at a performance disadvantage, the
+       higher scheduling priority and staggered timing will  periodically
+       yield  a  somewhat  truer  picture.   You could even reverse those
+       roles and get similar results.
+
+       The most consistent performance results  will  be  obtained  'off-
+       line',  using  your  shell's time pipe or the time program itself.
+       And even in a single processor environment or  without  equivalent
+       libraries,  total cpu costs (user time + system time) are similar.
+
+       However, this top's cpu costs ARE influenced by  the  capabilities
+       you  choose to exploit, even if they don't SEEM to be reflected in
+       such timings.  So let's examine some...
+
+   7c. Cost of Stuff
+       Colors Cost  --  Nada (almost).
+          Once the terminfo strings are built (at  and  during  a  user's
+          behest)  they  are  SAVED  with each window's stuff.  And while
+          there will be extra tty escape sequences transmitted because of
+          colors, it makes no difference which 'char *' is actually used.
+
+       Highlighting Cost  --  Nada (maybe), or blame it on Rio.
+          On second thought, let's blame it on the user.
+
+          For row highlighting, there is only the cost of those extra tty
+          escape  sequences  (same as for colors).  For column highlight-
+          ing, there is a fairly significant cost associated with  column
+          transition  management  combined  with  even  more  tty output.
+          These increased costs are incurred on every task display row.
+
+          Sooo... hey USER  --  do NOT highlight COLUMNS.  You  shouldn't
+          need  a  constant  visual  reminder  of your chosen sort field.
+          However, if you forget which field top is sorting it can  serve
+          as a quick visual reminder.
+
+       Windows Cost  --  Nada (if just 1 window).
+          If more than 1 window, almost certainly NOT Nada so blame it on
+          reality.  Colors are not an issue, but those sort fields are.
+
+          If we could trust the user to always select the same 'c' state,
+          'S' state and sort field (hey, why ya got multiple windows then
+          user, huh?) AND if we can trust someone to recompile top with a
+          #define enabled, then we could achieve 'Nada'.
+
+          Ok,  not likely, so we're gonna' be doing multiple sorts.  BUT,
+          it may not be as bad as it sounds.  Those sorts involve  point-
+          ers only.  And, that's as good as it gets !  (right Mr. N?)
+
+   7d. The top Sources
+       top.h
+          Unlike  his predecessor, this top has a proper header file.  It
+          contains ONLY declarations, NOT  definitions.   And  there  are
+          several  conditionals  present  to help with further customiza-
+          tions and experimentation.  All are Off by default.
+
+       top.c
+          Hopefully proves that source code needn't  be  a  disorganized,
+          misaligned  MESS.   And,  WHO  says  a source listing shouldn't
+          occasionally make you SMILE?  Why, top.c even does a darn  good
+          job  of  following the suggestions in a document hardly anybody
+          seems to observe.
+
+                        the Linus Torvalds CodingStyle guidelines ...
+                        -*- -*- -*- on indentation + etc. -*- -*- -*-
+                        well almost all, except for those stinkin'...
+
+       I suppose even Linus Torvalds is entitled to err  now  and  again.
+       How  so  you say?  Tabs, me' bucko, stinkin' tabs!  That, plus the
+       simplistic position regarding indentation espoused in that  other-
+       wise excellent document.
+
+   -*- Rant On, and on -*-
+       Let's  compare  two approaches to the tab/indentation issue with a
+       small code sample using tabs then spaces.  This snippet happens to
+       be  the key to top's use of dynamic colors on many static screens,
+       while also ensuring screen width isn't exceeded  so  as  to  avoid
+       line  wraps.   We'll  view just the first 40 columns, assuming one
+       wishes to occasionally provide comments to  the  right  of  actual
+       code (you do, don't you?).
+
+       Then YOU decide which approach makes the most SENSE!
+
+                           Stinkin' Tabs versus Spaces: the Linus way
+           Hey, where'd my +----+----1----+----2----+----3----+----4+
+           many code lines |                while (*sub_beg) {      :
+           up-and-gone-to? |                        switch (*sub_end:
+                           |                                case 0: :
+           Gosh, wonder if |   \ Tabs Induced /                     :
+           Linus expects a |                                case 1: :
+           fellow to stick |   + WASTE-Lands! +             case 5: :
+           his comments on |                                        :
+           the left side?! |   + Not a Living +                     :
+                           |                                        :
+           Ever see source |   + line-of-code +                     :
+           with not enough |                                        :
+           whitespace; and |   / To Be Found! \                     :
+           this is better? |                                default::
+                           |                                        :
+           Oh lookie here, \                        }               :
+           there's just a hint of REAL code! ---->  if (0 >= room) b:
+                           /                } /* end: while 'subtrin:
+                           +----------------------------------------+
+
+                           Spaces versus Stinkin' Tabs: the other way
+                           +----+----1----+----2----+----3----+----4+
+          Wow, now this is |      while (*sub_beg) {                :
+          Visible hackin'! |         switch (*sub_end) {            :
+                           |            case 0:                     :
+          Hmmm, wonder how |               *(sub_end + 1) = '\0';   :
+          many programmers |            case 1: case 2: case 3: case:
+          read those lines |            case 5: case 6: case 7: case:
+          from the LEFT to |               cap = Curwin->captab[(int:
+          the RIGHT?  This |               *sub_end = '\0';         :
+          "innovation" may |               PUTP("%s%.*s%s", cap, roo:
+          possibly benefit |               room -= (sub_end - sub_be:
+          those particular |               sub_beg = ++sub_end;     :
+          kinds of people, |               break;                   :
+          you agree?  Duh! |            default:                    :
+                           |               ++sub_end;               :
+          AND, there might |         }                              :
+          even be room for |         if (0 >= room) break;          :
+          unseen comments! |      } /* end: while 'subtrings' */    :
+                           +----------------------------------------+
+
+       Gosh, I just don't KNOW  --  it's such a TOUGH choice...
+
+       Oh  you  Stinkin' Tabs:  correspondence, Who-Cares; documentation,
+       Oh-Alright; even scripts, Well-If-You-Must.  But you have NO place
+       within  the  code-space  of  MY  C-source  listing!   So  be  gone
+       already!!
+
+   In Summation...
+       -  If you want to use tabs to the right of  the  code,  go-for-it.
+          But  PLEASE,  not  ever  in the C-source code-space, thank-you-
+          kindly.  Just use three little ol' spaces (exactly 3,  no-more,
+          no-less) where you WOULD have stuck a stinkin' tab.
+
+          We'll  get  far more READABLE files, much less WAISTED precious
+          horizontal space, more consistent CURSORS and on, and  ON,  AND
+          ON!  Plus, without those awful *the-devil's-own-handiwork*, the
+          aforementioned document need NEVER speak of their EVILS  again.
+
+       -  Lastly,  since  SPACES  (not  stinkin' tabs) are SO beneficial,
+          maybe we should use just a few more of 'em.  Some of  those  C-
+          thingies  are VERY sensitive  --  they don't like being TOUCHED
+          by any other syntax element!  Which ones?  Why these guys:
+
+             braces, reserved words and binary operators
+             ( it's the TRUTH, they told me themselves )
+
+          It's so EASY to keep 'em HAPPY!  And lo-and-behold, the  combi-
+          nation  of  <sp>thingy<sp> turns out to be a darn effective bug
+          repellent, too.  So  much  so,  one  can  actually  code  while
+          TOTALLY NUDE yet still avoid them ol' bug-bytes (sic-sic)!
+                                                                 step
+                                                            down_from
+                                                       me_punctilious
+                                                  soap-box_once_again
+                                                  [1 +5 +5 +5 = huh?]
+
+
+## 4c. EXAMPLES of Windows ---------------------------------------------##
+
+                    -*- The 'A' Mode Command Toggle -*-
+   Here's what you'll see when you  first  invoke  the  alternate-display
+   mode interactive command.
+
+   This  particular  display  was  produce on a VT100 xterm, with only 24
+   rows.  All four task displays are visible, but they could not be sized
+   the  same.  Available lines are parceled out in the fairest way possi-
+   ble so the last two task displays have an extra line each.
+
+   Notice the 'current' window name in the summary area   --   it's  been
+   emphasized  because  the  associated  task  display is visible.  Since
+   1:Def has a task area, the full range of interactive commands would be
+   at  your  disposal.   But  remember, many of those commands will apply
+   only to window 1:Def.
+
+                             +--------------------------------------+
+        1:Def name is bold,  |1:Def - 15:46:37 up 16:25,  9 users,  :
+         thus all commands   |Tasks:  76 total,   1 running,  75 sle:
+         will be available.  |Cpu(s):   0.7% user,   1.3% system,   :
+                             |Mem:    126588k total,   123688k used,:
+                             |Swap:   265032k total,     8232k used,:
+                             |______________________________________:
+        Tough luck windows   |1__PID_USER______PR__NI_%CPU____TIME+_:
+         #1 & 2 - you lost   |  7343 jtwm      16   0  0.9   0:00.59:
+         one line each  --   |  7339 jtwm       9   0  0.0   0:00.02:
+         guess you'll just   |__7337_root_______9___0__0.0___0:01.30:
+         have to learn how   |2__PID__PPID_Command____________TIME+_:
+         to live with it.    |   997   952 kdeinit          17:59.59:
+                             |  1115   952 kdeinit           2:16.47:
+                             |__1803__1116_led_______________1:55.30:
+                             |3__PID_%MEM__VIRT_SWAP__RES_CODE_DATA_:
+        The #3 & #4 windows  |  4634 12.3 15620    0  15m  860  14m :
+         better not gloat    |  7337 11.3 14396   92  13m   36  13m :
+         over 1 extra line.  |   923 10.6 30524  16m  13m 1120  12m :
+        That user could yet  |___991__7.2__9492__316_9176___12_9164_:
+         sock 'em with the   |4_UID_USER_____GROUP____TTY________PID:
+         'n' command and     |   43 xfs      xfs      ?          806:
+         take those lines,   |    0 ykde     users    pts/7     5561:
+         plus others, away!  |    0 wgnome   users    pts/7     5560:
+                             |    0 root     root     pts/7     5325:
+                             +--------------------------------------+
+
+   So, what say we start applying some of those "full range  of  interac-
+   tive commands"?
+
+   Onward + Downward...
+
+                    -*- STACKIN' & WHACKIN' Windows -*-
+   Whoa,  hold on mate.  Someone has already whacked these windows.  See,
+   there are no task areas for windows 1:Def and 4:Usr.  Well, we can  at
+   least retrace their steps...
+
+   Here's  what  was  done,  after  issuing  the 'A' command and entering
+   alternate-display mode.
+      1) When #1 was the 'current' window, '-' was pressed,
+         toggling Off the associated task display
+         ( if 'l t m' had been applied to its summary, too )
+         ( then there'll be only a msg line when 'current' )
+      2) Then the 'w' key was struck to cycle backward,
+         making 4:Usr the 'current' window
+         (could have used 'a a a', if one likes to type)
+      3) Then step #1 was repeated, and bye-bye window #4
+      4) Finally, window #2 was made the 'current' window
+         ( Q. how many keystrokes were used? )
+         ( A. minimum of 2:  'a a' or 'w w'. )
+
+                             +--------------------------------------+
+        No 'l','t','m','1'   |2:Top - 15:48:35 up 16:27,  9 users,  :
+         commands have been  |Tasks:  75 total,   1 running,  74 sle:
+         issued here,        |Cpu(s):   2.0% user,   0.7% system,   :
+         but...              |Mem:    126588k total,   123712k used,:
+                             |Swap:   265032k total,     8232k used,:
+                             |______________________________________:
+        #2's been changed;   |2__PID__PPID_Command____________TIME+_:
+         user applied a 'c'  |   997   952 kdeinit: konsol  18:00.70:
+         command (when it    |  1115   952 kdeinit: konsol   2:16.47:
+         was current) - now  |  1803  1116 led tiptop.HELP   1:55.30:
+         shows cmd lines vs. |   923   922 X :0              1:09.60:
+         program names;      |   973     1 klaptopdaemon     0:59.63:
+         still seems to be   |   981   952 /usr/bin/artsd    0:48.63:
+         sorted on TIME+     |   987     1 kdeinit: kdeskt   0:24.34:
+         though              |___991_____1_kdeinit:_kicker___0:04.59:
+                             |3__PID_%MEM__VIRT_SWAP__RES_CODE_DATA_:
+        This #3 guy appears  |  4634 12.3 15620    0  15m  860  14m :
+         to still be running |  7337 11.3 14396   92  13m   36  13m :
+         with the supplied   |   923 10.6 30544  16m  13m 1120  12m :
+         defaults, but no    |   991  7.2  9492  316 9176   12 9164 :
+         telling what damage |  7329  7.0  9036  140 8896   36 8860 :
+         might have been     |  1115  6.9  8956  160 8796   36 8760 :
+         done to it's        |   987  6.4  8668  524 8144   20 8124 :
+         summary info stuff  |  1131  6.4  8268  144 8124   36 8088 :
+                             +--------------------------------------+
+
+   And that's what brought us to  this  current  state.   No,  wait.   Oh
+   lordy, will you look at that  --  someone has changed the name of win-
+   dow #2 from 'Job' to 'Top'!
+
+   How'd they do that?  Well, they just issued the 'g'  interactive  com-
+   mand, of course.  That command is available whenever alternate-display
+   mode is active and always impacts just the  'current'  window.   Gosh,
+   you  can  even issue the 'g' command when 'l' has toggled Off the very
+   summary area line containing the window name!
+
+   Almost Done...
+
+                    -*- ALL TOGETHER Now, Window(s) -*-
+   Here, the window 1:Def task  display  has  been  toggled  Off  but  it
+   remains  the 'current' window.  Since there is no task area, many com-
+   mands will be restricted.  However, the commands ('l', 't', 'm',  '1')
+   affecting  the  summary  area,  as  well as some other global commands
+   ('k', 'Z', etc.), would still be active.
+
+   Notice that the Mem and Swap lines are not shown.  This means that the
+   loser  (oops, user) has, in fact, issued the 'm' command!  Now, if you
+   were to cycle the 'current' window with the 'a' or 'w'  commands,  the
+   task  display would remain the same (except possibly growing/shrinking
+   slightly) but the summary area would change periodically.
+
+   The comments to the left of the image provide additional insights into
+   how  things came to be.  Note especially the comments for window 4:Usr
+    --  the one with some empty rows...
+
+        1:Def no highlight,  +--------------------------------------+
+         thus disabled cmds: |1:Def - 15:50:32 up 16:29,  9 users,  :
+         b,i,n,u,x,y, etc.   |Tasks:  75 total,   2 running,  73 sle:
+         & m = lost Mem/Swap |Cpu(s):  10.6% user,   0.0% system,   :
+                             |______________________________________:
+        2:Job was very busy: |2__PID__PPID_Command____________TIME+_:
+         'n' cmd, w/ 7 tasks |    80     1 ( khubd )         0:00.00:
+         'c' cmd, cmd line   |     6     0 ( kreclaimd )     0:00.00:
+         'O' cmd, sort cmd   |     9     1 ( mdrecoveryd )   0:00.00:
+         'R' cmd, sort bkwd  | 11358     1 /bin/bash/ /usr   0:00.00:
+         'x' cmd, hi column  |  1297     1 /sbin/mingetty    0:00.00:
+        (when 2 WAS current) |   683     1 xinetd -stayali   0:00.00:
+                             |___836_____1_login_--_root_____0:00.00:
+        3:Mem has altered    |3__PID_%MEM__VIRT_SWAP__RES_CODE_DATA_:
+         some std defaults:  |  4634 12.3 15620    0  15m  860  14m :
+         'y' turned Off      |  7337 11.3 14396   92  13m   36  13m :
+         'x' turned On       |   923 10.6 30544  16m  13m 1120  12m :
+        (when 3 WAS current) |   991  7.2  9492  316 9176   12 9164 :
+                             |__7329__7.0__9036__140_8896___36_8860_:
+        Huh?  4:Usr has some |4_UID_USER_____GROUP____TTY________PID:
+         blank rows! ? ? ? ? |    0 jtwm     root     pts/2     5561:
+        Aha, the 'i' command |    0 root     root     ?         5560:
+         applied (when 4 WAS |                                      :
+         current); could be  |                                      :
+         reversed with '=',  |                                      :
+         when 4 IS current!  +--------------------------------------+
+
+   Ok now, how about that 'current' window 1:Def and  its  unseen  tasks?
+   At any time, you can quickly retrieve lost tasks in a number of ways:
+      1) Press '-', toggling just the 'current' window
+      2) Press '_', toggling all visible/invisible windows
+         ( 1:Def is the only window currently not shown )
+         ( afterward, it'll be the only window showing! )
+    * 3) Press '+', forcing all task displays to become visible
+      4) Press 'A' to return to full-screen mode,
+         with only 1:Def tasks shown and without a window name
+
+   Now that should be enough ways of getting a task area visible again to
+   satisfy almost any user, don't ya think?
+
+       Note: Use #3 above  when  you've  messed  up  your  screen  beyond
+       redemption.   The four task displays will reappear, nice and even.
+       They will also have retained any customizations you had previously
+       applied,  except for the 'i' (idle tasks) and 'n' (max tasks) com-
+       mands.
+
+   That's It !  Piece of Cake !!  Enjoy them there windows !!!
+

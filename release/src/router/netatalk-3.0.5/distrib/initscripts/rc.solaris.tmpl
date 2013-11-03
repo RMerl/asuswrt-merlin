@@ -1,0 +1,60 @@
+#! /bin/sh
+#
+# Start/stop the Netatalk :NETATALK_VERSION: daemons.
+#
+
+#
+# kill the named process(es)
+#
+killproc() {
+    pid=`/usr/bin/ps -e |
+    /usr/bin/grep $1 |
+    /usr/bin/sed -e 's/^  *//' -e 's/ .*//'`
+    [ "$pid" != "" ] && kill $pid
+}
+
+#
+# Start the netatalk server processes.
+#
+
+netatalk_startup() {
+    echo 'starting netatalk daemons: \c'
+
+    if [ -x :SBINDIR:/netatalk ]; then
+        :SBINDIR:/netatalk 
+        echo ' netatalk\c'
+    fi
+
+    echo '.'
+}
+
+
+case "$1" in
+
+    'start')
+            netatalk_startup
+        ;;
+
+#
+# Stop the netatalk server processes.
+#
+    'stop')
+
+        echo 'stopping netatalk daemons:\c'
+
+        if [ -x :SBINDIR:/netatalk ]; then
+            killproc netatalk;                      echo ' netatalk\c'
+        fi
+
+        echo '.'
+        ;;
+
+#
+# Usage statement.
+#
+
+    *)
+        echo "usage: $0 {start|stop}"
+        exit 1
+        ;;
+esac

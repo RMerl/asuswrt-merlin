@@ -106,7 +106,9 @@ void notify_nas(const char *ifname)
 #endif /* CONFIG_BCMWL5 */
 }
 #endif
+#endif
 
+#if defined(CONFIG_BCMWL5) || defined(MTK_APCLI) 
 #define APSCAN_INFO "/tmp/apscan_info.txt"
 
 static int lock = -1;
@@ -151,7 +153,7 @@ int wlcscan_main(void)
 	return 1;
 }
 
-#endif /* CONFIG_BCMWL5 */
+#endif /* CONFIG_BCMWL5 || MTK_APCLI*/
 
 #ifdef RTCONFIG_WIRELESSREPEATER
 

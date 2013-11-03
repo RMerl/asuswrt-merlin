@@ -69,6 +69,7 @@ function showdr_advise(setting){
 	}
 	else{
 		parent.parent.$('drword').innerHTML = "<#DrSurf_sweet_advise1#><br/><br/>";
+		parent.parent.$('wireless_client_detect').style.display = "";
 		if(typeof parent.detect_LANStatus == 'function')
 			setTimeout("parent.detect_LANStatus('finish');", restart_time*1000);
 		else

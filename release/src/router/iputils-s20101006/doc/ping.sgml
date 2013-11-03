@@ -1,0 +1,659 @@
+<refentry id="ping">
+
+<refmeta>
+<refentrytitle>ping</refentrytitle>
+<manvolnum>8</manvolnum>
+<refmiscinfo>iputils-&snapshot;</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>ping, ping6</refname>
+<refpurpose>send ICMP ECHO_REQUEST to network hosts</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>ping</command>
+<arg choice="opt"><option>-LRUbdfnqrvVaAB</option></arg>
+<arg choice="opt">-c <replaceable/count/</arg>
+<arg choice="opt">-m <replaceable/mark/</arg>
+<arg choice="opt">-i <replaceable/interval/</arg>
+<arg choice="opt">-l <replaceable/preload/</arg>
+<arg choice="opt">-p <replaceable/pattern/</arg>
+<arg choice="opt">-s <replaceable/packetsize/</arg>
+<arg choice="opt">-t <replaceable/ttl/</arg>
+<arg choice="opt">-w <replaceable/deadline/</arg>
+<arg choice="opt">-F <replaceable/flowlabel/</arg>
+<arg choice="opt">-I <replaceable/interface/</arg>
+<arg choice="opt">-M <replaceable/hint/</arg>
+<arg choice="opt">-N <replaceable/nioption/</arg>
+<arg choice="opt">-Q <replaceable/tos/</arg>
+<arg choice="opt">-S <replaceable/sndbuf/</arg>
+<arg choice="opt">-T <replaceable/timestamp option/</arg>
+<arg choice="opt">-W <replaceable/timeout/</arg>
+<arg choice="opt" rep="repeat"><replaceable/hop/</arg>
+<arg choice="req"><replaceable/destination/</arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1><title>DESCRIPTION</title>
+<para>
+<command/ping/ uses the ICMP protocol's mandatory ECHO_REQUEST
+datagram to elicit an ICMP ECHO_RESPONSE from a host or gateway.
+ECHO_REQUEST datagrams (``pings'') have an IP and ICMP
+header, followed by a <structname/struct timeval/ and then an arbitrary
+number of ``pad'' bytes used to fill out the packet.
+</para>
+<para>
+<command/ping6/ can also send Node Information Queries (RFC4620).
+</para>
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+
+<variablelist>
+ <varlistentry>
+  <term><option/-a/</term>
+  <listitem><para>
+Audible ping.
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option/-A/</term>
+  <listitem><para>
+Adaptive ping. Interpacket interval adapts to round-trip time, so that
+effectively not more than one (or more, if preload is set) unanswered probes
+present in the network. Minimal interval is 200msec for not super-user.
+On networks with low rtt this mode is essentially equivalent to flood mode.  
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option/-b/</term>
+  <listitem><para>
+Allow pinging a broadcast address.
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option/-B/</term>
+  <listitem><para>
+Do not allow <command/ping/ to change source address of probes.
+The address is bound to one selected when <command/ping/ starts.
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option>-m <replaceable/mark/</option></term>
+  <listitem><para>
+use <replaceable/mark/ to tag the packets going out. This is useful
+for variety of reasons within the kernel such as using policy
+routing to select specific outbound processing.
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option><anchor id="ping.count">-c <replaceable/count/</option></term>
+  <listitem><para>
+Stop after sending <replaceable/count/ ECHO_REQUEST
+packets. With 
+<link linkend="ping.deadline"><replaceable/deadline/</link>
+option, <command/ping/ waits for
+<replaceable/count/ ECHO_REPLY packets, until the timeout expires.
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option/-d/</term>
+  <listitem><para>
+Set the <constant/SO_DEBUG/ option on the socket being used.
+Essentially, this socket option is not used by Linux kernel. 
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option>-F <replaceable/flow label/</option></term>
+  <listitem><para>
+Allocate and set 20 bit flow label on echo request packets.
+(Only <command/ping6/). If value is zero, kernel allocates random flow label.
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option/-f/</term>
+  <listitem><para>
+Flood ping. For every ECHO_REQUEST sent a period ``.'' is printed,
+while for ever ECHO_REPLY received a backspace is printed.
+This provides a rapid display of how many packets are being dropped.
+If interval is not given, it sets interval to zero and
+outputs packets as fast as they come back or one hundred times per second,
+whichever is more.
+Only the super-user may use this option with zero interval.
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option>-i <replaceable/interval/</option></term>
+  <listitem><para>
+Wait <replaceable/interval/ seconds between sending each packet.
+The default is to wait for one second between each packet normally,
+or not to wait in flood mode. Only super-user may set interval
+to values less 0.2 seconds.
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option>-I <replaceable/interface address/</option></term>
+  <listitem><para>
+Set source address to specified interface address. Argument
+may be numeric IP address or name of device. When pinging IPv6
+link-local address this option is required.
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option>-l <replaceable/preload/</option></term>
+  <listitem><para>
+If <replaceable/preload/ is specified,
+<command/ping/ sends that many packets not waiting for reply.
+Only the super-user may select preload more than 3.
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option/-L/</term>
+  <listitem><para>
+Suppress loopback of multicast packets.  This flag only applies if the ping
+destination is a multicast address.
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option>-N <replaceable/nioption/</option></term>
+  <listitem><para>
+Send ICMPv6 Node Information Queries (RFC4620), instead of Echo Request.
+   <variablelist>
+    <varlistentry>
+     <term><option>name</option></term>
+     <listitem><para>Queries for Node Names.</para></listitem>
+    </varlistentry>
+   </variablelist>
+   <variablelist>
+    <varlistentry>
+     <term><option>ipv6</option></term>
+     <listitem><para>Queries for IPv6 Addresses. There are several IPv6 specific flags.
+      <variablelist>
+       <varlistentry>
+        <term><option>ipv6-global</option></term>
+        <listitem><para>Request IPv6 global-scope addresses.</para></listitem> 
+       </varlistentry>
+      </variablelist>
+      <variablelist>
+       <varlistentry>
+        <term><option>ipv6-sitelocal</option></term>
+        <listitem><para>Request IPv6 site-local addresses.</para></listitem> 
+       </varlistentry>
+      </variablelist>
+      <variablelist>
+       <varlistentry>
+        <term><option>ipv6-linklocal</option></term>
+        <listitem><para>Request IPv6 link-local addresses.</para></listitem> 
+       </varlistentry>
+      </variablelist>
+      <variablelist>
+       <varlistentry>
+        <term><option>ipv6-all</option></term>
+        <listitem><para>Request IPv6 addresses on other interfaces.</para></listitem> 
+       </varlistentry>
+      </variablelist>
+     </para></listitem>
+    </varlistentry>
+   </variablelist>
+   <variablelist>
+    <varlistentry>
+     <term><option>ipv4</option></term>
+     <listitem><para>Queries for IPv4 Addresses.  There is one IPv4 specific flag.
+      <variablelist>
+       <varlistentry>
+        <term><option>ipv4-all</option></term>
+        <listitem><para>Request IPv4 addresses on other interfaces.</para></listitem>
+       </varlistentry>
+      </variablelist>
+     </para></listitem>
+    </varlistentry>
+   </variablelist>
+   <variablelist>
+    <varlistentry>
+     <term><option>subject-ipv6=<replaceable/ipv6addr/</option></term>
+     <listitem><para>IPv6 subject address.</para></listitem>
+    </varlistentry>
+   </variablelist>
+   <variablelist>
+    <varlistentry>
+     <term><option>subject-ipv4=<replaceable/ipv4addr/</option></term>
+     <listitem><para>IPv4 subject address.</para></listitem>
+    </varlistentry>
+   </variablelist>
+   <variablelist>
+    <varlistentry>
+     <term><option>subject-name=<replaceable/nodename/</option></term>
+     <listitem><para>Subject name.  If it contains more than one dot,
+	fully-qualified domain name is assumed.</para></listitem>
+    </varlistentry>
+   </variablelist>
+   <variablelist>
+    <varlistentry>
+     <term><option>subject-fqdn=<replaceable/nodename/</option></term>
+     <listitem><para>Subject name.  Fully-qualified domain name is
+	always assumed.</para></listitem>
+    </varlistentry>
+   </variablelist>
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option/-n/</term>
+  <listitem><para>
+Numeric output only.
+No attempt will be made to lookup symbolic names for host addresses.
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option>-p <replaceable/pattern/</option></term>
+  <listitem><para>
+You may specify up to 16 ``pad'' bytes to fill out the packet you send.
+This is useful for diagnosing data-dependent problems in a network.
+For example, <option>-p ff</option> will cause the sent packet
+to be filled with all ones.
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option/-D/</term>
+  <listitem><para>
+Print timestamp (unix time + microseconds as in gettimeofday) before
+each line.
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option>-Q <replaceable/tos/</option></term>
+  <listitem><para>
+Set Quality of Service -related bits in ICMP datagrams.  
+<replaceable/tos/ can be either decimal or hex number.
+Traditionally (RFC1349), these have been interpreted as: 0 for reserved
+(currently being redefined as congestion control), 1-4 for Type of Service
+and 5-7 for Precedence.
+Possible settings for Type of Service are: minimal cost: 0x02, 
+reliability: 0x04, throughput: 0x08, low delay: 0x10.  Multiple TOS bits
+should not be set simultaneously.  Possible settings for
+special Precedence range from priority (0x20) to net control (0xe0).  You
+must be root (<constant/CAP_NET_ADMIN/ capability) to use Critical or
+higher precedence value.  You cannot set
+bit 0x01 (reserved) unless ECN has been enabled in the kernel.
+In RFC2474, these fields has been redefined as 8-bit Differentiated
+Services (DS), consisting of: bits 0-1 of separate data (ECN will be used,
+here), and bits 2-7 of Differentiated Services Codepoint (DSCP).
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option/-q/</term>
+  <listitem><para>
+Quiet output.
+Nothing is displayed except the summary lines at startup time and
+when finished.
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option/-R/</term>
+  <listitem><para>
+Record route.
+Includes the RECORD_ROUTE option in the ECHO_REQUEST
+packet and displays the route buffer on returned packets.
+Note that the IP header is only large enough for nine such routes.
+Many hosts ignore or discard this option.
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option/-r/</term>
+  <listitem><para>
+Bypass the normal routing tables and send directly to a host on an attached
+interface.
+If the host is not on a directly-attached network, an error is returned.
+This option can be used to ping a local host through an interface
+that has no route through it provided the option <option/-I/ is also
+used.
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option>-s <replaceable/packetsize/</option></term>
+  <listitem><para>
+Specifies the number of data bytes to be sent.  
+The default is 56, which translates into 64 ICMP
+data bytes when combined with the 8 bytes of ICMP header data.
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option>-S <replaceable/sndbuf/</option></term>
+  <listitem><para>
+Set socket sndbuf. If not specified, it is selected to buffer
+not more than one packet.
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option>-t <replaceable/ttl/</option></term>
+  <listitem><para>
+Set the IP Time to Live.
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option>-T <replaceable/timestamp option/</option></term>
+  <listitem><para>
+Set special IP timestamp options.
+<replaceable/timestamp option/ may be either 
+<replaceable/tsonly/ (only timestamps), 
+<replaceable/tsandaddr/ (timestamps and addresses) or 
+<replaceable/tsprespec host1 [host2 [host3 [host4]]]/
+(timestamp prespecified hops).
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option>-M <replaceable/hint/</option></term>
+  <listitem><para>
+Select Path MTU Discovery strategy.
+<replaceable/hint/ may be either <replaceable/do/
+(prohibit fragmentation, even local one), 
+<replaceable/want/ (do PMTU discovery, fragment locally when packet size
+is large), or <replaceable/dont/ (do not set DF flag).
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option/-U/</term>
+  <listitem><para>
+Print full user-to-user latency (the old behaviour). Normally
+<command/ping/
+prints network round trip time, which can be different
+f.e. due to DNS failures. 
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option/-v/</term>
+  <listitem><para>
+Verbose output.
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option/-V/</term>
+  <listitem><para>
+Show version and exit.
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option><anchor id="ping.deadline">-w <replaceable/deadline/</option></term>
+  <listitem><para>
+Specify a timeout, in seconds, before
+<command/ping/
+exits regardless of how many
+packets have been sent or received. In this case
+<command/ping/
+does not stop after
+<link linkend="ping.count"><replaceable/count/</link>
+packet are sent, it waits either for
+<link linkend="ping.deadline"><replaceable/deadline/</link>
+expire or until
+<link linkend="ping.count"><replaceable/count/</link>
+probes are answered or for some error notification from network.   
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option>-W <replaceable/timeout/</option></term>
+  <listitem><para>
+Time to wait for a response, in seconds. The option affects only timeout
+in absense of any responses, otherwise <command/ping/ waits for two RTTs.
+  </para></listitem>
+ </varlistentry>
+</variablelist>
+
+<para>
+When using <command/ping/ for fault isolation, it should first be run
+on the local host, to verify that the local network interface is up
+and running. Then, hosts and gateways further and further away should be
+``pinged''. Round-trip times and packet loss statistics are computed.
+If duplicate packets are received, they are not included in the packet
+loss calculation, although the round trip time of these packets is used
+in calculating the minimum/average/maximum round-trip time numbers.
+When the specified number of packets have been sent (and received) or
+if the program is terminated with a
+<constant/SIGINT/, a brief summary is displayed. Shorter current statistics
+can be obtained without termination of process with signal
+<constant/SIGQUIT/.
+</para>
+
+<para>
+If <command/ping/ does not receive any reply packets at all it will
+exit with code 1. If a packet 
+<link linkend="ping.count"><replaceable/count/</link>
+and
+<link linkend="ping.deadline"><replaceable/deadline/</link>
+are both specified, and fewer than
+<link linkend="ping.count"><replaceable/count/</link>
+packets are received by the time the
+<link linkend="ping.deadline"><replaceable/deadline/</link>
+has arrived, it will also exit with code 1. 
+On other error it exits with code 2. Otherwise it exits with code 0. This
+makes it possible to use the exit code to see if a host is alive or
+not.
+</para>
+
+
+<para>
+This program is intended for use in network testing, measurement and
+management.
+Because of the load it can impose on the network, it is unwise to use
+<command/ping/ during normal operations or from automated scripts.
+</para>
+
+</refsect1>
+
+
+<refsect1><title>ICMP PACKET DETAILS</title>
+
+<para>
+An IP header without options is 20 bytes.
+An ICMP ECHO_REQUEST packet contains an additional 8 bytes worth
+of ICMP header followed by an arbitrary amount of data.
+When a <replaceable/packetsize/ is given, this indicated the size of this
+extra piece of data (the default is 56). Thus the amount of data received
+inside of an IP packet of type ICMP ECHO_REPLY will always be 8 bytes
+more than the requested data space (the ICMP header).
+</para>
+
+<para>
+If the data space is at least of size of <structname/struct timeval/
+<command/ping/ uses the beginning bytes of this space to include
+a timestamp which it uses in the computation of round trip times.
+If the data space is shorter, no round trip times are given.
+</para>
+
+</refsect1>
+
+<refsect1><title>DUPLICATE AND DAMAGED PACKETS</title>
+
+<para>
+<command/ping/ will report duplicate and damaged packets.
+Duplicate packets should never occur, and seem to be caused by
+inappropriate link-level retransmissions.
+Duplicates may occur in many situations and are rarely (if ever) a
+good sign, although the presence of low levels of duplicates may not
+always be cause for alarm.
+</para>
+
+<para>
+Damaged packets are obviously serious cause for alarm and often
+indicate broken hardware somewhere in the
+<command/ping/ packet's path (in the network or in the hosts).
+</para>
+
+</refsect1>
+
+<refsect1><title>TRYING DIFFERENT DATA PATTERNS</title>
+
+<para>
+The (inter)network layer should never treat packets differently depending
+on the data contained in the data portion.
+Unfortunately, data-dependent problems have been known to sneak into
+networks and remain undetected for long periods of time.
+In many cases the particular pattern that will have problems is something
+that doesn't have sufficient ``transitions'', such as all ones or all
+zeros, or a pattern right at the edge, such as almost all zeros.
+It isn't necessarily enough to specify a data pattern of all zeros (for
+example) on the command line because the pattern that is of interest is
+at the data link level, and the relationship between what you type and
+what the controllers transmit can be complicated.
+</para>
+
+<para>
+This means that if you have a data-dependent problem you will probably
+have to do a lot of testing to find it.
+If you are lucky, you may manage to find a file that either can't be sent
+across your network or that takes much longer to transfer than other
+similar length files.
+You can then examine this file for repeated patterns that you can test
+using the <option/-p/ option of <command/ping/.
+</para>
+
+</refsect1>
+
+<refsect1><title>TTL DETAILS</title>
+
+<para>
+The TTL value of an IP packet represents the maximum number of IP routers
+that the packet can go through before being thrown away.
+In current practice you can expect each router in the Internet to decrement
+the TTL field by exactly one.
+</para>
+
+<para>
+The TCP/IP specification states that the TTL field for TCP
+packets should be set to 60, but many systems use smaller values
+(4.3 BSD uses 30, 4.2 used 15).
+</para>
+
+<para>
+The maximum possible value of this field is 255, and most Unix systems set
+the TTL field of ICMP ECHO_REQUEST packets to 255.
+This is why you will find you can ``ping'' some hosts, but not reach them
+with
+<citerefentry><refentrytitle/telnet/<manvolnum/1/</citerefentry>
+or
+<citerefentry><refentrytitle/ftp/<manvolnum/1/</citerefentry>.
+</para>
+
+<para>
+In normal operation ping prints the ttl value from the packet it receives.
+When a remote system receives a ping packet, it can do one of three things
+with the TTL field in its response:
+</para>
+
+<itemizedlist>
+ <listitem><para>
+Not change it; this is what Berkeley Unix systems did before the
+4.3BSD Tahoe release. In this case the TTL value in the received packet
+will be 255 minus the number of routers in the round-trip path.
+ </para></listitem>
+ <listitem><para>
+Set it to 255; this is what current Berkeley Unix systems do.
+In this case the TTL value in the received packet will be 255 minus the
+number of routers in the path <emphasis/from/
+the remote system <emphasis/to/ the <command/ping/ing host.
+ </para></listitem>
+ <listitem><para>
+Set it to some other value. Some machines use the same value for
+ICMP packets that they use for TCP packets, for example either 30 or 60.
+Others may use completely wild values.
+ </para></listitem>
+</itemizedlist>
+
+</refsect1>
+
+<refsect1><title>BUGS</title>
+
+<itemizedlist>
+ <listitem><para>
+Many Hosts and Gateways ignore the RECORD_ROUTE option.
+ </para></listitem>
+ <listitem><para>
+The maximum IP header length is too small for options like
+RECORD_ROUTE to be completely useful.
+There's not much that that can be done about this, however.
+ </para></listitem>
+ <listitem><para>
+Flood pinging is not recommended in general, and flood pinging the
+broadcast address should only be done under very controlled conditions.
+ </para></listitem>
+</itemizedlist>
+
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para>
+<citerefentry><refentrytitle/netstat/<manvolnum/1/</citerefentry>,
+<citerefentry><refentrytitle/ifconfig/<manvolnum/8/</citerefentry>.
+</para>
+</refsect1>
+
+<refsect1><title>HISTORY</title>
+<para>
+The <command/ping/ command appeared in 4.3BSD.
+</para>
+<para>
+The version described here is its descendant specific to Linux.
+</para>
+</refsect1>
+
+<refsect1><title>SECURITY</title>
+<para>
+<command/ping/ requires <constant/CAP_NET_RAWIO/ capability
+to be executed. It may be used as set-uid root.
+</para>
+</refsect1>
+
+<refsect1><title>AVAILABILITY</title>
+<para>
+<command/ping/ is part of <filename/iputils/ package
+and the latest versions are  available in source form at
+<ulink url="http://www.skbuff.net/iputils/iputils-current.tar.bz2">
+http://www.skbuff.net/iputils/iputils-current.tar.bz2</ulink>.
+</para>
+</refsect1>
+
+<![IGNORE[
+<refsect1><title>COPYING</title>
+<para>
+<literallayout>
+Copyright (c) 1989 The Regents of the University of California.
+All rights reserved.
+
+This code is derived from software contributed to Berkeley by
+Mike Muuss.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. All advertising materials mentioning features or use of this software
+   must display the following acknowledgement:
+	This product includes software developed by the University of
+	California, Berkeley and its contributors.
+4. Neither the name of the University nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+</literallayout>
+</para>
+</refsect1>
+]]>
+
+
+</refentry>
+

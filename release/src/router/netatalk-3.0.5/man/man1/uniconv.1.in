@@ -1,0 +1,203 @@
+'\" t
+.\"     Title: uniconv
+.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
+.\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
+.\"      Date: 19 Jan 2013
+.\"    Manual: @NETATALK_VERSION@
+.\"    Source: @NETATALK_VERSION@
+.\"  Language: English
+.\"
+.TH "UNICONV" "1" "19 Jan 2013" "@NETATALK_VERSION@" "@NETATALK_VERSION@"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+uniconv \- convert Netatalk volume encoding
+.SH "SYNOPSIS"
+.HP \w'\fBuniconv\fR\fB\fR\ 'u
+\fBuniconv\fR\fB\fR [\-ndv] \-c\ \fIcnidbackend\fR \-f\ \fIfromcode\fR \-t\ \fItocode\fR [\-m\ \fImaccode\fR] \fIvolumepath\fR
+.SH "DESCRIPTION"
+.PP
+\fBuniconv\fR
+converts the volume encoding of
+\fIvolumepath\fR
+from the
+\fIfromcode\fR
+to the
+\fItocode\fR
+encoding\&.
+.SH "OPTIONS"
+.PP
+\-c
+.RS 4
+CNID backend used on this volume, usually cdb or dbd\&. Should match the backend selected with afpd for this volume\&. If not specified, the default CNID backend "@DEFAULT_CNID_SCHEME@" is used
+.RE
+.PP
+\-d
+.RS 4
+don\*(Aqt HEX encode leading dots (:2e), equivalent to
+\fBuse dots = yes\fR
+in
+\fBafp.conf\fR(5)
+.RE
+.PP
+\-f
+.RS 4
+encoding to convert from, use ASCII for HEX encoded volumes
+.RE
+.PP
+\-h
+.RS 4
+display help
+.RE
+.PP
+\-m
+.RS 4
+Macintosh client codepage, required for HEX encoded volumes\&. Defaults to "MAC_ROMAN"
+.RE
+.PP
+\-n
+.RS 4
+"dry run", don\*(Aqt do any real changes
+.RE
+.PP
+\-t
+.RS 4
+volume encoding to convert to, e\&.g\&. UTF8
+.RE
+.PP
+\-v
+.RS 4
+verbose output, use twice for maximum logging\&.
+.RE
+.PP
+\-V
+.RS 4
+print version and exit
+.RE
+.PP
+.SH "WARNING"
+.PP
+Setting the wrong options might render your data unusable!!! Make sure you know what you are doing\&. Always backup your data first\&.
+.PP
+It is
+\fB*strongly*\fR
+recommended to do a "dry run" first and to check the output for conversion errors\&.
+.PP
+\fBafpd\fR(8)
+should
+\fInot\fR
+be running while you change the volume encoding\&. Remember to change
+\fBunix charset\fR
+or
+\fBvol charset\fR
+in
+\fBafp.conf\fR(5)
+to the new codepage, before restarting afpd\&.
+.PP
+In case of
+\fBMacChineseTraditional\fR,
+\fBMacJapanese\fR
+or
+\fBMacKorean\fR, uniconv cannot be used\&.
+.PP
+\fBUSE AT YOUR OWN RISK!!!\fR
+.SH "SELECTABLE CHARSETS"
+.PP
+Netatalk provides internal support for UTF\-8 (pre\- and decomposed) and HEX\&. If you want to use other charsets, they must be provided by
+\fBiconv\fR(1)
+.PP
+\fBuniconv\fR
+also knows iso\-8859\&.adapted, an old style 1\&.x NLS widely used\&. This is only intended for upgrading old volumes,
+\fBafpd\fR(8)
+cannot handle iso\-8859\&.adapted anymore\&.
+.SH "CNID BACKGROUND"
+.PP
+The CNID backends maintains name to ID mappings\&. If you change a filename outside afpd(8) (shell, samba), the CNID db, i\&.e\&. the DIDNAME index, gets inconsistent\&. Netatalk tries to recover from such inconsistencies as gracefully as possible\&. The mechanisms to resolve such inconsistencies may fail sometimes, though, as this is not an easy task to accomplish\&. I\&.e\&. if several names in the path to the file or directory have changed, things may go wrong\&.
+.PP
+If you change a lot of filenames at once, chances are higher that the afpds fallback mechanisms fail, i\&.e\&. files will be assigned new IDs, even though the file hasn\*(Aqt changed\&.
+\fBuniconv\fR
+therefore updates the CNID entry for each file/directory directly after it changes the name to avoid inconsistencies\&. The two supported backends for volumes, dbd and cdb, use the same CNID db format\&. Therefore, you
+\fIcould\fR
+use
+\fBuniconv\fR
+with cdb and
+\fBafpd\fR
+with dbd later\&.
+.PP
+\fBWarning\fR: There must not be two processes opening the CNID database using different backends at once! If a volume is still opened with dbd (cnid_metad/cnid_dbd) and you start
+\fBuniconv\fR
+with cdb, the result will be a corrupted CNID database, as the two backends use different locking schemes\&. You might run into additional problems, e\&.g\&. if dbd is compiled with transactions, cdb will not update the transaction logs\&.
+.PP
+In general, it is recommended to use the same backend for
+\fBuniconv\fR
+you are using with
+\fBafpd\fR(8)\&.
+.SH "EXAMPLES"
+.PP
+convert 1\&.x CAP encoded volume to UTF\-8, clients used MacRoman codepage, cnidscheme is dbd:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+example%\fB uniconv \-c dbd \-f ASCII \-t UTF8 \-m MAC_ROMAN /path/to/share\fR
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+convert iso8859\-1 volume to UTF\-8, cnidscheme is cdb:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+example%\fB uniconv \-c cdb \-f ISO\-8859\-1 \-t UTF8 \-m MAC_ROMAN /path/to/share\fR
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+convert 1\&.x volume using iso8859\-1 adapted NLS to HEX encoding:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+example%\fB uniconv \-f ISO\-8859\-ADAPTED \-t ASCII \-m MAC_ROMAN/path/to/share\fR
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+convert UTF\-8 volume to HEX, for MacCyrillic clients:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+example%\fB uniconv \-f UTF8 \-t ASCII \-m MAC_CYRILLIC /path/to/share\fR
+.fi
+.if n \{\
+.RE
+.\}
+.SH "SEE ALSO"
+.PP
+\fBafp.conf\fR(5),\fBafpd\fR(8),\fBiconv\fR(1),\fBcnid_metad\fR(8),\fBcnid_dbd\fR(8)

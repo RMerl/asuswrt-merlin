@@ -1,0 +1,221 @@
+<refentry id="rdisc">
+
+<refmeta>
+<refentrytitle>rdisc</refentrytitle>
+<manvolnum>8</manvolnum>
+<refmiscinfo>iputils-&snapshot;</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>rdisc</refname>
+<refpurpose>network router discovery daemon</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>rdisc</command>
+<arg choice="opt"><option>-abdfstvV</option></arg>
+<arg choice="opt"><replaceable/send_address/</arg>
+<arg choice="opt"><replaceable/receive_address/</arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1><title>DESCRIPTION</title>
+<para>
+<command/rdisc/ implements client side of the ICMP router discover protocol.
+<command/rdisc/ is invoked at boot time to populate the network
+routing tables with default routes. 
+</para>
+
+<para>
+<command/rdisc/ listens on the ALL_HOSTS (224.0.0.1) multicast address
+(or <replaceable/receive_address/ provided it is given) 
+for ROUTER_ADVERTISE messages from routers. The received
+messages are handled by first ignoring those listed router addresses
+with which the host does not share a network. Among the remaining addresses
+the ones with the highest preference are selected as default routers
+and a default route is entered in the kernel routing table
+for each one of them.
+</para>
+
+<para>
+Optionally, <command/rdisc/ can avoid waiting for routers to announce 
+themselves by sending out a few ROUTER_SOLICITATION messages
+to the ALL_ROUTERS (224.0.0.2) multicast address 
+(or <replaceable/send_address/ provided it is given) 
+when it is started.
+</para>
+
+<para>
+A timer is associated with each router address and the address will
+no longer be considered for inclusion in the the routing tables if the 
+timer expires before a new 
+<emphasis/advertise/ message is received from the router.
+The address will also be excluded from consideration if the host receives an 
+<emphasis/advertise/
+message with the preference being maximally negative.
+</para>
+
+<para>
+Server side of router discovery protocol is supported by Cisco IOS
+and by any more or less complete UNIX routing daemon, f.e <command/gated/.
+</para>
+
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+
+<variablelist>
+ <varlistentry>
+  <term><option/-a/</term>
+  <listitem><para>
+Accept all routers independently of the preference they have in their 
+<emphasis/advertise/ messages.
+Normally <command/rdisc/ only accepts (and enters in the kernel routing
+tables) the router or routers with the highest preference.
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option/-b/</term>
+  <listitem><para>
+Opposite to <option/-a/, i.e. install only router with the best
+preference value. It is default behaviour.
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option/-d/</term>
+  <listitem><para>
+Send debugging messages to syslog.
+  </para></listitem>
+ </varlistentry>
+ <varlistentry>
+  <term><option/-f/</term>
+  <listitem><para>
+Run <command/rdisc/ forever even if no routers are found.
+Normally <command/rdisc/ gives up if it has not received any 
+<emphasis/advertise/ message after after soliciting three times,
+in which case it exits with a non-zero exit code.
+If <option/-f/ is not specified in the first form then 
+<option/-s/ must be specified.
+  </para></listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term><option/-s/</term>
+  <listitem><para>
+Send three <emphasis/solicitation/ messages initially to quickly discover
+the routers when the system is booted.
+When <option/-s/ is specified <command/rdisc/
+exits with a non-zero exit code if it can not find any routers.
+This can be overridden with the <option/-f/ option.
+  </para></listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term><option/-t/</term>
+  <listitem><para>
+Test mode. Do not go to background.
+  </para></listitem>
+ </varlistentry>
+
+
+ <varlistentry>
+  <term><option/-v/</term>
+  <listitem><para>
+Be verbose i.e. send lots of debugging messages to syslog.
+  </para></listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term><option/-V/</term>
+  <listitem><para>
+Print version and exit.
+  </para></listitem>
+ </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1><title>HISTORY</title>
+<para>
+This program was developed by Sun Microsystems (see copyright
+notice in source file). It was ported to Linux by
+<ulink url="mailto:kuznet@ms2.inr.ac.ru">Alexey Kuznetsov
+&lt;kuznet@ms2.inr.ac.ru&gt;</ulink>.
+It is now maintained by
+<ulink url="mailto:yoshfuji@skbuff.net">YOSHIFUJI Hideaki
+&lt;yoshfuji@skbuff.net&gt;</ulink>.
+</para>
+</refsect1>
+
+
+<refsect1><title>SEE ALSO</title>
+<para>
+<citerefentry><refentrytitle/icmp/<manvolnum/7/</citerefentry>,
+<citerefentry><refentrytitle/inet/<manvolnum/7/</citerefentry>,
+<link linkend="ping">
+<citerefentry><refentrytitle/ping/<manvolnum/8/</citerefentry></link>.
+</para>
+</refsect1>
+
+<refsect1><title>REFERENCES</title>
+<para>
+Deering, S.E.,ed "ICMP Router Discovery Messages",
+<ulink url="ftp://ftp.isi.edu/in-notes/rfc1256.txt">
+RFC1256</ulink>, Network Information Center, SRI International,
+Menlo Park, Calif., September 1991.
+</para>
+</refsect1>
+
+<refsect1><title>SECURITY</title>
+<para>
+<command/rdisc/ requires <constant/CAP_NET_RAWIO/ to listen
+and send ICMP messages and capability <constant/CAP_NET_ADMIN/
+to update routing tables. 
+</para>
+</refsect1>
+
+<refsect1><title>AVAILABILITY</title>
+<para>
+<command/rdisc/ is part of <filename/iputils/ package
+and the latest versions are  available in source form at
+<ulink url="http://www.skbuff.net/iputils/iputils-current.tar.bz2">
+http://www.skbuff.net/iputils/iputils-current.tar.bz2</ulink>.
+</para>
+</refsect1>
+
+<![IGNORE[
+<refsect1><title>COPYING</title>
+<para>
+<literallayout>
+Rdisc (this program) was developed by Sun Microsystems, Inc. and is 
+provided for unrestricted use provided that this legend is included on 
+all tape media and as a part of the software program in whole or part.  
+Users may copy or modify Rdisc without charge, and they may freely 
+distribute it.
+
+RDISC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
+WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
+PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
+
+Rdisc is provided with no support and without any obligation on the
+part of Sun Microsystems, Inc. to assist in its use, correction,
+modification or enhancement.
+
+SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
+INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY RDISC
+OR ANY PART THEREOF.
+
+In no event will Sun Microsystems, Inc. be liable for any lost revenue
+or profits or other special, indirect and consequential damages, even if
+Sun has been advised of the possibility of such damages.
+
+Sun Microsystems, Inc.
+2550 Garcia Avenue
+Mountain View, California  94043
+</literallayout>
+</para>
+</refsect1>
+]]>
+
+
+</refentry>

@@ -62,7 +62,7 @@ elif [ "$1" == "mediaserver" ]; then
 	elif [ "$MS_version1" -eq "1" ] && [ "$MS_version4" -gt "15" ]; then
 		need_asuslighttpd=1
 	fi
-elif [ "$1" == "aicloud" ] && [ -z "$is_arm_machine" ]; then
+elif [ "$1" == "aicloud" ]; then
 	AC_version1=`app_get_field.sh aicloud Version 1 |awk '{FS=".";print $1}'`
 	AC_version4=`app_get_field.sh aicloud Version 1 |awk '{FS=".";print $4}'`
 
@@ -88,6 +88,14 @@ if [ "$need_asuslighttpd" == "1" ]; then
 fi
 
 nvram set apps_state_remove=1 # REMOVING
+echo "Removing the package: $1..."
+app_set_enabled.sh $1 no
+ipkg remove $1
+if [ "$?" != "0" ]; then
+	nvram set apps_state_error=9
+	exit 1
+fi
+
 if [ "$need_asuslighttpd" == "1" ]; then
 	_check_package asuslighttpd
 	if [ "$?" != "0" ]; then
@@ -125,14 +133,6 @@ elif [ "$need_smartsync" == "1" ]; then
 			fi
 		fi
 	done
-fi
-
-echo "Removing the package: $1..."
-app_set_enabled.sh $1 no
-ipkg remove $1
-if [ "$?" != "0" ]; then
-	nvram set apps_state_error=9
-	exit 1
 fi
 
 APPS_MOUNTED_TYPE=`mount |grep "/dev/$APPS_DEV on " |awk '{print $5}'`

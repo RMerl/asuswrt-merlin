@@ -15,3 +15,5 @@ doc/igmpproxy.conf.5
 src/Makefile
 src/igmpproxy
 src/os.h
+autom4te.cache
+

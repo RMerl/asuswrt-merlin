@@ -18,6 +18,7 @@ static const struct model_s model_list[] = {
 	{ "RT-AC56U",	MODEL_RTAC56U	},
 	{ "RT-AC66U",	MODEL_RTAC66U	},
 	{ "RT-AC68U",	MODEL_RTAC68U	},
+	{ "RT-AC53U",	MODEL_RTAC53U	},
 	{ "RT-N53",	MODEL_RTN53	},
 	{ "RT-N16",	MODEL_RTN16	},
 	{ "RT-N18U",	MODEL_RTN18U	},
@@ -28,6 +29,7 @@ static const struct model_s model_list[] = {
 	{ "RT-N12D1",	MODEL_RTN12D1	},
 	{ "RT-N12VP",	MODEL_RTN12VP	},
 	{ "RT-N12HP",	MODEL_RTN12HP	},
+	{ "RT-N12HP_B1",	MODEL_RTN12HP_B1	},
 	{ "AP-N12",	MODEL_APN12	},
 	{ "AP-N12HP",	MODEL_APN12HP	},
 	{ "RT-N10U",	MODEL_RTN10U	},
@@ -67,6 +69,8 @@ static int get_model_by_hw(void)
 			return MODEL_RTN12D1;
 		if (strncmp(hw_version, "RTN12VP", 7) == 0)
 			return MODEL_RTN12VP;
+		if (strncmp(hw_version, "RTN12HP_B1", 10) == 0)
+			return MODEL_RTN12HP_B1;
 		if (strncmp(hw_version, "RTN12HP", 7) == 0)
 			return MODEL_RTN12HP;
 		if (strncmp(hw_version, "APN12HP", 7) == 0)

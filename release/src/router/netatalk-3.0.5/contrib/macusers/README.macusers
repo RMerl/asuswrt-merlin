@@ -1,0 +1,4 @@
+This script is very similar to the nu script, but it shows more detailed
+information.  However, since ps and lsof outputs vary, it may need some
+modifications to work in Unixes other than Red Hat linux.  
+

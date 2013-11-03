@@ -49,6 +49,11 @@
 #include <nflash.h>
 #endif
 
+#include <chipcommonb.h>
+#include <armca9_core.h>
+#include <bcmdevs.h>
+#include <linux/reboot.h>
+
 int nvram_space = DEF_NVRAM_SPACE;
 
 /* Temp buffer to hold the nvram transfered romboot CFE */
@@ -1067,6 +1072,85 @@ dev_nvram_exit(void)
 	_nvram_exit();
 }
 
+static void
+reset_clkfreq()
+{
+	nvram_set("clkfreq", "800,533");
+	nvram_commit();
+	kernel_restart(NULL);
+}
+
+static void
+bcm947xx_corex_info()
+{
+        si_t *sih;
+        chipcommonbregs_t *chipcb = NULL;
+        osl_t *osh;
+        uint32 origidx, ccb_base;
+        uint32 reg, control1, control2, idx, val, dclk=0, cclk=0;
+        void __iomem *reg_map;
+
+        static uint32 BCMINITDATA(pll_table)[][3] = {
+                /* DDR clock, PLLCONTROL1, PLLCONTROL2 */
+                { 333,  0x17800000,     0x1e0f1219 },
+                { 389,  0x18c00000,     0x23121219 },
+                { 400,  0x18000000,     0x20101019 },
+                { 533,  0x18000000,     0x20100c19 },
+                { 666,  0x17800000,     0x1e0f0919 },
+                { 775,  0x17c00000,     0x20100819 },
+                { 800,  0x18000000,     0x20100819 },
+                {0}
+        };
+
+
+        if ((sih = si_kattach(SI_OSH)) == NULL) {
+                return;
+        }
+
+        osh = si_osh(sih);
+        if (CHIPID(sih->chip) == BCM4707_CHIP_ID) {
+                origidx = si_coreidx(sih);
+                if (si_setcore(sih, NS_CCB_CORE_ID, 0)) {
+                        ccb_base = si_addrspace(sih, 0);
+                        chipcb = (chipcommonbregs_t *)REG_MAP(ccb_base, sizeof(chipcommonbregs_t));
+                        if(chipcb){
+                                control1 = R_REG(osh, &chipcb->cru_lcpll_control1);
+                                control2 = R_REG(osh, &chipcb->cru_lcpll_control2);
+                        }
+                        REG_UNMAP(chipcb);
+                        for (idx = 0; pll_table[idx][0] != 0; idx++) {
+                                if ((control1 == pll_table[idx][1]) &&
+                                    (control2 == pll_table[idx][2])) {
+                                        dclk = pll_table[idx][0];
+					break;
+                                }
+                        }
+                }
+                si_setcoreidx(sih, origidx);
+		if(dclk < 533)
+			reset_clkfreq();
+
+                reg = IHOST_PROC_CLK_POLICY_FREQ;
+                reg_map = ioremap_nocache(reg, 4);
+                val = readl(reg_map);
+                iounmap((void*) reg_map);
+
+                if ((val & 0x7070707) == 0x2020202){
+                        cclk = 1000;
+                } else {
+                        reg = IHOST_PROC_CLK_PLLARMA;
+                        reg_map = ioremap_nocache(reg, 4);
+                        val = readl(reg_map);
+                        iounmap((void*) reg_map);
+                        val = (val >> 8) & 0x2ff;
+                        cclk = ((val * 25 * 1000000) / 2) / 1000000;
+                }
+
+		if(cclk < 800)
+			reset_clkfreq();
+        }
+}
+
 static int
 dev_nvram_init(void)
 {
@@ -1139,6 +1223,9 @@ dev_nvram_init(void)
 #else /* Linux 2.6.36 and above */
 	device_create(nvram_class, NULL, MKDEV(nvram_major, 0), NULL, "nvram");
 #endif	/* Linux 2.6.36 */
+
+        /* in case clkfreq is lower than 800,533 */
+        bcm947xx_corex_info();
 
 	return 0;
 

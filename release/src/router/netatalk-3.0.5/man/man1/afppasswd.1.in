@@ -1,0 +1,122 @@
+'\" t
+.\"     Title: afppasswd
+.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
+.\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
+.\"      Date: 22 Mar 2012
+.\"    Manual: @NETATALK_VERSION@
+.\"    Source: @NETATALK_VERSION@
+.\"  Language: English
+.\"
+.TH "AFPPASSWD" "1" "22 Mar 2012" "@NETATALK_VERSION@" "@NETATALK_VERSION@"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+afppasswd \- netatalk password maintenance utility
+.SH "SYNOPSIS"
+.HP \w'\fBafppasswd\fR\fB\fR\fB\fR\ 'u
+\fBafppasswd\fR\fB\fR\fB\fR [\-acfn] [\-p\ \fIpasswd\fR\ \fIfile\fR] [\-u\ \fIminimum\fR\ \fIuid\fR]
+.SH "DESCRIPTION"
+.PP
+\fBafppasswd\fR
+allows the maintenance of afppasswd files created by netatalk for use by the uams_randnum\&.so UAM (providing the "Randnum exchange" and "2\-Way Randnum exchange" User Authentication Modules)\&.
+.PP
+\fBafppasswd\fR
+can either be called by root with parameters, or can be called by local system users with no parameters to change their AFP passwords\&.
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+.PP
+With this utility you can only change the passwords used by two specific UAMs\&. As they provide only weak password encryption, the use of the "Randnum exchange" and "2\-Way Randnum exchange" UAMs is deprecated unless one has to support very old AFP clients, that can not deal with the more secure "DHCAST128" and "DHX2" UAM instead\&. Please compare with the
+Authentication chapter
+inside Netatalk\*(Aqs documentation\&.
+.sp .5v
+.RE
+.SH "EXAMPLE"
+.PP
+Local user changing their own password:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+example% \fBafppasswd\fR
+Enter NEW AFP password: \fB(hidden)\fR
+Enter NEW AFP password again: \fB(hidden)\fR
+afppasswd: updated password\&.
+.fi
+.if n \{\
+.RE
+.\}
+.SH "OPTIONS"
+.PP
+\fB\-a\fR
+.RS 4
+Add a new user to the
+\fBafppasswd\fR
+file\&.
+.RE
+.PP
+\fB\-c\fR
+.RS 4
+Create and/or initialize
+\fBafppasswd\fR
+file or specific user\&.
+.RE
+.PP
+\fB\-f\fR
+.RS 4
+Force the current action\&.
+.RE
+.PP
+\fB\-p\fR\fI path\fR
+.RS 4
+Path to
+\fBafppasswd\fR
+file\&.
+.RE
+.PP
+\fB\-n\fR
+.RS 4
+If cracklib support is built into
+\fBnetatalk\fR
+this option will cause cracklib checking to be disabled, if the superuser does not want to have the password run against the cracklib dictionary\&.
+.RE
+.PP
+\fB\-u\fR\fI minimum uid\fR
+.RS 4
+This is the minimum
+\fIuser id\fR
+(uid) that
+\fBafppasswd\fR
+will use when creating users\&.
+.RE
+.SH "SEE ALSO"
+.PP
+\fBafpd\fR(8),
+\fBafp.conf\fR(5)\&.

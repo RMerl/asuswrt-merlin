@@ -98,6 +98,8 @@ function updateOptions(){
 																		+document.form.ExtOption.value +" -n";
 	}else{
 		document.form.SystemCmd.value = "netstat " + document.form.NetOption.value;
+		if (document.form.ResolveName.value != "1")
+			document.form.SystemCmd.value += " -n";
 	}		
 	document.form.submit();
 	document.getElementById("cmdBtn").disabled = true;
@@ -167,11 +169,13 @@ function hideCNT(obj){
 		addNetOption(document.form.NetOption, option_netstat_nat, optval_netstat_nat);
 		append_value(document.form.NetOption);
 		$('ExtOption_tr').style.display = "";
+		$('resolvename').style.display = "none";
 	}
 	else{
 		$("cmdDesc").innerHTML = "<#NetworkTools_Info#>";	
 		addNetOption(document.form.NetOption, option_netstat, optval_netstat);
 		$('ExtOption_tr').style.display = "none";
+		$('resolvename').style.display = "";
 	}
 }
 
@@ -192,7 +196,6 @@ function append_value(obj){
 	}else{
 				$('targetip_tr').style.display = "none";
 	}
-	
 }
 
 var over_var = 0;
@@ -348,6 +351,15 @@ function validForm(){
  												</select>
 											</td>										
 										</tr>						
+										<tr id = "resolvename" style="">
+											<th width="20%">Resolve name</th>
+											<td>
+												<select id="ResolveName" class="input_option" name="ResolveName">
+													<option value="0">No</option>
+													<option value="1">Yes</option>
+												</select>
+											</td>
+										</tr>
 									</table>
 
 									<div class="apply_gen">

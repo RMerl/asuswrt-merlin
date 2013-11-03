@@ -24,7 +24,7 @@ Revision History:
 //
 // This field is updated by CVS
 //
-static const char s_FileVer[] = "$Id: ufsdvfs.c,v 1.385.2.23 2012-05-02 15:08:36 shura Exp $";
+static const char s_FileVer[] = "$Id: ufsdvfs.c 208702 2013-07-25 17:06:01Z Ivan.Zorin $";
 
 //
 // Tune ufsdvfs.c
@@ -145,7 +145,7 @@ static const char s_FileVer[] = "$Id: ufsdvfs.c,v 1.385.2.23 2012-05-02 15:08:36
 //
 // Default trace level for many functions in this module
 //
-#define Dbg  DEBUG_TRACE_VFS
+#define Dbg  UFSD_LEVEL_VFS
 
 //
 // Used to trace driver version
@@ -189,6 +189,8 @@ static const char s_DriverVer[] = PACKAGE_VERSION
 #endif
 #ifdef UFSD_DEBUG
   ", debug"
+#elif defined UFSD_TRACE
+  ", tr"
 #endif
   ;
 
@@ -197,18 +199,29 @@ static const char s_DriverVer[] = PACKAGE_VERSION
 #endif
 
 #include "ufsdapi.h"
+#include "vfsdebug.h"
 
 #if defined HAVE_LINUX_MUTEX_H && HAVE_LINUX_MUTEX_H
   #include <linux/mutex.h>
+#endif
+
+#if defined HAVE_LINUX_MUTEX_H && HAVE_LINUX_MUTEX_H && !(defined CONFIG_DEBUG_LOCK_ALLOC && CONFIG_DEBUG_LOCK_ALLOC)
+  // Use mutex if possible
+  #define Mutex                    mutex
+  #define Mutex_init(lock)         mutex_init(lock)
+  #define Mutex_lock(lock)         mutex_lock(lock)
+  #define Mutex_trylock(lock)      mutex_trylock(lock)
+  #define Mutex_unlock(lock)       mutex_unlock(lock)
+  #define Mutex_destroy(lock)      mutex_destroy(lock)
 #else
-  #undef mutex_init
-  #undef mutex_lock
-  #define mutex                    semaphore
-  #define mutex_init(lock)         sema_init(lock, 1)
-  #define mutex_lock(lock)         down(lock)
-  #define mutex_trylock(lock)      !down_trylock(lock)
-  #define mutex_unlock(lock)       up(lock)
-  #define mutex_destroy(lock)      do { } while ((void) 0,0)
+  // Use semaphore if mutex is not available
+  #define Mutex                    semaphore
+  // Don't 'cause may be G.P.L. #define Mutex_init(lock)         sema_init(lock, 1)
+  #define Mutex_init(lock)         *lock = (struct semaphore) __SEMAPHORE_INITIALIZER(*lock, 1)
+  #define Mutex_lock(lock)         down(lock)
+  #define Mutex_trylock(lock)      !down_trylock(lock)
+  #define Mutex_unlock(lock)       up(lock)
+  #define Mutex_destroy(lock)      do { } while ((void) 0,0)
 #endif
 
 
@@ -333,6 +346,7 @@ typedef struct unode {
   char          compr;
   char          encrypt;
   char          xattr;
+  char          flags;
 
 #ifdef UFSD_DELAY_ALLOC
   unsigned      i_state_flags;      // See UFSD_STATE_XXX
@@ -355,8 +369,8 @@ typedef struct usuper {
     struct vfsmount*  VfsMnt;
     char              MntBuffer[32];
 #endif
-    struct mutex      ApiMutex;
-    struct mutex      NoCaseMutex;
+    struct Mutex      ApiMutex;
+    struct Mutex      NoCaseMutex;
     mount_options     options;
 #ifdef UFSD_CHECK_BDI
     struct backing_dev_info*  bdi;
@@ -366,7 +380,7 @@ typedef struct usuper {
     size_t            BytesPerXBuffer;
 #endif
     struct proc_dir_entry*  procdir;
-    DEBUG_ONLY( struct sysinfo    SysInfo; )
+    TRACE_ONLY( struct sysinfo    SysInfo; )
     spinlock_t        ddt_lock;     // DoDelayedTasks lock
     struct list_head  clear_list;   // List of inodes to clear
 
@@ -374,7 +388,8 @@ typedef struct usuper {
     void*             rw_buffer;    // RW_BUFFER_SIZE
     unsigned int      ReadAheadPages;
 
-#ifdef UFSD_DEBUG
+#ifdef UFSD_TRACE
+
     size_t            nDelClear;      // Delayed clear
     size_t            nWrittenBlocks; // Count of written blocks
     size_t            nReadBlocks;    // Count of read blocks
@@ -388,6 +403,7 @@ typedef struct usuper {
     size_t            nHashCalls;     // Count of ufsd_name_hash calls
     size_t            nCompareCalls;  // Count of ufsd_compare calls
 
+#ifdef UFSD_DEBUG
     // Internal profiler
     size_t            bdread_cnt;
     size_t            bdread_ticks;
@@ -409,7 +425,9 @@ typedef struct usuper {
     size_t            da_write_begin_ticks;
     size_t            da_write_end_cnt;
     size_t            da_write_end_ticks;
-#endif
+#endif /* UFSD_DEBUG */
+
+#endif /* UFSD_TRACE */
 
     unsigned char     BlkBits;      // Log2(BytesPerBlock)
     unsigned char     SctBits;      // Log2(BytesPerSector)
@@ -423,7 +441,7 @@ typedef struct usuper {
 #ifdef UFSD_DELAY_ALLOC
     atomic_long_t     FreeBlocks; // UINT64?
     atomic_long_t     DirtyBlocks;
-    DEBUG_ONLY( int   DoNotTraceNoSpc; )
+    TRACE_ONLY( int   DoNotTraceNoSpc; )
 #endif
 
 } usuper;
@@ -434,11 +452,18 @@ typedef struct {
 } delay_task;
 
 
-#ifdef UFSD_DEBUG
+#ifdef UFSD_TRACE
   #define LockUfsd(s)     _LockUfsd( s, __func__ )
   #define TryLockUfsd(s)  _TryLockUfsd( s, __func__ )
   #define UnlockUfsd(s)   _UnlockUfsd( s, __func__ )
+  static unsigned long WaitMutex, StartJiffies;
+#else
+  #define LockUfsd(s)     _LockUfsd( s )
+  #define TryLockUfsd(s)  _TryLockUfsd( s )
+  #define UnlockUfsd(s)   _UnlockUfsd( s )
+#endif
 
+#ifdef UFSD_DEBUG
   #define ProfileEnter(s,name)    \
     s->name##_cnt += 1;           \
     s->name##_ticks -= jiffies
@@ -446,11 +471,7 @@ typedef struct {
   #define ProfileLeave(s,name)    \
     s->name##_ticks += jiffies
 
-  static unsigned long WaitMutex, StartJiffies;
 #else
-  #define LockUfsd(s)     _LockUfsd( s )
-  #define TryLockUfsd(s)  _TryLockUfsd( s )
-  #define UnlockUfsd(s)   _UnlockUfsd( s )
   #define ProfileEnter(s,name)
   #define ProfileLeave(s,name)
 #endif
@@ -664,8 +685,10 @@ static inline void inc_nlink(struct inode* i){ i->i_nlink++; }
 //
 #if defined HAVE_DECL_WRITEBACK_INODES_SB_IF_IDLE_V1 && HAVE_DECL_WRITEBACK_INODES_SB_IF_IDLE_V1
   #define Writeback_inodes_sb_if_idle(s) writeback_inodes_sb_if_idle( (s) )
+  #define Writeback_inodes_sb(s) writeback_inodes_sb( (s) )
 #elif defined HAVE_DECL_WRITEBACK_INODES_SB_IF_IDLE_V2 && HAVE_DECL_WRITEBACK_INODES_SB_IF_IDLE_V2
   #define Writeback_inodes_sb_if_idle(s) writeback_inodes_sb_if_idle( (s), WB_REASON_FREE_MORE_MEM )
+  #define Writeback_inodes_sb(s) writeback_inodes_sb( (s), WB_REASON_FREE_MORE_MEM )
 #endif
 
 
@@ -702,7 +725,7 @@ static size_t TotalAllocBlocks;
 static size_t TotalAllocSequence;
 static size_t MemMaxRequest;
 static LIST_HEAD(TotalAllocHead);
-static struct mutex MemMutex;
+static struct Mutex MemMutex;
 
 
 ///////////////////////////////////////////////////////////
@@ -719,13 +742,13 @@ TraceMemReport(
   size_t Kb = (UsedMemMax%(1024*1024)) / 1024;
   size_t b  = UsedMemMax%1024;
   if ( 0 != Mb ) {
-    DebugTrace(0, DEBUG_TRACE_ERROR, ("Memory report: Peak usage %Zu.%03Zu Mb (%Zu bytes), kmalloc %Zu, vmalloc %Zu\n",
+    DebugTrace(0, UFSD_LEVEL_ERROR, ("Memory report: Peak usage %Zu.%03Zu Mb (%Zu bytes), kmalloc %Zu, vmalloc %Zu\n",
                   Mb, Kb, UsedMemMax, TotalKmallocs, TotalVmallocs ) );
   } else {
-    DebugTrace(0, DEBUG_TRACE_ERROR, ("Memory report: Peak usage %Zu.%03Zu Kb (%Zu bytes),  kmalloc %Zu, vmalloc %Zu\n",
+    DebugTrace(0, UFSD_LEVEL_ERROR, ("Memory report: Peak usage %Zu.%03Zu Kb (%Zu bytes),  kmalloc %Zu, vmalloc %Zu\n",
                   Kb, b, UsedMemMax, TotalKmallocs, TotalVmallocs ) );
   }
-  DebugTrace(0, DEBUG_TRACE_ERROR, ("%s:  %Zu bytes in %Zu blocks, Max request %Zu bytes\n",
+  DebugTrace(0, UFSD_LEVEL_ERROR, ("%s:  %Zu bytes in %Zu blocks, Max request %Zu bytes\n",
                 OnExit? "Leak":"Total allocated", TotalAllocs, TotalAllocBlocks, MemMaxRequest ) );
 }
 
@@ -760,18 +783,18 @@ UFSD_HeapAlloc(
     ASSERT( (size_t)head >= VMALLOC_START && (size_t)head < VMALLOC_END );
 #ifdef UFSD_DEBUG
     if ( (size_t)head < VMALLOC_START || (size_t)head >= VMALLOC_END )
-      UFSD_DebugPrintf( "vmalloc(%Zu) returns %p. Must be in range [%lx, %lx)\n", AllocatedSize + TheOverhead, head, (long)VMALLOC_START, (long)VMALLOC_END );
+      _UFSDTrace( "vmalloc(%Zu) returns %p. Must be in range [%lx, %lx)\n", AllocatedSize + TheOverhead, head, (long)VMALLOC_START, (long)VMALLOC_END );
 #endif
   }
 
   ASSERT(NULL != head);
   if (NULL == head) {
-    DebugTrace(0, DEBUG_TRACE_ERROR, ("HeapAlloc(%Zu) failed\n", Size));
+    DebugTrace(0, UFSD_LEVEL_ERROR, ("HeapAlloc(%Zu) failed\n", Size));
     return NULL;
   }
   ASSERT(0 == (AllocatedSize & 1U));
 
-  mutex_lock( &MemMutex );
+  Mutex_lock( &MemMutex );
 
   // Fill head private fields
   head->AllocatedSize = AllocatedSize;
@@ -798,10 +821,10 @@ UFSD_HeapAlloc(
 
   if (!Use_kmalloc)
     head->AllocatedSize |= 1U;
-  DebugTrace(0, DEBUG_TRACE_MEMMNGR, ("alloc(%Zu) -> %p%s, seq=%u\n",
+  DebugTrace(0, UFSD_LEVEL_MEMMNGR, ("alloc(%Zu) -> %p%s, seq=%u\n",
                 Size, head+1, Use_kmalloc? "" : "(v)", head->Seq));
 
-  mutex_unlock( &MemMutex );
+  Mutex_unlock( &MemMutex );
   return head + 1;
 }
 
@@ -822,7 +845,7 @@ UFSD_HeapFree(
   if ( NULL == Pointer )
     return;
 
-  mutex_lock( &MemMutex );
+  Mutex_lock( &MemMutex );
 
 #if 1
   // Fast but unsafe find
@@ -839,8 +862,8 @@ UFSD_HeapFree(
     }
   }
   ASSERT( !"failed to find block" );
-  DebugTrace(0, DEBUG_TRACE_ERROR, ("HeapFree(%p) failed to find block\n", Pointer ));
-  mutex_unlock( &MemMutex );
+  DebugTrace(0, UFSD_LEVEL_ERROR, ("HeapFree(%p) failed to find block\n", Pointer ));
+  Mutex_unlock( &MemMutex );
   return;
 Found:
 #endif
@@ -854,12 +877,12 @@ Found:
       if ( *p != 0xde ) {
         Err = "head";
 BadNews:
-        DEBUG_ONLY( UFSD_DebugTraceLevel = -1; )
-        DebugTrace(0, DEBUG_TRACE_ERROR, ("**** Allocated %u seq %u DataSize %u\n",
+        TRACE_ONLY( UFSD_TraceLevel = -1; )
+        DebugTrace(0, UFSD_LEVEL_ERROR, ("**** Allocated %u seq %u DataSize %u\n",
                    block->AllocatedSize, block->Seq, block->DataSize ));
-        DebugTrace(0, DEBUG_TRACE_ERROR, ("**** HeapFree(%p) %s barrier failed at 0x%Zx\n", Pointer, Err, PtrOffset( block, p ) ));
+        DebugTrace(0, UFSD_LEVEL_ERROR, ("**** HeapFree(%p) %s barrier failed at 0x%Zx\n", Pointer, Err, PtrOffset( block, p ) ));
         UFSDAPI_DumpMemory( block, 512 );
-        DEBUG_ONLY( UFSD_DebugTraceLevel = 0; )
+        TRACE_ONLY( UFSD_TraceLevel = 0; )
         BUG_ON(1);
       }
     }
@@ -880,8 +903,8 @@ BadNews:
   //
   TotalAllocs -= block->DataSize;
   TotalAllocBlocks -= 1;
-  mutex_unlock( &MemMutex );
-  DebugTrace(0, DEBUG_TRACE_MEMMNGR, ("free(%p, %u) seq=%u\n", block + 1, block->DataSize, block->Seq));
+  Mutex_unlock( &MemMutex );
+  DebugTrace(0, UFSD_LEVEL_MEMMNGR, ("free(%p, %u) seq=%u\n", block + 1, block->DataSize, block->Seq));
 
   memset( block + 1, 0xcc, block->DataSize );
 
@@ -915,11 +938,11 @@ UFSD_HeapAlloc(
 
   ASSERT(NULL != ptr);
   if ( NULL == ptr ) {
-    DebugTrace(0, DEBUG_TRACE_ERROR, ("alloc(%Zu) failed\n", Size));
+    DebugTrace(0, UFSD_LEVEL_ERROR, ("alloc(%Zu) failed\n", Size));
     return NULL;
   }
 
-  DebugTrace(0, DEBUG_TRACE_MEMMNGR, ("alloc(%Zu) -> %p%s\n", Size, ptr, Size <= PAGE_SIZE?"" : "(v)" ));
+  DebugTrace(0, UFSD_LEVEL_MEMMNGR, ("alloc(%Zu) -> %p%s\n", Size, ptr, Size <= PAGE_SIZE?"" : "(v)" ));
   return ptr;
 }
 
@@ -936,7 +959,7 @@ UFSD_HeapFree(
     )
 {
   if ( NULL != ptr ) {
-    DebugTrace(0, DEBUG_TRACE_MEMMNGR, ("HeapFree(%p)\n", ptr));
+    DebugTrace(0, UFSD_LEVEL_MEMMNGR, ("HeapFree(%p)\n", ptr));
     if ( (size_t)ptr >= VMALLOC_START && (size_t)ptr < VMALLOC_END ) {
       // This memory was allocated via vmalloc
       vfree(ptr);
@@ -984,7 +1007,7 @@ UFSD_BCSToUni(
       return ret; // The only correct way to exit
 
     if ( max_out <= 0 ) {
-      DebugTrace( 0, DEBUG_TRACE_ERROR, ("A2U: too little output buffer\n" ) );
+      DebugTrace( 0, UFSD_LEVEL_ERROR, ("A2U: too little output buffer\n" ) );
       return ret;
     }
 
@@ -992,7 +1015,7 @@ UFSD_BCSToUni(
     charlen = nls->char2uni( s, len, &wc );
 
     if ( charlen <= 0 ){
-      DebugTrace( 0, DEBUG_TRACE_ERROR, ("char2uni (%s) failed:\n", nls->charset ) );
+      DebugTrace( 0, UFSD_LEVEL_ERROR, ("char2uni (%s) failed:\n", nls->charset ) );
       printk( KERN_NOTICE  QUOTED_UFSD_DEVICE": %s failed to convert '%.*s' to unicode. Pos %d, chars %x %x %x\n",
               nls->charset, len0, s - (len0-len), len0-len, (int)s[0], len > 1? (int)s[1] : 0, len > 2? (int)s[2] : 0 );
       return 0;
@@ -1045,13 +1068,13 @@ UFSD_UniToBCS(
       return (int)(s - s0); // The only correct way to exit
 
     if ( max_out <= 0 ) {
-      DebugTrace( 0, DEBUG_TRACE_ERROR, ("U2A: too little output buffer\n" ) );
+      DebugTrace( 0, UFSD_LEVEL_ERROR, ("U2A: too little output buffer\n" ) );
       return (int)(s - s0);
     }
 
     charlen = nls->uni2char( *ws, s, max_out );
     if ( charlen <= 0 ) {
-      DebugTrace(0, DEBUG_TRACE_ERROR, ("uni2char (%s) failed:\n", nls->charset ));
+      DebugTrace(0, UFSD_LEVEL_ERROR, ("uni2char (%s) failed:\n", nls->charset ));
       ASSERT( !"U2A: failed to convert" );
       return 0;
     }
@@ -1200,7 +1223,7 @@ UfsdBioEndIo(
 #endif
 
   if ( 0 != err ) {
-    DebugTrace(0, DEBUG_TRACE_ERROR,
+    DebugTrace(0, UFSD_LEVEL_ERROR,
                ("UFSD_Bd%s: failed on block %"PSCT"x, error %d\n",
                READ == bio_data_dir(bio)?"read" : "write",
                bio->bi_sector, err ));
@@ -1266,7 +1289,7 @@ BdReadWriteTail(
   if ( ToRw > Bytes )
     ToRw = Bytes;
 
-  DebugTrace(0, DEBUG_TRACE_IO, ("%s tail from %"PSCT"x %Zx\n", READ == Oper? "Read" : "Write", DevBlock, ToRw));
+  DebugTrace(0, UFSD_LEVEL_IO, ("%s tail from %"PSCT"x %Zx\n", READ == Oper? "Read" : "Write", DevBlock, ToRw));
 
   atomic_set( &wc.done, 1 );
   wc.flags  = 1 << BIO_UPTODATE;
@@ -1354,7 +1377,7 @@ UFSD_BdRead(
   sector_t RaBlock  = DevBlock;
   int bRet          = 1;
 
-  DebugTrace(+1, DEBUG_TRACE_IO, ("BdRead: %p, %"PSCT"x, %Zx, %p\n", sb, DevBlock, Bytes, Buffer));
+  DebugTrace(+1, UFSD_LEVEL_IO, ("BdRead: %p, %"PSCT"x, %Zx, %p\n", sb, DevBlock, Bytes, Buffer));
 
   ProfileEnter( sbi, bdread );
 
@@ -1372,7 +1395,7 @@ UFSD_BdRead(
       ToRead = BdReadWriteTail( sb, DevBlock, Buffer, Bytes, Bytes2Skip, READ );
       if ( 0 == ToRead || Bytes != ToRead ) {
         ASSERT( !"BdRead: failed to read tail block" );
-        DebugTrace(0, DEBUG_TRACE_ERROR, ("BdRead: failed to read tail block starting from %"PSCT"x, %llx\n", DevBlock, sbi->MaxBlock));
+        DebugTrace(0, UFSD_LEVEL_ERROR, ("BdRead: failed to read tail block starting from %"PSCT"x, %llx\n", DevBlock, sbi->MaxBlock));
         bRet = 0;
         goto out;
       }
@@ -1380,18 +1403,18 @@ UFSD_BdRead(
     }
 #endif
 
-    DEBUG_ONLY( if ( 0 != Bytes2Skip || Bytes < sb->s_blocksize ) sbi->nReadBlocksNa += 1; )
+    TRACE_ONLY( if ( 0 != Bytes2Skip || Bytes < sb->s_blocksize ) sbi->nReadBlocksNa += 1; )
 
     bh = __bread( sb_dev(sb), DevBlock, sb->s_blocksize );
 
     if ( NULL == bh ) {
       ASSERT( !"BdRead: failed to map block" );
-      DebugTrace(0, DEBUG_TRACE_ERROR, ("BdRead: failed to map block starting from %"PSCT"x, %llx\n", DevBlock, sbi->MaxBlock));
+      DebugTrace(0, UFSD_LEVEL_ERROR, ("BdRead: failed to map block starting from %"PSCT"x, %llx\n", DevBlock, sbi->MaxBlock));
       bRet = 0;
       goto out;
     }
 
-    DEBUG_ONLY( sbi->nReadBlocks += 1; )
+    TRACE_ONLY( sbi->nReadBlocks += 1; )
 
     ToRead = sb->s_blocksize - Bytes2Skip;
     if ( ToRead > Bytes )
@@ -1419,10 +1442,10 @@ out:
   ProfileLeave( sbi, bdread );
 
 #ifdef UFSD_DEBUG
-  if ( UFSD_DebugTraceLevel & DEBUG_TRACE_IO )
-    UFSD_DebugInc( -1 );
+  if ( UFSD_TraceLevel & UFSD_LEVEL_IO )
+    UFSD_TraceInc( -1 );
 #endif
-//  DebugTrace(-1, DEBUG_TRACE_IO, ("BdRead -> ok\n"));
+//  DebugTrace(-1, UFSD_LEVEL_IO, ("BdRead -> ok\n"));
   return bRet;
 }
 
@@ -1445,12 +1468,12 @@ BdSync(
     if ( Wait & UFSD_RW_WAIT_BARRIER ) {
       err = __sync_dirty_buffer( bh, WRITE_SYNC | WRITE_FLUSH_FUA );
       if ( 0 != err ) {
-        DebugTrace(0, DEBUG_TRACE_ERROR, ("BdSync: \"__sync_dirty_buffer( bh, WRITE_SYNC | WRITE_FLUSH_FUA )\" failed -> %d\n", err ));
+        DebugTrace(0, UFSD_LEVEL_ERROR, ("BdSync: \"__sync_dirty_buffer( bh, WRITE_SYNC | WRITE_FLUSH_FUA )\" failed -> %d\n", err ));
       }
     } else {
       err = sync_dirty_buffer( bh );
       if ( 0 != err ) {
-        DebugTrace(0, DEBUG_TRACE_ERROR, ("BdSync: \"sync_dirty_buffer( bh )\" failed -> %d\n", err ));
+        DebugTrace(0, UFSD_LEVEL_ERROR, ("BdSync: \"sync_dirty_buffer( bh )\" failed -> %d\n", err ));
       }
     }
 #elif defined WRITE_BARRIER
@@ -1463,7 +1486,7 @@ BdSync(
       clear_buffer_ordered( bh );
 
     if ( 0 != err ) {
-      DebugTrace(0, DEBUG_TRACE_ERROR, ("BdSync: %s \"sync_dirty_buffer( bh )\" failed -> %d\n", Wait & UFSD_RW_WAIT_BARRIER? "ordered":"noordered", err ));
+      DebugTrace(0, UFSD_LEVEL_ERROR, ("BdSync: %s \"sync_dirty_buffer( bh )\" failed -> %d\n", Wait & UFSD_RW_WAIT_BARRIER? "ordered":"noordered", err ));
     }
 #else
     ll_rw_block( WRITE, 1, &bh ); // TODO: do SG IO.
@@ -1482,7 +1505,7 @@ BdSync(
     err = sync_dirty_buffer( bh );
 
     if ( 0 != err ) {
-      DebugTrace(0, DEBUG_TRACE_ERROR, ("BdSync: nobarrier \"sync_dirty_buffer( bh )\" failed -> %d\n", err ));
+      DebugTrace(0, UFSD_LEVEL_ERROR, ("BdSync: nobarrier \"sync_dirty_buffer( bh )\" failed -> %d\n", err ));
     }
   }
 #else
@@ -1518,7 +1541,7 @@ UFSD_BdWrite(
   if ( !Wait && FlagOn( sb->s_flags, MS_SYNCHRONOUS ) )
     Wait = UFSD_RW_WAIT_SYNC;
 
-  DebugTrace(+1, DEBUG_TRACE_IO, ("BdWrite: %p, %"PSCT"x, %Zx, %p%s\n", sb, DevBlock, Bytes, Buffer, Wait?", wait":""));
+  DebugTrace(+1, UFSD_LEVEL_IO, ("BdWrite: %p, %"PSCT"x, %Zx, %p%s\n", sb, DevBlock, Bytes, Buffer, Wait?", wait":""));
 
   ProfileEnter( sbi, bdwrite );
 
@@ -1534,7 +1557,7 @@ UFSD_BdWrite(
       ToWrite = BdReadWriteTail( sb, DevBlock, (void*)Buffer, Bytes, Bytes2Skip, WRITE );
       if ( 0 == ToWrite || Bytes != ToWrite ){
         ASSERT( !"BdWrite: failed to write tail block" );
-        DebugTrace(0, DEBUG_TRACE_ERROR, ("BdWrite: failed to write tail block starting from %"PSCT"x, %llx\n", DevBlock, sbi->MaxBlock));
+        DebugTrace(0, UFSD_LEVEL_ERROR, ("BdWrite: failed to write tail block starting from %"PSCT"x, %llx\n", DevBlock, sbi->MaxBlock));
         bRet = 0;
         goto out;
       }
@@ -1542,13 +1565,13 @@ UFSD_BdWrite(
     }
 #endif
 
-    DEBUG_ONLY( if ( 0 != Bytes2Skip || Bytes < sb->s_blocksize ) sbi->nWrittenBlocksNa += 1; )
+    TRACE_ONLY( if ( 0 != Bytes2Skip || Bytes < sb->s_blocksize ) sbi->nWrittenBlocksNa += 1; )
 
     bh = ( 0 != Bytes2Skip || Bytes < sb->s_blocksize ? __bread : __getblk )( sb_dev(sb), DevBlock, sb->s_blocksize );
 
     if ( NULL == bh ) {
       ASSERT( !"BdWrite: failed to map block" );
-      DebugTrace(0, DEBUG_TRACE_ERROR, ("BdWrite: failed to map block starting from %"PSCT"x, %llx\n", DevBlock, sbi->MaxBlock));
+      DebugTrace(0, UFSD_LEVEL_ERROR, ("BdWrite: failed to map block starting from %"PSCT"x, %llx\n", DevBlock, sbi->MaxBlock));
       bRet = 0;
       goto out;
     }
@@ -1564,7 +1587,7 @@ UFSD_BdWrite(
       //
       // Process Pin request
       //
-      DEBUG_ONLY( sbi->nPinBlocks += 1; )
+      TRACE_ONLY( sbi->nPinBlocks += 1; )
       goto Next;  // skip __brelse
 
     } else if ( unlikely( UNPIN_BUFFER == Buffer ) ) {
@@ -1572,7 +1595,7 @@ UFSD_BdWrite(
       // Process Unpin request
       //
       ASSERT( atomic_read( &bh->b_count ) >= 2 );
-      DEBUG_ONLY( sbi->nUnpinBlocks += 1; )
+      TRACE_ONLY( sbi->nUnpinBlocks += 1; )
       __brelse( bh ); // double __brelse
 
     } else {
@@ -1599,13 +1622,13 @@ UFSD_BdWrite(
       mark_buffer_dirty( bh );
       unlock_buffer( bh );
 
-      DEBUG_ONLY( sbi->nWrittenBlocks += 1; )
+      TRACE_ONLY( sbi->nWrittenBlocks += 1; )
 
       if ( Wait ) {
         int err;
 #ifdef UFSD_DEBUG
-        if ( !(UFSD_DebugTraceLevel & DEBUG_TRACE_IO) )
-          DebugTrace(0, DEBUG_TRACE_VFS, ("BdWrite(wait)\n"));
+        if ( !(UFSD_TraceLevel & UFSD_LEVEL_IO) )
+          DebugTrace(0, UFSD_LEVEL_VFS, ("BdWrite(wait)\n"));
 #endif
 
         if ( sbi->options.nobarrier )
@@ -1615,7 +1638,7 @@ UFSD_BdWrite(
 
         if ( 0 != err ) {
           ASSERT( !"BdWrite: failed to write block" );
-          DebugTrace(0, DEBUG_TRACE_ERROR, ("BdWrite: failed to write block starting from %"PSCT"x, %llx, error=%d\n", DevBlock, sbi->MaxBlock, err));
+          DebugTrace(0, UFSD_LEVEL_ERROR, ("BdWrite: failed to write block starting from %"PSCT"x, %llx, error=%d\n", DevBlock, sbi->MaxBlock, err));
           __brelse( bh );
           bRet = 0;
           goto out;
@@ -1635,10 +1658,10 @@ out:
   ProfileLeave( sbi, bdwrite );
 
 #ifdef UFSD_DEBUG
-  if ( UFSD_DebugTraceLevel & DEBUG_TRACE_IO )
-    UFSD_DebugInc( -1 );
+  if ( UFSD_TraceLevel & UFSD_LEVEL_IO )
+    UFSD_TraceInc( -1 );
 #endif
-//  DebugTrace(-1, DEBUG_TRACE_IO, ("BdWrite -> ok\n"));
+//  DebugTrace(-1, UFSD_LEVEL_IO, ("BdWrite -> ok\n"));
   return bRet;
   UNREFERENCED_PARAMETER( sbi );
 }
@@ -1662,13 +1685,13 @@ UFSD_BdMap(
     )
 {
   struct buffer_head* bh;
-  DEBUG_ONLY( usuper* sbi = UFSD_SB( sb ); )
+  TRACE_ONLY( usuper* sbi = UFSD_SB( sb ); ) /* ??? */
   unsigned int BlockSize  = sb->s_blocksize;
   sector_t  DevBlock      = (sector_t)(Offset >> sb->s_blocksize_bits);
   size_t Bytes2Skip       = (size_t)(Offset & (BlockSize - 1)); // Offset % sb->s_blocksize
 
   if ( Bytes2Skip + Bytes > BlockSize ) {
-    DebugTrace(0, DEBUG_TRACE_ERROR, ("BdMap: [%llx %Zx] overlaps block boundary %x\n", Offset, Bytes, BlockSize));
+    DebugTrace(0, UFSD_LEVEL_ERROR, ("BdMap: [%llx %Zx] overlaps block boundary %x\n", Offset, Bytes, BlockSize));
     return 0;
   }
 
@@ -1676,7 +1699,7 @@ UFSD_BdMap(
 
   if ( NULL == bh ) {
     ASSERT( !"BdMap: failed to map block" );
-    DebugTrace(0, DEBUG_TRACE_ERROR, ("BdMap: failed to map block starting from %"PSCT"x\n", DevBlock));
+    DebugTrace(0, UFSD_LEVEL_ERROR, ("BdMap: failed to map block starting from %"PSCT"x\n", DevBlock));
     return 0;
   }
 
@@ -1685,14 +1708,14 @@ UFSD_BdMap(
   if ( buffer_locked( bh ) )
     __wait_on_buffer( bh );
 
-  DebugTrace(0, DEBUG_TRACE_IO, ("BdMap: %p, %"PSCT"x, %Zx, %Zx -> %p (%d)\n", sb, DevBlock, Bytes, Flags, bh, atomic_read( &bh->b_count ) ));
+  DebugTrace(0, UFSD_LEVEL_IO, ("BdMap: %p, %"PSCT"x, %Zx, %Zx -> %p (%d)\n", sb, DevBlock, Bytes, Flags, bh, atomic_read( &bh->b_count ) ));
 
   //
   // Return pointer into page
   //
   *Mem = Add2Ptr( bh->b_data, Bytes2Skip );
   *Bcb = bh;
-  DEBUG_ONLY( sbi->nMappedBh += 1; )
+  TRACE_ONLY( sbi->nMappedBh += 1; ) /* ??? */
   return 1;
 }
 
@@ -1715,7 +1738,7 @@ UFSD_BdUnMap(
 
   ASSERT( NULL != bh );
 
-  DebugTrace(0, DEBUG_TRACE_IO, ("BdUnMap: %"PSCT"x,%s %d\n", bh->b_blocknr, buffer_dirty(bh)?"d":"c", atomic_read( &bh->b_count ) - 1 ));
+  DebugTrace(0, UFSD_LEVEL_IO, ("BdUnMap: %"PSCT"x,%s %d\n", bh->b_blocknr, buffer_dirty(bh)?"d":"c", atomic_read( &bh->b_count ) - 1 ));
   __brelse( bh );
 
   DEBUG_ONLY( UFSD_SB( sb )->nUnMapped += 1; )
@@ -1747,7 +1770,7 @@ UFSD_BdSetDirty(
 
   ASSERT( NULL != bh );
 
-  DebugTrace(0, DEBUG_TRACE_IO, ("BdDirty: %"PSCT"x,%s %d\n", bh->b_blocknr, buffer_dirty(bh)?"d":"c", atomic_read( &bh->b_count ) ));
+  DebugTrace(0, UFSD_LEVEL_IO, ("BdDirty: %"PSCT"x,%s %d\n", bh->b_blocknr, buffer_dirty(bh)?"d":"c", atomic_read( &bh->b_count ) ));
   set_buffer_uptodate( bh );
   mark_buffer_dirty( bh );
 
@@ -1774,19 +1797,19 @@ UFSD_BdDiscard(
 {
 #if defined HAVE_DECL_SB_ISSUE_DISCARD && HAVE_DECL_SB_ISSUE_DISCARD
   int err;
-  DebugTrace(+1, DEBUG_TRACE_IO, ("BdDiscard: %p, %llx, %Zx\n", sb, Offset, Bytes));
+  DebugTrace(+1, UFSD_LEVEL_IO, ("BdDiscard: %p, %llx, %Zx\n", sb, Offset, Bytes));
   err = sb_issue_discard( sb, Offset >> sb->s_blocksize_bits, Bytes >> sb->s_blocksize_bits );
   if ( EOPNOTSUPP == err ) {
-    DebugTrace(-1, DEBUG_TRACE_IO, ("BdDiscard -> not supported\n"));
+    DebugTrace(-1, UFSD_LEVEL_IO, ("BdDiscard -> not supported\n"));
     return ERR_NOTIMPLEMENTED;
   }
 
   if ( 0 != err ) {
-    DebugTrace(-1, DEBUG_TRACE_IO, ("BdDiscard -> failed %d\n", err));
+    DebugTrace(-1, UFSD_LEVEL_IO, ("BdDiscard -> failed %d\n", err));
   } else {
 #ifdef UFSD_DEBUG
-    if ( UFSD_DebugTraceLevel & DEBUG_TRACE_IO )
-      UFSD_DebugInc( -1 );
+    if ( UFSD_DebugTraceLevel & UFSD_LEVEL_IO )
+      UFSD_TraceInc( -1 );
 #endif
   }
 
@@ -1796,7 +1819,7 @@ UFSD_BdDiscard(
   UNREFERENCED_PARAMETER( Offset );
   UNREFERENCED_PARAMETER( Bytes );
 
-  DebugTrace(0, DEBUG_TRACE_IO, ("BdDiscard -> not supported\n"));
+  DebugTrace(0, UFSD_LEVEL_IO, ("BdDiscard -> not supported\n"));
   return ERR_NOTIMPLEMENTED;
 #endif
 }
@@ -1890,6 +1913,11 @@ UFSD_BdFlush(
 
   DebugTrace(0, Dbg, ("BdFlush (%s)\n", UFSD_BdGetName( sb ) ));
 
+#if defined UFSD_SMART_TRACE && defined Writeback_inodes_sb
+  if ( 100 == Wait )
+    Writeback_inodes_sb( sb );
+#endif
+
   return 0 == sync_blockdev( sb_dev(sb) );
 }
 
@@ -1959,31 +1987,31 @@ DoDelayedTasks(
 static void
 _LockUfsd(
     IN usuper* sb
-#ifdef UFSD_DEBUG
+#ifdef UFSD_TRACE
     , IN const char* Hint
 #endif
     )
 {
-  DEBUG_ONLY( unsigned long dT; )
-  DEBUG_ONLY( unsigned long T0; )
-  DEBUG_ONLY( if ( UFSD_DebugTraceLevel & DEBUG_TRACE_SEMA ) si_meminfo( &sb->SysInfo ); )
-  DebugTrace(+1, DEBUG_TRACE_SEMA, ("%u: %lx %lx \"%s\" %s (+), ... ",
+  TRACE_ONLY( unsigned long dT; )
+  TRACE_ONLY( unsigned long T0; )
+  TRACE_ONLY( if ( UFSD_TraceLevel & UFSD_LEVEL_SEMA ) si_meminfo( &sb->SysInfo ); )
+  DebugTrace(+1, UFSD_LEVEL_SEMA, ("%u: %lx %lx \"%s\" %s (+), ... ",
               jiffies_to_msecs(jiffies-StartJiffies),
               sb->SysInfo.freeram, sb->SysInfo.bufferram,
               current->comm, Hint));
 
   OnUfsdLock();
 
-  DEBUG_ONLY( T0 = jiffies; )
+  TRACE_ONLY( T0 = jiffies; )
 
-  mutex_lock( &sb->ApiMutex );
-#ifdef UFSD_DEBUG
+  Mutex_lock( &sb->ApiMutex );
+#ifdef UFSD_TRACE
   dT         = jiffies - T0;
   WaitMutex += dT;
   if ( 0 == dT ) {
-    DebugTrace(0, DEBUG_TRACE_SEMA, ("OK\n"));
+    DebugTrace(0, UFSD_LEVEL_SEMA, ("OK\n"));
   } else {
-    DebugTrace(0, DEBUG_TRACE_SEMA, ("OKw %u\n", jiffies_to_msecs(dT)));
+    DebugTrace(0, UFSD_LEVEL_SEMA, ("OKw %u\n", jiffies_to_msecs(dT)));
   }
 #endif
 
@@ -2002,17 +2030,17 @@ _LockUfsd(
 static int
 _TryLockUfsd(
     IN usuper* sb
-#ifdef UFSD_DEBUG
+#ifdef UFSD_TRACE
     , IN const char* Hint
 #endif
     )
 {
-  int ok = mutex_trylock( &sb->ApiMutex );
-  DEBUG_ONLY( if ( UFSD_DebugTraceLevel & DEBUG_TRACE_SEMA ) si_meminfo( &sb->SysInfo ); )
+  int ok = Mutex_trylock( &sb->ApiMutex );
+  TRACE_ONLY( if ( UFSD_TraceLevel & UFSD_LEVEL_SEMA ) si_meminfo( &sb->SysInfo ); )
 
   ASSERT( 0 == ok || 1 == ok );
 
-  DebugTrace(ok, DEBUG_TRACE_SEMA, ("%u: %lx %lx \"%s\" %s %s\n",
+  DebugTrace(ok, UFSD_LEVEL_SEMA, ("%u: %lx %lx \"%s\" %s %s\n",
               jiffies_to_msecs(jiffies-StartJiffies),
               sb->SysInfo.freeram, sb->SysInfo.bufferram,
               current->comm, Hint, ok? "(+)" : "-> wait"));
@@ -2036,24 +2064,24 @@ _TryLockUfsd(
 static void
 _UnlockUfsd(
     IN usuper* sb
-#ifdef UFSD_DEBUG
+#ifdef UFSD_TRACE
     , IN const char* Hint
 #endif
     )
 {
-  DEBUG_ONLY( if ( UFSD_DebugTraceLevel & DEBUG_TRACE_SEMA ) si_meminfo( &sb->SysInfo ); )
+  TRACE_ONLY( if ( UFSD_TraceLevel & UFSD_LEVEL_SEMA ) si_meminfo( &sb->SysInfo ); )
 
   //
   // Perform any delayed tasks
   //
   DoDelayedTasks( sb );
 
-  DebugTrace(-1, DEBUG_TRACE_SEMA, ("%u: %lx %lx \"%s\" %s (-)\n",
+  DebugTrace(-1, UFSD_LEVEL_SEMA, ("%u: %lx %lx \"%s\" %s (-)\n",
               jiffies_to_msecs(jiffies-StartJiffies),
               sb->SysInfo.freeram, sb->SysInfo.bufferram,
               current->comm, Hint));
 
-  mutex_unlock( &sb->ApiMutex );
+  Mutex_unlock( &sb->ApiMutex );
 }
 
 
@@ -2174,29 +2202,30 @@ LazyOpen(
   if ( NULL != u->ufile )
     return 0;
 
-  if ( UFSDAPI_FileOpenById( sbi->Ufsd, i->i_ino, &u->ufile, &Info ) )
-    return -ENOENT;
+  if ( 0 == UFSDAPI_FileOpenById( sbi->Ufsd, i->i_ino, &u->ufile, &Info ) ) {
+    ASSERT( NULL != u->ufile );
+    ASSERT( i->i_ino == Info.Id );
 
-  ASSERT( NULL != u->ufile );
-  ASSERT( i->i_ino == Info.Id );
+    i->i_size   = Info.size;
+    i->i_blocks = Info.asize >> 9;
 
-  i->i_size   = Info.size;
-  i->i_blocks = Info.asize >> 9;
-
-  if ( !Info.is_dir ) {
-    set_nlink( i, Info.link_count );
-    u->sparse   = Info.is_sparse;
-    u->compr    = Info.is_compr;
-    u->encrypt  = Info.is_encrypt;
-    u->xattr    = Info.is_xattr;
-    u->mmu      = Info.vsize;
     if ( S_ISDIR( i->i_mode ) != Info.is_dir ) {
-      DebugTrace(0, DEBUG_TRACE_ERROR, ("Incorrect dir/file of inode r=%lx\n", i->i_ino ));
-      return -ENOENT;
+      DebugTrace(0, UFSD_LEVEL_ERROR, ("Incorrect dir/file of inode r=%lx\n", i->i_ino ));
+    } else {
+      if ( !Info.is_dir ) {
+        set_nlink( i, Info.link_count );
+        u->sparse   = Info.is_sparse;
+        u->compr    = Info.is_compr;
+        u->encrypt  = Info.is_encrypt;
+        u->mmu      = Info.vsize;
+      }
+      u->xattr  = Info.is_xattr;
+      return 0;
     }
   }
 
-  return 0;
+  make_bad_inode( i );
+  return -ENOENT;
 }
 
 
@@ -2373,7 +2402,7 @@ ufsd_file_open(
   usuper* sbi     = UFSD_SB( i->i_sb );
   unode* u        = UFSD_U( i );
   struct qstr* s  = &file->f_dentry->d_name;
-  DEBUG_ONLY( const char* hint=""; )
+  TRACE_ONLY( const char* hint=""; )
   int err;
 
   ASSERT( file->f_mapping == i->i_mapping && "Check kernel config!" );
@@ -2404,7 +2433,7 @@ ufsd_file_open(
       dget( file->f_dentry );
       file->private_data = p + 1;
       ASSERT( IsStream( file ) );
-      DEBUG_ONLY( hint="(stream)"; )
+      TRACE_ONLY( hint="(stream)"; )
     }
   }
 
@@ -2429,11 +2458,11 @@ ufsd_file_release(
     IN struct file*   file
     )
 {
-  DEBUG_ONLY( const char* hint=""; )
+  TRACE_ONLY( const char* hint=""; )
   if ( IsStream( file ) ) {
     dput( file->f_dentry );
     iput( i );
-    DEBUG_ONLY( hint="(stream)"; )
+    TRACE_ONLY( hint="(stream)"; )
   } else {
 #ifdef UFSD_DELAY_ALLOC
     unode* u = UFSD_U( i );
@@ -2544,13 +2573,13 @@ ufsd_ioctl(
   // Verify the input...
   //
   if ( 0 != copy_from_user( &p, (const void*)arg, sizeof(ufsd_ioctl_params) ) ) {
-    DebugTrace(0, DEBUG_TRACE_ERROR, ("ioctl: invalid input parameters buffer.\n"));
+    DebugTrace(0, UFSD_LEVEL_ERROR, ("ioctl: invalid input parameters buffer.\n"));
     err = -EFAULT;
     goto out;
   }
 
   if ( NULL != p.BytesReturned && 0 != put_user( 0, p.BytesReturned ) ) {
-    DebugTrace(0, DEBUG_TRACE_ERROR, ("ioctl: invalid returned length buffer.\n"));
+    DebugTrace(0, UFSD_LEVEL_ERROR, ("ioctl: invalid returned length buffer.\n"));
     err = -EFAULT;
     goto out;
   }
@@ -2563,18 +2592,18 @@ ufsd_ioctl(
     p.InputBuffer     = NULL;
     p.InputBufferSize = 0;
   } else if ( !access_ok( VERIFY_READ, p.InputBuffer, p.InputBufferSize ) ) {
-    DebugTrace(0, DEBUG_TRACE_ERROR, ("ioctl: invalid input buffer.\n"));
+    DebugTrace(0, UFSD_LEVEL_ERROR, ("ioctl: invalid input buffer.\n"));
     err = -EFAULT;
     goto out;
   } else {
     in_buffer = UFSD_HeapAlloc( p.InputBufferSize );
     if ( NULL == in_buffer ) {
-      DebugTrace(0, DEBUG_TRACE_ERROR, ("ioctl: no memory for input arguments\n"));
+      DebugTrace(0, UFSD_LEVEL_ERROR, ("ioctl: no memory for input arguments\n"));
       err = -ENOMEM;
       goto out;
     }
     if ( 0 != copy_from_user( in_buffer, p.InputBuffer, p.InputBufferSize ) ) {
-      DebugTrace(0, DEBUG_TRACE_ERROR, ("ioctl: invalid input parameters buffer.\n"));
+      DebugTrace(0, UFSD_LEVEL_ERROR, ("ioctl: invalid input parameters buffer.\n"));
       err = -EFAULT;
       goto out;
     }
@@ -2584,13 +2613,13 @@ ufsd_ioctl(
     p.OutputBuffer     = NULL;
     p.OutputBufferSize = 0;
   } else if ( !access_ok( VERIFY_WRITE, p.OutputBuffer, p.OutputBufferSize ) ) {
-    DebugTrace(0, DEBUG_TRACE_ERROR, ("ioctl: invalid output buffer.\n"));
+    DebugTrace(0, UFSD_LEVEL_ERROR, ("ioctl: invalid output buffer.\n"));
     err = -EFAULT;
     goto out;
   } else {
     out_buffer = UFSD_HeapAlloc( p.OutputBufferSize );
     if ( NULL == out_buffer ) {
-      DebugTrace(0, DEBUG_TRACE_ERROR, ("ioctl: no memory for output arguments\n"));
+      DebugTrace(0, UFSD_LEVEL_ERROR, ("ioctl: no memory for output arguments\n"));
       err = -ENOMEM;
       goto out;
     }
@@ -2627,14 +2656,14 @@ ufsd_ioctl(
   UnlockUfsd( sbi );
 
   if ( NULL != p.BytesReturned && 0 != put_user( BytesReturned, p.BytesReturned ) ) {
-    DebugTrace(0, DEBUG_TRACE_ERROR, ("ioctl: Can't set returned length buffer.\n"));
+    DebugTrace(0, UFSD_LEVEL_ERROR, ("ioctl: Can't set returned length buffer.\n"));
     err = -EFAULT;
   }
 
   if ( 0 != BytesReturned ) {
     ASSERT( BytesReturned <= p.OutputBufferSize );
     if ( 0 != copy_to_user( p.OutputBuffer, out_buffer, min( BytesReturned, p.OutputBufferSize ) ) ) {
-      DebugTrace(0, DEBUG_TRACE_ERROR, ("ioctl: Can't copy to user buffer.\n"));
+      DebugTrace(0, UFSD_LEVEL_ERROR, ("ioctl: Can't copy to user buffer.\n"));
       err = -EFAULT;
     }
   }
@@ -2765,9 +2794,9 @@ ufsd_compare(
   ret = ufsd_compare_hlp( name1->name, name1->len, name2->name, name2->len );
   if ( ret < 0 ) {
     usuper* sbi  = UFSD_SB(de->d_inode->i_sb);
-    mutex_lock( &sbi->NoCaseMutex );
+    Mutex_lock( &sbi->NoCaseMutex );
     ret = !UFSDAPI_NamesEqual( sbi->Ufsd, name1->name, name1->len, name2->name, name2->len );
-    mutex_unlock( &sbi->NoCaseMutex );
+    Mutex_unlock( &sbi->NoCaseMutex );
   }
   return ret;
 }
@@ -2790,9 +2819,9 @@ ufsd_name_hash(
   name->hash = ufsd_name_hash_hlp( name->name, name->len, &err );
   if ( err ) {
     usuper* sbi  = UFSD_SB(de->d_inode->i_sb);
-    mutex_lock( &sbi->NoCaseMutex );
+    Mutex_lock( &sbi->NoCaseMutex );
     name->hash = UFSDAPI_NameHash( sbi->Ufsd, name->name, name->len );
-    mutex_unlock( &sbi->NoCaseMutex );
+    Mutex_unlock( &sbi->NoCaseMutex );
   }
 
   return 0;
@@ -2827,9 +2856,9 @@ ufsd_compare(
   ret = ufsd_compare_hlp( name->name, name->len, str, len );
   if ( ret < 0 ) {
     usuper* sbi  = UFSD_SB(de->d_inode->i_sb);
-    mutex_lock( &sbi->NoCaseMutex );
+    Mutex_lock( &sbi->NoCaseMutex );
     ret = !UFSDAPI_NamesEqual( sbi->Ufsd, name->name, name->len, str, len );
-    mutex_unlock( &sbi->NoCaseMutex );
+    Mutex_unlock( &sbi->NoCaseMutex );
   }
 
   return ret;
@@ -2854,9 +2883,9 @@ ufsd_name_hash(
   name->hash = ufsd_name_hash_hlp( name->name, name->len, &err );
   if ( err ) {
     usuper* sbi  = UFSD_SB(de->d_inode->i_sb);
-    mutex_lock( &sbi->NoCaseMutex );
+    Mutex_lock( &sbi->NoCaseMutex );
     name->hash = UFSDAPI_NameHash( sbi->Ufsd, name->name, name->len );
-    mutex_unlock( &sbi->NoCaseMutex );
+    Mutex_unlock( &sbi->NoCaseMutex );
   }
 
   return 0;
@@ -3089,131 +3118,6 @@ ufsd_unlink(
 #endif
 
 
-#ifdef UFSD_DEBUG
-///////////////////////////////////////////////////////////
-// IsZero
-//
-//
-///////////////////////////////////////////////////////////
-static int
-IsZero(
-    IN const char*  data,
-    IN size_t       bytes
-    )
-{
-  if ( 0 == (((size_t)data)%sizeof(int)) ) {
-    while( bytes >= sizeof(int) ) {
-      if ( 0 != *(int*)data )
-        return 0;
-      bytes -= sizeof(int);
-      data  += sizeof(int);
-    }
-  }
-
-  while( 0 != bytes-- ) {
-    if ( 0 != *data++ )
-      return 0;
-  }
-  return 1;
-}
-#endif
-
-#if 0 //def UFSD_DEBUG
-///////////////////////////////////////////////////////////
-// TracePageBuffers
-//
-//
-///////////////////////////////////////////////////////////
-static void
-TracePageBuffers(
-    IN struct page* page,
-    IN int hdr
-    )
-{
-  if ( hdr ) {
-    DebugTrace(+1, DEBUG_TRACE_PAGE_BH, ("p=%p f=%lx:\n", page, page->flags ));
-  } else if ( UFSD_DebugTraceLevel & DEBUG_TRACE_PAGE_BH ) {
-    UFSD_DebugInc( +1 );
-  }
-
-  if ( page_has_buffers( page ) ) {
-    struct buffer_head* head  = page_buffers(page);
-    struct buffer_head* bh    = head;
-    do {
-      if ( (sector_t)-1 == bh->b_blocknr ) {
-        DebugTrace( 0, DEBUG_TRACE_PAGE_BH, ("bh=%p,%lx\n", bh, bh->b_state) );
-      } else {
-        DebugTrace( 0, DEBUG_TRACE_PAGE_BH, ("bh=%p,%lx,%"PSCT"x\n", bh, bh->b_state, bh->b_blocknr ) );
-      }
-      bh = bh->b_this_page;
-    } while( bh != head );
-  } else {
-    DebugTrace(0, DEBUG_TRACE_PAGE_BH, ("no buffers\n" ));
-  }
-
-  if ( UFSD_DebugTraceLevel & DEBUG_TRACE_PAGE_BH )
-    UFSD_DebugInc( -1 );
-}
-
-
-///////////////////////////////////////////////////////////
-// trace_pages
-//
-//
-///////////////////////////////////////////////////////////
-static unsigned
-trace_pages(
-    IN struct address_space* mapping
-    )
-{
-  struct pagevec pvec;
-  pgoff_t next = 0;
-  unsigned Ret = 0;
-  int i;
-
-  pagevec_init( &pvec, 0 );
-
-  while ( pagevec_lookup( &pvec, mapping, next, PAGEVEC_SIZE ) ) {
-    for ( i = 0; i < pvec.nr; i++ ) {
-      struct page *page = pvec.pages[i];
-      void* d = kmap_atomic( page, KM_USER0 );
-      DebugTrace( 0, Dbg, ("p=%p o=%llx f=%lx%s\n", page, (UINT64)page->index << PAGE_CACHE_SHIFT, page->flags, IsZero( d, PAGE_CACHE_SIZE )?", zero" : "" ));
-      TracePageBuffers( page, 0 );
-      kunmap_atomic( d, KM_USER0 );
-      if ( page->index > next )
-        next = page->index;
-      Ret += 1;
-      next += 1;
-    }
-    pagevec_release(&pvec);
-  }
-  if ( 0 == next )
-    DebugTrace( 0, Dbg, ("no pages\n"));
-  return Ret;
-}
-
-#endif
-
-#if 0 //def UFSD_DEBUG
-
-///////////////////////////////////////////////////////////
-// DropPages
-//
-//
-///////////////////////////////////////////////////////////
-static void
-DropPages(
-    IN struct address_space* m
-    )
-{
-  filemap_fdatawrite( m );
-  unmap_mapping_range( m, 0, 0, 1 );
-  truncate_inode_pages( m, 0 );
-  unmap_mapping_range( m, 0, 0, 1 );
-}
-
-#endif // #ifdef UFSD_DEBUG
-
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,0)
 
  #define set_buffer_new(bh)       set_bit( BH_New, &(bh)->b_state )
@@ -3283,10 +3187,11 @@ ufsd_get_block_flags(
   UINT64 Vbo              = (UINT64)iblock << blkbits;
   sector_t Lbn = -1, Len  = 0;
   int err = 0, bNew = 0, ufsd_locked = 0;
-  DEBUG_ONLY( const char* hint1 = ""; )
-  DEBUG_ONLY( const char* hint2 = ""; )
+  TRACE_ONLY( const char* hint1 = ""; )
+  TRACE_ONLY( const char* hint2 = ""; )
   size_t max_blocks = bh->b_size >> blkbits;
   size_t bh_size, tmp;
+  int dirty = 0;
 
   if ( 0 == max_blocks )
     max_blocks = 1;
@@ -3306,10 +3211,10 @@ ufsd_get_block_flags(
   clear_buffer_delay( bh );
 #endif
 
-  DebugTrace(+1, Dbg, ("get_block: r=%lx b=%"PSCT"x,%Zx, %s, %x\n", i->i_ino, iblock, max_blocks, create? "w" : "r", ufsd_flags ));
+  DebugTrace(+1, UFSD_LEVEL_VFS_GETBLK, ("get_block: r=%lx b=%"PSCT"x,%Zx, %s, %x\n", i->i_ino, iblock, max_blocks, create? "w" : "r", ufsd_flags ));
 
   if ( NULL == u->ufile ) {
-    DebugTrace(-1, Dbg, ("get_block -> not opened\n"));
+    DebugTrace(-1, UFSD_LEVEL_VFS_GETBLK, ("get_block -> not opened\n"));
     return -EBADF;
   }
 
@@ -3324,13 +3229,13 @@ ufsd_get_block_flags(
     if ( -1 != u->Lbn ) {
       Lbn = u->Lbn + dVbn;
       Len = u->Len - dVbn;
-//      DebugTrace(0, Dbg, ("cache [%"PSCT"x, %"PSCT"x) => %"PSCT"x\n", u->Vbn, u->Vbn + u->Len, u->Lbn));
-      DEBUG_ONLY( hint1 = ", cache"; )
+//      DebugTrace(0, UFSD_LEVEL_VFS_GETBLK, ("cache [%"PSCT"x, %"PSCT"x) => %"PSCT"x\n", u->Vbn, u->Vbn + u->Len, u->Lbn));
+      TRACE_ONLY( hint1 = ", cache"; )
     } else if ( !create ) {
 //      Lbn = -1;
       Len = u->Len - dVbn;
-//      DebugTrace(0, Dbg, ("cache [%"PSCT"x, %"PSCT"x) => -1\n", u->Vbn, u->Vbn + u->Len));
-      DEBUG_ONLY( hint1 = ", cache sparse"; )
+//      DebugTrace(0, UFSD_LEVEL_VFS_GETBLK, ("cache [%"PSCT"x, %"PSCT"x) => -1\n", u->Vbn, u->Vbn + u->Len));
+      TRACE_ONLY( hint1 = ", cache sparse"; )
     }
   }
   spin_unlock( &u->block_lock );
@@ -3372,7 +3277,7 @@ ufsd_get_block_flags(
 
       spin_unlock( &u->block_lock );
 
-      DebugTrace(0, Dbg, ("cache: [%"PSCT"x, %"PSCT"x) => %"PSCT"x\n", u->Vbn, u->Vbn + u->Len, u->Lbn));
+      DebugTrace(0, UFSD_LEVEL_VFS_GETBLK, ("cache: [%"PSCT"x, %"PSCT"x) => %"PSCT"x\n", u->Vbn, u->Vbn + u->Len, u->Lbn));
 
       ASSERT( 0 != Len );
 
@@ -3403,28 +3308,30 @@ ufsd_get_block_flags(
       if ( bNew || Vbo >= isize ) {
         TIMESPEC_SECONDS( &i->i_ctime ) = get_seconds();
         u->set_time |= SET_CHTIME;
-        mark_inode_dirty( i );
+        dirty = 1;
         set_buffer_new( bh );
       } else if ( Vbo >= u->mmu ) {
         set_buffer_new( bh );
       }
 
-      if ( mmu > u->mmu )
+      if ( mmu > u->mmu ) {
+        dirty = 1;
         u->mmu = mmu;
+      }
 
     } else if ( -1 == Lbn ) {
       ;
     } else if ( u->sparse ) {
       ;
     } else if ( Vbo >= u->mmu ) {
-      DEBUG_ONLY( hint2 = ", > valid"; )
+      TRACE_ONLY( hint2 = ", > valid"; )
       clear_buffer_mapped( bh );
     } else if ( mmu > u->mmu && u->mmu < isize ) {
       Len = (u->mmu - Vbo + blocksize - 1) >> blkbits;
       if ( 0 == Len )
         Len = 1;
       bh_size = Len << blkbits;
-      DEBUG_ONLY( hint2 = ", truncate at valid"; )
+      TRACE_ONLY( hint2 = ", truncate at valid"; )
     } else if ( ufsd_flags & UFSD_FLAG_BMAP ) {
       ;
     }
@@ -3487,7 +3394,7 @@ ufsd_get_block_flags(
       //
       // Read file via UFSD -> UFSD_BdRead
       //
-      DebugTrace(0, Dbg, ("get_block: use ufsd to read file %llx, %Zx\n", Vbo, bh_size ));
+      DebugTrace(0, UFSD_LEVEL_VFS_GETBLK, ("get_block: use ufsd to read file %llx, %Zx\n", Vbo, bh_size ));
 
       err = UFSDAPI_FileRead( sbi->Ufsd, u->ufile, NULL, 0, Vbo, bh_size, data, &tmp );
 
@@ -3512,11 +3419,11 @@ ufsd_get_block_flags(
           ufsd_locked = 1;
         }
 
-//        DebugTrace(0, Dbg, ("get_block: use ufsd to write file: 0x%llx, 0x%Zx%s\n", Vbo, towrite, IsZero(data, towrite)?", zero":"" ));
-
         err = UFSDAPI_FileWrite( sbi->Ufsd, u->ufile, NULL, 0, Vbo, towrite, data, &tmp );
-        if ( 0 == err && u->mmu < Vbo + tmp )
+        if ( 0 == err && u->mmu < Vbo + tmp ) {
           u->mmu = Vbo + tmp;
+          dirty = 1;
+        }
       }
 #endif
       clear_buffer_dirty( bh );
@@ -3535,7 +3442,7 @@ ufsd_get_block_flags(
     //
     // block is not yet allocated on disk
     //
-    DEBUG_ONLY( hint2 = ", not allocated"; )
+    TRACE_ONLY( hint2 = ", not allocated"; )
 
     //
     // Special sign
@@ -3590,7 +3497,7 @@ ufsd_get_block_flags(
     UnlockUfsd( sbi );
 
   if ( 0 != err ){
-    DebugTrace(-1, Dbg, ("get_block failed -> %d\n", err ));
+    DebugTrace(-1, UFSD_LEVEL_VFS_GETBLK, ("get_block failed -> %d\n", err ));
   } else {
     //
     // Setup bh
@@ -3602,26 +3509,28 @@ ufsd_get_block_flags(
       bh->b_blocknr = Lbn;
 #ifdef UFSD_DELAY_ALLOC
       if ( -2 == Lbn ) {
-        DebugTrace(-1, Dbg, ("get_block -> b=%"PSCT"x,%Zx (delay) %lx, mm=%llx%s%s\n",
+        DebugTrace(-1, UFSD_LEVEL_VFS_GETBLK, ("get_block -> b=%"PSCT"x,%Zx (delay) %lx, mm=%llx%s%s\n",
                               iblock, bh_size>>i->i_blkbits,
                               bh->b_state, (UINT64)u->mmu, hint1, hint2 ));
       } else
 #endif
       if ( -1 != Lbn ) {
-        DebugTrace(-1, Dbg, ("get_block -> b=%"PSCT"x,%Zx => %"PSCT"x,%lx, mm=%llx%s%s\n",
+        DebugTrace(-1, UFSD_LEVEL_VFS_GETBLK, ("get_block -> b=%"PSCT"x,%Zx => %"PSCT"x,%lx, mm=%llx%s%s\n",
                               iblock, bh_size>>i->i_blkbits, Lbn,
                               bh->b_state, (UINT64)u->mmu, hint1, hint2 ));
       } else {
-        DebugTrace(-1, Dbg, ("get_block -> b=%"PSCT"x,%Zx (to fix) %lx, mm=%llx%s%s\n",
+        DebugTrace(-1, UFSD_LEVEL_VFS_GETBLK, ("get_block -> b=%"PSCT"x,%Zx (to fix) %lx, mm=%llx%s%s\n",
                               iblock, bh_size>>i->i_blkbits,
                               bh->b_state, (UINT64)u->mmu, hint1, hint2 ));
       }
     } else {
       bh->b_blocknr = -1;
-      DebugTrace(-1, Dbg, ("get_block -> b=%"PSCT"x,%Zx (nomap) %lx, mm=%llx%s%s\n",
+      DebugTrace(-1, UFSD_LEVEL_VFS_GETBLK, ("get_block -> b=%"PSCT"x,%Zx (nomap) %lx, mm=%llx%s%s\n",
                             iblock, bh_size>>i->i_blkbits,
                             bh->b_state, (UINT64)u->mmu, hint1, hint2 ));
     }
+    if ( dirty )
+      mark_inode_dirty( i );
   }
   ProfileLeave( sbi, get_block );
   return err;
@@ -3659,7 +3568,7 @@ ufsd_truncate(
   UINT64 isize  = i_size_read( i );
   usuper* sbi   = UFSD_SB( i->i_sb );
   unode* u      = UFSD_U( i );
-  DEBUG_ONLY( const char* hint = ""; )
+  TRACE_ONLY( const char* hint = ""; )
 
   DebugTrace(+1, Dbg, ("truncate(r=%lx) -> %llx\n", i->i_ino, isize ) );
 
@@ -3701,10 +3610,10 @@ ufsd_truncate(
       u->Vbn  = 0;
       u->Lbn  = 0;
       u->Len  = 0;
-      DEBUG_ONLY( hint = " reset"; )
+      TRACE_ONLY( hint = " reset"; )
     } else if ( dVbn < u->Len ) {
       u->Len = dVbn;
-      DEBUG_ONLY( hint = " truncated"; )
+      TRACE_ONLY( hint = " truncated"; )
     }
   }
   spin_unlock( &u->block_lock );
@@ -3762,7 +3671,7 @@ ufsd_setattr(
     UINT64 isize = i_size_read(i);
 
     if ( u->encrypt ) {
-      DebugTrace(0, DEBUG_TRACE_ERROR, ("setattr: attempt to resize encrypted file\n" ) );
+      DebugTrace(0, UFSD_LEVEL_ERROR, ("setattr: attempt to resize encrypted file\n" ) );
       err = -ENOSYS;
       goto out;
     }
@@ -4065,7 +3974,7 @@ ufsd_getxattr(
   usuper* sbi = UFSD_SB( i->i_sb );
   int ret;
   size_t len;
-  if ( !u->xattr )
+  if ( NULL != u->ufile && !u->xattr )
     return -ENODATA;
 
   DebugTrace(+1, Dbg, ("getxattr: r=%lx, \"%s\", %p, %Zu\n", i->i_ino, name, value, size ));
@@ -5418,7 +5327,7 @@ ufsd_file_write(
   const unsigned char* p  = IsStream( file );
 
   if ( u->encrypt ) {
-    DebugTrace(0, DEBUG_TRACE_ERROR, ("file_write: r=%lx. Attempt to write to encrypted file\n", i->i_ino ));
+    DebugTrace(0, UFSD_LEVEL_ERROR, ("file_write: r=%lx. Attempt to write to encrypted file\n", i->i_ino ));
     return -ENOSYS;
   }
 
@@ -5472,8 +5381,8 @@ ufsd_file_write(
       if ( 0 != err ) {
         if ( -EOPNOTSUPP == err && NULL == p ) {
 #ifdef UFSD_DEBUG
-          if ( UFSD_DebugTraceLevel & Dbg )
-            UFSD_DebugInc( -1 );
+          if ( UFSD_TraceLevel & Dbg )
+            UFSD_TraceInc( -1 );
 #endif
           goto sync_write; // Operation requires resident->nonresident
         }
@@ -5616,6 +5525,7 @@ ufsd_file_aio_write(
   struct inode* i = iocb->ki_filp->f_dentry->d_inode;
 #endif
   unode* u        = UFSD_U( i );
+  UINT64 Holder;
 
   DebugTrace(+1, Dbg, ("file_aio_write: r=%lx, %llx, count=%x\n", i->i_ino, (UINT64)pos, (unsigned)len ));
 
@@ -5631,6 +5541,14 @@ ufsd_file_aio_write(
       UINT64 new_mmu = (iocb->ki_filp->f_flags & O_APPEND? i_size_read( i ) : pos) + len;
       if ( u->mmu < new_mmu )
         u->mmu = new_mmu;
+    } else if ( 0 == u->flags && pos > u->mmu && len <= sizeof(Holder) && (Holder = 0, 0 == copy_from_user( &Holder, buf, len ) ) ) {
+      // Optimize writing zero into non initialized area
+      if ( 0 == Holder ) {
+        DebugTrace(0, Dbg, ("file_aio_write (skip zeroing)\n"));
+        ret = len;
+        goto out;
+      }
+      DebugTrace(0, Dbg, ("file_aio_write (@%llx=%llx)\n", (UINT64)pos, Holder ));
     }
   }
 
@@ -5662,7 +5580,7 @@ ufsd_file_aio_read(
 {
   ssize_t ret;
   unsigned long seg;
-  loff_t len      = iov_length( iov, nr_segs );
+  size_t len      = iov_length( iov, nr_segs );
   struct inode* i = iocb->ki_filp->f_path.dentry->d_inode;
   unode* u        = UFSD_U( i );
 
@@ -5719,9 +5637,10 @@ ufsd_file_aio_write(
     )
 {
   ssize_t ret;
-  loff_t len      = iov_length( iov, nr_segs );
+  size_t len      = iov_length( iov, nr_segs );
   struct inode* i = iocb->ki_filp->f_path.dentry->d_inode;
   unode* u        = UFSD_U( i );
+  UINT64 Holder;
 
   DebugTrace(+1, Dbg, ("file_aio_write: r=%lx, %llx, %llx\n", i->i_ino, (UINT64)pos, (UINT64)len ));
 
@@ -5738,6 +5657,13 @@ ufsd_file_aio_write(
       UINT64 new_mmu = (iocb->ki_filp->f_flags & O_APPEND? i_size_read( i ) : pos) + len;
       if ( u->mmu < new_mmu )
         u->mmu = new_mmu;
+    } else if ( 0 == u->flags && pos > u->mmu && 1 == nr_segs && len <= sizeof(Holder) && (Holder = 0, 0 == copy_from_user( &Holder, iov->iov_base, len ) ) ) {
+      // Optimize writing zero into non initialized area
+      if ( 0 == Holder ) {
+        ret = len;
+        goto out;
+      }
+      DebugTrace(0, Dbg, ("file_aio_write (@%llx=%llx)\n", (UINT64)pos, Holder ));
     }
   }
 
@@ -5855,6 +5781,7 @@ ufsd_file_mmap(
 
     DebugTrace(0, Dbg, ("file_mmap: zero range [%llx,%llx)\n", u->mmu, vsize ));
 
+    u->flags       = 1;
     file->f_flags &= ~O_DIRECT;
     set_fs(KERNEL_DS);
 
@@ -5862,6 +5789,7 @@ ufsd_file_mmap(
 
     set_fs(old_limit);
     file->f_flags = flags;
+    u->flags      = 0;
 
     if ( 1 != err )
       goto out;
@@ -6640,7 +6568,7 @@ ufsd_write_begin(
   struct inode* i = mapping->host;
   unode* u        = UFSD_U( i );
 
-  DebugTrace(+1, DEBUG_TRACE_VFS_WBWE, ("write_begin: r=%lx pos=%llx,%x fl=%x s=%llx,%llx%s\n",
+  DebugTrace(+1, UFSD_LEVEL_VFS_WBWE, ("write_begin: r=%lx pos=%llx,%x fl=%x s=%llx,%llx%s\n",
                         i->i_ino, pos, len, flags, u->mmu, i_size_read( i ), u->sparse?",sp":"" ));
 
   ProfileEnter( UFSD_SB(i->i_sb), write_begin );
@@ -6682,7 +6610,7 @@ ufsd_write_begin(
 
   ProfileLeave( UFSD_SB(i->i_sb), write_begin );
 
-  DebugTrace(-1, DEBUG_TRACE_VFS_WBWE, ("write_begin: -> %d\n", err ));
+  DebugTrace(-1, UFSD_LEVEL_VFS_WBWE, ("write_begin: -> %d\n", err ));
   return err;
 }
 
@@ -6713,7 +6641,7 @@ ufsd_write_end(
   ASSERT( copied <= len );
   ASSERT( page->index == (pos >> PAGE_CACHE_SHIFT) );
 
-  DebugTrace(+1, DEBUG_TRACE_VFS_WBWE, ("write_end: r=%lx pos=%llx,%x,%x s=%llx,%llx\n",
+  DebugTrace(+1, UFSD_LEVEL_VFS_WBWE, ("write_end: r=%lx pos=%llx,%x,%x s=%llx,%llx\n",
                         i->i_ino, pos, len, copied, u->mmu, i->i_size ));
 
   ProfileEnter( UFSD_SB(i->i_sb), write_end );
@@ -6833,7 +6761,7 @@ ZeroTail:
 
   ProfileLeave( UFSD_SB(i->i_sb), write_end );
 
-  DebugTrace(-1, DEBUG_TRACE_VFS_WBWE, (err > 0? "write_end: -> %x s=%llx,%llx\n" : "write_end: -> %d s=%llx,%llx\n", err, u->mmu, i->i_size) );
+  DebugTrace(-1, UFSD_LEVEL_VFS_WBWE, (err > 0? "write_end: -> %x s=%llx,%llx\n" : "write_end: -> %d s=%llx,%llx\n", err, u->mmu, i->i_size) );
   return err;
 }
 
@@ -6896,10 +6824,11 @@ cont_prepare_write64(
       DebugTrace(0, 0, ("out_unmap: page=%lx\n", pgpos) );
       goto out_unmap;
     }
-//    DebugTrace(0, DEBUG_TRACE_VFS_WBWE, ("cont64: commit_write: p=%lx, %x,mmu=%llx\n", new_page->index, zerofrom,(UINT64)*bytes) );
-    kaddr = page_address(new_page);
+//    DebugTrace(0, UFSD_LEVEL_VFS_WBWE, ("cont64: commit_write: p=%lx, %x,mmu=%llx\n", new_page->index, zerofrom,(UINT64)*bytes) );
+    kaddr = kmap_atomic(new_page, KM_USER0);
     memset(kaddr+zerofrom, 0, PAGE_CACHE_SIZE-zerofrom);
     flush_dcache_page(new_page);
+    kunmap_atomic(kaddr, KM_USER0);
     generic_commit_write( NULL, new_page, zerofrom, PAGE_CACHE_SIZE );
     UnlockPage( new_page );
     page_cache_release(new_page);
@@ -6939,16 +6868,16 @@ cont_prepare_write64(
   // Update *bytes
   mmu = ((loff_t)page->index << PAGE_CACHE_SHIFT) + to;
   if ( *bytes < mmu ) {
-//    DebugTrace(0, DEBUG_TRACE_VFS_WBWE, ("cont64: update mmu: %llx => %llx\n", (UINT64)*bytes, (UINT64)mmu ) );
+//    DebugTrace(0, UFSD_LEVEL_VFS_WBWE, ("cont64: update mmu: %llx => %llx\n", (UINT64)*bytes, (UINT64)mmu ) );
     *bytes = mmu;
   }
 
-  kaddr = page_address(page);
   if ( zerofrom < offset ) {
+    kaddr = kmap_atomic(page, KM_USER0);
     memset(kaddr+zerofrom, 0, offset-zerofrom);
     flush_dcache_page(page);
-    kmap(page); // block_commit_write calls kunmap
-    DebugTrace(0, DEBUG_TRACE_VFS_WBWE, ("cont64: zero tail p=%lx, [%x,%x), mmu=%llx\n", page->index,
+    kunmap_atomic(kaddr, KM_USER0); // WAS (???): block_commit_write calls kunmap
+    DebugTrace(0, UFSD_LEVEL_VFS_WBWE, ("cont64: zero tail p=%lx, [%x,%x), mmu=%llx\n", page->index,
                        zerofrom, offset, (UINT64)*bytes ));
     generic_commit_write( NULL, page, zerofrom, offset );
   }
@@ -6980,7 +6909,7 @@ ufsd_prepare_write(
   unode* u        = UFSD_U( i );
   UINT64 mmu, off = (UINT64)page->index << PAGE_CACHE_SHIFT;
 
-  DebugTrace(+1, DEBUG_TRACE_VFS_WBWE, ("prepare_write: r=%lx p=%p,%lx o=%llx from %x to %x s=(%llx,%llx)\n",
+  DebugTrace(+1, UFSD_LEVEL_VFS_WBWE, ("prepare_write: r=%lx p=%p,%lx o=%llx from %x to %x s=(%llx,%llx)\n",
                         i->i_ino, page, page->flags, off, from, to, u->mmu, (UINT64)i_size_read( i )));
 
   ASSERT( NULL == file || !IsStream( file ) );
@@ -6996,7 +6925,7 @@ ufsd_prepare_write(
   }
 
   if ( 0 != err ) {
-    DebugTrace(-1, DEBUG_TRACE_VFS_WBWE, ("prepare_write -> error %d\n", err));
+    DebugTrace(-1, UFSD_LEVEL_VFS_WBWE, ("prepare_write -> error %d\n", err));
     return err;
   }
 
@@ -7033,7 +6962,7 @@ ZeroTail:
     mark_inode_dirty( i );
   }
 
-  DebugTrace(-1, DEBUG_TRACE_VFS_WBWE, ("prepare_write: -> 0, p=%lx,s=%llx,%llx\n", page->flags, u->mmu, (UINT64)i->i_size) );
+  DebugTrace(-1, UFSD_LEVEL_VFS_WBWE, ("prepare_write: -> 0, p=%lx,s=%llx,%llx\n", page->flags, u->mmu, (UINT64)i->i_size) );
 
   return 0;
 }
@@ -7053,7 +6982,7 @@ ufsd_commit_write(
     )
 {
   int err;
-  DebugTrace(+1, DEBUG_TRACE_VFS_WBWE, ("commit_write: r=%lx p=%p,%lx off=%llx len=%x,s=%llx,%llx\n",
+  DebugTrace(+1, UFSD_LEVEL_VFS_WBWE, ("commit_write: r=%lx p=%p,%lx off=%llx len=%x,s=%llx,%llx\n",
             page->mapping->host->i_ino, page, page->flags, ((UINT64)page->index << PAGE_CACHE_SHIFT) + from,
             to-from, UFSD_U(page->mapping->host)->mmu, (UINT64)page->mapping->host->i_size));
 
@@ -7081,7 +7010,7 @@ ufsd_commit_write(
     //
     // Write file via UFSD -> UFSD_BdWrite
     //
-//    DebugTrace(0, DEBUG_TRACE_VFS_WBWE, ("commit_write: use ufsd to write file: %llx, %x\n", pos, len ));
+//    DebugTrace(0, UFSD_LEVEL_VFS_WBWE, ("commit_write: use ufsd to write file: %llx, %x\n", pos, len ));
 
     err = UFSDAPI_FileWrite( sbi->Ufsd, u->ufile, NULL, 0, pos, len, kaddr + from, &tmp );
     ASSERT( 0 != err || tmp == len );
@@ -7117,7 +7046,7 @@ ufsd_commit_write(
     err = generic_commit_write( file, page, from, to );
   }
 
-  DebugTrace(-1, DEBUG_TRACE_VFS_WBWE, ("commit_write: -> %d, p=%lx,s=%llx,%llx\n", err,
+  DebugTrace(-1, UFSD_LEVEL_VFS_WBWE, ("commit_write: -> %d, p=%lx,s=%llx,%llx\n", err,
               page->flags, UFSD_U(page->mapping->host)->mmu, (UINT64)page->mapping->host->i_size) );
   return err;
 }
@@ -7278,13 +7207,13 @@ ufsd_writepages(
 {
   int err;
   struct inode* i = m->host;
-  DEBUG_ONLY( int nr; )
+  TRACE_ONLY( int nr; )
   ProfileEnter( UFSD_SB(i->i_sb), writepages );
 
 //  w->nr_to_write *= 8;
 
   // Save current 'nr_to_write' to show the number of written pages after 'mpage_writepages'
-  DEBUG_ONLY( nr = w->nr_to_write; )
+  TRACE_ONLY( nr = w->nr_to_write; )
 
   DebugTrace(+1, Dbg, ("%u: writepages r=%lx, %ld \"%s\"\n", jiffies_to_msecs(jiffies-StartJiffies), i->i_ino, w->nr_to_write, current->comm ));
   err = mpage_writepages( m, w, UFSD_U(i)->compr? NULL : ufsd_get_block_writepage );
@@ -7582,7 +7511,7 @@ mpage_da_map_and_submit(
   sector_t next       = mpd->b_blocknr;
   unsigned blkbits    = i->i_blkbits;
   sector_t vbn = 0, lbn = 0, len = 0;
-  DEBUG_ONLY( const char* hint; )
+  TRACE_ONLY( const char* hint; )
 
   DebugTrace(+1, Dbg, ("da_map_and_submit: r=%lx, [%lx %lx)\n", i->i_ino, mpd->first_page, mpd->next_page ));
 
@@ -7593,7 +7522,7 @@ mpage_da_map_and_submit(
   if ( 0 == mpd->b_size
     || ( (mpd->b_state & (1 << BH_Mapped)) && !(mpd->b_state & (1 << BH_Delay)) ) )
   {
-    DEBUG_ONLY( hint = "0"; )
+    TRACE_ONLY( hint = "0"; )
     err = 0;
   }
   else
@@ -7618,17 +7547,17 @@ mpage_da_map_and_submit(
       // just redirty the pages.
       //
       if ( -EAGAIN == err ) {
-        DEBUG_ONLY( hint = "eagain"; )
+        TRACE_ONLY( hint = "eagain"; )
       } else if ( -ENOSPC == err ) {//&& ufsd_count_free_blocks( sb ) ) {
         mpd->retval = err;
-        DEBUG_ONLY( printk( KERN_CRIT" no free space\n" ); )
-        DEBUG_ONLY( hint = "nospc"; )
+        TRACE_ONLY( printk( KERN_CRIT" no free space\n" ); )
+        TRACE_ONLY( hint = "nospc"; )
       } else {
-        DEBUG_ONLY( printk( KERN_CRIT" invalidate pages\n" ); )
+        TRACE_ONLY( printk( KERN_CRIT" invalidate pages\n" ); )
 
         // invalidate all the pages
         ufsd_da_block_invalidatepages( mpd, next, mpd->b_size >> blkbits );
-        DEBUG_ONLY( hint = "invalidate"; )
+        TRACE_ONLY( hint = "invalidate"; )
       }
     }
     else
@@ -7648,7 +7577,7 @@ mpage_da_map_and_submit(
           unmap_underlying_metadata( bdev, bh.b_blocknr + j );
       }
 
-      DEBUG_ONLY( hint = "ok"; )
+      TRACE_ONLY( hint = "ok"; )
     }
   }
 
@@ -8258,7 +8187,7 @@ ufsd_da_write_begin(
   long fBlocks    = atomic_long_read( &sbi->FreeBlocks );
   get_block_t* get_block;
 
-  DebugTrace(+1, DEBUG_TRACE_VFS_WBWE, ("da_write_begin: r=%lx pos=%llx,%x fl=%x s=%llx,%llx%s\n",
+  DebugTrace(+1, UFSD_LEVEL_VFS_WBWE, ("da_write_begin: r=%lx pos=%llx,%x fl=%x s=%llx,%llx%s\n",
                         i->i_ino, pos, len, flags, u->mmu, i_size_read( i ), u->sparse?",sp":"" ));
 
   *pagep = NULL;
@@ -8274,7 +8203,7 @@ ufsd_da_write_begin(
     TraceFreeSpace( sbi, "turn off delalloc" );
     err = ufsd_alloc_da_blocks( i );
     if ( 0 != err ) {
-      DebugTrace(-1, DEBUG_TRACE_VFS_WBWE, ("da_write_begin-> %d, failed to allocate da blocks\n", err ));
+      DebugTrace(-1, UFSD_LEVEL_VFS_WBWE, ("da_write_begin-> %d, failed to allocate da blocks\n", err ));
       return err;
     }
 
@@ -8329,7 +8258,7 @@ ufsd_da_write_begin(
   ProfileLeave( sbi, da_write_begin );
 
 out:
-  DebugTrace(-1, DEBUG_TRACE_VFS_WBWE, ("da_write_begin: -> %d\n", err ));
+  DebugTrace(-1, UFSD_LEVEL_VFS_WBWE, ("da_write_begin: -> %d\n", err ));
   return err;
 }
 
@@ -8358,7 +8287,7 @@ ufsd_da_write_end(
   UINT64* mmu  = fsdata;
 #endif
 
-  DebugTrace(+1, DEBUG_TRACE_VFS_WBWE, ("da_write_end: r=%lx pos=%llx,%x,%x s=%llx,%llx\n",
+  DebugTrace(+1, UFSD_LEVEL_VFS_WBWE, ("da_write_end: r=%lx pos=%llx,%x,%x s=%llx,%llx\n",
                         i->i_ino, pos, len, copied, u->mmu, i->i_size ));
 
   ProfileEnter( UFSD_SB(i->i_sb), da_write_end );
@@ -8415,7 +8344,7 @@ ZeroTail:
 
   ProfileLeave( UFSD_SB(i->i_sb), da_write_end );
 
-  DebugTrace(-1, DEBUG_TRACE_VFS_WBWE, (err > 0? "da_write_end: -> %x s=%llx,%llx\n" : "write_end: -> %d s=%llx,%llx\n", err, u->mmu, i->i_size) );
+  DebugTrace(-1, UFSD_LEVEL_VFS_WBWE, (err > 0? "da_write_end: -> %x s=%llx,%llx\n" : "write_end: -> %d s=%llx,%llx\n", err, u->mmu, i->i_size) );
   return err;
 }
 
@@ -8989,7 +8918,7 @@ ufsd_create_or_open(
   usuper* sbi = UFSD_SB( dir->i_sb );
   int err = -ENOENT;
   unsigned char* p = 0 == sbi->options.delim? NULL : strchr( de->d_name.name, sbi->options.delim );
-  DEBUG_ONLY( const char* hint = NULL==cr?"open":S_ISDIR(cr->mode)?"mkdir":cr->lnk?"link":S_ISLNK(cr->mode)?"symlink":cr->data?"mknode":"create"; )
+  TRACE_ONLY( const char* hint = NULL==cr?"open":S_ISDIR(cr->mode)?"mkdir":cr->lnk?"link":S_ISLNK(cr->mode)?"symlink":cr->data?"mknode":"create"; )
 
   param.Create        = cr;
   param.subdir_count  = 0;
@@ -9008,8 +8937,7 @@ ufsd_create_or_open(
   //
   LockUfsd( sbi );
 
-  if ( NULL != dir
-    && 0 != LazyOpen( sbi, dir ) ) {
+  if ( NULL != dir && 0 != LazyOpen( sbi, dir ) ) {
     // Failed to open parent directory
     goto Exit;
   }
@@ -9176,6 +9104,35 @@ Exit1:
   return err;
 }
 
+#ifdef UFSD_TRACE
+///////////////////////////////////////////////////////////
+// ParseTraceLevel
+//
+// parses string for trace level
+///////////////////////////////////////////////////////////
+static void
+ParseTraceLevel(
+    IN const char* v
+    )
+{
+  if ( NULL == v || 0 == v[0] )
+    UFSD_TraceLevel = UFSD_LEVEL_DEFAULT;
+  else if ( 0 == strcmp( v, "all" ) )
+    UFSD_TraceLevel = UFSD_LEVEL_STR_ALL;
+  else if ( 0 == strcmp( v, "vfs" ) )
+    UFSD_TraceLevel = UFSD_LEVEL_STR_VFS;
+  else if ( 0 == strcmp( v, "lib" ) )
+    UFSD_TraceLevel = UFSD_LEVEL_STR_LIB;
+  else if ( 0 == strcmp( v, "mid" ) )
+    UFSD_TraceLevel = UFSD_LEVEL_STR_MID;
+  else if ( 0 == strcmp( v, "io" ) )
+    UFSD_TraceLevel = UFSD_LEVEL_IO;
+  else
+    UFSD_TraceLevel = simple_strtoul( v, NULL, 16 );
+  DebugTrace(0, UFSD_LEVEL_ALWAYS, (" trace mask set to %08lx\n", UFSD_TraceLevel));
+}
+#endif
+
 #if defined CONFIG_PROC_FS
 
 static struct proc_dir_entry* proc_info_root = NULL;
@@ -9278,26 +9235,24 @@ ufsd_write_label(
   //
   // Maximum label length on NTFS is 128 UTF16 symbols (256 bytes). See $AttrDef
   //
-  if ( count > 128 )
-    count = 128;
+  ret = count > 128? 128 : count;
 
   //
   // Get label into kernel memory
   //
-  Label = kmalloc( count + 1, GFP_NOFS );
+  Label = kmalloc( ret + 1, GFP_NOFS );
   if ( NULL == Label )
     return -ENOMEM;
 
-  if ( 0 != copy_from_user( Label, buffer, count ) ) {
+  if ( 0 != copy_from_user( Label, buffer, ret ) ) {
     ret = -EINVAL;
   } else {
 
-    if ( count > 0 && '\n' == Label[count-1] ) {
-      // Remove last '\n'
-      count -= 1;
-    }
+    // Remove last '\n'
+    while( ret > 0 && '\n' == Label[ret-1] )
+      ret -= 1;
     // Set last zero
-    Label[count] = 0;
+    Label[ret] = 0;
 
     DebugTrace(0, Dbg, ("write_label: %s\n", Label ) );
 
@@ -9313,7 +9268,7 @@ ufsd_write_label(
     if ( 0 == ret ){
       ret = count; // Ok
     } else {
-      DebugTrace(0, DEBUG_TRACE_ERROR, ("write_label failed: %x\n", ret ) );
+      DebugTrace(0, UFSD_LEVEL_ERROR, ("write_label failed: %x\n", ret ) );
       ret = -EINVAL;
     }
   }
@@ -9386,7 +9341,7 @@ ufsd_write_tune(
     UfsdVolumeTune vt;
     int Parsed = sscanf( kbuffer, "Ra=%u DirAge=%u JnlRam=%u", &NewReadAhead, &vt.DirAge, &vt.JnlRam );
     if ( Parsed < 1 ) {
-      DebugTrace(0, DEBUG_TRACE_ERROR, ("failed to parse tune buffer \"%s\"\n", kbuffer) );
+      DebugTrace(0, UFSD_LEVEL_ERROR, ("failed to parse tune buffer \"%s\"\n", kbuffer) );
       ret = -EINVAL;
     } else {
       sbi->ReadAheadPages = NewReadAhead;
@@ -9408,7 +9363,7 @@ ufsd_write_tune(
     if ( 0 == ret ){
       ret = count; // Ok
     } else {
-      DebugTrace(0, DEBUG_TRACE_ERROR, ("write_tune failed: %x\n", ret ) );
+      DebugTrace(0, UFSD_LEVEL_ERROR, ("write_tune failed: %x\n", ret ) );
       ret = -EINVAL;
     }
   }
@@ -9531,6 +9486,135 @@ ufsd_proc_info(
   }
 }
 
+
+#ifdef UFSD_TRACE
+
+///////////////////////////////////////////////////////////
+// ufsd_read_trace
+//
+// /proc/fs/ufsd/trace
+///////////////////////////////////////////////////////////
+static int
+ufsd_read_trace(
+    IN  char *page,
+    OUT char **start  __attribute__((__unused__)),
+    IN  off_t off __attribute__((__unused__)),
+    IN  int count __attribute__((__unused__)),
+    OUT int *eof,
+    IN  void *data  __attribute__((__unused__))
+    )
+{
+  const char* hint;
+  *eof = 1;
+  switch( UFSD_TraceLevel ) {
+  case UFSD_LEVEL_STR_ALL:  hint = "all"; break;
+  case UFSD_LEVEL_STR_VFS:  hint = "vfs"; break;
+  case UFSD_LEVEL_STR_LIB:  hint = "lib"; break;
+  case UFSD_LEVEL_STR_MID:  hint = "mid"; break;
+  default:
+    return sprintf( page, "%lx\n", UFSD_TraceLevel );
+  }
+  return sprintf( page, "%s\n", hint );
+}
+
+
+///////////////////////////////////////////////////////////
+// ufsd_write_trace
+//
+// /proc/fs/ufsd/trace
+///////////////////////////////////////////////////////////
+static int
+ufsd_write_trace(
+    IN struct file*       file  __attribute__((__unused__)),
+    IN const char __user* buffer,
+    IN unsigned long      count,
+    IN void*              data  __attribute__((__unused__))
+    )
+{
+  //
+  // Copy buffer into kernel memory
+  //
+  char kbuffer[16];
+  size_t len = count;
+  if ( len > sizeof(kbuffer)-1 )
+    len = sizeof(kbuffer)-1;
+
+  if ( 0 != copy_from_user( kbuffer, buffer, len ) )
+    return -EINVAL;
+
+  // Remove last '\n'
+  while( len > 0 && '\n' == kbuffer[len-1] )
+    len -= 1;
+
+  // Set last zero
+  kbuffer[len] = 0;
+
+  ParseTraceLevel( kbuffer );
+  return count;
+}
+
+
+///////////////////////////////////////////////////////////
+// ufsd_read_logfile
+//
+// /proc/fs/ufsd/log
+///////////////////////////////////////////////////////////
+static int
+ufsd_read_logfile(
+    IN  char *page,
+    OUT char **start  __attribute__((__unused__)),
+    IN  off_t off __attribute__((__unused__)),
+    IN  int count __attribute__((__unused__)),
+    OUT int *eof,
+    IN  void *data  __attribute__((__unused__))
+    )
+{
+  *eof = 1;
+  return sprintf( page, "%s\n", ufsd_trace_file );
+}
+
+
+///////////////////////////////////////////////////////////
+// ufsd_write_logfile
+//
+// /proc/fs/ufsd/trace
+///////////////////////////////////////////////////////////
+static int
+ufsd_write_logfile(
+    IN struct file*       file  __attribute__((__unused__)),
+    IN const char __user* buffer,
+    IN unsigned long      count,
+    IN void*              data  __attribute__((__unused__))
+    )
+{
+  //
+  // Copy buffer into kernel memory
+  //
+  char kbuffer[sizeof(ufsd_trace_file)];
+  size_t len = count;
+  if ( len > sizeof(kbuffer)-1 )
+    len = sizeof(kbuffer)-1;
+
+  if ( 0 != copy_from_user( kbuffer, buffer, len ) )
+    return -EINVAL;
+
+  // Remove last '\n'
+  while( len > 0 && '\n' == kbuffer[len-1] )
+    len -= 1;
+
+  // Set last zero
+  kbuffer[len] = 0;
+
+  if ( 0 != strcmp( ufsd_trace_file, kbuffer ) ) {
+    memcpy( ufsd_trace_file, kbuffer, len + 1 );
+    CloseTrace();
+  }
+
+  return count;
+}
+
+#endif // #ifdef UFSD_TRACE
+
 #endif // #if defined CONFIG_PROC_FS
 
 
@@ -9565,32 +9649,34 @@ ufsd_put_super(
     vfree( sbi->rw_buffer );
 
 #ifndef CONFIG_DEBUG_MUTEXES // GPL
-  mutex_destroy( &sbi->ApiMutex );
-  mutex_destroy( &sbi->NoCaseMutex );
+  Mutex_destroy( &sbi->ApiMutex );
+  Mutex_destroy( &sbi->NoCaseMutex );
 #endif
 
 #ifndef UFSD_TRACE_SILENT
-#if defined UFSD_DEBUG
-  DebugTrace( 0, DEBUG_TRACE_ERROR, ("Delayed clear %Zu\n", sbi->nDelClear ));
-  DebugTrace( 0, DEBUG_TRACE_ERROR, ("Read %Zu, Written %Zu\n", sbi->nReadBlocks, sbi->nWrittenBlocks ));
-  DebugTrace( 0, DEBUG_TRACE_ERROR, ("ReadNa %Zu, WrittenNa %Zu\n", sbi->nReadBlocksNa, sbi->nWrittenBlocksNa ));
-  ASSERT( sbi->nPinBlocks == sbi->nUnpinBlocks );
-  DebugTrace( 0, DEBUG_TRACE_ERROR, ("Pinned %Zu, Unpinned %Zu\n", sbi->nPinBlocks, sbi->nUnpinBlocks ));
-  DebugTrace( 0, DEBUG_TRACE_ERROR, ("Mapped: %Zu + %Zu - %Zu\n", sbi->nMappedBh, sbi->nMappedMem, sbi->nUnMapped ));
-  ASSERT( sbi->nMappedBh + sbi->nMappedMem == sbi->nUnMapped );
-  if ( 0 != sbi->nCompareCalls )
-    DebugTrace( 0, DEBUG_TRACE_ERROR, ("ufsd_compare %Zu\n", (ssize_t)sbi->nCompareCalls ));
-  if ( 0 != sbi->nHashCalls )
-    DebugTrace( 0, DEBUG_TRACE_ERROR, ("ufsd_name_hash %Zu\n", (ssize_t)sbi->nHashCalls ));
-#endif
+  #if defined UFSD_DEBUG
+    DebugTrace( 0, UFSD_LEVEL_ERROR, ("Delayed clear %Zu\n", sbi->nDelClear ));
+    DebugTrace( 0, UFSD_LEVEL_ERROR, ("Read %Zu, Written %Zu\n", sbi->nReadBlocks, sbi->nWrittenBlocks ));
+    DebugTrace( 0, UFSD_LEVEL_ERROR, ("ReadNa %Zu, WrittenNa %Zu\n", sbi->nReadBlocksNa, sbi->nWrittenBlocksNa ));
+    ASSERT( sbi->nPinBlocks == sbi->nUnpinBlocks );
+    DebugTrace( 0, UFSD_LEVEL_ERROR, ("Pinned %Zu, Unpinned %Zu\n", sbi->nPinBlocks, sbi->nUnpinBlocks ));
+    DebugTrace( 0, UFSD_LEVEL_ERROR, ("Mapped: %Zu + %Zu - %Zu\n", sbi->nMappedBh, sbi->nMappedMem, sbi->nUnMapped ));
+    ASSERT( sbi->nMappedBh + sbi->nMappedMem == sbi->nUnMapped );
 
-  DebugTrace(0, DEBUG_TRACE_ERROR, ("bdread     : %Zu, %u msec\n", sbi->bdread_cnt, jiffies_to_msecs( sbi->bdread_ticks ) ) );
-  DebugTrace(0, DEBUG_TRACE_ERROR, ("bdwrite    : %Zu, %u msec\n", sbi->bdwrite_cnt, jiffies_to_msecs( sbi->bdwrite_ticks ) ) );
-  DebugTrace(0, DEBUG_TRACE_ERROR, ("get_block  : %Zu, %u msec\n", sbi->get_block_cnt, jiffies_to_msecs( sbi->get_block_ticks ) ) );
-  DebugTrace(0, DEBUG_TRACE_ERROR, ("write_begin: %Zu, %u msec\n", sbi->write_begin_cnt, jiffies_to_msecs( sbi->write_begin_ticks ) ) );
-  DebugTrace(0, DEBUG_TRACE_ERROR, ("write_end  : %Zu, %u msec\n", sbi->write_end_cnt, jiffies_to_msecs( sbi->write_end_ticks ) ) );
-  DebugTrace(0, DEBUG_TRACE_ERROR, ("writepages : %Zu, %u msec\n", sbi->writepages_cnt, jiffies_to_msecs( sbi->writepages_ticks ) ) );
-  DebugTrace(0, DEBUG_TRACE_ERROR, ("write_inode: %Zu, %u msec\n", sbi->write_inode_cnt, jiffies_to_msecs( sbi->write_inode_ticks ) ) );
+    if ( 0 != sbi->nCompareCalls )
+      DebugTrace( 0, UFSD_LEVEL_ERROR, ("ufsd_compare %Zu\n", (ssize_t)sbi->nCompareCalls ));
+
+    if ( 0 != sbi->nHashCalls )
+      DebugTrace( 0, UFSD_LEVEL_ERROR, ("ufsd_name_hash %Zu\n", (ssize_t)sbi->nHashCalls ));
+
+    DebugTrace( 0, UFSD_LEVEL_ERROR, ("bdread     : %Zu, %u msec\n", sbi->bdread_cnt, jiffies_to_msecs( sbi->bdread_ticks ) ) );
+    DebugTrace( 0, UFSD_LEVEL_ERROR, ("bdwrite    : %Zu, %u msec\n", sbi->bdwrite_cnt, jiffies_to_msecs( sbi->bdwrite_ticks ) ) );
+    DebugTrace( 0, UFSD_LEVEL_ERROR, ("get_block  : %Zu, %u msec\n", sbi->get_block_cnt, jiffies_to_msecs( sbi->get_block_ticks ) ) );
+    DebugTrace( 0, UFSD_LEVEL_ERROR, ("write_begin: %Zu, %u msec\n", sbi->write_begin_cnt, jiffies_to_msecs( sbi->write_begin_ticks ) ) );
+    DebugTrace( 0, UFSD_LEVEL_ERROR, ("write_end  : %Zu, %u msec\n", sbi->write_end_cnt, jiffies_to_msecs( sbi->write_end_ticks ) ) );
+    DebugTrace( 0, UFSD_LEVEL_ERROR, ("writepages : %Zu, %u msec\n", sbi->writepages_cnt, jiffies_to_msecs( sbi->writepages_ticks ) ) );
+    DebugTrace( 0, UFSD_LEVEL_ERROR, ("write_inode: %Zu, %u msec\n", sbi->write_inode_cnt, jiffies_to_msecs( sbi->write_inode_ticks ) ) );
+  #endif //#if defined UFSD_DEBUG
 #endif //#ifndef UFSD_TRACE_SILENT
 
 #ifdef UFSD_USE_XATTR
@@ -9811,7 +9897,7 @@ ufsd_statfs(
   buf->f_namelen= Info.NameLength;
 
   DebugTrace(-1, Dbg, ("statfs ->\n"));
-  //DEBUG_ONLY(show_buffers();)
+  //TRACE_ONLY(show_buffers();)
 #if defined UFSD_DEBUG_ALLOC & !defined UFSD_TRACE_SILENT
   TraceMemReport( 0 );
 #endif
@@ -9840,14 +9926,28 @@ ufsd_remount(
 {
   mount_options opts_saved;
   char*  options = data;
-  int Status, NeedParse = NULL != data && 0 != data[0];
+  int err = -EINVAL;
+  int NeedParse = NULL != data && 0 != data[0];
   int Ro = *flags & MS_RDONLY;
   struct UfsdVolumeInfo Info;
   usuper* sbi = UFSD_SB( sb );
   C_ASSERT( sizeof(sbi->options) == sizeof(opts_saved) );
-  DEBUG_ONLY( const char* DevName = UFSD_BdGetName( sb ); )
+  const char* DevName = UFSD_BdGetName( sb );
+
+  //
+  // Call UFSD library
+  //
+  LockUfsd( sbi );
 
   DebugTrace(+1, Dbg, ("remount %s, %lx, options '%s'\n", DevName, sb->s_flags, NULL == options? "(null)" : options));
+
+  if ( (sb->s_flags & MS_RDONLY) && !Ro && sbi->options.journal >= JOURNAL_STATUS_NEED_REPLAY ) {
+    DebugTrace(0, Dbg, ("remount \"%s\": ro -> rw + jnl\n", DevName ));
+    printk( KERN_WARNING QUOTED_UFSD_DEVICE ": Couldn't remount \"%s\" rw because journal is not replayed."
+            " Please umount/remount instead\n", DevName );
+    NeedParse = 0;
+    goto Exit;
+  }
 
   if ( NeedParse ) {
 
@@ -9858,22 +9958,12 @@ ufsd_remount(
     memset( &sbi->options, 0, sizeof(opts_saved) );
 
     if ( !ufsd_parse_options( &options, &sbi->options ) ) {
-      DebugTrace(-1, Dbg, ("remount: failed to remount %s, bad options '%s'\n", DevName, options));
-RestoreAndExit:
-      // unload new nls
-      UFSD_unload_nls( &sbi->options );
-      // Restore original options
-      memcpy( &sbi->options, &opts_saved, sizeof(opts_saved) );
-      return -EINVAL;
+      DebugTrace(0, Dbg, ("remount: failed to remount %s, bad options '%s'\n", DevName, options));
+      goto Exit;
     }
   }
 
   *flags |= MS_NODIRATIME | (sbi->options.noatime? MS_NOATIME : 0);
-
-  //
-  // Call UFSD library
-  //
-  LockUfsd( sbi );
 
   if ( !Ro
     && ( 0 != UFSDAPI_QueryVolumeInfo( sbi->Ufsd, &Info, NULL, 0, NULL )
@@ -9881,18 +9971,14 @@ RestoreAndExit:
     && !sbi->options.force ) {
     //
     printk(KERN_WARNING QUOTED_UFSD_DEVICE": volume is dirty and \"force\" flag is not set\n");
-    Status = 1;
-  } else {
-    Status = UFSDAPI_VolumeReMount( sbi->Ufsd, Ro, &sbi->options );
+    goto Exit;
   }
 
-  UnlockUfsd( sbi );
-
-  if ( 0 != Status ) {
-    DebugTrace(-1, Dbg, ("remount: failed to remount %s, UFSDAPI_VolumeReMount failed %x\n", DevName, (unsigned)Status ));
-    if ( NeedParse )
-      goto RestoreAndExit;
-    return -EINVAL;
+  err = UFSDAPI_VolumeReMount( sbi->Ufsd, Ro, &sbi->options );
+  if ( 0 != err ) {
+    DebugTrace(0, Dbg, ("remount: failed to remount %s, UFSDAPI_VolumeReMount failed %x\n", DevName, (unsigned)err ));
+    err = -EINVAL;
+    goto Exit;
   }
 
   if ( NeedParse ) {
@@ -9920,9 +10006,24 @@ RestoreAndExit:
   if ( FlagOn( sb->s_flags, MS_SYNCHRONOUS ) )
     sbi->options.sync = 1;
 
-  DebugTrace(-1, Dbg, ("remount -> ok\n"));
+Exit:
 
-  return 0;
+  if ( 0 != err && NeedParse ) {
+    // unload new nls
+    UFSD_unload_nls( &sbi->options );
+    // Restore original options
+    memcpy( &sbi->options, &opts_saved, sizeof(opts_saved) );
+  }
+
+  UnlockUfsd( sbi );
+
+  if ( 0 == err ) {
+    DebugTrace(-1, Dbg, ("remount -> ok\n"));
+  } else {
+    DebugTrace(-1, Dbg, ("remount failed: %d\n", err));
+  }
+
+  return err;
 }
 
 
@@ -9939,7 +10040,7 @@ ufsd_evict_inode(
   usuper* sbi = UFSD_SB( i->i_sb );
   unode* u    = UFSD_U( i );
   UFSD_FILE* file;
-  DEBUG_ONLY( int d = 0; )
+  TRACE_ONLY( int d = 0; )
 
   DebugTrace(+1, Dbg, ("evict_inode: r=%lx, h=%p, c=%u\n", i->i_ino, u->ufile, atomic_read(&i->i_count) ));
 
@@ -10010,9 +10111,9 @@ ufsd_evict_inode(
           list_add_tail( &task->list, &sbi->clear_list );
         else
           list_add( &task->list, &sbi->clear_list );
-        DEBUG_ONLY( sbi->nDelClear += 1; )
+        TRACE_ONLY( sbi->nDelClear += 1; )
         spin_unlock( &sbi->ddt_lock );
-        DEBUG_ONLY(d = 1;)
+        TRACE_ONLY(d = 1;)
 #ifndef UFSD_BIG_UNODE
         UFSD_HeapFree( u );
         UFSD_U(i) = NULL;
@@ -10047,7 +10148,7 @@ ufsd_show_options(
 #endif
 
   mount_options* opts = &sbi->options;
-//  DEBUG_ONLY( char* buf = seq->buf + seq->count; )
+//  TRACE_ONLY( char* buf = seq->buf + seq->count; )
 
 //  DebugTrace(+1, Dbg, ("show_options: %p\n", sbi));
 
@@ -10856,32 +10957,20 @@ ufsd_parse_options(
         case 31: opts->raKb = tmp; break;
         }
         break;
-#ifdef UFSD_DEBUG
+#ifdef UFSD_TRACE
       case 6: // "trace"
-        if ( NULL == v || 0 == v[0] )
-          tmp = DEBUG_TRACE_DEFAULT;
-        else if ( 0 == strcmp( v, "all" ) )
-          tmp = ~(DEBUG_TRACE_VFS_WBWE|DEBUG_TRACE_MEMMNGR|DEBUG_TRACE_IO|DEBUG_TRACE_UFSDAPI); // Do not include memory allocate/deallocate.
-        else if ( 0 == strcmp( v, "vfs" ) )
-          tmp = DEBUG_TRACE_SEMA|DEBUG_TRACE_PAGE_BH|DEBUG_TRACE_VFS|DEBUG_TRACE_ERROR;
-        else if ( 0 == strcmp( v, "lib" ) )
-          tmp = DEBUG_TRACE_UFSD|DEBUG_TRACE_ERROR;
-        else if ( 0 == strcmp( v, "mid" ) )
-          tmp = DEBUG_TRACE_VFS|DEBUG_TRACE_UFSD|DEBUG_TRACE_ERROR;
-        else
-          tmp = simple_strtoul( v, &v, 16 );
-        DebugTrace(0, DEBUG_TRACE_ALWAYS, (" trace mask set to %08lx\n", tmp));
-        UFSD_DebugTraceLevel = (long)tmp;
+        ParseTraceLevel( v );
         break;
       case 7: // "log"
         if ( NULL == v ) goto Err;
-        SetTrace( v );
-        DebugTrace( 0, DEBUG_TRACE_ALWAYS, ("%s", UFSDAPI_LibraryVersion( NULL ) ) );
-        DebugTrace( 0, DEBUG_TRACE_ALWAYS, ("%s%s\n", s_FileVer, s_DriverVer ) );
-        DebugTrace( 0, DEBUG_TRACE_ALWAYS, ("Module address %p\n", MODULE_BASE_ADDRESS ));
-        DebugTrace( 0, DEBUG_TRACE_ALWAYS, ("Kernel version %d.%d.%d\n", LINUX_VERSION_CODE>>16,
+        strncpy( ufsd_trace_file, v, sizeof(ufsd_trace_file) );
+        ufsd_trace_file[sizeof(ufsd_trace_file)-1] = 0;
+        DebugTrace( 0, UFSD_LEVEL_ALWAYS, ("%s", UFSDAPI_LibraryVersion( NULL ) ) );
+        DebugTrace( 0, UFSD_LEVEL_ALWAYS, ("%s%s\n", s_FileVer, s_DriverVer ) );
+        DebugTrace( 0, UFSD_LEVEL_ALWAYS, ("Module address %p\n", MODULE_BASE_ADDRESS ));
+        DebugTrace( 0, UFSD_LEVEL_ALWAYS, ("Kernel version %d.%d.%d\n", LINUX_VERSION_CODE>>16,
                                             (LINUX_VERSION_CODE>>8)&0xFF, LINUX_VERSION_CODE&0xFF ));
-        DebugTrace( 0, DEBUG_TRACE_ALWAYS, ("sizeof(inode)=%u\n", (unsigned)sizeof(struct inode) ) );
+        DebugTrace( 0, UFSD_LEVEL_ALWAYS, ("sizeof(inode)=%u\n", (unsigned)sizeof(struct inode) ) );
         break;
       case 25:  // "cycle"
         // Support both forms: 'cycle' and 'cycle=256'
@@ -10894,7 +10983,7 @@ ufsd_parse_options(
           else if ( 'M' == *v )
             tmp *= 1024*1024;
         }
-        SetCycle( tmp );
+        UFSD_CycleMB = (tmp + 1024*1024 - 1) >> 20;
         break;
 #else
       case 6:   // trace
@@ -10958,7 +11047,7 @@ ufsd_parse_options(
         opts->chkcnv = 1;
         break;
       case 26:  // "delim=':'
-        if ( NULL == v )
+        if ( NULL == v || 0 == v[0] )
           opts->delim = 0;
         else if ( 0 == v[1] )
           opts->delim = v[0];
@@ -11006,8 +11095,8 @@ Ok:
       nls = opts->nls[cp];
       if ( 0 == memcmp( nls->charset, "utf8", sizeof("utf8") ) ) {
 #ifndef UFSD_TRACE_SILENT
-        DebugTrace(0, Dbg, ("unload kernel utf8\n"));
-        printk( KERN_NOTICE QUOTED_UFSD_DEVICE": use builtin utf8 instead of kernel utf8\n" );
+//        DebugTrace(0, Dbg, ("unload kernel utf8\n"));
+//        printk( KERN_NOTICE QUOTED_UFSD_DEVICE": use builtin utf8 instead of kernel utf8\n" );
 #endif
         unload_nls( nls );
         opts->nls[cp] = NULL;
@@ -11026,8 +11115,8 @@ Ok:
   //
   if ( 0 == opts->nls_count ) {
 #ifndef UFSD_TRACE_SILENT
-    DebugTrace(0, Dbg, ("use builtin utf8\n" ));
-    printk( KERN_NOTICE QUOTED_UFSD_DEVICE": use builtin utf8\n" );
+//    DebugTrace(0, Dbg, ("use builtin utf8\n" ));
+//    printk( KERN_NOTICE QUOTED_UFSD_DEVICE": use builtin utf8\n" );
 #endif
     opts->nls_count = 1;
     opts->nls[0]    = NULL;
@@ -11044,7 +11133,7 @@ Ok:
     opts->delalloc = 0;
 #elif !defined Writeback_inodes_sb_if_idle
     printk( KERN_NOTICE QUOTED_UFSD_DEVICE": delalloc may work incorrect due to old kernel\n" );
-    DebugTrace(0, DEBUG_TRACE_ALWAYS, (" delalloc may work incorrect due to old kernel\n"));
+    DebugTrace(0, UFSD_LEVEL_ALWAYS, (" delalloc may work incorrect due to old kernel\n"));
 #endif
   }
 #endif
@@ -11113,7 +11202,7 @@ ufsd_read_super(
 #error "UFSD_BdGetSectorSize"
 #endif
 
-  DEBUG_ONLY( const char* hint = ""; )
+  TRACE_ONLY( const char* hint = ""; )
 
   C_ASSERT( sizeof(i->i_ino) == sizeof(param.Info.Id) );
 
@@ -11123,9 +11212,9 @@ ufsd_read_super(
     return -ENOMEM;
 
   memset( sbi, 0, sizeof(usuper) );
-  mutex_init( &sbi->ApiMutex );
+  Mutex_init( &sbi->ApiMutex );
   spin_lock_init( &sbi->ddt_lock );
-  mutex_init( &sbi->NoCaseMutex );
+  Mutex_init( &sbi->NoCaseMutex );
   INIT_LIST_HEAD( &sbi->clear_list );
 
 #if defined HAVE_STRUCT_SUPER_BLOCK_S_ID && HAVE_STRUCT_SUPER_BLOCK_S_ID
@@ -11138,24 +11227,27 @@ ufsd_read_super(
   DevName = sbi->s_id;
 #endif
 
+
+  //
+  // Check for size
+  //
+  if ( BytesPerSb <= 10*PAGE_SIZE ) {
+    printk(KERN_WARNING QUOTED_UFSD_DEVICE": %s: the volume size (0x%llx bytes) is too small to keep any fs\n", DevName, BytesPerSb );
+    TRACE_ONLY( hint = "too small"; )
+    goto ExitInc;
+  }
+
   //
   // Parse options.
   //
   if ( !ufsd_parse_options( &options, &sbi->options ) ) {
     printk(KERN_ERR QUOTED_UFSD_DEVICE": failed to mount %s. bad option '%s'\n", DevName, options );
-    DEBUG_ONLY( hint = "bad options"; )
-#ifdef UFSD_DEBUG
-     if ( UFSD_DebugTraceLevel & Dbg )
-       UFSD_DebugInc( +1 );
-#endif
-    goto Exit;
+    TRACE_ONLY( hint = "bad options"; )
+    goto ExitInc;
   }
 
-  //
-  // Now trace is activated
-  //
-  DebugTrace( +1, Dbg, ("read_super: %p (%s), %lx, %s, %s\n",
-                        sb, DevName, sb->s_flags, (char*)data,  silent ? "silent" : "verbose"));
+  DebugTrace( +1, Dbg, ("read_super(%s), %u: %p %lx, %s, %s\n", DevName, jiffies_to_msecs(jiffies-StartJiffies),
+                        sb, sb->s_flags, (char*)data,  silent ? "silent" : "verbose"));
 
   si_meminfo( &SysInfo );
   ASSERT( PAGE_SIZE == SysInfo.mem_unit );
@@ -11214,7 +11306,7 @@ ufsd_read_super(
   // 's_magic'    - filesystem magic nr
   // 's_maxbytes' - maximal file size for this filesystem.
   //
-  DebugTrace( 0, Dbg, ("%s: size = 0x%llx*0x%x >= 0x%llu*0x%lx\n",
+  DebugTrace( 0, Dbg, ("%s: size = 0x%llx*0x%x >= 0x%llx*0x%lx\n",
                         DevName, BytesPerSb>>sbi->SctBits, BytesPerSector, sbi->MaxBlock, PAGE_SIZE ));
 
   err = UFSDAPI_VolumeMount( sb, &sb->s_dirt, BytesPerSector, &BytesPerSb, &sbi->options, &Volume, SysInfo.totalram, SysInfo.mem_unit );
@@ -11225,7 +11317,7 @@ ufsd_read_super(
     } else {
       if (!silent)
         printk( KERN_ERR QUOTED_UFSD_DEVICE": failed to mount %s\n", DevName);
-      DEBUG_ONLY( hint = "unknown fs"; )
+      TRACE_ONLY( hint = "unknown fs"; )
     }
     err = -EINVAL;
     goto Exit;
@@ -11254,7 +11346,7 @@ ufsd_read_super(
   //
   if ( !FlagOn( sb->s_flags, MS_RDONLY ) && Info.Dirty && !sbi->options.force ) {
     printk(KERN_WARNING QUOTED_UFSD_DEVICE": volume is dirty and \"force\" flag is not set\n");
-    DEBUG_ONLY( hint = "no \"force\" and dirty"; )
+    TRACE_ONLY( hint = "no \"force\" and dirty"; )
     err = -EINVAL;
     goto Exit;
   }
@@ -11318,7 +11410,7 @@ ufsd_read_super(
 
   if ( NULL == i ) {
     printk(KERN_ERR QUOTED_UFSD_DEVICE": failed to open root on %s\n", DevName);
-    DEBUG_ONLY( hint = "open root"; )
+    TRACE_ONLY( hint = "open root"; )
     err = -EINVAL;
     goto Exit;
   }
@@ -11334,7 +11426,7 @@ ufsd_read_super(
   if ( NULL == sb->s_root ) {
     iput( i );
     printk(KERN_ERR QUOTED_UFSD_DEVICE": No memory for root entry\n");
-    DEBUG_ONLY( hint = "no memory"; )
+    TRACE_ONLY( hint = "no memory"; )
     // Not necessary to close root_ufsd
     goto Exit;
   }
@@ -11344,7 +11436,7 @@ ufsd_read_super(
   ASSERT( 0 == atomic_long_read( &sbi->DirtyBlocks ) );
   atomic_long_set( &sbi->FreeBlocks, FreeBlocks );
 
-  DEBUG_ONLY( if ( FreeBlocks < UFSD_RED_ZONE ) sbi->DoNotTraceNoSpc = 1; )
+  TRACE_ONLY( if ( FreeBlocks < UFSD_RED_ZONE ) sbi->DoNotTraceNoSpc = 1; )
 
   UFSDAPI_SetFreeSpaceCallBack( Volume, &FreeSpaceCallBack, sbi );
 #endif
@@ -11373,7 +11465,14 @@ ufsd_read_super(
   //
   DebugTrace(-1, Dbg, ("read_super(%s) -> sb=%p,i=%p,r=%lx,uid=%d,gid=%d,m=%o\n", DevName, sb, i,
                         i->i_ino, i->i_uid, i->i_gid, i->i_mode ));
+
   return 0;
+
+ExitInc:
+#ifdef UFSD_TRACE
+  if ( UFSD_TraceLevel & Dbg )
+    UFSD_TraceInc( +1 ); // compensate the last 'DebugTrace(-1, ... )'
+#endif
 
 Exit:
   //
@@ -11384,8 +11483,8 @@ Exit:
 
   ASSERT( NULL != sbi );
 #ifndef CONFIG_DEBUG_MUTEXES // GPL
-  mutex_destroy( &sbi->ApiMutex );
-  mutex_destroy( &sbi->NoCaseMutex );
+  Mutex_destroy( &sbi->ApiMutex );
+  Mutex_destroy( &sbi->NoCaseMutex );
 #endif
   UFSD_unload_nls( &sbi->options );
 
@@ -11415,6 +11514,12 @@ static DECLARE_FSTYPE_DEV( ufsd_fs_type, QUOTED_UFSD_DEVICE, ufsd_read_super_2_4
 
 #if defined HAVE_STRUCT_FILE_SYSTEM_TYPE_MOUNT && HAVE_STRUCT_FILE_SYSTEM_TYPE_MOUNT
 
+///////////////////////////////////////////////////////////
+// ufsd_mount
+//
+//
+// file_system_type::mount
+///////////////////////////////////////////////////////////
 static struct dentry*
 ufsd_mount(struct file_system_type *fs_type, int flags, const char *dev_name, void *data){
   return mount_bdev(fs_type, flags, dev_name, data, ufsd_read_super);
@@ -11428,6 +11533,7 @@ ufsd_mount(struct file_system_type *fs_type, int flags, const char *dev_name, vo
 // ufsd_get_sb
 //
 // 2,6,18+
+// file_system_type::get_sb
 ///////////////////////////////////////////////////////////
 static int
 ufsd_get_sb(
@@ -11453,6 +11559,7 @@ ufsd_get_sb(
 // ufsd_get_sb
 //
 // 2,6,18-
+// file_system_type::get_sbs
 ///////////////////////////////////////////////////////////
 static struct super_block *
 ufsd_get_sb(
@@ -11516,6 +11623,10 @@ __init ufsd_init(void)
 {
   int ret;
   int EndianError;
+
+  TRACE_ONLY( struct proc_dir_entry* de );
+  TRACE_ONLY( ParseTraceLevel( ufsd_trace_level ) );
+
 #ifdef UFSD_DEBUG_ALLOC
   TotalKmallocs=0;
   TotalVmallocs=0;
@@ -11526,10 +11637,14 @@ __init ufsd_init(void)
   MemMaxRequest=0;
   WaitMutex=0;
   StartJiffies=jiffies;
-  mutex_init( &MemMutex );
+  Mutex_init( &MemMutex );
 #endif
 
+#ifndef UFSD_TRACE_SILENT
   printk( KERN_NOTICE QUOTED_UFSD_DEVICE": driver (%s) loaded at %p\n%s", s_DriverVer, MODULE_BASE_ADDRESS, UFSDAPI_LibraryVersion( &EndianError ) );
+#else
+  UFSDAPI_LibraryVersion( &EndianError );
+#endif
 
   if ( EndianError )
     return -EINVAL;
@@ -11538,15 +11653,36 @@ __init ufsd_init(void)
   if ( NULL == proc_info_root ) {
     proc_info_root = proc_mkdir( proc_info_root_name, NULL );
     if ( NULL != proc_info_root ) {
-#if defined HAVE_STRUCT_PROC_DIR_ENTRY_OWNER && HAVE_STRUCT_PROC_DIR_ENTRY_OWNER
+  #if defined HAVE_STRUCT_PROC_DIR_ENTRY_OWNER && HAVE_STRUCT_PROC_DIR_ENTRY_OWNER
       proc_info_root->owner = THIS_MODULE;
-#endif
-      create_proc_read_entry("version", 0, proc_info_root, &ufsd_proc_version, NULL );
+  #endif
+      create_proc_read_entry( "version", 0, proc_info_root, &ufsd_proc_version, NULL );
+
+  #ifdef UFSD_TRACE
+      de = create_proc_entry( "trace", S_IFREG | S_IRUGO | S_IWUGO, proc_info_root );
+      if ( NULL != de ) {
+        de->read_proc  = ufsd_read_trace;
+        de->write_proc = ufsd_write_trace;
+    #if defined HAVE_STRUCT_PROC_DIR_ENTRY_OWNER && HAVE_STRUCT_PROC_DIR_ENTRY_OWNER
+        de->owner      = THIS_MODULE;
+    #endif
+      }
+
+      de = create_proc_entry( "log", S_IFREG | S_IRUGO | S_IWUGO, proc_info_root );
+      if ( NULL != de ) {
+        de->read_proc  = ufsd_read_logfile;
+        de->write_proc = ufsd_write_logfile;
+    #if defined HAVE_STRUCT_PROC_DIR_ENTRY_OWNER && HAVE_STRUCT_PROC_DIR_ENTRY_OWNER
+        de->owner      = THIS_MODULE;
+    #endif
+      }
+  #endif /* UFSD_TRACE */
+
     } else {
       printk( KERN_NOTICE QUOTED_UFSD_DEVICE": cannot create /proc/%s", proc_info_root_name );
     }
   }
-#endif
+#endif /* CONFIG_PROC_FS */
 
   OnUfsdInit();
 
@@ -11561,7 +11697,6 @@ __init ufsd_init(void)
 
   ret = register_filesystem( &ufsd_fs_type );
   if ( 0 == ret ) {
-    InitTrace();
     return 0; // Ok
   }
 
@@ -11597,6 +11732,12 @@ __exit ufsd_exit(void)
 #if defined CONFIG_PROC_FS
   if ( NULL != proc_info_root ) {
     remove_proc_entry( "version", proc_info_root );
+
+#ifdef UFSD_TRACE
+      remove_proc_entry( "trace", proc_info_root );
+      remove_proc_entry( "log", proc_info_root );
+#endif
+
     proc_info_root = NULL;
     remove_proc_entry( proc_info_root_name, NULL );
   }
@@ -11609,7 +11750,9 @@ __exit ufsd_exit(void)
 #ifdef UFSD_BIG_UNODE
   kmem_cache_destroy( unode_cachep );
 #endif
+#ifndef UFSD_TRACE_SILENT
   printk(KERN_NOTICE QUOTED_UFSD_DEVICE": driver unloaded\n");
+#endif
 #ifdef UFSD_DEBUG_ALLOC
   ASSERT(0 == TotalAllocs);
   TraceMemReport( 1 );
@@ -11618,7 +11761,7 @@ __exit ufsd_exit(void)
     MEMBLOCK_HEAD* block = list_entry( pos, MEMBLOCK_HEAD, Link );
     unsigned char* p = (unsigned char*)(block+1);
     unsigned char tag[5];
-    DebugTrace(0, DEBUG_TRACE_ERROR,
+    DebugTrace(0, UFSD_LEVEL_ERROR,
            ("block %p, seq=%u, %u bytes, tag '%s': '%02x %02x %02x %02x %02x %02x %02x %02x'\n",
           p, block->Seq, block->DataSize,
           ufsdp_make_tag_string(p, tag),
@@ -11631,15 +11774,24 @@ __exit ufsd_exit(void)
     else
       kfree( block );
   }
-  DebugTrace(0, DEBUG_TRACE_ERROR, ("WaitMutex: %u msec\n", jiffies_to_msecs( WaitMutex ) ) );
-  DebugTrace(0, DEBUG_TRACE_ERROR, ("HZ=%u\n", (unsigned)HZ ));
-  CloseTrace();
+  DebugTrace(0, UFSD_LEVEL_ERROR, ("WaitMutex: %u msec\n", jiffies_to_msecs( WaitMutex ) ) );
+  DebugTrace(0, UFSD_LEVEL_ERROR, ("HZ=%u\n", (unsigned)HZ ));
 #endif
+  CloseTrace();
 }
 
 MODULE_DESCRIPTION("Paragon " QUOTED_UFSD_DEVICE " driver");
 MODULE_AUTHOR("Andrey Shedel & Alexander Mamaev");
 MODULE_LICENSE("Commercial product");
+
+#ifdef UFSD_TRACE
+  module_param_string(trace, ufsd_trace_level, sizeof(ufsd_trace_level), S_IRUGO);
+  MODULE_PARM_DESC(trace, " trace level for ufsd module");
+  module_param_string(log,ufsd_trace_file,sizeof(ufsd_trace_file), S_IRUGO);
+  MODULE_PARM_DESC(log, " ufsd log file, default is system log");
+  module_param_named(cycle, UFSD_CycleMB, ulong, S_IRUGO);
+  MODULE_PARM_DESC(cycle, " the size of cycle log in MB, default is 0");
+#endif
 
 #if defined HAVE_DECL_EXPORT_NO_SYMBOLS && HAVE_DECL_EXPORT_NO_SYMBOLS
 EXPORT_NO_SYMBOLS;

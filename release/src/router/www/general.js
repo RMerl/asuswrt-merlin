@@ -228,6 +228,7 @@ function validate_string_ssid(o){
 	
 	if(o.value==""){      // to limit null SSID
 		alert('<#JS_fieldblank#>');
+		o.focus();
 		return false;
 	}	
 	
@@ -2061,6 +2062,7 @@ function wl_auth_mode_change(isload){
 			algos = new Array("AES", "TKIP+AES");
 		
 		/* Reconstruct algorithm array from new crypto algorithms */
+		free_options(document.form.wl_crypto);
 		document.form.wl_crypto.length = algos.length;
 		for(i=0; i<algos.length; i++){
 			document.form.wl_crypto[i] = new Option(algos[i], algos[i].toLowerCase());
@@ -2073,6 +2075,7 @@ function wl_auth_mode_change(isload){
 	change_wep_type(mode, isload);
 	
 	/* Save current network key index */
+	cur = "1";
 	for(var i = 0; i < document.form.wl_key.length; i++){
 		if(document.form.wl_key[i].selected){
 			cur = document.form.wl_key[i].value;
@@ -2085,11 +2088,10 @@ function wl_auth_mode_change(isload){
 		algos = new Array("1", "2", "3", "4");
 	else{
 		algos = new Array("1", "2", "3", "4");
-		if(!isload)
-			cur = "1";
 	}
 	
 	/* Reconstruct network key indices array from new network key indices */
+	free_options(document.form.wl_key);
 	document.form.wl_key.length = algos.length;
 	for(i=0; i<algos.length; i++){
 		document.form.wl_key[i] = new Option(algos[i], algos[i]);
@@ -2510,3 +2512,4 @@ function limit_auth_method(){
 		
 	authentication_method_change(document.form.wl_auth_mode_x);
 }
+

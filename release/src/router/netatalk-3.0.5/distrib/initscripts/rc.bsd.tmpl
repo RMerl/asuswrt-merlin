@@ -1,0 +1,13 @@
+#!/bin/sh
+#
+# Netatalk :NETATALK_VERSION: daemons.
+#
+
+echo -n 'starting netatalk daemons:'
+
+if [ -x :SBINDIR:/netatalk ]; then
+    :SBINDIR:/netatalk
+    echo -n ' netatalk'
+fi
+
+echo '.'

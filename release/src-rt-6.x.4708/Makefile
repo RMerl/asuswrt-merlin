@@ -26,6 +26,22 @@
 
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+#
+# To rebuild a part of code and generate a new firmware file:
+#
+
+# Example: rebuild rc (clean rc, compile rc, install rc to INSTALL directory, generate TARGET tree, generate Firmware file)
+#  make rc-clean mk-rc rc-install gen_target image
+#
+# Note: the "rc-clean mk-rc" may skip if the dependency in Makefile is okay.
+#
+
+# Example: rebuild kernel and modules
+#  make kernel gen_target image
+#
+
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 
 
 export SRCBASE := $(shell pwd)
@@ -72,29 +88,35 @@ include ./platform.mak
 include ./dsl.mak
 -include .config
 
+ifeq ($(ARM),y)
 export LD_LIBRARY_PATH := $(SRCBASE)/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3/lib
-
 export PLATFORM := arm-uclibc
+else
+export PLATFORM := mipsel-uclibc
+endif
 export PLATFORMDIR := $(SRCBASE)/router/$(PLATFORM)
+
+EXTRA_KERNEL_YES_CONFIGS_1 := $(filter %=y %=Y,$(EXTRA_KERNEL_CONFIGS))
+EXTRA_KERNEL_NO_CONFIGS_1 := $(filter %=n %=N,$(EXTRA_KERNEL_CONFIGS))
+EXTRA_KERNEL_MOD_CONFIGS_1 := $(filter %=m %=M,$(EXTRA_KERNEL_CONFIGS))
+EXTRA_KERNEL_VAL_CONFIGS := $(filter-out $(EXTRA_KERNEL_YES_CONFIGS_1) $(EXTRA_KERNEL_NO_CONFIGS_1) $(EXTRA_KERNEL_MOD_CONFIGS_1),$(EXTRA_KERNEL_CONFIGS))
+
+EXTRA_KERNEL_YES_CONFIGS := $(subst =y,,$(subst =Y,,$(EXTRA_KERNEL_YES_CONFIGS_1)))
+EXTRA_KERNEL_NO_CONFIGS := $(subst =n,,$(subst =N,,$(EXTRA_KERNEL_NO_CONFIGS_1)))
+EXTRA_KERNEL_MOD_CONFIGS := $(subst =m,,$(subst =M,,$(EXTRA_KERNEL_MOD_CONFIGS_1)))
 
 ifeq ($(NVRAM_SIZE),)
 NVRAM_SIZE = 0
 endif
 
 CTAGS_EXCLUDE_OPT := --exclude=kernel_header --exclude=$(PLATFORM)
-CTAGS_DEFAULT_DIR := $(SRCBASE)/../src/router/rc $(SRCBASE)/../src/router/httpd $(SRCBASE)/../src/router/shared $(SRCBASE)/../src/router/www
-
-ifeq ($(RALINK),y)
-else
-CTAGS_DEFAULT_DIR += $(SRCBASE)/include $(SRCBASE)/emf $(SRCBASE)/et $(SRCBASE)/wl
-endif
+CTAGS_DEFAULT_DIRS := $(SRCBASE)/../src/router/rc $(SRCBASE)/../src/router/httpd $(SRCBASE)/../src/router/shared $(SRCBASE)/../src/router/www
 
 uppercase_N = $(shell echo $(N) | tr a-z  A-Z)
 lowercase_N = $(shell echo $(N) | tr A-Z a-z)
-uppercase_B = $(shell echo $(B) | tr a-z  A-Z)
-lowercase_B = $(shell echo $(B) | tr A-Z a-z)
+uppercase_B = $(shell echo $(BUILD_NAME) | tr a-z  A-Z)
+lowercase_B = $(shell echo $(BUILD_NAME) | tr A-Z a-z)
 BUILD_TIME := $(shell LC_ALL=C date -u)
-#BUILD_USER=$(shell whoami)
 BUILD_USER ?= $(shell whoami)
 BUILD_INFO := $(shell git log --pretty="%h" -n 1)
 
@@ -109,7 +131,11 @@ endif
 ifeq ($(CONFIG_RALINK),y)
 KERNEL_BINARY=$(LINUXDIR)/vmlinux
 else
-KERNEL_BINARY=$(LINUXDIR)/arch/mips/brcm-board/bcm947xx/compressed/zImage
+ifeq ($(ARM),y)
+KERNEL_BINARY=$(LINUXDIR)/arch/arm/boot/zImage
+else
+KERNEL_BINARY=$(LINUXDIR)/arch/mips/brcm-boards/bcm947xx/compressed/zImage
+endif
 endif
 
 default:
@@ -120,32 +146,33 @@ default:
 	fi
 
 rt_ver:
-	echo '#ifndef RTVERSION' > router/shared/version.h
-	echo '#define RT_MAJOR_VERSION "$(KERNEL_VER)"' >> router/shared/version.h
-	echo '#define RT_MINOR_VERSION "$(FS_VER)"' >> router/shared/version.h
-	echo '#define RT_VERSION "$(KERNEL_VER).$(FS_VER)"' >> router/shared/version.h
-	echo '#define RT_SERIALNO "$(SERIALNO)"' >> router/shared/version.h
-	echo '#define RT_EXTENDNO "$(EXTENDNO)"' >> router/shared/version.h
-	echo '#define RT_SWPJVERNO "$(SWPJVERNO)"' >> router/shared/version.h
-	echo '#define RT_BUILD_NAME "$(BUILD_NAME)"' >> router/shared/version.h
-	echo '#define RT_BUILD_INFO "$(BUILD_TIME) $(BUILD_USER)@$(BUILD_INFO)"' >> router/shared/version.h
-	echo '#endif' >> router/shared/version.h
-	echo '$(BUILD_NAME)_$(KERNEL_VER).$(FS_VER) $(BUILD_TIME)' > router/shared/version
+	@echo '#ifndef RTVERSION' > router/shared/version.h
+	@echo '#define RT_MAJOR_VERSION "$(KERNEL_VER)"' >> router/shared/version.h
+	@echo '#define RT_MINOR_VERSION "$(FS_VER)"' >> router/shared/version.h
+	@echo '#define RT_VERSION "$(KERNEL_VER).$(FS_VER)"' >> router/shared/version.h
+	@echo '#define RT_SERIALNO "$(SERIALNO)"' >> router/shared/version.h
+	@echo '#define RT_EXTENDNO "$(EXTENDNO)"' >> router/shared/version.h
+	@echo '#define RT_SWPJVERNO "$(SWPJVERNO)"' >> router/shared/version.h
+	@echo '#define RT_BUILD_NAME "$(BUILD_NAME)"' >> router/shared/version.h
+	@echo '#define RT_BUILD_INFO "$(BUILD_TIME) $(BUILD_USER)@$(BUILD_INFO)"' >> router/shared/version.h
+	@echo '#endif' >> router/shared/version.h
+	@echo '$(BUILD_NAME)_$(KERNEL_VER).$(FS_VER) $(BUILD_TIME)' > router/shared/version
+	@echo 'EXTENDNO=$(EXTENDNO)' > router/extendno.conf
 
 rt_ver_ntools:
-	@rm -f ntools/version
-	echo 'KERNEL_IMAGE = $(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO).trx' >> ntools/version
+	-@rm -f ntools/version
+	-@echo 'KERNEL_IMAGE = $(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO)_$(EXTENDNO).trx' >> ntools/version
 
 all: rt_ver rt_ver_ntools
-	echo ""
-	echo "Building $(BUILD_NAME)_$(KERNEL_VER).$(FS_VER).trx"
-	echo ""
-	echo ""
-	-mkdir image
-	$(MAKE) -C router all
-	$(MAKE) -C router install
-	echo "*** install complete ***"
-	$(MAKE) image
+	@echo ""
+	@echo "Building $(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO).trx"
+	@echo ""
+	@echo ""
+
+	@-mkdir image
+	@$(MAKE) -C router all
+	@$(MAKE) -C router install
+	@$(MAKE) image
 
 image:
 	@if [ -z "$(BUILD_NAME)" ]; then \
@@ -154,6 +181,9 @@ image:
 	fi
 
 	@rm -f image/$(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO).trx
+ifeq ($(ARM),)
+	@$(MAKE) -C router image
+endif
 
 ifeq ($(CONFIG_RALINK),y)
 	# generate kernel part
@@ -191,9 +221,35 @@ ifeq ($(CONFIG_RALINK),y)
 	echo "PAD2: $${PAD2}" ; \
 	asustools/mkimage -A mips -O linux -T kernel -C lzma -a 80000000 -e $${ENTRY} -r $${RFSOFFSET} \
 		-n $(BUILD_NAME) -V "$(KERNEL_VER)" "$(FS_VER)" "0" "0" "0" "0" "0" "0" "0" "0" \
-		-d $(PLATFORMDIR)/zImage.img image/$(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO)_$(SWPJVER)$(EXTENDNO).trx
+		-d $(PLATFORMDIR)/zImage.img image/$(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO)_$(SWPJVER)$(EXTENDNO).trx ; \
+	if [ "`grep -c \"^CONFIG_RALINK_MT7620\>\" $(LINUXDIR)/.config`" -gt 0 ]; then \
+		echo -n "PA/LNA: " ; \
+		if [ "`grep -c \"^CONFIG_INTERNAL_PA_INTERNAL_LNA\>\" $(LINUXDIR)/.config`" -gt 0 ] ; then \
+			echo "Internal PA + Internal LNA" ; \
+			if [ "$(BUILD_NAME)" = "RT-N14U" ]; then \
+				echo "Check PA/LNA: OK" ; \
+			else \
+				mv -f image/$(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO).trx image/$(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO)_$(SWPJVER)$(EXTENDNO)_int_PA_int_LNA.trx ; \
+			fi ; \
+		elif [ "`grep -c \"^CONFIG_INTERNAL_PA_EXTERNAL_LNA\>\" $(LINUXDIR)/.config`" -gt 0 ] ; then \
+			echo "Internal PA + External LNA" ; \
+			if [ "$(BUILD_NAME)" = "N/A" ]; then \
+				echo "Check PA/LNA: OK" ; \
+			else \
+				mv -f image/$(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO).trx image/$(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO)_$(SWPJVER)$(EXTENDNO)_int_PA_ext_LNA.trx ; \
+			fi ; \
+		elif [ "`grep -c \"^CONFIG_EXTERNAL_PA_EXTERNAL_LNA\>\" $(LINUXDIR)/.config`" -gt 0 ] ; then \
+			echo "External PA + External LNA" ; \
+			if [ "$(BUILD_NAME)" = "RT-AC52U" ]; then \
+				echo "Check PA/LNA: OK" ; \
+			else \
+				mv -f image/$(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO).trx image/$(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO)_$(SWPJVER)$(EXTENDNO)_ext_PA_ext_LNA.trx ; \
+			fi ; \
+		else \
+			echo "UNKNOWN PA/LNA" ; \
+		fi ; \
+	fi
 else
-	echo "*** make ctools start ***"
 	$(MAKE) -C ctools
 	# Create generic TRX image
 ifeq ($(ARM),y)
@@ -202,16 +258,16 @@ else
 	ctools/objcopy -O binary -R .reginfo -R .note -R .comment -R .mdebug -S $(LINUXDIR)/vmlinux ctools/piggy
 endif
 	ctools/lzma_4k e ctools/piggy  ctools/vmlinuz-lzma
-	ctools/mksquashfs router/arm-uclibc/target ctools/target.squashfs -noappend -all-root
-ifneq (,$(filter y,$(BCMWL6) $(BCMWL6A)))
+	ctools/mksquashfs $(PLATFORMDIR)/target ctools/target.squashfs -noappend -all-root
+ifneq (,$(filter y,$(BCMWL6) $(BCMWL6A) $(BOOTLZMA)))
 	ctools/trx -o image/linux-lzma.trx ctools/vmlinuz-lzma ctools/target.squashfs
 else
 	ctools/trx -o image/linux-lzma.trx lzma-loader/loader.gz ctools/vmlinuz-lzma ctools/target.squashfs
 endif
 	ctools/trx_asus -i image/linux-lzma.trx -r $(BUILD_NAME),$(KERNEL_VER).$(FS_VER),image/$(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO)_$(SWPJVER)$(EXTENDNO).trx
-	rm -f image/linux-lzma.trx
+	@rm -f image/linux-lzma.trx
 endif
-	echo "all done "
+	@echo ""
 
 bin_file:
 	[ ! -e .bin/$(BUILD_NAME)/Makefile ] || $(MAKE) -C .bin/$(BUILD_NAME) O=$(SRCBASE)/image FW_FN=$(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO)_$(SWPJVER)$(EXTENDNO).trx
@@ -234,7 +290,7 @@ cleanimage:
 cleantools:
 	@$(MAKE) -C $(LINUXDIR)/scripts/squashfs clean
 	@$(MAKE) -C btools clean
-ifneq ($(RTCONFIG_RALINK),y)
+ifneq ($(CONFIG_RALINK),y)
 	@$(MAKE) -C ctools clean
 endif
 
@@ -246,9 +302,8 @@ cleankernel:
 	cp -p save-config .config || true
 
 kernel:
-	echo "make kernel"
-	$(MAKE) -C router kernel
-	[ ! -e $(KERNEL_BINARY) ] || ls -l $(KERNEL_BINARY)
+	@$(MAKE) -C router kernel
+	@[ ! -e $(KERNEL_BINARY) ] || ls -l $(KERNEL_BINARY)
 
 distclean: clean cleanimage cleankernel cleantools cleanlibc
 ifneq ($(INSIDE_MAK),1)
@@ -262,7 +317,7 @@ endif
 	@rm -f router/config_current
 	@rm -f router/.config.cmd router/.config.old router/.config
 	@rm -f router/libfoo_xref.txt
-
+	@-rm -f .config
 
 prepk:
 	@cd $(LINUXDIR) ; \
@@ -280,7 +335,6 @@ what:
 	@echo "$(current_BUILD_DESC)-$(current_BUILD_NAME)-$(TOMATO_PROFILE_NAME) Profile"
 	@echo ""
 
-
 # The methodology for making the different builds is to
 # copy the "base" config file to the "target" config file in
 # the appropriate directory, and then edit it by removing and
@@ -290,12 +344,14 @@ what:
 # what to do.
 
 # Options for "make bin" :
+# BUILD_DESC (Std|Lite|Ext|...)
 # MIPS32 (r2|r1)
 # KERN_SIZE_OPT
 # USB ("USB"|"")
 # JFFSv1 | NO_JFFS
 # NO_CIFS, NO_SSH, NO_ZEBRA, NO_SAMBA, NO_LIBOPT
-# SAMBA3, OPENVPN, IPV6SUPP, EBTABLES, NTFS, MEDIASRV, PRINTER, BBEXTRAS, USBEXTRAS, BCM57, SLIM
+# SAMBA3, OPENVPN, IPV6SUPP, EBTABLES, NTFS, MEDIASRV, BBEXTRAS, USBEXTRAS, BCM57, SLIM, XHCI, PSISTLOG
+# STRACE, GDB
 
 define RouterOptions
 	@( \
@@ -322,6 +378,14 @@ define RouterOptions
 		fi; \
 	else \
 		echo "RTCONFIG_JFFSV1=y" >>$(1); \
+	fi; \
+	if [ "$(UBIFS)" = "y" ]; then \
+		sed -i "/RTCONFIG_UBIFS/d" $(1); \
+		echo "RTCONFIG_UBIFS" >>$(1); \
+		sed -i "/RTCONFIG_JFFS2/d" $(1); \
+		echo "# RTCONFIG_JFFS2 is not set" >>$(1); \
+		sed -i "/RTCONFIG_JFFSV1/d" $(1); \
+		echo "# RTCONFIG_JFFSV1 is not set" >>$(1); \
 	fi; \
 	if [ "$(FANCTRL)" = "y" ]; then \
 		sed -i "/RTCONFIG_FANCTRL/d" $(1); \
@@ -403,6 +467,16 @@ define RouterOptions
 		sed -i "/RTCONFIG_ODMPID/d" $(1); \
 		echo "RTCONFIG_ODMPID=y" >>$(1); \
 	fi; \
+	if [ "$(MDNS)" = "y" ]; then \
+		sed -i "/RTCONFIG_MDNS/d" $(1); \
+		echo "RTCONFIG_MDNS=y" >>$(1); \
+	fi; \
+	if [ "$(TIMEMACHINE)" = "y" ]; then \
+		sed -i "/RTCONFIG_TIMEMACHINE/d" $(1); \
+		echo "RTCONFIG_TIMEMACHINE=y" >>$(1); \
+		sed -i "/RTCONFIG_MDNS/d" $(1); \
+		echo "RTCONFIG_MDNS=y" >>$(1); \
+	fi; \
 	if [ "$(LED_ALL)" = "y" ]; then \
 		sed -i "/RTCONFIG_LED_ALL/d" $(1); \
 		echo "RTCONFIG_LED_ALL=y" >>$(1); \
@@ -453,10 +527,6 @@ define RouterOptions
 		sed -i "/RTCONFIG_LAN4WAN_LED/d" $(1); \
 		echo "RTCONFIG_LAN4WAN_LED=y" >>$(1); \
 	fi; \
-	if [ "$(WLAN_LED)" = "y" ]; then \
-		sed -i "/RTCONFIG_WLAN_LED/d" $(1); \
-		echo "RTCONFIG_WLAN_LED=y" >>$(1); \
-	fi; \
 	if [ "$(SWMODE_SWITCH)" = "y" ]; then \
 		sed -i "/RTCONFIG_SWMODE_SWITCH/d" $(1); \
 		echo "RTCONFIG_SWMODE_SWITCH=y" >>$(1); \
@@ -468,7 +538,7 @@ define RouterOptions
 	if [ "$(SMALL_FW_UPDATE)" = "y" ]; then \
 		sed -i "/RTCONFIG_SMALL_FW_UPDATE/d" $(1); \
 		echo "RTCONFIG_SMALL_FW_UPDATE=y" >>$(1); \
- 	fi; \
+	fi; \
 	if [ "$(WIRELESS_SWITCH)" = "y" ]; then \
 		sed -i "/RTCONFIG_WIRELESS_SWITCH/d" $(1); \
 		echo "RTCONFIG_WIRELESS_SWITCH=y" >>$(1); \
@@ -512,14 +582,23 @@ define RouterOptions
 	if [ "$(DSL)" = "y" ]; then \
 		sed -i "/RTCONFIG_DSL/d" $(1); \
 		echo "RTCONFIG_DSL=y" >>$(1); \
-	fi; \
-	if [ "$(ANNEX_B)" = "y" ]; then \
-		sed -i "/RTCONFIG_DSL_ANNEX_B/d" $(1); \
-		echo "RTCONFIG_DSL_ANNEX_B=y" >>$(1); \
+		if [ "$(ANNEX_B)" = "y" ]; then \
+			echo "RTCONFIG_DSL_ANNEX_B=y" >>$(1); \
+		else \
+			echo "# RTCONFIG_DSL_ANNEX_B is not set" >>$(1); \
+		fi; \
 	fi; \
 	if [ "$(DUALWAN)" = "y" ]; then \
 		sed -i "/RTCONFIG_DUALWAN/d" $(1); \
 		echo "RTCONFIG_DUALWAN=y" >>$(1); \
+	fi; \
+	if [ "$(EMAIL)" = "y" ]; then \
+		sed -i "/RTCONFIG_PUSH_EMAIL/d" $(1); \
+		echo "RTCONFIG_PUSH_EMAIL=y" >>$(1); \
+	fi; \
+	if [ "$(USER_LOW_RSSI)" = "y" ]; then \
+		sed -i "/RTCONFIG_USER_LOW_RSSI/d" $(1); \
+		echo "RTCONFIG_USER_LOW_RSSI=y" >>$(1); \
 	fi; \
 	if [ "$(USB)" = "USB" ]; then \
 		sed -i "/RTCONFIG_USB is not set/d" $(1); \
@@ -536,6 +615,10 @@ define RouterOptions
 			sed -i "/RTCONFIG_NTFS/d" $(1); \
 			echo "RTCONFIG_NTFS=y" >>$(1); \
 			echo "RTCONFIG_NTFS3G=y" >>$(1); \
+		fi; \
+		if [ "$(HFS)" = "y" ]; then \
+			sed -i "/RTCONFIG_HFS/d" $(1); \
+			echo "RTCONFIG_HFS=y" >>$(1); \
 		fi; \
 		if [ "$(DISK_MONITOR)" = "y" ]; then \
 			sed -i "/RTCONFIG_DISK_MONITOR/d" $(1); \
@@ -577,10 +660,12 @@ define RouterOptions
 		if [ "$(USBAP)" = "y" ]; then \
 			sed -i "/RTCONFIG_BRCM_USBAP/d" $(1); \
 			echo "RTCONFIG_BRCM_USBAP=y" >>$(1); \
-			sed -i "/EPI_VERSION_NUM/d" include/epivers.h; \
-			sed -i "/#endif \/\* _epivers_h_ \*\//d" include/epivers.h; \
-			echo "#define   EPI_VERSION_NUM         $(DONGLE_VER)" >>include/epivers.h; \
-			echo "#endif /* _epivers_h_ */" >>include/epivers.h; \
+			if [ "$(RTAC53U)" != "y" ]; then \
+				sed -i "/EPI_VERSION_NUM/d" include/epivers.h; \
+				sed -i "/#endif \/\* _epivers_h_ \*\//d" include/epivers.h; \
+				echo "#define	EPI_VERSION_NUM		$(DONGLE_VER)" >>include/epivers.h; \
+				echo "#endif /* _epivers_h_ */" >>include/epivers.h; \
+			fi; \
 		fi; \
 		if [ "$(XHCI)" = "y" ]; then \
 			sed -i "/RTCONFIG_USB_XHCI/d" $(1); \
@@ -602,6 +687,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_USBRESET/d" $(1); \
 		echo "RTCONFIG_USBRESET=y" >>$(1); \
 	fi; \
+	if [ "$(XHCIMODE)" = "y" ]; then \
+		sed -i "/RTCONFIG_XHCIMODE/d" $(1); \
+		echo "RTCONFIG_XHCIMODE=y" >>$(1); \
+	fi; \
 	if [ "$(NO_SAMBA)" = "y" ]; then \
 		sed -i "/RTCONFIG_SAMBASRV/d" $(1); \
 		echo "# RTCONFIG_SAMBASRV is not set" >>$(1); \
@@ -619,6 +708,10 @@ define RouterOptions
 	if [ "$(JFFS2)" = "y" ]; then \
 		sed -i "/RTCONFIG_JFFS2/d" $(1); \
 		echo "RTCONFIG_JFFS2=y" >>$(1); \
+	fi; \
+	if [ "$(BRCM_NAND_JFFS2)" = "y" ]; then \
+		sed -i "/RTCONFIG_BRCM_NAND_JFFS2/d" $(1); \
+		echo "RTCONFIG_BRCM_NAND_JFFS2=y" >>$(1); \
 	fi; \
 	if [ "$(JFFS1)" = "y" ]; then \
 		sed -i "/RTCONFIG_JFFSV1/d" $(1); \
@@ -657,6 +750,14 @@ define RouterOptions
 		sed -i "/RTCONFIG_APP_PREINSTALLED/d" $(1); \
 		echo "# RTCONFIG_APP_PREINSTALLED is not set" >>$(1); \
 	fi; \
+	if [ "$(STRACE)" = "y" ] ; then \
+		sed -i "/RTCONFIG_STRACE/d" $(1); \
+		echo "RTCONFIG_STRACE=y" >>$(1); \
+	fi; \
+	if [ "$(GDB)" = "y" ]; then \
+		sed -i "/RTCONFIG_GDB/d" $(1); \
+		echo "RTCONFIG_GDB=y" >>$(1); \
+	fi; \
 	if [ "$(APP)" = "network" ]; then \
 		sed -i "/RTCONFIG_APP_NETINSTALLED/d" $(1); \
 		echo "RTCONFIG_APP_NETINSTALLED=y" >>$(1); \
@@ -684,13 +785,50 @@ define RouterOptions
 		sed -i "/RTCONFIG_PSISTLOG/d" $(1); \
 		echo "RTCONFIG_PSISTLOG=y" >>$(1); \
 	fi; \
+	if [ "$(UBI)" = "y" ]; then \
+		sed -i "/RTCONFIG_UBI/d" $(1); \
+		echo "RTCONFIG_UBI=y" >>$(1); \
+		if [ "$(UBIFS)" = "y" ]; then \
+			sed -i "/RTCONFIG_UBIFS/d" $(1); \
+			echo "RTCONFIG_UBIFS=y" >>$(1); \
+		else \
+			sed -i "/RTCONFIG_UBIFS/d" $(1); \
+			echo "# RTCONFIG_UBIFS is not set" >>$(1); \
+		fi; \
+	else \
+		sed -i "/RTCONFIG_UBI/d" $(1); \
+		echo "# RTCONFIG_UBI is not set" >>$(1); \
+		sed -i "/RTCONFIG_UBIFS/d" $(1); \
+		echo "# RTCONFIG_UBIFS is not set" >>$(1); \
+	fi; \
 	if [ "$(OPTIMIZE_XBOX)" = "y" ]; then \
 		sed -i "/RTCONFIG_OPTIMIZE_XBOX/d" $(1); \
 		echo "RTCONFIG_OPTIMIZE_XBOX=y" >>$(1); \
 	fi; \
+	if [ "$(NEW_RGDM)" = "y" ]; then \
+		sed -i "/RTCONFIG_NEW_REGULATION_DOMAIN/d" $(1); \
+		echo "RTCONFIG_NEW_REGULATION_DOMAIN=y" >>$(1); \
+	else \
+		sed -i "/RTCONFIG_NEW_REGULATION_DOMAIN/d" $(1); \
+		echo "# RTCONFIG_NEW_REGULATION_DOMAIN is not set" >>$(1); \
+	fi; \
 	if [ "$(DYN_DICT_NAME)" = "y" ]; then \
 		sed -i "/RTCONFIG_DYN_DICT_NAME/d" $(1); \
 		echo "RTCONFIG_DYN_DICT_NAME=y" >>$(1); \
+	fi; \
+	if [ "$(EXT4FS)" = "y" ]; then \
+		sed -i "/RTCONFIG_EXT4FS/d" $(1); \
+		echo "RTCONFIG_EXT4FS=y" >>$(1); \
+	else \
+		sed -i "/RTCONFIG_EXT4FS/d" $(1); \
+		echo "# RTCONFIG_EXT4FS is not set" >>$(1); \
+	fi; \
+	if [ "$(DMALLOC)" = "y" ]; then \
+		sed -i "/RTCONFIG_DMALLOC/d" $(1); \
+		echo "RTCONFIG_DMALLOC=y" >>$(1); \
+	else \
+		sed -i "/RTCONFIG_DMALLOC/d" $(1); \
+		echo "# RTCONFIG_DMALLOC is not set" >>$(1); \
 	fi; \
 	if [ "$(TEMPROOTFS)" = "y" ]; then \
 		sed -i "/RTCONFIG_TEMPROOTFS/d" $(1); \
@@ -713,12 +851,26 @@ define RouterOptions
 		sed -i "/RTCONFIG_WPSMULTIBAND/d" $(1); \
 		echo "# RTCONFIG_WPSMULTIBAND is not set" >>$(1); \
 	fi; \
+	if [ "$(EM)" = "y" ]; then \
+		sed -i "/RTCONFIG_ENGINEERING_MODE/d" $(1); \
+		echo "RTCONFIG_ENGINEERING_MODE=y" >>$(1); \
+	else \
+		sed -i "/RTCONFIG_ENGINEERING_MODE/d" $(1); \
+		echo "# RTCONFIG_ENGINEERING_MODE is not set" >>$(1); \
+	fi; \
+	if [ "$(VPNC)" = "y" ]; then \
+		sed -i "/RTCONFIG_VPNC/d" $(1); \
+		echo "RTCONFIG_VPNC=y" >>$(1); \
+	fi; \
+	if [ "$(KYIVSTAR)" = "y" ]; then \
+		sed -i "/RTCONFIG_KYIVSTAR/d" $(1); \
+		echo "RTCONFIG_KYIVSTAR=y" >>$(1); \
+	fi; \
 	if [ "$(IPSEC)" = "y" ]; then \
 		sed -i "/RTCONFIG_IPSEC/d" $(1); \
 		echo "RTCONFIG_IPSEC=y" >>$(1); \
 	fi; \
 	)
-
 	$(call platformRouterOptions, $(1))
 endef
 
@@ -752,6 +904,12 @@ define BusyboxOptions
 	fi; \
 	if [ "$(USB)" = "USB" ]; then \
 		if [ "$(USBEXTRAS)" = "y" ]; then \
+			sed -i "/CONFIG_E2FSCK/d" $(1); \
+			echo "CONFIG_E2FSCK=n" >>$(1); \
+			sed -i "/CONFIG_FSCK_MINIX/d" $(1); \
+			echo "CONFIG_FSCK_MINIX=n" >>$(1); \
+			sed -i "/CONFIG_MKE2FS/d" $(1); \
+			echo "CONFIG_MKE2FS=n" >>$(1); \
 			sed -i "/CONFIG_FDISK/d" $(1); \
 			echo "CONFIG_FDISK=y" >>$(1); \
 			sed -i "/CONFIG_FEATURE_FDISK_WRITABLE/d" $(1); \
@@ -822,8 +980,6 @@ define BusyboxOptions
 			echo "# CONFIG_LESS is not set" >>$(1); \
 			sed -i "/CONFIG_GZIP/d" $(1); \
 			echo "# CONFIG_GZIP is not set" >>$(1); \
-			sed -i "/CONFIG_DF/d" $(1); \
-			echo "# CONFIG_DF is not set" >>$(1); \
 			sed -i "/CONFIG_DU\b/d" $(1); \
 			echo "# CONFIG_DU is not set" >>$(1); \
 			sed -i "/CONFIG_HEAD/d" $(1); \
@@ -843,14 +999,35 @@ define BusyboxOptions
 			sed -i "/CONFIG_FEATURE_LS_COLOR\b/d" $(1); \
 			echo "# CONFIG_FEATURE_LS_COLOR is not set" >>$(1); \
 			if [ "$(SFP4M)" = "y" ]; then \
-				sed -i "/CONFIG_WGET/d" $(1); \
-				echo "# CONFIG_WGET is not set" >>$(1); \
-				sed -i "/CONFIG_FEATURE_WGET_AUTHENTICATION/d" $(1); \
-				echo "# CONFIG_FEATURE_WGET_AUTHENTICATION is not set" >>$(1); \
-				sed -i "/CONFIG_FEATURE_WGET_LONG_OPTIONS/d" $(1); \
-				echo "# CONFIG_FEATURE_WGET_LONG_OPTIONS is not set" >>$(1); \
-				sed -i "/CONFIG_FEATURE_WGET_TIMEOUT/d" $(1); \
-				echo "# CONFIG_FEATURE_WGET_TIMEOUT is not set" >>$(1); \
+				sed -i "/CONFIG_TAR/d" $(1); \
+				echo "# CONFIG_TAR is not set" >>$(1); \
+				sed -i "/CONFIG_DD/d" $(1); \
+				echo "# CONFIG_DD is not set" >>$(1); \
+				sed -i "/CONFIG_CUT/d" $(1); \
+				echo "# CONFIG_CUT is not set" >>$(1); \
+				sed -i "/CONFIG_SORT/d" $(1); \
+				echo "# CONFIG_SORT is not set" >>$(1); \
+				sed -i "/CONFIG_DMESG/d" $(1); \
+				echo "# CONFIG_DMESG is not set" >>$(1); \
+				sed -i "/CONFIG_CROND/d" $(1); \
+				echo "# CONFIG_CROND is not set" >>$(1); \
+				sed -i "/CONFIG_EXPR_MATH_SUPPORT_64/d" $(1); \
+				echo "# CONFIG_EXPR_MATH_SUPPORT_64 is not set" >>$(1); \
+				sed -i "/CONFIG_HEAD/d" $(1); \
+				echo "# CONFIG_HEAD is not set" >>$(1); \
+				sed -i "/CONFIG_MD5SUM/d" $(1); \
+				echo "# CONFIG_MD5SUM is not set" >>$(1); \
+				sed -i "/CONFIG_TAIL/d" $(1); \
+				echo "# CONFIG_TAIL is not set" >>$(1); \
+				sed -i "/CONFIG_AWK/d" $(1); \
+				echo "# CONFIG_AWK is not set" >>$(1); \
+				sed -i "/CONFIG_WC/d" $(1); \
+				echo "# CONFIG_WC is not set" >>$(1); \
+				sed -i "/CONFIG_VI/d" $(1); \
+				echo "# CONFIG_VI is not set" >>$(1); \
+				sed -i "/CONFIG_FIND/d" $(1); \
+				echo "# CONFIG_FIND is not set" >>$(1); \
+				echo "# CONFIG_FINDFS is not set" >>$(1); \
 			fi; \
 		else \
 			sed -i "/CONFIG_FEATURE_LS_COLOR\b/d" $(1); \
@@ -861,18 +1038,49 @@ define BusyboxOptions
 		sed -i "/CONFIG_HDPARM/d" $(1); \
 		echo "CONFIG_HDPARM=y" >>$(1); \
 	fi; \
-        if [ "$(DUALWAN)" = "y" ]; then \
-                sed -i "/CONFIG_IP_ADVANCED_ROUTER/d" $(1); \
-                echo "CONFIG_IP_ADVANCED_ROUTER=y" >>$(1); \
-                echo "CONFIG_ASK_IP_FIB_HASH=y" >>$(1); \
-                echo "# CONFIG_IP_FIB_TRIE is not set" >>$(1); \
-                echo "CONFIG_IP_MULTIPLE_TABLES=y" >>$(1); \
-                echo "CONFIG_IP_ROUTE_MULTIPATH=y" >>$(1); \
-                echo "# CONFIG_IP_ROUTE_VERBOSE is not set" >>$(1); \
-                echo "CONFIG_IP_MROUTE_MULTIPLE_TABLES=y" >>$(1); \
-        fi; \
+	if [ "$(BCMSMP)" = "y" ]; then \
+		sed -i "/CONFIG_FEATURE_TOP_SMP_CPU/d" $(1); \
+		echo "CONFIG_FEATURE_TOP_SMP_CPU=y" >>$(1); \
+		sed -i "/CONFIG_FEATURE_TOP_DECIMALS/d" $(1); \
+		echo "CONFIG_FEATURE_TOP_DECIMALS=y" >>$(1); \
+		sed -i "/CONFIG_FEATURE_TOP_SMP_PROCESS/d" $(1); \
+		echo "CONFIG_FEATURE_TOP_SMP_PROCESS=y" >>$(1); \
+		sed -i "/CONFIG_FEATURE_TOPMEM/d" $(1); \
+		echo "CONFIG_FEATURE_TOPMEM=y" >>$(1); \
+		sed -i "/CONFIG_FEATURE_SHOW_THREADS/d" $(1); \
+		echo "CONFIG_FEATURE_SHOW_THREADS=y" >>$(1); \
+	fi; \
 	)
 	$(call platformBusyboxOptions, $(1))
+endef
+
+define extraKernelConfig
+	@( \
+	if [ ! -z "$(EXTRA_KERNEL_YES_CONFIGS)" ] ; then \
+		for c in $(EXTRA_KERNEL_YES_CONFIGS) ; do \
+			sed -i "/CONFIG_$${c}/d" $(1); \
+			echo "CONFIG_$${c}=y" >>$(1); \
+		done \
+	fi; \
+	if [ ! -z "$(EXTRA_KERNEL_NO_CONFIGS)" ] ; then \
+		for c in $(EXTRA_KERNEL_NO_CONFIGS) ; do \
+			sed -i "/CONFIG_$${c}/d" $(1); \
+			echo "# CONFIG_$${c} is not set" >>$(1); \
+		done \
+	fi; \
+	if [ ! -z "$(EXTRA_KERNEL_MOD_CONFIGS)" ] ; then \
+		for c in $(EXTRA_KERNEL_MOD_CONFIGS) ; do \
+			sed -i "/CONFIG_$${c}/d" $(1); \
+			echo "CONFIG_$${c}=m" >>$(1); \
+		done \
+	fi; \
+	if [ ! -z "$(EXTRA_KERNEL_VAL_CONFIGS)" ] ; then \
+		for c in $(EXTRA_KERNEL_VAL_CONFIGS) ; do \
+			sed -i "/CONFIG_$${c}/d" $(1); \
+			echo "CONFIG_$${c}" >>$(1); \
+		done \
+	fi; \
+	)
 endef
 
 define KernelConfig
@@ -940,80 +1148,97 @@ define KernelConfig
 		sed -i "/CONFIG_IP_NF_LFP/d" $(1); \
 		echo "CONFIG_IP_NF_LFP=y" >>$(1); \
 	fi; \
+	if [ "$(MODEM)" != "y" ]; then \
+		echo "# CONFIG_USB_SERIAL is not set" >>$(1); \
+		echo "# CONFIG_USB_ACM is not set" >>$(1); \
+	fi; \
 	if [ "$(DNSMQ)" = "y" ]; then \
 		sed -i "/CONFIG_IP_NF_DNSMQ/d" $(1); \
 		echo "CONFIG_IP_NF_DNSMQ=y" >>$(1); \
 	fi; \
 	if [ "$(IPV6SUPP)" = "y" ]; then \
-		if [ "$(BCMWL6A)" != "y" ]; then \
-			sed -i "/CONFIG_IPV6 is not set/d" $(1); \
-			echo "CONFIG_IPV6=y" >>$(1); \
-			sed -i "/CONFIG_IP6_NF_IPTABLES/d" $(1); \
-			echo "CONFIG_IP6_NF_IPTABLES=y" >>$(1); \
-			sed -i "/CONFIG_IP6_NF_MATCH_RT/d" $(1); \
-			echo "CONFIG_IP6_NF_MATCH_RT=y" >>$(1); \
-			sed -i "/CONFIG_IP6_NF_FILTER/d" $(1); \
-			echo "CONFIG_IP6_NF_FILTER=m" >>$(1); \
-			sed -i "/CONFIG_IP6_NF_TARGET_LOG/d" $(1); \
-			echo "CONFIG_IP6_NF_TARGET_LOG=m" >>$(1); \
-			sed -i "/CONFIG_IP6_NF_TARGET_REJECT/d" $(1); \
-			echo "CONFIG_IP6_NF_TARGET_REJECT=m" >>$(1); \
-			sed -i "/CONFIG_IP6_NF_MANGLE/d" $(1); \
-			echo "CONFIG_IP6_NF_MANGLE=m" >>$(1); \
-			if [ "$(CONFIG_LINUX26)" = "y" ]; then \
-				sed -i "/CONFIG_NF_CONNTRACK_IPV6/d" $(1); \
-				echo "CONFIG_NF_CONNTRACK_IPV6=m" >>$(1); \
-				sed -i "/CONFIG_NETFILTER_XT_MATCH_HL/d" $(1); \
-				echo "CONFIG_NETFILTER_XT_MATCH_HL=m" >>$(1); \
-				sed -i "/CONFIG_IPV6_ROUTER_PREF/d" $(1); \
-				echo "CONFIG_IPV6_ROUTER_PREF=y" >>$(1); \
-				sed -i "/CONFIG_IPV6_SIT/d" $(1); \
-				echo "CONFIG_IPV6_SIT=m" >>$(1); \
-				sed -i "/CONFIG_IPV6_MULTIPLE_TABLES/d" $(1); \
-				echo "CONFIG_IPV6_MULTIPLE_TABLES=y" >>$(1); \
-				sed -i "/CONFIG_IP6_NF_TARGET_ROUTE/d" $(1); \
-				echo "CONFIG_IP6_NF_TARGET_ROUTE=m" >>$(1); \
-				sed -i "/CONFIG_IPV6_MROUTE/d" $(1); \
-				echo "CONFIG_IPV6_MROUTE=y" >>$(1); \
-			else \
-				sed -i "/CONFIG_IP6_NF_CONNTRACK/d" $(1); \
-				echo "CONFIG_IP6_NF_CONNTRACK=m" >>$(1); \
-				sed -i "/CONFIG_IP6_NF_MATCH_HL/d" $(1); \
-				echo "CONFIG_IP6_NF_MATCH_HL=m" >>$(1); \
-				sed -i "/CONFIG_IP6_NF_FTP/d" $(1); \
-				echo "CONFIG_IP6_NF_FTP=m" >>$(1); \
-				sed -i "/CONFIG_IP6_NF_MATCH_LIMIT/d" $(1); \
-				echo "CONFIG_IP6_NF_MATCH_LIMIT=m" >>$(1); \
-				sed -i "/CONFIG_IP6_NF_MATCH_CONDITION/d" $(1); \
-				echo "CONFIG_IP6_NF_MATCH_CONDITION=m" >>$(1); \
-				sed -i "/CONFIG_IP6_NF_MATCH_MAC/d" $(1); \
-				echo "CONFIG_IP6_NF_MATCH_MAC=m" >>$(1); \
-				sed -i "/CONFIG_IP6_NF_MATCH_MULTIPORT/d" $(1); \
-				echo "CONFIG_IP6_NF_MATCH_MULTIPORT=m" >>$(1); \
-				sed -i "/CONFIG_IP6_NF_MATCH_MARK/d" $(1); \
-				echo "CONFIG_IP6_NF_MATCH_MARK=m" >>$(1); \
-				sed -i "/CONFIG_IP6_NF_MATCH_LENGTH/d" $(1); \
-				echo "CONFIG_IP6_NF_MATCH_LENGTH=m" >>$(1); \
-				sed -i "/CONFIG_IP6_NF_MATCH_STATE/d" $(1); \
-				echo "CONFIG_IP6_NF_MATCH_STATE=m" >>$(1); \
-				sed -i "/CONFIG_IP6_NF_TARGET_MARK/d" $(1); \
-				echo "CONFIG_IP6_NF_TARGET_MARK=m" >>$(1); \
-				sed -i "/CONFIG_IP6_NF_TARGET_TCPMSS/d" $(1); \
-				echo "CONFIG_IP6_NF_TARGET_TCPMSS=m" >>$(1); \
-				sed -i "/CONFIG_IP6_NF_TARGET_ROUTE/d" $(1); \
-				echo "CONFIG_IP6_NF_TARGET_ROUTE=m" >>$(1); \
-			fi; \
+		sed -i "/CONFIG_IPV6 is not set/d" $(1); \
+		echo "CONFIG_IPV6=y" >>$(1); \
+		sed -i "/CONFIG_IP6_NF_IPTABLES/d" $(1); \
+		echo "CONFIG_IP6_NF_IPTABLES=y" >>$(1); \
+		sed -i "/CONFIG_IP6_NF_MATCH_RT/d" $(1); \
+		echo "CONFIG_IP6_NF_MATCH_RT=y" >>$(1); \
+		sed -i "/CONFIG_IP6_NF_FILTER/d" $(1); \
+		echo "CONFIG_IP6_NF_FILTER=m" >>$(1); \
+		sed -i "/CONFIG_IP6_NF_TARGET_LOG/d" $(1); \
+		echo "CONFIG_IP6_NF_TARGET_LOG=m" >>$(1); \
+		sed -i "/CONFIG_IP6_NF_TARGET_REJECT/d" $(1); \
+		echo "CONFIG_IP6_NF_TARGET_REJECT=m" >>$(1); \
+		sed -i "/CONFIG_IP6_NF_MANGLE/d" $(1); \
+		echo "CONFIG_IP6_NF_MANGLE=m" >>$(1); \
+		if [ "$(CONFIG_LINUX26)" = "y" ]; then \
+			sed -i "/CONFIG_NF_CONNTRACK_IPV6/d" $(1); \
+			echo "CONFIG_NF_CONNTRACK_IPV6=y" >>$(1); \
+			sed -i "/CONFIG_NETFILTER_XT_MATCH_HL/d" $(1); \
+			echo "CONFIG_NETFILTER_XT_MATCH_HL=m" >>$(1); \
+			sed -i "/CONFIG_IPV6_ROUTER_PREF/d" $(1); \
+			echo "CONFIG_IPV6_ROUTER_PREF=y" >>$(1); \
+			sed -i "/CONFIG_IPV6_SIT\b/d" $(1); \
+			echo "CONFIG_IPV6_SIT=m" >>$(1); \
+			sed -i "/CONFIG_IPV6_SIT_6RD/d" $(1); \
+			echo "CONFIG_IPV6_SIT_6RD=y" >>$(1); \
+			sed -i "/CONFIG_IPV6_MULTIPLE_TABLES/d" $(1); \
+			echo "CONFIG_IPV6_MULTIPLE_TABLES=y" >>$(1); \
+			sed -i "/CONFIG_IP6_NF_TARGET_ROUTE/d" $(1); \
+			echo "CONFIG_IP6_NF_TARGET_ROUTE=m" >>$(1); \
+			sed -i "/CONFIG_IPV6_MROUTE\b/d" $(1); \
+			echo "CONFIG_IPV6_MROUTE=y" >>$(1); \
 		fi; \
+		if [ "$(CONFIG_LINUX30)" = "y" ]; then \
+			sed -i "/CONFIG_IP6_NF_CONNTRACK/d" $(1); \
+			echo "CONFIG_IP6_NF_CONNTRACK=m" >>$(1); \
+			sed -i "/CONFIG_IPV6_ROUTER_PREF/d" $(1); \
+			echo "CONFIG_IPV6_ROUTER_PREF=y" >>$(1); \
+			sed -i "/CONFIG_IPV6_SIT\b/d" $(1); \
+			echo "CONFIG_IPV6_SIT=m" >>$(1); \
+			sed -i "/CONFIG_IPV6_SIT_6RD/d" $(1); \
+			echo "CONFIG_IPV6_SIT_6RD=y" >>$(1); \
+			sed -i "/CONFIG_IPV6_MULTIPLE_TABLES/d" $(1); \
+			echo "CONFIG_IPV6_MULTIPLE_TABLES=y" >>$(1); \
+			sed -i "/CONFIG_IP6_NF_MATCH_HL/d" $(1); \
+			echo "CONFIG_IP6_NF_MATCH_HL=m" >>$(1); \
+			sed -i "/CONFIG_IP6_NF_FTP/d" $(1); \
+			echo "CONFIG_IP6_NF_FTP=m" >>$(1); \
+			sed -i "/CONFIG_IP6_NF_MATCH_LIMIT/d" $(1); \
+			echo "CONFIG_IP6_NF_MATCH_LIMIT=m" >>$(1); \
+			sed -i "/CONFIG_IP6_NF_MATCH_CONDITION/d" $(1); \
+			echo "CONFIG_IP6_NF_MATCH_CONDITION=m" >>$(1); \
+			sed -i "/CONFIG_IP6_NF_MATCH_MAC/d" $(1); \
+			echo "CONFIG_IP6_NF_MATCH_MAC=m" >>$(1); \
+			sed -i "/CONFIG_IP6_NF_MATCH_MULTIPORT/d" $(1); \
+			echo "CONFIG_IP6_NF_MATCH_MULTIPORT=m" >>$(1); \
+			sed -i "/CONFIG_IP6_NF_MATCH_MARK/d" $(1); \
+			echo "CONFIG_IP6_NF_MATCH_MARK=m" >>$(1); \
+			sed -i "/CONFIG_IP6_NF_MATCH_LENGTH/d" $(1); \
+			echo "CONFIG_IP6_NF_MATCH_LENGTH=m" >>$(1); \
+			sed -i "/CONFIG_IP6_NF_MATCH_STATE/d" $(1); \
+			echo "CONFIG_IP6_NF_MATCH_STATE=m" >>$(1); \
+			sed -i "/CONFIG_IP6_NF_TARGET_MARK/d" $(1); \
+			echo "CONFIG_IP6_NF_TARGET_MARK=m" >>$(1); \
+			sed -i "/CONFIG_IP6_NF_TARGET_TCPMSS/d" $(1); \
+			echo "CONFIG_IP6_NF_TARGET_TCPMSS=m" >>$(1); \
+			sed -i "/CONFIG_IP6_NF_TARGET_ROUTE/d" $(1); \
+			echo "CONFIG_IP6_NF_TARGET_ROUTE=m" >>$(1); \
+			sed -i "/CONFIG_IPV6_MROUTE\b/d" $(1); \
+			echo "CONFIG_IPV6_MROUTE=y" >>$(1); \
+		fi; \
+	else \
+		sed -i "/CONFIG_IPV6/d" $(1); \
+		echo "# CONFIG_IPV6 is not set" >>$(1); \
 	fi; \
-	if [ "$(ARM)" != "y" ]; then \
-		if [ "$(BCM57)" = "y" ]; then \
- 			sed -i "/CONFIG_ET_ALL_PASSIVE/d" $(1); \
-			echo "CONFIG_BCM57XX=m" >>$(1); \
-			echo "# CONFIG_ET_ALL_PASSIVE_ON is not set" >>$(1); \
-			echo "CONFIG_ET_ALL_PASSIVE_RUNTIME=y" >>$(1); \
-		else \
-			echo "# CONFIG_BCM57XX is not set" >>$(1); \
-		fi; \
+	sed -i "/CONFIG_BCM57XX/d" $(1); \
+	if [ "$(BCM57)" = "y" ]; then \
+		sed -i "/CONFIG_ET_ALL_PASSIVE/d" $(1); \
+		echo "CONFIG_BCM57XX=m" >>$(1); \
+		echo "# CONFIG_ET_ALL_PASSIVE_ON is not set" >>$(1); \
+		echo "CONFIG_ET_ALL_PASSIVE_RUNTIME=y" >>$(1); \
+	else \
+		echo "# CONFIG_BCM57XX is not set" >>$(1); \
 	fi; \
 	sed -i "/CONFIG_WL_USE_HIGH/d" $(1); \
 	sed -i "/CONFIG_WL_USBAP/d" $(1); \
@@ -1021,7 +1246,6 @@ define KernelConfig
 		echo "CONFIG_WL_USE_HIGH=y" >> $(1); \
 		echo "CONFIG_WL_USBAP=y" >>$(1); \
 	else \
-		echo "1234567890" >> $(1); \
 		echo "# CONFIG_WL_USE_HIGH is not set" >> $(1); \
 		echo "# CONFIG_WL_USBAP is not set" >>$(1); \
 	fi; \
@@ -1050,8 +1274,29 @@ define KernelConfig
 		echo "CONFIG_N56U_SR2=y" >>$(1); \
 	else \
 		echo "# CONFIG_N56U_SR2 is not set" >>$(1); \
-	fi \
-	fi ; \
+	fi; \
+	sed -i "/CONFIG_DUAL_TRX/d" $(1); \
+	if [ "$(DUAL_TRX)" = "y" ]; then \
+		echo "CONFIG_DUAL_TRX=y" >>$(1); \
+	else \
+		echo "# CONFIG_DUAL_TRX is not set" >>$(1); \
+	fi; \
+	if [ "$(EXT4FS)" = "y" ]; then \
+		sed -i "/CONFIG_EXT4_FS/d" $(1); \
+		echo "CONFIG_EXT4_FS=m" >>$(1); \
+		sed -i "/CONFIG_EXT4_FS_XATTR/d" $(1); \
+		echo "CONFIG_EXT4_FS_XATTR=y" >>$(1); \
+		sed -i "/CONFIG_EXT4_FS_POSIX_ACL/d" $(1); \
+		echo "# CONFIG_EXT4_FS_POSIX_ACL is not set" >>$(1); \
+		sed -i "/CONFIG_EXT4_FS_SECURITY/d" $(1); \
+		echo "# CONFIG_EXT4_FS_SECURITY is not set" >>$(1); \
+		sed -i "/CONFIG_EXT4_DEBUG/d" $(1); \
+		echo "# CONFIG_EXT4_DEBUG is not set" >>$(1); \
+	else \
+		sed -i "/CONFIG_EXT4_FS/d" $(1); \
+		echo "# CONFIG_EXT4_FS is not set" >>$(1); \
+	fi; \
+	fi; \
 	if [ "$(ARMCPUSMP)" = "up" ]; then \
 		sed -i "/CONFIG_GENERIC_CLOCKEVENTS_BROADCAST/d" $(1); \
 		echo "CONFIG_HAVE_LATENCYTOP_SUPPORT=y" >>$(1); \
@@ -1072,6 +1317,18 @@ define KernelConfig
 		sed -i "/CONFIG_NR_CPUS=2/d" $(1); \
 		sed -i "/# CONFIG_HOTPLUG_CPU is not set/d" $(1); \
 		sed -i "/CONFIG_RPS=y/d" $(1); \
+	fi; \
+       	if [ "$(DUALWAN)" = "y" ]; then \
+		if [ "$(BCMWL6A)" = "y" ]; then \
+			sed -i "/CONFIG_IP_ADVANCED_ROUTER/d" $(1); \
+			echo "CONFIG_IP_ADVANCED_ROUTER=y" >>$(1); \
+			echo "CONFIG_ASK_IP_FIB_HASH=y" >>$(1); \
+			echo "# CONFIG_IP_FIB_TRIE is not set" >>$(1); \
+			echo "CONFIG_IP_MULTIPLE_TABLES=y" >>$(1); \
+			echo "CONFIG_IP_ROUTE_MULTIPATH=y" >>$(1); \
+			echo "# CONFIG_IP_ROUTE_VERBOSE is not set" >>$(1); \
+			echo "CONFIG_IP_MROUTE_MULTIPLE_TABLES=y" >>$(1); \
+		fi; \
 	fi; \
 	if [ "$(IPSEC)" = "y" ]; then \
 		sed -i "/CONFIG_XFRM_USER/d" $(1); \
@@ -1126,10 +1383,12 @@ define KernelConfig
 	fi \
 	)
 	$(call platformKernelConfig, $(1))
+	$(call extraKernelConfig, $(1))
 endef
 
 mk-%:
 	@$(MAKE) -C router $(shell echo $@ | sed s/mk-//)
+
 
 bin:
 ifeq ($(BUILD_NAME),)
@@ -1140,21 +1399,22 @@ endif
 	@cp router/config_base router/config_$(lowercase_B)
 	@cp router/busybox/config_base router/busybox/config_$(lowercase_B)
 ifeq ($(BCMWL6A),y)
-	cp $(LINUXDIR)/config_base.6a $(LINUXDIR)/config_$(lowercase_B)
+	@cp $(LINUXDIR)/config_base.6a $(LINUXDIR)/config_$(lowercase_B)
 else
-	cp $(LINUXDIR)/config_base $(LINUXDIR)/config_$(lowercase_B)
+	@cp $(LINUXDIR)/config_base $(LINUXDIR)/config_$(lowercase_B)
+	@if [ -f $(LINUXDIR)/config_base_$(lowercase_B) ]; then \
+		cp $(LINUXDIR)/config_base_$(lowercase_B) $(LINUXDIR)/config_$(lowercase_B); \
+	fi
 endif
-
 	$(call RouterOptions, router/config_$(lowercase_B))
 	$(call KernelConfig, $(LINUXDIR)/config_$(lowercase_B))
 	$(call BusyboxOptions, router/busybox/config_$(lowercase_B))
 
 	@$(MAKE) setprofile
-#	cp $(LINUXDIR)/config_base.6a $(LINUXDIR)/.config
 	@$(MAKE) all
 
 define save_src_config
-	@if [ -z "$($(shell echo $(1) | tr a-z A-Z))" ] ; then echo NO THIS TARGET $(1) ; exit 1; fi
+	@if [ -z '$($(shell echo $(1) | tr a-z A-Z))' ] ; then echo NO THIS TARGET $(1) ; exit 1; fi
 	@if [ ! -f .config ] ; then \
 		rm -f .config ; \
 		for var in $($(shell echo $(1) | tr a-z A-Z)) ; do \
@@ -1197,26 +1457,39 @@ dsl-% DSL-%:
 	$(call dsl_genbintrx_epilog)
 
 setprofile:
-	echo ""
-	echo "Using $(N) profile, $(B) build config."
-	echo ""
+	@echo ""
+	@echo "Using $(N) profile, $(B) build config."
+	@echo ""
 
-	cd $(LINUXDIR) ; \
+	@cd $(LINUXDIR) ; \
 		rm -f config_current ; \
 		ln -s config_$(lowercase_B) config_current ; \
 		cp -f config_current .config
 
-	cd router/busybox && \
+	@cd router/busybox && \
 		rm -f config_current ; \
 		ln -s config_$(lowercase_B) config_current ; \
 		cp config_current .config
 
-	cd router ; \
+	@cd router ; \
 		rm -f config_current ; \
 		ln -s config_$(lowercase_B) config_current ; \
 		cp config_current .config
 
-	$(MAKE) -C router oldconfig
+	@if grep -q "CONFIG_RT3352_INIC_MII=m" $(LINUXDIR)/.config ; then \
+		sed -i "/RTCONFIG_WLMODULE_RT3352_INIC_MII/d" router/.config; \
+		echo "RTCONFIG_WLMODULE_RT3352_INIC_MII=y" >> router/.config; \
+	fi
+	@if grep -q "CONFIG_RTPCI_AP=m" $(LINUXDIR)/.config ; then \
+		sed -i "/RTCONFIG_WLMODULE_RT3090_AP/d" router/.config; \
+		echo "RTCONFIG_WLMODULE_RT3090_AP=y" >> router/.config; \
+	fi
+	@if grep -q "CONFIG_MT7610_AP=m" $(LINUXDIR)/.config ; then \
+		sed -i "/RTCONFIG_WLMODULE_MT7610_AP/d" router/.config; \
+		echo "RTCONFIG_WLMODULE_MT7610_AP=y" >> router/.config; \
+	fi
+
+	@$(MAKE) -C router oldconfig
 
 cleanlibc:
 #	@$(MAKE) -C ../../tools-src/uClibc clean
@@ -1236,18 +1509,27 @@ help:
 	@echo "distclean    distclean of Linux & busybox (but preserve .configs)"
 	@echo "prepk        -C Linux oldconfig dep"
 	@echo "libc         -C uClibc clean, all, install"
-	
+
 kernel-tags: dummy
 	$(MAKE) -C $(LINUXDIR) tags
 
 tags: kernel-tags
-	ctags -R shared $(CTAGS_EXCLUDE_OPT) $(CTAGS_DEFAULT_DIR)
+	ctags -R $(CTAGS_EXCLUDE_OPT) $(CTAGS_DEFAULT_DIRS)
+
+cscope: dummy
+	cscope -bkR -s `echo "$(CTAGS_DEFAULT_DIRS)" | sed -e "s, , -s ,g"`
 
 all-tags: kernel-tags
 	ctags -R shared $(CTAGS_EXCLUDE_OPT) $(SRCBASE)/../src/router
 
+all-cscope: dummy
+	cscope -bkR -s $(SRCBASE)/../src/router
+
 clean-tags: dummy
-	$(RM) -f $(LINUXDIR)/tags $(SRCBASE)/tags
+	$(RM) -f $(LINUXDIR)/tags tags
+
+clean-cscope: dummy
+	$(RM) -f $(LINUXDIR)/cscope.* cscope.*
 
 install gen_target:
 	$(MAKE) -C router $@
@@ -1266,11 +1548,17 @@ install gen_target:
 %-install: dummy
 	@[ ! -d router/$* ] || $(MAKE) -C router $* $@
 
+%-stage: dummy
+	@[ ! -d router/$* ] || $(MAKE) -C router $* $@
+
 %-build: dummy
 	$(MAKE) $*-clean $*
 
 %-tags: dummy
 	@[ ! -d router/$* ] || ctags -a -R $(CTAGS_EXCLUDE_OPT) $(SRCBASE)/../src/router/$*
+
+%-cscope: dummy
+	@[ ! -d router/$* ] || cscope -bkR -s `echo "$(CTAGS_DEFAULT_DIRS) $(SRCBASE)/../src/router/$*" | sed -e "s, , -s ,g"`
 
 .PHONY: all clean distclean cleanimage cleantools cleankernel prepk what setprofile libc help image default bin_file
 .PHONY: a b c d m Makefile allversions

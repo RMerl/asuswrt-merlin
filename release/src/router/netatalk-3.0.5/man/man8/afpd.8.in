@@ -1,0 +1,171 @@
+'\" t
+.\"     Title: afpd
+.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
+.\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
+.\"      Date: 19 Jan 2013
+.\"    Manual: @NETATALK_VERSION@
+.\"    Source: @NETATALK_VERSION@
+.\"  Language: English
+.\"
+.TH "AFPD" "8" "19 Jan 2013" "@NETATALK_VERSION@" "@NETATALK_VERSION@"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+afpd \- Apple Filing Protocol daemon
+.SH "SYNOPSIS"
+.HP \w'\fBafpd\fR\fB\fR\fBafpd\fR\fB\fR\ 'u
+\fBafpd\fR\fB\fR [\-d] [\-F\ \fIconfigfile\fR]
+.br
+\fBafpd\fR\fB\fR \-v | \-V | \-h 
+.SH "DESCRIPTION"
+.PP
+\fBafpd\fR
+provides an Apple Filing Protocol (AFP) interface to the Unix file system\&. It is normally started at boot time by
+\fBnetatalk\fR(8)\&.
+.PP
+@pkgconfdir@/afp\&.conf
+is the configuration file used by
+\fBafpd\fR
+to determine the behavior and configuration of a file server\&.
+.SH "OPTIONS"
+.PP
+\-d
+.RS 4
+Specifies that the daemon should not fork\&.
+.RE
+.PP
+\-v
+.RS 4
+Print version information and exit\&.
+.RE
+.PP
+\-V
+.RS 4
+Print verbose information and exit\&.
+.RE
+.PP
+\-h
+.RS 4
+Print help and exit\&.
+.RE
+.PP
+\-F \fIconfigfile\fR
+.RS 4
+Specifies the configuration file to use\&. (Defaults to
+@pkgconfdir@/afp\&.conf\&.)
+.RE
+.SH "SIGNALS"
+.PP
+To shut down a user\*(Aqs
+\fBafpd\fR
+process it is recommended that
+\fBSIGKILL (\-9)\fR
+\fINOT\fR
+be used, except as a last resort, as this may leave the CNID database in an inconsistent state\&. The safe way to terminate an
+\fBafpd\fR
+is to send it a
+\fBSIGTERM (\-15)\fR
+signal and wait for it to die on its own\&.
+.PP
+SIGTERM and SIGUSR1 signals that are sent to the main
+\fBafpd\fR
+process are propagated to the children, so all will be affected\&.
+.PP
+SIGTERM
+.RS 4
+Clean exit\&. Propagates from master to childs\&.
+.RE
+.PP
+SIGQUIT
+.RS 4
+Send this to the master
+\fBafpd\fR, it will exit leaving all children running! Can be used to implement AFP service without downtime\&.
+.RE
+.PP
+SIGHUP
+.RS 4
+Sending a
+\fBSIGHUP\fR
+to afpd will cause it to reload its configuration files\&.
+.RE
+.PP
+SIGINT
+.RS 4
+Sending a
+\fBSIGINT\fR
+to a child
+\fBafpd\fR
+enables
+\fImax_debug\fR
+logging for this process\&. The log is sent to the file
+/tmp/afpd\&.PID\&.XXXXXX\&. Sending another
+\fBSIGINT\fR
+will revert to the original log settings\&.
+.RE
+.PP
+SIGUSR1
+.RS 4
+The
+\fBafpd\fR
+process will send the message "The server is going down for maintenance\&." to the client and shut itself down in 5 minutes\&. New connections are not allowed\&. If this is sent to a child afpd, the other children are not affected\&. However, the main process will still exit, disabling all new connections\&.
+.RE
+.PP
+SIGUSR2
+.RS 4
+The
+\fBafpd\fR
+process will look in the message directory configured at build time for a file named message\&.pid\&. For each one found, a the contents will be sent as a message to the associated AFP client\&. The file is removed after the message is sent\&. This should only be sent to a child
+\fBafpd\fR\&.
+.RE
+.SH "FILES"
+.PP
+@pkgconfdir@/afp\&.conf
+.RS 4
+configuration file used by afpd
+.RE
+.PP
+@localstatedir@/netatalk/afp_signature\&.conf
+.RS 4
+list of server signature
+.RE
+.PP
+@localstatedir@/netatalk/afp_voluuid\&.conf
+.RS 4
+list of UUID for Time Machine volume
+.RE
+.PP
+@pkgconfdir@/extmap\&.conf
+.RS 4
+file name extension mapping
+.RE
+.PP
+@pkgconfdir@/msg/message\&.pid
+.RS 4
+contains messages to be sent to users\&.
+.RE
+.SH "SEE ALSO"
+.PP
+\fBnetatalk\fR(8),
+\fBhosts_access\fR(5),
+\fBafp.conf\fR(5),
+\fBafp_signature.conf\fR(5),
+\fBafp_voluuid.conf\fR(5),
+\fBextmap.conf\fR(5),
+\fBdbd\fR(1)\&.

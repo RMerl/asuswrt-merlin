@@ -984,17 +984,23 @@ char *get_wlifname(int unit, int subunit, int subunit_x, char *buf)
 {
 	char wifbuf[32];
 	char prefix[]="wlXXXXXX_", tmp[100];
-
-	memset(wifbuf, 0, sizeof(wifbuf));
-
-	if(unit==0) strncpy(wifbuf, WIF_2G, strlen(WIF_2G)-1);
-	else strncpy(wifbuf, WIF_5G, strlen(WIF_5G)-1);
-
-	snprintf(prefix, sizeof(prefix), "wl%d.%d_", unit, subunit);
-	if (nvram_match(strcat_r(prefix, "bss_enabled", tmp), "1"))
-		sprintf(buf, "%s%d", wifbuf, subunit_x);
+	if(atoi(nvram_safe_get("sw_mode"))==2)
+	{   
+		sprintf(buf, "%s", "apcli0");
+	}	
 	else
-		sprintf(buf, "%s", "");
+	{
+		memset(wifbuf, 0, sizeof(wifbuf));
+
+		if(unit==0) strncpy(wifbuf, WIF_2G, strlen(WIF_2G)-1);
+		else strncpy(wifbuf, WIF_5G, strlen(WIF_5G)-1);
+
+		snprintf(prefix, sizeof(prefix), "wl%d.%d_", unit, subunit);
+		if (nvram_match(strcat_r(prefix, "bss_enabled", tmp), "1"))
+			sprintf(buf, "%s%d", wifbuf, subunit_x);
+		else
+			sprintf(buf, "%s", "");
+	}	
 	return buf;
 }
 

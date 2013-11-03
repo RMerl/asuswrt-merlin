@@ -357,7 +357,7 @@ fi
 need_asuslighttpd=0
 need_asusffmpeg=0
 need_smartsync=0
-if [ "$1" == "downloadmaster" ] && [ -z "$is_arm_machine" ]; then
+if [ "$1" == "downloadmaster" ]; then
 	DM_version1=`app_get_field.sh downloadmaster Version 2 |awk '{FS=".";print $1}'`
 	DM_version4=`app_get_field.sh downloadmaster Version 2 |awk '{FS=".";print $4}'`
 
@@ -366,7 +366,7 @@ if [ "$1" == "downloadmaster" ] && [ -z "$is_arm_machine" ]; then
 	elif [ "$DM_version1" -eq "3" ] && [ "$DM_version4" -gt "59" ]; then
 		need_asuslighttpd=1
 	fi
-elif [ "$1" == "mediaserver" ] && [ -z "$is_arm_machine" ]; then
+elif [ "$1" == "mediaserver" ]; then
 	MS_version1=`app_get_field.sh mediaserver Version 2 |awk '{FS=".";print $1}'`
 	MS_version4=`app_get_field.sh mediaserver Version 2 |awk '{FS=".";print $4}'`
 
@@ -381,7 +381,7 @@ elif [ "$1" == "mediaserver" ] && [ -z "$is_arm_machine" ]; then
 	elif [ "$MS_version1" -eq "1" ] && [ "$MS_version4" -ge "30" ]; then
 		need_asusffmpeg=1
 	fi
-elif [ "$1" == "aicloud" ] && [ -z "$is_arm_machine" ]; then
+elif [ "$1" == "aicloud" ]; then
 	AC_version1=`app_get_field.sh aicloud Version 2 |awk '{FS=".";print $1}'`
 	AC_version4=`app_get_field.sh aicloud Version 2 |awk '{FS=".";print $4}'`
 

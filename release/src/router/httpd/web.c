@@ -88,6 +88,10 @@ typedef unsigned long long u64;
 #include "initial_web_hook.h"
 //#endif
 
+//#ifdef RTCONFIG_OPENVPN
+#include "openvpn_options.h"
+//#endif
+
 #include <net/if.h>
 #include <linux/sockios.h>
 #include <networkmap.h> //2011.03 Yau add for new networkmap
@@ -115,6 +119,10 @@ extern int ej_wl_scan_2g(int eid, webs_t wp, int argc, char_t **argv);
 extern int ej_wl_scan_5g(int eid, webs_t wp, int argc, char_t **argv);
 extern int ej_wl_channel_list_2g(int eid, webs_t wp, int argc, char_t **argv);
 extern int ej_wl_channel_list_5g(int eid, webs_t wp, int argc, char_t **argv);
+#ifdef CONFIG_BCMWL5
+extern int ej_wl_rate_2g(int eid, webs_t wp, int argc, char_t **argv);
+extern int ej_wl_rate_5g(int eid, webs_t wp, int argc, char_t **argv);
+#endif
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_PROXYSTA
 int ej_wl_auth_psta(int eid, webs_t wp, int argc, char_t **argv);
@@ -1025,6 +1033,14 @@ ej_dump(int eid, webs_t wp, int argc, char_t **argv)
 		ret += dump_file(wp, filename);
 	}
 //#endif
+#ifdef RTCONFIG_OPENVPN
+	else if(!strcmp(file, "openvpn_connected")){
+		int unit = nvram_get_int("vpn_server_unit");
+		parse_openvpn_status(unit);
+		sprintf(filename, "/etc/openvpn/server%d/client_status", unit);
+		ret += dump_file(wp, filename);
+	}
+#endif
 	else {
 		sprintf(filename, "/tmp/%s", file);
 		ret += dump_file(wp, filename);
@@ -1191,6 +1207,7 @@ ej_lan_get_parameter(int eid, webs_t wp, int argc, char_t **argv)
 	return (websWrite(wp,"%s",""));
 }
 
+#ifdef RTCONFIG_OPENVPN
 static int
 ej_vpn_server_get_parameter(int eid, webs_t wp, int argc, char_t **argv)
 {
@@ -1214,11 +1231,11 @@ ej_vpn_client_get_parameter(int eid, webs_t wp, int argc, char_t **argv)
 
         return (websWrite(wp,"%s",""));
 }
-
+#endif
 
 
 //2008.08 magic {
-// Largest POST will be the OpenVPN key page:  
+// Largest POST will be the OpenVPN key page:
 // 2*5 fields + 2*4 fields = 18 fields total
 // Each field can have up to 3500 characters, for a potential
 // total of 63KB.  Going for 64KB to account for additional POST/GET data.
@@ -1364,26 +1381,26 @@ int validate_instance(webs_t wp, char *name)
 // This seems to create default values for each unit.
 // Is it really necessary?  lan_ does not seem to use it.
 #ifdef RTCONFIG_OPENVPN
-       else if(strncmp(name, "vpn_server_", 11)==0) {
-                for(i=1;i<3;i++) {
-                        sprintf(prefix, "vpn_server%d_", i);
-                        value = websGetVar(wp, strcat_r(prefix, name+11, tmp), NULL);
-                        if(value && strcmp(nvram_safe_get(tmp), value)) {
-                                nvram_set(tmp, value);
-                                found = NVRAM_MODIFIED_BIT;
-                        }
-                }
-        }
-       else if(strncmp(name, "vpn_client_", 11)==0) {
-                for(i=1;i<3;i++) {
-                        sprintf(prefix, "vpn_client%d_", i);
-                        value = websGetVar(wp, strcat_r(prefix, name+11, tmp), NULL);
-                        if(value && strcmp(nvram_safe_get(tmp), value)) {
-                                nvram_set(tmp, value);
-                                found = NVRAM_MODIFIED_BIT;
-                        }
-                }
-        }
+	else if(strncmp(name, "vpn_server_", 11)==0) {
+		for(i=1;i<3;i++) {
+			sprintf(prefix, "vpn_server%d_", i);
+			value = websGetVar(wp, strcat_r(prefix, name+11, tmp), NULL);
+			if(value && strcmp(nvram_safe_get(tmp), value)) {
+				nvram_set(tmp, value);
+				found = NVRAM_MODIFIED_BIT;
+			}
+		}
+	}
+	else if(strncmp(name, "vpn_client_", 11)==0) {
+		for(i=1;i<3;i++) {
+			sprintf(prefix, "vpn_client%d_", i);
+			value = websGetVar(wp, strcat_r(prefix, name+11, tmp), NULL);
+			if(value && strcmp(nvram_safe_get(tmp), value)) {
+				nvram_set(tmp, value);
+				found = NVRAM_MODIFIED_BIT;
+			}
+		}
+	}
 #endif
 
 	return found;
@@ -1434,10 +1451,9 @@ static int validate_apply(webs_t wp) {
 					|| !strcmp(name, "dsl_unit")
 #endif
 #ifdef RTCONFIG_OPENVPN
-		                        || !strcmp(name, "vpn_server_unit")
+					|| !strcmp(name, "vpn_server_unit")
 					|| !strcmp(name, "vpn_client_unit")
 #endif
-
 #ifdef RTCONFIG_DISK_MONITOR
 					|| !strcmp(name, "diskmon_usbport")
 #endif
@@ -1502,33 +1518,33 @@ static int validate_apply(webs_t wp) {
 			}
 #endif
 #ifdef RTCONFIG_OPENVPN
-                        else if(!strncmp(name, "vpn_server_", 11) && unit!=-1) {
-                                snprintf(prefix, sizeof(prefix), "vpn_server%d_", unit);
-                                (void)strcat_r(prefix, name+11, tmp);
+			else if(!strncmp(name, "vpn_server_", 11) && unit!=-1) {
+				snprintf(prefix, sizeof(prefix), "vpn_server%d_", unit);
+				(void)strcat_r(prefix, name+11, tmp);
 
-                                if(strcmp(nvram_safe_get(tmp), value)) {
-                                        nvram_set(tmp, value);
-                                        nvram_modified = 1;
-                                        _dprintf("set %s=%s\n", tmp, value);
-                                }
-                        }
-                        else if(!strncmp(name, "vpn_client_", 11) && unit!=-1) {
-                                snprintf(prefix, sizeof(prefix), "vpn_client%d_", unit);
-                                (void)strcat_r(prefix, name+11, tmp);
+				if(strcmp(nvram_safe_get(tmp), value)) {
+					nvram_set(tmp, value);
+					nvram_modified = 1;
+					_dprintf("set %s=%s\n", tmp, value);
+				}
+			}
+			else if(!strncmp(name, "vpn_client_", 11) && unit!=-1) {
+				snprintf(prefix, sizeof(prefix), "vpn_client%d_", unit);
+				(void)strcat_r(prefix, name+11, tmp);
 
-                                if(strcmp(nvram_safe_get(tmp), value)) {
-                                        nvram_set(tmp, value);
-                                        nvram_modified = 1;
-                                        _dprintf("set %s=%s\n", tmp, value);
-                                }
-                        }
+				if(strcmp(nvram_safe_get(tmp), value)) {
+					nvram_set(tmp, value);
+					nvram_modified = 1;
+					_dprintf("set %s=%s\n", tmp, value);
+				}
+			}
 #endif
 			// Replace CRLF with ">", as the nvram backup encoder can't handle
                         // ASCII values below 32.
 			else if((!strncmp(name, "vpn_crt", 7)) || (!strncmp(name, "sshd_", 5))) {
 
 				len = strlen(value);
-				// Saveguarda gainst buffer overrun
+				// Safeguard against buffer overrun
 				if (len > (sizeof(tmp) - 1)) len = sizeof(tmp) - 1;
 
 				i = 0;
@@ -1662,28 +1678,29 @@ static int ej_update_variables(int eid, webs_t wp, int argc, char_t **argv) {
 		}
 
 		if(do_apply || has_modify) {
-		if (strlen(action_script) > 0) {
-			memset(notify_cmd, 0, 32);
-			if(strstr(action_script, "_wan_if"))
-				sprintf(notify_cmd, "%s %s", action_script, wan_unit);
-			else
-				strncpy(notify_cmd, action_script, 128);
+			if (strlen(action_script) > 0) {
+				memset(notify_cmd, 0, 32);
+				if(strstr(action_script, "_wan_if"))
+					sprintf(notify_cmd, "%s %s", action_script, wan_unit);
+				else
+					strncpy(notify_cmd, action_script, 128);
 
-			notify_rc(notify_cmd);
-		}
+				if(strcmp(action_script, "saveNvram"))
+					notify_rc(notify_cmd);
+			}
 #if defined(RTCONFIG_RALINK)
-		if (strcmp(action_script, "restart_wireless") == 0
-		  ||strcmp(action_script, "restart_net") == 0)
-		{
-			char *rc_support = nvram_safe_get("rc_support");
-			if (find_word(rc_support, "2.4G") && find_word(rc_support, "5G"))
-				websWrite(wp, "<script>restart_needed_time(%d);</script>\n", atoi(action_wait) + 20);
+			if (strcmp(action_script, "restart_wireless") == 0
+			  ||strcmp(action_script, "restart_net") == 0)
+			{
+				char *rc_support = nvram_safe_get("rc_support");
+				if (find_word(rc_support, "2.4G") && find_word(rc_support, "5G"))
+					websWrite(wp, "<script>restart_needed_time(%d);</script>\n", atoi(action_wait) + 20);
+				else
+					websWrite(wp, "<script>restart_needed_time(%d);</script>\n", atoi(action_wait) + 5);
+			}
 			else
-				websWrite(wp, "<script>restart_needed_time(%d);</script>\n", atoi(action_wait) + 5);
-		}
-		else
 #endif
-		websWrite(wp, "<script>restart_needed_time(%d);</script>\n", atoi(action_wait));
+			websWrite(wp, "<script>restart_needed_time(%d);</script>\n", atoi(action_wait));
 		}
 	}
 	return 0;
@@ -1910,8 +1927,6 @@ static int wanlink_hook(int eid, webs_t wp, int argc, char_t **argv){
 #endif
 		unit = wan_primary_ifunit(); //Paul add 2013/7/24, get current working wan unit
 		//unit = WAN_UNIT_FIRST;
-
-printf("httpd: unit: %d\n", unit);
 
 	wan_prefix(unit, prefix);
 
@@ -2834,12 +2849,10 @@ ej_lan_leases(int eid, webs_t wp, int argc, char_t **argv)
 #define IPV6_CLIENT_NEIGH	"/tmp/ipv6_neigh"
 #define IPV6_CLIENT_INFO	"/tmp/ipv6_client_info"
 #define	IPV6_CLIENT_LIST	"/tmp/ipv6_client_list"
-#define IPV6_TRACERT		"/tmp/ipv6_tracert"
 #define	MAC			1
 #define	HOSTNAME		2
 #define	IPV6_ADDRESS		3
 #define BUFSIZE			8192
-#define IPV6_TRACERT_TTL_MAX	1
 
 static int compare_back(FILE *fp, int current_line, char *buffer);
 static int check_mac_previous(char *mac);
@@ -3119,44 +3132,6 @@ static int ipv6_client_numbers(void)
 }
 #endif
 
-#if 1 /* temporary till httpd route table redo */
-static char *get_traceroute_1st_hop()
-{
-	FILE *fp;
-	char buf[256], idx[16], ipaddr[64], delay[16], ms[16];
-	int i;
-
-	remove(IPV6_TRACERT);
-	doSystem("traceroute -n -w 1 -m %d -q 1 %s > %s", IPV6_TRACERT_TTL_MAX, "2001:4860:4860::8888", IPV6_TRACERT);
-
-	if ((fp = fopen(IPV6_TRACERT, "r")) == NULL)
-	{
-		dbg("can't open %s: %s", IPV6_TRACERT,
-			strerror(errno));
-
-		return NULL;
-	}
-
-	i = 0;
-	while (i < IPV6_TRACERT_TTL_MAX + 1)
-	{
-		if ( fgets(buf, sizeof(buf), fp) != NULL )
-		{
-			i++;
-
-			if (strstr(buf, "traceroute to"))
-				continue;
-
-			sscanf(buf, "%s %s %s %s", idx, ipaddr, delay, ms);
-			break;
-		}
-	}
-	fclose(fp);
-
-	return ipv6_address(ipaddr);
-}
-#endif
-
 int
 ej_lan_ipv6_network(int eid, webs_t wp, int argc, char_t **argv)
 {
@@ -3191,11 +3166,7 @@ ej_lan_ipv6_network(int eid, webs_t wp, int argc, char_t **argv)
 	ret += websWrite(wp, "%30s: %s\n", "WAN IPv6 Address",
 			 getifaddr((char *) get_wan6face(), AF_INET6, GIF_PREFIXLEN) ? : "");
 	ret += websWrite(wp, "%30s: %s\n", "WAN IPv6 Gateway",
-#if 1 /* temporary till httpd route table redo */
-			 (get_ipv6_service() == IPV6_NATIVE_DHCP) ? nvram_match("ipv6_ifdev", "ppp") ? ipv6_address(nvram_safe_get("ipv6_ll_remote")) : strlen(nvram_safe_get("ipv6_gw_addr")) ? ipv6_address(nvram_safe_get("ipv6_gw_addr")) : strtok(ipv6_gateway_address(), " ") : (get_ipv6_service() == IPV6_6TO4) ? get_traceroute_1st_hop() : (get_ipv6_service() == IPV6_6IN4) ? get_traceroute_1st_hop() : (get_ipv6_service() == IPV6_6RD) ? get_traceroute_1st_hop() : (get_ipv6_service() == IPV6_MANUAL) ? nvram_safe_get("ipv6_gateway") : "");
-#else
-			 ipv6_gateway_address());
-#endif
+			 ipv6_gateway_address() ? : "");
 	ret += websWrite(wp, "%30s: %s/%d\n", "LAN IPv6 Address",
 			 nvram_safe_get("ipv6_rtr_addr"), atoi(nvram_safe_get("ipv6_prefix_length")));
 	ret += websWrite(wp, "%30s: %s\n", "LAN IPv6 Link-Local Address",
@@ -3259,9 +3230,9 @@ ej_lan_ipv6_network(int eid, webs_t wp, int argc, char_t **argv)
 	return ret;
 }
 
+#if 1 /* temporary till httpd route table redo */
 static void INET6_displayroutes(webs_t wp)
 {
-#if 1 /* temporary till httpd route table redo */
 	char addr6[128], *naddr6;
 	/* In addr6x, we store both 40-byte ':'-delimited ipv6 addresses.
 	 * We read the non-delimited strings into the tail of the buffer
@@ -3348,97 +3319,98 @@ static void INET6_displayroutes(webs_t wp)
 	}
 
 	return;
-#endif
 }
 #endif
+#endif
+
+static int ipv4_route_table(webs_t wp)
+{
+	FILE *fp;
+	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
+	char buf[256], *dev, *sflags, *str;
+	struct in_addr dest, gateway, mask;
+	int flags, ref, use, metric;
+	int unit, ret = 0;
+
+	ret += websWrite(wp, "%-16s%-16s%-16s%s\n",
+			 "Destination", "Gateway", "Genmask",
+			 "Flags Metric Ref    Use Iface");
+
+	fp = fopen("/proc/net/route", "r");
+	if (fp == NULL)
+		return 0;
+
+	while ((str = fgets(buf, sizeof(buf), fp)) != NULL) {
+		dev = strsep(&str, " \t");
+		if (!str || dev == str)
+			continue;
+		if (sscanf(str, "%x%x%x%d%u%d%x", &dest.s_addr, &gateway.s_addr,
+			   &flags, &ref, &use, &metric, &mask.s_addr) != 7)
+			continue;
+
+		/* Parse flags, reuse buf */
+		sflags = str;
+		if (flags & RTF_UP)
+			*str++ = 'U';
+		if (flags & RTF_GATEWAY)
+			*str++ = 'G';
+		if (flags & RTF_HOST)
+			*str++ = 'H';
+		*str++ = '\0';
+
+		/* Skip interfaces here */
+		if (strcmp(dev, "lo") == 0)
+			continue;
+
+		/* Replace known interfaces with LAN/WAN/MAN */
+		if (nvram_match("lan_ifname", dev)) /* br0, wl0, etc */
+			dev = "LAN";
+		else {
+			/* Tricky, it's better to move wan_ifunit/wanx_ifunit to shared instead */
+			for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
+				wan_prefix(unit, prefix);
+				if (nvram_match(strcat_r(prefix, "pppoe_ifname", tmp), dev)) {
+					dev = "WAN";
+					break;
+				}
+				if (nvram_match(strcat_r(prefix, "ifname", tmp), dev)) {
+					char *wan_proto = nvram_safe_get(strcat_r(prefix, "proto", tmp));
+					dev = (strcmp(wan_proto, "dhcp") == 0 ||
+					       strcmp(wan_proto, "static") == 0 ) ? "WAN" : "MAN";
+					break;
+				}
+			}
+		}
+
+		ret += websWrite(wp, "%-16s", dest.s_addr == INADDR_ANY ? "default" : inet_ntoa(dest));
+		ret += websWrite(wp, "%-16s", gateway.s_addr == INADDR_ANY ? "*" : inet_ntoa(gateway));
+		ret += websWrite(wp, "%-16s%-6s%-6d %-2d %7d %s\n",
+				 inet_ntoa(mask), sflags, metric, ref, use, dev);
+	}
+	fclose(fp);
+
+	return ret;
+}
 
 int
 ej_route_table(int eid, webs_t wp, int argc, char_t **argv)
 {
-	char buff[256];
-	int  nl = 0;
-	struct in_addr dest;
-	struct in_addr gw;
-	struct in_addr mask;
-	int flgs, ref, use, metric, ret=0;
-	char flags[4];
-	unsigned long int d,g,m;
-	char sdest[16], sgw[16], *iface;
+	int ret;
+#if 1 /* temporary till httpd route table redo */
 	FILE *fp;
-	int unit;
-	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
 	char buf[256];
 	unsigned int fl = 0;
 	int found = 0;
+#endif
 
-	ret += websWrite(wp, "Destination     Gateway         Genmask         Flags Metric Ref    Use Iface\n");
-
-	if (!(fp = fopen("/proc/net/route", "r"))) return 0;
-
-	while (fgets(buff, sizeof(buff), fp) != NULL ) 
-	{
-		if (nl) 
-		{
-			int ifl = 0;
-			while (buff[ifl]!=' ' && buff[ifl]!='\t' && buff[ifl]!='\0')
-				ifl++;
-			buff[ifl]=0;	/* interface */
-			if (sscanf(buff+ifl+1, "%lx%lx%d%d%d%d%lx",
-			   &d, &g, &flgs, &ref, &use, &metric, &m)!=7) {
-				//error_msg_and_die( "Unsuported kernel route format\n");
-				//continue;
-			}
-
-			ifl = 0;	/* parse flags */
-			if (flgs&1)
-				flags[ifl++]='U';
-			if (flgs&2)
-				flags[ifl++]='G';
-			if (flgs&4)
-				flags[ifl++]='H';
-			flags[ifl]=0;
-			dest.s_addr = d;
-			gw.s_addr   = g;
-			mask.s_addr = m;
-			strcpy(sdest,  (dest.s_addr==0 ? "default" :
-					inet_ntoa(dest)));
-			strcpy(sgw,    (gw.s_addr==0   ? "*"       :
-					inet_ntoa(gw)));
-
-			/* Skip interfaces here */
-			if (strstr(buff, "lo"))
-				continue;
-
-			/* If unknown, just expose interface name */
-			iface = buff;
-			if (nvram_match("lan_ifname", buff)) /* br0, wl0, etc */
-				iface = "LAN";
-			else
-			/* Tricky, it's better to move wan_ifunit/wanx_ifunit to shared instead */
-			for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
-				wan_prefix(unit, prefix);
-				if (nvram_match(strcat_r(prefix, "pppoe_ifname", tmp), buff)) {
-					iface = "WAN";
-					break;
-				}
-				if (nvram_match(strcat_r(prefix, "ifname", tmp), buff)) {
-					char *wan_proto = nvram_safe_get(strcat_r(prefix, "proto", tmp));
-					iface = (strcmp(wan_proto, "dhcp") == 0 ||
-						 strcmp(wan_proto, "static") == 0 ) ? "WAN" : "MAN";
-					break;
-				}
-			}
-
-			ret += websWrite(wp, "%-16s%-16s%-16s%-6s%-6d %-2d %7d %s\n",
-			sdest, sgw,
-			inet_ntoa(mask),
-			flags, metric, ref, use, iface);
-		}
-		nl++;
-	}
-	fclose(fp);
+	ret = ipv4_route_table(wp);
 
 #ifdef RTCONFIG_IPV6
+	if (get_ipv6_service() != IPV6_DISABLED) {
+		ret += websWrite(wp, "\n"
+				     "IPv6 routing table\n");
+
+#if 1 /* temporary till httpd route table redo */
 	if ((fp = fopen("/proc/net/if_inet6", "r")) == (FILE*)0)
 		return ret;
 
@@ -3461,6 +3433,8 @@ ej_route_table(int eid, webs_t wp, int argc, char_t **argv)
 
 	if (found)
 		INET6_displayroutes(wp);
+#endif
+	}
 #endif
 
 	return ret;
@@ -3502,7 +3476,7 @@ static int ej_get_arp_table(int eid, webs_t wp, int argc, char_t **argv){
 	return 0;
 }
 
-#ifdef CONFIG_BCMWL5
+#if defined(CONFIG_BCMWL5) || defined (MTK_APCLI)
 static int ej_get_ap_info(int eid, webs_t wp, int argc, char_t **argv)
 {
 	FILE *fp;
@@ -4626,7 +4600,7 @@ wps_finish:
 		}
 	}
 //#endif
-
+#ifdef RTCONFIG_OPENVPN
         else if (!strcmp(action_mode, "change_vpn_server_unit"))
         {
                 action_para = websGetVar(wp, "vpn_server_unit", "");
@@ -4645,6 +4619,7 @@ wps_finish:
 
                 websRedirect(wp, current_url);
         }
+#endif
 	return 1;
 }
 
@@ -5159,6 +5134,162 @@ do_upload_cgi(char *url, FILE *stream)
 	}
 }
 
+#ifdef RTCONFIG_OPENVPN
+
+#define VPN_CLIENT_UPLOAD	"/tmp/openvpn_file"
+
+static void
+do_vpnupload_post(char *url, FILE *stream, int len, char *boundary)
+{
+	char upload_fifo[] = VPN_CLIENT_UPLOAD;
+	FILE *fifo = NULL;
+	int ret = EINVAL, ch;
+	int offset;
+	char *name, *value, *p;
+
+	memset(post_buf, 0, sizeof(post_buf));
+	nvram_set("vpn_upload_type", "");
+	nvram_set("vpn_upload_unit", "");
+
+	/* Look for our part */
+	while (len > 0) {
+		if (!fgets(post_buf, MIN(len + 1, sizeof(post_buf)), stream)) {
+			goto err;
+		}
+
+		len -= strlen(post_buf);
+
+		if (!strncasecmp(post_buf, "Content-Disposition:", 20)) {
+			if(strstr(post_buf, "name=\"file\""))
+				break;
+			else if(strstr(post_buf, "name=\"")) {
+				offset = strlen(post_buf);
+				fgets(post_buf+offset, MIN(len + 1, sizeof(post_buf)-offset), stream);
+				len -= strlen(post_buf) - offset;
+				offset = strlen(post_buf);
+				fgets(post_buf+offset, MIN(len + 1, sizeof(post_buf)-offset), stream);
+				len -= strlen(post_buf) - offset;
+				p = post_buf;
+				name = strstr(p, "\"") + 1;
+				p = strstr(name, "\"");
+				strcpy(p++, "\0");
+				value = strstr(p, "\r\n\r\n") + 4;
+				p = strstr(value, "\r");
+				strcpy(p, "\0");
+				//printf("%s=%s\n", name, value);
+				nvram_set(name, value);
+			}
+		}
+	}
+
+	/* Skip boundary and headers */
+	while (len > 0) {
+		if (!fgets(post_buf, MIN(len + 1, sizeof(post_buf)), stream)) {
+			goto err;
+		}
+
+		len -= strlen(post_buf);
+		if (!strcmp(post_buf, "\n") || !strcmp(post_buf, "\r\n")) {
+			break;
+		}
+	}
+
+	if (!(fifo = fopen(upload_fifo, "w")))
+		goto err;
+
+	while (len > 0) {
+		if (!fgets(post_buf, MIN(len + 1, sizeof(post_buf)), stream)) {
+			goto err;
+		}
+		len -= strlen(post_buf);
+
+		if (!strncasecmp(post_buf, "------WebKitFormBoundary", 24))
+			break;
+
+		fputs(post_buf, fifo);
+	}
+
+	ret = 0;
+
+	fclose(fifo);
+	fifo = NULL;
+	/*printf("done\n");*/
+
+err:
+	if (fifo)
+		fclose(fifo);
+
+	/* Slurp anything remaining in the request */
+	while (len-- > 0)
+		if((ch = fgetc(stream)) == EOF)
+			break;
+
+	fcntl(fileno(stream), F_SETOWN, -ret);
+}
+
+static void
+do_vpnupload_cgi(char *url, FILE *stream)
+{
+	int ret, state;
+	char *filetype = nvram_safe_get("vpn_upload_type");
+	char *unit = nvram_safe_get("vpn_upload_unit");
+	char nv[32] = {0};
+
+	if(!filetype || !unit) {
+		unlink(VPN_CLIENT_UPLOAD);
+		return;
+	}
+
+#ifdef RTCONFIG_HTTPS
+	if(do_ssl)
+		ret = fcntl(ssl_stream_fd , F_GETOWN, 0);
+	else
+#endif
+	ret = fcntl(fileno(stream), F_GETOWN, 0);
+
+	if (ret == 0)
+	{
+		//websApply(stream, "OvpnChecking.asp");
+
+		if(!strcmp(filetype, "ovpn")) {
+			reset_client_setting(atoi(unit));
+			ret = read_config_file(VPN_CLIENT_UPLOAD, atoi(unit));
+			nvram_set_int("vpn_upload_state", ret);
+			nvram_commit();
+		}
+		else if(!strcmp(filetype, "ca")) {
+			sprintf(nv, "vpn_crt_client%s_ca", unit);
+			set_crt_parsed(nv, VPN_CLIENT_UPLOAD);
+			state = nvram_get_int("vpn_upload_state");
+			nvram_set_int("vpn_upload_state", state & (~VPN_UPLOAD_NEED_CA_CERT));
+		}
+		else if(!strcmp(filetype, "cert")) {
+			sprintf(nv, "vpn_crt_client%s_cert", unit);
+			set_crt_parsed(nv, VPN_CLIENT_UPLOAD);
+			state = nvram_get_int("vpn_upload_state");
+			nvram_set_int("vpn_upload_state", state & (~VPN_UPLOAD_NEED_CERT));
+		}
+		else if(!strcmp(filetype, "key")) {
+			sprintf(nv, "vpn_crt_client%s_cert", unit);
+			set_crt_parsed(nv, VPN_CLIENT_UPLOAD);
+			state = nvram_get_int("vpn_upload_state");
+			nvram_set_int("vpn_upload_state", state & (~VPN_UPLOAD_NEED_KEY));
+		}
+		else if(!strcmp(filetype, "static")) {
+			sprintf(nv, "vpn_crt_client%s_static", unit);
+			set_crt_parsed(nv, VPN_CLIENT_UPLOAD);
+			state = nvram_get_int("vpn_upload_state");
+			nvram_set_int("vpn_upload_state", state & (~VPN_UPLOAD_NEED_STATIC));
+		}
+	}
+	else
+	{
+		//websApply(stream, "OvpnError.asp");
+	}
+	unlink(VPN_CLIENT_UPLOAD);
+}
+#endif	//RTCONFIG_OPENVPN
+
 // Viz 2010.08
 static void
 do_update_cgi(char *url, FILE *stream)
@@ -5488,13 +5619,17 @@ void ctvbuf(FILE *f) {
 static void
 do_prf_file(char *url, FILE *stream)
 {
-printf("here\n");
 	nvram_commit();
 	sys_download("/tmp/settings");
 	do_file(url, stream);
-	//unlink("/tmp/settings");
 }
 
+static void
+do_prf_ovpn_file(char *url, FILE *stream)
+{
+	nvram_commit();
+        do_file(url, stream);
+}
 
 // 2010.09 James. {
 static char no_cache_IE7[] =
@@ -5562,7 +5697,7 @@ struct mime_handler mime_handlers[] = {
 	{ "**.js",  "text/javascript", no_cache_IE7, NULL, do_ej, do_auth },
 	{ "**.cab", "text/txt", NULL, NULL, do_file, do_auth },
 	{ "**.CFG", "application/force-download", NULL, NULL, do_prf_file, do_auth },
-
+	{ "**.ovpn", "application/force-download", NULL, NULL, do_prf_ovpn_file, do_auth },
 	{ "apply.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_apply_cgi, do_auth },
 	{ "applyapp.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_apply_cgi, do_auth },
 	{ "upgrade.cgi*", "text/html", no_cache_IE7, do_upgrade_post, do_upgrade_cgi, do_auth},
@@ -5581,6 +5716,9 @@ struct mime_handler mime_handlers[] = {
 #ifdef TRANSLATE_ON_FLY
 	{ "change_lang.cgi*", "text/html", no_cache_IE7, do_lang_post, do_lang_cgi, do_auth },
 #endif //TRANSLATE_ON_FLY
+#ifdef RTCONFIG_OPENVPN
+	{ "vpnupload.cgi*", "text/html", no_cache_IE7, do_vpnupload_post, do_vpnupload_cgi, do_auth },
+#endif
 	{ NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
@@ -7612,7 +7750,7 @@ int start_autodet(int eid, webs_t wp, int argc, char **argv) {
 	notify_rc("start_autodet");
 	return 0;
 }
-#ifdef CONFIG_BCMWL5
+#if defined(CONFIG_BCMWL5) || defined(MTK_APCLI)
 int start_wlcscan(int eid, webs_t wp, int argc, char **argv) {
 	notify_rc("start_wlcscan");
 	return 0;
@@ -8426,7 +8564,7 @@ struct ej_handler ej_handlers[] = {
 	{ "sitesurvey", ej_SiteSurvey},
 #endif
 #endif
-#ifdef CONFIG_BCMWL5
+#if defined(CONFIG_BCMWL5) || defined(MTK_APCLI)
 	{ "get_ap_info", ej_get_ap_info},
 #endif
 	{ "ddns_info", ej_ddnsinfo},
@@ -8453,8 +8591,8 @@ struct ej_handler ej_handlers[] = {
 	{ "set_share_mode", ej_set_share_mode},
 	{ "initial_folder_var_file", ej_initial_folder_var_file},
 #ifdef RTCONFIG_DISK_MONITOR
-        { "apps_fsck_ret", ej_apps_fsck_ret},
-        { "apps_fsck_log", ej_apps_fsck_log},
+	{ "apps_fsck_ret", ej_apps_fsck_ret},
+	{ "apps_fsck_log", ej_apps_fsck_log},
 #endif
 	{ "apps_info", ej_apps_info},
 	{ "apps_state_info", ej_apps_state_info},
@@ -8471,7 +8609,7 @@ struct ej_handler ej_handlers[] = {
 #endif
 
 	{ "start_autodet", start_autodet},
-#ifdef CONFIG_BCMWL5
+#if defined(CONFIG_BCMWL5) || defined(MTK_APCLI)
 	{ "start_wlcscan", start_wlcscan},
 #endif
 	{ "setting_lan", setting_lan},
@@ -8490,6 +8628,10 @@ struct ej_handler ej_handlers[] = {
 	{ "wl_scan_5g", ej_wl_scan_5g},
 	{ "channel_list_2g", ej_wl_channel_list_2g},
 	{ "channel_list_5g", ej_wl_channel_list_5g},
+#ifdef CONFIG_BCMWL5
+	{ "wl_rate_2g", ej_wl_rate_2g},
+	{ "wl_rate_5g", ej_wl_rate_5g},
+#endif
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_PROXYSTA
 	{ "wlc_psta_state", ej_wl_auth_psta},

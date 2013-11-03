@@ -1,0 +1,222 @@
+<refentry id="arping">
+
+<refmeta>
+<refentrytitle>arping</refentrytitle>
+<manvolnum>8</manvolnum>
+<refmiscinfo>iputils-&snapshot;</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+<refname>arping</refname>
+<refpurpose>send ARP REQUEST to a neighbour host</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>arping</command>
+<arg choice="opt"><option>-AbDfhqUV</option></arg>
+<arg choice="opt">-c <replaceable/count/</arg>
+<arg choice="opt">-w <replaceable/deadline/</arg>
+<arg choice="opt">-s <replaceable/source/</arg>
+<arg choice="req">-I <replaceable/interface/</arg>
+<arg choice="req"><replaceable/destination/</arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1><title>DESCRIPTION</title>
+<para>
+Ping <replaceable/destination/ on device <replaceable/interface/ by ARP packets,
+using source address <replaceable/source/.
+</para>
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+
+<variablelist>
+
+ <varlistentry>
+  <term><option/-A/</term>
+  <listitem><para>
+The same as <option/-U/, but ARP REPLY packets used instead
+of ARP REQUEST.
+  </para></listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term><option>-b</option></term>
+  <listitem><para>
+Send only MAC level broadcasts. Normally <command/arping/ starts
+from sending broadcast, and switch to unicast after reply received.
+  </para></listitem>
+ </varlistentry>
+
+
+ <varlistentry>
+  <term><option><anchor id="arping.count">-c <replaceable/count/</option></term>
+  <listitem><para>
+Stop after sending <replaceable/count/ ARP REQUEST
+packets. With 
+<link linkend="arping.deadline"><replaceable/deadline/</link>
+option, <command/arping/ waits for
+<replaceable/count/ ARP REPLY packets, until the timeout expires.
+  </para></listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term><option/-D/</term>
+  <listitem><para>
+Duplicate address detection mode (DAD). See 
+<ulink url="ftp://ftp.isi.edu/in-notes/rfc2131.txt">RFC2131, 4.4.1</ulink>.
+Returns 0, if DAD succeeded i.e. no replies are received
+  </para></listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term><option>-f</option></term>
+  <listitem><para>
+Finish after the first reply confirming that target is alive.
+  </para></listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term><option><anchor id="opt.interface">-I <replaceable/interface/</option></term>
+  <listitem><para>
+Name of network device where to send ARP REQUEST packets. This option
+is required.
+  </para></listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term><option>-h</option></term>
+  <listitem><para>
+Print help page and exit.
+  </para></listitem>
+ </varlistentry>
+
+
+ <varlistentry>
+  <term><option/-q/</term>
+  <listitem><para>
+Quiet output. Nothing is displayed.
+  </para></listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term><option><anchor id="opt.source">-s <replaceable/source/</option></term>
+  <listitem><para>
+IP source address to use in ARP packets.
+If this option is absent, source address is:
+   <itemizedlist>
+    <listitem><para>
+In DAD mode (with option <option/-D/) set to 0.0.0.0.
+    </para></listitem>
+    <listitem><para>
+In Unsolicited ARP mode (with options <option/-U/ or <option/-A/)
+set to <replaceable/destination/.
+    </para></listitem>
+    <listitem><para>
+Otherwise, it is calculated from routing tables.
+    </para></listitem>
+   </itemizedlist>
+  </para></listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term><option/-U/</term>
+  <listitem><para>
+Unsolicited ARP mode to update neighbours' ARP caches.
+No replies are expected.
+  </para></listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term><option>-V</option></term>
+  <listitem><para>
+Print version of the program and exit.
+  </para></listitem>
+ </varlistentry>
+
+
+ <varlistentry>
+  <term><option><anchor id="arping.deadline">-w <replaceable/deadline/</option></term>
+  <listitem><para>
+Specify a timeout, in seconds, before
+<command/arping/
+exits regardless of how many
+packets have been sent or received. In this case
+<command/arping/
+does not stop after
+<link linkend="arping.count"><replaceable/count/</link>
+packet are sent, it waits either for
+<link linkend="arping.deadline"><replaceable/deadline/</link>
+expire or until
+<link linkend="arping.count"><replaceable/count/</link>
+probes are answered.
+  </para></listitem>
+ </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para>
+<link linkend="ping">
+<citerefentry><refentrytitle/ping/<manvolnum/8/</citerefentry></link>,
+<link linkend="clockdiff">
+<citerefentry><refentrytitle/clockdiff/<manvolnum/8/</citerefentry></link>,
+<link linkend="tracepath">
+<citerefentry><refentrytitle/tracepath/<manvolnum/8/</citerefentry></link>.
+</para>
+</refsect1>
+
+<refsect1><title>AUTHOR</title>
+<para>
+<command/arping/ was written by
+<ulink url="mailto:kuznet@ms2.inr.ac.ru">Alexey Kuznetsov
+&lt;kuznet@ms2.inr.ac.ru&gt;</ulink>.
+It is now maintained by
+<ulink url="mailto:yoshfuji@skbuff.net">YOSHIFUJI Hideaki
+&lt;yoshfuji@skbuff.net&gt;</ulink>.
+</para>
+</refsect1>
+
+<refsect1><title>SECURITY</title>
+<para>
+<command/arping/ requires <constant/CAP_NET_RAWIO/ capability
+to be executed. It is not recommended to be used as set-uid root,
+because it allows user to modify ARP caches of neighbour hosts.
+</para>
+</refsect1>
+
+<refsect1><title>AVAILABILITY</title>
+<para>
+<command/arping/ is part of <filename/iputils/ package
+and the latest versions are  available in source form at
+<ulink url="http://www.skbuff.net/iputils/iputils-current.tar.bz2">
+http://www.skbuff.net/iputils/iputils-current.tar.bz2</ulink>.
+</para>
+</refsect1>
+
+<![IGNORE[
+<refsect1><title>COPYING</title>
+<para>
+<literallayout>
+This documentation is free software; you can redistribute
+it and/or modify it under the terms of the GNU General Public
+License Version 2.
+
+This program is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU General Public License for more details.
+ 
+For more details see the file COPYING in the source
+distribution of Linux kernel of version 2.4.
+</literallayout>
+</para>
+</refsect1>
+]]>
+
+
+
+</refentry>

@@ -1,0 +1,67 @@
+'\" t
+.\"     Title: afpldaptest
+.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
+.\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
+.\"      Date: 22 Mar 2012
+.\"    Manual: @NETATALK_VERSION@
+.\"    Source: @NETATALK_VERSION@
+.\"  Language: English
+.\"
+.TH "AFPLDAPTEST" "1" "22 Mar 2012" "@NETATALK_VERSION@" "@NETATALK_VERSION@"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+afpldaptest \- Syntactically check ldap parameters in afp\&.conf
+.SH "SYNOPSIS"
+.HP \w'\fBafpldaptest\fR\fB\fR\fBafpldaptest\fR\fB\fR\ 'u
+\fBafpldaptest\fR\fB\fR {\-u\ \fIUSER\fR | \-g\ \fIGROUP\fR | \-i\ \fIUUID\fR}
+.br
+\fBafpldaptest\fR\fB\fR {\-h | \-? | \-:}
+.SH "DESCRIPTION"
+.PP
+\fBafpldaptest\fR
+is a simple command to syntactically check ldap parameters in @pkgconfdir@/afp\&.conf\&.
+.SH "OPTIONS"
+.PP
+\fB\-u\fR \fIUSER\fR
+.RS 4
+Show uuid for
+\fIUSER\fR\&.
+.RE
+.PP
+\fB\-g\fR \fIGROUP\fR
+.RS 4
+Show uuid for
+\fIGROUP\fR\&.
+.RE
+.PP
+\fB\-i\fR \fIUUID\fR
+.RS 4
+Show user, group or local\-uuid for
+\fIUUID\fR\&.
+.RE
+.PP
+\fB\-h, \-?, \-:\fR
+.RS 4
+Show the help and exit\&.
+.RE
+.SH "SEE ALSO"
+.PP
+\fBafp.conf\fR(5)

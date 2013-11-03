@@ -386,6 +386,10 @@
    don't. */
 #undef HAVE_DECL_SYNC_BLOCKDEV
 
+/* Define to 1 if you have the declaration of `sync_inodes_sb', and to 0 if
+   you don't. */
+#undef HAVE_DECL_SYNC_INODES_SB
+
 /* Define to 1 if you have the declaration of `tag_pages_for_writeback', and
    to 0 if you don't. */
 #undef HAVE_DECL_TAG_PAGES_FOR_WRITEBACK

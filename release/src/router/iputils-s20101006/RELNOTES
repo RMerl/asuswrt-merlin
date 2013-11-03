@@ -1,0 +1,413 @@
+[s20101006]
+
+Chris Caputo (1):
+      ping,ping6: avoid gethostbyaddr during ping flood.
+
+Paul Martin (1):
+      arping: Set correct broadcast address.
+
+YOSHIFUJI Hideaki (4):
+      tracepath: Fix some small typos in tracepath.sgml.
+      ping: Fix resource consumption triggered by specially crafted ICMP Echo Reply (CVE-2010-2529)
+      Makefile: migrate main machine from beatrice to takos.
+      Makefile: Use newer git subcommand style instead of git-subcommand.
+
+
+[s20100418]
+
+YOSHIFUJI Hideaki (28):
+      Merge branch 'timestamp'
+      Merge branch 'miscommit-20100210'
+      ping6: Use IPV6_TCLASS to set outgoing traffic class if available.
+      ping: Make build_echo(), gather_statistics() more generic.
+      ping6: Experimental support for Node Information Queries (RFC4620).
+      ping: simplify usage hint.
+      ping: Rename constant names
+      Extend -N option for NI Query options.
+      ping6: Make length-check qtype-specific.
+      ping6: Remove too many spaces between names.
+      ping6: ping6_niquery.h needs asm/byteorder.h.
+      ping6: Support Qtypes for IPv6/IPv4 Addresses.
+      ping6: Split pr_niquery_reply().
+      ping6: Handle ICMPv6 code in NI Reply.
+      ping6: Add subject-ipv6 and subject-ipv4 NI sub-option for subject address.
+      ping6: Support subject name.
+      ping6: Free old memory when reassign pointers.
+      ping6: Always enable IPv6 Node Information Queries.
+      makefile: Do not always link libresolv and libcrypto.
+      ping,traceroute6,clockdiff: Enlarge hostname buffer.
+      ping6: do not allow too large packet size by -s option.
+      ping: needless space when printing usage.
+      rdisc: Fix typo in error message.
+      rdisc: Allow multiple addresses on one interface.
+      arping: Support link-layer type with larger link-layer address.
+      tracepath6: resolve target even if -n option is supplied.
+      tracepath,tracepath6: sync tracepath and tracepath6.
+      tracepath6: Make it more protocol independent.
+
+
+[s20100214]
+
+Jamal Hadi Salim (2):
+      ping: ping by mark
+      ping: ping by mark doc update
+
+Jamie Le Tual (1):
+      ping: set un.echo.id to network byte order
+
+YOSHIFUJI Hideaki (11):
+      [PING6,TRACEROUTE6]: Ignore error in setting IPV6_CHECKSUM socket option for ICMPv6 socket.
+      [PING6]: Use if_nametoindex() to convert ifname to ifindex.
+      [PING6]: Allow to specify source address with interface in a single -I option.
+      ping6: Try using IPV6_PKTINFO sticky option to specify outgoing interface.
+      rdisc: Use FOPEN_MAX if OPEN_MAX is undefined.
+      ping6: Fix source routing with source interface set.
+      ping,ping6: Don't print extra ', ' in finish().
+      tracepath: Fix documentation typo.
+      Use sysconf(_SC_OPEN_MAX) instead of OPEN_MAX.
+      ping,ping6: Add -D option to print timestamp.
+      Merge branch 'timestamp'
+
+
+[s20071127]
+
+John Heffner (6):
+      [iputils] tracepath: Add length flag to set initial MTU.
+      [iputils] tracepath: Add documentation for the -l flag.
+      [iputils] tracepath: Use PMTUDISC_PROBE mode if it exists.
+      [iputils] tracepath: Document -n flag.
+      [iputils] tracepath: Fix asymm messages.
+      [iputils] tracepath: Re-probe at same TTL after MTU reduction.
+
+YOSHIFUJI Hideaki (8):
+      [DOC]: Delete duplicated lines in RELNOTES.
+      Fix white space errors.
+      [CLOCKDIFF,PING,RDISC,TRACEROUTE6]: Support uClibc.
+      [RARPD]: Fixed several signedness issues for char strings.
+      [PING]: Use inet_pton() instead of sscan().
+      [PING6]: Use IN6_IS_ADDR_xxx() macro.
+      [MAKEFILE]: Change authorized host to push snapshots.
+      [MAKEFILE]: Use git-archive instead of git-tar-tree.
+
+
+[s20070202]
+
+Mike Frysinger (2):
+      Use socklen_t in all the right places.
+      [IPG]: handle pktgen setup in newer kernels.
+
+Mitsuru Chinen (2):
+      [CLOCKDIFF]: Fix compilation errors about labels at end of compound statements.
+      [PING6]: Use getaddrinfo() for the name resolution of intermediate nodes.
+
+YOSHIFUJI Hideaki (9):
+      [MAKEFILE] Remove unused -I../include
+      [TRACEPATH] Print usage if we met incorrect option.
+      [PING6]: Fix compilation error with glibc-2.4 and later.
+      [PING6]: Use getaddrinfo() to allow scoped addresses
+      Merge branch 'miscommit-20060927'
+      [PING6]: Ensure not to reverse-lookup if target is numeric address.
+
+
+[s20060512]
+
+YOSHIFUJI Hideaki:
+      [BUILD] Build with standard headers.
+      [ARPING,PING6] Build fix for some old systems.
+
+
+[s20060425]
+
+YOSHIFUJI Hideaki:
+      [TRACEROUTE6] Fix ICMPv6 type printing with -v option
+      [TRACEROUTE6] Mark ICMPv6 messages as known
+      [DOC] Maintainer / Contact change
+      [PING6,TRACEPATH6,TRACEROUTE6] Define SOL_IPV6,SOL_ICMPV6 where needed
+      [TRACEROUTE6] Fix source/destination address with -v option
+      [PING6,TRACEPATH6,TRACEROUTE6] Use new RFC3542 advanced API if available
+      [RDISC] Use proper type for is_directly_connected()
+      [PING,PING6] Use proper type for printf()
+      [TRACEROUTE6] Fix inet_pton() error handling
+      [TRACEROUTE6] Use minimum format if 0 is specified for datalen
+      [TRACEROUTE6] Optimize datalen sanity checking code
+      [TRACEPATH6] Use getaddrinfo() to allow scoped addresses
+      [RDISC] Use strerror(errno) instead of sys_errlist[errno]
+      [PING,PING6] Avoid using __constant_htons() if it is really needed
+      [TRACEPATH6] Fix format for subseconds
+      [ARPING,CLOCKDIFF,PING,PING6,TRACEROUTE6] Check return value from setuid().
+      [PING,PING6] ensure to initialize msg.
+      [MAKEFILE] Make snapshot using git
+
+
+[020927]
+* arping.sgml, some options were forgotten.
+* send seqno in network byte order. Me.
+* Mads Martin Jørgensen <mmj@suse.de> Recursive citation:
+"On request of Mads Martin Jørgensen <mmj@suse.de> I've added manpages
+pregenerated from the Docbook sources. One could argue it is redundant
+when the Docbook sources are also there, but the argument of not having
+to install Docbook on a very small system to get the man pages was
+convinving enough to me. To quote Mads Martin: "How would a system
+be without a man page for ping?" 
+  As a chilidish revenge from my side enjoy with cyrillic date in these
+  man pages. :-)
+* Ken Cox <jkc@redhat.com>. Bogus definition of SOCK_DRGAM&SOCK_STREAM on mips.
+* Error returned from recvmsg() resulted in a bogus printout in traceroute6. Me.
+* Use IPV6_CHECKSUM on icmp socket in traceroute6. Me.
+* Noah L. Meyerhans <frodo@morgul.net> Fix to doc.
+!* Noah L. Meyerhans <frodo@morgul.net> What is the problem with "long" triptime?
+!  Reporter does not respond. _Malignantly_.
+* Thomas 'Dent' Mirlacher <dent@cosy.sbg.ac.at> Ping did not exit sometimes!
+* Add option -W to override default 10 second linger timeout. Me.
+* Mads Martin Jørgensen <mmj@suse.de>: ping should not bind to autoselected
+  source address, it used to work when routing changes. Return classic
+  behaviour, option -B is added to enforce binding.
+* Pekka Savola <pekkas@netcore.fi> Forgotten \n messing output of ping6.
+* Noah L. Meyerhans <frodo@morgul.net> traceroute6 -q 1 did not work.
+* Pekka Savola <pekkas@netcore.fi> various sizeof() cleanups in traceroute6.c
+* "Dmitry V. Levin" <ldv@alt-linux.org> wrote:
+  > ping (as well as other utilities) may open raw socket with descriptor <=2;
+  > In case of suid-root, it can be used by malicious user to send data to
+  > this raw socket.
+  > 
+  > Yes, modern glibc and some kernels have workaround for it, but
+  > IMHO iputils shouldn't rely on this feature.
+  Taken into account, but no changes made.
+* "Tilman Heinrich" <tilHeinrich@web.de> said some scripts are broken
+  when word "packet" disappeared from "100% packet loss". Despite of
+  the inarguable fact that such scripts are truly mad and deserve breaking
+  (sigh... exit codes are too smart concept for script writers, I guess),
+  I have to recognize removing this word carrying zero information
+  was not enough motivated. Returned.
+* ping used to retry forever when seeing ENOBUFS/ENOMEM without explicitly
+  given deadline. Being logically correct it is bad in practice f.e. when
+  pinging buggy device which locked up with some packets in queue.
+  So, retry for a finite time... let is be lingertime. Fair? Me.
+* Two "messages" are sent to rpm maintainers to make their wrong patches
+  failed.
+* Fix from RH iputils-20001007-deadline.patch. It was lost in the latest
+  rpms btw.
+* Dax Kelson <dax@gurulabs.com>: added _unsupported_ option to comppile
+  rdisc_srv.
+
+[020124]
+* Michal Kochanowicz <michal@michal.waw.pl> typos in tracepath.8
+* Michael Wardle <michael.wardle@adacel.com>: undo silly change of ss000305
+  (printing rtt in some funny units). Michael noticed that "sec" is not
+  standard abbreviation for time units (bullshit, of course), but real concern
+  is that it is more difficult to interpret with a neglibible improvement
+  to appearance. So, do this as expected: in "ms".
+* Documentation. Wow! I did it. man pages are disassembled to docbook,
+  audited wrt real state, edited... and promised to be maintained
+  in sync with the state of utilities.
+
+[011202]
+* Utz Bacher <utz.bacher@de.ibm.com> Bitops in ping6 were wrong
+  on bigendian machines. Wow, luckily I forgot to acknowledge that patch
+  of 010805 which has gotten rid of kernel bitops and did this so wrongly.
+* Michael Bakunin <bakunin@maphiasoft.org> (:-))
+  found mud in tftpd.c, it will crash when directory supplied in argument
+  is longer ~512 symbols.
+* Alexandr D. Kanevskiy <kad@blackcatlinux.com>: buffer overflow
+  in clockdiff. Very stupid one, the overflowed buffer even was not used. :-)
+* Alexandr D. Kanevskiy <kad@blackcatlinux.com>: shit! Code recognizing
+  kernels with broken IP_RECVERR for raw sockets depended on race
+  and accused even good kernel of being buggy. :-)
+
+[011002]
+* Stepan Koltsov <yozh@mx1.ru>, tracepath/tracepth6 segfaulted when
+  used without address.
+* Alexandr D. Kanevskiy <kad@blackcatlinux.com>: arping printed
+  "permission denied" instead of showing help page to non-superuser.
+
+[010824]
+* Alexandr D. Kanevskiy <kad@blackcatlinux.com>: ping compiled
+  for linux-2.4 forgot to send the second packet, when used with linux-2.2
+* Chris Evans <chris@scary.beasts.org>: buffer overflow in traceroute6.
+  datalen was messed: counting header in half of places.
+  Funny, looking into LBL traceroute, it is even worse :-)
+* Alexandr D. Kanevskiy <kad@blackcatlinux.com>: relayed patches
+  by Solar_Diz. Only missing description of option -q is accepted.
+* <ipatel@wilnetonline.net> ping6 printed wrong mtu.
+* Alexandr D. Kanevskiy <kad@blackcatlinux.com>: -Werror is removed.
+  Newer gcc are buggy and generates some wrong warnings about
+  uninitalized variables, which are evidently initialized.
+
+[010805]
+* Some news from Pekka Savola <pekkas@netcore.fi> around setting tos bits.
+* arping: broadcast-only mode by Ard van Breemen <ard@telegraafnet.nl>
+* ping6/traceroute6: parse ICMP errors with extension headers (me)
+  traceroute6 works with size > mtu now. Nice.
+* ping: Erik Quanstrom <quanstro@clark.net>. Serious patch.
+  ping interval timer was not very broken, but very unintelligible.
+  Though I remade the code to use leaky bucket logic, which
+  is the most transparent one. Anyway, contribution by Eric is
+  the most important one since the previous release.
+  Short theory of operation: option -i (interval) sets rate r=1/interval pps,
+  option -l (preload) sets burst size of l packets. So, ping sends
+  at most r*t+l packets for an arbitrary interval t.
+  Default values: l=1 and for non-flood case: r=1pps, for flood r=infinity.
+  Nice? Exact algorithm is:
+
+  Let N(t) be l/r=l*i initially and N(t) grow continuously with time as:
+
+	N(t+delta) = min{l*i, N(t) + delta}
+
+  Packet can be transmitted only at the time t_* when 1/r=i <= N(t_*)
+  and in this case N(t) jumps:
+
+	N(t_* + 0) = N(t_* - 0) - i.
+
+  When interval is zero, algo degenerates allowing to send any amount
+  of messages. In this case we modify it using l as limit on amount
+  of unanswered requests and waiting for 10msec, when something is not
+  answered. Note that the last thing (10msec) is just to be compatible with
+  BSD manual pages. BSD ping is simply not able to avoid delay technically,
+  we are able now.
+
+  In result we got some new facilities:
+  * "-f -l 100" becomes very aggressive, in fact on good link
+    it holds permanently 100 packets in flight, which is very different
+    of earlier bevaviour (one packet in flight).
+  * -f and -i are not incompatible more. In fact, "-f -i 1" is equivalent
+    to plain ping, only output is different (dotted). Essentially,
+    change of output format is the only effect. "ping -i 0" is flood
+    printing output in normal format.
+
+  Moved some parts of code to ping_common.c. Common part is not fully
+  trivial now. :-)
+
+* ping: Ian Lynagh <igloo@earth.li>, larger and dynamic dup detector.
+  Also, Ian submitted two large patches, one fixing formatting, another
+  doing something with signedness/longness. Not now...
+  Later note: found not working. x + 7 / 8 :-). Sorry... dubious, withdrawn.
+  size of table increased to maximal value instead (8K of memory,
+  not a big deal).
+* tftpd: an old misprint. left@sbor.spb.su (Igor A. Lefterov)
+* clockdiff: do not fail, if reversed resolution failed.
+  Tommy Lacroix <tommyl@zeroknowledge.com>
+* ping: audible ping by Patrik Schilt <patrik@bnc.ch>
+  Patrick's option renamed to -a to align to freebsd.
+* ping: react to device queue overflows using IP_RECVERR. me.
+* ping: option -S allows to change sndbuf 
+* rarpd is moved from separate package here (people asked)
+* ping6: kernel style bitops are not used more.
+* Option -A to adapt to network rtt.
+* Use BPF, when multiple pings are detected.
+
+[001110]
+* ping is able to select TOS. By Pekka Savola <pekkas@netcore.fi>
+* tracepath* DNS names. By Pawel Krawczyk <kravietz@ceti.com.pl> and
+  Arkadiusz Miskiewicz <misiek@pld.org.pl>
+* ping6 is expected to be compiled with linux-2.2.
+
+[001011]
+* RH bugid#16677: segfault, when ping is used by root and size
+  is large enough. Fix is to allow oversize by root (it is necessary
+  to check kernel side), but clamp it at some safe value.
+
+[001010]
+* More bug fixes from Chris Evans <chris@ferret.lmh.ox.ac.uk>
+  - do not trust h_length returned by system resolver.
+    This value is meaningless in any case.
+  - ping: buffer overflow in fill()!!! Disgraceful bug.
+
+* ping: allow not-priviledged users to use broadcasts. It was paranoia.
+  Multicasts were allowed. 8)
+* ping: but force broadcasts&multicasts not to fragment. BSD does
+  not allow to do this to anyone, we still allow this for superuser.
+* Option -M to control path mtu discovery.
+
+[001007]
+* By Pekka Savola <pekkas@netcore.fi>
+  - SIOCGSTAMP/SO_TIMESTAMP are sensitive to bug in kernel.
+    When get_fast_time != gettimeofday (f.e. timestampless x86),
+    returned stamp can be out of sync with gettimeofday.
+    Workaround is not to use SIOCGSTAMP/SO_TIMESTAMP on such systems.
+  - fixes in man pages
+  - compiles under rh-7.0
+* Chris Evans <chris@ferret.lmh.ox.ac.uk>
+  - ping: possible buffer overflow in pr_addr().
+
+[000928]
+* Sorry. I have lost all the CVS with changes made since 000418.
+  If someone sent me a patch after this date, please, resubmit.
+  Restored from the last backup and mailboxes:
+
+* ping*, SO_TIMESTAMP support.
+* ping*, allow zero data length (reported by Damjan Lango <damjan.lango@hermes.si>)
+* iputils man and help updates. Pekka Savola <Pekka.Savola@netcore.fi>
+* ping.8, fix to ping man page. By Dadid Eisner <cradle@glue.umd.edu>
+* ping prints addresses in numeric, if destination is numeric.
+  Proposed by Tim Waugh <twaugh@meme.surrey.redhat.com>
+
+New:
+* ping: strncpy bug <typo@inferno.tusculum.edu>
+* arping: improvements by Charles Howes <croot@micro-logistics.com>
+	- a feature to arping: quit as soon as a reply is received.
+	- default to eth0.
+	- spelling
+
+[000418]
+* llsqrt() was buggy again!
+       (noticed by Sam Farin <sfarin@ratol.fi>)
+
+[000404]
+* tracepath*, "NURDUnet-gw" bug workaround.
+	(noticed by Vitaly E.Lavrov <lve@aanet.ru>)
+* tracepath*, handle case of routers initializing rtt to 128.
+	Vitaly E.Lavrov <lve@aanet.ru>
+* shadowed icmp_sock in ping6. James Morris <jmorris@@intercode.com.au>
+* Bug in ping -f, introduced with SO_RCVTIMEO. me.
+* llsqrt() (ping, ping6) was wrong yet. me.
+
+[000310]
+* Print mean deviation of RTT in ping/ping6.
+* Use SIOCGSTAMP in ping/ping6. Old behaviour calculating
+  true user-to-user latency is restored with option -U.
+  Reason for this stupid change is mainly political; people
+  wonder why freebsd has twice less latency on loopback.
+  If to follow along this line, we have to print rtt equal to 0. 8)
+  [ LATER NOTE: actually, the change is _right_ without any doubts.
+    Ping has another bug: nameresolver is blocking, so that
+    when it dies not respond, ping shows evenly increasing by 1 sec
+    RTT. It is very confusing (look through linux-kernel maillists
+    to count number of people, who were cheated by misconfigured dns). ]
+* Use SO_RCVTIMEO instead of poll() with ping/ping6 -f.
+* Added -V option to arping/ping/ping6/traceroute6/rdisc
+  to print snapshot number.
+
+[000305]
+* rdisc: ugly bug in getting interface list. me.
+* ping/ping6: ping -i N, N>=3 did not work. Jeff Jonson <jbj@redhat.com>
+* ping/ping6: microsecond rtt measurements. me.
+
+[000120]
+* ping/ping6: non-zero exit code even without -w.
+
+[991024]
+* Option "-i" to ping/ping6 takes fractional time now, so that
+  "ping -i 0.3 xxx" pings each 300 msec. The idea is by
+  Marc Boucher <marc@mbsi.ca>
+* alpha/glibc-2.1 alignment problems in ping are fixed (struct timeval
+  was wrongly aligned).
+
+[990915]
+* ping/ping6 worked only with kernels 2.3.15+ in 990824.
+
+[990824]
+* tftpd is added. It uses MSG_CONFIRM to confirm arp entries.
+* ping6: workaround for bug in some egcs versions.
+
+[990610]
+* ping: output buffer was too small for full sized ping.
+* ping: silly restriction on ping size is removed.
+
+[990530]
+* short man pages (Oleg M. Shumsky <oms@cp.tomsk.su>)
+* ping6: get and print hop limit of reply packets (ME)
+* rdisc deletes routes before exit with -TERM
+* ping/ping6: option -w TIMEOUT 
+* arping: exit with error, if received no replies in normal
+  (not DAD and not unsilicited ARP) mode.
+

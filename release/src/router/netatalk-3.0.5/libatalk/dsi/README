@@ -1,0 +1,45 @@
+SIGNALS AND WRITES TO CLIENT:
+because AFP/TCP uses a streaming protocol, we need to make sure that
+writes to the client are atomic. notably, signal handlers which write
+data can't interrupt data currently being written. in addition, some
+functions get called from the signal handlers or can write partial
+packets. we need to SIG_BLOCK/SIG_SETMASK those functions instead of
+SIG_BLOCK/SIG_UNBLOCK'ing them. furthermore, certain functions which
+write to the client can get called at any time. to avoid corruption,
+we need to make sure that these functions DO NOT touch any common-use
+buffers.
+
+signals that send data to the client and should block other signals
+(afp_dsi.c):
+	SIGALRM (tickle handler)
+	SIGHUP (attention) 
+	SIGTERM (attention)
+
+functions which need SIG_BLOCK/SIG_SETMASK: dsi_send, dsi_attention
+functions which can use SIG_BLOCK/SIG_UNBLOCK: dsi_read
+
+functions which need their own buffers: dsi_attention, dsi_tickle 
+
+
+PERFORMANCE TWEAKING:
+sending complete packets or the header and a partial packet to the
+client should always be handled by proto_send. for dsi_tcp.c,
+proto_send will coalesce the header and data by using writev.
+in addition, appleshare sessions often involve
+the sending and receiving of many small packets. as a consequence, i
+use TCP_NODELAY to speed up the turnaround time.
+
+because dsi_read can send incomplete packets, proto_send should not
+use the length parameter to specify the dsi_len field in the
+header. instead, anything that uses proto_send needs to specify
+dsi_len (in network byte order) before calling proto_send. the
+dsi_send() macro already does this. 
+
+functions that need to specify .dsi_len: dsi_readinit, dsi_cmdreply
+
+mmap doesn't actually help things that much, so i don't use it.
+
+to reduce the amount of tickles generated on a slow link, i actually
+turn off SIGALRM for the duration of a "known" large file transfer
+(i.e., dsi_read/write).
+

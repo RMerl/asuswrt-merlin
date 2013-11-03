@@ -1,0 +1,4 @@
+avahi-ui/bssh.desktop.in
+avahi-ui/bvnc.desktop.in
+tests/c-plus-plus-test-gen.py
+avahi-python/avahi-discover/avahi-discover.desktop.in

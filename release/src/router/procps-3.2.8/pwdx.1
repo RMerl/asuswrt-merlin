@@ -1,0 +1,37 @@
+'\" t
+.\" (The preceding line is a note to broken versions of man to tell
+.\" them to pre-process this man page with tbl)
+.\" Man page for pwdx
+.\" Licensed under version 2 of the GNU General Public License.
+.\" Copyright 2004 Nicholas Miell.
+.\" Based on the pmap(1) man page by Albert Cahalan.
+.\"
+.TH PWDX 1 "September 8, 2004" "Linux" "Linux User's Manual"
+.SH NAME
+pwdx \- report current working directory of a process
+
+.SH SYNOPSIS
+.nf
+pwdx pids...
+pwdx -V
+.fi
+
+.SH DESCRIPTION
+The pwdx command reports the current working directory of a process or
+processes.
+
+.SH "GENERAL OPTIONS"
+.TS
+l l l.
+-V	show version	Displays version of program.
+.TE
+
+.SH "SEE ALSO"
+ps(1) pgrep(1)
+
+.SH STANDARDS
+No standards apply, but pwdx looks an awful lot like a SunOS command.
+
+.SH AUTHOR
+Nicholas Miell <nmiell@gmail.com> wrote pwdx in 2004. Please send bug
+reports to <procps-feedback@lists.sf.net>.

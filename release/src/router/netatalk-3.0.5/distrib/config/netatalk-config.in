@@ -1,0 +1,233 @@
+#!/bin/sh
+# netatalk-config
+
+af_libs=
+af_cflags=
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+
+
+##
+## Define usage()
+##
+usage()
+{
+        cat <<EOF
+Usage: $0 [OPTIONS] [LIBRARIES]
+Options:
+  --cflags      print pre-processor and compiler flags
+  --libs        print library linking information
+  --libs-dirs   only print the -L/-R part of --libs
+  --libs-names  only print the -l part of --libs
+  --help        display this help and exit
+  --macros      print the path to m4 macros
+
+  --prefix[=DIR] 
+  --exec_prefix[=DIR] 
+  --version     output netatalk version information
+Libraries:
+         netatalk
+EOF
+        exit $1
+}
+
+##
+## Process options
+##
+parse()
+{
+# we must be called with at least one argument
+if test $# -eq 0; then
+        usage 1 1>&2
+fi
+
+# at least one option should be selected
+case "$1" in
+  --*)
+     ;;
+  *)
+     usage 1 1>&2
+     ;;
+esac
+
+# grab all -- arguments
+while test $# -gt 0; do
+  case "$1" in
+  -*=*) af_optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*=//'` ;;
+  *) af_optarg= ;;
+  esac
+
+  case $1 in
+    --help)
+      usage 0 0>&2
+      ;;
+    --cflags)
+      af_echo_cflags=yes
+      ;;
+    --libs)
+      af_echo_libs_L=yes
+      af_echo_libs_l=yes
+      ;;
+    --libs-dirs)
+      af_echo_libs_L=yes
+      ;;
+    --libs-names)
+      af_echo_libs_l=yes
+      ;;
+    --macros*)
+
+echo -I @prefix@/include/netatalk/macros
+exit
+
+      ;;
+    --prefix=*)
+      prefix=$af_optarg
+      af_prefix_set=yes
+      ;;
+    --prefix)
+      af_echo_prefix=yes
+      ;;
+    --exec_prefix=*)
+      exec_prefix=$af_optarg
+      af_exec_prefix_set=yes
+      ;;
+    --exec_prefix)
+      af_echo_exec_prefix=yes
+      ;;
+    --version)
+      af_echo_version=yes
+      ;;
+    --*)
+      usage 1 1>&2
+      ;;
+    *)
+      break
+      ;;
+  esac
+  shift
+done
+
+# if we have a default library use it
+if test $# -eq 0; then
+if test "X$af_lib_default" != "X"; then
+  af_lib__AF_LIB_DEFAULT=yes
+  return
+fi
+fi
+
+while test $# -gt 0; do
+  case $1 in
+    netatalk)
+      af_lib_netatalk=yes
+      ;;
+    *)
+      usage 1 1>&2
+      ;;
+  esac
+  shift
+done
+}
+
+print_result()
+{
+if test "X$af_echo_cflags" = "Xyes"; then
+    af_all_flags="$af_cflags"
+fi
+
+if test "X$af_echo_libs_L" = "Xyes" || test "X$af_echo_libs_l" = "Xyes"; then
+    af_all_flags="$af_all_flags $af_libs"
+fi
+
+if test -z "$af_all_flags" || test "X$af_all_flags" = "X "; then
+    exit 1
+fi
+
+# Straight out any possible duplicates, but be careful to
+# get `-lfoo -lbar -lbaz' for `-lfoo -lbaz -lbar -lbaz'
+af_other_flags=
+af_lib_L_flags=
+af_rev_libs=
+for i in $af_all_flags; do
+    case "$i" in
+    # a library, save it for later, in reverse order
+    -l*) af_rev_libs="$i $af_rev_libs" ;;
+    -L*|-R*)
+        if test "X$af_echo_libs_L" = "Xyes"; then
+            case " $af_lib_L_flags " in
+            *\ $i\ *) ;;                              # already there
+            *) af_lib_L_flags="$af_lib_L_flags $i" ;; # add it to output
+            esac 
+        fi;;
+    *)
+        case " $af_other_flags " in
+        *\ $i\ *) ;;                                  # already there
+        *) af_other_flags="$af_other_flags $i" ;;     # add it to output
+        esac ;;
+    esac
+done
+
+af_ord_libs=
+if test "X$af_echo_libs_l" = "Xyes"; then
+    for i in $af_rev_libs; do
+        case " $af_ord_libs " in
+        *\ $i\ *) ;;                          # already there
+        *) af_ord_libs="$i $af_ord_libs" ;;   # add it to output in reverse order
+        esac
+    done
+fi
+
+echo $af_other_flags $af_lib_L_flags $af_ord_libs
+}
+
+##
+## Main Body
+##
+
+parse $*
+
+
+##
+## Initialize names
+##
+
+
+
+
+
+if test "X$af_echo_prefix" = "Xyes"; then
+        echo $prefix
+fi
+
+if test "X$af_echo_exec_prefix" = "Xyes"; then
+        echo $exec_prefix
+fi
+
+if test "X$af_echo_version" = "Xyes"; then
+        echo @NETATALK_VERSION@
+        exit 0
+fi
+
+
+##
+## Libraries
+##
+
+#dummy because this should always be selected
+
+
+if test "@includedir@" != /usr/include ; then
+  includes="-I@includedir@"
+fi
+if test "@libdir@" != /usr/lib ; then
+  libs="-L@libdir@"
+fi
+af_cflags="$af_cflags $includes"
+af_libs="$libs -latalk"
+
+
+
+
+print_result
+
+exit 0
+

@@ -55,12 +55,23 @@ fi
 
 set -o pipefail
 nvram set ${usb_path}_fs_path${i}_error=2
-if [ "$1" == "ntfs" ] || [ "$1" == "ufsd" ]; then
+if [ "$1" == "ntfs" ]; then
 	c=0
 	RET=1
 	while [ ${c} -lt 4 -a ${RET} -ne 0 ] ; do
 		c=$((${c} + 1))
 		eval chkntfs -a -f --verbose $2 $log_option
+		RET=$?
+		if [ ${RET} -ge 251 -a ${RET} -le 254 ] ; then
+			break;
+		fi
+	done
+elif [ "$1" == "hfs" ] || [ "$1" == "hfs+" ] || [ "$1" == "hfsj" ]; then
+	c=0
+	RET=1
+	while [ ${c} -lt 4 -a ${RET} -ne 0 ] ; do
+		c=$((${c} + 1))
+		eval chkhfs -a -f --verbose $2 $log_option
 		RET=$?
 		if [ ${RET} -ge 251 -a ${RET} -le 254 ] ; then
 			break;

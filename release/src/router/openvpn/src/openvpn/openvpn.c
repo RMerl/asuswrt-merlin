@@ -39,6 +39,12 @@
 
 #include "forward-inline.h"
 
+#define TYPEDEF_BOOL	//will skip in typedefs.h
+#include <unistd.h>
+#include <bcmnvram.h>
+#include "shared.h"
+extern void update_nvram_state(int st);
+
 #define P2P_CHECK_SIG() EVENT_LOOP_CHECK_SIGNAL (c, process_signal_p2p, c);
 
 static bool
@@ -324,3 +330,27 @@ main (int argc, char *argv[]) {
 	return openvpn_main(argc, argv);
 }
 #endif
+
+void update_nvram_state(int st)
+{
+	int pid = getpid();
+	char buf[64] = {0};
+	char *p;
+	int num = 0;
+
+	psname(pid, buf, 64);	//vpnserverX or vpnclientX
+	if(p = strstr(buf, "server")) {
+		num = atoi(p+6);
+		if(num) {
+			sprintf(buf, "vpn_server%d_state", num);
+			nvram_set_int(buf, st);
+		}
+	}
+	else if(p = strstr(buf, "client")) {
+		num = atoi(p+6);
+		if(num) {
+			sprintf(buf, "vpn_client%d_state", num);
+			nvram_set_int(buf, st);
+		}
+	}
+}

@@ -4,10 +4,16 @@ OBJS = push_log.o
 PROGS = libpush_log.so push_log
 
 CFLAGS += -fPIC $(EXTRACFLAGS) -Wall
-CFLAGS += -I. -I$(LINUXDIR)/include -I$(TOP)/shared
+CFLAGS += -I. -I$(LINUXDIR)/include -I$(TOP)/shared -I$(SRCBASE)/include -I$(TOP)/wb/ws_src
 
 LDFLAGS = -L. -lpush_log
-LDFLAGS += -L$(TOP)/nvram$(BCMEX) -lnvram -L$(TOP)/shared -lshared
+LDFLAGS += -L$(TOP)/nvram$(BCMEX) -lnvram
+LDFLAGS += -L$(TOP)/shared -lshared
+LDFLAGS += -L$(TOP)/openssl -lcrypto -lssl
+LDFLAGS += -L$(TOP)/curl-7.21.7/lib/.libs -lcurl
+LDFLAGS += -L$(TOP)/libxml2/.libs -lxml2 -lpthread
+LDFLAGS += -L$(TOP)/wb -lws
+LDFLAGS += -ldl
 ifeq ($(RTCONFIG_BCMARM),y)
 LDFLAGS += -lgcc_s
 endif

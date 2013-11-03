@@ -1,0 +1,161 @@
+<refentry id="clockdiff">
+
+<refmeta>
+<refentrytitle>clockdiff</refentrytitle>
+<manvolnum>8</manvolnum>
+<refmiscinfo>iputils-&snapshot;</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>clockdiff</refname>
+<refpurpose>measure clock difference between hosts</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>clockdiff</command>
+<arg choice="opt"><option>-o</option></arg>
+<arg choice="opt"><option>-o1</option></arg>
+<arg choice="req"><replaceable/destination/</arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1><title>DESCRIPTION</title>
+<para>
+<command/clockdiff/ Measures clock difference between us and
+<replaceable/destination/ with 1 msec resolution using ICMP TIMESTAMP
+<link linkend="clockdiff.icmp-timestamp">[2]</link>
+packets or, optionally, IP TIMESTAMP option
+<link linkend="clockdiff.ip-timestamp">[3]</link>
+option added to ICMP ECHO.
+<link linkend="clockdiff.icmp-echo">[1]</link>
+</para>
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+
+<variablelist>
+
+ <varlistentry>
+  <term><option/-o/</term>
+  <listitem><para>
+Use IP TIMESTAMP with ICMP ECHO instead of ICMP TIMESTAMP
+messages. It is useful with some destinations, which do not support
+ICMP TIMESTAMP (f.e. Solaris &lt;2.4).
+  </para></listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term><option/-o1/</term>
+  <listitem><para>
+Slightly different form of <option/-o/, namely it uses three-term
+IP TIMESTAMP with prespecified hop addresses instead of four term one.
+What flavor works better depends on target host. Particularly,
+<option/-o/ is better for Linux.
+  </para></listitem>
+ </varlistentry>
+
+</variablelist>
+
+</refsect1>
+
+<refsect1><title>WARNINGS</title>
+<itemizedlist>
+ <listitem><para>
+Some nodes (Cisco) use non-standard timestamps, which is allowed
+by RFC, but makes timestamps mostly useless.
+ </para></listitem>
+ <listitem><para>
+Some nodes generate messed timestamps (Solaris&gt;2.4), when
+run <command/xntpd/. Seems, its IP stack uses a corrupted clock source,
+which is synchronized to time-of-day clock periodically and jumps
+randomly making timestamps mostly useless. Good news is that you can
+use NTP in this case, which is even better.
+ </para></listitem>
+ <listitem><para>
+<command/clockdiff/ shows difference in time modulo 24 days.
+ </para></listitem>
+</itemizedlist>
+
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para>
+<link linkend="ping">
+<citerefentry><refentrytitle/ping/<manvolnum/8/</citerefentry></link>,
+<link linkend="arping">
+<citerefentry><refentrytitle/arping/<manvolnum/8/</citerefentry></link>,
+<link linkend="tracepath">
+<citerefentry><refentrytitle/tracepath/<manvolnum/8/</citerefentry></link>.
+</para>
+</refsect1>
+
+<refsect1><title>REFERENCES</title>
+<para>
+[1] <anchor id="clockdiff.icmp-echo">ICMP ECHO,
+<ulink url="ftp://ftp.isi.edu/in-notes/rfc792.txt">
+RFC0792, page 14</ulink>.
+</para>
+<para>
+[2] <anchor id="clockdiff.icmp-timestamp">ICMP TIMESTAMP,
+<ulink url="ftp://ftp.isi.edu/in-notes/rfc792.txt">
+RFC0792, page 16</ulink>.
+</para>
+<para>
+[3] <anchor id="clockdiff.ip-timestamp">IP TIMESTAMP option,
+<ulink url="ftp://ftp.isi.edu/in-notes/rfc791.txt">
+RFC0791, 3.1, page 16</ulink>.
+</para>
+</refsect1>
+
+<refsect1><title>AUTHOR</title>
+<para>
+<command/clockdiff/ was compiled by
+<ulink url="mailto:kuznet@ms2.inr.ac.ru">Alexey Kuznetsov
+&lt;kuznet@ms2.inr.ac.ru&gt;</ulink>. It was based on code borrowed
+from BSD <command/timed/ daemon.
+It is now maintained by
+<ulink url="mailto:yoshfuji@skbuff.net">YOSHIFUJI Hideaki
+&lt;yoshfuji@skbuff.net&gt;</ulink>.
+</para>
+</refsect1>
+
+<refsect1><title>SECURITY</title>
+<para>
+<command/clockdiff/ requires <constant/CAP_NET_RAWIO/ capability
+to be executed. It is safe to be used as set-uid root.
+</para>
+</refsect1>
+
+<refsect1><title>AVAILABILITY</title>
+<para>
+<command/clockdiff/ is part of <filename/iputils/ package
+and the latest versions are  available in source form at
+<ulink url="http://www.skbuff.net/iputils/iputils-current.tar.bz2">
+http://www.skbuff.net/iputils/iputils-current.tar.bz2</ulink>.
+</para>
+</refsect1>
+
+<![IGNORE[
+<refsect1><title>COPYING</title>
+<para>
+<literallayout>
+This documentation is free software; you can redistribute
+it and/or modify it under the terms of the GNU General Public
+License Version 2.
+
+This program is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU General Public License for more details.
+ 
+For more details see the file COPYING in the source
+distribution of Linux kernel of version 2.4.
+</literallayout>
+</para>
+</refsect1>
+]]>
+
+
+
+</refentry>

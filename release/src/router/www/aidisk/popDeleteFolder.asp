@@ -13,14 +13,15 @@
 <script type="text/javascript">
 var PoolDevice = pool_devices()[parent.getSelectedPoolOrder()];
 var selectedFolder = get_sharedfolder_in_pool(PoolDevice)[parent.getSelectedFolderOrder()];
+var DisplayFolderName = selectedFolder;
 var folderlist = get_sharedfolder_in_pool(PoolDevice);
 var delete_flag = 0;
 var $j = jQuery.noConflict();
 <% get_AiDisk_status(); %>
 
 function initial(){
-	selectedFolder = check_folder_length(selectedFolder);
-	showtext($("selected_Folder"), showhtmlspace(showhtmland(selectedFolder)));
+	DisplayFolderName = check_folder_length(selectedFolder);
+	showtext($("selected_Folder"), showhtmlspace(showhtmland(DisplayFolderName)));
 	document.deleteFolderForm.Cancel.focus();
 	get_layer_items_test(parent.document.aidiskForm.layer_order.value.substring(0,5));
 	clickevent();	

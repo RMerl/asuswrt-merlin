@@ -16,11 +16,12 @@ var PoolDevice = pool_devices()[parent.getSelectedPoolOrder()];
 var PoolName = pool_names()[parent.getSelectedPoolOrder()];
 var folderlist = get_sharedfolder_in_pool(PoolDevice);
 var selectedFolder = folderlist[parent.getSelectedFolderOrder()];
+var DisplayFolderName = selectedFolder;
 
 function initial(){
-	selectedFolder = check_folder_length(selectedFolder);
+	DisplayFolderName = check_folder_length(selectedFolder);
 	showtext($("selected_Pool"), PoolName);
-	showtext($("selected_Folder"), showhtmlspace(showhtmland(selectedFolder)));
+	showtext($("selected_Folder"), showhtmlspace(showhtmland(DisplayFolderName)));
 	document.modifyFolderForm.new_folder.focus();
 	clickevent();
 }

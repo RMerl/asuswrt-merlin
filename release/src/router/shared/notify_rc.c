@@ -72,6 +72,37 @@ int notify_rc_and_wait_2min(const char *event_name)
 	return notify_rc_internal(event_name, TRUE, 120);
 }
 
+/*
+ * int wait_rc_service(int wait)
+ * wait: seconds to wait and check
+ *
+ * @return:
+ * 0: no  right
+ * 1: get right
+ */
+int wait_rc_service(int wait)
+{
+	int i=wait;
+	int first_try = 1;
+	char p1[16];
+
+	psname(nvram_get_int("rc_service_pid"), p1, sizeof(p1));
+	while (!nvram_match("rc_service", "")) {
+		if(--i < 0)
+			return 0;
+		if(first_try){
+			logmessage_normal("rc_service", "waitting \"%s\" via %s ...", nvram_safe_get("rc_service"), p1);
+			first_try = 0;
+		}
+
+		_dprintf("%d: wait for previous script(%d/%d): %s %d %s.\n", getpid(), i, wait, nvram_safe_get("rc_service"), nvram_get_int("rc_service_pid"), p1);
+		sleep(1);
+
+	}
+	return 1;
+}
+
+
 /* @return:
  * 	0:	success
  *     -1:	invalid parameter
@@ -80,33 +111,18 @@ int notify_rc_and_wait_2min(const char *event_name)
 static int notify_rc_internal(const char *event_name, bool do_wait, int wait)
 {
 	int i;
-	char p1[16], p2[16];
+	char p2[16];
+	int got_right = 1;
 
 	if (!event_name || wait < 0)
 		return -1;
 
-	psname(nvram_get_int("rc_service_pid"), p1, sizeof(p1));
 	psname(getpid(), p2, sizeof(p2));
 	_dprintf("%s %d:notify_rc: %s\n", p2, getpid(), event_name);
-	logmessage("rc_service", "%s %d:notify_rc %s", p2, getpid(), event_name);
+	logmessage_normal("rc_service", "%s %d:notify_rc %s", p2, getpid(), event_name);
 
-	i=wait;
-	int first_try = 1, got_right = 1;
-	while ((!nvram_match("rc_service", "")) && (i-- > 0)) {
-		if(first_try){
-			logmessage("rc_service", "%s is waitting %s...", event_name, nvram_safe_get("rc_service"));
-			first_try = 0;
-		}
-
-		_dprintf("%d %s: wait for previous script(%d/%d): %s %d %s.\n", getpid(), p2, i, wait, nvram_safe_get("rc_service"), nvram_get_int("rc_service_pid"), p1);
-		sleep(1);
-
-		if(i <= 0)
-			got_right = 0;
-	}
-
-	if(!got_right){
-		logmessage("rc_service", "skip the event: %s.", event_name);
+	if (!wait_rc_service(wait)) {
+		logmessage_normal("rc_service", "skip the event: %s.", event_name);
 		_dprintf("rc_service: skip the event: %s.\n", event_name);
 		return 1;
 	}

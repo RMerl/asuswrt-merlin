@@ -161,7 +161,10 @@ function submitForm(){
 					return false;
 			}
 		}else
+		{
 			document.form.wl0_auth_mode_x.value = "open";
+			document.form.wl0_wep_x.value = "0";
+		}
 	}else{
 		if(parent.document.QKform.sw_mode.value == 2){
 			/* use parent AP settings */	
@@ -210,7 +213,10 @@ function submitForm(){
 								return false;
 						}
 				}else
+				{
 						document.form.wl1_auth_mode_x.value = "open";
+						document.form.wl1_wep_x.value = "0";
+				}
 
 		}else{
 			if(parent.document.QKform.sw_mode.value == 2){
@@ -719,11 +725,11 @@ function detect_LANStatus(_flag){
 <input type="hidden" name="wl1_auth_mode_x" id="wl1_auth_mode_x" value="">
 <input type="hidden" name="wl1_crypto" id="wl1_crypto" value="aes">
 <input type="hidden" name="wl1_wep_x" id="wl1_wep_x" value="<% nvram_get("wl1_wep_x"); %>">
-<input type="hidden" name="wl1_key" id="wl1_key" value="">
-<input type="hidden" name="wl1_key1" id="wl1_key1" value="">
-<input type="hidden" name="wl1_key2" id="wl1_key2" value="">
-<input type="hidden" name="wl1_key3" id="wl1_key3" value="">
-<input type="hidden" name="wl1_key4" id="wl1_key4" value="">
+<input type="hidden" name="wl1_key" id="wl1_key" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_key"); %>">
+<input type="hidden" name="wl1_key1" id="wl1_key1" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_key1"); %>">
+<input type="hidden" name="wl1_key2" id="wl1_key2" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_key2"); %>">
+<input type="hidden" name="wl1_key3" id="wl1_key3" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_key3"); %>">
+<input type="hidden" name="wl1_key4" id="wl1_key4" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_key4"); %>">
 <input type="hidden" name="wl1_wpa_mode" id="wl1_wpa_mode" value="0">
 <!-- lan -->
 <input type="hidden" name="lan_ipaddr" value="" disabled>

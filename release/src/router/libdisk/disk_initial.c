@@ -606,6 +606,8 @@ int find_partition_label(const char *dev_name, char *label, int partition_order)
 		goto ret;
 	if(volume_id_probe_ntfs(&id) == 0 || id.error)
 		goto ret;
+	if(volume_id_probe_hfs_hfsplus(&id) == 0 || id.error)
+		goto ret;
 ret:
 	volume_id_free_buffer(&id);
 	if(label && (*id.label != 0))
@@ -862,6 +864,16 @@ extern int read_mount_data(const char *device_name
 		usb_dbg("%s: Failed to execute sscanf()!\n", device_name);
 		free(mount_info);
 		return 0;
+	}
+
+	if(!strcmp(type, "ufsd")){
+		char full_dev[16];
+
+		memset(full_dev, 0, 16);
+		sprintf(full_dev, "/dev/%s", device_name);
+
+		memset(type, 0, type_len);
+		strcpy(type, detect_fs_type(full_dev));
 	}
 
 	right[2] = 0;

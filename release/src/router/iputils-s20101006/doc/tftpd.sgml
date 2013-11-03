@@ -1,0 +1,151 @@
+<refentry id="tftpd">
+
+<refmeta>
+<refentrytitle>tftpd</refentrytitle>
+<manvolnum>8</manvolnum>
+<refmiscinfo>iputils-&snapshot;</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>tftpd</refname>
+<refpurpose>Trivial File Transfer Protocol server</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>tftpd</command>
+<arg choice="req"><replaceable/directory/</arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1><title>DESCRIPTION</title>
+<para>
+<command/tftpd/ is a server which supports the DARPA
+Trivial File Transfer Protocol
+(<ulink url="ftp://ftp.isi.edu/in-notes/rfc1350.txt">RFC1350</ulink>).
+The TFTP server is started
+by <citerefentry><refentrytitle/inetd/<manvolnum/8/</citerefentry>.
+</para>
+
+<para>
+<replaceable/directory/ is required argument; if it is not given
+<command/tftpd/ aborts. This path is prepended to any file name requested
+via TFTP protocol, effectively chrooting <command/tftpd/ to this directory.
+File names are validated not to escape out of this directory, however
+administrator may configure such escape using symbolic links.
+</para>
+
+<para>
+It is in difference of variants of <command/tftpd/ usually distributed
+with unix-like systems, which take a list of directories and match
+file names to start from one of given prefixes or to some random
+default, when no arguments were given. There are two reasons not to
+behave in this way: first, it is inconvenient, clients are not expected
+to know something about layout of filesystem on server host.
+And second, TFTP protocol is not a tool for browsing of server's filesystem,
+it is just an agent allowing to boot dumb clients. 
+</para>
+
+<para>
+In the case when <command/tftpd/ is used together with
+<link linkend="rarpd">
+<citerefentry><refentrytitle/rarpd/<manvolnum/8/</citerefentry></link>,
+tftp directories in these services should coincide and it is expected
+that each client booted via TFTP has boot image corresponding
+its IP address with an architecture suffix following Sun Microsystems
+conventions. See 
+<link linkend="rarpd">
+<citerefentry><refentrytitle/rarpd/<manvolnum/8/</citerefentry></link>
+for more details.
+</para>
+</refsect1>
+
+<refsect1><title>SECURITY</title>
+<para>
+TFTP protocol does not provide any authentication.
+Due to this capital flaw <command/tftpd/ is not able to restrict
+access to files and will allow only publically readable
+files to be accessed. Files may be written only if they already
+exist and are publically writable.
+</para>
+
+<para>
+Impact is evident, directory exported via TFTP <emphasis/must not/
+contain sensitive information of any kind, everyone is allowed
+to read it as soon as a client is allowed. Boot images do not contain
+such information as rule, however you should think twice before
+publishing f.e. Cisco IOS config files via TFTP, they contain
+<emphasis/unencrypted/ passwords and may contain some information
+about the network, which you were not going to make public.
+</para>
+
+<para>
+The <command/tftpd/ server should be executed by <command/inetd/
+with dropped root privileges, namely with a user ID giving minimal
+access to files published in tftp directory. If it is executed
+as superuser occasionally, <command/tftpd/ drops its UID and GID
+to 65534, which is most likely not the thing which you expect.
+However, this is not very essential; remember, only files accessible
+for everyone can be read or written via TFTP.
+</para>
+
+</refsect1>
+
+
+<refsect1><title>SEE ALSO</title>
+<para>
+<link linkend="rarpd">
+<citerefentry><refentrytitle/rarpd/<manvolnum/8/</citerefentry></link>,
+<citerefentry><refentrytitle/tftp/<manvolnum/1/</citerefentry>,
+<citerefentry><refentrytitle/inetd/<manvolnum/8/</citerefentry>.
+</para>
+</refsect1>
+
+<refsect1><title>HISTORY</title>
+<para>
+The <command/tftpd/ command appeared in 4.2BSD. The source in iputils
+is cleaned up both syntactically (ANSIized) and semantically (UDP socket IO).
+</para>
+<para>
+It is distributed with iputils mostly as good demo of an interesting feature
+(<constant/MSG_CONFIRM/) allowing to boot long images by dumb clients
+not answering ARP requests until they are finally booted.
+However, this is full functional and can be used in production.
+</para>
+</refsect1>
+
+
+<refsect1><title>AVAILABILITY</title>
+<para>
+<command/tftpd/ is part of <filename/iputils/ package
+and the latest versions are  available in source form at
+<ulink url="http://www.skbuff.net/iputils/iputils-current.tar.bz2">
+http://www.skbuff.net/iputils/iputils-current.tar.bz2</ulink>.
+</para>
+</refsect1>
+
+
+<![IGNORE[
+<refsect1><title>COPYING</title>
+<para>
+<literallayout>
+This documentation is free software; you can redistribute
+it and/or modify it under the terms of the GNU General Public
+License Version 2.
+
+This program is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU General Public License for more details.
+ 
+For more details see the file COPYING in the source
+distribution of Linux kernel of version 2.4.
+</literallayout>
+</literallayout>
+</para>
+</refsect1>
+]]>
+
+
+
+</refentry>

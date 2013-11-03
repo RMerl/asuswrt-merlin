@@ -1,0 +1,26 @@
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DocBook V3.1//EN"[
+<!ENTITY snapshot SYSTEM "snapshot.db">
+<!ENTITY ping SYSTEM "ping.sgml">
+<!ENTITY rdisc SYSTEM "rdisc.sgml">
+<!ENTITY arping SYSTEM "arping.sgml">
+<!ENTITY clockdiff SYSTEM "clockdiff.sgml">
+<!ENTITY tracepath SYSTEM "tracepath.sgml">
+<!ENTITY traceroute6 SYSTEM "traceroute6.sgml">
+<!ENTITY rarpd SYSTEM "rarpd.sgml">
+<!ENTITY tftpd SYSTEM "tftpd.sgml">
+<!ENTITY pg3 SYSTEM "pg3.sgml">
+]>
+<reference id="index">
+<title>System Manager's Manual: iputils</title>
+
+&ping;
+&arping;
+&clockdiff;
+&rarpd;
+&tracepath;
+&traceroute6;
+&tftpd;
+&rdisc;
+&pg3;
+
+</reference>

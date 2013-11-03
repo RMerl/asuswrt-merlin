@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry id="macusers.1">
+  <refmeta>
+    <refentrytitle>macusers</refentrytitle>
+
+    <manvolnum>1</manvolnum>
+
+    <refmiscinfo class="date">13 Oct 2011</refmiscinfo>
+
+    <refmiscinfo class="source">@NETATALK_VERSION@</refmiscinfo>
+  </refmeta>
+
+  <refnamediv id="name">
+    <refname>macusers</refname>
+
+    <refpurpose>List the users connecting via AFP</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv id="synopsis">
+    <cmdsynopsis>
+      <command>macusers<indexterm><primary>macusers</primary></indexterm></command>
+    </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>macusers<indexterm><primary>macusers</primary></indexterm></command>
+
+      <group choice="plain">
+        <arg choice="plain">-v</arg>
+        <arg choice="plain">-version</arg>
+        <arg choice="plain">--version</arg>
+        <arg choice="plain">-h</arg>
+        <arg choice="plain">-help</arg>
+        <arg choice="plain">--help</arg>
+      </group>
+
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1 id="description">
+    <title>DESCRIPTION</title>
+
+    <para><command>macusers</command> list the users connecting via AFP.</para>
+
+  </refsect1>
+
+  <refsect1>
+    <title>OPTIONS</title>
+
+    <variablelist remap="TP">
+      <varlistentry>
+        <term><option>-v, -version, --version</option></term>
+
+        <listitem>
+          <para>Show version and exit</para>
+        </listitem>
+
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-h, -help, --help</option></term>
+
+        <listitem>
+          <para>Display the help and exit</para>
+        </listitem>
+
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1 id="see_also">
+    <title>SEE ALSO</title>
+
+    <para><citerefentry><refentrytitle>afpd</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+  </refsect1>
+</refentry>

@@ -62,10 +62,11 @@ var usb_path2_index;
 function initial(){
 	show_menu();
 
-	default_apps_array = [["AiDisk", "aidisk.asp", "<#AiDiskWelcome_desp1#>", "Aidisk.png"],
-												["Servers Center", tablink[3][1], "<#UPnPMediaServer_Help#>", "server.png"],
-												["<#Network_Printer_Server#>", "PrinterServer.asp", "<#Network_Printer_desc#>", "PrinterServer.png"],
-												["3G/4G", "Advanced_Modem_Content.asp", "<#HSDPAConfig_hsdpa_enable_hint1#>", "modem.png"]];
+	default_apps_array = [["AiDisk", "aidisk.asp", "<#AiDiskWelcome_desp1#>", "Aidisk.png", ""],
+												["Servers Center", tablink[3][1], "<#UPnPMediaServer_Help#>", "server.png", ""],
+												["<#Network_Printer_Server#>", "PrinterServer.asp", "<#Network_Printer_desc#>", "PrinterServer.png", ""],
+												["3G/4G", "Advanced_Modem_Content.asp", "<#HSDPAConfig_hsdpa_enable_hint1#>", "modem.png", ""],
+												["Time Machine", "Advanced_TimeMachine.asp", "Time Machine Support.", "TimeMachine.png", "1.0.0.1"]];
 	
 	if(!media_support){
 			default_apps_array[1].splice(2,1,"<#MediaServer_Help#>");						
@@ -81,6 +82,10 @@ function initial(){
 	}
 	if(!modem_support)
 		default_apps_array.splice(3, 1);
+
+	if(!timemachine_support){
+		default_apps_array = default_apps_array.del(default_apps_array.getIndexByValue2D("Time Machine")[0]);
+	}
 
 	trNum = default_apps_array.length;
 	calHeight(0);

@@ -25,7 +25,6 @@ Revision History:
 #include "vfsdebug.h"
 
 
-
 /*
  * Missing but useful declarations.
  */

@@ -1,0 +1,72 @@
+COMPATIBILITY
+
+    This code is intended for use with Linux 2.2.xx, 2.4.xx,
+    2.6.xx, and hopefully all future kernels. You should be
+    running a system with libc 6, but libc 5 might work too.
+
+INSTALLATION
+
+    make
+    make install
+
+    Only the second ("make install") is needed if you just
+    want to build and install procps in the normal way.
+
+    If you wish to test before installing, use the scripts
+    named t, v, and p to ensure that the correct libproc
+    (the new one) is used during your testing.
+
+    You may set SKIP to avoid building or installing things.
+    For example:
+
+    make SKIP='/bin/kill /usr/share/man/man1/kill.1' install
+
+    Use SHARED=0 to build procps without shared libraries.
+    This may be useful for installing in your home directory.
+
+    make SHARED=0 DESTDIR=$HOME install
+
+    Suppose you wanted to install stuff in strange places.
+    You might do something like this:
+
+    make usr/bin=/tmp/Q/i/ DESTDIR=/tmp/Q install="install -D" ldconfig=echo install
+
+    If cross-compiling, you might need to set lib64 to
+    either "lib" or "lib64". You might need to set m64 to
+    -m64, -m32, or nothing at all. Some examples:
+
+    make lib64=lib m64=-m32      # for a bi-arch gcc
+    make lib64=lib64 CC=x86_64-gcc
+    make lib64=lib CC=alpha-gcc
+
+PACKAGING
+
+    If you are a downstream maintainer (packager) for a Linux distribution,
+    please avoid causing troubles. This section applies to you.
+
+    Send patches in regularly. Many patches made by vendors have been buggy,
+    some quite severely so. Sending in a patch will at least get it reviewed,
+    if not included. There is a procps test suite that must be passed.
+    Forward all bug reports. If your bug database is public and busy enough
+    to bother with, please make this known. Follow Debian's lead in making
+    the bug database easy to comment on via email w/o need for an account.
+
+    Do not change the user interface. Many of the programs are intended to be
+    compatible with Solaris, FreeBSD, AIX, IRIX, Tru64, and the UNIX standard.
+    Your nice new command options WILL BE BROKEN as needed to ensure that
+    procps remains compatible with the rest of the world. Sysadmins hate to
+    deal with incompatible behavior. If you need a new option, ask for it.
+
+    For normal packages, ensure that you do not add debugging flags
+    to the CFLAGS variable. If debugging flags are present, the Makefile
+    will avoid adding several optimizations that would interfere with gdb.
+
+    There should be no need to modify the Makefile. You can set variables
+    on the "make" command line or use "make -e" to pass variables from
+    the environment.
+
+BUG REPORTS
+
+    Debian users should use the Debian bug tracking system.
+    Email to albert@users.sf.net or csmall@debian.org or
+    procps-feedback@lists.sf.net will also work.

@@ -274,6 +274,9 @@ static int br_nf_pre_routing_finish_bridge(struct sk_buff *skb)
 		goto free_skb;
 	dst = skb_dst(skb);
 	if (dst->hh) {
+#ifdef CATHY_BRNF_SAME_BR_PATCH
+		nf_bridge->mask |= BRNF_BRIDGED_DNAT;
+#endif /* CATHY_BRNF_SAME_BR_PATCH */
 		neigh_hh_bridge(dst->hh, skb);
 		skb->dev = nf_bridge->physindev;
 		return br_handle_frame_finish(skb);
@@ -806,6 +809,10 @@ static unsigned int br_nf_post_routing(unsigned int hook, struct sk_buff *skb,
 		skb->pkt_type = PACKET_HOST;
 		nf_bridge->mask |= BRNF_PKT_TYPE;
 	}
+#ifdef CATHY_BRNF_SAME_BR_PATCH
+	if (nf_bridge->mask & BRNF_BRIDGED_DNAT_SAME_BR)
+		memcpy(eth_hdr(skb)->h_source, realoutdev->dev_addr, ETH_ALEN);
+#endif /* CATHY_BRNF_SAME_BR_PATCH */
 
 	nf_bridge_pull_encap_header(skb);
 	nf_bridge_save_header(skb);
