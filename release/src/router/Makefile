@@ -2680,7 +2680,7 @@ libgpg-error-1.10: libgpg-error-1.10/stamp-h1
 	@$(MAKE) -C libgpg-error-1.10
 
 libgpg-error-1.10-install: libgpg-error-1.10
-	@$(MAKE) -C libgpg-error-1.10 install
+	@$(MAKE) -C libgpg-error-1.10 install-strip
 
 libgpg-error-1.10-clean:
 	-@$(MAKE) -C libgpg-error-1.10 clean
@@ -2698,7 +2698,7 @@ libgcrypt-1.5.1: libgcrypt-1.5.1/stamp-h1
 	@$(MAKE) -C libgcrypt-1.5.1
 
 libgcrypt-1.5.1-install: libgcrypt-1.5.1
-	@$(MAKE) -C libgcrypt-1.5.1 install
+	@$(MAKE) -C libgcrypt-1.5.1 install-strip
 
 libgcrypt-1.5.1-clean:
 	-@$(MAKE) -C libgcrypt-1.5.1 clean
@@ -2728,6 +2728,7 @@ db-4.8.30/build_unix/stamp-h1:
 	--disable-test \
 	--disable-uimutexes \
 	--enable-umrw \
+	--disable-static \
 	--disable-libtool-lock
 	touch $@
 
@@ -2736,10 +2737,11 @@ db-4.8.30/build_unix/stamp-h1:
 db-4.8.30: db-4.8.30/build_unix/stamp-h1
 	@$(SEP)
 	@$(MAKE) -C db-4.8.30/build_unix
-	
+
 db-4.8.30-install: db-4.8.30
 	@$(MAKE) -C db-4.8.30/build_unix install
-
+	$(STRIP) $(INSTALLDIR)/db-4.8.30/usr/lib/libdb-4.8.so
+	
 db-4.8.30-clean:
 	-@$(MAKE) -C db-4.8.30 clean
 	-@$(MAKE) -C db-4.8.30/build_unix clean
@@ -2756,6 +2758,7 @@ netatalk-3.0.5/stamp-h1: openssl libgcrypt-1.5.1 db-4.8.30
 	--with-bdb=$(TOP)/db-4.8.30/build_unix \
 	--prefix=$(INSTALLDIR)/netatalk-3.0.5/usr \
 	--with-ssl-dir=$(TOP)/openssl \
+	--disable-static \
 	--with-libgcrypt-dir=$(TOP)/libgcrypt-1.5.1 \
 	--with-ld-library-path=$(SRCBASE)/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3/lib
 	touch $@
@@ -2765,7 +2768,7 @@ netatalk-3.0.5: netatalk-3.0.5/stamp-h1
 	@$(MAKE) -C netatalk-3.0.5
 
 netatalk-3.0.5-install: netatalk-3.0.5
-	@$(MAKE) -C netatalk-3.0.5 install
+	@$(MAKE) -C netatalk-3.0.5 install-strip
 
 netatalk-3.0.5-clean:
 	-@$(MAKE) -C netatalk-3.0.5 clean
@@ -2783,6 +2786,8 @@ expat-2.0.1: expat-2.0.1/stamp-h1
 
 expat-2.0.1-install: expat-2.0.1
 	@$(MAKE) -C expat-2.0.1 install
+	$(STRIP) $(INSTALLDIR)/expat-2.0.1/usr/lib/libexpat.so.1.5.2
+	$(STRIP) $(INSTALLDIR)/expat-2.0.1/usr/bin/xmlwf
 
 expat-2.0.1-clean:
 	-@$(MAKE) -C expat-2.0.1 clean
@@ -2791,7 +2796,7 @@ expat-2.0.1-clean:
 #avahi-0.6.31
 avahi-0.6.31/stamp-h1: shared nvram$(BCMEX) expat-2.0.1 libdaemon
 	cd $(TOP)/avahi-0.6.31 && \
-	$(CONFIGURE) LDFLAGS="-L$(TOP)/expat-2.0.1/.libs" CFLAGS="-I$(TOP)/expat-2.0.1/lib -I$(TOP)/shared -I$(SRCBASE)/include" --prefix=$(INSTALLDIR)/avahi-0.6.31/usr --with-distro=archlinux --disable-glib --disable-gobject --disable-qt3 --disable-qt4 --disable-gtk --disable-dbus --disable-expat --disable-gdbm --disable-python --disable-pygtk --disable-python-dbus --disable-mono --disable-monodoc --disable-gtk3 --with-xml=none  LIBDAEMON_LIBS="-L$(TOP)/libdaemon/libdaemon/.libs -ldaemon -L$(TOP)/nvram$(BCMEX) -lnvram -L$(TOP)/shared -lshared" LIBDAEMON_CFLAGS="-I$(TOP)/libdaemon" --disable-autoipd --with-xml=expat --disable-stack-protector --with-avahi-user="admin" --with-avahi-group="root"
+	$(CONFIGURE) LDFLAGS="-L$(TOP)/expat-2.0.1/.libs" CFLAGS="-I$(TOP)/expat-2.0.1/lib -I$(TOP)/shared -I$(SRCBASE)/include" --prefix=$(INSTALLDIR)/avahi-0.6.31/usr --with-distro=archlinux --disable-glib --disable-gobject --disable-qt3 --disable-qt4 --disable-gtk --disable-dbus --disable-expat --disable-gdbm --disable-python --disable-pygtk --disable-python-dbus --disable-mono --disable-monodoc --disable-gtk3 --with-xml=none  LIBDAEMON_LIBS="-L$(TOP)/libdaemon/libdaemon/.libs -ldaemon -L$(TOP)/nvram$(BCMEX) -lnvram -L$(TOP)/shared -lshared" LIBDAEMON_CFLAGS="-I$(TOP)/libdaemon" --disable-autoipd --with-xml=expat --disable-stack-protector --with-avahi-user="admin" --with-avahi-group="root" --enable-static=no
 	touch $@
 
 avahi-0.6.31: avahi-0.6.31/stamp-h1
@@ -2799,7 +2804,7 @@ avahi-0.6.31: avahi-0.6.31/stamp-h1
 	@$(MAKE) -C avahi-0.6.31
 
 avahi-0.6.31-install: avahi-0.6.31
-	@$(MAKE) -C avahi-0.6.31 install
+	@$(MAKE) -C avahi-0.6.31 install-strip
 
 avahi-0.6.31-clean:
 	-@$(MAKE) -C avahi-0.6.31 clean
