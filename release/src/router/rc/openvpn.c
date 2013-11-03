@@ -891,6 +891,7 @@ void start_vpnserver(int serverNum)
 		}
 
 		sprintf(&buffer[0], "vpn_server%d_hmac", serverNum);
+		nvi = nvram_get_int(&buffer[0]);
 		//sprintf(&buffer[0], "vpn_crt_server%d_static", serverNum);
 		//if ( !nvram_is_empty(&buffer[0]) && nvi >= 0 )
 		if ( nvi >= 0 )
