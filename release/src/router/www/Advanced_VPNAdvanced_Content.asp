@@ -1159,7 +1159,7 @@ function cal_panel_block(){
 												<input type="radio" name="vpn_server_userpass_auth" class="input" value="0" onclick="update_visibility();" <% nvram_match_x("", "vpn_server_userpass_auth", "0", "checked"); %>><#checkbox_No#>
 										</td>
 									</tr>
-									<tr id="server_`">
+									<tr id="server_igncrt">
 										<th>Username/Password Auth. Only</th>
 										<td>
 												<input type="radio" name="vpn_server_igncrt" class="input" value="1" <% nvram_match_x("", "vpn_server_igncrt", "1", "checked"); %>><#checkbox_Yes#>
