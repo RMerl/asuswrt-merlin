@@ -761,10 +761,6 @@ void start_vpnserver(int serverNum)
 	else
 		fprintf(fp, "verb 3\n");
 
-	//authentication
-	fprintf(fp, "plugin /usr/lib/openvpn-plugin-auth-pam.so login\n");
-	fprintf(fp_client, "auth-user-pass\n");
-
 	if ( cryptMode == TLS )
 	{
 		//TLS Renegotiation Time
@@ -902,12 +898,22 @@ void start_vpnserver(int serverNum)
 			fprintf(fp, "\n");
 		}
 
-		//ignore client certificate
-		sprintf(&buffer[0], "vpn_server%d_igncrt", serverNum);
+		// Enable username/pass authentication (for Asus's PAM support)
+		sprintf(&buffer[0], "vpn_server%d_userpass_auth", serverNum);
 		if ( nvram_get_int(&buffer[0]) ) {
-			fprintf(fp, "client-cert-not-required\n");
-			fprintf(fp, "username-as-common-name\n");
-			fprintf(fp, "duplicate-cn\n");	//user share the same account
+			//authentication
+			fprintf(fp, "plugin /usr/lib/openvpn-plugin-auth-pam.so login\n");
+			fprintf(fp_client, "auth-user-pass\n");
+
+			//ignore client certificate, but only if user/pass auth is enabled
+			//That way, existing configuration (pre-Asus OVPN)
+			//will remain unchanged.
+			sprintf(&buffer[0], "vpn_server%d_igncrt", serverNum);
+			if ( nvram_get_int(&buffer[0]) ) {
+				fprintf(fp, "client-cert-not-required\n");
+				fprintf(fp, "username-as-common-name\n");
+				fprintf(fp, "duplicate-cn\n");	//user share the same account
+			}
 		}
 
 		//sprintf(&buffer[0], "vpn_crt_server%d_ca", serverNum);
