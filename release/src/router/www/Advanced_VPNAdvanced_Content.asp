@@ -244,6 +244,7 @@ function update_visibility(){
 	auth = document.openvpn_form.vpn_server_crypt.value;
 	iface = document.openvpn_form.vpn_server_if.value;
 	hmac = document.openvpn_form.vpn_server_hmac.value;
+	userpass = getRadioValue(document.openvpn_form.vpn_server_userpass_auth);
 	dhcp = getRadioValue(document.openvpn_form.vpn_server_dhcp);
 	if(auth != "tls")
 		ccd = 0;
@@ -267,9 +268,10 @@ function update_visibility(){
 	showhide("server_tls_crypto_text", (auth == "tls"));		//add by Viz
 	showhide("server_static_crypto_text", (auth == "secret"));		//add by Viz
 	showhide("server_custom_crypto_text", (auth == "custom"));
+	showhide("server_igncrt", (userpass == 1));
 
 // Since instancing certs/keys would waste many KBs of nvram,
-// we instead handle these at the webui level.
+// we instead handle these at the webui level, loading both instances.
 	showhide("edit_vpn_crt_server1_ca",(openvpn_unit == "1"));
 	showhide("edit_vpn_crt_server1_crt", (openvpn_unit == "1"));
 	showhide("edit_vpn_crt_server1_key",(openvpn_unit == "1"));
@@ -1139,8 +1141,8 @@ function cal_panel_block(){
 
 									<tr>
 										<th>Authorization Mode</th>
-			        			<td>
-			        				<select name="vpn_server_crypt" class="input_option" onclick="update_visibility();">
+										<td>
+											<select name="vpn_server_crypt" class="input_option" onclick="update_visibility();">
 												<option value="tls" <% nvram_match("vpn_server_crypt","tls","selected"); %> >TLS</option>
 												<option value="secret" <% nvram_match("vpn_server_crypt","secret","selected"); %> >Static Key</option>
 												<option value="custom" <% nvram_match("vpn_server_crypt","custom","selected"); %> >Custom</option>
@@ -1148,15 +1150,21 @@ function cal_panel_block(){
 											<span id="server_tls_crypto_text" onclick="set_Keys('tls');" style="text-decoration:underline;cursor:pointer;">Content modification of Keys & Certification.</span>
 											<span id="server_static_crypto_text" onclick="set_Keys('secret');" style="text-decoration:underline;cursor:pointer;">Content modification of Keys & Certification.</span>
 											<span id="server_custom_crypto_text">Must be manually configured.</span>
-			   						</td>
+										</td>
 									</tr>
-
 									<tr>
-											<th>Username/Password Auth. Only</th>
-											<td>
-													<input type="radio" name="vpn_server_igncrt" class="input" value="1" <% nvram_match_x("", "vpn_server_igncrt", "1", "checked"); %>><#checkbox_Yes#>
-													<input type="radio" name="vpn_server_igncrt" class="input" value="0" <% nvram_match_x("", "vpn_server_igncrt", "0", "checked"); %>><#checkbox_No#>
-											</td>
+										<th>Username/Password Authentication</th>
+										<td>
+												<input type="radio" name="vpn_server_userpass_auth" class="input" value="1" onclick="update_visibility();" <% nvram_match_x("", "vpn_server_userpass_auth", "1", "checked"); %>><#checkbox_Yes#>
+												<input type="radio" name="vpn_server_userpass_auth" class="input" value="0" onclick="update_visibility();" <% nvram_match_x("", "vpn_server_userpass_auth", "0", "checked"); %>><#checkbox_No#>
+										</td>
+									</tr>
+									<tr id="server_`">
+										<th>Username/Password Auth. Only</th>
+										<td>
+												<input type="radio" name="vpn_server_igncrt" class="input" value="1" <% nvram_match_x("", "vpn_server_igncrt", "1", "checked"); %>><#checkbox_Yes#>
+												<input type="radio" name="vpn_server_igncrt" class="input" value="0" <% nvram_match_x("", "vpn_server_igncrt", "0", "checked"); %>><#checkbox_No#>
+										</td>
 									</tr>
 
 									<tr>
