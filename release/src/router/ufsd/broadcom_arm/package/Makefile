@@ -65,10 +65,10 @@ endif
 
 
 $(src)$(MODULE_SRC)/$(MODULE_LIBNAME).bin:
-	@ln -s "/home/merlin/asuswrt.ac68/release/src/router/ufsd/broadcom_arm/package/ifslinux/objfre/libufsd_arm.bin" "$(src)$(MODULE_SRC)/$(MODULE_LIBNAME).bin"
+	@ln -s "ifslinux/objfre/libufsd_arm.bin" "$(src)$(MODULE_SRC)/$(MODULE_LIBNAME).bin"
 
 clean:
-	@$(MAKE) -C "/home/merlin/asuswrt.ac68/release/src-rt-6.x.4708/linux/linux-2.6" SUBDIRS="/home/merlin/asuswrt.ac68/release/src/router/ufsd/broadcom_arm/package" clean 2>&1 > /dev/null
+	@$(MAKE) -C "$(SRCBASE)/linux/linux-2.6" SUBDIRS="." clean 2>&1 > /dev/null
 	@/bin/rm -Rf "$(src)$(MODULE_SRC)/$(MODULE_LIBNAME).bin"
 
 -include $(TOPDIR)/Rules.make
@@ -76,10 +76,10 @@ clean:
 
 $(MODULE_NAME).ko:
 ifeq (2.6,2.4)
-	@if [ ! -e "/home/merlin/asuswrt.ac68/release/src-rt-6.x.4708/linux/linux-2.6/.config" ] ; then $(MAKE) -C "/home/merlin/asuswrt.ac68/release/src-rt-6.x.4708/linux/linux-2.6" SUBDIRS="/home/merlin/asuswrt.ac68/release/src/router/ufsd/broadcom_arm/package" V=1 cloneconfig >/dev/null 2>&1 ; true ; fi
-	@if [ ! -e "/home/merlin/asuswrt.ac68/release/src-rt-6.x.4708/linux/linux-2.6/.config" ] ; then echo -e "\033[32mPlease run 'make menuconfig' or 'make defconfig' from kernel source dir to make config file\033[0m" ; exit -1 ; fi
+	@if [ ! -e "$(SRCBASE)/linux/linux-2.6/.config" ] ; then $(MAKE) -C "$(SRCBASE)/linux/linux-2.6" SUBDIRS="." V=1 cloneconfig >/dev/null 2>&1 ; true ; fi
+	@if [ ! -e "$(SRCBASE)/linux/linux-2.6/.config" ] ; then echo -e "\033[32mPlease run 'make menuconfig' or 'make defconfig' from kernel source dir to make config file\033[0m" ; exit -1 ; fi
 endif
-	$(MAKE) -C "/home/merlin/asuswrt.ac68/release/src-rt-6.x.4708/linux/linux-2.6" SUBDIRS="/home/merlin/asuswrt.ac68/release/src/router/ufsd/broadcom_arm/package" O="/home/merlin/asuswrt.ac68/release/src-rt-6.x.4708/linux/linux-2.6" V=1 modules 2>&1
+	$(MAKE) -C "$(SRCBASE)/linux/linux-2.6" SUBDIRS="." O="$(SRCBASE)/linux/linux-2.6" V=1 modules 2>&1
 
 driver:$(MODULE_NAME).ko
 	arm-brcm-linux-uclibcgnueabi-strip -g --strip-unneeded ufsd.ko
