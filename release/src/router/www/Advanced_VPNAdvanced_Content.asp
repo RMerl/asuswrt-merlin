@@ -783,7 +783,7 @@ function cal_panel_block(){
 <div id="tlsKey_panel"  class="contentM_qis" style="box-shadow: 3px 3px 10px #000;">
 		<table class="QISform_wireless" border=0 align="center" cellpadding="5" cellspacing="0">
 			<tr>
-				<div class="description_down">Keys and Certification</div>
+				<div class="description_down">Keys and Certificates</div>
 			</tr>
 			<tr>
 				<div style="margin-left:30px; margin-top:10px;">
@@ -847,7 +847,7 @@ function cal_panel_block(){
 <div id="staticKey_panel"   class="contentM_qis" style="box-shadow: 3px 3px 10px #000;">
 	<table class="QISform_wireless" border=0 align="center" cellpadding="5" cellspacing="0">
 		<tr>
-			<div class="description_down">Keys and Certification</div>
+			<div class="description_down">Keys and Certificates</div>
 		</tr>
 		<tr>
 			<div style="margin-left:30px; margin-top:10px;">
@@ -1171,8 +1171,8 @@ function cal_panel_block(){
 												<option value="secret" <% nvram_match("vpn_server_crypt","secret","selected"); %> >Static Key</option>
 												<option value="custom" <% nvram_match("vpn_server_crypt","custom","selected"); %> >Custom</option>
 											</select>
-											<span id="server_tls_crypto_text" onclick="set_Keys('tls');" style="text-decoration:underline;cursor:pointer;">Content modification of Keys & Certification.</span>
-											<span id="server_static_crypto_text" onclick="set_Keys('secret');" style="text-decoration:underline;cursor:pointer;">Content modification of Keys & Certification.</span>
+											<span id="server_tls_crypto_text" onclick="set_Keys('tls');" style="text-decoration:underline;cursor:pointer;">Content modification of Keys & Certificates.</span>
+											<span id="server_static_crypto_text" onclick="set_Keys('secret');" style="text-decoration:underline;cursor:pointer;">Content modification of Keys & Certificates.</span>
 											<span id="server_custom_crypto_text">Must be manually configured.</span>
 										</td>
 									</tr>
