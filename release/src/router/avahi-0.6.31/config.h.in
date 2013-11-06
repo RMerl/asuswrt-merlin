@@ -18,6 +18,9 @@
 /* Enable chroot() usage */
 #undef ENABLE_CHROOT
 
+/* always defined to indicate that i18n is enabled */
+#undef ENABLE_NLS
+
 /* Define if SSP C support is enabled. */
 #undef ENABLE_SSP_CC
 
@@ -29,6 +32,9 @@
 
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 #undef HAVE_ARPA_INET_H
+
+/* Define to 1 if you have the `bind_textdomain_codeset' function. */
+#undef HAVE_BIND_TEXTDOMAIN_CODESET
 
 /* Define to 1 if you have the <bsdxml.h> header file. */
 #undef HAVE_BSDXML_H
@@ -50,6 +56,9 @@
 
 /* Define to 1 if you have the `dbus_connection_close' function. */
 #undef HAVE_DBUS_CONNECTION_CLOSE
+
+/* Define to 1 if you have the `dcgettext' function. */
+#undef HAVE_DCGETTEXT
 
 /* Define to 1 if you have the declaration of `environ', and to 0 if you
    don't. */
@@ -85,6 +94,9 @@
 /* Define to 1 if you have the `getprogname' function. */
 #undef HAVE_GETPROGNAME
 
+/* Define if the GNU gettext() function is already present or preinstalled. */
+#undef HAVE_GETTEXT
+
 /* Define to 1 if you have the `gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
 
@@ -97,8 +109,14 @@
 /* Enable BSD kqueue() usage */
 #undef HAVE_KQUEUE
 
+/* Define if your <locale.h> file defines LC_MESSAGES. */
+#undef HAVE_LC_MESSAGES
+
 /* Define to 1 if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H
+
+/* Define to 1 if you have the <locale.h> header file. */
+#undef HAVE_LOCALE_H
 
 /* Define to 1 if you have the `memchr' function. */
 #undef HAVE_MEMCHR
