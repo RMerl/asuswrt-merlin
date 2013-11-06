@@ -694,7 +694,6 @@ start_dhcp6c(void)
 		NULL,		/* interface */
 		NULL };
 	int index = 3;
-	int prefix_len;
 	unsigned char ea[ETHER_ADDR_LEN];
 	unsigned long iaid = 0;
 	struct {
@@ -715,10 +714,6 @@ start_dhcp6c(void)
 		nvram_set("ipv6_rtr_addr", "");
 		nvram_set("ipv6_prefix", "");
 	}
-
-	prefix_len = 64 - (nvram_get_int("ipv6_prefix_length") ? : 64);
-	if (prefix_len < 0)
-		prefix_len = 0;
 
 	if (ether_atoe(nvram_safe_get("wan0_hwaddr"), ea)) {
 		/* Generate IAID from the last 7 digits of WAN MAC */
@@ -757,10 +752,9 @@ start_dhcp6c(void)
 		fprintf(fp,	"id-assoc pd %lu {\n"
 					"prefix-interface %s {\n"
 						"sla-id 1;\n"
-						"sla-len %d;\n"
 					"};\n"
 					"prefix ::/56 0 0;\n"
-				"};\n", iaid, lan_ifname, prefix_len);
+				"};\n", iaid, lan_ifname);
 		fprintf(fp,	"id-assoc na %lu { };\n", iaid);
 		fclose(fp);
 	} else {
