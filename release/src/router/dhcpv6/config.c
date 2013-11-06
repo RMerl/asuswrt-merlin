@@ -126,7 +126,7 @@ extern long long cf_refreshtime;
 extern char *configfilename;
 
 static struct keyinfo *find_keybyname __P((struct keyinfo *, char *));
-static int add_pd_pif __P((struct iapd_conf *, struct cf_list *));
+static int add_pd_pif __P((struct iapd_conf *, struct cf_list *, u_int32_t));
 static int add_options __P((int, struct dhcp6_ifconf *, struct cf_list *));
 static int add_prefix __P((struct dhcp6_list *, char *, int,
     struct dhcp6_prefix *));
@@ -329,6 +329,8 @@ configure_ia(ialist, iatype)
 	size_t confsize;
 	static int init = 1;
 
+	u_int32_t if_count;
+
 	if (init) {
 		TAILQ_INIT(&ia_conflist0);
 		init = 0;
@@ -374,6 +376,8 @@ configure_ia(ialist, iatype)
 			break;
 		}
 
+		if_count = 0;
+
 		/* set up parameters for the IA */
 		for (cfl = iap->params; cfl; cfl = cfl->next) {
 			struct iapd_conf *pdp = (struct iapd_conf *) iac;
@@ -383,8 +387,9 @@ configure_ia(ialist, iatype)
 			case IATYPE_PD:
 				switch(cfl->type) {
 				case IACONF_PIF:
-					if (add_pd_pif(pdp, cfl))
+					if (add_pd_pif(pdp, cfl, if_count))
 						goto bad;
+					if_count++;
 					break;
 				case IACONF_PREFIX:
 					if (add_prefix(&pdp->iapd_prefix_list,
@@ -436,9 +441,10 @@ configure_ia(ialist, iatype)
 }
 
 static int
-add_pd_pif(iapdc, cfl0)
+add_pd_pif(iapdc, cfl0, if_count)
 	struct iapd_conf *iapdc;
 	struct cf_list *cfl0;
+	u_int32_t if_count;
 {
 	struct cf_list *cfl;
 	struct prefix_ifconf *pif;
@@ -473,6 +479,7 @@ add_pd_pif(iapdc, cfl0)
 		goto bad;
 	}
 
+	pif->sla_id = if_count;
 	pif->ifid_len = IFID_LEN_DEFAULT;
 	pif->sla_len = SLA_LEN_DEFAULT;
 	if (get_default_ifid(pif)) {
