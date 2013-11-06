@@ -22,3 +22,6 @@ cd $HOME/asuswrt-merlin/release/src-rt-6.x.4708/
 
 Make for the rt-ac68u:
 make rt-ac68u
+
+Hard reset everything to git version:
+git clean -fdxq && git reset --hard
