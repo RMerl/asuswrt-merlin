@@ -451,6 +451,17 @@ add_ifprefix(siteprefix, prefix, pconf)
 	ifpfx->paddr.sin6_len = sizeof(struct sockaddr_in6);
 #endif
 	ifpfx->paddr.sin6_addr = prefix->addr;
+
+	/* 
+         * dave (bevhost) thinks this should fix it rather than 
+         * generare the error below "invalid prefix length" 
+         * this way the sla-len can be left out of the config file 
+         * and calculated when the prefix is received
+         */
+	if (prefix->plen + pconf->ifid_len + pconf->sla_len > 128) {
+		pconf->sla_len = 128 - pconf->ifid_len - prefix->plen;
+	}
+
 	ifpfx->plen = prefix->plen + pconf->sla_len;
 	/*
 	 * XXX: our current implementation assumes ifid len is a multiple of 8
