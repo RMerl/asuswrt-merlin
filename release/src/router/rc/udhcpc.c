@@ -759,6 +759,7 @@ start_dhcp6c(void)
 						"sla-id 1;\n"
 						"sla-len %d;\n"
 					"};\n"
+					"prefix ::/56 0 0;\n"
 				"};\n", iaid, lan_ifname, prefix_len);
 		fprintf(fp,	"id-assoc na %lu { };\n", iaid);
 		fclose(fp);
