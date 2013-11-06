@@ -264,7 +264,7 @@ function set_Keys(auth){
 	}	
 }
 
-function cancel_Key_panel(){
+function cancel_Key_panel(auth){
 	if(auth == 'tls'){
 		this.FromObject ="0";
 		$j("#tlsKey_panel").fadeOut(300);	
@@ -294,20 +294,20 @@ function cancel_Key_panel(){
 function save_keys(auth){
 	if(auth == 'tls'){
 		if (openvpn_unit == "1") {
-			document.openvpnManualForm.vpn_crt_client1_ca.value = document.getElementById('edit_vpn_crt_client1_ca').value;
-			document.openvpnManualForm.vpn_crt_client1_crt.value = document.getElementById('edit_vpn_crt_client1_crt').value;
-			document.openvpnManualForm.vpn_crt_client1_key.value = document.getElementById('edit_vpn_crt_client1_key').value;
+			document.form.vpn_crt_client1_ca.value = document.getElementById('edit_vpn_crt_client1_ca').value;
+			document.form.vpn_crt_client1_crt.value = document.getElementById('edit_vpn_crt_client1_crt').value;
+			document.form.vpn_crt_client1_key.value = document.getElementById('edit_vpn_crt_client1_key').value;
 		} else {
-			document.openvpnManualForm.vpn_crt_client2_ca.value = document.getElementById('edit_vpn_crt_client2_ca').value;
-			document.openvpnManualForm.vpn_crt_client2_crt.value = document.getElementById('edit_vpn_crt_client2_crt').value;
-			document.openvpnManualForm.vpn_crt_client2_key.value = document.getElementById('edit_vpn_crt_client2_key').value;
+			document.form.vpn_crt_client2_ca.value = document.getElementById('edit_vpn_crt_client2_ca').value;
+			document.form.vpn_crt_client2_crt.value = document.getElementById('edit_vpn_crt_client2_crt').value;
+			document.form.vpn_crt_client2_key.value = document.getElementById('edit_vpn_crt_client2_key').value;
 		}
 		cancel_Key_panel('tls');
 	}else if(auth == 'secret'){			
 		if (openvpn_unit == "1"){
-			document.openvpnManualForm.vpn_crt_client1_static.value = document.getElementById('edit_vpn_crt_client1_static').value;
+			document.form.vpn_crt_client1_static.value = document.getElementById('edit_vpn_crt_client1_static').value;
 		}else{
-			document.openvpnManualForm.vpn_crt_client2_static.value = document.getElementById('edit_vpn_crt_client2_static').value;
+			document.form.vpn_crt_client2_static.value = document.getElementById('edit_vpn_crt_client2_static').value;
 		}
 		cancel_Key_panel('secret');
 	}
@@ -428,8 +428,8 @@ function pass_checked(obj){
 						</tbody>						
 	  				</table>
 					<div style="margin-top:5px;width:100%;text-align:center;">
-						<input class="button_gen" type="button" onclick="cancel_Key_panel();" value="<#CTL_Cancel#>">
-						<input class="button_gen" type="button" onclick="save_keys();" value="<#CTL_onlysave#>">	
+						<input class="button_gen" type="button" onclick="cancel_Key_panel('tls');" value="<#CTL_Cancel#>">
+						<input class="button_gen" type="button" onclick="save_keys('tls');" value="<#CTL_onlysave#>">	
 					</div>					
 				</td>
 			</tr>
