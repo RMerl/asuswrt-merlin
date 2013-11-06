@@ -1,7 +1,7 @@
-These are instructions that should get the build environment functional on a standard ubuntu install. You should be simply enter the commands below to get everything set up. Commands assume you are in the home folder but should be easy to modify. Currently testing with Ubuntu 64 bit 13.10
+These are instructions that should get the build environment functional on a standard ubuntu install. You should simply enter the commands below to get everything set up. Commands assume you are in the home folder but should be easy to modify. Currently testing with Ubuntu 64 bit 13.10
 
 Install Required Packages:
-sudo apt-get install build-essential libncurses5 libncurses5-dev m4 bison gawk flex libstdc++6-4.4-dev g++-4.4-multilib g++ git gitk zlib1g-dev autoconf autopoint libtool shtool autogen mtd-utils gcc-multilib gconf-editor lib32z1-dev pkg-config gperf libssl-dev libxml2-dev libelf1:i386 automake1.1
+sudo apt-get install build-essential libncurses5 libncurses5-dev m4 bison gawk flex libstdc++6-4.4-dev g++-4.4-multilib g++ git gitk zlib1g-dev autoconf autopoint libtool shtool autogen mtd-utils gcc-multilib gconf-editor lib32z1-dev pkg-config gperf libssl-dev libxml2-dev libelf1:i386 automake1.1 lib32z1 lib32ncurses5 lib32bz2-1.0
 
 Sync the repo from git:
 git clone https://github.com/RMerl/asuswrt-merlin.git
