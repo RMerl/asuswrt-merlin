@@ -21,6 +21,72 @@
 
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
+<style type="text/css">
+.contentM_qis{
+	width:740px;	
+	margin-top:280px;
+	margin-left:380px;
+	position:absolute;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	z-index:200;
+	background-color:#2B373B;
+	display:none;
+	/*behavior: url(/PIE.htc);*/
+}
+.QISmain{
+	width:730px;
+	/*font-family:Verdana, Arial, Helvetica, sans-serif;*/
+	font-size:14px;
+	z-index:200;
+	position:relative;
+	background-color:balck:
+}	
+.QISform_wireless{
+	width:600px;
+	font-size:12px;
+	color:#FFFFFF;
+	margin-top:10px;
+	*margin-left:10px;
+}
+
+.QISform_wireless thead{
+	font-size:15px;
+	line-height:20px;
+	color:#FFFFFF;	
+}
+
+.QISform_wireless th{
+	padding-left:10px;
+	*padding-left:30px;
+	font-size:12px;
+	font-weight:bolder;
+	color: #FFFFFF;
+	text-align:left; 
+}
+               
+.QISform_wireless li{	
+	margin-top:10px;
+}
+.QISGeneralFont{
+	font-family:Segoe UI, Arial, sans-serif;
+	margin-top:10px;
+	margin-left:70px;
+	*margin-left:50px;
+	margin-right:30px;
+	color:white;
+	LINE-HEIGHT:18px;
+}	
+.description_down{
+	margin-top:10px;
+	margin-left:10px;
+	padding-left:5px;
+	font-weight:bold;
+	line-height:140%;
+	color:#ffffff;	
+}
+</style>
 <script>
 var $j = jQuery.noConflict();
 
@@ -29,11 +95,11 @@ wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 <% vpn_client_get_parameter(); %>;
 
-vpn_unit = '<% nvram_get("vpn_client_unit"); %>';
+openvpn_unit = '<% nvram_get("vpn_client_unit"); %>';
 
-if (vpn_unit == 1)
+if (openvpn_unit == 1)
 	service_state = (<% sysinfo("pid.vpnclient1"); %> > 0);
-else if (vpn_unit == 2)
+else if (openvpn_unit == 2)
 	service_state = (<% sysinfo("pid.vpnclient2"); %> > 0);
 else
 	service_state = false;
@@ -96,11 +162,32 @@ function initial()
 	}
 
 	// Set these based on a compound field
-	setRadioValue(document.form.vpn_client_x_eas, ((document.form.vpn_clientx_eas.value.indexOf(''+(vpn_unit)) >= 0) ? "1" : "0"));
+	setRadioValue(document.form.vpn_client_x_eas, ((document.form.vpn_clientx_eas.value.indexOf(''+(openvpn_unit)) >= 0) ? "1" : "0"));
 
+	// Decode into editable format
+	openvpn_decodeKeys(0);
 	update_visibility();
 }
 
+function openvpn_decodeKeys(entities){
+	var expr;
+
+	if (entities == 1)
+		expr = new RegExp('&#62;','gm');
+	else
+		expr = new RegExp('>','gm');
+
+	document.getElementById('edit_vpn_crt_client1_static').value = document.getElementById('edit_vpn_crt_client1_static').value.replace(expr,"\r\n");
+	document.getElementById('edit_vpn_crt_client1_ca').value = document.getElementById('edit_vpn_crt_client1_ca').value.replace(expr,"\r\n");
+	document.getElementById('edit_vpn_crt_client1_key').value = document.getElementById('edit_vpn_crt_client1_key').value.replace(expr,"\r\n");
+	document.getElementById('edit_vpn_crt_client1_crt').value = document.getElementById('edit_vpn_crt_client1_crt').value.replace(expr,"\r\n");
+
+	document.getElementById('edit_vpn_crt_client2_static').value = document.getElementById('edit_vpn_crt_client2_static').value.replace(expr,"\r\n");
+	document.getElementById('edit_vpn_crt_client2_ca').value = document.getElementById('edit_vpn_crt_client2_ca').value.replace(expr,"\r\n");
+	document.getElementById('edit_vpn_crt_client2_key').value = document.getElementById('edit_vpn_crt_client2_key').value.replace(expr,"\r\n");
+	document.getElementById('edit_vpn_crt_client2_crt').value = document.getElementById('edit_vpn_crt_client2_crt').value.replace(expr,"\r\n");
+
+}
 
 function update_visibility(){
 
@@ -118,6 +205,9 @@ function update_visibility(){
 	showhide("client_userauth", (auth == "tls"));
 	showhide("client_hmac", (auth == "tls"));
 	showhide("client_custom_crypto_text", (auth == "custom"));
+	showhide("client_tls_crypto_text", (auth == "tls"));		//add by Viz
+	showhide("client_static_crypto_text", (auth == "secret"));		//add by Viz
+
 	showhide("client_username", userauth);
 	showhide("client_password", userauth);
 	showhide("client_useronly", userauth);
@@ -140,20 +230,126 @@ function update_visibility(){
 
 	showhide("vpn_client_cn", ((auth == "tls") && (tlsremote == 1)));
 	showhide("client_cn_label", ((auth == "tls") && (tlsremote == 1)));
+
+// Since instancing certs/keys would waste many KBs of nvram,
+// we instead handle these at the webui level, loading both instances.
+	showhide("edit_vpn_crt_client1_ca",(openvpn_unit == "1"));
+	showhide("edit_vpn_crt_client1_crt", (openvpn_unit == "1"));
+	showhide("edit_vpn_crt_client1_key",(openvpn_unit == "1"));
+	showhide("edit_vpn_crt_client1_static",(openvpn_unit == "1"));
+	showhide("edit_vpn_crt_client2_ca",(openvpn_unit == "2"));
+	showhide("edit_vpn_crt_client2_crt", (openvpn_unit == "2"));
+	showhide("edit_vpn_crt_client2_key",(openvpn_unit == "2"));
+	showhide("edit_vpn_crt_client2_static",(openvpn_unit == "2"));
+
 }
+
+function manualImport(_flag){
+	if(_flag){
+		document.getElementById("caFiled").style.display = "";
+		document.getElementById("manualFiled").style.display = "";
+	}
+	else{
+		document.getElementById("caFiled").style.display = "none";
+		document.getElementById("manualFiled").style.display = "none";
+	}
+}
+
+function set_Keys(auth){
+	cal_panel_block();
+	if(auth=='tls'){
+		$j("#tlsKey_panel").fadeIn(300);
+	}else if(auth=='secret'){
+		$j("#staticKey_panel").fadeIn(300);
+	}	
+}
+
+function cancel_Key_panel(auth){
+	if(auth == 'tls'){
+		this.FromObject ="0";
+		$j("#tlsKey_panel").fadeOut(300);	
+
+		if (openvpn_unit == 1) {
+			setTimeout("document.getElementById('edit_vpn_crt_client1_ca').value = '<% nvram_clean_get("vpn_crt_client1_ca"); %>';", 300);
+			setTimeout("document.getElementById('edit_vpn_crt_client1_crt').value = '<% nvram_clean_get("vpn_crt_client1_crt"); %>';", 300);
+			setTimeout("document.getElementById('edit_vpn_crt_client1_key').value = '<% nvram_clean_get("vpn_crt_client1_key"); %>';", 300);
+		} else {
+			setTimeout("document.getElementById('edit_vpn_crt_client2_ca').value = '<% nvram_clean_get("vpn_crt_client2_ca"); %>';", 300);
+			setTimeout("document.getElementById('edit_vpn_crt_client2_crt').value = '<% nvram_clean_get("vpn_crt_client2_crt"); %>';", 300);
+			setTimeout("document.getElementById('edit_vpn_crt_client2_key').value = '<% nvram_clean_get("vpn_crt_client2_key"); %>';", 300);
+		}
+	}else if(auth == 'secret'){
+			this.FromObject ="0";			
+			$j("#staticKey_panel").fadeOut(300);
+
+		if (openvpn_unit == 1)
+			setTimeout("document.getElementById('edit_vpn_crt_client1_static').value = '<% nvram_clean_get("vpn_crt_client1_static"); %>';", 300);
+		else
+			setTimeout("document.getElementById('edit_vpn_crt_client2_static').value = '<% nvram_clean_get("vpn_crt_client2_static"); %>';", 300);
+	}
+
+	setTimeout("openvpn_decodeKeys(1);", 400);
+}
+
+function save_keys(auth){
+	if(auth == 'tls'){
+		if (openvpn_unit == "1") {
+			document.form.vpn_crt_client1_ca.value = document.getElementById('edit_vpn_crt_client1_ca').value;
+			document.form.vpn_crt_client1_crt.value = document.getElementById('edit_vpn_crt_client1_crt').value;
+			document.form.vpn_crt_client1_key.value = document.getElementById('edit_vpn_crt_client1_key').value;
+		} else {
+			document.form.vpn_crt_client2_ca.value = document.getElementById('edit_vpn_crt_client2_ca').value;
+			document.form.vpn_crt_client2_crt.value = document.getElementById('edit_vpn_crt_client2_crt').value;
+			document.form.vpn_crt_client2_key.value = document.getElementById('edit_vpn_crt_client2_key').value;
+		}
+		cancel_Key_panel('tls');
+	}else if(auth == 'secret'){			
+		if (openvpn_unit == "1"){
+			document.form.vpn_crt_client1_static.value = document.getElementById('edit_vpn_crt_client1_static').value;
+		}else{
+			document.form.vpn_crt_client2_static.value = document.getElementById('edit_vpn_crt_client2_static').value;
+		}
+		cancel_Key_panel('secret');
+	}
+}
+
+function cal_panel_block(){
+	var blockmarginLeft;
+	if (window.innerWidth)
+		winWidth = window.innerWidth;
+	else if ((document.body) && (document.body.clientWidth))
+		winWidth = document.body.clientWidth;
+		
+	if (document.documentElement  && document.documentElement.clientHeight && document.documentElement.clientWidth){
+		winWidth = document.documentElement.clientWidth;
+	}
+
+	if(winWidth >1050){	
+		winPadding = (winWidth-1050)/2;	
+		winWidth = 1105;
+		blockmarginLeft= (winWidth*0.15)+winPadding;
+	}
+	else if(winWidth <=1050){
+		blockmarginLeft= (winWidth)*0.15+document.body.scrollLeft;	
+
+	}
+
+	$("tlsKey_panel").style.marginLeft = blockmarginLeft+"px";
+}
+
 
 function applyRule(){
 
 	showLoading();
 
 	if (service_state) {
-		document.form.action_script.value = "restart_vpnclient"+vpn_unit;
+		document.form.action_script.value = "restart_vpnclient"+openvpn_unit;
 	}
 
 	tmp_value = "";
 
 	for (var i=1; i < 3; i++) {
-		if (i == vpn_unit) {
+		if (i == openvpn_unit) {
 			if (getRadioValue(document.form.vpn_client_x_eas) == 1)
 				tmp_value += ""+i+",";
 		} else {
@@ -168,7 +364,8 @@ function applyRule(){
 }
 
 function change_vpn_unit(val){
-        FormActions("apply.cgi", "change_vpn_client_unit", "", "");
+		document.form.action_mode.value = "change_vpn_client_unit";
+		document.form.action = "apply.cgi";
         document.form.target = "";
         document.form.submit();
 }
@@ -183,6 +380,108 @@ function pass_checked(obj){
 </head>
 
 <body onload="initial();" onunLoad="return unload_body();">
+	<div id="tlsKey_panel"  class="contentM_qis" style="box-shadow: 3px 3px 10px #000;">
+		<table class="QISform_wireless" border=0 align="center" cellpadding="5" cellspacing="0">
+			<tr>
+				<div class="description_down">Keys and Certificates</div>
+			</tr>
+			<tr>
+				<div style="margin-left:30px; margin-top:10px;">
+					<p>Only paste the content of the <span style="color:#FFCC00;">----- BEGIN xxx ----- </span>/<span style="color:#FFCC00;"> ----- END xxx -----</span> block (including those two lines).
+					<p>Limit: 3499 characters per field
+				</div>
+				<div style="margin:5px;*margin-left:-5px;"><img style="width: 730px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+			</tr>			
+			<!--===================================Beginning of tls Content===========================================-->
+
+		    <tr>
+				<td valign="top">
+			   		<table width="700px" border="0" cellpadding="4" cellspacing="0">
+			        	<tbody>
+							<tr>
+					        	<td valign="top">
+									<table width="100%" id="page1_tls" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable">
+										<tr>
+											<th id="manualCa">Certificate Authority</th>
+											<td>
+												<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_client1_ca" name="edit_vpn_crt_client1_ca" cols="65" maxlength="3499"><% nvram_get("vpn_crt_client1_ca"); %></textarea>
+												<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_client2_ca" name="edit_vpn_crt_client2_ca" cols="65" maxlength="3499"><% nvram_get("vpn_crt_client2_ca"); %></textarea>
+											</td>
+										</tr>
+										<tr>
+											<th id="manualCert">Client Certificate</th>
+											<td>
+												<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_client1_crt" name="edit_vpn_crt_client1_crt" cols="65" maxlength="3499"><% nvram_get("vpn_crt_client1_crt"); %></textarea>
+												<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_client2_crt" name="edit_vpn_crt_client2_crt" cols="65" maxlength="3499"><% nvram_get("vpn_crt_client2_crt"); %></textarea>
+											</td>
+										</tr>
+										<tr>
+											<th id="manualKey">Client Key</th>
+											<td>
+												<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_client1_key" name="edit_vpn_crt_client1_key" cols="65" maxlength="3499"><% nvram_get("vpn_crt_client1_key"); %></textarea>
+												<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_client2_key" name="edit_vpn_crt_client2_key" cols="65" maxlength="3499"><% nvram_get("vpn_crt_client2_key"); %></textarea>
+											</td>
+										</tr>
+									</table>
+								</td>
+							</tr>						
+						</tbody>						
+	  				</table>
+					<div style="margin-top:5px;width:100%;text-align:center;">
+						<input class="button_gen" type="button" onclick="cancel_Key_panel('tls');" value="<#CTL_Cancel#>">
+						<input class="button_gen" type="button" onclick="save_keys('tls');" value="<#CTL_onlysave#>">	
+					</div>					
+				</td>
+			</tr>
+      <!--===================================Ending of tls Content===========================================-->			
+
+		</table>		
+	</div>
+
+<div id="staticKey_panel"   class="contentM_qis" style="box-shadow: 3px 3px 10px #000;">
+	<table class="QISform_wireless" border=0 align="center" cellpadding="5" cellspacing="0">
+		<tr>
+			<div class="description_down">Keys and Certificates</div>
+		</tr>
+		<tr>
+			<div style="margin-left:30px; margin-top:10px;">
+				<p>Only paste the content of the <span style="color:#FFCC00;">----- BEGIN xxx ----- </span>/<span style="color:#FFCC00;"> ----- END xxx -----</span> block (including those two lines).
+				<p>Limit: 3499 characters per field
+			</div>
+			<div style="margin:5px;*margin-left:-5px;"><img style="width: 730px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+		</tr>
+			<!--===================================Beginning of tls Content===========================================-->
+        <tr>
+			<td valign="top">
+			<table width="700px" border="0" cellpadding="4" cellspacing="0">
+				<tbody>
+                <tr>
+                	<td valign="top">
+					<table width="100%" id="page1_static" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable">
+						<tr>
+							<th>Static Key</th>
+							<td>
+								<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_client1_static" name="edit_vpn_crt_client1_static" cols="65" maxlength="3499"><% nvram_get("vpn_crt_client1_static"); %></textarea>
+								<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_client2_static" name="edit_vpn_crt_client2_static" cols="65" maxlength="3499"><% nvram_get("vpn_crt_client2_static"); %></textarea>
+							</td>
+						</tr>
+					</table>
+						<div style="margin-top:5px;width:100%;text-align:center;">
+							<input class="button_gen" type="button" onclick="cancel_Key_panel('secret');" value="<#CTL_Cancel#>">
+							<input class="button_gen" type="button" onclick="save_keys('secret');" value="<#CTL_onlysave#>">
+						</div>
+					</td>
+				</tr>
+				</tbody>
+		</table>
+		</td>
+	</tr>
+	      				      			
+</table>
+      <!--===================================Ending of tls Content===========================================-->			
+</div>
+
+
 <div id="TopBanner"></div>
 
 <div id="Loading" class="popup_bg"></div>
@@ -202,6 +501,14 @@ function pass_checked(obj){
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="vpn_clientx_eas" value="<% nvram_get("vpn_clientx_eas"); %>">
+<input type="hidden" name="vpn_crt_client1_ca" value="<% nvram_get("vpn_crt_client1_ca"); %>">
+<input type="hidden" name="vpn_crt_client1_crt" value="<% nvram_get("vpn_crt_client1_crt"); %>">
+<input type="hidden" name="vpn_crt_client1_key" value="<% nvram_get("vpn_crt_client1_key"); %>">
+<input type="hidden" name="vpn_crt_client1_static" value="<% nvram_get("vpn_crt_client1_static"); %>">
+<input type="hidden" name="vpn_crt_client2_ca" value="<% nvram_get("vpn_crt_client2_ca"); %>">
+<input type="hidden" name="vpn_crt_client2_crt" value="<% nvram_get("vpn_crt_client2_crt"); %>">
+<input type="hidden" name="vpn_crt_client2_key" value="<% nvram_get("vpn_crt_client2_key"); %>">
+<input type="hidden" name="vpn_crt_client2_static" value="<% nvram_get("vpn_crt_client2_static"); %>">
 
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
@@ -254,13 +561,13 @@ function pass_checked(obj){
 
 								$j('#radio_service_enable').iphoneSwitch(service_state,
 									 function() {
-										document.form.action_script.value = "start_vpnclient" + vpn_unit;
+										document.form.action_script.value = "start_vpnclient" + openvpn_unit;
 										parent.showLoading();
 										document.form.submit();
 										return true;
 									 },
 									 function() {
-										document.form.action_script.value = "stop_vpnclient" + vpn_unit;
+										document.form.action_script.value = "stop_vpnclient" + openvpn_unit;
 										parent.showLoading();
 										document.form.submit();
 										return true;
@@ -329,8 +636,9 @@ function pass_checked(obj){
 								<option value="secret" <% nvram_match("vpn_client_crypt","secret","selected"); %> >Static Key</option>
 								<option value="custom" <% nvram_match("vpn_client_crypt","custom","selected"); %> >Custom</option>
 							</select>
+							<span id="client_tls_crypto_text" onclick="set_Keys('tls');" style="text-decoration:underline;cursor:pointer;">Content modification of Keys & Certificates.</span>
+							<span id="client_static_crypto_text" onclick="set_Keys('secret');" style="text-decoration:underline;cursor:pointer;">Content modification of Keys & Certificates.</span>
 							<span id="client_custom_crypto_text">(Must be manually configured!)</span>
-
 			   			</td>
 					</tr>
 

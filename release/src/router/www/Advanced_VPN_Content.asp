@@ -445,8 +445,8 @@ function change_mode(obj){
 					document.getElementById('openvpn_export').style.display = "none";
 				else
 					document.getElementById('openvpn_export').style.display = "";	
-				if(service_state == false || service_state == '0')
-					document.getElementById('btn_export').style.display = "none";
+//				if(service_state == false || service_state == '0')
+//					document.getElementById('btn_export').style.display = "none";
 				if ('<% nvram_get("vpn_server_userpass_auth"); %>' == '0')
 					document.getElementById('openvpn_userauth_warn').style.display="";
 
@@ -457,12 +457,14 @@ function change_mode(obj){
 
 function check_vpn_server_state(){
 
-// Temporarily disable
-	return;
 // TODO: Allow the user to manually do a "quick OpenVPN setup", to be used if
 //       the user doesn't wish to manually configure everything himself.
 // TODO2: our easyrsa is set for interactive mode.  Provide a separate one
-//        for use by the httpd.
+//        for use by the fw for auto-generation.
+
+// For now skip displaying this as we aren't currently auto-starting the service,
+// therefore the certs aren't auto-generated.
+return;
 		if('<% nvram_get("VPNServer_enable"); %>' == '1' && '<% nvram_get("VPNServer_mode"); %>' == 'openvpn' && service_state == '0'){
 				document.getElementById('btn_export').style.display = "none";
 				document.getElementById('openvpn_initial').style.display = "";
@@ -470,6 +472,7 @@ function check_vpn_server_state(){
 		}		
 }
 
+	
 function update_vpn_server_state(){
 $j.ajax({
     		url: '/ajax_openvpn_server.asp',
@@ -604,7 +607,7 @@ function ExportOvpn(){
               									<input id="btn_export" class="button_gen" onclick="ExportOvpn();" type="button" value="Export" />
               									<div id="openvpn_initial" style="display:none;margin-left:5px;">
               											<span>              												
-              												 Initialinzing the settings of OpenVPN server now, please wait a few minutes to let the server to setup completed before VPN clients establish the connection.
+              												 Initializing the settings of OpenVPN server now, please wait a few minutes to let the server to setup completed before VPN clients establish the connection.
               												 <img id="initialing" src="images/InternetScan.gif" />
               											</span>              											
               									</div>

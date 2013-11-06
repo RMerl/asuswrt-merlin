@@ -184,7 +184,7 @@ function initial(){
 		check_vpn_conflict();
 	
 	}else if("<% nvram_get("VPNServer_mode"); %>" == "openvpn"){
-	
+
 		document.form.style.display = "none";
 		document.openvpn_form.style.display = "";
 		
@@ -206,8 +206,31 @@ function initial(){
 		setRadioValue(document.openvpn_form.vpn_server_x_eas, ((document.openvpn_form.vpn_serverx_eas.value.indexOf(''+(openvpn_unit)) >= 0) ? "1" : "0"));
 		setRadioValue(document.openvpn_form.vpn_server_x_dns, ((document.openvpn_form.vpn_serverx_dns.value.indexOf(''+(openvpn_unit)) >= 0) ? "1" : "0"));
 
+		// Decode into editable format
+		openvpn_decodeKeys(0);
 		update_visibility();
 	}
+}
+
+function openvpn_decodeKeys(entities){
+	var expr;
+
+	if (entities == 1)
+		expr = new RegExp('&#62;','gm');
+	else
+		expr = new RegExp('>','gm');
+
+	document.getElementById('edit_vpn_crt_server1_static').value = document.getElementById('edit_vpn_crt_server1_static').value.replace(expr,"\r\n");
+	document.getElementById('edit_vpn_crt_server1_ca').value = document.getElementById('edit_vpn_crt_server1_ca').value.replace(expr,"\r\n");
+	document.getElementById('edit_vpn_crt_server1_key').value = document.getElementById('edit_vpn_crt_server1_key').value.replace(expr,"\r\n");
+	document.getElementById('edit_vpn_crt_server1_crt').value = document.getElementById('edit_vpn_crt_server1_crt').value.replace(expr,"\r\n");
+	document.getElementById('edit_vpn_crt_server1_dh').value = document.getElementById('edit_vpn_crt_server1_dh').value.replace(expr,"\r\n");
+
+	document.getElementById('edit_vpn_crt_server2_static').value = document.getElementById('edit_vpn_crt_server2_static').value.replace(expr,"\r\n");
+	document.getElementById('edit_vpn_crt_server2_ca').value = document.getElementById('edit_vpn_crt_server2_ca').value.replace(expr,"\r\n");
+	document.getElementById('edit_vpn_crt_server2_key').value = document.getElementById('edit_vpn_crt_server2_key').value.replace(expr,"\r\n");
+	document.getElementById('edit_vpn_crt_server2_crt').value = document.getElementById('edit_vpn_crt_server2_crt').value.replace(expr,"\r\n");
+	document.getElementById('edit_vpn_crt_server2_dh').value = document.getElementById('edit_vpn_crt_server2_dh').value.replace(expr,"\r\n");
 }
 
 function openvpn_clientlist(){
@@ -536,11 +559,11 @@ function valid_IP(obj_name, obj_flag){
 function setEnd(){
 	var end="";
 	var pptpd_clients_subnet = document.form._pptpd_clients_start.value.split(".")[0]
-															+"."+document.form._pptpd_clients_start.value.split(".")[1]
-															+"."+document.form._pptpd_clients_start.value.split(".")[2]
-															+".";
-  var pptpd_clients_start_ip = parseInt(document.form._pptpd_clients_start.value.split(".")[3]);															
-  															
+								+"."+document.form._pptpd_clients_start.value.split(".")[1]
+								+"."+document.form._pptpd_clients_start.value.split(".")[2]
+								+".";
+	var pptpd_clients_start_ip = parseInt(document.form._pptpd_clients_start.value.split(".")[3]);															
+
 	$('pptpd_subnet').innerHTML = pptpd_clients_subnet;
 	
 	end = pptpd_clients_start_ip+9;
@@ -693,28 +716,29 @@ function cancel_Key_panel(auth){
 			else
 				setTimeout("document.getElementById('edit_vpn_crt_server2_static').value = '<% nvram_clean_get("vpn_crt_server2_static"); %>';", 300);
 	}
-	
+
+	setTimeout("openvpn_decodeKeys(1);", 400);
 }
 
 function save_keys(auth){
 	if(auth == 'tls'){
 		if (openvpn_unit == "1") {
-			document.openvpn_form.vpn_crt_server1_ca.value = document.getElementById('edit_vpn_crt_server1_ca').value.replace(/>/gm,"\r\n");
-			document.openvpn_form.vpn_crt_server1_crt.value = document.getElementById('edit_vpn_crt_server1_crt').value.replace(/>/gm,"\r\n");
-			document.openvpn_form.vpn_crt_server1_key.value = document.getElementById('edit_vpn_crt_server1_key').value.replace(/>/gm,"\r\n");
-			document.openvpn_form.vpn_crt_server1_dh.value = document.getElementById('edit_vpn_crt_server1_dh').value.replace(/>/gm,"\r\n");
+			document.openvpn_form.vpn_crt_server1_ca.value = document.getElementById('edit_vpn_crt_server1_ca');
+			document.openvpn_form.vpn_crt_server1_crt.value = document.getElementById('edit_vpn_crt_server1_crt');
+			document.openvpn_form.vpn_crt_server1_key.value = document.getElementById('edit_vpn_crt_server1_key');
+			document.openvpn_form.vpn_crt_server1_dh.value = document.getElementById('edit_vpn_crt_server1_dh');
 		}else{
-			document.openvpn_form.vpn_crt_server2_ca.value = document.getElementById('edit_vpn_crt_server2_ca').value.replace(/>/gm,"\r\n");
-			document.openvpn_form.vpn_crt_server2_crt.value = document.getElementById('edit_vpn_crt_server2_crt').value.replace(/>/gm,"\r\n");
-			document.openvpn_form.vpn_crt_server2_key.value = document.getElementById('edit_vpn_crt_server2_key').value.replace(/>/gm,"\r\n");
-			document.openvpn_form.vpn_crt_server2_dh.value = document.getElementById('edit_vpn_crt_server2_dh').value.replace(/>/gm,"\r\n");
+			document.openvpn_form.vpn_crt_server2_ca.value = document.getElementById('edit_vpn_crt_server2_ca');
+			document.openvpn_form.vpn_crt_server2_crt.value = document.getElementById('edit_vpn_crt_server2_crt');
+			document.openvpn_form.vpn_crt_server2_key.value = document.getElementById('edit_vpn_crt_server2_key');
+			document.openvpn_form.vpn_crt_server2_dh.value = document.getElementById('edit_vpn_crt_server2_dh');
 		}
 		cancel_Key_panel('tls');
 	}else if(auth == 'secret'){			
 		if (openvpn_unit == "1"){
-			document.openvpn_form.vpn_crt_server1_static.value = document.getElementById('edit_vpn_crt_server1_static').value.replace(/>/gm,"\r\n");
+			document.openvpn_form.vpn_crt_server1_static.value = document.getElementById('edit_vpn_crt_server1_static');
 		}else{
-			document.openvpn_form.vpn_crt_server2_static.value = document.getElementById('edit_vpn_crt_server2_static').value.replace(/>/gm,"\r\n");
+			document.openvpn_form.vpn_crt_server2_static.value = document.getElementById('edit_vpn_crt_server2_static');
 		}
 		cancel_Key_panel('secret');		
 	}
@@ -759,12 +783,12 @@ function cal_panel_block(){
 <div id="tlsKey_panel"  class="contentM_qis" style="box-shadow: 3px 3px 10px #000;">
 		<table class="QISform_wireless" border=0 align="center" cellpadding="5" cellspacing="0">
 			<tr>
-				<div class="description_down">Keys and Certification</div>
+				<div class="description_down">Keys and Certificates</div>
 			</tr>
 			<tr>
 				<div style="margin-left:30px; margin-top:10px;">
 					<p>Only paste the content of the <span style="color:#FFCC00;">----- BEGIN xxx ----- </span>/<span style="color:#FFCC00;"> ----- END xxx -----</span> block (including those two lines).
-					<p>Limit: 2999 characters per field
+					<p>Limit: 3499 characters per field
 				</div>
 				<div style="margin:5px;*margin-left:-5px;"><img style="width: 730px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
 			</tr>			
@@ -779,29 +803,29 @@ function cal_panel_block(){
 								<tr>
 									<th>Certificate Authority</th>
 									<td>
-										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server1_ca" name="edit_vpn_crt_server1_ca" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_server1_ca"); %></textarea>
-										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server2_ca" name="edit_vpn_crt_server2_ca" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_server2_ca"); %></textarea>
+										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server1_ca" name="edit_vpn_crt_server1_ca" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server1_ca"); %></textarea>
+										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server2_ca" name="edit_vpn_crt_server2_ca" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server2_ca"); %></textarea>
 									</td>
 								</tr>
 								<tr>
 									<th>Server Certificate</th>
 									<td>
-										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server1_crt" name="edit_vpn_crt_server1_crt" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_server1_crt"); %></textarea>
-										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server2_crt" name="edit_vpn_crt_server2_crt" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_server2_crt"); %></textarea>
+										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server1_crt" name="edit_vpn_crt_server1_crt" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server1_crt"); %></textarea>
+										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server2_crt" name="edit_vpn_crt_server2_crt" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server2_crt"); %></textarea>
 									</td>
 								</tr>
 								<tr>
 									<th>Server Key</th>
 									<td>
-										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server1_key" name="edit_vpn_crt_server1_key" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_server1_key"); %></textarea>
-										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server2_key" name="edit_vpn_crt_server2_key" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_server2_key"); %></textarea>
+										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server1_key" name="edit_vpn_crt_server1_key" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server1_key"); %></textarea>
+										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server2_key" name="edit_vpn_crt_server2_key" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server2_key"); %></textarea>
 									</td>
 								</tr>
 								<tr>
 									<th>Diffie Hellman parameters</th>
 									<td>
-										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server1_dh" name="edit_vpn_crt_server1_dh" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_server1_dh"); %></textarea>
-										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server2_dh" name="edit_vpn_crt_server2_dh" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_server2_dh"); %></textarea>
+										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server1_dh" name="edit_vpn_crt_server1_dh" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server1_dh"); %></textarea>
+										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server2_dh" name="edit_vpn_crt_server2_dh" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server2_dh"); %></textarea>
 									</td>
 								</tr>
 							</table>
@@ -823,12 +847,12 @@ function cal_panel_block(){
 <div id="staticKey_panel"   class="contentM_qis" style="box-shadow: 3px 3px 10px #000;">
 	<table class="QISform_wireless" border=0 align="center" cellpadding="5" cellspacing="0">
 		<tr>
-			<div class="description_down">Keys and Certification</div>
+			<div class="description_down">Keys and Certificates</div>
 		</tr>
 		<tr>
 			<div style="margin-left:30px; margin-top:10px;">
 				<p>Only paste the content of the <span style="color:#FFCC00;">----- BEGIN xxx ----- </span>/<span style="color:#FFCC00;"> ----- END xxx -----</span> block (including those two lines).
-				<p>Limit: 2999 characters per field
+				<p>Limit: 3499 characters per field
 			</div>
 			<div style="margin:5px;*margin-left:-5px;"><img style="width: 730px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
 		</tr>
@@ -1147,8 +1171,8 @@ function cal_panel_block(){
 												<option value="secret" <% nvram_match("vpn_server_crypt","secret","selected"); %> >Static Key</option>
 												<option value="custom" <% nvram_match("vpn_server_crypt","custom","selected"); %> >Custom</option>
 											</select>
-											<span id="server_tls_crypto_text" onclick="set_Keys('tls');" style="text-decoration:underline;cursor:pointer;">Content modification of Keys & Certification.</span>
-											<span id="server_static_crypto_text" onclick="set_Keys('secret');" style="text-decoration:underline;cursor:pointer;">Content modification of Keys & Certification.</span>
+											<span id="server_tls_crypto_text" onclick="set_Keys('tls');" style="text-decoration:underline;cursor:pointer;">Content modification of Keys & Certificates.</span>
+											<span id="server_static_crypto_text" onclick="set_Keys('secret');" style="text-decoration:underline;cursor:pointer;">Content modification of Keys & Certificates.</span>
 											<span id="server_custom_crypto_text">Must be manually configured.</span>
 										</td>
 									</tr>
