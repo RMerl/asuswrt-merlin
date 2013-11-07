@@ -82,7 +82,7 @@
 	padding-left:5px;
 	font-weight:bold;
 	line-height:140%;
-	color:#ffffff;	
+	color:#ffffff;
 }
 </style>
 <script>
@@ -128,14 +128,6 @@ var staticclist_row = dhcp_staticlists.split('&#60');
 var openvpn_clientlist_array ='<% nvram_get("vpn_server_ccd_val"); %>';
 var openvpn_unit = '<% nvram_get("vpn_server_unit"); %>';
 
-
-if (openvpn_unit == '1')
-	var service_state = (<% sysinfo("pid.vpnserver1"); %> > 0);
-else if (openvpn_unit == '2')
-	var service_state = (<% sysinfo("pid.vpnserver2"); %> > 0);
-else
-	var service_state = false;
-
 ciphersarray = [
 		["AES-128-CBC"],
 		["AES-192-CBC"],
@@ -160,7 +152,7 @@ ciphersarray = [
 
 function initial(){
 	show_menu();
-	check_dns_wins();	
+	check_dns_wins();
 
 	if("<% nvram_get("VPNServer_mode"); %>" == "pptpd"){
 		document.form.style.display = "";
@@ -182,28 +174,27 @@ function initial(){
 		document.form.pptpd_mppe_no.checked = (document.form.pptpd_mppe.value & 8);
 
 		check_vpn_conflict();
-	
+
 	}else if("<% nvram_get("VPNServer_mode"); %>" == "openvpn"){
 
 		document.form.style.display = "none";
 		document.openvpn_form.style.display = "";
-		
+
 		openvpn_clientlist();
-		
+
 		// Cipher list
 		free_options(document.openvpn_form.vpn_server_cipher);
 		currentcipher = "<% nvram_get("vpn_server_cipher"); %>";
 		add_option(document.openvpn_form.vpn_server_cipher, "Default","default",(currentcipher == "Default"));
 		add_option(document.openvpn_form.vpn_server_cipher, "None","none",(currentcipher == "none"));
-		
+
 		for(var i = 0; i < ciphersarray.length; i++){
 			add_option(document.openvpn_form.vpn_server_cipher,
 				ciphersarray[i][0], ciphersarray[i][0],
 				(currentcipher == ciphersarray[i][0]));
 		}
-		
+
 		// Set these based on a compound field
-		setRadioValue(document.openvpn_form.vpn_server_x_eas, ((document.openvpn_form.vpn_serverx_eas.value.indexOf(''+(openvpn_unit)) >= 0) ? "1" : "0"));
 		setRadioValue(document.openvpn_form.vpn_server_x_dns, ((document.openvpn_form.vpn_serverx_dns.value.indexOf(''+(openvpn_unit)) >= 0) ? "1" : "0"));
 
 		// Decode into editable format
@@ -303,10 +294,10 @@ function update_visibility(){
 	showhide("edit_vpn_crt_server2_crt", (openvpn_unit == "2"));
 	showhide("edit_vpn_crt_server2_key",(openvpn_unit == "2"));
 	showhide("edit_vpn_crt_server2_dh",(openvpn_unit == "2"));
-	
+
 	showhide("edit_vpn_crt_server1_static", (openvpn_unit == "1"));
 	showhide("edit_vpn_crt_server2_static", (openvpn_unit == "2"));
-	
+
 }
 
 function del_openvpnRow(r){
@@ -424,26 +415,26 @@ function pptpd_applyRule(){
 					document.form.pptpd_dns1.select();
 					return false;	
 			}
-					
+
 			if(!valid_IP_form(document.form.pptpd_dns1, 0) || !valid_IP_form(document.form.pptpd_dns2, 0))
 					return false;
-	}				
-	
+	}
+
 	if(document.form.pptpd_winsenable_x[0].checked == true){
 				document.form.pptpd_wins1.value = "";
 				document.form.pptpd_wins2.value = "";
 	}else{
-			if(document.form.pptpd_wins1.value == "" && document.form.pptpd_wins2.value == ""){				
+			if(document.form.pptpd_wins1.value == "" && document.form.pptpd_wins2.value == ""){
 					alert("<#JS_fieldblank#>");
 					document.form.pptpd_wins1.focus();
-					document.form.pptpd_wins1.select();					
+					document.form.pptpd_wins1.select();
 					return false;	
 			}		
 		
 			if(!valid_IP_form(document.form.pptpd_wins1, 0) || !valid_IP_form(document.form.pptpd_wins2, 0))
 					return false;
-	}		
-	
+	}
+
 	if(check_pptpd_clients_range() == false)
 		return false;
 
@@ -455,7 +446,7 @@ function pptpd_applyRule(){
 function openvpn_applyRule(){
 
 	showLoading();
-	
+
 	var client_num = $('openvpn_clientlist_table').rows.length;
 	var item_num = $('openvpn_clientlist_table').rows[0].cells.length;
 	var tmp_value = "";
@@ -480,20 +471,6 @@ function openvpn_applyRule(){
 
 	document.openvpn_form.vpn_server_ccd_val.value = tmp_value;
 
-
-	tmp_value = "";
-
-	for (var i=1; i < 3; i++) {
-		if (i == openvpn_unit) {
-			if (getRadioValue(document.openvpn_form.vpn_server_x_eas) == 1)
-				tmp_value += ""+i+",";
-		} else {
-			if (document.openvpn_form.vpn_serverx_eas.value.indexOf(''+(i)) >= 0)
-				tmp_value += ""+i+","
-		}
-	}	
-	document.openvpn_form.vpn_serverx_eas.value = tmp_value;
-	
 	tmp_value = "";
 
 	for (var i=1; i < 3; i++) {
@@ -504,7 +481,7 @@ function openvpn_applyRule(){
 			if (document.openvpn_form.vpn_serverx_dns.value.indexOf(''+(i)) >= 0)
 				tmp_value += ""+i+","
 		}
-	}	
+	}
 
 	if (tmp_value != document.openvpn_form.vpn_serverx_dns.value) {
 		document.openvpn_form.action_script.value += ";restart_dnsmasq";
@@ -536,8 +513,8 @@ function valid_IP(obj_name, obj_flag){
 			obj_name.focus();
 			return false;
 		}
-		
-		
+
+
 		if(ip_num > A_class_start && ip_num < A_class_end)
 			return true;
 		else if(ip_num > B_class_start && ip_num < B_class_end){
@@ -562,27 +539,27 @@ function setEnd(){
 								+"."+document.form._pptpd_clients_start.value.split(".")[1]
 								+"."+document.form._pptpd_clients_start.value.split(".")[2]
 								+".";
-	var pptpd_clients_start_ip = parseInt(document.form._pptpd_clients_start.value.split(".")[3]);															
+	var pptpd_clients_start_ip = parseInt(document.form._pptpd_clients_start.value.split(".")[3]);	
 
 	$('pptpd_subnet').innerHTML = pptpd_clients_subnet;
-	
+
 	end = pptpd_clients_start_ip+9;
 	if(end >254)	end = 254;
-	
+
 	if(!end)
 		document.form._pptpd_clients_end.value = "";
-	else	
+	else
 		document.form._pptpd_clients_end.value = end;
 }
 
 function check_vpn_conflict(){		//if conflict with LAN ip & DHCP ip pool & static
-	
+
 	var pptpd_clients_subnet = document.form._pptpd_clients_start.value.split(".")[0] + "." +
 				   document.form._pptpd_clients_start.value.split(".")[1] + "." +
 				   document.form._pptpd_clients_start.value.split(".")[2] + ".";
 	var pptpd_clients_start_ip = parseInt(document.form._pptpd_clients_start.value.split(".")[3]);
 	var pptpd_clients_end_ip = parseInt(document.form._pptpd_clients_end.value);
-	
+
   //LAN ip
   if(lan_ip_subnet == pptpd_clients_subnet 
   		&& lan_ip_end >= pptpd_clients_start_ip 
@@ -1067,8 +1044,6 @@ function cal_panel_block(){
                 				<div class="formfonttitle"><#BOP_isp_heart_item#> - <#vpn_Adv#></div>
                 				<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 								<div class="formfontdesc">
-									<p>Before starting the service make sure you properly configure it, including
-			   								the required key,<br> otherwise you will be unable to turn it on.	<!-- a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="Advanced_OpenVPN_Keys.asp">keys</a -->
 									<p><br>In case of problem, see the <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="Main_LogStatus_Content.asp">System Log</a> for any error message related to openvpn.
 									<p><br>Visit the OpenVPN <a style="font-weight: bolder; text-decoration:underline;" class="hyperlink" href="http://openvpn.net/index.php/open-source/downloads.html" target="_blank">Download</a> page to get the Windows client.
 								</div>
@@ -1083,55 +1058,19 @@ function cal_panel_block(){
 									<tr id="client_unit">
 										<th>Select server instance</th>
 										<td>
-			        				<select name="vpn_server_unit" class="input_option" onChange="change_vpn_unit(this.value);">
+											<select name="vpn_server_unit" class="input_option" onChange="change_vpn_unit(this.value);">
 												<option value="1" <% nvram_match("vpn_server_unit","1","selected"); %> >Server 1</option>
 												<option value="2" <% nvram_match("vpn_server_unit","2","selected"); %> >Server 2</option>
 											</select>
 			   							</td>
 									</tr>
-									<tr id="service_enable_button">
-										<th>Service state</th>
-										<td>
-											<div class="left" style="width:94px; float:left; cursor:pointer;" id="radio_service_enable"></div>
-											<script type="text/javascript">
-
-												$j('#radio_service_enable').iphoneSwitch(service_state,
-													function() {
-														document.form.action_script.value = "start_vpnserver"+openvpn_unit;
-														parent.showLoading();
-														document.form.submit();
-														return true;
-													},
-													function() {
-														document.form.action_script.value = "stop_vpnserver"+openvpn_unit;
-														parent.showLoading();
-														document.form.submit();
-														return true;
-													},
-													{
-														switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
-													}
-												);
-											</script>
-											<span>Warning: any unsaved change will be lost.</span>
-										</td>
-									</tr>
-
-									<tr>
-										<th>Start with WAN</th>
-										<td>
-											<input type="radio" name="vpn_server_x_eas" class="input" value="1"><#checkbox_Yes#>
-											<input type="radio" name="vpn_server_x_eas" class="input" value="0"><#checkbox_No#>
-										</td>
- 									</tr>
-
 									<tr>
 										<th>Interface Type</th>
-			        			<td>
-			       						<select name="vpn_server_if" class="input_option" onclick="update_visibility();">
-													<option value="tap" <% nvram_match("vpn_server_if","tap","selected"); %> >TAP</option>
-													<option value="tun" <% nvram_match("vpn_server_if","tun","selected"); %> >TUN</option>
-												</select>
+										<td>
+											<select name="vpn_server_if" class="input_option" onclick="update_visibility();">
+												<option value="tap" <% nvram_match("vpn_server_if","tap","selected"); %> >TAP</option>
+												<option value="tun" <% nvram_match("vpn_server_if","tun","selected"); %> >TUN</option>
+											</select>
 			   						</td>
 									</tr>
 
