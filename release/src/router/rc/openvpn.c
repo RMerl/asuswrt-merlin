@@ -554,6 +554,7 @@ void start_vpnserver(int serverNum)
 	int taskset_ret = -1;
 #endif
 	char nv1[32], nv2[32], nv3[32], fpath[128];
+	char nvstate[32];
 
 	sprintf(&buffer[0], "start_vpnserver%d", serverNum);
 	if (getpid() != 1) {
@@ -652,6 +653,8 @@ void start_vpnserver(int serverNum)
 	}
 
 	// Build and write config files
+	sprintf(nvstate, "vpn_server%d_state", serverNum);
+	nvram_set(nvstate, "2");	// Initializing
 	vpnlog(VPN_LOG_EXTRA,"Writing config file");
 	sprintf(&buffer[0], "/etc/openvpn/server%d/config.ovpn", serverNum);
 	fp = fopen(&buffer[0], "w");
@@ -964,6 +967,7 @@ void start_vpnserver(int serverNum)
 		sprintf(nv2, "vpn_crt_server%d_key", serverNum);
 		sprintf(nv3, "vpn_crt_server%d_crt", serverNum);
 		if( nvram_is_empty(nv1) || nvram_is_empty(nv2) || nvram_is_empty(nv3) ) {
+			nvram_set(nvstate, "3");	// Generating certs
 			sprintf(fpath, "/tmp/genvpncert.sh");
 			fp = fopen(fpath, "w");
 			if(fp) {
@@ -1037,6 +1041,7 @@ void start_vpnserver(int serverNum)
 				set_crt_parsed(&buffer[0], fpath);
 				fclose(fp);
 			}
+			nvram_set(nvstate, "2");	// Done creating
 		}
 		else {
 				sprintf(&buffer[0], "/etc/openvpn/server%d/ca.key", serverNum);
@@ -1107,6 +1112,7 @@ void start_vpnserver(int serverNum)
 		}
 		else
 		{	//generate dh param file
+			nvram_set(nvstate, "3");	// Generating certs
 			sprintf(fpath, "/etc/openvpn/server%d/dh.pem", serverNum);
 			eval("openssl", "dhparam", "-out", fpath, "512");
 			fp = fopen(fpath, "r");
@@ -1116,6 +1122,8 @@ void start_vpnserver(int serverNum)
 			}
 		}
 	}
+	nvram_set(nvstate, "2");	// Back to initializing
+
 	sprintf(&buffer[0], "vpn_server%d_hmac", serverNum);
 	if ( cryptMode == SECRET || (cryptMode == TLS && nvram_get_int(&buffer[0]) >= 0) )
 	{
@@ -1131,6 +1139,8 @@ void start_vpnserver(int serverNum)
 		}
 		else
 		{	//generate openvpn static key
+			nvram_set(nvstate, "3");	// Creating key
+
 			sprintf(fpath, "/etc/openvpn/server%d/static.key", serverNum);
 			eval("openvpn", "--genkey", "--secret", fpath);
 			fp = fopen(fpath, "r");
@@ -1138,6 +1148,8 @@ void start_vpnserver(int serverNum)
 				set_crt_parsed(&buffer[0], fpath);
 				fclose(fp);
 			}
+			nvram_set(nvstate, "2");	// Back to initializing
+
 		}
 
 		sprintf(&buffer[0], "vpn_crt_server%d_static", serverNum);
@@ -1168,6 +1180,8 @@ void start_vpnserver(int serverNum)
 	fprintf(fp_client, "nobind\n");
 	fclose(fp_client);
 	vpnlog(VPN_LOG_EXTRA,"Done writing client config file");
+
+	nvram_set(nvstate, "0");	// Done initializing
 
 #ifdef RTCONFIG_BCMARM
         if (cpu_num > 1)
