@@ -1,14 +1,14 @@
-Asuswrt-Merlin - build 3.0.0.4.374.34_2 (01-Nov-2013)
-=====================================================
+Asuswrt-Merlin - build 3.0.0.4.374.35 (xx-xxx-2013)
+===================================================
 
 About
 -----
-Asuswrt is the firmware developped by Asus for their newer routers.  They are 
+Asuswrt is the firmware developed by Asus for their newer routers.  They are 
 also porting it to some of their older models, like the RT-56U and RT-N16.  
 While originally based on Tomato-RT, Asus has disabled some of the 
 original Tomato features, and added others.
 
-Asuswrt-merlin is a customized version, which I am developping.
+Asuswrt-merlin is a customized version, which I am developing.
 The goal is to do some bugfixes and minor enhancements to Asus's firmware, 
 without targeting at full-blown advanced featuresets such as provided by 
 excellent projects like Tomato or DD-WRT.  Some of the features 
@@ -39,7 +39,7 @@ Features
 Here is a list of features that Asuswrt-merlin brings over the original firmware:
 
 System:
-   - Based on RT-AC66U 3.0.0.4.374_979 sources from Asus
+   - Based on RT-AC68U 3.0.0.4.374_339 sources from Asus
    - Various bugfixes and optimizations
    - Some components were updated to their latest versions, for improved stability
      and security
