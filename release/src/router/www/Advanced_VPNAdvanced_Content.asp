@@ -483,6 +483,7 @@ function openvpn_applyRule(){
 		}
 	}
 
+// TODO: Only restart if instance is running?
 	if (tmp_value != document.openvpn_form.vpn_serverx_dns.value) {
 		document.openvpn_form.action_script.value += ";restart_dnsmasq";
 		document.openvpn_form.vpn_serverx_dns.value = tmp_value;
@@ -673,7 +674,6 @@ function cancel_Key_panel(auth){
 	if(auth == 'tls'){
 			this.FromObject ="0";
 			$j("#tlsKey_panel").fadeOut(300);	
-
 			if (openvpn_unit == 1) {
 				setTimeout("document.getElementById('edit_vpn_crt_server1_ca').value = '<% nvram_clean_get("vpn_crt_server1_ca"); %>';", 300);
 				setTimeout("document.getElementById('edit_vpn_crt_server1_crt').value = '<% nvram_clean_get("vpn_crt_server1_crt"); %>';", 300);
@@ -700,24 +700,27 @@ function cancel_Key_panel(auth){
 function save_keys(auth){
 	if(auth == 'tls'){
 		if (openvpn_unit == "1") {
-			document.openvpn_form.vpn_crt_server1_ca.value = document.getElementById('edit_vpn_crt_server1_ca');
-			document.openvpn_form.vpn_crt_server1_crt.value = document.getElementById('edit_vpn_crt_server1_crt');
-			document.openvpn_form.vpn_crt_server1_key.value = document.getElementById('edit_vpn_crt_server1_key');
-			document.openvpn_form.vpn_crt_server1_dh.value = document.getElementById('edit_vpn_crt_server1_dh');
+			document.openvpn_form.vpn_crt_server1_ca.value = document.getElementById('edit_vpn_crt_server1_ca').value;
+			document.openvpn_form.vpn_crt_server1_crt.value = document.getElementById('edit_vpn_crt_server1_crt').value;
+			document.openvpn_form.vpn_crt_server1_key.value = document.getElementById('edit_vpn_crt_server1_key').value;
+			document.openvpn_form.vpn_crt_server1_dh.value = document.getElementById('edit_vpn_crt_server1_dh').value;
 		}else{
-			document.openvpn_form.vpn_crt_server2_ca.value = document.getElementById('edit_vpn_crt_server2_ca');
-			document.openvpn_form.vpn_crt_server2_crt.value = document.getElementById('edit_vpn_crt_server2_crt');
-			document.openvpn_form.vpn_crt_server2_key.value = document.getElementById('edit_vpn_crt_server2_key');
-			document.openvpn_form.vpn_crt_server2_dh.value = document.getElementById('edit_vpn_crt_server2_dh');
+			document.openvpn_form.vpn_crt_server2_ca.value = document.getElementById('edit_vpn_crt_server2_ca').value;
+			document.openvpn_form.vpn_crt_server2_crt.value = document.getElementById('edit_vpn_crt_server2_crt').value;
+			document.openvpn_form.vpn_crt_server2_key.value = document.getElementById('edit_vpn_crt_server2_key').value;
+			document.openvpn_form.vpn_crt_server2_dh.value = document.getElementById('edit_vpn_crt_server2_dh').value;
 		}
-		cancel_Key_panel('tls');
-	}else if(auth == 'secret'){			
+		this.FromObject ="0";
+		$j("#tlsKey_panel").fadeOut(300);	
+
+	}else if(auth == 'secret'){
 		if (openvpn_unit == "1"){
-			document.openvpn_form.vpn_crt_server1_static.value = document.getElementById('edit_vpn_crt_server1_static');
+			document.openvpn_form.vpn_crt_server1_static.value = document.getElementById('edit_vpn_crt_server1_static').value;
 		}else{
-			document.openvpn_form.vpn_crt_server2_static.value = document.getElementById('edit_vpn_crt_server2_static');
+			document.openvpn_form.vpn_crt_server2_static.value = document.getElementById('edit_vpn_crt_server2_static').value;
 		}
-		cancel_Key_panel('secret');		
+		this.FromObject ="0";			
+		$j("#staticKey_panel").fadeOut(300);
 	}
 
 }
