@@ -128,6 +128,13 @@ var staticclist_row = dhcp_staticlists.split('&#60');
 var openvpn_clientlist_array ='<% nvram_get("vpn_server_ccd_val"); %>';
 var openvpn_unit = '<% nvram_get("vpn_server_unit"); %>';
 
+if (openvpn_unit == '1')
+	var service_state = (<% sysinfo("pid.vpnserver1"); %> > 0);
+else if (openvpn_unit == '2')
+	var service_state = (<% sysinfo("pid.vpnserver2"); %> > 0);
+else
+	var service_state = false;
+
 ciphersarray = [
 		["AES-128-CBC"],
 		["AES-192-CBC"],
@@ -446,6 +453,10 @@ function pptpd_applyRule(){
 function openvpn_applyRule(){
 
 	showLoading();
+
+	if (service_state) {
+		document.form.action_script.value = "restart_vpnserver" + openvpn_unit;
+	}
 
 	var client_num = $('openvpn_clientlist_table').rows.length;
 	var item_num = $('openvpn_clientlist_table').rows[0].cells.length;
@@ -891,7 +902,7 @@ function cal_panel_block(){
 			<input type="hidden" name="modified" value="0">
 			<input type="hidden" name="action_mode" value="apply">
 			<input type="hidden" name="action_wait" value="5">
-			<input type="hidden" name="action_script" value="restart_vpnd">
+			<input type="hidden" name="action_script" value="">
 			<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 			<input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 			<input type="hidden" name="wl_ssid" value="<% nvram_get("wl_ssid"); %>">
