@@ -826,7 +826,7 @@ function cal_panel_block(){
       				</table>
 						<div style="margin-top:5px;width:100%;text-align:center;">
 							<input class="button_gen" type="button" onclick="cancel_Key_panel('tls');" value="<#CTL_Cancel#>">
-							<input class="button_gen" type="button" onclick="save_keys('tls');" value="<#CTL_onlysave#>">	
+							<input class="button_gen" type="button" onclick="save_keys('tls');" value="Ok">	
 						</div>					
           		</td>
       		</tr>
@@ -865,7 +865,7 @@ function cal_panel_block(){
 					</table>
 						<div style="margin-top:5px;width:100%;text-align:center;">
 							<input class="button_gen" type="button" onclick="cancel_Key_panel('secret');" value="<#CTL_Cancel#>">
-							<input class="button_gen" type="button" onclick="save_keys('secret');" value="<#CTL_onlysave#>">
+							<input class="button_gen" type="button" onclick="save_keys('secret');" value="Ok">
 						</div>
 					</td>
 				</tr>
@@ -902,7 +902,7 @@ function cal_panel_block(){
 			<input type="hidden" name="modified" value="0">
 			<input type="hidden" name="action_mode" value="apply">
 			<input type="hidden" name="action_wait" value="5">
-			<input type="hidden" name="action_script" value="">
+			<input type="hidden" name="action_script" value="restart_vpnd">
 			<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 			<input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 			<input type="hidden" name="wl_ssid" value="<% nvram_get("wl_ssid"); %>">
@@ -1030,7 +1030,7 @@ function cal_panel_block(){
 			<input type="hidden" name="next_host" value="">
 			<input type="hidden" name="modified" value="0">
 			<input type="hidden" name="action_mode" value="apply">
-			<input type="hidden" name="action_script" value="restart_vpnd">
+			<input type="hidden" name="action_script" value="">
 			<input type="hidden" name="action_wait" value="10">
 			<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 			<input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">			
@@ -1058,7 +1058,7 @@ function cal_panel_block(){
                 				<div class="formfonttitle"><#BOP_isp_heart_item#> - <#vpn_Adv#></div>
                 				<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 								<div class="formfontdesc">
-									<p><br>In case of problem, see the <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="Main_LogStatus_Content.asp">System Log</a> for any error message related to openvpn.
+									<p>In case of problem, see the <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="Main_LogStatus_Content.asp">System Log</a> for any error message related to openvpn.
 									<p><br>Visit the OpenVPN <a style="font-weight: bolder; text-decoration:underline;" class="hyperlink" href="http://openvpn.net/index.php/open-source/downloads.html" target="_blank">Download</a> page to get the Windows client.
 								</div>
 
