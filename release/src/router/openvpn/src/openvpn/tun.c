@@ -649,6 +649,13 @@ do_ifconfig (struct tuntap *tt,
       ifconfig_local = print_in_addr_t (tt->local, 0, &gc);
       ifconfig_remote_netmask = print_in_addr_t (tt->remote_netmask, 0, &gc);
 
+      //Sam.B	2013/10/31
+      if(current_addr(htonl(tt->local))) {
+          msg (M_WARN, "ifconfig addr '%s' conflicted", ifconfig_local);
+          update_nvram_status(ADDR_CONFLICTED);
+      }
+      //Sam.E	2013/10/31
+
       if ( tt->ipv6 && tt->did_ifconfig_ipv6_setup )
         {
 	  ifconfig_ipv6_local = print_in6_addr (tt->local_ipv6, 0, &gc);

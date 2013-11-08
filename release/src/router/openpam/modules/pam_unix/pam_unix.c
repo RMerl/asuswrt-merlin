@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 
-#include <pwd.h>
+#include <shadow.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -72,7 +72,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	const struct pam_message *msgp;
 	struct pam_response *resp;
 #endif
-	struct passwd *pwd;
+	struct spwd *spwd;
 	const char *user;
 	char *crypt_password, *password;
 	int pam_err, retry;
@@ -83,7 +83,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	/* identify user */
 	if ((pam_err = pam_get_user(pamh, &user, NULL)) != PAM_SUCCESS)
 		return (pam_err);
-	if ((pwd = getpwnam(user)) == NULL)
+	if ((spwd = getspnam(user)) == NULL)
 		return (PAM_USER_UNKNOWN);
 
 	/* get password */
@@ -119,9 +119,9 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		return (PAM_AUTH_ERR);
 
 	/* compare passwords */
-	if ((!pwd->pw_passwd[0] && (flags & PAM_DISALLOW_NULL_AUTHTOK)) ||
-	    (crypt_password = crypt(password, pwd->pw_passwd)) == NULL ||
-	    strcmp(crypt_password, pwd->pw_passwd) != 0)
+	if ((!spwd->sp_pwdp[0] && (flags & PAM_DISALLOW_NULL_AUTHTOK)) ||
+	    (crypt_password = crypt(password, spwd->sp_pwdp)) == NULL ||
+	    strcmp(crypt_password, spwd->sp_pwdp) != 0)
 		pam_err = PAM_AUTH_ERR;
 	else
 		pam_err = PAM_SUCCESS;

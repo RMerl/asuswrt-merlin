@@ -41,6 +41,10 @@
 #include <disk_share.h>
 #endif
 
+#ifdef RTCONFIG_BCMWL6A
+#include <etioctl.h>
+#endif
+
 #define SHELL "/bin/sh"
 
 static int fatalsigs[] = {
@@ -1150,6 +1154,10 @@ int init_nvram(void)
 	nvram_set("vpn_server2_state", "0");
 	nvram_set("vpn_client1_state", "0");
 	nvram_set("vpn_client2_state", "0");
+	nvram_set("vpn_server1_errno", "0");
+	nvram_set("vpn_server2_errno", "0");
+	nvram_set("vpn_client1_errno", "0");
+	nvram_set("vpn_client2_errno", "0");
 	nvram_set("vpn_upload_state", "");
 #endif
 
@@ -2037,8 +2045,6 @@ int init_nvram(void)
 #ifdef RTCONFIG_LED_BTN
 		nvram_set_int("AllLED", 1);
 #endif
-		nvram_set("0:mcsbw202gpo", "0xE8630000");
-		nvram_set("0:mcsbw402gpo", "0xE8630000");
 
 		break;
 
@@ -2237,9 +2243,7 @@ int init_nvram(void)
 #ifdef RTCONFIG_OPTIMIZE_XBOX
 		add_rc_support("optimize_xbox");
 #endif
-#ifdef RTAC66U
 		add_rc_support("WIFI_LOGO");
-#endif
 		break;
 
 	case MODEL_RTN14UHP:
@@ -2323,7 +2327,7 @@ int init_nvram(void)
 			set_wan_phy("");
 			for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
 				if(get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_LAN)
-					add_wan_phy("vlan3");
+					add_wan_phy("vlan2");
 				else if(get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_2G)
 					add_wan_phy("eth1");
 				else if(get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_WAN){
@@ -2331,6 +2335,8 @@ int init_nvram(void)
 						sprintf(wan_if, "vlan%s", nvram_safe_get("switch_wan0tagid"));
 						add_wan_phy(wan_if);
 					}
+					else if(get_wans_dualwan()&WANSCAP_LAN)
+						add_wan_phy("vlan1");
 					else
 						add_wan_phy("eth0");
 				}
@@ -2522,6 +2528,7 @@ int init_nvram(void)
 
 #ifdef RTCONFIG_OPENVPN
 	add_rc_support("openvpnd");
+	nvram_set("vpnc_proto", "disable");
 #endif
 
 #ifdef RTCONFIG_HTTPS
@@ -2563,6 +2570,7 @@ int init_nvram(void)
 
 #ifdef RTCONFIG_VPNC
 	add_rc_support("vpnc");
+	nvram_set("vpnc_proto", "disable");
 #endif
 
 #if RTCONFIG_TIMEMACHINE
@@ -2574,14 +2582,17 @@ int init_nvram(void)
 	nvram_set("apps_install_folder", "asusware.arm");
 	nvram_set("apps_ipkg_server", "http://nw-dlcdnet.asus.com/asusware/arm/stable");
 #else
-	if(nvram_match("apps_ipkg_old", "1"))
-		nvram_set("apps_ipkg_server", "http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT");
-	else if(!strcmp(get_productid(), "VSL-N66U")){
+	if(!strcmp(get_productid(), "VSL-N66U")){
 		nvram_set("apps_install_folder", "asusware.mipsbig");
 		nvram_set("apps_ipkg_server", "http://nw-dlcdnet.asus.com/asusware/mipsbig/stable");
 	}
-	else
-		nvram_set("apps_ipkg_server", "http://nw-dlcdnet.asus.com/asusware/mipsel/stable");
+	else{ // mipsel
+		nvram_set("apps_install_folder", "asusware");
+		if(nvram_match("apps_ipkg_old", "1"))
+			nvram_set("apps_ipkg_server", "http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT");
+		else
+			nvram_set("apps_ipkg_server", "http://nw-dlcdnet.asus.com/asusware/mipsel/stable");
+	}
 #endif
 #endif
 
@@ -2684,6 +2695,212 @@ int limit_page_cache_ratio(int ratio)
 	sprintf(p, "%d", ratio);
 	return f_write_string("/proc/sys/vm/pagecache_ratio", p, 0, 0);
 }
+
+#ifdef RTCONFIG_BCMWL6A
+#define ARPHRD_ETHER                    1 /* ARP Header */
+#define CTF_FA_DISABLED         0
+#define CTF_FA_BYPASS           1
+#define CTF_FA_NORMAL           2
+#define CTF_FA_SW_ACC           3
+#define FA_ON(mode)             (mode == CTF_FA_BYPASS || mode == CTF_FA_NORMAL)
+
+static int
+build_ifnames(char *type, char *names, int *size)
+{
+        char name[32], *next;
+        int len = 0;
+        int s;
+
+        /* open a raw scoket for ioctl */
+        if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0)
+                return -1;
+
+        foreach(name, type, next) {
+                struct ifreq ifr;
+                int i, unit;
+                char var[32], *mac;
+                unsigned char ea[ETHER_ADDR_LEN];
+
+                /* vlan: add it to interface name list */
+                if (!strncmp(name, "vlan", 4)) {
+                        /* append interface name to list */
+                        len += snprintf(&names[len], *size - len, "%s ", name);
+                        continue;
+                }
+
+                /* others: proceed only when rules are met */
+                for (i = 1; i <= DEV_NUMIFS; i ++) {
+                        /* ignore i/f that is not ethernet */
+                        ifr.ifr_ifindex = i;
+                        if (ioctl(s, SIOCGIFNAME, &ifr))
+                                continue;
+                        if (ioctl(s, SIOCGIFHWADDR, &ifr))
+                                continue;
+                        if (ifr.ifr_hwaddr.sa_family != ARPHRD_ETHER)
+                                continue;
+                        if (!strncmp(ifr.ifr_name, "vlan", 4))
+                                continue;
+                        /* wl: use unit # to identify wl */
+                        if (!strncmp(name, "wl", 2)) {
+                                if (wl_probe(ifr.ifr_name) ||
+                                    wl_ioctl(ifr.ifr_name, WLC_GET_INSTANCE, &unit, sizeof(unit)) ||
+                                    unit != atoi(&name[2]))
+                                        continue;
+                        }
+                        /* et/il: use mac addr to identify et/il */
+                        else if (!strncmp(name, "et", 2) || !strncmp(name, "il", 2)) {
+                                snprintf(var, sizeof(var), "%smacaddr", name);
+                                if (!(mac = nvram_get(var)) || !ether_atoe(mac, ea) ||
+                                    bcmp(ea, ifr.ifr_hwaddr.sa_data, ETHER_ADDR_LEN))
+                                        continue;
+                        }
+                        /* mac address: compare value */
+                        else if (ether_atoe(name, ea) &&
+                                !bcmp(ea, ifr.ifr_hwaddr.sa_data, ETHER_ADDR_LEN))
+                                ;
+                        /* others: ignore */
+                        else
+                                continue;
+                        /* append interface name to list */
+                        len += snprintf(&names[len], *size - len, "%s ", ifr.ifr_name);
+                }
+        }
+
+        close(s);
+
+        *size = len;
+        return 0;
+}
+
+/* Override the "0 5u" to "0 5" to backward compatible with old image */
+static void
+fa_override_vlan2ports()
+{
+        char port[] = "XXXX", *nvalue;
+        char *next, *cur, *ports, *u;
+        int len;
+
+        ports = nvram_get("vlan2ports");
+        nvalue = malloc(strlen(ports) + 2);
+        if (!nvalue) {
+                cprintf("Memory allocate failed!\n");
+                return;
+        }
+        memset(nvalue, 0, strlen(ports) + 2);
+
+        /* search last port include 'u' */
+        for (cur = ports; cur; cur = next) {
+                /* tokenize the port list */
+                while (*cur == ' ')
+                        cur ++;
+                next = strstr(cur, " ");
+                len = next ? next - cur : strlen(cur);
+                if (!len)
+                        break;
+                if (len > sizeof(port) - 1)
+                        len = sizeof(port) - 1;
+                strncpy(port, cur, len);
+                port[len] = 0;
+
+                /* prepare new value */
+                if ((u = strchr(port, 'u')))
+                        *u = '\0';
+                strcat(nvalue, port);
+                strcat(nvalue, " ");
+        }
+
+        /* Remove last " " */
+        len = strlen(nvalue);
+        if (len) {
+                nvalue[len-1] = '\0';
+                nvram_set("vlan2ports", nvalue);
+        }
+}
+
+static void
+fa_nvram_adjust()
+{
+        FILE *fp;
+        int fa_mode;
+        bool reboot = FALSE;
+
+        if (restore_defaults_g)
+                return;
+
+        if ((fp = fopen("/proc/fa", "r"))) {
+                /* FA is capable */
+                fclose(fp);
+
+                fa_mode = atoi(nvram_safe_get("ctf_fa_mode"));
+                switch (fa_mode) {
+                        case CTF_FA_BYPASS:
+                        case CTF_FA_NORMAL:
+                                break;
+                        default:
+                                fa_mode = CTF_FA_DISABLED;
+                                break;
+                }
+
+                if (FA_ON(fa_mode)) {
+                        char wan_ifnames[128];
+                        char wan_ifname[32], *next;
+                        int len, ret;
+
+                        cprintf("\nFA on.\n");
+
+                        /* Set et2macaddr, et2phyaddr as same as et0macaddr, et0phyaddr */
+                        if (!nvram_get("vlan2ports") || !nvram_get("wandevs"))  {
+                                cprintf("Insufficient envram, cannot do FA override\n");
+                                return;
+                        }
+
+                        /* adjusted */
+                        if (!strcmp(nvram_get("wandevs"), "vlan2") &&
+                            !strchr(nvram_get("vlan2ports"), 'u'))
+                            return;
+
+                        /* The vlan2ports will be change to "0 8u" dynamically by
+                         * robo_fa_imp_port_upd. Keep nvram vlan2ports unchange.
+                         */
+                        /* Override wandevs to "vlan2" */
+                        nvram_set("wandevs", "vlan2");
+                        /* build wan i/f list based on def nvram variable "wandevs" */
+                        len = sizeof(wan_ifnames);
+                        ret = build_ifnames("vlan2", wan_ifnames, &len);
+                        if (!ret && len) {
+                                /* automatically configure wan0_ too */
+                                nvram_set("wan_ifnames", wan_ifnames);
+                                nvram_set("wan0_ifnames", wan_ifnames);
+                                foreach(wan_ifname, wan_ifnames, next) {
+                                        nvram_set("wan_ifname", wan_ifname);
+                                        nvram_set("wan0_ifname", wan_ifname);
+                                        break;
+                                }
+                        }
+                        cprintf("Override FA nvram...\n");
+                        reboot = TRUE;
+                }
+                else {
+                        cprintf("\nFA off.\n");
+                }
+        }
+        else {
+                /* FA is not capable */
+                if (FA_ON(fa_mode)) {
+                        nvram_unset("ctf_fa_mode");
+                        cprintf("FA not supported...\n");
+                        reboot = TRUE;
+                }
+        }
+
+        if (reboot) {
+                nvram_commit();
+                cprintf("FA nvram overridden, rebooting...\n");
+                kill(1, SIGTERM);
+        }
+}
+#endif /* LINUX_2_6_36 */
+
 
 static void sysinit(void)
 {
@@ -2883,6 +3100,10 @@ static void sysinit(void)
 	init_syspara();// for system dependent part
 	init_nvram();  // for system indepent part after getting model	
 	restore_defaults(); // restore default if necessary 
+#ifdef RTCONFIG_BCMWL6A
+	/* Ajuest FA NVRAM variables */
+	fa_nvram_adjust();
+#endif
 #if defined(RTN14U)
 	nvram_unset("wl1_ssid");
 #endif
@@ -2915,6 +3136,7 @@ static void sysinit(void)
 				system("echo 2 > /proc/irq/163/smp_affinity");
 				system("echo 2 > /proc/irq/169/smp_affinity");
 			}
+			system("echo 2 > /proc/irq/111/smp_affinity");
 			system("echo 2 > /proc/irq/112/smp_affinity");
 		}
 #endif

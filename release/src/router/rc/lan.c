@@ -634,24 +634,24 @@ void wlconf_pre()
 #endif
 
 
-void apcli_start(void)          
-{       
-#ifdef RTCONFIG_RALINK     
+void apcli_start(void)
+{
+#ifdef RTCONFIG_RALINK
 //repeater mode :sitesurvey channel and apclienable=1
 	int ch;
 	char *aif;
 	if(atoi(nvram_safe_get("sw_mode"))==2) 
-	{   
-	   	aif=nvram_safe_get("wl0_ifname");	
+	{
+		aif=nvram_safe_get("wl0_ifname");
 		ch=site_survey_for_channel(0,aif, "1");
 		if(ch!=-1)
-		{   
+		{
 			doSystem("iwpriv apcli0 set Channel=%d", ch);
 			doSystem("iwpriv apcli0 set ApCliEnable=1");
 			fprintf(stderr,"##set channel=%d, enable apcli ..#\n",ch);
 		}	
 		else
-		   	fprintf(stderr,"## Can not find pap's ssid ##\n");
+			fprintf(stderr,"## Can not find pap's ssid ##\n");
 	}	
 #endif	
 }
@@ -752,6 +752,9 @@ void start_wl(void)
 #endif
 #endif
 #endif /* CONFIG_BCMWL5 */
+#ifdef RTCONFIG_USER_LOW_RSSI
+	init_wllc();
+#endif
 }
 
 void stop_wl(void)
@@ -945,21 +948,37 @@ void ipv6_sysconf(const char *ifname, const char *name, int value)
 
 void set_default_accept_ra(int flag)
 {
+#if 0
 	ipv6_sysconf("all", "accept_ra", flag ? 2 : 0);
 	ipv6_sysconf("default", "accept_ra", flag ? 2 : 0);
+#else
+	ipv6_sysconf("all", "accept_ra", flag ? 1 : 0);
+	ipv6_sysconf("default", "accept_ra", flag ? 1 : 0);
+#endif
+}
+
+void set_default_forwarding(int flag)
+{
+	ipv6_sysconf("all", "forwarding", flag ? 1 : 0);
+	ipv6_sysconf("default", "forwarding", flag ? 1 : 0);
 }
 
 void set_intf_ipv6_accept_ra(const char *ifname, int flag)
 {
+#if 0
 	ipv6_sysconf(ifname, "accept_ra", flag ? 2 : 0);
 	ipv6_sysconf(ifname, "forwarding", flag ? 2 : 0);
+#else
+	ipv6_sysconf(ifname, "accept_ra", flag ? 1 : 0);
+	ipv6_sysconf(ifname, "forwarding", 0);
+#endif
 }
 
-void set_intf_ipv6_dad(const char *ifname, int bridge, int flag)
+void set_intf_ipv6_dad(const char *ifname, int addbr, int flag)
 {
-	ipv6_sysconf(ifname, "accept_dad", flag ? 1 : 0);
+	ipv6_sysconf(ifname, "accept_dad", flag ? 2 : 0);
 	if (flag)
-		ipv6_sysconf(ifname, "dad_transmits", bridge ? 2 : 1);
+		ipv6_sysconf(ifname, "dad_transmits", addbr ? 2 : 1);
 }
 
 void enable_ipv6(const char *ifname)
@@ -1030,6 +1049,8 @@ ALL:
 			break;
 #endif
 		}
+
+		set_default_forwarding(1);
 	}
 	else set_default_accept_ra(0);
 }
@@ -1084,7 +1105,7 @@ void start_lan(void)
 #endif
 
 #ifdef RTCONFIG_LED_ALL
-	led_control(LED_ALL  , LED_ON);
+	led_control(LED_ALL, LED_ON);
 #endif
 
 #ifdef CONFIG_BCMWL5
@@ -1154,22 +1175,6 @@ void start_lan(void)
 						continue; /* Ignore disabled WL VIF */
 					}
 					wl_vif_hwaddr_set(ifname);
-				}
-#endif
-#ifdef RTCONFIG_IPV6
-				match = 0;
-				foreach (word, nvram_safe_get("wl_ifnames"), next) {
-					if (!strcmp(ifname, word))
-					{
-						match = 1;
-						break;
-					}
-				}
-
-				if (!match && !next)
-				{
-					set_intf_ipv6_accept_ra(ifname, 0);
-					set_intf_ipv6_dad(ifname, 0, 1);
 				}
 #endif
 				unit = -1; subunit = -1;
@@ -1333,6 +1338,7 @@ void start_lan(void)
 		ifconfig(lan_ifname, IFUP, nvram_default_get("lan_ipaddr"), nvram_default_get("lan_netmask"));
 
 #ifdef RTCONFIG_IPV6
+	set_intf_ipv6_dad(lan_ifname, 0, 1);
 	config_ipv6(ipv6_enabled() && is_routing_enabled(), 0);
 	start_ipv6();
 #endif
@@ -1493,6 +1499,7 @@ void stop_lan(void)
 #ifdef RTCONFIG_IPV6
 	stop_ipv6();
 	config_ipv6(ipv6_enabled() && is_routing_enabled(), 1);
+	set_intf_ipv6_dad(lan_ifname, 0, 0);
 #endif
 
 	if (module_loaded("ebtables")) {
@@ -2964,6 +2971,9 @@ void restart_wl(void)
 #endif
 #endif
 #endif /* CONFIG_BCMWL5 */
+#ifdef RTCONFIG_USER_LOW_RSSI
+	init_wllc();
+#endif
 }
 
 void lanaccess_mssid_ban(const char *limited_ifname)

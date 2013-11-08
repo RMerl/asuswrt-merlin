@@ -96,7 +96,11 @@ install: all
 	@install -D $(srcdir)/bin/smbpasswd $(INSTALLDIR)/usr/bin/smbpasswd
 	# @install -D $(srcdir)/bin/libsmbclient.so $(INSTALLDIR)/usr/lib/libsmbclient.so
 	@install -D $(srcdir)/bin/libbigballofmud.so.0 $(INSTALLDIR)/usr/lib/libbigballofmud.so.0
+ifeq ($(RTCONFIG_BCMARM),y)
+	@cp prebuilt.arm/lib/libresolv.so.0 $(INSTALLDIR)/usr/lib/libresolv.so.0
+else
 	@cp prebuilt/lib/libresolv.so.0 $(INSTALLDIR)/usr/lib/libresolv.so.0
+endif
 ###############################Charles Modify##########	
 
 	$(STRIP) -s $(INSTALLDIR)/usr/sbin/smbd

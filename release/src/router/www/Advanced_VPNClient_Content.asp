@@ -176,7 +176,16 @@ function Add_profile(){
 	$("cancelBtn").style.display = "";
 	$("cancelBtn_openvpn").style.display = "";
 	$j("#vpnsvr_setting").fadeIn(300);
-	check_openvpn_in_list();
+	if (vpnc_support == false){
+		tabclickhandler(2);
+		document.getElementById('pptpcTitle').style.display = "none";
+		document.getElementById('l2tpcTitle').style.display = "none";
+	}
+	if (openvpnd_support == false){
+		document.getElementById('opencTitle').style.display = "none";
+	}else{
+		check_openvpn_in_list();
+	}
 }
 
 function cancel_add_rule(){

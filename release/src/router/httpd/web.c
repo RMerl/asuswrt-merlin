@@ -4317,6 +4317,24 @@ int ej_shown_language_option(int eid, webs_t wp, int argc, char **argv){
 	return 0;
 }
 
+#ifdef  __CONFIG_NORTON__
+/* Trigger an NGA LiveUpdate (linux/netbsd - no support for ECOS) */
+static int
+nga_update(void)
+{
+	char *str = NULL;
+	int pid;
+
+	if ((str = file2str("/var/run/bootstrap.pid"))) {
+		pid = atoi(str);
+		free(str);
+		return kill(pid, SIGHUP);
+	}
+
+	return -1;
+}
+#endif /* __CONFIG_NORTON__ */
+
 static int
 apply_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 		char_t *url, char_t *path, char_t *query)
@@ -4620,6 +4638,17 @@ wps_finish:
                 websRedirect(wp, current_url);
         }
 #endif
+#ifdef  __CONFIG_NORTON__
+        /* Trigger an NGA LiveUpdate */
+	else if (!strcmp(action_mode, "NGAUpdate"))
+		websWrite(wp, "Invoking LiveUpdate...");
+		if (nga_update())
+			websWrite(wp, "error<br>");
+		else
+			websWrite(wp, "done<br>");
+	}
+#endif /* __CONFIG_NORTON__ */
+
 	return 1;
 }
 
@@ -5203,8 +5232,10 @@ do_vpnupload_post(char *url, FILE *stream, int len, char *boundary)
 		}
 		len -= strlen(post_buf);
 
-		if (!strncasecmp(post_buf, "------WebKitFormBoundary", 24))
-			break;
+		if(boundary) {
+			if (strstr(post_buf, boundary))
+				break;
+		}
 
 		fputs(post_buf, fifo);
 	}

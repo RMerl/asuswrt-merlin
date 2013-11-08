@@ -57,8 +57,6 @@
 #endif
 #endif
 
-extern void update_nvram_state(int st);
-
 /* Globals */
 unsigned int x_debug_level; /* GLOBAL */
 
@@ -411,7 +409,7 @@ assert_failed (const char *filename, int line)
 void
 out_of_memory (void)
 {
-  update_nvram_state(0);
+  update_nvram_status(EXIT_ERROR);
 
   fprintf (stderr, PACKAGE_NAME ": Out of Memory\n");
   exit (1);
@@ -706,9 +704,14 @@ openvpn_exit (const int status)
 
       if (status == OPENVPN_EXIT_STATUS_GOOD)
 	perf_output_results ();
-    }
 
-	update_nvram_state(0);
+	//Sam.B	2013/10/31
+      if(status)
+	update_nvram_status(EXIT_ERROR);
+      else
+	update_nvram_status(EXIT_GOOD);
+	//Sam.E	2013/10/31
+    }
 
   exit (status);
 }

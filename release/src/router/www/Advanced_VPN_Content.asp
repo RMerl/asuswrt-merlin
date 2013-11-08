@@ -22,6 +22,7 @@
 var $j = jQuery.noConflict();
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
+<% wanlink(); %>
 
 <% login_state_hook(); %>
 var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
@@ -69,6 +70,38 @@ function initial(){
 		$('wan_ctrl').style.display = "none";
 		$('dualwan_ctrl').style.display = "";	
 	}
+
+	valid_wan_ip();
+}
+
+//check DUT is belong to private IP.
+function valid_wan_ip() {
+        // test if WAN IP is a private IP.
+        var A_class_start = inet_network("10.0.0.0");
+        var A_class_end = inet_network("10.255.255.255");
+        var B_class_start = inet_network("172.16.0.0");
+        var B_class_end = inet_network("172.31.255.255");
+        var C_class_start = inet_network("192.168.0.0");
+        var C_class_end = inet_network("192.168.255.255");
+        
+        var ip_obj = wanlink_ipaddr();
+        var ip_num = inet_network(ip_obj);
+        var ip_class = "";
+
+        if(ip_num > A_class_start && ip_num < A_class_end)
+                ip_class = 'A';
+        else if(ip_num > B_class_start && ip_num < B_class_end)
+                ip_class = 'B';
+        else if(ip_num > C_class_start && ip_num < C_class_end)
+                ip_class = 'C';
+        else if(ip_num != 0){
+        				//Public IP								
+								return;
+        }
+				
+				document.getElementById("privateIP_notes").innerHTML = "The wireless router currently uses a private WAN IP address (192.168.x.x, 10,x,x,x, or 172.16.x.x). Please set DDNS service before initializing VPN server."
+				document.getElementById("privateIP_notes").style.display = "";
+				return;
 }
 
 function match_vpn_mode(){
@@ -709,8 +742,9 @@ function enable_openvpn(state){
 											</td>
 										</tr>
 									</table>
-
 									<br>
+									<div id="privateIP_notes" class="formfontdesc" style="display:none;color:#FFCC00;"></div>
+
 									<div id="PPTP_setting" style="display:none;">
 										<div class="formfontdesc"><#PPTP_desc#></div>
 										<div id="wan_ctrl" class="formfontdesc"><#PPTP_desc2#> <% nvram_get("wan0_ipaddr"); %></div>

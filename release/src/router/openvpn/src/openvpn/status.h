@@ -27,6 +27,32 @@
 
 #include "interval.h"
 
+//Sam.B	2013/10/31
+#define TYPEDEF_BOOL	//will skip in typedefs.h
+#include <unistd.h>
+#include <bcmnvram.h>
+#include "shared.h"
+
+#define EXIT_GOOD		0
+#define EXIT_ERROR		1
+#define ADDR_CONFLICTED		2
+#define ROUTE_CONFLICTED	3
+#define RUNNING			4
+
+#define ST_EXIT			0
+#define ST_INIT			1
+#define ST_RUNNING		2
+#define ST_ERROR		-1
+
+#define ERRNO_DEFAULT		0
+#define ERRNO_IP		1
+#define ERRNO_ROUTE		2
+
+void update_nvram_status(int flag);
+int current_addr(in_addr_t addr);
+int current_route(in_addr_t network, in_addr_t netmask);
+//Sam.E	2013/10/31
+
 /*
  * virtual function interface for status output
  */

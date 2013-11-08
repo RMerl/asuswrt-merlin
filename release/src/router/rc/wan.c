@@ -2034,6 +2034,7 @@ void wan6_up(const char *wan_ifname)
 
 void wan6_down(const char *wan_ifname)
 {
+	set_intf_ipv6_dad(wan_ifname, 0, 0);
 #if 0
 	stop_ecmh();
 #endif

@@ -487,7 +487,12 @@ struct nvram_tuple router_defaults[] = {
 	{ "ctf_disable_modem", 		"0"		},
 #endif
 #ifndef RTCONFIG_BCMARM
+#if defined(RTAC53U)
+	// RT-AC53U disable gro can get better usb performance
+	{ "gro_disable", 		"0"		},
+#else
 	{ "gro_disable", 		"1"		},
+#endif
 #else
 	{ "gro_disable",		"0"		},
 	{ "txworkq",			"1"		},
@@ -1158,7 +1163,6 @@ struct nvram_tuple router_defaults[] = {
 	{ "apps_ipkg_server", "" },
 	{ "apps_wget_timeout", "30" },
 	{ "apps_local_space", "/rom" },
-	{ "apps_install_folder", "asusware" },
 	{ "apps_swap_enable", "0" },
 	{ "apps_swap_threshold", "" }, // 72M
 	{ "apps_swap_file", ".swap" },
@@ -1395,6 +1399,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "vpn_server1_userpass_auth",	"0"		},
 	{ "vpn_server1_igncrt",		"1"		},
 	{ "vpn_server1_state",		"0"		},
+	{ "vpn_server1_errno",		"0"		},
 	{ "vpn_crt_server1_static",	""		},
 	{ "vpn_crt_server1_ca",		""		},
 	{ "vpn_crt_server1_ca_key",	""		},
@@ -1431,6 +1436,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "vpn_server2_userpass_auth",	"0"		},
 	{ "vpn_server2_igncrt",		"1"		},
 	{ "vpn_server2_state",		"0"		},
+	{ "vpn_server2_errno",		"0"		},
 	{ "vpn_crt_server2_static",	""		},
 	{ "vpn_crt_server2_ca",		""		},
 	{ "vpn_crt_server2_ca_key",	""		},
@@ -1474,6 +1480,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "vpn_client1_password",	""		},
 	{ "vpn_client1_useronly",	"0"		},
 	{ "vpn_client1_state",		"0"		},
+	{ "vpn_client1_errno",		"0"		},
 	{ "vpn_client2_poll",		"0"		},
 	{ "vpn_client2_if",		"tun"		},
 	{ "vpn_client2_bridge",		"1"		},
@@ -1507,6 +1514,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "vpn_client2_username",	""		},
 	{ "vpn_client2_password",	""		},
 	{ "vpn_client2_state",		"0"		},
+	{ "vpn_client2_errno",		"0"		},
 	{ "vpn_client_poll",		"0"		},
 	{ "vpn_client_if",		"tun"		},
 	{ "vpn_client_bridge",		"1"		},
@@ -1536,6 +1544,19 @@ struct nvram_tuple router_defaults[] = {
 	{ "vpn_client_password",	""		},
 	{ "vpn_client_useronly",	"0"		},
 #endif
+
+#ifdef  __CONFIG_NORTON__
+	{ "nga_lickey",			"0"		},
+	{ "nga_user",			"0"		},
+	{ "nga_pass",			"0"		},
+	{ "nga_devname",		"0"		},
+	{ "nga_ncw",			"0"		},
+	{ "nga_enable",			"0"		},
+	{ "nga_gact",			"0"		},
+	{ "NGA_MID",			""		},
+	{ "ngap_0",			""		},
+	{ "ngap_1",			""		},
+#endif /* __CONFIG_NORTON__ */
 
 #ifdef RTCONFIG_IPV6
 	// IPv6 parameters

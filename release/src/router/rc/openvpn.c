@@ -80,6 +80,11 @@ void start_vpnclient(int clientNum)
 		return;
 	}
 
+	sprintf(&buffer[0], "vpn_client%d_state", clientNum);
+	nvram_set(&buffer[0], "1");	//initializing
+	sprintf(&buffer[0], "vpn_client%d_errno", clientNum);
+	nvram_set(&buffer[0], "0");
+
 	// Determine interface
 	sprintf(&buffer[0], "vpn_client%d_if", clientNum);
 	if ( nvram_contains_word(&buffer[0], "tap") )
@@ -571,6 +576,11 @@ void start_vpnserver(int serverNum)
 		return;
 	}
 
+	sprintf(&buffer[0], "vpn_server%d_state", serverNum);
+	nvram_set(&buffer[0], "1");	//initializing
+	sprintf(&buffer[0], "vpn_server%d_errno", serverNum);
+	nvram_set(&buffer[0], "0");
+
 	// Determine interface type
 	sprintf(&buffer[0], "vpn_server%d_if", serverNum);
 	if ( nvram_contains_word(&buffer[0], "tap") )
@@ -733,12 +743,12 @@ void start_vpnserver(int serverNum)
 	sprintf(&buffer[0], "vpn_server%d_port", serverNum);
 	fprintf(fp, "port %d\n", nvram_get_int(&buffer[0]));
 
-	if(nvram_get_int("ddns_enable_x")) {	//need check real status?
+	if(nvram_get_int("ddns_enable_x"))
 		fprintf(fp_client, "remote %s %s\n", nvram_safe_get("ddns_hostname_x"), nvram_safe_get(&buffer[0]));
-		fprintf(fp_client, "float\n");
-	}
 	else
 		fprintf(fp_client, "remote %s %s\n", nvram_safe_get("wan0_ipaddr"), nvram_safe_get(&buffer[0]));
+
+	fprintf(fp_client, "float\n");
 
 
 	//cipher
@@ -905,7 +915,7 @@ void start_vpnserver(int serverNum)
 		sprintf(&buffer[0], "vpn_server%d_userpass_auth", serverNum);
 		if ( nvram_get_int(&buffer[0]) ) {
 			//authentication
-			fprintf(fp, "plugin /usr/lib/openvpn-plugin-auth-pam.so login\n");
+			fprintf(fp, "plugin /usr/lib/openvpn-plugin-auth-pam.so openvpn\n");
 			fprintf(fp_client, "auth-user-pass\n");
 
 			//ignore client certificate, but only if user/pass auth is enabled
