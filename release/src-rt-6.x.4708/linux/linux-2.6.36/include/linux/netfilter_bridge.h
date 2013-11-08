@@ -45,7 +45,6 @@ enum nf_br_hook_priorities {
 #define BRNF_NF_BRIDGE_PREROUTING	0x08
 #define BRNF_8021Q			0x10
 #define BRNF_PPPoE			0x20
-#define BRNF_BRIDGED_DNAT_SAME_BR	0x40
 
 /* Only used in br_forward.c */
 extern int nf_bridge_copy_header(struct sk_buff *skb);

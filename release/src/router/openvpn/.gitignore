@@ -12,6 +12,8 @@ images/Makefile
 .conf
 aclocal.m4
 Makefile
+Makefile.in
+config.h.in
 configure.h
 autom4te.cache
 config.h
@@ -19,3 +21,6 @@ libtool
 .libs
 src/openvpn/openvpn
 version.sh
+ltmain.sh
+tests/t_client.sh
+

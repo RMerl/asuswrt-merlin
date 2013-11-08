@@ -82,6 +82,10 @@ export CFLAGS += -D__CONFIG_WPS__
 #export CFLAGS += -DWFA_WPS_20_TESTBED
 endif
 
+ifeq ($(RTCONFIG_NORTON),y)
+export CFLAGS += -D__CONFIG_NORTON__
+endif
+
 #
 #
 #
@@ -377,6 +381,8 @@ obj-$(RTCONFIG_PUSH_EMAIL) += push_log
 ifeq ($(RTCONFIG_PUSH_EMAIL),y)
 PUSH_LOG=push_log
 endif
+
+obj-$(RTCONFIG_NORTON) += norton${BCMEX}
 
 #obj-y += lighttpd-1.4.28
 #obj-$(RTCONFIG_USB_WEBDAV) += lighttpd-1.4.29
@@ -780,9 +786,9 @@ ifneq ($(RTCONFIG_USB_EXTRAS),y)
 endif
 #	$(if $(RTCONFIG_CIFS),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/fs/cifs.*o $(PLATFORMDIR)/extras/ || true
 	@cp -f $(TARGETDIR)/lib/modules/*/kernel/fs/cifs.*o $(PLATFORMDIR)/extras/ || true
-	$(if $(RTCONFIG_BRCM_NAND_JFFS2),$(RTCONFIG_JFFS2),$(if $(RTCONFIG_JFFSV1),@mv,@cp -f),@mv) $(TARGETDIR)/lib/modules/*/kernel/fs/jffs2.*o $(PLATFORMDIR)/extras/ || true
-	$(if $(RTCONFIG_BRCM_NAND_JFFS2),$(RTCONFIG_JFFS2),$(if $(RTCONFIG_JFFSV1),@mv,@cp -f),@mv) $(TARGETDIR)/lib/modules/*/kernel/lib/zlib_*.*o $(PLATFORMDIR)/extras/ || true
-	$(if $(RTCONFIG_BRCM_NAND_JFFS2),$(RTCONFIG_JFFS2),$(if $(RTCONFIG_JFFSV1),@cp -f,@mv),@mv) $(TARGETDIR)/lib/modules/*/kernel/fs/jffs.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(or $(RTCONFIG_BRCM_NAND_JFFS2),$(RTCONFIG_JFFS2)),$(if $(RTCONFIG_JFFSV1),@mv,@cp -f),@mv) $(TARGETDIR)/lib/modules/*/kernel/fs/jffs2.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(or $(RTCONFIG_BRCM_NAND_JFFS2),$(RTCONFIG_JFFS2)),$(if $(RTCONFIG_JFFSV1),@mv,@cp -f),@mv) $(TARGETDIR)/lib/modules/*/kernel/lib/zlib_*.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(or $(RTCONFIG_BRCM_NAND_JFFS2),$(RTCONFIG_JFFS2)),$(if $(RTCONFIG_JFFSV1),@cp -f,@mv),@mv) $(TARGETDIR)/lib/modules/*/kernel/fs/jffs.*o $(PLATFORMDIR)/extras/ || true
 	[ ! -f $(TARGETDIR)/lib/modules/*/kernel/lib/* ] && rm -rf $(TARGETDIR)/lib/modules/*/kernel/lib || true
 	$(if $(RTCONFIG_L7),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/net/ipv4/netfilter/ipt_layer7.*o $(PLATFORMDIR)/extras/ || true
 	$(if $(RTCONFIG_L7),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/net/netfilter/xt_layer7.*o $(PLATFORMDIR)/extras/ || true
@@ -2378,26 +2384,29 @@ lzo-install: lzo
 
 openpam/stamp-h1:
 	cd openpam && ./autogen.sh && \
-	$(CONFIGURE) --without-doc
+	$(CONFIGURE) --without-doc --with-pam-unix
 	touch $@
 
 openpam: openpam/stamp-h1
 	$(MAKE) -C openpam
 
 openpam-install: openpam
-	install -D openpam/lib/libpam/.libs/libpam.so.2.0.0 $(INSTALLDIR)/openpam/usr/lib/libpam.so
-	$(STRIP) -s $(INSTALLDIR)/openpam/usr/lib/libpam.so
+	install -D openpam/lib/libpam/.libs/libpam.so.2.0.0 $(INSTALLDIR)/openpam/usr/lib/libpam.so.2
+	$(STRIP) -s $(INSTALLDIR)/openpam/usr/lib/libpam.so.2
+	install -D openpam/modules/pam_unix/.libs/pam_unix.so.2.0.0 $(INSTALLDIR)/openpam/usr/lib/pam_unix.so
+	$(STRIP) -s $(INSTALLDIR)/openpam/usr/lib/pam_unix.so
 
 openpam-clean:
-	-@$(MAKE) -C openpam clean
+	@[ ! -f openvpn/Makefile ] || $(MAKE) -C openpam clean
 	@rm -f openpam/stamp-h1
 
 openvpn/stamp-h1:
-	cd openvpn && CFLAGS="-O3 -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \
+	cd openvpn && ./autogen.sh && \
+	CFLAGS="-O3 -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \
 	LDFLAGS="$(EXTRALDFLAGS) -L$(TOP)/nvram$(BCMEX) -lnvram -L$(TOP)/shared -lshared -L$(TOP)/openssl -L$(TOP)/zlib -lz -L$(TOP)/lzo/src/.libs -L$(TOP)/openpam/lib/libpam/.libs -ffunction-sections -fdata-sections -Wl,--gc-sections" \
 	CPPFLAGS="-I$(TOP)/lzo/include -I$(TOP)/openssl/include -I$(TOP)/openpam/include -I$(TOP)/shared -I$(SRCBASE)/include" \
 	IPROUTE="/usr/sbin/ip" \
-	OPENSSL_CRYPTO_LIBS="-lcrypto" \
+	OPENSSL_CRYPTO_LIBS="-L$(TOP)/openssl -lcrypto" \
 	$(CONFIGURE) --prefix=  --enable-iproute2 \
 	--disable-debug --enable-management --disable-small \
 	--disable-selinux --disable-socks --enable-password-save \
@@ -2406,9 +2415,10 @@ openvpn/stamp-h1:
 	touch $@
 
 openvpn: openvpn/stamp-h1 shared openssl lzo openpam zlib
+	$(MAKE) -C $@
 
 openvpn-clean:
-	-@$(MAKE) -C openvpn clean
+	@[ ! -f openvpn/Makefile ] || $(MAKE) -C openvpn clean
 	@rm -f openvpn/stamp-h1
 
 openvpn-install: openvpn
@@ -2790,7 +2800,7 @@ expat-2.0.1-install: expat-2.0.1
 	$(STRIP) $(INSTALLDIR)/expat-2.0.1/usr/bin/xmlwf
 
 expat-2.0.1-clean:
-	-@$(MAKE) -C expat-2.0.1 clean
+	cd $(TOP)/expat-2.0.1 && make clean && cd ..
 	@rm -f expat-2.0.1/stamp-h1
 
 #avahi-0.6.31
@@ -2925,6 +2935,20 @@ ipset-install:
 	install ipset/*.so $(INSTALLDIR)/ipset/usr/lib/
 	$(STRIP) $(INSTALLDIR)/ipset/usr/lib/*.so
 	$(STRIP) $(INSTALLDIR)/ipset/usr/sbin/ipset
+
+NORTON_DIR := $(SRCBASE)/router/norton${BCMEX}
+
+.PHONY: norton${BCMEX} norton${BCMEX}-install norton${BCMEX}-clean
+
+
+norton${BCMEX}:
+	+$(MAKE) -C $(NORTON_DIR)
+
+norton${BCMEX}-install:
+	+$(MAKE) -C $(NORTON_DIR) install INSTALLDIR=$(INSTALLDIR)/norton${BCMEX}
+
+norton${BCMEX}-clean:
+	[ ! -f $(NORTEON_DIR)/Makefile ] || -@$(MAKE) -C $(NORTON_DIR) clean
 
 .PHONY : email-3.1.3 email-3.1.3-clean
 email-3.1.3:

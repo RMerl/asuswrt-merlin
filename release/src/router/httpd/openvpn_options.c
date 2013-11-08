@@ -436,7 +436,7 @@ add_option (char *p[], int line, int unit)
 		if (streq (p[1], INLINE_FILE_TAG) && p[2])
 		{
 			sprintf(buf, "vpn_crt_client%d_ca", unit);
-			nvram_set(buf, p[2]);
+			nvram_set(buf, strstr(p[2], "-----BEGIN"));
 		}
 		else
 		{
@@ -448,7 +448,7 @@ add_option (char *p[], int line, int unit)
 		if (streq (p[1], INLINE_FILE_TAG) && p[2])
 		{
 			sprintf(buf, "vpn_crt_client%d_crt", unit);
-			nvram_set(buf, p[2]);
+			nvram_set(buf, strstr(p[2], "-----BEGIN"));
 		}
 		else
 		{
@@ -460,7 +460,7 @@ add_option (char *p[], int line, int unit)
 		if (streq (p[1], INLINE_FILE_TAG) && p[2])
 		{
 			sprintf(buf, "vpn_crt_client%d_key", unit);
-			nvram_set(buf, p[2]);
+			nvram_set(buf, strstr(p[2], "-----BEGIN"));
 		}
 		else
 		{
@@ -472,7 +472,7 @@ add_option (char *p[], int line, int unit)
 		if (streq (p[1], INLINE_FILE_TAG) && p[2])
 		{
 			sprintf(buf, "vpn_crt_client%d_static", unit);
-			nvram_set(buf, p[2]);
+			nvram_set(buf, strstr(p[2], "-----BEGIN"));
 		}
 		else
 		{
@@ -490,7 +490,7 @@ add_option (char *p[], int line, int unit)
 		if (streq (p[1], INLINE_FILE_TAG) && p[2])
 		{
 			sprintf(buf, "vpn_crt_client%d_static", unit);
-			nvram_set(buf, p[2]);
+			nvram_set(buf, strstr(p[2], "-----BEGIN"));
 		}
 		else
 		{

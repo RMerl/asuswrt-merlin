@@ -484,9 +484,18 @@ function remove_url(){
 		menuL1_link[5]="";
 	}
 
-	if(!pptpd_support && !openvpnd_support){
+	if(!pptpd_support && !openvpnd_support &&!vpnc_support){
 		menuL2_title[6] = "";
 		menuL2_link[6] = "";
+	}else{
+		 if(!vpnc_support && !openvpnd_support){
+			tabtitle[5].splice(4, 1);
+			tablink[5].splice(4, 1);
+		}
+		 if(!pptpd_support && !openvpnd_support){
+			tabtitle[5].splice(1, 3);
+			tablink[5].splice(1, 3);
+		}
 	}	
 
 	if(!openvpnd_support){

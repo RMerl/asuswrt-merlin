@@ -42,6 +42,7 @@
 #include "manage.h"
 #include "win32.h"
 #include "options.h"
+#include "status.h"
 
 #include "memdbg.h"
 
@@ -1315,6 +1316,14 @@ add_route (struct route *r,
   is_local_route = local_route(r->network, r->netmask, r->gateway, rgi);
   if (is_local_route == LR_ERROR)
     goto done;
+
+  //Sam.B	2013/10/31
+  if(current_route(htonl(r->network), htonl(r->netmask))) {
+    msg(M_WARN, "Ignore conflicted routing rule: %s %s", network, netmask);
+    update_nvram_status(ROUTE_CONFLICTED);
+    goto done;
+  }
+  //Sam.E	2013/10/31
 
 #if defined(TARGET_LINUX)
 #ifdef ENABLE_IPROUTE

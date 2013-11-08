@@ -596,7 +596,7 @@ function manualSetup(){
 				<script type="text/javascript">
 						$j('#radio_dualwan_enable').iphoneSwitch(parent.wans_flag, 
 							 function() {
-								document.internetForm.wans_dualwan.value = "wan usb";
+								document.internetForm.wans_dualwan.value = wans_dualwan.split(" ")[0]+" usb";
 								document.internetForm.action_wait.value = '<% get_default_reboot_time(); %>';
 								document.internetForm.action_script.value = "reboot";
 								parent.showLoading();
@@ -604,7 +604,7 @@ function manualSetup(){
 								return true;
 							 },
 							 function() {
-								document.internetForm.wans_dualwan.value = "wan none";
+								document.internetForm.wans_dualwan.value = wans_dualwan.split(" ")[0]+" none";
 								document.internetForm.action_wait.value = '<% get_default_reboot_time(); %>';
 								document.internetForm.action_script.value = "reboot";
 								parent.showLoading();

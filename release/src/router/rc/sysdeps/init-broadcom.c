@@ -332,11 +332,79 @@ void generate_switch_para(void)
 		{					/* WAN L1 L2 L3 L4 CPU */
 			const int ports[SWPORT_COUNT] = { 0, 4, 3, 2, 1, 5 };
 			/* TODO: switch_wantag? */
+			int wancfg = (!nvram_match("switch_wantag", "none")&&!nvram_match("switch_wantag", "")) ? SWCFG_DEFAULT : cfg;
 
+#ifdef RTCONFIG_DUALWAN
+			int wan1cfg = nvram_get_int("wans_lanport");
+
+			nvram_unset("vlan1ports");
+			nvram_unset("vlan1hwname");
+			nvram_unset("vlan2ports");
+			nvram_unset("vlan2hwname");
+
+			// The first WAN port.
+			if(get_wans_dualwan()&WANSCAP_WAN){
+				switch_gen_config(wan, ports, wancfg, 1, (get_wans_dualwan()&WANSCAP_LAN && wan1cfg >= 1 && wan1cfg <= 4)?"":"u");
+				nvram_set("vlan1ports", wan);
+				if(get_wans_dualwan()&WANSCAP_LAN && wan1cfg >= 1 && wan1cfg <= 4)
+					nvram_set("vlan1hwname", "et0");
+			}
+
+			// The second WAN port.
+			if(get_wans_dualwan()&WANSCAP_LAN && wan1cfg >= 1 && wan1cfg <= 4){
+				wan1cfg += WAN1PORT1-1;
+				if(wancfg != SWCFG_DEFAULT){
+					gen_lan_ports(lan, ports, wancfg, wan1cfg, "*");
+					nvram_set("vlan0ports", lan);
+					gen_lan_ports(lan, ports, wancfg, wan1cfg, NULL);
+					nvram_set("lanports", lan);
+				}
+				else{
+					switch_gen_config(lan, ports, wan1cfg, 0, "*");
+					nvram_set("vlan0ports", lan);
+					switch_gen_config(lan, ports, wan1cfg, 0, NULL);
+					nvram_set("lanports", lan);
+				}
+
+				switch_gen_config(wan, ports, wan1cfg, 1, (get_wans_dualwan()&WANSCAP_WAN)?"":"u");
+				nvram_set("vlan2ports", wan);
+				if(get_wans_dualwan()&WANSCAP_WAN)
+					nvram_set("vlan2hwname", "et0");
+			}
+			else{
+				switch_gen_config(lan, ports, cfg, 0, "*");
+				nvram_set("vlan0ports", lan);
+				switch_gen_config(lan, ports, cfg, 0, NULL);
+				nvram_set("lanports", lan);
+			}
+
+			int unit;
+			char prefix[8], nvram_ports[16];
+
+			for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
+				memset(prefix, 0, 8);
+				sprintf(prefix, "%d", unit);
+
+				memset(nvram_ports, 0, 16);
+				sprintf(nvram_ports, "wan%sports", (unit == WAN_UNIT_FIRST)?"":prefix);
+
+				if(get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_WAN){
+					switch_gen_config(wan, ports, wancfg, 1, NULL);
+					nvram_set(nvram_ports, wan);
+				}
+				else if(get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_LAN){
+					switch_gen_config(wan, ports, wan1cfg, 1, NULL);
+					nvram_set(nvram_ports, wan);
+				}
+				else
+					nvram_unset(nvram_ports);
+			}
+#else
 			switch_gen_config(lan, ports, cfg, 0, "*");
 			switch_gen_config(wan, ports, cfg, 1, "u");
 			nvram_set("vlan0ports", lan);
 			nvram_set("vlan1ports", wan);
+#endif
 			switch_gen_config(lan, ports, cfg, 0, NULL);
 			switch_gen_config(wan, ports, cfg, 1, NULL);
 			nvram_set("lanports", lan);
@@ -1075,7 +1143,6 @@ void init_syspara(void)
 		case MODEL_RTN10P:
 		case MODEL_RTN10D1:
 		case MODEL_RTN10PV2:
-		case MODEL_RTAC53U:
 			if (!nvram_get("et0macaddr"))	// eth0, eth1
 				nvram_set("et0macaddr", "00:22:15:A5:03:00");
 			if (!nvram_get("0:macaddr"))	// eth2(5G)
@@ -1163,6 +1230,17 @@ void init_syspara(void)
 				nvram_set("odmpid", "");
 #endif
 			break;
+		case MODEL_RTAC53U:
+			if (!nvram_get("et0macaddr"))	//eth0, eth1
+				nvram_set("et0macaddr", "00:22:15:A5:03:00");
+			if (!nvram_get("0:macaddr"))	//eth2(5G)
+				nvram_set("0:macaddr", "00:22:15:A5:03:04");
+			nvram_set("sb/1/macaddr", nvram_safe_get("et0macaddr"));
+#ifdef RTCONFIG_ODMPID
+			if (nvram_match("odmpid", "ASUS") ||
+				!is_valid_hostname(nvram_safe_get("odmpid")))
+				nvram_set("odmpid", "");
+#endif
 		default:
 			if (!nvram_get("et0macaddr"))
 				nvram_set("et0macaddr", "00:22:15:A5:03:00");

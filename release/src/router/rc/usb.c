@@ -586,8 +586,10 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *type)
 		else if (strcmp(type, "vfat") == 0) {
 #ifdef RTCONFIG_BCMARM
 			flags |= MS_NOATIME;
-#endif
+			sprintf(options, "umask=0000,allow_utime=0022");
+#else
 			sprintf(options, "umask=0000,allow_utime=0000");
+#endif
 
 			if (nvram_invmatch("smbd_cset", ""))
 				sprintf(options + strlen(options), ",iocharset=%s%s", 
@@ -682,7 +684,7 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *type)
 			if(ret != 0 && !strncmp(type, "hfs", 3)){
 				if(nvram_invmatch("usb_hfs_opt", ""))
 					sprintf(options + strlen(options), "%s%s", options[0] ? "," : "", nvram_safe_get("usb_hfs_opt"));
-				sprintf(options + strlen(options), ",noatime,nodev" + (options[0] ? 0 : 1));
+				sprintf(options + strlen(options), ",noatime,nodev,sync" + (options[0] ? 0 : 1));
 
 				if (nvram_get_int("usb_fs_hfs")) {
 					ret = eval("mount", "-t", "ufsd", "-o", options, "-o", "force", mnt_dev, mnt_dir);
@@ -3301,10 +3303,12 @@ _dprintf("diskremove: pool_act=%s.\n", pool_act);
 _dprintf("diskremove: host=%d, channel=%d, id=%d, lun=%d.\n", host, channel, id, lun);
 				remove_scsi_device(host, channel, id, lun);
 			}
+#if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
 			else{
 _dprintf("diskremove: stop_app.\n");
 				stop_app();
 			}
+#endif
 
 			break;
 		}

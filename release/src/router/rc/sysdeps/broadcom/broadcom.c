@@ -245,6 +245,11 @@ setCountryCode_2G(const char *cc)
 			eval("nvram", "set", cmd );
 			puts(nvram_safe_get("0:ccode"));
 			break;
+		case MODEL_RTAC53U:
+			sprintf(cmd, "asuscfesb/1/ccode=%s", cc);
+			eval("nvram", "set", cmd );
+			puts(nvram_safe_get("sb/1/ccode"));
+			break;
 		default:
 			sprintf(cmd, "asuscferegulation_domain=%s", cc);
 			eval("nvram", "set", cmd );
@@ -273,6 +278,11 @@ setCountryCode_5G(const char *cc)
 			sprintf(cmd, "asuscfe1:ccode=%s", cc);
 			eval("nvram", "set", cmd );
 			puts(nvram_safe_get("1:ccode"));
+			break;
+		case MODEL_RTAC53U:
+			sprintf(cmd, "asuscfe0:ccode=%s", cc);
+			eval("nvram", "set", cmd );
+			puts(nvram_safe_get("0:ccode"));
 			break;
 		default:
 			sprintf(cmd, "asuscferegulation_domain_5G=%s", cc);
@@ -1490,6 +1500,9 @@ getCountryCode_2G(void)
 		case MODEL_RTN18U:
 			puts(nvram_safe_get("0:ccode"));
 			break;
+		case MODEL_RTAC53U:
+			puts(nvram_safe_get("sb/1/ccode"));
+			break;
 		default:
 			puts(nvram_safe_get("regulation_domain"));
 			break;
@@ -1509,6 +1522,9 @@ getCountryCode_5G(void)
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56U:
 			puts(nvram_safe_get("1:ccode"));
+			break;
+		case MODEL_RTAC53U:
+			puts(nvram_safe_get("0:ccode"));
 			break;
 		default:
 			puts(nvram_safe_get("regulation_domain_5G"));

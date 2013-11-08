@@ -1384,6 +1384,30 @@ void gen_macmode(int mac_filter[], int band)
 }
 //Ren.E
 
+static inline void __choose_mrate(char *prefix, int *mcast_phy, int *mcast_mcs)
+{
+	int phy = 3, mcs = 7;			/* HTMIX 65/150Mbps */
+	char tmp[128];
+
+	if (ipv6_enabled() && nvram_get_int("ipv6_radvd")) {
+		if (!strncmp(prefix, "wl0", 3)) {
+			phy = 2; mcs = 2;	/* 2G: OFDM 12Mbps */
+		} else {
+			phy = 3; mcs = 1;	/* 5G: HTMIX 13/30Mbps */
+		}
+	}
+
+	if (nvram_match(strcat_r(prefix, "nmode_x", tmp), "2") ||		/* legacy mode */
+	    strstr(nvram_safe_get(strcat_r(prefix, "crypto", tmp)), "tkip"))	/* tkip */
+	{
+		/* In such case, choose OFDM instead of HTMIX */
+		phy = 2; mcs = 4;		/* OFDM 24Mbps */
+	}
+
+	*mcast_phy = phy;
+	*mcast_mcs = mcs;
+}
+
 int gen_ralink_config(int band, int is_iNIC)
 {
 	FILE *fp;
@@ -1404,7 +1428,7 @@ int gen_ralink_config(int band, int is_iNIC)
 	int j;
 	char *nv, *nvp, *b;
 	int wl_key_type[MAX_NO_MSSID];
-	int mcast_phy, mcast_mcs;
+	int mcast_phy = 0, mcast_mcs = 0;
 	int mac_filter[MAX_NO_MSSID];
 #if defined(RTAC52U)
 	int VHTBW_MAX = 0;
@@ -3235,8 +3259,8 @@ int gen_ralink_config(int band, int is_iNIC)
 	i = nvram_get_int(strcat_r(prefix, "mrate_x", tmp));
 next_mrate:
 	switch (i++) {
-	case 0: /* HTMIX 65/150Mbps */
-		mcast_phy = 3, mcast_mcs = 7;
+	case 0: /* Choose multicast rate base on mode, encryption type, and IPv6 is enabled or not. */
+		__choose_mrate(prefix, &mcast_phy, &mcast_mcs);
 		break;
 	case 1: /* Legacy CCK 1Mbps */
 		mcast_phy = 1, mcast_mcs = 0;

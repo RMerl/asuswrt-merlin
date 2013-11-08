@@ -418,6 +418,10 @@ void create_passwd(void)
 	create_custom_passwd();
 #endif
 #ifdef RTCONFIG_OPENVPN
+	mkdir_if_none("/etc/pam.d");
+	f_write_string("/etc/pam.d/openvpn",
+		"auth required pam_unix.so\n",
+		0, 0644);
 	create_openvpn_passwd();
 #endif
 
@@ -600,6 +604,12 @@ void start_dnsmasq(int force)
 		dmresolv,
 		lan_ifname,
 		nvram_get_int("dns_minport") ? : 4096);
+
+#ifdef  __CONFIG_NORTON__
+	/* TODO: dnsmasq doesn't support a single hostname across multiple interfaces */
+	if (atoi(nvram_safe_get("nga_enable")))
+		fprintf(fp, "interface-name=norton.local,%s ", nvram_safe_get("lan_ifname"));
+#endif /* __CONFIG_NORTON__ */
 
 #ifdef RTCONFIG_YANDEXDNS
 	/* default Yandex.DNS server for clients */
@@ -1161,9 +1171,9 @@ void start_radvd(void)
 		use_custom_config("radvd.conf", "/etc/radvd.conf");
 
 		chmod("/etc/radvd.conf", 0400);
-
+#if 0
 		f_write_string("/proc/sys/net/ipv6/conf/all/forwarding", "1", 0, 0);
-
+#endif
 		// Start radvd
 		argc = 1;
 		argv[argc++] = "-u";
@@ -1194,8 +1204,9 @@ void stop_radvd(void)
 
 	pid_radvd = -1;
 	killall_tk("radvd");
-
+#if 0
 	f_write_string("/proc/sys/net/ipv6/conf/all/forwarding", "0", 0, 0);
+#endif
 }
 
 void stop_dhcp6s(void)
@@ -3044,10 +3055,34 @@ void stop_mdns()
 
 #endif
 
+#ifdef  __CONFIG_NORTON__
+
+int start_norton(void)
+{
+	eval("/opt/nga/init/bootstrap.sh", "start", "rc");
+
+	return 0;
+}
+
+int stop_norton(void)
+{
+	int ret;
+
+	ret = eval("/opt/nga/init/bootstrap.sh", "stop", "rc");
+
+	return ret;
+}
+
+#endif /* __CONFIG_NORTON__ */
+
 int
 start_services(void)
 {
 	_dprintf("%s %d\n", __FUNCTION__, __LINE__);	// tmp test
+
+#ifdef  __CONFIG_NORTON__
+	start_norton();
+#endif /* __CONFIG_NORTON__ */
 
 	start_telnetd();
 #ifdef RTCONFIG_SSH
@@ -3229,6 +3264,10 @@ stop_services(void)
 	stop_sshd();
 #endif
 	stop_telnetd();
+
+#ifdef  __CONFIG_NORTON__
+	stop_norton();
+#endif /* __CONFIG_NORTON__ */
 }
 
 // 2008.10 magic 
@@ -4613,7 +4652,9 @@ check_ddr_done:
 		int openvpn_unit = nvram_get_int("vpn_server_unit");
 #endif
 		if (action & RC_SERVICE_STOP){
+#if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
 			stop_pptpd();
+#endif
 #if defined(RTCONFIG_OPENVPN)
 			stop_vpnserver(openvpn_unit);
 #endif
@@ -4623,10 +4664,14 @@ check_ddr_done:
 #if defined(RTCONFIG_OPENVPN)
 				stop_vpnserver(openvpn_unit);
 #endif
+#if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
 				start_pptpd();
+#endif
                                 start_firewall(wan_primary_ifunit(), 0);
 			}else{	//openvpn
+#if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
 				stop_pptpd();
+#endif
 #if defined(RTCONFIG_OPENVPN)
 				start_vpnserver(openvpn_unit);
 #endif
