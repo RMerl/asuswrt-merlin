@@ -497,11 +497,7 @@ function check_vpn_server_state(){
 
 		if('<% nvram_get("VPNServer_mode"); %>' == 'openvpn' && openvpn_enabled == '1' && service_state != '2'){
 				document.getElementById('btn_export').style.display = "none";
-				if (service_state == 3) {
-					document.getElementById('openvpn_initial').style.display = "";
-				} else {
-					document.getElementById('openvpn_initial').style.display = "none";
-				}
+				document.getElementById('openvpn_initial').style.display = "";
 				update_vpn_server_state();
 		}
 }
@@ -520,6 +516,7 @@ function update_vpn_server_state(){
 
 			success: function(){
 				if(vpnd_state == '1'){
+					// Initializing
 					setTimeout("update_vpn_server_state();", 1000);
 
 				}else if(vpnd_state == '0') {
@@ -531,12 +528,17 @@ function update_vpn_server_state(){
 					}
 					setTimeout("update_vpn_server_state();", 1000);
 
+				}else if(vpnd_state == '-1') {
+					// openvpn failed with an error code
+					document.getElementById('openvpn_failed').style.display = "";
+					return;
+
 				}else{	// OpenVPN server ready , vpn_serverX_state==2
 					setTimeout("location.href='Advanced_VPN_Content.asp';", 1000);
-						return;
-						}
+					return;
 				}
-			});	
+			}
+	});	
 }
 
 function ExportOvpn(){
@@ -645,7 +647,7 @@ function enable_openvpn(state){
 												<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden;">
 												<script type="text/javascript">
 
-													$j('#openvpn_service_enable').iphoneSwitch((openvpn_enabled && service_state),
+													$j('#openvpn_service_enable').iphoneSwitch((openvpn_enabled && (service_state==2)),
 														function() {
 															enable_openvpn(1);
 															document.form.action_script.value = "start_vpnserver"+openvpn_unit;
