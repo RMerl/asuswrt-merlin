@@ -161,7 +161,7 @@ function initial()
 	currentiface = "<% nvram_get("vpn_client_if"); %>";
 	add_option(document.form.vpn_client_if_x, "TUN","tun",(currentiface.indexOf("tun") != -1));
 	add_option(document.form.vpn_client_if_x, "TAP","tap",(currentiface.indexOf("tap") != -1));
-		   			
+
 	for(var i = 0; i < ciphersarray.length; i++){
 		add_option(document.form.vpn_client_cipher,
 			ciphersarray[i][0], ciphersarray[i][0],
@@ -200,7 +200,7 @@ function update_visibility(){
 
 	fw = document.form.vpn_client_firewall.value;
 	auth = document.form.vpn_client_crypt.value;
-	iface = document.form.vpn_client_if.value;
+	iface = document.form.vpn_client_if_x.value;
 	bridge = getRadioValue(document.form.vpn_client_bridge);
 	nat = getRadioValue(document.form.vpn_client_nat);
 	hmac = document.form.vpn_client_hmac.value;
@@ -650,8 +650,6 @@ function ovpnFileChecker(){
 						<th>Interface Type</th>
 			        		<td>
 			       				<select name="vpn_client_if_x"  onclick="update_visibility();" class="input_option">
-								<option value="tap" <% nvram_match("vpn_client_if","tap","selected"); %> >TAP</option>
-								<option value="tun" <% nvram_match("vpn_client_if","tun","selected"); %> >TUN</option>
 							</select>
 			   			</td>
 					</tr>
