@@ -1,0 +1,27 @@
+These are instructions that should get the build environment functional on a standard ubuntu install. You should simply enter the commands below to get everything set up. Commands assume you are in the home folder but should be easy to modify. Currently testing with Ubuntu 64 bit 13.10
+
+Install Required Packages:
+sudo apt-get install build-essential libncurses5 libncurses5-dev m4 bison gawk flex libstdc++6-4.4-dev g++-4.4-multilib g++ git gitk zlib1g-dev autoconf autopoint libtool shtool autogen mtd-utils gcc-multilib gconf-editor lib32z1-dev pkg-config gperf libssl-dev libxml2-dev libelf1:i386 automake1.1 automake1.9 lib32z1 lib32ncurses5 lib32bz2-1.0 intltool g++-4.8-multilib lib32stdc++-4.8-dev libapr1 libaprutil1 libogg-dev libserf1 libsvn1 libx32stdc++-4.8-dev libx32stdc++6
+
+Configure automake since certain versions are incompatible:
+sudo update-alternatives --config automake
+select automake-1.9
+
+Sync the repo from git:
+git clone https://github.com/RMerl/asuswrt-merlin.git
+
+Setting up paths here(assuming you are in the home folder)
+Link the toolchain path:
+sudo ln -s $HOME/asuswrt-merlin/tools/brcm /opt/brcm && sudo ln -s $HOME/asuswrt-merlin/release/src-rt-6.x.4708/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3 /opt/brcm-arm
+
+Export Paths(run every time or make permenant):
+export PATH=$PATH:/opt/brcm/hndtools-mipsel-linux/bin:/opt/brcm/hndtools-mipsel-uclibc/bin:/opt/brcm-arm/bin
+
+Switch to the ARM Directory:
+cd $HOME/asuswrt-merlin/release/src-rt-6.x.4708/
+
+Make for the rt-ac68u:
+make rt-ac68u
+
+Hard reset everything to git version:
+git clean -fdxq && git reset --hard

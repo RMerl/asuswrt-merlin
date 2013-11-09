@@ -111,7 +111,7 @@ ifeq ($(CONFIG_LINUX26),y)
 ifeq ($(RTCONFIG_BCMWL6),y)
 ifneq ($(RTCONFIG_BCMARM),y)
 # e.g. RT-AC66U
-export KERNELCC := /opt/brcm/K26/hndtools-mipsel-linux-uclibc-4.2.3/bin/mipsel-linux-uclibc-gcc
+export KERNELCC := mipsel-linux-uclibc-gcc
 else # RTCONFIG_BCMARM = y
 export KERNELCC := $(CC)
 endif
@@ -125,7 +125,7 @@ endif
 ifeq ($(RTCONFIG_BCMWL6),y)
 ifneq ($(RTCONFIG_BCMARM),y)
 # e.g. RT-AC66U
-export KERNELLD := /opt/brcm/K26/hndtools-mipsel-linux-uclibc-4.2.3/bin/mipsel-linux-uclibc-ld
+export KERNELLD := mipsel-linux-uclibc-ld
 else # RTCONFIG_BCMARM = y
 export KERNELLD := $(LD)
 endif
