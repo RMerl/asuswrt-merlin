@@ -374,6 +374,8 @@ function pass_checked(obj){
 }
 
 function ImportOvpn(){
+	if (document.getElementById('ovpnfile').value == "") return false;
+
 	document.getElementById('importOvpnFile').style.display = "none";
 	document.getElementById('loadingicon').style.display = "";
 
@@ -622,7 +624,7 @@ function ovpnFileChecker(){
 					<tr>
 							<th>Import ovpn file</th>
 						<td>
-							<input type="file" name="file" class="input" style="color:#FFCC00;*color:#000;">
+							<input id="ovpnfile" type="file" name="file" class="input" style="color:#FFCC00;*color:#000;">
 							<input id="" class="button_gen" onclick="ImportOvpn();" type="button" value="<#CTL_upload#>" />
 								<img id="loadingicon" style="margin-left:5px;display:none;" src="/images/InternetScan.gif">
 								<span id="importOvpnFile" style="display:none;"><#Main_alert_proceeding_desc3#></span>
