@@ -1411,7 +1411,6 @@ static int validate_apply(webs_t wp) {
 	char *value;
 	char name[64];
 	char tmp[3500], prefix[32];
-	int i, j, len;
 	int unit=-1, subunit=-1;
 	int nvram_modified = 0;
 	int nvram_modified_wl = 0;
@@ -1539,22 +1538,8 @@ static int validate_apply(webs_t wp) {
 				}
 			}
 #endif
-			// Replace CRLF with ">", as the nvram backup encoder can't handle
-                        // ASCII values below 32.
 			else if((!strncmp(name, "vpn_crt", 7)) || (!strncmp(name, "sshd_", 5))) {
-
-				len = strlen(value);
-				// Safeguard against buffer overrun
-				if (len > (sizeof(tmp) - 1)) len = sizeof(tmp) - 1;
-
-				i = 0;
-				for (j=0; (j < len); j++) {
-					if (value[j] == '\n') tmp[i++] = '>';
-					else if (value[j] != '\r') tmp[i++] = value[j];
-				}
-				tmp[i] = '\0';
-
-				nvram_set(name, tmp);
+				write_encoded_crt(name, value);
 				nvram_modified = 1;
 				_dprintf("set %s=%s\n", name, tmp);
 			}
@@ -8859,3 +8844,23 @@ int is_wlif_up(const char *ifname)
 		return 0;
 }
 
+
+// Replace CRLF with ">", as the nvram backup encoder can't handle
+// ASCII values below 32.
+void write_encoded_crt(char *name, char *value){
+	int len, i, j;
+	char tmp[3500];
+
+	len = strlen(value);
+	// Safeguard against buffer overrun
+	if (len > (sizeof(tmp) - 1)) len = sizeof(tmp) - 1;
+
+	i = 0;
+	for (j=0; (j < len); j++) {
+		if (value[j] == '\n') tmp[i++] = '>';
+		else if (value[j] != '\r') tmp[i++] = value[j];
+	}
+
+	tmp[i] = '\0';
+	nvram_set(name, tmp);
+}
