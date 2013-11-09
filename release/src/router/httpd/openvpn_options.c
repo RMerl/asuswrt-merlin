@@ -425,7 +425,7 @@ add_option (char *p[], int line, int unit)
 		sprintf(buf, "vpn_client%d_cipher", unit);
 		nvram_set(buf, p[1]);
 	}
-	else if (streq (p[0], "redirect-gateway"))
+	else if (streq (p[0], "redirect-gateway") && (!p[1] || !strcmp(p[1], "def1")))	// Only handle if default GW
 	{
 		sprintf(buf, "vpn_client%d_rgw", unit);
 		nvram_set(buf, "1");
