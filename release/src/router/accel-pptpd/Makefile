@@ -21,10 +21,6 @@ pptpd: pptpd-1.3.3/Makefile
 
 pppd_plugin/Makefile: pptpd-1.3.3/Makefile
 	(cd pppd_plugin; $(CONFIGURE) --prefix=/usr PPPDIR=$(TOP)/pppd)
-
-pptpd-1.3.3/Makefile:
-	(cd pppd_plugin; $(CONFIGURE) --prefix=/usr PPPDIR=$(TOP)/pppd)
-
 pptpd-1.3.3/Makefile:
 	(cd pptpd-1.3.3; $(CONFIGURE) --prefix=$(INSTALLDIR)/pptpd --enable-bcrelay)
 

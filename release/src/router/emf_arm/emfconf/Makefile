@@ -1,5 +1,5 @@
 #
-# $Id: Makefile 241182 2011-02-17 21:50:03Z $
+# $Id: Makefile 382663 2013-02-03 04:40:03Z $
 #
 
 CROSS =
@@ -9,8 +9,7 @@ STRIP = $(CROSS)strip
 
 ALL_OBJS = emfu.o emfu_linux.o
 
-#CCFLAGS = -Os -Wall -I../../../include -I../../shared -I../../../include/emf/emf
-CCFLAGS = -Os -Wall -I../../../include -I../../shared -I../../../../src-rt-6.x.4708/include/emf/emf
+CCFLAGS = -Os -Wall -I$(SRCBASE)/include -I$(SRCBASE)/common/include -I$(SRCBASE)/shared -I$(SRCBASE)/include/emf/emf -I$(SRCBASE)/router/shared
 
 ifneq ($(wildcard ./prebuilt),)
 all:

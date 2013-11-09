@@ -1,7 +1,7 @@
 #
 # Linux acsd Makefile
 #
-# Copyright (C) 2012, Broadcom Corporation
+# Copyright (C) 2013, Broadcom Corporation
 # All Rights Reserved.
 # 
 # This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,10 +9,10 @@
 # or duplicated in any form, in whole or in part, without the prior
 # written permission of Broadcom Corporation.
 #
-# $Id: Makefile 401201 2013-05-09 03:06:42Z $
+# $Id: Makefile 394451 2013-04-02 18:21:38Z $
 #
 
-CFLAGS	+= -I. -I$(TOP)/shared -I$(SRCBASE)/include -Wall -Werror
+CFLAGS	+= -I. -I$(TOP)/shared -I$(SRCBASE)/include -I$(SRCBASE)/common/include -Wall -Werror
 CFLAGS	+= $(if $(WLAN_ComponentIncPath),$(WLAN_ComponentIncPath),$(addprefix -I,$(wildcard $(SRCBASE)/shared/bcmwifi/include)))
 #CFLAGS	+= -g -DDEBUG
 CFLAGS	+= -s -O2
@@ -21,25 +21,24 @@ LDFLAGS += -L$(TOP)/shared -L$(INSTALLDIR)/shared/usr/lib -lshared
 LDFLAGS += -lgcc_s
 
 
-vpath %.c $(SRCBASE)/shared/
+vpath %.c $(SRCBASE)/shared/ $(SRCBASE)/shared/bcmwifi/src
 
-ifeq ($(wildcard $(SRCBASE)/router/acsd/*.c),)
+ifeq ($(wildcard $(SRCBASE)/router/acsd${BCMEX}/*.c),)
 all:
-	-cp -f prebuild/acsd acsd
-	-cp -f prebuild/acs_cli acs_cli
+	-cp -f prebuilt/acsd acsd
 else
-all: acsd acs_cli
+all: acsd
 endif
 
-OBJS = chan_utils.o dcs.o acs.o acsd_utils.o acsd_main.o acsd_cmd.o acsd_chanim.o
-OBJS += acs_dfsr.o
+OBJS = dcs.o acs.o acsd_utils.o acsd_main.o acsd_cmd.o acsd_chanim.o bcmwifi_channels.o
+OBJS += acs_dfsr.o chan_utils.o
 
 install: all
 	install -d $(INSTALLDIR)/usr/sbin/
 	install acsd $(INSTALLDIR)/usr/sbin/
-	install acs_cli $(INSTALLDIR)/usr/sbin/
+	#install acs_cli $(INSTALLDIR)/usr/sbin/
 	$(STRIP) $(INSTALLDIR)/usr/sbin/acsd
-	$(STRIP) $(INSTALLDIR)/usr/sbin/acs_cli
+	#$(STRIP) $(INSTALLDIR)/usr/sbin/acs_cli
 
 clean:
 	rm -f *.o *.a *.so acsd acs_cli

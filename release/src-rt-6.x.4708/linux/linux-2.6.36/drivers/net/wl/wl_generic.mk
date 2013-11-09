@@ -92,7 +92,7 @@ endif
 else # SRCBASE/wl/sys doesn't exist
 
     # Otherwise, assume prebuilt object module(s) in src/wl/linux directory
-    # prebuilt := wl_$(wl_suffix).o
+    #prebuilt := wl_$(wl_suffix).o
     $(TARGET)-objs := $(SRCBASE_OFFSET)/wl/linux/wl.o
     obj-$(CONFIG_WL) := $(TARGET).o
 

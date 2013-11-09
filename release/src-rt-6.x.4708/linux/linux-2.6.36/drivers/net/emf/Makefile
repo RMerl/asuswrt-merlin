@@ -18,9 +18,9 @@
 # $Id: Makefile,v 1.3 2008-08-13 20:20:16 $
 #
 
-EMFSRCDIR := ../../../../../../src-rt-6.x.4708/router/emf_arm/emf
+EMFSRCDIR := ../../../../../../src-rt-6.x.4708/router/emf${BCMEX}/emf
 EMFCSRCDIR := ../../../../../../src-rt-6.x.4708/emf/emf
-EMFDIR := ../../../../../../src-rt-6.x.4708/router/emf_arm
+EMFDIR := ../../../../../../src-rt-6.x.4708/router/emf${BCMEX}
 
 EMF_OBJS := $(EMFCSRCDIR)/emfc.o $(EMFSRCDIR)/emf_linux.o
 
@@ -30,7 +30,7 @@ endif # CONFIG_BUZZZ_FUNC
 
 # Search for sources under src/router/emf/emf
 ifneq ($(wildcard $(src)/$(EMFSRCDIR)),)
-	EXTRA_CFLAGS += -I$(SRCBASE)/router/emf/emf -I$(SRCBASE)/router/emf/igs
+	EXTRA_CFLAGS += -I$(SRCBASE)/router/emf${BCMEX}/emf -I$(SRCBASE)/router/emf${BCMEX}/igs
 	EXTRA_CFLAGS += -I$(SRCBASE)/include/emf/emf -I$(SRCBASE)/include/emf/igs
 	emf-objs := $(EMF_OBJS)
 else
