@@ -1,0 +1,3 @@
+ufsd.ko
+package/Makefile
+*.o
