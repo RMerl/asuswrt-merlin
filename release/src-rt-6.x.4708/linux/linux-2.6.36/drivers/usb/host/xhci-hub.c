@@ -245,17 +245,14 @@ int xhci_hub_control(struct usb_hcd *hcd, u16 typeReq, u16 wValue,
 			 * However, khubd will ignore the roothub events until
 			 * the roothub is registered.
 			 */
-			if(usb2mode==1){
-				printk(KERN_INFO "[xhci] USB3 port power off\n");
-				xhci_writel(xhci, (temp | PORT_PE), addr);
-				xhci_writel(xhci, (temp & ~(PORT_POWER)), addr);
-				xhci_writel(xhci, ((temp & ~PORT_PLS_MASK) | PORT_WR | PORT_PLC | XDEV_U0 | PORT_RESET | PORT_LINK_STROBE), addr);
-			}else if(usb2mode==2){
-				printk(KERN_INFO "[xhci] USB3 port power off\n");
-				xhci_writel(xhci, (temp | PORT_PE), addr);
-				xhci_writel(xhci, (temp | PORT_POWER), addr);
-				xhci_writel(xhci, ((temp & ~PORT_PLS_MASK) | PORT_WR | PORT_PLC | XDEV_U0 | PORT_RESET | PORT_LINK_STROBE), addr);
-			}else{
+			if(usb2mode != 0){
+				xhci_writel(xhci, 0x0, addr);
+
+				if(usb2mode == 1){ // 0bc2:a0a1
+					xhci_writel(xhci, 0x0 & ~PORT_PE | PORT_POWER | PORT_LINK_STROBE & ~PORT_PLS_MASK, addr);
+				}
+			}
+			else{
 				xhci_writel(xhci, temp | PORT_POWER, addr);
 			}
 
