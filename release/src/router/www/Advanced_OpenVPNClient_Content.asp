@@ -244,17 +244,6 @@ function update_visibility(){
 
 }
 
-function manualImport(_flag){
-	if(_flag){
-		document.getElementById("caFiled").style.display = "";
-		document.getElementById("manualFiled").style.display = "";
-	}
-	else{
-		document.getElementById("caFiled").style.display = "none";
-		document.getElementById("manualFiled").style.display = "none";
-	}
-}
-
 function set_Keys(auth){
 	cal_panel_block();
 	if(auth=='tls'){
@@ -375,6 +364,44 @@ function pass_checked(obj){
 	switchType(obj, document.form.show_pass_1.checked, true);
 }
 
+function ImportOvpn(){
+	document.getElementById('importOvpnFile').style.display = "none";
+	document.getElementById('loadingicon').style.display = "";
+
+	document.form.action = "vpnupload.cgi";
+	document.form.enctype = "multipart/form-data";
+	document.form.encoding = "multipart/form-data";
+
+	document.form.submit();
+	setTimeout("ovpnFileChecker();",2000);
+}
+
+
+var vpn_upload_state = "init";
+function ovpnFileChecker(){
+	document.getElementById("importOvpnFile").innerHTML = "<#Main_alert_proceeding_desc3#>";
+
+	$j.ajax({
+			url: '/ajax_openvpn_server.asp',
+			dataType: 'script',
+			timeout: 1500,
+			error: function(xhr){
+				setTimeout("ovpnFileChecker();",1000);
+			},
+
+			success: function(){
+				document.getElementById('importOvpnFile').style.display = "";
+				document.getElementById('loadingicon').style.display = "none";
+
+				if(vpn_upload_state == "init"){
+					setTimeout("ovpnFileChecker();",1000);
+				}
+				else{
+					setTimeout("location.href='Advanced_OpenVPNClient_Content.asp';", 3000);
+				}
+			}
+	});
+}
 
 </script>
 </head>
@@ -509,6 +536,8 @@ function pass_checked(obj){
 <input type="hidden" name="vpn_crt_client2_crt" value="<% nvram_get("vpn_crt_client2_crt"); %>">
 <input type="hidden" name="vpn_crt_client2_key" value="<% nvram_get("vpn_crt_client2_key"); %>">
 <input type="hidden" name="vpn_crt_client2_static" value="<% nvram_get("vpn_crt_client2_static"); %>">
+<input type="hidden" name="vpn_upload_type" value="ovpn">
+<input type="hidden" name="vpn_upload_unit" value="<% nvram_get("vpn_client_unit"); %>">
 
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
@@ -534,14 +563,14 @@ function pass_checked(obj){
                 <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 		<div class="formfontdesc">
                         <p>Before starting the service make sure you properly configure it, including
-                           the required <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="Advanced_OpenVPN_Keys.asp">keys</a>,<br>otherwise you will be unable to turn it on.
+                           the required keys,<br>otherwise you will be unable to turn it on.
                         <p><br>In case of problem, see the <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="Main_LogStatus_Content.asp">System Log</a> for any error message related to openvpn.
                 </div>
 
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
 						<tr>
-							<td colspan="2">Basic Settings</td>
+							<td colspan="2">Client control</td>
 						</tr>
 					</thead>
 					<tr id="client_unit">
@@ -580,6 +609,24 @@ function pass_checked(obj){
 							<span>Warning: any unsaved change will be lost.</span>
 					    </td>
 					</tr>
+					<tr>
+							<th>Import ovpn file</th>
+						<td>
+							<input type="file" name="file" class="input" style="color:#FFCC00;*color:#000;">
+							<input id="" class="button_gen" onclick="ImportOvpn();" type="button" value="<#CTL_upload#>" />
+								<img id="loadingicon" style="margin-left:5px;display:none;" src="/images/InternetScan.gif">
+								<span id="importOvpnFile" style="display:none;"><#Main_alert_proceeding_desc3#></span>
+						</td>
+					</tr>
+
+				</table>
+
+				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+					<thead>
+						<tr>
+							<td colspan="2">Basic Settings</td>
+						</tr>
+					</thead>
 
 					<tr>
 						<th>Start with WAN</th>
