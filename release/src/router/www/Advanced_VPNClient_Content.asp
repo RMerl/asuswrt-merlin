@@ -181,11 +181,11 @@ function Add_profile(){
 		document.getElementById('pptpcTitle').style.display = "none";
 		document.getElementById('l2tpcTitle').style.display = "none";
 	}
-	if (openvpnd_support == false){
+//	if (openvpnd_support == false){
 		document.getElementById('opencTitle').style.display = "none";
-	}else{
-		check_openvpn_in_list();
-	}
+//	}else{
+//		check_openvpn_in_list();
+//	}
 }
 
 function cancel_add_rule(){
