@@ -104,6 +104,7 @@ else if (openvpn_unit == 2)
 else
 	service_state = false;
 
+
 ciphersarray = [
 		["AES-128-CBC"],
 		["AES-128-CFB"],
@@ -155,6 +156,12 @@ function initial()
 	add_option(document.form.vpn_client_cipher, "Default","default",(currentcipher == "Default"));
 	add_option(document.form.vpn_client_cipher, "None","none",(currentcipher == "none"));
 
+	// Extract the type out of the interface name 
+	// (imported ovpn can result in this being tun3, for example)
+	currentiface = "<% nvram_get("vpn_client_if"); %>";
+	add_option(document.form.vpn_client_if_x, "TUN","tun",(currentiface.indexOf("tun") != -1));
+	add_option(document.form.vpn_client_if_x, "TAP","tap",(currentiface.indexOf("tap") != -1));
+		   			
 	for(var i = 0; i < ciphersarray.length; i++){
 		add_option(document.form.vpn_client_cipher,
 			ciphersarray[i][0], ciphersarray[i][0],
@@ -348,6 +355,8 @@ function applyRule(){
 	}
 	document.form.vpn_clientx_eas.value = tmp_value;
 
+	document.form.vpn_client_if.value = document.form.vpn_client_if_x.value;
+	
 	document.form.submit();
 
 }
@@ -538,6 +547,7 @@ function ovpnFileChecker(){
 <input type="hidden" name="vpn_crt_client2_static" value="<% nvram_get("vpn_crt_client2_static"); %>">
 <input type="hidden" name="vpn_upload_type" value="ovpn">
 <input type="hidden" name="vpn_upload_unit" value="<% nvram_get("vpn_client_unit"); %>">
+<input type="hidden" name="vpn_client_if" value="<% nvram_get("vpn_client_if"); %>">
 
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
@@ -639,7 +649,7 @@ function ovpnFileChecker(){
 					<tr>
 						<th>Interface Type</th>
 			        		<td>
-			       				<select name="vpn_client_if"  onclick="update_visibility();" class="input_option">
+			       				<select name="vpn_client_if_x"  onclick="update_visibility();" class="input_option">
 								<option value="tap" <% nvram_match("vpn_client_if","tap","selected"); %> >TAP</option>
 								<option value="tun" <% nvram_match("vpn_client_if","tun","selected"); %> >TUN</option>
 							</select>
