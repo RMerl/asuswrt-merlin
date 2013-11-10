@@ -2403,10 +2403,11 @@ openpam-clean:
 openvpn/stamp-h1:
 	cd openvpn && ./autogen.sh && \
 	CFLAGS="-O3 -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \
-	LDFLAGS="$(EXTRALDFLAGS) -L$(TOP)/nvram$(BCMEX) -lnvram -L$(TOP)/shared -lshared -L$(TOP)/openssl -L$(TOP)/zlib -lz -L$(TOP)/lzo/src/.libs -L$(TOP)/openpam/lib/libpam/.libs -ffunction-sections -fdata-sections -Wl,--gc-sections" \
-	CPPFLAGS="-I$(TOP)/lzo/include -I$(TOP)/openssl/include -I$(TOP)/openpam/include -I$(TOP)/shared -I$(SRCBASE)/include" \
+	LDFLAGS="$(EXTRALDFLAGS) -L$(TOP)/nvram$(BCMEX) -lnvram -L$(TOP)/shared -lshared -L$(TOP)/zlib -lz -L$(TOP)/lzo/src/.libs -L$(TOP)/openpam/lib/libpam/.libs -ffunction-sections -fdata-sections -Wl,--gc-sections" \
+	CPPFLAGS="-I$(TOP)/lzo/include -I$(TOP)/openpam/include -I$(TOP)/shared -I$(SRCBASE)/include" \
 	IPROUTE="/usr/sbin/ip" \
-	OPENSSL_CRYPTO_LIBS="-L$(TOP)/openssl -lcrypto" \
+	OPENSSL_CRYPTO_CFLAGS="-I$(TOP)/openssl/include" OPENSSL_CRYPTO_LIBS="-L$(TOP)/openssl -lcrypto" \
+	OPENSSL_SSL_CFLAGS="-I$(TOP)/openssl/include" OPENSSL_SSL_LIBS="-L$(TOP)/openssl -lssl -lcrypto" \
 	$(CONFIGURE) --prefix=  --enable-iproute2 \
 	--disable-debug --enable-management --disable-small \
 	--disable-selinux --disable-socks --enable-password-save \
