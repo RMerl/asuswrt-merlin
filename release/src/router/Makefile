@@ -2807,7 +2807,7 @@ expat-2.0.1-clean:
 #avahi-0.6.31
 avahi-0.6.31/stamp-h1: shared nvram$(BCMEX) expat-2.0.1 libdaemon
 	cd $(TOP)/avahi-0.6.31 && \
-	$(CONFIGURE) LDFLAGS="-L$(TOP)/expat-2.0.1/.libs" CFLAGS="-I$(TOP)/expat-2.0.1/lib -I$(TOP)/shared -I$(SRCBASE)/include" --prefix=$(INSTALLDIR)/avahi-0.6.31/usr --with-distro=archlinux --disable-glib --disable-gobject --disable-qt3 --disable-qt4 --disable-gtk --disable-dbus --disable-expat --disable-gdbm --disable-python --disable-pygtk --disable-python-dbus --disable-mono --disable-monodoc --disable-gtk3 --with-xml=none  LIBDAEMON_LIBS="-L$(TOP)/libdaemon/libdaemon/.libs -ldaemon -L$(TOP)/nvram$(BCMEX) -lnvram -L$(TOP)/shared -lshared" LIBDAEMON_CFLAGS="-I$(TOP)/libdaemon" --disable-autoipd --with-xml=expat --disable-stack-protector --with-avahi-user="admin" --with-avahi-group="root" --enable-static=no
+	$(CONFIGURE) LDFLAGS="-L$(TOP)/expat-2.0.1/.libs" CFLAGS="-I$(TOP)/expat-2.0.1/lib -I$(TOP)/shared -I$(SRCBASE)/include" --prefix=$(INSTALLDIR)/avahi-0.6.31/usr --with-distro=archlinux --disable-glib --disable-gobject --disable-qt3 --disable-qt4 --disable-gtk --disable-dbus --disable-gdbm --disable-python --disable-pygtk --disable-python-dbus --disable-mono --disable-monodoc --disable-gtk3 --with-xml=none  LIBDAEMON_LIBS="-L$(TOP)/libdaemon/libdaemon/.libs -ldaemon -L$(TOP)/nvram$(BCMEX) -lnvram -L$(TOP)/shared -lshared" LIBDAEMON_CFLAGS="-I$(TOP)/libdaemon" --disable-autoipd --with-xml=expat --disable-stack-protector --with-avahi-user="admin" --with-avahi-group="root" --enable-static=no
 	touch $@
 
 avahi-0.6.31: avahi-0.6.31/stamp-h1
