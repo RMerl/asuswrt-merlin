@@ -66,8 +66,7 @@ Networking:
    - Layer7 iptables matching
    - User-defined options for WAN DHCP queries (required by some ISPs)
    - Improved NAT loopback (based on code from phuzi0n from the DD-WRT forums)
-   - OpenVPN client and server, based on code originally written by
-     Keith Moyer for Tomato and reused with his permission. (All models except RT-N16)
+   - Advanced OpenVPN client and server support (all models except RT-N16)
    - Netfilter ipset module, for efficient blacklist implemetnation
    - Configurable IPv6 firewall
    - Configurable min/max UPNP ports
@@ -100,6 +99,7 @@ integrated/enabled in the official firmware:
 - VPN Status page
 - DualWAN and Repeater mode (while it was still under development
   by Asus)
+- OpenVPN client and server support
 
 
 
@@ -445,6 +445,31 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.4.374.35 (xx-xxx-2013):
+   - NEW: Merged with Asus 374_339 GPL (from RT-AC68U).
+          Asus added some new features in this release:
+          * Support for HFS+ and Time Machine (AC56/AC68U only)
+          * OpenVPN support.  Their implementation uses the backend
+            code from Asuswrt-Merlin but with a more
+            simplistic, novice-friendly webui.  This required 
+            adapting the current webui to be able to retain some 
+            of their improvements without sacrificing the 
+            flexibility of being able to have two separate server 
+            and client configurations.
+
+   - NEW: Support for Namecheap DDNS (Patch provided by saintdev)
+   - CHANGED: VPN webui is now an hybrid of our original webui,
+              along with Asus's own.  This allows the addition
+              of these features developed by Asus:
+              * Ability to export an ovpn config file to give to
+                your clients
+              * Support for username/password authentcation on
+                the built-in server
+              * Ability to import a tunnel provider's .ovpn
+                config file to configure a client connection
+                on the router
+
+
 3.0.0.4.374.34_2 (01-Nov-2013):
    - FIXED: DNS resolution not working for VPN clients
             (bug in Asus 374_979)
