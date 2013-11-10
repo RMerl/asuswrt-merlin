@@ -108,30 +108,12 @@ else # CONFIG_RALINK != y
 
 # Broadcom SoC
 ifeq ($(CONFIG_LINUX26),y)
-ifeq ($(RTCONFIG_BCMWL6),y)
-ifneq ($(RTCONFIG_BCMARM),y)
-# e.g. RT-AC66U
-export KERNELCC := /opt/brcm/K26/hndtools-mipsel-linux-uclibc-4.2.3/bin/mipsel-linux-uclibc-gcc
-else # RTCONFIG_BCMARM = y
 export KERNELCC := $(CC)
-endif
-else # RTCONFIG_BCMWL6 != y
-export KERNELCC := $(CC)
-endif
-else # CONFIG_LINUX26 != y
+else
 export KERNELCC := $(CC)-3.4.6
 endif
 
-ifeq ($(RTCONFIG_BCMWL6),y)
-ifneq ($(RTCONFIG_BCMARM),y)
-# e.g. RT-AC66U
-export KERNELLD := /opt/brcm/K26/hndtools-mipsel-linux-uclibc-4.2.3/bin/mipsel-linux-uclibc-ld
-else # RTCONFIG_BCMARM = y
 export KERNELLD := $(LD)
-endif
-else # RTCONFIG_BCMWL6 != y
-export KERNELLD := $(LD)
-endif
 endif
 
 #	ifneq ($(STATIC),1)
@@ -139,4 +121,3 @@ endif
 #	else
 SIZECHECK = @$(SIZE) $@
 #	endif
-
