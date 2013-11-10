@@ -23,3 +23,6 @@ po/Makefile.in
 po/POTFILES
 po/stamp-it
 autom4te.cache
+Makefile.in
+aclocal.m4
+configure
