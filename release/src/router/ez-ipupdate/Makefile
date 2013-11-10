@@ -104,6 +104,9 @@ ifeq ($(RTCONFIG_BCMARM),y)
 LDFLAGS += -lgcc_s
 endif
 
+# Just copying what ASUS did here. This should be in Makefile.in instead.
+ez_ipupdate_OBJECTS += namecheap.o
+
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@

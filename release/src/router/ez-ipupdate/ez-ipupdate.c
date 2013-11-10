@@ -127,6 +127,8 @@
 #define DEFAULT_UPDATE_PERIOD 120
 #define DEFAULT_RESOLV_PERIOD 30
 
+#include "namecheap.h"
+
 #ifdef DEBUG
 #  define BUFFER_SIZE (16*1024)
 #else
@@ -618,9 +620,19 @@ struct service_t services[] = {
     DNSOMATIC_DEFAULT_PORT,
     DNSOMATIC_REQUEST
   },
+  { "namecheap",
+    { "namecheap", 0, 0, },
+    NULL,
+    NC_update_entry,
+    NC_check_info,
+    NC_fields_used,
+    NC_DEFAULT_SERVER,
+    NC_DEFAULT_PORT,
+    NC_REQUEST
+  },
 };
 
-static struct service_t *service = NULL;
+struct service_t *service = NULL;
 
 int options;
 
