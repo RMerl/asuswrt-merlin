@@ -307,9 +307,8 @@ function validForm(){
 			|| (!validate_number_range(document.form.upnp_max_port_ext, 1, 65535))) {
 				return false;
 		}
-
-		if((document.form.upnp_max_port_int.value < document.form.upnp_min_port_int.value)
-			|| (document.form.upnp_max_port_ext.value < document.form.upnp_min_port_ext.value)) {
+		if((parseInt(document.form.upnp_max_port_int.value) < parseInt(document.form.upnp_min_port_int.value))
+			|| (parseInt(document.form.upnp_max_port_ext.value) < parseInt(document.form.upnp_min_port_ext.value))) {
 				alert("Invalid UPNP ports!  First port must be lower than last port value.");
 	                        return false;
 		}
