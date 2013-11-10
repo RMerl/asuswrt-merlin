@@ -978,6 +978,8 @@ int start_iQos(void)
 	fclose(f);
 	chmod(qosfn, 0700);
 	eval((char *)qosfn, "start");
+
+	run_custom_script("qos-start", NULL);
 	fprintf(stderr,"[qos] tc done!\n");
 
 	return 0;
