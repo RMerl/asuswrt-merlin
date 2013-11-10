@@ -10,6 +10,7 @@ stamp-h1
 .libs/
 config.h
 Makefile
+Makefile.in
 config.log
 config.status
 libtool
@@ -23,3 +24,4 @@ po/Makefile.in
 po/POTFILES
 po/stamp-it
 autom4te.cache
+aclocal.m4
