@@ -671,6 +671,7 @@ void start_vpnserver(int serverNum)
 
 	sprintf(&buffer[0], "/etc/openvpn/server%d/client.ovpn", serverNum);
 	fp_client = fopen(&buffer[0], "w");
+	fprintf(fp_client, "client\n");
 
 	if ( cryptMode == TLS )
 	{
