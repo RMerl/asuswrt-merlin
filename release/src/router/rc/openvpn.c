@@ -148,7 +148,7 @@ void start_vpnclient(int clientNum)
 	for (argv[argc=0] = strtok(&buffer[0], " "); argv[argc] != NULL; argv[++argc] = strtok(NULL, " "));
 	if ( _eval(argv, NULL, 0, NULL) )
 	{
-		vpnlog(VPN_LOG_ERROR,"Creating tunnel interface failed...");
+		vpnlog(VPN_LOG_ERROR,"Creating tunnel interface %s failed...",&buffer[0]);
 		stop_vpnclient(clientNum);
 		return;
 	}
@@ -387,10 +387,10 @@ void start_vpnclient(int clientNum)
 #ifdef RTCONFIG_BCMARM
         if (cpu_num > 1)
 		sprintf(&buffer[0], "taskset -c %d /etc/openvpn/vpnclient%d --cd /etc/openvpn/client%d --config config.ovpn", (clientNum == 2 ? 1 : 0), clientNum, clientNum);
-
-        if (taskset_ret != 0)
+	else
 #endif
-	sprintf(&buffer[0], "/etc/openvpn/vpnclient%d --cd /etc/openvpn/client%d --config config.ovpn", clientNum, clientNum);
+		sprintf(&buffer[0], "/etc/openvpn/vpnclient%d --cd /etc/openvpn/client%d --config config.ovpn", clientNum, clientNum);
+
 	vpnlog(VPN_LOG_INFO,"Starting OpenVPN: %s",&buffer[0]);
 	for (argv[argc=0] = strtok(&buffer[0], " "); argv[argc] != NULL; argv[++argc] = strtok(NULL, " "));
 	if ( _eval(argv, NULL, 0, &pid) )
@@ -633,10 +633,11 @@ void start_vpnserver(int serverNum)
 	for (argv[argc=0] = strtok(&buffer[0], " "); argv[argc] != NULL; argv[++argc] = strtok(NULL, " "));
 	if ( _eval(argv, NULL, 0, NULL) )
 	{
-		vpnlog(VPN_LOG_ERROR,"Creating tunnel interface failed...");
+		vpnlog(VPN_LOG_ERROR,"Creating tunnel interface %s failed...",&buffer[0]);
 		stop_vpnserver(serverNum);
 		return;
 	}
+
 
 	// Add interface to LAN bridge (TAP only)
 	if( ifType == TAP )
@@ -1183,11 +1184,10 @@ void start_vpnserver(int serverNum)
 #ifdef RTCONFIG_BCMARM
         if (cpu_num > 1)
 		sprintf(&buffer[0], "taskset -c %d /etc/openvpn/vpnserver%d --cd /etc/openvpn/server%d --config config.ovpn", (serverNum == 2 ? 1 : 0), serverNum, serverNum);
-
-        if (taskset_ret != 0)
+	else
 #endif
+		sprintf(&buffer[0], "/etc/openvpn/vpnserver%d --cd /etc/openvpn/server%d --config config.ovpn", serverNum, serverNum);
 
-	sprintf(&buffer[0], "/etc/openvpn/vpnserver%d --cd /etc/openvpn/server%d --config config.ovpn", serverNum, serverNum);
 	vpnlog(VPN_LOG_INFO,"Starting OpenVPN: %s",&buffer[0]);
 	for (argv[argc=0] = strtok(&buffer[0], " "); argv[argc] != NULL; argv[++argc] = strtok(NULL, " "));
 	if ( _eval(argv, NULL, 0, &pid) )
@@ -1364,7 +1364,6 @@ void start_vpn_eas()
 	nums[i] = 0;
 	for( i = 0; nums[i] > 0; i++ )
 	{
-		if(!nvram_get_int("VPNServer_enable")) continue;
 		if(!nvram_match("VPNServer_mode", "openvpn")) continue;
 
 		sprintf(&buffer[0], "vpnserver%d", nums[i]);
