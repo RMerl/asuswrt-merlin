@@ -2278,10 +2278,6 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 	start_vpn_eas();
 #endif
 
-#ifdef RTCONFIG_OPENVPN
-	start_vpn_eas();
-#endif
-
 _dprintf("%s(%s): done.\n", __FUNCTION__, wan_ifname);
 }
 
