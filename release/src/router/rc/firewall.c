@@ -4117,6 +4117,7 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 }
 #endif // RTCONFIG_DUALWAN
 
+#if 0
 #ifdef RTCONFIG_BCMARM
 void
 del_samba_rules(void)
@@ -4144,6 +4145,7 @@ del_samba_rules(void)
         eval("iptables", "-t", "raw", "-D", "OUTPUT", "-p", "udp",
                 "--sport", "445", "-j", "NOTRACK");
 
+/*
         eval("iptables", "-t", "filter", "-D", "INPUT", "-i", ifname, "-p", "udp",
                 "--dport", "137:139", "-j", "ACCEPT");
         eval("iptables", "-t", "filter", "-D", "INPUT", "-i", ifname, "-p", "udp",
@@ -4152,7 +4154,7 @@ del_samba_rules(void)
                 "--dport", "137:139", "-j", "ACCEPT");
         eval("iptables", "-t", "filter", "-D", "INPUT", "-i", ifname, "-p", "tcp",
                 "--dport", "445", "-j", "ACCEPT");
-
+*/
 }
 
 add_samba_rules(void)
@@ -4182,6 +4184,7 @@ add_samba_rules(void)
         eval("iptables", "-t", "raw", "-A", "OUTPUT", "-p", "udp",
                 "--sport", "445", "-j", "NOTRACK");
 
+/*
         eval("iptables", "-t", "filter", "-I", "INPUT", "-i", ifname, "-p", "udp",
                 "--dport", "137:139", "-j", "ACCEPT");
         eval("iptables", "-t", "filter", "-I", "INPUT", "-i", ifname, "-p", "udp",
@@ -4190,8 +4193,9 @@ add_samba_rules(void)
                 "--dport", "137:139", "-j", "ACCEPT");
         eval("iptables", "-t", "filter", "-I", "INPUT", "-i", ifname, "-p", "tcp",
 		"--dport", "445", "-j", "ACCEPT");
-
+*/
 }
+#endif
 #endif
 
 //int start_firewall(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip)
@@ -4499,8 +4503,10 @@ int start_firewall(int wanunit, int lanunit)
 #ifdef RTCONFIG_OPENVPN
 	run_vpn_firewall_scripts();
 #endif
+#if 0	// Makes no measurable difference, and creates other issues
 #ifdef RTCONFIG_BCMARM
 	if (pids("smbd")) add_samba_rules();
+#endif
 #endif
 
 	run_custom_script("firewall-start", wan_if);
