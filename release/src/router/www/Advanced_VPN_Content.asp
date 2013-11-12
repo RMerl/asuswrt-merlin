@@ -756,7 +756,7 @@ function enable_openvpn(state){
 
 									<div id="OpenVPN_setting" style="display:none;">
 										<div class="formfontdesc">
-											For OpenVPN server configuration, <#Web_Title2#> will automatically generate a ovpn file including Certification Authority key.  You can deliver this file with username and password to clients making them connect to your VPN server. If you need to customize OpenVPN server setting, please go to VPN details.<br>
+											If you configure OpenVPN with username/password authentication, <#Web_Title2#> can automatically generate a ovpn file including Certification Authority key.  You can deliver this file with username and password to clients making them connect to your VPN server. If you need a more advanced authenticaton method (such as using signed certs), please go to VPN details.  You will need to manually prepare and provide signed certificates then.<br>
 											Please refer to below FAQ for your client side setting.
 											<ol>
 												<li><a href="http://support.asus.com/search.aspx?SLanguage=en&keyword=OpenVPN%20windows" target="_blank" style="text-decoration:underline;">Windows</a>
