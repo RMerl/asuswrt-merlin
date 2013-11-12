@@ -148,7 +148,7 @@ void start_vpnclient(int clientNum)
 	for (argv[argc=0] = strtok(&buffer[0], " "); argv[argc] != NULL; argv[++argc] = strtok(NULL, " "));
 	if ( _eval(argv, NULL, 0, NULL) )
 	{
-		vpnlog(VPN_LOG_ERROR,"Creating tunnel interface %s failed...",&buffer[0]);
+		vpnlog(VPN_LOG_ERROR,"Creating tunnel interface %s failed...",&iface[0]);
 		stop_vpnclient(clientNum);
 		return;
 	}
@@ -633,7 +633,7 @@ void start_vpnserver(int serverNum)
 	for (argv[argc=0] = strtok(&buffer[0], " "); argv[argc] != NULL; argv[++argc] = strtok(NULL, " "));
 	if ( _eval(argv, NULL, 0, NULL) )
 	{
-		vpnlog(VPN_LOG_ERROR,"Creating tunnel interface %s failed...",&buffer[0]);
+		vpnlog(VPN_LOG_ERROR,"Creating tunnel interface %s failed...",&iface[0]);
 		stop_vpnserver(serverNum);
 		return;
 	}
