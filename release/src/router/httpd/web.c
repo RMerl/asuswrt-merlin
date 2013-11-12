@@ -1235,13 +1235,13 @@ ej_vpn_client_get_parameter(int eid, webs_t wp, int argc, char_t **argv)
 
 
 //2008.08 magic {
-// Largest POST will be the OpenVPN key page:
-// 2*5 fields + 2*4 fields = 18 fields total
+// Largest POST will be the OpenVPN pages with keys:
+// 5 keys * 2 server instances = 10 large fields total
 // Each field can have up to 3500 characters, for a potential
-// total of 63KB.  Going for 64KB to account for additional POST/GET data.
+// total of 35KB.  Going for 40KB to account for additional POST/GET data.
 
-static char post_buf[65535] = { 0 };
-static char post_buf_backup[65535] = { 0 };
+static char post_buf[40000] = { 0 };
+static char post_buf_backup[40000] = { 0 };
 
 static void do_html_post_and_get(char *url, FILE *stream, int len, char *boundary){
 	char *query = NULL;
