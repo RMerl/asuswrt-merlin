@@ -652,7 +652,7 @@ static int env2nv(char *env, char *nv)
 
 int dhcp6c_state_main(int argc, char **argv)
 {
-	char *p;
+	const char *p;
 
 	TRACE_PT("begin\n");
 
