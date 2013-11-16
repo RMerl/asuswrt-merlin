@@ -5637,7 +5637,7 @@ do_prf_file(char *url, FILE *stream)
 {
 	nvram_commit();
 	sys_download("/tmp/settings");
-	do_file(url, stream);
+	do_file("/tmp/settings", stream);
 }
 
 static void
