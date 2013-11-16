@@ -662,8 +662,21 @@ int dhcp6c_state_main(int argc, char **argv)
 	nvram_set("ipv6_rtr_addr", getifaddr(nvram_safe_get("lan_ifname"), AF_INET6, 0));
 
 	if (nvram_get_int("ipv6_dhcp_pd")) {
-		p = ipv6_prefix(NULL);
-		if (*p) nvram_set("ipv6_prefix", p);
+		if ((p = getenv("new_iapd_prefix"))) {
+			char *prefixlen;
+
+			TRACE_PT("new_iapd_prefix=%s\n", p);
+			if ((prefixlen = strrchr(p, '/'))) {
+				*prefixlen = '\0';
+				prefixlen++;
+				nvram_set("ipv6_prefix", p);
+				nvram_set("ipv6_prefix_length", trim_r(prefixlen));
+			}
+		} else {
+			/* Guess prefix from lan address if we are not given one */
+			p = ipv6_prefix(NULL);
+			if (*p) nvram_set("ipv6_prefix", p);
+		}
 	}
 
 	if (env2nv("new_domain_name_servers", "ipv6_get_dns")) {
