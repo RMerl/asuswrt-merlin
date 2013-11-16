@@ -5229,37 +5229,28 @@ void setup_leds()
 			led_control(LED_SWITCH, LED_OFF);
 			led_control(LED_LAN, LED_OFF);
 			led_control(LED_WAN, LED_OFF);
-#ifdef RTCONFIG_USB
-			stop_usbled();
-			led_control(LED_USB, LED_OFF);
-#endif
 		}
+#ifdef RTCONFIG_USB
+		stop_usbled();
+		led_control(LED_USB, LED_OFF);
+#endif
 
 	} else {
-		if ((model == MODEL_RTAC56U) || (model == MODEL_RTAC68U)) {
-/* In original 372, setAllLedOff() uses LED_ALL on this router without checking if
-   RTCONFIG_LED_ALL is set (it ain't).  Keep an eye in case it eventually gets fixed
-   by making it also conditional to that flag being set - in   which case I will 
-   have to update the RT-AC56U profile to use it */
-#ifdef RTCONFIG_LED_ALL
-			led_control(LED_ALL, LED_ON);
-#endif
-			if (nvram_match("wl1_radio", "1")) {
-				nvram_set("led_5g", "1");
-				led_control(LED_5G, LED_ON);
-			}
-			kill_pidfile_s("/var/run/usbled.pid", SIGTSTP); // inform usbled to reset status
-		} else {
-			led_control(LED_5G, LED_ON);
 #ifdef RTCONFIG_USB
-			start_usbled();
+		start_usbled();
 #endif
+
+		if (nvram_match("wl1_radio", "1")) {
+			nvram_set("led_5g", "1");
+			led_control(LED_5G, LED_ON);
+		}
+		if (nvram_match("wl0_radio", "1")) {
+			led_control(LED_2G, LED_ON);
 		}
 
-		led_control(LED_2G, LED_ON);
 		led_control(LED_SWITCH, LED_ON);
 		led_control(LED_POWER, LED_ON);
-        }
+	}
 }
 
 void stop_cstats(void)
