@@ -4740,7 +4740,7 @@ check_ddr_done:
                 if (action & RC_SERVICE_START){
 #if defined(RTCONFIG_OPENVPN)
 			if(nvram_match("vpnc_proto", "openvpn")){
-				if (check_ovpn_client_enabled(openvpn_unit)) {
+				if (check_ovpn_client_enabled(openvpnc_unit)) {
 					start_vpnclient(openvpnc_unit);
 				}
 				stop_vpnc();
