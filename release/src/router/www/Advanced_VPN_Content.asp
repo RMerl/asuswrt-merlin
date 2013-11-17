@@ -641,7 +641,7 @@ function enable_openvpn(state){
 												<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden;">
 												<script type="text/javascript">
 
-													$j('#openvpn_service_enable').iphoneSwitch((openvpn_enabled && (service_state==2)),
+													$j('#openvpn_service_enable').iphoneSwitch(openvpn_enabled,
 														function() {
 															enable_openvpn(1);
 															document.form.action_script.value = "start_vpnserver"+openvpn_unit;
