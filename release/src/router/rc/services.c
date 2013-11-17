@@ -4661,7 +4661,9 @@ check_ddr_done:
 				stop_pptpd();
 #endif
 #if defined(RTCONFIG_OPENVPN)
-				start_vpnserver(openvpn_unit);
+				if (check_ovpn_server_enabled(openvpn_unit)){
+					start_vpnserver(openvpn_unit);
+				}
 #endif
 			}		
 		}
@@ -4738,7 +4740,9 @@ check_ddr_done:
                 if (action & RC_SERVICE_START){
 #if defined(RTCONFIG_OPENVPN)
 			if(nvram_match("vpnc_proto", "openvpn")){
-				start_vpnclient(openvpnc_unit);
+				if (check_ovpn_client_enabled(openvpn_unit)) {
+					start_vpnclient(openvpnc_unit);
+				}
 				stop_vpnc();
 			}
 			else{

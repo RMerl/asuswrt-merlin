@@ -1617,3 +1617,24 @@ void create_openvpn_passwd()
 	fclose(fp3);
 }
 
+
+int _check_ovpn_enabled(int unit, char *config){
+        char tmp[2];
+
+        if (unit > 9) return 0;
+
+        sprintf(tmp,"%d", unit);
+
+        if (strstr(nvram_safe_get(config), tmp)) return 1;
+
+        return 0;
+}
+
+int check_ovpn_server_enabled(int unit){
+	return _check_ovpn_enabled(unit, "vpn_serverx_eas");
+}
+
+int check_ovpn_client_enabled(int unit){
+	return _check_ovpn_enabled(unit, "vpn_clientx_eas");
+}
+

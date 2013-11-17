@@ -2948,6 +2948,7 @@ void restart_wl(void)
 	if (nvram_match("wl1_radio", "1"))
 	{
 		nvram_set("led_5g", "1");
+nvram_set("rmtest","1");
 #ifdef RTCONFIG_LED_BTN
 		if (nvram_get_int("AllLED"))
 #endif
@@ -2956,6 +2957,7 @@ void restart_wl(void)
 	else
 	{
 		nvram_set("led_5g", "0");
+nvram_set("rmtest", "0");
 		led_control(LED_5G, LED_OFF);
 	}
 #ifdef RTCONFIG_TURBO
