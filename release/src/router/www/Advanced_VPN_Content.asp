@@ -523,7 +523,9 @@ function update_vpn_server_state(){
 
 				}else if(vpnd_state == '-1') {
 					// openvpn failed with an error code
+					document.getElementById('openvpn_initial').style.display = "none";
 					document.getElementById('openvpn_failed').style.display = "";
+					document.getElementById('openvpn_errno').innerHTML="  (Error code: " + vpnd_errno + ")";
 					return;
 
 				}else{	// OpenVPN server ready , vpn_serverX_state==2
@@ -700,7 +702,7 @@ function enable_openvpn(state){
 													</div>
 												<div id="openvpn_failed" style="display:none;margin-left:5px;">
 													<span>
-														OpenVPN server has failed to start!  Check your configuration and try again.
+														Error when starting the OpenVPN server!  Check your configuration and try again.  <span id="openvpn_errno"></span>
 													</span>
 												</div>
 											</td>
