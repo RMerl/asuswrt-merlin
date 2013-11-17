@@ -144,25 +144,18 @@ function get_group_value(mode){
 
 function applyRule(){
 
-	if(document.form.VPNServer_mode.value == "pptpd" && document.form.VPNServer_enable.value == "1"){
+	if(document.form.VPNServer_mode.value == "pptpd"){
 			document.form.action_script.value = "restart_vpnd";
 			document.form.pptpd_clientlist.value = get_group_value("pptpd");
 			document.form.vpn_server_clientlist.disabled = true;
 			document.form.pptpd_enable.value = "1";
 
-	}else if (document.form.VPNServer_mode.value == "openvpn" && document.form.VPNServer_enable.value == "1"){
+	}else if (document.form.VPNServer_mode.value == "openvpn"){
 			document.form.action_script.value = "restart_vpnd";
 			document.form.action_script.value += ";restart_chpass";
 			document.form.pptpd_enable.value = "0";
 			document.form.vpn_server_clientlist.value = get_group_value("openvpn");
 			document.form.pptpd_clientlist.disabled = true;
-
-	}else{		//disable server
-			document.form.action_script.value = "stop_vpnd";
-			document.form.pptpd_enable.value = "0";
-			document.form.pptpd_clientlist.disabled = true;
-			document.form.vpn_server_clientlist.disabled = true;	
-
 	}
 
 	showLoading();
@@ -589,7 +582,6 @@ function enable_openvpn(state){
 			<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 			<input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 			<!-- UI common -->
-			<input type="hidden" name="VPNServer_enable" value="<% nvram_get("VPNServer_enable"); %>">
 			<input type="hidden" name="VPNServer_mode" value="<% nvram_get("VPNServer_mode"); %>">
 			<!-- pptp -->
 			<input type="hidden" name="pptpd_enable" value="<% nvram_get("pptpd_enable"); %>">
