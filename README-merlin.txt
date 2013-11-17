@@ -179,6 +179,8 @@ certain events occur.  Those scripts must be saved in /jffs/scripts/
 - openvpn-event: Called whenever an OpenVPN server gets started/stopped, or an OpenVPN
                  client connects to a remote server.  Uses the same syntax/parameters
                  as the "up" and "down" scripts in OpenVPN.
+- qos-start: Called after both the iptables rules and tc configuration is
+             completed for QoS.
 
 Don't forget to set them as executable:
 
@@ -458,6 +460,12 @@ History
             and client configurations.
 
    - NEW: Support for Namecheap DDNS (Patch provided by saintdev)
+   - NEW: Added qos-start user script
+   - FIXED: Incorrect range validation for UPnP ports on WAN page.
+   - FIXED: Accidentaly lock out of webui due to software hammering
+            the router's webui without valid login credentials
+   - FIXED: NAT Loopback broken with CTF enabled (AC56/AC68) (Asus bug)
+   - FIXED: Backing up your settings would return an empty CFG file.
    - CHANGED: VPN webui is now an hybrid of our original webui,
               along with Asus's own.  This allows the addition
               of these features developed by Asus:
