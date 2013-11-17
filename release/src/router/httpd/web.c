@@ -3152,8 +3152,8 @@ ej_lan_ipv6_network(int eid, webs_t wp, int argc, char_t **argv)
 			 getifaddr((char *) get_wan6face(), AF_INET6, GIF_PREFIXLEN) ? : "");
 	ret += websWrite(wp, "%30s: %s\n", "WAN IPv6 Gateway",
 			 ipv6_gateway_address() ? : "");
-	ret += websWrite(wp, "%30s: %s/%d\n", "LAN IPv6 Address",
-			 nvram_safe_get("ipv6_rtr_addr"), atoi(nvram_safe_get("ipv6_prefix_length")));
+	ret += websWrite(wp, "%30s: %s\n", "LAN IPv6 Address",
+			 getifaddr(nvram_safe_get("lan_ifname"), AF_INET6, GIF_PREFIXLEN) ? : "");
 	ret += websWrite(wp, "%30s: %s\n", "LAN IPv6 Link-Local Address",
 			 getifaddr(nvram_safe_get("lan_ifname"), AF_INET6, GIF_LINKLOCAL | GIF_PREFIXLEN) ? : "");
 	if (service == IPV6_NATIVE_DHCP) {
