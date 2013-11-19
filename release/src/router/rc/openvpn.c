@@ -412,11 +412,11 @@ void start_vpnclient(int clientNum)
 		chmod(&buffer[0], S_IRUSR|S_IWUSR|S_IXUSR);
 		fprintf(fp, "#!/bin/sh\n");
 		fprintf(fp, "iptables -I INPUT -i %s -j ACCEPT\n", &iface[0]);
+		fprintf(fp, "iptables -I FORWARD -i %s -j ACCEPT\n", &iface[0]);
 		// Setup traffic accounting
 		if (nvram_match("cstats_enable", "1")) {
 			ipt_account(fp, &iface[0]);
 		}
-		fprintf(fp, "iptables -I FORWARD -i %s -j ACCEPT\n", &iface[0]);
 		if ( routeMode == NAT )
 		{
 			sscanf(nvram_safe_get("lan_ipaddr"), "%d.%d.%d.%d", &ip[0], &ip[1], &ip[2], &ip[3]);
@@ -1225,10 +1225,10 @@ void start_vpnserver(int serverNum)
 		if ( !nvram_contains_word(&buffer[0], "external") )
 		{
 			fprintf(fp, "iptables -I INPUT -i %s -j ACCEPT\n", &iface[0]);
+			fprintf(fp, "iptables -I FORWARD -i %s -j ACCEPT\n", &iface[0]);
 			if (nvram_match("cstats_enable", "1")) {
 				ipt_account(fp, &iface[0]);
 			}
-			fprintf(fp, "iptables -I FORWARD -i %s -j ACCEPT\n", &iface[0]);
 		}
 		fclose(fp);
 		vpnlog(VPN_LOG_EXTRA,"Done creating firewall rules");
