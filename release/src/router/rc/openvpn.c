@@ -62,7 +62,6 @@ void start_vpnclient(int clientNum)
 	int userauth, useronly;
 #ifdef RTCONFIG_BCMARM
         int cpu_num = sysconf(_SC_NPROCESSORS_CONF);
-        int taskset_ret = -1;
 #endif
 
 	sprintf(&buffer[0], "start_vpnclient%d", clientNum);
@@ -560,7 +559,6 @@ void start_vpnserver(int serverNum)
 	int pid;
 #ifdef RTCONFIG_BCMARM
 	int cpu_num = sysconf(_SC_NPROCESSORS_CONF);
-	int taskset_ret = -1;
 #endif
 	char nv1[32], nv2[32], nv3[32], fpath[128];
 
