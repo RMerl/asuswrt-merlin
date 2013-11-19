@@ -4554,8 +4554,8 @@ void ipt_account(FILE *fp, char *interface) {
 
 	// If we are provided an interface (usually a VPN interface) then use it as WAN.
 	if (interface){
-		fprintf(fp, "-A FORWARD -i %s -o %s -m account --aaddr %s --aname lan\n", interface, nvram_safe_get("lan_ifname"), netaddrnetmask);
-		fprintf(fp, "-A FORWARD -o %s -i %s -m account --aaddr %s --aname lan\n", interface, nvram_safe_get("lan_ifname"), netaddrnetmask);
+		fprintf(fp, "iptables -I FORWARD -i %s -o %s -m account --aaddr %s --aname lan\n", interface, nvram_safe_get("lan_ifname"), netaddrnetmask);
+		fprintf(fp, "iptables -I FORWARD -o %s -i %s -m account --aaddr %s --aname lan\n", interface, nvram_safe_get("lan_ifname"), netaddrnetmask);
 
 	} else {	// Create rules for every WAN interfaces available
 	        for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
