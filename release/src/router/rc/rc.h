@@ -375,6 +375,7 @@ extern void filter_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_i
 #ifdef WEB_REDIRECT
 extern void redirect_setting(void);
 #endif
+extern void ipt_account(FILE *fp, char *interface);
 
 /* pc.c */
 #ifdef RTCONFIG_PARENTALCTRL

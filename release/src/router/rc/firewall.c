@@ -59,8 +59,6 @@ void write_upnp_filter(FILE *fp, char *wan_if);
 void redirect_setting();
 #endif
 
-void ipt_account(FILE *fp);
-
 struct datetime{
 	char start[6];		// start time
 	char stop[6];		// stop time
@@ -2005,7 +2003,7 @@ filter_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 
 // Setup traffic accounting
 	if (nvram_match("cstats_enable", "1")) {
-		ipt_account(fp);
+		ipt_account(fp, NULL);
 	}
 
 #ifdef RTCONFIG_OLD_PARENTALCTRL
@@ -2970,7 +2968,7 @@ filter_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 
 // Setup traffic accounting
         if (nvram_match("cstats_enable", "1")) {
-                ipt_account(fp);
+                ipt_account(fp, NULL);
         }
 
 #ifdef RTCONFIG_OLD_PARENTALCTRL
@@ -4541,7 +4539,7 @@ void enable_ip_forward(void)
 #endif
 }
 
-void ipt_account(FILE *fp) {
+void ipt_account(FILE *fp, char *interface) {
 	struct in_addr ipaddr, netmask, network;
 	char netaddrnetmask[] = "255.255.255.255/255.255.255.255 ";
 	int unit;
@@ -4554,12 +4552,17 @@ void ipt_account(FILE *fp) {
 
 	sprintf(netaddrnetmask, "%s/%s", inet_ntoa(network), nvram_safe_get("lan_netmask"));
 
-	//ipv4 only - and at least either source or destination must be WAN.
-	//Repeat this for every WAN units we support.
-        for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
-		if (strlen(get_wan_ifname(unit))) {
-			fprintf(fp, "-A FORWARD -i %s -o %s -m account --aaddr %s --aname lan\n", get_wan_ifname(unit), nvram_safe_get("lan_ifname"), netaddrnetmask);
-			fprintf(fp, "-A FORWARD -o %s -i %s -m account --aaddr %s --aname lan\n", get_wan_ifname(unit), nvram_safe_get("lan_ifname"), netaddrnetmask);
+	// If we are provided an interface (usually a VPN interface) then use it as WAN.
+	if (interface){
+		fprintf(fp, "-A FORWARD -i %s -o %s -m account --aaddr %s --aname lan\n", interface, nvram_safe_get("lan_ifname"), netaddrnetmask);
+		fprintf(fp, "-A FORWARD -o %s -i %s -m account --aaddr %s --aname lan\n", interface, nvram_safe_get("lan_ifname"), netaddrnetmask);
+
+	} else {	// Create rules for every WAN interfaces available
+	        for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
+			if (strlen(get_wan_ifname(unit))) {
+				fprintf(fp, "-A FORWARD -i %s -o %s -m account --aaddr %s --aname lan\n", get_wan_ifname(unit), nvram_safe_get("lan_ifname"), netaddrnetmask);
+				fprintf(fp, "-A FORWARD -o %s -i %s -m account --aaddr %s --aname lan\n", get_wan_ifname(unit), nvram_safe_get("lan_ifname"), netaddrnetmask);
+			}
 		}
 	}
 }
