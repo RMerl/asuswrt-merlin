@@ -412,7 +412,7 @@ void start_vpnclient(int clientNum)
 		chmod(&buffer[0], S_IRUSR|S_IWUSR|S_IXUSR);
 		fprintf(fp, "#!/bin/sh\n");
 		fprintf(fp, "iptables -I INPUT -i %s -j ACCEPT\n", &iface[0]);
-		fprintf(fp, "iptables -I FORWARD -i %s -j ACCEPT\n", &iface[0]);
+		fprintf(fp, "iptables -I FORWARD %d -i %s -j ACCEPT\n", (nvram_match("cstats_enable", "1") ? 4 : 2), &iface[0]);
 		// Setup traffic accounting
 		if (nvram_match("cstats_enable", "1")) {
 			ipt_account(fp, &iface[0]);
@@ -1225,10 +1225,10 @@ void start_vpnserver(int serverNum)
 		if ( !nvram_contains_word(&buffer[0], "external") )
 		{
 			fprintf(fp, "iptables -I INPUT -i %s -j ACCEPT\n", &iface[0]);
-			fprintf(fp, "iptables -I FORWARD -i %s -j ACCEPT\n", &iface[0]);
-			if (nvram_match("cstats_enable", "1")) {
-				ipt_account(fp, &iface[0]);
-			}
+			fprintf(fp, "iptables -I FORWARD %d -i %s -j ACCEPT\n", (nvram_match("cstats_enable", "1") ? 4 : 2), &iface[0]);
+		}
+		if (nvram_match("cstats_enable", "1")) {
+			ipt_account(fp, &iface[0]);
 		}
 		fclose(fp);
 		vpnlog(VPN_LOG_EXTRA,"Done creating firewall rules");

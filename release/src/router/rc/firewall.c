@@ -2003,6 +2003,7 @@ filter_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 
 // Setup traffic accounting
 	if (nvram_match("cstats_enable", "1")) {
+		fprintf(fp, ":ipttolan - [0:0]\n:iptfromlan - [0:0]\n");
 		ipt_account(fp, NULL);
 	}
 
@@ -2967,9 +2968,10 @@ filter_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 	strcpy(macaccept, "");
 
 // Setup traffic accounting
-        if (nvram_match("cstats_enable", "1")) {
-                ipt_account(fp, NULL);
-        }
+	if (nvram_match("cstats_enable", "1")) {
+		fprintf(fp, ":ipttolan - [0:0]\n:iptfromlan - [0:0]\n");
+		ipt_account(fp, NULL);
+	}
 
 #ifdef RTCONFIG_OLD_PARENTALCTRL
 	parental_ctrl();
@@ -4554,14 +4556,16 @@ void ipt_account(FILE *fp, char *interface) {
 
 	// If we are provided an interface (usually a VPN interface) then use it as WAN.
 	if (interface){
-		fprintf(fp, "iptables -I FORWARD -i %s -o %s -m account --aaddr %s --aname lan\n", interface, nvram_safe_get("lan_ifname"), netaddrnetmask);
-		fprintf(fp, "iptables -I FORWARD -o %s -i %s -m account --aaddr %s --aname lan\n", interface, nvram_safe_get("lan_ifname"), netaddrnetmask);
+		fprintf(fp, "iptables -A ipttolan -i %s -m account --aaddr %s --aname lan -j RETURN\n", interface, netaddrnetmask);
+		fprintf(fp, "iptables -A iptfromlan -o %s -m account --aaddr %s --aname lan -j RETURN\n", interface, netaddrnetmask);
 
 	} else {	// Create rules for every WAN interfaces available
-	        for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
-			if (strlen(get_wan_ifname(unit))) {
-				fprintf(fp, "-A FORWARD -i %s -o %s -m account --aaddr %s --aname lan\n", get_wan_ifname(unit), nvram_safe_get("lan_ifname"), netaddrnetmask);
-				fprintf(fp, "-A FORWARD -o %s -i %s -m account --aaddr %s --aname lan\n", get_wan_ifname(unit), nvram_safe_get("lan_ifname"), netaddrnetmask);
+		fprintf(fp, "-I FORWARD -i br0 -j iptfromlan\n");
+		fprintf(fp, "-I FORWARD -o br0 -j ipttolan\n");
+		for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
+			if ((get_dualwan_by_unit(unit) != WANS_DUALWAN_IF_NONE) && (strlen(get_wan_ifname(unit)))) {
+				fprintf(fp, "-A ipttolan -i %s -m account --aaddr %s --aname lan -j RETURN\n", get_wan_ifname(unit), netaddrnetmask);
+				fprintf(fp, "-A iptfromlan -o %s -m account --aaddr %s --aname lan -j RETURN\n", get_wan_ifname(unit), netaddrnetmask);
 			}
 		}
 	}
