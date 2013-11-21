@@ -18,4 +18,4 @@ At this time, the supported devices are:
 
 Firmware builds can be downloaded from the official download site:
 
-http://www.mediafire.com/asuswrt-merlin/
+http://www.lostrealm.ca/asuswrt-merlin/download
