@@ -29,9 +29,9 @@ Supported devices are:
  * RT-AC56U
  * RT-AC68U
 
-NOTE: all the "R" versions (for example RT-N66R) the same as their "U" counterparts, 
-they are just different packages aimed at large retailers.  Firmware is 100% 
-compatible with both U and R versions of the routers.
+NOTE: all the "R" versions (for example RT-N66R) are the same as their "U" 
+counterparts, they are just different packages aimed at large retailers.  
+Firmware is 100% compatible with both U and R versions of the routers.
 
 
 Features
@@ -49,7 +49,7 @@ System:
    - Customized config files for router services
    - LED control - put your Dark Knight in Stealth Mode by turning off all LEDs
    - Entware easy setup script (alternative to Optware - the two are mutually exclusive)
-     (not available on RT-AC56U)
+     (not available on RT-AC56U/RT-AC68U)
 
 Disk sharing:
    - Enable/disable the use of shorter share names
@@ -466,6 +466,10 @@ History
             the router's webui without valid login credentials
    - FIXED: NAT Loopback broken with CTF enabled (AC56/AC68) (Asus bug)
    - FIXED: Backing up your settings would return an empty CFG file.
+   - FIXED: Kernel panic when inserting ebtables rule (AC56/AC68,
+            fix backported from kernel 2.6.37)
+   - CHANGED: IPTraffic will now account for traffic going through
+              an OpenVPN tunnel
    - CHANGED: VPN webui is now an hybrid of our original webui,
               along with Asus's own.  This allows the addition
               of these features developed by Asus:
@@ -1357,12 +1361,11 @@ good amount of the limited available nvram. ***
 Contact information
 -------------------
 SmallNetBuilder forums (preferred method: http://forums.smallnetbuilder.com/showthread.php?t=7047 as RMerlin)
-Asus Forums (http://vip.asus.com/forum/topic.aspx?board_id=11&model=RT-N66U%20(VER.B1)&SLanguage=en-us) as RMerlin.
 Website: http://www.lostrealm.ca/
 Github: https://github.com/RMerl/asuswrt-merlin
 Email: rmerl@lostrealm.ca
 Twitter: https://twitter.com/RMerlinDev
-Download: http://wwww.mediafire.com/asuswrt-merlin/
+Download: http://www.lostrealm.ca/asuswrt-merlin/download
 
 Development news will be posted on Twitter.  You can also keep a closer eye 
 on development as it happens through the Github site.
