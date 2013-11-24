@@ -153,7 +153,6 @@ function applyRule(){
 	}else if (document.form.VPNServer_mode.value == "openvpn"){
 			document.form.action_script.value = "restart_vpnd";
 			document.form.action_script.value += ";restart_chpass";
-			document.form.pptpd_enable.value = "0";
 			document.form.vpn_server_clientlist.value = get_group_value("openvpn");
 			document.form.pptpd_clientlist.disabled = true;
 	}
@@ -619,12 +618,14 @@ function enable_openvpn(state){
 													$j('#pptp_service_enable').iphoneSwitch('<% nvram_get("pptpd_enable"); %>',
 														function() {
 															document.form.pptpd_enable.value = "1";
+															document.form.action_script.value = "start_pptpd";
 															parent.showLoading();
 															document.form.submit();
 															return true;
 														},
 														function() {
 															document.form.pptpd_enable.value = "0";
+															document.form.action_script.value = "stop_pptpd";
 															parent.showLoading();
 															document.form.submit();
 															return true;

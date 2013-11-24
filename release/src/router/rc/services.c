@@ -4648,24 +4648,15 @@ check_ddr_done:
 #endif
 		}
 		if (action & RC_SERVICE_START){
-			if(nvram_match("VPNServer_mode", "pptpd")){
-#if defined(RTCONFIG_OPENVPN)
-				stop_vpnserver(openvpn_unit);
-#endif
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
-				start_pptpd();
+			start_pptpd();
 #endif
-                                start_firewall(wan_primary_ifunit(), 0);
-			}else{	//openvpn
-#if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
-				stop_pptpd();
-#endif
+			start_firewall(wan_primary_ifunit(), 0);
 #if defined(RTCONFIG_OPENVPN)
-				if (check_ovpn_server_enabled(openvpn_unit)){
-					start_vpnserver(openvpn_unit);
-				}
+			if (check_ovpn_server_enabled(openvpn_unit)){
+				start_vpnserver(openvpn_unit);
+			}
 #endif
-			}		
 		}
         }
 #endif

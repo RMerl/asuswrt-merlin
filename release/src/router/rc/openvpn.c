@@ -1369,7 +1369,6 @@ void start_vpn_eas()
 	nums[i] = 0;
 	for( i = 0; nums[i] > 0; i++ )
 	{
-		if(!nvram_match("VPNServer_mode", "openvpn")) continue;
 
 		sprintf(&buffer[0], "vpnserver%d", nums[i]);
 		if ( pidof(&buffer[0]) >= 0 )
