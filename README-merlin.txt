@@ -468,6 +468,8 @@ History
    - FIXED: Backing up your settings would return an empty CFG file.
    - FIXED: Kernel panic when inserting ebtables rule (AC56/AC68,
             fix backported from kernel 2.6.37)
+   - FIXED: If an IP/CIDR on the IPv6 firewall page was long enough
+            to be shortened with "..." it would be incorrectly saved.
    - CHANGED: IPTraffic will now account for traffic going through
               an OpenVPN tunnel
    - CHANGED: VPN webui is now an hybrid of our original webui,
