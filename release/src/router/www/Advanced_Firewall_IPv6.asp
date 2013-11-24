@@ -36,7 +36,9 @@ wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 
 var overlib_str0 = new Array();
-var overlib_str = new Array();
+var overlib_str1 = new Array();
+var overlib_str2 = new Array();
+var overlib_str3 = new Array();
 
 var ipv6_fw_rulelist_array = "<% nvram_char_to_ascii("","ipv6_fw_rulelist"); %>";
 
@@ -302,7 +304,9 @@ function showipv6_fw_rulelist(){
 	else{
 		for(var i = 1; i < ipv6_fw_rulelist_row.length; i++){
 			overlib_str0[i] ="";
-			overlib_str[i] ="";			
+			overlib_str1[i] ="";	
+			overlib_str2[i] ="";	
+			overlib_str3[i] ="";			
 			code +='<tr id="row'+i+'">';
 			var ipv6_fw_rulelist_col = ipv6_fw_rulelist_row[i].split('>');
 			var wid=[15, 24, 24, 14, 11];
@@ -316,25 +320,25 @@ function showipv6_fw_rulelist(){
 								code +='<td width="'+wid[j]+'%">'+ ipv6_fw_rulelist_col[j] +'</td>';
 						}else if(j==1){
 							if(ipv6_fw_rulelist_col[1].length >22){
-								overlib_str[i] += ipv6_fw_rulelist_col[1];
+								overlib_str1[i] += ipv6_fw_rulelist_col[1];
 								ipv6_fw_rulelist_col[1]=ipv6_fw_rulelist_col[1].substring(0, 20)+"...";
-								code +='<td width="'+wid[j]+'%" title='+overlib_str[i]+'>'+ ipv6_fw_rulelist_col[1] +'</td>';
+								code +='<td width="'+wid[j]+'%" title='+overlib_str1[i]+'>'+ ipv6_fw_rulelist_col[1] +'</td>';
 							}else
 								code +='<td width="'+wid[j]+'%">'+ ipv6_fw_rulelist_col[j] +'</td>';
-                                                }else if(j==2){
-                                                        if(ipv6_fw_rulelist_col[2].length >22){
-                                                                overlib_str[i] += ipv6_fw_rulelist_col[2];
-                                                                ipv6_fw_rulelist_col[2]=ipv6_fw_rulelist_col[2].substring(0, 20)+"...";
-                                                                code +='<td width="'+wid[j]+'%" title='+overlib_str[i]+'>'+ ipv6_fw_rulelist_col[2] +'</td>';
-                                                        }else
-                                                                code +='<td width="'+wid[j]+'%">'+ ipv6_fw_rulelist_col[j] +'</td>';
-                                                }else if(j==3){
-                                                        if(ipv6_fw_rulelist_col[3].length >12){
-                                                                overlib_str[i] += ipv6_fw_rulelist_col[3];
-                                                                ipv6_fw_rulelist_col[3]=ipv6_fw_rulelist_col[3].substring(0, 10)+"...";
-                                                                code +='<td width="'+wid[j]+'%" title='+overlib_str[i]+'>'+ ipv6_fw_rulelist_col[3] +'</td>';
-                                                        }else
-                                                                code +='<td width="'+wid[j]+'%">'+ ipv6_fw_rulelist_col[j] +'</td>';
+						}else if(j==2){
+							if(ipv6_fw_rulelist_col[2].length >22){
+								overlib_str2[i] += ipv6_fw_rulelist_col[2];
+								ipv6_fw_rulelist_col[2]=ipv6_fw_rulelist_col[2].substring(0, 20)+"...";
+								code +='<td width="'+wid[j]+'%" title='+overlib_str2[i]+'>'+ ipv6_fw_rulelist_col[2] +'</td>';
+							}else
+								code +='<td width="'+wid[j]+'%">'+ ipv6_fw_rulelist_col[j] +'</td>';
+							}else if(j==3){
+								if(ipv6_fw_rulelist_col[3].length >12){
+									overlib_str3[i] += ipv6_fw_rulelist_col[3];
+									ipv6_fw_rulelist_col[3]=ipv6_fw_rulelist_col[3].substring(0, 10)+"...";
+									code +='<td width="'+wid[j]+'%" title='+overlib_str3[i]+'>'+ ipv6_fw_rulelist_col[3] +'</td>';
+								}else
+									code +='<td width="'+wid[j]+'%">'+ ipv6_fw_rulelist_col[j] +'</td>';
 						}else{
 							code +='<td width="'+wid[j]+'%">'+ ipv6_fw_rulelist_col[j] +'</td>';
 						}
