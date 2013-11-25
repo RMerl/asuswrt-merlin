@@ -251,7 +251,7 @@ void start_vpnclient(int clientNum)
 		if ( nvram_get_int(&buffer[0]) > 0 )
 		{
 			sprintf(&buffer[0], "/etc/openvpn/client%d/updown.sh", clientNum);
-			symlink("/rom/openvpn/updown.sh", &buffer[0]);
+			symlink("/usr/sbin/updown.sh", &buffer[0]);
 			fprintf(fp, "script-security 2\n");
 			fprintf(fp, "up updown.sh\n");
 			fprintf(fp, "down updown.sh\n");
