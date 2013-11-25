@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 3.0.0.4.374.35 (24-Nov-2013)
-===================================================
+Asuswrt-Merlin - build 3.0.0.4.374.35_2 (24-Nov-2013)
+=====================================================
 
 About
 -----
@@ -447,6 +447,11 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.4.374.35_2 (24-Nov-2013):
+   - FIXED: updown.sh script location was changed in
+            339, causing issues with OpenVPN clients
+
+
 3.0.0.4.374.35 (24-Nov-2013):
    - NEW: Merged with Asus 374_339 GPL (from RT-AC68U).
           Asus added some new features in this release:
