@@ -159,54 +159,57 @@ ciphersarray = [
 
 function initial(){
 	show_menu();
+	change_mode("<% nvram_get("VPNServer_mode"); %>");
+
 	check_dns_wins();
 
-	if("<% nvram_get("VPNServer_mode"); %>" == "pptpd"){
+	if (pptpd_clients != "") {
+		document.form._pptpd_clients_start.value = pptpd_clients.split("-")[0];
+		document.form._pptpd_clients_end.value = pptpd_clients.split("-")[1];
+		$('pptpd_subnet').innerHTML = pptpd_clients.split(".")[0] + "." +
+				      pptpd_clients.split(".")[1] + "." +
+				      pptpd_clients.split(".")[2] + ".";
+	}
+	
+	if (document.form.pptpd_mppe.value == 0)
+		document.form.pptpd_mppe.value = (1 | 4 | 8);
+	document.form.pptpd_mppe_128.checked = (document.form.pptpd_mppe.value & 1);
+	//document.form.pptpd_mppe_56.checked = (document.form.pptpd_mppe.value & 2);
+	document.form.pptpd_mppe_40.checked = (document.form.pptpd_mppe.value & 4);
+	document.form.pptpd_mppe_no.checked = (document.form.pptpd_mppe.value & 8);
+
+	check_vpn_conflict();
+	openvpn_clientlist();
+
+	// Cipher list
+	free_options(document.openvpn_form.vpn_server_cipher);
+	currentcipher = "<% nvram_get("vpn_server_cipher"); %>";
+	add_option(document.openvpn_form.vpn_server_cipher, "Default","default",(currentcipher == "Default"));
+	add_option(document.openvpn_form.vpn_server_cipher, "None","none",(currentcipher == "none"));
+
+	for(var i = 0; i < ciphersarray.length; i++){
+		add_option(document.openvpn_form.vpn_server_cipher,
+			ciphersarray[i][0], ciphersarray[i][0],
+			(currentcipher == ciphersarray[i][0]));
+	}
+
+	// Set these based on a compound field
+	setRadioValue(document.openvpn_form.vpn_server_x_dns, ((document.openvpn_form.vpn_serverx_dns.value.indexOf(''+(openvpn_unit)) >= 0) ? "1" : "0"));
+
+	// Decode into editable format
+	openvpn_decodeKeys(0);
+}
+
+function change_mode(mode){
+	if (mode == "pptpd"){
 		document.form.style.display = "";
 		document.openvpn_form.style.display = "none";
-
-		if (pptpd_clients != "") {
-			document.form._pptpd_clients_start.value = pptpd_clients.split("-")[0];
-			document.form._pptpd_clients_end.value = pptpd_clients.split("-")[1];
-			$('pptpd_subnet').innerHTML = pptpd_clients.split(".")[0] + "." +
-					      pptpd_clients.split(".")[1] + "." +
-					      pptpd_clients.split(".")[2] + ".";
-		}
-	
-		if (document.form.pptpd_mppe.value == 0)
-			document.form.pptpd_mppe.value = (1 | 4 | 8);
-		document.form.pptpd_mppe_128.checked = (document.form.pptpd_mppe.value & 1);
-		//document.form.pptpd_mppe_56.checked = (document.form.pptpd_mppe.value & 2);
-		document.form.pptpd_mppe_40.checked = (document.form.pptpd_mppe.value & 4);
-		document.form.pptpd_mppe_no.checked = (document.form.pptpd_mppe.value & 8);
-
-		check_vpn_conflict();
-
-	}else if("<% nvram_get("VPNServer_mode"); %>" == "openvpn"){
-
+		document.form.pptpd_mode.value="pptpd";
+	}else{
+		update_visibility();
 		document.form.style.display = "none";
 		document.openvpn_form.style.display = "";
-
-		openvpn_clientlist();
-
-		// Cipher list
-		free_options(document.openvpn_form.vpn_server_cipher);
-		currentcipher = "<% nvram_get("vpn_server_cipher"); %>";
-		add_option(document.openvpn_form.vpn_server_cipher, "Default","default",(currentcipher == "Default"));
-		add_option(document.openvpn_form.vpn_server_cipher, "None","none",(currentcipher == "none"));
-
-		for(var i = 0; i < ciphersarray.length; i++){
-			add_option(document.openvpn_form.vpn_server_cipher,
-				ciphersarray[i][0], ciphersarray[i][0],
-				(currentcipher == ciphersarray[i][0]));
-		}
-
-		// Set these based on a compound field
-		setRadioValue(document.openvpn_form.vpn_server_x_dns, ((document.openvpn_form.vpn_serverx_dns.value.indexOf(''+(openvpn_unit)) >= 0) ? "1" : "0"));
-
-		// Decode into editable format
-		openvpn_decodeKeys(0);
-		update_visibility();
+		document.openvpn_form.openvpn_mode.value="openvpn";
 	}
 }
 
@@ -872,6 +875,24 @@ function cal_panel_block(){
 								<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 								<div class="formfontdesc"><#PPTP_desc#></div>
 								<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+									<thead>
+										<tr>
+											<td colspan="2">Server Mode</td>
+										</tr>
+									</thead>
+									<tr>
+										<th>VPN Server mode</th>
+										<td>
+												<select id="pptpd_mode" class="input_option" onchange="change_mode(this.value);">
+													<option value="pptpd" selected>PPTP</option>
+													<option value="openvpn">OpenVPN</option>
+												</select>
+										</td>
+									</tr>
+
+								</table>
+
+								<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 									  	<thead>
 									  		<tr>
 												<td colspan="3" id="GWStatic"><#t2BC#></td>
@@ -1013,6 +1034,24 @@ function cal_panel_block(){
 									<p>In case of problem, see the <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="Main_LogStatus_Content.asp">System Log</a> for any error message related to openvpn.
 									<p><br>Visit the OpenVPN <a style="font-weight: bolder; text-decoration:underline;" class="hyperlink" href="http://openvpn.net/index.php/open-source/downloads.html" target="_blank">Download</a> page to get the Windows client.
 								</div>
+
+								<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+									<thead>
+										<tr>
+											<td colspan="2">Server Mode</td>
+										</tr>
+									</thead>
+									<tr>
+										<th>VPN Server mode</th>
+										<td>
+												<select id="openvpn_mode" name="VPNServer_mode_select" class="input_option" onchange="change_mode(this.value);">
+													<option value="pptpd">PPTP</option>
+													<option value="openvpn" selected>OpenVPN</option>
+												</select>
+										</td>
+									</tr>
+
+								</table>
 
 								<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 									<thead>
