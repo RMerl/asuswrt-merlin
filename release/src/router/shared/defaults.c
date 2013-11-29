@@ -1370,7 +1370,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "vpn_server_custom",		""		},
 	{ "vpn_server_igncrt",		"1"		},
 	{ "vpn_server_userpass_auth",	"0"		},
-	{ "vpn_server_clientlist",	""		},
+	{ "vpn_serverx_clientlist",	""		},
 	{ "vpn_server1_poll",		"0"		},
 	{ "vpn_server1_if",		"tun"		},
 	{ "vpn_server1_proto",		"udp"		},

@@ -1600,7 +1600,7 @@ void create_openvpn_passwd()
 	fp3=fopen("/etc/group.openvpn", "w");
 	if (!fp1 || !fp2 || !fp3) return;
 
-	nv = nvp = strdup(nvram_safe_get("vpn_server_clientlist"));
+	nv = nvp = strdup(nvram_safe_get("vpn_serverx_clientlist"));
 
 	if(nv) {
 		while ((b = strsep(&nvp, "<")) != NULL) {

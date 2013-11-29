@@ -32,7 +32,7 @@ var pptpd_clientlist_array = decodeURIComponent(pptpd_clientlist_array_ori);
 /* initial variables for openvpn start */
 <% vpn_server_get_parameter(); %>;
 
-var vpn_server_clientlist_array_ori = '<% nvram_char_to_ascii("","vpn_server_clientlist"); %>';
+var vpn_server_clientlist_array_ori = '<% nvram_char_to_ascii("","vpn_serverx_clientlist"); %>';
 var vpn_server_clientlist_array = decodeURIComponent(vpn_server_clientlist_array_ori);
 var openvpn_unit = '<% nvram_get("vpn_server_unit"); %>';
 if (openvpn_unit == '1')
@@ -147,13 +147,13 @@ function applyRule(){
 	if(document.form.VPNServer_mode.value == "pptpd"){
 			document.form.action_script.value = "restart_vpnd";
 			document.form.pptpd_clientlist.value = get_group_value("pptpd");
-			document.form.vpn_server_clientlist.disabled = true;
+			document.form.vpn_serverx_clientlist.disabled = true;
 			document.form.pptpd_enable.value = "1";
 
 	}else if (document.form.VPNServer_mode.value == "openvpn"){
 			document.form.action_script.value = "restart_vpnd";
 			document.form.action_script.value += ";restart_chpass";
-			document.form.vpn_server_clientlist.value = get_group_value("openvpn");
+			document.form.vpn_serverx_clientlist.value = get_group_value("openvpn");
 			document.form.pptpd_clientlist.disabled = true;
 	}
 
@@ -589,7 +589,7 @@ function enable_openvpn(state){
 			<input type="hidden" name="pptpd_broadcast" value="<% nvram_get("pptpd_broadcast"); %>">	
 			<input type="hidden" name="pptpd_clientlist" value="<% nvram_get("pptpd_clientlist"); %>">
 			<!-- openvpn -->
-			<input type="hidden" name="vpn_server_clientlist" value="<% nvram_get("vpn_server_clientlist"); %>">
+			<input type="hidden" name="vpn_serverx_clientlist" value="<% nvram_get("vpn_serverx_clientlist"); %>">
 			<input type="hidden" name="vpn_serverx_eas" value="<% nvram_get("vpn_serverx_eas"); %>">
 			<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
 				<tr>
