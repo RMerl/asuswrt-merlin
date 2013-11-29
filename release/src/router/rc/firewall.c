@@ -1275,7 +1275,7 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 	FILE *fp = NULL;	// oleg patch
 	char lan_class[32];	// oleg patch
 	int wan_port;
-	char dstips[32];
+	char dstips[64];
 	char *proto, *protono, *port, *lport, *dstip, *desc;
 	char *nv, *nvp, *b;
 	char *wan_if, *wan_ip;
