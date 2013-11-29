@@ -462,7 +462,7 @@ function openvpn_applyRule(){
 	showLoading();
 
 	if (service_state) {
-		document.form.action_script.value = "restart_vpnserver" + openvpn_unit;
+		document.openvpn_form.action_script.value = "restart_vpnserver" + openvpn_unit;
 	}
 
 	var client_num = $('openvpn_clientlist_table').rows.length;
@@ -498,7 +498,7 @@ function openvpn_applyRule(){
 		} else {
 			if (document.openvpn_form.vpn_serverx_dns.value.indexOf(''+(i)) >= 0)
 				tmp_value += ""+i+","
-		}
+	}
 	}
 
 // TODO: Only restart if instance is running?
