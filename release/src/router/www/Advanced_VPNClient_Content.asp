@@ -358,7 +358,7 @@ var save_flag;	//type of Saving profile
 function tabclickhandler(_type){
 	document.getElementById('pptpcTitle').className = "vpnClientTitle_td_unclick";
 	document.getElementById('l2tpcTitle').className = "vpnClientTitle_td_unclick";
-	document.getElementById('opencTitle').className = "vpnClientTitle_td_unclick";
+//	document.getElementById('opencTitle').className = "vpnClientTitle_td_unclick";
 
 	if(_type == 0){
 		save_flag = "PPTP";
@@ -847,7 +847,7 @@ function addOpenvpnProfile(){
 					<tr>
 			  		<td width="33%" align="center" id="pptpcTitle" onclick="tabclickhandler(0);">PPTP</td>
 			  		<td width="33%" align="center" id="l2tpcTitle" onclick="tabclickhandler(1);">L2TP</td>
-			  		<td width="33%" align="center" id="opencTitle" onclick="tabclickhandler(2);">OpenVPN</td>
+			  		<!-- td width="33%" align="center" id="opencTitle" onclick="tabclickhandler(2);">OpenVPN</td -->
 					</tr>
 				</table>
 			</td>
