@@ -204,12 +204,14 @@ function change_mode(mode){
 	if (mode == "pptpd"){
 		document.form.style.display = "";
 		document.openvpn_form.style.display = "none";
-		document.form.pptpd_mode.value="pptpd";
+		document.form.pptpd_mode.value = "pptpd";
+		document.form.VPNServer_mode.value = "pptpd";
 	}else{
 		update_visibility();
 		document.form.style.display = "none";
 		document.openvpn_form.style.display = "";
-		document.openvpn_form.openvpn_mode.value="openvpn";
+		document.openvpn_form.openvpn_mode.value = "openvpn";
+		document.openvpn_form.VPNServer_mode.value = "openvpn";
 	}
 }
 
@@ -863,6 +865,7 @@ function cal_panel_block(){
 			<input type="hidden" name="wl_ssid" value="<% nvram_get("wl_ssid"); %>">
 			<input type="hidden" name="pptpd_clients" value="<% nvram_get("pptpd_clients"); %>">
 			<input type="hidden" name="pptpd_mppe" value="<% nvram_get("pptpd_mppe"); %>">			
+			<input type="hidden" name="VPNServer_mode" value="<% nvram_get("VPNServer_mode"); %>">
 			<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
 				<tr>
 					<td valign="top">
@@ -1020,6 +1023,7 @@ function cal_panel_block(){
 			<input type="hidden" name="vpn_crt_server2_key" value="<% nvram_clean_get("vpn_crt_server2_key"); %>">
 			<input type="hidden" name="vpn_crt_server2_dh" value="<% nvram_clean_get("vpn_crt_server2_dh"); %>">
 			<input type="hidden" name="vpn_crt_server2_static" value="<% nvram_clean_get("vpn_crt_server2_static"); %>">
+			<input type="hidden" name="VPNServer_mode" value="<% nvram_get("VPNServer_mode"); %>">
       		<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
         		<tr>
           			<td valign="top">
