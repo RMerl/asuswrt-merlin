@@ -930,7 +930,7 @@ function addOpenvpnProfile(){
 									To start a VPN connection, please follow the steps below:
 									<ol>
 									<li>Add profile
-									<li>Select a VPN connection type(PPTP or L2TP)
+									<li>Select a VPN connection type (PPTP or L2TP)
 									<li>Enter VPN authentication information provided by your VPN provider then connect.
 									</ol>
 								</div>
