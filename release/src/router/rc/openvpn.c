@@ -1097,16 +1097,19 @@ void start_vpnserver(int serverNum)
 		sprintf(&buffer[0], "vpn_crt_server%d_ca", serverNum);
 		fprintf(fp_client, "<ca>\n");
 		fprintf(fp_client, "%s", get_parsed_crt(&buffer[0], buffer2));
+		if (&buffer[strlen(&buffer)] != ">") fprintf(fp_client, "\n");	// Append newline if missing
 		fprintf(fp_client, "</ca>\n");
 
 		fprintf(fp_client, "<cert>\n");
 		sprintf(&buffer[0], "vpn_crt_server%d_client_crt", serverNum);
 		fprintf(fp_client, "%s", get_parsed_crt(&buffer[0], buffer2));
+		if (&buffer[strlen(&buffer)] != ">") fprintf(fp_client, "\n");  // Append newline if missing
 		fprintf(fp_client, "</cert>\n");
 
 		fprintf(fp_client, "<key>\n");
 		sprintf(&buffer[0], "vpn_crt_server%d_client_key", serverNum);
 		fprintf(fp_client, "%s", get_parsed_crt(&buffer[0], buffer2));
+		if (&buffer[strlen(&buffer)] != ">") fprintf(fp_client, "\n");  // Append newline if missing
 		fprintf(fp_client, "</key>\n");
 
 		sprintf(&buffer[0], "vpn_crt_server%d_dh", serverNum);
@@ -1160,6 +1163,7 @@ void start_vpnserver(int serverNum)
 		else if(cryptMode == SECRET)
 			fprintf(fp_client, "<secret>\n");
 		fprintf(fp_client, "%s", get_parsed_crt(&buffer[0], buffer2));
+		if (&buffer[strlen(&buffer)] != ">") fprintf(fp_client, "\n");  // Append newline if missing
 		if(cryptMode == TLS) {
 			fprintf(fp_client, "</tls-auth>\n");
 			sprintf(&buffer[0], "vpn_server%d_hmac", serverNum);
