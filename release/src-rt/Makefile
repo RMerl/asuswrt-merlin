@@ -859,6 +859,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_WPSMULTIBAND/d" $(1); \
 		echo "# RTCONFIG_WPSMULTIBAND is not set" >>$(1); \
 	fi; \
+	if [ "$(VPNC)" = "y" ]; then \
+		sed -i "/RTCONFIG_VPNC/d" $(1); \
+		echo "RTCONFIG_VPNC=y" >>$(1); \
+	fi; \
 	if [ "$(IPSEC)" = "y" ]; then \
 		sed -i "/RTCONFIG_IPSEC/d" $(1); \
 		echo "RTCONFIG_IPSEC=y" >>$(1); \
