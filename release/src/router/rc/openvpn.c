@@ -1102,18 +1102,22 @@ void start_vpnserver(int serverNum)
 
 		fprintf(fp_client, "<cert>\n");
 		sprintf(&buffer[0], "vpn_crt_server%d_client_crt", serverNum);
-		if ( !nvram_is_empty(&buffer[0]) )
+		if ( !nvram_is_empty(&buffer[0]) ) {
 			fprintf(fp_client, "%s", get_parsed_crt(&buffer[0], buffer2));
-		else
+			if (&buffer[strlen(&buffer)] != ">") fprintf(fp_client, "\n");  // Append newline if missing
+		} else {
 			fprintf(fp_client, "    paste client certificate data here\n");
+		}
 		fprintf(fp_client, "</cert>\n");
 
 		fprintf(fp_client, "<key>\n");
 		sprintf(&buffer[0], "vpn_crt_server%d_client_key", serverNum);
-		if ( !nvram_is_empty(&buffer[0]) )
+		if ( !nvram_is_empty(&buffer[0]) ) {
 			fprintf(fp_client, "%s", get_parsed_crt(&buffer[0], buffer2));
-		else
+			if (&buffer[strlen(&buffer)] != ">") fprintf(fp_client, "\n");  // Append newline if missing
+		} else {
 			fprintf(fp_client, "    paste client key data here\n");
+		}
 		fprintf(fp_client, "</key>\n");
 
 		sprintf(&buffer[0], "vpn_crt_server%d_dh", serverNum);
