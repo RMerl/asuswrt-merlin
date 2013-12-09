@@ -157,6 +157,7 @@ typedef u_int32_t uint32_t;
 #endif /* HAVE_UINT32_T */
 
 #ifdef SO_PRIORITY
+#include <linux/types.h>
 #include <linux/pkt_sched.h>
 #endif
 
