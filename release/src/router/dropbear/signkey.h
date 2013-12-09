@@ -29,6 +29,24 @@
 #include "dss.h"
 #include "rsa.h"
 
+enum signkey_type {
+#ifdef DROPBEAR_RSA
+	DROPBEAR_SIGNKEY_RSA,
+#endif
+#ifdef DROPBEAR_DSS
+	DROPBEAR_SIGNKEY_DSS,
+#endif
+#ifdef DROPBEAR_ECDSA
+	DROPBEAR_SIGNKEY_ECDSA_NISTP256,
+	DROPBEAR_SIGNKEY_ECDSA_NISTP384,
+	DROPBEAR_SIGNKEY_ECDSA_NISTP521,
+#endif /* DROPBEAR_ECDSA */
+	DROPBEAR_SIGNKEY_NUM_NAMED,
+	DROPBEAR_SIGNKEY_ECDSA_KEYGEN = 70, /* just "ecdsa" for keygen */
+	DROPBEAR_SIGNKEY_ANY = 80,
+	DROPBEAR_SIGNKEY_NONE = 90,
+};
+
 
 /* Sources for signing keys */
 typedef enum {
@@ -39,11 +57,9 @@ typedef enum {
 
 struct SIGN_key {
 
-	int type; /* The type of key (dss or rsa) */
+	enum signkey_type type;
 	signkey_source source;
 	char *filename;
-	/* the buffer? for encrypted keys, so we can later get
-	 * the private key portion */
 
 #ifdef DROPBEAR_DSS
 	dropbear_dss_key * dsskey;
@@ -51,27 +67,38 @@ struct SIGN_key {
 #ifdef DROPBEAR_RSA
 	dropbear_rsa_key * rsakey;
 #endif
+#ifdef DROPBEAR_ECDSA
+#ifdef DROPBEAR_ECC_256
+	ecc_key * ecckey256;
+#endif
+#ifdef DROPBEAR_ECC_384
+	ecc_key * ecckey384;
+#endif
+#ifdef DROPBEAR_ECC_521
+	ecc_key * ecckey521;
+#endif
+#endif
 };
 
 typedef struct SIGN_key sign_key;
 
 sign_key * new_sign_key();
-const char* signkey_name_from_type(int type, int *namelen);
-int signkey_type_from_name(const char* name, int namelen);
-int buf_get_pub_key(buffer *buf, sign_key *key, int *type);
-int buf_get_priv_key(buffer* buf, sign_key *key, int *type);
-void buf_put_pub_key(buffer* buf, sign_key *key, int type);
-void buf_put_priv_key(buffer* buf, sign_key *key, int type);
+const char* signkey_name_from_type(enum signkey_type type, unsigned int *namelen);
+enum signkey_type signkey_type_from_name(const char* name, unsigned int namelen);
+int buf_get_pub_key(buffer *buf, sign_key *key, enum signkey_type *type);
+int buf_get_priv_key(buffer* buf, sign_key *key, enum signkey_type *type);
+void buf_put_pub_key(buffer* buf, sign_key *key, enum signkey_type type);
+void buf_put_priv_key(buffer* buf, sign_key *key, enum signkey_type type);
 void sign_key_free(sign_key *key);
-void buf_put_sign(buffer* buf, sign_key *key, int type, 
-		const unsigned char *data, unsigned int len);
+void buf_put_sign(buffer* buf, sign_key *key, enum signkey_type type, buffer *data_buf);
 #ifdef DROPBEAR_SIGNKEY_VERIFY
-int buf_verify(buffer * buf, sign_key *key, const unsigned char *data,
-		unsigned int len);
+int buf_verify(buffer * buf, sign_key *key, buffer *data_buf);
 char * sign_key_fingerprint(unsigned char* keyblob, unsigned int keybloblen);
 #endif
 int cmp_base64_key(const unsigned char* keyblob, unsigned int keybloblen, 
 					const unsigned char* algoname, unsigned int algolen, 
 					buffer * line, char ** fingerprint);
+
+void** signkey_key_ptr(sign_key *key, enum signkey_type type);
 
 #endif /* _SIGNKEY_H_ */

@@ -193,8 +193,8 @@ void setup_remotetcp() {
 		struct TCPFwdEntry *fwd = (struct TCPFwdEntry*)iter->item;
 		if (!fwd->listenaddr)
 		{
-			// we store the addresses so that we can compare them
-			// when the server sends them back
+			/* we store the addresses so that we can compare them
+			   when the server sends them back */
 			if (opts.listen_fwd_all) {
 				fwd->listenaddr = m_strdup("");
 			} else {

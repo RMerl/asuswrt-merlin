@@ -52,6 +52,22 @@ void m_mp_init_multi(mp_int *mp, ...)
     va_end(args);
 }
 
+void m_mp_alloc_init_multi(mp_int **mp, ...) 
+{
+    mp_int** cur_arg = mp;
+    va_list args;
+
+    va_start(args, mp);        /* init args to next argument from caller */
+    while (cur_arg != NULL) {
+    	*cur_arg = m_malloc(sizeof(mp_int));
+        if (mp_init(*cur_arg) != MP_OKAY) {
+			dropbear_exit("Mem alloc error");
+        }
+        cur_arg = va_arg(args, mp_int**);
+    }
+    va_end(args);
+}
+
 void bytes_to_mp(mp_int *mp, const unsigned char* bytes, unsigned int len) {
 
 	if (mp_read_unsigned_bin(mp, (unsigned char*)bytes, len) != MP_OKAY) {
@@ -60,16 +76,13 @@ void bytes_to_mp(mp_int *mp, const unsigned char* bytes, unsigned int len) {
 }
 
 /* hash the ssh representation of the mp_int mp */
-void sha1_process_mp(hash_state *hs, mp_int *mp) {
-
-	int i;
+void hash_process_mp(const struct ltc_hash_descriptor *hash_desc, 
+				hash_state *hs, mp_int *mp) {
 	buffer * buf;
 
 	buf = buf_new(512 + 20); /* max buffer is a 4096 bit key, 
 								plus header + some leeway*/
 	buf_putmpint(buf, mp);
-	i = buf->pos;
-	buf_setpos(buf, 0);
-	sha1_process(hs, buf_getptr(buf, i), i);
+	hash_desc->process(hs, buf->data, buf->len);
 	buf_free(buf);
 }

@@ -12,9 +12,10 @@ dropbearkey \- create private keys for the use with dropbear(8) or dbclient(1)
 .SH DESCRIPTION
 .B dropbearkey
 generates a
-.I RSA
+.I RSA 
+.I DSS,
 or
-.I DSS
+.I ECDSA
 format SSH private key, and saves it to a file for the use with the
 Dropbear client or server.
 Note that 
@@ -26,6 +27,7 @@ use the term "DSA" rather than "DSS", they mean the same thing.
 Type of key to generate.
 Must be one of
 .I rsa
+.I ecdsa
 or
 .IR dss .
 .TP
@@ -36,7 +38,7 @@ Write the secret key to the file
 .B \-s \fIbits
 Set the key size to
 .I bits
-bits, should be multiple of 8 (optional).
+bits, should be multiple of 8 (optional). 
 .SH NOTES
 The program dropbearconvert(1) can be used to convert between Dropbear and OpenSSH key formats.
 .P

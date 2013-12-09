@@ -57,14 +57,23 @@ void fail_assert(const char* expr, const char* file, int line) ATTRIB_NORETURN;
 void dropbear_trace(const char* format, ...) ATTRIB_PRINTF(1,2);
 void dropbear_trace2(const char* format, ...) ATTRIB_PRINTF(1,2);
 void printhex(const char * label, const unsigned char * buf, int len);
+void printmpint(const char *label, mp_int *mp);
 extern int debug_trace;
 #endif
+
+enum dropbear_prio {
+	DROPBEAR_PRIO_DEFAULT,
+	DROPBEAR_PRIO_LOWDELAY,
+	DROPBEAR_PRIO_BULK,
+};
 
 char * stripcontrol(const char * text);
 void get_socket_address(int fd, char **local_host, char **local_port,
 		char **remote_host, char **remote_port, int host_lookup);
 void getaddrstring(struct sockaddr_storage* addr, 
 		char **ret_host, char **ret_port, int host_lookup);
+void set_sock_nodelay(int sock);
+void set_sock_priority(int sock, enum dropbear_prio prio);
 int dropbear_listen(const char* address, const char* port,
 		int *socks, unsigned int sockcount, char **errstring, int *maxfd);
 int spawn_command(void(*exec_fn)(void *user_data), void *exec_data,

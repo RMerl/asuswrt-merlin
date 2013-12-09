@@ -73,16 +73,16 @@
 #else
 /* Simply select your favourite login types. */
 /* Can't do if-else because some systems use several... <sigh> */
-#  if defined(UTMPX_FILE) && !defined(DISABLE_UTMPX)
+#  if defined(HAVE_UTMPX_H) && defined(UTMPX_FILE) && !defined(DISABLE_UTMPX)
 #    define USE_UTMPX
 #  endif
-#  if defined(UTMP_FILE) && !defined(DISABLE_UTMP)
+#  if defined(HAVE_UTMP_H) && defined(UTMP_FILE) && !defined(DISABLE_UTMP)
 #    define USE_UTMP
 #  endif
-#  if defined(WTMPX_FILE) && !defined(DISABLE_WTMPX)
+#  if defined(HAVE_WTMPX_H) && defined(WTMPX_FILE) && !defined(DISABLE_WTMPX)
 #    define USE_WTMPX
 #  endif
-#  if defined(WTMP_FILE) && !defined(DISABLE_WTMP)
+#  if defined(HAVE_WTMP_H) && defined(WTMP_FILE) && !defined(DISABLE_WTMP)
 #    define USE_WTMP
 #  endif
 

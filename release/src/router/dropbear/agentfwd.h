@@ -40,7 +40,7 @@
 /* client functions */
 void cli_load_agent_keys(m_list * ret_list);
 void agent_buf_sign(buffer *sigblob, sign_key *key, 
-    const unsigned char *data, unsigned int len);
+	buffer *data_buf);
 void cli_setup_agent(struct Channel *channel);
 
 #ifdef __hpux

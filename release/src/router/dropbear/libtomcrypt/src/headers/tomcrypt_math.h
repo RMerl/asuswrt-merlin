@@ -11,11 +11,8 @@
    typedef void ecc_point;
 #endif
 
-/* Dropbear has its own rsa_key. We just comment this out. */
-#if 0
 #ifndef MRSA
    typedef void rsa_key;
-#endif
 #endif
 
 /** math descriptor */
@@ -389,8 +386,6 @@ typedef struct {
                       ecc_point *C,
                            void *modulus);
 
-/* Dropbear has its own rsa code */
-#if 0
 /* ---- (optional) rsa optimized math (for internal CRT) ---- */
 
    /** RSA Key Generation 
@@ -416,7 +411,6 @@ typedef struct {
    int (*rsa_me)(const unsigned char *in,   unsigned long inlen,
                        unsigned char *out,  unsigned long *outlen, int which,
                        rsa_key *key);
-#endif
 } ltc_math_descriptor;
 
 extern ltc_math_descriptor ltc_mp;

@@ -24,7 +24,7 @@ extern "C" {
 
 /* descriptor table size */
 /* Dropbear change - this should be smaller, saves some size */
-#define TAB_SIZE    4
+#define TAB_SIZE    5
 
 /* error codes [will be expanded in future releases] */
 enum {

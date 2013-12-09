@@ -30,7 +30,7 @@
 #include "buffer.h"
 #include "dss.h"
 #include "ssh.h"
-#include "random.h"
+#include "dbrandom.h"
 #include "kex.h"
 #include "channel.h"
 #include "runopts.h"
@@ -101,7 +101,7 @@ void common_session_init(int sock_in, int sock_out) {
 	ses.keys->recv.algo_mac = &dropbear_nohash;
 	ses.keys->trans.algo_mac = &dropbear_nohash;
 
-	ses.keys->algo_kex = -1;
+	ses.keys->algo_kex = NULL;
 	ses.keys->algo_hostkey = -1;
 	ses.keys->recv.algo_comp = DROPBEAR_COMP_NONE;
 	ses.keys->trans.algo_comp = DROPBEAR_COMP_NONE;
@@ -245,7 +245,16 @@ void session_cleanup() {
 		ses.extra_session_cleanup();
 	}
 	
-	m_free(ses.session_id);
+	if (ses.session_id) {
+		buf_burn(ses.session_id);
+		buf_free(ses.session_id);
+		ses.session_id = NULL;
+	}
+	if (ses.hash) {
+		buf_burn(ses.hash);
+		buf_free(ses.hash);
+		ses.hash = NULL;
+	}
 	m_burn(ses.keys, sizeof(struct key_context));
 	m_free(ses.keys);
 
@@ -257,7 +266,7 @@ void session_cleanup() {
 void send_session_identification() {
 	buffer *writebuf = buf_new(strlen(LOCAL_IDENT "\r\n") + 1);
 	buf_putbytes(writebuf, LOCAL_IDENT "\r\n", strlen(LOCAL_IDENT "\r\n"));
-	buf_putbyte(writebuf, 0x0); // packet type
+	buf_putbyte(writebuf, 0x0); /* packet type */
 	buf_setpos(writebuf, 0);
 	enqueue(&ses.writequeue, writebuf);
 }

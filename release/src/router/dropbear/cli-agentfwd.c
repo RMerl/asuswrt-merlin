@@ -34,7 +34,7 @@
 #include "channel.h"
 #include "packet.h"
 #include "buffer.h"
-#include "random.h"
+#include "dbrandom.h"
 #include "listener.h"
 #include "runopts.h"
 #include "atomicio.h"
@@ -73,8 +73,8 @@ static int connect_agent() {
 	return fd;
 }
 
-// handle a request for a connection to the locally running ssh-agent
-// or forward.
+/* handle a request for a connection to the locally running ssh-agent
+   or forward. */
 static int new_agent_chan(struct Channel * channel) {
 
 	int fd = -1;
@@ -94,7 +94,6 @@ static int new_agent_chan(struct Channel * channel) {
 	channel->readfd = fd;
 	channel->writefd = fd;
 
-	// success
 	return 0;
 }
 
@@ -202,7 +201,7 @@ static void agent_get_key_list(m_list * ret_list)
 	num = buf_getint(inbuf);
 	for (i = 0; i < num; i++) {
 		sign_key * pubkey = NULL;
-		int key_type = DROPBEAR_SIGNKEY_ANY;
+		enum signkey_type key_type = DROPBEAR_SIGNKEY_ANY;
 		buffer * key_buf;
 
 		/* each public key is encoded as a string */
@@ -254,7 +253,7 @@ void cli_load_agent_keys(m_list *ret_list) {
 }
 
 void agent_buf_sign(buffer *sigblob, sign_key *key, 
-		const unsigned char *data, unsigned int len) {
+		buffer *data_buf) {
 	buffer *request_data = NULL;
 	buffer *response = NULL;
 	unsigned int siglen;
@@ -266,10 +265,10 @@ void agent_buf_sign(buffer *sigblob, sign_key *key,
 	string			data
 	uint32			flags
 	*/
-	request_data = buf_new(MAX_PUBKEY_SIZE + len + 12);
+	request_data = buf_new(MAX_PUBKEY_SIZE + data_buf->len + 12);
 	buf_put_pub_key(request_data, key, key->type);
 	
-	buf_putstring(request_data, data, len);
+	buf_putbufstring(request_data, data_buf);
 	buf_putint(request_data, 0);
 	
 	response = agent_request(SSH2_AGENTC_SIGN_REQUEST, request_data);

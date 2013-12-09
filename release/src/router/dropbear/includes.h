@@ -134,14 +134,33 @@
 
 
 #include "compat.h"
-#include "fake-rfc2553.h"
 
-#ifndef HAVE_UINT16_T
+#ifndef HAVE_U_INT8_T
+typedef unsigned char u_int8_t;
+#endif /* HAVE_U_INT8_T */
+#ifndef HAVE_UINT8_T
+typedef u_int8_t uint8_t;
+#endif /* HAVE_UINT8_T */
+
 #ifndef HAVE_U_INT16_T
 typedef unsigned short u_int16_t;
 #endif /* HAVE_U_INT16_T */
+#ifndef HAVE_UINT16_T
 typedef u_int16_t uint16_t;
 #endif /* HAVE_UINT16_T */
+
+#ifndef HAVE_U_INT32_T
+typedef unsigned int u_int32_t;
+#endif /* HAVE_U_INT32_T */
+#ifndef HAVE_UINT32_T
+typedef u_int32_t uint32_t;
+#endif /* HAVE_UINT32_T */
+
+#ifdef SO_PRIORITY
+#include <linux/pkt_sched.h>
+#endif
+
+#include "fake-rfc2553.h"
 
 #ifndef LOG_AUTHPRIV
 #define LOG_AUTHPRIV LOG_AUTH

@@ -32,11 +32,12 @@
 #include "ssh.h"
 #include "packet.h"
 #include "bignum.h"
-#include "random.h"
+#include "dbrandom.h"
 #include "runopts.h"
+#include "ecc.h"
+#include "gensignkey.h"
 
-
-static void send_msg_kexdh_reply(mp_int *dh_e);
+static void send_msg_kexdh_reply(mp_int *dh_e, buffer *ecdh_qs);
 
 /* Handle a diffie-hellman key exchange initialisation. This involves
  * calculating a session key reply value, and corresponding hash. These
@@ -45,59 +46,193 @@ static void send_msg_kexdh_reply(mp_int *dh_e);
 void recv_msg_kexdh_init() {
 
 	DEF_MP_INT(dh_e);
+	buffer *ecdh_qs = NULL;
 
 	TRACE(("enter recv_msg_kexdh_init"))
 	if (!ses.kexstate.recvkexinit) {
 		dropbear_exit("Premature kexdh_init message received");
 	}
 
-	m_mp_init(&dh_e);
-	if (buf_getmpint(ses.payload, &dh_e) != DROPBEAR_SUCCESS) {
-		dropbear_exit("Failed to get kex value");
+	switch (ses.newkeys->algo_kex->mode) {
+		case DROPBEAR_KEX_NORMAL_DH:
+			m_mp_init(&dh_e);
+			if (buf_getmpint(ses.payload, &dh_e) != DROPBEAR_SUCCESS) {
+				dropbear_exit("Bad kex value");
+			}
+			break;
+		case DROPBEAR_KEX_ECDH:
+		case DROPBEAR_KEX_CURVE25519:
+#if defined(DROPBEAR_ECDH) || defined(DROPBEAR_CURVE25519)
+			ecdh_qs = buf_getstringbuf(ses.payload);
+#endif
+			break;
+	}
+	if (ses.payload->pos != ses.payload->len) {
+		dropbear_exit("Bad kex value");
 	}
 
-	send_msg_kexdh_reply(&dh_e);
+	send_msg_kexdh_reply(&dh_e, ecdh_qs);
 
 	mp_clear(&dh_e);
+	if (ecdh_qs) {
+		buf_free(ecdh_qs);
+		ecdh_qs = NULL;
+	}
 
 	send_msg_newkeys();
 	ses.requirenext[0] = SSH_MSG_NEWKEYS;
 	ses.requirenext[1] = 0;
 	TRACE(("leave recv_msg_kexdh_init"))
 }
+
+#ifdef DROPBEAR_DELAY_HOSTKEY
+static void svr_ensure_hostkey() {
+
+	const char* fn = NULL;
+	char *fn_temp = NULL;
+	enum signkey_type type = ses.newkeys->algo_hostkey;
+	void **hostkey = signkey_key_ptr(svr_opts.hostkey, type);
+	int ret = DROPBEAR_FAILURE;
+
+	if (hostkey && *hostkey) {
+		return;
+	}
+
+	switch (type)
+	{
+#ifdef DROPBEAR_RSA
+		case DROPBEAR_SIGNKEY_RSA:
+			fn = RSA_PRIV_FILENAME;
+			break;
+#endif
+#ifdef DROPBEAR_DSS
+		case DROPBEAR_SIGNKEY_DSS:
+			fn = DSS_PRIV_FILENAME;
+			break;
+#endif
+#ifdef DROPBEAR_ECDSA
+		case DROPBEAR_SIGNKEY_ECDSA_NISTP256:
+		case DROPBEAR_SIGNKEY_ECDSA_NISTP384:
+		case DROPBEAR_SIGNKEY_ECDSA_NISTP521:
+			fn = ECDSA_PRIV_FILENAME;
+			break;
+#endif
+		default:
+			(void)0;
+	}
+
+	if (readhostkey(fn, svr_opts.hostkey, &type) == DROPBEAR_SUCCESS) {
+		return;
+	}
+
+	fn_temp = m_malloc(strlen(fn) + 20);
+	snprintf(fn_temp, strlen(fn)+20, "%s.tmp%d", fn, getpid());
+
+	if (signkey_generate(type, 0, fn_temp) == DROPBEAR_FAILURE) {
+		goto out;
+	}
+
+	if (link(fn_temp, fn) < 0) {
+		/* It's OK to get EEXIST - we probably just lost a race
+		with another connection to generate the key */
+		if (errno != EEXIST) {
+			dropbear_log(LOG_ERR, "Failed moving key file to %s: %s", fn,
+				strerror(errno));
+			/* XXX fallback to non-atomic copy for some filesystems? */
+			goto out;
+		}
+	}
+
+	ret = readhostkey(fn, svr_opts.hostkey, &type);
+
+	if (ret == DROPBEAR_SUCCESS) {
+		char *fp = NULL;
+		unsigned int len;
+		buffer *key_buf = buf_new(MAX_PUBKEY_SIZE);
+		buf_put_pub_key(key_buf, svr_opts.hostkey, type);
+		buf_setpos(key_buf, 4);
+		len = key_buf->len - key_buf->pos;
+		fp = sign_key_fingerprint(buf_getptr(key_buf, len), len);
+		dropbear_log(LOG_INFO, "Generated hostkey %s, fingerprint is %s",
+			fn, fp);
+		m_free(fp);
+		buf_free(key_buf);
+	}
+
+out:
+	if (fn_temp) {
+		unlink(fn_temp);
+		m_free(fn_temp);
+	}
+
+	if (ret == DROPBEAR_FAILURE)
+	{
+		dropbear_exit("Couldn't read or generate hostkey %s", fn);
+	}
+}
+#endif
 	
 /* Generate our side of the diffie-hellman key exchange value (dh_f), and
  * calculate the session key using the diffie-hellman algorithm. Following
  * that, the session hash is calculated, and signed with RSA or DSS. The
  * result is sent to the client. 
  *
- * See the transport rfc 4253 section 8 for details */
-static void send_msg_kexdh_reply(mp_int *dh_e) {
-
-	DEF_MP_INT(dh_y);
-	DEF_MP_INT(dh_f);
-
+ * See the transport RFC4253 section 8 for details
+ * or RFC5656 section 4 for elliptic curve variant. */
+static void send_msg_kexdh_reply(mp_int *dh_e, buffer *ecdh_qs) {
 	TRACE(("enter send_msg_kexdh_reply"))
-	m_mp_init_multi(&dh_y, &dh_f, NULL);
-	
-	gen_kexdh_vals(&dh_f, &dh_y);
-
-	kexdh_comb_key(&dh_f, &dh_y, dh_e, svr_opts.hostkey);
-	mp_clear(&dh_y);
 
 	/* we can start creating the kexdh_reply packet */
 	CHECKCLEARTOWRITE();
+
+#ifdef DROPBEAR_DELAY_HOSTKEY
+	if (svr_opts.delay_hostkey)
+	{
+		svr_ensure_hostkey();
+	}
+#endif
+
 	buf_putbyte(ses.writepayload, SSH_MSG_KEXDH_REPLY);
 	buf_put_pub_key(ses.writepayload, svr_opts.hostkey,
 			ses.newkeys->algo_hostkey);
 
-	/* put f */
-	buf_putmpint(ses.writepayload, &dh_f);
-	mp_clear(&dh_f);
+	switch (ses.newkeys->algo_kex->mode) {
+		case DROPBEAR_KEX_NORMAL_DH:
+			{
+			struct kex_dh_param * dh_param = gen_kexdh_param();
+			kexdh_comb_key(dh_param, dh_e, svr_opts.hostkey);
+
+			/* put f */
+			buf_putmpint(ses.writepayload, &dh_param->pub);
+			free_kexdh_param(dh_param);
+			}
+			break;
+		case DROPBEAR_KEX_ECDH:
+#ifdef DROPBEAR_ECDH
+			{
+			struct kex_ecdh_param *ecdh_param = gen_kexecdh_param();
+			kexecdh_comb_key(ecdh_param, ecdh_qs, svr_opts.hostkey);
+
+			buf_put_ecc_raw_pubkey_string(ses.writepayload, &ecdh_param->key);
+			free_kexecdh_param(ecdh_param);
+			}
+#endif
+			break;
+		case DROPBEAR_KEX_CURVE25519:
+#ifdef DROPBEAR_CURVE25519
+			{
+			struct kex_curve25519_param *param = gen_kexcurve25519_param();
+			kexcurve25519_comb_key(param, ecdh_qs, svr_opts.hostkey);
+			buf_putstring(ses.writepayload, param->pub, CURVE25519_LEN);
+			free_kexcurve25519_param(param);
+			}
+#endif
+			break;
+	}
 
 	/* calc the signature */
 	buf_put_sign(ses.writepayload, svr_opts.hostkey, 
-			ses.newkeys->algo_hostkey, ses.hash, SHA1_HASH_SIZE);
+			ses.newkeys->algo_hostkey, ses.hash);
 
 	/* the SSH_MSG_KEXDH_REPLY is done */
 	encrypt_packet();

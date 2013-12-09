@@ -51,15 +51,16 @@
 
 #include "genrsa.h"
 #include "gendss.h"
+#include "ecdsa.h"
+#include "crypto_desc.h"
+#include "dbrandom.h"
+#include "gensignkey.h"
 
 static void printhelp(char * progname);
 
-#define RSA_SIZE (1024/8) /* 1024 bit */
-#define DSS_SIZE (1024/8) /* 1024 bit */
 
-static void buf_writefile(buffer * buf, const char * filename);
 static void printpubkey(sign_key * key, int keytype);
-static void justprintpub(const char* filename);
+static int printpubfile(const char* filename);
 
 /* Print a help message */
 static void printhelp(char * progname) {
@@ -72,14 +73,56 @@ static void printhelp(char * progname) {
 #ifdef DROPBEAR_DSS
 					"		dss\n"
 #endif
+#ifdef DROPBEAR_ECDSA
+					"		ecdsa\n"
+#endif
 					"-f filename	Use filename for the secret key\n"
 					"-s bits	Key size in bits, should be a multiple of 8 (optional)\n"
-					"           (DSS has a fixed size of 1024 bits)\n"
+#ifdef DROPBEAR_DSS
+					"           DSS has a fixed size of 1024 bits\n"
+#endif
+#ifdef DROPBEAR_ECDSA
+					"           ECDSA has sizes "
+#ifdef DROPBEAR_ECC_256
+					"256 "
+#endif
+#ifdef DROPBEAR_ECC_384
+					"384 "
+#endif
+#ifdef DROPBEAR_ECC_521
+					"521 "
+#endif
+					"\n"
+#endif
 					"-y		Just print the publickey and fingerprint for the\n		private key in <filename>.\n"
 #ifdef DEBUG_TRACE
 					"-v		verbose\n"
 #endif
 					,progname);
+}
+
+/* fails fatally */
+static void check_signkey_bits(enum signkey_type type, int bits)
+{
+        switch (type) {
+#ifdef DROPBEAR_RSA
+            case DROPBEAR_SIGNKEY_RSA:
+                if (bits < 512 || bits > 4096 || (bits % 8 != 0)) {
+                	dropbear_exit("Bits must satisfy 512 <= bits <= 4096, and be a"
+                            " multiple of 8\n");
+                }
+                break;
+#endif
+#ifdef DROPEAR_DSS
+            case DROPBEAR_SIGNKEY_DSS:
+                if (bits != 1024) {
+                    dropbear_exit("DSS keys have a fixed size of 1024 bits\n");
+                    exit(EXIT_FAILURE);
+                }
+#endif
+			default:
+				(void)0; /* quiet, compiler. ecdsa handles checks itself */
+        }
 }
 
 #if defined(DBMULTI_dropbearkey) || !defined(DROPBEAR_MULTI)
@@ -91,15 +134,15 @@ int main(int argc, char ** argv) {
 
 	int i;
 	char ** next = 0;
-	sign_key *key = NULL;
-	buffer *buf = NULL;
 	char * filename = NULL;
-	int keytype = -1;
+	enum signkey_type keytype = DROPBEAR_SIGNKEY_NONE;
 	char * typetext = NULL;
 	char * sizetext = NULL;
-	unsigned int bits;
-	unsigned int keysize;
+	unsigned int bits = 0;
 	int printpub = 0;
+
+	crypto_init();
+	seedrandom();
 
 	/* get the commandline options */
 	for (i = 1; i < argc; i++) {
@@ -151,8 +194,8 @@ int main(int argc, char ** argv) {
 	}
 
 	if (printpub) {
-		justprintpub(filename);
-		/* Not reached */
+		int ret = printpubfile(filename);
+		exit(ret);
 	}
 
 	/* check/parse args */
@@ -162,21 +205,26 @@ int main(int argc, char ** argv) {
 		exit(EXIT_FAILURE);
 	}
 
-	if (strlen(typetext) == 3) {
 #ifdef DROPBEAR_RSA
-		if (strncmp(typetext, "rsa", 3) == 0) {
-			keytype = DROPBEAR_SIGNKEY_RSA;
-			TRACE(("type is rsa"))
-		}
+	if (strcmp(typetext, "rsa") == 0)
+	{
+		keytype = DROPBEAR_SIGNKEY_RSA;
+	}
 #endif
 #ifdef DROPBEAR_DSS
-		if (strncmp(typetext, "dss", 3) == 0) {
-			keytype = DROPBEAR_SIGNKEY_DSS;
-			TRACE(("type is dss"))
-		}
-#endif
+	if (strcmp(typetext, "dss") == 0)
+	{
+		keytype = DROPBEAR_SIGNKEY_DSS;
 	}
-	if (keytype == -1) {
+#endif
+#ifdef DROPBEAR_ECDSA
+	if (strcmp(typetext, "ecdsa") == 0)
+	{
+		keytype = DROPBEAR_SIGNKEY_ECDSA_KEYGEN;
+	}
+#endif
+
+	if (keytype == DROPBEAR_SIGNKEY_NONE) {
 		fprintf(stderr, "Unknown key type '%s'\n", typetext);
 		printhelp(argv[0]);
 		exit(EXIT_FAILURE);
@@ -188,75 +236,26 @@ int main(int argc, char ** argv) {
 			exit(EXIT_FAILURE);
 		}
 		
-		if (keytype == DROPBEAR_SIGNKEY_DSS && bits != 1024) {
-			fprintf(stderr, "DSS keys have a fixed size of 1024 bits\n");
-			exit(EXIT_FAILURE);			
-		} else if (bits < 512 || bits > 4096 || (bits % 8 != 0)) {
-			fprintf(stderr, "Bits must satisfy 512 <= bits <= 4096, and be a"
-					" multiple of 8\n");
-			exit(EXIT_FAILURE);
-		}
+		check_signkey_bits(keytype, bits);;
+    }
 
-		keysize = bits / 8;
-	} else {
-		if (keytype == DROPBEAR_SIGNKEY_DSS) {
-			keysize = DSS_SIZE;
-		} else if (keytype == DROPBEAR_SIGNKEY_RSA) {
-			keysize = RSA_SIZE;
-		} else {
-			exit(EXIT_FAILURE); /* not reached */
-		}
-	}
-
-
-	fprintf(stderr, "Will output %d bit %s secret key to '%s'\n", keysize*8,
-			typetext, filename);
-
-	/* don't want the file readable by others */
-	umask(077);
-
-	/* now we can generate the key */
-	key = new_sign_key();
-	
 	fprintf(stderr, "Generating key, this may take a while...\n");
-	switch(keytype) {
-#ifdef DROPBEAR_RSA
-		case DROPBEAR_SIGNKEY_RSA:
-			key->rsakey = gen_rsa_priv_key(keysize); /* 128 bytes = 1024 bit */
-			break;
-#endif
-#ifdef DROPBEAR_DSS
-		case DROPBEAR_SIGNKEY_DSS:
-			key->dsskey = gen_dss_priv_key(keysize); /* 128 bytes = 1024 bit */
-			break;
-#endif
-		default:
-			fprintf(stderr, "Internal error, bad key type\n");
-			exit(EXIT_FAILURE);
-	}
+    if (signkey_generate(keytype, bits, filename) == DROPBEAR_FAILURE)
+    {
+    	dropbear_exit("Failed to generate key.\n");
+    }
 
-	buf = buf_new(MAX_PRIVKEY_SIZE); 
-
-	buf_put_priv_key(buf, key, keytype);
-	buf_setpos(buf, 0);
-	buf_writefile(buf, filename);
-
-	buf_burn(buf);
-	buf_free(buf);
-
-	printpubkey(key, keytype);
-
-	sign_key_free(key);
+	printpubfile(filename);
 
 	return EXIT_SUCCESS;
 }
 #endif
 
-static void justprintpub(const char* filename) {
+static int printpubfile(const char* filename) {
 
 	buffer *buf = NULL;
 	sign_key *key = NULL;
-	int keytype;
+	enum signkey_type keytype;
 	int ret;
 	int err = DROPBEAR_FAILURE;
 
@@ -290,7 +289,7 @@ out:
 		sign_key_free(key);
 		key = NULL;
 	}
-	exit(err);
+	return err;
 }
 
 static void printpubkey(sign_key * key, int keytype) {
@@ -319,7 +318,7 @@ static void printpubkey(sign_key * key, int keytype) {
 		fprintf(stderr, "base64 failed");
 	}
 
-	typestring = signkey_name_from_type(keytype, &err);
+	typestring = signkey_name_from_type(keytype, NULL);
 
 	fp = sign_key_fingerprint(buf_getptr(buf, len), len);
 
@@ -338,36 +337,4 @@ static void printpubkey(sign_key * key, int keytype) {
 
 	m_free(fp);
 	buf_free(buf);
-}
-
-/* Write a buffer to a file specified, failing if the file exists */
-static void buf_writefile(buffer * buf, const char * filename) {
-
-	int fd;
-	int len;
-
-	fd = open(filename, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
-	if (fd < 0) {
-		fprintf(stderr, "Couldn't create new file %s\n", filename);
-		perror("Reason");
-		buf_burn(buf);
-		exit(EXIT_FAILURE);
-	}
-
-	/* write the file now */
-	while (buf->pos != buf->len) {
-		len = write(fd, buf_getptr(buf, buf->len - buf->pos),
-				buf->len - buf->pos);
-		if (errno == EINTR) {
-			continue;
-		}
-		if (len <= 0) {
-			fprintf(stderr, "Failed writing file '%s'\n",filename);
-			perror("Reason");
-			exit(EXIT_FAILURE);
-		}
-		buf_incrpos(buf, len);
-	}
-
-	close(fd);
 }

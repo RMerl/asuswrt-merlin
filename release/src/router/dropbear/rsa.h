@@ -43,11 +43,9 @@ typedef struct {
 
 } dropbear_rsa_key;
 
-void buf_put_rsa_sign(buffer* buf, dropbear_rsa_key *key, const unsigned char* data,
-		unsigned int len);
+void buf_put_rsa_sign(buffer* buf, dropbear_rsa_key *key, buffer *data_buf);
 #ifdef DROPBEAR_SIGNKEY_VERIFY
-int buf_rsa_verify(buffer * buf, dropbear_rsa_key *key, const unsigned char* data,
-		unsigned int len);
+int buf_rsa_verify(buffer * buf, dropbear_rsa_key *key, buffer *data_buf);
 #endif
 int buf_get_rsa_pub_key(buffer* buf, dropbear_rsa_key *key);
 int buf_get_rsa_priv_key(buffer* buf, dropbear_rsa_key *key);

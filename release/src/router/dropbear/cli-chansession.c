@@ -369,6 +369,8 @@ static int cli_initchansess(struct Channel *channel) {
 
 	if (cli_opts.wantpty) {
 		send_chansess_pty_req(channel);
+	} else {
+		set_sock_priority(ses.sock_out, DROPBEAR_PRIO_BULK);
 	}
 
 	send_chansess_shell_req(channel);
@@ -398,6 +400,7 @@ void cli_send_netcat_request() {
 	const unsigned char* source_host = "127.0.0.1";
 	const int source_port = 22;
 
+	TRACE(("enter cli_send_netcat_request"))
 	cli_opts.wantpty = 0;
 
 	if (send_msg_channel_open_init(STDIN_FILENO, &cli_chan_netcat) 
@@ -414,7 +417,7 @@ void cli_send_netcat_request() {
 	buf_putint(ses.writepayload, source_port);
 
 	encrypt_packet();
-	TRACE(("leave cli_send_chansess_request"))
+	TRACE(("leave cli_send_netcat_request"))
 }
 #endif
 
@@ -433,7 +436,7 @@ void cli_send_chansess_request() {
 
 }
 
-// returns 1 if the character should be consumed, 0 to pass through
+/* returns 1 if the character should be consumed, 0 to pass through */
 static int
 do_escape(unsigned char c) {
 	switch (c) {
@@ -442,10 +445,10 @@ do_escape(unsigned char c) {
 			return 1;
 			break;
 		case 0x1a:
-			// ctrl-z
+			/* ctrl-z */
 			cli_tty_cleanup();
 			kill(getpid(), SIGTSTP);
-			// after continuation
+			/* after continuation */
 			cli_tty_setup();
 			cli_ses.winchange = 1;
 			return 1;
@@ -455,12 +458,12 @@ do_escape(unsigned char c) {
 }
 
 static
-void cli_escape_handler(struct Channel *channel, unsigned char* buf, int *len) {
+void cli_escape_handler(struct Channel* UNUSED(channel), unsigned char* buf, int *len) {
 	char c;
 	int skip_char = 0;
 
-	// only handle escape characters if they are read one at a time. simplifies
-	// the code and avoids nasty people putting ~. at the start of a line to paste 
+	/* only handle escape characters if they are read one at a time. simplifies 
+	   the code and avoids nasty people putting ~. at the start of a line to paste  */
 	if (*len != 1) {
 		cli_ses.last_char = 0x0;
 		return;

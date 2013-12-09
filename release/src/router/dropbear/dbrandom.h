@@ -25,7 +25,7 @@
 #ifndef _RANDOM_H_
 #define _RANDOM_H_
 
-struct mp_int;
+#include "includes.h"
 
 void seedrandom();
 void genrandom(unsigned char* buf, unsigned int len);

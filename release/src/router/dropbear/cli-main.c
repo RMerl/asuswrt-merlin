@@ -28,6 +28,8 @@
 #include "dbutil.h"
 #include "runopts.h"
 #include "session.h"
+#include "dbrandom.h"
+#include "crypto_desc.h"
 
 static void cli_dropbear_exit(int exitcode, const char* format, va_list param) ATTRIB_NORETURN;
 static void cli_dropbear_log(int priority, const char* format, va_list param);
@@ -51,6 +53,9 @@ int main(int argc, char ** argv) {
 
 	disallow_core();
 
+	seedrandom();
+	crypto_init();
+
 	cli_getopts(argc, argv);
 
 	TRACE(("user='%s' host='%s' port='%s'", cli_opts.username,
@@ -70,6 +75,9 @@ int main(int argc, char ** argv) {
 		int sock = connect_remote(cli_opts.remotehost, cli_opts.remoteport, 
 				0, &error);
 		sock_in = sock_out = sock;
+	 	if (cli_opts.wantpty) {
+			set_sock_priority(sock, DROPBEAR_PRIO_LOWDELAY);
+	 	}
 	}
 
 	if (sock_in < 0) {
@@ -138,4 +146,4 @@ static void cli_proxy_cmd(int *sock_in, int *sock_out) {
 		*sock_in = *sock_out = -1;
 	}
 }
-#endif // ENABLE_CLI_PROXYCMD
+#endif /* ENABLE_CLI_PROXYCMD */

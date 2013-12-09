@@ -2,8 +2,6 @@
  * Based on PuTTY's import.c for importing/exporting OpenSSH and SSH.com
  * keyfiles.
  *
- * The horribleness of the code is probably mine (matt).
- *
  * Modifications copyright 2003 Matt Johnston
  *
  * PuTTY is copyright 1997-2003 Simon Tatham.
@@ -36,6 +34,11 @@
 #include "bignum.h"
 #include "buffer.h"
 #include "dbutil.h"
+#include "ecc.h"
+
+static const unsigned char OID_SEC256R1_BLOB[] = {0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07};
+static const unsigned char OID_SEC384R1_BLOB[] = {0x2b, 0x81, 0x04, 0x00, 0x22};
+static const unsigned char OID_SEC521R1_BLOB[] = {0x2b, 0x81, 0x04, 0x00, 0x23};
 
 #define PUT_32BIT(cp, value) do { \
   (cp)[3] = (unsigned char)(value); \
@@ -109,7 +112,7 @@ static sign_key *dropbear_read(const char* filename) {
 
 	buffer * buf = NULL;
 	sign_key *ret = NULL;
-	int type;
+	enum signkey_type type;
 
 	buf = buf_new(MAX_PRIVKEY_SIZE);
 	if (buf_readfile(buf, filename) == DROPBEAR_FAILURE) {
@@ -124,6 +127,8 @@ static sign_key *dropbear_read(const char* filename) {
 		goto error;
 	}
 	buf_free(buf);
+
+	ret->type = type;
 
 	return ret;
 
@@ -140,25 +145,13 @@ error:
 /* returns 0 on fail, 1 on success */
 static int dropbear_write(const char*filename, sign_key * key) {
 
-	int keytype = -1;
 	buffer * buf;
 	FILE*fp;
 	int len;
 	int ret;
 
-#ifdef DROPBEAR_RSA
-	if (key->rsakey != NULL) {
-		keytype = DROPBEAR_SIGNKEY_RSA;
-	}
-#endif
-#ifdef DROPBEAR_DSS
-	if (key->dsskey != NULL) {
-		keytype = DROPBEAR_SIGNKEY_DSS;
-	}
-#endif
-
 	buf = buf_new(MAX_PRIVKEY_SIZE);
-	buf_put_priv_key(buf, key, keytype);
+	buf_put_priv_key(buf, key, key->type);
 
 	fp = fopen(filename, "w");
 	if (!fp) {
@@ -349,7 +342,7 @@ struct mpint_pos { void *start; int bytes; };
  * Code to read and write OpenSSH private keys.
  */
 
-enum { OSSH_DSA, OSSH_RSA };
+enum { OSSH_DSA, OSSH_RSA, OSSH_EC };
 struct openssh_key {
 	int type;
 	int encrypted;
@@ -392,6 +385,8 @@ static struct openssh_key *load_openssh_key(const char *filename)
 		ret->type = OSSH_RSA;
 	else if (!strcmp(buffer, "-----BEGIN DSA PRIVATE KEY-----\n"))
 		ret->type = OSSH_DSA;
+	else if (!strcmp(buffer, "-----BEGIN EC PRIVATE KEY-----\n"))
+		ret->type = OSSH_EC;
 	else {
 		errmsg = "Unrecognised key type";
 		goto error;
@@ -506,7 +501,7 @@ static int openssh_encrypted(const char *filename)
 	return ret;
 }
 
-static sign_key *openssh_read(const char *filename, char *passphrase)
+static sign_key *openssh_read(const char *filename, char * UNUSED(passphrase))
 {
 	struct openssh_key *key;
 	unsigned char *p;
@@ -516,10 +511,12 @@ static sign_key *openssh_read(const char *filename, char *passphrase)
 	char *errmsg;
 	char *modptr = NULL;
 	int modlen = -9999;
-	int type;
+	enum signkey_type type;
 
 	sign_key *retkey;
 	buffer * blobbuf = NULL;
+
+	retkey = new_sign_key();
 
 	key = load_openssh_key(filename);
 
@@ -597,6 +594,8 @@ static sign_key *openssh_read(const char *filename, char *passphrase)
 		num_integers = 9;
 	else if (key->type == OSSH_DSA)
 		num_integers = 6;
+	else if (key->type == OSSH_EC)
+		num_integers = 1;
 
 	/*
 	 * Space to create key blob in.
@@ -605,8 +604,10 @@ static sign_key *openssh_read(const char *filename, char *passphrase)
 
 	if (key->type == OSSH_DSA) {
 		buf_putstring(blobbuf, "ssh-dss", 7);
+		retkey->type = DROPBEAR_SIGNKEY_DSS;
 	} else if (key->type == OSSH_RSA) {
 		buf_putstring(blobbuf, "ssh-rsa", 7);
+		retkey->type = DROPBEAR_SIGNKEY_RSA;
 	}
 
 	for (i = 0; i < num_integers; i++) {
@@ -620,11 +621,18 @@ static sign_key *openssh_read(const char *filename, char *passphrase)
 		}
 
 		if (i == 0) {
-			/*
-			 * The first integer should be zero always (I think
-			 * this is some sort of version indication).
-			 */
-			if (len != 1 || p[0] != 0) {
+			/* First integer is a version indicator */
+			int expected;
+			switch (key->type) {
+				case OSSH_RSA:
+				case OSSH_DSA:
+					expected = 0;
+					break;
+				case OSSH_EC:
+					expected = 1;
+					break;
+			}
+			if (len != 1 || p[0] != expected) {
 				errmsg = "Version number mismatch";
 				goto error;
 			}
@@ -655,21 +663,136 @@ static sign_key *openssh_read(const char *filename, char *passphrase)
 		p += len;
 	}
 
+#ifdef DROPBEAR_ECDSA
+	if (key->type == OSSH_EC) {
+		unsigned char* private_key_bytes = NULL;
+		int private_key_len = 0;
+		unsigned char* public_key_bytes = NULL;
+		int public_key_len = 0;
+		ecc_key *ecc = NULL;
+		const struct dropbear_ecc_curve *curve = NULL;
+
+		/* See SEC1 v2, Appendix C.4 */
+		/* OpenSSL (so OpenSSH) seems to include the optional parts. */
+
+		/* privateKey OCTET STRING, */
+		ret = ber_read_id_len(p, key->keyblob+key->keyblob_len-p,
+							  &id, &len, &flags);
+		p += ret;
+		/* id==4 for octet string */
+		if (ret < 0 || id != 4 ||
+			key->keyblob+key->keyblob_len-p < len) {
+			errmsg = "ASN.1 decoding failure";
+			goto error;
+		}
+		private_key_bytes = p;
+		private_key_len = len;
+		p += len;
+
+		/* parameters [0] ECDomainParameters {{ SECGCurveNames }} OPTIONAL, */
+		ret = ber_read_id_len(p, key->keyblob+key->keyblob_len-p,
+							  &id, &len, &flags);
+		p += ret;
+		/* id==0 */
+		if (ret < 0 || id != 0) {
+			errmsg = "ASN.1 decoding failure";
+			goto error;
+		}
+
+		ret = ber_read_id_len(p, key->keyblob+key->keyblob_len-p,
+							  &id, &len, &flags);
+		p += ret;
+		/* id==6 for object */
+		if (ret < 0 || id != 6 ||
+			key->keyblob+key->keyblob_len-p < len) {
+			errmsg = "ASN.1 decoding failure";
+			goto error;
+		}
+
+		if (0) {}
+#ifdef DROPBEAR_ECC_256
+		else if (len == sizeof(OID_SEC256R1_BLOB) 
+			&& memcmp(p, OID_SEC256R1_BLOB, len) == 0) {
+			retkey->type = DROPBEAR_SIGNKEY_ECDSA_NISTP256;
+			curve = &ecc_curve_nistp256;
+		} 
+#endif
+#ifdef DROPBEAR_ECC_384
+		else if (len == sizeof(OID_SEC384R1_BLOB)
+			&& memcmp(p, OID_SEC384R1_BLOB, len) == 0) {
+			retkey->type = DROPBEAR_SIGNKEY_ECDSA_NISTP384;
+			curve = &ecc_curve_nistp384;
+		} 
+#endif
+#ifdef DROPBEAR_ECC_521
+		else if (len == sizeof(OID_SEC521R1_BLOB)
+			&& memcmp(p, OID_SEC521R1_BLOB, len) == 0) {
+			retkey->type = DROPBEAR_SIGNKEY_ECDSA_NISTP521;
+			curve = &ecc_curve_nistp521;
+		} 
+#endif
+		else {
+			errmsg = "Unknown ECC key type";
+			goto error;
+		}
+		p += len;
+
+		/* publicKey [1] BIT STRING OPTIONAL */
+		ret = ber_read_id_len(p, key->keyblob+key->keyblob_len-p,
+							  &id, &len, &flags);
+		p += ret;
+		/* id==1 */
+		if (ret < 0 || id != 1) {
+			errmsg = "ASN.1 decoding failure";
+			goto error;
+		}
+
+		ret = ber_read_id_len(p, key->keyblob+key->keyblob_len-p,
+							  &id, &len, &flags);
+		p += ret;
+		/* id==3 for bit string */
+		if (ret < 0 || id != 3 ||
+			key->keyblob+key->keyblob_len-p < len) {
+			errmsg = "ASN.1 decoding failure";
+			goto error;
+		}
+		public_key_bytes = p+1;
+		public_key_len = len-1;
+		p += len;
+
+		buf_putbytes(blobbuf, public_key_bytes, public_key_len);
+		ecc = buf_get_ecc_raw_pubkey(blobbuf, curve);
+		if (!ecc) {
+			errmsg = "Error parsing ECC key";
+			goto error;
+		}
+		m_mp_alloc_init_multi((mp_int**)&ecc->k, NULL);
+		if (mp_read_unsigned_bin(ecc->k, private_key_bytes, private_key_len)
+			!= MP_OKAY) {
+			errmsg = "Error parsing ECC key";
+			goto error;
+		}
+
+		*signkey_key_ptr(retkey, retkey->type) = ecc;
+	}
+#endif /* DROPBEAR_ECDSA */
+
 	/*
 	 * Now put together the actual key. Simplest way to do this is
 	 * to assemble our own key blobs and feed them to the createkey
 	 * functions; this is a bit faffy but it does mean we get all
 	 * the sanity checks for free.
 	 */
-	retkey = new_sign_key();
-	buf_setpos(blobbuf, 0);
-	type = DROPBEAR_SIGNKEY_ANY;
-	if (buf_get_priv_key(blobbuf, retkey, &type)
-			!= DROPBEAR_SUCCESS) {
-		errmsg = "unable to create key structure";
-		sign_key_free(retkey);
-		retkey = NULL;
-		goto error;
+	if (key->type == OSSH_RSA || key->type == OSSH_DSA) {
+		buf_setpos(blobbuf, 0);
+		type = DROPBEAR_SIGNKEY_ANY;
+		if (buf_get_priv_key(blobbuf, retkey, &type)
+				!= DROPBEAR_SUCCESS) {
+			errmsg = "unable to create key structure";
+			sign_key_free(retkey);
+			retkey = NULL;
+			goto error;
+		}
 	}
 
 	errmsg = NULL;					 /* no error */
@@ -703,202 +826,284 @@ static int openssh_write(const char *filename, sign_key *key,
 	char zero[1];
 	int ret = 0;
 	FILE *fp;
-	int keytype = -1;
 
 #ifdef DROPBEAR_RSA
 	mp_int dmp1, dmq1, iqmp, tmpval; /* for rsa */
-
-	if (key->rsakey != NULL) {
-		keytype = DROPBEAR_SIGNKEY_RSA;
-	}
-#endif
-#ifdef DROPBEAR_DSS
-	if (key->dsskey != NULL) {
-		keytype = DROPBEAR_SIGNKEY_DSS;
-	}
 #endif
 
-	dropbear_assert(keytype != -1);
+	if (key->type == DROPBEAR_SIGNKEY_RSA || key->type == DROPBEAR_SIGNKEY_DSS)
+	{
+		/*
+		 * Fetch the key blobs.
+		 */
+		keyblob = buf_new(3000);
+		buf_put_priv_key(keyblob, key, key->type);
 
-	/*
-	 * Fetch the key blobs.
-	 */
-	keyblob = buf_new(3000);
-	buf_put_priv_key(keyblob, key, keytype);
+		buf_setpos(keyblob, 0);
+		/* skip the "ssh-rsa" or "ssh-dss" header */
+		buf_incrpos(keyblob, buf_getint(keyblob));
 
-	buf_setpos(keyblob, 0);
-	/* skip the "ssh-rsa" or "ssh-dss" header */
-	buf_incrpos(keyblob, buf_getint(keyblob));
+		/*
+		 * Find the sequence of integers to be encoded into the OpenSSH
+		 * key blob, and also decide on the header line.
+		 */
+		numbers[0].start = zero; numbers[0].bytes = 1; zero[0] = '\0';
 
-	/*
-	 * Find the sequence of integers to be encoded into the OpenSSH
-	 * key blob, and also decide on the header line.
-	 */
-	numbers[0].start = zero; numbers[0].bytes = 1; zero[0] = '\0';
+	#ifdef DROPBEAR_RSA
+		if (key->type == DROPBEAR_SIGNKEY_RSA) {
 
-#ifdef DROPBEAR_RSA
-	if (keytype == DROPBEAR_SIGNKEY_RSA) {
+			if (key->rsakey->p == NULL || key->rsakey->q == NULL) {
+				fprintf(stderr, "Pre-0.33 Dropbear keys cannot be converted to OpenSSH keys.\n");
+				goto error;
+			}
 
-		if (key->rsakey->p == NULL || key->rsakey->q == NULL) {
-			fprintf(stderr, "Pre-0.33 Dropbear keys cannot be converted to OpenSSH keys.\n");
-			goto error;
+			/* e */
+			numbers[2].bytes = buf_getint(keyblob);
+			numbers[2].start = buf_getptr(keyblob, numbers[2].bytes);
+			buf_incrpos(keyblob, numbers[2].bytes);
+			
+			/* n */
+			numbers[1].bytes = buf_getint(keyblob);
+			numbers[1].start = buf_getptr(keyblob, numbers[1].bytes);
+			buf_incrpos(keyblob, numbers[1].bytes);
+			
+			/* d */
+			numbers[3].bytes = buf_getint(keyblob);
+			numbers[3].start = buf_getptr(keyblob, numbers[3].bytes);
+			buf_incrpos(keyblob, numbers[3].bytes);
+			
+			/* p */
+			numbers[4].bytes = buf_getint(keyblob);
+			numbers[4].start = buf_getptr(keyblob, numbers[4].bytes);
+			buf_incrpos(keyblob, numbers[4].bytes);
+			
+			/* q */
+			numbers[5].bytes = buf_getint(keyblob);
+			numbers[5].start = buf_getptr(keyblob, numbers[5].bytes);
+			buf_incrpos(keyblob, numbers[5].bytes);
+
+			/* now calculate some extra parameters: */
+			m_mp_init(&tmpval);
+			m_mp_init(&dmp1);
+			m_mp_init(&dmq1);
+			m_mp_init(&iqmp);
+
+			/* dmp1 = d mod (p-1) */
+			if (mp_sub_d(key->rsakey->p, 1, &tmpval) != MP_OKAY) {
+				fprintf(stderr, "Bignum error for p-1\n");
+				goto error;
+			}
+			if (mp_mod(key->rsakey->d, &tmpval, &dmp1) != MP_OKAY) {
+				fprintf(stderr, "Bignum error for dmp1\n");
+				goto error;
+			}
+
+			/* dmq1 = d mod (q-1) */
+			if (mp_sub_d(key->rsakey->q, 1, &tmpval) != MP_OKAY) {
+				fprintf(stderr, "Bignum error for q-1\n");
+				goto error;
+			}
+			if (mp_mod(key->rsakey->d, &tmpval, &dmq1) != MP_OKAY) {
+				fprintf(stderr, "Bignum error for dmq1\n");
+				goto error;
+			}
+
+			/* iqmp = (q^-1) mod p */
+			if (mp_invmod(key->rsakey->q, key->rsakey->p, &iqmp) != MP_OKAY) {
+				fprintf(stderr, "Bignum error for iqmp\n");
+				goto error;
+			}
+
+			extrablob = buf_new(2000);
+			buf_putmpint(extrablob, &dmp1);
+			buf_putmpint(extrablob, &dmq1);
+			buf_putmpint(extrablob, &iqmp);
+			buf_setpos(extrablob, 0);
+			mp_clear(&dmp1);
+			mp_clear(&dmq1);
+			mp_clear(&iqmp);
+			mp_clear(&tmpval);
+			
+			/* dmp1 */
+			numbers[6].bytes = buf_getint(extrablob);
+			numbers[6].start = buf_getptr(extrablob, numbers[6].bytes);
+			buf_incrpos(extrablob, numbers[6].bytes);
+			
+			/* dmq1 */
+			numbers[7].bytes = buf_getint(extrablob);
+			numbers[7].start = buf_getptr(extrablob, numbers[7].bytes);
+			buf_incrpos(extrablob, numbers[7].bytes);
+			
+			/* iqmp */
+			numbers[8].bytes = buf_getint(extrablob);
+			numbers[8].start = buf_getptr(extrablob, numbers[8].bytes);
+			buf_incrpos(extrablob, numbers[8].bytes);
+
+			nnumbers = 9;
+			header = "-----BEGIN RSA PRIVATE KEY-----\n";
+			footer = "-----END RSA PRIVATE KEY-----\n";
+		}
+	#endif /* DROPBEAR_RSA */
+
+	#ifdef DROPBEAR_DSS
+		if (key->type == DROPBEAR_SIGNKEY_DSS) {
+
+			/* p */
+			numbers[1].bytes = buf_getint(keyblob);
+			numbers[1].start = buf_getptr(keyblob, numbers[1].bytes);
+			buf_incrpos(keyblob, numbers[1].bytes);
+
+			/* q */
+			numbers[2].bytes = buf_getint(keyblob);
+			numbers[2].start = buf_getptr(keyblob, numbers[2].bytes);
+			buf_incrpos(keyblob, numbers[2].bytes);
+
+			/* g */
+			numbers[3].bytes = buf_getint(keyblob);
+			numbers[3].start = buf_getptr(keyblob, numbers[3].bytes);
+			buf_incrpos(keyblob, numbers[3].bytes);
+
+			/* y */
+			numbers[4].bytes = buf_getint(keyblob);
+			numbers[4].start = buf_getptr(keyblob, numbers[4].bytes);
+			buf_incrpos(keyblob, numbers[4].bytes);
+
+			/* x */
+			numbers[5].bytes = buf_getint(keyblob);
+			numbers[5].start = buf_getptr(keyblob, numbers[5].bytes);
+			buf_incrpos(keyblob, numbers[5].bytes);
+
+			nnumbers = 6;
+			header = "-----BEGIN DSA PRIVATE KEY-----\n";
+			footer = "-----END DSA PRIVATE KEY-----\n";
+		}
+	#endif /* DROPBEAR_DSS */
+
+		/*
+		 * Now count up the total size of the ASN.1 encoded integers,
+		 * so as to determine the length of the containing SEQUENCE.
+		 */
+		len = 0;
+		for (i = 0; i < nnumbers; i++) {
+			len += ber_write_id_len(NULL, 2, numbers[i].bytes, 0);
+			len += numbers[i].bytes;
+		}
+		seqlen = len;
+		/* Now add on the SEQUENCE header. */
+		len += ber_write_id_len(NULL, 16, seqlen, ASN1_CONSTRUCTED);
+		/* Round up to the cipher block size, ensuring we have at least one
+		 * byte of padding (see below). */
+		outlen = len;
+		if (passphrase)
+			outlen = (outlen+8) &~ 7;
+
+		/*
+		 * Now we know how big outblob needs to be. Allocate it.
+		 */
+		outblob = (unsigned char*)m_malloc(outlen);
+
+		/*
+		 * And write the data into it.
+		 */
+		pos = 0;
+		pos += ber_write_id_len(outblob+pos, 16, seqlen, ASN1_CONSTRUCTED);
+		for (i = 0; i < nnumbers; i++) {
+			pos += ber_write_id_len(outblob+pos, 2, numbers[i].bytes, 0);
+			memcpy(outblob+pos, numbers[i].start, numbers[i].bytes);
+			pos += numbers[i].bytes;
+		}
+	} /* end RSA and DSS handling */
+
+#ifdef DROPBEAR_ECDSA
+	if (key->type == DROPBEAR_SIGNKEY_ECDSA_NISTP256
+		|| key->type == DROPBEAR_SIGNKEY_ECDSA_NISTP384
+		|| key->type == DROPBEAR_SIGNKEY_ECDSA_NISTP521) {
+
+		/*  SEC1 V2 appendix c.4
+		ECPrivateKey ::= SEQUENCE {
+			version INTEGER { ecPrivkeyVer1(1) } (ecPrivkeyVer1),
+			privateKey OCTET STRING,
+			parameters [0] ECDomainParameters {{ SECGCurveNames }} OPTIONAL, 
+			publicKey [1] BIT STRING OPTIONAL
+		}
+		*/
+		buffer *seq_buf = buf_new(400);
+		ecc_key **eck = (ecc_key**)signkey_key_ptr(key, key->type);
+		const long curve_size = (*eck)->dp->size;
+		int curve_oid_len = 0;
+		const void* curve_oid = NULL;
+		unsigned long pubkey_size = 2*curve_size+1;
+		unsigned int k_size;
+
+		/* version. less than 10 bytes */
+		buf_incrwritepos(seq_buf,
+			ber_write_id_len(buf_getwriteptr(seq_buf, 10), 2, 1, 0));
+		buf_putbyte(seq_buf, 1);
+
+		/* privateKey */
+		k_size = mp_unsigned_bin_size((*eck)->k);
+		dropbear_assert(k_size <= curve_size);
+		buf_incrwritepos(seq_buf,
+			ber_write_id_len(buf_getwriteptr(seq_buf, 10), 4, k_size, 0));
+	    mp_to_unsigned_bin((*eck)->k, buf_getwriteptr(seq_buf, k_size));
+		buf_incrwritepos(seq_buf, k_size);
+
+		/* SECGCurveNames */
+		switch (key->type)
+		{
+			case DROPBEAR_SIGNKEY_ECDSA_NISTP256:
+				curve_oid_len = sizeof(OID_SEC256R1_BLOB);
+				curve_oid = OID_SEC256R1_BLOB;
+				break;
+			case DROPBEAR_SIGNKEY_ECDSA_NISTP384:
+				curve_oid_len = sizeof(OID_SEC384R1_BLOB);
+				curve_oid = OID_SEC384R1_BLOB;
+				break;
+			case DROPBEAR_SIGNKEY_ECDSA_NISTP521:
+				curve_oid_len = sizeof(OID_SEC521R1_BLOB);
+				curve_oid = OID_SEC521R1_BLOB;
+				break;
+			default:
+				dropbear_exit("Internal error");
 		}
 
-		/* e */
-		numbers[2].bytes = buf_getint(keyblob);
-		numbers[2].start = buf_getptr(keyblob, numbers[2].bytes);
-		buf_incrpos(keyblob, numbers[2].bytes);
-		
-		/* n */
-		numbers[1].bytes = buf_getint(keyblob);
-		numbers[1].start = buf_getptr(keyblob, numbers[1].bytes);
-		buf_incrpos(keyblob, numbers[1].bytes);
-		
-		/* d */
-		numbers[3].bytes = buf_getint(keyblob);
-		numbers[3].start = buf_getptr(keyblob, numbers[3].bytes);
-		buf_incrpos(keyblob, numbers[3].bytes);
-		
-		/* p */
-		numbers[4].bytes = buf_getint(keyblob);
-		numbers[4].start = buf_getptr(keyblob, numbers[4].bytes);
-		buf_incrpos(keyblob, numbers[4].bytes);
-		
-		/* q */
-		numbers[5].bytes = buf_getint(keyblob);
-		numbers[5].start = buf_getptr(keyblob, numbers[5].bytes);
-		buf_incrpos(keyblob, numbers[5].bytes);
+		buf_incrwritepos(seq_buf,
+			ber_write_id_len(buf_getwriteptr(seq_buf, 10), 0, 2+curve_oid_len, 0xa0));
+		/* object == 6 */
+		buf_incrwritepos(seq_buf,
+			ber_write_id_len(buf_getwriteptr(seq_buf, 10), 6, curve_oid_len, 0));
+		buf_putbytes(seq_buf, curve_oid, curve_oid_len);
 
-		/* now calculate some extra parameters: */
-		m_mp_init(&tmpval);
-		m_mp_init(&dmp1);
-		m_mp_init(&dmq1);
-		m_mp_init(&iqmp);
-
-		/* dmp1 = d mod (p-1) */
-		if (mp_sub_d(key->rsakey->p, 1, &tmpval) != MP_OKAY) {
-			fprintf(stderr, "Bignum error for p-1\n");
-			goto error;
+		buf_incrwritepos(seq_buf,
+			ber_write_id_len(buf_getwriteptr(seq_buf, 10), 1, 2+1+pubkey_size, 0xa0));
+		buf_incrwritepos(seq_buf,
+			ber_write_id_len(buf_getwriteptr(seq_buf, 10), 3, 1+pubkey_size, 0));
+		buf_putbyte(seq_buf, 0);
+		int err = ecc_ansi_x963_export(*eck, buf_getwriteptr(seq_buf, pubkey_size), &pubkey_size);
+		if (err != CRYPT_OK) {
+			dropbear_exit("ECC error");
 		}
-		if (mp_mod(key->rsakey->d, &tmpval, &dmp1) != MP_OKAY) {
-			fprintf(stderr, "Bignum error for dmp1\n");
-			goto error;
-		}
+		buf_incrwritepos(seq_buf, pubkey_size);
 
-		/* dmq1 = d mod (q-1) */
-		if (mp_sub_d(key->rsakey->q, 1, &tmpval) != MP_OKAY) {
-			fprintf(stderr, "Bignum error for q-1\n");
-			goto error;
-		}
-		if (mp_mod(key->rsakey->d, &tmpval, &dmq1) != MP_OKAY) {
-			fprintf(stderr, "Bignum error for dmq1\n");
-			goto error;
-		}
+		buf_setpos(seq_buf, 0);
+			
+		outblob = (unsigned char*)m_malloc(1000);
 
-		/* iqmp = (q^-1) mod p */
-		if (mp_invmod(key->rsakey->q, key->rsakey->p, &iqmp) != MP_OKAY) {
-			fprintf(stderr, "Bignum error for iqmp\n");
-			goto error;
-		}
+		pos = 0;
+		pos += ber_write_id_len(outblob+pos, 16, seq_buf->len, ASN1_CONSTRUCTED);
+		memcpy(&outblob[pos], seq_buf->data, seq_buf->len);
+		pos += seq_buf->len;
+		len = pos;
+		outlen = len;
 
-		extrablob = buf_new(2000);
-		buf_putmpint(extrablob, &dmp1);
-		buf_putmpint(extrablob, &dmq1);
-		buf_putmpint(extrablob, &iqmp);
-		buf_setpos(extrablob, 0);
-		mp_clear(&dmp1);
-		mp_clear(&dmq1);
-		mp_clear(&iqmp);
-		mp_clear(&tmpval);
-		
-		/* dmp1 */
-		numbers[6].bytes = buf_getint(extrablob);
-		numbers[6].start = buf_getptr(extrablob, numbers[6].bytes);
-		buf_incrpos(extrablob, numbers[6].bytes);
-		
-		/* dmq1 */
-		numbers[7].bytes = buf_getint(extrablob);
-		numbers[7].start = buf_getptr(extrablob, numbers[7].bytes);
-		buf_incrpos(extrablob, numbers[7].bytes);
-		
-		/* iqmp */
-		numbers[8].bytes = buf_getint(extrablob);
-		numbers[8].start = buf_getptr(extrablob, numbers[8].bytes);
-		buf_incrpos(extrablob, numbers[8].bytes);
+		buf_burn(seq_buf);
+		buf_free(seq_buf);
+		seq_buf = NULL;
 
-		nnumbers = 9;
-		header = "-----BEGIN RSA PRIVATE KEY-----\n";
-		footer = "-----END RSA PRIVATE KEY-----\n";
+		header = "-----BEGIN EC PRIVATE KEY-----\n";
+		footer = "-----END EC PRIVATE KEY-----\n";
 	}
-#endif /* DROPBEAR_RSA */
-
-#ifdef DROPBEAR_DSS
-	if (keytype == DROPBEAR_SIGNKEY_DSS) {
-
-		/* p */
-		numbers[1].bytes = buf_getint(keyblob);
-		numbers[1].start = buf_getptr(keyblob, numbers[1].bytes);
-		buf_incrpos(keyblob, numbers[1].bytes);
-
-		/* q */
-		numbers[2].bytes = buf_getint(keyblob);
-		numbers[2].start = buf_getptr(keyblob, numbers[2].bytes);
-		buf_incrpos(keyblob, numbers[2].bytes);
-
-		/* g */
-		numbers[3].bytes = buf_getint(keyblob);
-		numbers[3].start = buf_getptr(keyblob, numbers[3].bytes);
-		buf_incrpos(keyblob, numbers[3].bytes);
-
-		/* y */
-		numbers[4].bytes = buf_getint(keyblob);
-		numbers[4].start = buf_getptr(keyblob, numbers[4].bytes);
-		buf_incrpos(keyblob, numbers[4].bytes);
-
-		/* x */
-		numbers[5].bytes = buf_getint(keyblob);
-		numbers[5].start = buf_getptr(keyblob, numbers[5].bytes);
-		buf_incrpos(keyblob, numbers[5].bytes);
-
-		nnumbers = 6;
-		header = "-----BEGIN DSA PRIVATE KEY-----\n";
-		footer = "-----END DSA PRIVATE KEY-----\n";
-	}
-#endif /* DROPBEAR_DSS */
-
-	/*
-	 * Now count up the total size of the ASN.1 encoded integers,
-	 * so as to determine the length of the containing SEQUENCE.
-	 */
-	len = 0;
-	for (i = 0; i < nnumbers; i++) {
-		len += ber_write_id_len(NULL, 2, numbers[i].bytes, 0);
-		len += numbers[i].bytes;
-	}
-	seqlen = len;
-	/* Now add on the SEQUENCE header. */
-	len += ber_write_id_len(NULL, 16, seqlen, ASN1_CONSTRUCTED);
-	/* Round up to the cipher block size, ensuring we have at least one
-	 * byte of padding (see below). */
-	outlen = len;
-	if (passphrase)
-		outlen = (outlen+8) &~ 7;
-
-	/*
-	 * Now we know how big outblob needs to be. Allocate it.
-	 */
-	outblob = (unsigned char*)m_malloc(outlen);
-
-	/*
-	 * And write the data into it.
-	 */
-	pos = 0;
-	pos += ber_write_id_len(outblob+pos, 16, seqlen, ASN1_CONSTRUCTED);
-	for (i = 0; i < nnumbers; i++) {
-		pos += ber_write_id_len(outblob+pos, 2, numbers[i].bytes, 0);
-		memcpy(outblob+pos, numbers[i].start, numbers[i].bytes);
-		pos += numbers[i].bytes;
-	}
+#endif
 
 	/*
 	 * Padding on OpenSSH keys is deterministic. The number of

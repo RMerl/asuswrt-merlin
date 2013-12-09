@@ -28,7 +28,8 @@
 #include "buffer.h"
 #include "signkey.h"
 #include "runopts.h"
-#include "random.h"
+#include "dbrandom.h"
+#include "crypto_desc.h"
 
 static size_t listensockets(int *sock, size_t sockcount, int *maxfd);
 static void sigchld_handler(int dummy);
@@ -134,6 +135,11 @@ void main_noinetd() {
 	if (listensockcount == 0)
 	{
 		dropbear_exit("No listening ports available.");
+	}
+
+	for (i = 0; i < listensockcount; i++) {
+		set_sock_priority(listensocks[i], DROPBEAR_PRIO_LOWDELAY);
+		FD_SET(listensocks[i], &fds);
 	}
 
 	/* fork */
@@ -383,9 +389,11 @@ static void commonsetup() {
 		dropbear_exit("signal() error");
 	}
 
+	crypto_init();
+
 	/* Now we can setup the hostkeys - needs to be after logging is on,
 	 * otherwise we might end up blatting error messages to the socket */
-	loadhostkeys();
+	load_all_hostkeys();
 
     seedrandom();
 }

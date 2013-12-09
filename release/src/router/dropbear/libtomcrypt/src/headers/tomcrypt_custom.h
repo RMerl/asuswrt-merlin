@@ -127,12 +127,31 @@
 #ifdef DROPBEAR_SHA256
 #define SHA256
 #endif
-
+#ifdef DROPBEAR_SHA384
+#define SHA384
+#endif
 #ifdef DROPBEAR_SHA512
 #define SHA512
 #endif
 
 #define LTC_HMAC
+
+#ifdef DROPBEAR_ECC
+#define MECC
+#define LTC_ECC_SHAMIR
+#define LTC_ECC_TIMING_RESISTANT
+#define MPI
+#define LTM_DESC
+#ifdef DROPBEAR_ECC_256
+#define ECC256
+#endif
+#ifdef DROPBEAR_ECC_384
+#define ECC384
+#endif
+#ifdef DROPBEAR_ECC_521
+#define ECC521
+#endif
+#endif
 
 /* Various tidbits of modern neatoness */
 #define BASE64

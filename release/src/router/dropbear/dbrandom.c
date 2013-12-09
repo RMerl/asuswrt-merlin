@@ -26,7 +26,8 @@
 #include "buffer.h"
 #include "dbutil.h"
 #include "bignum.h"
-#include "random.h"
+#include "dbrandom.h"
+
 
 /* this is used to generate unique output from the same hashpool */
 static uint32_t counter = 0;
@@ -78,16 +79,19 @@ process_file(hash_state *hs, const char *filename,
 	{
 		int readlen, wantread;
 		unsigned char readbuf[4096];
-		if (!already_blocked)
+		if (!already_blocked && !prngd)
 		{
-			int ret;
-			struct timeval timeout = { .tv_sec = 2, .tv_usec = 0};
+			int res;
+			struct timeval timeout;
 			fd_set read_fds;
+
+ 			timeout.tv_sec  = 2;
+ 			timeout.tv_usec = 0;
 
 			FD_ZERO(&read_fds);
 			FD_SET(readfd, &read_fds);
-			ret = select(readfd + 1, &read_fds, NULL, NULL, &timeout);
-			if (ret == 0)
+			res = select(readfd + 1, &read_fds, NULL, NULL, &timeout);
+			if (res == 0)
 			{
 				dropbear_log(LOG_WARNING, "Warning: Reading the randomness source '%s' seems to have blocked.\nYou may need to find a better entropy source.", filename);
 				already_blocked = 1;
@@ -221,8 +225,8 @@ void seedrandom() {
 	pid = getpid();
 	sha1_process(&hs, (void*)&pid, sizeof(pid));
 
-	// gettimeofday() doesn't completely fill out struct timeval on 
-	// OS X (10.8.3), avoid valgrind warnings by clearing it first
+	/* gettimeofday() doesn't completely fill out struct timeval on 
+	   OS X (10.8.3), avoid valgrind warnings by clearing it first */
 	memset(&tv, 0x0, sizeof(tv));
 	gettimeofday(&tv, NULL);
 	sha1_process(&hs, (void*)&tv, sizeof(tv));

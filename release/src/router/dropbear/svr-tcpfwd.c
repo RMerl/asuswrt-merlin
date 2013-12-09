@@ -211,7 +211,7 @@ static int svr_remotetcpreq() {
 
 	tcpinfo->request_listenaddr = request_addr;
 	if (!opts.listen_fwd_all || (strcmp(request_addr, "localhost") == 0) ) {
-        // NULL means "localhost only"
+        /* NULL means "localhost only" */
 		tcpinfo->listenaddr = NULL;
 	}
 	else

@@ -25,7 +25,7 @@
 #include "includes.h"
 #include "dbutil.h"
 #include "bignum.h"
-#include "random.h"
+#include "dbrandom.h"
 #include "rsa.h"
 #include "genrsa.h"
 
@@ -34,7 +34,7 @@
 #ifdef DROPBEAR_RSA
 
 static void getrsaprime(mp_int* prime, mp_int *primeminus, 
-		mp_int* rsa_e, unsigned int size);
+		mp_int* rsa_e, unsigned int size_bytes);
 
 /* mostly taken from libtomcrypt's rsa key generation routine */
 dropbear_rsa_key * gen_rsa_priv_key(unsigned int size) {
@@ -44,26 +44,22 @@ dropbear_rsa_key * gen_rsa_priv_key(unsigned int size) {
 	DEF_MP_INT(qminus);
 	DEF_MP_INT(lcm);
 
+	if (size < 512 || size > 4096 || (size % 8 != 0)) {
+		dropbear_exit("Bits must satisfy 512 <= bits <= 4096, and be a"
+			" multiple of 8");
+	}
+
 	key = m_malloc(sizeof(*key));
-
-	key->e = (mp_int*)m_malloc(sizeof(mp_int));
-	key->n = (mp_int*)m_malloc(sizeof(mp_int));
-	key->d = (mp_int*)m_malloc(sizeof(mp_int));
-	key->p = (mp_int*)m_malloc(sizeof(mp_int));
-	key->q = (mp_int*)m_malloc(sizeof(mp_int));
-
-	m_mp_init_multi(key->e, key->n, key->d, key->p, key->q,
-			&pminus, &lcm, &qminus, NULL);
-
-	seedrandom();
+	m_mp_alloc_init_multi(&key->e, &key->n, &key->d, &key->p, &key->q, NULL);
+	m_mp_init_multi(&pminus, &lcm, &qminus, NULL);
 
 	if (mp_set_int(key->e, RSA_E) != MP_OKAY) {
 		fprintf(stderr, "RSA generation failed\n");
 		exit(1);
 	}
 
-	getrsaprime(key->p, &pminus, key->e, size/2);
-	getrsaprime(key->q, &qminus, key->e, size/2);
+	getrsaprime(key->p, &pminus, key->e, size/16);
+	getrsaprime(key->q, &qminus, key->e, size/16);
 
 	if (mp_mul(key->p, key->q, key->n) != MP_OKAY) {
 		fprintf(stderr, "RSA generation failed\n");
@@ -90,21 +86,21 @@ dropbear_rsa_key * gen_rsa_priv_key(unsigned int size) {
 
 /* return a prime suitable for p or q */
 static void getrsaprime(mp_int* prime, mp_int *primeminus, 
-		mp_int* rsa_e, unsigned int size) {
+		mp_int* rsa_e, unsigned int size_bytes) {
 
 	unsigned char *buf;
 	DEF_MP_INT(temp_gcd);
 
-	buf = (unsigned char*)m_malloc(size+1);
+	buf = (unsigned char*)m_malloc(size_bytes+1);
 
 	m_mp_init(&temp_gcd);
 	do {
 		/* generate a random odd number with MSB set, then find the
 		   the next prime above it */
-		genrandom(buf, size+1);
+		genrandom(buf, size_bytes+1);
 		buf[0] |= 0x80; /* MSB set */
 
-		bytes_to_mp(prime, buf, size+1);
+		bytes_to_mp(prime, buf, size_bytes+1);
 
 		/* find the next integer which is prime, 8 round of miller-rabin */
 		if (mp_prime_next_prime(prime, 8, 0) != MP_OKAY) {
@@ -126,7 +122,7 @@ static void getrsaprime(mp_int* prime, mp_int *primeminus,
 
 	/* now we have a good value for result */
 	mp_clear(&temp_gcd);
-	m_burn(buf, size+1);
+	m_burn(buf, size_bytes+1);
 	m_free(buf);
 }
 

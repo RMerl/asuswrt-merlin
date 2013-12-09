@@ -494,8 +494,8 @@ toremote(char *targ, int argc, char **argv)
 			if (verbose_mode)
 				addargs(&alist, "-v");
 #if 0
-			// Disabled since dbclient won't understand them
-			// and scp works fine without them.
+			/* Disabled since dbclient won't understand them
+			   and scp works fine without them. */
 			addargs(&alist, "-x");
 			addargs(&alist, "-oClearAllForwardings yes");
 			addargs(&alist, "-n");

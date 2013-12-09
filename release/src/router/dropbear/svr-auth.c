@@ -33,7 +33,7 @@
 #include "packet.h"
 #include "auth.h"
 #include "runopts.h"
-#include "random.h"
+#include "dbrandom.h"
 
 static void authclear();
 static int checkusername(unsigned char *username, unsigned int userlen);
@@ -88,8 +88,7 @@ void send_msg_userauth_banner(buffer *banner) {
 	CHECKCLEARTOWRITE();
 
 	buf_putbyte(ses.writepayload, SSH_MSG_USERAUTH_BANNER);
-	buf_putstring(ses.writepayload, buf_getptr(banner, banner->len),
-			banner->len);
+	buf_putbufstring(ses.writepayload, banner);
 	buf_putstring(ses.writepayload, "en", 2);
 
 	encrypt_packet();
@@ -232,7 +231,7 @@ static int checkusername(unsigned char *username, unsigned int userlen) {
 
 	char* listshell = NULL;
 	char* usershell = NULL;
-	int   uid;
+	uid_t uid;
 	TRACE(("enter checkusername"))
 	if (userlen > MAX_USERNAME_LEN) {
 		return DROPBEAR_FAILURE;
@@ -344,12 +343,10 @@ void send_msg_userauth_failure(int partial, int incrfail) {
 		buf_putbytes(typebuf, AUTH_METHOD_PASSWORD, AUTH_METHOD_PASSWORD_LEN);
 	}
 
-	buf_setpos(typebuf, 0);
-	buf_putstring(ses.writepayload, buf_getptr(typebuf, typebuf->len),
-			typebuf->len);
+	buf_putbufstring(ses.writepayload, typebuf);
 
-	TRACE(("auth fail: methods %d, '%s'", ses.authstate.authtypes,
-				buf_getptr(typebuf, typebuf->len)));
+	TRACE(("auth fail: methods %d, '%.*s'", ses.authstate.authtypes,
+				typebuf->len, typebuf->data))
 
 	buf_free(typebuf);
 

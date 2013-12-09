@@ -30,7 +30,7 @@
 #include "algo.h"
 #include "buffer.h"
 #include "kex.h"
-#include "random.h"
+#include "dbrandom.h"
 #include "service.h"
 #include "auth.h"
 #include "channel.h"
@@ -98,7 +98,7 @@ void write_packet() {
 		writebuf = (buffer*)examine(&ses.writequeue);
 		len = writebuf->len - 1 - writebuf->pos;
 		if (len > written) {
-			// partial buffer write
+			/* partial buffer write */
 			buf_incrpos(writebuf, written);
 			written = 0;
 		} else {

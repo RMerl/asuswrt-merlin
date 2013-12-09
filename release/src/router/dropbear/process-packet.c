@@ -30,7 +30,7 @@
 #include "algo.h"
 #include "buffer.h"
 #include "kex.h"
-#include "random.h"
+#include "dbrandom.h"
 #include "service.h"
 #include "auth.h"
 #include "channel.h"

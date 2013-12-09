@@ -66,7 +66,7 @@ struct key_context_directional {
 	const struct dropbear_cipher_mode *crypt_mode;
 	const struct dropbear_hash *algo_mac;
 	int hash_index; /* lookup for libtomcrypt */
-	char algo_comp; /* compression */
+	int algo_comp; /* compression */
 #ifndef DISABLE_ZLIB
 	z_streamp zstream;
 #endif
@@ -86,8 +86,8 @@ struct key_context {
 	struct key_context_directional recv;
 	struct key_context_directional trans;
 
-	char algo_kex;
-	char algo_hostkey;
+	const struct dropbear_kex *algo_kex;
+	int algo_hostkey;
 
 	int allow_compress; /* whether compression has started (useful in 
 							zlib@openssh.com delayed compression case) */
@@ -158,10 +158,10 @@ struct sshsession {
 	struct KEXState kexstate;
 	struct key_context *keys;
 	struct key_context *newkeys;
-	unsigned char *session_id; /* this is the hash from the first kex */
-	/* The below are used temorarily during kex, are freed after use */
+	buffer *session_id; /* this is the hash from the first kex */
+	/* The below are used temporarily during kex, are freed after use */
 	mp_int * dh_K; /* SSH_MSG_KEXDH_REPLY and sending SSH_MSH_NEWKEYS */
-	unsigned char hash[SHA1_HASH_SIZE]; /* the hash*/
+	buffer *hash; /* the session hash */
 	buffer* kexhashbuf; /* session hash buffer calculated from various packets*/
 	buffer* transkexinit; /* the kexinit packet we send should be kept so we
 							 can add it to the hash when generating keys */
@@ -241,8 +241,12 @@ typedef enum {
 
 struct clientsession {
 
-	mp_int *dh_e, *dh_x; /* Used during KEX */
-	int dh_val_algo; /* KEX algorithm corresponding to current dh_e and dh_x */
+	/* XXX - move these to kexstate? */
+	struct kex_dh_param *dh_param;
+	struct kex_ecdh_param *ecdh_param;
+	struct kex_curve25519_param *curve25519_param;
+	const struct dropbear_kex *param_kex_algo; /* KEX algorithm corresponding to current dh_e and dh_x */
+
 	cli_kex_state kex_state; /* Used for progressing KEX */
 	cli_state state; /* Used to progress auth/channelsession etc */
 	unsigned donefirstkex : 1; /* Set when we set sentnewkeys, never reset */

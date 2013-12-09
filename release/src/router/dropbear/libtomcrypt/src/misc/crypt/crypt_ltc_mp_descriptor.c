@@ -10,4 +10,4 @@
  */
 #include "tomcrypt.h"
 
-ltc_math_descriptor ltc_mp;
+ltc_math_descriptor ltc_mp = {0};

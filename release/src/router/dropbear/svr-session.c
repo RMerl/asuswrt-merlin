@@ -30,7 +30,7 @@
 #include "buffer.h"
 #include "dss.h"
 #include "ssh.h"
-#include "random.h"
+#include "dbrandom.h"
 #include "kex.h"
 #include "channel.h"
 #include "chansession.h"
@@ -39,6 +39,7 @@
 #include "service.h"
 #include "auth.h"
 #include "runopts.h"
+#include "crypto_desc.h"
 
 static void svr_remoteclosed();
 
@@ -83,7 +84,6 @@ void svr_session(int sock, int childpipe) {
 	char *host, *port;
 	size_t len;
 
-	crypto_init();
 	common_session_init(sock, sock);
 
 	/* Initialise server specific parts of the session */
@@ -142,7 +142,7 @@ void svr_dropbear_exit(int exitcode, const char* format, va_list param) {
 	if (!sessinitdone) {
 		/* before session init */
 		snprintf(fmtbuf, sizeof(fmtbuf), 
-				"Premature exit: %s", format);
+				"Early exit: %s", format);
 	} else if (ses.authstate.authdone) {
 		/* user has authenticated */
 		snprintf(fmtbuf, sizeof(fmtbuf),

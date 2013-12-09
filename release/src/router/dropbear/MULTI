@@ -20,7 +20,3 @@ etc
 then execute as normal:
 
 ./dropbear <options here>
-
-"make install" doesn't currently work for multi-binary configuration, though
-in most situations where it is being used, the target and build systems will
-differ.

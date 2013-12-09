@@ -32,7 +32,7 @@
 #include "sshpty.h"
 #include "termcodes.h"
 #include "ssh.h"
-#include "random.h"
+#include "dbrandom.h"
 #include "x11fwd.h"
 #include "agentfwd.h"
 #include "runopts.h"
@@ -664,6 +664,7 @@ static int sessioncommand(struct Channel *channel, struct ChanSess *chansess,
 
 	if (chansess->term == NULL) {
 		/* no pty */
+		set_sock_priority(ses.sock_out, DROPBEAR_PRIO_BULK);
 		ret = noptycommand(channel, chansess);
 	} else {
 		/* want pty */

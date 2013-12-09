@@ -3,10 +3,10 @@
 dropbear \- lightweight SSH server
 .SH SYNOPSIS
 .B dropbear
-[\-FEmwsgjki] [\-b
-.I banner\fR] [\-d
-.I dsskey\fR] [\-r
-.I rsakey\fR] [\-p
+[\-RFEmwsgjki] [\-b
+.I banner\fR] 
+[\-r
+.I hostkeyfile\fR] [\-p
 .IR [address:]port ]
 .SH DESCRIPTION
 .B dropbear
@@ -20,24 +20,16 @@ Display the contents of the file
 .I banner
 before user login (default: none).
 .TP
-.B \-d \fIdsskey
-dsskeyfile.
+.B \-r \fIhostkey
 Use the contents of the file
-.I dsskey
-for the DSS host key (default: /etc/dropbear/dropbear_dss_host_key). 
-Note that 
-some SSH implementations
-use the term "DSA" rather than "DSS", they mean the same thing.
+.I hostkey
+for the SSH hostkey.
 This file is generated with
-.BR dropbearkey (1).
+.BR dropbearkey (1) 
+or automatically with the '-R' option. See "Host Key Files" below.
 .TP
-.B \-r \fIrsakey
-rsakeyfile.
-Use the contents of the file
-.I rsakey
-for the rsa host key (default: /etc/dropbear/dropbear_rsa_host_key).
-This file is generated with
-.BR dropbearkey (1).
+.B \-R
+Generate hostkeys automatically. See "Host Key Files" below.
 .TP
 .B \-F
 Don't fork into background.
@@ -143,9 +135,13 @@ key authentication.
 Host Key Files
 
 Host key files are read at startup from a standard location, by default
-/etc/dropbear/dropbear_dss_host_key and /etc/dropbear/dropbear_rsa_host_key
-or specified on the commandline with -d or -r. These are of the form generated
-by dropbearkey.
+/etc/dropbear/dropbear_dss_host_key, /etc/dropbear/dropbear_rsa_host_key, and 
+/etc/dropbear/dropbear-ecdsa_host_key
+or specified on the commandline with -r. These are of the form generated
+by dropbearkey. The -R option can be used to automatically generate keys
+in the default location - keys will be generated after startup when the first
+connection is established. This had the benefit that the system /dev/urandom
+random number source has a better chance of being securely seeded.
 
 .TP
 Message Of The Day

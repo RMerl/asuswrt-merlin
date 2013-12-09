@@ -269,6 +269,11 @@ void buf_putstring(buffer* buf, const unsigned char* str, unsigned int len) {
 
 }
 
+/* puts an entire buffer as a SSH string. ignore pos of buf_str. */
+void buf_putbufstring(buffer *buf, const buffer* buf_str) {
+	buf_putstring(buf, buf_str->data, buf_str->len);
+}
+
 /* put the set of len bytes into the buffer, incrementing the pos, increasing
  * len if required */
 void buf_putbytes(buffer *buf, const unsigned char *bytes, unsigned int len) {

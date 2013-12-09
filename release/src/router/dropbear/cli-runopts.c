@@ -216,7 +216,7 @@ void cli_getopts(int argc, char ** argv) {
 			switch (argv[i][1]) {
 				case 'y': /* always accept the remote hostkey */
 					if (cli_opts.always_accept_key) {
-						// twice means no checking at all
+						/* twice means no checking at all */
 						cli_opts.no_hostkey_check = 1;
 					}
 					cli_opts.always_accept_key = 1;
@@ -450,7 +450,7 @@ void cli_getopts(int argc, char ** argv) {
 #ifdef ENABLE_CLI_PUBKEY_AUTH
 static void loadidentityfile(const char* filename) {
 	sign_key *key;
-	int keytype;
+	enum signkey_type keytype;
 
 	key = new_sign_key();
 	keytype = DROPBEAR_SIGNKEY_ANY;
@@ -481,7 +481,7 @@ multihop_passthrough_args() {
 		sign_key * key = (sign_key*)iter->item;
 		len += 3 + strlen(key->filename);
 	}
-	len += 30; // space for -W <size>, terminator.
+	len += 30; /* space for -W <size>, terminator. */
 	ret = m_malloc(len);
 	total = 0;
 
@@ -619,7 +619,7 @@ static void parse_hostname(const char* orighostarg) {
 
 	port = strchr(cli_opts.remotehost, '%');
 	if (!port)  {
-		// legacy separator
+		/* legacy separator */
 		port = strchr(cli_opts.remotehost, '/');
 	}
 	if (port) {

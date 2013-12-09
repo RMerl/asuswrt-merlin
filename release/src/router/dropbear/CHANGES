@@ -1,3 +1,45 @@
+2013.62 - Tuesday 3 December 2013
+
+- Disable "interactive" QoS connection options when a connection doesn't
+  have a PTY (eg scp, rsync). Thanks to Catalin Patulea for the patch.
+
+- Log when a hostkey is generated with -R, fix some bugs in handling server
+  hostkey commandline options
+
+- Fix crash in Dropbearconvert and 521 bit key, reported by NiLuJe
+
+- Update config.guess and config.sub again
+
+2013.61test - Thursday 14 November 2013
+
+- ECC (elliptic curve) support. Supports ECDSA hostkeys (requires new keys to
+  be generated) and ECDH for setting up encryption keys (no intervention
+  required). This is significantly faster.
+
+- curve25519-sha256@libssh.org support for setting up encryption keys. This is
+  another elliptic curve mode with less potential of NSA interference in
+  algorithm parameters. curve25519-donna code thanks to Adam Langley
+
+- -R option to automatically generate hostkeys. This is recommended for
+  embedded platforms since it allows the system random number device
+  /dev/urandom a longer startup time to generate a secure seed before the
+  hostkey is required.
+
+- Compile fixes for old vendor compilers like Tru64 from Daniel Richard G.
+
+- Make authorized_keys handling more robust, don't exit encountering
+  malformed lines. Thanks to Lorin Hochstein and Mark Stillwell 
+
+2013.60 - Wednesday 16 October 2013
+
+- Fix "make install" so that it doesn't always install to /bin and /sbin
+
+- Fix "make install MULTI=1", installing manpages failed
+
+- Fix "make install" when scp is included since it has no manpage
+
+- Make --disable-bundled-libtom work
+
 2013.59 - Friday 4 October 2013
 
 - Fix crash from -J command 
@@ -14,10 +56,10 @@
 
 - Limit the size of decompressed payloads, avoids memory exhaustion denial
   of service 
-  Thanks to Logan Lamb for reporting and investigating it
+  Thanks to Logan Lamb for reporting and investigating it. CVE-2013-4421
 
 - Avoid disclosing existence of valid users through inconsistent delays
-  Thanks to Logan Lamb for reporting
+  Thanks to Logan Lamb for reporting. CVE-2013-4434
 
 - Update config.guess and config.sub for newer architectures
 
@@ -318,7 +360,7 @@ https://secure.ucc.asn.au/hg/dropbear/graph/default
 
 - Security: dbclient previously would prompt to confirm a 
   mismatching hostkey but wouldn't warn loudly. It will now
-  exit upon a mismatch.
+  exit upon a mismatch. CVE-2007-1099
 
 - Compile fixes, make sure that all variable definitions are at the start
   of a scope.
@@ -380,7 +422,7 @@ https://secure.ucc.asn.au/hg/dropbear/graph/default
   (thanks to Tomas Vanek for helping track it down)
 
 - Implement per-IP pre-authentication connection limits 
-  (after some poking from Pablo Fernandez)
+  (after some poking from Pablo Fernandez) CVE-2006-1206
 
 - Exit gracefully if trying to connect to as SSH v1 server 
   (reported by Rushi Lala)
@@ -401,7 +443,7 @@ https://secure.ucc.asn.au/hg/dropbear/graph/default
 - SECURITY: fix for buffer allocation error in server code, could potentially
   allow authenticated users to gain elevated privileges. All multi-user systems
   running the server should upgrade (or apply the patch available on the
-  Dropbear webpage).
+  Dropbear webpage). CVE-2005-4178
 
 - Fix channel handling code so that redirecting to /dev/null doesn't use
   100% CPU.
@@ -608,7 +650,7 @@ https://secure.ucc.asn.au/hg/dropbear/graph/default
 - SECURITY: Don't try to free() uninitialised variables in DSS verification
   code. Thanks to Arne Bernin for pointing out this bug. This is possibly
   exploitable, all users with DSS and pubkey-auth compiled in are advised to
-  upgrade.
+  upgrade. CVE-2004-2486
 
 - Clean up agent forwarding socket files correctly, patch from Gerrit Pape.
 
