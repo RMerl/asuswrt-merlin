@@ -833,7 +833,7 @@ function addOpenvpnProfile(){
 <input type="hidden" name="vpnc_heartbeat_x" value="<% nvram_get("vpnc_heartbeat_x"); %>">
 <input type="hidden" name="vpnc_dnsenable_x" value="1">
 <input type="hidden" name="vpnc_proto" value="<% nvram_get("vpnc_proto"); %>">
-<input type="hidden" name="vpnc_clientlist" value='<% nvram_get("vpnc_clientlist"); %>'>
+<input type="hidden" name="vpnc_clientlist" value='<% nvram_clean_get("vpnc_clientlist"); %>'>
 <input type="hidden" name="vpnc_type" value="PPTP">
 <input type="hidden" name="vpn_client_unit" value="1">
 <input type="hidden" name="vpn_client1_username" value="<% nvram_get("vpn_client1_username"); %>">
@@ -1015,7 +1015,7 @@ function addOpenvpnProfile(){
 						<input type="hidden" name="action_wait" value="1">
 						<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 						<input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
-						<input type="hidden" name="vpnc_clientlist" value='<% nvram_get("vpnc_clientlist"); %>'>
+						<input type="hidden" name="vpnc_clientlist" value='<% nvram_clean_get("vpnc_clientlist"); %>'>
 						<input type="hidden" name="vpn_upload_type" value="ovpn">
 						<input type="hidden" name="vpn_upload_unit" value="1">
 						<input type="hidden" name="vpnc_openvpn_unit_edit" value="1">
