@@ -1693,6 +1693,7 @@ void write_ftpd_conf()
 	fclose(fp);
 
 	use_custom_config("vsftpd.conf", "/etc/vsftpd.conf");
+	run_postconf("vsftpd.postconf", "/etc/vsftpd.conf");
 }
 
 /*
@@ -2138,6 +2139,7 @@ void start_dms(void)
 		}
 
 		use_custom_config(MEDIA_SERVER_APP".conf","/etc/"MEDIA_SERVER_APP".conf");
+		run_postconf(MEDIA_SERVER_APP".postconf", "/etc/"MEDIA_SERVER_APP".conf");
 
 		/* start media server if it's not already running */
 		if (pidof(MEDIA_SERVER_APP) <= 0) {
@@ -3561,7 +3563,7 @@ void start_nfsd(void)
 
 	append_custom_config("exports", fp);
 	fclose(fp);
-
+	run_postconf("exports.postconf", NFS_EXPORT);
 	eval("/usr/sbin/portmap");
 	eval("/usr/sbin/statd");
 

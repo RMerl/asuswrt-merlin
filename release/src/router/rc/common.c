@@ -1469,6 +1469,11 @@ void run_custom_script_blocking(char *name, char *args)
 
 }
 
+void run_postconf(char *name, char *config)
+{
+	run_custom_script_blocking(name, config);
+}
+
 
 void use_custom_config(char *config, char *target)
 {

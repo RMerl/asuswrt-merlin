@@ -661,6 +661,10 @@ confpage:
 		if (check_if_file_exist("/jffs/configs/smb.conf")) {
 			eval("cp","/jffs/configs/smb.conf",SAMBA_CONF,NULL);
 		}
+
+		if (check_if_file_exist("/jffs/scripts/smb.postconf")) {
+			eval("/jffs/scripts/smb.postconf", SAMBA_CONF);
+		}
 	}
 
 	free_disk_data(&disks_info);

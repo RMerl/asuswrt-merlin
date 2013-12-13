@@ -461,6 +461,7 @@ void create_passwd(void)
 		fappend(f, "/etc/shadow.openvpn");
 #endif
 		fclose(f);
+		run_postconf("shadow.postconf", "/etc/shadow");
 	}
 	umask(m);
 	chmod("/etc/shadow", 0600);
@@ -496,7 +497,6 @@ void create_passwd(void)
 		http_user);
 	f_write_string("/etc/gshadow", s, 0, 0644);
 	fappend_file("/etc/gshadow", "/etc/gshadow.custom");
-//      append_custom_config();
         fappend_file("/etc/gshadow", "/jffs/configs/gshadow.add");
 
 	f_write_string("/etc/group",
@@ -575,6 +575,7 @@ void start_dnsmasq(int force)
 		append_custom_config("hosts", fp);
 		fclose(fp);
 		use_custom_config("hosts", "/etc/hosts");
+		run_postconf("hosts.postconf","/etc/hosts");
 	} else
 		perror("/etc/hosts");
 
@@ -752,6 +753,7 @@ void start_dnsmasq(int force)
 	fclose(fp);
 
 	use_custom_config("dnsmasq.conf","/etc/dnsmasq.conf");
+	run_postconf("dnsmasq.postconf","/etc/dnsmasq.conf");
 
 	/* Create resolv.conf with empty nameserver list */
 	f_write(dmresolv, NULL, 0, FW_APPEND, 0666);
@@ -1043,6 +1045,7 @@ void start_dhcp6s(void)
 	fclose(fp);
 
 	use_custom_config("dhcp6s.conf", "/etc/dhcp6s.conf");
+	run_postconf("dhcp6s.postconf", "/etc/dhcp6s.conf");
 
 	if (nvram_get_int("ipv6_debug"))
 		dhcp6s_argv[index++] = "-D";
@@ -1169,6 +1172,7 @@ void start_radvd(void)
 		fclose(f);
 
 		use_custom_config("radvd.conf", "/etc/radvd.conf");
+		run_postconf("radvd.postconf", "/etc/radvd.conf");
 
 		chmod("/etc/radvd.conf", 0400);
 #if 0
@@ -2830,6 +2834,7 @@ TRACE_PT("config 5\n");
 				fprintf(f, "\ndeny 0-65535 0.0.0.0/0 0-65535\n");
 				fclose(f);
 				use_custom_config("upnp", "/etc/upnp/config");
+				run_postconf("upnp", "/etc/upnp/config");
 				xstart("miniupnpd", "-f", "/etc/upnp/config");
 			}
 		}

@@ -541,6 +541,7 @@ extern void logmessage(char *logheader, char *fmt, ...);
 extern char *trim_r(char *str);
 extern void run_custom_script(char *name, char *args);
 extern void run_custom_script_blocking(char *name, char *args);
+extern void run_postconf(char *name, char *config);
 extern int is_valid_char_for_volname(char c);
 extern int is_valid_volname(const char *name);
 extern void restart_lfp(void);

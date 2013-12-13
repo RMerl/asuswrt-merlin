@@ -3228,7 +3228,7 @@ int init_main(int argc, char *argv[])
 
 		run_custom_script("init-start", NULL);
 		use_custom_config("fstab", "/etc/fstab");
-
+		run_postconf("fstab.postconf", "/etc/fstab");
 		state = SIGUSR2;	/* START */
 	}
 
