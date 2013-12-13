@@ -24,7 +24,7 @@
 <style type="text/css">
 .contentM_qis{
 	width:740px;	
-	margin-top:280px;
+	margin-top:220px;
 	margin-left:380px;
 	position:absolute;
 	-webkit-border-radius: 5px;
@@ -212,8 +212,7 @@ function update_visibility(){
 	showhide("client_userauth", (auth == "tls"));
 	showhide("client_hmac", (auth == "tls"));
 	showhide("client_custom_crypto_text", (auth == "custom"));
-	showhide("client_tls_crypto_text", (auth == "tls"));		//add by Viz
-	showhide("client_static_crypto_text", (auth == "secret"));		//add by Viz
+	showhide("client_tls_crypto_text", (auth != "custom"));         //add by Viz
 
 	showhide("client_username", userauth);
 	showhide("client_password", userauth);
@@ -253,59 +252,46 @@ function update_visibility(){
 
 function set_Keys(auth){
 	cal_panel_block();
-	if(auth=='tls'){
+	if((auth=='tls') || (auth=="secret")){
 		$j("#tlsKey_panel").fadeIn(300);
-	}else if(auth=='secret'){
-		$j("#staticKey_panel").fadeIn(300);
-	}	
+	}       
 }
-
+ 
 function cancel_Key_panel(auth){
-	if(auth == 'tls'){
+	if((auth == 'tls') || (auth == "secret")){
 		this.FromObject ="0";
 		$j("#tlsKey_panel").fadeOut(300);	
 
 		if (openvpn_unit == 1) {
+			setTimeout("document.getElementById('edit_vpn_crt_client1_static').value = '<% nvram_clean_get("vpn_crt_client1_static"); %>';", 300);
 			setTimeout("document.getElementById('edit_vpn_crt_client1_ca').value = '<% nvram_clean_get("vpn_crt_client1_ca"); %>';", 300);
 			setTimeout("document.getElementById('edit_vpn_crt_client1_crt').value = '<% nvram_clean_get("vpn_crt_client1_crt"); %>';", 300);
 			setTimeout("document.getElementById('edit_vpn_crt_client1_key').value = '<% nvram_clean_get("vpn_crt_client1_key"); %>';", 300);
 		} else {
+			setTimeout("document.getElementById('edit_vpn_crt_client2_static').value = '<% nvram_clean_get("vpn_crt_client2_static"); %>';", 300);
 			setTimeout("document.getElementById('edit_vpn_crt_client2_ca').value = '<% nvram_clean_get("vpn_crt_client2_ca"); %>';", 300);
 			setTimeout("document.getElementById('edit_vpn_crt_client2_crt').value = '<% nvram_clean_get("vpn_crt_client2_crt"); %>';", 300);
 			setTimeout("document.getElementById('edit_vpn_crt_client2_key').value = '<% nvram_clean_get("vpn_crt_client2_key"); %>';", 300);
 		}
-	}else if(auth == 'secret'){
-			this.FromObject ="0";			
-			$j("#staticKey_panel").fadeOut(300);
-
-		if (openvpn_unit == 1)
-			setTimeout("document.getElementById('edit_vpn_crt_client1_static').value = '<% nvram_clean_get("vpn_crt_client1_static"); %>';", 300);
-		else
-			setTimeout("document.getElementById('edit_vpn_crt_client2_static').value = '<% nvram_clean_get("vpn_crt_client2_static"); %>';", 300);
 	}
 
 	setTimeout("openvpn_decodeKeys(1);", 400);
 }
 
 function save_keys(auth){
-	if(auth == 'tls'){
+	if((auth == 'tls') || (auth == "secret")){
 		if (openvpn_unit == "1") {
+			document.form.vpn_crt_client1_static.value = document.getElementById('edit_vpn_crt_client1_static').value;
 			document.form.vpn_crt_client1_ca.value = document.getElementById('edit_vpn_crt_client1_ca').value;
 			document.form.vpn_crt_client1_crt.value = document.getElementById('edit_vpn_crt_client1_crt').value;
 			document.form.vpn_crt_client1_key.value = document.getElementById('edit_vpn_crt_client1_key').value;
 		} else {
+			document.form.vpn_crt_client2_static.value = document.getElementById('edit_vpn_crt_client2_static').value;
 			document.form.vpn_crt_client2_ca.value = document.getElementById('edit_vpn_crt_client2_ca').value;
 			document.form.vpn_crt_client2_crt.value = document.getElementById('edit_vpn_crt_client2_crt').value;
 			document.form.vpn_crt_client2_key.value = document.getElementById('edit_vpn_crt_client2_key').value;
 		}
 		cancel_Key_panel('tls');
-	}else if(auth == 'secret'){			
-		if (openvpn_unit == "1"){
-			document.form.vpn_crt_client1_static.value = document.getElementById('edit_vpn_crt_client1_static').value;
-		}else{
-			document.form.vpn_crt_client2_static.value = document.getElementById('edit_vpn_crt_client2_static').value;
-		}
-		cancel_Key_panel('secret');
 	}
 }
 
@@ -440,6 +426,13 @@ function ovpnFileChecker(){
 					        	<td valign="top">
 									<table width="100%" id="page1_tls" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable">
 										<tr>
+											<th>Static Key</th>
+											<td>
+												<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_client1_static" name="edit_vpn_crt_client1_static" cols="65" maxlength="3499"><% nvram_get("vpn_crt_client1_static"); %></textarea>
+												<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_client2_static" name="edit_vpn_crt_client2_static" cols="65" maxlength="3499"><% nvram_get("vpn_crt_client2_static"); %></textarea>
+											</td>
+										</tr>
+										<tr>
 											<th id="manualCa">Certificate Authority</th>
 											<td>
 												<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_client1_ca" name="edit_vpn_crt_client1_ca" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_client1_ca"); %></textarea>
@@ -475,50 +468,6 @@ function ovpnFileChecker(){
 
 		</table>		
 	</div>
-
-<div id="staticKey_panel"   class="contentM_qis" style="box-shadow: 3px 3px 10px #000;">
-	<table class="QISform_wireless" border=0 align="center" cellpadding="5" cellspacing="0">
-		<tr>
-			<div class="description_down">Keys and Certificates</div>
-		</tr>
-		<tr>
-			<div style="margin-left:30px; margin-top:10px;">
-				<p>Only paste the content of the <span style="color:#FFCC00;">----- BEGIN xxx ----- </span>/<span style="color:#FFCC00;"> ----- END xxx -----</span> block (including those two lines).
-				<p>Limit: 3499 characters per field
-			</div>
-			<div style="margin:5px;*margin-left:-5px;"><img style="width: 730px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
-		</tr>
-			<!--===================================Beginning of tls Content===========================================-->
-        <tr>
-			<td valign="top">
-			<table width="700px" border="0" cellpadding="4" cellspacing="0">
-				<tbody>
-                <tr>
-                	<td valign="top">
-					<table width="100%" id="page1_static" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable">
-						<tr>
-							<th>Static Key</th>
-							<td>
-								<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_client1_static" name="edit_vpn_crt_client1_static" cols="65" maxlength="3499"><% nvram_get("vpn_crt_client1_static"); %></textarea>
-								<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_client2_static" name="edit_vpn_crt_client2_static" cols="65" maxlength="3499"><% nvram_get("vpn_crt_client2_static"); %></textarea>
-							</td>
-						</tr>
-					</table>
-						<div style="margin-top:5px;width:100%;text-align:center;">
-							<input class="button_gen" type="button" onclick="cancel_Key_panel('secret');" value="<#CTL_Cancel#>">
-							<input class="button_gen" type="button" onclick="save_keys('secret');" value="<#CTL_onlysave#>">
-						</div>
-					</td>
-				</tr>
-				</tbody>
-		</table>
-		</td>
-	</tr>
-	      				      			
-</table>
-      <!--===================================Ending of tls Content===========================================-->			
-</div>
-
 
 <div id="TopBanner"></div>
 
@@ -693,8 +642,7 @@ function ovpnFileChecker(){
 								<option value="secret" <% nvram_match("vpn_client_crypt","secret","selected"); %> >Static Key</option>
 								<option value="custom" <% nvram_match("vpn_client_crypt","custom","selected"); %> >Custom</option>
 							</select>
-							<span id="client_tls_crypto_text" onclick="set_Keys('tls');" style="text-decoration:underline;cursor:pointer;">Content modification of Keys & Certificates.</span>
-							<span id="client_static_crypto_text" onclick="set_Keys('secret');" style="text-decoration:underline;cursor:pointer;">Content modification of Keys & Certificates.</span>
+							<span id="client_tls_crypto_text" onclick="set_Keys('tls');" style="text-decoration:underline;cursor:pointer;">Content modification of Keys &amp; Certificates.</span>
 							<span id="client_custom_crypto_text">(Must be manually configured!)</span>
 			   			</td>
 					</tr>
