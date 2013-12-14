@@ -206,16 +206,15 @@ ifeq ($(RTCONFIG_OPENVPN), y)
 else
 ifneq ($(RTCONFIG_ACCEL_PPTPD), y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/vpnstatus.png
-	rm -rf $(INSTALLDIR)/www/merlin.js
 	rm -rf $(INSTALLDIR)/www/ajax_openvpn_server.asp
 	rm -rf $(INSTALLDIR)/www/Advanced_VPNAdvanced_Content.asp
 	rm -rf $(INSTALLDIR)/www/Advanced_VPN_Content.asp
 	rm -rf $(INSTALLDIR)/www/Advanced_VPNStatus.asp
 endif
+endif
 ifneq ($(RTCONFIG_VPNC), y)	
 	rm -rf $(INSTALLDIR)/www/Advanced_VPNClient_Content.asp
 endif	
-endif
 ifneq ($(RTCONFIG_TIMEMACHINE),y)
 	rm -rf $(INSTALLDIR)/www/Advanced_TimeMachine.asp
 	rm -rf $(INSTALLDIR)/www/images/New_ui/USBExt/time_machine_banner.png
