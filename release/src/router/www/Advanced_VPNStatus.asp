@@ -34,12 +34,7 @@ function initial(){
 
 	show_menu();
 
-	if (openvpnd_support == -1){
-		showhide("server1", 0);
-		showhide("server2", 0);
-		showhide("client1", 0);
-		showhide("client2", 0);
-	} else {
+	if (openvpnd_support){
 		if (server1pid > 0)
 			$("server1_Block_Running").innerHTML = state_r;
 		else
@@ -65,13 +60,23 @@ function initial(){
 		parseStatus(document.form.status_client1.value, "client1_Block");
 		parseStatus(document.form.status_server2.value, "server2_Block");
 		parseStatus(document.form.status_client2.value, "client2_Block");
+	} else {
+		showhide("server1", 0);
+		showhide("server2", 0);
+		showhide("client1", 0);
+		showhide("client2", 0);
 	}
-	if (pptpdpid > 0)
-		$("pptp_Block_Running").innerHTML = state_r;
-	else
-		$("pptp_Block_Running").innerHTML = state_s;
 
-	parsePPTPClients();
+	if (pptpd_support) {
+		if (pptpdpid > 0)
+			$("pptp_Block_Running").innerHTML = state_r;
+		else
+			$("pptp_Block_Running").innerHTML = state_s;
+		parsePPTPClients();
+
+	} else {
+		showhide("pptpserver", 0);
+	}
 }
 
 
@@ -339,7 +344,7 @@ function parseStatus(text, block){
                 <div class="formfonttitle">VPN - Status</div>
                 <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 
-			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" id="pptpserver" class="FormTable">
 					<thead>
 						<tr>
 							<td><span id="pptp_Block_UpdateTime" style="float: right; background: transparent;"></span>PPTP VPN Server<span id="pptp_Block_Running" style="background: transparent;"></span></td>
