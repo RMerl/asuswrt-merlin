@@ -37,9 +37,9 @@ static void layer7_help(void)
 {
 	printf(
 	"LAYER7 match v%s options:\n"
-	"--l7dir <directory>  : Look for patterns here instead of /etc_ro/l7-protocols/\n"
+	"--l7dir <directory>  : Look for patterns here instead of /etc/l7-protocols/\n"
 	"                       (--l7dir must be specified before --l7proto if used!)\n"
-	"--l7proto [!] <name> : Match the protocol defined in /etc_ro/l7-protocols/name.pat\n",
+	"--l7proto [!] <name> : Match the protocol defined in /etc/l7-protocols/name.pat\n",
 	XTABLES_VERSION);
 }
 
@@ -268,7 +268,7 @@ parse_layer7_protocol(const char *s, struct xt_layer7_info *info)
 	if(strlen(l7dir) > 0)
 		dir = l7dir;
 	else
-		dir = "/etc_ro/l7-protocols";
+		dir = "/etc/l7-protocols";
 
 	subdirs = readl7dir(dir);
 
