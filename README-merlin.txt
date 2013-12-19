@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 3.0.0.4.374.35_4 (30-Nov-2013)
-=====================================================
+Asuswrt-Merlin - build 3.0.0.4.374.36 (xx-xxx-2013)
+===================================================
 
 About
 -----
@@ -436,6 +436,36 @@ For more information visit http://dns.yandex.ru/ .
 
 
 
+* Layer7-based Netfilter module *
+Support for layer7 rules in iptables has been enabled.  
+You will need to manually configure the iptables rules to 
+make use of it - there is no web interface exposing this.
+The defined protocols can be found in /etc/l7-protocols.
+
+To use it, you must first load the module:
+
+   modprobe xt_layer7
+
+Additionally, ARM devices such as the RT-AC56 and RT-AC68 require 
+that you manually enable traffic accounting, with the following 
+command:
+
+   echo 1 > nf_conntrack_acct
+
+An example iptable rules that would mark all SSH-related packets 
+with the value "22", for processing later on in another chain:
+
+   iptables -I FORWARD -m layer7 --l7proto ssh -j MARK --set-mark 22
+
+These could be inserted in a firewall-start script, for example.
+
+For more details on how to use layer7 filters, see the documentation on 
+the project's website:
+
+http://l7-filter.clearfoundation.com/
+
+
+
 Source code
 -----------
 The source code with all my modifications can be found 
@@ -447,6 +477,26 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.4.374.36 (xx-xxx-2013):
+   - NEW: Added ECDSA key support for SSH
+   - NEW: postconf scripts.  This allow you to modify a generated
+          config file (for example, smb.conf) before the service
+          using it gets started.
+   - NEW: layer7 Netfilter module on ARM devices (AC56, AC68).
+          Note: traffic accounting must be manually enabled on
+          these devices (see the Layer7 section in the FW's README)
+   - CHANGED: Updated dropbear to 2013.62
+   - CHANGED: Improved rendering of the VPN Status page
+   - FIXED: Some VPN client username/passwords were incorrectly handled
+   - FIXED: When disabling Dual WAN, WAN unit wasn't being reset to unit 0,
+            preventing users from editing the correct unit (Asus bug)
+   - FIXED: If you replaced the Asus generated CA with your own, the exported 
+            ovpn file would contain your CA with the Asus-signed client cert/key.
+            Now, we only insert the client cert/key if it was signed by the
+            current CA.
+   - FIXED: MSS clamping for clients connecting to the PPTPD server (Asus bug)
+
+  
 3.0.0.4.374.35_4 (30-Nov-2013):
    - CHANGED: Added a VPN mode selector on the VPN Server Details page.
    - FIXED: JS error on the VPN Server Details page related to PPTP
