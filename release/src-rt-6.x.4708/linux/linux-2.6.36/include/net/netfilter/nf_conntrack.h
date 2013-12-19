@@ -131,6 +131,22 @@ struct nf_conn {
 	u_int32_t ctf_flags;
 #endif /* HNDCTF */
 
+#if defined(CONFIG_NETFILTER_XT_MATCH_LAYER7) || \
+    defined(CONFIG_NETFILTER_XT_MATCH_LAYER7_MODULE)
+	struct {
+		/*
+		 * e.g. "http". NULL before decision. "unknown" after decision
+		 * if no match.
+		 */
+		char *app_proto;
+		/*
+		 * application layer data so far. NULL after match decision.
+		 */
+		char *app_data;
+		unsigned int app_data_len;
+	} layer7;
+#endif
+
 	/* Storage reserved for other modules: */
 	union nf_conntrack_proto proto;
 
