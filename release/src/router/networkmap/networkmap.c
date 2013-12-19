@@ -218,7 +218,7 @@ int main()
                 perror("create socket ERR:");
 	else {
 	        arp_timeout.tv_sec = 0;
-        	arp_timeout.tv_usec = 10000;
+        	arp_timeout.tv_usec = 50000;
 		setsockopt(arp_sockfd, SOL_SOCKET, SO_RCVTIMEO, &arp_timeout, sizeof(arp_timeout));//set receive timeout
 		dst_sockll = src_sockll; //Copy sockaddr info to dst
 		memset(dst_sockll.sll_addr, -1, sizeof(dst_sockll.sll_addr)); // set dmac= FF:FF:FF:FF:FF:FF
@@ -231,7 +231,7 @@ int main()
                 if(networkmap_fullscan == 1) { //Scan all IP address in the subnetwork
 		    if(scan_count == 0) { 
 	                arp_timeout.tv_sec = 0;
-        	        arp_timeout.tv_usec = 10000;
+        	        arp_timeout.tv_usec = 50000;
                 	setsockopt(arp_sockfd, SOL_SOCKET, SO_RCVTIMEO, &arp_timeout, sizeof(arp_timeout));//set receive timeout
 			NMP_DEBUG("Starting full scan!\n");
 			
@@ -248,8 +248,8 @@ int main()
                         sent_arppacket(arp_sockfd, scan_ipaddr);
 		    }         
 		    else if(scan_count>=255) { //Scan completed
-                	arp_timeout.tv_sec = 1;
-                	arp_timeout.tv_usec = 500000; //Reset timeout at monitor state for decase cpu loading
+                	arp_timeout.tv_sec = 2;
+                	arp_timeout.tv_usec = 0; //Reset timeout at monitor state for decase cpu loading
                 	setsockopt(arp_sockfd, SOL_SOCKET, SO_RCVTIMEO, &arp_timeout, sizeof(arp_timeout));//set receive timeout
 			networkmap_fullscan = 0;
 			//scan_count = 0;

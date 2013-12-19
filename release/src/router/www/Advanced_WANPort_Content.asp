@@ -189,7 +189,7 @@ function applyRule(){
 		document.form.wans_routing_rulelist.disabled =true;		
 		document.form.wans_dualwan.value = document.form.wans_primary.value + " none";
 		document.form.wandog_enable.value = "0";
-		
+		document.form.wan_unit.value = "0";
 	}	
 
 	if(document.form.wans_primary.value == "lan")
@@ -221,9 +221,6 @@ function applyRule(){
 	if (document.form.wans_primary.value == "dsl") document.form.next_page.value = "Advanced_DSL_Content.asp";
 	if (document.form.wans_primary.value == "lan") document.form.next_page.value = "Advanced_WAN_Content.asp";
 	if (document.form.wans_primary.value == "usb") document.form.next_page.value = "Advanced_Modem_Content.asp";
-
-	if(wans_dualwan_orig.split(" ")[1] == "none")
-		document.form.wan_unit.value = 0;
 
 	showLoading();
 	document.form.submit();

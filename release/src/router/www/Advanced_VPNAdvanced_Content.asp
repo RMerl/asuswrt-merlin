@@ -127,6 +127,7 @@ var staticclist_row = dhcp_staticlists.split('&#60');
 
 var openvpn_clientlist_array ='<% nvram_get("vpn_server_ccd_val"); %>';
 var openvpn_unit = '<% nvram_get("vpn_server_unit"); %>';
+var initial_vpn_mode = "<% nvram_get("VPNServer_mode"); %>";
 
 if (openvpn_unit == '1')
 	var service_state = (<% sysinfo("pid.vpnserver1"); %> > 0);
@@ -159,9 +160,12 @@ ciphersarray = [
 
 function initial(){
 	show_menu();
-	change_mode("<% nvram_get("VPNServer_mode"); %>");
+	change_mode(initial_vpn_mode);
 
 	check_dns_wins();
+
+	add_VPN_mode_Option(document.form.pptpd_mode);
+	add_VPN_mode_Option(document.openvpn_form.openvpn_mode);
 
 	if (pptpd_clients != "") {
 		document.form._pptpd_clients_start.value = pptpd_clients.split("-")[0];
@@ -198,6 +202,15 @@ function initial(){
 
 	// Decode into editable format
 	openvpn_decodeKeys(0);
+}
+
+function add_VPN_mode_Option(obj){
+	free_options(obj);
+
+	if(pptpd_support)
+		add_option(obj, "PPTP", "pptpd", (initial_vpn_mode == "pptpd"));
+	if(openvpnd_support)
+		add_option(obj, "OpenVPN", "openvpn", (initial_vpn_mode == "openvpn"));
 }
 
 function change_mode(mode){

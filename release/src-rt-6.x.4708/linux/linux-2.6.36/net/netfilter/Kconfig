@@ -972,7 +972,6 @@ config NETFILTER_XT_MATCH_LAYER7
         tristate '"layer7" match support'
         depends on NETFILTER_XTABLES
         depends on IP_NF_CONNTRACK || NF_CONNTRACK
-        depends on NF_CT_ACCT
         help
           Say Y if you want to be able to classify connections (and their
           packets) based on regular expression matching of their application

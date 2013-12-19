@@ -34,12 +34,7 @@ function initial(){
 
 	show_menu();
 
-	if (openvpnd_support == -1){
-		showhide("server1", 0);
-		showhide("server2", 0);
-		showhide("client1", 0);
-		showhide("client2", 0);
-	} else {
+	if (openvpnd_support){
 		if (server1pid > 0)
 			$("server1_Block_Running").innerHTML = state_r;
 		else
@@ -65,13 +60,23 @@ function initial(){
 		parseStatus(document.form.status_client1.value, "client1_Block");
 		parseStatus(document.form.status_server2.value, "server2_Block");
 		parseStatus(document.form.status_client2.value, "client2_Block");
+	} else {
+		showhide("server1", 0);
+		showhide("server2", 0);
+		showhide("client1", 0);
+		showhide("client2", 0);
 	}
-	if (pptpdpid > 0)
-		$("pptp_Block_Running").innerHTML = state_r;
-	else
-		$("pptp_Block_Running").innerHTML = state_s;
 
-	parsePPTPClients();
+	if (pptpd_support) {
+		if (pptpdpid > 0)
+			$("pptp_Block_Running").innerHTML = state_r;
+		else
+			$("pptp_Block_Running").innerHTML = state_s;
+		parsePPTPClients();
+
+	} else {
+		showhide("pptpserver", 0);
+	}
 }
 
 
@@ -91,8 +96,8 @@ function parsePPTPClients() {
 
 	var lines = text.split('\n');
 
-	code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="list_table" oldclass="FormTable_table"><thead><tr><td colspan="4">Connected Clients</td></tr></thead><tr>';
-	code += '<th>Username</th><th>Interface</th><th>Remote IP</th><th>Client IP</th>';
+	code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_table"><thead><tr><td colspan="4">Connected Clients</td></tr></thead><tr>';
+	code += '<th style="text-align:left;">Username</th><th style="text-align:left;">Interface</th><th style="text-align:left;">Remote IP</th><th style="text-align:left;">Client IP</th>';
 
 	for (i = 0; i < lines.length; ++i)
 	{
@@ -101,7 +106,7 @@ function parsePPTPClients() {
 		var fields = lines[i].split(' ');
 		if ( fields.length != 5 ) continue;
 
-		code +='<tr><td align="left">' + fields[4] + '</td><td align="left">' + fields[1] + '</td><td align="left">' + fields[2] + '</td><td align="left">' + fields[3] +'</td></tr>';
+		code +='<tr><td style="text-align:left;">' + fields[4] + '</td><td style="text-align:left;">' + fields[1] + '</td><td style="text-align:left;">' + fields[2] + '</td><td style="text-align:left;">' + fields[3] +'</td></tr>';
 	}
 	code +='</table>';
 
@@ -188,15 +193,15 @@ function parseStatus(text, block){
 /*** Clients ***/
 
 	if (clientPtr > 0) {
-		code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="list_table" oldclass="FormTable_table"><thead><tr><td colspan="' + (clientTableHeaders.length-1) + '">Clients</td></tr></thead><tr>';
+		code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_table"><thead><tr><td colspan="' + (clientTableHeaders.length-1) + '">Clients</td></tr></thead><tr>';
 
 // Headers
 		for (i = 0; i < (clientTableHeaders.length - 2); ++i)
 		{
 			if (i == 0) {
-				code +='<th>' + clientTableHeaders[i] + '<br><span style="color: cyan; background: transparent;">' + clientTableHeaders[clientTableHeaders.length-2] + '</span></th>';
+				code +='<th style="text-align:left;">' + clientTableHeaders[i] + '<br><span style="color: cyan; background: transparent;">' + clientTableHeaders[clientTableHeaders.length-2] + '</span></th>';
 			} else {
-				code +='<th>' + clientTableHeaders[i] + '</th>';
+				code +='<th style="text-align:left;">' + clientTableHeaders[i] + '</th>';
 			}
 		}
 
@@ -225,12 +230,12 @@ function parseStatus(text, block){
 /*** Routes ***/
 
 	if (routePtr > 0) {
-		code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="list_table" oldclass="FormTable_table"><thead><tr><td colspan="' + routeTableHeaders.length + '">Routes</td></tr></thead><tr>';
+		code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_table"><thead><tr><td colspan="' + routeTableHeaders.length + '">Routes</td></tr></thead><tr>';
 
 		// Headers
 		for (i = 0; i < routeTableHeaders.length; ++i)
 		{
-			code +='<th>' + routeTableHeaders[i] + '</th>';
+			code +='<th style="text-align:left;">' + routeTableHeaders[i] + '</th>';
 		}
 		code += '</tr>';
 
@@ -257,13 +262,13 @@ function parseStatus(text, block){
 /*** Stats ***/
 
 	if (statsPtr > 0) {
-		code += '<table width="50%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="list_table" oldclass="FormTable_table"><thead><tr><td colspan="2">Statistics</td></tr></thead>';
+		code += '<table width="50%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_table"><thead><tr><td colspan="2">Statistics</td></tr></thead>';
 
 		for (i = 0; i < statsTableEntries.length; ++i)
 		{
 			code += '<tr>';
-			code += '<th width="80%">' + statsTableEntries[i][0] +'</th>';
-			code += '<td width="20%" align="left">' + statsTableEntries[i][1] +'</td>';
+			code += '<th width="80%" style="text-align:left;">' + statsTableEntries[i][0] +'</th>';
+			code += '<td width="20%" align="left" style="text-align:left;">' + statsTableEntries[i][1] +'</td>';
 			code += '</tr>';
 		}
 		code += '</table>';
@@ -274,13 +279,13 @@ function parseStatus(text, block){
 
 	if (staticstatsPtr > 0) {
 
-		code += '<table width="50%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="list_table" oldclass="FormTable_table"><thead><tr><td colspan="2">Statistics</td></tr></thead>';
+		code += '<table width="50%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_table"><thead><tr><td colspan="2">Statistics</td></tr></thead>';
 
 		for (i = 0; i < staticstatsTableEntries.length; ++i)
 		{
 			code += '<tr>';
-			code += '<th width="80%">' + staticstatsTableEntries[i][0] +'</th>';
-			code += '<td width="20%" align="left">' + staticstatsTableEntries[i][1] +'</td>';
+			code += '<th width="80%" style="text-align:left;">' + staticstatsTableEntries[i][0] +'</th>';
+			code += '<td width="20%" align="left" style="text-align:left;">' + staticstatsTableEntries[i][1] +'</td>';
 			code += '</tr>';
 		}
 		code += '</table>';
@@ -339,7 +344,7 @@ function parseStatus(text, block){
                 <div class="formfonttitle">VPN - Status</div>
                 <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 
-			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" id="pptpserver" class="FormTable">
 					<thead>
 						<tr>
 							<td><span id="pptp_Block_UpdateTime" style="float: right; background: transparent;"></span>PPTP VPN Server<span id="pptp_Block_Running" style="background: transparent;"></span></td>
