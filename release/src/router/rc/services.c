@@ -1617,16 +1617,19 @@ stop_dcsd(void)
 
 
 //2008.10 magic{
-int start_networkmap(void)
+int start_networkmap(int bootwait)
 {
-	char *networkmap_argv[] = {"networkmap", NULL};
+	char *networkmap_argv[] = {"networkmap", NULL, NULL};
 	pid_t pid;
 
 	//if (!is_routing_enabled())
 	//	return 0;
 
+	if (bootwait)
+		networkmap_argv[1] = "--bootwait";
+
 	_eval(networkmap_argv, NULL, 0, &pid);
-	
+
 	return 0;
 }
 
@@ -3128,7 +3131,7 @@ start_services(void)
 	start_cron();
 #endif
 	start_infosvr();
-	start_networkmap();
+	start_networkmap(1);
 	restart_rstats();
 	restart_cstats();
 #ifdef RTCONFIG_DSL
@@ -3847,7 +3850,7 @@ again:
 			start_lan_port(0);
 
 			start_httpd();
-			start_networkmap();
+			start_networkmap(0);
 #ifdef RTCONFIG_USB_PRINTER
 			start_u2ec();
 #endif
@@ -3934,7 +3937,7 @@ again:
 			start_lan_port(6);
 
 			start_httpd();
-			start_networkmap();
+			start_networkmap(0);
 #ifdef RTCONFIG_USB_PRINTER
 			start_u2ec();
 #endif
@@ -3977,7 +3980,7 @@ again:
 			start_wlcconnect();
 #endif
 
-			start_networkmap();
+			start_networkmap(0);
 #ifdef RTCONFIG_USB_PRINTER
 			start_u2ec();
 #endif
@@ -4084,7 +4087,7 @@ check_ddr_done:
 			restart_wireless();
 		}
 		if(action&RC_SERVICE_START) {
-			start_networkmap();
+			start_networkmap(0);
 #ifdef RTCONFIG_USB_PRINTER
 			start_u2ec();
 #endif
@@ -4583,7 +4586,7 @@ check_ddr_done:
 			start_lan_wlc();
 			start_dnsmasq(0);
 			start_httpd();
-			start_networkmap();
+			start_networkmap(0);
 #ifdef RTCONFIG_USB_PRINTER
 			start_u2ec();
 #endif

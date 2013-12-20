@@ -796,7 +796,7 @@ extern void stop_wanduck(void);
 extern void stop_ntpc(void);
 extern int start_ntpc(void);
 extern void stop_networkmap(void);
-extern int start_networkmap(void);
+extern int start_networkmap(int bootwait);
 extern int stop_wps(void);
 extern int start_wps(void);
 extern void stop_upnp(void);

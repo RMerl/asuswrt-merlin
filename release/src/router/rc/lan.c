@@ -2535,7 +2535,7 @@ lan_up(char *lan_ifname)
 
 	/* Scan new subnetwork */
 	stop_networkmap();
-	start_networkmap(); 
+	start_networkmap(0); 
 	update_lan_state(LAN_STATE_CONNECTED, 0);
 
 #ifdef RTCONFIG_WIRELESSREPEATER

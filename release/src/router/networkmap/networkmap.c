@@ -155,7 +155,7 @@ static void refresh_sig(int sig)
 }
 
 /******************************************/
-int main()
+int main(int argc, char *argv[])
 {
 	int arp_sockfd, arp_getlen, i;
 	int send_count=0, file_num=0;
@@ -194,6 +194,12 @@ int main()
 	p_client_detail_info_tab->ip_mac_num = 0;
 	p_client_detail_info_tab->detail_info_num = 0;
 	file_unlock(lock);
+
+	if (argc > 1) {
+		if (strcmp(argv[1], "--bootwait") == 0) {
+			sleep(30);
+		}
+	}
 
 	//Get Router's IP/Mac
 	strcpy(router_ipaddr, nvram_safe_get("lan_ipaddr"));
