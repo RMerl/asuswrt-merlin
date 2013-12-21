@@ -748,6 +748,7 @@ int process_device_response(char *msg)
         int i;
         char *descri = NULL;
         int len;
+	struct timeval timeout={10, 0};
 
         //search "\r\n\r\n" or "\r\n" first appear place and judge whether msg have blank.
         if( (body = strstr(msg, "\r\n\r\n")) != NULL)
@@ -813,7 +814,8 @@ int process_device_response(char *msg)
                                                                                                                                              
         //receive data of http socket
         len = 0;
-        while((nbytes = recv(http_fd, data,1500, MSG_WAITALL)) > 0)
+	setsockopt(http_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(struct timeval));
+	while((nbytes = recv(http_fd, data,1500, 0)) > 0)
         {
                 len += nbytes;
                 if(len > 6000)
