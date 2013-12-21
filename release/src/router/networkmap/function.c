@@ -764,7 +764,7 @@ int process_device_response(char *msg)
                 line = strsep(&p, "\r\n");      //divide up string
                 if((strncmp(line, "LOCATION:", 9) == 0) || (strncmp(line, "Location:", 9) == 0))
                 {
-                        location = strip_chars(&line[10], "\t");
+                        location = strip_chars(&line[9], "\t");
                         break;
                 }
         }
