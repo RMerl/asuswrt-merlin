@@ -766,6 +766,7 @@ int process_device_response(char *msg)
                 if((strncmp(line, "LOCATION:", 9) == 0) || (strncmp(line, "Location:", 9) == 0))
                 {
                         location = strip_chars(&line[9], "\t");
+                        location = strip_chars(&line[9], " ");
                         break;
                 }
         }
