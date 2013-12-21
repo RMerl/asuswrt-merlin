@@ -495,6 +495,10 @@ History
             Now, we only insert the client cert/key if it was signed by the
             current CA.
    - FIXED: MSS clamping for clients connecting to the PPTPD server (Asus bug)
+   - FIXED: networkmap's DLNA detection was broken with some devices,
+            and could result in very long delays during scan (Asus bug)
+   - FIXED: Adjusted various timings in networkmap which should help with 
+            device lists being incomplete especially after a reboot.
 
   
 3.0.0.4.374.35_4 (30-Nov-2013):
