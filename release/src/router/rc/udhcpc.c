@@ -379,7 +379,7 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 		/* 5 seconds between packets (default 3 seconds) */
 		dhcp_argv[index++] = "-T5";
 		/* Wait 120 seconds before trying again (default 20 seconds) */
-		dhcp_argv[index++] = "-A120";
+		dhcp_argv[index++] = "-A160";
 	}
 
 	if (ppid == NULL)
