@@ -195,12 +195,6 @@ int main(int argc, char *argv[])
 	p_client_detail_info_tab->detail_info_num = 0;
 	file_unlock(lock);
 
-	if (argc > 1) {
-		if (strcmp(argv[1], "--bootwait") == 0) {
-			sleep(30);
-		}
-	}
-
 	//Get Router's IP/Mac
 	strcpy(router_ipaddr, nvram_safe_get("lan_ipaddr"));
 	strcpy(router_mac, nvram_safe_get("et0macaddr"));
@@ -213,6 +207,11 @@ int main(int argc, char *argv[])
 	networkmap_fullscan = 1;
 	nvram_set("networkmap_fullscan", "1");
 
+	if (argc > 1) {
+		if (strcmp(argv[1], "--bootwait") == 0) {
+			sleep(30);
+		}
+	}
 	if (strlen(router_mac)!=0) ether_atoe(router_mac, my_hwaddr);
 
 	signal(SIGUSR1, refresh_sig); //catch UI refresh signal
