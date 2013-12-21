@@ -557,7 +557,7 @@ int ctrlpt(unsigned char *dest_ip)
                                                                                                                                              
         create_msearch_ctrlpt(3);
         signal(SIGALRM, interrupt);
-        alarm(2);
+        alarm(4);
                                                                                                                                              
         global_exit = FALSE; //reset timeout flag
         memset(&description, 0, sizeof(struct device_info)); //reset description
