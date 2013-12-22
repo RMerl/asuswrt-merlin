@@ -6,7 +6,7 @@
 *
 * Functions for talking to PPP daemon
 *
-* Copyright (C) 2000-2012 by Roaring Penguin Software Inc.
+* Copyright (C) 2000 by Roaring Penguin Software Inc.
 *
 * This program may be distributed according to the terms of the GNU
 * General Public License, version 2 or (at your option) any later version.
@@ -102,14 +102,14 @@ syncReadFromPPP(PPPoEConnection *conn, PPPoEPacket *packet)
     vec[0].iov_base = (void *) dummy;
     vec[0].iov_len = 2;
     vec[1].iov_base = (void *) packet->payload;
-    vec[1].iov_len = ETH_JUMBO_LEN - PPPOE_OVERHEAD;
+    vec[1].iov_len = ETH_DATA_LEN - PPPOE_OVERHEAD;
 
     /* Use scatter-read to throw away the PPP frame address bytes */
     r = readv(0, vec, 2);
 #else
     /* Bloody hell... readv doesn't work with N_HDLC line discipline... GRR! */
-    unsigned char buf[ETH_JUMBO_LEN - PPPOE_OVERHEAD + 2];
-    r = read(0, buf, ETH_JUMBO_LEN - PPPOE_OVERHEAD + 2);
+    unsigned char buf[ETH_DATA_LEN - PPPOE_OVERHEAD + 2];
+    r = read(0, buf, ETH_DATA_LEN - PPPOE_OVERHEAD + 2);
     if (r >= 2) {
 	memcpy(packet->payload, buf+2, r-2);
     }
@@ -222,7 +222,7 @@ asyncReadFromPPP(PPPoEConnection *conn, PPPoEPacket *packet)
 		PPPState = STATE_WAITFOR_FRAME_ADDR;
 		break;
 	    default:
-		if (PPPPacketSize >= ETH_JUMBO_LEN - 4) {
+		if (PPPPacketSize >= ETH_DATA_LEN - 4) {
 		    syslog(LOG_ERR, "Packet too big!  Check MTU on PPP interface");
 		    PPPPacketSize = 0;
 		    PPPXorValue = 0;

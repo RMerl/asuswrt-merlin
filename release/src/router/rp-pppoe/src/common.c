@@ -6,7 +6,7 @@
 *
 * Common functions used by PPPoE client and server
 *
-* Copyright (C) 2000-2012 by Roaring Penguin Software Inc.
+* Copyright (C) 2000 by Roaring Penguin Software Inc.
 *
 * This program may be distributed according to the terms of the GNU
 * General Public License, version 2 or (at your option) any later version.
@@ -77,7 +77,7 @@ parsePacket(PPPoEPacket *packet, ParseFunc *func, void *extra)
     }
 
     /* Do some sanity checks on packet */
-    if (len > ETH_JUMBO_LEN - PPPOE_OVERHEAD) { /* 6-byte overhead for PPPoE header */
+    if (len > ETH_DATA_LEN - 6) { /* 6-byte overhead for PPPoE header */
 	syslog(LOG_ERR, "Invalid PPPoE packet length (%u)", len);
 	return -1;
     }
@@ -132,7 +132,7 @@ findTag(PPPoEPacket *packet, UINT16_t type, PPPoETag *tag)
     }
 
     /* Do some sanity checks on packet */
-    if (len > ETH_JUMBO_LEN - 6) { /* 6-byte overhead for PPPoE header */
+    if (len > ETH_DATA_LEN - 6) { /* 6-byte overhead for PPPoE header */
 	syslog(LOG_ERR, "Invalid PPPoE packet length (%u)", len);
 	return NULL;
     }

@@ -1,7 +1,7 @@
 # LIC: GPL
 
 pppoe: a PPP-over-Ethernet redirector for pppd
-Copyright (C) 2001-2012 Roaring Penguin Software Inc.
+Copyright (C) 2001-2005 Roaring Penguin Software Inc.
 
 Some inspiration from an earlier client by Luke Stras.
 
@@ -32,8 +32,9 @@ Requirements
 
 	   OR
 
-   FreeBSD, NetBSD or OpenBSD with BPF support, though this is old,
-   unmaintained, and may no longer work.
+   FreeBSD, NetBSD or OpenBSD with BPF support.  I have access only
+   to FreeBSD.  In general, I can't answer questions about the *BSD's
+   as well as I can about Linux.
 
 
 2) pppd 2.3.10 or later.  Versions 2.3.7 and later work unless you use

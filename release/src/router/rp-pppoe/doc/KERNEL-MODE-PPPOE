@@ -92,13 +92,6 @@ rp_pppoe_sess nnnn:aa:bb:cc:dd:ee:ff -- Attach to existing session 'nnnn'
                                 on AC with Ethernet address aa:bb:cc:dd:ee:ff
                                 This skips the discovery phase.
 
-rp_pppoe_mac aa:bb:cc:dd:ee:ff -- only accept PADOs from specified MAC address
-
-The kernel-mode PPPoE plugin permits an MTU of up to 1500 on the PPP
-interface providing that the MTU on the underlying Ethernet interface
-is at least 1508.  In /etc/ppp/pppoe.conf, set MTU=1500 and MRU=1500 to
-enable the larger PPP MTU.  The larger PPP MTU is negotiated according
-to RFC 4638.
 
 --
 David F. Skoll <dfs@roaringpenguin.com>

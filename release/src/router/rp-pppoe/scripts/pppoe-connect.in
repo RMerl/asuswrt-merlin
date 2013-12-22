@@ -115,12 +115,7 @@ fi
 # fails on some *BSD's, so we'll only do it under Linux
 
 if test `uname -s` = Linux ; then
-    $IFCONFIG $ETH up
-    EXISTING_MTU=`$IFCONFIG $ETH 2> /dev/null | grep MTU: | sed -e 's/.*MTU://' | sed -e 's/[^0-9].*//'`
-    if test "$EXISTING_MTU" = "" -o "$EXISTING_MTU" -lt 1500 ; then
-	$IFCONFIG $ETH mtu 1500
-    fi
-
+    $IFCONFIG $ETH up mtu 1500
     # For 2.4 kernels.  Will fail on 2.2.x, but who cares?
     modprobe ppp_generic > /dev/null 2>&1
     modprobe ppp_async > /dev/null 2>&1
@@ -215,21 +210,8 @@ else
     DEFAULTROUTE=""
 fi
 
-if test -n "$UNIT" ; then
-    DOUNIT="unit $UNIT"
-else
-    DOUNIT=""
-fi
-
-if test "$MTU" = "" ; then
-    MTU=1492
-fi
-if test "$MRU" = "" ; then
-    MRU=1492
-fi
-
 # Standard PPP options we always use
-PPP_STD_OPTIONS="$PLUGIN_OPTS $DOUNIT noipdefault noauth default-asyncmap $DEFAULTROUTE hide-password nodetach $PEERDNS mtu $MTU mru $MRU noaccomp nodeflate nopcomp novj novjccomp user $USER lcp-echo-interval $LCP_INTERVAL lcp-echo-failure $LCP_FAILURE $PPPD_EXTRA"
+PPP_STD_OPTIONS="$PLUGIN_OPTS noipdefault noauth default-asyncmap $DEFAULTROUTE hide-password nodetach $PEERDNS mtu 1492 mru 1492 noaccomp nodeflate nopcomp novj novjccomp user $USER lcp-echo-interval $LCP_INTERVAL lcp-echo-failure $LCP_FAILURE $PPPD_EXTRA"
 
 # Jigger DNS if required...
 if test "$DNSTYPE" = "SERVER" ; then
