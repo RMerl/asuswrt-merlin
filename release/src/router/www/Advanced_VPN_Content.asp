@@ -697,7 +697,7 @@ function enable_openvpn(state){
 												<input id="btn_export" class="button_gen" onclick="ExportOvpn();" type="button" value="Export" />
 													<div id="openvpn_initial" style="display:none;margin-left:5px;">
 														<span>
-															Initializing the settings of OpenVPN server now, please wait a few minutes to let the server to setup completed before VPN clients establish the connection.
+															Initializing the settings of OpenVPN server, this may take a few minutes...
 															<img id="initialing" src="images/InternetScan.gif" />
 														</span>
 													</div>
