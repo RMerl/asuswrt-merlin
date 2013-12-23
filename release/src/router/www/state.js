@@ -489,20 +489,16 @@ function remove_url(){
 		menuL2_link[6] = "";
 	}else{
 		 if(!vpnc_support && !openvpnd_support){
-			tabtitle[5].splice(4, 1);
-			tablink[5].splice(4, 1);
+			tabtitle[5].splice(4, 2);
+			tablink[5].splice(4, 2);
 		}
 		 if(!pptpd_support && !openvpnd_support){
-			tabtitle[5].splice(1, 3);
-			tablink[5].splice(1, 3);
+			tabtitle[5].splice(2, 2);
+			tablink[5].splice(2, 2);
+                        tabtitle[5].splice(3, 1);
+                        tablink[5].splice(3, 1);
 		}
 	}	
-
-	if(!openvpnd_support){
-		remove_menu_item(5,"Advanced_OpenVPNServer_Content.asp");
-		remove_menu_item(5,"Advanced_OpenVPNClient_Content.asp");
-		remove_menu_item(5,"Advanced_OpenVPN_Keys.asp");
-	}
 
 	if(!nfsd_support){
 		remove_menu_item(3,"Advanced_AiDisk_NFS.asp")
