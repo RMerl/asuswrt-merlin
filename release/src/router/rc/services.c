@@ -487,6 +487,7 @@ void create_passwd(void)
 	fappend_file("/etc/passwd", "/etc/passwd.openvpn");
 #endif
 	fappend_file("/etc/passwd", "/jffs/configs/passwd.add");
+	run_postconf("passwd.postconf","/etc/passwd");
 
 	sprintf(s,
 		"%s:*:0:\n"
@@ -498,6 +499,7 @@ void create_passwd(void)
 	f_write_string("/etc/gshadow", s, 0, 0644);
 	fappend_file("/etc/gshadow", "/etc/gshadow.custom");
         fappend_file("/etc/gshadow", "/jffs/configs/gshadow.add");
+	run_postconf("gshadow.postconf","/etc/gshadow");
 
 	f_write_string("/etc/group",
 		"root:x:0:\n"
@@ -511,6 +513,7 @@ void create_passwd(void)
 	fappend_file("/etc/group", "/etc/group.openvpn");
 #endif
 	fappend_file("/etc/group", "/jffs/configs/group.add");
+	run_postconf("group.postconf","/etc/group");
 }
 
 void start_dnsmasq(int force)
