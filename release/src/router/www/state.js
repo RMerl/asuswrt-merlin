@@ -488,15 +488,14 @@ function remove_url(){
 		menuL2_title[6] = "";
 		menuL2_link[6] = "";
 	}else{
-		 if(!vpnc_support && !openvpnd_support){
-			tabtitle[5].splice(4, 2);
-			tablink[5].splice(4, 2);
-		}
-		 if(!pptpd_support && !openvpnd_support){
-			tabtitle[5].splice(2, 2);
-			tablink[5].splice(2, 2);
-                        tabtitle[5].splice(3, 1);
-                        tablink[5].splice(3, 1);
+		if(!vpnc_support)
+			remove_menu_item(5, "Advanced_VPNClient_Content.asp");
+		if(!openvpnd_support)
+			remove_menu_item(5, "Advanced_OpenVPNClient_Content.asp");
+		if(!pptpd_support && !openvpnd_support){
+			remove_menu_item(5, "Advanced_VPNStatus.asp");
+			remove_menu_item(5, "Advanced_VPNAdvanced_Content.asp");
+			remove_menu_item(5, "Advanced_VPN_Content.asp");
 		}
 	}	
 
