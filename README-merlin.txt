@@ -549,6 +549,8 @@ History
    - CHANGED: Extended retry period for WAN DHCP queries to 160 secs
               in Normal DHCP mode to give time to Charter to 
               unblacklist customers being accidentally blocked by them.
+   - CHANGED: Downgraded rp-pppoe from 3.11 to 3.10 to see if it's
+              more stable for some PPPoE users
    - FIXED: Some VPN client username/passwords were incorrectly handled
    - FIXED: When disabling Dual WAN, WAN unit wasn't being reset to 
             unit 0, preventing users from editing the correct unit 
