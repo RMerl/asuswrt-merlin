@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.374.36 (xx-xxx-2013)
+Asuswrt-Merlin - build 3.0.0.4.374.36 (23-Dec-2013)
 ===================================================
 
 About
@@ -536,7 +536,7 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.4.374.36 (xx-xxx-2013):
+3.0.0.4.374.36 Beta 1 (23-Dec-2013):
    - NEW: Added ECDSA key support for SSH
    - NEW: postconf scripts.  This allow you to modify a generated
           config file (for example, smb.conf) before the service
