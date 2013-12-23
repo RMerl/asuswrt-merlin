@@ -247,8 +247,8 @@ function addrow(rclass, host, dl, ul, tcpin, tcpout, udpin, udpout, icmpin, icmp
 
 	return '<tr class="' + rclass + '">' +
                 '<td ' + link + ' >' + host + '</td>' +
-                '<td>' + dl + '</td>' +
-                '<td>' + ul + '</td>' +
+                '<td style="text-align: right; padding-right: 8px;">' + dl + '</td>' +
+                '<td style="text-align: right; padding-right: 8px;">' + ul + '</td>' +
                 '<td>' + tcpin + sep +tcpout + '</td>' +
                 '<td>' + udpin + sep + udpout + '</td>' +
                 '<td>' + icmpin + sep + icmpout + '</td>' +

@@ -242,9 +242,9 @@ function addrow(rclass, rtitle, host, dl, ul, total, ip) {
 	return '<tr class="' + rclass + '">' +
                 '<td class="rtitle">' + rtitle + '</td>' +
                 '<td  ' + link + ' class="host">' + host + '</td>' +
-                '<td>' + dl + '</td>' +
-                '<td>' + ul + '</td>' +
-                '<td>' + total + '</td>' +
+                '<td style="text-align: right;  padding-right: 8px;">' + dl + '</td>' +
+                '<td style="text-align: right;  padding-right: 8px;">' + ul + '</td>' +
+                '<td style="text-align: right;  padding-right: 8px;">' + total + '</td>' +
                 '</tr>';
 }
 
