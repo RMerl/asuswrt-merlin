@@ -324,6 +324,7 @@ int main(int argc, char *argv[])
 					real_num = p_client_detail_info_tab->detail_info_num;
 					p_client_detail_info_tab->detail_info_num = i;
 					FindAllApp(my_ipaddr, p_client_detail_info_tab);
+					FindHostname(p_client_detail_info_tab);
 					p_client_detail_info_tab->detail_info_num = real_num;
 					break;
 				}
