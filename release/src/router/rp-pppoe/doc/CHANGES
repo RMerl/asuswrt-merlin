@@ -1,41 +1,4 @@
 # LIC: GPL
-Changes from Version 3.10 to 3.11:
-
-- Make the rp-pppoe.so plugin avoid calling exit() if the "persist" pppd
-  option was given.
-
-- Permit both PPPoE server and client to specify an MTU/MRU of 1500 assuming
-  the underlying Ethernet interface has an MTU of at least 1508.  The larger
-  MTU is negotiated per RFC 4638.  NOTE: Only available with kernel-mode
-  plugin, not user-mode pty redirector.
-
-- Get rid of hard-coded nobsdcomp, nodeflate, novj and novjccomp options
-  in pppoe-server.
-
-- Apply patch from Philip Prindeville to allow cross-compiling.
-
-- Handle UNIT=xxx directive in pppoe-connect. (Keith Waters)
-
-- Add "-i" flag to pppoe-server to ignore PADIs if there are no free sessions.
-  Change suggested by Miroslav Lednicky.
-
-- Ignore PADTs not destined for our ethernet address.
-
-- Add "-X <pidfile>" option to pppoe-server.
-
-- Cleanup Makefile.in. (Philip Prindeville)
-
-- In plugin, don't set devnam if it's already set. (Mike Ireton)
-
-- Eliminate race condition in signal handling.
-
-- pppoe-server: Add -q and -Q options to allow specification of path to
-  pppd and pppoe programs respectively.
-
-- Add a few more sanity checks to pppoe-server packet handling.
-
-- Use -fno-strict-aliasing when compiling with gcc to avoid possible problems
-  from -O2 optimization level.
 
 Changes from Version 3.9 to 3.10: (30 June 2008)
 

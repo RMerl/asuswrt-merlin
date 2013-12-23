@@ -196,7 +196,7 @@ main(int argc, char *argv[])
 	dlokack(sock, (char *)buf);
 #else
 
-	sock = openInterface(IfName, ETH_P_ALL,  NULL, NULL);
+    sock = openInterface(IfName, ETH_P_ALL,  NULL);
 
 #endif
 

@@ -4,8 +4,8 @@
 *
 * pppd plugin for kernel-mode PPPoE on Linux
 *
-* Copyright (C) 2001-2012 by Roaring Penguin Software Inc.
-* Portions copyright 2000 Michal Ostrowski and Jamal Hadi Salim.
+* Copyright (C) 2001 by Roaring Penguin Software Inc., Michal Ostrowski
+* and Jamal Hadi Salim.
 *
 * Much code and many ideas derived from pppoe plugin by Michal
 * Ostrowski and Jamal Hadi Salim, which carries this copyright:
@@ -62,11 +62,11 @@ static char const RCSID[] =
 
 char pppd_version[] = VERSION;
 
-static int seen_devnam[2] = {0, 0};
-static char *pppoe_reqd_mac = NULL;
-
 /* From sys-linux.c in pppd -- MUST FIX THIS! */
 extern int new_style_driver;
+
+/* Supplied by pppd */
+extern int debug;
 
 char *pppd_pppoe_service = NULL;
 static char *acName = NULL;
@@ -87,8 +87,6 @@ static option_t Options[] = {
       "Attach to existing session (sessid:macaddr)" },
     { "rp_pppoe_verbose", o_int, &printACNames,
       "Be verbose about discovered access concentrators"},
-    { "rp_pppoe_mac", o_string, &pppoe_reqd_mac,
-      "Only connect to specified MAC address" },
     { NULL }
 };
 int (*OldDevnameHook)(char *cmd, char **argv, int doit) = NULL;
@@ -111,12 +109,6 @@ PPPOEInitDevice(void)
 	fatal("Could not allocate memory for PPPoE session");
     }
     memset(conn, 0, sizeof(PPPoEConnection));
-    if (acName) {
-	SET_STRING(conn->acName, acName);
-    }
-    if (pppd_pppoe_service) {
-	SET_STRING(conn->serviceName, pppd_pppoe_service);
-    }
     SET_STRING(conn->ifName, devnam);
     conn->discoverySocket = -1;
     conn->sessionSocket = -1;
@@ -139,33 +131,6 @@ static int
 PPPOEConnectDevice(void)
 {
     struct sockaddr_pppox sp;
-    struct ifreq ifr;
-    int s;
-
-    /* Restore configuration */
-    lcp_allowoptions[0].mru = conn->mtu;
-    lcp_wantoptions[0].mru = conn->mru;
-
-    /* Update maximum MRU */
-    s = socket(AF_INET, SOCK_DGRAM, 0);
-    if (s < 0) {
-	error("Can't get MTU for %s: %m", conn->ifName);
-	return -1;
-    }
-    strncpy(ifr.ifr_name, conn->ifName, sizeof(ifr.ifr_name));
-    if (ioctl(s, SIOCGIFMTU, &ifr) < 0) {
-	error("Can't get MTU for %s: %m", conn->ifName);
-	close(s);
-	return -1;
-    }
-    close(s);
-
-    if (lcp_allowoptions[0].mru > ifr.ifr_mtu - TOTAL_OVERHEAD) {
-	lcp_allowoptions[0].mru = ifr.ifr_mtu - TOTAL_OVERHEAD;
-    }
-    if (lcp_wantoptions[0].mru > ifr.ifr_mtu - TOTAL_OVERHEAD) {
-	lcp_wantoptions[0].mru = ifr.ifr_mtu - TOTAL_OVERHEAD;
-    }
 
     /* Open session socket before discovery phase, to avoid losing session */
     /* packets sent by peer just after PADS packet (noted on some Cisco    */
@@ -184,7 +149,6 @@ PPPOEConnectDevice(void)
     if (pppd_pppoe_service) {
 	SET_STRING(conn->serviceName, pppd_pppoe_service);
     }
-
     strlcpy(ppp_devnam, devnam, sizeof(ppp_devnam));
     if (existingSession) {
 	unsigned int mac[ETH_ALEN];
@@ -200,11 +164,12 @@ PPPOEConnectDevice(void)
 	}
     } else {
         conn->discoverySocket =
-            openInterface(conn->ifName, Eth_PPPOE_Discovery, conn->myEth, NULL);
+            openInterface(conn->ifName, Eth_PPPOE_Discovery, conn->myEth);
         discovery(conn);
 	if (conn->discoveryState != STATE_SESSION) {
 	    error("Unable to complete PPPoE Discovery");
-	    goto ERROR;
+	    close(conn->sessionSocket);
+	    goto errout;
 	}
     }
 
@@ -240,17 +205,18 @@ PPPOEConnectDevice(void)
     if (connect(conn->sessionSocket, (struct sockaddr *) &sp,
 		sizeof(struct sockaddr_pppox)) < 0) {
 	error("Failed to connect PPPoE socket: %d %m", errno);
-	goto ERROR;
+	close(conn->sessionSocket);
+	goto errout;
     }
 
     return conn->sessionSocket;
 
- ERROR:
-    close(conn->sessionSocket);
-    /* Send PADT to reset the session unresponsive at buggy nas */
-    sendPADT(conn, NULL);
-    if (!existingSession)
+ errout:
+    if (conn->discoverySocket >= 0) {
+	sendPADT(conn, NULL);
 	close(conn->discoverySocket);
+	conn->discoverySocket = -1;
+    }
     return -1;
 }
 
@@ -318,9 +284,9 @@ PPPOEDisconnectDevice(void)
 	return;
     }
     close(conn->sessionSocket);
-    /* Send PADT to reset the session unresponsive at buggy nas */
+    /* Send PATD to reset the session unresponsive at buggy nas */
     sendPADT(conn, NULL);
-    if (!existingSession)
+    if (conn->discoverySocket >= 0)
 	close(conn->discoverySocket);
 }
 
@@ -354,21 +320,6 @@ PPPoEDevnameHook(char *cmd, char **argv, int doit)
     int r = 1;
     int fd;
     struct ifreq ifr;
-    int seen_idx = doit ? 1 : 0;
-
-    /* If "devnam" has already been set, ignore.
-       This prevents kernel from doing modprobes against random
-       pppd arguments that happen to begin with "nic-", "eth" or "br"
-
-       Ideally, "nix-ethXXX" should be supplied immediately after
-       "plugin rp-pppoe.so"
-
-       Patch based on suggestion from Mike Ireton.
-    */
-    if (seen_devnam[seen_idx]) {
-	if (OldDevnameHook) return OldDevnameHook(cmd, argv, doit);
-	return 0;
-    }
 
     /* Only do it if name is "ethXXX" or "brXXX" or what was specified
        by rp_pppoe_dev option (ugh). */
@@ -408,35 +359,32 @@ PPPoEDevnameHook(char *cmd, char **argv, int doit)
     /* Close socket */
     close(fd);
     if (r) {
-	seen_devnam[seen_idx] = 1;
-	if (doit) {
-	    strncpy(devnam, cmd, sizeof(devnam));
-	    if (the_channel != &pppoe_channel) {
+	strncpy(devnam, cmd, sizeof(devnam));
+	if (the_channel != &pppoe_channel) {
 
-		the_channel = &pppoe_channel;
-		modem = 0;
+	    the_channel = &pppoe_channel;
+	    modem = 0;
 
-		lcp_allowoptions[0].neg_accompression = 0;
-		lcp_wantoptions[0].neg_accompression = 0;
+	    lcp_allowoptions[0].neg_accompression = 0;
+	    lcp_wantoptions[0].neg_accompression = 0;
 
-		lcp_allowoptions[0].neg_asyncmap = 0;
-		lcp_wantoptions[0].neg_asyncmap = 0;
+	    lcp_allowoptions[0].neg_asyncmap = 0;
+	    lcp_wantoptions[0].neg_asyncmap = 0;
 
-		lcp_allowoptions[0].neg_pcompression = 0;
-		lcp_wantoptions[0].neg_pcompression = 0;
+	    lcp_allowoptions[0].neg_pcompression = 0;
+	    lcp_wantoptions[0].neg_pcompression = 0;
 
-		ipcp_allowoptions[0].neg_vj=0;
-		ipcp_wantoptions[0].neg_vj=0;
+	    ipcp_allowoptions[0].neg_vj=0;
+	    ipcp_wantoptions[0].neg_vj=0;
 
-		ccp_allowoptions[0].deflate = 0 ;
-		ccp_wantoptions[0].deflate = 0 ;
+	    ccp_allowoptions[0].deflate = 0 ;
+	    ccp_wantoptions[0].deflate = 0 ;
 
-		ccp_allowoptions[0].bsd_compress = 0;
-		ccp_wantoptions[0].bsd_compress = 0;
+	    ccp_allowoptions[0].bsd_compress = 0;
+	    ccp_wantoptions[0].bsd_compress = 0;
 
 
-		PPPOEInitDevice();
-	    }
+	    PPPOEInitDevice();
 	}
 	return 1;
     }
@@ -475,7 +423,6 @@ plugin_init(void)
 * Nothing
 *%DESCRIPTION:
 * Prints a message plus the errno value to stderr and syslog and exits.
-*
 ***********************************************************************/
 void
 fatalSys(char const *str)
@@ -518,62 +465,14 @@ rp_fatal(char const *str)
 void
 sysErr(char const *str)
 {
-    char buf[1024];
-    sprintf(buf, "%.256s: %.256s", str, strerror(errno));
-    printErr(buf);
+    printErr(str);
 }
 
-void pppoe_check_options(void)
-{
-    unsigned int mac[ETH_ALEN];
-    int i;
-
-    if (pppoe_reqd_mac != NULL) {
-        if (sscanf(pppoe_reqd_mac, "%x:%x:%x:%x:%x:%x",
-                   &mac[0], &mac[1], &mac[2], &mac[3],
-                   &mac[4], &mac[5]) != ETH_ALEN) {
-            option_error("cannot parse pppoe-mac option value");
-            exit(EXIT_OPTION_ERROR);
-        }
-        for (i = 0; i < 6; ++i)
-            conn->req_peer_mac[i] = mac[i];
-        conn->req_peer = 1;
-    }
-
-    lcp_allowoptions[0].neg_accompression = 0;
-    lcp_wantoptions[0].neg_accompression = 0;
-
-    lcp_allowoptions[0].neg_asyncmap = 0;
-    lcp_wantoptions[0].neg_asyncmap = 0;
-
-    lcp_allowoptions[0].neg_pcompression = 0;
-    lcp_wantoptions[0].neg_pcompression = 0;
-
-    if (lcp_allowoptions[0].mru > MAX_PPPOE_MTU) {
-        lcp_allowoptions[0].mru = MAX_PPPOE_MTU;
-    }
-    if (lcp_wantoptions[0].mru > MAX_PPPOE_MTU) {
-        lcp_wantoptions[0].mru = MAX_PPPOE_MTU;
-    }
-
-    /* Save configuration */
-    conn->mtu = lcp_allowoptions[0].mru;
-    conn->mru = lcp_wantoptions[0].mru;
-
-    ccp_allowoptions[0].deflate = 0;
-    ccp_wantoptions[0].deflate = 0;
-
-    ipcp_allowoptions[0].neg_vj = 0;
-    ipcp_wantoptions[0].neg_vj = 0;
-
-    ccp_allowoptions[0].bsd_compress = 0;
-    ccp_wantoptions[0].bsd_compress = 0;
-}
 
 struct channel pppoe_channel = {
     .options = Options,
     .process_extra_options = &PPPOEDeviceOptions,
-    .check_options = &pppoe_check_options,
+    .check_options = NULL,
     .connect = &PPPOEConnectDevice,
     .disconnect = &PPPOEDisconnectDevice,
     .establish_ppp = &generic_establish_ppp,
