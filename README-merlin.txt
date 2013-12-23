@@ -3,18 +3,18 @@ Asuswrt-Merlin - build 3.0.0.4.374.36 (xx-xxx-2013)
 
 About
 -----
-Asuswrt is the firmware developed by Asus for their newer routers.  They are 
-also porting it to some of their older models, like the RT-56U and RT-N16.  
-While originally based on Tomato-RT, Asus has disabled some of the 
-original Tomato features, and added others.
+Asuswrt is the firmware developed by Asus for their newer routers.  They 
+are also porting it to some of their older models, like the RT-56U and 
+RT-N16.  While originally based on Tomato-RT, Asus has disabled some of 
+the original Tomato features, and added others.
 
 Asuswrt-merlin is a customized version, which I am developing.
-The goal is to do some bugfixes and minor enhancements to Asus's firmware, 
-without targeting at full-blown advanced featuresets such as provided by 
-excellent projects like Tomato or DD-WRT.  Some of the features 
-that had been disabled by Asus have also been re-enabled.
-This aims to be a more restrained alternative for those who prefer to stay 
-closer to the original firmware, with limited risks of seeing new 
+The goal is to do some bugfixes and minor enhancements to Asus's 
+firmware, without targeting at full-blown advanced featuresets such as 
+provided by excellent projects like Tomato or DD-WRT.  Some of the 
+features that had been disabled by Asus have also been re-enabled.
+This aims to be a more restrained alternative for those who prefer to 
+stay closer to the original firmware, with limited risks of seeing new 
 features bring in new stability issues.  I value stability over 
 performance, and performance over features.
 
@@ -29,27 +29,30 @@ Supported devices are:
  * RT-AC56U
  * RT-AC68U
 
-NOTE: all the "R" versions (for example RT-N66R) are the same as their "U" 
-counterparts, they are just different packages aimed at large retailers.  
-Firmware is 100% compatible with both U and R versions of the routers.
+NOTE: all the "R" versions (for example RT-N66R) are the same as their 
+"U" counterparts, they are just different packages aimed at large 
+retailers.  The firmware is 100% compatible with both U and R versions 
+of the routers.
 
 
 Features
 --------
-Here is a list of features that Asuswrt-merlin brings over the original firmware:
+Here is a list of features that Asuswrt-merlin brings over the original 
+firmware:
 
 System:
    - Based on RT-AC68U 3.0.0.4.374_339 sources from Asus
    - Various bugfixes and optimizations
-   - Some components were updated to their latest versions, for improved stability
-     and security
+   - Some components were updated to their latest versions, for 
+     improved stability and security
    - Persistent JFFS partition
    - User scripts that run on specific events
    - Cron jobs
-   - Customized config files for router services
-   - LED control - put your Dark Knight in Stealth Mode by turning off all LEDs
-   - Entware easy setup script (alternative to Optware - the two are mutually exclusive)
-     (not available on RT-AC56U/RT-AC68U)
+   - Ability to customize the config files used by the router services
+   - LED control - put your Dark Knight in Stealth Mode by turning off 
+     all LEDs
+   - Entware easy setup script (alternative to Optware - the two are 
+     mutually exclusive) (not available on RT-AC56U/RT-AC68U)
 
 Disk sharing:
    - Enable/disable the use of shorter share names
@@ -65,8 +68,10 @@ Networking:
    - CIFS client support (for mounting remote SMB share on the router)
    - Layer7 iptables matching
    - User-defined options for WAN DHCP queries (required by some ISPs)
-   - Improved NAT loopback (based on code from phuzi0n from the DD-WRT forums)
-   - Advanced OpenVPN client and server support (all models except RT-N16)
+   - Improved NAT loopback (based on code from phuzi0n from the DD-WRT 
+     forums)
+   - Advanced OpenVPN client and server support (all models except 
+     RT-N16)
    - Netfilter ipset module, for efficient blacklist implemetnation
    - Configurable IPv6 firewall
    - Configurable min/max UPNP ports
@@ -75,10 +80,11 @@ Networking:
 Web interface:
    - Improved client list, with DHCP hostnames
    - Optionally save traffic stats to disk (USB or JFFS partition)
-   - Enhanced traffic monitoring: added monthly, as well as per IP monitoring
+   - Enhanced traffic monitoring: added monthly, as well as per IP 
+     monitoring
    - Name field on the DHCP reservation list and Wireless ACL list
    - System info summary page
-   - Wireless client IP, hostname, rate and rssi on the Wireless Log page
+   - Wireless clientIP, hostname, rate and rssi on the Wireless Log page
    - Wifi icon reports the state of both radios
    - Display the Ethernet port states
    - The various MAC/IP selection pulldowns will also display hostnames
@@ -115,7 +121,8 @@ strongly recommended for the following cases:
 
 - Switching between an SDK5 build and a regular build (RT-N66U)
 - Upgrading from anything older than 3.0.0.4.374 on the RT-N66U
-- Coming from another firmware (with the exception of Asus's original FW)
+- Coming from another firmware (with the exception of Asus's original 
+  firmware)
 
 If upgrading from anything older and you experience issues, then 
 consider doing a factory default reset then as well.
@@ -130,57 +137,68 @@ sure to create a new backup of your settings after reconfiguring.
 Usage
 -----
 
-* JFFS *
-JFFS is a writable section of the flash memory which will allow you to store small 
-files (such as scripts) inside the router without needing to have a USB disk 
-plugged in.  This space will survive reboot (but it *MIGHT NOT survive 
-firmware flashing*, so back it up first before flashing!).  It will also be 
-available fairly early at boot (before USB disks).
+** JFFS **
+JFFS is a writable section of the flash memory which will allow you to 
+store small files (such as scripts) inside the router without needing 
+to have a USB disk plugged in.  This space will survive reboots (but it 
+*MIGHT NOT survive firmware flashing*, so back it up first before 
+flashing!).  It will also be available fairly early at boot (before 
+USB disks).
 
-To enable this option, go to the Administration page, under the System tab.
+To enable this option, go to the Administration page, under the System 
+tab.
 
-First time you enable JFFS, it must be formatted.  This can be done through 
-the web page, same page where you enable it.  Enabling/Disabling/Formating 
-JFFS requires a reboot to take effect.
+First time you enable JFFS, it must be formatted.  This can be done 
+through the web page, same page where you enable it.  
+Enabling/Disabling/Formating JFFS requires a reboot to take effect.
 
 I do not recommend doing frequent writes to this area, as it will 
-prematuraly wear out the flash storage.  This is a good place to 
-put files that are written once like scripts or kernel modules, or 
-that rarely get written to (like once a day).  Storing files that 
-constantly get written to (like logfiles) is NOT recommended - use
-a USB disk for that.
+prematuraly wear out the flash storage.  This is a good place to put 
+files that are written once like scripts or kernel modules, or that 
+rarely get written to (like once a day).  Storing files that constantly 
+get written to (like logfiles) is NOT recommended - use a USB disk for 
+that.
 
 
 
-* User scripts *
+** User scripts **
 These are shell scripts that you can create, and which will be run when 
 certain events occur.  Those scripts must be saved in /jffs/scripts/ 
 (so, JFFS must be enabled and formatted).  Available scripts:
 
-- services-start:  Services are started (boot)
-- services-stop:  Services are stopped (reboot)
-- wan-start:  WAN interface just come up (includes if it went down and back up)
-              The WAN unit number will be passed as argument (0 = primary WAN)
-- firewall-start:  Firewall is started (filter rules have been applied)
-                   The WAN interface will be passed as argument (for example. "eth0")
-- nat-start: nat rules (i.e. port forwards and such) have been applied (nat table)
-- init-start:  Right after jffs is mounted, before any of the services get started
-- pre-mount:  Just before a partition is mounted.  Be careful with 
-  this script.  This is run in a blocking call and will block the mounting of the 
-  partition  for which it is invoked till its execution is complete. This is done 
-  so that it can be used for things like running e2fsck on the partition before 
-  mounting. This script is also passed the device path being mounted as an 
-  argument which can be used in the script using $1.
-- post-mount:  Just after a partition is mounted
-- unmount: Just before unmounting a partition.  This is a blocking script, so be
-  careful with it.  The mount point is passed as an argument to the script.
-- dhcpc-event: Called whenever a DHCP event occurs on the WAN interface.
-               The type of event (bound, release, etc...) is passed as an argument.
-- openvpn-event: Called whenever an OpenVPN server gets started/stopped, or an OpenVPN
-                 client connects to a remote server.  Uses the same syntax/parameters
-                 as the "up" and "down" scripts in OpenVPN.
-- qos-start: Called after both the iptables rules and tc configuration is
-             completed for QoS.
+ * services-start: Initial service start at boot
+ * services-stop: Services are stopped at shutdown/reboot
+ * wan-start: WAN interface just came up (includes if it went down and 
+              back up).  The WAN unit number will be passed as argument 
+              (0 = primary WAN)
+ * firewall-start: Firewall is started (filter rules have been applied)
+                   The WAN interface will be passed as argument (for 
+                   example. "eth0")
+ * nat-start: nat rules (i.e. port forwards and such) have been applied 
+              (nat table)
+ * init-start: Right after jffs is mounted, before any of the services 
+               get started
+ * pre-mount: Just before a partition is mounted.  Be careful with 
+              this script.  This is run in a blocking call and will 
+              block the mounting of the partition  for which it is 
+              invoked till its execution is complete. This is done so  
+              that it can be used for things like running e2fsck on the 
+              partition before mounting. This script is also passed the 
+              device path being mounted as an argument which can be 
+              used in the script using $1.
+ * post-mount:  Just after a partition is mounted
+ * unmount: Just before unmounting a partition.  This is a blocking 
+            script, so be careful with it.  The mount point is passed 
+            as an argument to the script.
+ * dhcpc-event: Called whenever a DHCP event occurs on the WAN 
+                interface.  The type of event (bound, release, etc...) 
+                is passed as an argument.
+ * openvpn-event: Called whenever an OpenVPN server gets 
+                  started/stopped, or an OpenVPN client connects to a 
+                  remote server.  Uses the same syntax/parameters as 
+                  the "up" and "down" scripts in OpenVPN.
+ * qos-start: Called after both the iptables rules and tc configuration 
+              are completed for QoS.
 
 Don't forget to set them as executable:
 
@@ -192,83 +210,77 @@ And like any Linux script, they need to start with a shebang:
 
 
 
-* SSHD *
-SSH support (through Dropbear) was re-enabled.  Password-based login will use 
-the same username and password as telnet/web access.  You can also optionally 
-insert a RSA public key there for keypair-based authentication.  There 
-is also an option to make ssh access available over WAN.
+** SSHD **
+SSH support (through Dropbear) was re-enabled.  Password-based login 
+will use the same username and password as telnet/web access.  You can 
+also optionally insert a RSA or ECDSA public key there for 
+keypair-based authentication.  There is also an option to make ssh 
+access available over WAN.
 
 
 
-* Crond *
-Crond will automatically start at boot time.  You can 
-put your cron tasks in /var/spool/cron/crontabs/ .  The file 
-must be named "admin" as this is the name of the system user.
-Note that this location resides in RAM, so you would have to 
-put your cron script somewhere such as in the jffs partition, 
-and at boot time copy it to /var/spool/cron/crontabs/ using 
-an init-start user script.
+** Crond **
+Crond will automatically start at boot time.  You can put your cron 
+tasks in /var/spool/cron/crontabs/ .  The file must be named "admin" as 
+this is the name of the system user.Note that this location resides in 
+RAM, so you would have to put your cron script somewhere such as in the 
+jffs partition, and at boot time copy it to /var/spool/cron/crontabs/ 
+using an init-start user script.
 
-A simple way to manage your cron jobs is through the
-included "cru" command.  Just run "cru" to see the 
-usage information.  You can then put your "cru" 
-commands inside a user script to re-generate your cron jobs 
-at boot time.
-
-
-* Enhanced Traffic monitoring *
-Under Tools -> Other Settings are options that will allow you 
-to save your traffic history to disk, preserving it between 
-router reboots (by default it is currently kept in RAM, 
-so it will disappear when you reboot).
-
-You can save it to a custom location (for 
-example, "/jffs/" if you have jffs enabled), or 
-/mnt/sda1/ if you have a USB disk plugged in.
-Save frequency is also configurable - it is recommended 
-to keep that frequency lower (for example, once a day) 
-if you are saving to jffs, to reduce wearing out 
-your flash memory.  Make sure not to forget the trailing 
-slash ad the end of the path.
-
-Note that the first time you use that option, you must 
-tell the router to create the data file.  Make sure you 
-set "Create or reset data files" to "Yes".
-
-Also, Asuswrt-Merlin can track the traffic generated 
-by each individual IP on your network.  This option 
-is called IPTraffic.  To enable this, you 
-must first set a custom location to store your 
-traffic database (see above).  Once again, you 
-must also tell it to create the new data file, 
-by enabling "Create or reset IPTraffic data files".
-Once done, enable the IPTraffic Monitoring option.  
-This will add three new entries to the Traffic Monitor 
-page selector (on the Traffic Monitoring page).
-
-You can optionally specify which IP to monitor, 
-or exclude some IPs from monitoring.  Each IP 
-must be separated by a comma.
-
-It's strongly recommended that you assign a static 
-IP to devices you wish to monitor to ensure they 
-don't get a different IP over time, which would 
-make the collected data somewhat unreliable.
-The monitoring is done per IP, NOT per MAC.
+A simple way to manage your cron jobs is through the included "cru" 
+command.  Just run "cru" to see the usage information.  You can then 
+put your "cru" commands inside a user script to re-generate your cron 
+jobs at boot time.
 
 
 
-* Adjust TCP/IP connection tracking settings *
-Under Tools -> Other Settings there are various parameters 
-that lets you tweak the timeout values related to connection 
-tracking for TCP and UDP connections.  You should be careful with 
-those settings.  Most commonly, people will tweak the UDP timeout 
-values to make them more VoIP-friendly, by using smaller timeouts.
-Timeout values are in seconds.
+** Enhanced Traffic monitoring **
+Under Tools -> Other Settings are options that will allow you to save 
+your traffic history to disk, preserving it between router reboots (by 
+default it is currently kept in RAM, so it will disappear when you 
+reboot).
+
+You can save it to a custom location (for example, "/jffs/" if you have 
+jffs enabled), or /mnt/sda1/ if you have a USB disk plugged in.
+Save frequency is also configurable - it is recommended to keep that 
+frequency lower (for example, once a day) if you are saving to jffs, to 
+reduce wearing out your flash memory.  Make sure not to forget the 
+trailing slash ad the end of the path.
+
+Note that the first time you use that option, you must tell the router 
+to create the data file.  Make sure you set "Create or reset data 
+files" to "Yes".
+
+Also, Asuswrt-Merlin can track the traffic generated by each individual 
+IP on your network.  This option is called IPTraffic.  To enable this, 
+you must first set a custom location to store your traffic database 
+(see above).  Once again, you must also tell it to create the new data 
+file, by enabling "Create or reset IPTraffic data files".  Once done, 
+enable the IPTraffic Monitoring option.  This will add three new 
+entries to the Traffic Monitor page selector (on the Traffic Monitoring 
+page).
+
+You can optionally specify which IP to monitor, or exclude some IPs 
+from monitoring.  Each IP must be separated by a comma.
+
+It's strongly recommended that you assign a static IP to devices you 
+wish to monitor to ensure they don't get a different IP over time, 
+which would make the collected data somewhat unreliable.  The 
+monitoring is done per IP, NOT per MAC.
 
 
 
-* Mounting remote CIFS shares on the router *
+** Adjustable TCP/IP connection tracking settings **
+Under Tools -> Other Settings there are various parameters that lets 
+you tweak the timeout values related to connection tracking for TCP and 
+UDP connections.  You should be careful with those settings.  Most 
+commonly, people will tweak the UDP timeout values to make them more 
+VoIP-friendly, by using smaller timeouts.  Timeout values are in 
+seconds.
+
+
+
+** Mounting remote CIFS shares on the router **
 You can mount remote SMB shares on your router.  The syntax will 
 be something like this:
 
@@ -278,79 +290,79 @@ mount \\\\192.168.1.100\\ShareName /cifs1 -t cifs -o "username=User,password=Pas
 
 
 
-* Disk Spindown when idle *
+** Disk Spindown when idle **
 Jeff Gibbons's sd-idle-2.6 has been added to the firmware, allowing you 
 to configure a timeout value (in seconds) on the Tools -> Other Settings 
 page.  Plugged hard drives will stop spinning after being inactive 
-for that specified period of time.  Note that services like Download Master 
-might be generating background disk activity, preventing it from idling.
+for that specified period of time.  Note that services like Download 
+Master might be generating background disk activity, preventing it from 
+idling.
 
 
 
-* OpenVPN (client and server) *
-OpenVPN is an SSL-based VPN technology that is provided as a 
-secure alternative to the PPTP VPN already included by Asus.
-OpenVPN is far more secure and more flexible, however it is 
-not as easy to configure, and requires the installation of 
-a client software on your computer client.  The client 
+** OpenVPN (client and server) **
+OpenVPN is an SSL-based VPN technology that is provided as a secure 
+alternative to the PPTP VPN.  OpenVPN is far more secure and more 
+flexible, however it is not as easy to configure, and requires the 
+installation of a client software on your computer client.  The client 
 can be obtained through this download page:
 
 http://openvpn.net/index.php/open-source/downloads.html
 
 Explaining the details of OpenVPN are beyond the scope of this 
 documentation, and I am in no way an expert on OpenVPN.
-Fortunately, there is a lot of available documentation and 
-Howto guides out there.  I tried to stick to the same option 
-descriptions as used by Tomato, so about any guide written 
-for Tomato can easily be used to guide you on 
-Asuswrt-Merlin.  For pointers, check the Wiki on the Asuswrt-Merlin 
-Github repository.
+Fortunately, there is a lot of available documentation and Howto guides 
+out there.  I tried to stick to the same option descriptions as used by 
+Tomato, so about any guide written for Tomato can easily be used to 
+guide you on Asuswrt-Merlin.  For pointers, check the Wiki on the 
+Asuswrt-Merlin Github repository.
 
-You can provide your own custom client config files for the 
-two server instances.  Store them in the 
-/jffs/configs/openvpn/ccd1/ (and ccd2/) directory based 
-on which server instance they belong to, with the 
-filenames matching the client common names.
-See the OpenVPN documentation for more details on the ccd directory.
+You can provide your own custom client config files for the two server 
+instances.  Store them in the /jffs/configs/openvpn/ccd1/ (and ccd2/) 
+directory based on which server instance they belong to, with the 
+filenames matching the client common names.  See the OpenVPN 
+documentation for more details on the ccd directory.
 
 
 
-* Customized config files *
-You can append content to various configuration files that are 
-created by the firmware, or even completely replace them with 
-custom config files you have created.  Those config override 
-files must be stored in /jffs/configs/.  To have a config 
-file appended to the one created by the firmware, simply 
-add ".add" at the end of the file listed below.  For 
-example, /jffs/configs/dnsmasq.conf.add will be added at the 
-end of the dnsmasq configuration file that is created by 
-the firmware, while /jffs/configs/dnsmasq.conf would completely 
-replace it.
+** Customized config files **
+The services executed by the router such as minidlna or dnsmasq relies 
+on dynamically-generated config files.  There are various methods 
+through which you can interact with these config scripts to customize 
+them.
+
+The first method is through custom configs.  You can append content to 
+various configuration files that are created by the firmware, or even 
+completely replace them with custom config files you have created.  
+Those config override files must be stored in /jffs/configs/.  To have 
+a config file appended to the one created by the firmware, simply add 
+".add" at the end of the file listed below.  For example, 
+/jffs/configs/dnsmasq.conf.add will be added at the end of the dnsmasq 
+configuration file that is created by the firmware, while 
+/jffs/configs/dnsmasq.conf would completely replace it.
 
 Note that replacing a config file with your own implies that you 
-properly fill in all the fields usually dynamically created by 
-the firmware.  Since some of these entries require 
-dynamic parameters, you might want to dynamically generate
-the config file through an init-start script which 
-could retrieve parameters from nvram, and insert them in 
-your custom config.
+properly fill in all the fields usually dynamically created by the 
+firmware.  Since some of these entries require dynamic parameters, you 
+might be better using the postconf scripts added in 374.36 (see the 
+postconf scripts section below).
 
 The list of available config overrides:
 
-- dnsmasq.conf
-- vsftpd.conf
-- pptpd.conf
-- dhcp6s.conf
-- hosts (for /etc/hosts)
-- smb.conf
-- minidlna.conf
-- profile (shell profile, only profile.add suypported)
-- upnp (for miniupnpd)
-- radvd.conf
-- fstab (only fstab supported, remember to create mount point
+ * dhcp6s.conf
+ * dnsmasq.conf
+ * exports (only exports.add supported)
+ * fstab (only fstab supported, remember to create mount point
         through init-start first if it doesn't exist!)
-- group, gshadow, passwd, shadow (only .add versions supported)
-- exports (only exports.add supported)
+ * group, gshadow, passwd, shadow (only .add versions supported)
+ * hosts (for /etc/hosts)
+ * minidlna.conf
+ * pptpd.conf
+ * profile (shell profile, only profile.add suypported)
+ * radvd.conf
+ * smb.conf
+ * vsftpd.conf
+ * upnp (for miniupnpd)
 
 Also, you can put OpenVPN ccd files in the following directories:
 
@@ -361,24 +373,76 @@ The content of these will be copied to their respective
 server instance's ccd directory when the server is started.
 
 
-* NFS Exports *
+** Postconf scripts **
+A lot of the configuration scripts used by the router services
+(such as dnsmasq) are dynamically generated by the firmware.  This
+makes it hard for advanced users to apply modifications to these, short
+of entirely replacing the config file.
+
+Postconf scripts are the solution to that.  Those scripts are 
+executed after the router has generated a configuration script, but 
+before the related service gets started.  This means you can use those 
+scripts to manipulate the configuration script, using tools such as 
+"sed" for example.
+
+Postconf scripts must be stored in /jffs/scripts/ .
+The path/filename of the target config file is passed as argument to 
+the postconf script.
+
+The list of available postconf scripts is:
+
+ * dhcp6s.postconf
+ * dnsmasq.postconf
+ * exports.postconf
+ * fstab.postconf
+ * group.postconf
+ * gshadow.postconf
+ * hosts.postconf
+ * minidlna.postconf
+ * openvpnclient1.postconf (and openvpnclient2.postconf)
+ * openvpnserver1.postconf (and openvpnserver2.postconf)
+ * passwd.postconf
+ * pptpd.postconf
+ * radvd.postconf
+ * shadow.postconf
+ * upnp.postconf
+ * vsftpd.postconf
+
+Here is a simple dnsmasq.postconf script that demonstrates how to 
+modify the maximum number of leases set in the dnsmasq configuration:
+
+-----
+     #!/bin/sh
+     CONFIG=$1
+
+     sed "s/dhcp-lease-max=253/dhcp-lease-max=100/" -i $CONFIG
+-----
+
+Note that these scripts are blocking the firmware while they run, to 
+ensure the service only gets started once the script is done.  Make 
+sure those scripts do exit properly, or the router will be stuck 
+during boot, requiring a factory default reset to recover it.
+
+
+
+** NFS Exports **
 IMPORTANT: NFS sharing is still a bit unstable.
 In addition to SMB and FTP, you can now also share any plugged 
 hard disk through NFS.  The NFS Exports interface can be accessed 
-from the USB Applications section, under Servers Center.  
-Click on the NFS Exports tab.
+from the USB Applications section, under Servers Center.  Click on the 
+NFS Exports tab.
 
-Select the folder you wish to export by clicking on the Path 
-field.  Under Access List you can enter IPs/Networks to which 
-you wish to give access.  A few examples:
+Select the folder you wish to export by clicking on the Path field.  
+Under Access List you can enter IPs/Networks to which you wish to give 
+access.  A few examples:
 
   192.168.1.0/24 - will give access to the whole local network
   192.168.1.10 192.168.1.11 - will give access to the two IPs (separate with spaces)
 
 Entering nothing will allow anyone to access the export.
 
-Under options you can enter the export options, separated by 
-a comma.  For example:
+Under options you can enter the export options, separated by a comma.  
+For example:
 
   rw,sync
 
@@ -386,69 +450,63 @@ For more info, search the web for documentation on the format of the
 /etc/exports file.  The same syntax for the access list and the options 
 is used by the webui.
 
-You can also manually generate an exports file by creating a file 
-named /jffs/configs/exports.add , and entering your standard exports 
-there.  They will be added to any exports configured on the webui.
+You can also manually generate an exports file by creating a file named 
+/jffs/configs/exports.add , and entering your standard exports there.  
+They will be added to any exports configured on the webui.
 
-Note that by default, only NFSv3 is supported.  You can also 
-enable NFSv2 support from that page, but this is not recommended, 
-unless you are using an old NFS client that doesn't support V3.
-NFSv2 has various filesystem-level limitations.
+Note that by default, only NFSv3 is supported.  You can also enable 
+NFSv2 support from that page, but this is not recommended, unless you 
+are using an old NFS client that doesn't support V3.  NFSv2 has various 
+filesystem-level limitations.
 
 
 
-* Easy Entware setup *
-Entware is an alternative to Optware.  They are both online 
-software repositories that let you easily install additional 
-software to your router (such as an Apache web server, or 
-an Asterisk PBX).  The main benefit of Entware over 
-Optware (which is used by Asus for their own Download 
-Master) is it is very actively maintained, with recent 
+** Easy Entware setup **
+Entware is an alternative to Optware.  They are both online software 
+repositories that let you easily install additional software to your 
+router (such as an Apache web server, or an Asterisk PBX).  The main 
+benefit of Entware over Optware (which is used by Asus for their own 
+Download Master) is it is very actively maintained, with recent 
 software versions.
 
-Entware and Optware cannot be used 
-at the same time however, so you can't use Download Master 
-while using Entware.
+Entware and Optware cannot be used at the same time however, so you 
+can't use Download Master while using Entware.
 
 There is now a script to make setting up Entware ware easier.  
 Access your router through SSH/Telnet, and run 
 "entware-setup.sh".
 
-Note that Entware requires the JFFS partition to be enabled, 
-and an ext2/ext3 formatted USB disk (NTFS and FAT32 are 
-not supported).
+Note that Entware requires the JFFS partition to be enabled, and an 
+ext2/ext3 formatted USB disk (NTFS and FAT32 are not supported).
 
-Also note that Entware is not available for the 
-RT-AC56U, due to the different CPU architecture.
-
+Also note that Entware is not available for the RT-AC56U or RT-AC68U, 
+due to the different CPU architecture.
 
 
-* YandexDNS filtering *
-Asus is implementing support for the YandexDNS DNS-based 
-filtering.  This service allows you to filter out 
-dangerous websites at the DNS level.  You can configure 
-which computer will make use of this service if you 
-want, for example, to only filter your children's 
-computer.  The settings can be found under 
-Parental Control.
+
+** YandexDNS filtering **
+Asus is implementing support for the YandexDNS DNS-based filtering.  
+This service allows you to filter out dangerous websites at the DNS 
+level.  You can configure which computer will make use of this service 
+if you want, for example, to only filter your children's computer.  The 
+settings can be found under Parental Control.
 
 For more information visit http://dns.yandex.ru/ .
 
 
 
-* Layer7-based Netfilter module *
-Support for layer7 rules in iptables has been enabled.  
-You will need to manually configure the iptables rules to 
-make use of it - there is no web interface exposing this.
-The defined protocols can be found in /etc/l7-protocols.
+** Layer7-based Netfilter module **
+Support for layer7 rules in iptables has been enabled.  You will need 
+to manually configure the iptables rules to make use of it - there is 
+no web interface exposing this.The defined protocols can be found in 
+/etc/l7-protocols.
 
 To use it, you must first load the module:
 
    modprobe xt_layer7
 
-Additionally, ARM devices such as the RT-AC56 and RT-AC68 require 
-that you manually enable traffic accounting, with the following 
-command:
+Additionally, ARM devices such as the RT-AC56 and RT-AC68 require that 
+you manually enable traffic accounting, with the following command:
 
    echo 1 > nf_conntrack_acct
 
@@ -466,10 +524,11 @@ http://l7-filter.clearfoundation.com/
 
 
 
+
+
 Source code
 -----------
-The source code with all my modifications can be found 
-on Github, at:
+The source code with all my modifications can be found on Github, at:
 
 https://github.com/RMerl/asuswrt-merlin
 
@@ -487,18 +546,24 @@ History
           these devices (see the Layer7 section in the FW's README)
    - CHANGED: Updated dropbear to 2013.62
    - CHANGED: Improved rendering of the VPN Status page
+   - CHANGED: Extended retry period for WAN DHCP queries to 160 secs
+              in Normal DHCP mode to give time to Charter to 
+              unblacklist customers being accidentally blocked by them.
    - FIXED: Some VPN client username/passwords were incorrectly handled
-   - FIXED: When disabling Dual WAN, WAN unit wasn't being reset to unit 0,
-            preventing users from editing the correct unit (Asus bug)
-   - FIXED: If you replaced the Asus generated CA with your own, the exported 
-            ovpn file would contain your CA with the Asus-signed client cert/key.
-            Now, we only insert the client cert/key if it was signed by the
-            current CA.
-   - FIXED: MSS clamping for clients connecting to the PPTPD server (Asus bug)
+   - FIXED: When disabling Dual WAN, WAN unit wasn't being reset to 
+            unit 0, preventing users from editing the correct unit 
+            (Asus bug)
+   - FIXED: If you replaced the Asus generated CA with your own, the 
+            exported ovpn file would contain your CA with the 
+            Asus-signed client cert/key.  Now, we only insert the 
+            client cert/key if it was signed by the current CA.
+   - FIXED: MSS clamping for clients connecting to the PPTPD server 
+            (Asus bug)
    - FIXED: networkmap's DLNA detection was broken with some devices,
             and could result in very long delays during scan (Asus bug)
-   - FIXED: Adjusted various timings in networkmap which should help with 
-            device lists being incomplete especially after a reboot.
+   - FIXED: Adjusted various timings in networkmap which should help 
+            with device lists being incomplete especially after a 
+            reboot.
 
   
 3.0.0.4.374.35_4 (30-Nov-2013):
@@ -592,8 +657,8 @@ History
    - FIXED: 802.11h options should only be available on the 5 GHz band.
    - FIXED: Wifi icon hover would report 5G channel as undefined if
             2.4GHz radio was disabled.
-   - FIXED: IPv6 clients list failed to properly merge IPs from similar MACs
-            (Asus bug)
+   - FIXED: IPv6 clients list failed to properly merge IPs from similar 
+            MACs (Asus bug)
    - FIXED: Minor layout issues with the Clients list
    - FIXED: Samba wasn't started at boot time if browser master or WINS
             was enabled and we had no USB disk plugged in.
@@ -613,8 +678,8 @@ History
    - NEW: Merged with Asus 374_726 code from RT-AC66U GPL.  Notable changes:
             * RT-N66U now based on the SDK6 driver.  This resolved the
               numerous connectivity issues, at the expense of a shorter
-              range (a separate SDK5 build based on driver 5.100 is available 
-              in the Experimental folder as an alternative).
+              range (a separate SDK5 build based on driver 5.100 is 
+              available in the Experimental folder as an alternative).
             * AiCloud 2.0
    - NEW: Added bonding.ko kernel module.
    - NEW: Repeater mode moved into regular builds.
@@ -659,9 +724,10 @@ History
    - FIXED: Parental Control not working with certain schedules
             (patch provided by Makkie2002)
    - FIXED: Potential key truncation in httpd if one was to use very 
-            large OpenVPN keys and certs in all fields of all four instances.
-   - FIXED: Samba would start sharing local disks even if all you wanted was 
-            its WINS/Browser services.
+            large OpenVPN keys and certs in all fields of all four 
+            instances.
+   - FIXED: Samba would start sharing local disks even if all you 
+            wanted was its WINS/Browser services.
    - FIXED: The JFFS formatting code could encounter a case
             where it wouldn't write back its cleared
             format flag.
@@ -682,15 +748,16 @@ History
 
 3.0.0.4.374.32 (24-Aug-2013):
    - NEW: Merged with Asus 374_168 GPL code.
-   - NEW: wan-start script will get passed the WAN unit number as argument
-   - NEW: Webui option to select the location of the DLNA database (patch by
-          VinceV)
-   - NEW: IPv6 firewalling.  Originally, Asuswrt would allow any IPv6 traffic 
-          to be forwarded to your LAN devices.  This new option (enabled by
-          default) will prevent traffic forwarding to LAN devices.  You can
-          also create firewall rules to allow inbound traffic to specific 
-          hosts.  The firewall configuration can be accessed through the 
-          "Firewall -> IPv6 Firewall" page.
+   - NEW: wan-start script will get passed the WAN unit number as 
+          argument
+   - NEW: Webui option to select the location of the DLNA database 
+          (patch by VinceV)
+   - NEW: IPv6 firewalling.  Originally, Asuswrt would allow any IPv6 
+          traffic to be forwarded to your LAN devices.  This new option 
+          (enabled by default) will prevent traffic forwarding to LAN 
+          devices.  You can also create firewall rules to allow inbound 
+          traffic to specific hosts.  The firewall configuration can be 
+          accessed through the "Firewall -> IPv6 Firewall" page.
    - CHANGED: Upgraded OpenVPN to 2.3.2
    - CHANGED: Implemented IPTraffic support in DualWAN - Load balanced
               mode (Experimental builds)
@@ -782,8 +849,8 @@ History
    - NEW: Added JFFS support to RT-AC56U.
    - CHANGED: Downgraded wireless driver + CTF to build 270 version
               (RT-N66U, fixes 5 GHz stability issues).  Note that this
-              means that HW acceleration for PPPoE is no longer available
-              for the RT-N66U, as it was new in the 5.110 SDK.
+              means that HW acceleration for PPPoE is no longer 
+              available for the RT-N66U, as it was new in the 5.110 SDK.
    - CHANGED: Updated iptables-1.4.x to 1.4.14 (RT-AC56U)
    - CHANGED: Brought back the Connection page under System Logs
    - CHANGED: Updated e2fsprogs to 1.42.7.  Amongst other things
@@ -798,16 +865,17 @@ History
             (Asus bug, RT-AC56U)
    - FIXED: NVRAM values getting corrupted or disappearing if using more
             than 32 KB (Asus bug, RT-AC56U)
-   - FIXED: Reapply layout fixes to Guest network and DHCP page (were lost
-            in a recent webui update)
+   - FIXED: Reapply layout fixes to Guest network and DHCP page (were 
+            lost in a recent webui update)
    - FIXED: JFFS2 could get reformated again at each subsequent reboots.
-   - FIXED: Devices with a NetBIOS name of 15 chars long would have their
-            name merged with the next device's.
+   - FIXED: Devices with a NetBIOS name of 15 chars long would have 
+            their name merged with the next device's.
    - FIXED: Empty Site Survey list if there was only one AP found
    - FIXED: Saved settings might fail to restore if they contained 
             OpenVPN or SSHD keys with CRLF line endings.  You should
-            access the OpenVPN Keys page, click on Apply to re-save them,
-            then re-create any backup you had of your router settings.
+            access the OpenVPN Keys page, click on Apply to re-save 
+            them, then re-create any backup you had of your router 
+            settings.
    - FIXED: Numerous bugs in ipt_account for Kernel 2.6.36 (RT-AC56U)
 
 
@@ -841,15 +909,16 @@ History
    - FIXED: Unable to clear DMZ IP (fixed in 364 webui files)
    - FIXED: PPTP/L2TP Internet connection unable to connect at boot 
             (bug introduced in 358.28)
-   - FIXED: PPTP/L2TP Internet connection unable to reconnect after going 
-            down (unsure if Asus bug or 358.28 bug)
-   - FIXED: Numerous bugs in the Per IP traffic monitoring causing inaccurate
-            traffic accounting if there was too much traffic, or if update 
-            requests occured in a too short period of time.
-   - FIXED: Asking for traffic monitoring (regular and Per IP) database to be 
-            re-created would re-create it again on next reboot if in the mean time
-            you didn't change any other settings, causing the flag not to be
-            cleared on the mtd partition.
+   - FIXED: PPTP/L2TP Internet connection unable to reconnect after  
+            going down (unsure if Asus bug or 358.28 bug)
+   - FIXED: Numerous bugs in the Per IP traffic monitoring causing 
+            inaccurate traffic accounting if there was too much 
+            traffic, or if update requests occured in a too short 
+            period of time.
+   - FIXED: Asking for traffic monitoring (regular and Per IP) database 
+            to be re-created would re-create it again on next reboot if 
+            in the mean time you didn't change any other settings, 
+            causing the flag not to be cleared on the mtd partition.
 
 
 3.0.0.4.354.28 Beta 1 (19-Apr-2013):
@@ -857,39 +926,43 @@ History
                   cards (RT-N66U)
    - KNOWN ISSUE: Sort order is sometimes wrong on the Site Survey page
    - NEW: Wireless site survey (on the Wireless tab)
-   - NEW: openvpn-event user script that gets run when a tunnel goes up/down.
-          Read the OpenVPN documentation on the "up" and "down" events for more
-          on how to use this script, and to use the passed parameters.
+   - NEW: openvpn-event user script that gets run when a tunnel goes 
+          up/down.  Read the OpenVPN documentation on the "up" and 
+          "down" events for more on how to use this script, and to use 
+          the passed parameters.
    - NEW: Enabled sftp support in Dropbear (the sftp server must be
           installed from Entware)
    - NEW: Option to prevent SSH port hammering (patch submited by dodava)
-   - CHANGED: Merged with webui pages extract from the Asus released FW, as
-              they were more recent than the GPL ones
-   - CHANGED: Port state on Sysinfo page now uses the new OUI lookup code
-              from Asus
-   - CHANGED: Try to report on Sysinfo what is forcing HW acceleration to
-              be disabled
-   - FIXED: Build 354 reduced minimum syslog level to WARNING - bumped back
-            to INFO as in previous versions (resolves DHCP events not being
-            logged).  Also ensured we readjusted it if DHCP logging is 
-            enabled, to handle routers that got upgraded with the new
-            loglevel already set.
+   - CHANGED: Merged with webui pages extract from the Asus released FW, 
+              as they were more recent than the GPL ones
+   - CHANGED: Port state on Sysinfo page now uses the new OUI lookup 
+              code from Asus
+   - CHANGED: Try to report on Sysinfo what is forcing HW acceleration 
+              to be disabled
+   - FIXED: Build 354 reduced minimum syslog level to WARNING - bumped 
+            back to INFO as in previous versions (resolves DHCP events 
+            not being logged).  Also ensured we readjusted it if DHCP 
+            logging is enabled, to handle routers that got upgraded 
+            with the new loglevel already set.
    - FIXED: Port numbering on the Sysinfo page for devices that has 
             them backward (untested) (RT-N16)
-   - FIXED: Client list wasn't using the new OUI code from Asus (was missing
-            from the GPL archive)
-   - FIXED: LAN traffic going through the NAT loopback would be counted in the 
-            Per IP traffic monitoring.
-   - FIXED: IE rendering of the Other Settings page when toggling Per IP monitoring
-   - FIXED: Cannot set webui to HTTPS-only (causes port conflict error) (Asus bug in 354)
+   - FIXED: Client list wasn't using the new OUI code from Asus (was 
+            missing from the GPL archive)
+   - FIXED: LAN traffic going through the NAT loopback would be counted 
+            in the Per IP traffic monitoring.
+   - FIXED: IE rendering of the Other Settings page when toggling Per 
+            IP monitoring
+   - FIXED: Cannot set webui to HTTPS-only (causes port conflict error) 
+            (Asus bug in 354)
    - FIXED: Cannot create/modify folders in AiDisk
-   - FIXED: Couldn't resolve LAN hostnames if WAN was down (the web redirection would
-            hijack all DNS queries).  Now, we let dnsmasq handle both LAN and redirected 
-            queries.
+   - FIXED: Couldn't resolve LAN hostnames if WAN was down (the web 
+            redirection would hijack all DNS queries).  Now, we let 
+            dnsmasq handle both LAN and redirected queries.
   - FIXED: Fixed support for Broadcom Wimax devices
-  - FIXED: smbpasswd wasn't properly updated when deleting a user (Asus bug)
-  - FIXED: Aicloud: handling of disks with multiple partitions on the webui (Asus bug) 
-           (fix submitted by hshang)
+  - FIXED: smbpasswd wasn't properly updated when deleting a user 
+           (Asus bug)
+  - FIXED: Aicloud: handling of disks with multiple partitions on the 
+           webui (Asus bug) (fix submitted by hshang)
 
 
 3.0.0.4.354.27 Beta 1 (31-Mar-2013):
@@ -898,47 +971,52 @@ History
             * New Network Tools
             * WOL (Under Network Tools
             * HW acceleration support for PPPoE
-            * DHCP Normal/aggressive behaviour.  Similar to the 270.25 implementation,
-              except it can be enabled/disabled
+            * DHCP Normal/aggressive behaviour.  Similar to the 270.25 
+              implementation, except it can be enabled/disabled
 
-          Asus considers build 354 to still be beta, so be advised that there might 
-          still be some issues left (there are known issues related to 3G/4G dongles 
-          for instance).
+          Asus considers build 354 to still be beta, so be advised that 
+          there might still be some issues left (there are known issues 
+          related to 3G/4G dongles for instance).
 
-   - CHANGED: Removed WOL webui - Asus added their own WOL support  on the Network 
-              Tools page.  You will have  to re-add your WOL entries.
-   - CHANGED: Removed System Log -> Connections page, and integrated it into
-              the new Network Tools -> Netstat page from Asus (as NAT Connections)
+   - CHANGED: Removed WOL webui - Asus added their own WOL support  on 
+              the Network Tools page.  You will have  to re-add your 
+              WOL entries.
+   - CHANGED: Removed System Log -> Connections page, and integrated it 
+              into the new Network Tools -> Netstat page from Asus (as 
+              NAT Connections)
    - CHANGED: Removed wol binary, since Asus's WOL page uses ether-wake.
-   - CHANGED: Removed option to control SIP helper on Firewall page (use
-              the new Asus option from WAN - NAT PAssthrough page instead)
-   - CHANGED: WPS button when set as a radio toggle will now behave the same 
-              way as Asus's firmware: pressing it will fully enable/disable both 
-              radios in the webui, rather than just toggle the state of the 
-              enabled radios.  This means the button will override the 
-              webui, and radio states will survive reboots.
-   - FIXED: Avoid duplicate shares when using simpler share naming (using
-            Asus's code from 354)
+   - CHANGED: Removed option to control SIP helper on Firewall page 
+              (use the new Asus option from WAN - NAT PAssthrough page 
+              instead)
+   - CHANGED: WPS button when set as a radio toggle will now behave the 
+              same way as Asus's firmware: pressing it will fully 
+              enable/disable both radios in the webui, rather than just 
+              toggle the state of the enabled radios.  This means the 
+              button will override the webui, and radio states will 
+              survive reboots.
+   - FIXED: Avoid duplicate shares when using simpler share naming 
+            using Asus's code from 354)
    - FIXED: Improved fdisk support for 4KB sector size
    - FIXED: openvpn: Client-specific entries weren't properly parsed
    - FIXED: dnsmasq warning in syslog if DHCP static leases are disabled
 
 
 3.0.0.4.270.26b (17-Mar-2013):
-   - FIXED: Volume labels with spaces were rejected (Asus used the same code
-            to validate hostnames and volume labels)
+   - FIXED: Volume labels with spaces were rejected (Asus used the same 
+            code to validate hostnames and volume labels)
 
 
 3.0.0.4.270.26 (15-Mar-2013):
    - NEW: ipset Netfilter support + userspace tool to create ipset lists.
    - CHANGED: Router's hostname is now set all the time, regardless of
               telnet/ssh states (and including in AP mode)
-   - CHANGED: Added device name field on the LAN page, since it's now relevant
-              to the router's hostname (not just SMB).  Left it on the SMB
-              page as well, for those used to see it there.
-   - CHANGED: Router will supply its device name when requesting an IP while
-              in AP mode.
-   - CHANGED: Various webui lists were increased from 32 to 128 entries allowed.
+   - CHANGED: Added device name field on the LAN page, since it's now 
+              relevant to the router's hostname (not just SMB).  Left 
+              it on the SMB page as well, for those used to see it there.
+   - CHANGED: Router will supply its device name when requesting an IP 
+              while in AP mode.
+   - CHANGED: Various webui lists were increased from 32 to 128 entries 
+              allowed.
    - CHANGED: Improved networkmap:
                * Will also use DHCP hostnames and user-defined static
                  names instead of just NetBIOS names
@@ -946,31 +1024,34 @@ History
                  still busy scanning and resolving device names
                * Dropdown menus that use Networkmap to build a list
                  of devices will also display names in addition to IP/MAC.
-   - CHANGED: Don't restart the whole network if you only changed DHCP reservations
-              (LAN -> DHCP page)
-   - FIXED: Openvpn: Non-CBC ciphers weren't working (their use is still not 
-            recommended)
+   - CHANGED: Don't restart the whole network if you only changed DHCP 
+              reservations (LAN -> DHCP page)
+   - FIXED: Openvpn: Non-CBC ciphers weren't working (their use is still 
+            not recommended)
    - FIXED: Proxy auto-configuration support (Asus bug)
 
 
 3.0.0.4.270.25b (3-Mar-2013):
-   - FIXED: Disabling DHCP logging would cause a syntax error in dnsmasq's configuration
-            (regression from dnsmasq update)
-   - FIXED: Outbound VPN client traffic was dropped (regression from firewall_2 fix)
+   - FIXED: Disabling DHCP logging would cause a syntax error in 
+            dnsmasq's configuration (regression from dnsmasq update)
+   - FIXED: Outbound VPN client traffic was dropped (regression from 
+            firewall_2 fix)
 
 
 3.0.0.4.270.25
-   - NEW: NFS folder sharing.  Webui can be found on the USB Applications ->
-          Servers Center page (NFS Exports tab)
+   - NEW: NFS folder sharing.  Webui can be found on the 
+          USB Applications -> Servers Center page (NFS Exports tab)
    - NEW: dhcpc-event and zcip-event scripts (called on WAN events)
-   - NEW: Ccustom configs: group.add, gshadow.add, passwd.add, shadow.add, exports.add
-   - NEW: New script that will setup Entware for you (written by ryzhov_al).
-          Run "entware-setup.sh" through SSH/Telnet to launch the install process.
-   - CHANGED: Added a folder picker to the Tools Other Settings page to select
-              a location to store your traffic data files.
+   - NEW: Ccustom configs: group.add, gshadow.add, passwd.add, 
+          shadow.add, exports.add
+   - NEW: New script that will setup Entware for you (written by 
+          ryzhov_al).  Run "entware-setup.sh" through SSH/Telnet to 
+          launch the install process.
+   - CHANGED: Added a folder picker to the Tools Other Settings page to 
+              select a location to store your traffic data files.
    - CHANGED: Updated dnsmasq to 2.65 (backported from 3.0.0.4.334)
-   - CHANGED: Enabled additional optimizations for openssl and openvpn for 
-              a significant performance gain
+   - CHANGED: Enabled additional optimizations for openssl and openvpn 
+              for a significant performance gain
    - CHANGED: Reverted wireless driver to build 220 (RT-AC66U only)
    - FIXED: Added missing badblocks program
    - FIXED: Timing issues under IE where resolved device names would 
@@ -979,9 +1060,10 @@ History
    - FIXED: DHCP client will be less aggressive in attempting to obtain
             a lease (wait 2 mins instead of 20 secs between attempts),
             should help with ISPs like Charter who will blacklist you 
-            if you send too many Discovery packets in a short period of time.
-   - FIXED: Made profile.add be run after any Optware profile, so the user
-            changes will have priority over anything else.
+            if you send too many Discovery packets in a short period of 
+            time.
+   - FIXED: Made profile.add be run after any Optware profile, so the 
+            user changes will have priority over anything else.
    - FIXED: WOL list corruption when removing an entry in some browsers
    - FIXED: No longer forward packets with a LAN IP as destination
             (Asus bug, fixed CDRouter test firewall_2)
@@ -997,9 +1079,10 @@ History
       o NTP-related changes
    - NEW: Report CTF (HW Acceleration) state on Sysinfo page.
    - NEW: Display Ethernet port states on the Sysinfo page.
-   - NEW: Replaced Busybox fsck/mkfs tools with those from e2fsprogs, should
-          be more reliable.
-   - CHANGED: Temperatures on Sysinfo page will now auto-update every 3 seconds.
+   - NEW: Replaced Busybox fsck/mkfs tools with those from e2fsprogs, 
+          should be more reliable.
+   - CHANGED: Temperatures on Sysinfo page will now auto-update every 3 
+              seconds.
    - CHANGED: Connections page now uses Ajax for slightly better rendering
    - CHANGED: Improved name resolution on traffic monitor page, now uses
               a device's hostname if it reported one.
@@ -1007,37 +1090,43 @@ History
               will overwrite names with those entered on the DHCP static
               lease page.
    - CHANGED: Updated to OpenVPN 2.3.0 and lzo 2.06.
-   - CHANGED: Updated Busybox to 1.20.2 (with Oleg/wl500g patches re-applied).
-              Lots of fixes, including GPT support in fdisk.
-   - CHANGED: Updated Miniupnpd to version 1.8.  NOTE: previous versions were NOT
-              affected by the recent UPNP exploit disclosure.  This is just as
-              an added security precaution.
-   - FIXED: Temperature on Performance Tuning page would fail to update if a radio
-            was disabled.
-   - FIXED: Various timing issues causing some TrafficMonitoring and the Sysinfo
-            pages to often fail loading under IE.
+   - CHANGED: Updated Busybox to 1.20.2 (with Oleg/wl500g patches 
+              re-applied).  Lots of fixes, including GPT support in 
+              fdisk.
+   - CHANGED: Updated Miniupnpd to version 1.8.  NOTE: previous 
+              versions were NOT affected by the recent UPNP exploit 
+              disclosure.  This is just as an added security precaution.
+   - FIXED: Temperature on Performance Tuning page would fail to update 
+            if a radio was disabled.
+   - FIXED: Various timing issues causing some TrafficMonitoring and the
+            Sysinfo pages to often fail loading under IE.
    - FIXED: JS error on the Per Device pages if FW failed to load the 
             traffic history.
    - FIXED: ebtables were still broken, fixed by a complete rebuild.
    - FIXED: Some OpenVPN fields rejected -1 as being valid.
-   - FIXED: Hide 5G radio info from Sysinfo page if router is single band (RT-N16)
-   - FIXED: Master Browser/WINS would not work if there was no USB disk plugged.
-   - FIXED: Samba would bind to the WAN interface while in router mode (Asus bug)
-   - FIXED: Backported various kernel fixes from Oleg/WL500G, Tomato and Kernel.org to 
-            help improve HDD > 2 TB support (still not perfect, some USB enclosures
-            are simply not Linux compatible)
+   - FIXED: Hide 5G radio info from Sysinfo page if router is \
+            single band (RT-N16)
+   - FIXED: Master Browser/WINS would not work if there was no USB disk 
+            plugged.
+   - FIXED: Samba would bind to the WAN interface while in router mode 
+            (Asus bug)
+   - FIXED: Backported various kernel fixes from Oleg/WL500G, Tomato 
+            and Kernel.org to help improve HDD > 2 TB support (still 
+            not perfect, some USB enclosures are simply not Linux 
+            compatible)
    - FIXED: Display of Connections under IE
-   - FIXED: Trying to apply settings on the System page with a username containing
-            a non-alphanum would incorrectly assume you just tried to change to
-            an account name that already existed (Asus bug).
-   - FIXED: Wouldn't enable wins in Samba if you had a WINS IP entered on the
-            DHCP configuration page.
+   - FIXED: Trying to apply settings on the System page with a username 
+            containing a non-alphanum would incorrectly assume you just 
+            tried to change to an account name that already existed 
+            (Asus bug).
+   - FIXED: Wouldn't enable wins in Samba if you had a WINS IP entered 
+            on the DHCP configuration page.
 
 
 3.0.0.4.266.23b (31-Dec-2012):
-   - FIXED: The IE fix ended up breaking Firefox (and meanwhile, Chrome worked
-            fine no matter which method was used to build that dropdown).
-
+   - FIXED: The IE fix ended up breaking Firefox (and meanwhile, Chrome 
+            worked fine no matter which method was used to build that 
+            dropdown).
 
 3.0.0.4.266.23 (31-Dec-2012):
    - NEW: Rebased on 3.0.0.4.266 (from the RT-AC66U GPL)
@@ -1048,7 +1137,7 @@ History
             telnet disabled.
    - FIXED: Couldn't add new ebtables rules (regression in 264.22)
    - FIXED: customized minidlna.conf
-   - FIXED: Traffic monitoring per IP is unreliable if hardware acceleration
+   - FIXED: Traffic monitoring per IP is unreliable if HW acceleration
             is enabled.  Do not load CTF if booting with cstats enabled.
    - FIXED: Per Device traffic monitor pages missing under IE
 
@@ -1057,21 +1146,26 @@ History
    - NEW: Rebased on 3.0.0.4.264 (from the RT-N53 GPL).
    - NEW: Traffic monitoring per IP added to the Traffic Monitor section.
           Based on the Tomato IPTraffic implementation by Teaman.
-   - NEW: Option to disable the Netfilter SIP helper (Firewall page), allows
-          people to manually forward port 5060 to their own SIP server
-   - NEW: Option to enable/disable logging DHCP client queries (LAN->DHCP page)
+   - NEW: Option to disable the Netfilter SIP helper (Firewall page), 
+          allows people to manually forward port 5060 to their own SIP 
+          server
+   - NEW: Option to enable/disable logging DHCP client queries 
+          (LAN->DHCP page)
    - FIXED: Tabs would disappear while on the Monthly traffic page.
    - FIXED: Really fixed Firefox issue (the fix wasn't merged
             in release 260.21).
-   - FIXED: Router crash if the list of MAC filters + their names got too long.
+   - FIXED: Router crash if the list of MAC filters + their names got 
+            too long.
    - FIXED: OpenVPN webui: TLS Reneg and Connection Retry wouldn't let 
             you enter -1 as value.
-   - FIXED: Layout issues on the DHCP page (one in Asus code, another in Merlin code)
-   - FIXED: Beeline Corbina was unable to connect to PPTP/L2TP server due to DNS
-            issues.
+   - FIXED: Layout issues on the DHCP page (one in Asus code, another 
+            in Merlin code)
+   - FIXED: Beeline Corbina was unable to connect to PPTP/L2TP server 
+            due to DNS issues.
    - CHANGED: System log starts at the bottom (backported from GPL 314)
-   - CHANGED: Dual WAN is no longer enabled in regular builds - too many issues 
-              with it at this point.  Regular USB failover still works.
+   - CHANGED: Dual WAN is no longer enabled in regular builds - too many 
+              issues with it at this point.  Regular USB failover 
+              still works.
 
 
 3.0.0.4.260.21 (5-Dec-2012):
@@ -1097,22 +1191,26 @@ History
 
 
 3.0.0.4.246.20 (14-Nov-2012):
-   - NEW: Wifi status icon will be half colored if only one radio is enabled.
+   - NEW: Wifi status icon will be half colored if only one radio is 
+          enabled.
    - NEW: Wifi status icon popup will report the state of each radios.
    - NEW: upnp custom config file for miniupnpd
    - NEW: unmount user script
-   - NEW: led_ctrl and makemime (for use in conjunction with sendmail) applets.
+   - NEW: led_ctrl and makemime (for use in conjunction with sendmail) 
+          applets.
    - NEW: Implemented control for network switch LEDs (all four at once)
    - NEW: Stealth Mode: option to disable all LEDs
-   - NEW: Added CONFIG_IP_NF_RAW and CONFIG_NETFILTER_XT_TARGET_NOTRACK modules.
-   - FIXED: Radio toggle through WPS button would be overriden by a scheduled
-            radio.  Reverted "switch" to "toggle" code to prevent this.
+   - NEW: Added CONFIG_IP_NF_RAW and CONFIG_NETFILTER_XT_TARGET_NOTRACK 
+          modules.
+   - FIXED: Radio toggle through WPS button would be overriden by a 
+            scheduled radio.  Reverted "switch" to "toggle" code to 
+            prevent this.
    - FIXED: You couldn't disable DMZ by clearing the IP field.
    - FIXED: You couldn't edit entered text in DHCP/MAC/etc name field
    - FIXED: clientid passing for some ISPs requiring it (like Sky UK)
             was broken with the DHCP client change of build 220.
-   - FIXED: No longer reboot the router three times during boot time if one 
-            of the radios is disabled by the user. (RT-N66U)
+   - FIXED: No longer reboot the router three times during boot time if 
+            one of the radios is disabled by the user. (RT-N66U)
    - FIXED: Changing the router login name to anything other than "admin"
             would prevent radvd, ecmh and the cru script from working 
             properly - they all assumed "admin".  Made then use
@@ -1127,7 +1225,8 @@ History
 
 3.0.0.4.246.19 (23-Oct-2012):
    - NEW: Rebased on 3.0.0.4.246.  Some notable changes:
-            o New "Enhanced interference management" option under Wireless -> Professional.
+            o New "Enhanced interference management" option under 
+              Wireless -> Professional.
             o Improved AiCloud webui
             o dnsmasq updated to 2.64
 
@@ -1444,18 +1543,20 @@ Email: rmerl@lostrealm.ca
 Twitter: https://twitter.com/RMerlinDev
 Download: http://www.lostrealm.ca/asuswrt-merlin/download
 
-Development news will be posted on Twitter.  You can also keep a closer eye 
-on development as it happens through the Github site.
+Development news will be posted on Twitter.  You can also keep a closer 
+eye on development as it happens through the Github site.
 
-For support questions, please use the SmallNetBuilder forums whenever possible.  There's a 
-dedicated Asuswrt-Merlin sub-forum there, under the Asus Wireless section.
+For support questions, please use the SmallNetBuilder forums whenever 
+possible.  There's a dedicated Asuswrt-Merlin sub-forum there, under 
+the Asus Wireless section.
 
-Drop me a note if you are using this firmware and are enjoying it.  If you really like it and want 
-to give more than a simple "Thank you", there is also a Paypal donation button on my website.
+Drop me a note if you are using this firmware and are enjoying it.  If 
+you really like it and want to give more than a simple "Thank you", 
+there is also a Paypal donation button on my website.
 
-I want to give my special thanks to Asus for showing an interest in this project, 
-and also providing me with support when needed.  Also, thank you everyone who has 
-donated through Paypal.  Much appreciated!
+I want to give my special thanks to Asus for showing an interest in 
+this project, and also providing me with support when needed.  Also, 
+thank you everyone who has donated through Paypal.  Much appreciated!
 
 
 
