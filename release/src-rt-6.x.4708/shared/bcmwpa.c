@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: bcmwpa.c 401759 2013-05-13 16:08:08Z $
+ * $Id: bcmwpa.c 419467 2013-08-21 09:19:48Z $
  */
 
 #include <bcm_cfg.h>

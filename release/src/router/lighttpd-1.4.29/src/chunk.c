@@ -196,7 +196,7 @@ int chunkqueue_append_smb_file(chunkqueue *cq, buffer *fn, off_t offset, off_t l
 	c->roffset = 0;
 	c->open_thread = -1;
 	c->listcount = 0;
-	Cdbg(DBE,"chunkqueue_append_smb_file.....fn=[%s]", fn->ptr);
+	Cdbg(1,"chunkqueue_append_smb_file.....fn=[%s]", fn->ptr);
 
 	chunkqueue_append_chunk(cq, c);
 

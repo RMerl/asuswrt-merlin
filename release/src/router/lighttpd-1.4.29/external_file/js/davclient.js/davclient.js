@@ -532,16 +532,6 @@ global.davlib = new function() {
 			request.send('');
 		};
 		
-		this.DavClient.prototype.GETNOTICE = function(path,keyword,interval,handler,context,locktoken){
-			var request = this._getRequest('GETNOTICE',path,handler,context);	
-			request.setRequestHeader("KEYWORD",keyword);
-			request.setRequestHeader("INTERVAL",interval);		
-			if(locktoken){
-				request.setRequestHeader('If','<'+locktoken+'>');
-			};
-			request.send('');
-		};
-		
 		this.DavClient.prototype.GETFIRMVER = function(path,handler,context,locktoken){			
 			var request = this._getRequest('GETFIRMVER',path,handler,context);			
 			if(locktoken){
@@ -665,29 +655,6 @@ global.davlib = new function() {
 		this.DavClient.prototype.GETVIDEOSUBTITLE = function(path,name,handler,context,locktoken){			
 			var request = this._getRequest('GETVIDEOSUBTITLE',path,handler,context);
 			request.setRequestHeader("FILENAME", name);
-			if(locktoken){
-				request.setRequestHeader('If','<'+locktoken+'>');
-			};
-			request.send('');
-		};
-		
-		this.DavClient.prototype.UPLOADTOFACEBOOK = function(path,name,title,album,token,handler,context,locktoken){			
-			var request = this._getRequest('UPLOADTOFACEBOOK',path,handler,context);
-			request.setRequestHeader("FILENAME", name);
-			request.setRequestHeader("TITLE", title);
-			request.setRequestHeader("ALBUM", album);
-			request.setRequestHeader("TOKEN", token);
-			if(locktoken){
-				request.setRequestHeader('If','<'+locktoken+'>');
-			};
-			request.send('');
-		};
-		
-		this.DavClient.prototype.UPLOADTOFLICKR = function(path,name,title,token,handler,context,locktoken){			
-			var request = this._getRequest('UPLOADTOFLICKR',path,handler,context);
-			request.setRequestHeader("FILENAME", name);
-			request.setRequestHeader("TITLE", title);
-			request.setRequestHeader("TOKEN", token);			
 			if(locktoken){
 				request.setRequestHeader('If','<'+locktoken+'>');
 			};

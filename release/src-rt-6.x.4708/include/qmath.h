@@ -10,7 +10,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: qmath.h 241182 2011-02-17 21:50:03Z $
+ * $Id: qmath.h 419467 2013-08-21 09:19:48Z $
  */
 
 #ifndef __QMATH_H__

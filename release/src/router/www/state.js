@@ -97,7 +97,7 @@ var mediareview_support = '<% nvram_get("wlopmode"); %>' == 7 ? true : false;
 var userRSSI_support = isSupport("user_low_rssi");
 var timemachine_support = isSupport("timemachine");
 var kyivstar_support = isSupport("kyivstar");
-
+var email_support = isSupport("email");
 
 var localAP_support = true;
 if(sw_mode == 4)
@@ -255,8 +255,8 @@ tabtitle[4] = new Array("", "IPv6");
 tabtitle[5] = new Array("", "VPN Status", "<#BOP_isp_heart_item#>", "<#vpn_Adv#>", "PPTP/L2TP Client", "OpenVPN Client");
 tabtitle[6] = new Array("", "<#menu5_1_1#>", "<#menu5_5_2#>", "<#menu5_5_5#>", "<#menu5_5_3#>", "<#menu5_5_4#>", "IPv6 Firewall");
 tabtitle[7] = new Array("", "<#menu5_6_1#>", "<#menu5_6_2#>", "<#menu5_6_3#>", "<#menu5_6_4#>", "Performance tuning", "<#menu_dsl_setting#>");
-tabtitle[8] = new Array("", "<#menu5_7_2#>", "<#menu5_7_4#>", "<#menu5_7_3#>", "IPv6", "<#menu5_7_6#>", "<#menu5_7_5#>", "<#menu_dsl_log#>", "Spectrum", "Connections");
-tabtitle[9] = new Array("", "Network Analysis", "Netstat", "Wake on LAN");
+tabtitle[8] = new Array("", "<#menu5_7_2#>", "<#menu5_7_4#>", "<#menu5_7_3#>", "IPv6", "<#menu5_7_6#>", "<#menu5_7_5#>", "<#menu_dsl_log#>", "Spectrum", "<#Connections#>");
+tabtitle[9] = new Array("", "<#Network_Analysis#>", "Netstat", "<#NetworkTools_WOL#>");
 tabtitle[10] = new Array("", "QoS", "<#traffic_monitor#>");
 tabtitle[11] = new Array("", "<#Parental_Control#>", "<#YandexDNS#>");
 tabtitle[12] = new Array("", "Sysinfo", "Other Settings", "Run Cmd");
@@ -402,8 +402,6 @@ function remove_url(){
 		menuL1_title[6] ="";
 		menuL1_link[6] ="";
 
-		// Wireless
-		remove_menu_item(0, "Advanced_WWPS_Content.asp");
 		// WAN
 		menuL2_title[3]="";
 		menuL2_link[3]="";
@@ -1918,6 +1916,7 @@ function inputCtrl(obj, flag){
 	|| current_url.indexOf("Advanced_ASUSDDNS_Content.asp") == 0
 	|| current_url.indexOf("Advanced_DSL_Content.asp") == 0
 	|| current_url.indexOf("Advanced_SwitchCtrl_Content.asp") == 0
+	|| current_url.indexOf("router.asp") == 0
 	){
 		if(obj.type == "checkbox")
 			return true;
@@ -2058,6 +2057,12 @@ function refresh_info_status(xmldoc)
 	data_rate_info_5g = wanStatus[19].firstChild.nodeValue.replace("data_rate_info_5g=", "");
 
 	var vpnStatus = devicemapXML[0].getElementsByTagName("vpn");
+	
+	var secondary_wanStatus = devicemapXML[0].getElementsByTagName("secondary_wan");
+	secondary_link_status = secondary_wanStatus[0].firstChild.nodeValue;
+	secondary_link_sbstatus = secondary_wanStatus[1].firstChild.nodeValue;
+	secondary_link_auxstatus = secondary_wanStatus[2].firstChild.nodeValue;
+
 	vpnc_proto = vpnStatus[0].firstChild.nodeValue.replace("vpnc_proto=", "");
 	if(vpnc_proto == "openvpn"){
 		if('<% nvram_get("vpn_client_unit"); %>' == 1)
@@ -2080,7 +2085,7 @@ function refresh_info_status(xmldoc)
 	if(sw_mode == 1){
 		//Viz add2013.10 for vpn server
 		if(pptpd_support || openvpnd_support){
-			if(vpnd_state	== "vpnd_state=1")
+			if(vpnd_state	== "vpnd_state=2")
 					$("vpn_status").className = "vpnstatuson";					
 			else
 					$("vpn_status").className = "vpnstatusoff";
@@ -2107,7 +2112,8 @@ function refresh_info_status(xmldoc)
 				$("adsl_line_status").onmouseout = function(){nd();}
 		}
 
-		if((link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2")){
+		if((link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2") 
+		|| (secondary_link_status == "2" && secondary_link_auxstatus == "0") || (secondary_link_status == "2" && secondary_link_auxstatus == "2")){
 			$("connect_status").className = "connectstatuson";
 			$("connect_status").onclick = function(){openHint(24,3);}
 			if(location.pathname == "/" || location.pathname == "/index.asp"){

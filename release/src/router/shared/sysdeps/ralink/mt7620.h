@@ -210,10 +210,12 @@ typedef struct {
 
 #define REG_ESW_PORT_PCR_P0		0x2004
 #define REG_ESW_PORT_PVC_P0		0x2010
-#define REG_ESW_PORT_PPBVI_P0		0x2014
+#define REG_ESW_PORT_PPBV1_P0		0x2014
 #define REG_ESW_PORT_BSR_P0		0x201c
 #define REG_ESW_MAC_PMSR_P0		0x3008
 #define REG_ESW_MAC_PMCR_P6		0x3600
+#define REG_ESW_PORT_TGOCN_P0		0x4018
+#define REG_ESW_PORT_RGOCN_P0		0x4028
 
 /* for ATE Get_WanLanStatus command */
 typedef struct {

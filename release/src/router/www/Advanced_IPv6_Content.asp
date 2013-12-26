@@ -33,8 +33,6 @@ var machine_arm = (machine_name.search("arm") == -1) ? false : true;
 var ipv6_dhcp_start_orig = '<% nvram_get("ipv6_dhcp_start"); %>';
 var ipv6_dhcp_end_orig = '<% nvram_get("ipv6_dhcp_end"); %>';
 
-var alert_over = "<#vlaue_haigher_than#> ";
-
 var $j = jQuery.noConflict();
 
 
@@ -127,6 +125,11 @@ function showInputfield(v){
 		inputCtrl(document.form.ipv6_prefix_length, 0);
 		$("ipv6_prefix_r").style.display = "";
 		$("ipv6_prefix_length_r").style.display="";
+		
+		inputCtrl(document.form.ipv6_autoconf_type[0], 1);
+		inputCtrl(document.form.ipv6_autoconf_type[1], 1);
+		inputCtrl(document.form.ipv6_dhcp_lifetime, 1);
+		
 		if(v != ipv6_proto_orig){
 				document.form.ipv6_prefix.value = "";
 				document.form.ipv6_prefix_length.value = "";
@@ -424,42 +427,67 @@ function showInputfield2(s, v){
 		
 	}else if(s=='ipv6_dhcp_pd'){
 		inputCtrl(document.form.ipv6_rtr_addr, enable);
-		inputCtrl(document.form.ipv6_autoconf_type[0], enable);
-		inputCtrl(document.form.ipv6_autoconf_type[1], enable);
-		inputCtrl(document.form.ipv6_dhcp_lifetime, enable);
-		if(v == "0"){				
+
+		if(v == "0"){
 				$("ipv6_ipaddr_r").style.display = "none";
 				$("ipv6_prefix_length_span").innerHTML = "64";
-				if(document.form.ipv6_autoconf_type[0].checked == true){
-						showInputfield2('ipv6_autoconf_type', '0');
-				}else{
-						showInputfield2('ipv6_autoconf_type', '1');
-				}		
+				
 		}else{
 				$("ipv6_ipaddr_r").style.display = "";
-				$("ipv6_prefix_length_span").innerHTML = "";
-						
-				inputCtrl(document.form.ipv6_dhcp_start_start, 0);
-				inputCtrl(document.form.ipv6_dhcp_end_end, 0);
-				inputCtrl(document.form.ipv6_dhcp_lifetime, 0);
-								
+				$("ipv6_prefix_length_span").innerHTML = "";								
+		}
+		
+		if(document.form.ipv6_autoconf_type[0].checked == true){
+						showInputfield2('ipv6_autoconf_type', '0');
+		}else{
+						showInputfield2('ipv6_autoconf_type', '1');
 		}
 	}else if(s=='ipv6_autoconf_type'){
-		$("ipv6_prefix_span").innerHTML = GetIPv6_split(document.form.ipv6_rtr_addr)+"::";
+		if(document.form.ipv6_dhcp_pd[0].checked == true)
+			$("ipv6_prefix_span").innerHTML = GetIPv6_split(document.getElementById('ipv6_ipaddr_span').innerHTML)+"::";
+		else
+			$("ipv6_prefix_span").innerHTML = GetIPv6_split(document.form.ipv6_rtr_addr.value)+"::";
+		if($("ipv6_prefix_span").innerHTML == "::")
+			$("ipv6_prefix_span").innerHTML = "";
 		inputCtrl(document.form.ipv6_dhcp_start_start, !enable);
 		inputCtrl(document.form.ipv6_dhcp_end_end, !enable);
 		
-		if(document.form.ipv6_rtr_addr.value != ""){
-				var IPv6_rtr_addr_split = GetIPv6_split(document.form.ipv6_rtr_addr);
-				document.form.ipv6_prefix_span_for_start.value = IPv6_rtr_addr_split;
-				document.form.ipv6_prefix_span_for_end.value = IPv6_rtr_addr_split;
-				if(ipv6_dhcp_start_orig != "" && ipv6_dhcp_end_orig != ""){
+		if(!document.form.ipv6_dhcp_pd[0].checked){
+			if(document.form.ipv6_rtr_addr.value != "")
+				var IPv6_rtr_addr_split = GetIPv6_split(document.form.ipv6_rtr_addr.value);			
+			else
+				var IPv6_rtr_addr_split = "";
+			
+			document.form.ipv6_prefix_span_for_start.value = IPv6_rtr_addr_split;
+			document.form.ipv6_prefix_span_for_end.value = IPv6_rtr_addr_split;
+			
+			
+			if(ipv6_dhcp_start_orig != "" && ipv6_dhcp_end_orig != ""){
 						document.form.ipv6_dhcp_start_start.value = ipv6_dhcp_start_orig.split("::")[1];
 						document.form.ipv6_dhcp_end_end.value = ipv6_dhcp_end_orig.split("::")[1];	
-				}else{
+			}else{
 						document.form.ipv6_dhcp_start_start.value = 1000;
 						document.form.ipv6_dhcp_end_end.value = 2000;
-				}
+			}
+			
+		}
+		else if(!document.form.ipv6_dhcp_pd[1].checked){
+			if(document.getElementById('ipv6_ipaddr_span').innerHTML != "")
+				var IPv6_rtr_addr_split = GetIPv6_split(document.getElementById('ipv6_ipaddr_span').innerHTML);
+			else
+				var IPv6_rtr_addr_split = "";
+				
+				document.form.ipv6_prefix_span_for_start.value = IPv6_rtr_addr_split;
+				document.form.ipv6_prefix_span_for_end.value = IPv6_rtr_addr_split;
+				
+				
+			if(ipv6_dhcp_start_orig != "" && ipv6_dhcp_end_orig != ""){
+				document.form.ipv6_dhcp_start_start.value = ipv6_dhcp_start_orig.split("::")[1];
+				document.form.ipv6_dhcp_end_end.value = ipv6_dhcp_end_orig.split("::")[1];	
+			}else{
+				document.form.ipv6_dhcp_start_start.value = 1000;
+				document.form.ipv6_dhcp_end_end.value = 2000;
+			}			
 		}
 		else if(ipv6_dhcp_start_orig != "" && ipv6_dhcp_end_orig != ""){
 				document.form.ipv6_prefix_span_for_start.value = ipv6_dhcp_start_orig.split("::")[0];
@@ -532,9 +560,9 @@ function ipv6_valid(obj){
 
 function GetIPv6_split(obj){
 	
-	var Split_1_IPv6 = obj.value.split("::");
-	var Split_1_IPv6_pos = obj.value.search("::");
-	var Split_2_IPv6 = obj.value.split(":");
+	var Split_1_IPv6 = obj.split("::");
+	var Split_1_IPv6_pos = obj.search("::");
+	var Split_2_IPv6 = obj.split(":");
 	var return_prefix = "";
 	if(Split_1_IPv6.length >1){
 		if(Split_1_IPv6[0].substring(0,Split_1_IPv6_pos).split(":").length >4){	//get ipv6_prefix by Split_2_IPv6[0]~[3]
@@ -624,29 +652,29 @@ function validForm(){
 				if(document.form.ipv6_dhcp_pd[1].checked){
 							if(!ipv6_valid(document.form.ipv6_rtr_addr)){
 									return false;	
-							}
-							
-							if(document.form.ipv6_autoconf_type[1].checked){
-									
-									if(!validIPv6_dhcp(document.form.ipv6_dhcp_start_start))
-											return false;
-									if(!validIPv6_dhcp(document.form.ipv6_dhcp_end_end))
-											return false;											
-																		
-									if(parseInt("0x"+document.form.ipv6_dhcp_start_start.value) > parseInt("0x"+document.form.ipv6_dhcp_end_end.value)){
-											alert(alert_over+document.form.ipv6_dhcp_start_start.value);
-											document.form.ipv6_dhcp_end_end.focus();
-    										document.form.ipv6_dhcp_end_end.select();    									
-											return false;
-									}
-							}							
-							
-							if(!validate_range(document.form.ipv6_dhcp_lifetime, 120, 604800)){
-									document.form.ipv6_dhcp_lifetime.focus();
-									document.form.ipv6_dhcp_lifetime.select();
-									return false;	
-							}
+							}														
 				}
+
+			if(document.form.ipv6_autoconf_type[1].checked){
+									
+						if(!validIPv6_dhcp(document.form.ipv6_dhcp_start_start))
+								return false;
+						if(!validIPv6_dhcp(document.form.ipv6_dhcp_end_end))
+								return false;											
+																		
+						if(parseInt("0x"+document.form.ipv6_dhcp_start_start.value) > parseInt("0x"+document.form.ipv6_dhcp_end_end.value)){
+								alert("<#vlaue_haigher_than#> "+document.form.ipv6_dhcp_start_start.value);
+								document.form.ipv6_dhcp_end_end.focus();
+    						document.form.ipv6_dhcp_end_end.select();    									
+								return false;
+						}
+			}
+			
+			if(!validate_range(document.form.ipv6_dhcp_lifetime, 120, 604800)){
+						document.form.ipv6_dhcp_lifetime.focus();
+						document.form.ipv6_dhcp_lifetime.select();
+						return false;	
+			}			
 				
 				if(document.form.ipv6_dnsenable[1].checked){
 								if(document.form.ipv6_dns1.value=="" && document.form.ipv6_dns2.value=="" && document.form.ipv6_dns3.value==""){
@@ -715,14 +743,15 @@ function applyRule(){
 					document.form.ipv6_prefix_length.value = "64";
 					document.form.ipv6_prefix.disabled = false;
 					//document.form.ipv6_prefix.value = GetIPv6_split(document.form.ipv6_rtr_addr)+"::";	  //rc calculate it.
-					
-					if(document.form.ipv6_autoconf_type[1].checked){
+															
+				}
+				
+				if(document.form.ipv6_autoconf_type[1].checked){
 						document.form.ipv6_dhcp_start.disabled = false;
 						document.form.ipv6_dhcp_start.value = document.form.ipv6_prefix_span_for_start.value +"::"+document.form.ipv6_dhcp_start_start.value;
 						document.form.ipv6_dhcp_end.disabled = false;
 						document.form.ipv6_dhcp_end.value = document.form.ipv6_prefix_span_for_end.value +"::"+document.form.ipv6_dhcp_end_end.value;
 						
-					}
 				}
 		}
 				
@@ -810,7 +839,6 @@ function showInfo(){
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
 <input type="hidden" name="current_page" value="Advanced_IPv6_Content.asp">
 <input type="hidden" name="next_page" value="Advanced_IPv6_Content.asp">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="group_id" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply_new">

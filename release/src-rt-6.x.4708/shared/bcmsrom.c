@@ -17,7 +17,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmsrom.c 414820 2013-07-26 05:03:14Z $
+ * $Id: bcmsrom.c 427949 2013-10-07 06:04:47Z $
  */
 
 #include <bcm_cfg.h>
@@ -49,7 +49,6 @@
 
 #include <bcmnvram.h>
 #include <bcmotp.h>
-
 #if defined(BCMUSBDEV)
 #include <sbsdio.h>
 #include <sbhnddma.h>
@@ -2402,9 +2401,7 @@ static const char BCMATTACHDATA(vstr_pubkey)[] = "pubkey=%s";
 static const char BCMATTACHDATA(vstr_boardnum)[] = "boardnum=%d";
 static const char BCMATTACHDATA(vstr_macaddr)[] = "macaddr=%s";
 static const char BCMATTACHDATA(vstr_usbepnum)[] = "usbepnum=0x%x";
-#ifdef BCMUSBDEV_COMPOSITE
 static const char BCMATTACHDATA(vstr_usbdesc_composite)[] = "usbdesc_composite=0x%x";
-#endif /* BCMUSBDEV_COMPOSITE */
 static const char BCMATTACHDATA(vstr_usbutmi_ctl)[] = "usbutmi_ctl=0x%x";
 static const char BCMATTACHDATA(vstr_usbssphy_utmi_ctl0)[] = "usbssphy_utmi_ctl0=0x%x";
 static const char BCMATTACHDATA(vstr_usbssphy_utmi_ctl1)[] = "usbssphy_utmi_ctl1=0x%x";
@@ -2504,6 +2501,8 @@ static const char BCMATTACHDATA(vstr_txduty_thresh)[] = "tx_duty_cycle_thresh_%d
 static const char BCMATTACHDATA(vstr_paparambwver)[] = "paparambwver=%d";
 
 static const char BCMATTACHDATA(vstr_uuid)[] = "uuid=%s";
+static const char BCMATTACHDATA(vstr_wowlgpio)[] = "wowl_gpio=%d";
+static const char BCMATTACHDATA(vstr_wowlgpiopol)[] = "wowl_gpiopol=%d";
 
 static const char BCMATTACHDATA(vstr_end)[] = "END\0";
 
@@ -4256,12 +4255,10 @@ BCMATTACHFN(srom_parsecis)(osl_t *osh, uint8 *pcis[], uint ciscnt, char **vars, 
 
 					}
 #endif /* !BCM_BOOTLOADER */
-#ifdef BCMUSBDEV_COMPOSITE
 				case HNBU_USBDESC_COMPOSITE:
 					varbuf_append(&b, vstr_usbdesc_composite,
 						(cis[i + 2] << 8) | cis[i + 1]);
 					break;
-#endif /* BCMUSBDEV_COMPOSITE */
 				case HNBU_USBUTMI_CTL:
 					varbuf_append(&b, vstr_usbutmi_ctl,
 						(cis[i + 2] << 8) | cis[i + 1]);
@@ -4472,6 +4469,12 @@ BCMATTACHFN(srom_parsecis)(osl_t *osh, uint8 *pcis[], uint ciscnt, char **vars, 
 
 				case HNBU_PAPARAMBWVER:
 					varbuf_append(&b, vstr_paparambwver, 0, cis[i + 1]);
+					break;
+
+				case HNBU_WOWLGPIO:
+					varbuf_append(&b, vstr_wowlgpio, ((cis[i + 1]) & 0x7F));
+					varbuf_append(&b, vstr_wowlgpiopol,
+						(((cis[i + 1]) >> 7) & 0x1));
 					break;
 				}
 

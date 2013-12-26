@@ -1,3 +1,17 @@
+2013/10/02	releasing 1.9.5
+		minor fix in IPv6 forwarding setting check <akarl10>
+
+2013/10/01	releasing 1.9.4
+
+2013/09/24	Added a Makefile target to generate hashes and a gpg signature
+
+2013/09/07	Netlink processing fix <Nathan Hintz>
+		Correction in IPv6 forwarding setting check <Anand Kumria>
+		fix for kernels with no NETLINK_NO_ENOBUFS defined <Sedat Dilek>
+
+2013/04/13	Force UnicodeOnly if IFF_MULTICAST is unavailable
+		Remove check for IFF_BROADCAST since it isn't used
+
 2013/03/14	Fix for systems without sysctl.h from vapier
 		Updating to version 1.9.3
 		release 1.9.3

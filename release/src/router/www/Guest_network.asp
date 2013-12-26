@@ -42,7 +42,7 @@ wl_channel_list_5g = '<% channel_list_5g(); %>';
 
 function initial(){
 	$('ACL_disabled_hint').innerHTML = Untranslated.Guest_Network_enable_ACL;
-	$('enable_macfilter').innerHTML = Untranslated.enable_macmode;
+	$('enable_macfilter').innerHTML = "<#enable_macmode#>";
 	show_menu();	
 	//insertExtChannelOption();		
 
@@ -581,7 +581,6 @@ function genBWTable(_unit){
 <input type="hidden" name="wan_nat_x" value="<% nvram_get("wan_nat_x"); %>" disabled>
 <input type="hidden" name="current_page" value="Guest_network.asp">
 <input type="hidden" name="next_page" value="Guest_network.asp">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply_new">
 <input type="hidden" name="action_script" value="restart_wireless">

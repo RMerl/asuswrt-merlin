@@ -351,6 +351,18 @@
 	border-width:0;
 	color:#FFFFFF;
 }
+.input_30_table{
+	margin-left:2px;
+	padding-left:0.4em;
+	height:23px;
+	width:315px;
+	line-height:23px \9;	/*IE*/
+	font-size:12px;
+	font-family: Lucida Console;
+	background-image:url(/images/New_ui/inputbg.png);
+	border-width:0;
+	color:#FFFFFF;
+}
 .input_25_table{
 	margin-left:2px;	
 	padding-left:0.4em;

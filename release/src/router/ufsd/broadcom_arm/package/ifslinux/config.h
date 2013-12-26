@@ -12,6 +12,12 @@
    offset, unsigned long nr_segs); */
 #define HAVE_DECL_ASO_DIRECTIO_V2 1
 
+/* void (*invalidatepage) (struct page *, unsigned long); */
+#define HAVE_DECL_ASO_INVALIDATEPAGE_V1 1
+
+/* void (*invalidatepage) (struct page *, unsigned int, unsigned int); */
+#define HAVE_DECL_ASO_INVALIDATEPAGE_V2 0
+
 /* int (*writepage)(struct page *); */
 #define HAVE_DECL_ASO_WRITEPAGE_V1 0
 
@@ -32,9 +38,27 @@
 /* void (bio_end_io_t) (struct bio *, int); */
 #define HAVE_DECL_BIO_END_V2 1
 
+/* int blkdev_issue_flush(struct block_device *, sector_t *); */
+#define HAVE_DECL_BLKDEV_ISSUE_FLUSH_V1 0
+
+/* int blkdev_issue_flush(struct block_device *, gfp_t, sector_t *, unsigned
+   long); */
+#define HAVE_DECL_BLKDEV_ISSUE_FLUSH_V2 1
+
+/* int blkdev_issue_flush(struct block_device *, gfp_t, sector_t *); */
+#define HAVE_DECL_BLKDEV_ISSUE_FLUSH_V3 0
+
+/* Define to 1 if you have the declaration of `blkdev_issue_zeroout', and to 0
+   if you don't. */
+#define HAVE_DECL_BLKDEV_ISSUE_ZEROOUT 1
+
 /* Define to 1 if you have the declaration of `blk_run_address_space', and to
    0 if you don't. */
 #define HAVE_DECL_BLK_RUN_ADDRESS_SPACE 1
+
+/* Define to 1 if you have the declaration of `blk_start_plug', and to 0 if
+   you don't. */
+#define HAVE_DECL_BLK_START_PLUG 0
 
 /* ssize_t blockdev_direct_IO_no_locking(int rw, struct kiocb *iocb, struct
    inode *inode, struct block_device *bdev, const struct iovec *iov, loff_t
@@ -87,16 +111,31 @@
    don't. */
 #define HAVE_DECL_CURRENT_UMASK 1
 
+/* int (*d_compare)(struct dentry *, struct qstr*, struct qstr*); */
+#define HAVE_DECL_DCOMPARE_V1 1
+
+/* int (*d_compare)(const struct dentry *, const struct inode *, const struct
+   dentry *, const struct inode *, unsigned int, const char *, const struct
+   qstr *); */
+#define HAVE_DECL_DCOMPARE_V2 0
+
+/* int (*d_compare)(const struct dentry *, const struct dentry *, unsigned
+   int, const char *, const struct qstr *); */
+#define HAVE_DECL_DCOMPARE_V3 0
+
 /* Define to 1 if you have the declaration of `DECLARE_FSTYPE_DEV', and to 0
    if you don't. */
 #define HAVE_DECL_DECLARE_FSTYPE_DEV 0
 
-/* int (*d_has)(struct dentry *, int); */
+/* int (*d_hash)(struct dentry *, int); */
 #define HAVE_DECL_DHASH_V1 1
 
 /* int (*d_hash)(const struct dentry *, const struct inode*, struct nameidata
    *); */
 #define HAVE_DECL_DHASH_V2 0
+
+/* int (*d_hash)(const struct dentry *, struct qstr *); */
+#define HAVE_DECL_DHASH_V3 0
 
 /* Define to 1 if you have the declaration of `do_sync_read', and to 0 if you
    don't. */
@@ -132,6 +171,14 @@
    you don't. */
 #define HAVE_DECL_D_SPLICE_ALIAS 1
 
+/* int (*encode_fh)(struct inode *inode, __u32 *fh, int *max_len, int
+   connectable); */
+#define HAVE_DECL_ENCODE_FH_V1 1
+
+/* int (*encode_fh)(struct inode *inode, __u32 *fh, int *max_len, struct inode
+   *parent); */
+#define HAVE_DECL_ENCODE_FH_V2 0
+
 /* Define to 1 if you have the declaration of `end_writeback', and to 0 if you
    don't. */
 #define HAVE_DECL_END_WRITEBACK 1
@@ -139,6 +186,10 @@
 /* Define to 1 if you have the declaration of `EXPORT_NO_SYMBOLS', and to 0 if
    you don't. */
 #define HAVE_DECL_EXPORT_NO_SYMBOLS 0
+
+/* Define to 1 if you have the declaration of `file_inode', and to 0 if you
+   don't. */
+#define HAVE_DECL_FILE_INODE 0
 
 /* ssize_t (*aio_write) (struct kiocb *, const char __user *, size_t, loff_t);
    */
@@ -237,18 +288,6 @@
    */
 #define HAVE_DECL_INOP_LOOKUP_V3 0
 
-/* int (*mkdir) (struct inode *,struct dentry *,int); */
-#define HAVE_DECL_INOP_MKDIR_V1 1
-
-/* int (*mkdir) (struct inode *,struct dentry *,umode_t); */
-#define HAVE_DECL_INOP_MKDIR_V2 0
-
-/* int (*mknod) (struct inode *,struct dentry *,int,dev_t); */
-#define HAVE_DECL_INOP_MKNOD_V1 1
-
-/* int (*mknod) (struct inode *,struct dentry *,umode_t,dev_t); */
-#define HAVE_DECL_INOP_MKNOD_V2 0
-
 /* int (*permission) (struct inode *,int,struct nameidata*); */
 #define HAVE_DECL_INOP_PERMISSION_V1 0
 
@@ -279,6 +318,12 @@
 /* kdev_t super_block.s_dev; */
 #define HAVE_DECL_KDEV_T_S_DEV 0
 
+/* void *kmap_atomic(struct page *page, enum km_type idx); */
+#define HAVE_DECL_KMAP_ATOMIC_V1 1
+
+/* void *kmap_atomic(struct page *page); */
+#define HAVE_DECL_KMAP_ATOMIC_V2 0
+
 /* kmem_cache_t *kmem_cache_create(const char *, size_t, size_t, unsigned
    long,void (*)(void *, kmem_cache_t *, unsigned long), void (*)(void *,
    kmem_cache_t *, unsigned long)); */
@@ -295,6 +340,10 @@
 /* struct kmem_cache *kmem_cache_create(const char *, size_t, size_t, unsigned
    long, void (*)(void *)); */
 #define HAVE_DECL_KMEM_CACHE_CREATE_V4 1
+
+/* Define to 1 if you have the declaration of `kmem_cache_zalloc', and to 0 if
+   you don't. */
+#define HAVE_DECL_KMEM_CACHE_ZALLOC 1
 
 /* Define to 1 if you have the declaration of `kstatfs', and to 0 if you
    don't. */
@@ -325,6 +374,10 @@
 /* void page_put_link(struct dentry *, struct nameidata *, void *); */
 #define HAVE_DECL_PAGE_PUT_LINK_V1 1
 
+/* Define to 1 if you have the declaration of `PDE_DATA', and to 0 if you
+   don't. */
+#define HAVE_DECL_PDE_DATA 0
+
 /* Define to 1 if you have the declaration of `posix_acl_chmod', and to 0 if
    you don't. */
 #define HAVE_DECL_POSIX_ACL_CHMOD 0
@@ -336,6 +389,32 @@
 /* Define to 1 if you have the declaration of `posix_acl_from_xattr', and to 0
    if you don't. */
 #define HAVE_DECL_POSIX_ACL_FROM_XATTR 1
+
+/* int posix_acl_to_xattr(struct user_namespace *user_ns,const struct
+   posix_acl *acl, void *buffer, size_t size); */
+#define HAVE_DECL_POSIX_ACL_TO_XATTR_V2 0
+
+/* Define to 1 if you have the declaration of `proc_create_data', and to 0 if
+   you don't. */
+#define HAVE_DECL_PROC_CREATE_DATA 1
+
+/* Define to 1 if you have the declaration of `proc_mkdir_data', and to 0 if
+   you don't. */
+#define HAVE_DECL_PROC_MKDIR_DATA 0
+
+/* int (*readdir) (struct file *, void *, filldir_t); */
+#define HAVE_DECL_READDIR_V1 1
+
+/* int (*iterate) (struct file *, struct dir_context *); */
+#define HAVE_DECL_READDIR_V2 0
+
+/* Define to 1 if you have the declaration of `refrigerator', and to 0 if you
+   don't. */
+#define HAVE_DECL_REFRIGERATOR 1
+
+/* Define to 1 if you have the declaration of `round_jiffies_up', and to 0 if
+   you don't. */
+#define HAVE_DECL_ROUND_JIFFIES_UP 1
 
 /* Define to 1 if you have the declaration of `setattr_copy', and to 0 if you
    don't. */
@@ -354,6 +433,10 @@
 /* Define to 1 if you have the declaration of `set_buffer_uptodate', and to 0
    if you don't. */
 #define HAVE_DECL_SET_BUFFER_UPTODATE 1
+
+/* Define to 1 if you have the declaration of `set_freezable', and to 0 if you
+   don't. */
+#define HAVE_DECL_SET_FREEZABLE 1
 
 /* Define to 1 if you have the declaration of `set_nlink', and to 0 if you
    don't. */
@@ -387,10 +470,6 @@
    don't. */
 #define HAVE_DECL_SYNC_BLOCKDEV 1
 
-/* Define to 1 if you have the declaration of `sync_inodes_sb', and to 0 if
-   you don't. */
-#define HAVE_DECL_SYNC_INODES_SB 1
-
 /* Define to 1 if you have the declaration of `tag_pages_for_writeback', and
    to 0 if you don't. */
 #define HAVE_DECL_TAG_PAGES_FOR_WRITEBACK 0
@@ -401,6 +480,10 @@
 
 /* struct timespec inode.i_atime; */
 #define HAVE_DECL_TIMESPEC_I_ATIME 1
+
+/* Define to 1 if you have the declaration of `truncate_setsize', and to 0 if
+   you don't. */
+#define HAVE_DECL_TRUNCATE_SETSIZE 1
 
 /* Define to 1 if you have the declaration of `update_atime', and to 0 if you
    don't. */
@@ -424,6 +507,10 @@
 /* int writeback_inodes_sb_if_idle(struct super_block *, enum wb_reason
    reason); */
 #define HAVE_DECL_WRITEBACK_INODES_SB_IF_IDLE_V2 0
+
+/* Define to 1 if you have the declaration of `write_dirty_buffer', and to 0
+   if you don't. */
+#define HAVE_DECL_WRITE_DIRTY_BUFFER 1
 
 /* int (*get) (struct dentry*,const char*,void*,size_t,int); */
 #define HAVE_DECL_XATTR_HANDLER_V2 1
@@ -455,6 +542,12 @@
 /* Define to 1 if you have the <generated/autoconf.h> header file. */
 #define HAVE_GENERATED_AUTOCONF_H 1
 
+/* Define to 1 if you have the <generated/compile.h> header file. */
+#define HAVE_GENERATED_COMPILE_H 1
+
+/* Define to 1 if you have the <generated/utsrelease.h> header file. */
+#define HAVE_GENERATED_UTSRELEASE_H 1
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
@@ -466,6 +559,9 @@
 
 /* Define to 1 if the system has the type `kmem_cache_t'. */
 #define HAVE_KMEM_CACHE_T 0
+
+/* Define to 1 if you have the <linux/aio.h> header file. */
+#define HAVE_LINUX_AIO_H 1
 
 /* Define to 1 if you have the <linux/backing-dev.h> header file. */
 #define HAVE_LINUX_BACKING_DEV_H 1
@@ -490,6 +586,9 @@
 
 /* Define to 1 if you have the <linux/exportfs.h> header file. */
 #define HAVE_LINUX_EXPORTFS_H 1
+
+/* Define to 1 if you have the <linux/freezer.h> header file. */
+#define HAVE_LINUX_FREEZER_H 1
 
 /* Define to 1 if you have the <linux/fs_struct.h> header file. */
 #define HAVE_LINUX_FS_STRUCT_H 1
@@ -530,8 +629,14 @@
 /* Define to 1 if you have the <linux/pagevec.h> header file. */
 #define HAVE_LINUX_PAGEVEC_H 1
 
+/* Define to 1 if you have the <linux/proc_ns.h> header file. */
+/* #undef HAVE_LINUX_PROC_NS_H */
+
 /* Define to 1 if you have the <linux/sched.h> header file. */
 #define HAVE_LINUX_SCHED_H 1
+
+/* Define to 1 if you have the <linux/seq_file.h> header file. */
+#define HAVE_LINUX_SEQ_FILE_H 1
 
 /* Define to 1 if you have the <linux/smp_lock.h> header file. */
 #define HAVE_LINUX_SMP_LOCK_H 1
@@ -616,9 +721,6 @@
 /* Define to 1 if `get_dentry' is member of `struct export_operations'. */
 /* #undef HAVE_STRUCT_EXPORT_OPERATIONS_GET_DENTRY */
 
-/* Define to 1 if `f_path.dentry' is member of `struct file'. */
-#define HAVE_STRUCT_FILE_F_PATH_DENTRY 1
-
 /* Define to 1 if `aio_read' is member of `struct file_operations'. */
 #define HAVE_STRUCT_FILE_OPERATIONS_AIO_READ 1
 
@@ -630,6 +732,9 @@
 
 /* Define to 1 if `mount' is member of `struct file_system_type'. */
 /* #undef HAVE_STRUCT_FILE_SYSTEM_TYPE_MOUNT */
+
+/* Define to 1 if `i_acl' is member of `struct inode'. */
+#define HAVE_STRUCT_INODE_I_ACL 1
 
 /* Define to 1 if `i_blksize' is member of `struct inode'. */
 /* #undef HAVE_STRUCT_INODE_I_BLKSIZE */
@@ -682,8 +787,17 @@
 /* Define to 1 if `read_inode2' is member of `struct super_operations'. */
 /* #undef HAVE_STRUCT_SUPER_OPERATIONS_READ_INODE2 */
 
+/* Define to 1 if `write_super' is member of `struct super_operations'. */
+#define HAVE_STRUCT_SUPER_OPERATIONS_WRITE_SUPER 1
+
 /* Define to 1 if `tv_sec' is member of `struct timespec'. */
 #define HAVE_STRUCT_TIMESPEC_TV_SEC 1
+
+/* Define to 1 if `count' is member of `struct user_namespace'. */
+/* #undef HAVE_STRUCT_USER_NAMESPACE_COUNT */
+
+/* Define to 1 if `proc_inum' is member of `struct user_namespace'. */
+/* #undef HAVE_STRUCT_USER_NAMESPACE_PROC_INUM */
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
@@ -701,16 +815,22 @@
 #define PACKAGE_NAME "ufsd"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "ufsd 8.6"
+#define PACKAGE_STRING "ufsd lke_8.9.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "ufsd"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "8.6"
+#define PACKAGE_VERSION "lke_8.9.0"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
+/* EXFAT Using flag */
+/* #undef UFSD_EXFAT */
+
 /* HFS Using flag */
-#define UFSD_TAIL_RW /**/
+#define UFSD_HFS /**/
+
+/* NTFS Using flag */
+#define UFSD_NTFS /**/

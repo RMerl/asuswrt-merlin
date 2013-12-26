@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: wlc_extlog_idstr.h 241182 2011-02-17 21:50:03Z $
+ * $Id: wlc_extlog_idstr.h 419467 2013-08-21 09:19:48Z $
  */
 #ifndef _WLC_EXTLOG_IDSTR_H_
 #define _WLC_EXTLOG_IDSTR_H_

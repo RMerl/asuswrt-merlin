@@ -160,7 +160,6 @@ function getCookie(c_name)
 			<!--===================================Beginning of Main Content===========================================-->
 			<input type="hidden" name="current_page" value="Advanced_PerformanceTuning_Content.asp">
 			<input type="hidden" name="next_page" value="Advanced_PerformanceTuning_Content.asp">
-			<input type="hidden" name="next_host" value="">
 			<input type="hidden" name="modified" value="0">
 			<input type="hidden" name="action_mode" value="apply">
 			<input type="hidden" name="action_wait" value="5">

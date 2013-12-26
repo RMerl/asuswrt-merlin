@@ -59,7 +59,6 @@ function done_validating(action){
 
 function initial(){
 	show_menu(); 
-	load_body();
 	addOnlineHelp($("faq"), ["ASUSWRT", "DMZ"]);
 	dmz_enable_check();
 }
@@ -92,10 +91,8 @@ function dmz_on_off(flag){
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
 <form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
-
 <input type="hidden" name="current_page" value="Advanced_Exposed_Content.asp">
 <input type="hidden" name="next_page" value="">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="group_id" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">

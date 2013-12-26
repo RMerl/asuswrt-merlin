@@ -52,7 +52,6 @@
 #ifdef HNDCTF
 #include <linux/if.h>
 #include <linux/if_vlan.h>
-#include <linux/if_pppox.h>
 #include <linux/in.h>
 #include <linux/ip.h>
 #include <linux/tcp.h>
@@ -283,87 +282,30 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 	ipc_entry.next = NULL;
 
 	/* For vlan interfaces fill the vlan id and the tag/untag actions */
-	
-	if(!CTFQOS_ULDL_DIFFIF(kcih)){	
-		if (skb_dst(skb)->dev->priv_flags & IFF_802_1Q_VLAN) {
-			ipc_entry.txif = (void *)vlan_dev_real_dev(skb_dst(skb)->dev);
-			ipc_entry.vid = vlan_dev_vlan_id(skb_dst(skb)->dev);
-			ipc_entry.action = ((vlan_dev_vlan_flags(skb_dst(skb)->dev) & 1) ?
-								CTF_ACTION_TAG : CTF_ACTION_UNTAG);
-		} else {
-			ipc_entry.txif = skb_dst(skb)->dev;
-			ipc_entry.action = CTF_ACTION_UNTAG;
-		}
-	}
-	else{
+	if (skb_dst(skb)->dev->priv_flags & IFF_802_1Q_VLAN) {
+		ipc_entry.txif = (void *)vlan_dev_real_dev(skb_dst(skb)->dev);
+		ipc_entry.vid = vlan_dev_vlan_id(skb_dst(skb)->dev);
+		ipc_entry.action = ((vlan_dev_vlan_flags(skb_dst(skb)->dev) & 1) ?
+		                    CTF_ACTION_TAG : CTF_ACTION_UNTAG);
+	} else {
 		ipc_entry.txif = skb_dst(skb)->dev;
 		ipc_entry.action = CTF_ACTION_UNTAG;
-	}	
-#ifdef CTF_PPPOE
-	/* For pppoe interfaces fill the session id and header add/del actions */
-	if (skb_dst(skb)->dev->flags & IFF_POINTOPOINT) {
-		/* Transmit interface and sid will be populated by pppoe module */
-		ipc_entry.ppp_ifp = skb_dst(skb)->dev;
-	} else if (skb->dev->flags & IFF_POINTOPOINT) {
-		ipc_entry.ppp_ifp = skb->dev;
-	} else{
-		ipc_entry.ppp_ifp = NULL;
-		ipc_entry.pppoe_sid = 0xffff;
 	}
 
-
-	if (ipc_entry.ppp_ifp){
-		struct net_device  *pppox_tx_dev=NULL;
-		ctf_ppp_t ctfppp;
-		if (ppp_get_conn_pkt_info(ipc_entry.ppp_ifp,&ctfppp)){
-			return;
-		}
-		else {
-			if(ctfppp.psk.pppox_protocol == PX_PROTO_OE){
-				if (skb_dst(skb)->dev->flags & IFF_POINTOPOINT) {
-					ipc_entry.action |= CTF_ACTION_PPPOE_ADD;
-					pppox_tx_dev = ctfppp.psk.po->pppoe_dev; 
-					memcpy(ipc_entry.dhost.octet, ctfppp.psk.dhost.octet, ETH_ALEN);	
-					memcpy(ipc_entry.shost.octet, ctfppp.psk.po->pppoe_dev->dev_addr, ETH_ALEN);
-				}
-				else{
-					ipc_entry.action |= CTF_ACTION_PPPOE_DEL;
-				}
-				ipc_entry.pppoe_sid = ctfppp.pppox_id;
-			}
-			else
-				return;
-			
-			/* For vlan interfaces fill the vlan id and the tag/untag actions */
-			if(pppox_tx_dev){
-		
-				if(!CTFQOS_ULDL_DIFFIF(kcih)){	
-					if (pppox_tx_dev ->priv_flags & IFF_802_1Q_VLAN) {
-						ipc_entry.txif = (void *)vlan_dev_real_dev(pppox_tx_dev);
-						ipc_entry.vid = vlan_dev_vlan_id(pppox_tx_dev);
-						ipc_entry.action |= ((vlan_dev_vlan_flags(pppox_tx_dev) & 1) ?
-						                    CTF_ACTION_TAG : CTF_ACTION_UNTAG);
-					} else {
-						ipc_entry.txif = pppox_tx_dev;
-						ipc_entry.action |= CTF_ACTION_UNTAG;
-					}
-				}
-				else{
-					ipc_entry.txif = pppox_tx_dev;
-					ipc_entry.action |= CTF_ACTION_UNTAG;
-				}					
-				
-				
-				
-				
-				
-			}
-			
-			}
-		}	
-
-#endif /* CTF_PPPOE */
-
+#ifdef CTF_PPPOE
+	/* For pppoe interfaces fill the session id and header add/del actions */
+	ipc_entry.pppoe_sid = -1;
+	if (skb_dst(skb)->dev->flags & IFF_POINTOPOINT) {
+		/* Transmit interface and sid will be populated by pppoe module */
+		ipc_entry.action |= CTF_ACTION_PPPOE_ADD;
+		skb->ctf_pppoe_cb[0] = 2;
+		ipc_entry.ppp_ifp = skb_dst(skb)->dev;
+	} else if ((skb->dev->flags & IFF_POINTOPOINT) && (skb->ctf_pppoe_cb[0] == 1)) {
+		ipc_entry.action |= CTF_ACTION_PPPOE_DEL;
+		ipc_entry.pppoe_sid = *(uint16 *)&skb->ctf_pppoe_cb[2];
+		ipc_entry.ppp_ifp = skb->dev;
+	}
+#endif
 
 	if (((ipc_entry.tuple.proto == IPPROTO_TCP) && (kcih->ipc_suspend & CTF_SUSPEND_TCP)) ||
 	    ((ipc_entry.tuple.proto == IPPROTO_UDP) && (kcih->ipc_suspend & CTF_SUSPEND_UDP))) {
@@ -406,44 +348,19 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 	/* Do bridge cache lookup to determine outgoing interface
 	 * and any vlan tagging actions if needed.
 	 */
-	if(!CTFQOS_ULDL_DIFFIF(kcih)){	
-		if (ctf_isbridge(kcih, ipc_entry.txif)) {
-			ctf_brc_t *brcp;
+	if (ctf_isbridge(kcih, ipc_entry.txif)) {
+		ctf_brc_t *brcp;
 
 		brcp = ctf_brc_lkup(kcih, ipc_entry.dhost.octet);
 
-			if (brcp == NULL)
-				return;
-			else {
-				ipc_entry.action |= brcp->action;
-				ipc_entry.txif = brcp->txifp;
-				ipc_entry.vid = brcp->vid;
-				ctf_brc_release(kcih, brcp);
-			}
+		if (brcp == NULL)
+			return;
+		else {
+			ipc_entry.action |= brcp->action;
+			ipc_entry.txif = brcp->txifp;
+			ipc_entry.vid = brcp->vid;
+			ctf_brc_release(kcih, brcp);
 		}
-	}
-	else{
-		if (ctf_isbridge(kcih, ipc_entry.txif)) {
-			ctf_brc_t *brcp;
-
-			brcp = ctf_brc_lkup(kcih, ipc_entry.dhost.octet);
-
-			if (brcp == NULL)
-				return;
-			else {
-				ipc_entry.action |= brcp->action;
-				if(brcp->txvifp){
-					ipc_entry.txif = brcp->txvifp;
-					ipc_entry.action &= ~CTF_ACTION_TAG;
-					ipc_entry.action |= CTF_ACTION_UNTAG;
-				}
-				else
-					ipc_entry.txif = brcp->txifp;
-				ipc_entry.vid = brcp->vid;
-				ctf_brc_release(kcih, brcp);
-			}
-		}
-	
 	}
 
 #ifdef DEBUG
@@ -479,18 +396,17 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 	printk("txif: %s\n", ((struct net_device *)ipc_entry.txif)->name);
 #endif
 
-#ifdef BCMFA
-	ipc_entry.pkt = skb;
-
-	/* rxif */
-	if (skb->dev->priv_flags & IFF_802_1Q_VLAN)
-		ipc_entry.rxif = (void *)vlan_dev_real_dev(skb->dev);
-	else
-		ipc_entry.rxif = (void *)skb->dev;
-#endif /* BCMFA */
-
 	ctf_ipc_add(kcih, &ipc_entry, !IPVERSION_IS_4(ipver));
 
+#ifdef CTF_PPPOE
+	if (skb->ctf_pppoe_cb[0] == 2) {
+		ctf_ipc_t *ipct;
+		ipct = ctf_ipc_lkup(kcih, &ipc_entry, ipver == 6);
+		*(uint32 *)&skb->ctf_pppoe_cb[4] = (uint32)ipct;
+		if (ipct != NULL)
+			ctf_ipc_release(kcih, ipct);
+	}
+#endif
 
 	/* Update the attributes flag to indicate a CTF conn */
 	ct->ctf_flags |= (CTF_FLAGS_CACHED | (1 << dir));
@@ -549,8 +465,7 @@ ip_conntrack_ipct_delete(struct nf_conn *ct, int ct_timeout)
 		 */
 		if (ipct != NULL) {
 #ifdef BCMFA
-			if (ctf_fa_live(kcih, ipct, v6))
-				ipct->live = 1;
+			ctf_live(kcih, ipct, v6);
 #endif
 			if (ipct->live > 0) {
 				ipct->live = 0;
@@ -566,8 +481,7 @@ ip_conntrack_ipct_delete(struct nf_conn *ct, int ct_timeout)
 
 		if (ipct != NULL) {
 #ifdef BCMFA
-			if (ctf_fa_live(kcih, ipct, v6))
-				ipct->live = 1;
+			ctf_live(kcih, ipct, v6);
 #endif
 			if (ipct->live > 0) {
 				ipct->live = 0;

@@ -130,7 +130,7 @@ function setScenerion(mode){
 		$j("#Internet_span").css("display", "block");
 		$j("#ap-line").css("display", "none");
 		$j("#AP").html("<#Device_type_02_RT#>");
-		$j("#mode_desc").html("<#OP_RE_desc#>");
+		$j("#mode_desc").html("<#OP_RE_desc#><br/><span style=\"color:#FC0\"><#deviceDiscorvy2#></span>");
 		$j("#nextButton").attr("value","<#CTL_next#>");
 		clearTimeout(id_WANunplungHint);
 	}
@@ -143,7 +143,7 @@ function setScenerion(mode){
 		$j("#Internet_span").css("display", "block");
 		$j("#ap-line").css("display", "none");
 		$j("#AP").html("<#Device_type_02_RT#>");
-		$j("#mode_desc").html("<#OP_AP_desc#><br/><span style=\"color:#FC0\"><#deviceDiscorvy#></span>");
+		$j("#mode_desc").html("<#OP_AP_desc#><br/><span style=\"color:#FC0\"><#deviceDiscorvy3#></span>");
 		$j("#nextButton").attr("value","<#CTL_next#>");
 		clearTimeout(id_WANunplungHint);
 	}

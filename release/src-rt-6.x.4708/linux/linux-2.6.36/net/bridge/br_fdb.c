@@ -45,13 +45,11 @@ br_brc_init(ctf_brc_t *brc, unsigned char *ea, struct net_device *rxdev)
 
         if (rxdev->priv_flags & IFF_802_1Q_VLAN) {
 		brc->txifp = (void *)vlan_dev_real_dev(rxdev);
-		brc->txvifp = (void *)rxdev;
 		brc->vid = vlan_dev_vlan_id(rxdev);
 		brc->action = ((vlan_dev_vlan_flags(rxdev) & 1) ?
 		                     CTF_ACTION_TAG : CTF_ACTION_UNTAG);
 	} else {
 		brc->txifp = (void *)rxdev;
-		brc->txvifp = NULL;
 		brc->action = CTF_ACTION_UNTAG;
 	}
 
@@ -535,12 +533,13 @@ void BCMFASTPATH_HOST br_fdb_update(struct net_bridge *br, struct net_bridge_por
 		} else {
 			/* fastpath: update of existing entry */
 #ifdef HNDCTF
-			/* Update the brc entry incase the host moved from
+			/* Add the entry if the addr is new, or
+			 * update the brc entry incase the host moved from
 			 * one bridge to another or to a different port under
 			 * the same bridge.
 			 */
 			if (source->state == BR_STATE_FORWARDING)
-				br_brc_update((unsigned char *)addr, source->dev);
+				br_brc_add((unsigned char *)addr, source->dev);
 #endif /* HNDCTF */
 
 			fdb->dst = source;

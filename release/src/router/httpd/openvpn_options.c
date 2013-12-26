@@ -386,7 +386,10 @@ add_option (char *p[], int line, int unit)
 	if  (streq (p[0], "dev") && p[1])
 	{
 		sprintf(buf, "vpn_client%d_if", unit);
-		nvram_set(buf, p[1]);
+		if(!strncmp(p[1], "tun", 3))
+			nvram_set(buf, "tun");
+		else if(!strncmp(p[1], "tap", 3))
+			nvram_set(buf, "tap");
 	}
 	else if  (streq (p[0], "proto") && p[1])
 	{
@@ -512,6 +515,11 @@ add_option (char *p[], int line, int unit)
 		sprintf(buf, "vpn_client%d_tlsremote", unit);
 		nvram_set(buf, "1");
 		sprintf(buf, "vpn_client%d_cn", unit);
+		nvram_set(buf, p[1]);
+	}
+	else if (streq (p[0], "key-direction") && p[1])
+	{
+		sprintf(buf, "vpn_client%d_hmac", unit);
 		nvram_set(buf, p[1]);
 	}
 	// These are already added by us

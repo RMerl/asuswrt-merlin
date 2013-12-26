@@ -85,8 +85,6 @@ var simply_client_mac = smac[0] + smac[1] + smac[2] + smac[3] + smac[4] + smac[5
 var wl_maclist_x_array = '<% nvram_get("wl_maclist_x"); %>';
 
 function initial(){
-	$('pull_arrow').title = Untranslated.select_wireless_MAC;
-	$('enable_macfilter').innerHTML = Untranslated.enable_macmode;
 	show_menu();
 	if((sw_mode == 2 || sw_mode == 4) && '<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>'){
 		for(var i=3; i>=3; i--)
@@ -345,7 +343,6 @@ function enable_macMode(){
 		<!--===================================Beginning of Main Content===========================================-->
 <input type="hidden" name="current_page" value="Advanced_ACL_Content.asp">
 <input type="hidden" name="next_page" value="Advanced_ACL_Content.asp">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply_new">
 <input type="hidden" name="action_wait" value="3">
@@ -391,7 +388,7 @@ function enable_macMode(){
 							<td colspan="2" style="color:#FFCC00;height:30px;" align="center"><#page_not_support_mode_hint#></td>
 					  </tr>
 						<tr>
-							<th width="30%" id="enable_macfilter"></th>
+							<th width="30%"><#enable_macmode#></th>
 							<td>
 								<input type="radio" name="enable_mac" value="0" onclick="enable_macMode();"><#checkbox_Yes#>
 								<input type="radio" name="enable_mac" value="1" onclick="enable_macMode();"><#checkbox_No#>
@@ -418,12 +415,12 @@ function enable_macMode(){
 							<tr>
 								<th width="40%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);"><#FirewallConfig_MFList_groupitemname#></th> 
 								<th width="40%">Name</th>
-								<th width="20%">Add / Delete</th>
+								<th width="20%"><#list_add_delete#></th>
 							</tr>
 							<tr>
 								<td width="40%">
 									<input type="text" maxlength="17" class="input_macaddr_table" name="wl_maclist_x_0" onKeyPress="return is_hwaddr(this,event)" onClick="hideClients_Block();">
-									<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;display:none;" onclick="pullWLMACList(this);" title="" onmouseover="over_var=1;" onmouseout="over_var=0;">
+									<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;display:none;" onclick="pullWLMACList(this);" title="<#select_wireless_MAC#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
 									<div id="WL_MAC_List_Block" class="WL_MAC_Block"></div>
 					              		</td>
 								<td width="40%">

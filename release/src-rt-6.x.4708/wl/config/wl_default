@@ -20,8 +20,6 @@
 
 # wl driver base
 WL=1
-# bcm dbg
-#DEBUG=1
 
 # features
 WLLED=1
@@ -58,3 +56,4 @@ LINUX_CRYPTO=0
 #endif
 PPR_API=1
 WLTXBF=1
+WLOBSSPROT=1

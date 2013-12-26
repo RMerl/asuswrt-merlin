@@ -65,7 +65,6 @@ var vts_rulelist_array = "<% nvram_char_to_ascii("","vts_rulelist"); %>";
 var ctf_disable = '<% nvram_get("ctf_disable"); %>';
 
 function initial(){
-	$('pull_arrow').title = Untranslated.select_IP;
 	show_menu();
 	loadAppOptions();
 	loadGameOptions();
@@ -531,7 +530,6 @@ function changeBgColor(obj, num){
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
 <input type="hidden" name="current_page" value="Advanced_VirtualServer_Content.asp">
 <input type="hidden" name="next_page" value="Advanced_VirtualServer_Content.asp">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_wait" value="5">
 <input type="hidden" name="action_mode" value="apply">
@@ -628,7 +626,7 @@ function changeBgColor(obj, num){
             		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,25);"><#IPConnection_VServerIP_itemname#></a></th>
             		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,26);"><#IPConnection_VServerLPort_itemname#></a></th>
             		<th><#IPConnection_VServerProto_itemname#></th>
-								<th>Add / Delete</th>
+								<th><#list_add_delete#></th>
           		</tr>  
           		        
           		<tr>
@@ -640,7 +638,7 @@ function changeBgColor(obj, num){
 				</td>
 				<td width="21%">
 					<input type="text" maxlength="15" class="input_15_table" name="vts_ipaddr_x_0" align="left" onkeypress="return is_ipaddr(this, event)" style="float:left;"/ autocomplete="off" onblur="if(!over_var){hideClients_Block();}" onClick="hideClients_Block();">
-					<img id="pull_arrow" height="14px;" src="images/arrow-down.gif" align="right" onclick="pullLANIPList(this);" title="" onmouseover="over_var=1;" onmouseout="over_var=0;">
+					<img id="pull_arrow" height="14px;" src="images/arrow-down.gif" align="right" onclick="pullLANIPList(this);" title="<#select_IP#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
 					<div id="ClientList_Block" class="ClientList_Block"></div>
 				</td>
 				<td width="10%">

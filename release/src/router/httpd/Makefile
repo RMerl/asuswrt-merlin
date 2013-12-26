@@ -11,11 +11,19 @@ CFLAGS += -I$(TOP)/shared/sysdeps/ralink -I$(TOP)/wireless_tools
 endif
 
 ifeq ($(RTN14U),y)
-CFLAGS += -DRTN14U
+CFLAGS += -DBAND_2G_ONLY -DRTN14U
 endif
 
 ifeq ($(RTAC52U),y)
 CFLAGS += -DRTAC52U
+endif
+
+ifeq ($(RTAC51U),y)
+CFLAGS += -DRTAC51U
+endif
+
+ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U),y)
+CFLAGS += -DRA_ESW
 endif
 
 ifeq ($(RTN65U),y)
@@ -59,7 +67,7 @@ LIBS = -L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared
 ifeq ($(RTCONFIG_PUSH_EMAIL),y)
 LIBS += -L$(TOP)/openssl -lcrypto -lssl
 LIBS += -L$(TOP)/curl-7.21.7/lib/.libs -lcurl
-LIBS += -L$(TOP)/libxml2/.libs -lxml2 -lpthread
+LIBS += -L$(TOP)/libxml2/.libs -lxml2
 LIBS += -L$(TOP)/wb -lws
 LIBS += -L$(TOP)/push_log -lpush_log
 endif

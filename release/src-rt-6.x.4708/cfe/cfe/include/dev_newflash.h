@@ -311,7 +311,7 @@ typedef struct flashinstr_s {		/* must match offsets above */
  */
 
 typedef struct newflash_part_t {
-    int fp_size;
+    fl_size_t fp_size;
     char *fp_name;
 } newflash_part_t;
 #define FLASH_MAX_PARTITIONS	8
@@ -357,8 +357,8 @@ typedef struct flashdev_s flashdev_t;
 
 typedef struct flashpart_s {
     flashdev_t *fp_dev;
-    int fp_offset;
-    int fp_size;
+    fl_offset_t fp_offset;
+    fl_size_t fp_size;
 } flashpart_t;
 
 #define FLASH_MAX_CFIDATA	256	/* total size of CFI Data */

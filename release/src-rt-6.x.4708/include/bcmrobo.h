@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmrobo.h 414031 2013-07-23 10:54:51Z $
+ * $Id: bcmrobo.h 427480 2013-10-03 19:09:47Z $
  */
 
 #ifndef _bcm_robo_h_
@@ -162,6 +162,7 @@ extern void bcm_robo_detach(robo_info_t *robo);
 extern int bcm_robo_enable_device(robo_info_t *robo);
 extern int bcm_robo_config_vlan(robo_info_t *robo, uint8 *mac_addr);
 extern int bcm_robo_enable_switch(robo_info_t *robo);
+extern int bcm_robo_flow_control(robo_info_t *robo, bool set);
 
 #ifdef BCMDBG
 extern void robo_dump_regs(robo_info_t *robo, struct bcmstrbuf *b);
@@ -177,6 +178,7 @@ extern void robo_plc_hw_init(robo_info_t *robo);
 #ifdef BCMFA
 extern void robo_fa_aux_init(robo_info_t *robo);
 extern void robo_fa_aux_enable(robo_info_t *robo, bool enable);
+extern void robo_fa_enable(robo_info_t *robo, bool on, bool bhdr);
 #endif
 
 #endif /* _bcm_robo_h_ */

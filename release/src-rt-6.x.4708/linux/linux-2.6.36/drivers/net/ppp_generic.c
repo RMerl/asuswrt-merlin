@@ -58,7 +58,6 @@
 #ifdef HNDCTF
 #define TYPEDEF_INT32
 #include <ctf/hndctf.h>
-#include <linux/if_pppox.h>
 #endif
 
 #define PPP_VERSION	"2.4.2"
@@ -100,10 +99,6 @@ struct ppp_file {
 #define PF_TO_PPP(pf)		PF_TO_X(pf, struct ppp)
 #define PF_TO_CHANNEL(pf)	PF_TO_X(pf, struct channel)
 #define ROUNDUP(n, x)          (((n) + (x) - 1) / (x))
-
-#ifdef HNDCTF 
-typedef struct channel channel_t;
-#endif
 
 /*
  * Data structure describing one ppp unit.
@@ -149,9 +144,6 @@ struct ppp {
 	unsigned pass_len, active_len;
 #endif /* CONFIG_PPP_FILTER */
 	struct net	*ppp_net;	/* the net we belong to */
-#ifdef HNDCTF
-	channel_t               *ctfpch;
-#endif
 };
 
 /*
@@ -2808,9 +2800,6 @@ ppp_connect_channel(struct channel *pch, int unit)
 	list_add_tail(&pch->clist, &ppp->channels);
 	++ppp->n_channels;
 	pch->ppp = ppp;
-#ifdef HNDCTF
-        ppp->ctfpch = pch;
-#endif
 	atomic_inc(&ppp->file.refcnt);
 	ppp_unlock(ppp);
 	ret = 0;
@@ -2963,64 +2952,8 @@ ppp_txstats_upd(void *pppif, struct sk_buff *skb)
 	ppp->last_xmit = jiffies;
 }
 
-int
-ppp_get_conn_pkt_info(void *pppif, struct ctf_ppp *ctfppp){
-	struct pppox_sock *po = NULL;
-	struct asyncppp *ap = NULL;
-	struct sock *sk = NULL;
-	struct ppp *ppp = NULL;
-	struct channel *pch = NULL;
-	struct ppp_net *pn;
-
-	ppp = (struct ppp *)netdev_priv((const struct net_device *)pppif);
-	if(ppp) pch = ppp->ctfpch;
-
-	if (pch == NULL){
-		printk("pch ==NULL.\n");
-		return (BCME_ERROR);
-	}
-
-	po = pppox_sk((struct sock *)pch->chan->private);
-	ap = (struct asyncppp *)pch->chan->private;
-
-	if(ap && ap->tty)
-		return (BCME_ERROR);
-
-	if (po == NULL){
-		return (BCME_ERROR);
-	}
-	ctfppp->psk.po = po;
-
-	sk = po->chan.private;
-	if(sk /*&& sizeof(sk) > sizeof(struct sock_common)*/){
-		ctfppp->psk.pppox_protocol = sk->sk_protocol;
-		switch (sk->sk_protocol){
-		case PX_PROTO_OE:
-			ctfppp->pppox_id = po->pppoe_pa.sid;
-			memcpy(ctfppp->psk.dhost.octet , po->pppoe_pa.remote, ETH_ALEN);
-
-#ifdef DEBUG
-		printk("%s: Adding ppp connection:  session ID =%04x, Address=%02x:%02x:%02x:%02x:%02x:%02x.\n",
-			__FUNCTION__,ntohs(ctfppp->pppox_id),
-				ctfppp->psk.dhost.octet[0], ctfppp->psk.dhost.octet[1],
-				ctfppp->psk.dhost.octet[2], ctfppp->psk.dhost.octet[3],
-				ctfppp->psk.dhost.octet[4], ctfppp->psk.dhost.octet[5]);
-#endif /*DEBUG*/
-			break;
-		default:
-			return (BCME_ERROR);
-		}
-	}
-	else{
-		return (BCME_ERROR);
-	}
-	return (BCME_OK);
-
-}
-
 EXPORT_SYMBOL(ppp_rxstats_upd);
 EXPORT_SYMBOL(ppp_txstats_upd);
-EXPORT_SYMBOL(ppp_get_conn_pkt_info);
 
 #endif /* CTF_PPPOE */
 

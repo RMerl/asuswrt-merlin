@@ -112,7 +112,6 @@ static int notify_rc_internal(const char *event_name, bool do_wait, int wait)
 {
 	int i;
 	char p2[16];
-	int got_right = 1;
 
 	if (!event_name || wait < 0)
 		return -1;

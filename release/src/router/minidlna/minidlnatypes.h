@@ -31,21 +31,24 @@
 
 #include "config.h"
 #include "clients.h"
-//#include <netinet/in.h>
 #include <time.h>
 #include <fcntl.h>
 
+#define MAX_LAN_ADDR 4
 /* structure for storing lan addresses
  * with ascii representation and mask */
 struct lan_addr_s {
 	char str[16];	/* example: 192.168.0.1 */
-	struct in_addr addr, mask;	/* ip/mask */
+	struct in_addr addr;	/* ip */
+	struct in_addr mask;	/* netmask */
+	int snotify;	/* notify socket */
 };
 
 struct runtime_vars_s {
 	int port;	/* HTTP Port */
 	int notify_interval;	/* seconds between SSDP announces */
 	char *root_container;	/* root ObjectID (instead of "0") */
+	char *ifaces[MAX_LAN_ADDR];	/* list of configured network interfaces */
 };
 
 struct string_s {

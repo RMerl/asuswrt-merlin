@@ -44,11 +44,6 @@
 #include <sqlite3.h>
 #endif
 
-#include <stdarg.h>
-
-#include <curl/curl.h>
-#include <openssl/md5.h>
-
 //#include "sql.h"
 /*
 #if defined(HAVE_LIBXML_H) && defined(HAVE_SQLITE3_H) && defined(HAVE_UUID_UUID_H)
@@ -113,7 +108,6 @@ typedef struct {
 	unsigned short log_xml;
 
 	buffer *sqlite_db_name;
-	array  *alias_url;
 #ifdef USE_PROPPATCH
 	sqlite3 *sql;
 	sqlite3_stmt *stmt_update_prop;
@@ -149,7 +143,6 @@ typedef struct {
 	buffer *minidlna_db_dir;
 	buffer *minidlna_db_file;
 	buffer *minidlna_media_dir;
-	buffer *mnt_path;
 	
 } plugin_data;
 
@@ -175,8 +168,7 @@ INIT_FUNC(mod_webdav_init) {
 	p->minidlna_db_dir = buffer_init();
 	p->minidlna_db_file = buffer_init();
 	p->minidlna_media_dir = buffer_init();
-	p->mnt_path = buffer_init();
-	
+		
 	return p;
 }
 
@@ -195,7 +187,6 @@ FREE_FUNC(mod_webdav_free) {
 
 			if (!s) continue;
 
-			array_free(s->alias_url);
 			buffer_free(s->sqlite_db_name);
 #ifdef USE_PROPPATCH
 			if (s->sql) {
@@ -236,8 +227,7 @@ FREE_FUNC(mod_webdav_free) {
 	buffer_free(p->minidlna_db_dir);
 	buffer_free(p->minidlna_db_file);
 	buffer_free(p->minidlna_media_dir);
-	buffer_free(p->mnt_path);
-	
+		
 	free(p);
 
 	return HANDLER_GO_ON;
@@ -248,13 +238,11 @@ SETDEFAULTS_FUNC(mod_webdav_set_defaults) {
 	plugin_data *p = p_d;
 	size_t i = 0;
 
-	config_values_t cv[] = {		
+	config_values_t cv[] = {
 		{ "webdav.activate",            NULL, T_CONFIG_BOOLEAN, T_CONFIG_SCOPE_CONNECTION },       /* 0 */
 		{ "webdav.is-readonly",         NULL, T_CONFIG_BOOLEAN, T_CONFIG_SCOPE_CONNECTION },       /* 1 */
 		{ "webdav.sqlite-db-name",      NULL, T_CONFIG_STRING,  T_CONFIG_SCOPE_CONNECTION },       /* 2 */
 		{ "webdav.log-xml",             NULL, T_CONFIG_BOOLEAN, T_CONFIG_SCOPE_CONNECTION },       /* 3 */
-		{ "alias.url",                  NULL, T_CONFIG_ARRAY, T_CONFIG_SCOPE_CONNECTION },         /* 4 */
-		
 		{ NULL,                         NULL, T_CONFIG_UNSET, T_CONFIG_SCOPE_UNSET }
 	};
 
@@ -267,39 +255,17 @@ SETDEFAULTS_FUNC(mod_webdav_set_defaults) {
 
 		s = calloc(1, sizeof(plugin_config));
 		s->sqlite_db_name = buffer_init();
-		s->alias_url = array_init();
-		
+
 		cv[0].destination = &(s->enabled);
 		cv[1].destination = &(s->is_readonly);
 		cv[2].destination = s->sqlite_db_name;
 		cv[3].destination = &(s->log_xml);
-		cv[4].destination = s->alias_url;
-		
+
 		p->config_storage[i] = s;
 		
 		if (0 != config_insert_values_global(srv, ((data_config *)srv->config_context->data[i])->value, cv)) {
 			return HANDLER_ERROR;
 		}
-
-#if EMBEDDED_EANBLE
-		char *usbdiskname = nvram_get_productid();
-#else
-		char *usbdiskname = "usbdisk";
-#endif
-		for (size_t j = 0; j < s->alias_url->used; j++) {
-			data_string *ds = (data_string *)s->alias_url->data[j];
-			if(strstr(ds->key->ptr, usbdiskname)!=NULL){	
-				buffer_copy_string_buffer(p->mnt_path, ds->value);
-				
-				if(strcmp( p->mnt_path->ptr + (p->mnt_path->used -1 ), "/" )!=0)
-					buffer_append_string(p->mnt_path, "/");
-			}
-		}
-#if EMBEDDED_EANBLE
-#ifdef APP_IPKG
-		free(usbdiskname);
-#endif
-#endif
 
 		if (!buffer_is_empty(s->sqlite_db_name)) {
 #ifdef USE_PROPPATCH
@@ -573,79 +539,6 @@ URIHANDLER_FUNC(mod_webdav_uri_handler) {
 
 	/* not found */
 	return HANDLER_GO_ON;
-}
-
-size_t static curl_write_callback_func(void *ptr, size_t size, size_t count, void *stream)
-{
-   	/* ptr - your string variable.
-     	stream - data chuck you received */
-	char **response_ptr =  (char**)stream;
-
-    /* assuming the response is a string */
-    *response_ptr = strndup(ptr, (size_t)(size *count));
-	
-  	//printf("%.*s", size, (char*)stream));
-   	//Cdbg(1, "callback_func.... %s", (char*)ptr);
-}
-
-/* md5sum:
- * Concatenates a series of strings together then generates an md5
- * message digest. Writes the result directly into 'output', which
- * MUST be large enough to accept the result. (Size ==
- * 128 + null terminator.)
- */
-char secret[100] = "804b51d14d840d6e";
-/* sprint_hex:
- * print a long hex value into a string buffer. This function will
- * write 'len' bytes of data from 'char_buf' into 2*len bytes of space
- * in 'output'. (Each hex value is 4 bytes.) Space in output must be
- * pre-allocated. */
-void sprint_hex(char* output, unsigned char* char_buf, int len)
-{
-	int i;
-	for (i=0; i < len; i++) {
-		sprintf(output + i*2, "%02x", char_buf[i]);
-	}
-}
-
-void md5sum(char* output, int counter, ...)
-{
-	va_list argp;
-	unsigned char temp[MD5_DIGEST_LENGTH];
-	char* md5_string;
-	int full_len;
-	int i, str_len;
-	int buffer_size = 10;
-
-	md5_string = (char*)malloc(buffer_size);
-	md5_string[0] = '\0';
-
-	full_len = 0;
-	va_start(argp, secret);
-	for (i = 0; i < counter; i++) {
-		char* string = va_arg(argp, char*);
-		int len = strlen(string);
-
-		/* If the buffer is not large enough, expand until it is. */
-		while (len + full_len > buffer_size - 1) {
-			buffer_size += buffer_size;
-			md5_string = realloc(md5_string, buffer_size);
-		}
-
-		strncat(md5_string, string, len);
-
-		full_len += len;
-		md5_string[full_len] = '\0';
-	}
-	va_end(argp);
-
-	str_len = strlen(md5_string);
-	MD5((const unsigned char*)md5_string, (unsigned int)str_len, temp);
-
-	free(md5_string);
-
-	sprint_hex(output, temp, MD5_DIGEST_LENGTH);	
-	output[129] = '\0';
 }
 
 static int get_minidlna_db_path(plugin_data *p){
@@ -1319,13 +1212,12 @@ static int webdav_get_live_property(server *srv, connection *con, plugin_data *p
 			
 			int permission = -1;
 		#if EMBEDDED_EANBLE
+			char mnt_path[5] = "/mnt/";
+			int mlen = 5;			
+
 			char* usbdisk_rel_sub_path = NULL;
 			char* usbdisk_sub_share_folder = NULL;
-			smbc_parse_mnt_path(dst->path->ptr, 
-				                p->mnt_path->ptr, 
-				                p->mnt_path->used-1, 
-				                &usbdisk_rel_sub_path, 
-				                &usbdisk_sub_share_folder);
+			smbc_parse_mnt_path(dst->path->ptr, mnt_path, mlen, &usbdisk_rel_sub_path, &usbdisk_sub_share_folder);
 			
 			permission = smbc_get_usbdisk_permission(con->aidisk_username->ptr, usbdisk_rel_sub_path, usbdisk_sub_share_folder);
 	
@@ -1426,15 +1318,12 @@ static int webdav_get_live_property(server *srv, connection *con, plugin_data *p
 					sprintf(sql_query, "SELECT ID, TITLE, SIZE, TIMESTAMP, THUMBNAIL, RESOLUTION, CREATOR, ARTIST, MIME, ALBUM, ALBUM_ART from DETAILS");
 
 					#if EMBEDDED_EANBLE
-					if (0 == strcmp(dst->path->ptr, "/tmp"))
-						sprintf(sql_query, "%s WHERE PATH = '%s'", sql_query, dst->path->ptr);
-					else
-						sprintf(sql_query, "%s WHERE PATH = '/tmp%s'", sql_query, dst->path->ptr);
+					sprintf(sql_query, "%s WHERE PATH = '/%s%s'", sql_query, "tmp", dst->path->ptr);
 					#else
 					sprintf(sql_query, "%s WHERE PATH = '%s'", sql_query, dst->path->ptr);
 					#endif
 					
-					Cdbg(DBE, "sql_query=%s", sql_query);
+					//Cdbg(DBE, "sql_query=%s", sql_query);
 
 					if( sql_get_table(sql_minidlna, sql_query, &result, &rows, NULL) == SQLITE_OK ){
 						if( rows ){
@@ -2160,15 +2049,13 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
         strcat(usbdisk_path, productid);
         free(productid);
 		#endif
+		char mnt_path[5] = "/mnt/";
+		int mlen = 5;
 		char* usbdisk_rel_path=NULL;
 		char* usbdisk_share_folder=NULL;
 		int qry_type=0;
 		
-		smbc_parse_mnt_path(con->physical.path->ptr, 
-						    p->mnt_path->ptr, 
-						    p->mnt_path->used-1, 
-						    &usbdisk_rel_path, 
-						    &usbdisk_share_folder);
+		smbc_parse_mnt_path(con->physical.path->ptr, mnt_path, mlen, &usbdisk_rel_path, &usbdisk_share_folder);
 		
 		if(usbdisk_share_folder!=NULL){
 			
@@ -2311,11 +2198,7 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 					int permission = -1;
 					char* usbdisk_rel_sub_path = NULL;
 					char* usbdisk_sub_share_folder = NULL;
-					smbc_parse_mnt_path(d.path->ptr, 
-										p->mnt_path->ptr, 
-										p->mnt_path->used-1, 
-										&usbdisk_rel_sub_path, 
-										&usbdisk_sub_share_folder);
+					smbc_parse_mnt_path(d.path->ptr, mnt_path, mlen, &usbdisk_rel_sub_path, &usbdisk_sub_share_folder);
 					
 					if( usbdisk_sub_share_folder != NULL ){						
 						permission = smbc_get_usbdisk_permission(con->aidisk_username->ptr, usbdisk_rel_sub_path, usbdisk_sub_share_folder);
@@ -3815,22 +3698,17 @@ propmatch_cleanup:
 
 		int dms_enable = is_dms_enabled();
 
-		if(buffer_is_empty(srv->srvconf.aicloud_version)){
-			//- Parser version file
-			FILE* fp2;
-			char line[128];
-			if((fp2 = fopen(aicloud_version_file, "r")) != NULL){
-				memset(line, 0, sizeof(line));
-				while(fgets(line, 128, fp2) != NULL){
-					if(strncmp(line, "Version:", 8)==0){
-						strncpy(aicloud_version, line + 9, strlen(line)-8);
-					}
+		//- Parser version file
+		FILE* fp2;
+		char line[128];
+		if((fp2 = fopen(aicloud_version_file, "r")) != NULL){
+			memset(line, 0, sizeof(line));
+			while(fgets(line, 128, fp2) != NULL){
+				if(strncmp(line, "Version:", 8)==0){
+					strncpy(aicloud_version, line + 9, strlen(line)-8);
 				}
-				fclose(fp2);
 			}
-		}
-		else{
-			strcpy(aicloud_version, srv->srvconf.aicloud_version->ptr);
+			fclose(fp2);
 		}
 					
 #ifndef APP_IPKG
@@ -3838,9 +3716,9 @@ propmatch_cleanup:
 			strcpy(aicloud_version, swpjverno);
 			if(extendno!=NULL && strncmp(extendno,"", 1)!=0)
 			{
-				strcat(aicloud_version, "_");
-				strcat(aicloud_version, extendno);
-			}
+			strcat(aicloud_version, "_");
+			strcat(aicloud_version, extendno);
+		}
 		}
 #endif
 		con->http_status = 200;
@@ -3910,10 +3788,7 @@ propmatch_cleanup:
 		buffer_append_string_len(b,CONST_STR_LEN("<dms_enable>"));
 		buffer_append_string(b, ((dms_enable==1) ? "1" : "0"));
 		buffer_append_string_len(b,CONST_STR_LEN("</dms_enable>"));
-		buffer_append_string_len(b,CONST_STR_LEN("<app_installation_url>"));
-		buffer_append_string(b, buffer_is_empty(srv->srvconf.app_installation_url) ? "" : srv->srvconf.app_installation_url->ptr);
-		buffer_append_string_len(b,CONST_STR_LEN("</app_installation_url>"));
-		
+				
 		DIR *dir;
 		if (NULL != (dir = opendir(disk_path))) {
 
@@ -5027,9 +4902,9 @@ propmatch_cleanup:
 				strcpy(file_ext, aa);
 				for (int i = 0; file_ext[i]; i++)
 					file_ext[i] = tolower(file_ext[i]);
-				
+
 				if( strcmp(file_ext, "srt")==0 &&
-					strstr(de->d_name, filename->ptr)){
+					strncmp(de->d_name, filename->ptr, strlen(filename->ptr)) == 0 ){
 
 				#if 0
 					#define BUF_LEN 256
@@ -5190,375 +5065,6 @@ propmatch_cleanup:
 		buffer_append_string_len(b,CONST_STR_LEN("</result>"));
 		
 		con->http_status = 200;
-		con->file_finished = 1;
-		return HANDLER_FINISHED;
-	}
-
-	case HTTP_METHOD_UPLOADTOFACEBOOK:{
-		Cdbg(1, "do HTTP_METHOD_UPLOADTOFACEBOOK");
-		
-		buffer* filename;
-		buffer* title;
-		buffer* album;
-		buffer* auth_token;
-		
-		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "FILENAME"))) {
-			filename = ds->value;
-		} else {
-			con->http_status = 400;
-			return HANDLER_FINISHED;
-		}
-
-		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "TITLE"))) {
-			title = ds->value;
-		} else {
-			con->http_status = 400;
-			return HANDLER_FINISHED;
-		}
-		
-		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "TOKEN"))) {
-			auth_token = ds->value;
-		} else {
-			con->http_status = 400;
-			return HANDLER_FINISHED;
-		}
-
-		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "ALBUM"))) {
-			album = ds->value;
-		} else {
-			con->http_status = 400;
-			return HANDLER_FINISHED;
-		}
-		
-		CURL *curl;
-		CURLcode rt;
-		struct curl_httppost *formpost = NULL;
-		struct curl_httppost *lastptr = NULL;
-		char md5[129];
-		char* response_str;
-		char url_upload_facebook[1024] = "\0";
-		curl = curl_easy_init();
-
-		strcpy(url_upload_facebook, "https://graph.facebook.com/");
-		strcat(url_upload_facebook, album->ptr);
-		strcat(url_upload_facebook, "/photos");
-
-		Cdbg(1, "url_upload_facebook=%s", url_upload_facebook);
-		
-		if(curl) {
-			Cdbg(1, "curl_easy_init OK");
-
-			/* Set Host to target in HTTP header, and set response handler
-		 	* function */
-			curl_easy_setopt(curl, CURLOPT_URL, url_upload_facebook);
-
-
-			/* Build the form post */			
-			curl_formadd(&formpost, &lastptr,
-			             CURLFORM_COPYNAME, "access_token",
-			             CURLFORM_COPYCONTENTS, auth_token->ptr, CURLFORM_END);
-
-			curl_formadd(&formpost, &lastptr,
-			             CURLFORM_COPYNAME, "message",
-			             CURLFORM_COPYCONTENTS, title->ptr, CURLFORM_END);
-
-			curl_formadd(&formpost, &lastptr,
-			             CURLFORM_COPYNAME, "status",
-			             CURLFORM_COPYCONTENTS, "success", CURLFORM_END);
-			
-			char photo_path[1024] = "\0";
-			sprintf(photo_path, "%s/%s", con->physical.path->ptr, filename->ptr);
-			Cdbg(1, "photo_path=%s", photo_path);
-			
-			curl_formadd(&formpost, &lastptr,
-			             CURLFORM_COPYNAME, "source",
-			             CURLFORM_FILE, photo_path, CURLFORM_END);
-
-			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
-			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
-
-			curl_easy_setopt(curl, CURLOPT_HTTPPOST, formpost);
-			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_callback_func);
-			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_str);
-			
-			Cdbg(1, "Uploading...");
-			rt = curl_easy_perform(curl);
-
-			#if 1
-			/* now extract transfer info */ 
-			double speed_upload, total_time;
-      		curl_easy_getinfo(curl, CURLINFO_SPEED_UPLOAD, &speed_upload);
-      		curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &total_time);
- 
-      		Cdbg(1, "Speed: %.3f bytes/sec during %.3f seconds, response_str=%s",
-              		speed_upload, total_time, response_str);
-			
-			free(response_str);			
-			#else
-			if (rt) {
-				Cdbg(1, "An error occurred during upload! %s", curl_easy_strerror(rt));
-			}
-			else{
-				/* now extract transfer info */ 
-				double speed_upload, total_time;
-      			curl_easy_getinfo(curl, CURLINFO_SPEED_UPLOAD, &speed_upload);
-      			curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &total_time);
- 
-      			Cdbg(1, "Speed: %.3f bytes/sec during %.3f seconds",
-              		speed_upload, total_time);
-			}
-			#endif
-			
-			/* Done. Cleanup. */ 
-			curl_easy_cleanup(curl);
-			curl_formfree(formpost);
-		}
-		
-		con->http_status = 200;
-		con->file_finished = 1;
-		return HANDLER_FINISHED;
-	}
-	
-	case HTTP_METHOD_UPLOADTOFLICKR:{
-		Cdbg(1, "do HTTP_METHOD_UPLOADTOFLICKR");
-
-		buffer* filename;
-		buffer* title;
-		buffer* auth_token;
-		
-		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "FILENAME"))) {
-			filename = ds->value;
-		} else {
-			con->http_status = 400;
-			return HANDLER_FINISHED;
-		}
-
-		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "TITLE"))) {
-			title = ds->value;
-		} else {
-			con->http_status = 400;
-			return HANDLER_FINISHED;
-		}
-		
-		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "TOKEN"))) {
-			auth_token = ds->value;
-		} else {
-			con->http_status = 400;
-			return HANDLER_FINISHED;
-		}
-#if 0
-		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "PHOTOSET"))) {
-			photoset = ds->value;
-		} else {
-			con->http_status = 400;
-			return HANDLER_FINISHED;
-		}
-#endif		
-		char api_key[100] = "37140360286c5cd9952023fa8b662a64";
-		CURL *curl;
-		CURLcode rt;
-		struct curl_httppost *formpost = NULL;
-		struct curl_httppost *lastptr = NULL;
-		char md5[129];
-		char* response_str;
-		buffer* buffer_photoid = buffer_init();
-		
-		curl = curl_easy_init();
-		if(curl) {
-			Cdbg(1, "curl_easy_init OK");
-
-			/* Set Host to target in HTTP header, and set response handler
-		 	* function */
-			curl_easy_setopt(curl, CURLOPT_URL, "http://api.flickr.com/services/upload/");
-			/* curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L); */
-
-			/*
-			char input_string[1024] = "\0";
-			sprintf(input_string, "api_key%sauth_token%sdescription%stags%stitle%s", api_key, auth_token->ptr, description, tags, title);
-			Cdbg(1, "input_string=%s", input_string);
-			md5String(secret, input_string, md5);	
-			*/
-			
-			md5sum(md5, 7, secret, "api_key", api_key, "auth_token", auth_token->ptr, "title", title->ptr);			
-			Cdbg(1, "md5=%s", md5);
-			
-			/* Build the form post */
-			curl_formadd(&formpost, &lastptr,
-			             CURLFORM_COPYNAME, "api_key",
-			             CURLFORM_COPYCONTENTS, api_key, CURLFORM_END);
-			
-			curl_formadd(&formpost, &lastptr,
-			             CURLFORM_COPYNAME, "auth_token",
-			             CURLFORM_COPYCONTENTS, auth_token->ptr, CURLFORM_END);
-
-			curl_formadd(&formpost, &lastptr,
-			             CURLFORM_COPYNAME, "api_sig",
-			             CURLFORM_COPYCONTENTS, md5, CURLFORM_END);
-			
-			curl_formadd(&formpost, &lastptr,
-			             CURLFORM_COPYNAME, "title",
-			             CURLFORM_COPYCONTENTS, title->ptr, CURLFORM_END);
-
-			char photo_path[1024] = "\0";
-			sprintf(photo_path, "%s/%s", con->physical.path->ptr, filename->ptr);
-			Cdbg(1, "photo_path=%s", photo_path);
-			
-			curl_formadd(&formpost, &lastptr,
-			             CURLFORM_COPYNAME, "photo",
-			             CURLFORM_FILE, photo_path, CURLFORM_END);
-
-			curl_easy_setopt(curl, CURLOPT_HTTPPOST, formpost);
-			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_callback_func);
-			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_str);
-			
-			Cdbg(1, "Uploading...");
-			rt = curl_easy_perform(curl);
-
-			#if 0
-			/* now extract transfer info */ 
-			double speed_upload, total_time;
-      		curl_easy_getinfo(curl, CURLINFO_SPEED_UPLOAD, &speed_upload);
-      		curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &total_time);
- 
-      		Cdbg(1, "Speed: %.3f bytes/sec during %.3f seconds, response_str=%s",
-              		speed_upload, total_time, response_str);
-			#endif
-			
-			xmlDocPtr xml = xmlParseMemory(response_str, strlen(response_str));
-			if(xml){
-				xmlNode *rootnode = xmlDocGetRootElement(xml);
-				
-				if (0 == xmlStrcmp(rootnode->name, BAD_CAST "rsp")) {
-
-					xmlChar *stat = xmlGetProp(rootnode,(const xmlChar*) "stat"); 
-
-					if (0 == xmlStrcmp(stat, BAD_CAST "ok")) {
-						
-						xmlNode *childnode;
-						for (childnode = rootnode->children; childnode; childnode = childnode->next) {
-							if (0 == xmlStrcmp(childnode->name, BAD_CAST "photoid")) {
-								xmlChar *photoid = xmlNodeGetContent(childnode);
-								buffer_copy_string( buffer_photoid, photoid );								
-								break;
-							}
-						}
-					}
-				}
-
-				xmlFreeDoc(xml);
-			}
-
-			free(response_str);
-			
-			/* Done. Cleanup. */ 
-			curl_easy_cleanup(curl);
-			curl_formfree(formpost);
-		}
-
-		if(!buffer_is_empty(buffer_photoid)){
-				
-			Cdbg(1, "buffer_photoid=%s", buffer_photoid->ptr);
-#if 0
-
-			//- set photo to photoset
-			//if(!buffer_is_empty(photoset)){
-			if(buffer_is_empty(photoset)){
-
-				char* response_str2;
-				struct curl_httppost *formpost2 = NULL;
-				struct curl_httppost *lastptr2 = NULL;
-				curl = curl_easy_init();
-				if(curl) {
-					curl_easy_setopt(curl, CURLOPT_URL, "http://api.flickr.com/services/rest/");
-							
-					md5sum(md5, 11, secret, "method", "flickr.photosets.addPhoto", "api_key", api_key, "auth_token", auth_token->ptr, "photoset_id", photoset->ptr, "photo_id", buffer_photoid->ptr); 		
-					Cdbg(1, "md5=%s, photoset=%s", md5, photoset->ptr);
-							
-					/* Build the form post */
-					curl_formadd(&formpost2, &lastptr2,
-								 CURLFORM_COPYNAME, "method",
-								 CURLFORM_COPYCONTENTS, "flickr.photosets.addPhoto", CURLFORM_END);
-					
-					curl_formadd(&formpost2, &lastptr2,
-								 CURLFORM_COPYNAME, "api_key",
-								 CURLFORM_COPYCONTENTS, api_key, CURLFORM_END);
-
-					curl_formadd(&formpost2, &lastptr2,
-								 CURLFORM_COPYNAME, "photoset_id",
-								 CURLFORM_COPYCONTENTS, photoset->ptr, CURLFORM_END);
-
-					curl_formadd(&formpost2, &lastptr2,
-								 CURLFORM_COPYNAME, "photo_id",
-								 CURLFORM_COPYCONTENTS, buffer_photoid->ptr, CURLFORM_END);
-					
-					curl_formadd(&formpost2, &lastptr2,
-								 CURLFORM_COPYNAME, "auth_token",
-								 CURLFORM_COPYCONTENTS, auth_token->ptr, CURLFORM_END);
-				
-					curl_formadd(&formpost2, &lastptr2,
-								 CURLFORM_COPYNAME, "api_sig",
-								 CURLFORM_COPYCONTENTS, md5, CURLFORM_END);
-					
-					curl_easy_setopt(curl, CURLOPT_HTTPPOST, formpost2);
-
-					#if 1
-					rt = curl_easy_perform(curl);
-
-					if (rt) {
-						Cdbg(1, "An error occurred during upload! %s", curl_easy_strerror(rt));
-					}
-					#else
-					curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_callback_func);
-					curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_str2);							
-					Cdbg(1, "2", md5);
-					
-					rt = curl_easy_perform(curl);
-
-					Cdbg(1, "2, response_str2=%s", response_str2);
-					xmlDocPtr xml = xmlParseMemory(response_str2, strlen(response_str2));
-					if(xml){
-						xmlNode *rootnode = xmlDocGetRootElement(xml);
-								
-						if (0 == xmlStrcmp(rootnode->name, BAD_CAST "rsp")) {
-				
-							xmlChar *stat = xmlGetProp(rootnode,(const xmlChar*) "stat"); 
-				
-							if (0 == xmlStrcmp(stat, BAD_CAST "ok")) {
-								Cdbg(1, "set photoset OK...");
-							}
-				
-							xmlFreeDoc(xml);
-						}
-					}
-
-					free(response_str2);
-					#endif
-					
-					/* Done. Cleanup. */ 
-					curl_easy_cleanup(curl);
-					curl_formfree(formpost2);
-				}
-				
-			}
-#endif			
-			response_header_overwrite(srv, con, CONST_STR_LEN("Content-Type"), CONST_STR_LEN("text/xml; charset=\"utf-8\""));
-			
-			b = chunkqueue_get_append_buffer(con->write_queue);
-			
-			buffer_copy_string_len(b, CONST_STR_LEN("<?xml version=\"1.0\" encoding=\"utf-8\"?>"));
-			buffer_append_string_len(b,CONST_STR_LEN("<result>"));
-			buffer_append_string_len(b,CONST_STR_LEN("<photoid>"));
-			buffer_append_string_buffer(b,buffer_photoid);
-			buffer_append_string_len(b,CONST_STR_LEN("</photoid>"));
-			buffer_append_string_len(b,CONST_STR_LEN("</result>"));
-			
-			con->http_status = 200;
-		}
-		else
-			con->http_status = 501;
-
-		buffer_free(buffer_photoid);
-		
 		con->file_finished = 1;
 		return HANDLER_FINISHED;
 	}

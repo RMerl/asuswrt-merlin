@@ -28,24 +28,12 @@
 #include <idna.h>
 #endif
 
-#ifdef HAVE_ARC4RANDOM
-void rand_init(void)
-{
-  return;
-}
-
-unsigned short rand16(void)
-{
-   return (unsigned short) (arc4random() >> 15);
-}
-
-#else
-
 /* SURF random number generator */
 
 static u32 seed[32];
 static u32 in[12];
 static u32 out[8];
+static int outleft = 0;
 
 void rand_init()
 {
@@ -83,18 +71,31 @@ static void surf(void)
 
 unsigned short rand16(void)
 {
-  static int outleft = 0;
-
-  if (!outleft) {
-    if (!++in[0]) if (!++in[1]) if (!++in[2]) ++in[3];
-    surf();
-    outleft = 8;
-  }
-
+  if (!outleft) 
+    {
+      if (!++in[0]) if (!++in[1]) if (!++in[2]) ++in[3];
+      surf();
+      outleft = 8;
+    }
+  
   return (unsigned short) out[--outleft];
 }
 
-#endif
+u64 rand64(void)
+{
+  static int outleft = 0;
+
+  if (outleft < 2)
+    {
+      if (!++in[0]) if (!++in[1]) if (!++in[2]) ++in[3];
+      surf();
+      outleft = 8;
+    }
+  
+  outleft -= 2;
+
+  return (u64)out[outleft+1] + (((u64)out[outleft]) << 32);
+}
 
 static int check_name(char *in)
 {
@@ -457,7 +458,7 @@ int parse_hex(char *in, unsigned char *out, int maxlen,
 		  int j, bytes = (1 + (r - in))/2;
 		  for (j = 0; j < bytes; j++)
 		    { 
-		      char sav;
+		      char sav = sav;
 		      if (j < bytes - 1)
 			{
 			  sav = in[(j+1)*2];

@@ -32,7 +32,7 @@ int network_write_chunkqueue_write(server *srv, connection *con, int fd, chunkqu
 	chunk *c;
 	size_t chunks_written = 0;
 	fprintf(stderr,"network_write_chunkqueue_write");
-	
+
 	for(c = cq->first; c; c = c->next) {
 		int chunk_finished = 0;
 

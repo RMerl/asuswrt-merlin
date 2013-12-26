@@ -236,7 +236,7 @@ BCMINITFN(nand_find_nvram)(hndnand_t *nfl, uint32 off)
 	int rlen = sizeof(nand_nvh);
 	int len;
 
-	for (; off < NFL_BOOT_SIZE; off += blocksize) {
+	for (; off < nfl_boot_size(nfl); off += blocksize) {
 		if (hndnand_checkbadb(nfl, off) != 0)
 			continue;
 
@@ -305,7 +305,7 @@ BCMINITFN(find_nvram)(si_t *sih, bool embonly, bool *isemb)
 
 			blocksize = nfl_info->blocksize;
 			off = blocksize;
-			for (; off < NFL_BOOT_SIZE; off += blocksize) {
+			for (; off < nfl_boot_size(nfl_info); off += blocksize) {
 				if (hndnand_checkbadb(nfl_info, off) != 0)
 					continue;
 				nvh = (struct nvram_header *)OSL_UNCACHED(flbase + off);

@@ -630,7 +630,7 @@ function manualSetup(){
 
 <tr id=dualwan_row_primary style="display:none">
     <td style="padding:5px 10px 5px 15px;">
-    		<p class="formfonttitle_nwm">WAN Type</p>
+    		<p class="formfonttitle_nwm"><#wan_type#></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="dualwan_primary_if"></p>
       	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
     </td>
@@ -638,7 +638,7 @@ function manualSetup(){
 
 <tr id=dualwan_row_secondary style="display:none">
     <td style="padding:5px 10px 5px 15px;">
-    		<p class="formfonttitle_nwm">WAN Type</p>
+    		<p class="formfonttitle_nwm"><#wan_type#></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="dualwan_secondary_if"></p>
       	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
     </td>

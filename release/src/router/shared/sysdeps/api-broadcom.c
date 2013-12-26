@@ -66,15 +66,48 @@ uint32_t set_gpio(uint32_t gpio, uint32_t value)
 	return 0;
 }
 
-int get_switch_model(void)
+#ifdef RTCONFIG_BCMFA
+int get_fa_rev(void)
 {
-	int fd, devid;
+	int fd, rev, ret;
 	struct ifreq ifr;
 	et_var_t var;
 
 	fd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (fd < 0) goto skip;
 
+	rev = 0;
+	var.set = 0;
+	var.cmd = IOV_FA_REV;
+	var.buf = &rev;
+	var.len = sizeof(rev);
+
+	memset(&ifr, 0, sizeof(ifr));
+	strcpy(ifr.ifr_name, "eth0");
+	ifr.ifr_data = (caddr_t) &var;
+
+	ret = ioctl(fd, SIOCSETGETVAR, (caddr_t)&ifr);
+	close(fd);
+	if (ret < 0)
+		goto skip;
+
+	return rev;
+
+skip:
+	return 0;
+}
+#endif
+
+int get_switch_model(void)
+{
+	int fd, devid, ret;
+	struct ifreq ifr;
+	et_var_t var;
+
+	fd = socket(AF_INET, SOCK_DGRAM, 0);
+	if (fd < 0) goto skip;
+
+	devid = 0;
 	var.set = 0;
 	var.cmd = IOV_ET_ROBO_DEVID;
 	var.buf = &devid;
@@ -84,7 +117,9 @@ int get_switch_model(void)
 	strcpy(ifr.ifr_name, "eth0"); // is it always the same?
 	ifr.ifr_data = (caddr_t) &var;
 
-	if (ioctl(fd, SIOCSETGETVAR, (caddr_t)&ifr) < 0)
+	ret = ioctl(fd, SIOCSETGETVAR, (caddr_t)&ifr);
+	close(fd);
+	if (ret < 0)
 		goto skip;
 
 	if (devid == 0x25)
@@ -155,7 +190,7 @@ int phy_ioctl(int fd, int write, int phy, int reg, uint32_t *value)
 //  0: disconnected
 uint32_t get_phy_status(uint32_t portmask)
 {
-#define RTN15U_WORKAROUND
+#undef RTN15U_WORKAROUND
 	int fd, i, model;
 	uint32_t value, mask = 0;
 

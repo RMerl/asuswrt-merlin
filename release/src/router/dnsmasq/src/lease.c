@@ -451,15 +451,21 @@ void lease_find_interfaces(time_t now)
   iface_enumerate(AF_INET, &now, find_interface_v4);
 #ifdef HAVE_DHCP6
   iface_enumerate(AF_INET6, &now, find_interface_v6);
+#endif
+}
 
+#ifdef HAVE_DHCP6
+void lease_make_duid(time_t now)
+{
   /* If we're not doing DHCPv6, and there are not v6 leases, don't add the DUID to the database */
-  if (!daemon->duid && daemon->dhcp6)
+  if (!daemon->duid && daemon->doing_dhcp6)
     {
       file_dirty = 1;
       make_duid(now);
     }
-#endif
 }
+#endif
+
 
 
 

@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmotp.c 414820 2013-07-26 05:03:14Z $
+ * $Id: bcmotp.c 434932 2013-11-07 22:15:56Z $
  */
 
 #include <bcm_cfg.h>
@@ -1484,7 +1484,7 @@ BCMNMIATTACHFN(ipxotp_write_bit)(otpinfo_t *oi, chipcregs_t *cc, uint off)
 			OTP_MSG(("Bit already programmed: %d\n", off));
 		}
 	} else {
-		W_REG(oi->osh, &cc->otpcontrol, 0);
+		AND_REG(oi->osh, &cc->otpcontrol, OTPC_PROGEN);
 		W_REG(oi->osh, &cc->otpcontrol1, 0);
 
 		status = ipxotp_write_bit_common(oi, cc, off);

@@ -15,6 +15,24 @@
 
 @SET_MAKE@
 
+# This file is part of MiniDLNA.
+#
+# MiniDLNA is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# MiniDLNA is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public
+# License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with MiniDLNA; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+# USA.
+
+
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
@@ -63,11 +81,11 @@ PROGRAMS = $(sbin_PROGRAMS)
 am_minidlnad_OBJECTS = minidlna.$(OBJEXT) upnphttp.$(OBJEXT) \
 	upnpdescgen.$(OBJEXT) upnpsoap.$(OBJEXT) \
 	upnpreplyparse.$(OBJEXT) minixml.$(OBJEXT) clients.$(OBJEXT) \
-	getifaddr.$(OBJEXT) daemonize.$(OBJEXT) \
-	upnpglobalvars.$(OBJEXT) options.$(OBJEXT) minissdp.$(OBJEXT) \
-	uuid.$(OBJEXT) upnpevents.$(OBJEXT) sql.$(OBJEXT) \
-	utils.$(OBJEXT) metadata.$(OBJEXT) scanner.$(OBJEXT) \
-	inotify.$(OBJEXT) tivo_utils.$(OBJEXT) tivo_beacon.$(OBJEXT) \
+	getifaddr.$(OBJEXT) process.$(OBJEXT) upnpglobalvars.$(OBJEXT) \
+	options.$(OBJEXT) minissdp.$(OBJEXT) uuid.$(OBJEXT) \
+	upnpevents.$(OBJEXT) sql.$(OBJEXT) utils.$(OBJEXT) \
+	metadata.$(OBJEXT) scanner.$(OBJEXT) inotify.$(OBJEXT) \
+	tivo_utils.$(OBJEXT) tivo_beacon.$(OBJEXT) \
 	tivo_commands.$(OBJEXT) textutils.$(OBJEXT) misc.$(OBJEXT) \
 	tagutils.$(OBJEXT) playlist.$(OBJEXT) image_utils.$(OBJEXT) \
 	albumart.$(OBJEXT) log.$(OBJEXT)
@@ -113,6 +131,7 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	install-pdf-recursive install-ps-recursive install-recursive \
 	installcheck-recursive installdirs-recursive pdf-recursive \
 	ps-recursive uninstall-recursive
+DATA = $(noinst_DATA)
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
 AM_RECURSIVE_TARGETS = $(RECURSIVE_TARGETS:-recursive=) \
@@ -290,7 +309,7 @@ AM_CFLAGS = -Wall -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 @STATIC_CFLAGS@
 SUBDIRS = po
 minidlnad_SOURCES = minidlna.c upnphttp.c upnpdescgen.c upnpsoap.c \
 			upnpreplyparse.c minixml.c clients.c \
-			getifaddr.c daemonize.c upnpglobalvars.c \
+			getifaddr.c process.c upnpglobalvars.c \
 			options.c minissdp.c uuid.c upnpevents.c \
 			sql.c utils.c metadata.c scanner.c inotify.c \
 			tivo_utils.c tivo_beacon.c tivo_commands.c \
@@ -327,13 +346,22 @@ testupnpdescgen_LDADD = \
 	@LIBEXIF_LIBS@ \
 	-lFLAC  $(flacoggflag) $(vorbisflag)
 
+SUFFIXES = .tmpl .
+GENERATED_FILES = \
+	linux/minidlna.init.d.script
+
+TEMPLATES = \
+	linux/minidlna.init.d.script.tmpl
+
+CLEANFILES = $(GENERATED_FILES)
 ACLOCAL_AMFLAGS = -I m4
-EXTRA_DIST = m4/ChangeLog
+EXTRA_DIST = m4/ChangeLog $(TEMPLATES)
+noinst_DATA = $(GENERATED_FILES)
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
 .SUFFIXES:
-.SUFFIXES: .c .o .obj
+.SUFFIXES: .tmpl . .c .o .obj
 am--refresh: Makefile
 	@:
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
@@ -438,7 +466,6 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/albumart.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/clients.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/daemonize.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/getifaddr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/image_utils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/inotify.Po@am__quote@
@@ -450,6 +477,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/misc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/options.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/playlist.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/process.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scanner.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sql.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tagutils.Po@am__quote@
@@ -851,7 +879,7 @@ distcleancheck: distclean
 check-am: all-am
 	$(MAKE) $(AM_MAKEFLAGS) $(check_PROGRAMS)
 check: check-recursive
-all-am: Makefile $(PROGRAMS) config.h
+all-am: Makefile $(PROGRAMS) $(DATA) config.h
 installdirs: installdirs-recursive
 installdirs-am:
 	for dir in "$(DESTDIR)$(sbindir)"; do \
@@ -879,6 +907,7 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -981,6 +1010,9 @@ uninstall-am: uninstall-sbinPROGRAMS
 	ps ps-am tags tags-recursive uninstall uninstall-am \
 	uninstall-sbinPROGRAMS
 
+
+.tmpl:
+	sed -e s@:SBINDIR:@${sbindir}@ <$< >$@
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

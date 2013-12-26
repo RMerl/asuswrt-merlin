@@ -35,7 +35,11 @@ config RTCONFIG_BCMARM
 
 config RTCONFIG_BCMSMP
 	bool "BCM SMP"
-	default y
+	default n
+
+config RTCONFIG_BCMFA
+	bool "BCM FA"
+	default n
 
 config RTCONFIG_5301X
 	bool "Bcm 5301x"
@@ -249,6 +253,11 @@ config RTCONFIG_HFS
 	depends on RTCONFIG_USB
 	default n
 
+config RTCONFIG_UFSD_DEBUG
+	bool "ufsd debug Support"
+	depends on RTCONFIG_NTFS || RTCONFIG_HFS
+	default n
+
 config RTCONFIG_DISK_MONITOR
 	bool "Disk monitor Support"
 	depends on RTCONFIG_USB
@@ -314,6 +323,11 @@ config RTCONFIG_RALINK_RT3883
 
 config RTCONFIG_RALINK_RT3052
 	bool "Ralink Chip - RT3052 Support"
+	depends on RTCONFIG_RALINK
+	default n
+
+config RTCONFIG_RALINK_MT7620
+	bool "Ralink Chip - MT7620 Support"
 	depends on RTCONFIG_RALINK
 	default n
 

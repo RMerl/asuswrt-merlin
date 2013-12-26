@@ -3187,6 +3187,18 @@ void print_modules(void)
 	struct module *mod;
 	char buf[8];
 
+	/* Show each module name and core base address for
+	 * GDB source code trace dump
+	 */
+	preempt_disable();
+	list_for_each_entry_rcu(mod, &modules, list) {
+		printk("module:  %s\t %p\t %u\n",
+			mod->name,
+			mod->module_core,
+			mod->init_size + mod->core_size);
+	}
+	preempt_enable();
+
 	printk(KERN_DEFAULT "Modules linked in:");
 	/* Most callers should already have preempt disabled, but make sure */
 	preempt_disable();

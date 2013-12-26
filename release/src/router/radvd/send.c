@@ -128,6 +128,9 @@ send_ra(struct Interface *iface, struct in6_addr *dest)
 	size_t len = 0;
 	ssize_t err;
 
+
+	update_device_info(iface);
+
 	/* First we need to check that the interface hasn't been removed or deactivated */
 	if(check_device(iface) < 0) {
 		if (iface->IgnoreIfMissing)  /* a bit more quiet warning message.. */
@@ -154,7 +157,7 @@ send_ra(struct Interface *iface, struct in6_addr *dest)
 	}
 
 	/* Make sure that we've joined the all-routers multicast group */
-	if (check_allrouters_membership(iface) < 0)
+	if (!disableigmp6check && check_allrouters_membership(iface) < 0)
 		flog(LOG_WARNING, "problem checking all-routers membership on %s", iface->Name);
 
 	dlog(LOG_DEBUG, 3, "sending RA on %s", iface->Name);

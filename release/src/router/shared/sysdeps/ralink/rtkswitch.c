@@ -256,7 +256,7 @@ int ralink_gpio_write(uint32_t bit, int en)
 	return 0;
 }
 
-unsigned int rtkswitch_wanPort_phyStatus(void)
+unsigned int rtkswitch_wanPort_phyStatus(int wan_unit)
 {
 	int fd;
 	unsigned int value;

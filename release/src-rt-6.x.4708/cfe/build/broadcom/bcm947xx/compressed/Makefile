@@ -107,8 +107,16 @@ cfez.bin: cfez
 	$(OBJCOPY) $< $@
 	$(OBJCOPYSREC) $< cfez.srec
 ifeq ($(RTAC68U), 1)
+ifeq ($(PATYPE), 0)
 	../../../../../ctools/nvserial -i cfez.bin -o cfe_rt-ac68u.bin -s 00 rt-ac68u_nvram.txt
 	cp cfe_rt-ac68u.bin ../../../..
+else ifeq ($(PATYPE), 5023)
+	../../../../../ctools/nvserial -i cfez.bin -o cfe_rt-ac68u_v2_5023.bin -s 00 rt-ac68u_v2_5023_nvram.txt
+	cp cfe_rt-ac68u_v2_5023.bin ../../../..
+else ifeq ($(PATYPE), 85402)
+	../../../../../ctools/nvserial -i cfez.bin -o cfe_rt-ac68u_v2_85402.bin -s 00 rt-ac68u_v2_85402_nvram.txt
+	cp cfe_rt-ac68u_v2_85402.bin ../../../..
+endif
 else
 ifeq ($(RTN18U), 1)
 		../../../../../ctools/nvserial -i cfez.bin -o cfe_rt-n18u.bin -s 00 rt-n18u_nvram.txt

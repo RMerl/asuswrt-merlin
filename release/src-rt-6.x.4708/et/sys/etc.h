@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: etc.h 414031 2013-07-23 10:54:51Z $
+ * $Id: etc.h 429710 2013-10-15 21:00:58Z $
  */
 
 #ifndef _etc_h_
@@ -45,6 +45,14 @@
 struct etc_info;	/* forward declaration */
 struct bcmstrbuf;	/* forward declaration */
 
+#ifdef ET_INGRESS_QOS
+#define DMA_RX_THRESH_DEFAULT	250
+#define DMA_RX_POLICY_NONE	0
+#define DMA_RX_POLICY_UDP	1
+#define DMA_RX_POLICY_TOS	2
+#define DMA_RX_POLICY_LAST	2
+#endif /*ET_INGRESS_QOS*/
+
 /* each chip type supports a set of chip-type-specific ops */
 struct chops {
 	bool (*id)(uint vendor, uint device);		/* return true if match */
@@ -72,6 +80,8 @@ struct chops {
 	void (*dump)(ch_t *ch, struct bcmstrbuf *b);		/* debugging output */
 	void (*longname)(ch_t *ch, char *buf, uint bufsize);	/* return descriptive name */
 	void (*duplexupd)(ch_t *ch);			/* keep mac duplex consistent */
+	void (*unitmap)(uint coreunit, uint *unit);	/* core unit to enet unit mapping */
+	uint (*activerxbuf)(ch_t *ch);                  /* calculate the number of available free rx descriptors */
 };
 
 /*
@@ -133,7 +143,10 @@ typedef struct etc_info {
 
 	uint32		boardflags;	/* board flags */
 	uint32		txrec_thresh;	/* # of tx frames after which reclaim is done */
-
+#ifdef ET_INGRESS_QOS
+	uint16		dma_rx_thresh;	/* DMA red zone RX descriptor threshold */
+	uint16		dma_rx_policy;	/* DMA RX discard policy in red zone */
+#endif /*ET_INGRESS_QOS*/
 	/* sw-maintained stat counters */
 	uint32		txframes[NUMTXQ];	/* transmitted frames on each tx fifo */
 	uint32		txframe;	/* transmitted frames */
@@ -166,6 +179,16 @@ typedef struct etc_info {
 	void		*fa;		/* optional fa private data */
 #endif
 } etc_info_t;
+
+typedef struct et_sw_port_info {
+	uint16 port_id;
+	uint16 link_state;	/* 0:down  1:up */
+	uint16 speed;		/* 0:unknown  1:10M  2:100M  3:1000M  4:200M */
+	uint16 duplex;		/* 0:unknown  1:half  2:full */
+} et_sw_port_info_t;
+
+#define MACADDR_MASK	0x0000FFFFFFFFFFFFLL
+#define VID_MASK		0x0FFF000000000000LL
 
 /* interrupt event bitvec */
 #define	INTR_TX		0x1
@@ -264,7 +287,7 @@ etc_priq(uint32 txq_state)
 
 /* exported prototypes */
 extern struct chops *etc_chipmatch(uint vendor, uint device);
-extern void *etc_attach(void *et, uint vendor, uint device, uint unit, void *dev, void *regsva);
+extern void *etc_attach(void *et, uint vendor, uint device, uint coreunit, void *dev, void *regsva);
 extern void etc_detach(etc_info_t *etc);
 extern void etc_reset(etc_info_t *etc);
 extern void etc_init(etc_info_t *etc, uint options);
@@ -280,5 +303,6 @@ extern uint etc_totlen(etc_info_t *etc, void *p);
 #ifdef ETROBO
 extern void *etc_bcm53115_war(etc_info_t *etc, void *p);
 #endif /* ETROBO */
+extern void etc_unitmap(uint vendor, uint device, uint coreunit, uint *unit);
 
 #endif	/* _etc_h_ */

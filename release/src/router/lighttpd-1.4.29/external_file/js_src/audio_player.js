@@ -144,7 +144,7 @@ function get_mp3_url(audio_list, generate_sharelink, complete_handler){
 				var this_url = this_audio.substring(0, this_audio.lastIndexOf('/'));
 				
 				on_query = true;			
-				g_webdav_client.GSL(this_url, this_url, this_file_name, 0, 0, function(error, content, statusstring){				
+				client.GSL(this_url, this_url, this_file_name, 0, 0, function(error, content, statusstring){				
 					if(error==200){
 						var data = parseXml(statusstring);
 						var share_link = $(data).find('sharelink').text();

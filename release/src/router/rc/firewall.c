@@ -1158,8 +1158,9 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 				if (strcmp(proto, "TCP") == 0 || strcmp(proto, "BOTH") == 0){
 					fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %s -j DNAT %s\n", c, dstips);
 
-					if(!strcmp(c, "21") && nvram_get_int("vts_ftpport") != 0 && nvram_get_int("vts_ftpport") != 21)
-						fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %s -j DNAT --to-destination %s:21\n", nvram_safe_get("vts_ftpport"), nvram_safe_get("lan_ipaddr"));
+					int local_ftpport = nvram_get_int("vts_ftpport");
+					if(!strcmp(c, "21") && local_ftpport != 0 && local_ftpport != 21)
+						fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %d -j DNAT --to-destination %s:21\n", local_ftpport, nvram_safe_get("lan_ipaddr"));
 				}
 				if (strcmp(proto, "UDP") == 0 || strcmp(proto, "BOTH") == 0)
 					fprintf(fp, "-A VSERVER -p udp -m udp --dport %s -j DNAT %s\n", c, dstips);
@@ -1304,6 +1305,7 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 				":POSTROUTING ACCEPT [0:0]\n"
 				":OUTPUT ACCEPT [0:0]\n"
 				":VSERVER - [0:0]\n"
+				":LOCALSRV - [0:0]\n"
 				":VUPNP - [0:0]\n");
 #ifdef RTCONFIG_YANDEXDNS
 			fprintf(fp,
@@ -1322,10 +1324,7 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 			fprintf(fp, "-A PREROUTING -d %s -j VSERVER\n", wan_ip);
 
 		// wanx_if != wan_if means DHCP+PPP exist?
-		if((get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_WAN
-						|| get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_DSL
-						|| get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_LAN)
-				&& strcmp(wan_if, wanx_if) && inet_addr_(wanx_ip))
+		if (dualwan_unit__nonusbif(unit) && strcmp(wan_if, wanx_if) && inet_addr_(wanx_ip))
 			fprintf(fp, "-A PREROUTING -d %s -j VSERVER\n", wanx_ip);
 	}
 
@@ -1392,8 +1391,13 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 				else
 					snprintf(dstips, sizeof(dstips), "--to %s", dstip);
 
-				if (strcmp(proto, "TCP") == 0 || strcmp(proto, "BOTH") == 0)
+				if (strcmp(proto, "TCP") == 0 || strcmp(proto, "BOTH") == 0){
 					fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %s -j DNAT %s\n", c, dstips);
+
+					int local_ftpport = nvram_get_int("vts_ftpport");
+					if(!strcmp(c, "21") && local_ftpport != 0 && local_ftpport != 21)
+						fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %d -j DNAT --to-destination %s:21\n", local_ftpport, nvram_safe_get("lan_ipaddr"));
+				}
 				if (strcmp(proto, "UDP") == 0 || strcmp(proto, "BOTH") == 0)
 					fprintf(fp, "-A VSERVER -p udp -m udp --dport %s -j DNAT %s\n", c, dstips);
 				// Handle raw protocol in port field, no val1:val2 allowed
@@ -1459,11 +1463,23 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 	}
 #endif
 
-TRACE_PT("writing dmz\n");
-
-	// Exposed station	
+	/* Exposed station */
 	if (is_nat_enabled() && !nvram_match("dmz_ip", ""))
 	{
+		fprintf(fp, "-A VSERVER -j LOCALSRV\n");
+		if (nvram_match("webdav_aidisk", "1")) {
+			int port;
+
+			port = atoi(nvram_safe_get("webdav_https_port"));
+			if (!port || port >= 65536)
+				port = 443;
+			fprintf(fp, "-A LOCALSRV -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d\n", port, lan_ip, port);
+			port = atoi(nvram_safe_get("webdav_http_port"));
+			if (!port || port >= 65536)
+				port = 8082;
+			fprintf(fp, "-A LOCALSRV -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d\n", port, lan_ip, port);
+		}
+
 		fprintf(fp, "-A VSERVER -j DNAT --to %s\n", nvram_safe_get("dmz_ip"));
 	}
 
@@ -1493,10 +1509,7 @@ TRACE_PT("writing dmz\n");
 				fprintf(fp, "-A POSTROUTING %s -o %s ! -s %s -j MASQUERADE\n", p, wan_if, wan_ip);
 
 			/* masquerade physical WAN port connection */
-			if((get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_WAN
-							|| get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_DSL
-							|| get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_LAN)
-					&& strcmp(wan_if, wanx_if) && inet_addr_(wanx_ip))
+			if (dualwan_unit__nonusbif(unit) && strcmp(wan_if, wanx_if) && inet_addr_(wanx_ip))
 				fprintf(fp, "-A POSTROUTING %s -o %s ! -s %s -j MASQUERADE\n", p, wanx_if, wanx_ip);
 		}
 
@@ -1900,18 +1913,30 @@ err:
 int ruleHasFTPport(void)
 {
 	char *nvp = NULL, *nv = NULL, *b = NULL, *desc = NULL, *port = NULL, *dstip = NULL, *lport = NULL, *proto = NULL;
+	char *portv, *portp, *c;
 
 	nvp = nv = strdup(nvram_safe_get("vts_rulelist"));
-	while (nv && (b = strsep(&nvp, "<")) != NULL) {
-		if ((vstrsep(b, ">", &desc, &port, &dstip, &lport, &proto) != 5))
-		{
+	while(nv && (b = strsep(&nvp, "<")) != NULL){
+		if((vstrsep(b, ">", &desc, &port, &dstip, &lport, &proto) != 5))
 			continue;
-		}
 
+#if 0
 		if(strstr(port, "21"))
 		{
 			return 1;
 		}
+#else
+		// Handle port1,port2,port3 format
+		portp = portv = strdup(port);
+		while(portv && (c = strsep(&portp, ",")) != NULL){
+			if(!strcmp(c, "21")){
+				free(portv);
+				free(nv);
+				return 1;
+			}
+		}
+		free(portv);
+#endif
 	}
 	free(nv);
 	return 0;
@@ -2163,8 +2188,9 @@ TRACE_PT("writing Parental Control\n");
 		if (!nvram_match("enable_ftp", "0"))
 		{
 			fprintf(fp, "-A INPUT -p tcp -m tcp --dport 21 -j %s\n", logaccept);
-			if(nvram_match("vts_enable_x", "1") && nvram_get_int("vts_ftpport") != 0 && nvram_get_int("vts_ftpport") != 21 && ruleHasFTPport() )
-				fprintf(fp, "-A INPUT -p tcp -m tcp --dport %s -j %s\n", nvram_safe_get("vts_ftpport"), logaccept);
+			int local_ftpport = nvram_get_int("vts_ftpport");
+			if(nvram_match("vts_enable_x", "1") && local_ftpport != 0 && local_ftpport != 21 && ruleHasFTPport())
+				fprintf(fp, "-A INPUT -p tcp -m tcp --dport %d -j %s\n", local_ftpport, logaccept);
 		}
 
 #ifdef RTCONFIG_WEBDAV
@@ -2322,9 +2348,7 @@ TRACE_PT("writing Parental Control\n");
 
 	if(strcmp(wanx_if, wan_if) && inet_addr_(wanx_ip)
 #ifdef RTCONFIG_DUALWAN
-			&& (get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_WAN
-					|| get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_DSL	
-					|| get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_LAN)
+			&& dualwan_unit__nonusbif(unit)
 #endif
 			)
 		fprintf(fp, "-A FORWARD -o %s ! -i %s -j %s\n", wanx_if, lan_if, logdrop);
@@ -2797,30 +2821,27 @@ TRACE_PT("write url filter\n");
 	if (valid_url_filter_time()) {
 		if (!makeTimestr(timef)) {
 			nv = nvp = strdup(nvram_safe_get("url_rulelist"));
-
-			if(nv) {
-			while ((b = strsep(&nvp, "<")) != NULL) {
-TRACE_PT("filterstr %s\n", b);
-				if(vstrsep(b, ">", &filterstr) != 1) continue;		
-				if(strlen(filterstr)==0) continue;
-TRACE_PT("filterstr %s %s\n", timef, filterstr);
-				fprintf(fp,"-I FORWARD -p tcp %s -m webstr --url \"%s\" -j DROP\n", timef, filterstr); //2008.10 magic
+			while (nvp && (b = strsep(&nvp, "<")) != NULL) {
+				if (vstrsep(b, ">", &filterstr) != 1)
+					continue;
+				if (*filterstr) {
+					fprintf(fp, "-I FORWARD -p tcp %s -m webstr --url \"%s\" -j REJECT --reject-with tcp-reset\n",
+						timef, filterstr);
+				}
 			}
 			free(nv);
-			}
 		}
-
 		if (!makeTimestr2(timef2)) {
 			nv = nvp = strdup(nvram_safe_get("url_rulelist"));
-
-			if(nv) {
-			while ((b = strsep(&nvp, "<")) != NULL) {
-				if(vstrsep(b, ">", &filterstr) != 1) continue;		
-				if (strlen(filterstr)==0) continue;
-				fprintf(fp,"-I FORWARD -p tcp %s -m webstr --url \"%s\" -j DROP\n", timef2, filterstr); //2008.10 magic
+			while (nvp && (b = strsep(&nvp, "<")) != NULL) {
+				if (vstrsep(b, ">", &filterstr) != 1)
+					continue;
+				if (*filterstr) {
+					fprintf(fp, "-I FORWARD -p tcp %s -m webstr --url \"%s\" -j REJECT --reject-with tcp-reset\n",
+						timef2, filterstr);
+				}
 			}
 			free(nv);
-			}
 		}
 	}
 /* url filter corss midnight patch end */
@@ -2831,25 +2852,27 @@ TRACE_PT("filterstr %s %s\n", timef, filterstr);
 	{
 		if (!makeTimestr_content(timef)) {
 			nv = nvp = strdup(nvram_safe_get("keyword_rulelist"));
-			if(nv) {
-			while ((b = strsep(&nvp, "<")) != NULL) {
-				if(vstrsep(b, ">", &filterstr) != 1) continue;		
-				if (strcmp(filterstr, ""))
-					fprintf(fp,"-I FORWARD -p tcp --sport 80 %s -m string --string \"%s\" --algo bm -j DROP\n", timef, filterstr);
+			while (nvp && (b = strsep(&nvp, "<")) != NULL) {
+				if (vstrsep(b, ">", &filterstr) != 1)
+					continue;
+				if (*filterstr) {
+					fprintf(fp, "-I FORWARD -p tcp --sport 80 %s -m string --string \"%s\" --algo bm -j DROP\n",
+						timef, filterstr);
+				}
 			}
 			free(nv);
-			}
 		}
 		if (!makeTimestr2_content(timef2)) {
 			nv = nvp = strdup(nvram_safe_get("keyword_rulelist"));
-			if(nv) {
-			while ((b = strsep(&nvp, "<")) != NULL) {
-				if(vstrsep(b, ">", &filterstr) != 1) continue;		
-				if (strcmp(filterstr, ""))
-					fprintf(fp,"-I FORWARD -p tcp --sport 80 %s -m string --string \"%s\" --algo bm -j DROP\n", timef, filterstr);
+			while (nvp && (b = strsep(&nvp, "<")) != NULL) {
+				if (vstrsep(b, ">", &filterstr) != 1)
+					continue;
+				if (*filterstr) {
+					fprintf(fp, "-I FORWARD -p tcp --sport 80 %s -m string --string \"%s\" --algo bm -j DROP\n",
+						timef, filterstr);
+				}
 			}
 			free(nv);
-			}
 		}
 	}
 #endif
@@ -3132,11 +3155,13 @@ TRACE_PT("writing Parental Control\n");
 			fprintf(fp, "-A INPUT -p tcp -m tcp -d %s --dport %s -j %s\n", lan_ip, nvram_safe_get("https_lanport"), logaccept);
 #endif		
 		}
-		
+
 		if (!nvram_match("enable_ftp", "0"))
 		{	
-			//fprintf(fp, "-A INPUT -p tcp -m tcp -d %s --dport %s -j %s\n", wan_ip, nvram_safe_get("usb_ftpport_x"), logaccept);
-			fprintf(fp, "-A INPUT -p tcp -m tcp --dport 21 -j %s\n", logaccept);	// oleg patch
+			fprintf(fp, "-A INPUT -p tcp -m tcp --dport 21 -j %s\n", logaccept);
+			int local_ftpport = nvram_get_int("vts_ftpport");
+			if(nvram_match("vts_enable_x", "1") && local_ftpport != 0 && local_ftpport != 21 && ruleHasFTPport())
+				fprintf(fp, "-A INPUT -p tcp -m tcp --dport %d -j %s\n", local_ftpport, logaccept);
 		}
 
 #ifdef RTCONFIG_WEBDAV
@@ -3302,11 +3327,7 @@ TRACE_PT("writing Parental Control\n");
 		}
 	}
 #endif
-		if(strcmp(wanx_if, wan_if) && inet_addr_(wanx_ip)
-				&& (get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_WAN
-						|| get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_DSL
-						|| get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_LAN)
-				)
+		if (strcmp(wanx_if, wan_if) && inet_addr_(wanx_ip) && dualwan_unit__nonusbif(unit))
 			fprintf(fp, "-A FORWARD -o %s ! -i %s -j %s\n", wanx_if, lan_if, logdrop);
 	}
 
@@ -3886,30 +3907,28 @@ TRACE_PT("write url filter\n");
 	if (valid_url_filter_time()) {
 		if (!makeTimestr(timef)) {
 			nv = nvp = strdup(nvram_safe_get("url_rulelist"));
-
-			if(nv) {
-			while ((b = strsep(&nvp, "<")) != NULL) {
-TRACE_PT("filterstr %s\n", b);
-				if(vstrsep(b, ">", &filterstr) != 1) continue;		
-				if(strlen(filterstr)==0) continue;
-TRACE_PT("filterstr %s %s\n", timef, filterstr);
-				fprintf(fp,"-I FORWARD -p tcp %s -m webstr --url \"%s\" -j DROP\n", timef, filterstr); //2008.10 magic
+			while (nvp && (b = strsep(&nvp, "<")) != NULL) {
+				if(vstrsep(b, ">", &filterstr) != 1)
+					continue;
+				if (*filterstr) {
+					fprintf(fp, "-I FORWARD -p tcp %s -m webstr --url \"%s\" -j REJECT --reject-with tcp-reset\n",
+						timef, filterstr);
+				}
 			}
 			free(nv);
-			}
 		}
 
 		if (!makeTimestr2(timef2)) {
 			nv = nvp = strdup(nvram_safe_get("url_rulelist"));
-
-			if(nv) {
-			while ((b = strsep(&nvp, "<")) != NULL) {
-				if(vstrsep(b, ">", &filterstr) != 1) continue;		
-				if (strlen(filterstr)==0) continue;
-				fprintf(fp,"-I FORWARD -p tcp %s -m webstr --url \"%s\" -j DROP\n", timef2, filterstr); //2008.10 magic
+			while (nvp && (b = strsep(&nvp, "<")) != NULL) {
+				if(vstrsep(b, ">", &filterstr) != 1)
+					continue;
+				if (*filterstr) {
+					fprintf(fp, "-I FORWARD -p tcp %s -m webstr --url \"%s\" -j REJECT --reject-with tcp-reset\n",
+						timef2, filterstr);
+				}
 			}
 			free(nv);
-			}
 		}
 	}
 /* url filter corss midnight patch end */
@@ -3920,25 +3939,27 @@ TRACE_PT("filterstr %s %s\n", timef, filterstr);
 	{
 		if (!makeTimestr_content(timef)) {
 			nv = nvp = strdup(nvram_safe_get("keyword_rulelist"));
-			if(nv) {
-			while ((b = strsep(&nvp, "<")) != NULL) {
-				if(vstrsep(b, ">", &filterstr) != 1) continue;		
-				if (strcmp(filterstr, ""))
-					fprintf(fp,"-I FORWARD -p tcp --sport 80 %s -m string --string \"%s\" --algo bm -j DROP\n", timef, filterstr);
+			while (nvp && (b = strsep(&nvp, "<")) != NULL) {
+				if (vstrsep(b, ">", &filterstr) != 1)
+					continue;
+				if (*filterstr) {
+					fprintf(fp, "-I FORWARD -p tcp --sport 80 %s -m string --string \"%s\" --algo bm -j DROP\n",
+						timef, filterstr);
+				}
 			}
 			free(nv);
-			}
 		}
 		if (!makeTimestr2_content(timef2)) {
 			nv = nvp = strdup(nvram_safe_get("keyword_rulelist"));
-			if(nv) {
-			while ((b = strsep(&nvp, "<")) != NULL) {
-				if(vstrsep(b, ">", &filterstr) != 1) continue;		
-				if (strcmp(filterstr, ""))
-					fprintf(fp,"-I FORWARD -p tcp --sport 80 %s -m string --string \"%s\" --algo bm -j DROP\n", timef, filterstr);
+			while (nvp && (b = strsep(&nvp, "<")) != NULL) {
+				if (vstrsep(b, ">", &filterstr) != 1)
+					continue;
+				if (*filterstr) {
+					fprintf(fp, "-I FORWARD -p tcp --sport 80 %s -m string --string \"%s\" --algo bm -j DROP\n",
+						timef, filterstr);
+				}
 			}
 			free(nv);
-			}
 		}
 	}
 #endif
@@ -4048,7 +4069,7 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 #endif
 }
 
-#ifdef RTCONFIG_DUALWAN // RTCONFIG_DUALWAN
+#ifdef RTCONFIG_DUALWAN
 void
 mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 {

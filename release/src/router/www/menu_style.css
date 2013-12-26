@@ -72,3 +72,44 @@
 	z-index:1000;
 }
 /* TM Color select block  */
+
+.hiddenPanelContainer{
+	position:absolute;
+	margin-top: -800px;
+	display:none;
+	width: 100%;
+}
+.hiddenPanel{
+	box-shadow: 5px 5px 10px #000;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	z-index:200;
+	background-color:#2B373B;
+	width: 650px;
+	margin:0px auto;
+	behavior: url(/PIE.htc);
+}
+.panelTable{
+	width: 90%;
+	text-align:left;
+}
+.panelTableTitle{
+	margin:20px;
+	margin:20px \9;
+}
+.panelTableTitle div{
+	text-align:left;
+	font-size:16px;
+	font-weight: bolder;
+	padding-bottom:10px;
+	padding-top:10px;
+	padding-bottom:0px \9;
+	padding-top:0px \9;
+}
+.panelSubmiter{
+	height:50px;
+	margin-top:10px;
+	width:100%;
+	text-align:center;
+}

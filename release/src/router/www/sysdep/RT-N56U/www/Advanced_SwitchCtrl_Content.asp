@@ -23,7 +23,7 @@ var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 
 function initial(){
 	show_menu();
-	if(based_modelid == "RT-AC52U" || based_modelid == "RT-N14U")
+	if(based_modelid == "RT-AC52U" || based_modelid == "RT-N14U" || based_modelid == "RT-AC51U")
 	{
 		inputCtrl(document.form.switch_ctrlrate_unknown_unicast, 0);
 		inputCtrl(document.form.switch_ctrlrate_unknown_multicast, 0);
@@ -79,7 +79,6 @@ function valid_form(){
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
 <input type="hidden" name="current_page" value="Advanced_SwitchCtrl_Content.asp">
 <input type="hidden" name="next_page" value="">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="group_id" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply_new">
@@ -143,10 +142,12 @@ function valid_form(){
           </td>
 				</tr>
       	<tr>
-      		<th><#nat_enable#></th>
+      		<th>NAT Acceleration</th>
           <td>
-              <input type="radio" name="hwnat" value="1" <% nvram_match("hwnat", "1", "checked"); %>><#checkbox_Yes#>
-              <input type="radio" name="hwnat" value="0" <% nvram_match("hwnat", "0", "checked"); %>><#checkbox_No#>
+						<select name="hwnat" class="input_option">
+							<option class="content_input_fd" value="0" <% nvram_match("hwnat", "0","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+							<option class="content_input_fd" value="1" <% nvram_match("hwnat", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
+						</select>			
           </td>
       	</tr>					
 		</table>	

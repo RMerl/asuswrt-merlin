@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: sbusbd.h 286759 2011-09-29 01:41:51Z $
+ * $Id: sbusbd.h 419467 2013-08-21 09:19:48Z $
  */
 
 #ifndef	_usbdev_sb_h_

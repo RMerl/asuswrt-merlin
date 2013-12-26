@@ -11,13 +11,10 @@ var g_thumb_loader = {
 		
 		this._array = new Array(0);
 		
-		var find_class_name = "fcb";
-		/*
 		var find_class_name = "picDiv";
 		if(g_list_view.get()==1){
 			find_class_name = "listDiv";
 		}
-		*/
 		
 		this._container.find("."+find_class_name).each(function( index ) {
 			if($(this).attr("data-thumb")==1){  
@@ -65,7 +62,7 @@ var g_thumb_loader = {
 				self._onLoading = false;
 			}
 			else{
-				g_webdav_client.GETTHUMBIMAGE(loc, filename, function(error, statusstring, content){				
+				client.GETTHUMBIMAGE(loc, filename, function(error, statusstring, content){				
 					if(error==200){
 						var data = parseXml(content);
 						var thumb_image = $(data).find('thumb_image').text();

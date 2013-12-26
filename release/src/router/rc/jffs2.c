@@ -86,6 +86,7 @@ _dprintf("*** jffs2: %d, %d\n", part, size);
 
 	if (statfs("/jffs", &sf) == 0) { 
 		switch(model) {
+			case MODEL_RTAC56S: 
 			case MODEL_RTAC56U: 
 			case MODEL_RTAC68U: 
 			case MODEL_RTN65U:
@@ -119,7 +120,7 @@ _dprintf("*** jffs2: %d, %d\n", part, size);
 	sprintf(s, MTD_BLKDEV(%d), part);
 
 	if (mount(s, "/jffs", JFFS_NAME, MS_NOATIME, "") != 0) {
-                if( (get_model()==MODEL_RTAC56U || get_model()==MODEL_RTAC68U) ^ (!mtd_erase(JFFS_NAME)) ){
+		if( (model==MODEL_RTAC56U || model==MODEL_RTAC56S || model==MODEL_RTAC68U) ^ (!mtd_erase(JFFS_NAME)) ){
                         error("formatting");
                         return;
                 }

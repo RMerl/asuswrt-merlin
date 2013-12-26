@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: hnddma.h 401759 2013-05-13 16:08:08Z $
+ * $Id: hnddma.h 427480 2013-10-03 19:09:47Z $
  */
 
 #ifndef	_hnddma_h_
@@ -152,7 +152,7 @@ typedef struct di_fcn_s {
 	di_avoidancecnt_t	avoidancecnt;
 	di_param_set_t		param_set;
 	dma_glom_enable_t	glom_enab;
-	dma_active_rxbuf_t dma_activerxbuf;
+	dma_active_rxbuf_t	dma_activerxbuf;
 	uint			endnum;
 } di_fcn_t;
 
@@ -172,7 +172,6 @@ struct hnddma_pub {
 	uint		txnobuf;	/* tx out of dma descriptors */
 	uint		txnodesc;	/* tx out of dma descriptors running count */
 };
-
 
 extern hnddma_t * dma_attach(osl_t *osh, const char *name, si_t *sih,
 	volatile void *dmaregstx, volatile void *dmaregsrx,
@@ -230,6 +229,7 @@ extern hnddma_t * dma_attach(osl_t *osh, const char *name, si_t *sih,
 #define dma_burstlen_set(di, rxlen, txlen)	((di)->di_fn->burstlen_set(di, rxlen, txlen))
 #define dma_avoidance_cnt(di)		((di)->di_fn->avoidancecnt(di))
 #define dma_param_set(di, paramid, paramval)	((di)->di_fn->param_set(di, paramid, paramval))
+#define dma_activerxbuf(di)		((di)->di_fn->dma_activerxbuf(di))
 
 #else /* BCMDMA32 */
 extern const di_fcn_t dma64proc;

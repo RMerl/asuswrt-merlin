@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmsrom_tbl.h 414820 2013-07-26 05:03:14Z $
+ * $Id: bcmsrom_tbl.h 427949 2013-10-07 06:04:47Z $
  */
 
 #ifndef	_bcmsrom_tbl_h_
@@ -982,6 +982,7 @@ static const cis_tuple_t cis_hnbuvars[] = {
 	{HNBU_RXGAIN_ERR,	0xfffff800, 16, "1rxgainerr2ga0 1rxgainerr2ga1 1rxgainerr2ga2 "
 	"1*4rxgainerr5ga0 1*4rxgainerr5ga1 1*4rxgainerr5ga2"},
 	{HNBU_AGBGA,		0xfffff800, 7, "1agbg0 1agbg1 1agbg2 1aga0 1aga1 1aga2"},
+	{HNBU_USBDESC_COMPOSITE, 0xffffffff, 3, "2usbdesc_composite"},
 	{HNBU_UUID, 		0xffffffff, 17,	"16uuid"},
 	{HNBU_ACRXGAINS_C0,	0xfffff800, 5, "0rxgains5gtrelnabypa0 0rxgains5gtrisoa0 "
 	"0rxgains5gelnagaina0 0rxgains2gtrelnabypa0 0rxgains2gtrisoa0 0rxgains2gelnagaina0 "
@@ -1007,6 +1008,7 @@ static const cis_tuple_t cis_hnbuvars[] = {
 	"2*12pa5ga2"},
 	{HNBU_SUBBAND5GVER,	0xfffff800, 3,	"2subband5gver"},
 	{HNBU_PAPARAMBWVER,	0xfffff800, 2,	"1paparambwver"},
+	{HNBU_WOWLGPIO,     0xffffffff, 2,  "1wowl_gpio"},
 	{0xFF,			0xffffffff, 0, ""}
 };
 

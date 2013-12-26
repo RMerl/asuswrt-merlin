@@ -48,7 +48,7 @@ if [ "$autofix" == "1" ]; then
 	if [ "$1" == "ntfs" ]; then
 		autocheck_option="-a"
 		autofix_option="-f"
-	elif [ "$1" == "hfs" ] || [ "$1" == "hfs+" ] || [ "$1" == "hfsj" ]; then
+	elif [ "$1" == "hfs" ] || [ "$1" == "hfs+j" ] || [ "$1" == "hfs+jx" ]; then
 		autocheck_option="-a"
 		autofix_option="-f"
 	else
@@ -59,7 +59,7 @@ else
 	if [ "$1" == "ntfs" ]; then
 		autocheck_option="-a"
 		autofix_option=
-	elif [ "$1" == "hfs" ] || [ "$1" == "hfs+" ] || [ "$1" == "hfsj" ]; then
+	elif [ "$1" == "hfs" ] || [ "$1" == "hfs+j" ] || [ "$1" == "hfs+jx" ]; then
 		autocheck_option="-a"
 		autofix_option=
 	else
@@ -82,7 +82,7 @@ if [ "$1" == "ntfs" ]; then
 			break;
 		fi
 	done
-elif [ "$1" == "hfs" ] || [ "$1" == "hfs+" ] || [ "$1" == "hfsj" ]; then
+elif [ "$1" == "hfs" ] || [ "$1" == "hfs+j" ] || [ "$1" == "hfs+jx" ]; then
 	c=0
 	RET=1
 	while [ ${c} -lt 4 -a ${RET} -ne 0 ] ; do

@@ -14,7 +14,7 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
 # OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-# $Id: wl.mk 415806 2013-07-31 20:05:30Z $
+# $Id: wl.mk 435362 2013-11-11 00:24:00Z $
 
 
 
@@ -84,6 +84,7 @@ endif
 ifeq ($(PKTQ_LOG),1)
 	WLFLAGS += -DPKTQ_LOG
 	ifeq ($(SCB_BS_DATA),1)
+		WLFILES_SRC_HI += src/wl/sys/wlc_bs_data.c
 		WLFLAGS += -DSCB_BS_DATA
 	endif
 endif
@@ -91,6 +92,7 @@ endif
 
 ifeq ($(PSPRETEND),1)
 	WLFLAGS += -DPSPRETEND
+	WLFLAGS += -DWL_CS_PKTRETRY -DWL_CS_RESTRICT_RELEASE
 endif
 
 #ifdef BCMDBG_TRAP
@@ -148,9 +150,6 @@ ifeq ($(WL_HIGH),1)
 		endif
 		ifeq ($(BCMUSBDEV_EP_FOR_RPCRETURN),1)
 			WLFLAGS += -DBCMUSBDEV_EP_FOR_RPCRETURN
-		endif
-		ifeq ($(WLMEDIA_LARGE_DNGL_AGG),1)
-			WLFLAGS += -DWLMEDIA_LARGE_DNGL_AGG
 		endif
 		ifeq ($(BCMUSBDEV_COMPOSITE),1)
 			WLFLAGS += -DBCMUSBDEV_COMPOSITE
@@ -332,6 +331,9 @@ endif
 	WLFILES_SRC_HI += src/wl/sys/wlc_rate_def.c
 	WLFILES_SRC_HI += src/wl/sys/wlc_stf.c
 	WLFILES_SRC_HI += src/wl/sys/wlc_lq.c
+	ifneq ($(WLOBSSPROT),0)
+		WLFLAGS += -DWL_OBSSPROT
+	endif
 	ifneq ($(WLWSEC),0)
 		WLFLAGS += -DWLWSEC
 		WLFILES_SRC_HI += src/wl/sys/wlc_security.c
@@ -1352,8 +1354,16 @@ endif
 ifeq ($(WOWL),1)
 	WLFLAGS += -DWOWL
 	WLFILES_SRC_HI += src/wl/sys/d11ucode_wowl.c
+	WLFILES_SRC_HI += src/wl/sys/d11ucode_p2p.c
+	WLFILES_SRC_HI += src/wl/sys/d11ucode_ge40.c
+	WLFILES_SRC_HI += src/wl/sys/d11ucode_ge24.c
 	WLFILES_SRC_HI += src/wl/sys/wlc_wowl.c
 	WLFILES_SRC_HI += src/wl/sys/wowlaestbls.c
+endif
+ifeq ($(WOWL_OS_OFFLOADS),1)
+ifneq ($(WLTEST),1)
+	WLFLAGS += -DWOWL_OS_OFFLOADS
+endif
 endif
 #endif
 
@@ -2178,6 +2188,13 @@ endif
 ifeq ($(WET_TUNNEL),1)
 	WLFLAGS += -DWET_TUNNEL
 	WLFILES_SRC_HI += src/wl/sys/wlc_wet_tunnel.c
+endif
+#endif
+
+#ifdef WLDURATION
+ifeq ($(WLDURATION),1)
+	WLFLAGS += -DWLDURATION
+	WLFILES_SRC += src/wl/sys/wlc_duration.c
 endif
 #endif
 

@@ -41,8 +41,44 @@
 #define NANDF_SMALL_BADBLOCK_POS	5
 #define NANDF_LARGE_BADBLOCK_POS	0
 
+struct nandpart_timing_info {
+	const char	*name;
+	uint8	id[8];
+	/* Timing unit is ns for the following parameters */
+	uint8	tWP;
+	uint8	tWH;
+	uint8	tRP;
+	uint8	tREH;
+	uint8	tCS;
+	uint8	tCLH;
+	uint8	tALH;
+	uint16	tADL;
+	uint8	tWB;
+	uint8	tWHR;
+	uint8	tREAD;
+};
+
+static struct nandpart_timing_info nandpart_timing_list[] = {
+	{"Samsung K9LCG08U0B",
+	{0xec, 0xde, 0xd5, 0x7e, 0x68, 0x44},
+	11, 11, 11, 11, 25, 5, 5, 300, 100, 176, 37},
+
+	{"Micron MT29F4G08ABADA",
+	{0x2c, 0xdc, 0x90, 0x95, 0x56},
+	10, 7, 10, 7, 15, 5, 5, 70, 100, 60, 33},
+
+	{"Micron MT29F64G08CBABA",
+	{0x2c, 0x64, 0x44, 0x4b, 0xa9},
+	50, 30, 50, 30, 70, 20, 20, 200, 200, 120, 57},
+
+	{NULL, }
+};
+
 /* Private global state */
 static hndnand_t nandcore;
+
+static uint32 num_cache_per_page;
+static uint32 spare_per_cache;
 
 /* Prototype */
 static int nandcore_poll(si_t *sih, nandregs_t *nc);
@@ -53,8 +89,8 @@ static int nandcore_write(hndnand_t *nfl, uint64 offset, uint len, const uchar *
 static int nandcore_erase(hndnand_t *nfl, uint64 offset);
 static int nandcore_checkbadb(hndnand_t *nfl, uint64 offset);
 static int nandcore_mark_badb(hndnand_t *nfl, uint64 offset);
-
 static int nandcore_read_oob(hndnand_t *nfl, uint64 addr, uint8 *oob);
+
 #ifndef _CFE_
 static int nandcore_dev_ready(hndnand_t *nfl);
 static int nandcore_select_chip(hndnand_t *nfl, int chip);
@@ -67,23 +103,12 @@ static int nandcore_write_page(hndnand_t *nfl, uint64 addr, const uint8 *buf, ui
 static int nandcore_cmd_read_byte(hndnand_t *nfl, int cmd, int arg);
 #endif /* !_CFE_ */
 
+
 /* Issue a nand flash command */
 static INLINE void
 nandcore_cmd(osl_t *osh, nandregs_t *nc, uint opcode)
 {
 	W_REG(osh, &nc->cmd_start, opcode);
-}
-
-static int
-_nandcore_ffs(int i)
-{
-	int j;
-
-	if (i != 0)
-		for (j = 0; j < 32; j++)
-			if (i & (1 << j))
-				return j + 1;
-	return 0;
 }
 
 static bool
@@ -100,6 +125,25 @@ _nandcore_buf_erased(const void *buf, unsigned len)
 	return TRUE;
 }
 
+static INLINE int
+_nandcore_oobbyte_per_cache(hndnand_t *nfl, uint cache, uint32 spare)
+{
+	uint32 oob_byte;
+
+	if (nfl->sectorsize == 512)
+		oob_byte = spare;
+	else {
+		if ((spare * 2) < NANDSPARECACHE_SIZE)
+			oob_byte = spare * 2;
+		else
+			oob_byte = (cache % 2) ?
+			((spare * 2) - NANDSPARECACHE_SIZE) :
+			 NANDSPARECACHE_SIZE;
+	}
+
+	return oob_byte;
+}
+
 static int
 _nandcore_read_page(hndnand_t *nfl, uint64 offset, uint8 *buf, uint8 *oob, bool ecc,
 	uint32 *herr, uint32 *serr)
@@ -107,13 +151,13 @@ _nandcore_read_page(hndnand_t *nfl, uint64 offset, uint8 *buf, uint8 *oob, bool 
 	osl_t *osh;
 	nandregs_t *nc = (nandregs_t *)nfl->core;
 	aidmp_t *ai = (aidmp_t *)nfl->wrap;
-	unsigned data_bytes;
-	unsigned spare_per_sec;
-	unsigned sector;
+	unsigned cache, col = 0;
 	unsigned hard_err_count = 0;
 	uint32 mask, reg, *to;
 	uint32 err_soft_reg, err_hard_reg;
-	int i, ret, sectorsize_shift, sec_per_page_shift;
+	int i, ret;
+	uint8 *oob_to = oob;
+	uint32 rd_oob_byte, left_oob_byte;
 
 	ASSERT(nfl->sih);
 
@@ -133,16 +177,6 @@ _nandcore_read_page(hndnand_t *nfl, uint64 offset, uint8 *buf, uint8 *oob, bool 
 	err_hard_reg = R_REG(osh, &nc->uncorr_error_count);
 	err_soft_reg = R_REG(osh, &nc->read_error_count);
 
-	/* Cal shift */
-	sectorsize_shift = _nandcore_ffs(nfl->sectorsize) - 1;
-	sec_per_page_shift = _nandcore_ffs(nfl->pagesize) - 1 - sectorsize_shift;
-
-	spare_per_sec = nfl->oobsize >> sec_per_page_shift;
-
-	/* Set the page address for the following commands */
-	reg = (R_REG(osh, &nc->cmd_ext_address) & ~NANDCMD_EXT_ADDR_MASK);
-	W_REG(osh, &nc->cmd_ext_address, (reg | (offset >> 32)));
-
 	/* Enable ECC validation for ecc page reads */
 	if (ecc)
 		OR_REG(osh, nfl->chipidx ? &nc->acc_control_cs1 : &nc->acc_control_cs0,
@@ -151,54 +185,63 @@ _nandcore_read_page(hndnand_t *nfl, uint64 offset, uint8 *buf, uint8 *oob, bool 
 		AND_REG(osh, nfl->chipidx ? &nc->acc_control_cs1 : &nc->acc_control_cs0,
 			~NANDAC_CS0_RD_ECC_EN);
 
-	/* Loop all sectors in page */
-	for (sector = 0; sector < (1 << sec_per_page_shift); sector ++) {
-		data_bytes  = 0;
+	/* Loop all caches in page */
+	for (cache = 0; cache < num_cache_per_page; cache++, col += NANDCACHE_SIZE) {
+		uint32 ext_addr;
 
-		/* Copy partial sectors sized by cache reg */
-		while (data_bytes < (1 << sectorsize_shift)) {
-			unsigned col;
+		/* Set the page address for the following commands */
+		reg = (R_REG(osh, &nc->cmd_ext_address) & ~NANDCMD_EXT_ADDR_MASK);
+		ext_addr = ((offset + col) >> 32) & NANDCMD_EXT_ADDR_MASK;
+		W_REG(osh, &nc->cmd_ext_address, (reg | ext_addr));
+		W_REG(osh, &nc->cmd_address, (uint32)offset + col);
 
-			col = data_bytes + (sector << sectorsize_shift);
+		/* Issue command to read partial page */
+		nandcore_cmd(osh, nc, NANDCMD_PAGE_RD);
 
-			W_REG(osh, &nc->cmd_address, offset + col);
+		/* Wait for the command to complete */
+		if ((ret = nandcore_poll(nfl->sih, nc)) < 0)
+			return ret;
 
-			/* Issue command to read partial page */
-			nandcore_cmd(osh, nc, NANDCMD_PAGE_RD);
+		/* Set controller to Little Endian mode for copying */
+		OR_REG(osh, &ai->ioctrl, NAND_APB_LITTLE_ENDIAN);
 
-			/* Wait for the command to complete */
-			if ((ret = nandcore_poll(nfl->sih, nc)) < 0)
-				return ret;
+		/* Read page data per cache */
+		to = (uint32 *)(buf + col);
+		for (i = 0; i < (NANDCACHE_SIZE / 4); i++, to++)
+			*to = R_REG(osh, &nc->flash_cache[i]);
 
-			/* Set controller to Little Endian mode for copying */
-			OR_REG(osh, &ai->ioctrl, NAND_APB_LITTLE_ENDIAN);
+		/* Read oob data per cache */
+		if (oob_to) {
+			rd_oob_byte = _nandcore_oobbyte_per_cache(nfl, cache, spare_per_cache);
 
-			if (data_bytes == 0 && oob) {
-				to = (uint32 *)(oob + sector * spare_per_sec);
-				for (i = 0; i < spare_per_sec; i += 4, to++)
-					*to = R_REG(osh, &nc->spare_area_read_ofs[i/4]);
+			left_oob_byte = rd_oob_byte % 4;
+
+			/* Pay attention to natural address alignment access */
+			for (i = 0; i < (rd_oob_byte / 4); i++) {
+				reg = R_REG(osh, &nc->spare_area_read_ofs[i]);
+				memcpy((void *)oob_to, (void *)&reg, 4);
+				oob_to += 4;
 			}
 
-			/* oob per sector */
-			to = (uint32 *)(buf + col);
-			for (i = 0; i < NFL_SECTOR_SIZE; i += 4, to++)
-				*to = R_REG(osh, &nc->flash_cache[i/4]);
-
-			data_bytes += NFL_SECTOR_SIZE;
-
-			/* Return to Big Endian mode for commands etc */
-			AND_REG(osh, &ai->ioctrl, ~NAND_APB_LITTLE_ENDIAN);
-
-			/* capture hard errors for each partial */
-			if (err_hard_reg != R_REG(osh, &nc->uncorr_error_count)) {
-				int era = (R_REG(osh, &nc->intfc_status) & NANDIST_ERASED);
-				if ((!era) && (!_nandcore_buf_erased(buf+col, NFL_SECTOR_SIZE)))
-					hard_err_count ++;
-
-				err_hard_reg = R_REG(osh, &nc->uncorr_error_count);
+			if (left_oob_byte != 0) {
+				reg = R_REG(osh, &nc->spare_area_read_ofs[i]);
+				memcpy((void *)oob_to, (void *)&reg, left_oob_byte);
+				oob_to += left_oob_byte;
 			}
-		} /* while FlashCache buffer */
-	} /* for sector */
+		}
+
+		/* Return to Big Endian mode for commands etc */
+		AND_REG(osh, &ai->ioctrl, ~NAND_APB_LITTLE_ENDIAN);
+
+		/* capture hard errors for each partial */
+		if (err_hard_reg != R_REG(osh, &nc->uncorr_error_count)) {
+			int era = (R_REG(osh, &nc->intfc_status) & NANDIST_ERASED);
+			if ((!era) && (!_nandcore_buf_erased(buf+col, NANDCACHE_SIZE)))
+				hard_err_count ++;
+
+			err_hard_reg = R_REG(osh, &nc->uncorr_error_count);
+		}
+	} /* for cache */
 
 	if (!ecc)
 		return 0;
@@ -220,10 +263,11 @@ _nandcore_write_page(hndnand_t *nfl, uint64 offset, const uint8 *buf, uint8 *oob
 	osl_t *osh;
 	nandregs_t *nc = (nandregs_t *)nfl->core;
 	aidmp_t *ai = (aidmp_t *)nfl->wrap;
-	unsigned data_bytes, spare_bytes;
-	unsigned spare_per_sec, sector, num_sec;
+	unsigned cache, col = 0;
 	uint32 mask, reg, *from;
-	int i, ret = 0, sectorsize_shift, sec_per_page_shift;
+	int i, ret = 0;
+	uint8 *oob_from = oob;
+	uint32 wr_oob_byte, left_oob_byte;
 
 	ASSERT(nfl->sih);
 
@@ -239,18 +283,8 @@ _nandcore_write_page(hndnand_t *nfl, uint64 offset, const uint8 *buf, uint8 *oob
 
 	osh = si_osh(nfl->sih);
 
-	/* Cal shift */
-	sectorsize_shift = _nandcore_ffs(nfl->sectorsize) - 1;
-	sec_per_page_shift = _nandcore_ffs(nfl->pagesize) - 1 - sectorsize_shift;
-
-	spare_per_sec = nfl->oobsize >> sec_per_page_shift;
-
 	/* Disable WP */
 	AND_REG(osh, &nc->cs_nand_select, ~NANDCSEL_NAND_WP);
-
-	/* Set the page address for the following commands */
-	reg = (R_REG(osh, &nc->cmd_ext_address) & ~NANDCMD_EXT_ADDR_MASK);
-	W_REG(osh, &nc->cmd_ext_address, (reg | (offset >> 32)));
 
 	/* Enable ECC generation for ecc page write, if requested */
 	if (ecc)
@@ -260,62 +294,70 @@ _nandcore_write_page(hndnand_t *nfl, uint64 offset, const uint8 *buf, uint8 *oob
 		AND_REG(osh, nfl->chipidx ? &nc->acc_control_cs1 : &nc->acc_control_cs0,
 			~NANDAC_CS0_WR_ECC_EN);
 
-	spare_bytes = 0;
-	num_sec = 1 << sec_per_page_shift;
+	/* Loop all caches in page */
+	for (cache = 0; cache < num_cache_per_page; cache++, col += NANDCACHE_SIZE) {
+		uint32 ext_addr;
 
-	/* Loop all sectors in page */
-	for (sector = 0; sector < num_sec; sector++) {
-		data_bytes  = 0;
+		/* Set the page address for the following commands */
+		reg = (R_REG(osh, &nc->cmd_ext_address) & ~NANDCMD_EXT_ADDR_MASK);
+		ext_addr = ((offset + col) >> 32) & NANDCMD_EXT_ADDR_MASK;
+		W_REG(osh, &nc->cmd_ext_address, (reg | ext_addr));
+		W_REG(osh, &nc->cmd_address, (uint32)offset + col);
 
-		/* Copy partial sectors sized by cache reg */
-		while (data_bytes < (1 << sectorsize_shift)) {
-			unsigned col;
+		/* Set controller to Little Endian mode for copying */
+		OR_REG(osh, &ai->ioctrl, NAND_APB_LITTLE_ENDIAN);
 
-			col = data_bytes + (sector << sectorsize_shift);
+		/* Copy sub-page data */
+		from = (uint32 *)(buf + col);
+		for (i = 0; i < (NANDCACHE_SIZE / 4); i++, from++)
+			W_REG(osh, &nc->flash_cache[i], *from);
 
-			/* Set address of 512-byte sub-page */
-			W_REG(osh, &nc->cmd_address, offset + col);
+		/* Set spare area is written at each cache start */
+		if (oob_from) {
+			/* Fill spare area write cache */
+			wr_oob_byte = _nandcore_oobbyte_per_cache(nfl, cache, spare_per_cache);
 
-			/* Set controller to Little Endian mode for copying */
-			OR_REG(osh, &ai->ioctrl, NAND_APB_LITTLE_ENDIAN);
+			left_oob_byte = wr_oob_byte % 4;
 
-			/* Set spare area is written at each sector start */
-			if (data_bytes == 0) {
-				if (oob) {
-					from = (uint32 *)(oob + spare_bytes);
-					for (i = 0; i < spare_per_sec; i += 4, from++)
-						W_REG(osh, &nc->spare_area_write_ofs[i/4], *from);
-				}
-				else {
-					/* Write 0xffffffff to spare_area_write_ofs register
-					 * to prevent old spare_area_write_ofs vale write
-					 * when we issue NANDCMD_PAGE_PROG.
-					 */
-					for (i = 0; i < spare_per_sec; i += 4)
-						W_REG(osh, &nc->spare_area_write_ofs[i/4],
-							0xffffffff);
-				}
-
-				spare_bytes += spare_per_sec;
+			/* Pay attention to natural address alignment access */
+			for (i = 0; i < (wr_oob_byte / 4); i++) {
+				memcpy((void *)&reg, (void *)oob_from, 4);
+				W_REG(osh, &nc->spare_area_write_ofs[i], reg);
+				oob_from += 4;
 			}
 
-			/* Copy sub-page data */
-			from = (uint32 *)(buf + col);
-			for (i = 0; i < NFL_SECTOR_SIZE; i += 4, from++)
-				W_REG(osh, &nc->flash_cache[i/4], *from);
+			if (left_oob_byte != 0) {
+				reg = 0xffffffff;
+				memcpy((void *)&reg, (void *)oob_from,
+					left_oob_byte);
+				W_REG(osh, &nc->spare_area_write_ofs[i], reg);
+				oob_from += left_oob_byte;
+				i++;
+			}
 
-			data_bytes += NFL_SECTOR_SIZE;
-
-			/* Return to Big Endian mode for commands etc */
-			AND_REG(osh, &ai->ioctrl, ~NAND_APB_LITTLE_ENDIAN);
-
-			/* Push data into internal cache */
-			nandcore_cmd(osh, nc, NANDCMD_PAGE_PROG);
-
-			ret = nandcore_poll(nfl->sih, nc);
-			if (ret < 0)
-				goto err;
+			for (; i < (NANDSPARECACHE_SIZE / 4); i ++)
+				W_REG(osh, &nc->spare_area_write_ofs[i],
+					0xffffffff);
 		}
+		else {
+			/* Write 0xffffffff to spare_area_write_ofs register
+			 * to prevent old spare_area_write_ofs vale write
+			 * when we issue NANDCMD_PAGE_PROG.
+			 */
+			for (i = 0; i < (NANDSPARECACHE_SIZE / 4); i++)
+				W_REG(osh, &nc->spare_area_write_ofs[i],
+					0xffffffff);
+		}
+
+		/* Return to Big Endian mode for commands etc */
+		AND_REG(osh, &ai->ioctrl, ~NAND_APB_LITTLE_ENDIAN);
+
+		/* Push data into internal cache */
+		nandcore_cmd(osh, nc, NANDCMD_PAGE_PROG);
+
+		ret = nandcore_poll(nfl->sih, nc);
+		if (ret < 0)
+			goto err;
 	}
 
 err:
@@ -368,6 +410,115 @@ nandcore_check_id(uint8 *id)
 	return name;
 }
 
+static void
+nandcore_override_config(hndnand_t *nfl)
+{
+	nandregs_t *nc = nfl->core;
+	osl_t *osh;
+	uint32 reg;
+
+	ASSERT(nfl->sih);
+	osh = si_osh(nfl->sih);
+
+	/* Samsung K9LCG08U0B */
+	if ((nfl->id[0] == 0xec) && (nfl->id[1] == 0xde) &&
+	    (nfl->id[2] == 0xd5) && (nfl->id[3] == 0x7e) &&
+	    (nfl->id[4] == 0x68) && (nfl->id[5] == 0x44)) {
+		/* Block size, total size */
+		reg = R_REG(osh, &nc->config_cs0);
+		reg &= ~NANDCF_CS0_BLOCK_SIZE_MASK;
+		reg |= (NANDCF_CS0_BLOCK_SIZE_1MB << NANDCF_CS0_BLOCK_SIZE_SHIFT);
+		reg &= ~NANDCF_CS0_DEVICE_SIZE_MASK;
+		reg |= (NANDCF_CS0_DEVICE_SIZE_8GB << NANDCF_CS0_DEVICE_SIZE_SHIFT);
+		W_REG(osh, &nc->config_cs0, reg);
+
+		/* Spare size, sector size and ECC level */
+		reg = R_REG(osh, &nc->acc_control_cs0);
+		reg &= ~NANDAC_CS0_SPARE_AREA_SIZE;
+		reg |= NANDAC_CS0_SPARE_AREA_45B;
+		reg |= NANDAC_CS0_SECTOR_SIZE_1K;
+		reg &= ~NANDAC_CS0_ECC_LEVEL_MASK;
+		reg |= NANDAC_CS0_ECC_LEVEL_20;
+		W_REG(osh, &nc->acc_control_cs0, reg);
+	}
+
+	/* Micron MT29F64G08CBABA */
+	if ((nfl->id[0] == 0x2c) && (nfl->id[1] == 0x64) &&
+	    (nfl->id[2] == 0x44) && (nfl->id[3] == 0x4b) &&
+	    (nfl->id[4] == 0xa9)) {
+		/* Spare size, sector size and ECC level */
+		reg = R_REG(osh, &nc->acc_control_cs0);
+		reg &= ~NANDAC_CS0_SPARE_AREA_SIZE;
+		reg |= NANDAC_CS0_SPARE_AREA_45B;
+		reg |= NANDAC_CS0_SECTOR_SIZE_1K;
+		reg &= ~NANDAC_CS0_ECC_LEVEL_MASK;
+		reg |= NANDAC_CS0_ECC_LEVEL_20;
+		W_REG(osh, &nc->acc_control_cs0, reg);
+	}
+}
+
+static void
+nandcore_optimize_timing(hndnand_t *nfl)
+{
+	nandregs_t *nc = nfl->core;
+	osl_t *osh;
+	struct nandpart_timing_info *info = nandpart_timing_list;
+	uint32 reg, tmp_val;
+	uint32 clk_select, ns, divisor;
+
+	ASSERT(nfl->sih);
+	osh = si_osh(nfl->sih);
+
+	for (; info->name != NULL; info++) {
+		if (memcmp(nfl->id, info->id, 5) == 0)
+			break;
+	}
+
+	if (!info->name)
+		return;
+
+	reg = R_REG(osh, nfl->chipidx ? &nc->timing_2_cs1 : &nc->timing_2_cs0);
+	clk_select = (reg & NANDTIMING2_CLK_SEL_MASK) >> NANDTIMING2_CLK_SEL_SHIFT;
+	ns = (clk_select == 0) ? 8 : 4;
+	divisor = (clk_select == 0) ? 2 : 4;
+
+	/* Optimize nand_timing_1 */
+	reg = ((info->tWP + (ns - 1)) / ns) << NANDTIMING1_TWP_SHIFT;
+	reg |= ((info->tWH + (ns - 1)) / ns) << NANDTIMING1_TWH_SHIFT;
+	reg |= ((info->tRP + (ns - 1)) / ns) << NANDTIMING1_TRP_SHIFT;
+	reg |= ((info->tREH + (ns - 1)) / ns) << NANDTIMING1_TREH_SHIFT;
+	tmp_val = (((info->tCS + (ns - 1)) / ns) + (divisor - 1)) / divisor;
+	reg |= tmp_val << NANDTIMING1_TCS_SHIFT;
+	reg |= ((info->tCLH + (ns - 1)) / ns) << NANDTIMING1_TCLH_SHIFT;
+	tmp_val = (info->tALH > info->tWH) ? info->tALH : info->tWH;
+	reg |= ((tmp_val + (ns - 1)) / ns) << NANDTIMING1_TALH_SHIFT;
+	tmp_val = (((info->tADL + (ns - 1)) / ns) + (divisor - 1)) / divisor;
+	tmp_val = (tmp_val > 0xf) ? 0xf : tmp_val;
+	reg |= tmp_val << NANDTIMING1_TADL_SHIFT;
+	W_REG(osh, nfl->chipidx ? &nc->timing_1_cs1 : &nc->timing_1_cs0, reg);
+
+	/* Optimize nand_timing_2 */
+	reg = clk_select << NANDTIMING2_CLK_SEL_SHIFT;
+	tmp_val = (((info->tWB - (ns - 1)) / ns) + (divisor - 1)) / divisor;
+	reg |= tmp_val << NANDTIMING2_TWB_SHIFT;
+	tmp_val = (((info->tWHR + (ns - 1)) / ns) + (divisor - 1)) / divisor;
+	reg |= tmp_val << NANDTIMING2_TWHR_SHIFT;
+	tmp_val = info->tRP + info->tREH;
+	tmp_val = (info->tREAD > tmp_val) ? tmp_val : info->tREAD;
+	reg |= ((tmp_val + (ns - 1)) / ns) << NANDTIMING2_TREAD_SHIFT;
+	W_REG(osh, nfl->chipidx ? &nc->timing_2_cs1 : &nc->timing_2_cs0, reg);
+
+	printf("Optimize %s timing.\n", info->name);
+#ifdef BCMDBG
+	printf("R_REG(timing_1_cs%d)	= 0x%08x\n",
+		nfl->chipidx, R_REG(osh, nfl->chipidx ? &nc->timing_1_cs1 : &nc->timing_1_cs0));
+	printf("R_REG(timing_2_cs%d)	= 0x%08x\n",
+		nfl->chipidx, R_REG(osh, nfl->chipidx ? &nc->timing_2_cs1 : &nc->timing_2_cs0));
+#endif /* BCMDBG */
+
+	return;
+}
+
 /* Initialize nand flash access */
 hndnand_t *
 nandcore_init(si_t *sih)
@@ -407,8 +558,8 @@ nandcore_init(si_t *sih)
 	nandcore.erase = nandcore_erase;
 	nandcore.checkbadb = nandcore_checkbadb;
 	nandcore.markbadb = nandcore_mark_badb;
-
 	nandcore.read_oob = nandcore_read_oob;
+
 #ifndef _CFE_
 	nandcore.dev_ready = nandcore_dev_ready;
 	nandcore.select_chip = nandcore_select_chip;
@@ -419,6 +570,12 @@ nandcore_init(si_t *sih)
 	nandcore.write_page = nandcore_write_page;
 	nandcore.cmd_read_byte = nandcore_cmd_read_byte;
 #endif
+
+	/* For some nand part, requires to do reset before the other command */
+	nandcore_cmd(osh, nc, NANDCMD_FLASH_RESET);
+	if (nandcore_poll(sih, nc) < 0) {
+		return NULL;
+	}
 
 	nandcore_cmd(osh, nc, NANDCMD_ID_RD);
 	if (nandcore_poll(sih, nc) < 0) {
@@ -436,17 +593,18 @@ nandcore_init(si_t *sih)
 	/* Toggle as big endian */
 	AND_REG(osh, &ai->ioctrl, ~NAND_APB_LITTLE_ENDIAN);
 
-	for (i = 0; i < 5; i++) {
-		if (i < 4)
-			nandcore.id[i] = (id >> (8*i)) & 0xff;
-		else
-			nandcore.id[i] = id2 & 0xff;
+	for (i = 0; i < 4; i++) {
+		nandcore.id[i] = (id >> (8*i)) & 0xff;
+		nandcore.id[i + 4] = (id2 >> (8*i)) & 0xff;
 	}
 
 	name = nandcore_check_id(nandcore.id);
 	if (name == NULL)
 		return NULL;
 	nandcore.type = nandcore.id[0];
+
+	/* Override configuration for specific nand flash */
+	nandcore_override_config(&nandcore);
 
 	ncf = R_REG(osh, &nc->config_cs0);
 	/*  Page size (# of bytes) */
@@ -501,16 +659,11 @@ nandcore_init(si_t *sih)
 	if (ncf & NANDCF_CS0_DEVICE_WIDTH)
 		nandcore.width = 1;
 
-	/* Spare size and Spare per sector (# of bytes) */
+	/* Spare size and Spare per cache (# of bytes) */
 	acc_control = R_REG(osh, &nc->acc_control_cs0);
-	if (acc_control & NANDAC_CS0_SECTOR_SIZE_1K) {
-		printf("Pin strapping error. Sector size 1K hasn't supported yet\n");
-		return NULL;
-	}
 
 	/* Check conflict between 1K sector and page size */
 	if (acc_control & NANDAC_CS0_SECTOR_SIZE_1K) {
-		/* NOTE: 1K sector is not yet supported. */
 		nandcore.sectorsize = 1024;
 	}
 	else
@@ -525,14 +678,27 @@ nandcore_init(si_t *sih)
 	nandcore.sparesize = acc_control & NANDAC_CS0_SPARE_AREA_SIZE;
 
 	/* Get oob size,  */
-	nandcore.oobsize = nandcore.sparesize * (nandcore.pagesize / NFL_SECTOR_SIZE);
+	nandcore.oobsize = nandcore.sparesize * (nandcore.pagesize / NANDCACHE_SIZE);
 
 	/* Get ECC level */
 	nandcore.ecclevel = (acc_control & NANDAC_CS0_ECC_LEVEL_MASK) >> NANDAC_CS0_ECC_LEVEL_SHIFT;
-	if (nandcore.sectorsize == 1024)
-		nandcore.ecclevel *= 2;
+
+	/* Adjusted sparesize and eccbytes if sectorsize is 1K */
+	if (nandcore.sectorsize == 1024) {
+		nandcore.sparesize *= 2;
+		nandcore.eccbytes = ((nandcore.ecclevel * 14 + 3) >> 2);
+	}
+	else
+		nandcore.eccbytes = ((nandcore.ecclevel * 14 + 7) >> 3);
 
 	nandcore.numblocks = (nandcore.size * (1 << 10)) / (nandcore.blocksize >> 10);
+
+	/* Get the number of cache per page */
+	num_cache_per_page  = nandcore.pagesize / NANDCACHE_SIZE;
+
+	/* Get the spare size per cache */
+	spare_per_cache = nandcore.oobsize / num_cache_per_page;
+
 	if (firsttime) {
 		printf("Found a %s NAND flash:\n", name);
 		printf("Total size:  %uMB\n", nandcore.size);
@@ -541,10 +707,11 @@ nandcore_init(si_t *sih)
 		printf("OOB Size:    %uB\n", nandcore.oobsize);
 		printf("Sector size: %uB\n", nandcore.sectorsize);
 		printf("Spare size:  %uB\n", nandcore.sparesize);
-		printf("ECC level:   %u-bit\n", nandcore.ecclevel);
-		printf("Device ID: 0x%2x 0x%2x 0x%2x 0x%2x 0x%2x\n",
+		printf("ECC level:   %u (%u-bit)\n", nandcore.ecclevel,
+			(nandcore.sectorsize == 1024)? nandcore.ecclevel*2 : nandcore.ecclevel);
+		printf("Device ID: 0x%2x 0x%2x 0x%2x 0x%2x 0x%2x 0x%02x\n",
 			nandcore.id[0], nandcore.id[1], nandcore.id[2],
-			nandcore.id[3], nandcore.id[4]);
+			nandcore.id[3], nandcore.id[4], nandcore.id[5]);
 	}
 	firsttime = FALSE;
 
@@ -552,8 +719,20 @@ nandcore_init(si_t *sih)
 	nandcore.phybase = SI_NS_NANDFLASH;
 	nandcore.base = (uint32)REG_MAP(SI_NS_NANDFLASH, SI_FLASH_WINDOW);
 
+	/* For 1KB sector size setting */
+	if (R_REG(osh, &nc->acc_control_cs0) & NANDAC_CS0_SECTOR_SIZE_1K) {
+		AND_REG(osh, &nc->acc_control_cs0, ~NANDAC_CS0_PARTIAL_PAGE_EN);
+		printf("Disable PARTIAL_PAGE_EN\n");
+		AND_REG(osh, &nc->acc_control_cs0, ~NANDAC_CS0_FAST_PGM_RDIN);
+		printf("Disable FAST_PGM_RDIN\n");
+	}
+
+	/* Optimize timing */
+	nandcore_optimize_timing(&nandcore);
+
 #ifdef BCMDBG
 	/* Configuration readback */
+	printf("R_REG(nand_revision)	= 0x%08x\n", R_REG(osh, &nc->revision));
 	printf("R_REG(cs_nand_select)	= 0x%08x\n", R_REG(osh, &nc->cs_nand_select));
 	printf("R_REG(config_cs0)	= 0x%08x\n", R_REG(osh, &nc->config_cs0));
 	printf("R_REG(acc_control_cs0)	= 0x%08x\n", R_REG(osh, &nc->acc_control_cs0));
@@ -670,9 +849,9 @@ nandcore_erase(hndnand_t *nfl, uint64 offset)
 
 	/* Set the block address for the following commands */
 	reg = (R_REG(osh, &nc->cmd_ext_address) & ~NANDCMD_EXT_ADDR_MASK);
-	W_REG(osh, &nc->cmd_ext_address, (reg | (offset >> 32)));
+	W_REG(osh, &nc->cmd_ext_address, (reg | ((offset >> 32) & NANDCMD_EXT_ADDR_MASK)));
 
-	W_REG(osh, &nc->cmd_address, offset);
+	W_REG(osh, &nc->cmd_address, (uint32)offset);
 	nandcore_cmd(osh, nc, NANDCMD_BLOCK_ERASE);
 	if (nandcore_poll(sih, nc) < 0)
 		goto exit;
@@ -701,11 +880,12 @@ nandcore_checkbadb(hndnand_t *nfl, uint64 offset)
 	nandregs_t *nc = (nandregs_t *)nfl->core;
 	aidmp_t *ai = (aidmp_t *)nfl->wrap;
 	osl_t *osh;
-	int i;
-	uint off;
-	uint32 nand_intfc_status;
+	int i, j;
+	uint64 addr;
 	int ret = 0;
-	uint32 reg;
+	uint32 reg, oob_bi;
+	unsigned cache, col = 0;
+	uint32 rd_oob_byte, left_oob_byte;
 
 	ASSERT(sih);
 
@@ -716,42 +896,64 @@ nandcore_checkbadb(hndnand_t *nfl, uint64 offset)
 		return -1;
 	}
 
-	/* Set the block address for the following commands */
-	reg = (R_REG(osh, &nc->cmd_ext_address) & ~NANDCMD_EXT_ADDR_MASK);
-	W_REG(osh, &nc->cmd_ext_address, (reg | (offset >> 32)));
+	/* Enable ECC validation for spare area reads */
+	OR_REG(osh, nfl->chipidx ? &nc->acc_control_cs1 : &nc->acc_control_cs0,
+		NANDAC_CS0_RD_ECC_EN);
 
+	/* Check the first two pages for this block */
 	for (i = 0; i < 2; i++) {
-		off = offset + (nfl->pagesize * i);
-		W_REG(osh, &nc->cmd_address, off);
-		nandcore_cmd(osh, nc, NANDCMD_SPARE_RD);
-		if (nandcore_poll(sih, nc) < 0) {
-			ret = -1;
-			goto exit;
-		}
-		nand_intfc_status = R_REG(osh, &nc->intfc_status) & NANDIST_SPARE_VALID;
-		if (nand_intfc_status != NANDIST_SPARE_VALID) {
-			ret = -1;
-#ifdef BCMDBG
-			printf("%s: Spare is not valid\n", __FUNCTION__);
-#endif
-			goto exit;
+		addr = offset + (nfl->pagesize * i);
+		col = 0;
+		/* Loop all caches in page */
+		for (cache = 0; cache < num_cache_per_page; cache++, col += NANDCACHE_SIZE) {
+			uint32 ext_addr;
+
+			/* Set the page address for the following commands */
+			reg = (R_REG(osh, &nc->cmd_ext_address) & ~NANDCMD_EXT_ADDR_MASK);
+			ext_addr = ((addr + col) >> 32) & NANDCMD_EXT_ADDR_MASK;
+			W_REG(osh, &nc->cmd_ext_address, (reg | ext_addr));
+			W_REG(osh, &nc->cmd_address, (uint32)addr + col);
+
+			/* Issue page-read command */
+			nandcore_cmd(osh, nc, NANDCMD_PAGE_RD);
+
+			/* Wait for the command to complete */
+			if (nandcore_poll(sih, nc) < 0) {
+				ret = -1;
+				goto exit;
+			}
+
+			/* Set controller to Little Endian mode for copying */
+			OR_REG(osh, &ai->ioctrl, NAND_APB_LITTLE_ENDIAN);
+
+			rd_oob_byte = _nandcore_oobbyte_per_cache(nfl, cache, spare_per_cache);
+
+			left_oob_byte = rd_oob_byte % 4;
+
+			for (j = 0; j < (rd_oob_byte / 4); j++) {
+				if (cache == 0 && j == 0)
+					/* Save bad block indicator */
+					oob_bi = R_REG(osh, &nc->spare_area_read_ofs[0]);
+				else
+					reg = R_REG(osh, &nc->spare_area_read_ofs[j]);
+			}
+
+			if (left_oob_byte != 0) {
+				reg = R_REG(osh, &nc->spare_area_read_ofs[j]);
+			}
+
+			/* Return to Big Endian mode for commands etc */
+			AND_REG(osh, &ai->ioctrl, ~NAND_APB_LITTLE_ENDIAN);
 		}
 
-		/* Toggle as little endian */
-		OR_REG(osh, &ai->ioctrl, NAND_APB_LITTLE_ENDIAN);
-
-		if ((R_REG(osh, &nc->spare_area_read_ofs[0]) & 0xff) != 0xff) {
+		/* Check bad block indicator */
+		if ((oob_bi & 0xFF) != 0xFF) {
 			ret = -1;
 #ifdef BCMDBG
 			printf("%s: Bad Block (0x%llx)\n", __FUNCTION__, offset);
 #endif
-		}
-
-		/* Toggle as big endian */
-		AND_REG(osh, &ai->ioctrl, ~NAND_APB_LITTLE_ENDIAN);
-
-		if (ret == -1)
 			break;
+		}
 	}
 
 exit:
@@ -765,7 +967,7 @@ nandcore_mark_badb(hndnand_t *nfl, uint64 offset)
 	nandregs_t *nc = (nandregs_t *)nfl->core;
 	aidmp_t *ai = (aidmp_t *)nfl->wrap;
 	osl_t *osh;
-	uint off;
+	uint64 off;
 	int i, ret = 0;
 	uint32 reg;
 
@@ -780,10 +982,6 @@ nandcore_mark_badb(hndnand_t *nfl, uint64 offset)
 
 	/* Disable WP */
 	AND_REG(osh, &nc->cs_nand_select, ~NANDCSEL_NAND_WP);
-
-	/* Set the block address for the following commands */
-	reg = (R_REG(osh, &nc->cmd_ext_address) & ~NANDCMD_EXT_ADDR_MASK);
-	W_REG(osh, &nc->cmd_ext_address, (reg | (offset >> 32)));
 
 	/* Erase block */
 	W_REG(osh, &nc->cmd_address, offset);
@@ -805,8 +1003,16 @@ nandcore_mark_badb(hndnand_t *nfl, uint64 offset)
 	W_REG(osh, &nc->acc_control_cs0, reg);
 
 	for (i = 0; i < 2; i++) {
+		uint32 ext_addr;
+
 		off = offset + (nfl->pagesize * i);
-		W_REG(osh, &nc->cmd_address, off);
+
+		/* Set the block address for the following commands */
+		reg = (R_REG(osh, &nc->cmd_ext_address) & ~NANDCMD_EXT_ADDR_MASK);
+		ext_addr = (off >> 32) & NANDCMD_EXT_ADDR_MASK;
+		W_REG(osh, &nc->cmd_ext_address, (reg | ext_addr));
+
+		W_REG(osh, &nc->cmd_address, (uint32)off);
 
 		/* Toggle as little endian */
 		OR_REG(osh, &ai->ioctrl, NAND_APB_LITTLE_ENDIAN);
@@ -867,8 +1073,8 @@ _nandcore_set_cmd_address(hndnand_t *nfl, uint64 addr)
 	osh = si_osh(sih);
 
 	reg = (R_REG(osh, &nc->cmd_ext_address) & ~NANDCMD_EXT_ADDR_MASK);
-	W_REG(osh, &nc->cmd_ext_address, (reg | (addr >> 32)));
-	W_REG(osh, &nc->cmd_address, addr);
+	W_REG(osh, &nc->cmd_ext_address, (reg | ((addr >> 32) & NANDCMD_EXT_ADDR_MASK)));
+	W_REG(osh, &nc->cmd_address, (uint32)addr);
 }
 
 static int
@@ -979,21 +1185,6 @@ nandcore_waitfunc(hndnand_t *nfl, int *status)
 
 	return ret;
 }
-
-#endif
-
-#ifdef _CFE_
-static int
-ffs(int i)
-{       
-	int j;
-
-	if (i != 0)
-		for (j = 0; j < 32; j++)
-			if (i & (1 << j))
-				return j + 1;
-	return 0;
-}       
 #endif
 
 static int
@@ -1003,53 +1194,55 @@ nandcore_read_oob(hndnand_t *nfl, uint64 addr, uint8 *oob)
 	si_t *sih = nfl->sih;
 	nandregs_t *nc = (nandregs_t *)nfl->core;
 	aidmp_t *ai = (aidmp_t *)nfl->wrap;
-	uint32 reg, *to;
-	unsigned spare_per_sec, sector;
-	int i, sectorsize_shift, sec_per_page_shift;
+	uint32 reg;
+	unsigned cache, col = 0;
+	int i;
+	uint8 *to = oob;
+	uint32 rd_oob_byte, left_oob_byte;
 
 	ASSERT(sih);
 	osh = si_osh(sih);
 
-	/* Set the page address for the following commands */
-	reg = (R_REG(osh, &nc->cmd_ext_address) & ~NANDCMD_EXT_ADDR_MASK);
-	W_REG(osh, &nc->cmd_ext_address, (reg | (addr >> 32)));
+	/* Enable ECC validation for spare area reads */
+	OR_REG(osh, nfl->chipidx ? &nc->acc_control_cs1 : &nc->acc_control_cs0,
+		NANDAC_CS0_RD_ECC_EN);
 
-	/* Cal shift */
-	sectorsize_shift = ffs(nfl->sectorsize) - 1;
-	sec_per_page_shift = ffs(nfl->pagesize) - 1 - sectorsize_shift;
+	/* Loop all caches in page */
+	for (cache = 0; cache < num_cache_per_page; cache++, col += NANDCACHE_SIZE) {
+		uint32 ext_addr;
 
-	spare_per_sec = nfl->oobsize >> sec_per_page_shift;
+		/* Set the page address for the following commands */
+		reg = (R_REG(osh, &nc->cmd_ext_address) & ~NANDCMD_EXT_ADDR_MASK);
+		ext_addr = ((addr + col) >> 32) & NANDCMD_EXT_ADDR_MASK;
+		W_REG(osh, &nc->cmd_ext_address, (reg | ext_addr));
+		W_REG(osh, &nc->cmd_address, (uint32)(addr + col));
 
-	/* Disable ECC validation for spare area reads */
-	AND_REG(osh, nfl->chipidx ? &nc->acc_control_cs1 : &nc->acc_control_cs0,
-		~NANDAC_CS0_RD_ECC_EN);
-
-	/* Loop all sectors in page */
-	for (sector = 0; sector < (1 << sec_per_page_shift); sector ++) {
-		unsigned col;
-
-		col = (sector << sectorsize_shift);
-
-		/* Issue command to read partial page */
-		W_REG(osh, &nc->cmd_address, addr + col);
-
-		nandcore_cmd(osh, nc, NANDCMD_SPARE_RD);
+		/* Issue page-read command */
+		nandcore_cmd(osh, nc, NANDCMD_PAGE_RD);
 
 		/* Wait for the command to complete */
 		if (nandcore_poll(sih, nc))
 			return -1;
 
-		if (!(R_REG(osh, &nc->intfc_status) & NANDIST_SPARE_VALID)) {
-			printf("%s: data not valid\n",	__FUNCTION__);
-			return -1;
-		}
-
 		/* Set controller to Little Endian mode for copying */
 		OR_REG(osh, &ai->ioctrl, NAND_APB_LITTLE_ENDIAN);
 
-		to = (uint32 *)(oob + sector * spare_per_sec);
-		for (i = 0; i < spare_per_sec; i += 4, to++)
-			*to = R_REG(osh, &nc->spare_area_read_ofs[i/4]);
+		rd_oob_byte = _nandcore_oobbyte_per_cache(nfl, cache, spare_per_cache);
+
+		left_oob_byte = rd_oob_byte % 4;
+
+		/* Pay attention to natural address alignment access */
+		for (i = 0; i < (rd_oob_byte / 4); i++) {
+			reg = R_REG(osh, &nc->spare_area_read_ofs[i]);
+			memcpy((void *)to, (void *)&reg, 4);
+			to += 4;
+		}
+
+		if (left_oob_byte != 0) {
+			reg = R_REG(osh, &nc->spare_area_read_ofs[i]);
+			memcpy((void *)to, (void *)&reg, left_oob_byte);
+			to += left_oob_byte;
+		}
 
 		/* Return to Big Endian mode for commands etc */
 		AND_REG(osh, &ai->ioctrl, ~NAND_APB_LITTLE_ENDIAN);
@@ -1059,6 +1252,7 @@ nandcore_read_oob(hndnand_t *nfl, uint64 addr, uint8 *oob)
 }
 
 #ifndef _CFE_
+
 static int
 nandcore_write_oob(hndnand_t *nfl, uint64 addr, uint8 *oob)
 {
@@ -1066,12 +1260,15 @@ nandcore_write_oob(hndnand_t *nfl, uint64 addr, uint8 *oob)
 	si_t *sih = nfl->sih;
 	nandregs_t *nc = (nandregs_t *)nfl->core;
 	aidmp_t *ai = (aidmp_t *)nfl->wrap;
-	uint32 reg, *from;
-	unsigned spare_per_sec, sector, num_sec;
-	int i, sectorsize_shift, sec_per_page_shift;
+	uint32 reg;
+	unsigned cache, col = 0;
+	int i;
 	int ret = 0;
+	uint8 *from = oob;
+	uint32 wr_oob_byte, left_oob_byte;
 
 	ASSERT(sih);
+
 	osh = si_osh(sih);
 
 	/* Disable WP */
@@ -1082,44 +1279,58 @@ nandcore_write_oob(hndnand_t *nfl, uint64 addr, uint8 *oob)
 	 * for PROGRAM_SPARE_AREA
 	 */
 	reg = R_REG(osh, nfl->chipidx ? &nc->acc_control_cs1 : &nc->acc_control_cs0);
-	reg |= NANDAC_CS0_PARTIAL_PAGE_EN;
-	reg |= NANDAC_CS0_FAST_PGM_RDIN;
+	if (nfl->sectorsize == 512) {
+		reg |= NANDAC_CS0_PARTIAL_PAGE_EN;
+		reg |= NANDAC_CS0_FAST_PGM_RDIN;
+	}
 	reg &= ~NANDAC_CS0_WR_ECC_EN;
 	W_REG(osh, nfl->chipidx ? &nc->acc_control_cs1 : &nc->acc_control_cs0, reg);
 
-	/* Cal shift */
-	sectorsize_shift = _nandcore_ffs(nfl->sectorsize) - 1;
-	sec_per_page_shift = _nandcore_ffs(nfl->pagesize) - 1 - sectorsize_shift;
+	/* Loop all caches in page */
+	for (cache = 0; cache < num_cache_per_page; cache++, col += NANDCACHE_SIZE) {
+		uint32 ext_addr;
 
-	spare_per_sec = nfl->oobsize >> sec_per_page_shift;
-
-	/* Set the page address for the following commands */
-	reg = (R_REG(osh, &nc->cmd_ext_address) & ~NANDCMD_EXT_ADDR_MASK);
-	W_REG(osh, &nc->cmd_ext_address, (reg | (addr >> 32)));
-
-	num_sec = 1 << sec_per_page_shift;
-
-	/* Loop all sectors in page */
-	for (sector = 0; sector < num_sec; sector ++) {
-		unsigned col;
-
-		/* Spare area accessed by the data sector offset */
-		col = (sector << sectorsize_shift);
-
-		W_REG(osh, &nc->cmd_address, addr + col);
+		/* Set the page address for the following commands */
+		reg = (R_REG(osh, &nc->cmd_ext_address) & ~NANDCMD_EXT_ADDR_MASK);
+		ext_addr = ((addr + col) >> 32) & NANDCMD_EXT_ADDR_MASK;
+		W_REG(osh, &nc->cmd_ext_address, (reg | ext_addr));
+		W_REG(osh, &nc->cmd_address, (uint32)(addr + col));
 
 		/* Set controller to Little Endian mode for copying */
 		OR_REG(osh, &ai->ioctrl, NAND_APB_LITTLE_ENDIAN);
 
-		from = (uint32 *)(oob + sector * spare_per_sec);
-		for (i = 0; i < spare_per_sec; i += 4, from++)
-			W_REG(osh, &nc->spare_area_write_ofs[i/4], *from);
+		/* Must fill flash cache with all 0xff in each round */
+		for (i = 0; i < (NANDCACHE_SIZE / 4); i++)
+			W_REG(osh, &nc->flash_cache[i], 0xffffffff);
+
+		/* Fill spare area write cache */
+		wr_oob_byte = _nandcore_oobbyte_per_cache(nfl, cache, spare_per_cache);
+
+		left_oob_byte = wr_oob_byte % 4;
+
+		/* Pay attention to natural address alignment access */
+		for (i = 0; i < (wr_oob_byte / 4); i++) {
+			memcpy((void *)&reg, (void *)from, 4);
+			W_REG(osh, &nc->spare_area_write_ofs[i], reg);
+			from += 4;
+		}
+
+		if (left_oob_byte != 0) {
+			reg = 0xffffffff;
+			memcpy((void *)&reg, (void *)from, left_oob_byte);
+			W_REG(osh, &nc->spare_area_write_ofs[i], reg);
+			from += left_oob_byte;
+			i++;
+		}
+
+		for (; i < (NANDSPARECACHE_SIZE / 4); i++)
+			W_REG(osh, &nc->spare_area_write_ofs[i], 0xffffffff);
 
 		/* Return to Big Endian mode for commands etc */
 		AND_REG(osh, &ai->ioctrl, ~NAND_APB_LITTLE_ENDIAN);
 
 		/* Push spare bytes into internal buffer, last goes to flash */
-		nandcore_cmd(osh, nc, NANDCMD_SPARE_PROG);
+		nandcore_cmd(osh, nc, NANDCMD_PAGE_PROG);
 
 		if (nandcore_poll(sih, nc)) {
 			ret = -1;
@@ -1133,8 +1344,10 @@ err:
 	 * for PROGRAM_SPARE_AREA
 	 */
 	reg = R_REG(osh, nfl->chipidx ? &nc->acc_control_cs1 : &nc->acc_control_cs0);
-	reg &= ~NANDAC_CS0_PARTIAL_PAGE_EN;
-	reg &= ~NANDAC_CS0_FAST_PGM_RDIN;
+	if (nfl->sectorsize == 512) {
+		reg &= ~NANDAC_CS0_PARTIAL_PAGE_EN;
+		reg &= ~NANDAC_CS0_FAST_PGM_RDIN;
+	}
 	reg |= NANDAC_CS0_WR_ECC_EN;
 	W_REG(osh, nfl->chipidx ? &nc->acc_control_cs1 : &nc->acc_control_cs0, reg);
 

@@ -348,10 +348,10 @@ auth_check( char* dirname, char* authorization ,char* url)
 		if(login_try%MAX_login == 0)
 			logmessage(HEAD_HTTP_LOGIN, "Detect abnormal logins at %d times. The newest one was from %s.", login_try, temp_ip_str);
 
+#ifdef LOGIN_LOCK
 		send_authenticate( dirname );
-// This is currently badly implemented - any software that might automatically access port 80
-// on your LAN might end up getting yourself locked out.  For now, we will just log the attempts.
-//		return 0;
+		return 0;
+#endif
 	}
 
 	//printf("[httpd] auth chk:%s, %s\n", dirname, url);	// tmp test

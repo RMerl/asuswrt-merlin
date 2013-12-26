@@ -116,12 +116,7 @@ char *get_wan_ifname(int unit)
 	//_dprintf("wan_proto: %s\n", wan_proto);
 
 #ifdef RTCONFIG_USB_MODEM
-#ifdef RTCONFIG_DUALWAN
-	if(get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_USB)
-#else
-	if(unit == WAN_UNIT_SECOND)
-#endif
-	{
+	if (dualwan_unit__usbif(unit)) {
 		if(!strcmp(wan_proto, "dhcp"))
 			wan_ifname = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
 		else
@@ -154,17 +149,12 @@ char *get_wan6_ifname(int unit)
 
 	if(strcmp(nvram_safe_get("ipv6_ifdev"), "eth")==0) {
 		wan_ifname=nvram_safe_get(strcat_r(prefix, "ifname", tmp));
-		dbG("wan6_ifname: %s\n", wan_ifname);
+//		dbG("wan6_ifname: %s\n", wan_ifname);
 		return wan_ifname;
 	}
 
 #ifdef RTCONFIG_USB_MODEM
-#ifdef RTCONFIG_DUALWAN
-	if(get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_USB)
-#else
-	if(unit == WAN_UNIT_SECOND)
-#endif
-	{
+	if (dualwan_unit__usbif(unit)) {
 		if(!strcmp(wan_proto, "dhcp"))
 			wan_ifname = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
 		else
@@ -178,7 +168,7 @@ char *get_wan6_ifname(int unit)
 		wan_ifname = nvram_safe_get(strcat_r(prefix, "pppoe_ifname", tmp));
 	else wan_ifname=nvram_safe_get(strcat_r(prefix, "ifname", tmp));
 
-	dbG("wan6_ifname: %s\n", wan_ifname);
+//	dbG("wan6_ifname: %s\n", wan_ifname);
 	return wan_ifname;
 }
 
@@ -206,14 +196,14 @@ int get_wanports_status(int wan_unit)
 #ifdef RTCONFIG_DUALWAN
 	if(get_dualwan_by_unit(wan_unit) == WANS_DUALWAN_IF_LAN)
 	{
-		return rtkswitch_wanPort_phyStatus(); //Paul modify 2012/12/4	
+		return rtkswitch_wanPort_phyStatus(wan_unit); //Paul modify 2012/12/4	
 	}
 #endif
 	// TO CHENI:
 	// HOW TO HANDLE USB?	
 #else // RJ-45
 #ifdef RTCONFIG_RALINK
-	return rtkswitch_wanPort_phyStatus();
+	return rtkswitch_wanPort_phyStatus(wan_unit);
 #else
 	return wanport_status(wan_unit);
 #endif
@@ -275,6 +265,7 @@ wan_primary_ifunit(void)
 	return 0;
 }
 
+#ifdef RTCONFIG_MEDIA_SERVER
 void
 set_invoke_later(int flag)
 {
@@ -286,6 +277,7 @@ get_invoke_later()
 {
 	return(nvram_get_int("invoke_later"));
 }
+#endif	/* RTCONFIG_MEDIA_SERVER */
 
 #ifdef RTCONFIG_USB
 

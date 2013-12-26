@@ -25,6 +25,8 @@
 
 extern int sock;
 
+extern int disableigmp6check;
+
 #define min(a,b)	(((a) < (b)) ? (a) : (b))
 
 struct AdvPrefix;
@@ -195,7 +197,7 @@ int next_time_msec(struct Interface const * iface);
 int expired(struct Interface const * iface);
 
 /* device.c */
-int setup_deviceinfo(struct Interface *);
+int update_device_info(struct Interface *);
 int check_device(struct Interface *);
 int setup_linklocal_addr(struct Interface *);
 int setup_allrouters_membership(struct Interface *);

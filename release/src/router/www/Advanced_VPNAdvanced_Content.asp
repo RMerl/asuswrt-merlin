@@ -125,7 +125,7 @@ var staticclist_row = dhcp_staticlists.split('&#60');
 /* initial variables for openvpn start */
 <% vpn_server_get_parameter(); %>;
 
-var openvpn_clientlist_array ='<% nvram_get("vpn_server_ccd_val"); %>';
+var openvpn_clientlist_array = decodeURIComponent('<% nvram_char_to_ascii("", "vpn_server_ccd_val"); %>');
 var openvpn_unit = '<% nvram_get("vpn_server_unit"); %>';
 var initial_vpn_mode = "<% nvram_get("VPNServer_mode"); %>";
 
@@ -265,7 +265,7 @@ function openvpn_clientlist(){
 				//skip field[0] as it contains "1" for "Enabled".
 				for (var j = 1; j < openvpn_clientlist_col.length; j++){
 					if (j == 4)
-						code +='<td width="'+wid[j]+'%">'+ (openvpn_clientlist_col[j] == 1 ? 'Yes' : 'No') +'</td>';
+						code +='<td width="'+wid[j]+'%">'+ ((openvpn_clientlist_col[j] == 1 || openvpn_clientlist_col[j] == 'Yes') ? 'Yes' : 'No') +'</td>';
 					else
 						code +='<td width="'+wid[j]+'%">'+ openvpn_clientlist_col[j] +'</td>';
 
@@ -337,7 +337,7 @@ function del_openvpnRow(r){
 	for(k=0; k<$('openvpn_clientlist_table').rows.length; k++){
 		for(j=0; j<$('openvpn_clientlist_table').rows[k].cells.length-1; j++){
 			if(j == 0)
-				openvpn_clientlist_value += "<";
+				openvpn_clientlist_value += "<1>";
 			else
 				openvpn_clientlist_value += ">";
 			openvpn_clientlist_value += $('openvpn_clientlist_table').rows[k].cells[j].innerHTML;
@@ -358,21 +358,35 @@ function addRow_Group(upper){
 		return false;
 	}
 
-	if(document.openvpn_form.vpn_clientlist_commonname_0.value=="" || document.openvpn_form.vpn_clientlist_subnet_0.value=="" ||
-			document.openvpn_form.vpn_clientlist_netmask_0.value==""){
+	if(document.openvpn_form.vpn_clientlist_commonname_0.value==""){
 					alert("<#JS_fieldblank#>");
 					document.openvpn_form.vpn_clientlist_commonname_0.focus();
 					document.openvpn_form.vpn_clientlist_commonname_0.select();
 					return false;
+	}
+	if(document.openvpn_form.vpn_clientlist_subnet_0.value==""){
+					alert("<#JS_fieldblank#>");
+					document.openvpn_form.vpn_clientlist_subnet_0.focus();
+					document.openvpn_form.vpn_clientlist_subnet_0.select();
+					return false;		
+	}
+	if(document.openvpn_form.vpn_clientlist_netmask_0.value==""){
+					alert("<#JS_fieldblank#>");
+					document.openvpn_form.vpn_clientlist_netmask_0.focus();
+					document.openvpn_form.vpn_clientlist_netmask_0.select();
+					return false;		
 	}
 
 // Check for duplicate
 
 	if(item_num >=2){
 		for(i=0; i<client_num; i++){
-			if(document.openvpn_form.vpn_clientlist_commonname_0.value.toLowerCase() == $('vpn_clientlist_table').rows[i].cells[0].innerHTML.toLowerCase()){
+			if(document.openvpn_form.vpn_clientlist_commonname_0.value.toLowerCase() == $('openvpn_clientlist_table').rows[i].cells[0].innerHTML.toLowerCase()
+					&& document.openvpn_form.vpn_clientlist_subnet_0.value == $('openvpn_clientlist_table').rows[i].cells[1].innerHTML
+					&& document.openvpn_form.vpn_clientlist_netmask_0.value == $('openvpn_clientlist_table').rows[i].cells[2].innerHTML){
 				alert('<#JS_duplicate#>');
-				document.openvpn_form.vpn_clientlist__0.value =="";
+				document.openvpn_form.vpn_clientlist_commonname_0.focus();
+				document.openvpn_form.vpn_clientlist_commonname_0.select();
 				return false;
 			}
 		}
@@ -386,14 +400,14 @@ function Do_addRow_Group(){
 	addRow(document.openvpn_form.vpn_clientlist_netmask_0, 0);
 	addRow(document.openvpn_form.vpn_clientlist_push_0, 0);
 
-	document.openvpn_form.vpn_clientlist_push_0.value="0";
+	document.openvpn_form.vpn_clientlist_push_0.value="0"; //reset selection
 
 	openvpn_clientlist();
 }
 
 function addRow(obj, head){
 	if(head == 1)
-		openvpn_clientlist_array += "<";
+		openvpn_clientlist_array += "<1>";
 	else
 		openvpn_clientlist_array += ">";
 
@@ -868,7 +882,6 @@ function cal_panel_block(){
 			<form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
 			<input type="hidden" name="current_page" value="Advanced_VPNAdvanced_Content.asp">
 			<input type="hidden" name="next_page" value="Advanced_VPNAdvanced_Content.asp">
-			<input type="hidden" name="next_host" value="">
 			<input type="hidden" name="modified" value="0">
 			<input type="hidden" name="action_mode" value="apply">
 			<input type="hidden" name="action_wait" value="5">
@@ -1016,7 +1029,6 @@ function cal_panel_block(){
 			<form method="post" name="openvpn_form" id="openvpn_ruleForm" action="/start_apply.htm" target="hidden_frame">
 			<input type="hidden" name="current_page" value="Advanced_VPNAdvanced_Content.asp">
 			<input type="hidden" name="next_page" value="Advanced_VPNAdvanced_Content.asp">
-			<input type="hidden" name="next_host" value="">
 			<input type="hidden" name="modified" value="0">
 			<input type="hidden" name="action_mode" value="apply">
 			<input type="hidden" name="action_script" value="">
@@ -1304,11 +1316,11 @@ function cal_panel_block(){
 									</thead>
 
 									<tr>
-										<th width="36%">Common Name</th>
-										<th width="20%">Subnet</th>
-										<th width="20%">Netmask</th>
+										<th width="36%"><#PPPConnection_UserName_itemname#></th>
+										<th width="20%"><#IPConnection_ExternalIPAddress_itemname#></th>
+										<th width="20%"><#IPConnection_x_ExternalSubnetMask_itemname#></th>
 										<th width="12%">Push</th>
-										<th width="12%">Add / Delete</th>
+										<th width="12%"><#list_add_delete#></th>
 									</tr>
 
 									<tr>							

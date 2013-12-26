@@ -66,7 +66,7 @@ if [ "$1" == "ntfs" ]; then
 			break;
 		fi
 	done
-elif [ "$1" == "hfs" ] || [ "$1" == "hfs+" ] || [ "$1" == "hfsj" ]; then
+elif [ "$1" == "hfs" ] || [ "$1" == "hfs+j" ] || [ "$1" == "hfs+jx" ]; then
 	c=0
 	RET=1
 	while [ ${c} -lt 4 -a ${RET} -ne 0 ] ; do

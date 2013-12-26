@@ -76,7 +76,6 @@ function onSubmitCtrl(o, s) {
 
 function init(){
 		show_menu();
-		load_body();
 		showLANIPList();
 
 		if(downsize_4m_support){	// rm cmd for downsize //downsize_8m_support
@@ -276,7 +275,6 @@ function validForm(){
 <form method="GET" name="form" action="/apply.cgi" target="hidden_frame"> 
 <input type="hidden" name="current_page" value="Main_Netstat_Content.asp">
 <input type="hidden" name="next_page" value="Main_Netstat_Content.asp">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="group_id" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="">
@@ -335,7 +333,7 @@ function validForm(){
 											<th width="20%">Target IP</th>
 											<td>
 													<input type="text" id="targetip" class="input_15_table" maxlength="15" name="targetip" onKeyPress="return is_ipaddr(this,event)" onClick="hideClients_Block();">
-												<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="Select the device name of DHCP clients." onmouseover="over_var=1;" onmouseout="over_var=0;">
+												<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="<#select_device_name#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
 												<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
 											</td>										
 										</tr>										

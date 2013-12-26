@@ -320,13 +320,13 @@ function initial(){
 				html_code += "<ul>\n";
 				html_code += "<li><#APSurvey_action_search_again_hint2#>";
 				html_code += "<span style=\"text-align: right;\">\n";
-				html_code += "<input type=\"button\" class=\"button_gen\" width=\"72\" onclick=\"javascript:location.href=\'http://router.asus.com/QIS_wizard.htm?flag=sitesurvey\';\" value=\"Rescan\">";
+				html_code += "<input type=\"button\" class=\"button_gen\" width=\"72\" onclick=\"javascript:location.href=\'http://router.asus.com/QIS_wizard.htm?flag=sitesurvey\';\" value=\"<#QIS_rescan#>\">";
 				html_code += "</span>\n";
 				html_code += "</li>\n";
 
 				html_code += "<li><#QKSet_finish_moveto8#>";
 				html_code += "<span style=\"text-align: right;\">\n";
-				html_code += "<input type=\"button\" class=\"button_gen\" width=\"72\" onclick=\"javascript:location.href=\'QIS_wizard.htm?flag=manual\';\" value=\"Manual\">";
+				html_code += "<input type=\"button\" class=\"button_gen\" width=\"72\" onclick=\"javascript:location.href=\'QIS_wizard.htm?flag=manual\';\" value=\"<#Manual_Setting_btn#>\">";
 				html_code += "</span>\n";
 				html_code += "</li>\n";
 				html_code += "</ul>\n";			
@@ -626,8 +626,8 @@ function hideLoadingBar(){
 		<div id="suggestion" style="display:;">
 		<ul>
 		  <li>
-		  	<span id="suggestion_final"><#web_redirect_suggestion_final#></span>
-		  	<a href="javascript:wanLink();" style="color:#569AC7; text-decoration:underline;"><#web_redirect_suggestion_etc#></a>
+		  	<span id="suggestion_final"><#web_redirect_suggestion_final#></span>&nbsp;
+		  	<a href="javascript:wanLink();" style="color:#569AC7; text-decoration:underline;"><#web_redirect_suggestion_etc#></a>&nbsp;
 		   	<span><#web_redirect_suggestion_etc_desc#></span>
 		  </li>
 		</ul>

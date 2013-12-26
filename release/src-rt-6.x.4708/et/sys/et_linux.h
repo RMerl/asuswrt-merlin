@@ -15,7 +15,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: et_linux.h 412722 2013-07-16 09:37:43Z $
+ * $Id: et_linux.h 427480 2013-10-03 19:09:47Z $
  */
 
 #ifndef _et_linux_h_
@@ -27,7 +27,7 @@
 #if defined(CONFIG_RAM_SIZE) && ((CONFIG_RAM_SIZE > 0) && (CONFIG_RAM_SIZE <= 16))
 #define NRXBUFPOST      256             /* try to keep this # rbufs posted to the chip */
 #else
-#define NRXBUFPOST      320             /* try to keep this # rbufs posted to the chip */
+#define NRXBUFPOST      511             /* try to keep this # rbufs posted to the chip */
 #endif
 #define	BUFSZ		2048		/* packet data buffer size */
 #define	RXBUFSZ		(BUFSZ - 256)	/* receive buffer size */

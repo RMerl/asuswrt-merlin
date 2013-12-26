@@ -34,6 +34,10 @@
 #include <bcmparams.h>
 #include <bcmdevs.h>
 #include <shared.h>
+#ifdef RTCONFIG_BCMFA
+#include <linux/ethtool.h>
+#include <linux/sockios.h>
+#endif
 
 #include "rc.h"
 #include "interface.h"
@@ -337,13 +341,18 @@ int start_vlan(void)
 		char vlan_id[16];
 		char *hwname, *hwaddr;
 		char prio[8];
+#ifdef RTCONFIG_BCMFA
+		struct ethtool_drvinfo info;
+#endif
 		/* get the address of the EMAC on which the VLAN sits */
 		snprintf(nvvar_name, sizeof(nvvar_name), "vlan%dhwname", i);
 		if (!(hwname = nvram_get(nvvar_name)))
 			continue;
+
 		snprintf(nvvar_name, sizeof(nvvar_name), "%smacaddr", hwname);
 		if (!(hwaddr = nvram_get(nvvar_name)))
 			continue;
+
 		ether_atoe(hwaddr, ea);
 		/* find the interface name to which the address is assigned */
 		for (j = 1; j <= DEV_NUMIFS; j ++) {
@@ -354,9 +363,24 @@ int start_vlan(void)
 				continue;
 			if (ifr.ifr_hwaddr.sa_family != ARPHRD_ETHER)
 				continue;
+#ifdef RTCONFIG_BCMFA
+			if (bcmp(ifr.ifr_hwaddr.sa_data, ea, ETHER_ADDR_LEN))
+				continue;
+
+			/* Get driver info, it can handle both et0 and et2 have same MAC */
+			memset(&info, 0, sizeof(info));
+			info.cmd = ETHTOOL_GDRVINFO;
+			ifr.ifr_data = (caddr_t)&info;
+			if (ioctl(s, SIOCETHTOOL, &ifr) < 0)
+				continue;
+			if (strcmp(info.driver, hwname) == 0)
+				break;
+#else
 			if (!bcmp(ifr.ifr_hwaddr.sa_data, ea, ETHER_ADDR_LEN))
 				break;
+#endif
 		}
+
 		if (j > DEV_NUMIFS)
 			continue;
 		if (ioctl(s, SIOCGIFFLAGS, &ifr))
@@ -374,7 +398,7 @@ int start_vlan(void)
 			eval("vconfig", "set_ingress_map", vlan_id, prio, prio);
 		}
 	}
-#if defined(RTN14U) || defined(RTAC52U)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U)
 	eval("vconfig", "set_egress_map", "vlan2", "0", nvram_safe_get("switch_wan0prio"));
 #endif
 	close(s);

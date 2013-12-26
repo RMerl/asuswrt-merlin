@@ -297,7 +297,7 @@ function setScenerion(mode){
 		$j("#Internet_span").css("display", "block");
 		$j("#ap-line").css("display", "none");
 		$j("#AP").html("<#Device_type_02_RT#>");
-		$j("#mode_desc").html("<#OP_RE_desc#><br/><span style=\"color:#FC0\"><#use_DevDiscoveryUtil#></span>");
+		$j("#mode_desc").html("<#OP_RE_desc#><br/><span style=\"color:#FC0\"><#deviceDiscorvy2#></span>");
 		$j("#nextButton").attr("value","<#CTL_next#>");
 		clearTimeout(id_WANunplungHint);
 		$j("#Unplug-hint").css("display", "none");
@@ -312,7 +312,7 @@ function setScenerion(mode){
 		$j("#Internet_span").css("display", "block");
 		$j("#ap-line").css("display", "none");
 		$j("#AP").html("<#Device_type_02_RT#>");
-		$j("#mode_desc").html("<#OP_AP_desc#><br/><span style=\"color:#FC0\"><#deviceDiscorvy#></span>");
+		$j("#mode_desc").html("<#OP_AP_desc#><br/><span style=\"color:#FC0\"><#deviceDiscorvy3#></span>");
 		$j("#nextButton").attr("value","<#CTL_next#>");
 		clearTimeout(id_WANunplungHint);
 		$j("#Unplug-hint").css("display", "none");
@@ -326,7 +326,7 @@ function setScenerion(mode){
 				pstaDesc += "<#OP_MB_desc4#>";
 				pstaDesc += "<#OP_MB_desc5#>";
 				pstaDesc += "<br>In media bridge mode, the wireless only connect to the P-AP, client devices need connect to media bridge with network cable.";
-				pstaDesc += "<br/><span style=\"color:#FC0\"><#use_DevDiscoveryUtil#></span>";
+				pstaDesc += "<br/><span style=\"color:#FC0\"><#deviceDiscorvy4#></span>";
 
 		$j("#Senario").css("height", "300px");
 		$j("#Senario").css("background", "url(/images/New_ui/mb.jpg) center no-repeat");

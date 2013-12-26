@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: hnddma.c 411691 2013-07-10 04:19:32Z $
+ * $Id: hnddma.c 423696 2013-09-13 00:56:28Z $
  */
 
 #include <bcm_cfg.h>
@@ -1207,7 +1207,7 @@ next_frame:
 	if (head == NULL)
 		return (NULL);
 
-#if (!defined(__mips__) && !defined(BCM47XX_CA9))
+#if (!defined(__mips__) && !defined(BCM47XX_CA9) && !defined(__NetBSD__))
 #if defined(BCM4335) || defined(BCM4345) || defined(BCM4350) || defined(BCM43602)
 	if ((R_REG(osh, &dregs->control) & D64_RC_GE)) {
 		/* In case of glommed pkt get length from hwheader */
@@ -1223,23 +1223,13 @@ next_frame:
 #else
 	{
 	int read_count = 0;
-#if defined(__mips__) || defined(__NetBSD__)
-	for (read_count = 200;
-	     (!(len = ltoh16(*(uint16 *)OSL_UNCACHED(PKTDATA(di->osh, head)))) &&
-	       read_count); read_count--) {
-		if (CHIPID(di->sih->chip) == BCM5356_CHIP_ID)
-			break;
-		OSL_DELAY(1);
-	}
-#else
 	for (read_count = 200; read_count; read_count--) {
 		len = ltoh16(*(uint16 *)PKTDATA(di->osh, head));
 		if (len != 0)
 			break;
-		DMA_MAP(di->osh, PKTDATA(di->osh, head), 32, DMA_RX, NULL, NULL);
+		DMA_MAP(di->osh, PKTDATA(di->osh, head), sizeof(uint16), DMA_RX, NULL, NULL);
 		OSL_DELAY(1);
 	}
-#endif /* __mips__ */
 
 	if (!len) {
 		DMA_ERROR(("%s: dma_rx: frame length (%d)\n", di->name, len));
@@ -1256,8 +1246,15 @@ next_frame:
 	PKTSETLEN(di->osh, head, pkt_len);
 	resid = len - (di->rxbufsize - di->rxoffset);
 
-	/* check for single or multi-buffer rx */
-	if (resid > 0) {
+	if (resid <= 0) {
+		/* Single frame, all good */
+	} else if (di->hnddma.dmactrlflags & DMA_CTRL_RXSINGLE) {
+		DMA_TRACE(("%s: dma_rx: corrupted length (%d)\n", di->name, len));
+		PKTFREE(di->osh, head, FALSE);
+		di->hnddma.rxgiants++;
+		goto next_frame;
+	} else {
+		/* multi-buffer rx */
 #ifdef BCMDBG
 		/* get rid of compiler warning */
 		p = NULL;
@@ -1393,10 +1390,9 @@ _dma_rxfill(dma_info_t *di)
 		/* Do a cached write instead of uncached write since DMA_MAP
 		 * will flush the cache.
 		*/
-		*(uint32 *)(PKTDATA(di->osh, p)) = 0;
-#if defined(linux) && defined(BCM47XX_CA9)
-		DMA_MAP(di->osh, (void *)((uint)PKTDATA(di->osh, p) & ~0x1f),
-			32, DMA_TX, NULL, NULL);
+		*(uint16 *)(PKTDATA(di->osh, p)) = 0;
+#if defined(linux) && (defined(BCM47XX_CA9) || defined(__mips__))
+		DMA_MAP(di->osh, PKTDATA(di->osh, p), sizeof(uint16), DMA_TX, NULL, NULL);
 #endif
 
 		if (DMASGLIST_ENAB)
@@ -1407,12 +1403,6 @@ _dma_rxfill(dma_info_t *di)
 		              &di->rxp_dmah[rxout]);
 
 		ASSERT(ISALIGNED(PHYSADDRLO(pa), 4));
-
-#ifdef __mips__
-		/* Do a un-cached write now that DMA_MAP has invalidated the cache
-		 */
-		*(uint32 *)OSL_UNCACHED((PKTDATA(di->osh, p))) = 0;
-#endif /* __mips__ */
 
 		/* save the free packet pointer */
 		ASSERT(di->rxp[rxout] == NULL);

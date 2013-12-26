@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: sbhnddma.h 401759 2013-05-13 16:08:08Z $
+ * $Id: sbhnddma.h 419467 2013-08-21 09:19:48Z $
  */
 
 #ifndef	_sbhnddma_h_
@@ -333,6 +333,7 @@ typedef volatile struct {
 #define DMA_CTRL_UNFRAMED	(1 << 3)	/* Unframed Rx/Tx data */
 #define DMA_CTRL_USB_BOUNDRY4KB_WAR (1 << 4)
 #define DMA_CTRL_DMA_AVOIDANCE_WAR (1 << 5)	/* DMA avoidance WAR for 4331 */
+#define DMA_CTRL_RXSINGLE	(1 << 6)	/* always single buffer */
 
 /* receive descriptor table pointer */
 #define	D64_RP_LD_MASK		0x00001fff	/* last valid descriptor */

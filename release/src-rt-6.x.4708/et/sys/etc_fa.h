@@ -25,7 +25,52 @@
 #include <proto/bcmip.h>
 #include <proto/ethernet.h>
 #include <proto/vlan.h>
-#include <bcmfa.h>
+#include <ctf/hndctf.h>
+
+typedef struct {
+	union {
+#ifdef BIG_ENDIAN
+		struct {
+			uint32_t	op_code		:3; /* 31:29 */
+			uint32_t	reserved	:5; /* 28:24 */
+			uint32_t	cl_id		:8; /* 23:16 */
+			uint32_t	reason_code	:8; /* 15:8  */
+			uint32_t	tc		:3; /* 7:5   */
+			uint32_t	src_pid		:5; /* 4:0   */
+		} oc0;
+		struct {
+			uint32_t	op_code		:3; /* 31:29 */
+			uint32_t	reserved	:2; /* 28:27 */
+			uint32_t	all_bkts_full	:1; /* 26    */
+			uint32_t	bkt_id		:2; /* 25:24 */
+			uint32_t	napt_flow_id	:8; /* 23:16 */
+			uint32_t	hdr_chk_result	:8; /* 15:8  */
+			uint32_t	tc		:3; /* 7:5   */
+			uint32_t	src_pid		:5; /* 4:0   */
+		} oc10;
+#else
+		struct {
+			uint32_t	src_pid		:5; /* 4:0   */
+			uint32_t	tc		:3; /* 7:5   */
+			uint32_t	reason_code	:8; /* 15:8  */
+			uint32_t	cl_id		:8; /* 23:16 */
+			uint32_t	reserved	:5; /* 28:24 */
+			uint32_t	op_code		:3; /* 31:29 */
+		} oc0;
+		struct {
+			uint32_t	src_pid		:5; /* 4:0   */
+			uint32_t	tc		:3; /* 7:5   */
+			uint32_t	hdr_chk_result	:8; /* 15:8  */
+			uint32_t	napt_flow_id	:8; /* 23:16 */
+			uint32_t	bkt_id		:2; /* 25:24 */
+			uint32_t	all_bkts_full	:1; /* 26    */
+			uint32_t	reserved	:2; /* 28:27 */
+			uint32_t	op_code		:3; /* 31:29 */
+		} oc10;
+#endif /* BIG_ENDIAN */
+		uint32_t word;
+	};
+} bcm_hdr_t;
 
 #define FA_777WAR_ENABLED	0x01
 #define FA_BCM_HDR_RX		0x02
@@ -40,28 +85,28 @@
 
 #define FA_CTF_CAPABLE_DEV(fa)	!FA_IS_AUX_DEV(fa)
 
-#define FA_AUX_UNIT(u)	(((u) == 0) ? TRUE : FALSE)
-
 typedef struct fa_pub {
 	uint32	flags;
 } fa_t;
 
-extern int fa_probe(si_t *sih, int unit);
-extern fa_t *fa_attach(si_t *sih, void *et, char *vars, uint unit, void *robo);
+extern fa_t *fa_attach(si_t *sih, void *et, char *vars, uint coreunit, void *robo);
 extern void fa_detach(fa_t *fa);
 extern int fa_enable_device(fa_t *fa);
 extern void *fa_process_tx(fa_t *fa, void *p);
 extern void fa_process_rx(fa_t *fa, void *p);
-extern int32 fa_napt_add(fa_t *fa, fa_napt_ioctl_t *pa);
-extern int32 fa_napt_del(fa_t *fa, fa_napt_ioctl_t *pa);
-extern void fa_napt_live(fa_t *fa, fa_napt_ioctl_t *pa);
-extern void fa_conntrack(fa_t *fa, fa_napt_ioctl_t *pa);
+extern int32 fa_napt_add(fa_t *fa, ctf_ipc_t *ipc, bool v6);
+extern int32 fa_napt_del(fa_t *fa, ctf_ipc_t *ipc, bool v6);
+extern void fa_napt_live(fa_t *fa, ctf_ipc_t *ipc, bool v6);
+extern void fa_conntrack(fa_t *fa, ctf_ipc_t *ipc, bool v6);
 extern void fa_et_up(fa_t *fa);
 extern void fa_et_down(fa_t *fa);
 extern void fa_set_name(fa_t *fa, char *name);
+extern char *fa_get_macaddr(si_t *sih, char *vars, uint unit);
 extern int fa_read_proc(char *buffer, char **start, off_t offset, int length,
 	int *eof, void *data);
 extern void fa_dump(fa_t *fai, struct bcmstrbuf *b, bool all);
+extern uint fa_chiprev(fa_t *fai);
 extern void fa_regs_show(fa_t *fai, struct bcmstrbuf *b);
+extern uint fa_core2unit(si_t *sih, uint coreunit);
 
 #endif /* _ETC_FA_H_ */

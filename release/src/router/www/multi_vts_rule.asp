@@ -14,7 +14,6 @@
 <form method="post" name="vtsform" id="vtsform" action="/start_apply.htm" target="hidden_frame2">
 <input type="hidden" name="current_page" value="">
 <input type="hidden" name="next_page" value="">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="group_id" value="VSList">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value=" Add ">

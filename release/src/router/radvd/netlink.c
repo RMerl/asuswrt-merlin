@@ -41,7 +41,10 @@ void process_netlink_msg(int sock)
 	struct msghdr msg = { (void *)&sa, sizeof(sa), &iov, 1, NULL, 0, 0 };
 	struct nlmsghdr *nh;
 	struct ifinfomsg * ifinfo;
+	struct rtattr *rta;
+	int rta_len;
 	char ifname[IF_NAMESIZE] = {""};
+	int reloaded = 0;
 
 	len = recvmsg (sock, &msg, 0);
 	if (len == -1) {
@@ -59,15 +62,26 @@ void process_netlink_msg(int sock)
 		}
 
 		/* Continue with parsing payload. */
-		ifinfo = NLMSG_DATA(nh);
-		if_indextoname(ifinfo->ifi_index, ifname);
-		if (ifinfo->ifi_flags & IFF_RUNNING) {
-			dlog(LOG_DEBUG, 3, "%s, ifindex %d, flags is running", ifname, ifinfo->ifi_index);
+		if (nh->nlmsg_type == RTM_NEWLINK || nh->nlmsg_type == RTM_DELLINK || nh->nlmsg_type == RTM_SETLINK) {
+			ifinfo = (struct ifinfomsg *)NLMSG_DATA(nh);
+			if_indextoname(ifinfo->ifi_index, ifname);
+			rta = IFLA_RTA(NLMSG_DATA(nh));
+			rta_len = nh->nlmsg_len - NLMSG_LENGTH(sizeof(struct ifinfomsg));
+			for (; RTA_OK(rta, rta_len); rta = RTA_NEXT(rta, rta_len)) {
+				if (rta->rta_type == IFLA_OPERSTATE || rta->rta_type == IFLA_LINKMODE) {
+					if (ifinfo->ifi_flags & IFF_RUNNING) {
+						dlog(LOG_DEBUG, 3, "%s, ifindex %d, flags is running", ifname, ifinfo->ifi_index);
+					}
+					else {
+						dlog(LOG_DEBUG, 3, "%s, ifindex %d, flags is *NOT* running", ifname, ifinfo->ifi_index);
+					}
+					if (!reloaded) {
+						reload_config();
+						reloaded = 1;
+					}
+				}
+			}
 		}
-		else {
-			dlog(LOG_DEBUG, 3, "%s, ifindex %d, flags is *NOT* running", ifname, ifinfo->ifi_index);
-		}
-		reload_config();
 	}
 }
 
@@ -81,7 +95,7 @@ int netlink_socket(void)
 	if (sock == -1) {
 		flog(LOG_ERR, "Unable to open netlink socket: %s", strerror(errno));
 	}
-#ifdef NETLINK_NO_ENOBUFS
+#if defined SOL_NETLINK && defined NETLINK_NO_ENOBUFS
 	else if (setsockopt(sock, SOL_NETLINK, NETLINK_NO_ENOBUFS, &val, sizeof(val)) < 0 ) {
 		flog(LOG_ERR, "Unable to setsockopt NETLINK_NO_ENOBUFS: %s", strerror(errno));
 	}

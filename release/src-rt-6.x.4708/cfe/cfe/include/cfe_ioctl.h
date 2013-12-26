@@ -71,7 +71,7 @@ typedef struct flash_range_s {
 
 typedef struct flash_info_s {
     unsigned long long flash_base;	/* flash physical base address */
-    unsigned int flash_size;		/* available device size in bytes */
+    fl_size_t flash_size;			/* available device size in bytes */
     unsigned int flash_type;		/* type, from FLASH_TYPE below */
     unsigned int flash_flags;		/* Various flags (FLASH_FLAG_xxx) */
 } flash_info_t;

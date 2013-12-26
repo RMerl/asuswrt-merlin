@@ -73,6 +73,7 @@ CFG_SDRAM_PARAM_FROM_EMBEDDED_NVRAM := 1
 COMPRESSED_CFE := 1
 RESCUE_MODE := 1        # disable for tmp
 RTAC68U := 0
+PATYPE := 0
 
 # HND source base
 SRCBASE := $(shell cd ../../../.. && pwd)

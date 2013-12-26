@@ -250,6 +250,11 @@ static int __die(const char *str, int err, struct thread_info *thread, struct pt
 	if (!user_mode(regs) || in_interrupt()) {
 		dump_mem(KERN_EMERG, "Stack: ", regs->ARM_sp,
 			 THREAD_SIZE + (unsigned long)task_stack_page(tsk));
+
+		/* Show PC value again for GDB source code trace dump */
+		printk("[<%08lx>] ",regs->ARM_pc);
+		print_symbol("(PC is at %s)\n", instruction_pointer(regs));
+
 		dump_backtrace(regs, tsk);
 		dump_instr(KERN_EMERG, regs);
 	}

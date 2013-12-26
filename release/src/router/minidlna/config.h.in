@@ -187,6 +187,9 @@
 /* Define to 1 if you have the <netinet/in.h> header file. */
 #undef HAVE_NETINET_IN_H
 
+/* Support for Linux netlink */
+#undef HAVE_NETLINK
+
 /* Define to 1 if you have the <ogg/ogg.h> header file. */
 #undef HAVE_OGG_OGG_H
 

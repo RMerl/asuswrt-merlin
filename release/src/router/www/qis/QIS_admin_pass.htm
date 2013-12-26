@@ -43,14 +43,16 @@ function QKinternettype_load_body(){
 		document.getElementById("theFieldset2").style.display = "";
 		document.getElementById("tblsetting_1").style.display = "none";
 		parent.set_step("welcome");
-		chkPass("<% nvram_get("http_passwd"); %>", 'http_passwd');
+		var http_password = decodeURIComponent("<% nvram_char_to_ascii("", "http_passwd"); %>");
+		chkPass(http_password, 'http_passwd');
 	}
 	else{
 		parent.document.title = "<#Web_Title#> - Welcome!";
 		parent.set_step("t0");
 		document.getElementById("tblsetting_1").style.display = "";
 		document.form.http_passwd.focus();
-		chkPass("<% nvram_get("http_passwd"); %>", 'http_passwd');
+ 		var http_password = decodeURIComponent("<% nvram_char_to_ascii("", "http_passwd"); %>");
+		chkPass(http_password, 'http_passwd');
 
 		if (dsl_support) {
 			document.getElementById("prev_btn").style.display = "none";

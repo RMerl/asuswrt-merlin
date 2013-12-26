@@ -76,7 +76,6 @@ function done_validating(action){
 <form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
 <input type="hidden" name="current_page" value="Advanced_WSecurity_Content.asp">
 <input type="hidden" name="next_page" value="Advanced_WSecurity_Content.asp">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="group_id" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="first_time" value="">

@@ -333,7 +333,7 @@ reset_gpio=7
 # If the board has a USB power control chip, then the parameter "gpioX=usbportY" is used to tell
 # the USB driver code that it needs to set that GPIO HIGH to turn on power to that USB port.
 # "X" is the GPIO number, 0-31. "Y" is the USB port number, starting at "1".
-# gpio9=usbport1
+gpio13=usbport1
 # gpio10=usbport2
 # gpio12=43217enable
 # gpio13=4352enable
@@ -349,58 +349,73 @@ devpath0=pci/1/1
 
 0:venid=0x14E4
 0:boardvendor=0x14E4
-0:sromrev=9
-0:boardflags=0x80001200
-0:boardflags2=0x00100000
-0:devid=0x4332
+0:sromrev=11
+0:boardflags=0x00001000
+0:boardflags2=0x00100002
+0:boardflags3=0x00000003
+0:xtalfreq=40000
+0:devid=0x43A1
 0:macaddr=00:22:15:A5:03:00
 0:aa2g=7
-0:ag0=0
-0:ag1=0
-0:ag2=0
+0:agbg0=0
+0:agbg1=0
+0:agbg2=0
 0:txchain=7
 0:rxchain=7
 0:antswitch=0
-0:tssipos2g=1
-0:extpagain2g=3
-0:pdetrange2g=3
-0:triso2g=3
-0:antswctl2g=0
-0:elna2g=2
+0:femctrl=3
+0:gainctrlsph=0
+0:papdcap2g=0
+0:tworangetssi2g=0
+0:pdgain2g=4
+0:epagain2g=0
+0:tssiposslope2g=1
 
 
 
+# 2GHz RX Gain Parameteters
+0:rxgains2gelnagaina0=6
+0:rxgains2gelnagaina1=6
+0:rxgains2gelnagaina2=6
+0:rxgains2gtrelnabypa0=1
+0:rxgains2gtrelnabypa1=1
+0:rxgains2gtrelnabypa2=1
+0:rxgains2gtrisoa0=11
+0:rxgains2gtrisoa1=11
+0:rxgains2gtrisoa2=11
+
+# 2GHz TX Parameters
+0:maxp2ga0=106
+0:maxp2ga1=106
+0:maxp2ga2=106
 # 2GHz PA Parameters
-0:pa2gw0a0=0xFEAF
-0:pa2gw1a0=0x1BAB
-0:pa2gw2a0=0xF9E9
-
-0:pa2gw0a1=0xFE8B
-0:pa2gw1a1=0x1AA1
-0:pa2gw2a1=0xF9F6
-
-0:pa2gw0a2=0xFEE7
-0:pa2gw1a2=0x1C4B
-0:pa2gw2a2=0xFA1B
+0:pa2ga0=0xff4a,0x1bbc,0xfcb4
+0:pa2ga1=0xff49,0x1b5a,0xfcb9
+0:pa2ga2=0xff4e,0x1b0d,0xfccb
 
 # Power-Per-Rate settings:
-0:maxp2ga0=0x6A
-0:maxp2ga2=0x6A
-0:maxp2ga1=0x6A
-0:cckbw202gpo=0x0000
-0:cckbw20ul2gpo=0x0000
-0:legofdmbw202gpo=0x65332000
-0:legofdmbw20ul2gpo=0x65332000
-0:mcsbw202gpo=0x65332000
-0:mcsbw20ul2gpo=0x65332000
-0:mcsbw402gpo=0x65332000
-0:mcs32po=0x9999
-0:legofdm40duppo=0x4444
-0:parefldovoltage=35
+0:cckbw202gpo=0
+0:cckbw20ul2gpo=0
+0:mcsbw202gpo=0xA8642000
+0:mcsbw402gpo=0xA8642000
+0:dot11agofdmhrbw202gpo=0x6533
+0:ofdmlrbw202gpo=0
+0:sb20in40hrpo=0
+0:sb20in40lrpo=0
+0:dot11agduphrpo=0
+0:dot11agduplrpo=0
+
+#2G TX beamforming parameters
+0:rpcal2g=0xffff
 
 # Regulatory parameters
 0:ccode=US
 0:regrev=0
+0:sar2g=18
+
+#LED behavior settings
+0:ledbh10=7
+#0:leddc=0xFFFF
 
 #temperature setting
 0:temps_period=5
@@ -413,7 +428,7 @@ devpath0=pci/1/1
 
 
 # Bootloader version
-bl_version=1.0.0.2
+bl_version=2.0.0.4
 
 # for NAND flash
 bootflags=1

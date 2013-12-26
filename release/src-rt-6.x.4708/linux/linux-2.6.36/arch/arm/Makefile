@@ -112,6 +112,12 @@ endif
 KBUILD_CFLAGS	+=$(CFLAGS_ABI) $(CFLAGS_THUMB2) $(arch-y) $(tune-y) $(call cc-option,-mshort-load-bytes,$(call cc-option,-malignment-traps,)) -msoft-float -Uarm
 KBUILD_AFLAGS	+=$(CFLAGS_ABI) $(AFLAGS_THUMB2) $(arch-y) $(tune-y) -include asm/unified.h -msoft-float
 
+# Always compile with debug symbols. They will be stripped by the router
+# makefile to produce the final kernel. Debug versions of kernel and brcm
+# kernel modules will be kept with the extension dbgsym attached to their
+# names.
+KBUILD_CFLAGS += -ggdb
+
 CHECKFLAGS	+= -D__arm__
 
 #Default value

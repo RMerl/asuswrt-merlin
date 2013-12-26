@@ -239,8 +239,4 @@ enum {
 
 #endif /* __KERNEL__ */
 
-#ifdef CTF_PPPOE
-extern int ppp_get_conn_pkt_info(void *pppif, struct ctf_ppp *ctfppp);
-#endif
-
 #endif /* !(__LINUX_IF_PPPOX_H) */

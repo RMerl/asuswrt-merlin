@@ -27,7 +27,6 @@ var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 
 function initial(){
 	show_menu();
-	load_body();
 	change_firewall('<% nvram_get("fw_enable_x"); %>');
 
 	if(WebDav_support){
@@ -99,7 +98,6 @@ function done_validating(action){
 
 <input type="hidden" name="current_page" value="Advanced_BasicFirewall_Content.asp">
 <input type="hidden" name="next_page" value="">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="group_id" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_wait" value="5">

@@ -43,6 +43,10 @@ char usage_str[] = {
 "  -t, --chrootdir=PATH   Chroot to the specified path.\n"
 "  -u, --username=USER    Switch to the specified user.\n"
 "  -n, --nodaemon         Prevent the daemonizing.\n"
+#ifdef HAVE_NETLINK
+"  -L, --disablenetlink     Disable netlink feature\n"
+#endif
+"  -I,  --disableigmp6check    Disable igmp6 check before send\n"
 "  -v, --version          Print the version and quit.\n"
 };
 
@@ -60,6 +64,10 @@ struct option prog_opt[] = {
 	{"help", 0, 0, 'h'},
 	{"singleprocess", 0, 0, 's'},
 	{"nodaemon", 0, 0, 'n'},
+#ifdef HAVE_NETLINK
+	{"disablenetlink", 0, 0, 'L'},
+#endif
+	{"disableigmp6check", 0, 0, 'I'},
 	{NULL, 0, 0, 0}
 };
 
@@ -77,6 +85,10 @@ char *conf_file = NULL;
 char *pidfile = NULL;
 char *pname;
 int sock = -1;
+#ifdef HAVE_NETLINK
+int disablenetlink = 0;
+#endif
+int disableigmp6check = 0;
 
 volatile int sighup_received = 0;
 volatile int sigterm_received = 0;
@@ -192,6 +204,14 @@ main(int argc, char *argv[])
 			break;
 		case 'n':
 			daemonize = 0;
+			break;
+#ifdef HAVE_NETLINK
+		case 'L':
+			disablenetlink = 1;
+			break;
+#endif
+		case 'I':
+			disableigmp6check = 1;
 			break;
 		case 'h':
 			usage();
@@ -370,8 +390,13 @@ void main_loop(void)
 	fds[0].revents = 0;
 
 #if HAVE_NETLINK
-	fds[1].fd = netlink_socket();
-	fds[1].events = POLLIN;
+	if (!disablenetlink) {
+		fds[1].fd = netlink_socket();
+		fds[1].events = POLLIN;
+	} else{
+		fds[1].fd = -1;
+		fds[1].events = 0;
+	}
 	fds[1].revents = 0;
 #else
 	fds[1].fd = -1;
@@ -419,11 +444,12 @@ void main_loop(void)
 				}
 			}
 #ifdef HAVE_NETLINK
-			if (fds[1].revents & (POLLERR | POLLHUP | POLLNVAL)) {
-				flog(LOG_WARNING, "socket error on fds[1].fd");
-			}
-			else if (fds[1].revents & POLLIN) {
-				process_netlink_msg(fds[1].fd);
+			if (!disablenetlink) {
+				if (fds[1].revents & (POLLERR | POLLHUP | POLLNVAL)) {
+					flog(LOG_WARNING, "socket error on fds[1].fd");
+				} else if (fds[1].revents & POLLIN) {
+					process_netlink_msg(fds[1].fd);
+				}
 			}
 #endif
 		}
@@ -796,11 +822,26 @@ check_ip6_forwarding(void)
 	}
 #endif
 
-	if (value != 1 && !warned) {
+#ifdef __linux__
+    /* Linux allows the forwarding value to be either 1 or 2.
+     * https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/tree/Documentation/networking/ip-sysctl.txt?id=ae8abfa00efb8ec550f772cbd1e1854977d06212#n1078
+     *
+     * The value 2 indicates forwarding is enabled and that *AS* *WELL* router solicitions are being done.
+     *
+     * Which is sometimes used on routers performing RS on their WAN (ppp, etc.) links
+     */
+	if (!warned && value != 1 && value != 2) {
+		warned = 1;
+		flog(LOG_DEBUG, "IPv6 forwarding setting is: %u, should be 1 or 2", value);
+		return(-1);
+	}
+#else
+	if (!warned && value != 1) {
 		warned = 1;
 		flog(LOG_DEBUG, "IPv6 forwarding setting is: %u, should be 1", value);
 		return(-1);
 	}
+#endif /* __linux__ */
 
 	return(0);
 }

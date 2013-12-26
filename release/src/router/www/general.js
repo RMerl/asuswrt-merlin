@@ -872,65 +872,6 @@ function setTimeRange(sh, sm, eh, em){
 	return(sh.value+sm.value+eh.value+em.value);
 }
 
-function load_body(){
-	document.form.next_host.value = location.host;
-
-	if(document.form.current_page.value == "Advanced_WMode_Content.asp"){		
-		change_wireless_bridge(document.form.wl_mode_x.value);		
-	}
-	else if(document.form.current_page.value == "Advanced_PortTrigger_Content.asp"){
-		wItem = new Array(new Array("Quicktime 4 Client", "554", "TCP", "6970:32000", "UDP"),new Array("Real Audio", "7070", "TCP", "6970:7170", "UDP"));
-		free_options(document.form.TriggerKnownApps);
-		add_option(document.form.TriggerKnownApps, "<#Select_menu_default#>", "User Defined", 1);
-		for (i = 0; i < wItem.length; i++){
-			add_option(document.form.TriggerKnownApps, wItem[i][0], wItem[i][0], 0);
-		}
-	}	
-	else if(document.form.current_page.value == "Advanced_BasicFirewall_Content.asp"){
-		change_firewall(rcheck(document.form.fw_enable_x));
-	}
-	else if (document.form.current_page.value == "Advanced_Firewall_Content.asp"){
-		wItem = new Array(new Array("WWW", "80", "TCP"),new Array("TELNET", "23", "TCP"),new Array("FTP", "20:21", "TCP"));
-		free_options(document.form.LWKnownApps);
-		add_option(document.form.LWKnownApps, "User Defined", "User Defined", 1);
-		for (i = 0; i < wItem.length; i++){
-			add_option(document.form.LWKnownApps, wItem[i][0], wItem[i][0], 0);
-		}
-		document.form.filter_lw_date_x_Sun.checked = getDateCheck(document.form.filter_lw_date_x.value, 0);
-		document.form.filter_lw_date_x_Mon.checked = getDateCheck(document.form.filter_lw_date_x.value, 1);
-		document.form.filter_lw_date_x_Tue.checked = getDateCheck(document.form.filter_lw_date_x.value, 2);
-		document.form.filter_lw_date_x_Wed.checked = getDateCheck(document.form.filter_lw_date_x.value, 3);
-		document.form.filter_lw_date_x_Thu.checked = getDateCheck(document.form.filter_lw_date_x.value, 4);
-		document.form.filter_lw_date_x_Fri.checked = getDateCheck(document.form.filter_lw_date_x.value, 5);
-		document.form.filter_lw_date_x_Sat.checked = getDateCheck(document.form.filter_lw_date_x.value, 6);
-		document.form.filter_lw_time_x_starthour.value = getTimeRange(document.form.filter_lw_time_x.value, 0);
-		document.form.filter_lw_time_x_startmin.value = getTimeRange(document.form.filter_lw_time_x.value, 1);
-		document.form.filter_lw_time_x_endhour.value = getTimeRange(document.form.filter_lw_time_x.value, 2);
-		document.form.filter_lw_time_x_endmin.value = getTimeRange(document.form.filter_lw_time_x.value, 3);
-		document.form.filter_lw_time2_x_starthour.value = getTimeRange(document.form.filter_lw_time2_x.value, 0);
-		document.form.filter_lw_time2_x_startmin.value = getTimeRange(document.form.filter_lw_time2_x.value, 1);
-		document.form.filter_lw_time2_x_endhour.value = getTimeRange(document.form.filter_lw_time2_x.value, 2);
-		document.form.filter_lw_time2_x_endmin.value = getTimeRange(document.form.filter_lw_time2_x.value, 3);
-	}	
-	else if(document.form.current_page.value == "Advanced_URLFilter_Content.asp"){
-		document.form.url_date_x_Sun.checked = getDateCheck(document.form.url_date_x.value, 0);
-		document.form.url_date_x_Mon.checked = getDateCheck(document.form.url_date_x.value, 1);
-		document.form.url_date_x_Tue.checked = getDateCheck(document.form.url_date_x.value, 2);
-		document.form.url_date_x_Wed.checked = getDateCheck(document.form.url_date_x.value, 3);
-		document.form.url_date_x_Thu.checked = getDateCheck(document.form.url_date_x.value, 4);
-		document.form.url_date_x_Fri.checked = getDateCheck(document.form.url_date_x.value, 5);
-		document.form.url_date_x_Sat.checked = getDateCheck(document.form.url_date_x.value, 6);
-		document.form.url_time_x_starthour.value = getTimeRange(document.form.url_time_x.value, 0);
-		document.form.url_time_x_startmin.value = getTimeRange(document.form.url_time_x.value, 1);
-		document.form.url_time_x_endhour.value = getTimeRange(document.form.url_time_x.value, 2);
-		document.form.url_time_x_endmin.value = getTimeRange(document.form.url_time_x.value, 3);
-		document.form.url_time_x_starthour_1.value = getTimeRange(document.form.url_time_x_1.value, 0);
-		document.form.url_time_x_startmin_1.value = getTimeRange(document.form.url_time_x_1.value, 1);
-		document.form.url_time_x_endhour_1.value = getTimeRange(document.form.url_time_x_1.value, 2);
-		document.form.url_time_x_endmin_1.value = getTimeRange(document.form.url_time_x_1.value, 3);
-	}
-}
-
 function change_firewall(r){
 	if (r == "0"){
 		//Viz 2012.08.14 move to System page inputRCtrl1(document.form.misc_http_x, 0);
@@ -952,21 +893,8 @@ function change_wireless_bridge(m){
 	}else if (m == "1" && Rawifi_support){	 // N66U-spec
 		inputRCtrl2(document.form.wl_wdsapply_x, 0);
 		inputRCtrl1(document.form.wl_wdsapply_x, 0);
-		/*if (document.form.wl_channel_orig.value == "0" && document.form.wl_channel.options[0].selected == 1){
-			alert("<#JS_fixchannel#>");		
-			document.form.wl_channel.options[0].selected = 0;
-			document.form.wl_channel.options[1].selected = 1;
-		}*/
 	}else{
 		inputRCtrl1(document.form.wl_wdsapply_x, 1);
-		/*if (m != 0) {
-			if (document.form.wl_channel_orig.value == "0" && document.form.wl_channel.options[0].selected == 1){
-				alert("<#JS_fixchannel#>");
-				document.form.wl_channel.options[0].selected = 0;
-				document.form.wl_channel.options[1].selected = 1;
-				document.form.wl_channel.focus();
-			}
-		}*/
 	}
 }
 
@@ -1500,7 +1428,13 @@ function wl_wep_change(){
 		inputCtrl(document.form.wl_crypto, 0);
 		inputCtrl(document.form.wl_wpa_psk, 0);
 		inputCtrl(document.form.wl_wpa_gtk_rekey, 0);
-		inputCtrl(document.form.wl_wep_x, 1);
+		if(mode == "open" && document.form.wl_nmode_x.value != 2){
+			document.form.wl_wep_x.parentNode.parentNode.style.display = "none";
+			document.form.wl_wep_x.value = "0";
+		}	
+		else	
+			inputCtrl(document.form.wl_wep_x, 1);
+			
 		if(wep != "0"){
 			inputCtrl(document.form.wl_phrase_x, 1);
 			inputCtrl(document.form.wl_key1, 1);
@@ -1533,9 +1467,9 @@ function change_wep_type(mode, isload){
 		value_array = new Array("1", "2");
 	}
 	else{
-		if(document.form.wl_nmode_x.value != 2){
+		if(document.form.wl_nmode_x.value != 2 && sw_mode != 2){
 			wep_type_array = new Array("None");
-			value_array = new Array("0");	
+			value_array = new Array("0");					
 		}
 		else{
 			wep_type_array = new Array("None", "WEP-64bits", "WEP-128bits");
@@ -1543,8 +1477,7 @@ function change_wep_type(mode, isload){
 		}
 	}
 
-	add_options_x2(document.form.wl_wep_x, wep_type_array, value_array, cur_wep);
-	
+	add_options_x2(document.form.wl_wep_x, wep_type_array, value_array, cur_wep);	
 	if(mode == "psk" || mode == "psk2" || mode == "pskpsk2" || mode == "wpa" || mode == "wpa2" || mode == "wpawpa2" || mode == "radius") //2009.03 magic
 		document.form.wl_wep_x.value = "0";
 		
@@ -1983,13 +1916,13 @@ function insertExtChannelOption_2g(){
 		}
 		
 		if ((CurrentCh >=1) && (CurrentCh <= 4)){
-			x.options[0].text = "Lower";
+			x.options[0].text = "Above";
 			x.options[0].value = "lower";
 		}
 		else if ((CurrentCh >= 5) && (CurrentCh <= 7)){
-			x.options[0].text = "Lower";
+			x.options[0].text = "Above";
 			x.options[0].value = "lower";
-			add_option(document.form.wl_nctrlsb, "Upper", "upper");
+			add_option(document.form.wl_nctrlsb, "Below", "upper");
 			if (document.form.wl_nctrlsb_old.value == "upper")
 				document.form.wl_nctrlsb.options.selectedIndex=1;
 			
@@ -1999,25 +1932,25 @@ function insertExtChannelOption_2g(){
 				document.form.wl_nctrlsb.remove(0);
 		}
 		else if ((CurrentCh >= 8) && (CurrentCh <= 9)){
-			x.options[0].text = "Upper";
+			x.options[0].text = "Below";
 			x.options[0].value = "upper";
 			if (option_length >=14){
-				add_option(document.form.wl_nctrlsb, "Lower", "lower");
+				add_option(document.form.wl_nctrlsb, "Above", "lower");
 				if (document.form.wl_nctrlsb_old.value == "lower")
 					document.form.wl_nctrlsb.options.selectedIndex=1;
 			}
 		}
 		else if (CurrentCh == 10){
-			x.options[0].text = "Upper";
+			x.options[0].text = "Below";
 			x.options[0].value = "upper";
 			if (option_length > 14){
-				add_option(document.form.wl_nctrlsb, "Lower", "lower");
+				add_option(document.form.wl_nctrlsb, "Above", "lower");
 				if (document.form.wl_nctrlsb_old.value == "lower")
 					document.form.wl_nctrlsb.options.selectedIndex=1;
 			}
 		}
 		else if (CurrentCh >= 11){
-			x.options[0].text = "Upper";
+			x.options[0].text = "Below";
 			x.options[0].value = "upper";
 		}
 		else{
@@ -2496,11 +2429,11 @@ function wireless_mode_change(obj){
 /* To hide Shared key, WPA-Personal/Enterprise and RADIUS with 802.1X*/
 function limit_auth_method(){
 	var auth_method_array = document.form.wl_auth_mode_x.value;
-	if(document.form.wl_nmode_x.value != "2"){
-		if(document.form.current_page.value != "Guest_network.asp")
-			var auth_array = [["Open System", "open"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"], ["WPA2-Enterprise", "wpa2"], ["WPA-Auto-Enterprise", "wpawpa2"]];
-		else
-			var auth_array = [["Open System", "open"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"]];
+	if(sw_mode == 2){
+		var auth_array = [["Open System", "open"], ["Shared Key", "shared"], ["WPA-Personal", "psk"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"]];
+	}
+	else if(document.form.wl_nmode_x.value != "2"){
+		var auth_array = [["Open System", "open"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"], ["WPA2-Enterprise", "wpa2"], ["WPA-Auto-Enterprise", "wpawpa2"]];
 	}
 	else{
 		var auth_array = [["Open System", "open"], ["Shared Key", "shared"], ["WPA-Personal", "psk"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"], ["WPA-Enterprise", "wpa"], ["WPA2-Enterprise", "wpa2"], ["WPA-Auto-Enterprise", "wpawpa2"], ["Radius with 802.1x", "radius"]];

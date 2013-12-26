@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmrobo.c 414031 2013-07-23 10:54:51Z $
+ * $Id: bcmrobo.c 428037 2013-10-07 14:50:53Z $
  */
 
 
@@ -34,6 +34,9 @@
 #include <bcmrobo.h>
 #include <proto/ethernet.h>
 #include <hndpmu.h>
+#ifdef BCMFA
+#include <etioctl.h>
+#endif
 
 #ifdef	BCMDBG
 #define	ET_ERROR(args)	printf args
@@ -213,6 +216,9 @@ do { \
 		break; \
 	bcm_mdelay(1); \
 } while (1)
+
+#define RXTX_FLOW_CTRL_MASK	0x3	/* 53125 flow control capability mask */
+#define RXTX_FLOW_CTRL_SHIFT	4	/* 53125 flow contorl capability offset */
 
 #ifndef	_CFE_
 /* SPI registers */
@@ -1308,14 +1314,18 @@ pdesc_t pdesc25[] = {
 #if !defined(_CFE_) && defined(BCMFA)
 /* For FA feature can be worked with old/new CFE which keep using et0mac */
 static int
-robo_fa_imp_port_upd(robo_info_t *robo, char *port, int pid, int pdescsz)
+robo_fa_imp_port_upd(robo_info_t *robo, char *port, int pid, int vid, int pdescsz)
 {
+	char *u;
 	int newpid = pid;
 
-	if (strchr(port, FLAG_LAN)) {
+	/* Ugly, hard code to search port "5". */
+	if (strchr(port, FLAG_LAN) || strchr(port, FLAG_UNTAG) ||
+	    (vid == 2 && !strcmp(port, "5"))) {
 		if (BCM4707_CHIP(CHIPID(robo->sih->chip)) && (pid != pdescsz - 1) &&
-		    getintvar(robo->vars, "fa_overridden") == 2)
+		    FA_ON(getintvar(robo->vars, "ctf_fa_mode"))) {
 			newpid = pdescsz - 1;
+		}
 	}
 
 	return newpid;
@@ -1367,7 +1377,7 @@ robo_cpu_port_upd(robo_info_t *robo, pdesc_t *pdesc, int pdescsz)
 			}
 
 #if !defined(_CFE_) && defined(BCMFA)
-			pid = robo_fa_imp_port_upd(robo, port, pid, pdescsz);
+			pid = robo_fa_imp_port_upd(robo, port, pid, vid, pdescsz);
 #endif
 			if (strchr(port, FLAG_LAN) || strchr(port, FLAG_UNTAG)) {
 				/* Change it and return */
@@ -1547,7 +1557,6 @@ robo_fa_aux_dump_rate_counter(robo_info_t *robo, struct bcmstrbuf *b, uint32 ind
 void
 robo_fa_aux_init(robo_info_t *robo)
 {
-	uint16 val16;
 	uint8 val8;
 
 	if (!robo)
@@ -1573,17 +1582,6 @@ robo_fa_aux_init(robo_info_t *robo)
 				 */
 		(1 << 0);	/* LINK_STS: Link up */
 	robo->ops->write_reg(robo, PAGE_CTRL, REG_CTRL_PORT5_GMIIPO, &val8, sizeof(val8));
-
-	/* BRCM HDR Control Register (Page 2, Address 0x03): Disable on 7,5,8 */
-	/* Enable BCM_HDR generation on IMP port only when flow accelerator
-	 * is operating in normal mode.
-	 */
-	val8 = 0x1;
-	robo->ops->write_reg(robo, PAGE_MMR, REG_BRCM_HDR, &val8, sizeof(val8));
-
-	robo->ops->read_reg(robo, PAGE_FC, REG_FC_OOBPAUSE, &val16, sizeof(val16));
-	val16 |= (1 << 8);
-	robo->ops->write_reg(robo, PAGE_FC, REG_FC_OOBPAUSE, &val16, sizeof(val16));
 
 	/* CFP: filter TCP FIN/RST and copy to port 5 */
 	/* 1. Action policy */
@@ -1634,6 +1632,46 @@ robo_fa_aux_enable(robo_info_t *robo, bool enable)
 	if (enable)
 		val8 = 0x1F;
 	robo->ops->write_reg(robo, PAGE_CFP, REG_CFP_CTL_REG, &val8, sizeof(val8));
+
+	/* Disable management interface access */
+	if (robo->ops->disable_mgmtif)
+		robo->ops->disable_mgmtif(robo);
+}
+
+void
+robo_fa_enable(robo_info_t *robo, bool on, bool bhdr)
+{
+	uint16 val16;
+	uint8 val8;
+
+	if (!robo)
+		return;
+
+	/* Enable management interface access */
+	if (robo->ops->enable_mgmtif)
+		robo->ops->enable_mgmtif(robo);
+
+	/* BCM_HDR and OOB PAUSE */
+	if (on) {
+		/* Enable BCM_HDR Tag on IMP port if need it. */
+		val8 = (bhdr ? 0x1 : 0x0);
+		robo->ops->write_reg(robo, PAGE_MMR, REG_BRCM_HDR, &val8, sizeof(val8));
+
+		/* Use out-of-band signal for Switch and SOC flow control */
+		robo->ops->read_reg(robo, PAGE_FC, REG_FC_OOBPAUSE, &val16, sizeof(val16));
+		val16 |= (1 << 8);
+		robo->ops->write_reg(robo, PAGE_FC, REG_FC_OOBPAUSE, &val16, sizeof(val16));
+	}
+	else {
+		/* Disable BRCM HDR */
+		val8 = 0x0;
+		robo->ops->write_reg(robo, PAGE_MMR, REG_BRCM_HDR, &val8, sizeof(val8));
+
+		/* Default value: Use pause frame for Switch and SOC flow control. */
+		robo->ops->read_reg(robo, PAGE_FC, REG_FC_OOBPAUSE, &val16, sizeof(val16));
+		val16 &= ~(1 << 8);
+		robo->ops->write_reg(robo, PAGE_FC, REG_FC_OOBPAUSE, &val16, sizeof(val16));
+	}
 
 	/* Disable management interface access */
 	if (robo->ops->disable_mgmtif)
@@ -1776,7 +1814,7 @@ bcm_robo_config_vlan(robo_info_t *robo, uint8 *mac_addr)
 			/* build VLAN registers values */
 #ifndef	_CFE_
 #ifdef BCMFA
-			pid = robo_fa_imp_port_upd(robo, port, pid, pdescsz);
+			pid = robo_fa_imp_port_upd(robo, port, pid, vid, pdescsz);
 #endif
 			if ((!pdesc[pid].cpu && !strchr(port, FLAG_TAGGED)) ||
 			    (pdesc[pid].cpu && strchr(port, FLAG_UNTAG)))
@@ -2881,4 +2919,36 @@ robo_eee_advertise_init(robo_info_t *robo)
 		robo->eee_status = FALSE;
 		printf("bcm_robo_enable_switch: EEE is disabled\n");
 	}
+}
+
+int
+bcm_robo_flow_control(robo_info_t *robo, bool set)
+{
+	uint8 val8;
+	int ret = -1;
+
+	/* Enable management interface access */
+	if (robo->ops->enable_mgmtif)
+		robo->ops->enable_mgmtif(robo);
+
+	/* Only 53125 family is supported for now */
+	if (robo->devid == DEVID53125) {
+		/* Over ride IMP port flow control RX/TX capability */
+		val8 = 0;
+		robo->ops->read_reg(robo, PAGE_CTRL, REG_CTRL_MIIPO, &val8, sizeof(val8));
+		if (set)
+			val8 |= (RXTX_FLOW_CTRL_MASK << RXTX_FLOW_CTRL_SHIFT);
+		else
+			val8 &= ~(RXTX_FLOW_CTRL_MASK << RXTX_FLOW_CTRL_SHIFT);
+		robo->ops->write_reg(robo, PAGE_CTRL, REG_CTRL_MIIPO, &val8, sizeof(val8));
+		ret = 0;
+	} else {
+		printf("%s: Only BCM53125 is supported for now\n", __FUNCTION__);
+	}
+
+	/* Disable management interface access */
+	if (robo->ops->disable_mgmtif)
+		robo->ops->disable_mgmtif(robo);
+
+	return ret;
 }

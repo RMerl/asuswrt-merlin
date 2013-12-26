@@ -40,7 +40,7 @@ ifneq ($(RTCONFIG_BCMARM),y)
 	install -m 0700 entware-setup.sh $(INSTALLDIR)/usr/sbin
 endif
 
-ifeq ($(RTN14U)$(RTAC52U),y)
+ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U),y)
 # for read/write Ralink PHY registers
         install -D mii_mgr $(INSTALLDIR)/bin/mii_mgr
 endif

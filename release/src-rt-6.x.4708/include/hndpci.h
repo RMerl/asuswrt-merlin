@@ -1,7 +1,7 @@
 /*
  * HND SiliconBackplane PCI core software interface.
  *
- * $Id: hndpci.h 270062 2011-07-01 00:27:12Z $
+ * $Id: hndpci.h 419467 2013-08-21 09:19:48Z $
  * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any

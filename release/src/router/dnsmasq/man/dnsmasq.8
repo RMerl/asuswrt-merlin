@@ -199,7 +199,12 @@ or
 .B --listen-address
 configuration, indeed
 .B --auth-server
-will overide these and provide a different DNS service on the specified interface. The <domain> is the "glue record". It should resolve in the global DNS to a A and/or AAAA record which points to the address dnsmasq is listening on.
+will overide these and provide a different DNS service on the
+specified interface. The <domain> is the "glue record". It should
+resolve in the global DNS to a A and/or AAAA record which points to
+the address dnsmasq is listening on. When an interface is specified,
+it may be qualified with "/4" or "/6" to specify only the IPv4 or IPv6
+addresses associated with the interface.
 .TP 
 .B \-2, --no-dhcp-interface=<interface name>
 Do not provide DHCP or TFTP on the specified interface, but do provide DNS service.
@@ -509,11 +514,13 @@ record (which is always in the C_IN class). The value of the record is
 given by the hex data, which may be of the form 01:23:45 or 01 23 45 or
 012345 or any mixture of these.
 .TP
-.B --interface-name=<name>,<interface>
+.B --interface-name=<name>,<interface>[/4|/6]
 Return a DNS record associating the name with the primary address on
-the given interface. This flag specifies an A record for the given
+the given interface. This flag specifies an A or AAAA record for the given
 name in the same way as an /etc/hosts line, except that the address is
-not constant, but taken from the given interface. If the interface is
+not constant, but taken from the given interface. The interface may be
+followed by "/4" or "/6" to specify that only IPv4 or IPv6 addresses
+of the interface should be used. If the interface is
 down, not configured or non-existent, an empty record is returned. The
 matching PTR record is also created, mapping the interface address to
 the name. More than one name may be associated with an interface
@@ -588,16 +595,28 @@ needed for a client to do validation itself.
 .TP
 .B --auth-zone=<domain>[,<subnet>[/<prefix length>][,<subnet>[/<prefix length>].....]]
 Define a DNS zone for which dnsmasq acts as authoritative server. Locally defined DNS records which are in the domain
-will be served. A and AAAA records must be in one of the
-specified subnets, or in a subnet corresponding to a constructed DHCP
-range. (This can be overridden with 
-.B constructor-noauth:
-) The subnet(s) are also used to define in-addr.arpa and
+will be served. If subnet(s) are given, A and AAAA records must be in one of the
+specified subnets.
+
+As alternative to directly specifying the subnets, it's possible to
+give the name of an interface, in which case the subnets implied by
+that interface's configured addresses and netmask/prefix-length are
+used; this is useful when using constructed DHCP ranges as the actual
+address is dynamic and not known when configuring dnsmasq. The
+interface addresses may be confined to only IPv6 addresses using
+<interface>/6 or to only IPv4 using <interface>/4. This is useful when
+an interface has dynamically determined global IPv6 addresses which should
+appear in the zone, but RFC1918 IPv4 addresses which should not.
+Interface-name and address-literal subnet specifications may be used
+freely in the same --auth-zone declaration.
+
+The subnet(s) are also used to define in-addr.arpa and
 ipv6.arpa domains which are served for reverse-DNS queries. If not
 specified, the prefix length defaults to 24 for IPv4 and 64 for IPv6.
 For IPv4 subnets, the prefix length should be have the value 8, 16 or 24
 unless you are familiar with RFC 2317 and have arranged the
-in-addr.arpa delegation accordingly. 
+in-addr.arpa delegation accordingly. Note that if no subnets are
+specified, then no reverse queries are answered.
 .TP
 .B --auth-soa=<serial>[,<hostmaster>[,<refresh>[,<retry>[,<expiry>]]]]
 Specify fields in the SOA record associated with authoritative
@@ -654,7 +673,8 @@ always optional. It is always
 allowed to have more than one dhcp-range in a single subnet. 
 
 For IPv6, the parameters are slightly different: instead of netmask
-and broadcast address, there is an optional prefix length. If not
+and broadcast address, there is an optional prefix length which must
+be equal to or larger then the prefix length on the local interface. If not
 given, this defaults to 64. Unlike the IPv4 case, the prefix length is not
 automatically derived from the interface configuration. The mimimum
 size of the prefix length is 64.
@@ -679,12 +699,6 @@ then the address can be simply ::
 
 .B --dhcp-range=::,constructor:eth0
 
-
-There is a variant of the constructor: syntax using the keyword
-.B constructor-noauth.
-See 
-.B --auth-zone
-for an explanation of this.
 
 The optional 
 .B set:<tag> 
@@ -1899,8 +1913,12 @@ Something like:
 .nf
 .B auth-server=our.zone.com,eth0
 .B interface-name=our.zone.com,eth0
-.B auth-zone=our.zone.com,1.2.3.0/24
+.B auth-zone=our.zone.com,1.2.3.0/24,eth0
 .fi
+
+(The "eth0" argument in auth-zone adds the subnet containing eth0's
+dynamic address to the zone, so that the interface-name returns the
+address in outside queries.)
 
 Our final configuration builds on that above, but also adds a
 secondary DNS server. This is another DNS server which learns the DNS data
@@ -1959,18 +1977,20 @@ IPv4 and IPv6 addresses from /etc/hosts (and
 .B --addn-hosts
 ) and
 .B --host-record
+and 
+.B --interface-name
 provided the address falls into one of the subnets specified in the
 .B --auth-zone.
 .PP
-Addresses specified by 
-.B --interface-name.
-In this case, the address is not contrained to a subnet from
-.B --auth-zone. 
-
-.PP
 Addresses of DHCP leases, provided the address falls into one of the subnets specified in the
+.B --auth-zone.
+(If contructed DHCP ranges are is use, which depend on the address dynamically 
+assigned to an interface, then the form of
 .B --auth-zone
-OR a constructed DHCP range. In the default mode, where a DHCP lease
+which defines subnets by the dynamic address of an interface should
+be used to ensure this condition is met.)
+.PP 
+In the default mode, where a DHCP lease
 has an unqualified name, and possibly a qualified name constructed
 using 
 .B --domain

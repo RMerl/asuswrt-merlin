@@ -65,7 +65,6 @@ var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 var sr_rulelist_array = '<% nvram_get("sr_rulelist"); %>';
 
 function initial(){
-	$('pull_arrow').title = Untranslated.select_IP;
 	show_menu();
 	showsr_rulelist();
 	showLANIPList();
@@ -345,7 +344,6 @@ function Ctrl_LANIPList(obj){
 <form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
 <input type="hidden" name="current_page" value="Advanced_GWStaticRoute_Content.asp">
 <input type="hidden" name="next_page" value="">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply_new">
 <input type="hidden" name="action_wait" value="10">
@@ -409,14 +407,14 @@ function Ctrl_LANIPList(obj){
 					<th><a href="javascript:void(0);" onClick="openHint(6,3);"><div class="table_text"><#RouterConfig_GWStaticGW_itemname#></div></a></th>
 					<th><a href="javascript:void(0);" onClick="openHint(6,4);"><div class="table_text"><#RouterConfig_GWStaticMT_itemname#></div></a></th>
 					<th><a href="javascript:void(0);" onClick="openHint(6,5);"><div class="table_text"><#wan_interface#></div></a></th>
-					<th>Add / Delete</th>					
+					<th><#list_add_delete#></th>					
 			    </tr>
 			  
 			  <tr>
 			  	<!-- client info -->		
 					<td width="34%">
 						<input type="text" class="input_20_table" maxlength="15" name="sr_ipaddr_x_0" style="margin-left:-22px;width:215px;" onKeyPress="return is_ipaddr(this, event)" onClick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}">
-						<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;" onclick="pullLANIPList(this);" title="" onmouseover="over_var=1;" onmouseout="over_var=0;">						
+						<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;" onclick="pullLANIPList(this);" title="<#select_IP#>" onmouseover="over_var=1;" onmouseout="over_var=0;">						
 						<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
 					</td>
 					<td width="18%"><input type="text" maxlength="15" class="input_15_table" name="sr_netmask_x_0" onKeyPress="return is_ipaddr(this, event)" ></td>

@@ -19,7 +19,6 @@ var wlc_state = '<% nvram_get("wlc_state"); %>';
 var wlc_sbstate = '<% nvram_get("wlc_sbstate"); %>';
 var wlc_scan_state = '<% nvram_get("wlc_scan_state"); %>';
 var wlc_state_auth = 0;
-
 var profile = function(_profile){
 	if(_profile == null)
 		_profile = ["", "", "", "", "", "", "", "", ""];
@@ -775,9 +774,10 @@ function showSiteTable(){
 
 				// initial
 				htmlCode += '<tr style="height: 45px;">';
-
+				
+				ssid_str=handle_show_str(Profiles[i].ssid);
 				//ssid
-				htmlCode += '<td><span title="' + Profiles[i].macaddr + '">' + Profiles[i].ssid + '</span>';
+				htmlCode += '<td><span title="' + Profiles[i].macaddr + '">' + ssid_str + '</span>';
 
 				if(retValHandler.isConnected(Profiles[i].state))
 					htmlCode += "<span style='color:#FC0;margin-left:10px;'><#Connected#></span>";
@@ -934,7 +934,7 @@ function QKInternet_load_body(){
 			<#APSurvey_action_search_again_hint2#>
 			<br/>
 			<span style="color:#FC0" id="deviceDiscorvy">
-				Install and use the <a href="http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/Discovery.zip" style="font-family:Lucida Console;text-decoration:underline;color:#FC0;">Device Discovery Utility</a> in order to detect the <#Web_Title2#>'s IP address.
+				<#use_DevDiscoveryUtil#>
 			</span>
 		</div>
 		<br><br>
@@ -966,7 +966,7 @@ function QKInternet_load_body(){
 						<option value="psk2">WPA2-Personal</option>
 		  		</select>
 					<div id="wl_nmode_hint_manual" style="margin-top:5px;color:#FC0;">
-						Under WEP or WPA-Personal encryption, the maximum transmission rate of <#Web_Title2#> is 54Mbps. Please change to WPA2-Personal.
+						Under WEP or WPA-Personal+TKIP encryption, the maximum transmission rate of <#Web_Title2#> is 54Mbps. Please change to WPA2-Personal.
 					</div>
 				</td>
 	  	</tr>

@@ -75,9 +75,8 @@ var wds_aplist = "";
 var $j = jQuery.noConflict();
 
 function initial(){
-	$('pull_arrow').title = Untranslated.select_AP;
 	show_menu();
-	load_body();	
+	change_wireless_bridge(document.form.wl_mode_x.value);	
 
 	if((sw_mode == 2 || sw_mode == 4)&& '<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>'){
 		for(var i=5; i>=3; i--)
@@ -332,10 +331,8 @@ function wl_bwch_hint(){  //Control display chanspec hint when wl_bw=0 or wl_cha
 <input type="hidden" value="<% nvram_get("productid"); %>" name="productid" >
 <input type="hidden" value="<% nvram_get("wan_route_x"); %>" name="wan_route_x" >
 <input type="hidden" value="<% nvram_get("wan_nat_x"); %>" name="wan_nat_x" >
-
 <input type="hidden" name="current_page" value="Advanced_WMode_Content.asp">
 <input type="hidden" name="next_page" value="Advanced_WMode_Content.asp">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="group_id" value="wl_wdslist">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply_new">
@@ -344,7 +341,6 @@ function wl_bwch_hint(){  //Control display chanspec hint when wl_bw=0 or wl_cha
 <input type="hidden" name="action_script" value="restart_wireless">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
-
 <input type="hidden" maxlength="15" size="15" name="x_RegulatoryDomain" value="<% nvram_get("x_RegulatoryDomain"); %>" readonly="1">
 <input type="hidden" name="wl_wdsnum_x_0" value="<% nvram_get("wl_wdsnum_x"); %>" readonly="1">  
 <input type="hidden" name="wl_channel_orig" value='<% nvram_get("wl_channel"); %>'>
@@ -460,13 +456,13 @@ function wl_bwch_hint(){  //Control display chanspec hint when wl_bw=0 or wl_cha
             		<th width="80%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);">
 								 <#WLANConfig11b_RBRList_groupitemdesc#>
 								</th>
-								<th class="edit_table" width="20%">Add / Delete</th>
+								<th class="edit_table" width="20%"><#list_add_delete#></th>
 								
           		</tr>
           		<tr>
             		<td width="80%">
               		<input type="text" style="margin-left:220px;float:left;" maxlength="17" class="input_macaddr_table" name="wl_wdslist_0" onKeyPress="return is_hwaddr(this,event)">
-									<img style="float:left;" id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="" onmouseover="over_var=1;" onmouseout="over_var=0;">
+									<img style="float:left;" id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="<#select_AP#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
 									<div id="WDSAPList" class="WDSAPList">
 										<div style="width:98px">
 											<img height="15px" style="margin-left:5px;margin-top:2px;" src="/images/InternetScan.gif">

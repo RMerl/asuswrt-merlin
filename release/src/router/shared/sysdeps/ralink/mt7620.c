@@ -34,56 +34,79 @@
 #include "ra_ioctl.h"
 
 #define GPIO_DEV	"/dev/gpio0"
+#define NR_WANLAN_PORT	5
+
+
+struct wifi_if_vid_s {
+	int wl_vid[2];
+	int wl_wds_vid[2];
+};
 
 enum {
 	gpio_in,
 	gpio_out,
 };
 
-#if defined(RTN14U)
+#if defined(RTN14U) || defined(RTAC51U)
 /// RT-N14U mapping
 enum {
-WAN_PORT=0,
-LAN1_PORT=1,
-LAN2_PORT=2,
-LAN3_PORT=3,
-LAN4_PORT=4,
-P5_PORT=5,
-CPU_PORT=6,
-P7_PORT=7,
+	WAN_PORT=0,
+	LAN1_PORT=1,
+	LAN2_PORT=2,
+	LAN3_PORT=3,
+	LAN4_PORT=4,
+	P5_PORT=5,
+	CPU_PORT=6,
+	P7_PORT=7,
 };
 //0:WAN, 1:LAN, lan_wan_partition[][0] is port0
-static int lan_wan_partition[9][5] = {	{0,1,1,1,1}, //WLLLL
-					{0,0,1,1,1}, //WWLLL
-					{0,1,0,1,1}, //WLWLL
-					{0,1,1,0,1}, //WLLWL
-					{0,1,1,1,0}, //WLLLW
-					{0,0,0,1,1}, //WWWLL
-					{0,1,1,0,0}, //WLLWW
-					{1,1,1,1,1}}; // ALL
+static const int lan_wan_partition[9][NR_WANLAN_PORT] = {
+	/* P0, P1, P2, P3, P4 = W, L1, L2, L3, L4 */
+	{0,1,1,1,1}, //WLLLL
+	{0,0,1,1,1}, //WWLLL
+	{0,1,0,1,1}, //WLWLL
+	{0,1,1,0,1}, //WLLWL
+	{0,1,1,1,0}, //WLLLW
+	{0,0,0,1,1}, //WWWLL
+	{0,1,1,0,0}, //WLLWW
+	{1,1,1,1,1}  //ALL
+};
 #elif defined(RTAC52U)
 /// RT-AC52U mapping
 enum {
-WAN_PORT=0,
-LAN1_PORT=3,
-LAN2_PORT=4,
-LAN3_PORT=2,
-LAN4_PORT=1,
-P5_PORT=5,
-CPU_PORT=6,
-P7_PORT=7,
+	WAN_PORT=0,
+	LAN1_PORT=3,
+	LAN2_PORT=4,
+	LAN3_PORT=2,
+	LAN4_PORT=1,
+	P5_PORT=5,
+	CPU_PORT=6,
+	P7_PORT=7,
 };
 //0:WAN, 1:LAN, lan_wan_partition[][0] is port0
-static int lan_wan_partition[9][5] = {	{0,1,1,1,1}, //WLLLL
-					{0,1,1,0,1}, //WLLWL  port3	--> port1
-					{0,1,1,1,0}, //WLLLW  port4	--> port2
-					{0,1,0,1,1}, //WLWLL  port2	--> port3
-					{0,0,1,1,1}, //WWLLL  port1	--> port4
-					{0,1,1,0,0}, //WLLWW  port3+4	--> port1+2
-					{0,0,0,1,1}, //WWWLL  port1+2	--> port3+4
-					{1,1,1,1,1}}; // ALL
+static const int lan_wan_partition[9][NR_WANLAN_PORT] = {
+	/* P0, P1, P2, P3, P4 = W, L4, L3, L1, L2 */
+	{0,1,1,1,1}, //WLLLL
+	{0,1,1,0,1}, //WLLWL  port3	--> port1
+	{0,1,1,1,0}, //WLLLW  port4	--> port2
+	{0,1,0,1,1}, //WLWLL  port2	--> port3
+	{0,0,1,1,1}, //WWLLL  port1	--> port4
+	{0,1,1,0,0}, //WLLWW  port3+4	--> port1+2
+	{0,0,0,1,1}, //WWWLL  port1+2	--> port3+4
+	{1,1,1,1,1}, //ALL
+};
 #endif
 
+/* Final model-specific LAN/WAN/WANS_LAN partition definitions.
+ * bit0: P0, bit1: P1, bit2: P2, bit3: P3, bit4: P4
+ */
+static unsigned int lan_mask = 0;	/* LAN only. Exclude WAN, WANS_LAN, and generic IPTV port. */
+static unsigned int wan_mask = 0;	/* wan_type = WANS_DUALWAN_IF_WAN. Include generic IPTV port. */
+static unsigned int wans_lan_mask = 0;	/* wan_type = WANS_DUALWAN_IF_LAN. */
+
+/* RT-N56U's P0, P1, P2, P3, P4 = LAN4, LAN3, LAN2, LAN1, WAN
+ * ==> Model-specific port number.
+ */
 static int switch_port_mapping[] = {
 	LAN4_PORT,	//0000 0000 0001 LAN4
 	LAN3_PORT,	//0000 0000 0010 LAN3
@@ -98,6 +121,72 @@ static int switch_port_mapping[] = {
 };
 
 int esw_fd, esw_stb;
+
+/* Model-specific LANx ==> Model-specific PortX mapping */
+const int lan_id_to_port_mapping[NR_WANLAN_PORT] = {
+	WAN_PORT,	/* not used */
+	LAN1_PORT,
+	LAN2_PORT,
+	LAN3_PORT,
+	LAN4_PORT,
+};
+
+/* Model-specific LANx ==> Model-specific PortX */
+static inline int lan_id_to_port_nr(int id)
+{
+	return lan_id_to_port_mapping[id];
+}
+
+/**
+ * Get WAN port mask
+ * @wan_unit:	wan_unit, if negative, select WANS_DUALWAN_IF_WAN
+ * @return:	port bitmask
+ */
+static unsigned int get_wan_port_mask(int wan_unit)
+{
+	char nv[] = "wanXXXports_maskXXXXXX";
+
+	if (nvram_get_int("sw_mode") == SW_MODE_AP)
+		return 0;
+
+	if (wan_unit <= 0 || wan_unit >= WAN_UNIT_MAX)
+		strcpy(nv, "wanports_mask");
+	else
+		sprintf(nv, "wan%dports_mask", wan_unit);
+
+	return nvram_get_int(nv);
+}
+
+/**
+ * Get LAN port mask
+ * @return:	port bitmask
+ */
+static unsigned int get_lan_port_mask(void)
+{
+	unsigned int m = nvram_get_int("lanports_mask");
+
+	if (nvram_get_int("sw_mode") == SW_MODE_AP)
+		m = 0x1F;
+
+	return m;
+}
+
+/**
+ * Create string based portmap base on mask parameter.
+ * @mask:	port bit mask.
+ * 		bit0: P0, bit1: P1, etc
+ * @portmap:	pointer to char array. minimal length is 9 bytes.
+ */
+static void __create_port_map(unsigned int mask, char *portmap)
+{
+	int i;
+	char *p;
+	unsigned int m;
+
+	for (i = 0, m = mask, p = portmap; i < 8; ++i, m >>= 1, ++p)
+		*p = '0' + (m & 1);
+	*p = '\0';
+}
 
 int switch_init(void)
 {
@@ -125,7 +214,7 @@ int mt7620_reg_read(int offset, unsigned int *value)
 	strncpy(ifr.ifr_name, "eth2", 5);
 	ifr.ifr_data = (void*) &reg;
 	if (-1 == ioctl(esw_fd, RAETH_ESW_REG_READ, &ifr)) {
-		perror("ioctl");
+		_dprintf("%s: read esw register fail. errno %d (%s)\n", __func__, errno, strerror(errno));
 		close(esw_fd);
 		return -1;
 	}
@@ -180,46 +269,84 @@ static void write_VTCR(unsigned int value)
 	}
 }
 
-int mt7620_vlan_set(int idx, int vid, char *portmap, int stag)
+/**
+ * Find first available vlan slot or find vlan slot by vid.
+ * VLAN slot 0~2 are reserved.
+ * If VLAN ID is not equal to index + 1, it is assumed unavailable.
+ * @vid:
+ * 	>0:	Find vlan slot by vid.
+ * 	<=0:	Find first available vlan slot.
+ * @vawd1:	pointer to a unsigned integer.
+ * 		If vlan slot found and vawd1 is not null, save VAWD1 value here.
+ * @return:
+ * 	0~15:	vlan slot index.
+ * 	<0:	not found
+ */
+static int find_vlan_slot(int vid, unsigned int *vawd1)
 {
-	unsigned int i, mbr, value;
+	int idx;
+	unsigned int i, r, v, value;
 
-	if(idx < 0)
-	{ //auto
-		for(i = 4; i < 16; i++) //skip vlan index 0~3
-		{
-			if ((i&1) == 0)
-				mt7620_reg_read(REG_ESW_VLAN_ID_BASE + 4*(i>>1), &value);
+	for(i = 3, idx = -1; idx < 0 && i < 16; ++i) {	/* skip vlan index 0~2 */
+		if ((r = mt7620_reg_read(REG_ESW_VLAN_ID_BASE + 4*(i>>1), &value))) {
+			_dprintf("read VTIM1~8, i %d offset %x fail. (r = %d)\n", i, REG_ESW_VLAN_ID_BASE + 4*(i>>1), r);
+			continue;
+		}
 
-			if ((i&1) == 0)
-			{
-				if ((value & 0xfff) != i+1)
-					continue;
-			}
-			else
-			{
-				if (((value >> 12) & 0xfff) != i+1)
-					continue;
-			}
-			value = (0x0 << 12) + i; //read VAWD#
-			write_VTCR(value);
-			mt7620_reg_read(REG_ESW_VLAN_VAWD1, &value);
-			if((value & 1) == 0) //find inVALID
-				break;
-		}
-		if (i == 16)
-		{
-			cprintf("no empty vlan entry\n");
-			return -1;
-		}
-		idx = i;
+		if (!(i&1))
+			v = value & 0xfff;
+		else
+			v = (value >> 12) & 0xfff;
+
+		if ((vid <= 0 && v != (i + 1)) && (vid > 0 && v != vid))
+			continue;
+
+		value = (0x0 << 12) + i; //read VAWD#
+		write_VTCR(value);
+		mt7620_reg_read(REG_ESW_VLAN_VAWD1, &value);
+
+		if ((vid <= 0 ) && v == (i + 1) && !(value & 1))	/* find available vlan slot */
+			idx = i;
+		else if (vid > 0 && v == vid)				/* find vlan slot by vid */
+			idx = i;
+
+		if (idx >= 0 && vawd1)
+			*vawd1 = value;
 	}
 
-	//printf("mt7620_vlan_set()...idx=%d, vid=%d, portmap=%s, stag=%d\n", idx, vid, portmap, stag);
+	return idx;
+}
 
-	mbr = 0;
-	for (i = 0; i < 8; i++)
-		mbr += (*(portmap + i) - '0') * (1 << i);
+/**
+ * Set a VLAN
+ * @idx:	VLAN table index
+ *  >= 0:	specify VLAN table index.
+ *  <  0:	find available VLAN table.
+ * @vid:	VLAN ID
+ * @portmap:	Port member. string length must greater than or equal to 8.
+ * 		Only '0' and '1' are accepted.
+ * 		First digit means port 0, second digit means port1, etc.
+ * 		P0, P1, P2, P3, P4, P5, P6, P7
+ * @stag:	Service tag
+ * @return
+ * 	0:	success
+ *     -1:	no vlan entry available
+ *     -2:	invalid parameter
+ */
+int mt7620_vlan_set(int idx, int vid, char *portmap, int stag)
+{
+	unsigned int i, mbr, value, vawd1;
+
+	if (idx < 0) { //auto
+		if ((idx = find_vlan_slot(vid, &vawd1)) < 0 && (idx = find_vlan_slot(-1, &vawd1)) < 0) {
+			_dprintf("%s: no empty vlan entry for vid %d portmap %s stag %d!\n",
+				__func__, vid, portmap, stag);
+			return -1;
+		}
+	}
+
+	_dprintf("%s: idx=%d, vid=%d, portmap=%s, stag=%d\n", __func__, idx, vid, portmap, stag);
+
 	//set vlan identifier
 	mt7620_reg_read(REG_ESW_VLAN_ID_BASE + 4*(idx/2), &value);
 	if (idx % 2 == 0) {
@@ -232,6 +359,9 @@ int mt7620_vlan_set(int idx, int vid, char *portmap, int stag)
 	}
 	mt7620_reg_write(REG_ESW_VLAN_ID_BASE + 4*(idx/2), value);
 	//set vlan member
+	mbr = 0;
+	for (i = 0; i < 8; i++)
+		mbr += (*(portmap + i) - '0') * (1 << i);
 	value = (mbr << 16);		//PORT_MEM
 	value |= (1 << 30);		//IVL
 	value |= (1 << 27);		//COPY_PRI
@@ -245,150 +375,293 @@ int mt7620_vlan_set(int idx, int vid, char *portmap, int stag)
 	return 0;
 }
 
-
-#if defined(RTN14U) || defined(RTAC52U)
-int mt7620_wan_bytecount(int dir, unsigned long *count)
+/**
+ * Disable a VLAN by vid and restore VID to initial value.
+ * @vid:	VLAN ID to be deleted.
+ * @return:
+ * 	0:	success
+ */
+int mt7620_vlan_unset(int vid)
 {
-   	int offset;
+	int idx = -1;
+	unsigned int value, vawd1;
+
+	if ((idx = find_vlan_slot(vid, &vawd1)) < 0)
+		return -1;
+
+	//_dprintf("%s: delete vid=%d at idx=%d\n", __func__, vid, idx, vid);
+
+	/* disable VLAN */
+	mt7620_reg_write(REG_ESW_VLAN_VAWD1, 0);
+	value = (0x80001000 + idx); //w_vid_cmd
+	write_VTCR(value);
+
+	/* restore vlan identifier */
+	mt7620_reg_read(REG_ESW_VLAN_ID_BASE + 4*(idx/2), &value);
+	if (idx % 2 == 0) {
+		value &= 0xfff000;
+		value |= idx+1;
+	}
+	else {
+		value &= 0xfff;
+		value |= ((idx+1) << 12);
+	}
+	mt7620_reg_write(REG_ESW_VLAN_ID_BASE + 4*(idx/2), value);
+
+	return 0;
+}
+
+
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U)
+/**
+ * Get TX or RX byte count of WAN and WANS_LAN
+ * @unit:	WAN unit.
+ * @tx:
+ * @rx:
+ * @return:
+ * 	-1:	invalid parameter.
+ * 	0:	success
+ */
+int __mt7620_wan_bytecount(int unit, unsigned long *tx, unsigned long *rx)
+{
+	int dir, i;
+	unsigned long count[2];
+	unsigned int m, v, addr;
+
+	if (unit < 0 || unit >= WAN_UNIT_MAX || !tx || !rx) {
+		_dprintf("%s: invalid parameter! (%d, %p, %p)", unit, tx, rx);
+		return -1;
+	}
  
 	if (switch_init() < 0)
 		return -1;
 
-	if(dir==0) //tx
-		offset=0x4018;
-	else if(dir==1) //rx
-		offset=0x4028;
-	else
-	{   
-	   	perror("invalid parameter!");
-		return -1;
+	for (dir = 0; dir <= 1; ++dir) {
+		count[dir] = 0;
+		addr = dir? REG_ESW_PORT_RGOCN_P0:REG_ESW_PORT_TGOCN_P0;
+		m = get_wan_port_mask(unit) & ((1U << NR_WANLAN_PORT) - 1);
+		for (i = 0; m && i < NR_WANLAN_PORT; ++i, m >>= 1, addr += 0x100) {
+			if (!(m & 1))
+				continue;
+
+			v = 0;
+			mt7620_reg_read(addr, &v);
+			count[dir] += v;
+		}
 	}
 
-	mt7620_reg_read(offset, (unsigned int*) count);
 	switch_fini();
+
+	*tx = count[0];
+	*rx = count[1];
+
 	return 0;
 }   
 #endif
 
-static void get_mt7620_esw_WAN_linkStatus(int type, unsigned int *linkStatus)
+/**
+ * Get linkstatus in accordance with port bit-mask.
+ * @mask:	port bit-mask.
+ * 		bit0 = P0, bit1 = P1, etc.
+ * @linkStatus:	link status of all ports that is defined by mask.
+ * 		If one port of mask is linked-up, linkStatus is true.
+ */
+static void get_mt7620_esw_phy_linkStatus(unsigned int mask, unsigned int *linkStatus)
 {
 	int i;
-	unsigned int value = 0;
-	const int sw_mode = nvram_get_int("sw_mode");
+	unsigned int value = 0, m;
+
+	if (switch_init() < 0)
+		return;
+
+	m = mask & ((1U << NR_WANLAN_PORT) - 1);
+	for (i = 0; m && !value && i < NR_WANLAN_PORT; ++i, m >>= 1) {
+		if (!(m & 1))
+			continue;
+
+		mt7620_reg_read((REG_ESW_MAC_PMSR_P0 + 0x100*i), &value);
+		value &= 0x1;
+	}
+	*linkStatus = value;
+
+	switch_fini();
+}
+
+static void build_wan_lan_mask(int stb)
+{
+	int i, unit;
+	int wanscap_lan = get_wans_dualwan() & WANSCAP_LAN;
+	int wans_lanport = nvram_get_int("wans_lanport");
+	int sw_mode = nvram_get_int("sw_mode");
+	char prefix[8], nvram_ports[20];
 
 	if (sw_mode == SW_MODE_AP) {
-		*linkStatus = 0;
-		return;
+		wanscap_lan = 0;
+
+		if (stb == 100)	/* Don't create WAN port. */
+			stb = 7;
 	}
 
-	if (switch_init() < 0)
-		return;
+	if (wanscap_lan && (wans_lanport < 0 || wans_lanport > 4)) {
+		_dprintf("%s: invalid wans_lanport %d!\n", __func__, wans_lanport);
+		wanscap_lan = 0;
+	}
 
-	for (i = 4; i >= 0; i--) {
-		if (lan_wan_partition[type][i] == 1)
-			continue;
-		mt7620_reg_read((REG_ESW_MAC_PMSR_P0 + 0x100*i), &value);
-		value &= 0x1;
-		if (value)
+	lan_mask = wan_mask = wans_lan_mask = 0;
+	for (i = 0; i < NR_WANLAN_PORT; ++i) {
+		switch (lan_wan_partition[stb][i]) {
+		case 0:
+			wan_mask |= 1U << i;
 			break;
+		case 1:
+			lan_mask |= 1U << i;
+			break;
+		default:
+			_dprintf("%s: Unknown LAN/WAN port definition. (stb %d i %d val %d)\n",
+				__func__, stb, i, lan_wan_partition[stb][i]);
+		}
 	}
-	*linkStatus = value;
 
-	switch_fini();
+	//DUALWAN
+	if (wanscap_lan) {
+		wans_lan_mask = 1U << lan_id_to_port_nr(wans_lanport);
+		lan_mask &= ~wans_lan_mask;
+	}
+
+	for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit) {
+		sprintf(prefix, "%d", unit);
+		sprintf(nvram_ports, "wan%sports_mask", (unit == WAN_UNIT_FIRST)?"":prefix);
+
+		if (get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_WAN) {
+			nvram_set_int(nvram_ports, wan_mask);
+		}
+		else if (get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_LAN) {
+			nvram_set_int(nvram_ports, wans_lan_mask);
+		}
+		else
+			nvram_unset(nvram_ports);
+	}
+	nvram_set_int("lanports_mask", lan_mask);
 }
 
-static void get_mt7620_esw_LAN_linkStatus(int type, unsigned int *linkStatus)
-{
-	int i;
-	unsigned int value = 0;
-	const int sw_mode = nvram_get_int("sw_mode");
-
-	if (switch_init() < 0)
-		return;
-
-	for (i = 4; i >= 0; i--) {
-		if (lan_wan_partition[type][i] == 0 && sw_mode != SW_MODE_AP)
-			continue;
-		mt7620_reg_read((REG_ESW_MAC_PMSR_P0 + 0x100*i), &value);
-		value &= 0x1;
-		if (value)
-			break;
-	}
-	*linkStatus = value;
-
-	switch_fini();
-}
-
+/**
+ * Configure LAN/WAN partition base on generic IPTV type.
+ * @type:
+ * 	0:	Default.
+ * 	1:	LAN1
+ * 	2:	LAN2
+ * 	3:	LAN3
+ * 	4:	LAN4
+ * 	5:	LAN1+LAN2
+ * 	6:	LAN3+LAN4
+ */
 static void config_mt7620_esw_LANWANPartition(int type)
 {
-	int i;
 	char portmap[16];
+	int i, v, wans_lan_vid = 3, wanscap_wanlan = get_wans_dualwan() & (WANSCAP_WAN | WANSCAP_LAN);
+	int wanscap_lan = get_wans_dualwan() & WANSCAP_LAN;
+	int wans_lanport = nvram_get_int("wans_lanport");
+	int sw_mode = nvram_get_int("sw_mode");
+	unsigned int m;
 
 	if (switch_init() < 0)
 		return;
+
+	if (sw_mode == SW_MODE_AP)
+		wanscap_lan = 0;
+
+	if (wanscap_lan && (wans_lanport < 0 || wans_lanport > 4)) {
+		_dprintf("%s: invalid wans_lanport %d!\n", __func__, wans_lanport);
+		wanscap_lan = 0;
+		wanscap_wanlan &= ~WANSCAP_LAN;
+	}
+
+	if (wanscap_lan && !(get_wans_dualwan() & WANSCAP_WAN))
+		wans_lan_vid = 2;
 
 	//LAN/WAN ports as security mode
 	for (i = 0; i < 6; i++)
 		mt7620_reg_write((REG_ESW_PORT_PCR_P0 + 0x100*i), 0xff0003);
 	//LAN/WAN ports as transparent port
-	for (i = 0; i < 6; i++) {
-			mt7620_reg_write((REG_ESW_PORT_PVC_P0 + 0x100*i), 0x810000c2); //transparent port, admit untagged frames
-	}
+	for (i = 0; i < 6; i++)
+		mt7620_reg_write((REG_ESW_PORT_PVC_P0 + 0x100*i), 0x810000c2);	//transparent port, admit untagged frames
 
 	//set CPU/P7 port as user port
-	mt7620_reg_write((REG_ESW_PORT_PVC_P0 + 0x100*CPU_PORT), 0x81000000); //port6
-	mt7620_reg_write((REG_ESW_PORT_PVC_P0 + 0x100*P7_PORT), 0x81000000); //port7
+	mt7620_reg_write((REG_ESW_PORT_PVC_P0 + 0x100*CPU_PORT), 0x81000000);	//port6, user port, admit all frames
+	mt7620_reg_write((REG_ESW_PORT_PVC_P0 + 0x100*P7_PORT), 0x81000000);	//port7, user port, admit all frames
 
-	mt7620_reg_write((REG_ESW_PORT_PCR_P0 + 0x100*CPU_PORT), 0x20ff0003); //port6, Egress VLAN Tag Attribution=tagged
-	mt7620_reg_write((REG_ESW_PORT_PCR_P0 + 0x100*P7_PORT), 0x20ff0003); //port7, Egress VLAN Tag Attribution=tagged
+	mt7620_reg_write((REG_ESW_PORT_PCR_P0 + 0x100*CPU_PORT), 0x20ff0003);	//port6, Egress VLAN Tag Attribution=tagged
+	mt7620_reg_write((REG_ESW_PORT_PCR_P0 + 0x100*P7_PORT), 0x20ff0003);	//port7, Egress VLAN Tag Attribution=tagged
+
+	build_wan_lan_mask(type);
+	_dprintf("%s: LAN/WAN/WANS_LAN portmask %08x/%08x/%08x\n", __func__, lan_mask, wan_mask, wans_lan_mask);
 
 	//set PVID
-	for (i = 0; i < 5; i++) {
-		if (lan_wan_partition[type][i] == 1)	//LAN
-			mt7620_reg_write((REG_ESW_PORT_PPBVI_P0 + 0x100*i), 0x10001);
-		else					//WAN
-			mt7620_reg_write((REG_ESW_PORT_PPBVI_P0 + 0x100*i), 0x10002);
+	for (i = 0, m = 1; i < NR_WANLAN_PORT; ++i, m <<= 1) {
+		if (lan_mask & m)
+			v = 1;	//LAN
+		else if (wanscap_lan && (wans_lan_mask & m))
+			v = wans_lan_vid;	//WANSLAN
+		else
+			v = 2;	//WAN
+		_dprintf("%s: P%d PVID %d\n", __func__, i, v);
+		mt7620_reg_write((REG_ESW_PORT_PPBV1_P0 + 0x100*i), 0x10000 | v);
 	}
-	mt7620_reg_write((REG_ESW_PORT_PPBVI_P0 + 0x100*P5_PORT), 0x10001);
-	//VLAN member port
-	//LAN
-	sprintf(portmap, "%d%d%d%d%d111", lan_wan_partition[type][0]
-					, lan_wan_partition[type][1]
-					, lan_wan_partition[type][2]
-					, lan_wan_partition[type][3]
-					, lan_wan_partition[type][4]);
+	mt7620_reg_write((REG_ESW_PORT_PPBV1_P0 + 0x100*P5_PORT), 0x10001);
+
+	//VLAN member port: WAN, LAN, WANS_LAN
+	//LAN: P7, P6, P5, lan_mask
+	__create_port_map(0xE0 | lan_mask, portmap);
 	mt7620_vlan_set(0, 1, portmap, 0);
-	//WAN
-	sprintf(portmap, "%d%d%d%d%d011", !lan_wan_partition[type][0]
-					, !lan_wan_partition[type][1]
-					, !lan_wan_partition[type][2]
-					, !lan_wan_partition[type][3]
-					, !lan_wan_partition[type][4]);
-	mt7620_vlan_set(1, 2, portmap, 0);
-#if 0  // Bad workaround
-//// MT7620N work around
-	{
-	unsigned int value = 0;
-	mt7620_reg_read(REG_ESW_MAC_PMCR_P6, &value);
-	value &= ~(0x30);
-	mt7620_reg_write(REG_ESW_MAC_PMCR_P6, value); //disable port6 flow control
-	printf("Set P6 to %x\n",value);
+
+	if (sw_mode != SW_MODE_AP) {
+		switch (wanscap_wanlan) {
+		case WANSCAP_WAN | WANSCAP_LAN:
+			//WAN: P7, P6, wan_mask
+			__create_port_map(0xC0 | wan_mask, portmap);
+			mt7620_vlan_set(1, 2, portmap, 0);
+			//WANSLAN: P6, wans_lan_mask
+			__create_port_map(0x40 | wans_lan_mask, portmap);
+			mt7620_vlan_set(2, wans_lan_vid, portmap, 0);
+			break;
+		case WANSCAP_LAN:
+			//WANSLAN: P7, P6, wans_lan_mask
+			__create_port_map(0xC0 | wans_lan_mask, portmap);
+			mt7620_vlan_set(1, 2, portmap, 0);
+			break;
+		case WANSCAP_WAN:
+			//WAN: P7, P6, wan_mask
+			__create_port_map(0xC0 | wan_mask, portmap);
+			mt7620_vlan_set(1, 2, portmap, 0);
+			break;
+		default:
+			_dprintf("%s: Unknown WANSCAP %x\n", __func__, wanscap_wanlan);
+		}
 	}
-////
-#endif
+
 	switch_fini();
 }
 
 static void get_mt7620_esw_WAN_Speed(unsigned int *speed)
 {
-	unsigned int value = 0;
+	int i, v = -1, t;
+	unsigned int m;
 
 	if (switch_init() < 0)
 		return;
 
-	mt7620_reg_read(REG_ESW_MAC_PMSR_P0, &value);
-	value = (value >> 2) & 0x3;
-	switch (value) {
+	m = (get_wan_port_mask(0) | get_wan_port_mask(1)) & ((1U << NR_WANLAN_PORT) - 1);
+	for (i = 0; m && i < NR_WANLAN_PORT; ++i, m >>= 1) {
+		if (!(m & 1))
+			continue;
+
+		mt7620_reg_read((REG_ESW_MAC_PMSR_P0 + 4*i), (unsigned int*) &t);
+		t = (t >> 2) & 0x3;
+		if (t < 3 && t > v)
+			v = t;
+	}
+
+	switch (v) {
 	case 0x0:
 		*speed = 10;
 		break;
@@ -399,23 +672,23 @@ static void get_mt7620_esw_WAN_Speed(unsigned int *speed)
 		*speed = 1000;
 		break;
 	default:
-		printf("invalid!\n");
+		_dprintf("%s: invalid speed!\n", __func__);
 	}
-
 	switch_fini();
 }
 
-static void link_down_up_mt7620_PHY(int type, int status, int inverse)
+static void link_down_up_mt7620_PHY(unsigned int mask, int status, int inverse)
 {
 	int i;
 	char idx[2];
 	char value[5] = "3300";	//power up PHY
+	unsigned int m;
 
 	if (!status)		//power down PHY
 		value[1] = '9';
 
-	for (i = 0; i < 5; i++) {
-		if (lan_wan_partition[type][i] == inverse)
+	for (i = 0, m = mask; m && i < NR_WANLAN_PORT; ++i, m >>= 1) {
+		if (!(m & 1))
 			continue;
 		sprintf(idx, "%d", i);
 		eval("mii_mgr", "-s", "-p", idx, "-r", "0", "-v", value);
@@ -437,7 +710,7 @@ void set_mt7620_esw_broadcast_rate(int bsr)
 
 	printf("set broadcast strom control rate as: %d\n", bsr);
 #if 0
-	for (i = 0; i < 5; i++) {
+	for (i = 0; i < NR_WANLAN_PORT; i++) {
 		mt7620_reg_read((REG_ESW_PORT_BSR_P0 + 0x100*i), &value);
 		value |= 0x1 << 31; //STRM_MODE=Rate-based
 		value |= (bsr << 16) | (bsr << 8) | bsr;
@@ -497,30 +770,185 @@ static void set_Vlan_PRIO(int prio)
 	nvram_set("vlan_prio", tmp);
 }
 
+/**
+ * @stb_bitmask:	bitmask of STB port(s)
+ * 			e.g. bit0 = P0, bit1 = P1, etc.
+ */
 static void initialize_Vlan(int stb_bitmask)
 {
 	char portmap[16];
+	int wans_lan_vid = 3, wanscap_wanlan = get_wans_dualwan() & (WANSCAP_WAN | WANSCAP_LAN);
+	int wanscap_lan = get_wans_dualwan() & WANSCAP_LAN;
+	int wans_lanport = nvram_get_int("wans_lanport");
+	int sw_mode = nvram_get_int("sw_mode");
 
 	if (switch_init() < 0)
 		return;
 
-	//VLAN member port: LAN
-	sprintf(portmap, "%d%d%d%d%d111", lan_wan_partition[esw_stb][0]
-					, lan_wan_partition[esw_stb][1]
-					, lan_wan_partition[esw_stb][2]
-					, lan_wan_partition[esw_stb][3]
-					, lan_wan_partition[esw_stb][4]);
+	if (sw_mode == SW_MODE_AP)
+		wanscap_lan = 0;
+
+	if (wanscap_lan && (wans_lanport < 0 || wans_lanport > 4)) {
+		_dprintf("%s: invalid wans_lanport %d!\n", __func__, wans_lanport);
+		wanscap_lan = 0;
+		wanscap_wanlan &= ~WANSCAP_LAN;
+	}
+
+	if (wanscap_lan && (!(get_wans_dualwan() & WANSCAP_WAN)) && !(!nvram_match("switch_wantag", "none") && !nvram_match("switch_wantag", "")))
+		wans_lan_vid = 2;
+
+	build_wan_lan_mask(esw_stb);
+	_dprintf("%s: LAN/WAN/WANS_LAN portmask %08x/%08x/%08x\n", __func__, lan_mask, wan_mask, wans_lan_mask);
+
+	//VLAN member port: LAN, WANS_LAN
+	//LAN: P7, P6, P5, lan_mask
+	__create_port_map(0xE0 | lan_mask, portmap);
 	mt7620_vlan_set(0, 1, portmap, 1);
+	if (wanscap_lan) {
+		switch (wanscap_wanlan) {
+		case WANSCAP_WAN | WANSCAP_LAN:
+			//WANSLAN: P6, wans_lan_mask
+			__create_port_map(0x40 | wans_lan_mask, portmap);
+			mt7620_vlan_set(3, wans_lan_vid, portmap, wans_lan_vid);
+			break;
+		case WANSCAP_LAN:
+			if (!nvram_match("switch_wantag", "none") && !nvram_match("switch_wantag", "")) {
+				//WANSLAN: P6, wans_lan_mask
+				__create_port_map(0x40 | wans_lan_mask, portmap);
+			} else {
+				//WANSLAN: P7, P6, wans_lan_mask
+				__create_port_map(0xC0 | wans_lan_mask, portmap);
+			}
+			mt7620_vlan_set(3, wans_lan_vid, portmap, wans_lan_vid);
+			break;
+		case WANSCAP_WAN:
+			/* Do nothing. */
+			break;
+		default:
+			_dprintf("%s: Unknown WANSCAP %x\n", __func__, wanscap_wanlan);
+		}
+	}
 
 	switch_fini();
 }
 
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U)
+static void fix_up_hwnat_for_wifi(void)
+{
+	int i, j, m, r, v, isp_profile_hwnat_not_safe = 0;
+	char portmap[10];
+	char bss[] = "wl0.1_bss_enabledXXXXXX";
+	char mode_x[] = "wl0_mode_xXXXXXX";
+	struct wifi_if_vid_s w = {
+#if defined(RTAC52U) || defined(RTAC51U)
+		.wl_vid = { 21, 43 },		/* DP_RA0  ~ DP_RA3:  21, 22, 23, 24;	DP_RAI0  ~ DP_RAI3:  43, 44, 45, 46 */
+		.wl_wds_vid = { 37, 59 },	/* DP_WDS0 ~ DP_WDS3: 37, 38, 39, 40;	DP_WDSI0 ~ DP_WDSI3: 59, 60, 61, 62 */
+#elif defined(RTN14U)
+		.wl_vid = { 21, -1 },		/* DP_RA0  ~ DP_RA3:  21, 22, 23, 24;	DP_RAI0  ~ DP_RAI3:  43, 44, 45, 46 */
+		.wl_wds_vid = { 37, -1 },	/* DP_WDS0 ~ DP_WDS3: N/A;           	DP_WDSI0 ~ DP_WDSI3: N/A */
+#else
+#error Define VLAN ID of WiFi interface!
+#endif
+	};
+
+	if (nvram_match("switch_wantag", "none") || nvram_match("switch_wantag", "")) {
+		nvram_unset("isp_profile_hwnat_not_safe");
+		return;
+	}
+
+	if (switch_init() < 0)
+		return;
+
+	/* Create VLANs on P6 and P7 for WiFi interfaces to make sure VLAN ID of skbs
+	 * that come from WiFi interface and are injected to PPE is not swapped as zero.
+	 * This is used to workaround VirIfIdx=0 problem.
+	 */
+	strcpy(portmap, "00000011");	/* P6, P7 */
+	/* Initial state, 2G/5G interface only. */
+	for (i = 0; i <= 1; ++i) {
+		if ((v = w.wl_vid[i]) <= 0)
+			continue;
+
+		if ((r = mt7620_vlan_set(-1, v, portmap, v)) != 0)
+			isp_profile_hwnat_not_safe = 1;
+		for (j = 1; j <= 3; ++j)
+			mt7620_vlan_unset(v + j);
+
+		if ((v = w.wl_wds_vid[i]) <= 0)
+			continue;
+		for (j = 0; j <= 3; ++j, ++v)
+			mt7620_vlan_unset(v);
+	}
+
+	/* 2G/5G guest network i/f */
+	for (i = 0; !isp_profile_hwnat_not_safe && i <= 1; ++i) {
+		if ((v = w.wl_vid[i]) <= 0)
+			continue;
+
+		sprintf(mode_x, "wl%d_mode_x", i);
+		m = nvram_get_int(mode_x);	/* 1: WDS only */
+		for (j = 1; !isp_profile_hwnat_not_safe && j <= 3; ++j) {
+			sprintf(bss, "wl%d.%d_bss_enabled", i, j);
+			if (m == 1 || !nvram_get_int(bss))
+				continue;
+
+			v++;
+			if ((r = mt7620_vlan_set(-1, v, portmap, v)) != 0)
+				isp_profile_hwnat_not_safe = 1;
+		}
+	}
+
+	/* 2G/5G WDS i/f */
+	for (i = 0; !isp_profile_hwnat_not_safe && i <= 1; ++i) {
+		if ((v = w.wl_wds_vid[i]) <= 0)
+			continue;
+
+		sprintf(mode_x, "wl%d_mode_x", i);
+		m = nvram_get_int(mode_x);
+		if (m != 1 && m != 2)
+			continue;
+		for (j = 0; !isp_profile_hwnat_not_safe && j <= 3; ++j, ++v) {
+			if ((r = mt7620_vlan_set(-1, v, portmap, v)) != 0)
+				isp_profile_hwnat_not_safe = 1;
+		}
+	}
+	nvram_set_int("isp_profile_hwnat_not_safe", isp_profile_hwnat_not_safe);
+
+	switch_fini();
+}
+#else
+static inline void fix_up_hwnat_for_wifi(void) { }
+#endif
+
+/**
+ * Create VLAN for LAN and/or WAN in accordance with bitmask parameter.
+ * @bitmask:
+ *  bit15~bit0:		member port bitmask.
+ * 	bit0:		RT-N56U port0, LAN4
+ * 	bit1:		RT-N56U port1, LAN3
+ * 	bit2:		RT-N56U port2, LAN2
+ * 	bit3:		RT-N56U port3, LAN1
+ * 	bit4:		RT-N56U port4, WAN
+ * 	bit8:		RT-N56U port8, LAN_CPU port
+ * 	bit9:		RT-N56U port9, WAN_CPU port
+ *  bit31~bit16:	untag port bitmask.
+ * 	bit16:		RT-N56U port0, LAN4
+ * 	bit17:		RT-N56U port1, LAN3
+ * 	bit18:		RT-N56U port2, LAN2
+ * 	bit19:		RT-N56U port3, LAN1
+ * 	bit20:		RT-N56U port4, WAN
+ * 	bit24:		RT-N56U port8, LAN_CPU port
+ * 	bit25:		RT-N56U port9, WAN_CPU port
+ * First Ralink-based model is RT-N56U.
+ * Convert RT-N56U-specific bitmask to physical port of your model,
+ * base on relationship between physical port and visual WAN/LAN1~4 of that model first.
+ */
 static void create_Vlan(int bitmask)
 {
 	unsigned int value;
 	char portmap[16];
-	int vid = atoi(nvram_safe_get("vlan_vid"));
-	int prio = atoi(nvram_safe_get("vlan_prio"));
+	int vid = atoi(nvram_safe_get("vlan_vid")) & 0xFFF;
+	int prio = atoi(nvram_safe_get("vlan_prio")) & 0x7;
 	int mbr = bitmask & 0xffff;
 	int untag = (bitmask >> 16) & 0xffff;
 	int i, mask;
@@ -533,8 +961,7 @@ static void create_Vlan(int bitmask)
 
 	strcpy(portmap, "00000000"); // init
 	//convert port mapping
-	for(i = 0; i < 5; i++)
-	{
+	for(i = 0; i < NR_WANLAN_PORT; i++) {
 		mask = (1 << i);
 		if (mbr & mask)
 			portmap[ switch_port_mapping[i] ]='1';
@@ -553,20 +980,19 @@ static void create_Vlan(int bitmask)
 		for(i = 0; i < 4; i++) //LAN port only
 		{
 			mask = (1 << i);
-			if (mbr & mask)
-			{
-				if ((untag & mask) == 0)
-				{	//need tag
+			if (mbr & mask) {
+				if ((untag & mask) == 0) {	//need tag
 					mt7620_reg_write((REG_ESW_PORT_PCR_P0 + 0x100 * switch_port_mapping[i]), 0x20ff0003); //Egress VLAN Tag Attribution=tagged
 					mt7620_reg_write((REG_ESW_PORT_PVC_P0 + 0x100 * switch_port_mapping[i]), 0x81000000); //user port, admit all frames
 				}
-				else
-				{
-					mt7620_reg_write((REG_ESW_PORT_PPBVI_P0 + 0x100 * switch_port_mapping[i]), value);
+				else {
+					mt7620_reg_write((REG_ESW_PORT_PPBV1_P0 + 0x100 * switch_port_mapping[i]), value);
 				}
 			}
 		}
 		mt7620_vlan_set(-1, vid, portmap, vid);
+
+		fix_up_hwnat_for_wifi();
 	}
 	switch_fini();
 }
@@ -582,7 +1008,7 @@ static void is_singtel_mio(int is)
 	if (switch_init() < 0)
 		return;
 
-	for (i = 0; i < 5; i++) { //WAN/LAN, admit all frames
+	for (i = 0; i < NR_WANLAN_PORT; i++) { //WAN/LAN, admit all frames
 		mt7620_reg_read((REG_ESW_PORT_PVC_P0 + 0x100*i), &value);
 		value &= 0xfffffffc;
 		mt7620_reg_write((REG_ESW_PORT_PVC_P0 + 0x100*i), value);
@@ -595,19 +1021,19 @@ int mt7620_ioctl(int val, int val2)
 {
 //	int value = 0;
 	unsigned int value2 = 0;
+	int i, max_wan_unit = 0;
 
-	if(nvram_match("switch_stb_x", ""))
-		esw_stb = 6;
-	else
-		esw_stb = atoi(nvram_safe_get("switch_stb_x"));
+#if defined(RTCONFIG_DUALWAN)
+	max_wan_unit = 1;
+#endif
 
 	switch (val) {
 	case 0:
-		get_mt7620_esw_WAN_linkStatus(esw_stb, &value2);
+		value2 = rtkswitch_wanPort_phyStatus(-1);
 		printf("WAN link status : %u\n", value2);
 		break;
 	case 3:
-		get_mt7620_esw_LAN_linkStatus(esw_stb, &value2);
+		value2 = rtkswitch_lanPorts_phyStatus();
 		printf("LAN link status : %u\n", value2);
 		break;
 	case 8:
@@ -618,16 +1044,16 @@ int mt7620_ioctl(int val, int val2)
 		printf("WAN speed : %u Mbps\n", value2);
 		break;
 	case 14: // Link up LAN ports
-		link_down_up_mt7620_PHY(esw_stb, 1, 0);
+		link_down_up_mt7620_PHY(get_lan_port_mask(), 1, 0);
 		break;
 	case 15: // Link down LAN ports
-		link_down_up_mt7620_PHY(esw_stb, 0, 0);
+		link_down_up_mt7620_PHY(get_lan_port_mask(), 0, 0);
 		break;
 	case 16: // Link up ALL ports
-		link_down_up_mt7620_PHY(7, 1, 0);
+		link_down_up_mt7620_PHY(0x1F, 1, 0);
 		break;
 	case 17: // Link down ALL ports
-		link_down_up_mt7620_PHY(7, 0, 0);
+		link_down_up_mt7620_PHY(0x1F, 0, 0);
 		break;
 	case 21:
 		break;
@@ -658,11 +1084,19 @@ int mt7620_ioctl(int val, int val2)
 	case 40:
 		is_singtel_mio(val2);
 		break;
+	case 50:
+		fix_up_hwnat_for_wifi();
+		break;
 	case 114: // link up WAN ports
-		link_down_up_mt7620_PHY(esw_stb, 1, 1);
+		for (i = WAN_UNIT_FIRST; i <= max_wan_unit; ++i)
+			link_down_up_mt7620_PHY(get_wan_port_mask(i), 1, 1);
 		break;
 	case 115: // link down WAN ports
-		link_down_up_mt7620_PHY(esw_stb, 0, 1);
+		for (i = WAN_UNIT_FIRST; i <= max_wan_unit; ++i)
+			link_down_up_mt7620_PHY(get_wan_port_mask(i), 0, 1);
+		break;
+	case 200:	/* set LAN port number that is used as WAN port */
+		/* Nothing to do, nvram_get_int("wans_lanport ") is enough. */
 		break;
 	default:
 		printf("wrong ioctl cmd: %d\n", val);
@@ -763,7 +1197,7 @@ ralink_gpio_write_bit(int idx, int value)
 	}	
 	else if (idx==72) 
 	{              
-#if defined(RTN14U) || defined(RTAC52U)  //wlan led
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) //wlan led
 		req=RALINK_ATE_GPIO72;
 		idx=value;
 #else
@@ -830,7 +1264,7 @@ ralink_gpio_init(unsigned int idx, int dir)
 	int fd, req;
 	unsigned long arg;
 	
-#if defined(RTN14U) || defined(RTAC52U)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U)
 	if(idx==72) //discard gpio72
 		return 0;
 #endif
@@ -914,16 +1348,11 @@ int ralink_gpio_write(uint32_t bit, int en)
 }
 
 unsigned int
-rtkswitch_wanPort_phyStatus(void)
+rtkswitch_wanPort_phyStatus(int wan_unit)
 {
-	int stb;
-	unsigned int status;
-	if(nvram_match("switch_stb_x", ""))
-		stb = 6;
-	else
-		stb = atoi(nvram_safe_get("switch_stb_x"));
+	unsigned int status = 0;
 
-	get_mt7620_esw_WAN_linkStatus(stb, &status);
+	get_mt7620_esw_phy_linkStatus(get_wan_port_mask(wan_unit), &status);
 
 	return status;
 }
@@ -931,14 +1360,9 @@ rtkswitch_wanPort_phyStatus(void)
 unsigned int
 rtkswitch_lanPorts_phyStatus(void)
 {
-	int stb;
-	unsigned int status;
-	if(nvram_match("switch_stb_x", ""))
-		stb = 6;
-	else
-		stb = atoi(nvram_safe_get("switch_stb_x"));
+	unsigned int status = 0;
 
-	get_mt7620_esw_LAN_linkStatus(stb, &status);
+	get_mt7620_esw_phy_linkStatus(get_lan_port_mask(), &status);
 
 	return status;
 }
@@ -1017,7 +1441,7 @@ void ATE_mt7620_esw_port_status(void)
 	if (switch_init() < 0)
 		return;
 
-	for (i = 0; i < 5; i++) {
+	for (i = 0; i < NR_WANLAN_PORT; i++) {
 		pS.link[i] = 0;
 		pS.speed[i] = 0;
 		mt7620_reg_read((REG_ESW_MAC_PMSR_P0 + 0x100*i), &value);

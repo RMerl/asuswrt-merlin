@@ -140,8 +140,9 @@ int set_pwr_usb(int boolOn){
 
         switch(get_model()) {
                 case MODEL_RTAC68U:
-			if(atoi(nvram_safe_get("HW_ver"))!=170)
-				return;
+			if((atoi(nvram_safe_get("HW_ver")) != 170) &&
+				(atof(nvram_safe_get("HW_ver")) != 1.10))
+				return 0;
                         break;
         }
 
@@ -437,7 +438,7 @@ int led_control(int which, int mode)
 int wanport_status(int wan_unit)
 {
 #ifdef RTCONFIG_RALINK
-	return rtkswitch_wanPort_phyStatus();
+	return rtkswitch_wanPort_phyStatus(wan_unit);
 #else
 	char word[100], *next;
 	int mask;

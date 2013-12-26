@@ -46,7 +46,7 @@ function initial(){
 	}
 	else{
 			$('btn_refresh').style.display="none";
-			$('signals_update').innerHTML = "These graphs will be updated in(seconds): ";
+			$('signals_update').innerHTML = "<#Spectrum_refresh#> ";
 			$('signals_update').innerHTML += delay_time;
 			$('signals_update').style.display="";
 			update_spectrum();
@@ -73,7 +73,7 @@ function update_spectrum(){
 function refresh_signals(){
 		$('btn_refresh').style.display="none";
 		$('signals_collect_scan').style.display="";
-		$('signals_collect').innerHTML = "Gathering data, Spectrum graph will be displayed in(seconds): ";
+		$('signals_collect').innerHTML = "<#Spectrum_gathering#> ";
 		$('signals_collect').innerHTML += delay_time;
 		$('signals_collect').style.display="";		
 		update_spectrum();
@@ -100,7 +100,6 @@ function refresh_signals(){
 			<!--===================================Beginning of Main Content===========================================-->
 			<input type="hidden" name="current_page" value="Main_Spectrum_Content.asp">
 			<input type="hidden" name="next_page" value="Main_Spectrum_Content.asp">
-			<input type="hidden" name="next_host" value="">
 			<input type="hidden" name="modified" value="0">
 			<input type="hidden" name="action_mode" value="apply">
 			<input type="hidden" name="action_wait" value="5">
@@ -117,7 +116,7 @@ function refresh_signals(){
 									  <div>&nbsp;</div>
 									  <div class="formfonttitle"><#System_Log#> - Spectrum</div>
 									  <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-									  <div class="formfontdesc">The graph of signal-to-noise ratio shows the classic SNR (Signal-to-Noise Ratio), it can be useful in identifying the stability of DSL connection. Transmission / Reception shows how many bits per-carrier transmitted / received.</div>
+									  <div class="formfontdesc"><#Spectrum_desc#></div>
 										<span id="signals_update" style="margin-left:5px;margin-top:10px;color:#FFCC00;display:none;"></span>
 									</td>
 								</tr>

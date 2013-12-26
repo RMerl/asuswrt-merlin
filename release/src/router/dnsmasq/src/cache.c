@@ -320,7 +320,7 @@ static int cache_scan_free(char *name, struct all_addr *addr, time_t now, unsign
 	if (is_expired(now, crecp) || is_outdated_cname_pointer(crecp))
 	  { 
 	    *up = crecp->hash_next;
-	    if (!(crecp->flags & (F_HOSTS | F_DHCP)))
+	    if (!(crecp->flags & (F_HOSTS | F_DHCP | F_CONFIG)))
 	      {
 		cache_unlink(crecp);
 		cache_free(crecp);
@@ -354,13 +354,13 @@ static int cache_scan_free(char *name, struct all_addr *addr, time_t now, unsign
 	  if (is_expired(now, crecp))
 	    {
 	      *up = crecp->hash_next;
-	      if (!(crecp->flags & (F_HOSTS | F_DHCP)))
+	      if (!(crecp->flags & (F_HOSTS | F_DHCP | F_CONFIG)))
 		{ 
 		  cache_unlink(crecp);
 		  cache_free(crecp);
 		}
 	    }
-	  else if (!(crecp->flags & (F_HOSTS | F_DHCP)) &&
+	  else if (!(crecp->flags & (F_HOSTS | F_DHCP | F_CONFIG)) &&
 		   (flags & crecp->flags & F_REVERSE) && 
 		   (flags & crecp->flags & (F_IPV4 | F_IPV6)) &&
 		   memcmp(&crecp->addr.addr, addr, addrlen) == 0)
@@ -558,7 +558,7 @@ struct crec *cache_find_by_name(struct crec *crecp, char *name, time_t now, unsi
 		  (crecp->flags & prot) &&
 		  hostname_isequal(cache_get_name(crecp), name))
 		{
-		  if (crecp->flags & (F_HOSTS | F_DHCP))
+		  if (crecp->flags & (F_HOSTS | F_DHCP | F_CONFIG))
 		    {
 		      *chainp = crecp;
 		      chainp = &crecp->next;
@@ -599,7 +599,7 @@ struct crec *cache_find_by_name(struct crec *crecp, char *name, time_t now, unsi
 	    {
 	      /* expired entry, free it */
 	      *up = crecp->hash_next;
-	      if (!(crecp->flags & (F_HOSTS | F_DHCP)))
+	      if (!(crecp->flags & (F_HOSTS | F_DHCP | F_CONFIG)))
 		{ 
 		  cache_unlink(crecp);
 		  cache_free(crecp);
@@ -649,7 +649,7 @@ struct crec *cache_find_by_addr(struct crec *crecp, struct all_addr *addr,
 	       if ((crecp->flags & prot) &&
 		   memcmp(&crecp->addr.addr, addr, addrlen) == 0)
 		 {	    
-		   if (crecp->flags & (F_HOSTS | F_DHCP))
+		   if (crecp->flags & (F_HOSTS | F_DHCP | F_CONFIG))
 		     {
 		       *chainp = crecp;
 		       chainp = &crecp->next;
@@ -665,7 +665,7 @@ struct crec *cache_find_by_addr(struct crec *crecp, struct all_addr *addr,
 	   else
 	     {
 	       *up = crecp->hash_next;
-	       if (!(crecp->flags & (F_HOSTS | F_DHCP)))
+	       if (!(crecp->flags & (F_HOSTS | F_DHCP | F_CONFIG)))
 		 {
 		   cache_unlink(crecp);
 		   cache_free(crecp);
@@ -923,7 +923,7 @@ void cache_reload(void)
     for (cache = hash_table[i], up = &hash_table[i]; cache; cache = tmp)
       {
 	tmp = cache->hash_next;
-	if (cache->flags & F_HOSTS)
+	if (cache->flags & (F_HOSTS | F_CONFIG))
 	  {
 	    *up = cache->hash_next;
 	    free(cache);
@@ -945,15 +945,15 @@ void cache_reload(void)
   /* Add CNAMEs to interface_names to the cache */
   for (a = daemon->cnames; a; a = a->next)
     for (intr = daemon->int_names; intr; intr = intr->next)
-      if (hostname_isequal(a->target, intr->name))
+      if (hostname_isequal(a->target, intr->name) &&
+	  ((cache = whine_malloc(sizeof(struct crec)))))
 	{
-	  struct crec *aliasc = safe_malloc(sizeof(struct crec));
-	  aliasc->flags = F_FORWARD | F_NAMEP | F_CNAME | F_IMMORTAL | F_CONFIG;
-	  aliasc->name.namep = a->alias;
-	  aliasc->addr.cname.target.int_name = intr;
-	  aliasc->addr.cname.uid = -1;
-	  cache_hash(aliasc);
-	  add_hosts_cname(aliasc); /* handle chains */
+	  cache->flags = F_FORWARD | F_NAMEP | F_CNAME | F_IMMORTAL | F_CONFIG;
+	  cache->name.namep = a->alias;
+	  cache->addr.cname.target.int_name = intr;
+	  cache->addr.cname.uid = -1;
+	  cache_hash(cache);
+	  add_hosts_cname(cache); /* handle chains */
 	}
   
   /* borrow the packet buffer for a temporary by-address hash */
@@ -1083,7 +1083,7 @@ void cache_add_dhcp_entry(char *host_name, int prot,
   while ((crec = cache_find_by_name(crec, host_name, 0, flags | F_CNAME)))
     {
       /* check all addresses associated with name */
-      if (crec->flags & F_HOSTS)
+      if (crec->flags & (F_HOSTS | F_CONFIG))
 	{
 	  if (crec->flags & F_CNAME)
 	    my_syslog(MS_DHCP | LOG_WARNING, 

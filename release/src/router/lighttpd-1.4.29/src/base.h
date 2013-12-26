@@ -685,9 +685,6 @@ typedef struct {
 	//- Jerry add 20111018
 	buffer *arpping_interface;
 	buffer *syslog_file;
-	buffer *product_image;
-	buffer *aicloud_version;
-	buffer *app_installation_url;
 } server_config;
 
 typedef struct {

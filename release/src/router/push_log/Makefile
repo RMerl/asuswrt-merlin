@@ -11,12 +11,8 @@ LDFLAGS += -L$(TOP)/nvram$(BCMEX) -lnvram
 LDFLAGS += -L$(TOP)/shared -lshared
 LDFLAGS += -L$(TOP)/openssl -lcrypto -lssl
 LDFLAGS += -L$(TOP)/curl-7.21.7/lib/.libs -lcurl
-LDFLAGS += -L$(TOP)/libxml2/.libs -lxml2 -lpthread
+LDFLAGS += -L$(TOP)/libxml2/.libs -lxml2
 LDFLAGS += -L$(TOP)/wb -lws
-LDFLAGS += -ldl
-ifeq ($(RTCONFIG_BCMARM),y)
-LDFLAGS += -lgcc_s
-endif
 
 all: $(PROGS)
 

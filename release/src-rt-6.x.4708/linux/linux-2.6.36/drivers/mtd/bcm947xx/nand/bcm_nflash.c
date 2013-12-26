@@ -544,7 +544,7 @@ nflash_mtd_init(void)
 	/* Scan bad block */
 	NFLASH_LOCK(&nflash);
 	for (i = 0; i < info->numblocks; i++) {
-		if (hndnand_checkbadb(nflash.nfl, (i * info->blocksize)) != 0) {
+		if (hndnand_checkbadb(nflash.nfl, (i * (uint64)info->blocksize)) != 0) {
 			nflash.map[i] = 1;
 		}
 	}

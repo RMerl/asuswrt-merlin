@@ -407,7 +407,7 @@ static int _tftp_readmore(tftp_info_t *info)
 	 * Wait for some response, retransmitting as necessary
 	 */
 
-	buf = udp_recv_with_timeout(info->tftp_socket,tftp_recv_timeout);
+	buf = udp_recv_with_timeout(info->tftp_socket,tftp_max_retries>1 ? 50: tftp_recv_timeout);
 #ifdef RESCUE_MODE
         if (!buf)
         {
@@ -516,7 +516,7 @@ static int _tftp_writemore(tftp_info_t *info)
 	 * Wait for some response, retransmitting as necessary
 	 */
 
-	buf = udp_recv_with_timeout(info->tftp_socket,tftp_recv_timeout);
+	buf = udp_recv_with_timeout(info->tftp_socket,tftp_max_retries>1 ? 50: tftp_recv_timeout);
 	if (buf == NULL) continue;
 
 	/*
@@ -614,7 +614,7 @@ static int _tftpd_open(tftp_info_t *info,char *hostname,char *filename,int mode)
 	    break;
 	}
 
-	buf = udp_recv_with_timeout(info->tftp_socket,tftp_recv_timeout);
+	buf = udp_recv_with_timeout(info->tftp_socket,tftp_max_retries>1 ? 50: tftp_recv_timeout);
 	if (buf == NULL) continue;
 
 	/*

@@ -22,9 +22,7 @@ Revision History:
 #define __UFSDAPI_INC__
 
 
-#include "vfsdebug.h"
-
-
+
 /*
  * Missing but useful declarations.
  */
@@ -67,14 +65,13 @@ typedef unsigned long long  UINT64;
 #endif
 
 typedef int
-(*SNPRINTF)(
-    IN char * buf,
-    IN size_t size,
+(*SEQ_PRINTF)(
+    IN struct seq_file* m,
     IN const char * fmt,
     IN ...
     )
 #if __GNUC__ >= 3
-    __attribute__ ((format (printf, 3, 4)))
+    __attribute__ ((format (printf, 2, 3)))
 #endif
     ;
 
@@ -108,6 +105,7 @@ typedef int
 
 
 struct super_block;
+struct buffer_head;
 struct nls_table;
 typedef struct super_block SB;
 
@@ -157,6 +155,7 @@ typedef struct mount_options {
     char ntfs;            // filesystem is ntfs
     char hfs;             // filesystem is hfs
     char exfat;           // filesystem is exfat
+    char refs;            // filesystem is refs
 } mount_options;
 
 #define JOURNAL_STATUS_ABSENT       0
@@ -165,36 +164,62 @@ typedef struct mount_options {
 #define JOURNAL_STATUS_NEED_REPLAY  3
 #define JOURNAL_STATUS_NEED_REPLAY_NATIVE 4
 
-EXTERN_C
+#ifdef __cplusplus
+  extern "C"{
+#endif
+
+void*
+UFSDAPI_CALL
+UFSD_CacheCreate(
+    IN const char*  Name,
+    IN size_t       size
+    );
+
+void
+UFSDAPI_CALL
+UFSD_CacheDestroy(
+    IN void*  Cache
+    );
+
+void*
+UFSDAPI_CALL
+UFSD_CacheAlloc(
+    IN void*  Cache,
+    IN int    bZero
+    );
+
+void
+UFSDAPI_CALL
+UFSD_CacheFree(
+    IN void*  Cache,
+    IN void*  p
+    );
+
 void*
 UFSDAPI_CALL
 UFSD_HeapAlloc(
     IN size_t Size
     );
 
-EXTERN_C
 void
 UFSDAPI_CALL
 UFSD_HeapFree(
     IN void* Pointer
     );
 
-EXTERN_C
 UINT64
 UFSDAPI_CALL
 UFSD_CurrentTime(
     IN int PosixTime
     );
 
-EXTERN_C
 const char*
 UFSDAPI_CALL
 UFSDAPI_LibraryVersion(
     OUT int* EndianError
     );
 
-EXTERN_C
-int
+unsigned
 UFSDAPI_CALL
 UFSD_BdRead(
     IN  SB*     sb,
@@ -203,8 +228,7 @@ UFSD_BdRead(
     OUT void*   Buffer
     );
 
-EXTERN_C
-int
+unsigned
 UFSDAPI_CALL
 UFSD_BdWrite(
     IN SB*      sb,
@@ -214,39 +238,46 @@ UFSD_BdWrite(
     IN size_t   Wait
     );
 
-
-EXTERN_C
-int
+unsigned
 UFSDAPI_CALL
 UFSD_BdMap(
     IN  SB*     sb,
     IN  UINT64  Offset,
     IN  size_t  Bytes,
     IN  size_t  Flags,
-    OUT void**  Bcb,
+    OUT struct buffer_head**  Bcb,
     OUT void**  Mem
     );
 
-EXTERN_C
 void
 UFSDAPI_CALL
 UFSD_BdUnMap(
 #ifdef UFSD_DEBUG
     IN SB* sb,
 #endif
-    IN void* Bcb
+    IN struct buffer_head* bh
     );
 
-EXTERN_C
-int
+unsigned
 UFSDAPI_CALL
 UFSD_BdSetDirty(
     IN SB*      sb,
-    IN void*    Bcb,
+    IN struct buffer_head* bh,
     IN size_t   Wait
     );
 
-EXTERN_C
+void
+UFSDAPI_CALL
+UFSD_BdLockBuffer(
+    IN struct buffer_head* bh
+    );
+
+void
+UFSDAPI_CALL
+UFSD_BdUnLockBuffer(
+    IN struct buffer_head* bh
+    );
+
 int
 UFSDAPI_CALL
 UFSD_BdDiscard(
@@ -255,7 +286,14 @@ UFSD_BdDiscard(
     IN size_t   Bytes
     );
 
-EXTERN_C
+int
+UFSDAPI_CALL
+UFSD_BdZero(
+    IN struct super_block* sb,
+    IN UINT64 Offset,
+    IN size_t Bytes
+    );
+
 void
 UFSDAPI_CALL
 UFSD_BdSetBlockSize(
@@ -263,25 +301,22 @@ UFSD_BdSetBlockSize(
     IN unsigned int BytesPerBlock
     );
 
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSD_BdIsReadonly(
     IN SB* sb
     );
 
-EXTERN_C
 const char*
 UFSDAPI_CALL
 UFSD_BdGetName(
     IN SB* sb
     );
 
-EXTERN_C
-int
+unsigned
 UFSDAPI_CALL
 UFSD_BdFlush(
-    IN SB*    sb,
+    IN SB* sb,
     IN size_t Wait
     );
 
@@ -349,11 +384,21 @@ typedef struct mapinfo {
 
 
 ///////////////////////////////////////////////////////////
+// UFSD_OnSetDirty
+//
+// Callback function. Called when volume becomes dirty
+///////////////////////////////////////////////////////////
+void
+UFSDAPI_CALL
+UFSD_OnSetDirty(
+    IN void* Arg
+    );
+
+///////////////////////////////////////////////////////////
 // UFSD_TimeT2UfsdPosix
 //
 // Used to convert time_t to posix time
 ///////////////////////////////////////////////////////////
-EXTERN_C
 UINT64
 UFSDAPI_CALL
 UFSD_TimeT2UfsdPosix(
@@ -365,14 +410,12 @@ UFSD_TimeT2UfsdPosix(
 //
 // Used to convert time_t to Nt time
 ///////////////////////////////////////////////////////////
-EXTERN_C
 UINT64
 UFSDAPI_CALL
 UFSD_TimeT2UfsdNt(
     IN const void* time
     );
 
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSDAPI_NamesEqual(
@@ -383,7 +426,6 @@ UFSDAPI_NamesEqual(
     IN unsigned     Name2Len
     );
 
-EXTERN_C
 unsigned int
 UFSDAPI_CALL
 UFSDAPI_NameHash(
@@ -392,12 +434,17 @@ UFSDAPI_NameHash(
     IN unsigned     NameLen
     );
 
-EXTERN_C
+// This function is called once on module initialization/deinitialization
+int
+UFSDAPI_CALL
+UFSDAPI_main(
+    IN size_t Flags
+    );
+
 int
 UFSDAPI_CALL
 UFSDAPI_VolumeMount(
     IN SB*                  sb,
-    IN unsigned char*       sb_dirty,
     IN unsigned int         BytesPerSector,
     IN const UINT64*        BytesPerSb,
     IN OUT mount_options*   opts,
@@ -406,7 +453,6 @@ UFSDAPI_VolumeMount(
     IN unsigned long        BytesPerPage
     );
 
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSDAPI_VolumeReMount(
@@ -415,35 +461,25 @@ UFSDAPI_VolumeReMount(
     IN OUT mount_options* opts
     );
 
-EXTERN_C
 void
 UFSDAPI_CALL
 UFSDAPI_VolumeFree(
     IN UFSD_VOLUME* Volume
     );
 
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSDAPI_IsVolumeDirty(
     IN UFSD_VOLUME* Volume
     );
 
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSDAPI_VolumeFlush(
-    IN UFSD_VOLUME* Volume
+    IN UFSD_VOLUME* Volume,
+    IN int          Wait
     );
 
-EXTERN_C
-int
-UFSDAPI_CALL
-UFSDAPI_VolumeFlushIf(
-    IN UFSD_VOLUME* Volume
-    );
-
-EXTERN_C
 void
 UFSDAPI_CALL
 UFSDAPI_SetFreeSpaceCallBack(
@@ -469,21 +505,18 @@ typedef struct UfsdVolumeInfo{
   unsigned int  BytesPerSector;
   unsigned int  NameLength;
   unsigned int  Dirty;
-  unsigned int  OnMountDirty;
 
   char          ReadOnly;
   char          NeedEncode;   // 1 if filesystem requires encode (exFAT only)
 } UfsdVolumeInfo;
 
 
-EXTERN_C
 unsigned
 UFSDAPI_CALL
 UFSDAPI_QueryVolumeId(
     IN  UFSD_VOLUME*    Volume
     );
 
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSDAPI_QueryVolumeInfo(
@@ -494,21 +527,12 @@ UFSDAPI_QueryVolumeInfo(
     OUT UINT64*         FreeBlocks OPTIONAL
     );
 
-EXTERN_C
-int
-UFSDAPI_CALL
-UFSDAPI_SetDirtyFlag(
-    IN  UFSD_VOLUME*    Volume
-    );
-
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSDAPI_TraceVolumeInfo(
-    IN  UFSD_VOLUME*  Volume,
-    OUT char*         page,
-    IN  int           count,
-    IN  SNPRINTF      Snprintf
+    IN  UFSD_VOLUME*     Volume,
+    OUT struct seq_file* m,
+    IN  SEQ_PRINTF       SeqPrintf
     );
 
 typedef struct UfsdVolumeTune{
@@ -516,7 +540,6 @@ typedef struct UfsdVolumeTune{
   unsigned int JnlRam;
 } UfsdVolumeTune;
 
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSDAPI_QueryVolumeTune(
@@ -524,7 +547,6 @@ UFSDAPI_QueryVolumeTune(
     OUT UfsdVolumeTune* Tune
     );
 
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSDAPI_SetVolumeTune(
@@ -532,7 +554,6 @@ UFSDAPI_SetVolumeTune(
     IN  const UfsdVolumeTune* Tune
     );
 
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSDAPI_IoControl(
@@ -547,7 +568,6 @@ UFSDAPI_IoControl(
     OUT UfsdFileInfo* Info
     );
 
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSDAPI_ReadLink(
@@ -557,22 +577,12 @@ UFSDAPI_ReadLink(
     IN  size_t        MaxCharsInLink
     );
 
-EXTERN_C
 UINT64
 UFSDAPI_CALL
 UFSDAPI_GetDirSize(
     IN UFSD_FILE*   Dir
     );
 
-EXTERN_C
-UINT64
-UFSDAPI_CALL
-UFSDAPI_GetFileSize(
-    IN UFSD_FILE*   File,
-    OUT UINT64*     ValidSize
-    );
-
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSDAPI_FileOpen(
@@ -586,7 +596,6 @@ UFSDAPI_FileOpen(
     OUT struct UfsdFileInfo*  Info
     );
 
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSDAPI_FileClose(
@@ -594,7 +603,6 @@ UFSDAPI_FileClose(
     IN UFSD_FILE*   File
     );
 
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSDAPI_FileMap(
@@ -605,7 +613,6 @@ UFSDAPI_FileMap(
     OUT mapinfo*    Map
     );
 
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSDAPI_FileRead(
@@ -619,7 +626,6 @@ UFSDAPI_FileRead(
     OUT size_t*     BytesDone
     );
 
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSDAPI_FileWrite(
@@ -633,7 +639,6 @@ UFSDAPI_FileWrite(
     OUT size_t*     BytesDone
     );
 
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSDAPI_FileAllocate(
@@ -644,17 +649,14 @@ UFSDAPI_FileAllocate(
     OUT mapinfo*    Map
     );
 
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSDAPI_FileSetSize(
     IN UFSD_FILE*     FileHandle,
     IN UINT64         size,
-    IN const UINT64*  valid OPTIONAL,
     OUT UINT64*       asize OPTIONAL
     );
 
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSDAPI_FileMove(
@@ -668,7 +670,6 @@ UFSDAPI_FileMove(
     IN size_t       NewNameLen
     );
 
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSDAPI_FileFlush(
@@ -679,13 +680,11 @@ UFSDAPI_FileFlush(
     IN const void*            atime,
     IN const void*            mtime,
     IN const void*            ctime,
-    IN unsigned char          set_time,
     IN const unsigned*        gid,
     IN const unsigned*        uid,
     IN const unsigned short*  mode
     );
 
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSDAPI_IsDirEmpty(
@@ -693,7 +692,6 @@ UFSDAPI_IsDirEmpty(
     IN UFSD_FILE*   Dir
     );
 
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSDAPI_Unlink(
@@ -702,20 +700,18 @@ UFSDAPI_Unlink(
     IN const unsigned char* Name,
     IN size_t NameLen,
     IN const unsigned char* sName,
-    IN size_t sNameLen
+    IN size_t sNameLen,
+    IN UFSD_FILE*   Obj
     );
 
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSDAPI_SetVolumeInfo(
     IN UFSD_VOLUME*   Volume,
-    IN const char     VolumeSerial[16], OPTIONAL
-    IN const char*    Label OPTIONAL,
-    IN int            Dirty OPTIONAL // 0 - not change, 1 - set dirty, 2 - set clean
+    IN const char*    Label,
+    IN size_t         LabelLen
     );
 
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSDAPI_SetXAttr(
@@ -729,7 +725,6 @@ UFSDAPI_SetXAttr(
     IN int            Replace
     );
 
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSDAPI_ListXAttr(
@@ -740,7 +735,6 @@ UFSDAPI_ListXAttr(
     OUT size_t*       Bytes
     );
 
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSDAPI_GetXAttr(
@@ -753,7 +747,6 @@ UFSDAPI_GetXAttr(
     OUT size_t*       Len
     );
 
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSDAPI_FileOpenById(
@@ -763,7 +756,6 @@ UFSDAPI_FileOpenById(
     OUT UfsdFileInfo* Info
     );
 
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSDAPI_EncodeFH(
@@ -773,7 +765,6 @@ UFSDAPI_EncodeFH(
     IN OUT int*       MaxLen
     );
 
-EXTERN_C
 unsigned
 UFSDAPI_CALL
 UFSDAPI_DecodeFH(
@@ -786,7 +777,6 @@ UFSDAPI_DecodeFH(
     OUT struct UfsdFileInfo* Info
     );
 
-EXTERN_C
 unsigned
 UFSDAPI_CALL
 UFSDAPI_FileGetName(
@@ -797,7 +787,6 @@ UFSDAPI_FileGetName(
     IN  size_t          MaxLen
     );
 
-EXTERN_C
 unsigned
 UFSDAPI_CALL
 UFSDAPI_FileGetParent(
@@ -811,7 +800,6 @@ UFSDAPI_FileGetParent(
 
 typedef struct UFSD_SEARCH UFSD_SEARCH;
 
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSDAPI_FindOpen(
@@ -821,7 +809,6 @@ UFSDAPI_FindOpen(
     OUT UFSD_SEARCH** Scan
     );
 
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSDAPI_FindGet(
@@ -833,11 +820,19 @@ UFSDAPI_FindGet(
     OUT size_t*       ino
     );
 
-EXTERN_C
 void
 UFSDAPI_CALL
 UFSDAPI_FindClose(
     IN UFSD_SEARCH* Scan
+    );
+
+
+int
+UFSDAPI_CALL
+UFSDAPI_FileInfo(
+    IN UFSD_VOLUME*   Volume,
+    IN UFSD_FILE*     File,
+    OUT struct UfsdFileInfo* Info
     );
 
 
@@ -851,7 +846,6 @@ UFSDAPI_FindClose(
 // Converts multibyte string to UNICODE string
 // Returns the length of destination string in symbols
 ///////////////////////////////////////////////////////////
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSD_BCSToUni(
@@ -868,7 +862,6 @@ UFSD_BCSToUni(
 // Converts UNICODE string to multibyte
 // Returns the length of destination string in chars
 ///////////////////////////////////////////////////////////
-EXTERN_C
 int
 UFSDAPI_CALL
 UFSD_UniToBCS(
@@ -879,13 +872,16 @@ UFSD_UniToBCS(
     IN  struct nls_table *    nls
     );
 
-EXTERN_C
 void
 UFSDAPI_CALL
 UFSDAPI_DumpMemory(
     IN const void*  Mem,
     IN size_t       nBytes
     );
+
+#ifdef __cplusplus
+  }  //extern "C"{
+#endif
 
 
 #if defined __STDC_VERSION__
@@ -928,6 +924,12 @@ UFSDAPI_DumpMemory(
 // No such file or directory
 #define ERR_NOFILEEXISTS          0xa000010E
 
+// Read I/O
+#define ERR_READFILE              0xa000010C
+
+// Write I/O
+#define ERR_WRITEFILE             0xa000010D
+
 // File exists
 #define ERR_FILEEXISTS            0xa000010F
 
@@ -954,21 +956,16 @@ UFSDAPI_DumpMemory(
 
 #define ERR_BADNAME_LEN           206
 
-#define SET_MODTIME           0x00000004    // Set modification time
-//#define SET_CRTIME            0x00000008    // Set creation time
-#define SET_REFFTIME          0x00000010    // Set reference time
-#define SET_CHTIME            0x00000020    // Set last time any attribute was modified
-
 #ifndef Add2Ptr
   #define Add2Ptr(P,I)   ((unsigned char*)(P) + (I))
   #define PtrOffset(B,O) ((size_t)((size_t)(O) - (size_t)(B)))
 #endif
 
 #if defined CONFIG_LBD | defined CONFIG_LBDAF
-  // sector_r - 64 bit value
+  // sector_t - 64 bit value
   #define PSCT      "ll"
 #else
-  // sector_r - 32 bit value
+  // sector_t - 32 bit value
   #define PSCT      "l"
 #endif
 
@@ -981,6 +978,17 @@ UFSDAPI_DumpMemory(
           const typeof( ((type *)0)->member ) *__mptr = (ptr);  \
           (type *)( (char *)__mptr - offsetof(type,member) );})
 #endif
+
+  #define UFSD_IOC_SETVALID         _IOW('f', 91, unsigned long long)
+  #define UFSD_IOC_SETCLUMP         _IOW('f', 101, unsigned int)
+  #define UFSD_IOC_SETTIMES         _IOC(_IOC_WRITE,'f', 75, 4*sizeof(long long))
+  #define UFSD_IOC_GETTIMES         _IOC(_IOC_READ, 'f', 73, 4*sizeof(long long))
+  #define UFSD_IOC_SETATTR          _IOW('f', 99, unsigned int)
+  #define UFSD_IOC_GETATTR          _IOR('f', 95, unsigned int)
+  #define UFSD_IOC_GETMEMUSE        _IOC(_IOC_READ,'v', 20, 4*sizeof(size_t) )
+  #define UFSD_IOC_GETVOLINFO       _IOC(_IOC_READ,'v', 21, 196 )
+
+  #define UFSD_IOC32_GETMEMUSE      _IOC(_IOC_READ,'v', 20, 4*sizeof(int) )
 
 #endif // #ifndef __cplusplus
 

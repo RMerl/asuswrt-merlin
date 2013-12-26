@@ -37,9 +37,9 @@ Revision History:
 #define UFSD_DRIVER_LINUX
 
 //
-// Exclude zero tail
+// Force to use additional thread for periodically volume flush
 //
-//#define UFSD_SKIP_ZERO_TAIL
+//#define UFSD_USE_FLUSH_THREAD
 
 //
 // Do not include extended I/O code
@@ -74,27 +74,6 @@ Revision History:
 //
 //#define UFSD_DISABLE_UGM  "Turn off $UGM"
 
-#if defined UFSD_EXFAT
-  #ifndef UFSD_RW_MAP_EXFAT
-    #warning "UFSD_EXFAT (U86) requires UFSD_RW_MAP_EXFAT to operate with 32M clusters"
-    #define UFSD_RW_MAP_EXFAT
-  #endif
-#endif
-
-//
-// Turn on experimental feature
-//
-//#define UFSD_RW_MAP_EXFAT   "Turn on mapping"
-//#define UFSD_RW_MAP_HFS     "Turn on mapping"
-//#if defined UFSD_RW_MAP_EXFAT | defined UFSD_RW_MAP_HFS
-  #define UFSD_RW_MAP
-//#endif
-
-//
-// Activate this define to implement super_operations::write_supe
-//
-//#define UFSD_WRITE_SUPER
-
 //
 // Activate this define to check media every write operation
 //
@@ -116,41 +95,33 @@ Revision History:
 #define UFSD_IGNORE_SHORTNAMES
 
 //
+// By default driver frees memory in flush
+//
+//#define UFSD_EXFAT_KEEP_BUFFERS "Keep buffers in Flush"
+
+//#define UFSD_EXFAT_RECORDS_HASHBITS 16
+
+//#define UFSD_NTFS_RECORDS_HASHBITS 16
+
+//
+// Do not load all bitmap at mount
+//
+//#define USE_DELAY_BITMAP_LOAD
+
+//
+// Use 'UFSD_BdZero' to zero range of bytes
+//
+//#define UFSD_USE_BUILTIN_ZEROING     "Use built in zeroing"
+
+//
 // Exclude annoying messages while tests
 //
 //#define UFSD_TRACE_SILENT
 
 //
-// Do not load all bitmap at mount
-//
-//#define UFSD_DELAY_BITMAP_LOAD
-
-//
-// Do not dirty volume on mount (rw)
-//
-//#define UFSD_DIRTY_OFF
-
-//
-// Do smart dirty
-//
-//#define UFSD_SMART_DIRTY
-
-#if defined UFSD_SMART_DIRTY
-  #ifndef UFSD_DIRTY_OFF
-    #error "UFSD_SMART_DIRTY requires UFSD_DIRTY_OFF"
-  #endif
-
-  #ifndef UFSD_WRITE_SUPER
-    #define UFSD_WRITE_SUPER
-  #endif
-#endif
-
-//
 // Force to activate trace
 //
-#define UFSD_TRACE
-
-//#define UFSD_SMART_TRACE
+//#define UFSD_TRACE
 
 #if !defined UFSD_DEBUG && !defined NDEBUG
   #define UFSD_DEBUG 1
@@ -160,31 +131,30 @@ Revision History:
   #define UFSD_TRACE
 #endif
 
-//#define UFSD_NTFS_JNL                 // Include NTFS journal
-//#define UFSD_NTFS_LOGFILE             // Include NTFS native journal replaying
-
-
-#ifdef __cplusplus
-  #define EXTERN_C extern "C"
-#else
-  #define EXTERN_C extern
-#endif
-
 #if defined(i386)
-  #define UFSDAPI_CALL __attribute__((stdcall)) __attribute__((regparm(0)))
+  #define UFSDAPI_CALL __attribute__((regparm(3)))
   #define UFSDAPI_CALLv __attribute__((cdecl)) __attribute__((regparm(0)))
 #else
   #define UFSDAPI_CALL
   #define UFSDAPI_CALLv
 #endif
 
+#ifdef __cplusplus
+  extern "C" {
+#endif
 
 //
-// Trace message in system log
+// UFSD_NO_PRINTK - external define to off UFSD_printk from library
 //
-EXTERN_C UFSDAPI_CALLv int UFSD_printk( const char* fmt, ... ) __attribute__ ((format (printf, 1, 2)));
-
-#define UFSDTracek(a) UFSD_printk a
+#ifndef UFSD_NO_PRINTK
+  //
+  // Trace message in system log
+  //
+  UFSDAPI_CALLv int UFSD_printk( const char* fmt, ... ) __attribute__ ((format (printf, 1, 2)));
+  #define UFSDTracek(a) UFSD_printk a
+#else
+  #define UFSDTracek(a)
+#endif
 
 
 #ifdef UFSD_TRACE
@@ -193,10 +163,8 @@ EXTERN_C UFSDAPI_CALLv int UFSD_printk( const char* fmt, ... ) __attribute__ ((f
   // _UFSDTrace is used to trace messages from UFSD
   // UFSDError is called when error occurs
   //
-
-  EXTERN_C UFSDAPI_CALL void UFSDError( int Err, const char* FileName, int Line );
-  EXTERN_C UFSDAPI_CALLv void _UFSDTrace( const char* fmt, ... ) __attribute__ ((format (printf, 1, 2)));
-
+  UFSDAPI_CALL void UFSDError( int Err, const char* FileName, int Line );
+  UFSDAPI_CALLv void _UFSDTrace( const char* fmt, ... ) __attribute__ ((format (printf, 1, 2)));
   extern char ufsd_trace_file[128];
   extern char ufsd_trace_level[16];
   extern unsigned long UFSD_TraceLevel;
@@ -247,9 +215,10 @@ EXTERN_C UFSDAPI_CALLv int UFSD_printk( const char* fmt, ... ) __attribute__ ((f
   // "mid"
   #define UFSD_LEVEL_STR_MID        (UFSD_LEVEL_VFS|UFSD_LEVEL_UFSD|UFSD_LEVEL_ERROR)
 
+
   #define UFSD_LEVEL_DEFAULT        0x0000000f
 
-  EXTERN_C UFSDAPI_CALL void UFSD_TraceInc( int Indent );
+  UFSDAPI_CALL void UFSD_TraceInc( int Indent );
 
   #define UFSDTrace(a)                          \
     do {                                        \
@@ -271,52 +240,46 @@ EXTERN_C UFSDAPI_CALLv int UFSD_printk( const char* fmt, ... ) __attribute__ ((f
   #define TRACE_ONLY(e) e
 
 #else
-
   #define UFSDTrace(a) do{}while((void)0,0)
   #define DebugTrace(i, l, x) do{}while((void)0,0)
   #define TRACE_ONLY(e)
-
-#endif /* UFSD_TRACE */
-
-
-#define UFSD_ERROR_DEFINED // UFSDError is already declared
-#define _VERSIONS_H_       // Exclude configuration part of file versions.h
-
-#ifdef UFSD_DEBUG
-  // Usefull to debug some cases
-  EXTERN_C UFSDAPI_CALL void UFSD_DumpStack( void );
-#else
-  #define UFSD_DumpStack()
 #endif
 
 
 #ifdef UFSD_DEBUG
+  UFSDAPI_CALL void _UFSD_DumpStack( void );
+  UFSDAPI_CALL void _UFSD_TurnOnTraceLevel( void );
+  UFSDAPI_CALL void _UFSD_RevertTraceLevel( void );
+  #define UFSD_DumpStack() _UFSD_DumpStack()
+  #define UFSD_TurnOnTraceLevel() _UFSD_TurnOnTraceLevel()
+  #define UFSD_RevertTraceLevel() _UFSD_RevertTraceLevel()
 
-  #define ASSERT(cond) {                                           \
-    if (!(cond)) {                                                 \
-      _UFSDTrace( "***** assertion failed at "               \
-              __FILE__", %u: '%s'\n", __LINE__ , #cond);           \
-    }                                                              \
+  #define assert(cond) {                                    \
+    if (!(cond)) {                                          \
+      _UFSDTrace( "***** assertion failed at "              \
+              __FILE__", %u: '%s'\n", __LINE__ , #cond);    \
+    }                                                       \
   }
 
-  #define assert(cond) {                                           \
-    if (!(cond)) {                                                 \
-      _UFSDTrace( "***** assertion failed at "               \
-              __FILE__", %u: '%s'\n", __LINE__ , #cond);           \
-    }                                                              \
-  }
+  #define verify(cond) assert(cond)
 
   #define DEBUG_ONLY(e) e
-  #define VERIFY(cond) ASSERT(cond)
-
 #else
-
-  #define ASSERT(cond)
+  #define assert(cond) NOTHING;
+  #define verify(cond) {(void)(cond);}
   #define DEBUG_ONLY(e)
-  #define VERIFY(cond) {(void)(cond);}
+#endif
 
-#endif /* UFSD_DEBUG */
 
+#if defined UFSD_HFS
+  struct buffer_head;
+  struct page;
+  struct inode;
+  struct super_block;
+
+  typedef unsigned long long UINT64;
+  #include "jnl.h"
+#endif
 
 #define PIN_BUFFER          ((const void*)(size_t)0)
 #define UNPIN_BUFFER        ((const void*)(size_t)1)
@@ -327,9 +290,27 @@ EXTERN_C UFSDAPI_CALLv int UFSD_printk( const char* fmt, ... ) __attribute__ ((f
   #define PtrOffset(B,O) ((size_t)((size_t)(O) - (size_t)(B)))
 #endif
 
-#define C_ASSERT(e) typedef char _C_ASSERT_[(e)?1:-1]
+//
+// static assert in gcc since 4.3, requires -std=c++0x
+//
+#if defined __cplusplus && __cplusplus >= 201103L
+  #define C_ASSERT(e) static_assert( e, #e )
+#else
+  #define C_ASSERT(e) typedef char _C_ASSERT_[(e)?1:-1]
+#endif
+
 
 #ifndef UNREFERENCED_PARAMETER
   #define UNREFERENCED_PARAMETER(P)         {(void)(P);}
 #endif
 
+#define UFSD_ERROR_DEFINED // UFSDError is already declared
+#define _VERSIONS_H_       // Exclude configuration part of file versions.h
+
+void  UFSDAPI_CALL UFSD_BdInvalidate( void* Sb );
+
+#define UFSD_BdInvalidate     UFSD_BdInvalidate
+
+#ifdef __cplusplus
+  } // extern "C"{
+#endif

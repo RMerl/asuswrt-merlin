@@ -15,7 +15,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: et_export.h 414031 2013-07-23 10:54:51Z $
+ * $Id: et_export.h 418172 2013-08-14 06:08:25Z $
  */
 
 #ifndef _et_export_h_
@@ -46,7 +46,9 @@ extern void et_fa_lock_init(void *et);
 extern void et_fa_lock(void *et);
 extern void et_fa_unlock(void *et);
 extern void *et_fa_get_fa_dev(void *et);
-extern void et_fa_fs_create(void);
+extern bool et_fa_dev_on(void *dev);
+extern void et_fa_set_dev_on(void *et);
+extern void *et_fa_fs_create(void);
 extern void et_fa_fs_clean(void);
 #endif /* ETFA */
 #endif	/* _et_export_h_ */

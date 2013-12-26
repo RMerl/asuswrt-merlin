@@ -58,12 +58,15 @@ var wl_user_rssi_onload = '<% nvram_get("wl_user_rssi"); %>';
 
 function initial(){
 	show_menu();
-	load_body();
 	
 	if(userRSSI_support)
 		changeRSSI(wl_user_rssi_onload);
 	else
 		$("rssiTr").style.display = "none";
+
+	if(!band5g_support){	
+		$("wl_unit_field").style.display = "none";
+	}
 
 	if(sw_mode == "2"){
 		var _rows = $("WAdvTable").rows;
@@ -80,15 +83,11 @@ function initial(){
 
 	$("wl_rate").style.display = "none";
 
-	if(!band5g_support){	
-		$("wl_unit_field").style.display = "none";
-	}	
-
 	if(!Rawifi_support){ // BRCM == without rawifi
 		$("DLSCapable").style.display = "none";	
 		$("PktAggregate").style.display = "none";
 		
-		if('<% nvram_get("wl_unit"); %>' == '1' || based_modelid == "RT-AC66U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC56U" || based_modelid == "RT-N66U"){	// MODELDEP: RT-AC*U and RT-N66U
+		if('<% nvram_get("wl_unit"); %>' == '1' || based_modelid == "RT-AC66U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || based_modelid == "RT-N66U"){	// MODELDEP: RT-AC*U and RT-N66U
 			inputCtrl(document.form.wl_noisemitigation, 0);
 		}
 	}
@@ -116,25 +115,26 @@ function initial(){
 	inputCtrl(document.form.wl_itxbf, 0);
 	inputCtrl(document.form.usb_usb3, 0);
 
-	if((based_modelid == "RT-AC56U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC66U")){
+	if(based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC66U"){
 		inputCtrl(document.form.wl_ampdu_mpdu, 1);
 		inputCtrl(document.form.wl_ack_ratio, 1);
 
 		if('<% nvram_get("wl_unit"); %>' == '1'){ // 5GHz
 			inputCtrl(document.form.wl_txbf, 1);
 			
-			if(based_modelid == "RT-AC56U" || based_modelid == "RT-AC68U")
+			if(based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || based_modelid == "RT-AC68U")
 				inputCtrl(document.form.wl_itxbf, 1);
+		}else{		//2.4GHz, hide Implicit beam forming for all Broadcom AC model
+			inputCtrl(document.form.wl_itxbf, 0);		
 		}
 	}
 	if('<% nvram_get("wl_unit"); %>' != '1'){ // 2GHz
 		if(based_modelid == "RT-AC68U"){
 			inputCtrl(document.form.wl_turbo_qam, 1);
 			inputCtrl(document.form.wl_txbf, 1);
-			inputCtrl(document.form.wl_itxbf, 1);
 			inputCtrl(document.form.usb_usb3, 1);
 		}
-		else if(based_modelid == "RT-AC56U" || based_modelid == "RT-N65U"){
+		else if(based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || based_modelid == "RT-N65U"){
 			inputCtrl(document.form.usb_usb3, 1);
 		}
 	}
@@ -511,7 +511,6 @@ function check_ampdu_rts(){
 
 <input type="hidden" name="current_page" value="Advanced_WAdvanced_Content.asp">
 <input type="hidden" name="next_page" value="Advanced_WAdvanced_Content.asp">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="group_id" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="first_time" value="">
@@ -816,7 +815,7 @@ function check_ampdu_rts(){
 						</td>
 					</tr>
 					
-					<!-- [MODELDEP] for RT-AC68U and RT-AC56U -->
+					<!-- [MODELDEP] for RT-AC68U and RT-AC56S and RT-AC56U -->
 					<tr>
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,26);"><#WLANConfig11b_x_AMPDU#></a></th>
 						<td>

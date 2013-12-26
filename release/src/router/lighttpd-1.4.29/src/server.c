@@ -214,9 +214,6 @@ static server *server_init(void) {
 	//- Jerry add 20111018
 	CLEAN(srvconf.arpping_interface);
 	CLEAN(srvconf.syslog_file);
-	CLEAN(srvconf.product_image);
-	CLEAN(srvconf.aicloud_version);
-	CLEAN(srvconf.app_installation_url);
 	CLEAN(syslog_buf);
 	CLEAN(cur_login_info);
 	CLEAN(last_login_info);
@@ -313,9 +310,6 @@ static void server_free(server *srv) {
 	//- Jerry add 20111018
 	CLEAN(srvconf.arpping_interface);
 	CLEAN(srvconf.syslog_file);
-	CLEAN(srvconf.product_image);
-	CLEAN(srvconf.aicloud_version);
-	CLEAN(srvconf.app_installation_url);
 	CLEAN(syslog_buf);
 	CLEAN(cur_login_info);
 	CLEAN(last_login_info);

@@ -284,7 +284,7 @@ void config_switch_dsl()
 				}
 				else
 				{
-					config_switch_dsl_set_dsl();
+					config_switch_dsl_set_iptv(stbport);
 				}
 			}
 		}

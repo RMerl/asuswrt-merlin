@@ -74,6 +74,7 @@ extern char *get_usb_port_by_string(const char *target_string, char *buf, const 
 extern char *get_usb_port_by_device(const char *device_name, char *buf, const int buf_size);
 extern char *get_interface_by_string(const char *target_string, char *ret, const int ret_size);
 extern char *get_interface_by_device(const char *device_name, char *buf, const int buf_size);
+extern char *get_path_by_node(const char *usb_node, char *buf, const int buf_size);
 
 extern char *get_usb_vid(const char *usb_node, char *buf, const int buf_size);
 extern char *get_usb_pid(const char *usb_node, char *buf, const int buf_size);

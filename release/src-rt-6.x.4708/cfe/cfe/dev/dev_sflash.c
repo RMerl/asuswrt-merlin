@@ -1,7 +1,7 @@
 /*
  * Broadcom SiliconBackplane chipcommon serial flash interface
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: dev_sflash.c 354444 2012-08-31 03:47:39Z $
+ * $Id: dev_sflash.c 421304 2013-09-02 03:21:33Z $
  */
 
 #include "lib_types.h"
@@ -103,7 +103,7 @@ sflash_cfe_erase_range(cfe_devctx_t *ctx, flash_range_t *range)
 	if ((offset < part->fp_offset) ||
 		((offset + len) > (part->fp_offset + part->fp_size))) {
 		printf("!! offset 0x%x, len=0x%x over partition boundary: start: 0x%x, end: 0x%x",
-			offset, len, part->fp_offset, part->fp_offset + part->fp_size);
+		offset, len, (uint)part->fp_offset, (uint)(part->fp_offset + part->fp_size));
 		return CFE_ERR_INV_PARAM;
 	}
 	return hndsflash_commit(sflash->info, (uint)offset, (uint)len, NULL);
@@ -350,8 +350,8 @@ sflash_cfe_probe(cfe_driver_t *drv,
 		for (idx = 0; idx < probe->flash_nparts; idx++) {
 			sprintf(descr, "%s %s offset %08X size %uKB",
 				type, drv->drv_description,
-				sflash->parts[idx].fp_offset,
-				(sflash->parts[idx].fp_size + 1023) / 1024);
+				(uint)sflash->parts[idx].fp_offset,
+				(uint)(sflash->parts[idx].fp_size + 1023) / 1024);
 			sflash->parts[idx].fp_dev = (flashdev_t *) sflash;
 			if (probe->flash_parts[idx].fp_name)
 				strcpy(name, probe->flash_parts[idx].fp_name);

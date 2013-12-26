@@ -35,8 +35,8 @@ function initial(){
 		$("accIcon").src = "/images/cloudsync/account_block_icon.png";
 		$("unlockBtn").style.display = "";
 	}
-
-	if(enable_webdav_lock == 0){
+	
+	if(enable_webdav_lock == '0'){	
 		inputCtrl(document.form.webdav_lock_times, 0);
 		inputCtrl(document.form.webdav_lock_interval, 0);
 	}
@@ -189,15 +189,25 @@ function unlockAcc(){
 														);
 													</script>			
 													</div>
-
-													<input type="text" name="webdav_lock_times" class="input_3_table" maxlength="2" onblur="validate_number_range(this, 1, 10);" value="<% nvram_get("webdav_lock_times"); %>"> <#AiCloud_lock_time#>
-													<input type="text" name="webdav_lock_interval" class="input_3_table" maxlength="2" onblur="validate_number_range(this, 1, 60);" value="<% nvram_get("webdav_lock_interval"); %>"> <#AiCloud_lock_interval#>
-							            <br/>
-							            <br/>
-													<!--div class="apply_gen" style="background-color:#444F53;">
-														<input style="margin-left:10px;" class="button_gen" onclick="applyRule();" type="button" value="<#CTL_apply#>"/>
-							            </div-->
+													
 													<div>
+														<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+		  											<tr>
+     													<th style="white-space:normal;"><#AiCloud_lock_time#></th>
+															<td style="text-align:left;">
+																<input type="text" name="webdav_lock_times" class="input_3_table" maxlength="2" onblur="validate_number_range(this, 1, 10);" value="<% nvram_get("webdav_lock_times"); %>">
+															</td>
+														</tr>	
+														<tr>
+     													<th><#AiCloud_lock_interval#></th>
+															<td style="text-align:left;">
+																<input type="text" name="webdav_lock_interval" class="input_3_table" maxlength="2" onblur="validate_number_range(this, 1, 60);" value="<% nvram_get("webdav_lock_interval"); %>"> <#Minute#>
+															</td>
+														</tr>
+														</table>
+													</div>
+																<br>																							
+													<div>														
 														<div style="margin-top:10px;"><#AiCloud_account_status#></div>
 														<img style="margin-top:-30px;margin-left:150px" id="accIcon" width="40px" src="/images/cloudsync/account_icon.png">
 														<div style="margin-top:-30px;margin-left:200px;font-size:16px;font-weight:bolder;"><% nvram_get("http_username"); %></div>

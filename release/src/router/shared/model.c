@@ -7,6 +7,7 @@
 #include <bcmdevs.h>
 #include "shared.h"
 
+
 struct model_s {
 	char *pid;
 	int model;
@@ -15,6 +16,7 @@ struct model_s {
 static const struct model_s model_list[] = {
 #if !defined(RTCONFIG_RALINK)
 	{ "RT-N66U",	MODEL_RTN66U	},
+	{ "RT-AC56S",	MODEL_RTAC56S	},
 	{ "RT-AC56U",	MODEL_RTAC56U	},
 	{ "RT-AC66U",	MODEL_RTAC66U	},
 	{ "RT-AC68U",	MODEL_RTAC68U	},
@@ -47,6 +49,7 @@ static const struct model_s model_list[] = {
 	{ "RT-N13U",	MODEL_RTN13U	},
 	{ "RT-N14U",	MODEL_RTN14U	},
 	{ "RT-AC52U",	MODEL_RTAC52U	},
+	{ "RT-AC51U",	MODEL_RTAC51U	},
 	{ "RT-N36U3",	MODEL_RTN36U3	},
 	{ "RT-N56U",	MODEL_RTN56U	},
 	{ "RT-N65U",	MODEL_RTN65U	},
@@ -84,6 +87,28 @@ static int get_model_by_hw(void)
 	return MODEL_UNKNOWN;
 }
 #endif
+
+#define BLV_MAX 4
+#define BL_VERSION(a,b,c,d) (((a) << 12) + ((b) << 8) + ((c) << 4) + (d))
+
+int get_blver(char *bls) {
+	int bv[BLV_MAX], blver=0, i=0;
+	char *tok, *delim = ".";
+	char buf[32], *bp=NULL;
+
+	memset(buf, 0, sizeof(buf));
+        if(bls)
+		strcpy(buf, bls);
+	bp = buf;
+	while(tok = strsep((char**)&bp, delim))
+		if(i < BLV_MAX)
+			bv[i++] = atoi(tok);
+
+        blver = BL_VERSION(bv[0], bv[1], bv[2], bv[3]);
+
+        return blver;
+}
+
 
 /* returns MODEL ID
  * result is cached for safe multiple use */

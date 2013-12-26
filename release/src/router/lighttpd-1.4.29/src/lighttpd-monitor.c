@@ -609,14 +609,12 @@ int main(int argc, char **argv) {
 			#endif
 			}
 
-			#if 0
 			//-every 2 hour
 			if(stop_arp_count>=240){
 				stop_arpping_process();
 				stop_arp_count=0;
 			}
-			#endif
-			
+
 			//-every 12 hour
 			if(commit_count>=1440){				
 

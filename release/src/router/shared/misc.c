@@ -1001,6 +1001,7 @@ void bcmvlan_models(int model, char *vlan)
 {
 	switch (model) {
 	case MODEL_RTAC68U:
+	case MODEL_RTAC56S:
 	case MODEL_RTAC56U:
 	case MODEL_RTAC66U:
 	case MODEL_RTN66U:
@@ -1050,7 +1051,7 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 	char word[100], word1[100], *next, *next1;
 	char tmp[100];
 	char modelvlan[32];
-	int i, j, model;
+	int i, j, model, unit;
 
 	strcpy(ifname_desc2, "");
 	model = get_model();
@@ -1137,25 +1138,33 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 		return 1;
 	}
 	// find in WAN interface
-	else if(nvram_match("wan0_primary", "1") && nvram_contains_word("wan_ifnames", ifname))
+	else if (ifname && (unit = get_wan_unit(ifname)) >= 0)
 	{
-		if(strlen(modelvlan) && strcmp(ifname, "eth0")==0) { 
-			backup_rx = *rx;
-			backup_tx = *tx;
+		if (dualwan_unit__nonusbif(unit)) {
+#if defined(RA_ESW)
+			get_mt7620_wan_unit_bytecount(unit, tx, rx);
+#endif
+
+			if(strlen(modelvlan) && strcmp(ifname, "eth0")==0) {
+				backup_rx = *rx;
+				backup_tx = *tx;
+			}
+			else if (unit == wan_primary_ifunit()) {
+				strcpy(ifname_desc, "INTERNET");
+				return 1;
+			}
+		}
+		else if (dualwan_unit__usbif(unit)) {
+			if (unit == wan_primary_ifunit()) {
+				strcpy(ifname_desc, "INTERNET");
+				return 1;
+			}
 		}
 		else {
-			strcpy(ifname_desc, "INTERNET");
-			return 1;	
+			_dprintf("%s: unknown ifname %s\n", __func__, ifname);
 		}
 	}
-#if !defined(RTCONFIG_DUALWAN)
-	else if(nvram_match("wan1_primary", "1") &&
-		(!strcmp(nvram_safe_get("wan1_pppoe_ifname"), ifname) || !strcmp(nvram_safe_get("wan1_ifname"), ifname)))
-	{
-		strcpy(ifname_desc, "INTERNET");
-		return 1;
-	}
-#endif
+
 	return 0;
 }
 
@@ -1386,5 +1395,56 @@ int set_crt_parsed(const char *name, char *file_path)
 	}
 	else
 		return -ENOENT;
+}
+#endif
+
+#ifdef RTCONFIG_DUALWAN
+/**
+ * Get wan_unit of USB interface
+ * @return
+ *  >= 0:	wan_unit
+ *  <  0:	not found
+ */
+int get_usbif_dualwan_unit(void)
+{
+	int wan_unit;
+
+	for (wan_unit = WAN_UNIT_FIRST; wan_unit < WAN_UNIT_MAX; ++wan_unit)
+		if (dualwan_unit__usbif(wan_unit))
+			break;
+
+	if (wan_unit == WAN_UNIT_MAX)
+		wan_unit = -1;
+
+	return wan_unit;
+}
+
+/**
+ * Get unit of primary interface (WAN/LAN/USB only)
+ * @return
+ *  >= 0:	wan_unit
+ *  <  0:	not found
+ */
+int get_primaryif_dualwan_unit(void)
+{
+	int unit, wan_type;
+
+	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
+		if (unit != wan_primary_ifunit() && !nvram_match("wans_mode", "lb"))
+			continue;
+
+		wan_type = get_dualwan_by_unit(unit);
+		if (wan_type != WANS_DUALWAN_IF_WAN
+		    && wan_type != WANS_DUALWAN_IF_LAN
+		    && wan_type != WANS_DUALWAN_IF_USB)
+			continue;
+
+		break;
+	}
+
+	if(unit == WAN_UNIT_MAX)
+		unit = -1;
+
+	return unit;
 }
 #endif

@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: dbus.h 394558 2013-04-03 00:11:01Z $
+ * $Id: dbus.h 422800 2013-09-10 01:12:42Z $
  */
 
 #ifndef __DBUS_H__
@@ -142,8 +142,21 @@ typedef struct {
 /*
  * Configurable BUS parameters
  */
+enum {
+	DBUS_CONFIG_ID_RXCTL_DEFERRES = 1,
+	DBUS_CONFIG_ID_TXRXQUEUE
+};
 typedef struct {
-	bool rxctl_deferrespok;
+	uint32 config_id;
+	union {
+		bool rxctl_deferrespok;
+		struct {
+			int maxrxq;
+			int rxbufsize;
+			int maxtxq;
+			int txbufsize;
+		} txrxqueue;
+	};
 } dbus_config_t;
 
 /*

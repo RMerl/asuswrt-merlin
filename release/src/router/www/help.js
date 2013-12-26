@@ -1,27 +1,7 @@
 ﻿var Untranslated = {
 	fw_size_higher_mem : 'Memory space is NOT enough to upgrade on internet. Please wait for rebooting.',
-	enable_macmode : "Enable MAC Filter",
-	WPS_hideSSID_hint : "WPS function will not be available if SSID is hidden",
-	cloud_list_password : "The length of password can't shorter than 8 characters",
-	DM_DisableHint: "You cannot use Download Master because Download Master is disabled!", 
 	the_array_is_end : "end here.",
-	ddns_home_link: "Get started",
-	select_wireless_MAC : "Select the MAC address of Wireless Clients.",
-	select_AP : "Select the Access Point",
-	select_MAC : "Select the MAC address of DHCP clients.",
-	select_IP : "Select the IP address of DHCP clients.",
-	select_network_host : "Select the network host.",
-	select_device_name : "Select the device name of DHCP clients.",
-	select_service : "Select the service name.",
-	select_client : "Select the client of DHCP clients.",
-	select_APN_service : "Select the APN service.",
-	Guest_Network_enable_ACL : "You must go to enable MAC filter",
-	WLANConfig11b_Channel_HighPower_desc1 : "To ensure the best wireless signal, we suggest to set the router channel with channel 2. If agree to access Channel 2, please click 'OK'. If disagree, please click 'Cancel'",
-	WLANConfig11b_Channel_HighPower_desc2 : "Due to local regulator limitation, Channel 1 can’t provide the best wireless coverage. If you insist to access Channel 1, please click 'OK'. If not, it will set to channel 2. Please click 'Cancel'",
-	WLANConfig11b_Channel_HighPower_desc3 : "To ensure the best wireless signal, we suggest to set the router channel with channel 10. If agree to access Channel 10, please click 'OK'. If disagree, please click 'Cancel'",
-	WLANConfig11b_Channel_HighPower_desc4 : "Due to local regulator limitation, Channel 11 can’t provide the best wireless coverage. If you insist to access Channel 11, please click 'OK'. If not, it will set to channel 10. Please click 'Cancel'",
-	WLANConfig11b_WDS_sectiondesc4 : "4. To get best performance, please go to advanced settings -> wireless -> general and make sure that every router in the network has the same channel bandwidth, control channel and extension channel.",
-	parent_AP_status : "Parent AP status",
+	Guest_Network_enable_ACL : "You must go to enable MAC filter",	
 	link_rate : "Link rate"
 };
 var clicked_help_string = "<#Help_init_word1#> <a class=\"hintstyle\" style=\"background-color:#7aa3bd\"><#Help_init_word2#></a> <#Help_init_word3#>";
@@ -43,6 +23,14 @@ function handle_show_str(show_str)
 	show_str = show_str.replace(/\ /g, "&nbsp;");
 	return show_str;
 }
+
+
+function show_str_ssid(show_ssid)
+{
+	show_ssid = show_ssid.replace(/\%/g, "%25");
+	return show_ssid;
+}   
+
 
 function isMobile_help(){
 	return false; //disable mobile QIS temporary, Jieming added at 2013.08.12
@@ -405,7 +393,7 @@ function openHint(hint_array_id, hint_show_id, flag){
 						statusmenu = "<span class='StatusClickHint' onclick='suspendconn(0);' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#disconnect_internet#></span>";		
 				}					
 				else if(link_status == "5")
-					statusmenu = "<span class='StatusClickHint' onclick='suspendconn(1);' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>Resume internet</span>";
+					statusmenu = "<span class='StatusClickHint' onclick='suspendconn(1);' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#reconnect_internet#></span>";
 				else{
 					if(link_auxstatus == "1")
 						statusmenu = "<span class='StatusHint'><#QKSet_detect_wanconnfault#></span>";
@@ -2244,7 +2232,7 @@ function chkPass(pwd, flag) {
 	else {
 		/* Display default score criteria to client */
 		if(flag == 'http_passwd'){
-				orig_pwd = "<% nvram_get("http_passwd"); %>";
+				orig_pwd = decodeURIComponent("<% nvram_char_to_ascii("", "http_passwd"); %>");
 				chkPass(orig_pwd, 'http_passwd');
 		}
 	}

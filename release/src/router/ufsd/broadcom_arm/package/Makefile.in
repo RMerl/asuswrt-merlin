@@ -11,6 +11,14 @@ else
 MODULE_NAME := @PACKAGE_NAME@
 endif
 
+ifeq (@BUILD_WITH_JNL@,1)
+ifeq (@BUILD_WITH_DEBUG@,1)
+MODULE_NAME2 := jnl_debug
+else
+MODULE_NAME2 := jnl
+endif
+endif
+
 MODULE_LIBNAME := lib@PACKAGE_NAME@
 MODULE_OBJECTS := $(MODULE_SRC)/ufsdvfs.o $(MODULE_SRC)/vfsdebug.o
 
@@ -21,6 +29,14 @@ LDFLAGS   += -d
 else
 MODULE_EXTRA_FLAGS += -DNDEBUG -g0
 LDFLAGS   += -s -O2 -d -x -X
+endif
+
+ifeq (@BUILD_WITH_TRACE@,1)
+    MODULE_EXTRA_FLAGS += -DUFSD_TRACE
+endif
+
+ifeq (@BUILD_WITH_TRACEK@,0)
+    MODULE_EXTRA_FLAGS += -DUFSD_NO_PRINTK
 endif
 
 ifndef CONFIG_UFSD_FS
@@ -41,7 +57,18 @@ MODULE_OBJECTS += $(MODULE_SRC)/$(MODULE_LIBNAME).bin
 $(MODULE_NAME)-objs := $(MODULE_OBJECTS)
 $(MODULE_NAME)-y := $(MODULE_OBJECTS)
 
+ifeq (@BUILD_WITH_JNL@,1)
+$(MODULE_NAME2)-objs := $(MODULE_SRC)/ufsdjnl.o
+$(MODULE_NAME2)-y    := $(MODULE_SRC)/ufsdjnl.o
+obj-m := $(MODULE_NAME2).o $(MODULE_NAME).o
+else
 obj-m := $(MODULE_NAME).o
+endif
+
+## Add diagnostic module
+#kdiag-objs := $(MODULE_SRC)/kdiag.o
+#kdiag-y := $(MODULE_SRC)/kdiag.o
+#obj-m += kdiag.o
 
 ifeq (@KERNEL_VERSION@,2.4)
 O_TARGET := $(MODULE_NAME).o
@@ -87,17 +114,17 @@ driver:$(MODULE_NAME).@MODULE_EXT@
 ifeq (@ENABLE_INSTALL@,1)
 driver_install: $(MODULE_NAME).@MODULE_EXT@
 ifeq ($(shell @ID@ -u),0)
-	@@MODPROBE@ -qr $(MODULE_NAME) 2>&1 > /dev/null ; @MKDIR@ -p @KERNEL_INSTALL_DIR@ 2>&1 ; @CP@ $(MODULE_NAME).@MODULE_EXT@ @KERNEL_INSTALL_DIR@ 2>&1 && @DEPMOD@ -a 2>&1 ; @INSMOD@ @KERNEL_INSTALL_DIR@/$(MODULE_NAME).@MODULE_EXT@ 2>&1
+	@@MODPROBE@ -qr $(MODULE_NAME) 2>&1 > /dev/null ; @MODPROBE@ -qr $(MODULE_NAME2) 2>&1 > /dev/null ; @MKDIR@ -p @KERNEL_INSTALL_DIR@ 2>&1 ; @CP@ -f $(MODULE_NAME).@MODULE_EXT@ $(MODULE_NAME2).@MODULE_EXT@ @KERNEL_INSTALL_DIR@ 2>&1 && @DEPMOD@ -a 2>&1 ; @MODPROBE@ $(MODULE_NAME) 2>&1
 else
 	@echo -e "\033[33mEnter Root password for install driver\033[0m"
-	@@SU@ -c '@MODPROBE@ -qr $(MODULE_NAME) 2>&1 > /dev/null ; @MKDIR@ -p @KERNEL_INSTALL_DIR@ 2>&1 ; @CP@ $(MODULE_NAME).@MODULE_EXT@ @KERNEL_INSTALL_DIR@ 2>&1 && @DEPMOD@ -a 2>&1 ; @INSMOD@ @KERNEL_INSTALL_DIR@/$(MODULE_NAME).@MODULE_EXT@ 2>&1'
+	@@SU@ -c '@MODPROBE@ -qr $(MODULE_NAME) 2>&1 > /dev/null ; @MODPROBE@ -qr $(MODULE_NAME2) 2>&1 > /dev/null ; @MKDIR@ -p @KERNEL_INSTALL_DIR@ 2>&1 ; @CP@ -f $(MODULE_NAME).@MODULE_EXT@ $(MODULE_NAME2).@MODULE_EXT@ @KERNEL_INSTALL_DIR@ 2>&1 && @DEPMOD@ -a 2>&1 ; @MODPROBE@ $(MODULE_NAME) 2>&1'
 endif
 
 driver_uninstall:
 ifeq ($(shell @ID@ -u),0)
-	@@MODPROBE@ -qr $(MODULE_NAME) 2>&1 ; @RM@ -Rf @KERNEL_INSTALL_DIR@ 2>&1 && @DEPMOD@ -a 2>&1
+	@@MODPROBE@ -qr $(MODULE_NAME) 2>&1 ; @MODPROBE@ -qr $(MODULE_NAME2) 2>&1 > /dev/null ; @RM@ -Rf @KERNEL_INSTALL_DIR@ 2>&1 && @DEPMOD@ -a 2>&1
 else
 	@echo -e "\033[33mEnter Root password for uninstall driver\033[0m"
-	@@SU@ -c '@MODPROBE@ -qr $(MODULE_NAME) 2>&1 ; @RM@ -Rf @KERNEL_INSTALL_DIR@ 2>&1 && @DEPMOD@ -a 2>&1'
+	@@SU@ -c '@MODPROBE@ -qr $(MODULE_NAME) 2>&1 ; @MODPROBE@ -qr $(MODULE_NAME2) 2>&1 > /dev/null ; @RM@ -Rf @KERNEL_INSTALL_DIR@ 2>&1 && @DEPMOD@ -a 2>&1'
 endif
 endif

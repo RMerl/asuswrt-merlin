@@ -27,11 +27,22 @@
 
 typedef uint32_t __u32;
 
-#if defined(RTN14U) || defined(RTAC52U)
-int get_wan_bytecount(int dir, unsigned long *count)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U)
+const char WIF_5G[]	= "rai0";
+const char WIF_2G[]	= "ra0";
+const char WDSIF_5G[]	= "wdsi";
+#else
+const char WIF_5G[]	= "ra0";
+const char WIF_2G[]	= "rai0";
+const char WDSIF_5G[]	= "wds";
+#endif
+
+#if defined(RA_ESW)
+/* Read TX/RX byte count information from switch's register. */
+int get_mt7620_wan_unit_bytecount(int unit, unsigned long *tx, unsigned long *rx)
 {
-	return mt7620_wan_bytecount(dir, count);
-}   
+	return __mt7620_wan_bytecount(unit, tx, rx);
+}
 #endif
 
 uint32_t gpio_dir(uint32_t gpio, int dir)

@@ -117,12 +117,9 @@ static int config_insert(server *srv) {
 		{ "server.use-keep-alive",       "use server.max-keep-alive-requests = 0 instead", T_CONFIG_DEPRECATED, T_CONFIG_SCOPE_UNSET },
 		{ "server.force-lower-case-files",       "use server.force-lowercase-filenames instead", T_CONFIG_DEPRECATED, T_CONFIG_SCOPE_UNSET },
 
-		//- Jerry add
+		//- Jerry add 20111018
 		{ "server.arpping-interface",	 NULL, T_CONFIG_STRING, T_CONFIG_SCOPE_SERVER },	  /* 74 */
 		{ "server.syslog",               NULL, T_CONFIG_STRING, T_CONFIG_SCOPE_SERVER },      /* 75 */
-		{ "router.product-image",        NULL, T_CONFIG_STRING, T_CONFIG_SCOPE_SERVER },      /* 76 */
-		{ "aicloud.version",             NULL, T_CONFIG_STRING, T_CONFIG_SCOPE_SERVER },      /* 77 */
-		{ "router.app_installation-url", NULL, T_CONFIG_STRING, T_CONFIG_SCOPE_SERVER },      /* 78 */
 
 		{ NULL,                          NULL, T_CONFIG_UNSET, T_CONFIG_SCOPE_UNSET }
 	};
@@ -161,10 +158,7 @@ static int config_insert(server *srv) {
 	//- Jerry add 20111018
 	cv[74].destination = srv->srvconf.arpping_interface;
 	cv[75].destination = srv->srvconf.syslog_file;
-	cv[76].destination = srv->srvconf.product_image;
-	cv[77].destination = srv->srvconf.aicloud_version;
-	cv[78].destination = srv->srvconf.app_installation_url;	
-		
+	
 	srv->config_storage = calloc(1, srv->config_context->used * sizeof(specific_config *));
 
 	assert(srv->config_storage);

@@ -199,6 +199,7 @@ enum {
 	MODEL_RTN13U,
 	MODEL_RTN14U,
 	MODEL_RTAC52U,
+	MODEL_RTAC51U,
 	MODEL_RTN36U3,
 	MODEL_RTN56U,
 	MODEL_RTN65U,
@@ -219,6 +220,7 @@ enum {
 	MODEL_RTN66U,
 	MODEL_RTAC66U,
 	MODEL_RTAC68U,
+	MODEL_RTAC56S,
 	MODEL_RTAC56U,
 	MODEL_RTAC53U,
 	MODEL_RTN14UHP,
@@ -358,6 +360,10 @@ extern int f_wait_notexists(const char *name, int max);
 #define HAVE_FAN_OFF			4
 #define	HAVE_FAN_ON			5
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(ary) (sizeof(ary) / sizeof((ary)[0]))
+#endif
+
 #define MAX_NR_WL_IF			2
 static inline int get_wps_multiband(void)
 {
@@ -377,6 +383,39 @@ static inline int get_radio_band(int band)
 #endif
 }
 
+#ifdef RTCONFIG_DUALWAN
+static inline int dualwan_unit__usbif(int unit)
+{
+	return (get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_USB);
+}
+
+static inline int dualwan_unit__nonusbif(int unit)
+{
+	int type = get_dualwan_by_unit(unit);
+	return (type == WANS_DUALWAN_IF_WAN || type == WANS_DUALWAN_IF_DSL || type == WANS_DUALWAN_IF_LAN);
+}
+extern int get_usbif_dualwan_unit(void);
+extern int get_primaryif_dualwan_unit(void);
+#else
+static inline int dualwan_unit__usbif(int unit)
+{
+	return (unit == WAN_UNIT_SECOND);
+}
+
+static inline int dualwan_unit__nonusbif(int unit)
+{
+	return (unit == WAN_UNIT_FIRST);
+}
+static inline int get_usbif_dualwan_unit(void)
+{
+	return WAN_UNIT_SECOND;
+}
+static inline int get_primaryif_dualwan_unit(void)
+{
+	return wan_primary_ifunit();
+}
+#endif
+
 extern int init_gpio(void);
 extern int set_pwr_usb(int boolOn);
 extern int button_pressed(int which);
@@ -388,15 +427,12 @@ extern uint32_t set_gpio(uint32_t gpio, uint32_t value);
 extern uint32_t get_gpio(uint32_t gpio);
 extern int get_switch_model(void);
 extern uint32_t get_phy_speed(uint32_t portmask);
-#if defined(RTN14U) || defined(RTAC52U)
-extern int get_wan_bytecount(int dir, unsigned long *count);
-extern int mt7620_wan_bytecount(int dir, unsigned long *count);
-#endif
+extern int get_mt7620_wan_unit_bytecount(int unit, unsigned long *tx, unsigned long *rx);
 
 /* sysdeps/ralink/ *.c */
 #ifdef RTCONFIG_RALINK
 extern int rtkswitch_ioctl(int val, int val2);
-extern unsigned int rtkswitch_wanPort_phyStatus(void);
+extern unsigned int rtkswitch_wanPort_phyStatus(int wan_unit);
 extern unsigned int rtkswitch_lanPorts_phyStatus(void);
 extern unsigned int rtkswitch_WanPort_phySpeed(void);
 extern int rtkswitch_WanPort_linkUp(void);
@@ -413,6 +449,7 @@ extern int ralink_gpio_init(unsigned int idx, int dir);
 extern int config_rtkswitch(int argc, char *argv[]);
 extern int get_channel_list_via_driver(int unit, char *buffer, int len);
 extern int get_channel_list_via_country(int unit, const char *country_code, char *buffer, int len);
+extern int __mt7620_wan_bytecount(int unit, unsigned long *tx, unsigned long *rx);
 #else
 #define wif_to_vif(wif) (wif)
 #endif
@@ -504,6 +541,21 @@ extern char *get_usb_ohci_port(int port);
 extern int get_usb_port_number(const char *usb_port);
 extern int get_usb_port_host(const char *usb_port);
 #endif
+#ifdef RTCONFIG_DUALWAN
+extern void set_wanscap_support(char *feature);
+extern void add_wanscap_support(char *feature);
+extern int get_wans_dualwan(void) ;
+extern int get_dualwan_by_unit(int unit) ;
+extern int get_dualwan_primary(void);
+extern int get_dualwan_secondary(void) ;
+#else
+static inline int get_wans_dualwan(void) { return WANS_DUALWAN_IF_WAN; }
+static inline int get_dualwan_by_unit(int unit) { return ((unit == WAN_UNIT_SECOND)? WANS_DUALWAN_IF_USB:WANS_DUALWAN_IF_WAN); }
+#endif
+extern void set_lan_phy(char *phy);
+extern void add_lan_phy(char *phy);
+extern void set_wan_phy(char *phy);
+extern void add_wan_phy(char *phy);
 
 /* semaphore.c */
 extern void init_spinlock(void);

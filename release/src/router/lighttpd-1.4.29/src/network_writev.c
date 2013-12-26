@@ -30,12 +30,12 @@
 #define LOCAL_BUFFERING 1
 #endif
 
-#define DBE 0
+#define DBE 1
 
 int network_write_chunkqueue_writev(server *srv, connection *con, int fd, chunkqueue *cq) {
 	chunk *c;
 	size_t chunks_written = 0;
-	
+
 	for(c = cq->first; c; c = c->next) {
 		int chunk_finished = 0;
 
