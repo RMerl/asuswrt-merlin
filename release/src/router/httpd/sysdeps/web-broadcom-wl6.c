@@ -1452,7 +1452,7 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 #ifdef RTCONFIG_BCMARM
 			ret += websWrite(wp, "%s%s%s",
 				(sta->flags & WL_STA_PS) ? "P" : " ",
-				((sta->ht_capabilities & WL_STA_CAP_SHORT_GI_20) || (sta->ht_capabilities & WL_STA_CAP_SHORT_GI_40)) ? "G" : " ",
+				((sta->ht_capabilities & WL_STA_CAP_SHORT_GI_20) || (sta->ht_capabilities & WL_STA_CAP_SHORT_GI_40)) ? "S" : " ",
 				((sta->ht_capabilities & WL_STA_CAP_TX_STBC) || (sta->ht_capabilities & WL_STA_CAP_RX_STBC_MASK)) ? "T" : " ");
 #else
 			ret += websWrite(wp, "%s",
@@ -1474,7 +1474,7 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 
 		for (j = 0; j < authorized->count; j ++) {
 			if (!bcmp((void *)&auth->ea[i], (void *)&authorized->ea[j], ETHER_ADDR_LEN)) {
-				is_authorized = 1;				
+				is_authorized = 1;
 				break;
 			}
 		}
@@ -1582,7 +1582,7 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 #ifdef RTCONFIG_BCMARM
 					ret += websWrite(wp, "%s%s%s",
 						(sta->flags & WL_STA_PS) ? "P" : " ",
-						((sta->ht_capabilities & WL_STA_CAP_SHORT_GI_20) || (sta->ht_capabilities & WL_STA_CAP_SHORT_GI_40)) ? "G" : " ",
+						((sta->ht_capabilities & WL_STA_CAP_SHORT_GI_20) || (sta->ht_capabilities & WL_STA_CAP_SHORT_GI_40)) ? "S" : " ",
 						((sta->ht_capabilities & WL_STA_CAP_TX_STBC) || (sta->ht_capabilities & WL_STA_CAP_RX_STBC_MASK)) ? "T" : " ");
 #else
 					ret += websWrite(wp, "%s",
@@ -1604,7 +1604,7 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 
 				for (jj = 0; jj < authorized->count; jj ++) {
 					if (!bcmp((void *)&auth->ea[ii], (void *)&authorized->ea[jj], ETHER_ADDR_LEN)) {
-						is_authorized = 1;				
+						is_authorized = 1;
 						break;
 					}
 				}
