@@ -163,7 +163,6 @@ function switchPage(page){
 <form method="post" name="form" action="apply.cgi" target="hidden_frame">
 <input type="hidden" name="current_page" value="Main_TrafficMonitor_monthly.asp">
 <input type="hidden" name="next_page" value="Main_TrafficMonitor_monthly.asp">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="group_id" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="">

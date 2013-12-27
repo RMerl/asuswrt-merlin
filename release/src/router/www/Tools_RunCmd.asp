@@ -86,7 +86,6 @@ function checkCmdRet(){
 <form method="GET" name="form" id="ruleForm" action="/apply.cgi" target="hidden_frame">
 <input type="hidden" name="current_page" value="Tools_RunCmd.asp">
 <input type="hidden" name="next_page" value="Tools_RunCmd.asp">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="">
