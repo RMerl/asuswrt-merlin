@@ -950,8 +950,8 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		ret += websWrite(wp, "%-18s%-16s%-16s%-8s%-15s%-10s%-5s\n",
 				"MAC", "IP Address", "Name", "  RSSI", "  Rx/Tx Rate", "Connected", "Flags");
 	} else {
-		ret += websWrite(wp, "%-18s%-16s%-8s%-15s%-12s%-5s\n",
-				"MAC", "IP Address", "RSSI", "  Rx/Tx Rate", "Connected", "Flags");
+		ret += websWrite(wp, "%-18s%-16s%-8s%-15s%-10s%-5s\n",
+				"MAC", "IP Address", "  RSSI", "  Rx/Tx Rate", "Connected", "Flags");
 	}
 
 	/* build authenticated/associated/authorized sta list */
