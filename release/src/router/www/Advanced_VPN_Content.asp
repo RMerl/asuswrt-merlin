@@ -878,7 +878,7 @@ function enable_openvpn(state){
 										<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
 											<thead>
 											<tr>
-												<td colspan="4" id="GWStatic"><#Username_Pwd#>&nbsp;(<#List_limit#>&nbsp;16)</td>
+												<td colspan="4" id="GWStatic"><#Username_Pwd#>&nbsp;(<#List_limit#>&nbsp;64)</td>
 											</tr>
 											</thead>
 											<tr>
@@ -897,7 +897,7 @@ function enable_openvpn(state){
 													<input type="text" class="input_25_table" maxlength="64" name="pptpd_clientlist_password" onKeyPress="return is_string(this, event)">
 												</td>
 												<td width="15%">
-													<div><input type="button" class="add_btn" onClick="addRow_Group(16, 'pptpd');" value=""></div>
+													<div><input type="button" class="add_btn" onClick="addRow_Group(64, 'pptpd');" value=""></div>
 												</td>
 											</tr>
 										</table>        
@@ -921,7 +921,7 @@ function enable_openvpn(state){
 										<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
 											<thead>
 											<tr>
-												<td colspan="4" id="GWStatic"><#Username_Pwd#>&nbsp;(<#List_limit#>&nbsp;16)</td>
+												<td colspan="4" id="GWStatic"><#Username_Pwd#>&nbsp;(<#List_limit#>&nbsp;64)</td>
 											</tr>
 											</thead>
 											<tr>
@@ -940,7 +940,7 @@ function enable_openvpn(state){
 													<input type="text" class="input_25_table" maxlength="64" name="vpn_server_clientlist_password" onKeyPress="return is_string(this, event)">
 												</td>
 												<td width="15%">
-													<div><input type="button" class="add_btn" onClick="addRow_Group(16, 'openvpnd');" value=""></div>
+													<div><input type="button" class="add_btn" onClick="addRow_Group(64, 'openvpnd');" value=""></div>
 												</td>
 											</tr>
 										</table>        
