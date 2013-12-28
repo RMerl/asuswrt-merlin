@@ -1067,6 +1067,41 @@ void start_dhcp6s(void)
 
 static pid_t pid_radvd = -1;
 
+static char *calc_prefix6(const char *addr_in, int *length)
+{
+	struct in6_addr addr;
+	static char calc_prefix[INET6_ADDRSTRLEN + 1];
+	char *len;
+	int r, i;
+
+	syslog(LOG_DEBUG, "LAN address %s\n", addr_in);
+
+	memcpy(calc_prefix, addr_in, sizeof(calc_prefix));
+	if ((len = strrchr(calc_prefix, '/'))) {
+		*len = '\0';
+		len++;
+		r = atoi(len);
+		if (length)
+			*length = r;
+	}
+
+	if (inet_pton(AF_INET6, calc_prefix, &addr) > 0) {
+		for (r = 128 - r, i = 15; r > 0; r -= 8) {
+			if (r >= 8)
+				addr.s6_addr[i--] = 0;
+			else
+				addr.s6_addr[i--] &= (0xff << r);
+		}
+		inet_ntop(AF_INET6, &addr, calc_prefix, sizeof(calc_prefix));
+	} else {
+		calc_prefix[0] = '\0';
+	}
+
+	syslog(LOG_DEBUG, "Calculated prefix %s\n", calc_prefix);
+
+	return calc_prefix;
+}
+
 void start_radvd(void)
 {
 	FILE *f;
@@ -1075,6 +1110,7 @@ void start_radvd(void)
 	int do_dns, do_6to4, do_6rd;
 	char *argv[] = { "radvd", NULL, NULL, NULL, NULL, NULL, NULL };
 	int pid, argc, service, cnt = 0;
+	int length = 64;
 	char *p = NULL;
 
 	if (getpid() != 1) {
@@ -1095,6 +1131,9 @@ void start_radvd(void)
 
 		switch (service) {
 		case IPV6_NATIVE_DHCP:
+			prefix = calc_prefix6(getifaddr(nvram_safe_get("lan_ifname"), AF_INET6, GIF_PREFIXLEN), &length);
+			mtu = (nvram_get_int("ipv6_tun_mtu") > 0) ? nvram_safe_get("ipv6_tun_mtu") : "1480";
+			break;
 		case IPV6_6TO4:
 		case IPV6_6IN4:
 		case IPV6_6RD:
@@ -1133,7 +1172,7 @@ void start_radvd(void)
 			" AdvManagedFlag %s;\n"
 			" AdvOtherConfigFlag on;\n"
 			"%s%s%s"
-			" prefix %s/64 \n"
+			" prefix %s/%d \n"
 			" {\n"
 			"  AdvOnLink on;\n"
 			"  AdvAutonomous %s;\n"
@@ -1143,7 +1182,7 @@ void start_radvd(void)
 			nvram_safe_get("lan_ifname"),
 			nvram_get_int("ipv6_autoconf_type") ? "on" : "off",
 			mtu ? " AdvLinkMTU " : "", mtu ? : "", mtu ? ";\n" : "",
-			prefix,
+			prefix, length,
 			nvram_get_int("ipv6_autoconf_type") ? "off" : "on",
 			do_6to4 | do_6rd ? "  AdvValidLifetime 300;\n  AdvPreferredLifetime 120;\n" : "",
 			do_6to4 ? "  Base6to4Interface " : "",

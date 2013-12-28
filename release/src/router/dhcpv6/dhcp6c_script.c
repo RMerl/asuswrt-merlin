@@ -71,6 +71,7 @@ static char nispserver_str[] = "new_nisp_servers";
 static char nispname_str[] = "new_nisp_name";
 static char bcmcsserver_str[] = "new_bcmcs_servers";
 static char bcmcsname_str[] = "new_bcmcs_name";
+static char iapdprefix_str[] = "new_iapd_prefix";
 
 int
 client6_script(scriptpath, state, optinfo)
@@ -83,9 +84,10 @@ client6_script(scriptpath, state, optinfo)
 	int nisservers, nisnamelen;
 	int nispservers, nispnamelen;
 	int bcmcsservers, bcmcsnamelen;
+	int iapd_prefix;
 	char **envp, *s;
 	char reason[] = "REASON=NBI";
-	struct dhcp6_listval *v;
+	struct dhcp6_listval *v, *sv;
 	pid_t pid, wpid;
 
 	/* if a script is not specified, do nothing */
@@ -104,6 +106,7 @@ client6_script(scriptpath, state, optinfo)
 	nispnamelen = 0;
 	bcmcsservers = 0;
 	bcmcsnamelen = 0;
+	iapd_prefix = 0;
 	envc = 2;     /* we at least include the reason and the terminator */
 
 	/* count the number of variables */
@@ -153,6 +156,20 @@ client6_script(scriptpath, state, optinfo)
 		bcmcsnamelen += v->val_vbuf.dv_len;
 	}
 	envc += bcmcsnamelen ? 1 : 0;
+	for (v = TAILQ_FIRST(&optinfo->iapd_list); v; v = TAILQ_NEXT(v, link)) {
+		for (sv = TAILQ_FIRST(&v->sublist); sv; sv = TAILQ_NEXT(sv, link)) {
+			switch (sv->type) {
+				case DHCP6_LISTVAL_PREFIX6:
+					iapd_prefix++;
+					break;
+				case DHCP6_LISTVAL_STCODE:
+					break;
+				default:
+					dprintf(LOG_ERR, FNAME, "Unknown IA_PD subopt.");
+			}
+		}
+	}
+	envc += iapd_prefix ? 1 : 0;
 
 	/* allocate an environments array */
 	if ((envp = malloc(sizeof (char *) * envc)) == NULL) {
@@ -377,6 +394,33 @@ client6_script(scriptpath, state, optinfo)
 		    v = TAILQ_NEXT(v, link)) {
 			strlcat(s, v->val_vbuf.dv_buf, elen);
 			strlcat(s, " ", elen);
+		}
+	}
+	if (iapd_prefix) {
+		elen = sizeof(iapdprefix_str) + (INET6_ADDRSTRLEN + 4) * iapd_prefix + 1;
+		if ((s = envp[i++] = malloc(elen)) == NULL) {
+			dprintf(LOG_NOTICE, FNAME, "failed to allocate IA_PD prefix string");
+			ret = -1;
+			goto clean;
+		}
+		memset(s, 0, elen);
+		snprintf(s, elen, "%s=", iapdprefix_str);
+		for (v = TAILQ_FIRST(&optinfo->iapd_list); v; v = TAILQ_NEXT(v, link)) {
+			for (sv = TAILQ_FIRST(&v->sublist); sv; sv = TAILQ_NEXT(sv, link)) {
+				char prefix[INET6_ADDRSTRLEN + 5];
+				switch (sv->type) {
+					case DHCP6_LISTVAL_PREFIX6:
+						snprintf(prefix, INET6_ADDRSTRLEN + 5, "%s/%d ",
+								 in6addr2str(&sv->val_prefix6.addr, 0), sv->val_prefix6.plen);
+						dprintf(LOG_INFO, FNAME, "IA_PD prefix %s", prefix);
+						strlcat(s, prefix, elen);
+						break;
+					case DHCP6_LISTVAL_STCODE:
+						break;
+					default:
+						dprintf(LOG_ERR, FNAME, "Unknown IA_PD subopt.");
+				}
+			}
 		}
 	}
 

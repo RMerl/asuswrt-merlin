@@ -652,7 +652,7 @@ static int env2nv(char *env, char *nv)
 
 int dhcp6c_state_main(int argc, char **argv)
 {
-	char *p;
+	const char *p;
 
 	TRACE_PT("begin\n");
 
@@ -662,8 +662,21 @@ int dhcp6c_state_main(int argc, char **argv)
 	nvram_set("ipv6_rtr_addr", getifaddr(nvram_safe_get("lan_ifname"), AF_INET6, 0));
 
 	if (nvram_get_int("ipv6_dhcp_pd")) {
-		p = ipv6_prefix(NULL);
-		if (*p) nvram_set("ipv6_prefix", p);
+		if ((p = getenv("new_iapd_prefix"))) {
+			char *prefixlen;
+
+			TRACE_PT("new_iapd_prefix=%s\n", p);
+			if ((prefixlen = strrchr(p, '/'))) {
+				*prefixlen = '\0';
+				prefixlen++;
+				nvram_set("ipv6_prefix", p);
+				nvram_set("ipv6_prefix_length", trim_r(prefixlen));
+			}
+		} else {
+			/* Guess prefix from lan address if we are not given one */
+			p = ipv6_prefix(NULL);
+			if (*p) nvram_set("ipv6_prefix", p);
+		}
 	}
 
 	if (env2nv("new_domain_name_servers", "ipv6_get_dns")) {
@@ -694,7 +707,6 @@ start_dhcp6c(void)
 		NULL,		/* interface */
 		NULL };
 	int index = 3;
-	int prefix_len;
 	unsigned char ea[ETHER_ADDR_LEN];
 	unsigned long iaid = 0;
 	struct {
@@ -715,10 +727,6 @@ start_dhcp6c(void)
 		nvram_set("ipv6_rtr_addr", "");
 		nvram_set("ipv6_prefix", "");
 	}
-
-	prefix_len = 64 - (nvram_get_int("ipv6_prefix_length") ? : 64);
-	if (prefix_len < 0)
-		prefix_len = 0;
 
 	if (ether_atoe(nvram_safe_get("wan0_hwaddr"), ea)) {
 		/* Generate IAID from the last 7 digits of WAN MAC */
@@ -757,9 +765,9 @@ start_dhcp6c(void)
 		fprintf(fp,	"id-assoc pd %lu {\n"
 					"prefix-interface %s {\n"
 						"sla-id 1;\n"
-						"sla-len %d;\n"
 					"};\n"
-				"};\n", iaid, lan_ifname, prefix_len);
+					"prefix ::/56 0 0;\n"
+				"};\n", iaid, lan_ifname);
 		fprintf(fp,	"id-assoc na %lu { };\n", iaid);
 		fclose(fp);
 	} else {
