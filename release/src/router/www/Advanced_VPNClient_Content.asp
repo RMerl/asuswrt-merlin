@@ -176,6 +176,8 @@ function Add_profile(){
 	$("cancelBtn").style.display = "";
 	document.getElementById("pptpcTitle").style.display = "";
 	document.getElementById("l2tpcTitle").style.display = "";
+
+        $j("#vpnc_settings").fadeIn(300);
 }
 
 function cancel_add_rule(){
