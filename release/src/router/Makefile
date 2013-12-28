@@ -2405,9 +2405,9 @@ openpam-clean:
 
 openvpn/stamp-h1:
 	cd openvpn && ./autogen.sh && \
-	export OPENSSL_CRYPTO_CFLAGS="-I$(TOP)/openssl"; \
+	export OPENSSL_CRYPTO_CFLAGS="-I$(TOP)/openssl/include"; \
 	export OPENSSL_CRYPTO_LIBS="-L$(TOP)/openssl -lcrypto"; \
-	export OPENSSL_SSL_CFLAGS="-I$(TOP)/openssl"; \
+	export OPENSSL_SSL_CFLAGS="-I$(TOP)/openssl/include"; \
 	export OPENSSL_SSL_LIBS="-L$(TOP)/openssl -lssl"; \
 	CFLAGS="-O3 -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \
 	LDFLAGS="$(EXTRALDFLAGS) -L$(TOP)/nvram$(BCMEX) -lnvram -L$(TOP)/shared -lshared -L$(TOP)/zlib -lz -L$(TOP)/lzo/src/.libs -L$(TOP)/openpam/lib/libpam/.libs -ffunction-sections -fdata-sections -Wl,--gc-sections" \
