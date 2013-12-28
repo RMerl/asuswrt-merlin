@@ -1855,7 +1855,7 @@ libpcap-install: libpcap
 	#cd $(INSTALLDIR)/libpcap/usr/lib && ln -sf libpcap.so.1.4.0 libpcap.so
 
 libpcap-clean:
-	[ ! -f libpcap/Makefile ] || -@$(MAKE) -C libpcap clean
+	[ ! -f libpcap/Makefile ] || $(MAKE) -C libpcap clean
 	@rm -f libpcap/stamp-h1
 
 tcpdump-4.4.0/stamp-h1:
@@ -1871,7 +1871,7 @@ tcpdump-4.4.0-install: tcpdump-4.4.0
 	$(STRIP) $(INSTALLDIR)/tcpdump-4.4.0/usr/sbin/tcpdump
 
 tcpdump-4.4.0-clean:
-	[ ! -f tcpdump-4.4.0/Makefile ] || -@$(MAKE) -C tcpdump-4.4.0 clean
+	[ ! -f tcpdump-4.4.0/Makefile ] || $(MAKE) -C tcpdump-4.4.0 clean
 	@rm -f tcpdump-4.4.0/stamp-h1
 
 libbcm:
@@ -2998,7 +2998,7 @@ norton${BCMEX}-install:
 	+$(MAKE) -C $(NORTON_DIR) install INSTALLDIR=$(INSTALLDIR)/norton${BCMEX}
 
 norton${BCMEX}-clean:
-	[ ! -f $(NORTEON_DIR)/Makefile ] || -@$(MAKE) -C $(NORTON_DIR) clean
+	[ ! -f $(NORTEON_DIR)/Makefile ] || $(MAKE) -C $(NORTON_DIR) clean
 
 .PHONY : email-3.1.3 email-3.1.3-clean
 email-3.1.3:
