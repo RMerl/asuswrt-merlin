@@ -8703,6 +8703,7 @@ get_nat_vserver_table(int eid, webs_t wp, int argc, char_t **argv)
 	char dst[sizeof("255.255.255.255")];
 	char *range, *host, *port, *ptr, *val;
 	int ret = 0;
+	char chain[16];
 
 	/* dump nat table including VSERVER and VUPNP chains */
 	_eval(nat_argv, ">/tmp/vserver.log", 10, NULL);
@@ -8711,8 +8712,8 @@ get_nat_vserver_table(int eid, webs_t wp, int argc, char_t **argv)
 #ifdef NATSRC_SUPPORT
 		"Source          "
 #endif
-		"Destination     Proto. Port range  Redirect to     Local port\n");
-	/*	 255.255.255.255 other  65535:65535 255.255.255.255 65535:65535 */
+		"Destination     Proto. Port range  Redirect to     Local port  Chain\n");
+	/*	 255.255.255.255 other  65535:65535 255.255.255.255 65535:65535 VUPNP*/
 
 	fp = fopen("/tmp/vserver.log", "r");
 	if (fp == NULL)
@@ -8722,6 +8723,11 @@ get_nat_vserver_table(int eid, webs_t wp, int argc, char_t **argv)
 	{
 		_dprintf("HTTPD: %s\n", line);
 
+		// If it's a chain definition then store it for following rules
+		if (!strncmp(line, "Chain",  5)){
+			if (sscanf(line, "%*s%*[ \t]%15s%*[ \t]%*s", chain) == 1)
+				continue;
+		}
 		tmp[0] = '\0';
 		if (sscanf(line,
 		    "%15s%*[ \t]"		// target
@@ -8766,11 +8772,11 @@ get_nat_vserver_table(int eid, webs_t wp, int argc, char_t **argv)
 #ifdef NATSRC_SUPPORT
 			"%-15s "
 #endif
-			"%-15s %-6s %-11s %-15s %-11s\n",
+			"%-15s %-6s %-11s %-15s %-11s %-15s\n",
 #ifdef NATSRC_SUPPORT
 			src,
 #endif
-			dst, proto, range, host, port ? : range);
+			dst, proto, range, host, port ? : range, chain);
 	}
 	fclose(fp);
 	unlink("/tmp/vserver.log");
