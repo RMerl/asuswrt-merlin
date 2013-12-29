@@ -168,9 +168,9 @@ function parseStatus(text, block){
 		case "ROUTING_TABLE":
 			routeTableEntries[routePtr++] = fields.slice(1,fields.length-1);
 			break;
-		case "GLOBAL_STATS":
-			statsTableEntries[statsPtr++] = fields.slice(1);
-			break;
+//		case "GLOBAL_STATS":
+//			statsTableEntries[statsPtr++] = fields.slice(1);
+//			break;
 		case "OpenVPN STATISTICS":
 			staticStats = true;
 			break;
