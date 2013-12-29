@@ -169,13 +169,15 @@ function valid_form(){
 	              <input type="radio" name="gro_disable_force" value="1" <% nvram_match("gro_disable_force", "1", "checked"); %>><#checkbox_No#>
  	          </td>
 	      </tr>
-		<tr>
-		<th>Spanning-Tree Protocol</th>
-			<td>
-				<input type="radio" name="lan_stp" value="1" <% nvram_match("lan_stp", "1", "checked"); %>><#checkbox_Yes#>
-				<input type="radio" name="lan_stp" value="0" <% nvram_match("lan_stp", "0", "checked"); %>><#checkbox_No#>
-			</td>
-		</tr>
+      <tr>
+          <th>Spanning-Tree Protocol</th>
+              <td>
+				                <select name="lan_stp" class="input_option">
+						        <option class="content_input_fd" value="0" <% nvram_match("lan_stp", "0","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+						        <option class="content_input_fd" value="1" <% nvram_match("lan_stp", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
+                                                </select>
+              </td>
+      </tr>
 
 			</table>	
 
