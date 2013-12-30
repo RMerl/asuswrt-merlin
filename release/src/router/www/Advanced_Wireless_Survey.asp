@@ -203,7 +203,7 @@ function showSiteTable(){
 				htmlCode += '<tr>';
 
 				//ssid
-				ssid_str=handle_show_str(aplist[i][1]);
+				ssid_str=decodeURI(handle_show_str(aplist[i][1]));
 				htmlCode += '<td id="ssid" onclick="oui_query(\'' + aplist[i][6] +'\');overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">' + ssid_str + '</td>';
 
 				// channel
