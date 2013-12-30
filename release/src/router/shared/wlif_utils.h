@@ -29,7 +29,7 @@
 #define ETHER_ADDR_LEN 6
 #endif
 
-#define WLIFU_MAX_NO_BRIDGE		2
+#define WLIFU_MAX_NO_BRIDGE		5
 #define WLIFU_MAX_NO_WAN		2
 
 #define MAX_USER_KEY_LEN	80			/* same as NAS_WKSP_MAX_USER_KEY_LEN */
