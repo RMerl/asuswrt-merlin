@@ -27,6 +27,10 @@ client1pid = '<% sysinfo("pid.vpnclient1"); %>';
 client2pid = '<% sysinfo("pid.vpnclient2"); %>';
 pptpdpid = '<% sysinfo("pid.pptpd"); %>';
 
+var overlib_str0 = new Array();	//Viz add 2013.04 for record longer VPN client username/pwd
+var overlib_str1 = new Array();	//Viz add 2013.04 for record longer VPN client username/pwd
+vpnc_clientlist_array = decodeURIComponent('<% nvram_char_to_ascii("","vpnc_clientlist"); %>');
+
 
 function initial(){
 	var state_r = " - Running";
@@ -77,6 +81,15 @@ function initial(){
 	} else {
 		showhide("pptpserver", 0);
 	}
+
+	if ( (vpnc_support) && (vpnc_clientlist_array != "") ) {
+		show_vpnc_rulelist();
+		// Update state after a few seconds, when Ajax status is up-to-date
+		setTimeout("show_vpnc_rulelist();", 3000);
+	} else {
+		showhide("vpnc", 0);
+	}
+
 }
 
 
@@ -294,6 +307,63 @@ function parseStatus(text, block){
 }
 
 
+function show_vpnc_rulelist(){
+	if(vpnc_clientlist_array[0] == "<")
+		vpnc_clientlist_array = vpnc_clientlist_array.split("<")[1];
+
+	var vpnc_clientlist_row = vpnc_clientlist_array.split('<');
+	var code = "";
+	code +='<table style="margin-bottom:30px;" width="70%" border="1" align="left" cellpadding="4" cellspacing="0" class="list_table" id="vpnc_clientlist_table">';
+	code +='<tr><th style="height:30px; width:20%;">Status</th>';
+	code +='<th style="width:65%;"><div><#IPConnection_autofwDesc_itemname#></div></th>';
+	code +='<th style="width:15%;"><div><#QIS_internet_vpn_type#></div></th></tr>';
+	if(vpnc_clientlist_array == "")
+		code +='<tr><td style="color:#FFCC00;" colspan="6"><#IPConnection_VSList_Norule#></td></tr>';
+	else{
+		for(var i=0; i<vpnc_clientlist_row.length; i++){
+			overlib_str0[i] = "";
+			overlib_str1[i] = "";
+			code +='<tr id="row'+i+'">';
+
+			var vpnc_clientlist_col = vpnc_clientlist_row[i].split('>');
+
+			if(vpnc_clientlist_col[1] == document.form.vpnc_proto.value.toUpperCase() &&
+				vpnc_clientlist_col[2] == document.form.vpnc_heartbeat_x.value &&
+				vpnc_clientlist_col[3] == document.form.vpnc_pppoe_username.value)
+			{
+				if(vpnc_state_t == 0) // initial
+					code +='<td><img src="/images/InternetScan.gif"></td>';
+				else if(vpnc_state_t == 1) // disconnect
+					code +='<td style="color: red;">Error!</td>';
+				else // connected
+					code +='<td><span>Connected<span></td>';
+			}
+			else
+				code +='<td>Disconnected</td>';
+
+			for(var j=0; j<vpnc_clientlist_col.length; j++){
+				if(j == 0){
+					if(vpnc_clientlist_col[0].length >32){
+						overlib_str0[i] += vpnc_clientlist_col[0];
+						vpnc_clientlist_col[0]=vpnc_clientlist_col[0].substring(0, 30)+"...";
+						code +='<td style="text-align: left;"title="'+overlib_str0[i]+'">'+ vpnc_clientlist_col[0] +'</td>';
+					}else{
+						code +='<td style="text-align: left;">'+ vpnc_clientlist_col[0] +'</td>';
+					}
+				}
+				else if(j == 1){
+					code += '<td>'+ vpnc_clientlist_col[1] +'</td>';
+				}
+			}
+
+		}
+	}
+	code +='</table>';
+
+	$("vpnc_clientlist_Block").innerHTML = code;
+}
+
+
 </script>
 </head>
 
@@ -320,7 +390,9 @@ function parseStatus(text, block){
 <input type="hidden" name="status_client1" value="<% sysinfo("vpnstatus.client.1"); %>">
 <input type="hidden" name="status_client2" value="<% sysinfo("vpnstatus.client.2"); %>">
 <input type="hidden" name="status_pptp" value="<% nvram_dump("pptp_connected",""); %>">
-
+<input type="hidden" name="vpnc_proto" value="<% nvram_get("vpnc_proto"); %>">
+<input type="hidden" name="vpnc_pppoe_username" value="<% nvram_get("vpnc_pppoe_username"); %>">
+<input type="hidden" name="vpnc_heartbeat_x" value="<% nvram_get("vpnc_heartbeat_x"); %>">
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
   <tr>
@@ -416,6 +488,22 @@ function parseStatus(text, block){
 					<tr>
 						<td style="border: none;">
 							<div id="client2_Block"></div>
+						</td>
+					</tr>
+
+				</table>
+
+				<br>
+
+				<table width="100%" id="vpnc" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+					<thead>
+						<tr>
+							<td><span id="vpnc_Block_UpdateTime" style="float: right; background: transparent;"></span>PPTP/L2TP Clients<span id="vpnc_Block_Running" style="background: transparent;"></span></td>
+						</tr>
+					</thead>
+					<tr>
+						<td style="border: none;">
+							<div id="vpnc_clientlist_Block"></div>
 						</td>
 					</tr>
 
