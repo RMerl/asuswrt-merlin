@@ -552,6 +552,10 @@ History
    - CHANGED: Display in which chain a given port forward rule is, on the
               Port Forwarding page.  Allows to distinguish manual forwards
               from upnp forwards.
+   - CHANGED: The state of PPTP/L2TP client connections will be reported 
+              on the VPN Status page.
+   - CHANGED: Removed the display of global OpenVPN statistics on the
+              VPN Status page.
 
 
 3.0.0.4.374.36 Beta 1 (23-Dec-2013):
