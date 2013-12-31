@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.374.37 (xx-xxx-2013)
+Asuswrt-Merlin - build 3.0.0.4.374.37 (31-Dec-2013)
 ===================================================
 
 About
@@ -534,10 +534,10 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.4.374.37 (xx-xxx-xxxx):
+3.0.0.4.374.37 (31-Dec-2013):
    - NEW: Merged with Asus 374_501 GPL (from RT-AC68U).
           Notable changes in this version:
-          * New SDK (wireless driver) for AC56/AC68
+          * New SDK (wireless driver and CTF) for AC56/AC68
           * dnsmasq updated to 2.68
           * radvd updated to 1.9.5
           * Improved IPv6 support
@@ -556,6 +556,12 @@ History
               on the VPN Status page.
    - CHANGED: Removed the display of global OpenVPN statistics on the
               VPN Status page.
+   - FIXED: OpenVPN clients with DNS set to "Strict" weren't properly
+            setting dnsmasq to use "strict-order"
+   - FIXED: Garbled resolv.conf generated when adding an OpenVPN client DNS
+            to it
+   - FIXED: OpenVPN Client static key was incorrectly processed when shown
+            on the webui.
 
 
 3.0.0.4.374.36 Beta 1 (23-Dec-2013):
