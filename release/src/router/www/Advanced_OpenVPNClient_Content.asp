@@ -348,10 +348,10 @@ function applyRule(){
 }
 
 function change_vpn_unit(val){
-		document.form.action_mode.value = "change_vpn_client_unit";
-		document.form.action = "apply.cgi";
-        document.form.target = "";
-        document.form.submit();
+	document.form.action_mode.value = "change_vpn_client_unit";
+	document.form.action = "apply.cgi";
+	document.form.target = "";
+	document.form.submit();
 }
 
 /* password item show or not */
