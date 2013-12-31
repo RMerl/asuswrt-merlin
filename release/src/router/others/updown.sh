@@ -19,7 +19,16 @@ then
 	done
 fi
 
-if [ -f $conffile -o -f $resolvfile -o -n "$fileexists" ]; then service updateresolv; fi
+
+if [ -f $conffile -o -f $resolvfile -o -n "$fileexists" ]
+then
+	if [ $script_type == 'up' ] ; then
+		service updateresolv
+	elif [ $script_type == 'down' ]; then
+		service restart_dnsmasq
+	fi
+fi
+
 rmdir $filedir
 rmdir /etc/openvpn
 

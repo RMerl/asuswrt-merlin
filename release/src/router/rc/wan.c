@@ -1839,6 +1839,9 @@ int update_resolvconf(void)
 	char word[256], *next;
 	int lock;
 	int unit;
+#ifdef RTCONFIG_OPENVPN
+	int dnsstrict = 0;
+#endif
 
 	lock = file_lock("resolv");
 
@@ -1868,7 +1871,9 @@ int update_resolvconf(void)
 
 	/* Add DNS from VPN clients, others if non-exclusive */
 #ifdef RTCONFIG_OPENVPN
-	if (!write_vpn_resolv(fp)) {
+	dnsstrict = write_vpn_resolv(fp);
+	// If dns not set to exclusive
+	if (dnsstrict != 3) {
 #endif
 		for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
 			char *wan_dns, *wan_xdns;
@@ -1895,7 +1900,10 @@ int update_resolvconf(void)
 	file_unlock(lock);
 
 #ifdef RTCONFIG_DNSMASQ
-	reload_dnsmasq();
+	if (dnsstrict == 2)
+		restart_dnsmasq(0);	// add strict-order
+	else
+		reload_dnsmasq();
 #else
 	restart_dns();
 #endif

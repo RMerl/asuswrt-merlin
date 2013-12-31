@@ -1566,7 +1566,7 @@ void write_vpn_dnsmasq_config(FILE* f)
 					while( !feof(dnsf) )
 					{
 						ch = fgetc(dnsf);
-						fputc(ch==EOF?'\n':ch, f);
+						fputc(ch==255?'\n':ch, f);
 					}
 
 					fclose(dnsf);
@@ -1582,7 +1582,7 @@ int write_vpn_resolv(FILE* f)
 	struct dirent *file;
 	char *fn, ch, num, buf[24];
 	FILE *dnsf;
-	int exclusive = 0;
+	int strictlevel = 0;
 
 	if ( chdir("/etc/openvpn/dns") )
 		return 0;
@@ -1607,21 +1607,21 @@ int write_vpn_resolv(FILE* f)
 			while( !feof(dnsf) )
 			{
 				ch = fgetc(dnsf);
-				fputc(ch==EOF?'\n':ch, f);
+				fputc(ch==255?'\n':ch, f);
 			}
 
 			fclose(dnsf);
 
 			snprintf(&buf[0], sizeof(buf), "vpn_client%c_adns", num);
-			if ( nvram_get_int(&buf[0]) == 3 )
-				exclusive = 1;
+
+			strictlevel = nvram_get_int(&buf[0]);
 		}
 	}
 	vpnlog(VPN_LOG_EXTRA, "Done with DNS entries...");
 
 	closedir(dir);
 
-	return exclusive;
+	return strictlevel;
 }
 
 void create_openvpn_passwd()

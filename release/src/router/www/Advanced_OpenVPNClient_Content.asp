@@ -8,7 +8,7 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<title>ASUS Wireless Router <#Web_Title#> - OpenVPN Client Settings</title>
+<title><#Web_Title#> - OpenVPN Client Settings</title>
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
 
@@ -348,10 +348,10 @@ function applyRule(){
 }
 
 function change_vpn_unit(val){
-		document.form.action_mode.value = "change_vpn_client_unit";
-		document.form.action = "apply.cgi";
-        document.form.target = "";
-        document.form.submit();
+	document.form.action_mode.value = "change_vpn_client_unit";
+	document.form.action = "apply.cgi";
+	document.form.target = "";
+	document.form.submit();
 }
 
 /* password item show or not */
@@ -428,8 +428,8 @@ function ovpnFileChecker(){
 										<tr>
 											<th>Static Key</th>
 											<td>
-												<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_client1_static" name="edit_vpn_crt_client1_static" cols="65" maxlength="3499"><% nvram_get("vpn_crt_client1_static"); %></textarea>
-												<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_client2_static" name="edit_vpn_crt_client2_static" cols="65" maxlength="3499"><% nvram_get("vpn_crt_client2_static"); %></textarea>
+												<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_client1_static" name="edit_vpn_crt_client1_static" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_client1_static"); %></textarea>
+												<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_client2_static" name="edit_vpn_crt_client2_static" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_client2_static"); %></textarea>
 											</td>
 										</tr>
 										<tr>
