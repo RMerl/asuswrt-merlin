@@ -1566,7 +1566,7 @@ void write_vpn_dnsmasq_config(FILE* f)
 					while( !feof(dnsf) )
 					{
 						ch = fgetc(dnsf);
-						fputc(ch==EOF?'\n':ch, f);
+						fputc(ch==255?'\n':ch, f);
 					}
 
 					fclose(dnsf);
@@ -1607,7 +1607,7 @@ int write_vpn_resolv(FILE* f)
 			while( !feof(dnsf) )
 			{
 				ch = fgetc(dnsf);
-				fputc(ch==EOF?'\n':ch, f);
+				fputc(ch==255?'\n':ch, f);
 			}
 
 			fclose(dnsf);
