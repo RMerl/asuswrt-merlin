@@ -1,8 +1,24 @@
+# This file is part of MiniDLNA.
+#
+# MiniDLNA is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# MiniDLNA is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public
+# License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with MiniDLNA; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+# USA.
 AC_INIT(MiniDLNA,1.1.0,,minidlna)
 #LT_INIT
 
 AC_CANONICAL_TARGET
-AM_INIT_AUTOMAKE(minidlna,1.1.0)
+AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
 AM_SILENT_RULES([yes])
 
@@ -83,24 +99,27 @@ esac
 AC_CHECK_HEADERS(syscall.h sys/syscall.h mach/mach_time.h)
 AC_MSG_CHECKING([for __NR_clock_gettime syscall])
 AC_COMPILE_IFELSE(
-     [AC_LANG_PROGRAM(
-         [
-             #include <asm/unistd.h>
-         ],
-         [
-             #ifndef __NR_clock_gettime
-             #error
-             #endif
-         ]
-     )],
-     [
-         AC_MSG_RESULT([yes])
-         AC_DEFINE([HAVE_CLOCK_GETTIME_SYSCALL], [1], [Whether the __NR_clock_gettime syscall is defined])
-     ],
-     [
-         AC_MSG_RESULT([no])
-         AC_SEARCH_LIBS([clock_gettime], [rt], [AC_DEFINE([HAVE_CLOCK_GETTIME], [1], [use clock_gettime])],)
-     ])
+    [AC_LANG_PROGRAM(
+        [
+            #include <asm/unistd.h>
+        ],
+        [
+            #ifndef __NR_clock_gettime
+            #error
+            #endif
+        ]
+    )],
+    [
+        AC_MSG_RESULT([yes])
+        AC_DEFINE([HAVE_CLOCK_GETTIME_SYSCALL], [1], [Whether the __NR_clock_gettime syscall is defined])
+    ],
+    [
+        AC_MSG_RESULT([no])
+        AC_SEARCH_LIBS([clock_gettime], [rt], [AC_DEFINE([HAVE_CLOCK_GETTIME], [1], [use clock_gettime])],)
+    ])
+
+AC_CHECK_HEADER(linux/netlink.h,
+    [AC_DEFINE([HAVE_NETLINK],[1],[Support for Linux netlink])])
 
 ################################################################################################################
 ### Library checks

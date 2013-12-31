@@ -149,6 +149,7 @@ static const struct brcmnand_ecc_size_s {
 	{10,	10, 	35},
 	{10,	11, 	39},
 	{10,	12, 	42},
+	{10,	40, 	70},
 };
 
 /*
@@ -770,16 +771,20 @@ struct mtd_partition brcmnand_parts[] = {
 };
 
 struct mtd_partition *
-init_brcmnand_mtd_partitions(struct mtd_info *mtd, size_t size)
+init_brcmnand_mtd_partitions(struct mtd_info *mtd, uint64_t size)
 {
 	int knldev;
-	int offset = 0;
+	uint64_t offset = 0;
 	struct nand_chip *chip = mtd->priv;
 	struct brcmnand_mtd *brcmnand = chip->priv;
 
 	knldev = soc_knl_dev((void *)brcmnand->sih);
 	if (knldev == SOC_KNLDEV_NANDFLASH)
-		offset = NFL_BOOT_OS_SIZE;
+		offset = nfl_boot_os_size(brcmnand->nfl);
+
+	/* Since JFFS2 still uses uint32 for size, hence we have to force the size < 4GB */
+	if (size >= ((uint64_t)4 << 30))
+		size = ((uint64_t)4 << 30) - mtd->erasesize;
 
 	ASSERT(size > offset);
 
@@ -802,8 +807,6 @@ brcmnand_mtd_init(void)
 	struct mtd_partition *parts;
 	int i;
 #endif
-	uint32 *offset;
-	uint32 reg, size, block, page, ecc_level;
 
 	printk(KERN_INFO "%s, Version %s (c) Broadcom Inc. 2012\n",
 		DRV_DESC, DRV_VERSION);

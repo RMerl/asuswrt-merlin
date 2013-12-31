@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: et_linux.c 414031 2013-07-23 10:54:51Z $
+ * $Id: et_linux.c 427480 2013-10-03 19:09:47Z $
  */
 
 #include <et_cfg.h>
@@ -161,6 +161,11 @@ static const struct ethtool_ops et_ethtool_ops =
 };
 #endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 36) */
 
+
+#ifdef ET_INGRESS_QOS
+#define TOSS_CAP	4
+#define PROC_CAP	4
+#endif /*ET_INGRESS_QOS*/
 
 MODULE_LICENSE("Proprietary");
 
@@ -314,7 +319,8 @@ static void _et_watchdog(struct net_device *data);
 static void et_watchdog(ulong data);
 static int et_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd);
 #ifdef ETFA
-static int et_fa_iovar(void *dev, void *par, int cmd);
+static int et_fa_default_cb(void *dev, ctf_ipc_t *ipc, bool v6, int cmd);
+static int et_fa_normal_cb(void *dev, ctf_ipc_t *ipc, bool v6, int cmd);
 #endif
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 20)
 static irqreturn_t et_isr(int irq, void *dev_id);
@@ -566,33 +572,46 @@ et_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	et_info_t *et;
 	osl_t *osh;
 	char name[128];
-	int i, unit = et_found, err;
+	int i, coreunit = et_found, err;
 #ifdef PLC
 	struct net_device *plc_dev = NULL;
 	int8 *var;
 #endif /* PLC */
+	/* Scan based on core unit.
+	  * Map core unit to nvram unit for FA, otherwise, core unit is equal to nvram unit
+	  */
+	int unit = coreunit;
 
-	ET_TRACE(("et%d: et_probe: bus %d slot %d func %d irq %d\n", unit,
+	ET_TRACE(("et core%d: et_probe: bus %d slot %d func %d irq %d\n", coreunit,
 	          pdev->bus->number, PCI_SLOT(pdev->devfn), PCI_FUNC(pdev->devfn), pdev->irq));
 
 	if (!etc_chipmatch(pdev->vendor, pdev->device))
 		return -ENODEV;
 
+	/* Map core unit to nvram unit for FA, otherwise, core unit is equal to nvram unit */
+	etc_unitmap(pdev->vendor, pdev->device, coreunit, &unit);
+
+	/* Advanced for next core unit */
 	et_found++;
 
+#ifdef ETFA
+	/* Get mac address from nvram */
+	if (fa_get_macaddr(si_kattach(SI_OSH), NULL, unit) == NULL) {
+		ET_ERROR(("et core%d: can not bind to et%d\n", coreunit, unit));
+		return -ENODEV;
+	}
+#else
 	/* pre-qualify et unit, that can save the effort to do et_detach */
 	sprintf(name, "et%dmacaddr", unit);
 	if (getvar(NULL, name) == NULL) {
 		ET_ERROR(("et%d: et%dmacaddr not found, ignore it\n", unit, unit));
-		return -ENODEV;
-	}
-
-#ifdef ETFA
-	if (fa_probe(si_kattach(SI_OSH), unit)) {
-		ET_ERROR(("et%d: fa_probe failed, ignore it\n", unit));
+		ET_ERROR(("et core%d: can not bind to et%d\n", coreunit, unit));
 		return -ENODEV;
 	}
 #endif /* ETFA */
+
+	/* Use ET_ERROR to print core unit to nvram unit mapping always */
+	ET_ERROR(("et core%d: bind to et%d\n", coreunit, unit));
 
 	osh = osl_attach(pdev, PCI_BUS, FALSE);
 	ASSERT(osh);
@@ -681,13 +700,22 @@ et_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 		skb_queue_head_init(&et->txq[i]);
 
 	/* common load-time initialization */
-	et->etc = etc_attach((void *)et, pdev->vendor, pdev->device, unit, osh, et->regsva);
+	et->etc = etc_attach((void *)et, pdev->vendor, pdev->device, coreunit, osh, et->regsva);
 	if (et->etc == NULL) {
 		ET_ERROR(("et%d: etc_attach() failed\n", unit));
 		goto fail;
 	}
 
+#ifdef ETFA
+	if (et->etc->fa)
+		fa_set_name(et->etc->fa, dev->name);
+#endif /* ETFA */
+
 #ifdef HNDCTF
+	/* Normally we do ctf_attach for each ethernet devices but here we have to ignore
+	 * the aux device which invoked by the FA.  Because the aux device is a FA auxiliary
+	 * device, the skb->dev for all the packets from aux will be change to FA dev later.
+	 */
 	if (CTF_CAPABLE_DEV(et)) {
 		et->cih = ctf_attach(osh, dev->name, &et_msg_level, et_ctf_detach, et);
 
@@ -698,7 +726,12 @@ et_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 
 #ifdef ETFA
 		if (FA_IS_FA_DEV((fa_t *)et->etc->fa)) {
-			ctf_fa_register(et->cih, et_fa_iovar, dev);
+			if (getintvar(NULL, "ctf_fa_mode") == CTF_FA_NORMAL) {
+				ctf_fa_register(et->cih, et_fa_normal_cb, dev);
+			}
+			else {
+				ctf_fa_register(et->cih, et_fa_default_cb, dev);
+			}
 		}
 #endif
 
@@ -810,11 +843,6 @@ et_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 36)
 	dev->ethtool_ops = &et_ethtool_ops;
 #endif
-
-#ifdef ETFA
-	if (et->etc->fa)
-		fa_set_name(et->etc->fa, dev->name);
-#endif /* ETFA */
 
 	if (register_netdev(dev)) {
 		ET_ERROR(("et%d: register_netdev() failed\n", unit));
@@ -1409,7 +1437,7 @@ et_sendnext(et_info_t *et)
 			 * to receive bcmhdr, add one.
 			 */
 			if (FA_TX_BCM_HDR((fa_t *)et->etc->fa))
-				skb = fa_process_tx(et->etc->fa, skb);
+				p = fa_process_tx(et->etc->fa, p);
 #endif /* ETFA */
 			(*etc->chops->tx)(etc->ch, p);
 			etc->txframe++;
@@ -1904,7 +1932,7 @@ et_get_stats(struct net_device *dev)
 	}
 
 	stats->rx_fifo_errors = etc->rxoflo;
-	stats->rx_over_errors = etc->rxoflo;
+	stats->rx_over_errors = etc->rxgiants;
 	stats->tx_fifo_errors = etc->txuflo;
 
 	if (locked)
@@ -2103,17 +2131,50 @@ et_sendup_chain(et_info_t *et, void *h)
 }
 #endif /* PKTC */
 
+#ifdef ET_INGRESS_QOS
+static inline bool
+et_discard_rx(et_info_t *et, struct chops *chops, void *ch, uint8 *evh, uint8 prio, uint16 toss, int quota)
+{
+	uint16 left;
+
+	/* Regardless of DMA RX discard policy ICMP and IGMP packets are passed */
+	if (IP_PROT46(evh + ETHERVLAN_HDR_LEN) != IP_PROT_IGMP \
+         && IP_PROT46(evh + ETHERVLAN_HDR_LEN) != IP_PROT_ICMP) {
+		ASSERT(chops->activerxbuf);
+		left = (*chops->activerxbuf)(ch);
+		if (left < et->etc->dma_rx_thresh && toss < (quota << TOSS_CAP)) {
+			if ((et->etc->dma_rx_policy == DMA_RX_POLICY_TOS && \
+				prio != IPV4_TOS_CRITICAL) || \
+				(et->etc->dma_rx_policy == DMA_RX_POLICY_UDP && \
+					IP_PROT46(evh + ETHERVLAN_HDR_LEN) != IP_PROT_UDP)){
+						/* post new rx bufs asap */
+						(*chops->rxfill)(ch);
+						/* discard the packet */
+						return TRUE;
+			}
+		}
+	}
+	return FALSE;
+}
+#endif /* ET_INGRESS_QOS */
+
 static inline int
 et_rxevent(osl_t *osh, et_info_t *et, struct chops *chops, void *ch, int quota)
 {
 	uint processed = 0;
 	void *p, *h = NULL, *t = NULL;
 	struct sk_buff *skb;
+	bool stop_chain = FALSE;
+#ifdef ET_INGRESS_QOS
+	uint16 left = NRXBUFPOST, toss = 0;
+#endif /* ET_INGRESS_QOS */
 #ifdef PKTC
 	pktc_data_t cd[PKTCMC] = {{0}};
 	uint8 *evh, prio;
 	int32 i = 0, cidx = 0;
-	bool chaining = PKTC_ENAB(et);
+	int32 dataoff = HWRXOFF;
+	bool chaining;
+	bool def_chaining = PKTC_ENAB(et);
 #ifdef USBAP
 	bool skip_check = SKIP_TCP_CTRL_CHECK(et);
 #endif /* USBAP */
@@ -2123,7 +2184,26 @@ et_rxevent(osl_t *osh, et_info_t *et, struct chops *chops, void *ch, int quota)
 	while ((p = (*chops->rx)(ch))) {
 #ifdef PKTC
 		ASSERT(PKTCLINK(p) == NULL);
-		evh = PKTDATA(et->osh, p) + HWRXOFF;
+
+		/* Each packets should have the chance for chaining */
+		chaining = def_chaining;
+
+#ifdef ETFA
+		/* Get BRCM HDR len if any */
+		if (FA_RX_BCM_HDR((fa_t *)et->etc->fa)) {
+			bcm_hdr_t bhdr;
+			bhdr.word = NTOH32(*((uint32 *)(PKTDATA(et->osh, p) + dataoff)));
+			if (bhdr.oc10.op_code == 0x2)
+				dataoff += 4;
+			else if (bhdr.oc10.op_code == 0x1)
+				dataoff += 8;
+		}
+
+		/* Don't chain FA AUX dev packets which are all TCP control packet */
+		chaining = (chaining && !FA_IS_AUX_DEV((fa_t *)et->etc->fa));
+#endif /* ETFA */
+
+		evh = PKTDATA(et->osh, p) + dataoff;
 		prio = IP_TOS46(evh + ETHERVLAN_HDR_LEN) >> IPV4_TOS_PREC_SHIFT;
 		if (cd[0].h_da == NULL) {
 			cd[0].h_da = evh; cd[0].h_sa = evh + ETHER_ADDR_LEN;
@@ -2132,8 +2212,19 @@ et_rxevent(osl_t *osh, et_info_t *et, struct chops *chops, void *ch, int quota)
 
 #ifdef USBAP
 		/* Don't chain TCP control packet */
-		chaining = (PKTC_ENAB(et) && (skip_check || !PKT_IS_TCP_CTRL(et->osh, p)));
+		chaining = (chaining && (skip_check || !PKT_IS_TCP_CTRL(et->osh, p)));
 #endif /* USBAP */
+
+#ifdef ET_INGRESS_QOS
+		if (et->etc->dma_rx_policy) {
+			if (et_discard_rx(et, chops, ch, evh, prio, toss, quota)) {
+				/* toss the packet */
+				PKTFREE(et->osh, p, FALSE);
+				toss++;
+				continue;
+			}
+		}
+#endif /* ET_INGRESS_QOS */
 
 		/* if current frame doesn't match cached src/dest/prio or has err flags
 		 * set then stop chaining.
@@ -2168,7 +2259,7 @@ et_rxevent(osl_t *osh, et_info_t *et, struct chops *chops, void *ch, int quota)
 			chaining = (i < PKTCMC);
 		}
 
-		if (chaining) {
+		if (chaining && !stop_chain) {
 			PKTCENQTAIL(cd[i].chead, cd[i].ctail, p);
 			/* strip off rxhdr */
 			PKTPULL(et->osh, p, HWRXOFF);
@@ -2178,6 +2269,17 @@ et_rxevent(osl_t *osh, et_info_t *et, struct chops *chops, void *ch, int quota)
 
 			/* strip off crc32 */
 			PKTSETLEN(et->osh, p, PKTLEN(et->osh, p) - ETHER_CRC_LEN);
+
+#ifdef ETFA
+			/* Pull out BRCM HDR for each chaining packets. */
+			if (FA_RX_BCM_HDR((fa_t *)et->etc->fa)) {
+				fa_process_rx(et->etc->fa, p);
+			}
+			else {
+				PKTSETFAHIDX(p, BCM_FA_INVALID_IDX_VAL);
+			}
+#endif /* ETFA */
+
 #ifdef PLC
 			if (et_plc_pkt(et, evh)) {
 				if (et_plc_recv(et, p) == BCME_ERROR)
@@ -2200,6 +2302,8 @@ et_rxevent(osl_t *osh, et_info_t *et, struct chops *chops, void *ch, int quota)
 			PKTCINCRCNT(cd[i].chead);
 			PKTSETCHAINED(et->osh, p);
 			PKTCADDLEN(cd[i].chead, PKTLEN(et->osh, p));
+                        if (PKTCCNT(cd[i].chead) >= PKTCBND)
+	                        stop_chain = TRUE;
 		} else
 			PKTCENQTAIL(h, t, p);
 #else /* PKTC */
@@ -2212,11 +2316,30 @@ et_rxevent(osl_t *osh, et_info_t *et, struct chops *chops, void *ch, int quota)
 		}
 #endif /* PKTC */
 
-		/* we reached quota already */
-		if (++processed >= quota) {
-			/* reschedule et_dpc()/et_poll() */
-			et->resched = TRUE;
-			break;
+		processed++;
+#ifdef ET_INGRESS_QOS
+		if (et->etc->dma_rx_policy) {
+                        left = (*chops->activerxbuf)(ch);
+			/* Either we recovered or queued too many pkts or chain buffers are full */
+                        if (left + toss >= et->etc->dma_rx_thresh || \
+				processed > (quota << PROC_CAP) || stop_chain) {
+				/* we reached quota already */
+				if (processed >= quota) {
+					/* reschedule et_dpc()/et_poll() */
+					et->resched = TRUE;
+					break;
+				}
+			}
+		}
+		else
+#endif /*ET_INGRESS_QOS*/
+		{
+			/* we reached quota already */
+			if (processed >= quota) {
+				/* reschedule et_dpc()/et_poll() */
+				et->resched = TRUE;
+				break;
+			}
 		}
 	}
 
@@ -2251,7 +2374,6 @@ et_rxevent(osl_t *osh, et_info_t *et, struct chops *chops, void *ch, int quota)
 		et->etc->unchained++;
 		et_sendup(et, skb);
 	}
-
 	return (processed);
 }
 
@@ -2947,40 +3069,69 @@ et_fa_get_fa_dev(et_info_t *et)
 	return et->dev;
 }
 
+bool
+et_fa_dev_on(void *dev)
+{
+	if (dev == NULL)
+		return FALSE;
+
+	return ((struct net_device *)dev)->fa_on;
+}
+
+void
+et_fa_set_dev_on(et_info_t *et)
+{
+	et->dev->fa_on = TRUE;
+}
+
+/* Do nothing */
 static int
-et_fa_iovar(void *dev, void *par, int cmd)
+et_fa_default_cb(void *dev, ctf_ipc_t *ipc, bool v6, int cmd)
+{
+	return BCME_OK;
+}
+
+static int
+et_fa_normal_cb(void *dev, ctf_ipc_t *ipc, bool v6, int cmd)
 {
 	int error = BCME_OK;
 	et_info_t *et;
 
-	et = ET_INFO((struct net_device *)dev);
+	/* Validate the input params */
+	if (dev == NULL || ipc == NULL)
+		return BCME_ERROR;
 
+	et = ET_INFO((struct net_device *)dev);
 	switch (cmd) {
-		case FA_IOV_ADD_NAPT:
-			error = fa_napt_add(et->etc->fa, par);
+		case FA_CB_ADD_NAPT:
+			error = fa_napt_add(et->etc->fa, ipc, v6);
 			break;
-		case FA_IOV_DEL_NAPT:
-			error = fa_napt_del(et->etc->fa, par);
+		case FA_CB_DEL_NAPT:
+			error = fa_napt_del(et->etc->fa, ipc, v6);
 			break;
-		case FA_IOV_GET_LIVE:
-			fa_napt_live(et->etc->fa, par);
+		case FA_CB_GET_LIVE:
+			fa_napt_live(et->etc->fa, ipc, v6);
 			break;
-		case FA_IOV_CONNTRACK:
-			fa_conntrack(et->etc->fa, par);
+		case FA_CB_CONNTRACK:
+			fa_conntrack(et->etc->fa, ipc, v6);
 			break;
 	}
 
 	return error;
 }
 
-void
+void *
 et_fa_fs_create(void)
 {
 #ifdef CONFIG_PROC_FS
-	struct proc_dir_entry *proc_fa;
+	struct proc_dir_entry *proc_fa = NULL;
 
 	if ((proc_fa = create_proc_entry("fa", 0, NULL)))
 		proc_fa->read_proc = fa_read_proc;
+
+	return proc_fa;
+#else
+	return NULL;
 #endif /* CONFIG_PROC_FS */
 }
 

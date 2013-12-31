@@ -659,7 +659,7 @@ function submitenter(myfield,e)
 			<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,3);"><#HSDPAConfig_private_apn_itemname#></a></th>
       <td>
       	<input id="modem_apn" name="modem_apn" class="input_20_table" type="text" value=""/>
-     		<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="display:none;position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="Select the device name of DHCP clients." onmouseover="over_var=1;" onmouseout="over_var=0;">
+     		<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="display:none;position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="<#select_device_name#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
 				<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
 			</td>
 		</tr>
@@ -675,7 +675,7 @@ function submitenter(myfield,e)
 			<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,2);"><#PIN_code#></a></th>
 			<td>
 				<input id="modem_pincode" name="modem_pincode" class="input_20_table" type="password" autocapitalization="off" maxLength="8" value="<% nvram_get("modem_pincode"); %>"/>
-				<br><span id="pincode_status" style="display:none;">There's something wrong with the PIN code. Please correct the PIN code and re-plug in the USB modem. If the error is still existed, please turn off the PIN code with the SIM card and try again.</span>
+				<br><span id="pincode_status" style="display:none;"><#pincode_wrong#></span>
 			</td>
 		</tr>
                           

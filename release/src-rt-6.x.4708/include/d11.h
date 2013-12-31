@@ -10,7 +10,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: d11.h 414400 2013-07-24 18:42:20Z $
+ * $Id: d11.h 427773 2013-10-04 19:53:12Z $
  */
 
 #ifndef	_D11_H
@@ -1619,6 +1619,7 @@ BWL_PRE_PACKED_STRUCT struct tx_status {
 #define	TX_STATUS_ACK_RCV	(1 << 1)	/* ACK received */
 #define	TX_STATUS_VALID		(1 << 0)	/* Tx status valid (corerev >= 5) */
 #define	TX_STATUS_NO_ACK	0
+#define TX_STATUS_BE		(TX_STATUS_ACK_RCV | TX_STATUS_PMINDCTD)
 
 /* status field bit definitions phy rev > 40 */
 #define TX_STATUS40_FIRST		0x0002
@@ -1652,6 +1653,10 @@ BWL_PRE_PACKED_STRUCT struct tx_status {
 #define TX_STATUS40_TX_MEDIUM_DELAY(txs)    ((txs)->status.s8 & TX_STATUS40_MEDIUM_DELAY_MASK)
 
 /* chip rev 40 pkg 2 fields */
+#define TX_STATUS40_IMPBF_MASK		0x0000000C /* implicit bf applied */
+#define TX_STATUS40_IMPBF_BAD_MASK	0x00000010 /* impl bf applied but acked frame has no bfm */
+#define TX_STATUS40_IMPBF_LOW_MASK	0x00000020 /* ack received with low rssi */
+
 #define TX_STATUS40_RTS_RTX_MASK	0x00ff0000
 #define TX_STATUS40_RTS_RTX_SHIFT	16
 #define TX_STATUS40_CTS_RRX_MASK	0xff000000
@@ -1730,16 +1735,7 @@ enum  {
 #define AMT_IDX_MAC		63      /* device MAC */
 #define AMT_IDX_BSSID		62      /* BSSID match */
 #define AMT_IDX_MCAST_ADDR	61	/* MCAST address for Reliable Mcast feature */
-#ifdef WL_STA_MONITOR
-#define AMT_MAX_STA_MONITOR     1	/* Max STA(s) to monitor */
-#define AMT_MAXIDX_STA_MONITOR     60	/* AMT entry for STA to monitor */
-#define AMT_MAXIDX_P2P_USE	\
-	(AMT_MAXIDX_STA_MONITOR - AMT_MAX_STA_MONITOR)	/* Max P2P entry to use */
-#else
-#define AMT_MAX_STA_MONITOR     0
-#define AMT_MAXIDX_STA_MONITOR  0
 #define AMT_MAXIDX_P2P_USE	60	/* Max P2P entry to use */
-#endif /* WL_STA_MONITOR */
 
 #define AMT_MAX_TXBF_ENTRIES	7	/* Max tx beamforming entry */
 /* PSTA AWARE AP: Max PSTA Tx beamforming entry */
@@ -1799,6 +1795,7 @@ enum  {
 #define	SKL_INDEX_SHIFT		4
 #define	SKL_GRP_ALGO_MASK	0x1c00
 #define	SKL_GRP_ALGO_SHIFT	10
+#define	SKL_STAMON_NBIT		(1 << 15) /* STA monitor bit */
 
 /* additional bits defined for IBSS group key support */
 #define	SKL_IBSS_INDEX_MASK	0x01F0
@@ -1942,12 +1939,6 @@ enum  {
 #define M_TXPWR_MAX		(0x014 * 2)
 #define M_TXPWR_CUR		(0x019 * 2)
 
-/* elna bypas based on w1 OR RSSI */
-#define M_HIRSSI_THR            (0x019 * 2)
-#define M_PHYREG_WRSSI          (0xc0 * 2)
-#define M_WRSSI_THR             (0xc1 * 2)
-#define M_HIRSSI_FLAG           (0xc2 * 2)
-
 /* Rx-related parameters */
 #define	M_RX_PAD_DATA_OFFSET	(0x01a * 2)
 
@@ -1980,7 +1971,7 @@ enum  {
 #define	M_PRB_RESP_FRM_LEN	(0x025 * 2)
 #define	M_PRS_MAXTIME		(0x03a * 2)
 #define	M_SSID			(0xb0 * 2)
-#define	M_CTXPRS_BLK		(0xc0 * 2)
+#define	M_CTXPRS_BLK		(0xc0 * 2)     /* obselete in corerev >= 40 */
 #define	C_CTX_PCTLWD_POS	(0x4 * 2)
 
 
@@ -2306,10 +2297,11 @@ BWL_PRE_PACKED_STRUCT struct shm_acparams {
 #define	MHF1_TIMBC_EN		0x1000		/* Enable Target TIM Transmission Time function */
 #define MHF1_RADARWAR		0x2000
 #define MHF1_DEFKEYVALID	0x4000		/* Enable use of the default keys */
-#define	MHF1_UNUSED		0x8000
+#define	MHF1_CTS2SELF		0x8000		/* Enable CTS to self full phy bw protection */
 
 /* Definition changed in corerev >= 40 */
-#define	MHF1_D11AC_DYNBW		0x0001		/* dynamic bw */
+#define	MHF1_D11AC_DYNBW	0x0001		/* dynamic bw */
+#define MHF2_RSPBW20		0x0020		/* Uses bw20 for response frames ack/ba/cts */
 
 /* Flags in M_HOST_FLAGS2 */
 #define MHF2_DISABLE_PRB_RESP	0x0001		/* disable Probe Response in ucode */
@@ -2646,15 +2638,17 @@ enum prxs_subband_bphy {
 #define M_CCA_FLAGS	(0x9b7 * 2)
 
 /* PSM SHM variable offsets */
-#define	M_PSM_SOFT_REGS	0x0
-#define	M_BOM_REV_MAJOR	(M_PSM_SOFT_REGS + 0x0)
-#define	M_BOM_REV_MINOR	(M_PSM_SOFT_REGS + 0x2)
-#define	M_UCODE_DATE	(M_PSM_SOFT_REGS + 0x4)		/* 4:4:8 year:month:day format */
-#define	M_UCODE_TIME	(M_PSM_SOFT_REGS + 0x6)		/* 5:6:5 hour:min:sec format */
-#define M_SHM_BYT_CNT	(M_PSM_SOFT_REGS + (0x0a * 2))
-#define	M_UCODE_DBGST	(M_PSM_SOFT_REGS + 0x40)	/* ucode debug status code */
-#define	M_UCODE_MACSTAT	(M_PSM_SOFT_REGS + 0xE0)	/* macstat counters */
-#define M_UCODE_BSSBCNCNT (M_UCODE_MACSTAT + 0x4e)	/* rxbeaconmbss */
+#define	M_PSM_SOFT_REGS		0x0
+#define M_PSM_SOFT_REGS_EXT	(0xc0*2)  /* corerev >= 40 only */
+#define	M_BOM_REV_MAJOR		(M_PSM_SOFT_REGS + 0x0)
+#define	M_BOM_REV_MINOR		(M_PSM_SOFT_REGS + 0x2)
+#define	M_UCODE_DATE		(M_PSM_SOFT_REGS + 0x4)		/* 4:4:8 year:month:day format */
+#define	M_UCODE_TIME		(M_PSM_SOFT_REGS + 0x6)		/* 5:6:5 hour:min:sec format */
+#define M_SHM_BYT_CNT		(M_PSM_SOFT_REGS + (0x0a * 2))
+#define	M_UCODE_DBGST		(M_PSM_SOFT_REGS + 0x40)	/* ucode debug status code */
+#define	M_UCODE_MACSTAT		(M_PSM_SOFT_REGS + 0xE0)	/* macstat counters */
+#define	M_UCODE_MACSTAT1	(0x3d8*2)	/* macstat1 counters : corerev >= 40 only */
+#define M_UCODE_BSSBCNCNT	(M_UCODE_MACSTAT + 0x4e)	/* rxbeaconmbss */
 
 #define M_AGING_THRSH	(0x3e * 2)			/* max time waiting for medium before tx */
 #define	M_MBURST_SIZE	(0x40 * 2)			/* max frames in a frameburst */
@@ -2676,6 +2670,8 @@ enum prxs_subband_bphy {
 #define M_BTCX_PROT_RSSI_THRESH		(73 * 2)
 #define M_BTCX_AMPDUTX_RSSI_THRESH	(74 * 2)
 #define M_BTCX_AMPDURX_RSSI_THRESH	(75 * 2)
+#define M_BTCX_WARS		(82 * 2)
+#define M_BTCX_SNIFF_LO_THRESHOLD		(84 * 2)
 #define M_BTCX_DIVERSITY_SAVE		(89 * 2)
 /* the threshold to switch to btc_mode 4 simulteneous coex */
 #define M_BTCX_HIGH_THRESH          (100 * 2)
@@ -2748,8 +2744,10 @@ enum prxs_subband_bphy {
 #define P2P_ADDR_STRT_INDX	(RCMTA_SIZE - M_ADDR_BMP_BLK_SZ)
 
 /* WiFi P2P per BSS control block positions.
- * all time related fields are in units of 32us unless noted otherwise.
+ * all time related fields are in units of 128us unless noted otherwise.
  */
+#define P2P_UCODE_TIME_SHIFT 7
+
 #define M_P2P_BSS_BLK_SZ	12
 #define M_P2P_BSS_BLK(b)	((0x1d * 2) + (M_P2P_BSS_BLK_SZ * (b) * 2))
 #define M_P2P_BSS(b, p)		(M_P2P_BSS_BLK(b) + (p) * 2)
@@ -2763,7 +2761,7 @@ enum prxs_subband_bphy {
 #define M_P2P_BSS_N_NOA(b)	(M_P2P_BSS_BLK(b) + (7 * 2))	/* next absence time */
 #define M_P2P_BSS_NOA_DUR(b)	(M_P2P_BSS_BLK(b) + (8 * 2))	/* absence period */
 #define M_P2P_BSS_NOA_TD(b)	(M_P2P_BSS_BLK(b) + (9 * 2))	/* presence period (int - dur) */
-#define M_P2P_BSS_NOA_OFS(b)	(M_P2P_BSS_BLK(b) + (10 * 2))	/* last 5 bits of interval in us */
+#define M_P2P_BSS_NOA_OFS(b)	(M_P2P_BSS_BLK(b) + (10 * 2))	/* last 7 bits of interval in us */
 #define M_P2P_BSS_DTIM_CNT(b)	(M_P2P_BSS_BLK(b) + (11 * 2))	/* DTIM count */
 
 /* M_P2P_BSS_ST word positions. */
@@ -2795,10 +2793,10 @@ enum prxs_subband_bphy {
 #define M_P2P_BSS_INDEX_SHIFT_BITS      (8)
 
 /* per BSS PreTBTT */
-/* Bits 21 to 31 of NXT_PRETBTT time in us (per BSS) */
 #define M_P2P_BSS_PRE_TBTT(b)       ((0x5f * 2) + ((b) * 2))        /* in us */
 #endif /* WLP2P_UCODE */
 
+#define ADDR_STAMON_NBIT	(1 << 10) /* STA monitor bit in AMT_INFO_BLK entity */
 
 #ifdef WLP2P_UCODE
 /* Reserve bottom of RCMTA for P2P Addresses */
@@ -3058,6 +3056,38 @@ typedef struct macstat {
 	uint16  rxtoolate;
 	uint16  bphy_badplcp;           /* bphy bad plcp */
 } macstat_t;
+
+/* ucode mac statistic counters in shared memory, base addr defined in M_UCODE_MACSTAT1 */
+typedef struct macstat1 {
+	uint16 txndpa;                  /* + 0 */
+	uint16 txndp;                   /* + 1*2 */
+	uint16 txsf;                    /* + 2*2 */
+	uint16 txcwrts;                 /* + 3*2 */
+	uint16 txcwcts;                 /* + 4*2 */
+	uint16 txbfm;                   /* + 5*2 */
+	uint16 rxndpaucast;             /* + 6*2 */
+	uint16 bferptrdy;               /* + 7*2 */
+	uint16 rxsfucast;               /* + 8*2 */
+	uint16 rxcwrtsucast;            /* + 9*2 */
+	uint16 rxcwctsucast;            /* +10*2 */
+	uint16 rtggrt;                  /* +11*2 */
+	uint16 rtgack;                  /* +12*2 */
+	uint16 btc_rfact_l;             /* +13*2 */
+	uint16 btc_rfact_h;             /* +14*2 */
+	uint16 btc_txconf_l;            /* +15*2 : cnt */
+	uint16 btc_txconf_h;            /* +16*2 : cnt */
+	uint16 btc_txconf_durl;         /* +17*2 : dur */
+	uint16 btc_txconf_durh;         /* +18*2 : dur */
+	uint16 rxsecrssi0;              /* +19*2 : high bin */
+	uint16 rxsecrssi1;              /* +20*2 : med bin */
+	uint16 rxsecrssi2;              /* +21*2 : low bin */
+	uint16 rxpri_durl;              /* +22*2 : dur */
+	uint16 rxpri_durh;              /* +23*2 : dur */
+	uint16 rxsec20_durl;            /* +24*2 : dur */
+	uint16 rxsec20_durh;            /* +25*2 : dur */
+	uint16 rxsec40_durl;            /* +26*2 : dur */
+	uint16 rxsec40_durh;            /* +27*2 : dur */
+} macstat1_t;
 
 /* dot11 core-specific control flags */
 #define	SICF_PCLKE		0x0004		/* PHY clock enable */
@@ -3689,6 +3719,9 @@ extern uint16 aes_xtime9dbe[512];
 #define D11_M_BCN_PCTLWD	M_BCN_PCTLWD
 #define D11_M_BCN_PCT1WD	M_BCN_PCTL1WD
 
+/* To adjust BCN and PRS power */
+#define D11_M_LCNXN_BLK_PTR	(M_PSM_SOFT_REGS +(71*2))
+
 #define D11AC_BCN_TXPCTL0	(0x66 * 2)
 #define D11AC_BCN_TXPCTL1	(0x67 * 2)
 #define D11AC_BCN_TXPCTL2	(0x68 * 2)
@@ -3744,8 +3777,6 @@ extern uint16 aes_xtime9dbe[512];
 #define C_BFI_BFRCTL_POS_NDP_TYPE_SHIFT	1	/* 0 HT NDP; 1 VHT NDP */
 #define C_BFI_BFRCTL_POS_MLBF_SHIFT	2	/* 1 enable MLBF */
 
-#define M_PSM2HOST_STATS_EXT		(0x3d8*2)
-
 /* dynamic rflo ucode WAR defines */
 #define UCODE_WAR_EN		1
 #define UCODE_WAR_DIS		0
@@ -3769,4 +3800,20 @@ extern uint16 aes_xtime9dbe[512];
 /* TIMBC offset value */
 #define M_TIMBC_OFFSET		(M_PSM_SOFT_REGS + (0x65 * 2))
 #define M_TIMBC_OFFSET_PRE40	(M_PSM_SOFT_REGS + (0x3f * 2))
+
+/* new interface block added for corerev >= 40 */
+/* elna bypas based on w1 OR RSSI */
+#define M_PHYREG_WRSSI		(M_PSM_SOFT_REGS_EXT + 0)
+#define M_WRSSI_THR		(M_PSM_SOFT_REGS_EXT + 0x2)
+#define M_HIRSSI_FLAG		(M_PSM_SOFT_REGS_EXT + 0x4)
+#define M_HIRSSI_THR		(M_PSM_SOFT_REGS_EXT + 0x6)
+#define M_RSVD_NOW		(M_PSM_SOFT_REGS_EXT + 0x8) /* currently used for prs in driver */
+#define M_SECRSSI0_MIN		(M_PSM_SOFT_REGS_EXT + 0xa) /* rx secondary rssi hi thresh */
+#define M_SECRSSI1_MIN		(M_PSM_SOFT_REGS_EXT + 0xc) /* rx secondary rssi med thresh */
+#define M_RSPBW20_RSSI		(M_PSM_SOFT_REGS_EXT + 0xe) /* rssi thresh for rspbw20 */
+
+/* RFLDO ON setting */
+#define M_RFLDO_ON_L		(0x17e * 2)
+#define M_RFLDO_ON_H		(0x17f * 2)
+
 #endif	/* _D11_H */

@@ -84,7 +84,6 @@ function initial(){
 	}
 
 	gen_mainTable();
-	$('pull_arrow').title = Untranslated.select_client;  //temp, untranslated string
 	showLANIPList();
 	if(<% nvram_get("MULTIFILTER_ALL"); %>)
 		showhide("list_table",1);
@@ -156,11 +155,11 @@ function gen_mainTable(){
 	code +='<th width="40%"><#ParentalCtrl_username#></th>';
 	code +='<th width="25%"><#ParentalCtrl_hwaddr#></th>';
 	code +='<th width="10%"><#ParentalCtrl_time#></th>';
-	code +='<th width="10%">Add / Delete</th></tr>';
+	code +='<th width="10%"><#list_add_delete#></th></tr>';
 
 	code +='<tr><td style="border-bottom:2px solid #000;" title="<#WLANConfig11b_WirelessCtrl_button1name#>/<#btn_disable#>"><input type=\"checkbox\" id="newrule_Enable" checked></td>';
 	code +='<td style="border-bottom:2px solid #000;"><input type="text" maxlength="32" style="margin-left:10px;float:left;width:255px;" class="input_20_table" name="PC_devicename" onKeyPress="" onClick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}">';
-	code +='<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="" onmouseover="over_var=1;" onmouseout="over_var=0;">';
+	code +='<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="<#select_client#>" onmouseover="over_var=1;" onmouseout="over_var=0;">';
 	code +='<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div></td>';
 	code +='<td style="border-bottom:2px solid #000;"><input type="text" maxlength="17" class="input_macaddr_table" name="PC_mac" onKeyPress="return is_hwaddr(this,event)"></td>';
 	code +='<td style="border-bottom:2px solid #000;">--</td>';
@@ -335,7 +334,7 @@ function gen_lantowanTable(client){
 
 	if(ParentalCtrl2_support){
 		code +='<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="FormTable">';
-		code +='<thead><tr><td colspan="6" id="LWFilterList">Active schedule</td></tr></thead>';
+		code +='<thead><tr><td colspan="6" id="LWFilterList"><#ParentalCtrl_Act_schedule#></td></tr></thead>';
 
 		code +='<tr>';
 		code +='<th style="width:40%;height:20px;" align="right"><#ParentalCtrl_username#></th>';	
@@ -350,7 +349,7 @@ function gen_lantowanTable(client){
 	else
 		code +='<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="FormTable">';
 
-	code +='<thead><tr><td colspan="6" id="LWFilterList">Active schedule</td></tr></thead>';
+	code +='<thead><tr><td colspan="6" id="LWFilterList"><#ParentalCtrl_Act_schedule#></td></tr></thead>';
 	code +='<tr>';
 	code +='<th width="40%" height="30px;" align="right"><#ParentalCtrl_username#></th>';
 	if(MULTIFILTER_DEVICENAME_row[client] != "")
@@ -383,7 +382,7 @@ function gen_lantowanTable(client){
 	code +='<th width="35%"><#BM_UserList1#></th>';
 	code +='<th width="30%"><#FirewallConfig_LanWanSrcPort_itemname#></th>';
 	code +='<th width="20%"><#IPConnection_VServerProto_itemname#></th>';
-	code +='<th width="10%">Add / Delete</th></tr>';
+	code +='<th width="10%"><#list_add_delete#></th></tr>';
 	code +='<tr><td style="border-bottom:2px solid #666;"><input type=\"checkbox\" id="newrule_lantowan_Enable" checked></td>';
 	code +='<td style="border-bottom:2px solid #666;"><input type="text" maxlength="32" name="lantowan_service" onKeyPress="return is_string(this, event)"></td>';
 	code +='<td style="border-bottom:2px solid #666;"><input type="text" maxlength="32" name="lantowan_port" onKeyPress="return is_string(this, event)"></td>';
@@ -744,7 +743,6 @@ function deleteRow_lantowan(r, client){
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
 <input type="hidden" name="current_page" value="ParentalControl.asp">
 <input type="hidden" name="next_page" value="">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_wait" value="5">
 <input type="hidden" name="action_mode" value="apply">
@@ -802,7 +800,7 @@ function deleteRow_lantowan(r, client){
 								<!--span onclick="location.href='#';document.body.style.overflow='hidden';document.getElementById('ParentalCtrlHelp').style.display='';">Click to open tutorial video.</span-->
 							</li>
 						</ol>
-						<ol style="color:#FC0;margin:-5px 0px 3px -18px;*margin-left:18px;">Note: Default is to limit access to use on all time bucket.</ol>
+						<ol style="color:#FC0;margin:-5px 0px 3px -18px;*margin-left:18px;"><#ParentalCtrl_default#></ol>
 					</td>
 				</tr>
 			</table>

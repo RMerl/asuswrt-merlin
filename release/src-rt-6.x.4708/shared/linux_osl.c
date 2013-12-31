@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: linux_osl.c 409212 2013-06-24 11:09:04Z $
+ * $Id: linux_osl.c 425475 2013-09-24 09:36:55Z $
  */
 
 #define LINUX_PORT
@@ -511,6 +511,10 @@ osl_pktfastget(osl_t *osh, uint len)
 	}
 
 	ASSERT(len <= osh->ctfpool->obj_size);
+	if (len > osh->ctfpool->obj_size) {
+		CTFPOOL_UNLOCK(osh->ctfpool, flags);
+		return NULL;
+	}
 
 	/* Get an object from ctfpool */
 	skb = (struct sk_buff *)osh->ctfpool->head;

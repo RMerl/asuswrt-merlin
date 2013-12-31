@@ -57,8 +57,7 @@ function initial(){
 		$('FormTitle').style.BorderRadius = "3px";	
 	}
 	
-	gen_mainTable();
-	$('pull_arrow').title = Untranslated.select_client;  //temp, untranslated string
+	gen_mainTable();	
 	showLANIPList();
 
 	// yadns_enable_x 0: disable, 1: enable, show mainTable & Protection level when enable,	otherwise hide it
@@ -137,10 +136,10 @@ function gen_mainTable(){
 	code +='<tr><th width="40%"><#ParentalCtrl_username#></th>';
 	code +='<th width="20%"><#ParentalCtrl_hwaddr#></th>';
 	code +='<th width="15%"><#YandexDNS_mode#></th>';
-	code +='<th width="10%">Add / Delete</th></tr>';
+	code +='<th width="10%"><#list_add_delete#></th></tr>';
 
 	code +='<tr><td style="border-bottom:2px solid #000;"><input type="text" maxlength="32" style="margin-left:10px;float:left;width:255px;" class="input_20_table" name="rule_devname" onKeyPress="" onClick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}">';
-	code +='<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="" onmouseover="over_var=1;" onmouseout="over_var=0;">';
+	code +='<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="<#select_client#>" onmouseover="over_var=1;" onmouseout="over_var=0;">';
 	code +='<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div></td>';
 	code +='<td style="border-bottom:2px solid #000;"><input type="text" maxlength="17" class="input_macaddr_table" name="rule_mac" onKeyPress="return is_hwaddr(this,event)"></td>';
 	code +='<td style="border-bottom:2px solid #000;">'+gen_modeselect("rule_mode", "-1", "")+'</td>';
@@ -313,7 +312,6 @@ function changeRow_main(r){
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
 <input type="hidden" name="current_page" value="YandexDNS.asp">
 <input type="hidden" name="next_page" value="">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_wait" value="5">
 <input type="hidden" name="action_mode" value="apply">
@@ -355,7 +353,11 @@ function changeRow_main(r){
 					</td>
 					<td>&nbsp;&nbsp;</td>
 					<td style="font-style: italic;font-size: 14px;">
-						<span><#YandexDNS_desc#></span>
+						<div>
+						<#YandexDNS_desc#><br>
+						<#YandexDNS_mode1#>: <#YandexDNS_desc1#><br>
+						<#YandexDNS_mode2#>: <#YandexDNS_desc2#>
+						</div>
 						<p>
 						<a target="_blank" style="font-weight: bolder; cursor:pointer;text-decoration: underline;" href="http://dns.yandex.ru"><#YandexDNS#> FAQ</a>
 					</td>

@@ -562,7 +562,8 @@ function QKfinish_load_body(){
 	$("#account_item")[0].innerHTML = "<#QIS_finish_admin_item1#>";
 	$("#account")[0].innerHTML = '<% nvram_get("http_username"); %>';
 	$("#password_item")[0].innerHTML = "<#QIS_finish_admin_item2#>";
-	$("#password")[0].innerHTML = '<% nvram_get("http_passwd"); %>';
+	var http_password = decodeURIComponent('<% nvram_char_to_ascii("", "http_passwd"); %>');
+ 	$("#password")[0].innerHTML = http_password;
 	
 	//NTP sync or not
 	if(parent.svc_ready == "0")
@@ -891,7 +892,7 @@ function showclock(){
 			<div id="wanip_m"></div>
 		</div>
 		<div class="row_end">
-			<label>WAN Type</label>
+			<label><#wan_type#></label>
 			<div id="wantype_m"></div>
 		</div>
 	</fieldset>
@@ -971,9 +972,7 @@ function showclock(){
   <div id="newFWCancel" style="display:none;">
       <div class="QISGeneralFont" style="margin-top:5px;text-align:center;font-size:18px;">
           <div style="text-align:left;line-height: 25px;">
-              New firmware download has been stopped. You may go to ASUSWRT > 
-              Administration > Firmware Upgrade to check for new firmware and 
-              install any time.
+              <#newFW_cancel#>
           </div>
       </div>
       <br>

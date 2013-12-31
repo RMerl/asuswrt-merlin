@@ -702,10 +702,12 @@ function show_invitation(share_link_url){
 function show_captcha_style(captcha){		// captcha display style
 	if( $('captcha_rule').value == 2){  
 		var graph_content = "";
+		graph_content = "Security code: ";
 		for(i=0;i<4;i++){
-			graph_content += '<img style="height:30px;" src="/images/cloudsync/captcha/'+captcha[i]+'.jpg">';
+			graph_content += '<img style="height:30px;" src="/images/cloudsync/captcha/'+captcha.charAt(i)+'.jpg">';
 		}
-		$('invite_captcha').innerHTML = "Security code: "+graph_content;
+
+		$('invite_captcha').innerHTML = graph_content;
 	}
 	else if( $('captcha_rule').value == 0)
 		$('invite_captcha').innerHTML = "Security code: None";
@@ -913,7 +915,9 @@ function show_view_info(obj_id){
 
 function appendMailTo(){
 	var mailtoCode = '<a href="mailto:?subject=Router%20Sync%20Invitation&body=';
-	mailtoCode += "Hi,%0D%0A%0D%0A"; 
+	mailtoCode += "Hi,%0D%0A"; 
+	mailtoCode += "lets share our files with smart sync!"; 
+	mailtoCode += "%0D%0A%0D%0A"; 
 	mailtoCode += $('invite_desc').innerHTML.replace(/ /g, "%20") + "%0D%0A"; 
 	mailtoCode += "Sync%20path:%20" + $('invite_path').innerHTML.replace(/ /g, "%20") + "%0D%0A"; 
 	mailtoCode += $('invite_rule').innerHTML.replace(/ /g, "%20") + "%0D%0A%0D%0A"; 

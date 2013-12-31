@@ -267,7 +267,8 @@ make_dir(char * path, mode_t mode)
 		if (mkdir(path, mode) < 0) {
 			/* If we failed for any other reason than the directory
 			 * already exists, output a diagnostic and return -1.*/
-			if (errno != EEXIST || (stat(path, &st) < 0 || !S_ISDIR(st.st_mode))) {
+			if ((errno != EEXIST && errno != EISDIR)
+			    || (stat(path, &st) < 0 || !S_ISDIR(st.st_mode))) {
 				DPRINTF(E_WARN, L_GENERAL, "make_dir: cannot create directory '%s'\n", path);
 				if (c)
 					*s = c;

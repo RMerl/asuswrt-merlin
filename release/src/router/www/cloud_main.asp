@@ -35,7 +35,6 @@ wan_proto = '<% nvram_get("wan_proto"); %>';
 
 <% apps_action(); %> //trigger apps_action.
 
-var cloud_sync = '<% nvram_get("cloud_sync"); %>';
 var cloud_status;
 window.onresize = cal_agreement_block;
 var curState = '<% nvram_get("webdav_aidisk"); %>';

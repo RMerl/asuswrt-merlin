@@ -262,7 +262,6 @@ function cal_panel_block(obj_id){
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
 <input type="hidden" name="current_page" value="Advanced_TimeMachine.asp">
 <input type="hidden" name="next_page" value="Advanced_TimeMachine.asp">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="restart_timemachine">
@@ -320,9 +319,9 @@ function cal_panel_block(obj_id){
 								1. Enable Time machine.<br>
 								2. Select a target disk partition. <br>
 								3. Set usage limitation if you want and click [Apply]. <br>
-								4. Start to backup (<a href="http://support.apple.com/kb/HT1427" target="_blank" style="text-decoration:underline;">How to use APPLE Time Machine?</a>).<br>
+								4. Start to backup (<a href="http://www.asus.com/support/Knowledge-Detail/11/2/RTAC68U/3FEED048-5AC2-4B97-ABAE-DE609DDBC151/" target="_blank" style="text-decoration:underline;">How to use APPLE Time Machine?</a>).<br>
 								5. <a href="https://www.youtube.com/watch?v=Bc3oYW1cmcQ" target="_blank" style="text-decoration:underline;">Time Machine tutorial</a>.<br>
-								6. <a href="http://support.asus.com/Search.aspx?SLanguage=en&keyword=Time%20Machine" target="_blank" style="text-decoration:underline;">Time Machine FAQ</a>.<br>
+								6. <a href="http://www.asus.com/support/Knowledge-Detail/11/2/RTAC68U/25DFAE22-873C-4796-91C4-5CF1F08A2064/" target="_blank" style="text-decoration:underline;">Time Machine FAQ</a>.<br>
 								<span style="color:#FC0">
 									* We recommend you use an Ethernet connection for the initial backup. <br>
 									* Initial backup may take a while depending on the size of your OSX volume. Consider starting the first backup in

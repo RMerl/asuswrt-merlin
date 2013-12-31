@@ -93,9 +93,7 @@ var dhcp_dns1_curr = '<% nvram_get("dhcp_dns1_x"); %>';
 var dhcp_wins_curr = '<% nvram_get("dhcp_wins_x"); %>';
 
 function initial(){
-	$('pull_arrow').title = Untranslated.select_MAC;
 	show_menu();
-	load_body();
 	//Viz 2011.10{ for LAN ip in DHCP pool or Static list
 	showtext($("LANIP"), '<% nvram_get("lan_ipaddr"); %>');
 	if((inet_network(document.form.lan_ipaddr.value)>=inet_network(document.form.dhcp_start.value))&&(inet_network(document.form.lan_ipaddr.value)<=inet_network(document.form.dhcp_end.value))){
@@ -519,10 +517,8 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
 
 <form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
-
 <input type="hidden" name="current_page" value="Advanced_DHCP_Content.asp">
 <input type="hidden" name="next_page" value="Advanced_GWStaticRoute_Content.asp">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply_new">
 <input type="hidden" name="action_wait" value="30">
@@ -530,7 +526,6 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
 <input type="hidden" name="first_time" value="">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
-
 <input type="hidden" name="lan_ipaddr" value="<% nvram_get("lan_ipaddr"); %>">
 <input type="hidden" name="lan_netmask" value="<% nvram_get("lan_netmask"); %>">
 <input type="hidden" name="dhcp_staticlist" value="">
@@ -673,13 +668,13 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
 		  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);"><#MAC_Address#></a></th>
         		<th><#IPConnection_ExternalIPAddress_itemname#></th>
 			<th>Name</th>
-        		<th>Add / Delete</th>
+        		<th><#list_add_delete#></th>
 			  	</tr>			  
 			  	<tr>
 				<!-- client info -->
             			<td width="27%">
 					<input type="text" class="input_20_table" maxlength="17" name="dhcp_staticmac_x_0" style="margin-left:-12px;width:170px;" onKeyPress="return is_hwaddr(this,event)" onClick="hideClients_Block();">
-					<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;" onclick="pullLANIPList(this);" title="" onmouseover="over_var=1;" onmouseout="over_var=0;">
+					<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;" onclick="pullLANIPList(this);" title="<#select_MAC#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
 					<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
 				</td>
             			<td width="27%">

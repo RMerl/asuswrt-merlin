@@ -197,7 +197,7 @@ int add_multi_routes(void)
 	char wan_if[32], wan_ip[32], wan_gate[32];
 	char cmd[2048];
 #ifdef RTCONFIG_DUALWAN
-	int gate_num, wan_weight, table;
+	int gate_num = 0, wan_weight, table;
 	char cmd2[2048], *ptr;
 	char wan_dns[1024];
 	char wan_multi_if[WAN_UNIT_MAX][32], wan_multi_gate[WAN_UNIT_MAX][32];
@@ -912,14 +912,14 @@ static int start_ipoa()
 	FILE* fp_dsl_mac;
 	FILE* fp_log;	
 	
-    int NeighborIpNum;
-    int i;
-    int NeiBaseIpNum;
-    int LastIpNum;
-    int NetMaskLastIpNum;
-    char NeighborIpPrefix[32];
-    int ip_addr_dot_cnt;
-	char CmdBuf[128];   
+	int NeighborIpNum;
+	int i;
+	int NeiBaseIpNum;
+	int LastIpNum;
+	int NetMaskLastIpNum;
+	char NeighborIpPrefix[32];
+	int ip_addr_dot_cnt;
+	char CmdBuf[128];
 
 	// mac address is adsl mac
 	for (try_cnt = 0; try_cnt < 10; try_cnt++)
@@ -948,41 +948,40 @@ static int start_ipoa()
 		strcpy(ip_mask, nvram_safe_get("wan0_netmask"));		
 	}
 #else
-    strcpy(ip_gateway, nvram_safe_get("wan0_gateway"));
-    strcpy(ip_addr, nvram_safe_get("wan0_ipaddr"));
-    strcpy(ip_mask, nvram_safe_get("wan0_netmask"));
-#endif    
-    
+	strcpy(ip_gateway, nvram_safe_get("wan0_gateway"));
+	strcpy(ip_addr, nvram_safe_get("wan0_ipaddr"));
+	strcpy(ip_mask, nvram_safe_get("wan0_netmask"));
+#endif
 
-    // we only support maximum 256 neighbor host
-    if (strncmp("255.255.255",ip_mask,11) != 0)
-    {
-        fp_log = fopen("/tmp/adsl/ipoa_too_many_neighbors.txt","w");
-        fputs("ErrorMsg",fp_log);
-        fclose(fp_log);
-        return -1;
-    }
+	// we only support maximum 256 neighbor host
+	if (strncmp("255.255.255",ip_mask,11) != 0)
+	{
+		fp_log = fopen("/tmp/adsl/ipoa_too_many_neighbors.txt","w");
+		fputs("ErrorMsg",fp_log);
+		fclose(fp_log);
+		return -1;
+	}
 
 //
 // do not send arp to neighborhood and gateway
 //
 
-    ip_addr_dot_cnt = 0;
-    for (i=0; i<sizeof(NeighborIpPrefix); i++)
-    {
-        if (ip_addr[i] == '.')
-        {
-            ip_addr_dot_cnt++;
-            if (ip_addr_dot_cnt >= 3) break;
-        }
-        NeighborIpPrefix[i]=ip_addr[i];
-    }  
-    NeighborIpPrefix[i] = 0;
-    
-    LastIpNum = atoi(&ip_addr[i+1]);
-    NetMaskLastIpNum = atoi(&ip_mask[12]);
-    NeighborIpNum = ((~NetMaskLastIpNum) + 1)&0xff;
-    NeiBaseIpNum = LastIpNum & NetMaskLastIpNum;
+	ip_addr_dot_cnt = 0;
+	for (i=0; i<sizeof(NeighborIpPrefix); i++)
+	{
+		if (ip_addr[i] == '.')
+		{
+			ip_addr_dot_cnt++;
+			if (ip_addr_dot_cnt >= 3) break;
+		}
+		NeighborIpPrefix[i]=ip_addr[i];
+	}
+	NeighborIpPrefix[i] = 0;
+
+	LastIpNum = atoi(&ip_addr[i+1]);
+	NetMaskLastIpNum = atoi(&ip_mask[12]);
+	NeighborIpNum = ((~NetMaskLastIpNum) + 1)&0xff;
+	NeiBaseIpNum = LastIpNum & NetMaskLastIpNum;
 
 	//
 	// add gateway host
@@ -990,11 +989,11 @@ static int start_ipoa()
 	eval("arp","-i","br0","-a",ip_gateway,"-s",tc_mac);
 
 	// add neighbor hosts
-    for (i=0; i<NeighborIpNum; i++)
-    {
-    	sprintf(CmdBuf,"%s.%d",NeighborIpPrefix,i+NeiBaseIpNum);
-	    eval("arp","-i","br0","-a",CmdBuf,"-s",tc_mac);
-    }
+	for (i=0; i<NeighborIpNum; i++)
+	{
+		sprintf(CmdBuf,"%s.%d",NeighborIpPrefix,i+NeiBaseIpNum);
+		eval("arp","-i","br0","-a",CmdBuf,"-s",tc_mac);
+	}
 	
 	return 0;
 }
@@ -1059,7 +1058,7 @@ static int stop_ipoa()
 			if (ip_addr_dot_cnt >= 3) break;
 		}
 		NeighborIpPrefix[i]=ip_addr[i];
-	}  
+	}
 	NeighborIpPrefix[i] = 0;
 		
 	LastIpNum = atoi(&ip_addr[i+1]);
@@ -1098,7 +1097,8 @@ start_wan_if(int unit)
 	int s;
 	struct ifreq ifr;
 	pid_t pid;
-	int port_num, got_modem;
+	int port_num;
+	char port_path[8];
 	char nvram_name[32];
 	char word[PATH_MAX], *next;
 	int i = 0;
@@ -1123,12 +1123,7 @@ start_wan_if(int unit)
 #endif
 
 #ifdef RTCONFIG_USB_MODEM
-#ifdef RTCONFIG_DUALWAN
-	if(wan_type == WANS_DUALWAN_IF_USB)
-#else
-	if(unit == WAN_UNIT_SECOND)
-#endif
-	{
+	if (dualwan_unit__usbif(unit)) {
 		if(is_usb_modem_ready() != 1){
 cprintf("No USB Modem!\n");
 			return;
@@ -1304,25 +1299,17 @@ TRACE_PT("3g begin.\n");
 #endif
 
 				if(!nvram_match("stop_conn_3g", "1")){
-					got_modem = 0;
-					port_num = 1;
-					foreach(word, nvram_safe_get("ehci_ports"), next){
-						memset(nvram_name, 0, 32);
-						sprintf(nvram_name, "usb_path%d_act", port_num);
+					memset(port_path, 0, 8);
+					strncpy(port_path, nvram_safe_get("usb_modem_act_path"), 8);
 
-						if(!strcmp(nvram_safe_get(nvram_name), wan_ifname)){
-							got_modem = 1;
+					memset(nvram_name, 0, 32);
+					sprintf(nvram_name, "usb_path%s_act", port_path);
 
-							start_udhcpc(wan_ifname, unit, &pid);
-
-							break;
-						}
-
-						++port_num;
-					}
+					if(!strcmp(nvram_safe_get(nvram_name), wan_ifname))
+						start_udhcpc(wan_ifname, unit, &pid);
 
 #ifdef RTCONFIG_USB_BECEEM
-					if(!got_modem){
+					if(strlen(nvram_safe_get(nvram_name)) <= 0){
 						char buf[128];
 
 						memset(buf, 0, 128);
@@ -1363,15 +1350,7 @@ TRACE_PT("3g end.\n");
 	}
 	else
 #endif
-#ifdef RTCONFIG_DUALWAN
-	if(wan_type == WANS_DUALWAN_IF_WAN
-			|| wan_type == WANS_DUALWAN_IF_DSL
-			|| wan_type == WANS_DUALWAN_IF_LAN
-			)
-#else
-	if(unit == WAN_UNIT_FIRST)
-#endif
-	{
+	if (dualwan_unit__nonusbif(unit)) {
 		convert_wan_nvram(prefix, unit);
 
 		/* make sure the connection exists and is enabled */ 
@@ -1825,12 +1804,7 @@ stop_wan_if(int unit)
 #endif
 
 #if defined(RTCONFIG_USB_MODEM) && defined(RTCONFIG_USB_BECEEM)
-#ifdef RTCONFIG_DUALWAN
-	if(wan_type == WANS_DUALWAN_IF_USB)
-#else
-	if(unit == WAN_UNIT_SECOND)
-#endif
-	{
+	if (dualwan_unit__usbif(unit)) {
 		if(is_usb_modem_ready() == 1){
 			if(pids("wimaxd"))
 				system("wimaxc disconnect");
@@ -1865,6 +1839,9 @@ int update_resolvconf(void)
 	char word[256], *next;
 	int lock;
 	int unit;
+#ifdef RTCONFIG_OPENVPN
+	int dnsstrict = 0;
+#endif
 
 	lock = file_lock("resolv");
 
@@ -1894,7 +1871,9 @@ int update_resolvconf(void)
 
 	/* Add DNS from VPN clients, others if non-exclusive */
 #ifdef RTCONFIG_OPENVPN
-	if (!write_vpn_resolv(fp)) {
+	dnsstrict = write_vpn_resolv(fp);
+	// If dns not set to exclusive
+	if (dnsstrict != 3) {
 #endif
 		for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
 			char *wan_dns, *wan_xdns;
@@ -1921,7 +1900,10 @@ int update_resolvconf(void)
 	file_unlock(lock);
 
 #ifdef RTCONFIG_DNSMASQ
-	reload_dnsmasq();
+	if (dnsstrict == 2)
+		restart_dnsmasq(0);	// add strict-order
+	else
+		reload_dnsmasq();
 #else
 	restart_dns();
 #endif
@@ -1959,6 +1941,13 @@ void wan6_up(const char *wan_ifname)
 	case IPV6_NATIVE:
 		break;
 	case IPV6_NATIVE_DHCP:
+		{
+			int prefixlen = 64;
+
+			/* prefix */
+			nvram_set_int("ipv6_prefix_length", prefixlen);
+		}
+
 		stop_dhcp6c();
 		start_dhcp6c();
 		break;
@@ -2178,7 +2167,7 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 	/* Install interface dependent static routes */
 	add_wan_routes(wan_ifname);
 
-	/* setup static wan routes via physical device     */
+	/* setup static wan routes via physical device */
 	if (strcmp(wan_proto, "dhcp") == 0 || strcmp(wan_proto, "static") == 0) {
 		nvram_set(strcat_r(prefix, "xgateway", tmp), gateway ? : "0.0.0.0");
 		add_routes(prefix, "mroute", wan_ifname);
@@ -2203,28 +2192,8 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 	}
 #endif
 
-#if defined(RTN65U) || defined(RTN56U) || defined(RTN14U) || defined(RTAC52U)
-	switch (wan_unit) {
-	case WAN_UNIT_FIRST:
-		if (wan_unit == wan_primary_ifunit()) {
-			_dprintf("%s: reload hardware NAT driver!\n", __func__);
-			reinit_hwnat();
-		}
-		break;
-	case WAN_UNIT_SECOND:
-		if (module_loaded("hw_nat")) {
-			char primary[] = "wan1_primaryXXXXXX";
-
-			sprintf(primary, "wan%d_primary", WAN_UNIT_SECOND);
-			if (nvram_match(primary, "1")) {
-				_dprintf("%s: remove hardware NAT driver!\n", __func__);
-				modprobe_r("hw_nat");
-			}
-		}
-		break;
-	default:
-		_dprintf("%s(%s,%d) unknown wan_unit\n", __func__, wan_ifname, wan_unit);
-	}
+#if defined(RTN65U) || defined(RTN56U) || defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U)
+	reinit_hwnat(wan_unit);
 #endif
 
 #if defined(DSL_N55U) || defined(DSL_N55U_B)
@@ -2606,9 +2575,7 @@ start_wan(void)
 #endif
 //	symlink("/dev/null", "/tmp/ppp/connect-errors");
 
-#ifdef RTCONFIG_RALINK
-	reinit_hwnat();
-#endif
+	reinit_hwnat(-1);
 
 #ifdef RTCONFIG_DUALWAN
 	/* Start each configured and enabled wan connection and its undelying i/f */
@@ -2626,8 +2593,8 @@ start_wan(void)
 #endif
 
 #if LINUX_KERNEL_VERSION >= KERNEL_VERSION(2,6,36)
-        system("echo 0 > /proc/sys/net/bridge/bridge-nf-call-iptables");
-        system("echo 0 > /proc/sys/net/bridge/bridge-nf-call-ip6tables");
+	system("echo 0 > /proc/sys/net/bridge/bridge-nf-call-iptables");
+	system("echo 0 > /proc/sys/net/bridge/bridge-nf-call-ip6tables");
 #endif
 
 	/* Report stats */

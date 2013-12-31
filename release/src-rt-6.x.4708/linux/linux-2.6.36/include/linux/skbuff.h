@@ -321,6 +321,9 @@ struct sk_buff {
 #ifdef PKTC
 	unsigned char           pktc_cb[8];
 #endif
+#ifdef CTF_PPPOE
+	unsigned char           ctf_pppoe_cb[8];
+#endif
 	ktime_t			tstamp;
 
 	struct sock		*sk;
@@ -353,9 +356,9 @@ struct sk_buff {
 	__u32			pktc_flags;
 #endif
 #ifdef BCMFA
-#define BCM_FA_INVALID_IDX_VAL  0xFFF00000
-        __u32                   napt_idx;
-        __u32                   napt_flags;
+#define BCM_FA_INVALID_IDX_VAL	0xFFF00000
+	__u32                   napt_idx;
+	__u32			napt_flags;
 #endif /* BCMFA */
 
 	__u8			tcpf_smb:1,

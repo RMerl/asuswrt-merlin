@@ -150,7 +150,11 @@ struct nand_oobfree {
  */
 struct nand_ecclayout {
 	__u32 eccbytes;
+#ifdef CONFIG_BCM47XX
+	__u32 eccpos[768];
+#else
 	__u32 eccpos[64];
+#endif /* CONFIG_BCM47XX */
 	__u32 oobavail;
 	struct nand_oobfree oobfree[MTD_MAX_OOBFREE_ENTRIES];
 };

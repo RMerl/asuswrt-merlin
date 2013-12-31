@@ -1,7 +1,7 @@
 /*
  * Definitiosn for Jtag taps in HND chips.
  *
- * $Id: hndjtagdefs.h 241182 2011-02-17 21:50:03Z $
+ * $Id: hndjtagdefs.h 419467 2013-08-21 09:19:48Z $
  *
  * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 

@@ -20,9 +20,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: minidlna 1.0.18\n"
+"Project-Id-Version: minidlna 1.1.0\n"
 "Report-Msgid-Bugs-To: jmaggard@users.sourceforge.net\n"
-"POT-Creation-Date: 2010-07-19 10:50-0700\n"
+"POT-Creation-Date: 2013-06-12 16:46+0200\n"
 "PO-Revision-Date: 2010-10-19 11:00-0800\n"
 "Last-Translator: Andi Miko <ReadyNAS_forum_user>\n"
 "Language-Team: German\n"
@@ -31,92 +31,92 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: scanner.c:163
+#: scanner.c:165
 msgid "Unknown Date"
 msgstr "Unbekanntes Datum"
 
-#: scanner.c:191
+#: scanner.c:167
 msgid "Unknown Camera"
 msgstr "Unbekannte Kamera"
 
-#: scanner.c:282
+#: scanner.c:277
 msgid "- All Albums -"
 msgstr "- Alle Alben -"
 
-#: scanner.c:290 scanner.c:297 scanner.c:300
+#: scanner.c:285 scanner.c:292 scanner.c:296
 msgid "Unknown Album"
 msgstr "Unbekanntes Album"
 
-#: scanner.c:323
+#: scanner.c:318
 msgid "- All Artists -"
 msgstr "- Alle Interpreten -"
 
-#: scanner.c:331 scanner.c:337 scanner.c:340
+#: scanner.c:326 scanner.c:332 scanner.c:336
 msgid "Unknown Artist"
 msgstr "Unbekannter Interpret"
 
-#: scanner.c:543
+#: scanner.c:528
 msgid "Music"
 msgstr "Musik"
 
-#: scanner.c:544
+#: scanner.c:529
 msgid "All Music"
 msgstr "Alle Titel"
 
-#: scanner.c:545
+#: scanner.c:530
 msgid "Genre"
 msgstr "Genre"
 
-#: scanner.c:546
+#: scanner.c:531
 msgid "Artist"
 msgstr "Interpret"
 
-#: scanner.c:547
+#: scanner.c:532
 msgid "Album"
 msgstr "Album"
 
-#: scanner.c:548 scanner.c:552 scanner.c:557
+#: scanner.c:533 scanner.c:538 scanner.c:544
 msgid "Folders"
 msgstr "Ordner"
 
-#: scanner.c:549
+#: scanner.c:534
 msgid "Playlists"
 msgstr "Wiedergabelisten"
 
-#: scanner.c:550
+#: scanner.c:536
 msgid "Video"
 msgstr "Video"
 
-#: scanner.c:551
+#: scanner.c:537
 msgid "All Video"
 msgstr "Alle Videos"
 
-#: scanner.c:553
+#: scanner.c:540
 msgid "Pictures"
 msgstr "Bilder"
 
-#: scanner.c:554
+#: scanner.c:541
 msgid "All Pictures"
 msgstr "Alle Bilder"
 
-#: scanner.c:555
+#: scanner.c:542
 msgid "Date Taken"
 msgstr "Aufnahmedatum"
 
-#: scanner.c:556
+#: scanner.c:543
 msgid "Camera"
 msgstr "Kamera"
 
-#: scanner.c:558
+#: scanner.c:546
 msgid "Browse Folders"
 msgstr "Ordner durchsuchen"
 
-#: scanner.c:721
+#: scanner.c:690
 #, c-format
 msgid "Scanning %s\n"
 msgstr "%s wird gescannt ... \n"
 
-#: scanner.c:789
+#: scanner.c:766
 #, c-format
 msgid "Scanning %s finished (%llu files)!\n"
 msgstr "Scan von %s abgeschlossen (%llu files)!\n"

@@ -124,7 +124,7 @@ function go_next_page(){
 	<tr>
 		<td class="formfonttitle">
 			<span style="margin-left:3px;"><#AiDiskWelcome_title#></span>
-			<img onclick="go_setting_parent('/APP_Installation.asp')" align="right" style="cursor:pointer;margin-right:20px;margin-top:-20px;" title="Go to APP Gallery" src="/images/backprev.png" onMouseOver="this.src='/images/backprevclick.png'" onMouseOut="this.src='/images/backprev.png'">
+			<img onclick="go_setting_parent('/APP_Installation.asp')" align="right" style="cursor:pointer;margin-right:20px;margin-top:-20px;" title="<#Menu_usb_application#>" src="/images/backprev.png" onMouseOver="this.src='/images/backprevclick.png'" onMouseOut="this.src='/images/backprev.png'">
   	</td>
   </tr>
    

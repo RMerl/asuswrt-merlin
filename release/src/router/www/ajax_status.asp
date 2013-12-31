@@ -24,4 +24,5 @@
   <vpn>vpn_client1_state=<% nvram_get("vpn_client1_state"); %></vpn>  
   <vpn>vpn_client2_state=<% nvram_get("vpn_client2_state"); %></vpn>
   <vpn>vpnd_state=<% nvram_get("VPNServer_enable"); %></vpn>
+  <% secondary_ajax_wanstate(); %>
 </devicemap>

@@ -174,19 +174,72 @@ function Add_profile(){
 	tabclickhandler(0);
 
 	$("cancelBtn").style.display = "";
-	$j("#vpnsvr_setting").fadeIn(300);
-	if (vpnc_support == false){
-		tabclickhandler(2);
-		document.getElementById('pptpcTitle').style.display = "none";
-		document.getElementById('l2tpcTitle').style.display = "none";
-	}
+	document.getElementById("pptpcTitle").style.display = "";
+	document.getElementById("l2tpcTitle").style.display = "";
+
+        $j("#vpnc_settings").fadeIn(300);
 }
 
 function cancel_add_rule(){
-	$j("#vpnsvr_setting").fadeOut(300);
+	idx_tmp = "";
+	$j("#vpnc_settings").fadeOut(300);
 }
 
-function addRow_Group(upper, flag){
+function addRow_Group(upper, flag, idx){
+	idx = parseInt(idx);
+	if(idx >= 0){		//idx: edit row		
+		var table_id = "vpnc_clientlist_table";
+		var rule_num = $(table_id).rows.length;
+		var item_num = $(table_id).rows[0].cells.length;
+		if(flag == 'PPTP' || flag == 'L2TP'){
+			type_obj = document.form.vpnc_type;
+			description_obj = document.form.vpnc_des_edit;
+			server_obj = document.form.vpnc_svr_edit;
+			username_obj = document.form.vpnc_account_edit;
+			password_obj = document.form.vpnc_pwd_edit;						
+		}
+
+		if(validForm(flag)){
+			//check same rule  //match(description) is not accepted		
+			if(item_num >= 2){
+				for(i=0; i<rule_num; i++){
+					if(i != idx && description_obj.value.toLowerCase() == $(table_id).rows[i].cells[1].innerHTML.toLowerCase()){
+						alert("<#JS_duplicate#>");
+						description_obj.focus();
+						description_obj.select();
+						return false;
+					}	
+				}
+			}
+			duplicateCheck.tmpIdx = "";
+			duplicateCheck.saveTotmpIdx(idx);
+			duplicateCheck.tmpStr = "";
+			duplicateCheck.saveToTmpStr(type_obj, 0);
+			duplicateCheck.saveToTmpStr(server_obj, 0);
+			duplicateCheck.saveToTmpStr(username_obj, 0);
+			duplicateCheck.saveToTmpStr(password_obj, 0);
+			if(duplicateCheck.isDuplicate()){
+				username_obj.focus();
+				username_obj.select();
+				alert("<#JS_duplicate#>")
+				return false;
+			}
+			
+			var vpnc_clientlist_row = vpnc_clientlist_array.split('<');
+			vpnc_clientlist_row[idx] = description_obj.value+">"+type_obj.value+">"+server_obj.value+">"+username_obj.value+">"+password_obj.value;
+			//alert(idx+" ; "+vpnc_clientlist_row.join("<"));
+						
+			vpnc_clientlist_array = vpnc_clientlist_row.join("<");
+			show_vpnc_rulelist();
+			cancel_add_rule();
+			idx_tmp= "";
+			document.vpnclientForm.vpnc_clientlist.value = vpnc_clientlist_row.join("<");
+			document.vpnclientForm.submit();		
+			
+		}		
+	}
+	else{	//Add Rule
+				
 		var table_id = "vpnc_clientlist_table";
 		var rule_num = $(table_id).rows.length;
 		var item_num = $(table_id).rows[0].cells.length;		
@@ -235,13 +288,20 @@ function addRow_Group(upper, flag){
 
 			show_vpnc_rulelist();
 			cancel_add_rule();
-		}
-
-		document.form.vpnc_clientlist.value = vpnc_clientlist_array;
-		document.form.submit();
+			idx_tmp= "";
+			document.vpnclientForm.vpnc_clientlist.value = vpnc_clientlist_array;
+			document.vpnclientForm.submit();
+		}				
+	}	
 }
 
 var duplicateCheck = {
+	tmpIdx: "",
+	
+	saveTotmpIdx: function(obj){
+		this.tmpIdx = obj;	
+	},
+	
 	tmpStr: "",
 
 	saveToTmpStr: function(obj, head){	
@@ -252,10 +312,13 @@ var duplicateCheck = {
 	},
 
 	isDuplicate: function(){
-		if(vpnc_clientlist_array.search(this.tmpStr)  != -1)
-			return true;
-		else
-			return false;
+		var vpnc_clientlist_row = vpnc_clientlist_array.split('<');
+		for(var i=0; i<vpnc_clientlist_row.length; i++){
+			//alert(i+"; "+this.tmpIdx+" ; "+vpnc_clientlist_array.search(this.tmpStr));
+			if(i != this.tmpIdx && vpnc_clientlist_row[i].search(this.tmpStr) != -1)
+				return true;
+		}
+		return false;		
 	}
 }
 
@@ -396,6 +459,9 @@ function show_vpnc_rulelist(){
 
 
 function connect_Row(rowdata, flag){
+	var idx = rowdata.parentNode.parentNode.rowIndex;
+	var vpnc_clientlist_row = vpnc_clientlist_array.split('<');
+	var vpnc_clientlist_col = vpnc_clientlist_row[idx].split('>');	
 	if(flag == "disconnect"){
 		document.form.vpnc_proto.value = "disable";
 		document.form.vpnc_heartbeat_x.value = "";
@@ -403,9 +469,6 @@ function connect_Row(rowdata, flag){
 		document.form.vpnc_pppoe_passwd.value = "";
 	}
 	else{
-		var idx = rowdata.parentNode.parentNode.rowIndex;
-		var vpnc_clientlist_row = vpnc_clientlist_array.split('<');
-		var vpnc_clientlist_col = vpnc_clientlist_row[idx].split('>');
 		for(var j=0; j<vpnc_clientlist_col.length; j++){
 			if(j == 0){
 				document.form.vpnc_des_edit.value = vpnc_clientlist_col[0];
@@ -437,17 +500,20 @@ function connect_Row(rowdata, flag){
 					document.form.vpnc_pppoe_passwd.value = vpnc_clientlist_col[4];
 			} 
 		}
-		document.form.vpnc_clientlist.value = vpnc_clientlist_array;
+		//document.form.vpnc_clientlist.value = vpnc_clientlist_array;
 	}
 
+	document.form.vpnc_clientlist.value = vpnc_clientlist_array;	
 	rowdata.parentNode.innerHTML = "<img src='/images/InternetScan.gif'>";
 	document.form.submit();	
 }
 
+var idx_tmp = "";
 function Edit_Row(rowdata, flag){
-	$("cancelBtn").style.display = "none";
+	$("cancelBtn").style.display = "";
 
 	var idx = rowdata.parentNode.parentNode.rowIndex;
+	idx_tmp = rowdata.parentNode.parentNode.rowIndex;
 	var vpnc_clientlist_row = vpnc_clientlist_array.split('<');
 	var vpnc_clientlist_col = vpnc_clientlist_row[idx].split('>');
 
@@ -474,8 +540,16 @@ function Edit_Row(rowdata, flag){
 		} 
 	}
 
-	$j("#vpnsvr_setting").fadeIn(300);
-	del_Row(rowdata, flag);
+	$j("#vpnc_settings").fadeIn(300);
+	if(vpnc_clientlist_col[1] == "PPTP"){
+		document.getElementById("pptpcTitle").style.display = "";
+		document.getElementById("l2tpcTitle").style.display = "none";
+		document.getElementById("opencTitle").style.display = "none";
+	}else if(vpnc_clientlist_col[1] == "L2TP"){
+		document.getElementById("pptpcTitle").style.display = "none";
+		document.getElementById("l2tpcTitle").style.display = "";
+		document.getElementById("opencTitle").style.display = "none";
+	}	
 }
 
 function del_Row(rowdata, flag){  
@@ -523,9 +597,8 @@ function del_Row(rowdata, flag){
 <form method="post" name="form" action="/start_apply.htm" target="hidden_frame">
 <input type="hidden" name="current_page" value="Advanced_VPNClient_Content.asp">
 <input type="hidden" name="next_page" value="Advanced_VPNClient_Content.asp">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
-<input type="hidden" name="flag" value="vpnClient">
+<input type="hidden" name="flag" value="background">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="restart_vpncall">
 <input type="hidden" name="action_wait" value="3">
@@ -542,7 +615,7 @@ function del_Row(rowdata, flag){
 <input type="hidden" name="vpn_client1_username" value="<% nvram_get("vpn_client1_username"); %>">
 <input type="hidden" name="vpn_client1_password" value="<% nvram_get("vpn_client1_password"); %>">
 
-<div id="vpnsvr_setting"  class="contentM_qis" style="box-shadow: 3px 3px 10px #000;">
+<div id="vpnc_settings"  class="contentM_qis" style="box-shadow: 3px 3px 10px #000;">
 	<table class="QISform_wireless" border=0 align="center" cellpadding="5" cellspacing="0">
 		<tr>
 			<td>		
@@ -559,47 +632,46 @@ function del_Row(rowdata, flag){
 			<td>
 				<!---- vpnc_pptp/l2tp start  ---->
 				<div id="vpnc_pptpl2tp">
-				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable">
-			 		<tr>
-						<th><#IPConnection_autofwDesc_itemname#></th>
-					  <td>
-					  	<input type="text" name="vpnc_des" id="vpnc_des_edit" value="" class="input_32_table" style="float:left;"></input>
-					  </td>
-		  		</tr>  
-		
-		  		<tr>
-						<th>Server</th>
-					  <td>
-					  	<input type="text" name="vpnc_svr" id="vpnc_svr_edit" value="" class="input_32_table" style="float:left;"></input>
-					  </td>
-		  		</tr>  
-		
-		  		<tr>
-						<th><#PPPConnection_UserName_itemname#></th>
-					  <td>
-					  	<input type="text" name="vpnc_account" id="vpnc_account_edit" value="" class="input_32_table" style="float:left;"></input>
-					  </td>
-		  		</tr>  
-		
-		  		<tr>
-						<th><#PPPConnection_Password_itemname#></th>
-					  <td>
-					  	<input type="text" name="vpnc_pwd" id="vpnc_pwd_edit" value="" class="input_32_table" style="float:left;"></input>
-					  </td>
-		  		</tr>  
-		 
-		 		</table>
+					<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable">
+						<tr>
+							<th><#IPConnection_autofwDesc_itemname#></th>
+							<td>
+								<input type="text" name="vpnc_des" id="vpnc_des_edit" value="" class="input_32_table" style="float:left;"></input>
+							</td>
+						</tr>
+
+						<tr>
+							<th><#BOP_isp_heart_item#></th>
+							<td>
+								<input type="text" name="vpnc_svr" id="vpnc_svr_edit" value="" class="input_32_table" style="float:left;"></input>
+							</td>
+						</tr>
+
+						<tr>
+							<th><#PPPConnection_UserName_itemname#></th>
+							<td>
+								<input type="text" name="vpnc_account" id="vpnc_account_edit" value="" class="input_32_table" style="float:left;"></input>
+							</td>
+						</tr>
+
+						<tr>
+							<th><#PPPConnection_Password_itemname#></th>
+							<td>
+								<input type="text" name="vpnc_pwd" id="vpnc_pwd_edit" value="" class="input_32_table" style="float:left;"></input>
+							</td>
+						</tr>
+					</table>
 		 		</div>
 		 		<!---- vpnc_pptp/l2tp end  ---->		 			 	
-	  	</td>
+			</td>
 		</tr>
-	</table>		
+	</table>
 
 	<div style="margin-top:5px;padding-bottom:10px;width:100%;text-align:center;">
 		<input class="button_gen" type="button" onclick="cancel_add_rule();" id="cancelBtn" value="<#CTL_Cancel#>">
-		<input class="button_gen" type="button" onclick="addRow_Group(10,save_flag);" value="<#CTL_ok#>">	
+		<input class="button_gen" type="button" onclick="addRow_Group(10,save_flag, idx_tmp);" value="<#CTL_ok#>">	
 	</div>	
-      <!--===================================Ending of vpnsvr setting Content===========================================-->			
+      <!--===================================Ending of vpnc setting Content===========================================-->			
 </div>
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
@@ -632,7 +704,7 @@ function del_Row(rowdata, flag){
 									To start a VPN connection, please follow the steps below:
 									<ol>
 									<li>Add profile
-									<li>Select a VPN connection type (PPTP or L2TP)
+									<li>Select a VPN connection type
 									<li>Enter VPN authentication information provided by your VPN provider then connect.
 									</ol>
 								</div>
@@ -648,19 +720,19 @@ function del_Row(rowdata, flag){
         			<tr>
           				<td>
 							<table width="98%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table">
-							<thead>
-							<tr>
-									<td colspan="6" id="VPNServerList" style="border-right:none;height:22px;">VPN server list (Max limit:10)</td>
-							</tr>
-							</thead>			
-							<tr>
-									<th width="10%" style="height:30px;">Status</th>
-									<th><div>Description</div></th>
-									<th width="15%"><div>Type</div></th>
-									<th width="10%"><div>Edit</div></th>
-									<th width="10%"><div>Delete</div></th>
-									<th width="25%"><div>Connection</div></th>
-							</tr>											
+								<thead>
+									<tr>
+													<td colspan="6" id="VPNServerList" style="border-right:none;height:22px;"><#BOP_isp_VPN_list#> <span id="rules_limit" style="color:#FFFFFF"></span></td>
+									</tr>
+								</thead>			
+								<tr>
+													<th width="10%" style="height:30px;"><#PPPConnection_x_WANLink_itemname#></th>
+													<th><div><#IPConnection_autofwDesc_itemname#></div></th>
+													<th width="15%"><div><#QIS_internet_vpn_type#></div></th>
+													<th width="10%"><div><#pvccfg_edit#></div></th>
+													<th width="10%"><div><#CTL_del#></div></th>
+													<th width="25%"><div><#Connecting#></div></th>
+								</tr>											
 							</table>          					
 
 							<div id="vpnc_clientlist_Block"></div>

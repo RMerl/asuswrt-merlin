@@ -31,7 +31,6 @@ var macfilter_rulelist_array = '<% nvram_get("macfilter_rulelist"); %>';
 
 function initial(){
 	show_menu();
-	load_body();
 	showmacfilter_rulelist();
 }
 
@@ -211,7 +210,6 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 		<!--===================================Beginning of Main Content===========================================-->
 <input type="hidden" name="current_page" value="Advanced_MACFilter_Content.asp">
 <input type="hidden" name="next_page" value="">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="group_id" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
@@ -267,8 +265,8 @@ function check_macaddr(obj,flag){ //control hint of input mac address
               		<input type="hidden" name="macfilter_num_x_0" value="<% nvram_get("macfilter_num_x"); %>" readonly="1"/>
 		  	</th>
 			<th width="40%">Name</th>
-			<th width="20%">Add / Delete</th>
-        	</tr>
+			<th width="20%"><#list_add_delete#></th>
+       	</tr>
         	<tr>
           		<td width="40%">
           			<input type="text" maxlength="17" class="input_macaddr_table" name="macfilter_list_x_0"  onKeyPress="return is_hwaddr(this,event)">

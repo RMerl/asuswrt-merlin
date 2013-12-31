@@ -234,6 +234,7 @@ typedef volatile struct _faregs {
 #define CTF_DATA_SIZE				8
 #define CTF_MAX_POOL_TABLE_INDEX		4
 #define CTF_MAX_NEXTHOP_TABLE_INDEX		128
+#define CTF_MAX_BUCKET_INDEX			4
 #define CTF_MAX_FLOW_TABLE			1024
 
 /* Next hop defines */

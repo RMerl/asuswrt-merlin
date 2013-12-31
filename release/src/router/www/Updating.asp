@@ -9,14 +9,18 @@
 </head>
 <body>
 <script>
+	var reboot_needed_time = eval("<% get_default_reboot_time(); %>");
 	parent.$("hiddenMask").style.visibility = "hidden";
-	if(parent.based_modelid == "RT-AC56U"
+	if(parent.based_modelid == "RT-AC56S"
+			|| parent.based_modelid == "RT-AC56U"
 			|| parent.based_modelid == "RT-AC66U"
-			|| parent.based_modelid == "RT-AC68U"){		//MODELDEP: RT-AC56U, RT-AC66U, RT-AC68U 2013.03
-			parent.showLoadingBar(90);
+			|| parent.based_modelid == "RT-AC68U"){		//MODELDEP: RT-AC56S, RT-AC56U, RT-AC66U, RT-AC68U 2013.03
+			reboot_needed_time += 30;
+			parent.showLoadingBar(reboot_needed_time);
 			setTimeout("parent.detect_httpd();", 92000);
 	}else if(parent.based_modelid == "RT-AC52U"){			//MODELDEP: RT-AC52U
-			parent.showLoadingBar(120);
+			reboot_needed_time += 40;
+			parent.showLoadingBar(reboot_needed_time);
 			setTimeout("parent.detect_httpd();", 122000);
 	}else{
 			parent.showLoadingBar(270);

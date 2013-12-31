@@ -53,8 +53,13 @@ extern int nand_unlock(struct mtd_info *mtd, loff_t ofs, uint64_t len);
  * is supported now. If you add a chip with bigger oobsize/page
  * adjust this accordingly.
  */
+#ifdef CONFIG_BCM47XX
+#define NAND_MAX_OOBSIZE	768
+#define NAND_MAX_PAGESIZE	8192
+#else
 #define NAND_MAX_OOBSIZE	256
 #define NAND_MAX_PAGESIZE	4096
+#endif /* CONFIG_BCM47XX */
 
 /*
  * Constants for hardware specific CLE/ALE/NCE function

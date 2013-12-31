@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: dbus.c 401759 2013-05-13 16:08:08Z $
+ * $Id: dbus.c 422800 2013-09-10 01:12:42Z $
  */
 
 
@@ -1635,7 +1635,13 @@ dbus_set_config(dbus_pub_t *pub, dbus_config_t *config)
 
 	if (dbus_info->drvintf && dbus_info->drvintf->set_config) {
 		err = dbus_info->drvintf->set_config(dbus_info->bus_info,
-		config);
+			config);
+
+		if ((config->config_id == DBUS_CONFIG_ID_TXRXQUEUE) &&
+			(!err) &&
+			(dbus_info->pub.busstate == DBUS_STATE_UP)) {
+			dbus_rxirbs_fill(dbus_info);
+		}
 	}
 
 	return err;

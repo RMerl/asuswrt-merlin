@@ -128,7 +128,7 @@ BCMINITFN(nand_find_nvram)(hndnand_t *nfl, uint32 off)
 	int rlen = sizeof(nflash_nvh);
 	int len;
 
-	for (; off < NFL_BOOT_SIZE; off += blocksize) {
+	for (; off < nfl_boot_size(nfl); off += blocksize) {
 		if (hndnand_checkbadb(nfl, off) != 0)
 			continue;
 
@@ -340,7 +340,7 @@ early_nvram_init(void)
 		flash_base = nfl_info->base;
 		blocksize = nfl_info->blocksize;
 		off = blocksize;
-		for (; off < NFL_BOOT_SIZE; off += blocksize) {
+		for (; off < nfl_boot_size(nfl_info); off += blocksize) {
 			if (hndnand_checkbadb(nfl_info, off) != 0)
 				continue;
 			header = (struct nvram_header *)(flash_base + off);

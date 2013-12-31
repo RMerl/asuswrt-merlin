@@ -60,7 +60,12 @@ void tftp_request(struct listener *listen, time_t now)
   char *prefix = daemon->tftp_prefix;
   struct tftp_prefix *pref;
   struct all_addr addra;
-
+#ifdef HAVE_IPV6
+  /* Can always get recvd interface for IPv6 */
+  int check_dest = !option_bool(OPT_NOWILD) || listen->family == AF_INET6;
+#else
+  int check_dest = !option_bool(OPT_NOWILD);
+#endif
   union {
     struct cmsghdr align; /* this ensures alignment */
 #ifdef HAVE_IPV6
@@ -91,8 +96,9 @@ void tftp_request(struct listener *listen, time_t now)
 
   if ((len = recvmsg(listen->tftpfd, &msg, 0)) < 2)
     return;
-  
-  if (option_bool(OPT_NOWILD))
+
+  /* Can always get recvd interface for IPv6 */
+  if (!check_dest)
     {
       if (listen->iface)
 	{

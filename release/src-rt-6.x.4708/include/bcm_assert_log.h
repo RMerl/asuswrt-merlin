@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: bcm_assert_log.h 241182 2011-02-17 21:50:03Z $
+ * $Id: bcm_assert_log.h 419467 2013-08-21 09:19:48Z $
  */
 #ifndef _WLC_ASSERT_LOG_H_
 #define _WLC_ASSERT_LOG_H_

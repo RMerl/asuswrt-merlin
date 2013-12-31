@@ -626,7 +626,6 @@ function check_dir_path(){
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="current_page" value="Advanced_AiDisk_NFS.asp">
 <input type="hidden" name="next_page" value="Advanced_AiDisk_NFS.asp">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="action_mode" value="">
 <input type="hidden" name="action_script" value="">
 <input type="hidden" name="action_wait" value="">

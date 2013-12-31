@@ -579,6 +579,21 @@ char *get_interface_by_device(const char *device_name, char *buf, const int buf_
 	return buf;
 }
 
+char *get_path_by_node(const char *usb_node, char *buf, const int buf_size){
+	char *ptr;
+
+	if(usb_node == NULL || buf == NULL || buf_size <= 0)
+		return NULL;
+
+	if((ptr = strchr(usb_node, '-')) == NULL)
+		return NULL;
+
+	memset(buf, 0, buf_size);
+	strncpy(buf, ptr+1, buf_size);
+
+	return buf;
+}
+
 char *get_usb_vid(const char *usb_node, char *buf, const int buf_size)
 {
 	FILE *fp;
@@ -975,7 +990,7 @@ int hadACMModule(void)
 }
 
 // return 1 when there is a bound device.
-extern int hadRNDISModule(){
+int hadRNDISModule(){
 	DIR *module_dir;
 	struct dirent *file;
 	char buf[32];
@@ -1153,31 +1168,30 @@ int is_usb_modem_ready(void)
 	char word[8], *next;
 	char prefix[32], tmp[32];
 	char usb_act[8], usb_vid[8];
+	char port_path[8];
 
 	if(nvram_match("modem_enable", "0"))
 		return 0;
 
-	usb_port = 1;
-	foreach(word, nvram_safe_get("ehci_ports"), next){
-		memset(prefix, 0, 8);
-		sprintf(prefix, "usb_path%d", usb_port);
+	memset(port_path, 0, 8);
+	strncpy(port_path, nvram_safe_get("usb_modem_act_path"), 8);
 
-		memset(usb_act, 0, 8);
-		strcpy(usb_act, nvram_safe_get(strcat_r(prefix, "_act", tmp)));
-		memset(usb_vid, 0, 8);
-		strcpy(usb_vid, nvram_safe_get(strcat_r(prefix, "_vid", tmp)));
+	memset(prefix, 0, 8);
+	sprintf(prefix, "usb_path%s", port_path);
 
-		if(nvram_match(prefix, "modem") && strlen(usb_act) != 0){
-			// for the router dongle: Huawei E353, E3131.
-			if(!strncmp(usb_act, "eth", 3) && !strcmp(usb_vid, "12d1")){
-				if(!strncmp(nvram_safe_get("lan_ipaddr"), "192.168.1.", 10))
-					return 2;
-			}
+	memset(usb_act, 0, 8);
+	strcpy(usb_act, nvram_safe_get(strcat_r(prefix, "_act", tmp)));
+	memset(usb_vid, 0, 8);
+	strcpy(usb_vid, nvram_safe_get(strcat_r(prefix, "_vid", tmp)));
 
-			return 1;
+	if(nvram_match(prefix, "modem") && strlen(usb_act) != 0){
+		// for the router dongle: Huawei E353, E3131.
+		if(!strncmp(usb_act, "eth", 3) && !strcmp(usb_vid, "12d1")){
+			if(!strncmp(nvram_safe_get("lan_ipaddr"), "192.168.1.", 10))
+				return 2;
 		}
 
-		++usb_port;
+		return 1;
 	}
 
 	return 0;
@@ -1202,14 +1216,14 @@ int hadPrinterModule(void)
 
 int hadPrinterInterface(const char *usb_node)
 {
-	char check_usb_node[8], device_name[4];
+	char check_usb_node[32], device_name[4];
 	int printer_order, got_printer = 0;
 
 	for(printer_order = 0; printer_order < SCAN_PRINTER_NODE; ++printer_order){
 		memset(device_name, 0, 4);
 		sprintf(device_name, "lp%d", printer_order);
 
-		if(get_usb_node_by_device(device_name, check_usb_node, sizeof(check_usb_node)) == NULL)
+		if(get_usb_node_by_device(device_name, check_usb_node, 32) == NULL)
 			continue;
 
 		if(!strcmp(usb_node, check_usb_node)){

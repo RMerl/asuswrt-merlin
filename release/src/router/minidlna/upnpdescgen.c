@@ -192,7 +192,7 @@ static const struct XMLElt rootDesc[] =
 	{"/serviceType", "urn:microsoft.com:service:X_MS_MediaReceiverRegistrar:1"},
 	{"/serviceId", "urn:microsoft.com:serviceId:X_MS_MediaReceiverRegistrar"},
 	{"/controlURL", X_MS_MEDIARECEIVERREGISTRAR_CONTROLURL},
-	{"/eventSubURL", X_MS_MEDIARECEIVERREGISTRAR_EVENTURL},
+	{"/eventSubURL", ""},
 	{"/SCPDURL", X_MS_MEDIARECEIVERREGISTRAR_PATH},
 	{0, 0}
 };

@@ -341,7 +341,7 @@ function DMhint(){
 			<a target="_blank" href="\\<% nvram_get("lan_ipaddr"); %>" style="text-decoration:underline; font-family:Lucida Console;">\\<% nvram_get("lan_ipaddr"); %></a>
 		</span>
 		<span id="ddnslink_non_LAN" style="display:none;"><#menu5_4_1#><span id="clouddiskstr"> / Cloud Disk :</span><br>
-			<span style="text-decoration:underline;font-family:Lucida Console;">file://<% nvram_get("lan_ipaddr"); %></span>
+			<span style="text-decoration:underline;font-family:Lucida Console;" title="<#samba_tips#>">file://<% nvram_get("lan_ipaddr"); %></span>
 		</span>		
 	</li>
 </ul>

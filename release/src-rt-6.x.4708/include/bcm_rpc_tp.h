@@ -17,7 +17,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcm_rpc_tp.h 401759 2013-05-13 16:08:08Z $
+ * $Id: bcm_rpc_tp.h 422800 2013-09-10 01:12:42Z $
  */
 
 #ifndef _bcm_rpc_tp_h_
@@ -82,14 +82,10 @@
 #define BCM_RPC_TP_DNGL_AGG_DEFAULT	(((BCM_RPC_TP_DNGL_AGG_DEFAULT_SFRAME)\
 	 << BCM_RPC_TP_HOST_AGG_SHIFT) | BCM_RPC_TP_DNGL_AGG_DEFAULT_BYTE)
 
-#ifndef WLMEDIA_LARGE_DNGL_AGG
 /* rxbufsize for dbus_attach, linux only for now */
 #define DBUS_RX_BUFFER_SIZE_RPC    (BCM_RPC_TP_DNGL_AGG_MAX_BYTE)
-#else
-#define DBUS_RX_BUFFER_SIZE_RPC    (BCM_RPC_TP_DNGL_AGG_MAX_BYTE_4360)
-#endif
 
-#if (defined(NDIS) && (NDISVER >= 0x0600) && 0) || defined WLMEDIA_LARGE_DNGL_AGG
+#if (defined(NDIS) && (NDISVER >= 0x0600) && 0)
 /* TP-DBUS pkts flowcontrol */
 #ifndef BCM_RPC_TP_DBUS_NTXQ
 #define BCM_RPC_TP_DBUS_NTXQ	512	/* queue size for TX on bulk OUT, aggregation possible */
@@ -159,6 +155,7 @@ extern int bcm_rpc_tp_recv_rtn(rpc_tp_info_t *rpcb);
 extern int bcm_rpc_tp_get_device_speed(rpc_tp_info_t *rpc_th);
 extern void bcm_rpc_tp_get_vidpid(rpc_tp_info_t *rpc_th, uint16 *dnglvid, uint16 *dnglpid);
 extern void* bcm_rpc_tp_get_devinfo(rpc_tp_info_t *rpc_th);
+extern int bcm_rpc_tp_set_config(rpc_tp_info_t *rpc_th, void *config);
 #ifdef BCMDBG
 extern int bcm_rpc_tp_dump(rpc_tp_info_t *rpcb, struct bcmstrbuf *b);
 #endif

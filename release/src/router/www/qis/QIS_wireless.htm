@@ -169,7 +169,7 @@ function submitForm(){
 		if(parent.document.QKform.sw_mode.value == 2){
 			/* use parent AP settings */	
 			if(parent.document.QKform.wlc_band.value == 0)
-				document.form.wl0_ssid.value = decodeURIComponent(parent.document.QKform.wlc_ssid.value);
+				document.form.wl0_ssid.value = decodeURIComponent(show_str_ssid(parent.document.QKform.wlc_ssid.value));
 			else
 				document.form.wl0_ssid.value = decodeURIComponent(parent.document.QKform.wlc_ssid.value+'_2G');
 			
@@ -278,8 +278,12 @@ function submitForm(){
 		}
 	}
 	else if(parent.document.QKform.sw_mode.value == "2"){	// Repeater mode
+		if(parent.document.QKform.wlc_band.value == 1)
+			set_variable("wl1_nmode_x", "0");
+		else
+			set_variable("wl0_nmode_x", "0");
 		document.form.wlc_band.value = parent.document.QKform.wlc_band.value;
-		document.form.wlc_ssid.value = decodeURIComponent(parent.document.QKform.wlc_ssid.value); // ascii to char
+		document.form.wlc_ssid.value = decodeURIComponent(show_str_ssid(parent.document.QKform.wlc_ssid.value)); // ascii to char
 		document.form.wlc_wep.value = parent.document.QKform.wlc_wep.value;
 		document.form.wlc_key.value = parent.document.QKform.wlc_key.value;
 		document.form.wlc_wep_key.value = parent.document.QKform.wlc_wep_key.value;
@@ -546,7 +550,8 @@ function submitenter(myfield,e)
 function RP_useParentSetting(){
 	if($('RP_parentSetting').checked == true){
 		if(parent.document.QKform.wlc_band.value == 0){
-				document.form.wl0_ssid.value = decodeURIComponent(parent.document.QKform.wlc_ssid.value);
+				document.form.wl0_ssid.value = decodeURIComponent(show_str_ssid(parent.document.QKform.wlc_ssid.value));
+
 				if(band5g_support)
 					document.form.wl1_ssid.value = decodeURIComponent(parent.document.QKform.wlc_ssid.value+'_5G');
 		}

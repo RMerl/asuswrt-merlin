@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: flash.h 281527 2011-09-02 17:12:53Z $
+ * $Id: flash.h 419467 2013-08-21 09:19:48Z $
  */
 
 /* FILE-CSTYLED Cannot figure out how to make the initialization continuation lines acceptable */

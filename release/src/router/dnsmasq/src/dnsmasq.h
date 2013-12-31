@@ -280,18 +280,28 @@ struct ptr_record {
 struct cname {
   char *alias, *target;
   struct cname *next;
+}; 
+
+#define ADDRLIST_LITERAL 1
+#define ADDRLIST_IPV6    2
+
+struct addrlist {
+  struct all_addr addr;
+  int flags, prefixlen; 
+  struct addrlist *next;
 };
+
+#define AUTH6     1
+#define AUTH4     2
 
 struct auth_zone {
   char *domain;
-  struct subnet {
-    int is6, prefixlen;
-    struct in_addr addr4;
-#ifdef HAVE_IPV6
-    struct in6_addr addr6;
-#endif
-    struct subnet *next;
-  } *subnet;
+  struct auth_name_list {
+    char *name;
+    int flags;
+    struct auth_name_list *next;
+  } *interface_names;
+  struct addrlist *subnet;
   struct auth_zone *next;
 };
 
@@ -311,13 +321,8 @@ struct host_record {
 struct interface_name {
   char *name; /* domain name */
   char *intr; /* interface name */
-  struct addrlist {
-    struct all_addr addr;
-    struct addrlist *next;
-  } *addr4;
-#ifdef HAVE_IPV6
-  struct addrlist *addr6;
-#endif
+  int family; /* AF_INET, AF_INET6 or zero for both */
+  struct addrlist *addr;
   struct interface_name *next;
 };
 
@@ -454,7 +459,7 @@ struct ipsets {
 struct irec {
   union mysockaddr addr;
   struct in_addr netmask; /* only valid for IPv4 */
-  int tftp_ok, dhcp_ok, mtu, done, warned, dad, dns_auth, index, multicast_done;
+  int tftp_ok, dhcp_ok, mtu, done, warned, dad, dns_auth, index, multicast_done, found;
   char *name; 
   struct irec *next;
 };
@@ -748,9 +753,8 @@ struct dhcp_context {
 #define CONTEXT_RA             (1u<<13)
 #define CONTEXT_CONF_USED      (1u<<14)
 #define CONTEXT_USED           (1u<<15)
-#define CONTEXT_NOAUTH         (1u<<16)
-#define CONTEXT_OLD            (1u<<17)
-#define CONTEXT_V6             (1u<<18)
+#define CONTEXT_OLD            (1u<<16)
+#define CONTEXT_V6             (1u<<17)
 
 
 struct ping_result {
@@ -1000,6 +1004,7 @@ int in_zone(struct auth_zone *zone, char *name, char **cut);
 /* util.c */
 void rand_init(void);
 unsigned short rand16(void);
+u64 rand64(void);
 int legal_hostname(char *c);
 char *canonicalise(char *s, int *nomem);
 unsigned char *do_rfc1035_name(unsigned char *p, char *sval);
@@ -1072,6 +1077,7 @@ int enumerate_interfaces(int reset);
 void create_wildcard_listeners(void);
 void create_bound_listeners(int die);
 void warn_bound_listeners(void);
+void warn_int_names(void);
 int is_dad_listeners(void);
 int iface_check(int family, struct all_addr *addr, char *name, int *auth_dns);
 int loopback_exception(int fd, int family, struct all_addr *addr, char *name);
@@ -1123,6 +1129,7 @@ u64 lease_find_max_addr6(struct dhcp_context *context);
 void lease_ping_reply(struct in6_addr *sender, unsigned char *packet, char *interface);
 void lease_update_slaac(time_t now);
 void lease_set_iaid(struct dhcp_lease *lease, int iaid);
+void lease_make_duid(time_t now);
 #endif
 void lease_set_hwaddr(struct dhcp_lease *lease, unsigned char *hwaddr,
 		      unsigned char *clid, int hw_len, int hw_type, int clid_len, time_t now, int force);
@@ -1223,7 +1230,7 @@ int get_incoming_mark(union mysockaddr *peer_addr, struct all_addr *local_addr,
 #ifdef HAVE_DHCP6
 void dhcp6_init(void);
 void dhcp6_packet(time_t now);
-struct dhcp_context *address6_allocate(struct dhcp_context *context,  unsigned char *clid, int clid_len, 
+struct dhcp_context *address6_allocate(struct dhcp_context *context,  unsigned char *clid, int clid_len, int temp_addr,
 				       int iaid, int serial, struct dhcp_netid *netids, int plain_range, struct in6_addr *ans);
 int config_valid(struct dhcp_config *config, struct dhcp_context *context, struct in6_addr *addr);
 struct dhcp_context *address6_available(struct dhcp_context *context, 

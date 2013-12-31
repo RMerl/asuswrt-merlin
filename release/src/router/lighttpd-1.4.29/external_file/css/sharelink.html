@@ -10,34 +10,9 @@ html{
 	padding:0px;
 }
 body{
-display: block;
-overflow: hidden;
-background: #e8e8e8;
-color: rgb(80,90,100);
-font: 13px verdana, tahoma, arial, helvetica, sans-serif;
-}
-.share-icon {
-background:transparent url("style-theme.png") no-repeat top left;
-display: block;
-width: 40px;
-height: 40px;
-background-repeat: no-repeat;
-margin-right: 10px;
-float: left;
-cursor: pointer;
-display: none;
-}
-.share-facebook{
-background-position: -240px -390px;	
-}
-.share-google_plus{
-background-position: -280px -390px;	
-}
-.share-twitter{
-background-position: -320px -390px;	
-}
-.share-plurk{
-background-position: -360px -390px;	
+	display: block;
+	overflow: hidden;
+	background: #e8e8e8;
 }
 </style>
 <script type="text/javascript" src="/smb/js/tools.js"></script>
@@ -46,7 +21,6 @@ var this_url;
 var m = new lang();
 var g_storage = new myStorage();
 var is_private_ip = 0;
-var g_sharelink_array;
 
 $("document").ready(function() {
 	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
@@ -59,60 +33,30 @@ $("document").ready(function() {
 	$('button#cancel').text(m.getString('btn_cancel'));
 	$('span#desc').text(m.getString('msg_sharelink'));
 	$('#sharelink_warning').text(m.getString('msg_sharelink_warning'));
-	$('#shareto').text(m.getString('title_shareto'));
 	
 	this_url = getUrlVars()["v"];
 	is_private_ip = getUrlVars()["b"];
 	
-	g_sharelink_array = this_url.split(";");
+	while( this_url.indexOf('%3Cbr%3E') != -1 )
+		this_url = this_url.replace('%3Cbr%3E','\n');
 	
+	while( this_url.indexOf('<br>') != -1 )
+		this_url = this_url.replace('<br>','\n');
+		
 	var content = "";
+	
 	content += m.getString('msg_sharelink_desc1');
-	var len = g_sharelink_array.length;
-	for(var i = 0; i < len; i++){
-		content += 	g_sharelink_array[i];
-		if(i!=len-1)
-			content += "\n\n";			
-	}	
+	content += 	this_url;
 	content += m.getString('msg_sharelink_desc2');
 	
 	if(is_private_ip==1){
 		content += m.getString('msg_sharelink_desc3');
 	}
+	//$("#sharelink").html(content);
 	
 	$("#sharelink").val(content);
 	
 	select_all();
-	
-	$("#share-link-Facebook").click(function(){		
-		var len = g_sharelink_array.length;
-		for(var i = 0; i < len; i++){
-			var sharelink = g_sharelink_array[i];
-			var sharetitle = m.getString('msg_sharelink_desc1');
-			var url = 'http://www.facebook.com/share.php?u=' + encodeURIComponent(sharelink) + 
-			          "&t=" +  encodeURIComponent(sharetitle);
-			window.open(url);		
-		}
-	});
-	
-	$("#share-link-GooglePlus").click(function(){
-		var len = g_sharelink_array.length;
-		for(var i = 0; i < len; i++){
-			var sharelink = g_sharelink_array[i];
-			var url = 'https://plus.google.com/share?url=' + encodeURIComponent(sharelink);
-			window.open(url);		
-		}
-	});
-	
-	$("#share-link-Twitter").click(function(){
-		var url = 'http://twitter.com/home/?status=' + encodeURIComponent($("#sharelink").val());
-		window.open(url);
-	});
-	
-	$("#share-link-Plurk").click(function(){
-		var url = 'http://www.plurk.com/?qualifier=shares&status=' + encodeURIComponent($("#sharelink").val());
-		window.open(url);
-	});
 });
 
 function doCancel(e) {
@@ -148,45 +92,21 @@ function select_all(){
 	<tr>
   		<td>
 			<table width="100%">
-				<tr>
-                	<td>				  
-						<span id='desc'></span>
-					</td>
-                </tr>
-				<tr>
-                	<td>				  
-						<textarea name="sharelink" id="sharelink" style="height:370px;width:570px" wrap="off"></textarea>
-					</td>
-                </tr>				
+				<td><tr>				  
+					<span id='desc'></span>
+				</td></tr>
+				<td><tr>				  
+					<textarea name="sharelink" id="sharelink" style="height:400px;width:570px" wrap="off"></textarea>
+				</td></tr>				
 			</table>  
     	</td>    
 	</tr>
-  	<tr>
-  		<td>
-			<table width="100%">
-				<tr>
-                	<td>
-                    	<label id='shareto'>分享至</label>
-                    </td>
-                    <td>
-                    	<div>
-                        	<span id="share-link-Facebook" class="share-icon share-facebook" title="Facebook" style="display: inline;"></span>
-                            <span id="share-link-GooglePlus" class="share-icon share-google_plus" title="Google+" style="display: inline;"></span>
-                            <span id="share-link-Twitter" class="share-icon share-twitter" title="Twitter" style="display: inline;"></span>
-                            <span id="share-link-Plurk" class="share-icon share-plurk" title="Plurk" style="display: inline;"></span>
-                        </div>	
-                    </td>
-                </tr>			
-			</table>  
-    	</td>    
-	</tr>
-    <tr style="height:10px;">
-    </tr>
+  	<!--<tr style='height:20px'></tr>-->
     <tr>
-        <td>				  
-			<span id="sharelink_warning" name="sharelink_warning" style="color:#ff0000"></span>
-		</td>
-    </tr>      
+    	<td>
+    		<div id="sharelink_warning" name="sharelink_warning" style="margin:5px;color:#ff0000"></div>
+    	</td>
+    </tr>
   	<tr>
   		<td>
   			<div class="table_block_footer" style="text-align:right">

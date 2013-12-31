@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: sbpcmcia.h 401759 2013-05-13 16:08:08Z $
+ * $Id: sbpcmcia.h 427949 2013-10-07 06:04:47Z $
  */
 
 #ifndef	_SBPCMCIA_H
@@ -296,6 +296,7 @@
 /* Unified OTP: tupple to embed USB manfid inside SDIO CIS */
 #define HNBU_UMANFID		0x53
 #define HNBU_PUBKEY		0x54	/* 128 byte; publick key to validate downloaded FW */
+#define HNBU_WOWLGPIO       0x55   /* 1 byte bit 7 initial polarity, bit 6..0 gpio pin */
 #define HNBU_MUXENAB		0x56	/* 1 byte to enable mux options */
 #define HNBU_GCI_CCR		0x57	/* GCI Chip control register */
 #define HNBU_FEM_CFG		0x58	/* FEM config */

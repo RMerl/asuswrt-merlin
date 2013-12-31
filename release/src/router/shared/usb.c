@@ -105,10 +105,12 @@ char *detect_fs_type(char *device)
 	}
 	/* detect hfs */
 	else if(buf[1024] == 0x48){
-		if(buf[1032] == 0x48 && buf[1033] == 0x46 && buf[1034] == 0x53 && buf[1035] == 0x4A)
-			return "hfsj";
-		else if(buf[1025] == 0x2B || buf[1025] == 0x58)
-			return "hfs+";
+		if(!memcmp(buf+1032, "HFSJ", 4)){
+			if(buf[1025] == 0x58) // with case-sensitive
+				return "hfs+jx";
+			else
+				return "hfs+j";
+		}
 		else
 			return "hfs";
 	}
@@ -123,7 +125,10 @@ char *detect_fs_type(char *device)
 		buf[11] == 0 && buf[12] >= 1 && buf[12] <= 8 /* sector size 512 - 4096 */ &&
 		buf[13] != 0 && (buf[13] & (buf[13] - 1)) == 0) /* sectors per cluster */
 	{
-		return "vfat";
+		if(buf[6] == 0x20 && buf[7] == 0x20 && !memcmp(buf+71, "EFI        ", 11))
+			return "apple_efi";
+		else
+			return "vfat";
 	}
 
 	return "unknown";

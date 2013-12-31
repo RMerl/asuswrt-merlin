@@ -2,7 +2,7 @@
 #include <shutils.h>
 #ifdef RTCONFIG_RALINK
 #include <ralink.h>
-#if defined(RTN14U) || defined(RTAC52U)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U)
 #include <linux/if_packet.h>
 #include <linux/if_ether.h>
 #endif
@@ -212,7 +212,7 @@ int isValidSN(const char *sn)
 }
 
 int
-Get_USB_Port_Info(int port_x)
+Get_USB_Port_Info(const char *port_x)
 {
 	char output_buf[16];
 	char usb_pid[14];
@@ -220,18 +220,18 @@ Get_USB_Port_Info(int port_x)
 #if defined (RTCONFIG_USB_2XHCI2)
 	char usb_removed[32];
 #endif
-	sprintf(usb_pid, "usb_path%d_pid", port_x);
-	sprintf(usb_vid, "usb_path%d_vid", port_x);
+	sprintf(usb_pid, "usb_path%s_pid", port_x);
+	sprintf(usb_vid, "usb_path%s_vid", port_x);
 #if defined (RTCONFIG_USB_2XHCI2)
-	sprintf(usb_removed, "usb_path%d_removed", port_x);
-	if(nvram_match(usb_removed, "1")) {
+	sprintf(usb_removed, "usb_path%s_removed", port_x);
+	if(!strcmp(nvram_safe_get(usb_removed), "1")){
 		puts("N/A");
 		return 0;
 	}
 #endif
 
-	if( strcmp(nvram_get(usb_pid),"") && strcmp(nvram_get(usb_vid),"") ) {
-		sprintf(output_buf, "%s/%s",nvram_get(usb_pid),nvram_get(usb_vid));
+	if( strcmp(nvram_safe_get(usb_pid),"") && strcmp(nvram_safe_get(usb_vid),"") ) {
+		sprintf(output_buf, "%s/%s",nvram_safe_get(usb_pid),nvram_safe_get(usb_vid));
 		puts(output_buf);
 	}
 	else
@@ -241,10 +241,10 @@ Get_USB_Port_Info(int port_x)
 }
 
 int
-Get_USB_Port_Folder(int port_x)
+Get_USB_Port_Folder(const char *port_x)
 {
 	char usb_folder[19];
-	sprintf(usb_folder, "usb_path%d_fs_path0", port_x);
+	sprintf(usb_folder, "usb_path%s_fs_path0", port_x);
 	if( strcmp(nvram_safe_get(usb_folder),"") )
 		puts(nvram_safe_get(usb_folder));
 	else
@@ -255,11 +255,11 @@ Get_USB_Port_Folder(int port_x)
 
 #if defined (RTCONFIG_USB_XHCI) || defined (RTCONFIG_USB_2XHCI2)
 int
-Get_USB_Port_DataRate(int port_x)
+Get_USB_Port_DataRate(const char *port_x)
 {
 	char output_buf[16];
 	char usb_speed[19];
-	sprintf(usb_speed, "usb_path%d_speed", port_x);
+	sprintf(usb_speed, "usb_path%s_speed", port_x);
 	if( strcmp(nvram_safe_get(usb_speed),"") ) {
 		sprintf(output_buf, "%sMbps", nvram_safe_get(usb_speed));
 		puts(output_buf);
@@ -278,12 +278,12 @@ Get_SD_Card_Info(void)
 	int get_sd_card = 1;
 	FILE *fp;
 
-	if(nvram_match("usb_path3_fs_path0", "")){
+	if(!strcmp(nvram_safe_get("usb_path3_fs_path0"), "")){
 		puts("0");
 		return 1;
 	}
 		
-	sprintf(check_cmd, "test_disk2 %s &> /var/sd_info.txt", nvram_get("usb_path3_fs_path0"));
+	sprintf(check_cmd, "test_disk2 %s &> /var/sd_info.txt", nvram_safe_get("usb_path3_fs_path0"));
 	system(check_cmd);
 
 	if ((fp = fopen("/var/sd_info.txt", "r")) != NULL) {
@@ -337,9 +337,6 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 			puts("1");
 #ifdef RTCONFIG_FANCTRL
 			stop_phy_tempsense();
-#endif
-#ifdef RTCONFIG_BCMARM
-			stop_wlaide();
 #endif
 			stop_wpsaide();
 			stop_wps();
@@ -683,19 +680,19 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 	}
 #endif	
 	else if (!strcmp(command, "Get_Usb2p0_Port1_Infor")) {
-		Get_USB_Port_Info(1);
+		Get_USB_Port_Info("1");
 		return 0;
 	}
 	else if (!strcmp(command, "Get_Usb2p0_Port1_Folder")) {
-		Get_USB_Port_Folder(1);
+		Get_USB_Port_Folder("1");
 		return 0;
 	}
 	else if (!strcmp(command, "Get_Usb2p0_Port2_Infor")) {
-		Get_USB_Port_Info(2);
+		Get_USB_Port_Info("2");
 		return 0;
 	}
 	else if (!strcmp(command, "Get_Usb2p0_Port2_Folder")) {
-		Get_USB_Port_Folder(2);
+		Get_USB_Port_Folder("2");
 		return 0;
 	}
 	else if (!strcmp(command, "Get_SD_Infor")) {
@@ -790,12 +787,12 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 	else if (!strcmp(command, "Get_Usb3p0_Port1_Infor")) {
-		if (!Get_USB3_Port_Info(1))
+		if (!Get_USB3_Port_Info("1"))
 			puts("ATE_ERROR");
 		return 0;
 	}
 	else if (!strcmp(command, "Get_Usb3p0_Port2_Infor")) {
-		if (!Get_USB3_Port_Info(2))
+		if (!Get_USB3_Port_Info("2"))
 			puts("ATE_ERROR");
 		return 0;
 	}
@@ -804,12 +801,12 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 	else if (!strcmp(command, "Get_Usb3p0_Port1_Folder")) {
-		if (!Get_USB3_Port_Folder(1))
+		if (!Get_USB3_Port_Folder("1"))
 			puts("ATE_ERROR");
 		return 0;
 	}
 	else if (!strcmp(command, "Get_Usb3p0_Port2_Folder")) {
-		if (!Get_USB3_Port_Folder(2))
+		if (!Get_USB3_Port_Folder("2"))
 			puts("ATE_ERROR");
 		return 0;
 	}
@@ -818,12 +815,12 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return EINVAL;
 	}
 	else if (!strcmp(command, "Get_Usb3p0_Port1_DataRate")) {
-		if (!Get_USB3_Port_DataRate(1))
+		if (!Get_USB3_Port_DataRate("1"))
 			puts("ATE_ERROR");
 		return 0;
 	}
 	else if (!strcmp(command, "Get_Usb3p0_Port2_DataRate")) {
-		if (!Get_USB3_Port_DataRate(2))
+		if (!Get_USB3_Port_DataRate("2"))
 			puts("ATE_ERROR");
 		return 0;
 	}
@@ -859,7 +856,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 #ifdef RTCONFIG_RALINK
-#if !defined(RTN14U) && !defined(RTAC52U)
+#if !defined(RTN14U) && !defined(RTAC52U) && !defined(RTAC51U)
 	else if (!strcmp(command, "Ra_FWRITE")) {
 		return FWRITE(value, value2);
 	}

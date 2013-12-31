@@ -82,8 +82,6 @@ function key_event(evt){
 }
 
 function initial(){
-	$('pull_arrow').title = Untranslated.select_service;
-	$('pull_arrow_mac').title = Untranslated.select_client;
 	show_menu();
 	showqos_rulelist();
 
@@ -296,7 +294,7 @@ function showqos_rulelist(){
 			overlib_str[i] ="";			
 			code +='<tr id="row'+i+'">';
 			var qos_rulelist_col = qos_rulelist_row[i].split('>');
-			var wid=[20, 19, 15, 13, 16, 11];						
+			var wid=[21, 20, 14, 12, 15, 9];						
 				for(var j = 0; j < qos_rulelist_col.length; j++){
 						if(j != 0 && j !=2 && j!=5){
 							code +='<td width="'+wid[j]+'%">'+ qos_rulelist_col[j] +'</td>';
@@ -346,7 +344,7 @@ function showqos_rulelist(){
 								code += '</select></td>';
 						}
 				}
-				code +='<td  width="8%">';
+				code +='<td  width="9%">';
 				code +='<input class="remove_btn" type="button" onclick="del_Row(this);"/></td></tr>';
 		}
 	}
@@ -805,7 +803,6 @@ function linkport(obj){
 <form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
 <input type="hidden" name="current_page" value="Advanced_QOSUserRules_Content.asp">
 <input type="hidden" name="next_page" value="">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_wait" value="5">
@@ -814,8 +811,6 @@ function linkport(obj){
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="qos_rulelist" value=''>
-<!--input type="hidden" name="qos_enable_orig" value="<% nvram_get("qos_enable"); %>">
-<input type="hidden" name="qos_enable" value="1"-->
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 	<tr>
@@ -863,7 +858,12 @@ function linkport(obj){
         			</tr>
 					<tr id="is_qos_enable_desc">
 					<td>
-		  			<div class="formfontdesc" style="font-style: italic;font-size: 14px;color:#FFCC00;"><ul><li><#UserQoSRule_desc_zero#></li></ul></div>
+		  			<div class="formfontdesc" style="font-style: italic;font-size: 14px;color:#FFCC00;">
+							<ul>
+									<li><#UserQoSRule_desc_zero#></li>
+									<li><#UserQoSRule_desc_one#></li>
+							</ul>
+					</div>
 					</td>
 					</tr>
 					<tr>
@@ -887,23 +887,23 @@ function linkport(obj){
 								<th><div class="table_text"><#IPConnection_VServerProto_itemname#></div></th>
 								<th><a href="javascript:void(0);" onClick="openHint(18,5);"><div class="table_text"><div class="table_text">Transferred</div></a></th>
 								<th><#BM_UserList4#></th>
-								<th>Add / Delete</th>
+								<th><#list_add_delete#></th>
 							</tr>							
 							<tr>
-								<td width="20%">							
+								<td width="21%">							
 									<input type="text" class="input_12_table" style="float:left;width:105px;" placeholder="<#Select_menu_default#>" name="qos_service_name_x_0" onKeyPress="return is_string(this, event)">
-									<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullQoSList(this);" title="" >
+									<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullQoSList(this);" title="<#select_service#>">
 									<div id="QoSList_Block" class="QoSList_Block" onclick="hideClients_Block()"></div>
 								</td>
-								<td width="19%">
+								<td width="20%">
 									<input type="text" maxlength="17" class="input_15_table" name="qos_ip_x_0" style="width:100px;float:left">
-									<img id="pull_arrow_mac" class="pull_arrow"height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="" >
+									<img id="pull_arrow_mac" class="pull_arrow"height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="<#select_client#>">
 									<div id="ClientList_Block_PC" class="ClientList_Block_PC" ></div>
 								</td>
 								
 								
-								<td width="15%"><input type="text" class="input_12_table" name="qos_port_x_0" onKeyPress="return is_portrange(this, event)"></td>
-								<td width="13%">
+								<td width="14%"><input type="text" class="input_12_table" name="qos_port_x_0" onKeyPress="return is_portrange(this, event)"></td>
+								<td width="12%">
 									<select name="qos_proto_x_0" class="input_option" style="width:75px;" onChange="linkport(this);">
 										<option value="tcp">TCP</option>
 										<option value="udp">UDP</option>
@@ -914,12 +914,12 @@ function linkport(obj){
 										<option value="igmp">IGMP</option -->
 									</select>
 								</td>
-								<td width="16%">
+								<td width="15%">
 									<input type="text" class="input_3_table" maxlength="7" onKeyPress="return is_number(this,event);" onblur="conv_to_transf();" name="qos_min_transferred_x_0">~
 									<input type="text" class="input_3_table" maxlength="7" onKeyPress="return is_number(this,event);" onblur="conv_to_transf();" name="qos_max_transferred_x_0"> KB
 									<input type="hidden" name="qos_transferred_x_0" value="">
 								</td>
-								<td width="11%">
+								<td width="9%">
 									<select name='qos_prio_x_0' class="input_option" style="width:87px;"> <!--style="width:auto;"-->
 										<option value='0'><#Highest#></option>
 										<option value='1' selected><#High#></option>
@@ -929,7 +929,7 @@ function linkport(obj){
 									</select>
 								</td>
 								
-								<td width="8%">
+								<td width="9%">
 									<input type="button" class="add_btn" onClick="addRow_Group(128);">
 								</td>
 							</tr>

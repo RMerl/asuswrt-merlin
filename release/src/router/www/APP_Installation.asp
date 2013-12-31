@@ -239,7 +239,7 @@ function check_appstate(){
 				installPercent = installPercent + proceed;//*/
 			}
 			else{
-				$("apps_state_desc").innerHTML = "<#usb_initializing#>...";
+				$("apps_state_desc").innerHTML = "&nbsp;<#usb_initializing#>...";
 				apps_download_percent_done++;
 			}
 		}
@@ -365,7 +365,7 @@ function check_appstate(){
 				installPercent = installPercent + proceed;//*/
 			}
 			else{
-				$("apps_state_desc").innerHTML = "<#usb_initializing#>...";
+				$("apps_state_desc").innerHTML = "&nbsp;<#usb_initializing#>...";
 				apps_download_percent_done++;
 			}
 		}
@@ -780,15 +780,14 @@ function divdisplayctrl(flag1, flag2, flag3, flag4){
 			var _quick_dmlink = "http://" + location.host.split(":")[0] + ":" + dm_http_port;
 		else
 			var _quick_dmlink = "http://" + location.host + ":" + dm_http_port;
-
+		
 		if(_dm_enable == "yes"){
 			$("realLink").href = _quick_dmlink;
-			$("quick_dmlink").onclick = function(){$("realLink").click();}
-			//$("quick_dmlink").onclick = function(){location.href=_quick_dmlink;}
 		}
-		else
-			$("quick_dmlink").onclick = function(){alert(Untranslated.DM_DisableHint)}
-
+		else{
+			$("quick_dmlink").onclick = function(){alert(Untranslated.DM_DisableHint);return false;}
+		}	
+			
 		$("return_btn").style.display = "";
 		calHeight(1);
 	}
@@ -827,7 +826,6 @@ function reloadAPP(){
 <form method="post" name="form" action="/start_apply.htm" target="hidden_frame">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="action_mode" value="">
 <input type="hidden" name="action_script" value="">
 <input type="hidden" name="action_wait" value="">
@@ -852,7 +850,7 @@ function reloadAPP(){
 
   <tr>
   	<td class="formfonttitle"><!--#Menu_usb_application#>
-			<img id="return_btn" onclick="show_apps();" align="right" style="cursor:pointer;margin-right:10px;margin-top:-10px" title="Back to USB Extension" src="/images/backprev.png" onMouseOver="this.src='/images/backprevclick.png'" onMouseOut="this.src='/images/backprev.png'"-->
+			<img id="return_btn" onclick="show_apps();" align="right" style="cursor:pointer;margin-right:10px;margin-top:-10px" title="<#menu5_4#>" src="/images/backprev.png" onMouseOver="this.src='/images/backprevclick.png'" onMouseOut="this.src='/images/backprev.png'"-->
 
 				<div style="width:730px">
 					<table width="730px">
@@ -861,7 +859,7 @@ function reloadAPP(){
 								<span class="formfonttitle"><#Menu_usb_application#></span>
 							</td>
 							<td>
-								<img id="return_btn" onclick="reloadAPP();" align="right" style="cursor:pointer;position:absolute;margin-left:-30px;margin-top:-25px;" title="Back to USB Extension" src="/images/backprev.png" onMouseOver="this.src='/images/backprevclick.png'" onMouseOut="this.src='/images/backprev.png'">
+								<img id="return_btn" onclick="reloadAPP();" align="right" style="cursor:pointer;position:absolute;margin-left:-30px;margin-top:-25px;" title="<#Menu_usb_application#>" src="/images/backprev.png" onMouseOver="this.src='/images/backprevclick.png'" onMouseOut="this.src='/images/backprev.png'">
 							</td>
 						</tr>
 					</table>
@@ -872,7 +870,7 @@ function reloadAPP(){
   	<td class="line_export"><img src="images/New_ui/export/line_export.png" /></td>
   </tr>
   <tr>
-   	<td>
+		<td>
 			<div class="formfontdesc" id="usbHint"><#remove_usb_hint#></div>
 		</td> 
   </tr>
@@ -893,11 +891,12 @@ function reloadAPP(){
 		<div id="DMDesc" style="display:none;">
 			<div style="margin-left:10px;" id="isInstallDesc">
 				<h2><#DM_Install_success#></h2>
-				<div class="top-heading" style="cursor:pointer;" id="quick_dmlink">
-				<a id="realLink" href="www.google.com" target="_blank"></a>
-					<table><tr><td><b style="text-decoration:underline;color:#FC0;font-size:16px;"><#DM_launch#></b></td><td><img style="margin-left:10px;" src="images/New_ui/aidisk/steparrow.png" /></td></tr></table>
-				</div>
-			</div>
+				<table>	
+					<tr>
+					<td><div class="top-heading" style="cursor:pointer;margin-top:10px;height:20px;" id="quick_dmlink"><a id="realLink" href="" target="_blank"><b style="text-decoration:underline;color:#FC0;font-size:16px;"><#DM_launch#></b></></a></div></td>
+					<td><div style="margin-left:10px;"><img src="images/New_ui/aidisk/steparrow.png"></div></td>
+					</tr>		
+				</table>
 			<br/>
 			<div><img src="images/New_ui/export/line_export.png" /></div>
 			<table class="" cellspacing="0" cellpadding="0">

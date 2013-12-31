@@ -208,7 +208,6 @@ function switchPage(page){
 <form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
 <input type="hidden" name="current_page" value="Advanced_QOSUserPrio_Content.asp">
 <input type="hidden" name="next_page" value="">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_wait" value="5">
@@ -220,8 +219,6 @@ function switchPage(page){
 <input type="hidden" name="qos_irates" value=''>
 <input type="hidden" name="qos_obw_orig" id="qos_obw" value="<% nvram_get("qos_obw"); %>">
 <input type="hidden" name="qos_ibw_orig" id="qos_ibw" value="<% nvram_get("qos_ibw"); %>">
-<!-- input type="hidden" name="qos_enable_orig" value="<% nvram_get("qos_enable"); %>">
-<input type="hidden" name="qos_enable" value="1" -->
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 	<tr>

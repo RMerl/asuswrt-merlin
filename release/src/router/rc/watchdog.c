@@ -54,7 +54,11 @@
 #include <push_log.h>
 #endif
 #ifdef RTCONFIG_USER_LOW_RSSI
+#if defined(RTCONFIG_RALINK)
+#include <typedefs.h>
+#else
 #include <wlioctl.h>
+#endif
 #endif
 
 #define BCM47XX_SOFTWARE_RESET	0x40		/* GPIO 6 */
@@ -150,6 +154,7 @@ void led_control_normal(void)
 void erase_nvram(void)
 {
 	switch (get_model()) {
+		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
 		case MODEL_RTAC68U:
 			eval("mtd-erase2", "nvram");
@@ -162,6 +167,7 @@ void erase_nvram(void)
 int init_toggle(void)
 {
 	switch (get_model()) {
+		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
 		case MODEL_RTAC68U:
 			nvram_set("btn_ez_radiotoggle", "1");
@@ -867,10 +873,6 @@ static void catch_sig(int sig)
 		wsc_user_commit();
 		need_restart_wsc = 1;
 	}
-	else if (sig == SIGCONT)
-	{
-		dbg("##NULL, renew dhcp apcli ....#\n");
-	}
 #if 0
 	else if (sig == SIGHUP)
 	{
@@ -1463,6 +1465,7 @@ void init_wllc()
 	}
 }
 
+#if !defined(RTCONFIG_RALINK)
 void rssi_check_unit(int unit)
 {
 	int lrsi = 0, lrc = 0;
@@ -1525,9 +1528,9 @@ void rssi_check_unit(int unit)
 		goto exit;
 
 	for (i = 0; i < assoc->count; i ++) {
-		memcpy(&scb_val.ea, &assoc->ea[i], sizeof(scb_val.ea));
+		memcpy(&scb_val.ea, &assoc->ea[i], ETHER_ADDR_LEN);
 
-		if (wl_ioctl(name, WLC_GET_RSSI, &scb_val, sizeof(scb_val)))
+		if (wl_ioctl(name, WLC_GET_RSSI, &scb_val, sizeof(scb_val_t)))
 			continue;
 
 		ether_etoa((void *)&assoc->ea[i], ea);
@@ -1542,7 +1545,7 @@ void rssi_check_unit(int unit)
 				scb_val.val = 8;	// reason code: Disassociated because sending STA is leaving BSS
 				wllc[unit].lowc = 0;
 
-				if (wl_ioctl(name, WLC_SCB_DEAUTHENTICATE_FOR_REASON, &scb_val, sizeof(scb_val)))
+				if (wl_ioctl(name, WLC_SCB_DEAUTHENTICATE_FOR_REASON, &scb_val, sizeof(scb_val_t)))
 					continue;
 			}
 		} else
@@ -1566,9 +1569,9 @@ void rssi_check_unit(int unit)
 				goto exit;
 
 			for (ii = 0; ii < assoc->count; ii ++) {
-				memcpy(&scb_val.ea, &assoc->ea[ii], sizeof(scb_val.ea));
+				memcpy(&scb_val.ea, &assoc->ea[ii], ETHER_ADDR_LEN);
 
-				if (wl_ioctl(name_vif, WLC_GET_RSSI, &scb_val, sizeof(scb_val)))
+				if (wl_ioctl(name_vif, WLC_GET_RSSI, &scb_val, sizeof(scb_val_t)))
 					continue;
 
 				ether_etoa((void *)&assoc->ea[ii], ea);
@@ -1583,7 +1586,7 @@ void rssi_check_unit(int unit)
 						scb_val.val = 8;	// reason code: Disassociated because sending STA is leaving BSS
 						wllc[unit].lowc = 0;
 
-						if (wl_ioctl(name_vif, WLC_SCB_DEAUTHENTICATE_FOR_REASON, &scb_val, sizeof(scb_val)))
+						if (wl_ioctl(name_vif, WLC_SCB_DEAUTHENTICATE_FOR_REASON, &scb_val, sizeof(scb_val_t)))
 							continue;
 					}
 				} else
@@ -1598,7 +1601,7 @@ exit:
 
 	return;
 }
-
+#endif
 void rssi_check()
 {
 	int ii = 0;
@@ -1722,13 +1725,8 @@ watchdog_main(int argc, char *argv[])
 #ifdef RTCONFIG_RALINK
 	doSystem("iwpriv %s set WatchdogPid=%d", WIF_2G, getpid());
 	doSystem("iwpriv %s set WatchdogPid=%d", WIF_5G, getpid());
-	
-	if(nvram_get_int("sw_mode") == SW_MODE_REPEATER)
-	{
-		doSystem("iwpriv apcli0 set ApcliMonitorPid=%d", getpid());
-		signal(SIGCONT, catch_sig);
-	}
-#endif
+#endif	/* RTCONFIG_RALINK */
+
 	/* set the signal handler */
 	signal(SIGCHLD, chld_reap);
 	signal(SIGUSR1, catch_sig);

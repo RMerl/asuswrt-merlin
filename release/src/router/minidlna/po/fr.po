@@ -5,103 +5,103 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: minidlna 1.0.18\n"
+"Project-Id-Version: minidlna 1.1.0\n"
 "Report-Msgid-Bugs-To: jmaggard@users.sourceforge.net\n"
-"POT-Creation-Date: 2010-07-19 10:50-0700\n"
-"PO-Revision-Date: 2010-08-09 17:00-0700\n"
-"Last-Translator: super-poussin <ReadyNAS Forum User>\n"
+"POT-Creation-Date: 2013-06-12 16:46+0200\n"
+"PO-Revision-Date: 2013-06-12 16:56+0200\n"
+"Last-Translator: Benoît Knecht <benoit.knecht@fsfe.org>\n"
 "Language-Team: French\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: scanner.c:163
+#: scanner.c:165
 msgid "Unknown Date"
-msgstr "Date Inconnue"
+msgstr "Date inconnue"
 
-#: scanner.c:191
+#: scanner.c:167
 msgid "Unknown Camera"
-msgstr "Camera Inconnue"
+msgstr "Caméra inconnue"
 
-#: scanner.c:282
+#: scanner.c:277
 msgid "- All Albums -"
-msgstr "- Tous les Albums -"
+msgstr "- Tous les albums -"
 
-#: scanner.c:290 scanner.c:297 scanner.c:300
+#: scanner.c:285 scanner.c:292 scanner.c:296
 msgid "Unknown Album"
-msgstr "Album Inconnu"
+msgstr "Album inconnu"
 
-#: scanner.c:323
+#: scanner.c:318
 msgid "- All Artists -"
-msgstr "- Tous les Artistes -"
+msgstr "- Tous les artistes -"
 
-#: scanner.c:331 scanner.c:337 scanner.c:340
+#: scanner.c:326 scanner.c:332 scanner.c:336
 msgid "Unknown Artist"
-msgstr "Artiste Inconnu"
+msgstr "Artiste inconnu"
 
-#: scanner.c:543
+#: scanner.c:528
 msgid "Music"
 msgstr "Musique"
 
-#: scanner.c:544
+#: scanner.c:529
 msgid "All Music"
-msgstr "Toute la Musique"
+msgstr "Toute la musique"
 
-#: scanner.c:545
+#: scanner.c:530
 msgid "Genre"
 msgstr "Genre"
 
-#: scanner.c:546
+#: scanner.c:531
 msgid "Artist"
 msgstr "Artiste"
 
-#: scanner.c:547
+#: scanner.c:532
 msgid "Album"
 msgstr "Album"
 
-#: scanner.c:548 scanner.c:552 scanner.c:557
+#: scanner.c:533 scanner.c:538 scanner.c:544
 msgid "Folders"
 msgstr "Dossiers"
 
-#: scanner.c:549
+#: scanner.c:534
 msgid "Playlists"
-msgstr "Liste de Lecture"
+msgstr "Liste de lecture"
 
-#: scanner.c:550
+#: scanner.c:536
 msgid "Video"
 msgstr "Vidéo"
 
-#: scanner.c:551
+#: scanner.c:537
 msgid "All Video"
-msgstr "Toutes les Vidéos"
+msgstr "Toutes les vidéos"
 
-#: scanner.c:553
+#: scanner.c:540
 msgid "Pictures"
 msgstr "Images"
 
-#: scanner.c:554
+#: scanner.c:541
 msgid "All Pictures"
-msgstr "Toutes les Images"
+msgstr "Toutes les images"
 
-#: scanner.c:555
+#: scanner.c:542
 msgid "Date Taken"
-msgstr "Date de Prise"
+msgstr "Date de prise"
 
-#: scanner.c:556
+#: scanner.c:543
 msgid "Camera"
-msgstr "Camera"
+msgstr "Caméra"
 
-#: scanner.c:558
+#: scanner.c:546
 msgid "Browse Folders"
-msgstr "Parcourir les Dossiers"
+msgstr "Parcourir les dossiers"
 
-#: scanner.c:721
+#: scanner.c:690
 #, c-format
 msgid "Scanning %s\n"
 msgstr "Analyse de %s\n"
 
-#: scanner.c:789
+#: scanner.c:766
 #, c-format
 msgid "Scanning %s finished (%llu files)!\n"
-msgstr "Analyse réalisée à %s (%llu fichiers)!\n"
+msgstr "Analyse de %s terminée (%llu fichiers) !\n"

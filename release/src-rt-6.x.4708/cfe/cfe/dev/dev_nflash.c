@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: dev_nflash.c 411492 2013-07-09 05:55:15Z $
+ * $Id: dev_nflash.c 421468 2013-09-03 09:48:30Z $
  */
 
 #include "lib_types.h"
@@ -104,8 +104,10 @@ nflash_cfe_read(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
 	good_bytes = part->fp_offset & ~mask;
 	/* Check and skip bad blocks */
 	for (blk_idx = good_bytes/blocksize; blk_idx < nflash->info->numblocks; blk_idx++) {
+		fl_offset_t blk_off = ((fl_offset_t)blocksize * blk_idx);
+
 		if ((nflash->map[blk_idx] != 0) ||
-		    (hndnand_checkbadb(nflash->info, (blocksize*blk_idx)) != 0)) {
+		    (hndnand_checkbadb(nflash->info, blk_off) != 0)) {
 			skip_bytes += blocksize;
 			nflash->map[blk_idx] = 1;
 		} else {
@@ -202,8 +204,10 @@ nflash_cfe_write(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
 	for (blk_idx = good_bytes/blocksize;
 	     blk_idx < (part->fp_offset+part->fp_size)/blocksize;
 	     blk_idx++) {
+		fl_offset_t blk_off = ((fl_offset_t)blocksize * blk_idx);
+
 		if ((nflash->map[blk_idx] != 0) ||
-		    (hndnand_checkbadb(nflash->info, (blocksize*blk_idx)) != 0)) {
+		    (hndnand_checkbadb(nflash->info, blk_off) != 0)) {
 			skip_bytes += blocksize;
 			nflash->map[blk_idx] = 1;
 		} else {
@@ -315,7 +319,7 @@ nflash_cfe_erase_range(cfe_devctx_t *ctx, flash_range_t *range)
 	if ((offset < part->fp_offset) ||
 		((offset + len) > (part->fp_offset + part->fp_size))) {
 		printf("!! offset 0x%llx, len=0x%llx over partition boundary: "
-			"start: 0x%x, end: 0x%x",
+			"start: 0x%"FL_FMT"x, end: 0x%"FL_FMT"x",
 			offset, len, part->fp_offset, part->fp_offset + part->fp_size);
 		return CFE_ERR_INV_PARAM;
 	}
@@ -351,9 +355,13 @@ nflash_cfe_ioctl(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
 	case IOCTL_FLASH_GETINFO:
 		info = (flash_info_t *) buffer->buf_ptr;
 		info->flash_base = 0;
+#ifdef	__ARM_ARCH_7A__
+		info->flash_size = ((fl_size_t)nflash->info->size << 20);
+#else
 		/* 2GB is supported for now */
 		info->flash_size =
 			(nflash->info->size >= (1 << 11)) ? (1 << 31) : (nflash->info->size << 20);
+#endif /* __ARM_ARCH_7A__ */
 		info->flash_type = nflash->info->type;
 		info->flash_flags = FLASH_FLAG_NOERASE;
 		break;
@@ -399,9 +407,14 @@ nflash_do_parts(struct nflash_cfe *nflash, newflash_probe_t *probe)
 {
 	int idx;
 	int middlepart = -1;
-	int lobound = 0;
 	flashpart_t *parts = nflash->parts;
+#ifdef	__ARM_ARCH_7A__
+	fl_size_t lobound = 0;
+	fl_size_t hibound = ((fl_size_t)nflash->info->size << 20);
+#else
+	int lobound = 0;
 	int hibound = (nflash->info->size >= (1 << 11)) ? (1 << 31) : (nflash->info->size << 20);
+#endif /* __ARM_ARCH_7A__ */
 
 	for (idx = 0; idx < probe->flash_nparts; idx++) {
 		if (probe->flash_parts[idx].fp_size == 0) {
@@ -484,9 +497,14 @@ nflash_cfe_probe(cfe_driver_t *drv,
 		/* Just instantiate one device */
 		nflash->parts[0].fp_dev = (flashdev_t *)nflash;
 		nflash->parts[0].fp_offset = 0;
+#ifdef	__ARM_ARCH_7A__
+		nflash->parts[0].fp_size = ((fl_size_t)nflash->info->size) << 20;
+#else
 		/* At most 2GB for one partition */
 		nflash->parts[0].fp_size =
 			(nflash->info->size >= (1 << 11)) ? (1 << 31) : (nflash->info->size << 20);
+#endif /* __ARM_ARCH_7A__ */
+
 		sprintf(descr, "%s %s size %uKB",
 			type, drv->drv_description,
 			nflash->info->size << 10);
@@ -496,7 +514,7 @@ nflash_cfe_probe(cfe_driver_t *drv,
 		nflash_do_parts(nflash, probe);
 		/* Instantiate devices for each piece */
 		for (idx = 0; idx < probe->flash_nparts; idx++) {
-			sprintf(descr, "%s %s offset %08X size %uKB",
+			sprintf(descr, "%s %s offset %"FL_FMT"X size %"FL_FMT"uKB",
 				type, drv->drv_description,
 				nflash->parts[idx].fp_offset,
 				(nflash->parts[idx].fp_size + 1023) / 1024);

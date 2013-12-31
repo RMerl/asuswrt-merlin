@@ -45,7 +45,7 @@ void init_devs(void)
 {
 #define MKNOD(name,mode,dev)	if(mknod(name,mode,dev)) perror("## mknod " name)
 
-#if defined(LINUX30) && !defined(RTN14U) && !defined(RTAC52U)
+#if defined(LINUX30) && !defined(RTN14U) && !defined(RTAC52U) && !defined(RTAC51U)
 	/* Below device node are used by proprietary driver.
 	 * Thus, we cannot use GPL-only symbol to create/remove device node dynamically.
 	 */
@@ -58,12 +58,12 @@ void init_devs(void)
 	MKNOD("/dev/nvram", S_IFCHR | 0x666, makedev(228, 0));
 #else
 	MKNOD("/dev/video0", S_IFCHR | 0x666, makedev(81, 0));
-#if !defined(RTN14U) && !defined(RTAC52U)
+#if !defined(RTN14U) && !defined(RTAC52U) && !defined(RTAC51U)
 	MKNOD("/dev/rtkswitch", S_IFCHR | 0x666, makedev(206, 0));
 #endif
 	MKNOD("/dev/spiS0", S_IFCHR | 0x666, makedev(217, 0));
 	MKNOD("/dev/i2cM0", S_IFCHR | 0x666, makedev(218, 0));
-#if defined(RTN14U) || defined(RTAC52U)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U)
 #else
 	MKNOD("/dev/rdm0", S_IFCHR | 0x666, makedev(254, 0));
 #endif
@@ -94,6 +94,8 @@ void init_devs(void)
 void generate_switch_para(void)
 {
 	int model;
+	int wans_cap = get_wans_dualwan() & WANSCAP_WAN;
+	int wanslan_cap = get_wans_dualwan() & WANSCAP_LAN;
 
 	// generate nvram nvram according to system setting
 	model = get_model();
@@ -130,6 +132,16 @@ void generate_switch_para(void)
 				nvram_set("vlan1ports", "4 5u");
 			}
 			break;
+
+		case MODEL_RTN14U:	/* fall through */
+		case MODEL_RTAC51U:	/* fall through */
+		case MODEL_RTAC52U:
+			nvram_unset("vlan3hwname");
+			if ((wans_cap && wanslan_cap) ||
+			    (wanslan_cap && (!nvram_match("switch_wantag", "none") && !nvram_match("switch_wantag", "")))
+			   )
+				nvram_set("vlan3hwname", "et0");
+			break;
 	}
 }
 
@@ -163,7 +175,7 @@ static void init_switch_ralink(void)
 		restart_lfp();
 	}
 #endif
-//	reinit_hwnat();
+//	reinit_hwnat(-1);
 
 }
 
@@ -177,6 +189,62 @@ void init_switch()
 #endif	
 }
 
+/**
+ * Setup a VLAN.
+ * @vid:	VLAN ID
+ * @prio:	VLAN PRIO
+ * @mask:	bit31~16:	untag mask
+ * 		bit15~0:	port member mask
+ * @return:
+ * 	0:	success
+ *  otherwise:	fail
+ *
+ * bit definition of untag mask/port member mask
+ * 0:	Port 0, LANx port which is closed to WAN port in visual.
+ * 1:	Port 1
+ * 2:	Port 2
+ * 3:	Port 3
+ * 4:	Port 4, WAN port
+ * 9:	Port 9, RGMII/MII port that is used to connect CPU and WAN port.
+ * 	a. If you only have one RGMII/MII port and it is shared by WAN/LAN ports,
+ * 	   you have to define two VLAN interface for WAN/LAN ports respectively.
+ * 	b. If your switch chip choose another port as same feature, convert bit9
+ * 	   to your own port in low-level driver.
+ */
+static int __setup_vlan(int vid, int prio, unsigned int mask)
+{
+	char vlan_str[] = "4096XXX";
+	char prio_str[] = "7XXX";
+	char mask_str[] = "0x00000000XXX";
+	char *set_vlan_argv[] = { "rtkswitch", "36", vlan_str , NULL };
+	char *set_prio_argv[] = { "rtkswitch", "37", prio_str , NULL };
+	char *set_mask_argv[] = { "rtkswitch", "39", mask_str , NULL };
+
+	if (vid > 4096) {
+		_dprintf("%s: invalid vid %d\n", __func__, vid);
+		return -1;
+	}
+
+	if (prio > 7)
+		prio = 0;
+
+	_dprintf("%s: vid %d prio %d mask 0x%08x\n", __func__, vid, prio, mask);
+
+	if (vid >= 0) {
+		sprintf(vlan_str, "%d", vid);
+		_eval(set_vlan_argv, NULL, 0, NULL);
+	}
+
+	if (prio >= 0) {
+		sprintf(prio_str, "%d", prio);
+		_eval(set_prio_argv, NULL, 0, NULL);
+	}
+
+	sprintf(mask_str, "0x%08x", mask);
+	_eval(set_mask_argv, NULL, 0, NULL);
+
+	return 0;
+}
 
 int config_switch_for_first_time = 1;
 void config_switch()
@@ -198,7 +266,7 @@ void config_switch()
 		dbG("software reset\n");
 		eval("rtkswitch", "27");	// software reset
 	}
-#if defined(RTN14U) || defined(RTAC52U)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U)
 	system("rtkswitch 8 0"); //Barton add
 #endif
 
@@ -208,22 +276,26 @@ void config_switch()
 
 		stbport = atoi(nvram_safe_get("switch_stb_x"));
 		if (stbport < 0 || stbport > 6) stbport = 0;
-		dbG("STB port: %d\n", stbport);
-		/* stbport:	unifi_malaysia=1	otherwise
-		 * ----------------------------------------------
-		 *	0:	LLLLW			LLLLW
-		 *	1:	LLLTW			LLLWW
-		 *	2:	LLTLW			LLWLW
-		 *	3:	LTLLW			LWLLW
-		 *	4:	TLLLW			WLLLW
-		 *	5:	TTLLW			WWLLW
-		 *	6:	LLTTW			LLWWW
+		dbG("ISP Profile/STB: %s/%d\n", nvram_safe_get("switch_wantag"), stbport);
+		/* stbport:	Model-independent	unifi_malaysia=1	otherwise
+		 * 		IPTV STB port		(RT-N56U)		(RT-N56U)
+		 * -----------------------------------------------------------------------
+		 *	0:	N/A			LLLLW
+		 *	1:	LAN1			LLLTW			LLLWW
+		 *	2:	LAN2			LLTLW			LLWLW
+		 *	3:	LAN3			LTLLW			LWLLW
+		 *	4:	LAN4			TLLLW			WLLLW
+		 *	5:	LAN1 + LAN2		LLTTW			LLWWW
+		 *	6:	LAN3 + LAN4		TTLLW			WWLLW
 		 */
+
 		if(!nvram_match("switch_wantag", "none")&&!nvram_match("switch_wantag", ""))//2012.03 Yau modify
 		{
 			char tmp[128];
+			char *p;
 			int voip_port = 0;
-			int vlan_val;/* VID and PRIO */
+			int t, vlan_val = -1, prio_val = -1;
+			unsigned int mask = 0;
 
 //			voip_port = atoi(nvram_safe_get("voip_port"));
 			voip_port = 3;
@@ -237,190 +309,138 @@ void config_switch()
 			sprintf(tmp, "rtkswitch 29 %d", voip_port);	
 			system(tmp);	
 
-			if(!strncmp(nvram_safe_get("switch_wantag"), "unifi", 5))/* Added for Unifi. Cherry Cho modified in 2011/6/28.*/
-			{
-				if(strstr(nvram_safe_get("switch_wantag"), "home"))
-				{					
-					system("rtkswitch 38 1");/* IPTV: P0 */
-					/* Internet */
-					system("rtkswitch 36 500");
-					system("rtkswitch 37 0");
-					system("rtkswitch 39 0x02000210");
-					/* IPTV */
-					system("rtkswitch 36 600");
-					system("rtkswitch 37 0");
-					system("rtkswitch 39 0x00010011");
+			if(!strncmp(nvram_safe_get("switch_wantag"), "unifi", 5)) {
+				/* Added for Unifi. Cherry Cho modified in 2011/6/28.*/
+				if(strstr(nvram_safe_get("switch_wantag"), "home")) {
+					system("rtkswitch 38 1");		/* IPTV: P0 */
+					/* Internet:	untag: P9;   port: P4, P9 */
+					__setup_vlan(500, 0, 0x02000210);
+					/* IPTV:	untag: P0;   port: P0, P4 */
+					__setup_vlan(600, 0, 0x00010011);
 				}
-				else/* No IPTV. Business package */
-				{
-					/* Internet */
+				else {
+					/* No IPTV. Business package */
+					/* Internet:	untag: P9;   port: P4, P9 */
 					system("rtkswitch 38 0");
-					system("rtkswitch 36 500");
-					system("rtkswitch 37 0");
-					system("rtkswitch 39 0x02000210");
+					__setup_vlan(500, 0, 0x02000210);
 				}
 			}
-			else if(!strncmp(nvram_safe_get("switch_wantag"), "singtel", 7))/* Added for SingTel's exStream issues. Cherry Cho modified in 2011/7/19. */
-			{		
-				if(strstr(nvram_safe_get("switch_wantag"), "mio"))/* Connect Singtel MIO box to P3 */
-				{
-					system("rtkswitch 40 1");
-					system("rtkswitch 38 3");/* IPTV: P0  VoIP: P1 */
-					/* Internet */
-					system("rtkswitch 36 10");
-					system("rtkswitch 37 0");
-					system("rtkswitch 39 0x02000210");
-					/* VoIP */
-					system("rtkswitch 36 30");
-					system("rtkswitch 37 4");				
-					system("rtkswitch 39 0x00000012");//VoIP Port: P1 tag
+			else if(!strncmp(nvram_safe_get("switch_wantag"), "singtel", 7)) {
+				/* Added for SingTel's exStream issues. Cherry Cho modified in 2011/7/19. */
+				if(strstr(nvram_safe_get("switch_wantag"), "mio")) {
+					/* Connect Singtel MIO box to P3 */
+					system("rtkswitch 40 1");		/* admin all frames on all ports */
+					system("rtkswitch 38 3");		/* IPTV: P0  VoIP: P1 */
+					/* Internet:	untag: P9;   port: P4, P9 */
+					__setup_vlan(10, 0, 0x02000210);
+					/* VoIP:	untag: N/A;  port: P1, P4 */
+					//VoIP Port: P1 tag
+					__setup_vlan(30, 4, 0x00000012);
 				}
-				else//Connect user's own ATA to lan port and use VoIP by Singtel WAN side VoIP gateway at voip.singtel.com
-				{
-					system("rtkswitch 38 1");/* IPTV: P0 */
-					/* Internet */
-					system("rtkswitch 36 10");
-					system("rtkswitch 37 0");
-					system("rtkswitch 39 0x02000210");
+				else {
+					//Connect user's own ATA to lan port and use VoIP by Singtel WAN side VoIP gateway at voip.singtel.com
+					system("rtkswitch 38 1");		/* IPTV: P0 */
+					/* Internet:	untag: P9;   port: P4, P9 */
+					__setup_vlan(10, 0, 0x02000210);
 				}
 
 				/* IPTV */
-				system("rtkswitch 36 20");
-				system("rtkswitch 37 4");
-				system("rtkswitch 39 0x00010011");
+				__setup_vlan(20, 4, 0x00010011);		/* untag: P0;   port: P0, P4 */
 			}
-			else if(!strcmp(nvram_safe_get("switch_wantag"), "m1_fiber"))//VoIP: P1 tag. Cherry Cho added in 2012/1/13.
-			{
-				system("rtkswitch 40 1");
-				system("rtkswitch 38 2");/* VoIP: P1  2 = 0x10 */
-				/* Internet */
-				system("rtkswitch 36 1103");
-				system("rtkswitch 37 1");
-				system("rtkswitch 39 0x02000210");
-				/* VoIP */
-				system("rtkswitch 36 1107");
-				system("rtkswitch 37 1");				
-				system("rtkswitch 39 0x00000012");//VoIP Port: P1 tag
+			else if(!strcmp(nvram_safe_get("switch_wantag"), "m1_fiber")) {
+				//VoIP: P1 tag. Cherry Cho added in 2012/1/13.
+				system("rtkswitch 40 1");			/* admin all frames on all ports */
+				system("rtkswitch 38 2");			/* VoIP: P1  2 = 0x10 */
+				/* Internet:	untag: P9;   port: P4, P9 */
+				__setup_vlan(1103, 1, 0x02000210);
+				/* VoIP:	untag: N/A;  port: P1, P4 */
+				//VoIP Port: P1 tag
+				__setup_vlan(1107, 1, 0x00000012);
 			}
-			else if(!strcmp(nvram_safe_get("switch_wantag"), "maxis_fiber"))//VoIP: P1 tag. Cherry Cho added in 2012/11/6.
-			{
-				system("rtkswitch 40 1");
-				system("rtkswitch 38 2");/* VoIP: P1  2 = 0x10 */
-				/* Internet */
-				system("rtkswitch 36 621");
-				system("rtkswitch 37 0");
-				system("rtkswitch 39 0x02000210");
-				/* VoIP */
-				system("rtkswitch 36 821");
-				system("rtkswitch 37 0");				
-				system("rtkswitch 39 0x00000012");//VoIP Port: P1 tag
+			else if(!strcmp(nvram_safe_get("switch_wantag"), "maxis_fiber")) {
+				//VoIP: P1 tag. Cherry Cho added in 2012/11/6.
+				system("rtkswitch 40 1");			/* admin all frames on all ports */
+				system("rtkswitch 38 2");			/* VoIP: P1  2 = 0x10 */
+				/* Internet:	untag: P9;   port: P4, P9 */
+				__setup_vlan(621, 0, 0x02000210);
+				/* VoIP:	untag: N/A;  port: P1, P4 */
+				__setup_vlan(821, 0, 0x00000012);
 
-				system("rtkswitch 36 822");
-				system("rtkswitch 37 0");				
-				system("rtkswitch 39 0x00000012");//VoIP Port: P1 tag
+				__setup_vlan(822, 0, 0x00000012);		/* untag: N/A;  port: P1, P4 */ //VoIP Port: P1 tag
 			}
-			else if(!strcmp(nvram_safe_get("switch_wantag"), "maxis_fiber_sp"))//VoIP: P1 tag. Cherry Cho added in 2012/11/6.
-			{
-				system("rtkswitch 40 1");
-				system("rtkswitch 38 2");/* VoIP: P1  2 = 0x10 */
-				/* Internet */
-				system("rtkswitch 36 11");
-				system("rtkswitch 37 0");
-				system("rtkswitch 39 0x02000210");
-				/* VoIP */
-				system("rtkswitch 36 14");
-				system("rtkswitch 37 0");				
-				system("rtkswitch 39 0x00000012");//VoIP Port: P1 tag
+			else if(!strcmp(nvram_safe_get("switch_wantag"), "maxis_fiber_sp")) {
+				//VoIP: P1 tag. Cherry Cho added in 2012/11/6.
+				system("rtkswitch 40 1");			/* admin all frames on all ports */
+				system("rtkswitch 38 2");			/* VoIP: P1  2 = 0x10 */
+				/* Internet:	untag: P9;   port: P4, P9 */
+				__setup_vlan(11, 0, 0x02000210);
+				/* VoIP:	untag: N/A;  port: P1, P4 */
+				//VoIP Port: P1 tag
+				__setup_vlan(14, 0, 0x00000012);
 			}
-			else/* Cherry Cho added in 2011/7/11. */
-			{
+			else {
+				/* Cherry Cho added in 2011/7/11. */
 				/* Initialize VLAN and set Port Isolation */
 				if(strcmp(nvram_safe_get("switch_wan1tagid"), "") && strcmp(nvram_safe_get("switch_wan2tagid"), ""))
-					system("rtkswitch 38 3");// 3 = 0x11 IPTV: P0  VoIP: P1
+					system("rtkswitch 38 3");		// 3 = 0x11 IPTV: P0  VoIP: P1
 				else if(strcmp(nvram_safe_get("switch_wan1tagid"), ""))
-					system("rtkswitch 38 1");// 1 = 0x01 IPTV: P0 
+					system("rtkswitch 38 1");		// 1 = 0x01 IPTV: P0
 				else if(strcmp(nvram_safe_get("switch_wan2tagid"), ""))
-					system("rtkswitch 38 2");// 2 = 0x10 VoIP: P1
+					system("rtkswitch 38 2");		// 2 = 0x10 VoIP: P1
 				else
-					system("rtkswitch 38 0");//No IPTV and VoIP ports
+					system("rtkswitch 38 0");		//No IPTV and VoIP ports
 
 				/*++ Get and set Vlan Information */
-				if(strcmp(nvram_safe_get("switch_wan0tagid"), "") != 0)	// Internet on WAN (port 4)
-				{
-					vlan_val = atoi(nvram_safe_get("switch_wan0tagid"));
-					if((vlan_val >= 2) && (vlan_val <= 4094))
-					{											
-						sprintf(tmp, "rtkswitch 36 %d", vlan_val);
-						system(tmp);
+				if(strcmp(nvram_safe_get("switch_wan0tagid"), "") != 0) {
+					// Internet on WAN (port 4)
+					if ((p = nvram_get("switch_wan0tagid")) != NULL) {
+						t = atoi(p);
+						if((t >= 2) && (t <= 4094))
+							vlan_val = t;
 					}
 
-					if(strcmp(nvram_safe_get("switch_wan0prio"), "") != 0)
-					{
-						vlan_val = atoi(nvram_safe_get("switch_wan0prio"));
-						if((vlan_val >= 0) && (vlan_val <= 7))
-						{
-							sprintf(tmp, "rtkswitch 37 %d", vlan_val);
-							system(tmp);
-						}
-						else
-							system("rtkswitch 37 0");
-					}
+					if((p = nvram_get("switch_wan0prio")) != NULL && *p != '\0')
+						prio_val = atoi(p);
 
-					system("rtkswitch 39 0x02000210");
+					__setup_vlan(vlan_val, prio_val, 0x02000210);
 				}
 
-				if(strcmp(nvram_safe_get("switch_wan1tagid"), "") != 0)	// IPTV on LAN4 (port 0)
-				{
-					vlan_val = atoi(nvram_safe_get("switch_wan1tagid"));
-					if((vlan_val >= 2) && (vlan_val <= 4094))
-					{								
-						sprintf(tmp, "rtkswitch 36 %d", vlan_val);	
-						system(tmp);
+				if(strcmp(nvram_safe_get("switch_wan1tagid"), "") != 0) {
+					// IPTV on LAN4 (port 0)
+					if ((p = nvram_get("switch_wan1tagid")) != NULL) {
+						t = atoi(p);
+						if((t >= 2) && (t <= 4094))
+							vlan_val = t;
 					}
 
-					if(strcmp(nvram_safe_get("switch_wan1prio"), "") != 0)
-					{
-						vlan_val = atoi(nvram_safe_get("switch_wan1prio"));
-						if((vlan_val >= 0) && (vlan_val <= 7))
-						{
-							sprintf(tmp, "rtkswitch 37 %d", vlan_val);	
-							system(tmp);
-						}
-						else
-							system("rtkswitch 37 0");
-					}	
+					if((p = nvram_get("switch_wan1prio")) != NULL && *p != '\0')
+						prio_val = atoi(p);
 
 					if(!strcmp(nvram_safe_get("switch_wan1tagid"), nvram_safe_get("switch_wan2tagid")))
-						system("rtkswitch 39 0x00030013"); //IPTV=VOIP
+						mask = 0x00030013;	//IPTV=VOIP
 					else
-						system("rtkswitch 39 0x00010011");//IPTV Port: P0 untag 65553 = 0x10 011
+						mask = 0x00010011;	//IPTV Port: P0 untag 65553 = 0x10 011
+
+					__setup_vlan(vlan_val, prio_val, mask);
 				}	
 
-				if(strcmp(nvram_safe_get("switch_wan2tagid"), "") != 0)	// VoIP on LAN3 (port 1)
-				{
-					vlan_val = atoi(nvram_safe_get("switch_wan2tagid"));
-					if((vlan_val >= 2) && (vlan_val <= 4094))
-					{					
-						sprintf(tmp, "rtkswitch 36 %d", vlan_val);	
-						system(tmp);
+				if(strcmp(nvram_safe_get("switch_wan2tagid"), "") != 0) {
+					// VoIP on LAN3 (port 1)
+					if ((p = nvram_get("switch_wan2tagid")) != NULL) {
+						t = atoi(p);
+						if((t >= 2) && (t <= 4094))
+							vlan_val = t;
 					}
 
-					if(strcmp(nvram_safe_get("switch_wan2prio"), "") != 0)
-					{
-						vlan_val = atoi(nvram_safe_get("switch_wan2prio"));
-						if((vlan_val >= 0) && (vlan_val <= 7))
-						{
-							sprintf(tmp, "rtkswitch 37 %d", vlan_val);	
-							system(tmp);		
-						}
-						else
-							system("rtkswitch 37 0");
-					}
-	
+					if((p = nvram_get("switch_wan2prio")) != NULL && *p != '\0')
+						prio_val = atoi(p);
+
 					if(!strcmp(nvram_safe_get("switch_wan1tagid"), nvram_safe_get("switch_wan2tagid")))
-						system("rtkswitch 39 0x00030013"); //IPTV=VOIP
+						mask = 0x00030013;	//IPTV=VOIP
 					else
-						system("rtkswitch 39 0x00020012");//VoIP Port: P1 untag
+						mask = 0x00020012;	//VoIP Port: P1 untag
+
+					__setup_vlan(vlan_val, prio_val, mask);
 				}
 
 			}
@@ -487,7 +507,7 @@ void config_switch()
 	else if (is_apmode_enabled())
 	{
 		model = get_model();
-		if (model == MODEL_RTN65U || model == MODEL_RTN36U3)
+		if (model == MODEL_RTN65U || model == MODEL_RTN36U3 || MODEL_RTN14U || MODEL_RTAC52U || MODEL_RTAC51U)
 			eval("rtkswitch", "8", "100");
 	}
 
@@ -898,7 +918,7 @@ void init_syspara(void)
 #endif
 
 #ifdef RA_SINGLE_SKU
-#if defined(RTAC52U)
+#if defined(RTAC52U) || defined(RTAC51U)
 	{
 		char *reg_spec;
 
@@ -906,7 +926,7 @@ void init_syspara(void)
 		create_SingleSKU("/etc/Wireless/RT2860", "", reg_spec);
 		create_SingleSKU("/etc/Wireless/iNIC", "_5G", reg_spec);
 	}
-#endif	/* RTAC52U */
+#endif	/* RTAC52U && RTAC51U */
 #endif	/* RA_SINGLE_SKU */
 
 	{
@@ -931,52 +951,167 @@ void generate_wl_para(int unit, int subunit)
 {
 }
 
-// only ralink solution can reload it dynamically
-void reinit_hwnat()
+#if defined(RTAC52U) || defined(RTAC51U)
+#define HW_NAT_WIFI_OFFLOADING		(0xFF00)
+#define HW_NAT_DEVNAME			"hwnat0"
+static void adjust_hwnat_wifi_offloading(void)
 {
-	// only happened when hwnat=1
-	// only loaded when unloaded, and unloaded when loaded
-	// in restart_firewall for fw_pt_l2tp/fw_pt_ipsec
-	// in restart_qos for qos_enable
-	// in restart_wireless for wlx_mrate_x
+	int enable_hwnat_wifi = 1, fd;
+
+	if (!nvram_match("switch_wantag", "none") && !nvram_match("switch_wantag", "")) {
+		nvram_unset("isp_profile_hwnat_not_safe");
+		eval("rtkswitch", "50");
+		if (nvram_get_int("isp_profile_hwnat_not_safe") == 1)
+			enable_hwnat_wifi = 0;
+	}
+
+	if ((fd = open("/dev/" HW_NAT_DEVNAME, O_RDONLY)) < 0) {
+		_dprintf("Open /dev/%s fail. errno %d (%s)\n", HW_NAT_DEVNAME, errno, strerror(errno));
+		return;
+	}
+
+	_dprintf("hwnat_wifi = %d\n", enable_hwnat_wifi);
+	if (ioctl(fd, HW_NAT_WIFI_OFFLOADING, &enable_hwnat_wifi) < 0)
+		_dprintf("ioctl error. errno %d (%s)\n", errno, strerror(errno));
+
+	close(fd);
+}
+#else
+static inline void adjust_hwnat_wifi_offloading(void) { }
+#endif
+
+// only ralink solution can reload it dynamically
+// only happened when hwnat=1
+// only loaded when unloaded, and unloaded when loaded
+// in restart_firewall for fw_pt_l2tp/fw_pt_ipsec
+// in restart_qos for qos_enable
+// in restart_wireless for wlx_mrate_x, etc
+void reinit_hwnat(int unit)
+{
+	int nat_x = -1, prim_unit = wan_primary_ifunit();
+	int i, l, t, link_wan = 1, link_wans_lan = 1;
+	int act = 1;	/* -1/0/otherwise: ignore/remove hwnat/load hwnat */
+	int wans_cap = get_wans_dualwan() & WANSCAP_WAN;
+	int wanslan_cap = get_wans_dualwan() & WANSCAP_LAN;
+	char nat_x_str[] = "wanX_nat_xXXXXXX";
 	
-	if (nvram_get_int("hwnat")) {
-		if (is_nat_enabled() && !nvram_get_int("qos_enable") /*&&*/
-			/* TODO: consider RTCONFIG_DUALWAN case */
-//			!nvram_match("wan0_proto", "l2tp") &&
-//			!nvram_match("wan0_proto", "pptp") &&
-			/*(nvram_match("wl0_radio", "0") || !nvram_get_int("wl0_mrate_x")) &&
-			(nvram_match("wl1_radio", "0") || !nvram_get_int("wl1_mrate_x"))*/) {
+	if (!nvram_get_int("hwnat"))
+		return;
 
-#if !defined(RTCONFIG_DUALWAN)
-#if defined(RTN65U) || defined(RTN56U) || defined(RTN14U) || defined(RTAC52U)
-			char primary[] = "wan1_primaryXXXXXX";
+	/* If QoS is enabled, disable hwnat. */
+	if (nvram_get_int("qos_enable"))
+		act = 0;
 
-			sprintf(primary, "wan%d_primary", WAN_UNIT_SECOND);
-			if (nvram_match(primary, "1")) {
-				_dprintf("%s: don't install hardware NAT driver if 3G is enabled!\n", __func__);
-				return;
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U)
+	if (act > 0 && !nvram_match("switch_wantag", "none") && !nvram_match("switch_wantag", ""))
+		act = 0;
+#endif
+
+	if (act > 0) {
+#if defined(RTCONFIG_DUALWAN)
+		if (unit < 0 || unit > WAN_UNIT_SECOND) {
+			if ((wans_cap && wanslan_cap) ||
+			    (wanslan_cap && (!nvram_match("switch_wantag", "none") && !nvram_match("switch_wantag", "")))
+			   )
+				act = 0;
+		} else {
+			sprintf(nat_x_str, "wan%d_nat_x", unit);
+			nat_x = nvram_get_int(nat_x_str);
+			if (unit == prim_unit && !nat_x)
+				act = 0;
+			else if ((wans_cap && wanslan_cap) ||
+				 (wanslan_cap && (!nvram_match("switch_wantag", "none") && !nvram_match("switch_wantag", "")))
+				)
+				act = 0;
+			else if (unit != prim_unit)
+				act = -1;
+		}
+#else
+		if (!is_nat_enabled())
+			act = 0;
+#endif
+	}
+
+#if defined(RTN65U) || defined(RTN56U) || defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U)
+	if (act > 0) {
+#if defined(RTCONFIG_DUALWAN)
+		if (unit < 0 || unit > WAN_UNIT_SECOND || nvram_match("wans_mode", "lb")) {
+			if (get_wans_dualwan() & WANSCAP_USB)
+				act = 0;
+		} else {
+			if (unit == prim_unit && get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_USB)
+				act = 0;
+		}
+#else
+		if (dualwan_unit__usbif(prim_unit))
+			act = 0;
+#endif
+	}
+#endif
+
+#if defined(RTCONFIG_DUALWAN)
+	if (act != 0 &&
+	    ((wans_cap && wanslan_cap) || (wanslan_cap && (!nvram_match("switch_wantag", "none") && !nvram_match("switch_wantag", ""))))
+	   )
+	{
+		/* If WANS_LAN and WAN is enabled, WANS_LAN is link-up and WAN is not link-up, hw_nat MUST be removed.
+		 * If hw_nat exists in such scenario, LAN PC can't connect to Internet through WANS_LAN correctly.
+		 *
+		 * FIXME:
+		 * If generic IPTV feature is enabled, STB port and VoIP port are recognized as WAN port(s).
+		 * In such case, we don't know whether real WAN port is link-up/down.
+		 * Thus, if WAN is link-up and primary unit is not WAN, assume WAN is link-down.
+		 */
+		for (i = WAN_UNIT_FIRST; i < WAN_UNIT_MAX; ++i) {
+			if ((t = get_dualwan_by_unit(i)) == WANS_DUALWAN_IF_USB)
+				continue;
+
+			l = wanport_status(i);
+			switch (t) {
+			case WANS_DUALWAN_IF_WAN:
+				link_wan = l && (i == prim_unit);
+				break;
+			case WANS_DUALWAN_IF_DSL:
+				link_wan = l;
+				break;
+			case WANS_DUALWAN_IF_LAN:
+				link_wans_lan = l;
+				break;
+			default:
+				_dprintf("%s: Unknown WAN type %d\n", __func__, t);
 			}
-#endif
+		}
+
+		if (!link_wan && link_wans_lan)
+			act = 0;
+	}
+
+	_dprintf("%s:DUALWAN: unit %d,%d type %d iptv [%s] nat_x %d qos %d wans_mode %s link %d,%d: action %d.\n",
+		__func__, unit, prim_unit, get_dualwan_by_unit(unit), nvram_safe_get("switch_wantag"), nat_x,
+		nvram_get_int("qos_enable"), nvram_safe_get("wans_mode"),
+		link_wan, link_wans_lan, act);
+#else
+	_dprintf("%s:WAN: unit %d,%d type %d nat_x %d qos %d: action %d.\n",
+		__func__, unit, prim_unit, get_dualwan_by_unit(unit),
+		nvram_get_int("wan0_nat_x"), nvram_get_int("qos_enable"), act);
 #endif
 
-			if (!module_loaded("hw_nat")) {
-#if 0
-				system("echo 2 > /proc/sys/net/ipv4/conf/default/force_igmp_version");
-				system("echo 2 > /proc/sys/net/ipv4/conf/all/force_igmp_version");
-#endif
-				modprobe("hw_nat");
-				sleep(1);
-			}
-		}	
-		else if (module_loaded("hw_nat")) {
+	if (act < 0)
+		return;
+
+	switch (act) {
+	case 0:		/* remove hwnat */
+		if (module_loaded("hw_nat")) {
 			modprobe_r("hw_nat");
 			sleep(1);
-#if 0
-			system("echo 0 > /proc/sys/net/ipv4/conf/default/force_igmp_version");
-			system("echo 0 > /proc/sys/net/ipv4/conf/all/force_igmp_version");
-#endif
 		}
+		break;
+	default:	/* load hwnat */
+		if (!module_loaded("hw_nat")) {
+			modprobe("hw_nat");
+			sleep(1);
+		}
+		adjust_hwnat_wifi_offloading();
 	}
 }
 
@@ -984,11 +1119,20 @@ char *get_wlifname(int unit, int subunit, int subunit_x, char *buf)
 {
 	char wifbuf[32];
 	char prefix[]="wlXXXXXX_", tmp[100];
-	if(atoi(nvram_safe_get("sw_mode"))==2)
+#if defined(RTCONFIG_WIRELESSREPEATER)
+	if (nvram_get_int("sw_mode") == SW_MODE_REPEATER  && nvram_get_int("wlc_band") == unit && subunit==1)
 	{   
-		sprintf(buf, "%s", "apcli0");
+#if defined(RTCONFIG_RALINK_MT7620)
+		if(unit == 0)
+#else
+		if(unit == 1)
+#endif
+			sprintf(buf, "%s", "apcli0");
+		else
+			sprintf(buf, "%s", "apclii0");
 	}	
 	else
+#endif /* RTCONFIG_WIRELESSREPEATER */
 	{
 		memset(wifbuf, 0, sizeof(wifbuf));
 

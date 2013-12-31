@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.374.36 (xx-xxx-2013)
+Asuswrt-Merlin - build 3.0.0.4.374.37 (31-Dec-2013)
 ===================================================
 
 About
@@ -41,10 +41,10 @@ Here is a list of features that Asuswrt-merlin brings over the original
 firmware:
 
 System:
-   - Based on RT-AC68U 3.0.0.4.374_339 sources from Asus
+   - Based on RT-AC68U 3.0.0.4.374_501 sources from Asus
    - Various bugfixes and optimizations
-   - Some components were updated to their latest versions, for 
-     improved stability and security
+   - Some components were updated to newerversions, for improved
+     stability and security
    - Persistent JFFS partition
    - User scripts that run on specific events
    - Cron jobs
@@ -84,7 +84,7 @@ Web interface:
      monitoring
    - Name field on the DHCP reservation list and Wireless ACL list
    - System info summary page
-   - Wireless clientIP, hostname, rate and rssi on the Wireless Log page
+   - Wireless client IP and hostname on the Wireless Log page
    - Wifi icon reports the state of both radios
    - Display the Ethernet port states
    - The various MAC/IP selection pulldowns will also display hostnames
@@ -102,7 +102,7 @@ integrated/enabled in the official firmware:
 - WakeOnLan web interface (with user-entered preset targets)
 - clickable MACs on the client list for lookup in the OUI database
 - Display active/tracked network connections
-- VPN Status page
+- VPN client connection state report
 - DualWAN and Repeater mode (while it was still under development
   by Asus)
 - OpenVPN client and server support
@@ -120,9 +120,7 @@ NOTE: resetting to factory default after flashing is
 strongly recommended for the following cases:
 
 - Switching between an SDK5 build and a regular build (RT-N66U)
-- Upgrading from anything older than 3.0.0.4.374 on the RT-N66U
-- Coming from another firmware (with the exception of Asus's original 
-  firmware)
+- Coming from Tomato/DD-WRT/OpenWRT firmwares
 
 If upgrading from anything older and you experience issues, then 
 consider doing a factory default reset then as well.
@@ -166,18 +164,17 @@ These are shell scripts that you can create, and which will be run when
 certain events occur.  Those scripts must be saved in /jffs/scripts/ 
 (so, JFFS must be enabled and formatted).  Available scripts:
 
- * services-start: Initial service start at boot
- * services-stop: Services are stopped at shutdown/reboot
- * wan-start: WAN interface just came up (includes if it went down and 
-              back up).  The WAN unit number will be passed as argument 
-              (0 = primary WAN)
+ * dhcpc-event: Called whenever a DHCP event occurs on the WAN 
+                interface.  The type of event (bound, release, etc...) 
+                is passed as an argument.
  * firewall-start: Firewall is started (filter rules have been applied)
                    The WAN interface will be passed as argument (for 
                    example. "eth0")
- * nat-start: nat rules (i.e. port forwards and such) have been applied 
-              (nat table)
  * init-start: Right after jffs is mounted, before any of the services 
                get started
+ * nat-start: nat rules (i.e. port forwards and such) have been applied 
+              (nat table)
+ * post-mount:  Just after a partition is mounted
  * pre-mount: Just before a partition is mounted.  Be careful with 
               this script.  This is run in a blocking call and will 
               block the mounting of the partition  for which it is 
@@ -186,19 +183,20 @@ certain events occur.  Those scripts must be saved in /jffs/scripts/
               partition before mounting. This script is also passed the 
               device path being mounted as an argument which can be 
               used in the script using $1.
- * post-mount:  Just after a partition is mounted
- * unmount: Just before unmounting a partition.  This is a blocking 
-            script, so be careful with it.  The mount point is passed 
-            as an argument to the script.
- * dhcpc-event: Called whenever a DHCP event occurs on the WAN 
-                interface.  The type of event (bound, release, etc...) 
-                is passed as an argument.
+ * qos-start: Called after both the iptables rules and tc configuration 
+              are completed for QoS.
  * openvpn-event: Called whenever an OpenVPN server gets 
                   started/stopped, or an OpenVPN client connects to a 
                   remote server.  Uses the same syntax/parameters as 
                   the "up" and "down" scripts in OpenVPN.
- * qos-start: Called after both the iptables rules and tc configuration 
-              are completed for QoS.
+ * services-start: Initial service start at boot
+ * services-stop: Services are stopped at shutdown/reboot
+ * unmount: Just before unmounting a partition.  This is a blocking 
+            script, so be careful with it.  The mount point is passed 
+            as an argument to the script.
+ * wan-start: WAN interface just came up (includes if it went down and 
+              back up).  The WAN unit number will be passed as argument 
+              (0 = primary WAN)
 
 Don't forget to set them as executable:
 
@@ -222,7 +220,7 @@ access available over WAN.
 ** Crond **
 Crond will automatically start at boot time.  You can put your cron 
 tasks in /var/spool/cron/crontabs/ .  The file must be named "admin" as 
-this is the name of the system user.Note that this location resides in 
+this is the name of the system user.  Note that this location resides in 
 RAM, so you would have to put your cron script somewhere such as in the 
 jffs partition, and at boot time copy it to /var/spool/cron/crontabs/ 
 using an init-start user script.
@@ -498,7 +496,7 @@ For more information visit http://dns.yandex.ru/ .
 ** Layer7-based Netfilter module **
 Support for layer7 rules in iptables has been enabled.  You will need 
 to manually configure the iptables rules to make use of it - there is 
-no web interface exposing this.The defined protocols can be found in 
+no web interface exposing this.  The defined protocols can be found in 
 /etc/l7-protocols.
 
 To use it, you must first load the module:
@@ -536,7 +534,37 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.4.374.36 (xx-xxx-2013):
+3.0.0.4.374.37 (31-Dec-2013):
+   - NEW: Merged with Asus 374_501 GPL (from RT-AC68U).
+          Notable changes in this version:
+          * New SDK (wireless driver and CTF) for AC56/AC68
+          * dnsmasq updated to 2.68
+          * radvd updated to 1.9.5
+          * Improved IPv6 support
+          * Fixed Parental Control (A-M's own fix was replaced with
+            this new one for consistency)
+          * More details shown on Wireless Log page (their changes
+            were merged with our own changes)
+   - CHANGED: Dropbear default path will now include the locations
+              inside /opt
+   - CHANGED: Don't include a cert/key section in exported .ovpn if the
+              router has "User authentication only" enabled
+   - CHANGED: Display in which chain a given port forward rule is, on the
+              Port Forwarding page.  Allows to distinguish manual forwards
+              from upnp forwards.
+   - CHANGED: The state of PPTP/L2TP client connections will be reported 
+              on the VPN Status page.
+   - CHANGED: Removed the display of global OpenVPN statistics on the
+              VPN Status page.
+   - FIXED: OpenVPN clients with DNS set to "Strict" weren't properly
+            setting dnsmasq to use "strict-order"
+   - FIXED: Garbled resolv.conf generated when adding an OpenVPN client DNS
+            to it
+   - FIXED: OpenVPN Client static key was incorrectly processed when shown
+            on the webui.
+
+
+3.0.0.4.374.36 Beta 1 (23-Dec-2013):
    - NEW: Added ECDSA key support for SSH
    - NEW: postconf scripts.  This allow you to modify a generated
           config file (for example, smb.conf) before the service
@@ -549,6 +577,8 @@ History
    - CHANGED: Extended retry period for WAN DHCP queries to 160 secs
               in Normal DHCP mode to give time to Charter to 
               unblacklist customers being accidentally blocked by them.
+   - CHANGED: Downgraded rp-pppoe from 3.11 to 3.10 to see if it's
+              more stable for some PPPoE users
    - FIXED: Some VPN client username/passwords were incorrectly handled
    - FIXED: When disabling Dual WAN, WAN unit wasn't being reset to 
             unit 0, preventing users from editing the correct unit 

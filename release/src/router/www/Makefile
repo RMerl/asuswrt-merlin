@@ -209,7 +209,6 @@ ifneq ($(RTCONFIG_ACCEL_PPTPD), y)
 	rm -rf $(INSTALLDIR)/www/ajax_openvpn_server.asp
 	rm -rf $(INSTALLDIR)/www/Advanced_VPNAdvanced_Content.asp
 	rm -rf $(INSTALLDIR)/www/Advanced_VPN_Content.asp
-	rm -rf $(INSTALLDIR)/www/Advanced_VPNStatus.asp
 endif
 endif
 ifneq ($(RTCONFIG_VPNC), y)	
@@ -233,4 +232,10 @@ ifneq ($(RTCONFIG_YANDEXDNS),y)
 endif
 ifneq ($(RTCONFIG_KYIVSTAR),y)
 	rm -rf $(INSTALLDIR)/www/userRpm/SoftwareUpgradeRpm.htm
+endif
+
+ifeq ($(RTCONFIG_ODMPID),y)
+	@if [ ! -e $(INSTALLDIR)/www/images/$(subst U,R,$(BUILD_NAME))Model_producticon.png ] ; then \
+		 ln -sf Model_producticon.png $(INSTALLDIR)/www/images/$(subst U,R,$(BUILD_NAME))Model_producticon.png ; \
+	fi
 endif

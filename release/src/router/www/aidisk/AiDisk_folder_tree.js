@@ -21,7 +21,10 @@ function hidePop(flag){
 	if(flag != "apply")
 		enableCheckChangedStatus();
 
-	$('popupframe').src = "";
+	setTimeout(function(){
+		document.getElementById("popupframe").src = "";
+	}, 100);
+
 	$('OverlayMask').style.visibility = "hidden";
 }
 

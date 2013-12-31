@@ -3015,8 +3015,8 @@ fi
 
 
 # Define the identity of the package.
- PACKAGE=minidlna
- VERSION=1.1.0
+ PACKAGE='minidlna'
+ VERSION='1.1.0'
 
 
 cat >>confdefs.h <<_ACEOF
@@ -8449,15 +8449,15 @@ $as_echo_n "checking for __NR_clock_gettime syscall... " >&6; }
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
-             #include <asm/unistd.h>
+            #include <asm/unistd.h>
 
 int
 main ()
 {
 
-             #ifndef __NR_clock_gettime
-             #error
-             #endif
+            #ifndef __NR_clock_gettime
+            #error
+            #endif
 
 
   ;
@@ -8466,7 +8466,7 @@ main ()
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
 
-         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 
 $as_echo "#define HAVE_CLOCK_GETTIME_SYSCALL 1" >>confdefs.h
@@ -8474,9 +8474,9 @@ $as_echo "#define HAVE_CLOCK_GETTIME_SYSCALL 1" >>confdefs.h
 
 else
 
-         { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-         { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing clock_gettime" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing clock_gettime" >&5
 $as_echo_n "checking for library containing clock_gettime... " >&6; }
 if ${ac_cv_search_clock_gettime+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -8537,6 +8537,15 @@ fi
 
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+ac_fn_c_check_header_mongrel "$LINENO" "linux/netlink.h" "ac_cv_header_linux_netlink_h" "$ac_includes_default"
+if test "x$ac_cv_header_linux_netlink_h" = xyes; then :
+
+$as_echo "#define HAVE_NETLINK 1" >>confdefs.h
+
+fi
+
+
 
 ################################################################################################################
 ### Library checks

@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmutils.h 413802 2013-07-22 10:11:49Z $
+ * $Id: bcmutils.h 422014 2013-09-05 14:46:51Z $
  */
 
 #ifndef	_bcmutils_h_
@@ -165,7 +165,10 @@ typedef struct {
 
 typedef struct {
 	uint32                  _prec_log;
-	pktq_counters_t*	_prec_cnt[PKTQ_MAX_PREC];     /* Counters per queue  */
+	pktq_counters_t*        _prec_cnt[PKTQ_MAX_PREC];     /* Counters per queue  */
+#ifdef BCMDBG
+	uint32 pps_time;        /* time spent in ps pretend state */
+#endif
 } pktq_log_t;
 #endif /* PKTQ_LOG */
 

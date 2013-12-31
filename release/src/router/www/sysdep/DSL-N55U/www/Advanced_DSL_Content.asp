@@ -1007,7 +1007,6 @@ function pass_checked(obj){
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
 <input type="hidden" name="current_page" value="Advanced_DSL_Content.asp">
 <input type="hidden" name="next_page" value="Advanced_DSL_Content.asp">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="group_id" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
@@ -1051,11 +1050,11 @@ function pass_checked(obj){
 									<table id="WANscap" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 										<thead>
 										<tr>
-											<td colspan="2">WAN index</td>
+											<td colspan="2"><#wan_index#></td>
 										</tr>
 										</thead>
 										<tr>
-											<th>WAN Type</th>
+											<th><#wan_type#></th>
 											<td align="left">
 												<select id="wan_unit" class="input_option" name="wan_unit" onchange="change_wan_unit();"></select>											
 											</td>
@@ -1065,7 +1064,7 @@ function pass_checked(obj){
 									<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="DSL_WAN_table">
 										<thead>
 										<tr>
-											<td colspan="9">PVC Summary</td>
+											<td colspan="9"><#PVC_summary#></td>
 										</tr>
 										</thead>
 											<tr>
@@ -1076,8 +1075,8 @@ function pass_checked(obj){
 												<th style="width: 13%;"><center><#prtcl_JS_encap#></center></th>
 												<th style="width: 10%;"><center><#Internet#></center></th>
 												<th style="width: 10%;"><center><#menu_dsl_iptv#></center></th>
-												<th style="width: 15%;"><center>Edit PVC</center></th>
-												<th style="width: 15%;"><center>Add / Delete</center></th>
+												<th style="width: 15%;"><center><#PVC_edit#></center></th>
+												<th style="width: 15%;"><center><#list_add_delete#></center></th>
 											</tr>
 									</table>
 

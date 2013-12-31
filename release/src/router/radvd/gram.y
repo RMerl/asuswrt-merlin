@@ -177,7 +177,7 @@ ifacedef	: ifacehead '{' ifaceparams  '}' ';'
 					ABORT;
 				}
 			}
-			if (setup_deviceinfo(iface) < 0)
+			if (update_device_info(iface) < 0)
 				if (!iface->IgnoreIfMissing)
 				ABORT;
 			if (check_iface(iface) < 0)

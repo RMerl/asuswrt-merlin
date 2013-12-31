@@ -78,6 +78,7 @@
 #include "tivo_utils.h"
 #include "tivo_commands.h"
 #include "clients.h"
+#include "process.h"
 
 #include "sendfile.h"
 
@@ -387,6 +388,11 @@ ParseHttpHeaders(struct upnphttp * h)
 						break;
 					}
 				}
+			}
+			else if(strncasecmp(line, "uctt.upnp.org:", 14)==0)
+			{
+				/* Conformance testing */
+				SETFLAG(DLNA_STRICT_MASK);
 			}
 		}
 next_header:
@@ -1616,8 +1622,8 @@ SendResp_resizedimg(struct upnphttp * h, char * object)
 
 #if USE_FORK
 	pid_t newpid = 0;
-	newpid = fork();
-	if( newpid )
+	newpid = process_fork();
+	if( newpid > 0 )
 	{
 		CloseSocket_upnphttp(h);
 		goto resized_error;
@@ -1664,7 +1670,9 @@ SendResp_resizedimg(struct upnphttp * h, char * object)
 		dstw = (((height<<10)/srch) * srcw>>10);
 	}
 
-	if( dstw <= 640 && dsth <= 480 )
+	if( dstw <= 160 && dsth <= 160 )
+		strcpy(dlna_pn, "DLNA.ORG_PN=JPEG_TN;");
+	else if( dstw <= 640 && dsth <= 480 )
 		strcpy(dlna_pn, "DLNA.ORG_PN=JPEG_SM;");
 	else if( dstw <= 1024 && dsth <= 768 )
 		strcpy(dlna_pn, "DLNA.ORG_PN=JPEG_MED;");
@@ -1758,7 +1766,7 @@ SendResp_resizedimg(struct upnphttp * h, char * object)
 resized_error:
 	sqlite3_free_table(result);
 #if USE_FORK
-	if( !newpid )
+	if( newpid == 0 )
 		_exit(0);
 #endif
 }
@@ -1851,8 +1859,8 @@ SendResp_dlnafile(struct upnphttp *h, char *object)
 		sqlite3_free_table(result);
 	}
 #if USE_FORK
-	newpid = fork();
-	if( newpid )
+	newpid = process_fork();
+	if( newpid > 0 )
 	{
 		CloseSocket_upnphttp(h);
 		goto error;
@@ -1993,7 +2001,7 @@ SendResp_dlnafile(struct upnphttp *h, char *object)
 	CloseSocket_upnphttp(h);
 error:
 #if USE_FORK
-	if( !newpid )
+	if( newpid == 0 )
 		_exit(0);
 #endif
 	return;

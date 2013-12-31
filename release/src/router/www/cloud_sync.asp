@@ -618,7 +618,7 @@ function validform(){
 	}
 
 	/*if(document.form.cloud_password.value.length < 8){ //disable to check length of password temporary, Jieming added at 2013.08.13
-		alert(Untranslated.cloud_list_password);
+		alert("<#cloud_list_password#>");
 		return false;
 	}*/
 	
@@ -1085,7 +1085,6 @@ function cal_panel_block(){
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="current_page" value="cloud_sync.asp">
 <input type="hidden" name="next_page" value="cloud_sync.asp">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="restart_cloudsync">
@@ -1188,8 +1187,8 @@ function cal_panel_block(){
       					<th width="10%"><!--a class="hintstyle" href="javascript:void(0);" onClick="openHint(18,2);"-->Provider<!--/a--></th>
     						<th width="25%"><#PPPConnection_UserName_itemname#></a></th>
       					<th width="10%">Rule</a></th>
-      					<th width="30%">Folder</th>
-      					<th width="15%">Status</th>
+      					<th width="30%"><#FolderName#></th>
+      					<th width="15%"><#PPPConnection_x_WANLink_itemname#></th>
       					<th width="10%"><#CTL_del#></th>
     					</tr>
 
@@ -1227,7 +1226,7 @@ function cal_panel_block(){
 								<#AiDisk_Account#>
 							</th>			
 							<td>
-							  <input type="text" maxlength="32" class="input_32_table" style="height: 23px;" id="cloud_username" name="cloud_username" value="" onKeyPress="">
+							  <input type="text" maxlength="32" class="input_30_table" style="height: 23px;" id="cloud_username" name="cloud_username" value="" onKeyPress="">
 							</td>
 						  </tr>	
 
@@ -1236,7 +1235,7 @@ function cal_panel_block(){
 								<#PPPConnection_Password_itemname#>
 							</th>			
 							<td>
-								<input id="cloud_password" name="cloud_password" type="password" autocapitalization="off" onBlur="switchType(this, false);" onFocus="switchType(this, true);" maxlength="25" class="input_32_table" style="height: 23px;" value="">
+								<input id="cloud_password" name="cloud_password" type="password" autocapitalization="off" onBlur="switchType(this, false);" onFocus="switchType(this, true);" maxlength="25" class="input_30_table" style="height: 23px;" value="">
 							</td>
 						  </tr>						  				
 					  				
@@ -1245,8 +1244,8 @@ function cal_panel_block(){
 								Folder
 							</th>
 							<td>
-			          <input type="text" id="PATH" class="input_32_table" style="height: 23px;" name="cloud_dir" value="" onclick=""/>
-		  					<input name="button" type="button" class="button_gen_short" onclick="get_disk_tree();" value="Browser"/>
+			          <input type="text" id="PATH" class="input_30_table" style="height: 23px;" name="cloud_dir" value="" onclick=""/>
+		  					<input name="button" type="button" class="button_gen" onclick="get_disk_tree();" value="Browser"/>
 								<div id="noUSB" style="color:#FC0;display:none;margin-left: 3px;"><#no_usb_found#></div>
 							</td>
 						  </tr>
@@ -1307,7 +1306,6 @@ function cal_panel_block(){
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="current_page" value="cloud_sync.asp">
 <input type="hidden" name="next_page" value="cloud_sync.asp">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="restart_cloudsync">

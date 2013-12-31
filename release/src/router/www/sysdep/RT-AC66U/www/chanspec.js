@@ -3,46 +3,55 @@ function wl_chanspec_list_change(){
 	var band = document.form.wl_unit.value;
 	var bw_cap = document.form.wl_bw.value;
 	var chanspecs = new Array(0);
+	var chanspecs_string = new Array(0);
 	var cur = 0;
 	var sel = 0;
-
+	var cur_control_channel = 0;
+	var extend_channel = new Array();
+	var cur_extend_channel = 0;			//current extension channel
+	
 	if(country == ""){
 		country = prompt("The Country Code is not exist! Please enter Country Code.", "");
 	}
 
 	/* Save current chanspec */
 	cur = '<% nvram_get("wl_chanspec"); %>';
-
 	if (phytype == "a") {	// a mode
 		chanspecs = new Array(0); 
 	}
 	else if (phytype == "n") { // n mode
-		
 		if (band == "1") { // ---- 5 GHz
 				if(wl_channel_list_5g instanceof Array && wl_channel_list_5g != ["0"]){	//With wireless channel 5g hook or return not ["0"]
 						wl_channel_list_5g = eval('<% channel_list_5g(); %>');
-						
+					
+					extend_channel = ["<#Auto#>"];		 // for 5GHz, extension channel always displays Auto
+					extend_channel_value = [""];				
 						if (bw_cap != "0" && bw_cap != "1" && wl_channel_list_5g.getIndexByValue("165") >= 0 ) // rm 165, If not [20 MHz] or not [Auto]
 								wl_channel_list_5g.splice(wl_channel_list_5g.getIndexByValue("165"),1);
 						
 						if(bw_cap == "0"){	// [20/40/80 MHz] (auto)
+							$('wl_nctrlsb_field').style.display = "";
 								for(var i=0;i<wl_channel_list_5g.length;i++){
 										if(wl_channel_list_5g[i] == "165")		//165 belong to 20MHz
 												wl_channel_list_5g[i] = wl_channel_list_5g[i];
 										else if(document.form.preferred_lang.value == "UK")		// auto for UK
 												wl_channel_list_5g[i] = wlextchannel_fourty(wl_channel_list_5g[i]);
-										else{
+										else if(ac_model){
 												if(country == "EU" && parseInt(wl_channel_list_5g[i]) >= 116 && parseInt(wl_channel_list_5g[i]) <= 140){	// belong to 40MHz	
 														wl_channel_list_5g[i] = wlextchannel_fourty(wl_channel_list_5g[i]);
 												}else if(country == "TW" && parseInt(wl_channel_list_5g[i]) >= 56 && parseInt(wl_channel_list_5g[i]) <= 64){	// belong to 40MHz
 														wl_channel_list_5g[i] = wlextchannel_fourty(wl_channel_list_5g[i]);
-												}else{																																		
-														wl_channel_list_5g[i] = wl_channel_list_5g[i]+"/80";
+												}else{	
+														wl_channel_list_5g[i] = wl_channel_list_5g[i]+"/80";												
 												}		
-										}		
+										}
+										else{		// for 802.11n, RT-N66U
+											wl_channel_list_5g[i] = wlextchannel_fourty(wl_channel_list_5g[i]);									
+										}										
 								}								
 						}
 						else if(bw_cap == "3"){	// [80 MHz]
+							$('wl_nctrlsb_field').style.display = "";
 								for(var i=wl_channel_list_5g.length-1;i>=0;i--){									
 										if(document.form.preferred_lang.value == "UK")		// auto for UK
 												wl_channel_list_5g[i] = wlextchannel_fourty(wl_channel_list_5g[i]);
@@ -55,22 +64,25 @@ function wl_chanspec_list_change(){
 														wl_channel_list_5g[i] = wl_channel_list_5g[i]+"/80";
 												}
 										}		
-								}							
-								
+								}										
 						}
 						else if(bw_cap == "2"){		// 40MHz
+							$('wl_nctrlsb_field').style.display = "";
 								for(var i=0;i<wl_channel_list_5g.length;i++){
-										wl_channel_list_5g[i] = wlextchannel_fourty(wl_channel_list_5g[i]);	
+									wl_channel_list_5g[i] = wlextchannel_fourty(wl_channel_list_5g[i]);	
 								}
+						}
+						else{		//20MHz
+							$('wl_nctrlsb_field').style.display = "none";					
 						}
 												
 						if(wl_channel_list_5g[0] != "0")
 								wl_channel_list_5g.splice(0,0,"0");
-								
+						
+						add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value, 1);   //construct extension channel
 						chanspecs = wl_channel_list_5g;	
 						
-				}else{	// hook failure to set chennel by static channels array
-									
+				}else{	// hook failure to set chennel by static channels array									
 						if (bw_cap == "1") { // -- 20 MHz
 							if (country == "Q2")
 								chanspecs = new Array(0, "36", "40", "44", "48", "149", "153", "157", "161", "165");
@@ -81,7 +93,7 @@ function wl_chanspec_list_change(){
 							else if (country == "CN")
 								chanspecs = new Array(0, "149", "153", "157", "161", "165");
 							else if (country == "XX")
-								chanspecs = new Array(0, "34", "36", "38", "40", "42", "44", "46", "48", "52", "56", "60", "64", "100", "104", "108", "112", "116", "120", "124", "128", "132", "136", "140", "144", "149", "153", "157", "161", "165");
+								chanspecs = new Array(0, "36", "40", "44", "48", "52", "56", "60", "64", "100", "104", "108", "112", "116", "120", "124", "128", "132", "136", "140", "144", "149", "153", "157", "161", "165");
 							else // US
 								chanspecs = new Array(0, "36", "40", "44", "48", "149", "153", "157", "161", "165");
 						}					 
@@ -129,72 +141,65 @@ function wl_chanspec_list_change(){
 						} 
 						else { // ...
 								chanspecs = [0];
-						}
-						
+						}					
 				}
 		} 
-		else if (band == "0") { // - 2.4 GHz
-				
+		else if (band == "0") { // - 2.4 GHz				
 				if(wl_channel_list_2g instanceof Array && wl_channel_list_2g != ["0"]){	//With wireless channel 2.4g hook or return ["0"]
 						wl_channel_list_2g = eval('<% channel_list_2g(); %>');
-						
-						if(bw_cap == "2" || bw_cap == "0") { // -- [40 MHz]  | [20/40 MHz]
-							
-							  if(wl_channel_list_2g.length == 14){		//1~14
-										for(var j=0; j<9; j++){
-												wl_channel_list_2g[j] = wl_channel_list_2g[j] + "l";
-										}
-										for(var k=9; k<14; k++){
-												wl_channel_list_2g[k] = wl_channel_list_2g[k] + "u";
-										}
-										
-										//add coexistence extension channel
-										wl_channel_list_2g.splice(9,0,"9u");
-										wl_channel_list_2g.splice(8,0,"8u");
-										wl_channel_list_2g.splice(7,0,"7u");
-										wl_channel_list_2g.splice(6,0,"6u");
-										wl_channel_list_2g.splice(5,0,"5u");
-								
-								}
-								else if(wl_channel_list_2g.length == 13){		//1~13
-										for(var j=0; j<9; j++){
-												wl_channel_list_2g[j] = wl_channel_list_2g[j] + "l";
-										}
-										for(var k=9; k<13; k++){
-												wl_channel_list_2g[k] = wl_channel_list_2g[k] + "u";
-										}
-										
-										//add coexistence extension channel
-										wl_channel_list_2g.splice(9,0,"9u");
-										wl_channel_list_2g.splice(8,0,"8u");
-										wl_channel_list_2g.splice(7,0,"7u");
-										wl_channel_list_2g.splice(6,0,"6u");
-										wl_channel_list_2g.splice(5,0,"5u");
-								
-								}
-								else if(wl_channel_list_2g.length == 11){		//1~11
-										for(var j=0; j<7; j++){
-												wl_channel_list_2g[j] = wl_channel_list_2g[j] + "l";
-										}
-										for(var k=7; k<11; k++){
-												wl_channel_list_2g[k] = wl_channel_list_2g[k] + "u";
-										}
-										
-										//add coexistence extension channel
-										wl_channel_list_2g.splice(7,0,"7u");
-										wl_channel_list_2g.splice(6,0,"6u");
-										wl_channel_list_2g.splice(5,0,"5u");
-																				 
-								}						
-						}
-						
 						if(wl_channel_list_2g[0] != "0")
 								wl_channel_list_2g.splice(0,0,"0");
-								
-						chanspecs = wl_channel_list_2g;
+					
+						if(cur.search('[ul]') != -1){
+							cur_extend_channel = cur.slice(-1);			//current control channel
+							cur_control_channel = cur.split(cur_extend_channel)[0];	//current extension channel direction
+						}
+						else{
+							cur_control_channel = cur;
+						}				
 						
-				}else{
-				
+						if(bw_cap == "2" || bw_cap == "0") { 	// -- [40 MHz]  | [20/40 MHz]				
+							$('wl_nctrlsb_field').style.display = "";
+							if(cur_control_channel == 0){
+								extend_channel = ["Auto"];
+								extend_channel_value = ["1"];
+								add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value, 1);	
+							}
+							else if(cur_control_channel >= 1 && cur_control_channel <= 4){
+								extend_channel = ["Above"];
+								add_options_x2(document.form.wl_nctrlsb, extend_channel, "l");							
+							}
+							else if(wl_channel_list_2g.length == 12){    // 1 ~ 11
+								if(cur_control_channel >= 5 && cur_control_channel <= 7){
+									extend_channel = ["Above", "Below"];
+									extend_channel_value = ["l", "u"];
+									add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value, cur_extend_channel);							
+								}
+								else if(cur_control_channel >= 8 && cur_control_channel <= 11){
+									extend_channel = ["Below"];
+									extend_channel_value = ["u"];
+									add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value, cur_extend_channel);								
+								}
+							}
+							else{		// 1 ~ 13
+								if(cur_control_channel >= 5 && cur_control_channel <= 9){
+									extend_channel = ["Above", "Below"];
+									extend_channel_value = ["l", "u"];
+									add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value, cur_extend_channel);							
+								}
+								else if(cur_control_channel >= 10 && cur_control_channel <= 13){
+									extend_channel = ["Below"];
+									extend_channel_value = ["u"];
+									add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value, cur_extend_channel);								
+								}			
+							}
+						}else{		// -- [20 MHz]	
+							cur_control_channel = cur;
+							$('wl_nctrlsb_field').style.display = "none";
+						}	
+						
+						chanspecs = wl_channel_list_2g;
+				}else{			
 						if (bw_cap == "1") { // -- 20 MHz
 							if (country == "Q2")
 								chanspecs = new Array(0, "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11");
@@ -233,51 +238,99 @@ function wl_chanspec_list_change(){
 		chanspecs = new Array(0);
 	}
 
-	/* displaying chanspec even if the BW is auto.
-	if(chanspecs[0] == 0 && chanspecs.length == 1)
-		document.form.wl_chanspec.parentNode.parentNode.style.display = "none";
-	else
-		document.form.wl_chanspec.parentNode.parentNode.style.display = "";
-	*/
-
 	/* Reconstruct channel array from new chanspecs */
-	document.form.wl_chanspec.length = chanspecs.length;
-	for (var i in chanspecs){
-		if (chanspecs[i] == 0){
-			document.form.wl_chanspec[i] = new Option("<#Auto#>", chanspecs[i]);
-		}
-		else{
-			if(band == "1")
-				document.form.wl_chanspec[i] = new Option(chanspecs[i].toString().replace("/80", "").replace("u", "").replace("l", ""), chanspecs[i]);
-			else
-				document.form.wl_chanspec[i] = new Option(chanspecs[i].toString(), chanspecs[i]);
-		}
+	document.form.wl_channel.length = chanspecs.length;
+	if(band == 1){
+		for (var i in chanspecs){
+			if (chanspecs[i] == 0){
+				document.form.wl_channel[i] = new Option("<#Auto#>", chanspecs[i]);
+			}
+			else{
+				if(band == "1")
+					document.form.wl_channel[i] = new Option(chanspecs[i].toString().replace("/80", "").replace("u", "").replace("l", ""), chanspecs[i]);
+				else
+					document.form.wl_channel[i] = new Option(chanspecs[i].toString(), chanspecs[i]);
+			}
 
-		document.form.wl_chanspec[i].value = chanspecs[i];
-		if (chanspecs[i] == cur && bw_cap == '<% nvram_get("wl_bw"); %>') {
-			document.form.wl_chanspec[i].selected = true;
-			sel = 1;
+			document.form.wl_channel[i].value = chanspecs[i];
+			if (chanspecs[i] == cur && bw_cap == '<% nvram_get("wl_bw"); %>'){
+				document.form.wl_channel[i].selected = true;
+				sel = 1;
+			}
 		}
+		if (sel == 0 && document.form.wl_channel.length > 0)
+			document.form.wl_channel[0].selected = true;
 	}
+	else{
+		for(i=0;i< chanspecs.length;i++){
+			if(i == 0)
+				chanspecs_string[i] = "<#Auto#>";
+			else
+				chanspecs_string[i] = chanspecs[i];
+			
+		}
 
-	if (sel == 0 && document.form.wl_chanspec.length > 0)
-		document.form.wl_chanspec[0].selected = true;
+		add_options_x2(document.form.wl_channel, chanspecs_string, chanspecs, cur_control_channel);
+	}
 }
 
-
 function wlextchannel_fourty(v){
-		var tmp_wl_channel_5g = "";
-		if(v > 144){
-				tmp_wl_channel_5g = v - 1;
-				if(tmp_wl_channel_5g%8 == 0)
-						v = v + "u";
-				else		
-						v = v + "l";
-		}else{
-				if(v%8 == 0)
-						v = v + "u";
-				else		
-						v = v + "l";											
+	var tmp_wl_channel_5g = "";
+	if(v > 144){
+		tmp_wl_channel_5g = v - 1;
+		if(tmp_wl_channel_5g%8 == 0)
+			v = v + "u";
+		else		
+			v = v + "l";
+	}else{
+		if(v%8 == 0)
+			v = v + "u";
+		else		
+			v = v + "l";											
+	}
+	
+	return v;
+}
+
+function change_channel(obj){
+	var extend_channel = new Array();
+	var extend_channel_value = new Array();
+	var selected_channel = obj.value;
+	var channel_length =obj.length;
+	if(document.form.wl_bw.value != 1){   // 20/40 MHz or 40MHz
+		if(channel_length == 12){    // 1 ~ 11
+			if(selected_channel >= 1 && selected_channel <= 4){
+				extend_channel = ["Above"];
+				extend_channel_value = ["l"];
+				add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value);				
+			}
+			else if(selected_channel >= 5 && selected_channel <= 7){
+				extend_channel = ["Above", "Below"];
+				extend_channel_value = ["l", "u"];
+				add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value);							
+			}
+			else if(selected_channel >= 8 && selected_channel <= 11){
+				extend_channel = ["Below"];
+				extend_channel_value = ["u"];
+				add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value);								
+			}
 		}
-		return v;
+		else{		// 1 ~ 13
+			if(selected_channel >= 1 && selected_channel <= 4){
+				extend_channel = ["Above"];
+				extend_channel_value = ["l"];
+				add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value);							
+			}
+			else if(selected_channel >= 5 && selected_channel <= 9){
+				extend_channel = ["Above", "Below"];
+				extend_channel_value = ["l", "u"];
+				add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value);							
+			}
+			else if(selected_channel >= 10 && selected_channel <= 13){
+				extend_channel = ["Below"];
+				extend_channel_value = ["u"];
+				add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value);								
+			}			
+		}
+	}
 }

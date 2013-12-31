@@ -36,6 +36,9 @@
 #include <shutils.h>
 #include <shared.h>
 #include <wlioctl.h>
+#ifdef PSTA_DEBUG
+#include <rc.h>
+#endif
 
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_PROXYSTA
@@ -46,6 +49,9 @@
 
 int psta_debug = 0;
 int count_bss_down = 0;
+#ifdef PSTA_DEBUG
+static int count = -1;
+#endif
 
 /* WPS ENR mode APIs */
 typedef struct wlc_ap_list_info
@@ -249,7 +255,32 @@ wl_autho(char *name, struct ether_addr *ea)
 
 	return 0;
 }
+#ifdef PSTA_DEBUG
+static void check_wl_rate(const char *ifname)
+{
+	int rate = 0;
+	char rate_buf[32];
 
+	sprintf(rate_buf, "0 Mbps");
+
+        if (wl_ioctl(ifname, WLC_GET_RATE, &rate, sizeof(int)))
+	{
+                dbG("can not get rate info of %s\n", ifname);
+		goto ERROR;
+	}
+        else
+        {
+                rate = dtoh32(rate);
+		if ((rate == -1) || (rate == 0))
+			sprintf(rate_buf, "auto");
+		else
+			sprintf(rate_buf, "%d%s Mbps", (rate / 2), (rate & 1) ? ".5" : "");
+        }
+
+ERROR:
+	logmessage(LOGNAME, "wl interface %s data rate: %s", ifname, rate_buf);
+}
+#endif
 static void
 psta_keepalive()
 {
@@ -311,6 +342,10 @@ PSTA_ERR:
 		ether_etoa(&bssid, macaddr);
 		if (psta_debug) dbg("psta send keepalive nulldata to %s\n", macaddr);
 		eval("wl", "-i", name, "send_nulldata", macaddr);
+#ifdef PSTA_DEBUG
+		count = (count + 1) % 10;
+		if (!count) check_wl_rate(name);
+#endif
 	}
 	else
 	{

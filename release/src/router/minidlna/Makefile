@@ -61,7 +61,7 @@ ETCINSTALLDIR = $(DESTDIR)/etc
 
 BASEOBJS = minidlna.o upnphttp.o upnpdescgen.o upnpsoap.o \
 	   upnpreplyparse.o minixml.o \
-	   getifaddr.o daemonize.o upnpglobalvars.o \
+	   getifaddr.o process.o upnpglobalvars.o \
 	   options.o minissdp.o uuid.o upnpevents.o \
 	   sql.o utils.o metadata.o scanner.o inotify.o \
 	   tivo_utils.o tivo_beacon.o tivo_commands.o \
@@ -134,7 +134,7 @@ depend:	#config.h
 
 minidlna.o: config.h upnpglobalvars.h minidlnatypes.h
 minidlna.o: upnphttp.h upnpdescgen.h minidlnapath.h getifaddr.h upnpsoap.h
-minidlna.o: options.h minissdp.h daemonize.h upnpevents.h log.h
+minidlna.o: options.h minissdp.h process.h upnpevents.h log.h
 upnphttp.o: config.h upnphttp.h upnpdescgen.h minidlnapath.h upnpsoap.h
 upnphttp.o: upnpevents.h image_utils.h sql.h log.h sendfile.h icons.c
 upnpdescgen.o: config.h upnpdescgen.h minidlnapath.h upnpglobalvars.h upnpdescstrings.h
@@ -144,7 +144,7 @@ upnpsoap.o: upnphttp.h upnpsoap.h upnpreplyparse.h getifaddr.h log.h
 upnpreplyparse.o: upnpreplyparse.h minixml.h log.h
 minixml.o: minixml.h
 getifaddr.o: getifaddr.h log.h
-daemonize.o: daemonize.h config.h log.h
+process.o: process.h config.h log.h
 upnpglobalvars.o: config.h upnpglobalvars.h upnpdescstrings.h
 upnpglobalvars.o: minidlnatypes.h
 options.o: options.h config.h upnpglobalvars.h

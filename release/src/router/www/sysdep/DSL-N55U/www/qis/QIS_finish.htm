@@ -178,7 +178,7 @@ function QKfinish_load_body(){
 	$("#mac")[0].innerHTML = '<% nvram_get("et0macaddr"); %>';
 
 	if (0) {
-		$("#wantype_item")[0].innerHTML = "WAN type";
+		$("#wantype_item")[0].innerHTML = "<#wan_type#>";
 
 		if(wanlink_type() == "dhcp")
 			var wanlink_type_conv = "<#BOP_ctype_title1#>";

@@ -13,7 +13,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: hndctf.h 414031 2013-07-23 10:54:51Z $
+ * $Id: hndctf.h 418247 2013-08-14 11:16:42Z $
  */
 
 #ifndef _HNDCTF_H_
@@ -31,7 +31,6 @@
 #define CTFVLSTATS
 
 #define CTF_ENAB(ci)		(((ci) != NULL) && (ci)->_ctf)
-#define CTFQOS_ULDL_DIFFIF(ci)		(((ci) != NULL) && ((ci)->_ctf == (1 << 1)))
 
 #define CTF_ACTION_TAG		(1 << 0)
 #define CTF_ACTION_UNTAG	(1 << 1)
@@ -90,18 +89,11 @@
 #define ctf_dev_unregister(ci, d)	if (CTF_ENAB(ci)) (ci)->fn.dev_unregister(ci, d)
 #ifdef BCMFA
 #define ctf_fa_register(ci, d, i)	if (CTF_ENAB(ci)) (ci)->fn.fa_register(ci, d, i)
-#define ctf_fa_live(ci, i, v6)		(CTF_ENAB(ci) ? (ci)->fn.fa_live(ci, i, v6) : FALSE)
+#define ctf_live(ci, i, v6)		(CTF_ENAB(ci) ? (ci)->fn.live(ci, i, v6) : FALSE)
 #endif /* BCMFA */
 
 #define CTFCNTINCR(s) ((s)++)
 #define CTFCNTADD(s, c) ((s) += (c))
-
-#define NIPQUAD(addr) \
-	((unsigned char *)&addr)[0], \
-	((unsigned char *)&addr)[1], \
-	((unsigned char *)&addr)[2], \
-	((unsigned char *)&addr)[3]
-
 
 #define PPPOE_ETYPE_OFFSET	12
 #define PPPOE_VER_OFFSET	14
@@ -109,10 +101,10 @@
 #define PPPOE_LEN_OFFSET	18
 
 #define PPPOE_HLEN		20
-#define PPPOE_PPP_HLEN		8 //PPPOE + PPP HEADER LEN
+#define PPPOE_PPP_HLEN		8
 
-#define PPPOE_PROT_PPP_IP		0x0021
-#define PPPOE_PROT_PPP_IP6		0x0057
+#define PPPOE_PROT_PPP		0x0021
+#define PPPOE_PROT_PPP_IP6	0x0057
 
 
 typedef struct ctf_pub	ctf_t;
@@ -153,10 +145,10 @@ typedef int32 (*ctf_dev_vlan_delete_t)(ctf_t *ci, void *dev, uint16 vid);
 typedef void (*ctf_dump_t)(ctf_t *ci, struct bcmstrbuf *b);
 typedef void (*ctf_cfg_req_process_t)(ctf_t *ci, void *arg);
 #ifdef BCMFA
-typedef int (*ctf_fa_cb_t)(void *dev, void *par, int cmd);
+typedef int (*ctf_fa_cb_t)(void *dev, ctf_ipc_t *ipc, bool v6, int cmd);
 
 typedef int32 (*ctf_fa_register_t)(ctf_t *ci, ctf_fa_cb_t facb, void *fa);
-typedef bool (*ctf_fa_live_t)(ctf_t *ci, ctf_ipc_t *ipc, bool v6);
+typedef void (*ctf_live_t)(ctf_t *ci, ctf_ipc_t *ipc, bool v6);
 #endif /* BCMFA */
 
 struct ctf_brc_hot {
@@ -194,12 +186,12 @@ typedef struct ctf_fn {
 	ctf_cfg_req_process_t	cfg_req_process;
 #ifdef BCMFA
 	ctf_fa_register_t	fa_register;
-	ctf_fa_live_t		fa_live;
+	ctf_live_t		live;
 #endif /* BCMFA */
 } ctf_fn_t;
 
 struct ctf_pub {
-	uint8			_ctf;		/* Global CTF enable/disable */
+	bool			_ctf;		/* Global CTF enable/disable */
 	ctf_fn_t		fn;		/* Exported functions */
 	void			*nl_sk;		/* Netlink socket */
 	uint32			ipc_suspend;	/* Global IPC suspend flags */
@@ -212,7 +204,6 @@ struct ctf_brc {
 	struct	ether_addr	dhost;		/* MAC addr of host */
 	uint16			vid;		/* VLAN id to use on txif */
 	void			*txifp;		/* Interface connected to host */
-	void			*txvifp;		/* vlan Interface connected to host*/		
 	uint32			action;		/* Tag or untag the frames */
 	uint32			live;		/* Counter used to expire the entry */
 	uint32			hits;		/* Num frames matching brc entry */
@@ -236,6 +227,13 @@ typedef struct ctf_nat {
 	uint16	port;
 } ctf_nat_t;
 
+#ifdef BCMFA
+#define CTF_FA_PEND_ADD_ENTRY		0x1
+#define CTF_FA_ADD_ISPEND(ipc)		((ipc)->flags & CTF_FA_PEND_ADD_ENTRY)
+#define CTF_FA_SET_ADD_PEND(ipc)	((ipc)->flags |= CTF_FA_PEND_ADD_ENTRY)
+#define CTF_FA_CLR_ADD_PEND(ipc)	((ipc)->flags &= ~(CTF_FA_PEND_ADD_ENTRY))
+#endif /* BCMFA */
+
 struct ctf_ipc {
 	struct	ctf_ipc		*next;		/* Pointer to ipc entry */
 	ctf_conn_tuple_t	tuple;		/* Tuple to uniquely id the flow */
@@ -257,18 +255,9 @@ struct ctf_ipc {
 #ifdef BCMFA
 	void			*rxif;		/* Receive interface */
 	void			*pkt;		/* Received packet */
+	uint8			flags;		/* Flags for multiple purpose */
 #endif /* BCMFA */
 };
-struct ctf_ppp_sk {
-	struct pppox_sock 		*po;		/*pointer to pppoe socket*/
-	unsigned char			pppox_protocol;	/*0:pppoe/1:pptp*/
-	struct	ether_addr		dhost;		/*Remote MAC addr of host the pppox socket is bound to*/
-};
-
-typedef struct ctf_ppp {
-	struct ctf_ppp_sk		psk;
-	unsigned short			pppox_id;	/*PPTP peer call id if wan type is pptp, PPPOE session ID if wan type is PPPOE*/
-} ctf_ppp_t;
 
 extern ctf_t *ctf_kattach(osl_t *osh, uint8 *name);
 extern void ctf_kdetach(ctf_t *kci);

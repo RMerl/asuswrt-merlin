@@ -27,12 +27,29 @@ var url_rulelist_array = "<% nvram_char_to_ascii("","url_rulelist"); %>";
 
 function initial(){
 	show_menu();
-	load_body();
+	init_setting();
 	show_url_rulelist();
 	enable_url();
 	enable_url_1();
 }
 
+function init_setting(){
+	document.form.url_date_x_Sun.checked = getDateCheck(document.form.url_date_x.value, 0);
+	document.form.url_date_x_Mon.checked = getDateCheck(document.form.url_date_x.value, 1);
+	document.form.url_date_x_Tue.checked = getDateCheck(document.form.url_date_x.value, 2);
+	document.form.url_date_x_Wed.checked = getDateCheck(document.form.url_date_x.value, 3);
+	document.form.url_date_x_Thu.checked = getDateCheck(document.form.url_date_x.value, 4);
+	document.form.url_date_x_Fri.checked = getDateCheck(document.form.url_date_x.value, 5);
+	document.form.url_date_x_Sat.checked = getDateCheck(document.form.url_date_x.value, 6);
+	document.form.url_time_x_starthour.value = getTimeRange(document.form.url_time_x.value, 0);
+	document.form.url_time_x_startmin.value = getTimeRange(document.form.url_time_x.value, 1);
+	document.form.url_time_x_endhour.value = getTimeRange(document.form.url_time_x.value, 2);
+	document.form.url_time_x_endmin.value = getTimeRange(document.form.url_time_x.value, 3);
+	document.form.url_time_x_starthour_1.value = getTimeRange(document.form.url_time_x_1.value, 0);
+	document.form.url_time_x_startmin_1.value = getTimeRange(document.form.url_time_x_1.value, 1);
+	document.form.url_time_x_endhour_1.value = getTimeRange(document.form.url_time_x_1.value, 2);
+	document.form.url_time_x_endmin_1.value = getTimeRange(document.form.url_time_x_1.value, 3);
+}
 
 function show_url_rulelist(){
 	var url_rulelist_row = decodeURIComponent(url_rulelist_array).split('<');
@@ -194,7 +211,6 @@ function updateDateTime(){
 <form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
 <input type="hidden" name="current_page" value="Advanced_URLFilter_Content.asp">
 <input type="hidden" name="next_page" value="Advanced_URLFilter_Content.asp">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_wait" value="5">
@@ -319,7 +335,7 @@ function updateDateTime(){
 
   	<tr>
 		<th width="80%"><#FirewallConfig_UrlList_groupitemdesc#></th>
-		<th width="20%">Add / Delete</th>
+		<th width="20%"><#list_add_delete#></th>
 	</tr>
 	<tr>
 		<td width="80%">

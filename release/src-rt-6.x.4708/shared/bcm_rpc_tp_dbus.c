@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcm_rpc_tp_dbus.c 401759 2013-05-13 16:08:08Z $
+ * $Id: bcm_rpc_tp_dbus.c 422800 2013-09-10 01:12:42Z $
  */
 
 #if (!defined(WLC_HIGH) && !defined(WLC_LOW))
@@ -585,11 +585,13 @@ bcm_rpc_tp_attach(osl_t * osh, shared_info_t *shared, void *bus)
 
 	rpcb->bus = (struct dbus_pub *)dbus;
 
+	memset(&attrib, 0, sizeof(attrib));
 	dbus_get_attrib(dbus, &attrib);
 	rpcb->has_2nd_bulk_in_ep = attrib.has_2nd_bulk_in_ep;
 	rpcb->bus_mtu = attrib.mtu;
 	rpcb->bus_txdepth = BCM_RPC_TP_DBUS_NTXQ;
 
+	config.config_id = DBUS_CONFIG_ID_RXCTL_DEFERRES;
 	config.rxctl_deferrespok = TRUE;
 	dbus_set_config(dbus, &config);
 
@@ -1153,6 +1155,7 @@ bcm_rpc_tp_get_vidpid(rpc_tp_info_t *rpc_th, uint16 *dnglvid, uint16 *dnglpid)
 {
 	dbus_attrib_t attrib;
 	if (rpc_th && rpc_th->bus) {
+		memset(&attrib, 0, sizeof(attrib));
 		dbus_get_attrib(rpc_th->bus, &attrib);
 		*dnglvid = (uint16) attrib.vid;
 		*dnglpid = (uint16) attrib.pid;
@@ -1167,4 +1170,14 @@ bcm_rpc_tp_get_devinfo(rpc_tp_info_t *rpc_th)
 	}
 
 	return NULL;
+}
+
+int
+bcm_rpc_tp_set_config(rpc_tp_info_t *rpc_th, void *config)
+{
+	int err = DBUS_ERR;
+	if (rpc_th && rpc_th->bus) {
+		err = dbus_set_config(rpc_th->bus, (dbus_config_t*)config);
+	}
+	return err;
 }

@@ -675,8 +675,10 @@ void receive_query(struct listener *listen, time_t now)
   struct in_addr netmask, dst_addr_4;
   size_t m;
   ssize_t n;
-  int if_index = 0;
-  int local_auth = 0, auth_dns = 0;
+  int if_index = 0, auth_dns = 0;
+#ifdef HAVE_AUTH
+  int local_auth = 0;
+#endif
   struct iovec iov[1];
   struct msghdr msg;
   struct cmsghdr *cmptr;
@@ -695,7 +697,13 @@ void receive_query(struct listener *listen, time_t now)
 		 CMSG_SPACE(sizeof(struct sockaddr_dl))];
 #endif
   } control_u;
-  
+#ifdef HAVE_IPV6
+   /* Can always get recvd interface for IPv6 */
+  int check_dst = !option_bool(OPT_NOWILD) || listen->family == AF_INET6;
+#else
+  int check_dst = !option_bool(OPT_NOWILD);
+#endif
+
   /* packet buffer overwritten */
   daemon->srv_save = NULL;
   
@@ -738,7 +746,7 @@ void receive_query(struct listener *listen, time_t now)
     source_addr.in6.sin6_flowinfo = 0;
 #endif
 
-  if (!option_bool(OPT_NOWILD))
+  if (check_dst)
     {
       struct ifreq ifr;
 
@@ -916,7 +924,9 @@ unsigned char *tcp_request(int confd, time_t now,
 {
   size_t size = 0;
   int norebind = 0;
+#ifdef HAVE_AUTH
   int local_auth = 0;
+#endif
   int checking_disabled, check_subnet;
   size_t m;
   unsigned short qtype;

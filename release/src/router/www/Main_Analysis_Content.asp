@@ -56,9 +56,7 @@
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <script>
 function initial(){
-	$('pull_arrow').title = Untranslated.select_network_host;
 	show_menu();
-	load_body();
 	showLANIPList();
 }
 
@@ -199,7 +197,6 @@ function pullLANIPList(obj){
 <form method="GET" name="form" action="/apply.cgi" target="hidden_frame"> 
 <input type="hidden" name="current_page" value="Main_Analysis_Content.asp">
 <input type="hidden" name="next_page" value="Main_Analysis_Content.asp">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="group_id" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="">
@@ -244,7 +241,7 @@ function pullLANIPList(obj){
 											<th width="20%"><#NetworkTools_target#></th>
 											<td>
 												<input type="text" class="input_32_table" name="destIP" maxlength="100" value="" placeholder="ex: www.google.com">
-												<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="" onmouseover="over_var=1;" onmouseout="over_var=0;">						
+												<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="<#select_network_host#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
 												<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
 											</td>
 										</tr>
@@ -257,7 +254,7 @@ function pullLANIPList(obj){
 									</table>
 
 									<div class="apply_gen">
-										<span><input class="button_gen_long" id="cmdBtn" onClick="onSubmitCtrl(this, ' Refresh ')" type="button" value="Diagnose"></span>
+										<span><input class="button_gen_long" id="cmdBtn" onClick="onSubmitCtrl(this, ' Refresh ')" type="button" value="<#NetworkTools_Diagnose_btn#>"></span>
 										<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif">
 									</div>
 

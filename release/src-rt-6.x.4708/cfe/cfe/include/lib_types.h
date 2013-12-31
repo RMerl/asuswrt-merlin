@@ -105,6 +105,16 @@ typedef __SIZE_TYPE__ intptr_t;
 #undef unsigned
 typedef __SIZE_TYPE__ uintptr_t;
 
+#ifdef	__ARM_ARCH_7A__
+typedef unsigned long long	fl_size_t;
+typedef unsigned long long	fl_offset_t;
+#define FL_FMT	"ll"
+#else
+typedef unsigned int	fl_size_t;
+typedef unsigned int	fl_offset_t;
+#define FL_FMT	""
+#endif /* __ARM_ARCH_7A__ */
+
 /*  *********************************************************************
     *  Macros
     ********************************************************************* */

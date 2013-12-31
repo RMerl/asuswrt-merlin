@@ -370,7 +370,7 @@ char* GetBW(int BW)
 		case BW_40:
 			return "40M";
 
-#if defined(RTAC52U)
+#if defined(RTAC52U) || defined(RTAC51U)
 		case BW_80:
 			return "80M";
 #endif
@@ -395,7 +395,7 @@ char* GetPhyMode(int Mode)
 		case MODE_HTGREENFIELD:
 			return "GREEN";
 
-#if defined(RTAC52U)
+#if defined(RTAC52U) || defined(RTAC51U)
 		case MODE_VHT:
 			return "VHT";
 #endif
@@ -471,7 +471,7 @@ _fn_(_st_ HTSetting)							\
 
 int FN_GETRATE(getRate,      MACHTTRANSMIT_SETTING)		//getRate(MACHTTRANSMIT_SETTING)
 int FN_GETRATE(getRate_2g,   MACHTTRANSMIT_SETTING_2G)		//getRate_2g(MACHTTRANSMIT_SETTING_2G)
-#if defined(RTAC52U)
+#if defined(RTAC52U) || defined(RTAC51U)
 int FN_GETRATE(getRate_11ac, MACHTTRANSMIT_SETTING_11AC)	//getRate_11ac(MACHTTRANSMIT_SETTING_11AC)
 #endif
 
@@ -529,7 +529,7 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 #else
 	if (!get_radio_status(ifname))
 	{
-#if defined(RTN14U)
+#if defined(BAND_2G_ONLY)
 		ret+=websWrite(wp, "2.4 GHz radio is disabled\n");
 #else
 		ret+=websWrite(wp, "%s radio is disabled\n",
@@ -541,7 +541,7 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 
 	if (wl_ioctl(ifname, SIOCGIWAP, &wrq0) < 0)
 	{
-#if defined(RTN14U)
+#if defined(BAND_2G_ONLY)
 		ret+=websWrite(wp, "2.4 GHz radio is disabled\n");
 #else
 		ret+=websWrite(wp, "%s radio is disabled\n",
@@ -574,7 +574,7 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	if (ralink_get_range_info(&range, buffer, wrq2.u.data.length) < 0)
 		return ret;
 
-#if 1
+#if defined(RTN65U)
 	if (unit == 0 && get_model() == MODEL_RTN65U)
 	{
 		FILE *fp;
@@ -594,7 +594,7 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	}
 	else
 	{
-#endif
+#endif	/* RTN65U */
 	bzero(buffer, sizeof(unsigned long));
 	wrq2.u.data.length = sizeof(unsigned long);
 	wrq2.u.data.pointer = (caddr_t) buffer;
@@ -610,9 +610,9 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	}
 	else
 		phy_mode=wrq2.u.mode;
-#if 1
+#if defined(RTN65U)
 	}
-#endif
+#endif	/* RTN65U */
 
 	freq = iw_freq2float(&(wrq1.u.freq));
 	if (freq < KILO)
@@ -632,8 +632,8 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	else
 		ret+=websWrite(wp, "OP Mode		: AP\n");
 
-#ifdef RTAC52U
-	if (get_model() == MODEL_RTAC52U && unit == 1)
+#if defined(RTAC52U) || defined(RTAC51U)
+	if (unit == 1)
 	{
 		char *p = tmp;
 		if(phy_mode & WMODE_A)
@@ -735,7 +735,7 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		for (i=0;i<mp->Num;i++) {
 #if defined(RTN65U)
 			SHOW_STA_INFO(mp->Entry, i, RT_802_11_MAC_ENTRY_RT3352_iNIC, getRate_2g);
-#elif defined(RTAC52U)
+#elif defined(RTAC52U) || defined(RTAC51U)
 			SHOW_STA_INFO(mp2->Entry, i, RT_802_11_MAC_ENTRY_2G, getRate_2g);
 #else
 			SHOW_STA_INFO(mp2->Entry, i, RT_802_11_MAC_ENTRY_2G, getRate_2g);
@@ -746,7 +746,7 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		for (i=0;i<mp->Num;i++) {
 #if defined(RTN65U)
 			SHOW_STA_INFO(mp->Entry, i, RT_802_11_MAC_ENTRY_RT3883, getRate_2g);
-#elif defined(RTAC52U)
+#elif defined(RTAC52U) || defined(RTAC51U)
 			SHOW_STA_INFO(mp2->Entry, i, RT_802_11_MAC_ENTRY_11AC, getRate_11ac);
 #else
 			SHOW_STA_INFO(mp->Entry, i, RT_802_11_MAC_ENTRY_RT3883, getRate_2g);
@@ -1241,7 +1241,7 @@ static int wl_scan(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	dbg("\n%s", header);
 	if (wrq.u.data.length > 0)
 	{
-#if 1
+#if defined(RTN65U)
 		if (unit == 0 && get_model() == MODEL_RTN65U)
 		{
 			char *encryption;
@@ -1426,4 +1426,92 @@ int
 ej_wl_channel_list_5g(int eid, webs_t wp, int argc, char_t **argv)
 {
 	return ej_wl_channel_list(eid, wp, argc, argv, 1);
+}
+
+
+static int ej_wl_rate(int eid, webs_t wp, int argc, char_t **argv, int unit)
+{
+        struct iwreq wrq;
+	int retval = 0;
+	char tmp[256], prefix[] = "wlXXXXXXXXXX_";
+	char *name;
+	char word[256], *next;
+	int unit_max = 0;
+	int rate=0;
+	int status;
+	char rate_buf[32];
+	int sw_mode = nvram_get_int("sw_mode");
+	int wlc_band = nvram_get_int("wlc_band");
+
+	sprintf(rate_buf, "0 Mbps");
+
+	foreach (word, nvram_safe_get("wl_ifnames"), next)
+		unit_max++;
+
+	if (unit > (unit_max - 1))
+		goto ERROR;
+
+	if (wlc_band == unit && (sw_mode == SW_MODE_REPEATER || sw_mode == SW_MODE_HOTSPOT))
+		snprintf(prefix, sizeof(prefix), "wl%d.1_", unit);
+	else
+#if 0
+		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+
+	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
+
+	wrq.u.bitrate.value=-1;
+	if (wl_ioctl(name, SIOCGIWRATE, &wrq))
+	{
+		dbG("can not get rate info of %s\n", name);
+		goto ERROR;
+	}
+
+	rate = wrq.u.bitrate.value;
+	if ((rate == -1) || (rate == 0))
+		sprintf(rate_buf, "auto");
+	else
+		sprintf(rate_buf, "%d Mbps", (rate / 1000000));
+#else
+		goto ERROR;
+	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
+
+	memset(tmp, 0x00, sizeof(tmp));
+	wrq.u.data.length = sizeof(tmp);
+	wrq.u.data.pointer = (caddr_t) tmp;
+	wrq.u.data.flags = ASUS_SUBCMD_CONN_STATUS;
+
+	if (wl_ioctl(name, RTPRIV_IOCTL_ASUSCMD, &wrq) < 0)
+	{
+		dbg("%s: errors in getting %s CONN_STATUS result\n", __func__, name);
+		goto ERROR;
+	}
+	status = ((int*)tmp)[0];
+	rate   = ((int*)tmp)[1];
+
+	if(status == 6)
+		sprintf(rate_buf, "%d Mbps", rate);
+#endif
+
+ERROR:
+	retval += websWrite(wp, "%s", rate_buf);
+	return retval;
+}
+
+
+int
+ej_wl_rate_2g(int eid, webs_t wp, int argc, char_t **argv)
+{
+   	if(nvram_match("sw_mode", "2"))
+		return ej_wl_rate(eid, wp, argc, argv, 0);
+	else
+	   	return 0;
+}
+
+int
+ej_wl_rate_5g(int eid, webs_t wp, int argc, char_t **argv)
+{
+   	if(nvram_match("sw_mode", "2"))
+		return ej_wl_rate(eid, wp, argc, argv, 1);
+	else
+	   	return 0;
 }

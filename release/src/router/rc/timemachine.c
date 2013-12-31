@@ -144,7 +144,7 @@ void stop_cnid_metad()
 	system("killall -SIGKILL cnid_metad");
 	return;
 }
-#if 1
+#if 0
 int generate_avahi_config()
 {
 	FILE *fp;
@@ -165,7 +165,7 @@ int generate_avahi_config()
 	fprintf(fp, "host-name=%s-%c%c%c%c\n", nvram_safe_get("model"),et0macaddr[12],et0macaddr[13],et0macaddr[15],et0macaddr[16]);
 	fprintf(fp, "use-ipv4=yes\n");
 	fprintf(fp, "use-ipv6=no\n");
-	fprintf(fp, "deny-interfaces=eth0\n");
+	fprintf(fp, "deny-interfaces=%s\n", nvram_safe_get("wan0_ifname"));
 	fprintf(fp, "ratelimit-interval-usec=1000000\n");
 	fprintf(fp, "ratelimit-burst=1000\n");
 
@@ -265,7 +265,7 @@ int generate_timemachine_token_file(char *mpname)
 
 	return ret;
 }
-#if 1
+#if 0
 
 int start_avahi_daemon()
 {
@@ -475,6 +475,26 @@ int start_timemachine()
 	char test_log[100];
 	char *mount_point_name;
 
+	char prefix[] = "usb_pathXXXXXXXXXXXXXXXXX_", tmp[100];
+	char usb1_vid[8], usb1_pid[8], usb1_serial[64];
+	char usb2_vid[8], usb2_pid[8], usb2_serial[64];
+
+	snprintf(prefix, sizeof(prefix), "usb_path%s", "1");
+	memset(usb1_vid, 0, 8);
+	strncpy(usb1_vid, nvram_safe_get(strcat_r(prefix, "_vid", tmp)), 8);
+	memset(usb1_pid, 0, 8);
+	strncpy(usb1_pid, nvram_safe_get(strcat_r(prefix, "_pid", tmp)), 8);
+	memset(usb1_serial, 0, 64);
+	strncpy(usb1_serial, nvram_safe_get(strcat_r(prefix, "_serial", tmp)), 8);
+
+	snprintf(prefix, sizeof(prefix), "usb_path%s", "2");
+	memset(usb2_vid, 0, 8);
+	strncpy(usb2_vid, nvram_safe_get(strcat_r(prefix, "_vid", tmp)), 8);
+	memset(usb2_pid, 0, 8);
+	strncpy(usb2_pid, nvram_safe_get(strcat_r(prefix, "_pid", tmp)), 8);
+	memset(usb2_serial, 0, 64);
+	strncpy(usb2_serial, nvram_safe_get(strcat_r(prefix, "_serial", tmp)), 8);
+
 	//clear_timemachine_tokeninfo();
 	//find_tokenfile_partition();
 
@@ -494,19 +514,19 @@ int start_timemachine()
 		nvram_set("tm_ui_setting", "0");
 	}else{
 	//check mountpoint exchange or not
-	if((nvram_match("tm_usb_path_vid",nvram_safe_get("usb_path1_vid"))) 
-		&& (nvram_match("tm_usb_path_pid",nvram_safe_get("usb_path1_pid"))) 
-		&& (nvram_match("tm_usb_path_serial",nvram_safe_get("usb_path1_serial")))
-		&& (!nvram_match("tm_usb_path_vid", "")) )
+	if(!nvram_match("tm_usb_path_vid", "")
+		&& (nvram_match("tm_usb_path_vid",usb1_vid)) 
+		&& (nvram_match("tm_usb_path_pid",usb1_pid)) 
+		&& (nvram_match("tm_usb_path_serial",usb1_serial)))
 	{
 		sprintf(test_log, "Time Machine interface1 change %s -> %s", nvram_safe_get("tm_device_name"),nvram_safe_get("tm_partition_num"));
 		mount_point_name = find_mountpoint(nvram_safe_get("tm_device_name"));
 		logmessage("Timemachine", test_log);
 	}
-	else if((nvram_match("tm_usb_path_vid",nvram_safe_get("usb_path2_vid"))) 
-		&& (nvram_match("tm_usb_path_pid",nvram_safe_get("usb_path2_pid")))
-		&& (nvram_match("tm_usb_path_serial",nvram_safe_get("usb_path2_serial")))
-		&& (!nvram_match("tm_usb_path_vid", "")))
+	else if(!nvram_match("tm_usb_path_vid", "")
+		&& (nvram_match("tm_usb_path_vid",usb2_vid)) 
+		&& (nvram_match("tm_usb_path_pid",usb2_pid))
+		&& (nvram_match("tm_usb_path_serial",usb2_serial)))
 	{
 		sprintf(test_log, "tm_device_name interface2 change %s -> %s", nvram_safe_get("tm_device_name"),nvram_safe_get("tm_partition_num"));
 		mount_point_name = find_mountpoint(nvram_safe_get("tm_device_name"));
@@ -559,11 +579,9 @@ int start_timemachine()
 	//mkdir_if_none(backup_path);
 
 	ret = generate_afp_config(mount_point_name);
-	stop_avahi_daemon();
 	start_afpd();
 	start_cnid_metad();
-	sleep(1);
-	start_avahi_daemon();
+	restart_mdns();
 
 	logmessage("Timemachine", "daemon is started");
 
@@ -572,14 +590,9 @@ int start_timemachine()
 
 void stop_timemachine()
 {
-	stop_avahi_daemon();
-	rmdir(AVAHI_SERVICES_PATH);
-	if(check_if_dir_exist(AVAHI_SERVICES_PATH))
-	system("rm -rf /tmp/avahi/services");
 	stop_afpd();
 	stop_cnid_metad();
-	sleep(1);
-	start_mdns();
+	restart_mdns();
 	logmessage("Timemachine", "daemon is stoped");
 }
 

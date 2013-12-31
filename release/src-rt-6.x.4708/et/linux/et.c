@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: et.c 414031 2013-07-23 10:54:51Z $
+ * $Id: et.c 429710 2013-10-15 21:00:58Z $
  */
 
 #include <stdio.h>
@@ -266,6 +266,48 @@ main(int ac, char *av[])
 		/* For SPI mode, the length can only be 1, 2, and 4 bytes */
 		if (vecarg[1] == -1)
 			printf("Invalid length. For SPI mode, the length can only be 1, 2, and 4 bytes.\n");
+	} else if (strcmp(av[optind], "port_status") == 0) {
+		if (ac >= (optind + 3))
+			usage(av[0]);
+		var.set = 0;
+		var.cmd = IOV_PORTSTATS;
+		var.buf = buf;
+		if (ac == (optind + 1) || (strcmp(av[optind+1], "all") == 0))
+			*(uint *)buf = 0xFF;
+		else
+			*(uint *)buf = atoi(av[optind + 1]);
+
+		var.len = sizeof(buf);
+
+		ifr.ifr_data = (caddr_t) &var;
+		if (ioctl(s, SIOCSETGETVAR, (caddr_t)&ifr) < 0)
+			syserr("etcportstats");
+
+		printf("%s\n", buf);
+	} else if (strcmp(av[optind], "sw_mctbl") == 0) {
+		if ((ac > (optind + 3)))
+			usage(av[0]);
+
+		if (ac == (optind + 1)) {
+			*(uint *)buf = 0xff;
+		} else if (ac == (optind + 3) && strcmp(av[optind+1], "port") == 0) {
+			*(uint *)buf  = 1 << 16;;
+			*(uint *)buf |= atoi(av[optind + 2]) & 0xffff;
+		} else if (ac == (optind + 3) && strcmp(av[optind+1], "vid") == 0) {
+			*(uint *)buf = atoi(av[optind + 2]) & 0xffff;
+		} else {
+			usage(av[0]);
+		}
+
+		var.set = 0;
+		var.cmd = IOV_SW_MCTBL;
+		var.buf = buf;
+		var.len = sizeof(buf);
+
+		ifr.ifr_data = (caddr_t) &var;
+		if (ioctl(s, SIOCSETGETVAR, (caddr_t)&ifr) < 0)
+			syserr("etcswmctbl");
+		printf("%s\n", buf);
 	} else if (strcmp(av[optind], "clear_dump") == 0) {
 		if ((ac > (optind + 2)))
 			usage(av[0]);
@@ -372,6 +414,27 @@ main(int ac, char *av[])
 		}
 
 		DUMP_BUF_FREE(dbuf_alloc, dbuf);
+#ifdef ET_INGRESS_QOS
+	} else if ((strcmp(av[optind], "dma_rx_thresh") == 0) ||
+		(strcmp(av[optind], "dma_rx_policy") == 0)) {
+		/* Get case */
+		if (ac == (optind + 1))
+			var.set = 0;
+		else {
+			var.set = 1;
+			vecarg[0] = strtoul(av[optind + 1], NULL, 0);
+		}
+		var.len = sizeof(int);
+		var.cmd = strcmp(av[optind], "dma_rx_thresh") == 0 ? IOV_DMA_RX_THRESH : IOV_DMA_RX_POLICY;
+		var.buf = &vecarg;
+
+		ifr.ifr_data = (caddr_t)&var;
+		if (ioctl(s, SIOCSETGETVAR, (caddr_t)&ifr) < 0)
+			syserr("dma_rx_policy_usage");
+
+		if (!var.set)
+		        printf("%d\n", vecarg[0]);
+#endif /*ET_INGRESS_QOS*/
 	} else {
 		if (strcmp(av[optind], "switch_mode") == 0) {
 			int all = 0;
@@ -436,6 +499,8 @@ usage(char *av0)
 		"\tpromisc <0 or 1>\n"
 		"\tqos <0 or 1>\n"
 		"\tspeed <auto, 10half, 10full, 100half, 100full, 1000full>\n"
+		"\tport_status <0, 1, 2, 3, 4, all>\n"
+		"\tsw_mctbl [<port <port#>] | [vid <vid#>]\n"
 		"\tphyrd [<phyaddr>] <reg>\n"
 		"\tphywr [<phyaddr>] <reg> <val>\n"
 		"\trobord <page> <reg> [length] (length can be 1, 2, 4, 6, 8 bytes. Default length is 2 bytes)\n"

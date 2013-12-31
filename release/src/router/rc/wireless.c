@@ -108,7 +108,7 @@ void notify_nas(const char *ifname)
 #endif
 #endif
 
-#if defined(CONFIG_BCMWL5) || defined(MTK_APCLI) 
+#if defined(CONFIG_BCMWL5) || (defined(RTCONFIG_RALINK) && defined(RTCONFIG_WIRELESSREPEATER))
 #define APSCAN_INFO "/tmp/apscan_info.txt"
 
 static int lock = -1;
@@ -153,7 +153,7 @@ int wlcscan_main(void)
 	return 1;
 }
 
-#endif /* CONFIG_BCMWL5 || MTK_APCLI*/
+#endif /* CONFIG_BCMWL5 || (RTCONFIG_RALINK && RTCONFIG_WIRELESSREPEATER) */
 
 #ifdef RTCONFIG_WIRELESSREPEATER
 
@@ -214,7 +214,11 @@ _dprintf("%s: Start to run...\n", __FUNCTION__);
 				if(wlc_count < 3){
 					wlc_count++;
 _dprintf("Ready to disconnect...%d.\n", wlc_count);
+#ifdef RTCONFIG_RALINK
+					sleep(1);
+#else
 					sleep(5);
+#endif
 					continue;
 				}
 			}
@@ -258,9 +262,9 @@ _dprintf("Ready to disconnect...%d.\n", wlc_count);
 
 			old_ret = ret;
 		}
-
 		sleep(5);
 	}
+	return 0;
 }
 
 void repeater_pap_disable(void)

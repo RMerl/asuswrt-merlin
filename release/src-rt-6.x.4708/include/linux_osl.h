@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: linux_osl.h 414031 2013-07-23 10:54:51Z $
+ * $Id: linux_osl.h 419467 2013-08-21 09:19:48Z $
  */
 
 #ifndef _linux_osl_h_
@@ -403,7 +403,7 @@ extern void osl_writel(osl_t *osh, volatile uint32 *r, uint32 v);
 #define	PKTDATA(osh, skb)		(((struct sk_buff*)(skb))->data)
 #define	PKTLEN(osh, skb)		(((struct sk_buff*)(skb))->len)
 #define PKTHEADROOM(osh, skb)		(PKTDATA(osh, skb)-(((struct sk_buff*)(skb))->head))
-#define PKTEXPHEADROOM(osh, skb, b)	skb_realloc_headroom(skb, b)
+#define PKTEXPHEADROOM(osh, skb, b)	skb_realloc_headroom((struct sk_buff*)(skb), (b))
 #define PKTTAILROOM(osh, skb)		skb_tailroom((struct sk_buff*)(skb))
 #define	PKTNEXT(osh, skb)		(((struct sk_buff*)(skb))->next)
 #define	PKTSETNEXT(osh, skb, x)		(((struct sk_buff*)(skb))->next = (struct sk_buff*)(x))
@@ -596,9 +596,14 @@ typedef struct ctf_mark {
 #endif /* HNDCTF */
 
 #ifdef BCMFA
+#ifdef BCMFA_HW_HASH
 #define PKTSETFAHIDX(skb, idx)	(((struct sk_buff*)(skb))->napt_idx = idx)
+#else
+#define PKTSETFAHIDX(skb, idx)
+#endif /* BCMFA_SW_HASH */
 #define PKTGETFAHIDX(skb)	(((struct sk_buff*)(skb))->napt_idx)
 #define PKTSETFADEV(skb, imp)	(((struct sk_buff*)(skb))->dev = imp)
+#define PKTSETRXDEV(skb)	(((struct sk_buff*)(skb))->rxdev = ((struct sk_buff*)(skb))->dev)
 
 #define	AUX_TCP_FIN_RST	(1 << 0)
 #define	AUX_FREED	(1 << 1)

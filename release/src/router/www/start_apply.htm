@@ -74,15 +74,15 @@ function redirect_qis(){
 }
 
 function initial(){
-	if(getflag == "set_language"){
+	if(getflag == "vpnClient" || getflag == "background" || action_script == "saveNvram"){
+		return false;
+	}
+	else if(getflag == "set_language"){
 		if(navigator.appName.indexOf("Microsoft") >= 0)
 			parent.parent.location.reload();
 		else
 			parent.parent.location.href = parent.parent.location.href.split('#')[0];
 	}
-	else if(getflag == "vpnClient"){
-		return false;
-	}	
 	else if(next_page.indexOf("QIS_") >= 0){
 		if(dsl_support){
 			setTimeout("delay_redirect('"+next_page+"');", restart_time*1000);

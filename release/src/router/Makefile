@@ -96,7 +96,7 @@ SEP=echo "\033[41;1m   $@   \033[0m"
 #
 obj-$(RTCONFIG_DMALLOC) += dmalloc
 
-ifeq ($(RTN14U)$(RTAC52U),y)
+ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U),y)
 obj-y += reg
 endif
 ifneq ($(RTCONFIG_BCMARM),y)
@@ -112,7 +112,7 @@ obj-y += rt2880_app
 else
 obj-y += ated
 obj-y += flash
-ifeq ($(or $(RTN14U),$(RTAC52U)),y)
+ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U),y)
 else
 obj-y += hw_nat
 endif
@@ -283,7 +283,7 @@ obj-$(RTCONFIG_MEDIA_SERVER) += minidlna
 obj-$(RTCONFIG_MEDIA_SERVER) += libgdbm
 obj-$(RTCONFIG_MEDIA_SERVER) += mt-daapd
 #obj-$(RTCONFIG_MEDIA_SERVER) += mt-daapd-svn-1696
-obj-$(RTCONFIG_MEDIA_SERVER) += mDNSResponder
+#obj-$(RTCONFIG_MEDIA_SERVER) += mDNSResponder
 
 MEDIA_SERVER_STATIC=y
 
@@ -307,9 +307,12 @@ obj-$(RTCONFIG_TIMEMACHINE) += netatalk-3.0.5
 ifeq ($(RTCONFIG_TIMEMACHINE),y)
 obj-$(RTCONFIG_TIMEMACHINE) += avahi-0.6.31
 obj-$(RTCONFIG_TIMEMACHINE) += expat-2.0.1
-else
+else ifeq ($(RTCONFIG_MDNS),y)
 obj-$(RTCONFIG_MDNS) += avahi-0.6.31
 obj-$(RTCONFIG_MDNS) += expat-2.0.1
+else
+obj-$(RTCONFIG_MEDIA_SERVER) += avahi-0.6.31
+obj-$(RTCONFIG_MEDIA_SERVER) += expat-2.0.1
 endif
 
 #
@@ -886,7 +889,7 @@ rmconf: config/mconf
 
 roldconf: config/conf
 	config/conf -o $(CONFIG_IN)
-	$(MAKE) shared-clean rc-clean nvram$(BCMEX)-clean httpd-clean prebuilt-clean libbcmcrypto-clean
+	$(MAKE) shared-clean libdisk-clean rc-clean nvram$(BCMEX)-clean httpd-clean prebuilt-clean libbcmcrypto-clean
 #	@$(MAKE) iptables-clean ebtables-clean pppd-clean zebra-clean openssl-clean mssl-clean mdu-clean pppd-clean
 	$(MAKE) dnsmasq-clean iproute2-clean
 ifeq ($(RTCONFIG_BCMARM),y)
@@ -1852,7 +1855,7 @@ libpcap-install: libpcap
 	#cd $(INSTALLDIR)/libpcap/usr/lib && ln -sf libpcap.so.1.4.0 libpcap.so
 
 libpcap-clean:
-	[ ! -f libpcap/Makefile ] || -@$(MAKE) -C libpcap clean
+	[ ! -f libpcap/Makefile ] || $(MAKE) -C libpcap clean
 	@rm -f libpcap/stamp-h1
 
 tcpdump-4.4.0/stamp-h1:
@@ -1868,7 +1871,7 @@ tcpdump-4.4.0-install: tcpdump-4.4.0
 	$(STRIP) $(INSTALLDIR)/tcpdump-4.4.0/usr/sbin/tcpdump
 
 tcpdump-4.4.0-clean:
-	[ ! -f tcpdump-4.4.0/Makefile ] || -@$(MAKE) -C tcpdump-4.4.0 clean
+	[ ! -f tcpdump-4.4.0/Makefile ] || $(MAKE) -C tcpdump-4.4.0 clean
 	@rm -f tcpdump-4.4.0/stamp-h1
 
 libbcm:
@@ -2397,17 +2400,19 @@ openpam-install: openpam
 	$(STRIP) -s $(INSTALLDIR)/openpam/usr/lib/pam_unix.so
 
 openpam-clean:
-	@[ ! -f openvpn/Makefile ] || $(MAKE) -C openpam clean
+	@[ ! -f openpam/Makefile ] || $(MAKE) -C openpam clean
 	@rm -f openpam/stamp-h1
 
 openvpn/stamp-h1:
 	cd openvpn && ./autogen.sh && \
+	export OPENSSL_CRYPTO_CFLAGS="-I$(TOP)/openssl/include"; \
+	export OPENSSL_CRYPTO_LIBS="-L$(TOP)/openssl -lcrypto"; \
+	export OPENSSL_SSL_CFLAGS="-I$(TOP)/openssl/include"; \
+	export OPENSSL_SSL_LIBS="-L$(TOP)/openssl -lssl"; \
 	CFLAGS="-O3 -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \
 	LDFLAGS="$(EXTRALDFLAGS) -L$(TOP)/nvram$(BCMEX) -lnvram -L$(TOP)/shared -lshared -L$(TOP)/zlib -lz -L$(TOP)/lzo/src/.libs -L$(TOP)/openpam/lib/libpam/.libs -ffunction-sections -fdata-sections -Wl,--gc-sections" \
 	CPPFLAGS="-I$(TOP)/lzo/include -I$(TOP)/openpam/include -I$(TOP)/shared -I$(SRCBASE)/include" \
 	IPROUTE="/usr/sbin/ip" \
-	OPENSSL_CRYPTO_CFLAGS="-I$(TOP)/openssl/include" OPENSSL_CRYPTO_LIBS="-L$(TOP)/openssl -lcrypto" \
-	OPENSSL_SSL_CFLAGS="-I$(TOP)/openssl/include" OPENSSL_SSL_LIBS="-L$(TOP)/openssl -lssl -lcrypto" \
 	$(CONFIGURE) --prefix=  --enable-iproute2 \
 	--disable-debug --enable-management --disable-small \
 	--disable-selinux --disable-socks --enable-password-save \
@@ -2691,7 +2696,9 @@ libgpg-error-1.10: libgpg-error-1.10/stamp-h1
 	@$(MAKE) -C libgpg-error-1.10
 
 libgpg-error-1.10-install: libgpg-error-1.10
-	@$(MAKE) -C libgpg-error-1.10 install-strip
+	install -D libgpg-error-1.10/src/.libs/libgpg-error.so.0.8.0 $(INSTALLDIR)/libgpg-error-1.10/usr/lib/libgpg-error.so.0.8.0
+	$(STRIP) $(INSTALLDIR)/libgpg-error-1.10/usr/lib/libgpg-error.so.0.8.0
+	cd $(INSTALLDIR)/libgpg-error-1.10/usr/lib && ln -sf libgpg-error.so.0.8.0 libgpg-error.so.0
 
 libgpg-error-1.10-clean:
 	-@$(MAKE) -C libgpg-error-1.10 clean
@@ -2709,7 +2716,9 @@ libgcrypt-1.5.1: libgcrypt-1.5.1/stamp-h1
 	@$(MAKE) -C libgcrypt-1.5.1
 
 libgcrypt-1.5.1-install: libgcrypt-1.5.1
-	@$(MAKE) -C libgcrypt-1.5.1 install-strip
+	install -D libgcrypt-1.5.1/src/.libs/libgcrypt.so.11.8.0 $(INSTALLDIR)/libgcrypt-1.5.1/usr/lib/libgcrypt.so.11.8.0
+	$(STRIP) $(INSTALLDIR)/libgcrypt-1.5.1/usr/lib/libgcrypt.so.11.8.0
+	cd $(INSTALLDIR)/libgcrypt-1.5.1/usr/lib && ln -sf libgcrypt.so.11.8.0 libgcrypt.so.11
 
 libgcrypt-1.5.1-clean:
 	-@$(MAKE) -C libgcrypt-1.5.1 clean
@@ -2750,8 +2759,12 @@ db-4.8.30: db-4.8.30/build_unix/stamp-h1
 	@$(MAKE) -C db-4.8.30/build_unix
 
 db-4.8.30-install: db-4.8.30
-	@$(MAKE) -C db-4.8.30/build_unix install
+	install -D db-4.8.30/build_unix/.libs/libdb-4.8.so $(INSTALLDIR)/db-4.8.30/usr/lib/libdb-4.8.so
 	$(STRIP) $(INSTALLDIR)/db-4.8.30/usr/lib/libdb-4.8.so
+	cd $(INSTALLDIR)/db-4.8.30/usr/lib && ln -sf libdb-4.8.so libdb.so
+	cd $(INSTALLDIR)/db-4.8.30/usr/lib && ln -sf libdb-4.8.so libdb-4.so
+
+#	@$(MAKE) -C db-4.8.30/build_unix install
 	
 db-4.8.30-clean:
 	-@$(MAKE) -C db-4.8.30 clean
@@ -2779,7 +2792,36 @@ netatalk-3.0.5: netatalk-3.0.5/stamp-h1
 	@$(MAKE) -C netatalk-3.0.5
 
 netatalk-3.0.5-install: netatalk-3.0.5
-	@$(MAKE) -C netatalk-3.0.5 install-strip
+	install -D netatalk-3.0.5/etc/afpd/.libs/afpd $(INSTALLDIR)/netatalk-3.0.5/usr/sbin/afpd
+	install -D netatalk-3.0.5/etc/cnid_dbd/.libs/cnid_dbd $(INSTALLDIR)/netatalk-3.0.5/usr/sbin/cnid_dbd
+	install -D netatalk-3.0.5/etc/cnid_dbd/.libs/cnid_metad $(INSTALLDIR)/netatalk-3.0.5/usr/sbin/cnid_metad
+	install -D netatalk-3.0.5/bin/ad/.libs/ad $(INSTALLDIR)/netatalk-3.0.5/usr/bin/ad
+	install -D netatalk-3.0.5/bin/afppasswd/.libs/afppasswd $(INSTALLDIR)/netatalk-3.0.5/usr/bin/afppasswd
+	install -D netatalk-3.0.5/etc/cnid_dbd/.libs/dbd $(INSTALLDIR)/netatalk-3.0.5/usr/bin/dbd
+	install -D netatalk-3.0.5/bin/uniconv/.libs/uniconv $(INSTALLDIR)/netatalk-3.0.5/usr/bin/uniconv
+	install -D netatalk-3.0.5/libatalk/.libs/libatalk.so.6.0.0 $(INSTALLDIR)/netatalk-3.0.5/usr/lib/libatalk.so.6.0.0
+	install -D netatalk-3.0.5/etc/uams/.libs/uams_randnum.so $(INSTALLDIR)/netatalk-3.0.5/usr/lib/netatalk/uams_randnum.so
+	install -D netatalk-3.0.5/etc/uams/.libs/uams_passwd.so $(INSTALLDIR)/netatalk-3.0.5/usr/lib/netatalk/uams_passwd.so
+	install -D netatalk-3.0.5/etc/uams/.libs/uams_guest.so $(INSTALLDIR)/netatalk-3.0.5/usr/lib/netatalk/uams_guest.so
+	install -D netatalk-3.0.5/etc/uams/.libs/uams_dhx_passwd.so $(INSTALLDIR)/netatalk-3.0.5/usr/lib/netatalk/uams_dhx_passwd.so
+	install -D netatalk-3.0.5/etc/uams/.libs/uams_dhx2_passwd.so $(INSTALLDIR)/netatalk-3.0.5/usr/lib/netatalk/uams_dhx2_passwd.so
+	$(STRIP) $(INSTALLDIR)/netatalk-3.0.5/usr/sbin/afpd
+	$(STRIP) $(INSTALLDIR)/netatalk-3.0.5/usr/sbin/cnid_dbd
+	$(STRIP) $(INSTALLDIR)/netatalk-3.0.5/usr/sbin/cnid_metad
+	$(STRIP) $(INSTALLDIR)/netatalk-3.0.5/usr/bin/ad
+	$(STRIP) $(INSTALLDIR)/netatalk-3.0.5/usr/bin/afppasswd
+	$(STRIP) $(INSTALLDIR)/netatalk-3.0.5/usr/bin/dbd
+	$(STRIP) $(INSTALLDIR)/netatalk-3.0.5/usr/bin/uniconv
+	$(STRIP) $(INSTALLDIR)/netatalk-3.0.5/usr/lib/libatalk.so.6.0.0
+	$(STRIP) $(INSTALLDIR)/netatalk-3.0.5/usr/lib/netatalk/uams_randnum.so
+	$(STRIP) $(INSTALLDIR)/netatalk-3.0.5/usr/lib/netatalk/uams_passwd.so
+	$(STRIP) $(INSTALLDIR)/netatalk-3.0.5/usr/lib/netatalk/uams_guest.so
+	$(STRIP) $(INSTALLDIR)/netatalk-3.0.5/usr/lib/netatalk/uams_dhx_passwd.so
+	$(STRIP) $(INSTALLDIR)/netatalk-3.0.5/usr/lib/netatalk/uams_dhx2_passwd.so
+	cd $(INSTALLDIR)/netatalk-3.0.5/usr/lib && ln -sf libatalk.so.6.0.0 libatalk.so.6
+	cd $(INSTALLDIR)/netatalk-3.0.5/usr/lib/netatalk && ln -sf uams_passwd.so uams_clrtxt.so
+	cd $(INSTALLDIR)/netatalk-3.0.5/usr/lib/netatalk && ln -sf uams_dhx_passwd.so uams_dhx.so
+	cd $(INSTALLDIR)/netatalk-3.0.5/usr/lib/netatalk && ln -sf uams_dhx2_passwd.so uams_dhx2.so
 
 netatalk-3.0.5-clean:
 	-@$(MAKE) -C netatalk-3.0.5 clean
@@ -2796,12 +2838,12 @@ expat-2.0.1: expat-2.0.1/stamp-h1
 	@$(MAKE) -C expat-2.0.1
 
 expat-2.0.1-install: expat-2.0.1
-	@$(MAKE) -C expat-2.0.1 install
+	install -D expat-2.0.1/.libs/libexpat.so.1.5.2 $(INSTALLDIR)/expat-2.0.1/usr/lib/libexpat.so.1.5.2
 	$(STRIP) $(INSTALLDIR)/expat-2.0.1/usr/lib/libexpat.so.1.5.2
-	$(STRIP) $(INSTALLDIR)/expat-2.0.1/usr/bin/xmlwf
+	cd $(INSTALLDIR)/expat-2.0.1/usr/lib && ln -sf libexpat.so.1.5.2 libexpat.so.1
 
 expat-2.0.1-clean:
-	cd $(TOP)/expat-2.0.1 && make clean && cd ..
+	-@$(MAKE) -C expat-2.0.1 clean
 	@rm -f expat-2.0.1/stamp-h1
 
 #avahi-0.6.31
@@ -2815,7 +2857,14 @@ avahi-0.6.31: avahi-0.6.31/stamp-h1
 	@$(MAKE) -C avahi-0.6.31
 
 avahi-0.6.31-install: avahi-0.6.31
-	@$(MAKE) -C avahi-0.6.31 install-strip
+	install -D avahi-0.6.31/avahi-daemon/.libs/avahi-daemon $(INSTALLDIR)/avahi-0.6.31/usr/sbin/avahi-daemon
+	install -D avahi-0.6.31/avahi-common/.libs/libavahi-common.so.3.5.3 $(INSTALLDIR)/avahi-0.6.31/usr/lib/libavahi-common.so.3.5.3
+	install -D avahi-0.6.31/avahi-core/.libs/libavahi-core.so.7.0.2 $(INSTALLDIR)/avahi-0.6.31/usr/lib/libavahi-core.so.7.0.2
+	$(STRIP) $(INSTALLDIR)/avahi-0.6.31/usr/sbin/avahi-daemon
+	$(STRIP) $(INSTALLDIR)/avahi-0.6.31/usr/lib/libavahi-common.so.3.5.3
+	$(STRIP) $(INSTALLDIR)/avahi-0.6.31/usr/lib/libavahi-core.so.7.0.2
+	cd $(INSTALLDIR)/avahi-0.6.31/usr/lib && ln -sf libavahi-common.so.3.5.3 libavahi-common.so.3
+	cd $(INSTALLDIR)/avahi-0.6.31/usr/lib && ln -sf libavahi-core.so.7.0.2 libavahi-core.so.7
 
 avahi-0.6.31-clean:
 	-@$(MAKE) -C avahi-0.6.31 clean
@@ -2949,7 +2998,7 @@ norton${BCMEX}-install:
 	+$(MAKE) -C $(NORTON_DIR) install INSTALLDIR=$(INSTALLDIR)/norton${BCMEX}
 
 norton${BCMEX}-clean:
-	[ ! -f $(NORTEON_DIR)/Makefile ] || -@$(MAKE) -C $(NORTON_DIR) clean
+	[ ! -f $(NORTEON_DIR)/Makefile ] || $(MAKE) -C $(NORTON_DIR) clean
 
 .PHONY : email-3.1.3 email-3.1.3-clean
 email-3.1.3:

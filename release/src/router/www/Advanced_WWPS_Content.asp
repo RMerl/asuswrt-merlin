@@ -86,7 +86,7 @@ function initial(){
 	}
 
 	loadXML();
-	$('WPS_hideSSID_hint').innerHTML = "<#FW_note#> " + Untranslated.WPS_hideSSID_hint;
+	$('WPS_hideSSID_hint').innerHTML = "<#FW_note#> <#WPS_hideSSID_hint#>";
 	if("<% nvram_get("wl_closed"); %>" == 1){
 		$('WPS_hideSSID_hint').style.display = "";	
 	}	
@@ -528,7 +528,6 @@ function _change_wl_unit_status(__unit){
 		<!--===================================Beginning of Main Content===========================================-->
 <input type="hidden" name="current_page" value="Advanced_WWPS_Content.asp">
 <input type="hidden" name="next_page" value="Advanced_WWPS_Content.asp">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="">
 <input type="hidden" name="action_script" value="">

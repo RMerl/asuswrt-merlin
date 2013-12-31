@@ -66,7 +66,7 @@ function QKInternet_load_body(){
 function setScenerion_asuswrt(mode){
 	if(mode == '2'){
 		var pstaDesc = "<#OP_RE_desc#>";
-		pstaDesc += "<br><span style=\"color:#FC0\"><#use_DevDiscoveryUtil#></span>";
+		pstaDesc += "<br><span style=\"color:#FC0\"><#deviceDiscorvy2#></span>";
 		
 		parent.document.QKform.sw_mode.value = 2;
 		parent.localAP_support = true;
@@ -80,7 +80,7 @@ function setScenerion_asuswrt(mode){
 		parent.document.QKform.sw_mode.value = 3;
 		$j("#Senario").attr("src", "/images/New_ui/ap.jpg");
 		$j("#Senario").attr("style", "height:132px");
-		$j("#mode_desc").html("<#OP_AP_desc#><br><span style=\"color:#FC0\"><#deviceDiscorvy#></span>");		
+		$j("#mode_desc").html("<#OP_AP_desc#><br><span style=\"color:#FC0\"><#deviceDiscorvy3#></span>");		
 		document.form.sw_mode_radio[2].focus();
 		document.form.sw_mode_radio[2].checked = true;
 	}
@@ -91,7 +91,7 @@ function setScenerion_asuswrt(mode){
 		pstaDesc += "<#OP_MB_desc3#>";
 		pstaDesc += "<#OP_MB_desc4#>";
 		pstaDesc += "<#OP_MB_desc5#>";
-		pstaDesc += "<br><span style=\"color:#FC0\"><#use_DevDiscoveryUtil#></span>";
+		pstaDesc += "<br><span style=\"color:#FC0\"><#deviceDiscorvy4#></span>";
 
 		parent.document.QKform.sw_mode.value = 4;
 		parent.localAP_support = false;		
@@ -135,7 +135,7 @@ function setScenerion(mode){
 		$j("#Internet_span").css("display", "block");
 		$j("#ap-line").css("display", "none");
 		$j("#AP").html("<#Device_type_02_RT#>");
-		$j("#mode_desc").html("<#OP_RE_desc#>");
+		$j("#mode_desc").html("<#OP_RE_desc#><br/><span style=\"color:#FC0\"><#deviceDiscorvy2#></span>");
 		$j("#nextButton").attr("value","<#CTL_next#>");
 		clearTimeout(id_WANunplungHint);
 		document.form.sw_mode_radio[1].focus();
@@ -150,7 +150,7 @@ function setScenerion(mode){
 		$j("#Internet_span").css("display", "block");
 		$j("#ap-line").css("display", "none");
 		$j("#AP").html("<#Device_type_02_RT#>");
-		$j("#mode_desc").html("<#OP_AP_desc#><br/><span style=\"color:#FC0\"><#deviceDiscorvy#></span>");
+		$j("#mode_desc").html("<#OP_AP_desc#><br/><span style=\"color:#FC0\"><#deviceDiscorvy3#></span>");
 		$j("#nextButton").attr("value","<#CTL_next#>");
 		clearTimeout(id_WANunplungHint);
 		document.form.sw_mode_radio[2].focus();

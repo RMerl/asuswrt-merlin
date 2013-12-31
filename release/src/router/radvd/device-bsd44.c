@@ -26,7 +26,7 @@ static uint8_t ll_prefix[] = { 0xfe, 0x80 };
  * the defined prefixes
  */
 int
-setup_deviceinfo(struct Interface *iface)
+update_device_info(struct Interface *iface)
 {
 	struct ifaddrs *addresses = 0, *ifa;
 

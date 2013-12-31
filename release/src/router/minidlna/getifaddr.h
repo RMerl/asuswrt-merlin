@@ -38,21 +38,12 @@
    (x[4] == 0x00) && \
    (x[5] == 0x00))
 
-/* getifaddr()
- * take a network interface name and write the
- * ip v4 address as text in the buffer
- * returns: 0 success, -1 failure */
-int
-getifaddr(const char * ifname, char * buf, int len);
+int getsyshwaddr(char *buf, int len);
+int get_remote_mac(struct in_addr ip_addr, unsigned char *mac);
+void reload_ifaces(int notify);
 
-int
-getsysaddrs(void);
-
-int
-getsyshwaddr(char * buf, int len);
-
-int
-get_remote_mac(struct in_addr ip_addr, unsigned char * mac);
+int OpenAndConfMonitorSocket();
+void ProcessMonitorEvent(int s);
 
 #endif
 

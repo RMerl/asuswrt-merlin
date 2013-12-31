@@ -840,7 +840,7 @@ ddr3_init_tab:
 	.word	0,	0x00000600
 	.word	1,	0x00000000 
 	.word	3,	0x000000a0 
-	.word	4,	0x00000190 
+	.word	4,	0x00061a80 
 	.word	5,	0x16081600 
 	.word	6,	0x06040408 
 	.word	7,	0x0b061c27

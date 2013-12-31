@@ -22,9 +22,9 @@ Revision History:
 --*/
 
 //
-// This field is updated by CVS
+// This field is updated by SVN
 //
-static const char s_FileVer[] = "$Id: ufsdvfs.c 208702 2013-07-25 17:06:01Z Ivan.Zorin $";
+static const char s_FileVer[] = "$Id: ufsdvfs.c 217607 2013-11-27 12:41:47Z shura $";
 
 //
 // Tune ufsdvfs.c
@@ -33,13 +33,17 @@ static const char s_FileVer[] = "$Id: ufsdvfs.c 208702 2013-07-25 17:06:01Z Ivan
 //#define UFSD_COUNT_CONTAINED        "Use unix semantics for dir->i_nlink"
 //#define UFSD_USE_ASM_DIV64          "Use built-in macros do_div in <asm/div64.h> instead of __udivdi3"
 #define UFSD_READAHEAD_PAGES        8
-//#define UFSD_TAIL_RW                "Allow to read/write device tail"
 // NOTE: Kernel's utf8 does not support U+10000 (see utf8_mbtowc for details and note that 'typedef _u16 wchar_t;' )
 //#define UFSD_BUILTINT_UTF8          "Use builtin utf8 code page"
 #ifdef UFSD_DEBUG
 #define UFSD_DEBUG_ALLOC            "Track memory allocation/deallocation"
 #endif
+// Activate this define to test readdir
+//#define UFSD_EMULATE_SMALL_READDIR_BUFFER 10
 
+#ifndef UFSD_SMART_DIRTY_SEC
+  #define UFSD_SMART_DIRTY_SEC  5
+#endif
 
 #include <linux/version.h>
 #include <linux/kernel.h>
@@ -65,6 +69,7 @@ static const char s_FileVer[] = "$Id: ufsdvfs.c 208702 2013-07-25 17:06:01Z Ivan
 #include <linux/seq_file.h>
 #include <linux/mount.h>
 #include <linux/xattr.h>
+#include <linux/writeback.h>
 
 #include "config.h"
 
@@ -130,8 +135,17 @@ static const char s_FileVer[] = "$Id: ufsdvfs.c 208702 2013-07-25 17:06:01Z Ivan
   #include <linux/fs_struct.h>
 #endif
 
+#if defined HAVE_LINUX_PROC_NS_H && HAVE_LINUX_PROC_NS_H
+  #include <linux/proc_ns.h>
+#endif
+
+#if defined HAVE_LINUX_AIO_H && HAVE_LINUX_AIO_H
+  #include <linux/aio.h>
+#endif
+
 #if defined CONFIG_FS_POSIX_ACL \
-  && (defined HAVE_DECL_POSIX_ACL_FROM_XATTR && HAVE_DECL_POSIX_ACL_FROM_XATTR)
+  && ( (defined HAVE_DECL_POSIX_ACL_FROM_XATTR && HAVE_DECL_POSIX_ACL_FROM_XATTR)\
+    || (defined HAVE_DECL_POSIX_ACL_TO_XATTR_V2 && HAVE_DECL_POSIX_ACL_TO_XATTR_V2) )
   #include <linux/posix_acl_xattr.h>
   #define UFSD_USE_XATTR              "Include code to support xattr and acl"
 #endif
@@ -142,10 +156,22 @@ static const char s_FileVer[] = "$Id: ufsdvfs.c 208702 2013-07-25 17:06:01Z Ivan
   #define posix_acl_mode umode_t
 #endif
 
+#ifndef UFSD_USE_FLUSH_THREAD
+  #if !(defined HAVE_STRUCT_SUPER_OPERATIONS_WRITE_SUPER && HAVE_STRUCT_SUPER_OPERATIONS_WRITE_SUPER)
+    #define UFSD_USE_FLUSH_THREAD "Use thread to flush periodically"
+  #endif
+#endif
+
+#if defined UFSD_USE_FLUSH_THREAD && !(defined HAVE_LINUX_FREEZER_H && HAVE_LINUX_FREEZER_H)
+  #undef UFSD_USE_FLUSH_THREAD
+#endif
+
 //
 // Default trace level for many functions in this module
 //
 #define Dbg  UFSD_LEVEL_VFS
+
+#define UFSD_PACKAGE_STAMP " " "lke_8.9.0_r217892_b13"
 
 //
 // Used to trace driver version
@@ -154,7 +180,7 @@ static const char s_DriverVer[] = PACKAGE_VERSION
 #ifdef PACKAGE_TAG
    " " PACKAGE_TAG
 #else
-   ", " __DATE__" "__TIME__
+   UFSD_PACKAGE_STAMP
 #endif
 #if defined CONFIG_LBD | defined CONFIG_LBDAF
   ", LBD=ON"
@@ -173,19 +199,23 @@ static const char s_DriverVer[] = PACKAGE_VERSION
 #ifndef UFSD_DISABLE_UGM
   ", ugm"
 #endif
-#ifdef UFSD_RW_MAP
-  ", rwm"
-#endif
-#ifdef UFSD_WRITE_SUPER
-  ", ws"
-#endif
 #ifdef UFSD_CHECK_BDI
   ", bdi"
 #endif
-#ifdef UFSD_SMART_DIRTY
+#ifdef UFSD_USE_FLUSH_THREAD
+  ", sd2"
+#else
   ", sd"
-#elif defined UFSD_DIRTY_OFF
-  ", do"
+#endif
+#ifdef WRITE_FLUSH_FUA
+  ", fua"
+#elif defined WRITE_BARRIER
+  ", wb"
+#else
+  ", nb"
+#endif
+#ifdef UFSD_USE_BUILTIN_ZEROING
+  ", bz"
 #endif
 #ifdef UFSD_DEBUG
   ", debug"
@@ -269,25 +299,6 @@ static const char s_DriverVer[] = PACKAGE_VERSION
   #define UFSD_BIG_UNODE  "inode is a part of unode"
 #endif
 
-#ifdef UFSD_BIG_UNODE
-  //
-  // This function returns 'unode' for 'inode'
-  //
-  // struct unode* UFSD_U( IN struct inode* inode );
-  //
-  #define UFSD_U(inode)   (container_of((inode), struct unode, i))
-
-#else
-
-  #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,19)
-    #define UFSD_U(i)      (*(struct unode**)&((i)->i_private))
-  #else
-    #define UFSD_U(i)      (*(struct unode**)&((i)->u.generic_ip))
-  #endif
-
-#endif
-
-
 #if defined HAVE_KMEM_CACHE && HAVE_KMEM_CACHE && defined HAVE_KMEM_CACHE_NOT_DIFF && HAVE_KMEM_CACHE_NOT_DIFF
   #define u_kmem_cache struct kmem_cache
 #elif defined HAVE_KMEM_CACHE_T && HAVE_KMEM_CACHE_T
@@ -302,11 +313,27 @@ static const char s_DriverVer[] = PACKAGE_VERSION
   #define SLAB_MEM_SPREAD 0
 #endif
 
+#ifndef ACL_NOT_CACHED
+ #define ACL_NOT_CACHED ((void *)(-1))
+#endif
+
 #if  !(defined HAVE_DECL_KMEM_CACHE_CREATE_V1 && HAVE_DECL_KMEM_CACHE_CREATE_V1)\
   && !(defined HAVE_DECL_KMEM_CACHE_CREATE_V2 && HAVE_DECL_KMEM_CACHE_CREATE_V2)\
   && !(defined HAVE_DECL_KMEM_CACHE_CREATE_V3 && HAVE_DECL_KMEM_CACHE_CREATE_V3)\
   && !(defined HAVE_DECL_KMEM_CACHE_CREATE_V4 && HAVE_DECL_KMEM_CACHE_CREATE_V4)
 #error "Unknown version of kmem_cache_create"
+#endif
+
+#if defined HAVE_DECL_KMAP_ATOMIC_V1 && HAVE_DECL_KMAP_ATOMIC_V1
+  #define atomic_kmap(p)    kmap_atomic( (p), KM_USER0 )
+  #define atomic_kunmap(p)  kunmap_atomic( (p), KM_USER0 )
+#else
+  #define atomic_kmap(p)    kmap_atomic( (p) )
+  #define atomic_kunmap(p)  kunmap_atomic( (p) )
+#endif
+
+#if !( defined HAVE_DECL_FILE_INODE && HAVE_DECL_FILE_INODE )
+  #define file_inode(X) file->f_dentry->d_inode
 #endif
 
 //
@@ -330,18 +357,25 @@ typedef struct unode {
 #endif
   spinlock_t    block_lock;
 
+#if defined UFSD_USE_XATTR && !(defined HAVE_STRUCT_INODE_I_ACL && HAVE_STRUCT_INODE_I_ACL)
+  // inode does not contain cached values of acl/default_acl.  use own acl cache
+	struct posix_acl* acl;
+	struct posix_acl* default_acl;
+#endif
+
   //
+  // init_once initialize members ['i' - 'ufile')
+  // ufsd_alloc_inode resets members ['ufile' end)
   // Do not move 'ufile' member
   //
   UFSD_FILE*    ufile;
 
-  sector_t      Vbn;
-  sector_t      Lbn;
-  sector_t      Len;
+  sector_t      Vbn, Lbn, Len;        // saved one fragment
 
   loff_t        mmu;
+  unsigned      atime, ctime, mtime;  // saved on-disk times in seconds
+
   char          set_mode;
-  char          set_time;
   char          sparse;
   char          compr;
   char          encrypt;
@@ -356,6 +390,29 @@ typedef struct unode {
 
 } unode;
 
+#ifdef UFSD_BIG_UNODE
+  //
+  // This function returns 'unode' for 'inode'
+  //
+  // struct unode* UFSD_U( IN struct inode* inode );
+  //
+  #ifdef UFSD_DEBUG
+    struct unode* UFSD_U( IN struct inode* inode ) {
+      return container_of((inode), struct unode, i);
+    }
+  #else
+    #define UFSD_U(inode)   (container_of((inode), struct unode, i))
+  #endif
+
+#else
+
+  #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,19)
+    #define UFSD_U(i)      (*(struct unode**)&((i)->i_private))
+  #else
+    #define UFSD_U(i)      (*(struct unode**)&((i)->u.generic_ip))
+  #endif
+
+#endif
 
 //
 // Private superblock structure.
@@ -379,17 +436,34 @@ typedef struct usuper {
     void*             Xbuffer;
     size_t            BytesPerXBuffer;
 #endif
+
+#ifdef UFSD_HFS
+    struct buffer_head* TailBh;
+#endif
+
+#ifdef UFSD_USE_FLUSH_THREAD
+    rwlock_t            StateLock;     // Protect the various scalars
+    wait_queue_head_t   WaitDoneFlush;
+    wait_queue_head_t   WaitExitFlush;
+    struct task_struct* FlushTask;     // Pointer to the current flush thread for this volume
+    struct timer_list   FlushTimer;    // The timer used to wakeup the flush thread
+    unsigned char       ExitFlushThread; // Used to exit from flush thread
+    unsigned char       bDirty;
+#endif
+    unsigned long       LastDirty;
+
+#if defined CONFIG_PROC_FS
     struct proc_dir_entry*  procdir;
+#endif
     TRACE_ONLY( struct sysinfo    SysInfo; )
     spinlock_t        ddt_lock;     // DoDelayedTasks lock
     struct list_head  clear_list;   // List of inodes to clear
 
     #define RW_BUFFER_SIZE  (4*PAGE_SIZE)
     void*             rw_buffer;    // RW_BUFFER_SIZE
-    unsigned int      ReadAheadPages;
+    unsigned int      ReadAheadBlocks;
 
 #ifdef UFSD_TRACE
-
     size_t            nDelClear;      // Delayed clear
     size_t            nWrittenBlocks; // Count of written blocks
     size_t            nReadBlocks;    // Count of read blocks
@@ -409,6 +483,10 @@ typedef struct usuper {
     size_t            bdread_ticks;
     size_t            bdwrite_cnt;
     size_t            bdwrite_ticks;
+    size_t            bdmap_cnt;
+    size_t            bdmap_ticks;
+    size_t            bdsetdirty_cnt;
+    size_t            bdsetdirty_ticks;
     size_t            writepages_cnt;
     size_t            writepages_ticks;
     size_t            get_block_cnt;
@@ -425,9 +503,8 @@ typedef struct usuper {
     size_t            da_write_begin_ticks;
     size_t            da_write_end_cnt;
     size_t            da_write_end_ticks;
-#endif /* UFSD_DEBUG */
-
-#endif /* UFSD_TRACE */
+#endif
+#endif
 
     unsigned char     BlkBits;      // Log2(BytesPerBlock)
     unsigned char     SctBits;      // Log2(BytesPerSector)
@@ -470,7 +547,6 @@ typedef struct {
 
   #define ProfileLeave(s,name)    \
     s->name##_ticks += jiffies
-
 #else
   #define ProfileEnter(s,name)
   #define ProfileLeave(s,name)
@@ -482,6 +558,10 @@ typedef struct {
 #else
   #define MODULE_BASE_ADDRESS  &UFSD_CurrentTime //&__this_module
   #define get_seconds() xtime.tv_sec
+#endif
+
+#if !(defined HAVE_DECL_CURRENT_UMASK && HAVE_DECL_CURRENT_UMASK)
+  #define current_umask() (current->fs->umask)
 #endif
 
 #ifndef current_fsuid
@@ -504,17 +584,6 @@ typedef struct {
   #define is_owner_or_cap(i) ( (current_fsuid() == (i)->i_uid) || capable(CAP_FOWNER) )
 #endif
 
-#if !(defined HAVE_DECL_TIMESPEC_COMPARE  && HAVE_DECL_TIMESPEC_COMPARE)
-static inline int timespec_compare(const struct timespec *lhs, const struct timespec *rhs){
-  if ( lhs->tv_sec < rhs->tv_sec )
-    return -1;
-  if ( lhs->tv_sec > rhs->tv_sec )
-    return 1;
-  return lhs->tv_nsec - rhs->tv_nsec;
-}
-#endif
-
-
 //
 // assert tv_sec is the first member of type time_t
 //
@@ -525,7 +594,8 @@ typedef char AssertTvSecSz [sizeof(time_t) == sizeof(((struct timespec*)NULL)->t
 
 #define _100ns2seconds        10000000UL
 #define SecondsToStartOf1970  0x00000002B6109100ULL
-
+// How many seconds since 1970 till 1980
+#define Seconds1970To1980     0x12CEA600
 
 ///////////////////////////////////////////////////////////
 // UFSD_CurrentTime (GMT time)
@@ -593,7 +663,7 @@ UFSD_TimeNt2Posix(
   UINT64 seconds = NtTime / _100ns2seconds - SecondsToStartOf1970;
 #endif
 
-  ASSERT( seconds > 0 );
+  assert( seconds > 0 );
 
   return (time_t)seconds;
 }
@@ -637,20 +707,32 @@ UFSD_TimeT2UfsdNt(
 static inline void
 UfsdTimes2Inode(
     IN usuper*        sbi,
+    IN unode*         u,
     IN struct inode*  i,
     IN const UfsdFileInfo* Info
     )
 {
   if ( sbi->options.posixtime ) {
-    TIMESPEC_SECONDS( &i->i_atime )  = Info->atime;
-    TIMESPEC_SECONDS( &i->i_ctime )  = Info->ctime;
-    TIMESPEC_SECONDS( &i->i_mtime )  = Info->mtime;
+    u->atime = TIMESPEC_SECONDS( &i->i_atime )  = Info->atime;
+    u->ctime = TIMESPEC_SECONDS( &i->i_ctime )  = Info->ctime;
+    u->mtime = TIMESPEC_SECONDS( &i->i_mtime )  = Info->mtime;
   } else {
-    TIMESPEC_SECONDS( &i->i_atime )  = UFSD_TimeNt2Posix( Info->atime );
-    TIMESPEC_SECONDS( &i->i_ctime )  = UFSD_TimeNt2Posix( Info->ctime );
-    TIMESPEC_SECONDS( &i->i_mtime )  = UFSD_TimeNt2Posix( Info->mtime );
+    u->atime = TIMESPEC_SECONDS( &i->i_atime )  = UFSD_TimeNt2Posix( Info->atime );
+    u->ctime = TIMESPEC_SECONDS( &i->i_ctime )  = UFSD_TimeNt2Posix( Info->ctime );
+    u->mtime = TIMESPEC_SECONDS( &i->i_mtime )  = UFSD_TimeNt2Posix( Info->mtime );
   }
 }
+
+
+#if !(defined HAVE_DECL_TIMESPEC_COMPARE  && HAVE_DECL_TIMESPEC_COMPARE)
+static inline int timespec_compare(const struct timespec *lhs, const struct timespec *rhs){
+  if ( lhs->tv_sec < rhs->tv_sec )
+    return -1;
+  if ( lhs->tv_sec > rhs->tv_sec )
+    return 1;
+  return lhs->tv_nsec - rhs->tv_nsec;
+}
+#endif
 
 
 #if !(defined HAVE_DECL_JIFFIES_TO_MSECS && HAVE_DECL_JIFFIES_TO_MSECS)
@@ -685,10 +767,8 @@ static inline void inc_nlink(struct inode* i){ i->i_nlink++; }
 //
 #if defined HAVE_DECL_WRITEBACK_INODES_SB_IF_IDLE_V1 && HAVE_DECL_WRITEBACK_INODES_SB_IF_IDLE_V1
   #define Writeback_inodes_sb_if_idle(s) writeback_inodes_sb_if_idle( (s) )
-  #define Writeback_inodes_sb(s) writeback_inodes_sb( (s) )
 #elif defined HAVE_DECL_WRITEBACK_INODES_SB_IF_IDLE_V2 && HAVE_DECL_WRITEBACK_INODES_SB_IF_IDLE_V2
   #define Writeback_inodes_sb_if_idle(s) writeback_inodes_sb_if_idle( (s), WB_REASON_FREE_MORE_MEM )
-  #define Writeback_inodes_sb(s) writeback_inodes_sb( (s), WB_REASON_FREE_MORE_MEM )
 #endif
 
 
@@ -713,7 +793,7 @@ typedef struct _MEMBLOCK_HEAD {
      |   size 'DataSize'   |
      |---------------------|
   */
-  //unsigned char barrier2[64];
+  //unsigned char barrier2[64 - 3*sizeof(int) - sizeof(struct list_head)];
 
 } MEMBLOCK_HEAD;
 
@@ -767,37 +847,36 @@ UFSD_HeapAlloc(
   MEMBLOCK_HEAD* head;
   int Use_kmalloc;
   // Overhead includes private information and two barriers to check overwriting
-  size_t TheOverhead = sizeof(MEMBLOCK_HEAD) + sizeof(head->Barrier);
-  size_t AllocatedSize;
+  const size_t TheOverhead = sizeof(MEMBLOCK_HEAD) + sizeof(head->Barrier);
+  size_t AllocatedSize = Size + TheOverhead;
 
-  Use_kmalloc = (Size + TheOverhead) <= PAGE_SIZE;
-
-  if (Use_kmalloc) {
-    AllocatedSize = (Size + sizeof(size_t)-1) & ~(sizeof(size_t)-1); // size_t align
-    head = (MEMBLOCK_HEAD*)kmalloc( AllocatedSize + TheOverhead, GFP_NOFS );
+  if ( AllocatedSize <= PAGE_SIZE ) {
+    Use_kmalloc = 1;
+    // size_t align
+    AllocatedSize = (AllocatedSize + sizeof(size_t)-1) & ~(sizeof(size_t)-1);
+    head = (MEMBLOCK_HEAD*)kmalloc( AllocatedSize, GFP_NOFS );
   } else {
-    AllocatedSize = PAGE_ALIGN(Size + TheOverhead) - TheOverhead;
-    head = (AllocatedSize + TheOverhead) >> PAGE_SHIFT >= num_physpages
-        ? NULL
-        : (MEMBLOCK_HEAD*)vmalloc( AllocatedSize + TheOverhead );
-    ASSERT( (size_t)head >= VMALLOC_START && (size_t)head < VMALLOC_END );
+    Use_kmalloc = 0;
+    AllocatedSize = PAGE_ALIGN(AllocatedSize);
+    head = (MEMBLOCK_HEAD*)vmalloc( AllocatedSize );
+    assert( (size_t)head >= VMALLOC_START && (size_t)head < VMALLOC_END );
 #ifdef UFSD_DEBUG
     if ( (size_t)head < VMALLOC_START || (size_t)head >= VMALLOC_END )
-      _UFSDTrace( "vmalloc(%Zu) returns %p. Must be in range [%lx, %lx)\n", AllocatedSize + TheOverhead, head, (long)VMALLOC_START, (long)VMALLOC_END );
+      _UFSDTrace( "vmalloc(%Zu) returns %p. Must be in range [%lx, %lx)\n", AllocatedSize, head, (long)VMALLOC_START, (long)VMALLOC_END );
 #endif
   }
 
-  ASSERT(NULL != head);
-  if (NULL == head) {
+  assert(NULL != head);
+  if ( NULL == head ) {
     DebugTrace(0, UFSD_LEVEL_ERROR, ("HeapAlloc(%Zu) failed\n", Size));
     return NULL;
   }
-  ASSERT(0 == (AllocatedSize & 1U));
+  assert(0 == (AllocatedSize & 1U));
 
   Mutex_lock( &MemMutex );
 
   // Fill head private fields
-  head->AllocatedSize = AllocatedSize;
+  head->AllocatedSize = Use_kmalloc? AllocatedSize : (AllocatedSize | 1);
   head->DataSize      = Size;
   list_add( &head->Link, &TotalAllocHead );
   head->Seq           = ++TotalAllocSequence;
@@ -806,7 +885,7 @@ UFSD_HeapAlloc(
   // fills two barriers to check memory overwriting
   //
   memset( &head->Barrier[0], 0xde, sizeof(head->Barrier) );
-  memset( Add2Ptr( head + 1, head->DataSize), 0xed, (head->AllocatedSize & ~1) - head->DataSize );
+  memset( Add2Ptr( head + 1, Size), 0xed, sizeof(head->Barrier) );
 
   //
   // Update statistics
@@ -819,8 +898,6 @@ UFSD_HeapAlloc(
   if ( Size > MemMaxRequest )
     MemMaxRequest = Size;
 
-  if (!Use_kmalloc)
-    head->AllocatedSize |= 1U;
   DebugTrace(0, UFSD_LEVEL_MEMMNGR, ("alloc(%Zu) -> %p%s, seq=%u\n",
                 Size, head+1, Use_kmalloc? "" : "(v)", head->Seq));
 
@@ -861,7 +938,7 @@ UFSD_HeapFree(
         goto Found;
     }
   }
-  ASSERT( !"failed to find block" );
+  assert( !"failed to find block" );
   DebugTrace(0, UFSD_LEVEL_ERROR, ("HeapFree(%p) failed to find block\n", Pointer ));
   Mutex_unlock( &MemMutex );
   return;
@@ -887,7 +964,7 @@ BadNews:
       }
     }
 
-    i = (block->AllocatedSize & ~1) - block->DataSize;
+    i = sizeof(block->Barrier);
     for ( p = Add2Ptr( block + 1, block->DataSize ); 0 != i; p++, i-- ) {
       if ( *p != 0xed ) {
         Err = "tail";
@@ -910,9 +987,9 @@ BadNews:
 
   // declaration of vfree and kfree differs!
   if ( block->AllocatedSize & 1U )
-    vfree(block);
+    vfree( block );
   else
-    kfree(block);
+    kfree( block );
 }
 
 #else
@@ -932,11 +1009,11 @@ UFSD_HeapAlloc(
   if ( Size <= PAGE_SIZE ) {
     ptr = kmalloc(Size, GFP_NOFS);
   } else {
-    ptr = Size >> PAGE_SHIFT >= num_physpages? NULL : vmalloc( Size );
-    ASSERT( (size_t)ptr >= VMALLOC_START && (size_t)ptr < VMALLOC_END );
+    ptr = vmalloc( Size );
+    assert( (size_t)ptr >= VMALLOC_START && (size_t)ptr < VMALLOC_END );
   }
 
-  ASSERT(NULL != ptr);
+  assert(NULL != ptr);
   if ( NULL == ptr ) {
     DebugTrace(0, UFSD_LEVEL_ERROR, ("alloc(%Zu) failed\n", Size));
     return NULL;
@@ -971,6 +1048,115 @@ UFSD_HeapFree(
 }
 
 #endif // #ifndef UFSD_DEBUG_ALLOC
+
+
+//
+// 'kmem_cache_create' too often crashes at least in 2.6.22
+//
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,30)
+  #define UFSD_USE_KMEM_CACHE
+#endif
+
+///////////////////////////////////////////////////////////
+// UFSD_CacheCreate
+//
+//
+///////////////////////////////////////////////////////////
+void*
+UFSDAPI_CALL
+UFSD_CacheCreate(
+    IN const char*  Name,
+    IN size_t       size
+    )
+{
+#ifdef UFSD_USE_KMEM_CACHE
+  u_kmem_cache* cache = kmem_cache_create( Name, size, 0, SLAB_RECLAIM_ACCOUNT|SLAB_MEM_SPREAD|SLAB_PANIC, NULL
+#if defined HAVE_DECL_KMEM_CACHE_CREATE_V1 && HAVE_DECL_KMEM_CACHE_CREATE_V1
+                                          , NULL
+#endif
+                                          );
+#else
+  void* cache = (void*)size;
+  UNREFERENCED_PARAMETER( Name );
+#endif
+
+  DebugTrace(0, Dbg, ("Cache create: \"%s\" (%Zx) -> %p\n", Name, size, cache ) );
+  return cache;
+}
+
+
+///////////////////////////////////////////////////////////
+// UFSD_CacheDestroy
+//
+//
+///////////////////////////////////////////////////////////
+void
+UFSDAPI_CALL
+UFSD_CacheDestroy(
+    IN void* Cache
+    )
+{
+  DebugTrace(0, Dbg, ("Cache destroy: %p \n", Cache ) );
+#ifdef UFSD_USE_KMEM_CACHE
+  kmem_cache_destroy( (u_kmem_cache*)Cache );
+#else
+  UNREFERENCED_PARAMETER( Cache );
+#endif
+}
+
+
+///////////////////////////////////////////////////////////
+// UFSD_CacheAlloc
+//
+//
+///////////////////////////////////////////////////////////
+void*
+UFSDAPI_CALL
+UFSD_CacheAlloc(
+    IN void*  Cache,
+    IN int    bZero
+    )
+{
+#ifdef UFSD_USE_KMEM_CACHE
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26)
+  void* p = kmem_cache_alloc( (u_kmem_cache*)Cache, bZero? (__GFP_ZERO | GFP_KERNEL) : GFP_KERNEL );
+#elif defined HAVE_DECL_KMEM_CACHE_ZALLOC && HAVE_DECL_KMEM_CACHE_ZALLOC
+  void* p = (bZero? kmem_cache_zalloc : kmem_cache_alloc)( (u_kmem_cache*)Cache, GFP_KERNEL );
+#else
+  void* p = kmem_cache_alloc( (u_kmem_cache*)Cache, GFP_KERNEL );
+  if ( NULL != p && bZero )
+    memset( p, 0, kmem_cache_size( (u_kmem_cache*)Cache ) );
+#endif
+#else
+  void* p = kmalloc( (size_t)Cache, GFP_KERNEL );
+  if ( NULL != p && bZero )
+    memset( p, 0, (size_t)Cache );
+#endif
+  DebugTrace(0, UFSD_LEVEL_MEMMNGR, ("CacheAlloc(%p)->%p\n", Cache, p ) );
+  return p;
+}
+
+
+///////////////////////////////////////////////////////////
+// UFSD_CacheFree
+//
+//
+///////////////////////////////////////////////////////////
+void
+UFSDAPI_CALL
+UFSD_CacheFree(
+    IN void* Cache,
+    IN void* p
+    )
+{
+  DebugTrace(0, UFSD_LEVEL_MEMMNGR, ("CacheFree(%p,%p)\n", Cache, p ) );
+#ifdef UFSD_USE_KMEM_CACHE
+  kmem_cache_free( (u_kmem_cache*)Cache, p );
+#else
+  UNREFERENCED_PARAMETER( Cache );
+  kfree( p );
+#endif
+}
 
 
 //
@@ -1075,7 +1261,9 @@ UFSD_UniToBCS(
     charlen = nls->uni2char( *ws, s, max_out );
     if ( charlen <= 0 ) {
       DebugTrace(0, UFSD_LEVEL_ERROR, ("uni2char (%s) failed:\n", nls->charset ));
-      ASSERT( !"U2A: failed to convert" );
+      assert( !"U2A: failed to convert" );
+      printk( KERN_NOTICE  QUOTED_UFSD_DEVICE": %s failed to convert from unicode. Pos %d, chars %x %x %x\n",
+              nls->charset, (int)(s-s0), (unsigned)ws[0], len > 1? (unsigned)ws[1] : 0, len > 2? (unsigned)ws[2] : 0 );
       return 0;
     }
 
@@ -1173,182 +1361,55 @@ static inline void __breadahead(dev_t dev, UINT64 block, int size)
   #define page_buffers(page) page->buffers
 #endif
 
-#if defined UFSD_TAIL_RW && defined HAVE_LINUX_BIO_H && HAVE_LINUX_BIO_H
-//
-// This code reads/writes tail of device.
-// For example:
-// - device size is 1003 sectors
-// - block size is 8 sectors
-// - bread/getblk process blocks 0-255
-// - BdReadWriteTail can read/write sectors 1000-1002
-//
-
-#if defined HAVE_LINUX_BIO_H && HAVE_LINUX_BIO_H
-#include <linux/bio.h>
-#endif
-
-struct UfsdBioWait{
-  atomic_t            done;
-  struct completion*  wait;
-  unsigned long       flags;
-};
-
-
+#ifdef UFSD_HFS
 ///////////////////////////////////////////////////////////
-// UfsdBioEndIo
+// bh_tail
 //
-//
+// Get buffer_head for tail
 ///////////////////////////////////////////////////////////
-#if defined HAVE_DECL_BIO_END_V1 && HAVE_DECL_BIO_END_V1
-static int
-#elif defined HAVE_DECL_BIO_END_V2 && HAVE_DECL_BIO_END_V2
-static void
-#else
-#error "end_bio_io_page"
-#endif
-UfsdBioEndIo(
-    IN struct bio*  bio,
-#if defined HAVE_DECL_BIO_END_V1 && HAVE_DECL_BIO_END_V1
-    IN unsigned int bytes_done  __attribute__((__unused__)),
-#endif
-    IN int          err
-    )
-{
-  struct UfsdBioWait *wc = bio->bi_private;
-  if ( 0 != bio->bi_size )
-#if defined HAVE_DECL_BIO_END_V1 && HAVE_DECL_BIO_END_V1
-    return 1;
-#elif defined HAVE_DECL_BIO_END_V2 && HAVE_DECL_BIO_END_V2
-    return;
-#endif
-
-  if ( 0 != err ) {
-    DebugTrace(0, UFSD_LEVEL_ERROR,
-               ("UFSD_Bd%s: failed on block %"PSCT"x, error %d\n",
-               READ == bio_data_dir(bio)?"read" : "write",
-               bio->bi_sector, err ));
-
-    if ( EOPNOTSUPP == err )
-      set_bit( BIO_EOPNOTSUPP, &wc->flags );
-    else
-      clear_bit( BIO_UPTODATE, &wc->flags );
-  }
-
-  if ( atomic_dec_and_test( &wc->done ) )
-    complete( wc->wait );
-
-//  bio_put(bio);
-#if defined HAVE_DECL_BIO_END_V1 && HAVE_DECL_BIO_END_V1
-  return 0;
-#endif
-}
-
-
-///////////////////////////////////////////////////////////
-// BdReadWriteTail
-//
-//
-///////////////////////////////////////////////////////////
-static size_t
-BdReadWriteTail(
+struct buffer_head*
+bh_tail(
     IN struct super_block* sb,
-    IN sector_t   DevBlock,
-    IN void*      Buffer,
-    IN size_t     Bytes,
-    IN size_t     Bytes2Skip,
-    IN int        Oper // READ/WRITE
+    IN size_t              Bytes2Skip
     )
 {
-  //
-  // We can't use __bread if we read the last not full block
-  //
-  UINT64 DevBlockOffset = (UINT64)DevBlock << sb->s_blocksize_bits;
-  loff_t Tail = sb->s_bdev->bd_inode->i_size - DevBlockOffset;
-  struct page* page;
-  struct bio* bio;
-  size_t ToRw;
-  struct UfsdBioWait  wc;
-#ifdef DECLARE_COMPLETION_ONSTACK
-  DECLARE_COMPLETION_ONSTACK( wait );
-#else
-  struct completion wait;
-  init_completion( &wait );
-#endif
+  usuper* sbi = UFSD_SB( sb );
+  struct buffer_head* bh = sbi->TailBh;
+  if ( NULL == bh ) {
+    sector_t TailBlock = ((sbi->MaxBlock << sb->s_blocksize_bits) + Bytes2Skip) >> 9;
+    struct page* page = alloc_page( GFP_KERNEL | __GFP_ZERO );
+    if ( NULL == page )
+      return NULL;
+    bh = alloc_buffer_head( GFP_NOFS );
+    if ( NULL == bh ) {
+out:
+      __free_page( page );
+      return NULL;
+    }
 
-  ASSERT( sb->s_blocksize <= PAGE_SIZE );
-
-  if ( Tail <= Bytes2Skip || Tail >= sb->s_blocksize )
-    return 0;
-
-  page = alloc_page( GFP_KERNEL );
-  if ( unlikely( NULL == page ) )
-    return 0;
-
-  ASSERT( Tail < PAGE_SIZE );
-  ToRw = (size_t)Tail - Bytes2Skip;
-  if ( ToRw > Bytes )
-    ToRw = Bytes;
-
-  DebugTrace(0, UFSD_LEVEL_IO, ("%s tail from %"PSCT"x %Zx\n", READ == Oper? "Read" : "Write", DevBlock, ToRw));
-
-  atomic_set( &wc.done, 1 );
-  wc.flags  = 1 << BIO_UPTODATE;
-  wc.wait   = &wait;
-
-  bio = bio_alloc( GFP_ATOMIC, 16 );
-
-  if ( unlikely( NULL == bio ) ) {
-    ToRw = 0;
-    goto Exit;
+    bh->b_state = 0;
+    init_buffer( bh, end_buffer_read_sync, NULL );
+    atomic_set( &bh->b_count, 2 );
+    set_bh_page( bh, page, Bytes2Skip );
+    bh->b_size    = 512;
+    bh->b_bdev    = sb_dev(sb);
+    bh->b_blocknr = TailBlock;
+    set_buffer_mapped( bh );
+    lock_buffer( bh );
+    submit_bh( READ, bh );
+    wait_on_buffer( bh );
+    if ( !buffer_uptodate( bh ) ) {
+      brelse( bh );
+      goto out;
+    }
+    assert( 1 == atomic_read( &bh->b_count ) );
+    sbi->TailBh = bh;
+//    DebugTrace(0, 0, ("bh_tail\n"));
   }
-
-  bio->bi_sector  = (DevBlockOffset + Bytes2Skip) >> 9;
-  bio->bi_bdev    = sb_dev(sb);
-  bio->bi_private = &wc;
-  bio->bi_end_io  = UfsdBioEndIo;
-
-  if ( ToRw != bio_add_page( bio, page, ToRw, 0 ) ) {
-    ToRw = 0;
-    goto PutAndExit;
-  }
-
-  if ( WRITE == Oper ){
-    ClearPageUptodate( page );
-    memcpy( kmap( page ), Buffer, ToRw );
-    kunmap( page );
-    SetPageDirty( page );
-  }
-
-  atomic_inc( &wc.done );
-  submit_bio( Oper, bio );
-
-#if defined HAVE_DECL_BLK_RUN_ADDRESS_SPACE && HAVE_DECL_BLK_RUN_ADDRESS_SPACE
-  blk_run_address_space( sb->s_bdev->bd_inode->i_mapping );
-#endif
-
-  if ( !atomic_dec_and_test( &wc.done ) )
-    wait_for_completion( &wait );
-
-  if ( !test_bit( BIO_UPTODATE, &wc.flags ) ) {
-    ToRw = 0;
-  } else if ( test_bit( BIO_EOPNOTSUPP, &wc.flags ) ) {
-    ToRw = 0;
-  } else if ( READ == Oper ) {
-    //
-    // Copy data from page to buffer
-    //
-    memcpy( Buffer, kmap(page), ToRw );
-    kunmap( page );
-  }
-
-PutAndExit:
-  bio_put( bio );
-Exit:
-  __free_page( page );
-  return ToRw;
+  get_bh( bh );
+  return bh;
 }
-
-#endif // #if defined UFSD_TAIL_RW && defined HAVE_LINUX_BIO_H && HAVE_LINUX_BIO_H
+#endif
 
 
 ///////////////////////////////////////////////////////////
@@ -1356,7 +1417,7 @@ Exit:
 //
 // Read data from block device
 ///////////////////////////////////////////////////////////
-int
+unsigned
 UFSDAPI_CALL
 UFSD_BdRead(
     IN  struct super_block* sb,
@@ -1373,9 +1434,9 @@ UFSD_BdRead(
   size_t    Bytes2Skip  = (size_t)Offset & (sb->s_blocksize - 1); // Offset % sb->s_blocksize
 
   int ReadAhead     = 0;
-  int RaBlocks      = (sbi->ReadAheadPages * PAGE_SIZE) >> sb->s_blocksize_bits;
+  int RaBlocks      = sbi->ReadAheadBlocks;
   sector_t RaBlock  = DevBlock;
-  int bRet          = 1;
+  unsigned err      = 0;
 
   DebugTrace(+1, UFSD_LEVEL_IO, ("BdRead: %p, %"PSCT"x, %Zx, %p\n", sb, DevBlock, Bytes, Buffer));
 
@@ -1390,27 +1451,24 @@ UFSD_BdRead(
       __breadahead( sb_dev(sb), RaBlock++, sb->s_blocksize );
     ReadAhead -= 1;
 
-#if defined UFSD_TAIL_RW && defined HAVE_LINUX_BIO_H && HAVE_LINUX_BIO_H
+#ifdef UFSD_HFS
     if ( DevBlock == sbi->MaxBlock ) {
-      ToRead = BdReadWriteTail( sb, DevBlock, Buffer, Bytes, Bytes2Skip, READ );
-      if ( 0 == ToRead || Bytes != ToRead ) {
-        ASSERT( !"BdRead: failed to read tail block" );
-        DebugTrace(0, UFSD_LEVEL_ERROR, ("BdRead: failed to read tail block starting from %"PSCT"x, %llx\n", DevBlock, sbi->MaxBlock));
-        bRet = 0;
-        goto out;
-      }
-      break;
-    }
+      assert( 512 == Bytes );
+      bh = bh_tail( sb, Bytes2Skip );
+      Bytes2Skip = 0;
+    } else
 #endif
+    {
+      TRACE_ONLY( if ( 0 != Bytes2Skip || Bytes < sb->s_blocksize ) sbi->nReadBlocksNa += 1; )
 
-    TRACE_ONLY( if ( 0 != Bytes2Skip || Bytes < sb->s_blocksize ) sbi->nReadBlocksNa += 1; )
-
-    bh = __bread( sb_dev(sb), DevBlock, sb->s_blocksize );
+      bh = __bread( sb_dev(sb), DevBlock, sb->s_blocksize );
+    }
 
     if ( NULL == bh ) {
-      ASSERT( !"BdRead: failed to map block" );
+      assert( !"BdRead: failed to map block" );
+      printk( KERN_CRIT QUOTED_UFSD_DEVICE ":failed to read block 0x%"PSCT"x (max=%llx)\n", DevBlock, sbi->MaxBlock);
       DebugTrace(0, UFSD_LEVEL_ERROR, ("BdRead: failed to map block starting from %"PSCT"x, %llx\n", DevBlock, sbi->MaxBlock));
-      bRet = 0;
+      err = -EIO;
       goto out;
     }
 
@@ -1423,8 +1481,9 @@ UFSD_BdRead(
 #if !defined UFSD_AVOID_COPY_PAGE && defined HAVE_DECL_COPY_PAGE && HAVE_DECL_COPY_PAGE
     if ( likely(PAGE_SIZE == ToRead) )
     {
-      ASSERT( 0 == ((size_t)Buffer & 0x3f) );
-      copy_page( Buffer, bh->b_data + Bytes2Skip );
+      assert( 0 == Bytes2Skip );
+      assert( 0 == ((size_t)Buffer & 0x3f) );
+      copy_page( Buffer, bh->b_data );
     }
     else
 #endif
@@ -1441,12 +1500,12 @@ UFSD_BdRead(
 out:
   ProfileLeave( sbi, bdread );
 
-#ifdef UFSD_DEBUG
+#ifdef UFSD_TRACE
   if ( UFSD_TraceLevel & UFSD_LEVEL_IO )
     UFSD_TraceInc( -1 );
 #endif
 //  DebugTrace(-1, UFSD_LEVEL_IO, ("BdRead -> ok\n"));
-  return bRet;
+  return err;
 }
 
 
@@ -1458,7 +1517,7 @@ out:
 static inline int
 BdSync(
     IN struct super_block*  sb,
-    IN struct buffer_head* bh,
+    IN struct buffer_head*  bh,
     IN size_t Wait
     )
 {
@@ -1521,14 +1580,14 @@ BdSync(
 //
 // Write data to block device
 ///////////////////////////////////////////////////////////
-int
+unsigned
 UFSDAPI_CALL
 UFSD_BdWrite(
     IN struct super_block*  sb,
-    IN UINT64   Offset,
-    IN size_t   Bytes,
-    IN const void* Buffer,
-    IN size_t   Wait
+    IN UINT64       Offset,
+    IN size_t       Bytes,
+    IN const void*  Buffer,
+    IN size_t       Wait
    )
 {
   //
@@ -1537,7 +1596,7 @@ UFSD_BdWrite(
   usuper*   sbi         = UFSD_SB( sb );
   sector_t  DevBlock    = (sector_t)(Offset >> sb->s_blocksize_bits);
   size_t    Bytes2Skip  = (size_t)Offset & (sb->s_blocksize - 1); // Offset % sb->s_blocksize
-  int       bRet        = 1;
+  unsigned  err         = 0;
   if ( !Wait && FlagOn( sb->s_flags, MS_SYNCHRONOUS ) )
     Wait = UFSD_RW_WAIT_SYNC;
 
@@ -1550,29 +1609,24 @@ UFSD_BdWrite(
     size_t ToWrite;
     struct buffer_head* bh;
 
-#if defined UFSD_TAIL_RW && defined HAVE_LINUX_BIO_H && HAVE_LINUX_BIO_H
+#ifdef UFSD_HFS
     if ( DevBlock == sbi->MaxBlock ) {
-      if ( (size_t)Buffer <= 1 ) // Pin/Unpin commands
-        break;
-      ToWrite = BdReadWriteTail( sb, DevBlock, (void*)Buffer, Bytes, Bytes2Skip, WRITE );
-      if ( 0 == ToWrite || Bytes != ToWrite ){
-        ASSERT( !"BdWrite: failed to write tail block" );
-        DebugTrace(0, UFSD_LEVEL_ERROR, ("BdWrite: failed to write tail block starting from %"PSCT"x, %llx\n", DevBlock, sbi->MaxBlock));
-        bRet = 0;
-        goto out;
-      }
-      break;
-    }
+      assert( Bytes == 512 )
+      bh = bh_tail( sb, Bytes2Skip );
+      Bytes2Skip = 0;
+    } else
 #endif
+    {
+      TRACE_ONLY( if ( 0 != Bytes2Skip || Bytes < sb->s_blocksize ) sbi->nWrittenBlocksNa += 1; )
 
-    TRACE_ONLY( if ( 0 != Bytes2Skip || Bytes < sb->s_blocksize ) sbi->nWrittenBlocksNa += 1; )
-
-    bh = ( 0 != Bytes2Skip || Bytes < sb->s_blocksize ? __bread : __getblk )( sb_dev(sb), DevBlock, sb->s_blocksize );
+      bh = ( 0 != Bytes2Skip || Bytes < sb->s_blocksize ? __bread : __getblk )( sb_dev(sb), DevBlock, sb->s_blocksize );
+    }
 
     if ( NULL == bh ) {
-      ASSERT( !"BdWrite: failed to map block" );
+      assert( !"BdWrite: failed to map block" );
+      printk( KERN_CRIT QUOTED_UFSD_DEVICE ":failed to write block 0x%"PSCT"x (max=%llx)\n", DevBlock, sbi->MaxBlock );
       DebugTrace(0, UFSD_LEVEL_ERROR, ("BdWrite: failed to map block starting from %"PSCT"x, %llx\n", DevBlock, sbi->MaxBlock));
-      bRet = 0;
+      err = -EIO;
       goto out;
     }
 
@@ -1594,7 +1648,7 @@ UFSD_BdWrite(
       //
       // Process Unpin request
       //
-      ASSERT( atomic_read( &bh->b_count ) >= 2 );
+      assert( atomic_read( &bh->b_count ) >= 2 );
       TRACE_ONLY( sbi->nUnpinBlocks += 1; )
       __brelse( bh ); // double __brelse
 
@@ -1610,8 +1664,9 @@ UFSD_BdWrite(
 #if !defined UFSD_AVOID_COPY_PAGE && defined HAVE_DECL_COPY_PAGE && HAVE_DECL_COPY_PAGE
         if ( likely(PAGE_SIZE == ToWrite) )
         {
-          ASSERT( 0 == ((size_t)Buffer & 0x3f) );
-          copy_page( bh->b_data + Bytes2Skip, (void*)Buffer ); // copy_page requires source page as non const!
+          assert( 0 == Bytes2Skip );
+          assert( 0 == ((size_t)Buffer & 0x3f) );
+          copy_page( bh->b_data, (void*)Buffer ); // copy_page requires source page as non const!
         }
         else
 #endif
@@ -1625,7 +1680,6 @@ UFSD_BdWrite(
       TRACE_ONLY( sbi->nWrittenBlocks += 1; )
 
       if ( Wait ) {
-        int err;
 #ifdef UFSD_DEBUG
         if ( !(UFSD_TraceLevel & UFSD_LEVEL_IO) )
           DebugTrace(0, UFSD_LEVEL_VFS, ("BdWrite(wait)\n"));
@@ -1637,10 +1691,9 @@ UFSD_BdWrite(
         err = BdSync( sb, bh, Wait );
 
         if ( 0 != err ) {
-          ASSERT( !"BdWrite: failed to write block" );
+          assert( !"BdWrite: failed to write block" );
           DebugTrace(0, UFSD_LEVEL_ERROR, ("BdWrite: failed to write block starting from %"PSCT"x, %llx, error=%d\n", DevBlock, sbi->MaxBlock, err));
           __brelse( bh );
-          bRet = 0;
           goto out;
         }
       }
@@ -1657,66 +1710,105 @@ Next:
 out:
   ProfileLeave( sbi, bdwrite );
 
-#ifdef UFSD_DEBUG
+#ifdef UFSD_TRACE
   if ( UFSD_TraceLevel & UFSD_LEVEL_IO )
     UFSD_TraceInc( -1 );
 #endif
 //  DebugTrace(-1, UFSD_LEVEL_IO, ("BdWrite -> ok\n"));
-  return bRet;
+  return err;
   UNREFERENCED_PARAMETER( sbi );
 }
 
 
-#ifdef UFSD_RW_MAP
 ///////////////////////////////////////////////////////////
 // UFSD_BdMap
 //
 //
 ///////////////////////////////////////////////////////////
-int
+unsigned
 UFSDAPI_CALL
 UFSD_BdMap(
     IN  struct super_block* sb,
     IN  UINT64  Offset,
     IN  size_t  Bytes,
     IN  size_t  Flags,
-    OUT void**  Bcb,
+    OUT struct buffer_head** Bcb,
     OUT void**  Mem
     )
 {
   struct buffer_head* bh;
-  TRACE_ONLY( usuper* sbi = UFSD_SB( sb ); ) /* ??? */
+#if defined UFSD_TRACE || defined UFSD_HFS || !defined UFSD_USE_BUILTIN_ZEROING
+  usuper* sbi = UFSD_SB( sb );
+#endif
   unsigned int BlockSize  = sb->s_blocksize;
   sector_t  DevBlock      = (sector_t)(Offset >> sb->s_blocksize_bits);
   size_t Bytes2Skip       = (size_t)(Offset & (BlockSize - 1)); // Offset % sb->s_blocksize
+  TRACE_ONLY( const char* hint );
+  TRACE_ONLY( const char* hint2 = "" );
 
   if ( Bytes2Skip + Bytes > BlockSize ) {
     DebugTrace(0, UFSD_LEVEL_ERROR, ("BdMap: [%llx %Zx] overlaps block boundary %x\n", Offset, Bytes, BlockSize));
-    return 0;
+    return -EINVAL;
   }
 
-  bh = ( 0 == Bytes2Skip && Bytes == BlockSize && FlagOn( Flags, UFSD_RW_MAP_NO_READ ) ? __getblk : __bread )( sb_dev(sb), DevBlock, BlockSize );
+  ProfileEnter( sbi, bdmap );
+
+#ifdef UFSD_HFS
+  if ( DevBlock == sbi->MaxBlock ) {
+    assert( Bytes == 512 )
+    bh = bh_tail( sb, Bytes2Skip );
+    Bytes2Skip = 0;
+    TRACE_ONLY( hint = "tail " );
+  } else
+#endif
+  {
+    if ( 0 == Bytes2Skip && Bytes == BlockSize && FlagOn( Flags, UFSD_RW_MAP_NO_READ ) ) {
+      TRACE_ONLY( hint = "g " );
+      bh = __getblk( sb_dev(sb), DevBlock, BlockSize );
+      if ( NULL != bh )
+        set_buffer_uptodate( bh );
+    } else {
+      //
+      // Do not readahead implicitly. cause BdZero
+      //
+#ifndef UFSD_USE_BUILTIN_ZEROING
+      int RaBlocks      = sbi->ReadAheadBlocks;
+      sector_t RaBlock  = DevBlock;
+      while( 0 != RaBlocks-- ) {
+        if ( RaBlock >= sbi->MaxBlock )
+          break;
+        __breadahead( sb_dev(sb), RaBlock++, BlockSize );
+      }
+#endif
+
+      TRACE_ONLY( hint = "b " );
+      bh = __bread( sb_dev(sb), DevBlock, BlockSize );
+    }
+  }
+
+  ProfileLeave( sbi, bdmap );
 
   if ( NULL == bh ) {
-    ASSERT( !"BdMap: failed to map block" );
-    DebugTrace(0, UFSD_LEVEL_ERROR, ("BdMap: failed to map block starting from %"PSCT"x\n", DevBlock));
-    return 0;
+    assert( !"BdMap: failed to map block" );
+    DebugTrace(0, UFSD_LEVEL_ERROR, ("BdMap: failed to map block %"PSCT"x, max = %llx\n", DevBlock, sbi->MaxBlock));
+    return -EIO;
   }
 
-  ASSERT( bh->b_size == BlockSize );
-
-  if ( buffer_locked( bh ) )
+  if ( buffer_locked( bh ) ) {
+    TRACE_ONLY( hint2 = " w"; )
     __wait_on_buffer( bh );
+  }
 
-  DebugTrace(0, UFSD_LEVEL_IO, ("BdMap: %p, %"PSCT"x, %Zx, %Zx -> %p (%d)\n", sb, DevBlock, Bytes, Flags, bh, atomic_read( &bh->b_count ) ));
+  DebugTrace(0, UFSD_LEVEL_IO, ("BdMap: %p, %"PSCT"x, %Zx, %s%s%s -> %p (%d)\n", sb, DevBlock, Bytes,
+              hint, buffer_dirty(bh)?"d":"c", hint2, bh, atomic_read( &bh->b_count ) ));
 
   //
   // Return pointer into page
   //
   *Mem = Add2Ptr( bh->b_data, Bytes2Skip );
   *Bcb = bh;
-  TRACE_ONLY( sbi->nMappedBh += 1; ) /* ??? */
-  return 1;
+  DEBUG_ONLY( sbi->nMappedBh += 1; )
+  return 0;
 }
 
 
@@ -1731,12 +1823,10 @@ UFSD_BdUnMap(
 #ifdef UFSD_DEBUG
     IN struct super_block* sb,
 #endif
-    IN void* Bcb
+    IN struct buffer_head* bh
     )
 {
-  struct buffer_head* bh = Bcb;
-
-  ASSERT( NULL != bh );
+  assert( NULL != bh );
 
   DebugTrace(0, UFSD_LEVEL_IO, ("BdUnMap: %"PSCT"x,%s %d\n", bh->b_blocknr, buffer_dirty(bh)?"d":"c", atomic_read( &bh->b_count ) - 1 ));
   __brelse( bh );
@@ -1750,16 +1840,15 @@ UFSD_BdUnMap(
 //
 //
 ///////////////////////////////////////////////////////////
-int
+unsigned
 UFSDAPI_CALL
 UFSD_BdSetDirty(
     IN struct super_block* sb,
-    IN void*    Bcb,
+    IN struct buffer_head* bh,
     IN size_t   Wait
     )
 {
   int err = 0;
-  struct buffer_head* bh = Bcb;
   usuper* sbi = UFSD_SB( sb );
 
   if ( !Wait && FlagOn( sb->s_flags, MS_SYNCHRONOUS ) )
@@ -1768,18 +1857,55 @@ UFSD_BdSetDirty(
   if ( Wait && sbi->options.nobarrier )
     Wait &= ~UFSD_RW_WAIT_BARRIER;
 
-  ASSERT( NULL != bh );
+  assert( NULL != bh );
 
   DebugTrace(0, UFSD_LEVEL_IO, ("BdDirty: %"PSCT"x,%s %d\n", bh->b_blocknr, buffer_dirty(bh)?"d":"c", atomic_read( &bh->b_count ) ));
   set_buffer_uptodate( bh );
   mark_buffer_dirty( bh );
 
-  if ( Wait )
+  if ( Wait ) {
+    ProfileEnter( sbi, bdsetdirty );
     err = BdSync( sb, bh, Wait );
+    ProfileLeave( sbi, bdsetdirty );
+  }
 
-  return 0 == err;
+  return err;
 }
-#endif // #ifdef UFSD_RW_MAP
+
+
+///////////////////////////////////////////////////////////
+// UFSD_BdLockBuffer
+//
+//
+///////////////////////////////////////////////////////////
+void
+UFSDAPI_CALL
+UFSD_BdLockBuffer(
+    IN struct buffer_head* bh
+    )
+{
+  assert( NULL != bh );
+  assert( !buffer_locked( bh ) );
+  lock_buffer( bh );
+}
+
+
+///////////////////////////////////////////////////////////
+// UFSD_BdUnLockBuffer
+//
+//
+///////////////////////////////////////////////////////////
+void
+UFSDAPI_CALL
+UFSD_BdUnLockBuffer(
+    IN struct buffer_head* bh
+    )
+{
+  assert( NULL != bh );
+  assert( buffer_locked( bh ) );
+  set_buffer_uptodate( bh );
+  unlock_buffer( bh );
+}
 
 
 ///////////////////////////////////////////////////////////
@@ -1795,20 +1921,20 @@ UFSD_BdDiscard(
     IN size_t Bytes
     )
 {
-#if defined HAVE_DECL_SB_ISSUE_DISCARD && HAVE_DECL_SB_ISSUE_DISCARD
+#if defined HAVE_DECL_BLKDEV_ISSUE_DISCARD && HAVE_DECL_BLKDEV_ISSUE_DISCARD
   int err;
   DebugTrace(+1, UFSD_LEVEL_IO, ("BdDiscard: %p, %llx, %Zx\n", sb, Offset, Bytes));
-  err = sb_issue_discard( sb, Offset >> sb->s_blocksize_bits, Bytes >> sb->s_blocksize_bits );
-  if ( EOPNOTSUPP == err ) {
+  err = blkdev_issue_discard( sb->s_bdev, Offset >> 9, Bytes >> 9, GFP_NOFS, 0 );
+  if ( -EOPNOTSUPP == err ) {
     DebugTrace(-1, UFSD_LEVEL_IO, ("BdDiscard -> not supported\n"));
-    return ERR_NOTIMPLEMENTED;
+    return -EOPNOTSUPP;
   }
 
   if ( 0 != err ) {
     DebugTrace(-1, UFSD_LEVEL_IO, ("BdDiscard -> failed %d\n", err));
   } else {
-#ifdef UFSD_DEBUG
-    if ( UFSD_DebugTraceLevel & UFSD_LEVEL_IO )
+#ifdef UFSD_TRACE
+    if ( UFSD_TraceLevel & UFSD_LEVEL_IO )
       UFSD_TraceInc( -1 );
 #endif
   }
@@ -1820,9 +1946,147 @@ UFSD_BdDiscard(
   UNREFERENCED_PARAMETER( Bytes );
 
   DebugTrace(0, UFSD_LEVEL_IO, ("BdDiscard -> not supported\n"));
-  return ERR_NOTIMPLEMENTED;
+  return -EOPNOTSUPP;
 #endif
 }
+
+#ifdef UFSD_USE_BUILTIN_ZEROING
+
+#if !(defined HAVE_DECL_BLKDEV_ISSUE_ZEROOUT && HAVE_DECL_BLKDEV_ISSUE_ZEROOUT)
+//
+// Stolen from block/blk-lib.c
+//
+
+struct bio_batch {
+  atomic_t          done;
+  unsigned long     flags;
+  struct completion *wait;
+};
+
+#if defined HAVE_DECL_BIO_END_V2 && HAVE_DECL_BIO_END_V2
+static void bio_batch_end_io( struct bio *bio, int err )
+{
+  struct bio_batch *bb = bio->bi_private;
+  if ( err && EOPNOTSUPP != err )
+    clear_bit( BIO_UPTODATE, &bb->flags );
+  if ( atomic_dec_and_test( &bb->done ) )
+    complete( bb->wait );
+  bio_put( bio );
+}
+#elif defined HAVE_DECL_BIO_END_V1 && HAVE_DECL_BIO_END_V1
+static int bio_batch_end_io( struct bio *bio, unsigned int bytes, int err )
+{
+  struct bio_batch *bb = bio->bi_private;
+	if ( bio->bi_size )
+		return 1;
+  if ( err && EOPNOTSUPP != err )
+    clear_bit( BIO_UPTODATE, &bb->flags );
+  if ( atomic_dec_and_test( &bb->done ) )
+    complete( bb->wait );
+  bio_put( bio );
+  return 0;
+}
+#endif
+#endif // #if !(defined HAVE_DECL_BLKDEV_ISSUE_ZEROOUT && HAVE_DECL_BLKDEV_ISSUE_ZEROOUT)
+
+///////////////////////////////////////////////////////////
+// UFSD_BdZero
+//
+// Helper function to zero blocks in block device
+///////////////////////////////////////////////////////////
+int
+UFSDAPI_CALL
+UFSD_BdZero(
+    IN struct super_block* sb,
+    IN UINT64 Offset,
+    IN size_t Bytes
+    )
+{
+  int err;
+
+#if defined HAVE_DECL_BLKDEV_ISSUE_ZEROOUT && HAVE_DECL_BLKDEV_ISSUE_ZEROOUT
+  //
+  // 2.6.35+
+  //
+  DebugTrace(+1, UFSD_LEVEL_IO, ("BdZero: %p, %llx, %Zx\n", sb, Offset, Bytes));
+  err = blkdev_issue_zeroout( sb->s_bdev, Offset >> 9, Bytes >> 9, GFP_NOFS
+#ifdef BLKDEV_IFL_WAIT
+                              ,  BLKDEV_IFL_WAIT | BLKDEV_IFL_BARRIER
+#endif
+                             );
+#else
+  sector_t  sector    = Offset >> 9;
+  sector_t  nr_sects  = Bytes >> 9;
+  struct bio_batch bb;
+  struct page* zero;
+#ifdef DECLARE_COMPLETION_ONSTACK
+  DECLARE_COMPLETION_ONSTACK( wait );
+#else
+  DECLARE_COMPLETION( wait );
+#endif
+
+#if 1
+  zero = alloc_page( GFP_KERNEL | __GFP_ZERO );
+  if ( NULL == zero )
+    return -ENOMEM;
+#else
+  // Don't use ZERO_PAGE(0). Sometimes G.P.L., sometimes not exported ...
+  zero = ZERO_PAGE(0);
+#endif
+
+  DebugTrace(+1, UFSD_LEVEL_IO, ("BdZero: %p, %llx, %Zx\n", sb, Offset, Bytes));
+
+  atomic_set( &bb.done, 1 );
+  err       = 0;
+  bb.flags  = 1 << BIO_UPTODATE;
+  bb.wait   = &wait;
+
+  while ( 0 != nr_sects ) {
+
+    struct bio* bio = bio_alloc( GFP_NOFS, min(nr_sects, (sector_t)BIO_MAX_PAGES) );
+    if ( !bio ) {
+      err = -ENOMEM;
+      break;
+    }
+
+    bio->bi_sector  = sector;
+    bio->bi_bdev    = sb->s_bdev;
+    bio->bi_end_io  = bio_batch_end_io;
+    bio->bi_private = &bb;
+
+    while ( 0 != nr_sects ) {
+      unsigned int sz = min((sector_t) PAGE_SIZE , nr_sects << 9 );
+      int ok = bio_add_page( bio, zero, sz, 0 );
+      DebugTrace(0, UFSD_LEVEL_IO, ("added %d\n", ok));
+      nr_sects -= ok >> 9;
+      sector   += ok >> 9;
+      if ( ok < sz )
+        break;
+    }
+    atomic_inc( &bb.done );
+    DebugTrace(0, UFSD_LEVEL_IO, ("bio: %"PSCT"x, sz=%x\n", bio->bi_sector, bio->bi_size));
+    submit_bio( WRITE, bio );
+  }
+
+  // Wait for bios in-flight
+  if ( !atomic_dec_and_test( &bb.done ) )
+    wait_for_completion( &wait );
+
+  if ( !test_bit( BIO_UPTODATE, &bb.flags ) )
+    err = -EIO; // One of bios in the batch was completed with error
+
+  __free_page( zero );
+#endif
+
+#ifdef UFSD_TRACE
+  if ( 0 != err ) {
+    DebugTrace(-1, UFSD_LEVEL_IO, ("zero failed: err=%d\n", err));
+  } else if ( UFSD_TraceLevel & UFSD_LEVEL_IO )
+    UFSD_TraceInc( -1 );
+#endif
+  return err;
+}
+#endif // #ifdef UFSD_USE_BUILTIN_ZEROING
 
 
 ///////////////////////////////////////////////////////////
@@ -1844,10 +2108,11 @@ UFSD_BdSetBlockSize(
   sbi->BlkBits = blksize_bits( BytesPerBlock );
 
   if ( BytesPerBlock <= PAGE_SIZE ) {
-    set_blocksize( sb_dev(sb), BytesPerBlock );
-    sb->s_blocksize      = BytesPerBlock;
-    sb->s_blocksize_bits = sbi->BlkBits;
-    sbi->MaxBlock        = sb->s_bdev->bd_inode->i_size >> sb->s_blocksize_bits;
+    UINT64 BytesPerDev    = sb->s_bdev->bd_inode->i_size;
+    unsigned int RaBytes  = sbi->ReadAheadBlocks << sb->s_blocksize_bits;
+    sb_set_blocksize( sb, BytesPerBlock );
+    sbi->ReadAheadBlocks  = RaBytes >> sb->s_blocksize_bits;
+    sbi->MaxBlock         = BytesPerDev >> sb->s_blocksize_bits;
     DebugTrace(0, Dbg, ("BdSetBlockSize %x\n", BytesPerBlock ));
   } else {
     DebugTrace(0, Dbg, ("BdSetBlockSize %x -> %lx\n", BytesPerBlock, sb->s_blocksize ));
@@ -1858,7 +2123,7 @@ UFSD_BdSetBlockSize(
 ///////////////////////////////////////////////////////////
 // UFSD_BdIsReadonly
 //
-// Returns 1 for readonly media
+// Returns !0 for readonly media
 ///////////////////////////////////////////////////////////
 int
 UFSDAPI_CALL
@@ -1899,7 +2164,7 @@ UFSD_BdGetName(
 //
 //
 ///////////////////////////////////////////////////////////
-int
+unsigned
 UFSDAPI_CALL
 UFSD_BdFlush(
     IN struct super_block* sb,
@@ -1908,17 +2173,37 @@ UFSD_BdFlush(
 {
 #if defined WRITE_FLUSH_FUA | defined WRITE_BARRIER
   if ( 0 == Wait && 0 == UFSD_SB( sb )->options.nobarrier )
-    return 1;
+    return 0;
 #endif
 
   DebugTrace(0, Dbg, ("BdFlush (%s)\n", UFSD_BdGetName( sb ) ));
 
-#if defined UFSD_SMART_TRACE && defined Writeback_inodes_sb
-  if ( 100 == Wait )
-    Writeback_inodes_sb( sb );
-#endif
+  return sync_blockdev( sb_dev(sb) );
+}
 
-  return 0 == sync_blockdev( sb_dev(sb) );
+
+///////////////////////////////////////////////////////////
+// UFSD_BdInvalidate
+//
+// Invalidate clean unused buffers and pagecache
+// Used while texfat initialization
+///////////////////////////////////////////////////////////
+void
+UFSDAPI_CALL
+UFSD_BdInvalidate(
+    IN void *Sb
+    )
+{
+  struct super_block *sb = (struct super_block*)Sb;
+//  DebugTrace(0, Dbg, ("bdinvalidate (%s)\n", ufsd_bd_name( sb ) ));
+  sync_blockdev( sb->s_bdev );
+#if defined HAVE_DECL_INVALIDATE_BDEV_V1 && HAVE_DECL_INVALIDATE_BDEV_V1
+  invalidate_bdev( sb->s_bdev );
+#elif defined HAVE_DECL_INVALIDATE_BDEV_V2 && HAVE_DECL_INVALIDATE_BDEV_V2
+  invalidate_bdev( sb->s_bdev, 0 );
+#else
+  #error "Unknown version of invalidate_bdev"
+#endif
 }
 
 
@@ -1937,7 +2222,7 @@ DoDelayedTasks(
   int VFlush = atomic_read( &sbi->VFlush );
 
   if ( 0 != VFlush || ( sbi->options.sync && UFSDAPI_IsVolumeDirty( sbi->Ufsd ) ) ){
-    (*(3 == VFlush? &UFSDAPI_VolumeFlushIf : &UFSDAPI_VolumeFlush))( sbi->Ufsd );
+    UFSDAPI_VolumeFlush( sbi->Ufsd, 2 == VFlush );
     atomic_set( &sbi->VFlush, 0 );
   }
 
@@ -1950,7 +2235,7 @@ DoDelayedTasks(
     if ( list_empty( &sbi->clear_list ) ) {
       task = NULL;
     } else {
-      task = list_entry( (&sbi->clear_list)->next, delay_task, list );
+      task = list_entry( sbi->clear_list.next, delay_task, list );
       list_del( &task->list );
     }
     spin_unlock( &sbi->ddt_lock );
@@ -1959,7 +2244,7 @@ DoDelayedTasks(
       break;
 
     file = task->file;
-    ASSERT( NULL != file );
+    assert( NULL != file );
 
     UFSDAPI_FileClose( sbi->Ufsd, file );
     kfree( task );
@@ -1969,14 +2254,6 @@ DoDelayedTasks(
     DebugTrace( 0, Dbg, ("DoDelayedTasks: clear=%u\n", cnt ) );
   }
 }
-
-#if defined UFSD_JITTER
-  #include "jitter.c"
-#else
-  #define OnUfsdLock()
-  #define OnUfsdInit()
-  #define OnUfsdExit()
-#endif
 
 
 ///////////////////////////////////////////////////////////
@@ -1999,8 +2276,6 @@ _LockUfsd(
               jiffies_to_msecs(jiffies-StartJiffies),
               sb->SysInfo.freeram, sb->SysInfo.bufferram,
               current->comm, Hint));
-
-  OnUfsdLock();
 
   TRACE_ONLY( T0 = jiffies; )
 
@@ -2038,7 +2313,7 @@ _TryLockUfsd(
   int ok = Mutex_trylock( &sb->ApiMutex );
   TRACE_ONLY( if ( UFSD_TraceLevel & UFSD_LEVEL_SEMA ) si_meminfo( &sb->SysInfo ); )
 
-  ASSERT( 0 == ok || 1 == ok );
+  assert( 0 == ok || 1 == ok );
 
   DebugTrace(ok, UFSD_LEVEL_SEMA, ("%u: %lx %lx \"%s\" %s %s\n",
               jiffies_to_msecs(jiffies-StartJiffies),
@@ -2100,6 +2375,24 @@ typedef struct ufsd_iget4_param {
 } ufsd_iget4_param;
 
 
+#if defined HAVE_DECL_READDIR_V1 && HAVE_DECL_READDIR_V1
+
+  #define READDIR_DECLARE_ARG struct file* file, void* dirent, filldir_t filldir
+  #define READDIR_POS         file->f_pos
+  #define READDIR_FILL(Name, NameLen, pos, ino, dt) filldir( dirent, Name, NameLen, pos, ino, dt )
+  #define iterate             readdir
+
+#elif defined HAVE_DECL_READDIR_V2 && HAVE_DECL_READDIR_V2
+
+  #define READDIR_DECLARE_ARG struct file* file, struct dir_context* ctx
+  #define READDIR_POS         ctx->pos
+  #define READDIR_FILL(Name, NameLen, pos, ino, dt) (ctx->pos=pos, !dir_emit( ctx, Name, NameLen, ino, dt ))
+
+#else
+  #error "Unknown readdir"
+#endif
+
+
 ///////////////////////////////////////////////////////////
 // ufsd_readdir
 //
@@ -2114,16 +2407,17 @@ typedef struct ufsd_iget4_param {
 ///////////////////////////////////////////////////////////
 static int
 ufsd_readdir(
-    IN struct file* file,
-    IN void*        dirent,
-    IN filldir_t    filldir
+    READDIR_DECLARE_ARG
     )
 {
-  UINT64 pos = file->f_pos;
-  struct inode* i = file->f_dentry->d_inode;
+  struct inode* i = file_inode(file);
   unode* u     = UFSD_U( i );
   usuper* sbi  = UFSD_SB( i->i_sb );
+  UINT64 pos      = READDIR_POS;
   UFSD_SEARCH* DirScan = NULL;
+#ifdef UFSD_EMULATE_SMALL_READDIR_BUFFER
+  size_t cnt = 0;
+#endif
 
   if ( pos >= sbi->Eod ) {
     DebugTrace(0, Dbg, ("readdir: r=%lx,%llx -> no more\n", i->i_ino, pos ));
@@ -2152,11 +2446,16 @@ ufsd_readdir(
       if ( nfsd )
         UnlockUfsd( sbi );
 
+#ifdef UFSD_EMULATE_SMALL_READDIR_BUFFER
+      if ( ++cnt > UFSD_EMULATE_SMALL_READDIR_BUFFER )
+        break;
+#endif
+
       //
       // Unfortunately nfsd callback function opens file which in turn calls 'LockUfsd'
       // Linux's mutex does not allow recursive locks
       //
-      fd = filldir( dirent, Name, NameLen, pos, (ino_t)ino, is_dir? DT_DIR : DT_REG );
+      fd = READDIR_FILL( Name, NameLen, pos, (ino_t)ino, is_dir? DT_DIR : DT_REG );
 
       if ( nfsd )
         LockUfsd( sbi );
@@ -2173,7 +2472,7 @@ ufsd_readdir(
   //
   // Save position and return
   //
-  file->f_pos = pos;
+  READDIR_POS = pos;
   file->f_version = i->i_version;
 #if defined HAVE_DECL_UPDATE_ATIME && HAVE_DECL_UPDATE_ATIME
   update_atime( i );
@@ -2203,8 +2502,8 @@ LazyOpen(
     return 0;
 
   if ( 0 == UFSDAPI_FileOpenById( sbi->Ufsd, i->i_ino, &u->ufile, &Info ) ) {
-    ASSERT( NULL != u->ufile );
-    ASSERT( i->i_ino == Info.Id );
+    assert( NULL != u->ufile );
+    assert( i->i_ino == Info.Id );
 
     i->i_size   = Info.size;
     i->i_blocks = Info.asize >> 9;
@@ -2273,7 +2572,7 @@ FreeSpaceCallBack(
   {
     atomic_long_add( Len, &sbi->FreeBlocks );
   }
-  ASSERT( sbi->DoNotTraceNoSpc || atomic_long_read( &sbi->FreeBlocks ) >= atomic_long_read( &sbi->DirtyBlocks ) );
+  assert( sbi->DoNotTraceNoSpc || atomic_long_read( &sbi->FreeBlocks ) >= atomic_long_read( &sbi->DirtyBlocks ) );
 }
 
 
@@ -2313,11 +2612,11 @@ ufsd_da_release_space(
   usuper* sbi = UFSD_SB( i->i_sb );
   unode* u    = UFSD_U( i );
 
-  ASSERT( 0 != blocks );
+  assert( 0 != blocks );
 
   spin_lock( &u->block_lock );
 
-  ASSERT( blocks <= u->i_reserved_data_blocks );
+  assert( blocks <= u->i_reserved_data_blocks );
 
   if ( unlikely( blocks > u->i_reserved_data_blocks ) ) {
     WARN_ON(1);
@@ -2361,6 +2660,7 @@ ufsd_getattr(
 #endif // #ifdef UFSD_DELAY_ALLOC
 
 
+#ifdef UFSD_NTFS
 ///////////////////////////////////////////////////////////
 // IsStream
 //
@@ -2386,6 +2686,9 @@ IsStream(
   return NULL;
 #endif
 }
+#else
+  #define IsStream(f) NULL
+#endif
 
 
 ///////////////////////////////////////////////////////////
@@ -2405,10 +2708,11 @@ ufsd_file_open(
   TRACE_ONLY( const char* hint=""; )
   int err;
 
-  ASSERT( file->f_mapping == i->i_mapping && "Check kernel config!" );
-  DebugTrace(+1, Dbg, ("file_open: r=%lx, c=%x, l=%x, f=%p, fl=o%o, %.*s\n",
+  assert( file->f_mapping == i->i_mapping && "Check kernel config!" );
+  DebugTrace(+1, Dbg, ("file_open: r=%lx, c=%x, l=%x, f=%p, fl=o%o%s%s, %.*s\n",
                 i->i_ino, atomic_read( &i->i_count ), i->i_nlink,
                 file, file->f_flags,
+                FlagOn( file->f_flags, O_DIRECT )?",d":"", FlagOn( file->f_flags, O_APPEND )?",a":"",
                 (int)s->len, s->name ));
 
   LockUfsd( sbi );
@@ -2420,19 +2724,19 @@ ufsd_file_open(
     return err;
   }
 
-  if ( (u->compr || u->encrypt) && (file->f_flags & O_DIRECT) ) {
+  if ( (u->compr || u->encrypt) && FlagOn( file->f_flags, O_DIRECT ) ) {
     DebugTrace(-1, Dbg, ("file_open -> failed to open compressed file with O_DIRECT\n"));
     return -ENOTBLK;
   }
 
-  ASSERT( NULL == file->private_data );
+  assert( NULL == file->private_data );
   if ( 0 != sbi->options.delim ) {
     char* p = strchr( s->name, sbi->options.delim );
     if ( NULL != p ){
       igrab( i );
       dget( file->f_dentry );
       file->private_data = p + 1;
-      ASSERT( IsStream( file ) );
+      assert( IsStream( file ) );
       TRACE_ONLY( hint="(stream)"; )
     }
   }
@@ -2497,37 +2801,16 @@ ufsd_file_release(
   #define VFAT_IOCTL_GET_VOLUME_ID  _IOR('r', 0x12, __u32)
 #endif
 
-typedef struct {
-  size_t      IoControlCode;
-  void*       InputBuffer;
-  size_t      InputBufferSize;
-  void*       OutputBuffer;
-  size_t      OutputBufferSize;
-  size_t*     BytesReturned;
-} ufsd_ioctl_params;
-
-
 ///////////////////////////////////////////////////////////
 // ufsd_ioctl
 //
 // file_operations::ioctl
-//
-// io control passthrough.
-//
-// Typical user code:
-// ufsd_ioctl_params params = {
-//    IoControlCode,
-//    InputBuffer, InputBufferSize,
-//    OutputBuffer, OutputBufferSize, BytesReturned
-// };
-// err = ioctl(FileNumber, 13868, &params);
-//
 ///////////////////////////////////////////////////////////
 #if defined HAVE_STRUCT_FILE_OPERATIONS_IOCTL && HAVE_STRUCT_FILE_OPERATIONS_IOCTL
 static int
 ufsd_ioctl(
     IN struct inode*  i,
-    IN struct file*   file __attribute__((__unused__)),
+    IN struct file*   file,
     IN unsigned int   cmd,
     IN unsigned long  arg
     )
@@ -2541,13 +2824,12 @@ ufsd_ioctl(
     IN unsigned long  arg
     )
 {
-  struct inode* i = file->f_dentry->d_inode;
+  struct inode* i = file_inode( file );
 #endif
   int err;
-  ufsd_ioctl_params p;
+  unsigned insize = 0, osize = 0;
   size_t BytesReturned;
   usuper* sbi  = UFSD_SB( i->i_sb );
-  void* in_buffer = NULL, *out_buffer = NULL;
 
   UfsdFileInfo Info;
 
@@ -2555,118 +2837,76 @@ ufsd_ioctl(
                        (int)file->f_dentry->d_name.len, file->f_dentry->d_name.name,
                        i->i_ino, i->i_mode, file, cmd, arg));
 
-  ASSERT( NULL != i );
-  ASSERT( NULL != UFSD_VOLUME(i->i_sb) );
-
   if ( VFAT_IOCTL_GET_VOLUME_ID == cmd ) {
+    //
+    // Special code
+    //
     err = UFSDAPI_QueryVolumeId( sbi->Ufsd );
-    DebugTrace(-1, Dbg, ("ioctl (VFAT_IOCTL_GET_VOLUME_ID ) -> 0, id=%x\n", (unsigned)err));
+    DebugTrace(-1, Dbg, ("ioctl (VFAT_IOCTL_GET_VOLUME_ID ) -> %x\n", (unsigned)err));
     return err;
   }
 
-  if ( 13868 != cmd ) {
+  switch( cmd ) {
+  case UFSD_IOC_SETVALID:
+  case UFSD_IOC_SETCLUMP:
+  case UFSD_IOC_SETTIMES:
+  case UFSD_IOC_GETTIMES:
+  case UFSD_IOC_SETATTR:
+  case UFSD_IOC_GETATTR:
+  case UFSD_IOC_GETMEMUSE:
+  case UFSD_IOC_GETVOLINFO:
+    break;
+  default:
     DebugTrace(-1, Dbg, ("ioctl -> '-ENOTTY'\n"));
     return -ENOTTY;
-  }
-
-  //
-  // Verify the input...
-  //
-  if ( 0 != copy_from_user( &p, (const void*)arg, sizeof(ufsd_ioctl_params) ) ) {
-    DebugTrace(0, UFSD_LEVEL_ERROR, ("ioctl: invalid input parameters buffer.\n"));
-    err = -EFAULT;
-    goto out;
-  }
-
-  if ( NULL != p.BytesReturned && 0 != put_user( 0, p.BytesReturned ) ) {
-    DebugTrace(0, UFSD_LEVEL_ERROR, ("ioctl: invalid returned length buffer.\n"));
-    err = -EFAULT;
-    goto out;
   }
 
 #if !defined access_ok && (defined HAVE_DECL_VERIFY_AREA && HAVE_DECL_VERIFY_AREA)
   #define access_ok !verify_area
 #endif
 
-  if ( NULL == p.InputBuffer || 0 == p.InputBufferSize ) {
-    p.InputBuffer     = NULL;
-    p.InputBufferSize = 0;
-  } else if ( !access_ok( VERIFY_READ, p.InputBuffer, p.InputBufferSize ) ) {
-    DebugTrace(0, UFSD_LEVEL_ERROR, ("ioctl: invalid input buffer.\n"));
-    err = -EFAULT;
-    goto out;
-  } else {
-    in_buffer = UFSD_HeapAlloc( p.InputBufferSize );
-    if ( NULL == in_buffer ) {
-      DebugTrace(0, UFSD_LEVEL_ERROR, ("ioctl: no memory for input arguments\n"));
-      err = -ENOMEM;
+  if ( _IOC_DIR( cmd ) & _IOC_WRITE ) {
+    insize  = _IOC_SIZE( cmd );
+    if ( !access_ok( VERIFY_READ, (__user void*)arg, insize ) ) {
+      DebugTrace(0, UFSD_LEVEL_ERROR, ("ioctl: invalid input buffer.\n"));
+      err = -EFAULT;
       goto out;
     }
-    if ( 0 != copy_from_user( in_buffer, p.InputBuffer, p.InputBufferSize ) ) {
-      DebugTrace(0, UFSD_LEVEL_ERROR, ("ioctl: invalid input parameters buffer.\n"));
+  } else if (_IOC_DIR( cmd ) & _IOC_READ ) {
+    osize   = _IOC_SIZE( cmd );
+    if ( !access_ok( VERIFY_WRITE, (__user void*)arg, osize ) ) {
+      DebugTrace(0, UFSD_LEVEL_ERROR, ("ioctl: invalid output buffer.\n"));
       err = -EFAULT;
       goto out;
     }
   }
 
-  if ( NULL == p.OutputBuffer || 0 == p.OutputBufferSize ) {
-    p.OutputBuffer     = NULL;
-    p.OutputBufferSize = 0;
-  } else if ( !access_ok( VERIFY_WRITE, p.OutputBuffer, p.OutputBufferSize ) ) {
-    DebugTrace(0, UFSD_LEVEL_ERROR, ("ioctl: invalid output buffer.\n"));
-    err = -EFAULT;
-    goto out;
-  } else {
-    out_buffer = UFSD_HeapAlloc( p.OutputBufferSize );
-    if ( NULL == out_buffer ) {
-      DebugTrace(0, UFSD_LEVEL_ERROR, ("ioctl: no memory for output arguments\n"));
-      err = -ENOMEM;
-      goto out;
-    }
-  }
+  assert( NULL != i );
+  assert( NULL != UFSD_VOLUME(i->i_sb) );
 
   //
   // And call the library.
   //
   LockUfsd( sbi );
 
-  err = UFSDAPI_IoControl( sbi->Ufsd, UFSD_FH( i ), p.IoControlCode,
-                           in_buffer, p.InputBufferSize,
-                           out_buffer, p.OutputBufferSize,
-                           &BytesReturned, &Info );
+  err = UFSDAPI_IoControl( sbi->Ufsd, UFSD_FH( i ), _IOC_NR(cmd), (void*)arg, insize, (void*)arg, osize, &BytesReturned, &Info );
 
   if ( 0 == err ) {
-    switch( p.IoControlCode ) {
-    case 61:  // IOCTL_SET_SPARSE:
-      UFSD_U( i )->sparse = 1;
-      break;
-    case 75: // IOCTL_SET_TIMES2:
-      UfsdTimes2Inode( sbi, i, &Info );
+    switch( cmd ) {
+    case UFSD_IOC_SETTIMES:
+      UfsdTimes2Inode( sbi, UFSD_U( i ), i, &Info );
       mark_inode_dirty( i );
       break;
-    case 91:  // IOCTL_SET_VALID_DATA2
+    case UFSD_IOC_SETVALID:
       UFSD_U( i )->mmu = Info.vsize;
       // no break here!
-    case 99:  // IOCTL_SET_ATTRIBUTES2
+    case UFSD_IOC_SETATTR:
       mark_inode_dirty( i );
       break;
     }
   }
 
   UnlockUfsd( sbi );
-
-  if ( NULL != p.BytesReturned && 0 != put_user( BytesReturned, p.BytesReturned ) ) {
-    DebugTrace(0, UFSD_LEVEL_ERROR, ("ioctl: Can't set returned length buffer.\n"));
-    err = -EFAULT;
-  }
-
-  if ( 0 != BytesReturned ) {
-    ASSERT( BytesReturned <= p.OutputBufferSize );
-    if ( 0 != copy_to_user( p.OutputBuffer, out_buffer, min( BytesReturned, p.OutputBufferSize ) ) ) {
-      DebugTrace(0, UFSD_LEVEL_ERROR, ("ioctl: Can't copy to user buffer.\n"));
-      err = -EFAULT;
-    }
-  }
 
   //
   // Translate possible UFSD IoControl errors (see u_errors.h):
@@ -2680,13 +2920,40 @@ ufsd_ioctl(
   }
 
 out:
-  UFSD_HeapFree( in_buffer );
-  UFSD_HeapFree( out_buffer );
 
   DebugTrace(-1, Dbg, ("ioctl -> %d\n", err));
   return err;
 }
 
+
+#ifdef CONFIG_COMPAT
+#include <linux/compat.h>
+///////////////////////////////////////////////////////////
+// ufsd_compat_ioctl
+//
+// 32 application -> 64 bit driver
+///////////////////////////////////////////////////////////
+static long
+ufsd_compat_ioctl(
+    IN struct file*   file,
+    IN unsigned int   cmd,
+    IN unsigned long  arg
+    )
+{
+  switch( cmd ) {
+  case UFSD_IOC32_GETMEMUSE:
+    cmd = UFSD_IOC_GETMEMUSE;
+    break;
+  }
+
+  return ufsd_ioctl(
+#if defined HAVE_STRUCT_FILE_OPERATIONS_IOCTL && HAVE_STRUCT_FILE_OPERATIONS_IOCTL
+    file_inode( file ),
+#endif
+    file, cmd, (unsigned long)compat_ptr(arg)
+    );
+}
+#endif // #ifdef CONFIG_COMPAT
 #endif // #ifndef UFSD_NO_USE_IOCTL
 
 
@@ -2697,12 +2964,15 @@ out:
 STATIC_CONST struct file_operations ufsd_dir_operations = {
   .llseek   = generic_file_llseek,
   .read     = generic_read_dir,
-  .readdir  = ufsd_readdir,
+  .iterate  = ufsd_readdir,
   .fsync    = generic_file_fsync,
   .open     = ufsd_file_open,
   .release  = ufsd_file_release,
 #ifndef UFSD_NO_USE_IOCTL
   .ioctl    = ufsd_ioctl,
+#ifdef CONFIG_COMPAT
+  .compat_ioctl	= ufsd_compat_ioctl,
+#endif
 #endif
 };
 
@@ -2770,7 +3040,7 @@ ufsd_name_hash_hlp(
 }
 
 
-#if defined HAVE_DECL_DHASH_V1 & HAVE_DECL_DHASH_V1
+#if defined HAVE_DECL_DHASH_V1 && HAVE_DECL_DHASH_V1
 ///////////////////////////////////////////////////////////
 // ufsd_compare
 //
@@ -2787,7 +3057,7 @@ ufsd_compare(
 
   // Custom compare used to support case-insensitive scan.
   // Should return zero on name match.
-  ASSERT(NULL != de->d_inode);
+  assert(NULL != de->d_inode);
 
   DEBUG_ONLY( UFSD_SB(de->d_inode->i_sb)->nCompareCalls += 1; )
 
@@ -2827,7 +3097,7 @@ ufsd_name_hash(
   return 0;
 }
 
-#elif defined HAVE_DECL_DHASH_V2 & HAVE_DECL_DHASH_V2
+#elif ( defined HAVE_DECL_DHASH_V2 && HAVE_DECL_DHASH_V2 ) || ( defined HAVE_DECL_DHASH_V3 && HAVE_DECL_DHASH_V3 )
 
 ///////////////////////////////////////////////////////////
 // ufsd_compare
@@ -2837,9 +3107,13 @@ ufsd_name_hash(
 static int
 ufsd_compare(
     IN const struct dentry* parent,
+#if defined HAVE_DECL_DCOMPARE_V2 && HAVE_DECL_DCOMPARE_V2
     IN const struct inode * iparent,
+#endif
     IN const struct dentry* de,
+#if defined HAVE_DECL_DCOMPARE_V2 && HAVE_DECL_DCOMPARE_V2
     IN const struct inode * i,
+#endif
     IN unsigned int         len,
     IN const char*          str,
     IN const struct qstr*   name
@@ -2847,15 +3121,24 @@ ufsd_compare(
 {
   int ret;
 
+//  DebugTrace(0, Dbg, ("ufsd_compare: %p %p %p %p %*.s %.*s\n", parent, iparent, de, i, len, str, name->len, name->name ));
+
   // Custom compare used to support case-insensitive scan.
   // Should return zero on name match.
-  ASSERT(NULL != de->d_inode);
+  //
+  // NOTE: do not use 'i' cause it can be NULL (3.6.6+)
+  //
+#if defined HAVE_DECL_DCOMPARE_V2 && HAVE_DECL_DCOMPARE_V2
+  assert( NULL != parent && NULL != iparent && parent->d_inode == iparent );
+#elif defined HAVE_DECL_DCOMPARE_V3 && HAVE_DECL_DCOMPARE_V3
+  assert( NULL != parent );
+#endif
 
-  DEBUG_ONLY( UFSD_SB(de->d_inode->i_sb)->nCompareCalls += 1; )
+  DEBUG_ONLY( UFSD_SB( parent->d_inode->i_sb )->nCompareCalls += 1; )
 
   ret = ufsd_compare_hlp( name->name, name->len, str, len );
   if ( ret < 0 ) {
-    usuper* sbi  = UFSD_SB(de->d_inode->i_sb);
+    usuper* sbi  = UFSD_SB( parent->d_inode->i_sb );
     Mutex_lock( &sbi->NoCaseMutex );
     ret = !UFSDAPI_NamesEqual( sbi->Ufsd, name->name, name->len, str, len );
     Mutex_unlock( &sbi->NoCaseMutex );
@@ -2873,7 +3156,9 @@ ufsd_compare(
 static int
 ufsd_name_hash(
     IN const struct dentry* de,
+#if defined HAVE_DECL_DHASH_V2 && HAVE_DECL_DHASH_V2
     IN const struct inode*  i,
+#endif
     IN struct qstr*         name
     )
 {
@@ -2917,7 +3202,7 @@ static inline struct inode*
 iget4(
     IN struct super_block *sb,
     IN unsigned long ino,
-    IN void* unused  __attribute__((__unused__)),
+    IN void* unused,
     IN void *ctxt
     )
 {
@@ -2946,6 +3231,12 @@ ufsd_acl_chmod(
     );
 #endif
 
+#if ( defined HAVE_DECL_INOP_CREATE_V3 && HAVE_DECL_INOP_CREATE_V3 || defined HAVE_DECL_INOP_CREATE_V4 && HAVE_DECL_INOP_CREATE_V4 )
+  typedef umode_t  Umode_t;
+#else
+  typedef int      Umode_t;
+#endif
+
 ///////////////////////////////////////////////////////////
 // ufsd_create
 //
@@ -2956,18 +3247,11 @@ static int
 ufsd_create(
     IN struct inode*   dir,
     IN struct dentry*  de,
-#if ( defined HAVE_DECL_INOP_CREATE_V3 && HAVE_DECL_INOP_CREATE_V3 ) || ( defined HAVE_DECL_INOP_CREATE_V4 && HAVE_DECL_INOP_CREATE_V4 )
-    IN umode_t         mode,
-#if defined HAVE_DECL_INOP_CREATE_V3 && HAVE_DECL_INOP_CREATE_V3
-    struct nameidata * nd  __attribute__((__unused__))
+    IN Umode_t         mode
+#if (defined HAVE_DECL_INOP_CREATE_V2 && HAVE_DECL_INOP_CREATE_V2) || (defined HAVE_DECL_INOP_CREATE_V3 && HAVE_DECL_INOP_CREATE_V3)
+    , struct nameidata * nd
 #elif defined HAVE_DECL_INOP_CREATE_V4 && HAVE_DECL_INOP_CREATE_V4
-    bool nd  __attribute__((__unused__))
-#endif
-#else
-    IN int             mode
-#endif
-#if defined HAVE_DECL_INOP_CREATE_V2 && HAVE_DECL_INOP_CREATE_V2
-    , struct nameidata * nd  __attribute__((__unused__))
+    , bool nd
 #endif
     )
 {
@@ -2999,11 +3283,7 @@ static int
 ufsd_mkdir(
     IN struct inode*  dir,
     IN struct dentry* de,
-#if defined HAVE_DECL_INOP_MKDIR_V2 && HAVE_DECL_INOP_MKDIR_V2
-    IN umode_t        mode
-#else
-    IN int            mode
-#endif
+    IN Umode_t        mode
     )
 {
   int err;
@@ -3060,16 +3340,17 @@ ufsd_unlink(
 
   LockUfsd( sbi );
 
-  err = UFSDAPI_Unlink( sbi->Ufsd, UFSD_FH(dir),
-                        s->name, flen, sname, slen );
-  if ( ERR_DIRNOTEMPTY == err )
-    err = -ENOTEMPTY;
+  err = UFSDAPI_Unlink( sbi->Ufsd, UFSD_FH(dir), s->name, flen, sname, slen, UFSD_FH(i) );
 
   UnlockUfsd( sbi );
 
-  if ( -ENOTEMPTY == err ) {
+  switch( err ) {
+  case ERR_DIRNOTEMPTY:
     DebugTrace(-1, Dbg, ("unlink -> ENOTEMPTY\n"));
     return -ENOTEMPTY;
+  case ERR_NOSPC:
+    DebugTrace(-1, Dbg, ("unlink -> ENOSPC\n"));
+    return -ENOSPC;
   }
 
   if ( 0 != err ) {
@@ -3084,25 +3365,19 @@ ufsd_unlink(
     // Mark dir as requiring resync.
     dir->i_version += 1;
     TIMESPEC_SECONDS( &dir->i_mtime )  = TIMESPEC_SECONDS( &dir->i_ctime ) = get_seconds();
-    UFSD_U( dir )->set_time |= SET_MODTIME | SET_CHTIME;
     dir->i_size   = UFSDAPI_GetDirSize( UFSD_FH(dir) );
     dir->i_blocks = dir->i_size >> 9;
     mark_inode_dirty( dir );
     i->i_ctime    = dir->i_ctime;
-    UFSD_U(i)->set_time |= SET_CHTIME;
     mark_inode_dirty( i );
   }
 
 #ifdef UFSD_COUNT_CONTAINED
   if ( S_ISDIR( i->i_mode ) ) {
-    ASSERT(dir->i_nlink > 0);
+    assert(dir->i_nlink > 0);
     dir->i_nlink -= 1;
     mark_inode_dirty( dir );
   }
-#endif
-
-#ifdef UFSD_WRITE_SUPER
-  i->i_sb->s_dirt = 1;
 #endif
 
   DebugTrace(-1, Dbg, ("unlink -> %d\n", 0));
@@ -3190,7 +3465,7 @@ ufsd_get_block_flags(
   TRACE_ONLY( const char* hint1 = ""; )
   TRACE_ONLY( const char* hint2 = ""; )
   size_t max_blocks = bh->b_size >> blkbits;
-  size_t bh_size, tmp;
+  size_t bh_size;
   int dirty = 0;
 
   if ( 0 == max_blocks )
@@ -3198,12 +3473,12 @@ ufsd_get_block_flags(
 
   bh_size = max_blocks << blkbits;
 
-  ASSERT( i->i_sb->s_blocksize_bits >= sbi->SctBits );
-  ASSERT( blkbits >= sbi->SctBits );
-  ASSERT( blkbits == i->i_sb->s_blocksize_bits );
+  assert( i->i_sb->s_blocksize_bits >= sbi->SctBits );
+  assert( blkbits >= sbi->SctBits );
+  assert( blkbits == i->i_sb->s_blocksize_bits );
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
-  ASSERT( !buffer_mapped( bh ) );
+  assert( !buffer_mapped( bh ) );
 #else
   //
   // Clear buffer delay. Very important for 2.4
@@ -3249,14 +3524,14 @@ ufsd_get_block_flags(
     LockUfsd( sbi );
     ufsd_locked = 1;
 
-    ASSERT( -1 == Lbn );
+    assert( -1 == Lbn );
 
     err = UFSDAPI_FileMap( u->ufile, Vbo, bh_size, create ? UFSD_MAP_VBO_CREATE : 0, &Map );
 
     if ( 0 == err && Map.Len > 0 ) {
 
       long long dVbo = Vbo - Map.Vbo;
-      ASSERT( 0 <= dVbo && dVbo <= Map.Len );
+      assert( 0 <= dVbo && dVbo <= Map.Len );
 
       UnlockUfsd( sbi );
       ufsd_locked = 0;
@@ -3279,7 +3554,7 @@ ufsd_get_block_flags(
 
       DebugTrace(0, UFSD_LEVEL_VFS_GETBLK, ("cache: [%"PSCT"x, %"PSCT"x) => %"PSCT"x\n", u->Vbn, u->Vbn + u->Len, u->Lbn));
 
-      ASSERT( 0 != Len );
+      assert( 0 != Len );
 
       if ( 0 == Len )
         Len = 1;
@@ -3307,7 +3582,6 @@ ufsd_get_block_flags(
     if ( create ) {
       if ( bNew || Vbo >= isize ) {
         TIMESPEC_SECONDS( &i->i_ctime ) = get_seconds();
-        u->set_time |= SET_CHTIME;
         dirty = 1;
         set_buffer_new( bh );
       } else if ( Vbo >= u->mmu ) {
@@ -3364,12 +3638,14 @@ ufsd_get_block_flags(
 
   } else if ( u->sparse && Vbo >= PAGE_SIZE ) {
     // nothing to do with sparse files
+#ifdef UFSD_NTFS
   } else if ( !create || PageUptodate( bh->b_page ) ) {
 
     char* kaddr, *data;
     unsigned off;
+    size_t tmp;
 
-    ASSERT( ufsd_locked );
+    assert( ufsd_locked );
 
     //
     // File does not have allocation of this Vsn = Vbo >> sbi->SctBits
@@ -3419,6 +3695,8 @@ ufsd_get_block_flags(
           ufsd_locked = 1;
         }
 
+//        DebugTrace(0, UFSD_LEVEL_VFS_GETBLK, ("get_block: use ufsd to write file: 0x%llx, 0x%Zx%s\n", Vbo, towrite, IsZero(data, towrite)?", zero":"" ));
+
         err = UFSDAPI_FileWrite( sbi->Ufsd, u->ufile, NULL, 0, Vbo, towrite, data, &tmp );
         if ( 0 == err && u->mmu < Vbo + tmp ) {
           u->mmu = Vbo + tmp;
@@ -3436,6 +3714,7 @@ ufsd_get_block_flags(
     }
 
     kunmap( bh->b_page );
+#endif // #ifdef UFSD_NTFS
 
   } else {
 
@@ -3463,7 +3742,7 @@ ufsd_get_block_flags(
     sector_t md_needed = iblock >> 10;
     long d;
 
-    ASSERT( !buffer_delay( bh ) );
+    assert( !buffer_delay( bh ) );
 
     spin_lock( &u->block_lock );
     d = md_needed - u->i_reserved_meta_blocks;
@@ -3529,6 +3808,7 @@ ufsd_get_block_flags(
                             iblock, bh_size>>i->i_blkbits,
                             bh->b_state, (UINT64)u->mmu, hint1, hint2 ));
     }
+
     if ( dirty )
       mark_inode_dirty( i );
   }
@@ -3554,6 +3834,7 @@ ufsd_get_block_bmap(
 }
 
 
+#if !(defined HAVE_DECL_TRUNCATE_SETSIZE && HAVE_DECL_TRUNCATE_SETSIZE)
 ///////////////////////////////////////////////////////////
 // ufsd_truncate
 //
@@ -3585,7 +3866,7 @@ ufsd_truncate(
   LockUfsd( sbi );
 
   if ( 0 == LazyOpen( sbi, i )
-    && 0 == UFSDAPI_FileSetSize( u->ufile, isize, NULL, &asize ) )
+    && 0 == UFSDAPI_FileSetSize( u->ufile, isize, &asize ) )
   {
     i->i_blocks = asize >> 9;
     if ( u->mmu > isize )
@@ -3621,7 +3902,7 @@ ufsd_truncate(
   DebugTrace(-1, Dbg, ("truncate -> ok, cache: [%"PSCT"x, %"PSCT"x) => %"PSCT"x%s\n",
                        u->Vbn, u->Vbn + u->Len, u->Lbn, hint ));
 }
-
+#endif
 
 ///////////////////////////////////////////////////////////
 // ufsd_setattr
@@ -3634,6 +3915,7 @@ ufsd_setattr(
     IN struct iattr*   attr
     )
 {
+  UINT64 isize, ia_size;
   struct inode* i = de->d_inode;
   unode* u        = UFSD_U( i );
   int err;
@@ -3667,22 +3949,35 @@ ufsd_setattr(
     goto out;
   }
 
-  if ( ia_valid & ATTR_SIZE ) {
-    UINT64 isize = i_size_read(i);
+  if ( (ia_valid & ATTR_SIZE) && ( isize = i->i_size ) != ( ia_size = attr->ia_size ) ) {
+    UINT64 asize;
+    int Up = ia_size >= isize;
 
     if ( u->encrypt ) {
       DebugTrace(0, UFSD_LEVEL_ERROR, ("setattr: attempt to resize encrypted file\n" ) );
       err = -ENOSYS;
       goto out;
     }
-    if ( attr->ia_size >= isize ) {
-      usuper* sbi   = UFSD_SB( i->i_sb );
-      DebugTrace(+1, Dbg, ("expand: %llx -> %llx%s\n", isize, (UINT64)attr->ia_size, u->sparse?" ,sp" : "" ) );
 
-      if ( attr->ia_size > i->i_sb->s_maxbytes ) {
-        DebugTrace(-1, Dbg, ("expand: new size is too big. s_maxbytes=%llx\n", i->i_sb->s_maxbytes ) );
-        err = -EFBIG;
-        goto out;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,3,0)
+    inode_dio_wait( i );
+#endif
+
+#if defined HAVE_DECL_TRUNCATE_SETSIZE && HAVE_DECL_TRUNCATE_SETSIZE
+    //
+    // 2.6.36++ way
+    //
+    {
+      TRACE_ONLY( const char* hint = Up? "expand":"truncate"; )
+      usuper* sbi   = UFSD_SB( i->i_sb );
+      DebugTrace(+1, Dbg, ("%s: %llx -> %llx%s\n", hint, isize, ia_size, u->sparse?" ,sp" : "" ) );
+
+      if ( !Up ) {
+#ifdef UFSD_DELAY_ALLOC
+        if ( 0 == ia_size )
+          SetFlag( u->i_state_flags, UFSD_STATE_DA_ALLOC_CLOSE );
+#endif
+//        block_truncate_page( i->i_mapping, isize, ufsd_get_block_bmap );
       }
 
       LockUfsd( sbi );
@@ -3691,20 +3986,70 @@ ufsd_setattr(
 
       if ( 0 == err ) {
 
-        //
-        // We should wait if file can change its state
-        // this changes should be done before next 'writepage'
-        //
-        UINT64 asize;
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,3,0)
-        inode_dio_wait(i);
-#endif
-
-        err = UFSDAPI_FileSetSize( u->ufile, attr->ia_size, NULL, &asize );
+        err = UFSDAPI_FileSetSize( u->ufile, ia_size, &asize );
 
         if ( 0 == err ) {
-          i_size_write( i, attr->ia_size );
+          if ( u->mmu > ia_size )
+            u->mmu  = ia_size;
+          i->i_blocks = asize >> 9;
+          dirty = 1;
+        } else
+          // If no free space we should return -EFBIG or -EINVAL
+          //err = ERR_NOSPC == err? -ENOSPC : -EINVAL;
+          err = -EINVAL;
+      }
+
+      UnlockUfsd( sbi );
+
+      if ( 0 != err ) {
+        DebugTrace(-1, Dbg, ("%s failed -> %d\n", hint, err ) );
+        goto out;
+      }
+
+      //
+      // Always restore original i->i_size for 'truncate_setsize' (may be change in LazyOpen)
+      //
+      i->i_size = isize;
+
+      truncate_setsize( i, ia_size );
+
+      if ( !Up ) {
+        //
+        // Update cache info
+        //
+        spin_lock( &u->block_lock );
+        if ( 0 != u->Len ) {
+          long long dVbn = ((ia_size + (1u<<i->i_blkbits) - 1) >> i->i_blkbits) - u->Vbn;
+          if ( dVbn <= 0 ) {
+            u->Vbn  = 0;
+            u->Lbn  = 0;
+            u->Len  = 0;
+          } else if ( dVbn < u->Len ) {
+            u->Len = dVbn;
+          }
+        }
+        spin_unlock( &u->block_lock );
+      }
+      DebugTrace(-1, Dbg, ("%s -> ok, mmu=%llx\n", hint, (UINT64)u->mmu ) );
+    }
+#else
+    //
+    // 2.6.36-- way
+    //
+    if ( Up ) {
+      usuper* sbi   = UFSD_SB( i->i_sb );
+      DebugTrace(+1, Dbg, ("expand: %llx -> %llx%s\n", isize, ia_size, u->sparse?" ,sp" : "" ) );
+
+      LockUfsd( sbi );
+
+      err = LazyOpen( sbi, i );
+
+      if ( 0 == err ) {
+
+        err = UFSDAPI_FileSetSize( u->ufile, ia_size, &asize );
+
+        if ( 0 == err ) {
+          i->i_size   = ia_size;
           i->i_blocks = asize >> 9;
           dirty = 1;
         } else
@@ -3721,22 +4066,20 @@ ufsd_setattr(
         DebugTrace(-1, Dbg, ("expand failed -> %d\n", err ) );
         goto out;
       }
-    }
-    else if ( attr->ia_size < isize ) {
-      DebugTrace(0, Dbg, ("vmtruncate: %llx -> %llx\n", isize, attr->ia_size ));
-      err = vmtruncate( i, attr->ia_size );
+    } else {
+      DebugTrace(0, Dbg, ("vmtruncate: %llx -> %llx\n", isize, ia_size ));
+      err = vmtruncate( i, ia_size );
       if ( err ) {
         DebugTrace(0, Dbg, ("vmtruncate failed %d\n", err ));
         goto out;
       }
-      ASSERT( attr->ia_size == i->i_size );
+      assert( ia_size == i->i_size );
       dirty = 1;
     }
+#endif
 
-    if ( dirty ) {
+    if ( dirty )
       TIMESPEC_SECONDS( &i->i_mtime ) = TIMESPEC_SECONDS( &i->i_ctime ) = get_seconds();
-      u->set_time |= SET_MODTIME|SET_CHTIME;
-    }
   }
 
   //
@@ -3755,17 +4098,14 @@ ufsd_setattr(
   if ( (ia_valid & ATTR_ATIME) && 0 != timespec_compare( &i->i_atime, &attr->ia_atime ) ) {
     dirty = 1;
     i->i_atime = attr->ia_atime;
-    u->set_time |= SET_REFFTIME;
   }
   if ( (ia_valid & ATTR_MTIME) && 0 != timespec_compare( &i->i_mtime, &attr->ia_mtime ) ) {
     dirty = 1;
     i->i_mtime = attr->ia_mtime;
-    u->set_time |= SET_MODTIME;
   }
   if ( (ia_valid & ATTR_CTIME) && 0 != timespec_compare( &i->i_ctime, &attr->ia_ctime ) ) {
     dirty = 1;
     i->i_ctime = attr->ia_ctime;
-    u->set_time |= SET_CHTIME;
   }
   if ( ia_valid & ATTR_MODE ) {
     umode_t mode = attr->ia_mode;
@@ -3813,7 +4153,7 @@ ufsd_rename(
   int err, force_da_alloc = 0;
   usuper* sbi = UFSD_SB( odir->i_sb );
 
-  ASSERT( NULL != UFSD_FH( odir ) );
+  assert( NULL != UFSD_FH( odir ) );
 
   DebugTrace(+1, Dbg, ("rename: r=%lx, %p('%.*s') => r=%lx, %p('%.*s')\n",
                       odir->i_ino, ode,
@@ -3867,12 +4207,8 @@ ufsd_rename(
   // Mark dir as requiring resync.
   odir->i_version += 1;
   TIMESPEC_SECONDS( &odir->i_ctime ) = TIMESPEC_SECONDS( &odir->i_mtime ) = get_seconds();
-  UFSD_U( odir )->set_time = SET_MODTIME|SET_CHTIME;
   mark_inode_dirty( odir );
   mark_inode_dirty( ndir );
-#ifdef UFSD_WRITE_SUPER
-  odir->i_sb->s_dirt = 1;
-#endif
   odir->i_size   = UFSDAPI_GetDirSize( UFSD_FH( odir ) );
   odir->i_blocks = odir->i_size >> 9;
 
@@ -3880,13 +4216,12 @@ ufsd_rename(
 
     ndir->i_version += 1;
     ndir->i_mtime  = ndir->i_ctime = odir->i_ctime;
-    UFSD_U( ndir )->set_time |= SET_MODTIME|SET_CHTIME;
     ndir->i_size   = UFSDAPI_GetDirSize( UFSD_FH( ndir ) );
     ndir->i_blocks = ndir->i_size >> 9;
 
 #ifdef UFSD_COUNT_CONTAINED
     if ( S_ISDIR( ode->d_inode->i_mode ) ) {
-      ASSERT(odir->i_nlink > 0);
+      assert(odir->i_nlink > 0);
       odir->i_nlink -= 1;
       ndir->i_nlink += 1;
     }
@@ -3895,7 +4230,6 @@ ufsd_rename(
 
   if ( NULL != ode->d_inode ) {
     ode->d_inode->i_ctime = odir->i_ctime;
-    UFSD_U( ode->d_inode )->set_time |= SET_CHTIME;
     mark_inode_dirty( ode->d_inode );
 #ifdef UFSD_DELAY_ALLOC
   if ( force_da_alloc )
@@ -3909,6 +4243,35 @@ ufsd_rename(
 
 
 #ifdef UFSD_USE_XATTR
+
+#if defined HAVE_DECL_POSIX_ACL_TO_XATTR_V2 && HAVE_DECL_POSIX_ACL_TO_XATTR_V2
+#if defined HAVE_LINUX_PROC_NS_H && HAVE_LINUX_PROC_NS_H
+  #include <linux/proc_ns.h>
+#endif
+#include <linux/user_namespace.h>
+  // Wait for 'init_user_ns' to be non G.P.L.
+  struct user_namespace user_ns = {
+    .uid_map    = { .nr_extents = 1, .extent[0] = { .count = ~0u, }, },
+    .gid_map    = { .nr_extents = 1, .extent[0] = { .count = ~0u, }, },
+    .projid_map = { .nr_extents = 1, .extent[0] = { .count = ~0u, }, },
+#if defined HAVE_STRUCT_USER_NAMESPACE_COUNT && HAVE_STRUCT_USER_NAMESPACE_COUNT
+    .count = ATOMIC_INIT(3),
+#else
+    .kref = { .refcount = ATOMIC_INIT(3), },
+#endif
+    .owner = GLOBAL_ROOT_UID,
+    .group = GLOBAL_ROOT_GID,
+#if defined HAVE_STRUCT_USER_NAMESPACE_PROC_INUM && HAVE_STRUCT_USER_NAMESPACE_PROC_INUM
+    .proc_inum = PROC_USER_INIT_INO,
+#endif
+  };
+  #define Posix_acl_to_xattr( acl, buffer, size )   posix_acl_to_xattr( &user_ns, acl, buffer, size )
+  #define Posix_acl_from_xattr( value, size )       posix_acl_from_xattr( &user_ns, value, size )
+#else
+  #define Posix_acl_to_xattr( acl, buffer, size )   posix_acl_to_xattr( acl, buffer, size )
+  #define Posix_acl_from_xattr( value, size )       posix_acl_from_xattr( value, size )
+#endif
+
 
 ///////////////////////////////////////////////////////////
 // ufsd_listxattr
@@ -4033,7 +4396,17 @@ ufsd_setxattr(
                               name, strlen(name), value, size,
                               0 != (flags & XATTR_CREATE),
                               0 != (flags & XATTR_REPLACE) ) ) {
-    case 0                  : ret = 0; u->xattr = 1; break;  // Ok
+    case 0:
+      // Check if we delete the last xattr ( 0 == size && XATTR_REPLACE == flags && no xattrs )
+      u->xattr = 0 != size
+        || XATTR_REPLACE != flags
+        || 0 != UFSDAPI_ListXAttr( sbi->Ufsd, u->ufile, NULL, 0, &size )
+        || 0 != size;
+      if ( 0 == u->xattr ) {
+        DebugTrace(0, Dbg, ("setxattr: (removed last extended attribute)\n" ));
+      }
+      ret = 0;
+      break;  // Ok
     case ERR_NOTIMPLEMENTED : ret = -EOPNOTSUPP; break;
     case ERR_NOFILEEXISTS   : ret = -ENODATA; break;
     default                 : ret = -EINVAL;
@@ -4044,6 +4417,22 @@ ufsd_setxattr(
 
   DebugTrace(-1, Dbg, ("setxattr -> %d\n", ret ));
   return ret;
+}
+
+
+///////////////////////////////////////////////////////////
+// ufsd_posix_acl_release
+//
+//
+///////////////////////////////////////////////////////////
+static inline void
+ufsd_posix_acl_release(
+    IN struct posix_acl *acl
+    )
+{
+  assert( NULL != acl );
+  if ( atomic_dec_and_test( &acl->a_refcount ) )
+    kfree( acl );
 }
 
 
@@ -4060,19 +4449,43 @@ ufsd_get_acl(
     )
 {
   const char* name;
-  struct posix_acl* acl;
+  struct posix_acl* acl, **p;
   size_t req;
   int ret;
   usuper* sbi = UFSD_SB( i->i_sb );
+  unode* u    = UFSD_U( i );
 
-  ASSERT( sbi->options.acl );
+  assert( sbi->options.acl );
 
-  switch( type ) {
-    case ACL_TYPE_ACCESS:   name = POSIX_ACL_XATTR_ACCESS; break;
-    case ACL_TYPE_DEFAULT:  name = POSIX_ACL_XATTR_DEFAULT; break;
-    default:
-      return ERR_PTR(-EINVAL);
-  }
+	switch ( type ) {
+#if defined HAVE_STRUCT_INODE_I_ACL && HAVE_STRUCT_INODE_I_ACL
+	case ACL_TYPE_ACCESS:   p = &i->i_acl; break;
+	case ACL_TYPE_DEFAULT:  p = &i->i_default_acl; break;
+#else
+	case ACL_TYPE_ACCESS:   p = &u->acl; break;
+	case ACL_TYPE_DEFAULT:  p = &u->default_acl; break;
+#endif
+	default:  return ERR_PTR(-EINVAL);
+	}
+
+  //
+  // Check cached value of 'acl' and 'default_acl'
+  //
+  spin_lock( &i->i_lock );
+	acl = *p;
+  if ( ACL_NOT_CACHED != acl )
+    acl = posix_acl_dup( acl );
+  else if ( NULL != u->ufile && !u->xattr )
+    acl = NULL;
+  spin_unlock( &i->i_lock );
+
+  if ( ACL_NOT_CACHED != acl )
+    return acl;
+
+  //
+  // Possible values of 'type' was already checked above
+  //
+  name = ACL_TYPE_ACCESS == type? POSIX_ACL_XATTR_ACCESS : POSIX_ACL_XATTR_DEFAULT;
 
   LockUfsd( sbi );
 
@@ -4087,7 +4500,7 @@ ufsd_get_acl(
     // Allocate/Reallocate buffer and read again
     //
     if ( NULL != sbi->Xbuffer ) {
-      ASSERT( -ERANGE == ret );
+      assert( -ERANGE == ret );
       kfree( sbi->Xbuffer );
     }
 
@@ -4102,7 +4515,7 @@ ufsd_get_acl(
       // Read the extended attribute.
       //
       ret = ufsd_getxattr( i, name, sbi->Xbuffer, sbi->BytesPerXBuffer, &req );
-      ASSERT( ret > 0 );
+      assert( ret > 0 );
 
     } else {
       ret = -ENOMEM;
@@ -4110,16 +4523,25 @@ ufsd_get_acl(
     }
   }
 
+  UnlockUfsd( sbi );
+
   //
   // Translate extended attribute to acl
   //
-  acl = ret > 0
-    ? posix_acl_from_xattr( sbi->Xbuffer, ret )
-    : -ENODATA == ret || -ENOSYS == ret
-    ? NULL
-    : ERR_PTR(ret);
-
-  UnlockUfsd( sbi );
+  if ( ret > 0 ) {
+    acl = Posix_acl_from_xattr( sbi->Xbuffer, ret );
+    if ( !IS_ERR( acl ) ) {
+	    struct posix_acl *old;
+      spin_lock( &i->i_lock );
+      old = *p;
+      *p  = posix_acl_dup( acl );
+      spin_unlock( &i->i_lock );
+	    if ( ACL_NOT_CACHED != old )
+		    ufsd_posix_acl_release( old );
+    }
+  } else {
+    acl = -ENODATA == ret || -ENOSYS == ret ? NULL : ERR_PTR( ret );
+  }
 
   return acl;
 }
@@ -4179,31 +4601,31 @@ ufsd_set_acl(
     if ( NULL == value )
       return -ENOMEM;
 
-    err = posix_acl_to_xattr( acl, value, size );
+    err = Posix_acl_to_xattr( acl, value, size );
   }
 
-  if ( 0 != err )
+  if ( 0 != err ) {
     err = ufsd_setxattr( i, name, value, size, 0 );
+    if ( 0 == err ) {
+#if defined HAVE_STRUCT_INODE_I_ACL && HAVE_STRUCT_INODE_I_ACL
+      struct posix_acl** p  = ACL_TYPE_ACCESS == type? &i->i_acl : &i->i_default_acl;
+#else
+      unode* u = UFSD_U(i);
+      struct posix_acl** p  = ACL_TYPE_ACCESS == type? &u->acl : &u->default_acl;
+#endif
+	    struct posix_acl* old;
+      spin_lock( &i->i_lock );
+      old = *p;
+      *p  = posix_acl_dup( acl );
+      spin_unlock( &i->i_lock );
+	    if ( ACL_NOT_CACHED != old )
+		    ufsd_posix_acl_release( old );
+    }
+  }
 
   kfree( value );
 
   return err;
-}
-
-
-///////////////////////////////////////////////////////////
-// ufsd_posix_acl_release
-//
-//
-///////////////////////////////////////////////////////////
-static inline void
-ufsd_posix_acl_release(
-    IN struct posix_acl *acl
-    )
-{
-  ASSERT( NULL != acl );
-	if ( atomic_dec_and_test(&acl->a_refcount) )
-		kfree( acl );
 }
 
 
@@ -4235,7 +4657,7 @@ ufsd_check_acl(
   int err;
   struct posix_acl *acl;
 
-  ASSERT( UFSD_SB( i->i_sb )->options.acl );
+  assert( UFSD_SB( i->i_sb )->options.acl );
 
 #ifdef IPERM_FLAG_RCU
   if ( flags & IPERM_FLAG_RCU ) {
@@ -4328,7 +4750,7 @@ ufsd_acl_chmod(
   if ( !UFSD_SB( i->i_sb )->options.acl )
     return 0;
 
-  if ( S_ISLNK(i->i_mode) )
+  if ( S_ISLNK( i->i_mode ) )
     return -EOPNOTSUPP;
 
   DebugTrace(+1, Dbg, ("acl_chmod r=%lx\n", i->i_ino));
@@ -4388,7 +4810,7 @@ ufsd_xattr_get_acl(
   if ( NULL == acl )
     return -ENODATA;
 
-  err = posix_acl_to_xattr( acl, buffer, size );
+  err = Posix_acl_to_xattr( acl, buffer, size );
   ufsd_posix_acl_release( acl );
 
   return err;
@@ -4418,12 +4840,12 @@ ufsd_xattr_set_acl(
     return -EPERM;
 
   if ( NULL != value ) {
-    acl = posix_acl_from_xattr( value, size );
+    acl = Posix_acl_from_xattr( value, size );
     if ( IS_ERR(acl) )
       return PTR_ERR(acl);
 
     if ( NULL != acl ) {
-      err = posix_acl_valid(acl);
+      err = posix_acl_valid( acl );
       if ( err )
         goto release_and_out;
     }
@@ -4895,7 +5317,7 @@ ufsd_lookup(
   // ENOENT is expected and will be handled by the caller.
   // (a least on some old kernels).
   if ( err && -ENOENT != err ) {
-    ASSERT(NULL == i);
+    assert(NULL == i);
     return ERR_PTR(err);
   }
 
@@ -4923,15 +5345,15 @@ ufsd_link(
 
   UfsdCreate  cr;
 
-  cr.lnk  = UFSD_FH(oi);
+  cr.lnk  = (UFSD_FILE*)oi; // NOTE: use inode not ufsd handle cause it may be not loaded yet
   cr.data = NULL;
   cr.len  = 0;
   cr.mode = 0;
 
-  ASSERT( NULL != oi && NULL != UFSD_FH(oi) );
-  ASSERT( NULL != dir && NULL != UFSD_FH(dir) );
-  ASSERT( S_ISDIR( dir->i_mode ) );
-  ASSERT( dir->i_sb == oi->i_sb );
+  assert( NULL != oi );
+  assert( NULL != dir && NULL != UFSD_FH(dir) );
+  assert( S_ISDIR( dir->i_mode ) );
+  assert( dir->i_sb == oi->i_sb );
 
   DebugTrace(+1, Dbg, ("link: r=%lx \"%.*s\" => r=%lx /\"%.*s\"\n",
                         oi->i_ino, (int)ode->d_name.len, ode->d_name.name,
@@ -4943,14 +5365,10 @@ ufsd_link(
     //
     // Hard link is created
     //
-    ASSERT( i == oi );
+    assert( i == oi );
 
     d_instantiate( de, i );
     inc_nlink( i );
-
-#ifdef UFSD_WRITE_SUPER
-    dir->i_sb->s_dirt = 1;
-#endif
   }
 
   DebugTrace(-1, Dbg, ("link -> %d\n", err ));
@@ -4969,11 +5387,7 @@ static int
 ufsd_mknod(
     IN struct inode*  dir,
     IN struct dentry* de,
-#if defined HAVE_DECL_INOP_MKNOD_V2 && HAVE_DECL_INOP_MKNOD_V2
-    IN umode_t        mode,
-#else
-    IN int            mode,
-#endif
+    IN Umode_t        mode,
     IN dev_t          rdev
     );
 
@@ -4996,7 +5410,7 @@ STATIC_CONST struct inode_operations ufsd_dir_inode_operations = {
   .listxattr    = ufsd_listxattr,
   .removexattr  = generic_removexattr,
 #endif
-#if defined HAVE_STRUCT_INODE_OPERATIONS_GET_ACL && HAVE_STRUCT_INODE_OPERATIONS_GET_ACL
+#if defined UFSD_USE_XATTR && (defined HAVE_STRUCT_INODE_OPERATIONS_GET_ACL && HAVE_STRUCT_INODE_OPERATIONS_GET_ACL)
   .get_acl      = ufsd_get_acl,
 #endif
 };
@@ -5011,7 +5425,7 @@ STATIC_CONST struct inode_operations ufsd_special_inode_operations = {
   .removexattr  = generic_removexattr,
 #endif
   .setattr      = ufsd_setattr,
-#if defined HAVE_STRUCT_INODE_OPERATIONS_GET_ACL && HAVE_STRUCT_INODE_OPERATIONS_GET_ACL
+#if defined UFSD_USE_XATTR && (defined HAVE_STRUCT_INODE_OPERATIONS_GET_ACL && HAVE_STRUCT_INODE_OPERATIONS_GET_ACL)
   .get_acl      = ufsd_get_acl,
 #endif
 
@@ -5027,11 +5441,7 @@ static int
 ufsd_mknod(
     IN struct inode*  dir,
     IN struct dentry* de,
-#if defined HAVE_DECL_INOP_MKNOD_V2 && HAVE_DECL_INOP_MKNOD_V2
-    IN umode_t        mode,
-#else
-    IN int            mode,
-#endif
+    IN Umode_t        mode,
     IN dev_t          rdev
     )
 {
@@ -5160,7 +5570,7 @@ Again:
     #error "Unknown file_read version"
 #endif
 
-    if ( -ENOTBLK == ret && (file->f_flags & O_DIRECT) ) {
+    if ( -ENOTBLK == ret && FlagOn( file->f_flags, O_DIRECT ) ) {
       DebugTrace(0, Dbg, ("file_read: turn off O_DIRECT\n" ));
       file->f_flags &= ~O_DIRECT;
       goto Again;
@@ -5265,7 +5675,6 @@ ufsd_file_extend(
       if ( !append ) {
         i_size_write( i, new_size );
         TIMESPEC_SECONDS( &i->i_mtime ) = TIMESPEC_SECONDS( &i->i_ctime ) = get_seconds();
-        u->set_time |= SET_MODTIME|SET_CHTIME;
         mark_inode_dirty( i );
       }
       break;
@@ -5319,7 +5728,7 @@ ufsd_file_write(
     IN OUT loff_t*  ppos
     )
 {
-  struct inode* i = file->f_dentry->d_inode;
+  struct inode* i = file_inode( file );
   unode* u        = UFSD_U( i );
   UINT64 pos      = *ppos;
   usuper* sbi     = UFSD_SB( i->i_sb );
@@ -5380,7 +5789,7 @@ ufsd_file_write(
 
       if ( 0 != err ) {
         if ( -EOPNOTSUPP == err && NULL == p ) {
-#ifdef UFSD_DEBUG
+#ifdef UFSD_TRACE
           if ( UFSD_TraceLevel & Dbg )
             UFSD_TraceInc( -1 );
 #endif
@@ -5420,7 +5829,7 @@ sync_write:
 
 #if !(defined HAVE_STRUCT_FILE_OPERATIONS_AIO_WRITE && HAVE_STRUCT_FILE_OPERATIONS_AIO_WRITE)
     if ( !u->sparse && !u->compr ) {
-      ret = ufsd_file_extend( i, pos, count, file->f_flags & O_APPEND );
+      ret = ufsd_file_extend( i, pos, count, FlagOn( file->f_flags & O_APPEND ) );
       if ( 0 != ret )
         goto out;
     }
@@ -5435,7 +5844,7 @@ sync_write:
 out:
 
 #ifdef Writeback_inodes_sb_if_idle
-  if ( sbi->options.wb )
+  if ( sbi->options.wb && count >= PAGE_SIZE  )
     Writeback_inodes_sb_if_idle( i->i_sb );
 #endif
 
@@ -5465,11 +5874,8 @@ ufsd_file_aio_read(
     )
 {
   ssize_t ret;
-#if defined HAVE_STRUCT_FILE_F_PATH_DENTRY && HAVE_STRUCT_FILE_F_PATH_DENTRY
-  struct inode* i = iocb->ki_filp->f_path.dentry->d_inode;
-#else
-  struct inode* i = iocb->ki_filp->f_dentry->d_inode;
-#endif
+  //struct inode* i = iocb->ki_filp->f_path.dentry->d_inode;
+  struct inode* i = iocb->ki_filp->f_mapping->host;
   unode* u        = UFSD_U( i );
 
   DebugTrace(+1, Dbg, ("file_aio_read: r=%lx, %llx, %Zx\n", i->i_ino, (UINT64)pos, count ));
@@ -5519,11 +5925,8 @@ ufsd_file_aio_write(
     )
 {
   ssize_t ret;
-#if defined HAVE_STRUCT_FILE_F_PATH_DENTRY && HAVE_STRUCT_FILE_F_PATH_DENTRY
-  struct inode* i = iocb->ki_filp->f_path.dentry->d_inode;
-#else
-  struct inode* i = iocb->ki_filp->f_dentry->d_inode;
-#endif
+  // struct inode* i = iocb->ki_filp->f_path.dentry->d_inode;
+  struct inode* i = iocb->ki_filp->f_mapping->host;
   unode* u        = UFSD_U( i );
   UINT64 Holder;
 
@@ -5533,11 +5936,11 @@ ufsd_file_aio_write(
   // Preallocate space for normal files
   //
   if ( !u->sparse && !u->compr ) {
-    ret = ufsd_file_extend( i, pos, len, iocb->ki_filp->f_flags & O_APPEND );
+    ret = ufsd_file_extend( i, pos, len, FlagOn( iocb->ki_filp->f_flags, O_APPEND ) );
     if ( 0 != ret )
       goto out;
 
-    if ( unlikely( iocb->ki_filp->f_flags & O_DIRECT ) ){
+    if ( unlikely( FlagOn( iocb->ki_filp->f_flags, O_DIRECT ) ) ) {
       UINT64 new_mmu = (iocb->ki_filp->f_flags & O_APPEND? i_size_read( i ) : pos) + len;
       if ( u->mmu < new_mmu )
         u->mmu = new_mmu;
@@ -5580,8 +5983,9 @@ ufsd_file_aio_read(
 {
   ssize_t ret;
   unsigned long seg;
-  size_t len      = iov_length( iov, nr_segs );
-  struct inode* i = iocb->ki_filp->f_path.dentry->d_inode;
+  loff_t len      = iov_length( iov, nr_segs );
+  //struct inode* i = iocb->ki_filp->f_path.dentry->d_inode;
+  struct inode* i = iocb->ki_filp->f_mapping->host;
   unode* u        = UFSD_U( i );
 
   DebugTrace(+1, Dbg, ("file_aio_read: r=%lx, %llx, %llx\n", i->i_ino, (UINT64)pos, (UINT64)len ));
@@ -5638,11 +6042,12 @@ ufsd_file_aio_write(
 {
   ssize_t ret;
   size_t len      = iov_length( iov, nr_segs );
-  struct inode* i = iocb->ki_filp->f_path.dentry->d_inode;
+  // struct inode* i = iocb->ki_filp->f_path.dentry->d_inode;
+  struct inode* i = iocb->ki_filp->f_mapping->host;
   unode* u        = UFSD_U( i );
   UINT64 Holder;
 
-  DebugTrace(+1, Dbg, ("file_aio_write: r=%lx, %llx, %llx\n", i->i_ino, (UINT64)pos, (UINT64)len ));
+  DebugTrace(+1, Dbg, ("file_aio_write: r=%lx, %llx, %Zx\n", i->i_ino, (UINT64)pos, len ));
 
 
   //
@@ -5653,7 +6058,7 @@ ufsd_file_aio_write(
     if ( 0 != ret )
       goto out;
 
-    if ( unlikely( iocb->ki_filp->f_flags & O_DIRECT ) ){
+    if ( unlikely( FlagOn( iocb->ki_filp->f_flags, O_DIRECT ) ) ) {
       UINT64 new_mmu = (iocb->ki_filp->f_flags & O_APPEND? i_size_read( i ) : pos) + len;
       if ( u->mmu < new_mmu )
         u->mmu = new_mmu;
@@ -5681,6 +6086,7 @@ out:
 #endif // #if defined HAVE_DECL_FO_AIO_WRITE_V2 && HAVE_DECL_FO_AIO_WRITE_V2
 
 
+#ifdef UFSD_NTFS
 ///////////////////////////////////////////////////////////
 // ufsd_fix_page_buffers
 //
@@ -5730,6 +6136,7 @@ ufsd_fix_page_buffers(
 
   return ret;
 }
+#endif // #ifdef UFSD_NTFS
 
 
 ///////////////////////////////////////////////////////////
@@ -5744,14 +6151,14 @@ ufsd_file_mmap(
     )
 {
   int err;
-  struct inode* i   = file->f_dentry->d_inode;
+  struct inode* i   = file_inode( file );
   unode* u          = UFSD_U( i );
   UINT64 from       = ((UINT64)vma->vm_pgoff << PAGE_SHIFT);
   unsigned long len = vma->vm_end - vma->vm_start;
   UINT64 isize   = i_size_read( i );
   UINT64 vsize   = from + len;
 
-  ASSERT( from < isize );
+  assert( from < isize );
   if ( vsize > isize ) {
     len   = isize - from;
     vsize = isize;
@@ -5820,7 +6227,7 @@ ufsd_file_sendfile(
     )
 {
   ssize_t ret;
-  DebugTrace(+1, Dbg, ("file_sendfile: %llx %Zx\n", (UINT64)*ppos, count ));
+  DebugTrace(+1, Dbg, ("file_sendfile: r=%lx, %llx %Zx\n", file_inode( file )->i_ino, (UINT64)*ppos, count ));
 
   ret = IsStream( file )
     ? -ENOSYS
@@ -5848,7 +6255,7 @@ ufsd_file_splice_read(
     )
 {
   ssize_t ret;
-  DebugTrace(+1, Dbg, ("file_splice_read: r=%lx, %llx %Zx\n", file->f_dentry->d_inode->i_ino, (UINT64)*ppos, len ));
+  DebugTrace(+1, Dbg, ("file_splice_read: r=%lx, %llx %Zx\n", file_inode( file )->i_ino, (UINT64)*ppos, len ));
 
   if ( IsStream( file ) ) {
     DebugTrace(-1, Dbg, ("file_splice_read failed to read stream -> -ENOSYS\n"));
@@ -5882,7 +6289,7 @@ ufsd_file_splice_write(
     )
 {
   ssize_t ret;
-  struct inode* i = file->f_dentry->d_inode;
+  struct inode* i = file_inode( file );
   unode* u        = UFSD_U( i );
 
 #ifdef UFSD_CHECK_BDI
@@ -5994,6 +6401,9 @@ STATIC_CONST struct file_operations ufsd_file_operations = {
 #endif
 #ifndef UFSD_NO_USE_IOCTL
   .ioctl    = ufsd_ioctl,
+#ifdef CONFIG_COMPAT
+  .compat_ioctl	= ufsd_compat_ioctl,
+#endif
 #endif
 #if defined HAVE_DECL_GENERIC_FILE_SENDFILE && HAVE_DECL_GENERIC_FILE_SENDFILE
   .sendfile     = ufsd_file_sendfile,
@@ -6007,7 +6417,9 @@ STATIC_CONST struct file_operations ufsd_file_operations = {
 };
 
 STATIC_CONST struct inode_operations ufsd_file_inode_operations = {
+#if !(defined HAVE_DECL_TRUNCATE_SETSIZE && HAVE_DECL_TRUNCATE_SETSIZE)
   .truncate     = ufsd_truncate,
+#endif
   .setattr      = ufsd_setattr,
 #ifdef UFSD_DELAY_ALLOC
   .getattr      = ufsd_getattr,
@@ -6022,7 +6434,7 @@ STATIC_CONST struct inode_operations ufsd_file_inode_operations = {
 #if defined HAVE_STRUCT_INODE_OPERATIONS_FALLOCATE && HAVE_STRUCT_INODE_OPERATIONS_FALLOCATE
   .fallocate    = ufsd_fallocate,
 #endif
-#if defined HAVE_STRUCT_INODE_OPERATIONS_GET_ACL && HAVE_STRUCT_INODE_OPERATIONS_GET_ACL
+#if defined UFSD_USE_XATTR && (defined HAVE_STRUCT_INODE_OPERATIONS_GET_ACL && HAVE_STRUCT_INODE_OPERATIONS_GET_ACL)
   .get_acl      = ufsd_get_acl,
 #endif
 
@@ -6320,7 +6732,7 @@ ufsd_get_block_writepage(
     IN int                  create
     )
 {
-  ASSERT( PageUptodate( bh->b_page ) );
+  assert( PageUptodate( bh->b_page ) );
   return ufsd_get_block_flags( i, iblock, bh, create, UFSD_FLAG_WRITEPAGE );
 }
 #endif
@@ -6340,7 +6752,9 @@ ufsd_writepage(
     )
 {
   DebugTrace(0, Dbg, ("writepage: r=%lx o=%llx\n", page->mapping->host->i_ino, (UINT64)page->index << PAGE_CACHE_SHIFT) );
+#ifdef UFSD_NTFS
   ufsd_fix_page_buffers( page, 1 );
+#endif
   return block_write_full_page( page, ufsd_get_block_writepage, wbc );
 }
 
@@ -6367,7 +6781,7 @@ ufsd_writepage(
   unsigned tail;
 
   BUG_ON(!PageLocked(page));
-  ASSERT( PageUptodate(page) );
+  assert( PageUptodate(page) );
 
   DebugTrace(+1, Dbg, ("writepage: r=%lx p=%p, o=%llx, s=%llx\n", i->i_ino, page, (UINT64)page->index << PAGE_CACHE_SHIFT, i_size) );
 
@@ -6378,11 +6792,11 @@ ufsd_writepage(
     DebugTrace(-1, Dbg, ("_writepage out of file\n") );
     return 0;
   } else {
-    void* kaddr = kmap_atomic( page, KM_USER0 );
-    ASSERT( page->index == end_index && 0 != tail );
+    void* kaddr = atomic_kmap( page );
+    assert( page->index == end_index && 0 != tail );
     memset(kaddr + tail, 0, PAGE_CACHE_SIZE - tail);
     flush_dcache_page(page);
-    kunmap_atomic( kaddr, KM_USER0 );
+    atomic_kunmap( kaddr );
     DebugTrace(0, Dbg, ("writepage: last page\n") );
   }
 
@@ -6423,14 +6837,14 @@ ufsd_writepage(
           if ( buffer_mapped(bh) && -1 != bh->b_blocknr ) {
             lock_buffer(bh);
             set_buffer_async_io(bh);
-            ASSERT( buffer_mapped(bh) );
+            assert( buffer_mapped(bh) );
             unlock = 0;
           } else {
             clear_buffer_dirty( bh );
           }
         } while ((bh = bh->b_this_page) != head);
 
-        ASSERT( 0 == submitted );
+        assert( 0 == submitted );
         do {
           struct buffer_head *next = bh->b_this_page;
           if ( buffer_async( bh ) ) {
@@ -6467,7 +6881,7 @@ ufsd_writepage(
     if ( !(buffer_mapped(bh) && -1 != bh->b_blocknr) )
       continue;
 
-    ASSERT( buffer_mapped(bh) );
+    assert( buffer_mapped(bh) );
     lock_buffer(bh);
     set_buffer_async_io(bh);
     set_buffer_uptodate(bh);
@@ -6477,11 +6891,11 @@ ufsd_writepage(
   //
   // Stage 3: submit the IO
   //
-  ASSERT( 0 == submitted );
+  assert( 0 == submitted );
   do {
     struct buffer_head *next = bh->b_this_page;
     if ( buffer_async( bh ) ) {
-      ASSERT( buffer_mapped( bh ) );
+      assert( buffer_mapped( bh ) );
       submit_bh(WRITE, bh);
       submitted += 1;
     }
@@ -6574,38 +6988,19 @@ ufsd_write_begin(
   ProfileEnter( UFSD_SB(i->i_sb), write_begin );
 
   *pagep = NULL;
-
-  ASSERT( NULL == file || !IsStream( file ) );
+  *fsdata = NULL;
+  assert( NULL == file || !IsStream( file ) );
 
   if ( u->encrypt ) {
-    *fsdata = NULL;
-    err     = -ENOSYS;
+    err = -ENOSYS;
   } else if ( u->sparse || u->compr ) {
-
-    *fsdata = NULL;
-
 #if defined HAVE_DECL_BLOCK_WRITE_BEGIN_V1 && HAVE_DECL_BLOCK_WRITE_BEGIN_V1
     err = block_write_begin( file, mapping, pos, len, flags, pagep, fsdata, ufsd_get_block_prep );
 #else
     err = block_write_begin( mapping, pos, len, flags, pagep, ufsd_get_block_prep );
 #endif
   } else {
-
-#ifdef UFSD_SKIP_ZERO_TAIL
-    *fsdata = NULL;
     err = cont_write_begin( file, mapping, pos, len, flags, pagep, fsdata, ufsd_get_block_prep, &u->mmu );
-#else
-
-    UINT64* mmu = kmalloc( sizeof(UINT64), GFP_NOFS );
-    if ( NULL != mmu )
-      *mmu  = u->mmu;
-
-    *fsdata = mmu;
-
-    err = cont_write_begin( file, mapping, pos, len, flags, pagep, fsdata, ufsd_get_block_prep, &u->mmu );
-    if ( err && NULL != mmu )
-      kfree( mmu );
-#endif
   }
 
   ProfileLeave( UFSD_SB(i->i_sb), write_begin );
@@ -6634,20 +7029,18 @@ ufsd_write_end(
   int err;
   struct inode* i = page->mapping->host;
   unode* u        = UFSD_U( i );
-#ifndef UFSD_SKIP_ZERO_TAIL
-  UINT64* mmu     = fsdata;
-#endif
 
-  ASSERT( copied <= len );
-  ASSERT( page->index == (pos >> PAGE_CACHE_SHIFT) );
+  assert( copied <= len );
+  assert( page->index == (pos >> PAGE_CACHE_SHIFT) );
 
   DebugTrace(+1, UFSD_LEVEL_VFS_WBWE, ("write_end: r=%lx pos=%llx,%x,%x s=%llx,%llx\n",
                         i->i_ino, pos, len, copied, u->mmu, i->i_size ));
 
   ProfileEnter( UFSD_SB(i->i_sb), write_end );
 
-  ASSERT( NULL == file || !IsStream( file ) );
+  assert( NULL == file || !IsStream( file ) );
 
+#ifdef UFSD_NTFS
   if ( ufsd_fix_page_buffers( page, 0 ) ) {
 
     UINT64 isize  = i->i_size;
@@ -6663,7 +7056,7 @@ ufsd_write_end(
     char* kaddr   = kmap(page);
     size_t tmp;
 
-    ASSERT( !u->sparse );
+    assert( !u->sparse );
 
     //
     // Call UFSD library
@@ -6677,7 +7070,7 @@ ufsd_write_end(
 //    DebugTrace(0, Dbg, ("write_end: use ufsd to write file: %llx, %x\n", pos, copied ));
 
     err = UFSDAPI_FileWrite( sbi->Ufsd, u->ufile, NULL, 0, pos, copied, kaddr + from, &tmp );
-    ASSERT( tmp == copied );
+    assert( tmp == copied );
 
     //
     // Check results
@@ -6701,41 +7094,16 @@ ufsd_write_end(
     kunmap( page );
 
     TIMESPEC_SECONDS( &i->i_ctime ) = get_seconds();
-    u->set_time |= SET_CHTIME;
     mark_inode_dirty( i );
 
-  } else {
-
-#ifndef UFSD_SKIP_ZERO_TAIL
-    if ( NULL != mmu ){
-      unsigned from;
-      ASSERT( !u->sparse );
-
-      if ( pos + len > *mmu ) {
-        from = (pos & (PAGE_CACHE_SIZE - 1)) + len;
-        goto ZeroTail;
-      } else if ( page->index == (*mmu >> PAGE_CACHE_SHIFT) ) {
-        //
-        // mmu inside page. Zero tail before writing
-        //
-        from = *mmu & (PAGE_CACHE_SIZE - 1);
-ZeroTail:
-        ASSERT( from <= PAGE_CACHE_SIZE );
-        if ( from < PAGE_CACHE_SIZE ) {
-          DebugTrace(0, Dbg, ("p=%lx: zero tail %x\n", page->index, from) );
-          memset( kmap(page) + from, 0, PAGE_CACHE_SIZE - from );
-          flush_dcache_page( page );
-          kunmap( page );
-        }
-      }
-    }
-#endif
-
+  } else
+#endif // #ifdef UFSD_NTFS
+  {
     // Use generic function
     err = block_write_end( file, mapping, pos, len, copied, page, fsdata );
   }
 
-  ASSERT( err >= 0 );
+  assert( err >= 0 );
 
   if ( err >= 0 ) {
     pos += err;
@@ -6750,11 +7118,6 @@ ZeroTail:
       mark_inode_dirty( i );
     }
   }
-
-#ifndef UFSD_SKIP_ZERO_TAIL
-  if ( NULL != fsdata )
-    kfree( fsdata );
-#endif
 
   unlock_page(page);
   page_cache_release(page);
@@ -6912,7 +7275,7 @@ ufsd_prepare_write(
   DebugTrace(+1, UFSD_LEVEL_VFS_WBWE, ("prepare_write: r=%lx p=%p,%lx o=%llx from %x to %x s=(%llx,%llx)\n",
                         i->i_ino, page, page->flags, off, from, to, u->mmu, (UINT64)i_size_read( i )));
 
-  ASSERT( NULL == file || !IsStream( file ) );
+  assert( NULL == file || !IsStream( file ) );
 
   if ( u->encrypt ) {
     err = -ENOSYS;
@@ -6940,7 +7303,7 @@ ufsd_prepare_write(
     if ( off <= mmu && mmu < off + PAGE_CACHE_SIZE ) {
       z  = mmu & (PAGE_CACHE_SIZE - 1);
 ZeroTail:
-      ASSERT( z <= PAGE_CACHE_SIZE );
+      assert( z <= PAGE_CACHE_SIZE );
       if ( z < PAGE_CACHE_SIZE ) {
         DebugTrace(0, Dbg, ("zero tail [%llx %llx)\n", off + z, off + PAGE_CACHE_SIZE) );
         memset( kmap(page) + z, 0, PAGE_CACHE_SIZE - z );
@@ -6986,8 +7349,9 @@ ufsd_commit_write(
             page->mapping->host->i_ino, page, page->flags, ((UINT64)page->index << PAGE_CACHE_SHIFT) + from,
             to-from, UFSD_U(page->mapping->host)->mmu, (UINT64)page->mapping->host->i_size));
 
-  ASSERT( NULL == file || !IsStream( file ) );
+  assert( NULL == file || !IsStream( file ) );
 
+#ifdef UFSD_NTFS
   if ( ufsd_fix_page_buffers( page, 0 ) ) {
     //
     // File does not have allocation of this Vsn = Offset >> sbi->SctBits
@@ -7013,7 +7377,7 @@ ufsd_commit_write(
 //    DebugTrace(0, UFSD_LEVEL_VFS_WBWE, ("commit_write: use ufsd to write file: %llx, %x\n", pos, len ));
 
     err = UFSDAPI_FileWrite( sbi->Ufsd, u->ufile, NULL, 0, pos, len, kaddr + from, &tmp );
-    ASSERT( 0 != err || tmp == len );
+    assert( 0 != err || tmp == len );
 
     pos += len;
     if ( pos > i->i_size )
@@ -7038,10 +7402,11 @@ ufsd_commit_write(
     kunmap( page );
 
     TIMESPEC_SECONDS( &i->i_ctime ) = get_seconds();
-    u->set_time |= SET_CHTIME;
     mark_inode_dirty( i );
 
-  } else {
+  } else
+#endif // #ifdef UFSD_NTFS
+  {
     // Use generic function
     err = generic_commit_write( file, page, from, to );
   }
@@ -7079,7 +7444,7 @@ ufsd_readpage(
 
   DebugTrace(+1, Dbg, ("readpage: r=%lx p=%p, %llx\n", i->i_ino, page, (UINT64)page->index << PAGE_CACHE_SHIFT ));
 
-  ASSERT( NULL == file || !IsStream( file ) );
+  assert( NULL == file || !IsStream( file ) );
 
   BUG_ON(!PageLocked(page));
   blocksize = 1 << i->i_blkbits;
@@ -7107,10 +7472,10 @@ ufsd_readpage(
 //        map_buffer_to_page(page, bh, block);
         goto confused;
       } else {
-        char* d = kmap_atomic( page, KM_USER0 );
+        char* d = atomic_kmap( page );
         memset( d + j*blocksize, 0, blocksize );
         flush_dcache_page( page );
-        kunmap_atomic( d, KM_USER0 );
+        atomic_kunmap( d );
         set_buffer_uptodate( bh );
       }
     }
@@ -7121,11 +7486,11 @@ ufsd_readpage(
   //
   do {
     if ( !buffer_mapped( bh ) || -1 == bh->b_blocknr ) {
-      ASSERT( buffer_uptodate( bh ) );
+      assert( buffer_uptodate( bh ) );
       continue;
     }
 
-    ASSERT( buffer_mapped( bh ) );
+    assert( buffer_mapped( bh ) );
     lock_buffer( bh );
     set_buffer_async_io( bh );
   } while ((bh = bh->b_this_page) != head);
@@ -7133,11 +7498,11 @@ ufsd_readpage(
   //
   // Stage 3: submit the IO
   //
-  ASSERT( 0 == submitted );
+  assert( 0 == submitted );
   do {
     struct buffer_head *next = bh->b_this_page;
     if ( buffer_async( bh ) ) {
-      ASSERT( buffer_mapped( bh ) );
+      assert( buffer_mapped( bh ) );
       submit_bh(READ, bh);
       submitted += 1;
     }
@@ -7186,13 +7551,12 @@ ufsd_readpages(
 {
   int err;
   DebugTrace(+1, Dbg, ("readpages r=%lx (%u)\n", mapping->host->i_ino, nr_pages));
-  ASSERT( NULL == file || !IsStream( file ) );
+  assert( NULL == file || !IsStream( file ) );
   err = mpage_readpages( mapping, pages, nr_pages, ufsd_get_block );
   DebugTrace(-1, Dbg, ("readpages -> %d\n", err ));
   return err;
 }
 
-#include <linux/writeback.h>
 
 ///////////////////////////////////////////////////////////
 // ufsd_writepages
@@ -7484,7 +7848,13 @@ ufsd_da_block_invalidatepages(
         break;
       BUG_ON(!PageLocked( page ) );
       BUG_ON(PageWriteback( page ) );
+#if defined HAVE_DECL_ASO_INVALIDATEPAGE_V1 && HAVE_DECL_ASO_INVALIDATEPAGE_V1
       block_invalidatepage( page, 0 );
+#elif defined HAVE_DECL_ASO_INVALIDATEPAGE_V2 && HAVE_DECL_ASO_INVALIDATEPAGE_V2
+      block_invalidatepage( page, 0, PAGE_CACHE_SIZE );
+#else
+#error "Unknown block_invalidatepage"
+#endif
       ClearPageUptodate( page );
       unlock_page( page );
     }
@@ -8117,7 +8487,7 @@ retry:
     goto retry;
   }
 
-  ASSERT( pages_skipped == wbc->pages_skipped );
+  assert( pages_skipped == wbc->pages_skipped );
   if ( pages_skipped != wbc->pages_skipped )
     printk( KERN_CRIT QUOTED_UFSD_DEVICE": This should not happen leaving with nr_to_write = %ld ret = %d", wbc->nr_to_write, err );
 
@@ -8225,34 +8595,17 @@ ufsd_da_write_begin(
 
   flags |= AOP_FLAG_NOFS;
 
-  ASSERT( NULL == file || !IsStream( file ) );
+  assert( NULL == file || !IsStream( file ) );
+  *fsdata = NULL;
 
   if ( u->sparse || u->compr ) {
-
-    *fsdata = NULL;
-
 #if defined HAVE_DECL_BLOCK_WRITE_BEGIN_V1 && HAVE_DECL_BLOCK_WRITE_BEGIN_V1
     err = block_write_begin( file, mapping, pos, len, flags, pagep, fsdata, get_block );
 #else
     err = block_write_begin( mapping, pos, len, flags, pagep, get_block );
 #endif
   } else {
-
-#ifdef UFSD_SKIP_ZERO_TAIL
-    *fsdata = NULL;
     err = cont_write_begin( file, mapping, pos, len, flags, pagep, fsdata, get_block, &u->mmu );
-#else
-
-    UINT64* mmu = kmalloc( sizeof(UINT64), GFP_NOFS );
-    if ( NULL != mmu )
-      *mmu  = u->mmu;
-
-    *fsdata = mmu;
-
-    err = cont_write_begin( file, mapping, pos, len, flags, pagep, fsdata, get_block, &u->mmu );
-    if ( err && NULL != mmu )
-      kfree( mmu );
-#endif
   }
 
   ProfileLeave( sbi, da_write_begin );
@@ -8283,39 +8636,11 @@ ufsd_da_write_end(
   struct inode* i = page->mapping->host;
   unode* u        = UFSD_U( i );
 //  UINT64 isize = i->i_size;
-#ifndef UFSD_SKIP_ZERO_TAIL
-  UINT64* mmu  = fsdata;
-#endif
 
   DebugTrace(+1, UFSD_LEVEL_VFS_WBWE, ("da_write_end: r=%lx pos=%llx,%x,%x s=%llx,%llx\n",
                         i->i_ino, pos, len, copied, u->mmu, i->i_size ));
 
   ProfileEnter( UFSD_SB(i->i_sb), da_write_end );
-
-#ifndef UFSD_SKIP_ZERO_TAIL
-  if ( NULL != mmu ){
-    unsigned from;
-    ASSERT( !u->sparse );
-
-    if ( pos + len > *mmu ) {
-      from = (pos & (PAGE_CACHE_SIZE - 1)) + len;
-      goto ZeroTail;
-    } else if ( page->index == (*mmu >> PAGE_CACHE_SHIFT) ) {
-      //
-      // mmu inside page. Zero tail before writing
-      //
-      from = *mmu & (PAGE_CACHE_SIZE - 1);
-ZeroTail:
-      ASSERT( from <= PAGE_CACHE_SIZE );
-      if ( from < PAGE_CACHE_SIZE ) {
-        DebugTrace(0, Dbg, ("p=%lx: zero tail %x\n", page->index, from) );
-        memset( kmap(page) + from, 0, PAGE_CACHE_SIZE - from );
-        flush_dcache_page( page );
-        kunmap( page );
-      }
-    }
-  }
-#endif
 
   // Use generic function
   err = block_write_end( file, mapping, pos, len, copied, page, fsdata );
@@ -8333,11 +8658,6 @@ ZeroTail:
       mark_inode_dirty( i );
     }
   }
-
-#ifndef UFSD_SKIP_ZERO_TAIL
-  if ( NULL != fsdata )
-    kfree( fsdata );
-#endif
 
   unlock_page( page );
   page_cache_release( page );
@@ -8358,7 +8678,12 @@ ZeroTail:
 static void
 ufsd_da_invalidatepage(
     IN struct page*   page,
+#if defined HAVE_DECL_ASO_INVALIDATEPAGE_V1 && HAVE_DECL_ASO_INVALIDATEPAGE_V1
     IN unsigned long  offset
+#elif defined HAVE_DECL_ASO_INVALIDATEPAGE_V2 && HAVE_DECL_ASO_INVALIDATEPAGE_V2
+    IN unsigned int   offset,
+    IN unsigned int   len
+#endif
     )
 {
   BUG_ON(!PageLocked(page));
@@ -8387,8 +8712,13 @@ ufsd_da_invalidatepage(
   // If it's a full truncate we just forget about the pending dirtying
   if ( 0 == offset )
     ClearPageChecked( page );
-
+#if defined HAVE_DECL_ASO_INVALIDATEPAGE_V1 && HAVE_DECL_ASO_INVALIDATEPAGE_V1
   block_invalidatepage( page, offset );
+#elif defined HAVE_DECL_ASO_INVALIDATEPAGE_V2 && HAVE_DECL_ASO_INVALIDATEPAGE_V2
+  block_invalidatepage( page, offset, len );
+#else
+#error "Unknown block_invalidatepage"
+#endif
 }
 
 #endif // #ifdef UFSD_DELAY_ALLOC
@@ -8586,7 +8916,15 @@ ufsd_alloc_inode(
   if ( NULL == u )
     return NULL;
 
+  //
+  // NOTE: explicitly zero all unode members from 'ufile' until the end of struct
+  //
   memset( &u->ufile, 0, sizeof(unode) - offsetof(unode,ufile) );
+
+#if defined UFSD_USE_XATTR && !(defined HAVE_STRUCT_INODE_I_ACL && HAVE_STRUCT_INODE_I_ACL)
+  assert( ACL_NOT_CACHED == u->acl );
+  assert( ACL_NOT_CACHED == u->default_acl );
+#endif
 
   return &u->i;
 }
@@ -8626,16 +8964,19 @@ init_once(
 #endif
     )
 {
-  unode *ei = (unode *)foo;
+  unode* u = (unode *)foo;
 
+  //
+  // NOTE: once init unode members from start to 'ufile'
+  //
 #if defined SLAB_CTOR_CONSTRUCTOR && defined SLAB_CTOR_VERIFY
   if ((flags & (SLAB_CTOR_VERIFY|SLAB_CTOR_CONSTRUCTOR)) == SLAB_CTOR_CONSTRUCTOR)
 #endif
   {
 #if defined HAVE_DECL_INODE_INIT_ONCE && HAVE_DECL_INODE_INIT_ONCE
-    inode_init_once( &ei->i );
+    inode_init_once( &u->i );
 #else
-    struct inode* i = &ei->i;
+    struct inode* i = &u->i;
     memset( i, 0, sizeof( *i ) );
     init_waitqueue_head( &i->i_wait );
     INIT_LIST_HEAD( &i->i_hash );
@@ -8650,7 +8991,10 @@ init_once(
     sema_init( &i->i_zombie, 1 );
     spin_lock_init( &->i_data.i_shared_lock );
 #endif
-    spin_lock_init( &ei->block_lock );
+    spin_lock_init( &u->block_lock );
+#if defined UFSD_USE_XATTR && !(defined HAVE_STRUCT_INODE_I_ACL && HAVE_STRUCT_INODE_I_ACL)
+    u->acl = u->default_acl = ACL_NOT_CACHED;
+#endif
   }
 }
 
@@ -8693,7 +9037,7 @@ ufsd_symlink(
 
   if ( 0 == err ) {
 
-    ASSERT( NULL != i && NULL != UFSD_FH(i) );
+    assert( NULL != i && NULL != UFSD_FH(i) );
     i->i_op = &ufsd_link_inode_operations;
 
     if ( sbi->options.utf8link )
@@ -8735,12 +9079,13 @@ ufsd_read_inode2(
   struct super_block* sb  = i->i_sb;
   usuper* sbi             = UFSD_SB( sb );
   int check_special       = 0;
+  mode_t mode;
 
 #ifndef UFSD_BIG_UNODE
   if ( NULL == u ) {
     u = UFSD_HeapAlloc( sizeof(unode) );
     if ( NULL == u ) {
-      printk(KERN_ERR QUOTED_UFSD_DEVICE": failed to allocate %u bytes\n", (unsigned)sizeof(unode) );
+      printk( KERN_ERR QUOTED_UFSD_DEVICE": failed to allocate %u bytes\n", (unsigned)sizeof(unode) );
       return;
     }
     memset( u, 0, sizeof(unode) );
@@ -8758,9 +9103,9 @@ ufsd_read_inode2(
   // i->i_ino   = Info.Id;
   // i->i_flags = 0;
   //
-  ASSERT( i->i_ino == p->Info.Id );
-//  ASSERT( NULL == p->lnk );
-  ASSERT( 1 == atomic_read( &i->i_count ) );
+  assert( i->i_ino == p->Info.Id );
+//  assert( NULL == p->lnk );
+  assert( 1 == atomic_read( &i->i_count ) );
 
   i->i_op = NULL;
 
@@ -8776,48 +9121,49 @@ ufsd_read_inode2(
   if ( p->Info.is_dir ) {
     if ( sbi->options.dmask ) {
       // use mount options "dmask" or "umask"
-      i->i_mode = S_IRWXUGO & sbi->options.fs_dmask;
+      mode = S_IRWXUGO & sbi->options.fs_dmask;
     } else if ( NULL != cr ) {
-      i->i_mode = cr->mode;
+      mode = cr->mode;
       check_special = 1;
     } else if ( p->Info.is_ugm ) {
       // no mount options "dmask"/"umask" and fs supports "ugm"
-      i->i_mode     = p->Info.mode;
+      mode     = p->Info.mode;
       check_special = 1;
     } else if ( NULL == sb->s_root ) {
       // Read root inode while mounting
-      i->i_mode = S_IRWXUGO;
+      mode = S_IRWXUGO;
     } else {
       // by default ~(current->fs->umask)
-      i->i_mode = S_IRWXUGO & sbi->options.fs_dmask;
+      mode = S_IRWXUGO & sbi->options.fs_dmask;
     }
   } else {
     if ( sbi->options.fmask ) {
       // use mount options "fmask" or "umask"
-      i->i_mode = S_IRWXUGO & sbi->options.fs_fmask;
+      mode = S_IRWXUGO & sbi->options.fs_fmask;
     } else if ( NULL != cr ) {
-      i->i_mode = cr->mode;
+      mode = cr->mode;
       check_special = 1;
     } else if ( p->Info.is_ugm ) {
       // no mount options "fmask"/"umask" and fs supports "ugm"
-      i->i_mode     = p->Info.mode;
+      mode     = p->Info.mode;
       check_special = 1;
     } else {
       // by default ~(current->fs->umask)
-      i->i_mode = S_IRWXUGO & sbi->options.fs_fmask;
+      mode = S_IRWXUGO & sbi->options.fs_fmask;
     }
   }
 
-  if ( check_special && ( S_ISCHR(i->i_mode) || S_ISBLK(i->i_mode) || S_ISFIFO(i->i_mode) || S_ISSOCK(i->i_mode) ) ) {
-    init_special_inode( i, i->i_mode, new_decode_dev( p->Info.udev ) );
+  i->i_mode = mode;
+  if ( check_special && ( S_ISCHR(mode) || S_ISBLK(mode) || S_ISFIFO(mode) || S_ISSOCK(mode) ) ) {
+    init_special_inode( i, mode, new_decode_dev( p->Info.udev ) );
     i->i_op = &ufsd_special_inode_operations;
   } else {
-    ASSERT( NULL == cr || !p->Info.is_ugm || cr->mode == p->Info.mode );
+    assert( NULL == cr || !p->Info.is_ugm || cr->mode == p->Info.mode );
   }
 
   i->i_version  = 0;
   i->i_generation = p->Info.generation; // Used by NFS
-  UfsdTimes2Inode( sbi, i, &p->Info );
+  UfsdTimes2Inode( sbi, u, i, &p->Info );
   i->i_size     = p->Info.size;
 
   //
@@ -8828,7 +9174,7 @@ ufsd_read_inode2(
   u->encrypt  = p->Info.is_encrypt;
   u->xattr    = p->Info.is_xattr;
   u->mmu      = p->Info.vsize;
-  BUG_ON( 0 != u->Len || 0 != u->set_time );
+  BUG_ON( 0 != u->Len );
 
 
   // NOTE: i_blocks is measured in 512 byte blocks !
@@ -8839,16 +9185,12 @@ ufsd_read_inode2(
   } else if ( p->Info.is_dir ) {
     // dot and dot-dot should be included in count but was not included
     // in enumeration.
-    ASSERT( 1 == p->Info.link_count ); // Usually a hard link to directories are disabled
+    assert( 1 == p->Info.link_count ); // Usually a hard link to directories are disabled
 #ifdef UFSD_COUNT_CONTAINED
     set_nlink( i, p->Info.link_count + p->subdir_count + 1 );
 #else
     set_nlink( i, 1 );
 #endif
-//    if ( 0 == i->i_size ) {
-//      i->i_size   = sb->s_blocksize; // fake. Required to be non-zero.
-//      i->i_blocks = sb->s_blocksize >> 9;
-//    }
     i->i_op   = &ufsd_dir_inode_operations;
     i->i_fop  = &ufsd_dir_operations;
     i->i_mode |= S_IFDIR;
@@ -8943,6 +9285,14 @@ ufsd_create_or_open(
   }
 
   if ( NULL != cr ) {
+    struct inode *lnk = (struct inode*)cr->lnk;
+    if ( NULL != lnk ) {
+      if ( 0 != LazyOpen( sbi, lnk ) ) {
+        // Failed to open link node
+        goto Exit;
+      }
+      cr->lnk = UFSD_FH( lnk );
+    }
     cr->uid = current_fsuid();
     if ( !(dir->i_mode & S_ISGID) )
       cr->gid = current_fsgid();
@@ -8952,7 +9302,7 @@ ufsd_create_or_open(
         cr->mode |= S_ISGID;
     }
 
-    cr->mode &= ~current->fs->umask;
+    cr->mode &= ~current_umask();
 
 #ifdef UFSD_DELAY_ALLOC
     if ( sbi->options.delalloc
@@ -8983,8 +9333,8 @@ ufsd_create_or_open(
   default:  err = -ENOENT; goto Exit;
   }
 
-  ASSERT( NULL == cr || NULL != param.fh );
-  ASSERT( NULL != dir || param.Info.is_dir ); // root must be directory
+  assert( NULL == cr || NULL != param.fh );
+  assert( NULL != dir || param.Info.is_dir ); // root must be directory
 
   //
   // Load and init inode
@@ -9008,32 +9358,26 @@ ufsd_create_or_open(
   }
 
   if ( NULL != i ) {
-    ASSERT( NULL == cr || NULL != UFSD_FH(i) );
+    assert( NULL == cr || NULL != UFSD_FH(i) );
     // OK
     err = 0;
 
     if ( NULL != cr ) {
-      ASSERT( NULL != dir );
+      assert( NULL != dir );
 #ifdef UFSD_COUNT_CONTAINED
       if ( S_ISDIR ( i->i_mode ) )
         inc_nlink( dir );
 #endif
       TIMESPEC_SECONDS( &dir->i_mtime ) = TIMESPEC_SECONDS( &dir->i_ctime ) = get_seconds();
-      UFSD_U( dir )->set_time |= SET_MODTIME|SET_CHTIME;
       // Mark dir as requiring resync.
       dir->i_version += 1;
       dir->i_size   = UFSDAPI_GetDirSize( UFSD_FH(dir) );
       dir->i_blocks = dir->i_size >> 9;
 
       mark_inode_dirty( dir );
-//      mark_inode_dirty( i );
-#ifdef UFSD_WRITE_SUPER
-      dir->i_sb->s_dirt = 1;
-#endif
 
       if ( NULL != cr->lnk ){
         i->i_ctime = dir->i_ctime;
-        UFSD_U( i )->set_mode |= SET_CHTIME;
       }
 #ifdef UFSD_USE_XATTR
       else if ( !sbi->options.acl )
@@ -9129,125 +9473,202 @@ ParseTraceLevel(
     UFSD_TraceLevel = UFSD_LEVEL_IO;
   else
     UFSD_TraceLevel = simple_strtoul( v, NULL, 16 );
-  DebugTrace(0, UFSD_LEVEL_ALWAYS, (" trace mask set to %08lx\n", UFSD_TraceLevel));
+  DebugTrace(0, UFSD_LEVEL_ALWAYS, ("%s: trace mask set to %08lx\n", v, UFSD_TraceLevel));
 }
 #endif
 
 #if defined CONFIG_PROC_FS
 
 static struct proc_dir_entry* proc_info_root = NULL;
-static const char proc_info_root_name[] = "fs/ufsd";
+#define PROC_FS_UFSD_NAME "fs/ufsd"
+
+#if !( defined HAVE_DECL_PDE_DATA && HAVE_DECL_PDE_DATA )
+  #define PDE_DATA(X) PDE(X)->data
+#endif
 
 ///////////////////////////////////////////////////////////
-// ufsd_proc_volinfo
+// ufsd_proc_dev_version_show
+//
+// /proc/fs/ufsd/version
+///////////////////////////////////////////////////////////
+static int
+ufsd_proc_dev_version_show(
+    IN struct seq_file* m,
+    IN void*            o
+    )
+{
+  seq_printf( m, "%s%s\ndriver (%s) loaded at %p, sizeof(inode)=%u\n",
+              UFSDAPI_LibraryVersion( NULL ), s_FileVer, s_DriverVer, __this_module.module_core, (unsigned)sizeof(struct inode) );
+
+#ifdef UFSD_DEBUG_ALLOC
+  {
+    size_t Mb = UsedMemMax/(1024*1024);
+    size_t Kb = (UsedMemMax%(1024*1024)) / 1024;
+    size_t b  = UsedMemMax%1024;
+    if ( 0 != Mb ) {
+      seq_printf( m, "Memory report: Peak usage %Zu.%03Zu Mb (%Zu bytes), kmalloc %Zu, vmalloc %Zu\n",
+                  Mb, Kb, UsedMemMax, TotalKmallocs, TotalVmallocs );
+    } else {
+      seq_printf( m, "Memory report: Peak usage %Zu.%03Zu Kb (%Zu bytes), kmalloc %Zu, vmalloc %Zu\n",
+                  Kb, b, UsedMemMax, TotalKmallocs, TotalVmallocs );
+    }
+    seq_printf( m, "Total allocated:  %Zu bytes in %Zu blocks, Max request %Zu bytes\n",
+                  TotalAllocs, TotalAllocBlocks, MemMaxRequest );
+  }
+#endif
+
+  return 0;
+}
+
+static int ufsd_proc_dev_version_open( struct inode *inode, struct file *file )
+{
+  return single_open( file, ufsd_proc_dev_version_show, NULL );
+}
+
+static const struct file_operations ufsd_proc_dev_version_fops = {
+  .owner    = THIS_MODULE,
+  .read     = seq_read,
+  .llseek   = seq_lseek,
+  .release  = single_release,
+  .open     = ufsd_proc_dev_version_open,
+};
+
+
+///////////////////////////////////////////////////////////
+// ufsd_proc_dev_dirty_show
+//
+// /proc/fs/ufsd/<dev>/dirty
+///////////////////////////////////////////////////////////
+static int
+ufsd_proc_dev_dirty_show(
+    IN struct seq_file* m,
+    IN void*            o
+    )
+{
+  struct super_block* sb = m->private;
+#ifdef UFSD_USE_FLUSH_THREAD
+  seq_printf( m, "%u", (unsigned)UFSD_SB( sb )->bDirty );
+#else
+  seq_printf( m, "%u", (unsigned)sb->s_dirt );
+#endif
+  return 0;
+}
+
+static int ufsd_proc_dev_dirty_open( struct inode *inode, struct file *file )
+{
+  return single_open( file, ufsd_proc_dev_dirty_show, PDE_DATA(inode) );
+}
+
+static const struct file_operations ufsd_proc_dev_dirty_fops = {
+  .owner    = THIS_MODULE,
+  .read     = seq_read,
+  .llseek   = seq_lseek,
+  .release  = single_release,
+  .open     = ufsd_proc_dev_dirty_open,
+};
+
+
+///////////////////////////////////////////////////////////
+// ufsd_proc_dev_volinfo
 //
 // /proc/fs/ufsd/<dev>/volinfo
 ///////////////////////////////////////////////////////////
 static int
-ufsd_proc_volinfo(
-    IN  char *page,
-    OUT char **start  __attribute__((__unused__)),
-    IN  off_t off __attribute__((__unused__)),
-    IN  int count,
-    OUT int *eof,
-    IN  void *data
+ufsd_proc_dev_volinfo(
+    IN struct seq_file* m,
+    IN void*            o
     )
 {
-  int len;
-  usuper* sbi = (usuper*)data;
+  usuper* sbi = UFSD_SB( (struct super_block*)(m->private) );
 
   //
   // Call UFSD library
   //
   LockUfsd( sbi );
 
-  len = UFSDAPI_TraceVolumeInfo( sbi->Ufsd, page, count, &snprintf );
+  UFSDAPI_TraceVolumeInfo( sbi->Ufsd, m, &seq_printf );
 
   UnlockUfsd( sbi );
-
-  *eof = 1;
-  return len;
+  return 0;
 }
+
+static int ufsd_proc_dev_volinfo_open(struct inode *inode, struct file *file)
+{
+  return single_open( file, ufsd_proc_dev_volinfo, PDE_DATA(inode) );
+}
+
+static const struct file_operations ufsd_proc_dev_volinfo_fops = {
+  .owner    = THIS_MODULE,
+  .read     = seq_read,
+  .llseek   = seq_lseek,
+  .release  = single_release,
+  .open     = ufsd_proc_dev_volinfo_open,
+};
 
 
 ///////////////////////////////////////////////////////////
-// ufsd_read_label
+// ufsd_proc_dev_label_show
 //
 // /proc/fs/ufsd/<dev>/label
 ///////////////////////////////////////////////////////////
 static int
-ufsd_read_label(
-    IN  char *page,
-    OUT char **start  __attribute__((__unused__)),
-    IN  off_t off __attribute__((__unused__)),
-    IN  int count,
-    OUT int *eof,
-    IN  void *data
+ufsd_proc_dev_label_show(
+    OUT struct seq_file*  m,
+    IN void*              o
     )
 {
-  usuper* sbi = (usuper*)data;
-  int i;
-
-  //
-  // Call UFSD library
-  //
-  LockUfsd( sbi );
-
-  UFSDAPI_QueryVolumeInfo( sbi->Ufsd, NULL, page, count, NULL );
-
-  UnlockUfsd( sbi );
-
-  DebugTrace(0, Dbg, ("read_label: %s\n", page ) );
-
-  //
-  // Add last '\n'
-  //
-  for ( i = 0; i < count - 1; i++ ) {
-    if ( 0 == page[i] ) {
-      page[i++] = '\n';
-      memset( page + i, 0, count - i );
-      break;
-     }
-  }
-
-  *eof = 1;
-  return count;
-}
-
-
-///////////////////////////////////////////////////////////
-// ufsd_write_label
-//
-// /proc/fs/ufsd/<dev>/label
-///////////////////////////////////////////////////////////
-static int
-ufsd_write_label(
-    IN struct file*       file  __attribute__((__unused__)),
-    IN const char __user* buffer,
-    IN unsigned long      count,
-    IN void*              data
-    )
-{
-  int ret;
-  usuper* sbi = (usuper*)data;
-  char* Label;
-
-  //
-  // Maximum label length on NTFS is 128 UTF16 symbols (256 bytes). See $AttrDef
-  //
-  ret = count > 128? 128 : count;
-
-  //
-  // Get label into kernel memory
-  //
-  Label = kmalloc( ret + 1, GFP_NOFS );
+  usuper* sbi = UFSD_SB( (struct super_block*)(m->private) );
+  char *Label = kmalloc( PAGE_SIZE, GFP_NOFS );
   if ( NULL == Label )
     return -ENOMEM;
 
-  if ( 0 != copy_from_user( Label, buffer, ret ) ) {
-    ret = -EINVAL;
-  } else {
+  //
+  // Call UFSD library
+  //
+  LockUfsd( sbi );
 
+  UFSDAPI_QueryVolumeInfo( sbi->Ufsd, NULL, Label, PAGE_SIZE, NULL );
+  Label[PAGE_SIZE-1] = 0;
+
+  UnlockUfsd( sbi );
+
+  DebugTrace(0, Dbg, ("read_label: %s\n", Label ) );
+
+  seq_printf( m, "%s\n", Label );
+
+  kfree( Label );
+  return 0;
+}
+
+static int ufsd_proc_dev_label_open( struct inode *inode, struct file *file )
+{
+  return single_open( file, ufsd_proc_dev_label_show, PDE_DATA(inode) );
+}
+
+
+///////////////////////////////////////////////////////////
+// ufsd_proc_dev_label_write
+//
+// /proc/fs/ufsd/<dev>/label
+///////////////////////////////////////////////////////////
+static ssize_t
+ufsd_proc_dev_label_write(
+    IN struct file* file,
+    IN const char __user * buffer,
+    IN size_t       count,
+    IN OUT loff_t * ppos
+    )
+{
+  struct super_block* sb = PDE_DATA( file_inode( file ) );
+  usuper* sbi = UFSD_SB( sb );
+  ssize_t ret = count < PAGE_SIZE? count : PAGE_SIZE;
+  char *Label = kmalloc( ret, GFP_NOFS );
+  if ( NULL == Label )
+    return -ENOMEM;
+
+  if ( copy_from_user( Label, buffer, ret ) ) {
+    ret = -EFAULT;
+  } else {
     // Remove last '\n'
     while( ret > 0 && '\n' == Label[ret-1] )
       ret -= 1;
@@ -9261,39 +9682,44 @@ ufsd_write_label(
     //
     LockUfsd( sbi );
 
-    ret = UFSDAPI_SetVolumeInfo( sbi->Ufsd, NULL, Label, 0 );
+    ret = UFSDAPI_SetVolumeInfo( sbi->Ufsd, Label, ret );
 
     UnlockUfsd( sbi );
 
     if ( 0 == ret ){
-      ret = count; // Ok
+      ret   = count; // Ok
+      *ppos += count;
     } else {
-      DebugTrace(0, UFSD_LEVEL_ERROR, ("write_label failed: %x\n", ret ) );
+      DebugTrace(0, UFSD_LEVEL_ERROR, ("write_label failed: %x\n", (unsigned)ret ) );
       ret = -EINVAL;
     }
   }
-
   kfree( Label );
   return ret;
 }
 
+static const struct file_operations ufsd_proc_dev_label_fops = {
+  .owner    = THIS_MODULE,
+  .read     = seq_read,
+  .llseek   = seq_lseek,
+  .release  = single_release,
+  .open     = ufsd_proc_dev_label_open,
+  .write    = ufsd_proc_dev_label_write,
+};
+
 
 ///////////////////////////////////////////////////////////
-// ufsd_read_tune
+// ufsd_proc_dev_tune_show
 //
 // /proc/fs/ufsd/<dev>/tune
 ///////////////////////////////////////////////////////////
 static int
-ufsd_read_tune(
-    IN  char *page,
-    OUT char **start  __attribute__((__unused__)),
-    IN  off_t off __attribute__((__unused__)),
-    IN  int count __attribute__((__unused__)),
-    OUT int *eof,
-    IN  void *data
+ufsd_proc_dev_tune_show(
+    IN struct seq_file* m,
+    IN void*            o
     )
 {
-  usuper* sbi = (usuper*)data;
+  usuper* sbi = UFSD_SB( (struct super_block*)(m->private) );
   UfsdVolumeTune vt;
 
   //
@@ -9301,50 +9727,55 @@ ufsd_read_tune(
   //
   LockUfsd( sbi );
 
-  UFSDAPI_QueryVolumeTune( sbi->Ufsd, &vt );
+  if ( 0 != UFSDAPI_QueryVolumeTune( sbi->Ufsd, &vt ) )
+    vt.DirAge = vt.JnlRam = 0;
 
   UnlockUfsd( sbi );
 
-  count = sprintf( page, "Ra=%u DirAge=%u JnlRam=%u", sbi->ReadAheadPages, vt.DirAge, vt.JnlRam );
+  seq_printf( m, "Ra=%u DirAge=%u JnlRam=%u", sbi->ReadAheadBlocks, vt.DirAge, vt.JnlRam );
+  return 0;
+}
 
-  *eof = 1;
-  return count;
+static int ufsd_proc_dev_tune_open(struct inode *inode, struct file *file)
+{
+  return single_open( file, ufsd_proc_dev_tune_show, PDE_DATA( inode ) );
 }
 
 
 ///////////////////////////////////////////////////////////
-// ufsd_write_tune
+// ufsd_proc_dev_tune_write
 //
 // /proc/fs/ufsd/<dev>/tune
 ///////////////////////////////////////////////////////////
-static int
-ufsd_write_tune(
-    IN struct file*       file  __attribute__((__unused__)),
-    IN const char __user* buffer,
-    IN unsigned long      count,
-    IN void*              data
+static ssize_t
+ufsd_proc_dev_tune_write(
+    IN struct file* file,
+    IN const char __user * buffer,
+    IN size_t       count,
+    IN OUT loff_t * ppos
     )
 {
-  int ret;
-  usuper* sbi = (usuper*)data;
+  struct super_block* sb = PDE_DATA(file_inode(file));
+  usuper* sbi = UFSD_SB( sb );
+  ssize_t ret = count < PAGE_SIZE? count : PAGE_SIZE;
+  char *Tune = kmalloc( ret, GFP_NOFS );
+  if ( NULL == Tune )
+    return -ENOMEM;
+
   //
   // Copy buffer into kernel memory
   //
-  char* kbuffer = kmalloc( count + 1, GFP_NOFS );
-  if ( NULL == kbuffer )
-    return -ENOMEM;
-
-  if ( 0 != copy_from_user( kbuffer, buffer, count ) ) {
+  if ( 0 != copy_from_user( Tune, buffer, ret ) ) {
     ret = -EINVAL;
   } else {
     unsigned int NewReadAhead;
     UfsdVolumeTune vt;
-    int Parsed = sscanf( kbuffer, "Ra=%u DirAge=%u JnlRam=%u", &NewReadAhead, &vt.DirAge, &vt.JnlRam );
+    int Parsed = sscanf( Tune, "Ra=%u DirAge=%u JnlRam=%u", &NewReadAhead, &vt.DirAge, &vt.JnlRam );
     if ( Parsed < 1 ) {
-      DebugTrace(0, UFSD_LEVEL_ERROR, ("failed to parse tune buffer \"%s\"\n", kbuffer) );
+      DebugTrace(0, UFSD_LEVEL_ERROR, ("failed to parse tune buffer \"%s\"\n", Tune) );
       ret = -EINVAL;
     } else {
-      sbi->ReadAheadPages = NewReadAhead;
+      sbi->ReadAheadBlocks = NewReadAhead;
 
       if ( Parsed >= 3 ) {
         //
@@ -9362,173 +9793,71 @@ ufsd_write_tune(
 
     if ( 0 == ret ){
       ret = count; // Ok
+      *ppos += count;
     } else {
-      DebugTrace(0, UFSD_LEVEL_ERROR, ("write_tune failed: %x\n", ret ) );
+      DebugTrace(0, UFSD_LEVEL_ERROR, ("write_tune failed: %x\n", (unsigned)ret ) );
       ret = -EINVAL;
     }
   }
 
-  kfree( kbuffer );
+  kfree( Tune );
   return ret;
 }
 
-
-///////////////////////////////////////////////////////////
-// ufsd_proc_version
-//
-// /proc/fs/ufsd/<dev>/version
-///////////////////////////////////////////////////////////
-static int
-ufsd_proc_version(
-    IN  char *page,
-    OUT char **start  __attribute__((__unused__)),
-    IN  off_t off __attribute__((__unused__)),
-    IN  int count __attribute__((__unused__)),
-    OUT int *eof,
-    IN  void *data  __attribute__((__unused__))
-    )
-{
-  int len;
-
-  len = sprintf( page, "%s%s\ndriver (%s) loaded at %p, sizeof(inode)=%u\n",
-                 UFSDAPI_LibraryVersion( NULL ), s_FileVer, s_DriverVer, MODULE_BASE_ADDRESS, (unsigned)sizeof(struct inode) );
-
-#ifdef UFSD_DEBUG_ALLOC
-  {
-    size_t Mb = UsedMemMax/(1024*1024);
-    size_t Kb = (UsedMemMax%(1024*1024)) / 1024;
-    size_t b  = UsedMemMax%1024;
-    if ( 0 != Mb ) {
-      len += snprintf( page + len, count - len,
-                 "Memory report: Peak usage %Zu.%03Zu Mb (%Zu bytes), kmalloc %Zu, vmalloc %Zu\n",
-                  Mb, Kb, UsedMemMax, TotalKmallocs, TotalVmallocs );
-    } else {
-      len += snprintf( page + len, count - len,
-                  "Memory report: Peak usage %Zu.%03Zu Kb (%Zu bytes),  kmalloc %Zu, vmalloc %Zu\n",
-                  Kb, b, UsedMemMax, TotalKmallocs, TotalVmallocs );
-    }
-    len += snprintf( page + len, count - len,
-                  "Total allocated:  %Zu bytes in %Zu blocks, Max request %Zu bytes\n",
-                  TotalAllocs, TotalAllocBlocks, MemMaxRequest );
-  }
-#endif
-
-  *eof = 1;
-
-  return len;
-}
-
-
-///////////////////////////////////////////////////////////
-// ufsd_proc_info
-//
-//
-// /proc/fs/ufsd/<dev>
-///////////////////////////////////////////////////////////
-static void
-ufsd_proc_info(
-    IN struct super_block *sb,
-    IN int init
-    )
-{
-  usuper* sbi     = UFSD_SB( sb );
-  const char* dev = UFSD_BdGetName( sb );
-
-  if ( init ) {
-
-    sbi->procdir = proc_mkdir( dev, proc_info_root );
-    if ( NULL == sbi->procdir ) {
-      printk( KERN_NOTICE QUOTED_UFSD_DEVICE": cannot create /proc/%s/%s", proc_info_root_name, dev );
-    } else {
-      struct proc_dir_entry* de;
-#if defined HAVE_STRUCT_PROC_DIR_ENTRY_OWNER && HAVE_STRUCT_PROC_DIR_ENTRY_OWNER
-      sbi->procdir->owner = THIS_MODULE;
-#endif
-      sbi->procdir->data  = sb;
-      de = create_proc_read_entry( "volinfo", S_IFREG | S_IRUGO, sbi->procdir, &ufsd_proc_volinfo, sbi );
-#if defined HAVE_STRUCT_PROC_DIR_ENTRY_OWNER && HAVE_STRUCT_PROC_DIR_ENTRY_OWNER
-      if ( NULL != de )
-        de->owner = THIS_MODULE;
-#endif
-      de = create_proc_entry( "label", S_IFREG | S_IRUGO | S_IWUGO, sbi->procdir );
-      if ( NULL != de ) {
-        de->read_proc  = ufsd_read_label;
-        de->write_proc = ufsd_write_label;
-        de->data       = sbi;
-#if defined HAVE_STRUCT_PROC_DIR_ENTRY_OWNER && HAVE_STRUCT_PROC_DIR_ENTRY_OWNER
-        de->owner      = THIS_MODULE;
-#endif
-      }
-
-      de = create_proc_entry( "tune", S_IFREG | S_IRUGO | S_IWUGO, sbi->procdir );
-      if ( NULL != de ) {
-        de->read_proc  = ufsd_read_tune;
-        de->write_proc = ufsd_write_tune;
-        de->data       = sbi;
-#if defined HAVE_STRUCT_PROC_DIR_ENTRY_OWNER && HAVE_STRUCT_PROC_DIR_ENTRY_OWNER
-        de->owner      = THIS_MODULE;
-#endif
-      }
-    }
-
-  } else {
-
-    if ( NULL != sbi->procdir ) {
-      remove_proc_entry( "tune", sbi->procdir );
-      remove_proc_entry( "label", sbi->procdir );
-      remove_proc_entry( "volinfo", sbi->procdir );
-    }
-    if ( NULL != proc_info_root ) {
-      remove_proc_entry( dev, proc_info_root );
-      sbi->procdir = NULL;
-    }
-
-  }
-}
+static const struct file_operations ufsd_proc_dev_tune_fops = {
+  .owner    = THIS_MODULE,
+  .read     = seq_read,
+  .llseek   = seq_lseek,
+  .release  = single_release,
+  .open     = ufsd_proc_dev_tune_open,
+  .write    = ufsd_proc_dev_tune_write,
+};
 
 
 #ifdef UFSD_TRACE
 
 ///////////////////////////////////////////////////////////
-// ufsd_read_trace
+// ufsd_proc_dev_trace_show
 //
 // /proc/fs/ufsd/trace
 ///////////////////////////////////////////////////////////
 static int
-ufsd_read_trace(
-    IN  char *page,
-    OUT char **start  __attribute__((__unused__)),
-    IN  off_t off __attribute__((__unused__)),
-    IN  int count __attribute__((__unused__)),
-    OUT int *eof,
-    IN  void *data  __attribute__((__unused__))
+ufsd_proc_dev_trace_show(
+    IN struct seq_file* m,
+    IN void*            o
     )
 {
   const char* hint;
-  *eof = 1;
   switch( UFSD_TraceLevel ) {
   case UFSD_LEVEL_STR_ALL:  hint = "all"; break;
   case UFSD_LEVEL_STR_VFS:  hint = "vfs"; break;
   case UFSD_LEVEL_STR_LIB:  hint = "lib"; break;
   case UFSD_LEVEL_STR_MID:  hint = "mid"; break;
   default:
-    return sprintf( page, "%lx\n", UFSD_TraceLevel );
+    seq_printf( m, "%lx\n", UFSD_TraceLevel );
+    return 0;
   }
-  return sprintf( page, "%s\n", hint );
+  seq_printf( m, "%s\n", hint );
+  return 0;
+}
+
+static int ufsd_proc_dev_trace_open(struct inode *inode, struct file *file)
+{
+  return single_open( file, ufsd_proc_dev_trace_show, NULL );
 }
 
 
 ///////////////////////////////////////////////////////////
-// ufsd_write_trace
+// ufsd_proc_dev_trace_write
 //
 // /proc/fs/ufsd/trace
 ///////////////////////////////////////////////////////////
-static int
-ufsd_write_trace(
-    IN struct file*       file  __attribute__((__unused__)),
-    IN const char __user* buffer,
-    IN unsigned long      count,
-    IN void*              data  __attribute__((__unused__))
+static ssize_t
+ufsd_proc_dev_trace_write(
+    IN struct file* file,
+    IN const char __user * buffer,
+    IN size_t       count,
+    IN OUT loff_t * ppos
     )
 {
   //
@@ -9550,41 +9879,53 @@ ufsd_write_trace(
   kbuffer[len] = 0;
 
   ParseTraceLevel( kbuffer );
+  *ppos += count;
   return count;
 }
 
 
-///////////////////////////////////////////////////////////
-// ufsd_read_logfile
-//
-// /proc/fs/ufsd/log
-///////////////////////////////////////////////////////////
-static int
-ufsd_read_logfile(
-    IN  char *page,
-    OUT char **start  __attribute__((__unused__)),
-    IN  off_t off __attribute__((__unused__)),
-    IN  int count __attribute__((__unused__)),
-    OUT int *eof,
-    IN  void *data  __attribute__((__unused__))
-    )
-{
-  *eof = 1;
-  return sprintf( page, "%s\n", ufsd_trace_file );
-}
+static const struct file_operations ufsd_proc_dev_trace_fops = {
+  .owner    = THIS_MODULE,
+  .read     = seq_read,
+  .llseek   = seq_lseek,
+  .release  = single_release,
+  .open     = ufsd_proc_dev_trace_open,
+  .write    = ufsd_proc_dev_trace_write,
+};
 
 
 ///////////////////////////////////////////////////////////
-// ufsd_write_logfile
+// ufsd_proc_dev_log_show
 //
 // /proc/fs/ufsd/trace
 ///////////////////////////////////////////////////////////
 static int
-ufsd_write_logfile(
-    IN struct file*       file  __attribute__((__unused__)),
-    IN const char __user* buffer,
-    IN unsigned long      count,
-    IN void*              data  __attribute__((__unused__))
+ufsd_proc_dev_log_show(
+    IN struct seq_file* m,
+    IN void*            o
+    )
+{
+  seq_printf( m, "%s\n", ufsd_trace_file );
+  return 0;
+}
+
+static int ufsd_proc_dev_log_open( struct inode *inode, struct file *file )
+{
+  return single_open( file, ufsd_proc_dev_log_show, NULL );
+}
+
+
+///////////////////////////////////////////////////////////
+// ufsd_proc_dev_log_write
+//
+// /proc/fs/ufsd/trace
+///////////////////////////////////////////////////////////
+static ssize_t
+ufsd_proc_dev_log_write(
+    IN struct file* file,
+    IN const char __user * buffer,
+    IN size_t       count,
+    IN OUT loff_t*  ppos
     )
 {
   //
@@ -9610,10 +9951,190 @@ ufsd_write_logfile(
     CloseTrace();
   }
 
+  *ppos += count;
   return count;
 }
 
+static const struct file_operations ufsd_proc_dev_log_fops = {
+  .owner    = THIS_MODULE,
+  .read     = seq_read,
+  .llseek   = seq_lseek,
+  .release  = single_release,
+  .open     = ufsd_proc_dev_log_open,
+  .write    = ufsd_proc_dev_log_write,
+};
+
 #endif // #ifdef UFSD_TRACE
+
+typedef struct {
+  const char   name[8];
+  const struct file_operations* fops;
+  unsigned int mode;
+} ufsd_proc_entries;
+
+static const ufsd_proc_entries ProcInfoEntries[] = {
+  { "dirty",    &ufsd_proc_dev_dirty_fops   , S_IFREG | S_IRUGO },
+  { "label",    &ufsd_proc_dev_label_fops   , S_IFREG | S_IRUGO | S_IWUGO },
+  { "tune",     &ufsd_proc_dev_tune_fops    , S_IFREG | S_IRUGO | S_IWUGO },
+  { "volinfo",  &ufsd_proc_dev_volinfo_fops , S_IFREG | S_IRUGO },
+};
+
+static const ufsd_proc_entries ProcRootEntries[] = {
+  { "version",  &ufsd_proc_dev_version_fops , S_IFREG | S_IRUGO },
+#ifdef UFSD_TRACE
+  { "trace",    &ufsd_proc_dev_trace_fops   , S_IFREG | S_IRUGO | S_IWUGO },
+  { "log",      &ufsd_proc_dev_log_fops     , S_IFREG | S_IRUGO | S_IWUGO },
+#endif
+};
+
+
+///////////////////////////////////////////////////////////
+// Proc_mkdir
+//
+// Helper function to reduce chaos
+///////////////////////////////////////////////////////////
+static struct proc_dir_entry*
+Proc_mkdir( const char* name, struct proc_dir_entry* parent )
+{
+  struct proc_dir_entry* e = proc_mkdir( name, parent );
+#if defined HAVE_STRUCT_PROC_DIR_ENTRY_OWNER && HAVE_STRUCT_PROC_DIR_ENTRY_OWNER
+  if ( NULL != e )
+    e->owner = THIS_MODULE;
+#endif
+  return e;
+}
+
+
+///////////////////////////////////////////////////////////
+// CreateProcEntries
+//
+//
+///////////////////////////////////////////////////////////
+static const char*
+CreateProcEntries(
+    IN const ufsd_proc_entries* e,
+    IN unsigned int             count,
+    IN struct proc_dir_entry*   parent,
+    IN void*                    data
+    )
+{
+  for ( ; 0 != count--; e++ ) {
+#if defined HAVE_DECL_PROC_CREATE_DATA && HAVE_DECL_PROC_CREATE_DATA
+    if ( NULL == proc_create_data( e->name, e->mode, parent, e->fops, data ) )
+      return e->name;
+#else
+    // 2.6.22 -
+	  struct proc_dir_entry* de = create_proc_entry( e->name, e->mode, parent );
+    if ( NULL == de )
+      return e->name;
+    de->data = data;
+    de->proc_fops = e->fops;
+#endif
+  }
+  return NULL;
+}
+
+
+///////////////////////////////////////////////////////////
+// RemoveProcEntries
+//
+//
+///////////////////////////////////////////////////////////
+static void
+RemoveProcEntries(
+    IN const ufsd_proc_entries* e,
+    IN unsigned int             count,
+    IN struct proc_dir_entry*   parent
+    )
+{
+  for ( ; 0 != count--; e++ )
+    remove_proc_entry( e->name, parent );
+}
+
+
+///////////////////////////////////////////////////////////
+// ufsd_proc_info_create
+//
+// creates /proc/fs/ufsd/<dev>
+// Called from 'ufsd_read_super'
+///////////////////////////////////////////////////////////
+static void
+ufsd_proc_info_create(
+    IN struct super_block* sb
+    )
+{
+  if ( NULL != proc_info_root ) {
+    const char* dev   = UFSD_BdGetName( sb );
+    struct proc_dir_entry* e = Proc_mkdir( dev, proc_info_root );
+    const char* hint  = NULL == e? "" : CreateProcEntries( ProcInfoEntries, ARRAY_SIZE( ProcInfoEntries ), e, sb );
+    if ( NULL != hint )
+      printk( KERN_NOTICE QUOTED_UFSD_DEVICE": cannot create /proc/"PROC_FS_UFSD_NAME"/%s/%s", dev, hint );
+    UFSD_SB( sb )->procdir = e;
+  }
+}
+
+
+///////////////////////////////////////////////////////////
+// ufsd_proc_info_delete
+//
+// deletes /proc/fs/ufsd/<dev>
+// Called from 'ufsd_put_super'
+///////////////////////////////////////////////////////////
+static void
+ufsd_proc_info_delete(
+    IN struct super_block* sb
+    )
+{
+  usuper* sbi = UFSD_SB( sb );
+
+  if ( NULL != sbi->procdir )
+    RemoveProcEntries( ProcInfoEntries, ARRAY_SIZE( ProcInfoEntries ), sbi->procdir );
+
+  if ( NULL != proc_info_root )
+    remove_proc_entry( UFSD_BdGetName( sb ), proc_info_root );
+  sbi->procdir = NULL;
+}
+
+
+///////////////////////////////////////////////////////////
+// ufsd_proc_create
+//
+// creates "/proc/fs/ufsd"
+// Called from 'ufsd_init'
+///////////////////////////////////////////////////////////
+static void
+ufsd_proc_create( void )
+{
+  struct proc_dir_entry* e = Proc_mkdir( PROC_FS_UFSD_NAME, NULL );
+  const char* hint = NULL == e? "" : CreateProcEntries( ProcRootEntries, ARRAY_SIZE( ProcRootEntries), e, NULL );
+  if ( NULL != hint )
+    printk( KERN_NOTICE QUOTED_UFSD_DEVICE": cannot create /proc/"PROC_FS_UFSD_NAME"/%s\n", hint );
+  proc_info_root = e;
+}
+
+
+///////////////////////////////////////////////////////////
+// ufsd_proc_delete
+//
+// deletes "/proc/fs/ufsd"
+// Called from 'ufsd_exit'
+///////////////////////////////////////////////////////////
+static void
+ufsd_proc_delete( void )
+{
+  if ( NULL != proc_info_root ) {
+    RemoveProcEntries( ProcRootEntries, ARRAY_SIZE( ProcRootEntries), proc_info_root );
+    proc_info_root = NULL;
+    remove_proc_entry( PROC_FS_UFSD_NAME, NULL );
+  }
+}
+
+#else
+
+  #define ufsd_proc_info_create( s )
+  #define ufsd_proc_info_delete( s )
+  #define ufsd_proc_create()
+  #define ufsd_proc_delete()
 
 #endif // #if defined CONFIG_PROC_FS
 
@@ -9637,47 +10158,71 @@ ufsd_put_super(
   //
   DoDelayedTasks( sbi );
 
-#if defined CONFIG_PROC_FS
-  // Remove /proc/fs/ufsd/..
-  ufsd_proc_info( sb, 0 );
+#ifdef UFSD_USE_FLUSH_THREAD
+  //
+  // Stop flush thread
+  //
+  write_lock( &sbi->StateLock );
+  sbi->ExitFlushThread = 1;
+
+  while ( NULL != sbi->FlushTask ) {
+    wake_up( &sbi->WaitExitFlush );
+    write_unlock( &sbi->StateLock );
+    wait_event( sbi->WaitDoneFlush, NULL == sbi->FlushTask );
+    write_lock( &sbi->StateLock );
+  }
+  write_unlock( &sbi->StateLock );
 #endif
 
+  // Remove /proc/fs/ufsd/..
+  ufsd_proc_info_delete( sb );
+
   UFSDAPI_VolumeFree( sbi->Ufsd );
+
+#ifdef UFSD_HFS
+  if ( NULL != sbi->TailBh ) {
+    struct buffer_head* bh = sbi->TailBh;
+    assert( 1 == atomic_read( &bh->b_count ) );
+    __free_page( bh->b_page );
+    __brelse( bh );
+  }
+#endif
 
   UFSD_unload_nls( &sbi->options );
   if ( NULL != sbi->rw_buffer )
     vfree( sbi->rw_buffer );
 
-#ifndef CONFIG_DEBUG_MUTEXES // GPL
+#ifndef CONFIG_DEBUG_MUTEXES // G.P.L.
   Mutex_destroy( &sbi->ApiMutex );
   Mutex_destroy( &sbi->NoCaseMutex );
 #endif
 
-#ifndef UFSD_TRACE_SILENT
-  #if defined UFSD_DEBUG
-    DebugTrace( 0, UFSD_LEVEL_ERROR, ("Delayed clear %Zu\n", sbi->nDelClear ));
-    DebugTrace( 0, UFSD_LEVEL_ERROR, ("Read %Zu, Written %Zu\n", sbi->nReadBlocks, sbi->nWrittenBlocks ));
-    DebugTrace( 0, UFSD_LEVEL_ERROR, ("ReadNa %Zu, WrittenNa %Zu\n", sbi->nReadBlocksNa, sbi->nWrittenBlocksNa ));
-    ASSERT( sbi->nPinBlocks == sbi->nUnpinBlocks );
-    DebugTrace( 0, UFSD_LEVEL_ERROR, ("Pinned %Zu, Unpinned %Zu\n", sbi->nPinBlocks, sbi->nUnpinBlocks ));
-    DebugTrace( 0, UFSD_LEVEL_ERROR, ("Mapped: %Zu + %Zu - %Zu\n", sbi->nMappedBh, sbi->nMappedMem, sbi->nUnMapped ));
-    ASSERT( sbi->nMappedBh + sbi->nMappedMem == sbi->nUnMapped );
+#if !defined UFSD_TRACE_SILENT && defined UFSD_DEBUG
+  DebugTrace( 0, UFSD_LEVEL_ERROR, ("Delayed clear %Zu\n", sbi->nDelClear ));
+  DebugTrace( 0, UFSD_LEVEL_ERROR, ("Read %Zu, Written %Zu\n", sbi->nReadBlocks, sbi->nWrittenBlocks ));
+  DebugTrace( 0, UFSD_LEVEL_ERROR, ("ReadNa %Zu, WrittenNa %Zu\n", sbi->nReadBlocksNa, sbi->nWrittenBlocksNa ));
+  assert( sbi->nPinBlocks == sbi->nUnpinBlocks );
+  DebugTrace( 0, UFSD_LEVEL_ERROR, ("Pinned %Zu, Unpinned %Zu\n", sbi->nPinBlocks, sbi->nUnpinBlocks ));
+  DebugTrace( 0, UFSD_LEVEL_ERROR, ("Mapped: %Zu + %Zu - %Zu\n", sbi->nMappedBh, sbi->nMappedMem, sbi->nUnMapped ));
+  assert( sbi->nMappedBh + sbi->nMappedMem == sbi->nUnMapped );
+  if ( 0 != sbi->nCompareCalls )
+    DebugTrace( 0, UFSD_LEVEL_ERROR, ("ufsd_compare %Zu\n", (ssize_t)sbi->nCompareCalls ));
+  if ( 0 != sbi->nHashCalls )
+    DebugTrace( 0, UFSD_LEVEL_ERROR, ("ufsd_name_hash %Zu\n", (ssize_t)sbi->nHashCalls ));
 
-    if ( 0 != sbi->nCompareCalls )
-      DebugTrace( 0, UFSD_LEVEL_ERROR, ("ufsd_compare %Zu\n", (ssize_t)sbi->nCompareCalls ));
-
-    if ( 0 != sbi->nHashCalls )
-      DebugTrace( 0, UFSD_LEVEL_ERROR, ("ufsd_name_hash %Zu\n", (ssize_t)sbi->nHashCalls ));
-
-    DebugTrace( 0, UFSD_LEVEL_ERROR, ("bdread     : %Zu, %u msec\n", sbi->bdread_cnt, jiffies_to_msecs( sbi->bdread_ticks ) ) );
-    DebugTrace( 0, UFSD_LEVEL_ERROR, ("bdwrite    : %Zu, %u msec\n", sbi->bdwrite_cnt, jiffies_to_msecs( sbi->bdwrite_ticks ) ) );
-    DebugTrace( 0, UFSD_LEVEL_ERROR, ("get_block  : %Zu, %u msec\n", sbi->get_block_cnt, jiffies_to_msecs( sbi->get_block_ticks ) ) );
-    DebugTrace( 0, UFSD_LEVEL_ERROR, ("write_begin: %Zu, %u msec\n", sbi->write_begin_cnt, jiffies_to_msecs( sbi->write_begin_ticks ) ) );
-    DebugTrace( 0, UFSD_LEVEL_ERROR, ("write_end  : %Zu, %u msec\n", sbi->write_end_cnt, jiffies_to_msecs( sbi->write_end_ticks ) ) );
-    DebugTrace( 0, UFSD_LEVEL_ERROR, ("writepages : %Zu, %u msec\n", sbi->writepages_cnt, jiffies_to_msecs( sbi->writepages_ticks ) ) );
-    DebugTrace( 0, UFSD_LEVEL_ERROR, ("write_inode: %Zu, %u msec\n", sbi->write_inode_cnt, jiffies_to_msecs( sbi->write_inode_ticks ) ) );
-  #endif //#if defined UFSD_DEBUG
-#endif //#ifndef UFSD_TRACE_SILENT
+  DebugTrace(0, UFSD_LEVEL_ERROR, ("bdread        : %Zu, %u msec\n", sbi->bdread_cnt, jiffies_to_msecs( sbi->bdread_ticks ) ) );
+  DebugTrace(0, UFSD_LEVEL_ERROR, ("bdwrite       : %Zu, %u msec\n", sbi->bdwrite_cnt, jiffies_to_msecs( sbi->bdwrite_ticks ) ) );
+  DebugTrace(0, UFSD_LEVEL_ERROR, ("bdmap         : %Zu, %u msec\n", sbi->bdmap_cnt, jiffies_to_msecs( sbi->bdmap_ticks ) ) );
+  DebugTrace(0, UFSD_LEVEL_ERROR, ("bdsetdirty    : %Zu, %u msec\n", sbi->bdsetdirty_cnt, jiffies_to_msecs( sbi->bdsetdirty_ticks ) ) );
+  DebugTrace(0, UFSD_LEVEL_ERROR, ("get_block     : %Zu, %u msec\n", sbi->get_block_cnt, jiffies_to_msecs( sbi->get_block_ticks ) ) );
+  DebugTrace(0, UFSD_LEVEL_ERROR, ("write_begin   : %Zu, %u msec\n", sbi->write_begin_cnt, jiffies_to_msecs( sbi->write_begin_ticks ) ) );
+  DebugTrace(0, UFSD_LEVEL_ERROR, ("write_end     : %Zu, %u msec\n", sbi->write_end_cnt, jiffies_to_msecs( sbi->write_end_ticks ) ) );
+  DebugTrace(0, UFSD_LEVEL_ERROR, ("writepages    : %Zu, %u msec\n", sbi->writepages_cnt, jiffies_to_msecs( sbi->writepages_ticks ) ) );
+  DebugTrace(0, UFSD_LEVEL_ERROR, ("da_writepages : %Zu, %u msec\n", sbi->da_writepages_cnt, jiffies_to_msecs( sbi->da_writepages_ticks ) ) );
+  DebugTrace(0, UFSD_LEVEL_ERROR, ("da_write_begin: %Zu, %u msec\n", sbi->da_write_begin_cnt, jiffies_to_msecs( sbi->da_write_begin_ticks ) ) );
+  DebugTrace(0, UFSD_LEVEL_ERROR, ("da_write_end  : %Zu, %u msec\n", sbi->da_write_end_cnt, jiffies_to_msecs( sbi->da_write_end_ticks ) ) );
+  DebugTrace(0, UFSD_LEVEL_ERROR, ("write_inode   : %Zu, %u msec\n", sbi->write_inode_cnt, jiffies_to_msecs( sbi->write_inode_ticks ) ) );
+#endif //#if !defined UFSD_TRACE_SILENT && defined UFSD_DEBUG
 
 #ifdef UFSD_USE_XATTR
   if ( NULL != sbi->Xbuffer )
@@ -9686,7 +10231,7 @@ ufsd_put_super(
 
   UFSD_HeapFree( sbi );
   sb->s_fs_info = NULL;
-  ASSERT( NULL == UFSD_SB( sb ) );
+  assert( NULL == UFSD_SB( sb ) );
 
   sync_blockdev( sb_dev(sb) );
 
@@ -9724,7 +10269,7 @@ int ufsd_write_inode(
   ProfileEnter( sbi, write_inode );
 
   if ( i->i_state & (I_CLEAR | I_FREEING) ) {
-    ASSERT( !"try to flush clear node" );
+    assert( !"try to flush clear node" );
     DebugTrace(0, Dbg, ("write_inode: try to flush clear node\n"));
   } else if ( NULL == u->ufile ){
     DebugTrace(0, Dbg, ("write_inode: no ufsd handle for this inode\n"));
@@ -9750,12 +10295,16 @@ int ufsd_write_inode(
 
         if ( NULL != file ) {
           UFSDAPI_FileFlush( sbi->Ufsd, file, isize, u->mmu,
-                             &i->i_atime, &i->i_mtime, &i->i_ctime, u->set_time,
+                             TIMESPEC_SECONDS( &i->i_atime ) == u->atime? NULL : &i->i_atime,
+                             TIMESPEC_SECONDS( &i->i_mtime ) == u->mtime? NULL : &i->i_mtime,
+                             TIMESPEC_SECONDS( &i->i_ctime ) == u->ctime? NULL : &i->i_ctime,
                              &i->i_gid, &i->i_uid, u->set_mode? &i->i_mode : NULL );
+          u->atime = TIMESPEC_SECONDS( &i->i_atime );
+          u->mtime = TIMESPEC_SECONDS( &i->i_mtime );
+          u->ctime = TIMESPEC_SECONDS( &i->i_ctime );
         }
         flushed = 1;
         u->set_mode = 0;
-        u->set_time = 0;
 #if defined HAVE_STRUCT_INODE_I_MUTEX && HAVE_STRUCT_INODE_I_MUTEX
         mutex_unlock( &i->i_mutex );
 #endif
@@ -9790,12 +10339,21 @@ ufsd_sync_volume(
     )
 {
   usuper* sbi = UFSD_SB( sb );
-  UNREFERENCED_PARAMETER( wait );
   DebugTrace(+1, Dbg, ("sync_volume: %p (%s)%s\n", sb, UFSD_BdGetName(sb), wait? ",w":""));
+
+#ifndef UFSD_USE_FLUSH_THREAD
+  sb->s_dirt = 0;
+#else
+  sbi->bDirty = 0;
+#endif
+
+#ifdef UFSD_SMART_TRACE
+  printk( "<4>ufsd: sync_volume:+\n" );
+#endif
 
   if ( !TryLockUfsd( sbi ) ){
 
-    UFSDAPI_VolumeFlush( sbi->Ufsd );
+    UFSDAPI_VolumeFlush( sbi->Ufsd, wait );
     UnlockUfsd( sbi );
 
   } else {
@@ -9806,12 +10364,181 @@ ufsd_sync_volume(
     atomic_set( &sbi->VFlush, wait? 2 : 1 );
   }
 
+#ifdef UFSD_SMART_TRACE
+  printk( "<4>ufsd: sync_volume:-\n" );
+#endif
+
   DebugTrace(-1, Dbg, ("sync_volume ->\n"));
   return 0;
 }
 
+#ifdef UFSD_USE_FLUSH_THREAD
 
-#ifdef UFSD_WRITE_SUPER
+#include <linux/freezer.h>
+#include <linux/kthread.h>
+
+///////////////////////////////////////////////////////////
+// AddTimer
+//
+// Helper function to add timer UFSD_SMART_DIRTY_SEC after last dirty
+///////////////////////////////////////////////////////////
+static inline void
+AddTimer(
+    IN usuper* sbi
+    )
+{
+  mod_timer( &sbi->FlushTimer, HZ + sbi->LastDirty + msecs_to_jiffies( UFSD_SMART_DIRTY_SEC * 1000 ) );
+}
+
+
+///////////////////////////////////////////////////////////
+// flush_timer_fn
+//
+// Timer function
+///////////////////////////////////////////////////////////
+static void
+flush_timer_fn(
+    IN unsigned long data
+    )
+{
+  usuper* sbi = (usuper*)data;
+
+  if ( !sbi->bDirty ) {
+    // Do not wake up flush thread
+  } else {
+    long dj = jiffies - sbi->LastDirty;
+    if ( dj <= 0 || jiffies_to_msecs( dj ) < UFSD_SMART_DIRTY_SEC * 1000 ) {
+      // Do not wake up flush thread
+      // Sleep for another period
+      AddTimer( sbi );
+    } else if ( NULL != sbi->FlushTask ) {
+      //
+      // Volume is dirty and there are no writes last UFSD_SMART_DIRTY_SEC
+      // Wake up flush thread
+      //
+      wake_up_process( sbi->FlushTask );
+    }
+  }
+}
+
+
+///////////////////////////////////////////////////////////
+// ufsd_flush_thread
+//
+// 'dirty_writeback_interval'
+///////////////////////////////////////////////////////////
+static int
+ufsd_flush_thread(
+    IN void* arg
+    )
+{
+  struct super_block* sb = arg;
+  usuper* sbi = UFSD_SB( sb );
+#ifdef UFSD_TRACE
+  unsigned long j0, j1, j_a = 0, j_s = 0, cnt = 0;
+#endif
+
+  // Record that the flush thread is running
+  sbi->FlushTask = current;
+
+  //
+  // Set up an interval timer which can be used to trigger a flush wakeup after the flush interval expires
+  //
+  setup_timer( &sbi->FlushTimer, flush_timer_fn, (unsigned long)sbi );
+
+  wake_up( &sbi->WaitDoneFlush );
+
+  //
+  // And now, wait forever for flush wakeup events
+  //
+  write_lock( &sbi->StateLock );
+
+  TRACE_ONLY( j0 = jiffies; )
+
+  for ( ;; ) {
+    if ( sbi->ExitFlushThread ) {
+      write_unlock( &sbi->StateLock );
+      del_timer_sync( &sbi->FlushTimer );
+      sbi->FlushTask = NULL;
+      wake_up( &sbi->WaitDoneFlush );
+      DebugTrace(0, Dbg, ("flush_thread exiting: active %u, sleep %u, cycles %lu\n", jiffies_to_msecs( j_a ), jiffies_to_msecs( j_s ), cnt ));
+      return 0;
+    }
+
+    if ( sbi->bDirty ) {
+      long dj = jiffies - sbi->LastDirty;
+      unsigned int dt;
+      TRACE_ONLY( const char* hint;  )
+      TRACE_ONLY( dt = 0; )
+
+      DebugTrace(+1, Dbg, ("flush_thread: %p (%s)\n", sb, UFSD_BdGetName(sb)));
+
+      if ( dj <= 0 || (dt = jiffies_to_msecs( dj )) < UFSD_SMART_DIRTY_SEC * 1000 ) {
+        TRACE_ONLY( hint = "skip"; )
+        AddTimer( sbi );
+      } else {
+        sbi->bDirty = 0;
+#ifdef UFSD_SMART_TRACE
+        printk( "<4>ufsd: flush_thread:+\n" );
+#endif
+        write_unlock( &sbi->StateLock );
+        if ( !TryLockUfsd( sbi ) ){
+          UFSDAPI_VolumeFlush( sbi->Ufsd, 1 );
+          UnlockUfsd( sbi );
+          TRACE_ONLY( hint = "flushed"; )
+        } else {
+          //
+          // Do volume flush later
+          //
+          atomic_set( &sbi->VFlush, 1 );
+          TRACE_ONLY( hint = "delay"; )
+        }
+        write_lock( &sbi->StateLock );
+#ifdef UFSD_SMART_TRACE
+        printk( "<4>ufsd: flush_thread:-\n" );
+#endif
+      }
+
+      DebugTrace(-1, Dbg, ("flush_thread -> %s, %u\n", hint, dt));
+    }
+
+    wake_up( &sbi->WaitDoneFlush );
+
+    TRACE_ONLY( cnt += 1; )
+    TRACE_ONLY( j1 = jiffies; )
+    TRACE_ONLY( j_a += j1 - j0; )
+    TRACE_ONLY( j0 = j1; )
+
+    if ( freezing( current ) ) {
+      DebugTrace(0, Dbg, ("now suspending flush_thread\n" ));
+      write_unlock( &sbi->StateLock );
+#if defined HAVE_DECL_REFRIGERATOR && HAVE_DECL_REFRIGERATOR
+      refrigerator();
+#else
+      try_to_freeze();
+#endif
+      write_lock( &sbi->StateLock );
+
+    } else if ( !sbi->ExitFlushThread ) {
+
+      DEFINE_WAIT( wait );
+      prepare_to_wait( &sbi->WaitExitFlush, &wait, TASK_INTERRUPTIBLE );
+      write_unlock( &sbi->StateLock );
+
+      schedule();
+
+      TRACE_ONLY( j1 = jiffies; )
+      TRACE_ONLY( j_s += j1 - j0; )
+      TRACE_ONLY( j0 = j1; )
+
+      write_lock( &sbi->StateLock );
+      finish_wait( &sbi->WaitExitFlush, &wait );
+    }
+  }
+}
+
+#else
+
 ///////////////////////////////////////////////////////////
 // ufsd_write_super
 //
@@ -9823,26 +10550,82 @@ ufsd_write_super(
     )
 {
   usuper* sbi = UFSD_SB( sb );
+  long dj = jiffies - sbi->LastDirty;
+  unsigned int dt;
+  TRACE_ONLY( const char* hint;  )
+  TRACE_ONLY( dt = 0; )
   DebugTrace(+1, Dbg, ("write_super: %p (%s)\n", sb, UFSD_BdGetName(sb)));
 
-  if ( !TryLockUfsd( sbi ) ){
-
-    UFSDAPI_VolumeFlushIf( sbi->Ufsd );
-    UnlockUfsd( sbi );
-
-//    sync_blockdev( sb_dev(sb) );
-
+  if ( dj <= 0 || (dt = jiffies_to_msecs( dj )) < UFSD_SMART_DIRTY_SEC * 1000 ) {
+    TRACE_ONLY( hint = "skip"; )
   } else {
+    // Clear 's_dirt' to avoid next calls
+    sb->s_dirt  = 0;
+#ifdef UFSD_SMART_TRACE
+    printk( "<4>ufsd: write_super:+\n" );
+#endif
+    if ( !TryLockUfsd( sbi ) ){
 
-    //
-    // Do volume flush later
-    //
-    atomic_set( &sbi->VFlush, 3 );
+      UFSDAPI_VolumeFlush( sbi->Ufsd, 0 );
+      UnlockUfsd( sbi );
+      TRACE_ONLY( hint = "flushed"; )
+
+    } else {
+
+      //
+      // Do volume flush later
+      //
+      atomic_set( &sbi->VFlush, 1 );
+      TRACE_ONLY( hint = "delay"; )
+    }
+#ifdef UFSD_SMART_TRACE
+    printk( "<4>ufsd: write_super:-\n" );
+#endif
   }
 
-  DebugTrace(-1, Dbg, ("write_super ->\n"));
+  DebugTrace(-1, Dbg, ("write_super -> %s, %u\n", hint, dt));
 }
+
+#endif // #ifdef UFSD_USE_FLUSH_THREAD
+
+
+///////////////////////////////////////////////////////////
+// UFSD_OnSetDirty
+//
+// Callback function. Called when volume becomes dirty
+///////////////////////////////////////////////////////////
+void
+UFSDAPI_CALL
+UFSD_OnSetDirty(
+    IN void* Arg
+    )
+{
+  struct super_block* sb = Arg;
+  usuper* sbi = UFSD_SB( sb );
+
+  assert( !(sb->s_flags & MS_RDONLY) )
+
+#ifdef UFSD_USE_FLUSH_THREAD
+  write_lock( &sbi->StateLock );
+  sbi->LastDirty = jiffies;
+  if ( !sbi->bDirty ) {
+#ifdef UFSD_SMART_TRACE
+    printk( "<4>ufsd: UFSD_OnSetDirty()\n" );
 #endif
+    DebugTrace(0, Dbg, ("UFSD_OnSetDirty()\n" ));
+    sbi->bDirty = 1;
+  }
+  AddTimer( sbi );
+  write_unlock( &sbi->StateLock );
+#else
+#ifdef UFSD_SMART_TRACE
+  if ( !sb->s_dirt )
+    printk( "<4>ufsd: UFSD_OnSetDirty()\n" );
+#endif
+  sb->s_dirt      = 1;
+  sbi->LastDirty  = jiffies;
+#endif
+}
 
 
 #if defined HAVE_DECL_KSTATFS && HAVE_DECL_KSTATFS
@@ -9880,7 +10663,7 @@ ufsd_statfs(
   UFSDAPI_QueryVolumeInfo( sbi->Ufsd, &Info, NULL, 0, &FreeBlocks );
 
 #ifdef UFSD_DELAY_ALLOC
-  ASSERT( !sbi->options.delalloc || atomic_long_read( &sbi->FreeBlocks ) == FreeBlocks );
+  assert( !sbi->options.delalloc || atomic_long_read( &sbi->FreeBlocks ) == FreeBlocks );
 //  DebugTrace(0, Dbg, ("dirty blocks: %lx\n", atomic_long_read( &sbi->DirtyBlocks )));
   FreeBlocks -= atomic_long_read( &sbi->DirtyBlocks );
 #endif
@@ -9896,7 +10679,7 @@ ufsd_statfs(
   buf->f_ffree  = 0;
   buf->f_namelen= Info.NameLength;
 
-  DebugTrace(-1, Dbg, ("statfs ->\n"));
+  DebugTrace(-1, Dbg, ("statfs -> free=%llx\n", FreeBlocks));
   //TRACE_ONLY(show_buffers();)
 #if defined UFSD_DEBUG_ALLOC & !defined UFSD_TRACE_SILENT
   TraceMemReport( 0 );
@@ -9967,10 +10750,10 @@ ufsd_remount(
 
   if ( !Ro
     && ( 0 != UFSDAPI_QueryVolumeInfo( sbi->Ufsd, &Info, NULL, 0, NULL )
-      || 0 != Info.OnMountDirty )
+      || 0 != Info.Dirty )
     && !sbi->options.force ) {
     //
-    printk(KERN_WARNING QUOTED_UFSD_DEVICE": volume is dirty and \"force\" flag is not set\n");
+    printk( KERN_WARNING QUOTED_UFSD_DEVICE": volume is dirty and \"force\" flag is not set\n" );
     goto Exit;
   }
 
@@ -9993,6 +10776,9 @@ ufsd_remount(
 #if defined HAVE_STRUCT_SUPER_BLOCK_S_BDI && HAVE_STRUCT_SUPER_BLOCK_S_BDI
   if ( sbi->options.raKb )
     sb->s_bdi->ra_pages = sbi->options.raKb >> ( PAGE_CACHE_SHIFT-10 );
+#else
+  if ( sbi->options.raKb )
+    sb->s_bdev->bd_inode_backing_dev_info->ra_pages = sbi->options.raKb >> ( PAGE_CACHE_SHIFT-10 );
 #endif
 
   if ( Ro )
@@ -10111,8 +10897,8 @@ ufsd_evict_inode(
           list_add_tail( &task->list, &sbi->clear_list );
         else
           list_add( &task->list, &sbi->clear_list );
-        TRACE_ONLY( sbi->nDelClear += 1; )
         spin_unlock( &sbi->ddt_lock );
+        TRACE_ONLY( sbi->nDelClear += 1; )
         TRACE_ONLY(d = 1;)
 #ifndef UFSD_BIG_UNODE
         UFSD_HeapFree( u );
@@ -10121,6 +10907,17 @@ ufsd_evict_inode(
       }
     }
   }
+
+#if defined UFSD_USE_XATTR && !(defined HAVE_STRUCT_INODE_I_ACL && HAVE_STRUCT_INODE_I_ACL)
+  if ( ACL_NOT_CACHED != u->acl ) {
+    ufsd_posix_acl_release( u->acl );
+    u->acl = ACL_NOT_CACHED;
+  }
+  if ( ACL_NOT_CACHED != u->default_acl ) {
+    ufsd_posix_acl_release( u->default_acl );
+    u->default_acl  = ACL_NOT_CACHED;
+  }
+#endif
 
   DebugTrace(-1, Dbg, ("evict_inode ->%s\n", d? " (d)" : "") );
 }
@@ -10232,7 +11029,7 @@ STATIC_CONST struct super_operations ufsd_sops = {
   .put_super      = ufsd_put_super,
   .statfs         = ufsd_statfs,
   .remount_fs     = ufsd_remount,
-#ifdef UFSD_WRITE_SUPER
+#ifndef UFSD_USE_FLUSH_THREAD
   .write_super    = ufsd_write_super,
 #endif
   .sync_fs        = ufsd_sync_volume,
@@ -10335,7 +11132,7 @@ ufsd_get_parent(
   if ( 0 == LazyOpen( sbi, i_ch )
     && 0 == UFSDAPI_FileGetParent( sbi->Ufsd, UFSD_FH(i_ch), &param.fh, &param.Info ) ) {
 
-    ASSERT( NULL != param.fh );
+    assert( NULL != param.fh );
 
     i = iget4( i_ch->i_sb, param.Info.Id, NULL, &param );
 
@@ -10343,7 +11140,7 @@ ufsd_get_parent(
       err = -ENOMEM;
       DebugTrace(0, Dbg, ("get_parent: -> No memory for new inode\n" ));
     } else {
-      ASSERT( NULL != UFSD_FH(i) );
+      assert( NULL != UFSD_FH(i) );
       // OK
       err = 0;
     }
@@ -10400,19 +11197,36 @@ ufsd_get_parent(
 ///////////////////////////////////////////////////////////
 static int
 ufsd_encode_fh(
+#if defined HAVE_DECL_ENCODE_FH_V1 && HAVE_DECL_ENCODE_FH_V1
     IN struct dentry* de,
+#elif defined HAVE_DECL_ENCODE_FH_V2 && HAVE_DECL_ENCODE_FH_V2
+    IN struct inode*  i,
+#else
+#error Unknown ufsd_encode_fh
+#endif
     IN __u32*         fh,
     IN OUT int*       max_len,
+#if defined HAVE_DECL_ENCODE_FH_V1 && HAVE_DECL_ENCODE_FH_V1
     IN int            connectable
+#elif defined HAVE_DECL_ENCODE_FH_V2 && HAVE_DECL_ENCODE_FH_V2
+    IN struct inode * connectable
+#endif
     )
 {
   int type;
+#if defined HAVE_DECL_ENCODE_FH_V1 && HAVE_DECL_ENCODE_FH_V1
   struct inode* i = de->d_inode;
+#endif
   usuper* sbi     = UFSD_SB( i->i_sb );
   UNREFERENCED_PARAMETER( connectable ); // Always assumed to be true
 
+#if defined HAVE_DECL_ENCODE_FH_V1 && HAVE_DECL_ENCODE_FH_V1
   DebugTrace(+1, Dbg, ("encode_fh: r=%lx, %p('%.*s'), %x\n",
               i->i_ino, de, (int)de->d_name.len, de->d_name.name, *max_len ));
+#else
+  DebugTrace(+1, Dbg, ("encode_fh: r=%lx, %x\n",
+              i->i_ino, *max_len ));
+#endif
 
   LockUfsd( sbi );
 
@@ -10835,6 +11649,12 @@ static const char s_Options[][16] = {
 };
 
 
+//
+// This variable is used to get the bias
+//
+extern struct timezone sys_tz;
+
+
 ///////////////////////////////////////////////////////////
 // ufsd_parse_options
 //
@@ -10857,23 +11677,18 @@ ufsd_parse_options(
   char nls_name[50];
   struct nls_table* nls;
   int cp;
-  ASSERT( 0 == opts->nls_count );
+  assert( 0 == opts->nls_count );
 #endif
 
-  ASSERT( NULL != current->fs );
-
-  opts->delim    = ':';
+  assert( NULL != current->fs );
 
   opts->fs_uid   = current_uid();
   opts->fs_gid   = current_gid();
-
-  opts->fs_fmask = opts->fs_dmask = NULL == current->fs
-    ? -1
-#if defined HAVE_DECL_CURRENT_UMASK && HAVE_DECL_CURRENT_UMASK
-    : ~(current_umask());
-#else
-    : ~(current->fs->umask);
+  opts->fs_fmask = opts->fs_dmask = ~current_umask();
+#ifdef UFSD_EXFAT
+  opts->bias     = sys_tz.tz_minuteswest;
 #endif
+
   if ( NULL == options || NULL == options[0] || 0 == options[0][0] )
     goto Ok;
 
@@ -10903,9 +11718,9 @@ ufsd_parse_options(
       case 30:  // "wb="
         // Support both forms: 'nocase' and 'nocase=0/1'
         if ( NULL == v || 0 == v[0] )
-          c = 1;  // parse "nocase"
+          c = 1;  // parse short form "nocase"
         else if ( 0 == v[1] && '0' <= v[0] && v[0] <= '9' )
-          c = (char)(v[0] - '0'); // parse "nocase=X", where X=0,1,..,9
+          c = (char)(v[0] - '0'); // parse wide form "nocase=X", where X=0,1,..,9
         else
           goto Err;
         switch( i ) {
@@ -11057,8 +11872,8 @@ ufsd_parse_options(
         break;
       default:
 Err:
-      // Return error options
-      *ret_opt = t;
+        // Return error options
+        *ret_opt = t;
     }
 
     // Restore options string
@@ -11083,7 +11898,7 @@ Ok:
     if ( NULL != nls_def && 0 != memcmp( nls_def->charset, "utf8", sizeof("utf8") ) ) {
 #ifndef UFSD_TRACE_SILENT
       DebugTrace(0, Dbg, ("default nls %s\n", nls_def->charset ));
-      printk( KERN_NOTICE QUOTED_UFSD_DEVICE": default nls %s\n", nls_def->charset );
+//      printk( KERN_NOTICE QUOTED_UFSD_DEVICE": default nls %s\n", nls_def->charset );
 #endif
       ufsd_add_nls( opts, nls_def );
     }
@@ -11095,7 +11910,7 @@ Ok:
       nls = opts->nls[cp];
       if ( 0 == memcmp( nls->charset, "utf8", sizeof("utf8") ) ) {
 #ifndef UFSD_TRACE_SILENT
-//        DebugTrace(0, Dbg, ("unload kernel utf8\n"));
+        DebugTrace(0, Dbg, ("unload kernel utf8\n"));
 //        printk( KERN_NOTICE QUOTED_UFSD_DEVICE": use builtin utf8 instead of kernel utf8\n" );
 #endif
         unload_nls( nls );
@@ -11115,7 +11930,7 @@ Ok:
   //
   if ( 0 == opts->nls_count ) {
 #ifndef UFSD_TRACE_SILENT
-//    DebugTrace(0, Dbg, ("use builtin utf8\n" ));
+    DebugTrace(0, Dbg, ("use builtin utf8\n" ));
 //    printk( KERN_NOTICE QUOTED_UFSD_DEVICE": use builtin utf8\n" );
 #endif
     opts->nls_count = 1;
@@ -11138,12 +11953,17 @@ Ok:
   }
 #endif
 
-#ifndef Writeback_inodes_sb_if_idle
   if ( opts->wb ) {
+#ifdef Writeback_inodes_sb_if_idle
+    if ( opts->delalloc ) {
+      printk( KERN_ERR QUOTED_UFSD_DEVICE": \"delalloc\" and \"wb=1\" are not compatible\n" );
+      return 0; // error
+    }
+#else
     printk( KERN_NOTICE QUOTED_UFSD_DEVICE": ignore \"wb=1\" 'cause not supported\n" );
     opts->wb = 0;
-  }
 #endif
+  }
 
 #if !(defined HAVE_STRUCT_SUPER_BLOCK_S_BDI && HAVE_STRUCT_SUPER_BLOCK_S_BDI)
   if ( opts->raKb ){
@@ -11207,7 +12027,7 @@ ufsd_read_super(
   C_ASSERT( sizeof(i->i_ino) == sizeof(param.Info.Id) );
 
   sbi = UFSD_HeapAlloc( sizeof(usuper) );
-  ASSERT(NULL != sbi);
+  assert(NULL != sbi);
   if ( NULL == sbi )
     return -ENOMEM;
 
@@ -11216,6 +12036,11 @@ ufsd_read_super(
   spin_lock_init( &sbi->ddt_lock );
   Mutex_init( &sbi->NoCaseMutex );
   INIT_LIST_HEAD( &sbi->clear_list );
+#ifdef UFSD_USE_FLUSH_THREAD
+  rwlock_init( &sbi->StateLock );
+  init_waitqueue_head( &sbi->WaitDoneFlush );
+  init_waitqueue_head( &sbi->WaitExitFlush );
+#endif
 
 #if defined HAVE_STRUCT_SUPER_BLOCK_S_ID && HAVE_STRUCT_SUPER_BLOCK_S_ID
   DevName = sb->s_id;
@@ -11226,7 +12051,6 @@ ufsd_read_super(
   bdevname( sb->s_bdev, sbi->s_id );
   DevName = sbi->s_id;
 #endif
-
 
   //
   // Check for size
@@ -11241,7 +12065,7 @@ ufsd_read_super(
   // Parse options.
   //
   if ( !ufsd_parse_options( &options, &sbi->options ) ) {
-    printk(KERN_ERR QUOTED_UFSD_DEVICE": failed to mount %s. bad option '%s'\n", DevName, options );
+    printk( KERN_ERR QUOTED_UFSD_DEVICE": failed to mount %s. bad option '%s'\n", DevName, options );
     TRACE_ONLY( hint = "bad options"; )
     goto ExitInc;
   }
@@ -11250,7 +12074,7 @@ ufsd_read_super(
                         sb, sb->s_flags, (char*)data,  silent ? "silent" : "verbose"));
 
   si_meminfo( &SysInfo );
-  ASSERT( PAGE_SIZE == SysInfo.mem_unit );
+  assert( PAGE_SIZE == SysInfo.mem_unit );
   DebugTrace( 0, Dbg, ("Pages: total=%lx, free=%lx, buff=%lx, unit=%x\n",
                         SysInfo.totalram, SysInfo.freeram,
                         SysInfo.bufferram, SysInfo.mem_unit ));
@@ -11277,9 +12101,7 @@ ufsd_read_super(
   if ( FlagOn( sb->s_flags, MS_SYNCHRONOUS ) )
     sbi->options.sync = 1;
 
-  sb->s_blocksize_bits = PAGE_SHIFT;
-  sb->s_blocksize      = PAGE_SIZE;
-  set_blocksize( sb_dev(sb), PAGE_SIZE );
+  sb_set_blocksize( sb, PAGE_SIZE );
   sbi->MaxBlock = BytesPerSb >> PAGE_SHIFT;
 
   //
@@ -11296,7 +12118,7 @@ ufsd_read_super(
   // Set default readahead pages
   //
 #ifdef UFSD_READAHEAD_PAGES
-  sbi->ReadAheadPages = UFSD_READAHEAD_PAGES;
+  sbi->ReadAheadBlocks = UFSD_READAHEAD_PAGES;
 #endif
 
   //
@@ -11309,7 +12131,7 @@ ufsd_read_super(
   DebugTrace( 0, Dbg, ("%s: size = 0x%llx*0x%x >= 0x%llx*0x%lx\n",
                         DevName, BytesPerSb>>sbi->SctBits, BytesPerSector, sbi->MaxBlock, PAGE_SIZE ));
 
-  err = UFSDAPI_VolumeMount( sb, &sb->s_dirt, BytesPerSector, &BytesPerSb, &sbi->options, &Volume, SysInfo.totalram, SysInfo.mem_unit );
+  err = UFSDAPI_VolumeMount( sb, BytesPerSector, &BytesPerSb, &sbi->options, &Volume, SysInfo.totalram, SysInfo.mem_unit );
 
   if ( 0 != err ) {
     if ( ERR_NEED_REPLAY == err ) {
@@ -11334,20 +12156,17 @@ ufsd_read_super(
   UFSDAPI_QueryVolumeInfo( Volume, &Info, NULL, 0, sbi->options.delalloc? &FreeBlocks : NULL );
 
   if ( Info.ReadOnly && !FlagOn( sb->s_flags, MS_RDONLY ) ) {
-    printk(KERN_WARNING QUOTED_UFSD_DEVICE": No write support. Marking filesystem read-only\n");
+    printk( KERN_WARNING QUOTED_UFSD_DEVICE": No write support. Marking filesystem read-only\n");
     sb->s_flags |= MS_RDONLY;
   }
-
-  // First time this should be always true
-  ASSERT( Info.Dirty == Info.OnMountDirty );
 
   //
   // Check for dirty flag
   //
   if ( !FlagOn( sb->s_flags, MS_RDONLY ) && Info.Dirty && !sbi->options.force ) {
-    printk(KERN_WARNING QUOTED_UFSD_DEVICE": volume is dirty and \"force\" flag is not set\n");
+    printk( KERN_WARNING QUOTED_UFSD_DEVICE": volume is dirty and \"force\" flag is not set\n" );
     TRACE_ONLY( hint = "no \"force\" and dirty"; )
-    err = -EINVAL;
+    err = -1000; // Return special value to detect no 'force'
     goto Exit;
   }
 
@@ -11365,11 +12184,6 @@ ufsd_read_super(
   // If journaled Hfs+ consists of more than 2^31 physical sectors
   //
   sbi->SctBits = blksize_bits( Info.BytesPerSector );
-
-  //
-  // For rw volumes this function sets dirty flag (if not set already)
-  //
-  VERIFY( 0 == UFSDAPI_SetDirtyFlag( Volume ) );
 
 #ifdef UFSD_DELAY_ALLOC
 //  sbi->s_max_writeback_mb_bump = 128;
@@ -11393,8 +12207,8 @@ ufsd_read_super(
   sb->s_xattr       = (__typeof__( sb->s_xattr )) ufsd_xattr_handlers;
 #endif
   sbi->Ufsd         = Volume;
-  ASSERT(UFSD_SB( sb ) == sbi);
-  ASSERT(UFSD_VOLUME(sb) == Volume);
+  assert(UFSD_SB( sb ) == sbi);
+  assert(UFSD_VOLUME(sb) == Volume);
 
   param.subdir_count = 0;
   if ( 0 == UFSDAPI_FileOpen( Volume, NULL, "/", 1, NULL,
@@ -11409,7 +12223,7 @@ ufsd_read_super(
   }
 
   if ( NULL == i ) {
-    printk(KERN_ERR QUOTED_UFSD_DEVICE": failed to open root on %s\n", DevName);
+    printk( KERN_ERR QUOTED_UFSD_DEVICE": failed to open root on %s\n", DevName );
     TRACE_ONLY( hint = "open root"; )
     err = -EINVAL;
     goto Exit;
@@ -11425,7 +12239,7 @@ ufsd_read_super(
 
   if ( NULL == sb->s_root ) {
     iput( i );
-    printk(KERN_ERR QUOTED_UFSD_DEVICE": No memory for root entry\n");
+    printk( KERN_ERR QUOTED_UFSD_DEVICE": No memory for root entry\n" );
     TRACE_ONLY( hint = "no memory"; )
     // Not necessary to close root_ufsd
     goto Exit;
@@ -11433,7 +12247,7 @@ ufsd_read_super(
 
 #ifdef UFSD_DELAY_ALLOC
   // Should we call atomic_set( &sbi->DirtyBlocks, 0 )
-  ASSERT( 0 == atomic_long_read( &sbi->DirtyBlocks ) );
+  assert( 0 == atomic_long_read( &sbi->DirtyBlocks ) );
   atomic_long_set( &sbi->FreeBlocks, FreeBlocks );
 
   TRACE_ONLY( if ( FreeBlocks < UFSD_RED_ZONE ) sbi->DoNotTraceNoSpc = 1; )
@@ -11441,14 +12255,15 @@ ufsd_read_super(
   UFSDAPI_SetFreeSpaceCallBack( Volume, &FreeSpaceCallBack, sbi );
 #endif
 
-#if defined CONFIG_PROC_FS
   // Create /proc/fs/ufsd/..
-  ufsd_proc_info( sb, 1 );
-#endif
+  ufsd_proc_info_create( sb );
 
 #if defined HAVE_STRUCT_SUPER_BLOCK_S_BDI && HAVE_STRUCT_SUPER_BLOCK_S_BDI
   if ( sbi->options.raKb )
     sb->s_bdi->ra_pages = sbi->options.raKb >> ( PAGE_CACHE_SHIFT-10 );
+#else
+  if ( sbi->options.raKb )
+    sb->s_bdev->bd_inode_backing_dev_info->ra_pages = sbi->options.raKb >> ( PAGE_CACHE_SHIFT-10 );
 #endif
 
 #ifdef UFSD_CHECK_BDI
@@ -11456,14 +12271,31 @@ ufsd_read_super(
   #if defined HAVE_STRUCT_SUPER_BLOCK_S_BDI && HAVE_STRUCT_SUPER_BLOCK_S_BDI
   sbi->bdi = sb->s_bdi;
   #else
-  sbi->bdi = blk_get_backing_dev_info(sb->s_bdev);
+  sbi->bdi = blk_get_backing_dev_info( sb->s_bdev );
   #endif
+#endif
+
+#ifdef UFSD_USE_FLUSH_THREAD
+  //
+  // Start flush thread.
+  // To simplify remount logic do it for read-only volumes too
+  //
+  {
+    void* p = kthread_run( ufsd_flush_thread, sb, "ufsd_%s", DevName );
+    if ( IS_ERR( p ) ) {
+//      printk( KERN_ERR QUOTED_UFSD_DEVICE": failed to create flush thread\n" );
+      err = PTR_ERR( p );
+      goto Exit;
+    }
+
+    wait_event( sbi->WaitDoneFlush, NULL != sbi->FlushTask );
+  }
 #endif
 
   //
   // Done.
   //
-  DebugTrace(-1, Dbg, ("read_super(%s) -> sb=%p,i=%p,r=%lx,uid=%d,gid=%d,m=%o\n", DevName, sb, i,
+  DebugTrace(-1, Dbg, ("read_super(%s), %u -> sb=%p,i=%p,r=%lx,uid=%d,gid=%d,m=%o\n", DevName, jiffies_to_msecs(jiffies-StartJiffies), sb, i,
                         i->i_ino, i->i_uid, i->i_gid, i->i_mode ));
 
   return 0;
@@ -11481,8 +12313,8 @@ Exit:
   if ( NULL != Volume )
     UFSDAPI_VolumeFree( Volume );
 
-  ASSERT( NULL != sbi );
-#ifndef CONFIG_DEBUG_MUTEXES // GPL
+  assert( NULL != sbi );
+#ifndef CONFIG_DEBUG_MUTEXES // G.P.L.
   Mutex_destroy( &sbi->ApiMutex );
   Mutex_destroy( &sbi->NoCaseMutex );
 #endif
@@ -11514,12 +12346,7 @@ static DECLARE_FSTYPE_DEV( ufsd_fs_type, QUOTED_UFSD_DEVICE, ufsd_read_super_2_4
 
 #if defined HAVE_STRUCT_FILE_SYSTEM_TYPE_MOUNT && HAVE_STRUCT_FILE_SYSTEM_TYPE_MOUNT
 
-///////////////////////////////////////////////////////////
-// ufsd_mount
-//
-//
-// file_system_type::mount
-///////////////////////////////////////////////////////////
+// 2.6.38+
 static struct dentry*
 ufsd_mount(struct file_system_type *fs_type, int flags, const char *dev_name, void *data){
   return mount_bdev(fs_type, flags, dev_name, data, ufsd_read_super);
@@ -11528,12 +12355,10 @@ ufsd_mount(struct file_system_type *fs_type, int flags, const char *dev_name, vo
 #else
 
 #if defined HAVE_DECL_FST_GETSB_V2 && HAVE_DECL_FST_GETSB_V2
-
 ///////////////////////////////////////////////////////////
 // ufsd_get_sb
 //
-// 2,6,18+
-// file_system_type::get_sb
+// [2.6.18 - 2.6.38]
 ///////////////////////////////////////////////////////////
 static int
 ufsd_get_sb(
@@ -11559,7 +12384,6 @@ ufsd_get_sb(
 // ufsd_get_sb
 //
 // 2,6,18-
-// file_system_type::get_sbs
 ///////////////////////////////////////////////////////////
 static struct super_block *
 ufsd_get_sb(
@@ -11623,10 +12447,6 @@ __init ufsd_init(void)
 {
   int ret;
   int EndianError;
-
-  TRACE_ONLY( struct proc_dir_entry* de );
-  TRACE_ONLY( ParseTraceLevel( ufsd_trace_level ) );
-
 #ifdef UFSD_DEBUG_ALLOC
   TotalKmallocs=0;
   TotalVmallocs=0;
@@ -11635,10 +12455,15 @@ __init ufsd_init(void)
   TotalAllocBlocks=0;
   TotalAllocSequence=0;
   MemMaxRequest=0;
-  WaitMutex=0;
-  StartJiffies=jiffies;
   Mutex_init( &MemMutex );
 #endif
+
+#ifdef UFSD_DEBUG
+  WaitMutex=0;
+  StartJiffies=jiffies;
+#endif
+
+  TRACE_ONLY( ParseTraceLevel( ufsd_trace_level ) );
 
 #ifndef UFSD_TRACE_SILENT
   printk( KERN_NOTICE QUOTED_UFSD_DEVICE": driver (%s) loaded at %p\n%s", s_DriverVer, MODULE_BASE_ADDRESS, UFSDAPI_LibraryVersion( &EndianError ) );
@@ -11649,42 +12474,16 @@ __init ufsd_init(void)
   if ( EndianError )
     return -EINVAL;
 
-#if defined CONFIG_PROC_FS
-  if ( NULL == proc_info_root ) {
-    proc_info_root = proc_mkdir( proc_info_root_name, NULL );
-    if ( NULL != proc_info_root ) {
-  #if defined HAVE_STRUCT_PROC_DIR_ENTRY_OWNER && HAVE_STRUCT_PROC_DIR_ENTRY_OWNER
-      proc_info_root->owner = THIS_MODULE;
-  #endif
-      create_proc_read_entry( "version", 0, proc_info_root, &ufsd_proc_version, NULL );
+#ifdef UFSD_EXFAT
+  //
+  // exfat stores dates relative 1980
+  // 'get_seconds' returns seconds since 1970
+  // Check current date
+  if ( get_seconds() < Seconds1970To1980 )
+    printk( KERN_NOTICE QUOTED_UFSD_DEVICE": exfat can't store dates before Jan 1, 1980. Please update current date\n" );
+#endif
 
-  #ifdef UFSD_TRACE
-      de = create_proc_entry( "trace", S_IFREG | S_IRUGO | S_IWUGO, proc_info_root );
-      if ( NULL != de ) {
-        de->read_proc  = ufsd_read_trace;
-        de->write_proc = ufsd_write_trace;
-    #if defined HAVE_STRUCT_PROC_DIR_ENTRY_OWNER && HAVE_STRUCT_PROC_DIR_ENTRY_OWNER
-        de->owner      = THIS_MODULE;
-    #endif
-      }
-
-      de = create_proc_entry( "log", S_IFREG | S_IRUGO | S_IWUGO, proc_info_root );
-      if ( NULL != de ) {
-        de->read_proc  = ufsd_read_logfile;
-        de->write_proc = ufsd_write_logfile;
-    #if defined HAVE_STRUCT_PROC_DIR_ENTRY_OWNER && HAVE_STRUCT_PROC_DIR_ENTRY_OWNER
-        de->owner      = THIS_MODULE;
-    #endif
-      }
-  #endif /* UFSD_TRACE */
-
-    } else {
-      printk( KERN_NOTICE QUOTED_UFSD_DEVICE": cannot create /proc/%s", proc_info_root_name );
-    }
-  }
-#endif /* CONFIG_PROC_FS */
-
-  OnUfsdInit();
+  ufsd_proc_create();
 
 #ifdef UFSD_BIG_UNODE
   unode_cachep = kmem_cache_create( QUOTED_UFSD_DEVICE "_unode_cache", sizeof(unode), 0,
@@ -11695,24 +12494,32 @@ __init ufsd_init(void)
                                     );
 #endif
 
-  ret = register_filesystem( &ufsd_fs_type );
+  //
+  // Allow UFSD to init globals
+  //
+  ret = UFSDAPI_main( 0 );
   if ( 0 == ret ) {
-    return 0; // Ok
+    //
+    // Finally register filesystem
+    //
+    ret = register_filesystem( &ufsd_fs_type );
+    if ( 0 == ret )
+      return 0; // Ok
   }
+
+  //
+  // Deinit UFSD globals
+  //
+  UFSDAPI_main( 1 );
 
 #ifdef UFSD_BIG_UNODE
   kmem_cache_destroy( unode_cachep );
 #endif
 
-#if defined CONFIG_PROC_FS
-  if ( NULL != proc_info_root ) {
-    remove_proc_entry( "version", proc_info_root );
-    proc_info_root = NULL;
-    remove_proc_entry( proc_info_root_name, NULL );
-  }
-#endif
+  // remove /proc/fs/ufsd
+  ufsd_proc_delete();
 
-//  printk(KERN_NOTICE QUOTED_UFSD_DEVICE": ufsd_init failed %d\n", ret);
+//  printk( KERN_NOTICE QUOTED_UFSD_DEVICE": ufsd_init failed %d\n", ret );
 
   return ret;
 }
@@ -11729,32 +12536,24 @@ __exit ufsd_exit(void)
 #ifdef UFSD_DEBUG_ALLOC
   struct list_head* pos, *pos2;
 #endif
-#if defined CONFIG_PROC_FS
-  if ( NULL != proc_info_root ) {
-    remove_proc_entry( "version", proc_info_root );
-
-#ifdef UFSD_TRACE
-      remove_proc_entry( "trace", proc_info_root );
-      remove_proc_entry( "log", proc_info_root );
-#endif
-
-    proc_info_root = NULL;
-    remove_proc_entry( proc_info_root_name, NULL );
-  }
-#endif
-
-  OnUfsdExit();
+  // remove /proc/fs/ufsd
+  ufsd_proc_delete();
 
   unregister_filesystem( &ufsd_fs_type );
+
+  //
+  // Deinit UFSD globals
+  //
+  UFSDAPI_main( 1 );
 
 #ifdef UFSD_BIG_UNODE
   kmem_cache_destroy( unode_cachep );
 #endif
 #ifndef UFSD_TRACE_SILENT
-  printk(KERN_NOTICE QUOTED_UFSD_DEVICE": driver unloaded\n");
+  printk( KERN_NOTICE QUOTED_UFSD_DEVICE": driver unloaded\n" );
 #endif
 #ifdef UFSD_DEBUG_ALLOC
-  ASSERT(0 == TotalAllocs);
+  assert(0 == TotalAllocs);
   TraceMemReport( 1 );
   list_for_each_safe( pos, pos2, &TotalAllocHead )
   {
@@ -11774,24 +12573,27 @@ __exit ufsd_exit(void)
     else
       kfree( block );
   }
-  DebugTrace(0, UFSD_LEVEL_ERROR, ("WaitMutex: %u msec\n", jiffies_to_msecs( WaitMutex ) ) );
-  DebugTrace(0, UFSD_LEVEL_ERROR, ("HZ=%u\n", (unsigned)HZ ));
+  DebugTrace(0, UFSD_LEVEL_ERROR, ("inuse = %u msec, wait = %u msec, HZ=%u\n", jiffies_to_msecs( jiffies - StartJiffies ), jiffies_to_msecs( WaitMutex ), (unsigned)HZ ));
 #endif
   CloseTrace();
 }
 
+//
+// And now the modules code and kernel interface.
+//
 MODULE_DESCRIPTION("Paragon " QUOTED_UFSD_DEVICE " driver");
 MODULE_AUTHOR("Andrey Shedel & Alexander Mamaev");
 MODULE_LICENSE("Commercial product");
 
 #ifdef UFSD_TRACE
-  module_param_string(trace, ufsd_trace_level, sizeof(ufsd_trace_level), S_IRUGO);
-  MODULE_PARM_DESC(trace, " trace level for ufsd module");
-  module_param_string(log,ufsd_trace_file,sizeof(ufsd_trace_file), S_IRUGO);
-  MODULE_PARM_DESC(log, " ufsd log file, default is system log");
-  module_param_named(cycle, UFSD_CycleMB, ulong, S_IRUGO);
-  MODULE_PARM_DESC(cycle, " the size of cycle log in MB, default is 0");
+module_param_string(trace, ufsd_trace_level, sizeof(ufsd_trace_level), S_IRUGO);
+MODULE_PARM_DESC(trace, " trace level for ufsd module");
+module_param_string(log,ufsd_trace_file,sizeof(ufsd_trace_file), S_IRUGO);
+MODULE_PARM_DESC(log, " ufsd log file, default is system log");
+module_param_named(cycle, UFSD_CycleMB, ulong, S_IRUGO);
+MODULE_PARM_DESC(cycle, " the size of cycle log in MB, default is 0");
 #endif
+
 
 #if defined HAVE_DECL_EXPORT_NO_SYMBOLS && HAVE_DECL_EXPORT_NO_SYMBOLS
 EXPORT_NO_SYMBOLS;

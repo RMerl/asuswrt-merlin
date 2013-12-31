@@ -23,13 +23,56 @@ var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 
 function initial(){
 	show_menu();
+
+	if('<% nvram_get("ctf_fa_mode"); %>' != ''){
+		document.form.ctf_level.length = 0;
+		add_option(document.form.ctf_level, "<#WLANConfig11b_WirelessCtrl_buttonname#>", 0, getCtfLevel(0));
+		add_option(document.form.ctf_level, "Level 1 CTF", 1, getCtfLevel(1));
+		add_option(document.form.ctf_level, "Level 2 CTF", 2, getCtfLevel(2));
+	}
+}
+
+/*
+					ctf_disable_force   ctf_fa_mode
+Disable   1                   0
+Level 1   0                   0
+Level 2   0                   2 
+
+*/
+function getCtfLevel(val){
+	var curVal;
+
+	if(document.form.ctf_disable_force.value == 0 && document.form.ctf_fa_mode.value == 0)
+		curVal = 1;
+	else if(document.form.ctf_disable_force.value == 0 && document.form.ctf_fa_mode.value == 2)
+		curVal = 2;
+	else
+		curVal = 0;
+
+	if(curVal == val)
+		return true;
+	else
+		return false;
 }
 
 function applyRule(){
-		if(valid_form()){
-				showLoading();
-				document.form.submit();	
-		}
+	if(document.form.ctf_level.value == 1){
+		document.form.ctf_disable_force.value = 0;
+		document.form.ctf_fa_mode.value = 0;
+	}
+	else if(document.form.ctf_level.value == 2){
+		document.form.ctf_disable_force.value = 0;
+		document.form.ctf_fa_mode.value = 2;
+	}
+	else{
+		document.form.ctf_disable_force.value = 1;
+		document.form.ctf_fa_mode.value = 0;
+	}
+
+	if(valid_form()){
+			showLoading();
+			document.form.submit();	
+	}
 }
 
 function valid_form(){		
@@ -65,7 +108,6 @@ function valid_form(){
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
 <input type="hidden" name="current_page" value="Advanced_SwitchCtrl_Content.asp">
 <input type="hidden" name="next_page" value="Advanced_SwitchCtrl_Content.asp">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="group_id" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
@@ -73,6 +115,8 @@ function valid_form(){
 <input type="hidden" name="action_wait" value="60">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
+<input type="hidden" name="ctf_fa_mode" value="<% nvram_get("ctf_fa_mode"); %>">
+<input type="hidden" name="ctf_disable_force" value="<% nvram_get("ctf_disable_force"); %>">
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
   <tr>
@@ -103,15 +147,19 @@ function valid_form(){
       <tr>
       <th><!--a class="hintstyle" href="javascript:void(0);" onClick="openHint(4,4);"--><#jumbo_frame#><!--/a--></th>
           <td>
-              <input type="radio" name="jumbo_frame_enable" value="1" <% nvram_match("jumbo_frame_enable", "1", "checked"); %>><#checkbox_Yes#>
-              <input type="radio" name="jumbo_frame_enable" value="0" <% nvram_match("jumbo_frame_enable", "0", "checked"); %>><#checkbox_No#>
+						<select name="jumbo_frame_enable" class="input_option">
+							<option class="content_input_fd" value="0" <% nvram_match("jumbo_frame_enable", "0","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+							<option class="content_input_fd" value="1" <% nvram_match("jumbo_frame_enable", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
+						</select>
           </td>
       </tr>
       <tr>
-      <th><!--a class="hintstyle" href="javascript:void(0);" onClick="openHint(4,);"--><#ctf_enable#><!--/a--></th>
-           <td>
-              <input type="radio" name="ctf_disable_force" value="0" <% nvram_match("ctf_disable_force", "0", "checked"); %>><#checkbox_Yes#>
-              <input type="radio" name="ctf_disable_force" value="1" <% nvram_match("ctf_disable_force", "1", "checked"); %>><#checkbox_No#>
+      <th>NAT Acceleration</th>
+          <td>
+						<select name="ctf_level" class="input_option">
+							<option class="content_input_fd" value="0" <% nvram_match("ctf_disable_force", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+							<option class="content_input_fd" value="1" <% nvram_match("ctf_disable_force", "0","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
+						</select>
           </td>
       </tr>     
 	    <tr style="display:none">
@@ -121,13 +169,15 @@ function valid_form(){
 	              <input type="radio" name="gro_disable_force" value="1" <% nvram_match("gro_disable_force", "1", "checked"); %>><#checkbox_No#>
  	          </td>
 	      </tr>
-		<tr>
-		<th>Spanning-Tree Protocol</th>
-			<td>
-				<input type="radio" name="lan_stp" value="1" <% nvram_match("lan_stp", "1", "checked"); %>><#checkbox_Yes#>
-				<input type="radio" name="lan_stp" value="0" <% nvram_match("lan_stp", "0", "checked"); %>><#checkbox_No#>
-			</td>
-		</tr>
+      <tr>
+          <th>Spanning-Tree Protocol</th>
+              <td>
+				                <select name="lan_stp" class="input_option">
+						        <option class="content_input_fd" value="0" <% nvram_match("lan_stp", "0","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+						        <option class="content_input_fd" value="1" <% nvram_match("lan_stp", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
+                                                </select>
+              </td>
+      </tr>
 
 			</table>	
 

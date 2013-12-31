@@ -328,16 +328,18 @@ body {
 	cursor:help;
 }
 .hintstyle2:link{
+	color: #0fd517;
+	font-weight:bold;
 	text-decoration:none;
 	cursor:help;
-	border-bottom:1px dashed #069;
+	border-bottom:1px solid #0fd517;
 }
 .hintstyle2:hover{
-	color: #FF6600;
-	font-weight:bold;
-	border-bottom:1px dashed #069;
+	color: #0fd517;
+	font-weight:bold;	
 	text-decoration:none;
 	cursor:help;
+	border-bottom:1px solid #0fd517;
 }
 /**************Add by kcol***************/
 

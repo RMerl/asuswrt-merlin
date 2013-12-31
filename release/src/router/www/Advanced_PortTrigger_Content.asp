@@ -28,11 +28,19 @@ var autofw_rulelist_array = "<% nvram_char_to_ascii("","autofw_rulelist"); %>";
 
 function initial(){
 	show_menu(); 
-	load_body(); 
+	well_known_apps(); 
 	showautofw_rulelist();
 	addOnlineHelp($("faq"), ["ASUSWRT", "port", "trigger"]);
 }
 
+function well_known_apps(){
+	wItem = new Array(new Array("Quicktime 4 Client", "554", "TCP", "6970:32000", "UDP"),new Array("Real Audio", "7070", "TCP", "6970:7170", "UDP"));
+	free_options(document.form.TriggerKnownApps);
+	add_option(document.form.TriggerKnownApps, "<#Select_menu_default#>", "User Defined", 1);
+	for (i = 0; i < wItem.length; i++){
+		add_option(document.form.TriggerKnownApps, wItem[i][0], wItem[i][0], 0);
+	}
+}
 function applyRule(){
 	var rule_num = $('autofw_rulelist_table').rows.length;
 	var item_num = $('autofw_rulelist_table').rows[0].cells.length;
@@ -247,7 +255,6 @@ function trigger_validate_duplicate(o, v, l, off){
 <form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
 <input type="hidden" name="current_page" value="Advanced_PortTrigger_Content.asp">
 <input type="hidden" name="next_page" value="">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_wait" value="5">
@@ -256,7 +263,6 @@ function trigger_validate_duplicate(o, v, l, off){
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="autofw_rulelist" value=''>
-
 <input type="hidden" name="autofw_num_x_0" value="<% nvram_get("autofw_num_x"); %>" readonly="1" />
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
@@ -324,7 +330,7 @@ function trigger_validate_duplicate(o, v, l, off){
             	<th><#IPConnection_VServerProto_itemname#></th>
             	<th><#IPConnection_autofwInPort_itemname#></th>
             	<th><#IPConnection_VServerProto_itemname#></th>            
-            	<th>Add / Delete</th>
+            	<th><#list_add_delete#></th>
   	        </tr>
           
 	          <tr>

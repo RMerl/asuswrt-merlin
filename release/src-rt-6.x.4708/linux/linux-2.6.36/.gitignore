@@ -81,5 +81,6 @@ GTAGS
 \#*#
 config_
 config_current
+config_rt*
 save-config
 

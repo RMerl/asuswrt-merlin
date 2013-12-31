@@ -159,7 +159,8 @@ int iface_check(int family, struct all_addr *addr, char *name, int *auth)
   for (tmp = daemon->authinterface; tmp; tmp = tmp->next)
     if (tmp->name)
       {
-	if (strcmp(tmp->name, name) == 0)
+	if (strcmp(tmp->name, name) == 0 &&
+	    (tmp->addr.sa.sa_family == 0 || tmp->addr.sa.sa_family == family))
 	  break;
       }
     else if (addr && tmp->addr.sa.sa_family == AF_INET && family == AF_INET &&
@@ -239,7 +240,7 @@ struct iface_param {
 };
 
 static int iface_allowed(struct iface_param *param, int if_index, char *label,
-			 union mysockaddr *addr, struct in_addr netmask, int dad) 
+			 union mysockaddr *addr, struct in_addr netmask, int prefixlen, int dad) 
 {
   struct irec *iface;
   int mtu = 0, loopback;
@@ -250,6 +251,8 @@ static int iface_allowed(struct iface_param *param, int if_index, char *label,
 #if defined(HAVE_DHCP) || defined(HAVE_TFTP)
   struct iname *tmp;
 #endif
+
+  (void)prefixlen;
 
   if (!indextoname(param->fd, if_index, ifr.ifr_name) ||
       ioctl(param->fd, SIOCGIFFLAGS, &ifr) == -1)
@@ -267,17 +270,71 @@ static int iface_allowed(struct iface_param *param, int if_index, char *label,
     label = ifr.ifr_name;
 
   
-  /* Update addresses from interface_names. These are a set independent
-     of the set we're listening on. */  
 #ifdef HAVE_IPV6
   if (addr->sa.sa_family != AF_INET6 || !IN6_IS_ADDR_LINKLOCAL(&addr->in6.sin6_addr))
 #endif
     {
       struct interface_name *int_name;
       struct addrlist *al;
+#ifdef HAVE_AUTH
+      struct auth_zone *zone;
+      struct auth_name_list *name;
 
+      /* Find subnets in auth_zones */
+      for (zone = daemon->auth_zones; zone; zone = zone->next)
+	for (name = zone->interface_names; name; name = name->next)
+	  if (wildcard_match(name->name, label))
+	    {
+	      if (addr->sa.sa_family == AF_INET && (name->flags & AUTH4))
+		{
+		  if (param->spare)
+		    {
+		      al = param->spare;
+		      param->spare = al->next;
+		    }
+		  else
+		    al = whine_malloc(sizeof(struct addrlist));
+		  
+		  if (al)
+		    {
+		      al->next = zone->subnet;
+		      zone->subnet = al;
+		      al->prefixlen = prefixlen;
+		      al->addr.addr.addr4 = addr->in.sin_addr;
+		      al->flags = 0;
+		    }
+		}
+	      
+#ifdef HAVE_IPV6
+	      if (addr->sa.sa_family == AF_INET6 && (name->flags & AUTH6))
+		{
+		  if (param->spare)
+		    {
+		      al = param->spare;
+		      param->spare = al->next;
+		    }
+		  else
+		    al = whine_malloc(sizeof(struct addrlist));
+		  
+		  if (al)
+		    {
+		      al->next = zone->subnet;
+		      zone->subnet = al;
+		      al->prefixlen = prefixlen;
+		      al->addr.addr.addr6 = addr->in6.sin6_addr;
+		      al->flags = ADDRLIST_IPV6;
+		    }
+		} 
+#endif
+	      
+	    }
+#endif
+       
+      /* Update addresses from interface_names. These are a set independent
+	 of the set we're listening on. */  
       for (int_name = daemon->int_names; int_name; int_name = int_name->next)
-	if (strncmp(label, int_name->intr, IF_NAMESIZE) == 0)
+	if (strncmp(label, int_name->intr, IF_NAMESIZE) == 0 && 
+	    (addr->sa.sa_family == int_name->family || int_name->family == 0))
 	  {
 	    if (param->spare)
 	      {
@@ -289,18 +346,19 @@ static int iface_allowed(struct iface_param *param, int if_index, char *label,
 	    
 	    if (al)
 	      {
+		al->next = int_name->addr;
+		int_name->addr = al;
+		
 		if (addr->sa.sa_family == AF_INET)
 		  {
 		    al->addr.addr.addr4 = addr->in.sin_addr;
-		    al->next = int_name->addr4;
-		    int_name->addr4 = al;
+		    al->flags = 0;
 		  }
 #ifdef HAVE_IPV6
 		else
 		 {
 		    al->addr.addr.addr6 = addr->in6.sin6_addr;
-		    al->next = int_name->addr6;
-		    int_name->addr6 = al;
+		    al->flags = ADDRLIST_IPV6;
 		 } 
 #endif
 	      }
@@ -313,6 +371,7 @@ static int iface_allowed(struct iface_param *param, int if_index, char *label,
     if (sockaddr_isequal(&iface->addr, addr))
       {
 	iface->dad = dad;
+	iface->found = 1; /* for garbage collection */
 	return 1;
       }
 
@@ -387,6 +446,7 @@ static int iface_allowed(struct iface_param *param, int if_index, char *label,
       iface->dns_auth = auth_dns;
       iface->mtu = mtu;
       iface->dad = dad;
+      iface->found = 1;
       iface->done = iface->multicast_done = iface->warned = 0;
       iface->index = if_index;
       if ((iface->name = whine_malloc(strlen(ifr.ifr_name)+1)))
@@ -413,7 +473,6 @@ static int iface_allowed_v6(struct in6_addr *local, int prefix,
   struct in_addr netmask; /* dummy */
   netmask.s_addr = 0;
 
-  (void)prefix; /* warning */
   (void)scope; /* warning */
   (void)preferred;
   (void)valid;
@@ -425,9 +484,13 @@ static int iface_allowed_v6(struct in6_addr *local, int prefix,
   addr.in6.sin6_family = AF_INET6;
   addr.in6.sin6_addr = *local;
   addr.in6.sin6_port = htons(daemon->port);
-  addr.in6.sin6_scope_id = if_index;
-  
-  return iface_allowed((struct iface_param *)vparam, if_index, NULL, &addr, netmask, !!(flags & IFACE_TENTATIVE));
+  /* FreeBSD insists this is zero for non-linklocal addresses */
+  if (IN6_IS_ADDR_LINKLOCAL(local))
+    addr.in6.sin6_scope_id = if_index;
+  else
+    addr.in6.sin6_scope_id = 0;
+
+  return iface_allowed((struct iface_param *)vparam, if_index, NULL, &addr, netmask, prefix, !!(flags & IFACE_TENTATIVE));
 }
 #endif
 
@@ -435,6 +498,7 @@ static int iface_allowed_v4(struct in_addr local, int if_index, char *label,
 			    struct in_addr netmask, struct in_addr broadcast, void *vparam)
 {
   union mysockaddr addr;
+  int prefix, bit;
 
   memset(&addr, 0, sizeof(addr));
 #ifdef HAVE_SOCKADDR_SA_LEN
@@ -445,7 +509,10 @@ static int iface_allowed_v4(struct in_addr local, int if_index, char *label,
   addr.in.sin_addr = local;
   addr.in.sin_port = htons(daemon->port);
 
-  return iface_allowed((struct iface_param *)vparam, if_index, label, &addr, netmask, 0);
+  /* determine prefix length from netmask */
+  for (prefix = 32, bit = 1; (bit & ntohl(netmask.s_addr)) == 0 && prefix != 0; bit = bit << 1, prefix--);
+
+  return iface_allowed((struct iface_param *)vparam, if_index, label, &addr, netmask, prefix, 0);
 }
    
 int enumerate_interfaces(int reset)
@@ -456,7 +523,11 @@ int enumerate_interfaces(int reset)
   int errsave, ret = 1;
   struct addrlist *addr, *tmp;
   struct interface_name *intname;
-  
+  struct irec *iface;
+#ifdef HAVE_AUTH
+  struct auth_zone *zone;
+#endif
+
   /* Do this max once per select cycle  - also inhibits netlink socket use
    in TCP child processes. */
 
@@ -477,30 +548,45 @@ int enumerate_interfaces(int reset)
   if ((param.fd = socket(PF_INET, SOCK_DGRAM, 0)) == -1)
     return 0;
  
+  /* Mark interfaces for garbage collection */
+  for (iface = daemon->interfaces; iface; iface = iface->next) 
+    iface->found = 0;
+
   /* remove addresses stored against interface_names */
   for (intname = daemon->int_names; intname; intname = intname->next)
     {
-      for (addr = intname->addr4; addr; addr = tmp)
+      for (addr = intname->addr; addr; addr = tmp)
 	{
 	  tmp = addr->next;
 	  addr->next = spare;
 	  spare = addr;
 	}
       
-      intname->addr4 = NULL;
-
-#ifdef HAVE_IPV6
-      for (addr = intname->addr6; addr; addr = tmp)
-	{
-	  tmp = addr->next;
-	  addr->next = spare;
-	  spare = addr;
-	} 
-      
-      intname->addr6 = NULL;
-#endif
+      intname->addr = NULL;
     }
-  
+
+#ifdef HAVE_AUTH
+  /* remove addresses stored against auth_zone subnets, but not 
+   ones configured as address literals */
+  for (zone = daemon->auth_zones; zone; zone = zone->next)
+    if (zone->interface_names)
+      {
+	struct addrlist **up;
+	for (up = &zone->subnet, addr = zone->subnet; addr; addr = tmp)
+	  {
+	    tmp = addr->next;
+	    if (addr->flags & ADDRLIST_LITERAL)
+	      up = &addr->next;
+	    else
+	      {
+		*up = addr->next;
+		addr->next = spare;
+		spare = addr;
+	      }
+	  }
+      }
+#endif
+
   param.spare = spare;
   
 #ifdef HAVE_IPV6
@@ -512,11 +598,47 @@ int enumerate_interfaces(int reset)
  
   errsave = errno;
   close(param.fd);
+  
+  if (option_bool(OPT_CLEVERBIND))
+    { 
+      /* Garbage-collect listeners listening on addresses that no longer exist.
+	 Does nothing when not binding interfaces or for listeners on localhost, 
+	 since the ->iface field is NULL. Note that this needs the protections
+	 against re-entrancy, hence it's here.  It also means there's a possibility,
+	 in OPT_CLEVERBIND mode, that at listener will just disappear after
+	 a call to enumerate_interfaces, this is checked OK on all calls. */
+      struct listener *l, *tmp, **up;
+      
+      for (up = &daemon->listeners, l = daemon->listeners; l; l = tmp)
+	{
+	  tmp = l->next;
+	  
+	  if (!l->iface || l->iface->found)
+	    up = &l->next;
+	  else
+	    {
+	      *up = l->next;
+	      
+	      /* In case it ever returns */
+	      l->iface->done = 0;
+	      
+	      if (l->fd != -1)
+		close(l->fd);
+	      if (l->tcpfd != -1)
+		close(l->tcpfd);
+	      if (l->tftpfd != -1)
+		close(l->tftpfd);
+	      
+	      free(l);
+	    }
+	}
+    }
+  
   errno = errsave;
-
+  
   spare = param.spare;
   active = 0;
-
+  
   return ret;
 }
 
@@ -539,7 +661,7 @@ static int make_sock(union mysockaddr *addr, int type, int dienow)
   
   if ((fd = socket(family, type, 0)) == -1)
     {
-      int port;
+      int port, errsav;
       char *s;
 
       /* No error if the kernel just doesn't support this IP flavour */
@@ -549,6 +671,7 @@ static int make_sock(union mysockaddr *addr, int type, int dienow)
 	return -1;
       
     err:
+      errsav = errno;
       port = prettyprint_addr(addr, daemon->addrbuff);
       if (!option_bool(OPT_NOWILD) && !option_bool(OPT_CLEVERBIND))
 	sprintf(daemon->addrbuff, "port %d", port);
@@ -556,6 +679,8 @@ static int make_sock(union mysockaddr *addr, int type, int dienow)
       
       if (fd != -1)
 	close (fd);
+	
+      errno = errsav;
       
       if (dienow)
 	{
@@ -586,9 +711,9 @@ static int make_sock(union mysockaddr *addr, int type, int dienow)
       if (listen(fd, 5) == -1)
 	goto err;
     }
-  else if (!option_bool(OPT_NOWILD))
+  else if (family == AF_INET)
     {
-      if (family == AF_INET)
+      if (!option_bool(OPT_NOWILD))
 	{
 #if defined(HAVE_LINUX_NETWORK) 
 	  if (setsockopt(fd, IPPROTO_IP, IP_PKTINFO, &opt, sizeof(opt)) == -1)
@@ -599,11 +724,11 @@ static int make_sock(union mysockaddr *addr, int type, int dienow)
 	    goto err;
 #endif
 	}
-#ifdef HAVE_IPV6
-      else if (!set_ipv6pktinfo(fd))
-	goto err;
-#endif
     }
+#ifdef HAVE_IPV6
+  else if (!set_ipv6pktinfo(fd))
+    goto err;
+#endif
   
   return fd;
 }
@@ -751,7 +876,8 @@ static struct listener *create_listeners(union mysockaddr *addr, int do_tftp, in
       l->family = addr->sa.sa_family;
       l->fd = fd;
       l->tcpfd = tcpfd;
-      l->tftpfd = tftpfd;
+      l->tftpfd = tftpfd;	
+      l->iface = NULL;
     }
 
   return l;
@@ -798,7 +924,7 @@ void create_bound_listeners(int dienow)
   struct iname *if_tmp;
 
   for (iface = daemon->interfaces; iface; iface = iface->next)
-    if (!iface->done && !iface->dad && 
+    if (!iface->done && !iface->dad && iface->found &&
 	(new = create_listeners(&iface->addr, iface->tftp_ok, dienow)))
       {
 	new->iface = iface;
@@ -822,7 +948,6 @@ void create_bound_listeners(int dienow)
     if (!if_tmp->used && 
 	(new = create_listeners(&if_tmp->addr, !!option_bool(OPT_TFTP), dienow)))
       {
-	new->iface = NULL;
 	new->next = daemon->listeners;
 	daemon->listeners = new;
       }
@@ -836,6 +961,9 @@ void create_bound_listeners(int dienow)
 
    The fix is to use --bind-dynamic, which actually checks the arrival interface too.
    Tough if your platform doesn't support this.
+
+   Note that checking the arrival interface is supported in the standard IPv6 API and
+   always done, so we don't warn about any IPv6 addresses here.
 */
 
 void warn_bound_listeners(void)
@@ -844,43 +972,34 @@ void warn_bound_listeners(void)
   int advice = 0;
 
   for (iface = daemon->interfaces; iface; iface = iface->next)
-    if (option_bool(OPT_NOWILD) && !iface->dns_auth)
+    if (!iface->dns_auth)
       {
-	int warn = 0;
 	if (iface->addr.sa.sa_family == AF_INET)
 	  {
 	    if (!private_net(iface->addr.in.sin_addr, 1))
 	      {
 		inet_ntop(AF_INET, &iface->addr.in.sin_addr, daemon->addrbuff, ADDRSTRLEN);
-		warn = 1;
+		iface->warned = advice = 1;
+		my_syslog(LOG_WARNING, 
+			  _("LOUD WARNING: listening on %s may accept requests via interfaces other than %s"),
+			  daemon->addrbuff, iface->name);
 	      }
-	  }
-#ifdef HAVE_IPV6
-	else
-	  {
-	    if (!IN6_IS_ADDR_LINKLOCAL(&iface->addr.in6.sin6_addr) &&
-		!IN6_IS_ADDR_SITELOCAL(&iface->addr.in6.sin6_addr) &&
-		!IN6_IS_ADDR_ULA(&iface->addr.in6.sin6_addr) &&
-		!IN6_IS_ADDR_LOOPBACK(&iface->addr.in6.sin6_addr))
-	      {
-		inet_ntop(AF_INET6, &iface->addr.in6.sin6_addr, daemon->addrbuff, ADDRSTRLEN);
-		warn = 1;
-	      }
-	  }
-#endif
-	if (warn)
-	  {
-	    iface->warned = advice = 1;
-	    my_syslog(LOG_WARNING, 
-		      _("LOUD WARNING: listening on %s may accept requests via interfaces other than %s. "),
-		      daemon->addrbuff, iface->name);
 	  }
       }
   
   if (advice)
-    my_syslog(LOG_WARNING, _("LOUD WARNING: use --bind-dynamic rather than --bind-interfaces to avoid DNS amplification attacks via these interface(s).")); 
+    my_syslog(LOG_WARNING, _("LOUD WARNING: use --bind-dynamic rather than --bind-interfaces to avoid DNS amplification attacks via these interface(s)")); 
 }
 
+void warn_int_names(void)
+{
+  struct interface_name *intname;
+ 
+  for (intname = daemon->int_names; intname; intname = intname->next)
+    if (!intname->addr)
+      my_syslog(LOG_WARNING, _("warning: no addresses found for interface %s"), intname->intr);
+}
+ 
 int is_dad_listeners(void)
 {
   struct irec *iface;

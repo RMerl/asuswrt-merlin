@@ -10,7 +10,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: rwl_wifi.h 393460 2013-03-27 19:43:28Z $
+ * $Id: rwl_wifi.h 419467 2013-08-21 09:19:48Z $
  *
  */
 

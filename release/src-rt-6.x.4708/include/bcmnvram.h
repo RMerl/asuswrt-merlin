@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmnvram.h 401759 2013-05-13 16:08:08Z $
+ * $Id: bcmnvram.h 419467 2013-08-21 09:19:48Z $
  */
 
 #ifndef _bcmnvram_h_
@@ -205,7 +205,7 @@ extern int nvram_space;
 #define NVRAM_VERSION		1
 #define NVRAM_HEADER_SIZE	20
 /* This definition is for precommit staging, and will be removed */
-#define NVRAM_SPACE             0x10000
+#define NVRAM_SPACE		0x10000
 /* For CFE builds this gets passed in thru the makefile */
 #ifndef MAX_NVRAM_SPACE
 #define MAX_NVRAM_SPACE		0x10000

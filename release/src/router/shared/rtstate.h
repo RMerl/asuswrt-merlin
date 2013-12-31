@@ -1,5 +1,6 @@
 #ifndef __RTSTATE_H__
 #define __RTSTATE_H__
+#include <rtconfig.h>
 
 enum {
 	SW_MODE_NONE=0,
@@ -97,7 +98,7 @@ enum {
 	LAN_STOPPED_REASON_SYSTEM_ERR
 };
 
-#if defined(CONFIG_BCMWL5) || defined(MTK_APCLI)
+#if defined(CONFIG_BCMWL5) || (defined(RTCONFIG_RALINK) && defined(RTCONFIG_WIRELESSREPEATER))
 enum { 
 	WLC_STATE_INITIALIZING=0,
 	WLC_STATE_CONNECTING,
@@ -230,7 +231,6 @@ enum {
 
 #endif
 
-#ifdef RTCONFIG_DUALWAN
 // the following definition is for wans_cap
 #define WANSCAP_DSL	0x01
 #define WANSCAP_WAN	0x02
@@ -247,7 +247,6 @@ enum {
 #define WANS_DUALWAN_IF_USB	4
 #define WANS_DUALWAN_IF_2G	5
 #define WANS_DUALWAN_IF_5G	6
-#endif
 
 // the following definition is for free_caches()
 #define FREE_MEM_NONE  "0"

@@ -113,7 +113,7 @@ function genWANSoption(){
 /* end of DualWAN */ 
 	
 function initial(){
-	$('pull_arrow').title = Untranslated.select_APN_service;
+	$('pull_arrow').title = "<#select_APN_service#>";
 	show_menu();
 	genWANSoption();
 	switch_modem_mode('<% nvram_get("modem_enable"); %>');
@@ -546,7 +546,6 @@ function check_dongle_status(){
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
 <input type="hidden" name="current_page" value="Advanced_Modem_Content.asp">
 <input type="hidden" name="next_page" value="Advanced_Modem_Content.asp">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="reboot">
@@ -583,7 +582,7 @@ function check_dongle_status(){
 								<span class="formfonttitle"><#menu5_4_4#></span>
 							</td>
 							<td align="right">
-								<img onclick="go_setting('/APP_Installation.asp')" align="right" style="cursor:pointer;position:absolute;margin-left:-20px;margin-top:-30px;" title="Back to USB Extension" src="/images/backprev.png" onMouseOver="this.src='/images/backprevclick.png'" onMouseOut="this.src='/images/backprev.png'">
+								<img onclick="go_setting('/APP_Installation.asp')" align="right" style="cursor:pointer;position:absolute;margin-left:-20px;margin-top:-30px;" title="<#Menu_usb_application#>" src="/images/backprev.png" onMouseOver="this.src='/images/backprevclick.png'" onMouseOut="this.src='/images/backprev.png'">
 							</td>
 						</tr>
 					</table>
@@ -594,11 +593,11 @@ function check_dongle_status(){
 						<table  width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="WANscap">
 							<thead>
 							<tr>
-								<td colspan="2">WAN index</td>
+								<td colspan="2"><#wan_index#></td>
 							</tr>
 							</thead>							
 							<tr>
-								<th>WAN Type</th>
+								<th><#wan_type#></th>
 								<td align="left">
 									<select id="" class="input_option" name="wan_unit" onchange="change_wan_unit();">
 									</select>
@@ -671,7 +670,7 @@ function check_dongle_status(){
 						<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,2);"><#PIN_code#></a></th>
 						<td>
 							<input id="modem_pincode" name="modem_pincode" class="input_20_table" type="password" autocapitalization="off" maxLength="8" value="<% nvram_get("modem_pincode"); %>"/>
-							<br><span id="pincode_status" style="display:none;">There's something wrong with the PIN code. Please correct the PIN code and re-plug in the USB modem. If the error is still existed, please turn off the PIN code with the SIM card and try again.</span>
+							<br><span id="pincode_status" style="display:none;"><#pincode_wrong#></span>
 						</td>
 					</tr>
                                 

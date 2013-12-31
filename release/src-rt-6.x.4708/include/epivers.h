@@ -26,21 +26,21 @@
 
 #define	EPI_RC_NUMBER		14
 
-#define	EPI_INCREMENTAL_NUMBER	34
+#define	EPI_INCREMENTAL_NUMBER	62
 
 #define	EPI_BUILD_NUMBER	0
 
-#define	EPI_VERSION		6, 37, 14, 34
+#define	EPI_VERSION		6, 37, 14, 62
 
-#define	EPI_VERSION_NUM		0x06250e22
+#define	EPI_VERSION_NUM		0x06250e3e
 
 #define EPI_VERSION_DEV		6.37.14
 
 /* Driver Version String, ASCII, 32 chars max */
 #ifdef WLTEST
-#define	EPI_VERSION_STR		"6.37.14.34 (r415984 WLTEST)"
+#define	EPI_VERSION_STR		"6.37.14.62 (r437318 WLTEST)"
 #else
-#define	EPI_VERSION_STR		"6.37.14.34 (r415984)"
+#define	EPI_VERSION_STR		"6.37.14.62 (r437318)"
 #endif
 
 #endif /* _epivers_h_ */

@@ -8,9 +8,7 @@
 #define RAETH_MII_WRITE			0x89F4
 #define RAETH_ESW_INGRESS_RATE		0x89F5
 #define RAETH_ESW_EGRESS_RATE		0x89F6
-#if defined(RTN14U) || defined(RTAC52U)
 #define RAETH_ESW_PHY_DUMP		0x89F7
-#endif
 /* ASUS Ext */
 #define RAETH_ASUS			0x89FF
 
@@ -18,7 +16,7 @@
 #define RAETH_ASUS_RESET		0x0
 #define RAETH_ASUS_STATS		0x1
 
-#if defined(RTN14U) || defined(RTAC52U)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U)
 
 #define REG_ESW_WT_MAC_MFC              0x10
 #define REG_ESW_WT_MAC_ATA1             0x74
@@ -66,7 +64,7 @@
 #define REG_ESW_MAX			0x14C
 #elif defined (CONFIG_RALINK_RT5350)
 #define REG_ESW_MAX                     0x16C
-#elif defined(RTN14U) || defined(RTAC52U)
+#elif defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U)
 #define REG_ESW_MAX			0x7FFFF
 #else //RT305x, RT3350
 #define REG_ESW_MAX			0xFC

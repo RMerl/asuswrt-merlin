@@ -14,7 +14,7 @@ helpcontent[0] = new Array("",
 						   "<#WLANConfig11b_WEPKey_itemtype1#>",
 						   "<#WLANConfig11b_WEPKey_itemtype2#>",
 						   "<#WLANConfig11b_ChannelBW_itemdesc#><br/><#WLANConfig11b_Wireless_Speed_itemname_3#>",
-						   "<#WLANConfig11b_EChannel_itemdesc#>",
+						   "To locate the 40MHz channel in combination with the control channel", //<#WLANConfig11b_EChannel_itemdesc#>
 							 "<#WLANConfig11b_TxPower_help1#>",
 							 "<#WLANConfig11b_TxPower_help#>",
 							 "WEP-64bits: <#WLANConfig11b_WEPKey_itemtype1#><br/>WEP-128bits: <#WLANConfig11b_WEPKey_itemtype2#>",
@@ -65,7 +65,7 @@ helpcontent[3] = new Array("",
 							 "<#WLANConfig11b_x_ACK_desc#>",
 							 "<#WLANConfig11b_x_TurboQAM_desc#>",
 							 "<#WLANConfig11b_x_ReduceUSB3_desc#>",
-							 "Use RTS for AMPDU",
+							 "<#RTS_for_AMPDU#>",
 							 "In multiple AP or wireless router-repeater environment, client sometimes cannot automatically connect to the AP with better signal because it still connect to main wireless router. Enabling this feature would force disconnecting the client and main router when the signal strength is under the threshold and client can choose the AP with better signal."
 							 );
 

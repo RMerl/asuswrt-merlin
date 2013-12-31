@@ -17,7 +17,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: etc47xx.c 411691 2013-07-10 04:19:32Z $
+ * $Id: etc47xx.c 423696 2013-09-13 00:56:28Z $
  */
 
 #include <et_cfg.h>
@@ -974,6 +974,7 @@ chipstatsupd(struct bcm4xxx *ch)
 	 *
 	 * Arbitrarily lump the non-specific dma errors as tx errors.
 	 */
+	etc->rxgiants = ch->di->rxgiants;
 	etc->txerror = m->tx_jabber_pkts + m->tx_oversize_pkts
 		+ m->tx_underruns + m->tx_excessive_cols
 		+ m->tx_late_cols + etc->txnobuf + etc->dmade
@@ -982,7 +983,7 @@ chipstatsupd(struct bcm4xxx *ch)
 		+ m->rx_missed_pkts + m->rx_crc_align_errs
 		+ m->rx_undersize + m->rx_crc_errs
 		+ m->rx_align_errs + m->rx_symbol_errs
-		+ etc->rxnobuf + etc->rxdmauflo + etc->rxoflo + etc->rxbadlen;
+		+ etc->rxnobuf + etc->rxdmauflo + etc->rxoflo + etc->rxbadlen + etc->rxgiants;
 }
 
 static void

@@ -29,6 +29,7 @@
 #  include <net/if_var.h> 
 #endif
 #include <netinet/in_var.h>
+#include <netinet6/in6_var.h>
 
 #ifndef SA_SIZE
 #define SA_SIZE(sa)                                             \
@@ -145,7 +146,7 @@ int iface_enumerate(int family, void *parm, int (*callback)())
 	      int i, j, prefix = 0;
 	      u32 valid = 0xffffffff, preferred = 0xffffffff;
 	      int flags = 0;
-#ifdef HAVE_BSD_NETWORK
+#if defined(HAVE_BSD_NETWORK) && !defined(__APPLE__)
 	      struct in6_ifreq ifr6;
 
 	      memset(&ifr6, 0, sizeof(ifr6));

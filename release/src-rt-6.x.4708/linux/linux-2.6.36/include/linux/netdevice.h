@@ -1063,6 +1063,10 @@ struct net_device {
 
 	/* phy device may attach itself for hardware timestamping */
 	struct phy_device *phydev;
+
+#ifdef BCMFA
+	bool			fa_on;
+#endif
 };
 #define to_net_dev(d) container_of(d, struct net_device, dev)
 

@@ -29,6 +29,7 @@
 #include <et_export.h>	/* for et_fa_xx() routines */
 #include <chipcommonb.h>
 #include <bcmrobo.h>
+#include <etioctl.h>
 
 
 #define ETC_FA_LOCK_INIT(fai)	et_fa_lock_init((fai)->et)
@@ -62,11 +63,6 @@
 	(nhi)->flist[i] = (nhi)->free_idx; \
 	(nhi)->free_idx = i; \
 }
-
-/* FA mode values */
-#define CTF_FA_BYPASS   1
-#define CTF_FA_NORMAL   2
-#define CTF_FA_SW_ACC   3
 
 /* FA dump options */
 #define CTF_FA_DUMP_VALID       1
@@ -191,8 +187,17 @@
 #define	PRINT_POOL_TABLE_HDR(pr, b) pr(b, "%-8s %-17s External\n", "Pool-idx", "Rmap_SA");
 
 #define FA_CAPABLE(rev)		((rev) >= 3)
-#define FA_NVRAM_OVERRIDDEN()	(getintvar(NULL, "fa_overridden") == 2)
-#define FA_FA_UNIT(u)		(((u) == 2) ? TRUE : FALSE)
+#define FA_ON_MODE_VALID()	(getintvar(NULL, "ctf_fa_mode") == CTF_FA_BYPASS || \
+				 getintvar(NULL, "ctf_fa_mode") == CTF_FA_NORMAL)
+
+#define FA_FA_ENET_UNIT		0
+#define FA_AUX_ENET_UNIT	2
+
+#define FA_FA_CORE_UNIT		2
+#define FA_AUX_CORE_UNIT	0
+#define FA_FA_CORE(u)	(((u) == FA_FA_CORE_UNIT) ? TRUE : FALSE)
+#define FA_AUX_CORE(u)	(((u) == FA_AUX_CORE_UNIT) ? TRUE : FALSE)
+
 #define	FA_NAPT(fai)		((fa_info_t *)(fai))->napt
 #define FA_NAPT_TPL_CMP(p, v6, sip, dip, proto, sp, dp) \
 	(!(((v6) ? memcmp(p->sip, sip, 32) : \
@@ -216,51 +221,6 @@
 	sum = ((sum >> 16) + (sum & 0xffff)); \
 	(((sum >> 8) + (sum & 0xff)) & (FA_NAPT_SZ - 1)); \
 })
-
-typedef struct {
-	union {
-#ifdef BIG_ENDIAN
-		struct {
-			uint32_t	op_code		:3; /* 31:29 */
-			uint32_t	reserved	:5; /* 28:24 */
-			uint32_t	cl_id		:8; /* 23:16 */
-			uint32_t	reason_code	:8; /* 15:8  */
-			uint32_t	tc		:3; /* 7:5   */
-			uint32_t	src_pid		:5; /* 4:0   */
-		} oc0;
-		struct {
-			uint32_t	op_code		:3; /* 31:29 */
-			uint32_t	reserved	:2; /* 28:27 */
-			uint32_t	all_bkts_full	:1; /* 26    */
-			uint32_t	bkt_id		:2; /* 25:24 */
-			uint32_t	napt_flow_id	:8; /* 23:16 */
-			uint32_t	hdr_chk_result	:8; /* 15:8  */
-			uint32_t	tc		:3; /* 7:5   */
-			uint32_t	src_pid		:5; /* 4:0   */
-		} oc10;
-#else
-		struct {
-			uint32_t	src_pid		:5; /* 4:0   */
-			uint32_t	tc		:3; /* 7:5   */
-			uint32_t	reason_code	:8; /* 15:8  */
-			uint32_t	cl_id		:8; /* 23:16 */
-			uint32_t	reserved	:5; /* 28:24 */
-			uint32_t	op_code		:3; /* 31:29 */
-		} oc0;
-		struct {
-			uint32_t	src_pid		:5; /* 4:0   */
-			uint32_t	tc		:3; /* 7:5   */
-			uint32_t	hdr_chk_result	:8; /* 15:8  */
-			uint32_t	napt_flow_id	:8; /* 23:16 */
-			uint32_t	bkt_id		:2; /* 25:24 */
-			uint32_t	all_bkts_full	:1; /* 26    */
-			uint32_t	reserved	:2; /* 28:27 */
-			uint32_t	op_code		:3; /* 31:29 */
-		} oc10;
-#endif /* BIG_ENDIAN */
-		uint32_t word;
-	};
-} bcm_hdr_t;
 
 typedef int (* print_buf_t)(void *buf, const char *f, ...);
 
@@ -320,7 +280,7 @@ typedef struct fa_info {
 	bool			enabled;
 	void			*fadevid;	/* Ref to gmac connected to FA */
 	fa_napt_t		**napt;		/* NAPT connection cache table */
-	bool			ftable[CTF_MAX_FLOW_TABLE]; /* Indicate HW napt index used */
+	fa_napt_t		*ftable[CTF_MAX_FLOW_TABLE]; /* Indicate HW napt index used */
 	uint8			acc_mode;	/* Flow accelarator mode */
 	uint16			nflows;		/* Keep track of no o flfows in NAPT flow table */
 	next_hop_t		nhi;		/* Next hop info */
@@ -331,16 +291,93 @@ typedef struct fa_info {
 
 static fa_info_t *aux_dev = NULL;
 static fa_info_t *fa_dev = NULL;
-static bool fa_fs_created = FALSE;
+static void *fa_proc = NULL;
+
+/* Use SW hash by default */
+/* SW hash CCITT polynomial (0 5 12 16): X16+X12+X5 +1 */
+#ifdef BCMFA_HW_HASH
+#define HW_HASH()	1
+#else
+#define HW_HASH()	0
+#endif
+
+#define P_CCITT 0x1021
+static unsigned short crcccitt_tab[256];
+
+static void
+init_crcccitt_tab(void)
+{
+
+	int i, j;
+	unsigned short crc, c;
+
+	for (i = 0; i < 256; i++) {
+		crc = 0;
+		c = ((unsigned short) i) << 8;
+
+		for (j = 0; j < 8; j++) {
+
+			if ((crc ^ c) & 0x8000)
+				crc = (crc << 1) ^ P_CCITT;
+			else
+				crc = crc << 1;
+
+			c = c << 1;
+		}
+		crcccitt_tab[i] = crc;
+	}
+}
+
+static unsigned short
+update_crc_ccitt(unsigned short crc, char c)
+{
+	unsigned short tmp, short_c;
+
+	short_c  = 0x00ff & (unsigned short) c;
+
+	tmp = (crc >> 8) ^ short_c;
+	crc = (crc << 8) ^ crcccitt_tab[tmp];
+
+	return crc;
+
+}
+
+static unsigned short
+fa_crc_ccitt(ctf_ipc_t *ipc)
+{
+	int i;
+	unsigned short crc_ccitt = 0;
+	unsigned char istr[13];
+
+	memset(istr, 0, sizeof(istr));
+	memcpy(&istr[1], (unsigned char *)&ipc->tuple.sip[0], 4);
+	memcpy(&istr[5], (unsigned char *)&ipc->tuple.dip[0], 4);
+	memcpy(&istr[9], (unsigned char *)&ipc->tuple.sp, sizeof(ipc->tuple.sp));
+	memcpy(&istr[11], (unsigned char *)&ipc->tuple.dp, sizeof(ipc->tuple.dp));
+
+	/* LSH 1 + sip + dip , just do idx 0 ~ 7 */
+	for (i = 0; i < 8; i++)
+		istr[i] = (istr[i] << 1) | (istr[i+1] >> 7);
+
+	/* idx 8 */
+	istr[i] = istr[i] << 1;
+	if (ipc->tuple.proto == 6)
+		istr[i] |= 1;
+
+	for (i = 0; i < sizeof(istr); i++)
+		crc_ccitt = update_crc_ccitt(crc_ccitt, istr[i]);
+
+	return crc_ccitt;
+}
 
 static bool
-fa_corereg(fa_info_t *fai, uint unit)
+fa_corereg(fa_info_t *fai, uint coreunit)
 {
 	uint32 idx = si_coreidx(fai->sih);
 
 	/* GMAC-2 connect FA but FA regs fall in GMAC-3 corereg space so using GMAC-3 as base. */
-	if (unit == 2) {
-		si_setcore(fai->sih, GMAC_CORE_ID, unit);
+	if (coreunit == 2) {
+		si_setcore(fai->sih, GMAC_CORE_ID, coreunit);
 		fai->fadevid = (void *)si_addrspace(fai->sih, 0);
 		if ((fai->regs = si_setcore(fai->sih, GMAC_CORE_ID, 3)))
 			fai->regs = (faregs_t *) ((uint8 *)fai->regs + FA_BASE_OFFSET);
@@ -780,23 +817,22 @@ done:
 }
 
 static void
-fa_napt_prep_ipv4_word(fa_info_t *fai, fa_napt_t *napt, fa_napt_ioctl_t *par, uint32 *tbl)
+fa_napt_prep_ipv4_word(fa_info_t *fai, fa_napt_t *napt, ctf_ipc_t *ipc, uint32 *tbl)
 {
-	uint external = (par->external == ETFA_NP_INTERNAL) ? CTF_NP_INTERNAL : CTF_NP_EXTERNAL;
 	memset(tbl, 0, sizeof(uint32) * CTF_DATA_SIZE);
 
 	tbl[1] = (napt->nfi.action << 3) | (napt->nfi.tgt_dma << 5) | (napt->pool_idx << 6) |
-		(napt->nh_idx << 8) | ((NTOH32(par->nat_ip[0]) & 0x1FFFF) << 15);
-	tbl[2] = ((NTOH32(par->nat_ip[0]) & 0xFFFE0000) >> 17) | (NTOH16(par->nat_port) << 15) |
-		((NTOH16(par->dp) & 0x1) << 31);
-	tbl[3] = ((NTOH16(par->dp) & 0xFFFE) >> 1) | (NTOH16(par->sp) << 15) |
-		((par->proto == 6) << 31);
-	tbl[4] = NTOH32(par->dip[0]);
-	tbl[5] = NTOH32(par->sip[0]);
+		(napt->nh_idx << 8) | ((NTOH32(ipc->nat.ip) & 0x1FFFF) << 15);
+	tbl[2] = ((NTOH32(ipc->nat.ip) & 0xFFFE0000) >> 17) | (NTOH16(ipc->nat.port) << 15) |
+		((NTOH16(ipc->tuple.dp) & 0x1) << 31);
+	tbl[3] = ((NTOH16(ipc->tuple.dp) & 0xFFFE) >> 1) | (NTOH16(ipc->tuple.sp) << 15) |
+		((ipc->tuple.proto == 6) << 31);
+	tbl[4] = NTOH32(ipc->tuple.dip[0]);
+	tbl[5] = NTOH32(ipc->tuple.sip[0]);
 	/* LAN->WAN (INTERNAL), WAN->LAN(EXTERNAL), this is reverse of
 	 * external entry we populate in pool entry
 	 */
-	tbl[6] = external | (1 << 20);
+	tbl[6] = ((ipc->action & CTF_ACTION_SNAT) ? CTF_NP_INTERNAL: CTF_NP_EXTERNAL) | (1 << 20);
 	/* Set ipv4_entry=1 */
 	tbl[7] = (1 << 31);
 }
@@ -899,6 +935,8 @@ fa_down(fa_info_t *fai)
 
 	fai->pub.flags &= ~(FA_BCM_HDR_RX | FA_BCM_HDR_TX);
 
+	robo_fa_enable(fai->robo, FALSE, FALSE);
+
 done:
 	return ret;
 }
@@ -934,12 +972,20 @@ fa_up(fa_info_t *fai, uint8 mode)
 
 	fa_clr_all_int(fai);
 
-	/* Init BRCM hdr control */
-	val = (CTF_BRCM_HDR_PARSE_IGN_EN | CTF_BRCM_HDR_HW_EN |
-		CTF_BRCM_HDR_SW_RX_EN | CTF_BRCM_HDR_SW_TX_EN);
-	W_REG(osh, &regs->bcm_hdr_ctl, val);
+	if (HW_HASH()) {
+		/* Init BRCM hdr control */
+		val = (CTF_BRCM_HDR_PARSE_IGN_EN | CTF_BRCM_HDR_HW_EN |
+			CTF_BRCM_HDR_SW_RX_EN | CTF_BRCM_HDR_SW_TX_EN);
+		W_REG(osh, &regs->bcm_hdr_ctl, val);
 
-	fai->pub.flags |= (FA_BCM_HDR_RX | FA_BCM_HDR_TX);
+		fai->pub.flags |= (FA_BCM_HDR_RX | FA_BCM_HDR_TX);
+	}
+	else {
+		/* Init CRC CCITT table for SW hash */
+		init_crcccitt_tab();
+	}
+
+	robo_fa_enable(fai->robo, TRUE, HW_HASH());
 
 	/* Init L2 skip control */
 	val = CTF_L2SKIP_ET_TO_SNAP_CONV;
@@ -948,7 +994,9 @@ fa_up(fa_info_t *fai, uint8 mode)
 	/* Init L3 NAPT ctl */
 	val = R_REG(osh, &regs->l3_napt_ctl);
 	val &= ~(CTFCTL_L3NAPT_HITS_CLR_ON_RD_EN | CTFCTL_L3NAPT_TIMESTAMP);
-	val |= (CTFCTL_L3NAPT_HASH_SEL | htons(0x4321));
+	if (HW_HASH()) {
+		val |= (CTFCTL_L3NAPT_HASH_SEL | htons(0x4321));
+	}
 	W_REG(osh, &regs->l3_napt_ctl, val);
 
 	/* Enable IPV4 checksum */
@@ -960,6 +1008,17 @@ fa_up(fa_info_t *fai, uint8 mode)
 
 done:
 	return ret;
+}
+
+uint
+fa_chiprev(fa_t *fa)
+{
+	fa_info_t *fai = (fa_info_t *)fa;
+
+	if(fai)
+		return fai->chiprev;
+	else
+		return 0;
 }
 
 static int
@@ -1206,35 +1265,6 @@ fa_chip_rev(si_t *sih)
 	return rev;
 }
 
-static int
-fa_devices_qualify(si_t *sih, int unit, bool *isaux)
-{
-	int ret = 0, val = 0;
-	bool aux = FALSE;
-
-	/* Two cases on FA board:
-	 * 1. FA bypass mode: Ignore GMAC-0/1
-	 * 2. FA normal mode: Ignore GMAC1 only, GAMC0 will be used as AUX input
-	 * 3. Bypass the et0macaddr checking when ctf_fa_mode = 2
-	 */
-	/* Ignore !FA and !AUX unit when ctf_fa_mode = 2 */
-	if (FA_CAPABLE(fa_chip_rev(sih)) && !FA_FA_UNIT(unit) &&
-	    (val = getintvar(NULL, "ctf_fa_mode")) != 0) {
-		if (val != 2 || !FA_AUX_UNIT(unit)) {
-			ET_ERROR(("et%d: FA present, ignore it\n", unit));
-			ret = -1;
-			goto done;
-		}
-		aux = TRUE;
-	}
-
-done:
-	if (isaux)
-		*isaux = aux;
-
-	return ret;
-}
-
 static fa_napt_t *
 fa_napt_lkup_ll(fa_info_t *fai, bool v6, uint32 *sip, uint32 *dip, uint8 proto,
 	uint16 sp, uint16 dp)
@@ -1255,36 +1285,53 @@ fa_napt_lkup_ll(fa_info_t *fai, bool v6, uint32 *sip, uint32 *dip, uint8 proto,
 	return (NULL);
 }
 
-/*
- * Create and intialize fa instance
- */
-
-int
-fa_probe(si_t *sih, int unit)
+uint
+fa_core2unit(si_t *sih, uint coreunit)
 {
-	if (!fa_fs_created && FA_CAPABLE(fa_chip_rev(sih))) {
-		et_fa_fs_create();
-		fa_fs_created = TRUE;
-	}
+	int unit = coreunit;
+	bool fa_capable = FA_CAPABLE(fa_chip_rev(sih));
 
-	/* By pass fa devices quality if FA nvram settings not ready */
-	if (!FA_NVRAM_OVERRIDDEN())
-		return 0;
+	if (!FA_ON_MODE_VALID() || !fa_capable)
+		goto done;
 
-	return fa_devices_qualify(sih, unit, NULL);
+	if (coreunit == FA_FA_CORE_UNIT)
+		unit = FA_FA_ENET_UNIT;
+	else if (coreunit == FA_AUX_CORE_UNIT)
+		unit = FA_AUX_ENET_UNIT;
+
+done:
+	return unit;
+}
+
+static uint
+fa_unit2core(uint unit)
+{
+	int coreunit = unit;
+
+	if (unit == FA_FA_ENET_UNIT)
+		coreunit = FA_FA_CORE_UNIT;
+	else if (unit == FA_AUX_ENET_UNIT)
+		coreunit = FA_AUX_CORE_UNIT;
+
+	return coreunit;
 }
 
 fa_t *
-fa_attach(si_t *sih, void *et, char *vars, uint unit, void *robo)
+fa_attach(si_t *sih, void *et, char *vars, uint coreunit, void *robo)
 {
 	fa_info_t *fai = NULL;
-	bool is_auxdev = FALSE;
+	bool fa_capable = FA_CAPABLE(fa_chip_rev(sih));
 
-	/* By pass fa attach if FA nvram settings are not ready */
-	if (!FA_NVRAM_OVERRIDDEN() || getintvar(NULL, "ctf_fa_mode") == 0)
+	/* By pass fa attach if FA configuration is not enabled or invalid */
+	if (!FA_ON_MODE_VALID() || !fa_capable)
 		return NULL;
 
-	if (fa_devices_qualify(sih, unit, &is_auxdev) != 0)
+	/* Do fa_attach for:
+	 * Normal mode: Both Aux and FA device
+	 * Bypass mode: Only FA device
+	 * fa_probe has filter it for us.
+	 */
+	if (!FA_FA_CORE(coreunit) && !FA_AUX_CORE(coreunit))
 		return NULL;
 
 	/* Allocate private info structure */
@@ -1301,7 +1348,7 @@ fa_attach(si_t *sih, void *et, char *vars, uint unit, void *robo)
 	fai->chiprev = fa_chip_rev(sih);
 	fai->robo = robo;
 
-	if (is_auxdev) {
+	if (FA_AUX_CORE(coreunit)) {
 		ASSERT(aux_dev == NULL);
 
 		aux_dev = fai;
@@ -1315,7 +1362,11 @@ fa_attach(si_t *sih, void *et, char *vars, uint unit, void *robo)
 		goto aux_done;
 	}
 
-	if (!fa_corereg(fai, unit)) {
+	/* Create the FA proc for user application */
+	if (FA_FA_CORE(coreunit))
+		fa_proc = et_fa_fs_create();
+
+	if (!fa_corereg(fai, coreunit)) {
 		MFREE(si_osh(sih), fai, sizeof(fa_info_t));
 		ET_ERROR(("%s: FA regs dev not found\n", __FUNCTION__));
 		return NULL;
@@ -1341,6 +1392,7 @@ fa_attach(si_t *sih, void *et, char *vars, uint unit, void *robo)
 
 	fa_dev = fai;
 	fai->pub.flags |= FA_FA_DEV;
+	et_fa_set_dev_on(fai->et);
 
 	if (aux_dev) {
 		aux_dev->faimp_dev = et_fa_get_fa_dev(fa_dev->et);
@@ -1358,6 +1410,14 @@ fa_detach(fa_t *fa)
 {
 	fa_info_t *fai = (fa_info_t *)fa;
 
+	if (fa_proc) {
+		et_fa_fs_clean();
+		fa_proc = NULL;
+	}
+
+	if (fa == NULL)
+		return;
+
 	if (FA_IS_FA_DEV(fa))
 		fa_down(fai);
 
@@ -1365,11 +1425,6 @@ fa_detach(fa_t *fa)
 		MFREE(si_osh(fai->sih), fai->napt, (FA_NAPT_SZ * sizeof(fa_napt_t *)));
 
 	MFREE(si_osh(fai->sih), fai, sizeof(fa_info_t));
-
-	if (fa_fs_created) {
-		et_fa_fs_clean();
-		fa_fs_created = FALSE;
-	}
 }
 
 /*
@@ -1378,26 +1433,12 @@ fa_detach(fa_t *fa)
 int
 fa_enable_device(fa_t *fa)
 {
-	int mode;
 	fa_info_t *fai = (fa_info_t *)fa;
 
 	if (FA_IS_AUX_DEV(fa))
 		return 0;
 
-	/* If FA is present check what mode(bypass/normal) to operate in.
-	 * NOTE: For now support bypass and normal mode alone.
-	 * TBD: SW-Accelerated mode.
-	 */
-	mode = getintvar(fai->vars, "ctf_fa_mode");
-
-	ASSERT(mode != 0);
-	if (mode != CTF_FA_BYPASS && mode != CTF_FA_NORMAL) {
-		ET_ERROR(("%s: FA mode expected (%d) or (%d) found (%d)\n",
-			__FUNCTION__, CTF_FA_BYPASS, CTF_FA_NORMAL, mode));
-		return -1;
-	}
-
-	fa_up(fai, mode);
+	fa_up(fai, getintvar(fai->vars, "ctf_fa_mode"));
 
 	/* Update the state to enabled/disabled */
 	fai->enabled = TRUE;
@@ -1441,9 +1482,9 @@ fa_process_rx(fa_t *fa, void *p)
 		return;
 	}
 
-	bhdr.word = ntohl(*((uint32 *)PKTDATA(si_osh(fai->sih), p)));
+	bhdr.word = NTOH32(*((uint32 *)PKTDATA(si_osh(fai->sih), p)));
 	if (bhdr.oc10.op_code == 0x2) {
-		uint32 nid = (bhdr.oc10.napt_flow_id * 4) + bhdr.oc10.bkt_id;
+		uint32 nid = (bhdr.oc10.napt_flow_id * CTF_MAX_BUCKET_INDEX) + bhdr.oc10.bkt_id;
 
 		if (bhdr.oc10.all_bkts_full) {
 			ET_ERROR(("%s All bkts full, leave to SW CTF\n", __FUNCTION__));
@@ -1461,47 +1502,64 @@ fa_process_rx(fa_t *fa, void *p)
 }
 
 int32
-fa_napt_add(fa_t *fa, fa_napt_ioctl_t *par)
+fa_napt_add(fa_t *fa, ctf_ipc_t *ipc, bool v6)
 {
-	uint32 hash, napt_idx;
 	uint32 *sip, *dip;
 	uint16 sp, dp;
 	uint8 proto;
 
+	uint32 hash, napt_idx;
 	int32 ret = BCME_OK;
 	nhop_entry_t nh;
 	pool_entry_t pe;
 	fa_napt_t *napt = NULL;
 	uint32 tbl[CTF_DATA_SIZE];
 	fa_info_t *fai = (fa_info_t *)fa;
-
-	/* Validate the input params */
-	if (fai == NULL || par == NULL)
-		return BCME_ERROR;
-
-	/* If FA is in bypass mode, no use adding entries */
-	if (fai->acc_mode != CTF_FA_NORMAL)
-		return BCME_OK;
+	unsigned short crc_hash;
+	int i;
 
 	/* Are both TX/RX FA capable */
-	if (!FA_IS_FA_DEV(fa) || par->txif != par->rxif)
+	if (!et_fa_dev_on(ipc->txif) || !et_fa_dev_on(ipc->rxif))
 		return BCME_ERROR;
 
-	napt_idx = PKTGETFAHIDX(par->pkt);
-	if (napt_idx == BCM_FA_INVALID_IDX_VAL) {
-		ET_TRACE(("%s Invalid hash and bkt idx!\n", __FUNCTION__));
+	if (v6)
 		return BCME_ERROR;
+
+	sip = ipc->tuple.sip;
+	dip = ipc->tuple.dip;
+	proto = ipc->tuple.proto;
+	sp = ipc->tuple.sp;
+	dp = ipc->tuple.dp;
+
+	ETC_FA_LOCK(fai);
+
+	if (HW_HASH()) {
+		napt_idx = PKTGETFAHIDX(ipc->pkt);
+		if (napt_idx == BCM_FA_INVALID_IDX_VAL) {
+			ET_TRACE(("%s Invalid hash and bkt idx!\n", __FUNCTION__));
+			ret = BCME_ERROR;
+			goto err;
+		}
+	}
+	else {
+		/* Only take the low 8-bit address */
+		crc_hash = fa_crc_ccitt(ipc) & 0xff;
+		/* Check if we have enough bucket */
+		for (i = 0; i < CTF_MAX_BUCKET_INDEX; i++) {
+			napt_idx = crc_hash * CTF_MAX_BUCKET_INDEX + i;
+			if (!fai->ftable[napt_idx])
+				break;
+		}
+
+		if (i == CTF_MAX_BUCKET_INDEX) {
+			/* Bucket full */
+			ET_TRACE(("%s All bkts full, leave to SW CTF\n", __FUNCTION__));
+			ret = BCME_ERROR;
+			goto err;
+		}
 	}
 
 	ASSERT(napt_idx < CTF_MAX_FLOW_TABLE);
-
-	sip = par->sip;
-	dip = par->dip;
-	proto = par->proto;
-	sp = par->sp;
-	dp = par->dp;
-
-	ETC_FA_LOCK(fai);
 
 	if (fai->ftable[napt_idx]) {
 		ET_TRACE(("%s flow table index %d has been used!\n", __FUNCTION__, napt_idx));
@@ -1509,7 +1567,7 @@ fa_napt_add(fa_t *fa, fa_napt_ioctl_t *par)
 		goto err;
 	}
 
-	if (fa_napt_lkup_ll(fai, par->v6, sip, dip, proto, sp, dp) != NULL) {
+	if (fa_napt_lkup_ll(fai, v6, sip, dip, proto, sp, dp) != NULL) {
 		ET_TRACE(("%s: Adding duplicate entry\n", __FUNCTION__));
 		ret = BCME_ERROR;
 		goto err;
@@ -1524,23 +1582,23 @@ fa_napt_add(fa_t *fa, fa_napt_ioctl_t *par)
 	bzero((char *)napt, sizeof(fa_napt_t));
 
 	napt->nfi.napt_idx = napt_idx;
-	memcpy(napt->dhost.octet, par->dhost.octet, ETH_ALEN);
+	memcpy(napt->dhost.octet, ipc->dhost.octet, ETH_ALEN);
 
 	/* Next hop settings */
 	nh.l2_ftype = 0;
-	nh.tag_op = (par->tag_op == ETFA_NH_OP_CTAG) ? CTF_NH_OP_CTAG : CTF_NH_OP_NOTAG;
+	nh.tag_op = (ipc->action & CTF_ACTION_TAG) ? CTF_NH_OP_CTAG : CTF_NH_OP_NOTAG;
 	/* For now deriving vlan prio from ip_tos
 	 * should be ok, as our switch has fixmap from tos -> VLAN_PCP
 	 */
-	nh.vlan_tci = (((par->tos >> IPV4_TOS_PREC_SHIFT) & VLAN_PRI_MASK) << VLAN_PRI_SHIFT);
-	nh.vlan_tci |= par->vid & VLAN_VID_MASK;
-	ether_copy(par->dhost.octet, nh.nh_mac);
+	nh.vlan_tci = (((ipc->tos >> IPV4_TOS_PREC_SHIFT) & VLAN_PRI_MASK) << VLAN_PRI_SHIFT);
+	nh.vlan_tci |= ipc->vid & VLAN_VID_MASK;
+	ether_copy(ipc->dhost.octet, nh.nh_mac);
 
 	/* Decide direction in pool entry, at this point all we know is it
 	 * should be reverse of whats is in corresponding flow entry.
 	 */
-	pe.external = (par->external == ETFA_NP_INTERNAL) ? CTF_NP_EXTERNAL : CTF_NP_INTERNAL;
-	ether_copy(par->shost.octet, pe.remap_mac);
+	pe.external = (ipc->action & CTF_ACTION_SNAT) ? CTF_NP_EXTERNAL : CTF_NP_INTERNAL;
+	ether_copy(ipc->shost.octet, pe.remap_mac);
 
 	/* Add(or get if already present) next-hop and pool table entries */
 	if (((ret = fa_add_nhop_entry(fai, napt, &nh)) == BCME_BUSY) ||
@@ -1548,15 +1606,15 @@ fa_napt_add(fa_t *fa, fa_napt_ioctl_t *par)
 		goto err;
 
 	napt->nfi.action = CTF_NAPT_OVRW_IP;
-	if (((par->external == ETFA_NP_EXTERNAL) && (par->sp != par->nat_port)) ||
-	    ((par->external == ETFA_NP_INTERNAL) && (par->dp != par->nat_port)))
+	if (((ipc->action & CTF_ACTION_SNAT) && (ipc->tuple.sp != ipc->nat.port)) ||
+	    ((ipc->action & CTF_ACTION_DNAT) && (ipc->tuple.dp != ipc->nat.port)))
 		napt->nfi.action |= CTF_NAPT_OVRW_PORT;
 	napt->nfi.tgt_dma = 0;
 
 	/* Add Napt entry if not exist */
-	if (!par->v6) {
+	if (!v6) {
 		/* prepare napt ipv4 entry */
-		fa_napt_prep_ipv4_word(fai, napt, par, tbl);
+		fa_napt_prep_ipv4_word(fai, napt, ipc, tbl);
 	} else {
 		/* For now IPV6 NAT is not supported in SW CTF as well,
 		 * might not be required, so disabling this part untill
@@ -1573,17 +1631,18 @@ fa_napt_add(fa_t *fa, fa_napt_ioctl_t *par)
 		goto err;
 
 	/* Save 5 tuple info */
-	memcpy(napt->sip, par->sip, sizeof(napt->sip));
-	memcpy(napt->dip, par->dip, sizeof(napt->dip));
-	napt->sp = par->sp;
-	napt->dp = par->dp;
-	napt->proto = par->proto;
+	memcpy(napt->sip, ipc->tuple.sip, sizeof(napt->sip));
+	memcpy(napt->dip, ipc->tuple.dip, sizeof(napt->dip));
+	napt->sp = ipc->tuple.sp;
+	napt->dp = ipc->tuple.dp;
+	napt->proto = ipc->tuple.proto;
+	napt->v6 = v6;
 
-	hash = FA_NAPT_HASH(par->v6, sip, dip, proto, sp, dp);
+	hash = FA_NAPT_HASH(v6, sip, dip, proto, sp, dp);
 	napt->next = FA_NAPT(fai)[hash];
 	FA_NAPT(fai)[hash] = napt;
 
-	fai->ftable[napt_idx] = TRUE;
+	fai->ftable[napt_idx] = napt;
 	fai->nflows++;
 
 err:
@@ -1597,30 +1656,24 @@ err:
 }
 
 int32
-fa_napt_del(fa_t *fa, fa_napt_ioctl_t *par)
+fa_napt_del(fa_t *fa, ctf_ipc_t *ipc, bool v6)
 {
-	uint32 hash;
-	fa_napt_t *napt, *prev = NULL;
 	uint32 *sip, *dip;
 	uint16 sp, dp;
 	uint8 proto;
+
+	uint32 hash;
+	fa_napt_t *napt, *prev = NULL;
 	int32 ret = BCME_OK;
 	fa_info_t *fai = (fa_info_t *)fa;
 
-	/* Validate the input params */
-	if (fai == NULL || par == NULL)
-		return BCME_ERROR;
+	sip = ipc->tuple.sip;
+	dip = ipc->tuple.dip;
+	proto = ipc->tuple.proto;
+	sp = ipc->tuple.sp;
+	dp = ipc->tuple.dp;
 
-	/* If FA is in bypass mode, no use deleting entries */
-	if (fai->acc_mode != CTF_FA_NORMAL)
-		return BCME_OK;
-
-	sip = par->sip;
-	dip = par->dip;
-	proto = par->proto;
-	sp = par->sp;
-	dp = par->dp;
-	hash = FA_NAPT_HASH(par->v6, sip, dip, proto, sp, dp);
+	hash = FA_NAPT_HASH(v6, sip, dip, proto, sp, dp);
 
 	ETC_FA_LOCK(fai);
 
@@ -1628,7 +1681,7 @@ fa_napt_del(fa_t *fa, fa_napt_ioctl_t *par)
 
 	/* Keep track of prev pointer for deletion */
 	while (napt != NULL) {
-		if (!FA_NAPT_TPL_CMP(napt, par->v6, sip, dip, proto, sp, dp)) {
+		if (!FA_NAPT_TPL_CMP(napt, v6, sip, dip, proto, sp, dp)) {
 			prev = napt;
 			napt = napt->next;
 			continue;
@@ -1640,11 +1693,11 @@ fa_napt_del(fa_t *fa, fa_napt_ioctl_t *par)
 		else
 			FA_NAPT(fai)[hash] = napt->next;
 
-		ASSERT(napt->v6 == par->v6);
+		ASSERT(napt->v6 == v6);
 
 		ret = _fa_napt_del(fai, napt);
 
-		fai->ftable[napt->nfi.napt_idx] = FALSE;
+		fai->ftable[napt->nfi.napt_idx] = NULL;
 		fai->nflows--;
 
 		break;
@@ -1659,40 +1712,34 @@ fa_napt_del(fa_t *fa, fa_napt_ioctl_t *par)
 }
 
 void
-fa_conntrack(fa_t *fa, fa_napt_ioctl_t *par)
+fa_conntrack(fa_t *fa, ctf_ipc_t *ipc, bool v6)
 {
 	uint32 *sip, *dip;
 	uint16 sp, dp;
 	uint8 proto;
 	fa_info_t *fai = (fa_info_t *)fa;
 
-	/* Validate the input params */
-	if (fai == NULL || par == NULL)
+	if (!PKTISFAAUX(ipc->pkt))
 		return;
 
-	/* If FA is in bypass mode, no use deleting entries */
-	if (fai->acc_mode != CTF_FA_NORMAL)
-		return;
-
-	if (!PKTISFAAUX(par->pkt))
-		return;
-
-	sip = par->sip;
-	dip = par->dip;
-	proto = par->proto;
-	sp = par->sp;
-	dp = par->dp;
+	sip = ipc->tuple.sip;
+	dip = ipc->tuple.dip;
+	proto = ipc->tuple.proto;
+	sp = ipc->tuple.sp;
+	dp = ipc->tuple.dp;
 
 	ETC_FA_LOCK(fai);
 
-	if (fa_napt_lkup_ll(fai, par->v6, sip, dip, proto, sp, dp))
-		PKTSETFAFREED(par->pkt);
+	if (fa_napt_lkup_ll(fai, v6, sip, dip, proto, sp, dp) == NULL) {
+		/* Notify to free it because no fast path found */
+		PKTSETFAFREED(ipc->pkt);
+	}
 
 	ETC_FA_UNLOCK(fai);
 }
 
 void
-fa_napt_live(fa_t *fa, fa_napt_ioctl_t *par)
+fa_napt_live(fa_t *fa, ctf_ipc_t *ipc, bool v6)
 {
 	uint32 *sip, *dip;
 	uint16 sp, dp;
@@ -1703,25 +1750,19 @@ fa_napt_live(fa_t *fa, fa_napt_ioctl_t *par)
 	fa_napt_t *napt;
 	fa_info_t *fai = (fa_info_t *)fa;
 
-	/* Validate the input params */
-	if (fai == NULL || par == NULL)
+	/* No need to update if SW CTF say it's alive */
+	if (ipc->live > 0)
 		return;
 
-	par->live = FALSE;
-
-	/* If FA is in bypass mode, no use deleting entries */
-	if (fai->acc_mode != CTF_FA_NORMAL)
-		return;
-
-	sip = par->sip;
-	dip = par->dip;
-	proto = par->proto;
-	sp = par->sp;
-	dp = par->dp;
+	sip = ipc->tuple.sip;
+	dip = ipc->tuple.dip;
+	proto = ipc->tuple.proto;
+	sp = ipc->tuple.sp;
+	dp = ipc->tuple.dp;
 
 	ETC_FA_LOCK(fai);
 
-	if ((napt = fa_napt_lkup_ll(fai, par->v6, sip, dip, proto, sp, dp)) == NULL)
+	if ((napt = fa_napt_lkup_ll(fai, v6, sip, dip, proto, sp, dp)) == NULL)
 		goto err;
 
 	if (fa_read_napt_entry(fai, tbl, napt->nfi.napt_idx) != BCME_OK) {
@@ -1733,9 +1774,8 @@ fa_napt_live(fa_t *fa, fa_napt_ioctl_t *par)
 	hits = ((LTOH16(tbl[1]) & 0x7) << 29 | LTOH16(tbl[0]) >> 3);
 	if (napt->nfi.hits != hits) {
 		napt->nfi.hits = hits;
-		par->live = TRUE;
+		ipc->live = 1;
 	}
-
 err:
 
 	ETC_FA_UNLOCK(fai);
@@ -1767,6 +1807,27 @@ fa_et_down(fa_t *fa)
 	/* Just disable AUX, FA interface GMAC reset disable FA function */
 	if (aux_dev)
 		robo_fa_aux_enable(fai->robo, FALSE);
+}
+
+char *
+fa_get_macaddr(si_t *sih, char *vars, uint unit)
+{
+	char *mac, name[128];
+	uint nvram_etunit = unit;
+	uint coreunit = fa_unit2core(unit);
+	bool fa_capable = FA_CAPABLE(fa_chip_rev(sih));
+
+	if (FA_ON_MODE_VALID() && fa_capable && FA_AUX_CORE(coreunit) &&
+	    getintvar(NULL, "ctf_fa_mode") == CTF_FA_NORMAL)
+		nvram_etunit = FA_FA_ENET_UNIT;
+
+	sprintf(name, "et%dmacaddr", nvram_etunit);
+	mac = getvar(vars, name);
+	if (mac == NULL) {
+		ET_ERROR(("et%d: et%dmacaddr not found, ignore it\n", unit, nvram_etunit));
+	}
+
+	return mac;
 }
 
 void
@@ -1813,7 +1874,7 @@ fa_dump(fa_t *fa, struct bcmstrbuf *b, bool all)
 		return;
 	}
 
-	bcm_bprintf(b, "Number of flows: %d\n", fai->nflows);
+	bcm_bprintf(b, "Number of flows: %d entries\n", fai->nflows);
 
 	fa_dump_entries(fai, NF, (print_buf_t) bcm_bprintf, b);
 	fa_dump_entries(fai, NH, (print_buf_t) bcm_bprintf, b);
@@ -1841,6 +1902,7 @@ fa_regs_show(fa_t *fa, struct bcmstrbuf *b)
 		(fai->acc_mode == CTF_FA_BYPASS) ? "BYPASS" :
 		(fai->acc_mode == CTF_FA_NORMAL) ? "NORMAL" :
 		(fai->acc_mode == CTF_FA_SW_ACC) ? "SW" : "UNKNOWN");
+	bcm_bprintf(b, "Hash mode: %s\n", HW_HASH() ? "HW" : "SW");
 
 	/* reg dump */
 	for (i = 0; i < (nregs -4); i++) {

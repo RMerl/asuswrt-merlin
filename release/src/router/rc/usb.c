@@ -188,10 +188,6 @@ test_user(char *target, char *pattern)
 	return 0;
 }
 
-#define MOUNT_VAL_FAIL 	0
-#define MOUNT_VAL_RONLY	1
-#define MOUNT_VAL_RW 	2
-
 int
 fill_smbpasswd_input_file(const char *passwd)
 {
@@ -276,7 +272,19 @@ void start_usb(void)
 			}
 #ifdef RTCONFIG_NTFS
 #ifndef RTCONFIG_NTFS3G
-			if (nvram_get_int("usb_fs_ntfs"))
+			if(nvram_get_int("usb_fs_ntfs"))
+#ifdef RTCONFIG_UFSD_DEBUG
+				modprobe("/usr/lib/ufsd_debug.ko");
+#else
+				modprobe("/usr/lib/ufsd.ko");
+#endif
+#endif
+#endif
+#ifdef RTCONFIG_HFS
+			if(nvram_get_int("usb_fs_hfs"))
+#ifdef RTCONFIG_UFSD_DEBUG
+				modprobe("/usr/lib/ufsd_debug.ko");
+#else
 				modprobe("/usr/lib/ufsd.ko");
 #endif
 #endif
@@ -375,7 +383,22 @@ void remove_usb_storage_module(void)
 	modprobe_r("fat");
 #ifdef RTCONFIG_NTFS
 #ifndef RTCONFIG_NTFS3G
+#ifdef RTCONFIG_UFSD_DEBUG
+	modprobe_r("ufsd_debug");
+	modprobe_r("jnl_debug");
+#else
 	modprobe_r("ufsd");
+	modprobe_r("jnl");
+#endif
+#endif
+#endif
+#ifdef RTCONFIG_HFS
+#ifdef RTCONFIG_UFSD_DEBUG
+	modprobe_r("ufsd_debug");
+	modprobe_r("jnl_debug");
+#else
+	modprobe_r("ufsd");
+	modprobe_r("jnl");
 #endif
 #endif
 	modprobe_r("fuse");
@@ -480,10 +503,6 @@ void stop_usb(void)
 {
 	int disabled = !nvram_get_int("usb_enable");
 
-	/* fix upgrade fail issue : remove wl_high before rmmod ehci_hcd */
-	if (get_model() == MODEL_RTAC53U) 
-		modprobe_r("wl_high");
-
 	stop_usb_program(0);
 
 	remove_usb_modem_modules();
@@ -553,6 +572,11 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *type)
 	char flagfn[128];
 	int dir_made;
 
+	if(type != NULL && !strcmp(type, "apple_efi")){
+		TRACE_PT("Don't mount the EFI partition(%s) of APPLE!\n", mnt_dev, type);
+		return MOUNT_VAL_EXIST;
+	}
+
 	if ((mnt = findmntents(mnt_dev, 0, NULL, 0))) {
 		syslog(LOG_INFO, "USB partition at %s already mounted on %s",
 			mnt_dev, mnt->mnt_dir);
@@ -585,7 +609,6 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *type)
 		}
 		else if (strcmp(type, "vfat") == 0) {
 #ifdef RTCONFIG_BCMARM
-			flags |= MS_NOATIME;
 			sprintf(options, "umask=0000,allow_utime=0022");
 #else
 			sprintf(options, "umask=0000,allow_utime=0000");
@@ -619,9 +642,6 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *type)
 
 		}
 		else if (strncmp(type, "ntfs", 4) == 0) {
-#ifdef RTCONFIG_BCMARM
-			flags |= MS_NOATIME;
-#endif
 			sprintf(options, "umask=0000");
 
 			if (nvram_invmatch("smbd_cset", ""))
@@ -664,7 +684,11 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *type)
 #ifdef RTCONFIG_NTFS
 			/* try ntfs-3g in case it's installed */
 			if (ret != 0 && strncmp(type, "ntfs", 4) == 0) {
+#ifdef RTCONFIG_BCMARM
 				sprintf(options + strlen(options), ",noatime,nodev" + (options[0] ? 0 : 1));
+#else
+				sprintf(options + strlen(options), ",nodev" + (options[0] ? 0 : 1));
+#endif
 
 				if (nvram_get_int("usb_fs_ntfs")) {
 #ifdef RTCONFIG_NTFS3G
@@ -684,7 +708,11 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *type)
 			if(ret != 0 && !strncmp(type, "hfs", 3)){
 				if(nvram_invmatch("usb_hfs_opt", ""))
 					sprintf(options + strlen(options), "%s%s", options[0] ? "," : "", nvram_safe_get("usb_hfs_opt"));
-				sprintf(options + strlen(options), ",noatime,nodev,sync" + (options[0] ? 0 : 1));
+#ifdef RTCONFIG_BCMARM
+				sprintf(options + strlen(options), ",noatime,nodev" + (options[0] ? 0 : 1));
+#else
+				sprintf(options + strlen(options), ",nodev" + (options[0] ? 0 : 1));
+#endif
 
 				if (nvram_get_int("usb_fs_hfs")) {
 					ret = eval("mount", "-t", "ufsd", "-o", options, "-o", "force", mnt_dev, mnt_dir);
@@ -692,15 +720,20 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *type)
 			}
 #endif
 
-			if (ret != 0) /* give it another try - guess fs */
+			if (ret != 0){ /* give it another try - guess fs */
+				TRACE_PT("give it another try - guess fs.\n");
 #ifndef RTCONFIG_BCMARM
 				ret = eval("mount", "-o", "noatime,nodev", mnt_dev, mnt_dir);
 #else
 				ret = eval("mount", "-o", "nodev", mnt_dev, mnt_dir);
 #endif
+			}
+
 			if (ret == 0) {
 				syslog(LOG_INFO, "USB %s%s fs at %s mounted on %s",
-					type, (flags & MS_RDONLY) ? " (ro)" : "", mnt_dev, mnt_dir);
+						type, (flags & MS_RDONLY) ? " (ro)" : "", mnt_dev, mnt_dir);
+				TRACE_PT("USB %s%s fs at %s mounted on %s.\n",
+						type, (flags & MS_RDONLY) ? " (ro)" : "", mnt_dev, mnt_dir);
 				return (flags & MS_RDONLY) ? MOUNT_VAL_RONLY : MOUNT_VAL_RW;
 			}
 
@@ -1031,7 +1064,6 @@ int mount_partition(char *dev_name, int host_num, char *dsc_name, char *pt_name,
 	static char *swp_argv[] = { "swapon", "-a", NULL };
 	struct mntent *mnt;
 	char command[PATH_MAX];
-	char word[PATH_MAX], *next_word;
 
 	if ((type = detect_fs_type(dev_name)) == NULL)
 		return 0;
@@ -1084,50 +1116,35 @@ done:
 		chmod(mountpoint, 0777);
 
 #ifdef RTCONFIG_USB_MODEM
-		int got_port, port_num = 0;
-		char nvram_name[32], usb_port[8];
+		char usb_node[32], port_path[8];
+		char prefix[] = "usb_pathXXXXXXXXXXXXXXXXX_", tmp[100];
+		char vid[8], pid[8];
 
 		ptr = dev_name+5;
 
-		// Get USB port.
-		got_port = 0;
-		if(get_usb_port_by_device(ptr, usb_port, sizeof(usb_port)) != NULL){
-			port_num = 1;
-			foreach(word, nvram_safe_get("ehci_ports"), next_word){
-				if(!strcmp(usb_port, word)){
-					got_port = 1;
-					memset(nvram_name, 0, 32);
-					sprintf(nvram_name, "usb_path%d_fs_path0", port_num);
-					nvram_set(nvram_name, ptr);
+		// Get USB node.
+		if(get_usb_node_by_device(ptr, usb_node, 32) != NULL){
+			if(get_path_by_node(usb_node, port_path, 8) != NULL){
+				snprintf(prefix, sizeof(prefix), "usb_path%s", port_path);
+				// for ATE.
+				if(strlen(nvram_safe_get(strcat_r(prefix, "_fs_path0", tmp))) <= 0)
+					nvram_set(tmp, ptr);
 
-					break;
+				memset(vid, 0, 8);
+				strcpy(vid, nvram_safe_get(strcat_r(prefix, "_vid", tmp)));
+
+				memset(pid, 0, 8);
+				strcpy(pid, nvram_safe_get(strcat_r(prefix, "_pid", tmp)));
+
+				if(is_create_file_dongle(vid, pid)){
+					if(strcmp(nvram_safe_get("stop_sg_remove"), "1")){
+						memset(command, 0, PATH_MAX);
+						sprintf(command, "touch %s/wcdma.cfg", mountpoint);
+						system(command);
+					}
+
+					return 0; // skip to restart_nasapps.
 				}
-
-				++port_num;
-			}
-		}
-
-		if(got_port){
-			char vid[8], pid[8];
-
-			memset(nvram_name, 0, 32);
-			sprintf(nvram_name, "usb_path%d_vid", port_num);
-			memset(vid, 0, 8);
-			strcpy(vid, nvram_safe_get(nvram_name));
-
-			memset(nvram_name, 0, 32);
-			sprintf(nvram_name, "usb_path%d_pid", port_num);
-			memset(pid, 0, 8);
-			strcpy(pid, nvram_safe_get(nvram_name));
-
-			if(is_create_file_dongle(vid, pid)){
-				if(strcmp(nvram_safe_get("stop_sg_remove"), "1")){
-					memset(command, 0, PATH_MAX);
-					sprintf(command, "touch %s/wcdma.cfg", mountpoint);
-					system(command);
-				}
-
-				return 0; // skip to restart_nasapps.
 			}
 		}
 #endif
@@ -1576,7 +1593,7 @@ void hotplug_usb(void)
 				}
 				TRACE_PT(" mount to dev: %s\n", devname);
 				if (mount_partition(devname, host, NULL, device, EFH_HP_ADD)) {
-//_dprintf("restart_nas_services(%d): test 5.\n", getpid());
+_dprintf("restart_nas_services(%d): test 5.\n", getpid());
 					//restart_nas_services(1, 1); // restart all NAS applications
 					notify_rc_and_wait("restart_nasapps");
 				}
@@ -1589,7 +1606,7 @@ void hotplug_usb(void)
 			/* Restart NAS applications (they could be killed by umount_mountpoint),
 			 * or just re-read the configuration.
 			 */
-//_dprintf("restart_nas_services(%d): test 6.\n", getpid());
+_dprintf("restart_nas_services(%d): test 6.\n", getpid());
 			//restart_nas_services(1, 1);
 			notify_rc_after_wait("restart_nasapps");
 		}
@@ -2040,7 +2057,6 @@ void find_dms_dbdir(char *dbdir)
 	if(!found)
 		strcpy(dbdir, nvram_default_get("dms_dbdir"));
 
-end:
 	nvram_set("dms_dbdir", dbdir);
 
 	return;
@@ -2251,7 +2267,8 @@ start_mt_daapd()
 	if (is_routing_enabled())
 	{
 		system("mt-daapd -m");
-		doSystem("mDNSResponder %s thehost %s _daap._tcp. 3689 &", nvram_safe_get("lan_ipaddr"), servername);
+		//doSystem("mDNSResponder %s thehost %s _daap._tcp. 3689 &", nvram_safe_get("lan_ipaddr"), servername);
+		restart_mdns();
 	}
 	else
 		system("mt-daapd");
@@ -2274,11 +2291,14 @@ stop_mt_daapd()
 		return;
 	}
 
-	if (!pids("mDNSResponder") && !pids("mt-daapd"))
+	//if (!pids("mDNSResponder") && !pids("mt-daapd"))
+	if (!pids("avahi-daemon") && !pids("mt-daapd"))
 		return;
 
-	if (pids("mDNSResponder"))
-		system("killall mDNSResponder");
+	//if (pids("mDNSResponder"))
+	//	system("killall mDNSResponder");
+	if (pids("avahi-daemon"))
+		restart_mdns();
 
 	if (pids("mt-daapd"))
 		system("killall -SIGKILL mt-daapd");
@@ -2805,7 +2825,7 @@ void restart_sambaftp(int stop, int start)
 
 static void ejusb_usage(void)
 {
-	printf(	"Usage: ejusb [-1|1|2] [0|1*]\n"
+	printf(	"Usage: ejusb [-1|1|2|1.*|2.*] [0|1*]\n"
 		"First parameter means disk_port.\n"
 		"\t-1: All ports\n"
 		"\t 1: disk port 1\n"
@@ -2821,14 +2841,11 @@ static void ejusb_usage(void)
  * 	-2:	read disk data fail
  * 	-3:	device not found
  */
-int __ejusb_main(int got_usb_port)
+int __ejusb_main(const char *port_path)
 {
 	disk_info_t *disk_list, *disk_info;
 	partition_info_t *partition_info;
 	char nvram_name[32], device_name[8], devpath[16];
-
-	if (got_usb_port < 1 || got_usb_port > 3)
-		return -1;
 
 	disk_list = read_disk_data();
 	if(disk_list == NULL){
@@ -2836,13 +2853,8 @@ int __ejusb_main(int got_usb_port)
 		return -2;
 	}
 
-	memset(nvram_name, 0, 32);
-	sprintf(nvram_name, "usb_path%d_act", got_usb_port);
-	memset(device_name, 0, 8);
-	strcpy(device_name, nvram_safe_get(nvram_name));
-
 	for(disk_info = disk_list; disk_info != NULL; disk_info = disk_info->next)
-		if(!strcmp(disk_info->device, device_name))
+		if(!strcmp(disk_info->port, port_path))
 			break;
 
 	if(disk_info == NULL){
@@ -2852,7 +2864,7 @@ int __ejusb_main(int got_usb_port)
 	}
 
 	memset(nvram_name, 0, 32);
-	sprintf(nvram_name, "usb_path%d_removed", got_usb_port);
+	sprintf(nvram_name, "usb_path%s_removed", port_path);
 	nvram_set(nvram_name, "1");
 
 	for(partition_info = disk_info->partitions; partition_info != NULL; partition_info = partition_info->next){
@@ -2889,7 +2901,7 @@ int ejusb_main(int argc, char *argv[])
 		if (ports != -1 && i != ports)
 			continue;
 
-		__ejusb_main(i);
+		__ejusb_main(argv[1]);
 	}
 
 	if (restart_nasapps) {
@@ -3171,10 +3183,10 @@ cprintf("disk_monitor: Port %d: val_day=%d, val_hour=%d.\n", port_num, val_day[p
 		++port_num;
 	}
 
-	if(diskmon_enable == 0){
+	/*if(diskmon_enable == 0){
 		cprintf("disk_monitor: Disable the disk_monitor.\n");
 		exit(0);
-	}
+	}//*/
 
 	while(1){
 		time(&now);

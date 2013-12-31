@@ -126,6 +126,54 @@ SUFFIXES = .man
 		-e 's,@''LOG_FACILITY''@,$(LOG_FACILITY),g' \
 		$< > $@
 
+
+EXTENSIONS = gz bz2 lz lzma xz tarZ shar zip
+HASHES = md5 sha1 sha256
+
+sign:
+	$(AM_V_GEN)for e in $(EXTENSIONS); do \
+		if [ -f radvd-$(VERSION).tar.$$e ]; then \
+			for h in $(HASHES); do \
+				$${h}sum radvd-$(VERSION).tar.$$e > radvd-$(VERSION).tar.$$e.$$h; \
+			done; \
+			gpg -sba radvd-$(VERSION).tar.$$e; \
+		fi; \
+	done
+
+verify:
+	$(AM_V_GEN)for e in $(EXTENSIONS); do \
+		if [ -f radvd-$(VERSION).tar.$$e ]; then \
+			for h in $(HASHES); do \
+				$${h}sum -c radvd-$(VERSION).tar.$$e.$$h; \
+			done; \
+			gpg --verify radvd-$(VERSION).tar.$$e.asc; \
+		fi; \
+	done
+
+html:
+	$(AM_V_GEN)echo "<ul>"; \
+	for e in $(EXTENSIONS); do \
+		if [ -f radvd-$(VERSION).tar.$$e ]; then \
+			echo "<li>"; \
+			echo "<a href=\"dist/radvd-$(VERSION).tar.$$e\">radvd-$(VERSION).tar.$$e</a>"; \
+			for h in $(HASHES); do \
+				echo "<a href=\"dist/radvd-$(VERSION).tar.$$e.$$h\">[$$h]</a>"; \
+			done; \
+			echo "<a href=\"dist/radvd-$(VERSION).tar.$$e.asc\">[GPG]</a>"; \
+			echo "</li>"; \
+		fi; \
+	done; \
+	echo "</ul>"
+
+packages:
+	$(MAKE) dist-bzip2
+	$(MAKE) dist-gzip
+	$(MAKE) dist-xz
+	$(MAKE) sign
+	$(MAKE) verify
+	$(MAKE) html
+
+
 dist-hook:
 	rm -f $(distdir)/gram.c
 	rm -f $(distdir)/gram.h

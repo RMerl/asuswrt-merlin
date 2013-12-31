@@ -18,7 +18,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: wlioctl.h 415105 2013-07-28 03:40:28Z $
+ * $Id: wlioctl.h 427697 2013-10-04 09:42:19Z $
  */
 
 #ifndef _wlioctl_h_
@@ -785,6 +785,19 @@ typedef struct {
 	cca_congest_t  secs[1];	/* Data */
 } cca_congest_channel_req_t;
 
+#if defined(BCMDBG)
+typedef struct {
+	uint32 msrmnt_time; /* Time for Measurement (msec) */
+	uint32 msrmnt_done; /* flag set when measurement complete */
+	char buf[1];
+} cca_stats_n_flags;
+
+typedef struct {
+	uint32 msrmnt_query; /* host to driver query for measurement done */
+	uint32 time_req;	/* Time required for measurement */
+} cca_msrmnt_query;
+#endif
+
 /* interference source detection and identification mode */
 #define ITFR_MODE_DISABLE	0	/* disable feature */
 #define ITFR_MODE_MANUAL_ENABLE	1	/* enable manual detection */
@@ -1177,11 +1190,22 @@ typedef struct {
 	uint64			tx_mcast_bytes;	/* # data bytes txed (mcast) */
 	uint64			rx_ucast_bytes;	/* data bytes recvd (ucast) */
 	uint64			rx_mcast_bytes;	/* data bytes recvd (mcast) */
-	int8			rssi[WL_STA_ANT_MAX];	/* per antenna rssi */
+	int8			rssi[WL_STA_ANT_MAX];	/* average rssi per antenna of data
+						         * frames
+						         */
 	int8			nf[WL_STA_ANT_MAX];	/* per antenna noise floor */
 	uint16			aid;		/* association ID */
 	uint16			ht_capabilities;	/* advertised ht caps */
 	uint16			vht_flags;		/* converted vht flags */
+	uint32			tx_pkts_retried;		/* # of frames where a retry was
+						                 *   necessary
+						                 */
+	uint32			tx_pkts_retry_exhausted; /* # of frames where a retry was
+						          * exhausted
+						          */
+	int8			rx_lastpkt_rssi[WL_STA_ANT_MAX]; /* Per antenna RSSI of last
+						                  * received data frame
+						                  */
 } sta_info_t;
 
 #define WL_OLD_STAINFO_SIZE	OFFSETOF(sta_info_t, tx_tot_pkts)
@@ -2908,6 +2932,10 @@ typedef struct {
 	uint32	rxdrop20s;	/* drop secondary cnt */
 	uint32	pciereset;	/* Secondary Bus Reset issued by driver */
 	uint32	cfgrestore;	/* configspace restore by driver */
+
+	uint32	rxdma_frame;	/* count for rx dma */
+	uint32	rxdma_inactivity;	/* cleared when rxdma handler is serviced or increased in watchdog */
+	uint32	rxdma_stuck;	/* count for rx stuck */
 } wl_cnt_t;
 
 #ifndef LINUX_POSTMOGRIFY_REMOVAL
@@ -4599,43 +4627,60 @@ typedef struct {
 } wl_iov_mac_full_params_t;
 
 /* Parameter block for PKTQ_LOG statistics */
+#define PKTQ_LOG_COUNTERS_V4 \
+	/* packets requested to be stored */ \
+	uint32 requested; \
+	/* packets stored */ \
+	uint32 stored; \
+	/* packets saved, because a lowest priority queue has given away one packet */ \
+	uint32 saved; \
+	/* packets saved, because an older packet from the same queue has been dropped */ \
+	uint32 selfsaved; \
+	/* packets dropped, because pktq is full with higher precedence packets */ \
+	uint32 full_dropped; \
+	 /* packets dropped because pktq per that precedence is full */ \
+	uint32 dropped; \
+	/* packets dropped, in order to save one from a queue of a highest priority */ \
+	uint32 sacrificed; \
+	/* packets droped because of hardware/transmission error */ \
+	uint32 busy; \
+	/* packets re-sent because they were not received */ \
+	uint32 retry; \
+	/* packets retried again (ps pretend) prior to moving power save mode */ \
+	uint32 ps_retry; \
+	 /* suppressed packet count */ \
+	uint32 suppress; \
+	/* packets finally dropped after retry limit */ \
+	uint32 retry_drop; \
+	/* the high-water mark of the queue capacity for packets - goes to zero as queue fills */ \
+	uint32 max_avail; \
+	/* the high-water mark of the queue utilisation for packets - ('inverse' of max_avail) */ \
+	uint32 max_used; \
+	 /* the maximum capacity of the queue */ \
+	uint32 queue_capacity; \
+	/* count of rts attempts that failed to receive cts */ \
+	uint32 rtsfail; \
+	/* count of packets sent (acked) successfully */ \
+	uint32 acked; \
+	/* running total of phy rate of packets sent successfully */ \
+	uint32 txrate_succ; \
+	/* running total of phy 'main' rate */ \
+	uint32 txrate_main; \
+	/* actual data transferred successfully */ \
+	uint32 throughput; \
+	/* time difference since last pktq_stats */ \
+	uint32 time_delta;
+
 typedef struct {
-	uint32 requested;      /* packets requested to be stored */
-	uint32 stored;         /* packets stored */
-	uint32 saved;          /* packets saved,
-	                          because a lowest priority queue has given away one packet
-	                       */
-	uint32 selfsaved;      /* packets saved,
-	                          because an older packet from the same queue has been dropped
-	                       */
-	uint32 full_dropped;   /* packets dropped,
-	                          because pktq is full with higher precedence packets
-	                       */
-	uint32 dropped;        /* packets dropped because pktq per that precedence is full */
-	uint32 sacrificed;     /* packets dropped,
-	                          in order to save one from a queue of a highest priority
-	                       */
-	uint32 busy;           /* packets droped because of hardware/transmission error */
-	uint32 retry;          /* packets re-sent because they were not received */
-	uint32 ps_retry;       /* packets retried again prior to moving power save mode */
-	uint32 suppress;       /* suppressed packet count */
-	uint32 retry_drop;     /* packets finally dropped after retry limit */
-	uint32 max_avail;      /* the high-water mark of the queue capacity for packets -
-	                          goes to zero as queue fills
-	                       */
-	uint32 max_used;       /* the high-water mark of the queue utilisation for packets -
-	                          increases with use ('inverse' of max_avail)
-	                       */
-	uint32 queue_capacity; /* the maximum capacity of the queue */
-	uint32 rtsfail;        /* count of rts attempts that failed to receive cts */
-	uint32 acked;          /* count of packets sent (acked) successfully */
-	uint32 txrate_succ;    /* running total of phy rate of packets sent successfully */
-	uint32 txrate_main;    /* running total of phy 'main' rate */
-	uint32 throughput;     /* actual data transferred successfully */
-	uint32 time_delta;     /* time difference since last pktq_stats */
+	PKTQ_LOG_COUNTERS_V4
 } pktq_log_counters_v04_t;
 
-#define sacrified sacrificed
+/* v5 is the same as V4 with extra parameter */
+typedef struct {
+	PKTQ_LOG_COUNTERS_V4
+	/* cumulative time to transmit */
+	uint32 airtime;
+} pktq_log_counters_v05_t;
 
 typedef struct {
 	uint8                num_prec[WL_IOV_MAC_PARAM_LEN];
@@ -4645,14 +4690,27 @@ typedef struct {
 	char                 headings[1];
 } pktq_log_format_v04_t;
 
+typedef struct {
+	uint8                num_prec[WL_IOV_MAC_PARAM_LEN];
+	pktq_log_counters_v05_t  counters[WL_IOV_MAC_PARAM_LEN][WL_IOV_PKTQ_LOG_PRECS];
+	uint32               counter_info[WL_IOV_MAC_PARAM_LEN];
+	uint32               pspretend_time_delta[WL_IOV_MAC_PARAM_LEN];
+	char                 headings[1];
+} pktq_log_format_v05_t;
+
 
 typedef struct {
 	uint32               version;
 	wl_iov_mac_params_t  params;
 	union {
 		pktq_log_format_v04_t v04;
+		pktq_log_format_v05_t v05;
 	} pktq_log;
 } wl_iov_pktq_log_t;
+
+/* PKTQ_LOG_AUTO, PKTQ_LOG_DEF_PREC flags introduced in v05, they are ignored by v04 */
+#define PKTQ_LOG_AUTO     (1 << 31)
+#define PKTQ_LOG_DEF_PREC (1 << 30)
 
 /*
  * SCB_BS_DATA iovar definitions start.
@@ -4977,6 +5035,13 @@ typedef BWL_PRE_PACKED_STRUCT struct {
 	uint8  pprdata[1];		/* ppr serialization buffer */
 } BWL_POST_PACKED_STRUCT tx_pwr_rpt_t;
 
+#define TXPWR_TARGET_VERSION  0
+typedef BWL_PRE_PACKED_STRUCT struct {
+	int32 version;		/* version number */
+	chanspec_t chanspec;	/* txpwr report for this channel */
+	int8 txpwr[WL_STA_ANT_MAX]; /* Max tx target power, in qdb */
+	uint8 rf_cores;		/* count of RF Cores being reported */
+} BWL_POST_PACKED_STRUCT txpwr_target_max_t;
 
 /* fbt_cap: FBT assoc / reassoc modes. */
 #define WLC_FBT_CAP_DRV_4WAY_AND_REASSOC  1 /* Driver 4-way handshake & reassoc (WLFBT). */
@@ -6001,7 +6066,9 @@ typedef struct wl_staprio_cfg {
 
 typedef enum wl_stamon_cfg_cmd_type {
 	STAMON_CFG_CMD_DEL = 0,
-	STAMON_CFG_CMD_ADD = 1
+	STAMON_CFG_CMD_ADD = 1,
+	STAMON_CFG_CMD_ENB = 2,
+	STAMON_CFG_CMD_DSB = 3
 } wl_stamon_cfg_cmd_type_t;
 
 typedef struct wlc_stamon_sta_config {
@@ -6021,9 +6088,21 @@ typedef struct wl_taf_sta {
 	uint32 rule_user_val;	/* Parameter for rule User */
 } wl_taf_sta_t;
 
+#define WL_TAF_RULE_AID_BIT	0x01
+#define WL_TAF_RULE_RSSI_BIT	0x02
+#define WL_TAF_RULE_RATE_BIT	0x04
+#define WL_TAF_RULE_PRIO_BIT	0x08
+#define WL_TAF_RULE_SSID_BIT	0x10
+#define WL_TAF_RULE_USER_BIT	0x20
+
 /* WDS net interface types */
 #define WL_WDSIFTYPE_NONE  0x0 /* The interface type is neither WDS nor DWDS. */
 #define WL_WDSIFTYPE_WDS   0x1 /* The interface is WDS type. */
 #define WL_WDSIFTYPE_DWDS  0x2 /* The interface is DWDS type. */
+
+typedef struct {
+	uint32 config;	/* MODE: AUTO (-1), Disable (0), Enable (1) */
+	uint32 status;	/* Current state: Disabled (0), Enabled (1) */
+} wl_config_t;
 
 #endif /* _wlioctl_h_ */

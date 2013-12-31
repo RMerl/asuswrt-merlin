@@ -86,7 +86,7 @@ function replace_ContentAnnex(oldMod, newMod){
 </script>
 </head>
 
-<body onload="show_menu();load_body();showadslbootTime();initial();" onunLoad="return unload_body();">
+<body onload="show_menu();showadslbootTime();initial();" onunLoad="return unload_body();">
 <div id="TopBanner"></div>
 
 <div id="Loading" class="popup_bg"></div>
@@ -96,7 +96,6 @@ function replace_ContentAnnex(oldMod, newMod){
 <form method="post" name="form" action="apply.cgi" target="hidden_frame">
 <input type="hidden" name="current_page" value="Main_AdslStatus_Content.asp">
 <input type="hidden" name="next_page" value="Main_AdslStatus_Content.asp">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="group_id" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="">
@@ -163,17 +162,14 @@ function replace_ContentAnnex(oldMod, newMod){
 
 			<tr class="apply_gen" valign="top">
 				<td width="20%" align="center">
-						<input type="hidden" name="next_host" value="">
-						<input type="submit" onClick="document.form2.next_host.value = location.host; onSubmitCtrl(this, ' Save ')" value="<#CTL_onlysave#>" class="button_gen">
+						<input type="submit" onClick="onSubmitCtrl(this, ' Save ')" value="<#CTL_onlysave#>" class="button_gen">
 					</form>
 				</td>
 				<td width="40%" align="left" >
 					<form method="post" name="form3" action="apply.cgi">
 						<input type="hidden" name="current_page" value="Main_AdslStatus_Content.asp">
 						<input type="hidden" name="action_mode" value=" Refresh ">
-						<input type="hidden" name="next_host" value="">
-						<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen">
-						<!--input type="submit" onClick="document.form3.next_host.value = location.host; onSubmitCtrl(this, ' Refresh ')" value="<#CTL_refresh#>" class="button"-->
+						<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen">						
 					</form>
 				</td>
 			</tr>

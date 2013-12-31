@@ -764,7 +764,8 @@ static int dhcp6_no_relay(struct state *state, int msg_type, void *inbuff, size_
 	      }
 		 	   
 	    /* Return addresses for all valid contexts which don't yet have one */
-	    while ((c = address6_allocate(state->context, state->clid, state->clid_len, state->iaid, ia_counter, solicit_tags, plain_range, &addr)))
+	    while ((c = address6_allocate(state->context, state->clid, state->clid_len, state->ia_type == OPTION6_IA_TA,
+					  state->iaid, ia_counter, solicit_tags, plain_range, &addr)))
 	      {
 #ifdef OPTION6_PREFIX_CLASS
 		if (dump_all_prefix_classes && state->ia_type == OPTION6_IA_NA)

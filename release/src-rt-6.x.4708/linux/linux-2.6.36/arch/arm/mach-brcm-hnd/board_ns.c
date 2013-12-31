@@ -200,7 +200,7 @@ void soc_watchdog(void)
 		si_watchdog_ms(sih, watchdog);
 }
 
-#define CFE_UPDATE 1		// added by Chen-I for mac/regulation update
+#define CFE_UPDATE 1            // added by Chen-I for mac/regulation update
 
 #ifdef CFE_UPDATE
 void bcm947xx_watchdog_disable(void)
@@ -251,7 +251,7 @@ static void __init board_fixup(
 	if (lo_size == mem_size)
 		return;
 
-	mi->bank[1].start = DRAM_LARGE_REGION_BASE + lo_size;
+	mi->bank[1].start = PHYS_OFFSET2 + lo_size;
 	mi->bank[1].size = mem_size - lo_size;
 	mi->nr_banks++;
 }
@@ -817,10 +817,10 @@ init_nflash_mtd_partitions(hndnand_t *nfl, struct mtd_info *mtd, size_t size)
 
 		/* Setup NVRAM MTD partition */
 		bcm947xx_nflash_parts[nparts].name = "nvram";
-		bcm947xx_nflash_parts[nparts].size = NFL_BOOT_SIZE - offset;
+		bcm947xx_nflash_parts[nparts].size = nfl_boot_size(nfl) - offset;
 		bcm947xx_nflash_parts[nparts].offset = offset;
 
-		offset = NFL_BOOT_SIZE;
+		offset = nfl_boot_size(nfl);
 		nparts++;
 	}
 
@@ -834,8 +834,9 @@ init_nflash_mtd_partitions(hndnand_t *nfl, struct mtd_info *mtd, size_t size)
 		} else
 #endif
 		{
-			bcm947xx_nflash_parts[nparts].size =
-				nparts ? (NFL_BOOT_OS_SIZE - NFL_BOOT_SIZE) : NFL_BOOT_OS_SIZE;
+			bcm947xx_nflash_parts[nparts].size = nparts ?
+				(nfl_boot_os_size(nfl) - nfl_boot_size(nfl)) :
+				nfl_boot_os_size(nfl);
 		}
 		bcm947xx_nflash_parts[nparts].offset = offset;
 
@@ -847,7 +848,7 @@ init_nflash_mtd_partitions(hndnand_t *nfl, struct mtd_info *mtd, size_t size)
 			offset = image_second_offset;
 		else
 #endif
-		offset = NFL_BOOT_OS_SIZE;
+		offset = nfl_boot_os_size(nfl);
 		nparts++;
 
 		/* Setup rootfs MTD partition */
@@ -857,10 +858,10 @@ init_nflash_mtd_partitions(hndnand_t *nfl, struct mtd_info *mtd, size_t size)
 			bcm947xx_nflash_parts[nparts].size = image_second_offset - shift;
 		else
 #endif
-		bcm947xx_nflash_parts[nparts].size = NFL_BOOT_OS_SIZE - shift;
+		bcm947xx_nflash_parts[nparts].size = nfl_boot_os_size(nfl) - shift;
 		bcm947xx_nflash_parts[nparts].offset = shift;
 		bcm947xx_nflash_parts[nparts].mask_flags = MTD_WRITEABLE;
-		offset = NFL_BOOT_OS_SIZE;
+		offset = nfl_boot_os_size(nfl);
 
 		nparts++;
 
@@ -868,14 +869,14 @@ init_nflash_mtd_partitions(hndnand_t *nfl, struct mtd_info *mtd, size_t size)
 		/* Setup 2nd kernel MTD partition */
 		if (dual_image_on) {
 			bcm947xx_nflash_parts[nparts].name = "linux2";
-			bcm947xx_nflash_parts[nparts].size = NFL_BOOT_OS_SIZE - image_second_offset;
+			bcm947xx_nflash_parts[nparts].size = nfl_boot_os_size(nfl) - image_second_offset;
 			bcm947xx_nflash_parts[nparts].offset = image_second_offset;
 			shift = lookup_nflash_rootfs_offset(nfl, mtd, image_second_offset,
 			                                    bcm947xx_nflash_parts[nparts].size);
 			nparts++;
 			/* Setup rootfs MTD partition */
 			bcm947xx_nflash_parts[nparts].name = "rootfs2";
-			bcm947xx_nflash_parts[nparts].size = NFL_BOOT_OS_SIZE - shift;
+			bcm947xx_nflash_parts[nparts].size = nfl_boot_os_size(nfl) - shift;
 			bcm947xx_nflash_parts[nparts].offset = shift;
 			bcm947xx_nflash_parts[nparts].mask_flags = MTD_WRITEABLE;
 			nparts++;
@@ -901,70 +902,6 @@ init_nflash_mtd_partitions(hndnand_t *nfl, struct mtd_info *mtd, size_t size)
 
 /* LR: Calling this function directly violates Linux API conventions */
 EXPORT_SYMBOL(init_nflash_mtd_partitions);
-#else
-
-/* Note: NFL_BOOT_OS_SIZE is now set to 32M for FAILSAFE issue */
-#ifndef	NFL_BOOT_OS_SIZE
-#define	NFL_BOOT_OS_SIZE	SZ_32M
-#endif
-
-/* LR: Here is how partition managers are intended to be */
-static int parse_cfenand_partitions(struct mtd_info *mtd,
-                             struct mtd_partition **pparts,
-                             unsigned long origin)
-{
-	unsigned size, offset, nparts ;
-	static struct mtd_partition cfenand_parts[2] = {{0}};
-
-	if ( pparts == NULL )
-		return -EINVAL;
-
-	/*
-	NOTE:
-	Can not call init_nflash_mtd_partitions)_ because it depends
-	on the "other" conflicting driver for its operation,
-	so instead this will just create two partitions
-	so that jffs2 does not overwrite bootable areas.
-	*/
-
-	size = mtd->size ;
-	nparts = 0;
-	offset = origin ;
-
-	printk("%s: slicing up %uMiB provisionally\n", __func__, size >> 20 );
-
-	cfenand_parts[nparts].name = "cfenand";
-	cfenand_parts[nparts].size = NFL_BOOT_OS_SIZE ;
-	cfenand_parts[nparts].offset = offset ;
-	cfenand_parts[nparts].mask_flags = MTD_WRITEABLE;
-	cfenand_parts[nparts].ecclayout = mtd->ecclayout;
-	nparts++;
-	offset += NFL_BOOT_OS_SIZE ;
-
-	cfenand_parts[nparts].name = "jffs2";
-	cfenand_parts[nparts].size = size - offset ;
-	cfenand_parts[nparts].offset = offset;
-	cfenand_parts[nparts].mask_flags = 0;
-	cfenand_parts[nparts].ecclayout = mtd->ecclayout;
-	nparts++;
-
-	*pparts = cfenand_parts;
-	return nparts;
-}
-
-static struct mtd_part_parser cfenand_parser = {
-        .owner = THIS_MODULE,
-        .parse_fn = parse_cfenand_partitions,
-        .name = "cfenandpart",
-};
-
-static int __init cfenenad_parser_init(void)
-{
-        return register_mtd_parser(&cfenand_parser);
-}
-
-module_init(cfenenad_parser_init);
-
 #endif /* CONFIG_MTD_NFLASH */
 
 #ifdef CONFIG_CRASHLOG

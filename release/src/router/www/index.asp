@@ -141,7 +141,7 @@ function initial(){
 			else	
 				$('wlc_band_status').innerHTML = "5GHz";
 		}
-		$('NM_connect_title').innerHTML = Untranslated.parent_AP_status + ":";
+		$('NM_connect_title').innerHTML = "<#parent_AP_status#> :";
 	}
 	else{
 		$("index_status").innerHTML = '<span style="word-break:break-all;">' + wanlink_ipaddr() + '</span>'
@@ -456,7 +456,7 @@ function printer_html(device_seat, printer_order){
 	var icon_html_code = '';
 	var dec_html_code = '';
 	
-	if(printer_pool()[printer_order] != "")
+	if(printer_serialn()[printer_order] == "<% nvram_get("u2ec_serial"); %>")
 		printer_status = '<#CTL_Enabled#>';
 	else
 		printer_status = '<#CTL_Disabled#>';

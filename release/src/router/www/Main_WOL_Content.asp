@@ -57,9 +57,7 @@
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <script>
 function initial(){
-	$('pull_arrow').title = Untranslated.select_device_name;
 	show_menu();
-	load_body();
 	showwollist();
 	showLANIPList();
 }
@@ -330,7 +328,6 @@ function applyRule(){
 <form method="GET" name="form" action="/apply.cgi" target="hidden_frame"> 
 <input type="hidden" name="current_page" value="Main_Netstat_Content.asp">
 <input type="hidden" name="next_page" value="Main_Netstat_Content.asp">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="group_id" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="">
@@ -367,7 +364,7 @@ function applyRule(){
 											<th width="20%"><#NetworkTools_target#></th>
 											<td>
 												<input type="text" class="input_20_table" maxlength="17" name="destIP" value="" placeholder="ex: <% nvram_get("et0macaddr"); %>" onKeyPress="return is_hwaddr(this,event);">
-												<input class="button_gen" id="cmdBtn" onClick="onSubmitCtrl(this, ' Refresh ')" type="button" value="Wake">
+												<input class="button_gen" id="cmdBtn" onClick="onSubmitCtrl(this, ' Refresh ')" type="button" value="<#NetworkTools_WOL_btn#>">
 												<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></span>
 											</td>										
 										</tr>
@@ -383,14 +380,14 @@ function applyRule(){
 									  	<tr>
 						        		<th><#ShareNode_DeviceName_itemname#></th>
 								  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);"><#MAC_Address#></a></th>
-						        		<th>Add / Delete</th>
+						        		<th><#list_add_delete#></th>
 									  	</tr>			  
 									  	<tr>
 									  			<!-- client info -->
 																					  		
 				            			<td width="40%">
 				            				<input type="text" class="input_20_table" maxlength="15" name="wollist_deviceName" onClick="hideClients_Block();" onkeypress="return is_alphanum(this,event);">
-											<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="" onmouseover="over_var=1;" onmouseout="over_var=0;">
+											<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="<#select_device_name#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
 											<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>	
 				            			</td>
 				            			<td width="40%">
@@ -426,7 +423,6 @@ function applyRule(){
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
 <input type="hidden" name="current_page" value="Main_WOL_Content.asp">
 <input type="hidden" name="next_page" value="Main_WOL_Content.asp">
-<input type="hidden" name="next_host" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_wait" value="3">

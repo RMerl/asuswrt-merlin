@@ -64,6 +64,10 @@ extern int cpu_turbo_mode;
 #endif
 #endif
 
+#ifdef RTN18U				// RT-N18U USB RESET
+#define USB_PWR1_GPIO	(1 << 13)	// GPIO 13
+#endif
+
 void
 board_pinmux_init(si_t *sih)
 {
@@ -97,6 +101,9 @@ board_pinmux_init(si_t *sih)
 	si_gpioouten(sih, USB_PWR2_GPIO, USB_PWR2_GPIO, GPIO_DRV_PRIORITY);
 #endif
 #endif
+#ifdef RTN18U				// RT-N18U USB RESET
+	si_gpioouten(sih, USB_PWR1_GPIO, USB_PWR1_GPIO, GPIO_DRV_PRIORITY);
+#endif
 
 	si_gpioout(sih, PWR_LED_GPIO, 0, GPIO_DRV_PRIORITY);
 	si_gpioout(sih, USB_LED_GPIO, USB_LED_GPIO, GPIO_DRV_PRIORITY);
@@ -116,6 +123,9 @@ board_pinmux_init(si_t *sih)
 #ifndef RTAC68U
 	si_gpioout(sih, USB_PWR2_GPIO, USB_PWR2_GPIO, GPIO_DRV_PRIORITY);
 #endif
+#endif
+#ifdef RTN18U				// for RT-N18U to enable USB power
+	si_gpioout(sih, USB_PWR1_GPIO, USB_PWR1_GPIO, GPIO_DRV_PRIORITY);
 #endif
 }
 
