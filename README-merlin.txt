@@ -556,6 +556,8 @@ History
               on the VPN Status page.
    - CHANGED: Removed the display of global OpenVPN statistics on the
               VPN Status page.
+   - CHANGED: Upgraded AiCloud binary components on MIPS routers to
+              374_1631 build (N16/N66/AC66)
    - FIXED: OpenVPN clients with DNS set to "Strict" weren't properly
             setting dnsmasq to use "strict-order"
    - FIXED: Garbled resolv.conf generated when adding an OpenVPN client DNS
