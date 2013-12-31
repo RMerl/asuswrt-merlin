@@ -1900,9 +1900,11 @@ int update_resolvconf(void)
 	file_unlock(lock);
 
 #ifdef RTCONFIG_DNSMASQ
+#ifdef RTCONFIG_OPENVPN
 	if (dnsstrict == 2)
 		restart_dnsmasq(0);	// add strict-order
 	else
+#endif
 		reload_dnsmasq();
 #else
 	restart_dns();
