@@ -1,7 +1,7 @@
 /*
  * BCM47XX Sonics SiliconBackplane SDRAM/MEMC core initialization
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -186,7 +186,7 @@ read_nvram:
 	li	v1,1
 
 	/* 2: find_nvram, use the 32MB window */
-1:	li	t2,KSEG1ADDR(SI_FLASH2 - NVRAM_SPACE)
+1:	li	t2,KSEG1ADDR(SI_FLASH2 - MAX_NVRAM_SPACE)
 	li	t4,SI_FLASH2_SZ
 	li	t3,FLASH_MIN 
 	li	t0,NVRAM_MAGIC

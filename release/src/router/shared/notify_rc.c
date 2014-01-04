@@ -72,6 +72,11 @@ int notify_rc_and_wait_2min(const char *event_name)
 	return notify_rc_internal(event_name, TRUE, 120);
 }
 
+int notify_rc_and_period_wait(const char *event_name, int wait)
+{
+	return notify_rc_internal(event_name, TRUE, wait);
+}
+
 /*
  * int wait_rc_service(int wait)
  * wait: seconds to wait and check

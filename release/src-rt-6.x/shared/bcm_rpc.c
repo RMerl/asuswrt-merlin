@@ -2,7 +2,7 @@
  * RPC layer. It links to bus layer with transport layer(bus dependent)
  * Broadcom 802.11abg Networking Device Driver
  *
- * Copyright (C) 2011, Broadcom Corporation
+ * Copyright (C) 2012, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -10,7 +10,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: bcm_rpc.c 314581 2012-02-13 17:54:04Z $
+ * $Id: bcm_rpc.c 358609 2012-09-24 21:59:30Z $
  */
 
 #include <epivers.h>
@@ -567,7 +567,7 @@ BCMATTACHFN(bcm_rpc_detach)(struct rpc_info *rpci)
 #ifdef WLC_HIGH
 #if defined(NDIS)
 	if (rpci->reorder_lock_alloced)
-		NdisFreeSpinLock(&rpcb->lock);
+		NdisFreeSpinLock(&rpci->reorder_lock);
 #endif
 #endif /* WLC_HIGH */
 
@@ -986,10 +986,10 @@ bcm_rpc_watchdog(struct rpc_info *rpci)
 	static uint32 uptime = 0;
 
 #ifdef WLC_LOW
-/* rpc watchdog is called every 10 msec in the low driver */
+/* rpc watchdog is called every 5 msec in the low driver */
 	static uint32 count = 0;
 	count++;
-	if (count % 100 == 0) {
+	if (count % 200 == 0) {
 		 count = 0;
 		 uptime++;
 		if (uptime % 60 == 0)

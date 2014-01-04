@@ -1,7 +1,7 @@
 /*
  * Broadcom chipcommon NAND flash interface
  *
- * Copyright (C) 2011, Broadcom Corporation
+ * Copyright (C) 2012, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: dev_nflash.c 304950 2011-12-23 09:17:46Z $
+ * $Id: dev_nflash.c 359506 2012-09-28 05:19:03Z $
  */
 
 #include "lib_types.h"
@@ -29,7 +29,7 @@
 #include <osl.h>
 #include <bcmutils.h>
 #include <siutils.h>
-#include <nflash.h>
+#include <hndnand.h>
 #include <hndsoc.h>
 
 #define isaligned(x, y) (((x) % (y)) == 0)
@@ -37,9 +37,7 @@
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
 struct nflash_cfe {
-	si_t *sih;
-	chipcregs_t *cc;
-	struct nflash *info;
+	hndnand_t *info;
 	flashpart_t parts[FLASH_MAX_PARTITIONS];
 	unsigned char *map;
 };
@@ -57,15 +55,15 @@ nflash_cfe_read(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
 {
 	flashpart_t *part = (flashpart_t *) ctx->dev_softc;
 	struct nflash_cfe *nflash = (struct nflash_cfe *) part->fp_dev;
-	uint offset = (uint) buffer->buf_offset + part->fp_offset;
+	uint64 offset = buffer->buf_offset + part->fp_offset;
 	uint len = (uint) buffer->buf_length;
 	uchar *buf = NULL;
 	int bytes, ret = 0;
 	uint extra = 0;
 	uchar *tmpbuf = NULL;
 	int size;
-	uint blocksize, mask, blk_offset, off;
-	uint skip_bytes = 0, good_bytes = 0;
+	uint64 blk_offset, off, skip_bytes = 0;
+	uint blocksize, pagesize, mask, good_bytes = 0;
 	int blk_idx;
 	int need_copy = 0;
 
@@ -74,15 +72,16 @@ nflash_cfe_read(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
 	/* Check address range */
 	if (!len)
 		return 0;
-	if ((offset & (NFL_SECTOR_SIZE - 1)) != 0) {
-		extra = offset & (NFL_SECTOR_SIZE - 1);
+
+	pagesize = nflash->info->pagesize;
+	if ((offset & (pagesize - 1)) != 0) {
+		extra = offset & (pagesize - 1);
 		offset -= extra;
 		len += extra;
 		need_copy = 1;
 	}
 
-	size = (len + (NFL_SECTOR_SIZE - 1)) & ~(NFL_SECTOR_SIZE - 1);
-
+	size = (len + (pagesize - 1)) & ~(pagesize - 1);
 	if (size != len)
 		need_copy = 1;
 	if (!need_copy) {
@@ -106,7 +105,7 @@ nflash_cfe_read(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
 	/* Check and skip bad blocks */
 	for (blk_idx = good_bytes/blocksize; blk_idx < nflash->info->numblocks; blk_idx++) {
 		if ((nflash->map[blk_idx] != 0) ||
-		    (nflash_checkbadb(nflash->sih, nflash->cc, (blocksize*blk_idx)) != 0)) {
+		    (hndnand_checkbadb(nflash->info, (blocksize*blk_idx)) != 0)) {
 			skip_bytes += blocksize;
 			nflash->map[blk_idx] = 1;
 		} else {
@@ -115,7 +114,6 @@ nflash_cfe_read(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
 			good_bytes += blocksize;
 		}
 	}
-
 	if (blk_idx == nflash->info->numblocks) {
 		ret = CFE_ERR_IOERR;
 		goto done;
@@ -129,7 +127,7 @@ nflash_cfe_read(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
 			blk_offset += blocksize;
 			blk_idx++;
 			while (((nflash->map[blk_idx] != 0) ||
-				(nflash_checkbadb(nflash->sih, nflash->cc, blk_offset) != 0)) &&
+				(hndnand_checkbadb(nflash->info, blk_offset) != 0)) &&
 			       ((blk_offset >> 20) < nflash->info->size)) {
 				skip_bytes += blocksize;
 				nflash->map[blk_idx] = 1;
@@ -142,7 +140,7 @@ nflash_cfe_read(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
 			}
 			off = offset + skip_bytes;
 		}
-		if ((bytes = nflash_read(nflash->sih, nflash->cc, off, NFL_SECTOR_SIZE, buf)) < 0) {
+		if ((bytes = hndnand_read(nflash->info, off, pagesize, buf)) < 0) {
 			ret = bytes;
 			goto done;
 		}
@@ -154,6 +152,7 @@ nflash_cfe_read(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
 		buffer->buf_retlen += bytes;
 	}
 
+
 done:
 	if (tmpbuf) {
 		buf = (uchar *) buffer->buf_ptr;
@@ -161,7 +160,6 @@ done:
 		memcpy(buf, tmpbuf+extra, buffer->buf_retlen);
 		KFREE(tmpbuf);
 	}
-
 	return ret;
 }
 
@@ -177,14 +175,14 @@ nflash_cfe_write(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
 {
 	flashpart_t *part = (flashpart_t *) ctx->dev_softc;
 	struct nflash_cfe *nflash = (struct nflash_cfe *) part->fp_dev;
-	uint offset = (uint) buffer->buf_offset + part->fp_offset;
+	uint64 offset = buffer->buf_offset + part->fp_offset;
 	uint len = (uint) buffer->buf_length;
 	uchar *buf = (uchar *) buffer->buf_ptr;
 	uchar *block = NULL;
 	iocb_buffer_t cur;
 	int bytes, ret = 0;
-	uint blocksize, mask, blk_offset, off =  0;
-	uint skip_bytes = 0, good_bytes = 0;
+	uint64 blk_offset, off = 0, skip_bytes = 0;
+	uint blocksize, mask, good_bytes;
 	int blk_idx;
 	int docopy = 1;
 
@@ -201,9 +199,11 @@ nflash_cfe_write(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
 	/* Check and skip bad blocks */
 	blk_offset = offset & ~mask;
 	good_bytes = part->fp_offset & ~mask;
-	for (blk_idx = good_bytes/blocksize; blk_idx < (part->fp_offset+part->fp_size)/blocksize; blk_idx++) {
+	for (blk_idx = good_bytes/blocksize;
+	     blk_idx < (part->fp_offset+part->fp_size)/blocksize;
+	     blk_idx++) {
 		if ((nflash->map[blk_idx] != 0) ||
-		    (nflash_checkbadb(nflash->sih, nflash->cc, (blocksize*blk_idx)) != 0)) {
+		    (hndnand_checkbadb(nflash->info, (blocksize*blk_idx)) != 0)) {
 			skip_bytes += blocksize;
 			nflash->map[blk_idx] = 1;
 		} else {
@@ -224,9 +224,9 @@ nflash_cfe_write(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
 			cur.buf_offset = offset & ~mask;
 			cur.buf_length = blocksize;
 			cur.buf_ptr = block;
-	
+
 			/* Copy existing data into holding sector if necessary */
-			if (!isaligned(offset, blocksize) || (len < blocksize)) {
+			if (!isaligned((uint)offset, blocksize) || (len < blocksize)) {
 				cur.buf_offset -= part->fp_offset;
 				if ((ret = nflash_cfe_read(ctx, &cur)))
 					goto done;
@@ -243,25 +243,25 @@ nflash_cfe_write(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
 
 		off = (uint) cur.buf_offset + skip_bytes;
 		/* Erase block */
-		if ((ret = nflash_erase(nflash->sih, nflash->cc, off)) < 0) {
-				nflash_mark_badb(nflash->sih, nflash->cc, off);
-				nflash->map[blk_idx] = 1;
-				skip_bytes += blocksize;
-				docopy = 0;
+		if ((ret = hndnand_erase(nflash->info, off)) < 0) {
+			hndnand_mark_badb(nflash->info, off);
+			nflash->map[blk_idx] = 1;
+			skip_bytes += blocksize;
+			docopy = 0;
 		}
 		else {
 			/* Write holding sector */
 			while (cur.buf_length) {
-				if ((bytes = nflash_write(nflash->sih, nflash->cc,
-							  (uint) cur.buf_offset + skip_bytes,
-							  (uint) cur.buf_length,
-							  (uchar *) cur.buf_ptr)) < 0) {
-					nflash_mark_badb(nflash->sih, nflash->cc, off);
+				if ((bytes = hndnand_write(nflash->info,
+					cur.buf_offset + skip_bytes,
+					(uint)cur.buf_length,
+					(uchar *)cur.buf_ptr)) < 0) {
+					/* Mark bad block */
+					hndnand_mark_badb(nflash->info, off);
 					nflash->map[blk_idx] = 1;
 					skip_bytes += blocksize;
 					docopy = 0;
 					break;
-	
 				}
 				cur.buf_offset += bytes;
 				cur.buf_length -= bytes;
@@ -280,7 +280,7 @@ nflash_cfe_write(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
 			blk_offset += blocksize;
 			blk_idx++;
 			while (((nflash->map[blk_idx] != 0) ||
-				(nflash_checkbadb(nflash->sih, nflash->cc, blk_offset) != 0)) &&
+				(hndnand_checkbadb(nflash->info, blk_offset) != 0)) &&
 			       (blk_offset < (part->fp_offset+part->fp_size))) {
 				skip_bytes += blocksize;
 				nflash->map[blk_idx] = 1;
@@ -307,31 +307,32 @@ nflash_cfe_erase_range(cfe_devctx_t *ctx, flash_range_t *range)
 	struct nflash_cfe *nflash = (struct nflash_cfe *) part->fp_dev;
 	uint blocksize = nflash->info->blocksize;
 
-	int len, offset;
+	uint64 offset, len;
 
 	offset = part->fp_offset + range->range_base;
 	len = range->range_length;
 
-	if ((offset < part->fp_offset) || 
+	if ((offset < part->fp_offset) ||
 		((offset + len) > (part->fp_offset + part->fp_size))) {
-		printf("!! offset 0x%x, len=0x%x over partition boundary: start: 0x%x, end: 0x%x",
-			offset, len, part->fp_offset, part->fp_offset + part->fp_size );
+		printf("!! offset 0x%llx, len=0x%llx over partition boundary: "
+			"start: 0x%x, end: 0x%x",
+			offset, len, part->fp_offset, part->fp_offset + part->fp_size);
 		return CFE_ERR_INV_PARAM;
 	}
 	if ((offset & (blocksize - 1)) != 0) {
-		printf("ersae offset must aligned to %x = 0x%x\n", offset, blocksize);
+		printf("ersae offset must aligned to %llx = 0x%x\n", offset, blocksize);
 		return CFE_ERR_INV_PARAM;
 	}
 
 	while (len > 0) {
-		nflash_erase(nflash->sih, nflash->cc, offset);
+		hndnand_erase(nflash->info, offset);
 		offset += blocksize;
 		len -= blocksize;
 	}
 
 	return 0;
 }
-#endif
+#endif	/* CFE_FLASH_ERASE_FLASH_ENABLED */
 
 static int
 nflash_cfe_ioctl(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
@@ -351,7 +352,8 @@ nflash_cfe_ioctl(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
 		info = (flash_info_t *) buffer->buf_ptr;
 		info->flash_base = 0;
 		/* 2GB is supported for now */
-		info->flash_size = (nflash->info->size >= (1 << 11)) ? (1 << 31) : (nflash->info->size << 20);
+		info->flash_size =
+			(nflash->info->size >= (1 << 11)) ? (1 << 31) : (nflash->info->size << 20);
 		info->flash_type = nflash->info->type;
 		info->flash_flags = FLASH_FLAG_NOERASE;
 		break;
@@ -359,12 +361,13 @@ nflash_cfe_ioctl(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
 	case IOCTL_FLASH_ERASE_RANGE:
 		range = (flash_range_t *) buffer->buf_ptr;
 		/* View the base 0 and range 0 as erase all parition */
-		if(range->range_base == 0 && range->range_length == 0) {
+		if (range->range_base == 0 && range->range_length == 0) {
 			range->range_length = part->fp_size;
 			printf("Erase whole mtd partition!\n");
 		}
-		xprintf("Erase range: 0x%x - 0x%x\n", range->range_base, range->range_base+ range->range_length);
-		nflash_cfe_erase_range(ctx, range);	    
+		xprintf("Erase range: 0x%x - 0x%x\n",
+			range->range_base, range->range_base + range->range_length);
+		nflash_cfe_erase_range(ctx, range);
 		break;
 #endif
 	default:
@@ -433,15 +436,16 @@ nflash_cfe_probe(cfe_driver_t *drv,
 	struct nflash_cfe *nflash;
 	char type[80], descr[80], name[80];
 	int idx;
+	si_t *sih;
 
-	if (!(nflash = (struct nflash_cfe *) KMALLOC(sizeof(struct nflash_cfe), 0)))
+	if (!(nflash = (struct nflash_cfe *)KMALLOC(sizeof(struct nflash_cfe), 0)))
 		return;
 	memset(nflash, 0, sizeof(struct nflash_cfe));
 	/* Attach to the backplane and map to chipc */
-	nflash->sih = si_kattach(SI_OSH);
-	nflash->cc = (chipcregs_t *)probe->flash_cmdset;
+	sih = si_kattach(SI_OSH);
+
 	/* Initialize serial flash access */
-	if (!(nflash->info = nflash_init(nflash->sih, nflash->cc))) {
+	if (!(nflash->info = hndnand_init(sih))) {
 		xprintf("nflash: found no supported devices\n");
 		KFREE(nflash);
 		return;
@@ -478,10 +482,11 @@ nflash_cfe_probe(cfe_driver_t *drv,
 		memset(nflash->map, 0, nflash->info->numblocks);
 	if (probe->flash_nparts == 0) {
 		/* Just instantiate one device */
-		nflash->parts[0].fp_dev = (flashdev_t *) nflash;
+		nflash->parts[0].fp_dev = (flashdev_t *)nflash;
 		nflash->parts[0].fp_offset = 0;
 		/* At most 2GB for one partition */
-		nflash->parts[0].fp_size = (nflash->info->size >= (1 << 11)) ? (1 << 31) : (nflash->info->size << 20);
+		nflash->parts[0].fp_size =
+			(nflash->info->size >= (1 << 11)) ? (1 << 31) : (nflash->info->size << 20);
 		sprintf(descr, "%s %s size %uKB",
 			type, drv->drv_description,
 			nflash->info->size << 10);

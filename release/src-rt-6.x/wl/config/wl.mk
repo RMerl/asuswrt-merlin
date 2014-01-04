@@ -14,26 +14,32 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
 # OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-# $Id: wl.mk 355911 2012-09-10 11:44:52Z $
+# $Id: wl.mk 365823 2012-10-31 04:24:30Z $
 
 
 
 # debug/internal
 ifeq ($(DEBUG),1)
-	WLFLAGS += -DBCMDBG -DWLTEST -DRWL_WIFI -DWIFI_ACT_FRAME -DWLRWL
+	WLFLAGS += -DBCMDBG -DWLTEST -DRWL_WIFI -DWIFI_ACT_FRAME -DWLRWL -DWL_EXPORT_CURPOWER
 	WLRWL = 1
 else ifeq ($(WLDEBUG),1)
 	BCMUTILS = 1
 	OSLLX = 1
-	WLFLAGS += -DBCMDBG -DWLTEST -DWIFI_ACT_FRAME
+	WLFLAGS += -DBCMDBG -DWLTEST -DWIFI_ACT_FRAME -DWL_EXPORT_CURPOWER
 else
 #ifdef WLTEST
 	# mfgtest builds
 	ifeq ($(WLTEST),1)
-		WLFLAGS += -DWLTEST
+		WLFLAGS += -DWLTEST -DWL_EXPORT_CURPOWER
 	endif
 #endif
 endif
+
+#ifdef BCMDBG
+ifeq ($(BCMDBG),1)
+	WLFLAGS += -DWL_EXPORT_CURPOWER
+endif
+#endif
 
 ifeq ($(HSPOT),1)
 	WLBSSLOAD = 1
@@ -45,6 +51,14 @@ ifeq ($(HSPOT),1)
 	WLPROBRESP_SW = 1
 endif
 
+ifeq ($(NPS),1)
+	WLWNM = 1
+	WLNPS = 1
+	ifeq ($(STA),1)
+		KEEP_ALIVE = 1
+	endif
+endif
+
 ifneq ($(MINIAP),1)
 	WLFLAGS += -DENABLE_ACPHY
 endif
@@ -53,7 +67,11 @@ WLFLAGS += -DPPR_API
 #ifdef WL11AC
 ifneq ($(WL11AC),0)
 	WL11AC := 1
-	WLFLAGS += -DWL11AC -DWL_BEAMFORMING
+	WLFLAGS += -DWL11AC
+
+ifneq ($(WLTXBF),0)
+	WLFLAGS += -DWL_BEAMFORMING
+endif
 endif
 #endif
 
@@ -123,6 +141,9 @@ ifeq ($(WL_HIGH),1)
 		ifeq ($(BCMUSBDEV_EP_FOR_RPCRETURN),1)
 			WLFLAGS += -DBCMUSBDEV_EP_FOR_RPCRETURN
 		endif
+		ifeq ($(WLMEDIA_LARGE_DNGL_AGG),1)
+			WLFLAGS += -DWLMEDIA_LARGE_DNGL_AGG
+		endif
 	endif
 endif
 
@@ -171,7 +192,7 @@ ifeq ($(WL_SPLIT),1)
 	WLFILES_SRC_HI += src/wl/sys/wlc_rpctx.c
 	WLFILES_SRC_LO += src/wl/sys/wlc_high_stubs.c
 
-	WLFILES_SRC_HI += src/wl/phy/wlc_ppr.c
+	WLFILES_SRC_HI += src/wl/ppr/src/wlc_ppr.c
 
 	ifeq ($(WL_HIGH),1)
 		ifeq ($(BCMSDIO),1)
@@ -191,8 +212,7 @@ endif
 
 #ifdef WL
 ifeq ($(WL),1)
-#	WLFILES_SRC += src/shared/bcmwifi/src/bcmwifi_channels.c
-	WLFILES_SRC += src/shared/bcmwifi_channels.c
+	WLFILES_SRC += src/shared/bcmwifi/src/bcmwifi_channels.c
 	WLFILES_SRC += src/shared/bcmevent.c
 	WLFILES_SRC += src/shared/bcm_mpool.c
 	WLFILES_SRC += src/shared/bcm_notif.c
@@ -203,7 +223,7 @@ ifeq ($(WL),1)
 	WLFILES_SRC_LO += src/shared/qmath.c
 	WLFILES_SRC_LO += src/wl/sys/d11ucode_gt15.c
 	WLFILES_SRC_LO += src/wl/sys/d11ucode_ge24.c
-	WLFILES_SRC_LO += src/wl/phy/wlc_ppr.c
+	WLFILES_SRC_LO += src/wl/ppr/src/wlc_ppr.c
 	WLFILES_SRC_LO += src/wl/phy/wlc_phy_cmn.c
 	WLFILES_SRC_LO += src/wl/phy/wlc_phy_ssn.c
 	WLFILES_SRC_LO += src/wl/phy/wlc_phy_n.c
@@ -216,6 +236,7 @@ ifeq ($(WL),1)
 	ifneq ($(MINIAP),1)
 		WLFILES_SRC_LO += src/wl/sys/d11ucode_ge40.c
 		WLFILES_SRC_LO += src/wl/phy/wlc_phytbl_ac.c
+		WLFILES_SRC_LO += src/wl/phy/wlc_phytbl_acdc.c
 		WLFILES_SRC_LO += src/wl/phy/wlc_phy_ac.c
 		WLFILES_SRC_LO += src/wl/sys/d11ucode_le15.c
 		WLFILES_SRC_LO += src/wl/phy/wlc_phy_ht.c
@@ -257,8 +278,16 @@ ifeq ($(WL),1)
 			WLFLAGS += -DLP_P2P_SOFTAP
 		endif
 	endif
+#ifdef WL_LPC_DEBUG
+	ifeq ($(WL_LPC_DEBUG),1)
+		WLFLAGS += -DWL_LPC_DEBUG
+	endif
 #endif
-
+#endif
+	ifeq ($(WL_RELMCAST),1)
+		WLFLAGS += -DWL_RELMCAST
+		WLFILES_SRC_HI += src/wl/rel_mcast/src/wlc_relmcast.c
+	endif
 	WLFILES_SRC_HI += src/wl/sys/wlc_antsel.c
 	WLFILES_SRC_HI += src/wl/sys/wlc_bsscfg.c
 	WLFILES_SRC_HI += src/wl/sys/wlc_vndr_ie_list.c
@@ -406,6 +435,12 @@ endif
 ifeq ($(EMBED_IMAGE_43236b),1)
 	WLFLAGS += -DEMBED_IMAGE_43236b
 endif
+ifeq ($(EMBED_IMAGE_43526a),1)
+	WLFLAGS += -DEMBED_IMAGE_43526a
+endif
+ifeq ($(EMBED_IMAGE_43526b),1)
+	WLFLAGS += -DEMBED_IMAGE_43526b
+endif
 ifeq ($(EMBED_IMAGE_4325sd),1)
 	WLFLAGS += -DEMBED_IMAGE_4325sd
 endif
@@ -528,8 +563,7 @@ ifeq ($(WLNDIS),1)
 	endif
 
 	WLFILES_SRC += src/wl/sys/wl_ndconfig.c
-#	WLFILES_SRC += src/shared/bcmwifi/src/bcmwifi_channels.c
-	WLFILES_SRC += src/shared/bcmwifi_channels.c
+	WLFILES_SRC += src/shared/bcmwifi/src/bcmwifi_channels.c
 	WLFILES_SRC += src/shared/bcmstdlib.c
 
 	# support host supplied nvram variables
@@ -992,10 +1026,30 @@ endif
 
 ifeq ($(WLFBT),1)
 	WLFLAGS += -DWLFBT
+	WLFLAGS += -DWLFBTOVERDS
+	WLFLAGS += -DBCMINTSUP
+	WLFLAGS += -DWLCAC
+	WLFILES_SRC_HI += src/wl/sys/wlc_sup.c
+	WLFILES_SRC_HI += src/bcmcrypto/aes.c
+	WLFILES_SRC_HI += src/bcmcrypto/aeskeywrap.c
+	WLFILES_SRC_HI += src/bcmcrypto/prf.c
+	WLFILES_SRC_HI += src/bcmcrypto/sha1.c
+	WLFILES_SRC_HI += src/bcmcrypto/hmac_sha256.c
+	WLFILES_SRC_HI += src/bcmcrypto/sha256.c
+	WLFILES_SRC_HI += src/wl/sys/wlc_cac.c
+	# NetBSD 2.0 has MD5 and AES built in
+	ifneq ($(OSLBSD),1)
+		WLFILES_SRC_HI += src/bcmcrypto/md5.c
+		WLFILES_SRC_HI += src/bcmcrypto/rijndael-alg-fst.c
+	endif
 endif
 
 ifeq ($(WLWNM),1)
 	WLFLAGS += -DWLWNM
+endif
+
+ifeq ($(WLNPS),1)
+	WLFLAGS += -DWLWNM -DWLNPS
 endif
 
 #ifdef BCMSUP_PSK
@@ -1058,9 +1112,16 @@ ifeq ($(MFP),1)
 	WLFILES_SRC_HI += src/bcmcrypto/aes.c
 	WLFILES_SRC_HI += src/bcmcrypto/sha256.c
 	WLFILES_SRC_HI += src/bcmcrypto/hmac_sha256.c
+	WLFILES_SRC_HI += src/bcmcrypto/prf.c
+	WLFILES_SRC_HI += src/bcmcrypto/sha1.c
+	WLFILES_SRC_HI += src/wl/sys/wlc_mfp.c
 	# BSD has AES built in
 	ifneq ($(BSD),1)
 		WLFILES_SRC_HI += src/bcmcrypto/rijndael-alg-fst.c
+	endif
+	ifeq ($(MFP_TEST),1)
+		WLFLAGS += -DMFP_TEST
+		WLFILES_SRC_HI += src/wl/sys/wlc_mfp_test.c
 	endif
 endif
 #endif
@@ -1138,6 +1199,9 @@ ifeq ($(WLAMPDU),1)
 	endif
 	ifeq ($(WLAMPDU_HW),1)
 		WLFLAGS += -DWLAMPDU_HW -DWLAMPDU_MAC
+	endif
+	ifeq ($(WLAMPDU_AQM),1)
+		WLFLAGS += -DWLAMPDU_AQM -DWLAMPDU_MAC
 	endif
 	ifeq ($(WLAMPDU_PRECEDENCE),1)
 		WLFLAGS += -DWLAMPDU_PRECEDENCE
@@ -1217,6 +1281,9 @@ endif
 endif
 #endif /* WLP2P */
 #ifdef WLOFFLD
+ifeq ($(WLTEST),1)
+	WLOFFLD=0
+endif
 ifeq ($(WLOFFLD),1)
 	ifeq ($(WL_SPLIT),0)
 		WLFLAGS += -DWLOFFLD
@@ -1225,6 +1292,17 @@ ifeq ($(WLOFFLD),1)
 	endif
 endif
 #endif /* WLOFFLD */
+
+#ifdef WLVSDB
+ifeq ($(WLVSDB),1)
+        WLFLAGS += -DWLVSDB
+        WLMCNX := 1
+ifndef WLMCHAN
+        WLMCHAN := 1
+endif
+endif
+#endif /*WLVSDB*/
+
 
 ifeq ($(WLMCNX),1)
 	WLFLAGS += -DWLP2P_UCODE
@@ -1307,6 +1385,12 @@ endif
 #ifdef WLPKTDLYSTAT
 ifeq ($(WLPKTDLYSTAT),1)
 	WLFLAGS += -DWLPKTDLYSTAT
+endif
+#endif
+
+#ifdef WLPKTDLYSTAT_IND
+ifeq ($(WLPKTDLYSTAT_IND),1)
+	WLFLAGS += -DWLPKTDLYSTAT_IND
 endif
 #endif
 
@@ -1490,8 +1574,7 @@ endif
 ifeq ($(CONFIG_USBRNDIS_RETAIL),1)
 	WLFLAGS += -DCONFIG_USBRNDIS_RETAIL
 	WLFILES_SRC += src/wl/sys/wl_ndconfig.c
-#	WLFILES_SRC += src/shared/bcmwifi/src/bcmwifi_channels.c
-	WLFILES_SRC += src/shared/bcmwifi_channels.c
+	WLFILES_SRC += src/shared/bcmwifi/src/bcmwifi_channels.c
 endif
 
 ifeq ($(NVRAM),1)
@@ -1630,6 +1713,13 @@ endif
 ifeq ($(WLNDOE),1)
 	WLFLAGS += -DWLNDOE
 	WLFILES_SRC += src/wl/sys/wl_ndoe.c
+endif
+#endif
+
+#ifdef PLC
+ifeq ($(PLC),1)
+	WLFLAGS += -DPLC -DPLC_WET
+	WLFILES_SRC += src/wl/sys/wl_plc_linux.c
 endif
 #endif
 
@@ -1797,6 +1887,11 @@ endif
 
 # add a flag to indicate the split to linux kernels
 WLFLAGS += -DPHY_HAL
+
+# compile only 1x1 ACPHY related code
+ifeq ($(ACPHY_1X1_ONLY),1)
+WLFLAGS += -DACPHY_1X1_ONLY
+endif
 
 #ifdef WET_TUNNEL
 ifeq ($(WET_TUNNEL),1)

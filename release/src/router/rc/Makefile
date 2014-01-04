@@ -15,6 +15,9 @@ endif
 
 ifeq ($(RTCONFIG_RALINK),y)
 CFLAGS += -I$(TOP)/shared/sysdeps/ralink -I$(TOP)/wireless_tools
+ifneq ($(findstring MAC_REPEATER=, $(shell cat $(LINUXDIR)/.config)),)
+export CFLAGS += -DMAC_REPEATER
+endif
 endif
 
 ifeq ($(RTN14U),y)

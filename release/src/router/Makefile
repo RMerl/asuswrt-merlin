@@ -86,6 +86,9 @@ ifeq ($(RTCONFIG_NORTON),y)
 export CFLAGS += -D__CONFIG_NORTON__
 endif
 
+ifeq ($(RTCONFIG_DEBUG),y)
+export CFLAGS += -g
+endif
 #
 #
 #
@@ -269,6 +272,7 @@ obj-$(RTCONFIG_IPV6) += libdaemon
 obj-$(RTCONFIG_IPV6) += radvd
 obj-$(RTCONFIG_IPV6) += dhcpv6
 #obj-$(RTCONFIG_IPV6) += ecmh
+obj-$(RTCONFIG_IPV6) += ndisc6
 
 obj-$(RTCONFIG_MEDIA_SERVER) += zlib
 obj-$(RTCONFIG_MEDIA_SERVER) += sqlite
@@ -1563,19 +1567,44 @@ radvd: libdaemon radvd/stamp-h1
 	make -C $@
 
 radvd-clean:
-	-@$(MAKE) -C radvd distclean
+	-@ [ ! -f radvd/Makefile ] || $(MAKE) -C radvd distclean
 	@rm -f radvd/stamp-h1
 
 radvd-install: radvd
 	install -D radvd/radvd $(INSTALLDIR)/radvd/usr/sbin/radvd
 	$(STRIP) $(INSTALLDIR)/radvd/usr/sbin/radvd
 
+ndisc6/stamp-h1:
+ifeq ($(RTCONFIG_BCMARM),y)
+	cd ndisc6 && CFLAGS="-Os $(EXTRACFLAGS) -ffunction-sections -fdata-sections -I$(SRCBASE)/include -I$(TOP)/shared" \
+	LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections" \
+	$(CONFIGURE) --prefix="" --disable-dependency-tracking
+else
+	cd ndisc6 && CFLAGS="-Os -ffunction-sections -fdata-sections -I$(SRCBASE)/include -I$(TOP)/shared" \
+	LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections -L$(TOP)/nvram$(BCMEX) -L$(TOP)/shared" \
+	$(CONFIGURE) --prefix="" LIBS='-lnvram -lshared' --disable-dependency-tracking
+endif
+	-@$(MAKE) -C ndisc6 clean
+	@touch $@
+
+ndisc6: ndisc6/stamp-h1
+	$(MAKE) -C $@
+
+ndisc6-clean:
+	-@[ ! -f ndisc6/Makefile ] || $(MAKE) -C ndisc6 clean
+	-@[ ! -f ndisc6/Makefile ] || $(MAKE) -C ndisc6 distclean
+	-@[ -f ndisc6/stamp-h1 ] || rm -f ndisc6/stamp-h1
+
+ndisc6-install: ndisc6
+	install -D ndisc6/rdnssd/rdnssd $(INSTALLDIR)/ndisc6/usr/sbin/rdnssd
+	$(STRIP) $(INSTALLDIR)/ndisc6/usr/sbin/rdnssd
+
 dhcpv6/stamp-h1:
 	@cd dhcpv6 && \
 	CFLAGS="-Os -Wall $(EXTRACFLAGS) -D_GNU_SOURCE -ffunction-sections -fdata-sections -DUSE_DHCP6SRV" \
 	LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections -fPIC" \
 	ac_cv_func_setpgrp_void=yes \
-	$(CONFIGURE) --prefix= --with-localdbdir=/var
+	$(CONFIGURE) --prefix= --with-localdbdir=/var --with-sysconfdir=/etc
 	-@$(MAKE) -C dhcpv6 clean
 	@touch $@
 
@@ -2476,7 +2505,7 @@ termcap: termcap/Makefile
 	$(MAKE) -C $@
 
 termcap/Makefile:
-	( cd termcap && $(CONFIGURE) )
+	( cd termcap && $(CONFIGURE) && touch termcap.info)
 
 termcap-install:
 	# We don't need to install termcap to target filesystem.
@@ -2492,6 +2521,7 @@ gdb/Makefile:
 	( cd gdb && \
 	  TUI_LIBRARY=$(TOP)/termcap/libtermcap.a \
 	  LDFLAGS=-L$(TOP)/termcap \
+	  CFLAGS_FOR_BUILD= \
 	  $(CONFIGURE) --bindir=/sbin \
 	)
 

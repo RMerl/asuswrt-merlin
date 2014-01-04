@@ -1,7 +1,7 @@
 /*
  *   wep.c - WEP functions
  *
- * Copyright (C) 2011, Broadcom Corporation
+ * Copyright (C) 2012, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,9 +9,10 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: wep.c 281526 2011-09-02 17:10:12Z $
+ * $Id: wep.c 358033 2012-09-20 23:57:22Z $
  */
 
+#include <bcm_cfg.h>
 #include <typedefs.h>
 
 /* include wl driver config file if this file is compiled for driver */

@@ -37,8 +37,8 @@ update_device_info(struct Interface *iface)
 	strncpy(ifr.ifr_name, iface->Name, IFNAMSIZ-1);
 	ifr.ifr_name[IFNAMSIZ-1] = '\0';
 
-	if (ioctl(sock, SIOCGIFMTU | SIOCGIFHWADDR, &ifr) < 0) {
-		flog(LOG_ERR, "ioctl() failed for %s: %s",
+	if (ioctl(sock, SIOCGIFMTU, &ifr) < 0) {
+		flog(LOG_ERR, "ioctl(SIOCGIFMTU) failed for %s: %s",
 			iface->Name, strerror(errno));
 		return (-1);
 	}
@@ -46,19 +46,23 @@ update_device_info(struct Interface *iface)
 	dlog(LOG_DEBUG, 3, "mtu for %s is %d", iface->Name, ifr.ifr_mtu);
 	iface->if_maxmtu = ifr.ifr_mtu;
 
-	dlog(LOG_DEBUG, 3, "hardware type for %s is %d", iface->Name,
-		ifr.ifr_hwaddr.sa_family);
-
+	if (ioctl(sock, SIOCGIFHWADDR, &ifr) < 0) {
+		flog(LOG_ERR, "ioctl(SIOCGIFHWADDR) failed for %s: %s",
+			iface->Name, strerror(errno));
+		return (-1);
+	}
 	switch(ifr.ifr_hwaddr.sa_family)
         {
 	case ARPHRD_ETHER:
 		iface->if_hwaddr_len = 48;
 		iface->if_prefix_len = 64;
+		dlog(LOG_DEBUG, 3, "hardware type for %s is ARPHRD_ETHER", iface->Name);
 		break;
 #ifdef ARPHRD_FDDI
 	case ARPHRD_FDDI:
 		iface->if_hwaddr_len = 48;
 		iface->if_prefix_len = 64;
+		dlog(LOG_DEBUG, 3, "hardware type for %s is ARPHRD_FDDI", iface->Name);
 		break;
 #endif /* ARPHDR_FDDI */
 #ifdef ARPHRD_ARCNET
@@ -66,12 +70,15 @@ update_device_info(struct Interface *iface)
 		iface->if_hwaddr_len = 8;
 		iface->if_prefix_len = -1;
 		iface->if_maxmtu = -1;
+		dlog(LOG_DEBUG, 3, "hardware type for %s is ARPHRD_ARCNET", iface->Name);
 		break;
 #endif /* ARPHDR_ARCNET */
 	default:
 		iface->if_hwaddr_len = -1;
 		iface->if_prefix_len = -1;
 		iface->if_maxmtu = -1;
+		dlog(LOG_DEBUG, 3, "hardware type for %s is %d", iface->Name,
+			ifr.ifr_hwaddr.sa_family);
 		break;
 	}
 

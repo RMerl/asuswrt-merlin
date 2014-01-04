@@ -160,6 +160,12 @@ send_ra(struct Interface *iface, struct in6_addr *dest)
 	if (!disableigmp6check && check_allrouters_membership(iface) < 0)
 		flog(LOG_WARNING, "problem checking all-routers membership on %s", iface->Name);
 
+	if (!iface->AdvSendAdvert)
+	{
+		dlog(LOG_DEBUG, 2, "AdvSendAdvert is off for %s", iface->Name);
+		return 0;
+	}
+
 	dlog(LOG_DEBUG, 3, "sending RA on %s", iface->Name);
 
 	if (dest == NULL)

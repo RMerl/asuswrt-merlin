@@ -1,0 +1,104 @@
+.\" *************************************************************************
+.\" *  Copyright © 2007 Pierre Ynard, Rémi Denis-Courmont.                  *
+.\" *  This program is free software: you can redistribute and/or modify    *
+.\" *  it under the terms of the GNU General Public License as published by *
+.\" *  the Free Software Foundation, versions 2 or 3 of the license.        *
+.\" *                                                                       *
+.\" *  This program is distributed in the hope that it will be useful,      *
+.\" *  but WITHOUT ANY WARRANTY; without even the implied warranty of       *
+.\" *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        *
+.\" *  GNU General Public License for more details.                         *
+.\" *                                                                       *
+.\" *  You should have received a copy of the GNU General Public License    *
+.\" *  along with this program. If not, see <http://www.gnu.org/licenses/>. *
+.\" *************************************************************************
+.TH "RDNSSD" "8" "$Date: 2007-12-29 23:55:43 +0200 (Sat, 29 Dec 2007) $" "rdnssd" "System Manager's Manual"
+.SH NAME
+rdnssd \- IPv6 Recursive DNS Server discovery Daemon
+.SH SYNOPSIS
+.BR "rdnssd" " [" "-f" "] [" "-H merge-hook" "] [" "-r resolv-file" "]"
+.BR "" "[" "-p pidfile" "] [" "-u username" "]"
+
+.SH DESCRIPTON
+.B rdnssd
+is a daemon program providing client-side support for DNS configuration
+using the Recursive DNS Server (RDNSS) option, as described in RFC 5006.
+Its purpose is to supply IPv6 DNS resolvers through stateless
+autoconfiguration, carried by Router Advertisements.
+
+rdnssd parses RDNSS options and keeps track of resolvers to write
+nameservers entries to a resolv.conf(5) configuration file. By default,
+it writes its own separate file, and may call an external hook to merge
+it with the main @sysconfdir@/resolv.conf. This is aimed at easing coexistence
+with concurrent daemons, especially IPv4 ones, updating
+@sysconfdir@/resolv.conf too.
+
+On Linux, since version 2.6.24, rdnssd takes advantage of a new netlink
+interface, forwarding RDNSS options validated by the kernel to userland.
+Otherwise, it merely listens to all ICMPv6 traffic through a raw socket.
+
+.SH OPTIONS
+
+.TP
+.BR "\-f" " or " "\-\-foreground"
+Do not detach from the console. Run the program in the foreground.
+
+.TP
+.BR "\-H merge-hook" " or " "\-\-merge-hook merge-hook"
+Execute this hook whenever resolv.conf is updated. If this option is
+not specified, then no hook will be called.
+
+.TP
+.BR "\-h" " or " "\-\-help"
+Display some help and exit.
+
+.TP
+.BR "\-p pidfile" " or " "\-\-pidfile pidfile"
+Override the location of the pidfile.
+
+.TP
+.BR "\-r resolv-file" " or " "\-\-resolv-file resolv-file"
+Set the path to the generated resolv.conf file.
+
+.TP
+.BR "\-u username" " or " "\-\-user username"
+Override the user that the program will run as. By default, it runs as
+.BR "nobody" "."
+
+.TP
+.BR "\-V" " or " "\-\-version"
+Display program version and license and exit.
+
+.SH FILES
+.TP
+.I @sysconfdir@/rdnssd/merge-hook
+A basic merge hook shipped with rdnssd, to be called with the -H option.
+
+.TP
+.I @localstatedir@/run/rdnssd/resolv.conf
+The default resolv.conf(5) file that rdnssd writes its configuration to.
+
+.TP
+.I @localstatedir@/run/rdnssd.pid
+The process-id file.
+
+.SH BUGS
+rdnssd does not keep track of the lifetimes of the routers associated
+with some DNS resolvers, whereas it should to strictly comply with RFC
+5006.
+
+When rdnssd uses a raw socket instead of the netlink kernel interface,
+it does not validate received Neighbor Discovery traffic in any way.
+For example, it will always consider Router Advertisement packets,
+whereas it should not if the host is configured as a router. When the
+netlink interface is used, such validation is done by the kernel.
+
+.SH "SEE ALSO"
+resolv.conf(5), rdisc6(8), ipv6(7)
+
+.SH AUTHOR
+Pierre Ynard <linkfanel at yahoo.fr>
+
+$Id: rdnssd.8-in 575 2007-12-29 21:55:43Z linkfanel $
+
+http://www.remlab.net/ndisc6/

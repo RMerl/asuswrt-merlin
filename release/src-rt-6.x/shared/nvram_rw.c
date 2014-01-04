@@ -29,7 +29,7 @@
 #include <flashutl.h>
 #include <hndsoc.h>
 #include <sbchipc.h>
-
+#include <LzmaDec.h>
 #ifdef NFLASH_SUPPORT
 #include <hndnand.h>
 #endif	/* NFLASH_SUPPORT */
@@ -71,6 +71,10 @@ extern int kernel_initial;
 /* Convenience */
 #define KB * 1024
 #define MB * 1024 * 1024
+
+#ifndef NVRAM_RESET_GPIO_WAIT
+#define NVRAM_RESET_GPIO_WAIT	5000 /* in ms */
+#endif
 
 char *
 nvram_get(const char *name)
@@ -159,7 +163,7 @@ BCMINITFN(nvram_reset)(void  *si)
 		return FALSE;
 
 	/* GPIO reset is asserted low */
-	for (msec = 0; msec < 5000; msec++) {
+	for (msec = 0; msec < NVRAM_RESET_GPIO_WAIT; msec++) {
 		if (si_gpioin(sih) & ((uint32) 1 << gpio))
 			return FALSE;
 		OSL_DELAY(1000);
@@ -170,7 +174,7 @@ BCMINITFN(nvram_reset)(void  *si)
 }
 
 #ifdef NFLASH_SUPPORT
-static unsigned char nand_nvh[NVRAM_SPACE];
+static unsigned char nand_nvh[MAX_NVRAM_SPACE];
 
 static struct nvram_header *
 BCMINITFN(nand_find_nvram)(hndnand_t *nfl, uint32 off)
@@ -207,7 +211,7 @@ static struct nvram_header *
 BCMINITFN(find_nvram)(si_t *sih, bool embonly, bool *isemb)
 {
 	struct nvram_header *nvh;
-	uint32 off, lim;
+	uint32 off, lim = SI_FLASH2_SZ;
 	uint32 flbase = SI_FLASH2;
 	int bootdev;
 #ifdef NFLASH_SUPPORT
@@ -231,8 +235,10 @@ BCMINITFN(find_nvram)(si_t *sih, bool embonly, bool *isemb)
 #ifdef _CFE_
 		/* Init nand anyway */
 		sfl_info = hndsflash_init(sih);
-		if (sfl_info)
+		if (sfl_info) {
 			flbase = sfl_info->phybase;
+			lim = sfl_info->size;
+		}
 #else
 	if (sih->ccrev == 42)
 		flbase = SI_NS_NORFLASH;
@@ -264,11 +270,10 @@ BCMINITFN(find_nvram)(si_t *sih, bool embonly, bool *isemb)
 		else
 #endif /* NFLASH_SUPPORT */
 		{
-			lim = SI_FLASH2_SZ;
 			off = FLASH_MIN;
 			while (off <= lim) {
 				nvh = (struct nvram_header *)
-					OSL_UNCACHED(flbase + off - NVRAM_SPACE);
+					OSL_UNCACHED(flbase + off - MAX_NVRAM_SPACE);
 				if (nvh->magic == NVRAM_MAGIC) {
 //					if (nvram_calc_crc(nvh) == (uint8) nvh->crc_ver_init) {
 						return (nvh);
@@ -281,6 +286,12 @@ BCMINITFN(find_nvram)(si_t *sih, bool embonly, bool *isemb)
 		printf("find_nvram: nvram not found, trying embedded nvram next\n");
 #endif /* BCMDBG */
 	}
+
+	/*
+	 * Provide feedback to user when nvram corruption detected.
+	 * Must be non-BCMDBG for customer release.
+	 */
+	printf("Corrupt NVRAM found, trying embedded NVRAM next.\n");
 
 	/* Now check embedded nvram */
 	*isemb = TRUE;
@@ -364,6 +375,16 @@ BCMINITFN(nvram_exit)(void *si)
 	_nvram_exit();
 }
 
+/* LZMA need to be able to allocate memory,
+ * so set it up to use the OSL memory routines,
+ * only the linux debug osl uses the osh on malloc and the osh and size on
+ * free, and the debug code checks if they are valid, so pass NULL as the osh
+ * to tell the OSL that we don't have a valid osh
+ */
+static void *SzAlloc(void *p, size_t size) { p = p; return MALLOC(NULL, size); }
+static void SzFree(void *p, void *address) { p = p; MFREE(NULL, address, 0); }
+static ISzAlloc g_Alloc = { SzAlloc, SzFree };
+
 int
 BCMINITFN(_nvram_read)(void *buf)
 {
@@ -379,9 +400,44 @@ BCMINITFN(_nvram_read)(void *buf)
 	for (i = 0; i < sizeof(struct nvram_header); i += 4)
 		*dst++ = *src++;
 
-	for (; i < nvram_header->len && i < NVRAM_SPACE; i += 4)
-		*dst++ = ltoh32(*src++);
+	/* Since we know what the first 3 bytes of the lzma properties
+	 * should be based on what we used to compress, check them
+	 * to see if we need to decompress (uncompressed this would show up a
+	 * a single [ and then the end of nvram marker so its invalid in an
+	 * uncompressed nvram block
+	 */
+	if ((((unsigned char *)src)[0] == 0x5d) &&
+	    (((unsigned char *)src)[1] == 0) &&
+	    (((unsigned char *)src)[2] == 0)) {
+		unsigned int dstlen = nvram_header->len;
+		unsigned int srclen = MAX_NVRAM_SPACE-LZMA_PROPS_SIZE-NVRAM_HEADER_SIZE;
+		unsigned char *cp = (unsigned char *)src;
+		CLzmaDec state;
+		SRes res;
+		ELzmaStatus status;
 
+		LzmaDec_Construct(&state);
+		res = LzmaDec_Allocate(&state, cp, LZMA_PROPS_SIZE, &g_Alloc);
+		if (res != SZ_OK) {
+			printf("Error Initializing LZMA Library\n");
+			return -19;
+		}
+		LzmaDec_Init(&state);
+		res = LzmaDec_DecodeToBuf(&state,
+		                          (unsigned char *)dst, &dstlen,
+		                          &cp[LZMA_PROPS_SIZE], &srclen,
+		                          LZMA_FINISH_ANY,
+		                          &status);
+
+		LzmaDec_Free(&state, &g_Alloc);
+		if (res != SZ_OK) {
+			printf("Error Decompressing eNVRAM\n");
+			return -19;
+		}
+	} else {
+		for (; i < nvram_header->len && i < MAX_NVRAM_SPACE; i += 4)
+			*dst++ = ltoh32(*src++);
+	}
 	return 0;
 }
 
@@ -420,7 +476,7 @@ BCMINITFN(nvram_reinit_hash)(void)
 	struct nvram_header *header;
 	int ret;
 
-	if (!(header = (struct nvram_header *) MALLOC(NULL, NVRAM_SPACE))) {
+	if (!(header = (struct nvram_header *) MALLOC(NULL, MAX_NVRAM_SPACE))) {
 		printf("nvram_reinit_hash: out of memory\n");
 		return -12; /* -ENOMEM */
 	}
@@ -431,20 +487,20 @@ BCMINITFN(nvram_reinit_hash)(void)
 	ret = _nvram_commit(header);
 
 	NVRAM_UNLOCK();
-	MFREE(NULL, header, NVRAM_SPACE);
+	MFREE(NULL, header, MAX_NVRAM_SPACE);
 	return ret;
 }
 #endif /* __ECOS */
 
 int
-BCMINITFN(nvram_commit)(void)
+BCMINITFN(nvram_commit_internal)(bool nvram_corrupt)
 {
 	struct nvram_header *header;
 	int ret;
 	uint32 *src, *dst;
 	uint i;
 
-	if (!(header = (struct nvram_header *) MALLOC(NULL, NVRAM_SPACE))) {
+	if (!(header = (struct nvram_header *) MALLOC(NULL, MAX_NVRAM_SPACE))) {
 		printf("nvram_commit: out of memory\n");
 		return -12; /* -ENOMEM */
 	}
@@ -459,11 +515,15 @@ BCMINITFN(nvram_commit)(void)
 	src = (uint32 *) &header[1];
 	dst = src;
 
-	for (i = sizeof(struct nvram_header); i < header->len && i < NVRAM_SPACE; i += 4)
+	for (i = sizeof(struct nvram_header); i < header->len && i < MAX_NVRAM_SPACE; i += 4)
 		*dst++ = htol32(*src++);
 
 #ifdef _CFE_
 	if ((ret = cfe_open(flashdrv_nvram)) >= 0) {
+		if (nvram_corrupt) {
+			printf("Corrupting NVRAM...\n");
+			header->magic = NVRAM_INVALID_MAGIC;
+		}
 		cfe_writeblk(ret, 0, (unsigned char *) header, header->len);
 		cfe_close(ret);
 	}
@@ -477,7 +537,7 @@ BCMINITFN(nvram_commit)(void)
 		nvWriteChars((unsigned char *)&header->magic, sizeof(header->magic));
 
 		header->magic = NVRAM_INVALID_MAGIC;
-		nvWrite((unsigned short *) header, NVRAM_SPACE);
+		nvWrite((unsigned short *) header, MAX_NVRAM_SPACE);
 
 		header->magic = NVRAM_MAGIC;
 		nvWriteChars((unsigned char *)&header->magic, sizeof(header->magic));
@@ -486,6 +546,13 @@ BCMINITFN(nvram_commit)(void)
 
 done:
 	NVRAM_UNLOCK();
-	MFREE(NULL, header, NVRAM_SPACE);
+	MFREE(NULL, header, MAX_NVRAM_SPACE);
 	return ret;
+}
+
+int
+BCMINITFN(nvram_commit)(void)
+{
+	/* do not corrupt nvram */
+	return nvram_commit_internal(FALSE);
 }

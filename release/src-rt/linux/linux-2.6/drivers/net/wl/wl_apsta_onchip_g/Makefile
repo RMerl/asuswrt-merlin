@@ -18,7 +18,7 @@
 # $Id: Makefile,v 1.2 2007-11-17 01:37:39 $
 #
 
-SRCBASE := ../../../../../..
+SRCBASE := ../../../../../../../$(SRCBASEDIR)
 
 ifeq ($(CONFIG_WL_APSTA_ONCHIP_G),)
 CONFIG_WL_APSTA_ONCHIP_G := "wlconfig_lx_router_apsta_1chipG"

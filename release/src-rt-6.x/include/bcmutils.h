@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmutils.h 342324 2012-07-02 14:57:04Z $
+ * $Id: bcmutils.h 376091 2012-12-21 06:53:20Z $
  */
 
 #ifndef	_bcmutils_h_
@@ -138,6 +138,7 @@ typedef struct {
 	uint32 busy;         /* packets droped because of hardware/transmission error */
 	uint32 retry;        /* packets re-sent because they were not received */
 	uint32 ps_retry;     /* packets retried again prior to moving power save mode */
+	uint32 suppress;     /* packets which were suppressed and not transmitted */
 	uint32 retry_drop;   /* packets finally dropped after retry limit */
 	uint32 max_avail;    /* the high-water mark of the queue capacity for packets -
 	                            goes to zero as queue fills
@@ -439,8 +440,8 @@ extern int bcmdumplogent(char *buf, uint idx);
 #define	bcmdumplogent(buf, idx)	-1
 #endif /* BCMPERFSTATS */
 
-#if defined(BCMTSTAMPEDLOGS)
 #define TSF_TICKS_PER_MS	1024
+#if defined(BCMTSTAMPEDLOGS)
 /* Store a TSF timestamp and a log line in the log buffer */
 extern void bcmtslog(uint32 tstamp, char *fmt, uint a1, uint a2);
 /* Print out the log buffer with timestamps */
@@ -588,7 +589,8 @@ extern int bcm_format_ssid(char* buf, const uchar ssid[], uint ssid_len);
 #define BCME_NODEVICE			-40 	/* Device not present */
 #define BCME_NMODE_DISABLED		-41 	/* NMODE disabled */
 #define BCME_NONRESIDENT		-42 /* access to nonresident overlay */
-#define BCME_LAST			BCME_NONRESIDENT
+#define BCME_SCANREJECT		        -43 /* access to nonresident overlay */
+#define BCME_LAST			BCME_SCANREJECT
 
 /* These are collection of BCME Error strings */
 #define BCMERRSTRINGTABLE {		\
@@ -635,6 +637,7 @@ extern int bcm_format_ssid(char* buf, const uchar ssid[], uint ssid_len);
 	"Device Not Present",		\
 	"NMODE Disabled",		\
 	"Nonresident overlay access", \
+	"Scan Rejected",		\
 }
 
 #ifndef ABS
@@ -769,6 +772,13 @@ typedef struct bcm_bit_desc {
 	const char* name;
 } bcm_bit_desc_t;
 
+/* bcm_format_field */
+typedef struct bcm_bit_desc_ex {
+	uint32 mask;
+	const bcm_bit_desc_t *bitfield;
+} bcm_bit_desc_ex_t;
+
+
 /* tag_ID/length/value_buffer tuple */
 typedef struct bcm_tlv {
 	uint8	id;
@@ -815,6 +825,9 @@ extern uint32 BCMROMFN(hndcrc32)(uint8 *p, uint nbytes, uint32 crc);
 /* format/print */
 #if defined(BCMDBG) || defined(DHD_DEBUG) || defined(BCMDBG_ERR) || \
 	defined(WLMSG_PRHDRS) || defined(WLMSG_PRPKT) || defined(WLMSG_ASSOC)
+/* print out the value a field has: fields may have 1-32 bits and may hold any value */
+extern int bcm_format_field(const bcm_bit_desc_ex_t *bd, uint32 field, char* buf, int len);
+/* print out which bits in flags are set */
 extern int bcm_format_flags(const bcm_bit_desc_t *bd, uint32 flags, char* buf, int len);
 #endif
 
@@ -825,7 +838,7 @@ extern int bcm_format_hex(char *str, const void *bytes, int len);
 #endif
 
 #ifdef BCMDBG
-extern void deadbeef(void *p, size_t len);
+extern void deadbeef(void *p, uint len);
 #endif
 extern const char *bcm_crypto_algo_name(uint algo);
 extern char *bcm_chipname(uint chipid, char *buf, uint len);
@@ -876,6 +889,11 @@ extern uint8 BCMROMFN(bcm_mw_to_qdbm)(uint16 mw);
 extern uint bcm_mkiovar(char *name, char *data, uint datalen, char *buf, uint len);
 
 unsigned int process_nvram_vars(char *varbuf, unsigned int len);
+
+/* calculate a * b + c */
+extern void bcm_uint64_multiple_add(uint32* r_high, uint32* r_low, uint32 a, uint32 b, uint32 c);
+/* calculate a / b */
+extern void bcm_uint64_divide(uint32* r, uint32 a_high, uint32 a_low, uint32 b);
 
 #ifdef __cplusplus
 	}

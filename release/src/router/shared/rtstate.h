@@ -229,6 +229,12 @@ enum {
 #define DISKMON_DAY_HOUR 24
 #define DISKMON_HOUR_SEC 3600
 
+#define MAX_USB_PORT 3
+#define MAX_USB_HUB_PORT 6
+#define MAX_USB_DISK_NUM 26
+#define MAX_USB_PART_NUM 16
+#define MAX_USB_PRINTER_NUM 10
+#define MAX_USB_TTY_NUM 10
 #endif
 
 // the following definition is for wans_cap

@@ -1,0 +1,65 @@
+#! /bin/sh
+#
+# resolv.conf merge hook for rdnssd
+# 
+# $Id: merge-hook.in 634 2009-11-25 21:31:20Z linkfanel $
+
+# *************************************************************************
+# *  Copyright © 2007-2009 Pierre Ynard.                                  *
+# *  This program is free software: you can redistribute and/or modify    *
+# *  it under the terms of the GNU General Public License as published by *
+# *  the Free Software Foundation, versions 2 or 3 of the license.        *
+# *                                                                       *
+# *  This program is distributed in the hope that it will be useful,      *
+# *  but WITHOUT ANY WARRANTY; without even the implied warranty of       *
+# *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        *
+# *  GNU General Public License for more details.                         *
+# *                                                                       *
+# *  You should have received a copy of the GNU General Public License    *
+# *  along with this program. If not, see <http://www.gnu.org/licenses/>. *
+# *************************************************************************
+
+set -e
+
+PATH=/sbin:/bin
+
+# Max number of nameserver options taken into account. Should be as
+# defined in <resolv.h>
+MAXNS=3
+
+# This script tries to share available nameserver slots with IPv4
+# entries, for example to allow fallback to IPv4 if IPv6 fails. If
+# there is not enough room for all IPv6 and IPv4 entries, this script
+# will limit the IPv6 entries it adds to $RDNSS_LIMIT only.
+RDNSS_LIMIT=$(($MAXNS - 1))
+
+sysconfdir='@SYSCONFDIR@'
+localstatedir='@LOCALSTATEDIR@'
+resolvconf="$sysconfdir/resolv.conf"
+myresolvconf="$localstatedir/run/rdnssd/resolv.conf"
+
+# These should be POSIX-compliant BREs
+RE_NSV4='^nameserver  *\([0-9]\{1,3\}\.\)\{3,3\}[0-9]\{1,3\} *$'
+RE_NSV4OR6='^nameserver  *[a-fA-F0-9:\.]\{1,46\}\(%[a-zA-Z0-9]\{1,\}\)\{,1\} *$'
+
+# Count how many IPv6 nameservers we can fit
+
+limit=$RDNSS_LIMIT
+
+nnsv4=`grep -c "$RE_NSV4" $resolvconf || [ $? -le 1 ]`
+room=$(($MAXNS - $nnsv4))
+
+if [ $limit -lt $room ]; then
+	limit=$room
+fi
+
+# Merge and write the result
+
+{
+	sed -e "/$RE_NSV4OR6/d" < $resolvconf
+        [ $limit -gt 0 ] && sed -e "${limit}q" < $myresolvconf
+	sed -ne "/$RE_NSV4/p" < $resolvconf
+} >| $resolvconf.tmp
+
+mv -f $resolvconf.tmp $resolvconf
+

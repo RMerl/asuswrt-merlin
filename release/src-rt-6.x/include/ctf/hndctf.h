@@ -13,7 +13,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: hndctf.h 342700 2012-07-03 21:26:12Z $
+ * $Id: hndctf.h 371260 2012-11-27 19:42:11Z $
  */
 
 #ifndef _HNDCTF_H_
@@ -31,13 +31,16 @@
 #define CTFVLSTATS
 
 #define CTF_ENAB(ci)		(((ci) != NULL) && (ci)->_ctf)
+#define CTFQOS_ULDL_DIFFIF(ci)		(((ci) != NULL) && ((ci)->_ctf == (1 << 1)))
 
 #define CTF_ACTION_TAG		(1 << 0)
 #define CTF_ACTION_UNTAG	(1 << 1)
 #define CTF_ACTION_SNAT		(1 << 2)
 #define CTF_ACTION_DNAT		(1 << 3)
 #define CTF_ACTION_SUSPEND	(1 << 4)
-
+#define CTF_ACTION_TOS		(1 << 5)
+#define CTF_ACTION_MARK		(1 << 6)
+#define CTF_ACTION_BYTECNT	(1 << 7)
 #define CTF_ACTION_PPPOE_ADD	(1 << 8)
 #define CTF_ACTION_PPPOE_DEL	(1 << 9)
 #define CTF_ACTION_PPTP_ADD	(1 << 10)
@@ -62,10 +65,10 @@
 	(CTF_ENAB(ci) ? (ci)->fn.ipc_count_get(ci, i) : BCME_OK)
 #define ctf_ipc_delete_multi(ci, i, im, v6)	\
 	(CTF_ENAB(ci) ? (ci)->fn.ipc_delete_multi(ci, i, im, v6) : BCME_OK)
-#define ctf_ipc_delete_range(ci, i, im, v6)	\
-	(CTF_ENAB(ci) ? (ci)->fn.ipc_delete_range(ci, i, im, v6) : BCME_OK)
-#define ctf_ipc_suspend(ci, i, im, s, v6) \
-	(CTF_ENAB(ci) ? (ci)->fn.ipc_suspend(ci, i, im, s, v6) : BCME_OK)
+#define ctf_ipc_delete_range(ci, s, e, v6)	\
+	(CTF_ENAB(ci) ? (ci)->fn.ipc_delete_range(ci, s, e, v6) : BCME_OK)
+#define ctf_ipc_action(ci, s, e, am, v6) \
+	(CTF_ENAB(ci) ? (ci)->fn.ipc_action(ci, s, e, am, v6) : BCME_OK)
 #define ctf_ipc_lkup(ci, i, v6)	\
 	(CTF_ENAB(ci) ? (ci)->fn.ipc_lkup(ci, i, v6) : NULL)
 #ifdef CTF_IPV6
@@ -86,21 +89,15 @@
 #ifdef CTF_L2TP
 #define ctf_l2tp_lookup(__ci__, __p__)	\
 	(CTF_ENAB((__ci__)) ? ((__ci__))->fn.l2tp_lookup((__ci__), (__p__)) : BCME_OK)
-#endif /* CTF_L2TP */
-
-#ifdef BCMDBG
+#endif /* CTF_L2TP */	
 #define CTFCNTINCR(s) ((s)++)
-#else /* BCMDBG */
-#define CTFCNTINCR(s)
-#endif /* BCMDBG */
+#define CTFCNTADD(s, c) ((s) += (c))
 
-/* Copy an ethernet address in reverse order */
-#define	ether_rcopy(s, d) \
-do { \
-	((uint16 *)(d))[2] = ((uint16 *)(s))[2]; \
-	((uint16 *)(d))[1] = ((uint16 *)(s))[1]; \
-	((uint16 *)(d))[0] = ((uint16 *)(s))[0]; \
-} while (0)
+#define NIPQUAD(addr) \
+	((unsigned char *)&addr)[0], \
+	((unsigned char *)&addr)[1], \
+	((unsigned char *)&addr)[2], \
+	((unsigned char *)&addr)[3]
 
 
 #define PPPOE_ETYPE_OFFSET	12
@@ -111,8 +108,8 @@ do { \
 #define PPPOE_HLEN		20
 #define PPPOE_PPP_HLEN		8 //PPPOE + PPP HEADER LEN
 
-#define PPPOE_PROT_PPP_IP	0x0021
-#define PPPOE_PROT_PPP_IP6	0x0057
+#define PPPOE_PROT_PPP_IP		0x0021
+#define PPPOE_PROT_PPP_IP6		0x0057
 
 
 typedef struct ctf_pub	ctf_t;
@@ -139,8 +136,8 @@ typedef int32 (*ctf_ipc_delete_multi_t)(ctf_t *ci, ctf_ipc_t *ipc,
                                         ctf_ipc_t *ipcm, bool v6);
 typedef int32 (*ctf_ipc_delete_range_t)(ctf_t *ci, ctf_ipc_t *start,
                                         ctf_ipc_t *end, bool v6);
-typedef int32 (*ctf_ipc_suspend_t)(ctf_t *ci, ctf_ipc_t *start,
-                                   ctf_ipc_t *end, bool suspend, bool v6);
+typedef int32 (*ctf_ipc_action_t)(ctf_t *ci, ctf_ipc_t *start,
+                                  ctf_ipc_t *end, uint32 action_mask, bool v6);
 typedef ctf_ipc_t * (*ctf_ipc_lkup_t)(ctf_t *ci, ctf_ipc_t *ipc, bool v6);
 typedef	uint8 * (*ctf_ipc_lkup_l4proto_t)(uint8 *iph, uint8 *proto_num);
 typedef int32 (*ctf_enable_t)(ctf_t *ci, void *dev, bool enable, ctf_brc_hot_t **brc_hot);
@@ -172,7 +169,7 @@ typedef struct ctf_fn {
 	ctf_ipc_count_get_t	ipc_count_get;
 	ctf_ipc_delete_multi_t	ipc_delete_multi;
 	ctf_ipc_delete_range_t	ipc_delete_range;
-	ctf_ipc_suspend_t ipc_suspend;
+	ctf_ipc_action_t	ipc_action;
 	ctf_ipc_lkup_t		ipc_lkup;
 	ctf_ipc_lkup_l4proto_t ipc_lkup_l4proto;
 	ctf_enable_t		enable;
@@ -189,18 +186,22 @@ typedef struct ctf_fn {
 } ctf_fn_t;
 
 struct ctf_pub {
-	bool			_ctf;		/* Global CTF enable/disable */
+	uint8			_ctf;		/* Global CTF enable/disable */
 	ctf_fn_t		fn;		/* Exported functions */
 };
+
+struct ctf_mark;	/* Connection Mark */
 
 struct ctf_brc {
 	struct	ctf_brc		*next;		/* Pointer to brc entry */
 	struct	ether_addr	dhost;		/* MAC addr of host */
 	uint16			vid;		/* VLAN id to use on txif */
 	void			*txifp;		/* Interface connected to host */
+	void			*txvifp;		/* vlan Interface connected to host*/	
 	uint32			action;		/* Tag or untag the frames */
 	uint32			live;		/* Counter used to expire the entry */
 	uint32			hits;		/* Num frames matching brc entry */
+	uint64			*bytecnt_ptr;	/* Pointer to the byte counter */
 };
 
 #ifdef CTF_IPV6
@@ -239,6 +240,7 @@ struct ctf_ipc {
 	uint32			live;		/* Counter used to expire the entry */
 	struct	ctf_nat		nat;		/* Manip data for SNAT, DNAT */
 	struct	ether_addr	sa;		/* MAC address of sender */
+	uint8			tos;		/* IPv4 tos or IPv6 traffic class field with ECN cleared */
 	uint16			pppoe_sid;	/*PPTP peer call id if wan type is pptp, PPPOE session ID if wan type is PPPOE*/
 #ifdef CTF_PPTP	
 	ctf_pptp_t		pptp;
@@ -248,7 +250,12 @@ struct ctf_ipc {
 #endif
 	void			*ppp_ifp;	/* PPP interface handle */
 	uint32			hits;		/* Num frames matching ipc entry */
+	uint64			*bytecnt_ptr;	/* Pointer to the byte counter */
+	struct	ctf_mark	mark;		/* Mark value to use for the connection */
 };
+
+
+
 
 struct ctf_ppp_sk {
 	struct pppox_sock 		*po;		/*pointer to pppoe socket*/

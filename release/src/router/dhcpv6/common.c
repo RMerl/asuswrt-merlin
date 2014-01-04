@@ -3254,7 +3254,11 @@ my_dprintf(int level, const char *fname, const char *fmt, ...)
 		    fname, printfname ? ": " : "",
 		    logbuf);
 	} else
+#if 0
 		syslog(level, "%s%s%s", fname, printfname ? ": " : "", logbuf);
+#else
+		syslog(level > LOG_NOTICE ? LOG_NOTICE : level, "%s%s%s", fname, printfname ? ": " : "", logbuf);
+#endif
 }
 
 int

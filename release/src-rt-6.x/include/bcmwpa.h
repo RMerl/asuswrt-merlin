@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: bcmwpa.h 350375 2012-08-13 17:31:20Z $
+ * $Id: bcmwpa.h 353470 2012-08-27 18:08:37Z $
  */
 
 #ifndef _BCMWPA_H_
@@ -188,10 +188,6 @@ extern bool BCMROMFN(wpa_is_gtk_encap)(uint8 *ie, uint8 **tlvs, uint *tlvs_len);
 /* Look for encapsulated key data; return it's address if found, NULL otherwise */
 extern eapol_wpa2_encap_data_t *BCMROMFN(wpa_find_kde)(uint8 *parse, uint len, uint8 type);
 #endif /* defined(BCMSUP_PSK) || defined(BCMSUPPL) */
-
-#ifdef MFP
-extern eapol_wpa2_encap_data_t *BCMROMFN(wpa_find_igtk_encap)(uint8 *parse, uint len);
-#endif
 
 #ifdef BCMSUP_PSK
 /* Calculate a pair-wise transient key */

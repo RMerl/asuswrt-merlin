@@ -30,7 +30,6 @@
 	     next = strchr(next, ':'))
 
 #define MAX_WAIT_FILE 5
-#define SCAN_PRINTER_NODE 2
 
 #define SYS_MODULE "/sys/module"
 #define SYS_BLOCK "/sys/block"

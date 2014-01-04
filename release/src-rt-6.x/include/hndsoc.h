@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: hndsoc.h 345471 2012-07-18 06:08:52Z $
+ * $Id: hndsoc.h 365038 2012-10-26 08:49:46Z $
  */
 
 #ifndef	_HNDSOC_H
@@ -60,6 +60,7 @@
 #define SI_NS_NANDFLASH		0x1c000000	/* NorthStar NAND flash base */
 #define SI_NS_NORFLASH		0x1e000000	/* NorthStar NOR flash base */
 #define SI_NS_ROM		0xfffd0000	/* NorthStar ROM */
+#define	SI_NS_FLASH_WINDOW	0x02000000	/* NorthStar Flash XIP Window */
 
 #define	SI_ARM7S_ROM		0x20000000	/* ARM7TDMI-S ROM */
 #define	SI_ARMCR4_ROM		0x000f0000	/* ARM Cortex-R4 ROM */

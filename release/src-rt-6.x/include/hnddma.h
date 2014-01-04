@@ -2,7 +2,7 @@
  * Generic Broadcom Home Networking Division (HND) DMA engine SW interface
  * This supports the following chips: BCM42xx, 44xx, 47xx .
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: hnddma.h 321146 2012-03-14 08:27:23Z $
+ * $Id: hnddma.h 370836 2012-11-23 23:19:04Z $
  */
 
 #ifndef	_hnddma_h_
@@ -58,10 +58,8 @@ typedef void (*di_txsuspend_t)(hnddma_t *dmah);
 typedef void (*di_txresume_t)(hnddma_t *dmah);
 typedef bool (*di_txsuspended_t)(hnddma_t *dmah);
 typedef bool (*di_txsuspendedidle_t)(hnddma_t *dmah);
-#ifdef WL_MULTIQUEUE
 typedef void (*di_txflush_t)(hnddma_t *dmah);
 typedef void (*di_txflush_clear_t)(hnddma_t *dmah);
-#endif /* WL_MULTIQUEUE */
 typedef int (*di_txfast_t)(hnddma_t *dmah, void *p, bool commit);
 typedef int (*di_txunframed_t)(hnddma_t *dmah, void *p, uint len, bool commit);
 typedef void* (*di_getpos_t)(hnddma_t *di, bool direction);
@@ -99,6 +97,7 @@ typedef void (*di_burstlen_set_t)(hnddma_t *dmah, uint8 rxburstlen, uint8 txburs
 typedef uint (*di_avoidancecnt_t)(hnddma_t *dmah);
 typedef void (*di_param_set_t)(hnddma_t *dmah, uint16 paramid, uint16 paramval);
 typedef bool (*dma_glom_enable_t) (hnddma_t *dmah, uint32 val);
+typedef uint (*dma_active_rxbuf_t) (hnddma_t *dmah);
 /* dma opsvec */
 typedef struct di_fcn_s {
 	di_detach_t		detach;
@@ -109,10 +108,8 @@ typedef struct di_fcn_s {
 	di_txresume_t           txresume;
 	di_txsuspended_t        txsuspended;
 	di_txsuspendedidle_t    txsuspendedidle;
-#ifdef WL_MULTIQUEUE
 	di_txflush_t            txflush;
 	di_txflush_clear_t      txflush_clear;
-#endif /* WL_MULTIQUEUE */
 	di_txfast_t             txfast;
 	di_txunframed_t         txunframed;
 	di_getpos_t             getpos;
@@ -155,6 +152,7 @@ typedef struct di_fcn_s {
 	di_avoidancecnt_t	avoidancecnt;
 	di_param_set_t		param_set;
 	dma_glom_enable_t	glom_enab;
+	dma_active_rxbuf_t dma_activerxbuf;
 	uint			endnum;
 } di_fcn_t;
 
@@ -193,10 +191,8 @@ extern hnddma_t * dma_attach(osl_t *osh, const char *name, si_t *sih,
 #define dma_txresume(di)                ((di)->di_fn->txresume(di))
 #define dma_txsuspended(di)             ((di)->di_fn->txsuspended(di))
 #define dma_txsuspendedidle(di)         ((di)->di_fn->txsuspendedidle(di))
-#ifdef WL_MULTIQUEUE
 #define dma_txflush(di)                 ((di)->di_fn->txflush(di))
 #define dma_txflush_clear(di)           ((di)->di_fn->txflush_clear(di))
-#endif /* WL_MULTIQUEUE */
 #define dma_txfast(di, p, commit)	((di)->di_fn->txfast(di, p, commit))
 #define dma_fifoloopbackenable(di)      ((di)->di_fn->fifoloopbackenable(di))
 #define dma_txstopped(di)               ((di)->di_fn->txstopped(di))
@@ -249,10 +245,8 @@ extern const di_fcn_t dma64proc;
 #define dma_txresume(di)                (dma64proc.txresume(di))
 #define dma_txsuspended(di)             (dma64proc.txsuspended(di))
 #define dma_txsuspendedidle(di)         (dma64proc.txsuspendedidle(di))
-#ifdef WL_MULTIQUEUE
 #define dma_txflush(di)                 (dma64proc.txflush(di))
 #define dma_txflush_clear(di)           (dma64proc.txflush_clear(di))
-#endif /* WL_MULTIQUEUE */
 #define dma_txfast(di, p, commit)	(dma64proc.txfast(di, p, commit))
 #define dma_txunframed(di, p, l, commit)(dma64proc.txunframed(di, p, l, commit))
 #define dma_getpos(di, dir)		(dma64proc.getpos(di, dir))
@@ -294,6 +288,7 @@ extern const di_fcn_t dma64proc;
 #define dma_param_set(di, paramid, paramval)	(dma64proc.param_set(di, paramid, paramval))
 
 #define dma_glom_enable(di, val)	(dma64proc.glom_enab(di, val))
+#define dma_activerxbuf(di)	(dma64proc.dma_activerxbuf(di))
 
 #endif /* BCMDMA32 */
 

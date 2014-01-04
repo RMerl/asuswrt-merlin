@@ -77,7 +77,7 @@ hndnand_enable(hndnand_t *nfl, int enable)
 
 /* Read len bytes starting at offset into buf. Returns number of bytes read. */
 int
-hndnand_read(hndnand_t *nfl, uint offset, uint len, uchar *buf)
+hndnand_read(hndnand_t *nfl, uint64 offset, uint len, uchar *buf)
 {
 	ASSERT(nfl);
 	ASSERT(nfl->read);
@@ -89,7 +89,7 @@ hndnand_read(hndnand_t *nfl, uint offset, uint len, uchar *buf)
  * written.
  */
 int
-hndnand_write(hndnand_t *nfl, uint offset, uint len, const uchar *buf)
+hndnand_write(hndnand_t *nfl, uint64 offset, uint len, const uchar *buf)
 {
 	ASSERT(nfl);
 	ASSERT(nfl->write);
@@ -101,7 +101,7 @@ hndnand_write(hndnand_t *nfl, uint offset, uint len, const uchar *buf)
  * Caller should poll for completion.
  */
 int
-hndnand_erase(hndnand_t *nfl, uint offset)
+hndnand_erase(hndnand_t *nfl, uint64 offset)
 {
 	ASSERT(nfl);
 	ASSERT(nfl->erase);
@@ -110,7 +110,7 @@ hndnand_erase(hndnand_t *nfl, uint offset)
 }
 
 int
-hndnand_checkbadb(hndnand_t *nfl, uint offset)
+hndnand_checkbadb(hndnand_t *nfl, uint64 offset)
 {
 	ASSERT(nfl);
 	ASSERT(nfl->checkbadb);
@@ -119,10 +119,92 @@ hndnand_checkbadb(hndnand_t *nfl, uint offset)
 }
 
 int
-hndnand_mark_badb(hndnand_t *nfl, uint offset)
+hndnand_mark_badb(hndnand_t *nfl, uint64 offset)
 {
 	ASSERT(nfl);
 	ASSERT(nfl->markbadb);
 
 	return (nfl->markbadb)(nfl, offset);
 }
+
+#ifndef _CFE_
+int
+hndnand_dev_ready(hndnand_t *nfl)
+{
+	ASSERT(nfl);
+	ASSERT(nfl->dev_ready);
+
+	return (nfl->dev_ready)(nfl);
+}
+
+int
+hndnand_select_chip(hndnand_t *nfl, int chip)
+{
+	ASSERT(nfl);
+	ASSERT(nfl->select_chip);
+
+	return (nfl->select_chip)(nfl, chip);
+}
+
+int hndnand_cmdfunc(hndnand_t *nfl, uint64 addr, int cmd)
+{
+	ASSERT(nfl);
+	ASSERT(nfl->cmdfunc);
+
+	return (nfl->cmdfunc)(nfl, addr, cmd);
+}
+
+int
+hndnand_waitfunc(hndnand_t *nfl, int *status)
+{
+	ASSERT(nfl);
+	ASSERT(nfl->waitfunc);
+
+	return (nfl->waitfunc)(nfl, status);
+}
+
+int
+hndnand_read_oob(hndnand_t *nfl, uint64 addr, uint8 *oob)
+{
+	ASSERT(nfl);
+	ASSERT(nfl->read_oob);
+
+	return (nfl->read_oob)(nfl, addr, oob);
+}
+
+int
+hndnand_write_oob(hndnand_t *nfl, uint64 addr, uint8 *oob)
+{
+	ASSERT(nfl);
+	ASSERT(nfl->write_oob);
+
+	return (nfl->write_oob)(nfl, addr, oob);
+}
+int
+hndnand_read_page(hndnand_t *nfl, uint64 addr, uint8 *buf, uint8 *oob, bool ecc,
+	uint32 *herr, uint32 *serr)
+{
+	ASSERT(nfl);
+	ASSERT(nfl->read_page);
+
+	return (nfl->read_page)(nfl, addr, buf, oob, ecc, herr, serr);
+}
+
+int
+hndnand_write_page(hndnand_t *nfl, uint64 addr, const uint8 *buf, uint8 *oob, bool ecc)
+{
+	ASSERT(nfl);
+	ASSERT(nfl->write_page);
+
+	return (nfl->write_page)(nfl, addr, buf, oob, ecc);
+}
+
+int
+hndnand_cmd_read_byte(hndnand_t *nfl, int cmd, int arg)
+{
+	ASSERT(nfl);
+	ASSERT(nfl->cmd_read_byte);
+
+	return (nfl->cmd_read_byte)(nfl, cmd, arg);
+}
+#endif /* _CFE_ */

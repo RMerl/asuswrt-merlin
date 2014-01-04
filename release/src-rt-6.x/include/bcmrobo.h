@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmrobo.h 341899 2012-06-29 04:06:38Z $
+ * $Id: bcmrobo.h 363505 2012-10-18 01:58:09Z $
  */
 
 #ifndef _bcm_robo_h_
@@ -38,7 +38,9 @@
 #define DEVID53010	0x53010	/* 53010 */
 #define DEVID53011	0x53011	/* 53011 */
 #define DEVID53012	0x53012	/* 53012 */
-#define ROBO_IS_BCM5301X(id) ((id) == DEVID53010 || (id) == DEVID53011 || (id) == DEVID53012)
+#define DEVID53019	0x53019	/* 53019 */
+#define ROBO_IS_BCM5301X(id) ((id) == DEVID53010 || (id) == DEVID53011 || (id) == DEVID53012 || \
+(id) == DEVID53019)
 
 /* Power save duty cycle times */
 #define MAX_NO_PHYS		5
@@ -139,6 +141,10 @@ struct robo_info_s {
 	uint8	pwrsave_phys; 		/* Phys that can be put into power save mode */
 	uint8	pwrsave_mode_phys[MAX_NO_PHYS];         /* Power save mode on the switch */
 	bool	eee_status;
+#ifdef PLC
+	/* PLC */
+	bool	plc_hw;			/* PLC chip */
+#endif /* PLC */
 };
 
 /* Power Save mode related functions */
@@ -160,5 +166,9 @@ extern void robo_dump_regs(robo_info_t *robo, struct bcmstrbuf *b);
 
 extern void robo_watchdog(robo_info_t *robo);
 extern void robo_eee_advertise_init(robo_info_t *robo);
+
+#ifdef PLC
+extern void robo_plc_hw_init(robo_info_t *robo);
+#endif /* PLC */
 
 #endif /* _bcm_robo_h_ */

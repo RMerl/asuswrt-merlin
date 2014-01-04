@@ -1,0 +1,99 @@
+.\" *************************************************************************
+.\" *  Copyright © 2004-2006 Rémi Denis-Courmont.                           *
+.\" *  This program is free software: you can redistribute and/or modify    *
+.\" *  it under the terms of the GNU General Public License as published by *
+.\" *  the Free Software Foundation, versions 2 or 3 of the license.        *
+.\" *                                                                       *
+.\" *  This program is distributed in the hope that it will be useful,      *
+.\" *  but WITHOUT ANY WARRANTY; without even the implied warranty of       *
+.\" *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        *
+.\" *  GNU General Public License for more details.                         *
+.\" *                                                                       *
+.\" *  You should have received a copy of the GNU General Public License    *
+.\" *  along with this program. If not, see <http://www.gnu.org/licenses/>. *
+.\" *************************************************************************
+.TH "RDISC6" "8" "$Date: 2011-05-28 17:01:38 +0300 (sam. 28 mai 2011) $" "rdisc6" "System Manager's Manual"
+.SH NAME
+rdisc \- ICMPv6 Router Discovery tool
+.SH SYNOPSIS
+.BR "rdisc6" " [" "-qv" "] [" "-r attempts" "] [" "-w wait_ms" "]"
+.BR "" "[" "IPv6 address" "] <" "iface" ">"
+
+.SH DESCRIPTON
+.B RDisc6
+is an Unix program which implements the ICMPv6 Router Discovery in
+userland (it is normally done by the kernel). It is used to lookup the
+list of on-link routers and IPv6 prefixes.
+
+It can also be used to force the kernel to update the state of a given
+IPv6-autoconfigured network interface.
+
+The name of the network interface to probe routers for must be
+specified.
+
+.SH OPTIONS
+
+.TP
+.BR "\-1" " or " "\-\-single"
+Exit as soon as the first advertisement is received.
+
+.TP
+.BR "\-h" " or " "\-\-help"
+Display some help and exit.
+
+.TP
+.BR "\-m" " or " "\-\-multiple"
+Wait for possible multiple advertisements and print all of them (default).
+
+.TP
+.BR "\-n" " or " "\-\-numeric"
+If the optional parameter is not a valid IPv6 address, do not try to
+resolve it as a DNS hostname.
+
+.TP
+.BR "\-q" " or " "\-\-quiet"
+Only display advertised IPv6 prefixes. Display nothing in case of failure.
+That is mostly useful when calling the program from a shell script.
+
+.TP
+.BR "\-r attempts" " or " "\-\-retry attempts"
+Send ICMPv6 Router Discovery that many times until a reply is
+received, or abort. By default, rdisc6 will try 3 times before aborting
+(MAX_RTR_SOLICITATIONS from RFC2461).
+
+.TP
+.BR "\-V" " or " "\-\-version"
+Display program version and license and exit.
+
+.TP
+.BR "\-v" " or " "\-\-verbose"
+Display verbose information. That is the default.
+
+.TP
+.BR "\-w wait_ms" " or " "\-\-wait wait_ms"
+.RI "Wait " "wait_ms" " milliseconds for a response before retrying."
+By default, rdisc6 waits 4 second between each attempts
+(RTR_SOLICITATION_INTERVAL from RFC2461).
+
+.PP
+.RB "If " "rdisc6" " does not receive any response after the specified number"
+.RI "of attempts waiting for " "wait_ms" " milliseconds each time, it will"
+exit with code 2. On error, it exits with code 1.
+Otherwise it exits with code 0.
+
+.SH SECURITY
+.RB "" "rdisc6" " "
+.RI "must be " "setuid" " " "root" " to allow use by non "
+privileged users. It will drop its root privileges before any attempt
+is made to send or receive data from the network to reduce the possible
+impact of a security vulnerability.
+
+.SH "SEE ALSO"
+ndisc6(8), ipv6(7)
+
+.SH AUTHOR
+R\[char233]mi Denis-Courmont <remi at remlab dot net>
+
+$Id: rdisc6.8 678 2011-05-28 14:01:38Z remi $
+
+http://www.remlab.net/ndisc6/

@@ -1,0 +1,79 @@
+.\" *************************************************************************
+.\" *  Copyright © 2006 Rémi Denis-Courmont.                                *
+.\" *  This program is free software: you can redistribute and/or modify    *
+.\" *  it under the terms of the GNU General Public License as published by *
+.\" *  the Free Software Foundation, versions 2 or 3 of the license.        *
+.\" *                                                                       *
+.\" *  This program is distributed in the hope that it will be useful,      *
+.\" *  but WITHOUT ANY WARRANTY; without even the implied warranty of       *
+.\" *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        *
+.\" *  GNU General Public License for more details.                         *
+.\" *                                                                       *
+.\" *  You should have received a copy of the GNU General Public License    *
+.\" *  along with this program. If not, see <http://www.gnu.org/licenses/>. *
+.\" *************************************************************************
+.TH "ADDR2NAME" "1" "$Date: 2010-10-31 22:56:30 +0200 (dim. 31 oct. 2010) $" "addr2name" "User's Manual"
+.SH NAME
+addr2name, name2addr \- perform DNS lookups from scripts
+.SH SYNOPSIS
+.BR "addr2name" " [" "-46cmnr" "] [" "HOSTNAMES" "]"
+
+.BR "name2addr" " [" "-46cn" "] [" "HOSTNAMES" "]"
+
+.SH DESCRIPTON
+Write addresses or canonical hostname of specified names to the standard
+output. If no names are specified via the command line, they are read from
+the standard input.
+
+.SH OPTIONS
+
+.TP
+.BR "\-4" " or " "\-\-ipv4"
+Only try to perform IPv4 lookups.
+
+.TP
+.BR "\-6" " or " "\-\-ipv6"
+Only try to perform IPv6 lookups.
+
+.TP
+.BR "\-c" " or " "\-\-config"
+Only lookup and print results for address families that match locally
+configured addresses (If the system has no IPv4 resp IPv6 address,
+then IPv4 resp IPv6 addresses are ignored).
+
+.TP
+.BR "\-h" " or " "\-\-help"
+Display some help and exit.
+
+.TP
+.BR "\-m" " or " "\-\-multiple"
+Normally, if a name yields multiple results, only the first one is printed.
+With this optional parameter, all results will be printed on a single line,
+separated by spaces.
+
+.TP
+.BR "\-n" " or " "\-\-numeric"
+Prevent forward hostname lookup.
+This ensures that the input names are numeric addresses, which do not need
+to be looked up. Typically used along with the \-\-reverse option to convert
+numerical addresses to canonical hostnames.
+
+.TP
+.BR "\-r" " or " "\-\-reverse"
+Perform a reverse DNS lookup
+.RB "(enabled implicitly with " "addr2name" ")."
+.BR "addr2name" " prints numerical resolved addresses by default instead."
+
+.TP
+.BR "\-\-version"
+Display program version and license and exit.
+
+.SH "SEE ALSO"
+host(1), getaddrinfo(3), getnameinfo(3), resolv.conf(5)
+
+.SH AUTHOR
+R\[char233]mi Denis-Courmont <remi at remlab dot net>
+
+$Id: addr2name.1 658 2010-10-31 20:56:30Z remi $
+
+http://www.remlab.net/ndisc6/

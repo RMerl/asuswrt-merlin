@@ -555,3 +555,11 @@ config RTCONFIG_VPNC
 config RTCONFIG_KYIVSTAR
 	bool "KYIVSTAR specified"
 	default n
+
+config RTCONFIG_CFE_NVRAM_CHK
+        bool "CFE_NVRAM_CHK"
+        default n
+
+config RTCONFIG_DEBUG
+        bool "debug mode"
+        default n

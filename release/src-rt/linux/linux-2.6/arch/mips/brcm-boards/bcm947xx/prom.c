@@ -1,15 +1,21 @@
 /*
  * Early initialization code for BCM94710 boards
  *
- * Copyright (C) 2009, Broadcom Corporation
- * All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
- * THIS SOFTWARE IS OFFERED "AS IS", AND BROADCOM GRANTS NO WARRANTIES OF ANY
- * KIND, EXPRESS OR IMPLIED, BY STATUTE, COMMUNICATION OR OTHERWISE. BROADCOM
- * SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
- * FOR A SPECIFIC PURPOSE OR NONINFRINGEMENT CONCERNING THIS SOFTWARE.
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+ * SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
+ * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+ * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: prom.c,v 1.5 2009/06/08 17:32:33 Exp $
+ * $Id: prom.c,v 1.8 2010-07-09 06:00:16 $
  */
 
 #include <linux/config.h>
@@ -31,8 +37,10 @@
 
 /* Global SB handle */
 extern si_t *bcm947xx_sih;
+
 /* Convenience */
 #define sih bcm947xx_sih
+
 #define MB      << 20
 
 #ifdef  CONFIG_HIGHMEM
@@ -96,6 +104,7 @@ add_tmptlb_entry(unsigned long entrylo0, unsigned long entrylo1,
 #endif  /* CONFIG_HIGHMEM */
 
 extern char ram_nvram_buf[];
+
 void __init
 prom_init(void)
 {
@@ -139,6 +148,7 @@ prom_init(void)
 			(si_setcore(sih, DMEMS_CORE_ID, 0) != NULL)) {
 			uint32 addr, size;
 			uint asidx = 0;
+
 			do {
 				si_coreaddrspaceX(sih, asidx, &addr, &size);
 				if (size == 0)
@@ -152,28 +162,29 @@ prom_init(void)
 		}
 		/* switch back to previous core */
 		si_setcoreidx(sih, idx);
+
 		if (highmem_region) {
 #endif
-		early_tlb_init();
-		/* Add one temporary TLB entries to map SDRAM Region 2.
-		*      Physical        Virtual
-		*      0x80000000      0xc0000000      (1st: 256MB)
-		*      0x90000000      0xd0000000      (2nd: 256MB)
-		*/
-		add_tmptlb_entry(ENTRYLO(SI_SDRAM_R2),
-				 ENTRYLO(SI_SDRAM_R2 + (256 MB)),
-				 EXTVBASE, PM_256M);
+			early_tlb_init();
+			/* Add one temporary TLB entries to map SDRAM Region 2.
+			*      Physical        Virtual
+			*      0x80000000      0xc0000000      (1st: 256MB)
+			*      0x90000000      0xd0000000      (2nd: 256MB)
+			*/
+			add_tmptlb_entry(ENTRYLO(SI_SDRAM_R2),
+					 ENTRYLO(SI_SDRAM_R2 + (256 MB)),
+					 EXTVBASE, PM_256M);
 
-		off = EXTVBASE + __pa(off);
-		for (extmem = (128 MB); extmem < (512 MB); extmem <<= 1) {
-			if (*(unsigned long *)(off + extmem) == data)
-				break;
+			off = EXTVBASE + __pa(off);
+			for (extmem = (128 MB); extmem < (512 MB); extmem <<= 1) {
+				if (*(unsigned long *)(off + extmem) == data)
+					break;
+			}
+
+			extmem -= mem;
+			/* Keep tlb entries back in consistent state */
+			early_tlb_init();
 		}
-
-		extmem -= mem;
-		/* Keep tlb entries back in consistent state */
-		early_tlb_init();
-	}
 #if 0
 	}
 #endif
@@ -185,21 +196,25 @@ prom_init(void)
 	 */
 	if (MIPS74K(current_cpu_data.processor_id) && (mem == (128 MB)))
 		mem -= 0x1000;
+
 	/* CFE could have loaded nvram during netboot
 	 * to top 32KB of RAM, Just check for nvram signature
 	 * and copy it to nvram space embedded in linux
 	 * image for later use by nvram driver.
 	 */
-	header = (struct nvram_header *)(KSEG0ADDR(mem - NVRAM_SPACE));
+
+	header = (struct nvram_header *)(KSEG0ADDR(mem - DEF_NVRAM_SPACE));
 	if (ltoh32(header->magic) == NVRAM_MAGIC) {
 		uint32 *src = (uint32 *)header;
 		uint32 *dst = (uint32 *)ram_nvram_buf;
 		uint32 i;
+
 		printk("Copying NVRAM bytes: %d from: 0x%p To: 0x%p\n", ltoh32(header->len),
 			src, dst);
-		for (i = 0; i < ltoh32(header->len) && i < NVRAM_SPACE; i += 4)
+		for (i = 0; i < ltoh32(header->len) && i < DEF_NVRAM_SPACE; i += 4)
 			*dst++ = ltoh32(*src++);
 	}
+
 #ifdef CONFIG_BLK_DEV_RAM
 	init_ramdisk(mem);
 #endif

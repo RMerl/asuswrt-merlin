@@ -2,7 +2,7 @@
 #define MY_DEBUG_H_
 
 #ifndef MAX_DEBUG_LEVEL
-# define MAX_DEBUG_LEVEL	LOG_NOTICE
+# define MAX_DEBUG_LEVEL	LOG_DEBUG
 #endif
 
 /* First include stdio.h, which may contain the prototype for the external dprintf.

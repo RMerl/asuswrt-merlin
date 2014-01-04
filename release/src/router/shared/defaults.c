@@ -341,7 +341,12 @@ struct nvram_tuple router_defaults[] = {
 #endif
 
 #if defined (RTCONFIG_RALINK) || defined (RTCONFIG_BCMWL6)
+#if defined(RTAC53U)
+	/* RT-AC53U disable txbf by default */
+	{ "wl_txbf", "0" },
+#else
 	{ "wl_txbf", "1" },
+#endif
 #endif
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_BCMARM
@@ -521,7 +526,6 @@ struct nvram_tuple router_defaults[] = {
 #endif
 #else
 	{ "gro_disable",		"0"		},
-	{ "txworkq",			"1"		},
 #endif
 #endif
 //#ifdef RTCONFIG_BCMWL6
@@ -1567,6 +1571,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "PM_SMTP_AUTH_PASS", ""},
 	{ "PM_MAIL_SUBJECT", ""},
 	{ "PM_LETTER_CONTENT", ""},
+	{ "PM_LETTER_PATH", ""},
 	{ "PM_MAIL_FILE", ""},
 	{ "PM_MAIL_TARGET", ""},
 	{ "PM_title", ""},                              /* The title of mail. */
@@ -1636,6 +1641,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "ipv6_dhcp_end",	""		},	// end of address pool
 	{ "ipv6_fw_enable",	"1"		},	// Default FORWARD table to DROP packets
 	{ "ipv6_fw_rulelist",	""		},	// IPv6 allowed forward rules
+	{ "ipv6_ra_conf",	"noneset"	},	// address configuration from WAN router advertisement
 
 	{ "web_redirect", 	"1"		},	// Only NOLINK is redirected in default, it is overwrited in init_nvram
 	{ "disiosdet",		"1"		},

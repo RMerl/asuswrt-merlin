@@ -35,7 +35,7 @@
  *              and instrumentation on top of the heap, without modifying the heap
  *              allocation implementation.
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -174,7 +174,7 @@ int bcm_mpm_create_prealloc_pool(bcm_mpm_mgr_h mgr,
                                  int nobj,
                                  void *memstart,
                                  unsigned int memsize,
-                                 char poolname[BCM_MP_NAMELEN],
+                                 const char poolname[BCM_MP_NAMELEN],
                                  bcm_mp_pool_h *newp);
 
 
@@ -213,7 +213,7 @@ int bcm_mpm_delete_prealloc_pool(bcm_mpm_mgr_h mgr, bcm_mp_pool_h *poolp);
  *
  */
 int bcm_mpm_create_heap_pool(bcm_mpm_mgr_h mgr, unsigned int obj_sz,
-                             char poolname[BCM_MP_NAMELEN],
+                             const char poolname[BCM_MP_NAMELEN],
                              bcm_mp_pool_h *newp);
 
 

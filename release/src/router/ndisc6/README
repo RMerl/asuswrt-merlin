@@ -1,0 +1,33 @@
+NDisc6 : IPv6 diagnostic tools
+===============================
+$Id: README 658 2010-10-31 20:56:30Z remi $
+Copyright © 2005-2006 Rémi Denis-Courmont.
+
+  This package gathers a few diagnostic tools for IPv6 networks:
+- ndisc6, which performs ICMPv6 Neighbor Discovery in userland,
+- rdisc6, which performs ICMPv6 Router Discovery in userland,
+- rltraceroute6, yet another IPv6 implementation of traceroute,
+- tcptraceroute6, a TCP/IPv6-based traceroute implementation,
+- tracert6, a ICMPv6 Echo Request based traceroute,
+- tcpspray6, a TCP/IP Discard/Echo bandwidth metter.
+
+  For detailled usage instructions, you should refer to the Unix manual
+pages ndisc6(8), rdisc6(8), traceroute6(8) and tcpspray6(1) which
+should be provided with your copy of the program.
+  For instructions on compilation and installation of the package,
+refer to the provided INSTALL file.
+
+  This package is distributed under the terms of the General Public
+License (GPL) version 2 written by the Free Software Foundation, Inc.
+for full licensing details, please read COPYING.
+
+  If you have further questions, you can contact me via email at:
+    reim (at) remlab (dot) net
+
+  All programs are known to run on Linux (with either glibc or µclibc).
+They should also work on any recent open-source BSD variant, and might
+work on Solaris or other BSD derivatives.
+
+-- 
+Rémi Denis-Courmont <remi (at) remlab (dot) net>
+http://www.remlab.net/ndisc6/

@@ -17,7 +17,7 @@
  *
  * Dependencies: proto/bcmeth.h
  *
- * $Id: bcmevent.h 339265 2012-06-15 23:44:23Z $
+ * $Id: bcmevent.h 363229 2012-10-16 19:17:22Z $
  *
  */
 
@@ -185,7 +185,12 @@ typedef BWL_PRE_PACKED_STRUCT struct bcm_event {
 #define WLC_E_TDLS_PEER_EVENT 	92	/* discovered peer, connected or disconnected peer */
 #define WLC_E_SPEEDY_RECREATE_FAIL	93	/* fast assoc recreation failed */
 #define WLC_E_NATIVE			94	/* port-specific event and payload (e.g. NDIS) */
-#define WLC_E_LAST			95	/* highest val + 1 for range checking */
+#define WLC_E_PKTDELAY_IND		95	/* event for tx pkt delay suddently jump */
+#define WLC_E_IBSS_COALESCE		96	/* IBSS Coalescing */
+#define WLC_E_SERVICE_FOUND		102	/* desired service found */
+#define WLC_E_GAS_FRAGMENT_RX	103	/* GAS fragment received */
+#define WLC_E_GAS_COMPLETE		104	/* GAS sessions all complete */
+#define WLC_E_LAST	105	/* highest val + 1 for range checking */
 
 
 /* Table of event name strings for UIs and debugging dumps */

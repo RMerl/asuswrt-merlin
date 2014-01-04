@@ -160,7 +160,7 @@ function submitForm(o, s){
 		parent.document.QKform.wan_pppoe_passwd.value = document.form.wan_pppoe_passwd.value;
 		
 		location.href = document.form.next_page.value;
-		return true;
+		return false;	//do not submit form
 	}
 	else{
 		changeiuiBackground(0);

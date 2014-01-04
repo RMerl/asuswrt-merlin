@@ -3,7 +3,7 @@
  * Perform password to key hash algorithm as defined in WPA and 802.11i
  * specifications
  *
- * Copyright (C) 2011, Broadcom Corporation
+ * Copyright (C) 2012, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;

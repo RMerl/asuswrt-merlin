@@ -112,6 +112,7 @@ typedef volatile struct nandregs {
 
 /* nand_cs_nand_select */
 #define NANDCSEL_NAND_WP			0x20000000
+#define NANDCSEL_AUTO_ID_CFG			0x40000000
 
 /* nand_cmd_start commands */
 #define NANDCMD_NULL				0x00000000
@@ -133,6 +134,7 @@ typedef volatile struct nandregs {
 #define NANDCMD_LOW_LEVEL_OP			0x10000000
 #define NANDCMD_PAGE_READ_MULTI			0x11000000
 #define NANDCMD_STATUS_READ_MULTI		0x12000000
+#define NANDCMD_OPCODE_MASK			0x1f000000
 
 /* nand_acc_control_cs0 */
 #define	NANDAC_CS0_RD_ECC_EN			0x80000000
@@ -175,5 +177,17 @@ typedef volatile struct nandregs {
 #define	NANDIST_ERASED				0x08000000
 #define	NANDIST_STATUS				0x000000ff
 #define	NANDIST_STATUS_FAIL			0x00000001
+
+/* cmd_ext_address */
+#define NANDCMD_CS_SEL_MASK			0x00070000
+#define NANDCMD_CS_SEL_SHIFT			16
+#define NANDCMD_EXT_ADDR_MASK			0x0000ffff
+
+/*
+ * NAND IDM
+ */
+/* Core specific control flags */
+#define NAND_APB_LITTLE_ENDIAN			0x01000000
+#define NAND_RO_CTRL_READY			0x00000001
 
 #endif	/* _nand_core_h_ */

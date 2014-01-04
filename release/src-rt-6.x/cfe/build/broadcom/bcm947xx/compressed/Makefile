@@ -1,7 +1,7 @@
 #
 # Makefile for compressed self-booting CFE on Broadcom BCM947XX boards
 #
-# Copyright (C) 2011, Broadcom Corporation
+# Copyright (C) 2012, Broadcom Corporation
 # All Rights Reserved.
 # 
 # This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
 # or duplicated in any form, in whole or in part, without the prior
 # written permission of Broadcom Corporation.
 #
-# $Id: Makefile 300761 2011-12-05 23:22:14Z $
+# $Id: Makefile 367718 2012-11-09 03:57:10Z $
 #
 
 CROSS_COMPILE	:= $(TOOLPREFIX)
@@ -19,43 +19,70 @@ LOADADDR	:= $(CFG_TEXT_START)
 
 # The self-decompresor uses the minimal OSL, get rid of _CFE_ and vxworks
 CFLAGS		:= $(subst -D_CFE_,,$(CFLAGS)) -fdata-sections
-CFLAGS		+= -D_MINOSL_ -DBCMBUSTYPE=SI_BUS -Uvxworks -U__vxworks
+CFLAGS		+= -D_CFEZ_ -D_MINOSL_ -DBCMBUSTYPE=SI_BUS -Uvxworks -U__vxworks
 
-ifeq ($(strip $(CFG_MINIMAL_SIZE)), 1)
-ifeq ($(strip $(CFG_GMAC)), 0)
-CFLAGS		+= -DBCMCHIPTYPE=0
-else
-CFLAGS		+= -DBCMCHIPTYPE=1
+# Default mips
+ifeq ($(ARCH),)
+ARCH := mips
 endif
-endif
-
-# Link at 3 MB offset in RAM
-TEXT_START	:= 0x80001000
 
 OBJCOPY		:= $(CROSS_COMPILE)objcopy -O binary -R .reginfo -R .note -R .comment -R .mdebug -S
 OBJCOPYSREC	:= $(CROSS_COMPILE)objcopy -O srec -R .reginfo -R .note -R .comment -R .mdebug -S
 
 SYSTEM		:= ../cfe
 
-vpath %.c $(SRCBASE)/shared
+vpath %.c $(SRCBASE)/shared $(SRCBASE)/cfe/cfe/arch/arm/board/bcm947xx/src
 vpath %.S $(SRCBASE)/shared
 vpath %.lds.in $(SRCBASE)/shared $(SRCBASE)/tools/misc/lzma_src/C
 
 CFLAGS		+= -DLOADADDR=$(LOADADDR)
 CFLAGS		+= -ffunction-sections $(call check_gcc, -fvtable-gc, )
 
-OBJECTS		:= boot.o sisdram.o siutils.o load.o \
-		 hndmips.o hndchipc.o hndpmu.o \
-		 min_osl.o bcmutils.o bcmstdlib.o sromstubs.o nvramstubs.o
+# Note: siutils.o appeared seperately on purpose to solve post reference problem of GCC
+OBJS-mips = boot.o sisdram.o siutils.o hndmips.o hndpmu.o
+OBJS-arm = bootarm.o  aisdram_ca9.o siutils.o hndarm_ca9.o \
+	   pcieinit_ca9.o aiutils.o
 
-ifeq ($(strip $(CFG_MINIMAL_SIZE)), 1)
-ifeq ($(strip $(CFG_GMAC)), 0)
-OBJECTS		+= sbsdram.o sbutils.o
-else
-OBJECTS		+= aisdram.o aiutils.o
+ifeq ($(strip $(CFG_SHMOO)), 1)
+OBJS-arm += aisdram-ca9.o hndsoc.o \
+	    ddr40_phy_init.o platform.o shmoo_DDR3.o tinymt32.o
 endif
+
+OBJECTS := $(OBJS-$(ARCH))
+OBJECTS += load.o hndchipc.o min_osl.o bcmutils.o \
+	   bcmstdlib.o sromstubs.o nvramstubs.o
+
+ifeq ($(ARCH), arm)
+  ELF32_LITTLE := elf32-littlearm
+  ELF32_BIG    := elf32-bigarm
+  CFLAGS       += -DBCMCHIPTYPE=3
+  ifeq ($(strip $(CFG_SHMOO)), 1)
+    TEXT_START   := 0xc0000000
+    CFLAGS	 += -DCFG_SHMOO=1
+    CFEZ_LDS_IN  := cfez_arm_shmoo.lds.in
+  else
+    TEXT_START   := 0x00001000
+    CFEZ_LDS_IN  := cfez_arm.lds.in
+  endif
 else
-OBJECTS		+= aisdram.o aiutils.o sbsdram.o sbutils.o
+  CFEZ_LDS_IN  := hndrte.lds.in
+  ELF32_LITTLE := elf32-tradlittlemips
+  ELF32_BIG    := elf32-bigmips
+
+  ifeq ($(strip $(CFG_MINIMAL_SIZE)), 1)
+    ifeq ($(strip $(CFG_GMAC)), 0)
+      CFLAGS   += -DBCMCHIPTYPE=0
+      OBJECTS  += sbsdram.o sbutils.o
+    else
+      CFLAGS   += -DBCMCHIPTYPE=1
+      OBJECTS  += aisdram.o aiutils.o
+    endif
+  else
+    OBJECTS    += aisdram.o aiutils.o sbsdram.o sbutils.o
+  endif
+
+  # Link at 3 MB offset in RAM
+  TEXT_START	:= 0x80001000
 endif
 
 ifeq ($(strip $(CFG_NFLASH)), 1)
@@ -68,15 +95,7 @@ COMPRESS	:= lzma_4k e
 ifneq ($(findstring lzma_4k,$(COMPRESS)),)
 CFLAGS		+= -DUSE_LZMA -DBCMLZMA
 else
-ifneq ($(findstring gzip,$(COMPRESS)),)
-CFLAGS		+= -DUSE_GZIP
-else
-ifneq ($(findstring bzip2,$(COMPRESS)),)
-CFLAGS		+= -DUSE_BZIP2
-else
 COMPRESS	:= cat
-endif
-endif
 endif
 
 all: cfez.bin
@@ -98,19 +117,19 @@ cfez.bin: cfez
 
 # Link the loader and the kernel binary together
 cfez: cfez.lds $(OBJECTS) piggy.o
-	$(LD) -static -Map cfez.map --gc-sections -no-warn-mismatch -T cfez.lds -o $@ $(OBJECTS) piggy.o
+	$(LD) -static -Map cfez.map --gc-sections -no-warn-mismatch -T cfez.lds -o $@ $(OBJECTS) $(LDLIBS) piggy.o
 
-cfez.lds: hndrte.lds.in Makefile
+cfez.lds: $(CFEZ_LDS_IN) Makefile
 	sed -e s/TEXT_START/$(TEXT_START)/ \
-	    -e s/TARGET_ARCH/mips/ < $< > $@
+	    -e s/TARGET_ARCH/$(ARCH)/ < $< > $@
 
 # Create a linkable version of the (possibly compressed) kernel binary
 piggy.o: piggz piggy.lds
 
 ifeq ($(CFG_LITTLE), 1)
-	$(LD) -no-warn-mismatch -T piggy.lds -r -o $@ -b binary piggz -b elf32-tradlittlemips 
+	$(LD) -no-warn-mismatch -T piggy.lds -r -o $@ -b binary piggz -b $(ELF32_LITTLE)
 else
-	$(LD) -no-warn-mismatch -T piggy.lds -r -o $@ -b binary piggz -b elf32-bigmips
+	$(LD) -no-warn-mismatch -T piggy.lds -r -o $@ -b binary piggz -b $(ELF32_BIG)
 endif
 
 piggy.lds:
@@ -132,4 +151,4 @@ clean:
 	rm -f cfez cfez.bin cfez.srec piggz piggy *.lds *.o *.map
 
 %.o : %.S
-	$(GCC) $(CFLAGS) -o $@ $<
+	$(GCC) $(ASFLAGS) $(CFLAGS) -o $@ $<

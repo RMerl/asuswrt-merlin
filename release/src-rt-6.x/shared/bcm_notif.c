@@ -1,7 +1,7 @@
 /*
  * Implementation of event notification component.
  *
- * Copyright (C) 2011, Broadcom Corporation
+ * Copyright (C) 2012, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -12,9 +12,10 @@
  * $Id$
  */
 
+#include <bcm_cfg.h>
 #include <typedefs.h>
-#include <bcmutils.h>
 #include <osl.h>
+#include <bcmutils.h>
 #include "bcm_notif_priv.h"
 #include <bcm_notif_pub.h>
 #include <bcm_mpool_pub.h>

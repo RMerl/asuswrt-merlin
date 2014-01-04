@@ -42,7 +42,7 @@ function initial(){
 	if('<% nvram_get("tm_device_name"); %>' != '')
 		$("tmPath").innerHTML = '/mnt/<% nvram_get("tm_device_name"); %>';
 	else
-		$("tmPath").innerHTML = '<div style="margin-left:5px;color:#FC0">Change the Backup Path button to \"Select\" and the text \"Select the USB storage device that you want to access.\"</div>';
+		$("tmPath").innerHTML = '<div style="margin-left:5px;color:#FC0"><#DM_Install_partition#></div>';
 	
 	if(document.form.timemachine_enable.value == "0"){
 		$("backupPath_tr").style.display = "none";
@@ -226,7 +226,7 @@ function cal_panel_block(obj_id){
 	<table>
 		<tr>
 			<td>
-				<div style="width:450px;font-family:Arial;font-size:13px;font-weight:bolder; margin-top:23px;margin-left:30px;">Select a target disk:</div>
+				<div style="width:450px;font-family:Arial;font-size:13px;font-weight:bolder; margin-top:23px;margin-left:30px;"><#DM_Install_partition#> :</div>
 			</td>
 		</tr>
 	</table>
@@ -370,14 +370,14 @@ function cal_panel_block(obj_id){
 					<tr id="backupPath_tr">
 						<th>Backup Path</a></th>
 						<td>
-							<input class="button_gen" onclick="selPartition()" type="button" value="<#Select_menu_default#>"/>
+							<input class="button_gen" onclick="selPartition()" type="button" value="<#Select_btn#>"/>
 							<span id="tmPath" style="font-family: Lucida Console;"></span>
 		   			</td>
 					</tr>
 					<tr id="volSize_tr">
 						<th>TimeMachine Volume Size</a></th>
 						<td>
-							<input id="tm_vol_size" name="tm_vol_size" maxlength="3" class="input_6_table" type="text" maxLength="8" value="<% nvram_get("tm_vol_size"); %>"/> GB (0: Unlimited)
+							<input id="tm_vol_size" name="tm_vol_size" maxlength="3" class="input_6_table" type="text" maxLength="8" value="<% nvram_get("tm_vol_size"); %>"/> GB (0: <#Limitless#>)
 							&nbsp;<span id="maxVolSize"></span>
 						</td>
 					</tr>

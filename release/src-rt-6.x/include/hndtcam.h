@@ -1,7 +1,7 @@
 /*
  * HND SOCRAM TCAM software interface.
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: hndtcam.h 317281 2012-02-27 11:23:27Z $
+ * $Id: hndtcam.h 362090 2012-10-10 23:32:09Z $
  */
 #ifndef _hndtcam_h_
 #define _hndtcam_h_
@@ -37,7 +37,8 @@
 #endif
 
 #if defined(__ARM_ARCH_7R__)
-#ifndef PATCHCOUNT
+#if !defined(PATCHCOUNT) || (PATCHCOUNT == 0)
+#undef PATCHCOUNT
 #define PATCHCOUNT 1
 #endif
 #define	ARMCR4_TCAMPATCHCOUNT	PATCHCOUNT
@@ -83,6 +84,7 @@ extern void hnd_tcam_write(void *srp, uint16 idx, uint32 data);
 extern void hnd_tcam_read(void *srp, uint16 idx, uint32 *content);
 void * hnd_tcam_init(void *srp, int no_addrs);
 extern void hnd_tcam_disablepatch(void *srp);
+extern void hnd_tcam_patchdisable(void);
 extern void hnd_tcam_enablepatch(void *srp);
 #ifdef CONFIG_XIP
 extern void hnd_tcam_bootloader_load(void *srp, char *pvars);

@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: nflash.c 344874 2012-07-16 02:38:51Z $
+ * $Id: nflash.c 376441 2012-12-27 00:45:42Z $
  */
 
 #include <typedefs.h>
@@ -48,50 +48,14 @@ static hndnand_t nflash;
 static uint32 nflash_col_mask;
 static uint32 nflash_row_shift;
 
-/* Prototype */
-static int nflash_poll(si_t *sih, chipcregs_t *cc);
-static int nflash_readst(si_t *sih, chipcregs_t *cc, uint8 *status);
-static int nflash_readoob(si_t *sih, chipcregs_t *cc, uint offset, uint len, uchar *buf);
-static int nflash_writeoob(si_t *sih, chipcregs_t *cc, uint offset, uint len, uchar *buf);
 
-hndnand_t *nflash_init(si_t *sih);
-static void nflash_enable(hndnand_t *nfl, int enable);
-static int nflash_read(hndnand_t *nfl, uint offset, uint len, uchar *buf);
-static int nflash_write(hndnand_t *nfl, uint offset, uint len, const uchar *buf);
-static int nflash_erase(hndnand_t *nfl, uint offset);
-static int nflash_checkbadb(hndnand_t *nfl, uint offset);
-static int nflash_mark_badb(hndnand_t *nfl, uint offset);
+#undef DEBUG_GEN_1BIT_ERR
+/* 256 bytes for 3 bytes ecc. */
+#define SOFT_HAMMING_SECTOR_SIZE (256)
+#define SOFT_HAMMING_ECC_BYTES (3)
 
-#define ARES_TRY_ECC 1
-/* For shipped 4706 without ecc enabled, if new firmware found it does not have ecc written, i.e. ecc is wrong.
-   It bypass error correction to prevent mess up correct data due to wrong ecc.*/
-
-#ifdef ARES_TRY_ECC
-#define SWECC_ENAB	nvram_match("nflash_swecc", "1")
-#else
-#define SWECC_ENAB	0
-#endif
-
-#define ARES_WAR_OVERRIDE_ECC_ON_READ 1
-
-#undef DEBUG_DUMP_FIRST_PAGE
-#undef ARES_GEN_1BIT_ERR
-/* test purpose, write 0xff to oob to simulate previous CFE (no ECC writing)*/
-#undef ARES_WRITE_OOB_ALLFF
-
-#define DBGMSG(x) printf x
-
-#ifdef ARES_WAR_OVERRIDE_ECC_ON_READ
-int war_stop_read_on_correct_fail=0;
-int war_write_back_calc_ecc = 0;
-#endif
-
-#ifdef ARES_TRY_ECC
-#define SOFT_HAMMING_SECTOR_SIZE (256) /* 256 bytes for 3 bytes ecc. */
-#define SOFT_HAMMING_ECC_BYTES (3) /* 256 bytes for 3 bytes ecc. */
-#define MAX_SUPPORT_OOB_SZ (128)
-#define HAMMING_00B_BYTES_PER_SECTOR (16)
-uint8 page_oob[MAX_SUPPORT_OOB_SZ];
+#define MAX_SOFTECC_OOB_SZ (64)
+static uint8 tmp_page_oob[MAX_SOFTECC_OOB_SZ];
 
 #define SAME_ECC(recc, cecc) \
 				((recc[0] == cecc[0]) && \
@@ -99,12 +63,32 @@ uint8 page_oob[MAX_SUPPORT_OOB_SZ];
 				(recc[2] == cecc[2]))
 
 #if defined(_CFE_) || defined(CFE_FLASH_ERASE_FLASH_ENABLED)
-int nand_calculate_ecc(void *mtd, const uint8 *dat, uint8 *ecc_code);
-int nand_correct_data(void *mtd, uint8 *dat, uint8 *read_ecc, uint8 *calc_ecc);
+extern void hamming_compute_256(const uint8 *data, uint8 *code);
+extern int8 hamming_correct_256(uint8 *data, const uint8 *original_code,
+    const uint8 *computed_code);
+
+#define nand_calculate_ecc(mtd, data, ecc)\
+	hamming_compute_256(data, ecc)
+#define nand_correct_data(mtd, data, read_ecc, calc_ecc)\
+	hamming_correct_256(data, read_ecc, calc_ecc)
+
+int enable_ecc_correct = 1;
 #else
-int nand_calculate_ecc(struct mtd_info *mtd, const u_char *dat, u_char *ecc_code);
-int nand_correct_data(struct mtd_info *mtd, u_char *dat, u_char *read_ecc, u_char *calc_ecc);
+extern int nand_calculate_ecc(struct mtd_info *mtd, const u_char *dat, u_char *ecc_code);
+extern int nand_correct_data(struct mtd_info *mtd, u_char *dat, u_char *read_ecc, u_char *calc_ecc);
+int enable_ecc_correct = 0;
 #endif
+
+/* Redefine nand_ecclayout to same as mtd-abi.h */
+#ifdef CONFIG_BCM47XX
+#define MTD_MAX_OOBFREE_ENTRIES	16
+#else
+#define MTD_MAX_OOBFREE_ENTRIES	8
+#endif
+struct nand_oobfree {
+	uint32 offset;
+	uint32 length;
+};
 
 struct nand_ecclayout {
 	uint32 eccbytes;
@@ -113,42 +97,50 @@ struct nand_ecclayout {
 #else
 	uint32 eccpos[64];
 #endif /* CONFIG_BCM47XX */
-	//uint32 oobavail;
-	//struct nand_oobfree oobfree[MTD_MAX_OOBFREE_ENTRIES];
+	uint32 oobavail;
+	struct nand_oobfree oobfree[MTD_MAX_OOBFREE_ENTRIES];
 };
 
-static struct nand_ecclayout tmp_nand_oob_64 = {
+/* Define default oob placement schemes for large and small page devices */
+static struct nand_ecclayout brcmnand_swecc_nand_oob_8 = {
+	.eccbytes = 3,
+	.eccpos = {0, 1, 2},
+};
+
+static struct nand_ecclayout brcmnand_swecc_nand_oob_16 = {
+	.eccbytes = 6,
+	.eccpos = {0, 1, 2, 3, 6, 7},
+};
+
+static struct nand_ecclayout brcmnand_swecc_oob_64 = {
 	.eccbytes = 24,
 	.eccpos = {
 		   40, 41, 42, 43, 44, 45, 46, 47,
 		   48, 49, 50, 51, 52, 53, 54, 55,
 		   56, 57, 58, 59, 60, 61, 62, 63},
-
 };
 
+/* For softare ecc reference current layout. */
+static struct nand_ecclayout *curr_ecclayout = NULL;
+#ifdef DEBUG_GEN_1BIT_ERR
+int enable_inject_err_on_write = 1;
 #endif
 
-#ifdef ARES_GEN_1BIT_ERR
-#if defined(_CFE_) || defined(CFE_FLASH_ERASE_FLASH_ENABLED)
-int enable_inject_err_on_write=1;
-#else
-int enable_inject_err_on_write=1;
-#endif
+/* Prototype */
+static int nflash_poll(si_t *sih, chipcregs_t *cc);
+static int nflash_readst(si_t *sih, chipcregs_t *cc, uint8 *status);
+static int nflash_readoob(si_t *sih, chipcregs_t *cc, uint64 offset, uint len, uchar *buf);
+static int nflash_writeoob(si_t *sih, chipcregs_t *cc, uint64 offset, uint len, uchar *buf);
 
-#endif
-#ifdef DEBUG_DUMP_FIRST_PAGE
-int ares_dump_first_oob=0;
-#endif
+hndnand_t *nflash_init(si_t *sih);
+static void nflash_enable(hndnand_t *nfl, int enable);
+static int nflash_read(hndnand_t *nfl, uint64 offset, uint len, uchar *buf);
+static int nflash_write(hndnand_t *nfl, uint64 offset, uint len, const uchar *buf);
+static int nflash_erase(hndnand_t *nfl, uint64 offset);
+static int nflash_checkbadb(hndnand_t *nfl, uint64 offset);
+static int nflash_mark_badb(hndnand_t *nfl, uint64 offset);
 
-#define DUMPBUF(buf,len) \
-	{int ii;\
-		unsigned char* p_tmpBuf=(unsigned char*) buf;\
-		printf("\ndumping buffer---"#buf);\
-		for( ii =0; ii < len; ii++) {\
-			if( ii %8 ==0) printf("\n");\
-			printf(" 0x%02x", (unsigned char)*p_tmpBuf++);\
-		}\
-	}
+#define SWECC_ENAB	nvram_match("nflash_swecc", "1")
 
 static void
 nflash_enable(hndnand_t *nfl, int enable)
@@ -200,7 +192,11 @@ static char *
 nflash_check_id(uint8 *id)
 {
 	char *name = NULL;
-	char *value = nvram_get("bootflags");
+	uint32 bootflags = 0;
+	char *val = NULL;
+
+	if ((val = nvram_get("bootflags")))
+		bootflags = bcm_strtoul(val, NULL, 0);
 
 	switch (id[0]) {
 	case NFL_VENDOR_AMD:
@@ -221,14 +217,21 @@ nflash_check_id(uint8 *id)
 	case NFL_VENDOR_SAMSUNG:
 		name = "Samsung";
 		break;
+#if 0
+	case NFL_VENDOR_ESMT:
+		name = "Esmt";
+		break;
+#else
 	case NFL_VENDOR_ZENTEL:
 		name = "Zentel";
 		break;
+#endif
+	case NFL_VENDOR_MXIC:
+		name = "Mxic";
+		break;
 	default:
-		if (!value || (int) bcm_atoi(value) != 1)
-			printf("No NAND flash type found\n");
-		else
-			name = "Unknown";
+		if (bootflags)
+		name = "Unknown";
 		break;
 	}
 
@@ -246,12 +249,6 @@ nflash_init(si_t *sih)
 	int i;
 	uint32 ncf, val;
 	uint32 acc_control;
-
-#ifdef ARES_WAR_OVERRIDE_ECC_ON_READ
-	uint8 tmpbuf[NFL_SECTOR_SIZE];
-	int bad_ecc_detected=0;
-	uint32 offset;
-#endif
 
 	ASSERT(sih);
 
@@ -404,6 +401,21 @@ nflash_init(si_t *sih)
 				| NFCF_DS_8 | NFCF_WE;
 
 		W_REG(osh, &cc->nflashconf, val);
+
+		switch (nflash.oobsize) {
+		case 64:
+			curr_ecclayout = &brcmnand_swecc_oob_64;
+			break;
+		case 16:
+			curr_ecclayout = &brcmnand_swecc_nand_oob_16;
+			break;
+		case 8:
+			curr_ecclayout = &brcmnand_swecc_nand_oob_8;
+			break;
+		default:
+			printf("unsupported oob size %d.\n", nflash.oobsize);
+			return NULL;
+		}
 	} else {
 		nflash_enable(&nflash, 1);
 		nflash_cmd(osh, cc, NCMD_ID_RD);
@@ -493,46 +505,13 @@ nflash_init(si_t *sih)
 	if (firsttime)
 		printf("Found a %s NAND flash with %uB pages or %dKB blocks; total size %dMB\n",
 		       name, nflash.pagesize, (nflash.blocksize >> 10), nflash.size);
-
-#ifdef ARES_WAR_OVERRIDE_ECC_ON_READ
-if (SWECC_ENAB) {
-	if ((CHIPID(sih->chip) == BCM4706_CHIP_ID) && firsttime) {
-
-		war_stop_read_on_correct_fail = 1;
-
-		for (i = 0; i < 5; i++) {
-			offset = i * NFL_SECTOR_SIZE;
-			if (nflash_read(&nflash, offset, NFL_SECTOR_SIZE, tmpbuf) < 0)
-				bad_ecc_detected++;
-		}
-
-		// re-calculate ecc for whole nand flash.
-		if (bad_ecc_detected) {
-			DBGMSG(("\n %s:%s %d found un-recoverable ecc err, try override all.\n", __FILE__ , __FUNCTION__ , __LINE__));
-
-			war_write_back_calc_ecc = 1;
-
-			/* override ecc, shall cover all trx range. */
-#define TRX_IMAGE_SIZE (0x2000000)
-			for (i = 0; i < (TRX_IMAGE_SIZE / NFL_SECTOR_SIZE); i++) {
-				offset = i * NFL_SECTOR_SIZE;
-				nflash_read(&nflash, offset, NFL_SECTOR_SIZE, tmpbuf);
-			}
-		}
-
-		war_stop_read_on_correct_fail = 0;
-		war_write_back_calc_ecc = 0;
-	}
-}
-#endif
-
 	firsttime = FALSE;
 	return nflash.size ? &nflash : NULL;
 }
 
 /* Read len bytes starting at offset into buf. Returns number of bytes read. */
 static int
-nflash_read(hndnand_t *nfl, uint offset, uint len, uchar *buf)
+nflash_read(hndnand_t *nfl, uint64 offset, uint len, uchar *buf)
 {
 	si_t *sih = nfl->sih;
 	chipcregs_t *cc = (chipcregs_t *)nfl->core;
@@ -543,21 +522,8 @@ nflash_read(hndnand_t *nfl, uint offset, uint len, uchar *buf)
 	uint32 val;
 	uint res;
 
-#ifdef ARES_TRY_ECC
-	uint32 oob_len = 0;
-	int prev_page_start_offset = -1;
-	int page_start_offset = -1;
-	uint8 read_ecc[6];
-	uint8 calc_ecc[6];
-	int sector_idx = 0, eccpos;
-	uint8 *pdata = NULL;
-	struct nand_ecclayout *ecclayout = &tmp_nand_oob_64;
-#endif
-#ifdef ARES_WAR_OVERRIDE_ECC_ON_READ
-	uint8 tmpbuf[SOFT_HAMMING_SECTOR_SIZE];
-#endif
-
 	ASSERT(sih);
+
 	mask = NFL_SECTOR_SIZE - 1;
 	if ((offset & mask) != 0 || (len & mask) != 0)
 		return 0;
@@ -572,64 +538,29 @@ nflash_read(hndnand_t *nfl, uint offset, uint len, uchar *buf)
 	if (CHIPID(sih->chip) == BCM4706_CHIP_ID) {
 		uint32 page_addr, page_offset;
 		uint32 ctrlcode;
-		//DBGMSG(("\n %s:%d %s nflash.pagesize %d offset 0x%08x \n", __FILE__, __LINE__, __FUNCTION__, nflash.pagesize, offset ));
+		int prev_page_start_offset = -1;
+		uint page_start_offset;
+		int sector_idx = 0, eccpos;
+		uint8 *pdata = NULL;
+		uint8 read_ecc[SOFT_HAMMING_ECC_BYTES];
+		uint8 calc_ecc[SOFT_HAMMING_ECC_BYTES];
 
-#ifdef ARES_TRY_ECC
-if (SWECC_ENAB) {
-	if (offset & (NFL_SECTOR_SIZE-1)) {
-		DBGMSG(("\n %s:%d %s assertion fail. offset 0x%08x is not aligned to NFL_SECTOR_SIZE\n"
-				, __FILE__, __LINE__, __FUNCTION__
-				, offset));
-	}
-
-	/* 4706 only support SW 1-bit hamming ECC */
-	oob_len = (nflash.pagesize / NFL_SECTOR_SIZE) *HAMMING_00B_BYTES_PER_SECTOR;
-	pdata = (uint8*)buf;
-}
-#endif
-#ifdef DEBUG_DUMP_FIRST_PAGE
-	if( !ares_dump_first_oob){
-		uint32 dump_offset = 0x0; //0x00640000;
-		ares_dump_first_oob=1;
-		printf("\n nflash_read : offset 0x%08x", dump_offset);
-		nflash_readoob(sih, cc, dump_offset, oob_len, page_oob);
-		DUMPBUF(page_oob, oob_len);
-		dump_offset += 0x800;
-
-		printf("\n nflash_read : offset 0x%08x", dump_offset);
-		nflash_readoob(sih, cc, dump_offset, oob_len, page_oob);
-		DUMPBUF(page_oob, oob_len);
-		dump_offset += 0x800;
-
-		printf("\n nflash_read : offset 0x%08x", dump_offset);
-		nflash_readoob(sih, cc, dump_offset, oob_len, page_oob);
-		DUMPBUF(page_oob, oob_len);
-		dump_offset += 0x800;
-
-		printf("\n nflash_read : offset 0x%08x", dump_offset);
-		nflash_readoob(sih, cc, dump_offset, oob_len, page_oob);
-		DUMPBUF(page_oob, oob_len);
-		dump_offset += 0x800;
-	}
-
-#endif
-
+		/* 4706 only support SW 1-bit hamming ECC */
+if (SWECC_ENAB)
+		pdata = (uint8*)buf;
 		while (res > 0) {
 			page_offset = offset & (nflash.pagesize - 1);
 			page_addr = (offset & ~(nflash.pagesize - 1)) * 2;
 			page_addr += page_offset;
-
-#ifdef ARES_TRY_ECC
 if (SWECC_ENAB) {
 			page_start_offset = (offset & ~(uint32)((uint32)nflash.pagesize-1));
 			if (page_start_offset != prev_page_start_offset) {
 				/* read oob only on new page to read. */
-				nflash_readoob(sih, cc, page_start_offset, oob_len, page_oob);
-				prev_page_start_offset = (offset & ~(uint32)(nflash.pagesize-1));
+				nflash_readoob(sih, cc, page_start_offset,
+					nflash.oobsize, tmp_page_oob);
+				prev_page_start_offset = page_start_offset;
 			}
 }
-#endif
-
 			W_REG(osh, &cc->nflashcoladdr, page_addr & nflash_col_mask);
 			W_REG(osh, &cc->nflashrowaddr, page_addr >> nflash_row_shift);
 
@@ -652,69 +583,28 @@ if (SWECC_ENAB) {
 
 				*to = R_REG(osh, &cc->nflashdata);
 			}
-
-#ifdef ARES_TRY_ECC
-			// hardcode layout as nand_oob_64 in nand_base.c, 256 bytes data generate 3 bytes ecc.
 if (SWECC_ENAB) {
 			for (i = 0, sector_idx = (page_offset / SOFT_HAMMING_SECTOR_SIZE);
-				  (i < (NFL_SECTOR_SIZE / SOFT_HAMMING_SECTOR_SIZE));
-				  i++, sector_idx++) {
+				 i < (NFL_SECTOR_SIZE / SOFT_HAMMING_SECTOR_SIZE);
+				 i++, sector_idx++) {
 
-//				bypass_ecc_correct = 0;
 				/* find correct ecc position on page oob. */
 				eccpos = sector_idx * SOFT_HAMMING_ECC_BYTES;
 
-				read_ecc[0] = page_oob[ecclayout->eccpos[eccpos + 0]];
-				read_ecc[1] = page_oob[ecclayout->eccpos[eccpos + 1]];
-				read_ecc[2] = page_oob[ecclayout->eccpos[eccpos + 2]];
+				read_ecc[0] = tmp_page_oob[curr_ecclayout->eccpos[eccpos + 0]];
+				read_ecc[1] = tmp_page_oob[curr_ecclayout->eccpos[eccpos + 1]];
+				read_ecc[2] = tmp_page_oob[curr_ecclayout->eccpos[eccpos + 2]];
 
 				nand_calculate_ecc(NULL, pdata, calc_ecc);
 
-#ifdef ARES_WAR_OVERRIDE_ECC_ON_READ
-				if (war_write_back_calc_ecc) {
-					/*Override ecc, don't correct. */
-					page_oob[ecclayout->eccpos[eccpos + 0]] = read_ecc[0] = calc_ecc[0];
-					page_oob[ecclayout->eccpos[eccpos + 1]] = read_ecc[1] = calc_ecc[1];
-					page_oob[ecclayout->eccpos[eccpos + 2]] = read_ecc[2] = calc_ecc[2];
-				}
-#endif
-				if (!SAME_ECC(read_ecc, calc_ecc)) {
-
-/*
-				DBGMSG(("\n nflash_read: read != calc ecc offset 0x%08x sector %d i %d ecc pos %d %d %d read 0x%02x 0x%02x 0x%02x  calc 0x%02x 0x%02x 0x%02x buf %p, pdata %p\n"
-						, offset, sector_idx, i
-						, ecclayout->eccpos[eccpos + 0], ecclayout->eccpos[eccpos + 1], ecclayout->eccpos[eccpos + 2]
-						, read_ecc[0], read_ecc[1], read_ecc[2]
-						, calc_ecc[0], calc_ecc[1], calc_ecc[2]
-						, buf, pdata));
-*/
-#ifdef ARES_WAR_OVERRIDE_ECC_ON_READ
-					if (war_stop_read_on_correct_fail) {
-						//try correct data.
-						memcpy(tmpbuf, pdata, SOFT_HAMMING_SECTOR_SIZE);
-						if (nand_correct_data(NULL, tmpbuf, read_ecc, calc_ecc) < 0) {
-							DBGMSG(("\n %s:%s %d unrecovable error. by pass this block\n", __FILE__ , __FUNCTION__ , __LINE__));
-								return -1;
-						}
+				if (enable_ecc_correct && !SAME_ECC(read_ecc, calc_ecc) &&
+					nand_correct_data(NULL, pdata, read_ecc, calc_ecc) < 0) {
+						printf("nflash_read: cannot correct data !!\n");
 					}
-#endif
-					if (nand_correct_data(NULL, pdata, read_ecc, calc_ecc) < 0) {
-						printf("\n nflash_read: cannot correct data !!\n");
-						DBGMSG(("\n page offset 0x%08x, offset 0x%08x sector %d\n", page_start_offset, offset, sector_idx));
-						//DUMPBUF(page_oob, oob_len);
-					}
-				}
 
 				pdata += SOFT_HAMMING_SECTOR_SIZE;
 			}
-
-#ifdef ARES_WAR_OVERRIDE_ECC_ON_READ
-				if (war_write_back_calc_ecc)
-					nflash_writeoob(sih, cc, page_start_offset, oob_len, page_oob);
-#endif
 }
-#endif
-
 			res -= NFL_SECTOR_SIZE;
 			offset += NFL_SECTOR_SIZE;
 		}
@@ -780,7 +670,7 @@ nflash_poll(si_t *sih, chipcregs_t *cc)
  * written.
  */
 static int
-nflash_write(hndnand_t *nfl, uint offset, uint len, const uchar *buf)
+nflash_write(hndnand_t *nfl, uint64 offset, uint len, const uchar *buf)
 {
 	si_t *sih = nfl->sih;
 	chipcregs_t *cc = (chipcregs_t *)nfl->core;
@@ -792,15 +682,6 @@ nflash_write(hndnand_t *nfl, uint offset, uint len, const uchar *buf)
 	uint32 reg;
 	int ret = 0;
 	uint8 status;
-
-#ifdef ARES_TRY_ECC
-	uint8 page_oob[MAX_SUPPORT_OOB_SZ];
-	uint32 oob_len = 0;
-	uint8 calc_ecc[3];
-	uint8 *pdata = NULL;
-	int sector_idx, eccpos;
-	struct nand_ecclayout *ecclayout = &tmp_nand_oob_64;
-#endif
 
 	ASSERT(sih);
 	mask = nflash.pagesize - 1;
@@ -816,27 +697,20 @@ nflash_write(hndnand_t *nfl, uint offset, uint len, const uchar *buf)
 	from = (uint32 *)buf;
 	res = len;
 
-	//DBGMSG(("\n %s:%s %d offset %08x len = 0x%08x \n", __FILE__ , __FUNCTION__ , __LINE__, offset, len ));
 	if (CHIPID(sih->chip) == BCM4706_CHIP_ID) {
 		uint32 page_addr;
 		uint32 ctrlcode;
-
-#ifdef ARES_TRY_ECC
-if (SWECC_ENAB) {
-		ASSERT((offset & (NFL_SECTOR_SIZE - 1)) == 0);
-		ASSERT((len & (nflash.pagesize - 1)) == 0);
+		uint8 *pdata = NULL;
+		int sector_idx, eccpos;
+		uint8 calc_ecc[SOFT_HAMMING_ECC_BYTES];
 
 		/* 4706 only support SW 1-bit hamming ECC */
-		oob_len = (nflash.pagesize / NFL_SECTOR_SIZE) * HAMMING_00B_BYTES_PER_SECTOR;
+if (SWECC_ENAB)
 		pdata = (uint8 *)buf;
-}
-#endif
 
 		while (res > 0) {
-
-#ifdef ARES_TRY_ECC
 if (SWECC_ENAB) {
-			nflash_readoob(sih, cc, offset, oob_len, page_oob);
+			nflash_readoob(sih, cc, offset, nflash.oobsize, tmp_page_oob);
 
 			for (i = 0, sector_idx = 0;
 				  i < (nflash.pagesize / SOFT_HAMMING_SECTOR_SIZE);
@@ -844,41 +718,28 @@ if (SWECC_ENAB) {
 				eccpos = sector_idx * SOFT_HAMMING_ECC_BYTES;
 				nand_calculate_ecc(NULL, pdata, calc_ecc);
 
-#ifdef ARES_WRITE_OOB_ALLFF
-				calc_ecc[0] = calc_ecc[1] = calc_ecc[2] =0xff;
-#endif
-
-				page_oob[ecclayout->eccpos[eccpos + 0]] = calc_ecc[0];
-				page_oob[ecclayout->eccpos[eccpos + 1]] = calc_ecc[1];
-				page_oob[ecclayout->eccpos[eccpos + 2]] = calc_ecc[2];
+				tmp_page_oob[curr_ecclayout->eccpos[eccpos + 0]] = calc_ecc[0];
+				tmp_page_oob[curr_ecclayout->eccpos[eccpos + 1]] = calc_ecc[1];
+				tmp_page_oob[curr_ecclayout->eccpos[eccpos + 2]] = calc_ecc[2];
 				pdata += SOFT_HAMMING_SECTOR_SIZE;
-
 			}
-
 
 			/* written a sector */
-			if (nflash_writeoob(sih, cc, offset, oob_len, page_oob) < 0) {
-				DBGMSG(("\n %s:%s %d fail to write oob , offset 0x%08x \n", __FILE__ , __FUNCTION__ , __LINE__, offset));
+			if (nflash_writeoob(sih, cc, offset,
+				nflash.oobsize, tmp_page_oob) < 0) {
+				printf("\nflash_write write oob fail, offset 0x%08x\n",
+					(uint32)offset);
+				return -1;
 			}
-#ifdef DEBUG_DUMP_FIRST_PAGE
-			if (offset ==0x0000) {
-				printf("\n nflash_write: data offset 0x0000, dump first 64 data");
-				DUMPBUF(buf, 64);
-				printf("\n data offset 0x%08x, dump first oob", offset);
-				DUMPBUF(page_oob, 64);
-			}
-#endif
 }
-#endif
 
-#ifdef ARES_GEN_1BIT_ERR
+#ifdef DEBUG_GEN_1BIT_ERR
 			for (i = 0; i < enable_inject_err_on_write; i++) {
 				int min_range = (res < nflash.pagesize)? res: nflash.pagesize;
 				min_range /= sizeof(uint32);
 				from[(from[i]%min_range)] ^= 0x04;
 			}
 #endif
-
 			page_addr = (offset & ~(nflash.pagesize - 1)) * 2;
 
 			W_REG(osh, &cc->nflashcoladdr, page_addr & nflash_col_mask);
@@ -962,7 +823,7 @@ if (SWECC_ENAB) {
  * Caller should poll for completion.
  */
 static int
-nflash_erase(hndnand_t *nfl, uint offset)
+nflash_erase(hndnand_t *nfl, uint64 offset)
 {
 	si_t *sih = nfl->sih;
 	chipcregs_t *cc = (chipcregs_t *)nfl->core;
@@ -1027,7 +888,7 @@ err:
 }
 
 static int
-nflash_checkbadb(hndnand_t *nfl, uint offset)
+nflash_checkbadb(hndnand_t *nfl, uint64 offset)
 {
 	si_t *sih = nfl->sih;
 	chipcregs_t *cc = (chipcregs_t *)nfl->core;
@@ -1096,7 +957,7 @@ err:
 }
 
 static int
-nflash_mark_badb(hndnand_t *nfl, uint offset)
+nflash_mark_badb(hndnand_t *nfl, uint64 offset)
 {
 	si_t *sih = nfl->sih;
 	chipcregs_t *cc = (chipcregs_t *)nfl->core;
@@ -1225,7 +1086,7 @@ nflash_readst(si_t *sih, chipcregs_t *cc, uint8 *status)
 
 /* To read len bytes of oob data in the page specified in the page address offset */
 static int
-nflash_readoob(si_t *sih, chipcregs_t *cc, uint offset, uint len, uchar *buf)
+nflash_readoob(si_t *sih, chipcregs_t *cc, uint64 offset, uint len, uchar *buf)
 {
 	uint32 mask;
 	osl_t *osh;
@@ -1283,7 +1144,7 @@ nflash_readoob(si_t *sih, chipcregs_t *cc, uint offset, uint len, uchar *buf)
 
 /* To write len bytes of oob data in the page specified in the page address offset */
 static int
-nflash_writeoob(si_t *sih, chipcregs_t *cc, uint offset, uint len, uchar *buf)
+nflash_writeoob(si_t *sih, chipcregs_t *cc, uint64 offset, uint len, uchar *buf)
 {
 	uint32 mask;
 	osl_t *osh;

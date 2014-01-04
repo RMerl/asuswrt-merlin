@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmdevs.h 349610 2012-08-09 02:14:56Z $
+ * $Id: bcmdevs.h 364668 2012-10-24 22:55:30Z $
  */
 
 #ifndef	_BCMDEVS_H
@@ -60,6 +60,8 @@
 #define BCM_DNGL_BL_PID_43143	0xbd1e
 #define BCM_DNGL_BL_PID_43242	0xbd1f
 #define BCM_DNGL_BL_PID_4335	0xbd20
+#define BCM_DNGL_BL_PID_43341	0xbd22
+#define BCM_DNGL_BL_PID_4350    0xbd23
 
 #define BCM_DNGL_BDC_PID	0x0bdc
 #define BCM_DNGL_JTAG_PID	0x4a44
@@ -163,9 +165,15 @@
 #define BCM94313HMG_SSID_VEN1	0x0609
 #define BCM943142HM_SSID_VEN1	0x0611
 
+#define BCM43143_D11N2G_ID	0x4366		/* 43143 802.11n 2.4G device */
+
 #define BCM43242_D11N_ID	0x4367		/* 43242 802.11n dualband device */
 #define BCM43242_D11N2G_ID	0x4368		/* 43242 802.11n 2.4G device */
 #define BCM43242_D11N5G_ID	0x4369		/* 43242 802.11n 5G device */
+
+#define BCM4350_D11AC_ID	0x43a3
+#define BCM4350_D11AC2G_ID	0x43a4
+#define BCM4350_D11AC5G_ID	0x43a5
 
 
 #define	BCMGPRS_UART_ID		0x4333		/* Uart id used by 4306/gprs card */
@@ -266,18 +274,21 @@
 #define	BCM43242_CHIP_ID	43242		/* 43242 chipcommon chipid */
 #define	BCM43243_CHIP_ID	43243		/* 43243 chipcommon chipid */
 #define BCM4334_CHIP_ID		0x4334		/* 4334 chipcommon chipid */
-#define BCM4335_CHIP_ID     0x4335
-#define BCM4360_CHIP_ID		0x4360
+#define BCM4335_CHIP_ID		0x4335		/* 4335 chipcommon chipid */
+#define BCM4360_CHIP_ID		0x4360          /* 4360 chipcommon chipid */
+#define BCM4352_CHIP_ID		0x4352          /* 4352 chipcommon chipid */
 #define BCM43526_CHIP_ID	0xAA06
-#define BCM4352_CHIP_ID		0x4352
 #define BCM43341_CHIP_ID	43341		/* 43341 chipcommon chipid */
 #define BCM43342_CHIP_ID	43342		/* 43342 chipcommon chipid */
+#define BCM4350_CHIP_ID		0x4350          /* 4350 chipcommon chipid */
 
 #define	BCM4342_CHIP_ID		4342		/* 4342 chipcommon chipid (OTP, RBBU) */
 #define	BCM4402_CHIP_ID		0x4402		/* 4402 chipid */
 #define	BCM4704_CHIP_ID		0x4704		/* 4704 chipcommon chipid */
 #define	BCM4706_CHIP_ID		0x5300		/* 4706 chipcommon chipid */
 #define BCM4707_CHIP_ID		53010		/* 4707 chipcommon chipid */
+#define BCM53018_CHIP_ID	53018		/* 53018 chipcommon chipid */
+#define BCM4707_CHIP(chipid)	(((chipid) == BCM4707_CHIP_ID) || ((chipid) == BCM53018_CHIP_ID))
 #define	BCM4710_CHIP_ID		0x4710		/* 4710 chipid */
 #define	BCM4712_CHIP_ID		0x4712		/* 4712 chipcommon chipid */
 #define	BCM4716_CHIP_ID		0x4716		/* 4716 chipcommon chipid */
@@ -437,7 +448,10 @@
 									   /*  board rework */
 #define BFL2_DYNAMIC_VMID	0x10000000  /* enable dynamic Vmid in idle TSSI CAL for 4331 */
 
-#define BFL2_SDR_EN		0x20000000	/* SDR enabled or disabled */
+#define BFL2_SDR_EN		0x20000000  /* SDR enabled or disabled */
+#define BFL2_DYNAMIC_VMID	0x10000000  /* boardflag to enable dynamic Vmid idle TSSI CAL */
+#define BFL2_LNA1BYPFORTR2G	0x40000000  /* acphy, enable lna1 bypass for clip gain, 2g */
+#define BFL2_LNA1BYPFORTR5G	0x80000000  /* acphy, enable lna1 bypass for clip gain, 5g */
 
 /* SROM 11 - 11ac boardflag definitions */
 #define BFL_SROM11_BTCOEX  0x00000001  /* Board supports BTCOEX */
@@ -448,10 +462,13 @@
 #define BFL2_SROM11_APLL_WAR	0x00000002  /* Flag to implement alternative A-band PLL settings */
 #define BFL2_SROM11_ANAPACTRL_2G  0x00100000  /* 2G ext PAs are ctrl-ed by analog PA ctrl lines */
 #define BFL2_SROM11_ANAPACTRL_5G  0x00200000  /* 5G ext PAs are ctrl-ed by analog PA ctrl lines */
+#define BFL2_SROM11_SINGLEANT_CCK	0x00002000  /* Tx CCK pkts on Ant 0 only */
 
 /* boardflags3 */
 #define BFL3_FEMCTRL_SUB	0x00000007  /* acphy, subrevs of femctrl on top of srom_femctrl */
-
+#define BFL3_RCAL_WAR		0x00000008  /* acphy, rcal war active on this board (4335a0) */
+#define BFL3_TXGAINTBLID	0x00000070  /* acphy, txgain table id */
+#define BFL3_TXGAINTBLID_SHIFT	0x4         /* acphy, txgain table id shift bit */
 
 /* board specific GPIO assignment, gpio 0-3 are also customer-configurable led */
 #define	BOARD_GPIO_BTC3W_IN	0x850	/* bit 4 is RF_ACTIVE, bit 6 is STATUS, bit 11 is PRI */
@@ -468,6 +485,7 @@
 #define BOARD_GPIO_BTC4_STAT	0x4000	/* gpio 14, coex4, status */
 #define BOARD_GPIO_BTC4_WLAN	0x8000	/* gpio 15, coex4, wlan active */
 #define	BOARD_GPIO_1_WLAN_PWR	0x02	/* throttle WLAN power on X21 board */
+#define	BOARD_GPIO_2_WLAN_PWR	0x04	/* throttle WLAN power on X29C board */
 #define	BOARD_GPIO_3_WLAN_PWR	0x08	/* throttle WLAN power on X28 board */
 #define	BOARD_GPIO_4_WLAN_PWR	0x10	/* throttle WLAN power on X19 board */
 
@@ -829,6 +847,7 @@
 /* 4360 Boards */
 #define BCM94360X29C            0X0112
 #define BCM94360X51             0x0111
+#define BCM94360CS              0x061B
 
 /* 43217 Boards */
 #define BCM943217BU_SSID	0x05d5
@@ -838,6 +857,9 @@
 /* 43142 Boards */
 #define BCM943142HM_SSID	0x05e0
 #endif /* LINUX_POSTMOGRIFY_REMOVAL */
+
+/* 43342 Boards */
+#define BCM943342FCAGBI_SSID	0x0641
 
 /* # of GPIO pins */
 #define GPIO_NUMPINS		32
@@ -857,6 +879,8 @@
 #define RDL_RAM_BASE_4360  0x60000000
 #define RDL_RAM_SIZE_43242  0x90000
 #define RDL_RAM_BASE_43242  0x60000000
+#define RDL_RAM_SIZE_43143  0x70000
+#define RDL_RAM_BASE_43143  0x60000000
 
 /* generic defs for nvram "muxenab" bits
 * Note: these differ for 4335a0. refer bcmchipc.h for specific mux options.

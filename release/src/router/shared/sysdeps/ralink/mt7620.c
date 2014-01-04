@@ -146,7 +146,7 @@ static unsigned int get_wan_port_mask(int wan_unit)
 {
 	char nv[] = "wanXXXports_maskXXXXXX";
 
-	if (nvram_get_int("sw_mode") == SW_MODE_AP)
+	if (nvram_get_int("sw_mode") == SW_MODE_REPEATER)
 		return 0;
 
 	if (wan_unit <= 0 || wan_unit >= WAN_UNIT_MAX)

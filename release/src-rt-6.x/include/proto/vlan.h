@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: vlan.h 345182 2012-07-16 23:31:56Z $
+ * $Id: vlan.h 352279 2012-08-22 07:21:57Z $
  */
 
 #ifndef _vlan_h_
@@ -56,6 +56,21 @@ struct ethervlan_header {
 	uint16	vlan_type;		/* 0x8100 */
 	uint16	vlan_tag;		/* priority, cfi and vid */
 	uint16	ether_type;
+};
+
+struct dot3_mac_llc_snapvlan_header {
+	uint8	ether_dhost[ETHER_ADDR_LEN];	/* dest mac */
+	uint8	ether_shost[ETHER_ADDR_LEN];	/* src mac */
+	uint16	length;				/* frame length incl header */
+	uint8	dsap;				/* always 0xAA */
+	uint8	ssap;				/* always 0xAA */
+	uint8	ctl;				/* always 0x03 */
+	uint8	oui[3];				/* RFC1042: 0x00 0x00 0x00
+						 * Bridge-Tunnel: 0x00 0x00 0xF8
+						 */
+	uint16	vlan_type;			/* 0x8100 */
+	uint16	vlan_tag;			/* priority, cfi and vid */
+	uint16	ether_type;			/* ethertype */
 };
 
 #define	ETHERVLAN_HDR_LEN	(ETHER_HDR_LEN + VLAN_TAG_LEN)

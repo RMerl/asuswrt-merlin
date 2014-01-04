@@ -1,0 +1,683 @@
+# English localization for ndisc6.
+# Copyright © 2007 Rémi Denis-Courmont
+# This file is distributed under the same license as the ndisc6 package.
+# Rémi Denis-Courmont, 2007.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ndisc6 0.9.4\n"
+"Report-Msgid-Bugs-To: miredo-devel_no_bulk_mail@remlab.net\n"
+"POT-Creation-Date: 2011-07-31 11:39+0300\n"
+"PO-Revision-Date: 2007-12-27 19:14+0200\n"
+"Last-Translator: Rémi Denis-Courmont\n"
+"Language-Team: English <en@li.org>\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: rdnssd/rdnssd.c:88 rdnssd/rdnssd.c:109
+#, c-format
+msgid "Cannot write %s: %m"
+msgstr ""
+
+#: rdnssd/rdnssd.c:231
+#, c-format
+msgid "Cannot find user \"%s\""
+msgstr "Cannot find user “%s”"
+
+#: rdnssd/rdnssd.c:236 rdnssd/rdnssd.c:241 rdnssd/rdnssd.c:246
+#: rdnssd/rdnssd.c:336 rdnssd/rdnssd.c:420 rdnssd/rdnssd.c:459
+#, c-format
+msgid "Fatal error (%s): %m"
+msgstr ""
+
+#: rdnssd/rdnssd.c:363 rdnssd/rdnssd.c:367
+#, c-format
+msgid "Cannot run \"%s\": %m"
+msgstr "Cannot run “%s”: %m"
+
+#: rdnssd/rdnssd.c:399
+msgid "Child process hung up unexpectedly, aborting"
+msgstr ""
+
+#: rdnssd/rdnssd.c:523 src/addrinfo.c:144 src/ndisc.c:757 src/tcpspray.c:270
+#: src/tcptraceroute.c:42 src/traceroute.c:1207
+#, c-format
+msgid "Try \"%s -h\" for more information.\n"
+msgstr "Try “%s -h” for more information.\n"
+
+#: rdnssd/rdnssd.c:533
+#, c-format
+msgid ""
+"Usage: %s [OPTIONS]\n"
+"Starts the IPv6 Recursive DNS Server discovery Daemon.\n"
+"\n"
+"  -f, --foreground  run in the foreground\n"
+"  -H, --merge-hook  execute this hook whenever resolv.conf is updated\n"
+"  -h, --help        display this help and exit\n"
+"  -p, --pidfile     override the location of the PID file\n"
+"  -r, --resolv-file set the path to the generated resolv.conf file\n"
+"  -u, --user        override the user to set UID to\n"
+"  -V, --version     display program version and exit\n"
+msgstr ""
+
+#: rdnssd/rdnssd.c:550
+#, c-format
+msgid "rdnssd: IPv6 Recursive DNS Server discovery Daemon %s (%s)\n"
+msgstr ""
+
+#: rdnssd/rdnssd.c:552 src/addrinfo.c:152 src/ndisc.c:788 src/tcpspray.c:306
+#: src/traceroute.c:1254
+#, c-format
+msgid " built %s on %s\n"
+msgstr ""
+
+#: rdnssd/rdnssd.c:553 src/addrinfo.c:153 src/ndisc.c:790 src/tcpspray.c:307
+#: src/traceroute.c:1255
+#, c-format
+msgid "Configured with: %s\n"
+msgstr ""
+
+#: rdnssd/rdnssd.c:554
+msgid "Written by Pierre Ynard and Remi Denis-Courmont\n"
+msgstr "Written by Pierre Ynard and Rémi Denis-Courmont\n"
+
+#: rdnssd/rdnssd.c:556
+#, c-format
+msgid "Copyright (C) %u-%u Pierre Ynard, Remi Denis-Courmont\n"
+msgstr "Copyright © %u-%u Pierre Ynard, Rémi Denis-Courmont\n"
+
+#: rdnssd/rdnssd.c:559 src/addrinfo.c:157 src/ndisc.c:794 src/tcpspray.c:311
+#: src/traceroute.c:1259
+msgid ""
+"This is free software; see the source for copying conditions.\n"
+"There is NO warranty; not even for MERCHANTABILITY or\n"
+"FITNESS FOR A PARTICULAR PURPOSE.\n"
+msgstr ""
+
+#: rdnssd/rdnssd.c:672
+#, c-format
+msgid "Cannot create %s (%m) - already running?"
+msgstr ""
+
+#: src/addrinfo.c:116
+msgid "Input error"
+msgstr ""
+
+#: src/addrinfo.c:127
+#, c-format
+msgid ""
+"Usage: %s [-4|-6] [hostnames]\n"
+"Converts names to addresses.\n"
+"\n"
+"  -4, --ipv4     only lookup IPv4 addresses\n"
+"  -6, --ipv6     only lookup IPv6 addresses\n"
+"  -c, --config   only return addresses for locally configured protocols\n"
+"  -h, --help     display this help and exit\n"
+"  -m, --multiple print multiple results separated by spaces\n"
+"  -n, --numeric  do not perform forward hostname lookup\n"
+"  -r, --reverse  perform reverse address to hostname lookup\n"
+"  -V, --version  display program version and exit\n"
+msgstr ""
+
+#: src/addrinfo.c:151
+#, c-format
+msgid "addrinfo %s (%s)\n"
+msgstr ""
+
+#: src/addrinfo.c:154 src/ndisc.c:791 src/tcpspray.c:308 src/traceroute.c:1256
+msgid "Written by Remi Denis-Courmont\n"
+msgstr "Written by Rémi Denis-Courmont\n"
+
+#: src/addrinfo.c:156 src/ndisc.c:793 src/tcpspray.c:310 src/traceroute.c:1258
+#, c-format
+msgid "Copyright (C) %u-%u Remi Denis-Courmont\n"
+msgstr "Copyright © %u-%u Rémi Denis-Courmont\n"
+
+#: src/ndisc.c:91 src/traceroute.c:947
+#, c-format
+msgid "%s: %s\n"
+msgstr ""
+
+#: src/ndisc.c:177
+#, c-format
+msgid ""
+"Usage: %s [options] <IPv6 address> <interface>\n"
+"Looks up an on-link IPv6 node link-layer address (Neighbor Discovery)\n"
+msgstr ""
+
+#: src/ndisc.c:179
+msgid "link-layer address"
+msgstr ""
+
+#: src/ndisc.c:258
+msgid "Target link-layer address: "
+msgstr ""
+
+#: src/ndisc.c:271
+#, c-format
+msgid ""
+"Usage: %s [options] [IPv6 address] <interface>\n"
+"Solicits on-link IPv6 routers (Router Discovery)\n"
+msgstr ""
+
+#: src/ndisc.c:273
+msgid "advertised prefixes"
+msgstr "advertized prefixes"
+
+#: src/ndisc.c:298
+msgid "    infinite (0xffffffff)\n"
+msgstr ""
+
+#: src/ndisc.c:300 src/ndisc.c:452 src/ndisc.c:459 src/ndisc.c:468
+#, c-format
+msgid "%12u (0x%08x) %s\n"
+msgstr ""
+
+#: src/ndisc.c:301 src/ndisc.c:453 src/tcpspray.c:120
+msgid "second"
+msgid_plural "seconds"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/ndisc.c:319
+msgid " Prefix                   : "
+msgstr ""
+
+#: src/ndisc.c:326
+#, c-format
+msgid "  On-link                 :          %3s\n"
+msgstr ""
+
+#: src/ndisc.c:327 src/ndisc.c:329 src/ndisc.c:440 src/ndisc.c:442
+#: src/ndisc.c:444 src/ndisc.c:447
+msgid "Yes"
+msgstr ""
+
+#: src/ndisc.c:327 src/ndisc.c:329 src/ndisc.c:440 src/ndisc.c:442
+#: src/ndisc.c:444 src/ndisc.c:447
+msgid "No"
+msgstr ""
+
+#: src/ndisc.c:328
+#, c-format
+msgid "  Autonomous address conf.:          %3s\n"
+msgstr ""
+
+#: src/ndisc.c:331
+msgid "  Valid time              : "
+msgstr ""
+
+#: src/ndisc.c:333
+msgid "  Pref. time              : "
+msgstr ""
+
+#: src/ndisc.c:345
+msgid " MTU                      : "
+msgstr ""
+
+#: src/ndisc.c:347 src/tcpspray.c:119 src/tcpspray.c:155 src/tcpspray.c:156
+#: src/tcpspray.c:164 src/tcpspray.c:165
+msgid "byte"
+msgid_plural "bytes"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/ndisc.c:348
+msgid "valid"
+msgstr ""
+
+#: src/ndisc.c:348
+msgid "invalid"
+msgstr ""
+
+#: src/ndisc.c:356
+msgid "medium"
+msgstr ""
+
+#: src/ndisc.c:356
+msgid "high"
+msgstr ""
+
+#: src/ndisc.c:356
+msgid "medium (invalid)"
+msgstr ""
+
+#: src/ndisc.c:356
+msgid "low"
+msgstr ""
+
+#: src/ndisc.c:374
+#, c-format
+msgid " Route                    : %s/%<PRIu8>\n"
+msgstr ""
+
+#: src/ndisc.c:375
+#, c-format
+msgid "  Route preference        :       %6s\n"
+msgstr ""
+
+#: src/ndisc.c:376
+msgid "  Route lifetime          : "
+msgstr ""
+
+#: src/ndisc.c:398
+#, c-format
+msgid " Recursive DNS server     : %s\n"
+msgstr ""
+
+#: src/ndisc.c:401
+msgid "  DNS server lifetime     : "
+msgid_plural "  DNS servers lifetime    : "
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/ndisc.c:430
+msgid "Hop limit                 :    "
+msgstr ""
+
+#: src/ndisc.c:433
+#, c-format
+msgid "      %3u"
+msgstr ""
+
+#: src/ndisc.c:435
+msgid "undefined"
+msgstr ""
+
+#: src/ndisc.c:436
+#, c-format
+msgid " (      0x%02x)\n"
+msgstr ""
+
+#: src/ndisc.c:439
+#, c-format
+msgid "Stateful address conf.    :          %3s\n"
+msgstr ""
+
+#: src/ndisc.c:441
+#, c-format
+msgid "Stateful other conf.      :          %3s\n"
+msgstr ""
+
+#: src/ndisc.c:443
+#, c-format
+msgid "Mobile home agent         :          %3s\n"
+msgstr ""
+
+#: src/ndisc.c:445
+#, c-format
+msgid "Router preference         :       %6s\n"
+msgstr ""
+
+#: src/ndisc.c:446
+#, c-format
+msgid "Neighbor discovery proxy  :          %3s\n"
+msgstr ""
+
+#: src/ndisc.c:450
+msgid "Router lifetime           : "
+msgstr ""
+
+#: src/ndisc.c:456
+msgid "Reachable time            : "
+msgstr ""
+
+#: src/ndisc.c:460 src/ndisc.c:469
+msgid "millisecond"
+msgid_plural "milliseconds"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/ndisc.c:462 src/ndisc.c:471
+msgid " unspecified (0x00000000)\n"
+msgstr ""
+
+#: src/ndisc.c:465
+msgid "Retransmit time           : "
+msgstr ""
+
+#: src/ndisc.c:494
+msgid " Source link-layer address: "
+msgstr ""
+
+#: src/ndisc.c:626
+msgid "Receiving ICMPv6 packet"
+msgstr ""
+
+#: src/ndisc.c:643
+#, c-format
+msgid " from %s\n"
+msgstr ""
+
+#: src/ndisc.c:669 src/traceroute.c:922 src/traceroute.c:930
+msgid "Raw IPv6 socket"
+msgstr ""
+
+#: src/ndisc.c:700
+#, c-format
+msgid "Soliciting %s (%s) on %s...\n"
+msgstr ""
+
+#: src/ndisc.c:720
+msgid "Sending ICMPv6 packet"
+msgstr ""
+
+#: src/ndisc.c:736
+msgid "Timed out."
+msgstr ""
+
+#: src/ndisc.c:745
+msgid "No response."
+msgstr ""
+
+#: src/ndisc.c:767
+#, c-format
+msgid ""
+"\n"
+"  -1, --single   display first response and exit\n"
+"  -h, --help     display this help and exit\n"
+"  -m, --multiple wait and display all responses\n"
+"  -n, --numeric  don't resolve host names\n"
+"  -q, --quiet    only print the %s (mainly for scripts)\n"
+"  -r, --retry    maximum number of attempts (default: 3)\n"
+"  -V, --version  display program version and exit\n"
+"  -v, --verbose  verbose display (this is the default)\n"
+"  -w, --wait     how long to wait for a response [ms] (default: 1000)\n"
+"\n"
+msgstr ""
+"\n"
+"  -1, --single   display first response and exit\n"
+"  -h, --help     display this help and exit\n"
+"  -m, --multiple wait and display all responses\n"
+"  -n, --numeric  don’t resolve host names\n"
+"  -q, --quiet    only print the %s (mainly for scripts)\n"
+"  -r, --retry    maximum number of attempts (default: 3)\n"
+"  -V, --version  display program version and exit\n"
+"  -v, --verbose  verbose display (this is the default)\n"
+"  -w, --wait     how long to wait for a response [ms] (default: 1000)\n"
+"\n"
+
+#: src/ndisc.c:787
+#, c-format
+msgid "ndisc6: IPv6 Neighbor/Router Discovery userland tool %s (%s)\n"
+msgstr ""
+
+#: src/tcpspray.c:74 src/tcpspray.c:95
+#, c-format
+msgid "%s port %s: %s\n"
+msgstr ""
+
+#: src/tcpspray.c:118
+#, c-format
+msgid "%s %lu %s in %f %s"
+msgstr ""
+
+#: src/tcpspray.c:122
+#, c-format
+msgid " (%0.3f kbytes/s)"
+msgstr ""
+
+#: src/tcpspray.c:153
+#, c-format
+msgid "Warning: \"%s\" is too small (%zu %s) to fill block of %zu %s.\n"
+msgstr "Warning: “%s” is too small (%zu %s) to fill block of %zu %s.\n"
+
+#: src/tcpspray.c:163
+#, c-format
+msgid "Sending %ju %s with blocksize %zu %s\n"
+msgstr ""
+
+#: src/tcpspray.c:180 src/traceroute.c:498
+#, c-format
+msgid "Receive error: %s\n"
+msgstr ""
+
+#: src/tcpspray.c:182 src/tcpspray.c:218
+msgid "Connection closed by peer"
+msgstr ""
+
+#: src/tcpspray.c:216 src/traceroute.c:1113
+#, c-format
+msgid "Cannot send data: %s\n"
+msgstr ""
+
+#: src/tcpspray.c:240
+#, c-format
+msgid "Child process returned an error"
+msgstr ""
+
+#: src/tcpspray.c:247
+msgid "Received"
+msgstr ""
+
+#: src/tcpspray.c:251
+msgid "Transmitted"
+msgstr ""
+
+#: src/tcpspray.c:279
+#, c-format
+msgid ""
+"Usage: %s [options] <hostname/address> [service/port number]\n"
+"Use the discard TCP service at the specified host\n"
+"(the default host is the local system, the default service is discard)\n"
+msgstr ""
+
+#: src/tcpspray.c:284
+msgid ""
+"\n"
+"  -4  force usage of the IPv4 protocols family\n"
+"  -6  force usage of the IPv6 protocols family\n"
+"  -b  specify the block bytes size (default: 1024)\n"
+"  -d  wait for given delay (usec) between each block (default: 0)\n"
+"  -e  perform a duplex test (TCP Echo instead of TCP Discard)\n"
+"  -f  fill sent data blocks with the specified file content\n"
+"  -h  display this help and exit\n"
+"  -n  specify the number of blocks to send (default: 100)\n"
+"  -V  display program version and exit\n"
+"  -v  enable verbose output\n"
+msgstr ""
+"\n"
+"  -4  force usage of the IPv4 protocols family\n"
+"  -6  force usage of the IPv6 protocols family\n"
+"  -b  specify the block bytes size (default: 1024)\n"
+"  -d  wait for given delay (µsec) between each block (default: 0)\n"
+"  -e  perform a duplex test (TCP Echo instead of TCP Discard)\n"
+"  -f  fill sent data blocks with the specified file content\n"
+"  -h  display this help and exit\n"
+"  -n  specify the number of blocks to send (default: 100)\n"
+"  -V  display program version and exit\n"
+"  -v  enable verbose output\n"
+
+#: src/tcpspray.c:305
+#, c-format
+msgid "tcpspray6: TCP/IP bandwidth tester %s (%s)\n"
+msgstr ""
+
+#: src/tcptraceroute.c:51 src/traceroute.c:1216
+#, c-format
+msgid ""
+"Usage: %s [options] <IPv6 hostname/address> [%s]\n"
+"Print IPv6 network route to a host\n"
+msgstr ""
+
+#: src/tcptraceroute.c:52
+msgid "port number"
+msgstr ""
+
+#: src/tcptraceroute.c:54
+msgid ""
+"\n"
+"  -A  send TCP ACK probes\n"
+"  -d  enable socket debugging\n"
+"  -E  set TCP Explicit Congestion Notification bits in probe packets\n"
+"  -f  specify the initial hop limit (default: 1)\n"
+"  -g  insert a route segment within a \"Type 0\" routing header\n"
+"  -h  display this help and exit\n"
+"  -i  force outgoing network interface\n"
+"  -l  set probes byte size\n"
+"  -m  set the maximum hop limit (default: 30)\n"
+"  -N  perform reverse name lookups on the addresses of every hop\n"
+"  -n  don't perform reverse name lookup on addresses\n"
+"  -p  override source TCP port\n"
+"  -q  override the number of probes per hop (default: 3)\n"
+"  -r  do not route packets\n"
+"  -S  send TCP SYN probes (default)\n"
+"  -s  specify the source IPv6 address of probe packets\n"
+"  -t  set traffic class of probe packets\n"
+"  -V, --version  display program version and exit\n"
+"  -w  override the timeout for response in seconds (default: 5)\n"
+"  -z  specify a time to wait (in ms) between each probes (default: 0)\n"
+msgstr ""
+"\n"
+"  -A  send TCP ACK probes\n"
+"  -d  enable socket debugging\n"
+"  -E  set TCP Explicit Congestion Notification bits in probe packets\n"
+"  -f  specify the initial hop limit (default: 1)\n"
+"  -g  insert a route segment within a “Type 0” routing header\n"
+"  -h  display this help and exit\n"
+"  -i  force outgoing network interface\n"
+"  -l  set probes byte size\n"
+"  -m  set the maximum hop limit (default: 30)\n"
+"  -N  perform reverse name lookups on the addresses of every hop\n"
+"  -n  don’t perform reverse name lookup on addresses\n"
+"  -p  override source TCP port\n"
+"  -q  override the number of probes per hop (default: 3)\n"
+"  -r  do not route packets\n"
+"  -S  send TCP SYN probes (default)\n"
+"  -s  specify the source IPv6 address of probe packets\n"
+"  -t  set traffic class of probe packets\n"
+"  -V, --version  display program version and exit\n"
+"  -w  override the timeout for response in seconds (default: 5)\n"
+"  -z  specify a time to wait (in ms) between each probes (default: 0)\n"
+
+#: src/traceroute.c:621
+#, c-format
+msgid " %u.%03u ms "
+msgstr ""
+
+#: src/traceroute.c:662
+msgid "[closed] "
+msgstr ""
+
+#: src/traceroute.c:666
+msgid "[open] "
+msgstr ""
+
+#: src/traceroute.c:724
+#, c-format
+msgid "%s%s%s%s: %s\n"
+msgstr ""
+
+#: src/traceroute.c:725
+msgid "port "
+msgstr ""
+
+#: src/traceroute.c:785
+#, c-format
+msgid "traceroute to %s (%s) "
+msgstr ""
+
+#: src/traceroute.c:790
+#, c-format
+msgid "from %s, "
+msgstr ""
+
+#: src/traceroute.c:794
+#, c-format
+msgid "port %u, from port %u, "
+msgstr ""
+
+#: src/traceroute.c:1011
+#, c-format
+msgid "%u hop max, "
+msgid_plural "%u hops max, "
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/traceroute.c:1062
+#, c-format
+msgid "%zu byte packets\n"
+msgid_plural "%zu bytes packets\n"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/traceroute.c:1090 src/traceroute.c:1164
+#, c-format
+msgid " %3u%% completed..."
+msgstr ""
+
+#: src/traceroute.c:1180
+msgid "                  "
+msgstr ""
+
+#: src/traceroute.c:1217
+msgid "packet length"
+msgstr ""
+
+#: src/traceroute.c:1219
+msgid ""
+"\n"
+"  -A  send TCP ACK probes\n"
+"  -d  enable socket debugging\n"
+"  -E  set TCP Explicit Congestion Notification bits in TCP packets\n"
+"  -f  specify the initial hop limit (default: 1)\n"
+"  -g  insert a route segment within a \"Type 0\" routing header\n"
+"  -h  display this help and exit\n"
+"  -I  use ICMPv6 Echo Request packets as probes\n"
+"  -i  force outgoing network interface\n"
+"  -l  display incoming packets hop limit\n"
+"  -m  set the maximum hop limit (default: 30)\n"
+"  -N  perform reverse name lookups on the addresses of every hop\n"
+"  -n  don't perform reverse name lookup on addresses\n"
+"  -p  override destination port\n"
+"  -q  override the number of probes per hop (default: 3)\n"
+"  -r  do not route packets\n"
+"  -S  send TCP SYN probes\n"
+"  -s  specify the source IPv6 address of probe packets\n"
+"  -t  set traffic class of probe packets\n"
+"  -U  send UDP probes (default)\n"
+"  -V  display program version and exit\n"
+"  -w  override the timeout for response in seconds (default: 5)\n"
+"  -z  specify a time to wait (in ms) between each probes (default: 0)\n"
+msgstr ""
+"\n"
+"  -A  send TCP ACK probes\n"
+"  -d  enable socket debugging\n"
+"  -E  set TCP Explicit Congestion Notification bits in TCP packets\n"
+"  -f  specify the initial hop limit (default: 1)\n"
+"  -g  insert a route segment within a “Type 0” routing header\n"
+"  -h  display this help and exit\n"
+"  -I  use ICMPv6 Echo Request packets as probes\n"
+"  -i  force outgoing network interface\n"
+"  -l  display incoming packets hop limit\n"
+"  -m  set the maximum hop limit (default: 30)\n"
+"  -N  perform reverse name lookups on the addresses of every hop\n"
+"  -n  don’t perform reverse name lookup on addresses\n"
+"  -p  override destination port\n"
+"  -q  override the number of probes per hop (default: 3)\n"
+"  -r  do not route packets\n"
+"  -S  send TCP SYN probes\n"
+"  -s  specify the source IPv6 address of probe packets\n"
+"  -t  set traffic class of probe packets\n"
+"  -U  send UDP probes (default)\n"
+"  -V  display program version and exit\n"
+"  -w  override the timeout for response in seconds (default: 5)\n"
+"  -z  specify a time to wait (in ms) between each probes (default: 0)\n"
+
+#: src/traceroute.c:1253
+#, c-format
+msgid "traceroute6: TCP & UDP IPv6 traceroute tool %s (%s)\n"
+msgstr ""
+
+#: src/traceroute.c:1273
+#, c-format
+msgid "%s: invalid hop limit\n"
+msgstr ""
+
+#: src/traceroute.c:1287
+#, c-format
+msgid "%s: invalid packet length\n"
+msgstr ""

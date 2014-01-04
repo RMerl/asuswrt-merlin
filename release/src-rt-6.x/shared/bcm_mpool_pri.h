@@ -32,7 +32,7 @@
  * The memory pool manager maintains an array of individual pools so that instrumentation
  * can examine and manage all of them globally.
  *
- * Copyright (C) 2011, Broadcom Corporation
+ * Copyright (C) 2012, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;

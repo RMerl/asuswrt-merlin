@@ -725,6 +725,10 @@ config DUAL_TRX
         bool "Support dual trx"
         default n
 
+config CFE_NVRAM_CHK
+        bool "Support nvram format check before commit to CFE"
+        default n
+
 endmenu
 
 config RWSEM_GENERIC_SPINLOCK

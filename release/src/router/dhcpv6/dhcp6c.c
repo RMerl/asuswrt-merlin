@@ -2182,7 +2182,11 @@ info_printf(const char *fmt, ...)
 	va_start(ap, fmt);
 	vsnprintf(logbuf, sizeof(logbuf), fmt, ap);
 
+#if 0
 	dprintf(LOG_DEBUG, FNAME, "%s", logbuf);
+#else
+	dprintf(LOG_NOTICE, FNAME, "%s", logbuf);
+#endif
 	if (infreq_mode)
 		printf("%s\n", logbuf);
 

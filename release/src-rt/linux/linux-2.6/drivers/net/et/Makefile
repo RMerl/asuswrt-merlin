@@ -1,7 +1,7 @@
 #
 # Makefile for the Broadcom et driver
 #
-# Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+# Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
 # 
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -41,7 +41,7 @@ endif	# /* CONFIG_ET_ALL_PASSIVE_ON */
 
 # Search for sources under src/et/sys or objects under src/et/linux
 ifneq ($(wildcard $(src)/$(ETSRCDIR)/sys),)
-EXTRA_CFLAGS	+= -I$(src)/$(ETSRCDIR)/sys
+EXTRA_CFLAGS	+= -I$(src)/$(ETSRCDIR)/sys -I$(src)/$(ETSRCDIR)/include
 else
 et-objs := $(ETSRCDIR)/linux/et.o
 endif

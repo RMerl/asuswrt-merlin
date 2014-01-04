@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: hndpmu.h 344148 2012-07-11 10:53:20Z $
+ * $Id: hndpmu.h 371895 2012-11-29 20:15:08Z $
  */
 
 #ifndef _hndpmu_h_
@@ -40,6 +40,7 @@ extern bool si_pmu_is_autoresetphyclk_disabled(si_t *sih, osl_t *osh);
 extern void si_pmu_res_init(si_t *sih, osl_t *osh);
 extern void si_pmu_swreg_init(si_t *sih, osl_t *osh);
 extern uint32 si_pmu_force_ilp(si_t *sih, osl_t *osh, bool force);
+extern uint32 si_pmu_enb_ht_req(si_t *sih, osl_t *osh, bool enb);
 
 extern uint32 si_pmu_si_clock(si_t *sih, osl_t *osh);
 extern uint32 si_pmu_cpu_clock(si_t *sih, osl_t *osh);
@@ -71,6 +72,7 @@ extern void si_pmu_radio_enable(si_t *sih, bool enable);
 extern uint32 si_pmu_waitforclk_on_backplane(si_t *sih, osl_t *osh, uint32 clk, uint32 delay);
 extern void si_pmu_set_4330_plldivs(si_t *sih, uint8 dacrate);
 extern void si_pmu_pllreset(si_t *sih);
+extern uint32 si_pmu_get_bb_vcofreq(si_t *sih, osl_t *osh, int xtalfreq);
 
 typedef void (*si_pmu_callback_t)(void* arg);
 

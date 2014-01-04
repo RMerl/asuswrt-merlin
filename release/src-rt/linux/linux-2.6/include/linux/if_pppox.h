@@ -33,6 +33,7 @@
 #endif
 
 #ifdef	__KERNEL__
+#include <linux/in.h>
 #include <linux/if_ether.h>
 #include <linux/if.h>
 #include <linux/netdevice.h>

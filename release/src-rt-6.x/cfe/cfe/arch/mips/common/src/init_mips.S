@@ -322,6 +322,8 @@ VAPI_VECTOR(VAPI_FUNC_LOGFPRS,vapi_logfprs)
 		.org	0x1000
 		.globl	embedded_nvram
 embedded_nvram:	.fill	0x400,4,~(0x48534c46)
+	.long   0x4c5a4d41              # LZMA NVRAM Supported
+
 #endif
 
 		.globl segment_table

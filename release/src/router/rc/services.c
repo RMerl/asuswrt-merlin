@@ -47,7 +47,9 @@
 #ifdef RTCONFIG_DSL
 #include <dsl-upg.h>
 #endif
+#ifdef RTCONFIG_USB
 #include <disk_io_tools.h>	//mkdir_if_none()
+#endif	/* RTCONFIG_USB */
 
 extern char *crypt __P((const char *, const char *)); //should be defined in unistd.h with _XOPEN_SOURCE defined
 #define sin_addr(s) (((struct sockaddr_in *)(s))->sin_addr)
@@ -77,7 +79,7 @@ void stop_wlcscan(void);
 
 
 #ifndef MS_MOVE
-# define MS_MOVE     8192
+#define MS_MOVE		8192
 #endif
 #ifndef MNT_DETACH
 #define MNT_DETACH	0x00000002
@@ -1225,6 +1227,34 @@ void stop_radvd(void)
 #endif
 }
 
+void start_rdnssd(void)
+{
+	char *argv[] = { "rdnssd", "-i", NULL, NULL };
+	int  argc, pid;
+
+	if (getpid() != 1) {
+		notify_rc("start_rdnssd");
+		return;
+	}
+
+	stop_rdnssd();
+
+	argc = 2;
+	argv[argc++] = (char*)get_wan6face();
+	_eval(argv, NULL, 0, &pid);
+}
+
+void stop_rdnssd(void)
+{
+	if (getpid() != 1) {
+		notify_rc("stop_rdnssd");
+		return;
+	}
+
+	killall_tk("rdnssd");
+	unlink("/var/run/rdnssd.pid");
+}
+
 void stop_dhcp6s(void)
 {
 	if (getpid() != 1) {
@@ -1269,6 +1299,7 @@ void start_ipv6(void)
 
 void stop_ipv6(void)
 {
+	stop_radvd();
 	stop_ipv6_tunnel();
 	stop_dhcp6c();
 	eval("ip", "-6", "route", "flush", "scope", "all");
@@ -1557,37 +1588,37 @@ reset_wps(void)
 int
 start_hspotap(void)
 {
-#ifdef __CONFIG_HSPOT__         // hold it for tmp
-        char *hs_argv[] = {"/bin/hspotap", NULL};
-        pid_t pid;
-        int wait_time = 3;
+#ifdef __CONFIG_HSPOT__		// hold it for tmp
+	char *hs_argv[] = {"/bin/hspotap", NULL};
+	pid_t pid;
+	int wait_time = 3;
 
-        eval("killall", "hspotap");
-        do {
-                if ((pid = get_pid_by_name("/bin/hspotap")) <= 0)
-                        break;
-                wait_time--;
-                sleep(1);
-        } while (wait_time);
-        if (wait_time == 0)
-                dprintf("Unable to kill hspotap!\n");
+	eval("killall", "hspotap");
+	do {
+		if ((pid = get_pid_by_name("/bin/hspotap")) <= 0)
+			break;
+		wait_time--;
+		sleep(1);
+	} while (wait_time);
+	if (wait_time == 0)
+		dprintf("Unable to kill hspotap!\n");
 
-        if (nvram_match("hspotap_enable", "1"))
-                _eval(hs_argv, NULL, 0, &pid);
+	if (nvram_match("hspotap_enable", "1"))
+		_eval(hs_argv, NULL, 0, &pid);
 #endif /* __CONFIG_HSPOT__ */
-        return 0;
+	return 0;
 }
 
 int
 stop_hspotap(void)
 {
-        int ret = 0;
+	int ret = 0;
 
 #ifdef __CONFIG_HSPOT__
-        ret = eval("killall", "hspotap");
+	ret = eval("killall", "hspotap");
 #endif /* __CONFIG_HSPOT__ */
 
-        return ret;
+	return ret;
 }
 #endif
 
@@ -2375,7 +2406,7 @@ stop_syslogd(void)
 	{
 		killall("syslogd", SIGTERM);
 #if defined(RTCONFIG_JFFS2LOG) && (defined(RTCONFIG_JFFS2)||defined(RTCONFIG_BRCM_NAND_JFFS2))
-	        eval("cp", "/tmp/syslog.log", "/tmp/syslog.log-1", "/jffs");
+		eval("cp", "/tmp/syslog.log", "/tmp/syslog.log-1", "/jffs");
 #endif
 	}
 }
@@ -2431,7 +2462,7 @@ start_syslogd(void)
 
 //#if defined(RTCONFIG_JFFS2LOG) && defined(RTCONFIG_JFFS2)
 #if defined(RTCONFIG_JFFS2LOG) && (defined(RTCONFIG_JFFS2)||defined(RTCONFIG_BRCM_NAND_JFFS2))
-        eval("cp", "/jffs/syslog.log", "/jffs/syslog.log-1", "/tmp");
+	eval("cp", "/jffs/syslog.log", "/jffs/syslog.log-1", "/tmp");
 #endif
 
 	// TODO: make sure is it necessary?
@@ -2974,7 +3005,7 @@ int stop_lltd(void)
 	return ret;
 }
 
-#if defined(RTCONFIG_MDNS) || defined(RTCONFIG_MEDIA_SERVER)
+#if defined(RTCONFIG_MDNS)
 
 #define AVAHI_CONFIG_PATH	"/tmp/avahi"
 #define AVAHI_SERVICES_PATH	"/tmp/avahi/services"
@@ -3003,7 +3034,7 @@ int generate_mdns_config()
 
 	/* Set [server] configuration */
 	fprintf(fp, "[Server]\n");
-	fprintf(fp, "host-name=%s-%c%c%c%c\n", nvram_safe_get("model"),et0macaddr[12],et0macaddr[13],et0macaddr[15],et0macaddr[16]);
+	fprintf(fp, "host-name=%s-%c%c%c%c\n", get_productid(),et0macaddr[12],et0macaddr[13],et0macaddr[15],et0macaddr[16]);
 	fprintf(fp, "use-ipv4=yes\n");
 	fprintf(fp, "use-ipv6=no\n");
 	fprintf(fp, "deny-interfaces=%s\n", nvram_safe_get("wan0_ifname"));
@@ -3141,12 +3172,10 @@ int start_mdns()
 			generate_adisk_service_config();
 	}else{
 		if (f_exists(afpd_service_config)){
-			sprintf(buf, "rm %s", afpd_service_config);
-			system(buf);
+			unlink(afpd_service_config);
 		}
 		if (f_exists(adisk_service_config)){
-			sprintf(buf, "rm %s", adisk_service_config);
-			system(buf);
+			unlink(adisk_service_config);
 		}
 	}
 
@@ -3156,30 +3185,34 @@ int start_mdns()
 		}
 	}else{
 		if (f_exists(itune_service_config)){
-			sprintf(buf, "rm %s", itune_service_config);
-			system(buf);
+			unlink(itune_service_config);
 		}
 	}
 
 	// Execute avahi_daemon daemon
-	xstart("avahi-daemon");
+	char *avahi_daemon_argv[] = {"avahi-daemon", NULL};
+	pid_t pid;
 
-	_dprintf("start_mdns: ret= %d\n", ret);
-
-	return ret;
+	return _eval(avahi_daemon_argv, NULL, 0, &pid);
 }
 
 void stop_mdns()
 {
-	if (getpid() != 1) {
-		notify_rc("stop_mdns");
-	}
 	if (pids("avahi-daemon"))
-		killall_tk("avahi-daemon");
+		killall("avahi-daemon", SIGTERM);
 }
 
 void restart_mdns()
-{
+{	
+	char afpd_service_config[80];
+	char itune_service_config[80];
+	sprintf(afpd_service_config, "%s/%s", AVAHI_SERVICES_PATH, AVAHI_AFPD_SERVICE_FN);
+	sprintf(itune_service_config, "%s/%s", AVAHI_SERVICES_PATH, AVAHI_ITUNE_SERVICE_FN);
+	
+	if ((nvram_match("timemachine_enable", "1") == f_exists(afpd_service_config)) &&
+	    (nvram_match("daapd_enable", "1") == f_exists(itune_service_config)))
+		return;
+
 	stop_mdns();
 	sleep(2);
 	start_mdns();
@@ -3240,8 +3273,8 @@ start_services(void)
 	start_dhcpd();
 	start_dns();
 #endif
-#if defined(RTCONFIG_MDNS) || defined(RTCONFIG_MEDIA_SERVER)
-	restart_mdns();
+#if defined(RTCONFIG_MDNS)
+	start_mdns();
 #endif
 	/* Link-up LAN ports after DHCP server ready. */
 	start_lan_port(0);
@@ -3300,7 +3333,7 @@ start_services(void)
 #endif
 
 #if defined(RTCONFIG_RALINK) && defined(RTCONFIG_WIRELESSREPEATER)
-	apcli_start(); 
+	apcli_start();
 #endif	
 
 #ifdef RTCONFIG_SAMBASRV
@@ -3369,10 +3402,11 @@ stop_services(void)
 	stop_dns();
 	stop_dhcpd();
 #endif
-#if defined(RTCONFIG_MDNS) || defined(RTCONFIG_MEDIA_SERVER)
-	restart_mdns();
+#if defined(RTCONFIG_MDNS)
+	stop_mdns();
 #endif
 #ifdef RTCONFIG_IPV6
+	stop_rdnssd();
 	stop_radvd();
 #endif
 	stop_wpsaide();
@@ -3675,7 +3709,7 @@ again:
 #endif
 //#if defined(RTCONFIG_JFFS2LOG) && defined(RTCONFIG_JFFS2)
 #if defined(RTCONFIG_JFFS2LOG) && (defined(RTCONFIG_JFFS2)||defined(RTCONFIG_BRCM_NAND_JFFS2))
-                eval("cp", "/tmp/syslog.log", "/tmp/syslog.log-1", "/jffs");
+		eval("cp", "/tmp/syslog.log", "/tmp/syslog.log-1", "/jffs");
 #endif
 		if(strcmp(script,"rebootandrestore")==0) {
 			for(i=1;i<count;i++) {
@@ -3694,7 +3728,7 @@ again:
 #endif
 		sleep(3);
 		nvram_set(ASUS_STOP_COMMIT, "1");
-		if (nvram_contains_word("rc_support", "nandflash"))     /* RT-AC56S,U/RT-AC68U/RT-N18U */
+		if (nvram_contains_word("rc_support", "nandflash"))	/* RT-AC56S,U/RT-AC68U/RT-N18U */
 			eval("mtd-erase2", "nvram");
 		else
 			eval("mtd-erase", "-d", "nvram");
@@ -3843,8 +3877,8 @@ again:
 		stop_dns();
 		stop_dhcpd();
 #endif
-#if defined(RTCONFIG_MDNS) || defined(RTCONFIG_MEDIA_SERVER)
-		restart_mdns();
+#if defined(RTCONFIG_MDNS)
+		stop_mdns();
 #endif
 		stop_ots();
 		stop_networkmap();
@@ -3864,8 +3898,8 @@ again:
 			stop_dns();
 			stop_dhcpd();
 #endif
-#if defined(RTCONFIG_MDNS) || defined(RTCONFIG_MEDIA_SERVER)
-			restart_mdns();
+#if defined(RTCONFIG_MDNS)
+			stop_mdns();
 #endif
 			stop_wps();
 #ifdef CONFIG_BCMWL5
@@ -3894,8 +3928,8 @@ again:
 			start_dns();
 			start_dhcpd();
 #endif
-#if defined(RTCONFIG_MDNS) || defined(RTCONFIG_MEDIA_SERVER)
-			restart_mdns();
+#if defined(RTCONFIG_MDNS)
+			start_mdns();
 #endif
 			start_wan();
 #ifdef CONFIG_BCMWL5
@@ -3930,8 +3964,8 @@ again:
 			stop_dns();
 			stop_dhcpd();
 #endif
-#if defined(RTCONFIG_MDNS) || defined(RTCONFIG_MEDIA_SERVER)
-			restart_mdns();
+#if defined(RTCONFIG_MDNS)
+			stop_mdns();
 #endif
 			stop_wps();
 #ifdef CONFIG_BCMWL5
@@ -3958,8 +3992,8 @@ again:
 			start_dns();
 			start_dhcpd();
 #endif
-#if defined(RTCONFIG_MDNS) || defined(RTCONFIG_MEDIA_SERVER)
-			restart_mdns();
+#if defined(RTCONFIG_MDNS)
+			start_mdns();
 #endif
 			start_wan();
 #ifdef CONFIG_BCMWL5
@@ -4009,8 +4043,8 @@ again:
 			stop_dns();
 			stop_dhcpd();
 #endif
-#if defined(RTCONFIG_MDNS) || defined(RTCONFIG_MEDIA_SERVER)
-			restart_mdns();
+#if defined(RTCONFIG_MDNS)
+			stop_mdns();
 #endif
 			stop_wps();
 #ifdef CONFIG_BCMWL5
@@ -4042,8 +4076,8 @@ again:
 			start_dns();
 			start_dhcpd();
 #endif
-#if defined(RTCONFIG_MDNS) || defined(RTCONFIG_MEDIA_SERVER)
-			restart_mdns();
+#if defined(RTCONFIG_MDNS)
+			start_mdns();
 #endif
 			start_wan();
 #ifdef CONFIG_BCMWL5
@@ -4112,46 +4146,46 @@ again:
 	}
 #ifdef CONFIG_BCMWL5
 #ifdef RTCONFIG_BCMWL6A
-        else if (strcmp(script, "clkfreq") == 0) {
-                dbG("clkfreq: %s\n", nvram_safe_get("clkfreq"));
+	else if (strcmp(script, "clkfreq") == 0) {
+		dbG("clkfreq: %s\n", nvram_safe_get("clkfreq"));
 
-                char *string = nvram_safe_get("clkfreq");
-                char *cpu, *ddr, buf[100];
-                unsigned int cpu_clock = 0, ddr_clock = 0;
-                static unsigned int cpu_clock_table[] = {600, 800, 1000, 1200, 1400, 1600};
-                static unsigned int ddr_clock_table[] = {333, 389, 400, 533, 666, 775, 800};
+		char *string = nvram_safe_get("clkfreq");
+		char *cpu, *ddr, buf[100];
+		unsigned int cpu_clock = 0, ddr_clock = 0;
+		static unsigned int cpu_clock_table[] = {600, 800, 1000, 1200, 1400, 1600};
+		static unsigned int ddr_clock_table[] = {333, 389, 400, 533, 666, 775, 800};
 
-                if (strchr(string, ','))
-                {
-                        strncpy(ddr = buf, string, sizeof(buf));
-                        cpu = strsep(&ddr, ",");
-                        cpu_clock=atoi(cpu);
-                        ddr_clock=atoi(ddr);
-                }
-                else
-                        cpu_clock=atoi(string);
+		if (strchr(string, ','))
+		{
+			strncpy(ddr = buf, string, sizeof(buf));
+			cpu = strsep(&ddr, ",");
+			cpu_clock=atoi(cpu);
+			ddr_clock=atoi(ddr);
+		}
+		else
+			cpu_clock=atoi(string);
 
 
-                for (i = 0; i < (sizeof(cpu_clock_table)/sizeof(cpu_clock_table[0])); i++)
-                {
-                        if (cpu_clock == cpu_clock_table[i])
-                                goto check_ddr_clock;
-                }
-                cpu_clock = 800;
+		for (i = 0; i < (sizeof(cpu_clock_table)/sizeof(cpu_clock_table[0])); i++)
+		{
+			if (cpu_clock == cpu_clock_table[i])
+				goto check_ddr_clock;
+		}
+		cpu_clock = 800;
 check_ddr_clock:
-                for (i = 0; i < (sizeof(ddr_clock_table)/sizeof(ddr_clock_table[0])); i++)
-                {
-                        if (ddr_clock == ddr_clock_table[i])
-                                goto check_ddr_done;
-                }
-                ddr_clock = 533;
+		for (i = 0; i < (sizeof(ddr_clock_table)/sizeof(ddr_clock_table[0])); i++)
+		{
+			if (ddr_clock == ddr_clock_table[i])
+				goto check_ddr_done;
+		}
+		ddr_clock = 533;
 check_ddr_done:
-                if (cpu_clock) dbG("target CPU clock: %d\n", cpu_clock);
-                if (ddr_clock) dbG("target DDR clock: %d\n", ddr_clock);
+		if (cpu_clock) dbG("target CPU clock: %d\n", cpu_clock);
+		if (ddr_clock) dbG("target DDR clock: %d\n", ddr_clock);
 
-                nvram_unset("sdram_ncdl");
-                nvram_commit();
-        }
+		nvram_unset("sdram_ncdl");
+		nvram_commit();
+	}
 #endif
 	else if (strcmp(script, "set_wltxpower") == 0) {
 	if ((get_model() == MODEL_RTAC66U) ||
@@ -4476,6 +4510,12 @@ check_ddr_done:
 		if (action & RC_SERVICE_START)
 			start_radvd();
 	}
+	else if (strcmp(script, "rdnssd") == 0) {
+		if (action & RC_SERVICE_STOP)
+			stop_rdnssd();
+		if (action & RC_SERVICE_START)
+			start_rdnssd();
+	}
 	else if (strncmp(script, "dhcp6", 5) == 0) {
 		if (action & RC_SERVICE_STOP)
 			stop_dhcp6c();
@@ -4762,8 +4802,8 @@ check_ddr_done:
 	}
 #endif
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD) || defined(RTCONFIG_OPENVPN)
-        else if (strcmp(script, "vpnd") == 0)
-        {	
+	else if (strcmp(script, "vpnd") == 0)
+	{
 #if defined(RTCONFIG_OPENVPN)
 		int openvpn_unit = nvram_get_int("vpn_server_unit");
 #endif
@@ -4786,7 +4826,7 @@ check_ddr_done:
 			}
 #endif
 		}
-        }
+	}
 #endif
 #ifdef RTCONFIG_YANDEXDNS
 	else if (strcmp(script, "yadns") == 0)
@@ -4831,27 +4871,39 @@ check_ddr_done:
 		if(action&RC_SERVICE_START) start_cnid_metad();
 	}
 #endif
-#if defined(RTCONFIG_MDNS) || defined(RTCONFIG_MEDIA_SERVER)
+#if defined(RTCONFIG_MDNS)
 	else if (strcmp(script, "mdns") == 0)
 	{
 		if(action&RC_SERVICE_STOP) stop_mdns();
-		if(action&RC_SERVICE_START) restart_mdns();
+		if(action&RC_SERVICE_START) start_mdns();
 	}
 #endif
+
+#ifdef RTCONFIG_PUSH_EMAIL
+	else if (strcmp(script, "sendmail") == 0)
+	{
+		start_sendmail();
+	}
+	else if (strcmp(script, "DSLsendmail") == 0)
+	{
+		start_DSLsendmail();
+	}	
+#endif
+
 #ifdef RTCONFIG_VPNC
 	else if (strcmp(script, "vpncall") == 0) 
 	{
 #if defined(RTCONFIG_OPENVPN)
 		int openvpnc_unit = nvram_get_int("vpn_client_unit");
 #endif
-                if (action & RC_SERVICE_STOP){
+		if (action & RC_SERVICE_STOP){
 			stop_vpnc();
 #if defined(RTCONFIG_OPENVPN)
 			stop_vpnclient(openvpnc_unit);
 #endif
 		}
 
-                if (action & RC_SERVICE_START){
+		if (action & RC_SERVICE_START){
 #if defined(RTCONFIG_OPENVPN)
 			if(nvram_match("vpnc_proto", "openvpn")){
 				if (check_ovpn_client_enabled(openvpnc_unit)) {
@@ -5340,11 +5392,11 @@ void start_sendmail(void)
 	fputs(buf,fp);
 	fclose(fp);
 
-        fp = fopen("/etc/email/mailContent", "w");
-        if(fp == NULL){
-                logmessage("email", "Failed to send mail!\n");
-        }
-        sprintf(buf,
+	fp = fopen("/etc/email/mailContent", "w");
+	if(fp == NULL){
+		logmessage("email", "Failed to send mail!\n");
+	}
+	sprintf(buf,
 		"%s\r\n", nvram_get("PM_LETTER_CONTENT")
 	);
 	fputs(buf,fp);

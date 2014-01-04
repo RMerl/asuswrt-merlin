@@ -668,6 +668,8 @@ int if_wan_phyconnected(int wan_unit){
 
 			if(link_wan[wan_unit] == 2)
 				logmessage("wanduck", "The local subnet is the same with the USB ethernet.");
+			else
+				link_changed = 1;
 		}
 
 		if(link_wan[wan_unit] == 2)
@@ -721,6 +723,12 @@ int if_wan_phyconnected(int wan_unit){
 	if(sw_mode == SW_MODE_ROUTER){
 		// this means D2C because of reconnecting the WAN port.
 		if (link_changed) {
+#ifdef RTCONFIG_USB_MODEM
+			if(dualwan_unit__usbif(wan_unit) && link_wan[wan_unit]){
+				return PHY_RECONN;
+			}
+			else
+#endif
 			// WAN port was disconnected, arm reconnect
 			if(!link_setup[wan_unit] && !link_wan[wan_unit]){
 				link_setup[wan_unit] = 1;
@@ -1556,6 +1564,13 @@ int wanduck_main(int argc, char *argv[]){
 #ifdef RTCONFIG_DUALWAN
 		if(sw_mode == SW_MODE_ROUTER && !strcmp(dualwan_mode, "lb")){
 			for(wan_unit = WAN_UNIT_FIRST; wan_unit < WAN_UNIT_MAX; ++wan_unit){
+#ifdef RTCONFIG_USB_MODEM
+				if(dualwan_unit__usbif(wan_unit) && !link_wan[wan_unit]){
+					if_wan_phyconnected(wan_unit);
+					continue;
+				}
+#endif
+
 				current_state[wan_unit] = nvram_get_int(nvram_state[wan_unit]);
 
 				if(current_state[wan_unit] == WAN_STATE_DISABLED){
@@ -1616,7 +1631,7 @@ int wanduck_main(int argc, char *argv[]){
 
 						memset(cmd, 0, 32);
 						sprintf(cmd, "restart_wan_if %d", wan_unit);
-						notify_rc_and_wait(cmd);
+						notify_rc_and_period_wait(cmd, 30);
 
 						memset(cmd, 0, 32);
 						sprintf(cmd, "restart_wan_line %d", !wan_unit);

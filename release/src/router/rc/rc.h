@@ -78,10 +78,10 @@ extern int g_reboot;
 
 static inline int before(int ver1, int ver2)
 {
-        return (ver1-ver2) < 0;
+	return (ver1-ver2) < 0;
 }
 
-#define After(ver2, ver1)       before(ver1, ver2)
+#define After(ver2, ver1)	before(ver1, ver2)
 #endif
 
 #if defined(LINUX30) || LINUX_VERSION_CODE > KERNEL_VERSION(2,6,34)
@@ -527,7 +527,7 @@ extern int stop_ots(void);
 extern int start_ots(void);
 
 // common.c
-extern in_addr_t inet_addr_(const char *cp);    // oleg patch
+extern in_addr_t inet_addr_(const char *cp);	// oleg patch
 extern void usage_exit(const char *cmd, const char *help) __attribute__ ((noreturn));
 #define modprobe(mod, args...) ({ char *argv[] = { "modprobe", "-s", mod, ## args, NULL }; _eval(argv, NULL, 0, NULL); })
 extern int modprobe_r(const char *mod);
@@ -732,6 +732,8 @@ extern void start_ipv6_tunnel(void);
 extern void stop_ipv6_tunnel(void);
 extern void start_radvd(void);
 extern void stop_radvd(void);
+extern void start_rdnssd(void);
+extern void stop_rdnssd(void);
 extern void start_dhcp6s(void);
 extern void stop_dhcp6s(void);
 extern void start_ipv6(void);
@@ -760,7 +762,7 @@ extern int start_avahi_daemon(void);
 extern void stop_avahi_daemon(void);
 #endif
 
-#if defined(RTCONFIG_MDNS) || defined(RTCONFIG_MEDIA_SERVER)
+#if defined(RTCONFIG_MDNS)
 extern int start_mdns(void);
 extern void stop_mdns(void);
 #endif

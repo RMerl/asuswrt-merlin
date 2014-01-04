@@ -1,7 +1,7 @@
 /*
  * HND MIPS boards setup routines
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -309,7 +309,7 @@ brcm_setup(void)
 	value = nvram_get("assert_type");
 	if (value && strlen(value))
 		g_assert_type = simple_strtoul(value, NULL, 10);
-	
+
 
 	if ((lanports_enable = getgpiopin(NULL, "lanports_enable", GPIO_PIN_NOTDEFINED)) ==
 		GPIO_PIN_NOTDEFINED)
@@ -555,7 +555,7 @@ init_mtd_partitions(struct mtd_info *mtd, size_t size)
 			bcm947xx_flash_parts[nparts].size = mtd->size - vmlz_off;
 
 			/* Reserve for NVRAM */
-			bcm947xx_flash_parts[nparts].size -= ROUNDUP(NVRAM_SPACE, mtd->erasesize);
+			bcm947xx_flash_parts[nparts].size -= ROUNDUP(nvram_space, mtd->erasesize);
 #ifdef PLC
 			/* Reserve for PLC */
 			bcm947xx_flash_parts[nparts].size -= ROUNDUP(0x1000, mtd->erasesize);
@@ -573,7 +573,7 @@ init_mtd_partitions(struct mtd_info *mtd, size_t size)
 		bcm947xx_flash_parts[nparts].size -= ROUNDUP(0x1000, mtd->erasesize);
 #endif
 		/* Reserve for NVRAM */
-		bcm947xx_flash_parts[nparts].size -= ROUNDUP(NVRAM_SPACE, mtd->erasesize);
+		bcm947xx_flash_parts[nparts].size -= ROUNDUP(nvram_space, mtd->erasesize);
 
 #ifdef BCMCONFMTD
 		bcm947xx_flash_parts[nparts].size -= (mtd->erasesize *4);
@@ -599,7 +599,7 @@ init_mtd_partitions(struct mtd_info *mtd, size_t size)
 			bcm947xx_flash_parts[nparts].name = "linux2";
 			bcm947xx_flash_parts[nparts].size = mtd->size - image_second_offset;
 			/* Reserve for NVRAM */
-			bcm947xx_flash_parts[nparts].size -= ROUNDUP(NVRAM_SPACE, mtd->erasesize);
+			bcm947xx_flash_parts[nparts].size -= ROUNDUP(nvram_space, mtd->erasesize);
 
 #ifdef BCMCONFMTD
 			bcm947xx_flash_parts[nparts].size -= (mtd->erasesize *4);
@@ -650,13 +650,13 @@ init_mtd_partitions(struct mtd_info *mtd, size_t size)
 	bcm947xx_flash_parts[nparts].name = "plc";
 	bcm947xx_flash_parts[nparts].size = ROUNDUP(0x1000, mtd->erasesize);
 	bcm947xx_flash_parts[nparts].offset =
-		size - (ROUNDUP(NVRAM_SPACE, mtd->erasesize) + ROUNDUP(0x1000, mtd->erasesize));
+		size - (ROUNDUP(nvram_space, mtd->erasesize) + ROUNDUP(0x1000, mtd->erasesize));
 	nparts++;
 #endif
 
 	/* Setup nvram MTD partition */
 	bcm947xx_flash_parts[nparts].name = "nvram";
-	bcm947xx_flash_parts[nparts].size = ROUNDUP(NVRAM_SPACE, mtd->erasesize);
+	bcm947xx_flash_parts[nparts].size = ROUNDUP(nvram_space, mtd->erasesize);
 	bcm947xx_flash_parts[nparts].offset = size - bcm947xx_flash_parts[nparts].size;
 	nparts++;
 
@@ -676,10 +676,17 @@ lookup_nflash_rootfs_offset(hndnand_t *nfl, struct mtd_info *mtd, int offset, si
 	struct cramfs_super *cramfsb;
 	struct squashfs_super_block *squashfsb;
 	struct trx_header *trx;
-	unsigned char buf[NFL_SECTOR_SIZE];
-	uint blocksize, mask, blk_offset, off, shift = 0;
+	unsigned char *buf;
+	uint blocksize, pagesize, mask, blk_offset, off, shift = 0;
 	int ret;
-	
+
+	pagesize = nfl->pagesize;
+	buf = (unsigned char *)kmalloc(pagesize, GFP_KERNEL);
+	if (!buf) {
+		printk("lookup_nflash_rootfs_offset: kmalloc fail\n");
+		return 0;
+	}
+
 	romfsb = (struct romfs_super_block *) buf;
 	cramfsb = (struct cramfs_super *) buf;
 	squashfsb = (struct squashfs_super_block *) buf;
@@ -693,8 +700,8 @@ lookup_nflash_rootfs_offset(hndnand_t *nfl, struct mtd_info *mtd, int offset, si
 		blk_offset = off & ~mask;
 		if (hndnand_checkbadb(nfl, blk_offset) != 0)
 			continue;
-		memset(buf, 0xe5, sizeof(buf));
-		if ((ret = hndnand_read(nfl, off, sizeof(buf), buf)) != sizeof(buf)) {
+		memset(buf, 0xe5, pagesize);
+		if ((ret = hndnand_read(nfl, off, pagesize, buf)) != pagesize) {
 			printk(KERN_NOTICE
 			       "%s: nflash_read return %d\n", mtd->name, ret);
 			continue;
@@ -702,7 +709,7 @@ lookup_nflash_rootfs_offset(hndnand_t *nfl, struct mtd_info *mtd, int offset, si
 
 		/* Try looking at TRX header for rootfs offset */
 		if (le32_to_cpu(trx->magic) == TRX_MAGIC) {
-			mask = NFL_SECTOR_SIZE - 1;
+			mask = pagesize - 1;
 			off = offset + (le32_to_cpu(trx->offsets[1]) & ~mask) - blocksize;
 			shift = (le32_to_cpu(trx->offsets[1]) & mask);
 			romfsb = (struct romfs_super_block *)((unsigned char *)romfsb + shift);
@@ -737,6 +744,10 @@ lookup_nflash_rootfs_offset(hndnand_t *nfl, struct mtd_info *mtd, int offset, si
 		}
 
 	}
+
+	if (buf)
+		kfree(buf);
+
 	return shift + off;
 }
 
@@ -770,7 +781,7 @@ init_nflash_mtd_partitions(hndnand_t *nfl, struct mtd_info *mtd, size_t size)
 
 	}
 #endif	/* CONFIG_FAILSAFE_UPGRADE */
-	
+
 	bootflags = boot_flags();
 	if ((bootflags & FLASH_BOOT_NFLASH) == FLASH_BOOT_NFLASH) {
 		bootsz = boot_partition_size(SI_FLASH1);
@@ -795,7 +806,7 @@ init_nflash_mtd_partitions(hndnand_t *nfl, struct mtd_info *mtd, size_t size)
 		bcm947xx_nflash_parts[nparts].name = "nvram";
 		bcm947xx_nflash_parts[nparts].size = NFL_BOOT_SIZE - offset;
 		bcm947xx_nflash_parts[nparts].offset = offset;
-			
+
 		offset = NFL_BOOT_SIZE;
 		nparts++;
 	}

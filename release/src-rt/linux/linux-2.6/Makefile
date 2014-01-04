@@ -423,7 +423,7 @@ ifeq ($(config-targets),1)
 include $(srctree)/arch/$(ARCH)/Makefile
 export KBUILD_DEFCONFIG
 
-config: scripts_basic outputmakefile FORCE
+config:  scripts_basic outputmakefile FORCE
 	$(Q)mkdir -p include/linux include/config
 	$(Q)$(MAKE) $(build)=scripts/kconfig $@
 
@@ -550,6 +550,10 @@ ifeq ($(CONFIG_MTD_NFLASH),y)
 CFLAGS += -DNFLASH_SUPPORT
 endif
 
+ifdef CONFIG_PROXYARP
+CFLAGS += -DPROXYARP
+endif
+
 ifeq ($(CONFIG_DUAL_TRX),y)
 CFLAGS += -DCONFIG_DUAL_TRX
 endif
@@ -558,6 +562,11 @@ ifeq ($(CONFIG_NVRAM_64K),y)
 ifeq ($(BUILD_NAME),RT-N66U)
 CFLAGS += -DRTN66U_NVRAM_64K_SUPPORT
 endif
+
+ifeq ($(CONFIG_CFE_NVRAM_CHK),y)
+CFLAGS += -DCFE_NVRAM_CHK_SUPPORT
+endif
+
 endif
 
 # Default kernel image to build when no specific target is given.
@@ -1492,9 +1501,10 @@ endif
 	$(Q)$(MAKE) $(build)=$(build-dir) $(target-dir)$(notdir $@)
 
 # Modules
-/: prepare scripts FORCE
+/:  prepare scripts FORCE
 	$(Q)$(MAKE) KBUILD_MODULES=$(if $(CONFIG_MODULES),1) \
 	$(build)=$(build-dir)
+
 %/: prepare scripts FORCE
 	$(Q)$(MAKE) KBUILD_MODULES=$(if $(CONFIG_MODULES),1) \
 	$(build)=$(build-dir)

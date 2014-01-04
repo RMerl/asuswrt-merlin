@@ -311,22 +311,34 @@ function check_NOnly_to_GN(){
 	//                    Y/N        mssid      auth    asyn    wpa_psk wl_wep_x wl_key k1	k2 k3 k4                                        
 	//var gn_array_5g = [["1", "ASUS_5G_Guest1", "open", "aes", "", "0", "1", "", "", "", "", "0", "off", "0"], ["0", "ASUS_5G_Guest2", "open", "aes", "", "0", "1", "", "", "", "", "0", "off", ""], ["0", "ASUS_5G_Guest3", "open", "aes", "", "0", "1", "", "", "", "", "0", "off", ""]];
 	// Viz add 2012.11.05 restriction for 'N Only' mode  ( start 	
-	if(document.form.wl_nmode_x.value == "1" && "<% nvram_get("wl_unit"); %>" == "1"){		//5G
+	if(document.form.wl_nmode_x.value == "0" || document.form.wl_nmode_x.value == "1"){
+		if("<% nvram_get("wl_unit"); %>" == "1"){		//5G
 			for(var i=0;i<gn_array_5g.length;i++){
-					if(gn_array_5g[i][0] == "1" 
-							&& (gn_array_5g[i][3] == "tkip" || gn_array_5g[i][5] == "1" || gn_array_5g[i][5] == "2")){								
-								$('wl_NOnly_note').style.display = "";
-								return false;
-					}
-			}
-	}else if(document.form.wl_nmode_x.value == "1" && "<% nvram_get("wl_unit"); %>" == "0"){		//2.4G
+				if(gn_array_5g[i][0] == "1" && (gn_array_5g[i][3] == "tkip" || gn_array_5g[i][5] == "1" || gn_array_5g[i][5] == "2")){
+					if(document.form.wl_nmode_x.value == "0")
+						$('wl_NOnly_note').innerHTML = '<br>* <#WLANConfig11n_Auto_note#>';
+					else{
+						$('wl_NOnly_note').innerHTML = '<br>* <#WLANConfig11n_NOnly_note#>';
+					}	
+						
+					$('wl_NOnly_note').style.display = "";
+					return false;
+				}
+			}		
+		}
+		else if("<% nvram_get("wl_unit"); %>" == "0"){		//2.4G
 			for(var i=0;i<gn_array_2g.length;i++){
-					if(gn_array_2g[i][0] == "1" 
-							&& (gn_array_2g[i][3] == "tkip" || gn_array_2g[i][5] == "1" || gn_array_2g[i][5] == "2")){
-								$('wl_NOnly_note').style.display = "";
-								return false;
-					}
-			}
+				if(gn_array_2g[i][0] == "1" && (gn_array_2g[i][3] == "tkip" || gn_array_2g[i][5] == "1" || gn_array_2g[i][5] == "2")){
+					if(document.form.wl_nmode_x.value == "0")
+						$('wl_NOnly_note').innerHTML = '<br>* <#WLANConfig11n_Auto_note#>';
+					else	
+						$('wl_NOnly_note').innerHTML = '<br>* <#WLANConfig11n_NOnly_note#>';
+						
+					$('wl_NOnly_note').style.display = "";
+					return false;
+				}
+			}	
+		}	
 	}
 	$('wl_NOnly_note').style.display = "none";
 	return true;
@@ -498,7 +510,7 @@ function high_power_auto_channel(){
 						<span id="wl_optimizexbox_span" style="display:none"><input type="checkbox" name="wl_optimizexbox_ckb" id="wl_optimizexbox_ckb" value="<% nvram_get("wl_optimizexbox"); %>" onclick="document.form.wl_optimizexbox.value=(this.checked==true)?1:0;"> Optimized for Xbox</input></span>
 						<span id="wl_gmode_checkbox" style="display:none;"><input type="checkbox" name="wl_gmode_check" id="wl_gmode_check" value="" onClick="wl_gmode_protection_check();"> b/g Protection</input></span>
 						<span id="wl_nmode_x_hint" style="display:none;"><br><#WLANConfig11n_automode_limition_hint#><br></span>
-						<span id="wl_NOnly_note" style="display:none;"><br>* <#WLANConfig11n_NOnly_note#></span>
+						<span id="wl_NOnly_note" style="display:none;"></span>
 						<!-- [N only] is not compatible with current guest network authentication method(TKIP or WEP),  Please go to <a id="gn_link" href="/Guest_network.asp?af=wl_NOnly_note" target="_blank" style="color:#FFCC00;font-family:Lucida Console;text-decoration:underline;">guest network</a> and change the authentication method. -->
 					</td>
 			  </tr>

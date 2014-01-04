@@ -1,0 +1,253 @@
+RELEASE NOTES for NDisc6
+version 1.0.2
+=========================
+$Id: NEWS 680 2011-07-31 08:46:22Z remi $
+
+  There are no known issues at the moment.
+Please report any problem by email at address :
+remi (at) remlab (dot) net
+Thanks for your help.
+
+  You can find major changes since version 0.1.5 below. For more general
+informations on this program, see README. For syntax details, read the
+provided manual pages.
+
+============================================================================
+STABLE RELEASE 1.0.2 :
+
+# rdisc6: print RA ND proxy bit.
+# rdisc6: print RA prefix flags.
+# rdnssd: check for errors while dropping privileges
+# Fix compilation on BSD.
+
+============================================================================
+STABLE RELEASE 1.0.1 :
+
+# Remove the deprecated ISATAP daemon from ndisc6.
+
+============================================================================
+STABLE RELEASE 1.0.0 : Minor feature enhancements
+
+# Add --config option to addr2name and name2addr.
+# German localization (credits to Chris Leck).
+# Fix memory alignment problems on ARM and SPARC systems.
+
+============================================================================
+STABLE RELEASE 0.9.9 : Minor feature enhancements
+
+# Linux isatap daemon for router list maintenance:
+  Hosts should use this alongside the kernel-mode isatap tunnel driver.
+# Czech localization (credits to Petr Pisar).
+
+============================================================================
+STABLE RELEASE 0.9.8 : Major portability fixes
+
+# Fix compilation for BSD and OS X.
+# Fix rdisc6 support for ISATAP interfaces.
+
+============================================================================
+STABLE RELEASE 0.9.7 : Minor bugfixes
+
+# Don't remove DNS servers from resolv.conf at RDNSSD startup and exit.
+# Use relative links for manual pages.
+
+============================================================================
+STABLE RELEASE 0.9.6 : Minor bugfixes
+
+# Fix compilation against Linux kernel headers version 2.6.24.
+# Use the socket filter on Linux as an optimization for traceroute6.
+
+============================================================================
+STABLE RELEASE 0.9.5 : Minor bugfixes
+
+# Fix RDNSSD handling of GID.
+# Various cosmetic fixes.
+
+============================================================================
+TEST RELEASE 0.9.4 : Major feature enhancements
+
+# RDNSS client daemon for Linux.
+# Fix name2addr and addr2name inversion.
+
+============================================================================
+STABLE RELEASE 0.9.3 : Minor feature enhancements
+
+# rdisc6: supports RDNSS option.
+# Allow usage of GPLv3 in addition to GPLv2.
+# Update gettext to version 1.16.2.
+
+============================================================================
+STABLE RELEASE 0.9.2 : Minor portability fixes
+
+# traceroute6: fix compilation on glibc 2.3
+
+============================================================================
+STABLE RELEASE 0.9.1 : Minor bug fixes
+
+# traceroute6: fix progress report in case of timeouts.
+# traceroute6 supports UDP-Lite (with -L provisional option)
+# addrinfo becomes addr2name because of conflict with Sofia-SIP.
+# nameinfo becomes name2addr.
+# gettext support (English and partial French localization included).
+# gen-alias (build system): fix non-Debian builds
+
+============================================================================
+TEST RELEASE 0.9.0 : Major features enhancement, major bug fixes
+
+# rdisc6 supports RFC4191 (router preference and specific routes)
+# rdisc6 uses RFC2461 probe interval by default (4" instead of 1"). 
+# traceroute6 parallelized in a safe manner.
+# traceroute6 handles Parameter Problem / Next Header errors better.
+# traceroute6 prints numerical IPv6 address when DNS fails.
+# traceroute6 includes IPv6 and extensions headers in packet size.
+# tcpspray: fix rare error handling deadlock.
+
+============================================================================
+STABLE RELEASE 0.7.4 : Minor feature enhancement
+
+# traceroute6 can send TCP probes of different sizes.
+
+============================================================================
+STABLE RELEASE 0.7.3 : Minor features enhancement, major bug fixes
+
+# traceroute6 won't stop at the first non-responsive hop anymore.
+# traceroute6 can print hop limit of received packet with option -l.
+# Support for resolving IDN (Internationalized Domain Names).
+
+============================================================================
+STABLE RELEASE 0.7.2 : Minor features enhancement
+
+# rdisc6, ndisc6 and traceroute6 now drop root privilege at the very
+  beginning of execution to prevent all kind of would-be local root
+  compromise (in case of bug in the command line parsing code).
+# FreeBSD build fixes.
+
+============================================================================
+STABLE RELEASE 0.7.1 : Minor portability fixes
+
+# Traffic class and routing header compatibility code for old libc
+  (on Linux, FreeBSD and NetBSD).
+# Fix clock_nanosleep availability detection.
+
+============================================================================
+STABLE RELEASE 0.7.0 : Major feature enhancement
+
+# nameinfo and addrinfo DNS resolver for scripting added.
+# dnssort, simple sort script for DNS hostnames added.
+# IPv6 "Type 0" (loose source) routing support for traceroute6.
+# Outgoing interface selection with traceroute6 (even on non-Linux).
+# Minor fixes for LP64 architectures (incl. AMD64).
+# traceroute6 can skip IPv6 extension headers.
+
+============================================================================
+STABLE RELEASE 0.6.8 : Major bug fixes
+
+# Fix (very) incorrect duration and bandwidth result from tcpspray6.
+# Support for specifying IPv6 Traffic Class with traceroute6.
+
+============================================================================
+STABLE RELEASE 0.6.7 : Minor security fix
+
+# Check hop limit of incoming neighbor discovery packets (ndisc6, rdisc6).
+
+============================================================================
+STABLE RELEASE 0.6.6 : Minor portability fixes
+
+# FreeBSD compilation fix.
+
+=============================================================================
+STABLE RELEASE 0.6.5 : Minor feature enhancement
+
+# Use POSIX monotonic clock instead of the real-time clock
+
+=============================================================================
+STABLE RELEASE 0.6.4 : Minor bug fixes
+
+# Autoconf updates.
+# Fix non-ASCII characters within manual pages.
+# Debian packaging support.
+
+=============================================================================
+STABLE RELEASE 0.6.3 : Minor bug fixes
+
+# tcptraceroute6 handles parameters with white spaces correctly.
+# Renamed traceroute6 to rltraceroute6 to avoid conflict with iputils.
+
+=============================================================================
+STABLE RELEASE 0.6.2 : Major feature enhancement, minor security fixes
+
+# Support for ICMPv6 Echo requests traceroute6.
+# traceroute6 support for specifying UDP and ICMPv6 packets byte size
+  (payload no longer has an empty payload by default).
+# Support for sending ECN-setup SYN packets with tcptraceroute6.
+# Support for selecting base UDP destination port with traceroute6.
+# Support for selecting source port number with tcptraceroute6.
+# Support for custom delay in-between each (tcp)traceroute6 probes.
+# Sanitize raw socket file descriptors number before use.
+# Fix symlink installation wrt DESTDIR (such as when packaging via RPM).
+
+=============================================================================
+STABLE RELEASE 0.6.0 : Major feature enhancement, portability fixes
+
+# Switch to the bloated autotools.
+# rdisc6 and traceroute6 compile fixes for Solaris.
+# ndisc6 fixes for BSD and Solaris.
+# tcpspray6 Discard/Echo bandwidth metter added.
+
+=============================================================================
+TEST RELEASE 0.5.3 : Minor bug fixes
+
+# Port (tcp)traceroute6 to BSD.
+# Fix UDP traceroute6 regression from version 0.5.2.
+# Handle ICMPv6 Parameter problem errors.
+
+=============================================================================
+TEST RELEASE 0.5.2 : Minor bug fixes
+
+# Fix minor input buffer boundary check error.
+# Fix detection of invalid hop limits on the command line.
+
+=============================================================================
+TEST RELEASE 0.5.1 : Minor feature enhancement
+
+# Add traditional UDP traceroute to traceroute6 (formerly tcptraceroute6).
+# tcptraceroute6 is now an alias for “traceroute6 -S”.
+# Source address specification option for (tcp)traceroute6.
+# TCP/ACK probes option for (tcp)traceroute6.
+# Use a rather high source TCP port, dependant on PID.
+
+=============================================================================
+TEST RELEASE 0.5.0 : Major feature enhancement
+
+# tcptraceroute6 was added to the package.
+
+=============================================================================
+STABLE RELEASE 0.4.1 : Minor bugfixes
+
+# rdisc6 can be compiled on FreeBSD.
+
+=============================================================================
+STABLE RELEASE 0.4.0 : Minor features enhancement, major security fix
+
+# Print Source Link-Layer address in Router Advertisement if present.
+# Check Prefix information option length properly in Router Adverts.
+# Some spelling fixes.
+
+=============================================================================
+BETA RELEASE 0.3.0 : Major features enhancement (release cancelled)
+
+# New --numeric option prevents DNS lookups.
+# Removed some useless system calls.
+# rdisc6 prints advertised link MTU.
+# Milliseconds and infinite lifetimes reported properly as such.
+# Don't print error messages multiple times.
+# New --single option only prints the first advertisement with rdisc6.
+# New --multiple option prints duplicate advertisements with ndisc6.
+
+=============================================================================
+BETA RELEASE 0.1.5 : Minor features enhancement
+
+# Set appropriate ICMPv6 type filter (reduce CPU usage).
+
+=============================================================================
+

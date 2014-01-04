@@ -323,17 +323,9 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 	}
 }*/
 
-function wl_bwch_hint(){  //Control display chanspec hint when wl_bw=1 or wl_channel=0(Auto)
-	if(document.form.wl_bw.value == "1"){
-		$("wl_bw_hint").style.display="";
-		$("wl_ch_hint").style.display="none";
-	}else if(document.form.wl_channel.value == "0"){
-		$("wl_bw_hint").style.display="none";
-		$("wl_ch_hint").style.display="";
-	}else{
-		$("wl_bw_hint").style.display="none";
-		$("wl_ch_hint").style.display="none";
-	}
+function wl_bwch_hint(){  //Control display chanspec hint when wl_bw=1(20/40) or wl_channel=0(Auto)
+		$("wl_bw_hint").style.display=(document.form.wl_bw.value == "1") ? "" : "none";
+		$("wl_ch_hint").style.display=(document.form.wl_channel.value == "0") ? "" : "none";
 }
 </script>
 </head>
@@ -360,7 +352,6 @@ function wl_bwch_hint(){  //Control display chanspec hint when wl_bw=1 or wl_cha
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" maxlength="15" size="15" name="x_RegulatoryDomain" value="<% nvram_get("x_RegulatoryDomain"); %>" readonly="1">
 <input type="hidden" name="wl_wdsnum_x_0" value="<% nvram_get("wl_wdsnum_x"); %>" readonly="1">  
-<input type="hidden" name="wl_channel_orig" value='<% nvram_get("wl_channel"); %>'>
 <input type="hidden" name="wl_nmode_x" value='<% nvram_get("wl_nmode_x"); %>'>
 <input type="hidden" name="wl_bw" value='<% nvram_get("wl_bw"); %>'>
 <input type="hidden" name="wl_channel" value='<% nvram_get("wl_channel"); %>'>
@@ -392,14 +383,18 @@ function wl_bwch_hint(){  //Control display chanspec hint when wl_bw=1 or wl_cha
 		  	<div>&nbsp;</div>
 		  	<div class="formfonttitle"><#menu5_1#> - <#menu5_1_3#></div>
 		  	<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-		  	<div class="formfontdesc"><#WLANConfig11b_display31_sectiondesc#></div>
-		  	<div class="formfontdesc" style="color:#FFCC00;"><#ADSL_FW_note#><#WLANConfig11b_display32_sectiondesc#></div>
-		  	<div class="formfontdesc"><#WLANConfig11b_display33_sectiondesc#></div>	
-		  	<div id="wds_desc4" class="formfontdesc" style="margin-left:28px;"><#WLANConfig11b_display34_sectiondesc#></div>	
-		  	<div id="wl_bw_hint" style="font-size:13px;font-family: Arial, Helvetica, sans-serif;color:#FC0;margin-left:28px;"><#WLANConfig11b_display351_sectiondesc#></div>
-					<!-- 5. You are currently using the Auto channel. Click <a style="font-size:13px;font-family: Lucida Console;color:#FC0;text-decoration:underline;" href="/Advanced_Wireless_Content.asp?af=wl_bw">Here</a> to modify. -->
-			<div id="wl_ch_hint" style="font-size:13px;font-family: Arial, Helvetica, sans-serif;color:#FC0;margin-left:28px;"><#WLANConfig11b_display352_sectiondesc#></div>
-					<!-- 5. You are currently using the Auto channel. Click <a style="font-size:13px;font-family: Lucida Console;color:#FC0;text-decoration:underline;" href="/Advanced_Wireless_Content.asp?af=wl_channel">Here</a> to modify. -->
+		  	<div class="formfontdesc"><#WLANConfig11b_display1_sectiondesc#></div>
+		  	<div class="formfontdesc" style="color:#FFCC00;"><#ADSL_FW_note#><#WLANConfig11b_display2_sectiondesc#></div>
+		  	<div class="formfontdesc"><#WLANConfig11b_display3_sectiondesc#>
+				<ul>
+					<li><#WLANConfig11b_display31_sectiondesc#></li>
+					<li><#WLANConfig11b_display32_sectiondesc#></li>
+					<li><#WLANConfig11b_display33_sectiondesc#></li>
+					<li><#WLANConfig11b_display34_sectiondesc#></li>					
+				</ul>					
+			</div>
+			<div id="wl_bw_hint" style="font-size:13px;font-family: Arial, Helvetica, sans-serif;color:#FC0;margin-left:28px;"><#WLANConfig11b_display41_sectiondesc#></div>
+			<div id="wl_ch_hint" style="font-size:13px;font-family: Arial, Helvetica, sans-serif;color:#FC0;margin-left:28px;"><#WLANConfig11b_display42_sectiondesc#></div>
 			
 			<table id="MainTable1" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 			  <thead>

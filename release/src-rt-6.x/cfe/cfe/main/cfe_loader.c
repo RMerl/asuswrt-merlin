@@ -65,18 +65,24 @@
     *  Externs
     ********************************************************************* */
 
+#if CFG_LDR_ELF
 extern const cfe_loader_t elfloader;
+#endif
 extern const cfe_loader_t rawloader;
+#if CFG_LDR_SREC
 extern const cfe_loader_t srecloader;
+#endif
 
 /*  *********************************************************************
     *  Loader list
     ********************************************************************* */
 
 const cfe_loader_t * const cfe_loaders[] = {
+#if CFG_LDR_ELF
     &elfloader,
+#endif
     &rawloader,
-#if !CFG_MINIMAL_SIZE
+#if CFG_LDR_SREC
     &srecloader,
 #endif
     NULL};

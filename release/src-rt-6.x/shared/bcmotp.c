@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmotp.c 350340 2012-08-13 10:22:57Z $
+ * $Id: bcmotp.c 361350 2012-10-08 10:09:58Z $
  */
 
 #include <bcm_cfg.h>
@@ -242,7 +242,11 @@ get_otpinfo(void)
 
 
 /* OTP Size */
+#define OTP_SZ_FU_720		((ROUNDUP(720, 16))/8)
+#define OTP_SZ_FU_608		((ROUNDUP(608, 16))/8)
+#define OTP_SZ_FU_576		((ROUNDUP(576, 16))/8)
 #define OTP_SZ_FU_324		((ROUNDUP(324,8))/8)	/* 324 bits */
+#define OTP_SZ_FU_792		(792/8)		/* 792 bits */
 #define OTP_SZ_FU_288		(288/8)		/* 288 bits */
 #define OTP_SZ_FU_216		(216/8)		/* 216 bits */
 #define OTP_SZ_FU_72		(72/8)		/* 72 bits */
@@ -268,6 +272,7 @@ get_otpinfo(void)
 /* Offset in OTP from upper GUR to HNBU_UMANFID tuple value in (16-bit) words */
 #define USB_MANIFID_OFFSET_4319		42
 #define USB_MANIFID_OFFSET_43143	45 /* See Confluence 43143 SW notebook #1 */
+#define USB_MANIFID_OFFSET_4335		8
 #endif /* USBSDIOUNIFIEDOTP */
 
 #if defined(BCMNVRAMW)
@@ -291,19 +296,6 @@ ipxotp_size(void *oh)
 {
 	otpinfo_t *oi = (otpinfo_t *)oh;
 	return (int)oi->wsize * 2;
-}
-
-static uint16
-ipxotp_otpr(void *oh, chipcregs_t *cc, uint wn)
-{
-	otpinfo_t *oi;
-
-	oi = (otpinfo_t *)oh;
-
-	ASSERT(wn < oi->wsize);
-	ASSERT(cc != NULL);
-
-	return R_REG(oi->osh, &cc->sromotp[wn]);
 }
 
 static uint16
@@ -356,6 +348,59 @@ ipxotp_read_bit(void *oh, chipcregs_t *cc, uint off)
 	W_REG(oi->osh, &cc->otpcontrol1, 0);
 
 	return ipxotp_read_bit_common(oh, cc, off);
+}
+
+#if !defined(BCMROMBUILD)
+static uint16
+ipxotp_otprb16(void *oh, chipcregs_t *cc, uint wn)
+{
+	uint base, i;
+	uint16 val;
+	uint16 bit;
+
+	base = wn * 16;
+
+	val = 0;
+	for (i = 0; i < 16; i++) {
+		if ((bit = ipxotp_read_bit(oh, cc, base + i)) == 0xffff)
+			break;
+		val = val | (bit << i);
+	}
+	if (i < 16)
+		val = 0xffff;
+
+	return val;
+}
+#endif /* !defined(BCMROMBUILD) */
+
+static uint16
+ipxotp_otpr(void *oh, chipcregs_t *cc, uint wn)
+{
+	otpinfo_t *oi;
+#if !defined(BCMROMBUILD)
+	si_t *sih;
+#endif /* !defined(BCMROMBUILD) */
+	uint16 val;
+
+
+	oi = (otpinfo_t *)oh;
+
+	ASSERT(wn < oi->wsize);
+	ASSERT(cc != NULL);
+
+#if !defined(BCMROMBUILD)
+	sih = oi->sih;
+	ASSERT(sih != NULL);
+	/* If sprom is available use indirect access(as cc->sromotp maps to srom),
+	 * else use random-access.
+	 */
+	if (si_is_sprom_available(sih))
+		val = ipxotp_otprb16(oi, cc, wn);
+	else
+#endif /* !defined(BCMROMBUILD) */
+		val = R_REG(oi->osh, &cc->sromotp[wn]);
+
+	return val;
 }
 
 /*
@@ -465,6 +510,12 @@ ipxotp_max_rgnsz(otpinfo_t *oi)
 	case BCM43428_CHIP_ID:
 		oi->fusebits = OTP_SZ_FU_72;
 		break;
+	case BCM4335_CHIP_ID:
+		oi->fusebits = OTP_SZ_FU_576;
+		break;
+	case BCM4360_CHIP_ID:
+		oi->fusebits = OTP_SZ_FU_792;
+		break;
 	default:
 		if (oi->fusebits == 0)
 			ASSERT(0);	/* Don't konw about this chip */
@@ -573,6 +624,10 @@ ipxotp_uotp_usbmanfid_offset(otpinfo_t *oi)
 			oi->usbmanfid_offset = USB_MANIFID_OFFSET_43143;
 			oi->buotp = TRUE;
 			break;
+		case BCM4335_CHIP_ID:
+			oi->usbmanfid_offset = USB_MANIFID_OFFSET_4335;
+			oi->buotp = TRUE;
+			break;
 		default:
 			OTP_ERR(("chip=0x%x does not support Unified OTP.\n",
 				CHIPID(oi->sih->chip)));
@@ -653,6 +708,7 @@ BCMNMIATTACHFN(_ipxotp_init)(otpinfo_t *oi, chipcregs_t *cc)
 		(CHIPID(oi->sih->chip) == BCM43431_CHIP_ID) ||
 		(CHIPID(oi->sih->chip) == BCM4335_CHIP_ID) ||
 		(CHIPID(oi->sih->chip) == BCM4360_CHIP_ID) ||
+		(CHIPID(oi->sih->chip) == BCM43460_CHIP_ID) ||
 		(CHIPID(oi->sih->chip) == BCM4352_CHIP_ID) ||
 		(CHIPID(oi->sih->chip) == BCM43526_CHIP_ID) ||
 	0) {
@@ -676,6 +732,9 @@ BCMNMIATTACHFN(_ipxotp_init)(otpinfo_t *oi, chipcregs_t *cc)
 				oi->buotp = TRUE;
 				break;
 			case BCM43143_CHIP_ID:
+				oi->buotp = TRUE;
+				break;
+			case BCM4335_CHIP_ID:
 				oi->buotp = TRUE;
 				break;
 			default:
@@ -1832,7 +1891,8 @@ ipxotp_write_region(void *oh, int region, uint16 *data, uint wlen)
 				CHIPID(oi->sih->chip) == BCM43242_CHIP_ID ||
 				CHIPID(oi->sih->chip) == BCM43243_CHIP_ID ||
 				CHIPID(oi->sih->chip) == BCM43143_CHIP_ID ||
-				CHIPID(oi->sih->chip) == BCM4324_CHIP_ID)
+				CHIPID(oi->sih->chip) == BCM4324_CHIP_ID ||
+				CHIPID(oi->sih->chip) == BCM4335_CHIP_ID)
 				ipxotp_write_bit(oi, cc, otpgu_bit_base + OTPGU_NEWCISFORMAT_OFF);
 			break;
 		case OTP_SW_RGN:
@@ -2065,7 +2125,7 @@ _ipxotp_cis_append_region(si_t *sih, int region, char *vars, int count)
 					otp_layout = si_corereg(sih, SI_CC_IDX,
 						OFFSETOF(chipcregs_t, otplayout), 0, 0);
 					if (otp_layout & OTP_CISFORMAT_NEW) {
-						i += 4; /* new sdio header format, 2 half words */
+						i += 12; /* new sdio header format, 6 half words */
 					} else {
 						i += 8; /* old sdio header format */
 					}
@@ -2249,26 +2309,7 @@ ipxotp_nvwrite(void *oh, uint16 *data, uint wlen)
 #endif /* BCMNVRAMW */
 
 #if defined(WLTEST) && !defined(BCMROMBUILD)
-static uint16
-ipxotp_otprb16(void *oh, chipcregs_t *cc, uint wn)
-{
-	uint base, i;
-	uint16 val;
-	uint16 bit;
 
-	base = wn * 16;
-
-	val = 0;
-	for (i = 0; i < 16; i++) {
-		if ((bit = ipxotp_read_bit(oh, cc, base + i)) == 0xffff)
-			break;
-		val = val | (bit << i);
-	}
-	if (i < 16)
-		val = 0xffff;
-
-	return val;
-}
 
 static int
 ipxotp_dump(void *oh, int arg, char *buf, uint size)

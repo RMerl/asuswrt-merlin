@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: wltunable_lx_router.h 348245 2012-08-01 01:51:24Z $
+ * $Id: wltunable_lx_router.h 376399 2012-12-26 09:50:35Z $
  *
  * wl driver tunables
  */
@@ -31,7 +31,11 @@
 #define NRXBUFPOST	56	/* # rx buffers posted */
 #define RXBND		24	/* max # rx frames to process */
 #define PKTCBND		36	/* max # rx frames to chain */
-#define CTFPOOLSZ       64	/* max buffers in ctfpool */
+#ifdef __ARM_ARCH_7A__
+#define CTFPOOLSZ       512	/* max buffers in ctfpool */
+#else
+#define CTFPOOLSZ       192	/* max buffers in ctfpool */
+#endif
 
 #define WME_PER_AC_TX_PARAMS 1
 #define WME_PER_AC_TUNING 1
@@ -42,7 +46,11 @@
 #define NRXD_LARGE_AC3X3	2048	/* RX descriptor ring */
 #define NRXBUFPOST_AC3X3	320	/* # rx buffers posted */
 #define RXBND_AC3X3		36	/* max # rx frames to process */
+#ifdef __ARM_ARCH_7A__
+#define CTFPOOLSZ_AC3X3		1024	/* max buffers in ctfpool */
+#else
 #define CTFPOOLSZ_AC3X3		512	/* max buffers in ctfpool */
+#endif
 #define PKTCBND_AC3X3		48	/* max # rx frames to chain */
 
 #define TXMR			2	/* number of outstanding reads */
@@ -56,4 +64,5 @@
 
 #define MRRS			512	/* Max read request size */
 
+#define AMPDU_PKTQ_LEN          1536
 #define AMPDU_PKTQ_FAVORED_LEN  4096

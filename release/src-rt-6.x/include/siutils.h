@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: siutils.h 348160 2012-07-31 21:25:18Z $
+ * $Id: siutils.h 364852 2012-10-25 18:47:50Z $
  */
 
 #ifndef	_siutils_h_
@@ -124,9 +124,9 @@ typedef struct _ate_params {
 #define SI_PCIUP	3
 
 #if defined(BCMQT)
-#define	ISSIM_ENAB(sih)	((sih)->issim)
+#define	ISSIM_ENAB(sih)	TRUE
 #else
-#define	ISSIM_ENAB(sih)	0
+#define	ISSIM_ENAB(sih)	FALSE
 #endif
 
 /* PMU clock/power control */
@@ -193,6 +193,8 @@ extern void si_setosh(si_t *sih, osl_t *osh);
 extern uint si_corereg(si_t *sih, uint coreidx, uint regoff, uint mask, uint val);
 extern void *si_coreregs(si_t *sih);
 extern uint si_wrapperreg(si_t *sih, uint32 offset, uint32 mask, uint32 val);
+extern uint si_core_wrapperreg(si_t *sih, uint32 coreidx, uint32 offset, uint32 mask, uint32 val);
+extern void *si_wrapperregs(si_t *sih);
 extern uint32 si_core_cflags(si_t *sih, uint32 mask, uint32 val);
 extern void si_core_cflags_wo(si_t *sih, uint32 mask, uint32 val);
 extern uint32 si_core_sflags(si_t *sih, uint32 mask, uint32 val);
@@ -215,6 +217,7 @@ extern int si_corebist(si_t *sih);
 extern void si_core_reset(si_t *sih, uint32 bits, uint32 resetbits);
 extern void si_core_disable(si_t *sih, uint32 bits);
 extern uint32 si_clock_rate(uint32 pll_type, uint32 n, uint32 m);
+extern uint si_chip_hostif(si_t *sih);
 extern bool si_read_pmu_autopll(si_t *sih);
 extern uint32 si_clock(si_t *sih);
 extern uint32 si_alp_clock(si_t *sih);
@@ -283,8 +286,10 @@ extern int si_eci_init(si_t *sih);
 extern void si_eci_notify_bt(si_t *sih, uint32 mask, uint32 val, bool interrupt);
 extern bool si_seci(si_t *sih);
 extern void* si_seci_init(si_t *sih, uint8 seci_mode);
+extern void* si_gci_init(si_t *sih);
 extern void si_seci_down(si_t *sih);
 extern void si_seci_upd(si_t *sih, bool enable);
+extern bool si_gci(si_t *sih);
 #else
 #define si_eci(sih) 0
 static INLINE void * si_eci_init(si_t *sih) {return NULL;}
@@ -292,7 +297,9 @@ static INLINE void * si_eci_init(si_t *sih) {return NULL;}
 #define si_seci(sih) 0
 #define si_seci_upd(sih, a)	do {} while (0)
 static INLINE void * si_seci_init(si_t *sih, uint8 use_seci) {return NULL;}
+static INLINE void * si_gci_init(si_t *sih) {return NULL;}
 #define si_seci_down(sih) do {} while (0)
+#define si_gci(sih) 0
 #endif /* BCMECICOEX */
 
 /* OTP status */
@@ -319,6 +326,7 @@ extern int si_cis_source(si_t *sih);
 #define	CSM_FAB7	0x1	/* CSM Fab7 chip */
 #define	TSMC_FAB12	0x2	/* TSMC Fab12/Fab14 chip */
 #define	SMIC_FAB4	0x3	/* SMIC Fab4 chip */
+
 extern int BCMINITFN(si_otp_fabid)(si_t *sih, uint16 *fabid, bool rw);
 extern uint16 BCMINITFN(si_fabid)(si_t *sih);
 
@@ -368,6 +376,7 @@ extern void si_btc_enable_chipcontrol(si_t *sih);
 extern void si_btcombo_p250_4313_war(si_t *sih);
 extern void si_btcombo_43228_war(si_t *sih);
 extern void si_clk_pmu_htavail_set(si_t *sih, bool set_clear);
+extern void si_pmu_synth_pwrsw_4313_war(si_t *sih);
 extern uint si_pll_reset(si_t *sih);
 /* === debug routines === */
 
@@ -382,8 +391,9 @@ extern void si_viewall(si_t *sih, bool verbose);
 struct bcmstrbuf;
 extern void si_dumpregs(si_t *sih, struct bcmstrbuf *b);
 #endif 
-
+extern uint32 si_ccreg(si_t *sih, uint32 offset, uint32 mask, uint32 val);
 extern uint32 si_pciereg(si_t *sih, uint32 offset, uint32 mask, uint32 val, uint type);
+extern uint32 write_ccreg(si_t *sih, uint32 offset, uint32 mask, uint32 val);
 extern uint32 si_pcieserdesreg(si_t *sih, uint32 mdioslave, uint32 offset, uint32 mask, uint32 val);
 extern void si_pcie_set_request_size(si_t *sih, uint16 size);
 extern uint16 si_pcie_get_request_size(si_t *sih);
@@ -405,10 +415,40 @@ extern void BCMATTACHFN(si_muxenab)(si_t *sih, uint32 w);
 extern uint32 si_tcm_size(si_t *sih);
 #endif 
 
+extern uint32 si_gci_direct(si_t *sih, uint offset, uint32 mask, uint32 val);
+extern uint32 si_gci_indirect(si_t *sih, uint regidx, uint offset, uint32 mask, uint32 val);
+extern uint32 si_gci_output(si_t *sih, uint reg, uint32 mask, uint32 val);
+extern uint32 si_gci_input(si_t *sih, uint reg);
+extern uint32 si_gci_int_enable(si_t *sih, bool enable);
+extern void si_gci_reset(si_t *sih);
+extern void si_ercx_init(si_t *sih);
+extern void si_wci2_init(si_t *sih);
+extern void si_gci_seci_init(si_t *sih);
 extern void si_gci_set_functionsel(si_t *sih, uint32 pin, uint8 fnsel);
 extern uint8 si_gci_get_chipctrlreg_idx(uint32 pin, uint32 *regidx, uint32 *pos);
 extern uint32 si_gci_chipcontrol(si_t *sih, uint reg, uint32 mask, uint32 val);
 extern int si_set_sromctl(si_t *sih, uint32 value);
 extern uint32 si_get_sromctl(si_t *sih);
+
+extern uint16 si_cc_get_reg16(uint32 reg_offs);
+extern uint32 si_cc_get_reg32(uint32 reg_offs);
+extern uint32 si_cc_set_reg32(uint32 reg_offs, uint32 val);
+extern uint32 si_gci_preinit_upd_indirect(uint32 regidx, uint32 setval, uint32 mask);
+
+#define CHIPCTRLREG2 0x2
+#define CHIPCTRLREG3 0x3
+#define CHIPCTRLREG4 0x4
+#define MINRESMASKREG 0x618
+#define CHIPCTRLADDR 0x650
+#define CHIPCTRLDATA 0x654
+#define RSRCTABLEADDR 0x620
+#define RSRCUPDWNTIME 0x628
+#define PMUREG_RESREQ_MASK 0x68c
+
+void
+si_update_masks(si_t *sih);
+
+void
+si_force_islanding(si_t *sih, bool enable);
 
 #endif	/* _siutils_h_ */

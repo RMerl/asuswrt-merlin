@@ -2267,11 +2267,19 @@ start_mt_daapd()
 	if (is_routing_enabled())
 	{
 		system("mt-daapd -m");
-		//doSystem("mDNSResponder %s thehost %s _daap._tcp. 3689 &", nvram_safe_get("lan_ipaddr"), servername);
+#if defined(RTCONFIG_TIMEMACHINE) || defined(RTCONFIG_MDNS)
 		restart_mdns();
+#else
+		doSystem("mDNSResponder %s thehost %s _daap._tcp. 3689 &", nvram_safe_get("lan_ipaddr"), servername);
+#endif
 	}
-	else
+	else{
 		system("mt-daapd");
+#if defined(RTCONFIG_TIMEMACHINE) || defined(RTCONFIG_MDNS)
+	if (pids("avahi-daemon"))
+		restart_mdns();
+#endif
+	}
 
 	if (pids("mt-daapd"))
 	{
@@ -2291,14 +2299,22 @@ stop_mt_daapd()
 		return;
 	}
 
-	//if (!pids("mDNSResponder") && !pids("mt-daapd"))
-	if (!pids("avahi-daemon") && !pids("mt-daapd"))
+	if(!pids("mt-daapd") &&
+#if defined(RTCONFIG_TIMEMACHINE) || defined(RTCONFIG_MDNS)
+			!pids("avahi-daemon")
+#else
+			!pids("mDNSResponder")
+#endif
+			)
 		return;
 
-	//if (pids("mDNSResponder"))
-	//	system("killall mDNSResponder");
+#if defined(RTCONFIG_TIMEMACHINE) || defined(RTCONFIG_MDNS)
 	if (pids("avahi-daemon"))
 		restart_mdns();
+#else
+	if (pids("mDNSResponder"))
+		system("killall mDNSResponder");
+#endif
 
 	if (pids("mt-daapd"))
 		system("killall -SIGKILL mt-daapd");
@@ -2850,29 +2866,24 @@ int __ejusb_main(const char *port_path)
 	disk_list = read_disk_data();
 	if(disk_list == NULL){
 		printf("Can't get any disk's information.\n");
-		return -2;
+		return -1;
 	}
 
-	for(disk_info = disk_list; disk_info != NULL; disk_info = disk_info->next)
-		if(!strcmp(disk_info->port, port_path))
-			break;
+	for(disk_info = disk_list; disk_info != NULL; disk_info = disk_info->next){
+		if(strcmp(port_path, "-1") && strcmp(disk_info->port, port_path))
+			continue;
 
-	if(disk_info == NULL){
-		printf("Can't find the information of the device: %s\n", device_name);
-		free_disk_data(&disk_list);
-		return -3;
-	}
+		memset(nvram_name, 0, 32);
+		sprintf(nvram_name, "usb_path%s_removed", disk_info->port);
+		nvram_set(nvram_name, "1");
 
-	memset(nvram_name, 0, 32);
-	sprintf(nvram_name, "usb_path%s_removed", port_path);
-	nvram_set(nvram_name, "1");
+		for(partition_info = disk_info->partitions; partition_info != NULL; partition_info = partition_info->next){
+			if(partition_info->mount_point != NULL){
+				memset(devpath, 0, 16);
+				sprintf(devpath, "/dev/%s", partition_info->device);
 
-	for(partition_info = disk_info->partitions; partition_info != NULL; partition_info = partition_info->next){
-		if(partition_info->mount_point != NULL){
-			memset(devpath, 0, 16);
-			sprintf(devpath, "/dev/%s", partition_info->device);
-
-			umount_partition(devpath, 0, NULL, NULL, EFH_HP_REMOVE);
+				umount_partition(devpath, 0, NULL, NULL, EFH_HP_REMOVE);
+			}
 		}
 	}
 	free_disk_data(&disk_list);
@@ -3349,6 +3360,8 @@ int diskremove_main(int argc, char *argv[]){
 			|| !flag || strlen(flag) <= 0)
 		return -1;
 _dprintf("diskremove: SUBSYSTEM=%s, DEVICE=%s, FLAG=%s.\n", subsystem, device, flag);
+
+	return 0;
 
 	record_pool_error(device, flag);
 

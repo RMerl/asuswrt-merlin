@@ -1,7 +1,7 @@
 /*
  * NVRAM variable manipulation
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmnvram.h 320657 2012-03-12 20:24:32Z $
+ * $Id: bcmnvram.h 371897 2012-11-29 20:19:17Z $
  */
 
 #ifndef _bcmnvram_h_
@@ -50,6 +50,7 @@ extern char *nvram_default_get(const char *name);
  * platforms.
  */
 extern int nvram_init(void *sih);
+extern int nvram_deinit(void *sih);
 
 /*
  * Append a chunk of nvram variables to the global list
@@ -104,7 +105,7 @@ nvram_safe_get(const char *name)
  *		to match or FALSE otherwise
  */
 static INLINE int
-nvram_match(char *name, char *match)
+nvram_match(const char *name, const char *match)
 {
 	const char *value = nvram_get(name);
 	return (value && !strcmp(value, match));
@@ -118,7 +119,7 @@ nvram_match(char *name, char *match)
  *		equal to invmatch or FALSE otherwise
  */
 static INLINE int
-nvram_invmatch(char *name, char *invmatch)
+nvram_invmatch(const char *name, const char *invmatch)
 {
 	const char *value = nvram_get(name);
 	return (value && strcmp(value, invmatch));
@@ -148,6 +149,15 @@ extern int nvram_unset(const char *name);
  * Commit NVRAM variables to permanent storage. All pointers to values
  * may be invalid after a commit.
  * NVRAM values are undefined after a commit.
+ * @param   nvram_corrupt    true to corrupt nvram, false otherwise.
+ * @return	0 on success and errno on failure
+ */
+extern int nvram_commit_internal(bool nvram_corrupt);
+
+/*
+ * Commit NVRAM variables to permanent storage. All pointers to values
+ * may be invalid after a commit.
+ * NVRAM values are undefined after a commit.
  * @return	0 on success and errno on failure
  */
 extern int nvram_commit(void);
@@ -166,6 +176,7 @@ extern int nvram_getall(char *nvram_buf, int count);
  */
 uint8 nvram_calc_crc(struct nvram_header * nvh);
 
+extern int nvram_space;
 #endif /* _LANGUAGE_ASSEMBLY */
 
 /* The NVRAM version number stored as an NVRAM variable */
@@ -176,7 +187,23 @@ uint8 nvram_calc_crc(struct nvram_header * nvh);
 #define NVRAM_INVALID_MAGIC	0xFFFFFFFF
 #define NVRAM_VERSION		1
 #define NVRAM_HEADER_SIZE	20
+/* This definition is for precommit staging, and will be removed */
+#if (defined(RTCONFIG_NVRAM_64K) || defined(CONFIG_NVRAM_64K))
 #define NVRAM_SPACE		0x10000
+#else
+#define NVRAM_SPACE		0x8000
+#endif
+/* For CFE builds this gets passed in thru the makefile */
+#ifndef MAX_NVRAM_SPACE
+#define MAX_NVRAM_SPACE		0x10000
+#endif
+#if (defined(RTCONFIG_NVRAM_64K) || defined(CONFIG_NVRAM_64K))
+#define DEF_NVRAM_SPACE		0x10000
+#else
+#define DEF_NVRAM_SPACE		0x8000
+#endif
+#define ROM_ENVRAM_SPACE	0x1000
+#define NVRAM_LZMA_MAGIC	0x4c5a4d41	/* 'LZMA' */
 
 #define NVRAM_MAX_VALUE_LEN 255
 #define NVRAM_MAX_PARAM_LEN 64

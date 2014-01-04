@@ -70,6 +70,8 @@ enum {
 	BCM_OL_RESET,
 	BCM_OL_FIFODEL,
 	BCM_OL_MSG_TEST,
+	BCM_OL_MSG_IE_NOTIFICATION_FLAG,
+	BCM_OL_MSG_IE_NOTIFICATION,
 	BCM_OL_MSG_MAX
 };
 
@@ -230,6 +232,16 @@ typedef BWL_PRE_PACKED_STRUCT struct olmsg_nd_setip_t {
 	olmsg_header 		hdr;
 	struct ipv6_addr	host_ip;
 } BWL_POST_PACKED_STRUCT olmsg_nd_setip;
+
+/* Add IE NOTIFICATION STRUCT HERE */
+typedef BWL_PRE_PACKED_STRUCT struct olmsg_ie_notification_enable_t {
+	olmsg_header            hdr;            /* Message Header */
+	struct  ether_addr      BSSID;          /* Associated with BSSID */
+	struct  ether_addr      cur_etheraddr;  /* Current Ethernet Address */
+	uint32                  id;             /* IE Mask for standard IE */
+	uint32                  enable;         /* IE Mask enable/disable flag */
+
+} BWL_POST_PACKED_STRUCT olmsg_ie_notification_enable;
 
 #include <packed_section_end.h>
 

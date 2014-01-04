@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmdefs.h 346153 2012-07-20 07:39:53Z $
+ * $Id: bcmdefs.h 377098 2013-01-04 03:52:54Z $
  */
 
 #ifndef	_bcmdefs_h_
@@ -31,6 +31,9 @@
  */
 #define BCM_REFERENCE(data)	((void)(data))
 
+#ifdef EFI
+#define STATIC_ASSERT(expr)	ASSERT((expr))
+#else
 /* Compile-time assert can be used in place of ASSERT if the expression evaluates
  * to a constant at compile time.
  */
@@ -40,6 +43,7 @@
 	/* Make sure the expression is true. */ \
 	typedef char STATIC_ASSERT_FAIL[(expr) ? 1 : -1]; \
 }
+#endif
 
 /* Reclaiming text and data :
  * The following macros specify special linker sections that can be reclaimed
@@ -236,6 +240,8 @@ typedef struct  {
  * allocate a large number of segments
  */
 #define MAX_DMA_SEGS 16
+#elif defined(linux)
+#define MAX_DMA_SEGS 8
 #else
 #define MAX_DMA_SEGS 4
 #endif
@@ -257,13 +263,17 @@ typedef struct {
 
 #if defined(BCM_RPC_NOCOPY) || defined(BCM_RCP_TXNOCOPY)
 /* add 40 bytes to allow for extra RPC header and info  */
-#define BCMEXTRAHDROOM 220
+#define BCMEXTRAHDROOM 260
 #else /* BCM_RPC_NOCOPY || BCM_RPC_TXNOCOPY */
+#if defined(linux) && defined(__ARM_ARCH_7A__)
+#define BCMEXTRAHDROOM 224
+#else
 #ifdef CTFMAP
 #define BCMEXTRAHDROOM 208
 #else /* CTFMAP */
 #define BCMEXTRAHDROOM 204
 #endif /* CTFMAP */
+#endif /* linux && __ARM_ARCH_7A__ */
 #endif /* BCM_RPC_NOCOPY || BCM_RPC_TXNOCOPY */
 
 /* Packet alignment for most efficient SDIO (can change based on platform) */

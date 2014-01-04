@@ -161,7 +161,7 @@ static int cfe_tryauto_common(cfe_autoboot_method_t *method,
 
     /* okay, go for it. */
 
-    xprintf("-- Loader:%s Filesys:%s Dev:%s File:%s Options:%s\n",
+    xprintf("Loader:%s Filesys:%s Dev:%s File:%s Options:%s\n",
 	    method->ab_loader,la->la_filesys,la->la_device,la->la_filename,la->la_options);
 
     res = cfe_boot(method->ab_loader,&cfe_loadargs);

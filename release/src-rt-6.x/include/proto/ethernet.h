@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ethernet.h 345992 2012-07-19 21:29:37Z $
+ * $Id: ethernet.h 370581 2012-11-22 08:29:04Z $
  */
 
 #ifndef _NET_ETHERNET_H_	    /* use native BSD ethernet.h when available */
@@ -74,13 +74,19 @@
 #define	ETHER_TYPE_IP		0x0800		/* IP */
 #define ETHER_TYPE_ARP		0x0806		/* ARP */
 #define ETHER_TYPE_8021Q	0x8100		/* 802.1Q */
-#define ETHER_TYPE_PPP_SES	0x8864		/* PPPoE Session */
 #define	ETHER_TYPE_IPV6		0x86dd		/* IPv6 */
 #define	ETHER_TYPE_BRCM		0x886c		/* Broadcom Corp. */
 #define	ETHER_TYPE_802_1X	0x888e		/* 802.1x */
+#ifdef PLC
+#define	ETHER_TYPE_88E1		0x88e1		/* GIGLE */
+#define	ETHER_TYPE_8912		0x8912		/* GIGLE */
+#define ETHER_TYPE_GIGLED	0xffff		/* GIGLE */
+#endif /* PLC */
 #define	ETHER_TYPE_802_1X_PREAUTH 0x88c7	/* 802.1x preauthentication */
 #define ETHER_TYPE_WAI		0x88b4		/* WAI */
 #define ETHER_TYPE_89_0D	0x890d		/* 89-0d frame for TDLS */
+
+#define ETHER_TYPE_PPP_SES	0x8864		/* PPPoE Session */
 
 #define ETHER_TYPE_IPV6		0x86dd		/* IPV6 */
 
@@ -145,9 +151,9 @@ BWL_PRE_PACKED_STRUCT struct	ether_addr {
 
 
 /* compare two ethernet addresses - assumes the pointers can be referenced as shorts */
-#define eacmp(a, b)	((((uint16 *)(a))[0] ^ ((uint16 *)(b))[0]) | \
-	                 (((uint16 *)(a))[1] ^ ((uint16 *)(b))[1]) | \
-	                 (((uint16 *)(a))[2] ^ ((uint16 *)(b))[2]))
+#define eacmp(a, b)	((((const uint16 *)(a))[0] ^ ((const uint16 *)(b))[0]) | \
+	                 (((const uint16 *)(a))[1] ^ ((const uint16 *)(b))[1]) | \
+	                 (((const uint16 *)(a))[2] ^ ((const uint16 *)(b))[2]))
 
 #define	ether_cmp(a, b)	eacmp(a, b)
 
@@ -160,6 +166,15 @@ do { \
 } while (0)
 
 #define	ether_copy(s, d) eacopy(s, d)
+
+/* Copy an ethernet address in reverse order */
+#define	ether_rcopy(s, d) \
+do { \
+	((uint16 *)(d))[2] = ((uint16 *)(s))[2]; \
+	((uint16 *)(d))[1] = ((uint16 *)(s))[1]; \
+	((uint16 *)(d))[0] = ((uint16 *)(s))[0]; \
+} while (0)
+
 
 
 static const struct ether_addr ether_bcast = {{255, 255, 255, 255, 255, 255}};
@@ -190,6 +205,8 @@ do { \
 	t = *(struct ether_header *)(s); \
 	*(struct ether_header *)(d) = t; \
 } while (0)
+
+#define  ETHER_ISUCAST(ea) ((((uint8 *)(ea))[0] & 0x01) == 0)
 
 /* This marks the end of a packed structure section. */
 #include <packed_section_end.h>

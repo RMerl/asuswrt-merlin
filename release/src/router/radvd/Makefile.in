@@ -291,10 +291,6 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = 1.2 foreign
-INCLUDES = \
-	-I$(srcdir) \
-	-I.
-
 COMMON_SRC = \
 	defaults.h \
 	includes.h \

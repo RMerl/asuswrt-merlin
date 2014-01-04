@@ -133,6 +133,11 @@ define wlan_cc
 $(filter-out -D% -I%,$1) $(filter -D%,$1) $(filter -I%,$1) $(WLAN_EXTERNAL_CFLAGS)
 endef
 
+# Applies the standard cygpath translation for a path on Cygwin.
+define wlan_cygpath
+$(if $(WLAN_CYGWIN_HOST),$(shell cygpath -m $1),$1)
+endef
+
 ################################################################
 # Standard make variables
 ################################################################
@@ -224,7 +229,7 @@ WLAN_ComponentSrcPathsInUse :=
 $(foreach _path,$(WLAN_ComponentPathsInUse), \
   $(if $(wildcard $(WLAN_TreeBaseA)/$(_path)/$(notdir $(_path)).mk),$(eval include $(WLAN_TreeBaseA)/$(_path)/$(notdir $(_path)).mk)) \
   $(eval $(notdir $(_path))_IncDirs ?= include) \
-  $(eval $(notdir $(_path))_SrcDirs ?= src-rt-6.x) \
+  $(eval $(notdir $(_path))_SrcDirs ?= src) \
   $(eval WLAN_ComponentIncPathsInUse += $(addprefix $(_path)/,$($(notdir $(_path))_IncDirs))) \
   $(eval WLAN_ComponentSrcPathsInUse += $(addprefix $(_path)/,$($(notdir $(_path))_SrcDirs))) \
   $(eval WLAN_ComponentBaseDir_$$(notdir $(_path)) := $$(WLAN_TreeBaseA)/$(_path)) \
@@ -270,14 +275,16 @@ endif
 # Variables of general utility.
 WLAN_Perl := perl
 WLAN_Python := python
+WLAN_WINPFX ?= Z:
+WLAN_WINPFX ?= //broadcom/sjca
 
 # These macros are used to stash an extra copy of generated source files,
 # such that when a source release is made those files can be reconstituted
 # from the stash during builds. Required if the generating tools or inputs
 # are not shipped.
 define wlan_copy_to_gen
-  $(if $(WLAN_COPY_GEN),&& mkdir -pv $(subst $(abspath $2),$(abspath $2/$(WLAN_GenDir)),$(dir $1)) && \
-    cp -pv $1 $(subst $(abspath $2),$(abspath $2/$(WLAN_GenDir)),$1.GEN))
+  $(if $(WLAN_COPY_GEN),&& mkdir -pv $(subst $(abspath $2),$(abspath $2/$(WLAN_GenBaseDir)),$(dir $1)) && \
+    cp -pv $1 $(subst $(abspath $2),$(abspath $2/$(WLAN_GenBaseDir)),$1.GEN))
 endef
 
 ################################################################
@@ -296,15 +303,17 @@ endef
 #   The outermost conditional allows this rule to become a no-op
 # in external settings where there is no XML input file while allowing
 # it to turn back on automatically if an XML file is provided.
-#   Vpath is used to find the XML input because this file is not allowed
+#   A vpath is used to find the XML input because this file is not allowed
 # to be present in external builds. Use of vpath allows it to be "poached"
-# from the internal build if necessary.
+# from the internal build as necessary.
 #   There are a few ways to set ClmCompiler flags: passing them as the $3
 # parameter (preferred) or by overriding CLMCOMPDEFFLAGS. Additionally,
 # when the make variable CLM_TYPE is defined it points to a config file
 # for the compiler. The CLMCOMPEXTFLAGS variable contains "external flags"
 # which must be present for all external builds. It can be forced to "" for
 # debug builds.
+# Note: the .c file is listed with and without a path due to the way the
+# Linux kernel Makefiles generate .depend data.
 #   The undocumented $5 parameter has been used for dongle testing
 # against variant XML but its semantics are subject to change.
 CLMCOMPDEFFLAGS ?= --region '\#a/0' --region '\#r/0' --full_set
@@ -313,14 +322,15 @@ define WLAN_GenClmCompilerRule
 $(eval\
 .PHONY: clm_compiled clm_clean
 vpath wlc_clm_data$4.c $1 $$(abspath $1)
-ifneq (,$(wildcard $(addsuffix /wl/clm/private/wlc_clm_data.xml,$2 $2/../../src-rt-6.x $2/../../../src-rt-6.x)))
-  vpath wlc_clm_data.xml $(addsuffix /wl/clm/private,$5 $2 $2/../../src-rt-6.x $2/../../../src-rt-6.x)
-  $1/wlc_clm_data$4.c: wlc_clm_data.xml $$(if $$(CLM_TYPE),$2/wl/clm/types/$$(CLM_TYPE).clm) ; \
+ifneq (,$(wildcard $(addsuffix /wl/clm/private/wlc_clm_data.xml,$2 $2/../../src $2/../../../src)))
+  vpath wlc_clm_data.xml $(wildcard $(addsuffix /wl/clm/private,$5 $2 $2/../../src $2/../../../src))
+  vpath %.clm $(addsuffix /wl/clm/types,$2 $2/../../src $2/../../../src)
+  $$(sort $1/wlc_clm_data$4.c ./wlc_clm_data$4.c): wlc_clm_data.xml $$(if $$(CLM_TYPE),$$(CLM_TYPE).clm) ; \
     $$(strip $$(abspath $$(<D)/../../../tools/build/ClmCompiler) \
-      $$(if $$(CLM_TYPE),--config_file $$(abspath $$(<D)/../types/$$(CLM_TYPE).clm) $3,$$(if $3,$3,$$(CLMCOMPDEFFLAGS))) \
+      $$(if $$(CLM_TYPE),--config_file $$(lastword $$^) $3,$$(if $3,$3,$$(CLMCOMPDEFFLAGS))) \
       $(CLMCOMPEXTFLAGS) $$< $$@ $$(call wlan_copy_to_gen,$$@,$2))
 else
-  vpath %.GEN $(subst $(abspath $2),$(abspath $2/$(WLAN_GenDir)),$1) $(sort $(patsubst %/,%,$(dir $(wildcard $(subst $(abspath $2),$(abspath $2/$(WLAN_GenDir)),$(dir $1))*/*.GEN))))
+  vpath %.GEN $(subst $(abspath $2),$(abspath $2/$(WLAN_GenBaseDir)),$1) $(sort $(patsubst %/,%,$(dir $(wildcard $(subst $(abspath $2),$(abspath $2/$(WLAN_GenBaseDir)),$(dir $1))*/*.GEN))))
   $1/%: %.GEN ; cp -pv $$< $$@
 endif
   clm_compiled: $1/wlc_clm_data$4.c
@@ -328,9 +338,6 @@ endif
   CLM_DATA_FILES += $1/wlc_clm_data$4.c
 )
 endef
-
-# Backward compatibility.
-GenClmCompilerRule = $(WLAN_GenClmCompilerRule)
 
 ################################################################
 

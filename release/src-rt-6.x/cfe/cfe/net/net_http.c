@@ -58,6 +58,7 @@
 #include "lib_printf.h"
 #include "lib_scanf.h"
 #include <bcmendian.h>
+#include <bcmnvram.h>
 #include "net_ebuf.h"
 #include "net_ether.h"
 
@@ -74,7 +75,6 @@
 
 #include "net_http.h"
 #include <trxhdr.h>
-#include <bcmnvram.h>
 
 #ifndef	NULL
 #define NULL (void *)0
@@ -164,12 +164,6 @@ extern int ui_docommands(char *buf);
 extern int flash_validate(uint8_t *ptr, int bufsize, int insize, uint8_t **outptr, int *outsize);
 extern void ui_get_flash_buf(uint8_t **bufptr, int *bufsize);
 extern unsigned int flash_crc32(const unsigned char *databuf, unsigned int  datalen);
-
-#ifdef _TCP_DEBUG_
-int _tcp_dumpflags = 1;
-#else
-int _tcp_dumpflags = 0;
-#endif	/* _TCP_DEBUG */
 
 /*
  * _tcp_init(ipi,ref)
@@ -622,9 +616,10 @@ httpd_appcall(struct httpd_state *hs)
 		/* Send mini-web index page out */
 		httpd_page_init(hs);
 		httpd_printf(hs,
-			/*"<table border=0 cellpadding=0 cellspacing=0 bgcolor=#4D595D>\r\n"
+#if 0
+			"<table border=0 cellpadding=0 cellspacing=0 bgcolor=#306498>\r\n"
 			"<tr><td height=57 width=600>\r\n"
-			"<font face=Arial size=6 color=#ffffff>ASUSTeK - CFE miniWeb Server</font>\r\n"
+			"<font face=Arial size=6 color=#ffffff>Broadcom - CFE miniWeb Server</font>\r\n"
 			"</td></tr>\r\n"
 			"</table><br>\r\n"
 			"<form action=f2.htm method=post encType=multipart/form-data>\r\n"
@@ -634,7 +629,9 @@ httpd_appcall(struct httpd_state *hs)
 			"</form>\r\n"
 			"<form action=do.htm method=get>\r\n"
 			"<br>Command:<br><a href=do.htm?cmd=reboot>Reboot.</a>\r\n"
-			"<br><a href=do.htm?cmd=nvram+erase>Restore default NVRAM values.</a>\r\n"*/
+			"<br><a href=do.htm?cmd=nvram+erase>Restore default NVRAM values.</a>\r\n"
+			"</form>\r\n");
+#else
 			"<br><br>\r\n"	
 			"<form action=f2.htm method=post encType=multipart/form-data>\r\n"
 			"<table width=470px align=center cellspacing=5px style=margin-top:20px;margin-bottom:20px;font-family:Segoe UI, Arial, sans-serif>\r\n"
@@ -654,9 +651,8 @@ httpd_appcall(struct httpd_state *hs)
 			"<div style=background-color:A6A6A6;font-family:Segoe UI, Arial, sans-serif; align=center>\r\n"
 			"<a style=color:404040 href=do.htm?cmd=reboot>Reboot</a>&nbsp&nbsp&nbsp&nbsp\r\n"
 			"<a style=color:404040 href=do.htm?cmd=nvram+erase>Restore default NVRAM values</a>\r\n"
-			"</div></form>\r\n",
-			nvram_get("model")
-			);
+			"</div></form>\r\n", nvram_get("model"));
+#endif
 		httpd_page_end(hs, 0, 0);
 		return 0;
 

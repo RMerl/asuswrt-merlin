@@ -1,7 +1,7 @@
 /*
  * NVRAM variable manipulation (common)
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -123,6 +123,14 @@ BCMINITFN(nvram_rehash)(struct nvram_header *header)
 {
 	char buf[] = "0xXXXXXXXX", *name, *value, *end, *eq;
 	struct nvram_header *hdrptr;
+	unsigned long nvram_space = DEF_NVRAM_SPACE;
+
+	if (nvram_space_str)
+		nvram_space =  bcm_strtoul(nvram_space_str, NULL, 0);
+
+	if (nvram_space < DEF_NVRAM_SPACE)
+		nvram_space = DEF_NVRAM_SPACE;
+
 	/* (Re)initialize hash table */
 	nvram_free();
 
@@ -130,7 +138,7 @@ BCMINITFN(nvram_rehash)(struct nvram_header *header)
 
 	/* Parse and set "name=value\0 ... \0\0" */
 	name = (char *) &hdrptr[1];
-	end = (char *) hdrptr + NVRAM_SPACE - 2;
+	end = (char *) hdrptr + nvram_space - 2;
 	end[0] = end[1] = '\0';
 
 again:
@@ -189,13 +197,21 @@ static int
 BCMINITFN(nvram_rehash)(struct nvram_header *header)
 {
 	char buf[] = "0xXXXXXXXX", *name, *value, *end, *eq;
+	char *nvram_space_str = _nvram_get("nvram_space");
+	unsigned long nvram_space = DEF_NVRAM_SPACE;
+
+	if (nvram_space_str)
+		nvram_space =  bcm_strtoul(nvram_space_str, NULL, 0);
+
+	if (nvram_space < DEF_NVRAM_SPACE)
+		nvram_space = DEF_NVRAM_SPACE;
 
 	/* (Re)initialize hash table */
 	nvram_free();
 
 	/* Parse and set "name=value\0 ... \0\0" */
 	name = (char *) &header[1];
-	end = (char *) header + NVRAM_SPACE - 2;
+	end = (char *) header + nvram_space - 2;
 	end[0] = end[1] = '\0';
 	for (; *name; name = value + strlen(value) + 1) {
 		if (!(eq = strchr(name, '=')))
@@ -347,11 +363,19 @@ BCMINITFN(_nvram_commit)(struct nvram_header *header)
 	struct nvram_tuple *t;
 	struct nvram_header *hdrptr;
 	int starti, next;
+	char *nvram_space_str = _nvram_get("nvram_space");
+	unsigned long nvram_space = DEF_NVRAM_SPACE;
+
+	if (nvram_space_str)
+		nvram_space =  bcm_strtoul(nvram_space_str, NULL, 0);
+
+	if (nvram_space < DEF_NVRAM_SPACE)
+		nvram_space = DEF_NVRAM_SPACE;
 
 	hdrptr=header;
-	bzero(hdrptr, NVRAM_SPACE);
+	bzero(hdrptr, nvram_space);
 	/* Leave space for a double NUL at the end */
-	end = (char *) header + NVRAM_SPACE - 2;
+	end = (char *) header + nvram_space - 2;
 	starti=0;
 	next = 0;
 
@@ -385,7 +409,7 @@ again:
 				break;
 			ptr += sprintf(ptr, "%s=%s", t->name, t->value) + 1;
 		}
-		if(starti==0 && (ptr-(char *)hdrptr)>(NVRAM_SPACE/2)) {
+		if(starti==0 && (ptr-(char *)hdrptr)>(nvram_space/2)) {
 			starti = i+1;
 printk("next hash table: %x\n", i);
 			break;
@@ -420,6 +444,14 @@ BCMINITFN(_nvram_commit)(struct nvram_header *header)
 	char *ptr, *end;
 	int i;
 	struct nvram_tuple *t;
+	char *nvram_space_str = _nvram_get("nvram_space");
+	unsigned long nvram_space = DEF_NVRAM_SPACE;
+
+	if (nvram_space_str)
+		nvram_space =  bcm_strtoul(nvram_space_str, NULL, 0);
+
+	if (nvram_space < DEF_NVRAM_SPACE)
+		nvram_space = DEF_NVRAM_SPACE;
 
 	/* Regenerate header */
 	header->magic = NVRAM_MAGIC;
@@ -441,10 +473,10 @@ BCMINITFN(_nvram_commit)(struct nvram_header *header)
 
 	/* Clear data area */
 	ptr = (char *) header + sizeof(struct nvram_header);
-	bzero(ptr, NVRAM_SPACE - sizeof(struct nvram_header));
+	bzero(ptr, nvram_space - sizeof(struct nvram_header));
 
 	/* Leave space for a double NUL at the end */
-	end = (char *) header + NVRAM_SPACE - 2;
+	end = (char *) header + nvram_space - 2;
 
 	/* Write out all tuples */
 	for (i = 0; i < ARRAYSIZE(nvram_hash); i++) {
@@ -477,16 +509,16 @@ BCMINITFN(_nvram_init)(void *sih)
 	int ret;
 
 
-	if (!(header = (struct nvram_header *) MALLOC(si_osh(sih), NVRAM_SPACE))) {
+	if (!(header = (struct nvram_header *) MALLOC(si_osh(sih), MAX_NVRAM_SPACE))) {
 		printf("nvram_init: out of memory\n");
 		return -12; /* -ENOMEM */
 	}
-	printf("_nvram_init: allocat size= %d\n", NVRAM_SPACE);
+
 	if ((ret = _nvram_read(header)) == 0 &&
 	    header->magic == NVRAM_MAGIC)
 		nvram_rehash(header);
 
-	MFREE(si_osh(sih), header, NVRAM_SPACE);
+	MFREE(si_osh(sih), header, MAX_NVRAM_SPACE);
 	return ret;
 }
 

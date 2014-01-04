@@ -1,0 +1,4900 @@
+------------------------------------------------------------------------
+r679 | remi | 2011-07-20 18:23:27 +0300 (Wed, 20 Jul 2011) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Check for errors when dropping privileges
+
+------------------------------------------------------------------------
+r678 | remi | 2011-05-28 17:01:38 +0300 (Sat, 28 May 2011) | 4 lines
+Changed paths:
+   M /trunk/doc/ndisc6.8
+   M /trunk/doc/rdisc6.8
+
+Document rdisc6 and ndisc6 return values
+
+Patch by Andrew O. Shadoura <bugzilla@tut.by> (via Debian BTS)
+
+------------------------------------------------------------------------
+r677 | linkfanel | 2011-04-16 22:09:20 +0300 (Sat, 16 Apr 2011) | 2 lines
+Changed paths:
+   M /trunk/compat/ppoll.c
+
+ppoll(): fix typo
+
+------------------------------------------------------------------------
+r676 | remi | 2011-03-19 11:48:38 +0200 (Sat, 19 Mar 2011) | 2 lines
+Changed paths:
+   M /trunk/compat/ppoll.c
+
+ppoll(): handle NULL timeout parameter
+
+------------------------------------------------------------------------
+r675 | linkfanel | 2011-02-21 19:03:29 +0200 (Mon, 21 Feb 2011) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Fix integer overflow of RDNSS lifetime (Debian #605808)
+
+------------------------------------------------------------------------
+r674 | remi | 2011-02-21 18:37:16 +0200 (Mon, 21 Feb 2011) | 2 lines
+Changed paths:
+   M /trunk/po/cs.po
+   M /trunk/po/de.po
+
+Update Czech and German translations
+
+------------------------------------------------------------------------
+r673 | remi | 2011-02-20 16:00:35 +0200 (Sun, 20 Feb 2011) | 2 lines
+Changed paths:
+   M /trunk/po/cs.po
+   M /trunk/po/de.po
+   M /trunk/po/en.po
+   M /trunk/po/ndisc6.pot
+
+Sync PO files
+
+------------------------------------------------------------------------
+r672 | remi | 2011-02-20 16:00:04 +0200 (Sun, 20 Feb 2011) | 2 lines
+Changed paths:
+   M /trunk/po/fr.po
+
+Update french translation
+
+------------------------------------------------------------------------
+r671 | remi | 2011-02-20 15:50:33 +0200 (Sun, 20 Feb 2011) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+News
+
+------------------------------------------------------------------------
+r670 | remi | 2011-02-20 15:48:34 +0200 (Sun, 20 Feb 2011) | 2 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+Print prefix informations flags (Debian #605808)
+
+------------------------------------------------------------------------
+r669 | remi | 2011-02-20 15:38:25 +0200 (Sun, 20 Feb 2011) | 2 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+Add RA proxy bit (RFC4389)
+
+------------------------------------------------------------------------
+r668 | remi | 2011-02-20 15:23:21 +0200 (Sun, 20 Feb 2011) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+Bump version
+
+------------------------------------------------------------------------
+r666 | remi | 2011-02-20 15:21:16 +0200 (Sun, 20 Feb 2011) | 2 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+Print the RA home agent flag
+
+------------------------------------------------------------------------
+r665 | remi | 2010-11-16 21:15:41 +0200 (Tue, 16 Nov 2010) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+News
+
+------------------------------------------------------------------------
+r664 | remi | 2010-11-16 21:15:36 +0200 (Tue, 16 Nov 2010) | 2 lines
+Changed paths:
+   M /trunk/doc/Makefile.am
+   D /trunk/doc/isatapd.8
+   M /trunk/src/Makefile.am
+   D /trunk/src/isatapd.c
+   D /trunk/src/isatapd.h
+
+Remove the isatap daemon
+
+------------------------------------------------------------------------
+r663 | remi | 2010-11-16 21:14:34 +0200 (Tue, 16 Nov 2010) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+Bump version
+
+------------------------------------------------------------------------
+r661 | remi | 2010-10-31 22:59:03 +0200 (Sun, 31 Oct 2010) | 2 lines
+Changed paths:
+   M /trunk/po/cs.po
+   M /trunk/po/de.po
+   M /trunk/po/en.po
+   M /trunk/po/fr.po
+   M /trunk/po/ndisc6.pot
+
+Update PO files
+
+------------------------------------------------------------------------
+r660 | remi | 2010-10-31 22:58:51 +0200 (Sun, 31 Oct 2010) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+New version
+
+------------------------------------------------------------------------
+r659 | remi | 2010-10-31 22:57:48 +0200 (Sun, 31 Oct 2010) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+News
+
+------------------------------------------------------------------------
+r658 | remi | 2010-10-31 22:56:30 +0200 (Sun, 31 Oct 2010) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+   M /trunk/README
+   M /trunk/configure.ac
+   M /trunk/doc/addr2name.1
+   M /trunk/doc/dnssort.1
+   M /trunk/doc/ndisc6.8
+   M /trunk/doc/rdisc6.8
+   M /trunk/doc/rltraceroute6.8
+   M /trunk/doc/tcpspray.1
+   M /trunk/m4/sockaddr.m4
+
+Update my mail address
+
+------------------------------------------------------------------------
+r657 | remi | 2010-10-31 22:51:32 +0200 (Sun, 31 Oct 2010) | 2 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+rdisc: fix alignments problems on ARM and SPARC
+
+------------------------------------------------------------------------
+r656 | remi | 2010-05-05 22:31:09 +0300 (Wed, 05 May 2010) | 2 lines
+Changed paths:
+   M /trunk/po/de.po
+
+german update
+
+------------------------------------------------------------------------
+r655 | remi | 2010-05-05 22:27:36 +0300 (Wed, 05 May 2010) | 2 lines
+Changed paths:
+   M /trunk/po/cs.po
+
+Czech update
+
+------------------------------------------------------------------------
+r654 | remi | 2010-05-01 11:12:56 +0300 (Sat, 01 May 2010) | 2 lines
+Changed paths:
+   M /trunk/po/en.po
+
+Update American translation again
+
+------------------------------------------------------------------------
+r653 | remi | 2010-05-01 11:12:10 +0300 (Sat, 01 May 2010) | 2 lines
+Changed paths:
+   M /trunk/po/fr.po
+
+Update French translation (for good this time)
+
+------------------------------------------------------------------------
+r652 | remi | 2010-05-01 11:11:57 +0300 (Sat, 01 May 2010) | 2 lines
+Changed paths:
+   M /trunk/po/ndisc6.pot
+
+Sync PO master (again...)
+
+------------------------------------------------------------------------
+r651 | remi | 2010-05-01 11:08:53 +0300 (Sat, 01 May 2010) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Fix plural handling
+
+------------------------------------------------------------------------
+r650 | remi | 2010-05-01 11:08:34 +0300 (Sat, 01 May 2010) | 2 lines
+Changed paths:
+   M /trunk/src/tcpspray.c
+
+Use C99 format modifiers instead of casts
+
+------------------------------------------------------------------------
+r649 | remi | 2010-05-01 10:52:43 +0300 (Sat, 01 May 2010) | 2 lines
+Changed paths:
+   M /trunk/po/en.po
+
+Udpate American English locale
+
+------------------------------------------------------------------------
+r648 | remi | 2010-05-01 10:50:58 +0300 (Sat, 01 May 2010) | 2 lines
+Changed paths:
+   M /trunk/po/cs.po
+   M /trunk/po/de.po
+   M /trunk/po/en.po
+   M /trunk/po/ndisc6.pot
+
+Sync PO again...
+
+------------------------------------------------------------------------
+r647 | remi | 2010-05-01 10:50:45 +0300 (Sat, 01 May 2010) | 2 lines
+Changed paths:
+   M /trunk/po/fr.po
+
+Update French locale
+
+------------------------------------------------------------------------
+r646 | remi | 2010-05-01 10:49:06 +0300 (Sat, 01 May 2010) | 2 lines
+Changed paths:
+   M /trunk/src/addrinfo.c
+
+Typo
+
+------------------------------------------------------------------------
+r645 | remi | 2010-05-01 10:45:34 +0300 (Sat, 01 May 2010) | 2 lines
+Changed paths:
+   M /trunk/po/cs.po
+   M /trunk/po/de.po
+   M /trunk/po/en.po
+   M /trunk/po/fr.po
+   M /trunk/po/ndisc6.pot
+
+Resync PO files
+
+------------------------------------------------------------------------
+r644 | remi | 2010-05-01 10:40:37 +0300 (Sat, 01 May 2010) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+News
+
+------------------------------------------------------------------------
+r643 | remi | 2010-05-01 10:38:31 +0300 (Sat, 01 May 2010) | 4 lines
+Changed paths:
+   M /trunk/po/LINGUAS
+   A /trunk/po/de.po
+
+Initial german translation
+
+Credits to Chris Leick, via Debian BTS
+
+------------------------------------------------------------------------
+r642 | remi | 2010-04-08 19:05:18 +0300 (Thu, 08 Apr 2010) | 4 lines
+Changed paths:
+   M /trunk/po/cs.po
+
+Czech translation fix
+
+Credits to Petr Pisar <petr.pisar@atlas.cz>
+
+------------------------------------------------------------------------
+r641 | remi | 2010-01-24 10:35:43 +0200 (Sun, 24 Jan 2010) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+
+Silent rules for src/
+
+------------------------------------------------------------------------
+r640 | remi | 2010-01-24 10:32:21 +0200 (Sun, 24 Jan 2010) | 2 lines
+Changed paths:
+   M /trunk/doc/Makefile.am
+   M /trunk/rdnssd/Makefile.am
+
+silent rules for sed
+
+------------------------------------------------------------------------
+r639 | remi | 2010-01-24 10:27:53 +0200 (Sun, 24 Jan 2010) | 2 lines
+Changed paths:
+   M /trunk/Makefile.am
+   M /trunk/configure.ac
+
+Enable silent rules and automake -Wall
+
+------------------------------------------------------------------------
+r638 | remi | 2010-01-24 10:25:00 +0200 (Sun, 24 Jan 2010) | 2 lines
+Changed paths:
+   M /trunk/Makefile.am
+   M /trunk/configure.ac
+
+Move automake options to Makefile.am
+
+------------------------------------------------------------------------
+r637 | remi | 2010-01-24 10:20:39 +0200 (Sun, 24 Jan 2010) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+   M /trunk/configure.ac
+
+Bump version
+
+------------------------------------------------------------------------
+r636 | remi | 2010-01-24 10:18:41 +0200 (Sun, 24 Jan 2010) | 2 lines
+Changed paths:
+   M /trunk/doc/addr2name.1
+
+Document --config
+
+------------------------------------------------------------------------
+r635 | remi | 2010-01-24 10:16:52 +0200 (Sun, 24 Jan 2010) | 2 lines
+Changed paths:
+   M /trunk/src/addrinfo.c
+
+Add --config option to addr2name
+
+------------------------------------------------------------------------
+r634 | linkfanel | 2009-11-25 23:31:20 +0200 (Wed, 25 Nov 2009) | 3 lines
+Changed paths:
+   M /trunk/rdnssd/Makefile.am
+   M /trunk/rdnssd/merge-hook.in
+
+Replace the Perl merge hook by one written in POSIX shell, free of
+utilities stored in /usr
+
+------------------------------------------------------------------------
+r632 | remi | 2009-08-04 21:42:37 +0300 (Tue, 04 Aug 2009) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+News for 0.9.9
+
+------------------------------------------------------------------------
+r631 | remi | 2009-08-04 21:39:39 +0300 (Tue, 04 Aug 2009) | 2 lines
+Changed paths:
+   M /trunk/po/cs.po
+   M /trunk/po/en.po
+   M /trunk/po/fr.po
+   M /trunk/po/ndisc6.pot
+
+Sync PO files
+
+------------------------------------------------------------------------
+r630 | remi | 2009-08-04 21:38:40 +0300 (Tue, 04 Aug 2009) | 2 lines
+Changed paths:
+   M /trunk/AUTHORS
+
+Update authors (we have no thanks file)
+
+------------------------------------------------------------------------
+r629 | remi | 2009-08-04 21:37:49 +0300 (Tue, 04 Aug 2009) | 2 lines
+Changed paths:
+   M /trunk/AUTHORS
+
+Update my email address
+
+------------------------------------------------------------------------
+r628 | remi | 2009-08-04 21:37:13 +0300 (Tue, 04 Aug 2009) | 2 lines
+Changed paths:
+   M /trunk/doc/Makefile.am
+   M /trunk/src/Makefile.am
+
+Distribute missing isatapd files
+
+------------------------------------------------------------------------
+r627 | remi | 2009-08-04 21:34:27 +0300 (Tue, 04 Aug 2009) | 4 lines
+Changed paths:
+   M /trunk/doc/Makefile.am
+   A /trunk/doc/isatapd.8
+   M /trunk/src/Makefile.am
+   A /trunk/src/isatapd.c
+   A /trunk/src/isatapd.h
+
+isatapd for Linux
+
+Patch by Yin Kwong-Sang and Fred Templin, the Boeing Company
+
+------------------------------------------------------------------------
+r626 | remi | 2008-12-19 18:40:04 +0200 (Fri, 19 Dec 2008) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+   M /trunk/po/LINGUAS
+   A /trunk/po/cs.po
+
+Czech translation by Petr Pisar
+
+------------------------------------------------------------------------
+r625 | remi | 2008-07-11 20:10:23 +0300 (Fri, 11 Jul 2008) | 4 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+Use PRIu8 as appropriate
+
+Surprisingly enough, gettext does handle this correctly (since 2002!)
+
+------------------------------------------------------------------------
+r624 | remi | 2008-05-01 17:26:09 +0300 (Thu, 01 May 2008) | 2 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+   M /trunk/src/tcpspray.c
+   M /trunk/src/trace-icmp.c
+   M /trunk/src/trace-tcp.c
+   M /trunk/src/trace-udp.c
+   M /trunk/src/traceroute.c
+
+Fix stdint.h includes
+
+------------------------------------------------------------------------
+r623 | remi | 2008-05-01 17:08:21 +0300 (Thu, 01 May 2008) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+Bump version
+
+------------------------------------------------------------------------
+r621 | remi | 2008-05-01 15:50:28 +0300 (Thu, 01 May 2008) | 2 lines
+Changed paths:
+   M /trunk/po/en.po
+   M /trunk/po/fr.po
+   M /trunk/po/ndisc6.pot
+
+Update PO files
+
+------------------------------------------------------------------------
+r620 | remi | 2008-04-24 23:33:56 +0300 (Thu, 24 Apr 2008) | 3 lines
+Changed paths:
+   M /trunk/NEWS
+   M /trunk/src/ndisc.c
+
+rdisc6: set unicast hop limit to 255 as well for ISATAP support
+Issue pointed out by Fred L. Templin.
+
+------------------------------------------------------------------------
+r619 | remi | 2008-04-24 20:15:22 +0300 (Thu, 24 Apr 2008) | 3 lines
+Changed paths:
+   M /trunk/src/trace-icmp.c
+
+Don't set checksum coverage on ICMPv6 socket.
+This violates RFC3542, and is not needed anyway.
+
+------------------------------------------------------------------------
+r618 | remi | 2008-04-24 20:13:07 +0300 (Thu, 24 Apr 2008) | 3 lines
+Changed paths:
+   M /trunk/rdnssd/icmp.c
+
+Don't set checksum coverage on ICMPv6 socket.
+This violates RFC3542, and is not needed anyway.
+
+------------------------------------------------------------------------
+r617 | remi | 2008-04-24 20:12:58 +0300 (Thu, 24 Apr 2008) | 3 lines
+Changed paths:
+   M /trunk/ezirad/ezirad.c
+
+Don't set checksum coverage on ICMPv6 socket.
+This violates RFC3542, and is not needed anyway.
+
+------------------------------------------------------------------------
+r616 | remi | 2008-04-24 20:12:17 +0300 (Thu, 24 Apr 2008) | 2 lines
+Changed paths:
+   M /trunk/src/trace-udp.c
+
+Fix incorrent double negation
+
+------------------------------------------------------------------------
+r615 | remi | 2008-03-23 11:56:38 +0200 (Sun, 23 Mar 2008) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+Some news
+
+------------------------------------------------------------------------
+r614 | remi | 2008-03-23 11:54:25 +0200 (Sun, 23 Mar 2008) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+ndisc6 already has a replacement for monotonic time - use it
+
+------------------------------------------------------------------------
+r613 | remi | 2008-03-23 11:50:17 +0200 (Sun, 23 Mar 2008) | 2 lines
+Changed paths:
+   M /trunk/compat/fixups.h
+
+Fix for braindead OSX inet6 support
+
+------------------------------------------------------------------------
+r612 | remi | 2008-03-23 11:39:45 +0200 (Sun, 23 Mar 2008) | 3 lines
+Changed paths:
+   M /trunk/compat/fixups.h
+   A /trunk/compat/ppoll.c
+   M /trunk/configure.ac
+
+Add ppoll() replacement - this is a GNU extension
+(and it might be a mess if POSIX ever standardizes a different prototype)
+
+------------------------------------------------------------------------
+r611 | remi | 2008-03-23 11:17:49 +0200 (Sun, 23 Mar 2008) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Add missing #includes pointed out by S?\195?\169bastien Vincent
+
+------------------------------------------------------------------------
+r610 | remi | 2008-03-23 11:15:00 +0200 (Sun, 23 Mar 2008) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/icmp.c
+
+BSD does not define SOL_*, copy work-around from src/traceroute.c
+
+------------------------------------------------------------------------
+r609 | remi | 2008-03-23 11:12:19 +0200 (Sun, 23 Mar 2008) | 2 lines
+Changed paths:
+   M /trunk/compat/fixups.h
+   A /trunk/compat/inet6_rth_add.c (from /trunk/src/inet6rth.h:605)
+   M /trunk/configure.ac
+   M /trunk/src/Makefile.am
+   D /trunk/src/inet6rth.h
+   M /trunk/src/traceroute.c
+
+More inet6_rth_* replacements to libcompat
+
+------------------------------------------------------------------------
+r608 | remi | 2008-03-22 23:57:51 +0200 (Sat, 22 Mar 2008) | 3 lines
+Changed paths:
+   A /trunk/compat/fdatasync.c
+   M /trunk/compat/fixups.h
+   M /trunk/configure.ac
+
+Replace fdatasync
+(copied straight from Miredo)
+
+------------------------------------------------------------------------
+r607 | remi | 2008-03-22 23:55:24 +0200 (Sat, 22 Mar 2008) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/Makefile.am
+   M /trunk/src/Makefile.am
+
+Use libcompat (even though it's currently empty)
+
+------------------------------------------------------------------------
+r606 | remi | 2008-03-22 23:50:33 +0200 (Sat, 22 Mar 2008) | 3 lines
+Changed paths:
+   M /trunk/Makefile.am
+   A /trunk/compat
+   A /trunk/compat/Makefile.am
+   A /trunk/compat/dummy.c
+   A /trunk/compat/fixups.h
+   M /trunk/configure.ac
+
+Infrastructure to use AC_REPLACE_FUNC
+(shamelessly stolen from Miredo)
+
+------------------------------------------------------------------------
+r605 | remi | 2008-03-16 19:34:47 +0200 (Sun, 16 Mar 2008) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+Bump version number
+
+------------------------------------------------------------------------
+r604 | remi | 2008-03-16 19:34:07 +0200 (Sun, 16 Mar 2008) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Fix undefined behavior if the interface of a link-local server vanishes early
+
+------------------------------------------------------------------------
+r602 | remi | 2008-03-05 22:38:10 +0200 (Wed, 05 Mar 2008) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+Fix news
+
+------------------------------------------------------------------------
+r601 | remi | 2008-03-05 22:37:54 +0200 (Wed, 05 Mar 2008) | 2 lines
+Changed paths:
+   M /trunk/po/en.po
+   M /trunk/po/fr.po
+   M /trunk/po/ndisc6.pot
+
+Sync PO files
+
+------------------------------------------------------------------------
+r600 | remi | 2008-02-13 23:11:14 +0200 (Wed, 13 Feb 2008) | 3 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Hack to avoid resetting resolv.conf when rdnssd is restarted.
+It would be more appropriate to query the routers manually at startup...
+
+------------------------------------------------------------------------
+r599 | remi | 2008-02-13 23:04:47 +0200 (Wed, 13 Feb 2008) | 4 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Handle the corner case whereby the current time is already beyond the deadline.
+(fix integer overflow).
+
+
+------------------------------------------------------------------------
+r598 | remi | 2008-02-13 22:58:27 +0200 (Wed, 13 Feb 2008) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+   M /trunk/rdnssd/rdnssd.c
+
+Be consistent: no merge hook at exit => no updating resolv.conf either
+
+------------------------------------------------------------------------
+r597 | remi | 2008-02-13 22:57:00 +0200 (Wed, 13 Feb 2008) | 3 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Handle ppoll() errors:
+EINTR is ok. ENOMEM is a fatal error. EINVAL, EFAULT, EBADF are bugs.
+
+------------------------------------------------------------------------
+r596 | remi | 2008-02-13 22:49:26 +0200 (Wed, 13 Feb 2008) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Cleanup: manager() does not need to know the worker PID, nor that it's its children
+
+------------------------------------------------------------------------
+r595 | remi | 2008-02-11 19:57:39 +0200 (Mon, 11 Feb 2008) | 8 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Do not rerun the merge hook upon exit.
+Experience shows that does more harm than good.
+If the system is going down, that is useless.
+If rdnssd is restarted, or the system is going down for maintenance, that may screw up the network connectivity.
+
+Simplify waiting on the pipe from the manager.
+Also fixes a very minor and extremely unlikely race condition whereby the worker unexpectdtedly dies while writing to the pipe (then revents should be POLLIN|POLLHUP and we still want to run the merge hook one last time)
+
+------------------------------------------------------------------------
+r594 | remi | 2008-02-11 19:43:36 +0200 (Mon, 11 Feb 2008) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Fix missing waitpid() return value check
+
+------------------------------------------------------------------------
+r593 | remi | 2008-02-11 19:37:57 +0200 (Mon, 11 Feb 2008) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+unlink before close is confusing. Comment it.
+
+------------------------------------------------------------------------
+r592 | remi | 2008-02-09 15:28:13 +0200 (Sat, 09 Feb 2008) | 3 lines
+Changed paths:
+   M /trunk/doc/Makefile.am
+
+doc: Install relative rather than absolute symlinks
+(as pointed out by Jason Tibbitts on Fedora Bugzilla)
+
+------------------------------------------------------------------------
+r591 | remi | 2008-02-09 15:21:31 +0200 (Sat, 09 Feb 2008) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+Bump version
+
+------------------------------------------------------------------------
+r590 | remi | 2008-02-09 15:00:32 +0200 (Sat, 09 Feb 2008) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+
+Warn about disable-suid-install. I thought I did that already.
+
+------------------------------------------------------------------------
+r588 | remi | 2008-02-09 14:06:50 +0200 (Sat, 09 Feb 2008) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+   M /trunk/po/en.po
+   M /trunk/po/fr.po
+   M /trunk/po/ndisc6.pot
+
+More news and sync PO files
+
+------------------------------------------------------------------------
+r587 | remi | 2008-02-08 17:50:20 +0200 (Fri, 08 Feb 2008) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+News for 0.9.6
+
+------------------------------------------------------------------------
+r586 | remi | 2008-02-08 17:50:04 +0200 (Fri, 08 Feb 2008) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/Makefile.am
+
+Fix distcheck
+
+------------------------------------------------------------------------
+r585 | remi | 2008-02-08 17:45:22 +0200 (Fri, 08 Feb 2008) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/merge-hook.in
+
+Typo
+
+------------------------------------------------------------------------
+r584 | remi | 2008-01-30 18:54:05 +0200 (Wed, 30 Jan 2008) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/netlink.c
+
+Fix compilation against 2.6.24 kernel headers
+
+------------------------------------------------------------------------
+r583 | remi | 2008-01-10 20:04:55 +0200 (Thu, 10 Jan 2008) | 3 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Filter out ICMP errors for packets toward other destinations,
+using the socket filter
+
+------------------------------------------------------------------------
+r582 | remi | 2007-12-30 18:54:31 +0200 (Sun, 30 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/Makefile.am
+
+Really make merge-hook executable.
+
+------------------------------------------------------------------------
+r581 | remi | 2007-12-30 18:53:08 +0200 (Sun, 30 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+Bump dev version
+
+------------------------------------------------------------------------
+r579 | remi | 2007-12-30 13:03:06 +0200 (Sun, 30 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/po/en.po
+   M /trunk/po/fr.po
+
+Improve the English locale, complete the French one
+
+------------------------------------------------------------------------
+r578 | remi | 2007-12-30 12:37:51 +0200 (Sun, 30 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/po/en.po
+   M /trunk/po/fr.po
+   M /trunk/po/ndisc6.pot
+   M /trunk/rdnssd/rdnssd.c
+
+Add some translation, and rationalize
+
+------------------------------------------------------------------------
+r577 | linkfanel | 2007-12-30 02:12:30 +0200 (Sun, 30 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/po/fr.po
+
+Update translation file
+
+------------------------------------------------------------------------
+r576 | remi | 2007-12-30 00:00:44 +0200 (Sun, 30 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+Some news already
+
+------------------------------------------------------------------------
+r575 | linkfanel | 2007-12-29 23:55:43 +0200 (Sat, 29 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/rdnssd.8-in
+
+Fix typo in manpage formatting
+
+------------------------------------------------------------------------
+r574 | remi | 2007-12-29 23:41:43 +0200 (Sat, 29 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/Makefile.am
+
+Ship rdnssd.8-in instead of rdnssd.8 in the tarball
+
+------------------------------------------------------------------------
+r573 | remi | 2007-12-29 23:38:32 +0200 (Sat, 29 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/Makefile.am
+
+Try to remove /var/run/rdnssd/ while uninstalling
+
+------------------------------------------------------------------------
+r572 | remi | 2007-12-27 22:31:31 +0200 (Thu, 27 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Missing #include
+
+------------------------------------------------------------------------
+r571 | remi | 2007-12-27 22:23:37 +0200 (Thu, 27 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Initialize groups properly - not to UID!!!
+
+------------------------------------------------------------------------
+r570 | remi | 2007-12-27 22:04:16 +0200 (Thu, 27 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/Makefile.am
+
+Make merge-hook executable
+
+------------------------------------------------------------------------
+r569 | remi | 2007-12-27 19:23:25 +0200 (Thu, 27 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+   M /trunk/configure.ac
+
+Bump version number
+
+------------------------------------------------------------------------
+r567 | remi | 2007-12-27 19:17:53 +0200 (Thu, 27 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+News for 0.9.4
+
+------------------------------------------------------------------------
+r566 | remi | 2007-12-27 19:16:06 +0200 (Thu, 27 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/po/en.po
+   M /trunk/po/fr.po
+   M /trunk/po/ndisc6.pot
+
+Gettext insists on updating the PO dates
+
+------------------------------------------------------------------------
+r565 | remi | 2007-12-27 19:12:35 +0200 (Thu, 27 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/Makefile.am
+
+Fix ASCII manpage hook
+
+------------------------------------------------------------------------
+r564 | remi | 2007-12-27 19:10:56 +0200 (Thu, 27 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+   M /trunk/m4
+
+Update gettext
+
+------------------------------------------------------------------------
+r563 | remi | 2007-12-27 00:03:00 +0200 (Thu, 27 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/po/en.po
+   M /trunk/po/fr.po
+   M /trunk/po/ndisc6.pot
+
+Sync and update translation files
+
+------------------------------------------------------------------------
+r562 | remi | 2007-12-26 23:56:25 +0200 (Wed, 26 Dec 2007) | 4 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+String rationalization:
+ - don't use \n with syslog
+ - getpwnam does not usually set errno to anything meaningful (if user does not exists)
+
+------------------------------------------------------------------------
+r561 | remi | 2007-12-26 23:43:18 +0200 (Wed, 26 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/Makefile.am
+
+Pedantic use of --
+
+------------------------------------------------------------------------
+r560 | remi | 2007-12-26 23:39:47 +0200 (Wed, 26 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/Makefile.am
+
+Create /var/run/rdnssd from $(make install)
+
+------------------------------------------------------------------------
+r559 | remi | 2007-12-26 23:31:13 +0200 (Wed, 26 Dec 2007) | 3 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Use SIG_SETMASK rather than SIG_BLOCK
+We don't want to inherit whatever signal mask our parent had.
+
+------------------------------------------------------------------------
+r558 | remi | 2007-12-14 18:57:29 +0200 (Fri, 14 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/Makefile.am
+
+Install rdnssd to /etc/rdnssd rather than /etc/ndisc6
+
+------------------------------------------------------------------------
+r557 | remi | 2007-12-14 18:47:55 +0200 (Fri, 14 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/Makefile.am
+   M /trunk/rdnssd/merge-hook.in
+
+merge-hook cosmetic fixes
+
+------------------------------------------------------------------------
+r556 | remi | 2007-12-14 18:42:32 +0200 (Fri, 14 Dec 2007) | 3 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+ - Add missing brackets
+ - Handle socket error gracefully (skip error from recv())
+
+------------------------------------------------------------------------
+r555 | remi | 2007-12-14 18:30:25 +0200 (Fri, 14 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/icmp.c
+
+Fix for prehistoric libc
+
+------------------------------------------------------------------------
+r554 | remi | 2007-12-14 18:30:11 +0200 (Fri, 14 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/doc
+
+ignore
+
+------------------------------------------------------------------------
+r553 | linkfanel | 2007-12-14 18:29:38 +0200 (Fri, 14 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Enable writing of scoped link-local addresses to resolv.conf
+
+------------------------------------------------------------------------
+r552 | remi | 2007-12-14 17:31:18 +0200 (Fri, 14 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/Makefile.am
+   M /trunk/doc/rdnssd.8-in
+
+Substitution, installation and cleaning for rdnssd.8
+
+------------------------------------------------------------------------
+r551 | remi | 2007-12-14 17:26:26 +0200 (Fri, 14 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/Makefile.am
+   M /trunk/doc/Makefile.am
+
+Fix manpage symlinks
+
+------------------------------------------------------------------------
+r550 | remi | 2007-12-14 17:24:29 +0200 (Fri, 14 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/Makefile.am
+   M /trunk/configure.ac
+   M /trunk/doc
+   A /trunk/doc/Makefile.am
+
+"Build" doc as a separate directory
+
+------------------------------------------------------------------------
+r549 | linkfanel | 2007-12-14 17:18:11 +0200 (Fri, 14 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/Makefile.am
+
+Install rdnssd manpage
+
+------------------------------------------------------------------------
+r548 | remi | 2007-12-14 17:16:30 +0200 (Fri, 14 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/rdnssd.8-in
+
+props
+
+------------------------------------------------------------------------
+r547 | linkfanel | 2007-12-14 16:59:17 +0200 (Fri, 14 Dec 2007) | 2 lines
+Changed paths:
+   A /trunk/doc/rdnssd.8-in
+
+Add a manpage for rdnssd
+
+------------------------------------------------------------------------
+r546 | linkfanel | 2007-12-14 16:46:05 +0200 (Fri, 14 Dec 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Update informational output.
+
+------------------------------------------------------------------------
+r545 | linkfanel | 2007-12-09 09:18:06 +0200 (Sun, 09 Dec 2007) | 3 lines
+Changed paths:
+   M /trunk/rdnssd/icmp.c
+   M /trunk/rdnssd/netlink.c
+   M /trunk/rdnssd/rdnssd.c
+   M /trunk/rdnssd/rdnssd.h
+
+- Update to new netlink interface
+- Add logic to handle link-local addresses
+
+------------------------------------------------------------------------
+r544 | linkfanel | 2007-11-09 03:43:12 +0200 (Fri, 09 Nov 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Complete help
+
+------------------------------------------------------------------------
+r543 | linkfanel | 2007-11-09 01:58:48 +0200 (Fri, 09 Nov 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Fix parenthesis error in the parsing of multiple options
+
+------------------------------------------------------------------------
+r542 | remi | 2007-11-08 18:10:47 +0200 (Thu, 08 Nov 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/netlink.c
+
+Only try netlink if running recent enough Linux kernel
+
+------------------------------------------------------------------------
+r541 | remi | 2007-11-08 18:03:38 +0200 (Thu, 08 Nov 2007) | 3 lines
+Changed paths:
+   M /trunk/rdnssd/icmp.c
+   M /trunk/rdnssd/netlink.c
+   M /trunk/rdnssd/rdnssd.c
+   M /trunk/rdnssd/rdnssd.h
+
+ - Use the new files.
+ - Set nobody as default UID rather than undefined.
+
+------------------------------------------------------------------------
+r540 | remi | 2007-11-08 17:46:00 +0200 (Thu, 08 Nov 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/Makefile.am
+   A /trunk/rdnssd/icmp.c
+   A /trunk/rdnssd/netlink.c
+   M /trunk/rdnssd/rdnssd.c
+   A /trunk/rdnssd/rdnssd.h
+
+Prepare to split into multiple files
+
+------------------------------------------------------------------------
+r539 | linkfanel | 2007-11-08 03:42:22 +0200 (Thu, 08 Nov 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Add support to setuid
+
+------------------------------------------------------------------------
+r538 | linkfanel | 2007-11-08 03:17:45 +0200 (Thu, 08 Nov 2007) | 3 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+- Actually handle poll errors
+- Handle child process failures
+
+------------------------------------------------------------------------
+r537 | linkfanel | 2007-11-08 00:13:34 +0200 (Thu, 08 Nov 2007) | 3 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+- Switch IPC from signal to pipe to work with setuid
+- Move signal handling again
+
+------------------------------------------------------------------------
+r536 | remi | 2007-11-07 21:49:29 +0200 (Wed, 07 Nov 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Missing comma
+
+------------------------------------------------------------------------
+r535 | remi | 2007-11-07 20:40:39 +0200 (Wed, 07 Nov 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Fix locking, simplify signal handling
+
+------------------------------------------------------------------------
+r534 | remi | 2007-11-07 19:56:33 +0200 (Wed, 07 Nov 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Remove unused statements
+
+------------------------------------------------------------------------
+r533 | linkfanel | 2007-11-07 05:40:17 +0200 (Wed, 07 Nov 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Totally remove resolv.conf files management with inotify
+
+------------------------------------------------------------------------
+r532 | linkfanel | 2007-11-06 04:32:49 +0200 (Tue, 06 Nov 2007) | 3 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Fix start-up with a non-existent /var/run/rdnssd/resolv.conf.
+Inotify logic is still further flawed.
+
+------------------------------------------------------------------------
+r531 | remi | 2007-11-03 14:45:28 +0200 (Sat, 03 Nov 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Add _() where applicable
+
+------------------------------------------------------------------------
+r530 | remi | 2007-11-03 14:42:24 +0200 (Sat, 03 Nov 2007) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+   M /trunk/rdnssd/Makefile.am
+
+Make distcheck happy
+
+------------------------------------------------------------------------
+r529 | remi | 2007-11-03 14:38:32 +0200 (Sat, 03 Nov 2007) | 2 lines
+Changed paths:
+   M /trunk/po/POTFILES.in
+   M /trunk/po/en.po
+   M /trunk/po/fr.po
+   M /trunk/po/ndisc6.pot
+   M /trunk/rdnssd/rdnssd.c
+
+Partial strings update
+
+------------------------------------------------------------------------
+r528 | remi | 2007-11-03 14:26:47 +0200 (Sat, 03 Nov 2007) | 2 lines
+Changed paths:
+   M /trunk/src/addrinfo.c
+   M /trunk/src/ndisc.c
+   M /trunk/src/tcpspray.c
+   M /trunk/src/traceroute.c
+
+License string rationalization
+
+------------------------------------------------------------------------
+r527 | remi | 2007-11-03 14:26:28 +0200 (Sat, 03 Nov 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Add --help and --version
+
+------------------------------------------------------------------------
+r526 | remi | 2007-11-03 13:20:57 +0200 (Sat, 03 Nov 2007) | 10 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+- Add foreground option for easier debugging
+- Add bunch of static qualifiers
+- Functions with no parameters take void
+- Use advisory locking for PID file
+- Ignore SIGPIPE
+- Dequeue errors (POLLERR but not POLLIN) on socket
+- Use ppoll and sigprocmask for signal handling
+- Handle SIGINT as SIGTERM
+- And add lots of new bugs
+
+------------------------------------------------------------------------
+r525 | remi | 2007-11-02 19:00:36 +0200 (Fri, 02 Nov 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Use const and fix unused parameters warnings
+
+------------------------------------------------------------------------
+r524 | linkfanel | 2007-11-02 04:14:05 +0200 (Fri, 02 Nov 2007) | 3 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Parse options from command line, to control file paths and switch to
+managed mode
+
+------------------------------------------------------------------------
+r523 | linkfanel | 2007-11-02 01:23:20 +0200 (Fri, 02 Nov 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Fix and clean up startup and shutdown processes
+
+------------------------------------------------------------------------
+r522 | linkfanel | 2007-11-01 04:30:46 +0200 (Thu, 01 Nov 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Ignore our own changes to /etc/resolv.conf to avoid merging twice
+
+------------------------------------------------------------------------
+r521 | linkfanel | 2007-11-01 04:14:13 +0200 (Thu, 01 Nov 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Make changes to /var/run/rdnssd/resolv.conf atomic
+
+------------------------------------------------------------------------
+r520 | linkfanel | 2007-11-01 03:54:08 +0200 (Thu, 01 Nov 2007) | 3 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+- Split netlink listening and resolv.conf management into two processes
+- Prepare support for unmanaged mode
+
+------------------------------------------------------------------------
+r519 | linkfanel | 2007-10-31 20:41:21 +0200 (Wed, 31 Oct 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Add daemon capabilities
+
+------------------------------------------------------------------------
+r518 | remi | 2007-10-30 21:03:23 +0200 (Tue, 30 Oct 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/merge-hook.in
+
+svn properties
+
+------------------------------------------------------------------------
+r517 | linkfanel | 2007-10-30 20:54:21 +0200 (Tue, 30 Oct 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/Makefile.am
+   M /trunk/rdnssd/merge-hook.in
+
+Add merge hook for rdnssd
+
+------------------------------------------------------------------------
+r516 | remi | 2007-10-30 20:02:40 +0200 (Tue, 30 Oct 2007) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+
+Remove unneeded defines
+
+------------------------------------------------------------------------
+r515 | remi | 2007-10-29 21:53:33 +0200 (Mon, 29 Oct 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd
+
+svn:ignore
+
+------------------------------------------------------------------------
+r514 | remi | 2007-10-29 21:52:53 +0200 (Mon, 29 Oct 2007) | 2 lines
+Changed paths:
+   M /trunk/rdnssd/rdnssd.c
+
+Woops restore recent commits
+
+------------------------------------------------------------------------
+r513 | remi | 2007-10-29 21:52:20 +0200 (Mon, 29 Oct 2007) | 2 lines
+Changed paths:
+   M /trunk/Makefile.am
+   A /trunk/ald
+   M /trunk/configure.ac
+   A /trunk/rdnssd
+   A /trunk/rdnssd/Makefile.am (from /trunk/src/Makefile.am:511)
+   A /trunk/rdnssd/merge-hook.in
+   A /trunk/rdnssd/rdnssd.c (from /trunk/src/rdnssd.c:511)
+   M /trunk/src/Makefile.am
+   D /trunk/src/rdnssd.c
+
+Move rdnssd to its own directory
+
+------------------------------------------------------------------------
+r512 | linkfanel | 2007-10-29 02:38:37 +0200 (Mon, 29 Oct 2007) | 2 lines
+Changed paths:
+   M /trunk/src/rdnssd.c
+
+Improve inotify handling
+
+------------------------------------------------------------------------
+r511 | remi | 2007-10-28 13:50:00 +0200 (Sun, 28 Oct 2007) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+   M /trunk/src/Makefile.am
+
+name2addr and addr2name got messed up. Fix them.
+
+------------------------------------------------------------------------
+r510 | remi | 2007-10-27 22:38:20 +0300 (Sat, 27 Oct 2007) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+   M /trunk/src/rdnssd.c
+
+Use autoconf localstatedir instead of /var
+
+------------------------------------------------------------------------
+r509 | remi | 2007-10-27 22:36:15 +0300 (Sat, 27 Oct 2007) | 5 lines
+Changed paths:
+   M /trunk/src/rdnssd.c
+
+Fix merge_hook:
+ - handle errors and whine about them,
+ - get directory from autoconf settings,
+ - pass valid arg0 to exec*().
+
+------------------------------------------------------------------------
+r508 | remi | 2007-10-27 22:32:28 +0300 (Sat, 27 Oct 2007) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+
+Set SYSCONFDIR to system config dir from autoconf
+
+------------------------------------------------------------------------
+r507 | remi | 2007-10-27 22:21:04 +0300 (Sat, 27 Oct 2007) | 2 lines
+Changed paths:
+   M /trunk/src/rdnssd.c
+
+Fix more sign warnings
+
+------------------------------------------------------------------------
+r506 | remi | 2007-10-27 22:19:30 +0300 (Sat, 27 Oct 2007) | 2 lines
+Changed paths:
+   M /trunk/src/rdnssd.c
+
+Use const, fix a sign warning
+
+------------------------------------------------------------------------
+r505 | remi | 2007-10-27 22:15:36 +0300 (Sat, 27 Oct 2007) | 4 lines
+Changed paths:
+   M /trunk/src/rdnssd.c
+
+ - Comment out dead ICMP code for the time being,
+ - Factorize fcntl code
+ - Cleanup event loop
+
+------------------------------------------------------------------------
+r504 | linkfanel | 2007-10-27 21:09:26 +0300 (Sat, 27 Oct 2007) | 3 lines
+Changed paths:
+   M /trunk/src/rdnssd.c
+
+- Remove resolv.conf merging from main rdnssd
+- Add inotify support for resolv.conf
+
+------------------------------------------------------------------------
+r503 | linkfanel | 2007-10-24 20:42:54 +0300 (Wed, 24 Oct 2007) | 2 lines
+Changed paths:
+   M /trunk/AUTHORS
+   M /trunk/src/rdnssd.c
+
+Fix my email address and add my copyright
+
+------------------------------------------------------------------------
+r502 | remi | 2007-10-24 20:42:14 +0300 (Wed, 24 Oct 2007) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+Add some news and test post commit hook
+
+------------------------------------------------------------------------
+r501 | remi | 2007-10-24 20:35:39 +0300 (Wed, 24 Oct 2007) | 2 lines
+Changed paths:
+   M /trunk/AUTHORS
+
+Add Pierre to AUTHORS (email needs checking)
+
+------------------------------------------------------------------------
+r500 | remi | 2007-10-24 20:31:01 +0300 (Wed, 24 Oct 2007) | 2 lines
+Changed paths:
+   M /trunk/m4
+
+svn:ignore
+
+------------------------------------------------------------------------
+r499 | remi | 2007-10-24 20:29:48 +0300 (Wed, 24 Oct 2007) | 2 lines
+Changed paths:
+   M /trunk/autogen.sh
+
+Simplify through autoreconf
+
+------------------------------------------------------------------------
+r498 | remi | 2007-10-24 20:24:06 +0300 (Wed, 24 Oct 2007) | 2 lines
+Changed paths:
+   M /trunk/autogen.sh
+   M /trunk/configure.ac
+
+Fix GPL version
+
+------------------------------------------------------------------------
+r497 | remi | 2007-10-24 20:22:23 +0300 (Wed, 24 Oct 2007) | 2 lines
+Changed paths:
+   M /trunk/README
+
+GPL version TWO
+
+------------------------------------------------------------------------
+r496 | linkfanel | 2007-10-23 05:38:29 +0300 (Tue, 23 Oct 2007) | 2 lines
+Changed paths:
+   M /trunk/src/rdnssd.c
+
+Fix typo when opening syslog
+
+------------------------------------------------------------------------
+r495 | linkfanel | 2007-10-23 05:05:15 +0300 (Tue, 23 Oct 2007) | 2 lines
+Changed paths:
+   M /trunk/src/rdnssd.c
+
+Fix expiration detection
+
+------------------------------------------------------------------------
+r494 | linkfanel | 2007-10-23 04:40:33 +0300 (Tue, 23 Oct 2007) | 2 lines
+Changed paths:
+   M /trunk/src/rdnssd.c
+
+Actually sort entries in the right order
+
+------------------------------------------------------------------------
+r493 | linkfanel | 2007-10-23 04:36:06 +0300 (Tue, 23 Oct 2007) | 4 lines
+Changed paths:
+   M /trunk/src/rdnssd.c
+
+Add logic to further limit the number of RDNSS entries written to
+resolv.conf: we may want to leave some room for IPv4 entries as backup
+for when IPv6 fails.
+
+------------------------------------------------------------------------
+r492 | linkfanel | 2007-10-23 02:31:54 +0300 (Tue, 23 Oct 2007) | 4 lines
+Changed paths:
+   M /trunk/src/rdnssd.c
+
+rdnssd:
+ - Merge new netlink interface support 
+ - Add support to update resolv.conf file
+
+------------------------------------------------------------------------
+r491 | linkfanel | 2007-10-23 02:28:19 +0300 (Tue, 23 Oct 2007) | 2 lines
+Changed paths:
+   M /trunk/autogen.sh
+
+Fix a copy-paste typo
+
+------------------------------------------------------------------------
+r490 | remi | 2007-09-25 21:07:05 +0300 (Tue, 25 Sep 2007) | 2 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+RFC5006 is out
+
+------------------------------------------------------------------------
+r489 | remi | 2007-08-08 21:34:08 +0300 (Wed, 08 Aug 2007) | 2 lines
+Changed paths:
+   M /trunk/src/rdnssd.c
+
+Fix meta infos
+
+------------------------------------------------------------------------
+r488 | remi | 2007-08-08 21:32:52 +0300 (Wed, 08 Aug 2007) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+Bump version
+
+------------------------------------------------------------------------
+r487 | remi | 2007-08-08 21:02:19 +0300 (Wed, 08 Aug 2007) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+   A /trunk/src/rdnssd.c
+
+Add partial RDNSSd
+
+------------------------------------------------------------------------
+r485 | remi | 2007-08-08 18:13:07 +0300 (Wed, 08 Aug 2007) | 2 lines
+Changed paths:
+   M /trunk/po/en.po
+   M /trunk/po/fr.po
+   M /trunk/po/ndisc6.pot
+
+Resync PO files
+
+------------------------------------------------------------------------
+r484 | remi | 2007-08-08 18:11:29 +0300 (Wed, 08 Aug 2007) | 2 lines
+Changed paths:
+   M /trunk/Makefile.am
+   M /trunk/m4/Makefile.am
+   M /trunk/src/Makefile.am
+
+License fixups
+
+------------------------------------------------------------------------
+r483 | remi | 2007-08-08 18:09:36 +0300 (Wed, 08 Aug 2007) | 2 lines
+Changed paths:
+   M /trunk/COPYING
+   M /trunk/NEWS
+   M /trunk/doc/addr2name.1
+   M /trunk/doc/dnssort.1
+   M /trunk/doc/ndisc6.8
+   M /trunk/doc/rdisc6.8
+   M /trunk/doc/rltraceroute6.8
+   M /trunk/doc/tcpspray.1
+   M /trunk/src/Makefile.am
+   M /trunk/src/addrinfo.c
+   M /trunk/src/dnssort.in
+   M /trunk/src/gen-alias
+   M /trunk/src/gettime.h
+   M /trunk/src/inet6rth.h
+   M /trunk/src/ndisc.c
+   M /trunk/src/tcpspray.c
+   M /trunk/src/tcptraceroute.c
+   M /trunk/src/trace-icmp.c
+   M /trunk/src/trace-tcp.c
+   M /trunk/src/trace-udp.c
+   M /trunk/src/traceroute.c
+   M /trunk/src/traceroute.h
+
+Still allow GPLv2
+
+------------------------------------------------------------------------
+r482 | remi | 2007-08-05 22:59:53 +0300 (Sun, 05 Aug 2007) | 2 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+Use linker rather than precompiler for most of the ndisc/rdisc specifics
+
+------------------------------------------------------------------------
+r481 | remi | 2007-08-05 22:38:09 +0300 (Sun, 05 Aug 2007) | 2 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+Ignore unused attributes instead of (ab)using macros
+
+------------------------------------------------------------------------
+r480 | remi | 2007-07-11 20:03:57 +0300 (Wed, 11 Jul 2007) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+   M /trunk/src/ndisc.c
+
+Support for RDNSS in router advertisements
+
+------------------------------------------------------------------------
+r479 | remi | 2007-07-11 19:48:32 +0300 (Wed, 11 Jul 2007) | 2 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+Minor code factorization
+
+------------------------------------------------------------------------
+r478 | remi | 2007-07-09 23:08:04 +0300 (Mon, 09 Jul 2007) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+Fix gettext usage
+
+------------------------------------------------------------------------
+r477 | remi | 2007-07-09 23:02:55 +0300 (Mon, 09 Jul 2007) | 2 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+Fix warning
+
+------------------------------------------------------------------------
+r476 | remi | 2007-07-09 23:02:36 +0300 (Mon, 09 Jul 2007) | 2 lines
+Changed paths:
+   M /trunk/COPYING
+   M /trunk/Makefile.am
+   M /trunk/NEWS
+   M /trunk/README
+   M /trunk/autogen.sh
+   M /trunk/configure.ac
+   M /trunk/doc/addr2name.1
+   M /trunk/doc/dnssort.1
+   M /trunk/doc/ndisc6.8
+   M /trunk/doc/rdisc6.8
+   M /trunk/doc/rltraceroute6.8
+   M /trunk/doc/tcpspray.1
+   M /trunk/m4/Makefile.am
+   M /trunk/src/Makefile.am
+   M /trunk/src/addrinfo.c
+   M /trunk/src/dnssort.in
+   M /trunk/src/gen-alias
+   M /trunk/src/gettime.h
+   M /trunk/src/inet6rth.h
+   M /trunk/src/ndisc.c
+   M /trunk/src/tcpspray.c
+   M /trunk/src/tcptraceroute.c
+   M /trunk/src/trace-icmp.c
+   M /trunk/src/trace-tcp.c
+   M /trunk/src/trace-udp.c
+   M /trunk/src/traceroute.c
+   M /trunk/src/traceroute.h
+
+Switch to GLPv3
+
+------------------------------------------------------------------------
+r475 | remi | 2007-06-03 14:18:25 +0300 (Sun, 03 Jun 2007) | 2 lines
+Changed paths:
+   D /tags/0.9.0/packages
+   D /tags/0.9.2/packages
+   D /trunk/packages
+
+Remove useless empty directories
+
+------------------------------------------------------------------------
+r473 | remi | 2007-04-13 19:20:20 +0300 (Fri, 13 Apr 2007) | 2 lines
+Changed paths:
+   M /trunk/Makefile.am
+
+Add distcheck hook to make sure manpages are plain ASCII
+
+------------------------------------------------------------------------
+r471 | remi | 2007-04-13 19:01:15 +0300 (Fri, 13 Apr 2007) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+   M /trunk/po/en.po
+   M /trunk/po/fr.po
+   M /trunk/po/ndisc6.pot
+
+Sync for release 0.9.2
+
+------------------------------------------------------------------------
+r470 | remi | 2007-03-29 19:55:43 +0300 (Thu, 29 Mar 2007) | 4 lines
+Changed paths:
+   A /trunk/CMakeLists.txt
+   A /trunk/config.cmake
+   A /trunk/src/CMakeLists.txt
+
+Partial CMake support.
+It sucks (CMake does not seem to care much about Linux/BSD).
+DO NOT USE IT.
+
+------------------------------------------------------------------------
+r469 | remi | 2007-03-29 18:31:21 +0300 (Thu, 29 Mar 2007) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+Fix build with automake 1.10
+
+------------------------------------------------------------------------
+r468 | remi | 2007-03-04 14:11:18 +0200 (Sun, 04 Mar 2007) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+   M /trunk/configure.ac
+   M /trunk/src/traceroute.c
+
+glibc 2.3 compile fix
+
+------------------------------------------------------------------------
+r467 | remi | 2007-03-04 12:03:26 +0200 (Sun, 04 Mar 2007) | 2 lines
+Changed paths:
+   M /trunk/po/en.po
+   M /trunk/po/fr.po
+   M /trunk/po/ndisc6.pot
+
+Improve French translation and resync PO files
+
+------------------------------------------------------------------------
+r466 | remi | 2007-03-04 12:03:05 +0200 (Sun, 04 Mar 2007) | 2 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+Missing translation
+
+------------------------------------------------------------------------
+r465 | remi | 2007-03-04 11:58:00 +0200 (Sun, 04 Mar 2007) | 2 lines
+Changed paths:
+   M /trunk/src/tcptraceroute.c
+   M /trunk/src/traceroute.c
+
+Some string rationalization
+
+------------------------------------------------------------------------
+r464 | remi | 2007-03-04 11:35:07 +0200 (Sun, 04 Mar 2007) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+   M /trunk/src/gen-alias
+
+Do not use tempfile as it Debian-specific
+
+------------------------------------------------------------------------
+r463 | remi | 2007-02-05 23:00:01 +0200 (Mon, 05 Feb 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/rltraceroute6.8
+
+Document UDP-Lite support
+
+------------------------------------------------------------------------
+r462 | remi | 2007-02-05 22:57:35 +0200 (Mon, 05 Feb 2007) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+   M /trunk/src/trace-udp.c
+   M /trunk/src/traceroute.c
+   M /trunk/src/traceroute.h
+
+traceroute support for UDP-Lite (no extra code! only extra data!)
+
+------------------------------------------------------------------------
+r461 | remi | 2007-02-04 21:48:36 +0200 (Sun, 04 Feb 2007) | 2 lines
+Changed paths:
+   A /trunk/ezirad
+   A /trunk/ezirad/Makefile
+   A /trunk/ezirad/NOTES
+   A /trunk/ezirad/config.h
+   A /trunk/ezirad/ezirad.c
+   A /trunk/ezirad/ezirad.h
+   A /trunk/ezirad/sys_netlink.c
+
+Check-in (broken unusable) development preversion of ezirad
+
+------------------------------------------------------------------------
+r460 | remi | 2007-02-04 16:51:00 +0200 (Sun, 04 Feb 2007) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Preliminary (incomplete, ifdef'd out) code for Extended ICMP
+
+------------------------------------------------------------------------
+r459 | remi | 2007-02-04 14:31:12 +0200 (Sun, 04 Feb 2007) | 2 lines
+Changed paths:
+   M /trunk/doc/rltraceroute6.8
+
+Document traceroute error symbols
+
+------------------------------------------------------------------------
+r458 | remi | 2007-02-04 14:08:27 +0200 (Sun, 04 Feb 2007) | 3 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+- Add support for RFC4443 unreachable error codes (2, 5, 6)
+- Remove bogus gettext translation requests
+
+------------------------------------------------------------------------
+r457 | remi | 2007-02-03 22:46:31 +0200 (Sat, 03 Feb 2007) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Use getaddrinfo() AI_CANNONAME instead of getnameinfo()
+
+------------------------------------------------------------------------
+r456 | remi | 2007-02-02 22:14:07 +0200 (Fri, 02 Feb 2007) | 2 lines
+Changed paths:
+   M /trunk/po/LINGUAS
+   M /trunk/po/en.po
+   A /trunk/po/fr.po
+   M /trunk/po/ndisc6.pot
+   M /trunk/src/tcpspray.c
+
+Partial French localization and some string fixes
+
+------------------------------------------------------------------------
+r454 | remi | 2007-02-02 21:55:04 +0200 (Fri, 02 Feb 2007) | 2 lines
+Changed paths:
+   M /trunk/include
+
+Fix svn:ignore
+
+------------------------------------------------------------------------
+r453 | remi | 2007-02-02 21:54:32 +0200 (Fri, 02 Feb 2007) | 2 lines
+Changed paths:
+   M /trunk/src/addrinfo.c
+   M /trunk/src/ndisc.c
+   M /trunk/src/tcpspray.c
+   M /trunk/src/tcptraceroute.c
+   M /trunk/src/traceroute.c
+
+String rationalization
+
+------------------------------------------------------------------------
+r452 | remi | 2007-02-02 21:49:52 +0200 (Fri, 02 Feb 2007) | 2 lines
+Changed paths:
+   M /trunk/Makefile.am
+   M /trunk/autogen.sh
+   M /trunk/configure.ac
+   A /trunk/include
+   M /trunk/src/Makefile.am
+   M /trunk/src/addrinfo.c
+   M /trunk/src/ndisc.c
+   M /trunk/src/tcpspray.c
+   M /trunk/src/tcptraceroute.c
+   M /trunk/src/traceroute.c
+
+Actually use gettext within all programs
+
+------------------------------------------------------------------------
+r451 | remi | 2007-02-02 21:40:22 +0200 (Fri, 02 Feb 2007) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Fixes
+
+------------------------------------------------------------------------
+r450 | remi | 2007-02-02 21:36:40 +0200 (Fri, 02 Feb 2007) | 3 lines
+Changed paths:
+   M /trunk/po
+   M /trunk/po/LINGUAS
+   A /trunk/po/en.po
+   M /trunk/po/ndisc6.pot
+   M /trunk/src/ndisc.c
+   M /trunk/src/tcpspray.c
+   M /trunk/src/traceroute.c
+
+- Rationalizes/fixes translated string
+- Add english localization
+
+------------------------------------------------------------------------
+r449 | remi | 2007-02-02 21:13:43 +0200 (Fri, 02 Feb 2007) | 2 lines
+Changed paths:
+   M /trunk/po
+   M /trunk/src
+
+Fix svn:ignore
+
+------------------------------------------------------------------------
+r448 | remi | 2007-02-02 21:06:40 +0200 (Fri, 02 Feb 2007) | 2 lines
+Changed paths:
+   M /trunk
+   M /trunk/Makefile.am
+   M /trunk/admin
+   M /trunk/autogen.sh
+   M /trunk/configure.ac
+   M /trunk/m4
+   A /trunk/po
+   A /trunk/po/LINGUAS
+   A /trunk/po/Makevars
+   A /trunk/po/POTFILES.in
+   A /trunk/po/ndisc6.pot
+
+Add gettext
+
+------------------------------------------------------------------------
+r447 | remi | 2007-02-02 20:49:12 +0200 (Fri, 02 Feb 2007) | 2 lines
+Changed paths:
+   M /trunk/src/addrinfo.c
+   M /trunk/src/ndisc.c
+   M /trunk/src/tcpspray.c
+   M /trunk/src/tcptraceroute.c
+   M /trunk/src/traceroute.c
+
+setlocale() fixes
+
+------------------------------------------------------------------------
+r446 | remi | 2007-01-27 19:07:45 +0200 (Sat, 27 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+Some news
+
+------------------------------------------------------------------------
+r445 | remi | 2007-01-27 18:56:14 +0200 (Sat, 27 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/Makefile.am
+
+Forgot this file in previous commit
+
+------------------------------------------------------------------------
+r444 | remi | 2007-01-27 18:55:49 +0200 (Sat, 27 Jan 2007) | 2 lines
+Changed paths:
+   A /trunk/doc/addr2name.1 (from /trunk/doc/addrinfo.1:442)
+   D /trunk/doc/addrinfo.1
+   M /trunk/src/Makefile.am
+
+Rename addrinfo resp nameinfo to name2addr resp addr2name
+
+------------------------------------------------------------------------
+r443 | remi | 2007-01-27 18:54:58 +0200 (Sat, 27 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Fix typo
+
+------------------------------------------------------------------------
+r442 | remi | 2007-01-14 16:15:52 +0200 (Sun, 14 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/README
+   M /trunk/doc/addrinfo.1
+   M /trunk/doc/dnssort.1
+   M /trunk/doc/ndisc6.8
+   M /trunk/doc/rdisc6.8
+   M /trunk/doc/rltraceroute6.8
+   M /trunk/doc/tcpspray.1
+
+Update official ndisc6 URL
+
+------------------------------------------------------------------------
+r441 | remi | 2007-01-07 16:20:39 +0200 (Sun, 07 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+
+No longer define MYEXECDIR when compiling tcptraceroute6
+
+------------------------------------------------------------------------
+r440 | remi | 2007-01-07 16:19:58 +0200 (Sun, 07 Jan 2007) | 5 lines
+Changed paths:
+   M /trunk/src/tcptraceroute.c
+
+- No longer hardcode rltraceroute6 path into tcptraceroute6
+- tcptraceroute6 uses exit() to limit would-be buffer overflow exploitability
+  (however since this binary is not meant to be setuid, a buffer overflow
+   should be harmless anyway; besidesn it has no known buffer overlow...)
+
+------------------------------------------------------------------------
+r439 | remi | 2007-01-06 16:00:48 +0200 (Sat, 06 Jan 2007) | 2 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+Remove superfluous ampersand
+
+------------------------------------------------------------------------
+r438 | remi | 2006-12-30 19:01:10 +0200 (Sat, 30 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Increase progress report properly in case of  timeout
+
+------------------------------------------------------------------------
+r437 | remi | 2006-12-30 18:45:10 +0200 (Sat, 30 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+This is development trunk for 0.9.1
+
+------------------------------------------------------------------------
+r435 | remi | 2006-12-30 15:32:35 +0200 (Sat, 30 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+News for release 0.9.0
+
+------------------------------------------------------------------------
+r434 | remi | 2006-12-30 12:20:52 +0200 (Sat, 30 Dec 2006) | 3 lines
+Changed paths:
+   M /trunk/doc/ndisc6.8
+   M /trunk/doc/rdisc6.8
+   M /trunk/src/ndisc.c
+
+Apply RFC2461 interval between router solicitations and document it.
+RFC2461-mandated random delays are still not implemented.
+
+------------------------------------------------------------------------
+r433 | remi | 2006-12-29 12:22:27 +0200 (Fri, 29 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+Fix "low" preference text
+
+------------------------------------------------------------------------
+r432 | remi | 2006-12-29 12:13:37 +0200 (Fri, 29 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+   M /trunk/src/ndisc.c
+
+rdisc6 implements RFC4191
+
+------------------------------------------------------------------------
+r431 | remi | 2006-12-28 19:59:55 +0200 (Thu, 28 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+Print value of Router Advertisement flags from RFC2461
+
+------------------------------------------------------------------------
+r430 | remi | 2006-12-28 17:39:08 +0200 (Thu, 28 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+Router lifetime is expressed in seconds, not in milliseconds!
+
+------------------------------------------------------------------------
+r428 | remi | 2006-12-21 22:07:26 +0200 (Thu, 21 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/Makefile.am
+   M /trunk/src/Makefile.am
+
+suppress useless likely counter-intuitive tcpspray4 alias
+
+------------------------------------------------------------------------
+r427 | remi | 2006-12-21 20:28:04 +0200 (Thu, 21 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+
+Take program-transform-name into account when setting SetUID bit
+
+------------------------------------------------------------------------
+r426 | remi | 2006-12-21 20:03:25 +0200 (Thu, 21 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+Escape antislash properly in configure invocation macro definition
+
+------------------------------------------------------------------------
+r425 | remi | 2006-12-21 19:29:34 +0200 (Thu, 21 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+   M /trunk/src/tcptraceroute.c
+
+Also apply program name transformation to tcptraceroute6 manually.
+
+------------------------------------------------------------------------
+r424 | remi | 2006-12-21 19:21:04 +0200 (Thu, 21 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+   M /trunk/src/gen-alias
+
+Apply transform_program_name to alias scripts as well
+
+------------------------------------------------------------------------
+r423 | remi | 2006-12-21 19:06:28 +0200 (Thu, 21 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/Makefile.am
+
+Take program-name-transform into account for manual pages symlinks
+
+------------------------------------------------------------------------
+r422 | remi | 2006-12-21 19:05:06 +0200 (Thu, 21 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+Document tcpspray fix
+
+------------------------------------------------------------------------
+r421 | remi | 2006-12-21 19:04:21 +0200 (Thu, 21 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src
+
+Fix svn:ignore
+
+------------------------------------------------------------------------
+r420 | remi | 2006-12-21 09:47:09 +0200 (Thu, 21 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/doc/addrinfo.1
+
+Add missing new line
+
+------------------------------------------------------------------------
+r419 | remi | 2006-12-21 09:40:36 +0200 (Thu, 21 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/addrinfo.c
+
+Remove obsolete "-1" command line option from addrinfo usage line
+
+------------------------------------------------------------------------
+r418 | remi | 2006-12-21 09:35:26 +0200 (Thu, 21 Dec 2006) | 3 lines
+Changed paths:
+   M /trunk/src/tcpspray.c
+
+Kill child (receiver) process in case of fatal error.
+This solves a deadlock at exit if write() failed for some reason.
+
+------------------------------------------------------------------------
+r416 | remi | 2006-12-20 19:55:24 +0200 (Wed, 20 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/doc/tcpspray.1
+
+Update tcpspray documentation
+
+------------------------------------------------------------------------
+r415 | remi | 2006-12-20 19:53:45 +0200 (Wed, 20 Dec 2006) | 3 lines
+Changed paths:
+   M /trunk/Makefile.am
+   A /trunk/doc/tcpspray.1 (from /trunk/doc/tcpspray6.1:413)
+   D /trunk/doc/tcpspray6.1
+   M /trunk/src/Makefile.am
+
+Rename tcpspray6 to tcpspray as it really is not IPv6 specific.
+Add tcpspray{4,6} as IPv{4,6}-specific aliases to tcpspray.
+
+------------------------------------------------------------------------
+r414 | remi | 2006-12-20 19:48:27 +0200 (Wed, 20 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+   A /trunk/src/gen-alias
+
+Generate aliasing/shortcut scripts with an helper script.
+
+------------------------------------------------------------------------
+r413 | remi | 2006-12-18 14:21:37 +0200 (Mon, 18 Dec 2006) | 3 lines
+Changed paths:
+   M /trunk/NEWS
+   M /trunk/doc/rltraceroute6.8
+   M /trunk/src/traceroute.c
+
+- Take routing header overhead into account within the payload length.
+- Fix likely integer underflow if payload length was too small.
+
+------------------------------------------------------------------------
+r412 | remi | 2006-12-17 23:54:45 +0200 (Sun, 17 Dec 2006) | 3 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+As iputils traceroute6, do not print numerical address in parenthesis
+when reverse DNS lookups are disabled
+
+------------------------------------------------------------------------
+r411 | remi | 2006-12-17 22:41:14 +0200 (Sun, 17 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Erase progress report entirely (missed the last dot)
+
+------------------------------------------------------------------------
+r410 | remi | 2006-12-17 22:33:36 +0200 (Sun, 17 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+Add some news for 0.9.0
+
+------------------------------------------------------------------------
+r409 | remi | 2006-12-17 20:12:05 +0200 (Sun, 17 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src
+
+Fix svn:ignore
+
+------------------------------------------------------------------------
+r408 | remi | 2006-12-17 19:07:05 +0200 (Sun, 17 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Cleanup ICMPv6 types and codes handling
+
+------------------------------------------------------------------------
+r407 | remi | 2006-12-17 18:57:53 +0200 (Sun, 17 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Print !P in case of next header error
+
+------------------------------------------------------------------------
+r406 | remi | 2006-12-17 18:26:24 +0200 (Sun, 17 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Handle EPROTO properly
+
+------------------------------------------------------------------------
+r405 | remi | 2006-12-17 18:08:38 +0200 (Sun, 17 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Restore de TTY-only progress report and suppress debug informations
+
+------------------------------------------------------------------------
+r404 | remi | 2006-12-17 18:00:58 +0200 (Sun, 17 Dec 2006) | 3 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Print each hop data as soon as it is collected,
+rather than all at a time in the end
+
+------------------------------------------------------------------------
+r403 | remi | 2006-12-17 17:56:51 +0200 (Sun, 17 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Do not apply inter-probe delay after last probe
+
+------------------------------------------------------------------------
+r402 | remi | 2006-12-17 16:54:48 +0200 (Sun, 17 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+Allow disabling assertions
+
+------------------------------------------------------------------------
+r401 | remi | 2006-12-17 16:54:33 +0200 (Sun, 17 Dec 2006) | 6 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Send probes simultaneous in a diagonal pattern rather than vertical.
+Vertical (constant attempt number, increasing hop limit) is much faster,
+but it has severe problems with the "last" hop (= the final destination).
+As for the traditional horizontal order (constant hop limit), it has severe
+issues with ICMPv6 rate limiting.
+
+------------------------------------------------------------------------
+r400 | remi | 2006-12-17 12:40:45 +0200 (Sun, 17 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Improve progress report
+
+------------------------------------------------------------------------
+r399 | remi | 2006-12-17 12:38:28 +0200 (Sun, 17 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Remove debug messages
+
+------------------------------------------------------------------------
+r398 | remi | 2006-12-17 12:37:40 +0200 (Sun, 17 Dec 2006) | 3 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Parallel traceroute implementation.
+Unfortunately, finding the last hop does not work well
+
+------------------------------------------------------------------------
+r397 | remi | 2006-12-17 00:12:47 +0200 (Sun, 17 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Pass a deadline to receive probe rather than a timeout
+
+------------------------------------------------------------------------
+r396 | remi | 2006-12-17 00:06:16 +0200 (Sun, 17 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Revert [395]
+
+------------------------------------------------------------------------
+r395 | remi | 2006-12-17 00:01:22 +0200 (Sun, 17 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Support for receiving more than one probe per probe() call
+
+------------------------------------------------------------------------
+r394 | remi | 2006-12-16 23:52:29 +0200 (Sat, 16 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Cosmetic changes
+
+------------------------------------------------------------------------
+r393 | remi | 2006-12-16 23:49:56 +0200 (Sat, 16 Dec 2006) | 3 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+- Disable currently broken EPROTO handling
+- Move RTT computation
+
+------------------------------------------------------------------------
+r392 | remi | 2006-12-16 23:43:59 +0200 (Sat, 16 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Separate functions to parse ICMPv6 and protocol packets
+
+------------------------------------------------------------------------
+r391 | remi | 2006-12-16 22:43:51 +0200 (Sat, 16 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Don't handle impossible condition
+
+------------------------------------------------------------------------
+r390 | remi | 2006-12-16 22:40:45 +0200 (Sat, 16 Dec 2006) | 3 lines
+Changed paths:
+   M /trunk/src/trace-icmp.c
+   M /trunk/src/trace-tcp.c
+   M /trunk/src/trace-udp.c
+   M /trunk/src/traceroute.c
+   M /trunk/src/traceroute.h
+
+Always use (signed) integers to receive hop limits
+for consistency with POSIX and IETF specs
+
+------------------------------------------------------------------------
+r389 | remi | 2006-12-16 22:36:12 +0200 (Sat, 16 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Hide hop limit from receiver
+
+------------------------------------------------------------------------
+r388 | remi | 2006-12-16 22:28:20 +0200 (Sat, 16 Dec 2006) | 3 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Work around DNS resolution temporary failures:
+print the numerical hostname
+
+------------------------------------------------------------------------
+r387 | remi | 2006-12-16 22:25:43 +0200 (Sat, 16 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Fix progress report
+
+------------------------------------------------------------------------
+r386 | remi | 2006-12-16 22:17:31 +0200 (Sat, 16 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Add a rudimentary progress report
+
+------------------------------------------------------------------------
+r385 | remi | 2006-12-16 22:10:30 +0200 (Sat, 16 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Step 3: separate sending of probes from receiving
+
+------------------------------------------------------------------------
+r384 | remi | 2006-12-16 22:01:03 +0200 (Sat, 16 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Document tsdiff
+
+------------------------------------------------------------------------
+r383 | remi | 2006-12-16 21:22:13 +0200 (Sat, 16 Dec 2006) | 3 lines
+Changed paths:
+   M /trunk/doc/rltraceroute6.8
+   M /trunk/src/traceroute.c
+
+- Wait for delay only between columns, rather than between every probes
+- Fix previous commit
+
+------------------------------------------------------------------------
+r382 | remi | 2006-12-16 21:00:58 +0200 (Sat, 16 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Send probes in column rather than in line
+
+------------------------------------------------------------------------
+r381 | remi | 2006-12-16 20:45:23 +0200 (Sat, 16 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+No longer assume probes with identical hop limit are sent consequently
+
+------------------------------------------------------------------------
+r380 | remi | 2006-12-16 20:30:10 +0200 (Sat, 16 Dec 2006) | 3 lines
+Changed paths:
+   M /trunk/src/trace-icmp.c
+   M /trunk/src/trace-tcp.c
+   M /trunk/src/trace-udp.c
+   M /trunk/src/traceroute.c
+   M /trunk/src/traceroute.h
+
+Pass hop limit via ancilliary data instead of setsockopt,
+so that probes can be sent in arbitrary order
+
+------------------------------------------------------------------------
+r379 | remi | 2006-12-16 20:17:55 +0200 (Sat, 16 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Minor clean up
+
+------------------------------------------------------------------------
+r378 | remi | 2006-12-16 20:15:13 +0200 (Sat, 16 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Small source code inlining
+
+------------------------------------------------------------------------
+r377 | remi | 2006-12-16 20:11:19 +0200 (Sat, 16 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Store full socket address instead of IPv6 address
+
+------------------------------------------------------------------------
+r376 | remi | 2006-12-16 19:49:08 +0200 (Sat, 16 Dec 2006) | 4 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Parallel traceroute, step 2: store result in table and use display function
+Now the problem, of course, is that traceroute is as slow as before,
+and does not print anything until the full traceroute is complete.
+
+------------------------------------------------------------------------
+r375 | remi | 2006-12-16 18:53:34 +0200 (Sat, 16 Dec 2006) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+   M /trunk/src/traceroute.c
+
+Parallel traceroute, step 1: rudimentary result printer
+
+------------------------------------------------------------------------
+r374 | remi | 2006-10-12 18:50:12 +0300 (Thu, 12 Oct 2006) | 2 lines
+Changed paths:
+   M /trunk/doc/rltraceroute6.8
+
+Update documentation
+
+------------------------------------------------------------------------
+r373 | remi | 2006-10-12 18:46:50 +0300 (Thu, 12 Oct 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+(Almost) follows LBL traceroute semantics for packet length paramater.
+
+------------------------------------------------------------------------
+r372 | remi | 2006-10-12 18:25:31 +0300 (Thu, 12 Oct 2006) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+   M /trunk/src/trace-tcp.c
+
+Support for modifying traceroute TCP probes size
+
+------------------------------------------------------------------------
+r371 | remi | 2006-10-11 22:03:32 +0300 (Wed, 11 Oct 2006) | 2 lines
+Changed paths:
+   M /trunk/doc/rltraceroute6.8
+
+Update documentation
+
+------------------------------------------------------------------------
+r370 | remi | 2006-10-11 21:56:40 +0300 (Wed, 11 Oct 2006) | 3 lines
+Changed paths:
+   M /trunk/src/tcptraceroute.c
+   M /trunk/src/traceroute.c
+
+Re-include support for source TCP specification via undocumented
+(read: subject to change, not to used externally) traceroute6 option.
+
+------------------------------------------------------------------------
+r369 | remi | 2006-10-11 21:51:17 +0300 (Wed, 11 Oct 2006) | 3 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+traceroute6 always use iputils-style traceroute command line syntax.
+tcptraceroute6 consequently works properly.
+
+------------------------------------------------------------------------
+r368 | remi | 2006-10-11 21:49:07 +0300 (Wed, 11 Oct 2006) | 2 lines
+Changed paths:
+   M /trunk/src/tcptraceroute.c
+
+Various fixes to previous commit
+
+------------------------------------------------------------------------
+r367 | remi | 2006-10-10 23:24:18 +0300 (Tue, 10 Oct 2006) | 3 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+   A /trunk/src/tcptraceroute.c (from /trunk/src/traceroute.c:364)
+
+Make tcptraceroute6 a wrapper with tcptraceroute semantics
+that are partly incompatible with iputils traceroute ones.
+
+------------------------------------------------------------------------
+r366 | remi | 2006-10-10 22:00:06 +0300 (Tue, 10 Oct 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+traceroute6 accepts -F as documented
+
+------------------------------------------------------------------------
+r365 | remi | 2006-10-08 21:13:09 +0300 (Sun, 08 Oct 2006) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+This is development trunk 0.7.4
+
+------------------------------------------------------------------------
+r364 | remi | 2006-10-08 21:12:40 +0300 (Sun, 08 Oct 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Fix very unfortunate typo
+
+------------------------------------------------------------------------
+r360 | remi | 2006-10-08 20:19:23 +0300 (Sun, 08 Oct 2006) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+   M /trunk/src/traceroute.c
+
+Fix traceroute6 stopping at first non-responsive hop
+
+------------------------------------------------------------------------
+r359 | remi | 2006-10-08 20:06:22 +0300 (Sun, 08 Oct 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+C99 cleanup
+
+------------------------------------------------------------------------
+r358 | remi | 2006-10-08 20:03:52 +0300 (Sun, 08 Oct 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Some cleanup
+
+------------------------------------------------------------------------
+r357 | remi | 2006-10-08 19:48:42 +0300 (Sun, 08 Oct 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Work-around for OS missing IPV6_PKTINFO
+
+------------------------------------------------------------------------
+r356 | remi | 2006-10-07 18:55:34 +0300 (Sat, 07 Oct 2006) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+Document previous changeset
+
+------------------------------------------------------------------------
+r355 | remi | 2006-10-07 18:02:56 +0300 (Sat, 07 Oct 2006) | 2 lines
+Changed paths:
+   M /trunk/src/addrinfo.c
+   M /trunk/src/ndisc.c
+   M /trunk/src/tcpspray.c
+   M /trunk/src/traceroute.c
+
+Support for IDN within getaddrinfo()
+
+------------------------------------------------------------------------
+r354 | remi | 2006-10-07 14:48:01 +0300 (Sat, 07 Oct 2006) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+   M /trunk/src/Makefile.am
+
+Link each binary with librt manually as needed
+
+------------------------------------------------------------------------
+r353 | remi | 2006-10-07 14:38:51 +0300 (Sat, 07 Oct 2006) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+   M /trunk/doc/rltraceroute6.8
+
+Document previous changeset
+
+------------------------------------------------------------------------
+r352 | remi | 2006-10-07 14:36:18 +0300 (Sat, 07 Oct 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+traceroute6 -l prints hop limit of received packets
+
+------------------------------------------------------------------------
+r350 | remi | 2006-10-07 11:31:42 +0300 (Sat, 07 Oct 2006) | 2 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+Smae as previous commit
+
+------------------------------------------------------------------------
+r349 | remi | 2006-10-07 11:29:34 +0300 (Sat, 07 Oct 2006) | 3 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Use SO_DONTROUTE instead of MSG_DONTROUTE
+(anyway, neither are implemented by the kernel)
+
+------------------------------------------------------------------------
+r348 | remi | 2006-10-06 20:52:54 +0300 (Fri, 06 Oct 2006) | 2 lines
+Changed paths:
+   M /trunk/src/inet6rth.h
+
+Work-around for FreeBSD 4
+
+------------------------------------------------------------------------
+r347 | remi | 2006-10-06 20:50:06 +0300 (Fri, 06 Oct 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Same syntax error
+
+------------------------------------------------------------------------
+r346 | remi | 2006-10-06 20:49:36 +0300 (Fri, 06 Oct 2006) | 2 lines
+Changed paths:
+   M /trunk/src/inet6rth.h
+
+Syntax error
+
+------------------------------------------------------------------------
+r345 | remi | 2006-10-06 20:49:23 +0300 (Fri, 06 Oct 2006) | 2 lines
+Changed paths:
+   M /trunk/Makefile.am
+
+Uninstall nameinfo.1 symlink
+
+------------------------------------------------------------------------
+r344 | remi | 2006-10-06 20:48:41 +0300 (Fri, 06 Oct 2006) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+This is development version 0.7.3
+
+------------------------------------------------------------------------
+r341 | remi | 2006-09-30 22:52:27 +0300 (Sat, 30 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+
+Fix BSD/make fix
+
+------------------------------------------------------------------------
+r340 | remi | 2006-09-30 22:50:39 +0300 (Sat, 30 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+News for 0.7.2
+
+------------------------------------------------------------------------
+r334 | remi | 2006-09-30 22:32:50 +0300 (Sat, 30 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/doc/addrinfo.1
+
+Fix obvious typo.
+
+------------------------------------------------------------------------
+r333 | remi | 2006-09-30 22:28:01 +0300 (Sat, 30 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+
+BSD/make build fix
+
+------------------------------------------------------------------------
+r332 | remi | 2006-09-30 22:21:21 +0300 (Sat, 30 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/trace-udp.c
+
+FreeBSD compile fix
+
+------------------------------------------------------------------------
+r331 | remi | 2006-09-30 21:13:32 +0300 (Sat, 30 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Create raw sockets then drop root at the very beginning of the program.
+
+------------------------------------------------------------------------
+r330 | remi | 2006-09-30 19:24:11 +0300 (Sat, 30 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+This is development for release 0.7.2
+
+------------------------------------------------------------------------
+r329 | remi | 2006-09-30 19:23:47 +0300 (Sat, 30 Sep 2006) | 3 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+rt_segv does not really need to be initialized.
+Might save 1 or 2k in the binary depending on the format.
+
+------------------------------------------------------------------------
+r328 | remi | 2006-09-30 19:18:58 +0300 (Sat, 30 Sep 2006) | 3 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+When setuid, create the raw socket and drop root really as early as possible,
+so that we won't have a local root in case of command line parsing bug.
+
+------------------------------------------------------------------------
+r327 | remi | 2006-09-30 19:03:26 +0300 (Sat, 30 Sep 2006) | 3 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+Open a local non privileged socket for SIOCGIFHWADDR, instead of using an
+ugly global variable.
+
+------------------------------------------------------------------------
+r324 | remi | 2006-09-29 22:35:55 +0300 (Fri, 29 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+Some news
+
+------------------------------------------------------------------------
+r322 | remi | 2006-09-29 22:29:13 +0300 (Fri, 29 Sep 2006) | 4 lines
+Changed paths:
+   M /trunk/src/inet6rth.h
+   M /trunk/src/traceroute.c
+
+Add FreeBSD/NetBSD defines for IPV6_TCLASS and IPV6_RTHDR.
+OpenBSD and DragonFly do not have the RFC3542 defines yet according
+to their CVSweb, so not added :(
+
+------------------------------------------------------------------------
+r321 | remi | 2006-09-29 22:16:43 +0300 (Fri, 29 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+   M /trunk/src/inet6rth.h
+   M /trunk/src/traceroute.c
+
+Really use the inet6_rth_* and IPV6_RTHDR work-around
+
+------------------------------------------------------------------------
+r320 | remi | 2006-09-29 22:04:37 +0300 (Fri, 29 Sep 2006) | 3 lines
+Changed paths:
+   D /trunk/packages/debian/inet6_rth_add.c
+   M /trunk/src/Makefile.am
+   A /trunk/src/inet6rth.h (from /trunk/packages/debian/inet6_rth_add.c:319)
+
+Prepare to use inet6_rth_* replacement in the source tarball
+instead of just Debian
+
+------------------------------------------------------------------------
+r319 | remi | 2006-09-29 21:59:41 +0300 (Fri, 29 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Add warnings for IPV6_TCLASS and IPV6_RTHDR
+
+------------------------------------------------------------------------
+r318 | remi | 2006-09-29 21:56:33 +0300 (Fri, 29 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+This is development trunk for release 0.7.1
+
+------------------------------------------------------------------------
+r317 | remi | 2006-09-29 21:56:01 +0300 (Fri, 29 Sep 2006) | 3 lines
+Changed paths:
+   M /trunk/configure.ac
+
+Fix clock_nanosleep check...
+It was be as if it was never present!
+
+------------------------------------------------------------------------
+r316 | remi | 2006-09-29 20:59:40 +0300 (Fri, 29 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/packages/debian/inet6_rth_add.c
+
+Cosmetic fix
+
+------------------------------------------------------------------------
+r315 | remi | 2006-09-28 19:14:50 +0300 (Thu, 28 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+Oops, forgot to document addrinfo and nameinfo in NEWS - too late.
+
+------------------------------------------------------------------------
+r314 | remi | 2006-09-28 19:10:20 +0300 (Thu, 28 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/packages/debian/inet6_rth_add.c
+
+Fix Debian IPV6_RTHDR work-around
+
+------------------------------------------------------------------------
+r313 | remi | 2006-09-28 18:50:00 +0300 (Thu, 28 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+Forward port [311]
+
+------------------------------------------------------------------------
+r310 | remi | 2006-09-28 18:47:06 +0300 (Thu, 28 Sep 2006) | 2 lines
+Changed paths:
+   A /trunk/packages/debian/inet6_rth_add.c
+
+Debian package for upcoming 0.7.0
+
+------------------------------------------------------------------------
+r309 | remi | 2006-09-28 18:43:53 +0300 (Thu, 28 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+News for release 0.7.0
+
+------------------------------------------------------------------------
+r308 | remi | 2006-09-28 17:30:45 +0300 (Thu, 28 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/doc/rltraceroute6.8
+
+Document -g option (source routing)
+
+------------------------------------------------------------------------
+r307 | remi | 2006-09-27 23:05:01 +0300 (Wed, 27 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+traceroute6 support for Type 0 Routing Header, i.e. IPv6 source routing
+
+------------------------------------------------------------------------
+r306 | remi | 2006-09-27 22:04:21 +0300 (Wed, 27 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Cosmetic reordering
+
+------------------------------------------------------------------------
+r305 | remi | 2006-09-27 20:44:50 +0300 (Wed, 27 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+   M /trunk/src/tcpspray.c
+   M /trunk/src/trace-icmp.c
+   M /trunk/src/trace-tcp.c
+   M /trunk/src/trace-udp.c
+   M /trunk/src/traceroute.c
+   M /trunk/src/traceroute.h
+
+Use ssize_t instead of int when needed
+
+------------------------------------------------------------------------
+r304 | remi | 2006-09-27 20:29:31 +0300 (Wed, 27 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Add a comment for readability (hopefully)
+
+------------------------------------------------------------------------
+r303 | remi | 2006-09-27 20:28:53 +0300 (Wed, 27 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+traceroute6 now skips IPv6 extension headers within ICMPv6 errors payloads
+
+------------------------------------------------------------------------
+r301 | remi | 2006-09-25 20:18:13 +0300 (Mon, 25 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Remove dummy comment
+
+------------------------------------------------------------------------
+r300 | remi | 2006-09-25 19:58:02 +0300 (Mon, 25 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/doc/rltraceroute6.8
+
+Linux kernel 2.6.18 has fixed support for -t
+
+------------------------------------------------------------------------
+r299 | remi | 2006-09-25 19:55:51 +0300 (Mon, 25 Sep 2006) | 5 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Use standard API for outgoing interface setting
+This is not Linux-specific anymore, but that does not mean it
+is going to work any better (actually neither standard and non-standard
+methods work on Linux 2.6.18)
+
+------------------------------------------------------------------------
+r295 | remi | 2006-09-13 21:17:36 +0300 (Wed, 13 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/Makefile.am
+   A /trunk/doc/addrinfo.1 (from /trunk/doc/dnssort.1:294)
+   M /trunk/src/addrinfo.c
+
+Add documentation for addrinfo
+
+------------------------------------------------------------------------
+r294 | remi | 2006-09-13 21:04:19 +0300 (Wed, 13 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+   A /trunk/src/addrinfo.c
+
+Add addrinfo and nameinfo scripting tools
+
+------------------------------------------------------------------------
+r293 | remi | 2006-09-13 21:03:54 +0300 (Wed, 13 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+   M /trunk/src/traceroute.c
+
+Add missing const qualifier
+
+------------------------------------------------------------------------
+r291 | remi | 2006-09-13 17:45:39 +0300 (Wed, 13 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/doc/dnssort.1
+   M /trunk/src/dnssort.in
+
+Use getopt from Perl - big simplification
+
+------------------------------------------------------------------------
+r290 | remi | 2006-09-12 23:24:41 +0300 (Tue, 12 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/Makefile.am
+   A /trunk/doc/dnssort.1
+
+Manual page for dnssort
+
+------------------------------------------------------------------------
+r289 | remi | 2006-09-12 23:23:57 +0300 (Tue, 12 Sep 2006) | 3 lines
+Changed paths:
+   M /trunk/src/dnssort.in
+
+dnssport supports file names from the command line
+(yeah almost complete rewrite!)
+
+------------------------------------------------------------------------
+r288 | remi | 2006-09-12 23:06:06 +0300 (Tue, 12 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/dnssort.in
+
+Implement dnssort --reverse
+
+------------------------------------------------------------------------
+r287 | remi | 2006-09-12 22:43:10 +0300 (Tue, 12 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+   M /trunk/src/dnssort.in
+
+Look for Perl interpreter (don't assume it is in /usr/bin)
+
+------------------------------------------------------------------------
+r286 | remi | 2006-09-12 22:36:25 +0300 (Tue, 12 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+   M /trunk/configure.ac
+   M /trunk/src
+   M /trunk/src/Makefile.am
+   A /trunk/src/dnssort.in
+
+Add dnssort
+
+------------------------------------------------------------------------
+r285 | remi | 2006-09-06 19:46:20 +0300 (Wed, 06 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+Bump version number
+
+------------------------------------------------------------------------
+r282 | remi | 2006-09-06 18:36:57 +0300 (Wed, 06 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+News for release 0.6.8
+
+------------------------------------------------------------------------
+r281 | remi | 2006-09-06 18:34:43 +0300 (Wed, 06 Sep 2006) | 3 lines
+Changed paths:
+   M /trunk/src/tcpspray.c
+
+Fix duration and bandwidth values from tcpspray6:
+the start time was not withdrawn from the end time.
+
+------------------------------------------------------------------------
+r280 | remi | 2006-09-03 22:19:48 +0300 (Sun, 03 Sep 2006) | 3 lines
+Changed paths:
+   M /trunk/src/gettime.h
+   M /trunk/src/ndisc.c
+   M /trunk/src/tcpspray.c
+   M /trunk/src/traceroute.c
+
+- s/gettime/mono_gettime/g
+- add mono_nanosleep wrapper for monotonic clock nanosleep
+
+------------------------------------------------------------------------
+r279 | remi | 2006-09-03 22:11:17 +0300 (Sun, 03 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Revert previous commit. I need more sleep.
+
+------------------------------------------------------------------------
+r278 | remi | 2006-09-03 22:09:17 +0300 (Sun, 03 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Remaining unwrapped clock_gettime (CLOCK_MONOTONIC) call
+
+------------------------------------------------------------------------
+r277 | remi | 2006-09-03 22:05:19 +0300 (Sun, 03 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Packet parsing code factorization
+
+------------------------------------------------------------------------
+r276 | remi | 2006-09-03 21:57:40 +0300 (Sun, 03 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.h
+
+Create typedefs for callbacks
+
+------------------------------------------------------------------------
+r275 | remi | 2006-09-03 21:53:07 +0300 (Sun, 03 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Kill useless variable
+
+------------------------------------------------------------------------
+r274 | remi | 2006-09-03 21:52:53 +0300 (Sun, 03 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Some cleanup - should ease source routing support later
+
+------------------------------------------------------------------------
+r273 | remi | 2006-09-03 19:04:21 +0300 (Sun, 03 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/tcpspray.c
+
+Fix amd64 compiler warning
+
+------------------------------------------------------------------------
+r272 | remi | 2006-09-01 22:56:48 +0300 (Fri, 01 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+   A /trunk/src/trace-icmp.c (from /trunk/src/traceroute.c:271)
+   M /trunk/src/traceroute.c
+
+And ICMPv6-specific is now separated too
+
+------------------------------------------------------------------------
+r271 | remi | 2006-09-01 22:53:46 +0300 (Fri, 01 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Remove useless #include
+
+------------------------------------------------------------------------
+r270 | remi | 2006-09-01 22:53:28 +0300 (Fri, 01 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+No need BSD semantics in traceroute core
+
+------------------------------------------------------------------------
+r269 | remi | 2006-09-01 22:52:50 +0300 (Fri, 01 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+   M /trunk/src/trace-tcp.c
+   A /trunk/src/trace-udp.c (from /trunk/src/traceroute.c:268)
+   M /trunk/src/traceroute.c
+
+Separate UDP code
+
+------------------------------------------------------------------------
+r268 | remi | 2006-09-01 22:48:30 +0300 (Fri, 01 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/trace-tcp.c
+   M /trunk/src/traceroute.c
+   M /trunk/src/traceroute.h
+
+Cosmetic
+
+------------------------------------------------------------------------
+r267 | remi | 2006-09-01 22:44:28 +0300 (Fri, 01 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/trace-tcp.c
+
+Remove many useless headers
+
+------------------------------------------------------------------------
+r266 | remi | 2006-09-01 22:42:30 +0300 (Fri, 01 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+   A /trunk/src/trace-tcp.c (from /trunk/src/traceroute.c:265)
+   M /trunk/src/traceroute.c
+   M /trunk/src/traceroute.h
+
+Separate TCP code from main
+
+------------------------------------------------------------------------
+r265 | remi | 2006-09-01 22:36:29 +0300 (Fri, 01 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+   M /trunk/src/traceroute.c
+   A /trunk/src/traceroute.h (from /trunk/src/traceroute.c:264)
+
+Create traceroute.h, first step toward splitted traceroute source
+
+------------------------------------------------------------------------
+r263 | remi | 2006-09-01 20:27:53 +0300 (Fri, 01 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/doc/rltraceroute6.8
+   M /trunk/src/traceroute.c
+
+Document option -t and ignore it if not supported
+
+------------------------------------------------------------------------
+r262 | remi | 2006-09-01 18:54:13 +0300 (Fri, 01 Sep 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Add -t traceroute6 option to set Traffic Class
+
+------------------------------------------------------------------------
+r261 | remi | 2006-08-31 21:03:51 +0300 (Thu, 31 Aug 2006) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+Fix configure invocation in version infos
+
+------------------------------------------------------------------------
+r260 | remi | 2006-08-31 20:31:27 +0300 (Thu, 31 Aug 2006) | 2 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+Cleanup
+
+------------------------------------------------------------------------
+r259 | remi | 2006-08-31 20:20:09 +0300 (Thu, 31 Aug 2006) | 3 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+- Make sure errno is not overriden before perror()
+- Make errno always contain an error code before calling perror()
+
+------------------------------------------------------------------------
+r258 | remi | 2006-08-31 20:08:19 +0300 (Thu, 31 Aug 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Really cosmetic fix
+
+------------------------------------------------------------------------
+r257 | remi | 2006-08-31 20:07:57 +0300 (Thu, 31 Aug 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Minor cosmetic changes
+
+------------------------------------------------------------------------
+r256 | remi | 2006-08-27 11:23:25 +0300 (Sun, 27 Aug 2006) | 2 lines
+Changed paths:
+   A /trunk/autogen.sh (from /trunk/bootstrap:255)
+   D /trunk/bootstrap
+   M /trunk/src/ndisc.c
+   M /trunk/src/traceroute.c
+
+(Unlikely to ever be triggered) fixes for -Wundef
+
+------------------------------------------------------------------------
+r255 | remi | 2006-08-21 22:01:34 +0300 (Mon, 21 Aug 2006) | 2 lines
+Changed paths:
+   M /trunk/src/tcpspray.c
+
+use inttypes.h instead of stdint.h
+
+------------------------------------------------------------------------
+r254 | remi | 2006-08-17 18:14:47 +0300 (Thu, 17 Aug 2006) | 2 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+BSD compile fix
+
+------------------------------------------------------------------------
+r253 | remi | 2006-08-17 18:14:35 +0300 (Thu, 17 Aug 2006) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+Development trunk for version 0.6.8
+
+------------------------------------------------------------------------
+r249 | remi | 2006-08-12 22:50:55 +0300 (Sat, 12 Aug 2006) | 3 lines
+Changed paths:
+   M /trunk/NEWS
+   M /trunk/src/tcpspray.c
+
+Fix for old FreeBSD adapted from its ports tree
+(original author: Shaun Amott)
+
+------------------------------------------------------------------------
+r248 | remi | 2006-08-03 19:36:58 +0300 (Thu, 03 Aug 2006) | 5 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+Check hop limit of neighbor advertisement:
+they must be 255, which proves they weren't routed.
+In a way, this is a security fix to {n,r}disc6
+(though the bug has been known for a long time)
+
+------------------------------------------------------------------------
+r247 | remi | 2006-08-03 18:41:26 +0300 (Thu, 03 Aug 2006) | 2 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+More C99 cosmetics
+
+------------------------------------------------------------------------
+r246 | remi | 2006-08-03 18:10:42 +0300 (Thu, 03 Aug 2006) | 2 lines
+Changed paths:
+   M /trunk/src/tcpspray.c
+   M /trunk/src/traceroute.c
+
+C99 cosmetics
+
+------------------------------------------------------------------------
+r245 | remi | 2006-08-03 18:06:21 +0300 (Thu, 03 Aug 2006) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+Development trunk 0.6.7
+
+------------------------------------------------------------------------
+r234 | remi | 2006-07-12 21:06:26 +0300 (Wed, 12 Jul 2006) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+News for release 0.6.6
+
+------------------------------------------------------------------------
+r233 | remi | 2006-07-12 21:03:32 +0300 (Wed, 12 Jul 2006) | 2 lines
+Changed paths:
+   D /trunk/debian
+   A /trunk/packages
+   A /trunk/packages/debian (from /trunk/debian:232)
+
+Move debian/ to packages/debian/
+
+------------------------------------------------------------------------
+r232 | remi | 2006-07-12 21:02:18 +0300 (Wed, 12 Jul 2006) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+This is development trunk for version 0.6.6
+
+------------------------------------------------------------------------
+r231 | remi | 2006-07-12 21:01:57 +0300 (Wed, 12 Jul 2006) | 2 lines
+Changed paths:
+   M /trunk/src/tcpspray.c
+
+Compile fix for FreeBSD
+
+------------------------------------------------------------------------
+r229 | remi | 2006-07-07 18:12:36 +0300 (Fri, 07 Jul 2006) | 2 lines
+Changed paths:
+   M /trunk/debian
+   D /trunk/debian/docs
+
+Switch to CDBS
+
+------------------------------------------------------------------------
+r228 | remi | 2006-07-07 18:12:27 +0300 (Fri, 07 Jul 2006) | 2 lines
+Changed paths:
+   M /trunk/src
+
+Update svn:ignore
+
+------------------------------------------------------------------------
+r225 | remi | 2006-06-05 20:17:01 +0300 (Mon, 05 Jun 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Remove debug message
+
+------------------------------------------------------------------------
+r224 | remi | 2006-06-05 19:49:48 +0300 (Mon, 05 Jun 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Switch traceroute to the monotonic clock too.
+
+------------------------------------------------------------------------
+r223 | remi | 2006-06-05 19:49:22 +0300 (Mon, 05 Jun 2006) | 3 lines
+Changed paths:
+   M /trunk/src/gettime.h
+
+Use correct clock frequency for times()
+Unfortunately, this yields very imprecise results.
+
+------------------------------------------------------------------------
+r222 | remi | 2006-06-05 19:06:56 +0300 (Mon, 05 Jun 2006) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+
+Include gettime.h in tarball
+
+------------------------------------------------------------------------
+r221 | remi | 2006-06-05 19:05:48 +0300 (Mon, 05 Jun 2006) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+Cheap clock_nanosleep replacement
+
+------------------------------------------------------------------------
+r220 | remi | 2006-06-05 19:03:37 +0300 (Mon, 05 Jun 2006) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+   M /trunk/configure.ac
+   M /trunk/src/Makefile.am
+   M /trunk/src/tcpspray.c
+   M /trunk/src/traceroute.c
+
+Use AC_USE_SYSTEM_EXTENSIONS
+
+------------------------------------------------------------------------
+r219 | remi | 2006-06-05 19:01:55 +0300 (Mon, 05 Jun 2006) | 3 lines
+Changed paths:
+   A /trunk/src/gettime.h
+   M /trunk/src/ndisc.c
+   M /trunk/src/tcpspray.c
+
+- Commoditize gettime() wrapper
+- Use monotonic clock within tcpspray
+
+------------------------------------------------------------------------
+r218 | remi | 2006-06-05 18:37:11 +0300 (Mon, 05 Jun 2006) | 2 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+Use a monotonic time source within (n|r)disc6.
+
+------------------------------------------------------------------------
+r216 | remi | 2006-06-03 21:28:39 +0300 (Sat, 03 Jun 2006) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+   A /trunk/debian
+   A /trunk/debian/docs
+
+Debian packaging metadata.
+
+------------------------------------------------------------------------
+r215 | remi | 2006-06-03 21:06:19 +0300 (Sat, 03 Jun 2006) | 2 lines
+Changed paths:
+   M /trunk/doc/ndisc6.8
+   M /trunk/doc/rdisc6.8
+   M /trunk/doc/rltraceroute6.8
+   M /trunk/doc/tcpspray6.1
+
+manpages: Encode all non-ASCII charset properly
+
+------------------------------------------------------------------------
+r214 | remi | 2006-06-03 11:00:17 +0300 (Sat, 03 Jun 2006) | 2 lines
+Changed paths:
+   M /trunk/README
+
+Cosmetic
+
+------------------------------------------------------------------------
+r213 | remi | 2006-06-02 23:15:06 +0300 (Fri, 02 Jun 2006) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+   M /trunk/src/Makefile.am
+
+Use Autoconf check for C99
+
+------------------------------------------------------------------------
+r211 | remi | 2006-05-07 14:08:19 +0300 (Sun, 07 May 2006) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+News for 0.6.3
+
+------------------------------------------------------------------------
+r210 | remi | 2006-05-07 11:27:43 +0300 (Sun, 07 May 2006) | 2 lines
+Changed paths:
+   M /trunk/README
+
+Update README
+
+------------------------------------------------------------------------
+r209 | remi | 2006-05-07 11:25:08 +0300 (Sun, 07 May 2006) | 2 lines
+Changed paths:
+   M /trunk/doc/rltraceroute6.8
+
+traceroute6 -> rltraceroute6
+
+------------------------------------------------------------------------
+r208 | remi | 2006-05-07 11:24:39 +0300 (Sun, 07 May 2006) | 2 lines
+Changed paths:
+   M /trunk/Makefile.am
+
+Fix make uninstall
+
+------------------------------------------------------------------------
+r207 | remi | 2006-05-07 11:15:51 +0300 (Sun, 07 May 2006) | 2 lines
+Changed paths:
+   M /trunk/Makefile.am
+   A /trunk/doc/rltraceroute6.8 (from /trunk/doc/traceroute6.8:206)
+   D /trunk/doc/traceroute6.8
+   M /trunk/src/Makefile.am
+
+Rename traceroute6 to rltraceroute6 to avoid conflict with iputils
+
+------------------------------------------------------------------------
+r206 | remi | 2006-05-07 10:50:52 +0300 (Sun, 07 May 2006) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+
+Make the wrapper scripts relocatable
+
+------------------------------------------------------------------------
+r205 | remi | 2006-05-07 10:50:11 +0300 (Sun, 07 May 2006) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+Version 0.6.3
+
+------------------------------------------------------------------------
+r204 | remi | 2006-05-07 09:25:10 +0300 (Sun, 07 May 2006) | 2 lines
+Changed paths:
+   M /trunk/doc/traceroute6.8
+
+Document tracert6.
+
+------------------------------------------------------------------------
+r203 | remi | 2006-05-07 09:21:33 +0300 (Sun, 07 May 2006) | 3 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+
+- Handle parameters with white space properly in tcptraceroute6 wrapper
+- Add Windows-like tracert6 wrapper with ICMPv6 as default mode
+
+------------------------------------------------------------------------
+r201 | remi | 2006-05-02 14:10:33 +0300 (Tue, 02 May 2006) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+   M /trunk/configure.ac
+
+Upcoming release is 0.6.2
+
+------------------------------------------------------------------------
+r200 | remi | 2006-05-02 13:58:35 +0300 (Tue, 02 May 2006) | 3 lines
+Changed paths:
+   M /trunk/Makefile.am
+
+Fix installation of tcptraceroute.8 as a symlink.
+Bug noticed while having a look at Dries Verachtert?\226?\128?\153s ndisc6.spec.
+
+------------------------------------------------------------------------
+r199 | remi | 2006-05-01 20:09:07 +0300 (Mon, 01 May 2006) | 2 lines
+Changed paths:
+   M /trunk/Makefile.am
+
+Make sure svn log does not ask questions
+
+------------------------------------------------------------------------
+r198 | remi | 2006-05-01 00:15:35 +0300 (Mon, 01 May 2006) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+News for upcoming release 0.6.2
+
+------------------------------------------------------------------------
+r197 | remi | 2006-04-30 19:40:03 +0300 (Sun, 30 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/Makefile.am
+
+Don't ignore failure when generating ChangeLog
+
+------------------------------------------------------------------------
+r196 | remi | 2006-04-30 11:16:38 +0300 (Sun, 30 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/doc/traceroute6.8
+
+Update documented BUGS
+
+------------------------------------------------------------------------
+r195 | remi | 2006-04-30 11:07:58 +0300 (Sun, 30 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/doc/traceroute6.8
+   M /trunk/src/traceroute.c
+
+Support traceroute6 -z to wait between each probes
+
+------------------------------------------------------------------------
+r194 | remi | 2006-04-29 23:44:38 +0300 (Sat, 29 Apr 2006) | 7 lines
+Changed paths:
+   M /trunk/doc/traceroute6.8
+   M /trunk/src/traceroute.c
+
+- Support traceroute6 -p <port> to specify base UDP port
+  (this was no longer possible since when the last parameter was turned
+   into a packet byte length)
+- Support tcptraceroute6 <port> to override source TCP port
+- Document (tcp)traceroute6 -p option
+- Note that TCP port 0 is actually TCP port 0
+
+------------------------------------------------------------------------
+r193 | remi | 2006-04-29 23:19:53 +0300 (Sat, 29 Apr 2006) | 3 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Finally parse the last parameter as a packet length for ICMP and UDP
+probes, instead of as a destination port number
+
+------------------------------------------------------------------------
+r192 | remi | 2006-04-29 23:05:57 +0300 (Sat, 29 Apr 2006) | 3 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Don't print destination port number when using ICMP which has no port
+numbers
+
+------------------------------------------------------------------------
+r191 | remi | 2006-04-29 23:01:02 +0300 (Sat, 29 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Internal support for customized source port
+
+------------------------------------------------------------------------
+r190 | remi | 2006-04-29 22:53:48 +0300 (Sat, 29 Apr 2006) | 4 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Internal support for various size of UDP and ICMP probes (not yet
+available to user). ICMPv6 Echo probes now pass through my 6to4
+relay's firewall.
+
+------------------------------------------------------------------------
+r189 | remi | 2006-04-28 23:46:51 +0300 (Fri, 28 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Solaris compile fix
+
+------------------------------------------------------------------------
+r188 | remi | 2006-04-28 23:30:10 +0300 (Fri, 28 Apr 2006) | 5 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Fix traceroute time out
+- it was broken by the previous commit on Linux
+- it never worked properly on BSD, as it used to assume that select()
+  updated the struct timeval upon return.
+
+------------------------------------------------------------------------
+r187 | remi | 2006-04-28 23:23:34 +0300 (Fri, 28 Apr 2006) | 3 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Also switch traceroute to poll()
+TODO: fix timeout
+
+------------------------------------------------------------------------
+r186 | remi | 2006-04-28 23:18:01 +0300 (Fri, 28 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+Set close-on-exec flag
+
+------------------------------------------------------------------------
+r185 | remi | 2006-04-28 23:15:47 +0300 (Fri, 28 Apr 2006) | 3 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+ndisc: Use poll() instead of select() to simplify code and get rid of
+the FD_SETSIZE issues
+
+------------------------------------------------------------------------
+r184 | remi | 2006-04-26 23:15:21 +0300 (Wed, 26 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+   M /trunk/src/traceroute.c
+
+Compile fix
+
+------------------------------------------------------------------------
+r183 | remi | 2006-04-26 23:13:25 +0300 (Wed, 26 Apr 2006) | 5 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+   M /trunk/src/traceroute.c
+
+For SetUID programs, make sure raw sockets are always:
+- above 2 (so that we can't be tricked into writing crap to sockets
+           through STDOUT/STDERR)
+- below FD_SETSIZE so that FD_SET does not overflow.
+
+------------------------------------------------------------------------
+r182 | remi | 2006-04-26 20:00:34 +0300 (Wed, 26 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/Makefile.am
+
+Make sure the ChangeLog is updated via make dist
+
+------------------------------------------------------------------------
+r181 | remi | 2006-04-26 19:58:23 +0300 (Wed, 26 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/src
+
+Add missing svn:ignore entry
+
+------------------------------------------------------------------------
+r180 | remi | 2006-04-26 17:54:53 +0300 (Wed, 26 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Remove extra one time debug code
+
+------------------------------------------------------------------------
+r179 | remi | 2006-04-26 17:22:40 +0300 (Wed, 26 Apr 2006) | 5 lines
+Changed paths:
+   M /trunk/doc/traceroute6.8
+   M /trunk/src/traceroute.c
+
+Support (tcp)traceroute6 -i
+Unfortunately, the Linux kernel ignores SO_BINDTODEVICE
+(much like MSG_DONTROUTE) on raw IPv6 sockets. iputils traceroute6 has
+the same bug.
+
+------------------------------------------------------------------------
+r178 | remi | 2006-04-26 14:37:01 +0300 (Wed, 26 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/doc/traceroute6.8
+   M /trunk/src/traceroute.c
+
+support traceroute6 -d (SO_DEBUG)
+
+------------------------------------------------------------------------
+r177 | remi | 2006-04-26 11:07:29 +0300 (Wed, 26 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/doc/traceroute6.8
+   M /trunk/src/traceroute.c
+
+Support tcptraceroute6 -E to emit ECN-setup SYN probes
+
+------------------------------------------------------------------------
+r176 | remi | 2006-04-26 00:46:16 +0300 (Wed, 26 Apr 2006) | 6 lines
+Changed paths:
+   M /trunk/doc/traceroute6.8
+   M /trunk/src/traceroute.c
+
+- support traceroute6 -r (DONTROUTE, but Linux ignores that)
+- support tcptraceroute6 -N (as the opposite of -n, maybe we should
+  differenciate private addresses as IPv4/tcptraceroute ?)
+- ignore traceroute6 -F
+- ingore traceroute6 -x
+
+------------------------------------------------------------------------
+r175 | remi | 2006-04-25 23:38:05 +0300 (Tue, 25 Apr 2006) | 4 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+- Set proper ICMPv6 filter for ping socket
+- Factorize fcntl()
+- Set SO_REUSEADDR (probably useless, but not an error)
+
+------------------------------------------------------------------------
+r174 | remi | 2006-04-25 21:42:45 +0300 (Tue, 25 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Cosmetic changes
+
+------------------------------------------------------------------------
+r173 | remi | 2006-04-25 21:36:13 +0300 (Tue, 25 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Would-be thread-safety fix, clean up
+
+------------------------------------------------------------------------
+r172 | remi | 2006-04-25 19:58:05 +0300 (Tue, 25 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Fix minor boundary check problem
+
+------------------------------------------------------------------------
+r171 | remi | 2006-04-25 19:46:41 +0300 (Tue, 25 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/doc/traceroute6.8
+   M /trunk/src/traceroute.c
+
+traceroute support for sending ICMPv6 Echo request probes
+
+------------------------------------------------------------------------
+r170 | remi | 2006-04-25 18:51:55 +0300 (Tue, 25 Apr 2006) | 3 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+- Add one long option for each short one
+- Add comment about some unimplemented options
+
+------------------------------------------------------------------------
+r169 | remi | 2006-04-25 18:36:46 +0300 (Tue, 25 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+Version 0.6.1-svn
+
+------------------------------------------------------------------------
+r167 | remi | 2006-04-24 13:07:14 +0300 (Mon, 24 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+   M /trunk/README
+
+Added tcpspray6 to the documentation
+
+------------------------------------------------------------------------
+r165 | remi | 2006-04-23 15:55:34 +0300 (Sun, 23 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/Makefile.am
+
+Include tcpspray6.1 in tarball
+
+------------------------------------------------------------------------
+r164 | remi | 2006-04-23 15:55:17 +0300 (Sun, 23 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+
+Fix distclean
+
+------------------------------------------------------------------------
+r163 | remi | 2006-04-23 15:53:29 +0300 (Sun, 23 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/Makefile.am
+   A /trunk/doc/tcpspray6.1
+   M /trunk/src/tcpspray.c
+
+Man page for tcpspray6
+
+------------------------------------------------------------------------
+r162 | remi | 2006-04-23 12:37:30 +0300 (Sun, 23 Apr 2006) | 5 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+
+Instead of installing everything into $(prefix)/sbin:
+- install setuid programs in .../bin unless setuid is disabled,
+- otherwise install privilege-needing programs in .../sbin,
+- always install non-privileged programs in .../bin.
+
+------------------------------------------------------------------------
+r161 | remi | 2006-04-21 19:58:37 +0300 (Fri, 21 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+
+Fix tcptraceroute6 dependencies
+
+------------------------------------------------------------------------
+r160 | remi | 2006-04-21 19:50:10 +0300 (Fri, 21 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+
+Check for nanosleep in -lrt (Solaris)
+
+------------------------------------------------------------------------
+r159 | remi | 2006-04-21 00:51:27 +0300 (Fri, 21 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/Makefile.am
+
+Attempt to fix make dist from svn export
+
+------------------------------------------------------------------------
+r158 | remi | 2006-04-21 00:46:42 +0300 (Fri, 21 Apr 2006) | 3 lines
+Changed paths:
+   M /trunk/Makefile.am
+
+Do not force build of stamp-svn - it will be built automatically when
+needed (which means when calling make dist)
+
+------------------------------------------------------------------------
+r157 | remi | 2006-04-21 00:42:14 +0300 (Fri, 21 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/Makefile.am
+
+Build fix
+
+------------------------------------------------------------------------
+r156 | remi | 2006-04-21 00:29:52 +0300 (Fri, 21 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/Makefile.am
+   M /trunk/bootstrap
+
+Fix automake warnings
+
+------------------------------------------------------------------------
+r155 | remi | 2006-04-21 00:21:12 +0300 (Fri, 21 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/src/tcpspray.c
+   M /trunk/src/traceroute.c
+
+OpenBSD compilation fixes
+
+------------------------------------------------------------------------
+r154 | remi | 2006-04-20 17:38:52 +0300 (Thu, 20 Apr 2006) | 4 lines
+Changed paths:
+   M /trunk/src/tcpspray.c
+
+-f tcpspray command line option to read block content from a file
+This is now a feature-wise full tcpspray rewrite, let alone the lack of
+manual page.
+
+------------------------------------------------------------------------
+r153 | remi | 2006-04-20 17:25:23 +0300 (Thu, 20 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/src/tcpspray.c
+
+Support for (useless?) ?\194?\181sec delay tcpspray option
+
+------------------------------------------------------------------------
+r152 | remi | 2006-04-20 15:10:51 +0300 (Thu, 20 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/src/tcpspray.c
+
+Fix error handling in Echo mode
+
+------------------------------------------------------------------------
+r151 | remi | 2006-04-20 15:08:24 +0300 (Thu, 20 Apr 2006) | 3 lines
+Changed paths:
+   M /trunk/src/tcpspray.c
+
+- Implement Echo protocol support (command line optino -e)
+- Some clean up
+
+------------------------------------------------------------------------
+r150 | remi | 2006-04-20 14:18:35 +0300 (Thu, 20 Apr 2006) | 3 lines
+Changed paths:
+   M /trunk/src/tcpspray.c
+
+Require a hostname to tcpspray. Using localhost by default instead of
+printing an error is confusing.
+
+------------------------------------------------------------------------
+r149 | remi | 2006-04-20 14:12:18 +0300 (Thu, 20 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/src/tcpspray.c
+
+Add option -n to specify number of blocks to send
+
+------------------------------------------------------------------------
+r148 | remi | 2006-04-20 14:01:49 +0300 (Thu, 20 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/src/tcpspray.c
+
+tcpspray6 -b option to customize blocks size
+
+------------------------------------------------------------------------
+r147 | remi | 2006-04-20 00:20:33 +0300 (Thu, 20 Apr 2006) | 4 lines
+Changed paths:
+   M /trunk/src/tcpspray.c
+
+Add genuine though rudimentary command line options to tcpspray6.
+It still misses most option from the original tcpspray (and it also
+lacks a manual page).
+
+------------------------------------------------------------------------
+r146 | remi | 2006-04-19 23:31:40 +0300 (Wed, 19 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+   A /trunk/src/tcpspray.c
+
+Preliminary complete rewrite dual-stack of Greg Christy's tcpspray
+
+------------------------------------------------------------------------
+r145 | remi | 2006-04-19 19:37:52 +0300 (Wed, 19 Apr 2006) | 3 lines
+Changed paths:
+   M /trunk/configure.ac
+   M /trunk/src/ndisc.c
+   M /trunk/src/traceroute.c
+
+More comprehensive version informations.
+Updated copyright information.
+
+------------------------------------------------------------------------
+r144 | remi | 2006-04-19 19:26:42 +0300 (Wed, 19 Apr 2006) | 3 lines
+Changed paths:
+   R /trunk/m4/getopt.m4
+   R /trunk/m4/sockaddr.m4
+
+Hmm hmm, these files were commited as links from the tcpreen trunk.
+ndisc6 must not depend on tcpreen... add them as real files.
+
+------------------------------------------------------------------------
+r143 | remi | 2006-04-19 19:25:31 +0300 (Wed, 19 Apr 2006) | 2 lines
+Changed paths:
+   A /trunk/m4/hostname.m4
+
+M4 macro that's going to be needed
+
+------------------------------------------------------------------------
+r142 | remi | 2006-04-19 19:15:20 +0300 (Wed, 19 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/AUTHORS
+   M /trunk/Makefile.am
+   M /trunk/bootstrap
+   M /trunk/configure.ac
+   M /trunk/doc/ndisc6.8
+   M /trunk/doc/rdisc6.8
+   M /trunk/doc/traceroute6.8
+   M /trunk/m4/Makefile.am
+   M /trunk/m4/getopt.m4
+   M /trunk/m4/sockaddr.m4
+   M /trunk/src/Makefile.am
+
+Define/Uniformize SVN properties
+
+------------------------------------------------------------------------
+r141 | remi | 2006-04-19 19:13:14 +0300 (Wed, 19 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+   M /trunk/README
+
+Everything works on BSD now
+
+------------------------------------------------------------------------
+r140 | remi | 2006-04-19 18:13:44 +0300 (Wed, 19 Apr 2006) | 4 lines
+Changed paths:
+   M /trunk/configure.ac
+   M /trunk/src/Makefile.am
+
+- Enable setuid bit on installed programs by default,
+- Add a --disable-suid-install option to not annoy would-be
+  paranoid^H^H^H^H^H^H^H^Hsuspicious packagers
+
+------------------------------------------------------------------------
+r139 | remi | 2006-04-19 18:00:29 +0300 (Wed, 19 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/Makefile.am
+
+Symlink tcptraceroute6.8 to traceroute6.8
+
+------------------------------------------------------------------------
+r138 | remi | 2006-04-19 17:24:56 +0300 (Wed, 19 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/Makefile.am
+
+Fix ChangeLog build rules
+
+------------------------------------------------------------------------
+r137 | remi | 2006-04-19 17:09:56 +0300 (Wed, 19 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk
+   M /trunk/Makefile.am
+
+Autobuild ChangeLog from SVN
+
+------------------------------------------------------------------------
+r136 | remi | 2006-04-19 16:49:53 +0300 (Wed, 19 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+
+Fix make distcheck
+
+------------------------------------------------------------------------
+r135 | remi | 2006-04-19 16:48:42 +0300 (Wed, 19 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Support some long options
+
+------------------------------------------------------------------------
+r134 | remi | 2006-04-19 16:48:34 +0300 (Wed, 19 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+Terminate long options list properly
+
+------------------------------------------------------------------------
+r133 | remi | 2006-04-19 16:37:11 +0300 (Wed, 19 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/doc/traceroute6.8
+
+Document option -U
+
+------------------------------------------------------------------------
+r132 | remi | 2006-04-19 16:35:54 +0300 (Wed, 19 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Do no longer use argv[0] to determine default probe packets type.
+
+------------------------------------------------------------------------
+r131 | remi | 2006-04-19 16:31:31 +0300 (Wed, 19 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+Fix check for ioctl(SIOCGIFHWADDR)
+
+------------------------------------------------------------------------
+r130 | remi | 2006-04-19 16:30:20 +0300 (Wed, 19 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+Fix ordering of memcpy's while crafting a Neighbor Solicitation
+
+------------------------------------------------------------------------
+r129 | remi | 2006-04-19 16:25:21 +0300 (Wed, 19 Apr 2006) | 3 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+Do not send source lladdr option on operating systems where ndisc6
+doesn't know (yet) of two determine the MAC address of an interface.
+
+------------------------------------------------------------------------
+r128 | remi | 2006-04-19 13:42:44 +0300 (Wed, 19 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+Solaris compile fix
+
+------------------------------------------------------------------------
+r127 | remi | 2006-04-19 13:36:06 +0300 (Wed, 19 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/src/traceroute.c
+
+Same as previous commit, for traceroute
+
+------------------------------------------------------------------------
+r126 | remi | 2006-04-19 13:34:34 +0300 (Wed, 19 Apr 2006) | 3 lines
+Changed paths:
+   M /trunk/src/ndisc.c
+
+Print --help usage infos on stdout rather than stderr
+as other program do
+
+------------------------------------------------------------------------
+r125 | remi | 2006-04-19 12:42:19 +0300 (Wed, 19 Apr 2006) | 2 lines
+Changed paths:
+   A /trunk/bootstrap
+
+Bootstrap SVN script
+
+------------------------------------------------------------------------
+r124 | remi | 2006-04-19 12:39:37 +0300 (Wed, 19 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk
+   M /trunk/admin
+   M /trunk/m4
+   M /trunk/src
+
+svn:ignore rewrite
+
+------------------------------------------------------------------------
+r123 | remi | 2006-04-19 12:36:00 +0300 (Wed, 19 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/configure.ac
+   M /trunk/src/ndisc.c
+   M /trunk/src/traceroute.c
+
+Handle non-gettext entirely from config.h
+
+------------------------------------------------------------------------
+r122 | remi | 2006-04-19 12:32:18 +0300 (Wed, 19 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+
+Put full path to traceroute6 in the tcptraceroute6 wrapper
+
+------------------------------------------------------------------------
+r121 | remi | 2006-04-19 12:30:58 +0300 (Wed, 19 Apr 2006) | 3 lines
+Changed paths:
+   M /trunk/src/Makefile.am
+
+Rewrite tcptraceroute6 as a trivial shell script around traceroute6
+instead of a symlink
+
+------------------------------------------------------------------------
+r120 | remi | 2006-04-19 12:26:39 +0300 (Wed, 19 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/Makefile.am
+   M /trunk/NEWS
+   M /trunk/configure.ac
+
+Include man pages in the distribution
+
+------------------------------------------------------------------------
+r119 | remi | 2006-04-19 12:22:56 +0300 (Wed, 19 Apr 2006) | 2 lines
+Changed paths:
+   D /trunk/INSTALL
+   D /trunk/Makefile
+   A /trunk/Makefile.am
+   A /trunk/configure.ac
+   A /trunk/doc/ndisc6.8 (from /trunk/ndisc6.8:117)
+   A /trunk/doc/rdisc6.8 (from /trunk/rdisc6.8:117)
+   A /trunk/doc/traceroute6.8 (from /trunk/traceroute6.8:117)
+   A /trunk/m4/Makefile.am
+   A /trunk/m4/getopt.m4
+   A /trunk/m4/sockaddr.m4
+   D /trunk/ndisc.c
+   D /trunk/ndisc6.8
+   D /trunk/rdisc6.8
+   A /trunk/src/Makefile.am
+   A /trunk/src/ndisc.c (from /trunk/ndisc.c:117)
+   A /trunk/src/traceroute.c (from /trunk/traceroute.c:117)
+   D /trunk/traceroute.c
+   D /trunk/traceroute6.8
+
+Switch to autotools and break everything - MUAHAHA!!
+
+------------------------------------------------------------------------
+r118 | remi | 2006-04-19 12:16:39 +0300 (Wed, 19 Apr 2006) | 2 lines
+Changed paths:
+   A /trunk/AUTHORS
+
+Add author file
+
+------------------------------------------------------------------------
+r117 | remi | 2006-04-19 12:09:16 +0300 (Wed, 19 Apr 2006) | 2 lines
+Changed paths:
+   A /trunk/admin
+   A /trunk/doc
+   A /trunk/m4
+   A /trunk/src
+
+New directory structure for autotools
+
+------------------------------------------------------------------------
+r115 | remi | 2006-04-19 12:02:46 +0300 (Wed, 19 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+News for release 0.5.3
+
+------------------------------------------------------------------------
+r114 | remi | 2006-04-19 11:58:04 +0300 (Wed, 19 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/traceroute.c
+
+Solaris compilation fix
+
+------------------------------------------------------------------------
+r113 | remi | 2006-04-19 00:29:16 +0300 (Wed, 19 Apr 2006) | 4 lines
+Changed paths:
+   M /trunk/traceroute.c
+
+- Detect parameter problems errors and consider they are an indication
+  that the traceroute is completed.
+- Some clean up.
+
+------------------------------------------------------------------------
+r112 | remi | 2006-04-18 22:49:37 +0300 (Tue, 18 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/README
+
+Update BSD status
+
+------------------------------------------------------------------------
+r111 | remi | 2006-04-18 22:46:07 +0300 (Tue, 18 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/traceroute.c
+
+BSD compile fix
+
+------------------------------------------------------------------------
+r110 | remi | 2006-04-18 22:44:06 +0300 (Tue, 18 Apr 2006) | 3 lines
+Changed paths:
+   M /trunk/traceroute.c
+
+Use BSD-ish tcphdr and udphdr structs
+(partial traceroute6 BSD compile fix)
+
+------------------------------------------------------------------------
+r109 | remi | 2006-04-18 22:40:36 +0300 (Tue, 18 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/traceroute.c
+
+Fix extra warning properly
+
+------------------------------------------------------------------------
+r108 | remi | 2006-04-18 22:39:50 +0300 (Tue, 18 Apr 2006) | 3 lines
+Changed paths:
+   M /trunk/traceroute.c
+
+Revert broken earlier commits chunks (from [98] and [107])
+that prevented UDP traceroute6 from detecting succesful completion
+
+------------------------------------------------------------------------
+r107 | remi | 2006-04-18 22:03:06 +0300 (Tue, 18 Apr 2006) | 3 lines
+Changed paths:
+   M /trunk/traceroute.c
+
+- Abort on protocol error (such as parameter problem)
+- Set non-blocking mode and close-on-exec just in case
+
+------------------------------------------------------------------------
+r106 | remi | 2006-04-18 20:38:52 +0300 (Tue, 18 Apr 2006) | 3 lines
+Changed paths:
+   M /trunk/Makefile
+   M /trunk/traceroute.c
+
+traceroute6: Reset fd_set properly after every probe
+rather than every TTL increment
+
+------------------------------------------------------------------------
+r104 | remi | 2006-04-16 20:51:04 +0300 (Sun, 16 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+Oops - update version number in NEWS
+
+------------------------------------------------------------------------
+r103 | remi | 2006-04-16 20:50:36 +0300 (Sun, 16 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+NEWS for upcoming release 0.5.2
+
+------------------------------------------------------------------------
+r102 | remi | 2006-04-16 20:46:58 +0300 (Sun, 16 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/COPYING
+   M /trunk/INSTALL
+   M /trunk/Makefile
+   M /trunk/NEWS
+   M /trunk/README
+   M /trunk/ndisc.c
+   M /trunk/ndisc6.8
+   M /trunk/rdisc6.8
+   M /trunk/traceroute.c
+   M /trunk/traceroute6.8
+
+Uniformize svn:keywords
+
+------------------------------------------------------------------------
+r101 | remi | 2006-04-16 20:44:11 +0300 (Sun, 16 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/COPYING
+   M /trunk/INSTALL
+   M /trunk/Makefile
+   M /trunk/NEWS
+   M /trunk/README
+   M /trunk/ndisc.c
+   M /trunk/ndisc6.8
+   M /trunk/rdisc6.8
+   M /trunk/traceroute.c
+   M /trunk/traceroute6.8
+
+Encoding and MIME type fixes
+
+------------------------------------------------------------------------
+r100 | remi | 2006-04-16 20:12:32 +0300 (Sun, 16 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/Makefile
+
+Make sure ChangeLog is built in English language
+
+------------------------------------------------------------------------
+r98 | remi | 2006-04-16 19:57:49 +0300 (Sun, 16 Apr 2006) | 3 lines
+Changed paths:
+   M /trunk/traceroute.c
+
+- Fixes detection of invalid hop limits from the command line
+- Another bunch of warnings fixed
+
+------------------------------------------------------------------------
+r97 | remi | 2006-04-16 19:49:04 +0300 (Sun, 16 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/traceroute.c
+
+A bunch of warning fixed
+
+------------------------------------------------------------------------
+r96 | remi | 2006-04-16 19:48:52 +0300 (Sun, 16 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/ndisc.c
+
+Update copyright
+
+------------------------------------------------------------------------
+r95 | remi | 2006-04-16 19:45:07 +0300 (Sun, 16 Apr 2006) | 2 lines
+Changed paths:
+   M /trunk/ndisc.c
+
+Fix input buffer size check
+
+------------------------------------------------------------------------
+r94 | remi | 2005-12-17 22:38:11 +0200 (Sat, 17 Dec 2005) | 2 lines
+Changed paths:
+   A /trunk/COPYING
+   M /trunk/Makefile
+
+Add copyright license to the SVN trunk
+
+------------------------------------------------------------------------
+r93 | remi | 2005-12-17 22:31:45 +0200 (Sat, 17 Dec 2005) | 4 lines
+Changed paths:
+   M /trunk/Makefile
+
+- Fix handling of DESTDIR with space
+- Allow installation of binaries alone (install-bin(-strip))
+  (see https://dev.openwrt.org/ticket/4)
+
+------------------------------------------------------------------------
+r92 | remi | 2005-12-01 16:33:36 +0200 (Thu, 01 Dec 2005) | 2 lines
+Changed paths:
+   M /trunk/traceroute6.8
+
+Prepare intermediary release
+
+------------------------------------------------------------------------
+r91 | remi | 2005-10-21 19:48:47 +0300 (Fri, 21 Oct 2005) | 2 lines
+Changed paths:
+   M /trunk/Makefile
+
+Makefile beautification
+
+------------------------------------------------------------------------
+r90 | remi | 2005-10-21 19:40:46 +0300 (Fri, 21 Oct 2005) | 3 lines
+Changed paths:
+   M /trunk/Makefile
+
+Force rewrite of tcptraceroute6 as a symlink to traceroute6
+for local compilation
+
+------------------------------------------------------------------------
+r89 | remi | 2005-10-21 19:39:32 +0300 (Fri, 21 Oct 2005) | 2 lines
+Changed paths:
+   M /trunk/README
+
+Missing s/tcp//
+
+------------------------------------------------------------------------
+r88 | remi | 2005-10-21 19:39:09 +0300 (Fri, 21 Oct 2005) | 2 lines
+Changed paths:
+   M /trunk/README
+
+Update README as regards (tcp)traceroute6
+
+------------------------------------------------------------------------
+r87 | remi | 2005-10-21 19:37:00 +0300 (Fri, 21 Oct 2005) | 3 lines
+Changed paths:
+   M /trunk
+   M /trunk/Makefile
+   D /trunk/tcptraceroute6.8
+   M /trunk/traceroute.c
+   M /trunk/traceroute6.8
+
+- Made tcptraceroute6.8 a link to traceroute6.8
+- some s/tcptraceroute6/traceroute6/ here and there
+
+------------------------------------------------------------------------
+r86 | remi | 2005-10-21 19:31:50 +0300 (Fri, 21 Oct 2005) | 4 lines
+Changed paths:
+   M /trunk/Makefile
+   M /trunk/NEWS
+   M /trunk/traceroute.c
+   A /trunk/traceroute6.8 (from /trunk/tcptraceroute6.8:85)
+
+- traditional UDP traceroute (+ updated man page)
+- move tcptraceroute6 to traceroute6
+- make tcptraceroute6 an alias for "traceroute6 -S"
+
+------------------------------------------------------------------------
+r85 | remi | 2005-10-21 18:32:42 +0300 (Fri, 21 Oct 2005) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+   M /trunk/traceroute.c
+
+PID-dependant, high port number
+
+------------------------------------------------------------------------
+r84 | remi | 2005-10-21 14:34:10 +0300 (Fri, 21 Oct 2005) | 3 lines
+Changed paths:
+   M /trunk/tcptraceroute6.8
+
+Document new options -S and -A
+
+
+------------------------------------------------------------------------
+r83 | remi | 2005-10-21 14:27:25 +0300 (Fri, 21 Oct 2005) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+   M /trunk/traceroute.c
+
+TCP/ACK traceroute support
+
+------------------------------------------------------------------------
+r82 | remi | 2005-10-18 22:20:04 +0300 (Tue, 18 Oct 2005) | 2 lines
+Changed paths:
+   M /trunk/Makefile
+
+Increment version number
+
+------------------------------------------------------------------------
+r81 | remi | 2005-10-18 21:49:12 +0300 (Tue, 18 Oct 2005) | 3 lines
+Changed paths:
+   M /trunk/ndisc6.8
+   M /trunk/rdisc6.8
+   M /trunk/tcptraceroute6.8
+   M /trunk/traceroute.c
+
+- Source address specification (-s) for tcptraceroute6
+- Some clean up
+
+------------------------------------------------------------------------
+r79 | remi | 2005-10-16 15:26:55 +0300 (Sun, 16 Oct 2005) | 2 lines
+Changed paths:
+   M /trunk/Makefile
+   M /trunk/NEWS
+   M /trunk/README
+
+Update text files for upcoming release 0.5.0
+
+------------------------------------------------------------------------
+r78 | remi | 2005-10-16 15:18:59 +0300 (Sun, 16 Oct 2005) | 2 lines
+Changed paths:
+   M /trunk/ndisc.c
+   M /trunk/ndisc6.8
+   M /trunk/rdisc6.8
+   M /trunk/tcptraceroute6.8
+   M /trunk/traceroute.c
+
+Man page for tcptraceroute6
+
+------------------------------------------------------------------------
+r77 | remi | 2005-10-16 14:37:58 +0300 (Sun, 16 Oct 2005) | 2 lines
+Changed paths:
+   M /trunk/traceroute.c
+
+Print port number in prolog
+
+------------------------------------------------------------------------
+r76 | remi | 2005-10-16 13:21:13 +0300 (Sun, 16 Oct 2005) | 2 lines
+Changed paths:
+   M /trunk
+
+ignore tcptraceroute6 binary
+
+------------------------------------------------------------------------
+r75 | remi | 2005-10-16 13:20:08 +0300 (Sun, 16 Oct 2005) | 2 lines
+Changed paths:
+   M /trunk/traceroute.c
+
+Initial command line parsing
+
+------------------------------------------------------------------------
+r74 | remi | 2005-10-16 12:26:27 +0300 (Sun, 16 Oct 2005) | 2 lines
+Changed paths:
+   A /trunk/tcptraceroute6.8
+
+Dummy man page to work-around error in make dist and make install
+
+------------------------------------------------------------------------
+r73 | remi | 2005-10-16 12:24:47 +0300 (Sun, 16 Oct 2005) | 5 lines
+Changed paths:
+   M /trunk/Makefile
+
+Build tcptraceroute6 from Makefile
+(Known regression:
+ make dist is broken because there is no man page for tcptraceroute6)
+Also, tcptraceroute6 name might change 
+
+------------------------------------------------------------------------
+r72 | remi | 2005-10-16 12:14:39 +0300 (Sun, 16 Oct 2005) | 2 lines
+Changed paths:
+   M /trunk/traceroute.c
+
+Print source address in the prolog
+
+------------------------------------------------------------------------
+r71 | remi | 2005-10-16 00:23:30 +0300 (Sun, 16 Oct 2005) | 2 lines
+Changed paths:
+   M /trunk/traceroute.c
+
+Boundary check fix
+
+------------------------------------------------------------------------
+r70 | remi | 2005-10-16 00:18:16 +0300 (Sun, 16 Oct 2005) | 2 lines
+Changed paths:
+   M /trunk/traceroute.c
+
+Check and parse ICMPv6 errors
+
+------------------------------------------------------------------------
+r69 | remi | 2005-10-15 23:26:43 +0300 (Sat, 15 Oct 2005) | 2 lines
+Changed paths:
+   M /trunk/traceroute.c
+
+Bunch of fixes
+
+------------------------------------------------------------------------
+r68 | remi | 2005-10-15 22:49:00 +0300 (Sat, 15 Oct 2005) | 5 lines
+Changed paths:
+   A /trunk/traceroute.c
+
+Preliminary tcptraceroute6 that should someday eventually :
+1/ work properly
+2/ support ICMP and UDP traceroute6 as well
+3/ allows usual traceroute command line options
+
+------------------------------------------------------------------------
+r65 | remi | 2005-10-02 18:08:13 +0300 (Sun, 02 Oct 2005) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+Add the news for 0.4.1
+
+------------------------------------------------------------------------
+r64 | remi | 2005-09-10 00:31:28 +0300 (Sat, 10 Sep 2005) | 2 lines
+Changed paths:
+   M /trunk/INSTALL
+
+Set properties
+
+------------------------------------------------------------------------
+r63 | remi | 2005-09-10 00:31:00 +0300 (Sat, 10 Sep 2005) | 2 lines
+Changed paths:
+   M /trunk/INSTALL
+
+SVN tag
+
+------------------------------------------------------------------------
+r62 | remi | 2005-09-10 00:30:24 +0300 (Sat, 10 Sep 2005) | 2 lines
+Changed paths:
+   A /trunk/INSTALL
+   M /trunk/Makefile
+   M /trunk/README
+   M /trunk/ndisc.c
+
+rdisc6 now supports FreeBSD (at least, it should)
+
+------------------------------------------------------------------------
+r61 | remi | 2005-09-10 00:11:25 +0300 (Sat, 10 Sep 2005) | 2 lines
+Changed paths:
+   M /trunk/Makefile
+   M /trunk/ndisc.c
+
+Partial FreeBSD compile fix (doesn't compile)
+
+------------------------------------------------------------------------
+r60 | remi | 2005-09-09 14:30:52 +0300 (Fri, 09 Sep 2005) | 3 lines
+Changed paths:
+   M /trunk/Makefile
+   M /trunk/NEWS
+
+- Flag version as stable (0.4.0)
+- Add dependency on Makefile
+
+------------------------------------------------------------------------
+r59 | remi | 2005-09-09 14:27:52 +0300 (Fri, 09 Sep 2005) | 2 lines
+Changed paths:
+   M /trunk/NEWS
+
+Typo
+
+------------------------------------------------------------------------
+r58 | remi | 2005-09-05 23:36:12 +0300 (Mon, 05 Sep 2005) | 2 lines
+Changed paths:
+   M /trunk/ndisc.c
+
+Ignore unknown options as specified per RFC2461
+
+------------------------------------------------------------------------
+r56 | remi | 2005-09-05 23:22:48 +0300 (Mon, 05 Sep 2005) | 4 lines
+Changed paths:
+   M /trunk/Makefile
+   M /trunk/NEWS
+   M /trunk/ndisc.c
+
+- Print Source Link-Layer address in Router Advertisement if present.
+- Check Prefix information option length properly in Router Adverts.
+- Some spelling fixes.
+
+------------------------------------------------------------------------
+r55 | remi | 2005-09-05 21:20:36 +0300 (Mon, 05 Sep 2005) | 2 lines
+Changed paths:
+   M /trunk/ndisc6.8
+   M /trunk/rdisc6.8
+
+Put verb in the infinitive to be more coherent
+
+------------------------------------------------------------------------
+r54 | remi | 2005-09-03 20:27:34 +0300 (Sat, 03 Sep 2005) | 2 lines
+Changed paths:
+   M /trunk/ndisc.c
+
+Add usage for -1 and -m options
+
+------------------------------------------------------------------------
+r52 | remi | 2005-09-03 10:43:48 +0300 (Sat, 03 Sep 2005) | 2 lines
+Changed paths:
+   M /trunk/ndisc.c
+
+Further FIXME removed
+
+------------------------------------------------------------------------
+r51 | remi | 2005-09-03 10:40:03 +0300 (Sat, 03 Sep 2005) | 2 lines
+Changed paths:
+   M /trunk/ndisc.c
+
+Remove some FIXMEs
+
+------------------------------------------------------------------------
+r50 | remi | 2005-09-03 10:37:10 +0300 (Sat, 03 Sep 2005) | 2 lines
+Changed paths:
+   M /trunk/ndisc.c
+
+Fix neighbor discovery
+
+------------------------------------------------------------------------
+r49 | remi | 2005-09-03 10:36:43 +0300 (Sat, 03 Sep 2005) | 2 lines
+Changed paths:
+   M /trunk/Makefile
+
+Fix install
+
+------------------------------------------------------------------------
+r48 | remi | 2005-09-03 09:49:40 +0300 (Sat, 03 Sep 2005) | 2 lines
+Changed paths:
+   M /trunk
+   M /trunk/Makefile
+   A /trunk/NEWS
+   M /trunk/ndisc.c
+   M /trunk/ndisc6.8
+   M /trunk/rdisc6.8
+
+Too many changes to list them all (see NEWS)
+
+------------------------------------------------------------------------
+r47 | remi | 2005-08-26 23:31:31 +0300 (Fri, 26 Aug 2005) | 3 lines
+Changed paths:
+   M /trunk/Makefile
+   M /trunk/ndisc.c
+
+- Implement ICMPv6 type filtering
+- Implement some more GNU Makefile targets
+
+------------------------------------------------------------------------
+r41 | remi | 2005-05-03 15:04:39 +0300 (Tue, 03 May 2005) | 3 lines
+Changed paths:
+   M /trunk/Makefile
+   M /trunk/README
+
+- Changed package name to ndisc6 to soften confusion
+- Make bin/ directory before installing binaries if needed
+
+------------------------------------------------------------------------
+r40 | remi | 2005-04-09 09:46:02 +0300 (Sat, 09 Apr 2005) | 2 lines
+Changed paths:
+   M /trunk/Makefile
+
+Bump version number
+
+------------------------------------------------------------------------
+r39 | remi | 2005-04-09 09:45:43 +0300 (Sat, 09 Apr 2005) | 2 lines
+Changed paths:
+   M /trunk/ndisc.c
+
+Fix unitialized bytes in router advertisement packet
+
+------------------------------------------------------------------------
+r38 | remi | 2005-04-07 16:48:45 +0300 (Thu, 07 Apr 2005) | 3 lines
+Changed paths:
+   M /trunk/Makefile
+
+- Include ChangeLog in source tarball
+- Release 0.1.3
+
+------------------------------------------------------------------------
+r37 | remi | 2005-04-07 16:42:24 +0300 (Thu, 07 Apr 2005) | 2 lines
+Changed paths:
+   M /trunk/Makefile
+   M /trunk/ndisc.c
+
+Check that packet came from the expected interface
+
+------------------------------------------------------------------------
+r36 | remi | 2005-04-02 18:20:13 +0300 (Sat, 02 Apr 2005) | 2 lines
+Changed paths:
+   M /trunk/README
+
+Update README for 0.1.2
+
+------------------------------------------------------------------------
+r35 | remi | 2005-04-02 18:17:38 +0300 (Sat, 02 Apr 2005) | 6 lines
+Changed paths:
+   M /trunk
+   M /trunk/Makefile
+   D /trunk/ndisc.8
+   M /trunk/ndisc.c
+   A /trunk/ndisc6.8 (from /trunk/ndisc.8:34)
+   D /trunk/rdisc.8
+   A /trunk/rdisc6.8 (from /trunk/rdisc.8:34)
+
+Changed executables' name :
+rdisc -> rdisc6
+ndisc -> ndisc6
+(suggestion from M. H. Warfield
+  - conflicts with fairly common iputils package)
+
+------------------------------------------------------------------------
+r34 | remi | 2005-04-01 15:54:06 +0300 (Fri, 01 Apr 2005) | 2 lines
+Changed paths:
+   M /trunk/Makefile
+
+New release
+
+------------------------------------------------------------------------
+r33 | remi | 2005-03-31 20:01:08 +0300 (Thu, 31 Mar 2005) | 3 lines
+Changed paths:
+   M /trunk/ndisc.c
+
+- Remove superfluous variable
+- Fix retries with Router Discovery
+
+------------------------------------------------------------------------
+r32 | remi | 2005-03-12 14:55:43 +0200 (Sat, 12 Mar 2005) | 2 lines
+Changed paths:
+   M /trunk
+
+Created svn:ignore
+
+------------------------------------------------------------------------
+r31 | remi | 2005-02-15 21:21:19 +0200 (Tue, 15 Feb 2005) | 2 lines
+Changed paths:
+   M /trunk/README
+
+Fixes $Id$
+
+------------------------------------------------------------------------
+r30 | remi | 2005-02-15 21:20:23 +0200 (Tue, 15 Feb 2005) | 2 lines
+Changed paths:
+   M /trunk/README
+
+Buggy $Id$
+
+------------------------------------------------------------------------
+r29 | remi | 2005-02-15 21:19:59 +0200 (Tue, 15 Feb 2005) | 2 lines
+Changed paths:
+   M /trunk/Makefile
+   A /trunk/README
+
+Add a README file and a copy of the GPL in the source tarball
+
+------------------------------------------------------------------------
+r28 | remi | 2005-02-15 21:06:23 +0200 (Tue, 15 Feb 2005) | 2 lines
+Changed paths:
+   M /trunk/Makefile
+   M /trunk/ndisc.c
+
+Improve version information
+
+------------------------------------------------------------------------
+r27 | remi | 2005-02-15 20:59:27 +0200 (Tue, 15 Feb 2005) | 3 lines
+Changed paths:
+   M /trunk/Makefile
+   A /trunk/rdisc.8
+
+- Improved Makefile (among other things: updated uninstall target)
+- man page for rdisc
+
+------------------------------------------------------------------------
+r26 | remi | 2005-01-26 16:53:43 +0200 (Wed, 26 Jan 2005) | 3 lines
+Changed paths:
+   M /trunk/ndisc.c
+
+- Fix indentation
+- simply print prefixes when -q is used
+
+------------------------------------------------------------------------
+r25 | remi | 2005-01-26 16:27:55 +0200 (Wed, 26 Jan 2005) | 2 lines
+Changed paths:
+   M /trunk/ndisc.c
+
+Better spacing to make verbose results more readable
+
+------------------------------------------------------------------------
+r24 | remi | 2005-01-26 13:58:58 +0200 (Wed, 26 Jan 2005) | 2 lines
+Changed paths:
+   M /trunk/ndisc.c
+
+Fix command line parameter checking
+
+------------------------------------------------------------------------
+r23 | remi | 2005-01-26 13:49:41 +0200 (Wed, 26 Jan 2005) | 2 lines
+Changed paths:
+   M /trunk/Makefile
+
+Install rdisc
+
+------------------------------------------------------------------------
+r22 | remi | 2005-01-26 01:21:42 +0200 (Wed, 26 Jan 2005) | 3 lines
+Changed paths:
+   M /trunk/ndisc.c
+
+- Only show prefixes when -v is not used
+- Display multiple prefixes in the same advertisement
+
+------------------------------------------------------------------------
+r21 | remi | 2005-01-26 00:52:52 +0200 (Wed, 26 Jan 2005) | 4 lines
+Changed paths:
+   M /trunk/Makefile
+   M /trunk/ndisc.c
+
+- Fix -v option,
+- Clean up,
+- Initial support for router solitication
+
+------------------------------------------------------------------------
+r20 | remi | 2005-01-09 13:42:19 +0200 (Sun, 09 Jan 2005) | 3 lines
+Changed paths:
+   M /trunk/ndisc.8
+   M /trunk/ndisc.c
+
+- no longer rely on Linux-like semantics for select(),
+- solves the longer that expected select() bug
+
+------------------------------------------------------------------------
+r19 | remi | 2005-01-09 13:02:59 +0200 (Sun, 09 Jan 2005) | 2 lines
+Changed paths:
+   M /trunk/ndisc.8
+
+Update manpage
+
+------------------------------------------------------------------------
+r18 | remi | 2004-12-02 11:02:45 +0200 (Thu, 02 Dec 2004) | 2 lines
+Changed paths:
+   M /trunk/ndisc.8
+
+Typo reported by Laurent Granger
+
+------------------------------------------------------------------------
+r17 | remi | 2004-12-01 17:13:43 +0200 (Wed, 01 Dec 2004) | 2 lines
+Changed paths:
+   M /trunk/Makefile
+
+Distribute and install man page
+
+------------------------------------------------------------------------
+r16 | remi | 2004-12-01 17:13:27 +0200 (Wed, 01 Dec 2004) | 2 lines
+Changed paths:
+   M /trunk/ndisc.8
+
+Sentence about aim of the program
+
+------------------------------------------------------------------------
+r15 | remi | 2004-12-01 17:08:11 +0200 (Wed, 01 Dec 2004) | 2 lines
+Changed paths:
+   M /trunk/ndisc.8
+
+Fixed svn:keywords property
+
+------------------------------------------------------------------------
+r14 | remi | 2004-12-01 17:05:48 +0200 (Wed, 01 Dec 2004) | 2 lines
+Changed paths:
+   A /trunk/ndisc.8
+
+Man page
+
+------------------------------------------------------------------------
+r13 | remi | 2004-12-01 00:58:44 +0200 (Wed, 01 Dec 2004) | 3 lines
+Changed paths:
+   M /trunk/Makefile
+
+dist target
+
+
+------------------------------------------------------------------------
+r12 | remi | 2004-11-30 02:01:59 +0200 (Tue, 30 Nov 2004) | 3 lines
+Changed paths:
+   M /trunk/ndisc.c
+
+- verbose help text,
+- fairly useless --verbose option
+
+------------------------------------------------------------------------
+r11 | remi | 2004-11-28 15:27:06 +0200 (Sun, 28 Nov 2004) | 2 lines
+Changed paths:
+   M /trunk/ndisc.c
+
+Support for --quiet, --retry and --wait options
+
+------------------------------------------------------------------------
+r10 | remi | 2004-11-27 17:02:27 +0200 (Sat, 27 Nov 2004) | 3 lines
+Changed paths:
+   M /trunk/Makefile
+   M /trunk/ndisc.c
+
+- Invert error return values.
+- Version information.
+
+------------------------------------------------------------------------
+r9 | remi | 2004-11-27 16:50:16 +0200 (Sat, 27 Nov 2004) | 2 lines
+Changed paths:
+   M /trunk/ndisc.c
+
+Print Neighbor Advertisement source IPv6 address
+
+------------------------------------------------------------------------
+r8 | remi | 2004-11-27 16:44:55 +0200 (Sat, 27 Nov 2004) | 2 lines
+Changed paths:
+   M /trunk/ndisc.c
+
+Don't bug on unknown ICMPv6 options
+
+------------------------------------------------------------------------
+r7 | remi | 2004-11-27 14:49:20 +0200 (Sat, 27 Nov 2004) | 2 lines
+Changed paths:
+   M /trunk/ndisc.c
+
+Retry 3 times
+
+------------------------------------------------------------------------
+r6 | remi | 2004-11-27 13:43:36 +0200 (Sat, 27 Nov 2004) | 2 lines
+Changed paths:
+   M /trunk/ndisc.c
+
+Wait one second instead of 3, like the Linux kernel does
+
+------------------------------------------------------------------------
+r5 | remi | 2004-11-27 13:41:47 +0200 (Sat, 27 Nov 2004) | 2 lines
+Changed paths:
+   M /trunk/ndisc.c
+
+Waits for at most 3 seconds
+
+------------------------------------------------------------------------
+r4 | remi | 2004-11-27 13:18:46 +0200 (Sat, 27 Nov 2004) | 2 lines
+Changed paths:
+   M /trunk/ndisc.c
+
+Functions cleanup
+
+------------------------------------------------------------------------
+r3 | remi | 2004-11-27 13:00:28 +0200 (Sat, 27 Nov 2004) | 2 lines
+Changed paths:
+   M /trunk/ndisc.c
+
+Minor cleanup
+
+------------------------------------------------------------------------
+r2 | remi | 2004-11-27 12:46:58 +0200 (Sat, 27 Nov 2004) | 3 lines
+Changed paths:
+   M /trunk/Makefile
+
+- Support for install, install-strip and uninstall.
+- Clean-up.
+
+------------------------------------------------------------------------
+r1 | remi | 2004-11-27 12:37:45 +0200 (Sat, 27 Nov 2004) | 2 lines
+Changed paths:
+   A /trunk
+   A /trunk/Makefile
+   A /trunk/ndisc.c
+
+Initial SVN import
+
+------------------------------------------------------------------------

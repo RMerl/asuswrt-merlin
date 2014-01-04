@@ -1848,6 +1848,16 @@ struct mtd_partition *init_brcmnand_mtd_partitions(struct mtd_info *mtd, size_t 
                 j++;
         }
 
+#if 0
+       //ASUS Dual image
+        brcmnand_parts[j].name = "asustrx2";
+        brcmnand_parts[j].offset = 0x4000000;
+        brcmnand_parts[j].size = 0x2000000;
+        offset = 0x6000000;
+        size   = 0x2000000;
+        j++;
+#endif
+
 	size -= NFL_BBT_SIZE;
 	if (size <= 0) {
 		printk(KERN_ERR "%s: nand flash size is too small\n", __func__);

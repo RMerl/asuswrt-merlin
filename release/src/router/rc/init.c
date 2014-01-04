@@ -825,17 +825,22 @@ restore_defaults(void)
 	// default for USB state control variables. {
 	int i, j;
 
+#ifdef RTCONFIG_USB
 	// unset USB node nvrams.
-	for(i = 1; i < 3; ++i){ // MAX USB port number is 3.
-		snprintf(prefix, sizeof(prefix), "usb_path%d", i);
-
+	for(i = 1; i < MAX_USB_PORT; ++i){ // MAX USB port number is 3.
+		snprintf(prefix, sizeof(prefix), "usb_led%d", i);
 		nvram_unset(prefix);
+
+		snprintf(prefix, sizeof(prefix), "usb_path%d", i);
+		nvram_unset(prefix);
+
 		nvram_unset(strcat_r(prefix, "_vid", tmp));
 		nvram_unset(strcat_r(prefix, "_pid", tmp));
 		nvram_unset(strcat_r(prefix, "_manufacturer", tmp));
 		nvram_unset(strcat_r(prefix, "_product", tmp));
 		nvram_unset(strcat_r(prefix, "_serial", tmp));
 		nvram_unset(strcat_r(prefix, "_speed", tmp));
+		nvram_unset(strcat_r(prefix, "_node", tmp));
 		// for ATE. {
 		nvram_unset(strcat_r(prefix, "_removed", tmp));
 		nvram_unset(strcat_r(prefix, "_act", tmp));
@@ -845,7 +850,7 @@ restore_defaults(void)
 		nvram_unset(strcat_r(prefix, "_pool_error", tmp));
 #endif
 
-		for(j = 1; j < 6; ++j){ // MAX USB hub port number is 6.
+		for(j = 1; j < MAX_USB_HUB_PORT; ++j){ // MAX USB hub port number is 6.
 			snprintf(prefix, sizeof(prefix), "usb_path%d.%d", i, j);
 
 			nvram_unset(prefix);
@@ -855,6 +860,7 @@ restore_defaults(void)
 			nvram_unset(strcat_r(prefix, "_product", tmp));
 			nvram_unset(strcat_r(prefix, "_serial", tmp));
 			nvram_unset(strcat_r(prefix, "_speed", tmp));
+			nvram_unset(strcat_r(prefix, "_node", tmp));
 			// for ATE. {
 			nvram_unset(strcat_r(prefix, "_removed", tmp));
 			nvram_unset(strcat_r(prefix, "_act", tmp));
@@ -868,12 +874,12 @@ restore_defaults(void)
 
 	// unset USB device nvrams.
 	// storage.
-	for(i = 0; i < 26; ++i){ // MAX disk number is 26.
+	for(i = 0; i < MAX_USB_DISK_NUM; ++i){ // MAX disk number is 26.
 		snprintf(prefix, sizeof(prefix), "usb_path_sd%c", 'a'+i);
 		nvram_unset(prefix);
 		nvram_unset(strcat_r(prefix, "_label", tmp));
 
-		for(j = 1; j < 16; ++j){ // MAX partition number is 16.
+		for(j = 1; j <= MAX_USB_PART_NUM; ++j){ // MAX partition number is 16.
 			snprintf(prefix, sizeof(prefix), "usb_path_sd%c%d", 'a'+i, j);
 			nvram_unset(prefix);
 			nvram_unset(strcat_r(prefix, "_label", tmp));
@@ -881,18 +887,20 @@ restore_defaults(void)
 	}
 
 	// printer.
-	for(i = 0; i < 10; ++i){ // MAX printer number is 10.
+	for(i = 0; i < MAX_USB_PRINTER_NUM; ++i){ // MAX printer number is 5.
 		snprintf(prefix, sizeof(prefix), "usb_path_lp%d", i);
 		nvram_unset(prefix);
 	}
 
 	// modem.
-	for(i = 0; i < 10; ++i){ // MAX ttyUSB number is 10.
+	nvram_unset("usb_modem_act_path");
+
+	for(i = 0; i < MAX_USB_TTY_NUM; ++i){ // MAX ttyUSB number is 10.
 		snprintf(prefix, sizeof(prefix), "usb_path_ttyUSB%d", i);
 		nvram_unset(prefix);
 	}
 
-	for(i = 0; i < 10; ++i){ // MAX ttyACM number is 10.
+	for(i = 0; i < MAX_USB_TTY_NUM; ++i){ // MAX ttyACM number is 10.
 		snprintf(prefix, sizeof(prefix), "usb_path_ttyACM%d", i);
 		nvram_unset(prefix);
 	}
@@ -901,19 +909,25 @@ restore_defaults(void)
 	snprintf(prefix, sizeof(prefix), "usb_path_%s", "usbbcm");
 	nvram_unset(prefix);
 	// default for USB state control variables. }
+#endif	/* RTCONFIG_USB */
 
 	/* some default state values is model deps, so handled here*/
 	model = get_model();
 
 	switch(model) {
 #ifdef RTCONFIG_BCMARM
+		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
-			if(After(get_blver(nvram_safe_get("bl_version")), get_blver("1.0.2.4")))
-				nvram_set("reboot_time", "105"); // default is 70 sec
+			if(After(get_blver(nvram_safe_get("bl_version")), get_blver("1.0.2.4")))	// since 1.0.2.5
+				nvram_set("reboot_time", "140"); // default is 70 sec
 			break;
 		case MODEL_RTAC68U:
-			if(After(get_blver(nvram_safe_get("bl_version")), get_blver("1.0.1.6")))
-				nvram_set("reboot_time", "105"); // default is 70 sec
+			if(After(get_blver(nvram_safe_get("bl_version")), get_blver("1.0.1.6")))	// since 1.0.1.7
+				nvram_set("reboot_time", "140"); // default is 70 sec
+			break;
+		case MODEL_RTN18U:
+			if(After(get_blver(nvram_safe_get("bl_version")), get_blver("2.0.0.5")))
+				nvram_set("reboot_time", "140"); // default is 70 sec
 			break;
 #endif
 		case MODEL_RTN14UHP:
@@ -948,6 +962,9 @@ restore_defaults(void)
 	nvram_set("success_start_service", "0");
 #if defined(RTAC66U) || defined(BCM4352)
 	nvram_set("led_5g", "0");
+#endif
+#if defined(RTN14U)
+	nvram_unset("wl1_ssid");
 #endif
 
 #ifdef RTCONFIG_USB
@@ -2187,10 +2204,6 @@ int init_nvram(void)
 		nvram_set("vlan2hwname", "et0");
 		nvram_set("lan_ifname", "br0");
 		nvram_set("landevs", "vlan1 wl0");
-		if(nvram_match("usb_usb3_disabled_force", "0"))
-			nvram_set("usb_usb3", "1");
-		else
-			nvram_set("usb_usb3", "0");
 
 #if 0
 		set_basic_ifname_vars("eth0", "vlan1", "eth1", NULL, "usb", NULL, "vlan2", "vlan3", 0);
@@ -2245,13 +2258,13 @@ int init_nvram(void)
 		nvram_set_int("pwr_usb_gpio", 13);
 #endif
 		nvram_set_int("led_usb_gpio", 3|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_usb3_gpio", 14|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_pwr_gpio", 0|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_wps_gpio", 0|GPIO_ACTIVE_LOW);
 		nvram_set_int("btn_wps_gpio", 11|GPIO_ACTIVE_LOW);
 		nvram_set_int("btn_rst_gpio", 7|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_wan_gpio", 6|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_lan_gpio", 9|GPIO_ACTIVE_LOW);
-		nvram_set_int("led_2g_gpio", 10|GPIO_ACTIVE_LOW);
 
 #ifdef RTCONFIG_XHCIMODE
 		nvram_set("xhci_ports", "1-1");
@@ -2278,9 +2291,6 @@ int init_nvram(void)
 		add_rc_support("pwrctrl");
 		add_rc_support("WIFI_LOGO");
 		add_rc_support("nandflash");
-#ifdef RTCONFIG_WLAN_LED
-					add_rc_support("led_2g");
-#endif
 #ifdef RTCONFIG_LED_BTN
 		nvram_set_int("AllLED", 1);
 #endif
@@ -2921,6 +2931,10 @@ int init_nvram(void)
 	nvram_set("vpnc_proto", "disable");
 #endif
 
+#ifdef RTCONFIG_PUSH_EMAIL
+	add_rc_support("email");
+#endif
+
 #ifdef RTCONFIG_HTTPS
 	add_rc_support("HTTPS");
 #endif
@@ -3263,6 +3277,10 @@ chk_etfa()	/* after insmod et */
 			reboot(RB_AUTOBOOT);
 			return;
 		}
+	} else {
+		if((atoi(nvram_safe_get("PA"))==0) && (get_fa_rev()<3)){
+			nvram_unset("ctf_fa_mode");
+		}
 	}
 }
 #endif /* RTCONFIG_BCMFA */
@@ -3464,18 +3482,15 @@ static void sysinit(void)
 	init_syspara();// for system dependent part
 	init_nvram();  // for system indepent part after getting model	
 	restore_defaults(); // restore default if necessary 
-#if defined(RTN14U)
-	nvram_unset("wl1_ssid");
-#endif
 	init_gpio();   // for system dependent part
 #ifdef RTCONFIG_SWMODE_SWITCH
 	init_swmode(); // need to check after gpio initized
 #endif
+#ifdef RTCONFIG_BCMARM
+	init_others();
+#endif
 	init_switch(); // for system dependent part
 	init_wl();     // for system dependent part
-
-//	config_loopback();
-
 	klogctl(8, NULL, nvram_get_int("console_loglevel"));
 
 	setup_conntrack();
@@ -3485,25 +3500,6 @@ static void sysinit(void)
 #ifdef RTCONFIG_USB_BECEEM
 	eval("cp", "-rf", "/rom/Beceem_firmware", "/tmp");
 #endif
-#ifdef RTCONFIG_BCMARM
-	if(get_model() == MODEL_RTAC56U || get_model() == MODEL_RTAC56S || get_model() == MODEL_RTAC68U || get_model() == MODEL_RTN18U){
-#ifdef SMP
-		int fd;
-
-		if ((fd = open("/proc/irq/163/smp_affinity", O_RDWR)) >= 0) {
-			close(fd);
-			if (nvram_match("enable_samba", "0")){  // not set txworkq 
-				system("echo 2 > /proc/irq/163/smp_affinity");
-				system("echo 2 > /proc/irq/169/smp_affinity");
-			}
-			system("echo 2 > /proc/irq/111/smp_affinity");
-			system("echo 2 > /proc/irq/112/smp_affinity");
-		}
-#endif
-		nvram_set("txworkq", "1");
-	}
-#endif
-
 #ifdef RTCONFIG_BCMFA
 	chk_etfa();
 #endif

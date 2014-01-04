@@ -14,16 +14,17 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: bcmevent.c 339265 2012-06-15 23:44:23Z $
+ * $Id: bcmevent.c 363229 2012-10-16 19:17:22Z $
  */
 
+#include <bcm_cfg.h>
 #include <typedefs.h>
 #include <bcmutils.h>
 #include <proto/ethernet.h>
 #include <proto/bcmeth.h>
 #include <proto/bcmevent.h>
 
-#if WLC_E_LAST != 95
+#if WLC_E_LAST != 105
 #error "You need to add an entry to bcmevent_names[] for the new event"
 #endif
 
@@ -98,6 +99,7 @@ const bcmevent_name_t bcmevent_names[] = {
 	{ WLC_E_DFS_AP_RESUME, "DFS_AP_RESUME" },
 	{ WLC_E_ASSOC_IND_NDIS, "ASSOC_IND_NDIS"},
 	{ WLC_E_REASSOC_IND_NDIS, "REASSOC_IND_NDIS"},
+	{ WLC_E_IBSS_COALESCE, "IBSS COALESCE" },
 #endif /* NDIS && NDISVER >= 0x0620 */
 	{ WLC_E_ESCAN_RESULT, "WLC_E_ESCAN_RESULT" },
 	{ WLC_E_ACTION_FRAME_OFF_CHAN_COMPLETE, "WLC_E_AF_OFF_CHAN_COMPLETE" },
@@ -127,7 +129,13 @@ const bcmevent_name_t bcmevent_names[] = {
 #ifdef WLTDLS
 	{ WLC_E_TDLS_PEER_EVENT, "TDLS_PEER_EVENT" },
 #endif /* WLTDLS */
-	{ WLC_E_NATIVE, "NATIVE" }
+	{ WLC_E_NATIVE, "NATIVE" },
+#ifdef WLPKTDLYSTAT
+	{ WLC_E_PKTDELAY_IND, "PKTDELAY_IND" },
+#endif /* WLPKTDLYSTAT */
+	{ WLC_E_SERVICE_FOUND, "SERVICE_FOUND" },
+	{ WLC_E_GAS_FRAGMENT_RX, "GAS_FRAGMENT_RX" },
+	{ WLC_E_GAS_COMPLETE, "GAS_COMPLETE" }
 };
 
 const int bcmevent_names_size = ARRAYSIZE(bcmevent_names);
