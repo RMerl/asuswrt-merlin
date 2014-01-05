@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.374.37 (31-Dec-2013)
+Asuswrt-Merlin - build 3.0.0.4.374.38 (xx-xxx-2014)
 ===================================================
 
 About
@@ -41,7 +41,7 @@ Here is a list of features that Asuswrt-merlin brings over the original
 firmware:
 
 System:
-   - Based on RT-AC68U 3.0.0.4.374_501 sources from Asus
+   - Based on RT-N66U 3.0.0.4.374_2078 sources (unreleased) from Asus
    - Various bugfixes and optimizations
    - Some components were updated to newerversions, for improved
      stability and security
