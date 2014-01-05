@@ -886,6 +886,16 @@ define RouterOptions
 		sed -i "/RTCONFIG_KYIVSTAR/d" $(1); \
 		echo "RTCONFIG_KYIVSTAR=y" >>$(1); \
 	fi; \
+        if [ "$(CFE_NVRAM_CHK)" = "y" ]; then \
+                sed -i "/RTCONFIG_CFE_NVRAM_CHK/d" $(1); \
+                echo "RTCONFIG_CFE_NVRAM_CHK=y" >>$(1); \
+        fi; \
+        if [ "$(DEBUG)" = "y" ]; then \
+                sed -i "/RTCONFIG_DEBUG/d" $(1); \
+                echo "RTCONFIG_DEBUG=y" >>$(1); \
+		sed -i "/RTCONFIG_GDB/d" $(1); \
+		echo "RTCONFIG_GDB=y" >>$(1); \
+        fi; \
 	)
 	$(call platformRouterOptions, $(1))
 endef
@@ -1392,6 +1402,20 @@ define KernelConfig
 			echo "CONFIG_INET6_XFRM_MODE_BEET=m" >>$(1); \
 		fi; \
 	fi; \
+        sed -i "/CONFIG_CFE_NVRAM_CHK/d" $(1); \
+        if [ "$(NVRAM_64K)" = "y" ]; then \
+                echo "CONFIG_CFE_NVRAM_CHK=y" >>$(1); \
+        else \
+                echo "# CONFIG_CFE_NVRAM_CHK is not set" >>$(1); \
+        fi; \
+	if [ "$(DEBUG)" = "y" ] || [ "$(GDB)" = "y" ]; then \
+                sed -i "/CONFIG_ELF_CORE/d" $(1); \
+                echo "CONFIG_ELF_CORE=y" >>$(1); \
+        	if [ "$(BCMWL6A)" = "y" ]; then \
+                	sed -i "/CONFIG_CORE_DUMP_DEFAULT_ELF_HEADERS/d" $(1); \
+                	echo "# CONFIG_CORE_DUMP_DEFAULT_ELF_HEADERS is not set" >>$(1); \
+        	fi; \
+        fi; \
 	)
 	$(call platformKernelConfig, $(1))
 	$(call extraKernelConfig, $(1))

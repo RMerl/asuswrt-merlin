@@ -8,7 +8,7 @@
  * (C) 1990 RSA Data Security, Inc.                                  **
  * ********************************************************************
  *
- * Copyright (C) 2011, Broadcom Corporation
+ * Copyright (C) 2012, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;

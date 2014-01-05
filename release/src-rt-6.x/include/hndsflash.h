@@ -34,6 +34,8 @@ struct hndsflash {
 	uint size;		/* Total size in bytes */
 	uint32 base;
 	uint32 phybase;
+	uint8 vendor_id;
+	uint16 device_id;
 
 	si_t *sih;
 	void *core;

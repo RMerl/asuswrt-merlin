@@ -3,7 +3,7 @@
  *
  * Implementation of the memory pools component: manager and pools object.
  *
- * Copyright (C) 2011, Broadcom Corporation
+ * Copyright (C) 2012, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -34,7 +34,7 @@ static int create_pool(bcm_mpm_mgr_h mgr,
                        unsigned int padded_obj_sz,
                        int nobj,
                        void *memstart,
-                       char poolname[BCM_MP_NAMELEN],
+                       const char poolname[BCM_MP_NAMELEN],
                        uint16 type,
                        bcm_mp_pool_h *newp);
 
@@ -178,7 +178,7 @@ int BCMATTACHFN(bcm_mpm_create_prealloc_pool)(bcm_mpm_mgr_h mgr,
                                               int nobj,
                                               void *memstart,
                                               unsigned int memsize,
-                                              char poolname[BCM_MP_NAMELEN],
+                                              const char poolname[BCM_MP_NAMELEN],
                                               bcm_mp_pool_h *newp)
 {
 	int ret;
@@ -267,7 +267,7 @@ static int BCMATTACHFN(create_pool)(bcm_mpm_mgr_h mgr,
                                     unsigned int padded_obj_sz,
                                     int nobj,
                                     void *memstart,
-                                    char poolname[BCM_MP_NAMELEN],
+                                    const char poolname[BCM_MP_NAMELEN],
                                     uint16 type,
                                     bcm_mp_pool_h *newp)
 {
@@ -409,7 +409,7 @@ static int BCMATTACHFN(delete_pool)(bcm_mpm_mgr_h mgr, bcm_mp_pool_h *poolp)
  */
 int BCMATTACHFN(bcm_mpm_create_heap_pool)(bcm_mpm_mgr_h mgr,
                                           unsigned int obj_sz,
-                                          char poolname[BCM_MP_NAMELEN],
+                                          const char poolname[BCM_MP_NAMELEN],
                                           bcm_mp_pool_h *newp)
 {
 	return (create_pool(mgr, obj_sz, obj_sz, 0, NULL, poolname,

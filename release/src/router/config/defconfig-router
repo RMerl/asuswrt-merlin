@@ -55,7 +55,7 @@ CONFIG_BCMWPA2=y
 #
 # Environment
 #
-PLATFORM=arm
+PLATFORM=mipsel
 LINUXDIR=$(SRCBASE)/linux/linux
 LIBDIR=$(TOOLCHAIN)/lib
 USRLIBDIR=$(TOOLCHAIN)/usr/lib

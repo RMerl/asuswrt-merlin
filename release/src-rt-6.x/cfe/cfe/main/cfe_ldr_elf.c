@@ -43,7 +43,7 @@
     *     TORT (INCLUDING NEGLIGENCE OR OTHERWISE), EVEN IF ADVISED OF 
     *     THE POSSIBILITY OF SUCH DAMAGE.
     ********************************************************************* */
-
+#ifdef	CFG_LDR_ELF
 
 #include "lib_types.h"
 #include "lib_string.h"
@@ -392,3 +392,5 @@ static int cfe_elfload(cfe_loadargs_t *la)
 
     return res;
 }
+
+#endif	/* CFG_LDR_ELF */

@@ -196,11 +196,15 @@ int ui_init_loadcmds(void)
 #if CFG_ZLIB || CFG_LZMA
 	       "-z;Load compessed file|"
 #endif
+#if CFG_ROMBOOT
+	       "-raw;Load the file as a raw binary|"
+	       "-max=*;Specify the maximum number of bytes to load (raw only)|"
+	       "-addr=*;Specify the load address (hex) (raw only)|"	
+#endif
 	       "-tftp;Load the file using the TFTP protocol|"
 	       "-fatfs;Load the file from a FAT file system|"
 	       "-rawfs;Load the file from an unformatted file system|"
                "-fs=*;Specify CFE file system name");
-
 
 #if CFG_AUTOBOOT
     cmd_addcmd("autoboot",

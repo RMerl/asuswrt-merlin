@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011, Broadcom Corporation
+# Copyright (C) 2012, Broadcom Corporation
 # All Rights Reserved.
 # 
 # This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -7,7 +7,7 @@
 # or duplicated in any form, in whole or in part, without the prior
 # written permission of Broadcom Corporation.
 #
-# $Id: Makefile 311089 2012-01-27 13:47:40Z $
+# $Id: Makefile 341899 2012-06-29 04:06:38Z $
 #
 
 include ../common.mak
@@ -43,7 +43,11 @@ OBJFILES = ${SRCFILES:.c=.o}
 
 ifeq ($(wildcard ./upnp),)
 all:
-	cp -f ./prebuilt$(BCMEX)/$(UPNPLIB_NAME) .
+ifeq ($(RTCONFIG_BCMARM),y)
+	cp -f ./prebuilt.arm/$(UPNPLIB_NAME) .
+else
+	cp -f ./prebuilt.mipsel/$(UPNPLIB_NAME) .
+endif
 else
 all: $(OBJFILES)
 	$(LD) -shared -o $(UPNPLIB_NAME) $^
@@ -57,4 +61,4 @@ install: all
 clean:
 	rm -f $(UPNPLIB_NAME) $(OBJFILES)
 
-.PHONY: all clean
+.PHONY: clean

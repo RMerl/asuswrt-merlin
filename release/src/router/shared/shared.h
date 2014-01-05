@@ -526,6 +526,7 @@ extern int notify_rc_after_period_wait(const char *event_name, int wait);
 extern int notify_rc_and_wait(const char *event_name);
 extern int notify_rc_and_wait_1min(const char *event_name);
 extern int notify_rc_and_wait_2min(const char *event_name);
+extern int notify_rc_and_period_wait(const char *event_name, int wait);
 
 /* rtstate.c */
 extern char *get_wanx_ifname(int unit);

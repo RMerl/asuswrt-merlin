@@ -27,6 +27,8 @@ CFG_USB ?= 0
 CFG_XIP ?= 0
 CFG_SIM ?= 0
 CFG_SIM_CONSOLE ?= 0
+CFG_LDR_SREC ?= 0
+CFG_LDR_ELF ?= 0
 
 #
 # Paths to other parts of the firmware.  Everything's relative to ${TOP}
@@ -34,6 +36,7 @@ CFG_SIM_CONSOLE ?= 0
 #
 
 ARCH_TOP   = ${TOP}/arch/${ARCH}
+ARCH_CMN   = ${TOP}/arch/common
 ARCH_SRC   = ${ARCH_TOP}/common/src
 ARCH_INC   = ${ARCH_TOP}/common/include
 CPU_SRC    = ${ARCH_TOP}/cpu/${CPU}/src
@@ -47,6 +50,7 @@ CPU_INC    = ${ARCH_TOP}/cpu/${CPU}/include
 
 ifneq ("$(strip ${BOARD})","")
 BOARD_SRC  = ${ARCH_TOP}/board/${BOARD}/src
+BOARD_CMN  = ${ARCH_CMN}/board/${BOARD}/src
 BOARD_INC  = ${ARCH_TOP}/board/${BOARD}/include
 endif
 
@@ -61,7 +65,7 @@ VDEF = -DCFE_VER_MAJ=${CFE_VER_MAJ} -DCFE_VER_MIN=${CFE_VER_MIN} -DCFE_VER_ECO=$
 # paths and VPATH
 #
 
-SRCDIRS = ${ARCH_SRC} ${CPU_SRC} ${BOARD_SRC} ${TOP}/main ${TOP}/vendor ${TOP}/include ${TOP}/net ${TOP}/dev ${TOP}/pci ${TOP}/ui ${TOP}/lib ${TOP}/common ${TOP}/verif 
+SRCDIRS = ${ARCH_SRC} ${CPU_SRC} ${BOARD_SRC} ${BOARD_CMN} ${TOP}/main ${TOP}/vendor ${TOP}/include ${TOP}/net ${TOP}/dev ${TOP}/pci ${TOP}/ui ${TOP}/lib ${TOP}/common ${TOP}/verif 
 
 CFE_INC = ${TOP}/include ${TOP}/pci ${TOP}/net 
 
@@ -95,6 +99,14 @@ endif
 ifeq ($(strip ${CFG_LZMA}),1)
 SRCDIRS += ${SRCBASE}/tools/misc/lzma_src/C
 CFE_INC += ${SRCBASE}/tools/misc/lzma_src/C
+endif
+
+ifeq ($(strip ${CFG_LDR_SREC}),1)
+CFLAGS += -DCFG_LDR_SREC=1
+endif
+
+ifeq ($(strip ${CFG_LDR_ELF}),1)
+CFLAGS += -DCFG_LDR_ELF=1
 endif
 
 INCDIRS = $(patsubst %,-I%,$(subst :, ,$(ARCH_INC) $(CPU_INC) $(BOARD_INC) $(CFE_INC)))
@@ -322,7 +334,7 @@ LIBCFE = libcfe.a
 	$(GCC) $(CFLAGS) -o $@ $<
 
 %.o : %.S
-	$(GCC) $(CFLAGS) -o $@ $<
+	$(GCC) $(ASFLAGS) $(CFLAGS) -o $@ $<
 
 #
 # This rule constructs "libcfe.a" which contains most of the object

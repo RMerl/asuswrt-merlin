@@ -278,10 +278,10 @@ function submitForm(){
 		}
 	}
 	else if(parent.document.QKform.sw_mode.value == "2"){	// Repeater mode
-		if(parent.document.QKform.wlc_band.value == 1)
+		set_variable("wl0_nmode_x", "0");
+		if(band5g_support){
 			set_variable("wl1_nmode_x", "0");
-		else
-			set_variable("wl0_nmode_x", "0");
+		}
 		document.form.wlc_band.value = parent.document.QKform.wlc_band.value;
 		document.form.wlc_ssid.value = decodeURIComponent(show_str_ssid(parent.document.QKform.wlc_ssid.value)); // ascii to char
 		document.form.wlc_wep.value = parent.document.QKform.wlc_wep.value;

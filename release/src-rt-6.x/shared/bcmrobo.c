@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmrobo.c 341899 2012-06-29 04:06:38Z $
+ * $Id: bcmrobo.c 363505 2012-10-18 01:58:09Z $
  */
 
 
@@ -88,6 +88,14 @@
 #define REG_CTRL_MIIPO	0x0E	/* 5325: MII Port Override register */
 #define REG_CTRL_PWRDOWN 0x0F   /* 5325: Power Down Mode register */
 #define REG_CTRL_SRST	0x79	/* Software reset control register */
+#ifdef PLC
+#define REG_CTRL_MIIP5O 0x5d    /* 53115: Port State Override register for port 5 */
+
+/* Management/Mirroring Registers */
+#define REG_MMR_ATCR    0x06    /* Aging Time Control register */
+#define REG_MMR_MCCR    0x10    /* Mirror Capture Control register */
+#define REG_MMR_IMCR    0x12    /* Ingress Mirror Control register */
+#endif /* PLC */
 
 /* Status Page Registers */
 #define REG_STATUS_LINK	0x00	/* Link Status Summary */
@@ -868,7 +876,7 @@ bcm_robo_attach(si_t *sih, void *h, char *vars, miird_f miird, miiwr_f miiwr)
 	robo->miiwr = miiwr;
 	robo->page = -1;
 
-	if (SRAB_ENAB() && sih->chip == BCM4707_CHIP_ID) {
+	if (SRAB_ENAB() && BCM4707_CHIP(sih->chip)) {
 		SET_ROBO_SRABREGS(robo);
 	}
 
@@ -919,7 +927,7 @@ bcm_robo_attach(si_t *sih, void *h, char *vars, miird_f miird, miiwr_f miiwr)
 			 */
 			robo->corerev = 3;
 		}
-		else if (SRAB_ENAB() && sih->chip == BCM4707_CHIP_ID) {
+		else if (SRAB_ENAB() && BCM4707_CHIP(sih->chip)) {
 			srab_interface_reset(robo);
 			rc = srab_rreg(robo, PAGE_MMR, REG_VERSION_ID, &robo->corerev, 1);
 		}
@@ -930,7 +938,7 @@ bcm_robo_attach(si_t *sih, void *h, char *vars, miird_f miird, miiwr_f miiwr)
 		ET_MSG(("%s: Internal robo rev %d\n", __FUNCTION__, robo->corerev));
 	}
 
-	if (SRAB_ENAB() && sih->chip == BCM4707_CHIP_ID) {
+	if (SRAB_ENAB() && BCM4707_CHIP(sih->chip)) {
 		rc = srab_rreg(robo, PAGE_MMR, REG_DEVICE_ID, &robo->devid, sizeof(uint32));
 
 		ET_MSG(("%s: devid read %ssuccesfully via srab: 0x%x\n",
@@ -1093,6 +1101,11 @@ bcm_robo_attach(si_t *sih, void *h, char *vars, miird_f miird, miiwr_f miiwr)
 		robo->pwrsave_phys = 0x1f;
 #endif /* _CFE_ */
 
+#ifdef PLC
+	/* See if one of the ports is connected to plc chipset */
+	robo->plc_hw = (getvar(vars, "plc_vifs") != NULL);
+#endif /* PLC */
+
 	return robo;
 
 #ifndef	_CFE_
@@ -1118,6 +1131,9 @@ bcm_robo_enable_device(robo_info_t *robo)
 {
 	uint8 reg_offset, reg_val;
 	int ret = 0;
+#ifdef PLC
+	uint32 val32;
+#endif /* PLC */
 
 	/* Enable management interface access */
 	if (robo->ops->enable_mgmtif)
@@ -1155,6 +1171,13 @@ bcm_robo_enable_device(robo_info_t *robo)
 			}
 		}
 	}
+
+#ifdef PLC
+	if (robo->plc_hw) {
+		val32 = 0x100002;
+		robo->ops->write_reg(robo, PAGE_MMR, REG_MMR_ATCR, &val32, sizeof(val32));
+	}
+#endif /* PLC */
 
 	/* Disable management interface access */
 	if (robo->ops->disable_mgmtif)
@@ -2168,6 +2191,41 @@ robo_power_save_mode_set(robo_info_t *robo, int32 mode, int32 phy)
 	return 0;
 }
 #endif /* _CFE_ */
+
+#ifdef PLC
+void
+robo_plc_hw_init(robo_info_t *robo)
+{
+	uint8 val8;
+
+	ASSERT(robo);
+
+	if (!robo->plc_hw)
+		return;
+
+	/* Enable management interface access */
+	if (robo->ops->enable_mgmtif)
+		robo->ops->enable_mgmtif(robo);
+
+	if (robo->devid == DEVID53115) {
+		/* Fix the duplex mode and speed for Port 5 */
+		val8 = ((1 << 6) | (1 << 2) | 3);
+		robo->ops->write_reg(robo, PAGE_CTRL, REG_CTRL_MIIP5O, &val8, sizeof(val8));
+	} else if ((robo->sih->chip == BCM5357_CHIP_ID) &&
+	           (robo->sih->chippkg == BCM5358_PKG_ID)) {
+		/* Fix the duplex mode and speed for Port 4 (MII port). Force
+		 * full duplex mode and set speed to 100.
+		 */
+		si_pmu_chipcontrol(robo->sih, 2, (1 << 1) | (1 << 2), (1 << 1) | (1 << 2));
+	}
+
+	/* Disable management interface access */
+	if (robo->ops->disable_mgmtif)
+		robo->ops->disable_mgmtif(robo);
+
+	ET_MSG(("%s: Configured PLC MII interface\n", __FUNCTION__));
+}
+#endif /* PLC */
 
 /* BCM53125 EEE IOP WAR for some other vendor's wrong EEE implementation. */
 

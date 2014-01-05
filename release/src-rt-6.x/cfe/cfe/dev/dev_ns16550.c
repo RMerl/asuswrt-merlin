@@ -235,11 +235,16 @@ static int ns16550_uart_inpstat(cfe_devctx_t *ctx, iocb_inpstat_t *inpstat)
 #define LOG_BUF_MASK	(LOG_BUF_LEN-1)
 char log_buf[LOG_BUF_LEN];
 unsigned long log_start;
-#define KSEG1ADDR(a)	(((unsigned long)(a) & 0x1fffffff) | 0xa0000000)
+
+#ifdef __mips__
+#define UNCACHED(a)	(((unsigned long)(a) & 0x1fffffff) | 0xa0000000)
+#else
+#define UNCACHED(a)	((unsigned long)(a))
+#endif
 
 #define WRITEBUF(c) \
 do { \
-	*((char*)KSEG1ADDR(&log_buf[log_start])) = c; \
+	*((char*)UNCACHED(&log_buf[log_start])) = c; \
 	log_start = (log_start + 1) & LOG_BUF_MASK; \
 } \
 while (0)

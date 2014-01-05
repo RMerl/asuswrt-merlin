@@ -1,7 +1,7 @@
 /*
  * Broadcom SiliconBackplane chipcommon serial flash interface
  *
- * Copyright (C) 2011, Broadcom Corporation
+ * Copyright (C) 2012, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: dev_sflash.c 304950 2011-12-23 09:17:46Z $
+ * $Id: dev_sflash.c 354444 2012-08-31 03:47:39Z $
  */
 
 #include "lib_types.h"
@@ -29,16 +29,15 @@
 #include <osl.h>
 #include <bcmutils.h>
 #include <siutils.h>
-#include <sflash.h>
+#include <hndsflash.h>
 
 #define isaligned(x, y) (((x) % (y)) == 0)
-#define min(a,b) ((a) < (b) ? (a) : (b))
-#define max(a,b) ((a) > (b) ? (a) : (b))
+#define min(a, b) ((a) < (b) ? (a) : (b))
+#define max(a, b) ((a) > (b) ? (a) : (b))
 
 struct sflash_cfe {
 	si_t *sih;
-	chipcregs_t *cc;
-	struct sflash *info;
+	struct hndsflash *info;
 	flashpart_t parts[FLASH_MAX_PARTITIONS];
 };
 
@@ -53,11 +52,11 @@ sflash_cfe_open(cfe_devctx_t *ctx)
 static int
 sflash_cfe_read(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
 {
-	flashpart_t *part = (flashpart_t *) ctx->dev_softc;
-	struct sflash_cfe *sflash = (struct sflash_cfe *) part->fp_dev;
-	uint offset = (uint) buffer->buf_offset + part->fp_offset;
-	uint len = (uint) buffer->buf_length;
-	uchar *buf = (uchar *) buffer->buf_ptr;
+	flashpart_t *part = (flashpart_t *)ctx->dev_softc;
+	struct sflash_cfe *sflash = (struct sflash_cfe *)part->fp_dev;
+	uint offset = (uint)buffer->buf_offset + part->fp_offset;
+	uint len = (uint)buffer->buf_length;
+	uchar *buf = (uchar *)buffer->buf_ptr;
 	int bytes, ret = 0;
 
 	buffer->buf_retlen = 0;
@@ -69,7 +68,7 @@ sflash_cfe_read(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
 		return CFE_ERR_IOERR;
 
 	while (len) {
-		if ((bytes = sflash_read(sflash->sih, sflash->cc, offset, len, buf)) < 0) {
+		if ((bytes = hndsflash_read(sflash->info, offset, len, buf)) < 0) {
 			ret = bytes;
 			goto done;
 		}
@@ -79,7 +78,7 @@ sflash_cfe_read(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
 		buffer->buf_retlen += bytes;
 	}
 
- done:
+done:
 	return ret;
 }
 
@@ -94,31 +93,31 @@ sflash_cfe_inpstat(cfe_devctx_t *ctx, iocb_inpstat_t *inpstat)
 static int
 sflash_cfe_erase_range(cfe_devctx_t *ctx, flash_range_t *range)
 {
-	flashpart_t *part = (flashpart_t *) ctx->dev_softc;
-	struct sflash_cfe *sflash = (struct sflash_cfe *) part->fp_dev;
+	flashpart_t *part = (flashpart_t *)ctx->dev_softc;
+	struct sflash_cfe *sflash = (struct sflash_cfe *)part->fp_dev;
 	int len, offset;
 
 	offset = part->fp_offset + range->range_base;
 	len = range->range_length;
 
-	if((offset < part->fp_offset) || 
+	if ((offset < part->fp_offset) ||
 		((offset + len) > (part->fp_offset + part->fp_size))) {
 		printf("!! offset 0x%x, len=0x%x over partition boundary: start: 0x%x, end: 0x%x",
-			offset, len, part->fp_offset, part->fp_offset + part->fp_size );
+			offset, len, part->fp_offset, part->fp_offset + part->fp_size);
 		return CFE_ERR_INV_PARAM;
 	}
-	return sflash_commit(sflash->sih, sflash->cc, (uint) offset, (uint) len, NULL);
+	return hndsflash_commit(sflash->info, (uint)offset, (uint)len, NULL);
 }
-#endif
+#endif	/* CFE_FLASH_ERASE_FLASH_ENABLED */
 
 static int
 sflash_cfe_write(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
 {
-	flashpart_t *part = (flashpart_t *) ctx->dev_softc;
-	struct sflash_cfe *sflash = (struct sflash_cfe *) part->fp_dev;
-	uint offset = (uint) buffer->buf_offset + part->fp_offset;
-	uint len = (uint) buffer->buf_length;
-	uchar *buf = (uchar *) buffer->buf_ptr;
+	flashpart_t *part = (flashpart_t *)ctx->dev_softc;
+	struct sflash_cfe *sflash = (struct sflash_cfe *)part->fp_dev;
+	uint offset = (uint)buffer->buf_offset + part->fp_offset;
+	uint len = (uint)buffer->buf_length;
+	uchar *buf = (uchar *)buffer->buf_ptr;
 	uchar *block = NULL;
 	uint blocksize = 0, mask;
 	iocb_buffer_t cur;
@@ -165,20 +164,20 @@ sflash_cfe_write(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
 		memcpy(cur.buf_ptr + (offset & mask), buf, cur.buf_retlen);
 
 		/* Erase block */
-		if ((ret = sflash_erase(sflash->sih, sflash->cc, (uint) cur.buf_offset)) < 0)
+		if ((ret = hndsflash_erase(sflash->info, (uint)cur.buf_offset)) < 0)
 			goto done;
-		while (sflash_poll(sflash->sih, sflash->cc, (uint) cur.buf_offset));
+		while (hndsflash_poll(sflash->info, (uint)cur.buf_offset));
 
 		/* Write holding block */
 		while (cur.buf_length) {
-			if ((bytes = sflash_write(sflash->sih, sflash->cc,
-						  (uint) cur.buf_offset,
-						  (uint) cur.buf_length,
-						  (uchar *) cur.buf_ptr)) < 0) {
+			if ((bytes = hndsflash_write(sflash->info,
+				(uint)cur.buf_offset,
+				(uint)cur.buf_length,
+				(uchar *)cur.buf_ptr)) < 0) {
 				ret = bytes;
 				goto done;
 			}
-			while (sflash_poll(sflash->sih, sflash->cc, (uint) cur.buf_offset));
+			while (hndsflash_poll(sflash->info, (uint)cur.buf_offset));
 
 			cur.buf_offset += bytes;
 			cur.buf_length -= bytes;
@@ -191,17 +190,17 @@ sflash_cfe_write(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
 		buffer->buf_retlen += cur.buf_retlen;
 	}
 
- done:
+done:
 	if (block)
 		KFREE(block);
 	return ret;
 }
 
 static int
-sflash_cfe_ioctl(cfe_devctx_t *ctx, iocb_buffer_t *buffer) 
+sflash_cfe_ioctl(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
 {
-	flashpart_t *part = (flashpart_t *) ctx->dev_softc;
-	struct sflash_cfe *sflash = (struct sflash_cfe *) part->fp_dev;
+	flashpart_t *part = (flashpart_t *)ctx->dev_softc;
+	struct sflash_cfe *sflash = (struct sflash_cfe *)part->fp_dev;
 	flash_info_t *info;
 #ifdef CFE_FLASH_ERASE_FLASH_ENABLED
 	flash_range_t *range;
@@ -212,7 +211,7 @@ sflash_cfe_ioctl(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
 		sflash_cfe_write(ctx, buffer);
 		break;
 	case IOCTL_FLASH_GETINFO:
-		info = (flash_info_t *) buffer->buf_ptr;
+		info = (flash_info_t *)buffer->buf_ptr;
 		info->flash_base = 0;
 		info->flash_size = sflash->info->size;
 		info->flash_type = sflash->info->type;
@@ -220,19 +219,19 @@ sflash_cfe_ioctl(cfe_devctx_t *ctx, iocb_buffer_t *buffer)
 		break;
 #ifdef FLASH_PARTITION_FILL_ENABLED
 	case IOCTL_FLASH_PARTITION_INFO:
-		info = (flash_info_t *) buffer->buf_ptr;
+		info = (flash_info_t *)buffer->buf_ptr;
 		info->flash_base = part->fp_offset;
 		info->flash_size = part->fp_size;
 		break;
 #endif
 #ifdef CFE_FLASH_ERASE_FLASH_ENABLED
 	case IOCTL_FLASH_ERASE_RANGE:
-		range = (flash_range_t *) buffer->buf_ptr;
+		range = (flash_range_t *)buffer->buf_ptr;
 		/* View the base 0 and range 0 as erase all parition */
-		if(range->range_base == 0 && range->range_length == 0) {
+		if (range->range_base == 0 && range->range_length == 0) {
 			range->range_length = part->fp_size;
 		}
-	        sflash_cfe_erase_range(ctx, range);	    
+	        sflash_cfe_erase_range(ctx, range);
 		break;
 #endif
 	default:
@@ -254,7 +253,7 @@ static const cfe_devdisp_t sflash_cfe_dispatch = {
 	sflash_cfe_inpstat,
 	sflash_cfe_write,
 	sflash_cfe_ioctl,
-	sflash_cfe_close,	
+	sflash_cfe_close,
 	NULL,
 	NULL
 };
@@ -294,25 +293,23 @@ sflash_do_parts(struct sflash_cfe *sflash, newflash_probe_t *probe)
 
 static void
 sflash_cfe_probe(cfe_driver_t *drv,
-		 unsigned long probe_a, unsigned long probe_b, 
-		 void *probe_ptr)
+	unsigned long probe_a, unsigned long probe_b,
+	void *probe_ptr)
 {
-	newflash_probe_t *probe = (newflash_probe_t *) probe_ptr;
+	newflash_probe_t *probe = (newflash_probe_t *)probe_ptr;
 	struct sflash_cfe *sflash;
 	char type[80], descr[80], name[80];
 	int idx;
 
-	if (!(sflash = (struct sflash_cfe *) KMALLOC(sizeof(struct sflash_cfe), 0)))
+	if (!(sflash = (struct sflash_cfe *)KMALLOC(sizeof(struct sflash_cfe), 0)))
 		return;
 	memset(sflash, 0, sizeof(struct sflash_cfe));
 
 	/* Attach to the backplane and map to chipc */
 	sflash->sih = si_kattach(SI_OSH);
 
-	sflash->cc = (chipcregs_t *)probe->flash_cmdset;
-
 	/* Initialize serial flash access */
-	if (!(sflash->info = sflash_init(sflash->sih, sflash->cc))) {
+	if (!(sflash->info = hndsflash_init(sflash->sih))) {
 		xprintf("sflash: found no supported devices\n");
 		KFREE(sflash);
 		return;
@@ -324,9 +321,11 @@ sflash_cfe_probe(cfe_driver_t *drv,
 	/* Set description */
 	switch (sflash->info->type) {
 	case SFLASH_ST:
-		sprintf(type, "ST");
+	case QSPIFLASH_ST:
+		sprintf(type, "ST Compatible");
 		break;
 	case SFLASH_AT:
+	case QSPIFLASH_AT:
 		sprintf(type, "Atmel");
 		break;
 	default:
@@ -336,7 +335,7 @@ sflash_cfe_probe(cfe_driver_t *drv,
 
 	if (probe->flash_nparts == 0) {
 		/* Just instantiate one device */
-		sflash->parts[0].fp_dev = (flashdev_t *) sflash;
+		sflash->parts[0].fp_dev = (flashdev_t *)sflash;
 		sflash->parts[0].fp_offset = 0;
 		sflash->parts[0].fp_size = sflash->info->size;
 		sprintf(descr, "%s %s size %uKB",

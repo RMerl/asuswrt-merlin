@@ -1,7 +1,7 @@
 #
 # Makefile for Broadcom BCM947XX boards
 #
-# Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+# Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
 # 
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
 # OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
-# $Id: Makefile 315309 2012-02-16 06:57:20Z dboyce $
+# $Id: Makefile 376109 2012-12-21 08:38:43Z $
 #
 
 # Max sizes for vanilla external
@@ -38,7 +38,7 @@ CFE_INTERNAL = 1
 CFEZ_MAXSIZE = 262144
 CFE_MAXSIZE = 524288
 
-BSPOBJS += bcm947xx_init.o bcm947xx_devs.o ui_bcm947xx.o
+BSPOBJS += bcm947xx_init.o bcm947xx_devs.o ui_bcm947xx.o bcm947xx_machdep.o
 
 ifeq ($(strip $(CFG_MINIMAL_SIZE)), 1)
 ifeq ($(strip $(CFG_GMAC)), 0)
@@ -54,7 +54,7 @@ endif
 
 ALLOBJS += sisdram.o siutils.o \
 	hndmips.o hndpmu.o hndchipc.o sromstubs.o bcmutils.o cfe_osl.o \
-	nvram.o nvram_rw.o bcmstdlib.o
+	nvram.o nvram_rw.o bcmstdlib.o hndsoc.o
 
 CFLAGS += -DBCM4710 -DBCM4704 -DBCMDRIVER
 ifeq ($(CFG_BCMHND74K), 1)
@@ -89,18 +89,19 @@ endif
 
 ifeq ($(strip ${CFG_SFLASH}),1)
 CFLAGS += -DCFG_SFLASH=1
-ALLOBJS += dev_sflash.o sflash.o
+ALLOBJS += dev_sflash.o hndsflash.o ccsflash.o
 endif
 
 ifeq ($(strip ${CFG_NFLASH}),1)
 CFLAGS += -DCFG_NFLASH=1 -DNFLASH_SUPPORT -DCFG_HEAP_SIZE=2048
-ALLOBJS += dev_nflash.o nflash.o nand_ecc.o
+ALLOBJS += dev_nflash.o hndnand.o nflash.o
+ALLOBJS += hamming.o popcount32.o
 endif
 
 ifeq ($(strip $(CFG_ET)),1)
 
 ETOBJS := etc.o et_cfe.o bcmrobo.o
-CFLAGS += -DCFG_ET=1 -I$(SRCBASE)/et/sys -DETROBO -DDMA
+CFLAGS += -DCFG_ET=1 -I$(SRCBASE)/et/sys -I$(SRCBASE)/et/include -DETROBO -DDMA
 
 ifeq ($(strip $(CFG_GMAC)),1)
 ETOBJS += etcgmac.o
@@ -184,3 +185,6 @@ endif
 else
 CFLAGS += -DBCMBUSTYPE=SI_BUS
 endif
+
+# ASUSWRT NVRAM 64K support
+CFLAGS += -DCONFIG_NVRAM_64K

@@ -2424,15 +2424,13 @@ FILE *fp = NULL;
 
 #define LOCK_FILE      "/tmp/hotplug_block_lock"
 
-#define MAX_USB_PORTS                   2
-
 int hotplug_usb_power(int port, int boolOn)
 {
         char name[] = "usbport%d"; /* 1 ~ 99 ports */
         unsigned long gpiomap;
         int usb_gpio;
 
-        if (port > MAX_USB_PORTS)
+        if (port > MAX_USB_PORT)
                 return -1;
 
         sprintf(name, "usbport%d", port);
@@ -2454,7 +2452,7 @@ int hotplug_usb_init(void)
         /* Enable VBUS via GPIOs for port1 and port2 */
         int i, count;
 
-        for (count = 0, i = 1; i <= MAX_USB_PORTS; i++) {
+        for (count = 0, i = 1; i <= MAX_USB_PORT; i++) {
                 if (hotplug_usb_power(i, TRUE) > 0)
                         count++;
         }
@@ -2615,7 +2613,8 @@ int set_usb_common_nvram(const char *action, const char *device_name, const char
 				nvram_unset(tmp);
 			if(strlen(nvram_safe_get(strcat_r(prefix, "_speed", tmp))) > 0)
 				nvram_unset(tmp);
-
+			if(strlen(nvram_safe_get(strcat_r(prefix, "_node", tmp))) > 0)
+				nvram_unset(tmp);
 		}
 		else{
 			snprintf(prefix, sizeof(prefix), "usb_path_%s", device_name);
@@ -2713,6 +2712,9 @@ int set_usb_common_nvram(const char *action, const char *device_name, const char
 		strcat_r(prefix, "_speed", tmp);
 		if(get_usb_speed(usb_node, speed, 256) != NULL && strlen(speed) > 0)
 			nvram_set(tmp, speed);
+
+		strcat_r(prefix, "_node", tmp);
+		nvram_set(tmp, usb_node);
 	}
 
 	return 0;
@@ -2797,7 +2799,7 @@ int asus_sd(const char *device_name, const char *action){
 	}
 
 	// Get USB port.
-	if(get_usb_port_by_string(usb_node, usb_port, sizeof(usb_port)) == NULL){
+	if(get_usb_port_by_string(usb_node, usb_port, 8) == NULL){
 		usb_dbg("(%s): Fail to get usb port.\n", usb_node);
 		file_unlock(isLock);
 		return 0;
@@ -3519,7 +3521,7 @@ int asus_tty(const char *device_name, const char *action){
 				file_unlock(isLock);
 				return 0;
 			}
-			else if(cur_val != -1 && cur_val <= tmp_val && strcmp(current_def, "1")){ // get the smaller node safely.
+			else if(cur_val != -1 && cur_val < tmp_val && strcmp(current_def, "1")){ // get the smaller node safely.
 usb_dbg("(%s): cur_val=%d, tmp_val=%d, set_default_node=%s.\n", device_name, cur_val, tmp_val, current_def);
 				usb_dbg("(%s): Skip to write PPP's conf.\n", device_name);
 				file_unlock(isLock);
@@ -3553,6 +3555,8 @@ usb_dbg("(%s): cur_val=%d, tmp_val=%d.\n", device_name, cur_val, tmp_val);
 			file_unlock(isLock);
 			return 0;
 		}
+		else
+			usb_dbg("(%s): Had wrrtten the 3g ppp file.\n", device_name);
 	}
 	else{ // isACMNode(device_name).
 		// Find the control interface of cdc-acm.
@@ -3571,6 +3575,8 @@ usb_dbg("(%s): cur_val=%d, tmp_val=%d.\n", device_name, cur_val, tmp_val);
 				file_unlock(isLock);
 				return 0;
 			}
+			else
+				usb_dbg("(%s): Had wrrtten the 3g ppp file.\n", device_name);
 		}
 		else{
 			usb_dbg("(%s): Skip to write PPP's conf.\n", device_name);
@@ -3725,7 +3731,7 @@ int asus_usbbcm(const char *device_name, const char *action){
 
 int asus_usb_interface(const char *device_name, const char *action){
 #if defined(RTCONFIG_USB) || defined(RTCONFIG_USB_PRINTER) || defined(RTCONFIG_USB_MODEM)
-	char usb_node[32];
+	char usb_node[32], usb_port[8];
 #ifdef RTCONFIG_USB_MODEM
 	char vid[8], pid[8];
 	char modem_cmd[64], buf[64];
@@ -3735,6 +3741,7 @@ int asus_usb_interface(const char *device_name, const char *action){
 	char nvram_usb_path[16];
 	char conf_file[32];
 	char port_path[8];
+	int port_num;
 	usb_dbg("(%s): action=%s.\n", device_name, action);
 
 	if(!strcmp(nvram_safe_get("stop_ui"), "1")){
@@ -3761,20 +3768,31 @@ int asus_usb_interface(const char *device_name, const char *action){
 		return 0;
 	}
 
+	// Get USB port.
+	if(get_usb_port_by_string(usb_node, usb_port, 8) == NULL){
+		usb_dbg("(%s): Fail to get usb port.\n", usb_node);
+		file_unlock(isLock);
+		return 0;
+	}
+
+	port_num = get_usb_port_number(usb_port);
+	if(!port_num){
+		usb_dbg("(%s): Fail to get usb port number.\n", usb_port);
+		file_unlock(isLock);
+		return 0;
+	}
+
 	// If remove the device? Handle the remove hotplug of the printer and modem.
 	if(!check_hotplug_action(action)){
-		memset(nvram_usb_path, 0, 16);
-		sprintf(nvram_usb_path, "usb_path%s", port_path);
+		snprintf(nvram_usb_path, 16, "usb_led%d", port_num);
+		if(!strcmp(nvram_safe_get(nvram_usb_path), "1"))
+			nvram_unset(nvram_usb_path);
 
-#ifdef RTCONFIG_USB_PRINTER
-		if(!strcmp(nvram_safe_get(nvram_usb_path), "printer"))
-			strcpy(device_type, "printer");
-		else
-#endif
+		snprintf(nvram_usb_path, 16, "usb_path%s", port_path);
+		strcpy(device_type, nvram_safe_get(nvram_usb_path));
+
 #ifdef RTCONFIG_USB_MODEM
-		if(!strcmp(nvram_safe_get(nvram_usb_path), "modem")){
-			strcpy(device_type, "modem");
-
+		if(!strcmp(device_type, "modem")){
 			// remove the device between adding interface and adding tty.
 			modprobe_r("option");
 #if LINUX_KERNEL_VERSION >= KERNEL_VERSION(2,6,36)
@@ -3799,14 +3817,7 @@ int asus_usb_interface(const char *device_name, const char *action){
 				notify_rc("reboot");
 			}
 		}
-		else
 #endif
-#ifdef RTCONFIG_USB
-		if(!strcmp(nvram_safe_get(nvram_usb_path), "storage"))
-			strcpy(device_type, "storage");
-		else
-#endif
-			strcpy(device_type, "");
 
 		if(strlen(device_type) > 0){
 			// Remove USB common nvram.
@@ -3820,6 +3831,10 @@ int asus_usb_interface(const char *device_name, const char *action){
 		file_unlock(isLock);
 		return 0;
 	}
+
+	snprintf(nvram_usb_path, 16, "usb_led%d", port_num);
+	if(strcmp(nvram_safe_get(nvram_usb_path), "1"))
+		nvram_set(nvram_usb_path, "1");
 
 #ifdef RTCONFIG_USB_MODEM
 	// Get VID.

@@ -580,16 +580,26 @@ char *get_interface_by_device(const char *device_name, char *buf, const int buf_
 }
 
 char *get_path_by_node(const char *usb_node, char *buf, const int buf_size){
-	char *ptr;
+	char usb_port[8], *hub_path;
+	int port_num = 0, len;
 
 	if(usb_node == NULL || buf == NULL || buf_size <= 0)
 		return NULL;
 
-	if((ptr = strchr(usb_node, '-')) == NULL)
+	// Get USB port.
+	if(get_usb_port_by_string(usb_node, usb_port, sizeof(usb_port)) == NULL)
 		return NULL;
 
-	memset(buf, 0, buf_size);
-	strncpy(buf, ptr+1, buf_size);
+	port_num = get_usb_port_number(usb_port);
+	if(port_num == 0)
+		return NULL;
+
+	if(strlen(usb_node) > (len = strlen(usb_port))){
+		hub_path = usb_node+len;
+		snprintf(buf, buf_size, "%d%s", port_num, hub_path);
+	}
+	else
+		snprintf(buf, buf_size, "%d", port_num);
 
 	return buf;
 }
@@ -1164,8 +1174,6 @@ int isGCTInterface(const char *interface_name){
 // 0: no modem, 1: has modem, 2: has modem but system isn't ready.
 int is_usb_modem_ready(void)
 {
-	int usb_port = 0;
-	char word[8], *next;
 	char prefix[32], tmp[32];
 	char usb_act[8], usb_vid[8];
 	char port_path[8];
@@ -1219,7 +1227,7 @@ int hadPrinterInterface(const char *usb_node)
 	char check_usb_node[32], device_name[4];
 	int printer_order, got_printer = 0;
 
-	for(printer_order = 0; printer_order < SCAN_PRINTER_NODE; ++printer_order){
+	for(printer_order = 0; printer_order < MAX_USB_PRINTER_NUM; ++printer_order){
 		memset(device_name, 0, 4);
 		sprintf(device_name, "lp%d", printer_order);
 

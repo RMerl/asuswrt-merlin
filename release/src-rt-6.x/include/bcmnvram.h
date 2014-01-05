@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmnvram.h 349220 2012-08-07 10:36:24Z $
+ * $Id: bcmnvram.h 371897 2012-11-29 20:19:17Z $
  */
 
 #ifndef _bcmnvram_h_
@@ -149,6 +149,15 @@ extern int nvram_unset(const char *name);
  * Commit NVRAM variables to permanent storage. All pointers to values
  * may be invalid after a commit.
  * NVRAM values are undefined after a commit.
+ * @param   nvram_corrupt    true to corrupt nvram, false otherwise.
+ * @return	0 on success and errno on failure
+ */
+extern int nvram_commit_internal(bool nvram_corrupt);
+
+/*
+ * Commit NVRAM variables to permanent storage. All pointers to values
+ * may be invalid after a commit.
+ * NVRAM values are undefined after a commit.
  * @return	0 on success and errno on failure
  */
 extern int nvram_commit(void);
@@ -167,6 +176,7 @@ extern int nvram_getall(char *nvram_buf, int count);
  */
 uint8 nvram_calc_crc(struct nvram_header * nvh);
 
+extern int nvram_space;
 #endif /* _LANGUAGE_ASSEMBLY */
 
 /* The NVRAM version number stored as an NVRAM variable */
@@ -177,12 +187,23 @@ uint8 nvram_calc_crc(struct nvram_header * nvh);
 #define NVRAM_INVALID_MAGIC	0xFFFFFFFF
 #define NVRAM_VERSION		1
 #define NVRAM_HEADER_SIZE	20
+/* This definition is for precommit staging, and will be removed */
 #if (defined(RTCONFIG_NVRAM_64K) || defined(CONFIG_NVRAM_64K))
 #define NVRAM_SPACE		0x10000
 #else
 #define NVRAM_SPACE		0x8000
 #endif
+/* For CFE builds this gets passed in thru the makefile */
+#ifndef MAX_NVRAM_SPACE
+#define MAX_NVRAM_SPACE		0x10000
+#endif
+#if (defined(RTCONFIG_NVRAM_64K) || defined(CONFIG_NVRAM_64K))
+#define DEF_NVRAM_SPACE		0x10000
+#else
+#define DEF_NVRAM_SPACE		0x8000
+#endif
 #define ROM_ENVRAM_SPACE	0x1000
+#define NVRAM_LZMA_MAGIC	0x4c5a4d41	/* 'LZMA' */
 
 #define NVRAM_MAX_VALUE_LEN 255
 #define NVRAM_MAX_PARAM_LEN 64

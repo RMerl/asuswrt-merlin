@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: sbpcmcia.h 350740 2012-08-15 06:35:40Z $
+ * $Id: sbpcmcia.h 361350 2012-10-08 10:09:58Z $
  */
 
 #ifndef	_SBPCMCIA_H
@@ -319,6 +319,13 @@
 #define HNBU_TXDUTY		0x6a	/* Tx duty cycle for ACPHY 5g 40/80 Mhz */
 #define HNBU_USBUTMI_CTL        0x6b    /* 2 byte USB UTMI/LDO Control */
 #define HNBU_PDOFF_2G		0x6c
+#define HNBU_USBSSPHY_UTMI_CTL0	0x6d    /* 4 byte USB SSPHY UTMI Control */
+#define HNBU_USBSSPHY_UTMI_CTL1	0x6e    /* 4 byte USB SSPHY UTMI Control */
+#define HNBU_USBSSPHY_UTMI_CTL2	0x6f    /* 4 byte USB SSPHY UTMI Control */
+#define HNBU_USBSSPHY_SLEEP0	0x70    /* 2 byte USB SSPHY sleep */
+#define HNBU_USBSSPHY_SLEEP1	0x71    /* 2 byte USB SSPHY sleep */
+#define HNBU_USBSSPHY_SLEEP2	0x72    /* 2 byte USB SSPHY sleep */
+#define HNBU_USBSSPHY_SLEEP3	0x73    /* 2 byte USB SSPHY sleep */
 
 #define HNBU_SROM3SWRGN		0x80	/* 78 bytes; srom rev 3 s/w region without crc8
 					 * plus extra info appended.

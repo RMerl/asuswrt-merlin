@@ -296,7 +296,7 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 	if ((skb->dst->dev->flags & IFF_POINTOPOINT) || (skb->dev->flags & IFF_POINTOPOINT) ){
 		int pppunit = 0;
 		struct net_device  *pppox_tx_dev=NULL;
-		ctf_ppp_t ctfppp;	
+		ctf_ppp_t ctfppp;
 
 		/* For pppoe interfaces fill the session id and header add/del actions */
 		if (skb->dst->dev->flags & IFF_POINTOPOINT) {
@@ -320,7 +320,7 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 						//control path for outgoing data will change ipc_entry.pppoe_sid back to zero
 					} else if (skb->dev->flags & IFF_POINTOPOINT )  {
 						ipc_entry.action |= CTF_ACTION_L2TP_DEL;
-					}					
+					}
 
 					goto ipcp_add;
 				}
@@ -333,8 +333,8 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 
 					if (skb->dst->dev->flags & IFF_POINTOPOINT){
 						ipc_entry.action |= CTF_ACTION_PPPOE_ADD;
-						pppox_tx_dev = ctfppp.psk.po->pppoe_dev; 
-						memcpy(ipc_entry.dhost.octet, ctfppp.psk.dhost.octet, ETH_ALEN);	
+						pppox_tx_dev = ctfppp.psk.po->pppoe_dev;
+						memcpy(ipc_entry.dhost.octet, ctfppp.psk.dhost.octet, ETH_ALEN);
 						memcpy(ipc_entry.shost.octet, ctfppp.psk.po->pppoe_dev->dev_addr, ETH_ALEN);
 					}
 					else{
@@ -342,11 +342,11 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 					}
 					ipc_entry.pppoe_sid = ctfppp.pppox_id;
 				}
+//#ifdef CTF_PPTP
 #if 0
-#ifdef CTF_PPTP				
 				else if (ctfppp.psk.pppox_protocol == PX_PROTO_PPTP){
 					struct pptp_opt *opt;
-					if(ctfppp.psk.po == NULL) 
+					if(ctfppp.psk.po == NULL)
 						return;
 					opt=&ctfppp.psk.po->proto.pptp;
 					if (skb->dst->dev->flags & IFF_POINTOPOINT){
@@ -363,16 +363,14 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 							if (ip_route_output_key(&rt, &fl) ) {
 								return;
 							}
-							if (rt==NULL ) 
+							if (rt==NULL )
 								return;
 
 							if (skb->dst->hh == NULL) {
 								memcpy(ipc_entry.dhost.octet, rt->u.dst.neighbour->ha, ETH_ALEN);
 							}
-							
-
 						}
-						
+
 						pppox_tx_dev = rt->u.dst.dev;
 						memcpy(ipc_entry.shost.octet, rt->u.dst.dev->dev_addr, ETH_ALEN);
 						ipc_entry.pptp.rt_dst_mtrc_lock_fgoff = dst_metric(&rt->u.dst, RTAX_LOCK)&(1<<RTAX_MTU);//for ip header fragment offset
@@ -384,28 +382,47 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 					ipc_entry.pptp.pptpopt = &ctfppp.psk.po->proto.pptp;
 				}
 #endif /*CTF_PPTP*/
-#endif
 				else
 					return;
 
-ppp_tx_dev:			
+ppp_tx_dev:
 			/* For vlan interfaces fill the vlan id and the tag/untag actions */
 			if(pppox_tx_dev){
 				if (pppox_tx_dev ->priv_flags & IFF_802_1Q_VLAN) {
 					ipc_entry.txif = (void *)(VLAN_DEV_INFO(pppox_tx_dev )->real_dev);
 					ipc_entry.vid = VLAN_DEV_INFO(pppox_tx_dev )->vlan_id;
 					ipc_entry.action |= ((VLAN_DEV_INFO(pppox_tx_dev)->flags & 1) ?
-				                   		CTF_ACTION_TAG : CTF_ACTION_UNTAG);
+								CTF_ACTION_TAG : CTF_ACTION_UNTAG);
 				} else {
 					ipc_entry.txif = pppox_tx_dev;
 					ipc_entry.action |= CTF_ACTION_UNTAG;
 				}
 			}
-			
+
 			}
-		}		
+		}
 	}
 #endif /* CTF_PPPOE | CTF_PPTP | CTF_L2TP */
+
+	/* Copy the DSCP value. ECN bits must be cleared. */
+	if (IPVERSION_IS_4(ipver))
+		ipc_entry.tos = IPV4_TOS(iph);
+#ifdef CONFIG_IPV6
+	else
+		ipc_entry.tos = IPV6_TRAFFIC_CLASS(ip6h);
+#endif /* CONFIG_IPV6 */
+	ipc_entry.tos &= IPV4_TOS_DSCP_MASK;
+	if (ipc_entry.tos)
+		ipc_entry.action |= CTF_ACTION_TOS;
+
+#ifdef CONFIG_NF_CONNTRACK_MARK
+	/* Initialize the mark for this connection */
+	if (ct->mark != 0) {
+		ipc_entry.mark.value = ct->mark;
+		ipc_entry.action |= CTF_ACTION_MARK;
+	}
+#endif /* CONFIG_NF_CONNTRACK_MARK */
+
 ipcp_add:
 	/* Update the manip ip and port */
 	if (manip != NULL) {
@@ -423,17 +440,40 @@ ipcp_add:
 	/* Do bridge cache lookup to determine outgoing interface
 	 * and any vlan tagging actions if needed.
 	 */
-	if (ctf_isbridge(kcih, ipc_entry.txif)) {
-		ctf_brc_t *brcp;
+	if(!CTFQOS_ULDL_DIFFIF(kcih)){
+		if (ctf_isbridge(kcih, ipc_entry.txif)) {
+			ctf_brc_t *brcp;
 
-		brcp = ctf_brc_lkup(kcih, ipc_entry.dhost.octet);
+			brcp = ctf_brc_lkup(kcih, ipc_entry.dhost.octet);
 
-		if (brcp == NULL)
-			return;
-		else {
-			ipc_entry.action |= brcp->action;
-			ipc_entry.txif = brcp->txifp;
-			ipc_entry.vid = brcp->vid;
+			if (brcp == NULL)
+				return;
+			else {
+				ipc_entry.action |= brcp->action;
+				ipc_entry.txif = brcp->txifp;
+				ipc_entry.vid = brcp->vid;
+			}
+		}
+	}
+	else{
+		if (ctf_isbridge(kcih, ipc_entry.txif)) {
+			ctf_brc_t *brcp;
+
+			brcp = ctf_brc_lkup(kcih, ipc_entry.dhost.octet);
+
+			if (brcp == NULL)
+				return;
+			else {
+				ipc_entry.action |= brcp->action;
+				if(brcp->txvifp){
+					ipc_entry.txif = brcp->txvifp;
+					ipc_entry.action &= ~CTF_ACTION_TAG;
+					ipc_entry.action |= CTF_ACTION_UNTAG;
+				}
+				else
+					ipc_entry.txif = brcp->txifp;
+				ipc_entry.vid = brcp->vid;
+			}
 		}
 	}
 
@@ -563,13 +603,14 @@ ip_conntrack_ipct_delete(struct nf_conn *ct, int ct_timeout)
 
 	return (0);
 }
+
 #ifdef CTF_L2TP
-/* 
- * Sniffing outgoing l2tp data packets transmitted by user 
+/*
+ * Sniffing outgoing l2tp data packets transmitted by user
  * space daemon (l2tpd). If skb carried L2TP data packet then
- * function will look whether there is an entry in CTF's ip 
+ * function will look whether there is an entry in CTF's ip
  * connection cache table which corresponds to the
- * encapsulated ip packet. If the entry found then the L2TP 
+ * encapsulated ip packet. If the entry found then the L2TP
  * tunnel/session information will be associated with that
  * connection entry.
  */
@@ -586,8 +627,8 @@ ip_conntrack_l2tp_lookup(struct sk_buff *skb, u_int32_t hooknum,
 	dir = CTINFO2DIR(ci);
 	orig = &ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple;
 
-	if (!(hooknum == NF_IP_POST_ROUTING && 
-		dir == IP_CT_DIR_ORIGINAL && 
+	if (!(hooknum == NF_IP_POST_ROUTING &&
+		dir == IP_CT_DIR_ORIGINAL &&
 		orig->dst.protonum == IPPROTO_UDP))
 		return;
 

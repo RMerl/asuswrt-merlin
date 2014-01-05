@@ -88,8 +88,8 @@
 #define TFTP_MAX_RETRIES	8
 #endif
 
-#define TFTP_RRQ_TIMEOUT	CFE_HZ	/* ticks */
-#define TFTP_RECV_TIMEOUT	CFE_HZ	/* ticks */
+#define TFTP_RRQ_TIMEOUT	CFE_HZ*5	/* ticks */
+#define TFTP_RECV_TIMEOUT	CFE_HZ*5	/* ticks */
 
 #ifdef RESCUE_MODE
 unsigned char tftpipfrom[4] = { 0xc0, 0xa8, 0x01, 0x01 };
@@ -162,53 +162,53 @@ const fileio_dispatch_t tftp_fileops = {
 #define ip_addriszero(a) (((a)[0]|(a)[1]|(a)[2]|(a)[3]) == 0)
 static void ui_myshowifconfig(void)
 {
-        char *devname;
-        uint8_t *addr;
+	char *devname;
+	uint8_t *addr;
 
-        devname = (char *) net_getparam(NET_DEVNAME);
-        if (devname == NULL) {
-                xprintf("Network interface has not been configured\n");
-                return;
-        }
-        xprintf("Device %s: ",devname);
-        addr = net_getparam(NET_HWADDR);
-        if (addr)
-                xprintf(" hwaddr %a",addr);
-        addr = net_getparam(NET_IPADDR);
-        if (addr) {
-                if (ip_addriszero(addr))
-                        xprintf(", ipaddr not set");
-                else
-                        xprintf(", ipaddr %I",addr);
-        }
-        addr = net_getparam(NET_NETMASK);
-        if (addr) {
-                if (ip_addriszero(addr))
-                        xprintf(", mask not set");
-                else
-                        xprintf(", mask %I",addr);
-        }
-        xprintf("\n");
-        xprintf("        ");
-        addr = net_getparam(NET_GATEWAY);
-        if (addr) {
-                if (ip_addriszero(addr))
-                        xprintf("gateway not set");
-                else
-                        xprintf("gateway %I",addr);
-        }
-        addr = net_getparam(NET_NAMESERVER);
-        if (addr) {
-                if (ip_addriszero(addr))
-                        xprintf(", nameserver not set");
-        else
-                xprintf(", nameserver %I",addr);
-        }
-        addr = net_getparam(NET_DOMAIN);
-        if (addr) {
-                xprintf(", domain %s",addr);
-        }
-        xprintf("\n");
+	devname = (char *) net_getparam(NET_DEVNAME);
+	if (devname == NULL) {
+		xprintf("Network interface has not been configured\n");
+		return;
+	}
+	xprintf("Device %s: ",devname);
+	addr = net_getparam(NET_HWADDR);
+	if (addr)
+		xprintf(" hwaddr %a",addr);
+	addr = net_getparam(NET_IPADDR);
+	if (addr) {
+		if (ip_addriszero(addr))
+			xprintf(", ipaddr not set");
+		else
+			xprintf(", ipaddr %I",addr);
+	}
+	addr = net_getparam(NET_NETMASK);
+	if (addr) {
+		if (ip_addriszero(addr))
+			xprintf(", mask not set");
+		else
+			xprintf(", mask %I",addr);
+	}
+	xprintf("\n");
+	xprintf("	");
+	addr = net_getparam(NET_GATEWAY);
+	if (addr) {
+		if (ip_addriszero(addr))
+			xprintf("gateway not set");
+		else
+			xprintf("gateway %I",addr);
+	}
+	addr = net_getparam(NET_NAMESERVER);
+	if (addr) {
+		if (ip_addriszero(addr))
+			xprintf(", nameserver not set");
+	else
+		xprintf(", nameserver %I",addr);
+	}
+	addr = net_getparam(NET_DOMAIN);
+	if (addr) {
+		xprintf(", domain %s",addr);
+	}
+	xprintf("\n");
 }
 #endif
 
@@ -408,11 +408,11 @@ static int _tftp_readmore(tftp_info_t *info)
 
 	buf = udp_recv_with_timeout(info->tftp_socket,tftp_recv_timeout);
 #ifdef RESCUE_MODE
-        if (!buf)
-        {
-                xprintf("break! no netctx or timer expired ! \n");
-                continue;
-        }
+	if (!buf)
+	{
+		xprintf("break! no netctx or timer expired ! \n");
+		continue;
+	}
 #else
 	if (buf == NULL) continue;
 #endif
@@ -576,13 +576,13 @@ static int _tftpd_open(tftp_info_t *info,char *hostname,char *filename,int mode)
     int retries;
     char ch = 0;
 #ifdef RESCUE_MODE
-        uint8_t asuslink[13] = "ASUSSPACELINK";
-        uint8_t maclink[13]="snxxxxxxxxxxx";
-        unsigned char tftpmask[4] = { 0xff, 0xff, 0xff, 0x00 };
-        int i;
-        char tftpnull;
-        uint8_t ipaddr[4] = { 0xc0, 0xa8, 0x01, 0x0c };
-        uint8_t hwaddr[6] = { 0x00, 0xe0, 0x18, 0x00, 0x3e, 0xc4 };
+	uint8_t asuslink[13] = "ASUSSPACELINK";
+	uint8_t maclink[13]="snxxxxxxxxxxx";
+	unsigned char tftpmask[4] = { 0xff, 0xff, 0xff, 0x00 };
+	int i;
+	char tftpnull;
+	uint8_t ipaddr[4] = { 0xc0, 0xa8, 0x01, 0x0c };
+	uint8_t hwaddr[6] = { 0x00, 0xe0, 0x18, 0x00, 0x3e, 0xc4 };
 #endif
 
     /*
@@ -1092,35 +1092,35 @@ static void tftp_fileop_uninit(void *fsctx)
 #ifdef RESCUE_MODE
 extern int send_rescueack(unsigned short no, unsigned short lo)
 {
-        ebuf_t *buf = NULL;
-        int acksocket;
-        char tftpnull;
-        int res, i;
+	ebuf_t *buf = NULL;
+	int acksocket;
+	char tftpnull;
+	int res, i;
 
-        /*
-         * Open a UDP socket to the TFTP server
-         */
-        acksocket = udp_socket(UDP_PROTO_TFTP);
-        res = udp_bind(acksocket, 69);
-        if (res < 0) {
-                return res;
-        }
-        udp_connect(acksocket, ackport);
-        for (i = 0; i < 1; i++) {
-                buf = udp_alloc();
-                if (!buf)
-                        return -1;
-                /*
-                 * Send the data
-                 */
-                ebuf_append_u16_be(buf, no);
-                ebuf_append_u16_be(buf, lo);
-                ebuf_append_bytes(buf,&tftpnull, 0);
-                udp_send(acksocket ,buf, tftpipto);
-        }
-        if (buf)
-                udp_free(buf);
-        udp_close(acksocket);
-        return 0;
+	/*
+	 * Open a UDP socket to the TFTP server
+	 */
+	acksocket = udp_socket(UDP_PROTO_TFTP);
+	res = udp_bind(acksocket, 69);
+	if (res < 0) {
+		return res;
+	}
+	udp_connect(acksocket, ackport);
+	for (i = 0; i < 1; i++) {
+		buf = udp_alloc();
+		if (!buf)
+			return -1;
+		/*
+		 * Send the data
+		 */
+		ebuf_append_u16_be(buf, no);
+		ebuf_append_u16_be(buf, lo);
+		ebuf_append_bytes(buf,&tftpnull, 0);
+		udp_send(acksocket ,buf, tftpipto);
+	}
+	if (buf)
+		udp_free(buf);
+	udp_close(acksocket);
+	return 0;
 }
 #endif

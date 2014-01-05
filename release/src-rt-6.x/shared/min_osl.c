@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: min_osl.c 341899 2012-06-29 04:06:38Z $
+ * $Id: min_osl.c 367718 2012-11-09 03:57:10Z $
  */
 
 #include <typedefs.h>
@@ -432,10 +432,14 @@ blast_dcache(void)
 
 	flush_cache(0, ~0);
 
+#ifdef CFG_SHMOO
+	val &= ~CR_C;
+#else
 	val &= ~(CR_C | CR_M);
+#endif
 	asm volatile("mcr p15, 0, %0, c1, c0, 0	@ set CR" : : "r" (val) : "cc");
 	isb();
-#endif
+#endif /* !CFG_UNCACHED */
 }
 
 void
@@ -683,6 +687,7 @@ osl_init()
 #else
 #error "Unknow CPU"
 #endif
+
 	cpu_clock = si_cpu_clock(sih);
 	c0counts_per_us = cpu_clock / (1000000 * c0counts_per_cycle);
 	c0counts_per_ms = si_cpu_clock(sih) / (1000 * c0counts_per_cycle);
@@ -692,9 +697,18 @@ osl_init()
 		si_serial_init(sih, serial_add);
 
 	/* Init malloc */
+#if defined(CFG_SHMOO)
+	{
+	extern int _memsize;
+	if (_memsize) {
+		free_mem_ptr = _memsize >> 1;
+		free_mem_ptr_end = _memsize - (_memsize >> 2);
+	}
+	}
+#else
 	free_mem_ptr = (ulong) bss_end;
 	free_mem_ptr_end = ((ulong)&sih) - 8192;	/* Enough stack? */
-
+#endif /* CFG_SHMOO */
 	return ((void *)sih);
 }
 

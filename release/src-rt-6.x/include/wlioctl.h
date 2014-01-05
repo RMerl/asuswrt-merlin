@@ -18,7 +18,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: wlioctl.h 359983 2012-10-01 12:01:20Z $
+ * $Id: wlioctl.h 375781 2012-12-20 02:48:55Z $
  */
 
 #ifndef _wlioctl_h_
@@ -234,6 +234,9 @@ typedef struct wl_bss_info {
 
 /* bssinfo flag for nbss_cap */
 #define VHT_BI_SGI_80MHZ			0x00000100
+#define VHT_BI_80MHZ			    0x00000200
+#define VHT_BI_160MHZ			    0x00000400
+#define VHT_BI_8080MHZ			    0x00000800
 
 #ifndef LINUX_POSTMOGRIFY_REMOVAL
 
@@ -624,6 +627,7 @@ typedef struct wl_extjoin_params {
 #define WL_RSPEC_BW_MASK        0x00070000      /* bandwidth mask */
 #define WL_RSPEC_BW_SHIFT       16              /* bandwidth shift */
 #define WL_RSPEC_STBC           0x00100000      /* STBC encoding, Nsts = 2 x Nss */
+#define WL_RSPEC_TXBF           0x00200000      /* bit indicates TXBF mode */
 #define WL_RSPEC_LDPC           0x00400000      /* bit indicates adv coding in use */
 #define WL_RSPEC_SGI            0x00800000      /* Short GI mode */
 #define WL_RSPEC_ENCODING_MASK  0x03000000      /* Encoding of Rate/MCS field */
@@ -880,6 +884,7 @@ typedef enum sup_auth_status {
 #define CRYPTO_ALGO_AES_OCB_MPDU	6
 #define CRYPTO_ALGO_NALG		7
 #define CRYPTO_ALGO_PMK			12	/* for 802.1x supp to set PMK before 4-way */
+#define CRYPTO_ALGO_BIP			13  /* 802.11w BIP (aes cmac) */
 
 #define WSEC_GEN_MIC_ERROR	0x0001
 #define WSEC_GEN_REPLAY		0x0002
@@ -942,11 +947,9 @@ typedef struct {
 #define WSEC_ENABLED(wsec)	((wsec) & (WEP_ENABLED | TKIP_ENABLED | AES_ENABLED))
 #define WSEC_SES_OW_ENABLED(wsec)	((wsec) & SES_OW_ENABLED)
 
-#ifdef MFP
 #define MFP_CAPABLE		0x0200
 #define MFP_REQUIRED	0x0400
 #define MFP_SHA256		0x0800 /* a special configuration for STA for WIFI test tool */
-#endif /* MFP */
 
 /* WPA authentication mode bitvec */
 #define WPA_AUTH_DISABLED	0x0000	/* Legacy (i.e., non-WPA) */
@@ -964,7 +967,7 @@ typedef struct {
 #define WPA_AUTH_PFN_ANY	0xffffffff	/* for PFN, match only ssid */
 
 /* pmkid */
-#define	MAXPMKID		16
+#define	MAXPMKID		64
 
 typedef struct _pmkid {
 	struct ether_addr	BSSID;
@@ -1060,6 +1063,32 @@ struct wme_tx_params_s {
 typedef struct wme_tx_params_s wme_tx_params_t;
 
 #define WL_WME_TX_PARAMS_IO_BYTES (sizeof(wme_tx_params_t) * AC_COUNT)
+
+typedef struct wl_plc_nodelist {
+	uint count;			/* Number of nodes */
+	struct _node {
+		struct ether_addr ea;	/* Node ether address */
+		uint32 node_type;	/* Node type */
+		uint32 cost;		/* PLC affinity */
+	} node[1];
+} wl_plc_nodelist_t;
+
+typedef struct wl_plc_params {
+	uint32	cmd;			/* Command */
+	bool	plc_failover;		/* PLC failover control/status */
+	struct	ether_addr node_ea;	/* Node ether address */
+	uint32	cost;			/* Link cost or mac cost */
+} wl_plc_params_t;
+
+#define	PLC_CMD_FAILOVER	1
+#define	PLC_CMD_MAC_COST	2
+#define	PLC_CMD_LINK_COST	3
+#define	PLC_CMD_NODE_LIST	4
+
+#define NODE_TYPE_UNKNOWN	0	/* Unknown link */
+#define NODE_TYPE_WIFI_ONLY	1	/* Pure Wireless STA node */
+#define NODE_TYPE_PLC_ONLY	2	/* Pure PLC only node */
+#define NODE_TYPE_WIFI_PLC	3	/* WiFi PLC capable node */
 
 /* defines used by poweridx iovar - it controls power in a-band */
 /* current gain setting is maintained */
@@ -1738,6 +1767,15 @@ typedef struct {
 #define	WL_SPURAVOID_ON1	1
 #define	WL_SPURAVOID_ON2	2
 
+#define WL_4335_SPURAVOID_ON2	2
+#define WL_4335_SPURAVOID_ON3	3
+#define WL_4335_SPURAVOID_ON4	4
+#define WL_4335_SPURAVOID_ON5	5
+#define WL_4335_SPURAVOID_ON6	6
+#define WL_4335_SPURAVOID_ON7	7
+#define WL_4335_SPURAVOID_ON8	8
+#define WL_4335_SPURAVOID_ON9	9
+
 /* Override bit for WLC_SET_TXPWR.  if set, ignore other level limits */
 #define WL_TXPWR_OVERRIDE	(1U<<31)
 #define WL_TXPWR_NEG   (1U<<30)
@@ -2365,6 +2403,71 @@ typedef struct txppr {
 	int8 b40in80_3x3sdm_vht[WL_NUM_RATES_EXTRA_VHT];	/* VHT8_9SS3 */
 
 	int8 mcs32; /* C_CHECK - THIS NEEDS TO BE REMOVED THROUGHOUT THE CODE */
+	int8 b20_1x2txbf_ofdm[WL_NUM_RATES_OFDM];		/* Legacy OFDM TXBF transmission */
+	int8 b20_1x2txbf_mcs0[WL_NUM_RATES_MCS_1STREAM];	/* TXBF MCS 0-7 */
+	int8 b20_2x2txbf_mcs8[WL_NUM_RATES_MCS_1STREAM];	/* TXBF MCS 8-15 */
+	int8 b20_1x3txbf_ofdm[WL_NUM_RATES_OFDM];		/* Legacy OFDM TXBF transmission */
+	int8 b20_1x3txbf_mcs0[WL_NUM_RATES_MCS_1STREAM];	/* TXBF 1 Nsts to 3 Tx Chain */
+	int8 b20_2x3txbf_mcs8[WL_NUM_RATES_MCS_1STREAM];	/* TXBF MCS 8-15 */
+	int8 b20_3x3txbf_mcs16[WL_NUM_RATES_MCS_1STREAM];	/* TXBF 3 Nsts to 3 Tx Chain */
+	int8 b20_1x2txbf_vht[WL_NUM_RATES_EXTRA_VHT];		/* VHT8_9SS1_TXBF */
+	int8 b20_1x3txbf_vht[WL_NUM_RATES_EXTRA_VHT];		/* VHT8_9SS1_TXBF2 */
+	int8 b20_2x3txbf_vht[WL_NUM_RATES_EXTRA_VHT];		/* VHT8_9SS2_TXBF2 */
+
+	int8 b40_1x2txbf_ofdm[WL_NUM_RATES_OFDM];		/* Legacy OFDM TXBF transmission */
+	int8 b40_1x2txbf_mcs0[WL_NUM_RATES_MCS_1STREAM];	/* TXBF MCS 0-7 */
+	int8 b40_2x2txbf_mcs8[WL_NUM_RATES_MCS_1STREAM];	/* TXBF MCS 8-15 */
+	int8 b40_1x3txbf_ofdm[WL_NUM_RATES_OFDM];		/* Legacy OFDM TXBF transmission */
+	int8 b40_1x3txbf_mcs0[WL_NUM_RATES_MCS_1STREAM];	/* TXBF 1 Nsts to 3 Tx Chain */
+	int8 b40_2x3txbf_mcs8[WL_NUM_RATES_MCS_1STREAM];	/* TXBF MCS 8-15 */
+	int8 b40_3x3txbf_mcs16[WL_NUM_RATES_MCS_1STREAM];	/* TXBF 3 Nsts to 3 Tx Chain */
+	int8 b40_1x2txbf_vht[WL_NUM_RATES_EXTRA_VHT];		/* VHT8_9SS1_TXBF */
+	int8 b40_1x3txbf_vht[WL_NUM_RATES_EXTRA_VHT];		/* VHT8_9SS1_TXBF2 */
+	int8 b40_2x3txbf_vht[WL_NUM_RATES_EXTRA_VHT];		/* VHT8_9SS2_TXBF2 */
+
+	int8 b20in40_1x2txbf_ofdm[WL_NUM_RATES_OFDM];		/* Legacy OFDM TXBF transmission */
+	int8 b20in40_1x2txbf_mcs0[WL_NUM_RATES_MCS_1STREAM];	/* TXBF MCS 0-7 */
+	int8 b20in40_2x2txbf_mcs8[WL_NUM_RATES_MCS_1STREAM];	/* TXBF MCS 8-15 */
+	int8 b20in40_1x3txbf_ofdm[WL_NUM_RATES_OFDM];		/* 20 in 40 MHz Legacy OFDM TXBF */
+	int8 b20in40_1x3txbf_mcs0[WL_NUM_RATES_MCS_1STREAM];	/* TXBF 1 Nsts to 3 Tx Chain */
+	int8 b20in40_2x3txbf_mcs8[WL_NUM_RATES_MCS_1STREAM];	/* TXBF MCS 8-15 */
+	int8 b20in40_3x3txbf_mcs16[WL_NUM_RATES_MCS_1STREAM];	/* TXBF 3 Nsts to 3 Tx Chain */
+	int8 b20in40_1x2txbf_vht[WL_NUM_RATES_EXTRA_VHT];	/* VHT8_9SS1_TXBF */
+	int8 b20in40_1x3txbf_vht[WL_NUM_RATES_EXTRA_VHT];	/* VHT8_9SS1_TXBF2 */
+	int8 b20in40_2x3txbf_vht[WL_NUM_RATES_EXTRA_VHT];	/* VHT8_9SS2_TXBF2 */
+
+	int8 b80_1x2txbf_ofdm[WL_NUM_RATES_OFDM];		/* Legacy OFDM TXBF transmission */
+	int8 b80_1x2txbf_mcs0[WL_NUM_RATES_MCS_1STREAM];	/* TXBF MCS 0-7 */
+	int8 b80_2x2txbf_mcs8[WL_NUM_RATES_MCS_1STREAM];	/* TXBF MCS 8-15 */
+	int8 b80_1x3txbf_ofdm[WL_NUM_RATES_OFDM];		/* Legacy OFDM TXBF transmission */
+	int8 b80_1x3txbf_mcs0[WL_NUM_RATES_MCS_1STREAM];	/* TXBF 1 Nsts to 3 Tx Chain */
+	int8 b80_2x3txbf_mcs8[WL_NUM_RATES_MCS_1STREAM];	/* TXBF MCS 8-15 */
+	int8 b80_3x3txbf_mcs16[WL_NUM_RATES_MCS_1STREAM];	/* TXBF 3 Nsts to 3 Tx Chain */
+	int8 b80_1x2txbf_vht[WL_NUM_RATES_EXTRA_VHT];		/* VHT8_9SS1_TXBF */
+	int8 b80_1x3txbf_vht[WL_NUM_RATES_EXTRA_VHT];		/* VHT8_9SS1_TXBF2 */
+	int8 b80_2x3txbf_vht[WL_NUM_RATES_EXTRA_VHT];		/* VHT8_9SS2_TXBF2 */
+
+	int8 b20in80_1x2txbf_ofdm[WL_NUM_RATES_OFDM];		/* Legacy OFDM TXBF transmission */
+	int8 b20in80_1x2txbf_mcs0[WL_NUM_RATES_MCS_1STREAM];	/* TXBF MCS 0-7 */
+	int8 b20in80_2x2txbf_mcs8[WL_NUM_RATES_MCS_1STREAM];	/* TXBF MCS 8-15 */
+	int8 b20in80_1x3txbf_ofdm[WL_NUM_RATES_OFDM];		/* Legacy OFDM TXBF transmission */
+	int8 b20in80_1x3txbf_mcs0[WL_NUM_RATES_MCS_1STREAM];	/* TXBF 1 Nsts to 3 Tx Chain */
+	int8 b20in80_2x3txbf_mcs8[WL_NUM_RATES_MCS_1STREAM];	/* TXBF MCS 8-15 */
+	int8 b20in80_3x3txbf_mcs16[WL_NUM_RATES_MCS_1STREAM];	/* TXBF 3 Nsts to 3 Tx Chain */
+	int8 b20in80_1x2txbf_vht[WL_NUM_RATES_EXTRA_VHT];	/* VHT8_9SS1_TXBF */
+	int8 b20in80_1x3txbf_vht[WL_NUM_RATES_EXTRA_VHT];	/* VHT8_9SS1_TXBF2 */
+	int8 b20in80_2x3txbf_vht[WL_NUM_RATES_EXTRA_VHT];	/* VHT8_9SS2_TXBF2 */
+
+	int8 b40in80_1x2txbf_ofdm[WL_NUM_RATES_OFDM];		/* Legacy OFDM TXBF transmission */
+	int8 b40in80_1x2txbf_mcs0[WL_NUM_RATES_MCS_1STREAM];	/* TXBF MCS 0-7 */
+	int8 b40in80_2x2txbf_mcs8[WL_NUM_RATES_MCS_1STREAM];	/* TXBF MCS 8-15 */
+	int8 b40in80_1x3txbf_ofdm[WL_NUM_RATES_OFDM];		/* 40 in 80MHz Legacy OFDM TXBF */
+	int8 b40in80_1x3txbf_mcs0[WL_NUM_RATES_MCS_1STREAM];	/* TXBF 1 Nsts to 3 Tx Chain */
+	int8 b40in80_2x3txbf_mcs8[WL_NUM_RATES_MCS_1STREAM];	/* TXBF MCS 8-15 */
+	int8 b40in80_3x3txbf_mcs16[WL_NUM_RATES_MCS_1STREAM];	/* TXBF 3 Nsts to 3 Tx Chain */
+	int8 b40in80_1x2txbf_vht[WL_NUM_RATES_EXTRA_VHT];	/* VHT8_9SS1_TXBF */
+	int8 b40in80_1x3txbf_vht[WL_NUM_RATES_EXTRA_VHT];	/* VHT8_9SS1_TXBF2 */
+	int8 b40in80_2x3txbf_vht[WL_NUM_RATES_EXTRA_VHT];	/* VHT8_9SS2_TXBF2 */
 } txppr_t;
 
 /* 20MHz */
@@ -2397,6 +2500,17 @@ typedef struct txppr {
 #define WL_TX_POWER_20_S2X3_VHT					OFFSETOF(txppr_t, b20_2x3sdm_vht)
 #define WL_TX_POWER_20_S3X3_VHT					OFFSETOF(txppr_t, b20_3x3sdm_vht)
 
+#define WL_TX_POWER_OFDM20_TXBF_FIRST				OFFSETOF(txppr_t, b20_1x2txbf_ofdm)
+#define WL_TX_POWER_MCS20_TXBF_FIRST				OFFSETOF(txppr_t, b20_1x2txbf_mcs0)
+#define WL_TX_POWER_20_S2x2_TXBF_FIRST				OFFSETOF(txppr_t, b20_2x2txbf_mcs8)
+#define WL_TX_POWER_OFDM20_TXBF_S1x3_FIRST			OFFSETOF(txppr_t, b20_1x3txbf_ofdm)
+#define WL_TX_POWER_20_S1x3_TXBF_FIRST				OFFSETOF(txppr_t, b20_1x3txbf_mcs0)
+#define WL_TX_POWER_20_S2x3_TXBF_FIRST				OFFSETOF(txppr_t, b20_2x3txbf_mcs8)
+#define WL_TX_POWER_20_S3x3_TXBF_FIRST				OFFSETOF(txppr_t, b20_3x3txbf_mcs16)
+#define WL_TX_POWER_20_S1X2_TXBF_VHT				OFFSETOF(txppr_t, b20_1x2txbf_vht)
+#define WL_TX_POWER_20_S1X3_TXBF_VHT				OFFSETOF(txppr_t, b20_1x3txbf_vht)
+#define WL_TX_POWER_20_S2X3_TXBF_VHT				OFFSETOF(txppr_t, b20_2x3txbf_vht)
+
 /* 40MHz */
 #define WL_TX_POWER_40_DUMMY_CCK_FIRST			OFFSETOF(txppr_t, b40_dummy1x1dsss)
 #define WL_TX_POWER_OFDM40_FIRST				OFFSETOF(txppr_t, b40_1x1ofdm)
@@ -2427,6 +2541,17 @@ typedef struct txppr {
 #define WL_TX_POWER_40_S2X3_VHT					OFFSETOF(txppr_t, b40_2x3sdm_vht)
 #define WL_TX_POWER_40_S3X3_VHT					OFFSETOF(txppr_t, b40_3x3sdm_vht)
 
+#define WL_TX_POWER_OFDM40_TXBF_FIRST				OFFSETOF(txppr_t, b40_1x2txbf_ofdm)
+#define WL_TX_POWER_MCS40_S1x2_TXBF_FIRST			OFFSETOF(txppr_t, b40_1x2txbf_mcs0)
+#define WL_TX_POWER_MCS40_S2x2_TXBF_FIRST			OFFSETOF(txppr_t, b40_2x2txbf_mcs8)
+#define WL_TX_POWER_OFDM40_TXBF_S1x3_FIRST			OFFSETOF(txppr_t, b40_1x3txbf_ofdm)
+#define WL_TX_POWER_40_S1x3_TXBF_FIRST				OFFSETOF(txppr_t, b40_1x3txbf_mcs0)
+#define WL_TX_POWER_40_S2x3_TXBF_FIRST				OFFSETOF(txppr_t, b40_2x3txbf_mcs8)
+#define WL_TX_POWER_40_S3x3_TXBF_FIRST				OFFSETOF(txppr_t, b40_3x3txbf_mcs16)
+#define WL_TX_POWER_40_S1X2_TXBF_VHT				OFFSETOF(txppr_t, b40_1x2txbf_vht)
+#define WL_TX_POWER_40_S1X3_TXBF_VHT				OFFSETOF(txppr_t, b40_1x3txbf_vht)
+#define WL_TX_POWER_40_S2X3_TXBF_VHT				OFFSETOF(txppr_t, b40_2x3txbf_vht)
+
 /* 20 in 40MHz */
 #define WL_TX_POWER_20UL_CCK_FIRST				OFFSETOF(txppr_t, b20in40_1x1dsss)
 #define WL_TX_POWER_20UL_OFDM_FIRST				OFFSETOF(txppr_t, b20in40_1x1ofdm)
@@ -2453,6 +2578,17 @@ typedef struct txppr {
 #define WL_TX_POWER_20UL_S2X3_STBC_VHT		OFFSETOF(txppr_t, b20in40_2x3stbc_vht)
 #define WL_TX_POWER_20UL_S2X3_VHT			OFFSETOF(txppr_t, b20in40_2x3sdm_vht)
 #define WL_TX_POWER_20UL_S3X3_VHT			OFFSETOF(txppr_t, b20in40_3x3sdm_vht)
+
+#define WL_TX_POWER_20UL_OFDM_TXBF_FIRST		OFFSETOF(txppr_t, b20in40_1x2txbf_ofdm)
+#define WL_TX_POWER_20UL_S1x2_TXBF_FIRST		OFFSETOF(txppr_t, b20in40_1x2txbf_mcs0)
+#define WL_TX_POWER_20UL_S2x2_TXBF_FIRST		OFFSETOF(txppr_t, b20in40_2x2txbf_mcs8)
+#define WL_TX_POWER_20UL_OFDM_TXBF_S1x3_FIRST		OFFSETOF(txppr_t, b20in40_1x3txbf_ofdm)
+#define WL_TX_POWER_20UL_S1x3_TXBF_FIRST		OFFSETOF(txppr_t, b20in40_1x3txbf_mcs0)
+#define WL_TX_POWER_20UL_S2x3_TXBF_FIRST		OFFSETOF(txppr_t, b20in40_2x3txbf_mcs8)
+#define WL_TX_POWER_20UL_S3x3_TXBF_FIRST		OFFSETOF(txppr_t, b20in40_3x3txbf_mcs16)
+#define WL_TX_POWER_20UL_S1X2_TXBF_VHT			OFFSETOF(txppr_t, b20in40_1x2txbf_vht)
+#define WL_TX_POWER_20UL_S1X3_TXBF_VHT			OFFSETOF(txppr_t, b20in40_1x3txbf_vht)
+#define WL_TX_POWER_20UL_S2X3_TXBF_VHT			OFFSETOF(txppr_t, b20in40_2x3txbf_vht)
 
 /* 80MHz */
 #define WL_TX_POWER_80_DUMMY_CCK_FIRST		OFFSETOF(txppr_t, b80_dummy1x1dsss)
@@ -2484,6 +2620,17 @@ typedef struct txppr {
 #define WL_TX_POWER_80_S2X3_VHT					OFFSETOF(txppr_t, b80_2x3sdm_vht)
 #define WL_TX_POWER_80_S3X3_VHT					OFFSETOF(txppr_t, b80_3x3sdm_vht)
 
+#define WL_TX_POWER_OFDM80_TXBF_FIRST				OFFSETOF(txppr_t, b80_1x2txbf_ofdm)
+#define WL_TX_POWER_80_S1x2_TXBF_FIRST				OFFSETOF(txppr_t, b80_1x2txbf_mcs0)
+#define WL_TX_POWER_80_S2x2_TXBF_FIRST				OFFSETOF(txppr_t, b80_2x2txbf_mcs8)
+#define WL_TX_POWER_OFDM80_TXBF_S1x3_FIRST			OFFSETOF(txppr_t, b80_1x3txbf_ofdm)
+#define WL_TX_POWER_80_S1x3_TXBF_FIRST				OFFSETOF(txppr_t, b80_1x3txbf_mcs0)
+#define WL_TX_POWER_80_TXBF_S2x3_FIRST				OFFSETOF(txppr_t, b80_2x3txbf_mcs8)
+#define WL_TX_POWER_80_S3x3_TXBF_FIRST				OFFSETOF(txppr_t, b80_3x3txbf_mcs16)
+#define WL_TX_POWER_80_S1X2_TXBF_VHT				OFFSETOF(txppr_t, b80_1x2txbf_vht)
+#define WL_TX_POWER_80_S1X3_TXBF_VHT				OFFSETOF(txppr_t, b80_1x3txbf_vht)
+#define WL_TX_POWER_80_S2X3_TXBF_VHT				OFFSETOF(txppr_t, b80_2x3txbf_vht)
+
 /* 20 in 80MHz */
 #define WL_TX_POWER_20UUL_CCK_FIRST				OFFSETOF(txppr_t, b20in80_1x1dsss)
 #define WL_TX_POWER_20UUL_OFDM_FIRST			OFFSETOF(txppr_t, b20in80_1x1ofdm)
@@ -2510,6 +2657,17 @@ typedef struct txppr {
 #define WL_TX_POWER_20UUL_S2X3_STBC_VHT		OFFSETOF(txppr_t, b20in80_2x3stbc_vht)
 #define WL_TX_POWER_20UUL_S2X3_VHT			OFFSETOF(txppr_t, b20in80_2x3sdm_vht)
 #define WL_TX_POWER_20UUL_S3X3_VHT			OFFSETOF(txppr_t, b20in80_3x3sdm_vht)
+
+#define WL_TX_POWER_20UUL_OFDM_TXBF_FIRST		OFFSETOF(txppr_t, b20in80_1x2txbf_ofdm)
+#define WL_TX_POWER_20UUL_S1x2_TXBF_FIRST		OFFSETOF(txppr_t, b20in80_1x2txbf_mcs0)
+#define WL_TX_POWER_20UUL_S2x2_TXBF_FIRST		OFFSETOF(txppr_t, b20in80_2x2txbf_mcs8)
+#define WL_TX_POWER_20UUL_OFDM_TXBF_S1x3_FIRST		OFFSETOF(txppr_t, b20in80_1x3txbf_ofdm)
+#define WL_TX_POWER_20UUL_S1x3_TXBF_FIRST		OFFSETOF(txppr_t, b20in80_1x3txbf_mcs0)
+#define WL_TX_POWER_20UUL_TXBF_S2x3_FIRST		OFFSETOF(txppr_t, b20in80_2x3txbf_mcs8)
+#define WL_TX_POWER_20UUL_S3x3_TXBF_FIRST		OFFSETOF(txppr_t, b20in80_3x3txbf_mcs16)
+#define WL_TX_POWER_20UUL_S1X2_TXBF_VHT			OFFSETOF(txppr_t, b20in80_1x2txbf_vht)
+#define WL_TX_POWER_20UUL_S1X3_TXBF_VHT			OFFSETOF(txppr_t, b20in80_1x3txbf_vht)
+#define WL_TX_POWER_20UUL_S2X3_TXBF_VHT			OFFSETOF(txppr_t, b20in80_2x3txbf_vht)
 
 /* 40 in 80MHz */
 #define WL_TX_POWER_40UUL_DUMMY_CCK_FIRST		OFFSETOF(txppr_t, b40in80_dummy1x1dsss)
@@ -2538,6 +2696,17 @@ typedef struct txppr {
 #define WL_TX_POWER_40UUL_S2X3_VHT			OFFSETOF(txppr_t, b40in80_2x3sdm_vht)
 #define WL_TX_POWER_40UUL_S3X3_VHT			OFFSETOF(txppr_t, b40in80_3x3sdm_vht)
 
+#define WL_TX_POWER_40UUL_OFDM_TXBF_FIRST		OFFSETOF(txppr_t, b40in80_1x2txbf_ofdm)
+#define WL_TX_POWER_40UUL_S1x2_TXBF_FIRST		OFFSETOF(txppr_t, b40in80_1x2txbf_mcs0)
+#define WL_TX_POWER_40UUL_S2x2_TXBF_FIRST		OFFSETOF(txppr_t, b40in80_2x2txbf_mcs8)
+#define WL_TX_POWER_40UUL_OFDM_TXBF_S1x3_FIRST		OFFSETOF(txppr_t, b40in80_1x3txbf_ofdm)
+#define WL_TX_POWER_40UUL_S1x3_TXBF_FIRST		OFFSETOF(txppr_t, b40in80_1x3txbf_mcs0)
+#define WL_TX_POWER_40UUL_TXBF_S2x3_FIRST		OFFSETOF(txppr_t, b40in80_2x3txbf_mcs8)
+#define WL_TX_POWER_40UUL_S3x3_TXBF_FIRST		OFFSETOF(txppr_t, b40in80_3x3txbf_mcs16)
+#define WL_TX_POWER_40UUL_S1X2_TXBF_VHT			OFFSETOF(txppr_t, b40in80_1x2txbf_vht)
+#define WL_TX_POWER_40UUL_S1X3_TXBF_VHT			OFFSETOF(txppr_t, b40in80_1x3txbf_vht)
+#define WL_TX_POWER_40UUL_S2X3_TXBF_VHT			OFFSETOF(txppr_t, b40in80_2x3txbf_vht)
+
 #define WL_TX_POWER_MCS_32			OFFSETOF(txppr_t, mcs32) /* C_CHECK remove later */
 
 #define WL_TX_POWER_RATES			sizeof(struct txppr)
@@ -2552,10 +2721,11 @@ typedef struct {
 	uint32 flags;
 	chanspec_t chanspec;			/* txpwr report for this channel */
 	chanspec_t local_chanspec;		/* channel on which we are associated */
-	int8 ppr[WL_TX_POWER_RATES];		/* Latest target power */
+	uint32     buflen;			/* ppr buffer length */
+	uint8      pprbuf[1];			/* Latest target power buffer */
 } wl_txppr_t;
 
-#define WL_TXPPR_VERSION	0
+#define WL_TXPPR_VERSION	1
 #define WL_TXPPR_LENGTH	(sizeof(wl_txppr_t))
 #define TX_POWER_T_VERSION	43
 
@@ -2599,6 +2769,7 @@ typedef struct {
 	uint8 display_core;			/* Displayed curpower core */
 	int8 target_offsets[4];		/* Target power offsets for current rate per core */
 	uint32 last_tx_ratespec;	/* Ratespec for last transmition */
+	int8 SARLIMIT[MAX_STREAMS_SUPPORTED];
 } tx_power_t;
 
 typedef struct tx_inst_power {
@@ -2742,8 +2913,9 @@ typedef struct wl_txchain_pwr_offsets {
 #define WL_PSTA_VAL		0x00008000
 #define WL_TSO_VAL		0x00010000
 #define WL_TRF_MGMT_VAL		0x00020000
-#define WL_PWRSEL_VAL	0x00040000
+#define WL_LPC_VAL	        0x00040000
 #define WL_L2FILTER_VAL		0x00080000
+#define WL_TXBF_VAL		0x00100000
 /* use top-bit for WL_TIME_STAMP_VAL because this is a modifier
  * rather than a message-type of its own
  */
@@ -3067,6 +3239,7 @@ typedef struct {
 
 	uint32	rfdisable;	/* count of radio disables */
 	uint32	bphy_rxcrsglitch;	/* PHY count of bphy glitches */
+	uint32  bphy_badplcp;
 
 	uint32	txexptime;	/* Tx frames suppressed due to timer expiration */
 
@@ -3332,6 +3505,7 @@ typedef struct {
 
 	uint32  rfdisable;  /* count of radio disables */
 	uint32  bphy_rxcrsglitch;   /* PHY count of bphy glitches */
+	uint32  bphy_badplcp;
 
 	uint32  txmpdu_sgi; /* count for sgi transmit */
 	uint32  rxmpdu_sgi; /* count for sgi received */
@@ -3554,6 +3728,7 @@ struct tslist {
 #define TDLS_MANUAL_EP_WAKE		5	/* wake up dpt endpoint from PM */
 #define TDLS_MANUAL_EP_DISCOVERY	6	/* discover if endpoint is TDLS capable */
 #define TDLS_MANUAL_EP_CHSW		7	/* channel switch */
+#define TDLS_MANUAL_EP_WFD_TPQ	8	/* WiFi-Display Tunneled Probe reQuest */
 
 /* structure for tdls iovars */
 typedef struct tdls_iovar {
@@ -3564,9 +3739,11 @@ typedef struct tdls_iovar {
 } tdls_iovar_t;
 
 /* modes */
-#define TDLS_WFD_IE_TX 0
-#define TDLS_WFD_IE_RX 1
-#define TDLS_WFD_IE_SIZE 512
+#define TDLS_WFD_IE_TX 			0
+#define TDLS_WFD_IE_RX 			1
+#define TDLS_WFD_PROBE_IE_TX	2
+#define TDLS_WFD_PROBE_IE_RX	3
+#define TDLS_WFD_IE_SIZE 		512
 /* structure for tdls wfd ie */
 typedef struct tdls_wfd_ie_iovar {
 	struct ether_addr ea;		/* Station address */
@@ -3649,12 +3826,16 @@ typedef struct wl_lifetime {
 	uint32 lifetime;    /* Packet lifetime value in ms */
 } wl_lifetime_t;
 
+#define CSA_BROADCAST_ACTION_FRAME	0	/* csa broadcast action frame */
+#define CSA_UNICAST_ACTION_FRAME	  1 /* csa unicast action frame */
+
 /* Channel Switch Announcement param */
 typedef struct wl_chan_switch {
 	uint8 mode;		/* value 0 or 1 */
 	uint8 count;		/* count # of beacons before switching */
 	chanspec_t chspec;	/* chanspec */
 	uint8 reg;		/* regulatory class */
+	uint8 frame_type;		/* csa frame type, unicast or broadcast */
 } wl_chan_switch_t;
 
 /* Roaming trigger definitions for WLC_SET_ROAM_TRIGGER.
@@ -3696,11 +3877,11 @@ enum {
 
 #define SORT_CRITERIA_BIT		0
 #define AUTO_NET_SWITCH_BIT		1
-#define ENABLE_BKGRD_SCAN_BIT		2
+#define ENABLE_BKGRD_SCAN_BIT	2
 #define IMMEDIATE_SCAN_BIT		3
 #define	AUTO_CONNECT_BIT		4
 #define	ENABLE_BD_SCAN_BIT		5
-#define ENABLE_ADAPTSCAN_BIT		6
+#define ENABLE_ADAPTSCAN_BIT	6
 #define IMMEDIATE_EVENT_BIT		8
 #define SUPPRESS_SSID_BIT		9
 #define ENABLE_NET_OFFLOAD_BIT		10
@@ -3755,15 +3936,15 @@ typedef struct wl_pfn_param {
 	int32 version;			/* PNO parameters version */
 	int32 scan_freq;		/* Scan frequency */
 	int32 lost_network_timeout;	/* Timeout in sec. to declare
-					 * discovered network as lost
-					 */
+								* discovered network as lost
+								*/
 	int16 flags;			/* Bit field to control features
-					 * of PFN such as sort criteria auto
-					 * enable switch and background scan
-					 */
+							* of PFN such as sort criteria auto
+							* enable switch and background scan
+							*/
 	int16 rssi_margin;		/* Margin to avoid jitter for choosing a
-					 * PFN based on RSSI sort criteria
-					 */
+							* PFN based on RSSI sort criteria
+							*/
 	uint8 bestn; /* number of best networks in each scan */
 	uint8 mscan; /* number of scans recorded */
 	uint8 repeat; /* Minimum number of scan intervals
@@ -3775,9 +3956,28 @@ typedef struct wl_pfn_param {
 #endif /* !WLC_PATCH || !BCM43362A2 */
 } wl_pfn_param_t;
 
+typedef struct wl_pfn_bssid {
+	struct ether_addr  macaddr;
+	/* Bit4: suppress_lost, Bit3: suppress_found */
+	uint16             flags;
+} wl_pfn_bssid_t;
+#define WL_PFN_SUPPRESSFOUND_MASK	0x08
+#define WL_PFN_SUPPRESSLOST_MASK	0x10
+#define WL_PFN_RSSI_MASK			0xff00
+#define WL_PFN_RSSI_SHIFT			8
+
+typedef struct wl_pfn_cfg {
+	uint32				reporttype;
+	int32				channel_num;
+	uint16				channel_list[WL_NUMCHANNELS];
+} wl_pfn_cfg_t;
+#define WL_PFN_REPORT_ALLNET    0
+#define WL_PFN_REPORT_SSIDNET   1
+#define WL_PFN_REPORT_BSSIDNET  2
+
 typedef struct wl_pfn {
 	wlc_ssid_t		ssid;			/* ssid name and its length */
-	int32			bss_type;		/* IBSS or infrastructure */
+	int32			flags;			/* bit2: hidden */
 	int32			infra;			/* BSS Vs IBSS */
 	int32			auth;			/* Open Vs Closed */
 	int32			wpa_auth;		/* WPA type */
@@ -3843,7 +4043,7 @@ struct toe_ol_stats_t {
 #define ARP_ERRTEST_REPLY_HOST	0x2
 
 #define ARP_MULTIHOMING_MAX	8	/* Maximum local host IP addresses */
-#define ND_MULTIHOMING_MAX 8	/* Maximum local host IP addresses */
+#define ND_MULTIHOMING_MAX 10	/* Maximum local host IP addresses */
 
 /* Arp offload statistic counts */
 struct arp_ol_stats_t {
@@ -3883,14 +4083,14 @@ struct nd_ol_stats_t {
  */
 typedef struct wl_keep_alive_pkt {
 	uint32	period_msec;	/* Retransmission period (0 to disable packet re-transmits) */
-	uint16	len_bytes;	/* Size of packet to transmit (0 to disable packet re-transmits) */
+	uint16	len_bytes;	/* Size of packet to transmit (0 for null packet) */
 	uint8	data[1];	/* Variable length packet to transmit.  Contents should include
 				 * entire ethernet packet (enet header, IP header, UDP header,
 				 * and UDP payload) in network byte order.
 				 */
 } wl_keep_alive_pkt_t;
 
-#define WL_KEEP_ALIVE_FIXED_LEN		OFFSETOF(wl_keep_alive_pkt_t, data)
+#define WL_KEEP_ALIVE_FIXED_LEN		6
 
 /*
  * Dongle pattern matching filter.
@@ -4039,6 +4239,9 @@ typedef struct wl_sslpnphy_percal_debug_data {
 	int32 volt_winner;
 } wl_sslpnphy_percal_debug_data_t;
 
+/*
+ * WOWL capability/override settings
+ */
 #define WL_WOWL_MAGIC       (1 << 0)    /* Wakeup on Magic packet */
 #define WL_WOWL_NET         (1 << 1)    /* Wakeup on Netpattern */
 #define WL_WOWL_DIS         (1 << 2)    /* Wakeup on loss-of-link due to Disassoc/Deauth */
@@ -4058,17 +4261,17 @@ typedef struct wl_sslpnphy_percal_debug_data {
 
 #define MAGIC_PKT_MINLEN 102    /* Magic pkt min length is 6 * 0xFF + 16 * ETHER_ADDR_LEN */
 
-#define WOWL_PATTEN_TYPE_ARP	(1 << 0)	/* ARP offload Pattern */
-#define WOWL_PATTEN_TYPE_NA		(1 << 1)	/* NA offload Pattern */
+#define WOWL_PATTERN_TYPE_ARP	(1 << 0)	/* ARP offload Pattern */
+#define WOWL_PATTERN_TYPE_NS	(1 << 1)	/* NS offload Pattern */
 
 typedef struct {
-	uint32 masksize;		/* Size of the mask in #of bytes */
-	uint32 offset;			/* Offset to start looking for the packet in # of bytes */
+	uint32 masksize;	/* Size of the mask in #of bytes */
+	uint32 offset;		/* Offset to start looking for the packet in # of bytes */
 	uint32 patternoffset;	/* Offset of start of pattern in the structure */
-	uint32 patternsize;		/* Size of the pattern itself in #of bytes */
-	uint32 id;				/* id */
-	uint32 reasonsize;		/* Size of the wakeup reason code */
-	uint32 flags;			/* Flags to tell the pattern type and other properties */
+	uint32 patternsize;	/* Size of the pattern itself in #of bytes */
+	uint32 id;		/* id */
+	uint32 reasonsize;	/* Size of the wakeup reason code */
+	uint32 flags;		/* Flags to tell the pattern type and other properties */
 	/* Mask follows the structure above */
 	/* Pattern follows the mask is at 'patternoffset' from the start */
 } wl_wowl_pattern_t;
@@ -4505,6 +4708,39 @@ typedef BWL_PRE_PACKED_STRUCT struct {
 } BWL_POST_PACKED_STRUCT txfailinfo_t;
 #endif /* WLMEDIA_TXFAILEVENT */
 
+typedef BWL_PRE_PACKED_STRUCT struct {
+	uint32 flags;
+	chanspec_t chanspec;			/* txpwr report for this channel */
+	chanspec_t local_chanspec;		/* channel on which we are associated */
+	uint8 local_max;			/* local max according to the AP */
+	uint8 local_constraint;			/* local constraint according to the AP */
+	int8  antgain[2];			/* Ant gain for each band - from SROM */
+	uint8 rf_cores;				/* count of RF Cores being reported */
+	uint8 est_Pout[4];			/* Latest tx power out estimate per RF chain */
+	uint8 est_Pout_act[4]; /* Latest tx power out estimate per RF chain w/o adjustment */
+	uint8 est_Pout_cck;			/* Latest CCK tx power out estimate */
+	uint8 tx_power_max[4];		/* Maximum target power among all rates */
+	uint tx_power_max_rate_ind[4];		/* Index of the rate with the max target power */
+	int8 clm_limits[WL_NUMRATES];		/* regulatory limits - 20, 40 or 80MHz */
+	int8 clm_limits_subchan1[WL_NUMRATES];	/* regulatory limits - 20in40 or 40in80 */
+	int8 clm_limits_subchan2[WL_NUMRATES];	/* regulatory limits - 20in80MHz */
+	int8 sar;					/* SAR limit for display by wl executable */
+	int8 channel_bandwidth;		/* 20, 40 or 80 MHz bandwidth? */
+	uint8 version;				/* Version of the data format wlu <--> driver */
+	uint8 display_core;			/* Displayed curpower core */
+	int8 target_offsets[4];		/* Target power offsets for current rate per core */
+	uint32 last_tx_ratespec;	/* Ratespec for last transmition */
+	uint   user_target;		/* user limit */
+	uint32 board_limit_len;		/* length of board limit buffer */
+	uint32 target_len;		/* length of target power buffer */
+	int8 SARLIMIT[MAX_STREAMS_SUPPORTED];
+	uint8  pprdata[1];		/* ppr serialization buffer */
+} BWL_POST_PACKED_STRUCT tx_pwr_rpt_t;
+
+
+/* fbt_cap: FBT assoc / reassoc modes. */
+#define WLC_FBT_CAP_DRV_4WAY_AND_REASSOC  1 /* Driver 4-way handshake & reassoc (WLFBT). */
+
 #endif /* LINUX_POSTMOGRIFY_REMOVAL */
 
 /* no strict structure packing */
@@ -4543,10 +4779,12 @@ typedef struct assertlog_results {
 
 /* define for apcs reason code */
 #define APCS_INIT		0
-#define APCS_IOCTL 		1
-#define APCS_CHANIM 	2
+#define APCS_IOCTL		1
+#define APCS_CHANIM		2
 #define APCS_CSTIMER	3
 #define APCS_BTA		4
+#define APCS_TXDLY		5
+#define APCS_NONACSD	6
 
 /* number of ACS record entries */
 #define CHANIM_ACS_RECORD			10
@@ -5063,13 +5301,138 @@ typedef struct trf_mgmt_stats_array     {
 	trf_mgmt_stats_t  rx_queue_stats[TRF_MGMT_MAX_PRIORITIES];
 } trf_mgmt_stats_array_t;
 
-typedef struct powersel_params {
+typedef struct lpc_params {
 	/* LPC Params exposed via IOVAR */
-	int32		tp_ratio_thresh;  /* Throughput ratio threshold */
 	uint8		rate_stab_thresh; /* Thresh for rate stability based on nupd */
 	uint8		pwr_stab_thresh; /* Number of successes before power step down */
-	uint8		pwr_sel_exp_time; /* Time lapse for expiry of database */
-} powersel_params_t;
+	uint8		lpc_exp_time; /* Time lapse for expiry of database */
+	uint8		pwrup_slow_step; /* Step size for slow step up */
+	uint8		pwrup_fast_step; /* Step size for fast step up */
+	uint8		pwrdn_slow_step; /* Step size for slow step down */
+} lpc_params_t;
 
+/* tx pkt delay statistics */
+#define	SCB_RETRY_SHORT_DEF	7	/* Default Short retry Limit */
+#define WLPKTDLY_HIST_NBINS	16	/* number of bins used in the Delay histogram */
+
+/* structure to store per-AC delay statistics */
+typedef struct scb_delay_stats {
+	uint32 txmpdu_lost;	/* number of MPDUs lost */
+	uint32 txmpdu_cnt[SCB_RETRY_SHORT_DEF]; /* retry times histogram */
+	uint32 delay_sum[SCB_RETRY_SHORT_DEF]; /* cumulative packet latency */
+	uint32 delay_min;	/* minimum packet latency observed */
+	uint32 delay_max;	/* maximum packet latency observed */
+	uint32 delay_avg;	/* packet latency average */
+	uint32 delay_hist[WLPKTDLY_HIST_NBINS];	/* delay histogram */
+} scb_delay_stats_t;
+
+/* structure for txdelay event */
+typedef struct txdelay_event {
+	uint8	status;
+	int		rssi;
+	chanim_stats_t		chanim_stats;
+	scb_delay_stats_t	delay_stats[AC_COUNT];
+} txdelay_event_t;
+
+/* structure for txdelay parameters */
+typedef struct txdelay_params {
+	uint16	ratio;	/* Avg Txdelay Delta */
+	uint8	cnt;	/* Sample cnt */
+	uint8	period;	/* Sample period */
+	uint8	tune;	/* Debug */
+} txdelay_params_t;
+
+/* WNM feature mask */
+#define WL_WNM_BSSTRANS			0x00000001
+#define WL_WNM_PROXYARP			0x00000002
+#define WL_WNM_BSS_MAX_IDLE_PERIOD	0x00000004
+#define WL_WNM_TIM_BCAST		0x00000008
+#define WL_WNM_TFS			0x00000010
+#define WL_WNM_SLEEP			0x00000020
+#define WL_WNM_DMS			0x00000040
+#define WL_WNM_FMS			0x00000080
+#define WL_WNM_NOTIF		0x00000100
+
+#ifdef WLWNM
+#define TCLAS_SERVICE_DMS	1
+#define TCLAS_SERVICE_TFS	2
+#define TCLAS_SERVICE_FMS	3
+
+typedef struct wl_tclas_fc_param {
+	uint8 user_priority;
+	uint8 len;
+	dot11_tclas_fc_t param;
+} wl_tclas_fc_param_t;
+
+typedef struct wl_tclas_fc_param_list {
+	uint32 num;
+	wl_tclas_fc_param_t param[1];
+} wl_tclas_fc_param_list_t;
+
+typedef struct wl_tfs_req {
+	uint8 tfs_id;
+	uint8 tfs_actcode;
+	uint8 tfs_subelem_id;
+	uint8 send;
+} wl_tfs_req_t;
+
+#endif /* WLWNM */
+
+#define WL_RELMCAST_MAX_CLIENT 			32
+#define WL_RELMCAST_FLAG_INBLACKLIST	1
+#define WL_RELMCAST_FLAG_ACTIVEACKER	2
+#define WL_RELMCAST_FLAG_RELMCAST		4
+
+#define WL_RELMCAST_VER					1
+
+typedef struct wl_relmcast_client {
+	uint8 flag;
+	int16 rssi;
+	struct ether_addr addr;
+} wl_relmcast_client_t;
+
+typedef struct wl_relmcast_st {
+	uint8 ver;
+	uint8 num;
+	wl_relmcast_client_t clients[WL_RELMCAST_MAX_CLIENT];
+} wl_relmcast_status_t;
 #endif /* LINUX_POSTMOGRIFY_REMOVAL */
+
+typedef struct bcnreq {
+	uint8 bcn_mode;
+	int dur;
+	int channel;
+	struct ether_addr da;
+	uint16 random_int;
+	wlc_ssid_t ssid;
+	uint16 reps;
+} bcnreq_t;
+
+typedef struct rrmreq {
+	struct ether_addr da;
+	uint8 reg;
+	uint8 chan;
+	uint16 random_int;
+	uint16 dur;
+	uint16 reps;
+} rrmreq_t;
+
+typedef struct framereq {
+	struct ether_addr da;
+	uint8 reg;
+	uint8 chan;
+	uint16 random_int;
+	uint16 dur;
+	struct ether_addr ta;
+	uint16 reps;
+} framereq_t;
+
+typedef struct statreq {
+	struct ether_addr da;
+	struct ether_addr peer;
+	uint16 random_int;
+	uint16 dur;
+	uint8 group_id;
+	uint16 reps;
+} statreq_t;
 #endif /* _wlioctl_h_ */

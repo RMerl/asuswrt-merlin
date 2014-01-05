@@ -93,9 +93,19 @@ setCommit(void)
 	FILE *fp;
 	char line[32];
 	eval("rm", "-f", "/var/log/commit_ret");
+#ifdef RTCONFIG_CFE_NVRAM_CHK
+	eval("rm", "-f", "/var/log/cfecommit_ret");
+#endif
 	eval("nvram", "set", "asuscfecommit=");
 	eval("nvram", "commit");
 	sleep(1);
+#ifdef RTCONFIG_CFE_NVRAM_CHK
+	if((fp = fopen("/var/log/cfecommit_ret", "r"))!=NULL) {
+		puts("Illegal nvram format!");
+                fclose(fp);
+                return 1;
+	}
+#endif
 	if((fp = fopen("/var/log/commit_ret", "r"))!=NULL) {
 		while(fgets(line, sizeof(line), fp)){
 			if(strstr(line, "OK")) {
@@ -911,10 +921,11 @@ setAllLedOn(void)
 		case MODEL_RTN18U:
 		{
 			led_control(LED_USB, LED_ON);
+			led_control(LED_USB3, LED_ON);
 			led_control(LED_POWER, LED_ON);
 			led_control(LED_WAN, LED_ON);
 			led_control(LED_LAN, LED_ON);
-			led_control(LED_2G, LED_ON);
+			eval("wl", "-i", "eth1", "ledbh", "10", "7");
 			break;
 		}
 		case MODEL_RTAC68U:
@@ -1090,10 +1101,12 @@ setAllLedOff(void)
 		case MODEL_RTN18U:
 		{
 			led_control(LED_USB, LED_OFF);
+			led_control(LED_USB3, LED_OFF);
 			led_control(LED_POWER, LED_OFF);
 			led_control(LED_WAN, LED_OFF);
 			led_control(LED_LAN, LED_OFF);
 			led_control(LED_2G, LED_OFF);
+			eval("wl", "-i", "eth1", "ledbh", "10", "0");
 			break;
 		}
 		case MODEL_RTAC68U:

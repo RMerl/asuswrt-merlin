@@ -24,7 +24,10 @@
 MFP=0
 
 #HSPOT can be flipped by router makefile
-HSPOT=1
+HSPOT=0
+
+#NPS can be flipped by router makefile
+NPS=0
 
 AP=1
 WDS=1
@@ -35,3 +38,4 @@ WME_PER_AC_TX_PARAMS=1
 WME_PER_AC_TUNING=1
 WLOVERTHRUSTER=1
 BCMECICOEX=0
+WLMULTIQUEUE=1

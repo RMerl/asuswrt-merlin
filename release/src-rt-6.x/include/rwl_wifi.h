@@ -2,7 +2,7 @@
  * RWL definitions  of
  * Broadcom 802.11bang Networking Device Driver
  *
- * Copyright (C) 2011, Broadcom Corporation
+ * Copyright (C) 2012, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;

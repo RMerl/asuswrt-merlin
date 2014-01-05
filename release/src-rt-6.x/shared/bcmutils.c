@@ -1,7 +1,7 @@
 /*
  * Driver O/S-independent utility routines
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,17 +14,22 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: bcmutils.c 329066 2012-04-23 22:56:34Z $
+ * $Id: bcmutils.c 371895 2012-11-29 20:15:08Z $
  */
 
 #include <bcm_cfg.h>
 #include <typedefs.h>
 #include <bcmdefs.h>
 #if defined(__FreeBSD__) || defined(__NetBSD__)
+#include <sys/param.h>
+#if __NetBSD_Version__ >= 500000003
+#include <sys/stdarg.h>
+#else
 #include <machine/stdarg.h>
+#endif
 #else
 #include <stdarg.h>
-#endif
+#endif /* NetBSD */
 #ifdef BCMDRIVER
 
 #include <osl.h>
@@ -2126,11 +2131,11 @@ BCMINITFN(bcm_nvram_refresh)(char *flash)
 	/* default "empty" vars cache */
 	bzero(flash, 2);
 
-	if ((ret = nvram_getall(flash, NVRAM_SPACE)))
+	if ((ret = nvram_getall(flash, MAX_NVRAM_SPACE)))
 		return;
 
 	/* determine nvram length */
-	for (i = 0; i < NVRAM_SPACE; i++) {
+	for (i = 0; i < MAX_NVRAM_SPACE; i++) {
 		if (flash[i] == '\0' && flash[i+1] == '\0')
 			break;
 	}
@@ -2174,7 +2179,7 @@ BCMINITFN(bcm_nvram_cache)(void *sih)
 	osh = si_osh((si_t *)sih);
 
 	/* allocate memory and read in flash */
-	if (!(flash = MALLOC(osh, NVRAM_SPACE))) {
+	if (!(flash = MALLOC(osh, MAX_NVRAM_SPACE))) {
 		ret = BCME_NOMEM;
 		goto exit;
 	}
@@ -2189,7 +2194,7 @@ BCMINITFN(bcm_nvram_cache)(void *sih)
 		} else
 			bcopy(flash, nvram_vars, vars_len);
 	}
-	MFREE(osh, flash, NVRAM_SPACE);
+	MFREE(osh, flash, MAX_NVRAM_SPACE);
 #else
 	/* cache must be full size of nvram if read/write */
 	nvram_vars = flash;
@@ -2666,6 +2671,31 @@ BCMROMFN(bcm_parse_ordered_tlvs)(void *buf, int buflen, uint key)
 #if defined(BCMDBG) || defined(BCMDBG_ERR) || defined(WLMSG_PRHDRS) || \
 	defined(WLMSG_PRPKT) || defined(WLMSG_ASSOC) || defined(DHD_DEBUG)
 int
+bcm_format_field(const bcm_bit_desc_ex_t *bd, uint32 flags, char* buf, int len)
+{
+	int i, slen = 0;
+	uint32 bit, mask;
+	const char *name;
+	mask = bd->mask;
+	if (len < 2 || !buf)
+		return 0;
+
+	buf[0] = '\0';
+
+	for (i = 0;  (name = bd->bitfield[i].name) != NULL; i++) {
+		bit = bd->bitfield[i].bit;
+		if ((flags & mask) == bit) {
+			if (len > (int)strlen(name)) {
+				slen = strlen(name);
+				strncpy(buf, name, slen+1);
+			}
+			break;
+		}
+	}
+	return slen;
+}
+
+int
 bcm_format_flags(const bcm_bit_desc_t *bd, uint32 flags, char* buf, int len)
 {
 	int i;
@@ -2793,7 +2823,7 @@ bcm_crypto_algo_name(uint algo)
 
 #ifdef BCMDBG
 void
-deadbeef(void *p, size_t len)
+deadbeef(void *p, uint len)
 {
 	static uint8 meat[] = { 0xde, 0xad, 0xbe, 0xef };
 
@@ -3182,4 +3212,62 @@ process_nvram_vars(char *varbuf, unsigned int len)
 		*dp++ = 0;
 
 	return buf_len;
+}
+
+/* calculate a * b + c */
+void
+bcm_uint64_multiple_add(uint32* r_high, uint32* r_low, uint32 a, uint32 b, uint32 c)
+{
+#define FORMALIZE(var) {cc += (var & 0x80000000) ? 1 : 0; var &= 0x7fffffff;}
+	uint32 r1, r0;
+	uint32 a1, a0, b1, b0, t, cc = 0;
+
+	a1 = a >> 16;
+	a0 = a & 0xffff;
+	b1 = b >> 16;
+	b0 = b & 0xffff;
+
+	r0 = a0 * b0;
+	FORMALIZE(r0);
+
+	t = (a1 * b0) << 16;
+	FORMALIZE(t);
+
+	r0 += t;
+	FORMALIZE(r0);
+
+	t = (a0 * b1) << 16;
+	FORMALIZE(t);
+
+	r0 += t;
+	FORMALIZE(r0);
+
+	FORMALIZE(c);
+
+	r0 += c;
+	FORMALIZE(r0);
+
+	r0 |= (cc % 2) ? 0x80000000 : 0;
+	r1 = a1 * b1 + ((a1 * b0) >> 16) + ((b1 * a0) >> 16) + (cc / 2);
+
+	*r_high = r1;
+	*r_low = r0;
+}
+
+/* calculate a / b */
+void
+bcm_uint64_divide(uint32* r, uint32 a_high, uint32 a_low, uint32 b)
+{
+	uint32 a1 = a_high, a0 = a_low, r0 = 0;
+
+	if (b < 2)
+		return;
+
+	while (a1 != 0) {
+		r0 += (0xffffffff / b) * a1;
+		bcm_uint64_multiple_add(&a1, &a0, ((0xffffffff % b) + 1) % b, a1, a0);
+	}
+
+	r0 += a0 / b;
+	*r = r0;
 }

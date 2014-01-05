@@ -28,15 +28,19 @@
 #include <bcmnvram.h>
 #include <nand_core.h>
 
+static int bootdev = -1;
+static int knldev = -1;
 
 int
 soc_boot_dev(void *socp)
 {
 	si_t *sih = (si_t *)socp;
-	uint32 bootdev = SOC_BOOTDEV_SFLASH;
+	int bootfrom = SOC_BOOTDEV_SFLASH;
 	uint32 origidx;
 	uint32 option;
 
+	if (bootdev != -1)
+		return bootdev;
 
 	origidx = si_coreidx(sih);
 
@@ -45,14 +49,14 @@ soc_boot_dev(void *socp)
 		if (si_setcore(sih, NS_ROM_CORE_ID, 0) != NULL) {
 			option = si_core_sflags(sih, 0, 0) & SISF_NS_BOOTDEV_MASK;
 			if (option == SISF_NS_BOOTDEV_NOR) {
-				bootdev = SOC_BOOTDEV_SFLASH;
+				bootfrom = SOC_BOOTDEV_SFLASH;
 			}
 			else if (option == SISF_NS_BOOTDEV_NAND) {
-				bootdev = SOC_BOOTDEV_NANDFLASH;
+				bootfrom = SOC_BOOTDEV_NANDFLASH;
 			}
 			else {
 				/* This must be SISF_NS_BOOTDEV_ROM */
-				bootdev = SOC_BOOTDEV_ROM;
+				bootfrom = SOC_BOOTDEV_ROM;
 			}
 		}
 	}
@@ -62,11 +66,11 @@ soc_boot_dev(void *socp)
 		/* Check 5357 */
 		if (sih->ccrev == 38) {
 			if ((sih->chipst & (1 << 4)) != 0) {
-				bootdev = SOC_BOOTDEV_NANDFLASH;
+				bootfrom = SOC_BOOTDEV_NANDFLASH;
 				goto found;
 			}
 			else if ((sih->chipst & (1 << 5)) != 0) {
-				bootdev =  SOC_BOOTDEV_ROM;
+				bootfrom =  SOC_BOOTDEV_ROM;
 				goto found;
 			}
 		}
@@ -75,14 +79,16 @@ soc_boot_dev(void *socp)
 		if ((cc = (chipcregs_t *)si_setcoreidx(sih, SI_CC_IDX))) {
 			option = R_REG(NULL, &cc->capabilities) & CC_CAP_FLASH_MASK;
 			if (option == PFLASH)
-				bootdev = SOC_BOOTDEV_PFLASH;
+				bootfrom = SOC_BOOTDEV_PFLASH;
 			else
-				bootdev = SOC_BOOTDEV_SFLASH;
+				bootfrom = SOC_BOOTDEV_SFLASH;
 		}
 	}
 
 found:
 	si_setcoreidx(sih, origidx);
+
+	bootdev = bootfrom;
 	return bootdev;
 }
 
@@ -91,9 +97,15 @@ soc_knl_dev(void *socp)
 {
 	si_t *sih = (si_t *)socp;
 	char *val;
+	int knlfrom = SOC_KNLDEV_NORFLASH;
 
-	if (soc_boot_dev(socp) == SOC_BOOTDEV_NANDFLASH)
-		return SOC_KNLDEV_NANDFLASH;
+	if (knldev != -1)
+		return knldev;
+
+	if (soc_boot_dev(socp) == SOC_BOOTDEV_NANDFLASH) {
+		knlfrom = SOC_KNLDEV_NANDFLASH;
+		goto found;
+	}
 
 	if (((CHIPID(sih->chip) == BCM4706_CHIP_ID) || sih->ccrev == 38) &&
 		(sih->cccaps & CC_CAP_NFLASH)) {
@@ -117,7 +129,8 @@ soc_knl_dev(void *socp)
 		/* Break through */
 	}
 
-	return SOC_KNLDEV_NORFLASH;
+	/* Default set to nor boot */
+	goto found;
 
 check_nv:
 	/* Check NVRAM here */
@@ -129,8 +142,10 @@ check_nv:
 		bootflags = atoi(val);
 #endif
 		if (bootflags & FLASH_KERNEL_NFLASH)
-			return SOC_KNLDEV_NANDFLASH;
+			knlfrom = SOC_KNLDEV_NANDFLASH;
 	}
 
-	return SOC_KNLDEV_NORFLASH;
+found:
+	knldev = knlfrom;
+	return knldev;
 }

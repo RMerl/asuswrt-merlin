@@ -9,9 +9,10 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: bcmwpa.c 327534 2012-04-14 00:29:02Z $
+ * $Id: bcmwpa.c 358033 2012-09-20 23:57:22Z $
  */
 
+#include <bcm_cfg.h>
 #include <bcmendian.h>
 
 /* include wl driver config file if this file is compiled for driver */
@@ -641,14 +642,6 @@ BCMROMFN(wpa_find_gtk_encap)(uint8 *parse, uint len)
 }
 #endif /* defined(BCMSUP_PSK) || defined(BCMSUPPL) */
 
-#ifdef MFP
-eapol_wpa2_encap_data_t *
-BCMROMFN(wpa_find_igtk_encap)(uint8 *parse, uint len)
-{
-	return wpa_find_kde(parse, len, WPA2_KEY_DATA_SUBTYPE_IGTK);
-}
-#endif
-
 uint8 *
 BCMROMFN(wpa_array_cmp)(int max_array, uint8 *x, uint8 *y, uint len)
 {
@@ -660,7 +653,9 @@ BCMROMFN(wpa_array_cmp)(int max_array, uint8 *x, uint8 *y, uint len)
 			break;
 
 	if (i == len) {
-		return NULL;
+		/* returning null will cause crash, return value used for bcopy */
+		/* return first param in this case to close security loophole */
+		return x;
 	}
 	if (max_array && (y[i] > x[i]))
 		ret = y;

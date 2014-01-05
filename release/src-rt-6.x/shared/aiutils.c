@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: aiutils.c 347044 2012-07-25 10:26:49Z $
+ * $Id: aiutils.c 363505 2012-10-18 01:58:09Z $
  */
 #include <bcm_cfg.h>
 #include <typedefs.h>
@@ -40,7 +40,7 @@
 			(CHIPID(sih->chip) == BCM4749_CHIP_ID)) && \
 	    (sih->chippkg == BCM5357_PKG_ID) && \
 	    (sii->coreid[sii->curidx] == USB20H_CORE_ID))
-#define BCM4707_DMP() ((CHIPID(sih->chip) == BCM4707_CHIP_ID) && \
+#define BCM4707_DMP() (BCM4707_CHIP(CHIPID(sih->chip)) && \
 	    (sii->coreid[sii->curidx] == NS_CCB_CORE_ID))
 
 /* EROM parsing */
@@ -699,7 +699,7 @@ ai_wrap_reg(si_t *sih, uint32 offset, uint32 mask, uint32 val)
 		uint32 w = R_REG(sii->osh, map+(offset/4));
 		w &= ~mask;
 		w |= val;
-		W_REG(sii->osh, map+(offset/4), val);
+		W_REG(sii->osh, map+(offset/4), w);
 	}
 
 	return (R_REG(sii->osh, map+(offset/4)));

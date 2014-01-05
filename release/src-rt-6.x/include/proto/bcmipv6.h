@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  *
  * Fundamental constants relating to Neighbor Discovery Protocol
  *
- * $Id: bcmipv6.h 305568 2011-12-29 20:21:17Z $
+ * $Id: bcmipv6.h 352279 2012-08-22 07:21:57Z $
  */
 
 #ifndef _bcmipv6_h_
@@ -42,6 +42,8 @@
 							 a[5] | a[6] | a[7] | a[8] | a[9] | \
 							 a[10] | a[11] | a[12] | a[13] | \
 							 a[14] | a[15]) == 0)
+
+#define IPV6_ADDR_LOCAL(a)	(((a[0] == 0xfe) && (a[1] & 0x80))? TRUE: FALSE)
 
 /* IPV6 address */
 BWL_PRE_PACKED_STRUCT struct ipv6_addr {

@@ -3,7 +3,7 @@
 /*
  * Definitions for tcp compression routines.
  *
- * $Header: slcompress.h,v 1.10 89/12/31 08:53:02 van Exp $
+ * $Header: /ramdisk/repositories/20_cvs_clean_up/2011-02-11_sj/src/linux/linux-2.6/include/net/slhc_vj.h,v 1.1.1.1 2007-08-03 18:53:45 rnuti Exp $
  *
  * Copyright (c) 1989 Regents of the University of California.
  * All rights reserved.

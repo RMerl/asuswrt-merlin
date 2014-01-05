@@ -215,9 +215,15 @@
 #   define HOST_c2l(c,l)	({ unsigned int r=*((const unsigned int *)(c));	\
 				   asm ("bswapl %0":"=r"(r):"0"(r));	\
 				   (c)+=4; (l)=r;			})
+#ifdef EFI
+#   define HOST_l2c(l,c)	({ unsigned int r=(l);			\
+				   asm ("bswapl %0":"=r"(r):"0"(r));	\
+				   *((unsigned int *)(c))=r; (c)+=4;	})
+#else
 #   define HOST_l2c(l,c)	({ unsigned int r=(l);			\
 				   asm ("bswapl %0":"=r"(r):"0"(r));	\
 				   *((unsigned int *)(c))=r; (c)+=4; r;	})
+#endif /* EFI */
 #  endif
 # endif
 #endif

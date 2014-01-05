@@ -3,7 +3,7 @@
  *
  * Code should be position-independent until it copies itself to SDRAM.
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -303,7 +303,8 @@ bevtrap:
 	.globl	embedded_nvram
 embedded_nvram:
 	.fill	0x400,4,~(0x48534c46)
-
+        .long   0x4c5a4d41              # LZMA NVRAM Supported
+	
 chkcacheon:
 	TRACE(0x424f0b)
 	/* Check if the caches are already on */

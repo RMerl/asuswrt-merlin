@@ -21,10 +21,6 @@ DEFS = \
 	-DPATH_RADVD_PID=\"$(PATH_RADVD_PID)\" \
 	-DVERSION=\"$(VERSION)\"
 
-INCLUDES = \
-	-I$(srcdir) \
-	-I.
-
 COMMON_SRC = \
 	defaults.h \
 	includes.h \

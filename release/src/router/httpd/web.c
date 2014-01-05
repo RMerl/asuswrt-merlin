@@ -74,6 +74,7 @@
 #endif
 
 #ifdef RTCONFIG_USB
+#include <usb_info.h>
 #include <disk_io_tools.h>
 #include <disk_initial.h>
 #include <disk_share.h>
@@ -1292,6 +1293,7 @@ void copy_index_to_unindex(char *prefix, int unit, int subunit)
 	char tmp[64], unitprefix[32];
 
 	// check if unit exist
+	if(unit == -1) return;
 	snprintf(unitptr, sizeof(unitptr), "%sunit", prefix);
 	if((value=nvram_get(unitptr))==NULL) return;
 
@@ -3683,6 +3685,85 @@ static int ej_get_changed_status(int eid, webs_t wp, int argc, char_t **argv){
 }
 
 #ifdef RTCONFIG_USB
+static int ej_show_usb_path(int eid, webs_t wp, int argc, char_t **argv){
+	DIR *bus_usb;
+	struct dirent *interface;
+	char usb_port[8], port_path[8], *ptr;
+	int port_num, port_order, hub_order;
+	char all_usb_path[MAX_USB_PORT][MAX_USB_HUB_PORT][2][16]; // MAX USB hub port number is 6.
+	char prefix[] = "usb_pathXXXXXXXXXXXXXXXXX_";
+	int port_set, got_port, got_hub;
+
+	if((bus_usb = opendir(USB_DEVICE_PATH)) == NULL)
+		return -1;
+
+	memset(all_usb_path, 0, MAX_USB_PORT*MAX_USB_HUB_PORT*2*16);
+
+	while((interface = readdir(bus_usb)) != NULL){
+		if(interface->d_name[0] == '.')
+			continue;
+
+		if(!isdigit(interface->d_name[0]))
+			continue;
+
+		if(strchr(interface->d_name, ':'))
+			continue;
+
+		if(get_usb_port_by_string(interface->d_name, usb_port, 8) == NULL)
+			continue;
+
+		port_num = get_usb_port_number(usb_port);
+		port_order = port_num-1;
+		if((ptr = strchr(interface->d_name+strlen(usb_port), '.')) != NULL)
+			hub_order = atoi(ptr+1);
+		else
+			hub_order = 0;
+
+		if(get_path_by_node(interface->d_name, port_path, 8) == NULL)
+			continue;
+
+		strncpy(all_usb_path[port_order][hub_order][0], port_path, 16);
+		snprintf(prefix, sizeof(prefix), "usb_path%s", port_path);
+		strncpy(all_usb_path[port_order][hub_order][1], nvram_safe_get(prefix), 16);
+	}
+
+	port_set = got_port = got_hub = 0;
+
+	websWrite(wp, "[");
+	for(port_order = 0; port_order < MAX_USB_PORT; ++port_order){
+		got_hub = 0;
+		for(hub_order = 0; hub_order < MAX_USB_HUB_PORT; ++hub_order){
+			if(strlen(all_usb_path[port_order][hub_order][1]) > 0){
+				if(!port_set){ // port range.
+					port_set = 1;
+
+					if(!got_port)
+						got_port = 1;
+					else
+						websWrite(wp, ", ");
+
+					websWrite(wp, "[");
+				}
+
+				if(!got_hub)
+					got_hub = 1;
+				else
+					websWrite(wp, ", ");
+
+				websWrite(wp, "[\"%s\", \"%s\"]", all_usb_path[port_order][hub_order][0], all_usb_path[port_order][hub_order][1]);
+			}
+		}
+
+		if(port_set){ // port range.
+			port_set = 0;
+			websWrite(wp, "]");
+		}
+	}
+	websWrite(wp, "]");
+
+	return 0;
+}
+
 static int ej_disk_pool_mapping_info(int eid, webs_t wp, int argc, char_t **argv){
 	disk_info_t *disks_info, *follow_disk;
 	partition_info_t *follow_partition;
@@ -4037,70 +4118,16 @@ static int ej_available_disk_names_and_sizes(int eid, webs_t wp, int argc, char_
 	return 0;
 }
 
-#if 0
 static int ej_get_printer_info(int eid, webs_t wp, int argc, char_t **argv){
-	FILE *lpfp;
-	char manufacturer[100], models[100], serialnos[100], pool[100];
-	char buf[500];
-	char *lpparam, *value, *v1 = NULL;
-
-	if (!(lpfp = fopen("/proc/usblp/usblpid", "r"))){
-		strcpy(manufacturer, "");
-		strcpy(models, "");
-		strcpy(serialnos, "");
-		strcpy(pool, "");
-	}
-	else{
-		while (fgets(buf, 500, lpfp)){
-			value = &buf[0];
-			lpparam = strsep(&value, "=")?:&buf[0];
-
-			if (value){
-				v1 = strchr(value, '\n');
-				*v1 = '\0';
-
-				if (!strcmp(lpparam, "Manufacturer"))
-					sprintf(manufacturer, "\"%s\"", value);
-				else if (!strcmp(lpparam, "Model"))
-					sprintf(models, "\"%s\"", value );
-			}
-		}
-
-		/* compatible for WL700gE platform */
-		strcpy(pool, "VirtualPool");
-		fclose(lpfp);
-	}
-
-	websWrite(wp, "function printer_manufacturers() {\n return [%s];\n}\n", manufacturer);
-	websWrite(wp, "function printer_models() {\n return [%s];\n}\n", models);
-	websWrite(wp, "function printer_serialn() {\n return [%s];\n}\n", "");
-	websWrite(wp, "function printer_pool() {\n return [\"%s\"];\n}\n", pool);
-
-	return 0;
-}
-#else
-#define MAX_PRINTER_NUM 2
-
-static int ej_get_printer_info(int eid, webs_t wp, int argc, char_t **argv){
-	int printer_num = 0, first;
-	char tmp[64], prefix[] = "usb_pathXXXXXXXXXXXXXXXXX_";
-	char printer_array[2][5][64];
+	int printer_num, got_printer;
+	char prefix[] = "usb_pathXXXXXXXXXXXXXXXXX_", tmp[100];
+	char printer_array[MAX_USB_PRINTER_NUM][4][64];
 	char usb_node[32];
 	char port_path[8];
-#ifndef RTCONFIG_USB_HUB
-	char usb_port[8];
-	int port_num;
-#endif
 
-	for(printer_num = 0; printer_num < MAX_PRINTER_NUM; ++printer_num){
-		memset(printer_array[printer_num][0], 0, 64);
-		memset(printer_array[printer_num][1], 0, 64);
-		memset(printer_array[printer_num][2], 0, 64);
-		memset(printer_array[printer_num][3], 0, 64);
-		memset(printer_array[printer_num][4], 0, 64);
-	}
+	memset(printer_array, 0, MAX_USB_PRINTER_NUM*4*64);
 
-	for(printer_num = 0; printer_num < MAX_PRINTER_NUM; ++printer_num){
+	for(printer_num = 0, got_printer = 0; printer_num < MAX_USB_PRINTER_NUM; ++printer_num){
 		snprintf(prefix, sizeof(prefix), "usb_path_lp%d", printer_num);
 		memset(usb_node, 0, 32);
 		strncpy(usb_node, nvram_safe_get(prefix), 32);
@@ -4109,23 +4136,12 @@ static int ej_get_printer_info(int eid, webs_t wp, int argc, char_t **argv){
 			if(get_path_by_node(usb_node, port_path, 8) != NULL){
 				snprintf(prefix, sizeof(prefix), "usb_path%s", port_path);
 
-#ifdef RTCONFIG_USB_HUB
-				strncpy(printer_array[printer_num][0], "printer", 64);
-				strncpy(printer_array[printer_num][1], nvram_safe_get(strcat_r(prefix, "_manufacturer", tmp)), 64);
-				strncpy(printer_array[printer_num][2], nvram_safe_get(strcat_r(prefix, "_product", tmp)), 64);
-				strncpy(printer_array[printer_num][3], nvram_safe_get(strcat_r(prefix, "_serial", tmp)), 64);
-				strcpy(printer_array[printer_num][4], usb_node);
-#else
-				get_usb_port_by_string(usb_node, usb_port, 8);
-				port_num = get_usb_port_number(usb_port);
-				if(port_num == 1 || port_num == 2){
-					strncpy(printer_array[port_num-1][0], "printer", 64);
-					strncpy(printer_array[port_num-1][1], nvram_safe_get(strcat_r(prefix, "_manufacturer", tmp)), 64);
-					strncpy(printer_array[port_num-1][2], nvram_safe_get(strcat_r(prefix, "_product", tmp)), 64);
-					strncpy(printer_array[port_num-1][3], nvram_safe_get(strcat_r(prefix, "_serial", tmp)), 64);
-					strcpy(printer_array[port_num-1][4], usb_node);
-				}
-#endif
+				strncpy(printer_array[got_printer][0], nvram_safe_get(strcat_r(prefix, "_manufacturer", tmp)), 64);
+				strncpy(printer_array[got_printer][1], nvram_safe_get(strcat_r(prefix, "_product", tmp)), 64);
+				strncpy(printer_array[got_printer][2], nvram_safe_get(strcat_r(prefix, "_serial", tmp)), 64);
+				strncpy(printer_array[got_printer][3], port_path, 64);
+
+				++got_printer;
 			}
 		}
 	}
@@ -4133,16 +4149,14 @@ static int ej_get_printer_info(int eid, webs_t wp, int argc, char_t **argv){
 	websWrite(wp, "function printer_manufacturers(){\n");
 	websWrite(wp, "    return [");
 
-	first = 1;
-	for(printer_num = 0; printer_num < MAX_PRINTER_NUM; ++printer_num){
+	for(printer_num = 0; printer_num < got_printer; ++printer_num){
+		if(printer_num != 0)
+			websWrite(wp, ", ");
+
 		if(strlen(printer_array[printer_num][0]) > 0)
-			websWrite(wp, "\"%s\"", printer_array[printer_num][1]);
+			websWrite(wp, "\"%s\"", printer_array[printer_num][0]);
 		else
 			websWrite(wp, "\"\"");
-		if(first){
-			--first;
-			websWrite(wp, ", ");
-		}
 	}
 
 	websWrite(wp, "];\n");
@@ -4151,16 +4165,14 @@ static int ej_get_printer_info(int eid, webs_t wp, int argc, char_t **argv){
 	websWrite(wp, "function printer_models(){\n");
 	websWrite(wp, "    return [");
 
-	first = 1;
-	for(printer_num = 0; printer_num < MAX_PRINTER_NUM; ++printer_num){
-		if(strlen(printer_array[printer_num][0]) > 0)
-			websWrite(wp, "\"%s\"", printer_array[printer_num][2]);
+	for(printer_num = 0; printer_num < got_printer; ++printer_num){
+		if(printer_num != 0)
+			websWrite(wp, ", ");
+
+		if(strlen(printer_array[printer_num][1]) > 0)
+			websWrite(wp, "\"%s\"", printer_array[printer_num][1]);
 		else
 			websWrite(wp, "\"\"");
-		if(first){
-			--first;
-			websWrite(wp, ", ");
-		}
 	}
 
 	websWrite(wp, "];\n");
@@ -4169,16 +4181,14 @@ static int ej_get_printer_info(int eid, webs_t wp, int argc, char_t **argv){
 	websWrite(wp, "function printer_serialn(){\n");
 	websWrite(wp, "    return [");
 
-	first = 1;
-	for(printer_num = 0; printer_num < MAX_PRINTER_NUM; ++printer_num){
-		if(strlen(printer_array[printer_num][0]) > 0)
-			websWrite(wp, "\"%s\"", printer_array[printer_num][3]);
+	for(printer_num = 0; printer_num < got_printer; ++printer_num){
+		if(printer_num != 0)
+			websWrite(wp, ", ");
+
+		if(strlen(printer_array[printer_num][2]) > 0)
+			websWrite(wp, "\"%s\"", printer_array[printer_num][2]);
 		else
 			websWrite(wp, "\"\"");
-		if(first){
-			--first;
-			websWrite(wp, ", ");
-		}
 	}
 
 	websWrite(wp, "];\n");
@@ -4187,16 +4197,14 @@ static int ej_get_printer_info(int eid, webs_t wp, int argc, char_t **argv){
 	websWrite(wp, "function printer_pool(){\n");
 	websWrite(wp, "    return [");
 
-	first = 1;
-	for(printer_num = 0; printer_num < MAX_PRINTER_NUM; ++printer_num){
-		if(strlen(printer_array[printer_num][0]) > 0)
-			websWrite(wp, "\"%s\"", printer_array[printer_num][4]);
+	for(printer_num = 0; printer_num < got_printer; ++printer_num){
+		if(printer_num != 0)
+			websWrite(wp, ", ");
+
+		if(strlen(printer_array[printer_num][3]) > 0)
+			websWrite(wp, "\"%s\"", printer_array[printer_num][3]);
 		else
 			websWrite(wp, "\"\"");
-		if(first){
-			--first;
-			websWrite(wp, ", ");
-		}
 	}
 
 	websWrite(wp, "];\n");
@@ -4204,7 +4212,112 @@ static int ej_get_printer_info(int eid, webs_t wp, int argc, char_t **argv){
 
 	return 0;
 }
-#endif
+
+static int ej_get_modem_info(int eid, webs_t wp, int argc, char_t **argv){
+	int i, j, got_modem;
+	char prefix[] = "usb_pathXXXXXXXXXXXXXXXXX_", tmp[100];
+	char modem_array[MAX_USB_PORT*MAX_USB_HUB_PORT][4][64];
+	char port_path[8];
+
+	memset(modem_array, 0, MAX_USB_PORT*MAX_USB_HUB_PORT*4*64);
+
+	got_modem = 0;
+	for(i = 1; i < MAX_USB_PORT; ++i){
+		snprintf(prefix, sizeof(prefix), "usb_path%d", i);
+		if(!strcmp(nvram_safe_get(prefix), "modem")){
+			snprintf(port_path, 8, "%d", i);
+
+			strncpy(modem_array[got_modem][0], nvram_safe_get(strcat_r(prefix, "_manufacturer", tmp)), 64);
+			strncpy(modem_array[got_modem][1], nvram_safe_get(strcat_r(prefix, "_product", tmp)), 64);
+			strncpy(modem_array[got_modem][2], nvram_safe_get(strcat_r(prefix, "_serial", tmp)), 64);
+			strncpy(modem_array[got_modem][3], port_path, 64);
+
+			++got_modem;
+		}
+		else{
+			for(j = 1; j < MAX_USB_HUB_PORT; ++j){
+				snprintf(prefix, sizeof(prefix), "usb_path%d.%d", i, j);
+
+				if(!strcmp(nvram_safe_get(prefix), "modem")){
+					snprintf(port_path, 8, "%d.%d", i, j);
+
+					strncpy(modem_array[got_modem][0], nvram_safe_get(strcat_r(prefix, "_manufacturer", tmp)), 64);
+					strncpy(modem_array[got_modem][1], nvram_safe_get(strcat_r(prefix, "_product", tmp)), 64);
+					strncpy(modem_array[got_modem][2], nvram_safe_get(strcat_r(prefix, "_serial", tmp)), 64);
+					strncpy(modem_array[got_modem][3], port_path, 64);
+
+					++got_modem;
+				}
+			}
+		}
+	}
+
+	websWrite(wp, "function modem_manufacturers(){\n");
+	websWrite(wp, "    return [");
+
+	for(i = 0; i < got_modem; ++i){
+		if(i != 0)
+			websWrite(wp, ", ");
+
+		if(strlen(modem_array[i][0]) > 0)
+			websWrite(wp, "\"%s\"", modem_array[i][0]);
+		else
+			websWrite(wp, "\"\"");
+	}
+
+	websWrite(wp, "];\n");
+	websWrite(wp, "}\n\n");
+
+	websWrite(wp, "function modem_models(){\n");
+	websWrite(wp, "    return [");
+
+	for(i = 0; i < got_modem; ++i){
+		if(i != 0)
+			websWrite(wp, ", ");
+
+		if(strlen(modem_array[i][1]) > 0)
+			websWrite(wp, "\"%s\"", modem_array[i][1]);
+		else
+			websWrite(wp, "\"\"");
+	}
+
+	websWrite(wp, "];\n");
+	websWrite(wp, "}\n\n");
+
+	websWrite(wp, "function modem_serialn(){\n");
+	websWrite(wp, "    return [");
+
+	for(i = 0; i < got_modem; ++i){
+		if(i != 0)
+			websWrite(wp, ", ");
+
+		if(strlen(modem_array[i][2]) > 0)
+			websWrite(wp, "\"%s\"", modem_array[i][2]);
+		else
+			websWrite(wp, "\"\"");
+	}
+
+	websWrite(wp, "];\n");
+	websWrite(wp, "}\n\n");
+
+	websWrite(wp, "function modem_pool(){\n");
+	websWrite(wp, "    return [");
+
+	for(i = 0; i < got_modem; ++i){
+		if(i != 0)
+			websWrite(wp, ", ");
+
+		if(strlen(modem_array[i][3]) > 0)
+			websWrite(wp, "\"%s\"", modem_array[i][3]);
+		else
+			websWrite(wp, "\"\"");
+	}
+
+	websWrite(wp, "];\n");
+	websWrite(wp, "}\n\n");
+
+	return 0;
+}
 #endif
 
 int ej_shown_language_css(int eid, webs_t wp, int argc, char **argv){
@@ -8578,9 +8691,11 @@ struct ej_handler ej_handlers[] = {
 #endif
 	{ "ddns_info", ej_ddnsinfo},
 #ifdef RTCONFIG_USB
+	{ "show_usb_path", ej_show_usb_path},
 	{ "disk_pool_mapping_info", ej_disk_pool_mapping_info},
 	{ "available_disk_names_and_sizes", ej_available_disk_names_and_sizes},
 	{ "get_printer_info", ej_get_printer_info},
+	{ "get_modem_info", ej_get_modem_info},
 	{ "get_AiDisk_status", ej_get_AiDisk_status},
 	{ "set_AiDisk_status", ej_set_AiDisk_status},
 	{ "get_all_accounts", ej_get_all_accounts},

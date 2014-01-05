@@ -57,12 +57,11 @@ char *wlc_nvname(char *keyword);
 #define VHT_SUPPORT /* 11AC */
 #endif
 
+#define xR_MAX	3
 typedef struct _roaming_info
 {
        char mac[19];
-       char rssi0[7];
-       char rssi1[7];
-       char rssi2[7];
+       char rssi[xR_MAX][7];
        char dump;
 } roam;
 
@@ -465,6 +464,9 @@ int setRegSpec(const char *regSpec)
 	else if (!strcasecmp(regSpec, "FCC")) ;
 #if defined(RTAC52U) || defined(RTAC51U)
 	else if (!strcasecmp(regSpec, "SG")) ;
+#endif
+#if defined(RTAC52U)
+	else if (!strcasecmp(regSpec, "AU")) ;
 #endif
 	else
 		return -1;
@@ -3279,6 +3281,13 @@ int gen_ralink_config(int band, int is_iNIC)
 			fprintf(fp, "ApCliKey4Type=0\n");
 			fprintf(fp, "ApCliKey4Str=\n");
 		}
+#if defined(MAC_REPEATER)
+		fprintf(fp, "MACRepeaterEn=1\n");
+		fprintf(fp, "MACRepeaterOuiMode=2\n");
+#else
+		fprintf(fp, "MACRepeaterEn=0\n");
+		fprintf(fp, "MACRepeaterOuiMode=0\n");
+#endif
 	}
 	else
 #endif
@@ -3298,6 +3307,8 @@ int gen_ralink_config(int band, int is_iNIC)
 		fprintf(fp, "ApCliKey3Str=\n");
 		fprintf(fp, "ApCliKey4Type=0\n");
 		fprintf(fp, "ApCliKey4Str=\n");
+		fprintf(fp, "MACRepeaterEn=0\n");
+		fprintf(fp, "MACRepeaterOuiMode=0\n");
 	}
 
 	//RadioOn
@@ -5819,102 +5830,122 @@ int wlcscan_core(char *ofile, char *wif)
 }	
 #endif
 
+#ifdef RTCONFIG_USER_LOW_RSSI
 void rssi_check_unit(int unit)
 {
-   	int xTxR=0;
+	int xTxR;
 	char header[128];
-	int i = 0, k = 0 ,apCount = 0, count=0, lrssi = 0, rssi_th=0;
+	int staCount = 0, rssi_th;
 	char data[2048],cmd[128],tmp[128];
-	unsigned char pap_bssid[17];
+	unsigned char pap_bssid[18];
 	struct iwreq wrq,wrq2;
 	roam_sta *ssap;
-	memset(data, 0x00, 2048);
-	wrq.u.data.length = 2048;
-	wrq.u.data.pointer = (caddr_t) data;
-	wrq.u.data.flags = ASUS_SUBCMD_GROAM;
 	char prefix[] = "wlXXXXXXXXXX_";
+	char *wif;
+	int hdrLen;
 
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 	if (!(rssi_th= atoi(nvram_safe_get(strcat_r(prefix, "user_rssi", tmp)))))
 		return;
-
 	//dbg("rssi_th=%d\n",rssi_th);
-	if (wl_ioctl(get_wifname(0), RTPRIV_IOCTL_ASUSCMD, &wrq) < 0)
+
+	if (!(xTxR = atoi(nvram_safe_get(strcat_r(prefix, "HT_RxStream", tmp)))))
+		return;
+
+	if(xTxR > xR_MAX)
+		xTxR = xR_MAX;
+
+	memset(data, 0x00, sizeof(data));
+	wrq.u.data.length = sizeof(data);
+	wrq.u.data.pointer = (caddr_t) data;
+	wrq.u.data.flags = ASUS_SUBCMD_GROAM;
+	wif = get_wifname(unit);
+	if (wl_ioctl(wif, RTPRIV_IOCTL_ASUSCMD, &wrq) < 0)
 	{
 		dbg("errors in getting STAINFO result\n");
 		return;
 	}
+	//dbg("wif(%s) xTxR(%d) GROAM:\n%s", wif, xTxR, data);
 
 	memset(header, 0, sizeof(header));
-	sprintf(header, "%-19s%-7s%-7s%-7s\n",
-       			"MAC", "RSSI0", "RSSI1","RSSI2");
-#if defined(RTN14U)	
-	xTxR=2;
-#endif	
+	hdrLen = sprintf(header, "%-19s%-7s%-7s%-7s\n",
+			"MAC", "RSSI0", "RSSI1","RSSI2");
 
-	if (wrq.u.data.length > 0)
+	if (wrq.u.data.length > 0 && data[0] != 0)
 	{
-	   	//dbg("%s\n",wrq.u.data.pointer);
-		ssap = (roam_sta *)(wrq.u.data.pointer + strlen(header));
-		int len = strlen(wrq.u.data.pointer + strlen(header));
+		int len = strlen(wrq.u.data.pointer + hdrLen);
 		char *sp, *op;
- 		op = sp = wrq.u.data.pointer + strlen(header);
+
+		//dbg("%s\n",wrq.u.data.pointer);
+		ssap = (roam_sta *)(wrq.u.data.pointer + hdrLen);
+		op = sp = wrq.u.data.pointer + hdrLen;
 		while (*sp && ((len - (sp-op)) >= 0)) {
-			ssap->sta[i].mac[18]='\0';
-			ssap->sta[i].rssi0[6]='\0';
-			ssap->sta[i].rssi1[6]='\0';
-			ssap->sta[i].rssi2[6]='\0';
-			sp += strlen(header);
-			apCount = ++i;
+			ssap->sta[staCount].mac[18]='\0';
+			ssap->sta[staCount].rssi[0][6]='\0';
+			ssap->sta[staCount].rssi[1][6]='\0';
+			ssap->sta[staCount].rssi[2][6]='\0';
+			sp += hdrLen;
+			staCount++;
 		}
 
-		
 #ifdef RTCONFIG_WIRELESSREPEATER
 		memset(pap_bssid,0,sizeof(pap_bssid));
-		if(wl_ioctl("apcli0", SIOCGIWAP, &wrq2)>=0);
+		if(nvram_get_int("sw_mode") == SW_MODE_REPEATER && nvram_get_int("wlc_band") == unit)
 		{
-			wrq2.u.ap_addr.sa_family = ARPHRD_ETHER;
-			sprintf(pap_bssid,"%02X:%02X:%02X:%02X:%02X:%02X",
-		       				(unsigned char)wrq2.u.ap_addr.sa_data[0],
-		       				(unsigned char)wrq2.u.ap_addr.sa_data[1],
-		       				(unsigned char)wrq2.u.ap_addr.sa_data[2],
-		       				(unsigned char)wrq2.u.ap_addr.sa_data[3],
-		       				(unsigned char)wrq2.u.ap_addr.sa_data[4],
-		       				(unsigned char)wrq2.u.ap_addr.sa_data[5]);
+			char *aif;
+			aif = nvram_get(strcat_r(prefix, "vifs", tmp));
+			if(wl_ioctl(aif, SIOCGIWAP, &wrq2)>=0);
+			{
+				wrq2.u.ap_addr.sa_family = ARPHRD_ETHER;
+				sprintf(pap_bssid,"%02X:%02X:%02X:%02X:%02X:%02X",
+						(unsigned char)wrq2.u.ap_addr.sa_data[0],
+						(unsigned char)wrq2.u.ap_addr.sa_data[1],
+						(unsigned char)wrq2.u.ap_addr.sa_data[2],
+						(unsigned char)wrq2.u.ap_addr.sa_data[3],
+						(unsigned char)wrq2.u.ap_addr.sa_data[4],
+						(unsigned char)wrq2.u.ap_addr.sa_data[5]);
+			}
 		}	
 #endif
-		if (apCount) 
+		if (staCount)
 		{
-			for(i=0;i<apCount;i++)
-		   	{
+			char *strBand;
+			int rssi, lrssi;
+			int count;
+			int i, k;
+
+			if(unit)
+				strBand = "5G";
+			else
+				strBand = "2.4G";
+
+			for(i = 0; i < staCount; i++)
+			{
 #ifdef RTCONFIG_WIRELESSREPEATER
 				//dbg("pap bssid=#%s#\n",pap_bssid);
 				if(!strncmp(pap_bssid,ssap->sta[i].mac,sizeof(pap_bssid)))
-				   continue; //pap bssid,skip
-#endif			   
-				//dbg("sta%d:mac=%s, rssi0=%s, rssi1=%s\n",i,ssap->sta[i].mac,ssap->sta[i].rssi0,ssap->sta[i].rssi1);
-				count=0;	
-		       		for(k=0;k<xTxR;k++)
-		  		{
-					switch(k){
-						case 0:lrssi=atoi(ssap->sta[i].rssi0);
-						        break;
-						case 1:lrssi=atoi(ssap->sta[i].rssi1);
-						  	break;
-						case 2:lrssi=atoi(ssap->sta[i].rssi2);
-						  	break;
+					continue; //pap bssid,skip
+#endif
+				//dbg("sta%d:mac=%s, rssi[0]=%s, rssi[1]=%s\n",i,ssap->sta[i].mac,ssap->sta[i].rssi[0],ssap->sta[i].rssi[1]);
+				count = 0;
+				for(k = 0; k < xTxR; k++)
+				{
+					rssi = atoi(ssap->sta[i].rssi[k]);
+					if(rssi < rssi_th)
+					{
+						lrssi = rssi;
+						count++;
 					}
-				   	if(lrssi < rssi_th)
-					   	count++;
 				}
 				//disassociation
-				if(count==xTxR) 
+				if(count==xTxR)
 				{
-					sprintf(cmd,"iwpriv ra0 set DisConnectSta=%s",ssap->sta[i].mac);
+					logmessage("Roaming", "%s Disconnect Station: %s  RSSI: %d", strBand, ssap->sta[i].mac, lrssi);
+					sprintf(cmd,"iwpriv %s set DisConnectSta=%s", wif, ssap->sta[i].mac);
 					system(cmd);
-				}   
-			}	 	   
-		   
-		}   
+				}
+			}
+		}
 	}
-}   
+}
+#endif	/* RTCONFIG_USER_LOW_RSSI */

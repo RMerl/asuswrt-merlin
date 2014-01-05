@@ -662,7 +662,7 @@ int dhcp6c_state_main(int argc, char **argv)
 	nvram_set("ipv6_rtr_addr", getifaddr(nvram_safe_get("lan_ifname"), AF_INET6, 0));
 
 	if (nvram_get_int("ipv6_dhcp_pd")) {
-		p = ipv6_prefix(NULL);
+		p = (char *)ipv6_prefix(NULL);
 		if (*p) nvram_set("ipv6_prefix", p);
 	}
 
@@ -686,7 +686,7 @@ int
 start_dhcp6c(void)
 {
 	FILE *fp;
-	char *wan_ifname = (char*)get_wan6face();
+	char *wan_ifname = (char *)get_wan6face();
 	char *lan_ifname = nvram_safe_get("lan_ifname");
 	char *dhcp6c_argv[] = { "dhcp6c",
 		"-T", "LL",
@@ -708,6 +708,13 @@ start_dhcp6c(void)
 		return 0;
 	if (!wan_ifname || !*wan_ifname)
 		return -1;
+	if (!nvram_match("ipv6_ra_conf", "mset") &&
+		!nvram_get_int("ipv6_dhcp_pd") &&
+		nvram_match("ipv6_dnsenable", "0"))
+		return -2;
+	if (nvram_match("ipv6_ra_conf", "noneset") &&
+		!nvram_get_int("ipv6_dhcp_pd"))
+		return -3;
 
 	nvram_set("ipv6_get_dns", "");
 	nvram_set("ipv6_get_domain", "");
@@ -747,12 +754,15 @@ start_dhcp6c(void)
 		fprintf(fp,	"interface %s {\n", wan_ifname);
 		if (nvram_get_int("ipv6_dhcp_pd"))
 		fprintf(fp,		"send ia-pd %lu;\n", iaid);
-		fprintf(fp,		"send ia-na %lu;\n"
-					"send rapid-commit;\n"
-					"request domain-name-servers;\n"
+		if (nvram_match("ipv6_ra_conf", "mset"))
+		fprintf(fp,		"send ia-na %lu;\n", iaid);
+		fprintf(fp,		"send rapid-commit;\n");
+		if (nvram_match("ipv6_dnsenable", "1") &&
+			!nvram_match("ipv6_ra_conf", "noneset"))
+		fprintf(fp,		"request domain-name-servers;\n"
 					"request domain-name;\n"
 					"script \"/sbin/dhcp6c-state\";\n"
-				"};\n", iaid);
+				"};\n");
 		if (nvram_get_int("ipv6_dhcp_pd"))
 		fprintf(fp,	"id-assoc pd %lu {\n"
 					"prefix-interface %s {\n"
@@ -760,6 +770,7 @@ start_dhcp6c(void)
 						"sla-len %d;\n"
 					"};\n"
 				"};\n", iaid, lan_ifname, prefix_len);
+		if (nvram_match("ipv6_ra_conf", "mset"))
 		fprintf(fp,	"id-assoc na %lu { };\n", iaid);
 		fclose(fp);
 	} else {
@@ -779,7 +790,6 @@ void stop_dhcp6c(void)
 {
 	TRACE_PT("begin\n");
 
-	char *wan6face = (char*)get_wan6face();
 	char *lan_ifname = nvram_safe_get("lan_ifname");
 
 	if (!pids("dhcp6c")) return;
@@ -787,6 +797,7 @@ void stop_dhcp6c(void)
 	killall("dhcp6c-event", SIGTERM);
 	killall_tk("dhcp6c");
 
+	if (nvram_get_int("ipv6_dhcp_pd"))
 	eval("ip", "-6", "addr", "flush", "scope", "global", "dev", lan_ifname);
 	eval("ip", "-6", "neigh", "flush", "dev", lan_ifname);
 

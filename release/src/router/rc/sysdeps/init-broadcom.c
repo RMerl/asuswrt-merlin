@@ -1370,7 +1370,38 @@ void init_syspara(void)
 	else
 		nvram_set("wps_device_pin", "12345670");
 }
+#ifdef RTCONFIG_BCMARM
+#define ASUS_TWEAK
+void init_others(void)
+{
+	int model = get_model();
 
+	if (model == MODEL_RTAC56U || model == MODEL_RTAC56S || model == MODEL_RTAC68U || model == MODEL_RTN18U) {
+#ifdef SMP
+		int fd;
+
+		if ((fd = open("/proc/irq/163/smp_affinity", O_RDWR)) >= 0) {
+			close(fd);
+#ifdef ASUS_TWEAK
+			if (nvram_match("enable_samba", "0")) {  // not set txworkq
+#else
+			if (!nvram_match("txworkq", "1")) {
+#endif
+				system("echo 2 > /proc/irq/163/smp_affinity");
+				system("echo 2 > /proc/irq/169/smp_affinity");
+			}
+#ifdef ASUS_TWEAK
+			system("echo 2 > /proc/irq/111/smp_affinity");
+#endif
+			system("echo 2 > /proc/irq/112/smp_affinity");
+		}
+#endif
+#ifdef ASUS_TWEAK
+		nvram_set("txworkq", "1");
+#endif
+	}
+}
+#endif
 void chanspec_fix_5g(int unit)
 {
 	char tmp[100], prefix[]="wlXXXXXXX_";

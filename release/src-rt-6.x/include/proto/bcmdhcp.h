@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011, Broadcom Corporation
+ * Copyright (C) 2012, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  *
  * Fundamental constants relating to DHCP Protocol
  *
- * $Id: bcmdhcp.h 300516 2011-12-04 17:39:44Z $
+ * $Id: bcmdhcp.h 355047 2012-09-05 07:00:54Z $
  */
 
 #ifndef _bcmdhcp_h_
@@ -17,12 +17,17 @@
 
 /* DHCP params */
 #define DHCP_TYPE_OFFSET	0	/* DHCP type (request|reply) offset */
+#define DHCP_TID_OFFSET		4	/* DHCP transition id offset */
 #define DHCP_FLAGS_OFFSET	10	/* DHCP flags offset */
 #define DHCP_CIADDR_OFFSET	12	/* DHCP client IP address offset */
 #define DHCP_YIADDR_OFFSET	16	/* DHCP your IP address offset */
 #define DHCP_GIADDR_OFFSET	24	/* DHCP relay agent IP address offset */
 #define DHCP_CHADDR_OFFSET	28	/* DHCP client h/w address offset */
 #define DHCP_OPT_OFFSET		236	/* DHCP options offset */
+
+#define DHCP_OPT_MSGTYPE	53	/* DHCP message type */
+#define DHCP_OPT_MSGTYPE_REQ	3
+#define DHCP_OPT_MSGTYPE_ACK	5	/* DHCP message type - ACK */
 
 #define DHCP_OPT_CODE_OFFSET	0	/* Option identifier */
 #define DHCP_OPT_LEN_OFFSET	1	/* Option data length */

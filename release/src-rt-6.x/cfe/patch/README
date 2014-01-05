@@ -1,6 +1,5 @@
-cfe patch against brcm sdk linux-2.6-router-6.30.39.16
+cfe patch against brcm sdk linux-2.6-router-6.30.163.2002
     - src/include/amemc_core.h
     - src/include/bcmnvram.h
-    - src/include/nflash.h
+    - src/include/hndnand.h
     - src/shared/nflash.c
-    - src/shared/nand_ecc.c

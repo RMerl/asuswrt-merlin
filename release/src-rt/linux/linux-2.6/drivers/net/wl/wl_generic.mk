@@ -36,7 +36,7 @@ ifeq ($(REBUILD_WL_MODULE),1)
     include $(WLCFGDIR)/wl.mk
 
     ifeq ($(WLCLMAPI),1)
-        WLAN_ComponentsInUse := bcmwifi clm
+        WLAN_ComponentsInUse := bcmwifi clm ppr
         include $(src)/$(SRCBASE)/makefiles/WLAN_Common.mk
     endif
     
@@ -45,7 +45,8 @@ ifeq ($(REBUILD_WL_MODULE),1)
     endif
     
     ifeq ($(WLCLMAPI),1)
-    $(call WLAN_GenClmCompilerRule,$(src)/$(SRCBASE)/wl/clm/src,$(src)/$(SRCBASE),--ccrev all)
+    CLM_TYPE := generic
+    $(call WLAN_GenClmCompilerRule,$(src)/$(SRCBASE)/wl/clm/src,$(src)/$(SRCBASE))
     endif
     
     # need -I. to pick up wlconf.h in build directory
@@ -114,4 +115,4 @@ $(obj)/$(WLCONF_H): $(WLCFGDIR)/$(WLTUNEFILE) FORCE
 
 FORCE:
 
-clean-files += $(SRCBASE)/wl/sys/*.o $(SRCBASE)/wl/phy/*.o $(SRCBASE)/wl/sys/.*.*.cmd $(SRCBASE)/wl/phy/.*.*.cmd $(WLCONF_H) $(WLCONF_O)
+clean-files += $(SRCBASE)/wl/sys/*.o $(SRCBASE)/wl/phy/*.o $(SRCBASE)/wl/ppr/src/*.o $(SRCBASE)/wl/sys/.*.*.cmd $(SRCBASE)/wl/phy/.*.*.cmd $(WLCONF_H) $(WLCONF_O)

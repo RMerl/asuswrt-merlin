@@ -245,6 +245,9 @@ struct sk_buff {
 	struct sk_buff		*prev;
 
 	struct sock		*sk;
+#ifdef PKTC
+	unsigned char           pktc_cb[8];
+#endif
 #if defined(HNDCTF) && defined(PKTC)
 	ktime_t			ctf_tstamp;     /* This field is used by Broadcom CTF driver! */
 #else

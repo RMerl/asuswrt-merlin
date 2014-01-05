@@ -375,7 +375,7 @@ is16x:	TRACE(0x41530b)
 	/* Read sdram_config from nvram */
 find_nvram:
 	TRACE(0x41530c)
-	li	t0,KSEG1ADDR(SI_FLASH2 - NVRAM_SPACE)
+	li	t0,KSEG1ADDR(SI_FLASH2 - MAX_NVRAM_SPACE)
 	li	t1,FLASH_MIN
 	li	t2,SI_FLASH2_SZ
 	li	t3,NVRAM_MAGIC

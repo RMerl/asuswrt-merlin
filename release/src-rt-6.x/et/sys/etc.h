@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: etc.h 341899 2012-06-29 04:06:38Z $
+ * $Id: etc.h 352715 2012-08-23 19:50:14Z $
  */
 
 #ifndef _etc_h_
@@ -196,7 +196,7 @@ typedef struct etc_info {
  * Must be >= size of largest rxhdr
  * Must be 2-mod-4 aligned so IP is 0-mod-4
  */
-#define	HWRXOFF		30
+#define	HWRXOFF		14
 
 #define TC_BK		0	/* background traffic class */
 #define TC_BE		1	/* best effort traffic class */

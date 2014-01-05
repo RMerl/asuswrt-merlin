@@ -50,9 +50,9 @@ static char *usb_path2 = NULL;
 static int status_usb = 0;
 static int status_usb_old = 0;
 
+#ifdef LED_USB3
 static int got_usb2 = 0;
 static int got_usb2_old = 0;
-#ifdef LED_USB3
 static int got_usb3 = 0;
 static int got_usb3_old = 0;
 #endif
@@ -71,7 +71,7 @@ usb_status()
 {
 	if (usb_busy)
 		return 0;
-	else if (nvram_invmatch("usb_path1", "") || nvram_invmatch("usb_path2", ""))
+	else if (nvram_invmatch("usb_led1", "") || nvram_invmatch("usb_led2", ""))
 		return 1;
 	else
 		return 0;
@@ -80,24 +80,20 @@ usb_status()
 static int
 check_usb2()
 {
-        if (usb_busy)
-                return 0;
-        else if ((model==MODEL_RTAC56U||model==MODEL_RTAC56S||model==MODEL_RTAC68U) && nvram_invmatch("usb_path2", ""))
-                return 1;
-        else
-                return 0;
+	if(usb_busy)
+		return 0;
+	else if((model==MODEL_RTAC56U||model==MODEL_RTAC56S||model==MODEL_RTAC68U) && strlen(nvram_safe_get("usb_led2")) > 0)
+		return 1;
+	else
+		return 0;
 }
 #ifdef LED_USB3
 static int
 check_usb3()
 {
-	if (usb_busy)
+	if(usb_busy)
 		return 0;
-#ifndef RTCONFIG_BCMARM
-	else if (nvram_match("usb_path1_speed", "5000") || nvram_match("usb_path2_speed", "5000"))
-#else
-	else if ((model==MODEL_RTAC56U||model==MODEL_RTAC56S||model==MODEL_RTAC68U) && nvram_invmatch("usb_path1", ""))
-#endif
+	else if((model==MODEL_RTAC56U||model==MODEL_RTAC56S||model==MODEL_RTAC68U) && strlen(nvram_safe_get("usb_led1")) > 0)
 		return 1;
 	else
 		return 0;
@@ -123,10 +119,10 @@ static void no_blink(int sig)
 #ifdef RTCONFIG_USBEJECT
 static void reset_status(int sig)
 {
-        status_usb_old = -1;
-        got_usb2_old = -1;
+	status_usb_old = -1;
 #ifdef LED_USB3
-        got_usb3_old = -1;
+	got_usb2_old = -1;
+	got_usb3_old = -1;
 #endif
 }
 #endif
@@ -171,42 +167,43 @@ static void usbled(int sig)
 
 #ifdef LED_USB3
 	if(model==MODEL_RTAC56U || model==MODEL_RTAC56S || model==MODEL_RTAC68U){
-                got_usb2_old = got_usb2;
-                got_usb2 = check_usb2();
-                got_usb3_old = got_usb3;
-                got_usb3 = check_usb3();
+		got_usb2_old = got_usb2;
+		got_usb2 = check_usb2();
+		got_usb3_old = got_usb3;
+		got_usb3 = check_usb3();
 	}
 #endif
 
 	if(nvram_match("asus_mfg", "1")
 #ifdef RTCONFIG_USBEJECT
-                || !nvram_get_int("AllLED")
+			|| !nvram_get_int("AllLED")
 #endif
-        )
+			)
 		no_blink(sig);
 	else if (!usb_busy
 #ifdef RTCONFIG_USBEJECT
-                && nvram_get_int("AllLED")
+			&& nvram_get_int("AllLED")
 #endif
-	)
+			)
 	{
-                if(model==MODEL_RTAC56U || model==MODEL_RTAC56S || model==MODEL_RTAC68U){
-                        if(got_usb2 != got_usb2_old){
-                                if(got_usb2)
-                                        led_control(LED_USB, LED_ON);
-                                else
-                                        led_control(LED_USB, LED_OFF);
-                        }
 #ifdef LED_USB3
-                        if(got_usb3 != got_usb3_old){
-                                if(got_usb3)
-                                        led_control(LED_USB3, LED_ON);
-                                else
-                                        led_control(LED_USB3, LED_OFF);
-                        }
+		if(model==MODEL_RTAC56U || model==MODEL_RTAC56S || model==MODEL_RTAC68U){
+			if(got_usb2 != got_usb2_old){
+				if(got_usb2)
+					led_control(LED_USB, LED_ON);
+				else
+					led_control(LED_USB, LED_OFF);
+			}
+			if(got_usb3 != got_usb3_old){
+				if(got_usb3)
+					led_control(LED_USB3, LED_ON);
+				else
+					led_control(LED_USB3, LED_OFF);
+			}
+		}
+		else
 #endif
-                }
-		else if (status_usb != status_usb_old)
+		if (status_usb != status_usb_old)
 		{
 			if (status_usb)
 				led_control(LED_USB, LED_ON);
@@ -216,7 +213,7 @@ static void usbled(int sig)
 	}
 	else
 #ifdef RTCONFIG_USBEJECT
-                if (nvram_get_int("AllLED"))
+	if (nvram_get_int("AllLED"))
 #endif
 	{
 		if (strcmp(usb_path1, "storage") && strcmp(usb_path2, "storage"))

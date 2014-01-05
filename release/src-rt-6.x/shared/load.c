@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: load.c 342293 2012-07-02 10:25:35Z $
+ * $Id: load.c 368663 2012-11-14 09:42:37Z $
  */
 
 #include <typedefs.h>
@@ -31,6 +31,8 @@
 #ifdef NFLASH_SUPPORT
 #include <nflash.h>
 #endif
+
+extern void cpu_inv_cache_all(void);
 
 void c_main(unsigned long ra);
 
@@ -78,7 +80,7 @@ error(char *x)
 #endif /* USE_LZMA */
 
 #if defined(USE_GZIP)
-
+extern int _memsize;
 /*
  * gzip declarations
  */
@@ -233,16 +235,19 @@ decompressLZMA(unsigned char *src, unsigned int srcLen, unsigned char *dest, uns
 		res = 0;
 	return res;
 }
+#else
+extern int _memsize;
 
 #endif /* defined(USE_GZIP) */
 
-extern char input_data[];
+extern char input_data[], input_data_end[];
 extern int input_len;
 
 static void
 load(si_t *sih)
 {
 	int ret = 0;
+	uint32 image_len;
 #ifdef	CONFIG_XIP
 	int inoff;
 
@@ -251,9 +256,24 @@ load(si_t *sih)
 		inbase = OSL_UNCACHED(SI_FLASH2 + inoff);
 	else
 		inbase = OSL_CACHED(SI_FLASH2 + inoff);
+	image_len = input_len;
+#else
+#if defined(CFG_SHMOO)
+	int inoff;
+	int bootdev;
+
+	inoff = (ulong)input_data - (ulong)text_start;
+	bootdev = soc_boot_dev((void *)sih);
+	if (bootdev == SOC_BOOTDEV_NANDFLASH)
+		inbase = (uint32 *)(SI_NS_NANDFLASH + inoff);
+	else
+		inbase = (uint32 *)(SI_NS_NORFLASH + inoff);
+	image_len = *(uint32 *)((ulong)inbase - 4);
 #else
 	inbase = (uint32 *)input_data;
-#endif
+	image_len = input_len;
+#endif /* CFG_SHMOO */
+#endif /* CONFIG_XIP */
 
 	outbuf = (uchar *)LOADADDR;
 	bytes_out = 0;
@@ -271,10 +291,10 @@ load(si_t *sih)
 #elif defined(USE_LZMA)
 	printf("Decompressing...");
 	bytes_out = (ulong)_memsize - (ulong)PHYSADDR(outbuf);
-	ret = decompressLZMA((unsigned char *)inbase, input_len, outbuf, bytes_out);
+	ret = decompressLZMA((unsigned char *)inbase, image_len, outbuf, bytes_out);
 #else
 	printf("Copying...");
-	while (bytes_out < input_len) {
+	while (bytes_out < image_len) {
 		fill_inbuf();
 		memcpy(&outbuf[bytes_out], inbuf, insize);
 		bytes_out += insize;
@@ -311,10 +331,10 @@ set_sflash_div(si_t *sih)
 	flbase = (uintptr)OSL_UNCACHED((void *)SI_FLASH2);
 	off = FLASH_MIN;
 	while (off <= 16 * 1024 * 1024) {
-		nvh = (struct nvram_header *)(flbase + off - NVRAM_SPACE);
+		nvh = (struct nvram_header *)(flbase + off - MAX_NVRAM_SPACE);
 		if (R_REG(osh, &nvh->magic) == NVRAM_MAGIC)
 			break;
-		off <<= 1;
+		off += DEF_NVRAM_SPACE;
 		nvh = NULL;
 	};
 
@@ -364,7 +384,9 @@ c_main(unsigned long ra)
 	/* Discover cache configuration and if not already on,
 	 * initialize and turn them on.
 	 */
+#ifndef CFG_SHMOO
 	caches_on();
+#endif
 #endif /* CFG_UNCACHED */
 
 	BCMDBG_TRACE(0x4c4401);

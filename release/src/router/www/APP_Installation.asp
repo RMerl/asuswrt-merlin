@@ -723,7 +723,7 @@ function show_partition(){
 		htmlcode += '<tr height="360px"><td colspan="2" class="nohover"><span class="app_name" style="line-height:100%"><#no_usb_found#></span></td></tr>\n';
 
 	$("partition_div").innerHTML = htmlcode;
-	$("usbHint").innerHTML = "<#DM_Install_partition#>";
+	$("usbHint").innerHTML = "<#DM_Install_partition#> :";
 	calHeight(1);
 }
 

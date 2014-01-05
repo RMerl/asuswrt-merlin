@@ -12,7 +12,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: typedefs.h 286783 2011-09-29 06:18:57Z $
+ * $Id: typedefs.h 355800 2012-09-09 01:32:41Z $
  */
 
 #ifndef _TYPEDEFS_H_
@@ -110,14 +110,14 @@ typedef unsigned __int64 uint64;
 #endif
 
 #if defined(__NetBSD__)
-#define TYPEDEF_BOOL
 #ifndef _KERNEL
 #include <stdbool.h>
 #endif
+#define TYPEDEF_BOOL
 #define TYPEDEF_UINT
 #define TYPEDEF_USHORT
 #define TYPEDEF_ULONG
-#endif /* defined(__NetBSD__) */
+#endif  /* NetBSD */
 
 #if defined(__sparc__)
 #define TYPEDEF_ULONG

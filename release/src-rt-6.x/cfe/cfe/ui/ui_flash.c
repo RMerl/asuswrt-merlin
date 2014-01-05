@@ -305,30 +305,30 @@ void ui_get_flash_buf(uint8_t **bufptr, int *bufsize)
 #ifdef RESCUE_MODE
 void replace(uint8_t *bootbuf, char *keyword, uint8_t *value)
 {
-        int addr=0, addr_i=0, addr_j=0, idx=0;
-        int wordlen=strlen(keyword);
-        char addr_buf[wordlen];
-        do
-        {
-                for(addr_i=0;addr_i<strlen(keyword);addr_i++)
-                {
-                        addr_buf[0x0+addr_i]=bootbuf[0x0000+addr+addr_i];
-                }
-                addr_buf[wordlen]=0x00;
-                addr++;
-        }
-        while (!(strcmp(addr_buf, keyword)==0));
-        if(strcmp(keyword, "secret_code") == 0)
-                idx = 8;
-        else if (strcmp(keyword, "regulation_domain") == 0)
-                idx = 6;
-        else
-                idx = 17;
+	int addr=0, addr_i=0, addr_j=0, idx=0;
+	int wordlen=strlen(keyword);
+	char addr_buf[wordlen];
+	do
+	{
+		for(addr_i=0;addr_i<strlen(keyword);addr_i++)
+		{
+			addr_buf[0x0+addr_i]=bootbuf[0x0000+addr+addr_i];
+		}
+		addr_buf[wordlen]=0x00;
+		addr++;
+	}
+	while (!(strcmp(addr_buf, keyword)==0));
+	if(strcmp(keyword, "secret_code") == 0)
+		idx = 8;
+	else if (strcmp(keyword, "regulation_domain") == 0)
+		idx = 6;
+	else
+		idx = 17;
 
-        for (addr_j=0 ; addr_j < idx ; addr_j++)
-        {
-                bootbuf[0x0000+addr+addr_j+strlen(keyword)] = value[0x0+addr_j];
-        }
+	for (addr_j=0 ; addr_j < idx ; addr_j++)
+	{
+		bootbuf[0x0000+addr+addr_j+strlen(keyword)] = value[0x0+addr_j];
+	}
 }
 #endif
 
@@ -542,6 +542,7 @@ static int ui_cmd_flash(ui_cmdline_t *cmd,int argc,char *argv[])
      */
 
     fname = cmd_getarg(cmd,0);
+
     if (!fname) {
 	return ui_showusage(cmd);
 	}
@@ -599,6 +600,7 @@ static int ui_cmd_flash(ui_cmdline_t *cmd,int argc,char *argv[])
 #ifdef DUAL_TRX
     write_trx2 = cmd_sw_isset(cmd, "-onlytrx1");
 #endif
+
     /* Fix up the ptr and size for reading from memory
      * and skip loading to go directly to programming
      */
@@ -625,6 +627,8 @@ static int ui_cmd_flash(ui_cmdline_t *cmd,int argc,char *argv[])
 		return ui_showerror(sfd,"Could not open source device");
 		}
 	    memset(ptr,0xFF,bufsize);
+
+
 	    if (cfe_ioctl(sfd,IOCTL_FLASH_GETINFO,
 			  (unsigned char *) &flashinfo,
 			  sizeof(flash_info_t),
@@ -638,11 +642,15 @@ static int ui_cmd_flash(ui_cmdline_t *cmd,int argc,char *argv[])
             else {
 		size = flashinfo.flash_size;
 		}
+
 	    /* Make sure we don't overrun the staging buffer */
+	    
 	    if (size > bufsize) {
 		size = bufsize;
 		}
+
 	    /* Read the flash device here. */
+
 	    res = cfe_read(sfd,ptr,size);
 
 	    cfe_close(sfd);
@@ -678,6 +686,7 @@ static int ui_cmd_flash(ui_cmdline_t *cmd,int argc,char *argv[])
 	    break;
 
 	default:
+		
 	    res = ui_process_url(fname, cmd, &la);
 	    if (res < 0) {
 		ui_showerror(res,"Invalid file name %s",fname);
@@ -706,86 +715,86 @@ program:
 
 #ifdef RESCUE_MODE
     if (norescue == 0) {
-        if (copysize>0 && copysize<=0x40000) {
-                strcpy(flashdev, "flash1.boot");
-                for (i=0; i<0x40000; i++)
-                        bootbuf[i] = (*(unsigned char *) (0xbfc00000+i));
-                if (
+	if (copysize>0 && copysize<=0x40000) {
+		strcpy(flashdev, "flash1.boot");
+		for (i=0; i<0x40000; i++)
+			bootbuf[i] = (*(unsigned char *) (0xbfc00000+i));
+		if (
 #ifdef COMPRESSED_CFE
-                (*(unsigned long *) (ptr+0x400) == NVRAM_MAGIC) && ( *(unsigned long *) (ptr) != NVRAM_MAGIC_MAC0)
+		(*(unsigned long *) (ptr+0x400) == NVRAM_MAGIC) && ( *(unsigned long *) (ptr) != NVRAM_MAGIC_MAC0)
 #else
-                (*(unsigned long *) (ptr+0x1000) == NVRAM_MAGIC) && ( *(unsigned long *) (ptr) != NVRAM_MAGIC_MAC0)
+		(*(unsigned long *) (ptr+0x1000) == NVRAM_MAGIC) && ( *(unsigned long *) (ptr) != NVRAM_MAGIC_MAC0)
 #endif
-                                && (*(unsigned long *) (ptr) != NVRAM_MAGIC_MAC1) && (*(unsigned long *) (ptr) != NVRAM_MAGIC_RDOM )
-                                && (*(unsigned long *) (ptr) != NVRAM_MAGIC_ASUS )) {
-                        xprintf(".Download of 0x%x bytes Completed\n", copysize);
-                        xprintf("Write bootloader binary to FLASH (0xbfc00000)\n");
-                        parseflag=1;
-                }
-                else if ( *(unsigned long *) (ptr) == NVRAM_MAGIC_MAC0 ) {
-                        xprintf("Download of 0x%x bytes completed\n", copysize);
-                        for (i=0; i<17; i++)
-                                MAC0[i] = ptr[4+i];
-                        MAC0[i]='\0';
-                        /* Wait for SCODE by SJ_Yen */
-                        i=i+4;
-                        if ((ptr[i] == SCODE[0]) &&
-                                (ptr [i+1] == SCODE[1]) &&
-                                (ptr [i+2] == SCODE[2]) &&
-                                (ptr [i+3] == SCODE[3]) &&
-                                (ptr [i+4] == SCODE[4]) ) {
-                                for (i = 26 ; i < 34; i++) {
-                                        secretcode[j] = ptr [i];
-                                        j++;
-                                }
-                                secretcode[j]='\0';
-                                xprintf("Write secret code = %s to FLASH\n", secretcode);
-                                replace(bootbuf, scode, secretcode);
-                                nvram_set("secret_code", (int8_t *)secretcode);
-                                nvram_commit();
-                        }
-                        /* End Yen */
+				&& (*(unsigned long *) (ptr) != NVRAM_MAGIC_MAC1) && (*(unsigned long *) (ptr) != NVRAM_MAGIC_RDOM )
+				&& (*(unsigned long *) (ptr) != NVRAM_MAGIC_ASUS )) {
+			xprintf(".Download of 0x%x bytes Completed\n", copysize);
+			xprintf("Write bootloader binary to FLASH (0xbfc00000)\n");
+			parseflag=1;
+		}
+		else if ( *(unsigned long *) (ptr) == NVRAM_MAGIC_MAC0 ) {
+			xprintf("Download of 0x%x bytes completed\n", copysize);
+			for (i=0; i<17; i++)
+				MAC0[i] = ptr[4+i];
+			MAC0[i]='\0';
+			/* Wait for SCODE by SJ_Yen */
+			i=i+4;
+			if ((ptr[i] == SCODE[0]) &&
+				(ptr [i+1] == SCODE[1]) &&
+				(ptr [i+2] == SCODE[2]) &&
+				(ptr [i+3] == SCODE[3]) &&
+				(ptr [i+4] == SCODE[4]) ) {
+				for (i = 26 ; i < 34; i++) {
+					secretcode[j] = ptr [i];
+					j++;
+				}
+				secretcode[j]='\0';
+				xprintf("Write secret code = %s to FLASH\n", secretcode);
+				replace(bootbuf, scode, secretcode);
+				nvram_set("secret_code", (int8_t *)secretcode);
+				nvram_commit();
+			}
+			/* End Yen */
 
-                        replace(bootbuf, et0mac, MAC0);
-                        replace(bootbuf, il0mac, MAC0);
+			replace(bootbuf, et0mac, MAC0);
+			replace(bootbuf, il0mac, MAC0);
 
-                        xprintf("Write MAC0 = %s  to FLASH \n", MAC0);
-                        xprintf("set nvram: et0macaddr=%s\n", MAC0);
-                        nvram_set("et0macaddr", (int8_t *)MAC0);
-                        xprintf("set nvram: et0macaddr=%s\n", MAC0);
-                        nvram_set("macaddr", (int8_t *)MAC0);
-                        xprintf("nvram commit\n");
-                        nvram_commit();
-                        parseflag=2;
-                }
-                else if ( *(unsigned long *) (ptr) == NVRAM_MAGIC_RDOM ) {
-                        for (i=0; i<6; i++)
-                                RDOM[i] = ptr[4+i];
-                        RDOM[i] = '\0';
-                        replace(bootbuf, reg_dom, RDOM);
-                        xprintf("Write RDOM = %s  to FLASH \n", RDOM);
-                        nvram_set("regulation_domain", (int8_t *)RDOM);
-                        nvram_commit();
-                        parseflag=3;
-                }
-                else {
-                        parseflag=-1;
-                        xprintf("Download of 0x%x bytes completed\n", copysize);
-                        xprintf("Not valid nvram MAGIC at all !!\n");
-                        copysize = 0;
-                }
-        }
-        else if (copysize>0x40000)
-        {
-                parseflag=0;
-                xprintf("Download of 0x%x bytes completed\n", copysize);
-                xprintf("Write kernel and filesystem binary to FLASH \n");
-        }
-        else {
-                parseflag=-1;
-                copysize = 0;
-                xprintf("Downloading image time out\n");
-        }
+			xprintf("Write MAC0 = %s  to FLASH \n", MAC0);
+			xprintf("set nvram: et0macaddr=%s\n", MAC0);
+			nvram_set("et0macaddr", (int8_t *)MAC0);
+			xprintf("set nvram: et0macaddr=%s\n", MAC0);
+			nvram_set("macaddr", (int8_t *)MAC0);
+			xprintf("nvram commit\n");
+			nvram_commit();
+			parseflag=2;
+		}
+		else if ( *(unsigned long *) (ptr) == NVRAM_MAGIC_RDOM ) {
+			for (i=0; i<6; i++)
+				RDOM[i] = ptr[4+i];
+			RDOM[i] = '\0';
+			replace(bootbuf, reg_dom, RDOM);
+			xprintf("Write RDOM = %s  to FLASH \n", RDOM);
+			nvram_set("regulation_domain", (int8_t *)RDOM);
+			nvram_commit();
+			parseflag=3;
+		}
+		else {
+			parseflag=-1;
+			xprintf("Download of 0x%x bytes completed\n", copysize);
+			xprintf("Not valid nvram MAGIC at all !!\n");
+			copysize = 0;
+		}
+	}
+	else if (copysize>0x40000)
+	{
+		parseflag=0;
+		xprintf("Download of 0x%x bytes completed\n", copysize);
+		xprintf("Write kernel and filesystem binary to FLASH \n");
+	}
+	else {
+		parseflag=-1;
+		copysize = 0;
+		xprintf("Downloading image time out\n");
+	}
     } // No-rescue
 #endif // RESCUE_MODE
 
@@ -808,7 +817,8 @@ Open_dev:
     if (fh < 0) {
 	xprintf("Could not open device '%s'\n",flashdev);
 	return CFE_ERR_DEVNOTFOUND;
-    }
+	}
+
     if (cfe_ioctl(fh,IOCTL_FLASH_GETINFO,
 		  (unsigned char *) &flashinfo,
 		  sizeof(flash_info_t),
@@ -816,8 +826,8 @@ Open_dev:
 	/* Truncate write if source size is greater than flash size */
 	if ((copysize + offset) > flashinfo.flash_size) {
             copysize = flashinfo.flash_size - offset;
+	    }
 	}
-    }
 
     /*
      * If overwriting the boot flash, we need to use the special IOCTL
@@ -840,7 +850,7 @@ Open_dev:
 	/* should not return */
 	return CFE_ERR;
 #endif
-    }
+	}
 
     /*
      * Otherwise: it's not the flash we're using right
@@ -932,7 +942,7 @@ Open_dev:
    }
 #else
     if (copysize == amtcopy) {
-	xprintf("NO: done. %d bytes written\n",amtcopy);
+	xprintf("done. %d bytes written\n",amtcopy);
 	res = 0;
 	}
     else {
@@ -940,7 +950,7 @@ Open_dev:
 	res = CFE_ERR_IOERR;
 	}
 #endif // RESCUE_MODE
-
+    
     /* 	
      * done!
      */

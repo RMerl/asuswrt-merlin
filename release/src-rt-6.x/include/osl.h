@@ -1,7 +1,7 @@
 /*
  * OS Abstraction Layer
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: osl.h 341165 2012-06-26 19:16:22Z $
+ * $Id: osl.h 377094 2013-01-04 03:11:57Z $
  */
 
 #ifndef _osl_h_
@@ -137,12 +137,15 @@ MAKE_PREFETCH_RANGE_FN(PREF_STORE_RETAINED)
 #define OSL_SYSUPTIME_SUPPORT TRUE
 #endif /* OSL_SYSUPTIME */
 
-#if !defined(linux) || !defined(PKTC)
+#if !(defined(linux) && defined(PKTC)) && !defined(PKTC_DONGLE)
 #define	PKTCGETATTR(s)		(0)
 #define	PKTCSETATTR(skb, f, p, b)
 #define	PKTCCLRATTR(skb)
-#define	PKTCCNT(skb)		(0)
-#define	PKTCLEN(skb)		(0)
+#define	PKTCCNT(skb)		(1)
+#define	PKTCLEN(skb)		PKTLEN(NULL, skb)
+#define	PKTCGETFLAGS(skb)	(0)
+#define	PKTCSETFLAGS(skb, f)
+#define	PKTCCLRFLAGS(skb)
 #define	PKTCFLAGS(skb)		(0)
 #define	PKTCSETCNT(skb, c)
 #define	PKTCINCRCNT(skb)

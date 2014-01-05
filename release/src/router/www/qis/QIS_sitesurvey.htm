@@ -243,6 +243,7 @@ var btnAction = {
 			viewHandler.changeAuthMode("open");
 			document.getElementById("wlc_auth_mode_x_manual").selectedIndex = 0;
 		}
+		document.getElementById("deviceDiscorvy").innerHTML = "<#use_DevDiscoveryUtil#>";
 		viewHandler.displayObj(["manualPAP", "btnPre", "btnNext"]);
 	},
 
@@ -407,11 +408,20 @@ var viewHandler = {
 		document.getElementById("wlc_key_index_manual").parentNode.parentNode.style.display = "none";
 		document.getElementById("thekey_manual").parentNode.parentNode.style.display = "none";
 
-		if(_val.search("psk") != -1){
+		if(_val == "psk"){			// WPA + TKIP
+			document.getElementById("wlc_crypto_manual").options[0] = new Option('TKIP','tkip');
 			document.getElementById("wlc_crypto_manual").parentNode.parentNode.style.display = "";
 			document.getElementById("thekey_manual").parentNode.parentNode.style.display = "";
 			document.getElementById("show_pass_manual").parentNode.parentNode.style.display = "";
 			this.showSpeedHint(_val=="psk");
+		
+		}
+		else if(_val == "psk2"){		// WPA2 + AES
+			document.getElementById("wlc_crypto_manual").options[0] = new Option('AES','aes');
+			document.getElementById("wlc_crypto_manual").parentNode.parentNode.style.display = "";
+			document.getElementById("thekey_manual").parentNode.parentNode.style.display = "";
+			document.getElementById("show_pass_manual").parentNode.parentNode.style.display = "";
+				this.showSpeedHint(_val=="psk");
 		}
 		else{
 			document.getElementById("wlc_wep_manual").parentNode.parentNode.style.display = "";
@@ -570,6 +580,7 @@ var bindEvent = {
 			var initRow = '<tr class="inputRow" style="display:none;background-color:#708789;"><td style="height:50px;" colspan="5"><table width="100%"><tr>';
 			var connectedHint = '<td style="border:0px;"><span style="color:#FFCC00;"><#APSurvey_msg_connected#></span></td>';
 			var unEncrypt = '<td style="border:0px;"><span style="color:#FFCC00;"><#APSurvey_msg_connect_open_wlan#></span></td>';
+			var unSupport = '<td style="border:0px;"><span style="color:#FFCC00;">Non supported Authentication Method.</span></td>';
 			var networkKey = '<td style="border:0px;"><span style="color:#FFFFFF;"><#Network_key#>:</span><input type="password" autocapitalization="off" id="thekey_tmp" class="input_25_table" style="padding-left:3px;margin-left:5px;width:200px;"><input type="checkbox" onclick="pass_checked(this, document.getElementById(\'thekey_tmp\'));"><span style="color:#FFF"><#QIS_show_pass#></span></td>';
 			var connectBtn = '<td style="border:0px;text-align:right"><input style="margin-left:10px;" id="connect_btn" type="button" value="<#CTL_Add_enrollee#>" onclick="btnAction.saveWlcVar('+ bindEvent.idx +', false)" class="button_gen"></td></tr>';
 			var wep_auth = '<tr><td style="border:0px;"><span style="margin-left:5px;color:#FFFFFF;"><#WLANConfig11b_AuthenticationMethod_itemname#></span><select id="thekey_wep_method_tmp" class="input_option" style="margin-left:5px;"><option value="open" selected>open</option><option value="shared">shared</option></select>';
@@ -603,6 +614,9 @@ var bindEvent = {
 				if(Profiles[bindEvent.idx].alg == "NONE"){
 					initRow += unEncrypt;
 					initRow += connectBtn;
+				}
+				else if(Profiles[bindEvent.idx].auth == "WPA" || Profiles[bindEvent.idx].auth == "WPA2" ){
+					initRow += unSupport;
 				}
 				else{
 					initRow += networkKey;
@@ -840,6 +854,7 @@ function QKInternet_load_body(){
 	if(!parent.band5g_support)
 		document.getElementById('wl_unit_field').style.display = "none";
 }
+
 </script>
 </head>
 <body onLoad="QKInternet_load_body();" onunload="">
@@ -974,12 +989,9 @@ function QKInternet_load_body(){
 			<tr>
 				<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 6);"><#WLANConfig11b_WPAType_itemname#></a></th>
 				<td>
-		  		<select id="wlc_crypto_manual" class="input_option">
-						<option value="tkip">TKIP</option>
-						<option value="aes">AES</option>
-				  </select>					
+					<select id="wlc_crypto_manual" class="input_option"></select>					
 				</td>
-	  	</tr>	  	
+			</tr>	  	
 
 	  	<tr>
 				<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 9);"><#WLANConfig11b_WEPType_itemname#></a></th>

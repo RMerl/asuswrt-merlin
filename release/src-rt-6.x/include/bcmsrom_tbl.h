@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmsrom_tbl.h 350740 2012-08-15 06:35:40Z $
+ * $Id: bcmsrom_tbl.h 368850 2012-11-15 01:22:39Z $
  */
 
 #ifndef	_bcmsrom_tbl_h_
@@ -59,7 +59,11 @@ typedef struct {
  */
 
 static const sromvar_t pci_sromvars[] = {
+#if defined(CABLECPE)
+	{"devid",	0xffffff00,	SRFL_PRHEX,	PCI_F0DEVID,	0xffff},
+#else
 	{"devid",	0xffffff00,	SRFL_PRHEX|SRFL_NOVAR,	PCI_F0DEVID,	0xffff},
+#endif 
 	{"boardrev",	0x0000000e,	SRFL_PRHEX,	SROM_AABREV,		SROM_BR_MASK},
 	{"boardrev",	0x000000f0,	SRFL_PRHEX,	SROM4_BREV,		0xffff},
 	{"boardrev",	0xffffff00,	SRFL_PRHEX,	SROM8_BREV,		0xffff},
@@ -451,14 +455,14 @@ static const sromvar_t pci_sromvars[] = {
 	{"ledbh2",	0xfffff800,	SRFL_NOFFS,		SROM11_LEDBH32,	0x00ff},
 	{"ledbh3",	0xfffff800,	SRFL_NOFFS,		SROM11_LEDBH32,	0xff00},
 	{"leddc",	0xfffff800,	SRFL_NOFFS|SRFL_LEDDC,	SROM11_LEDDC,	0xffff},
-	{"aa2g",	0xfffff800,	0,			SROM11_AA,	0x00ff},
-	{"aa5g",	0xfffff800,	0,			SROM11_AA,	0xff00},
-	{"agbg0",	0xfffff800,	0,			SROM11_AGBG10,  0x00ff},
-	{"agbg1",	0xfffff800,	0,			SROM11_AGBG10,	0xff00},
-	{"agbg2",	0xfffff800,	0,			SROM11_AGBG2A0,	0x00ff},
-	{"aga0",	0xfffff800,	0,			SROM11_AGBG2A0,	0xff00},
-	{"aga1",	0xfffff800,	0,			SROM11_AGA21,   0x00ff},
-	{"aga2",	0xfffff800,	0,			SROM11_AGA21,	0xff00},
+	{"aa2g",	0xfffff800,	0,			SROM11_AA,	0xff00},
+	{"aa5g",	0xfffff800,	0,			SROM11_AA,	0x00ff},
+	{"agbg0",	0xfffff800,	0,			SROM11_AGBG10,  0xff00},
+	{"agbg1",	0xfffff800,	0,			SROM11_AGBG10,	0x00ff},
+	{"agbg2",	0xfffff800,	0,			SROM11_AGBG2A0,	0xff00},
+	{"aga0",	0xfffff800,	0,			SROM11_AGBG2A0,	0x00ff},
+	{"aga1",	0xfffff800,	0,			SROM11_AGA21,   0xff00},
+	{"aga2",	0xfffff800,	0,			SROM11_AGA21,	0x00ff},
 	{"txchain",	0xfffff800,	SRFL_NOFFS,	SROM11_TXRXC,	SROM4_TXCHAIN_MASK},
 	{"rxchain",	0xfffff800,	SRFL_NOFFS,	SROM11_TXRXC,	SROM4_RXCHAIN_MASK},
 	{"antswitch",	0xfffff800,	SRFL_NOFFS,	SROM11_TXRXC,	SROM4_SWITCH_MASK},
@@ -490,6 +494,12 @@ static const sromvar_t pci_sromvars[] = {
 	{"temps_hysteresis",	0xfffff800,	0,		SROM11_PHYCAL_TEMPDELTA, 0xf000},
 	{"measpower1", 		0xfffff800,	SRFL_PRHEX,	SROM11_MPWR_1_AND_2, 	0x007f},
 	{"measpower2",		0xfffff800, 	SRFL_PRHEX,	SROM11_MPWR_1_AND_2, 	0x3f80},
+
+	{"tssifloor2g",		0xfffff800,	SRFL_PRHEX,	SROM11_TSSIFLOOR_2G,	0x03ff},
+	{"tssifloor5g",	0xfffff800,	SRFL_PRHEX | SRFL_ARRAY, SROM11_TSSIFLOOR_5GL,	0x03ff},
+	{"",		0xfffff800,	SRFL_PRHEX | SRFL_ARRAY, SROM11_TSSIFLOOR_5GM,	0x03ff},
+	{"",		0xfffff800,	SRFL_PRHEX | SRFL_ARRAY, SROM11_TSSIFLOOR_5GH,	0x03ff},
+	{"",		0xfffff800,	SRFL_PRHEX,		SROM11_TSSIFLOOR_5GU,	0x03ff},
 	{"pdoffset2g40ma0",     0xfffff800, 0,      SROM11_PDOFF_2G_40M,    0x000f},
 	{"pdoffset2g40ma1",     0xfffff800, 0,      SROM11_PDOFF_2G_40M,    0x00f0},
 	{"pdoffset2g40ma2",     0xfffff800, 0,      SROM11_PDOFF_2G_40M,    0x0f00},
@@ -518,24 +528,18 @@ static const sromvar_t pci_sromvars[] = {
 	{"",           		0xfffff800, 	0,     		SROM11_MCSBW405GLPO_1, 	0xffff},
 	{"mcsbw805glpo",	0xfffff800,	SRFL_MORE,	SROM11_MCSBW805GLPO, 	0xffff},
 	{"",           		0xfffff800, 	0,    		SROM11_MCSBW805GLPO_1, 	0xffff},
-	{"mcsbw1605glpo",	0xfffff800,	SRFL_MORE,	SROM11_MCSBW1605GLPO, 	0xffff},
-	{"",           		0xfffff800, 	0,    		SROM11_MCSBW1605GLPO_1, 0xffff},
 	{"mcsbw205gmpo",	0xfffff800,	SRFL_MORE,	SROM11_MCSBW205GMPO, 	0xffff},
 	{"",           		0xfffff800, 	0,     		SROM11_MCSBW205GMPO_1, 	0xffff},
 	{"mcsbw405gmpo",	0xfffff800,	SRFL_MORE,	SROM11_MCSBW405GMPO, 	0xffff},
 	{"",           		0xfffff800, 	0,     		SROM11_MCSBW405GMPO_1, 	0xffff},
 	{"mcsbw805gmpo",	0xfffff800,	SRFL_MORE,	SROM11_MCSBW805GMPO, 	0xffff},
 	{"",           		0xfffff800, 	0,   		SROM11_MCSBW805GMPO_1, 	0xffff},
-	{"mcsbw1605gmpo",	0xfffff800,	SRFL_MORE,	SROM11_MCSBW1605GMPO, 	0xffff},
-	{"",           		0xfffff800, 	0,  		SROM11_MCSBW1605GMPO_1, 0xffff},
 	{"mcsbw205ghpo",	0xfffff800,	SRFL_MORE,	SROM11_MCSBW205GHPO, 	0xffff},
 	{"",           		0xfffff800, 	0,  		SROM11_MCSBW205GHPO_1, 	0xffff},
 	{"mcsbw405ghpo",	0xfffff800,	SRFL_MORE,	SROM11_MCSBW405GHPO, 	0xffff},
 	{"",           		0xfffff800, 	0,   		SROM11_MCSBW405GHPO_1, 	0xffff},
 	{"mcsbw805ghpo",	0xfffff800,	SRFL_MORE,	SROM11_MCSBW805GHPO, 	0xffff},
 	{"",           		0xfffff800, 	0,    		SROM11_MCSBW805GHPO_1, 	0xffff},
-	{"mcsbw1605ghpo",	0xfffff800,	SRFL_MORE,	SROM11_MCSBW1605GHPO, 	0xffff},
-	{"",           		0xfffff800, 	0,    		SROM11_MCSBW1605GHPO_1, 0xffff},
 	{"mcslr5glpo",		0xfffff800,	0,		SROM11_MCSLR5GLPO, 	0xffff},
 	{"mcslr5gmpo",		0xfffff800,	0,		SROM11_MCSLR5GMPO, 	0xffff},
 	{"mcslr5ghpo",		0xfffff800,	0,		SROM11_MCSLR5GHPO, 	0xffff},
@@ -557,7 +561,6 @@ static const sromvar_t pci_sromvars[] = {
 	{"dot11agduplrpo",	  0xfffff800, 	0,	SROM11_DOT11AGDUPLRPO,		0xffff},
 
 	/* Misc */
-	{"pcieingress_war",	0xfffff800,	0,	SROM11_PCIEINGRESS_WAR,	0xf},
 	{"sar2g",       	0xfffff800,	0,	SROM11_SAR,          	0x00ff},
 	{"sar5g",           	0xfffff800,	0,	SROM11_SAR,		0xff00},
 
@@ -592,6 +595,11 @@ static const sromvar_t pci_sromvars[] = {
 	{"",      		0xfffff800, 	SRFL_ARRAY,    	SROM11_RXGAINERR_5GM,   0xf800},
 	{"",      		0xfffff800, 	SRFL_ARRAY,    	SROM11_RXGAINERR_5GH,   0xf800},
 	{"",      		0xfffff800, 	0,    		SROM11_RXGAINERR_5GU,   0xf800},
+	{"rpcal2g",      	0xfffff800, 	0,		SROM11_RPCAL_2G,    0xffff},
+	{"rpcal5gb0",      	0xfffff800, 	0,		SROM11_RPCAL_5GL,   0xffff},
+	{"rpcal5gb1",      	0xfffff800, 	0,		SROM11_RPCAL_5GM,   0xffff},
+	{"rpcal5gb2",      	0xfffff800, 	0,		SROM11_RPCAL_5GH,   0xffff},
+	{"rpcal5gb3",      	0xfffff800, 	0,		SROM11_RPCAL_5GU,   0xffff},
 
 	{NULL,		0,		0,		0,			0}
 };
@@ -671,7 +679,6 @@ static const sromvar_t perpath_pci_sromvars[] = {
 	{"",		0xfffff800,	SRFL_PRHEX | SRFL_ARRAY, SROM11_5GB3_PA,	0xffff},
 	{"",		0xfffff800,	SRFL_PRHEX | SRFL_ARRAY, SROM11_5GB3_PA + 1,	0xffff},
 	{"",		0xfffff800,	SRFL_PRHEX,		 SROM11_5GB3_PA + 2,	0xffff},
-
 	{NULL,		0,		0,		0, 			0}
 };
 

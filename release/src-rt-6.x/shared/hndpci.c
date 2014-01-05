@@ -1,7 +1,7 @@
 /*
  * Low-Level PCI and SI support for BCM47xx
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: hndpci.c 319422 2012-03-08 01:30:26Z $
+ * $Id: hndpci.c 358999 2012-09-26 05:59:33Z $
  */
 
 #include <bcm_cfg.h>
@@ -118,7 +118,7 @@ hndpci_set_busid(uint busid)
 
 static int
 hndpci_pci_coreunit(uint bus)
-{	uint i;
+{	int i;
 
 	ASSERT(bus >= 1);
 	for (i = SI_PCI_MAXCORES - 1; i >= 0; i--) {
@@ -1038,7 +1038,8 @@ BCMATTACHFN(hndpci_init_regions)(si_t *sih, uint func, pci_config_regs *cfg, si_
 	bool issb = sih->socitype == SOCI_SB;
 	uint i, n;
 
-	if (si_coreid(sih) == USB20H_CORE_ID) {
+	if ((si_coreid(sih) == USB20H_CORE_ID) ||
+		(si_coreid(sih) == NS_USB20_CORE_ID)) {
 		uint32 base, base1;
 
 		base = htol32(si_addrspace(sih, 0));

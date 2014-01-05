@@ -1,3 +1,8 @@
+2013/11/20	Fixed attempt to get multiple values in an ioctl
+		improved logging of hardware type
+
+2013/11/17	AdvSendAdvert was being ignored in some cases <Babel>
+
 2013/10/02	releasing 1.9.5
 		minor fix in IPv6 forwarding setting check <akarl10>
 

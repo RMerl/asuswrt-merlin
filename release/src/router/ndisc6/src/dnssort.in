@@ -1,0 +1,74 @@
+#! @PERL@
+#
+# Perl script to sort DNS names
+# 
+# $Id: dnssort.in 483 2007-08-08 15:09:36Z remi $
+
+# *************************************************************************
+# *  Copyright © 2004-2006 Rémi Denis-Courmont.                           *
+# *  This program is free software: you can redistribute and/or modify    *
+# *  it under the terms of the GNU General Public License as published by *
+# *  the Free Software Foundation, versions 2 or 3 of the license.        *
+# *                                                                       *
+# *  This program is distributed in the hope that it will be useful,      *
+# *  but WITHOUT ANY WARRANTY; without even the implied warranty of       *
+# *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        *
+# *  GNU General Public License for more details.                         *
+# *                                                                       *
+# *  You should have received a copy of the GNU General Public License    *
+# *  along with this program. If not, see <http://www.gnu.org/licenses/>. *
+# *************************************************************************
+
+use strict;
+#use locale; -- not very useful for DNS
+use Getopt::Std;
+
+$Getopt::Std::STANDARD_HELP_VERSION = 1;
+$main::VERSION = '@VERSION@';
+
+sub main::HELP_MESSAGE()
+{
+	print "Usage: dnssort [-r] [FILES]\n".
+	      "       Sorts DNS hostnames from input.\n";
+}
+
+
+# Parse command line
+our $opt_r;
+getopts('r');
+
+if ($#ARGV < 0)
+{
+	# No files specified -> Use standard input
+	push @ARGV, '-';
+}
+
+# Read files
+my @names = ();
+
+foreach (@ARGV)
+{
+	open FD,"< $_" or die "$_: $!\n";
+	while(<FD>)
+	{
+		chomp;
+		split /\./;
+		push @names, join('.', reverse @_);
+	}
+	close FD;
+}
+
+# Sort entries
+@names = sort { lc($a) cmp lc($b) } @names;
+if ($opt_r)
+{
+	@names = reverse @names;
+}
+
+# Print results
+foreach (@names)
+{
+	split /\./;
+	print join('.', reverse @_)."\n";
+}
+

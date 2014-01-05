@@ -1,7 +1,7 @@
 /*
  * stdlib support routines for self-contained images.
  *
- * Copyright (C) 2011, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmstdlib.c 323209 2012-03-23 11:25:10Z $
+ * $Id: bcmstdlib.c 355155 2012-09-05 17:00:22Z $
  */
 
 /*
@@ -90,7 +90,6 @@ snprintf(char *buf, size_t bufsize, const char *fmt, ...)
 }
 
 #else /* BCMSTDLIB_WIN32_APP */
-
 
 static const char hex_upper[17] = "0123456789ABCDEF";
 static const char hex_lower[17] = "0123456789abcdef";

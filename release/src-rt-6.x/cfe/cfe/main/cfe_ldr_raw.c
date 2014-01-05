@@ -260,45 +260,43 @@ static int cfe_rawload(cfe_loadargs_t *la)
      */
 
     if (!findbb && (la->la_flags & LOADFLG_COMPRESSED)) {
-#ifdef CFG_LZMA
-		uint8_t c;
+		uint8_t c[2];
 		int len;
-		static uint8_t gz_magic[2] = {0x1f, 0x8b}; /* gzip magic header */
-		int gzip = 1;
+		char *zh = "z";
+
 		/* 
 		* Check compression method
 		*/
 		res = fs_open(fsctx, &ref, la->la_filename, FILE_MODE_READ);
-		if (res == 0) {
-			for (len = 0; len < 2; len++)
-			{
-				res = fs_read(fsctx, ref, &c, 1);
-				if (res != 1) 
-					break;
-				else if (c != gz_magic[len]) {
-					gzip = 0;
-					break;
-				}
-			}
-			fs_close(fsctx, ref);
-		}
-		else
-			return res;
+		if (res != 0)
+			goto errout;
 
-		if (!gzip) {
-			res = fs_hook(fsctx,"lzma");
-			if (res != 0) {
-				return res;
-			}			
+		len = fs_read(fsctx, ref, c, 2);
+		fs_close(fsctx, ref);
+		if (len != 2) {
+			res = CFE_ERR_IOERR;
+			goto errout;
 		}
+
+#ifdef	CFG_ZLIB
+		if (memcmp(c, "\x1f\x8b", 2) == 0)
+			zh = "z";
 		else
-#endif /* CFG_LZMA */
+#endif
+#ifdef	CFG_LZMA
+		if (memcmp(c, "\x5d\x00", 2) == 0)
+			zh = "lzma";
+		else
+#endif
 		{
-			res = fs_hook(fsctx,"z");
-			if (res != 0) {
-				return res;
-			}
+			xprintf("Image compressed with unsupported method\n");
+			res = CFE_ERR_UNSUPPORTED;
+			goto errout;
 		}
+
+		res = fs_hook(fsctx, zh);
+		if (res != 0)
+			goto errout;
 	}
 
 	/*
@@ -306,10 +304,8 @@ static int cfe_rawload(cfe_loadargs_t *la)
      */
 
     res = fs_open(fsctx,&ref,la->la_filename,FILE_MODE_READ);
-    if (res != 0) {
-	fs_uninit(fsctx);
-	return res;
-	}
+    if (res != 0)
+		goto errout;
 
     /*
      * If we need to find a boot block, do it now.
@@ -331,8 +327,7 @@ static int cfe_rawload(cfe_loadargs_t *la)
 	    }
 	else {
 	    fs_close(fsctx,ref);
-	    fs_uninit(fsctx);
-	    return res;
+	    goto errout;
 	    }
 	
 	}
@@ -390,5 +385,8 @@ static int cfe_rawload(cfe_loadargs_t *la)
     if (la->la_flags & LOADFLG_NOISY) xprintf(" %d bytes read\n",ttlcopy);
 
     return (res < 0) ? res : ttlcopy;
-    
+
+errout:
+	fs_uninit(fsctx);
+	return res;
 }

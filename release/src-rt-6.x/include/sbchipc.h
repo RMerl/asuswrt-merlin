@@ -5,7 +5,7 @@
  * JTAG, 0/1/2 UARTs, clock frequency control, a watchdog interrupt timer,
  * GPIO interface, extbus, and support for serial and parallel flashes.
  *
- * $Id: sbchipc.h 354512 2012-08-31 10:28:54Z $
+ * $Id: sbchipc.h 377125 2013-01-04 08:09:28Z $
  *
  * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
@@ -363,10 +363,52 @@ typedef volatile struct {
 	uint32	gci_corecaps2;
 	uint32	gci_corectrl;
 	uint32	gci_corestat; /* 0xC10 */
-	uint32	PAD[11];
+	uint32	gci_intstat; /* 0xC14 */
+	uint32	gci_intmask; /* 0xC18 */
+	uint32	gci_wakemask; /* 0xC1C */
+	uint32	gci_levelintstat; /* 0xC20 */
+	uint32	gci_eventintstat; /* 0xC24 */
+	uint32	PAD[6];
 	uint32	gci_indirect_addr; /* 0xC40 */
-	uint32	PAD[111];
+	uint32	gci_gpioctl; /* 0xC44 */
+	uint32	PAD;
+	uint32	gci_gpiomask; /* 0xC4C */
+	uint32	PAD;
+	uint32	gci_miscctl; /* 0xC54 */
+	uint32	PAD[2];
+	uint32	gci_input[32]; /* C60 */
+	uint32	gci_event[32]; /* CE0 */
+	uint32	gci_output[4]; /* D60 */
+	uint32	gci_control_0; /* 0xD70 */
+	uint32	gci_control_1; /* 0xD74 */
+	uint32	gci_level_polreg; /* 0xD78 */
+	uint32	gci_levelintmask; /* 0xD7C */
+	uint32	gci_eventintmask; /* 0xD80 */
+	uint32	PAD[3];
+	uint32	gci_inbandlevelintmask; /* 0xD90 */
+	uint32	gci_inbandeventintmask; /* 0xD94 */
+	uint32	PAD[2];
+	uint32	gci_seciauxtx; /* 0xDA0 */
+	uint32	gci_seciauxrx; /* 0xDA4 */
+	uint32	gci_secitx_datatag; /* 0xDA8 */
+	uint32	gci_secirx_datatag; /* 0xDAC */
+	uint32	gci_secitx_datamask; /* 0xDB0 */
+	uint32	gci_seciusef0tx_reg; /* 0xDB4 */
+	uint32	gci_secif0tx_offset; /* 0xDB8 */
+	uint32	gci_secif0rx_offset; /* 0xDBC */
+	uint32	gci_secif1tx_offset; /* 0xDC0 */
+	uint32	PAD[3];
+	uint32	gci_uartescval; /* DD0 */
+	uint32	PAD[3];
+	uint32	gci_secibauddiv; /* DE0 */
+	uint32	gci_secifcr; /* DE4 */
+	uint32	gci_secilcr; /* DE8 */
+	uint32	gci_secimcr; /* DEC */
+	uint32	PAD[2];
+	uint32	gci_baudadj; /* DF8 */
+	uint32	PAD;
 	uint32	gci_chipctrl; /* 0xE00 */
+	uint32	gci_chipsts; /* 0xE04 */
 } chipcregs_t;
 
 #endif /* _LANGUAGE_ASSEMBLY */
@@ -485,7 +527,10 @@ typedef volatile struct {
 #define	CC_CAP2_GSIO		0x00000002	/* GSIO (spi/i2c) present, rev >= 37 */
 
 /* capabilities extension */
-#define CC_CAP_EXT_SECI_PRESENT   0x00000001    /* SECI present */
+#define CC_CAP_EXT_SECI_PRESENT 0x00000001    /* SECI present */
+#define CC_CAP_EXT_GCI_PRESENT	0x00000004    /* GCI present */
+
+#define GCI_WL_CHN_INFO_MASK 	(0xFF00)
 
 /* PLL type */
 #define PLL_NONE		0x00000000
@@ -821,8 +866,8 @@ typedef volatile struct {
 #define	FW_W3_SHIFT		24
 
 /* watchdog */
-#define WATCHDOG_CLOCK          48000000        /* Hz */
-#define WATCHDOG_CLOCK_5354     32000           /* Hz */
+#define WATCHDOG_CLOCK		48000000	/* Hz */
+#define WATCHDOG_CLOCK_5354	32000		/* Hz */
 
 /* When Srom support present, fields in sromcontrol */
 #define	SRC_START		0x80000000
@@ -1538,6 +1583,10 @@ typedef volatile struct {
 #define CCTRL43217_EXTPA_C0             (1<<13) /* core0 extPA in ChipControl 1, bit 13 */
 #define CCTRL43217_EXTPA_C1             (1<<8)  /* core1 extPA in ChipControl 1, bit 8 */
 
+/* 43228 Chip specific ChipControl register bits */
+#define CCTRL43228_EXTPA_C0             (1<<14) /* core1 extPA in ChipControl 1, bit 14 */
+#define CCTRL43228_EXTPA_C1             (1<<9)  /* core0 extPA in ChipControl 1, bit 1 */
+
 /* 4328 resources */
 #define RES4328_EXT_SWITCHER_PWM	0	/* 0x00001 */
 #define RES4328_BB_SWITCHER_PWM		1	/* 0x00002 */
@@ -2160,6 +2209,8 @@ typedef volatile struct {
 #define RES43143_OTP_PU			9	/* 0x00200 */
 #define RES43143_LQ_AVAIL		10	/* 0x00400 */
 
+#define PMU43143_XTAL_CORE_SIZE_MASK	0x3F
+
 /* 4313 resources */
 #define	RES4313_BB_PU_RSRC		0
 #define	RES4313_ILP_REQ_RSRC		1
@@ -2304,6 +2355,14 @@ typedef volatile struct {
 
 #define CCTL_4360_UART_SEL	2
 
+/* defines to detect active host interface in use */
+#define CHIP_HOSTIF_PCIEMODE	0x1
+#define CHIP_HOSTIF_USBMODE	0x2
+#define CHIP_HOSTIF_SDIOMODE	0x4
+#define CHIP_HOSTIF_PCIE(sih)	(si_chip_hostif(sih) == CHIP_HOSTIF_PCIEMODE)
+#define CHIP_HOSTIF_USB(sih)	(si_chip_hostif(sih) == CHIP_HOSTIF_USBMODE)
+#define CHIP_HOSTIF_SDIO(sih)	(si_chip_hostif(sih) == CHIP_HOSTIF_SDIOMODE)
+
 /* 4335 resources */
 #define RES4335_LPLDO_PO           0
 #define RES4335_PMU_BG_PU          1
@@ -2345,27 +2404,70 @@ typedef volatile struct {
 #define CST4335_CHIPMODE_MASK		0xF
 #define CST4335_CHIPMODE_SDIOD(cs)	(((cs) & (1 << 0)) != 0)	/* SDIO */
 #define CST4335_CHIPMODE_GSPI(cs)	(((cs) & (1 << 1)) != 0)	/* gSPI */
-#define CST4335_CHIPMODE_USB20D(cs)	(((cs) & (1 << 2)) != 0)	/* USB || USBDA */
+#define CST4335_CHIPMODE_USB20D(cs)	(((cs) & (1 << 2)) != 0)	/* HSIC || USBDA */
 #define CST4335_CHIPMODE_PCIE(cs)	(((cs) & (1 << 3)) != 0)	/* PCIE */
 
 /* 4335 Chip specific ChipControl1 register bits */
 #define CCTRL1_4335_GPIO_SEL		(1 << 0)    /* 1=select GPIOs to be muxed out */
 #define CCTRL1_4335_SDIO_HOST_WAKE (1 << 2)  /* SDIO: 1=configure GPIO0 for host wake */
 
-
 #define CR4_RAM_BASE                    (0x180000)
 #define PATCHTBL_SIZE			(0x800)
+
+/* 4335 chip OTP present & OTP select bits. */
+#define SPROM4335_OTP_SELECT	0x00000010
+#define SPROM4335_OTP_PRESENT	0x00000020
+
+/* 4335 GCI specific bits. */
+#define CC4335_GCI_STRAP_OVERRIDE_SFLASH_PRESENT	(1 << 24)
+#define CC4335_GCI_STRAP_OVERRIDE_SFLASH_TYPE	25
+#define CC4335_GCI_FUNC_SEL_PAD_SDIO	0x00707770
+
+/* SFLASH clkdev specific bits. */
+#define CC4335_SFLASH_CLKDIV_MASK	0x1F000000
+#define CC4335_SFLASH_CLKDIV_SHIFT	25
+
+/* 4335 OTP bits for SFLASH. */
+#define CC4335_SROM_OTP_SFLASH	40
+#define CC4335_SROM_OTP_SFLASH_PRESENT	0x1
+#define CC4335_SROM_OTP_SFLASH_TYPE	0x2
+#define CC4335_SROM_OTP_SFLASH_CLKDIV_MASK	0x003C
+#define CC4335_SROM_OTP_SFLASH_CLKDIV_SHIFT	2
+
 /* 4335 resources--END */
 
 /* 4350 PMU resources and chip status bits */
 #define CST4350_SDIO_MODE		0x00000001
 #define CST4350_HSIC20D_MODE		0x00000002
-#define CST4350_HSIC30D_MODE		0x00000004
+#define CST4350_BP_ON_HSIC_CLK		0x00000004
 #define CST4350_PCIE_MODE		0x00000008
 #define CST4350_USB20D_MODE		0x00000010
 #define CST4350_USB30D_MODE		0x00000020
 #define CST4350_SPROM_PRESENT		0x00000040
 #define CST4350_SFLASH_PRESENT		0x00040000
+
+/* strap_host_ifc strap value */
+#define CST4350_HOST_IFC_MASK		0x00700000
+#define CST4350_HOST_IFC_SHIFT		20
+
+/* host_ifc raw mode */
+#define CST4350_IFC_MODE_SDIOD			0x0
+#define CST4350_IFC_MODE_HSIC20D		0x1
+#define CST4350_IFC_MODE_HSIC30D		0x2
+#define CST4350_IFC_MODE_PCIE			0x3
+#define CST4350_IFC_MODE_USB20D			0x4
+#define CST4350_IFC_MODE_USB30D			0x5
+#define CST4350_IFC_MODE_USB30D_WL		0x6
+#define CST4350_IFC_MODE_USB30D_BT		0x7
+
+#define CST4350_IFC_MODE(cs)	((cs & CST4350_HOST_IFC_MASK) >> CST4350_HOST_IFC_SHIFT)
+
+#define CST4350_CHIPMODE_SDIOD(cs)	(CST4350_IFC_MODE(cs) == (CST4350_IFC_MODE_SDIOD))
+#define CST4350_CHIPMODE_USB20D(cs)	((CST4350_IFC_MODE(cs)) == (CST4350_IFC_MODE_USB20D))
+#define CST4350_CHIPMODE_HSIC20D(cs)	(CST4350_IFC_MODE(cs) == (CST4350_IFC_MODE_HSIC20D))
+#define CST4350_CHIPMODE_HSIC30D(cs)	(CST4350_IFC_MODE(cs) == (CST4350_IFC_MODE_HSIC30D))
+#define CST4350_CHIPMODE_USB30D(cs)	(CST4350_IFC_MODE(cs) == (CST4350_IFC_MODE_USB30D))
+#define CST4350_CHIPMODE_USB30D_WL(cs)	(CST4350_IFC_MODE(cs) == (CST4350_IFC_MODE_USB30D_WL))
 
 #define RES4350_LPLDO_PU	0
 #define RES4350_PMU_BG_PU	1
@@ -2399,7 +2501,42 @@ typedef volatile struct {
 #define RES4350_HT_AVAIL	29
 #define RES4350_MACPHY_CLKAVAIL	30
 
-#define CST4350_CHIPMODE_USB20D(cs)	(((cs) & (1 << 2)) != 0)
+#define MUXENAB4350_UART_MASK		(0x0000000f)
+
+/* 4350 GCI function sel values */
+#define CC4350_FNSEL_HWDEF		(0)
+#define CC4350_FNSEL_SAMEASPIN		(1)
+#define CC4350_FNSEL_UART		(2)
+#define CC4350_FNSEL_SFLASH		(3)
+#define CC4350_FNSEL_SPROM		(4)
+#define CC4350_FNSEL_I2C		(5)
+#define CC4350_FNSEL_MISC0		(6)
+#define CC4350_FNSEL_GCI		(7)
+#define CC4350_FNSEL_MISC1		(8)
+#define CC4350_FNSEL_MISC2		(9)
+#define CC4350_FNSEL_PWDOG 		(10)
+#define CC4350_FNSEL_IND		(12)
+#define CC4350_FNSEL_PDN		(13)
+#define CC4350_FNSEL_PUP		(14)
+#define CC4350_FNSEL_TRISTATE		(15)
+
+/* 4350 GPIO */
+#define CC4350_PIN_GPIO_00		(0)
+#define CC4350_PIN_GPIO_01		(1)
+#define CC4350_PIN_GPIO_02		(2)
+#define CC4350_PIN_GPIO_03		(3)
+#define CC4350_PIN_GPIO_04		(4)
+#define CC4350_PIN_GPIO_05		(5)
+#define CC4350_PIN_GPIO_06		(6)
+#define CC4350_PIN_GPIO_07		(7)
+#define CC4350_PIN_GPIO_08		(8)
+#define CC4350_PIN_GPIO_09		(9)
+#define CC4350_PIN_GPIO_10		(10)
+#define CC4350_PIN_GPIO_11		(11)
+#define CC4350_PIN_GPIO_12		(12)
+#define CC4350_PIN_GPIO_13		(13)
+#define CC4350_PIN_GPIO_14		(14)
+#define CC4350_PIN_GPIO_15		(15)
 
 /* GCI chipcontrol register indices */
 #define CC_GCI_CHIPCTRL_00	(0)
@@ -2409,6 +2546,8 @@ typedef volatile struct {
 #define CC_GCI_CHIPCTRL_04	(4)
 #define CC_GCI_CHIPCTRL_05	(5)
 #define CC_GCI_CHIPCTRL_06	(6)
+#define 	CC_GCI_06_JTAG_SEL_SHIFT	4
+#define 	CC_GCI_06_JTAG_SEL_MASK		(1 << 4)
 #define CC_GCI_CHIPCTRL_07	(7)
 #define CC_GCI_CHIPCTRL_08	(8)
 
@@ -2470,13 +2609,15 @@ typedef volatile struct {
 #define GCIPOSVAL(val, pos)  ((((uint32)val) << pos) & GCIMASK(pos))
 
 /* 4335 MUX options. each nibble belongs to a setting. Non-zero value specifies a logic
-* for now only UART for bootloader.
+* for now only UART for bootloader and sdio host wakeup.
 */
 #define MUXENAB4335_UART_MASK		(0x0000000f)
+#define MUXENAB4335_UART_SHIFT		0
+#define MUXENAB4335_HOSTWAKE_MASK	(0x000000f0)	/* configure GPIO for SDIO host_wake */
+#define MUXENAB4335_HOSTWAKE_SHIFT	4
 
-
-/* defines to detect active host interface in use */
-#define CHIP_HOSTIF_USB(sih)	(si_chip_hostif(sih) & CST4360_MODE_USB)
+#define MUXENAB4335_GETIX(val, name) \
+	((((val) & MUXENAB4335_ ## name ## _MASK) >> MUXENAB4335_ ## name ## _SHIFT) - 1)
 
 /*
 * Maximum delay for the PMU state transition in us.
@@ -2596,8 +2737,10 @@ typedef volatile struct {
 #define SECI_MODE_SHIFT		4 /* (bits 5, 6, 7) */
 #define SECI_UPD_SECI		(1 << 7)
 
-#define SECI_SIGNOFF_0     0xDB
-#define SECI_SIGNOFF_1     0
+#define SECI_SLIP_ESC_CHAR	0xDB
+#define SECI_SIGNOFF_0		SECI_SLIP_ESC_CHAR
+#define SECI_SIGNOFF_1		0
+#define SECI_REFRESH_REQ	0xDA
 
 /* seci clk_ctl_st bits */
 #define CLKCTL_STS_SECI_CLK_REQ		(1 << 8)

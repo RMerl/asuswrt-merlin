@@ -16,7 +16,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: etcgmac.c 346601 2012-07-23 10:38:19Z $
+ * $Id: etcgmac.c 368367 2012-11-13 09:35:32Z $
  */
 
 #include <et_cfg.h>
@@ -275,7 +275,7 @@ chipattach(etc_info_t *etc, void *osh, void *regsva)
 	si_pci_setup(ch->sih, (1 << si_coreidx(ch->sih)));
 
 	/* Northstar, take all GMAC cores out of reset */
-	if (CHIPID(ch->sih->chip) == BCM4707_CHIP_ID) {
+	if (BCM4707_CHIP(CHIPID(ch->sih->chip))) {
 		int ns_gmac;
 		for (ns_gmac = 0; ns_gmac < MAX_GMAC_CORES_4707; ns_gmac++) {
 			/* As northstar requirement, we have to reset all GAMCs before
@@ -464,6 +464,10 @@ chipattach(etc_info_t *etc, void *osh, void *regsva)
 			ET_ERROR(("et%d: chipattach: robo_enable_switch failed\n", etc->unit));
 			goto fail;
 		}
+#ifdef PLC
+		/* Configure the switch port connected to PLC chipset */
+		robo_plc_hw_init(etc->robo);
+#endif /* PLC */
 	}
 #endif /* ETROBO */
 
@@ -528,7 +532,7 @@ chipdetach(ch_t *ch)
 
 	/* put the core back into reset */
 	/* For Northstar, should not disable any GMAC core */
-	if (ch->sih && CHIPID(ch->sih->chip) != BCM4707_CHIP_ID)
+	if (ch->sih && !BCM4707_CHIP(CHIPID(ch->sih->chip)))
 		si_core_disable(ch->sih, 0);
 
 	ch->etc->mib = NULL;
@@ -629,7 +633,7 @@ chipdumpregs(ch_t *ch, gmacregs_t *regs, struct bcmstrbuf *b)
 	bcm_bprintf(b, "\n");
 
 	/* unimac registers */
-	if (CHIPID(ch->sih->chip) != BCM4707_CHIP_ID) {
+	if (!BCM4707_CHIP(CHIPID(ch->sih->chip))) {
 		/* BCM4707 doesn't has unimacversion register */
 		PRREG(unimacversion);
 	}
@@ -945,7 +949,7 @@ gmac_enable(ch_t *ch)
 	/* To prevent any risk of the BCM4707 ROM mdp issue we saw in the QT,
 	 * we use the mdp register default value
 	 */
-	if (CHIPID(ch->sih->chip) != BCM4707_CHIP_ID) {
+	if (!BCM4707_CHIP(CHIPID(ch->sih->chip))) {
 		/* init the mac data period. the value is set according to expr
 		 * ((128ns / bp_clk) - 3).
 		 */
@@ -1003,7 +1007,7 @@ gmac_miiconfig(ch_t *ch)
 	 *          Unimac line rate will be 2G.
 	 *          If reset, this selects 125MHz reference clock input.
 	 */
-	if (CHIPID(ch->sih->chip) == BCM4707_CHIP_ID) {
+	if (BCM4707_CHIP(CHIPID(ch->sih->chip))) {
 		if (ch->etc->forcespeed == ET_AUTO) {
 			si_core_cflags(ch->sih, 0x44, 0x44);
 			gmac_speed(ch, ET_2500FULL);
@@ -1098,7 +1102,7 @@ chipinreset:
 	si_core_reset(ch->sih, flagbits, 0);
 
 	/* Request Misc PLL for corerev > 2 */
-	if (ch->etc->corerev > 2 && CHIPID(ch->sih->chip) != BCM4707_CHIP_ID) {
+	if (ch->etc->corerev > 2 && !BCM4707_CHIP(CHIPID(ch->sih->chip))) {
 		OR_REG(ch->osh, &regs->clk_ctl_st, CS_ER);
 		SPINWAIT((R_REG(ch->osh, &regs->clk_ctl_st) & CS_ES) != CS_ES, 1000);
 	}
@@ -1248,7 +1252,6 @@ chipinit(ch_t *ch, uint options)
 	gmacregs_t *regs;
 	uint idx;
 	uint i;
-
 	regs = ch->regs;
 	etc = ch->etc;
 	idx = 0;
@@ -1370,8 +1373,16 @@ chiptx(ch_t *ch, void *p0)
 	if ((ch->etc->txframes[q] & ch->etc->txrec_thresh) == 1)
 		dma_txreclaim(ch->di[q], HNDDMA_RANGE_TRANSMITTED);
 
+#if defined(_CFE_) || defined(__NetBSD__)
 	error = dma_txfast(ch->di[q], p0, TRUE);
-
+#else
+#ifdef PKTC
+#define DMA_COMMIT	((PKTCFLAGS(p0) & 1) != 0)
+#else
+#define DMA_COMMIT	(TRUE)
+#endif
+	error = dma_txfast(ch->di[q], p0, DMA_COMMIT);
+#endif /* defined(_CFE_) || defined(__NetBSD__) */
 	if (error) {
 		ET_ERROR(("et%d: chiptx: out of txds\n", ch->etc->unit));
 		ch->etc->txnobuf++;
@@ -1381,7 +1392,8 @@ chiptx(ch_t *ch, void *p0)
 	ch->etc->txframes[q]++;
 
 	/* set back the orig length */
-	PKTSETLEN(ch->osh, p0, len);
+	if (len < GMAC_MIN_FRAMESIZE)
+		PKTSETLEN(ch->osh, p0, len);
 
 	return TRUE;
 }
@@ -1395,7 +1407,9 @@ chiptxreclaim(ch_t *ch, bool forceall)
 	ET_TRACE(("et%d: chiptxreclaim\n", ch->etc->unit));
 
 	for (i = 0; i < NUMTXQ; i++) {
-		dma_txreclaim(ch->di[i], forceall ? HNDDMA_RANGE_ALL : HNDDMA_RANGE_TRANSMITTED);
+		if (*(uint *)(ch->etc->txavail[i]) < NTXD)
+			dma_txreclaim(ch->di[i], forceall ? HNDDMA_RANGE_ALL :
+			                                    HNDDMA_RANGE_TRANSMITTED);
 		ch->intstatus &= ~(I_XI0 << i);
 	}
 }

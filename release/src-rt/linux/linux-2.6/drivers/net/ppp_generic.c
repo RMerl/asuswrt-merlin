@@ -45,7 +45,6 @@
 #include <linux/stddef.h>
 #include <linux/device.h>
 #include <linux/mutex.h>
-#include <linux/ppp_async.h>
 #include <net/slhc_vj.h>
 #include <asm/atomic.h>
 
@@ -104,8 +103,8 @@ struct ppp_file {
  * It can have 0 or more ppp channels connected to it.
  */
 #ifdef HNDCTF
- typedef struct channel channel_t;
-#endif 
+typedef struct channel channel_t;
+#endif
 
 struct ppp {
 	struct ppp_file	file;		/* stuff for read/write/poll 0 */
@@ -2532,16 +2531,16 @@ ppp_create_interface(int unit, int *retp)
 		goto out2;
 	}
 
+	atomic_inc(&ppp_unit_count);
+	ret = cardmap_set(&all_ppp_units, unit, ppp);
+	if (ret != 0)
+		goto out3;
+
 #ifdef HNDCTF
 	if ((ctf_dev_register(kcih, dev, FALSE) != BCME_OK) ||
 	    (ctf_enable(kcih, dev, TRUE, NULL) != BCME_OK))
 		ctf_dev_unregister(kcih, dev);
 #endif
-
-	atomic_inc(&ppp_unit_count);
-	ret = cardmap_set(&all_ppp_units, unit, ppp);
-	if (ret != 0)
-		goto out3;
 
 	mutex_unlock(&all_ppp_mutex);
 	*retp = 0;
@@ -2706,7 +2705,7 @@ ppp_connect_channel(struct channel *pch, int unit)
 	pch->ppp = ppp;
 #ifdef HNDCTF
 	ppp->ctfpch = pch;
-#endif	
+#endif
 	atomic_inc(&ppp->file.refcnt);
 	ppp_unlock(ppp);
 	ret = 0;
@@ -2916,15 +2915,12 @@ ppp_txstats_upd(void *pppif, struct sk_buff *skb)
 	ppp->last_xmit = jiffies;
 }
 
-
 int
 ppp_get_conn_pkt_info(int unit, struct ctf_ppp *ctfppp){
 	struct pppox_sock *po = NULL;
-	struct asyncppp *ap = NULL;
 	struct sock *sk = NULL;
 	struct ppp *ppp = NULL;
 	struct channel *pch = NULL;
-	const char *vars = NULL;
 
 	ppp = ppp_find_unit(unit);
 	if(ppp) pch = ppp->ctfpch;
@@ -2934,18 +2930,15 @@ ppp_get_conn_pkt_info(int unit, struct ctf_ppp *ctfppp){
 	}
 
 	po = pppox_sk((struct sock *)pch->chan->private);
-	ap = (struct asyncppp *)pch->chan->private;
-
-	if(ap && ap->tty)
-		return (BCME_ERROR);
 
 	if (po == NULL){
 		return (BCME_ERROR);
 	}
+
 	ctfppp->psk.po = po;
 	
 	sk = po->chan.private;
-	if(sk /*&& sizeof(sk) > sizeof(struct sock_common)*/){
+	if(sk && sk==&po->sk ){
 		ctfppp->psk.pppox_protocol = sk->sk_protocol;
 		switch (sk->sk_protocol){
 		case PX_PROTO_OE:

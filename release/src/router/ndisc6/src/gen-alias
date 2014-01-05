@@ -1,0 +1,38 @@
+#! /bin/sh
+
+# *************************************************************************
+# *  Copyright © 2006 Rémi Denis-Courmont.                                *
+# *  This program is free software: you can redistribute and/or modify    *
+# *  it under the terms of the GNU General Public License as published by *
+# *  the Free Software Foundation, versions 2 or 3 of the license.        *
+# *                                                                       *
+# *  This program is distributed in the hope that it will be useful,      *
+# *  but WITHOUT ANY WARRANTY; without even the implied warranty of       *
+# *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        *
+# *  GNU General Public License for more details.                         *
+# *                                                                       *
+# *  You should have received a copy of the GNU General Public License    *
+# *  along with this program. If not, see <http://www.gnu.org/licenses/>. *
+# *************************************************************************
+
+
+set -e
+
+FRONTEND="$1"
+BACKEND="$2"
+PARAMS="$3"
+
+if [ -z "$PARAMS" ]; then
+	echo "Usage: $0 <output_file> <back-end> <parameters>" >&2
+	exit 1
+fi
+
+BACKEND="`echo "${BACKEND}" | sed "${transform}"`"
+
+rm -f "${FRONTEND}"
+cat > "$FRONTEND" << EOF
+#! /bin/sh
+exec "\$(dirname \$0)/${BACKEND}" ${PARAMS} "\$@"
+EOF
+chmod +rx "$FRONTEND"
+

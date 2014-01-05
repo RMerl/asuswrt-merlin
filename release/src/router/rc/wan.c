@@ -1074,8 +1074,8 @@ static int stop_ipoa()
 	// delete neighbor hosts
 	for (i=0; i<NeighborIpNum; i++)
 	{
-		sprintf(CmdBuf,"%s.%d",NeighborIpPrefix,i+NeiBaseIpNum); 		
-		eval("arp","-d",CmdBuf); 	
+		sprintf(CmdBuf,"%s.%d",NeighborIpPrefix,i+NeiBaseIpNum);
+		eval("arp","-d",CmdBuf);
 	}
 	
 	return 0;
@@ -1097,10 +1097,8 @@ start_wan_if(int unit)
 	int s;
 	struct ifreq ifr;
 	pid_t pid;
-	int port_num;
-	char port_path[8];
+	char usb_node[32], port_path[8];
 	char nvram_name[32];
-	char word[PATH_MAX], *next;
 	int i = 0;
 #ifdef RTCONFIG_USB_BECEEM
 	char uvid[8], upid[8];
@@ -1181,18 +1179,19 @@ TRACE_PT("3g begin.\n");
 			wan_ifname = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
 			if(strlen(wan_ifname) <= 0){
 #ifdef RTCONFIG_USB_BECEEM
-				port_num = 1;
-				foreach(word, nvram_safe_get("ehci_ports"), next){
-					memset(nvram_name, 0, 32);
-					sprintf(nvram_name, "usb_path%d", port_num);
+				snprintf(usb_node, 32, "%s", nvram_safe_get("usb_modem_act_path"));
+				if(strlen(usb_node) <= 0)
+					return;
+
+				if(get_path_by_node(usb_node, port_path, 8) != NULL){
+					snprintf(nvram_name, 32, "usb_path%s", port_path);
+_dprintf("RNDIS/Beceem: start_wan_if.\n");
 
 					if(!strcmp(nvram_safe_get(nvram_name), "modem")){
-						memset(nvram_name, 0, 32);
-						sprintf(nvram_name, "usb_path%d_vid", port_num);
+						snprintf(nvram_name, 32, "usb_path%s_vid", port_path);
 						memset(uvid, 0, 8);
 						strncpy(uvid, nvram_safe_get(nvram_name), 8);
-						memset(nvram_name, 0, 32);
-						sprintf(nvram_name, "usb_path%d_pid", port_num);
+						snprintf(nvram_name, 32, "usb_path%s_pid", port_path);
 						memset(upid, 0, 8);
 						strncpy(upid, nvram_safe_get(nvram_name), 8);
 
@@ -1234,11 +1233,7 @@ TRACE_PT("3g begin.\n");
 
 							xstart("gctwimax", "-C", WIMAX_CONF);
 						}
-
-						break;
 					}
-
-					++port_num;
 				}
 #endif
 
@@ -1284,7 +1279,8 @@ TRACE_PT("3g begin.\n");
 			nvram_set(strcat_r(prefix, "dhcpenable_x", tmp), "1");
 			nvram_set(strcat_r(prefix, "dnsenable_x", tmp), "1");
 
-			if(!strncmp(wan_ifname, "usb", 3)){ // RNDIS interface.
+			// Android phone, RNDIS interface.
+			if(!strncmp(wan_ifname, "usb", 3)){
 				if(!nvram_match("stop_conn_3g", "1")){
 					start_udhcpc(wan_ifname, unit, &pid);
 					update_wan_state(prefix, WAN_STATE_CONNECTING, 0);
@@ -1292,15 +1288,20 @@ TRACE_PT("3g begin.\n");
 				else
 					TRACE_PT("stop_conn_3g was set.\n");
 			}
-			// Beceem dongle, ASIX USB to RJ45 converter.
+			// Beceem dongle, ASIX USB to RJ45 converter, Huawei E353.
 			else if(!strncmp(wan_ifname, "eth", 3)){
 #ifdef RTCONFIG_USB_BECEEM
 				write_beceem_conf(wan_ifname);
 #endif
 
 				if(!nvram_match("stop_conn_3g", "1")){
-					memset(port_path, 0, 8);
-					strncpy(port_path, nvram_safe_get("usb_modem_act_path"), 8);
+					snprintf(usb_node, 32, "%s", nvram_safe_get("usb_modem_act_path"));
+					if(strlen(usb_node) <= 0)
+						return;
+
+					if(get_path_by_node(usb_node, port_path, 8) == NULL)
+						return;
+_dprintf("Beceem: stop_wan_if.\n");
 
 					memset(nvram_name, 0, 32);
 					sprintf(nvram_name, "usb_path%s_act", port_path);
@@ -1949,9 +1950,12 @@ void wan6_up(const char *wan_ifname)
 			/* prefix */
 			nvram_set_int("ipv6_prefix_length", prefixlen);
 		}
-
+#if 0
 		stop_dhcp6c();
 		start_dhcp6c();
+#else
+		start_rdnssd();
+#endif
 		break;
 	case IPV6_MANUAL:
 		if (nvram_match("ipv6_ipaddr", (char*)ipv6_router_address(NULL))) {
@@ -2029,6 +2033,7 @@ void wan6_down(const char *wan_ifname)
 #if 0
 	stop_ecmh();
 #endif
+	stop_rdnssd();
 	stop_radvd();
 	stop_ipv6_tunnel();
 	stop_dhcp6c();
