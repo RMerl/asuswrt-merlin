@@ -178,8 +178,8 @@ obj-y += eapd$(BCMEX)/linux
 obj-$(CONFIG_LIBBCM) += libbcm
 obj-$(CONFIG_LIBUPNP) += libupnp
 obj-$(RTCONFIG_WPS) += wps$(BCMEX)
-obj-$(RTCONFIG_EMF) += emf$(BCMEX)
-obj-$(RTCONFIG_EMF) += igs$(BCMEX)
+obj-$(RTCONFIG_EMF) += emf
+obj-$(RTCONFIG_EMF) += igs
 endif
 
 obj-y += libbcmcrypto
@@ -2321,16 +2321,16 @@ hotplug2-install: hotplug2
 	$(MAKE) -C hotplug2 install PREFIX=$(INSTALLDIR)/hotplug2 SUBDIRS=""
 	$(MAKE) -C hotplug2/examples install PREFIX=$(INSTALLDIR)/hotplug2/rom KERNELVER=$(LINUX_KERNEL)
 
-emf$(BCMEX):
+emf:
 	$(MAKE) -C emf$(BCMEX)/emfconf CROSS=$(CROSS_COMPILE)
 
-emf$(BCMEX)-install:
+emf-install:
 ifeq ($(RTCONFIG_EMF),y)
 	install -d $(TARGETDIR)
 	$(MAKE) -C emf$(BCMEX)/emfconf CROSS=$(CROSS_COMPILE) INSTALLDIR=$(INSTALLDIR) install
 endif
 
-emf$(BCMEX)-clean:
+emf-clean:
 	-@$(MAKE) -C emf$(BCMEX)/emfconf clean
 
 igs:
