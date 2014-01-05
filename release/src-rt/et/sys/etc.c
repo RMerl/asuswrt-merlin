@@ -499,6 +499,12 @@ etc_watchdog(etc_info_t *etc)
 
 	etc->now++;
 
+#if defined(ETROBO)
+	/* BCM53125 EEE IOP WAR for some other vendor's wrong EEE implementation. */
+	if (robo)
+		robo_watchdog(robo);
+#endif
+
 #if defined(ETROBO) && !defined(_CFE_)
 	/* Every PWRSAVE_WAKE_TIME sec the phys that are in manual mode 
 	 * is taken out of that mode and link status is checked after

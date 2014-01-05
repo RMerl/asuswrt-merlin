@@ -176,6 +176,9 @@ typedef BWL_PRE_PACKED_STRUCT struct bcm_event {
 #define WLC_E_CSA_COMPLETE_IND		78	/* 802.11 CHANNEL SWITCH ACTION completed */
 #define WLC_E_LAST		79	/* highest val + 1 for range checking */
 
+/* dummy for eapd */
+#define WLC_E_PKTDELAY_IND		95	/* event for tx pkt delay suddently jump */
+
 /* Table of event name strings for UIs and debugging dumps */
 typedef struct {
 	uint event;

@@ -497,10 +497,15 @@ do { \
 #define	PKTCLRCHAINED(osh, skb)	(((struct sk_buff*)(skb))->__unused &= (~CHAINED))
 #define	PKTISCHAINED(skb)	(((struct sk_buff*)(skb))->__unused & CHAINED)
 #endif /* 2.6.22 */
+typedef struct ctf_mark {
+	uint32	value;
+}	ctf_mark_t;
+#define CTF_MARK(m)				(m.value)
 #else /* HNDCTF */
 #define	PKTSETSKIPCT(osh, skb)
 #define	PKTCLRSKIPCT(osh, skb)
 #define	PKTSKIPCT(osh, skb)
+#define CTF_MARK(m)				0
 #endif /* HNDCTF */
 
 extern void osl_pktfree(osl_t *osh, void *skb, bool send);

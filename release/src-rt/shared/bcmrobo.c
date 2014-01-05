@@ -53,6 +53,8 @@
 /* MII access registers */
 #define PSEUDO_PHYAD	0x1E	/* MII Pseudo PHY address */
 #define REG_MII_CTRL    0x00    /* 53115 MII control register */
+#define REG_MII_CLAUSE_45_CTL1 0xd     /* 53125 MII Clause 45 control 1 */
+#define REG_MII_CLAUSE_45_CTL2 0xe     /* 53125 MII Clause 45 control 2 */
 #define REG_MII_PAGE	0x10	/* MII Page register */
 #define REG_MII_ADDR	0x11	/* MII Address register */
 #define REG_MII_DATA0	0x18	/* MII Data register 0 */
@@ -1277,6 +1279,8 @@ bcm_robo_enable_switch(robo_info_t *robo)
 		robo->ops->read_reg(robo, PAGE_CTRL, REG_CTRL_MIIPO, &val8, sizeof(val8));
 		val8 |= 0x81;	/* Make Link pass and override it. */
 		robo->ops->write_reg(robo, PAGE_CTRL, REG_CTRL_MIIPO, &val8, sizeof(val8));
+		/* Init the EEE feature */
+		robo_eee_advertise_init(robo);
 	}
 
 	/* Disable management interface access */
@@ -1348,6 +1352,21 @@ robo_dump_regs(robo_info_t *robo, struct bcmstrbuf *b)
 		}
 
 	} else {
+		uint8 vtble, vtbli, vtbla;
+
+		if ((robo->devid == DEVID5395) ||
+			(robo->devid == DEVID53115) ||
+			(robo->devid == DEVID53125) ||
+			ROBO_IS_BCM5301X(robo->devid)) {
+			vtble = REG_VTBL_ENTRY_5395;
+			vtbli = REG_VTBL_INDX_5395;
+			vtbla = REG_VTBL_ACCESS_5395;
+		} else {
+			vtble = REG_VTBL_ENTRY;
+			vtbli = REG_VTBL_INDX;
+			vtbla = REG_VTBL_ACCESS;
+		}
+
 		for (i = 0; i <= VLAN_MAXVID; i++) {
 			/* VLAN Table Address Index Register (Page 0x05, Address 0x61-0x62) */
 			val16 = i;		/* vlan id */
@@ -1778,3 +1797,105 @@ robo_plc_hw_init(robo_info_t *robo)
 	ET_MSG(("%s: Configured PLC MII interface\n", __FUNCTION__));
 }
 #endif /* PLC */
+
+/* BCM53125 EEE IOP WAR for some other vendor's wrong EEE implementation. */
+
+static void
+robo_link_down(robo_info_t *robo, int32 phy)
+{
+	if (robo->devid != DEVID53125)
+		return;
+
+	printf("robo_link_down: applying EEE WAR for 53125 port %d link-down\n", phy);
+
+	robo->miiwr(robo->h, phy, 0x18, 0x0c00);
+	robo->miiwr(robo->h, phy, 0x17, 0x001a);
+	robo->miiwr(robo->h, phy, 0x15, 0x0007);
+	robo->miiwr(robo->h, phy, 0x18, 0x0400);
+}
+
+static void
+robo_link_up(robo_info_t *robo, int32 phy)
+{
+	if (robo->devid != DEVID53125)
+		return;
+
+	printf("robo_link_down: applying EEE WAR for 53125 port %d link-up\n", phy);
+
+	robo->miiwr(robo->h, phy, 0x18, 0x0c00);
+	robo->miiwr(robo->h, phy, 0x17, 0x001a);
+	robo->miiwr(robo->h, phy, 0x15, 0x0003);
+	robo->miiwr(robo->h, phy, 0x18, 0x0400);
+}
+
+void
+robo_watchdog(robo_info_t *robo)
+{
+	int32 phy;
+	uint16 link_status;
+	static int first = 1;
+
+	if (robo->devid != DEVID53125)
+		return;
+
+	if (!robo->eee_status)
+		return;
+
+	/* read the link status of all ports */
+	robo->ops->read_reg(robo, PAGE_STATUS, REG_STATUS_LINK,
+		&link_status, sizeof(uint16));
+	link_status &= 0x1f;
+	if (first || (link_status != robo->prev_status)) {
+		for (phy = 0; phy < MAX_NO_PHYS; phy++) {
+			if (first) {
+				if (!(link_status & (1 << phy)))
+					robo_link_down(robo, phy);
+			} else if ((link_status & (1 << phy)) != (robo->prev_status & (1 << phy))) {
+				if (!(link_status & (1 << phy)))
+					robo_link_down(robo, phy);
+				else
+					robo_link_up(robo, phy);
+			}
+		}
+		robo->prev_status = link_status;
+		first = 0;
+	}
+}
+
+void
+robo_eee_advertise_init(robo_info_t *robo)
+{
+	uint16 val16;
+	int32 phy;
+
+	ASSERT(robo);
+
+	val16 = 0;
+	robo->ops->read_reg(robo, 0x92, 0x00, &val16, sizeof(val16));
+	if (val16 == 0x1f) {
+		robo->eee_status = TRUE;
+		printf("bcm_robo_enable_switch: EEE is enabled\n");
+	} else {
+		for (phy = 0; phy < MAX_NO_PHYS; phy++) {
+			/* select DEVAD 7 */
+			robo->miiwr(robo->h, phy, REG_MII_CLAUSE_45_CTL1, 0x0007);
+			/* select register 3Ch */
+			robo->miiwr(robo->h, phy, REG_MII_CLAUSE_45_CTL2, 0x003c);
+			/* read command */
+			robo->miiwr(robo->h, phy, REG_MII_CLAUSE_45_CTL1, 0xc007);
+			/* read data */
+			val16 = robo->miird(robo->h, phy, REG_MII_CLAUSE_45_CTL2);
+			val16 &= ~0x6;
+			/* select DEVAD 7 */
+			robo->miiwr(robo->h, phy, REG_MII_CLAUSE_45_CTL1, 0x0007);
+			/* select register 3Ch */
+			robo->miiwr(robo->h, phy, REG_MII_CLAUSE_45_CTL2, 0x003c);
+			/* write command */
+			robo->miiwr(robo->h, phy, REG_MII_CLAUSE_45_CTL1, 0x4007);
+			/* write data */
+			robo->miiwr(robo->h, phy, REG_MII_CLAUSE_45_CTL2, val16);
+		}
+		robo->eee_status = FALSE;
+		printf("bcm_robo_enable_switch: EEE is disabled\n");
+	}
+}

@@ -168,11 +168,13 @@ uint8 nvram_calc_crc(struct nvram_header * nvh);
 #define NVRAM_INVALID_MAGIC	0xFFFFFFFF
 #define NVRAM_VERSION		1
 #define NVRAM_HEADER_SIZE	20
-#if (defined(RTCONFIG_NVRAM_64K) || defined(CONFIG_NVRAM_64K))
-    #define NVRAM_SPACE		0x10000
-#else
-    #define NVRAM_SPACE		0x8000
+/* This definition is for precommit staging, and will be removed */
+#define NVRAM_SPACE		0x8000
+/* For CFE builds this gets passed in thru the makefile */
+#ifndef MAX_NVRAM_SPACE
+#define MAX_NVRAM_SPACE		NVRAM_SPACE
 #endif
+#define DEF_NVRAM_SPACE		0x8000
 
 #define NVRAM_MAX_VALUE_LEN 255
 #define NVRAM_MAX_PARAM_LEN 64
