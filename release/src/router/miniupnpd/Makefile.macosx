@@ -3,6 +3,10 @@
 # Author: Thomas Bernard
 # This Makefile should work for MacOSX
 #
+# To compile with pf with OS X 10.7+, you need to specify
+# path to XNU bsd sources :
+# INCLUDES="-I.../xnu/bsd I.../xnu/libkern" make -f Makefile.macosx
+#
 # To install use :
 # $ PREFIX=/dummyinstalldir make -f Makefile.macosx install
 # or :
@@ -10,16 +14,20 @@
 #
 CFLAGS = -Wall -O -g3 -DDEBUG
 #CFLAGS = -Wall -Os
-CC = gcc
+#CC = gcc  #better use clang !
 RM = rm -f
 MV = mv
 INSTALL = install
 STRIP = strip
 
+CFLAGS += -DMACOSX
+
 # OSNAME and FWNAME are used for building OS or FW dependent code.
 OSNAME = $(shell uname)
 ARCH = $(shell uname -p)
-FWNAME = ipfw
+# Firewall is ipfw up to OS X 10.6 Snow Leopard
+# and pf since OS X 10.7 Lion (Darwin 11.0)
+FWNAME = $(shell [ `uname -r | cut -d. -f1` -ge 11  ] && echo "pf" || echo "ipfw" )
 
 STD_OBJS = miniupnpd.o upnphttp.o upnpdescgen.o upnpsoap.o \
           upnpredirect.o getifaddr.o daemonize.o upnpglobalvars.o \
@@ -27,9 +35,16 @@ STD_OBJS = miniupnpd.o upnphttp.o upnpdescgen.o upnpsoap.o \
 	  upnpevents.o getconnstatus.o upnputils.o
 MAC_OBJS = mac/getifstats.o bsd/ifacewatcher.o
 IPFW_OBJS = ipfw/ipfwrdr.o ipfw/ipfwaux.o
+PF_OBJS = pf/obsdrdr.o pf/pfpinhole.o
 MISC_OBJS = upnpreplyparse.o minixml.o
 
-ALL_OBJS = $(STD_OBJS) $(MISC_OBJS) $(MAC_OBJS) $(IPFW_OBJS)
+ALL_OBJS = $(STD_OBJS) $(MISC_OBJS) $(MAC_OBJS)
+ifeq ($(FWNAME), ipfw)
+  ALL_OBJS += $(IPFW_OBJS)
+else
+  ALL_OBJS += $(PF_OBJS)
+  CFLAGS += -DPF
+endif
 
 TEST_UPNPDESCGEN_OBJS = testupnpdescgen.o upnpdescgen.o
 TEST_GETIFSTATS_OBJS = testgetifstats.o mac/getifstats.o
@@ -106,5 +121,5 @@ config.h: genconfig.sh
 
 .SUFFIXES: .o .c
 .c.o:
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
 #	$(CC) $(CFLAGS) -c -o $(.TARGET) $(.IMPSRC)

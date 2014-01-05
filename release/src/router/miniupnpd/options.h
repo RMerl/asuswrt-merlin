@@ -1,8 +1,8 @@
-/* $Id: options.h,v 1.22 2012/09/27 15:47:15 nanard Exp $ */
+/* $Id: options.h,v 1.23 2013/12/13 13:20:30 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * author: Ryan Wagoner
- * (c) 2006-2012 Thomas Bernard
+ * (c) 2006-2013 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -22,7 +22,14 @@ enum upnpconfigoptions {
 	UPNPBITRATE_UP,			/* "bitrate_up" */
 	UPNPBITRATE_DOWN,		/* "bitrate_down" */
 	UPNPPRESENTATIONURL,	/* presentation_url */
+#ifdef ENABLE_MANUFACTURER_INFO_CONFIGURATION
 	UPNPFRIENDLY_NAME,		/* "friendly_name" */
+	UPNPMANUFACTURER_NAME,	/* "manufacturer_name" */
+	UPNPMANUFACTURER_URL,	/* "manufacturer_url" */
+	UPNPMODEL_NAME,	/* "model_name" */
+	UPNPMODEL_DESCRIPTION,	/* "model_description" */
+	UPNPMODEL_URL,	/* "model_url" */
+#endif
 	UPNPNOTIFY_INTERVAL,	/* notify_interval */
 	UPNPSYSTEM_UPTIME,		/* "system_uptime" */
 	UPNPPACKET_LOG,			/* "packet_log" */
@@ -32,6 +39,8 @@ enum upnpconfigoptions {
 	UPNPCLEANTHRESHOLD,		/* clean_ruleset_threshold */
 	UPNPCLEANINTERVAL,		/* clean_ruleset_interval */
 	UPNPENABLENATPMP,		/* enable_natpmp */
+	UPNPPCPMINLIFETIME,		/* minimum lifetime for PCP mapping */
+	UPNPPCPMAXLIFETIME,		/* maximum lifetime for PCP mapping */
 #ifdef USE_NETFILTER
 	UPNPFORWARDCHAIN,
 	UPNPNATCHAIN,

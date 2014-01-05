@@ -1,4 +1,4 @@
-/* $Id: upnpredirect.c,v 1.80 2012/05/01 20:08:22 nanard Exp $ */
+/* $Id: upnpredirect.c,v 1.81 2013/12/13 13:41:53 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2012 Thomas Bernard
@@ -508,6 +508,32 @@ get_upnp_rules_state_list(int max_rules_number_target)
 		if(!tmp)
 			break;
 	}
+#ifdef PCP_PEER
+	i=0;
+	while(get_peer_rule_by_index(i, /*ifname*/0, &tmp->eport, 0, 0,
+		                              &iport, &proto, 0, 0, 0,0,0, &timestamp,
+									  &tmp->packets, &tmp->bytes) >= 0)
+	{
+		tmp->to_remove = 0;
+		if(timestamp > 0) {
+			/* need to remove this port mapping ? */
+			if(timestamp <= (unsigned int)current_time)
+				tmp->to_remove = 1;
+			else if((nextruletoclean_timestamp <= (unsigned int)current_time)
+				   || (timestamp < nextruletoclean_timestamp))
+				nextruletoclean_timestamp = timestamp;
+		}
+		tmp->proto = (short)proto;
+		/* add tmp to list */
+		tmp->next = list;
+		list = tmp;
+		/* prepare next iteration */
+		i++;
+		tmp = malloc(sizeof(struct rule_state));
+		if(!tmp)
+			break;
+	}
+#endif
 	free(tmp);
 	/* remove the redirections that need to be removed */
 	for(p = &list, tmp = list; tmp; tmp = *p)

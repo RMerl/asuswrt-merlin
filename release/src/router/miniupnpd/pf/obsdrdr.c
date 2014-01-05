@@ -1,4 +1,4 @@
-/* $Id: obsdrdr.c,v 1.74 2012/05/01 09:20:43 nanard Exp $ */
+/* $Id: obsdrdr.c,v 1.75 2013/12/16 15:37:38 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2012 Thomas Bernard
@@ -45,6 +45,9 @@
 #ifdef __DragonFly__
 #include <net/pf/pfvar.h>
 #else
+#ifdef MACOSX
+#define PRIVATE 1
+#endif
 #include <net/pfvar.h>
 #endif
 #include <fcntl.h>
@@ -219,9 +222,15 @@ add_redirect_rule2(const char * ifname,
 		pcr.rule.rdr.addr.type = PF_ADDR_ADDRMASK;
 #endif
 
+#ifdef MACOSX
+		pcr.rule.dst.xport.range.op = PF_OP_EQ;
+		pcr.rule.dst.xport.range.port[0] = htons(eport);
+		pcr.rule.dst.xport.range.port[1] = htons(eport);
+#else
 		pcr.rule.dst.port_op = PF_OP_EQ;
 		pcr.rule.dst.port[0] = htons(eport);
 		pcr.rule.dst.port[1] = htons(eport);
+#endif
 #ifndef PF_NEWSTYLE
 		pcr.rule.action = PF_RDR;
 #ifndef PF_ENABLE_FILTER_RULES
@@ -490,8 +499,13 @@ get_redirect_rule(const char * ifname, unsigned short eport, int proto,
 			syslog(LOG_ERR, "ioctl(dev, DIOCGETRULE): %m");
 			goto error;
 		}
+#ifdef MACOSX
+		if( (eport == ntohs(pr.rule.dst.xport.range.port[0]))
+		  && (eport == ntohs(pr.rule.dst.xport.range.port[1]))
+#else
 		if( (eport == ntohs(pr.rule.dst.port[0]))
 		  && (eport == ntohs(pr.rule.dst.port[1]))
+#endif
 		  && (pr.rule.proto == proto) )
 		{
 #ifndef PF_NEWSTYLE
@@ -591,8 +605,13 @@ delete_redirect_rule(const char * ifname, unsigned short eport, int proto)
 			syslog(LOG_ERR, "ioctl(dev, DIOCGETRULE): %m");
 			goto error;
 		}
+#ifdef MACOSX
+		if( (eport == ntohs(pr.rule.dst.xport.range.port[0]))
+		  && (eport == ntohs(pr.rule.dst.xport.range.port[1]))
+#else
 		if( (eport == ntohs(pr.rule.dst.port[0]))
 		  && (eport == ntohs(pr.rule.dst.port[1]))
+#endif
 		  && (pr.rule.proto == proto) )
 		{
 			pr.action = PF_CHANGE_GET_TICKET;
@@ -710,7 +729,11 @@ get_redirect_rule_by_index(int index,
 		goto error;
 	}
 	*proto = pr.rule.proto;
+#ifdef MACOSX
+	*eport = ntohs(pr.rule.dst.xport.range.port[0]);
+#else
 	*eport = ntohs(pr.rule.dst.port[0]);
+#endif
 #ifndef PF_NEWSTYLE
 	*iport = pr.rule.rpool.proxy_port[0];
 #else
@@ -822,8 +845,13 @@ get_portmappings_in_range(unsigned short startport, unsigned short endport,
 			syslog(LOG_ERR, "ioctl(dev, DIOCGETRULE): %m");
 			continue;
 		}
+#ifdef MACOSX
+		eport = ntohs(pr.rule.dst.xport.range.port[0]);
+		if( (eport == ntohs(pr.rule.dst.xport.range.port[1]))
+#else
 		eport = ntohs(pr.rule.dst.port[0]);
 		if( (eport == ntohs(pr.rule.dst.port[1]))
+#endif
 		  && (pr.rule.proto == proto)
 		  && (startport <= eport) && (eport <= endport) )
 		{

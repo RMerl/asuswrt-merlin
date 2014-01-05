@@ -1,4 +1,4 @@
-/* $Id: getifaddr.c,v 1.17 2013/04/27 15:40:09 nanard Exp $ */
+/* $Id: getifaddr.c,v 1.19 2013/12/13 14:28:40 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2013 Thomas Bernard
@@ -21,7 +21,7 @@
 
 #include "config.h"
 #include "getifaddr.h"
-#if defined(USE_GETIFADDRS) || defined(ENABLE_IPV6)
+#if defined(USE_GETIFADDRS) || defined(ENABLE_IPV6) || defined(ENABLE_PCP)
 #include <ifaddrs.h>
 #endif
 
@@ -127,6 +127,62 @@ getifaddr(const char * ifname, char * buf, int len,
 	return 0;
 #endif
 }
+
+#ifdef ENABLE_PCP
+int getifaddr_in6(const char * ifname, struct in6_addr * addr){
+	struct ifaddrs * ifap;
+	struct ifaddrs * ife;
+
+	if(!ifname || ifname[0]=='\0')
+		return -1;
+	if(getifaddrs(&ifap)<0)
+	{
+		syslog(LOG_ERR, "getifaddrs: %m");
+		return -1;
+	}
+	for(ife = ifap; ife; ife = ife->ifa_next)
+	{
+		int found = 0;
+		/* skip other interfaces if one was specified */
+		if(ifname && (0 != strcmp(ifname, ife->ifa_name)))
+			continue;
+		if(ife->ifa_addr == NULL)
+			continue;
+		switch(ife->ifa_addr->sa_family)
+		{
+		case AF_INET:
+#if 0
+			addr->s6_addr32[0]=0;
+			addr->s6_addr32[1]=0;
+			addr->s6_addr32[2]=htonl(0xffff);
+			addr->s6_addr32[3]=((struct sockaddr_in *)ife->ifa_addr)->sin_addr.s_addr;
+#endif
+			memset(addr->s6_addr, 0, 10);
+			addr->s6_addr[10] = 0xff;
+			addr->s6_addr[11] = 0xff;
+			memcpy(addr->s6_addr + 12, &(((struct sockaddr_in *)ife->ifa_addr)->sin_addr.s_addr), 4);
+			/*inet_ntop(ife->ifa_addr->sa_family,
+					&((struct sockaddr_in *)ife->ifa_addr)->sin_addr,
+					buf, len);*/
+			found = 1;
+			break;
+
+		case AF_INET6:
+			if(!IN6_IS_ADDR_LOOPBACK(addr)
+			   && !IN6_IS_ADDR_LINKLOCAL(addr)) {
+				memcpy(addr->s6_addr, &((struct sockaddr_in6 *)ife->ifa_addr)->sin6_addr, 16);
+				found = 1;
+			}
+			break;
+		}
+		if (found) {
+			break;
+		}
+	}
+	freeifaddrs(ifap);
+	return 0;
+}
+#endif
 
 #ifdef ENABLE_IPV6
 int

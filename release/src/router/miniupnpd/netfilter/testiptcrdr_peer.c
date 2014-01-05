@@ -1,4 +1,4 @@
-/* $Id: testiptcrdr.c,v 1.19 2013/12/13 13:40:42 nanard Exp $ */
+/* $Id: testiptcrdr_peer.c,v 1.1 2013/12/13 13:10:48 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2012 Thomas Bernard
@@ -10,8 +10,9 @@
 #include <netinet/in.h>
 #include <syslog.h>
 
-#include "iptcrdr.c"
+#include "iptcrdr.h"
 #include "../commonrdr.h"
+#include "iptcrdr.c"
 
 #ifndef PRIu64
 #define PRIu64 "llu"
@@ -20,21 +21,24 @@
 int
 main(int argc, char ** argv)
 {
-	unsigned short eport, iport;
-	const char * iaddr;
-	printf("Usage %s <ext_port> <internal_ip> <internal_port>\n", argv[0]);
+	unsigned short eport, iport, rport;
+	const char * eaddr, *iaddr, *rhost;
+	printf("Usage %s <ext_ip> <ext_port> <internal_ip> <internal_port> <peer_ip> <peer_port>\n", argv[0]);
 
-	if(argc<4)
+	if(argc<6)
 		return -1;
-	openlog("testiptcrdr", LOG_PERROR|LOG_CONS, LOG_LOCAL0);
-	eport = (unsigned short)atoi(argv[1]);
-	iaddr = argv[2];
-	iport = (unsigned short)atoi(argv[3]);
+	openlog("testiptcrdr_peer", LOG_PERROR|LOG_CONS, LOG_LOCAL0);
+	eaddr = argv[1];
+	eport = (unsigned short)atoi(argv[2]);
+	iaddr = argv[3];
+	iport = (unsigned short)atoi(argv[4]);
+	rhost = argv[5];
+	rport = (unsigned short)atoi(argv[6]);
+#if 1
 	printf("trying to redirect port %hu to %s:%hu\n", eport, iaddr, iport);
-	if(addnatrule(IPPROTO_TCP, eport, iaddr, iport, NULL) < 0)
+	if(addpeernatrule(IPPROTO_TCP, eaddr, eport, iaddr, iport, rhost, rport) < 0)
 		return -1;
-	if(add_filter_rule(IPPROTO_TCP, NULL, iaddr, iport) < 0)
-		return -1;
+#endif
 	/* test */
 	{
 		unsigned short p1, p2;
@@ -47,10 +51,10 @@ main(int argc, char ** argv)
 
 		desc[0] = '\0';
 		if(get_redirect_rule_by_index(0, "", &p1,
-		                              addr, sizeof(addr), &p2,
-		                              &proto2, desc, sizeof(desc),
-		                              rhost, sizeof(rhost),
-		                              &timestamp,
+									  addr, sizeof(addr), &p2,
+									  &proto2, desc, sizeof(desc),
+									  rhost, sizeof(rhost),
+									  &timestamp,
 									  &packets, &bytes) < 0)
 		{
 			printf("rule not found\n");

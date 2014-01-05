@@ -1,4 +1,4 @@
-/* $Id: natpmp.c,v 1.33 2013/03/23 10:46:55 nanard Exp $ */
+/* $Id: natpmp.c,v 1.35 2013/12/13 14:07:08 nanard Exp $ */
 /* MiniUPnP project
  * (c) 2007-2013 Thomas Bernard
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
@@ -118,20 +118,21 @@ static void FillPublicAddressResponse(unsigned char * resp, in_addr_t senderaddr
 #endif
 }
 
-/** read the request from the socket, process it and then send the
- * response back.
+/*
+ * Receives NATPMP and PCP packets and stores them in msg_buff.
+ * The sender information is stored in senderaddr.
+ * Returns number of bytes recevied, even if number is negative.
  */
-void ProcessIncomingNATPMPPacket(int s)
+int ReceiveNATPMPOrPCPPacket(int s, struct sockaddr_in* senderaddr,
+                             unsigned char *msg_buff, size_t msg_buff_size)
 {
-	unsigned char req[32];	/* request udp packet */
-	unsigned char resp[32];	/* response udp packet */
-	int resplen;
-	struct sockaddr_in senderaddr;
-	socklen_t senderaddrlen = sizeof(senderaddr);
+
+	socklen_t senderaddrlen = sizeof(*senderaddr);
 	int n;
-	char senderaddrstr[16];
-	n = recvfrom(s, req, sizeof(req), 0,
-	             (struct sockaddr *)&senderaddr, &senderaddrlen);
+
+	n = recvfrom(s, msg_buff, msg_buff_size, 0,
+	             (struct sockaddr *)senderaddr, &senderaddrlen);
+
 	if(n<0) {
 		/* EAGAIN, EWOULDBLOCK and EINTR : silently ignore (retry next time)
 		 * other errors : log to LOG_ERR */
@@ -140,14 +141,32 @@ void ProcessIncomingNATPMPPacket(int s)
 		   errno != EINTR) {
 			syslog(LOG_ERR, "recvfrom(natpmp): %m");
 		}
-		return;
+		return n;
 	}
-	if(!inet_ntop(AF_INET, &senderaddr.sin_addr,
-	              senderaddrstr, sizeof(senderaddrstr))) {
+
+	return n;
+}
+
+/** read the request from the socket, process it and then send the
+ * response back.
+ */
+void ProcessIncomingNATPMPPacket(int s, unsigned char *msg_buff, int len,
+		struct sockaddr_in *senderaddr)
+{
+	unsigned char *req=msg_buff;	/* request udp packet */
+	unsigned char resp[32];	/* response udp packet */
+	int resplen;
+	int n = len;
+	char senderaddrstr[16];
+
+	if(!inet_ntop(AF_INET, &senderaddr->sin_addr,
+			senderaddrstr, sizeof(senderaddrstr))) {
 		syslog(LOG_ERR, "inet_ntop(natpmp): %m");
 	}
+
 	syslog(LOG_INFO, "NAT-PMP request received from %s:%hu %dbytes",
-           senderaddrstr, ntohs(senderaddr.sin_port), n);
+	       senderaddrstr, ntohs(senderaddr->sin_port), n);
+
 	if(n<2 || ((((req[1]-1)&~1)==0) && n<12)) {
 		syslog(LOG_WARNING, "discarding NAT-PMP request (too short) %dBytes",
 		       n);
@@ -172,7 +191,7 @@ void ProcessIncomingNATPMPPacket(int s)
 	} else switch(req[1]) {
 	case 0:	/* Public address request */
 		syslog(LOG_INFO, "NAT-PMP public address request");
-		FillPublicAddressResponse(resp, senderaddr.sin_addr.s_addr);
+		FillPublicAddressResponse(resp, senderaddr->sin_addr.s_addr);
 		resplen = 12;
 		break;
 	case 1:	/* UDP port mapping request */
@@ -243,7 +262,7 @@ void ProcessIncomingNATPMPPacket(int s)
 				}
 				eport = 0; /* to indicate correct removing of port mapping */
 			} else if(iport==0
-			   || !check_upnp_rule_against_permissions(upnppermlist, num_upnpperm, eport, senderaddr.sin_addr, iport)) {
+			   || !check_upnp_rule_against_permissions(upnppermlist, num_upnpperm, eport, senderaddr->sin_addr, iport)) {
 				resp[3] = 2;	/* Not Authorized/Refused */
 			} else do {
 				r = get_redirect_rule(ext_if_name, eport, proto,
@@ -305,7 +324,7 @@ void ProcessIncomingNATPMPPacket(int s)
 		resp[3] = 5;	/* Unsupported OPCODE */
 	}
 	n = sendto(s, resp, resplen, 0,
-	           (struct sockaddr *)&senderaddr, sizeof(senderaddr));
+	           (struct sockaddr *)senderaddr, sizeof(*senderaddr));
 	if(n<0) {
 		syslog(LOG_ERR, "sendto(natpmp): %m");
 	} else if(n<resplen) {

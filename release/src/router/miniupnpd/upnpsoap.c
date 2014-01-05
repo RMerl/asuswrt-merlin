@@ -1,4 +1,4 @@
-/* $Id: upnpsoap.c,v 1.118 2013/06/13 13:21:30 nanard Exp $ */
+/* $Id: upnpsoap.c,v 1.119 2013/08/19 16:16:00 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2013 Thomas Bernard
@@ -410,6 +410,14 @@ AddPortMapping(struct upnphttp * h, const char * action)
 	       action, eport, int_ip, iport, protocol, desc, leaseduration,
 	       r_host ? r_host : "NULL");
 
+	/* TODO : be compliant with IGD spec for updating existing port mappings.
+	See "WANIPConnection:1 Service Template Version 1.01" 2.2.20.PortMappingDescription :
+	Overwriting Previous / Existing Port Mappings:
+	If the RemoteHost, ExternalPort, PortMappingProtocol and InternalClient are
+	exactly the same as an existing mapping, the existing mapping values for InternalPort,
+	PortMappingDescription, PortMappingEnabled and PortMappingLeaseDuration are
+	overwritten.
+	*/
 	r = upnp_redirect(r_host, eport, int_ip, iport, protocol, desc, leaseduration);
 
 	ClearNameValueList(&data);

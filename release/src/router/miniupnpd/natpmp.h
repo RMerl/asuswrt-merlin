@@ -1,4 +1,4 @@
-/* $Id: natpmp.h,v 1.9 2012/09/27 15:47:15 nanard Exp $ */
+/* $Id: natpmp.h,v 1.10 2013/12/13 12:44:48 nanard Exp $ */
 /* MiniUPnP project
  * author : Thomas Bernard
  * website : http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
@@ -20,7 +20,11 @@
 
 int OpenAndConfNATPMPSockets(int * sockets);
 
-void ProcessIncomingNATPMPPacket(int s);
+int ReceiveNATPMPOrPCPPacket(int s, struct sockaddr_in* senderaddr,
+		unsigned char *msg_buff, size_t msg_buff_size);
+
+void ProcessIncomingNATPMPPacket(int s, unsigned char *msg_buff, int len,
+	    struct sockaddr_in *senderaddr);
 
 #if 0
 int ScanNATPMPforExpiration(void);

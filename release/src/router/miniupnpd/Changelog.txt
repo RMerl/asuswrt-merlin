@@ -1,4 +1,11 @@
-$Id: Changelog.txt,v 1.345 2013/06/13 13:21:28 nanard Exp $
+$Id: Changelog.txt,v 1.347 2013/12/16 15:38:52 nanard Exp $
+
+2013/12/16:
+  Attempt to compile with OS X/pf
+
+2013/12/13:
+  Make all manufacturer info configurable thanks to Leo Moll
+  Merge PCP support (see https://github.com/miniupnp/miniupnp)
 
 2013/06/13:
   Have 3 UUID for the 3 devices (IGD, WAN Device, WAN Connection Device)
