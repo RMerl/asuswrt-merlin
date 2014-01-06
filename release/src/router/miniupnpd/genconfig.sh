@@ -288,8 +288,9 @@ case $OS_NAME in
 		echo "#ifdef LINUX26" >> ${CONFIGFILE}
 		echo "#define USE_IFACEWATCHER 1" >> ${CONFIGFILE}
 		echo "#endif" >> ${CONFIGFILE}
-# Should we use it for 22 and 36?  See what Asus did with that for 36.
-		echo "#define USE_GETIFADDRS 1" >> ${CONFIGFILE}
+# The replacement code for ARM uclibc doesn't work properly here, so disabling for now
+#		echo "#define USE_GETIFADDRS 1" >> ${CONFIGFILE}
+# IPv6 doesn't build properly yet, so disable it for now
 #       echo "#ifdef RTCONFIG_IPV6" >> ${CONFIGFILE}
 #       echo "#define ENABLE_IPV6" >> ${CONFIGFILE}
 #       echo "#endif" >> ${CONFIGFILE}
