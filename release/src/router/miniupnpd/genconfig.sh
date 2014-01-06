@@ -80,7 +80,7 @@ fi
 # Asuswrt
 if [ -d ../asuswebstorage ]; then
 	OS_NAME=AsusWRT
-	OS_VERSION="AsusWRT"
+	OS_VERSION=$(cat ../shared/version.h | grep RT_VERSION | cut -f 3 -d " " | sed 's/"//g')
 fi
 
 ${RM} ${CONFIGFILE}
@@ -279,7 +279,7 @@ case $OS_NAME in
 		FW=netfilter
 		;;
 	AsusWRT)
-		OS_NAME=UPnP
+		OS_NAME=AsusWRT
 		OS_URL=http://www.asus.com/
 		echo "" >> ${CONFIGFILE}
 		echo "#define USE_NETFILTER 1" >> ${CONFIGFILE}
@@ -491,7 +491,7 @@ echo "/*#define DISABLE_CONFIG_FILE*/" >> ${CONFIGFILE}
 echo "" >> ${CONFIGFILE}
 
 echo "/* Unable the ability to configure all manufacturer infos through miniupnpd.conf */" >> ${CONFIGFILE}
-echo "/*#define ENABLE_MANUFACTURER_INFO_CONFIGURATION*/" >> ${CONFIGFILE}
+echo "#define ENABLE_MANUFACTURER_INFO_CONFIGURATION" >> ${CONFIGFILE}
 echo "" >> ${CONFIGFILE}
 
 echo "#endif" >> ${CONFIGFILE}
