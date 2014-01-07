@@ -5,3 +5,5 @@ libufsd.bin
 jnl.mod.c
 package/Makefile
 *.o
+package/ifslinux/vfsdebug.o
+package/ufsd.mod.c
