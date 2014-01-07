@@ -1064,6 +1064,10 @@ function change_ddns_setting(v){
 				
 				showhide("wildcard_field",!disable_wild);
 		}
+		if(v == "WWW.NAMECHEAP.COM")
+			$("ddns_username_th").innerHTML = Untranslated.namecheap_username_title;
+		else
+			$("ddns_username_th").innerHTML = "<#LANHostConfig_x_DDNSUserName_itemname#>";
 }
 
 function change_common_radio(o, s, v, r){
