@@ -1,7 +1,7 @@
 /*
  * WPS include
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: wps.h 323637 2012-03-26 10:31:40Z $
+ * $Id: wps.h 383924 2013-02-08 04:14:39Z $
  */
 #ifndef __WPS_H__
 #define __WPS_H__
@@ -69,7 +69,8 @@ enum {
 	WPS_RECEIVE_PKT_UI = 1,
 	WPS_RECEIVE_PKT_PB,
 	WPS_RECEIVE_PKT_EAP,
-	WPS_RECEIVE_PKT_UPNP
+	WPS_RECEIVE_PKT_UPNP,
+	WPS_RECEIVE_PKT_NFC
 } WPS_RECEIVE_PKT_T;
 
 typedef struct {
@@ -89,6 +90,14 @@ typedef struct {
 #define	WPS_IS_PROXY(mode)	((mode == SCMODE_AP_REGISTRAR) && \
 				strcmp(wps_ui_get_env("wps_sta_pin"), "") == 0)
 
+#define WPS_WLAKM_BOTH(akm) ((akm & WPA_AUTH_PSK) && (akm & WPA2_AUTH_PSK))
+#define WPS_WLAKM_PSK2(akm) ((akm & WPA2_AUTH_PSK))
+#define WPS_WLAKM_PSK(akm) ((akm & WPA_AUTH_PSK))
+#define WPS_WLAKM_NONE(akm) (!(WPS_WLAKM_BOTH(akm) | WPS_WLAKM_PSK2(akm) | WPS_WLAKM_PSK(akm)))
+
+#define WPS_WLENCR_BOTH(wsec) ((wsec & TKIP_ENABLED) && (wsec & AES_ENABLED))
+#define WPS_WLENCR_TKIP(wsec) (wsec & TKIP_ENABLED)
+#define WPS_WLENCR_AES(wsec) (wsec & AES_ENABLED)
 
 #if defined(IL_BIGENDIAN)
 #include <bcmendian.h>

@@ -1,7 +1,7 @@
 /*
  * WPS upnp
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2013, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: wps_upnp.h 279189 2011-08-23 10:14:21Z $
+ * $Id: wps_upnp.h 383924 2013-02-08 04:14:39Z $
  */
 
 #ifndef __WPS_UPNP_H__
@@ -39,7 +39,7 @@ void wps_upnp_clear_ssr_timer();
 int wps_upnp_ssr_expire();
 void wps_upnp_device_uuid(unsigned char *uuid);
 char *wps_upnp_parse_msg(char *upnpmsg, int upnpmsg_len, int *len, int *type, char *addr);
-int wps_upnp_process_msg(char *upnpmsg, int upnpmsg_len, wps_hndl_t *hndl);
+int wps_upnp_process_msg(char *upnpmsg, int upnpmsg_len);
 int wps_upnp_send_msg(int if_instance, char *buf, int len, int type);
 
 void wps_upnp_update_wlan_event(int if_instance, unsigned char *macaddr,
