@@ -121,7 +121,7 @@ function checkCmdRet(){
                         <tr>
                           <td>
                             <input class="input_option" type="text" maxlength="255" size="60%" name="SystemCmd" value="">
-                            <input class="button_gen" id="cmdBtn" onClick="onSubmitCtrl(this, ' Refresh ')" type="submit" value="<#CTL_refresh#>" name="action">
+                            <input class="button_gen" id="cmdBtn" onClick="onSubmitCtrl(this, ' Execute ')" type="submit" value="<#CTL_refresh#>" name="action">
                             <img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></span>
                           </td>
                         </tr>
