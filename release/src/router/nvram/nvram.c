@@ -320,6 +320,10 @@ main(int argc, char **argv)
 {
 	char *name, *value, *buf;
 	int size;
+#ifdef RTCONFIG_CFE_NVRAM_CHK
+	int ret = 0;
+	FILE *fp;
+#endif
 
 	/* Skip program name */
 	--argc;
@@ -328,7 +332,7 @@ main(int argc, char **argv)
 	if (!*argv) 
 		usage();
 	
-	buf = malloc (NVRAM_SPACE);
+	buf = malloc (MAX_NVRAM_SPACE);
 	if (buf == NULL)	{
 		perror ("Out of memory!\n");
 		return -1;
@@ -344,9 +348,22 @@ main(int argc, char **argv)
 		}
 		else if (!strncmp(*argv, "set", 3)) {
 			if (*++argv) {
-				strncpy(value = buf, *argv, NVRAM_SPACE);
+				strncpy(value = buf, *argv, MAX_NVRAM_SPACE);
 				name = strsep(&value, "=");
+				
+#ifdef RTCONFIG_CFE_NVRAM_CHK
+				ret = nvram_set(name, value);
+				if(ret == 2) {
+					fp = fopen("/var/log/cfecommit_ret", "w");
+					if(fp!=NULL) {
+		                                fprintf(fp,"Illegal nvram\n");
+						fclose(fp);
+					}
+					puts("Illegal nvram format!");
+				}
+#else
 				nvram_set(name, value);
+#endif
 			}
 		}
 		else if (!strncmp(*argv, "unset", 5)) {
@@ -360,7 +377,7 @@ main(int argc, char **argv)
 		{
 			if (*++argv) 
 			{
-				nvram_getall(buf, NVRAM_SPACE);	
+				nvram_getall(buf, MAX_NVRAM_SPACE);
 				nvram_save_new(*argv, buf);
 			}
 			
@@ -374,11 +391,11 @@ main(int argc, char **argv)
 			
 		}
 		else if (!strncmp(*argv, "show", 4) || !strncmp(*argv, "getall", 6)) {
-			nvram_getall(buf, NVRAM_SPACE);
+			nvram_getall(buf, MAX_NVRAM_SPACE);
 			for (name = buf; *name; name += strlen(name) + 1)
 				puts(name);
 			size = sizeof(struct nvram_header) + (int) name - (int) buf;
-			fprintf(stderr, "size: %d bytes (%d left)\n", size, NVRAM_SPACE - size);
+			fprintf(stderr, "size: %d bytes (%d left)\n", size, MAX_NVRAM_SPACE - size);
 		}
 		if (!*argv)
 			break;
