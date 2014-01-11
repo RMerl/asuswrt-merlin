@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.374.38 (xx-xxx-2014)
+Asuswrt-Merlin - build 3.0.0.4.374.38 (11-Jan-2014)
 ===================================================
 
 About
@@ -534,16 +534,32 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.4.374.38 (xx-xxx-2014):
+3.0.0.4.374.38 (11-Jan-2014):
+   This version isn't available for the RT-N16 or the SDK5 build 
+   of the RT-N66U as support for the SDK5 platform is currently 
+   broken.  Please stick to 374.36 Beta 1 for the time being on 
+   these two platforms.
+
+   Note that the RT-N66U did get a newer wifi driver, so give it a 
+   try, as it might have resolved or at least improved on the wifi 
+   range issues.
+
+   Remember to do a factory default reset if switching from SDK5 to 
+   SDK6 builds!  Keep a backup of your existing settings in case you 
+   decide to revert back to an SDK5 build.
+
    - NEW: Merged with 374_2078 GPL provided by Asus (From RT-N66U).
           Notable changes:
-      * Updated SDK - 6.30.163.2002 (r382208)
+      * Updated SDK for MIPS devices - 6.30.163.2002 (r382208)
       * PPPoE HW acceleration should be fixed by the new SDK
       * Updated AiCloud closed source components (MIPS)
 
+   - CHANGED: Reverted Parental Control code to our fixed code, 
+              as I see Asus is still making fixes to their own 
+              code past version 2078.
    - CHANGED: Updated AC56 and AC68U wifi driver and CTF to
               January 3rd builds (provided by Asus)
-   - FIXED: emf/igs userspace tools missing on ARM devices
+   - FIXED: emf/igs userspace tools were missing on ARM devices
    - FIXED: USB devices missing on MIPS devices (regression
             in 374.37)
    - FIXED: Wifi stability on ARM devices (regression in
@@ -551,6 +567,8 @@ History
 
 
 3.0.0.4.374.37 (31-Dec-2013):
+   * This build was pulled due to numerous issues *
+
    - NEW: Merged with Asus 374_501 GPL (from RT-AC68U).
           Notable changes in this version:
           * New SDK (wireless driver and CTF) for AC56/AC68
