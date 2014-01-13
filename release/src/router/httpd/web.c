@@ -5808,6 +5808,10 @@ static char syslog_txt[] =
 "filename=syslog.txt"
 ;
 
+static char cache_object[] =
+"Cache-Control: max-age=300"
+;
+
 static void 
 do_log_cgi(char *path, FILE *stream)
 {
@@ -5839,9 +5843,9 @@ struct mime_handler mime_handlers[] = {
 	{ "**.zip", "application/octet-stream", NULL, NULL, do_file, NULL },
 	{ "**.ipk", "application/octet-stream", NULL, NULL, do_file, NULL },
 	{ "**.css", "text/css", NULL, NULL, do_file, NULL },
-	{ "**.png", "image/png", NULL, NULL, do_file, NULL },
-	{ "**.gif", "image/gif", NULL, NULL, do_file, NULL },
-	{ "**.jpg", "image/jpeg", NULL, NULL, do_file, NULL },
+	{ "**.png", "image/png", cache_object, NULL, do_file, NULL },
+	{ "**.gif", "image/gif", cache_object, NULL, do_file, NULL },
+	{ "**.jpg", "image/jpeg", cache_object, NULL, do_file, NULL },
 	// Viz 2010.08
 	{ "**.svg", "image/svg+xml", NULL, NULL, do_file, NULL },
 	{ "**.swf", "application/x-shockwave-flash", NULL, NULL, do_file, NULL  },
