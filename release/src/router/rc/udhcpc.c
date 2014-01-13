@@ -761,8 +761,8 @@ start_dhcp6c(void)
 			!nvram_match("ipv6_ra_conf", "noneset"))
 		fprintf(fp,		"request domain-name-servers;\n"
 					"request domain-name;\n"
-					"script \"/sbin/dhcp6c-state\";\n"
-				"};\n");
+					"script \"/sbin/dhcp6c-state\";\n");
+		fprintf(fp,		"};\n");
 		if (nvram_get_int("ipv6_dhcp_pd"))
 		fprintf(fp,	"id-assoc pd %lu {\n"
 					"prefix-interface %s {\n"
