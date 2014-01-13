@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.374.38_1 (12-Jan-2014)
+Asuswrt-Merlin - build 3.0.0.4.374.38_2 (xx-xxx-2014)
 =====================================================
 
 About
@@ -534,6 +534,10 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.4.374.38_2 (xx-xxx-2014):
+   - FIXED: Syntax error in DHCPv6 client config (Asus bug)
+
+
 3.0.0.4.374.38_1 (12-Jan-2014):
    - FIXED: Tools -> Run Cmd page wasn't working (regression
             in 374.38)
