@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 3.0.0.4.374.38 (11-Jan-2014)
-===================================================
+Asuswrt-Merlin - build 3.0.0.4.374.38_1 (12-Jan-2014)
+=====================================================
 
 About
 -----
@@ -534,6 +534,13 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.4.374.38_1 (12-Jan-2014):
+   - FIXED: Tools -> Run Cmd page wasn't working (regression
+            in 374.38)
+   - FIXED: Router getting stuck on various webui changes due 
+            to a broken precompiled emf module (AC56/AC68)
+
+
 3.0.0.4.374.38 (11-Jan-2014):
    This version isn't available for the RT-N16 or the SDK5 build 
    of the RT-N66U as support for the SDK5 platform is currently 
