@@ -615,7 +615,7 @@ void start_dnsmasq(int force)
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
 	if (nvram_get_int("pptpd_enable")) {
 		fprintf(fp, "interface=%s\n"		// dns for VPN clients
-			    "no-dhcp-interface=%s",	// no dhcp for VPN clients
+			    "no-dhcp-interface=%s\n",	// no dhcp for VPN clients
 			"ppp1*", "ppp1*");
 	}
 #endif
