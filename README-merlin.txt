@@ -535,7 +535,15 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 3.0.0.4.374.38_2 (xx-xxx-2014):
+   - CHANGED: Improved webui responsiveness by instructing the browser 
+              to cache images.
    - FIXED: Syntax error in DHCPv6 client config (Asus bug)
+   - FIXED: Domain field wasn't clearly identified on the webui 
+            when DDNS set to Namecheap (Saintdev)
+   - FIXED: Missing carriage return in dnsmasq.conf when PPTP VPN
+            is enabled, causing LAN name resolution issues.
+   - FIXED: A few unescaped quotes in the French dict would break
+            some webui pages (such as the Wireless page).
 
 
 3.0.0.4.374.38_1 (12-Jan-2014):
