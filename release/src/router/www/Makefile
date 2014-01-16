@@ -202,7 +202,8 @@ ifeq ($(BUILD_NAME), RT-N12)
 endif
 
 ifeq ($(RTCONFIG_OPENVPN), y)
-	cd $(INSTALLDIR)/www && ln -sf ../etc/openvpn/server1/client.ovpn && cd $(TOP)/www
+	cd $(INSTALLDIR)/www && ln -sf ../etc/openvpn/server1/client.ovpn client1.ovpn && cd $(TOP)/www
+	cd $(INSTALLDIR)/www && ln -sf ../etc/openvpn/server2/client.ovpn client2.ovpn && cd $(TOP)/www
 else
 ifneq ($(RTCONFIG_ACCEL_PPTPD), y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/vpnstatus.png

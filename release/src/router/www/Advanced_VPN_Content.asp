@@ -843,7 +843,7 @@ function enable_openvpn(state){
 												</div>
 												<script type="text/javascript">
 														document.getElementById("exportToLocal").onclick = function(){
-															location.href = 'client.ovpn';
+															location.href = 'client<% nvram_get("vpn_server_unit"); %>.ovpn';
 														}
 
 														document.getElementById("exportViaEmail").onclick = function(){
@@ -975,7 +975,7 @@ function enable_openvpn(state){
 			<input type="hidden" name="action_wait" value="5">
 			<input type="hidden" name="flag" value="background">
 			<input type="hidden" name="PM_MAIL_SUBJECT" value="My ovpn file">
-			<input type="hidden" name="PM_MAIL_FILE" value="/www/client.ovpn">
+			<input type="hidden" name="PM_MAIL_FILE" value="/www/client<% nvram_get("vpn_server_unit"); %>.ovpn">
 			<input type="hidden" name="PM_LETTER_CONTENT" value="Here is the ovpn file.">
 
 			<div class="panelTableTitle">
