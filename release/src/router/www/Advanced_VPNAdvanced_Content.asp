@@ -160,7 +160,6 @@ ciphersarray = [
 
 function initial(){
 	show_menu();
-	change_mode(initial_vpn_mode);
 
 	check_dns_wins();
 
@@ -199,6 +198,9 @@ function initial(){
 
 	// Set these based on a compound field
 	setRadioValue(document.openvpn_form.vpn_server_x_dns, ((document.openvpn_form.vpn_serverx_dns.value.indexOf(''+(openvpn_unit)) >= 0) ? "1" : "0"));
+
+	// Display appropriate page
+	change_mode(initial_vpn_mode);
 
 	// Decode into editable format
 	openvpn_decodeKeys(0);
