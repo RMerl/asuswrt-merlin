@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.374.38_2 (xx-xxx-2014)
+Asuswrt-Merlin - build 3.0.0.4.374.38_2 (17-Jan-2014)
 =====================================================
 
 About
@@ -534,7 +534,7 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.4.374.38_2 (xx-xxx-2014):
+3.0.0.4.374.38_2 (17-Jan-2014):
    - CHANGED: Improved webui responsiveness by instructing the browser 
               to cache images.
    - FIXED: Syntax error in DHCPv6 client config (Asus bug)
@@ -542,8 +542,16 @@ History
             when DDNS set to Namecheap (Saintdev)
    - FIXED: Missing carriage return in dnsmasq.conf when PPTP VPN
             is enabled, causing LAN name resolution issues.
+            (Asus bug)
    - FIXED: A few unescaped quotes in the French dict would break
             some webui pages (such as the Wireless page).
+            (Asus bug)
+   - FIXED: OpenVPN server export would always export the first 
+            server instance configuration.
+   - FIXED: Bogus "Config file is missing" error logged by pptpd when 
+            it was starting (Asus bug)
+   - FIXED: "Advertise DNS" wasn't visible if the page was loaded and 
+            "Respond to DNS" was already enabled.
 
 
 3.0.0.4.374.38_1 (12-Jan-2014):
