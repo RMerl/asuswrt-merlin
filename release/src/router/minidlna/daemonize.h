@@ -26,33 +26,24 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __GETIFADDR_H__
-#define __GETIFADDR_H__
-#include <arpa/inet.h>
+#ifndef __DAEMONIZE_H__
+#define __DAEMONIZE_H__
 
-#define MACADDR_IS_ZERO(x) \
-  ((x[0] == 0x00) && \
-   (x[1] == 0x00) && \
-   (x[2] == 0x00) && \
-   (x[3] == 0x00) && \
-   (x[4] == 0x00) && \
-   (x[5] == 0x00))
+#include "config.h"
 
-/* getifaddr()
- * take a network interface name and write the
- * ip v4 address as text in the buffer
- * returns: 0 success, -1 failure */
+/* daemonize()
+ * "fork" to background, detach from terminal, etc... 
+ * returns: pid of the daemon, exits upon failure */
 int
-getifaddr(const char * ifname, char * buf, int len);
+daemonize(void);
 
+/* checkforrunning()
+ * check for another instance running
+ * returns: 0 only instance
+ *          -1 invalid filename
+ *          -2 another instance running  */
 int
-getsysaddrs(void);
-
-int
-getsyshwaddr(char * buf, int len);
-
-int
-get_remote_mac(struct in_addr ip_addr, unsigned char * mac);
+checkforrunning(const char * fname);
 
 #endif
 

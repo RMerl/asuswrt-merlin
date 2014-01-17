@@ -43,6 +43,7 @@ static const struct {
 	const char * name;
 } optionids[] = {
 	{ UPNPIFNAME, "network_interface" },
+	{ UPNPLISTENING_IP, "listening_ip" },
 	{ UPNPPORT, "port" },
 	{ UPNPPRESENTATIONURL, "presentation_url" },
 	{ UPNPNOTIFY_INTERVAL, "notify_interval" },

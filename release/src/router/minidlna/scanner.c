@@ -594,97 +594,85 @@ sql_failed:
 	return (ret != SQLITE_OK);
 }
 
-static inline int
-filter_hidden(scan_filter *d)
-{
-	return (d->d_name[0] != '.');
-}
-
 static int
 filter_type(scan_filter *d)
 {
-	return ( (d->d_type == DT_DIR) ||
-	         (d->d_type == DT_LNK) ||
-	         (d->d_type == DT_UNKNOWN)
+	return ( (*d->d_name != '.') &&
+	         ((d->d_type == DT_DIR) ||
+	          (d->d_type == DT_LNK) ||
+	          (d->d_type == DT_UNKNOWN))
 	       );
 }
 
 static int
 filter_a(scan_filter *d)
 {
-	return ( filter_hidden(d) &&
-	         (filter_type(d) ||
-		  ((d->d_type == DT_REG) &&
-		   (is_audio(d->d_name) ||
-	            is_playlist(d->d_name))))
-	       );
+	return ( filter_type(d) ||
+		 ((d->d_type == DT_REG) &&
+		  (is_audio(d->d_name) ||
+	           is_playlist(d->d_name))
+	       ) );
 }
 
 static int
 filter_av(scan_filter *d)
 {
-	return ( filter_hidden(d) &&
-	         (filter_type(d) ||
-		  ((d->d_type == DT_REG) &&
-		   (is_audio(d->d_name) ||
-		    is_video(d->d_name) ||
-	            is_playlist(d->d_name))))
+	return ( filter_type(d) ||
+		 ((d->d_type == DT_REG) &&
+		  (is_audio(d->d_name) ||
+		   is_video(d->d_name) ||
+	           is_playlist(d->d_name)))
 	       );
 }
 
 static int
 filter_ap(scan_filter *d)
 {
-	return ( filter_hidden(d) &&
-	         (filter_type(d) ||
-		  ((d->d_type == DT_REG) &&
-		   (is_audio(d->d_name) ||
-		    is_image(d->d_name) ||
-	            is_playlist(d->d_name))))
+	return ( filter_type(d) ||
+		 ((d->d_type == DT_REG) &&
+		  (is_audio(d->d_name) ||
+		   is_image(d->d_name) ||
+	           is_playlist(d->d_name)))
 	       );
 }
 
 static int
 filter_v(scan_filter *d)
 {
-	return ( filter_hidden(d) &&
-	         (filter_type(d) ||
-		  (d->d_type == DT_REG &&
-	           is_video(d->d_name)))
+	return ( filter_type(d) ||
+		 (d->d_type == DT_REG &&
+	          is_video(d->d_name))
 	       );
 }
 
 static int
 filter_vp(scan_filter *d)
 {
-	return ( filter_hidden(d) &&
-	         (filter_type(d) ||
-		  ((d->d_type == DT_REG) &&
-		   (is_video(d->d_name) ||
-	            is_image(d->d_name))))
+	return ( filter_type(d) ||
+		 ((d->d_type == DT_REG) &&
+		  (is_video(d->d_name) ||
+	           is_image(d->d_name)))
 	       );
 }
 
 static int
 filter_p(scan_filter *d)
 {
-	return ( filter_hidden(d) &&
-	         (filter_type(d) ||
-		  (d->d_type == DT_REG &&
-		   is_image(d->d_name)))
+	return ( filter_type(d) ||
+		 (d->d_type == DT_REG &&
+		  is_image(d->d_name))
 	       );
 }
 
 static int
 filter_avp(scan_filter *d)
 {
-	return ( filter_hidden(d) &&
-	         (filter_type(d) ||
-		  ((d->d_type == DT_REG) &&
-		   (is_audio(d->d_name) ||
-		    is_image(d->d_name) ||
-		    is_video(d->d_name) ||
-	            is_playlist(d->d_name))))
+	return ( filter_type(d) ||
+		 ((d->d_type == DT_REG) &&
+		  (is_audio(d->d_name) ||
+		   is_image(d->d_name) ||
+		   is_video(d->d_name) ||
+	           is_playlist(d->d_name)))
 	       );
 }
 

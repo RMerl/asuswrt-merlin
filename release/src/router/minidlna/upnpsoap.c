@@ -306,16 +306,15 @@ GetCurrentConnectionInfo(struct upnphttp * h, const char * action)
 #define FILTER_RES_RESOLUTION                    0x00000400
 #define FILTER_RES_SAMPLEFREQUENCY               0x00000800
 #define FILTER_RES_SIZE                          0x00001000
-#define FILTER_SEARCHABLE                        0x00002000
-#define FILTER_UPNP_ACTOR                        0x00004000
-#define FILTER_UPNP_ALBUM                        0x00008000
-#define FILTER_UPNP_ALBUMARTURI                  0x00010000
-#define FILTER_UPNP_ALBUMARTURI_DLNA_PROFILEID   0x00020000
-#define FILTER_UPNP_ARTIST                       0x00040000
-#define FILTER_UPNP_GENRE                        0x00080000
-#define FILTER_UPNP_ORIGINALTRACKNUMBER          0x00100000
-#define FILTER_UPNP_SEARCHCLASS                  0x00200000
-#define FILTER_UPNP_STORAGEUSED                  0x00400000
+#define FILTER_UPNP_ACTOR                        0x00002000
+#define FILTER_UPNP_ALBUM                        0x00004000
+#define FILTER_UPNP_ALBUMARTURI                  0x00008000
+#define FILTER_UPNP_ALBUMARTURI_DLNA_PROFILEID   0x00010000
+#define FILTER_UPNP_ARTIST                       0x00020000
+#define FILTER_UPNP_GENRE                        0x00040000
+#define FILTER_UPNP_ORIGINALTRACKNUMBER          0x00080000
+#define FILTER_UPNP_SEARCHCLASS                  0x00100000
+#define FILTER_UPNP_STORAGEUSED                  0x00200000
 /* Vendor-specific filter flags */
 #define FILTER_SEC_CAPTION_INFO_EX               0x01000000
 #define FILTER_SEC_DCM_INFO                      0x02000000
@@ -345,10 +344,6 @@ set_filter_flags(char *filter, struct upnphttp *h)
 		if( strcmp(item, "@childCount") == 0 )
 		{
 			flags |= FILTER_CHILDCOUNT;
-		}
-		else if( strcmp(item, "@searchable") == 0 )
-		{
-			flags |= FILTER_SEARCHABLE;
 		}
 		else if( strcmp(item, "dc:creator") == 0 )
 		{
@@ -905,7 +900,7 @@ callback(void *args, int argc, char **argv, char **azColName)
 					     strncmp(dlna_pn, "AVC_TS_MP_HD_AC3", 16) == 0 ||
 					     strncmp(dlna_pn, "AVC_TS_HP_HD_AC3", 16) == 0))
 					{
-						sprintf(dlna_buf, "DLNA.ORG_PN=%s;DLNA.ORG_OP=01;DLNA.ORG_CI=1", "MPEG_PS_NTSC");
+						sprintf(dlna_buf, "DLNA.ORG_PN=%s;DLNA.ORG_OP=01;DLNA.ORG_CI=0", "MPEG_PS_NTSC");
 						add_res(size, duration, bitrate, sampleFrequency, nrAudioChannels,
 						        resolution, dlna_buf, mime, detailID, ext, passed_args);
 					}
@@ -917,13 +912,13 @@ callback(void *args, int argc, char **argv, char **azColName)
 					{
 						if( strncmp(dlna_pn, "MPEG_TS_SD_NA", 13) != 0 )
 						{
-							sprintf(dlna_buf, "DLNA.ORG_PN=%s;DLNA.ORG_OP=01;DLNA.ORG_CI=1", "MPEG_TS_SD_NA");
+							sprintf(dlna_buf, "DLNA.ORG_PN=%s;DLNA.ORG_OP=01;DLNA.ORG_CI=0", "MPEG_TS_SD_NA");
 							add_res(size, duration, bitrate, sampleFrequency, nrAudioChannels,
 							        resolution, dlna_buf, mime, detailID, ext, passed_args);
 						}
 						if( strncmp(dlna_pn, "MPEG_TS_SD_EU", 13) != 0 )
 						{
-							sprintf(dlna_buf, "DLNA.ORG_PN=%s;DLNA.ORG_OP=01;DLNA.ORG_CI=1", "MPEG_TS_SD_EU");
+							sprintf(dlna_buf, "DLNA.ORG_PN=%s;DLNA.ORG_OP=01;DLNA.ORG_CI=0", "MPEG_TS_SD_EU");
 							add_res(size, duration, bitrate, sampleFrequency, nrAudioChannels,
 							        resolution, dlna_buf, mime, detailID, ext, passed_args);
 						}
@@ -938,13 +933,13 @@ callback(void *args, int argc, char **argv, char **azColName)
 						strcpy(mime+6, "avi");
 						if( !dlna_pn || strncmp(dlna_pn, "MPEG_PS_NTSC", 12) != 0 )
 						{
-							sprintf(dlna_buf, "DLNA.ORG_PN=%s;DLNA.ORG_OP=01;DLNA.ORG_CI=1", "MPEG_PS_NTSC");
+							sprintf(dlna_buf, "DLNA.ORG_PN=%s;DLNA.ORG_OP=01;DLNA.ORG_CI=0", "MPEG_PS_NTSC");
 							add_res(size, duration, bitrate, sampleFrequency, nrAudioChannels,
 						        	resolution, dlna_buf, mime, detailID, ext, passed_args);
 						}
 						if( !dlna_pn || strncmp(dlna_pn, "MPEG_PS_PAL", 11) != 0 )
 						{
-							sprintf(dlna_buf, "DLNA.ORG_PN=%s;DLNA.ORG_OP=01;DLNA.ORG_CI=1", "MPEG_PS_PAL");
+							sprintf(dlna_buf, "DLNA.ORG_PN=%s;DLNA.ORG_OP=01;DLNA.ORG_CI=0", "MPEG_PS_PAL");
 							add_res(size, duration, bitrate, sampleFrequency, nrAudioChannels,
 						        	resolution, dlna_buf, mime, detailID, ext, passed_args);
 						}
@@ -994,27 +989,30 @@ callback(void *args, int argc, char **argv, char **azColName)
 	else if( strncmp(class, "container", 9) == 0 )
 	{
 		ret = strcatf(str, "&lt;container id=\"%s\" parentID=\"%s\" restricted=\"1\" ", id, parent);
-		if( passed_args->filter & FILTER_SEARCHABLE ) {
-			ret = strcatf(str, "searchable=\"1\" ");
-		}
-		if( passed_args->filter & FILTER_CHILDCOUNT ) {
+		if( passed_args->filter & FILTER_CHILDCOUNT )
+		{
 			int children;
 			ret = sql_get_int_field(db, "SELECT count(*) from OBJECTS where PARENT_ID = '%s';", id);
 			children = (ret > 0) ? ret : 0;
 			ret = strcatf(str, "childCount=\"%d\"", children);
 		}
 		/* If the client calls for BrowseMetadata on root, we have to include our "upnp:searchClass"'s, unless they're filtered out */
-		if( passed_args->requested == 1 && strcmp(id, "0") == 0 && (passed_args->filter & FILTER_UPNP_SEARCHCLASS) ) {
-			ret = strcatf(str, "&gt;"
-			                   "&lt;upnp:searchClass includeDerived=\"1\"&gt;object.item.audioItem&lt;/upnp:searchClass&gt;"
-			                   "&lt;upnp:searchClass includeDerived=\"1\"&gt;object.item.imageItem&lt;/upnp:searchClass&gt;"
-			                   "&lt;upnp:searchClass includeDerived=\"1\"&gt;object.item.videoItem&lt;/upnp:searchClass");
+		if( (passed_args->requested == 1) && (strcmp(id, "0") == 0) )
+		{
+			ret = strcatf(str, " searchable=\"1\"");
+			if( passed_args->filter & FILTER_UPNP_SEARCHCLASS )
+			{
+				ret = strcatf(str, "&gt;"
+				                   "&lt;upnp:searchClass includeDerived=\"1\"&gt;object.item.audioItem&lt;/upnp:searchClass&gt;"
+				                   "&lt;upnp:searchClass includeDerived=\"1\"&gt;object.item.imageItem&lt;/upnp:searchClass&gt;"
+				                   "&lt;upnp:searchClass includeDerived=\"1\"&gt;object.item.videoItem&lt;/upnp:searchClass");
+			}
 		}
 		ret = strcatf(str, "&gt;"
 		                   "&lt;dc:title&gt;%s&lt;/dc:title&gt;"
 		                   "&lt;upnp:class&gt;object.%s&lt;/upnp:class&gt;",
 		                   title, class);
-		if( (passed_args->filter & FILTER_UPNP_STORAGEUSED) || strcmp(class+10, "storageFolder") == 0 ) {
+		if( (passed_args->filter & FILTER_UPNP_STORAGEUSED) && strcmp(class+10, "storageFolder") == 0 ) {
 			/* TODO: Implement real folder size tracking */
 			ret = strcatf(str, "&lt;upnp:storageUsed&gt;%s&lt;/upnp:storageUsed&gt;", (size ? size : "-1"));
 		}
@@ -1333,12 +1331,6 @@ parse_search_criteria(const char *str)
 			case 'o':
 				if (strncmp(s, "object.", 7) == 0)
 					s += 7;
-				else if (strncmp(s, "object\"", 7) == 0 ||
-				         strncmp(s, "object&quot;", 12) == 0)
-				{
-					s += 6;
-					continue;
-				}
 			default:
 				charcat(&criteria, *s);
 				break;
@@ -1506,16 +1498,6 @@ parse_search_criteria(const char *str)
 				else
 					charcat(&criteria, *s);
 				break;
-			case '(':
-				if (s > str && !isspace(s[-1]))
-					charcat(&criteria, ' ');
-				charcat(&criteria, *s);
-				break;
-			case ')':
-				charcat(&criteria, *s);
-				if (!isspace(s[1]))
-					charcat(&criteria, ' ');
-				break;
 			default:
 				charcat(&criteria, *s);
 				break;
@@ -1544,7 +1526,7 @@ SearchContentDirectory(struct upnphttp * h, const char * action)
 	int totalMatches;
 	int ret;
 	char *ContainerID, *Filter, *SearchCriteria, *SortCriteria;
-	char *orderBy = NULL, *where = NULL;
+	char *orderBy = NULL;
 	char groupBy[] = "group by DETAIL_ID";
 	struct NameValueParserData data;
 	int RequestedCount = 0;
@@ -1622,11 +1604,8 @@ SearchContentDirectory(struct upnphttp * h, const char * action)
 	else if( strcmp(ContainerID, MUSIC_ALL_ID) == 0 )
 		groupBy[0] = '\0';
 
-	if( GETFLAG(DLNA_STRICT_MASK) )
-		groupBy[0] = '\0';
-
-	where = parse_search_criteria(SearchCriteria);
-	DPRINTF(E_DEBUG, L_HTTP, "Translated SearchCriteria: %s\n", where);
+	SearchCriteria = parse_search_criteria(SearchCriteria);
+	DPRINTF(E_DEBUG, L_HTTP, "Translated SearchCriteria: %s\n", SearchCriteria);
 
 	totalMatches = sql_get_int_field(db, "SELECT (select count(distinct DETAIL_ID)"
 	                                     " from OBJECTS o left join DETAILS d on (o.DETAIL_ID = d.ID)"
@@ -1634,7 +1613,7 @@ SearchContentDirectory(struct upnphttp * h, const char * action)
 	                                     " + "
 	                                     "(select count(*) from OBJECTS o left join DETAILS d on (o.DETAIL_ID = d.ID)"
 	                                     " where (OBJECT_ID = '%q') and (%s))",
-	                                     ContainerID, where, ContainerID, where);
+	                                     ContainerID, SearchCriteria, ContainerID, SearchCriteria);
 	if( totalMatches < 0 )
 	{
 		/* Must be invalid SQL, so most likely bad or unhandled search criteria. */
@@ -1669,11 +1648,11 @@ SearchContentDirectory(struct upnphttp * h, const char * action)
 	                      " where OBJECT_ID glob '%q$*' and (%s) %s "
 	                      "%z %s"
 	                      " limit %d, %d",
-	                      ContainerID, where, groupBy,
+	                      ContainerID, SearchCriteria, groupBy,
 	                      (*ContainerID == '*') ? NULL :
 	                      sqlite3_mprintf("UNION ALL " SELECT_COLUMNS
 	                                      "from OBJECTS o left join DETAILS d on (d.ID = o.DETAIL_ID)"
-	                                      " where OBJECT_ID = '%q' and (%s) ", ContainerID, where),
+	                                      " where OBJECT_ID = '%q' and (%s) ", ContainerID, SearchCriteria),
 	                      orderBy, StartingIndex, RequestedCount);
 	DPRINTF(E_DEBUG, L_HTTP, "Search SQL: %s\n", sql);
 	ret = sqlite3_exec(db, sql, callback, (void *) &args, &zErrMsg);
@@ -1695,7 +1674,7 @@ search_error:
 	if( args.flags & FLAG_FREE_OBJECT_ID )
 		sqlite3_free(ContainerID);
 	free(orderBy);
-	free(where);
+	free(SearchCriteria);
 	free(str.data);
 }
 

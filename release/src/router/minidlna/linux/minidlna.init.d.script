@@ -1,0 +1,52 @@
+#!/bin/sh
+
+# chkconfig: 345 99 10
+# description: Startup/shutdown script for MiniDLNA daemon
+#
+# Based on the MiniUPnPd script by Thomas Bernard
+# Modified for MiniDLNA by Justin Maggard <jmaggard@users.sourceforge.net>
+# Status function added by Igor Drobot
+#
+### BEGIN INIT INFO
+# Provides:          minidlna
+# Required-Start:    $network $local_fs $remote_fs
+# Required-Stop::    $network $local_fs $remote_fs
+# Should-Start:      $all
+# Should-Stop:       $all
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: DLNA/UPnP-AV media server
+### END INIT INFO
+
+MINIDLNA=/usr/sbin/minidlna
+PIDFILE=/var/run/minidlna.pid
+CONF=/etc/minidlna.conf
+ARGS="-f $CONF"
+
+test -f $MINIDLNA || exit 0
+
+. /lib/lsb/init-functions
+
+case "$1" in
+start)  log_daemon_msg "Starting minidlna" "minidlna"
+        start-stop-daemon --start --quiet --pidfile $PIDFILE --startas $MINIDLNA -- $ARGS $LSBNAMES
+        log_end_msg $?
+        ;;
+stop)   log_daemon_msg "Stopping minidlna" "minidlna"
+        start-stop-daemon --stop --quiet --pidfile $PIDFILE
+        log_end_msg $?
+        ;;
+restart|reload|force-reload)
+        log_daemon_msg "Restarting minidlna" "minidlna"
+        start-stop-daemon --stop --retry 5 --quiet --pidfile $PIDFILE
+        start-stop-daemon --start --quiet --pidfile $PIDFILE --startas $MINIDLNA -- $ARGS $LSBNAMES
+        log_end_msg $?
+        ;;
+status)
+        status_of_proc -p $PIDFILE $MINIDLNA minidlna && exit 0 || exit $?
+        ;;
+*)      log_action_msg "Usage: /etc/init.d/minidlna {start|stop|restart|reload|force-reload|status}"
+        exit 2
+        ;;
+esac
+exit 0

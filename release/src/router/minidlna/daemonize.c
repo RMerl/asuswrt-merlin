@@ -26,33 +26,100 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __GETIFADDR_H__
-#define __GETIFADDR_H__
-#include <arpa/inet.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+#include <signal.h>
 
-#define MACADDR_IS_ZERO(x) \
-  ((x[0] == 0x00) && \
-   (x[1] == 0x00) && \
-   (x[2] == 0x00) && \
-   (x[3] == 0x00) && \
-   (x[4] == 0x00) && \
-   (x[5] == 0x00))
+#include "daemonize.h"
+#include "config.h"
+#include "log.h"
 
-/* getifaddr()
- * take a network interface name and write the
- * ip v4 address as text in the buffer
- * returns: 0 success, -1 failure */
-int
-getifaddr(const char * ifname, char * buf, int len);
-
-int
-getsysaddrs(void);
-
-int
-getsyshwaddr(char * buf, int len);
-
-int
-get_remote_mac(struct in_addr ip_addr, unsigned char * mac);
-
+#include <rtconfig.h>
+#ifdef RTCONFIG_BCMARM
+#undef USE_DAEMON
 #endif
+
+int
+daemonize(void)
+{
+	int pid;
+#ifndef USE_DAEMON
+	int i;
+
+	switch(fork())
+	{
+	/* fork error */
+	case -1:
+		perror("fork()");
+		exit(1);
+	
+	/* child process */
+	case 0:
+		/* obtain a new process group */
+		if( (pid = setsid()) < 0)
+		{
+			perror("setsid()");
+			exit(1);
+		}
+
+		/* close all descriptors */
+		for (i=getdtablesize();i>=0;--i) close(i);		
+
+		i = open("/dev/null",O_RDWR); /* open stdin */
+		dup(i); /* stdout */
+		dup(i); /* stderr */
+
+		umask(027);
+		chdir("/");
+
+		break;
+	/* parent process */
+	default:
+		exit(0);
+	}
+#else
+	if( daemon(0, 0) < 0 )
+		perror("daemon()");
+	pid = getpid();
+#endif
+	return pid;
+}
+
+int
+checkforrunning(const char * fname)
+{
+	char buffer[64];
+	int pidfile;
+	pid_t pid;
+
+	if(!fname || *fname == '\0')
+		return -1;
+
+	if( (pidfile = open(fname, O_RDONLY)) < 0)
+		return 0;
+	
+	memset(buffer, 0, 64);
+	
+	if(read(pidfile, buffer, 63))
+	{
+		if( (pid = atol(buffer)) > 0)
+		{
+			if(!kill(pid, 0))
+			{
+				close(pidfile);
+				return -2;
+			}
+		}
+	}
+	
+	close(pidfile);
+	
+	return 0;
+}
 

@@ -44,6 +44,26 @@
 #include "sql.h"
 #include "log.h"
 
+#ifndef FF_PROFILE_H264_BASELINE
+#define FF_PROFILE_H264_BASELINE 66
+#endif
+#ifndef FF_PROFILE_H264_MAIN
+#define FF_PROFILE_H264_MAIN 77
+#endif
+#ifndef FF_PROFILE_H264_HIGH
+#define FF_PROFILE_H264_HIGH 100
+#endif
+#define FF_PROFILE_SKIP -100
+
+#if LIBAVCODEC_VERSION_MAJOR < 53
+#define AVMEDIA_TYPE_AUDIO CODEC_TYPE_AUDIO
+#define AVMEDIA_TYPE_VIDEO CODEC_TYPE_VIDEO
+#endif
+
+#if LIBAVUTIL_VERSION_INT < ((50<<16)+(13<<8)+0)
+#define av_strerror(x, y, z) snprintf(y, z, "%d", x)
+#endif
+
 #define FLAG_TITLE	0x00000001
 #define FLAG_ARTIST	0x00000002
 #define FLAG_ALBUM	0x00000004
@@ -660,6 +680,7 @@ GetImageMetadata(const char *path, char *name)
 				}
 				free(art_file);
 			}
+
 		}
 	}
 	//DEBUG DPRINTF(E_DEBUG, L_METADATA, " * thumbnail: %d\n", thumb);
@@ -1059,7 +1080,6 @@ GetVideoMetadata(const char *path, char *name)
 					switch( vc->profile )
 					{
 						case FF_PROFILE_H264_BASELINE:
-						case FF_PROFILE_H264_CONSTRAINED_BASELINE:
 							off += sprintf(m.dlna_pn+off, "BL_");
 							if( vc->width  <= 352 &&
 							    vc->height <= 288 &&
@@ -1082,7 +1102,6 @@ GetVideoMetadata(const char *path, char *name)
 						case FF_PROFILE_H264_MAIN:
 							off += sprintf(m.dlna_pn+off, "MP_");
 							if( vc->profile != FF_PROFILE_H264_BASELINE &&
-							    vc->profile != FF_PROFILE_H264_CONSTRAINED_BASELINE &&
 							    vc->profile != FF_PROFILE_H264_MAIN )
 							{
 								DPRINTF(E_DEBUG, L_METADATA, "Unknown AVC profile %d; assuming MP. [%s]\n",
@@ -1186,7 +1205,6 @@ GetVideoMetadata(const char *path, char *name)
 
 					switch( vc->profile ) {
 					case FF_PROFILE_H264_BASELINE:
-					case FF_PROFILE_H264_CONSTRAINED_BASELINE:
 						if( vc->width  <= 352 &&
 						    vc->height <= 288 )
 						{
