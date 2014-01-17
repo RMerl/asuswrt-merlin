@@ -537,6 +537,10 @@ History
 3.0.0.4.374.38_2 (17-Jan-2014):
    - CHANGED: Improved webui responsiveness by instructing the browser 
               to cache images.
+   - CHANGED: Reverted minidlna to 374.37 code.  While the latest code 
+              brings some fixes, it seems to also break functionality 
+              for a small number of users.  Too many low-level changes 
+              from the minidlna author to make it easy to debug.
    - FIXED: Syntax error in DHCPv6 client config (Asus bug)
    - FIXED: Domain field wasn't clearly identified on the webui 
             when DDNS set to Namecheap (Saintdev)
