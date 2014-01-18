@@ -991,6 +991,7 @@ set40M_Channel_2G(char *channel)
 	return 1;
 }
 
+#if defined(RTCONFIG_HAS_5G)
 int
 set40M_Channel_5G(char *channel)
 {
@@ -1003,6 +1004,7 @@ set40M_Channel_5G(char *channel)
 	puts("1");
 	return 1;
 }
+#endif	/* RTCONFIG_HAS_5G */
 
 
 int Get_channel_list(int unit)
@@ -4528,28 +4530,36 @@ wps_pbc_both(void)
 
 	eval("route", "delete", "239.255.255.250");
 
+#if defined(RTCONFIG_HAS_5G)
 	kill_pidfile_s_rm(get_wscd_pidfile_band(1), SIGKILL);
+#endif	/* RTCONFIG_HAS_5G */
 	kill_pidfile_s_rm(get_wscd_pidfile_band(0), SIGKILL);
 
 	dbg("%s: start wsc ()\n", __func__);
 
+#if defined(RTCONFIG_HAS_5G)
 	doSystem("iwpriv %s set WscConfMode=%d", get_wifname(1), 0);		// WPS disabled
 	doSystem("iwpriv %s set WscConfMode=%d", get_wifname(1), 7);		// Enrollee + Proxy + Registrar
+#endif	/* RTCONFIG_HAS_5G */
 
 	doSystem("iwpriv %s set WscConfMode=%d", get_wifname(0), 0);		// WPS disabled
 	doSystem("iwpriv %s set WscConfMode=%d", get_wifname(0), 7);		// Enrollee + Proxy + Registrar
 
 	eval("route", "add", "-host", "239.255.255.250", "dev", "br0");
 	strcpy(str_lan_ipaddr, nvram_safe_get("lan_ipaddr"));
+#if defined(RTCONFIG_HAS_5G)
 	doSystem("wscd -m 1 -a %s -i %s &", str_lan_ipaddr, get_wifname(1));
+#endif	/* RTCONFIG_HAS_5G */
 	doSystem("wscd -m 1 -a %s -i %s &", str_lan_ipaddr, get_wifname(0));
 
 //	dbg("WPS: PBC\n");
-	g_isEnrollee[0] = 1;
+#if defined(RTCONFIG_HAS_5G)
 	g_isEnrollee[1] = 1;
 	doSystem("iwpriv %s set WscMode=%d", get_wifname(1), 2);		// PBC method
 	doSystem("iwpriv %s set WscGetConf=%d", get_wifname(1), 1);		// Trigger WPS AP to do simple config with WPS Client
+#endif	/* RTCONFIG_HAS_5G */
 
+	g_isEnrollee[0] = 1;
 	doSystem("iwpriv %s set WscMode=%d", get_wifname(0), 2);		// PBC method
 	doSystem("iwpriv %s set WscGetConf=%d", get_wifname(0), 1);		// Trigger WPS AP to do simple config with WPS Client
 
@@ -4644,12 +4654,13 @@ wps_pbc_both(void)
 	if (!__need_to_start_wps_band("wl1") || !__need_to_start_wps_band("wl0")) return 0;
 
 //	dbg("WPS: PBC\n");
-	g_isEnrollee[0] = 1;
+#if defined(RTCONFIG_HAS_5G)
 	g_isEnrollee[1] = 1;
-
 	doSystem("iwpriv %s set WscMode=%d", get_wifname(1), 2);		// PBC method
 	doSystem("iwpriv %s set WscGetConf=%d", get_wifname(1), 1);		// Trigger WPS AP to do simple config with WPS Client
+#endif	/* RTCONFIG_HAS_5G */
 
+	g_isEnrollee[0] = 1;
 	doSystem("iwpriv %s set WscMode=%d", get_wifname(0), 2);		// PBC method
 	doSystem("iwpriv %s set WscGetConf=%d", get_wifname(0), 1);		// Trigger WPS AP to do simple config with WPS Client
 
@@ -4734,8 +4745,8 @@ __wps_oob(const int multiband)
 			iwprivSet(get_wifname(i), "Key4", p);
 		doSystem("iwpriv %s set DefaultKeyID=%s", get_wifname(i), nvram_safe_get(strcat_r(prefix, "key", tmp)));
 		iwprivSet(get_wifname(i), "SSID", nvram_safe_get(strcat_r(prefix, "ssid", tmp)));
-		doSystem("iwpriv %s set WscConfMode=%d", get_wifname(1), 0);		// WPS disabled. Force WPS status to change
-		doSystem("iwpriv %s set WscConfMode=%d", get_wifname(1), 7);		// WPS enabled. Force WPS status to change
+		doSystem("iwpriv %s set WscConfMode=%d", get_wifname(i), 0);		// WPS disabled. Force WPS status to change
+		doSystem("iwpriv %s set WscConfMode=%d", get_wifname(i), 7);		// WPS enabled. Force WPS status to change
 		doSystem("iwpriv %s set WscConfStatus=%d", get_wifname(i), 1);		// AP is unconfigured
 #endif
 		g_isEnrollee[i] = 0;
@@ -4769,6 +4780,7 @@ wps_oob_both(void)
 	nvram_commit();
 
 #if defined (W7_LOGO) || defined (wifi_LOGO)
+#if defined(RTCONFIG_HAS_5G)
 	doSystem("iwpriv %s set AuthMode=%s", get_wifname(1), "OPEN");
 	doSystem("iwpriv %s set EncrypType=%s", get_wifname(1), "NONE");
 	doSystem("iwpriv %s set IEEE8021X=%d", get_wifname(1), 0);
@@ -4782,6 +4794,7 @@ wps_oob_both(void)
 		iwprivSet(get_wifname(1), "Key4", nvram_safe_get("wl1_key4"));
 	doSystem("iwpriv %s set DefaultKeyID=%s", get_wifname(1), nvram_safe_get("wl1_key"));
 	iwprivSet(get_wifname(1), "SSID", nvram_safe_get("wl1_ssid"));
+#endif	/* RTCONFIG_HAS_5G */
 
 	doSystem("iwpriv %s set AuthMode=%s", get_wifname(0), "OPEN");
 	doSystem("iwpriv %s set EncrypType=%s", get_wifname(0), "NONE");
@@ -4799,12 +4812,14 @@ wps_oob_both(void)
 
 	eval("route", "delete", "239.255.255.250");
 
-	kill_pidfile_s_rm(get_wscd_pidfile_band(1), SIGKILL);
 	kill_pidfile_s_rm(get_wscd_pidfile_band(0), SIGKILL);
 
+#if defined(RTCONFIG_HAS_5G)
+	kill_pidfile_s_rm(get_wscd_pidfile_band(1), SIGKILL);
 	doSystem("iwpriv %s set WscConfMode=%d", get_wifname(1), 0);		// WPS disabled
 	doSystem("iwpriv %s set WscConfMode=%d", get_wifname(1), 7);		// Enrollee + Proxy + Registrar
 	doSystem("iwpriv %s set WscConfStatus=%d", get_wifname(1), 1);		// AP is unconfigured
+#endif	/* RTCONFIG_HAS_5G */
 
 	doSystem("iwpriv %s set WscConfMode=%d", get_wifname(0), 0);		// WPS disabled
 	doSystem("iwpriv %s set WscConfMode=%d", get_wifname(0), 7);		// Enrollee + Proxy + Registrar
@@ -4817,16 +4832,17 @@ wps_oob_both(void)
 	char str_lan_ipaddr[16];
 	strcpy(str_lan_ipaddr, nvram_safe_get("lan_ipaddr"));
 
+#if defined(RTCONFIG_HAS_5G)
 	doSystem("wscd -m 1 -a %s -i %s &", str_lan_ipaddr, get_wifname(1));
+	doSystem("iwpriv %s set WscMode=1", get_wifname(1));			// PIN method
+//	doSystem("iwpriv %s set WscGetConf=%d", get_wifname(1), 1);		// Trigger WPS AP to do simple config with WPS Client
+#endif	/* RTCONFIG_HAS_5G */
 
 	doSystem("wscd -m 1 -a %s -i %s &", str_lan_ipaddr, get_wifname(0));
-
-	doSystem("iwpriv %s set WscMode=1", get_wifname(1));			// PIN method
-
 	doSystem("iwpriv %s set WscMode=1", get_wifname(0));			// PIN method
 
-//	doSystem("iwpriv %s set WscGetConf=%d", get_wifname(1), 1);		// Trigger WPS AP to do simple config with WPS Client
 #else
+#if defined(RTCONFIG_HAS_5G)
 	doSystem("iwpriv %s set AuthMode=%s", get_wifname(1), "OPEN");
 	doSystem("iwpriv %s set EncrypType=%s", get_wifname(1), "NONE");
 	doSystem("iwpriv %s set IEEE8021X=%d", get_wifname(1), 0);
@@ -4843,6 +4859,7 @@ wps_oob_both(void)
 	doSystem("iwpriv %s set WscConfMode=%d", get_wifname(1), 0);		// WPS disabled. Force WPS status to change
 	doSystem("iwpriv %s set WscConfMode=%d", get_wifname(1), 7);		// WPS enabled. Force WPS status to change
 	doSystem("iwpriv %s set WscConfStatus=%d", get_wifname(1), 1);		// AP is unconfigured
+#endif	/* RTCONFIG_HAS_5G */
 
 	doSystem("iwpriv %s set AuthMode=%s", get_wifname(0), "OPEN");
 	doSystem("iwpriv %s set EncrypType=%s", get_wifname(0), "NONE");
@@ -5017,16 +5034,22 @@ stop_wsc_both(void)
 #if defined(RTCONFIG_WPSMULTIBAND)
 	__stop_wsc(1);
 #else
-	if (!__need_to_start_wps_band("wl1") && !__need_to_start_wps_band("wl0"))
+	if (!__need_to_start_wps_band("wl0")
+#if defined(RTCONFIG_HAS_5G)
+ && !__need_to_start_wps_band("wl1")
+#endif	/* RTCONFIG_HAS_5G */
+	   )
 		return;
 
 	system("route delete 239.255.255.250 1>/dev/null 2>&1");
 
-	kill_pidfile_s_rm(get_wscd_pidfile_band(1), SIGKILL);
 	kill_pidfile_s_rm(get_wscd_pidfile_band(0), SIGKILL);
 
+#if defined(RTCONFIG_HAS_5G)
+	kill_pidfile_s_rm(get_wscd_pidfile_band(1), SIGKILL);
 	doSystem("iwpriv %s set WscConfMode=%d", get_wifname(1), 0);		// WPS disabled
 	doSystem("iwpriv %s set WscStatus=%d", get_wifname(1), 0);		// Not Used
+#endif	/* RTCONFIG_HAS_5G */
 
 	doSystem("iwpriv %s set WscConfMode=%d", get_wifname(0), 0);		// WPS disabled
 	doSystem("iwpriv %s set WscStatus=%d", get_wifname(0), 0);		// Not Used

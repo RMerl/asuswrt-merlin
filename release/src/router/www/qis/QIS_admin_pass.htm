@@ -105,6 +105,8 @@ function submitForm(){
 		document.form.http_username.select();
 		changeiuiBackground(0);
 		return false;
+	}else{
+		$("alert_msg1").style.display = "none";
 	}
 
 	document.form.http_username.value = trim(document.form.http_username.value);

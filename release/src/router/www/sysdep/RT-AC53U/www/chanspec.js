@@ -1,1 +1,0 @@
-../../RT-AC66U/www/chanspec.js

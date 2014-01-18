@@ -354,9 +354,6 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl0_itxbf", "0" },
 #endif
 #endif
-#ifndef RTCONFIG_RALINK
-	{ "debug_wl", "0" },
-#endif
 
 #if defined (RTCONFIG_WIRELESSREPEATER) || defined (RTCONFIG_PROXYSTA)
 	{ "wlc_list",			""	},
@@ -1072,7 +1069,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "acc_num", "1"},
 	{ "acc_list", "admin>admin"},
 	{ "st_samba_mode", "1"},
-	{ "st_ftp_mode", "1"},
+	{ "st_ftp_mode", "2"},
 	{ "enable_ftp", "0"},
 	{ "enable_samba", "1"},
 	{ "st_max_user", "5"},
@@ -1676,7 +1673,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "Ate_continue_fail",		"3"},
 	{ "dev_fail_reboot",		"3"},
 	// Wireless parameters
-#if RTCONFIG_TIMEMACHINE
+#ifdef RTCONFIG_TIMEMACHINE
 	{"timemachine_enable", 		"0"},
 	{"tm_device_name", 		""},
 	{"tm_vol_size", 		"0"},

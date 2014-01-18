@@ -86,7 +86,6 @@ function setSelectedDiskOrder(selectedId){
 	this.selectedDiskBarcode = getDiskBarcode(selectedId.substring(1));
 	this.selectedPoolBarcode = "";
 	this.selectedFolderBarcode = "";
-	
 	this.selectedDiskOrder = getDiskOrder(this.selectedDiskBarcode);
 	this.selectedPoolOrder = -1;
 	this.selectedFolderOrder = -1;
@@ -227,7 +226,7 @@ function getDiskPort(all_disk_order){
 	var disk_port;
 	
 	if(all_disk_order < foreign_disks().length)
-		disk_port = foreign_disk_interface_names()[all_disk_order];
+		disk_port = foreign_disk_interface_names()[all_disk_order].charAt(0);
 	else
 		disk_port = blank_disk_interface_names()[all_disk_order-foreign_disks().length];
 	
@@ -244,22 +243,6 @@ function getDiskModelName(all_disk_order){
 		
 	return disk_model_name;
 }
-/*
-function getDiskTotalSize(all_disk_order){
-	var TotalSize = 0;
-
-	if(foreign_disks().length > 1){   //Lock add 2009.05.14 for N13U Rev.B1: some disk will format to 2 sub disk.
-		for(var i=0; i<foreign_disk_total_size().length; i++){
-			TotalSize = TotalSize + simpleNum(foreign_disk_total_size()[i]);
-		}
-	}	
-	else if(all_disk_order < foreign_disks().length)
-		TotalSize = simpleNum(foreign_disk_total_size()[all_disk_order]);
-	else
-		TotalSize = simpleNum(blank_disk_total_size()[all_disk_order-foreign_disk_total_size().length]);
-		
-	return TotalSize;
-}*/
 
 function getDiskTotalSize(all_disk_order){
 	var TotalSize;

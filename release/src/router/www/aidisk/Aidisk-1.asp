@@ -20,10 +20,13 @@ var ddns_enable = '<% nvram_get("ddns_enable_x"); %>';
 var ddns_server = '<% nvram_get("ddns_server_x"); %>';
 var ddns_hostname = '<% nvram_get("ddns_hostname_x"); %>';
 var format_of_first_partition = parent.pool_types()[0]; //"ntfs";
-
+var st_ftp_mode = '<% nvram_get("st_ftp_mode"); %>';
 function initial(){
 	parent.hideLoading();
 	showdisklink();
+
+	if(st_ftp_mode == 1)
+		$("noFTP_Hint").style.display = "";
 }
 
 function showdisklink(){
@@ -151,22 +154,17 @@ function go_next_page(){
 		  	<div id="linkdiskbox" >
 		  			<span style="margin-left:5px;"><#AiDisk_wizard_text_box_title3#></span><br/>
 		  			<ul>
+		  				<li id="noFTP_Hint" style="display:none;">
+		  					<span><#AiDisk_shareHint#></span>
+		  				</li>
 		  				<li> 
 		  					<span id="noWAN_link" style="display:none;"></span>
-		  					<span id="ddnslink1" style="display:none;">
-		  					<!-- #Internet#>&nbsp;<#AiDisk_linktoFTP_fromInternet#>&nbsp;<a target="_blank" href="ftp://<% nvram_get("ddns_hostname_x"); %>" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("ddns_hostname_x"); %></a-->
-		  					</span>
-		  					<span id="ddnslink2" style="display:none;">
-		  					<!--#Internet#>&nbsp;<#AiDisk_linktoFTP_fromInternet#>&nbsp;<a target="_blank" href="ftp://<% nvram_get("ddns_hostname_x"); %>" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("ddns_hostname_x"); %></a-->
-		  					</span>
+		  					<span id="ddnslink1" style="display:none;"></span>
+		  					<span id="ddnslink2" style="display:none;"></span>
 		  				</li>
 		  				<li id="desc_2" style="display:none;margin-top:8px;">
-		  					<span id="ddnslink1_LAN" style="display:none;">
-		  					<!-- #t2LAN#>&nbsp;<#AiDisk_linktoFTP_fromInternet#>&nbsp;<a target="_blank" href="ftp://<% nvram_get("lan_ipaddr"); %>" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("lan_ipaddr"); %></a -->
-		  					</span>
-		  					<span id="ddnslink2_LAN" style="display:none;">
-		  					<!-- #t2LAN#>&nbsp;<#AiDisk_linktoFTP_fromInternet#>&nbsp;<a target="_blank" href="ftp://<% nvram_get("lan_ipaddr"); %>" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("lan_ipaddr"); %></a -->
-		  					</span>
+		  					<span id="ddnslink1_LAN" style="display:none;"></span>
+		  					<span id="ddnslink2_LAN" style="display:none;"></span>
 		  				</li>
 							<li><#AiDisk_moreconfig#></li>
 							<li><#Aidisk_authority_hint#></li>

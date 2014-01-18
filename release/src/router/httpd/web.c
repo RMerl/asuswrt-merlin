@@ -3726,6 +3726,7 @@ static int ej_show_usb_path(int eid, webs_t wp, int argc, char_t **argv){
 		snprintf(prefix, sizeof(prefix), "usb_path%s", port_path);
 		strncpy(all_usb_path[port_order][hub_order][1], nvram_safe_get(prefix), 16);
 	}
+	closedir(bus_usb);
 
 	port_set = got_port = got_hub = 0;
 
@@ -4222,7 +4223,7 @@ static int ej_get_modem_info(int eid, webs_t wp, int argc, char_t **argv){
 	memset(modem_array, 0, MAX_USB_PORT*MAX_USB_HUB_PORT*4*64);
 
 	got_modem = 0;
-	for(i = 1; i < MAX_USB_PORT; ++i){
+	for(i = 1; i <= MAX_USB_PORT; ++i){
 		snprintf(prefix, sizeof(prefix), "usb_path%d", i);
 		if(!strcmp(nvram_safe_get(prefix), "modem")){
 			snprintf(port_path, 8, "%d", i);
@@ -4235,7 +4236,7 @@ static int ej_get_modem_info(int eid, webs_t wp, int argc, char_t **argv){
 			++got_modem;
 		}
 		else{
-			for(j = 1; j < MAX_USB_HUB_PORT; ++j){
+			for(j = 1; j <= MAX_USB_HUB_PORT; ++j){
 				snprintf(prefix, sizeof(prefix), "usb_path%d.%d", i, j);
 
 				if(!strcmp(nvram_safe_get(prefix), "modem")){
@@ -4317,6 +4318,16 @@ static int ej_get_modem_info(int eid, webs_t wp, int argc, char_t **argv){
 	websWrite(wp, "}\n\n");
 
 	return 0;
+}
+#else
+static int ej_show_usb_path(int eid, webs_t wp, int argc, char_t **argv){
+        websWrite(wp, "[]");
+        return 0;
+}
+
+int ej_apps_fsck_ret(int eid, webs_t wp, int argc, char **argv){
+        websWrite(wp, "[]");
+        return 0;
 }
 #endif
 
@@ -7373,12 +7384,12 @@ int ej_set_account_all_folder_permission(int eid, webs_t wp, int argc, char **ar
 	return 0;
 }
 
-#ifdef RTCONFIG_DISK_MONITOR
 int ej_apps_fsck_ret(int eid, webs_t wp, int argc, char **argv){
 	disk_info_t *disk_list, *disk_info;
 	partition_info_t *partition_info;
 	FILE *fp;
 
+#ifdef RTCONFIG_DISK_MONITOR
 	disk_list = read_disk_data();
 	if(disk_list == NULL){
 		websWrite(wp, "[]");
@@ -7419,8 +7430,13 @@ int ej_apps_fsck_ret(int eid, webs_t wp, int argc, char **argv){
 	free_disk_data(&disk_list);
 
 	return 0;
+#endif
+
+	websWrite(wp, "[]");
+	return 0;
 }
 
+#ifdef RTCONFIG_DISK_MONITOR
 int ej_apps_fsck_log(int eid, webs_t wp, int argc, char **argv){
 	disk_info_t *disk_list, *disk_info;
 	partition_info_t *partition_info;
@@ -8694,8 +8710,9 @@ struct ej_handler ej_handlers[] = {
 	{ "get_ap_info", ej_get_ap_info},
 #endif
 	{ "ddns_info", ej_ddnsinfo},
-#ifdef RTCONFIG_USB
 	{ "show_usb_path", ej_show_usb_path},
+	{ "apps_fsck_ret", ej_apps_fsck_ret},
+#ifdef RTCONFIG_USB
 	{ "disk_pool_mapping_info", ej_disk_pool_mapping_info},
 	{ "available_disk_names_and_sizes", ej_available_disk_names_and_sizes},
 	{ "get_printer_info", ej_get_printer_info},
@@ -8719,7 +8736,6 @@ struct ej_handler ej_handlers[] = {
 	{ "set_share_mode", ej_set_share_mode},
 	{ "initial_folder_var_file", ej_initial_folder_var_file},
 #ifdef RTCONFIG_DISK_MONITOR
-	{ "apps_fsck_ret", ej_apps_fsck_ret},
 	{ "apps_fsck_log", ej_apps_fsck_log},
 #endif
 	{ "apps_info", ej_apps_info},

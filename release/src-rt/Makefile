@@ -770,10 +770,25 @@ define RouterOptions
 		sed -i "/RTCONFIG_STRACE/d" $(1); \
 		echo "RTCONFIG_STRACE=y" >>$(1); \
 	fi; \
-	if [ "$(GDB)" = "y" ]; then \
-		sed -i "/RTCONFIG_GDB/d" $(1); \
-		echo "RTCONFIG_GDB=y" >>$(1); \
-	fi; \
+	if [ "$(DEBUG)" = "y" ] || [ "$(GDB)" = "y" ]; then \
+                sed -i "/CONFIG_ELF_CORE/d" $(1); \
+                echo "CONFIG_ELF_CORE=y" >>$(1); \
+        	if [ "$(BCMWL6A)" = "y" ]; then \
+                	sed -i "/CONFIG_CORE_DUMP_DEFAULT_ELF_HEADERS/d" $(1); \
+                	echo "# CONFIG_CORE_DUMP_DEFAULT_ELF_HEADERS is not set" >>$(1); \
+        	fi; \
+        fi; \
+        if [ "$(DUMP_OOPS_MSG)" = "y" ]; then \
+                if [ "$(BUILD_NAME)" = "RT-AC66U" ] || [ "$(BUILD_NAME)" = "RT-N66U" ]; then \
+                        echo "CONFIG_DUMP_PREV_OOPS_MSG=y" >>$(1); \
+                        echo "CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR=0x07FFE000" >>$(1); \
+                        echo "CONFIG_DUMP_PREV_OOPS_MSG_BUF_LEN=0x2000" >>$(1); \
+                else \
+                        echo "# CONFIG_DUMP_PREV_OOPS_MSG is not set" >>$(1); \
+                fi; \
+        else \
+                echo "# CONFIG_DUMP_PREV_OOPS_MSG is not set" >>$(1); \
+        fi; \
 	if [ "$(APP)" = "network" ]; then \
 		sed -i "/RTCONFIG_APP_NETINSTALLED/d" $(1); \
 		echo "RTCONFIG_APP_NETINSTALLED=y" >>$(1); \
@@ -895,6 +910,20 @@ define RouterOptions
                 echo "RTCONFIG_DEBUG=y" >>$(1); \
 		sed -i "/RTCONFIG_GDB/d" $(1); \
 		echo "RTCONFIG_GDB=y" >>$(1); \
+        fi; \
+        if [ "$(LLDP)" = "y" ]; then \
+                sed -i "/RTCONFIG_LLDP/d" $(1); \
+                echo "RTCONFIG_LLDP=y" >>$(1); \
+        fi; \
+        if [ "$(DEBUG)" = "y" ]; then \
+                sed -i "/RTCONFIG_DEBUG/d" $(1); \
+                echo "RTCONFIG_DEBUG=y" >>$(1); \
+		sed -i "/RTCONFIG_GDB/d" $(1); \
+		echo "RTCONFIG_GDB=y" >>$(1); \
+        fi; \
+        if [ "$(SINGLE_2G)" = "y" ]; then \
+                sed -i "/RTCONFIG_HAS_5G/d" $(1); \
+                echo "# RTCONFIG_HAS_5G is not set" >>$(1); \
         fi; \
 	)
 	$(call platformRouterOptions, $(1))

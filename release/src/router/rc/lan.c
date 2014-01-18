@@ -289,10 +289,6 @@ static int wlconf(char *ifname, int unit, int subunit)
 // Disabled since we are still using 5.100
 ///		eval("wl", "-i", ifname, "ampdu_density", "6");		// resolve IOT with Intel STA for BRCM SDK 5.110.27.20012
 #endif
-		if (nvram_match("debug_wl", "1"))
-			eval("wl", "-i", ifname, "msglevel",  "+error", "+inform", "+assoc", "+ampdu", "+ps");
-		else
-			eval("wl", "-i", ifname, "msglevel",  "0");
 	}
 
 	r = eval("wlconf", ifname, "up");
@@ -333,15 +329,22 @@ static int wlconf(char *ifname, int unit, int subunit)
 			if (nvram_match(strcat_r(prefix, "ampdu_rts", tmp), "0") &&
 				nvram_match(strcat_r(prefix, "nmode", tmp), "-1"))
 				eval("wl", "-i", ifname, "rtsthresh", "65535");
-#if 0
-			if (get_model() == MODEL_RTAC68U) {
-				if (unit &&
-					nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
-					nvram_match(strcat_r(prefix, "country_rev", tmp), "13"))
-					eval("wl", "-i", ifname, "radarthrs",
-						"0x6ac", "0x30", "0x6a8", "0x30", "0x6a8", "0x30", "0x6a8", "0x30", "0x6a4", "0x30", "0x6a0", "0x30");
-			}
 #endif
+#if 0
+			if (unit) {
+				if (	((get_model() == MODEL_RTAC68U) &&
+					nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
+					nvram_match(strcat_r(prefix, "country_rev", tmp), "13")) /*||
+					((get_model() == MODEL_RTAC66U) &&
+                                        nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
+                                        nvram_match(strcat_r(prefix, "country_rev", tmp), "13")) ||
+					((get_model() == MODEL_RTN66U) &&
+					nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
+					nvram_match(strcat_r(prefix, "country_rev", tmp), "0"))*/
+				)
+						eval("wl", "-i", ifname, "radarthrs",
+							"0x6ac", "0x30", "0x6a8", "0x30", "0x6a8", "0x30", "0x6a8", "0x30", "0x6a4", "0x30", "0x6a0", "0x30");
+			}
 #endif
 #endif
 			txpower = nvram_get_int(wl_nvname("TxPower", unit, 0));
@@ -1997,14 +2000,14 @@ NEITHER_WDS_OR_PSTA:
 			sleep(2);
 
 			memset(port_path, 0, 8);
-			for(i = 1; i < MAX_USB_PORT; ++i){ // MAX USB port number is 3.
+			for(i = 1; i <= MAX_USB_PORT; ++i){ // MAX USB port number is 3.
 				snprintf(nvram_name, 32, "usb_path%d", i);
 				if(!strcmp(nvram_safe_get(nvram_name), "modem")){
 					snprintf(port_path, 8, "%d", i);
 					break;
 				}
 
-				for(j = 1; j < MAX_USB_HUB_PORT; ++j){
+				for(j = 1; j <= MAX_USB_HUB_PORT; ++j){
 					snprintf(nvram_name, 32, "usb_path%d.%d", i, j);
 					if(!strcmp(nvram_safe_get(nvram_name), "modem")){
 						snprintf(port_path, 8, "%d.%d", i, j);
@@ -2596,7 +2599,7 @@ lan_up(char *lan_ifname)
 
 	/* Scan new subnetwork */
 	stop_networkmap();
-	start_networkmap(0); 
+	start_networkmap(0);
 	update_lan_state(LAN_STATE_CONNECTED, 0);
 
 #ifdef RTCONFIG_WIRELESSREPEATER

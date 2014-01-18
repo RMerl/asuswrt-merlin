@@ -2599,6 +2599,7 @@ int set_usb_common_nvram(const char *action, const char *device_name, const char
 	if(!check_hotplug_action(action)){
 		if(known_type == NULL){
 			snprintf(prefix, sizeof(prefix), "usb_path%s", port_path);
+			snprintf(been_type, 16, "%s", nvram_safe_get(prefix));
 			nvram_unset(prefix);
 
 			if(strlen(nvram_safe_get(strcat_r(prefix, "_vid", tmp))) > 0)
@@ -2611,7 +2612,7 @@ int set_usb_common_nvram(const char *action, const char *device_name, const char
 				nvram_unset(tmp);
 			if(strlen(nvram_safe_get(strcat_r(prefix, "_serial", tmp))) > 0)
 				nvram_unset(tmp);
-			if(strlen(nvram_safe_get(strcat_r(prefix, "_speed", tmp))) > 0)
+			if(strcmp(been_type, "storage") && strlen(nvram_safe_get(strcat_r(prefix, "_speed", tmp))) > 0)
 				nvram_unset(tmp);
 			if(strlen(nvram_safe_get(strcat_r(prefix, "_node", tmp))) > 0)
 				nvram_unset(tmp);
@@ -2634,6 +2635,7 @@ int set_usb_common_nvram(const char *action, const char *device_name, const char
 #ifdef RTCONFIG_DISK_MONITOR
 					nvram_unset(strcat_r(prefix, "_pool_error", tmp));
 #endif
+					nvram_unset(strcat_r(prefix, "_speed", tmp));
 					// for ATE. }
 				}
 			}
@@ -2729,6 +2731,13 @@ int asus_sd(const char *device_name, const char *action){
 	char port_path[8];
 	char buf1[32];
 	char prefix[] = "usb_pathXXXXXXXXXXXXXXXXX_", tmp[100];
+#ifdef RTCONFIG_XHCIMODE
+	int usb2mode = 0;
+	char vid[8], pid[8];
+	char speed[256];
+#endif
+	char *ptr;
+
 	usb_dbg("(%s): action=%s.\n", device_name, action);
 
 	if(!strcmp(nvram_safe_get("stop_sd"), "1")){
@@ -2747,6 +2756,8 @@ int asus_sd(const char *device_name, const char *action){
 		return 0;
 	}
 
+	ptr = device_name+strlen(device_name)-1;
+
 	// If remove the device?
 	if(!check_hotplug_action(action)){
 		memset(buf1, 0, 32);
@@ -2754,8 +2765,20 @@ int asus_sd(const char *device_name, const char *action){
 		memset(usb_node, 0, 32);
 		strcpy(usb_node, nvram_safe_get(buf1));
 
+#ifdef RTCONFIG_XHCIMODE
+		if(get_path_by_node(usb_node, port_path, 8) == NULL){
+			usb_dbg("(%s): Fail to get usb path.\n", usb_node);
+			file_unlock(isLock);
+			return 0;
+		}
+
+		snprintf(tmp, 100, "usb_path%s_speed", port_path);
+		snprintf(nvram_value, 32, "%s", nvram_safe_get(tmp));
+#endif
+
 		if(strlen(usb_node) > 0){
-			set_usb_common_nvram(action, device_name, usb_node, "storage");
+			if(!isdigit(*ptr))
+				set_usb_common_nvram(action, device_name, usb_node, "storage");
 			usb_dbg("(%s): Remove Storage on USB node %s.\n", device_name, usb_node);
 		}
 		else
@@ -2780,6 +2803,21 @@ int asus_sd(const char *device_name, const char *action){
 		unsetenv("SUBSYSTEM");
 		unsetenv("MAJOR");
 		unsetenv("PHYSDEVBUS");
+
+#ifdef RTCONFIG_XHCIMODE
+		if(!strncmp(port_path, "1", 1) && nvram_get_int("usb_usb3") != 1){
+			// Get the xhci mode.
+			if(f_read_string("/sys/module/xhci_hcd/parameters/usb2mode", buf1, 32) <= 0){
+				usb_dbg("(%s): Fail to get xhci mode.\n", device_name);
+				file_unlock(isLock);
+				return 0;
+			}
+			usb2mode = atoi(buf1);
+
+			if(usb2mode != 0 && !isdigit(*ptr) && strlen(nvram_value) > 0 && strcmp(nvram_value, "5000"))
+				notify_rc("restart_xhcimode 0");
+		}
+#endif
 
 		file_unlock(isLock);
 		return 0;
@@ -2809,12 +2847,7 @@ int asus_sd(const char *device_name, const char *action){
 	sprintf(buf1, "usb_path_%s", device_name);
 	nvram_set(buf1, usb_node);
 
-#if RTCONFIG_XHCIMODE
-	int usb2mode = 0;
-	char *ptr;
-	char vid[8], pid[8];
-	char speed[256];
-
+#ifdef RTCONFIG_XHCIMODE
 	if(get_usb_speed(usb_node, speed, 256) != NULL && strcmp(speed, "5000")){
 		goto after_change_xhcimode;
 	}
@@ -2826,9 +2859,6 @@ int asus_sd(const char *device_name, const char *action){
 		return 0;
 	}
 	usb2mode = atoi(buf1);
-
-	ptr = device_name+strlen(device_name)-1;
-_dprintf("test 1. ptr=%s.\n", ptr);
 
 	if(nvram_get_int("stop_xhcimode") == 1)
 		usb_dbg("(%s): stop the xhci mode.\n", device_name);
@@ -2868,9 +2898,7 @@ _dprintf("test 1. ptr=%s.\n", ptr);
 		file_unlock(isLock);
 		return 0;
 	}
-#endif
 
-#if RTCONFIG_XHCIMODE
 after_change_xhcimode:
 #endif
 
@@ -2903,11 +2931,11 @@ after_change_xhcimode:
 		return 0;
 	}
 
-	// set USB common nvram.
-	set_usb_common_nvram(action, device_name, usb_node, "storage");
+	if(!isdigit(*ptr)){
+		// set USB common nvram.
+		set_usb_common_nvram(action, device_name, usb_node, "storage");
 
-	// for DM.
-	if(strlen(device_name) == 3){ // sda, sdb, sdc...
+		// for DM.
 		if(!strcmp(nvram_safe_get(prefix), "storage")){
 			nvram_set(strcat_r(prefix, "_act", tmp), device_name);
 		}
@@ -3286,7 +3314,7 @@ int asus_tty(const char *device_name, const char *action){
 	char vid[8], pid[8];
 	char *ptr, interface_name[16];
 	int got_Int_endpoint = 0;
-	int isLock;
+	int isLock = -1, isLock_tty = -1;
 	char current_act[16], current_def[16];
 	int cur_val, tmp_val;
 	int retry;
@@ -3440,7 +3468,7 @@ int asus_tty(const char *device_name, const char *action){
 	// Only see the other usb port, because in the same port there are more modem interfaces and they need to compare.
 	memset(buf1, 0, 32);
 	strncpy(buf1, nvram_safe_get("usb_modem_act_path"), 32);
-	if(strlen(buf1) > 0 && strcmp(port_path, buf1)){
+	if(strlen(buf1) > 0 && strcmp(usb_node, buf1)){
 		// We would show the second modem device but didn't let it work.
 		// Because it didn't set the nvram: usb_path%d_act.
 		usb_dbg("(%s): Already had the modem device in the other USB port!\n", device_name);
@@ -3448,7 +3476,7 @@ int asus_tty(const char *device_name, const char *action){
 		return 0;
 	}
 	else if(strlen(buf1) <= 0)
-		nvram_set("usb_modem_act_path", port_path);
+		nvram_set("usb_modem_act_path", usb_node);
 
 	// Find the control node of modem.
 	// Get Interface name.
@@ -3460,6 +3488,11 @@ int asus_tty(const char *device_name, const char *action){
 
 	snprintf(prefix, sizeof(prefix), "usb_path%s", port_path);
 
+	// Check Lock and wait
+	while((isLock_tty = file_lock((char *)__FUNCTION__)) == -1){
+		usb_dbg("(%s): lock and wait!\n", device_name);
+		usleep(5000);
+	}
 	// check the current working node of modem.
 	memset(current_act, 0, 16);
 	strcpy(current_act, nvram_safe_get(strcat_r(prefix, "_act", tmp)));
@@ -3470,22 +3503,24 @@ int asus_tty(const char *device_name, const char *action){
 	if(isSerialNode(device_name)){
 		// Find the endpoint: 03(Int).
 		got_Int_endpoint = get_interface_Int_endpoint(interface_name);
+		usb_dbg("(%s): got_Int_endpoint(%d)!\n", device_name, got_Int_endpoint);
 		if(!got_Int_endpoint){
 			// Set the default node be ttyUSB0, because there is no Int endpoint in some dongles.
-			if(!strcmp(device_name, "ttyUSB0") && !strcmp(current_act, "")){
+			if(strcmp(device_name, "ttyUSB0")){
+				usb_dbg("(%s): No Int endpoint!\n", device_name);
+				file_unlock(isLock_tty);
+				file_unlock(isLock);
+				return 0;
+			}
+			else if(!strcmp(current_act, "") || get_device_type_by_device(current_act) == DEVICE_TYPE_DISK){
 				usb_dbg("(%s): set_default_node!\n", device_name);
 				nvram_set(strcat_r(prefix, "_act_def", tmp), "1");
 				memset(current_def, 0, 16);
 				strcpy(current_def, "1");
 			}
-			else if(!strcmp(device_name, "ttyUSB0") && get_device_type_by_device(current_act) == DEVICE_TYPE_DISK){
-				usb_dbg("(%s)2: set_default_node!\n", device_name);
-				nvram_set(strcat_r(prefix, "_act_def", tmp), "1");
-				memset(current_def, 0, 16);
-				strcpy(current_def, "1");
-			}
-			else if(strcmp(device_name, "ttyUSB0")){
-				usb_dbg("(%s): No Int endpoint!\n", device_name);
+			else {
+				usb_dbg("(%s): has act(%s) already!\n", device_name, current_act);
+				file_unlock(isLock_tty);
 				file_unlock(isLock);
 				return 0;
 			}
@@ -3498,6 +3533,7 @@ int asus_tty(const char *device_name, const char *action){
 				strncpy(current_act, device_name, 16);
 			}
 			else{
+				file_unlock(isLock_tty);
 				file_unlock(isLock);
 				return 0;
 			}
@@ -3508,22 +3544,27 @@ int asus_tty(const char *device_name, const char *action){
 			strncpy(current_act, device_name, 16);
 		}
 		else{
-			errno = 0;
-			cur_val = strtol(&current_act[6], &ptr, 10);
-			if(errno != 0 || &current_act[6] == ptr){
-				cur_val = -1;
+			cur_val = -1;
+			if(strlen(current_act) > 6) {
+				errno = 0;
+				cur_val = strtol(&current_act[6], &ptr, 10);
+				if(errno != 0 || &current_act[6] == ptr){
+					cur_val = -1;
+				}
 			}
 
 			errno = 0;
 			tmp_val = strtol(&device_name[6], &ptr, 10);
 			if(errno != 0 || &device_name[6] == ptr){
 				usb_dbg("(%s): Can't get the working node.\n", device_name);
+				file_unlock(isLock_tty);
 				file_unlock(isLock);
 				return 0;
 			}
 			else if(cur_val != -1 && cur_val < tmp_val && strcmp(current_def, "1")){ // get the smaller node safely.
 usb_dbg("(%s): cur_val=%d, tmp_val=%d, set_default_node=%s.\n", device_name, cur_val, tmp_val, current_def);
 				usb_dbg("(%s): Skip to write PPP's conf.\n", device_name);
+				file_unlock(isLock_tty);
 				file_unlock(isLock);
 				return 0;
 			}
@@ -3533,15 +3574,17 @@ usb_dbg("(%s): cur_val=%d, tmp_val=%d.\n", device_name, cur_val, tmp_val);
 				nvram_set(strcat_r(prefix, "_act", tmp), device_name);
 				memset(current_act, 0, 16);
 				strncpy(current_act, device_name, 16);
+				if(got_Int_endpoint){
 				nvram_set(strcat_r(prefix, "_act_def", tmp), "");
 				memset(current_def, 0, 16);
+				}
 			}
 		}
 
 		// Only let act node trigger the dial procedure and avoid the wrong node to write the PPP conf.
-		//if(strcmp(device_name, "ttyUSB0")){
 		if(strcmp(device_name, current_act)){
 			usb_dbg("(%s): Success!\n", device_name);
+			file_unlock(isLock_tty);
 			file_unlock(isLock);
 			return 0;
 		}
@@ -3552,6 +3595,7 @@ usb_dbg("(%s): cur_val=%d, tmp_val=%d.\n", device_name, cur_val, tmp_val);
 		// Write dial config file.
 		if(!write_3g_ppp_conf(current_act)){
 			usb_dbg("(%s): Fail to write PPP's conf for 3G process!\n", device_name);
+			file_unlock(isLock_tty);
 			file_unlock(isLock);
 			return 0;
 		}
@@ -3562,6 +3606,7 @@ usb_dbg("(%s): cur_val=%d, tmp_val=%d.\n", device_name, cur_val, tmp_val);
 		// Find the control interface of cdc-acm.
 		if(!isACMInterface(interface_name)){
 			usb_dbg("(%s): Not control interface!\n", device_name);
+			file_unlock(isLock_tty);
 			file_unlock(isLock);
 			return 0;
 		}
@@ -3572,6 +3617,7 @@ usb_dbg("(%s): cur_val=%d, tmp_val=%d.\n", device_name, cur_val, tmp_val);
 			// Write dial config file.
 			if(!write_3g_ppp_conf(device_name)){
 				usb_dbg("(%s): Fail to write PPP's conf for 3G process!\n", device_name);
+				file_unlock(isLock_tty);
 				file_unlock(isLock);
 				return 0;
 			}
@@ -3580,6 +3626,7 @@ usb_dbg("(%s): cur_val=%d, tmp_val=%d.\n", device_name, cur_val, tmp_val);
 		}
 		else{
 			usb_dbg("(%s): Skip to write PPP's conf.\n", device_name);
+			file_unlock(isLock_tty);
 			file_unlock(isLock);
 			return 0;
 		}
@@ -3596,6 +3643,7 @@ usb_dbg("(%s): cur_val=%d, tmp_val=%d.\n", device_name, cur_val, tmp_val);
 				nvram_set("ctf_disable_modem", "1");
 				nvram_commit();
 				notify_rc_and_wait("reboot");
+				file_unlock(isLock_tty);
 				file_unlock(isLock);
 
 				return 0;
@@ -3623,6 +3671,7 @@ usb_dbg("Didn't support the USB connection now...\n");
 	kill_pidfile_s("/var/run/wanduck.pid", SIGUSR2);
 
 	usb_dbg("(%s): Success!\n", device_name);
+	file_unlock(isLock_tty);
 	file_unlock(isLock);
 #endif // RTCONFIG_USB_MODEM
 	return 1;
@@ -3708,7 +3757,7 @@ int asus_usbbcm(const char *device_name, const char *action){
 	// Only see the other usb port, because in the same port there are more modem interfaces and they need to compare.
 	memset(buf1, 0, 32);
 	strncpy(buf1, nvram_safe_get("usb_modem_act_path"), 32);
-	if(strlen(buf1) > 0 && strcmp(port_path, buf1)){
+	if(strlen(buf1) > 0 && strcmp(usb_node, buf1)){
 		// We would show the second modem device but didn't let it work.
 		// Because it didn't set the nvram: usb_path%d_act.
 		usb_dbg("(%s): Already had the modem device in the other USB port!\n", device_name);
@@ -3716,7 +3765,7 @@ int asus_usbbcm(const char *device_name, const char *action){
 		return 0;
 	}
 	else if(strlen(buf1) <= 0)
-		nvram_set("usb_modem_act_path", port_path);
+		nvram_set("usb_modem_act_path", usb_node);
 
 	// check the current working node of modem.
 	snprintf(prefix, sizeof(prefix), "usb_path%s", port_path);

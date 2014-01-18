@@ -557,7 +557,7 @@ void writeback_inodes_wb(struct bdi_writeback *wb,
 static void __writeback_inodes_sb(struct super_block *sb,
 		struct bdi_writeback *wb, struct writeback_control *wbc)
 {
-	WARN_ON(!rwsem_is_locked(&sb->s_umount));
+//	WARN_ON(!rwsem_is_locked(&sb->s_umount));
 
 	spin_lock(&inode_lock);
 	if (!wbc->for_kupdate || list_empty(&wb->b_io))

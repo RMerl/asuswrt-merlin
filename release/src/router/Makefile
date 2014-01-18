@@ -264,9 +264,17 @@ endif
 ifeq ($(RTCONFIG_NTFS3G),y)
 obj-$(RTCONFIG_NTFS) += ntfs-3g
 else
+ifeq ($(RTCONFIG_TUXERA),y)
+obj-$(RTCONFIG_NTFS) += tuxera
+else
 obj-$(RTCONFIG_NTFS) += ufsd
 endif
+endif
+ifeq ($(RTCONFIG_TUXERA),y)
+obj-$(RTCONFIG_HFS) += tuxera
+else
 obj-$(RTCONFIG_HFS) += ufsd
+endif
 obj-$(RTCONFIG_EBTABLES) += ebtables
 obj-$(RTCONFIG_IPV6) += libdaemon
 obj-$(RTCONFIG_IPV6) += radvd
@@ -374,6 +382,7 @@ obj-y += ez-ipupdate
 obj-$(RTCONFIG_STRACE) += strace
 
 obj-$(RTCONFIG_GDB) += gdb
+obj-$(RTCONFIG_LLDP) += openlldp
 
 obj-n += lsof
 obj-$(RTCONFIG_IPERF) += iperf
@@ -586,6 +595,7 @@ else
 ifeq ($(RTCONFIG_BRCM_USBAP),y)
 	cd $(TARGETDIR)/lib/modules/*/kernel/drivers/net && mv wl/wl_high.ko . || true
 	cd $(TARGETDIR)/lib/modules/*/kernel/drivers/net && mv wl/wl_high/wl_high.ko . || true
+	cd $(TARGETDIR)/lib/modules/*/kernel/drivers/net && mv wl/wl_sta/wl_high.ko . || true
 endif
 	cd $(TARGETDIR)/lib/modules/*/kernel/drivers/net && mv wl/wl.ko . && rm -rf wl || true
 endif
@@ -1604,6 +1614,9 @@ ndisc6-clean:
 ndisc6-install: ndisc6
 	install -D ndisc6/rdnssd/rdnssd $(INSTALLDIR)/ndisc6/usr/sbin/rdnssd
 	$(STRIP) $(INSTALLDIR)/ndisc6/usr/sbin/rdnssd
+ifeq ($(RTCONFIG_RALINK),y)
+	install -D $(shell dirname $(shell which $(CXX)))/../lib/librt.so.0 $(TARGETDIR)/lib/librt.so.0
+endif
 
 dhcpv6/stamp-h1:
 	@cd dhcpv6 && \
@@ -2539,6 +2552,23 @@ gdb-install:
 
 gdb-clean:
 	@[ ! -f gdb/Makefile ] || $(MAKE) -C gdb distclean
+
+.PHONY: openlldp
+openlldp: openlldp/Makefile
+	$(MAKE) -C $@
+
+openlldp/Makefile:
+	( cd openlldp && \
+	  $(CONFIGURE) --bindir=/sbin \
+	)
+
+openlldp-install:
+	@install -D openlldp/src/lldpd $(INSTALLDIR)/openlldp/sbin/lldpd
+	@$(STRIP) $(INSTALLDIR)/openlldp/sbin/lldpd
+
+openlldp-clean:
+	@[ ! -f openlldp/Makefile ] || $(MAKE) -C openlldp distclean
+
 
 nas$(BCMEX): nvram$(BCMEX) shared
 

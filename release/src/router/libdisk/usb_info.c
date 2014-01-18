@@ -1176,13 +1176,17 @@ int is_usb_modem_ready(void)
 {
 	char prefix[32], tmp[32];
 	char usb_act[8], usb_vid[8];
-	char port_path[8];
+	char usb_node[32], port_path[8];
 
 	if(nvram_match("modem_enable", "0"))
 		return 0;
 
-	memset(port_path, 0, 8);
-	strncpy(port_path, nvram_safe_get("usb_modem_act_path"), 8);
+	snprintf(usb_node, 32, "%s", nvram_safe_get("usb_modem_act_path"));
+	if(strlen(usb_node) <= 0)
+		return 0;
+
+	if(get_path_by_node(usb_node, port_path, 8) == NULL)
+		return 0;
 
 	memset(prefix, 0, 8);
 	sprintf(prefix, "usb_path%s", port_path);

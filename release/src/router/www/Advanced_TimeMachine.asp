@@ -25,8 +25,6 @@
 
 <% login_state_hook(); %>
 var $j = jQuery.noConflict();
-var usb_path1_index = '<% nvram_get("usb_path1"); %>';
-var usb_path2_index = '<% nvram_get("usb_path2"); %>';
 var all_disks = "";
 var all_disk_interface;
 if(usb_support != -1){
@@ -121,7 +119,6 @@ var availSpace;
 function setPart(_part, _avail, _total){
 	$("tmPath").innerHTML = "/mnt/" + _part;
 	document.form.tm_device_name.value = _part;
-	get_USBInfo(all_foreign_disk_interface_names()[pool_names().getIndexByValue(_part)]);
 	cancel_folderTree();
 	totalSpace = _total;
 	availSpace = _avail;
@@ -176,24 +173,11 @@ function all_foreign_disk_interface_names(){
 	var _foreign_disk_interface_names = new Array();
 	for(var i=0; i<foreign_disk_interface_names().length; i++){
 		for(var k=0; k<foreign_disk_total_mounted_number()[i]; k++){
-			_foreign_disk_interface_names.push(foreign_disk_interface_names()[i]);
+			_foreign_disk_interface_names.push(foreign_disk_interface_names()[i].charAt(0));
 		}
 	}
 	return _foreign_disk_interface_names;
 }
-
-function get_USBInfo(_path){
-	if(_path == "1"){
-			document.form.tm_usb_path_vid.value = "<% nvram_get("usb_path1_vid"); %>";
-			document.form.tm_usb_path_pid.value = "<% nvram_get("usb_path1_pid"); %>";
-			document.form.tm_usb_path_serial.value = "<% nvram_get("usb_path1_serial"); %>";
-	}
-	else{
-			document.form.tm_usb_path_vid.value = "<% nvram_get("usb_path2_vid"); %>";
-			document.form.tm_usb_path_pid.value = "<% nvram_get("usb_path2_pid"); %>";
-			document.form.tm_usb_path_serial.value = "<% nvram_get("usb_path2_serial"); %>";
-	}
-}	
 
 function cal_panel_block(obj_id){
 	var blockmarginLeft;
@@ -267,9 +251,6 @@ function cal_panel_block(obj_id){
 <input type="hidden" name="action_script" value="restart_timemachine">
 <input type="hidden" name="action_wait" value="5">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
-<input type="hidden" name="tm_usb_path_vid" id="usb_path_vid" value="">
-<input type="hidden" name="tm_usb_path_pid" id="tm_usb_path_pid" value="">
-<input type="hidden" name="tm_usb_path_serial" id="tm_usb_path_serial" value="">
 <input type="hidden" name="tm_ui_setting" value="">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="timemachine_enable" value="<% nvram_get("timemachine_enable"); %>">

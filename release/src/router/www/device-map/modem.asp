@@ -9,36 +9,16 @@
 <title></title>
 <link href="../NM_style.css" rel="stylesheet" type="text/css" />
 <link href="../form_style.css" rel="stylesheet" type="text/css" />
-
 <script type="text/javascript" src="/state.js"></script>
 <script>
-var usb_path1_product = '<% nvram_get("usb_path1_product"); %>';
-var usb_path2_product = '<% nvram_get("usb_path2_product"); %>';
-var model_name;
-if(parent.get_clicked_device_order())
-	model_name = usb_path2_product;
-else
-	model_name = usb_path1_product;
-
 function initial(){
-		showtext($("disk_model_name"), model_name);
+		showtext($("disk_model_name"), parent.usbPorts[parent.currentUsbPort].deviceName);
 		if(sw_mode != "1")
 			inputHideCtrl(document.diskForm.btn_Hspda, 0);
 }
 
 function goHspdaWizard(){
 	parent.location.href = "/Advanced_Modem_Content.asp";
-}
-
-function remove_d3g(){
-	var str = "Do you really want to remove this USB dongle?";
-	
-	if(confirm(str)){
-		parent.showLoading();
-		
-		document.diskForm.action = "safely_remove_disk.asp";
-		setTimeout("document.diskForm.submit();", 8000);
-	}
 }
 </script>
 </head>
@@ -61,14 +41,6 @@ function remove_d3g(){
       <img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
     </td>
   </tr>
-
-  <!--tr>
-    <td height="50" style="padding:10px 15px 0px 15px;">
-    	<p class="formfonttitle_nwm" style="float:left;width:138px; "><#Safelyremovedisk_title#>:</p>
-    	<input id="show_remove_button" class="button_gen" type="button" class="button" onclick="remove_d3g();" value="<#btn_remove#>">
-    	<div id="show_removed_string" style="display:none;"><#Safelyremovedisk#></div>
-    </td>
-  </tr-->
 </table>
 
 

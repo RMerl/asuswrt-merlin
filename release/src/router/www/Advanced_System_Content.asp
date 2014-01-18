@@ -235,7 +235,9 @@ function validForm(){
 		document.form.http_username.focus();
 		document.form.http_username.select();
 		return false;
-	}
+	}else{
+                $("alert_msg1").style.display = "none";
+        }
 
 	document.form.http_username.value = trim(document.form.http_username.value);
 
@@ -961,10 +963,10 @@ function select_time_zone(){
         </tr>
     	</thead>
 	<tr id="btn_ez_radiotoggle_tr">
-		<th>WPS Button behavior</th>
+		<th><#WPS_btn_behavior#></th>
 		<td>
-			<input type="radio" name="btn_ez_radiotoggle" class="input" value="1" <% nvram_match_x("", "btn_ez_radiotoggle", "1", "checked"); %>>Toggle Radio
-			<input type="radio" name="btn_ez_radiotoggle" class="input" value="0" <% nvram_match_x("", "btn_ez_radiotoggle", "0", "checked"); %>>Activate WPS
+			<input type="radio" name="btn_ez_radiotoggle" class="input" value="1" <% nvram_match_x("", "btn_ez_radiotoggle", "1", "checked"); %>><#WPS_btn_toggle#>
+			<input type="radio" name="btn_ez_radiotoggle" class="input" value="0" <% nvram_match_x("", "btn_ez_radiotoggle", "0", "checked"); %>><#WPS_btn_actWPS#>
 		</td>
 	</tr>
         <tr>

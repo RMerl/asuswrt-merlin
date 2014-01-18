@@ -1,4 +1,4 @@
-﻿<html>
+<html>
 <head>
 <title>ASUS Wireless Router Web Manager</title>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -14,7 +14,9 @@
 	if(parent.based_modelid == "RT-AC56S"
 			|| parent.based_modelid == "RT-AC56U"
 			|| parent.based_modelid == "RT-AC66U"
-			|| parent.based_modelid == "RT-AC68U"){		//MODELDEP: RT-AC56S, RT-AC56U, RT-AC66U, RT-AC68U 2013.03
+			|| parent.based_modelid == "RT-AC68U"
+			|| parent.based_modelid == "RT-AC68U_V2"
+			|| parent.based_modelid == "RT-AC69U"){		//MODELDEP: RT-AC56S, RT-AC56U, RT-AC66U, RT-AC68U, RT-AC68U_V2, RT-AC69U 2014.01
 			reboot_needed_time += 30;
 			parent.showLoadingBar(reboot_needed_time);
 			reboot_needed_time += 2;

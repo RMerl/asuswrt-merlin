@@ -1633,7 +1633,7 @@ start_default_filter(int lanunit)
 		  "--log-tcp-sequence --log-tcp-options --log-ip-options\n"
 		  "-A logaccept -j ACCEPT\n");
 
-	fprintf(fp,"-A logdrop -m state --state NEW -j LOG --log-prefix \"DROP\" "
+	fprintf(fp,"-A logdrop -m state --state NEW -j LOG --log-prefix \"DROP \" "
 		  "--log-tcp-sequence --log-tcp-options --log-ip-options\n"
 		  "-A logdrop -j DROP\n");
 	fprintf(fp, "COMMIT\n\n");
@@ -2804,12 +2804,12 @@ TRACE_PT("write wl filter\n");
 #endif
 
 	// logdrop chain
-	fprintf(fp,"-A logdrop -m state --state NEW -j LOG --log-prefix \"DROP\" "
+	fprintf(fp,"-A logdrop -m state --state NEW -j LOG --log-prefix \"DROP \" "
 		  "--log-tcp-sequence --log-tcp-options --log-ip-options\n"
 		  "-A logdrop -j DROP\n");
 #ifdef RTCONFIG_IPV6
 	if (ipv6_enabled())
-	fprintf(fp_ipv6,"-A logdrop -m state --state NEW -j LOG --log-prefix \"DROP\" "
+	fprintf(fp_ipv6,"-A logdrop -m state --state NEW -j LOG --log-prefix \"DROP \" "
 		  "--log-tcp-sequence --log-tcp-options --log-ip-options\n"
 		  "-A logdrop -j DROP\n");
 #endif
@@ -2831,6 +2831,7 @@ TRACE_PT("write url filter\n");
 			}
 			free(nv);
 		}
+
 		if (!makeTimestr2(timef2)) {
 			nv = nvp = strdup(nvram_safe_get("url_rulelist"));
 			while (nvp && (b = strsep(&nvp, "<")) != NULL) {
@@ -2856,7 +2857,7 @@ TRACE_PT("write url filter\n");
 				if (vstrsep(b, ">", &filterstr) != 1)
 					continue;
 				if (*filterstr) {
-					fprintf(fp, "-I FORWARD -p tcp --sport 80 %s -m string --string \"%s\" --algo bm -j DROP\n",
+					fprintf(fp, "-I FORWARD -p tcp --sport 80 %s -m string --string \"%s\" --algo bm -j REJECT --reject-with tcp-reset\n",
 						timef, filterstr);
 				}
 			}
@@ -2868,7 +2869,7 @@ TRACE_PT("write url filter\n");
 				if (vstrsep(b, ">", &filterstr) != 1)
 					continue;
 				if (*filterstr) {
-					fprintf(fp, "-I FORWARD -p tcp --sport 80 %s -m string --string \"%s\" --algo bm -j DROP\n",
+					fprintf(fp, "-I FORWARD -p tcp --sport 80 %s -m string --string \"%s\" --algo bm -j REJECT --reject-with tcp-reset\n",
 						timef, filterstr);
 				}
 			}
@@ -3890,12 +3891,12 @@ TRACE_PT("write wl filter\n");
 #endif
 
 	// logdrop chain
-	fprintf(fp,"-A logdrop -m state --state NEW -j LOG --log-prefix \"DROP\" "
+	fprintf(fp,"-A logdrop -m state --state NEW -j LOG --log-prefix \"DROP \" "
 		  "--log-tcp-sequence --log-tcp-options --log-ip-options\n"
 		  "-A logdrop -j DROP\n");
 #ifdef RTCONFIG_IPV6
 	if (ipv6_enabled())
-	fprintf(fp_ipv6, "-A logdrop -m state --state NEW -j LOG --log-prefix \"DROP\" "
+	fprintf(fp_ipv6, "-A logdrop -m state --state NEW -j LOG --log-prefix \"DROP \" "
 		  "--log-tcp-sequence --log-tcp-options --log-ip-options\n"
 		  "-A logdrop -j DROP\n");
 #endif
@@ -3908,7 +3909,7 @@ TRACE_PT("write url filter\n");
 		if (!makeTimestr(timef)) {
 			nv = nvp = strdup(nvram_safe_get("url_rulelist"));
 			while (nvp && (b = strsep(&nvp, "<")) != NULL) {
-				if(vstrsep(b, ">", &filterstr) != 1)
+				if (vstrsep(b, ">", &filterstr) != 1)
 					continue;
 				if (*filterstr) {
 					fprintf(fp, "-I FORWARD -p tcp %s -m webstr --url \"%s\" -j REJECT --reject-with tcp-reset\n",
@@ -3921,7 +3922,7 @@ TRACE_PT("write url filter\n");
 		if (!makeTimestr2(timef2)) {
 			nv = nvp = strdup(nvram_safe_get("url_rulelist"));
 			while (nvp && (b = strsep(&nvp, "<")) != NULL) {
-				if(vstrsep(b, ">", &filterstr) != 1)
+				if (vstrsep(b, ">", &filterstr) != 1)
 					continue;
 				if (*filterstr) {
 					fprintf(fp, "-I FORWARD -p tcp %s -m webstr --url \"%s\" -j REJECT --reject-with tcp-reset\n",
@@ -4049,7 +4050,7 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 	/* mark connect to bypass CTF */		
 	if(nvram_match("ctf_disable", "0")) {
 		/* mark 80 port connection */
-		if (nvram_match("url_enable_x", "1")) {
+		if (nvram_match("url_enable_x", "1") || nvram_match("keyword_enable_x", "1")) {
 			eval("iptables", "-t", "mangle", "-A", "FORWARD",
 			     "-p", "tcp", "--dport", "80",
 			     "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01");
@@ -4116,7 +4117,7 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 	/* mark connect to bypass CTF */		
 	if(nvram_match("ctf_disable", "0")) {
 		/* mark 80 port connection */
-		if (nvram_match("url_enable_x", "1")) {
+		if (nvram_match("url_enable_x", "1") || nvram_match("keyword_enable_x", "1")) {
 			eval("iptables", "-t", "mangle", "-A", "FORWARD",
 			     "-p", "tcp", "--dport", "80",
 			     "-m", "state", "--state NEW", "-j", "MARK", "--set-mark", "0x01");
@@ -4218,7 +4219,6 @@ add_samba_rules(void)
 }
 #endif
 #endif
-
 //int start_firewall(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip)
 int start_firewall(int wanunit, int lanunit)
 {

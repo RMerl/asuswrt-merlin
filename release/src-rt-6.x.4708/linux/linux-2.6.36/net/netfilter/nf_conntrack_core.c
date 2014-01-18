@@ -367,8 +367,8 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 	if (IPVERSION_IS_4(ipver))
 		printk("%s: Adding ipc entry for [%d]%u.%u.%u.%u:%u - %u.%u.%u.%u:%u\n", __FUNCTION__,
 			ipc_entry.tuple.proto,
-			NIPQUAD(ipc_entry.tuple.sip[0]), ntohs(ipc_entry.tuple.sp),
-			NIPQUAD(ipc_entry.tuple.dip[0]), ntohs(ipc_entry.tuple.dp));
+			ntohl(ipc_entry.tuple.sip[0]), ntohs(ipc_entry.tuple.sp),
+			ntohl(ipc_entry.tuple.dip[0]), ntohs(ipc_entry.tuple.dp));
 #ifdef CONFIG_IPV6
 	else
 		printk("\n%s: Adding ipc entry for [%d]\n"
@@ -392,7 +392,7 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 	printk("[%d] vid: %d action %x\n", hooknum, ipc_entry.vid, ipc_entry.action);
 	if (manip != NULL)
 		printk("manip_ip: %u.%u.%u.%u manip_port %u\n",
-			NIPQUAD(ipc_entry.nat.ip), ntohs(ipc_entry.nat.port));
+			ntohl(ipc_entry.nat.ip), ntohs(ipc_entry.nat.port));
 	printk("txif: %s\n", ((struct net_device *)ipc_entry.txif)->name);
 #endif
 

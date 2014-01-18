@@ -392,7 +392,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		}
 		return 0;
 	}
-#if !defined(RTN14U)	
+#if defined(RTCONFIG_HAS_5G)
 	else if (!strcmp(command, "Set_MacAddr_5G")) {
 		if( !setMAC_5G(value))
 		{
@@ -401,7 +401,8 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		}
 		return 0;
 	}
-#else
+#endif	/* RTCONFIG_HAS_5G */
+#if defined(RTN14U)
 	else if (!strcmp(command, "eeprom")) {
 		if ( !eeprom_upgrade(value, 1))
 			return EINVAL;
@@ -554,7 +555,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		}
 		return 0;
 	}
-#if !defined(RTN14U)  	
+#if defined(RTCONFIG_HAS_5G)
 	else if (!strcmp(command, "Set_40M_Channel_5G")) {
 		if(!set40M_Channel_5G((char*)value))
 		{
@@ -563,7 +564,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		}
 		return 0;
 	}
-#endif	
+#endif	/* RTCONFIG_HAS_5G */
 	else if (!strcmp(command, "Set_RestoreDefault")) {
 		ResetDefault();
 		return 0;
@@ -673,12 +674,12 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		getMAC_2G();
 		return 0;
 	}
-#if !defined(RTN14U)  	
+#if defined(RTCONFIG_HAS_5G)
 	else if (!strcmp(command, "Get_MacAddr_5G")) {
 		getMAC_5G();
 		return 0;
 	}
-#endif	
+#endif	/* RTCONFIG_HAS_5G */
 	else if (!strcmp(command, "Get_Usb2p0_Port1_Infor")) {
 		Get_USB_Port_Info("1");
 		return 0;
@@ -768,24 +769,26 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		getrssi(0);
 		return 0;
 	}
-#if !defined(RTN14U)
+#if defined(RTCONFIG_HAS_5G)
 	else if (!strcmp(command, "Get_RSSI_5G")) {
 		getrssi(1);
 		return 0;
 	}
-#endif
+#endif	/* RTCONFIG_HAS_5G */
 #endif
 	else if (!strcmp(command, "Get_ChannelList_2G")) {
 		if(!Get_ChannelList_2G())
 			puts("ATE_ERROR");
 		return 0;
 	}
-#if !defined(RTN14U)
+#if defined(RTCONFIG_HAS_5G)
 	else if (!strcmp(command, "Get_ChannelList_5G")) {
 		if (!Get_ChannelList_5G())
 			puts("ATE_ERROR");
 		return 0;
 	}
+#endif	/* RTCONFIG_HAS_5G */
+#if defined(RTCONFIG_USB_XHCI) || defined(RTCONFIG_USB_2XHCI2)
 	else if (!strcmp(command, "Get_Usb3p0_Port1_Infor")) {
 		if (!Get_USB3_Port_Info("1"))
 			puts("ATE_ERROR");
@@ -828,7 +831,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		puts("ATE_ERROR"); //Need to implement
 		return EINVAL;
 	}
-#endif	
+#endif	/* RTCONFIG_USB_XHCI */
 #if defined (RTCONFIG_USB_2XHCI2)
 	else if (!strcmp(command, "Set_Usb3_Disabled")) {
 		nvram_set("usb_usb3_disabled_force", "1");

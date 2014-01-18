@@ -1684,7 +1684,17 @@ void stop_networkmap(void)
 		killall_tk("networkmap");
 }
 
+#ifdef RTCONFIG_LLDP
+int start_lldpd(void)
+{
+        char *lldpd_argv[] = {"lldpd", nvram_safe_get("lan_ifname"), NULL};
+        pid_t pid;
 
+        _eval(lldpd_argv, NULL, 0, &pid);
+
+        return 0;
+}
+#endif
 // -----------------------------------------------------------------------------
 #ifdef LINUX26
 
@@ -3300,7 +3310,11 @@ start_services(void)
 	start_psta_monitor();
 #endif
 #endif
+#ifdef RTCONFIG_LLDP
+	start_lldpd();
+#else
 	start_lltd();
+#endif
 #ifdef RTCONFIG_BCMWL6
 	start_acsd();
 #endif
@@ -4854,7 +4868,7 @@ check_ddr_done:
 		}
 	}
 #endif
-#if RTCONFIG_TIMEMACHINE
+#ifdef RTCONFIG_TIMEMACHINE
 	else if (strcmp(script, "timemachine") == 0)
 	{
 		if(action&RC_SERVICE_STOP) stop_timemachine();
@@ -5297,11 +5311,24 @@ void set_acs_ifnames()
 
 		unit++;
 	}
+
 	nvram_set("acs_ifnames", acs_ifnames);
 #if 0
 	if (strlen(acs_ifnames))
 		nvram_set_int("wlready", 0);
 #endif
+
+	nvram_set("wl1_acs_fcs_mode", "0");
+
+	if (nvram_match("wl1_country_code", "EU") || nvram_match("wl1_country_code", "JP"))
+	{
+		nvram_set("wl1_acs_excl_chans", "");
+	}
+	else	/* exclude acsd to select chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80 */
+	{
+		nvram_set("wl1_acs_excl_chans",
+			  "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a");
+	}
 }
 
 int

@@ -439,9 +439,9 @@ function wl_bwch_hint(){  //Control display chanspec hint when wl_bw=1(20/40) or
 					</th>
 					<td>
 						<select name="wl_mode_x" class="input_option" onChange="change_wireless_bridge(this.value);">
-							<option value="0" <% nvram_match("wl_mode_x", "0","selected"); %>>AP Only</option>
-							<option value="1" <% nvram_match("wl_mode_x", "1","selected"); %>>WDS Only</option>
-							<option value="2" <% nvram_match("wl_mode_x", "2","selected"); %>>Hybrid</option>
+							<option value="0" <% nvram_match("wl_mode_x", "0","selected"); %>><#WLANConfig11b_x_APMode_option0#></option>
+							<option value="1" <% nvram_match("wl_mode_x", "1","selected"); %>><#WLANConfig11b_x_APMode_option1#></option>
+							<option value="2" <% nvram_match("wl_mode_x", "2","selected"); %>><#WLANConfig11b_x_APMode_option2#></option>
 					  	</select>
 					</td>
 				</tr>

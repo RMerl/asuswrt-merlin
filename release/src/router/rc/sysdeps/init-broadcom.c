@@ -931,7 +931,7 @@ void init_switch()
 
 #ifdef CONFIG_BCMWL5
 	// ctf should be disabled when some functions are enabled
-	if(nvram_get_int("cstats_enable") || nvram_get_int("qos_enable") || nvram_get_int("url_enable_x") || nvram_get_int("keyword_enable_x") || nvram_get_int("ctf_disable_force")
+	if(nvram_get_int("cstats_enable") || nvram_get_int("qos_enable") /*|| nvram_get_int("url_enable_x") || nvram_get_int("keyword_enable_x")*/ || nvram_get_int("ctf_disable_force")
 // #ifdef RTCONFIG_WIRELESSREPEATER
 // #ifndef RTCONFIG_PROXYSTA
 	|| nvram_get_int("sw_mode") == SW_MODE_REPEATER
@@ -3612,25 +3612,22 @@ void generate_wl_para(int unit, int subunit)
 		sprintf(tmp2, "%d", atoi(nvram_safe_get(strcat_r(prefix, "pmk_cache", tmp))) * 60);
 		nvram_set(strcat_r(prefix, "net_reauth", tmp), tmp2);
 #if 0
-		if (get_model() == MODEL_RTAC68U)
-		{
-			if (unit &&
+		if (unit) {
+			if (	((get_model() == MODEL_RTAC68U) &&
 				nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
-				nvram_match(strcat_r(prefix, "country_rev", tmp), "13"))
+				nvram_match(strcat_r(prefix, "country_rev", tmp), "13")) /*||
+				((get_model() == MODEL_RTAC66U) &&
+				nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
+				nvram_match(strcat_r(prefix, "country_rev", tmp), "13")) ||
+				((get_model() == MODEL_RTN66U) &&
+				nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
+				nvram_match(strcat_r(prefix, "country_rev", tmp), "0"))*/
+			)
 			{
 				nvram_set(strcat_r(prefix, "reg_mode", tmp), "h");
-#if 0
-				nvram_set(strcat_r(prefix, "radarthrs", tmp), "0x6ac 0x30 0x6a8 0x30 0x6a8 0x30 0x6a8 0x30 0x6a4 0x30 0x6a0 0x30");
-#endif
 			}
-#if 0
-			else
-			{
-				nvram_set(strcat_r(prefix, "reg_mode", tmp), "off");
-				nvram_set(strcat_r(prefix, "radarthrs", tmp), "0 0x6a8 0x6c8 0x6ac 0x6c7");
-			}
-#endif
 		}
+		else nvram_set(strcat_r(prefix, "reg_mode", tmp), "off");
 #endif
 		dbG("bw: %s\n", nvram_safe_get(strcat_r(prefix, "bw", tmp)));
 #ifdef RTCONFIG_BCMWL6

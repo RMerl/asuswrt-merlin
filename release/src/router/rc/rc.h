@@ -856,6 +856,10 @@ extern int stop_8021x(void);
 #ifdef RTCONFIG_DNSMASQ
 extern void stop_dnsmasq(int force);
 #endif
+#ifdef RTCONFIG_LLDP
+extern void stop_lldpd(void);
+extern int start_lldpd(void);
+#endif
 extern int firmware_check_main(int argc, char *argv[]);
 #ifdef RTCONFIG_DSL
 extern int check_tc_upgrade(void);

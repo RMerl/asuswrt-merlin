@@ -7,7 +7,7 @@ EXTRACFLAGS += -funit-at-a-time -Wno-pointer-sign -mtune=mips32 -mips32
 endif
 
 ifeq ($(RTCONFIG_NVRAM_64K), y)
-EXTRACFLAGS += -DRTCONFIG_NVRAM_64K 
+EXTRACFLAGS += -DRTCONFIG_NVRAM_64K
 endif
 
 export EXTRACFLAGS

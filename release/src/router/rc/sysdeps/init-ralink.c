@@ -507,7 +507,7 @@ void config_switch()
 	else if (is_apmode_enabled())
 	{
 		model = get_model();
-		if (model == MODEL_RTN65U || model == MODEL_RTN36U3 || MODEL_RTN14U || MODEL_RTAC52U || MODEL_RTAC51U)
+		if (model == MODEL_RTN65U || model == MODEL_RTN36U3 || model == MODEL_RTN14U || model == MODEL_RTAC52U || model == MODEL_RTAC51U)
 			eval("rtkswitch", "8", "100");
 	}
 

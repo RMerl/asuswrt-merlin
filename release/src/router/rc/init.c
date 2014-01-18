@@ -827,7 +827,7 @@ restore_defaults(void)
 
 #ifdef RTCONFIG_USB
 	// unset USB node nvrams.
-	for(i = 1; i < MAX_USB_PORT; ++i){ // MAX USB port number is 3.
+	for(i = 1; i <= MAX_USB_PORT; ++i){ // MAX USB port number is 3.
 		snprintf(prefix, sizeof(prefix), "usb_led%d", i);
 		nvram_unset(prefix);
 
@@ -850,7 +850,7 @@ restore_defaults(void)
 		nvram_unset(strcat_r(prefix, "_pool_error", tmp));
 #endif
 
-		for(j = 1; j < MAX_USB_HUB_PORT; ++j){ // MAX USB hub port number is 6.
+		for(j = 1; j <= MAX_USB_HUB_PORT; ++j){ // MAX USB hub port number is 6.
 			snprintf(prefix, sizeof(prefix), "usb_path%d.%d", i, j);
 
 			nvram_unset(prefix);
@@ -963,9 +963,9 @@ restore_defaults(void)
 #if defined(RTAC66U) || defined(BCM4352)
 	nvram_set("led_5g", "0");
 #endif
-#if defined(RTN14U)
+#if !defined(RTCONFIG_HAS_5G)
 	nvram_unset("wl1_ssid");
-#endif
+#endif	/* ! RTCONFIG_HAS_5G */
 
 #ifdef RTCONFIG_USB
 	if (nvram_match("smbd_cpage", ""))
@@ -2977,7 +2977,7 @@ int init_nvram(void)
 	nvram_set("vpnc_proto", "disable");
 #endif
 
-#if RTCONFIG_TIMEMACHINE
+#ifdef RTCONFIG_TIMEMACHINE
 	add_rc_support("timemachine");
 #endif
 

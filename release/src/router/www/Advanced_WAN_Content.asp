@@ -960,11 +960,11 @@ function pass_checked(obj){
         	</tr>
 
         	<tr>
-      		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,30);">DHCP query frequency</a></th>
+		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,30);"><#DHCP_query_freq#></a></th>
         	<td>
         	<select name="dhcpc_mode" class="input_option">
-        		<option value="0" <% nvram_match(" dhcpc_mode", "0","selected"); %>>Normal Mode</option>
-        		<option value="1" <% nvram_match(" dhcpc_mode", "1","selected"); %>>Aggressive Mode</option>
+			<option value="0" <% nvram_match(" dhcpc_mode", "0","selected"); %>><#DHCPnormal#></option>
+			<option value="1" <% nvram_match(" dhcpc_mode", "1","selected"); %>><#DHCPaggressive#></option>
         	</select>
         	</td>
         	</tr>

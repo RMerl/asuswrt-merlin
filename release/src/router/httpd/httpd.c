@@ -222,6 +222,7 @@ int change_passwd = 0;
 int reget_passwd = 0;	
 int x_Setting = 0;
 int skip_auth = 0;
+int isLogout = 0;
 char url[128];
 int http_port=SERVER_PORT;
 
@@ -331,6 +332,12 @@ auth_check( char* dirname, char* authorization ,char* url)
 	struct in_addr temp_ip_addr;
 	char *temp_ip_str;
 	time_t dt;
+
+	if(isLogout == 1){
+		isLogout = 0;
+		send_authenticate( dirname );
+                return 0;
+	}
 
 	login_timestamp_tmp = uptime();
 	dt = login_timestamp_tmp - last_login_timestamp;
@@ -964,8 +971,10 @@ handle_request(void)
 	}
 
 	if(!fromapp) {
-		if(!strcmp(file, "Logout.asp")) 
+		if(!strcmp(file, "Logout.asp")){
+			isLogout = 1;
 			http_logout(login_ip_tmp);
+		}
 	}
 }
 
@@ -1197,7 +1206,7 @@ load_dictionary (char *lang, pkw_t pkw)
 #ifndef RELOAD_DICT
 	static char loaded_dict[12] = {'\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'};
 #endif  // RELOAD_DICT
-#if RTCONFIG_DYN_DICT_NAME
+#ifdef RTCONFIG_DYN_DICT_NAME
 	char *dyn_dict_buf;
 	char *dyn_dict_buf_new;
 #endif
@@ -1250,7 +1259,7 @@ load_dictionary (char *lang, pkw_t pkw)
 	dict_size -= 3;
 	printf ("dict_size %d\n", dict_size);
 
-#if RTCONFIG_DYN_DICT_NAME
+#ifdef RTCONFIG_DYN_DICT_NAME
 	dyn_dict_buf = malloc(dict_size);
 	fseek (dfp, 0L, SEEK_SET);
 	// skip BOM

@@ -5,3 +5,5 @@ libtoolize --copy --force
 autoheader
 automake -a -c --foreign
 autoconf
+[ ! -f .gitignore ]; touch .gitignore
+[ ! -f .gitattributes ]; touch .gitattributes

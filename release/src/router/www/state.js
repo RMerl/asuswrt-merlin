@@ -1,9 +1,45 @@
-﻿//For operation mode;
+﻿String.prototype.toArray = function(){
+	var ret = eval(this.toString());
+	if(Object.prototype.toString.apply(ret) === '[object Array]')
+		return ret;
+	return [];
+}
+
+Array.prototype.getIndexByValue = function(value){
+	var index = -1;
+	for(var i=0; i<this.length; i++){
+		if (this[i] == value){
+			index = i;
+			break;
+		}
+	}
+	return index;
+}
+
+Array.prototype.getIndexByValue2D = function(value){
+	for(var i=0; i<this.length; i++){
+		if(this[i].getIndexByValue(value) != -1){
+			return [i, this[i].getIndexByValue(value)]; // return [1-D_index, 2-D_index];
+		}
+	}
+	return -1;
+}
+
+Array.prototype.del = function(n){
+　if(n < 0)
+　　return this;
+　else
+　　return this.slice(0,n).concat(this.slice(n+1,this.length));
+}
+
 var sw_mode = '<% nvram_get("sw_mode"); %>';
 if(sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 1)
 	sw_mode = 4;
 var productid = '<#Web_Title2#>';
 var based_modelid = '<% nvram_get("productid"); %>';
+if (based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U"){
+	based_modelid = "RT-AC68U";
+}
 var hw_ver = '<% nvram_get("hardware_version"); %>';
 var uptimeStr = "<% uptime(); %>";
 var timezone = uptimeStr.substring(26,31);
@@ -57,7 +93,10 @@ var no5gmssid_support = rc_support.search("no5gmssid");
 var no5gmssid_support = isSupport("no5gmssid");
 var wifi_hw_sw_support = isSupport("wifi_hw_sw");
 var wifi_tog_btn_support = isSupport("wifi_tog_btn");
-var usb_support = isSupport("usb"); 
+
+var usb_support = isSupport("usbX");
+var usbPortMax = rc_support.charAt(rc_support.indexOf("usbX")+4);
+
 var printer_support = isSupport("printer"); 
 var appbase_support = isSupport("appbase");
 var appnet_support = isSupport("appnet");
@@ -90,7 +129,11 @@ var downsize_8m_support = isSupport("sfp8m");
 var hwmodeSwitch_support = isSupport("swmode_switch");
 var diskUtility_support = isSupport("diskutility");
 var networkTool_support = true;
-var band5g_11ac_support = isSupport("11AC");
+if(Rawifi_support)
+	var band5g_11ac_support = isSupport("11AC");
+else
+	var band5g_11ac_support = '<% nvram_get("wl_phytype"); %>' == 'v' ? true : false;
+
 var optimizeXbox_support = isSupport("optimize_xbox");
 var spectrum_support = isSupport("spectrum");
 var mediareview_support = '<% nvram_get("wlopmode"); %>' == 7 ? true : false;
@@ -104,7 +147,7 @@ if(sw_mode == 4)
 	localAP_support = false;
 
 var rrsut_support = false;
-if(based_modelid == "RT-AC56U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC66U" || based_modelid == "RT-N66U") // MODELDEP
+if(based_modelid == "RT-AC56U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || based_modelid == "RT-AC66U" || based_modelid == "RT-N66U") // MODELDEP
 	rrsut_support = true;
 
 var ufsd_support = isSupport("ufsd");
@@ -123,8 +166,132 @@ var stopFlag = 0;
 var gn_array_2g = <% wl_get_guestnetwork("0"); %>;
 var gn_array_5g = <% wl_get_guestnetwork("1"); %>;
 
+var apps_fsck_ret = '<% apps_fsck_ret(); %>'.toArray();
+var apps_dev = '<% nvram_get("apps_dev"); %>';
+var tm_device_name = '<% nvram_get("tm_device_name"); %>';
+
 <% available_disk_names_and_sizes(); %>
 <% disk_pool_mapping_info(); %>
+<% get_printer_info(); %>
+<% get_modem_info(); %>
+
+var newDisk = function(){
+	this.usbPath = "";
+	this.deviceIndex = "";
+	this.node = "";
+	this.manufacturer = "";
+	this.deviceName = "";
+	this.deviceType = "";
+	this.totalSize = "";
+	this.totalUsed = "";
+	this.mountNumber = "";
+	this.serialNum = "";
+	this.hasErrPart = false;
+	this.hasAppDev = false;
+	this.hasTM = false;
+	this.partition = new Array(0);
+}
+
+var newPartition = function(){
+	this.partName = "";
+	this.mountPoint = "";
+	this.isAppDev = false;
+	this.isTM = false;
+	this.fsck = "";
+	this.size = "";
+	this.used = "";
+	this.format = "";
+}
+
+var allUsbStatus = "";
+var allUsbStatusTmp = "";
+var allUsbStatusArray = '<% show_usb_path(); %>'.toArray();
+var pool_name = new Array();
+if(typeof pool_devices != "undefined") pool_name = pool_devices();
+
+var usbDevices = new Array();
+function genUsbDevices(){
+	var allPartIndex = 0;
+	usbDevices = new Array();
+
+	for(var i=0; i<foreign_disk_interface_names().length; i++){
+		if(foreign_disk_interface_names()[i].charAt(0) > usbPortMax) continue;
+
+		var tmpDisk = new newDisk();
+		tmpDisk.usbPath = foreign_disk_interface_names()[i].charAt(0);
+		tmpDisk.deviceIndex = i;
+		tmpDisk.node = foreign_disk_interface_names()[i];
+		tmpDisk.deviceName = decodeURIComponentSafe(foreign_disks()[i]);
+		tmpDisk.deviceType = "storage";
+		tmpDisk.mountNumber = foreign_disk_total_mounted_number()[i];
+
+		for(var j=0; j<tmpDisk.mountNumber; j++){
+			var tmpParts = new newPartition();
+			tmpParts.partName = pool_names()[allPartIndex];
+			tmpParts.mountPoint = pool_devices()[allPartIndex];
+			if(tmpParts.mountPoint == apps_dev){
+				tmpParts.isAppDev = true;
+				tmpDisk.hasAppDev = true;
+			}
+			if(tmpParts.mountPoint == tm_device_name){
+				tmpParts.isTM = true;
+				tmpDisk.hasTM = true;
+			}		
+			tmpParts.size = parseInt(pool_kilobytes()[allPartIndex] + pool_kilobytes_in_use()[allPartIndex]);
+			tmpParts.used = parseInt(pool_kilobytes_in_use()[allPartIndex]);
+			tmpParts.format = pool_types()[allPartIndex];
+			tmpParts.fsck = apps_fsck_ret[allPartIndex][1];
+			if(apps_fsck_ret[allPartIndex][1] == 1){
+				tmpDisk.hasErrPart = true;
+			}
+
+			tmpDisk.partition.push(tmpParts);
+			tmpDisk.totalSize = parseInt(tmpDisk.totalSize + tmpParts.size);
+			tmpDisk.totalUsed = parseInt(tmpDisk.totalUsed + tmpParts.used);
+			allPartIndex++;
+		}
+
+		if(tmpDisk.deviceName != "") usbDevices.push(tmpDisk);
+	}
+
+	for(var i=0; i<allUsbStatusArray.length; i++){
+		for(var j=0; j<allUsbStatusArray[i].length; j++){
+			if(allUsbStatusArray[i][j][0].charAt(0) > usbPortMax) continue;
+
+			if(allUsbStatusArray[i][j].join().search("storage") == -1 || allUsbStatusArray[i][j].length == 0){
+				tmpDisk = new newDisk();
+				tmpDisk.usbPath = allUsbStatusArray[i][j][0].charAt(0);
+				tmpDisk.deviceIndex = usbDevices.length;
+				tmpDisk.node = allUsbStatusArray[i][j][0];
+				tmpDisk.deviceType = allUsbStatusArray[i][j][1];
+
+				if(tmpDisk.deviceType == "printer" && printer_support){
+					var idx = printer_pool().getIndexByValue(tmpDisk.node)
+					if(idx == -1)
+						continue;
+
+					tmpDisk.manufacturer = printer_manufacturers()[idx];
+					tmpDisk.deviceName = tmpDisk.manufacturer + " " + printer_models()[idx].replace(tmpDisk.manufacturer, "");
+					tmpDisk.serialNum = printer_serialn()[idx];
+				}
+				else if(tmpDisk.deviceType == "modem" && modem_support){
+					var idx = modem_pool().getIndexByValue(tmpDisk.node)
+					if(idx == -1)
+						continue;
+
+					tmpDisk.manufacturer = modem_manufacturers()[idx];
+					tmpDisk.deviceName = tmpDisk.manufacturer + " " + modem_models()[idx].replace(tmpDisk.manufacturer, "");
+					tmpDisk.serialNum = modem_serialn()[idx];
+				}
+
+				if(tmpDisk.deviceName != "") usbDevices.push(tmpDisk);
+			}
+		}	
+	}
+}
+
+if(usb_support)
+	genUsbDevices();
 
 var wan_line_state = "<% nvram_get("dsltmp_adslsyncsts"); %>";
 var wlan0_radio_flag = "<% nvram_get("wl0_radio"); %>";
@@ -519,33 +686,6 @@ function remove_menu_item(L2, remove_url){
 		tablink[L2].splice(dx, 1);
 		break;
 	}
-}
-
-Array.prototype.getIndexByValue = function(value){
-	var index = -1;
-	for(var i=0; i<this.length; i++){
-		if (this[i] == value){
-			index = i;
-			break;
-		}
-	}
-	return index;
-}
-
-Array.prototype.getIndexByValue2D = function(value){
-	for(var i=0; i<this.length; i++){
-		if(this[i].getIndexByValue(value) != -1){
-			return [i, this[i].getIndexByValue(value)]; // return [1-D_index, 2-D_index];
-		}
-	}
-	return -1;
-}
-
-Array.prototype.del = function(n){
-　if(n < 0)
-　　return this;
-　else
-　　return this.slice(0,n).concat(this.slice(n+1,this.length));
 }
 
 var current_url = location.pathname.substring(location.pathname.lastIndexOf('/') + 1);
@@ -1313,7 +1453,6 @@ function show_selected_language(){
 
 
 function submit_language(obj){
-	//if($("select_lang").value != $("preferred_lang").value){
 	if(obj.id != $("preferred_lang").value){
 		showLoading();
 		
@@ -1988,47 +2127,34 @@ function makeRequest_status_ie(file)
 	}
 }
 
-function updateUSBStatus(){
-	if(current_url == "index.asp" || current_url == "")
-		detectUSBStatusIndex();
-	else
-		detectUSBStatus();
-}
-
 function detectUSBStatus(){
 	$j.ajax({
-    		url: '/update_diskinfo.asp',
-    		dataType: 'script',
-    		error: function(xhr){
-    			detectUSBStatus();
-    		},
-    		success: function(){
-					return true;
-  			}
+		url: '/update_diskinfo.asp',
+		dataType: 'script',
+		error: function(xhr){
+			detectUSBStatus();
+		},
+		success: function(){
+			genUsbDevices();
+		}
   });
+}
+
+function hadPlugged(deviceType){
+	if(allUsbStatusArray.join().search(deviceType) != -1)
+		return true;
+
+	return false;
 }
 
 var link_status;
 var link_auxstatus;
 var link_sbstatus;
-var usb_path1;
-var usb_path2;
-var usb_path1_tmp = "init";
-var usb_path2_tmp = "init";
-var usb_path1_removed;
-var usb_path2_removed;
-var usb_path1_removed_tmp = "init";
-var usb_path2_removed_tmp = "init";
 var ddns_return_code = '<% nvram_get("ddns_return_code_chk");%>';
 var ddns_updated = '<% nvram_get("ddns_updated");%>';
 var vpnc_state_t = '';
 var vpnc_sbstate_t = '';
 var vpnc_proto = '<% nvram_get("vpnc_proto");%>';
-
-if(usb_support){
-	var tmp_mount_0 = foreign_disk_total_mounted_number()[0];		//Viz 2013.06
-	var tmp_mount_1 = foreign_disk_total_mounted_number()[1];		//Viz 2013.06
-}
 var vpnd_state;	
 
 function refresh_info_status(xmldoc)
@@ -2038,23 +2164,19 @@ function refresh_info_status(xmldoc)
 	link_status = wanStatus[0].firstChild.nodeValue;
 	link_sbstatus = wanStatus[1].firstChild.nodeValue;
 	link_auxstatus = wanStatus[2].firstChild.nodeValue;
-	usb_path1 = wanStatus[3].firstChild.nodeValue;
-	usb_path2 = wanStatus[4].firstChild.nodeValue;
-	monoClient = wanStatus[5].firstChild.nodeValue;	
-	cooler = wanStatus[6].firstChild.nodeValue;	
-	_wlc_state = wanStatus[7].firstChild.nodeValue;
-	_wlc_sbstate = wanStatus[8].firstChild.nodeValue;	
-	_wlc_auth = wanStatus[10].firstChild.nodeValue;	
-	wifi_hw_switch = wanStatus[9].firstChild.nodeValue;
-	usb_path1_removed = wanStatus[11].firstChild.nodeValue;	
-	usb_path2_removed = wanStatus[12].firstChild.nodeValue;
-	ddns_return_code = wanStatus[13].firstChild.nodeValue.replace("ddnsRet=", "");
-	ddns_updated = wanStatus[14].firstChild.nodeValue.replace("ddnsUpdate=", "");
-	wan_line_state = wanStatus[15].firstChild.nodeValue.replace("wan_line_state=", "");
-	wlan0_radio_flag = wanStatus[16].firstChild.nodeValue.replace("wlan0_radio_flag=", "");
-	wlan1_radio_flag = wanStatus[17].firstChild.nodeValue.replace("wlan1_radio_flag=", "");
-	data_rate_info_2g = wanStatus[18].firstChild.nodeValue.replace("data_rate_info_2g=", "");
-	data_rate_info_5g = wanStatus[19].firstChild.nodeValue.replace("data_rate_info_5g=", "");
+
+	monoClient = wanStatus[3].firstChild.nodeValue;	
+	_wlc_state = wanStatus[4].firstChild.nodeValue;
+	_wlc_sbstate = wanStatus[5].firstChild.nodeValue;	
+	_wlc_auth = wanStatus[6].firstChild.nodeValue;	
+	wifi_hw_switch = wanStatus[7].firstChild.nodeValue;
+	ddns_return_code = wanStatus[8].firstChild.nodeValue.replace("ddnsRet=", "");
+	ddns_updated = wanStatus[9].firstChild.nodeValue.replace("ddnsUpdate=", "");
+	wan_line_state = wanStatus[10].firstChild.nodeValue.replace("wan_line_state=", "");
+	wlan0_radio_flag = wanStatus[11].firstChild.nodeValue.replace("wlan0_radio_flag=", "");
+	wlan1_radio_flag = wanStatus[12].firstChild.nodeValue.replace("wlan1_radio_flag=", "");
+	data_rate_info_2g = wanStatus[13].firstChild.nodeValue.replace("data_rate_info_2g=", "");
+	data_rate_info_5g = wanStatus[14].firstChild.nodeValue.replace("data_rate_info_5g=", "");
 
 	var vpnStatus = devicemapXML[0].getElementsByTagName("vpn");
 	
@@ -2062,6 +2184,9 @@ function refresh_info_status(xmldoc)
 	secondary_link_status = secondary_wanStatus[0].firstChild.nodeValue;
 	secondary_link_sbstatus = secondary_wanStatus[1].firstChild.nodeValue;
 	secondary_link_auxstatus = secondary_wanStatus[2].firstChild.nodeValue;
+
+	var usbStatus = devicemapXML[0].getElementsByTagName("usb");
+	allUsbStatus = usbStatus[0].firstChild.nodeValue.toString();
 
 	vpnc_proto = vpnStatus[0].firstChild.nodeValue.replace("vpnc_proto=", "");
 	if(vpnc_proto == "openvpn"){
@@ -2219,83 +2344,40 @@ function refresh_info_status(xmldoc)
 		$("wifi_hw_sw_status").onmouseout = function(){nd();}
 	}
 
-	// usb
+	// usb.storage
 	if(usb_support){
-		if(current_url=="index.asp"||current_url==""){
-			if((usb_path1_removed != usb_path1_removed_tmp && usb_path1_removed_tmp != "init")){
+		if(allUsbStatus != allUsbStatusTmp && allUsbStatusTmp != ""){
+			if(current_url=="index.asp"||current_url=="")
 				location.href = "/index.asp";
-			}
-			else if(usb_path1_removed == "umount=0"){ // umount=0->umount=0, 0->storage
-				if((usb_path1 != usb_path1_tmp && usb_path1_tmp != "init"))
-					location.href = "/index.asp";
-			}
-
-			if((usb_path2_removed != usb_path2_removed_tmp && usb_path2_removed_tmp != "init")){
-				location.href = "/index.asp";
-			}
-			else if(usb_path2_removed == "umount=0"){ // umount=0->umount=0, 0->storage
-				if((usb_path2 != usb_path2_tmp && usb_path2_tmp != "init"))
-					location.href = "/index.asp";
-			}
 		}
 
-		if(usb_path1_removed == "umount=1")
-			usb_path1 = "usb=";
-
-		if(usb_path2_removed == "umount=1")
-			usb_path2 = "usb=";
-
-		if(usb_path1 == "usb=" && usb_path2 == "usb="){
+		if(allUsbStatus.search("storage") == -1){
 			$("usb_status").className = "usbstatusoff";
 			$("usb_status").onclick = function(){overHint(2);}
-			if(printer_support){
-				$("printer_status").className = "printstatusoff";
-				$("printer_status").onclick = function(){overHint(5);}
-				$("printer_status").onmouseover = function(){overHint(5);}
-				$("printer_status").onmouseout = function(){nd();}
-			}
 		}
 		else{
-			if(usb_path1 == "usb=printer" || usb_path2 == "usb=printer"){ // printer
-				if((current_url == "index.asp" || current_url == "") && $("printerName0") == null && $("printerName1") == null)
-					updateUSBStatus();
-				if(printer_support){
-					$("printer_status").className = "printstatuson";
-					$("printer_status").onmouseover = function(){overHint(6);}
-					$("printer_status").onmouseout = function(){nd();}
-					$("printer_status").onclick = function(){openHint(24,1);}
-				}
-				if(usb_path1 == "usb=" || usb_path2 == "usb=")
-					$("usb_status").className = "usbstatusoff";			
-				else
-					$("usb_status").className = "usbstatuson";
-			}
-			else{ // !printer
-				if((current_url == "index.asp" || current_url == "") && ($("printerName0") != null || $("printerName1") != null))
-					location.href = "/index.asp";
-
-				if(printer_support){
-					$("printer_status").className = "printstatusoff";
-					$("printer_status").onmouseover = function(){overHint(5);}
-					$("printer_status").onmouseout = function(){nd();}
-				}
-
-				$("usb_status").className = "usbstatuson";
-				//alert(tmp_mount_0+" , "+foreign_disk_total_mounted_number()[0]+" ; "+tmp_mount_1+" , "+foreign_disk_total_mounted_number()[1]);
-				if((tmp_mount_0 == 0 && usb_path1_removed =="umount=0") || (tmp_mount_1 == 0 && usb_path2_removed =="umount=0")){
-							updateUSBStatus();						//Viz 2013.06
-				}
-							
-			}
+			$("usb_status").className = "usbstatuson";
 			$("usb_status").onclick = function(){openHint(24,2);}
 		}
 		$("usb_status").onmouseover = function(){overHint(2);}
 		$("usb_status").onmouseout = function(){nd();}
 
-		usb_path1_tmp = usb_path1;
-		usb_path2_tmp = usb_path2;
-		usb_path1_removed_tmp = usb_path1_removed;
-		usb_path2_removed_tmp = usb_path2_removed;
+		allUsbStatusTmp = allUsbStatus;
+	}
+
+	// usb.printer
+	if(printer_support){
+		if(allUsbStatus.search("printer") == -1){
+			$("printer_status").className = "printstatusoff";
+			$("printer_status").onmouseover = function(){overHint(5);}
+			$("printer_status").onmouseout = function(){nd();}
+		}
+		else{
+			$("printer_status").className = "printstatuson";
+			$("printer_status").onmouseover = function(){overHint(6);}
+			$("printer_status").onmouseout = function(){nd();}
+			$("printer_status").onclick = function(){openHint(24,1);}
+		}
 	}
 
 	// guest network
@@ -2573,5 +2655,14 @@ function handle_show_str(show_str)
 	show_str = show_str.replace(/\>/g, "&gt;");
 	show_str = show_str.replace(/\ /g, "&nbsp;");
 	return show_str;
+}
+
+function decodeURIComponentSafe(_ascii){
+	try{
+		return decodeURIComponent(_ascii);
+	}
+	catch(err){
+		return _ascii;
+	}
 }
 

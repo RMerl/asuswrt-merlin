@@ -243,6 +243,11 @@ config RTCONFIG_USB_EXTRAS
 	depends on RTCONFIG_USB
 	default n
 
+config RTCONFIG_TUXERA
+	bool "Tuxera module Support"
+	depends on RTCONFIG_USB
+	default n
+
 config RTCONFIG_NTFS
 	bool "NTFS Support"
 	depends on RTCONFIG_USB
@@ -250,6 +255,11 @@ config RTCONFIG_NTFS
 
 config RTCONFIG_HFS
 	bool "HFS Support"
+	depends on RTCONFIG_USB
+	default n
+
+config RTCONFIG_EXFAT
+	bool "exFAT Support"
 	depends on RTCONFIG_USB
 	default n
 
@@ -557,9 +567,18 @@ config RTCONFIG_KYIVSTAR
 	default n
 
 config RTCONFIG_CFE_NVRAM_CHK
-        bool "CFE_NVRAM_CHK"
-        default n
+	bool "CFE_NVRAM_CHK"
+	default n
 
 config RTCONFIG_DEBUG
-        bool "debug mode"
-        default n
+	bool "debug mode"
+	default n
+
+config RTCONFIG_LLDP
+	bool "lldpd"
+	default n
+
+config RTCONFIG_HAS_5G
+	bool "has 5G band"
+	default y
+

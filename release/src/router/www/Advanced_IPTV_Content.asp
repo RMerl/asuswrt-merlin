@@ -552,7 +552,7 @@ function validate_range_null(o, min, max, def) {		//Viz add 2013.03 allow to set
 			</tr>
 
 					<tr id="enable_eff_multicast_forward" style="display:none;">
-						<th>Enable efficient multicast forwarding (IGMP Snooping)</th>
+						<th><#WLANConfig11b_x_Emf_itemname#></th>
 						<td>
                   				<select name="emf_enable" class="input_option">
                     					<option value="0" <% nvram_match("emf_enable", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>

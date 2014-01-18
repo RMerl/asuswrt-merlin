@@ -1893,7 +1893,7 @@ int update_resolvconf(void)
 			foreach(word, (*wan_dns ? wan_dns : wan_xdns), next)
 				fprintf(fp, "nameserver %s\n", word);
 		}
-#if RTCONFIG_OPENVPN
+#ifdef RTCONFIG_OPENVPN
 	}
 #endif
 	fclose(fp);
@@ -2800,10 +2800,7 @@ autodet_main(int argc, char *argv[])
 
 	i = 0;
 	while(i < mac_num && get_wan_state(unit) != WAN_STATE_CONNECTED){
-		if( !(nvram_match("wl_country_code", "SG") || //RT-N56U format
-		      nvram_match("regulation_domain", "SG") || //RT-N66U/AC66U format
-		      nvram_match("0:ccode", "SG")) //RT-AC56U/AC68U format 
-		) { // Singpore do not auto clone
+		if( !(nvram_match("wl0_country_code", "SG"))){ // Singpore do not auto clone
 			_dprintf("try clone %s\n", mac_clone[i]);
 			nvram_set(strcat_r(prefix, "hwaddr_x", tmp), mac_clone[i]);
 		}

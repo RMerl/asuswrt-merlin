@@ -380,7 +380,10 @@
 	border-radius: 10px 10px 10px 10px;
 }
 
-.style1 {color: #569AC7}
+.style1 {
+	color: #569AC7;
+	margin: 10px;
+}
 .style4 {color: #333333}
 .style5 {
 	color: #FFF;
