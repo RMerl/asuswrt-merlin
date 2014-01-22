@@ -1229,7 +1229,7 @@ void stop_radvd(void)
 
 void start_rdnssd(void)
 {
-	char *argv[] = { "rdnssd", "-i", NULL, NULL };
+	char *argv[] = { "rdnssd", NULL, NULL, NULL, NULL, NULL };
 	int  argc, pid;
 
 	if (getpid() != 1) {
@@ -1239,7 +1239,10 @@ void start_rdnssd(void)
 
 	stop_rdnssd();
 
-	argc = 2;
+	argc = 1;
+	argv[argc++] = "-u";
+	argv[argc++] = nvram_safe_get("http_username");
+	argv[argc++] = "-i";
 	argv[argc++] = (char*)get_wan6face();
 	_eval(argv, NULL, 0, &pid);
 }
