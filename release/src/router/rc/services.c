@@ -5550,7 +5550,7 @@ void restart_cstats(void)
 const char *dns_filter(int mode)
 {
 	static const char *server[] = {
-		nvram_safe_get("lan_ipaddr", /* 0: Undefined  router IP */
+		"0.0.0.0", /* 0: Undefined, unused for now */
 		"208.67.222.222",	/* 1: OpenDNS */
                 "199.85.126.10",	/* 2: Norton Connect Safe A (Security) */
 		"199.85.126.20",	/* 3: Norton Connect Safe B (Security + Adult) */

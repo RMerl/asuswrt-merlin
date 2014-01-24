@@ -1148,7 +1148,7 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 				continue;
 			fprintf(fp,
 				"-A DNSFILTER -m mac --mac-source %s -j DNAT --to-destination %s\n",
-				mac, dnsfilter(atoi(mode)));
+				mac, dns_filter(atoi(mode)));
 		}
 		free(nv);
 
