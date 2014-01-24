@@ -5554,7 +5554,7 @@ const char *dns_filter(int mode)
 		"208.67.222.222",	/* 1: OpenDNS */
                 "199.85.126.10",	/* 2: Norton Connect Safe A (Security) */
 		"199.85.126.20",	/* 3: Norton Connect Safe B (Security + Adult) */
-		"199.85.126.30"		/* 4: Norton Connect Safe C (Sec. + Adult + Violence */
+		"199.85.126.30",	/* 4: Norton Connect Safe C (Sec. + Adult + Violence */
 		"77.88.8.88",		/* 5: Secure Mode safe.dns.yandex.ru */
 		"77.88.8.7"		/* 6: Family Mode family.dns.yandex.ru */
         };
