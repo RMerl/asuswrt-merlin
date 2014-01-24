@@ -23,16 +23,16 @@ libevent.a: $(OBJS)
 	@RANLIB@ libevent.a
 
 event.o: event.c $(HDRS)
-	@CC@ $(CFLAGS) -c -o event.o event.c
+	@CC@ $(CFLAGS) -c -o $@ $<
 
 hash.o: hash.c $(HDRS)
-	@CC@ $(CFLAGS) -c -o hash.o hash.c
+	@CC@ $(CFLAGS) -c -o $@ $<
 
 event_sig.o: event_sig.c $(HDRS)
-	@CC@ $(CFLAGS) -c -o event_sig.o event_sig.c
+	@CC@ $(CFLAGS) -c -o $@ $<
 
 event_tcp.o: event_tcp.c $(HDRS)
-	@CC@ $(CFLAGS) -c -o event_tcp.o event_tcp.c
+	@CC@ $(CFLAGS) -c -o $@ $<
 
 clean: FORCE
 	rm -f *.a *.o *~

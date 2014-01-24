@@ -4,7 +4,7 @@
 *
 * Implementation of user-space PPPoE redirector for Linux.
 *
-* Copyright (C) 2000-2006 by Roaring Penguin Software Inc.
+* Copyright (C) 2000-2012 by Roaring Penguin Software Inc.
 *
 * This program may be distributed according to the terms of the GNU
 * General Public License, version 2 or (at your option) any later version.
@@ -70,8 +70,6 @@ int optFloodDiscovery    = 0;   /* Flood server with discovery requests.
 PPPoEConnection *Connection = NULL; /* Must be global -- used
 				       in signal handler */
 
-int persist = -1; 		/* We are not a pppd plugin */
-int asked_to_quit = 0;		/* Ignored at the moment */
 /***********************************************************************
 *%FUNCTION: sendSessionPacket
 *%ARGUMENTS:
@@ -616,7 +614,7 @@ main(int argc, char *argv[])
 		fprintf(stderr, "Sending discovery flood %d\n", n+1);
 	    }
             conn.discoverySocket =
-	        openInterface(conn.ifName, Eth_PPPOE_Discovery, conn.myEth);
+	        openInterface(conn.ifName, Eth_PPPOE_Discovery, conn.myEth, NULL);
 	    discovery(&conn);
 	    conn.discoveryState = STATE_SENT_PADI;
 	    close(conn.discoverySocket);
@@ -630,14 +628,14 @@ main(int argc, char *argv[])
     /* Opening this socket just before waitForPADS in the discovery()      */
     /* function would be more appropriate, but it would mess-up the code   */
     if (!optSkipSession)
-        conn.sessionSocket = openInterface(conn.ifName, Eth_PPPOE_Session, conn.myEth);
+        conn.sessionSocket = openInterface(conn.ifName, Eth_PPPOE_Session, conn.myEth, NULL);
 
     /* Skip discovery and don't open discovery socket? */
     if (conn.skipDiscovery && conn.noDiscoverySocket) {
 	conn.discoveryState = STATE_SESSION;
     } else {
         conn.discoverySocket =
-	    openInterface(conn.ifName, Eth_PPPOE_Discovery, conn.myEth);
+	    openInterface(conn.ifName, Eth_PPPOE_Discovery, conn.myEth, NULL);
         discovery(&conn);
     }
     if (optSkipSession) {

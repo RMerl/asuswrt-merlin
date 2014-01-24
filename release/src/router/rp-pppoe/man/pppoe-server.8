@@ -21,11 +21,30 @@ daemon.  The default is to fork and become a daemon.
 
 .TP
 .B \-I \fIinterface\fR
-The \fB\-I\fR option specifies the Ethernet interface to use.  Under Linux,
-it is typically \fIeth0\fR or \fIeth1\fR.  The interface should be "up"
-before you start \fBpppoe-server\fR, but should \fInot\fR be configured to have
-an IP address.  You can supply multiple \fB\-I\fR options if you want the
+The \fB\-I\fR option specifies the Ethernet interface to use.  Under
+Linux, it is typically \fIeth0\fR or \fIeth1\fR.  The interface should
+be "up" before you start \fBpppoe-server\fR, but need not have an IP
+address.  You can supply multiple \fB\-I\fR options if you want the
 server to respond on more than one interface.
+
+.TP
+.B \-X \fIpidfile\fR
+This option causes \fBpppoe-server\fR to write its process ID to
+\fIpidfile\fR.  Additionally, it keeps the file locked so that only
+a single process may be started for a given \fIpidfile\fR.
+
+.TP
+.B \-q \fI/path/to/pppd\fR
+Specifies the full path to the \fBpppd\fR program.  The default is determined
+at compile time.  One use of this option is to supply a wrapper program that
+modifies the arguments passed to pppd.  This lets you do things not directly
+supported by the server (for example, specify IPv6 addresses.)
+
+.TP
+.B \-Q \fI/path/to/pppoe\fR
+Specifies the full path to the \fBpppoe\fR program.  The default is determined
+at compile time.  This option is only relevant if you are \fInot\fR
+using kernel-mode PPPoE.
 
 .TP
 .B \-T \fItimeout\fR
@@ -147,6 +166,11 @@ the peer you are dealing with uses non-standard frame types.
 The \fB\-k\fR option tells the server to use kernel-mode PPPoE on Linux.
 This option is available only on Linux kernels 2.4.0 and later, and
 only if the server was built with kernel-mode support.
+
+.TP
+.B \-i
+The \fB\-i\fR option tells the server to completely ignore PADI frames
+if there are no free session slots.
 
 .TP
 .B \-h
