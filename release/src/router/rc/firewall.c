@@ -1073,9 +1073,14 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 		":VSERVER - [0:0]\n"
 		":LOCALSRV - [0:0]\n"
 		":VUPNP - [0:0]\n");
+
 #ifdef RTCONFIG_YANDEXDNS
 	fprintf(fp,
 		":YADNS - [0:0]\n");
+#endif
+#ifdef RTCONFIG_DNSFILTER
+	fprintf(fp,
+		":DNSFILTER - [0:0]\n");
 #endif
 
 	_dprintf("writting prerouting %s %s %s %s %s %s\n", wan_if, wan_ip, wanx_if, wanx_ip, lan_if, lan_ip);
@@ -1121,6 +1126,38 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 		fprintf(fp, "-A YADNS ! -d %s -j DNAT --to-destination %s\n", lan_ip, lan_ip);
 	}
 #endif
+
+#ifdef RTCONFIG_DNSFILTER
+	if (nvram_get_int("dnsfilter_enable_x")) {
+		char *name, *mac, *mode;
+		unsigned char ea[ETHER_ADDR_LEN];
+
+		/* Reroute all DNS requests from LAN */
+		ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
+		fprintf(fp,
+			"-A PREROUTING -s %s -p udp -m udp --dport 53 -j DNSFILTER\n"
+			"-A PREROUTING -s %s -p tcp -m tcp --dport 53 -j DNSFILTER\n",
+			lan_class, lan_class);
+
+		/* Protection level per client */
+		nv = nvp = strdup(nvram_safe_get("dnsfilter_rulelist"));
+		while (nv && (b = strsep(&nvp, "<")) != NULL) {
+			if (vstrsep(b, ">", &name, &mac, &mode) != 3)
+				continue;
+			if (!*mac || !*mode || !ether_atoe(mac, ea))
+				continue;
+			fprintf(fp,
+				"-A DNSFILTER -m mac --mac-source %s -j DNAT --to-destination %s\n",
+				mac, dnsfilter(atoi(mode)));
+		}
+		free(nv);
+
+// TODO: Implement default leve in dnsmasq
+		/* Catch other queries for default level */
+		fprintf(fp, "-A DNSFILTER ! -d %s -j DNAT --to-destination %s\n", lan_ip, lan_ip);
+	}
+#endif
+
 
 	// need multiple instance for tis?
 	if (nvram_match("misc_http_x", "1"))
@@ -1311,6 +1348,10 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 			fprintf(fp,
 				":YADNS - [0:0]\n");
 #endif
+#ifdef RTCONFIG_DNSFILTER
+			fprintf(fp,
+				":DNSFILTER - [0:0]\n");
+#endif
 		}
 
 		_dprintf("writting prerouting 2 %s %s %s %s %s %s\n", wan_if, wan_ip, wanx_if, wanx_ip, lan_if, lan_ip);
@@ -1355,6 +1396,36 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 
 		/* Catch other queries for default level */
 		fprintf(fp, "-A YADNS ! -d %s -j DNAT --to-destination %s\n", lan_ip, lan_ip);
+	}
+#endif
+
+#ifdef RTCONFIG_DNSFILTER
+	if (nvram_get_int("dnsfilter_enable_x")) {
+		char *name, *mac, *mode;
+		unsigned char ea[ETHER_ADDR_LEN];
+
+		/* Reroute all DNS requests from LAN */
+		ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
+		fprintf(fp,
+			"-A PREROUTING -s %s -p udp -m udp --dport 53 -j DNSFILTER\n"
+			"-A PREROUTING -s %s -p tcp -m tcp --dport 53 -j DNSFILTER\n",
+			lan_class, lan_class);
+
+		/* Protection level per client */
+		nv = nvp = strdup(nvram_safe_get("dnsfilter_rulelist"));
+		while (nv && (b = strsep(&nvp, "<")) != NULL) {
+			if (vstrsep(b, ">", &name, &mac, &mode) != 3)
+				continue;
+			if (!*mac || !*mode || !ether_atoe(mac, ea))
+				continue;
+			fprintf(fp,
+				"-A DNSFILTER -m mac --mac-source %s -j DNAT --to-destination %s\n",
+				mac, dns_filter(atoi(mode)));
+		}
+		free(nv);
+
+		/* Catch other queries for default level */
+		fprintf(fp, "-A DNSFILTER ! -d %s -j DNAT --to-destination %s\n", lan_ip, lan_ip);
 	}
 #endif
 
@@ -1583,6 +1654,11 @@ void redirect_setting(void)
 		fprintf(redirect_fp,
 				":YADNS - [0:0]\n");
 #endif
+#ifdef RTCONFIG_DNSFILTER
+		fprintf(redirect_fp,
+				":DNSFILTER - [0:0]\n");
+#endif
+
 	}
 	fprintf(redirect_fp, "-A PREROUTING ! -d %s/%s -p tcp --dport 80 -j DNAT --to-destination %s:18017\n", lan_ipaddr_t, lan_netmask_t, lan_ipaddr_t);
 	fprintf(redirect_fp, "COMMIT\n");

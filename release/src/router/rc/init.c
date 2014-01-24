@@ -2893,6 +2893,9 @@ int init_nvram(void)
 	add_rc_support("yadns");
 #endif
 
+#ifdef RTCONFIG_DNSFILTER
+	add_rc_support("dnsfilter");
+#endif
 #ifdef RTCONFIG_DUALWAN // RTCONFIG_DUALWAN
 	add_rc_support("dualwan");
 

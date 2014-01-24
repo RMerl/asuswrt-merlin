@@ -925,6 +925,10 @@ define RouterOptions
                 sed -i "/RTCONFIG_HAS_5G/d" $(1); \
                 echo "# RTCONFIG_HAS_5G is not set" >>$(1); \
         fi; \
+	if [ "$(DNSFILTER)" = "y" ]; then \
+		sed -i "/RTCONFIG_DNSFILTER/d" $(1); \
+		echo "RTCONFIG_DNSFILTER=y" >>$(1); \
+	fi; \
 	)
 	$(call platformRouterOptions, $(1))
 endef

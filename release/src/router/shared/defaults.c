@@ -924,6 +924,11 @@ struct nvram_tuple router_defaults[] = {
 	{ "yadns_mode", "1"},		/* 0: Undefended, 1: Safe, 2: Family */
 	{ "yadns_rulelist", ""},	/* List client modes <devname>hh:ww:aa:dd:dd:rr>mode... */
 #endif  /* RTCONFIG_YANDEXDNS */
+#ifdef RTCONFIG_DNSFILTER
+	{ "dnsfilter_enable_x", "0"},
+	{ "dnsfilter_mode", "1"},	/* Default to OpenDNS */
+	{ "dnsfilter_rulelist", ""},	/* List client modes <devname>hh:ww:aa:dd:dd:rr>mode... */
+#endif
 	{ "fw_enable_x", "1" },
 	{ "fw_dos_x", "0" },
 	{ "fw_log_x", "none" },

@@ -104,6 +104,7 @@ var media_support = isSupport(" media");
 var nomedia_support = isSupport("nomedia");
 var cloudsync_support = isSupport("cloudsync"); 
 var yadns_support = isSupport("yadns"); 
+var dnsfilter_support = isSupport("dnsfilter");
 var manualstb_support = isSupport("manual_stb");
 var wps_multiband_support = isSupport("wps_multiband");
 
@@ -425,7 +426,7 @@ tabtitle[7] = new Array("", "<#menu5_6_1#>", "<#menu5_6_2#>", "<#menu5_6_3#>", "
 tabtitle[8] = new Array("", "<#menu5_7_2#>", "<#menu5_7_4#>", "<#menu5_7_3#>", "IPv6", "<#menu5_7_6#>", "<#menu5_7_5#>", "<#menu_dsl_log#>", "Spectrum", "<#Connections#>");
 tabtitle[9] = new Array("", "<#Network_Analysis#>", "Netstat", "<#NetworkTools_WOL#>");
 tabtitle[10] = new Array("", "QoS", "<#traffic_monitor#>");
-tabtitle[11] = new Array("", "<#Parental_Control#>", "<#YandexDNS#>");
+tabtitle[11] = new Array("", "<#Parental_Control#>", "<#YandexDNS#>", "DNS Filtering");
 tabtitle[12] = new Array("", "Sysinfo", "Other Settings", "Run Cmd");
 
 var tablink = new Array();
@@ -440,7 +441,7 @@ tablink[7] = new Array("", "Advanced_OperationMode_Content.asp", "Advanced_Syste
 tablink[8] = new Array("", "Main_LogStatus_Content.asp", "Main_WStatus_Content.asp", "Main_DHCPStatus_Content.asp", "Main_IPV6Status_Content.asp", "Main_RouteStatus_Content.asp", "Main_IPTStatus_Content.asp", "Main_AdslStatus_Content.asp", "Main_Spectrum_Content.asp", "Main_ConnStatus_Content.asp");
 tablink[9] = new Array("", "Main_Analysis_Content.asp", "Main_Netstat_Content.asp", "Main_WOL_Content.asp");
 tablink[10] = new Array("", "QoS_EZQoS.asp", "Main_TrafficMonitor_realtime.asp", "Main_TrafficMonitor_last24.asp", "Main_TrafficMonitor_daily.asp", "Main_TrafficMonitor_monthly.asp", "Main_TrafficMonitor_devrealtime.asp", "Main_TrafficMonitor_devdaily.asp", "Main_TrafficMonitor_devmonthly.asp", "Advanced_QOSUserPrio_Content.asp", "Advanced_QOSUserRules_Content.asp");
-tablink[11] = new Array("", "ParentalControl.asp", "YandexDNS.asp");
+tablink[11] = new Array("", "ParentalControl.asp", "YandexDNS.asp", "DNSFilter.asp");
 tablink[12] = new Array("", "Tools_Sysinfo.asp", "Tools_OtherSettings.asp", "Tools_RunCmd.asp");
 
 //Level 2 Menu
@@ -617,16 +618,21 @@ function remove_url(){
 //		remove_menu_item(7, "Advanced_PerformanceTuning_Content.asp");
 //	}
 
-	if(!ParentalCtrl2_support && !yadns_support){
+	if(!ParentalCtrl2_support && !yadns_support && !dnsfilter_support){
 		menuL1_title[4]="";
 		menuL1_link[4]="";
 	}
+// TODO: Handle all the various scenarios involving PC, yadns and dnsfilter
 	else if(!ParentalCtrl2_support && yadns_support){
 		remove_menu_item(11, "ParentalControl.asp");
 		menuL1_link[4]="YandexDNS.asp";
 	}
-	else if(ParentalCtrl2_support && !yadns_support){
-		remove_menu_item(11, "YandexDNS.asp");
+
+	else if(ParentalCtrl2_support) {
+		if  (!yadns_support)
+			remove_menu_item(11, "YandexDNS.asp");
+		if (!dnsfilter_support)
+			remove_menu_item(11, "DNSFilter.asp");
 	}
 	
 	if(!ParentalCtrl_support)
@@ -778,6 +784,16 @@ function show_menu(){
 			L2 = traffic_L2_dx;
 			L3 = 2;
 		}	
+	}
+// TODO: Handle the various scenarios involving PC, yadns and dnsfilter
+	if(current_url.indexOf("DNSFilter") == 0){
+		if(ParentalCtrl2_support && dnsfilter_support){
+			traffic_L1_dx = 4;
+			traffic_L2_dx = 12;
+			L1 = traffic_L1_dx;
+			L2 = traffic_L2_dx;
+			L3 = 3;
+		}
 	}
 	
 	show_banner(L3);

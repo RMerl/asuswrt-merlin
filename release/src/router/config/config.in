@@ -582,3 +582,6 @@ config RTCONFIG_HAS_5G
 	bool "has 5G band"
 	default y
 
+config RTCONFIG_DNSFILTER
+	bool "DNS-based filtering Support"
+	default n
