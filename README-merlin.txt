@@ -403,6 +403,7 @@ The list of available postconf scripts is:
  * pptpd.postconf
  * radvd.postconf
  * shadow.postconf
+ * smb.postconf
  * upnp.postconf
  * vsftpd.postconf
 
@@ -548,6 +549,8 @@ History
               for best results.
   - FIXED: DHCPv6 client failing to start if the router username was 
            changed from "admin" (Asus bug) (patch from Saintdev)
+  - FIXED: SMB shares were accessible over WAN, bypassing Netfilter
+           (Asus bug) (AC56/AC68)
 
 
 3.0.0.4.374.38_2 (17-Jan-2014):
