@@ -721,7 +721,7 @@ extern void write_static_leases(char *file);
 extern const char *yandex_dns(int mode);
 #endif
 #ifdef RTCONFIG_DNSFILTER
-extern const char *dnsfilter(int mode);
+extern const char *dns_filter(int mode);
 #endif
 #ifdef RTCONFIG_DNSMASQ
 extern void restart_dnsmasq(int force);
