@@ -48,9 +48,6 @@ function initial(){
 	show_menu();
 	show_footer();
 
-	if(downsize_4m_support)
-		$("guest_image").parentNode.style.display = "none";
-	
 	if(!ParentalCtrl2_support){		
 		$('FormTitle').style.webkitBorderRadius = "3px";
 		$('FormTitle').style.MozBorderRadius = "3px";
@@ -60,8 +57,8 @@ function initial(){
 	gen_mainTable();	
 	showLANIPList();
 
-	// dnsfilter_enable_x 0: disable, 1: enable, show mainTable & Protection level when enable,	otherwise hide it
-	showhide("dnsfilter_mode",document.form.dnsfilter_enable_x.value);	
+	// dnsfilter_enable_x 0: disable, 1: enable, show mainTable & Protection level when enable, otherwise hide it
+	showhide("dnsfilter_mode",document.form.dnsfilter_enable_x.value);
 	showhide("mainTable", document.form.dnsfilter_enable_x.value);
 }
 
@@ -99,10 +96,10 @@ function showLANIPList(){
 }
 
 function pullLANIPList(obj){
-	if(isMenuopen == 0){		
+	if(isMenuopen == 0){
 		obj.src = "/images/arrow-top.gif"
-		$("ClientList_Block_PC").style.display = 'block';		
-		document.form.rule_devname.focus();		
+		$("ClientList_Block_PC").style.display = 'block';
+		document.form.rule_devname.focus();
 		isMenuopen = 1;
 	}
 	else
@@ -193,7 +190,7 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 		childsel.setAttribute("id","check_mac");
 		childsel.style.color="#FFCC00";
 		obj.parentNode.appendChild(childsel);
-		$("check_mac").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";		
+		$("check_mac").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";
 		$("check_mac").style.display = "";
 		return false;
 	}else if(flag == 2){
@@ -201,23 +198,23 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 		childsel.setAttribute("id","check_mac");
 		childsel.style.color="#FFCC00";
 		obj.parentNode.appendChild(childsel);
-		$("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";		
+		$("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";
 		$("check_mac").style.display = "";
-		return false;		
-	}else{	
+		return false;
+	}else{
 		$("check_mac") ? $("check_mac").style.display="none" : true;
 		return true;
-	}	
+	}
 }
 
 function addRow_main(upper){
 	var rule_num = $('mainTable_table').rows.length;
-	var item_num = $('mainTable_table').rows[0].cells.length;	
+	var item_num = $('mainTable_table').rows[0].cells.length;
 
 	if(rule_num >= upper){
 		alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
-		return false;	
-	}				
+		return false;
+	}
 
 	if(!validate_string(document.form.rule_devname))
 		return false;
@@ -234,16 +231,10 @@ function addRow_main(upper){
 		return false;
 	}
 
-	/*if(MULTIFILTER_MAC.search(document.form.rule_mac.value) > -1){
-		alert("<#JS_duplicate#>");
-		document.form.rule_mac.focus();
-		return false;
-	}*/
-
 	if(!check_macaddr(document.form.rule_mac, check_hwaddr_flag(document.form.rule_mac))){
 		document.form.rule_mac.focus();
 		document.form.rule_mac.select();
-		return false;	
+		return false;
 	}
 
 	dnsfilter_rule_list += "<";
@@ -327,19 +318,19 @@ function changeRow_main(r){
 
 <table class="content" align="center" cellpadding="0" cellspacing="0" >
 	<tr>
-		<td width="17">&nbsp;</td>		
-		<td valign="top" width="202">				
-		<div  id="mainMenu"></div>	
-		<div  id="subMenu"></div>		
-		</td>				
-		
+		<td width="17">&nbsp;</td>
+		<td valign="top" width="202">
+		<div  id="mainMenu"></div>
+		<div  id="subMenu"></div>
+		</td>
+
     <td valign="top">
 	<div id="tabMenu" class="submenuBlock"></div>
-		<!--===================================Beginning of Main Content===========================================-->		
+		<!--===================================Beginning of Main Content===========================================-->
 <table width="98%" border="0" align="left" cellpadding="0" cellspacing="0" >
 	<tr>
 		<td valign="top" >
-		
+
 <table width="730px" border="0" cellpadding="4" cellspacing="0" class="FormTitle" id="FormTitle">
 	<tbody>
 	<tr>
@@ -347,7 +338,6 @@ function changeRow_main(r){
 		<div>&nbsp;</div>
 		<div class="formfonttitle">DNS-based Filtering</div>
 		<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-		<!--div class="formfontdesc"><#ParentalCtrl_Desc#></div-->
 
 		<div id="dnsfilter_desc" style="margin-bottom:10px;">
 			<table width="700px" style="margin-left:25px;">
@@ -382,20 +372,20 @@ function changeRow_main(r){
 								$j('#radio_dnsfilter_enable').iphoneSwitch(document.form.dnsfilter_enable_x.value,
 									function(){
 										document.form.dnsfilter_enable_x.value = 1;
-										showhide("dnsfilter_mode",1);	
+										showhide("dnsfilter_mode",1);
 										showhide("mainTable",1);	
 									},
 									function(){
 										document.form.dnsfilter_enable_x.value = 0;
-										showhide("dnsfilter_mode",0);	
+										showhide("dnsfilter_mode",0);
 										showhide("mainTable",0);	
 									},
 										{
 											switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
 									});
-							</script>			
+							</script>
 						</div>
-					</td>			
+					</td>
 				</tr>
 				<tr id="dnsfilter_mode">
 					<th>Global Filter Mode</th>
@@ -410,8 +400,8 @@ function changeRow_main(r){
 							<option value="6" <% nvram_match("dnsfilter_mode", "6", "selected"); %>>Yandex Family</option>
 						</select>
 					</td>
-				</tr>		
-			</table>						
+				</tr>
+			</table>
 			<table id="list_table" width="100%" border="0" align="center" cellpadding="0" cellspacing="0" >
 				<tr>
 					<td valign="top" align="center">
@@ -421,8 +411,8 @@ function changeRow_main(r){
 						<div id="mainTable" style="margin-top:10px;"></div>
 						<!--br/-->
 						<div id="hintBlock" style="width:650px;display:none;"></div>
-						<!-- Content -->						
-					</td>	
+						<!-- Content -->
+					</td>
 				</tr>
 			</table>
 			<div class="apply_gen">
@@ -430,12 +420,12 @@ function changeRow_main(r){
 			</div>
 		</td>
 	</tr>
-	</tbody>	
+	</tbody>
 	</table>
-</td>         
+</td>
         </tr>
-      </table>				
-		<!--===================================Ending of Main Content===========================================-->		
+      </table>
+		<!--===================================Ending of Main Content===========================================-->
 	</td>
 		
     <td width="10" align="center" valign="top">&nbsp;</td>
