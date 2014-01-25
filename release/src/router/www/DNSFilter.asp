@@ -82,7 +82,7 @@ function showLANIPList(){
 	for(var i = 1; i < client_list_row.length; i++){
 		var client_list_col = client_list_row[i].split('>');
 		if(client_list_col[1] && client_list_col[1].length > 20)
-			show_name = client_list_col[1].substring(0, 16) + "..";
+			show_name = client_list_col[1].substring(0, 64) + "..";
 		else
 			show_name = client_list_col[1];
 
@@ -136,7 +136,7 @@ function gen_modeselect(name, value, onchange){
 function gen_mainTable(){
 	var code = "";
 	code +='<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="FormTable_table" id="mainTable_table">';
-	code +='<thead><tr><td colspan="4"><#ConnectedClient#>&nbsp;(<#List_limit#>&nbsp;16)</td></tr></thead>';
+	code +='<thead><tr><td colspan="4"><#ConnectedClient#>&nbsp;(<#List_limit#>&nbsp;64)</td></tr></thead>';
 	code +='<tr><th width="40%"><#ParentalCtrl_username#></th>';
 	code +='<th width="20%"><#ParentalCtrl_hwaddr#></th>';
 	code +='<th width="15%">Filter Mode</th>';
@@ -147,7 +147,7 @@ function gen_mainTable(){
 	code +='<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div></td>';
 	code +='<td style="border-bottom:2px solid #000;"><input type="text" maxlength="17" class="input_macaddr_table" name="rule_mac" onKeyPress="return is_hwaddr(this,event)"></td>';
 	code +='<td style="border-bottom:2px solid #000;">'+gen_modeselect("rule_mode", "-1", "")+'</td>';
-	code +='<td style="border-bottom:2px solid #000;"><input class="url_btn" type="button" onClick="addRow_main(16)" value=""></td></tr>';
+	code +='<td style="border-bottom:2px solid #000;"><input class="url_btn" type="button" onClick="addRow_main(64)" value=""></td></tr>';
 
 	if(dnsfilter_rule_list_row == "")
 		code +='<tr><td style="color:#FFCC00;" colspan="10"><#IPConnection_VSList_Norule#></td>';
