@@ -622,12 +622,14 @@ function remove_url(){
 		menuL1_title[4]="";
 		menuL1_link[4]="";
 	}
-// TODO: Handle all the various scenarios involving PC, yadns and dnsfilter
 	else if(!ParentalCtrl2_support && yadns_support){
 		remove_menu_item(11, "ParentalControl.asp");
 		menuL1_link[4]="YandexDNS.asp";
 	}
-
+	else if(!ParentalCtrl2_support && dnsfilter_support){
+		remove_menu_item(11, "ParentalControl.asp");
+		menuL1_link[4]="DNSFilter.asp";
+	}
 	else if(ParentalCtrl2_support) {
 		if  (!yadns_support)
 			remove_menu_item(11, "YandexDNS.asp");
@@ -767,7 +769,7 @@ function show_menu(){
 		L1 = 6;
 
 	if(current_url.indexOf("ParentalControl") == 0){
-		if(ParentalCtrl2_support && yadns_support){
+		if(ParentalCtrl2_support && (yadns_support || dnsfilter_support)){
 			traffic_L1_dx = 4;
 			traffic_L2_dx = 12;
 			L1 = traffic_L1_dx;	
@@ -785,14 +787,14 @@ function show_menu(){
 			L3 = 2;
 		}	
 	}
-// TODO: Handle the various scenarios involving PC, yadns and dnsfilter
+
 	if(current_url.indexOf("DNSFilter") == 0){
 		if(ParentalCtrl2_support && dnsfilter_support){
 			traffic_L1_dx = 4;
 			traffic_L2_dx = 12;
 			L1 = traffic_L1_dx;
 			L2 = traffic_L2_dx;
-			L3 = 3;
+			L3 = 2;
 		}
 	}
 	
