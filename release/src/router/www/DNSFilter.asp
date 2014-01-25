@@ -319,7 +319,7 @@ function changeRow_main(r){
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_wait" value="5">
 <input type="hidden" name="action_mode" value="apply">
-<input type="hidden" name="action_script" value="restart_firewall">
+<input type="hidden" name="action_script" value="restart_dnsfilter">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="dnsfilter_enable_x" value="<% nvram_get("dnsfilter_enable_x"); %>">

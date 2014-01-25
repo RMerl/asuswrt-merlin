@@ -4875,6 +4875,19 @@ check_ddr_done:
 		}
 	}
 #endif
+#ifdef RTCONFIG_DNSFILTER
+	else if (strcmp(script, "dnsfilter") == 0)
+	{
+		if(action&RC_SERVICE_START) {
+#ifdef RTCONFIG_DNSMASQ
+			restart_dnsmasq(0);
+#else
+			restart_dns();
+#endif
+			start_firewall(wan_primary_ifunit(), 0);
+		}
+	}
+#endif
 #ifdef RTCONFIG_ISP_METER
 	else if (strcmp(script, "isp_meter") == 0) {
 		_dprintf("%s: isp_meter: %s\n", __FUNCTION__, cmd[1]);
