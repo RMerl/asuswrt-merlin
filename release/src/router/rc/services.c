@@ -606,6 +606,10 @@ void start_dnsmasq(int force)
 #ifdef RTCONFIG_YANDEXDNS
 		nvram_get_int("yadns_enable_x") ? "" : // no resolv.conf
 #endif
+// TODO: Make sure this works properly with vpnc potentially modifying dns server list
+#ifdef RTCONFIG_DNSFILTER
+		( (nvram_get_int("dnsfilter_enable_x")) && (nvram_get_int("dnsfilter_mode") > 0) ) ? "" : // no resolv.conf
+#endif
 		dmresolv,
 		nvram_get_int("dns_minport") ? : 4096);
 
@@ -631,6 +635,13 @@ void start_dnsmasq(int force)
 	if (nvram_get_int("yadns_enable_x")) {
 		fprintf(fp,
 		"server=%s\n", yandex_dns(nvram_get_int("yadns_mode")));
+	} else
+#endif
+#ifdef RTCONFIG_DNSFILTER
+	/* default DNSFilter server for clients */
+	if ( (nvram_get_int("dnsfilter_enable_x")) && (nvram_get_int("dnsfilter_mode") > 0) ) {
+		fprintf(fp,
+		"server=%s\n", dns_filter(nvram_get_int("dnsfilter_mode")));
 	} else
 #endif
 {
@@ -2047,12 +2058,18 @@ start_dns(void)
 #ifdef RTCONFIG_YANDEXDNS
 		nvram_get_int("yadns_enable_x") ? yandex_dns(nvram_get_int("yadns_mode")) :
 #endif
+#ifdef RTCONFIG_DNSFILTER
+		(nvram_get_int("dnsfilter_enable_x") && (nvram_get_int("dnsfilter_mode") > 0)) ? dns_filter(nvram_get_int("dnsfilter_mode")) :
+#endif
 		"");
 	fprintf(fp, "ppp_detect=0\n");
 	fprintf(fp, "purge_time=1200\n");
 	fprintf(fp, "resolv_file=%s\n",
 #ifdef RTCONFIG_YANDEXDNS
 		nvram_get_int("yadns_enable_x") ? "/dev/null" :
+#endif
+#ifdef RTCONFIG_DNSFILTER
+		( (nvram_get_int("dnsfilter_enable_x")) && (nvram_get_int("dnsfilter_mode") > 0) ) ? "/dev/null" :
 #endif
 		"/tmp/resolv.conf");
 //	fprintf(fp, "deny_file=/tmp/dproxy.deny\n");
