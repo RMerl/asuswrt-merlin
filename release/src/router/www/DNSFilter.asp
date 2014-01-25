@@ -398,7 +398,7 @@ function changeRow_main(r){
 					</td>			
 				</tr>
 				<tr id="dnsfilter_mode">
-					<th>Filter Mode</th>
+					<th>Global Filter Mode</th>
 					<td>
 						<select name="dnsfilter_mode" class="input_option">
 							<option value="0" <% nvram_match("dnsfilter_mode", "0", "selected"); %>>No filtering</option>
