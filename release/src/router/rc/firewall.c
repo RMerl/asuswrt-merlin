@@ -1152,9 +1152,10 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 		}
 		free(nv);
 
-// TODO: Implement default leve in dnsmasq
-		/* Catch other queries for default level */
-		fprintf(fp, "-A DNSFILTER ! -d %s -j DNAT --to-destination %s\n", lan_ip, lan_ip);
+		/* Send other queries to the default server */
+		if (nvram_safe_get("dnsfilter_mode") != 0) {
+			fprintf(fp, "-A DNSFILTER -j DNAT --to-destination %s\n", dns_filter(nvram_get_int("dnsfilter_mode")));
+		}
 	}
 #endif
 

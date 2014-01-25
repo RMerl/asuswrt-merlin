@@ -606,10 +606,6 @@ void start_dnsmasq(int force)
 #ifdef RTCONFIG_YANDEXDNS
 		nvram_get_int("yadns_enable_x") ? "" : // no resolv.conf
 #endif
-// TODO: Make sure this works properly with vpnc potentially modifying dns server list
-#ifdef RTCONFIG_DNSFILTER
-		( (nvram_get_int("dnsfilter_enable_x")) && (nvram_get_int("dnsfilter_mode") > 0) ) ? "" : // no resolv.conf
-#endif
 		dmresolv,
 		nvram_get_int("dns_minport") ? : 4096);
 
@@ -635,13 +631,6 @@ void start_dnsmasq(int force)
 	if (nvram_get_int("yadns_enable_x")) {
 		fprintf(fp,
 		"server=%s\n", yandex_dns(nvram_get_int("yadns_mode")));
-	} else
-#endif
-#ifdef RTCONFIG_DNSFILTER
-	/* default DNSFilter server for clients */
-	if ( (nvram_get_int("dnsfilter_enable_x")) && (nvram_get_int("dnsfilter_mode") > 0) ) {
-		fprintf(fp,
-		"server=%s\n", dns_filter(nvram_get_int("dnsfilter_mode")));
 	} else
 #endif
 {
@@ -2058,18 +2047,12 @@ start_dns(void)
 #ifdef RTCONFIG_YANDEXDNS
 		nvram_get_int("yadns_enable_x") ? yandex_dns(nvram_get_int("yadns_mode")) :
 #endif
-#ifdef RTCONFIG_DNSFILTER
-		(nvram_get_int("dnsfilter_enable_x") && (nvram_get_int("dnsfilter_mode") > 0)) ? dns_filter(nvram_get_int("dnsfilter_mode")) :
-#endif
 		"");
 	fprintf(fp, "ppp_detect=0\n");
 	fprintf(fp, "purge_time=1200\n");
 	fprintf(fp, "resolv_file=%s\n",
 #ifdef RTCONFIG_YANDEXDNS
 		nvram_get_int("yadns_enable_x") ? "/dev/null" :
-#endif
-#ifdef RTCONFIG_DNSFILTER
-		( (nvram_get_int("dnsfilter_enable_x")) && (nvram_get_int("dnsfilter_mode") > 0) ) ? "/dev/null" :
 #endif
 		"/tmp/resolv.conf");
 //	fprintf(fp, "deny_file=/tmp/dproxy.deny\n");
@@ -5580,7 +5563,7 @@ void restart_cstats(void)
 const char *dns_filter(int mode)
 {
 	static const char *server[] = {
-		"0.0.0.0", /* 0: Undefined, unused for now */
+		"",			/* 0: Unfiltered (handled separately below) */
 		"208.67.222.222",	/* 1: OpenDNS */
                 "199.85.126.10",	/* 2: Norton Connect Safe A (Security) */
 		"199.85.126.20",	/* 3: Norton Connect Safe B (Security + Adult) */
@@ -5590,6 +5573,11 @@ const char *dns_filter(int mode)
         };
 
 	if (mode > 6) mode = 0;
+
+	// Unfiltered - return whichever DNS server DHCPD provides to clients, or our own IP if none defined by user
+	if (mode == 0)
+		return ( nvram_invmatch("dhcp_dns1_x","") ? nvram_safe_get("dhcp_dns1_x") : nvram_safe_get("lan_ipaddr") );
+
 	return server[mode];
 }
 #endif
