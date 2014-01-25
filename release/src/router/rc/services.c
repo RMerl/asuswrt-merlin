@@ -647,6 +647,8 @@ void start_dnsmasq(int force)
 	if (*nv) {
 		fprintf(fp, "domain=%s\n"
 			    "expand-hosts\n", nv);	// expand hostnames in hosts file
+		if (nvram_get_int("lan_dns_localfwd_disable") != 1)
+			fprintf(fp, "local=/%s/\n", nv);	// Don't forward local queries upstream
 	}
 
 	/* caching */
