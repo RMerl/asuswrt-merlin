@@ -118,18 +118,18 @@ function hideClients_Block(){
 	isMenuopen = 0;
 	//valid_IP_form(document.form.rule_devname, 0);
 }
-/*----------} Mouse event of fake LAN IP select menu-----------------*/
 
 function gen_modeselect(name, value, onchange){
 	var code = "";
 	code +='<select class="input_option" name="'+name+'" value="'+value+'" onchange="'+onchange+'">';
+	code +='<option value="0"'+(value == 0 ? "selected" : "")+'>None</option>';
 	code +='<option value="1"'+(value == 1 ? "selected" : "")+'>OpenDNS</option>';
-	code +='<option value="2"'+(value == 2 ? "selected" : "")+'>Norton Level A</option>';
-	code +='<option value="3"'+(value == 3 ? "selected" : "")+'>Norton Level B</option>';
-	code +='<option value="4"'+(value == 4 ? "selected" : "")+'>Norton Level C</option>';
+	code +='<option value="2"'+(value == 2 ? "selected" : "")+'>Norton Safe</option>';
+	code +='<option value="3"'+(value == 3 ? "selected" : "")+'>Norton Family</option>';
+	code +='<option value="4"'+(value == 4 ? "selected" : "")+'>Norton Children</option>';
 	code +='<option value="5"'+(value == 5 ? "selected" : "")+'>Yandex Safe</option>';
 	code +='<option value="6"'+(value == 6 ? "selected" : "")+'>Yandex Family</option>';
-	code +='<option value="0"'+(value == 0 ? "selected" : "")+'>None</option></select>';
+	code +='</select>';
 	return code;
 }
 
@@ -355,9 +355,17 @@ function changeRow_main(r){
 					<td>&nbsp;&nbsp;</td>
 					<td style="font-style: italic;font-size: 14px;">
 						<div>
-						DNS based filter here
-						Supported: OpenDNS, Norton, YandexDNS
-						Insert description here
+							<p>DNS-based filtering lets you protect specific LAN devices
+							against harmful online content.  The following filtering services
+							are currently supported (some of which offer multiple levels of
+							protection):
+							<ul>
+								<li><a target="_blank" style="font-weight: bolder; cursor:pointer;text-decoration: underline;" href="http://www.opendns.com/home-internet-security/">OpenDNS</a>
+								<li><a target="_blank" style="font-weight: bolder; cursor:pointer;text-decoration: underline;" href="https://dns.norton.com/">Norton Connect Safe</a> (for home usage only)
+								<ul><li>Safe = Malicious content<li>Family = Malicious + Sexual content<li>Children = Malicious + Sexual + Mature content</ul>
+								<li><a target="_blank" style="font-weight: bolder; cursor:pointer;text-decoration: underline;" href="http://dns.yandex.com"><#YandexDNS#></a>
+								<ul><li>Safe = Malicious content<li>Family = Malicious + Sexual content</ul>
+							</ul>
 						</div>
 					</td>
 				</tr>
@@ -393,13 +401,13 @@ function changeRow_main(r){
 					<th>Filter Mode</th>
 					<td>
 						<select name="dnsfilter_mode" class="input_option">
-							<option value="1" <% nvram_match("dnsfilter_mode", "1", "selected"); %>>OpenDNS</option>
-							<option value="2" <% nvram_match("dnsfilter_mode", "2", "selected"); %>>Norton A</option>
-							<option value="3" <% nvram_match("dnsfilter_mode", "3", "selected"); %>>Norton B</option>
-							<option value="4" <% nvram_match("dnsfilter_mode", "4", "selected"); %>>Norton C</option>
-							<option value="5" <% nvram_match("dnsfilter_mode", "5", "selected"); %>><#YandexDNS_mode1#></option>
-							<option value="6" <% nvram_match("dnsfilter_mode", "6", "selected"); %>><#YandexDNS_mode2#></option>
 							<option value="0" <% nvram_match("dnsfilter_mode", "0", "selected"); %>>No filtering</option>
+							<option value="1" <% nvram_match("dnsfilter_mode", "1", "selected"); %>>OpenDNS</option>
+							<option value="2" <% nvram_match("dnsfilter_mode", "2", "selected"); %>>Norton Safe</option>
+							<option value="3" <% nvram_match("dnsfilter_mode", "3", "selected"); %>>Norton Family</option>
+							<option value="4" <% nvram_match("dnsfilter_mode", "4", "selected"); %>>Norton Children</option>
+							<option value="5" <% nvram_match("dnsfilter_mode", "5", "selected"); %>>Yandex Safe</option>
+							<option value="6" <% nvram_match("dnsfilter_mode", "6", "selected"); %>>Yandex Family</option>
 						</select>
 					</td>
 				</tr>		
