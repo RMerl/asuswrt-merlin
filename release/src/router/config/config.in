@@ -164,6 +164,7 @@ config RTCONFIG_PARENTALCTRL
 
 config RTCONFIG_YANDEXDNS
 	bool "Yandex.DNS Support"
+	depends on !RTCONFIG_DNSFILTER
 	default n
 
 config RTCONFIG_DSL
@@ -584,4 +585,5 @@ config RTCONFIG_HAS_5G
 
 config RTCONFIG_DNSFILTER
 	bool "DNS-based filtering Support"
+	depends on !RTCONFIG_YANDEXDNS
 	default n
