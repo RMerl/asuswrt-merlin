@@ -926,7 +926,7 @@ struct nvram_tuple router_defaults[] = {
 #endif  /* RTCONFIG_YANDEXDNS */
 #ifdef RTCONFIG_DNSFILTER
 	{ "dnsfilter_enable_x", "0"},
-	{ "dnsfilter_mode", "1"},	/* Default to OpenDNS */
+	{ "dnsfilter_mode", "0"},	/* Default to no global filtering (only per client rules) */
 	{ "dnsfilter_rulelist", ""},	/* List client modes <devname>hh:ww:aa:dd:dd:rr>mode... */
 #endif
 	{ "fw_enable_x", "1" },
