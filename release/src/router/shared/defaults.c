@@ -552,6 +552,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "lan_dnsenable_x", "0"},
 	{ "lan_dns1_x", ""},					/* x.x.x.x x.x.x.x ... */
 	{ "lan_dns2_x", ""},
+	{ "lan_dns_fwd_local", "0"},		/* Forward queries for local domain to upstream DNS server */
 	{ "lan_port", "80"},
 	{ "jumbo_frame_enable", "0"},
 
