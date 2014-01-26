@@ -5853,7 +5853,7 @@ struct mime_handler mime_handlers[] = {
 	{ "**.tgz", "application/octet-stream", NULL, NULL, do_file, NULL },
 	{ "**.zip", "application/octet-stream", NULL, NULL, do_file, NULL },
 	{ "**.ipk", "application/octet-stream", NULL, NULL, do_file, NULL },
-	{ "**.css", "text/css", NULL, NULL, do_file, NULL },
+	{ "**.css", "text/css", cache_object, NULL, do_file, NULL },
 	{ "**.png", "image/png", cache_object, NULL, do_file, NULL },
 	{ "**.gif", "image/gif", cache_object, NULL, do_file, NULL },
 	{ "**.jpg", "image/jpeg", cache_object, NULL, do_file, NULL },
