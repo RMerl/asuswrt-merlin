@@ -142,7 +142,7 @@ function change_wizard(o, id){
 					else if(wItem[i][2] == "UDP")
 						document.form.filter_lw_proto_x_0.options[8].selected = 1;
 					
-					document.form.filter_wl_srcport_x_0.value = wItem[i][1];
+					document.form.filter_lw_srcport_x_0.value = wItem[i][1];
 				}
 				else{
 					if(wItem[i][2] == "TCP")
