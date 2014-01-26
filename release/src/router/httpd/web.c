@@ -8877,6 +8877,10 @@ get_nat_vserver_table(int eid, webs_t wp, int argc, char_t **argv)
 		if (strcmp(target, "DNAT") != 0)
 			continue;
 
+		/* Don't list DNS redirections  from DNSFilter */
+		if (strcmp(chain, "DNSFILTER") ==0)
+			continue;
+
 		/* uppercase proto */
 		for (ptr = proto; *ptr; ptr++)
 			*ptr = toupper(*ptr);
