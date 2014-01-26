@@ -280,6 +280,18 @@ static struct irq_chip brcm_irq2_type = {
 	.end = end_brcm_irq2
 };
 
+#define DEFINE_HWx_IRQDISPATCH(x)					\
+	static void bcm47xx_hw ## x ## _irqdispatch(void)		\
+	{								\
+		do_IRQ(x);						\
+	}
+DEFINE_HWx_IRQDISPATCH(2)
+DEFINE_HWx_IRQDISPATCH(3)
+DEFINE_HWx_IRQDISPATCH(4)
+DEFINE_HWx_IRQDISPATCH(5)
+DEFINE_HWx_IRQDISPATCH(6)
+DEFINE_HWx_IRQDISPATCH(7)
+
 /*
  * We utilize chipcommon configuration register SBFlagSt to implement a
  * smart shared IRQ handling machenism through which only ISRs registered
@@ -338,5 +350,15 @@ arch_init_irq(void)
 	/* Install interrupt controllers */
 	for (i = 0; i < NR_IRQS; i++) {
 		set_irq_chip(i, (i < SBMIPS_NUMIRQS ? &brcm_irq_type : &brcm_irq2_type));
+	}
+
+	if (cpu_has_vint) {
+		pr_info("Setting up vectored interrupts\n");
+		set_vi_handler(2, bcm47xx_hw2_irqdispatch);
+		set_vi_handler(3, bcm47xx_hw3_irqdispatch);
+		set_vi_handler(4, bcm47xx_hw4_irqdispatch);
+		set_vi_handler(5, bcm47xx_hw5_irqdispatch);
+		set_vi_handler(6, bcm47xx_hw6_irqdispatch);
+		set_vi_handler(7, bcm47xx_hw7_irqdispatch);
 	}
 }
