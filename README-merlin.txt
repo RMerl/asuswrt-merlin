@@ -408,17 +408,27 @@ The list of available postconf scripts is:
  * upnp.postconf
  * vsftpd.postconf
 
-Here is a simple dnsmasq.postconf script that demonstrates how to 
-modify the maximum number of leases set in the dnsmasq configuration:
+To make things easier for novice users who don't want to 
+learn the arcane details of using "sed", a script providing 
+support functions is available.  The following dnsmasq.postconf 
+script demonstrates how to modify the maximum number of leases 
+in the dnsmasq configuration:
 
 -----
      #!/bin/sh
      CONFIG=$1
+     source /usr/sbin/helper.sh
 
-     sed "s/dhcp-lease-max=253/dhcp-lease-max=100/" -i $CONFIG
+     pc_replace "dhcp-lease-max=253" "dhcp-lease-max=100" $CONFIG
 -----
 
-Note that these scripts are blocking the firmware while they run, to 
+Three functions are currently available through helper.sh:
+
+   pc_replace "original string" "new string" "config filename"
+   pc_insert "string to locate" "string to insert after" "config filename"
+   pc_append "string to append" "config filename"
+
+Note that postconf scripts are blocking the firmware while they run, to 
 ensure the service only gets started once the script is done.  Make 
 sure those scripts do exit properly, or the router will be stuck 
 during boot, requiring a factory default reset to recover it.
@@ -549,6 +559,8 @@ History
           a DNS-based filtering service, and apply a specific 
           filter both globally and on a per-client basis.  Supported
           are: OpenDNS, Norton Connect Safe and YandexDNS.
+   - NEW: helper.sh script, to simplify creation of postconf
+          scripts.  See the postconf section for details.
    - CHANGED: Discontinued SDK5 builds for the RT-N66U.  The new EM
               builds resolved wifi range issues by running the SDK6
               driver set in Engineering Mode (driver provided by Asus).
@@ -576,6 +588,8 @@ History
 
   - FIXED: OpenVPN Client page - changing the local IP wouldn't always be 
            properly saved.
+  - FIXED: Well-known services not properly applying settings on the
+           Network Services Filtering page (Asus bug)
   - REMOVED: YandexDNS has been removed, since its functionality is now
              provided by the new DNSFilter.
 
