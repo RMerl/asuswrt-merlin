@@ -8989,6 +8989,8 @@ void write_encoded_crt(char *name, char *value){
 	int len, i, j;
 	char tmp[3500];
 
+	if (!value) return;
+
 	len = strlen(value);
 	// Safeguard against buffer overrun
 	if (len > (sizeof(tmp) - 1)) len = sizeof(tmp) - 1;
