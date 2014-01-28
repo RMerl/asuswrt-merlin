@@ -25,6 +25,7 @@ then
 	if [ $script_type == 'up' ] ; then
 		service updateresolv
 	elif [ $script_type == 'down' ]; then
+		service updateresolv
 		service restart_dnsmasq
 	fi
 fi
