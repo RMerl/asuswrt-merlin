@@ -76,6 +76,7 @@ Networking:
    - Configurable IPv6 firewall
    - Configurable min/max UPNP ports
    - IPSec kernel support
+   - DNS-based Filtering, can be applied globally or per client
 
 Web interface:
    - Improved client list, with DHCP hostnames
@@ -407,17 +408,27 @@ The list of available postconf scripts is:
  * upnp.postconf
  * vsftpd.postconf
 
-Here is a simple dnsmasq.postconf script that demonstrates how to 
-modify the maximum number of leases set in the dnsmasq configuration:
+To make things easier for novice users who don't want to 
+learn the arcane details of using "sed", a script providing 
+support functions is available.  The following dnsmasq.postconf 
+script demonstrates how to modify the maximum number of leases 
+in the dnsmasq configuration:
 
 -----
      #!/bin/sh
      CONFIG=$1
+     source /usr/sbin/helper.sh
 
-     sed "s/dhcp-lease-max=253/dhcp-lease-max=100/" -i $CONFIG
+     pc_replace "dhcp-lease-max=253" "dhcp-lease-max=100" $CONFIG
 -----
 
-Note that these scripts are blocking the firmware while they run, to 
+Three functions are currently available through helper.sh:
+
+   pc_replace "original string" "new string" "config filename"
+   pc_insert "string to locate" "string to insert after" "config filename"
+   pc_append "string to append" "config filename"
+
+Note that postconf scripts are blocking the firmware while they run, to 
 ensure the service only gets started once the script is done.  Make 
 sure those scripts do exit properly, or the router will be stuck 
 during boot, requiring a factory default reset to recover it.
@@ -483,15 +494,20 @@ due to the different CPU architecture.
 
 
 
-** YandexDNS filtering **
-Asus is implementing support for the YandexDNS DNS-based filtering.  
-This service allows you to filter out dangerous websites at the DNS 
-level.  You can configure which computer will make use of this service 
-if you want, for example, to only filter your children's computer.  The 
-settings can be found under Parental Control.
+** DNSFilter **
+Under Parental Control there is a tab called DNSFilter.  On this 
+page you can force the use of a DNS service that provides 
+security/parental filtering.  This can be done globally, or on a 
+per device basis.  Each of them can have a different type of filtering 
+applied.  For example, you can have your LAN use OpenDNS's server to 
+provide basic filtering, but force your children's devices to use 
+Norton Connect Safe's DNS server that filters out malicious, 
+adult, and general mature content.
 
-For more information visit http://dns.yandex.ru/ .
-
+Note that DNSFilter will interfere with resolution of local 
+hostnames.  This is a side effect of having devices forced to use 
+a specific external nameserver.  If this is an issue for you, then set 
+the default filter to "None", and only filter out specific devices.
 
 
 ** Layer7-based Netfilter module **
@@ -538,7 +554,13 @@ History
 3.0.0.4.374.39 (xx-xxx-2014)
    - NEW: Merged with Asus 374_583 GPL.  Notable changes:
       * USB hub support
-
+   - NEW: DNS-based filtering.  Under Parental Control there is
+          now a new tab called DNS Filter where you can enable 
+          a DNS-based filtering service, and apply a specific 
+          filter both globally and on a per-client basis.  Supported
+          are: OpenDNS, Norton Connect Safe and YandexDNS.
+   - NEW: helper.sh script, to simplify creation of postconf
+          scripts.  See the postconf section for details.
    - CHANGED: Discontinued SDK5 builds for the RT-N66U.  The new EM
               builds resolved wifi range issues by running the SDK6
               driver set in Engineering Mode (driver provided by Asus).
@@ -547,10 +569,29 @@ History
               it gets sufficiently tested.  You might need to do a 
               factory default reset after switching to an EM build,
               for best results.
+  - CHANGED: Re-switched back to rp-pppoe 3.11 since nobody confirmed 
+             that 3.10 worked better for them.
+  - CHANGED: Allow PPPoE MTU up to 1500, for ISPs that support RFC 4638.
+  - CHANGED: Additional webui performance improvemnet by caching CSS.
   - FIXED: DHCPv6 client failing to start if the router username was 
            changed from "admin" (Asus bug) (patch from Saintdev)
   - FIXED: SMB shares were accessible over WAN, bypassing Netfilter
            (Asus bug) (AC56/AC68)
+  - FIXED: Resolution of local machines with domain appended would fail 
+           when using a nameserver that does not return nxdomain errors 
+           (such as OpenDNS) (Asus bug)
+
+           The new behaviour is configurable on the LAN-> DHCP page, 
+           in case you run your own nameserver which is expected to 
+           handle both local and remote domains.  Default is to not
+           forward these (to allow OpenDNS to work properly).
+
+  - FIXED: OpenVPN Client page - changing the local IP wouldn't always be 
+           properly saved.
+  - FIXED: Well-known services not properly applying settings on the
+           Network Services Filtering page (Asus bug)
+  - REMOVED: YandexDNS has been removed, since its functionality is now
+             provided by the new DNSFilter.
 
 
 3.0.0.4.374.38_2 (17-Jan-2014):
