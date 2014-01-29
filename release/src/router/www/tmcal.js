@@ -201,11 +201,11 @@ function loadData()
 				delete speed_history[i];
 				continue;
 			}
-
 			if (updateReTotal) {
 				h.rx_total = h.rx_max = 0;
 				h.tx_total = h.tx_max = 0;
 				for (j = (h.rx.length - updateMaxL); j < h.rx.length; ++j) {
+
 					t = h.rx[j];
 					if (t > h.rx_max) h.rx_max = t;
 					h.rx_total += t;
@@ -213,8 +213,8 @@ function loadData()
 					if (t > h.tx_max) h.tx_max = t;
 					h.tx_total += t;
 				}
-				h.rx_avg = h.rx_total / updateMaxL;
-				h.tx_avg = h.tx_total / updateMaxL;
+				h.rx_avg = h.rx_total / h.count;
+				h.tx_avg = h.tx_total / h.count;
 			}
 
 			if (updateDiv > 1) {
