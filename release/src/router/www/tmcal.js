@@ -201,11 +201,11 @@ function loadData()
 				delete speed_history[i];
 				continue;
 			}
+
 			if (updateReTotal) {
 				h.rx_total = h.rx_max = 0;
 				h.tx_total = h.tx_max = 0;
 				for (j = (h.rx.length - updateMaxL); j < h.rx.length; ++j) {
-
 					t = h.rx[j];
 					if (t > h.rx_max) h.rx_max = t;
 					h.rx_total += t;
