@@ -1214,9 +1214,9 @@ function browser_compatibility(){
 	if((isFirefox || isOpera) && document.getElementById("FormTitle")){
 		document.getElementById("FormTitle").className = "FormTitle_firefox";
 		if(current_url.indexOf("Guest_network") == 0)
-			document.getElementById("FormTitle").style.marginTop = "-140px";	
-		if(current_url.indexOf("ParentalControl") == 0 && !yadns_support)
-			document.getElementById("FormTitle").style.marginTop = "-140px";				
+			document.getElementById("FormTitle").style.marginTop = "-140px";
+		if(current_url.indexOf("ParentalControl") == 0 && !yadns_support && !dnsfilter_support)
+			document.getElementById("FormTitle").style.marginTop = "-140px";
 	}
 
 	if(isiOS){
