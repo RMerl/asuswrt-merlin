@@ -572,7 +572,7 @@ History
   - CHANGED: Re-switched back to rp-pppoe 3.11 since nobody confirmed 
              that 3.10 worked better for them.
   - CHANGED: Allow PPPoE MTU up to 1500, for ISPs that support RFC 4638.
-  - CHANGED: Additional webui performance improvemnet by caching CSS.
+  - CHANGED: Additional webui performance improvement by caching CSS.
   - FIXED: DHCPv6 client failing to start if the router username was 
            changed from "admin" (Asus bug) (patch from Saintdev)
   - FIXED: SMB shares were accessible over WAN, bypassing Netfilter
@@ -590,6 +590,12 @@ History
            properly saved.
   - FIXED: Well-known services not properly applying settings on the
            Network Services Filtering page (Asus bug)
+  - FIXED: Webui crash when importing an ovpn with invalid cert/keys
+  - FIXED: resolv.conf not reverted to its original content after an 
+           OpenVPN client that gets DNS pushed to it would disconnect.
+  - FIXED: The average rates on the realtime traffic page would be 
+           calculated based on the max number of samples (300) instead of 
+           the currently collected number of samples (Asus bug)
   - REMOVED: YandexDNS has been removed, since its functionality is now
              provided by the new DNSFilter.
 
