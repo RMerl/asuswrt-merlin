@@ -575,6 +575,8 @@ History
   - CHANGED: Additional webui performance improvement by caching CSS.
   - FIXED: DHCPv6 client failing to start if the router username was 
            changed from "admin" (Asus bug) (patch from Saintdev)
+  - FIXED: DHCPv6 client failing to request an IP on some 
+           configurations (Asus bug) (patch from Saintdev)
   - FIXED: SMB shares were accessible over WAN, bypassing Netfilter
            (Asus bug) (AC56/AC68)
   - FIXED: Resolution of local machines with domain appended would fail 
