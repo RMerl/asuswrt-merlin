@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2014 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2013 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -489,7 +489,7 @@ static int iface_allowed_v6(struct in6_addr *local, int prefix,
     addr.in6.sin6_scope_id = if_index;
   else
     addr.in6.sin6_scope_id = 0;
-  
+
   return iface_allowed((struct iface_param *)vparam, if_index, NULL, &addr, netmask, prefix, !!(flags & IFACE_TENTATIVE));
 }
 #endif
@@ -681,7 +681,7 @@ static int make_sock(union mysockaddr *addr, int type, int dienow)
 	close (fd);
 	
       errno = errsav;
-
+      
       if (dienow)
 	{
 	  /* failure to bind addresses given by --listen-address at this point
@@ -1470,31 +1470,7 @@ int reload_servers(char *fname)
   return gotone;
 }
 
-#if defined(HAVE_LINUX_NETWORK) || defined(HAVE_BSD_NETWORK)
-/* Called when addresses are added or deleted from an interface */
-void newaddress(time_t now)
-{
-  (void)now;
-  
-  if (option_bool(OPT_CLEVERBIND) || daemon->doing_dhcp6 || daemon->relay6 || daemon->doing_ra)
-    enumerate_interfaces(0);
-  
-  if (option_bool(OPT_CLEVERBIND))
-    create_bound_listeners(0);
-  
-#ifdef HAVE_DHCP6
-  if (daemon->doing_dhcp6 || daemon->relay6 || daemon->doing_ra)
-    join_multicast(0);
-  
-  if (daemon->doing_dhcp6 || daemon->doing_ra)
-    dhcp_construct_contexts(now);
-  
-  if (daemon->doing_dhcp6)
-    lease_find_interfaces(now);
-#endif
-}
 
-#endif
 
 
 

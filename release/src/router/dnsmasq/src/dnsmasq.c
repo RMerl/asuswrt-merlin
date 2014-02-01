@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2014 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2013 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -13,44 +13,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/* Jon Zarate AFAIK wrote the original Tomato specific code, primarily to
-   support extra info in the GUI. Following is a vague clue as to how it
-   hangs together.
-
-   device list status is handled by www/devlist.c - this sends a SIGUSR2
-   to dnsmasq which causes the 'tomato_helper' function to execute in
-   addition to the normal dnsmasq SIGUSR2 code (Switch logfile, but since
-   Tomato not using that it doesn't matter) devlist.c waits up to 5 secs
-   for file '/var/tmp/dhcp/leases.!' to disappear before continuing
-   (Must be a better way to do this IPC stuff)
-
-   tomato_helper(lease.c) does a couple of things:
-
-   It looks for /var/tmp/dhcp/delete and deletes any known leases by IP
-   address found therein.  It deletes /var/tmp/dhcp/delete when done.
-   This implements the 'delete lease' from GUI functionality.
-
-   It dumps the current dhcp leases into /var/tmp/dhcp/lease.! (tmp file)
-   subtracting the current time from the lease expiry time, thus producing
-   a 'lease remaining' time for the GUI.
-   The temp file is renamed to /var/tmp/dhcp/leases thus signalling devlist.c
-   that it may proceed.  Finally when devlist.c is finished
-   /var/tmp/dhcp/leases is removed.
-
-   dnsmasq.c also intercepts SIGHUP so that it may flush the lease file.
-   This is so lease expiry times survive a process restart since dnsmasq
-   reads the lease file at start-up.
-
-   Finally(?) lease_update_file (lease.c) writes out the remaining lease
-   duration for each dhcp lease rather than lease expiry time (with RTC) or
-   lease length (no RTC) for dnsmasq's internal lease database. 
-
-   dhcp lease file is /var/lib/misc/dnsmasq.leases
-
-   Above description K Darbyshire-Bryant 04/12/13
-*/
-
-  
 
 /* Declare static char *compiler_opts  in config.h */
 #define DNSMASQ_COMPILE_OPTS
@@ -68,7 +30,6 @@ static void sig_handler(int sig);
 static void async_event(int pipe, time_t now);
 static void fatal_event(struct event_desc *ev, char *msg);
 static int read_event(int fd, struct event_desc *evp, char **msg);
-
 
 int main (int argc, char **argv)
 {
@@ -120,25 +81,15 @@ int main (int argc, char **argv)
   umask(022); /* known umask, create leases and pid files as 0644 */
 
   read_opts(argc, argv, compile_opts);
- 
+    
   if (daemon->edns_pktsz < PACKETSZ)
     daemon->edns_pktsz = PACKETSZ;
-#ifdef HAVE_DNSSEC
-  /* Enforce min packet big enough for DNSSEC */
-  if (option_bool(OPT_DNSSEC_VALID) && daemon->edns_pktsz < EDNS_PKTSZ)
-    daemon->edns_pktsz = EDNS_PKTSZ;
-#endif
-
   daemon->packet_buff_sz = daemon->edns_pktsz > DNSMASQ_PACKETSZ ? 
     daemon->edns_pktsz : DNSMASQ_PACKETSZ;
   daemon->packet = safe_malloc(daemon->packet_buff_sz);
-  
+
   daemon->addrbuff = safe_malloc(ADDRSTRLEN);
-  
-#ifdef HAVE_DNSSEC
-  if (option_bool(OPT_DNSSEC_VALID))
-    daemon->keyname = safe_malloc(MAXDNAME);
-#endif
+
 
 #ifdef HAVE_DHCP
   if (!daemon->lease_file)
@@ -180,19 +131,6 @@ int main (int argc, char **argv)
     }
 #endif
   
-  if (option_bool(OPT_DNSSEC_VALID))
-    {
-#ifdef HAVE_DNSSEC
-      if (!daemon->dnskeys)
-	die(_("No trust anchors provided for DNSSEC"), NULL, EC_BADCONF);
-      
-      if (daemon->cachesize < CACHESIZ)
-	die(_("Cannot reduce cache size from default when DNSSEC enabled"), NULL, EC_BADCONF);
-#else 
-      die(_("DNSSEC not available: set HAVE_DNSSEC in src/config.h"), NULL, EC_BADCONF);
-#endif
-    }
-
 #ifndef HAVE_TFTP
   if (option_bool(OPT_TFTP))
     die(_("TFTP server not available: set HAVE_TFTP in src/config.h"), NULL, EC_BADCONF);
@@ -244,7 +182,7 @@ int main (int argc, char **argv)
 	    daemon->doing_dhcp6 = 1;
 	  if (context->flags & CONTEXT_RA)
 	    daemon->doing_ra = 1;
-#if !defined(HAVE_LINUX_NETWORK) && !defined(HAVE_BSD_NETWORK)
+#ifndef  HAVE_LINUX_NETWORK
 	  if (context->flags & CONTEXT_TEMPLATE)
 	    die (_("dhcp-range constructor not available on this platform"), NULL, EC_BADCONF);
 #endif 
@@ -282,15 +220,13 @@ int main (int argc, char **argv)
     ipset_init();
 #endif
 
-#if  defined(HAVE_LINUX_NETWORK)
+#ifdef HAVE_LINUX_NETWORK
   netlink_init();
-#elif defined(HAVE_BSD_NETWORK)
-  route_init();
-#endif
-
+  
   if (option_bool(OPT_NOWILD) && option_bool(OPT_CLEVERBIND))
     die(_("cannot set --bind-interfaces and --bind-dynamic"), NULL, EC_BADCONF);
-  
+#endif
+
   if (!enumerate_interfaces(1) || !enumerate_interfaces(0))
     die(_("failed to find list of interfaces: %s"), NULL, EC_MISC);
   
@@ -343,12 +279,7 @@ int main (int argc, char **argv)
 #endif
   
   if (daemon->port != 0)
-    {
-      cache_init();
-#ifdef HAVE_DNSSEC
-      blockdata_init();
-#endif
-    }
+    cache_init();
     
   if (option_bool(OPT_DBUS))
 #ifdef HAVE_DBUS
@@ -686,7 +617,7 @@ int main (int argc, char **argv)
   else
     my_syslog(LOG_INFO, _("started, version %s cache disabled"), VERSION);
   
-  my_syslog(LOG_INFO, _("compile time options: %s"), compile_opts);
+  my_syslog(LOG_DEBUG, _("compile time options: %s"), compile_opts);
   
 #ifdef HAVE_DBUS
   if (option_bool(OPT_DBUS))
@@ -697,16 +628,11 @@ int main (int argc, char **argv)
 	my_syslog(LOG_INFO, _("DBus support enabled: bus connection pending"));
     }
 #endif
-  
-#ifdef HAVE_DNSSEC
-  if (option_bool(OPT_DNSSEC_VALID))
-    my_syslog(LOG_INFO, _("DNSSEC validation enabled"));
-#endif
 
   if (log_err != 0)
     my_syslog(LOG_WARNING, _("warning: failed to change owner of %s: %s"), 
 	      daemon->log_file, strerror(log_err));
-  
+
   if (bind_fallback)
     my_syslog(LOG_WARNING, _("setting --bind-interfaces option because of OS limitations"));
 
@@ -882,14 +808,11 @@ int main (int argc, char **argv)
 	}
 #endif
 
-#if defined(HAVE_LINUX_NETWORK)
+#ifdef HAVE_LINUX_NETWORK
       FD_SET(daemon->netlinkfd, &rset);
       bump_maxfd(daemon->netlinkfd, &maxfd);
-#elif defined(HAVE_BSD_NETWORK)
-      FD_SET(daemon->routefd, &rset);
-      bump_maxfd(daemon->routefd, &maxfd);
 #endif
-
+      
       FD_SET(piperead, &rset);
       bump_maxfd(piperead, &maxfd);
 
@@ -944,12 +867,9 @@ int main (int argc, char **argv)
 	  warn_bound_listeners();
 	}
 
-#if defined(HAVE_LINUX_NETWORK)
+#ifdef HAVE_LINUX_NETWORK
       if (FD_ISSET(daemon->netlinkfd, &rset))
 	netlink_multicast(now);
-#elif defined(HAVE_BSD_NETWORK)
-      if (FD_ISSET(daemon->routefd, &rset))
-	route_sock(now);
 #endif
 
       /* Check for changes to resolv files once per second max. */
@@ -1232,21 +1152,11 @@ static void async_event(int pipe, time_t now)
 	/* Note: this may leave TCP-handling processes with the old file still open.
 	   Since any such process will die in CHILD_LIFETIME or probably much sooner,
 	   we leave them logging to the old file. */
-
 	if (daemon->log_file != NULL)
 	  log_reopen(daemon->log_file);
-
-#ifdef HAVE_TOMATO
-	tomato_helper(now); //possibly delete & write out leases for tomato
-#endif //TOMATO
-/* following is Asus tweak.  Interestingly Asus read the dnsmasq leases db
-   directly.  They signal dnsmasq to update via SIGUSR2 and wait 1 second
-   assuming the file will be complete by the time they come to parse it.
-   Race conditions anyone?  What if dnsmasq happens to be updating the
-   file anyway? */
-#if defined(HAVE_DHCP) && defined(HAVE_LEASEFILE_EXPIRE) && !defined(HAVE_TOMATO)
+#if defined(HAVE_DHCP) && defined(HAVE_LEASEFILE_EXPIRE)
 	if (daemon->dhcp || daemon->dhcp6)
-		flush_lease_file(now);
+	  lease_flush_file(now);
 #endif
 	break;
 	
@@ -1269,13 +1179,10 @@ static void async_event(int pipe, time_t now)
 	    close(daemon->helperfd);
 	  }
 #endif
-
-//Originally TOMATO tweak
 #if defined(HAVE_DHCP) && defined(HAVE_LEASEFILE_EXPIRE)
 	if (daemon->dhcp || daemon->dhcp6)
-		flush_lease_file(now);
+	  lease_flush_file(now);
 #endif
-	
 	if (daemon->lease_stream)
 	  fclose(daemon->lease_stream);
 
@@ -1404,7 +1311,7 @@ static int set_dns_listeners(time_t now, fd_set *set, int *maxfdp)
   
   /* will we be able to get memory? */
   if (daemon->port != 0)
-    get_new_frec(now, &wait, 0);
+    get_new_frec(now, &wait);
   
   for (serverfdp = daemon->sfds; serverfdp; serverfdp = serverfdp->next)
     {

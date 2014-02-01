@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2014 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2013 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -1545,7 +1545,6 @@ static void log_packet(char *type, void *addr, unsigned char *ext_mac,
 		       int mac_len, char *interface, char *string, char *err, u32 xid)
 {
   struct in_addr a;
-
  
   if (!err && !option_bool(OPT_LOG_OPTS) && option_bool(OPT_QUIET_DHCP))
     return;

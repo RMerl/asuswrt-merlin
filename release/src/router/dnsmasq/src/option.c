@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2014 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2013 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -138,9 +138,7 @@ struct myoption {
 #define LOPT_QUIET_DHCP   326
 #define LOPT_QUIET_DHCP6  327
 #define LOPT_QUIET_RA     328
-#define LOPT_SEC_VALID    329
-#define LOPT_DNSKEY       330
-#define LOPT_DNSSEC_DEBUG 331
+
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option opts[] =  
@@ -276,9 +274,6 @@ static const struct myoption opts[] =
     { "auth-peer", 1, 0, LOPT_AUTHPEER }, 
     { "ipset", 1, 0, LOPT_IPSET },
     { "synth-domain", 1, 0, LOPT_SYNTH },
-    { "dnssec", 0, 0, LOPT_SEC_VALID },
-    { "dnskey", 1, 0, LOPT_DNSKEY },
-    { "dnssec-debug", 0, 0, LOPT_DNSSEC_DEBUG },
 #ifdef OPTION6_PREFIX_CLASS 
     { "dhcp-prefix-class", 1, 0, LOPT_PREF_CLSS },
 #endif
@@ -412,7 +407,7 @@ static struct {
   { LOPT_TEST, 0, NULL, gettext_noop("Check configuration syntax."), NULL },
   { LOPT_ADD_MAC, OPT_ADD_MAC, NULL, gettext_noop("Add requestor's MAC address to forwarded DNS queries."), NULL },
   { LOPT_ADD_SBNET, ARG_ONE, "<v4 pref>[,<v6 pref>]", gettext_noop("Add requestor's IP subnet to forwarded DNS queries."), NULL },
-  { LOPT_DNSSEC, OPT_DNSSEC_PROXY, NULL, gettext_noop("Proxy DNSSEC validation results from upstream nameservers."), NULL },
+  { LOPT_DNSSEC, OPT_DNSSEC, NULL, gettext_noop("Proxy DNSSEC validation results from upstream nameservers."), NULL },
   { LOPT_INCR_ADDR, OPT_CONSEC_ADDR, NULL, gettext_noop("Attempt to allocate sequential IP addresses to DHCP clients."), NULL },
   { LOPT_CONNTRACK, OPT_CONNTRACK, NULL, gettext_noop("Copy connection-track mark from queries to upstream connections."), NULL },
   { LOPT_FQDN, OPT_FQDN_UPDATE, NULL, gettext_noop("Allow DHCP clients to do their own DDNS updates."), NULL },
@@ -429,9 +424,6 @@ static struct {
   { LOPT_AUTHPEER, ARG_DUP, "<ipaddr>[,<ipaddr>...]", gettext_noop("Peers which are allowed to do zone transfer"), NULL },
   { LOPT_IPSET, ARG_DUP, "/<domain>/<ipset>[,<ipset>...]", gettext_noop("Specify ipsets to which matching domains should be added"), NULL },
   { LOPT_SYNTH, ARG_DUP, "<domain>,<range>,[<prefix>]", gettext_noop("Specify a domain and address range for synthesised names"), NULL },
-  { LOPT_SEC_VALID, OPT_DNSSEC_VALID, NULL, gettext_noop("Activate DNSSEC validation"), NULL },
-  { LOPT_DNSKEY, ARG_DUP, "<domain>,<algo>,<key>", gettext_noop("Specify trust anchor DNSKEY"), NULL },
-  { LOPT_DNSSEC_DEBUG, OPT_DNSSEC_DEBUG, NULL, gettext_noop("Disable upstream checking for DNSSEC debugging."), NULL },
 #ifdef OPTION6_PREFIX_CLASS 
   { LOPT_PREF_CLSS, ARG_DUP, "set:tag,<class>", gettext_noop("Specify DHCPv6 prefix class"), NULL },
 #endif
@@ -2740,7 +2732,7 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
 	  else
 	    {
 	      char *cp, *lastp = NULL, last = 0;
-	      int fac = 1, isdig = 0;
+	      int fac = 1;
 	      
 	      if (strlen(a[j]) > 1)
 		{
@@ -2771,11 +2763,9 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
 		}
 	      
 	      for (cp = a[j]; *cp; cp++)
-		if (isdigit((unsigned char)*cp))
-		  isdig = 1;
-		else if (*cp != ' ')
+		if (!isdigit((unsigned char)*cp) && *cp != ' ')
 		  break;
-
+	      
 	      if (*cp)
 		{
 		  if (lastp)
@@ -2797,7 +2787,7 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
 		      new->domain = strip_hostname(new->hostname);			
 		    }
 		}
-	      else if (isdig)
+	      else
 		{
 		  new->lease_time = atoi(a[j]) * fac; 
 		  /* Leases of a minute or less confuse
@@ -3673,53 +3663,9 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
 	daemon->host_records_tail = new;
 	break;
       }
-
-#ifdef HAVE_DNSSEC
-    case LOPT_DNSKEY:
-      {
-	struct dnskey *new = opt_malloc(sizeof(struct dnskey));
-      	char *key64, *algo = NULL;
-	
-	new->class = C_IN;
-
-	if ((comma = split(arg)) && (algo = split(comma)))
-	  {
-	    int class = 0;
-	    if (strcmp(comma, "IN") == 0)
-	      class = C_IN;
-	    else if (strcmp(comma, "CH") == 0)
-	      class = C_CHAOS;
-	    else if (strcmp(comma, "HS") == 0)
-	      class = C_HESIOD;
-	    
-	    if (class != 0)
-	      {
-		new->class = class;
-		comma = algo;
-		algo = split(comma);
-	      }
-	  }
-		  
-       	if (!comma || !algo || !(key64 = split(algo)) ||
-	    !atoi_check16(comma, &new->flags) || !atoi_check16(algo, &new->algo) ||
-	    !(new->name = canonicalise_opt(arg)))
-	  ret_err(_("bad DNSKEY"));
-	    
-	/* Upper bound on length */
-	new->key = opt_malloc((3*strlen(key64)/4)+1);
-	unhide_metas(key64);
-	if ((new->keylen = parse_base64(key64, new->key)) == -1)
-	  ret_err(_("bad base64 in DNSKEY"));
-	
-	new->next = daemon->dnskeys;
-	daemon->dnskeys = new;
-
-	break;
-      }
-#endif
-		
+      
     default:
-      ret_err(_("unsupported option (check that dnsmasq was compiled with DHCP/TFTP/DNSSEC/DBus support)"));
+      ret_err(_("unsupported option (check that dnsmasq was compiled with DHCP/TFTP/DBus support)"));
       
     }
   

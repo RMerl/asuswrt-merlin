@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2014 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2013 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -31,8 +31,8 @@ struct ra_param {
   int ind, managed, other, found_context, first;
   char *if_name;
   struct dhcp_netid *tags;
-  struct in6_addr link_local, link_global, ula;
-  unsigned int glob_pref_time, link_pref_time, ula_pref_time, adv_interval;
+  struct in6_addr link_local, link_global;
+  unsigned int pref_time, adv_interval;
 };
 
 struct search_param {
@@ -206,7 +206,6 @@ static void send_ra(time_t now, int iface, char *iface_name, struct in6_addr *de
   struct dhcp_opt *opt_cfg;
   struct ra_interface *ra_param = find_iface_param(iface_name);
   int done_dns = 0, old_prefix = 0;
-  unsigned int min_pref_time;
 #ifdef HAVE_LINUX_NETWORK
   FILE *f;
 #endif
@@ -229,7 +228,7 @@ static void send_ra(time_t now, int iface, char *iface_name, struct in6_addr *de
   parm.if_name = iface_name;
   parm.first = 1;
   parm.now = now;
-  parm.glob_pref_time = parm.link_pref_time = parm.ula_pref_time = 0;
+  parm.pref_time = 0;
   parm.adv_interval = calc_interval(ra_param);
   
   /* set tag with name == interface */
@@ -245,18 +244,6 @@ static void send_ra(time_t now, int iface, char *iface_name, struct in6_addr *de
 
   if (!iface_enumerate(AF_INET6, &parm, add_prefixes))
     return;
-
-  /* Find smallest preferred time within address classes,
-     to use as lifetime for options. This is a rather arbitrary choice. */
-  min_pref_time = 0xffffffff;
-  if (parm.glob_pref_time != 0 && parm.glob_pref_time < min_pref_time)
-    min_pref_time = parm.glob_pref_time;
-  
-  if (parm.ula_pref_time != 0 && parm.ula_pref_time < min_pref_time)
-    min_pref_time = parm.ula_pref_time;
-
-  if (parm.link_pref_time != 0 && parm.link_pref_time < min_pref_time)
-    min_pref_time = parm.link_pref_time;
 
   /* Look for constructed contexts associated with addresses which have gone, 
      and advertise them with preferred_time == 0  RFC 6204 4.3 L-13 */
@@ -285,28 +272,10 @@ static void send_ra(time_t now, int iface, char *iface_name, struct in6_addr *de
 	      /* zero net part of address */
 	      setaddr6part(&local, addr6part(&local) & ~((context->prefix == 64) ? (u64)-1LL : (1LLU << (128 - context->prefix)) - 1LLU));
 	     
-	      
 	      if ((context->flags & 
 		   (CONTEXT_RA_ONLY | CONTEXT_RA_NAME | CONTEXT_RA_STATELESS)))
-		{
-		  do_slaac = 1;
-		  if (context->flags & CONTEXT_DHCP)
-		    {
-		      parm.other = 1; 
-		      if (!(context->flags & CONTEXT_RA_STATELESS))
-			parm.managed = 1;
-		    }
-		}
-	      else
-		{
-		  /* don't do RA for non-ra-only unless --enable-ra is set */
-		  if (option_bool(OPT_RA))
-		    {
-		      parm.managed = 1;
-		      parm.other = 1;
-		    }
-		}
-
+		do_slaac = 1;
+	      
 	      if ((opt = expand(sizeof(struct prefix_opt))))
 		{
 		  opt->type = ICMP6_OPT_PREFIX;
@@ -371,48 +340,22 @@ static void send_ra(time_t now, int iface, char *iface_name, struct in6_addr *de
       
       if (opt_cfg->opt == OPTION6_DNS_SERVER)
         {
-	  struct in6_addr *a;
-	  int len;
-
+	  struct in6_addr *a = (struct in6_addr *)opt_cfg->val;
+	  
 	  done_dns = 1;
-
-          if (opt_cfg->len == 0)
+          if (opt_cfg->len == 0 || (IN6_IS_ADDR_UNSPECIFIED(a) && parm.pref_time != 0))
 	    continue;
 	  
-	  /* reduce len for any addresses we can't substitute */
-	  for (a = (struct in6_addr *)opt_cfg->val, len = opt_cfg->len, i = 0; 
-	       i < opt_cfg->len; i += IN6ADDRSZ, a++)
-	    if ((IN6_IS_ADDR_UNSPECIFIED(a) && parm.glob_pref_time == 0) ||
-		(IN6_IS_ADDR_ULA_ZERO(a) && parm.ula_pref_time == 0) ||
-		(IN6_IS_ADDR_LINK_LOCAL_ZERO(a) && parm.link_pref_time == 0))
-	      len -= IN6ADDRSZ;
-
-	  if (len != 0)
-	    {
-	      put_opt6_char(ICMP6_OPT_RDNSS);
-	      put_opt6_char((len/8) + 1);
-	      put_opt6_short(0);
-	      put_opt6_long(min_pref_time);
-	 
-	      for (a = (struct in6_addr *)opt_cfg->val, i = 0; i <  opt_cfg->len; i += IN6ADDRSZ, a++)
-		if (IN6_IS_ADDR_UNSPECIFIED(a))
-		  {
-		    if (parm.glob_pref_time != 0)
-		      put_opt6(&parm.link_global, IN6ADDRSZ);
-		  }
-		else if (IN6_IS_ADDR_ULA_ZERO(a))
-		  {
-		    if (parm.ula_pref_time != 0)
-		    put_opt6(&parm.ula, IN6ADDRSZ);
-		  }
-		else if (IN6_IS_ADDR_LINK_LOCAL_ZERO(a))
-		  {
-		    if (parm.link_pref_time != 0)
-		      put_opt6(&parm.link_local, IN6ADDRSZ);
-		  }
-		else
-		  put_opt6(a, IN6ADDRSZ);
-	    }
+	  put_opt6_char(ICMP6_OPT_RDNSS);
+	  put_opt6_char((opt_cfg->len/8) + 1);
+	  put_opt6_short(0);
+	  put_opt6_long(parm.pref_time);
+	  /* zero means "self" */
+	  for (i = 0; i < opt_cfg->len; i += IN6ADDRSZ, a++)
+	    if (IN6_IS_ADDR_UNSPECIFIED(a))
+	      put_opt6(&parm.link_global, IN6ADDRSZ);
+	    else
+	      put_opt6(a, IN6ADDRSZ);
 	}
       
       if (opt_cfg->opt == OPTION6_DOMAIN_SEARCH && opt_cfg->len != 0)
@@ -422,7 +365,7 @@ static void send_ra(time_t now, int iface, char *iface_name, struct in6_addr *de
 	  put_opt6_char(ICMP6_OPT_DNSSL);
 	  put_opt6_char(len + 1);
 	  put_opt6_short(0);
-	  put_opt6_long(min_pref_time); 
+	  put_opt6_long(parm.pref_time); 
 	  put_opt6(opt_cfg->val, opt_cfg->len);
 	  
 	  /* pad */
@@ -431,13 +374,13 @@ static void send_ra(time_t now, int iface, char *iface_name, struct in6_addr *de
 	}
     }
 	
-  if (daemon->port == NAMESERVER_PORT && !done_dns && parm.link_pref_time != 0)
+  if (daemon->port == NAMESERVER_PORT && !done_dns && parm.pref_time != 0)
     {
       /* default == us, as long as we are supplying DNS service. */
       put_opt6_char(ICMP6_OPT_RDNSS);
       put_opt6_char(3);
       put_opt6_short(0);
-      put_opt6_long(min_pref_time); 
+      put_opt6_long(parm.pref_time); 
       put_opt6(&parm.link_local, IN6ADDRSZ);
     }
 
@@ -483,16 +426,7 @@ static int add_prefixes(struct in6_addr *local,  int prefix,
   if (if_index == param->ind)
     {
       if (IN6_IS_ADDR_LINKLOCAL(local))
-	{
-	  /* Can there be more than one LL address?
-	     Select the one with the longest preferred time 
-	     if there is. */
-	  if (preferred > param->link_pref_time)
-	    {
-	      param->link_pref_time = preferred;
-	      param->link_local = *local;
-	    }
-	}
+	param->link_local = *local;
       else if (!IN6_IS_ADDR_LOOPBACK(local) &&
 	       !IN6_IS_ADDR_MULTICAST(local))
 	{
@@ -582,22 +516,11 @@ static int add_prefixes(struct in6_addr *local,  int prefix,
 	  /* configured time is ceiling */
 	  if (!constructed || preferred > time)
 	    preferred = time;
-	  
-	  if (IN6_IS_ADDR_ULA(local))
+	    	  
+	  if (preferred > param->pref_time)
 	    {
-	      if (preferred > param->ula_pref_time)
-		{
-		  param->ula_pref_time = preferred;
-		  param->ula = *local;
-		}
-	    }
-	  else 
-	    {
-	      if (preferred > param->glob_pref_time)
-		{
-		  param->glob_pref_time = preferred;
-		  param->link_global = *local;
-		}
+	      param->pref_time = preferred;
+	      param->link_global = *local;
 	    }
 	  
 	  if (real_prefix != 0)
@@ -623,6 +546,7 @@ static int add_prefixes(struct in6_addr *local,  int prefix,
 		  if (!option_bool(OPT_QUIET_RA))
 		    my_syslog(MS_DHCP | LOG_INFO, "RTR-ADVERT(%s) %s", param->if_name, daemon->addrbuff); 		    
 		}
+
 	    }
 	}
     }          

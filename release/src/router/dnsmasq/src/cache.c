@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2014 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2013 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -25,6 +25,9 @@ static int cache_inserted = 0, cache_live_freed = 0, insert_error;
 static union bigname *big_free = NULL;
 static int bignames_left, hash_size;
 static int uid = 1;
+#ifdef HAVE_DNSSEC
+static struct keydata *keyblock_free = NULL;
+#endif
 
 /* type->string mapping: this is also used by the name-hash function as a mixing table. */
 static const struct {
@@ -53,8 +56,6 @@ static const struct {
   { 38,  "A6" },
   { 39,  "DNAME" },
   { 41,  "OPT" },
-  { 43,  "DS" },
-  { 46,  "RRSIG" },
   { 48,  "DNSKEY" },
   { 249, "TKEY" },
   { 250, "TSIG" },
@@ -170,22 +171,7 @@ static void cache_hash(struct crec *crecp)
   crecp->hash_next = *up;
   *up = crecp;
 }
-
-#ifdef HAVE_DNSSEC
-static void cache_blockdata_free(struct crec *crecp)
-{
-  if (crecp->flags & F_DNSKEY)
-    {
-      if (crecp->flags & F_DS)
-	blockdata_free(crecp->addr.sig.keydata);
-      else
-	blockdata_free(crecp->addr.key.keydata);
-    }
-  else if (crecp->flags & F_DS)
-    blockdata_free(crecp->addr.ds.keydata);
-}
-#endif
-
+ 
 static void cache_free(struct crec *crecp)
 {
   crecp->flags &= ~F_FORWARD;
@@ -210,9 +196,9 @@ static void cache_free(struct crec *crecp)
       big_free = crecp->name.bname;
       crecp->flags &= ~F_BIGNAME;
     }
-
 #ifdef HAVE_DNSSEC
-  cache_blockdata_free(crecp);
+  else if (crecp->flags & (F_DNSKEY | F_DS))
+    keydata_free(crecp->addr.key.keydata);
 #endif
 }    
 
@@ -331,52 +317,27 @@ static int cache_scan_free(char *name, struct all_addr *addr, time_t now, unsign
   if (flags & F_FORWARD)
     {
       for (up = hash_bucket(name), crecp = *up; crecp; crecp = crecp->hash_next)
-	{
-	  if (is_expired(now, crecp) || is_outdated_cname_pointer(crecp))
-	    { 
-	      *up = crecp->hash_next;
-	      if (!(crecp->flags & (F_HOSTS | F_DHCP | F_CONFIG)))
-		{
-		  cache_unlink(crecp);
-		  cache_free(crecp);
-		}
-	      continue;
-	    } 
-	
-	  if ((crecp->flags & F_FORWARD) && hostname_isequal(cache_get_name(crecp), name))
-	    {
-	      /* Don't delete DNSSEC in favour of a CNAME, they can co-exist */
-	      if ((flags & crecp->flags & (F_IPV4 | F_IPV6)) || 
-		  (((crecp->flags | flags) & F_CNAME) && !(crecp->flags & (F_DNSKEY | F_DS))))
-		{
-		  if (crecp->flags & (F_HOSTS | F_DHCP | F_CONFIG))
-		    return 0;
-		  *up = crecp->hash_next;
-		  cache_unlink(crecp);
-		  cache_free(crecp);
-		  continue;
-		}
-	      
-#ifdef HAVE_DNSSEC
-	      /* Deletion has to be class-sensitive for DS, DNSKEY, RRSIG, also 
-		 type-covered sensitive for  RRSIG */
-	      if ((flags & (F_DNSKEY | F_DS)) &&
-		  (flags & (F_DNSKEY | F_DS)) == (crecp->flags & (F_DNSKEY | F_DS)) &&
-		  crecp->uid == addr->addr.dnssec.class &&
-		  (!((flags & (F_DS | F_DNSKEY)) == (F_DS | F_DNSKEY)) || 
-		   crecp->addr.sig.type_covered == addr->addr.dnssec.type))
-		{
-		  if (crecp->flags & F_CONFIG)
-		    return 0;
-		  *up = crecp->hash_next;
-		  cache_unlink(crecp);
-		  cache_free(crecp);
-		  continue;
-		}
-#endif
-	    }
+	if (is_expired(now, crecp) || is_outdated_cname_pointer(crecp))
+	  { 
+	    *up = crecp->hash_next;
+	    if (!(crecp->flags & (F_HOSTS | F_DHCP | F_CONFIG)))
+	      {
+		cache_unlink(crecp);
+		cache_free(crecp);
+	      }
+	  } 
+	else if ((crecp->flags & F_FORWARD) && 
+		 ((flags & crecp->flags & F_TYPE) || ((crecp->flags | flags) & F_CNAME)) &&
+		 hostname_isequal(cache_get_name(crecp), name))
+	  {
+	    if (crecp->flags & (F_HOSTS | F_DHCP | F_CONFIG))
+	      return 0;
+	    *up = crecp->hash_next;
+	    cache_unlink(crecp);
+	    cache_free(crecp);
+	  }
+	else
 	  up = &crecp->hash_next;
-	}
     }
   else
     {
@@ -449,8 +410,8 @@ struct crec *cache_insert(char *name, struct all_addr *addr,
   if (daemon->max_cache_ttl != 0 && daemon->max_cache_ttl < ttl)
     ttl = daemon->max_cache_ttl;
 
-  /* Don't log keys here, done elsewhere */
-  if (flags & (F_IPV4 | F_IPV6 | F_CNAME))
+  /* Don't log keys */
+  if (flags & (F_IPV4 | F_IPV6))
     log_query(flags | F_UPSTREAM, name, addr, NULL);
 
   /* if previous insertion failed give up now. */
@@ -594,9 +555,6 @@ struct crec *cache_find_by_name(struct crec *crecp, char *name, time_t now, unsi
 	  if (!is_expired(now, crecp) && !is_outdated_cname_pointer(crecp))
 	    {
 	      if ((crecp->flags & F_FORWARD) && 
-#ifdef HAVE_DNSSEC
-		  ((crecp->flags & (F_DNSKEY | F_DS)) == (prot & (F_DNSKEY | F_DS))) &&
-#endif
 		  (crecp->flags & prot) &&
 		  hostname_isequal(cache_get_name(crecp), name))
 		{
@@ -654,10 +612,7 @@ struct crec *cache_find_by_name(struct crec *crecp, char *name, time_t now, unsi
 
   if (ans && 
       (ans->flags & F_FORWARD) &&
-#ifdef HAVE_DNSSEC
-      ((ans->flags & (F_DNSKEY | F_DS)) == (prot & (F_DNSKEY | F_DS))) &&
-#endif
-      (ans->flags & prot) &&     
+      (ans->flags & prot) &&
       hostname_isequal(cache_get_name(ans), name))
     return ans;
   
@@ -961,18 +916,12 @@ void cache_reload(void)
   struct name_list *nl;
   struct cname *a;
   struct interface_name *intr;
-#ifdef HAVE_DNSSEC
-  struct dnskey *key;
-#endif
 
   cache_inserted = cache_live_freed = 0;
   
   for (i=0; i<hash_size; i++)
     for (cache = hash_table[i], up = &hash_table[i]; cache; cache = tmp)
       {
-#ifdef HAVE_DNSSEC
-	cache_blockdata_free(cache);
-#endif
 	tmp = cache->hash_next;
 	if (cache->flags & (F_HOSTS | F_CONFIG))
 	  {
@@ -1006,22 +955,6 @@ void cache_reload(void)
 	  cache_hash(cache);
 	  add_hosts_cname(cache); /* handle chains */
 	}
-
-#ifdef HAVE_DNSSEC
-  for (key = daemon->dnskeys; key; key = key->next)
-    if ((cache = whine_malloc(sizeof(struct crec))) &&
-	(cache->addr.key.keydata = blockdata_alloc(key->key, key->keylen)))
-      {
-	cache->flags = F_FORWARD | F_IMMORTAL | F_DNSKEY | F_CONFIG | F_NAMEP;
-	cache->name.namep = key->name;
-	cache->addr.key.keylen = key->keylen;
-	cache->addr.key.algo = key->algo;
-	cache->addr.key.flags = key->flags;
-	cache->addr.key.keytag = dnskey_keytag(key->algo, key->flags, (unsigned char *)key->key, key->keylen);
-	cache->uid = key->class;
-	cache_hash(cache);
-      }
-#endif
   
   /* borrow the packet buffer for a temporary by-address hash */
   memset(daemon->packet, 0, daemon->packet_buff_sz);
@@ -1222,7 +1155,6 @@ void cache_add_dhcp_entry(char *host_name, int prot,
 void dump_cache(time_t now)
 {
   struct server *serv, *serv1;
-  char *t = "";
 
   my_syslog(LOG_INFO, _("time %lu"), (unsigned long)now);
   my_syslog(LOG_INFO, _("cache size %d, %d/%d cache insertions re-used unexpired cache entries."), 
@@ -1231,9 +1163,6 @@ void dump_cache(time_t now)
 	    daemon->queries_forwarded, daemon->local_answer);
 #ifdef HAVE_AUTH
   my_syslog(LOG_INFO, _("queries for authoritative zones %u"), daemon->auth_answer);
-#endif
-#ifdef HAVE_DNSSEC
-  blockdata_report();
 #endif
 
   /* sum counts from different records for same server */
@@ -1263,45 +1192,35 @@ void dump_cache(time_t now)
     {
       struct crec *cache ;
       int i;
-      my_syslog(LOG_INFO, "Host                                     Address                        Flags      Expires");
+      my_syslog(LOG_INFO, "Host                                     Address                        Flags     Expires");
     
       for (i=0; i<hash_size; i++)
 	for (cache = hash_table[i]; cache; cache = cache->hash_next)
 	  {
-	    char *a = daemon->addrbuff, *p = daemon->namebuff, *n = cache_get_name(cache);
-	    *a = 0;
-	    if (strlen(n) == 0 && !(cache->flags & F_REVERSE))
-	      n = "<Root>";
-	    p += sprintf(p, "%-40.40s ", n);
-	    if ((cache->flags & F_CNAME) && !is_outdated_cname_pointer(cache))
-	      a = cache_get_cname_target(cache);
-#ifdef HAVE_DNSSEC
-	    else if (cache->flags & F_DS)
+	    char *a, *p = daemon->namebuff;
+	    p += sprintf(p, "%-40.40s ", cache_get_name(cache));
+	    if ((cache->flags & F_NEG) && (cache->flags & F_FORWARD))
+	      a = ""; 
+	    else if (cache->flags & F_CNAME) 
 	      {
-		if (cache->flags & F_DNSKEY)
-		  {
-		    char tp[20];
-		    /* RRSIG */
-		    querystr("", tp, cache->addr.sig.type_covered);
-		    a = daemon->addrbuff;
-		    sprintf(a, "%5u %3u %s", cache->addr.sig.keytag,
-			    cache->addr.sig.algo, tp);
-		  }
-		else
-		  {
-		    a = daemon->addrbuff;
-		    sprintf(a, "%5u %3u %3u", cache->addr.ds.keytag,
-			    cache->addr.ds.algo, cache->addr.ds.digest);
-		  }
+		a = "";
+		if (!is_outdated_cname_pointer(cache))
+		  a = cache_get_cname_target(cache);
 	      }
+#ifdef HAVE_DNSSEC
 	    else if (cache->flags & F_DNSKEY)
 	      {
 		a = daemon->addrbuff;
-		sprintf(a, "%5u %3u %3u", cache->addr.key.keytag,
-			cache->addr.key.algo, cache->addr.key.flags);
+		sprintf(a, "%3u %u", cache->addr.key.algo, cache->uid);
+	      }
+	    else if (cache->flags & F_DS)
+	      {
+		a = daemon->addrbuff;
+		sprintf(a, "%5u %3u %3u %u", cache->addr.key.flags_or_keyid,
+			cache->addr.key.algo, cache->addr.key.digest, cache->uid);
 	      }
 #endif
-	    else if (!(cache->flags & F_NEG) || !(cache->flags & F_FORWARD))
+	    else 
 	      { 
 		a = daemon->addrbuff;
 		if (cache->flags & F_IPV4)
@@ -1312,21 +1231,12 @@ void dump_cache(time_t now)
 #endif
 	      }
 
-	    if (cache->flags & F_IPV4)
-	      t = "4";
-	    else if (cache->flags & F_IPV6)
-	      t = "6";
-	    else if (cache->flags & F_CNAME)
-	      t = "C";
-#ifdef HAVE_DNSSEC
-	    else if ((cache->flags & (F_DS | F_DNSKEY)) == (F_DS | F_DNSKEY))
-	      t = "G"; /* DNSKEY and DS set -> RRISG */
-	    else if (cache->flags & F_DS)
-	      t = "S";
-	    else if (cache->flags & F_DNSKEY)
-	      t = "K";
-#endif
-	    p += sprintf(p, "%-30.30s %s%s%s%s%s%s%s%s%s  ", a, t,
+	    p += sprintf(p, "%-30.30s %s%s%s%s%s%s%s%s%s%s%s%s%s  ", a, 
+			 cache->flags & F_IPV4 ? "4" : "",
+			 cache->flags & F_IPV6 ? "6" : "",
+			 cache->flags & F_DNSKEY ? "K" : "",
+			 cache->flags & F_DS ? "S" : "",
+			 cache->flags & F_CNAME ? "C" : "",
 			 cache->flags & F_FORWARD ? "F" : " ",
 			 cache->flags & F_REVERSE ? "R" : " ",
 			 cache->flags & F_IMMORTAL ? "I" : " ",
@@ -1381,20 +1291,13 @@ void log_query(unsigned int flags, char *name, struct all_addr *addr, char *arg)
 
   if (addr)
     {
-      if (flags & F_KEYTAG)
-	sprintf(daemon->addrbuff, arg, addr->addr.keytag);
-      else
-	{
 #ifdef HAVE_IPV6
-	  inet_ntop(flags & F_IPV4 ? AF_INET : AF_INET6,
-		    addr, daemon->addrbuff, ADDRSTRLEN);
+      inet_ntop(flags & F_IPV4 ? AF_INET : AF_INET6,
+		addr, daemon->addrbuff, ADDRSTRLEN);
 #else
-	  strncpy(daemon->addrbuff, inet_ntoa(addr->addr.addr4), ADDRSTRLEN);  
+      strncpy(daemon->addrbuff, inet_ntoa(addr->addr.addr4), ADDRSTRLEN);  
 #endif
-	}
     }
-  else
-    dest = arg;
 
   if (flags & F_REVERSE)
     {
@@ -1436,8 +1339,6 @@ void log_query(unsigned int flags, char *name, struct all_addr *addr, char *arg)
     source = arg;
   else if (flags & F_UPSTREAM)
     source = "reply";
-  else if (flags & F_SECSTAT)
-    source = "validation";
   else if (flags & F_AUTH)
     source = "auth";
   else if (flags & F_SERVER)
@@ -1450,11 +1351,6 @@ void log_query(unsigned int flags, char *name, struct all_addr *addr, char *arg)
       source = arg;
       verb = "from";
     }
-  else if (flags & F_DNSSEC)
-    {
-      source = arg;
-      verb = "to";
-    }
   else
     source = "cached";
   
@@ -1464,4 +1360,50 @@ void log_query(unsigned int flags, char *name, struct all_addr *addr, char *arg)
   my_syslog(LOG_INFO, "%s %s %s %s", source, name, verb, dest);
 }
 
- 
+#ifdef HAVE_DNSSEC
+struct keydata *keydata_alloc(char *data, size_t len)
+{
+  struct keydata *block, *ret = NULL;
+  struct keydata **prev = &ret;
+  while (len > 0)
+    {
+      if (keyblock_free)
+	{
+	  block = keyblock_free;
+	  keyblock_free = block->next;
+	}
+      else
+	block = whine_malloc(sizeof(struct keydata));
+
+      if (!block)
+	{
+	  /* failed to alloc, free partial chain */
+	  keydata_free(ret);
+	  return NULL;
+	}
+      
+      memcpy(block->key, data, len > KEYBLOCK_LEN ? KEYBLOCK_LEN : len);
+      data += KEYBLOCK_LEN;
+      len -= KEYBLOCK_LEN;
+      *prev = block;
+      prev = &block->next;
+      block->next = NULL;
+    }
+  
+  return ret;
+}
+
+void keydata_free(struct keydata *blocks)
+{
+  struct keydata *tmp;
+
+  if (blocks)
+    {
+      for (tmp = blocks; tmp->next; tmp = tmp->next);
+      tmp->next = keyblock_free;
+      keyblock_free = blocks;
+    }
+}
+#endif
+
+      

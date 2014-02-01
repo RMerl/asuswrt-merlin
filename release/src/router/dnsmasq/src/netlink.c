@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2014 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2013 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -39,6 +39,7 @@ static struct iovec iov;
 static u32 netlink_pid;
 
 static int nl_async(struct nlmsghdr *h);
+static void nl_newaddress(time_t now);
 
 void netlink_init(void)
 {
@@ -202,7 +203,7 @@ int iface_enumerate(int family, void *parm, int (*callback)())
 	    /* handle async new interface address arrivals, these have to be done
 	       after we complete as we're not re-entrant */
 	    if (newaddr) 
-	      newaddress(dnsmasq_time());
+	      nl_newaddress(dnsmasq_time());
 		
 	    return callback_ok;
 	  }
@@ -264,10 +265,10 @@ int iface_enumerate(int family, void *parm, int (*callback)())
 		    
 		    if (ifa->ifa_flags & IFA_F_DEPRECATED)
 		      flags |= IFACE_DEPRECATED;
-		    
-		    if (!(ifa->ifa_flags & IFA_F_TEMPORARY))
+
+		    if (ifa->ifa_flags & IFA_F_PERMANENT)
 		      flags |= IFACE_PERMANENT;
-    		    
+		    
 		    if (addrp && callback_ok)
 		      if (!((*callback)(addrp, (int)(ifa->ifa_prefixlen), (int)(ifa->ifa_scope), 
 					(int)(ifa->ifa_index), flags, 
@@ -350,7 +351,7 @@ void netlink_multicast(time_t now)
   fcntl(daemon->netlinkfd, F_SETFL, flags);
   
   if (newaddr) 
-    newaddress(now);
+    nl_newaddress(now);
 }
 
 static int nl_async(struct nlmsghdr *h)
@@ -398,6 +399,30 @@ static int nl_async(struct nlmsghdr *h)
   
   return 0;
 }
+  	
+static void nl_newaddress(time_t now)
+{
+  (void)now;
+
+  if (option_bool(OPT_CLEVERBIND) || daemon->doing_dhcp6 || daemon->relay6 || daemon->doing_ra)
+    enumerate_interfaces(0);
+  
+  if (option_bool(OPT_CLEVERBIND))
+    create_bound_listeners(0);
+  
+#ifdef HAVE_DHCP6
+  if (daemon->doing_dhcp6 || daemon->relay6 || daemon->doing_ra)
+    join_multicast(0);
+  
+  if (daemon->doing_dhcp6 || daemon->doing_ra)
+    dhcp_construct_contexts(now);
+  
+  if (daemon->doing_dhcp6)
+    lease_find_interfaces(now);
+#endif
+}
+
+
 #endif
 
       

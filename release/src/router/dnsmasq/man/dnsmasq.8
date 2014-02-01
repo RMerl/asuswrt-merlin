@@ -579,29 +579,19 @@ Set the maximum number of concurrent DNS queries. The default value is
 where this needs to be increased is when using web-server log file
 resolvers, which can generate large numbers of concurrent queries.
 .TP
-.B --dnssec
-Validate DNS replies and cache DNSSEC data. When forwarding DNS queries, dnsmasq requests the 
-DNSSEC records needed to validate the replies. The replies are validated and the result returned as 
-the Authenticated Data bit in the DNS packet. In addition the DNSSEC records are stored in the cache, making 
-validation by clients more efficient. Note that validation by clients is the most secure DNSSEC mode, but for
-clients unable to do validation, use of the AD bit set by dnsmasq is useful, provided that the network between 
-the dnsmasq server and the client is trusted. Dnsmasq must be compiled with HAVE_DNSSEC enabled, and DNSSEC
-trust anchors provided, see 
-.B --dnsskey.
-Because the DNSSEC validation process uses the cache, it is not permitted to reduce the cache size below the default when DNSSEC is enabled.
-.TP
-.B --dnskey=[<class>],<domain>,<flags>,<algorithm>,<base64-key>
-Provide DNSKEY records to act a trust anchors for DNSSEC validation. Typically these will be the keys for root zone,
-but trust anchors for limited domains are also possible. 
-.TP
 .B --proxy-dnssec
-Copy the DNSSEC Authenticated Data bit from upstream servers to downstream clients and cache it.  This is an 
-alternative to having dnsmasq validate DNSSEC, but it depends on the security of the network between 
-dnsmasq and the upstream servers, and the trustworthiness of the upstream servers.
-.TP
-.B --dnssec-debug
-Set debugging mode for the DNSSEC validation, set the Checking Disabled bit on upstream queries, 
-and don't convert BOGUS replies to SERVFAIL responses. 
+A resolver on a client machine can do DNSSEC validation in two ways: it
+can perform the cryptograhic operations on the reply it receives, or
+it can rely on the upstream recursive nameserver to do the validation
+and set a bit in the reply if it succeeds. Dnsmasq is not a DNSSEC
+validator, so it cannot perform the validation role of the recursive nameserver,
+but it can pass through the validation results from its own upstream
+nameservers. This option enables this behaviour. You should only do
+this if you trust all the configured upstream nameservers 
+.I and the network between you and them.
+If you use the first DNSSEC mode, validating resolvers in clients,
+this option is not required. Dnsmasq always returns all the data
+needed for a client to do validation itself. 
 .TP
 .B --auth-zone=<domain>[,<subnet>[/<prefix length>][,<subnet>[/<prefix length>].....]]
 Define a DNS zone for which dnsmasq acts as authoritative server. Locally defined DNS records which are in the domain
@@ -927,11 +917,9 @@ and to set the time-server address to 192.168.0.4, do
 .B --dhcp-option = 42,192.168.0.4 
 or 
 .B --dhcp-option = option:ntp-server, 192.168.0.4
-The special address 0.0.0.0 is taken to mean "the address of the
-machine running dnsmasq". 
-
-Data types allowed are comma separated
-dotted-quad IPv4 addresses, []-wrapped IPv6 addresses, a decimal number, colon-separated hex digits
+The special address 0.0.0.0 (or [::] for DHCPv6) is taken to mean "the address of the
+machine running dnsmasq". Data types allowed are comma separated
+dotted-quad IP addresses, a decimal number, colon-separated hex digits
 and a text string. If the optional tags are given then
 this option is only sent when all the tags are matched.
 
@@ -947,9 +935,7 @@ keyword, followed by the option number or option name. The IPv6 option
 name space is disjoint from the IPv4 option name space. IPv6 addresses
 in options must be bracketed with square brackets, eg. 
 .B --dhcp-option=option6:ntp-server,[1234::56]
-For IPv6, [::] means "the global address of
-the machine running dnsmasq", whilst [fd00::] is replaced with the
-ULA, if it exists, and [fe80::] with the link-local address.
+ 
 
 Be careful: no checking is done that the correct type of data for the
 option number is sent, it is quite possible to

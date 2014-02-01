@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2014 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2013 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 #define MAX_PROCS 20 /* max no children for TCP requests */
 #define CHILD_LIFETIME 150 /* secs 'till terminated (RFC1035 suggests > 120s) */
 #define EDNS_PKTSZ 4096 /* default max EDNS.0 UDP packet from RFC5625 */
-#define KEYBLOCK_LEN 35 /* choose to mininise fragmentation when storing DNSSEC keys */
+#define KEYBLOCK_LEN 140 /* choose to mininise fragmentation when storing DNSSEC keys */
 #define TIMEOUT 10 /* drop UDP queries after TIMEOUT seconds */
 #define FORWARD_TEST 50 /* try all servers every 50 queries */
 #define FORWARD_TIME 20 /* or 20 seconds */
@@ -64,8 +64,10 @@ HAVE_BROKEN_RTC
    leases file, otherwise dnsmasq may get very confused.
 
 HAVE_LEASEFILE_EXPIRE
-
-HAVE_TOMATO
+   define this if you want to enable lease file update with expire
+   timeouts instead of expiry times or lease lengths, if HAVE_BROKEN_RTC
+   is also enabled. Lease file will be rewritten upon SIGUSR2 signal
+   reception and/or dnsmasq termination.
 
 HAVE_TFTP
    define this to get dnsmasq's built-in TFTP server.
@@ -115,6 +117,7 @@ NO_DHCP6
 NO_SCRIPT
 NO_LARGEFILE
 NO_AUTH
+NO_IPSET
    these are avilable to explictly disable compile time options which would 
    otherwise be enabled automatically (HAVE_IPV6, >2Gb file sizes) or 
    which are enabled  by default in the distributed source tree. Building dnsmasq
@@ -128,11 +131,6 @@ RESOLVFILE
 
 */
 
-/* Defining this builds a binary which handles time differently and works better on a system without a 
-   stable RTC (it uses uptime, not epoch time) and writes the DHCP leases file less often to avoid flash wear. 
-*/
-
-/* #define HAVE_BROKEN_RTC */
 
 /* The default set of options to build. Built with these options, dnsmasq
    has no library dependencies other than libc */
@@ -143,19 +141,12 @@ RESOLVFILE
 #define HAVE_SCRIPT
 #define HAVE_AUTH
 #define HAVE_IPSET 
-
-/* Build options which require external libraries.
-   
-   Defining HAVE_<opt>_STATIC as _well_ as HAVE_<opt> will link the library statically.
-
-   You can use "make COPTS=-DHAVE_<opt>" instead of editing these.
-*/
-
 /* #define HAVE_LUASCRIPT */
+/* #define HAVE_BROKEN_RTC */
+/* #define HAVE_LEASEFILE_EXPIRE */
 /* #define HAVE_DBUS */
 /* #define HAVE_IDN */
 /* #define HAVE_CONNTRACK */
-/* #define HAVE_DNSSEC */
 
 
 /* Default locations for important system files. */
@@ -231,10 +222,12 @@ HAVE_SOCKADDR_SA_LEN
 #if !defined(__ARCH_HAS_MMU__) && !defined(__UCLIBC_HAS_MMU__)
 #  define NO_FORK
 #endif
-#if defined(__UCLIBC_HAS_IPV6__)
+#if defined(__UCLIBC_HAS_IPV6__) && defined(USE_IPV6)
 #  ifndef IPV6_V6ONLY
 #    define IPV6_V6ONLY 26
 #  endif
+#elif !defined(NO_IPV6)
+#  define NO_IPV6
 #endif
 
 /* This is for glibc 2.x */
@@ -336,10 +329,6 @@ HAVE_SOCKADDR_SA_LEN
 #undef HAVE_IPSET
 #endif
 
-#ifdef HAVE_TOMATO
-#define HAVE_LEASEFILE_EXPIRE
-#endif
-
 /* Define a string indicating which options are in use.
    DNSMASQP_COMPILE_OPTS is only defined in dnsmasq.c */
 
@@ -402,18 +391,10 @@ static char *compile_opts =
 "no-"
 #endif
 "ipset "
-#ifdef HAVE_TOMATO
-  "Tomato-helper "
-#endif
 #ifndef HAVE_AUTH
 "no-"
 #endif
-"auth "
-#ifndef HAVE_DNSSEC
-"no-"
-#endif
-"DNSSEC";
-
+  "auth";
 
 #endif
 
