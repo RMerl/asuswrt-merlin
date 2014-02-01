@@ -1,0 +1,79 @@
+Notes on configuring dnsmasq as packaged for Debian.
+
+(1) To configure dnsmasq edit /etc/dnsmasq.conf. The file is well
+    commented; see also the dnsmasq.8 man page for explanation of
+    the options. The file /etc/default/dnsmasq also exists but it
+    shouldn't need to be touched in most cases. To set up DHCP
+    options you might need to refer to a copy of RFC 2132. This is 
+    available on Debian systems in the package doc-rfc-std as the file
+    /usr/share/doc/RFC/draft-standard/rfc2132.txt.gz .
+
+(2) Installing the dnsmasq package also creates the directory
+    /etc/dnsmasq.d which is searched by dnsmasq for configuration file
+    fragments. This behaviour can be disabled by editing 
+    /etc/default/dnsmasq.
+
+(3) If the Debian resolvconf package is installed then, regardless
+    of what interface configuration daemons are employed, the list of
+    nameservers to which dnsmasq should forward queries can be found
+    in /var/run/dnsmasq/resolv.conf; also, 127.0.0.1 is listed as the
+    first nameserver address in /etc/resolv.conf. This works using the
+    default configurations of resolvconf and dnsmasq.
+
+(4) In the absence of resolvconf, if you are using dhcpcd then
+    dnsmasq should read the list of nameservers from the automatically
+    generated file /etc/dhcpc/resolv.conf.  You should list 127.0.0.1
+    as the first nameserver address in /etc/resolv.conf.
+
+(5) In the absence of resolvconf, if you are using pppd then
+    dnsmasq should read the list of nameservers from the automatically
+    generated file /etc/ppp/resolv.conf.  You should list 127.0.0.1
+    as the first nameserver address in /etc/resolv.conf.
+
+(6) In the absence of resolvconf, dns-nameservers lines in 
+    /etc/network/interfaces are ignored. If you do do not use
+    resolvconf, list 127.0.0.1 as the first nameserver address
+    in /etc/resolv.conf and configure your nameservers using
+    "server=<IP-address>" lines in /etc/dnsmasq.conf.
+
+(7) If you run multiple DNS servers on a single machine, each
+    listening on a different interface, then it is necessary to use 
+    the bind-interfaces option by uncommenting "bind-interfaces" in 
+    /etc/dnsmasq.conf. This option stops dnsmasq from binding the 
+    wildcard address and allows servers listening on port 53 on
+    interfaces not in use by dnsmasq to work. The Debian 
+    libvirt package will add a configuration file in /etc/dnsmasq.d
+    which does this so that the "system" dnsmasq and "private" dnsmasq
+    instances started by libvirt do not clash.
+
+(8) The following options are supported in DEB_BUILD_OPTIONS
+      noopt       : compile without optimisation.
+      nostrip     : don't remove symbols from binary. 
+      nodocs      : omit documentation.
+      notftp      : omit TFTP support.
+      nodhcp      : omit DHCP support.
+      nodhcp6     : omit DHCPv6 support.
+      noscript    : omit lease-change script support.
+      use_lua     : provide support for lease-change scripts written
+                    in Lua.
+      noipv6      : omit IPv6 support.
+      nodbus      : omit DBus support.
+      noconntrack : omit connection tracking support. 
+      noipset     : omit IPset support.
+      nortc       : compile alternate mode suitable for systems without an RTC.
+      noi18n      : omit translations and internationalisation support.
+      noidn       : omit international domain name support, must be
+                    combined with noi18n to be effective.
+      gitversion  : set the version of the produced packages from the
+                    git-derived versioning information on the source,
+                    rather the the debian changelog. 
+
+(9) Dnsmasq comes as three packages - dnsmasq-utils, dnsmasq-base and
+    dnsmasq. Dnsmasq-base provides the dnsmasq executable and
+    documentation (including this file). Dnsmasq, which depends on
+    dnsmasq-base, provides the init script and configuration
+    infrastructure. This file assumes that both are installed. It is
+    possible to install only dnsmasq-base and use dnsmasq as a
+    non-"system" daemon. Libvirt, for instance, does this.
+    Dnsmasq-utils provides the utilities dhcp_release and 
+    dhcp_lease_time.

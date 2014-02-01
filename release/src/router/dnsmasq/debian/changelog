@@ -1,0 +1,1126 @@
+dnsmasq (2.68-1) unstable; urgency=low
+
+   * New upstream. (closes: #730553)
+   
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sun, 8 Dec 2013 15:57:32 +0000
+
+dnsmasq (2.67-1) unstable; urgency=low
+
+   * New upstream.
+   * Update resolvconf script. (closes: #720732)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Wed, 4 Aug 2013 14:53:22 +0000
+
+dnsmasq (2.66-4) unstable; urgency=low
+
+   * Update resolvconf script. (closes: #716908)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Wed, 4 Aug 2013 14:48:21 +0000
+
+dnsmasq (2.66-3) unstable; urgency=low
+
+   * Update resolvconf script for dnscrypt-proxy integration. (closes: #709179)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Tue, 28 May 2013 14:39:51 +0000
+
+dnsmasq (2.66-2) unstable; urgency=low
+
+   * Fix error on startup with some configs. (closes: #709010)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Mon, 20 May 2013 11:46:11 +0000
+
+dnsmasq (2.66-1) unstable; urgency=low
+
+   * New upstream.
+   * Add support for noipset in DEB_BUILD_OPTIONS.
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Fri, 22 Feb 2013 21:52:13 +0000
+
+dnsmasq (2.65-1) unstable; urgency=low
+
+   * New upstream.
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Fri, 14 Dec 2012 11:34:12 +0000
+
+dnsmasq (2.64-1) unstable; urgency=low
+
+   * New upstream.
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Fri, 21 Sep 2012 17:17:22 +0000
+
+dnsmasq (2.63-4) unstable; urgency=low
+
+   * Make pid-file creation immune to symlink attacks. (closes: #686484)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Fri, 21 Sep 2012 17:16:34 +0000
+
+dnsmasq (2.63-3) unstable; urgency=low
+
+   * Move adduser dependency to dnsmasq-base. (closes: #686694)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Tue, 4 Sep 2012 21:44:15 +0000
+
+dnsmasq (2.63-2) unstable; urgency=low
+
+   * Fix version script to report correct version.
+   * Unbotch move of dbus config file by using correct versions in
+     Replaces: and Breaks: lines. (closes: #685204)
+   * Create dnsmasq user in dnsmasq-base so that Dbus doesn't complain if
+     only dnsmasq-base is installed. (closes: #685987)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Tue, 28 Aug 2012 16:18:35 +0000
+
+dnsmasq (2.63-1) unstable; urgency=low
+
+   * New upstream.
+   * Move /etc/dbus-1/system.d/dnsmasq.conf from dnsmasq to dnsmasq-base.
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Mon, 11 Jun 2012 21:55:35 +0000
+
+dnsmasq (2.62-3) unstable; urgency=low
+
+   * Do resolvconf and /etc/default startup logic when
+     starting with systemd. (closes: #675854)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Mon, 11 Jun 2012 21:50:11 +0000
+
+dnsmasq (2.62-2) unstable; urgency=low
+
+   * Pass LDFLAGS to make to get hardening in linker.
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Thu, 7 Jun 2012 09:53:43 +0000
+
+dnsmasq (2.62-1) unstable; urgency=low
+
+   * New upstream.
+   * Use dpkg-buildflags. (Enables hardening).
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sat, 12 May 2012 15:25:23 +0000
+
+dnsmasq (2.61-1) unstable; urgency=low
+
+   * New upstream.
+   * Provide "dump-stats" initscript method. (closes: #654656)
+   * Add (empty) build-indep and build-arch rules targets.
+   * Bump standards-version to 3.9.3
+   * Add port option to example dnsmasq.conf (closes: #668386)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Tue, 6 Mar 2012 19:45:43 +0000
+
+dnsmasq (2.60-2) unstable; urgency=high
+
+   * Fix DHCPv4 segfault. (closes: #665008)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Fri, 23 Mar 2012 09:37:23 +0000
+
+dnsmasq (2.60-1) unstable; urgency=low
+
+   * New upstream.
+   * Bump standards-version to 3.9.2
+   * Fix typo in example config file. (closes: #654897)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Thu, 1 Dec 2011 15:49:33 +0000
+
+dnsmasq (2.59-4) unstable; urgency=low
+
+   * Supply /etc/insserv.conf.d/dnsmasq (closes: #650540)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Thu, 1 Dec 2011 11:35:13 +0000
+
+dnsmasq (2.59-3) unstable; urgency=low
+
+   * Stop daemon at runlevels 0, 1 and 6. (closes: #647726)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sat, 26 Nov 2011 15:28:33 +0000
+
+dnsmasq (2.59-2) unstable; urgency=low
+
+   * Fix reported version number.
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Wed, 19 Oct 2011 09:25:53 +0000
+
+dnsmasq (2.59-1) unstable; urgency=low
+
+   * New upstream.
+   * Fix IPv6 bind problem (closes: #644345)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sat, 8 Oct 2011 16:34:13 +0000
+
+dnsmasq (2.58-3) unstable; urgency=low
+
+   * Fix resolvconf script location. (closes: #641717)
+   * Update systemd service file. (closes: #640095)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Thu, 15 Sep 2011 16:33:23 +0000
+
+dnsmasq (2.58-2) unstable; urgency=low
+
+   * Fix resolvconf script. (closes: #639963)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Thu, 1 Sep 2011 10:05:23 +0000
+
+dnsmasq (2.58-1) unstable; urgency=low
+
+   * New upstream.
+   * Add noconntrack DEB_BUILD_OPTIONS flag.
+   * Improve error message when tag:xxx appears
+     in --dhcp-host (closes: #627986)
+   * Add /usr/lib/resolvconf/packaging-event.d/dnsmasq (closes: #628003)
+   * Update resolvconf hook script to sleep only
+     when necessary. (closes: #627789)
+   * Tweak behaviour of --domain-needed to avoid problems with recursive
+     nameservers _downstream_ of dnsmasq. (closes: #630637)
+   * Allow processes running as uid dnsmasq to send messages on the DBus,
+     so that dnsmasq can return errors. (closes: #635017)
+   * Add /lib/systemd/system/dnsmasq.service (closes: #635753)
+   * New binary package, dnsmasq-utils, containing dhcp_release and
+     dhcp_lease_time from contrib/wrt. Note that these are Linux-specific
+     so this package is Architecture: linux-any (closes: #638136)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Mon, 22 Aug 2011 14:57:03 +0000
+
+dnsmasq (2.57-1) unstable; urgency=low
+
+   * New upstream.
+   * Fix typos in example config file. (closes: #606615)
+   * Bump standards-version to 3.9.1
+   * Add noidn DEB_BUILD_OPTIONS flag.
+   * Don't complain about extra command line arguments if
+     they are empty, as this breaks libvirt. (closes: #613915)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Fri, 18 Feb 2011 09:54:13 +0000
+
+dnsmasq (2.56-1) unstable; urgency=low
+
+   * New upstream.
+   * Die if non-option args present on the command-line. (closes: #589885)
+   * Tighten up use of IGNORE_RESOLVCONF in initscript. (closes: #575345)
+   * Update URL of ISC's explanation of dhcp-authoritative in the example
+     configuration file. (closes: #604870)
+   * Cosmetic changes to dnsmasq.conf.example. (closes: #598790)
+   * More dnsmasq.conf.example fixes. (closes: #606615)
+   * Add other resolv.conf locations to FILES section of the manual
+     page. (closes: #603505)
+   * Clarify configuration for static IP addresses in the absence of
+     resolvconf in the Debian readme file. (closes: #604035)
+   * Fix handling of obsolete DNSMASQ_INTERFACE and DNSMASQ_EXCEPT
+     variables in /etc/default/dnsmasq. (LP: #691329)
+   * Provide debian/source/format.
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Fri, 17 Dec 2010 13:17:33 +0000
+
+dnsmasq (2.55-2) unstable; urgency=high
+
+   * Fix crash on double free. (closes: #597205)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sun, 19 Sep 2010 21:45:33 +0000
+
+dnsmasq (2.55-1) unstable; urgency=low
+
+   * New upstream.
+   * Fix crash when /etc/ethers in use. (closes: #584754)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sun, 6 Jun 2010 20:33:13 +0000
+
+dnsmasq (2.53-1) unstable; urgency=low
+
+   * New upstream.
+   * Fix FTBFS on kFreeBSD. (closes: #566334)
+   * Teach initscript to check the config file syntax before
+     restarting dnsmasq. An error will leave the old dnsmasq still
+     running, rather than killing the old daemon and then failing to start
+     a new one.
+   * Tweak DHCP behaviour when a physical interface has two addresses on
+     the same subnet. (closes: #581064)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Thu, 20 May 2010 11:41:23 +0000
+
+dnsmasq (2.52-1) unstable; urgency=low
+
+   * New upstream.
+   * Be more conservative with "A for A" processing. (closes: #553337)
+   * Add README file in /etc/dnsmasq.d to explain what's going on.
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Thu, 14 Jan 2010 09:53:13 +0000
+
+dnsmasq (2.51-1) unstable; urgency=low
+
+   * New upstream.
+   * Bump standards-version to 3.8.2 (no changes needed).
+   * Ignore files named *.dpkg-old, *.dpkg-new and *.dpkg-dist 
+     in /etc/dnsmasq.d
+   * Provide a facility in /etc/default/dnsmasq to disable dnsmasq's
+     interaction with the resolvconf package. This is needed because
+     setting "resolv-file" in /etc/dnsmasq.conf won't override a
+     file given on the command line from resolvconf. (closes: #528762)
+   * Check for duplicate names/addresses in /etc/ethers. (closes: #523787)
+   * Set the system locale in the environment before invoking dnsmasq,
+     so that translated messages work, and IDN uses the correct charset.
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Fri, 4 Oct 2009 14:01:14 +0000
+
+
+dnsmasq (2.50-1) unstable; urgency=high
+   
+   * New upstream, fixes remote vulns in TFTP server.
+     Bugtraq id: 36120,36121 CVE: 2009-2957,2009-2958	
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Fri, 21 Aug 2009 10:25:13 +0000
+
+	
+dnsmasq (2.49-1) unstable; urgency=low
+   
+   * New upstream.
+   * Log TFTP "file not found" errors. (closes: #532201)
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Mon, 8 Jun 2009 22:03:23 +0000
+	
+dnsmasq (2.48-2) unstable; urgency=low
+   
+   * Change dnsmasq -> dnsmasq-base dependency to >= to allow binNMU,
+     fixes Lintian error.
+   * Bump standards-version to 3.8.1
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Fri, 5 Jun 2009 10:58:33 +0000
+
+dnsmasq (2.48-1) unstable; urgency=low
+
+   * New upstream.
+   * Detect and ignore duplicate configuration files. (closes: #516234)
+   * Add 2 second sleep between stop and start during initscript restart.
+   * Make dependency on dnsmasq-base in dnsmasq package versioned, so that
+     installing the latest dnsmasq will install the latest dnsmasq-base
+     too. (closes: #523955)
+   * Add nodhcp DEB_BUILD_OPTIONS option.
+		
+ -- Simon Kelley <simon@thekelleys.org.uk>  Fri, 29 May 2009 10:20:23 +0000
+
+dnsmasq (2.47-3) unstable; urgency=low
+
+   * Fix bashism in init script. (closes: #514397)
+   * Tweak logging in init script.
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sat, 7 Feb 2009 19:25:23 +0000
+
+dnsmasq (2.47-2) unstable; urgency=low
+
+   * Check that /etc/init.d/dnsmasq is executable in postinst in case
+     the daemon has been  disabled that way. (closes: #514314)
+   * Ensure that /var/run/dnsmasq exists and has the right permissions
+     before running dnsmasq. On some systems /var/run is cleared over 
+     reboot. (closes: #514317)
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Fri, 6 Feb 2009 09:38:21 +0000
+	
+dnsmasq (2.47-1) unstable; urgency=low
+
+   * New upstream.
+   * Handle the "ENABLED" flag in the init script a bit more 
+     intelligently. The "stop" and "status" functions continue
+     to work even when disabled, but a failed "stop" becomes 
+     silent and returns zero exit code.
+   * Don't explicitly kill dnsmasq at system shutdown, rely on the 
+     sendsigs script instead which is quicker. (closes: #506734)
+   * Store the PID-file in /var/run/dnsmasq. This directory is owned by
+     user "dnsmasq", so that dnsmasq can delete the PID-file on
+     shutdown. This ensures that the the PID-file goes even when dnsmasq 
+     is stopped by sendsigs. (closes: #508560) 
+   * Bump standards-version to 3.8.0 (no changes required.)
+   * /usr/sbin/adduser -> adduser in postinst. Lintian fix.
+   * Handle IPv6 addresses in "tentative" state better. (closes: #507646) 
+   * Add DBus introspection support. (closes: #508774)
+   * Fix Dbus configuration. (closes: #510649)
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Mon, 2 Feb 2009 13:39:11 +0000
+
+dnsmasq (2.46-1) unstable; urgency=low
+
+   * New upstream. (closes: #499162) (closes: #499007)
+   * Remove from init script start-stop-daemon call to kill
+     child processes. This is not needed since dnsmasq is 
+     carefully written to kill child processes, and it interacts
+     badly with "private" instances of dnsmasq. (closes: #505523)
+   * Provide /etc/dnsmasq.d and alter the installed /etc/default/dnsmasq
+     so that /etc/dnsmasq.d is read. This provides a drop-directory where
+     libvirt can add options to make the system dnsmasq automatically 
+     play nice with libvirt's private instances. (closes: #505522)
+	        
+ -- Simon Kelley <simon@thekelleys.org.uk>  Thu, 13 Nov 2008 20:15:31 +0000
+
+dnsmasq (2.45-1) unstable; urgency=high
+
+   * New upstream - fixes regression when min-port not set.
+	        
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sun, 20 Jul 2008 19:27:11 +0000
+	
+dnsmasq (2.44-1) unstable; urgency=high
+
+   * New upstream - bugfix release for 2.43.
+   * Fix crash in netlink code. (closes: #491289)
+        
+ -- Simon Kelley <simon@thekelleys.org.uk>  Fri, 11 Jul 2008 19:39:10 +0000
+
+dnsmasq (2.43-1) unstable; urgency=high
+
+   * New upstream.
+   * Implement source-port randomisation and better random
+     number generator as defence against CVE-2008-1447 (closes: #490123)
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Tue, 17 Jun 2008 11:55:38 +0000
+
+dnsmasq (2.42-4) unstable; urgency=low
+
+   * Fix botch in postinst introduced in 2.42-2. (closes: #486616)
+        
+ -- Simon Kelley <simon@thekelleys.org.uk>  Tue, 17 Jun 2008 11:39:10 +0000
+
+dnsmasq (2.42-3) unstable; urgency=low
+
+   * Fix thinko in init script, breaks status command. (closes: #486455)
+        
+ -- Simon Kelley <simon@thekelleys.org.uk>  Mon, 16 Jun 2008 11:26:20 +0000
+
+dnsmasq (2.42-2) unstable; urgency=low
+
+   * Error check in postinst file (closes: #485645)
+        
+ -- Simon Kelley <simon@thekelleys.org.uk>  Tue, 10 Jun 2008 20:25:10 +0000
+
+dnsmasq (2.42-1) unstable; urgency=low
+
+   * New upstream.
+   * Fix manpage typos. (closes: #468762)
+   * Use LSB log_*_msg rather than echo in init script. (closes: #473117)
+   * Fix agent-id echo problem. (closes: #473015)
+   * Fixup changing /usr/share/doc/dnsmasq to symlink. (closes: #468763)
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Wed, 27 Feb 2008 21:15:28 +0000
+
+dnsmasq (2.41-2) unstable; urgency=low
+
+   * Fix rules to build binary-arch and binary-indep correctly.
+        
+ -- Simon Kelley <simon@thekelleys.org.uk>  Wed, 27 Feb 2008 19:57:10 +0000
+
+dnsmasq (2.41-1) unstable; urgency=low
+
+   * New upstream.
+   * Fix typo. (closes: #448038)
+   * Fix DHCP problem interoperating with Sony Ericsson K610i (closes: #451871)
+   * Split binary packages into dnsmasq and dnsmasq-base (closes: #463407)
+   * Add warnings about bad effects of --filterwin2k to default config
+     file. (closes: #464357) 
+   * Don't declare Provides: $named in LSB header. (closes: #464512)
+   * Remove conflict with pdnsd. (closes: #464691)
+   * Add ability to disable dnsmasq in /etc/default/dnsmasq. (closes: #465062)
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Thu, 31 Jan 2008 20:25:28 +0000
+
+dnsmasq (2.40-1) unstable; urgency=low
+
+   * New upstream.
+   * Fix manpage typo. (closes: #429412)
+   * Fix dnsmasq.conf typos (closes: #429929)
+   * Handle DEB_BUILD_OPTIONS nostrip and noopt (closes: #436784)
+   * Add DEB_BUILD_OPTIONS for nodocs, notftp, noipv6, 
+     nodbus, noi18n and nortc.
+   * Create DEBIAN/md5sums file in package.
+   * Add status function to init script. (closes: #439316)
+			
+ -- Simon Kelley <simon@thekelleys.org.uk>  Thu, 9 Aug 2007 10:24:18 +0000
+
+dnsmasq (2.39-1) unstable; urgency=low
+
+   * New upstream.
+   * Provide example config file in /usr/share/doc/dnsmasq/examples
+     as well as /etc/dnsmasq.conf, so it's available for reference.
+			
+ -- Simon Kelley <simon@thekelleys.org.uk>  Thu, 13 Feb 2007 10:02:38 +0000
+
+dnsmasq (2.38-1) unstable; urgency=low
+
+   * New upstream (closes: #410185)
+			
+ -- Simon Kelley <simon@thekelleys.org.uk>  Tue, 6 Feb 2007 21:14:58 +0000
+
+dnsmasq (2.37-1) unstable; urgency=low
+
+   * New upstream.
+			
+ -- Simon Kelley <simon@thekelleys.org.uk>  Thu, 25 Jan 2007 10:44:18 +0000
+
+dnsmasq (2.36-1) unstable; urgency=low
+
+   * New upstream. (closes: #400037)
+   * Don't fail to purge if deluser command is not available.
+   * Add one second sleep to resolvconf script. (closes: #398961)
+   * Fix dnsmasq.conf typo (closes: #405314) 
+			
+ -- Simon Kelley <simon@thekelleys.org.uk>  Tue, 31 Oct 2006 10:24:58 +0000
+
+dnsmasq (2.35-1) unstable; urgency=low
+
+   * New upstream.
+				
+ -- Simon Kelley <simon@thekelleys.org.uk>  Wed, 18 Oct 2006 09:23:28 +0000
+
+dnsmasq (2.34-1) unstable; urgency=low
+
+   * New upstream.
+   * Includes --clear-on-reload flag. (loses: #391654)
+   * Don't any longer set the "domain-needed" and "bogus-priv" flags in the
+   * the default-installed dnsmasq.conf. These can generate puzzling 
+   * behaviour for people who get them without asking.
+				
+ -- Simon Kelley <simon@thekelleys.org.uk>  Wed, 9 Aug 2006 09:23:28 +0000
+
+dnsmasq (2.33-1) unstable; urgency=low
+
+   * New upstream.
+   * Remove bashism from Makefile (closes: #375409)
+   * Added Provides: $named to LSB header in init script.
+   * Add --dns-forward-max flag. (closes: #377506)
+				
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sun, 25 June 2006 18:03:13 +0000
+
+dnsmasq (2.32-2) unstable; urgency=low
+
+   * Added LSB tags to init.d startup script. (closes: #374650)
+				
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sun, 25 June 2006 17:55:11 +0000
+
+dnsmasq (2.32-1) unstable; urgency=low
+
+   * New upstream.
+				
+ -- Simon Kelley <simon@thekelleys.org.uk>  Mon, 8 May 2006 09:23:28 +0000
+
+dnsmasq (2.31-1) unstable; urgency=high
+
+   * New upstream. (closes: #364800)
+   * Compile in Dbus support now that suitable Dbus packages exist.
+   * Don't stop an old dnsmasq process, until a new one is ready, 
+     when upgrading. (closes: #366224)
+   * Move to standards-version 3.7.2 (no changes needed).
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sat, 6 May 2006 11:58:22 +0000
+
+dnsmasq (2.30-1) unstable; urgency=low
+
+   * New upstream, fixes crash with DHCP broadcast replies.
+				
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sun, 23 Apr 2006 14:58:22 +0000
+
+dnsmasq (2.29-1) unstable; urgency=low
+
+   * New upstream. (closes: #363244) (closes: #363340)
+   * Made config options clearer in src/config.h and 
+     clarify ISC integration status in Debian readme. (closes: #364250)
+			
+ -- Simon Kelley <simon@thekelleys.org.uk>  Tue, 18 Apr 2006 10:26:12 +0000
+
+dnsmasq (2.28-1) unstable; urgency=low
+
+   * New upstream. (closes: #359956) (closes: #362499)
+   * Added firestarter info to FAQ. (closes: #359139)
+		
+ -- Simon Kelley <simon@thekelleys.org.uk>  Tue, 14 Mar 2006 19:20:12 +0000
+
+dnsmasq (2.27-1) unstable; urgency=low
+
+   * New upstream.
+   * Workaround buggy Microsoft DHCP clients. (closes: #355008)
+		
+ -- Simon Kelley <simon@thekelleys.org.uk>  Wed, 1 Feb 2006 17:05:12 +0000
+
+dnsmasq (2.26-1) unstable; urgency=high
+
+   * New upstream. (Fixes possible crash in 2.25, hence urgency).
+		
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sun, 22 Jan 2006 11:05:22 +0000
+
+dnsmasq (2.25-1) unstable; urgency=low
+
+   * Remove bashisms in postinst and prerm scripts.
+   * Remove misconcieved dependency on locales.	
+   * Depend on adduser.
+		
+ -- Simon Kelley <simon@thekelleys.org.uk>  Thu, 01 Dec 2005 21:02:12 +0000
+
+dnsmasq (2.24-1) unstable; urgency=low
+
+   * New upstream. (closes: #330422)
+   * Fix typo and clean up dnsmasq.conf (closes: #326057) (closes: #304446)
+   * Add build support for I18N and gettext.
+   * Fixed manpage typos. (closes: #336413)
+   * Create a dnsmasq-unique userid for the daemon to run as. (closes: #338353)
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sat, 03 Sep 2005 20:02:32 +0000
+
+dnsmasq (2.23-1) unstable; urgency=low
+
+   * New upstream. (closes: #302501) (closes: #315794)
+   * Fix manpage typos. (closes: #304984)
+   * Add support for DNSMASQ_EXCEPT in /etc/defaults/dnsmasq.
+     putting "lo" in this also disables resolvconf support.
+   * No longer delete pre-existing /etc/init.d symlinks. The 
+     change in default runlevels which neccesitated this 
+     is now ancient history and anyway the startup script now 
+     behaves when called twice. (closes: #312111)
+   * Tightened config-file parser. (closes: #317030)
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Tue, 02 Aug 2005 13:17:22 +0000
+
+dnsmasq (2.22-2) unstable; urgency=low
+
+   * Make the resolv.conf polling code resistant to 
+     backwards-moving system clocks. (closes: #306117) (closes: #300694)
+        
+ -- Simon Kelley <simon@thekelleys.org.uk>  Wed, 04 May 2005 13:25:23 +0000
+
+dnsmasq (2.22-1) unstable; urgency=low
+
+   * New upstream.
+   * Fixed broken-ness when read /etc/ethers. (closes: #301999)
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Thur, 24 Mar 2005 17:10:13 +0000
+
+dnsmasq (2.21-1) unstable; urgency=low
+
+   * New upstream.
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sat, 29 Jan 2005 16:05:13 +0000
+
+dnsmasq (2.20-1) unstable; urgency=low
+
+   * New upstream.
+   * Fix shadowed CNAME-target problem. (closes: #286654)
+   * Add --localise-queries option. (closes: #291367)
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Fri, 17 Dec 2004 17:35:23 +0000
+
+dnsmasq (2.19-1) unstable; urgency=high
+
+   * New upstream.
+   * Fix another IPv6 interface enumeration problem. (closes: #285182)
+   * Uploading at high priority since 285182 is really RC.
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sat, 11 Dec 2004 20:39:33 +0000
+
+dnsmasq (2.18-2) unstable; urgency=low
+
+   * Revert startup to not start from rcS. Starting in rcS
+   * causes problems if interfaces are not available at that
+   * point. Users who need this facility should  manually 
+   * make rcS.d symlinks. (closes: #283239)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sat, 27 Nov 2004 16:33:12 +0000
+	
+dnsmasq (2.18-1) unstable; urgency=low
+
+   * New upstream.
+   * Reset cache statistics when clearing the cache. (closes: #281817)
+   * Fix problems with bind-interfaces and IPv6. (closes: #282192)
+   * Fix problems upgrading when restarting dnsmasq fails.
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Tue, 16 Nov 2004 17:33:32 +0000
+
+dnsmasq (2.17-1) unstable; urgency=high
+
+   * New upstream - fixes crash, hence high urgency. 
+   * Clarified log message when a record in /etc/hosts 
+     and a DHCP name clash. (closes: #275420)
+   * Start dnsmasq just before portmap and nfs mounts from rcS.d
+     DNS is required at this stage to use the net. (closes: #280434)
+   * Make "bind-interfaces" apply to IPv6 interfaces. (closes: #278492)
+   * Allow a list if interfaces as arg to the --interface and
+     --except-interface options. (closes: #279063) 
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Tue, 26 Oct 2004 20:39:33 +0000
+
+dnsmasq (2.16-2) unstable; urgency=high
+
+   * Rename variable in cache.c which clashes with C headers
+     under gcc-3.4 (closes: #277893)
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Mon, 25 Oct 2004 16:03:24 +0000
+
+dnsmasq (2.16-1) unstable; urgency=high
+
+   * New upstream.
+   * Fixes interaction with Linux 2.4.x and 2.6.x not-quite-POSIX
+     select behavior, which can cause hangs when receiving UDP
+     packets with bad checksum.
+   * Fix bad interaction with polipo. (closes: #275754)
+   * Cache CNAMEs better. (closes: #276289)
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Mon, 04 Oct 2004 15:25:44 +0000
+
+dnsmasq (2.15-1) unstable; urgency=low
+
+   * New upstream.
+   * Fix NXDOMAIN/NODATA confusion for locally known names. (closes: #271564)
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Wed, 15 Sep 2004 15:01:44 +0000
+
+dnsmasq (2.14-1) unstable; urgency=low
+
+   * New upstream.
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sat, 28 Aug 2004 20:39:33 +0000
+
+dnsmasq (2.13-1) unstable; urgency=high
+
+   * New upstream - fixes crash. (closes #265313)
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Thur, 12 Aug 2004 12:45:23 +0000
+
+dnsmasq (2.12-1) unstable; urgency=low
+
+   * New upstream.
+   * Log types of incoming queries (closes: #230123).
+   * Don't set "filterwin2k" by default in the included
+     config file - it breaks SRV lookups and Kerberos.
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sun, 8 Aug 2004 19:58:13 +0000
+
+dnsmasq (2.11-1) unstable; urgency=low
+
+   * New upstream.
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Wed, 28 July 2004 21:59:33 +0000
+
+dnsmasq (2.10-1) unstable; urgency=low
+
+   * New upstream.
+   * Allow query-port less than 1024 (closes: #236586)
+   * Change behaviour of --bogus-priv (closes: #254711)
+   * Match existing leases by MAC address when a client stops
+     using client-id or they get suppressed by dnsmasq. (closes: #258519)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Thur, 24 June 2004 20:55:42 +0000
+
+dnsmasq (2.9-2) unstable; urgency=low
+
+   * Fix typo in debian/control (closes: #255762)
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Wed, 23 Jun 2004 20:40:13 +0000
+
+dnsmasq (2.9-1) unstable; urgency=low
+
+   * New upstream.
+   * New version has improved server selection logic (closes: #251097)
+   * Improved initscript (closes: #252229)
+   * Conflict with old resolvconf versions to maintain compatibility.
+   * Updated README.debian (closes: #253429)
+   * Changed startup message to mention DHCP as well as DNS.
+   * New resolvconf update script (closes: #254765)
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Wed, 26 May 2004 12:35:23 +0000
+
+dnsmasq (2.8-1) unstable; urgency=low
+
+   * New upstream.
+   * Fixes problem with zero-length hostnames which can lose
+     DHCP leases over a restart. (closes: #248829)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Thur, 13 May 2004 18:40:12 +0000
+	
+dnsmasq (2.7-2) unstable; urgency=low
+
+   * New version of resolvconf script from Thomas Hood with the 
+     following changes: (closes: #247695)
+   * Doesn't include nameservers listed in the lo.inet or lo.inet6 interface
+     records created by "ifup lo"
+   * Lists addresses in a specified order (by interface name)
+   * Eliminates duplicate nameserver addresses
+   * Updates /var/run/dnsmasq/resolv.conf atomically
+   * Doesn't generate empty lines
+        
+ -- Simon Kelley <simon@thekelleys.org.uk>  Tue, 11 May 2004 22:35:12 +0000
+
+dnsmasq (2.7-1) unstable; urgency=low
+
+   * New upstream.
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sun, 18 Apr 2004 20:00:23 +0000
+
+dnsmasq (2.6-3) unstable; urgency=low
+
+   * Removed reload command from start script and moved force-reload
+     to be equivalent to restart. This is needed to be policy compliant
+     since SIHGUP doesn't cause dnsmasq to reload its configuration file,
+     only the /etc/hosts, /etc/resolv.conf etc. (closes: #244208)
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sun, 18 Apr 2004 14:40:51 +0000
+
+dnsmasq (2.6-2) unstable; urgency=low
+
+   * Added Conflict with pdnsd (closes: #242731).
+     Rationale: dnsmasq used to conflict with all the DNS servers
+     in Debian, but that was removed because some people wished
+     to run with dnsmasq listening on one interface and another DNS
+     server listening on another interface. However AFAIK it is not
+     possible to make pdnsd listen on a subset of a hosts interfaces,
+     so there is no scenario where running pdnsd and dnsmasq on the same
+     host would be useful, hence the conflict goes back.
+   * Added note about the --bind-interfaces option to
+     readme.Debian (closes: #241700)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Tues, 13 Apr 2004 18:37:55 +0000
+      
+dnsmasq (2.6-1) unstable; urgency=low
+
+   * New upstream.
+   * New version adds back ability to read ISC dhcpd lease files
+     for backwards compatibility. (closes: #229684) (closes: #236421)
+   * Fix parsing of # characters in options file. (closes: #241199)
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sun, 21 Mar 2004 19:59:25 +0000
+      
+dnsmasq (2.5-1) unstable; urgency=low
+
+   * New upstream, includes fix for IP-alias related 
+     problem. (closes: #238268)
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sun, 14 Mar 2004 08:32:43 +0000
+
+dnsmasq (2.4-3) unstable; urgency=low
+
+   * Fixed "bind-interfaces" option, even when
+     an "interface" option is given also.
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Fri, 12 Mar 2004 08:14:23 +0000
+
+dnsmasq (2.4-2) unstable; urgency=low
+
+   * Fixed "bind-interfaces" option (closes: #237543).
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Fri, 12 Mar 2004 07:30:25 +0000
+
+dnsmasq (2.4-1) unstable; urgency=low
+
+   * New upstream.
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Thurs, 11 Mar 2004 07:59:55 +0000
+
+dnsmasq (2.3-1) unstable; urgency=low
+
+   * New upstream.
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Tues, 03 Feb 2004 20:33:10 +0000
+
+dnsmasq (2.2-1) unstable; urgency=low
+
+   * New upstream. (fixes no DHCP with IPv6 problem)
+   * Restart (old) daemon on abort-upgrade. (closes: #230286)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Fri, 30 Jan 2004 10:23:00 +0000
+
+dnsmasq (2.1-1) unstable; urgency=low
+
+   * New upstream.
+   * Allow addresses in /etc/hosts to be used for 
+     DHCP leases (closes: #229681)
+   * Fix lease time processing. (closes: #229682) (closes: #229687)
+   * Fix example conf file. (closes: #229683) (closes: #229701)
+   * Allow address 0.0.0.0 to mean "self" in dhcp-option. (closes: #229685)
+   * Cope with ENODEV return from bind of 
+     IPv6 server socket (closes: #229607) 
+   * Document the strict-order option in dnsmasq.conf (closes: #229272)
+   * Fix local-only domain setting. (closes: #229846)
+   * Updates Debian readme to mention resolvconf and point at the
+     local copy of RFC2132.
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Fri,  23 Jan 2004 14:38:29 +0000
+
+dnsmasq (2.0-1) unstable; urgency=low
+
+   * New upstream: This removes the ability to read the 
+     the leases file of ISC DHCP and replaces it with a built-in 
+     DHCP server. Apologies in advance for breaking backwards 
+     compatibilty, but this replaces a bit of a hack (the ISC stuff)
+     with a nicely engineered and much more apropriate solution.
+     Wearing my upstream-maintainer hat, I want to lose the hack now,
+     rather than have to support it into Sarge.
+   * New upstream closes some bugs since they become 
+     irrelevant. (closes: #197295)
+   * Ensure that /var/run and /var/lib/misc exist.
+   * Remove sed dependency, which was a mistake.
+   * Remove extraneous "build" file. (closes: #226994)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sun,  16 Jan 2004 19:35:49 +0000
+
+dnsmasq (1.18-2) unstable; urgency=low
+        
+   * Fixed manpage typo (closes: #220961)
+   * Added dependency for sed. (closes: #222401)
+   * Check for complete resolvconf installation before 
+     calling it. (closes: #223442)
+   * Added Links section to doc.html
+        
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sat, 27 Dec 2003 20:21:15 +0000
+   
+dnsmasq (1.18-1) unstable; urgency=low
+
+   * New upstream which does round-robin. (closes: #215460)
+   * Removed conflicts with other dns servers since it is now
+     possible to control exactly where dnsmasq listens on multi-homed 
+     hosts, making co-existance with another nameserver 
+     a viable proposition. (closes #176163)
+   * New upstream allows _ in hostnames and check for illegal
+     names in /etc/hosts. (closes: #218842)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Fri, 17 Oct 2003 16:23:14 +0000
+
+dnsmasq (1.17-1) unstable; urgency=high
+
+   * New upstream (closes: #212680)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Wed,  8 Oct 2003 14:38:29 +0000
+
+dnsmasq (1.16-1) unstable; urgency=low
+  
+   * New upstream.
+   * Renamed Debian README to the standard README.Debian. (closes: #211577)
+   * Updated the installed /etc/dnsmasq.conf to reflect new options.
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Tues, 16 Sep 2003 23:18:59 +0000
+
+dnsmasq (1.15-1) unstable; urgency=low
+  
+   * New upstream.
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Tues, 16 Sep 2003 21:48:49 +0000
+
+dnsmasq (1.14-1) unstable; urgency=low
+  
+   * New upstream.
+   * Use invoke-rc.d in postinst and prerm scripts when available.
+   * Stop dnsmasq later (at priority 85). (closes: #200625)
+   * Updated /etc/resolvconf/update.d/dnsmasq. (closes: #202609)
+   * Suggest resolvconf. (closes: #208093)
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Tues,  2 Sep 2003 16:43:29 +0000
+
+dnsmasq (1.13-4) unstable; urgency=high
+  
+   * Ignore failures in stopping existing dnsmasq 
+     processes. (closes: #204127) (closes: #204129)
+   * Added download source to copyright. (closes: #206647)
+	
+ -- Simon Kelley <simon@thekelleys.org.uk>  Tues, 2 Sep 2003 15:28:28 +0000
+
+dnsmasq (1.13-3) unstable; urgency=low
+  
+   * Moved /etc/resolvconf/update.d/dnsmasq script into this package.
+   * Don't call resolvconf from /etc/init.d/dnsmasq if dnsmasq fails
+     to start. (Patch from Thomas Hood.)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Mon,  7 Jul 2003 20:55:29 +0000
+
+dnsmasq (1.13-2) unstable; urgency=low
+  
+   * Added support for the resolvconf nameserver configuration package.
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sun, 22 Jun 2003 20:30:19 +0000
+
+dnsmasq (1.13-1) unstable; urgency=low
+
+   * New upstream.
+   * Added new options to the default dnsmasq.conf.
+   * Default config now reads /var/lib/dhcp/dhcp.leases (closes: #195185)
+   * Added option to disable negative caching. (closes: #194274)
+   * Added David Coe's query port patch. (closes: #196578)
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sat, 31 May 2003 18:10:29 +0000
+
+dnsmasq (1.12-1) unstable; urgency=low
+
+   * New upstream.
+   * Added examples of "local" and "address" options to dnsmasq.conf.
+   * Remove /usr/doc symlink code.
+   * Remove period from end of description field.
+  
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sat, 8 Mar 2003 12:16:09 +0000
+
+dnsmasq (1.11-2) unstable; urgency=low
+
+   * Fixed thinko in example dnsmasq.conf. (closes: #180410)
+  
+ -- Simon Kelley <simon@thekelleys.org.uk>  Mon, 24 Feb 2003 20:06:19 +0000
+
+dnsmasq (1.11-1) unstable; urgency=low
+
+   * New uptream.
+  
+ -- Simon Kelley <simon@thekelleys.org.uk>  Tues, 12 Jan 2003 22:25:17 -0100
+
+dnsmasq (1.10-1) unstable; urgency=low
+
+   * New uptream.
+   * Force service to stop in postinst before restarting. I don't
+     understand the circumstances under which it would still be running at
+     this point, but this is the correct fix anyway. (closes: #169718) 
+   * Add /etc/dnsmasq.conf as a conffile and add a comment to 
+     /etc/default/dnsmasq deprecating its use and recommending 
+     /etc/dnsmasq.conf instead, since upstream now supports this.
+  
+ -- Simon Kelley <simon@thekelleys.org.uk>  Mon, 9 Oct 2002 19:05:34 -0100
+
+dnsmasq (1.9-1) unstable; urgency=low
+
+   * New uptream.
+  
+ -- Simon Kelley <simon@thekelleys.org.uk>  Mon, 23 Sept 2002 21:35:07 -0100
+
+dnsmasq (1.8-1) unstable; urgency=low
+  
+   * New upstream.
+    
+ -- Simon Kelley <simon@thekelleys.org.uk>  Mon, 12 Aug 2002 21:56:17 -0100
+
+dnsmasq (1.7-1) unstable; urgency=low
+  
+   * New upstream including better group-id manipulation. (closes: #152212)
+   * Conflict with bind9 (closes: #151812)
+   * Added more options to startup script. (closes: #148535)
+    
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sun, 14 July 2002 20:23:14 -0100
+
+dnsmasq (1.6-1) unstable; urgency=low
+  
+   * New upstream.
+   * Fixed documentation typos. (closes: #144637)
+   * Fixed failure to remove package if daemon not running. (closes: #147083)
+   * Changed upload to tarball-and-diff. (closes: #144638)
+  
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sun, 19 May 2002 22:30:17 -0100
+
+dnsmasq (1.5-1) unstable; urgency=medium
+  
+   * New upstream (includes hotmail.com fix).
+   * Fixed DHCP lease file bug. (closes: #143778)
+   * Fixed failure of "reload" command in startup script (closes: #141021)
+   * Allow more than one interface name in the DNSMASQ_INTERFACE variable.
+  
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sun, 14 Apr 2002 16:39:13 -0100
+  
+dnsmasq (1.4-2) unstable; urgency=low
+  
+    * Fixed snafu in startup script (closes: #139760)
+  
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sun, 24 Mar 2002 23:06:18 +0000
+  
+dnsmasq (1.4-1) unstable; urgency=low
+  
+  * New upstream
+  
+ -- Simon Kelley <simon@thekelleys.org.uk>  Thurs, 7 Mar 2002 21:02:05 +0000
+  
+dnsmasq (1.3-1) unstable; urgency=low
+  
+  * New upstream
+
+ -- Simon Kelley <simon@thekelleys.org.uk>  Fri, 15 Feb 2002 20:45:01 +0000
+  
+dnsmasq (1.2-4) unstable; urgency=low
+  
+  * Updated standards-version.
+  * More aggressive strip of binaries.
+  * Added depends: netbase.
+  * distribution->unstable for upload.
+  * Updated readme.Debian since config in /etc/default/dnsmasq now.
+  * Updated readme.Debian to reflect fact that this package is official now!
+ 
+ -- Simon Kelley <simon@thekelleys.org.uk>  Fri, 15 Feb 2002 20:45:01 +0000
+  
+dnsmasq (1.2-3) stable; urgency=low
+  
+  * Added Suggests: and Conflicts: fields to control file.
+  
+ -- Simon Kelley <simon@thekelleys.org.uk>  Thurs, 14 Feb 2002 20:33:47 +0000
+  
+dnsmasq (1.2-2) stable; urgency=low
+ 
+  * Many packaging fixes, to please lintian
+  * Added extended description.
+  * Fixed copyright file.
+  * Compressed everything in /usr/share/doc/dnsmasq.
+  * Added code to remove /usr/doc/dnsmasq to prerm script.
+  * Moved configuration from /etc/init.d/dnsmasq to /etc/default/dnsmasq
+  
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sat, 02 Feb 2002 18:54:37 +0000
+  
+dnsmasq (1.2-1) stable; urgency=low
+ 
+  * New upstream
+  * Added more options to startup script
+  
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sat, 20 Dec 2001 21:15:07 +0000
+
+dnsmasq (1.1-2) stable; urgency=low
+ 
+  * New upstream
+  * Strip binary
+  * Moved manpage from section 1 to section 8
+  
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sat, 21 Oct 2001 17:32:04 -0100
+
+dnsmasq (1.0-1) unstable; urgency=low
+ 
+  * New upstream
+  
+ -- Simon Kelley <simon@thekelleys.org.uk>  Sat, 10 Oct 2001 15:52:06 -0100
+  
+dnsmasq (0.996-1) unstable; urgency=low
+  
+  * New upstream
+  
+ -- Simon Kelley <simon@thkelleys.org.uk>  Fri, 26 Oct 2001 10:32:06 -0100
+
+dnsmasq (0.995-1) unstable; urgency=low
+  
+  * New upstream
+  
+ -- Simon Kelley <simon@thkelleys.org.uk>  Tue, 09 Oct 2001 16:39:07 -0100
+
+dnsmasq (0.994-1) unstable; urgency=low
+  
+  * New upstream
+  
+ -- Simon Kelley <simon@thkelleys.org.uk>  Sat, 07 Oct 2001 15:45:04 -0100
+
+dnsmasq (0.992-1) unstable; urgency=low
+
+  * New upstream
+
+ -- Simon Kelley <simon@thkelleys.org.uk>  Fri, 31 Aug 2001 16:17:00 -0100
+
+dnsmasq (0.98-1) unstable; urgency=low
+
+  * New upstream
+
+ -- Simon Kelley <simon@thkelleys.org.uk>  Wed, 11 Jul 2001 11:31:00 -0100
+
+dnsmasq (0.96-1) unstable; urgency=low
+
+  * Fixed thinko in cache code..
+
+ -- Simon Kelley <simon@thkelleys.org.uk>  Sat, 07 Jul 2001 18:52:00 -0100
+
+dnsmasq (0.95-1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Simon Kelley <simon@thkelleys.org.uk>  Sat, 29 Aug 1998 20:27:27 -0400
+
+
+  
+  
+  
+  
+  
+  
+  
+  

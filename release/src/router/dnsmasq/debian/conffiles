@@ -1,0 +1,5 @@
+/etc/init.d/dnsmasq
+/etc/default/dnsmasq
+/etc/dnsmasq.conf
+/etc/resolvconf/update.d/dnsmasq
+/etc/insserv.conf.d/dnsmasq

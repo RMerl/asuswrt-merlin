@@ -1,0 +1,42 @@
+Source: dnsmasq
+Section: net
+Priority: optional
+Build-depends: gettext, libnetfilter-conntrack-dev [linux-any], libidn11-dev, libdbus-1-dev (>=0.61)
+Maintainer: Simon Kelley <simon@thekelleys.org.uk>
+Standards-Version: 3.9.3
+
+Package: dnsmasq
+Architecture: all
+Depends: netbase, dnsmasq-base(>= ${binary:Version})
+Suggests: resolvconf
+Conflicts: resolvconf (<<1.15)
+Description: Small caching DNS proxy and DHCP/TFTP server
+ Dnsmasq is a lightweight, easy to configure, DNS forwarder and DHCP
+ server. It is designed to provide DNS and optionally, DHCP, to a 
+ small network. It can serve the names of local machines which are 
+ not in the global DNS. The DHCP server integrates with the DNS 
+ server and allows machines with DHCP-allocated addresses
+ to appear in the DNS with names configured either in each host or
+ in a central configuration file. Dnsmasq supports static and dynamic 
+ DHCP leases and BOOTP/TFTP for network booting of diskless machines.
+
+Package: dnsmasq-base
+Architecture: any
+Depends: adduser, ${shlibs:Depends}
+Breaks: dnsmasq (<< 2.63-1~)
+Replaces: dnsmasq (<< 2.63-1~)
+Description: Small caching DNS proxy and DHCP/TFTP server
+ This package contains the dnsmasq executable and documentation, but
+ not the infrastructure required to run it as a system daemon. For
+ that, install the dnsmasq package.
+
+Package: dnsmasq-utils
+Architecture: linux-any
+Depends: ${shlibs:Depends}
+Conflicts: dnsmasq (<<2.40)
+Description: Utilities for manipulating DHCP leases
+ Small utilities to query a DHCP server's lease database and
+ remove leases from it. These programs are distributed with dnsmasq
+ and may not work correctly with other DHCP servers.
+
+ 

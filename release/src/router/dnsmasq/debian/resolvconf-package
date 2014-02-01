@@ -1,0 +1,13 @@
+#!/bin/sh
+# Resolvconf packaging event hook script for the dnsmasq package
+restart_dnsmasq() {
+    if which invoke-rc.d >/dev/null 2>&1 ; then
+        invoke-rc.d dnsmasq restart
+    elif [ -x /etc/init.d/dnsmasq ] ; then
+        /etc/init.d/dnsmasq restart
+    fi
+}
+
+case "$1" in
+  install) restart_dnsmasq ;;
+esac

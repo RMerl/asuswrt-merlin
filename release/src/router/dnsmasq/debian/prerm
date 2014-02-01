@@ -1,0 +1,14 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "remove" ]; then
+  if [ -x /usr/sbin/invoke-rc.d ] ; then
+      invoke-rc.d dnsmasq stop || true
+  else
+      /etc/init.d/dnsmasq stop || true
+  fi
+fi
+
+exit 0
+
+

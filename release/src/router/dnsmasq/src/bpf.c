@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2013 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2014 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,9 +19,9 @@
 #if defined(HAVE_BSD_NETWORK) || defined(HAVE_SOLARIS_NETWORK)
 #include <ifaddrs.h>
 
-#if defined(HAVE_BSD_NETWORK) && !defined(__APPLE__)
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#include <net/if.h>
 #include <net/route.h>
 #include <net/if_dl.h>
 #include <netinet/if_ether.h>
@@ -29,7 +29,9 @@
 #  include <net/if_var.h> 
 #endif
 #include <netinet/in_var.h>
-#include <netinet6/in6_var.h>
+#ifdef HAVE_IPV6
+#  include <netinet6/in6_var.h>
+#endif
 
 #ifndef SA_SIZE
 #define SA_SIZE(sa)                                             \
@@ -37,6 +39,13 @@
         sizeof(long)            :                               \
         1 + ( (((struct sockaddr *)(sa))->sa_len - 1) | (sizeof(long) - 1) ) )
 #endif
+
+#ifdef HAVE_BSD_NETWORK
+static int del_family = 0;
+static struct all_addr del_addr;
+#endif
+
+#if defined(HAVE_BSD_NETWORK) && !defined(__APPLE__)
 
 int arp_enumerate(void *parm, int (*callback)())
 {
@@ -88,7 +97,7 @@ int arp_enumerate(void *parm, int (*callback)())
 
   return 1;
 }
-#endif
+#endif /* defined(HAVE_BSD_NETWORK) && !defined(__APPLE__) */
 
 
 int iface_enumerate(int family, void *parm, int (*callback)())
@@ -129,6 +138,10 @@ int iface_enumerate(int family, void *parm, int (*callback)())
 	    {
 	      struct in_addr addr, netmask, broadcast;
 	      addr = ((struct sockaddr_in *) addrs->ifa_addr)->sin_addr;
+#ifdef HAVE_BSD_NETWORK
+	      if (del_family == AF_INET && del_addr.addr.addr4.s_addr == addr.s_addr)
+		continue;
+#endif
 	      netmask = ((struct sockaddr_in *) addrs->ifa_netmask)->sin_addr;
 	      if (addrs->ifa_broadaddr)
 		broadcast = ((struct sockaddr_in *) addrs->ifa_broadaddr)->sin_addr; 
@@ -146,6 +159,10 @@ int iface_enumerate(int family, void *parm, int (*callback)())
 	      int i, j, prefix = 0;
 	      u32 valid = 0xffffffff, preferred = 0xffffffff;
 	      int flags = 0;
+#ifdef HAVE_BSD_NETWORK
+	      if (del_family == AF_INET6 && IN6_ARE_ADDR_EQUAL(&del_addr.addr.addr6, addr))
+		continue;
+#endif
 #if defined(HAVE_BSD_NETWORK) && !defined(__APPLE__)
 	      struct in6_ifreq ifr6;
 
@@ -226,7 +243,7 @@ int iface_enumerate(int family, void *parm, int (*callback)())
 
   return ret;
 }
-#endif
+#endif /* defined(HAVE_BSD_NETWORK) || defined(HAVE_SOLARIS_NETWORK) */
 
 
 #if defined(HAVE_BSD_NETWORK) && defined(HAVE_DHCP)
@@ -345,6 +362,87 @@ void send_via_bpf(struct dhcp_packet *mess, size_t len,
   while (writev(daemon->dhcp_raw_fd, iov, 4) == -1 && retry_send());
 }
 
+#endif /* defined(HAVE_BSD_NETWORK) && defined(HAVE_DHCP) */
+ 
+
+#ifdef HAVE_BSD_NETWORK
+
+void route_init(void)
+{
+  /* AF_UNSPEC: all addr families */
+  daemon->routefd = socket(PF_ROUTE, SOCK_RAW, AF_UNSPEC);
+  
+  if (daemon->routefd == -1 || !fix_fd(daemon->routefd))
+    die(_("cannot create PF_ROUTE socket: %s"), NULL, EC_BADNET);
+}
+
+void route_sock(time_t now)
+{
+  struct if_msghdr *msg;
+  int rc = recv(daemon->routefd, daemon->packet, daemon->packet_buff_sz, 0);
+
+  if (rc < 4)
+    return;
+
+  msg = (struct if_msghdr *)daemon->packet;
+  
+  if (rc < msg->ifm_msglen)
+    return;
+
+   if (msg->ifm_version != RTM_VERSION)
+     {
+       static int warned = 0;
+       if (!warned)
+	 {
+	   my_syslog(LOG_WARNING, _("Unknown protocol version from route socket"));
+	   warned = 1;
+	 }
+     }
+   else if (msg->ifm_type == RTM_NEWADDR)
+     {
+       del_family = 0;
+       newaddress(now);
+     }
+   else if (msg->ifm_type == RTM_DELADDR)
+     {
+       /* There's a race in the kernel, such that if we run iface_enumerate() immediately
+	  we get a DELADDR event, the deleted address still appears. Here we store the deleted address
+	  in a static variable, and omit it from the set returned by iface_enumerate() */
+       int mask = ((struct ifa_msghdr *)msg)->ifam_addrs;
+       int maskvec[] = { RTA_DST, RTA_GATEWAY, RTA_NETMASK, RTA_GENMASK,
+			 RTA_IFP, RTA_IFA, RTA_AUTHOR, RTA_BRD };
+       int of;
+       unsigned int i;
+       
+       for (i = 0,  of = sizeof(struct ifa_msghdr); of < rc && i < sizeof(maskvec)/sizeof(maskvec[0]); i++) 
+	 if (mask & maskvec[i]) 
+	   {
+	     struct sockaddr *sa = (struct sockaddr *)((char *)msg + of);
+	     size_t diff = (sa->sa_len != 0) ? sa->sa_len : sizeof(long);
+	     
+	     if (maskvec[i] == RTA_IFA)
+	       {
+		 del_family = sa->sa_family;
+		 if (del_family == AF_INET)
+		   del_addr.addr.addr4 = ((struct sockaddr_in *)sa)->sin_addr;
+#ifdef HAVE_IPV6
+		 else if (del_family == AF_INET6)
+		   del_addr.addr.addr6 = ((struct sockaddr_in6 *)sa)->sin6_addr;
 #endif
+		 else
+		   del_family = 0;
+	       }
+	     
+	     of += diff;
+	     /* round up as needed */
+	     if (diff & (sizeof(long) - 1)) 
+	       of += sizeof(long) - (diff & (sizeof(long) - 1));
+	   }
+       
+       newaddress(now);
+     }
+}
+
+#endif /* HAVE_BSD_NETWORK */
 
 

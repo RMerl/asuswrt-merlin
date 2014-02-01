@@ -1,0 +1,33 @@
+# This file has five functions: 
+# 1) to completely disable starting dnsmasq, 
+# 2) to set DOMAIN_SUFFIX by running `dnsdomainname` 
+# 3) to select an alternative config file
+#    by setting DNSMASQ_OPTS to --conf-file=<file>
+# 4) to tell dnsmasq to read the files in /etc/dnsmasq.d for
+#    more configuration variables.
+# 5) to stop the resolvconf package from controlling dnsmasq's
+#    idea of which upstream nameservers to use.
+# For upgraders from very old versions, all the shell variables set 
+# here in previous versions are still honored by the init script
+# so if you just keep your old version of this file nothing will break.
+
+#DOMAIN_SUFFIX=`dnsdomainname`
+#DNSMASQ_OPTS="--conf-file=/etc/dnsmasq.alt"
+
+# Whether or not to run the dnsmasq daemon; set to 0 to disable.
+ENABLED=1
+
+# By default search this drop directory for configuration options.
+# Libvirt leaves a file here to make the system dnsmasq play nice.
+# Comment out this line if you don't want this. The dpkg-* are file
+# endings which cause dnsmasq to skip that file. This avoids pulling
+# in backups made by dpkg.
+CONFIG_DIR=/etc/dnsmasq.d,.dpkg-dist,.dpkg-old,.dpkg-new
+
+# If the resolvconf package is installed, dnsmasq will use its output 
+# rather than the contents of /etc/resolv.conf to find upstream 
+# nameservers. Uncommenting this line inhibits this behaviour.
+# Not that including a "resolv-file=<filename>" line in 
+# /etc/dnsmasq.conf is not enough to override resolvconf if it is
+# installed: the line below must be uncommented.
+#IGNORE_RESOLVCONF=yes
