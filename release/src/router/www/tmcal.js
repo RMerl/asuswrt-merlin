@@ -213,8 +213,8 @@ function loadData()
 					if (t > h.tx_max) h.tx_max = t;
 					h.tx_total += t;
 				}
-				h.rx_avg = h.rx_total / h.count;
-				h.tx_avg = h.tx_total / h.count;
+				h.rx_avg = h.rx_total / (h.count ? h.count : updateMaxL);
+				h.tx_avg = h.tx_total / (h.count ? h.count : updateMaxL);
 			}
 
 			if (updateDiv > 1) {
