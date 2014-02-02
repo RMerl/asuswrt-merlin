@@ -551,6 +551,11 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.4.374.40 (xx-xxx-2014)
+   - FIXED: Last24 page wasn't properly displaying the 
+            Avg value (regression from 374.39)
+
+
 3.0.0.4.374.39 (31-Jan-2014)
    - NEW: Merged with Asus 374_583 GPL.  Notable changes:
       * USB hub support
