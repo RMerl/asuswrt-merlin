@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2013 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2014 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -399,13 +399,13 @@ void dhcp_update_configs(struct dhcp_config *configs)
 	    if (cache_find_by_name(crec, config->hostname, 0, cacheflags))
 	      {
 		/* use primary (first) address */
-	      while (crec && !(crec->flags & F_REVERSE))
-		crec = cache_find_by_name(crec, config->hostname, 0, cacheflags);
-	      if (!crec)
-		continue; /* should be never */
-	      inet_ntop(prot, &crec->addr.addr, daemon->addrbuff, ADDRSTRLEN);
-	      my_syslog(MS_DHCP | LOG_WARNING, _("%s has more than one address in hostsfile, using %s for DHCP"), 
-			config->hostname, daemon->addrbuff);
+		while (crec && !(crec->flags & F_REVERSE))
+		  crec = cache_find_by_name(crec, config->hostname, 0, cacheflags);
+		if (!crec)
+		  continue; /* should be never */
+		inet_ntop(prot, &crec->addr.addr, daemon->addrbuff, ADDRSTRLEN);
+		my_syslog(MS_DHCP | LOG_WARNING, _("%s has more than one address in hostsfile, using %s for DHCP"), 
+			  config->hostname, daemon->addrbuff);
 	      }
 	    
 	    if (prot == AF_INET && 
