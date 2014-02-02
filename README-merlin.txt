@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.4.374.39 (xx-xxx-2014)
+Asuswrt-Merlin - build 3.0.0.4.374.40 (xx-xxx-2014)
 ===================================================
 
 About
@@ -551,7 +551,12 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.4.374.39 (xx-xxx-2014)
+3.0.0.4.374.40 (xx-xxx-2014)
+   - FIXED: Last24 page wasn't properly displaying the 
+            Avg value (regression from 374.39)
+
+
+3.0.0.4.374.39 (31-Jan-2014)
    - NEW: Merged with Asus 374_583 GPL.  Notable changes:
       * USB hub support
    - NEW: DNS-based filtering.  Under Parental Control there is
@@ -575,10 +580,12 @@ History
   - CHANGED: Additional webui performance improvement by caching CSS.
   - FIXED: DHCPv6 client failing to start if the router username was 
            changed from "admin" (Asus bug) (patch from Saintdev)
-  - FIXED: DHCPv6 client failing to request an IP on some 
-           configurations (Asus bug) (patch from Saintdev)
+  - FIXED: DHCPv6 client failing to request an IP with some ISPs 
+           such as Comcast (Asus bug) (patch from Saintdev)
   - FIXED: SMB shares were accessible over WAN, bypassing Netfilter
            (Asus bug) (AC56/AC68)
+  - FIXED: USB read speed would be limited by the QoS upstream
+           configuration (Asus bug) (AC56/AC68)
   - FIXED: Resolution of local machines with domain appended would fail 
            when using a nameserver that does not return nxdomain errors 
            (such as OpenDNS) (Asus bug)
