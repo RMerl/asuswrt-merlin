@@ -120,7 +120,7 @@ function gen_modeselect(name, value, onchange){
 	var code = "";
 	code +='<select class="input_option" name="'+name+'" value="'+value+'" onchange="'+onchange+'">';
 	code +='<option value="0"'+(value == 0 ? "selected" : "")+'>None</option>';
-	code +='<option value="1"'+(value == 1 ? "selected" : "")+'>OpenDNS</option>';
+	code +='<option value="1"'+(value == 1 ? "selected" : "")+'>OpenDNS Home</option>';
 	code +='<option value="7"'+(value == 7 ? "selected" : "")+'>OpenDNS Family</option>';
 	code +='<option value="2"'+(value == 2 ? "selected" : "")+'>Norton Safe</option>';
 	code +='<option value="3"'+(value == 3 ? "selected" : "")+'>Norton Family</option>';
@@ -352,7 +352,7 @@ function changeRow_main(r){
 							protection):
 							<ul>
 								<li><a target="_blank" style="font-weight: bolder; cursor:pointer;text-decoration: underline;" href="http://www.opendns.com/home-internet-security/">OpenDNS</a>
-								<ul><li>Safe = Regular OpenDNS server (manually configurable through their portal)
+								<ul><li>Home = Regular OpenDNS server (manually configurable through their portal)
 								<li>Family = Family Shield (pre-configured to block adult content)</ul>
 								<li><a target="_blank" style="font-weight: bolder; cursor:pointer;text-decoration: underline;" href="https://dns.norton.com/">Norton Connect Safe</a> (for home usage only)
 								<ul><li>Safe = Malicious content<li>Family = Malicious + Sexual content<li>Children = Malicious + Sexual + Mature content</ul>
@@ -395,7 +395,7 @@ function changeRow_main(r){
 					<td>
 						<select name="dnsfilter_mode" class="input_option">
 							<option value="0" <% nvram_match("dnsfilter_mode", "0", "selected"); %>>No filtering</option>
-							<option value="1" <% nvram_match("dnsfilter_mode", "1", "selected"); %>>OpenDNS</option>
+							<option value="1" <% nvram_match("dnsfilter_mode", "1", "selected"); %>>OpenDNS Home</option>
 							<option value="7" <% nvram_match("dnsfilter_mode", "7", "selected"); %>>OpenDNS Family</option>
 							<option value="2" <% nvram_match("dnsfilter_mode", "2", "selected"); %>>Norton Safe</option>
 							<option value="3" <% nvram_match("dnsfilter_mode", "3", "selected"); %>>Norton Family</option>
