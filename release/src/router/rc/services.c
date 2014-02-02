@@ -5572,10 +5572,11 @@ const char *dns_filter(int mode)
 		"199.85.126.20",	/* 3: Norton Connect Safe B (Security + Adult) */
 		"199.85.126.30",	/* 4: Norton Connect Safe C (Sec. + Adult + Violence */
 		"77.88.8.88",		/* 5: Secure Mode safe.dns.yandex.ru */
-		"77.88.8.7"		/* 6: Family Mode family.dns.yandex.ru */
+		"77.88.8.7",		/* 6: Family Mode family.dns.yandex.ru */
+		"208.67.222.123"	/* 7: OpenDNS Family Shield */
         };
 
-	if (mode > 6) mode = 0;
+	if (mode > 7) mode = 0;
 
 	// Unfiltered - return whichever DNS server DHCPD provides to clients, or our own IP if none defined by user
 	if (mode == 0)
