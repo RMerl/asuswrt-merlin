@@ -1222,7 +1222,9 @@ void fini_wl(void)
 	if ((get_model() == MODEL_RTAC68U) ||
 		(get_model() == MODEL_RTAC66U) ||
 		(get_model() == MODEL_RTN66U))
-	modprobe_r("wl");
+	// VSi: Use rmmod, because modprobe -r will unload igs and emf drivers,
+	// which are still used by the bridge.
+	eval("rmmod", "wl");
 #endif
 }
 
