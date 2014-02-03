@@ -1090,126 +1090,129 @@ void start_radvd(void)
 	stop_radvd();
 
 	stop_dhcp6s();
-	start_dhcp6s();
 
-	if (ipv6_enabled() && nvram_get_int("ipv6_radvd")) {
-		service = get_ipv6_service();
-		do_6to4 = (service == IPV6_6TO4);
-		do_6rd = (service == IPV6_6RD);
-		mtu = NULL;
+	if (ipv6_enabled()) {
+		if (nvram_get_int("ipv6_dhcp6s_enable")) start_dhcp6s();
 
-		switch (service) {
-		case IPV6_NATIVE_DHCP:
-		case IPV6_6TO4:
-		case IPV6_6IN4:
-		case IPV6_6RD:
-			mtu = (nvram_get_int("ipv6_tun_mtu") > 0) ? nvram_safe_get("ipv6_tun_mtu") : "1480";
-			// fall through
-		default:
-			prefix = do_6to4 ? "0:0:0:1::" : nvram_safe_get("ipv6_prefix");
-			break;
-		}
-		if (!(*prefix) || (strlen(prefix) <= 0)) prefix = "::";
+		if (nvram_get_int("ipv6_radvd")) {
+			service = get_ipv6_service();
+			do_6to4 = (service == IPV6_6TO4);
+			do_6rd = (service == IPV6_6RD);
+			mtu = NULL;
 
-		// Create radvd.conf
-		if ((f = fopen("/etc/radvd.conf", "w")) == NULL) return;
+			switch (service) {
+			case IPV6_NATIVE_DHCP:
+			case IPV6_6TO4:
+			case IPV6_6IN4:
+			case IPV6_6RD:
+				mtu = (nvram_get_int("ipv6_tun_mtu") > 0) ? nvram_safe_get("ipv6_tun_mtu") : "1480";
+				// fall through
+			default:
+				prefix = do_6to4 ? "0:0:0:1::" : nvram_safe_get("ipv6_prefix");
+				break;
+			}
+			if (!(*prefix) || (strlen(prefix) <= 0)) prefix = "::";
+
+			// Create radvd.conf
+			if ((f = fopen("/etc/radvd.conf", "w")) == NULL) return;
 #if 0
-		ip = (char *)ipv6_router_address(NULL);
+			ip = (char *)ipv6_router_address(NULL);
 #else
-		ip = getifaddr(nvram_safe_get("lan_ifname"), AF_INET6, GIF_LINKLOCAL) ? : "";
+			ip = getifaddr(nvram_safe_get("lan_ifname"), AF_INET6, GIF_LINKLOCAL) ? : "";
 #endif
 #if 0
-		do_dns = (*ip);
+			do_dns = (*ip);
 #else
-		do_dns = 0;
+			do_dns = 0;
 #endif
-		fprintf(f,
-			"interface %s\n"
-			"{\n"
-			" IgnoreIfMissing on;\n"
-			" AdvSendAdvert on;\n"
+			fprintf(f,
+				"interface %s\n"
+				"{\n"
+				" IgnoreIfMissing on;\n"
+				" AdvSendAdvert on;\n"
 #if 1
-			" MinRtrAdvInterval 3;\n"
-			" MaxRtrAdvInterval 10;\n"
+				" MinRtrAdvInterval 3;\n"
+				" MaxRtrAdvInterval 10;\n"
 #else
-			" MaxRtrAdvInterval 60;\n"
+				" MaxRtrAdvInterval 60;\n"
 #endif
-			" AdvHomeAgentFlag off;\n"
-			" AdvManagedFlag %s;\n"
-			" AdvOtherConfigFlag on;\n"
-			"%s%s%s"
-			" prefix %s/64 \n"
-			" {\n"
-			"  AdvOnLink on;\n"
-			"  AdvAutonomous %s;\n"
-			"%s"
-			"%s%s%s"
-			" };\n",
-			nvram_safe_get("lan_ifname"),
-			nvram_get_int("ipv6_autoconf_type") ? "on" : "off",
-			mtu ? " AdvLinkMTU " : "", mtu ? : "", mtu ? ";\n" : "",
-			prefix,
-			nvram_get_int("ipv6_autoconf_type") ? "off" : "on",
-			do_6to4 | do_6rd ? "  AdvValidLifetime 300;\n  AdvPreferredLifetime 120;\n" : "",
-			do_6to4 ? "  Base6to4Interface " : "",
-			do_6to4 ? get_wanface()  : "",
-			do_6to4 ? ";\n" : "");
+				" AdvHomeAgentFlag off;\n"
+				" AdvManagedFlag %s;\n"
+				" AdvOtherConfigFlag on;\n"
+				"%s%s%s"
+				" prefix %s/64 \n"
+				" {\n"
+				"  AdvOnLink on;\n"
+				"  AdvAutonomous %s;\n"
+				"%s"
+				"%s%s%s"
+				" };\n",
+				nvram_safe_get("lan_ifname"),
+				nvram_get_int("ipv6_autoconf_type") ? "on" : "off",
+				mtu ? " AdvLinkMTU " : "", mtu ? : "", mtu ? ";\n" : "",
+				prefix,
+				nvram_get_int("ipv6_autoconf_type") ? "off" : "on",
+				do_6to4 | do_6rd ? "  AdvValidLifetime 300;\n  AdvPreferredLifetime 120;\n" : "",
+				do_6to4 ? "  Base6to4Interface " : "",
+				do_6to4 ? get_wanface()  : "",
+				do_6to4 ? ";\n" : "");
 
-		if (do_dns) {
-			fprintf(f, " RDNSS %s {};\n", ip);
-		}
-		else {
-			char ipv6_dns_str[1024] = "";
-			char nvname[sizeof("ipv6_dnsXXX")];
-			char *next = ipv6_dns_str;
-			int i;
+			if (do_dns) {
+				fprintf(f, " RDNSS %s {};\n", ip);
+			}
+			else {
+				char ipv6_dns_str[1024] = "";
+				char nvname[sizeof("ipv6_dnsXXX")];
+				char *next = ipv6_dns_str;
+				int i;
 
-			ipv6_dns_str[0] = '\0';
-			for (i = 0; i < 3; i++) {
-				snprintf(nvname, sizeof(nvname), "ipv6_dns%d", i + 1);
-				p = nvram_safe_get(nvname);
-				if (!strlen(p)) continue;
-				/* TODO: make validation ipv6 address */
-				next += sprintf(next, strlen(ipv6_dns_str) ? " %s" : "%s", p);
+				ipv6_dns_str[0] = '\0';
+				for (i = 0; i < 3; i++) {
+					snprintf(nvname, sizeof(nvname), "ipv6_dns%d", i + 1);
+					p = nvram_safe_get(nvname);
+					if (!strlen(p)) continue;
+					/* TODO: make validation ipv6 address */
+					next += sprintf(next, strlen(ipv6_dns_str) ? " %s" : "%s", p);
+				}
+
+				if ((get_ipv6_service() == IPV6_NATIVE_DHCP) && nvram_match("ipv6_dnsenable", "1"))
+					p = nvram_safe_get("ipv6_get_dns");
+				else
+					p = ipv6_dns_str;
+
+				cnt = write_ipv6_dns_servers(f, " RDNSS ", (char*) ((p && *p) ? p : ip), " ", 1);
+				if (cnt) fprintf(f, "{};\n");
 			}
 
-			if ((get_ipv6_service() == IPV6_NATIVE_DHCP) && nvram_match("ipv6_dnsenable", "1"))
-				p = nvram_safe_get("ipv6_get_dns");
-			else
-				p = ipv6_dns_str;
+			fprintf(f,
+				"};\n");	// close "interface" section
 
-			cnt = write_ipv6_dns_servers(f, " RDNSS ", (char*) ((p && *p) ? p : ip), " ", 1);
-			if (cnt) fprintf(f, "{};\n");
-		}
+			append_custom_config("radvd.conf", f);
+			fclose(f);
 
-		fprintf(f,
-			"};\n");	// close "interface" section
+			use_custom_config("radvd.conf", "/etc/radvd.conf");
+			run_postconf("radvd.postconf", "/etc/radvd.conf");
 
-		append_custom_config("radvd.conf", f);
-		fclose(f);
-
-		use_custom_config("radvd.conf", "/etc/radvd.conf");
-		run_postconf("radvd.postconf", "/etc/radvd.conf");
-
-		chmod("/etc/radvd.conf", 0400);
+			chmod("/etc/radvd.conf", 0400);
 #if 0
-		f_write_string("/proc/sys/net/ipv6/conf/all/forwarding", "1", 0, 0);
+			f_write_string("/proc/sys/net/ipv6/conf/all/forwarding", "1", 0, 0);
 #endif
-		// Start radvd
-		argc = 1;
-		argv[argc++] = "-u";
-		argv[argc++] = nvram_safe_get("http_username");
-		if (nvram_get_int("ipv6_debug")) {
-			argv[argc++] = "-m";
-			argv[argc++] = "logfile";
-			argv[argc++] = "-d";
-			argv[argc++] = "5";
-		}
-		argv[argc] = NULL;
-		_eval(argv, NULL, 0, &pid);
+			// Start radvd
+			argc = 1;
+			argv[argc++] = "-u";
+			argv[argc++] = nvram_safe_get("http_username");
+			if (nvram_get_int("ipv6_debug")) {
+				argv[argc++] = "-m";
+				argv[argc++] = "logfile";
+				argv[argc++] = "-d";
+				argv[argc++] = "5";
+			}
+			argv[argc] = NULL;
+			_eval(argv, NULL, 0, &pid);
 
-		if (!nvram_contains_word("debug_norestart", "radvd")) {
-			pid_radvd = -2;
+			if (!nvram_contains_word("debug_norestart", "radvd")) {
+				pid_radvd = -2;
+			}
 		}
 	}
 }

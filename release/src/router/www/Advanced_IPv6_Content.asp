@@ -1167,6 +1167,15 @@ function showInfo(){
 							</select>
 		     		</td>
 		     	</tr-->
+					<tr>
+						<th>Enable DHCPv6 Server</th>
+		     		<td>
+							<select name="ipv6_dhcp6s_enable" class="input_option">
+								<option class="content_input_fd" value="1" <% nvram_match("ipv6_dhcp6s_enable", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
+								<option class="content_input_fd" value="0" <% nvram_match("ipv6_dhcp6s_enable", "0","selected"); %>><#btn_disable#></option>
+							</select>
+		     		</td>
+		     	</tr>
 			</table>
 			<!---------------------------------------Auto Config end ------------------------------->  	
 				
