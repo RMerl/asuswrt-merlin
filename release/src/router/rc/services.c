@@ -5565,6 +5565,7 @@ void restart_cstats(void)
 #ifdef RTCONFIG_DNSFILTER
 const char *dns_filter(int mode)
 {
+	char *dnsptr;
 	static const char *server[] = {
 		"",			/* 0: Unfiltered (handled separately below) */
 		"208.67.222.222",	/* 1: OpenDNS */
@@ -5573,16 +5574,22 @@ const char *dns_filter(int mode)
 		"199.85.126.30",	/* 4: Norton Connect Safe C (Sec. + Adult + Violence */
 		"77.88.8.88",		/* 5: Secure Mode safe.dns.yandex.ru */
 		"77.88.8.7",		/* 6: Family Mode family.dns.yandex.ru */
-		"208.67.222.123"	/* 7: OpenDNS Family Shield */
+		"208.67.222.123",	/* 7: OpenDNS Family Shield */
+		""			/* 8: Custom */
         };
 
-	if (mode > 7) mode = 0;
+	if (mode > 8) mode = 0;
 
 	// Unfiltered - return whichever DNS server DHCPD provides to clients, or our own IP if none defined by user
 	if (mode == 0)
-		return ( nvram_invmatch("dhcp_dns1_x","") ? nvram_safe_get("dhcp_dns1_x") : nvram_safe_get("lan_ipaddr") );
+		dnsptr = nvram_safe_get("dhcp_dns1_x");
+	// Custom IP, with fallback to router IP if it's not defined
+	else if (mode == 8)
+		dnsptr = nvram_safe_get("dnsfilter_custom1");
+	else
+		dnsptr = server[mode];
 
-	return server[mode];
+	return (strlen(dnsptr) ? dnsptr : nvram_safe_get("lan_ipaddr"));
 }
 #endif
 

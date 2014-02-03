@@ -127,6 +127,7 @@ function gen_modeselect(name, value, onchange){
 	code +='<option value="4"'+(value == 4 ? "selected" : "")+'>Norton Children</option>';
 	code +='<option value="5"'+(value == 5 ? "selected" : "")+'>Yandex Safe</option>';
 	code +='<option value="6"'+(value == 6 ? "selected" : "")+'>Yandex Family</option>';
+	code +='<option value="8"'+(value == 8 ? "selected" : "")+'>Custom</option>';
 	code +='</select>';
 	return code;
 }
@@ -402,7 +403,14 @@ function changeRow_main(r){
 							<option value="4" <% nvram_match("dnsfilter_mode", "4", "selected"); %>>Norton Children</option>
 							<option value="5" <% nvram_match("dnsfilter_mode", "5", "selected"); %>>Yandex Safe</option>
 							<option value="6" <% nvram_match("dnsfilter_mode", "6", "selected"); %>>Yandex Family</option>
+							<option value="8" <% nvram_match("dnsfilter_mode", "8", "selected"); %>>Custom</option>
 						</select>
+					</td>
+				</tr>
+				<tr>
+					<th width="200">Custom (user-defined) DNS</th>
+					<td>
+						<input type="text" maxlength="15" class="input_15_table" name="dnsfilter_custom1" value="<% nvram_get("dnsfilter_custom1"); %>" onKeyPress="return is_ipaddr(this,event)">
 					</td>
 				</tr>
 			</table>
