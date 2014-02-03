@@ -59,6 +59,7 @@ function initial(){
 
 	// dnsfilter_enable_x 0: disable, 1: enable, show mainTable & Protection level when enable, otherwise hide it
 	showhide("dnsfilter_mode",document.form.dnsfilter_enable_x.value);
+	showhide("dnsfilter_custom", document.form.dnsfilter_enable_x.value);
 	showhide("mainTable", document.form.dnsfilter_enable_x.value);
 }
 
@@ -377,11 +378,13 @@ function changeRow_main(r){
 									function(){
 										document.form.dnsfilter_enable_x.value = 1;
 										showhide("dnsfilter_mode",1);
+										showhide("dnsfilter_custom",1);
 										showhide("mainTable",1);	
 									},
 									function(){
 										document.form.dnsfilter_enable_x.value = 0;
 										showhide("dnsfilter_mode",0);
+										showhide("dnsfilter_custom",0);
 										showhide("mainTable",0);	
 									},
 										{
@@ -407,7 +410,7 @@ function changeRow_main(r){
 						</select>
 					</td>
 				</tr>
-				<tr>
+				<tr id="dnsfilter_custom">
 					<th width="200">Custom (user-defined) DNS</th>
 					<td>
 						<input type="text" maxlength="15" class="input_15_table" name="dnsfilter_custom1" value="<% nvram_get("dnsfilter_custom1"); %>" onKeyPress="return is_ipaddr(this,event)">
