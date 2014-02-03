@@ -552,6 +552,8 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 3.0.0.4.374.40 (xx-xxx-2014)
+   - NEW: Added OpenDNS Family Shield support to DNSFilter
+   - NEW: Added support for a user-defined server under DNSFilter
    - FIXED: Last24 page wasn't properly displaying the 
             Avg value (regression from 374.39)
 
