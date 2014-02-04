@@ -4112,6 +4112,13 @@ write_porttrigger(FILE *fp, char *wan_if, int is_nat)
 void
 mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 {
+#ifdef RTCONFIG_IPV6
+#ifdef RTCONFIG_DNSFILTER
+	char *nv, *nvp, *b;
+	char *name, *mac, *mode;
+	unsigned char ea[ETHER_ADDR_LEN];
+#endif
+#endif
 	if(nvram_match("qos_enable", "1")) {
 		add_iQosRules(wan_if);
 	}
@@ -4121,6 +4128,27 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 		eval("ip6tables", "-t", "mangle", "-F");
 #endif
 	}
+
+/* DNSFilter - prevent DNS access over IPv6 since all our filters are IPv4-only anyway*/
+#ifdef RTCONFIG_DNSFILTER
+#ifdef RTCONFIG_IPV6
+	if(nvram_match("dnsfilter_enable_x", "1")) {
+		eval("ip6tables", "-t", "mangle", "-N", "DNSFILTER");
+		eval("ip6tables", "-t", "mangle", "-A", "PREROUTING", "-p", "udp", "--dport", "53", "-j", "DNSFILTER");
+		eval("ip6tables", "-t", "mangle", "-A", "PREROUTING", "-p", "tcp", "--dport", "53", "-j", "DNSFILTER");
+
+		nv = nvp = strdup(nvram_safe_get("dnsfilter_rulelist"));
+		while (nv && (b = strsep(&nvp, "<")) != NULL) {
+			if (vstrsep(b, ">", &name, &mac, &mode) != 3)
+				continue;
+			if (!*mac || (atoi(mode) == 0) || (atoi(mode) == 8) || !ether_atoe(mac, ea))
+				continue;
+			eval("ip6tables", "-t", "mangle", "-A", "DNSFILTER", "-m", "mac", "--mac-source", mac, "-j", "DROP");
+		}
+		free(nv);
+	}
+#endif
+#endif
 
 /* For NAT loopback */
 	eval("iptables", "-t", "mangle", "-A", "PREROUTING", "!", "-i", wan_if,
@@ -4158,6 +4186,13 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
 	char *wan_if;
 	char *wan_ip;
+#ifdef RTCONFIG_IPV6
+#ifdef RTCONFIG_DNSFILTER
+	char *nv, *nvp, *b;
+	char *name, *mac, *mode;
+	unsigned char ea[ETHER_ADDR_LEN];
+#endif
+#endif
 
 	if(nvram_match("qos_enable", "1")) {
 		for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
@@ -4176,6 +4211,26 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 		eval("ip6tables", "-t", "mangle", "-F");
 #endif
 	}
+
+/* DNSFilter - prevent DNS access over IPv6 since all our filters are IPv4-only anyway*/
+#ifdef RTCONFIG_DNSFILTER
+#ifdef RTCONFIG_IPV6
+	if(nvram_match("dnsfilter_enable_x", "1")) {
+		eval("ip6tables", "-t", "mangle", "-N", "DNSFILTER");
+		eval("ip6tables", "-t", "mangle", "-A", "PREROUTING", "-p", "udp", "--dport", "53", "-j", "DNSFILTER");
+
+		nv = nvp = strdup(nvram_safe_get("dnsfilter_rulelist"));
+		while (nv && (b = strsep(&nvp, "<")) != NULL) {
+			if (vstrsep(b, ">", &name, &mac, &mode) != 3)
+				continue;
+			if (!*mac || (atoi(mode) == 0) || (atoi(mode) == 8) || !ether_atoe(mac, ea))
+				continue;
+			eval("ip6tables", "-t", "mangle", "-A", "DNSFILTER", "-m", "mac", "--mac-source", mac, "-j", "DROP");
+		}
+		free(nv);
+	}
+#endif
+#endif
 
 /* For NAT loopback */
 /* Untested yet */
