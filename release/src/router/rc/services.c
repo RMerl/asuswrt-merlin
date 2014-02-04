@@ -1090,7 +1090,8 @@ void start_radvd(void)
 	stop_radvd();
 
 	stop_dhcp6s();
-	start_dhcp6s();
+
+	if (ipv6_enabled() && nvram_get_int("ipv6_dhcp6s_enable")) start_dhcp6s();
 
 	if (ipv6_enabled() && nvram_get_int("ipv6_radvd")) {
 		service = get_ipv6_service();
