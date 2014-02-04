@@ -1,3 +1,23 @@
+version 2.69
+	    Implement dynamic interface discovery on *BSD. This allows
+	    the contructor: syntax to be used in dhcp-range for DHCPv6
+	    on the BSD platform. Thanks to Matthias Andree for
+	    valuable research on how to implement this.
+
+	    Fix infinite loop associated with some --bogus-nxdomain
+	    configs. Thanks fogobogo for the bug report.
+
+	    Fix missing RA RDNS option with configuration like
+	    --dhcp-option=option6:23,[::] Thanks to Tsachi Kimeldorfer
+	    for spotting the problem.
+
+	    Add [fd00::] and [fe80::] as special addresses in DHCPv6
+	    options, analogous to [::]. [fd00::] is replaced with the
+	    actual ULA of the interface on the machine running
+	    dnsmasq, [fe80::] with the link-local address. 
+	    Thanks to Tsachi Kimeldorfer for championing this.
+
+
 version 2.68
             Use random addresses for DHCPv6 temporary address
             allocations, instead of algorithmically determined stable
