@@ -553,9 +553,17 @@ History
 -------
 3.0.0.4.374.40 (xx-xxx-2014)
    - NEW: Added OpenDNS Family Shield support to DNSFilter
-   - NEW: Added support for a user-defined server under DNSFilter
+   - NEW: Added support for a user-defined server to DNSFilter
+   - NEW: Option to disable the DHCP6 Server (code contributed by
+          kdarbyshirebryant)
+   - CHANGED: The RT-N66U is now compiled with EM enabled
+              by default.
    - FIXED: Last24 page wasn't properly displaying the 
-            Avg value (regression from 374.39)
+            Avg value (regression in 374.39)
+   - FIXED: Clients with a configured IPv6 DNS would bypass
+            DNSFilter.  DNSFilter-enabled clients will now 
+            be prevented from using IPv6 nameservers, forcing 
+            them through the (IPv4-only) filtering nameserver
 
 
 3.0.0.4.374.39 (31-Jan-2014)
