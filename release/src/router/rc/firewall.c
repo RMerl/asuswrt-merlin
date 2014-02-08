@@ -4699,9 +4699,14 @@ void dnsfilter_settings(FILE *fp, char *lan_ip) {
 				continue;
 			if (!*mac || !*mode || !ether_atoe(mac, ea))
 				continue;
-			fprintf(fp,
-				"-A DNSFILTER -m mac --mac-source %s -j DNAT --to-destination %s\n",
-				mac, dns_filter(atoi(mode)));
+			if (mode == 0)
+                                fprintf(fp,
+					"-A DNSFILTER -m mac --mac-source %s -j RETURN\n",
+					mac);
+			else
+				fprintf(fp,
+					"-A DNSFILTER -m mac --mac-source %s -j DNAT --to-destination %s\n",
+					mac, dns_filter(atoi(mode)));
 		}
 		free(nv);
 
