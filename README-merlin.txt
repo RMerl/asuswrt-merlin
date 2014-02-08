@@ -504,10 +504,24 @@ provide basic filtering, but force your children's devices to use
 Norton Connect Safe's DNS server that filters out malicious, 
 adult, and general mature content.
 
+If using a global filter, then specific devices can be told to 
+bypass the global filter, by creating a client rule for these, 
+and setting it to "No Filtering".
+
+DNSFilter also lets you define up to three custom nameservers, for 
+use in filtering rules.  This will let you use any unsupported 
+filtering nameserver.
+
+You can configure a filter rule to force your clients to 
+use whichever DNS is provided by the router's DHCP server (if 
+you changed it from the default value, otherwise it will be 
+the router's IP).  Set the filtering rule to "Router" for this.
+
 Note that DNSFilter will interfere with resolution of local 
 hostnames.  This is a side effect of having devices forced to use 
 a specific external nameserver.  If this is an issue for you, then set 
 the default filter to "None", and only filter out specific devices.
+
 
 
 ** Layer7-based Netfilter module **
@@ -553,17 +567,29 @@ History
 -------
 3.0.0.4.374.40 (xx-xxx-2014)
    - NEW: Added OpenDNS Family Shield support to DNSFilter
-   - NEW: Added support for a user-defined server to DNSFilter
+   - NEW: Added support for up to three user-defined servers to DNSFilter
+   - NEW: Added option to force DNSfilter clients to always use the DNS
+          provided to them by the router's DHCP server (which will be
+          the router itself if you didn't change it on the DHCP 
+          webui page)
    - NEW: Option to disable the DHCP6 Server (code contributed by
           kdarbyshirebryant)
    - CHANGED: The RT-N66U is now compiled with EM enabled
-              by default.
+              by default.  That means there will no longer be a separate
+              experimental build for this.
    - FIXED: Last24 page wasn't properly displaying the 
             Avg value (regression in 374.39)
    - FIXED: Clients with a configured IPv6 DNS would bypass
             DNSFilter.  DNSFilter-enabled clients will now 
             be prevented from using IPv6 nameservers, forcing 
             them through the (IPv4-only) filtering nameserver
+   - FIXED: DNSFilter clients set to "None" would still be
+            forced through your WAN-configured nameservers,
+            preventing nameservers configured on the clients
+            to work.  Now they will fully ignore the DNSFilter 
+            settings.
+  - FIXED: The global DNSFilter would sometime not get properly
+           configured in the firewall.
 
 
 3.0.0.4.374.39 (31-Jan-2014)
