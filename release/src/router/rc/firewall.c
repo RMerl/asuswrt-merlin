@@ -4671,7 +4671,7 @@ void dnsfilter_settings(FILE *fp, char *lan_ip) {
 		free(nv);
 
 		/* Send other queries to the default server */
-		if (nvram_safe_get("dnsfilter_mode") != 0) {
+		if (nvram_get_int("dnsfilter_mode") != 0) {
 			fprintf(fp, "-A DNSFILTER -j DNAT --to-destination %s\n", dns_filter(nvram_get_int("dnsfilter_mode")));
 		}
 	}
