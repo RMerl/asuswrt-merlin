@@ -123,7 +123,7 @@ function gen_modeselect(name, value, onchange){
 	var code = "";
 	code +='<select class="input_option" name="'+name+'" value="'+value+'" onchange="'+onchange+'">';
 	code +='<option value="0"'+(value == 0 ? "selected" : "")+'>None</option>';
-	code +='<option value="8"'+(value == 11 ? "selected" : "")+'>Router</option>';
+	code +='<option value="11"'+(value == 11 ? "selected" : "")+'>Router</option>';
 	code +='<option value="1"'+(value == 1 ? "selected" : "")+'>OpenDNS Home</option>';
 	code +='<option value="7"'+(value == 7 ? "selected" : "")+'>OpenDNS Family</option>';
 	code +='<option value="2"'+(value == 2 ? "selected" : "")+'>Norton Safe</option>';
@@ -132,8 +132,8 @@ function gen_modeselect(name, value, onchange){
 	code +='<option value="5"'+(value == 5 ? "selected" : "")+'>Yandex Safe</option>';
 	code +='<option value="6"'+(value == 6 ? "selected" : "")+'>Yandex Family</option>';
 	code +='<option value="8"'+(value == 8 ? "selected" : "")+'>Custom 1</option>';
-	code +='<option value="8"'+(value == 9 ? "selected" : "")+'>Custom 2</option>';
-	code +='<option value="8"'+(value == 10 ? "selected" : "")+'>Custom 3</option>';
+	code +='<option value="9"'+(value == 9 ? "selected" : "")+'>Custom 2</option>';
+	code +='<option value="10"'+(value == 10 ? "selected" : "")+'>Custom 3</option>';
 	code +='</select>';
 	return code;
 }
@@ -410,7 +410,7 @@ function changeRow_main(r){
 					<td>
 						<select name="dnsfilter_mode" class="input_option">
 							<option value="0" <% nvram_match("dnsfilter_mode", "0", "selected"); %>>No filtering</option>
-							<option value="0" <% nvram_match("dnsfilter_mode", "11", "selected"); %>>Router</option>
+							<option value="11" <% nvram_match("dnsfilter_mode", "11", "selected"); %>>Router</option>
 							<option value="1" <% nvram_match("dnsfilter_mode", "1", "selected"); %>>OpenDNS Home</option>
 							<option value="7" <% nvram_match("dnsfilter_mode", "7", "selected"); %>>OpenDNS Family</option>
 							<option value="2" <% nvram_match("dnsfilter_mode", "2", "selected"); %>>Norton Safe</option>
@@ -419,8 +419,8 @@ function changeRow_main(r){
 							<option value="5" <% nvram_match("dnsfilter_mode", "5", "selected"); %>>Yandex Safe</option>
 							<option value="6" <% nvram_match("dnsfilter_mode", "6", "selected"); %>>Yandex Family</option>
 							<option value="8" <% nvram_match("dnsfilter_mode", "8", "selected"); %>>Custom 1</option>
-							<option value="8" <% nvram_match("dnsfilter_mode", "9", "selected"); %>>Custom 2</option>
-							<option value="8" <% nvram_match("dnsfilter_mode", "10", "selected"); %>>Custom 3</option>
+							<option value="9" <% nvram_match("dnsfilter_mode", "9", "selected"); %>>Custom 2</option>
+							<option value="10" <% nvram_match("dnsfilter_mode", "10", "selected"); %>>Custom 3</option>
 						</select>
 					</td>
 				</tr>
