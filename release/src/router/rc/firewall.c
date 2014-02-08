@@ -4693,7 +4693,7 @@ void dnsfilter6_settings() {
 		while (nv && (b = strsep(&nvp, "<")) != NULL) {
 			if (vstrsep(b, ">", &name, &mac, &mode) != 3)
 				continue;
-			if (!*mac || (atoi(mode) == 0) || (atoi(mode) == 8) || !ether_atoe(mac, ea))
+			if (!*mac || (atoi(mode) == 0) || !ether_atoe(mac, ea))
 				continue;
 			eval("ip6tables", "-t", "mangle", "-A", "DNSFILTER", "-m", "mac", "--mac-source", mac, "-j", "DROP");
 		}
