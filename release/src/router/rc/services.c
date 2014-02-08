@@ -5576,17 +5576,29 @@ const char *dns_filter(int mode)
 		"77.88.8.88",		/* 5: Secure Mode safe.dns.yandex.ru */
 		"77.88.8.7",		/* 6: Family Mode family.dns.yandex.ru */
 		"208.67.222.123",	/* 7: OpenDNS Family Shield */
-		""			/* 8: Custom */
+		"",			/* 8: Custom1 */
+		"",			/* 9: Custom2 */
+		"",			/* 10: Custom3 */
+		""			/* 11: Router */
         };
 
-	if (mode > 8) mode = 0;
+	if (mode > 11) mode = 0;
 
-	// Unfiltered - return whichever DNS server DHCPD provides to clients, or our own IP if none defined by user
+	// Unfiltered - don't return anything, the calling function should take care of handling it
+        // (currently, dnsfilter_settings() will simply not enforce anything, as if dnsfilter was disabled)
 	if (mode == 0)
-		dnsptr = nvram_safe_get("dhcp_dns1_x");
-	// Custom IP, with fallback to router IP if it's not defined
+		return "";
+	// Custom IP, will fallback to router IP if it's not defined
 	else if (mode == 8)
 		dnsptr = nvram_safe_get("dnsfilter_custom1");
+	else if (mode == 9)
+		dnsptr = nvram_safe_get("dnsfilter_custom2");
+	else if (mode == 10)
+		dnsptr = nvram_safe_get("dnsfilter_custom3");
+	// Force to use what's returned by the router's DHCP server to clients (which means either
+        // the router's IP, or a user-defined nameserver from the DHCP webui page)
+	else if (mode == 11)
+		dnsptr = nvram_safe_get("dhcp_dns1_x");
 	else
 		dnsptr = server[mode];
 
