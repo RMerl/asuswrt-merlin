@@ -4659,7 +4659,7 @@ void dnsfilter_settings(FILE *fp, char *lan_ip) {
 				continue;
 			if (!*mac || !*mode || !ether_atoe(mac, ea))
 				continue;
-			if (mode == 0)
+			if (atoi(mode) == 0)
                                 fprintf(fp,
 					"-A DNSFILTER -m mac --mac-source %s -j RETURN\n",
 					mac);
