@@ -59,6 +59,10 @@ void write_upnp_filter(FILE *fp, char *wan_if);
 void redirect_setting();
 #endif
 
+#ifdef RTCONFIG_DNSFILTER
+void dnsfilter_settings(FILE *fp, char *lan_ip);
+#endif
+
 struct datetime{
 	char start[6];		// start time
 	char stop[6];		// stop time
@@ -1054,7 +1058,6 @@ void repeater_nat_setting(){
 void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	// oleg patch
 {
 	FILE *fp;		// oleg patch
-	char lan_class[32];	// oleg patch
 	int wan_port;
 	char dstips[64];
 	char *proto, *protono, *port, *lport, *dstip, *desc;
@@ -1127,36 +1130,9 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 	}
 #endif
 
+
 #ifdef RTCONFIG_DNSFILTER
-	if (nvram_get_int("dnsfilter_enable_x")) {
-		char *name, *mac, *mode;
-		unsigned char ea[ETHER_ADDR_LEN];
-
-		/* Reroute all DNS requests from LAN */
-		ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
-		fprintf(fp,
-			"-A PREROUTING -s %s -p udp -m udp --dport 53 -j DNSFILTER\n"
-			"-A PREROUTING -s %s -p tcp -m tcp --dport 53 -j DNSFILTER\n",
-			lan_class, lan_class);
-
-		/* Protection level per client */
-		nv = nvp = strdup(nvram_safe_get("dnsfilter_rulelist"));
-		while (nv && (b = strsep(&nvp, "<")) != NULL) {
-			if (vstrsep(b, ">", &name, &mac, &mode) != 3)
-				continue;
-			if (!*mac || !*mode || !ether_atoe(mac, ea))
-				continue;
-			fprintf(fp,
-				"-A DNSFILTER -m mac --mac-source %s -j DNAT --to-destination %s\n",
-				mac, dns_filter(atoi(mode)));
-		}
-		free(nv);
-
-		/* Send other queries to the default server */
-		if (nvram_safe_get("dnsfilter_mode") != 0) {
-			fprintf(fp, "-A DNSFILTER -j DNAT --to-destination %s\n", dns_filter(nvram_get_int("dnsfilter_mode")));
-		}
-	}
+	dnsfilter_settings(fp, lan_ip);
 #endif
 
 
@@ -1312,7 +1288,6 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	// oleg patch
 {
 	FILE *fp = NULL;	// oleg patch
-	char lan_class[32];	// oleg patch
 	int wan_port;
 	char dstips[64];
 	char *proto, *protono, *port, *lport, *dstip, *desc;
@@ -1400,38 +1375,11 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 	}
 #endif
 
+
 #ifdef RTCONFIG_DNSFILTER
-	if (nvram_get_int("dnsfilter_enable_x")) {
-		char *name, *mac, *mode;
-		unsigned char ea[ETHER_ADDR_LEN];
-
-		/* Reroute all DNS requests from LAN */
-		ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
-		fprintf(fp,
-			"-A PREROUTING -s %s -p udp -m udp --dport 53 -j DNSFILTER\n"
-			"-A PREROUTING -s %s -p tcp -m tcp --dport 53 -j DNSFILTER\n",
-			lan_class, lan_class);
-
-		/* Protection level per client */
-		nv = nvp = strdup(nvram_safe_get("dnsfilter_rulelist"));
-		while (nv && (b = strsep(&nvp, "<")) != NULL) {
-			if (vstrsep(b, ">", &name, &mac, &mode) != 3)
-				continue;
-			if (!*mac || !*mode || !ether_atoe(mac, ea))
-				continue;
-			fprintf(fp,
-				"-A DNSFILTER -m mac --mac-source %s -j DNAT --to-destination %s\n",
-				mac, dns_filter(atoi(mode)));
-		}
-		free(nv);
-
-		/* Send other queries to the default server */
-		if (nvram_safe_get("dnsfilter_mode") != 0) {
-			fprintf(fp, "-A DNSFILTER -j DNAT --to-destination %s\n", dns_filter(nvram_get_int("dnsfilter_mode")));
-		}
-
-	}
+	dnsfilter_settings(fp, lan_ip);
 #endif
+
 
 	// need multiple instance for tis?
 	if (nvram_match("misc_http_x", "1"))
@@ -4726,3 +4674,42 @@ void ipt_account(FILE *fp, char *interface) {
 		}
 	}
 }
+
+
+#ifdef RTCONFIG_DNSFILTER
+void dnsfilter_settings(FILE *fp, char *lan_ip) {
+
+	char *name, *mac, *mode;
+	unsigned char ea[ETHER_ADDR_LEN];
+	char *nv, *nvp, *b;
+	char lan_class[32];
+
+	if (nvram_get_int("dnsfilter_enable_x")) {
+		/* Reroute all DNS requests from LAN */
+		ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
+		fprintf(fp,
+			"-A PREROUTING -s %s -p udp -m udp --dport 53 -j DNSFILTER\n"
+			"-A PREROUTING -s %s -p tcp -m tcp --dport 53 -j DNSFILTER\n",
+			lan_class, lan_class);
+
+		/* Protection level per client */
+		nv = nvp = strdup(nvram_safe_get("dnsfilter_rulelist"));
+		while (nv && (b = strsep(&nvp, "<")) != NULL) {
+			if (vstrsep(b, ">", &name, &mac, &mode) != 3)
+				continue;
+			if (!*mac || !*mode || !ether_atoe(mac, ea))
+				continue;
+			fprintf(fp,
+				"-A DNSFILTER -m mac --mac-source %s -j DNAT --to-destination %s\n",
+				mac, dns_filter(atoi(mode)));
+		}
+		free(nv);
+
+		/* Send other queries to the default server */
+		if (nvram_safe_get("dnsfilter_mode") != 0) {
+			fprintf(fp, "-A DNSFILTER -j DNAT --to-destination %s\n", dns_filter(nvram_get_int("dnsfilter_mode")));
+		}
+	}
+}
+#endif
+
