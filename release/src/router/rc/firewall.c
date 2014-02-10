@@ -2029,7 +2029,10 @@ filter_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 	}
 #endif
 
-	fprintf(fp, "*filter\n:INPUT ACCEPT [0:0]\n:FORWARD DROP [0:0]\n:OUTPUT ACCEPT [0:0]\n:FUPNP - [0:0]\n");
+	if (nvram_match("fw_enable_x", "1"))
+		fprintf(fp, "*filter\n:INPUT ACCEPT [0:0]\n:FORWARD DROP [0:0]\n:OUTPUT ACCEPT [0:0]\n:FUPNP - [0:0]\n");
+	else
+		fprintf(fp, "*filter\n:INPUT ACCEPT [0:0]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:FUPNP - [0:0]\n");
 #ifdef RTCONFIG_PARENTALCTRL
 	fprintf(fp, ":PControls - [0:0]\n");
 #else
@@ -2995,7 +2998,10 @@ filter_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 	}
 #endif
 
-	fprintf(fp, "*filter\n:INPUT ACCEPT [0:0]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:FUPNP - [0:0]\n");
+	if (nvram_match("fw_enable_x", "1")) 
+		fprintf(fp, "*filter\n:INPUT ACCEPT [0:0]\n:FORWARD DROP [0:0]\n:OUTPUT ACCEPT [0:0]\n:FUPNP - [0:0]\n");
+	else
+		fprintf(fp, "*filter\n:INPUT ACCEPT [0:0]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:FUPNP - [0:0]\n");
 #ifdef RTCONFIG_PARENTALCTRL
 	fprintf(fp, ":PControls - [0:0]\n");
 #else
