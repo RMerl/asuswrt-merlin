@@ -566,6 +566,9 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 3.0.0.4.374.40 (xx-xxx-2014)
+   This version isn't available for the RT-N16 as support for the 
+   SDK5 platform is currently broken in the latest GPL sources.
+
    - NEW: Added OpenDNS Family Shield support to DNSFilter
    - NEW: Added support for up to three user-defined servers to DNSFilter
    - NEW: Added option to force DNSfilter clients to always use the DNS
@@ -586,13 +589,18 @@ History
    - FIXED: DNSFilter clients set to "None" would still be
             forced through your WAN-configured nameservers,
             preventing nameservers configured on the clients
-            to work.  Now they will fully ignore the DNSFilter 
+            from working.  Now they will fully ignore the DNSFilter 
             settings.
-  - FIXED: The global DNSFilter would sometime not get properly
-           configured in the firewall.
+   - FIXED: The global DNSFilter would sometime not get properly
+            configured in the firewall.
+   - FIXED: When the firewall was disabled, the FORWARD chain
+            policy was still left to "DROP" - changed to "ACCEPT".
 
 
 3.0.0.4.374.39 (31-Jan-2014)
+   This version isn't available for the RT-N16 as support for the 
+   SDK5 platform is currently broken in the latest GPL sources. 
+
    - NEW: Merged with Asus 374_583 GPL.  Notable changes:
       * USB hub support
    - NEW: DNS-based filtering.  Under Parental Control there is
