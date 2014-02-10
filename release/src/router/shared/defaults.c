@@ -929,9 +929,9 @@ struct nvram_tuple router_defaults[] = {
 	{ "dnsfilter_enable_x", "0"},
 	{ "dnsfilter_mode", "0"},	/* Default to no global filtering (only per client rules) */
 	{ "dnsfilter_rulelist", ""},	/* List client modes <devname>hh:ww:aa:dd:dd:rr>mode... */
-	{ "dnsfilter_custom1", ""},	/* User-defined DNS filter 1 */
-	{ "dnsfilter_custom2", ""},     /* User-defined DNS filter 2 */
-	{ "dnsfilter_custom3", ""},     /* User-defined DNS filter 3 */
+	{ "dnsfilter_custom1", "8.8.8.8"},	/* User-defined DNS filter 1 */
+	{ "dnsfilter_custom2", "8.8.8.8"},     /* User-defined DNS filter 2 */
+	{ "dnsfilter_custom3", "8.8.8.8"},     /* User-defined DNS filter 3 */
 #endif
 	{ "fw_enable_x", "1" },
 	{ "fw_dos_x", "0" },
