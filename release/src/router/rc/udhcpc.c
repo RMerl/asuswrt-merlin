@@ -758,11 +758,11 @@ start_dhcp6c(void)
 		fprintf(fp,		"send ia-na %lu;\n", iaid);
 		fprintf(fp,		"send rapid-commit;\n");
 		if (nvram_match("ipv6_dnsenable", "1") &&
-			!nvram_match("ipv6_ra_conf", "noneset"))
+			(!nvram_match("ipv6_ra_conf", "noneset") || nvram_get_int("ipv6_dhcp_pd")))
 		fprintf(fp,		"request domain-name-servers;\n"
-					"request domain-name;\n"
-					"script \"/sbin/dhcp6c-state\";\n");
-		fprintf(fp,		"};\n");
+					"request domain-name;\n");
+		fprintf(fp, "script \"/sbin/dhcp6c-state\";\n"
+				"};\n");
 		if (nvram_get_int("ipv6_dhcp_pd"))
 		fprintf(fp,	"id-assoc pd %lu {\n"
 					"prefix-interface %s {\n"
