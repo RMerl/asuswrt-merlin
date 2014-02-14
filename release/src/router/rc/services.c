@@ -1100,12 +1100,12 @@ void start_radvd(void)
 		mtu = NULL;
 
 		switch (service) {
-		case IPV6_NATIVE_DHCP:
 		case IPV6_6TO4:
 		case IPV6_6IN4:
 		case IPV6_6RD:
 			mtu = (nvram_get_int("ipv6_tun_mtu") > 0) ? nvram_safe_get("ipv6_tun_mtu") : "1480";
 			// fall through
+		case IPV6_NATIVE_DHCP:
 		default:
 			prefix = do_6to4 ? "0:0:0:1::" : nvram_safe_get("ipv6_prefix");
 			break;
