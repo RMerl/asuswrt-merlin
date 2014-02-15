@@ -422,7 +422,9 @@ struct nvram_tuple router_defaults[] = {
 #ifdef RTCONFIG_BCMWL6
 	{ "wl_wmf_ucigmp_query", "0", 0 },	/* Disable Converting IGMP Query to ucast (default) */
 	{ "wl_wmf_mdata_sendup", "0", 0 },	/* Disable Sending Multicast Data to host  (default) */
+#ifdef RTCONFIG_BCMARM
 	{ "wl_wmf_ucast_upnp", "0", 0 },	/* Disable Converting upnp to ucast (default) */
+#endif
 	{ "wl_wmf_igmpq_filter", "0", 0 },	/* Disable igmp query filter */
 #endif
 #endif
@@ -913,10 +915,6 @@ struct nvram_tuple router_defaults[] = {
 	{"MULTIFILTER_MAC", "" },
 	{"MULTIFILTER_DEVICENAME", "" },
 	{"MULTIFILTER_MACFILTER_DAYTIME", "" },
-	{"MULTIFILTER_LANTOWAN_ENABLE", "" },
-	{"MULTIFILTER_LANTOWAN_DESC", "" },
-	{"MULTIFILTER_LANTOWAN_PORT", "" },
-	{"MULTIFILTER_LANTOWAN_PROTO", "" },
 	{"MULTIFILTER_URL_ENABLE", "" },
 	{"MULTIFILTER_URL", "" },
 #endif	/* RTCONFIG_PARENTALCTRL */
@@ -943,6 +941,9 @@ struct nvram_tuple router_defaults[] = {
 	{ "fw_pt_h323", "1" },
 	{ "fw_pt_sip", "1" },
 	{ "fw_pt_pppoerelay", "0"},
+#ifdef RTCONFIG_BCMARM
+	{ "fw_pt_stun", "1"},
+#endif
 	{ "misc_http_x", "0" },
 	{ "misc_httpport_x", "8080" },
 #ifdef RTCONFIG_HTTPS
@@ -1038,18 +1039,18 @@ struct nvram_tuple router_defaults[] = {
 	{ "script_usbumount", ""},
 
 	{ "smbd_enable", "1"},
-	{ "smbd_autoshare", "1"},
+//	{ "smbd_autoshare", "1"},
 	{ "smbd_cpage", ""},
 	{ "smbd_cset", "utf8"},
 	{ "smbd_custom", ""},
 	{ "smbd_master", "0"},
-	{ "smbd_passwd", ""},
-	{ "smbd_shares", "share</mnt<Default Share<1<0>root$</Hidden Root<0<1"},
+//	{ "smbd_passwd", ""},
+//	{ "smbd_shares", "share</mnt<Default Share<1<0>root$</Hidden Root<0<1"},
 	{ "smbd_user", "nas"},
-	{ "smbd_wgroup", "WORKGROUP"},
+//	{ "smbd_wgroup", "WORKGROUP"},
 	{ "smbd_wins", "0"},
+	{ "smbd_wanac", "0"},
 	{ "smbd_simpler_naming", "0"},
-	{ "smbd_bind_wan", "0"},
 
 #ifdef RTCONFIG_NFS
 	{ "nfsd_enable", "0"},
@@ -2132,7 +2133,9 @@ struct nvram_tuple router_defaults_override_type1[] = {
 #ifdef __CONFIG_EMF__
 	{ "emf_enable", "1", 0 },		/* Enable EMF by default */
 	{ "wl_wmf_ucigmp_query", "1", 0 },	/* Enable Converting IGMP Query to ucast */
+#ifdef RTCONFIG_BCMARM
 	{ "wl_wmf_ucast_upnp", "1", 0 },	/* Enable upnp to ucast conversion */
+#endif
 	{ "wl_wmf_igmpq_filter", "1", 0 },	/* Enable igmp query filter */
 #endif
 	{ "wl_acs_fcs_mode", "1", 0 },		/* Enable acsd fcs mode */

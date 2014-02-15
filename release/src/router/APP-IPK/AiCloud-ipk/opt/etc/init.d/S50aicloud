@@ -73,7 +73,7 @@ SHARE_LINK_RESULT=`nvram get share_link_result`
 
 SWPJVERNO=`nvram get swpjverno`
 EXTENDNO=`nvram get extendno`
-
+ODMPID=`nvram get odmpid`
 chmod -R 777 $APPS_INSTALL_PATH/bin/
 
 chmod -R 777 $APPS_INSTALL_PATH/etc
@@ -94,17 +94,14 @@ if [ ! -d "/tmp/lighttpd/www" ]; then
 mkdir -p /tmp/lighttpd/www
 fi
 
-if [ -f "/etc/smb.conf" ];then
-cp -f /etc/smb.conf /opt/etc/samba/
-fi
-
 chmod -R 777 /tmp/lighttpd
 chmod -R 777 /tmp/lighttpd/compress
 chmod -R 777 /tmp/lighttpd/uploads
 chmod -R 777 /tmp/lighttpd/www
 
-#sh /opt/etc/asus_script/dm2_check_general general-check&
-
+if [ -f "/etc/smb.conf" ];then
+cp -f /etc/smb.conf /opt/etc/samba/
+fi
 
 case "$1" in
   start)
@@ -112,9 +109,9 @@ case "$1" in
 
 		#asuslighttpdnum=`ps | grep "asus_lighttpd" | grep -v "$0" | grep -v "grep" | awk '{printf $5}'`
 	if [ $WEBDAV_PROXY == 1 ] || [ $WEBDAV_AIDISK == 1 ]; then
-		cp -rf /opt/etc/asus_script/smartsync_remove /tmp
+		cp -rf /opt/etc/apps_asus_script/smartsync_remove /tmp
 		cp -f /opt/etc/samba/openssl.cnf /etc/
-		sh /opt/etc/asus_script/gencert.sh 0x123123
+		#sh /opt/etc/apps_asus_script/gencert.sh 0x123123
 		#cp -f /opt/etc/samba/server.pem /tmp/lighttpd/
 
 		if [ -z "$APPS_MOUNTED_PATH" ]; then
@@ -340,6 +337,8 @@ case "$1" in
 		iptables -D INPUT -p tcp -m tcp -d $LAN_IP --dport $WEBDAV_HTTPS_PORT -j ACCEPT
 		iptables -t nat -D VSERVER -p tcp -m tcp --dport $WEBDAV_HTTPS_PORT -j DNAT --to-destination $LAN_IP:$WEBDAV_HTTPS_PORT
 	else
+		sh /opt/etc/init.d/S50aicloud start;
+		exit;
 		lighttpd=`ps | grep "lighttpd" |grep -v "lighttpd-arpping" |grep -v "lighttpd-monitor"|grep -v "asus_lighttpd"|grep -v "grep" |awk '{printf $5}'`
 		echo $lighttpd
 		if [ "$lighttpd" == "./lighttpd" ]; then

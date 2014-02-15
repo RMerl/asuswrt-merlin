@@ -26,7 +26,7 @@
 
 #include <libsmbclient.h>
 //#include <assert.h>
-#define DBE 1
+#define DBE 0
 
 int network_write_chunkqueue_write(server *srv, connection *con, int fd, chunkqueue *cq) {
 	chunk *c;
@@ -145,7 +145,7 @@ int network_write_chunkqueue_write(server *srv, connection *con, int fd, chunkqu
 					return -1;
 				}
 			}
-
+			
 			munmap(p, sce->st.st_size);
 #else /* USE_MMAP */
 			buffer_prepare_copy(srv->tmp_buf, toSend);

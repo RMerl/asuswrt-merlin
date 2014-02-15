@@ -1855,7 +1855,7 @@ static int ej_wl_rate(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	char tmp[256], prefix[] = "wlXXXXXXXXXX_";
 	char *name;
 	char word[256], *next;
-	int unit_max = 0;
+	int unit_max = 0, unit_cur = -1;
 	int rate = 0;
 	char rate_buf[32];
 
@@ -1870,7 +1870,10 @@ static int ej_wl_rate(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
 
-	if (wl_ioctl(name, WLC_GET_RATE, &rate, sizeof(int)))
+	wl_ioctl(name, WLC_GET_INSTANCE, &unit_cur, sizeof(unit_cur));
+	if (unit != unit_cur)
+		goto ERROR;
+	else if (wl_ioctl(name, WLC_GET_RATE, &rate, sizeof(int)))
 	{
 		dbG("can not get rate info of %s\n", name);
 		goto ERROR;

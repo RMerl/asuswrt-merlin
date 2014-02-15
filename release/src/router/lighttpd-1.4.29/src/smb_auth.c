@@ -30,6 +30,22 @@ typedef li_MD5_CTX MD5_CTX;
 #define DBE 0
 #define LIGHTTPD_ARPPING_PID_FILE_PATH	"/tmp/lighttpd/lighttpd-arpping.pid"
 
+int file_exist(const char *filepath)
+{
+	struct stat stat_buf;
+	Cdbg(1, "file_exist=%s", filepath);
+    if (!stat(filepath, &stat_buf))
+    	return S_ISREG(stat_buf.st_mode);
+    else
+        return 0;
+}
+unsigned long file_size(const char *path)
+{
+    struct stat st;
+    if (stat(path, &st) == 0) return st.st_size;
+    return (unsigned long)-1;
+}
+
 #ifdef APP_IPKG
 /*???start?*/
 #include <dirent.h>
@@ -72,81 +88,70 @@ typedef li_MD5_CTX MD5_CTX;
 #define usb_dbg printf
 #endif
 
-
 /* Transfer Char to ASCII */
 int char_to_ascii_safe(const char *output, const char *input, int outsize)
 {
-        char *src = (char *)input;
-        char *dst = (char *)output;
-        char *end = (char *)output + outsize - 1;
-        char *escape = "[]"; // shouldn't be more?
+	char *src = (char *)input;
+    char *dst = (char *)output;
+    char *end = (char *)output + outsize - 1;
+    char *escape = "[]"; // shouldn't be more?
 
-        if (src == NULL || dst == NULL || outsize <= 0)
-                return 0;
+    if (src == NULL || dst == NULL || outsize <= 0)
+    	return 0;
 
-        for ( ; *src && dst < end; src++) {
-                if ((*src >='0' && *src <='9') ||
-                    (*src >='A' && *src <='Z') ||
-                    (*src >='a' && *src <='z')) {
-                        *dst++ = *src;
-                } else if (strchr(escape, *src)) {
-                        if (dst + 2 > end)
-                                break;
-                        *dst++ = '\\';
-                        *dst++ = *src;
-                } else {
-                        if (dst + 3 > end)
-                                break;
-                        dst += sprintf(dst, "%%%.02X", *src);
-                }
+	for ( ; *src && dst < end; src++) {
+		if ((*src >='0' && *src <='9') ||
+            (*src >='A' && *src <='Z') ||
+            (*src >='a' && *src <='z')) {
+        	*dst++ = *src;
+        } else if (strchr(escape, *src)) {
+        	if (dst + 2 > end)
+            	break;
+            *dst++ = '\\';
+            *dst++ = *src;
+        } else {
+        	if (dst + 3 > end)
+            	break;
+            dst += sprintf(dst, "%%%.02X", *src);
         }
-        if (dst <= end)
-                *dst = '\0';
-
-        return dst - output;
+	}
+    if (dst <= end)
+    	*dst = '\0';
+	
+    return dst - output;
 }
 
+#if 0
 int
 check_if_file_exist(const char *filepath)
 {
-/*
-        FILE *fp;
-        fp=fopen(filename, "r");
-        if (fp)
-        {
-                fclose(fp);
-                return 1;
-        }
-        else
-                return 0;
-*/
-        struct stat stat_buf;
+	struct stat stat_buf;
 
-        if (!stat(filepath, &stat_buf))
-                return S_ISREG(stat_buf.st_mode);
-        else
-                return 0;
+    if (!stat(filepath, &stat_buf))
+    	return S_ISREG(stat_buf.st_mode);
+    else
+        return 0;
 }
 unsigned long f_size(const char *path)	// 4GB-1	-1 = error
 {
-        struct stat st;
-        if (stat(path, &st) == 0) return st.st_size;
-        return (unsigned long)-1;
+    struct stat st;
+    if (stat(path, &st) == 0) return st.st_size;
+    return (unsigned long)-1;
 }
-
+#endif
 
 extern int check_file_integrity(const char *const file_name){
-    unsigned long file_size;
+    unsigned long fsize;
     char test_file[PATH_MAX];
 
-    if((file_size = f_size(file_name)) == -1){
+    if((fsize = file_size(file_name)) == -1){
         usb_dbg("Fail to get the size of the file.\n");
         return 0;
     }
 
     memset(test_file, 0, PATH_MAX);
-    sprintf(test_file, "%s.%lu", file_name, file_size);
-    if(!check_if_file_exist(test_file)){
+    sprintf(test_file, "%s.%lu", file_name, fsize);
+    if(!file_exist(test_file)){
         usb_dbg("Fail to check the folder list.\n");
         return 0;
     }
@@ -155,90 +160,82 @@ extern int check_file_integrity(const char *const file_name){
 }
 
 int
-check_if_dir_exist(const char *dirpath)
-{
-/*
-        DIR *dp;
-        if (!(dp=opendir(dir)))
-                return 0;
-        closedir(dp);
-        return 1;
-*/
-        struct stat stat_buf;
+check_if_dir_exist(const char *dirpath){
+	struct stat stat_buf;
 
-        if (!stat(dirpath, &stat_buf))
-                return S_ISDIR(stat_buf.st_mode);
-        else
-                return 0;
+    if (!stat(dirpath, &stat_buf))
+    	return S_ISDIR(stat_buf.st_mode);
+    else
+    	return 0;
 }
 
 extern int delete_file_or_dir(char *target){
-        int ret;
+	int ret;
 
-        if(check_if_dir_exist(target))
-                ret = rmdir(target);
-        else
-                ret = unlink(target);
+    if(check_if_dir_exist(target))
+    	ret = rmdir(target);
+    else
+        ret = unlink(target);
 
-        return ret;
+    return ret;
 }
 
 extern char *get_upper_str(const char *const str, char **target){
-        int len, i;
-        char *ptr;
+	int len, i;
+    char *ptr;
 
-        len = strlen(str);
-        *target = (char *)malloc(sizeof(char)*(len+1));
-        if(*target == NULL){
-                printf("No memory \"*target\".\n");
-                return NULL;
-        }
-        ptr = *target;
-        for(i = 0; i < len; ++i)
-                ptr[i] = toupper(str[i]);
-        ptr[len] = 0;
+    len = strlen(str);
+    *target = (char *)malloc(sizeof(char)*(len+1));
+    if(*target == NULL){
+    	printf("No memory \"*target\".\n");
+        return NULL;
+    }
+    ptr = *target;
+    for(i = 0; i < len; ++i)
+    	ptr[i] = toupper(str[i]);
+   	ptr[len] = 0;
 
-        return ptr;
+    return ptr;
 }
 
 extern int upper_strcmp(const char *const str1, const char *const str2){
-        char *upper_str1, *upper_str2;
-        int ret;
+    char *upper_str1, *upper_str2;
+    int ret;
 
-        if(str1 == NULL || str2 == NULL)
-                return -1;
+    if(str1 == NULL || str2 == NULL)
+    	return -1;
 
-        if(get_upper_str(str1, &upper_str1) == NULL)
-                return -1;
+    if(get_upper_str(str1, &upper_str1) == NULL)
+        return -1;
 
-        if(get_upper_str(str2, &upper_str2) == NULL){
-                free(upper_str1);
-                return -1;
-        }
+    if(get_upper_str(str2, &upper_str2) == NULL){
+    	free(upper_str1);
+        return -1;
+    }
 
-        ret = strcmp(upper_str1, upper_str2);
-        free(upper_str1);
-        free(upper_str2);
+    ret = strcmp(upper_str1, upper_str2);
+    free(upper_str1);
+    free(upper_str2);
 
-        return ret;
+    return ret;
 }
 
 extern int test_if_System_folder(const char *const dirname){
-        const char *const MS_System_folder[] = {"SYSTEM VOLUME INFORMATION", "RECYCLER", "RECYCLED", "$RECYCLE.BIN", NULL};
-        const char *const Linux_System_folder[] = {"lost+found", NULL};
-        int i;
+	const char *const MS_System_folder[] = {"SYSTEM VOLUME INFORMATION", "RECYCLER", "RECYCLED", "$RECYCLE.BIN", NULL};
+    const char *const Linux_System_folder[] = {"lost+found", NULL};
+    int i;
 
-        for(i = 0; MS_System_folder[i] != NULL; ++i){
-                if(!upper_strcmp(dirname, MS_System_folder[i]))
-                        return 1;
-        }
+    for(i = 0; MS_System_folder[i] != NULL; ++i){
+    	if(!upper_strcmp(dirname, MS_System_folder[i]))
+        	return 1;
+    }
 
-        for(i = 0; Linux_System_folder[i] != NULL; ++i){
-                if(!upper_strcmp(dirname, Linux_System_folder[i]))
-                        return 1;
-        }
+    for(i = 0; Linux_System_folder[i] != NULL; ++i){
+    	if(!upper_strcmp(dirname, Linux_System_folder[i]))
+        	return 1;
+    }
 
-        return 0;
+    return 0;
 }
 
 extern int get_var_file_name(const char *const account, const char *const path, char **file_name){
@@ -271,75 +268,73 @@ extern int get_var_file_name(const char *const account, const char *const path, 
 }
 
 extern char *read_whole_file(const char *target){
-        FILE *fp;
-        char *buffer, *new_str;
-        int i;
-        unsigned int read_bytes = 0;
-        unsigned int each_size = 1024;
+	FILE *fp;
+    char *buffer, *new_str;
+    int i;
+    unsigned int read_bytes = 0;
+    unsigned int each_size = 1024;
 
-        if((fp = fopen(target, "r")) == NULL)
-                return NULL;
+	if((fp = fopen(target, "r")) == NULL)
+    	return NULL;
 
-        buffer = (char *)malloc(sizeof(char)*each_size);
-        if(buffer == NULL){
-                //_dprintf("No memory \"buffer\".\n");
-                fclose(fp);
-                return NULL;
-        }
-        memset(buffer, 0, each_size);
-
-        while ((i = fread(buffer+read_bytes, each_size * sizeof(char), 1, fp)) == 1){
-                read_bytes += each_size;
-                new_str = (char *)malloc(sizeof(char)*(each_size+read_bytes));
-                if(new_str == NULL){
-                        //_dprintf("No memory \"new_str\".\n");
-                        free(buffer);
-                        fclose(fp);
-                        return NULL;
-                }
-                memset(new_str, 0, sizeof(char)*(each_size+read_bytes));
-                memcpy(new_str, buffer, read_bytes);
-
-                free(buffer);
-                buffer = new_str;
-        }
-
+    buffer = (char *)malloc(sizeof(char)*each_size);
+    if(buffer == NULL){
+    	//_dprintf("No memory \"buffer\".\n");
         fclose(fp);
-        return buffer;
+        return NULL;
+    }
+    memset(buffer, 0, each_size);
+
+    while ((i = fread(buffer+read_bytes, each_size * sizeof(char), 1, fp)) == 1){
+    	read_bytes += each_size;
+        new_str = (char *)malloc(sizeof(char)*(each_size+read_bytes));
+        if(new_str == NULL){
+        	//_dprintf("No memory \"new_str\".\n");
+            free(buffer);
+            fclose(fp);
+            return NULL;
+        }
+        memset(new_str, 0, sizeof(char)*(each_size+read_bytes));
+        memcpy(new_str, buffer, read_bytes);
+
+        free(buffer);
+        buffer = new_str;
+    }
+
+    fclose(fp);
+    return buffer;
 }
 
-
-
 extern char *upper_strstr(const char *const str, const char *const target){
-        char *upper_str, *upper_target;
-        char *ret;
-        int len;
+    char *upper_str, *upper_target;
+    char *ret;
+    int len;
 
-        if(str == NULL || target == NULL)
-                return NULL;
+    if(str == NULL || target == NULL)
+    	return NULL;
 
-        if(get_upper_str(str, &upper_str) == NULL)
-                return NULL;
+    if(get_upper_str(str, &upper_str) == NULL)
+    	return NULL;
 
-        if(get_upper_str(target, &upper_target) == NULL){
-                free(upper_str);
-                return NULL;
-        }
+    if(get_upper_str(target, &upper_target) == NULL){
+    	free(upper_str);
+        return NULL;
+    }
 
-        ret = strstr(upper_str, upper_target);
-        if(ret == NULL){
-                free(upper_str);
-                free(upper_target);
-                return NULL;
-        }
-
-        if((len = upper_str-ret) < 0)
-                len = ret-upper_str;
-
-        free(upper_str);
+    ret = strstr(upper_str, upper_target);
+    if(ret == NULL){
+    	free(upper_str);
         free(upper_target);
+        return NULL;
+    }
 
-        return (char *)(str+len);
+    if((len = upper_str-ret) < 0)
+    	len = ret-upper_str;
+
+    free(upper_str);
+    free(upper_target);
+
+    return (char *)(str+len);
 }
 
 extern void free_2_dimension_list(int *num, char ***list) {
@@ -430,7 +425,7 @@ extern int get_all_folder(const char *const mount_path, int *sh_num, char ***fol
 }
 
 extern void set_file_integrity(const char *const file_name){
-    unsigned long file_size;
+    unsigned long fsize;
     char test_file[PATH_MAX], test_file_name[PATH_MAX];
     FILE *fp;
     char target_dir[PATH_MAX], *ptr;
@@ -446,19 +441,19 @@ extern void set_file_integrity(const char *const file_name){
     memset(target_dir, 0, PATH_MAX);
     strncpy(target_dir, file_name, len);
 
-    if((file_size = f_size(file_name)) == -1){
+    if((fsize = file_size(file_name)) == -1){
         usb_dbg("Fail to get the size of the file.\n");
         return;
     }
 
     memset(test_file, 0, PATH_MAX);
-    sprintf(test_file, "%s.%lu", file_name, file_size);
+    sprintf(test_file, "%s.%lu", file_name, fsize);
     if((fp = fopen(test_file, "w")) != NULL)
         fclose(fp);
 
     memset(test_file_name, 0, PATH_MAX);
     ++ptr;
-    sprintf(test_file_name, "%s.%lu", ptr, file_size);
+    sprintf(test_file_name, "%s.%lu", ptr, fsize);
 
     if((opened_dir = opendir(target_dir)) == NULL){
         usb_dbg("Can't opendir \"%s\".\n", target_dir);
@@ -566,103 +561,103 @@ extern int get_permission(const char *const account,
                               const char *const mount_path,
                               const char *const folder,
                               const char *const protocol) {
-        char *var_file, *var_info;
-        char *target, *follow_info;
-        int len, result;
+    char *var_file, *var_info;
+    char *target, *follow_info;
+    int len, result;
 
-        // 1. get the var file
-        if(get_var_file_name(account, mount_path, &var_file)){
-            usb_dbg("Can't malloc \"var_file\".\n");
-            return -1;
-        }
+    // 1. get the var file
+    if(get_var_file_name(account, mount_path, &var_file)){
+    	usb_dbg("Can't malloc \"var_file\".\n");
+        return -1;
+    }
 
-        // 2. check the file integrity.
-        if(!check_file_integrity(var_file)){
-            usb_dbg("Fail to check the file: %s.\n", var_file);
-            if(initial_var_file(account, mount_path) != 0){
-                usb_dbg("Can't initial \"%s\"'s file in %s.\n", account, mount_path);
+    // 2. check the file integrity.
+    if(!check_file_integrity(var_file)){
+        usb_dbg("Fail to check the file: %s.\n", var_file);
+    	if(initial_var_file(account, mount_path) != 0){
+        	usb_dbg("Can't initial \"%s\"'s file in %s.\n", account, mount_path);
                 free(var_file);
                 return -1;
-            }
         }
-
-        // 3. get the content of the var_file of the account
-        var_info = read_whole_file(var_file);
-        if (var_info == NULL) {
-            usb_dbg("get_permission: \"%s\" isn't existed or there's no content.\n", var_file);
-            free(var_file);
-            return -1;
-        }
-        free(var_file);
-
-        // 4. get the target in the content
-        if(folder == NULL)
-            len = strlen("*=");
-        else
-            len = strlen("*")+strlen(folder)+strlen("=");
-        target = (char *)malloc(sizeof(char)*(len+1));
-        if (target == NULL) {
-            usb_dbg("Can't allocate \"target\".\n");
-            free(var_info);
-            return -1;
-        }
-        if(folder == NULL)
-            strcpy(target, "*=");
-        else
-            sprintf(target, "*%s=", folder);
-        target[len] = 0;
-
-        follow_info = upper_strstr(var_info, target);
-        free(target);
-        if (follow_info == NULL) {
-            if(account == NULL)
-                usb_dbg("No right about \"%s\" with the share mode.\n", (folder == NULL?"Pool":folder));
-            else
-                usb_dbg("No right about \"%s\" with \"%s\".\n", (folder == NULL?"Pool":folder), account);
-            free(var_info);
-            return -1;
-        }
-
-        follow_info += len;
-
-        if (follow_info[MAX_PROTOCOL_NUM] != '\n') {
-            if(account == NULL)
-                usb_dbg("The var info is incorrect.\nPlease reset the var file of the share mode.\n");
-            else
-                usb_dbg("The var info is incorrect.\nPlease reset the var file of \"%s\".\n", account);
-
-            free(var_info);
-            return -1;
-        }
-
-        // 5. get the right of folder
-        if (!strcmp(protocol, PROTOCOL_CIFS))
-            result = follow_info[0]-'0';
-        else if (!strcmp(protocol, PROTOCOL_FTP))
-            result = follow_info[1]-'0';
-        else if (!strcmp(protocol, PROTOCOL_MEDIASERVER))
-            result = follow_info[2]-'0';
-#ifdef RTCONFIG_WEBDAV_OLD
-        else if (!strcmp(protocol, PROTOCOL_WEBDAV))
-            result = follow_info[3]-'0';
-#endif
-        else{
-            usb_dbg("The protocol, \"%s\", is incorrect.\n", protocol);
-            free(var_info);
-            return -1;
-        }
-        free(var_info);
-
-        if (result < 0 || result > 3) {
-            if(account == NULL)
-                usb_dbg("The var info is incorrect.\nPlease reset the var file of the share mode.\n");
-            else
-                usb_dbg("The var info is incorrect.\nPlease reset the var file of \"%s\".\n", account);
-            return -1;
-        }
-
-        return result;
     }
+
+    // 3. get the content of the var_file of the account
+    var_info = read_whole_file(var_file);
+    if (var_info == NULL) {
+    	usb_dbg("get_permission: \"%s\" isn't existed or there's no content.\n", var_file);
+        free(var_file);
+    	return -1;
+    }
+    free(var_file);
+
+    // 4. get the target in the content
+    if(folder == NULL)
+    	len = strlen("*=");
+    else
+        len = strlen("*")+strlen(folder)+strlen("=");
+    target = (char *)malloc(sizeof(char)*(len+1));
+    if (target == NULL) {
+    	usb_dbg("Can't allocate \"target\".\n");
+        free(var_info);
+        return -1;
+    }
+    if(folder == NULL)
+    	strcpy(target, "*=");
+    else
+    	sprintf(target, "*%s=", folder);
+    target[len] = 0;
+
+    follow_info = upper_strstr(var_info, target);
+    free(target);
+    if (follow_info == NULL) {
+    	if(account == NULL)
+        	usb_dbg("No right about \"%s\" with the share mode.\n", (folder == NULL?"Pool":folder));
+        else
+        	usb_dbg("No right about \"%s\" with \"%s\".\n", (folder == NULL?"Pool":folder), account);
+        free(var_info);
+        return -1;
+	}
+
+    follow_info += len;
+
+    if (follow_info[MAX_PROTOCOL_NUM] != '\n') {
+    	if(account == NULL)
+        	usb_dbg("The var info is incorrect.\nPlease reset the var file of the share mode.\n");
+        else
+            usb_dbg("The var info is incorrect.\nPlease reset the var file of \"%s\".\n", account);
+
+        free(var_info);
+        return -1;
+    }
+
+    // 5. get the right of folder
+    if (!strcmp(protocol, PROTOCOL_CIFS))
+    	result = follow_info[0]-'0';
+    else if (!strcmp(protocol, PROTOCOL_FTP))
+        result = follow_info[1]-'0';
+    else if (!strcmp(protocol, PROTOCOL_MEDIASERVER))
+        result = follow_info[2]-'0';
+#ifdef RTCONFIG_WEBDAV_OLD
+    else if (!strcmp(protocol, PROTOCOL_WEBDAV))
+        result = follow_info[3]-'0';
+#endif
+    else{
+        usb_dbg("The protocol, \"%s\", is incorrect.\n", protocol);
+        free(var_info);
+    	return -1;
+    }
+    free(var_info);
+
+    if (result < 0 || result > 3) {
+    	if(account == NULL)
+        	usb_dbg("The var info is incorrect.\nPlease reset the var file of the share mode.\n");
+        else
+        	usb_dbg("The var info is incorrect.\nPlease reset the var file of \"%s\".\n", account);
+    	return -1;
+    }
+
+    return result;
+}
 
 /*???end?*/
 
@@ -673,129 +668,130 @@ extern int get_permission(const char *const account,
 #include <ctype.h>
 #include <stddef.h>
 enum {
-        PSSCAN_PID      = 1 << 0,
-        PSSCAN_PPID     = 1 << 1,
-        PSSCAN_PGID     = 1 << 2,
-        PSSCAN_SID      = 1 << 3,
-        PSSCAN_UIDGID   = 1 << 4,
-        PSSCAN_COMM     = 1 << 5,
-        /* PSSCAN_CMD      = 1 << 6, - use read_cmdline instead */
-        PSSCAN_ARGV0    = 1 << 7,
-        /* PSSCAN_EXE      = 1 << 8, - not implemented */
-        PSSCAN_STATE    = 1 << 9,
-        PSSCAN_VSZ      = 1 << 10,
-        PSSCAN_RSS      = 1 << 11,
-        PSSCAN_STIME    = 1 << 12,
-        PSSCAN_UTIME    = 1 << 13,
-        PSSCAN_TTY      = 1 << 14,
-        PSSCAN_SMAPS    = (1 << 15) * 0,
-        PSSCAN_ARGVN    = (1 << 16) * 1,
-        PSSCAN_START_TIME = 1 << 18,
-        /* These are all retrieved from proc/NN/stat in one go: */
-        PSSCAN_STAT     = PSSCAN_PPID | PSSCAN_PGID | PSSCAN_SID
-                        | PSSCAN_COMM | PSSCAN_STATE
-                        | PSSCAN_VSZ | PSSCAN_RSS
-                        | PSSCAN_STIME | PSSCAN_UTIME | PSSCAN_START_TIME
-                        | PSSCAN_TTY,
+	PSSCAN_PID      = 1 << 0,
+    PSSCAN_PPID     = 1 << 1,
+    PSSCAN_PGID     = 1 << 2,
+    PSSCAN_SID      = 1 << 3,
+    PSSCAN_UIDGID   = 1 << 4,
+    PSSCAN_COMM     = 1 << 5,
+    /* PSSCAN_CMD      = 1 << 6, - use read_cmdline instead */
+    PSSCAN_ARGV0    = 1 << 7,
+    /* PSSCAN_EXE      = 1 << 8, - not implemented */
+    PSSCAN_STATE    = 1 << 9,
+    PSSCAN_VSZ      = 1 << 10,
+    PSSCAN_RSS      = 1 << 11,
+    PSSCAN_STIME    = 1 << 12,
+    PSSCAN_UTIME    = 1 << 13,
+    PSSCAN_TTY      = 1 << 14,
+    PSSCAN_SMAPS    = (1 << 15) * 0,
+    PSSCAN_ARGVN    = (1 << 16) * 1,
+    PSSCAN_START_TIME = 1 << 18,
+    /* These are all retrieved from proc/NN/stat in one go: */
+    PSSCAN_STAT     = PSSCAN_PPID | PSSCAN_PGID | PSSCAN_SID
+                      | PSSCAN_COMM | PSSCAN_STATE
+                      | PSSCAN_VSZ | PSSCAN_RSS
+                      | PSSCAN_STIME | PSSCAN_UTIME | PSSCAN_START_TIME
+                      | PSSCAN_TTY,
 };
 
 #define PROCPS_BUFSIZE 1024
 
 static int read_to_buf(const char *filename, void *buf)
 {
-        int fd;
-        /* open_read_close() would do two reads, checking for EOF.
+    int fd;
+    /* open_read_close() would do two reads, checking for EOF.
          * When you have 10000 /proc/$NUM/stat to read, it isn't desirable */
-        int ret = -1;
-        fd = open(filename, O_RDONLY);
-        if (fd >= 0) {
-                ret = read(fd, buf, PROCPS_BUFSIZE-1);
-                close(fd);
-        }
-        ((char *)buf)[ret > 0 ? ret : 0] = '\0';
-        return ret;
+	int ret = -1;
+    fd = open(filename, O_RDONLY);
+   	if (fd >= 0) {
+    	ret = read(fd, buf, PROCPS_BUFSIZE-1);
+        close(fd);
+    }
+    ((char *)buf)[ret > 0 ? ret : 0] = '\0';
+    return ret;
 }
 
 void* xzalloc(size_t size)
 {
-        void *ptr = malloc(size);
-        memset(ptr, 0, size);
-        return ptr;
+    void *ptr = malloc(size);
+    memset(ptr, 0, size);
+    return ptr;
 }
 
 void* xrealloc(void *ptr, size_t size)
 {
-        ptr = realloc(ptr, size);
-        if (ptr == NULL && size != 0)
-                perror("no memory");
-        return ptr;
+    ptr = realloc(ptr, size);
+    if (ptr == NULL && size != 0)
+    	perror("no memory");
+    return ptr;
 }
 
 void* xrealloc_vector_helper(void *vector, unsigned sizeof_and_shift, int idx)
 {
-        int mask = 1 << (unsigned char)sizeof_and_shift;
+    int mask = 1 << (unsigned char)sizeof_and_shift;
 
-        if (!(idx & (mask - 1))) {
-                sizeof_and_shift >>= 8; /* sizeof(vector[0]) */
-                vector = xrealloc(vector, sizeof_and_shift * (idx + mask + 1));
-                memset((char*)vector + (sizeof_and_shift * idx), 0, sizeof_and_shift * (mask + 1));
-        }
-        return vector;
+    if (!(idx & (mask - 1))) {
+    	sizeof_and_shift >>= 8; /* sizeof(vector[0]) */
+        vector = xrealloc(vector, sizeof_and_shift * (idx + mask + 1));
+        memset((char*)vector + (sizeof_and_shift * idx), 0, sizeof_and_shift * (mask + 1));
+    }
+    return vector;
 }
 
 #define xrealloc_vector(vector, shift, idx) \
         xrealloc_vector_helper((vector), (sizeof((vector)[0]) << 8) + (shift), (idx))
 
 typedef struct procps_status_t {
-        DIR *dir;
-        unsigned char shift_pages_to_bytes;
-        unsigned char shift_pages_to_kb;
-/* Fields are set to 0/NULL if failed to determine (or not requested) */
-        unsigned int argv_len;
-        char *argv0;
-        /* Everything below must contain no ptrs to malloc'ed data:
+    DIR *dir;
+    unsigned char shift_pages_to_bytes;
+    unsigned char shift_pages_to_kb;
+	/* Fields are set to 0/NULL if failed to determine (or not requested) */
+    unsigned int argv_len;
+    char *argv0;
+    /* Everything below must contain no ptrs to malloc'ed data:
          * it is memset(0) for each process in procps_scan() */
-        unsigned long vsz, rss; /* we round it to kbytes */
-        unsigned long stime, utime;
-        unsigned long start_time;
-        unsigned pid;
-        unsigned ppid;
-        unsigned pgid;
-        unsigned sid;
-        unsigned uid;
-        unsigned gid;
-        unsigned tty_major,tty_minor;
-        char state[4];
-        /* basename of executable in exec(2), read from /proc/N/stat
+    unsigned long vsz, rss; /* we round it to kbytes */
+    unsigned long stime, utime;
+    unsigned long start_time;
+    unsigned pid;
+    unsigned ppid;
+    unsigned pgid;
+    unsigned sid;
+    unsigned uid;
+    unsigned gid;
+    unsigned tty_major,tty_minor;
+    char state[4];
+    /* basename of executable in exec(2), read from /proc/N/stat
          * (if executable is symlink or script, it is NOT replaced
          * by link target or interpreter name) */
-        char comm[16];
-        /* user/group? - use passwd/group parsing functions */
+    char comm[16];
+    /* user/group? - use passwd/group parsing functions */
 } procps_status_t;
 
-        static procps_status_t* alloc_procps_scan(void)
-        {
-            unsigned n = getpagesize();
-            procps_status_t* sp = xzalloc(sizeof(procps_status_t));
-            sp->dir = opendir("/proc");
-            while (1) {
-                n >>= 1;
-                if (!n) break;
-                sp->shift_pages_to_bytes++;
-            }
-            sp->shift_pages_to_kb = sp->shift_pages_to_bytes - 10;
-            return sp;
-        }
-        void BUG_comm_size(void)
-        {
-        }
+static procps_status_t* alloc_procps_scan(void)
+{
+	unsigned n = getpagesize();
+    procps_status_t* sp = xzalloc(sizeof(procps_status_t));
+    sp->dir = opendir("/proc");
+    while (1) {
+    	n >>= 1;
+        if (!n) break;
+        sp->shift_pages_to_bytes++;
+    }
+    sp->shift_pages_to_kb = sp->shift_pages_to_bytes - 10;
+    return sp;
+}
+
+void BUG_comm_size(void)
+{
+}
 #define ULLONG_MAX     (~0ULL)
 #define UINT_MAX       (~0U)
 
 static unsigned long long ret_ERANGE(void)
 {
-        errno = ERANGE; /* this ain't as small as it looks (on glibc) */
-        return ULLONG_MAX;
+    errno = ERANGE; /* this ain't as small as it looks (on glibc) */
+	return ULLONG_MAX;
 }
 static unsigned long long handle_errors(unsigned long long v, char **endp, char *endptr)
 {
@@ -825,221 +821,224 @@ unsigned bb_strtou(const char *arg, char **endp, int base)
 
 const char* bb_basename(const char *name)
 {
-        const char *cp = strrchr(name, '/');
-        if (cp)
-                return cp + 1;
-        return name;
+    const char *cp = strrchr(name, '/');
+    if (cp)
+    	return cp + 1;
+    return name;
 }
 
 static int comm_match(procps_status_t *p, const char *procName)
 {
-        int argv1idx;
+    int argv1idx;
 
-        /* comm does not match */
-        if (strncmp(p->comm, procName, 15) != 0)
-                return 0;
+    /* comm does not match */
+    if (strncmp(p->comm, procName, 15) != 0)
+    	return 0;
 
-        /* in Linux, if comm is 15 chars, it may be a truncated */
-        if (p->comm[14] == '\0') /* comm is not truncated - match */
-                return 1;
+    /* in Linux, if comm is 15 chars, it may be a truncated */
+    if (p->comm[14] == '\0') /* comm is not truncated - match */
+         return 1;
 
-        /* comm is truncated, but first 15 chars match.
+    /* comm is truncated, but first 15 chars match.
          * This can be crazily_long_script_name.sh!
          * The telltale sign is basename(argv[1]) == procName. */
 
-        if (!p->argv0)
-                return 0;
+    if (!p->argv0)
+    	return 0;
 
-        argv1idx = strlen(p->argv0) + 1;
-        if (argv1idx >= p->argv_len)
-                return 0;
+    argv1idx = strlen(p->argv0) + 1;
+    if (argv1idx >= p->argv_len)
+    	return 0;
 
-        if (strcmp(bb_basename(p->argv0 + argv1idx), procName) != 0)
-                return 0;
+    if (strcmp(bb_basename(p->argv0 + argv1idx), procName) != 0)
+    	return 0;
 
-        return 1;
+    return 1;
 }
 
 void free_procps_scan(procps_status_t* sp)
 {
-        closedir(sp->dir);
-        free(sp->argv0);
-        free(sp);
+    closedir(sp->dir);
+    free(sp->argv0);
+    free(sp);
 }
 
 procps_status_t* procps_scan(procps_status_t* sp, int flags)
 {
-        struct dirent *entry;
-        char buf[PROCPS_BUFSIZE];
-        char filename[sizeof("/proc//cmdline") + sizeof(int)*3];
-        char *filename_tail;
-        long tasknice;
-        unsigned pid;
-        int n;
-        struct stat sb;
+	struct dirent *entry;
+    char buf[PROCPS_BUFSIZE];
+    char filename[sizeof("/proc//cmdline") + sizeof(int)*3];
+    char *filename_tail;
+    long tasknice;
+    unsigned pid;
+    int n;
+    struct stat sb;
 
-        if (!sp)
-                sp = alloc_procps_scan();
+    if (!sp)
+    	sp = alloc_procps_scan();
 
-        for (;;) {
-                entry = readdir(sp->dir);
-                if (entry == NULL) {
-                        free_procps_scan(sp);
-                        return NULL;
-                }
-                pid = bb_strtou(entry->d_name, NULL, 10);
-                if (errno)
-                        continue;
+    for (;;) {
+    	entry = readdir(sp->dir);
+        if (entry == NULL) {
+        	free_procps_scan(sp);
+            return NULL;
+        }
+        pid = bb_strtou(entry->d_name, NULL, 10);
+        if (errno)
+        	continue;
 
-                /* After this point we have to break, not continue
+        /* After this point we have to break, not continue
                  * ("continue" would mean that current /proc/NNN
                  * is not a valid process info) */
 
-                memset(&sp->vsz, 0, sizeof(*sp) - offsetof(procps_status_t, vsz));
+        memset(&sp->vsz, 0, sizeof(*sp) - offsetof(procps_status_t, vsz));
 
-                sp->pid = pid;
-                if (!(flags & ~PSSCAN_PID)) break;
+        sp->pid = pid;
+        if (!(flags & ~PSSCAN_PID)) break;
 
-                filename_tail = filename + sprintf(filename, "/proc/%d", pid);
+        filename_tail = filename + sprintf(filename, "/proc/%d", pid);
 
-                if (flags & PSSCAN_UIDGID) {
-                        if (stat(filename, &sb))
-                                break;
-                        /* Need comment - is this effective or real UID/GID? */
-                        sp->uid = sb.st_uid;
-                        sp->gid = sb.st_gid;
-                }
-
-                if (flags & PSSCAN_STAT) {
-                        char *cp, *comm1;
-                        int tty;
-                        unsigned long vsz, rss;
-
-                        /* see proc(5) for some details on this */
-                        strcpy(filename_tail, "/stat");
-                        n = read_to_buf(filename, buf);
-                        if (n < 0)
-                                break;
-                        cp = strrchr(buf, ')'); /* split into "PID (cmd" and "<rest>" */
-                        /*if (!cp || cp[1] != ' ')
-                                break;*/
-                        cp[0] = '\0';
-                        if (sizeof(sp->comm) < 16)
-                                BUG_comm_size();
-                        comm1 = strchr(buf, '(');
-                        /*if (comm1)*/
-                                strncpy(sp->comm, comm1 + 1, sizeof(sp->comm));
-
-                        n = sscanf(cp+2,
-                                "%c %u "               /* state, ppid */
-                                "%u %u %d %*s "        /* pgid, sid, tty, tpgid */
-                                "%*s %*s %*s %*s %*s " /* flags, min_flt, cmin_flt, maj_flt, cmaj_flt */
-                                "%lu %lu "             /* utime, stime */
-                                "%*s %*s %*s "         /* cutime, cstime, priority */
-                                "%ld "                 /* nice */
-                                "%*s %*s "             /* timeout, it_real_value */
-                                "%lu "                 /* start_time */
-                                "%lu "                 /* vsize */
-                                "%lu "                 /* rss */
-                        /*	"%lu %lu %lu %lu %lu %lu " rss_rlim, start_code, end_code, start_stack, kstk_esp, kstk_eip */
-                        /*	"%u %u %u %u "         signal, blocked, sigignore, sigcatch */
-                        /*	"%lu %lu %lu"          wchan, nswap, cnswap */
-                                ,
-                                sp->state, &sp->ppid,
-                                &sp->pgid, &sp->sid, &tty,
-                                &sp->utime, &sp->stime,
-                                &tasknice,
-                                &sp->start_time,
-                                &vsz,
-                                &rss);
-                        if (n != 11)
-                                break;
-                        /* vsz is in bytes and we want kb */
-                        sp->vsz = vsz >> 10;
-                        /* vsz is in bytes but rss is in *PAGES*! Can you believe that? */
-                        sp->rss = rss << sp->shift_pages_to_kb;
-                        sp->tty_major = (tty >> 8) & 0xfff;
-                        sp->tty_minor = (tty & 0xff) | ((tty >> 12) & 0xfff00);
-
-                        if (sp->vsz == 0 && sp->state[0] != 'Z')
-                                sp->state[1] = 'W';
-                        else
-                                sp->state[1] = ' ';
-                        if (tasknice < 0)
-                                sp->state[2] = '<';
-                        else if (tasknice) /* > 0 */
-                                sp->state[2] = 'N';
-                        else
-                                sp->state[2] = ' ';
-
-                }
-
-                if (flags & (PSSCAN_ARGV0|PSSCAN_ARGVN)) {
-                        free(sp->argv0);
-                        sp->argv0 = NULL;
-                        strcpy(filename_tail, "/cmdline");
-                        n = read_to_buf(filename, buf);
-                        if (n <= 0)
-                                break;
-                        if (flags & PSSCAN_ARGVN) {
-                                sp->argv_len = n;
-                                sp->argv0 = malloc(n + 1);
-                                memcpy(sp->argv0, buf, n + 1);
-                                /* sp->argv0[n] = '\0'; - buf has it */
-                        } else {
-                                sp->argv_len = 0;
-                                sp->argv0 = strdup(buf);
-                        }
-                }
-                break;
+        if (flags & PSSCAN_UIDGID) {
+        	if (stat(filename, &sb))
+            	break;
+        	/* Need comment - is this effective or real UID/GID? */
+            sp->uid = sb.st_uid;
+            sp->gid = sb.st_gid;
         }
-        return sp;
+
+        if (flags & PSSCAN_STAT) {
+        	char *cp, *comm1;
+            int tty;
+            unsigned long vsz, rss;
+
+            /* see proc(5) for some details on this */
+            strcpy(filename_tail, "/stat");
+            n = read_to_buf(filename, buf);
+            if (n < 0)
+            	break;
+            cp = strrchr(buf, ')'); /* split into "PID (cmd" and "<rest>" */
+            /*if (!cp || cp[1] != ' ')
+                    	break;*/
+            cp[0] = '\0';
+            if (sizeof(sp->comm) < 16)
+            	BUG_comm_size();
+            comm1 = strchr(buf, '(');
+            /*if (comm1)*/
+            strncpy(sp->comm, comm1 + 1, sizeof(sp->comm));
+
+            n = sscanf( cp+2,
+                        "%c %u "               /* state, ppid */
+                        "%u %u %d %*s "        /* pgid, sid, tty, tpgid */
+                        "%*s %*s %*s %*s %*s " /* flags, min_flt, cmin_flt, maj_flt, cmaj_flt */
+                        "%lu %lu "             /* utime, stime */
+                        "%*s %*s %*s "         /* cutime, cstime, priority */
+                        "%ld "                 /* nice */
+                        "%*s %*s "             /* timeout, it_real_value */
+                        "%lu "                 /* start_time */
+                        "%lu "                 /* vsize */
+                        "%lu "                 /* rss */
+            			/*	"%lu %lu %lu %lu %lu %lu " rss_rlim, start_code, end_code, start_stack, kstk_esp, kstk_eip */
+            			/*	"%u %u %u %u "         signal, blocked, sigignore, sigcatch */
+            			/*	"%lu %lu %lu"          wchan, nswap, cnswap */
+                        ,
+                        sp->state, &sp->ppid,
+                        &sp->pgid, &sp->sid, &tty,
+                        &sp->utime, &sp->stime,
+                        &tasknice,
+                        &sp->start_time,
+                        &vsz,
+                        &rss);
+			if (n != 11)
+            	break;
+            /* vsz is in bytes and we want kb */
+            sp->vsz = vsz >> 10;
+            /* vsz is in bytes but rss is in *PAGES*! Can you believe that? */
+            sp->rss = rss << sp->shift_pages_to_kb;
+            sp->tty_major = (tty >> 8) & 0xfff;
+            sp->tty_minor = (tty & 0xff) | ((tty >> 12) & 0xfff00);
+
+            if (sp->vsz == 0 && sp->state[0] != 'Z')
+            	sp->state[1] = 'W';
+            else
+            	sp->state[1] = ' ';
+            if (tasknice < 0)
+            	sp->state[2] = '<';
+            else if (tasknice) /* > 0 */
+            	sp->state[2] = 'N';
+            else
+            	sp->state[2] = ' ';
+
+		}
+
+        if (flags & (PSSCAN_ARGV0|PSSCAN_ARGVN)) {
+        	free(sp->argv0);
+            sp->argv0 = NULL;
+            strcpy(filename_tail, "/cmdline");
+            n = read_to_buf(filename, buf);
+            if (n <= 0)
+            	break;
+            if (flags & PSSCAN_ARGVN) {
+            	sp->argv_len = n;
+                sp->argv0 = malloc(n + 1);
+                memcpy(sp->argv0, buf, n + 1);
+                /* sp->argv0[n] = '\0'; - buf has it */
+            } else {
+            	sp->argv_len = 0;
+                sp->argv0 = strdup(buf);
+            }
+        }
+        break;
+	}
+    return sp;
 }
 
 pid_t* find_pid_by_name(const char *procName)
 {
-        pid_t* pidList;
-        int i = 0;
-        procps_status_t* p = NULL;
+    pid_t* pidList;
+    int i = 0;
+    procps_status_t* p = NULL;
 
-        pidList = xzalloc(sizeof(*pidList));
-        while ((p = procps_scan(p, PSSCAN_PID|PSSCAN_COMM|PSSCAN_ARGVN))) {
-                if (comm_match(p, procName)
-                /* or we require argv0 to match (essential for matching reexeced /proc/self/exe)*/
-                 || (p->argv0 && strcmp(bb_basename(p->argv0), procName) == 0)
-                /* TOOD: we can also try /proc/NUM/exe link, do we want that? */
-                ) {
-                        if (p->state[0] != 'Z')
-                        {
-                                pidList = xrealloc_vector(pidList, 2, i);
-                                pidList[i++] = p->pid;
-                        }
+    pidList = xzalloc(sizeof(*pidList));
+    while ((p = procps_scan(p, PSSCAN_PID|PSSCAN_COMM|PSSCAN_ARGVN))) {
+    	if (comm_match(p, procName)
+        	/* or we require argv0 to match (essential for matching reexeced /proc/self/exe)*/
+            || (p->argv0 && strcmp(bb_basename(p->argv0), procName) == 0)
+            /* TOOD: we can also try /proc/NUM/exe link, do we want that? */
+            ) {
+            	if (p->state[0] != 'Z')
+                {
+                	pidList = xrealloc_vector(pidList, 2, i);
+                    pidList[i++] = p->pid;
                 }
-        }
+    	}
+    }
 
-        pidList[i] = 0;
-        return pidList;
+    pidList[i] = 0;
+    return pidList;
 }
 
 int pids(char *appname)
 {
-        pid_t *pidList;
-        pid_t *pl;
-        int count = 0;
+    pid_t *pidList;
+    pid_t *pl;
+    int count = 0;
 
-        pidList = find_pid_by_name(appname);
-        for (pl = pidList; *pl; pl++) {
-                count++;
-        }
-        free(pidList);
+    pidList = find_pid_by_name(appname);
+    for (pl = pidList; *pl; pl++) {
+    	count++;
+    }
+    free(pidList);
 
-        if (count)
-                return 1;
-        else
-                return 0;
+	if (count)
+    	return 1;
+   	else
+    	return 0;
 }
 /*pids end*/
-#endif
+
+/*end #ifdef APP_IPKG*/
+#endif 
+
 const char base64_pad = '=';
 
 /* "A-Z a-z 0-9 + /" maps to 0-63 */
@@ -1063,66 +1062,138 @@ const short base64_reverse_table[256] = {
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /* 0xF0 - 0xFF */
 };
 
-
 unsigned char * base64_decode(buffer *out, const char *in) {
-	unsigned char *result;
-	int ch, j = 0, k;
-	size_t i;
+        unsigned char *result;
+        unsigned int j = 0; /* current output character (position) that is decoded. can contain partial result */
+        unsigned int group = 0; /* how many base64 digits in the current group were decoded already. each group has up to 4 digits */
+        size_t i;
 
-	size_t in_len = strlen(in);
-	
-	buffer_prepare_copy(out, in_len);
+        size_t in_len = strlen(in);
 
-	result = (unsigned char *)out->ptr;
+        buffer_prepare_copy(out, in_len);
 
-	ch = in[0];
-	/* run through the whole string, converting as we go */
-	for (i = 0; i < in_len; i++) {
-		ch = in[i];
+        result = (unsigned char *)out->ptr;
 
-		if (ch == '\0') break;
+        /* run through the whole string, converting as we go */
+        for (i = 0; i < in_len; i++) {
+                unsigned char c = (unsigned char) in[i];
+                short ch;
 
-		if (ch == base64_pad) break;
+                if (c == '\0') break;
 
-		ch = base64_reverse_table[ch];
-		if (ch < 0) continue;
+                if (c == base64_pad) {
+                        /* pad character can only come after 2 base64 digits in a group */
+                        if (group < 2) return NULL;
+                        break;
+                }
 
-		switch(i % 4) {
-		case 0:
-			result[j] = ch << 2;
-			break;
-		case 1:
-			result[j++] |= ch >> 4;
-			result[j] = (ch & 0x0f) << 4;
-			break;
-		case 2:
-			result[j++] |= ch >>2;
-			result[j] = (ch & 0x03) << 6;
-			break;
-		case 3:
-			result[j++] |= ch;
-			break;
-		}
-	}
-	k = j;
-	/* mop things up if we ended on a boundary */
-	if (ch == base64_pad) {
-		switch(i % 4) {
-		case 0:
-		case 1:
-			return NULL;
-		case 2:
-			k++;
-		case 3:
-			result[k++] = 0;
-		}
-	}
-	result[k] = '\0';
+                ch = base64_reverse_table[c];
+                if (ch < 0) continue; /* skip invalid characters */
 
-	out->used = k;
+                switch(group) {
+                case 0:
+                        result[j] = ch << 2;
+                        group = 1;
+                        break;
+                case 1:
+                        result[j++] |= ch >> 4;
+                        result[j] = (ch & 0x0f) << 4;
+                        group = 2;
+                        break;
+                case 2:
+                        result[j++] |= ch >>2;
+                        result[j] = (ch & 0x03) << 6;
+                        group = 3;
+                        break;
+                case 3:
+                        result[j++] |= ch;
+                        group = 0;
+                        break;
+                }
+        }
 
-	return result;
+        switch(group) {
+        case 0:
+                /* ended on boundary */
+                break;
+        case 1:
+                /* need at least 2 base64 digits per group */
+                return NULL;
+        case 2:
+                /* have 2 base64 digits in last group => one real octect, two zeroes padded */
+        case 3:
+                /* have 3 base64 digits in last group => two real octects, one zero padded */
+
+                /* for both cases the current index already is on the first zero padded octet
+                 * - check it really is zero (overlapping bits) */
+                if (0 != result[j]) return NULL;
+                break;
+        }
+
+        result[j] = '\0';
+        out->used = j;
+
+        return result;
 }
+//unsigned char * base64_decode(buffer *out, const char *in) {
+//	unsigned char *result;
+//	int ch, j = 0, k;
+//	size_t i;
+
+//	size_t in_len = strlen(in);
+	
+//	buffer_prepare_copy(out, in_len);
+
+//	result = (unsigned char *)out->ptr;
+
+//	ch = in[0];
+//	/* run through the whole string, converting as we go */
+//	for (i = 0; i < in_len; i++) {
+//		ch = in[i];
+
+//		if (ch == '\0') break;
+
+//		if (ch == base64_pad) break;
+
+//		ch = base64_reverse_table[ch];
+//		if (ch < 0) continue;
+
+//		switch(i % 4) {
+//		case 0:
+//			result[j] = ch << 2;
+//			break;
+//		case 1:
+//			result[j++] |= ch >> 4;
+//			result[j] = (ch & 0x0f) << 4;
+//			break;
+//		case 2:
+//			result[j++] |= ch >>2;
+//			result[j] = (ch & 0x03) << 6;
+//			break;
+//		case 3:
+//			result[j++] |= ch;
+//			break;
+//		}
+//	}
+//	k = j;
+//	/* mop things up if we ended on a boundary */
+//	if (ch == base64_pad) {
+//		switch(i % 4) {
+//		case 0:
+//		case 1:
+//			return NULL;
+//		case 2:
+//			k++;
+//		case 3:
+//			result[k++] = 0;
+//		}
+//	}
+//	result[k] = '\0';
+
+//	out->used = k;
+
+//	return result;
+//}
 
 char* get_mac_address(const char* iface, char* mac){
 	int fd;
@@ -1645,7 +1716,27 @@ int hex2ten(const char* in_str )
 {	
 	int ret;
 
-	if( in_str == (char*)'A' || in_str==(char*)'a' )
+	if( in_str == (char*)'0' )
+		ret = 0;
+	else if( in_str == (char*)'1' )
+		ret = 1;
+	else if( in_str == (char*)'2' )
+		ret = 2;
+	else if( in_str == (char*)'3' )
+		ret = 3;
+	else if( in_str == (char*)'4' )
+		ret = 4;
+	else if( in_str == (char*)'5' )
+		ret = 5;
+	else if( in_str == (char*)'6' )
+		ret = 6;
+	else if( in_str == (char*)'7' )
+		ret = 7;
+	else if( in_str == (char*)'8' )
+		ret = 8;
+	else if( in_str == (char*)'9' )
+		ret = 9;
+	else if( in_str == (char*)'A' || in_str==(char*)'a' )
 		ret = 10;
 	else if( in_str==(char*)'B' || in_str==(char*)'b' )
 		ret = 11;
@@ -1658,7 +1749,7 @@ int hex2ten(const char* in_str )
 	else if( in_str==(char*)'F' || in_str==(char*)'f' )
 		ret = 15;
 	else
-		ret = atoi( (const char *)&in_str );
+		ret = 0;
 	
 	//Cdbg(1, "12121212, in_str=%c, ret=%d", in_str, ret);
 	return ret;
@@ -1666,7 +1757,7 @@ int hex2ten(const char* in_str )
 
 void ten2bin(int ten, char** out)
 {
-	char _array[4]="\0";
+	char _array[5]="\0";
 	_array[0] = '0';    	
 	_array[1] = '0';    	
 	_array[2] = '0';    	
@@ -1684,8 +1775,8 @@ void ten2bin(int ten, char** out)
 		ten = ten/2;
 	}
 
-	*out = (char*)malloc(4);
-	memset(*out, '\0', 4);
+	*out = (char*)malloc(5);
+	memset(*out, '\0', 5);
 	strcpy(*out, _array);
 }
 
@@ -1720,7 +1811,7 @@ void hexstr2binstr(const char* in_str, char** out_str)
 
 char* ten2hex(int  _v )
 {	
-	char ret[4]="\0";		
+	char ret[5]="\0";		
 	if( _v >=0 && _v <= 9 )		
 		//ret = _v.toString();	
 		sprintf(ret,"%d", _v);
@@ -1967,7 +2058,7 @@ void binstr2str( const char* inbinstr, char** out )
 	int ic = strlen(inbinstr) / 8;	
 	int k = 0;	
 
-	*out = (char*)malloc(ic);
+	*out = (char*)malloc(ic+1);
 	memset(*out , '\0', ic);
 	
 	for( int i = 0; i < strlen(inbinstr); i+=8 )	
@@ -1976,12 +2067,16 @@ void binstr2str( const char* inbinstr, char** out )
 		char* substrupper = (char*)malloc(4);
 		substr(substrupper, inbinstr, i, 4);
 		int uc = bin2ten( substrupper );
+		free(substrupper);
+		substrupper=NULL;
 		
 		//後四位元
 		char* substrlowwer = (char*)malloc(4);
 		substr(substrlowwer, inbinstr,  i + 4, 4);
 		int lc = bin2ten( substrlowwer );
-
+		free(substrlowwer);
+		substrlowwer=NULL;
+		
 		int v = (uc << 4) | lc;	
 		
 		char out_char[8];
@@ -2050,25 +2145,25 @@ void str2binstr(const char* instr, char** out)
 
 char* x123_decode(const char* in_str, const char* key, char* out_str)
 {
-	Cdbg(DBE, "in_str=%s, key=%s", in_str, key);
+	//Cdbg(DBE, "in_str=%s, key=%s", in_str, key);
 
 	char* ibinstr;
 	hexstr2binstr( in_str, &ibinstr );
-	//Cdbg(DBE, "ibinstr=%s", ibinstr);
+	//Cdbg(1, "ibinstr=%s", ibinstr);
 
 	char* binstr;
 	deinterleave( ibinstr, 8, &binstr );
-	//Cdbg(DBE, "deinterleave, binstr=%s", binstr);
+	//Cdbg(1, "deinterleave, binstr=%s", binstr);
 
 	int shiftamount = getshiftamount( key, binstr );
-	//Cdbg(DBE, "shiftamount %d %s", shiftamount, key);
+	//Cdbg(1, "shiftamount %d %s", shiftamount, key);
 
 	char* unshiftbinstr;
 	strleftshift( binstr, shiftamount, &unshiftbinstr );
-	//Cdbg(DBE, "unshiftbinstr %s", unshiftbinstr);
+	//Cdbg(1, "unshiftbinstr %s", unshiftbinstr);
 
 	binstr2str(unshiftbinstr, &out_str);
-	Cdbg(DBE, "out_str %s", out_str);
+	//Cdbg(DBE, "out_str %s", out_str);
 
 	free(ibinstr);
 	free(binstr);
@@ -2312,7 +2407,131 @@ int generate_sharelink(server* srv,
 
 	if(filename==NULL||url==NULL||base64_auth==NULL)
 		return 0;
-	
+
+#if 1
+	if(toShare==1){
+		char * pch;
+		pch = strtok(filename, ";");
+		
+		*out = buffer_init();
+				
+		while(pch!=NULL){
+					
+			char share_link[1024];
+			struct timeval tv;
+			unsigned long long now_utime;
+			gettimeofday(&tv,NULL);
+			now_utime = tv.tv_sec * 1000000 + tv.tv_usec;  
+			sprintf( share_link, "AICLOUD%d", abs(now_utime));
+		
+			share_link_info_t *share_link_info;
+			share_link_info = (share_link_info_t *)calloc(1, sizeof(share_link_info_t));
+									
+			share_link_info->shortpath = buffer_init();
+			buffer_copy_string(share_link_info->shortpath, share_link);
+									
+			share_link_info->realpath = buffer_init();
+			buffer_copy_string(share_link_info->realpath, url);
+			buffer_urldecode_path(share_link_info->realpath);
+				
+			share_link_info->filename = buffer_init();
+			buffer_copy_string(share_link_info->filename, pch);
+			buffer_urldecode_path(share_link_info->filename);
+			
+			share_link_info->auth = buffer_init();
+			buffer_copy_string(share_link_info->auth, base64_auth);
+		
+			share_link_info->createtime = time(NULL);
+			share_link_info->expiretime = (expire==0 ? 0 : share_link_info->createtime + expire);
+			share_link_info->toshare = toShare;
+					
+			DLIST_ADD(share_link_info_list, share_link_info);
+					
+			buffer_append_string(*out, share_link);
+			buffer_append_string_len(*out, CONST_STR_LEN("/"));
+			buffer_append_string(*out, pch);
+					
+			//- Next
+			pch = strtok(NULL,";");
+		
+			if(pch)
+				buffer_append_string_len(*out, CONST_STR_LEN(";"));
+		
+			log_sys_write(srv, "sbsbss", "Create share link", share_link_info->realpath , "/", share_link_info->filename, "from ip", con->dst_addr_buf->ptr);
+		
+		}
+	}
+	else{
+		char * pch;
+		pch = strtok(filename, ";");
+		
+		*out = buffer_init();
+
+		char strTime[20]="\0";
+		char mac[20]="\0";
+
+		#if EMBEDDED_EANBLE
+#ifdef APP_IPKG
+                char *router_mac=nvram_get_router_mac();
+                sprintf(mac,"%s",router_mac);
+                free(router_mac);
+#else
+		strcpy( mac, nvram_get_router_mac() );
+#endif
+		#else
+		get_mac_address("eth0", &mac);					
+		#endif
+		
+		char* base64_key = ldb_base64_encode(mac, strlen(mac));
+
+		expire = 86400; //- 24hr
+		unsigned long expiretime = (expire==0 ? 0 : time(NULL) + expire);
+		
+		sprintf(strTime, "%lu", expiretime);
+		
+		char* share_link;
+		char* urlstr = (char*)malloc(strlen(url) +  strlen(base64_auth) + strlen(strTime) + 15);
+		sprintf(urlstr, "%s?auth=%s&expire=%s", url, base64_auth, strTime);
+		Cdbg(DBE, "urlstr=%s", urlstr);
+		share_link = x123_encode(urlstr, base64_key, &share_link);
+		Cdbg(DBE, "share_link=%s", share_link);
+		
+		while(pch!=NULL){
+			buffer_append_string(*out, share_link);
+			buffer_append_string_len(*out, CONST_STR_LEN("/"));
+			buffer_append_string(*out, pch);
+			
+			//- Next
+			pch = strtok(NULL,";");
+
+			if(pch)
+				buffer_append_string_len(*out, CONST_STR_LEN(";"));
+		}
+
+		//Cdbg(1, "out=%s", (*out)->ptr);
+		
+		if(base64_key){
+			free(base64_key);
+			base64_key=NULL;
+		}
+
+		if(urlstr){
+			free(urlstr);
+			urlstr=NULL;
+		}
+
+		if(share_link){
+			free(share_link);
+			share_link=NULL;
+		}
+		
+		//share_link = x123_encode("sambapc/sharefolder", "abcdefg", &share_link);
+		//char* decode_str;
+		//decode_str = x123_decode(encode_str, ldb_base64_encode(mac, strlen(mac)), &decode_str);
+		//Cdbg(DBE, "do HTTP_METHOD_GSL decode_str=%s", decode_str);
+	}
+#else
+
 #if 1	
 	char * pch;
 	pch = strtok(filename, ";");
@@ -2386,55 +2605,84 @@ int generate_sharelink(server* srv,
 	//decode_str = x123_decode(encode_str, ldb_base64_encode(mac, strlen(mac)), &decode_str);
 	//Cdbg(DBE, "do HTTP_METHOD_GSL decode_str=%s", decode_str);
 #endif
+#endif
 
 	return 1;
 
 }
 
-void save_sharelink_list(){
-
-#if EMBEDDED_EANBLE
-
+int get_sharelink_save_count(){
+	int count = 0;
 	share_link_info_t* c;
+	time_t cur_time = time(NULL);
+	for (c = share_link_info_list; c; c = c->next) {			
+		if(c->toshare != 0){
+			double offset = difftime(c->expiretime, cur_time);
+			if( c->expiretime == 0 || offset >= 0.0 ){
+				count++;
+			}
+		}
+	}
+	Cdbg(DBE, "get_sharelink_save_count=%d", count);
+	return count;
+}
+
+void save_sharelink_list(){
+	share_link_info_t* c;
+	time_t cur_time = time(NULL);
+	
+#if EMBEDDED_EANBLE
 	
 	buffer* sharelink_list = buffer_init();
 	buffer_copy_string(sharelink_list, "");
 	
 	for (c = share_link_info_list; c; c = c->next) {
 
-		if(c->toshare == 0)
+		double offset = difftime(c->expiretime, cur_time);					
+		if( c->expiretime !=0 && offset < 0.0 ){				
+			share_link_info_t* c_prev = c->prev;
+			free_share_link_info(c);
+			DLIST_REMOVE(share_link_info_list, c);
+			free(c);
+			c = c_prev;				
 			continue;
-		
-		buffer* temp = buffer_init();
-		
-		buffer_copy_string_buffer(temp, c->shortpath);
-		buffer_append_string(temp, ">");
-		buffer_append_string_buffer(temp, c->realpath);
-		buffer_append_string(temp, ">");
-		buffer_append_string_buffer(temp, c->filename);
-		//buffer_append_string_encoded(temp, CONST_BUF_LEN(c->filename), ENCODING_REL_URI);
-		buffer_append_string(temp, ">");
-		buffer_append_string_buffer(temp, c->auth);
-		buffer_append_string(temp, ">");
-		char strTime[25] = {0};
-		sprintf(strTime, "%lu", c->expiretime);		
-		buffer_append_string(temp, strTime);
-		
-		buffer_append_string(temp, ">");		
-		char strTime2[25] = {0};
-		sprintf(strTime2, "%lu", c->createtime);		
-		buffer_append_string(temp, strTime2);
-		
-		buffer_append_string(temp, ">");		
-		char toshare[5] = {0};
-		sprintf(toshare, "%d", c->toshare);		
-		buffer_append_string(temp, toshare);
-		
-		buffer_append_string(temp, "<");
+		}
 			
-		buffer_append_string_buffer(sharelink_list, temp);
-		
-		buffer_free(temp);
+		if(c->toshare != 0){
+				
+			buffer* temp = buffer_init();
+			
+			buffer_copy_string_buffer(temp, c->shortpath);
+			buffer_append_string(temp, ">");
+			buffer_append_string_buffer(temp, c->realpath);
+			buffer_append_string(temp, ">");
+			buffer_append_string_buffer(temp, c->filename);
+			//buffer_append_string_encoded(temp, CONST_BUF_LEN(c->filename), ENCODING_REL_URI);
+			buffer_append_string(temp, ">");
+			buffer_append_string_buffer(temp, c->auth);
+			buffer_append_string(temp, ">");
+			
+			char strTime[25] = {0};
+			sprintf(strTime, "%lu", c->expiretime);		
+			buffer_append_string(temp, strTime);
+			
+			buffer_append_string(temp, ">");		
+			char strTime2[25] = {0};
+			sprintf(strTime2, "%lu", c->createtime);		
+			buffer_append_string(temp, strTime2);
+			
+			buffer_append_string(temp, ">");		
+			char toshare[5] = {0};
+			sprintf(toshare, "%d", c->toshare);		
+			buffer_append_string(temp, toshare);
+			
+			buffer_append_string(temp, "<");
+				
+			buffer_append_string_buffer(sharelink_list, temp);
+			
+			buffer_free(temp);
+		}
+				
 	}
 
 	nvram_set_sharelink_str(sharelink_list->ptr);
@@ -2442,34 +2690,32 @@ void save_sharelink_list(){
 #else
 	unlink(g_temp_sharelink_file);
 
-	smb_srv_info_t* c;
-	
 	char mybuffer[100];
 	FILE* fp = fopen(g_temp_sharelink_file, "w");
-
-	if(fp!=NULL){
-		share_link_info_t* c;
-	
+	int count = 0;
+	if(fp!=NULL){		
 		for (c = share_link_info_list; c; c = c->next) {
-			if(c->toshare == 0)
+			double offset = difftime(c->expiretime, cur_time);					
+			if( c->expiretime !=0 && offset < 0.0 ){				
+				share_link_info_t* c_prev = c->prev;
+				free_share_link_info(c);
+				DLIST_REMOVE(share_link_info_list, c);
+				free(c);
+				c = c_prev;				
 				continue;
-
-#if 0
-			buffer* temp = buffer_init();
-			buffer_copy_string(temp, "");						
-			buffer_append_string_encoded(temp, CONST_BUF_LEN(c->filename), ENCODING_REL_URI);
-					
-			fprintf(fp, "%s>%s>%s>%s>%lu>%lu>%d\n", c->shortpath->ptr, c->realpath->ptr, temp->ptr, c->auth->ptr, c->expiretime, c->createtime, c->toshare);
-
-			buffer_free(temp);
-#else
-			fprintf(fp, "%s>%s>%s>%s>%lu>%lu>%d\n", c->shortpath->ptr, c->realpath->ptr, c->filename->ptr, c->auth->ptr, c->expiretime, c->createtime, c->toshare);
-#endif
+			}
+		
+			if(c->toshare != 0){
+				fprintf(fp, "%s>%s>%s>%s>%lu>%lu>%d\n", c->shortpath->ptr, c->realpath->ptr, c->filename->ptr, c->auth->ptr, c->expiretime, c->createtime, c->toshare);				
+			}
+			count++;
 		}
 		
 		fclose(fp);
 	}
 #endif
+
+	//Cdbg(1, "save sharelink array length = %d", get_sharelink_save_count());
 }
 
 void free_share_link_info(share_link_info_t *smb_sharelink_info){
@@ -2480,9 +2726,9 @@ void free_share_link_info(share_link_info_t *smb_sharelink_info){
 }
 
 void read_sharelink_list(){
+	
 #if EMBEDDED_EANBLE
 
-#if 1
 	char* aa = nvram_get_sharelink_str();
 
 	if(aa==NULL){
@@ -2586,95 +2832,6 @@ void read_sharelink_list(){
 		
 		pch = strtok_r(NULL, "<", &saveptr);
 	}
-#else
-	char* aa = nvram_get_sharelink_str();
-
-	if(aa==NULL){
-		return;
-	}
-	
-	char* str_sharelink_list = (char*)malloc(strlen(aa)+1);
-	strcpy(str_sharelink_list, aa);
-#ifdef APP_IPKG
-	free(aa);
-#endif
-		
-	if(str_sharelink_list!=NULL){
-		char * pch;
-		pch = strtok(str_sharelink_list, "<>");
-		
-		while(pch!=NULL){
-
-			int b_addto_list = 1;
-			
-			share_link_info_t *smb_sharelink_info;
-			smb_sharelink_info = (share_link_info_t *)calloc(1, sizeof(share_link_info_t));
-			//smb_sharelink_info->toshare = 1;
-			
-			//- Share Path
-			if(pch){
-				//Cdbg(DBE, "share path=%s", pch);
-				smb_sharelink_info->shortpath = buffer_init();
-				buffer_copy_string_len(smb_sharelink_info->shortpath, pch, strlen(pch));
-			}
-			
-			//- Real Path
-			pch = strtok(NULL,"<>");
-			if(pch){
-				//Cdbg(DBE, "real path=%s", pch);
-				smb_sharelink_info->realpath = buffer_init();
-				buffer_copy_string_len(smb_sharelink_info->realpath, pch, strlen(pch));
-			}
-			
-			//- File Name
-			pch = strtok(NULL,"<>");
-			if(pch){
-				//Cdbg(DBE, "file name=%s", pch);
-				smb_sharelink_info->filename = buffer_init();
-				buffer_copy_string_len(smb_sharelink_info->filename, pch, strlen(pch));
-			}
-			
-			//- Auth
-			pch = strtok(NULL,"<>");
-			if(pch){
-				//Cdbg(DBE, "auth=%s", pch);
-				smb_sharelink_info->auth = buffer_init();
-				buffer_copy_string_len(smb_sharelink_info->auth, pch, strlen(pch));
-			}
-
-			//- Expire Time
-			pch = strtok(NULL,"<>");
-			if(pch){				
-				smb_sharelink_info->expiretime = atoi(pch);	
-				time_t cur_time = time(NULL);				
-				double offset = difftime(smb_sharelink_info->expiretime, cur_time);					
-				if( smb_sharelink_info->expiretime !=0 && offset < 0.0 ){
-					free_share_link_info(smb_sharelink_info);
-					free(smb_sharelink_info);
-					b_addto_list = 0;
-				}
-			}
-			
-			//- Create Time
-			pch = strtok(NULL,"<>");
-			if(pch){				
-				smb_sharelink_info->createtime = atoi(pch);
-			}
-			
-			//- toShare
-			pch = strtok(NULL,"<>");
-			if(pch){		
-				smb_sharelink_info->toshare = atoi(pch);
-			}
-			
-			if(b_addto_list==1)
-				DLIST_ADD(share_link_info_list, smb_sharelink_info);
-			
-			//- Next
-			pch = strtok(NULL,"<>");
-		}
-	}
-#endif
 
 #else
 	size_t j;
@@ -2851,6 +3008,29 @@ int in_the_same_folder(buffer *src, buffer *dst)
 	return (res) ? 0 : 1;
 }
 
+int is_dms_ipk_enabled(void)
+{
+    FILE* fp2;
+    char line[128];
+    char ms_enable[20]="\0";
+    int result = 0;
+    if((fp2 = fopen("/opt/lib/ipkg/info/mediaserver.control", "r")) != NULL){
+            memset(line, 0, sizeof(line));
+            while(fgets(line, 128, fp2) != NULL){
+                    if(strncmp(line, "Enabled:", 8)==0){
+                            strncpy(ms_enable, line + 9, strlen(line)-8);
+                    }
+            }
+            fclose(fp2);
+    }
+    Cdbg(DBE, "ms_enable=%s\n", ms_enable);
+    if(strncmp(ms_enable,"yes",strlen("yes")) == 0)
+        result = 1;
+    //fprintf(stderr,"ms_enable=%s,result=%d\n", ms_enable,result);
+    return result;
+}
+
+
 int is_dms_enabled(void){
 	int result = 0;
 	
@@ -2869,8 +3049,17 @@ int is_dms_enabled(void){
 
 	if(NULL != dms_enable && strcmp( dms_enable, "1" ) == 0) 
 		result = 1;
-	else if(NULL != ms_dlna && strcmp( ms_dlna, "1" ) == 0) 
-		result = 1;
+        else if(NULL != ms_dlna && strcmp( ms_dlna, "1" ) == 0)
+        {
+            if(0 == access("/opt/lib/ipkg/info/mediaserver.control",F_OK))
+            {
+                result = is_dms_ipk_enabled();
+            }
+            else
+            {
+                result = 0;
+            }
+         }
 
 #if EMBEDDED_EANBLE
 #ifdef APP_IPKG
@@ -3139,6 +3328,103 @@ void process_share_link_for_router_sync_use(){
 	Cdbg(DBE,"process_share_link_for_router_sync_use...return_sharelink=%s", return_sharelink->ptr);
 
 	buffer_free(return_sharelink);
+}
+
+static const char base64_xlat[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+int base64_decode2(const char *in, unsigned char *out, int inlen)
+{
+    char *p;
+    int n;
+    unsigned long x;
+    unsigned char *o;
+    char c;
+    o = out;
+    n = 0;
+    x = 0;
+    while (inlen-- > 0) {
+        if (*in == '=') break;
+        if ((p = strchr(base64_xlat, c = *in++)) == NULL) {
+//          printf("ignored - %x %c\n", c, c);
+            continue;   // note: invalid characters are just ignored
+        }
+        x = (x << 6) | (p - base64_xlat);
+        if (++n == 4) {
+            *out++ = x >> 16;
+            *out++ = (x >> 8) & 0xFF;
+            *out++ = x & 0xFF;
+            n = 0;
+            x = 0;
+        }
+    }
+    if (n == 3) {
+        *out++ = x >> 10;
+        *out++ = (x >> 2) & 0xFF;
+    }
+    else if (n == 2) {
+        *out++ = x >> 4;
+    }
+    return out - o;
+}
+
+/* md5sum:
+ * Concatenates a series of strings together then generates an md5
+ * message digest. Writes the result directly into 'output', which
+ * MUST be large enough to accept the result. (Size ==
+ * 128 + null terminator.)
+ */
+char secret[100] = "804b51d14d840d6e";
+
+/* sprint_hex:
+ * print a long hex value into a string buffer. This function will
+ * write 'len' bytes of data from 'char_buf' into 2*len bytes of space
+ * in 'output'. (Each hex value is 4 bytes.) Space in output must be
+ * pre-allocated. */
+void sprint_hex(char* output, unsigned char* char_buf, int len)
+{
+	int i;
+	for (i=0; i < len; i++) {
+		sprintf(output + i*2, "%02x", char_buf[i]);
+	}
+}
+
+void md5sum(char* output, int counter, ...)
+{
+	va_list argp;
+	unsigned char temp[MD5_DIGEST_LENGTH];
+	char* md5_string;
+	int full_len;
+	int i, str_len;
+	int buffer_size = 10;
+
+	md5_string = (char*)malloc(buffer_size);
+	md5_string[0] = '\0';
+
+	full_len = 0;
+	va_start(argp, secret);
+	for (i = 0; i < counter; i++) {
+		char* string = va_arg(argp, char*);
+		int len = strlen(string);
+
+		/* If the buffer is not large enough, expand until it is. */
+		while (len + full_len > buffer_size - 1) {
+			buffer_size += buffer_size;
+			md5_string = realloc(md5_string, buffer_size);
+		}
+
+		strncat(md5_string, string, len);
+
+		full_len += len;
+		md5_string[full_len] = '\0';
+	}
+	va_end(argp);
+
+	str_len = strlen(md5_string);
+	MD5((const unsigned char*)md5_string, (unsigned int)str_len, temp);
+
+	free(md5_string);
+
+	sprint_hex(output, temp, MD5_DIGEST_LENGTH);	
+	output[129] = '\0';
 }
 
 #if 0

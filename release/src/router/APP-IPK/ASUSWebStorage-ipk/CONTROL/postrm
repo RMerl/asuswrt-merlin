@@ -1,0 +1,24 @@
+#! /bin/sh
+
+APPS_MOUNTED_PATH=`nvram get apps_mounted_path`
+APPS_INSTALL_FOLDER=`nvram get apps_install_folder`
+APPS_INSTALL_PATH=$APPS_MOUNTED_PATH/$APPS_INSTALL_FOLDER
+#CLOUD_PATH=`cat /opt/etc/Cloud.conf | awk -F , '{print $7}'`
+
+#rm progress
+rm -rf $APPS_INSTALL_PATH/bin/asuswebstorage
+#rm libs
+rm -rf $APPS_INSTALL_PATH/lib/libssl.so.0.9.8
+rm -rf $APPS_INSTALL_PATH/lib/libcrypto.so.0.9.8
+#rm ui
+#rm -rf $APPS_INSTALL_PATH/etc/downloadmaster/cloudui
+#rm -rf $APPS_INSTALL_PATH/etc/www/cloudui
+#rm setting
+#rm -rf $APPS_MOUNTED_PATH/Cloud/inotify_file
+#rm -rf $CLOUD_PATH/asuswebstorage/.logs
+#rm -rf $CLOUD_PATH/asuswebstorage/xml
+#rm conf
+#rm -rf $APPS_INSTALL_PATH/etc/Cloud_*
+#rm -rf $APPS_INSTALL_PATH/etc/cloud_*
+#rm -rf $APPS_INSTALL_PATH/etc/Cloud.conf
+rm -rf $APPS_INSTALL_PATH/etc/asuswebstorage_*

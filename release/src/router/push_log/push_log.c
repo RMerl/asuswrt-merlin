@@ -2,11 +2,142 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+
+#ifndef APP_IPKG
 #include <shutils.h>
 #include <bcmnvram.h>
+#endif
+
 #include <ws_api.h>
 #include <push_log.h>
 
+#ifdef APP_IPKG
+
+#include <unistd.h>
+#include <syslog.h>
+#include <string.h>
+/* Copy each token in wordlist delimited by space into word */
+#define foreach(word, wordlist, next) \
+	for (next = &wordlist[strspn(wordlist, " ")], \
+	     strncpy(word, next, sizeof(word)), \
+	     word[strcspn(word, " ")] = '\0', \
+	     word[sizeof(word) - 1] = '\0', \
+	     next = strchr(next, ' '); \
+	     strlen(word); \
+	     next = next ? &next[strspn(next, " ")] : "", \
+	     strncpy(word, next, sizeof(word)), \
+	     word[strcspn(word, " ")] = '\0', \
+	     word[sizeof(word) - 1] = '\0', \
+	     next = strchr(next, ' '))
+
+/* Copy each token in wordlist delimited by ascii_58 into word */
+#define foreach_58(word, wordlist, next) \
+		for (next = &wordlist[strspn(wordlist, ":")], \
+				strncpy(word, next, sizeof(word)), \
+				word[strcspn(word, ":")] = '\0', \
+				word[sizeof(word) - 1] = '\0', \
+				next = strchr(next, ':'); \
+				strlen(word); \
+				next = next ? &next[strspn(next, ":")] : "", \
+				strncpy(word, next, sizeof(word)), \
+				word[strcspn(word, ":")] = '\0', \
+				word[sizeof(word) - 1] = '\0', \
+				next = strchr(next, ':'))
+
+char * nvram_get(const char *name)
+{
+
+        char tmp_name[256]="/opt/etc/asus_script/aicloud_nvram_check.sh";
+        char *cmd_name;
+        cmd_name=(char *)malloc(sizeof(char)*(strlen(tmp_name)+strlen(name)+2));
+        memset(cmd_name,0,sizeof(cmd_name));
+        sprintf(cmd_name,"%s %s",tmp_name,name);
+        system(cmd_name);
+        free(cmd_name);
+
+        while(-1!=access("/tmp/aicloud_check.control",F_OK))
+            usleep(50);
+
+
+    FILE *fp;
+    if((fp=fopen("/tmp/webDAV.conf","r+"))==NULL)
+    {
+        return NULL;
+    }
+    char *value = NULL;
+
+    char tmp[256]={0};
+    while(!feof(fp)){
+        memset(tmp,'\0',sizeof(tmp));
+        fgets(tmp,sizeof(tmp),fp);
+        if(strncmp(tmp,name,strlen(name))==0)
+        {
+            if(tmp[strlen(tmp)-1] == 10)
+            {
+                tmp[strlen(tmp)-1]='\0';
+            }
+            char *p=NULL;
+            p=strchr(tmp,'=');
+            p++;
+            if(p == NULL || strlen(p) == 0)
+            {
+                fclose(fp);
+                return NULL;
+            }
+            else
+            {
+            value=(char *)malloc(strlen(p)+1);
+            memset(value,'\0',sizeof(value));
+            strcpy(value,p);
+            if(value[strlen(value)-1]=='\n')
+                value[strlen(value)-1]='\0';
+        }
+
+    }
+    fclose(fp);
+    return value;
+}
+}
+
+char * nvram_safe_get(const char *name)
+{
+	char *p = nvram_get(name);
+	return p ? p : "";
+}
+
+int nvram_get_int(const char *key)
+{
+	return atoi(nvram_safe_get(key));
+}
+
+int nvram_set(const char *name, const char *value)
+{
+    char *cmd;
+
+    if(value == NULL)
+        cmd=(char *)malloc(sizeof(char)*(64+strlen(name)));
+    else
+        cmd=(char *)malloc(sizeof(char)*(64+strlen(name)+strlen(value)));
+
+    memset(cmd,0,sizeof(cmd));
+
+    sprintf(cmd,"nvram set \"%s=%s\"",name,value);
+
+    system(cmd);
+
+    free(cmd);
+    return 0;
+}
+
+int nvram_set_int(const char *key, int value)
+{
+	char nvramstr[16];
+
+	snprintf(nvramstr, sizeof(nvramstr), "%d", value);
+	return nvram_set(key, nvramstr);
+}
+
+#endif
 
 int trans_mon(char *target){
 	char *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", NULL};

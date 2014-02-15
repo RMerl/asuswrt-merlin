@@ -13,7 +13,7 @@ function set_share_mode_error(error_msg){
 }
 
 function set_share_mode_success(){
-	parent.resultOfSwitchShareMode();
+	parent.refreshpage();
 }
 </script>
 </head>

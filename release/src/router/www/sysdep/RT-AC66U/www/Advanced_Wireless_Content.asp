@@ -200,10 +200,14 @@ function applyRule(){
 		if(sw_mode == 2 || sw_mode == 4)
 			document.form.action_wait.value = "5";
 
-		if(document.form.wl_bw.value == 1)
+		if(document.form.wl_bw.value == 1)		// 5GHz
 			document.form.wl_chanspec.value = document.form.wl_channel.value;
-		else
-			document.form.wl_chanspec.value = document.form.wl_channel.value + document.form.wl_nctrlsb.value;
+		else{
+			if(document.form.wl_channel.value == 0)			// 2.4GHz, Auto case
+				document.form.wl_chanspec.value = document.form.wl_channel.value;
+			else	
+				document.form.wl_chanspec.value = document.form.wl_channel.value + document.form.wl_nctrlsb.value;
+		}	
 			
 		document.form.submit();
 	}
@@ -596,6 +600,17 @@ function regen_5G_mode(obj,flag){
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 8);"><#WLANConfig11b_x_Phrase_itemname#></a></th>
 					<td>
 				  		<input type="text" name="wl_phrase_x" maxlength="64" class="input_32_table" value="<% nvram_get("wl_phrase_x"); %>" onKeyUp="return is_wlphrase('WLANConfig11b', 'wl_phrase_x', this);">
+					</td>
+			  	</tr>
+			  
+				<tr>
+					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 9);">Protected Management Frames</a></th>
+					<td>
+				  		<select name="wl_mfp" class="input_option" >
+								<option value="0" <% nvram_match("wl_mfp", "0", "selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+								<option value="1" <% nvram_match("wl_mfp", "1", "selected"); %>>Capable</option>
+								<option value="2" <% nvram_match("wl_mfp", "2", "selected"); %>>Required</option>
+				  		</select>
 					</td>
 			  	</tr>
 			  

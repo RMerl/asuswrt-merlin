@@ -1,0 +1,177 @@
+html{
+margin:0 0;
+padding:0px;
+}
+body{
+display: block;
+padding:0px;
+margin:0px;
+overflow:hidden;
+}
+#uploadRegion {
+-moz-border-radius: 5px;
+-webkit-border-radius: 5px;
+border-radius: 5px;
+padding: 0px;
+text-align: center;
+font: 20pt bold;
+font-family:"Segoe UI";
+color: #ffffff;
+left:0px;
+top:0px;
+width:100%;
+height:350px;
+background:#555A5D;
+}
+#uploadOption{
+background-color:#f1f1ef;
+border: #676965;
+border-style:solid;
+border-width:1px;
+height:auto;
+width:100%;
+text-align: left;
+}
+#inputnameRegion{
+border: 2px #BBB;
+width:100%;
+height:100%;
+background:#d8eaf6;
+}
+#upload_file_list{
+display: inline;
+font: 12pt bold;
+font-family:"Segoe UI";
+text-align: left;
+}
+.upload-dropzone-parent {
+height: 100%;
+width: 100%;
+position: relative;
+border-spacing: 20px;
+}
+.drag-drop-supported .upload-dropzone-cell {
+border: #DDD 4px dashed;
+border-radius: 2px;
+}
+.upload-dropzone-cell {
+width: 100%;
+text-align: center;
+position: relative;
+}
+.upload-dropzone {
+width: 100%;
+text-align: center;
+position: relative;
+}
+.upload-drop-here {
+font-weight: bold;
+font-size: 15px;
+color: #fff;
+padding: 0 10px;
+display: none;
+}
+.chrome-require {
+font-weight: bold;
+font-size: 20px;
+padding:10px;
+}
+.chrome-require a{
+color: #FDC049;
+text-decoration: none;
+}
+.chrome-require a:hover{
+color: #FDC049;
+text-decoration: underline;
+}
+.upload-drop-alt {
+display: none;
+padding: 15px 0 5px;
+font-weight: bold;
+font-size: 15px;
+color: #fff;
+}
+.upload-select-here, .upload-select-directorys-here{
+font-weight: bold;
+font-size: 15px;
+color: #fff;
+padding: 0 10px;
+}
+
+#nav {
+width: 100%;
+height: 100%;
+line-height: 2em;
+border: 1px solid #ccc;
+padding: 0;
+margin: 0;
+overflow: scroll;
+overflow-x: hidden;
+}
+li {
+border-top: 1px solid #ccc;
+}
+ul ul {
+text-indent: 1em;
+}
+ul ul ul {
+text-indent: 2em;
+}
+.ml-btn-1 {
+display: inline-block;
+text-decoration: none;
+font-family: "Segoe UI", Helvetica, Arial, sans-serif;
+font-size: 13px;
+font-weight: bold;
+line-height: 240%;
+color:#666;
+text-align: center;
+text-shadow: 0px 1px 0px rgba(255, 255, 255, 0.5);
+background-color: #FBFBFB;
+background-image: -moz-linear-gradient(53% 100% 90deg,#EBEBEB 0%,#FEFEFE 100%);
+background-image: -webkit-gradient(linear,53% 100%,53% 3%,color-stop(0, #EBEBEB),color-stop(1, #FEFEFE));
+background-image: -webkit-linear-gradient(90deg,#EBEBEB 0%,#FEFEFE 100%);
+background-image: -o-linear-gradient(90deg,#EBEBEB 0%,#FEFEFE 100%);
+background-image: -ms-linear-gradient(90deg,#EBEBEB 0%,#FEFEFE 100%);
+background-image: linear-gradient(90deg,#EBEBEB 0%,#FEFEFE 100%);
+/*width: 120px;
+height: 30px;*/
+border-color: #B4B4B4;
+border-width: 1px;
+-moz-border-radius: 3px;
+-webkit-border-radius: 3px;
+border-radius: 3px;
+border-style: solid;
+-moz-box-shadow: 0px 0px 0px 3px rgba(0,0,0,0.05) ,inset 0px 1px 0px rgba(255,255,255,0.5);
+-webkit-box-shadow: 0px 0px 0px 3px 
+rgba(0, 0, 0, 0.05) ,inset 0px 1px 0px 
+rgba(255, 255, 255, 0.5);
+box-shadow: 0px 0px 0px 3px 
+rgba(0, 0, 0, 0.05) ,inset 0px 1px 0px 
+rgba(255, 255, 255, 0.5);
+-ms-filter: "progid:DXImageTransform.Microsoft.gradient(startColorstr=#fffefefe,endColorstr=#ffebebeb,GradientType=0) progid:DXImageTransform.Microsoft.Glow(Color=#ff000000,Strength=3)";
+filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#fffefefe,endColorstr=#ffebebeb,GradientType=0) progid:DXImageTransform.Microsoft.Glow(Color=#ff000000,Strength=3);
+}
+
+input[type="file"] {
+border: 1px solid #EEE;
+border-radius: 10px;
+padding: 8px;
+font-weight: bold;
+font-size: 15px;
+color: #fff;
+}
+
+div#divApplet{
+width:100px;
+height:40px;
+}
+.ml-btn-2{
+color:#FFBC3B;
+font-size:14px;
+}
+#upload-file-list-container{
+height:100%;	
+}
+
+

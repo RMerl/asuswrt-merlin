@@ -56,7 +56,7 @@
 }	
 </style>	
 <script>
-option_netstat = new Array("Display all sockets","TCP sockets","UDP sockets","RAW sockets","UNIX sockets","Display listening server sockets","Display routing table");
+option_netstat = new Array("<#sockets_all#>","<#sockets_TCP#>","<#sockets_UDP#>","<#sockets_RAW#>","<#sockets_UNIX#>","<#sockets_listening#>","<#Display_routingtable#>");
 optval_netstat = new Array("-a","-t","-u","-w","-x","-l","-r");
 option_netstat_nat = new Array("Connections to NAT", "By source IP", "SNAT connections");
 optval_netstat_nat = new Array("-L","-s","-S");
@@ -319,13 +319,13 @@ function validForm(){
 											<th width="20%"><#NetworkTools_option#></th>
 											<td>
 												<select id="NetOption" class="input_option" name="NetOption" onChange="append_value(this);">
-													<option value="-a">Display all sockets</option>
-													<option value="-t">TCP sockets</option>
-													<option value="-u">UDP sockets</option>
-													<option value="-w">RAW sockets</option>
-													<option value="-x">UNIX sockets</option>
-													<option value="-l">Display listening server sockets</option>
-													<option value="-r">Display routing table</option>
+													<option value="-a"><#sockets_all#></option>
+													<option value="-t"><#sockets_TCP#></option>
+													<option value="-u"><#sockets_UDP#></option>
+													<option value="-w"><#sockets_RAW#></option>
+													<option value="-x"><#sockets_UNIX#></option>
+													<option value="-l"><#sockets_listening#></option>
+													<option value="-r"><#Display_routingtable#></option>
  												</select>	
 											</td>			
 										</tr>

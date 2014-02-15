@@ -98,6 +98,7 @@ typedef unsigned long long u64;
 #include <networkmap.h> //2011.03 Yau add for new networkmap
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <sys/sysinfo.h>
 
 #include "sysinfo.h"
 
@@ -2303,7 +2304,7 @@ static int get_wan_unit_hook(int eid, webs_t wp, int argc, char_t **argv){
 }
 
 static int ej_get_parameter(int eid, webs_t wp, int argc, char_t **argv){
-//	char *c;
+	char *c;
 	bool last_was_escaped;
 	int ret = 0;
 
@@ -2316,11 +2317,11 @@ static int ej_get_parameter(int eid, webs_t wp, int argc, char_t **argv){
 
 	last_was_escaped = FALSE;
 
-	char *value = websGetVar(wp, argv[0], "");
-	websWrite(wp, "%s", value);//*/
-	/*for (c = websGetVar(wp, argv[0], ""); *c; c++){
+	//char *value = websGetVar(wp, argv[0], "");
+	//websWrite(wp, "%s", value);
+	for (c = websGetVar(wp, argv[0], ""); *c; c++){
 		if (isprint((int)*c) &&
-			*c != '"' && *c != '&' && *c != '<' && *c != '>' && *c != '\\' &&
+			*c != '"' && *c != '&' && *c != '<' && *c != '>' && *c != '\\' &&  *c != '(' && *c != ')' &&
 			((!last_was_escaped) || !isdigit(*c)))
 		{
 			ret += websWrite(wp, "%c", *c);
@@ -2333,10 +2334,11 @@ static int ej_get_parameter(int eid, webs_t wp, int argc, char_t **argv){
 		}
 		else
 		{
-			ret += websWrite(wp, "&#%d", *c);
-			last_was_escaped = TRUE;
+			ret += websWrite(wp, " ");
+			//ret += websWrite(wp, "&#%d", *c);
+			//last_was_escaped = TRUE;
 		}
-	}//*/
+	}
 
 	return ret;
 }
@@ -4352,7 +4354,7 @@ int ej_shown_language_css(int eid, webs_t wp, int argc, char **argv){
 
 	memset(lang, 0, 4);
 	strcpy(lang, nvram_safe_get("preferred_lang"));
-	websWrite(wp, "<li><dl><dt id=\"selected_lang\"></dt>\\n");
+	websWrite(wp, "<li><dl><a href=\"#\"><dt id=\"selected_lang\"></dt></a>\\n");
 	while (1) {
 		memset(buffer, 0, sizeof(buffer));
 		if ((follow_info = fgets(buffer, sizeof(buffer), fp)) != NULL){
@@ -4919,6 +4921,7 @@ do_lang_post(char *url, FILE *stream, int len, char *boundary)
 		(((__u32)(x) & (__u32)0xff000000UL) >> 24) ))
 
 int upgrade_err;
+int stop_upgrade_once = 0;
 
 static void
 do_upgrade_post(char *url, FILE *stream, int len, char *boundary)
@@ -4931,11 +4934,13 @@ do_upgrade_post(char *url, FILE *stream, int len, char *boundary)
 	int cnt;
 	long filelen;
 	int offset;
+	struct sysinfo si;
 
 	upgrade_err=1;
 	eval("/sbin/ejusb", "-1", "0");
 #if defined(RTCONFIG_SMALL_FW_UPDATE)
 	notify_rc("stop_upgrade");
+	stop_upgrade_once = 1;
 #endif
 
 	/* Look for our part */
@@ -4969,6 +4974,15 @@ do_upgrade_post(char *url, FILE *stream, int len, char *boundary)
 	free_caches(FREE_MEM_PAGE, 5, BYTE_TO_KB(len));
 
 	if (!(fifo = fopen(upload_fifo, "a+"))) goto err;
+
+#if !defined(RTCONFIG_SMALL_FW_UPDATE)
+	sysinfo(&si);
+	if ((si.freeram * si.mem_unit) < len)
+	{
+		notify_rc("stop_upgrade");
+		stop_upgrade_once = 1;
+	}
+#endif
 
 	filelen = len;
 	cnt = 0;
@@ -5064,9 +5078,6 @@ do_upgrade_post(char *url, FILE *stream, int len, char *boundary)
 		goto err;
 #endif 
 	upgrade_err = 0;
-#if !defined(RTCONFIG_SMALL_FW_UPDATE)
-	notify_rc("stop_upgrade");
-#endif
 
 err:
 	if (fifo)
@@ -5088,9 +5099,6 @@ do_upgrade_cgi(char *url, FILE *stream)
 	{
 #ifdef RTCONFIG_DSL
 		int ret_val_trunc;
-#endif
-		websApply(stream, "Updating.asp");
-#ifdef RTCONFIG_DSL
 		ret_val_trunc = truncate_trx();
 		printf("truncate_trx ret=%d\n",ret_val_trunc);
 		if (ret_val_trunc)
@@ -5112,6 +5120,11 @@ do_upgrade_cgi(char *url, FILE *stream)
 			}
 		}
 #endif
+#if !defined(RTCONFIG_SMALL_FW_UPDATE)
+		if (!stop_upgrade_once)
+		notify_rc("stop_upgrade");
+#endif
+		websApply(stream, "Updating.asp");
 		shutdown(fileno(stream), SHUT_RDWR);
 		notify_rc_after_period_wait("start_upgrade", 60);
 	}
@@ -6664,7 +6677,7 @@ int ej_set_share_mode(int eid, webs_t wp, int argc, char **argv){
 		result = notify_rc_for_nas("restart_samba");
 	}
 	else if (!strcmp(protocol, "ftp")) {
-		result = notify_rc_for_nas("restart_ftpd");
+		result = notify_rc_for_nas("restart_ftpd_force");
 	}
 #ifdef RTCONFIG_WEBDAV_PENDING
 	else if (!strcmp(protocol, "webdav")) {
@@ -7649,6 +7662,8 @@ static char *convert_cloudsync_status(const char *status_code){
 		return "DOWNLOAD";
 	else if(!strcmp(status_code, "STATUS:75"))
 		return "STOP";
+	else if(!strcmp(status_code, "STATUS:77"))
+		return "INPUT CAPTCHA";
 	else
 		return "ERROR";
 }
@@ -7732,7 +7747,7 @@ int ej_UI_cloud_status(int eid, webs_t wp, int argc, char **argv){
 	FILE *fp = fopen("/tmp/smartsync/.logs/asuswebstorage", "r");
 	char line[PATH_MAX], buf[PATH_MAX], dest[PATH_MAX];
 	int line_num;
-	char status[16], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX], full_capa[PATH_MAX], used_capa[PATH_MAX];
+	char status[16], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX], full_capa[PATH_MAX], used_capa[PATH_MAX], captcha_url[PATH_MAX];
 
 	if(fp == NULL){
 		websWrite(wp, "cloud_status=\"ERROR\";\n");
@@ -7740,6 +7755,7 @@ int ej_UI_cloud_status(int eid, webs_t wp, int argc, char **argv){
 		websWrite(wp, "cloud_msg=\"\";\n");
 		websWrite(wp, "cloud_fullcapa=\"\";\n");
 		websWrite(wp, "cloud_usedcapa=\"\";\n");
+		websWrite(wp, "CAPTCHA_URL=\"\";\n");
 		return 0;
 	}
 
@@ -7749,6 +7765,7 @@ int ej_UI_cloud_status(int eid, webs_t wp, int argc, char **argv){
 	memset(error_msg, 0, PATH_MAX);
 	memset(full_capa, 0, PATH_MAX);
 	memset(used_capa, 0, PATH_MAX);
+	memset(captcha_url, 0, PATH_MAX);
 
 	memset(line, 0, PATH_MAX);
 	line_num = 0;
@@ -7782,7 +7799,11 @@ int ej_UI_cloud_status(int eid, webs_t wp, int argc, char **argv){
 			substr(dest, line, 11, PATH_MAX);
 			strcpy(used_capa, dest);
 		}
-
+		else if(strstr(line, "CAPTCHA_URL") != NULL){
+            substr(dest, line, 12, PATH_MAX);
+            strcpy(captcha_url, dest);
+        }
+		
 		memset(line, 0, PATH_MAX);
 	}
 	fclose(fp);
@@ -7793,6 +7814,7 @@ int ej_UI_cloud_status(int eid, webs_t wp, int argc, char **argv){
 		websWrite(wp, "cloud_msg=\"\";\n");
 		websWrite(wp, "cloud_fullcapa=\"\";\n");
 		websWrite(wp, "cloud_usedcapa=\"\";\n");
+		websWrite(wp, "CAPTCHA_URL=\"\";\n");
 	}
 	else{
 		websWrite(wp, "cloud_status=\"%s\";\n", status);
@@ -7800,6 +7822,7 @@ int ej_UI_cloud_status(int eid, webs_t wp, int argc, char **argv){
 		websWrite(wp, "cloud_msg=\"%s\";\n", error_msg);
 		websWrite(wp, "cloud_fullcapa=\"%s\";\n", full_capa);
 		websWrite(wp, "cloud_usedcapa=\"%s\";\n", used_capa);
+		websWrite(wp, "CAPTCHA_URL=\"%s\";\n", captcha_url);
 	}
 
 	return 0;
@@ -8615,6 +8638,23 @@ ej_radio_status(int eid, webs_t wp, int argc, char_t **argv)
 	return retval;
 }
 
+static int
+ej_check_acpw(int eid, webs_t wp, int argc, char_t **argv)
+{
+	int retval = 0;
+	char result[2048];
+	char default_acpw[] = "admin";
+
+	strcpy(result, "0");
+
+	if(!strcmp(default_acpw, nvram_safe_get("http_username")) && !strcmp(default_acpw, nvram_safe_get("http_passwd")))
+		strcpy(result, "1");
+
+	retval += websWrite(wp, result);
+
+	return retval;
+}
+
 struct ej_handler ej_handlers[] = {
 	{ "nvram_get", ej_nvram_get},
 	{ "nvram_default_get", ej_nvram_default_get},
@@ -8789,6 +8829,7 @@ struct ej_handler ej_handlers[] = {
 #endif
 	{ "nvram_clean_get", ej_nvram_clean_get},
 	{ "radio_status", ej_radio_status},
+	{ "check_acpw", ej_check_acpw},
 	{ NULL, NULL }
 };
 

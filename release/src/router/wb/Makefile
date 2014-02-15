@@ -16,15 +16,11 @@ WSLIB_OBJS := $(WS_SOURCES:%.c=$(OUTPUT)/%.o)
 
 all: $(WSLIB)
 
-CFLAGS = -I$(CURL_DIR)/include -I$(OPENSSL_DIR)/include -I$(XML2_DIR)/include -I.  -I$(WS_SRC)
+CFLAGS = -fPIC -I$(CURL_DIR)/include -I$(OPENSSL_DIR)/include -I$(XML2_DIR)/include -I.  -I$(WS_SRC)
 
 LDFLAGS = -L$(OPENSSL_DIR) -lcrypto -lssl
 LDFLAGS += -L$(CURL_DIR)/lib/.libs -lcurl
-LDFLAGS += -L$(XML2_DIR)/.libs -lxml2 -lpthread
-LDFLAGS += -ldl
-ifeq ($(RTCONFIG_BCMARM),y)
-LDFLAGS += -lgcc_s
-endif
+LDFLAGS += -L$(XML2_DIR)/.libs -lxml2
 
 $(WSLIB): $(WSLIB_OBJS)
 	$(LD) -shared -o $@ $^ $(LDFLAGS)

@@ -66,6 +66,16 @@ padding-top: 5px;
 background-color:#FFCD8A;
 color:#ff0000;
 }
+.tab_content{
+font-family: verdana, tahoma, arial, helvetica, sans-serif;
+font: normal 12px tahoma, arial, helvetica, sans-serif;
+}
+.tab_content fieldset {
+padding: 6px 10px;
+border: 1px solid #ccc;
+margin-bottom: 10px;
+display: block;
+}
 </style>
 <script type="text/javascript" src="/smb/js/tools.js"></script>
 <script type="text/javascript" src="/smb/js/davclient_tools.js"></script>
@@ -75,7 +85,7 @@ var m = new lang();
 var g_storage = new myStorage();
 
 $("document").ready(function() {
-	//document.oncontextmenu = function() {return false;};
+	document.oncontextmenu = function() {return false;};
 	
 	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
 	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
@@ -85,13 +95,13 @@ $("document").ready(function() {
 	var only_show_init_page = ( getUrlVars()["s"] == undefined ) ? 0 : getUrlVars()["s"];
 		
 	// 預設顯示第一個 Tab
-	var _showTab = init_page;
-	$('ul.tabs li').eq(_showTab).addClass('active');
-	$('.tab_content').hide().eq(_showTab).show();
+	var _showTabIndex = init_page;
+	$('ul.tabs li').eq(_showTabIndex).addClass('active');
+	$('.tab_content').hide().eq(_showTabIndex).show();
 	
 	if(only_show_init_page){
 		$('ul.tabs li').each(function(i){
-			if(i!=_showTab)
+			if(i!=_showTabIndex)
 				$('ul.tabs li').eq(i).hide();
 		});
 	}
@@ -110,7 +120,7 @@ $("document").ready(function() {
  		 		
  		//if(_clickTab=="#tab3")
  		//	getLatestVersion();
- 		
+
 		return false;
 	}).find('a').focus(function(){
 		this.blur();
@@ -122,22 +132,81 @@ $("document").ready(function() {
 		parent.doRescanSamba();
 	});
 	
+	$("button#btn_gen_crt").click(function(){
+		var client = new davlib.DavClient();
+		client.initialize();
+		
+		var keylen = 2048;
+		var caname = "AiCloud";
+		var email = "";
+		var country = "TW";
+		var state = "Taiwan";
+		var ln = "Hsinchu";
+		var orag = "ASUS";
+		var ounit = "RD";
+		var cn = window.location.hostname;
+		
+		var msg = m.getString("msg_gen_crt_confirm");
+		msg = msg.replace("%s", cn);
+		
+		if(confirm(msg)){
+			$("#crt_creating").show();
+			
+			client.GENROOTCERTIFICATE("/", keylen,caname,email,country,state,ln,orag,ounit,cn, function(error, content, statusstring){	
+				if(error==200){
+					$("#crt_creating").hide();
+					alert(m.getString("msg_gen_crt_complete"));
+					
+					client.APPLYAPP("/", "apply", "", "restart_webdav", function(error, statusstring, content){				
+						if(error==200){
+							setTimeout( function(){
+								parent.location.reload(false);
+							}, 6000 );
+						}
+						
+						client = null;
+					});					
+				}
+			});		
+		}		
+	});
+	
+	$("button#btn_export_crt").click(function(){
+		window.open("/aicloud.crt");
+	});
+		
 	$('li#rescan a').text(m.getString('title_rescan'));
 	$('li#sharelink a').text(m.getString('title_sharelink'));
+	$('li#version a').text(m.getString('title_version'));
+	$('li#settings a').text(m.getString('title_crt'));
 	$('button#ok').text(m.getString('btn_ok'));
 	$('button#cancel').text(m.getString('btn_close'));
 	$('#btn_rescan').text(m.getString('btn_rescan'));
 	$('span#desc_rescan').text(m.getString('title_desc_rescan'));
 	
 	$('span#aicloud_desc_version').text("AiCloud " + m.getString('title_version')+": ");
-	$('span#aicloud_version').text(g_storage.get('aicloud_version'));
+	$('span#aicloud_version').text(g_storage.get('aicloud_version'));	
+	$('span#smartsync_desc_version').text("SmartSync " + m.getString('title_version')+": ");
+	$('span#smartsync_version').text(g_storage.get('smartsync_version'));
 	
 	$('span#desc_version').text("FW " + m.getString('title_version')+": ");
 	$('span#version').text(g_storage.get('router_version'));
 	
 	$("p.desc_share_link").text(m.getString('title_copy_string'));
 	
-	refreshShareLinkList();
+	$("#label_gen_crt").text(m.getString("title_gen_crt"));
+	$("#btn_gen_crt").text(m.getString("title_gen_crt"));
+	$("#desc_gen_crt").text(m.getString("title_desc_gen_crt"));
+	$("#label_server_crt").text(m.getString("title_server_crt"));
+	$("#label_crt_type").text(m.getString("title_crt_type"));
+	$("#label_self_crt_type").text(m.getString("title_self_crt_type"));
+	$("#label_crt_to").text(m.getString("title_crt_to"));
+	$("#btn_export_crt").text(m.getString("title_export_crt"));
+	$("#label_https_crt_cn").text(g_storage.get('https_crt_cn'));
+	$("#crt_creating").text(g_storage.get('msg_gen_crt_creating'));
+	
+	if(_showTabIndex==1)
+		refreshShareLinkList();
 	
 	$(".abgne_tab").css("height", $(window).height()-80);
 	
@@ -176,6 +245,18 @@ function getLatestVersion(){
 }
 
 function refreshShareLinkList(){
+	var webdav_mode = g_storage.get('webdav_mode');
+	var ddns_host_name = g_storage.get('ddns_host_name');    
+					
+	var hostName = (ddns_host_name=="") ? window.location.host : ddns_host_name;
+	if(hostName.indexOf(":")!=-1)
+		hostName = hostName.substring(0, hostName.indexOf(":"));
+			
+	if( webdav_mode == 0 ) //- Only enable http
+		hostName = "http://" + hostName + ":" + g_storage.get("http_port");
+	else
+		hostName = "https://" + hostName;
+	
 	var client = new davlib.DavClient();
 	client.initialize();
 	client.GSLL("/", function(error, content, statusstring){	
@@ -217,7 +298,7 @@ function refreshShareLinkList(){
 						filename = encodeURIComponent($(this).attr("filename"));
 					}
 						
-					var url = window.location.protocol + "//" + window.location.host + "/" + $(this).attr("url") + "/" + filename;
+					var url = hostName + "/" + $(this).attr("url") + "/" + filename;
 					var createtime = $(this).attr("createtime");
 					var expiretime = $(this).attr("expiretime");
 					var lefttime = parseFloat($(this).attr("lefttime"));
@@ -453,7 +534,7 @@ function getMouseXY(e) {
 				<li id='rescan'><a href="#tab1">重新搜尋</a></li>
 				<li id='sharelink'><a href="#tab2">分享清單</a></li>
 				<li id='version'><a href="#tab3">版本</a></li>
-                <li id='other_settings'><a href="#tab4">Other Settings</a></li>
+                <li id='settings'><a href="#tab4">憑證</a></li>
 			</ul>
 			<div class="tab_container">
 				<div id="tab1" class="tab_content">
@@ -465,10 +546,96 @@ function getMouseXY(e) {
 				<div id="tab3" class="tab_content">
 					<span id="aicloud_desc_version"></span>
 					<span id="aicloud_version"></span><br><br>
+                    <span id="smartsync_desc_version">Smart Sync Version: </span>
+					<span id="smartsync_version"></span><br><br>
                     <span id="desc_version"></span>
                     <span id="version"></span><br>
 					<span id="update" style="color:red"></span>
 				</div>
+                <div id="tab4" class="tab_content">
+                	<fieldset style="width: 700px;">
+                    	<legend>
+                        	<span id="label_gen_crt">建立憑證</span>
+                        </legend>
+                        <div>
+                        	<div style="width:700px;">
+                            	<div>
+                                	<div id="desc_gen_crt" style="margin-left:0px;">您可以建立自我簽署憑證。</div>
+                                </div>
+                                <div style="width:100%;">
+                                	<table cellspacing="0" style="width: auto;">
+                                    	<tbody>
+                                        	<tr>
+                                            	<td><i>&nbsp;</i></td>
+                                                <td></td>
+                                                <td><i>&nbsp;</i></td>
+                                            </tr>
+                                        	<tr>
+                                            	<td><i>&nbsp;</i></td>
+                                                <td>
+                                                	<button type="button" id="btn_gen_crt" name="btn_gen_crt">建立憑證</button>
+                                                    <span id="crt_creating" style="display:none">憑證建立中，請稍候...</span>                                    
+                                                </td>
+                                                <td><i>&nbsp;</i></td>
+                                                <td>
+                                                	<!--<button type="button" id="ext-gen1077" class=" x-btn-text">匯入憑證</button>-->
+												</td>
+                                            </tr>
+                                            <tr>
+                                            	<td><i>&nbsp;</i></td>
+                                                <td></td>
+                                                <td><i>&nbsp;</i></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+                    
+                    <fieldset style="width: 700px;">
+                    	<legend>
+                        	<span id="label_server_crt">伺服器憑證</span>
+                        </legend>
+                        <div>
+                        	<div style="width:700px;">
+                            	<div style="width:100%;">
+                                	<table cellspacing="0" style="width: auto;">
+                                    	<tbody>
+                                        	<tr>
+                                            	<td id="label_crt_type">狀態:</td>
+                                                <td></td>
+                                                <td id="label_self_crt_type">自我簽暑憑證</td>
+                                            </tr>
+                                            <tr>
+                                            	<td id="label_crt_to">核發給:</td>
+                                                <td></td>
+                                                <td id="label_https_crt_cn"></td>
+                                            </tr>
+                                            <tr>
+                                            	<td><i>&nbsp;</i></td>
+                                                <td></td>
+                                                <td><i>&nbsp;</i></td>
+                                            </tr>
+                                        	<tr>
+                                            	 <td>
+                                                	<button type="button" id="btn_export_crt" name="btn_export_crt">匯出憑證</button>   
+												</td>
+                                            	<td><i>&nbsp;</i></td>
+                                                <td><i>&nbsp;</i></td>
+                                            </tr>
+                                            <tr>
+                                            	<td><i>&nbsp;</i></td>
+                                                <td></td>
+                                                <td><i>&nbsp;</i></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+                </div>
 			</div>
 		</div>
 	</td>    

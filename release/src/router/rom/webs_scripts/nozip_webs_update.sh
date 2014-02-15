@@ -11,11 +11,23 @@ nvram set webs_state_url=""
 # get firmware information
 forsq=`nvram get apps_sq`
 model=`nvram get productid`
+swisscom=`nvram show | grep rc_support | grep swisscom`
 if [ "$forsq" == "1" ]; then
-	echo "---- update sq ----" >> /tmp/webs_upgrade.log
-	wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ/wlan_update_v2.zip -O /tmp/wlan_update.txt
+	if [ "$swisscom" == "" ]; then
+		echo "---- update sq normal----" >> /tmp/webs_upgrade.log
+		wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ/wlan_update_v2.zip -O /tmp/wlan_update.txt
+	else
+		echo "---- update sq swisscom----" >> /tmp/webs_upgrade.log
+		wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ/wlan_update_swisscom.zip -O /tmp/wlan_update.txt		
+	fi
 else
-	wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/wlan_update_v2.zip -O /tmp/wlan_update.txt
+	if [ "$swisscom" == "" ]; then
+		echo "---- update real normal----" >> /tmp/webs_upgrade.log
+		wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/wlan_update_v2.zip -O /tmp/wlan_update.txt
+	else
+		echo "---- update real swisscom----" >> /tmp/webs_upgrade.log
+		wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/wlan_update_swisscom.zip -O /tmp/wlan_update.txt
+	fi
 fi	
 
 if [ "$?" != "0" ]; then

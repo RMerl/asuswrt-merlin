@@ -407,6 +407,10 @@ int start_vlan(void)
 	if(!nvram_match("switch_wantag", "none")&&!nvram_match("switch_wantag", ""))
 		set_wan_tag(&ifr.ifr_name);
 #endif
+#ifdef RTCONFIG_RGMII_BRCM5301X
+	eval("et", "robowr", "0x0", "0x5d", "0xfb", "1");
+#endif
+
 	return 0;
 }
 

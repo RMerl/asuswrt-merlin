@@ -1,0 +1,17 @@
+--- release/src/router/libdisk/write_smb_conf.c	2013-11-28 21:33:12.000000000 -0500
++++ release/src/router/libdisk/write_smb_conf.c	2014-02-13 04:52:39.000000000 -0500
+@@ -281,10 +287,12 @@
+ //	fprintf(fp, "mangling method = hash2\n");	// ASUS add
+ 	fprintf(fp, "wide links = no\n"); 		// ASUS add
+ #ifndef RTCONFIG_BCMARM
++#ifndef RTCONFIG_TUXERA
+ 	fprintf(fp, "bind interfaces only = yes\n");	// ASUS add
+-	fprintf(fp, "interfaces = lo br0 %s\n", (!nvram_match("sw_mode", "3") ? nvram_safe_get("wan0_ifname") : ""));
++#endif
++	fprintf(fp, "interfaces = lo br0 %s\n", (is_routing_enabled() && nvram_get_int("smbd_wanac")) ? nvram_safe_get("wan0_ifname") : "");
+ #else
+-	fprintf(fp, "interfaces = br0 %s\n", (!nvram_match("sw_mode", "3") ? nvram_safe_get("wan0_ifname") : ""));
++	fprintf(fp, "interfaces = br0 %s\n", (is_routing_enabled() && nvram_get_int("smbd_wanac")) ? nvram_safe_get("wan0_ifname") : "");
+ #endif
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,36)
+ 	fprintf(fp, "use sendfile = no\n");

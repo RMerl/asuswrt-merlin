@@ -301,8 +301,7 @@ function cleandef(){
 			<td>
 			<div style="margin-left:20px;">	
 				<p><input type="radio" name="check_asus_ddns" id="c1" onClick="switch_ddns();" checked>
-						<label for="c1"><#DDNSterm_agreeword#></label>
-						<a onclick="parent.show_help_iframe(5);"><#DDNS_termofservice_Title#></a>
+					<label for="c1"><#DDNSterm_agreeword#></label>
 				</p>			
 				<br/>
 						<div id="ddnsname_input" class="aidiskdesc" style="display:none;">

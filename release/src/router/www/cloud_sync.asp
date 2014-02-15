@@ -486,6 +486,7 @@ function showcloud_synclist(){
 }
 
 var updateCloudStatus_counter = 0;
+var captcha_flag = 0;
 function updateCloudStatus(){
     $j.ajax({
     	url: '/cloud_status.asp',
@@ -502,6 +503,9 @@ function updateCloudStatus(){
 							$("status_image").firstChild.className="status_gif_Img_LR";
 						}
 						else if(cloud_status.toUpperCase() == "ERROR"){
+							$("status_image").firstChild.className="status_png_Img_error";
+						}
+						else if(cloud_status.toUpperCase() == "INPUT CAPTCHA"){
 							$("status_image").firstChild.className="status_png_Img_error";
 						}
 						else if(cloud_status.toUpperCase() == "UPLOAD"){
@@ -530,6 +534,16 @@ function updateCloudStatus(){
 							_cloud_msg += "<span style=\\'word-break:break-all;\\'>" + decodeURIComponent(cloud_obj) + "</span>";
 						}
 						else if(cloud_msg){
+							if(cloud_msg == "Need to enter the CAPTCHA"){
+								if(captcha_flag == 0){
+									showEditTable = 1;
+									showAddTable(1);
+									$('captcha_tr').style.display = "";															
+									autoFocus('captcha_field');	
+									$('captcha_iframe').src= CAPTCHA_URL;						
+									captcha_flag = 1;
+								}
+							}
 							_cloud_msg += cloud_msg;
 						}
 						else{
@@ -632,6 +646,7 @@ function validform(){
 function applyRule(){
 	if(validform()){
 		var cloud_synclist_row;
+		var cloud_synclist_col;
 		var cloud_synclist_array_tmp = cloud_sync; 
 
 		if(isonEdit != -1){
@@ -649,11 +664,23 @@ function applyRule(){
 			}
 		}
 		
-		if(cloud_sync != "")
-			cloud_synclist_array_tmp += '<';
+		if(cloud_sync != ""){
+			cloud_synclist_row = cloud_synclist_array_tmp.split('<');
+			for(i=0;i< cloud_synclist_row.length;i++){
+				cloud_synclist_col = cloud_synclist_row[i].split('>');
+				if(document.form.cloud_username.value == cloud_synclist_col[1])
+					cloud_synclist_array_tmp = "";
+				else
+					cloud_synclist_array_tmp += '<';			
+			}
+		}
 
-		cloud_synclist_array_tmp += '0>'+document.form.cloud_username.value+'>'+document.form.cloud_password.value+'>none>'+document.form.cloud_rule.value+'>'+"/tmp"+document.form.cloud_dir.value+'>1';
+		if(document.form.captcha_field.value == "" && document.form.security_code_field.value == "")
+			cloud_synclist_array_tmp += '0>'+document.form.cloud_username.value+'>'+document.form.cloud_password.value+'>none>'+document.form.cloud_rule.value+'>'+"/tmp"+document.form.cloud_dir.value+'>1';
+		else
+			cloud_synclist_array_tmp += '0>'+document.form.cloud_username.value+'>'+document.form.cloud_password.value+'>'+document.form.security_code_field.value +'#'+ document.form.captcha_field.value+'>'+document.form.cloud_rule.value+'>'+"/tmp"+document.form.cloud_dir.value+'>1';
 
+		
 		showcloud_synclist();
 		document.form.cloud_sync.value = cloud_synclist_array_tmp;
 		document.form.cloud_username.value = '';
@@ -1029,6 +1056,18 @@ function cal_panel_block(){
 	$("folderTree_panel").style.marginLeft = blockmarginLeft+"px";
 	$("invitation").style.marginLeft = blockmarginLeft+"px";
 }
+
+var captcha_flag = 0;
+function refresh_captcha(){
+	if(captcha_flag == 0){
+		var captcha_url = 'http://sg03.asuswebstorage.com/member/captcha/?userid='+document.form.cloud_username.value;
+		$('captcha_iframe').setAttribute("src", captcha_url);
+	}
+	else{
+		document.getElementById('captcha_iframe').src = document.getElementById('captcha_iframe').src;
+	}
+}
+
 </script>
 </head>
 
@@ -1260,6 +1299,27 @@ function cal_panel_block(){
 									<option value="1">Download to USB Disk</option>
 									<option value="2">Upload to Cloud</option>
 								</select>			
+							</td>
+						  </tr>
+						  <tr>
+							<th width="30%" style="font-family: Calibri;font-weight: bolder;">
+								Security code
+							</th>
+							<td>
+								<div style="color:#FC0;"><input id="security_code_field" name="security_code_field" type="text" maxlength="6" class="input_32_table" style="height: 23px;width:100px;margin-right:10px;" >OTP Authentication</div>
+							</td>
+						  </tr>
+						  <tr height="45px;" id="captcha_tr" style="display:none;">
+							<th width="30%" style="font-family: Calibri;font-weight: bolder;">
+								Captcha
+							</th>			
+							<td style="height:85px;">
+								<div style="height:25px;"><input id="captcha_field" name="captcha_field" type="text" maxlength="6" class="input_32_table" style="height: 23px;width:100px;margin-top:8px;" ></div>
+								<div id="captcha_hint" style="color:#FC0;height:25px;margin-top:10px;">Please input the captcha</div>						
+								<div>
+									<iframe id="captcha_iframe" frameborder="0" scrolling="no" src="" style="width:230px;height:80px;*width:210px;*height:87px;margin:-60px 0 0 160px;*margin-left:165px;"></iframe>
+								</div>
+								<div style="color:#FC0;text-decoration:underline;height:35px;margin:-35px 0px 0px 380px;cursor:pointer" onclick="refresh_captcha();"><#CTL_refresh#></div>   
 							</td>
 						  </tr>
 						</table>	

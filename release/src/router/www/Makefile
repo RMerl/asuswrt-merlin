@@ -26,6 +26,7 @@ endif
 	rm -rf $(INSTALLDIR)/www/encoding_check.sh
 	rm -rf $(INSTALLDIR)/www/en_result.txt
 	rm -rf $(INSTALLDIR)/www/temp.dict
+	rm -rf $(INSTALLDIR)/www/.gitignore
 	rm -rf `find $(INSTALLDIR) -name "*.bak"`
 
 	chmod -x `find $(INSTALLDIR)/www/ -name "*.asp"`

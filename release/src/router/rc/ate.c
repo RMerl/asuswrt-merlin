@@ -217,18 +217,9 @@ Get_USB_Port_Info(const char *port_x)
 	char output_buf[16];
 	char usb_pid[14];
 	char usb_vid[14];
-#if defined (RTCONFIG_USB_2XHCI2)
-	char usb_removed[32];
-#endif
+
 	sprintf(usb_pid, "usb_path%s_pid", port_x);
 	sprintf(usb_vid, "usb_path%s_vid", port_x);
-#if defined (RTCONFIG_USB_2XHCI2)
-	sprintf(usb_removed, "usb_path%s_removed", port_x);
-	if(!strcmp(nvram_safe_get(usb_removed), "1")){
-		puts("N/A");
-		return 0;
-	}
-#endif
 
 	if( strcmp(nvram_safe_get(usb_pid),"") && strcmp(nvram_safe_get(usb_vid),"") ) {
 		sprintf(output_buf, "%s/%s",nvram_safe_get(usb_pid),nvram_safe_get(usb_vid));
@@ -253,7 +244,7 @@ Get_USB_Port_Folder(const char *port_x)
 	return 1;
 }
 
-#if defined (RTCONFIG_USB_XHCI) || defined (RTCONFIG_USB_2XHCI2)
+#if defined (RTCONFIG_USB_XHCI)
 int
 Get_USB_Port_DataRate(const char *port_x)
 {
@@ -788,7 +779,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 #endif	/* RTCONFIG_HAS_5G */
-#if defined(RTCONFIG_USB_XHCI) || defined(RTCONFIG_USB_2XHCI2)
+#if defined(RTCONFIG_USB_XHCI)
 	else if (!strcmp(command, "Get_Usb3p0_Port1_Infor")) {
 		if (!Get_USB3_Port_Info("1"))
 			puts("ATE_ERROR");
@@ -832,20 +823,6 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return EINVAL;
 	}
 #endif	/* RTCONFIG_USB_XHCI */
-#if defined (RTCONFIG_USB_2XHCI2)
-	else if (!strcmp(command, "Set_Usb3_Disabled")) {
-		nvram_set("usb_usb3_disabled_force", "1");
-		nvram_commit();
-		puts("1");
-		return 1;
-	}
-	else if (!strcmp(command, "Set_Usb3_Enabled")) {
-		nvram_set("usb_usb3_disabled_force", "0");
-		nvram_commit();
-		puts("1");
-		return 1;
-	}
-#endif
 	else if (!strcmp(command, "Get_fail_ret")) {
 		Get_fail_ret();
 		return 0;

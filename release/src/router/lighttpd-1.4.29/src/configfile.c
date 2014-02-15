@@ -123,7 +123,9 @@ static int config_insert(server *srv) {
 		{ "router.product-image",        NULL, T_CONFIG_STRING, T_CONFIG_SCOPE_SERVER },      /* 76 */
 		{ "aicloud.version",             NULL, T_CONFIG_STRING, T_CONFIG_SCOPE_SERVER },      /* 77 */
 		{ "router.app_installation-url", NULL, T_CONFIG_STRING, T_CONFIG_SCOPE_SERVER },      /* 78 */
-
+		{ "aicloud.max-sharelink",       NULL, T_CONFIG_INT, T_CONFIG_SCOPE_CONNECTION },      /* 79 */
+		{ "smartsync.version",           NULL, T_CONFIG_STRING, T_CONFIG_SCOPE_SERVER },      /* 80 */
+		
 		{ NULL,                          NULL, T_CONFIG_UNSET, T_CONFIG_SCOPE_UNSET }
 	};
 
@@ -164,6 +166,8 @@ static int config_insert(server *srv) {
 	cv[76].destination = srv->srvconf.product_image;
 	cv[77].destination = srv->srvconf.aicloud_version;
 	cv[78].destination = srv->srvconf.app_installation_url;	
+	cv[79].destination = &(srv->srvconf.max_sharelink);
+	cv[80].destination = srv->srvconf.smartsync_version;
 		
 	srv->config_storage = calloc(1, srv->config_context->used * sizeof(specific_config *));
 

@@ -3408,3 +3408,28 @@ safefile(path)
 
 	return (0);
 }
+
+int
+dumpfile(path)
+	const char *path;
+{
+	FILE *f = NULL;
+	char buf[256];
+
+	if (path == NULL)
+		return -1;
+
+	if ((f = fopen(path, "r")) == NULL) {
+		dprintf(LOG_ERR, FNAME, "%s: %s: %s", strerror(errno), path, __FUNCTION__);
+		return -1;
+	}
+
+	while (fgets(buf, sizeof(buf), f))
+	{
+		dprintf(LOG_ERR, FNAME, "%s", buf);
+	}
+
+	fclose(f);
+
+	return 0;
+}

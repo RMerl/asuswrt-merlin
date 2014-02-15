@@ -378,7 +378,8 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 		dhcp_argv[index++] = "-t2";
 		/* 5 seconds between packets (default 3 seconds) */
 		dhcp_argv[index++] = "-T5";
-		/* Wait 120 seconds before trying again (default 20 seconds) */
+		/* Wait 160 seconds before trying again (default 20 seconds) */
+		/* set to 160 to accomodate new timings enforced by Charter cable */
 		dhcp_argv[index++] = "-A160";
 	}
 
@@ -711,7 +712,13 @@ start_dhcp6c(void)
 	if (!nvram_match("ipv6_ra_conf", "mset") &&
 		!nvram_get_int("ipv6_dhcp_pd") &&
 		nvram_match("ipv6_dnsenable", "0"))
+	{
+		// (re)start radvd and httpd
+		start_radvd();
+		start_httpd();
+
 		return -2;
+	}
 	if (nvram_match("ipv6_ra_conf", "noneset") &&
 		!nvram_get_int("ipv6_dhcp_pd"))
 		return -3;

@@ -56,7 +56,7 @@ String.prototype.width = function(font) {
 
 function getFileExt(filename){
 	var ext = /^.+\.([^.]+)$/.exec(filename);
-  return ext == null ? "" : ext[1].toLowerCase();
+  	return ext == null ? "" : ext[1].toLowerCase();
 }
 
 function isPrivateIP(ip){
@@ -188,41 +188,57 @@ function mydecodeURI(iurl){
 	
 	//iurl = String(iurl).replace("%7f", "~"); 
 	
-	var myurl = decodeURIComponent(iurl);
-	/*
-	myurl = String(myurl).replace("%22", "\""); 
-	myurl = String(myurl).replace("%23", "#");
-	myurl = String(myurl).replace("%24", "$");
-	myurl = String(myurl).replace("%25", "%");
-	myurl = String(myurl).replace("%26", "&");
-	myurl = String(myurl).replace("%2b", "+");
-	myurl = String(myurl).replace("%40", "@");
-	*/
+	try{
+		var myurl = decodeURIComponent(iurl);
+		/*
+		myurl = String(myurl).replace("%22", "\""); 
+		myurl = String(myurl).replace("%23", "#");
+		myurl = String(myurl).replace("%24", "$");
+		myurl = String(myurl).replace("%25", "%");
+		myurl = String(myurl).replace("%26", "&");
+		myurl = String(myurl).replace("%2b", "+");
+		myurl = String(myurl).replace("%40", "@");
+		*/
+	}
+	catch(err){
+		//Handle errors here
+	  	//alert('catch error: '+ err);
+		return iurl;
+	}
+	
 	return myurl;
 }
 
 function myencodeURI(iurl){
-	var myurl = iurl;
-	/*
-	myurl = String(myurl).replace("%", "%25");
+	try{
+		var myurl = iurl;
+		/*
+		myurl = String(myurl).replace("%", "%25");
+		
+		myurl = String(myurl).replace("\"", "%22"); 
+		myurl = String(myurl).replace("#", "%23");
+		myurl = String(myurl).replace("$", "%24");
+		myurl = String(myurl).replace("&", "%26");
+		myurl = String(myurl).replace("+", "%2b");
+		myurl = String(myurl).replace("@", "%40");
+		
+		myurl = encodeURI(myurl);
+		
+		myurl = String(myurl).replace("\"", "%22"); 
+		myurl = String(myurl).replace("#", "%23");
+		myurl = String(myurl).replace("$", "%24");
+		myurl = String(myurl).replace("&", "%26");
+		myurl = String(myurl).replace("+", "%2b");
+		myurl = String(myurl).replace("@", "%40");
+		*/
+		myurl = encodeURIComponent(myurl);
+	}
+	catch(err){
+		//Handle errors here
+	  	//alert('catch error: '+ err);
+		return iurl;
+	}
 	
-	myurl = String(myurl).replace("\"", "%22"); 
-	myurl = String(myurl).replace("#", "%23");
-	myurl = String(myurl).replace("$", "%24");
-	myurl = String(myurl).replace("&", "%26");
-	myurl = String(myurl).replace("+", "%2b");
-	myurl = String(myurl).replace("@", "%40");
-	
-	myurl = encodeURI(myurl);
-	
-	myurl = String(myurl).replace("\"", "%22"); 
-	myurl = String(myurl).replace("#", "%23");
-	myurl = String(myurl).replace("$", "%24");
-	myurl = String(myurl).replace("&", "%26");
-	myurl = String(myurl).replace("+", "%2b");
-	myurl = String(myurl).replace("@", "%40");
-	*/
-	myurl = encodeURIComponent(myurl);
 	return myurl;
 }
 

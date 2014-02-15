@@ -558,7 +558,84 @@ static void show_help (void) {
 #undef TEXT_IPV6
 	write(STDOUT_FILENO, b, strlen(b));
 }
+#if 0
+void save_cert(void)
+{
+	if (eval("tar", "-C", "/", "-czf", "/tmp/cert.tgz", "etc/cert.pem", "etc/key.pem") == 0) {
+    	if (nvram_set_file("https_crt_file", "/tmp/cert.tgz", 8192)) {
+        	nvram_commit_x();
+    	}
+	}
+	unlink("/tmp/cert.tgz");
+}
 
+void erase_cert(void)
+{
+	unlink("/etc/cert.pem");
+    unlink("/etc/key.pem");
+    nvram_unset("https_crt_file");
+    //nvram_unset("https_crt_gen");
+    nvram_set("https_crt_gen", "0");
+}
+
+void start_ssl(void)
+{
+    int ok;
+    int save;
+    int retry;
+    unsigned long long sn;
+    char t[32];
+
+    Cdbg(DBE, "[lighttpd] start_ssl running!!");
+    
+    if (nvram_match("https_crt_gen", "1")) {
+        erase_cert();
+    }
+
+    retry = 1;
+    while (1) {
+        save = nvram_match("https_crt_save", "1");
+
+        if ((!f_exists("/etc/cert.pem")) || (!f_exists("/etc/key.pem"))) {
+            ok = 0;
+            if (save) {
+                Cdbg(DBE, "Save SSL certificate..."); // tmp test
+                if (nvram_get_file("https_crt_file", "/tmp/cert.tgz", 8192)) {
+                    if (eval("tar", "-xzf", "/tmp/cert.tgz", "-C", "/", "etc/cert.pem", "etc/key.pem") == 0){
+                        system("cat /etc/key.pem /etc/cert.pem > /etc/server.pem");
+                        ok = 1;
+                    }
+                    unlink("/tmp/cert.tgz");
+                }
+            }
+            if (!ok) {
+                erase_cert();
+                
+                Cdbg(DBE, "Generating SSL certificate..."); // tmp test
+                
+                // browsers seems to like this when the ip address moves... -- zzz
+                f_read("/dev/urandom", &sn, sizeof(sn));
+
+                sprintf(t, "%llu", sn & 0x7FFFFFFFFFFFFFFFULL);
+                eval("gencert.sh", t);
+            }
+        }
+
+        if ((save) && (*nvram_safe_get("https_crt_file")) == 0) {
+            save_cert();
+        }
+
+		/*
+        if (mssl_init("/etc/cert.pem", "/etc/key.pem")) return;
+
+        erase_cert();
+
+        if (!retry) exit(1);
+        retry = 0;
+        */
+    }
+}
+#endif
 int main (int argc, char **argv) {
 	server *srv = NULL;
 	int print_config = 0;
@@ -994,9 +1071,17 @@ int main (int argc, char **argv) {
 	buffer_copy_string( srv->cur_login_info, nvram_get_webdav_last_login_info() );
 	#else
 	char *last_login_info = nvram_get_webdav_last_login_info();
-    buffer_copy_string( srv->last_login_info, last_login_info);
-    buffer_copy_string( srv->cur_login_info, last_login_info);
-    free(last_login_info);
+        fprintf(stderr,"last_login_info=%s\n",last_login_info);
+        if(last_login_info == NULL || *last_login_info == '(')
+        {
+            fprintf(stderr,"111\n");
+        }
+        else
+        {
+            buffer_copy_string( srv->last_login_info, last_login_info);
+            buffer_copy_string( srv->cur_login_info, last_login_info);
+            free(last_login_info);
+        }
 	#endif
 	#else
 	buffer_copy_string( srv->last_login_info, "admin>2012/08/08 18:28:28>100.100.100.100" );

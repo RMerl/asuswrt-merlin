@@ -5,7 +5,7 @@ extern int Get_USB_Port_Info(const char *port_x);
 extern int Get_USB_Port_Folder(const char *port_x);
 extern int Get_USB_Port_DataRate(const char *port_x);
 
-#if defined (RTCONFIG_USB_XHCI) || defined (RTCONFIG_USB_2XHCI2)
+#if defined (RTCONFIG_USB_XHCI)
 static inline int Get_USB3_Port_Info(const char *port_x)
 {
 	return Get_USB_Port_Info(port_x);

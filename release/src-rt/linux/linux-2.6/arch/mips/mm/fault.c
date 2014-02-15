@@ -161,6 +161,9 @@ no_context:
 	 */
 	bust_spinlocks(1);
 
+#ifdef CONFIG_DUMP_PREV_OOPS_MSG
+	enable_oopsbuf(1);
+#endif
 	printk(KERN_ALERT "CPU %d Unable to handle kernel paging request at "
 	       "virtual address %0*lx, epc == %0*lx, ra == %0*lx\n",
 	       raw_smp_processor_id(), field, address, field, regs->cp0_epc,

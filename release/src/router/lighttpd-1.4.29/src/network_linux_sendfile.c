@@ -183,14 +183,14 @@ int network_write_chunkqueue_linuxsendfile(server *srv, connection *con, int fd,
 	for(c = cq->first; c; c = c->next, chunks_written++) {
 		int chunk_finished = 0;
 
-		//Cdbg(DBE, "\t c->type=[%d]", c->type);
+		Cdbg(DBE, "\t c->type=[%d]", c->type);
 
 		switch(c->type) {
 		case MEM_CHUNK: {
 			char * offset;
 			size_t toSend;
 			ssize_t r;
-			//Cdbg(DBE, "MEM_CHUNK...");
+			Cdbg(DBE, "MEM_CHUNK...");
 
 			size_t num_chunks, i;
 			struct iovec chunks[UIO_MAXIOV];
@@ -232,7 +232,7 @@ int network_write_chunkqueue_linuxsendfile(server *srv, connection *con, int fd,
 					num_bytes += toSend;
 				}
 			}
-//Cdbg(DBE, "num_chunks = %d", num_chunks);
+Cdbg(DBE, "num_chunks = %d", num_chunks);
 
 //Cdbg(DBE, "MEMORY = %s", chunks[0].iov_base);
 			if ((r = writev(fd, chunks, num_chunks)) < 0) {
@@ -299,7 +299,7 @@ Cdbg(DBE, "\t\tfilename=[%s]", c->file.name->ptr);
 				toSend, c->file.length);
 			
 			/* open file if not already opened */
-			if (-1 == c->file.fd) {
+			if (-1 == c->file.fd) {				
 				if (-1 == (c->file.fd = open(c->file.name->ptr, O_RDONLY))) {
 					log_error_write(srv, __FILE__, __LINE__, "ss", "open failed: ", strerror(errno));
 
@@ -459,8 +459,6 @@ Cdbg(DBE, "\t\tfilename=[%s]", c->file.name->ptr);
 			
 			if (c->offset == c->file.length) {
 				chunk_finished = 1;
-				Cdbg(1, "11111111111111111");
-
 				
 				/* chunk_free() / chunk_reset() will cleanup for us but it is a ok to be faster :) */
 				

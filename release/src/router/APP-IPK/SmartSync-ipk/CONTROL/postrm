@@ -6,7 +6,7 @@ APPS_INSTALL_PATH=$APPS_MOUNTED_PATH/$APPS_INSTALL_FOLDER
 #CLOUD_PATH=`cat /opt/etc/Cloud.conf | awk -F , '{print $7}'`
 
 rm -rf /opt/etc/init.d/S50smartsync
-rm -rf /opt/etc/smartsync_script
+rm -rf /opt/etc/apps_asus_script/smartsync_rm
 
 sh /tmp/smartsync_rm&
 

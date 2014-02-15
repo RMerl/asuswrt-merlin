@@ -238,6 +238,12 @@ int main(int argc, char *argv[])
 
 	/* share mode */
 	if (!strcmp(nvram_safe_get("st_samba_mode"), "1") || !strcmp(nvram_safe_get("st_samba_mode"), "3")) {
+#ifdef RTCONFIG_TUXERA
+		fprintf(fp, "auth methods = guest\n");
+		fprintf(fp, "guest account = admin\n");
+		fprintf(fp, "map to guest = Bad Password\n");
+		fprintf(fp, "guest ok = yes\n");
+#endif
 		fprintf(fp, "security = SHARE\n");
 		fprintf(fp, "guest only = yes\n");
 	}
@@ -274,8 +280,14 @@ int main(int argc, char *argv[])
 	fprintf(fp, "host msdfs = no\n");		// ASUS add
 	fprintf(fp, "strict allocate = No\n");		// ASUS add
 //	fprintf(fp, "mangling method = hash2\n");	// ASUS add
+#ifndef RTCONFIG_BCMARM
+#ifndef RTCONFIG_TUXERA
 	fprintf(fp, "bind interfaces only = yes\n");	// ASUS add
-	fprintf(fp, "interfaces = lo br0 %s\n", ((!nvram_match("sw_mode", "3") && !nvram_match("sw_mode", "1")) ? nvram_safe_get("wan0_ifname") : ""));
+#endif
+	fprintf(fp, "interfaces = lo br0 %s\n", (is_routing_enabled() && nvram_get_int("smbd_wanac")) ? nvram_safe_get("wan0_ifname") : "");
+#else
+	fprintf(fp, "interfaces = br0 %s\n", (is_routing_enabled() && nvram_get_int("smbd_wanac")) ? nvram_safe_get("wan0_ifname") : "");
+#endif
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,36)
 	fprintf(fp, "use sendfile = no\n");
 #else
@@ -335,6 +347,7 @@ int main(int argc, char *argv[])
 				
 				fprintf(fp, "[%s]\n", mount_folder);
 				fprintf(fp, "comment = %s's %s\n", follow_disk->tag, mount_folder);
+				fprintf(fp, "veto files = /.__*.txt*/asus_lighttpdpasswd/\n");
 				fprintf(fp, "path = %s\n", follow_partition->mount_point);
 				fprintf(fp, "writeable = yes\n");
 

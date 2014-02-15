@@ -210,8 +210,8 @@ char *get_usb_node_by_string(const char *target_string, char *ret, const int ret
 	char *ptr, *ptr_end;
 	int len;
 
-	memset(usb_port, 0, 8);
-	if(get_usb_port_by_string(target_string, usb_port, 8) == NULL)
+	memset(usb_port, 0, sizeof(usb_port));
+	if(get_usb_port_by_string(target_string, usb_port, sizeof(usb_port)) == NULL)
 		return NULL;
 
 	if((ptr = strstr(target_string, usb_port)) == NULL)
@@ -222,11 +222,11 @@ char *get_usb_node_by_string(const char *target_string, char *ret, const int ret
 	if((ptr_end = strchr(ptr, ':')) == NULL)
 		return NULL;
 
-	len = strlen(ptr)-strlen(ptr_end);
-	if(len > 16)
-		len = 16;
+	len = ptr_end - ptr;
+	if(len >= sizeof(buf))
+		len = sizeof(buf)-1;
 
-	memset(buf, 0, 16);
+	memset(buf, 0, sizeof(buf));
 	strncpy(buf, ptr, len);
 
 	if((ptr = strrchr(buf, '/')) == NULL)
@@ -896,11 +896,11 @@ int get_interface_Int_endpoint(const char *interface_name)
 	bNumEndpoints = get_interface_numendpoints(interface_name);
 	if(bNumEndpoints <= 0){
 		usb_dbg("(%s): No endpoints: %d.\n", interface_name, bNumEndpoints);
-		return 0;
+		goto leave;
 	}
 	else if(bNumEndpoints == 1){ // ex: GL04P
 		usb_dbg("(%s): It's a little impossible to be the control interface with a endpoint.\n", interface_name);
-		return 0;
+		goto leave;
 	}
 
 	end_count = 0;
@@ -922,7 +922,7 @@ int get_interface_Int_endpoint(const char *interface_name)
 		ptr = fgets(buf, sizeof(buf), fp);
 		fclose(fp);
 		if(ptr == NULL)
-			return 0;
+			goto leave;
 
 		if(!strncmp(buf, "03", 2)){
 			got_Int = 1;
@@ -931,6 +931,8 @@ int get_interface_Int_endpoint(const char *interface_name)
 		else if(end_count == bNumEndpoints)
 			break;
 	}
+
+leave:
 	closedir(interface_dir);
 
 	return got_Int;

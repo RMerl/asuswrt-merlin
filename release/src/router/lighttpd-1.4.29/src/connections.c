@@ -467,6 +467,9 @@ static int connection_handle_write_prepare(server *srv, connection *con) {
 		case HTTP_METHOD_GETVIDEOSUBTITLE:
 		case HTTP_METHOD_UPLOADTOFACEBOOK:
 		case HTTP_METHOD_UPLOADTOFLICKR:
+		case HTTP_METHOD_GENROOTCERTIFICATE:
+		case HTTP_METHOD_APPLYAPP:
+		case HTTP_METHOD_NVRAMGET:
 		   	//Cdbg(DBE,"http method= %s break;",connection_get_state(con->request.http_method));
 			break;
 		case HTTP_METHOD_OPTIONS:
@@ -749,15 +752,33 @@ static int parser_share_link(server *srv, connection *con){
 	if(strncmp(con->request.uri->ptr, "/ASUSHARE", 9)==0){
 		
 		char mac[20]="\0";		
-		char* decode_str;
-		int bExpired = 0;
-		get_mac_address("eth0", &mac);
+		char* decode_str=NULL;
+		int bExpired=0;
+
+		#if EMBEDDED_EANBLE
+#ifdef APP_IPKG
+		char *router_mac=nvram_get_router_mac();
+      	sprintf(mac,"%s",router_mac);
+		free(router_mac);
+#else
+		strcpy( mac, nvram_get_router_mac() );
+#endif
+		#else
+		get_mac_address("eth0", &mac);					
+		#endif
+		
+		Cdbg(DBE, "mac=%s", mac);
 		
 		char* key = ldb_base64_encode(mac, strlen(mac));		
 		int y = strstr (con->request.uri->ptr+1,"/") - (con->request.uri->ptr);
 		
-		if(y<=9)
+		if(y<=9){
+			if(key){
+				free(key);
+				key=NULL;
+			}
 			return -1;
+		}
 		
 		buffer* filename = buffer_init();
 		buffer_copy_string_len(filename, con->request.uri->ptr+y, con->request.uri->used-y);
@@ -765,85 +786,91 @@ static int parser_share_link(server *srv, connection *con){
 		buffer* substrencode = buffer_init();
 		buffer_copy_string_len(substrencode,con->request.uri->ptr+9,y-9);
 
-		decode_str = x123_decode(substrencode->ptr, key, &decode_str);
-		
-		//Cdbg(DBE, "con->request.uri=%s", con->request.uri->ptr);
-		//Cdbg(DBE, "filename=%s", filename->ptr);
-		//Cdbg(DBE, "decode_str=%s", decode_str);
+		decode_str = x123_decode(substrencode->ptr, key, &decode_str);		
+		Cdbg(DBE, "decode_str=%s", decode_str);
 
-		int x = strstr (decode_str,"?") - decode_str;
+		if(decode_str){
+			int x = strstr (decode_str,"?") - decode_str;
 
-		int param_len = strlen(decode_str) - x;
-		buffer* param = buffer_init();
-		buffer* user = buffer_init();
-		buffer* pass = buffer_init();
-		buffer* expire = buffer_init();
-		buffer_copy_string_len(param, decode_str + x + 1, param_len);
-		//Cdbg(DBE, "123param=[%s]", param->ptr);
+			int param_len = strlen(decode_str) - x;
+			buffer* param = buffer_init();
+			buffer* user = buffer_init();
+			buffer* pass = buffer_init();
+			buffer* expire = buffer_init();
+			buffer_copy_string_len(param, decode_str + x + 1, param_len);
+			//Cdbg(DBE, "123param=[%s]", param->ptr);
 
-		char * pch;
-		pch = strtok(param->ptr, "&");
-		while(pch!=NULL){
-		
-			if(strncmp(pch, "auth=", 5)==0){
+			char * pch;
+			pch = strtok(param->ptr, "&");
+			while(pch!=NULL){
+			
+				if(strncmp(pch, "auth=", 5)==0){
 
-				int len = strlen(pch)-5;				
-				char* temp = (char*)malloc(len+1);
-				memset(temp,'\0', len);				
-				strncpy(temp, pch+5, len);
-				temp[len]='\0';
+					int len = strlen(pch)-5;				
+					char* temp = (char*)malloc(len+1);
+					memset(temp,'\0', len);				
+					strncpy(temp, pch+5, len);
+					temp[len]='\0';
 
-				buffer_copy_string( con->share_link_basic_auth, "Basic " );
-				buffer_append_string( con->share_link_basic_auth, temp );
-				
-				free(temp);
-			}
-			else if(strncmp(pch, "expire=", 7)==0){
-				int len = strlen(pch)-7;				
-				char* temp = (char*)malloc(len+1);
-				memset(temp,'\0', len);				
-				strncpy(temp, pch+7, len);
-				temp[len]='\0';
-				
-				struct tm tm;
-				time_t expire_time;
-				Cdbg(DBE, "expire = %s", temp);
-				if (strptime(temp, "%Y-%m-%d-%H:%M:%S", &tm) ){					
-					expire_time = mktime(&tm);
+					buffer_copy_string( con->share_link_basic_auth, "Basic " );
+					buffer_append_string( con->share_link_basic_auth, temp );
+
+					if(temp){
+						free(temp);
+						temp=NULL;
+					}
+				}
+				else if(strncmp(pch, "expire=", 7)==0){
+					int len = strlen(pch)-7;				
+					char* temp2 = (char*)malloc(len+1);
+					memset(temp2,'\0', len);				
+					strncpy(temp2, pch+7, len);
+					temp2[len]='\0';
+					Cdbg(DBE, "expire(temp2) = %s", temp2);
+
+					unsigned long expire_time = atol(temp2);
 					time_t cur_time = time(NULL);
-
-					char strTime[25] = {0};
-					strftime(strTime, sizeof(strTime), "%Y-%m-%d-%H:%M:%S", localtime(&cur_time));	
-
-					double offset = difftime(expire_time, cur_time);
-					//Cdbg(DBE, "expire offset = %f, strTime=%s", offset, strTime);
+					unsigned long cur_time2 = cur_time;
+					
+					//double offset = difftime((time_t)expire_time, cur_time);
+					unsigned long offset = expire_time - cur_time;
+					Cdbg(DBE, "expire_time=%lu, cur_time2=%lu, offset = %lu", expire_time, cur_time2, offset);
 					if( offset < 0.0 ){
 						buffer_reset(con->share_link_basic_auth);	
 						bExpired = 1;
 					}
+					
+					if(temp2){
+						free(temp2);
+						temp2=NULL;
+					}
 				}
-				else
-					Cdbg(DBE, "fail to strptime");
+				
+				pch = strtok( NULL, "&" );
 			}
-		
-			pch = strtok( NULL, "&" );
+
+			buffer_free(param);
+			buffer_free(user);
+			buffer_free(pass);
+			buffer_free(expire);
+			
+			buffer_reset(con->request.uri);
+			buffer_copy_string_len(con->request.uri, decode_str, x);
+			buffer_append_string_buffer(con->request.uri, filename);
+
+			if(decode_str){
+				free(decode_str);
+				decode_str = NULL;
+			}
 		}
 
-		
-		buffer_free(param);
-		buffer_free(user);
-		buffer_free(pass);
-		buffer_free(expire);
-		free(key);
-		
-		buffer_reset(con->request.uri);
-		
-		buffer_copy_string_len(con->request.uri, decode_str, x);
-		
-		buffer_append_string_buffer(con->request.uri, filename);
-						
-		//buffer_free(substrencode);		
+		buffer_free(substrencode);		
 		buffer_free(filename);
+
+		if(key){
+			free(key);
+			key=NULL;
+		}
 		
 		Cdbg(DBE, "end parser_share_file, con->request.uri=%s", con->request.uri->ptr);
 
@@ -851,6 +878,7 @@ static int parser_share_link(server *srv, connection *con){
 			result = 1;
 		else if(bExpired==1)
 			result = -1;
+		
 	}
 	else if(strncmp(con->request.uri->ptr, "/AICLOUD", 8)==0){
 		int is_illegal = 0;
@@ -947,7 +975,7 @@ static int parser_share_link(server *srv, connection *con){
 		  
 		return 1;
 	}
-		
+
 	return result;
 }
 
@@ -1958,7 +1986,7 @@ connection *connection_accept(server *srv, server_socket *srv_socket) {
 #if 0
 		gettimeofday(&(con->start_tv), NULL);
 #endif
-//Cdbg(DBE, "connection_accept, accept con=[%p], con->fd=[%d]", con, con->fd);
+//Cdbg(1, "connection_accept, accept con=[%p], con->fd=[%d]", con, con->fd);
 		fdevent_register(srv->ev, con->fd, connection_handle_fdevent, con);
 
 		connection_set_state(srv, con, CON_STATE_REQUEST_START);

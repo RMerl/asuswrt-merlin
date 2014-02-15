@@ -928,6 +928,19 @@ setAllLedOn(void)
 			eval("wl", "-i", "eth1", "ledbh", "10", "7");
 			break;
 		}
+		case MODEL_RTAC87U:
+		{
+			led_control(LED_USB, LED_ON);
+			led_control(LED_USB3, LED_ON);
+			led_control(LED_TURBO, LED_ON);
+			eval("et", "robowr", "0", "0x18", "0x01ff");	// lan/wan ethernet/giga led
+			eval("et", "robowr", "0", "0x1a", "0x01e0");
+			eval("wl", "ledbh", "10", "1");			// wl 2.4G
+			/* Quantenna's fake 5g led */
+			gpio_write(LED_5G, 1);				// wl 5G
+			led_control(LED_5G, LED_ON);
+			break;
+		}
 		case MODEL_RTAC68U:
 		{
 			led_control(LED_USB, LED_ON);
@@ -1107,6 +1120,19 @@ setAllLedOff(void)
 			led_control(LED_LAN, LED_OFF);
 			led_control(LED_2G, LED_OFF);
 			eval("wl", "-i", "eth1", "ledbh", "10", "0");
+			break;
+		}
+		case MODEL_RTAC87U:
+		{
+			led_control(LED_USB, LED_OFF);
+			led_control(LED_USB3, LED_OFF);
+			led_control(LED_TURBO, LED_OFF);
+			eval("et", "robowr", "0", "0x18", "0x01e0");	// lan/wan ethernet/giga led
+			eval("et", "robowr", "0", "0x1a", "0x01e0");
+			eval("wl", "ledbh", "10", "0");			// wl 2.4G
+			/* Quantenna's fake 5g led */
+			gpio_write(LED_5G, 1);				// wl 5G
+			led_control(LED_5G, LED_OFF);
 			break;
 		}
 		case MODEL_RTAC68U:
@@ -2450,13 +2476,13 @@ next_info:
 
 				if (apinfos[i].wpa == 1){
 					if (apinfos[i].wid.key_mgmt == WPA_KEY_MGMT_IEEE8021X_)
-						fprintf(fp, "\"%s\",", "WPA");
+						fprintf(fp, "\"%s\",", "WPA-Enterprise");
 					else if (apinfos[i].wid.key_mgmt == WPA_KEY_MGMT_IEEE8021X2_)
-						fprintf(fp, "\"%s\",", "WPA2");
+						fprintf(fp, "\"%s\",", "WPA2-Enterprise");
 					else if (apinfos[i].wid.key_mgmt == WPA_KEY_MGMT_PSK_)
-						fprintf(fp, "\"%s\",", "WPA-PSK");
+						fprintf(fp, "\"%s\",", "WPA-Personal");
 					else if (apinfos[i].wid.key_mgmt == WPA_KEY_MGMT_PSK2_)
-						fprintf(fp, "\"%s\",", "WPA2-PSK");
+						fprintf(fp, "\"%s\",", "WPA2-Personal");
 					else if (apinfos[i].wid.key_mgmt == WPA_KEY_MGMT_NONE_)
 						fprintf(fp, "\"%s\",", "NONE");
 					else if (apinfos[i].wid.key_mgmt == WPA_KEY_MGMT_IEEE8021X_NO_WPA_)
@@ -2761,6 +2787,104 @@ wl_phy_rssi_ant(char *ifname)
 	}
 
 	return ret;
+}
+#endif
+#ifdef RTAC66U
+int generate_swisscom_setting(unsigned char *ssid, unsigned char *key)
+{
+	int i;
+	unsigned char ea[ETHER_ADDR_LEN];
+	char *mac = nvram_safe_get("et0macaddr");
+
+	memset(ssid, sizeof(ssid), 0);
+	memset(key, sizeof(key), 0);
+	ether_atoe(mac, ea);
+
+	sprintf(ssid, "%x%x%x-%x%x%x%x%x\n",
+		(ea[2] & 0xf0) >> 4,
+		(ea[2] & 0x0f),
+		(ea[3] & 0xf0) >> 4,
+		(ea[3] & 0x0f),
+		(ea[4] & 0xf0) >> 4,
+		(ea[4] & 0x0f),
+		(ea[5] & 0xf0) >> 4,
+		(ea[5] & 0x0f));
+	ssid[9] = 0x0;
+
+	for (i = 0; i < 3; i++)
+	{
+		switch(ssid[i])
+		{
+			case '0': ssid[i] = 'a'; break;
+			case '1': ssid[i] = 'b'; break;
+			case '2': ssid[i] = 'c'; break;
+			case '3': ssid[i] = 'd'; break;
+			case '4': ssid[i] = 'e'; break;
+			case '5': ssid[i] = 'f'; break;
+			case '6': ssid[i] = 'g'; break;
+			case '7': ssid[i] = 'h'; break;
+			case '8': ssid[i] = 'j'; break;
+			case '9': ssid[i] = 'k'; break;
+		}
+	}
+
+	for (i = 4; i < 9; i++)
+	{
+		switch(ssid[i])
+		{
+			case '0': ssid[i] = '1'; break;
+			case 'a': ssid[i] = '2'; break;
+			case 'b': ssid[i] = '3'; break;
+			case 'c': ssid[i] = '4'; break;
+			case 'd': ssid[i] = '5'; break;
+			case 'e': ssid[i] = '7'; break;
+			case 'f': ssid[i] = '8'; break;
+		}
+	}
+
+	sprintf(key, "%x%x%x%x-%c%c%c%c-%x%x%x%x-%x%x%x%x\n",
+		(ea[5] & 0xf0) >> 4,
+		(ea[4] & 0x0f),
+		(ea[4] & 0xf0) >> 4,
+		(ea[5] & 0x0f),
+
+		ssid[1],
+		ssid[4],
+		ssid[6],
+		ssid[8],
+
+		(ea[1] & 0xf0) >> 4,
+		(ea[0] & 0x0f),
+		(ea[0] & 0xf0) >> 4,
+		(ea[1] & 0x0f),
+
+		(ea[3] & 0xf0) >> 4,
+		(ea[2] & 0x0f),
+		(ea[2] & 0xf0) >> 4,
+		(ea[3] & 0x0f)
+	);
+	key[19] = 0x0;
+
+	for (i = 0; i < 19; i++)
+	{
+		if (key[i] != '-')
+		switch(key[i])
+		{
+			case '0': key[i] = '1'; break;
+			case 'a': key[i] = '2'; break;
+			case 'b': key[i] = '3'; break;
+			case 'c': key[i] = '4'; break;
+			case 'd': key[i] = '5'; break;
+			case 'e': key[i] = '7'; break;
+			case 'f': key[i] = '8'; break;
+			default:  if (key[i] > 'f') key[i] = '6'; break;
+		}
+	}
+
+	printf("swisscom ssid: %s (%d)\n", ssid, strlen(ssid));
+	printf("swisscom key:  %s (%d)\n", key, strlen(key));
+
+	return 0;
 }
 #endif
 

@@ -2338,18 +2338,34 @@ TRACE_PT("writing Parental Control\n");
 	/* Clamp TCP MSS to PMTU of WAN interface before accepting RELATED packets */
 	if (!strcmp(wan_proto, "pptp") || !strcmp(wan_proto, "pppoe") || !strcmp(wan_proto, "l2tp"))
 	{
+#ifdef RTCONFIG_BCMARM
+		fprintf(fp, "-A FORWARD -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n");
+#else
 		fprintf(fp, "-A FORWARD -p tcp --syn -j TCPMSS --clamp-mss-to-pmtu\n");
+#endif
 		if (strlen(macaccept)>0)
+#ifdef RTCONFIG_BCMARM
+			fprintf(fp, "-A %s -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n", macaccept);
+#else
 			fprintf(fp, "-A %s -p tcp --syn -j TCPMSS --clamp-mss-to-pmtu\n", macaccept);
+#endif
 
 #ifdef RTCONFIG_IPV6
 		switch (get_ipv6_service()) {
 		case IPV6_6IN4:
 		case IPV6_6TO4:
 		case IPV6_6RD:
+#ifdef RTCONFIG_BCMARM
+			fprintf(fp_ipv6, "-A FORWARD -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n");
+#else
 			fprintf(fp_ipv6, "-A FORWARD -p tcp --syn -j TCPMSS --clamp-mss-to-pmtu\n");
+#endif
 			if (strlen(macaccept)>0)
+#ifdef RTCONFIG_BCMARM
+			fprintf(fp_ipv6, "-A %s -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n", macaccept);
+#else
 			fprintf(fp_ipv6, "-A %s -p tcp --syn -j TCPMSS --clamp-mss-to-pmtu\n", macaccept);
+#endif
 			break;
 		}
 #endif
@@ -3315,18 +3331,34 @@ TRACE_PT("writing Parental Control\n");
 		wan_proto = nvram_safe_get(strcat_r(prefix, "proto", tmp));
 
 		if(!strcmp(wan_proto, "pppoe") || !strcmp(wan_proto, "pptp") || !strcmp(wan_proto, "l2tp")){
+#ifdef RTCONFIG_BCMARM
+			fprintf(fp, "-A FORWARD -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n");
+#else
 			fprintf(fp, "-A FORWARD -p tcp --syn -j TCPMSS --clamp-mss-to-pmtu\n");
+#endif
 			if(strlen(macaccept) > 0)
+#ifdef RTCONFIG_BCMARM
+				fprintf(fp, "-A %s -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n", macaccept);
+#else
 				fprintf(fp, "-A %s -p tcp --syn -j TCPMSS --clamp-mss-to-pmtu\n", macaccept);
+#endif
 
 #ifdef RTCONFIG_IPV6
 			switch(get_ipv6_service()){
 				case IPV6_6IN4:
 				case IPV6_6TO4:
 				case IPV6_6RD:
+#ifdef RTCONFIG_BCMARM
+					fprintf(fp_ipv6, "-A FORWARD -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n");
+#else
 					fprintf(fp_ipv6, "-A FORWARD -p tcp --syn -j TCPMSS --clamp-mss-to-pmtu\n");
+#endif
 					if(strlen(macaccept) > 0)
+#ifdef RTCONFIG_BCMARM
+						fprintf(fp_ipv6, "-A %s -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n", macaccept);
+#else
 						fprintf(fp_ipv6, "-A %s -p tcp --syn -j TCPMSS --clamp-mss-to-pmtu\n", macaccept);
+#endif
 					break;
 			}
 #endif
@@ -3997,6 +4029,14 @@ TRACE_PT("write url filter\n");
 			}
 			free(nv);
 		}
+#ifdef RTCONFIG_BCMARM
+		/* mark STUN connection*/
+		if (nvram_match("fw_pt_stun", "1")) {
+			eval("iptables", "-t", "mangle", "-A", "FORWARD",
+			     "-p", "udp",
+			     "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01");
+		}
+#endif
 	}
 #endif
 
@@ -4131,6 +4171,14 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 
 			add_iQosRules(wan_if);
 		}
+#ifdef RTCONFIG_BCMARM
+		/* mark STUN connection*/
+		if (nvram_match("fw_pt_stun", "1")) {
+			eval("iptables", "-t", "mangle", "-A", "FORWARD",
+			     "-p", "udp",
+			     "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01");
+		}
+#endif
 	}
 	else {
 		eval("iptables", "-t", "mangle", "-F");

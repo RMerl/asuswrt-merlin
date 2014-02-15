@@ -1363,10 +1363,6 @@ static int cfe_update(const char *keyword, const char *value)
         end = (char *) header + cfe_embedded_size - 2;
         end[0] = end[1] = '\0';
 
-#ifdef CFE_NVRAM_CHK_SUPPORT
-
-	int str_head = (int)str;
-redo:
         for (; *str; str += strlen(str) + 1)
         {
                 if(!found)
@@ -1387,34 +1383,7 @@ redo:
                         }
                 }
         }
-        if(((int)str - str_head) < (header->len)-16){
-                str++;
-		//printf("Unexpect \\0 inside nvram at %04x\n", (int)str-str_head);
-                goto redo;
-        }
 
-#else
-        for (; *str; str += strlen(str) + 1)
-        {
-                if(!found)
-                {
-                        if(strncmp(str, keyword, strlen(keyword)) == 0 && str[strlen(keyword)] == '=')
-                        {
-                                printk("cfe_update: !!!! found !!!!\n");
-                                found = 1;
-                                if(value != NULL && strlen(str) == strlen(keyword) + 1 + strlen(value))
-                                {//string length is the same
-                                        strcpy(str+strlen(keyword)+1, value);
-                                }
-                                else
-                                {
-                                        mv_target = str;
-                                        mv_start = str + strlen(str) + 1;
-                                }
-                        }
-                }
-        }
-#endif
         /* str point to the end of all embedded nvram settings */
 
         if(mv_target != NULL)

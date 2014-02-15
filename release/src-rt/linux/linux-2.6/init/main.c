@@ -502,6 +502,7 @@ asmlinkage void __init start_kernel(void)
 
 	smp_setup_processor_id();
 
+printk("start_kernel\n");
 	/*
 	 * Need to run as early as possible, to initialize the
 	 * lockdep hash:
@@ -567,7 +568,9 @@ asmlinkage void __init start_kernel(void)
 		printk("start_kernel(): bug: interrupts were enabled early\n");
 	early_boot_irqs_on();
 	local_irq_enable();
-
+#ifdef CONFIG_DUMP_PREV_OOPS_MSG 
+	prepare_and_dump_previous_oops();
+#endif
 	/*
 	 * HACK ALERT! This is early. We're enabling the console before
 	 * we've done PCI setups etc, and console_init() must be aware of

@@ -155,6 +155,8 @@ start_wps_method(void)
 //	nvram_unset("wps_pinfail_name");
 //	nvram_unset("wps_pinfail_state");
 
+	nvram_set("wps_env_buf", buf);
+	nvram_set_int("wps_restart_war", 1);
 	set_wps_env(buf);
 
 	sprintf(tmp, "%lu", uptime());
@@ -231,27 +233,38 @@ int is_wps_stopped(void)
 	int status = nvram_get_int("wps_proc_status");
 	time_t now = uptime();
 	time_t wps_uptime = strtoul(nvram_safe_get("wps_uptime"), NULL, 10);
+	char tmp[100];
 
-	if ((now - wps_uptime) < 5)
+	if ((now - wps_uptime) < 2)
 		return 0;
 
 	switch (status) {
 		case 0: /* Init */
-			fprintf(stderr, "Init again?\n");
+			dbg("Init again?\n");
+			if (nvram_get_int("wps_restart_war") && (now - wps_uptime) < 3)
+			{
+				dbg("Re-send WPS env!!!\n");
+				set_wps_env(nvram_safe_get("wps_env_buf"));
+				nvram_unset("wps_env_buf");
+				nvram_set_int("wps_restart_war", 0);
+				sprintf(tmp, "%lu", uptime());
+				nvram_set("wps_uptime", tmp);
+				return 0;
+			}
 			break;
 		case 1: /* WPS_ASSOCIATED */
-			fprintf(stderr, "Processing WPS start...\n");
+			dbg("Processing WPS start...\n");
 			ret = 0;
 			break;
 		case 2: /* WPS_OK */
 		case 7: /* WPS_MSGDONE */
-			fprintf(stderr, "WPS Success\n");
+			dbg("WPS Success\n");
 			break;
 		case 3: /* WPS_MSG_ERR */
-			fprintf(stderr, "WPS Fail due to message exange error!\n");
+			dbg("WPS Fail due to message exange error!\n");
 			break;
 		case 4: /* WPS_TIMEOUT */
-			fprintf(stderr, "WPS Fail due to time out!\n");
+			dbg("WPS Fail due to time out!\n");
 			break;
 		default:
 			ret = 0;

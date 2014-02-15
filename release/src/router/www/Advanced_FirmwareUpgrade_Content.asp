@@ -68,75 +68,48 @@ var dead = 0;
 function detect_firmware(){
 
 	$j.ajax({
-    		url: '/detect_firmware.asp',
-    		dataType: 'script',
+		url: '/detect_firmware.asp',
+		dataType: 'script',
 
-    		error: function(xhr){
-						dead++;
-						if(dead < 30)
-    				setTimeout("detect_firmware();", 1000);
-						else{
-      					$('update_scan').style.display="none";
-      					$('update_states').innerHTML="<#connect_failed#>";
-						}
-    		},
+		error: function(xhr){
+					dead++;
+					if(dead < 30)
+				setTimeout("detect_firmware();", 1000);
+					else{
+  					$('update_scan').style.display="none";
+  					$('update_states').innerHTML="<#connect_failed#>";
+					}
+		},
 
-    		success: function(){
-      			if(webs_state_update==0){
-      					setTimeout("detect_firmware();", 1000);
-      			}else{	// got wlan_update.zip
-      					if(webs_state_error==1){
-      								$('update_scan').style.display="none";
-      								$('update_states').innerHTML="<#connect_failed#>";
-      								return;
-      					}
-      					else{
-
-	      					var Latest_firmver = webs_state_info.split("_");
-	      					var Latest_firm = parseInt(Latest_firmver[0]);
-	      					var Latest_buildno = parseInt(Latest_firmver[1]);
-	      					var Latest_extendno = Latest_firmver[2];
-	      					var Latest_extendno_split = Latest_extendno.split("-g");
-	      					var Latest_extendno_comp = parseInt(Latest_extendno_split[0]);
-	      					
-	      					if(Latest_firm && Latest_buildno && Latest_extendno ){	//match model FW
-      								current_firm = parseInt(exist_firmver.replace(/[.]/gi,""));
-      								current_buildno = parseInt("<% nvram_get("buildno"); %>");
-      								current_extendno = "<% nvram_get("extendno"); %>";
-      								current_extendno_split = current_extendno.split("-g");
-      								current_extendno_comp = parseInt(current_extendno_split[0]);
-      								
-      								if((current_buildno < Latest_buildno) || 
-      									 (current_firm < Latest_firm && current_buildno == Latest_buildno) ||
-      									 (current_extendno_comp < Latest_extendno_comp && current_buildno == Latest_buildno && current_firm == Latest_firm))
-      								{
-      										$('update_scan').style.display="none";
-      										$('update_states').style.display="none";
-      										if(confirm("<#exist_new#>")){
-      												document.start_update.action_mode.value="apply";
-      												document.start_update.action_script.value="start_webs_upgrade";
-															document.start_update.submit();
-															return;
-      										}
-      										
-      								}else{
-      										//var flag = getCookie("after_check");
-      										//if(flag==1){
-      							  				$('update_states').innerHTML="<#is_latest#>";
-      												$('update_scan').style.display="none";
-      												//setCookie("after_check", 0, 365);
-      										//}
-      								}
-      						}
-      						else{		//miss-match model FW
-      								$('update_scan').style.display="none";
-      								$('update_states').innerHTML="<#unavailable_update#>";
-      								return;
-      						}
-								}
-							}
-  		}
-  		});
+		success: function(){
+  			if(webs_state_update==0){
+				setTimeout("detect_firmware();", 1000);
+  			}
+  			else{	// got wlan_update.zip
+				if(webs_state_error==1){
+					$('update_scan').style.display="none";
+					$('update_states').innerHTML="<#connect_failed#>";
+					return;
+				}
+				else{
+					if(isNewFW(webs_state_info)){
+						$('update_scan').style.display="none";
+						$('update_states').style.display="none";
+						if(confirm("<#exist_new#>")){
+							document.start_update.action_mode.value="apply";
+							document.start_update.action_script.value="start_webs_upgrade";
+							document.start_update.submit();
+							return;
+						}      								
+					}
+					else{
+						$('update_states').innerHTML="<#is_latest#>";
+						$('update_scan').style.display="none";
+					}
+				}
+			}
+		}
+	});
 }
 
 function detect_update(){

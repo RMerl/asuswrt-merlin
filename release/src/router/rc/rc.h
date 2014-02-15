@@ -45,7 +45,7 @@
 #define OLD_DUT_DOMAIN_NAME2 "www.asusrouter.com"
 
 #define USBCORE_MOD	"usbcore"
-#if defined (RTCONFIG_USB_XHCI) || defined (RTCONFIG_USB_2XHCI2)
+#if defined (RTCONFIG_USB_XHCI)
 #define USB30_MOD	"xhci-hcd"
 #endif
 #define USB20_MOD	"ehci-hcd"

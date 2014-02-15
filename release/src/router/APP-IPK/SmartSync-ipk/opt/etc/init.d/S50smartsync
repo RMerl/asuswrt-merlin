@@ -1,5 +1,15 @@
 #! /bin/sh
 
+CHECK_WEBDAV=`ls /usr/sbin | grep webdav_client`
+if [ -n "$CHECK_WEBDAV" ]; then
+	exit 1
+fi
+
+CHECK_ASUSWEBSTORAGE=`ls /usr/sbin | grep asuswebstorage`
+if [ -n "$CHECK_ASUSWEBSTORAGE" ]; then
+	exit 1
+fi
+
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/opt/bin
 
 APP_UCLIBC_VERSION=0.9.28
@@ -7,39 +17,188 @@ APPS_MOUNTED_PATH=`nvram get apps_mounted_path`
 APPS_INSTALL_FOLDER=`nvram get apps_install_folder`
 APPS_INSTALL_PATH=$APPS_MOUNTED_PATH/$APPS_INSTALL_FOLDER
 ENABLE_CLOUDSYNC=`nvram get enable_cloudsync`
+APPS_DEV=`nvram get apps_dev`
+CLOUD_SYNC=`nvram get cloud_sync`
 
 chmod -R 777 $APPS_INSTALL_PATH/bin/
-
 chmod -R 777 $APPS_INSTALL_PATH/etc
 
 case "$1" in
-  start)
-	cp -rf /opt/etc/smartsync_script/smartsync_rm /tmp/smartsync_rm
-	if [ "$ENABLE_CLOUDSYNC" == "1" ]; then
-		webdavclientnum=`ps | grep "webdav_client" | grep -v "$0" | grep -v "grep" | wc -l`
-		asuswebstoragenum=`ps | grep "asuswebstorage" | grep -v "$0" | grep -v "grep" | wc -l`
-		if [ "$webdavclientnum" == "0" ]; then
-			sh /opt/etc/init.d/S50webdavclient start
-		fi
-		if [ "$asuswebstoragenum" == "0" ]; then
-    		sh /opt/etc/init.d/S50asuswebstorage start
-		fi
+  start|restart)
+	cp -rf /opt/etc/apps_asus_script/smartsync_rm /tmp/smartsync_rm
+	
+	if [ -z "$APPS_MOUNTED_PATH" ]; then
+		nvram set apps_state_error=2
+		exit 1
 	fi
-    ;;
-  restart)
-	cp -rf /opt/etc/smartsync_script/smartsync_rm /tmp/smartsync_rm
-	if [ "$ENABLE_CLOUDSYNC" == "1" ]; then
-		    sh /opt/etc/init.d/S50asuswebstorage restart
-			sh /opt/etc/init.d/S50webdavclient restart
-	else
-		    sh /opt/etc/init.d/S50asuswebstorage stop
-			sh /opt/etc/init.d/S50webdavclient stop
-	fi
-	;;
-  stop)
-    sh /opt/etc/init.d/S50asuswebstorage stop
-	sh /opt/etc/init.d/S50webdavclient stop
 
+	if [ "$ENABLE_CLOUDSYNC" == "0" ]; then
+		if [ "$1" == "restart" ]; then
+			killall -SIGTERM webdav_client &
+			killall -SIGTERM asuswebstorage &
+			killall -SIGTERM inotify &
+		fi
+		exit 0
+	fi
+	
+#	if [ "$1" == "restart" ]; then
+#		echo "restart"
+		killall -SIGTERM webdav_client &
+		killall -SIGTERM asuswebstorage &
+		killall -SIGTERM inotify &
+		sleep 6
+		killall -9 webdav_client
+		killall -9 asuswebstorage
+		killall -9 inotify
+		sleep 2
+		#echo "killall finish"
+#	fi
+	if [ -z "$CLOUD_SYNC" ]; then
+		exit 1
+	fi
+
+	#inotifynum=`ps | grep "inotify" | grep -v "$0" | grep -v "grep" | wc -l`
+	#echo "inotifynum="$inotifynum
+	#if [ "$inotifynum" == "0" ]; then
+		$APPS_INSTALL_PATH/bin/inotify &
+		sleep 1
+	#fi
+
+	log_path="/tmp/smartsync/.logs"
+	log_fullname=$log_path"/asuswebstorage"
+	if [ ! -d "$log_path" ];then
+		mkdir -p $log_path
+	fi
+	if [ ! -f "$log_fullname" ];then
+		touch $log_fullname
+	fi
+	echo "STATUS:70" >$log_fullname
+	echo "TOTAL_SPACE:0" >>$log_fullname
+	echo "USED_SPACE:0"  >>$log_fullname
+
+	APP_BIN=$APPS_INSTALL_PATH/bin
+	APP_LIB=$APPS_INSTALL_PATH/lib
+
+	APP_LINK_DIR=/tmp/opt
+	APP_LINK_BIN=$APP_LINK_DIR/bin
+	APP_LINK_LIB=$APP_LINK_DIR/lib
+
+	APPS_MOUNTED_TYPE=`mount |grep "/dev/$APPS_DEV on " |awk '{print $5}'`
+#ntfs
+	if [ "$APPS_MOUNTED_TYPE" != "vfat" ]; then
+		#echo "ntfs"
+		if [ ! -L "$APP_LINK_DIR" ]; then
+			rm -rf $APP_LINK_DIR
+			ln -sf $APPS_INSTALL_PATH $APP_LINK_DIR
+        fi
+
+	#start webdav
+		#webdavclientnum=`ps | grep "webdav_client" | grep -v "$0" | grep -v "grep" | wc -l`
+		#echo "webdavclientnum="$webdavclientnum
+		#if [ "$webdavclientnum" == "0" ]; then
+			ln -sf $APP_LIB/libneon.so.27.2.6 $APP_LINK_LIB/libneon.so.27
+			ln -sf $APP_LIB/libneon.so.27.2.6 $APP_LINK_LIB/libneon.so
+			$APPS_INSTALL_PATH/bin/webdav_client &
+		#fi
+
+	#start asuswebstorage
+		#asuswebstoragenum=`ps | grep "asuswebstorage" | grep -v "$0" | grep -v "grep" | wc -l`
+		#echo "asuswebstoragenum="$asuswebstoragenum		
+		#if [ "$asuswebstoragenum" == "0" ]; then
+			$APPS_INSTALL_PATH/bin/asuswebstorage &
+		#fi
+		exit 0
+	fi
+	
+#fat
+	#echo "fat"
+	# Others files or directories
+	objs=`ls -a $APPS_INSTALL_PATH |grep -v ^\.__*`
+	for obj in $objs; do
+		if [ "$obj" == "." ] || [ "$obj" == ".." ]; then
+			continue
+		fi
+
+		if [ "$obj" != "bin" ] && [ "$obj" != "lib" ]; then
+			ln -sf $APPS_INSTALL_PATH/$obj $APP_LINK_DIR/$obj 
+		fi
+	done
+
+	# BIN
+	objs=`ls -a $APP_BIN`
+	# ipkg-opt
+	ln -sf $APP_BIN/ipkg $APP_LINK_BIN/ipkg-opt
+
+	# ncurses
+	ln -sf $APP_BIN/tic $APP_LINK_BIN/captoinfo
+	ln -sf $APP_BIN/tic $APP_LINK_BIN/infotocap
+	ln -sf $APP_BIN/tset $APP_LINK_BIN/reset
+
+	for obj in $objs; do
+		if [ "$obj" == "." ] || [ "$obj" == ".." ]; then
+			continue
+		fi
+
+		ln -sf $APP_BIN/$obj $APP_LINK_BIN/$obj 
+	done
+
+
+	# LIB
+	objs=`ls -a $APP_LIB`
+	# first find the other objs and then do uclibc.
+	for obj in $objs; do
+		if [ "$obj" == "." ] || [ "$obj" == ".." ]; then
+			continue
+		fi
+
+		ln -sf $APP_LIB/$obj $APP_LINK_LIB/$obj 
+	done
+
+	# ipkg-opt
+	ln -sf $APP_LIB/libipkg.so.0.0.0 $APP_LINK_LIB/libipkg.so.0
+	ln -sf $APP_LIB/libipkg.so.0.0.0 $APP_LINK_LIB/libipkg.so
+
+	# openssl
+	ln -sf $APP_LIB/libcrypto.so.0.9.7 $APP_LINK_LIB/libcrypto.so.0
+	ln -sf $APP_LIB/libcrypto.so.0.9.7 $APP_LINK_LIB/libcrypto.so
+	ln -sf $APP_LIB/libssl.so.0.9.7 $APP_LINK_LIB/libssl.so.0
+	ln -sf $APP_LIB/libssl.so.0.9.7 $APP_LINK_LIB/libssl.so
+
+	# zlib
+	ln -sf $APP_LIB/libz.so.1.2.5 $APP_LINK_LIB/libz.so.1
+	ln -sf $APP_LIB/libz.so.1.2.5 $APP_LINK_LIB/libz.so
+
+	# libxml2
+	ln -sf $APP_LIB/libxml2.so.2.7.8 $APP_LINK_LIB/libxml2.so.2
+	ln -sf $APP_LIB/libxml2.so.2.7.8 $APP_LINK_LIB/libxml2.so
+
+	# libneon
+	ln -sf $APP_LIB/libneon.so.27.2.6 $APP_LINK_LIB/libneon.so.27
+	ln -sf $APP_LIB/libneon.so.27.2.6 $APP_LINK_LIB/libneon.so
+
+	# libcurl
+	ln -sf $APP_LIB/libcurl.so.4.2.0 $APP_LINK_LIB/libcurl.so.4
+	ln -sf $APP_LIB/libcurl.so.4.2.0 $APP_LINK_LIB/libcurl.so
+	
+	#start webdav
+	#webdavclientnum=`ps | grep "webdav_client" | grep -v "$0" | grep -v "grep" | wc -l`
+	#echo "webdavclientnum="$webdavclientnum
+	#if [ "$webdavclientnum" == "0" ]; then
+		$APPS_INSTALL_PATH/bin/webdav_client &
+	#fi
+
+	#start asuswebstorage
+	#asuswebstoragenum=`ps | grep "asuswebstorage" | grep -v "$0" | grep -v "grep" | wc -l`
+	#echo "asuswebstoragenum="$asuswebstoragenum
+	#if [ "$asuswebstoragenum" == "0" ]; then
+		$APPS_INSTALL_PATH/bin/asuswebstorage &
+	#fi
+
+    ;;
+  stop)
+    killall -SIGTERM webdav_client &
+	killall -SIGTERM asuswebstorage &
+	killall -SIGTERM inotify &
     ;;
   
   *)

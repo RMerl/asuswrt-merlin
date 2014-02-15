@@ -674,6 +674,21 @@ int main(int argc, char **argv)
                 }
         }
 #endif
+        else if(!strcmp(base, "test_endian")){
+		int num = 0x04030201;
+		char c = *(char *)(&num);
+
+		if(c == 0x04 || c == 0x01){
+			if(c == 0x04)
+				printf("Big.\n");
+			else
+				printf("Little.\n");
+		}
+		else
+			printf("test error!\n");
+
+		return 0;
+	}
 	else if (!strcmp(base, "free_caches")) {
 		int c;
 		unsigned int test_num;

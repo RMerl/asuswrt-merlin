@@ -324,6 +324,9 @@ function validForm(){
 		if (!validate_range(document.form.misc_httpport_x, 1024, 65535))
 			return false;
 	
+	if (HTTPS_support && !validate_range(document.form.https_lanport, 1024, 65535))
+			return false;
+
 		if (HTTPS_support && !validate_range(document.form.misc_httpsport_x, 1024, 65535))
 			return false;
 	}
@@ -345,6 +348,11 @@ function validForm(){
 	else if(isPortConflict(document.form.https_lanport.value) && HTTPS_support){
 		alert(isPortConflict(document.form.https_lanport.value));
 		document.form.https_lanport.focus();
+		return false;
+	}
+	else if(document.form.misc_httpsport_x.value == document.form.misc_httpport_x.value && HTTPS_support){
+		alert("Duplicate port number with HTTP and HTTPS WAN port setting.");
+		document.form.misc_httpsport_x.focus();
 		return false;
 	}
 

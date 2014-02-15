@@ -1,4 +1,4 @@
-﻿/* CSS Document */
+/* CSS Document */
 .buttonok {width:52px; font-family:Verdana; font-size:11px; line-height:25px; text-align:center;}
 .buttonok a {height:28px; text-decoration: none;}
 .buttonok a:link, .buttonok a:visited {
@@ -1653,6 +1653,49 @@ padding-top:1px;
 	border-bottom-left-radius: 5px;
 }
 
+#notiDiv0{
+	position: absolute;
+	visibility: visible;
+	z-index: 500;
+	top: 108px;
+	left: 930px;
+	*left: 900px;
+	background-image: none;	
+}
+
+#notiDiv{
+	filter:alpha(opacity=95);
+	opacity:.95;
+	z-index: 500;
+}
+#notiDiv_table3{
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	behavior: url(/PIE.htc);
+	border-radius: 5px;
+	-moz-box-shadow: 3px 3px 4px #333;
+	-webkit-box-shadow: 3px 3px 4px #333;
+	box-shadow: 3px 3px 4px #000;
+	-ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#333333')";
+	filter: progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#333333');
+}
+#notiDiv_table4{
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	behavior: url(/PIE.htc);
+	border-radius: 5px;
+}
+#notiDiv_table5{
+	behavior: url(/PIE.htc);
+	-webkit-border-bottom-right-radius: 5px;
+	-webkit-border-bottom-left-radius: 5px;
+	-moz-border-radius-bottomright: 5px;
+	-moz-border-radius-bottomleft: 5px;
+	behavior: url(/PIE.htc);
+	border-radius: 5px 5px 5px 5px ;
+	margin:3px 0px 0px 3px ;
+}
+
 .aidisk1_table{
 	width:740px;
 	height:760px;
@@ -1768,6 +1811,22 @@ padding-top:1px;
 	border-style:bevel;
 	color:#FFFFFF;
 }
+.notification_on{
+	background-image:url(/images/New_ui/notification.png);
+	background-repeat:no-repeat;	
+	background-position:2px 2px;
+	height:29px;
+	width:30px;
+	cursor: pointer;
+}
+.notification_off{
+	display: none;
+}
+
+.notification_on1{
+	cursor: pointer;
+}
+
 .vpnstatuson{
 	background-image:url(/images/New_ui/vpnstatus.png);
 	background-repeat:no-repeat;	
@@ -2102,3 +2161,4 @@ padding-top:1px;
 	height:40px;
 	width:20px;
 }
+

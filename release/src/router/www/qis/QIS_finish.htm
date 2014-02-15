@@ -704,7 +704,7 @@ function set_timezone(){
 
 	if(system_timezone_dut.search("DST") >= 0 && "<% nvram_get("time_zone_dst"); %>" == "1"){
 		document.getElementById('dstzone').style.display = "";
-		document.getElementById('dstzone').innerHTML = "* Daylight saving time is implemented in this time zone.";
+		document.getElementById('dstzone').innerHTML = "* <#General_x_SystemTime_dst#>";
 	}
 
 	showclock();

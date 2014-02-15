@@ -39,6 +39,9 @@ WL_EXE  := wl
 endif
 
 CFLAGS += -s -I$(SRCBASE)/include
+ifneq ($(RTCONFIG_BCMWL6),y)
+CFLAGS += -I$(TOP)/shared -I$(TOP)/nvram
+endif
 #ifeq ($(CONFIG_RTR_OPTIMIZE_SIZE),y)
 ifeq ($(SFP),y)
 CFLAGS  += -Os
@@ -48,6 +51,10 @@ else
 CFLAGS  += -O2
 endif
 CFLAGS += -DBCMINTERNAL -DBCMDBG
+ifneq ($(RTCONFIG_BCMWL6),y)
+LDFLAGS += -L$(TOP)/nvram -L$(INSTALLDIR)/nvram/usr/lib -lnvram
+LDFLAGS += -L$(TOP)/shared -L$(INSTALLDIR)/shared/usr/lib -lshared
+endif
 
 #UTILS := mii-tool robocfg ttcp
 UTILS := robocfg

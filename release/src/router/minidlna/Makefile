@@ -43,15 +43,17 @@ INSTALL = install
 
 CFLAGS += -I$(TOP)/shared
 
-ifeq ($(RTAC66U), y)
-	CFLAGS += -DRTN66U
+include $(SRCBASE)/.config
+
+ifneq ($(findstring DSL,$(BUILD_NAME)),)
+MODEL = $(subst -,_,$(BUILD_NAME))
+else
+MODEL = $(subst -,,$(BUILD_NAME))
 endif
 
-ifeq ($(RTN66U), y)
-	CFLAGS += -DRTN66U
-endif
+export CFLAGS += -D$(MODEL)
 
-ifeq ($(RTN56U)$(RTN65U), y)
+ifeq ($(RTN65U), y)
 	CFLAGS += -DRTN56U
 endif
 

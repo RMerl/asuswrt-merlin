@@ -74,8 +74,8 @@ AM_CFLAGS = \
 	-Wpointer-arith \
 	-Wmissing-declarations \
 	-Wmissing-prototypes \
-	-Wno-strict-aliasing \
-	-Wstrict-prototypes
+	-Wstrict-prototypes \
+	-fno-strict-aliasing
 
 radvdump_SOURCES = \
 	$(COMMON_SRC) \

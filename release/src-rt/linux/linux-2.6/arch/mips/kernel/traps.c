@@ -46,6 +46,9 @@
 #include <asm/stacktrace.h>
 
 #include <linux/reboot.h>
+#ifdef CONFIG_DUMP_PREV_OOPS_MSG
+#include <linux/kernel.h>
+#endif
 
 extern void check_wait(void);
 extern asmlinkage void r4k_wait(void);
@@ -332,6 +335,9 @@ NORET_TYPE void ATTRIB_NORET die(const char * str, struct pt_regs * regs)
 #ifdef CONFIG_MIPS_MT_SMTC
 	mips_mt_regdump(dvpret);
 #endif /* CONFIG_MIPS_MT_SMTC */
+#ifdef CONFIG_DUMP_PREV_OOPS_MSG
+        enable_oopsbuf(1);
+#endif
 	printk("%s[#%d]:\n", str, ++die_counter);
 	show_registers(regs);
 	spin_unlock_irq(&die_lock);

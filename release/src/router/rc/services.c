@@ -1064,6 +1064,8 @@ void start_dhcp6s(void)
 	use_custom_config("dhcp6s.conf", "/etc/dhcp6s.conf");
 	run_postconf("dhcp6s.postconf", "/etc/dhcp6s.conf");
 
+	eval("touch", "/etc/dhcp6sctlkey");
+
 	if (nvram_get_int("ipv6_debug"))
 		dhcp6s_argv[index++] = "-D";
 
@@ -1318,8 +1320,8 @@ void stop_ipv6(void)
 
 int no_need_to_start_wps(void)
 {
-	int i, wps_band, multiband = get_wps_multiband();
-	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
+	int i, j, wps_band, multiband = get_wps_multiband();
+	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX", prefix_mssid[] = "wlXXXXXXXXXX_mssid_";
 	char word[256], *next, ifnames[128];
 	int c = 0, ret = 0;
 
@@ -1348,6 +1350,19 @@ int no_need_to_start_wps(void)
 		    nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "radius"))
 			ret++;
 
+#ifdef RTCONFIG_RALINK
+		if (nvram_match("wl_mssid", "1"))
+#endif
+		for (j = 1; j < MAX_NO_MSSID; j++) {
+			sprintf(prefix_mssid, "wl%d.%d_", wps_band, j);
+			if (!nvram_match(strcat_r(prefix_mssid, "bss_enabled", tmp), "1"))
+				continue;
+			++c;
+			if (nvram_match(strcat_r(prefix_mssid, "auth_mode_x", tmp), "shared") ||
+			    strstr(nvram_safe_get(strcat_r(prefix_mssid, "auth_mode_x", tmp)), "wpa") ||
+			    nvram_match(strcat_r(prefix_mssid, "auth_mode_x", tmp), "radius"))
+				ret++;
+		}
 		i++;
 	}
 
@@ -1752,21 +1767,48 @@ int
 exec_8021x_start(int band, int is_iNIC)
 {
 	char tmp[100], prefix[] = "wlXXXXXXX_";
+	char *str;
+	int flag_8021x = 0;
+	int i;
 
-	snprintf(prefix, sizeof(prefix), "wl%d_", band);
+	if (nvram_get_int("sw_mode") == SW_MODE_REPEATER && nvram_get_int("wlc_band") == band)
+		return 0;
 
-	if (nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "wpa") ||
-		nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "wpa2") ||
-		nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "wpawpa2") ||
-		nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "radius"))
+	for (i = 0; i < MAX_NO_MSSID; i++)
+	{
+		if (i)
+		{
+			sprintf(prefix, "wl%d.%d_", band, i);
+
+			if (!nvram_match(strcat_r(prefix, "bss_enabled", tmp), "1"))
+				continue;
+		}
+		else
+			sprintf(prefix, "wl%d_", band);
+
+		str = nvram_safe_get(strcat_r(prefix, "auth_mode_x", tmp));
+
+		if(str && strlen(str) > 0)
+		{
+			if (    !strcmp(str, "radius") ||
+				!strcmp(str, "wpa") ||
+				!strcmp(str, "wpa2") ||
+				!strcmp(str, "wpawpa2") )
+			{ //need daemon
+				flag_8021x = 1;
+				break;
+			}
+		}
+	}
+
+	if(flag_8021x)
 	{
 		if (is_iNIC)
 			return xstart("rtinicapd");
 		else
 			return xstart("rt2860apd");
 	}
-	else
-		return 0;
+	return 0;
 }
 
 int
@@ -1797,22 +1839,10 @@ start_8021x(void)
 int
 exec_8021x_stop(int band, int is_iNIC)
 {
-	char tmp[100], prefix[] = "wlXXXXXXX_";
-
-	snprintf(prefix, sizeof(prefix), "wl%d_", band);
-
-	if (nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "wpa") ||
-		nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "wpa2") ||
-		nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "wpawpa2") ||
-		nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "radius"))
-	{
 		if (is_iNIC)
 			return killall("rtinicapd", SIGTERM);
 		else
 			return killall("rt2860apd", SIGTERM);
-	}
-	else
-		return 0;
 }
 
 int
@@ -3257,6 +3287,21 @@ int stop_norton(void)
 
 #endif /* __CONFIG_NORTON__ */
 
+#ifdef RTCONFIG_QTN
+int reset_qtn(void)
+{
+	system("cp /rom/qtn/* /tmp/");
+        eval("ifconfig", "br0:0", "1.1.1.1", "netmask", "255.255.255.0");
+        sleep(1);
+        eval("tftpd");
+        led_control(BTN_QTN_RESET, LED_ON);
+        sleep(1);
+        led_control(BTN_QTN_RESET, LED_OFF);
+}
+
+#endif
+
+
 int
 start_services(void)
 {
@@ -3355,7 +3400,11 @@ start_services(void)
 
 #if defined(RTCONFIG_RALINK) && defined(RTCONFIG_WIRELESSREPEATER)
 	apcli_start();
-#endif	
+#endif
+
+#ifdef RTCONFIG_QTN
+	reset_qtn();
+#endif
 
 #ifdef RTCONFIG_SAMBASRV
 	start_samba();	// We might need it for wins/browsing services
@@ -4213,6 +4262,7 @@ check_ddr_done:
 		(get_model() == MODEL_RTAC56S) ||
 		(get_model() == MODEL_RTAC56U) ||
 		(get_model() == MODEL_RTAC68U) ||
+		(get_model() == MODEL_RTAC87U) ||
 		(get_model() == MODEL_RTN12HP) ||
 		(get_model() == MODEL_APN12HP) ||
 		(get_model() == MODEL_RTN66U))
@@ -4338,6 +4388,20 @@ check_ddr_done:
 		start_firewall(wan_primary_ifunit(), 0);
 	}
 #endif
+	else if (strcmp(script, "ftpd_force") == 0)
+	{
+		nvram_set("st_ftp_force_mode", nvram_safe_get("st_ftp_mode"));
+		nvram_commit();
+
+		if(action&RC_SERVICE_STOP) {
+			stop_ftpd();
+		}
+		if(action&RC_SERVICE_START) {
+			start_ftpd();
+		}
+		/* for security concern, even if you stop ftp daemon, it is better to restart firewall to clean FTP port: 21. */
+		start_firewall(wan_primary_ifunit(), 0);
+	}
 #ifdef RTCONFIG_SAMBASRV
 	else if (strcmp(script, "samba") == 0)
 	{
@@ -5030,7 +5094,7 @@ _dprintf("test 2. turn off the USB power during %d seconds.\n", reset_seconds[re
 		}
 	}
 #endif
-#if defined (RTCONFIG_USB_XHCI) || defined (RTCONFIG_USB_2XHCI2)
+#if defined (RTCONFIG_USB_XHCI)
 #ifdef RTCONFIG_XHCIMODE
 	else if(!strcmp(script, "xhcimode")){
 		char param[32];
@@ -5337,8 +5401,6 @@ void set_acs_ifnames()
 	if (strlen(acs_ifnames))
 		nvram_set_int("wlready", 0);
 #endif
-
-	nvram_set("wl1_acs_fcs_mode", "0");
 
 	if (nvram_match("wl1_country_code", "EU") || nvram_match("wl1_country_code", "JP"))
 	{

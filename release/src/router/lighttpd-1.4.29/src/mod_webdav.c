@@ -102,7 +102,7 @@ include <uuid/uuid.h>
 #define WEBDAV_FILE_MODE S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH
 #define WEBDAV_DIR_MODE  S_IRWXU | S_IRWXG | S_IRWXO
 
-#define DBG_ENABLE_MOD_SMBDAV 1
+#define DBG_ENABLE_MOD_SMBDAV 0
 #define DBE	DBG_ENABLE_MOD_SMBDAV
 
 /* plugin config for all request/connections */
@@ -587,6 +587,7 @@ size_t static curl_write_callback_func(void *ptr, size_t size, size_t count, voi
   	//printf("%.*s", size, (char*)stream));
    	//Cdbg(1, "callback_func.... %s", (char*)ptr);
 }
+#if 0
 
 /* md5sum:
  * Concatenates a series of strings together then generates an md5
@@ -647,6 +648,7 @@ void md5sum(char* output, int counter, ...)
 	sprint_hex(output, temp, MD5_DIGEST_LENGTH);	
 	output[129] = '\0';
 }
+#endif
 
 static int get_minidlna_db_path(plugin_data *p){
 
@@ -2358,7 +2360,6 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 					
 					buffer_append_string_len(b,CONST_STR_LEN("</D:href>\n"));
 					
-					//Cdbg(1, "b=%s", d.rel_path->ptr);
 					if (!buffer_is_empty(prop_200)) {
 						buffer_append_string_len(b,CONST_STR_LEN("<D:propstat>\n"));
 						buffer_append_string_len(b,CONST_STR_LEN("<D:prop>\n"));
@@ -2586,7 +2587,7 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 			const char *num = ds_range->value->ptr;
 			off_t offset;
 			char *err = NULL;
-			//Cdbg(DBE,"Content-Range =%s",num);
+			Cdbg(DBE,"Content-Range =%s",num);
 			if (0 != strncmp(num, "bytes ", 6)) {
 				con->http_status = 501; /* not implemented */
 
@@ -2742,7 +2743,7 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 
 					/* chunk_reset() or chunk_free() will cleanup for us */
 				}
-
+				//Cdbg(DBE, "FILE_CHUNK: %d, %d", c->file.mmap.start + c->offset, c->file.length - c->offset);
 				if ((r = write(fd, c->file.mmap.start + c->offset, c->file.length - c->offset)) < 0) {
 					switch(errno) {
 					case ENOSPC:
@@ -2756,6 +2757,7 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 				}
 				break;
 			case MEM_CHUNK:
+				//Cdbg(DBE, "MEM_CHUNK: %d, %d", c->mem->ptr + c->offset, c->mem->used - c->offset - 1);
 				if ((r = write(fd, c->mem->ptr + c->offset, c->mem->used - c->offset - 1)) < 0) {
 					switch(errno) {
 					case ENOSPC:
@@ -2775,6 +2777,7 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 			if (r > 0) {
 				c->offset += r;
 				cq->bytes_out += r;
+				//Cdbg(DBE, "cq->bytes_out = %d", cq->bytes_out);
 			} else {
 				break;
 			}
@@ -3604,6 +3607,21 @@ propmatch_cleanup:
 		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "TOSHARE"))) {
 			toShare = atoi(ds->value->ptr);
 		}
+
+		int sharelink_save_count = get_sharelink_save_count();
+		int file_count = 0;
+		char* tmp_filename = strdup(buffer_filename->ptr);
+		char *pch = strtok(tmp_filename, ";");				
+		while(pch!=NULL){
+			file_count++;
+			pch = strtok(NULL,";");
+		}
+		free(tmp_filename);
+		
+		if(sharelink_save_count+file_count>srv->srvconf.max_sharelink){
+			con->http_status = 405;
+			return HANDLER_FINISHED;
+		}
 		
 		char auth[100]="\0";		
 		if(con->aidisk_username->used && con->aidisk_passwd->used)
@@ -3640,14 +3658,14 @@ propmatch_cleanup:
 		buffer_append_string_buffer(b,buffer_result_share_link);
 		buffer_append_string_len(b,CONST_STR_LEN("</sharelink>"));
 		buffer_append_string_len(b,CONST_STR_LEN("</result>"));
-
+		
 		con->file_finished = 1;
 
 		buffer_free(buffer_result_share_link);
 		free(base64_auth);
 
 		if(toShare==1)
-			save_sharelink_list();
+			save_sharelink_list(srv);
 
 		return HANDLER_FINISHED;
 	}
@@ -3775,13 +3793,18 @@ propmatch_cleanup:
 		#ifdef APP_IPKG
 		char* aicloud_version_file = "/opt/lib/ipkg/info/aicloud.control";
 		char* aicloud_app_type = "install";
+		char* smartsync_version_file = "/opt/lib/ipkg/info/smartsync.control";
 		#else
 		char* aicloud_version_file = "/usr/lighttpd/control";
 		char* aicloud_app_type = "embed";
+		char* smartsync_version_file = "/usr/lighttpd/smartsync_control";
 		#endif
 		char aicloud_version[20]="\0";
+		char smartsync_version[20]="\0";
 		char *swpjverno = nvram_get_swpjverno();
 		char *extendno = nvram_get_extendno();
+
+		char *https_crt_cn = nvram_get_https_crt_cn();
 #else
 		char router_mac[20]="\0";
 		get_mac_address("eth0", &router_mac); 
@@ -3807,12 +3830,16 @@ propmatch_cleanup:
 						
 		//- Get aicloud version
 		char* aicloud_version_file = "/usr/css/control";
+		char* smartsync_version_file = "/usr/css/smartsync_control";
 		char aicloud_version[20]="\0";
+		char smartsync_version[20]="\0";
 		char *swpjverno = "";
 		char *extendno = "";
 		char* aicloud_app_type = "embed";
-#endif
 
+		char *https_crt_cn = "192.168.1.1";
+#endif
+		int sharelink_save_count = get_sharelink_save_count();
 		int dms_enable = is_dms_enabled();
 
 		if(buffer_is_empty(srv->srvconf.aicloud_version)){
@@ -3832,7 +3859,25 @@ propmatch_cleanup:
 		else{
 			strcpy(aicloud_version, srv->srvconf.aicloud_version->ptr);
 		}
-					
+
+		if(buffer_is_empty(srv->srvconf.smartsync_version)){
+			//- Parser version file
+			FILE* fp2;
+			char line[128];
+			if((fp2 = fopen(smartsync_version_file, "r")) != NULL){
+				memset(line, 0, sizeof(line));
+				while(fgets(line, 128, fp2) != NULL){
+					if(strncmp(line, "Version:", 8)==0){
+						strncpy(smartsync_version, line + 9, strlen(line)-8);
+					}
+				}
+				fclose(fp2);
+			}
+		}
+		else{
+			strcpy(smartsync_version, srv->srvconf.smartsync_version->ptr);
+		}
+		
 #ifndef APP_IPKG
 		if( swpjverno!=NULL && strncmp(swpjverno,"", 1)!=0){
 			strcpy(aicloud_version, swpjverno);
@@ -3865,9 +3910,15 @@ propmatch_cleanup:
 		buffer_append_string_len(b,CONST_STR_LEN("<aicloud_version>"));
 		buffer_append_string(b,aicloud_version);
 		buffer_append_string_len(b,CONST_STR_LEN("</aicloud_version>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<extendno>"));
+		if(extendno!=NULL && strncmp(extendno,"", 1)!=0) buffer_append_string(b,extendno);
+		buffer_append_string_len(b,CONST_STR_LEN("</extendno>"));
 		buffer_append_string_len(b,CONST_STR_LEN("<aicloud_app_type>"));		
 		buffer_append_string(b,aicloud_app_type);		
 		buffer_append_string_len(b,CONST_STR_LEN("</aicloud_app_type>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<smartsync_version>"));
+		buffer_append_string(b,smartsync_version);
+		buffer_append_string_len(b,CONST_STR_LEN("</smartsync_version>"));
 		buffer_append_string_len(b,CONST_STR_LEN("<modalname>"));
 		buffer_append_string(b,modal_name);
 		buffer_append_string_len(b,CONST_STR_LEN("</modalname>"));
@@ -3899,7 +3950,10 @@ propmatch_cleanup:
 		buffer_append_string(b,misc_https_port);
 		buffer_append_string_len(b,CONST_STR_LEN("</misc_https_port>"));
 		buffer_append_string_len(b,CONST_STR_LEN("<last_login_info>"));
-		buffer_append_string(b,srv->last_login_info->ptr);
+		if(buffer_is_empty(srv->last_login_info))
+			buffer_append_string(b,"");
+		else
+			buffer_append_string(b,srv->last_login_info->ptr);
 		buffer_append_string_len(b,CONST_STR_LEN("</last_login_info>"));
 		buffer_append_string_len(b,CONST_STR_LEN("<ddns_host_name>"));
 		buffer_append_string(b,ddns_host_name);
@@ -3910,9 +3964,22 @@ propmatch_cleanup:
 		buffer_append_string_len(b,CONST_STR_LEN("<dms_enable>"));
 		buffer_append_string(b, ((dms_enable==1) ? "1" : "0"));
 		buffer_append_string_len(b,CONST_STR_LEN("</dms_enable>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<https_crt_cn>"));
+		buffer_append_string(b,https_crt_cn);
+		buffer_append_string_len(b,CONST_STR_LEN("</https_crt_cn>"));
 		buffer_append_string_len(b,CONST_STR_LEN("<app_installation_url>"));
 		buffer_append_string(b, buffer_is_empty(srv->srvconf.app_installation_url) ? "" : srv->srvconf.app_installation_url->ptr);
-		buffer_append_string_len(b,CONST_STR_LEN("</app_installation_url>"));
+		buffer_append_string_len(b,CONST_STR_LEN("</app_installation_url>"));		
+		buffer_append_string_len(b,CONST_STR_LEN("<used_sharelink>"));
+		char used_sharelink[5] = "\0";
+		sprintf(used_sharelink, "%d", sharelink_save_count);
+		buffer_append_string(b, used_sharelink);
+		buffer_append_string_len(b,CONST_STR_LEN("</used_sharelink>"));	
+		buffer_append_string_len(b,CONST_STR_LEN("<max_sharelink>"));
+		char max_sharelink[5] = "\0";
+		sprintf(max_sharelink, "%d", srv->srvconf.max_sharelink);
+		buffer_append_string(b, max_sharelink);
+		buffer_append_string_len(b,CONST_STR_LEN("</max_sharelink>"));
 		
 		DIR *dir;
 		if (NULL != (dir = opendir(disk_path))) {
@@ -4008,6 +4075,7 @@ propmatch_cleanup:
 			free(swpjverno);
 		if(extendno!=NULL)
 			free(extendno);
+		free(https_crt_cn);
 #endif
 #endif
 		return HANDLER_FINISHED;
@@ -4264,7 +4332,8 @@ propmatch_cleanup:
 				
 				char partion_path[100] = "\0";
 				sprintf(partion_path, "%s%s", disk_path, de->d_name);
-
+				
+				//if(strstr( con->physical.path->ptr, partion_path ) && buffer_is_empty(parentid)){
 				if(strstr( con->physical.path->ptr, partion_path )){
 					sprintf(sql_query, "%s and PATH LIKE '%s%s/%s'", sql_query, "%", partion_path, "%");
 					break;
@@ -4684,7 +4753,7 @@ propmatch_cleanup:
 			sprintf(sql_query, "SELECT d.TITLE as TITLE, "
 						   	   "d.ALBUM_ART as ALBUM_ART, "
 						   	   "d.ARTIST as ARTIST, "
-						       "o.PARENT_ID as PARENT_ID, "
+						   	   "o.PARENT_ID as PARENT_ID, "
 						       "o.OBJECT_ID as OBJECT_ID "
 						       "from OBJECTS o "
 						       "left join DETAILS d on (o.DETAIL_ID = d.ID) "
@@ -4695,7 +4764,7 @@ propmatch_cleanup:
 			sprintf(sql_query, "SELECT d.TITLE as TITLE, "
 							   "d.ALBUM_ART as ALBUM_ART, "
 							   "d.ARTIST as ARTIST, "
-                               "o.PARENT_ID as PARENT_ID, "
+							   "o.PARENT_ID as PARENT_ID, "
                                "o.OBJECT_ID as OBJECT_ID "
 						       "from OBJECTS o "
 						       "left join DETAILS d on (o.DETAIL_ID = d.ID) "
@@ -4713,7 +4782,7 @@ propmatch_cleanup:
 				
 		b = chunkqueue_get_append_buffer(con->write_queue);
 				
-		buffer_copy_string_len(b, CONST_STR_LEN("<?xml version=\"1.0\" encoding=\"unicode\"?>"));
+		buffer_copy_string_len(b, CONST_STR_LEN("<?xml version=\"1.0\" encoding=\"utf-8\"?>"));
 		buffer_append_string_len(b,CONST_STR_LEN("<result>"));
 		
 		Cdbg(DBE, "do HTTP_METHOD_GETMUSICCLASSIFICATION, sql_query=%s", sql_query);
@@ -4729,13 +4798,85 @@ propmatch_cleanup:
 				char* artist = result[i+2];
 				char* parent_id = result[i+3];
 				char* object_id = result[i+4];
-					
-				//Cdbg(DBE, "1, TITLE=%s, ALBUM_ART=%s, ARTIST=%s", title, album_art, artist);
+
+				buffer* id = buffer_init();
+				buffer_copy_string(id,object_id);
+				if(buffer_is_equal_string(classify, CONST_STR_LEN("artist")))
+					buffer_append_string(id,"$0");
+				
+				Cdbg(DBE, "1, TITLE=%s, ALBUM_ART=%s, ARTIST=%s", title, album_art, artist);
+
+#if 1
+				int column_count2 = 1;
+				int rows2, j;
+				char **result2;
+				int partion_count = 0;
+				
+				sprintf(sql_query, "SELECT COUNT(*) as COUNT from DETAILS d "
+					"LEFT JOIN OBJECTS o on (o.DETAIL_ID = d.ID) "
+					"WHERE d.MIME glob 'a*' AND o.PARENT_ID='%s' ", id->ptr);
+				
+#if EMBEDDED_EANBLE
+				//- Get mount partition
+				char* disk_path = "/mnt/";
+				char partion_path[100] = "\0";
+				DIR *dir;
+				if (NULL != (dir = opendir(disk_path))) {
+					struct dirent *de;
+					while(NULL != (de = readdir(dir))) {
+						if ( de->d_name[0] == '.' && de->d_name[1] == '.' && de->d_name[2] == '\0' ) {
+							continue;
+							//- ignore the parent dir
+						}
+				
+						if ( de->d_name[0] == '.' ) {
+							continue;
+							//- ignore the hidden file
+						}
+
+						sprintf(partion_path, "%s%s", disk_path, de->d_name);
+						
+						if(strstr( con->physical.path->ptr, partion_path )){
+							sprintf(sql_query, "%s AND PATH LIKE '%s%s/%s'", sql_query, "%", partion_path, "%");
+						}
+
+						partion_count++;
+					}
+					closedir(dir);
+				}
+#else
+				char partion_path[100] = "/mnt/sda";
+				sprintf(sql_query, "%s AND PATH LIKE '%s%s/%s'", sql_query, "%", partion_path, "%");
+				partion_count = 1;
+#endif
+				if(partion_count>1){
+					Cdbg(1, "sql_query=%s", sql_query);
+					int count = 0;
+					if( sql_get_table(sql_minidlna, sql_query, &result2, &rows2, NULL) == SQLITE_OK ){
+						Cdbg(DBE, "aaaaaaaaaaaaaa rows2=%d", rows2);
+
+						for( j=column_count2; j<=rows2*column_count2; j+=column_count2 ){					
+							count = atoi(result2[j]);						
+						}
+
+						sqlite3_free_table(result2);
+					}
+
+					Cdbg(DBE, "bbbbbbbbbbbbb count=%d", count);
+
+					if(count==0){
+						buffer_free(id);
+						continue;
+					}
+				}
+#endif
+
 				buffer_append_string_len(b,CONST_STR_LEN("<item>"));
 				buffer_append_string_len(b,CONST_STR_LEN("<id>"));
-				buffer_append_string(b,object_id);
-				if(buffer_is_equal_string(classify, CONST_STR_LEN("artist")))
-					buffer_append_string(b,"$0");	
+				//buffer_append_string(b,object_id);
+				//if(buffer_is_equal_string(classify, CONST_STR_LEN("artist")))
+				//	buffer_append_string(b,"$0");	
+				buffer_append_string_buffer(b, id);
 				buffer_append_string_len(b,CONST_STR_LEN("</id>"));
 				buffer_append_string_len(b,CONST_STR_LEN("<title>"));
 				buffer_append_string(b,title);
@@ -4743,7 +4884,7 @@ propmatch_cleanup:
 				buffer_append_string_len(b,CONST_STR_LEN("<artist>"));
 				buffer_append_string(b,artist);
 				buffer_append_string_len(b,CONST_STR_LEN("</artist>"));
-		
+				
 				char* image = NULL;
 				sqlite_int64 plAlbumArt = (album_art ? strtoll(album_art, NULL, 10) : 0);
 				if(get_album_cover_image(sql_minidlna, plAlbumArt, &image)==1){
@@ -4754,6 +4895,8 @@ propmatch_cleanup:
 				}
 					
 				buffer_append_string_len(b,CONST_STR_LEN("</item>"));
+
+				buffer_free(id);
 			}
 						
 			sqlite3_free_table(result);
@@ -4762,7 +4905,7 @@ propmatch_cleanup:
 		sqlite3_close(sql_minidlna);
 		buffer_append_string_len(b,CONST_STR_LEN("</result>"));
 #endif
-		
+
 		con->http_status = 200;
 		con->file_finished = 1;
 		return HANDLER_FINISHED;
@@ -4817,7 +4960,7 @@ propmatch_cleanup:
 				
 		b = chunkqueue_get_append_buffer(con->write_queue);
 				
-		buffer_copy_string_len(b, CONST_STR_LEN("<?xml version=\"1.0\" encoding=\"unicode\"?>"));
+		buffer_copy_string_len(b, CONST_STR_LEN("<?xml version=\"1.0\" encoding=\"utf-8\"?>"));
 		buffer_append_string_len(b,CONST_STR_LEN("<result>"));
 		
 		Cdbg(DBE, "do HTTP_METHOD_GETMUSICPLAYLIST, sql_query=%s", sql_query);
@@ -4888,14 +5031,18 @@ propmatch_cleanup:
 						                	(char *)&buff[0]);
 					
 					#endif
-				
-					Cdbg(DBE, "filename=%s, filepath=%s", buffer_filename->ptr, tmp);
+
+					buffer* buffer_filepath = buffer_init();
+					buffer_copy_string(buffer_filepath, "");
+					buffer_append_string_encoded(buffer_filepath,tmp,strlen(tmp),ENCODING_REL_URI);
+										
+					Cdbg(DBE, "filename=%s, filepath=%s", buffer_filename->ptr, buffer_filepath->ptr);
 					
 					buffer* buffer_result_share_link;
 					if( generate_sharelink(srv, 
 						                   con, 
 						                   buffer_filename->ptr, 
-						                   tmp, 
+						                   buffer_filepath->ptr, 
 						                   base64_auth, 0, 0, 
 						                   &buffer_result_share_link) == 1){
 						buffer_append_string_len(b,CONST_STR_LEN("<sharelink>"));
@@ -4907,6 +5054,7 @@ propmatch_cleanup:
 					free(usbdisk_name);
 					free(filepath);
 					buffer_free(buffer_filename);
+					buffer_free(buffer_filepath);
 					buffer_free(buffer_result_share_link);
 				}
 				
@@ -4921,6 +5069,8 @@ propmatch_cleanup:
 		
 		buffer_append_string_len(b,CONST_STR_LEN("</result>"));
 #endif
+
+		//Cdbg(DBE, "b=%s", b->ptr);
 
 		con->http_status = 200;
 		con->file_finished = 1;
@@ -4951,7 +5101,7 @@ propmatch_cleanup:
 				
 		b = chunkqueue_get_append_buffer(con->write_queue);
 				
-		buffer_copy_string_len(b, CONST_STR_LEN("<?xml version=\"1.0\" encoding=\"unicode\"?>"));
+		buffer_copy_string_len(b, CONST_STR_LEN("<?xml version=\"1.0\" encoding=\"utf-8\"?>"));
 		buffer_append_string_len(b,CONST_STR_LEN("<result>"));
 		
 		buffer* file_path = buffer_init();
@@ -4960,7 +5110,7 @@ propmatch_cleanup:
 		buffer_append_string_buffer(file_path, file);
 		
 		char* image = NULL;
-		Cdbg(DBE, "file_path = %s", file_path->ptr);
+		Cdbg(1, "file_path = %s", file_path->ptr);
 		if(get_thumb_image(file_path->ptr, p, &image)==1){
 			buffer_append_string_len(b, CONST_STR_LEN("<thumb_image>"));
 			buffer_append_string(b, image);
@@ -5160,12 +5310,16 @@ propmatch_cleanup:
 						buffer_free(new_srt_file);
 					}
 
-#endif						
+#endif					
+					buffer* buffer_filepath = buffer_init();
+					buffer_copy_string(buffer_filepath, "");
+					buffer_append_string_encoded(buffer_filepath, con->url.path->ptr, strlen(con->url.path->ptr), ENCODING_REL_URI);
+					
 					buffer* buffer_result_share_link;
 					if( generate_sharelink(srv, 
 						                   con, 
 						                   de->d_name, 
-						                   con->url.path->ptr, 
+						                   buffer_filepath->ptr, 
 						                   base64_auth, 0, 0, 
 						                   &buffer_result_share_link) == 1){
 						buffer_append_string_len(b,CONST_STR_LEN("<file>"));
@@ -5177,7 +5331,8 @@ propmatch_cleanup:
 						buffer_append_string_len(b,CONST_STR_LEN("</sharelink>"));
 						buffer_append_string_len(b,CONST_STR_LEN("</file>"));
 					}
-					
+
+					buffer_free(buffer_filepath);
 					buffer_free(buffer_result_share_link);
 				}
 
@@ -5269,6 +5424,14 @@ propmatch_cleanup:
 			char photo_path[1024] = "\0";
 			sprintf(photo_path, "%s/%s", con->physical.path->ptr, filename->ptr);
 			Cdbg(1, "photo_path=%s", photo_path);
+
+			//- check file exists
+			if(!file_exist(photo_path)){
+				curl_easy_cleanup(curl);
+				curl_formfree(formpost);
+				con->http_status = 404;
+				return HANDLER_FINISHED;
+			}
 			
 			curl_formadd(&formpost, &lastptr,
 			             CURLFORM_COPYNAME, "source",
@@ -5378,7 +5541,7 @@ propmatch_cleanup:
 			Cdbg(1, "input_string=%s", input_string);
 			md5String(secret, input_string, md5);	
 			*/
-			
+			char secret[100] = "804b51d14d840d6e";
 			md5sum(md5, 7, secret, "api_key", api_key, "auth_token", auth_token->ptr, "title", title->ptr);			
 			Cdbg(1, "md5=%s", md5);
 			
@@ -5402,7 +5565,16 @@ propmatch_cleanup:
 			char photo_path[1024] = "\0";
 			sprintf(photo_path, "%s/%s", con->physical.path->ptr, filename->ptr);
 			Cdbg(1, "photo_path=%s", photo_path);
-			
+
+			//- check file exists
+			if(!file_exist(photo_path)){
+				curl_easy_cleanup(curl);
+				curl_formfree(formpost);
+				buffer_free(buffer_photoid);
+				con->http_status = 404;
+				return HANDLER_FINISHED;
+			}
+							
 			curl_formadd(&formpost, &lastptr,
 			             CURLFORM_COPYNAME, "photo",
 			             CURLFORM_FILE, photo_path, CURLFORM_END);

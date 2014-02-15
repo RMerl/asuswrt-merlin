@@ -1,6 +1,6 @@
 include ../common.mak
 
-CFLAGS = -Os -Wall $(EXTRACFLAGS) -fPIC
+CFLAGS += -Os -Wall $(EXTRACFLAGS) -fPIC
 CFLAGS += -I. -I$(TOP)/shared -I$(SRCBASE)/include
 CFLAGS += -I$(LINUXDIR)/include
 
@@ -27,13 +27,15 @@ ifeq ($(RTCONFIG_5301X),y)
 CFLAGS += -DBCM5301X
 endif
 
-ifeq ($(RTAC66U), y)
-CFLAGS += -DRTAC66U
+include $(SRCBASE)/.config
+
+ifneq ($(findstring DSL,$(BUILD_NAME)),)
+MODEL = $(subst -,_,$(BUILD_NAME))
+else
+MODEL = $(subst -,,$(BUILD_NAME))
 endif
 
-ifeq ($(RTAC53U), y)
-CFLAGS += -DRTAC53U
-endif
+export CFLAGS += -D$(MODEL)
 
 ifeq ($(RTCONFIG_4352_5G),y)
 CFLAGS += -DBCM4352
@@ -44,18 +46,6 @@ CFLAGS += -DAUTOFW_PORT_DEPRECATED
 endif
 
 CFLAGS += -DTRAFFIC_MGMT
-
-ifeq ($(RTN14U),y)
-export CFLAGS += -DRTN14U
-endif
-
-ifeq ($(RTAC52U),y)
-export CFLAGS += -DRTAC52U
-endif
-
-ifeq ($(RTAC51U),y)
-export CFLAGS += -DRTAC51U
-endif
 
 ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U),y)
 CFLAGS += -DRA_ESW
