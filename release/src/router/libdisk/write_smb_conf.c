@@ -280,10 +280,9 @@ int main(int argc, char *argv[])
 	fprintf(fp, "host msdfs = no\n");		// ASUS add
 	fprintf(fp, "strict allocate = No\n");		// ASUS add
 //	fprintf(fp, "mangling method = hash2\n");	// ASUS add
+	fprintf(fp, "bind interfaces only = yes\n");    // ASUS add
+
 #ifndef RTCONFIG_BCMARM
-#ifndef RTCONFIG_TUXERA
-	fprintf(fp, "bind interfaces only = yes\n");	// ASUS add
-#endif
 	fprintf(fp, "interfaces = lo br0 %s\n", (is_routing_enabled() && nvram_get_int("smbd_wanac")) ? nvram_safe_get("wan0_ifname") : "");
 #else
 	fprintf(fp, "interfaces = br0 %s\n", (is_routing_enabled() && nvram_get_int("smbd_wanac")) ? nvram_safe_get("wan0_ifname") : "");
