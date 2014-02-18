@@ -16215,9 +16215,7 @@ fi
 	if test "$tryssl" = "yes"; then
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for SSL" >&5
 $as_echo_n "checking for SSL... " >&6; }
-#		for ssldir in "" $tryssldir /usr /usr/local/openssl /usr/$atalk_libname/openssl /usr/local/ssl /usr/$atalk_libname/ssl /usr/local /usr/pkg /opt /opt/openssl /usr/local/ssl ; do
-#Change for don't check ssl by Edison in 20130923
-                for ssldir in "" $tryssldir ; do
+		for ssldir in "" $tryssldir /usr /usr/local/openssl /usr/$atalk_libname/openssl /usr/local/ssl /usr/$atalk_libname/ssl /usr/local /usr/pkg /opt /opt/openssl /usr/local/ssl ; do
 			if test -f "$ssldir/include/openssl/cast.h" ; then
 				SSL_CFLAGS="$SSL_CFLAGS -I$ssldir/include -I$ssldir/include/openssl"
 				SSL_LIBS="$SSL_LIBS -L$ssldir/$atalk_libname -L$ssldir -lcrypto"
