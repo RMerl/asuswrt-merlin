@@ -41,7 +41,7 @@ Here is a list of features that Asuswrt-merlin brings over the original
 firmware:
 
 System:
-   - Based on RT-AC68U 3.0.0.4.374_583 sources from Asus
+   - Based on 3.0.0.4.374_4422 sources from Asus
    - Various bugfixes and optimizations
    - Some components were updated to newerversions, for improved
      stability and security
@@ -106,7 +106,7 @@ integrated/enabled in the official firmware:
 - VPN client connection state report
 - DualWAN and Repeater mode (while it was still under development
   by Asus)
-- OpenVPN client and server support
+- OpenVPN client and server
 
 
 
@@ -568,6 +568,10 @@ History
 3.0.0.4.374.40 (xx-xxx-2014)
    This version isn't available for the RT-N16 as support for the 
    SDK5 platform is currently broken in the latest GPL sources.
+
+   - NEW: Merged with Asus's 374_4422 GPL.  Notable changes:
+       * Various security-related fixes
+       * Redesigned Parental Control webui
 
    - NEW: Added OpenDNS Family Shield support to DNSFilter
    - NEW: Added support for up to three user-defined servers to DNSFilter
@@ -1757,6 +1761,7 @@ Website: http://www.lostrealm.ca/
 Github: https://github.com/RMerl/asuswrt-merlin
 Email: rmerl@lostrealm.ca
 Twitter: https://twitter.com/RMerlinDev
+IRC: #asuswrt on DALnet
 Download: http://www.lostrealm.ca/asuswrt-merlin/download
 
 Development news will be posted on Twitter.  You can also keep a closer 
