@@ -2032,10 +2032,6 @@ $as_echo "$ac_res" >&6; }
 ac_fn_c_check_header_mongrel ()
 {
   as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  # Added by Edison 20130918
-  if test "$shlibpath_tmp" != ""; then
-     eval "export LD_LIBRARY_PATH=$shlibpath_tmp;"
-  fi
 
   if eval \${$3+:} false; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
@@ -4179,14 +4175,6 @@ fi
 else
   AMDEP_TRUE='#'
   AMDEP_FALSE=
-fi
-
-# Added by Edison - 20130923
-# Check whether --with-ld-library-path was given.
-if test "${with_ld_library_path+set}" = set; then :
-  shlibpath_tmp=$with_ld_library_path
-else
-  shlibpath_tmp=""
 fi
 
 depcc="$CC"   am_compiler_list=
