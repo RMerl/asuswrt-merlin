@@ -2854,7 +2854,9 @@ netatalk-3.0.5/stamp-h1: openssl libgcrypt-1.5.1 db-4.8.30
 	LIBS="-L$(TOP)/libgpg-error-1.10/src/.libs -lgpg-error -L$(TOP)/libgcrypt-1.5.1/src/.libs -lgcrypt" \
 	--without-kerberos \
 	--with-bdb=$(TOP)/db-4.8.30/build_unix \
+	--with-cnid-cdb-backend \
 	--prefix=$(INSTALLDIR)/netatalk-3.0.5/usr \
+	--program-prefix= \
 	--with-ssl-dir=$(TOP)/openssl \
 	--disable-static \
 	--with-libgcrypt-dir=$(TOP)/libgcrypt-1.5.1 \
