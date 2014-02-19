@@ -250,7 +250,10 @@ powerpc64:yes | s390x:yes | sparc*:yes | x86_64:yes | i386:yes)
     ;;
 *:*)
     AC_MSG_RESULT([no])
-    atalk_libname="lib"
+
+    dnl Modified to .libs for Asuswrt build environment
+
+    atalk_libname=".libs"
     ;;
 esac
 ])
