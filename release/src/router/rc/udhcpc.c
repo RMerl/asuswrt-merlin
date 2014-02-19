@@ -757,8 +757,7 @@ start_dhcp6c(void)
 		if (nvram_match("ipv6_ra_conf", "mset"))
 		fprintf(fp,		"send ia-na %lu;\n", iaid);
 		fprintf(fp,		"send rapid-commit;\n");
-		if (nvram_match("ipv6_dnsenable", "1") &&
-			(!nvram_match("ipv6_ra_conf", "noneset") || nvram_get_int("ipv6_dhcp_pd")))
+		if (nvram_match("ipv6_dnsenable", "1"))
 		fprintf(fp,		"request domain-name-servers;\n"
 					"request domain-name;\n");
 		fprintf(fp, "script \"/sbin/dhcp6c-state\";\n"
