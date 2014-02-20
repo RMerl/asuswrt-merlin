@@ -599,6 +599,8 @@ History
             configured in the firewall.
    - FIXED: When the firewall was disabled, the FORWARD chain
             policy was still left to "DROP" - changed to "ACCEPT".
+   - FIXED: typo in SMB config ("use spne go") (Asus bug)
+
 
 
 3.0.0.4.374.39 (31-Jan-2014)
