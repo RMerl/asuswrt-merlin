@@ -1,0 +1,1151 @@
+#!/bin/sh
+#
+# $Id: Customize,v 1.9 2005/05/11 13:02:18 abe Exp $
+#
+# Customize: customize dialect's machine.h header file.
+#
+# Allows easy modification of some important compile-time definitions for
+# lsof, made in the dialect's machine.h header file, including:
+#
+#	HASSECURITY	the security option
+#	HASNOSOCKSECURITY
+#			the socket oberalization of HASSECURITY
+#	HASDCACHE	enabling/disabling the device cache file
+#			(Note: changing the device cache file option isn't
+#			       offered when machine.h contains NEVER_HASDCACHE
+#			       anywhere, including in a comment.)
+#	HASENVDC	enabling/disabling device cache path from environment
+#	HASKERNIDCK	enabling/disabling the kernel identity check
+#			(not done for some dialects)
+#	HASPERSDC	enabling/disabling personal device cache path
+#			construction
+#	HASPERSDCPATH	enabling/disabling additional personal device cache
+#			path component
+#	HASSYSDC	enabling/disabling system-wide device cache file path
+#	HASXOPT_ROOT	enabling/disabling root use of the -X option
+#	WARNDEVACCESS	enabling inaccessible /dev node warnings
+#			(Note: changing the inaccessible /dev/node warning
+#			       option isn't offered when machine.h contains
+#			       NEVER_WARNDEVACCESS anywhere, including in a
+#			       comment.)
+#	WARNINGSTATE	enable/disabling default warning message state
+#
+# Usage: Customize [dialect_directory]
+#
+# where: dialect_directory (optional) is the directory in which the dialect's
+#	 dialect's sources, Makefile and scripts are found
+
+OLD=machine.h
+NEW=new_machine.h
+
+# Save optional dialect directory.
+
+if test $# -eq 1
+then
+  DialDir=$1
+else
+  DialDir=""
+fi
+
+# Establish trap and stty handling.
+
+ISIG=":"
+trap 'rm -f $NEW; $ISIG; exit 1' 1 2 3 15
+stty -a 2>&1 | grep isig > /dev/null
+if test $? -eq 0
+then
+  stty -a 2>&1 | egrep -e -isig > /dev/null
+  if test $? -eq 0
+  then
+    ISIG="stty -isig"
+    stty isig
+  fi
+fi
+
+# Decide how to use echo.
+
+ECHO=`echo -n ""`
+if test "X$ECHO" = "X-n "
+then
+  EC="\c"
+  EO=""
+else
+  EC=""
+  EO="-n"
+fi
+
+# Decide how to use tail(1).
+
+TMP1=`tail -n 1 $0 2> /dev/null`
+if test $? -eq 0 -a "X$TMP1" = "X#LAST_LINE"
+then
+  TA="-n 1"
+else
+  TA="-1"
+fi
+
+# Display the introduction and basic explanation.
+
+cat << .CAT_MARK
+
+You may now customize the machine.h header file for this UNIX
+dialect.  The customizations will take effect when you compile
+lsof.  You may also choose to skip customization and proceed to
+the compilation of lsof.
+
+If you don't know if you need to customize or want to know more
+about what you can customize, consult the 00DCACHE, 00FAQ, 00PORTING,
+and 00README files of the lsof distribution.  You might also find
+it helpful to examine the machine.h header file for the dialect
+you're customizing.
+
+You don't need to use this procedure to customize lsof; you can
+edit the machine.h header file directly.  If you later decide you
+want to use this procedure to customize machine.h, execute the
+./Customize script.
+.CAT_MARK
+
+END=0
+while test $END -eq 0
+do
+  echo ""
+  echo $EO "Do you want to customize (y|n) [y]? $EC"
+  read ANS EXCESS
+  if test "X$ANS" = "Xn" -o "X$ANS" = "XN"
+  then
+    exit 0
+  fi
+  if test "X$ANS" = "Xy" -o "X$ANS" = "XY" -o "X$ANS" = "X"
+  then
+    echo ""
+    echo "Customizing ..."
+    END=1
+  else
+    echo ""
+    echo "Please answer y|n [y]."
+  fi
+done
+
+# See if $OLD exists.
+
+if test ! -r $OLD
+then
+  echo ""
+  echo "FATAL: The file \"$OLD\" doesn't exist.  Customization can't"
+  echo "continue without it."
+  echo ""
+  echo "Did you run the Configure script?"
+  echo ""
+  echo "Customize quits."
+  echo ""
+  exit 1
+fi
+
+# See if $NEW exists.
+
+if test -r $NEW
+then
+  echo ""
+  echo "====================================================================="
+  echo ""
+  echo "WARNING: \"$NEW\" exists.  Customization will replace it."
+  END=0
+  while test $END -eq 0
+  do
+    echo ""
+    echo $EO "Do you want to remove $NEW (y|n) [y]? $EC"
+    read ANS EXCESS
+    if test "X$ANS" = "Xy" -o "X$ANS" = "XY" -o "X$ANS" = "X"
+    then
+      echo ""
+      echo "Removing $NEW"
+      echo ""
+      rm -f $NEW
+      END=1
+    else
+      if test "X$ANS" = "Xn" -o "X$ANS" = "XN"
+      then
+        echo ""
+        echo "FATAL: Customize quits; it must be able to create \"$NEW\"."
+        echo ""
+        exit 1
+      else
+        echo ""
+        echo "Please answer y|n [y]."
+      fi
+    fi
+  done
+fi
+
+# Process HASSECURITY.
+
+cat << .CAT_MARK
+
+=====================================================================
+
+When HASSECURITY is enabled, only the root user may use lsof to
+examine all open files; other users may examine only the files
+belonging to the real user ID of their lsof process.  If
+HASNOSOCKSECURITY is also defined, anyone may list anyone else's
+open socket files, provided their listing is selected with the "-i"
+option.
+
+When HASSECURITY is disabled, anyone may use lsof to examine all
+open files.
+
+.CAT_MARK
+
+grep HASSECURITY $OLD | tail $TA | egrep "^#define" > /dev/null
+if test $? -eq 0
+then
+  echo "HASSECURITY is enabled."
+  NSEC=1
+else
+  echo "HASSECURITY is disabled."
+  NSEC=0
+fi
+END=0
+while test $END -eq 0
+do
+  echo ""
+  if test $NSEC -eq 1
+  then
+    echo $EO "Disable HASSECURITY (y|n) [n]? $EC"
+  else
+    echo $EO "Enable HASSECURITY (y|n) [n]? $EC"
+  fi
+  read ANS EXCESS
+  if test "X$ANS" = "Xy" -o "X$ANS" = "XY"
+  then
+    echo ""
+    if test $NSEC -eq 1
+    then
+      NSEC=0
+      echo "HASSECURITY will be disabled."
+    else
+      NSEC=1
+      echo "HASSECURITY will be enabled."
+    fi
+    END=1
+  else
+    if test "X$ANS" = "Xn" -o "X$ANS" = "XN" -o "X$ANS" = "X"
+    then
+      echo ""
+      echo "HASSECURITY will not be changed."
+      END=1
+    else
+      echo ""
+      echo "Please answer y|n [n]."
+    fi
+  fi
+done
+
+# If HASSECURITY is enabled, see if HASNOSOCKSECURITY should also be defined.
+
+if test $NSEC -eq 1
+then
+  cat << .CAT_MARK
+
+====================================================================
+
+When HASSECURITY is enabled, you may also define HASNOSOCKSECURITY.
+
+When both are defined, no one but root may list all of anyone else's
+open files -- only their own open files -- but anyone may list
+anyone else's open socket files.
+
+This option is useful with ntop (http://www.ntop.org).
+
+.CAT_MARK
+
+  grep HASNOSOCKSECURITY $OLD | tail $TA | egrep "^#define" > /dev/null
+  if test $? -eq 0
+  then
+    echo "HASNOSOCKSECURITY is enabled."
+    SOCKSEC=1
+  else
+    echo "HASNOSOCKSECURITY is disabled."
+    SOCKSEC=0
+  fi
+  END=0
+  while test $END -eq 0
+  do
+    echo ""
+    if test $SOCKSEC -eq 1
+    then
+      echo $EO "Disable HASNOSOCKSECURITY (y|n) [n]? $EC"
+    else
+      echo $EO "Enable HASNOSOCKSECURITY (y|n) [n]? $EC"
+    fi
+    read ANS EXCESS
+    if test "X$ANS" = "Xy" -o "X$ANS" = "XY"
+    then
+      echo ""
+      if test $SOCKSEC -eq 1
+      then
+        SOCKSEC=0
+        echo "HASNOSOCKSECURITY will be disabled."
+      else
+        SOCKSEC=1
+        echo "HASNOSOCKSECURITY will be enabled."
+      fi
+      END=1
+    else
+      if test "X$ANS" = "Xn" -o "X$ANS" = "XN" -o "X$ANS" = "X"
+      then
+        echo ""
+        echo "HASNOSOCKSECURITY will not be changed."
+        END=1
+      else
+        echo ""
+        echo "Please answer y|n [n]."
+      fi
+    fi
+  done
+else
+  SOCKSEC=0
+fi
+
+# Process WARNINGSTATE.
+
+cat << .CAT_MARK
+
+=====================================================================
+
+When WARNINGSTATE is enabled, lsof will will issue whatever warning
+messages it finds necessary.  When WARNINGSTATE is disabled, lsof
+will issue no warning messages.  For individual uses of lsof, -w
+disables warning state and +w enables it.
+
+.CAT_MARK
+
+grep WARNINGSTATE $OLD | tail $TA | egrep "^#define" > /dev/null
+if test $? -eq 0
+then
+  echo "WARNINGSTATE is disabled."
+  WST=0
+else
+  echo "WARNINGSTATE is enabled."
+  WST=1
+fi
+END=0
+NWST=$WST
+while test $END -eq 0
+do
+  echo ""
+  if test $NWST -eq 0
+  then
+    echo $EO "Enable WARNINGSTATE? (y|n) [n]? $EC"
+  else
+    echo $EO "Disable WARNINGSTATE? (y|n) [n]? $EC"
+  fi
+  read ANS EXCESS
+  if test "X$ANS" = "Xy" -o "X$ANS" = "XY"
+  then
+    echo ""
+    if test $NWST -eq 0
+    then
+      echo "WARNINGSTATE will be enabled."
+      NWST=1
+    else
+      echo "WARNINGSTATE will be disabled."
+      NWST=0
+    fi
+    END=1
+  else
+    if test "X$ANS" = "Xn" -o "X$ANS" = "XN" -o "X$ANS" = "X"
+    then
+      echo ""
+      echo "WARNINGSTATE will not be changed."
+      END=1
+    else
+      echo ""
+      echo "Please answer y|n [n]."
+    fi
+  fi
+done
+
+# Process WARNDEVACCESS, unless the dialect's machine.h header file contains
+# NEVER_WARNDEVACCESS.
+
+grep NEVER_WARNDEVACCESS $OLD > /dev/null
+if test $? -eq 0
+then
+  NEVERWDA=1
+  NWDA=0
+else
+  NEVERWDA=0
+  cat << .CAT_MARK
+
+=====================================================================
+
+When WARNDEVACCESS is enabled, lsof will issue warning messages
+when it can't access nodes in /dev (or /devices), subject to the
+default or explicit (-w) WARNINGSTATE.
+
+When WARNDEVACCESS is disabled, lsof will silently skip nodes in
+/dev (or /devices) that it can't access.
+
+.CAT_MARK
+
+  grep WARNDEVACCESS $OLD | tail $TA | egrep "^#define" > /dev/null
+  if test $? -eq 0
+  then
+    echo "WARNDEVACCESS is enabled."
+    WDA=1
+  else
+    echo "WARNDEVACCESS is disabled."
+    WDA=0
+  fi
+  END=0
+  NWDA=$WDA
+  while test $END -eq 0
+  do
+    echo ""
+    if test $NWDA -eq 1
+    then
+      echo $EO "Disable WARNDEVACCESS (y|n) [n]? $EC"
+    else
+      echo $EO "Enable WARNDEVACCESS (y|n) [n]? $EC"
+    fi
+    read ANS EXCESS
+    if test "X$ANS" = "Xy" -o "X$ANS" = "XY"
+    then
+      echo ""
+      if test $NWDA -eq 1
+      then
+        echo "WARNDEVACCESS will be disabled."
+        NWDA=0
+      else
+        echo "WARNDEVACCESS will be enabled."
+        NWDA=1
+      fi
+      END=1
+    else
+      if test "X$ANS" = "Xn" -o "X$ANS" = "XN" -o "X$ANS" = "X"
+      then
+	echo ""
+	echo "WARNDEVACCESS will not be changed."
+        END=1
+      else
+        echo ""
+        echo "Please answer y|n [n]."
+      fi
+    fi
+  done
+fi
+
+# Process HASDCACHE, unless the dialect's machine.h header file contains
+# NEVER_HASDCACHE.
+
+ENVV=""
+ENVN=0
+PDCV=""
+PDCN=0
+PDCPV=""
+PDCPN=0
+SDCV=""
+SDCN=0
+grep NEVER_HASDCACHE $OLD > /dev/null
+if test $? -eq 0
+then
+  NEVERDC=1
+  CDC=0
+  DC=0
+  NDC=0
+else
+  NEVERDC=0
+  cat << .CAT_MARK
+
+=====================================================================
+
+When HASDCACHE is enabled, lsof will write a device cache file that
+contains information about the nodes in /dev (or /devices).  The
+options HASENVDC, HASPERSDC, HASPERSDCPATH, and HASSYSDC define
+the device cache file path.
+
+When HASDCACHE is disabled, lsof won't write a device cache file.
+
+Consult the 00DCACHE and 00FAQ files of the lsof distribution for
+more information.
+
+.CAT_MARK
+
+  grep HASDCACHE $OLD | tail $TA | egrep "^#define" > /dev/null
+  if test $? -eq 0
+  then
+    echo "HASDCACHE is enabled."
+    DC=1
+  else
+    echo "HASDCACHE is disabled."
+    DC=0
+  fi
+  END=0
+  NDC=$DC
+  while test $END -eq 0
+  do
+    echo ""
+    if test $NDC -eq 1
+    then
+      echo $EO "Disable HASDCACHE (y|n) [n]? $EC"
+    else
+      echo $EO "Enable HASDCACHE (y|n) [n]? $EC"
+    fi
+    read ANS EXCESS
+    if test "X$ANS" = "Xy" -o "X$ANS" = "XY"
+    then
+      echo ""
+      if test $NDC -eq 1
+      then
+        echo "HASDCACHE will be disabled."
+        NDC=0
+      else
+        echo "HASDCACHE will be enabled."
+        NDC=1
+      fi
+      END=1
+    else
+      if test "X$ANS" = "Xn" -o "X$ANS" = "XN" -o "X$ANS" = "X"
+      then
+	echo ""
+	echo "HASDCACHE will not be changed."
+        END=1
+      else
+        echo ""
+        echo "Please answer y|n [n]."
+      fi
+    fi
+  done
+
+  # See if other device cache options need to be declared.
+
+  if test $DC -eq 1 -a $NDC -eq 1
+  then
+    cat << .CAT_MARK
+
+=====================================================================
+
+You have decided that HASDCACHE should be defined.  There are other
+definitions associated with HASDCACHE that specify options for the
+formation of the device cache file path.  You may change them.
+
+Consult the 00DCACHE and 00FAQ files of the lsof distribution for
+more information.
+
+The current path options are:
+  
+.CAT_MARK
+
+    grep HASENVDC $OLD | tail $TA | egrep "^#define"
+    egrep "HASPERSDC$|HASPERSDC[ 	]" $OLD | tail $TA | egrep "^#define"
+    grep HASPERSDCPATH $OLD | tail $TA | egrep "^#define"
+    grep HASSYSDC $OLD | tail $TA | egrep "^#define"
+    END=0
+    while test $END -eq 0
+    do
+      echo ""
+      echo $EO "Do you want to change path options (y|n) [n]? $EC"
+      read ANS EXCESS
+      if test "X$ANS" = "Xy" -o "X$ANS" = "XY"
+      then
+        CDC=1
+        END=1
+      else
+        if test "X$ANS" = "Xn" -o "X$ANS" = "XN"
+        then
+	  CDC=0
+	  END=1
+        else
+	  if test "X$ANS" = "X"
+	  then
+	    echo ""
+	    echo "The path options will not be changed."
+	    CDC=0
+	    END=1
+	  else
+	    echo ""
+	    echo "Please answer y|n [n]."
+	  fi
+        fi
+      fi
+    done
+  else
+    CDC=0
+  fi
+  if test \( $NDC -eq 1 -a $DC -eq 0 \) -o \( $DC -eq 1 -a $CDC -eq 1 \)
+  then
+    cat << .CAT_MARK
+
+=====================================================================
+
+You may specify for HASENVDC the name of the environment variable
+from which lsof should take the device cache file path for non-root
+users.  Press ENTER to use the current value of HASENVDC:
+
+.CAT_MARK
+
+    echo $EO "        $EC"
+    TMP1=`grep HASENVDC $OLD | tail $TA | egrep "^#define"`
+    if test "X$TMP1" != "X"
+    then
+      TMP1=`echo "$TMP1" | sed 's/^#define[ 	]HASENVDC[ 	]"\([^"]*\)".*$/\1/'`
+      echo "$TMP1"
+    else
+      echo "no current HASENVDC value"
+    fi
+    END=0
+    GV=0
+    while test $END -eq 0
+    do
+      echo ""
+      echo $EO "Do you want to define a name for HASENVDC (y|n) [n]? $EC"
+      read ANS EXCESS
+      if test "X$ANS" = "Xn" -o "X$ANS" = "XN"
+      then
+        ENVV=""
+        END=1
+      else
+        if test "X$ANS" = "Xy" -o "X$ANS" = "XY"
+        then
+	  GV=1
+	  END=1
+        else
+	  if test "X$ANS" = "X"
+	  then
+	    echo ""
+	    echo "HASENVDC will not be changed."
+	    ENVV=$TMP1
+	    END=1
+	  else
+	    echo ""
+	    echo "Please answer y|n [n]."
+	  fi
+        fi
+      fi
+    done
+    if test $GV -eq 1
+    then
+      echo ""
+      echo $EO "Please enter the HASENVDC name (no quotes): $EC"
+      read TMP1 EXCESS
+      ENVV=`echo $TMP1 | sed 's/^\"//' | sed 's/\"$//'`
+      if test "X$ENVV" = "X"
+      then
+	ENVN=1
+      fi
+    fi
+    cat << .CAT_MARK
+
+=====================================================================
+
+HASPERSDC is a format that specifies how the personal device cache
+path is constructed.  Consult the 00DCACHE and 00FAQ files of the
+lsof distribution for information on the conversions supported in
+HASPERSDC.  Press ENTER to use the curent HASPERSDC format:
+
+.CAT_MARK
+
+    echo $EO "        $EC"
+    TMP1=`egrep "HASPERSDC$|HASPERSDC[ 	]" $OLD | tail $TA | egrep "^#define"`
+    if test "X$TMP1" != "X"
+    then
+      TMP1=`echo "$TMP1" | sed 's/^#define[ 	]HASPERSDC[ 	]"\([^"]*\)".*$/\1/'`
+      echo "$TMP1"
+    else
+      echo "no current HASPERSDC format"
+    fi
+    END=0
+    GV=0
+    while test $END -eq 0
+    do
+      echo ""
+      echo $EO "Do you want to define a format for HASPERSDC (y|n) [n]? $EC"
+      read ANS EXCESS
+      if test "X$ANS" = "Xn" -o "X$ANS" = "XN"
+      then
+        END=1
+      else
+        if test "X$ANS" = "Xy" -o "X$ANS" = "XY"
+        then
+	  GV=1
+	  END=1
+        else
+	  if test "X$ANS" = "X"
+	  then
+	    echo ""
+	    echo "HASPERSDC will not be changed."
+	    PDCV=$TMP1
+	    END=1
+	  else
+	    echo ""
+	    echo "Please answer y|n [n]."
+	  fi
+        fi
+      fi
+    done
+    if test $GV -eq 1
+    then
+      echo ""
+      echo $EO "Please enter the HASPERSDC format (no quotes): $EC"
+      read TMP1 EXCESS
+      PDCV=`echo $TMP1 | sed 's/^\"//' | sed 's/\"$//'`
+      if test "X$PDCV" = "X"
+      then
+	PDCN=1
+      fi
+    fi
+    cat << .CAT_MARK
+
+=====================================================================
+
+Specify for HASPERSDCPATH the name of the environment variable from
+which lsof should take a path name component to insert at the %p
+conversion in the HASPERSDC format.
+
+Consult the 00FAQ and 00DCACHE files of the lsof distribution for
+more information on HASPERSDCPATH usage.
+
+Press ENTER to use the current value for HASPERSDCPATH:
+
+.CAT_MARK
+
+    echo $EO "        $EC"
+    TMP1=`grep HASPERSDCPATH $OLD | tail $TA | egrep "^#define"`
+    if test "X$TMP1" != "X"
+    then
+      TMP1=`echo "$TMP1" | sed 's/^#define[ 	]HASPERSDCPATH[ 	]"\([^"]*\)".*$/\1/'`
+      echo "$TMP1"
+    else
+      echo "no current HASPERSDCPATH value"
+    fi
+    END=0
+    GV=0
+    while test $END -eq 0
+    do
+      echo ""
+      echo $EO "Do you want to change HASPERSDCPATH (y|n) [n]? $EC"
+      read ANS EXCESS
+      if test "X$ANS" = "Xn" -o "X$ANS" = "XN" -o "X$ANS" = "X"
+      then
+	echo ""
+	echo "HASPERSDCPATH will not be changed."
+	PDCPV=$TMP1
+        END=1
+      else
+        if test "X$ANS" = "Xy" -o "X$ANS" = "XY"
+        then
+	  GV=1
+	  END=1
+	else
+	  echo ""
+	  echo "Please answer y|n [n]."
+	fi
+      fi
+    done
+    if test $GV -eq 1
+    then
+      echo ""
+      echo $EO "Please enter the HASPERSDCPATH name (no quotes): $EC"
+      read TMP1 EXCESS
+      PDCPV=`echo $TMP1 | sed 's/^\"//' | sed 's/\"$//'`
+      if test "X$PDCPV" = "X"
+      then
+	PDCPN=1
+      fi
+    fi
+    cat << .CAT_MARK
+
+=====================================================================
+
+Specify for HASSYSDC the system-wide device cache file path.  Press
+ENTER to use the current HASSYSDC value:
+
+.CAT_MARK
+
+    echo $EO "        $EC"
+    TMP1=`grep HASSYSDC $OLD | tail $TA | egrep "^#define"`
+    if test "X$TMP1" != "X"
+    then
+      TMP1=`echo "$TMP1" | sed 's/^#define[ 	]HASSYSDC[ 	]"\([^"]*\)".*$/\1/'`
+      echo "$TMP1"
+    else
+      echo "no current HASSYSDC value"
+    fi
+    END=0
+    GV=0
+    while test $END -eq 0
+    do
+      echo ""
+      echo $EO "Do you want to define a system-device path (y|n) [n]? $EC"
+      read ANS EXCESS
+      if test "X$ANS" = "Xn" -o "X$ANS" = "XN"
+      then
+        END=1
+      else
+        if test "X$ANS" = "Xy" -o "X$ANS" = "XY"
+        then
+	  GV=1
+	  END=1
+        else
+	  if test "X$ANS" = "X"
+	  then
+	    echo ""
+	    echo "No HASSYSDC change will be made."
+	    SDCV=$TMP1
+	    END=1
+	  else
+	    echo ""
+	    echo "Please answer y|n [n]."
+	  fi
+        fi
+      fi
+    done
+    if test $GV -eq 1
+    then
+      echo ""
+      echo $EO "Please enter the system-wide path (no quotes): $EC"
+      read TMP1 EXCESS
+      SDCV=`echo $TMP1 | sed 's/^\"//' | sed 's/\"$//'`
+      if test "X$SDCV" = "X"
+      then
+	SDCN=1
+      fi
+    fi
+  fi
+fi
+
+# If HASXOPT is defined, and HASXOPT_ROOT is mentioned,
+# ask about changing HASXOPT_ROOT.
+
+HXRC=0
+grep HASXOPT $OLD | tail $TA | egrep "^#define" > /dev/null
+if test $? -eq 0
+then
+  grep HASXOPT_ROOT $OLD > /dev/null
+  if test $? -eq 0
+  then
+    cat << .CAT_MARK
+
+=====================================================================
+
+HASXOPT is defined.  If the dialect for which you are customizing
+appears in the following list, you may want to change the definition
+of HASXOPT_ROOT to restrict the use of the X option to lsof processes
+whose real user ID is root, or enable use of it by all user IDs.
+
+  AIX           the -X option enables the risky operation of letting
+		lsof read library entry structures with readx().
+		If HASXOPT_ROOT is defined, only processes whose
+		real user ID is root will be allowed to use -X.
+		If HASXOPT_ROOT is undefined, any process will be
+		allowed to use -X.  Consult the 00FAQ file of the
+		lsof distribution for more information on why
+		readx() may be risky.
+
+.CAT_MARK
+
+    grep HASXOPT_ROOT $OLD | tail $TA | egrep "^#define" > /dev/null
+    if test $? -eq 0
+    then
+      echo "HASXOPT_ROOT is defined."
+      HXR="undefine"
+      HXRS=1
+    else
+      echo "HASXOPT_ROOT is not defined."
+      HXR="define"
+      HXRS=0
+    fi
+    END=0
+    while test $END -eq 0
+    do
+      echo ""
+      echo $EO "Do you want to $HXR HASXOPT_ROOT (y|n) [n]? $EC"
+      read ANS EXCESS
+      if test "X$ANS" = "Xy" -o "X$ANS" = "XY"
+      then
+        HXRA=1
+        END=1
+      else
+        if test "X$ANS" = "Xn" -o "X$ANS" = "XN" -o "X$ANS" = "X"
+        then
+	  echo ""
+	  echo "HASXOPT_ROOT will not be changed."
+          HXRA=0
+          END=1
+        else
+          echo ""
+          echo "Please answer y|n [n]."
+        fi
+      fi
+    done
+    if test $HXRA -eq 1
+    then
+      HXRC=1
+    fi
+  fi
+fi
+
+# Process HASKERNIDCK.  Skip processing for selected dialect directories.
+
+case $DialDir in
+  linux/proc)
+    NIDCK=0
+    ;;
+  *)
+    cat << .CAT_MARK
+
+=====================================================================
+
+When HASKERNIDCK is enabled, lsof compares the identity of the
+kernel where it was built to the identity of the kernel where it
+is running.  This check can detect an lsof executable inappropriate
+for the system on which it is being run.
+
+The kernel identity check can take considerable time on some UNIX
+dialects -- e.g., AIX -- so there may be occasions when it is
+desirable to disable it, in spite of the increased risk of using
+an inappropriate lsof executable.
+
+.CAT_MARK
+
+    grep HASKERNIDCK $OLD | tail $TA | grep "^#define" > /dev/null
+    if test $? -eq 0
+    then
+      echo "HASKERNIDCK is enabled."
+      IDCK=1
+    else
+      echo "HASKERNIDCK is disabled."
+      IDCK=0
+    fi
+    END=0
+    NIDCK=$IDCK
+    while test $END -eq 0
+    do
+      echo ""
+      if test $NIDCK -eq 1
+      then
+        echo $EO "Disable HASKERNIDCK (y|n) [n]? $EC"
+      else
+        echo $EO "Enable HASKERNIDCK (y|n) [n]? $EC"
+      fi
+      read ANS EXCESS
+      if test "X$ANS" = "Xy" -o "X$ANS" = "XY"
+      then
+        echo ""
+        if test $NIDCK -eq 1
+        then
+          NIDCK=0
+          echo "HASKERNIDCK will be disabled."
+        else
+          NIDCK=1
+          echo "HASKERNIDCK will be enabled."
+        fi
+        END=1
+      else
+        if test "X$ANS" = "Xn" -o "X$ANS" = "XN" -o "X$ANS" = "X"
+        then
+          echo ""
+          echo "HASKERNIDCK will not be changed."
+          END=1
+          NIDCK=$IDCK
+        else
+          echo ""
+          echo "Please answer y|n [n]."
+        fi
+      fi
+    done
+    ;;
+esac
+
+# Initialize new machine.h.
+
+rm -f $NEW
+cp $OLD $NEW
+chmod 0644 $NEW
+echo "" >> $NEW
+echo "/*" >> $NEW
+echo $EO " * Added by Customize on $EC" >> $NEW
+date >> $NEW
+echo " */" >> $NEW
+echo "" >> $NEW
+
+# Change HASSECURITY and HASNOSOCKSECURITY, as required.
+
+echo "#undef	HASSECURITY" >> $NEW
+echo "#undef	HASNOSOCKSECURITY" >> $NEW
+if test $NSEC -eq 1
+then
+  echo "#define	HASSECURITY	1" >> $NEW
+  if test $SOCKSEC -eq 1
+  then
+    echo "#define	HASNOSOCKSECURITY	1" >> $NEW
+  fi
+fi
+
+# Change WARNDEVACCESS, as required.
+
+if test $NEVERWDA -eq 0
+then
+  echo "#undef	WARNDEVACCESS" >> $NEW
+  if test $NWDA -eq 1
+  then
+    echo "#define	WARNDEVACCESS	1" >> $NEW
+  fi
+fi
+
+# Change WARNINGSTATE, as required.
+
+echo "#undef	WARNINGSTATE" >> $NEW
+if test $NWST -eq 0
+then
+  echo "#define	WARNINGSTATE	1" >> $NEW
+fi
+
+# Change device cache definitions, as required.
+
+if test \( $NDC -eq 1 -a $DC -eq 0 \) -o \( $DC -eq 1 -a $CDC -eq 1 \)
+then
+  if test "X$ENVV" = "X" -a "X$PDCV" = "X" -a "X$SDCV" = "X"
+  then
+    cat << .CAT_MARK
+
+FATAL: HASDCACHE is defined, but there is no definition for
+       any of HASENVDC, HASPERSDC, or HASSYSDC
+
+       No new machine.h has been created.
+
+       Customize quits.
+
+       Restart Customize and define at least one of HASENVDC,
+       HASPERSDC, or HASSYSDC.
+
+.CAT_MARK
+
+    rm -f $NEW
+    exit 1
+  fi
+fi
+if test "X$PDCV" != "X"
+then
+  echo "$PDCV" | grep "%p" > /dev/null
+  if test $? -eq 0 -a $PDCPN -eq 1
+  then
+    cat << .CAT_MARK
+
+FATAL: HASDCACHE is defined and HASPERSDC has a %p conversion,
+       but HASPERSDCPATH is NULL.
+
+       No new machine.h has been created.
+
+       Customize quits.
+
+       Restart Customize and define HASPERSDCPATH.
+
+.CAT_MARK
+
+    rm -f $NEW
+    exit 1
+  fi
+fi
+echo "#undef	HASDCACHE" >> $NEW
+if test $NEVERDC -eq 1
+then
+  echo "#undef	HASENVDC" >> $NEW
+  echo "#undef	HASPERSDC" >> $NEW
+  echo "#undef	HASPERSDCPATH" >> $NEW
+  echo "#undef	HASSYSDC" >> $NEW
+else
+  if test $NDC -eq 1
+  then
+    echo "#define	HASDCACHE	1" >> $NEW
+    if test "X$ENVV" != "X" -o $ENVN -eq 1
+    then
+      echo "#undef	HASENVDC" >> $NEW
+      if test $ENVN -eq 0
+      then
+        echo "#define	HASENVDC	\"$ENVV\"" >> $NEW
+      fi
+    fi
+    if test "X$PDCV" != "X" -o $PDCN -eq 1
+    then
+      echo "#undef	HASPERSDC" >> $NEW
+      if test $PDCN -eq 0
+      then
+        echo "#define	HASPERSDC	\"$PDCV\"" >> $NEW
+      fi
+    fi
+    if test "X$PDCPV" != "X" -o $PDCPN -eq 1
+    then
+      echo "#undef	HASPERSDCPATH" >> $NEW
+      if test $PDCPN -eq 0
+      then
+        echo "#define	HASPERSDCPATH	\"$PDCPV\"" >> $NEW
+      fi
+    fi
+    if test "X$SDCV" != "X" -o $SDCN -eq 1
+    then
+      echo "#undef	HASSYSDC" >> $NEW
+      if test $SDCN -eq 0
+      then
+        echo "#define	HASSYSDC	\"$SDCV\"" >> $NEW
+      fi
+    fi
+  fi
+fi
+
+# Change HASXOPT_ROOT, as required.
+
+if test $HXRC -eq 1
+then
+  if test $HXRS -eq 1
+  then
+    echo "#undef	HASXOPT_ROOT" >> $NEW
+  else
+    echo "#define	HASXOPT_ROOT	1" >> $NEW
+  fi
+fi
+
+# Change HASKERNIDCK, as required.
+
+echo "#undef	HASKERNIDCK" >> $NEW
+if test $NIDCK -eq 1
+then
+  echo "#define	HASKERNIDCK	1" >> $NEW
+fi
+
+# Replace the current machine.h with the new one, as requested.
+
+echo ""
+echo "====================================================================="
+echo ""
+echo "A new $OLD file has been created in \"$NEW\"."
+END=0
+while test $END -eq 0
+do
+  echo ""
+  echo "Do you want to rename $OLD to ${OLD}.old and replace it with"
+  echo $EO "$NEW (y|n) [y]? $EC"
+  read ANS EXCESS
+  if test "X$ANS" = "Xn" -o "X$ANS" = "XN"
+  then
+    END=1
+  else
+    if test "X$ANS" = "Xy" -o "X$ANS" = "XY" -o "X$ANS" = "X"
+    then
+      rm -f ${OLD}.old
+      mv $OLD ${OLD}.old
+      mv $NEW $OLD
+      END=1
+    else
+      echo ""
+      echo "Please answer y|n [y]."
+    fi
+  fi
+done
+echo ""
+echo "You may now run the make command -- e.g.,"
+echo ""
+echo "        $ make"
+echo ""
+exit 0
+#LAST_LINE

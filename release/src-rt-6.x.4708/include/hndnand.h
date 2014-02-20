@@ -35,7 +35,16 @@
 #define NFL_TABLE_END			0xffffffff
 
 #define NFL_BOOT_SIZE			0x200000
+/* ASUS LINUX MTD SIZE */
+#if CONFIG_LINUX_MTD == 32
 #define NFL_BOOT_OS_SIZE		0x2000000
+#elif CONFIG_LINUX_MTD == 64
+#define NFL_BOOT_OS_SIZE		0x4000000
+#elif CONFIG_LINUX_MTD == 128
+#define NFL_BOOT_OS_SIZE		0x8000000
+#else
+#define NFL_BOOT_OS_SIZE		0x2000000
+#endif
 #define NFL_BBT_SIZE			0x100000
 
 #ifdef __ARM_ARCH_7A__

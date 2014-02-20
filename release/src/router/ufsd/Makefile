@@ -12,6 +12,7 @@ DSTDIR = $(INSTALLDIR)/lib/modules/$(LINUX_KERNEL)/kernel/fs
 else
 ifeq ($(RTCONFIG_BCMARM),y)
 SRCFILE = broadcom_arm
+UFSD_PREBUILT = 1
 DSTDIR = $(INSTALLDIR)/lib/modules/2.6.36.4brcmarm/kernel/fs
 else
 SRCFILE = broadcom
@@ -30,10 +31,8 @@ export DEBUG
 vpath broadcom ralink
 
 all:
-	@[ ! -f $(SRCFILE)/Makefile ] || $(MAKE) -C $(SRCFILE) $@
 
 clean:
-	@[ ! -f $(SRCFILE)/Makefile ] || $(MAKE) -C $(SRCFILE) $@
 
 install:
 	@echo "[ufsd] Installing..."
@@ -51,6 +50,7 @@ endif
 	@chmod 775 $(INSTALLDIR)/usr/sbin/chkntfs
 endif
 ifeq ($(RTCONFIG_HFS),y)
+	@cp -f $(SRCFILE)/jnl.ko $(DSTDIR)
 	@[ ! -f $(SRCFILE)/mkhfs ] || cp -f $(SRCFILE)/mkhfs $(INSTALLDIR)/usr/sbin || chmod 775 $(INSTALLDIR)/usr/sbin/mkhfs
 	@[ ! -f $(SRCFILE)/chkhfs ] || cp -f $(SRCFILE)/chkhfs $(INSTALLDIR)/usr/sbin || chmod 775 $(INSTALLDIR)/usr/sbin/chkhfs
 	@[ ! -f $(SRCFILE)/memalloc ] || cp -f $(SRCFILE)/memalloc $(INSTALLDIR)/usr/sbin || chmod 775 $(INSTALLDIR)/usr/sbin/memalloc

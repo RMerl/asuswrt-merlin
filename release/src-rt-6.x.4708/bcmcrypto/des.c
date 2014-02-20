@@ -4,7 +4,7 @@
  * and diddled with only enough to compile without warnings and link
  * with our driver.
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2014, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -12,7 +12,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: des.c 241182 2011-02-17 21:50:03Z $
+ * $Id: des.c 368513 2012-11-13 23:52:52Z $
  */
 
 /* Portable C code to create DES key schedules from user-provided keys
@@ -418,8 +418,11 @@ void
 BCMROMFN(des)(unsigned long ks[16][2],		/* Key schedule */
 	      unsigned char block[8])		/* Data block */
 {
+/* Optimize for size. */
+#define DES_SIZE_OPTIMIZE
+
 	unsigned long left, right, work;
-#if defined(BCMROMBUILD)
+#if defined(DES_SIZE_OPTIMIZE)
 	int round;
 #endif
 
@@ -464,12 +467,12 @@ BCMROMFN(des)(unsigned long ks[16][2],		/* Key schedule */
 	/* Now do the 16 rounds.
 	 * Fully unrolling generates 4x larger ARM code for this function
 	 */
-#if defined(BCMROMBUILD)
+#if defined(DES_SIZE_OPTIMIZE)
 	for (round = 0; round < 16; round += 2) {
 		F(left, right, ks[round + 0]);
 		F(right, left, ks[round + 1]);
 	}
-#else /* !BCMROMBUILD */
+#else /* !DES_SIZE_OPTIMIZE */
 	F(left, right, ks[0]);
 	F(right, left, ks[1]);
 	F(left, right, ks[2]);
@@ -486,7 +489,7 @@ BCMROMFN(des)(unsigned long ks[16][2],		/* Key schedule */
 	F(right, left, ks[13]);
 	F(left, right, ks[14]);
 	F(right, left, ks[15]);
-#endif /* !BCMROMBUILD */
+#endif /* !DES_SIZE_OPTIMIZE */
 
 	/* Inverse permutation, also from Hoey via Outerbridge and Schneier */
 	right = (right << 31) | (right >> 1);

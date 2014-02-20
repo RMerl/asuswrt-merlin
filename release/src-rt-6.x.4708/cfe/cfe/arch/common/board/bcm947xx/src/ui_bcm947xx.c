@@ -52,6 +52,13 @@ extern void GPIO_INIT(void);
 extern void FANON(void);
 
 /* define GPIOs*/
+#ifdef RTAC87U
+#define PWR_LED_GPIO	(1 << 1)	// GPIO 1, and used for WPS LED
+#define RST_BTN_GPIO	(1 << 11)	// GPIO 11
+#define	TURBO_LED_GPIO	(1 << 4)	// GPIO 4
+#define WPS_BTN_GPIO	(1 << 2)	// GPIO 2
+
+#else	/* RTAC87U */
 #ifdef RTN18U
 #define PWR_LED_GPIO	(1 << 0)	// GPIO 0
 #define RST_BTN_GPIO	(1 << 7)	// GPIO 7
@@ -75,6 +82,8 @@ extern void FANON(void);
 #endif
 #endif
 #endif
+
+#endif	/* end of RTAC87U */
 
 static int
 ui_cmd_reboot(ui_cmdline_t *cmd, int argc, char *argv[])
@@ -283,13 +292,13 @@ extern void LEDON(void)
 	sih = si_kattach(SI_OSH);
 	ASSERT(sih);
 	si_gpioouten(sih, PWR_LED_GPIO, PWR_LED_GPIO, GPIO_DRV_PRIORITY);
-#ifdef RTAC68U
+#if defined(RTAC68U) || defined(RTAC87U)
 	si_gpioouten(sih, TURBO_LED_GPIO, TURBO_LED_GPIO, GPIO_DRV_PRIORITY);
 #endif
 	/* led on */
 	/* negative logic and hence val==0 */
 	si_gpioout(sih, PWR_LED_GPIO, 0, GPIO_DRV_PRIORITY);
-#ifdef RTAC68U
+#if defined(RTAC68U) || defined(RTAC87U)
 	si_gpioout(sih, TURBO_LED_GPIO, 0, GPIO_DRV_PRIORITY);
 #endif
 }
@@ -298,11 +307,11 @@ extern void GPIO_INIT(void)
 	sih = si_kattach(SI_OSH);
 	ASSERT(sih);
 	si_gpiocontrol(sih, PWR_LED_GPIO, 0, GPIO_DRV_PRIORITY);
-#ifdef RTAC68U
+#if defined(RTAC68U) || defined(RTAC87U)
 	si_gpiocontrol(sih, TURBO_LED_GPIO, 0, GPIO_DRV_PRIORITY);
 #endif
 	si_gpioouten(sih, PWR_LED_GPIO, 0, GPIO_DRV_PRIORITY);
-#ifdef RTAC68U
+#if defined(RTAC68U) || defined(RTAC87U)
 	si_gpioouten(sih, TURBO_LED_GPIO, 0, GPIO_DRV_PRIORITY);
 #endif
 }
@@ -312,16 +321,16 @@ extern void LEDOFF(void)
 	sih = si_kattach(SI_OSH);
 	ASSERT(sih);
 	si_gpioouten(sih, PWR_LED_GPIO, PWR_LED_GPIO, GPIO_DRV_PRIORITY);
-#ifdef RTAC68U
+#if defined(RTAC68U) || defined(RTAC87U)
 	si_gpioouten(sih, TURBO_LED_GPIO, TURBO_LED_GPIO, GPIO_DRV_PRIORITY);
 #endif
 	si_gpioout(sih, PWR_LED_GPIO, PWR_LED_GPIO, GPIO_DRV_PRIORITY);
-#ifdef RTAC68U
+#if defined(RTAC68U) || defined(RTAC87U)
 	si_gpioout(sih, TURBO_LED_GPIO, TURBO_LED_GPIO, GPIO_DRV_PRIORITY);
 #endif
 }
 #if 0
-#ifdef RTAC68U
+#if defined(RTAC68U) || defined(RTAC87U)
 extern void OTHERLEDOFF(void)
 {
         sih = si_kattach(SI_OSH);
@@ -525,7 +534,7 @@ ui_cmd_go(ui_cmdline_t *cmd, int argc, char *argv[])
         GPIO_INIT();
         LEDON();
 #if 0
-#ifdef RTAC68U
+#if defined(RTAC68U) || defined(RTAC87U)
 	OTHERLEDOFF();
 #endif
 #endif

@@ -74,6 +74,7 @@ COMPRESSED_CFE := 1
 RESCUE_MODE := 1        # disable for tmp
 RTAC68U := 0
 PATYPE := 0
+MTDSIZE := 32
 
 # HND source base
 SRCBASE := $(shell cd ../../../.. && pwd)
@@ -127,11 +128,23 @@ endif
 ifeq ($(strip $(RTAC68U)),1)
 CFLAGS += -DRTAC68U
 endif
+ifeq ($(strip $(RTAC87U)),1)
+CFLAGS += -DRTAC87U
+endif
 ifeq ($(strip $(RTN18U)),1)
 CFLAGS += -DRTN18U
 endif
 ifeq ($(strip $(COMPRESSED_CFE)),1)
 CFLAGS += -DCOMPRESSED_CFE
+endif
+ifeq ($(MTDSIZE),32)
+CFLAGS += -D"CONFIG_LINUX_MTD=32"
+endif
+ifeq ($(MTDSIZE),64)
+CFLAGS += -D"CONFIG_LINUX_MTD=64"
+endif
+ifeq ($(MTDSIZE),128)
+CFLAGS += -D"CONFIG_LINUX_MTD=128"
 endif
 
 # Toolchain prefix 

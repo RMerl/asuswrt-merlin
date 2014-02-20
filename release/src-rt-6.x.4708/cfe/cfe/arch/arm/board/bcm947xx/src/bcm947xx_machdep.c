@@ -32,6 +32,14 @@
 extern bool si_arm_setclock(si_t *sih, uint32 armclock, uint32 ddrclock, uint32 axiclock);
 extern int cpu_turbo_mode;
 
+#ifdef RTAC87U
+#define	PWR_LED_GPIO	(1 << 1)	// GPIO 1
+#define	USB_LED_GPIO	(1 << 0)	// GPIO 0
+#define	TURBO_LED_GPIO	(1 << 4)	// GPIO 4
+#define	USB3_LED_GPIO	(1 << 14)	// GPIO 14
+#define USB_PWR1_GPIO	(1 << 9)	// GPIO 9
+#else	/* not RTAC87U */
+
 #ifndef RTN18U
 #define	PWR_LED_GPIO	(1 << 3)	// GPIO 3
 #else	/* RT-N18U */
@@ -70,6 +78,8 @@ extern int cpu_turbo_mode;
 #define USB_PWR1_GPIO	(1 << 13)	// GPIO 13
 #endif
 
+#endif	/* end of RTAC87U */
+
 void
 board_pinmux_init(si_t *sih)
 {
@@ -90,16 +100,18 @@ board_pinmux_init(si_t *sih)
 	si_gpioouten(sih, TURBO_LED_GPIO, TURBO_LED_GPIO, GPIO_DRV_PRIORITY);
 #endif
 #ifndef RTN18U
+#ifndef RTAC87U
 	si_gpioouten(sih, WL5G_LED_GPIO, WL5G_LED_GPIO, GPIO_DRV_PRIORITY);
+#endif
 	si_gpioouten(sih, USB3_LED_GPIO, USB3_LED_GPIO, GPIO_DRV_PRIORITY);
 #endif
-#ifndef RTAC68U
+#if !defined(RTAC68U) && !defined(RTAC87U)
 	si_gpioouten(sih, WAN_LED_GPIO, WAN_LED_GPIO, GPIO_DRV_PRIORITY);
 	si_gpioouten(sih, LAN_LED_GPIO, LAN_LED_GPIO, GPIO_DRV_PRIORITY);
 #endif
 #ifndef RTN18U				// for RT-AC56U & RT-AC68U
 	si_gpioouten(sih, USB_PWR1_GPIO, USB_PWR1_GPIO, GPIO_DRV_PRIORITY);
-#ifndef RTAC68U
+#if !defined(RTAC68U) && !defined(RTAC87U)
 	si_gpioouten(sih, USB_PWR2_GPIO, USB_PWR2_GPIO, GPIO_DRV_PRIORITY);
 #endif
 #endif
@@ -115,16 +127,18 @@ board_pinmux_init(si_t *sih)
 	si_gpioout(sih, TURBO_LED_GPIO, 0, GPIO_DRV_PRIORITY);
 #endif
 #ifndef RTN18U				// for RT-AC56U & RT-AC68U to enable USB power
+#ifndef RTAC87U
 	si_gpioout(sih, WL5G_LED_GPIO, WL5G_LED_GPIO, GPIO_DRV_PRIORITY);
+#endif
 	si_gpioout(sih, USB3_LED_GPIO, USB3_LED_GPIO, GPIO_DRV_PRIORITY);
 #endif
-#ifndef RTAC68U
+#if !defined(RTAC68U) && !defined(RTAC87U)
 	si_gpioout(sih, WAN_LED_GPIO, WAN_LED_GPIO, GPIO_DRV_PRIORITY);
 	si_gpioout(sih, LAN_LED_GPIO, LAN_LED_GPIO, GPIO_DRV_PRIORITY);
 #endif
 #ifndef RTN18U				// for RT-AC56U & RT-AC68U to enable USB power
 	si_gpioout(sih, USB_PWR1_GPIO, USB_PWR1_GPIO, GPIO_DRV_PRIORITY);
-#ifndef RTAC68U
+#if !defined(RTAC68U) && !defined(RTAC87U)
 	si_gpioout(sih, USB_PWR2_GPIO, USB_PWR2_GPIO, GPIO_DRV_PRIORITY);
 #endif
 #endif

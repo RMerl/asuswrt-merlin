@@ -3,7 +3,7 @@
  * AES encrypt/decrypt wrapper functions used around Rijndael reference
  * implementation
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2014, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -11,9 +11,10 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: aes.c 241182 2011-02-17 21:50:03Z $
+ * $Id: aes.c 385542 2013-02-15 23:17:03Z $
  */
 
+#include <bcm_cfg.h>
 #include <typedefs.h>
 
 #ifdef BCMDRIVER

@@ -1,7 +1,7 @@
 /*
  * Broadcom 53xx RoboSwitch device driver.
  *
- * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmrobo.c 428037 2013-10-07 14:50:53Z $
+ * $Id: bcmrobo.c 448163 2014-01-13 13:21:00Z $
  */
 
 
@@ -216,6 +216,9 @@ do { \
 		break; \
 	bcm_mdelay(1); \
 } while (1)
+
+/* a flag to control Manage Mode enable/disable */
+static bool mang_mode_en = FALSE;
 
 #define RXTX_FLOW_CTRL_MASK	0x3	/* 53125 flow control capability mask */
 #define RXTX_FLOW_CTRL_SHIFT	4	/* 53125 flow contorl capability offset */
@@ -2012,6 +2015,12 @@ bcm_robo_enable_switch(robo_info_t *robo)
 	/* Switch Mode register (Page 0, Address 0x0B) */
 	robo->ops->read_reg(robo, PAGE_CTRL, REG_CTRL_MODE, &val8, sizeof(val8));
 
+	if (!mang_mode_en) {
+		/* Set unmanaged mode if no any other GMAC enable mang mode */
+		val8 &= (~(1 << 0));
+		robo->ops->write_reg(robo, PAGE_CTRL, REG_CTRL_MODE, &val8, sizeof(val8));
+	}
+
 	/* Bit 1 enables switching/forwarding */
 	if (!(val8 & (1 << 1))) {
 		/* Set unmanaged mode */
@@ -2129,6 +2138,15 @@ bcm_robo_enable_switch(robo_info_t *robo)
 				robo->ops->write_reg(robo, PAGE_VLAN, REG_VLAN_CTRL5,
 					&val8, sizeof(val8));
 
+				/* Switch Mode Register (Page 0, Address 0x0B): Set Managed Mode */
+				val8 = 0;
+				robo->ops->read_reg(robo, PAGE_CTRL, REG_CTRL_MODE,
+					&val8, sizeof(val8));
+				val8 |= (1 << 0);	/* SW_FWDG_MODE Managed Mode */
+				robo->ops->write_reg(robo, PAGE_CTRL, REG_CTRL_MODE,
+					&val8, sizeof(val8));
+				mang_mode_en = TRUE;
+
 				/* Enable ports 5 and 7 for SMP dual core 3 GMAC setup */
 
 				/* Port 5 GMII Port States Override Register
@@ -2184,14 +2202,6 @@ bcm_robo_enable_switch(robo_info_t *robo)
 		/* Disable CFP by default */
 		val8 = 0x0;
 		robo->ops->write_reg(robo, PAGE_CFP, REG_CFP_CTL_REG, &val8, sizeof(val8));
-
-		/* Switch Mode Register (Page 0, Address 0x0B): Managed and SW Fwding */
-		val8 = 0;
-		robo->ops->read_reg(robo, PAGE_CTRL, REG_CTRL_MODE, &val8, sizeof(val8));
-		val8 |=
-			(1 << 1) |		/* SW_FWDG_EN Frame Forwarding is enabled */
-			(1 << 0);		/* SW_FWDG_MODE Managed Mode */
-		robo->ops->write_reg(robo, PAGE_CTRL, REG_CTRL_MODE, &val8, sizeof(val8));
 	}
 
 	/* Disable management interface access */

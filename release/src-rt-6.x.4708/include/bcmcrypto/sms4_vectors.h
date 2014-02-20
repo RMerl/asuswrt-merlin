@@ -3,7 +3,7 @@
  * sms4_vectors.h
  * SMS4 block cipher test vectors
  *
- * Copyright (C) 2013, Broadcom Corporation
+ * Copyright (C) 2014, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;

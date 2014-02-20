@@ -429,7 +429,7 @@ static int _tftp_readmore(tftp_info_t *info)
 	    }
 
 	ebuf_get_u16_be(buf,block);
-	if (block != (info->tftp_blknum+1)) {
+	if (block != ((info->tftp_blknum+1) % 0x10000)) {
 	    udp_free(buf);
 	    continue;
 	    }
@@ -540,7 +540,7 @@ static int _tftp_writemore(tftp_info_t *info)
 	    }
 
 	ebuf_get_u16_be(buf,block);
-	if (block != (info->tftp_blknum)) {
+	if (block != ((info->tftp_blknum+1) % 0x10000)) {
 	    udp_free(buf);
 	    continue;
 	    }

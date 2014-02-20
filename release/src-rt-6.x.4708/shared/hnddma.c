@@ -2,7 +2,7 @@
  * Generic Broadcom Home Networking Division (HND) DMA module.
  * This supports the following chips: BCM42xx, 44xx, 47xx .
  *
- * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: hnddma.c 423696 2013-09-13 00:56:28Z $
+ * $Id: hnddma.c 442497 2013-12-11 19:47:56Z $
  */
 
 #include <bcm_cfg.h>
@@ -1390,7 +1390,7 @@ _dma_rxfill(dma_info_t *di)
 		/* Do a cached write instead of uncached write since DMA_MAP
 		 * will flush the cache.
 		*/
-		*(uint16 *)(PKTDATA(di->osh, p)) = 0;
+		*(uint32 *)(PKTDATA(di->osh, p)) = 0;
 #if defined(linux) && (defined(BCM47XX_CA9) || defined(__mips__))
 		DMA_MAP(di->osh, PKTDATA(di->osh, p), sizeof(uint16), DMA_TX, NULL, NULL);
 #endif
