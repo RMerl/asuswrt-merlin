@@ -62,6 +62,7 @@ init_nflash_mtd_partitions(hndnand_t *nfl, struct mtd_info *mtd, size_t size);
 struct mtd_partition *nflash_parts;
 #endif
 
+int nospare;
 /* Mutexing is version-dependent */
 extern struct nand_hw_control *nand_hwcontrol_lock_init(void);
 

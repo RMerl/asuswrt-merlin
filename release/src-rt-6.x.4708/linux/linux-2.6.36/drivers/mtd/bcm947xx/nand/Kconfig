@@ -15,3 +15,9 @@ config MTD_NFLASH
 	bool "Broadcom Flash support for legacy MTD partition"
 	help
 	  This enables support for Broadcom legacy MTD partition.
+
+config LINUX_MTD
+	int "Linux MTD size (MB)"
+	default "32"
+	help
+	  This can change MTD SIZE (MB), ASUS support!
