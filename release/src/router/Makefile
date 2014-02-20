@@ -2861,7 +2861,8 @@ netatalk-3.0.5/stamp-h1: openssl libgcrypt-1.5.1 db-4.8.30
 	--program-prefix= \
 	--with-ssl-dir=$(TOP)/openssl \
 	--disable-static \
-	--with-libgcrypt-dir=$(TOP)/libgcrypt-1.5.1
+	--with-libgcrypt-dir=$(TOP)/libgcrypt-1.5.1 \
+	--without-dtrace
 	touch $@
 
 netatalk-3.0.5: netatalk-3.0.5/stamp-h1
