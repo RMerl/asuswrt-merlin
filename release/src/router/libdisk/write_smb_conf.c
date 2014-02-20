@@ -273,7 +273,7 @@ int main(int argc, char *argv[])
         fprintf(fp, "socket options = TCP_NODELAY SO_KEEPALIVE SO_RCVBUF=65536 SO_SNDBUF=65536\n");
 #endif
 	fprintf(fp, "obey pam restrictions = no\n");
-	fprintf(fp, "use spne go = no\n");		// ASUS add
+	fprintf(fp, "use spnego = no\n");		// ASUS add
 	fprintf(fp, "client use spnego = no\n");	// ASUS add
 //	fprintf(fp, "client use spnego = yes\n");  // ASUS add
 	fprintf(fp, "disable spoolss = yes\n");		// ASUS add
