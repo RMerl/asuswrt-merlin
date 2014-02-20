@@ -3,7 +3,7 @@
  *
  * This file implements the chip-specific routines for the GMAC core.
  *
- * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: etcgmac.c 427480 2013-10-03 19:09:47Z $
+ * $Id: etcgmac.c 436117 2013-11-13 06:54:29Z $
  */
 
 #include <et_cfg.h>
@@ -351,7 +351,8 @@ chipattach(etc_info_t *etc, void *osh, void *regsva)
 
 #ifndef _CFE_
 	/* override dma parameters, corerev 4 dma channel 1,2 and 3 default burstlen is 0. */
-	if (etc->corerev >= 4) {
+	/* corerev 4,5: NS Ax; corerev 6: BCM43909 no HW prefetch; corerev 7: NS B0 */
+	if (etc->corerev == 4 || etc->corerev == 5) {
 #define DMA_CTL_TX 0
 #define DMA_CTL_RX 1
 
@@ -1419,8 +1420,14 @@ chiptx(ch_t *ch, void *p0)
 		PKTSETLEN(ch->osh, p0, GMAC_MIN_FRAMESIZE);
 
 	/* queue the packet based on its priority */
-	if (ch->etc->qos)
-		q = etc_up2tc(PKTPRIO(p0));
+	if (ch->etc->qos) {
+		if (ch->etc->corerev != 4 && ch->etc->corerev != 5) {
+			q = etc_up2tc(PKTPRIO(p0));
+		}
+		else {
+			q = TC_BE;
+		}
+	}
 
 	ASSERT(q < NUMTXQ);
 

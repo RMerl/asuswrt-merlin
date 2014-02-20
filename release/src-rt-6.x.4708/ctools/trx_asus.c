@@ -11,7 +11,7 @@
 
 #define TRX_MAGIC		0x30524448
 #define TRX_MAX_OFFSET		4
-#define TRX_MAX_LEN		((32 * 1024 * 1024) - ((256 + 128) * 1024))		// 32MB - (256K cfe + 128K cfg)
+#define TRX_MAX_LEN		((64 * 1024 * 1024) - ((256 + 128) * 1024))		// 64MB - (256K cfe + 128K cfg)
 
 typedef struct {
 	uint32_t magic;

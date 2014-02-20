@@ -389,9 +389,9 @@ devpath0=pci/1/1
 0:maxp2ga1=106
 0:maxp2ga2=106
 # 2GHz PA Parameters
-0:pa2ga0=0xff4a,0x1bbc,0xfcb4
-0:pa2ga1=0xff49,0x1b5a,0xfcb9
-0:pa2ga2=0xff4e,0x1b0d,0xfccb
+0:pa2ga0=0xff4a,0x19fc,0xfcdb
+0:pa2ga1=0xff49,0x1a9a,0xfcca
+0:pa2ga2=0xff4e,0x1a8d,0xfcd6
 
 # Power-Per-Rate settings:
 0:cckbw202gpo=0
@@ -428,7 +428,7 @@ devpath0=pci/1/1
 
 
 # Bootloader version
-bl_version=2.0.0.5
+bl_version=2.0.0.6
 
 # for NAND flash
 bootflags=1
