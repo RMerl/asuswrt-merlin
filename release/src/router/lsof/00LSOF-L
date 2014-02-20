@@ -1,0 +1,100 @@
+
+		    The Lsof Mailing List, lsof-l
+
+Information on lsof is available via a GNU Mailman mailing list, named
+lsof-l.  The server is located on the host rcac.purdue.edu.
+
+
+Subscribing
+===========
+
+You may subscribe to the lsof-l mailing list by sending e-mail to:
+
+  lsof-l-subscribe@rcac.purdue.edu
+
+The body of your e-mail may be empty.  You will receive a confirmation
+reply, explaining one further step you must take to complete your
+subscription.
+
+The list manager uses the e-mail address and real name in the "From:"
+line of your request to set those values in your subscription.  If you
+want different values in your subscription, consult the Mailman help
+information to learn how to specify them on your subscription request.
+(See the next "Get Help" section on how to obtain Mailman help
+information.)
+
+
+Get Help
+========
+
+More information about the rcac.purdue.edu GNU Mailman server is
+available by sending e-mail to lsof-l-request@rcac.purdue.edu with
+"help" in the subject line.  The body of your e-mail may be empty.
+
+The other information will be delivered by return e-mail.
+
+You can also obtain information on the Mailman e-mail commands in
+section 3.2 of the GNU Mailman documentation at:
+
+  http://www.gnu.org/software/mailman/mailman-member/mailman-member.html
+
+
+The Web Interface
+=================
+
+There is a web interface at:
+
+  https://lists.rcac.purdue.edu/listinfo/lsof-l
+
+You can use it to manage your lsof-l list entry.
+
+
+Posting and Moderation
+======================
+
+Once you have subscribed to lsof-l (and have an e-mail confirmation
+that your subscription was accepted), you may post messages to the list
+by sending e-mail directly to:
+
+  lsof-l@rcac.purdue.edu
+
+I moderate the lsof-l mailing list and try to keep its traffic low,
+mainly limiting it to announcements of new revisions, patches and
+security issues.  Postings don't appear until I've approved them.
+
+
+Send Bug Reports to Me Via E-Mail
+=================================
+
+DON'T SEND BUG REPORTS TO lsof-l.  Send them directly to me via e-mail
+at <abe@purdue.edu>.  Make sure lsof appears in the "Subject:" line and
+make sure you first read the "Bug Reports" section of the 00README file
+of the lsof distribution.
+
+
+Unsubscribing
+=============
+
+You can unsubscribe from lsof-l by sending e-mail to:
+
+  lsof-l-unsubscribe@rcac.purdue.edu
+
+The body of your e-mail may be empty.  You will receive a confirmation
+reply, explaining one further step you must take to complete the
+removal of your subscription.
+
+
+Archive
+=======
+
+There is an archive; use the link:
+
+  https://lists.rcac.purdue.edu/listinfo/lsof-l
+
+The archive link is the first one on the web page.  You will need the
+password you received or set when you subscribed, or later set via
+lsof-l-request or the web interface.
+
+
+Vic Abell <abe@purdue.edu>
+May 8, 2008
