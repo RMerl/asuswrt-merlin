@@ -2847,7 +2847,6 @@ db-4.8.30-clean:
 
 #netatalk-3.0.5
 netatalk-3.0.5/stamp-h1: openssl libgcrypt-1.5.1 db-4.8.30
-	touch $(TOP)/netatalk-3.0.5/*
 	cd $(TOP)/netatalk-3.0.5 && \
 	$(CONFIGURE) CPPFLAGS="-I$(TOP)/db-4.8.30/build_unix -I$(TOP)/libgcrypt-1.5.1/src" \
 	LDFLAGS="-L$(TOP)/db-4.8.30/build_unix/.libs -L$(TOP)/libgcrypt-1.5.1/src/.libs" \
