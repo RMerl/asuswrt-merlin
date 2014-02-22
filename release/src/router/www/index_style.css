@@ -43,6 +43,29 @@ body {
 	background:url(images/New_ui/title_bg.png) 0 0 no-repeat;
 	margin:0px auto;
 }	
+.banner41{
+	width:998px;
+	height:54px;
+	background:url(images/New_ui/title_bg.png) 0 0 no-repeat;
+	margin:0px auto;
+	content: "";
+	z-index: 1;
+	-webkit-transform: rotate(-5deg);
+	transform: rotate(-5deg);
+	-webkit-box-shadow: 0 35px 200px #F42;
+	box-shadow: 0 35px 200px #F42;
+	-webkit-transition: all 0.5s linear;
+	transition: all 0.5s linear;
+}
+
+.banner41:hover{
+	-webkit-box-shadow: 0 35px 200px #27F;
+	box-shadow: 0 35px 200px #27F;
+	-webkit-transition: all 0.5s linear;
+	transition: all 0.5s linear;
+	-webkit-transform: rotate(5deg);
+	transform: rotate(5deg);
+}
 
 #banner3{
 	width:983px;

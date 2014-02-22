@@ -384,7 +384,11 @@ function show_banner(L3){// L3 = The third Level of Menu
 	banner_code +='<input type="hidden" name="wan_unit" value="<% get_wan_unit(); %>">\n';
 	banner_code +='</form>\n';
 
-	banner_code +='<div class="banner1" align="center"><img src="images/New_ui/asustitle.png" width="218" height="54" align="left">\n';
+	if(JS_timeObj.getDate() == 1 && JS_timeObj.getMonth()+1 == 4) {
+	        banner_code +='<div class="banner41" align="center"><img src="images/New_ui/asustitle.png" width="218" height="54" align="left">\n';
+	} else {
+	        banner_code +='<div class="banner1" align="center"><img src="images/New_ui/asustitle.png" width="218" height="54" align="left">\n';
+	}
 	banner_code +='<div style="margin-top:13px;margin-left:-90px;*margin-top:0px;*margin-left:0px;" align="center"><span id="modelName_top" onclick="this.focus();" class="modelName_top"><#Web_Title2#></span></div>';
 
 	// logout, reboot
