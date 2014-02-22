@@ -622,6 +622,7 @@ ac_includes_default="\
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
 BUNDLED_LIBTOM
+LIBTOM_LIBS
 CRYPTLIB
 EGREP
 GREP
@@ -5900,14 +5901,9 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_tommath_mp_exptmod" >&5
 $as_echo "$ac_cv_lib_tommath_mp_exptmod" >&6; }
 if test "x$ac_cv_lib_tommath_mp_exptmod" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBTOMMATH 1
-_ACEOF
-
-  LIBS="-ltommath $LIBS"
-
+  LIBTOM_LIBS="$LIBTOM_LIBS -ltommath"
 else
-  as_fn_error $? "Missing system libtomcrypt and --disable-bundled-libtom was specified" "$LINENO" 5
+  as_fn_error $? "Missing system libtommath and --disable-bundled-libtom was specified" "$LINENO" 5
 fi
 
 			{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for register_cipher in -ltomcrypt" >&5
@@ -5947,12 +5943,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_tomcrypt_register_cipher" >&5
 $as_echo "$ac_cv_lib_tomcrypt_register_cipher" >&6; }
 if test "x$ac_cv_lib_tomcrypt_register_cipher" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBTOMCRYPT 1
-_ACEOF
-
-  LIBS="-ltomcrypt $LIBS"
-
+  LIBTOM_LIBS="$LIBTOM_LIBS -ltomcrypt"
 else
   as_fn_error $? "Missing system libtomcrypt and --disable-bundled-libtom was specified" "$LINENO" 5
 fi
@@ -5999,12 +5990,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_tommath_mp_exptmod" >&5
 $as_echo "$ac_cv_lib_tommath_mp_exptmod" >&6; }
 if test "x$ac_cv_lib_tommath_mp_exptmod" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBTOMMATH 1
-_ACEOF
-
-  LIBS="-ltommath $LIBS"
-
+  LIBTOM_LIBS="$LIBTOM_LIBS -ltommath"
 else
   BUNDLED_LIBTOM=1
 fi
@@ -6046,12 +6032,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_tomcrypt_register_cipher" >&5
 $as_echo "$ac_cv_lib_tomcrypt_register_cipher" >&6; }
 if test "x$ac_cv_lib_tomcrypt_register_cipher" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBTOMCRYPT 1
-_ACEOF
-
-  LIBS="-ltomcrypt $LIBS"
-
+  LIBTOM_LIBS="$LIBTOM_LIBS -ltomcrypt"
 else
   BUNDLED_LIBTOM=1
 fi
@@ -6066,6 +6047,7 @@ if test $BUNDLED_LIBTOM = 1 ; then
 $as_echo "#define BUNDLED_LIBTOM /**/" >>confdefs.h
 
 fi
+
 
 
 

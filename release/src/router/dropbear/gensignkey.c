@@ -26,7 +26,7 @@ static int buf_writefile(buffer * buf, const char * filename) {
 	while (buf->pos != buf->len) {
 		int len = write(fd, buf_getptr(buf, buf->len - buf->pos),
 				buf->len - buf->pos);
-		if (errno == EINTR) {
+		if (len == -1 && errno == EINTR) {
 			continue;
 		}
 		if (len <= 0) {

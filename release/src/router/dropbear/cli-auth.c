@@ -41,16 +41,6 @@ void cli_authinitialise() {
 /* Send a "none" auth request to get available methods */
 void cli_auth_getmethods() {
 	TRACE(("enter cli_auth_getmethods"))
-#ifdef CLI_IMMEDIATE_AUTH
-	ses.authstate.authtypes = AUTH_TYPE_PUBKEY;
-    if (getenv(DROPBEAR_PASSWORD_ENV)) {
-		ses.authstate.authtypes |= AUTH_TYPE_PASSWORD | AUTH_TYPE_INTERACT;
-	}
-	if (cli_auth_try() == DROPBEAR_SUCCESS) {
-		TRACE(("skipped initial none auth query"))
-		return;
-	}
-#endif
 	CHECKCLEARTOWRITE();
 	buf_putbyte(ses.writepayload, SSH_MSG_USERAUTH_REQUEST);
 	buf_putstring(ses.writepayload, cli_opts.username, 
@@ -60,6 +50,26 @@ void cli_auth_getmethods() {
 	buf_putstring(ses.writepayload, "none", 4); /* 'none' method */
 
 	encrypt_packet();
+
+#ifdef DROPBEAR_CLI_IMMEDIATE_AUTH
+	/* We can't haven't two auth requests in-flight with delayed zlib mode
+	since if the first one succeeds then the remote side will 
+	expect the second one to be compressed. 
+	Race described at
+	http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/zlib-openssh.html
+	*/
+	if (ses.keys->trans.algo_comp != DROPBEAR_COMP_ZLIB_DELAY) {
+		ses.authstate.authtypes = AUTH_TYPE_PUBKEY;
+		if (getenv(DROPBEAR_PASSWORD_ENV)) {
+			ses.authstate.authtypes |= AUTH_TYPE_PASSWORD | AUTH_TYPE_INTERACT;
+		}
+		if (cli_auth_try() == DROPBEAR_SUCCESS) {
+			TRACE(("skipped initial none auth query"))
+			/* Note that there will be two auth responses in-flight */
+			cli_ses.ignore_next_auth_response = 1;
+		}
+	}
+#endif
 	TRACE(("leave cli_auth_getmethods"))
 }
 
@@ -150,31 +160,46 @@ void recv_msg_userauth_failure() {
 	TRACE(("<- MSG_USERAUTH_FAILURE"))
 	TRACE(("enter recv_msg_userauth_failure"))
 
+	if (ses.authstate.authdone) {
+		TRACE(("leave recv_msg_userauth_failure, already authdone."))
+		return;
+	}
+
 	if (cli_ses.state != USERAUTH_REQ_SENT) {
 		/* Perhaps we should be more fatal? */
 		dropbear_exit("Unexpected userauth failure");
 	}
 
+	/* When DROPBEAR_CLI_IMMEDIATE_AUTH is set there will be an initial response for 
+	the "none" auth request, and then a response to the immediate auth request. 
+	We need to be careful handling them. */
+	if (cli_ses.ignore_next_auth_response) {
+		TRACE(("ignore next response, state set to USERAUTH_REQ_SENT"))
+		cli_ses.state = USERAUTH_REQ_SENT;
+	} else  {
+		cli_ses.state = USERAUTH_FAIL_RCVD;
+		cli_ses.lastauthtype = AUTH_TYPE_NONE;
 #ifdef ENABLE_CLI_PUBKEY_AUTH
-	/* If it was a pubkey auth request, we should cross that key 
-	 * off the list. */
-	if (cli_ses.lastauthtype == AUTH_TYPE_PUBKEY) {
-		cli_pubkeyfail();
-	}
+		/* If it was a pubkey auth request, we should cross that key 
+		 * off the list. */
+		if (cli_ses.lastauthtype == AUTH_TYPE_PUBKEY) {
+			cli_pubkeyfail();
+		}
 #endif
 
 #ifdef ENABLE_CLI_INTERACT_AUTH
-	/* If we get a failure message for keyboard interactive without
-	 * receiving any request info packet, then we don't bother trying
-	 * keyboard interactive again */
-	if (cli_ses.lastauthtype == AUTH_TYPE_INTERACT
-			&& !cli_ses.interact_request_received) {
-		TRACE(("setting auth_interact_failed = 1"))
-		cli_ses.auth_interact_failed = 1;
-	}
+		/* If we get a failure message for keyboard interactive without
+		 * receiving any request info packet, then we don't bother trying
+		 * keyboard interactive again */
+		if (cli_ses.lastauthtype == AUTH_TYPE_INTERACT
+				&& !cli_ses.interact_request_received) {
+			TRACE(("setting auth_interact_failed = 1"))
+			cli_ses.auth_interact_failed = 1;
+		}
 #endif
+	}
 
-	cli_ses.lastauthtype = AUTH_TYPE_NONE;
+	cli_ses.ignore_next_auth_response = 0;
 
 	methods = buf_getstring(ses.payload, &methlen);
 
@@ -227,13 +252,14 @@ void recv_msg_userauth_failure() {
 	}
 
 	m_free(methods);
-
-	cli_ses.state = USERAUTH_FAIL_RCVD;
 		
 	TRACE(("leave recv_msg_userauth_failure"))
 }
 
 void recv_msg_userauth_success() {
+	/* This function can validly get called multiple times
+	if DROPBEAR_CLI_IMMEDIATE_AUTH is set */
+
 	TRACE(("received msg_userauth_success"))
 	/* Note: in delayed-zlib mode, setting authdone here 
 	 * will enable compression in the transport layer */

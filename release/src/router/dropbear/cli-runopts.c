@@ -617,7 +617,7 @@ static void parse_hostname(const char* orighostarg) {
 		cli_opts.username = m_strdup(cli_opts.own_user);
 	}
 
-	port = strchr(cli_opts.remotehost, '%');
+	port = strchr(cli_opts.remotehost, '^');
 	if (!port)  {
 		/* legacy separator */
 		port = strchr(cli_opts.remotehost, '/');
