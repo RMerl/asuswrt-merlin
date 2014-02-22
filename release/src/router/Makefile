@@ -652,11 +652,6 @@ endif
 
 	cd $(TARGETDIR)/lib/modules/*/kernel/drivers/net && mv bcm57xx/* . && rm -rf bcm57xx || true
 
-# Temporary, as we don't have up-to-date linkable objects from Asus, so use prebuilt modules (RM)
-ifneq ($(RTCONFIG_BCMARM),y)
-	cp emf/emf.ko $(TARGETDIR)/lib/modules/*/kernel/drivers/net/emf/
-	cp emf/igs.ko $(TARGETDIR)/lib/modules/*/kernel/drivers/net/igs/
-endif
 	cd $(TARGETDIR)/lib/modules/*/kernel/drivers/net && mv emf$(BCMEX)/* . && rm -rf emf$(BCMEX) || true
 	cd $(TARGETDIR)/lib/modules/*/kernel/drivers/net && mv igs$(BCMEX)/* . && rm -rf igs$(BCMEX) || true
 ifeq ($(RTAC53U),y)
