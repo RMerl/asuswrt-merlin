@@ -1653,47 +1653,43 @@ padding-top:1px;
 	border-bottom-left-radius: 5px;
 }
 
-#notiDiv0{
-	position: absolute;
-	visibility: visible;
-	z-index: 500;
-	top: 108px;
-	left: 930px;
-	*left: 900px;
-	background-image: none;	
-}
-
 #notiDiv{
+	position: absolute;
 	filter:alpha(opacity=95);
 	opacity:.95;
-	z-index: 500;
+	z-index: 98;
+	width:250px;
+	margin-top:15px;
+	margin-left:-70px;
 }
+
 #notiDiv_table3{
 	-webkit-border-radius: 5px;
 	-moz-border-radius: 5px;
-	behavior: url(/PIE.htc);
 	border-radius: 5px;
 	-moz-box-shadow: 3px 3px 4px #333;
 	-webkit-box-shadow: 3px 3px 4px #333;
 	box-shadow: 3px 3px 4px #000;
-	-ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#333333')";
-	filter: progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#333333');
+	behavior: url(/PIE.htc);
+	*behavior: !important;
 }
+
 #notiDiv_table4{
 	-webkit-border-radius: 5px;
 	-moz-border-radius: 5px;
-	behavior: url(/PIE.htc);
 	border-radius: 5px;
+	behavior: url(/PIE.htc);
 }
+
 #notiDiv_table5{
 	behavior: url(/PIE.htc);
 	-webkit-border-bottom-right-radius: 5px;
 	-webkit-border-bottom-left-radius: 5px;
 	-moz-border-radius-bottomright: 5px;
 	-moz-border-radius-bottomleft: 5px;
-	behavior: url(/PIE.htc);
 	border-radius: 5px 5px 5px 5px ;
 	margin:3px 0px 0px 3px ;
+	behavior: url(/PIE.htc);
 }
 
 .aidisk1_table{

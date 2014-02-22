@@ -367,7 +367,9 @@ int led_control(int which, int mode)
 				use_gpio = led_5g_gpio;
                         } else {
                                 use_gpio = led_5g_gpio;
-                        }
+			}
+			if(nvram_match("5g_fail", "1"))
+				return -1;
 			break;
 #ifdef RTCONFIG_LAN4WAN_LED
 		case LED_LAN1:

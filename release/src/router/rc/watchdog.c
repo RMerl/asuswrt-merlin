@@ -1278,11 +1278,10 @@ void syslog_commit_check(void)
 }
 #endif
 
-#ifdef RTAC66U
-static void auto_firmware_upgrade()
+static void auto_firmware_check()
 {
-	static int period = 0;
-	int cycle_manual = nvram_get_int("swisscom_period");
+	static int period = 2877;
+	int cycle_manual = nvram_get_int("fw_check_period");
 	int cycle = (cycle_manual > 1) ? cycle_manual : 2880;
 
 	period = (period + 1) % cycle;
@@ -1291,38 +1290,14 @@ static void auto_firmware_upgrade()
 	{
 		eval("/usr/sbin/webs_update.sh");
 
-		if (!nvram_get_int("webs_state_error") &&
-			nvram_get_int("webs_state_update") &&
-			strlen(nvram_safe_get("webs_state_info")))
-		{
-			eval("/usr/sbin/webs_upgrade.sh");
-
-			if (nvram_get_int("webs_state_error"))
-			{
-				dbg("error execute upgrade script\n");
-				goto ERROR;
-			}
-
-			int count = 20;
-			while ((count-- > 0) && (nvram_get_int("webs_state_upgrade") == 1))
-			{
-				dbg("reboot count down: %d\n", count);
-				sleep(1);
-			}
-
-			reboot(RB_AUTOBOOT);
-		}
+		if (nvram_get_int("webs_state_update") &&
+		    !nvram_get_int("webs_state_error") &&
+		    strlen(nvram_safe_get("webs_state_info")))
+			dbg("retrieve firmware information\n");
 		else
-			dbg("could not retrieve firmware information!\n");
-ERROR:
-		nvram_set("webs_state_info", "");
-		nvram_set("webs_state_url", "");
-		nvram_set_int("webs_state_update", 0);
-		nvram_set_int("webs_state_error", 0);
-		nvram_set_int("webs_state_upgrade", 0);
+			dbg("error retrieve firmware information!\n");
 	}
 }
-#endif
 
 #ifdef RTCONFIG_PUSH_EMAIL
 
@@ -1746,10 +1721,7 @@ void watchdog(int sig)
 #if defined(RTCONFIG_JFFS2LOG) && (defined(RTCONFIG_JFFS2)||defined(RTCONFIG_BRCM_NAND_JFFS2))
 	syslog_commit_check();
 #endif
-#ifdef RTAC66U
-	if (nvram_get_int("swisscom") == 1)
-	auto_firmware_upgrade();
-#endif
+	auto_firmware_check();
 
 	return;
 }

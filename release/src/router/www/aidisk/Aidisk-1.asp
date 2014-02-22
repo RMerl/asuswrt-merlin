@@ -20,12 +20,11 @@ var ddns_enable = '<% nvram_get("ddns_enable_x"); %>';
 var ddns_server = '<% nvram_get("ddns_server_x"); %>';
 var ddns_hostname = '<% nvram_get("ddns_hostname_x"); %>';
 var format_of_first_partition = parent.pool_types()[0]; //"ntfs";
-var st_ftp_mode = '<% nvram_get("st_ftp_mode"); %>';
 function initial(){
 	parent.hideLoading();
 	showdisklink();
 
-	if(st_ftp_mode == 1)
+	if(FTP_mode == 1)
 		$("noFTP_Hint").style.display = "";
 }
 

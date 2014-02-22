@@ -992,6 +992,8 @@ define BusyboxOptions
 			echo "CONFIG_E2FSCK=n" >>$(1); \
 			sed -i "/CONFIG_FSCK_MINIX/d" $(1); \
 			echo "CONFIG_FSCK_MINIX=n" >>$(1); \
+			sed -i "/CONFIG_MKE2FS/d" $(1); \
+			echo "CONFIG_MKE2FS=n" >>$(1); \
 			sed -i "/CONFIG_FDISK/d" $(1); \
 			echo "CONFIG_FDISK=y" >>$(1); \
 			sed -i "/CONFIG_FEATURE_FDISK_WRITABLE/d" $(1); \
@@ -1039,6 +1041,36 @@ define BusyboxOptions
 		sed -i "/CONFIG_TRACEROUTE6/d" $(1); \
 		echo "CONFIG_TRACEROUTE6=y" >>$(1); \
 	fi; \
+	if [ "$(RTN11P)" = "y" ]; then \
+		sed -i "/CONFIG_LESS/d" $(1); \
+		echo "# CONFIG_LESS is not set" >>$(1); \
+		sed -i "/CONFIG_DU\b/d" $(1); \
+		echo "# CONFIG_DU is not set" >>$(1); \
+		sed -i "/CONFIG_HEAD/d" $(1); \
+		echo "# CONFIG_HEAD is not set" >>$(1); \
+		sed -i "/CONFIG_TAIL/d" $(1); \
+		echo "# CONFIG_TAIL is not set" >>$(1); \
+		sed -i "/CONFIG_BASENAME/d" $(1); \
+		echo "# CONFIG_BASENAME is not set" >>$(1); \
+		sed -i "/CONFIG_FEATURE_DEVFS/d" $(1); \
+		echo "# CONFIG_FEATURE_DEVFS is not set" >>$(1); \
+		sed -i "/CONFIG_BLKID/d" $(1); \
+		echo "# CONFIG_BLKID is not set" >>$(1); \
+		sed -i "/CONFIG_TELNET\b/d" $(1); \
+		echo "# CONFIG_TELNET is not set" >>$(1); \
+		sed -i "/CONFIG_FEATURE_LS_COLOR\b/d" $(1); \
+		echo "# CONFIG_FEATURE_LS_COLOR is not set" >>$(1); \
+		sed -i "/CONFIG_CUT/d" $(1); \
+		echo "# CONFIG_CUT is not set" >>$(1); \
+		sed -i "/CONFIG_CROND/d" $(1); \
+		echo "# CONFIG_CROND is not set" >>$(1); \
+		sed -i "/CONFIG_MD5SUM/d" $(1); \
+		echo "# CONFIG_MD5SUM is not set" >>$(1); \
+		sed -i "/CONFIG_AWK/d" $(1); \
+		echo "# CONFIG_AWK is not set" >>$(1); \
+		sed -i "/CONFIG_WC/d" $(1); \
+		echo "# CONFIG_WC is not set" >>$(1); \
+	else \
 	if [ "$(SLIM)" = "y" ]; then \
 		sed -i "/CONFIG_AWK/d" $(1); \
 		echo "# CONFIG_AWK is not set" >>$(1); \
@@ -1116,6 +1148,7 @@ define BusyboxOptions
 			echo "CONFIG_SENDMAIL=y" >>$(1); \
 		fi; \
 	fi; \
+	fi; \
 	if [ "$(DISKTEST)" = "y" ]; then \
 		sed -i "/CONFIG_HDPARM/d" $(1); \
 		echo "CONFIG_HDPARM=y" >>$(1); \
@@ -1183,6 +1216,50 @@ define KernelConfig
 		echo "CONFIG_CPU_MIPS32_R2=y" >>$(1); \
 		sed -i "/CONFIG_CPU_MIPSR1/d" $(1); \
 		echo "CONFIG_CPU_MIPSR2=y" >>$(1); \
+	fi; \
+	if [ "$(RTN11P)" = "y" ]; then \
+		sed -i "/CONFIG_USB/d" $(1); \
+		echo "# CONFIG_USB is not set" >>$(1); \
+		sed -i "/CONFIG_USB_SUPPORT/d" $(1); \
+		echo "# CONFIG_USB_SUPPORT is not set" >>$(1); \
+		sed -i "/CONFIG_USB_ARCH_HAS_OHCI/d" $(1); \
+		echo "# CONFIG_USB_ARCH_HAS_OHCI is not set" >>$(1); \
+		sed -i "/CONFIG_USB_ARCH_HAS_EHCI/d" $(1); \
+		echo "# CONFIG_USB_ARCH_HAS_EHCI is not set" >>$(1); \
+		sed -i "/CONFIG_SWAP/d" $(1); \
+		echo "# CONFIG_SWAP is not set" >>$(1); \
+		sed -i "/CONFIG_RD_GZIP/d" $(1); \
+		echo "# CONFIG_RD_GZIP is not set" >>$(1); \
+		sed -i "/CONFIG_SCSI/d" $(1); \
+		echo "# CONFIG_SCSI is not set" >>$(1); \
+		sed -i "/CONFIG_EXT2_FS/d" $(1); \
+		echo "# CONFIG_EXT2_FS is not set" >>$(1); \
+		sed -i "/CONFIG_EXT3_FS/d" $(1); \
+		echo "# CONFIG_EXT3_FS is not set" >>$(1); \
+		sed -i "/CONFIG_FAT_FS/d" $(1); \
+		echo "# CONFIG_FAT_FS is not set" >>$(1); \
+		sed -i "/CONFIG_VFAT_FS/d" $(1); \
+		echo "# CONFIG_VFAT_FS is not set" >>$(1); \
+		sed -i "/CONFIG_REISERFS_FS/d" $(1); \
+		echo "# CONFIG_REISERFS_FS is not set" >>$(1); \
+		sed -i "/CONFIG_JFFS2_FS/d" $(1); \
+		echo "# CONFIG_JFFS2_FS is not set" >>$(1); \
+		sed -i "/CONFIG_FUSE_FS/d" $(1); \
+		echo "# CONFIG_FUSE_FS is not set" >>$(1); \
+		sed -i "/CONFIG_CONFIGFS_FS/d" $(1); \
+		echo "# CONFIG_CONFIGFS_FS is not set" >>$(1); \
+		sed -i "/CONFIG_SERIAL_NONSTANDARD/d" $(1); \
+		echo "# CONFIG_SERIAL_NONSTANDARD is not set" >>$(1); \
+		sed -i "/CONFIG_NETWORK_FILESYSTEMS/d" $(1); \
+		echo "# CONFIG_NETWORK_FILESYSTEMS is not set" >>$(1); \
+		sed -i "/CONFIG_CC_OPTIMIZE_FOR_SIZE/d" $(1); \
+		echo "CONFIG_CC_OPTIMIZE_FOR_SIZE=y" >>$(1); \
+		sed -i "/CONFIG_KALLSYMS/d" $(1); \
+		echo "# CONFIG_KALLSYMS is not set" >>$(1); \
+		sed -i "/CONFIG_RALINK_TIMER/d" $(1); \
+		echo "# CONFIG_RALINK_TIMER is not set" >>$(1); \
+		sed -i "/CONFIG_BUG/d" $(1); \
+		echo "# CONFIG_BUG is not set" >>$(1); \
 	fi; \
 	if [ "$(USB)" = "" ]; then \
 		sed -i "/CONFIG_MSDOS_PARTITION/d" $(1); \

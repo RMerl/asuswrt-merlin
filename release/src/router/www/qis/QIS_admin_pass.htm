@@ -74,15 +74,6 @@ function QKinternettype_load_body(){
 				document.form.next_page.value = "/qis/QIS_manual_setting.htm";				
 			}
 		}
-		
-		if(WebDav_support){
-			document.getElementById('http_username_span').style.display = "none";
-			document.form.http_username.disabled = false;
-		}else{
-			document.getElementById('http_username_span').style.display = "";
-			document.form.http_username.disabled = true;
-			document.getElementById('http_username').parentNode.style.display = "none";
-		}
 	}
 	
 	document.form.http_username.value= accounts[0];	
@@ -267,7 +258,6 @@ function pass_checked(obj){
 		<tr>
 		  <th width="200"><#Router_Login_Name#></th>
 		  <td class="QISformtd">
-				<div id="http_username_span" name="http_username_span" style="color:#FFFFFF;margin-left:8px;"><% nvram_get("http_username"); %></div>
 				<div>
 					<input type="text" id="http_username" name="http_username" tabindex="1" style="height:25px;" class="input_15_table" maxlength="20" value="<% nvram_get("http_username"); %>">
 					<br/><span id="alert_msg1"></span>

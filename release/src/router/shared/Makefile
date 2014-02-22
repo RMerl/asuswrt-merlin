@@ -47,10 +47,6 @@ endif
 
 CFLAGS += -DTRAFFIC_MGMT
 
-ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U),y)
-CFLAGS += -DRA_ESW
-endif
-
 OBJS = shutils.o linux_timer.o defaults.o model.o rtstate.o boardapi.o
 OBJS += misc.o version.o files.o strings.o process.o 
 OBJS += bin_sem_asus.o semaphore.o pids.o notify_rc.o discover.o
@@ -63,7 +59,8 @@ OBJS += flash_mtd.o api-ralink.o
 ifeq ($(RTCONFIG_RALINK_RT3052),y)
 OBJS += ra3052.o
 endif
-ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U),y)
+ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U)$(RTN11P),y)
+CFLAGS += -DRA_ESW
 OBJS += mt7620.o
 else
 OBJS += rtkswitch.o

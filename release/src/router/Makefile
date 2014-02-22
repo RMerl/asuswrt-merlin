@@ -12,6 +12,7 @@
 #
 
 include common.mak
+include $(SRCBASE)/.config
 
 ifneq ($(RTCONFIG_RALINK),y)
 export CFLAGS += -DBCMWPA2
@@ -102,7 +103,7 @@ SEP=echo "\033[41;1m   $@   \033[0m"
 #
 obj-$(RTCONFIG_DMALLOC) += dmalloc
 
-ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U),y)
+ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U)$(RTN11P),y)
 obj-y += reg
 endif
 ifneq ($(RTCONFIG_BCMARM),y)
@@ -117,8 +118,10 @@ ifneq ($(findstring linux-3.x,$(LINUXDIR)),)
 obj-y += rt2880_app
 else
 obj-y += ated
+ifneq ($(RTN11P),y)
 obj-y += flash
-ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U),y)
+endif
+ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U)$(RTN11P),y)
 else
 obj-y += hw_nat
 endif
@@ -132,17 +135,14 @@ ifneq ($(or $(findstring linux-2.6.36,$(LINUXDIR)),$(findstring linux-3.x,$(LINU
 obj-y += iptables-1.4.x
 obj-y += iproute2-3.x
 else
-ifeq ($(RTAC53U),y)
-obj-y += iptables-1.4.x
-obj-y += iproute2-3.x
-else
 obj-y += iptables
 obj-y += iproute2
 endif
-endif
 
 obj-y += rc
+ifeq ($(RTCONFIG_USB),y)
 obj-y += rom
+endif
 obj-y += others
 obj-y += busybox
 obj-y += httpd
@@ -320,12 +320,9 @@ obj-$(RTCONFIG_TIMEMACHINE) += libgpg-error-1.10
 obj-$(RTCONFIG_TIMEMACHINE) += libgcrypt-1.5.1
 obj-$(RTCONFIG_TIMEMACHINE) += db-4.8.30
 obj-$(RTCONFIG_TIMEMACHINE) += netatalk-3.0.5
-ifeq ($(RTCONFIG_TIMEMACHINE),y)
+ifeq ($(or $(RTCONFIG_TIMEMACHINE),$(RTCONFIG_MDNS)),y)
 obj-$(RTCONFIG_TIMEMACHINE) += avahi-0.6.31
 obj-$(RTCONFIG_TIMEMACHINE) += expat-2.0.1
-else ifeq ($(RTCONFIG_MDNS),y)
-obj-$(RTCONFIG_MDNS) += avahi-0.6.31
-obj-$(RTCONFIG_MDNS) += expat-2.0.1
 else
 obj-$(RTCONFIG_MEDIA_SERVER) += avahi-0.6.31
 obj-$(RTCONFIG_MEDIA_SERVER) += expat-2.0.1
@@ -413,6 +410,7 @@ obj-$(UBIFS) += util-linux lzo zlib
 ifeq ($(RTCONFIG_RALINK),y)
 obj-$(RA_SKU) += ra_SingleSKU
 endif
+obj-$(RTCONFIG_BCMARM) += wl$(BCMEX)
 
 #obj-y += bonnie
 
@@ -2754,6 +2752,12 @@ inotify-install: inotify
 
 inotify-clean:
 	-@$(MAKE) -C inotify clean
+
+wl$(BCMEX):
+	-@$(MAKE) -C wl_arm
+	
+wl$(BCMEX)-install:
+	@$(SEP)
 
 #libgpg-error-1.10
 libgpg-error-1.10/stamp-h1:

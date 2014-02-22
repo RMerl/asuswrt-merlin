@@ -122,7 +122,6 @@ int tnl_del_ioctl(const char *basedev, const char *name, void *p)
 	return err;
 }
 
-#ifndef NO_IPV6
 static int tnl_gen_ioctl(int cmd, const char *name, 
 			 void *p, int skiperr)
 {
@@ -146,6 +145,7 @@ int tnl_prl_ioctl(int cmd, const char *name, void *p)
 	return tnl_gen_ioctl(cmd, name, p, -1);
 }
 
+#ifndef NO_IPV6
 int tnl_6rd_ioctl(int cmd, const char *name, void *p)
 {
 	return tnl_gen_ioctl(cmd, name, p, -1);

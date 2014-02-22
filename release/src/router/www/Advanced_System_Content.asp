@@ -107,15 +107,6 @@ function initial(){
 		hide_https_lanport(document.form.http_enable.value);
 		hide_https_wanport(document.form.http_enable.value);
 	}	
-
-	if(WebDav_support){
-		document.getElementById('http_username_span').style.display = "none";
-		document.form.http_username.disabled = false;
-	}else{
-		document.getElementById('http_username_span').style.display = "";
-		document.form.http_username.disabled = true;
-		document.getElementById('http_username').parentNode.style.display = "none";
-	}
 	
 	if(wifi_tog_btn_support || wifi_hw_sw_support || sw_mode == 2 || sw_mode == 4){		// wifi_tog_btn && wifi_hw_sw && hide WPS button behavior under repeater mode
 			document.form.btn_ez_radiotoggle[0].disabled = true;
@@ -236,8 +227,8 @@ function validForm(){
 		document.form.http_username.select();
 		return false;
 	}else{
-                $("alert_msg1").style.display = "none";
-        }
+        $("alert_msg1").style.display = "none";
+    }
 
 	document.form.http_username.value = trim(document.form.http_username.value);
 
@@ -682,10 +673,10 @@ function show_http_clientlist(){
 }
 
 function deleteRow(r){
-  var i=r.parentNode.parentNode.rowIndex;
-  $('http_clientlist_table').deleteRow(i);
+	var i=r.parentNode.parentNode.rowIndex;
+	$('http_clientlist_table').deleteRow(i);
   
-  var http_clientlist_value = "";
+	var http_clientlist_value = "";
 	for(i=0; i<$('http_clientlist_table').rows.length; i++){
 		http_clientlist_value += "&#60";
 		http_clientlist_value += $('http_clientlist_table').rows[i].cells[0].innerHTML;
@@ -773,7 +764,6 @@ function setClientIP(ipaddr){
 	over_var = 0;
 }
 
-
 var over_var = 0;
 var isMenuopen = 0;
 
@@ -784,7 +774,6 @@ function hideClients_Block(){
 }
 
 function pullLANIPList(obj){
-	
 	if(isMenuopen == 0){		
 		obj.src = "/images/arrow-top.gif"
 		$("ClientList_Block_PC").style.display = 'block';		
@@ -800,7 +789,6 @@ function hideport(flag){
 	$("accessfromwan_port").style.display = (flag == 1) ? "" : "none";
 }
 
-
 //Viz add 2012.12 show url for https [start]
 function change_url(num, flag){
 	if(flag == 'https_lan'){
@@ -812,7 +800,6 @@ function change_url(num, flag){
 	}		
 }
 //Viz add 2012.12 show url for https [end]
-
 
 /* password item show or not */
 function pass_checked(obj){
@@ -916,8 +903,7 @@ function select_time_zone(){
         <tr>
           <th width="40%"><#Router_Login_Name#></th>
           <td>
-				  	<div id="http_username_span" name="http_username_span" style="color:#FFFFFF;margin-left:8px;"><% nvram_get("http_username"); %></div>
-						<div><input type="text" id="http_username" name="http_username" tabindex="1" style="height:25px;" class="input_15_table" maxlength="20"><br/><span id="alert_msg1"></span></div>
+				<div><input type="text" id="http_username" name="http_username" tabindex="1" style="height:25px;" class="input_15_table" maxlength="20"><br/><span id="alert_msg1"></span></div>
           </td>
         </tr>
 

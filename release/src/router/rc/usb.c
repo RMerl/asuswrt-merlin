@@ -67,9 +67,10 @@ char *find_sddev_by_mountpoint(char *mountpoint);
 #ifdef LINUX26
 void tune_bdflush(void)
 {
+	f_write_string("/proc/sys/vm/dirty_writeback_centisecs", "200", 0, 0);
+
 #ifndef RTCONFIG_BCMARM
 	f_write_string("/proc/sys/vm/dirty_expire_centisecs", "200", 0, 0);
-	f_write_string("/proc/sys/vm/dirty_writeback_centisecs", "200", 0, 0);
 #else
         printf("no tune_bdflush\n");
 #endif
@@ -1231,7 +1232,7 @@ done:
 #ifdef RTCONFIG_USB_MODEM
 		char usb_node[32], port_path[8];
 		char prefix[] = "usb_pathXXXXXXXXXXXXXXXXX_", tmp[100];
-		char vid[8], pid[8];
+		unsigned int vid, pid;
 
 		ptr = dev_name+5;
 
@@ -1243,11 +1244,8 @@ done:
 				if(strlen(nvram_safe_get(strcat_r(prefix, "_fs_path0", tmp))) <= 0)
 					nvram_set(tmp, ptr);
 
-				memset(vid, 0, 8);
-				strcpy(vid, nvram_safe_get(strcat_r(prefix, "_vid", tmp)));
-
-				memset(pid, 0, 8);
-				strcpy(pid, nvram_safe_get(strcat_r(prefix, "_pid", tmp)));
+				vid = strtoul(nvram_safe_get(strcat_r(prefix, "_vid", tmp)), NULL, 16);
+				pid = strtoul(nvram_safe_get(strcat_r(prefix, "_pid", tmp)), NULL, 16);
 
 				if(is_create_file_dongle(vid, pid)){
 					if(strcmp(nvram_safe_get("stop_sg_remove"), "1")){
@@ -2050,16 +2048,16 @@ _dprintf("%s: cmd=%s.\n", __FUNCTION__, cmd);
 
 	xstart("nmbd", "-D", "-s", "/etc/smb.conf");
 #ifdef RTCONFIG_BCMARM
-#ifdef SMP 
-        if (cpu_num > 1)
+#ifdef SMP
+	if (cpu_num > 1)
 		taskset_ret = cpu_eval(NULL, "1", "ionice", "-c1", "-n0", "smbd", "-D", "-s", "/etc/smb.conf");
-        else
+	else
 		taskset_ret = eval("ionice", "-c1", "-n0", "smbd", "-D", "-s", "/etc/smb.conf");
 
         if (taskset_ret != 0)
 #endif
 #endif
-                xstart("smbd", "-D", "-s", "/etc/smb.conf");
+		xstart("smbd", "-D", "-s", "/etc/smb.conf");
 
 	logmessage("Samba Server", "daemon is started");
 

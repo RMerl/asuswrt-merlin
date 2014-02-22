@@ -779,37 +779,6 @@ restore_defaults(void)
 					break;
 			}
 		}
-#ifdef RTAC66U
-		if (nvram_get_int("swisscom") == 1)
-		{
-			/* AP mode by default*/
-			nvram_set("sw_mode", "3");
-			nvram_set("lan_proto", "dhcp");
-			nvram_set("lan_dnsenable_x", "1");
-
-			/* enable IGMP snooping */
-			nvram_set("emf_enable", "1");
-			nvram_set("wl0_igs", "1");
-			nvram_set("wl1_igs", "1");
-
-			/* misc */
-			nvram_set("time_zone", "MEZ-1DST");
-			nvram_set("w_Setting", "1");
-			nvram_set("x_Setting", "1");
-
-			unsigned char ssid[16];
-			unsigned char key[32];
-			generate_swisscom_setting(&ssid, &key);
-			nvram_set("wl0_ssid", ssid);
-			nvram_set("wl1_ssid", ssid);
-			nvram_set("wl0_auth_mode_x", "psk2");
-			nvram_set("wl1_auth_mode_x", "psk2");
-			nvram_set("wl0_crypto", "aes");
-			nvram_set("wl1_crypto", "aes");
-			nvram_set("wl0_wpa_psk", key);
-			nvram_set("wl1_wpa_psk", key);
-		}
-#endif
 	}
 
 	/* Commit values */
@@ -1551,6 +1520,7 @@ int init_nvram(void)
 		add_rc_support("mssid 2.4G 5G update");
 		break;
 
+#ifdef RTN65U
 	case MODEL_RTN65U:
 		nvram_set("boardflags", "0x100");	// although it is not used in ralink driver, set for vlan
 		nvram_set("vlan1hwname", "et0");	// vlan. used to get "%smacaddr" for compare and find parent interface.
@@ -1583,7 +1553,9 @@ int init_nvram(void)
 		add_rc_support("switchctrl");
 		add_rc_support("manual_stb");
 		break;
+#endif	/* RTN65U */
 
+#if defined(RTN67U)
 	case MODEL_RTN67U:
 		nvram_set("lan_ifname", "br0");
 		set_basic_ifname_vars("eth3", "eth2", "ra0", NULL, "usb", NULL, NULL, NULL, 0);
@@ -1610,7 +1582,9 @@ int init_nvram(void)
 		add_rc_support("switchctrl");
 		add_rc_support("manual_stb");
 		break;
+#endif	/* RTN67U */
 
+#if defined(RTN36U3)
 	case MODEL_RTN36U3:
 		nvram_set("lan_ifname", "br0");
 		set_basic_ifname_vars("eth3", "eth2", "ra0", NULL, "usb", NULL, NULL, NULL, 0);
@@ -1633,7 +1607,9 @@ int init_nvram(void)
 		add_rc_support("switchctrl");
 		add_rc_support("manual_stb");
 		break;
+#endif	/* RTN36U3 */
 
+#if defined(RTN56U)
 	case MODEL_RTN56U:
 		nvram_set("lan_ifname", "br0");
 
@@ -1690,6 +1666,7 @@ int init_nvram(void)
 		nvram_set("wl1_HT_TxStream", "2");
 		nvram_set("wl1_HT_RxStream", "3");
 		break;
+#endif	/* RTN56U */
 
 #if defined(RTN14U)
 	case MODEL_RTN14U:
@@ -1716,6 +1693,34 @@ int init_nvram(void)
 		if (nvram_match("wl_mssid", "1"))
 		add_rc_support("mssid");
 		add_rc_support("2.4G update usbX1");
+		add_rc_support("rawifi");
+		add_rc_support("switchctrl"); //for hwnat only
+		add_rc_support("manual_stb");
+		// the following values is model dep. so move it from default.c to here
+		nvram_set("wl0_HT_TxStream", "2");
+		nvram_set("wl0_HT_RxStream", "2");
+		break;
+#endif
+
+#if defined(RTN11P)
+	case MODEL_RTN11P:
+		nvram_set("boardflags", "0x100"); // although it is not used in ralink driver, set for vlan
+		nvram_set("vlan1hwname", "et0");  // vlan. used to get "%smacaddr" for compare and find parent interface.
+		nvram_set("vlan2hwname", "et0");  // vlan. used to get "%smacaddr" for compare and find parent interface.
+		nvram_set("lan_ifname", "br0");
+		set_basic_ifname_vars("vlan2", "vlan1", "ra0", NULL, NULL, "vlan1", NULL, "vlan3", 0);
+
+		nvram_set_int("btn_rst_gpio", 1|GPIO_ACTIVE_LOW);
+		nvram_set_int("btn_wps_gpio", 2|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_lan_gpio", 41|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_wan_gpio", 40|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_pwr_gpio", 43|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_wps_gpio", 43|GPIO_ACTIVE_LOW);
+//		nvram_set_int("led_2g_gpio", 72|GPIO_ACTIVE_LOW);
+
+		nvram_set("ct_max", "300000"); // force
+
+		add_rc_support("2.4G update");
 		add_rc_support("rawifi");
 		add_rc_support("switchctrl"); //for hwnat only
 		add_rc_support("manual_stb");
@@ -1893,6 +1898,7 @@ int init_nvram(void)
 		break;
 #endif // RTCONFIG_DSL
 
+#if defined(RTN13U)
 	case MODEL_RTN13U:
 		nvram_set("boardflags", "0x310"); // although it is not used in ralink driver
 		nvram_set("lan_ifname", "br0");
@@ -1908,6 +1914,7 @@ int init_nvram(void)
 		nvram_set_int("led_pwr_gpio", 7|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_wps_gpio", 7|GPIO_ACTIVE_LOW);
 		break;
+#endif	/* RTN13U */
 #endif // RTCONFIG_RALINK
 
 #ifdef CONFIG_BCMWL5
@@ -2742,10 +2749,7 @@ int init_nvram(void)
 		add_rc_support("manual_stb");
 		add_rc_support("pwrctrl");
 		add_rc_support("WIFI_LOGO");
-#ifdef RTAC66U
-		if (nvram_get_int("swisscom") == 1)
-		add_rc_support("swisscom");
-#endif
+
 		break;
 
 	case MODEL_RTN14UHP:
@@ -2955,14 +2959,64 @@ int init_nvram(void)
 		break;
 	case MODEL_RTAC53U:
 		nvram_set("lan_ifname", "br0");
+
+#if 0
+		set_basic_ifname_vars("eth0", "vlan1", "eth1", "eth2", "usb", NULL, "vlan2", "vlan3", 0);
+#else
+#ifdef RTCONFIG_DUALWAN
+		if(get_wans_dualwan()&WANSCAP_WAN && get_wans_dualwan()&WANSCAP_LAN)
+			nvram_set("wandevs", "vlan2 vlan3");
+		else
+			nvram_set("wandevs", "et0");
+
+		set_lan_phy("vlan1");
+
+		if(!(get_wans_dualwan()&WANSCAP_2G))
+			add_lan_phy("eth1");
+		if(!(get_wans_dualwan()&WANSCAP_5G))
+			add_lan_phy("eth2");
+
+		if(nvram_get("wans_dualwan")){
+			set_wan_phy("");
+			for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
+				if(get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_LAN){
+					if(get_wans_dualwan()&WANSCAP_WAN)
+						add_wan_phy("vlan3");
+					else
+						add_wan_phy("eth0");
+				}
+				else if(get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_2G)
+					add_wan_phy("eth1");
+				else if(get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_5G)
+					add_wan_phy("eth2");
+				else if(get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_WAN){
+					if(nvram_get("switch_wantag") && !nvram_match("switch_wantag", "") && !nvram_match("switch_wantag", "none")){
+						sprintf(wan_if, "vlan%s", nvram_safe_get("switch_wan0tagid"));
+						add_wan_phy(wan_if);
+					}
+					else if(get_wans_dualwan()&WANSCAP_LAN)
+						add_wan_phy("vlan2");
+					else
+						add_wan_phy("eth0");
+				}
+				else if(get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_USB)
+					add_wan_phy("usb");
+			}
+		}
+		else
+			nvram_set("wan_ifnames", "eth0 usb");
+#else
 		nvram_set("lan_ifnames", "vlan1 eth1 eth2");
 		nvram_set("wan_ifnames", "eth0");
+#endif
 		nvram_set("wl_ifnames", "eth1 eth2");
 		nvram_set("wl0_vifnames", "wl0.1 wl0.2 wl0.3");
 		nvram_set("wl1_vifnames", "wl1.1 wl1.2 wl1.3");
+#endif
 		nvram_set("sb/1/ledbh3", "0x87");
 		nvram_set("0:ledbh9", "0x87");
 		nvram_set_int("led_pwr_gpio", 0|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_wps_gpio", 0|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_wan_gpio", 1|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_lan_gpio", 2|GPIO_ACTIVE_LOW);
 		nvram_set_int("btn_wps_gpio", 7|GPIO_ACTIVE_LOW);
@@ -2973,8 +3027,12 @@ int init_nvram(void)
 		if(!nvram_get("ct_max")) 
 			nvram_set("ct_max", "300000");
 		add_rc_support("2.4G 5G mssid usbX1 update");
+		add_rc_support("switchctrl");
 		break;
 #endif // CONFIG_BCMWL5
+	default:
+		cprintf("############################ unknown model #################################\n");
+		break;
 	}
 
 #if defined(CONFIG_BCMWL5) && !defined(RTCONFIG_DUALWAN)
@@ -3557,6 +3615,8 @@ static void sysinit(void)
 		run_shell(1, 0);
 	}
 
+	init_syspara();// for system dependent part (befor first get_model())
+
 	model = get_model();
 #ifdef RTCONFIG_RALINK
 	// avoid the process like fsck to devour the memory.
@@ -3569,6 +3629,9 @@ static void sysinit(void)
 	// At the Broadcom platform, restarting wireless won't use too much memory.
 	if(model==MODEL_RTN53) {
 		f_write_string("/proc/sys/vm/min_free_kbytes", "2048", 0, 0);
+	}
+	else if(model==MODEL_RTAC53U) {
+		f_write_string("/proc/sys/vm/min_free_kbytes", "4096", 0, 0);
 	}
 #endif
 #ifdef RTCONFIG_16M_RAM_SFP
@@ -3615,7 +3678,6 @@ static void sysinit(void)
 #ifdef RTCONFIG_DSL
 	check_upgrade_from_old_ui();
 #endif	
-	init_syspara();// for system dependent part
 	init_nvram();  // for system indepent part after getting model	
 	restore_defaults(); // restore default if necessary 
 	init_gpio();   // for system dependent part
@@ -4081,7 +4143,7 @@ int reboothalt_main(int argc, char *argv[])
 	cprintf(reboot ? "Rebooting..." : "Shutting down...");
 	kill(1, reboot ? SIGTERM : SIGQUIT);
 
-#if defined(RTN14U) || defined(RTN65U) || defined(RTAC52U) || defined(RTAC51U)
+#if defined(RTN14U) || defined(RTN65U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)
 	def_reset_wait = 50;
 #endif
 	

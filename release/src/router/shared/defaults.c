@@ -456,7 +456,9 @@ struct nvram_tuple router_defaults[] = {
 
 #ifdef RTCONFIG_BCMWL6
 	{ "acs_ifnames", "", 0 },
-
+#ifdef RTAC68U
+	{ "acs_dfs", "0", 0},			/* disable DFS channels for acsd by default */
+#endif
 	{ "wl_wet_tunnel", "0", 0  },		/* Disable wet tunnel */
 
 	{ "dpsta_ifnames", "", 0  },

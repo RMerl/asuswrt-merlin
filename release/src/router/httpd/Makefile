@@ -20,11 +20,15 @@ endif
 
 export CFLAGS += -D$(MODEL)
 
+ifeq ($(RTN11P),y)
+CFLAGS += -DBAND_2G_ONLY
+endif
+
 ifeq ($(RTN14U),y)
 CFLAGS += -DBAND_2G_ONLY
 endif
 
-ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U),y)
+ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U)$(RTN11P),y)
 CFLAGS += -DRA_ESW
 endif
 

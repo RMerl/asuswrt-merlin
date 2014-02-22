@@ -659,10 +659,10 @@ int dhcp6c_state_main(int argc, char **argv)
 
 	if (!wait_action_idle(10)) return 1;
 
-	if (nvram_get_int("ipv6_dhcp_pd"))
-	nvram_set("ipv6_rtr_addr", getifaddr(nvram_safe_get("lan_ifname"), AF_INET6, 0));
-
-	if (nvram_get_int("ipv6_dhcp_pd")) {
+	if ((get_ipv6_service() == IPV6_NATIVE_DHCP) &&
+		nvram_get_int("ipv6_dhcp_pd")) {
+		nvram_set("ipv6_rtr_addr",
+			  getifaddr(nvram_safe_get("lan_ifname"), AF_INET6, 0));
 		p = (char *)ipv6_prefix(NULL);
 		if (*p) nvram_set("ipv6_prefix", p);
 	}

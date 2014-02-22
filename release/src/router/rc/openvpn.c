@@ -937,8 +937,8 @@ void start_vpnserver(int serverNum)
 			if ( useronly ) {
 				fprintf(fp, "client-cert-not-required\n");
 				fprintf(fp, "username-as-common-name\n");
-				fprintf(fp, "duplicate-cn\n");	//user share the same account
 			}
+			fprintf(fp, "duplicate-cn\n");
 		}
 
 		//sprintf(&buffer[0], "vpn_crt_server%d_ca", serverNum);

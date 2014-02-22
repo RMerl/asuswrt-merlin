@@ -566,7 +566,7 @@ function QKfinish_load_body(){
  	$("#password")[0].innerHTML = http_password;
 	
 	//NTP sync or not
-	if(parent.svc_ready == "0")
+	if('<% nvram_get("svc_ready"); %>' == '0')
 		document.getElementById('svc_hint_div').style.display = "";	
 
 	if(parent.ISMOBILE){

@@ -98,6 +98,12 @@ function initial(){
 	if(!band5g_support)	
 		$("wl_unit_field").style.display = "none";
 
+		
+	if(based_modelid == "RT-AC68U"){
+		if('<% nvram_get("wl_unit"); %>' == '1' && country == "EU")
+			$('dfs_checkbox').style.display = "";
+	}	
+
 	if(sw_mode == 2 || sw_mode == 4)
 		document.form.wl_subunit.value = ('<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>') ? 1 : -1;
 				
@@ -208,7 +214,7 @@ function applyRule(){
 			else	
 				document.form.wl_chanspec.value = document.form.wl_channel.value + document.form.wl_nctrlsb.value;
 		}	
-			
+
 		document.form.submit();
 	}
 } 
@@ -284,7 +290,7 @@ function checkBW(){
 				document.form.wl_bw.selectedIndex = 2;
 				
 			if (wl_channel_list_5g.getIndexByValue("165") >= 0 ) // rm option 165 if not Auto
-						document.form.wl_channel.remove(wl_channel_list_5g.getIndexByValue("165"));			
+				document.form.wl_channel.remove(wl_channel_list_5g.getIndexByValue("165"));			
 		}
 	}
 }
@@ -504,10 +510,10 @@ function regen_5G_mode(obj,flag){
 					<th><a id="wl_channel_select" class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 3);"><#WLANConfig11b_Channel_itemname#></a></th>
 					<td>
 				 		<select name="wl_channel" class="input_option" onChange="change_channel(this);"></select>
+						<span id="dfs_checkbox" style="display:none"><input type="checkbox" name="acs_dfs" onClick="document.form.acs_dfs.value=(this.checked==true)?1:0;"  value="<% nvram_get("acs_dfs"); %>" <% nvram_match("acs_dfs", "1", "checked"); %>>DFS Support</input></span>
 					</td>
-			  </tr>
+			  </tr> 
 		  	<!-- end -->
-
 				<tr id="wl_nctrlsb_field">
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 15);"><#WLANConfig11b_EChannel_itemname#></a></th>
 					<td>
@@ -636,7 +642,6 @@ function regen_5G_mode(obj,flag){
 <!--===================================Ending of Main Content===========================================-->
 
 	</td>
-	
 	<td width="10" align="center" valign="top"></td>
   </tr>
 </table>

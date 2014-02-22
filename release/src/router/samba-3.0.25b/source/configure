@@ -4470,9 +4470,9 @@ echo "${ECHO_T}$ac_cv_safe_to_define___extensions__" >&6; }
 #define __EXTENSIONS__ 1
 _ACEOF
 
-  cat >>confdefs.h <<\_ACEOF
-#define _POSIX_PTHREAD_SEMANTICS 1
-_ACEOF
+#  cat >>confdefs.h <<\_ACEOF
+##define _POSIX_PTHREAD_SEMANTICS 1
+#_ACEOF
 
 
 { echo "$as_me:$LINENO: checking whether byte ordering is bigendian" >&5

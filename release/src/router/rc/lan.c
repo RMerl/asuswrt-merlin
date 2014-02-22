@@ -1271,8 +1271,14 @@ void start_lan(void)
 				}
 #endif
 				// bring up interface
-				if (ifconfig(ifname, IFUP, NULL, NULL) != 0) continue;
-
+				if (ifconfig(ifname, IFUP, NULL, NULL) != 0){
+					if( strncmp(ifname, "eth2", 4)==0 && (
+					(get_model() == MODEL_RTAC56S) ||
+					(get_model() == MODEL_RTAC56U) ))
+						nvram_set("5g_fail", "1");      // gpio led
+					continue;
+				} else if(strncmp(ifname, "eth2", 4)==0)
+					nvram_unset("5g_fail");      // gpio led
 #ifdef RTCONFIG_RALINK
 				wlconf_ra(ifname);
 #endif

@@ -1101,7 +1101,7 @@ start_wan_if(int unit)
 	char nvram_name[32];
 	int i = 0;
 #ifdef RTCONFIG_USB_BECEEM
-	char uvid[8], upid[8];
+	unsigned int uvid, upid;
 #endif
 	int mtu;
 
@@ -1189,11 +1189,9 @@ _dprintf("RNDIS/Beceem: start_wan_if.\n");
 
 					if(!strcmp(nvram_safe_get(nvram_name), "modem")){
 						snprintf(nvram_name, 32, "usb_path%s_vid", port_path);
-						memset(uvid, 0, 8);
-						strncpy(uvid, nvram_safe_get(nvram_name), 8);
+						uvid = strtoul(nvram_safe_get(nvram_name), NULL, 16);
 						snprintf(nvram_name, 32, "usb_path%s_pid", port_path);
-						memset(upid, 0, 8);
-						strncpy(upid, nvram_safe_get(nvram_name), 8);
+						upid = strtoul(nvram_safe_get(nvram_name), NULL, 16);
 
 						if(is_samsung_dongle(1, uvid, upid)){
 							modprobe("tun");
@@ -1929,9 +1927,11 @@ void wan6_up(const char *wan_ifname)
 	switch (service) {
 	case IPV6_NATIVE:
 	case IPV6_NATIVE_DHCP:
-	case IPV6_MANUAL:
 		if ((nvram_get_int("ipv6_accept_ra") & 1) != 0)
 			set_intf_ipv6_accept_ra(wan_ifname, 1);
+		break;
+	case IPV6_MANUAL:
+		set_intf_ipv6_accept_ra(wan_ifname, 0);
 		break;
 	case IPV6_6RD:
 		update_6rd_info();
@@ -2199,7 +2199,7 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 	}
 #endif
 
-#if defined(RTN65U) || defined(RTN56U) || defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U)
+#if defined(RTN65U) || defined(RTN56U) || defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)
 	reinit_hwnat(wan_unit);
 #endif
 

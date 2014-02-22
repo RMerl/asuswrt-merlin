@@ -3603,6 +3603,7 @@ void generate_wl_para(int unit, int subunit)
 			else
 			{
 				if (get_model() == MODEL_RTAC66U || 
+					get_model() == MODEL_RTAC53U || 
 					get_model() == MODEL_RTAC56U || 
 					get_model() == MODEL_RTAC56S || 
 					get_model() == MODEL_RTAC68U || 

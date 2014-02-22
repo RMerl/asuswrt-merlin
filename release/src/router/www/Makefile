@@ -26,6 +26,7 @@ endif
 	rm -rf $(INSTALLDIR)/www/encoding_check.sh
 	rm -rf $(INSTALLDIR)/www/en_result.txt
 	rm -rf $(INSTALLDIR)/www/temp.dict
+	rm -rf $(INSTALLDIR)/www/model_patch
 	rm -rf $(INSTALLDIR)/www/.gitignore
 	rm -rf `find $(INSTALLDIR) -name "*.bak"`
 
@@ -54,6 +55,11 @@ else
 endif
 	echo " WWW FOR $(BUILD_NAME)"
 
+	rm -rf $(INSTALLDIR)/www/images/New_ui/asustitle_ie6.png
+#ifneq ($(RTCONFIG_FANCTRL),y)
+#	rm -rf $(INSTALLDIR)/www/Advanced_PerformanceTuning_Content.asp
+#	rm -rf $(INSTALLDIR)/www/fan.svg
+#endif
 ifeq ($(RTCONFIG_SFP),y)
 	rm -rf $(INSTALLDIR)/www/images/PrinterServer
 	rm -rf $(INSTALLDIR)/www/images/appinstall
@@ -102,6 +108,10 @@ ifeq ($(RTCONFIG_4M_SFP),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/rt.jpg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/re.jpg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/ap.jpg
+	rm -rf $(INSTALLDIR)/www/images/New_ui/mb.jpg
+endif
+ifneq ($(RTCONFIG_PROXYSTA),y)
+	rm -rf $(INSTALLDIR)/www/images/New_ui/mb.jpg
 endif
 ifeq ($(RTCONFIG_DSL),y)
 	rm -rf $(INSTALLDIR)/www/images/Model_producticon.png
@@ -116,6 +126,7 @@ ifneq ($(BUILD_NAME),DSL-N55U-B)
 ifneq ($(BUILD_NAME),RT-N56U)
 ifneq ($(RTCONFIG_CLOUDSYNC),y)
 	rm -rf $(INSTALLDIR)/www/images/cloudsync
+	rm -rf $(INSTALLDIR)/www/images/aicloud_logo.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/USBExt/*cloud*.png
 	rm -rf $(INSTALLDIR)/www/update_cloudstatus.asp
 	rm -rf $(INSTALLDIR)/www/get_webdavInfo.asp
@@ -131,6 +142,13 @@ else
 	rm -rf $(INSTALLDIR)/www/images/New_ui/ap.jpg
 endif
 
+ifneq ($(RTCONFIG_IPV6),y)
+	rm -rf $(INSTALLDIR)/www/Main_IPV6Status_Content.asp
+	rm -rf $(INSTALLDIR)/www/Advanced_IPv6_Content.asp
+	rm -rf $(INSTALLDIR)/www/update_IPv6state.asp
+	rm -rf $(INSTALLDIR)/www/Advanced_Firewall_IPv6_Content.asp
+endif
+
 ifeq ($(RTCONFIG_NO_USBSTORAGE),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/USBExt
 	rm -rf $(INSTALLDIR)/www/images/New_ui/aidisk
@@ -143,7 +161,7 @@ ifeq ($(RTCONFIG_NO_USBSTORAGE),y)
 	rm -rf $(INSTALLDIR)/www/gettree.asp
 	rm -rf $(INSTALLDIR)/www/images/Tree
 	# disk utility
-	rm -rf $(INSTALLDIR)/www/device-map/disk_utility.asp        
+	rm -rf $(INSTALLDIR)/www/device-map/disk_utility.asp
 	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/backgroud_move_8P_2.0.gif
 	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/white_04.gif
 	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/normal.png
@@ -158,7 +176,11 @@ ifneq ($(RTCONFIG_USB),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/map-iconmodem.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/map-iconUSBdisk.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/advancesetting
+	rm -rf $(INSTALLDIR)/www/images/WANunplug_usb.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/usbstatus.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/printstatus.png
 	rm -rf $(INSTALLDIR)/www/aidisk
+	rm -rf $(INSTALLDIR)/www/mediaserver.asp
 	rm -rf $(INSTALLDIR)/www/Advanced_AiDisk_ftp.asp
 	rm -rf $(INSTALLDIR)/www/Advanced_AiDisk_samba.asp
 	rm -rf $(INSTALLDIR)/www/Advanced_AiDisk_others.asp
@@ -195,6 +217,18 @@ ifneq ($(RTCONFIG_USB),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/orange.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/red.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/USB_2.png
+	rm -rf $(INSTALLDIR)/www/disk_msg.js
+	rm -rf $(INSTALLDIR)/www/disk_fsck.xml
+	rm -rf $(INSTALLDIR)/www/disk_scan.asp
+	rm -rf $(INSTALLDIR)/www/diskmon_test.asp
+	rm -rf $(INSTALLDIR)/www/disk_functions.js
+endif
+ifneq ($(MODEM),y)
+	-rm -f $(INSTALLDIR)/www/images/modem_unplug.png
+	-rm -f $(INSTALLDIR)/www/images/modem_plug.png
+	-rm -f $(INSTALLDIR)/www/qis/QIS_modem.htm
+	-rm -f $(INSTALLDIR)/www/qis/QIS_resetModem2.htm
+	-rm -f $(INSTALLDIR)/www/qis/QIS_resetModem.htm
 endif
 endif
 

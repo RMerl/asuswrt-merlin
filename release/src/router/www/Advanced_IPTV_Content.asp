@@ -248,41 +248,27 @@ function validForm(){
 }
 
 function applyRule(){
-	// dualwan LAN port should not equal to IPTV port
-	if (dualWAN_support) {
-		var tmp_pri_if = wans_dualwan_orig.split(" ")[0].toUpperCase();
-		var tmp_sec_if = wans_dualwan_orig.split(" ")[1].toUpperCase();	
-		if (tmp_pri_if != 'LAN' || tmp_sec_if != 'LAN') {
-			var port_conflict = false;
-			var iptv_port = document.form.switch_stb_x.value;
-			if (wans_lanport == "1") {
-				if (iptv_port == "1" || iptv_port == "5") {
-					port_conflict = true;
-				}
-			}
-			else if (wans_lanport == "2") {		
-				if (iptv_port == "2" || iptv_port == "5") {
-					port_conflict = true;
-				}
-			}
-			else if (wans_lanport == "3") {				
-				if (iptv_port == "3" || iptv_port == "6") {
-					port_conflict = true;
-				}
-			}
-			else if (wans_lanport == "4") {				
-				if (iptv_port == "4" || iptv_port == "6") {
-					port_conflict = true;
-				}
-			}
-			if (port_conflict) {
-				alert("<#RouterConfig_IPTV_conflict#>");
-				return;
-			}
-		}
-	}
+	// dualwan LAN port should not equal to IPTV port	
+	var tmp_pri_if = wans_dualwan_orig.split(" ")[0].toUpperCase();
+	var tmp_sec_if = wans_dualwan_orig.split(" ")[1].toUpperCase();	
 
-	if(!dsl_support) {	
+	if (tmp_pri_if == 'LAN' || tmp_sec_if == 'LAN'){
+		var port_conflict = false;
+		var iptv_port = document.form.switch_stb_x.value;
+		if(wans_lanport == iptv_port)
+			port_conflict = true;
+		else if( (wans_lanport == 1 || wans_lanport == 2) && iptv_port == 5)	
+			port_conflict = true;
+		else if( (wans_lanport == 3 || wans_lanport == 4) && iptv_port == 6)	
+			port_conflict = true;	
+	
+		if (port_conflict) {
+			alert("<#RouterConfig_IPTV_conflict#>");
+			return;
+		}
+	}		
+
+	if(!dsl_support){
 		if( (original_switch_stb_x != document.form.switch_stb_x.value) 
 		||  (original_switch_wantag != document.form.switch_wantag.value)
 		||  (original_switch_wan0tagid != document.form.switch_wan0tagid.value)

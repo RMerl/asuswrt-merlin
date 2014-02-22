@@ -867,7 +867,9 @@ static void add_ip6_lanaddr(void)
 		eval("ip", "-6", "addr", "add", ip, "dev", nvram_safe_get("lan_ifname"));
 	}
 
-	if (!nvram_get_int("ipv6_dhcp_pd")) {
+	if ((get_ipv6_service() == IPV6_MANUAL) ||
+	   ((get_ipv6_service() == IPV6_NATIVE_DHCP) && !nvram_get_int("ipv6_dhcp_pd")))
+	{
 		p = ipv6_prefix(NULL);
 		if (*p) nvram_set("ipv6_prefix", p);
 	}
@@ -1176,7 +1178,7 @@ void start_radvd(void)
 				next += sprintf(next, strlen(ipv6_dns_str) ? " %s" : "%s", p);
 			}
 
-			if ((get_ipv6_service() == IPV6_NATIVE_DHCP) && nvram_match("ipv6_dnsenable", "1"))
+			if ((service == IPV6_NATIVE_DHCP) && nvram_match("ipv6_dnsenable", "1"))
 				p = nvram_safe_get("ipv6_get_dns");
 			else
 				p = ipv6_dns_str;
@@ -1290,7 +1292,7 @@ void start_ipv6(void)
 	case IPV6_NATIVE:
 	case IPV6_MANUAL:
 	case IPV6_NATIVE_DHCP:
-		if (get_ipv6_service() == IPV6_NATIVE_DHCP)
+		if (service == IPV6_NATIVE_DHCP)
 		{
 			nvram_set("ipv6_prefix", "");
 			if (nvram_get_int("ipv6_dhcp_pd"))
@@ -1693,7 +1695,9 @@ int start_networkmap(int bootwait)
 	if (bootwait)
 		networkmap_argv[1] = "--bootwait";
 
+#ifndef RTCONFIG_RGMII_BRCM5301X
 	_eval(networkmap_argv, NULL, 0, &pid);
+#endif
 
 	return 0;
 }
@@ -3887,12 +3891,8 @@ again:
 #elif defined(RTCONFIG_TEMPROOTFS)
 				stop_lan_wl();
 #endif
-
 				if (!(r = build_temp_rootfs(TMP_ROOTFS_MNT_POINT)))
 					sw = 1;
-
-				/* isn't it already stopped in stop_uprage above? */
-				stop_wan();
 #ifdef RTCONFIG_DUAL_TRX
 				if (!nvram_match("nflash_swecc", "1"))
 				{
@@ -3900,11 +3900,6 @@ again:
 					eval("mtd-write", "-i", upgrade_file, "-d", "linux2");
 				}
 #endif
-				/* lighttpd* would be started again by restart_nasapps rc_service
-				 * that is triggered by hotplug.  Kill them or encounter SQUASHFS error.
-				 */
-				stop_all_webdav();
-
 				if (nvram_contains_word("rc_support", "nandflash"))	/* RT-AC56S,U/RT-AC68U/RT-N16UHP */
 					eval("mtd-write2", upgrade_file, "linux");
 				else
@@ -5371,6 +5366,7 @@ void set_acs_ifnames()
 	char word[256], *next;
 	char tmp[128], prefix[] = "wlXXXXXXXXXX_";
 	int unit;
+	int dfs_in_use = 0;
 
 	unit = 0;
 	memset(acs_ifnames, 0, sizeof(acs_ifnames));
@@ -5402,15 +5398,30 @@ void set_acs_ifnames()
 		nvram_set_int("wlready", 0);
 #endif
 
-	if (nvram_match("wl1_country_code", "EU") || nvram_match("wl1_country_code", "JP"))
+	if (nvram_match("wl1_country_code", "EU"))
+	{
+		if (nvram_match("acs_dfs", "1"))
+		{
+			nvram_set("wl1_acs_excl_chans", "");
+			dfs_in_use = 1;
+		}
+		else
+		{	/* exclude acsd from selecting chanspec 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80, 100, 100l, 100/80, 104, 104u, 104/80, 108, 108l, 108/80, 112, 112u, 112/80, 116, 132, 132l, 136, 136u, 140 */
+			nvram_set("wl1_acs_excl_chans",
+				  "0xd034,0xd836,0xe03a,0xd038,0xd936,0xe13a,0xd03c,0xd83e,0xe23a,0xd040,0xd93e,0xe33a,0xd064,0xd866,0xe06a,0xd068,0xd966,0xe16a,0xd06c,0xd86e,0xe26a,0xd070,0xd96e,0xe36a,0xd074,0xd084,0xd886,0xd088,0xd986,0xd08c");
+		}
+	}
+	else if (nvram_match("wl1_country_code", "JP"))
 	{
 		nvram_set("wl1_acs_excl_chans", "");
 	}
-	else	/* exclude acsd to select chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80 */
-	{
+	else
+	{	/* exclude acsd from selecting chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80 */
 		nvram_set("wl1_acs_excl_chans",
 			  "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a");
 	}
+
+	nvram_set_int("wl1_acs_dfs", dfs_in_use);
 }
 
 int
