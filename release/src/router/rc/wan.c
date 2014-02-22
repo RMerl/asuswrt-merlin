@@ -1500,12 +1500,12 @@ TRACE_PT("3g end.\n");
 					/* First set parent device if vlan was configured */
 					strncpy(ifv.device1, wan_ifname, IFNAMSIZ);
 					ifv.cmd = GET_VLAN_REALDEV_NAME_CMD;
-					if (ioctl(s SIOCGIFVLAN, &ifv) >= 0) {
-						strncpy(ifr.ifr_name, ifv.device2, IFNAMSIZ);
+					if (ioctl(s, SIOCGIFVLAN, &ifv) >= 0) {
+						strncpy(ifr.ifr_name, ifv.u.device2, IFNAMSIZ);
 						ifr.ifr_mtu = mtu + 8;
 						if (ioctl(s, SIOCSIFMTU, &ifr)) {
 							perror(wan_ifname);
-							logmessage("start_wan_if()", "Error setting MTU on %s to %d", ifv.device2, mtu);
+							logmessage("start_wan_if()", "Error setting MTU on %s to %d", ifv.u.device2, mtu);
 						}
 					}
 
