@@ -1495,7 +1495,7 @@ TRACE_PT("3g end.\n");
 
 			/* Increase WAN interface's MTU to allow pppoe MTU over 1492 (with 8 byte overhead) */
 			if ((strcmp(wan_proto, "pppoe") == 0) &&
-			    (mtu = nvram_get_int(strcat_r(prefix, "pppoe_mtu", tmp)) > 1492)) {
+			    ((mtu = nvram_get_int(strcat_r(prefix, "pppoe_mtu", tmp))) > 1492)) {
 				if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) >= 0) {
 					/* First set parent device if vlan was configured */
 					strncpy(ifv.device1, wan_ifname, IFNAMSIZ);
