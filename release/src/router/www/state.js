@@ -1395,9 +1395,9 @@ function show_top_status(){
 
 	if(swpjverno == ''){
 		if ((extendno == "") || (extendno == "0"))
-			showtext($("firmver"), firmver + "." + buildno);
+			showtext($("firmver"), buildno);
 		else
-			showtext($("firmver"), firmver + "." + buildno + '_' + extendno.split("-g")[0]);
+			showtext($("firmver"), buildno + '_' + extendno.split("-g")[0]);
 	}
 	else{
 		showtext($("firmver"), swpjverno + '_' + extendno);
