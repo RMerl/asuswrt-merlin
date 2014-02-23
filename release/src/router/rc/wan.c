@@ -1493,30 +1493,36 @@ TRACE_PT("3g end.\n");
 			/* Bring up WAN interface */
 			ifconfig(wan_ifname, IFUP, ipaddr, netmask);
 
-			/* Increase WAN interface's MTU to allow pppoe MTU over 1492 (with 8 byte overhead) */
-			if ((strcmp(wan_proto, "pppoe") == 0) &&
-			    ((mtu = nvram_get_int(strcat_r(prefix, "pppoe_mtu", tmp))) > 1492)) {
-				if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) >= 0) {
-					/* First set parent device if vlan was configured */
-					strncpy(ifv.device1, wan_ifname, IFNAMSIZ);
-					ifv.cmd = GET_VLAN_REALDEV_NAME_CMD;
-					if (ioctl(s, SIOCGIFVLAN, &ifv) >= 0) {
-						strncpy(ifr.ifr_name, ifv.u.device2, IFNAMSIZ);
+			/* Increase WAN interface's MTU to allow pppoe MTU/MRU over 1492 (with 8 byte overhead) */
+			if (strcmp(wan_proto, "pppoe") == 0) {
+				/* Compute maximum required MTU by taking the maximum of the pppoe MRU and MTU values */
+				int mru = nvram_get_int(strcat_r(prefix, "pppoe_mru", tmp));
+				mtu = nvram_get_int(strcat_r(prefix, "pppoe_mtu", tmp));
+				if (mru > mtu)
+					mtu = mru;
+				if (mtu > 1492) {
+					if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) >= 0) {
+						/* First set parent device if vlan was configured */
+						strncpy(ifv.device1, wan_ifname, IFNAMSIZ);
+						ifv.cmd = GET_VLAN_REALDEV_NAME_CMD;
+						if (ioctl(s, SIOCGIFVLAN, &ifv) >= 0) {
+							strncpy(ifr.ifr_name, ifv.u.device2, IFNAMSIZ);
+							ifr.ifr_mtu = mtu + 8;
+							if (ioctl(s, SIOCSIFMTU, &ifr)) {
+								perror(wan_ifname);
+								logmessage("start_wan_if()", "Error setting MTU on %s to %d", ifv.u.device2, mtu);
+							}
+						}
+
+						/* Set WAN device */
+						strncpy(ifr.ifr_name, wan_ifname, IFNAMSIZ);
 						ifr.ifr_mtu = mtu + 8;
 						if (ioctl(s, SIOCSIFMTU, &ifr)) {
 							perror(wan_ifname);
-							logmessage("start_wan_if()", "Error setting MTU on %s to %d", ifv.u.device2, mtu);
+							logmessage("start_wan_if()", "Error setting MTU on %s to %d", wan_ifname, mtu);
 						}
+						close(s);
 					}
-
-					/* Set WAN device */
-					strncpy(ifr.ifr_name, wan_ifname, IFNAMSIZ);
-					ifr.ifr_mtu = mtu + 8;
-					if (ioctl(s, SIOCSIFMTU, &ifr)) {
-						perror(wan_ifname);
-						logmessage("start_wan_if()", "Error setting MTU on %s to %d", wan_ifname, mtu);
-					}
-					close(s);
 				}
 			}
 
