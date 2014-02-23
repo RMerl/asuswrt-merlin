@@ -1104,7 +1104,6 @@ void start_radvd(void)
 		mtu = NULL;
 
 		switch (service) {
-		case IPV6_NATIVE_DHCP:
 		case IPV6_6TO4:
 		case IPV6_6IN4:
 		case IPV6_6RD:
