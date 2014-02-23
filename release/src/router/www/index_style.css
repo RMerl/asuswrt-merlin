@@ -48,14 +48,15 @@ body {
 	height:54px;
 	background:url(images/New_ui/title_bg.png) 0 0 no-repeat;
 	margin:0px auto;
-	content: "";
 	z-index: 1;
-	-webkit-transform: rotate(-5deg);
-	transform: rotate(-5deg);
+	-webkit-transform: rotate(5deg);
+	transform: rotate(5deg);
 	-webkit-box-shadow: 0 35px 200px #F42;
 	box-shadow: 0 35px 200px #F42;
-	-webkit-transition: all 0.5s linear;
-	transition: all 0.5s linear;
+	-webkit-transition: all 2s cubic-bezier(1,0,1,1);
+	transition: all 2s cubic-bezier(1,0,1,1);
+	-webkit-transform-origin: 0% 50%;
+	transform-origin: 0% 50%;
 }
 
 .banner41:hover{
@@ -63,8 +64,10 @@ body {
 	box-shadow: 0 35px 200px #27F;
 	-webkit-transition: all 0.5s linear;
 	transition: all 0.5s linear;
-	-webkit-transform: rotate(5deg);
-	transform: rotate(5deg);
+	-webkit-transform: rotate(0deg);
+	transform: rotate(0deg);
+	-webkit-transform-origin: 0% 50%;
+	transform-origin: 0% 50%;
 }
 
 #banner3{
