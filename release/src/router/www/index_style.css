@@ -46,6 +46,7 @@ body {
 .banner41{
 	width:998px;
 	height:54px;
+	position:relative;
 	background:url(images/New_ui/title_bg.png) 0 0 no-repeat;
 	margin:0px auto;
 	z-index: 1;
