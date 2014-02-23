@@ -53,6 +53,15 @@ function initial(){
 		$("model_id").innerHTML = odmpid;
 	else
 		$("model_id").innerHTML = productid;
+
+	var buildno = '<% nvram_get("buildno"); %>';
+	var firmver = '<% nvram_get("firmver"); %>'
+	var extendno = '<% nvram_get("extendno"); %>';
+	if ((extendno == "") || (extendno == "0"))
+		$("fwver").innerHTML = firmver + "." + buildno;
+	else
+		$("fwver").innerHTML =  firmver + "." + buildno + '_' + extendno.split("-g")[0];
+
 	update_temperatures();
 	hwaccel_state();
 	show_etherstate();
@@ -257,6 +266,11 @@ function show_etherstate(){
 						<th>Model</th>
 				        	<td id="model_id"><% nvram_get("productid"); %></td>
 					</tr>
+					<tr>
+						<th>Firmware Version</th>
+						<td id="fwver"></td>
+					</tr>
+
 					<tr>
 						<th>Firmware Build</th>
 						<td><% nvram_get("buildinfo"); %></td>
