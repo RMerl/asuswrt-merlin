@@ -1,0 +1,67 @@
+NTFS & HFS 8.9
+
+Support morden Kernels up to 3.11
+Support for bd_discard/TRIM feature (for iSCSI and SSD storage)
+Improved HFS+ journal support
+Improved installation script
+Support DKMS library usage
+
+NTFS & HFS 8.5	
+New Features:
+Improved read/write performance
+Optimized disk space allocation to reduce fragmentation of files
+Improved performance of HFS+ journal
+Support for modern Linux kernels (up to 2.6.38)
+
+NTFS & HFS 8.1	
+New Features:
+HFS+/HFSX support
+Improved installation procedure
+All current Linux Kernels are supported
+UTF16 character encoding
+Several codepages are supported simultaneously
+Full support of Alternative Data Streams via the single NTFS driver
+Full interoperability with Macr OS X SAMBA Clients
+Full interoperability with torrent software
+Supporting all kernels up to 2.6.32
+Compatibility with Windows 7 NTFS
+ 	 	 
+NTFS & HFS 7.0	
+New Features:
+New installation procedure to simplify the installation process 
+All current Linux kernels are supported
+All known bugs are fixed
+ 	 	 
+NTFS & HFS 6.0	
+New Features:
+Support for x86-64  architecture
+Compatibility with Windows Vista's NTFS
+Support  for modern Linux Kernels up to 2.6.20 
+Improved installation script
+Improved performance
+ 	 	 
+NTFS & HFS 5.2	
+New Features:
+Support for 2.6.16 Kernel
+
+NTFS & HFS 5.0	
+New Features:
+Improved installation script
+Improved performance
+Support for SMP kernels
+Support for compressed files
+No limitations to maximum file size (but within kernel and NTFS limitations)
+
+NTFS & HFS 2.0	
+New Features:
+Improved performance
+Suport for 2.6 Kernel
+
+NTFS & HFS 1.0 	
+New Features:
+Special installation script
+Select non-Default codepage
+Startup service supported
+Supports Chinese, Japanes and other Linux Localizations
+Sparse file support on all NT File Systems
+Access to files with more than 2 Gb per cluster

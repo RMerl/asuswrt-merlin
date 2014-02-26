@@ -1,0 +1,130 @@
+ifdef src
+    src := $(src)/
+endif
+
+#Module
+#Module
+MODULE_SRC := ifslinux
+ifeq (@BUILD_WITH_DEBUG@,1)
+MODULE_NAME := @PACKAGE_NAME@_debug
+else
+MODULE_NAME := @PACKAGE_NAME@
+endif
+
+ifeq (@BUILD_WITH_JNL@,1)
+ifeq (@BUILD_WITH_DEBUG@,1)
+MODULE_NAME2 := jnl_debug
+else
+MODULE_NAME2 := jnl
+endif
+endif
+
+MODULE_LIBNAME := lib@PACKAGE_NAME@
+MODULE_OBJECTS := $(MODULE_SRC)/ufsdvfs.o $(MODULE_SRC)/vfsdebug.o
+
+MODULE_EXTRA_FLAGS := -include $(src)$(MODULE_SRC)/fs_conf.h -DUFSD_DEVICE=ufsd -DUFSD_USE_ASM_DIV64
+ifeq (@BUILD_WITH_DEBUG@,1)
+MODULE_EXTRA_FLAGS += -DUFSD_DEBUG -g3
+LDFLAGS   += -d
+else
+MODULE_EXTRA_FLAGS += -DNDEBUG -g0
+LDFLAGS   += -s -O2 -d -x -X
+endif
+
+ifeq (@BUILD_WITH_TRACE@,1)
+    MODULE_EXTRA_FLAGS += -DUFSD_TRACE
+endif
+
+ifeq (@BUILD_WITH_TRACEK@,0)
+    MODULE_EXTRA_FLAGS += -DUFSD_NO_PRINTK
+endif
+
+ifndef CONFIG_UFSD_FS
+    CONFIG_UFSD_FS = m
+endif
+
+MODULE_OBJECTS += $(MODULE_SRC)/$(MODULE_LIBNAME).bin
+
+#KERNEL_SOURCE_DIR:=@KERNEL_SOURCE_DIR@
+#KERNEL_BUILD_DIR:=@KERNEL_BUILD_DIR@
+#KERNEL_INSTALL_DIR:=@KERNEL_INSTALL_DIR@
+
+#ARCH:=@KERNEL_ARCH@
+#VERSION:=@KERNEL_VERSION@
+#PATCHLEVEL:=@KERNEL_PATCHLEVEL@
+#MODULE_EXT:=@MODULE_EXT@
+
+$(MODULE_NAME)-objs := $(MODULE_OBJECTS)
+$(MODULE_NAME)-y := $(MODULE_OBJECTS)
+
+ifeq (@BUILD_WITH_JNL@,1)
+$(MODULE_NAME2)-objs := $(MODULE_SRC)/ufsdjnl.o
+$(MODULE_NAME2)-y    := $(MODULE_SRC)/ufsdjnl.o
+obj-m := $(MODULE_NAME2).o $(MODULE_NAME).o
+else
+obj-m := $(MODULE_NAME).o
+endif
+
+## Add diagnostic module
+#kdiag-objs := $(MODULE_SRC)/kdiag.o
+#kdiag-y := $(MODULE_SRC)/kdiag.o
+#obj-m += kdiag.o
+
+ifeq (@KERNEL_VERSION@,2.4)
+O_TARGET := $(MODULE_NAME).o
+obj-y := $(MODULE_OBJECTS)
+endif
+
+EXTRA_CFLAGS +=	 $(MODULE_EXTRA_FLAGS)
+
+ifeq (@KERNEL_VERSION@,2.4)
+EXTRA_CFLAGS += -DNO_MM
+endif
+
+
+ifdef PACKAGE_TAG
+EXTRA_CFLAGS += "-DPACKAGE_TAG=\"$(PACKAGE_TAG)\""
+endif
+
+ifdef EXT_MODULE_FLAGS
+EXTRA_CFLAGS += $(EXT_MODULE_FLAGS)
+endif
+
+
+$(src)$(MODULE_SRC)/$(MODULE_LIBNAME).bin:
+	@@LN_S@ "@UFSD_LIBRARY@" "$(src)$(MODULE_SRC)/$(MODULE_LIBNAME).bin"
+
+clean:
+	@$(MAKE) -C "@KERNEL_SOURCE_DIR@" SUBDIRS="@PWD@" clean 2>&1 > /dev/null
+	@@RM@ -Rf "$(src)$(MODULE_SRC)/$(MODULE_LIBNAME).bin"
+
+-include $(TOPDIR)/Rules.make
+
+
+$(MODULE_NAME).@MODULE_EXT@:
+ifeq (@KERNEL_VERSION@,2.4)
+	@if [ ! -e "@KERNEL_SOURCE_DIR@/.config" ] ; then $(MAKE) -C "@KERNEL_SOURCE_DIR@" SUBDIRS="@PWD@" V=1 cloneconfig >/dev/null 2>&1 ; true ; fi
+	@if [ ! -e "@KERNEL_SOURCE_DIR@/.config" ] ; then echo -e "\033[32mPlease run 'make menuconfig' or 'make defconfig' from kernel source dir to make config file\033[0m" ; exit -1 ; fi
+endif
+	$(MAKE) -C "@KERNEL_SOURCE_DIR@" SUBDIRS="@PWD@" O="@KERNEL_BUILD_DIR@" V=1 modules 2>&1
+
+driver:$(MODULE_NAME).@MODULE_EXT@
+	@STRIP_RL@
+
+ifeq (@ENABLE_INSTALL@,1)
+driver_install: $(MODULE_NAME).@MODULE_EXT@
+ifeq ($(shell @ID@ -u),0)
+	@@MODPROBE@ -qr $(MODULE_NAME) 2>&1 > /dev/null ; @MODPROBE@ -qr $(MODULE_NAME2) 2>&1 > /dev/null ; @MKDIR@ -p @KERNEL_INSTALL_DIR@ 2>&1 ; @CP@ -f $(MODULE_NAME).@MODULE_EXT@ $(MODULE_NAME2).@MODULE_EXT@ @KERNEL_INSTALL_DIR@ 2>&1 && @DEPMOD@ -a 2>&1 ; @MODPROBE@ $(MODULE_NAME) 2>&1
+else
+	@echo -e "\033[33mEnter Root password for install driver\033[0m"
+	@@SU@ -c '@MODPROBE@ -qr $(MODULE_NAME) 2>&1 > /dev/null ; @MODPROBE@ -qr $(MODULE_NAME2) 2>&1 > /dev/null ; @MKDIR@ -p @KERNEL_INSTALL_DIR@ 2>&1 ; @CP@ -f $(MODULE_NAME).@MODULE_EXT@ $(MODULE_NAME2).@MODULE_EXT@ @KERNEL_INSTALL_DIR@ 2>&1 && @DEPMOD@ -a 2>&1 ; @MODPROBE@ $(MODULE_NAME) 2>&1'
+endif
+
+driver_uninstall:
+ifeq ($(shell @ID@ -u),0)
+	@@MODPROBE@ -qr $(MODULE_NAME) 2>&1 ; @MODPROBE@ -qr $(MODULE_NAME2) 2>&1 > /dev/null ; @RM@ -Rf @KERNEL_INSTALL_DIR@ 2>&1 && @DEPMOD@ -a 2>&1
+else
+	@echo -e "\033[33mEnter Root password for uninstall driver\033[0m"
+	@@SU@ -c '@MODPROBE@ -qr $(MODULE_NAME) 2>&1 ; @MODPROBE@ -qr $(MODULE_NAME2) 2>&1 > /dev/null ; @RM@ -Rf @KERNEL_INSTALL_DIR@ 2>&1 && @DEPMOD@ -a 2>&1'
+endif
+endif

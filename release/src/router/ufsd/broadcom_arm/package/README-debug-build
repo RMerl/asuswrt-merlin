@@ -1,0 +1,14 @@
+Configure and build
+
+!!!!!!! fix paths COMPILER_PATH KERNEL_SOURCE_PATH KERNEL_BUILD_PATH !!!!!!!
+COMPILER_PATH - Path to gcc binarys
+KERNEL_SOURCE_PATH - Path to kernel sources
+KERNEL_BUILD_PATH - Path to kernel output, may be equals KERNEL_SOURCE_PATH
+
+( export COMPILER_PATH="" ; \
+export KERNEL_SOURCE_PATH="" ; \
+export KERNEL_BUILD_PATH="" ; \
+export COMPILER_NAME="arm-brcm-linux-uclibcgnueabi" ; \
+PATH="${COMPILER_PATH}:${PATH}" make ARCH="arm" CROSS_COMPILE=${COMPILER_NAME}- CROSSCOMPILE=${COMPILER_NAME}- TARGET="arm" CFLAGS="" clean ; \
+PATH="${COMPILER_PATH}:${PATH}" ./configure CFLAGS="-I$KERNEL_SOURCE_PATH/mnt/toolchains_09/toolchains/Asus_RT-AC56U_k2.6.36_2013-11-07/linux-2.6.36/arch/arm/include -I$KERNEL_BUILD_PATH/include -mlittle-endian -I$KERNEL_BUILD_PATH/arch/arm/mach-brcm-hnd/include -I$KERNEL_BUILD_PATH/arch/arm/plat-brcm/include -fno-strict-aliasing -fno-common -fno-delete-null-pointer-checks -DBCMDRIVER -Dlinux -DHNDCTF -DCTFPOOL -DCTFMAP -DPKTC -DCTF_PPPOE -DCTF_IPV6 -DBCM47XX -marm -ffreestanding -fno-dwarf2-cfi-asm -mabi=aapcs-linux -mno-thumb-interwork -funwind-tables -D__LINUX_ARM_ARCH__=7 -march=armv7-a -msoft-float -Uarm -fno-stack-protector -fomit-frame-pointer -fno-strict-overflow -fconserve-stack  -O1" CC=${COMPILER_NAME}-gcc --target=arm --host=${COMPILER_NAME} --with-ks-dir=${KERNEL_SOURCE_PATH} --with-kb-dir=${KERNEL_BUILD_PATH}  --enable-ufsd-debug && \
+PATH="${COMPILER_PATH}:${PATH}" make EXT_MODULE_FLAGS="-DUFSD_DISABLE_UGM -DUFSD_CHECK_BDI -DUFSD_TRACE" PACKAGE_TAG="lke_8.9.0_r219253_b22" ARCH="arm" CROSS_COMPILE=${COMPILER_NAME}- CROSSCOMPILE=${COMPILER_NAME}- TARGET="arm" CFLAGS="" driver )
