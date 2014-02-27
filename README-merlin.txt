@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 3.0.0.4.374.40 (xx-xxx-2014)
-===================================================
+Asuswrt-Merlin - build 374.40 (xx-xxx-2014)
+===========================================
 
 About
 -----
@@ -564,7 +564,7 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.4.374.40 (xx-xxx-2014)
+374.40 (xx-xxx-2014)
    - NEW: Merged with Asus's 374_4561 GPL.  Notable changes:
        * Various security-related fixes
        * Redesigned Parental Control webui
@@ -582,6 +582,10 @@ History
               by default.  That means there will no longer be a separate
               experimental build for this.
    - CHANGED: Updated dropbear to 2014.63
+   - CHANGED: New type of glue for the webui header
+   - CHANGED: Switched to a shorter version numbering scheme
+   - FIXED: RT-N16 builds (missing files were obtained from
+            the new GPL release Asus made for this model)
    - FIXED: Last24 page wasn't properly displaying the 
             Avg value (regression in 374.39)
    - FIXED: Clients with a configured IPv6 DNS would bypass
@@ -598,7 +602,10 @@ History
    - FIXED: When the firewall was disabled, the FORWARD chain
             policy was still left to "DROP" - changed to "ACCEPT".
    - FIXED: typo in SMB config ("use spne go") (Asus bug)
-
+   - FIXED: PPPoE with an MTU of 1500 requires the WAN interface 
+            to have its MTU set at 1508 (patch by pinwing)
+   - FIXED: IPv6 Prefix Delegation issues (patch by pinwing)
+   - FIXED: MTU setting on IPv6 connections (patch by pinwing)
 
 
 3.0.0.4.374.39 (31-Jan-2014)
