@@ -41,9 +41,9 @@ Here is a list of features that Asuswrt-merlin brings over the original
 firmware:
 
 System:
-   - Based on 3.0.0.4.374_4422 sources from Asus
+   - Based on 3.0.0.4.374_4561 sources from Asus
    - Various bugfixes and optimizations
-   - Some components were updated to newerversions, for improved
+   - Some components were updated to newer versions, for improved
      stability and security
    - Persistent JFFS partition
    - User scripts that run on specific events
@@ -58,7 +58,7 @@ Disk sharing:
    - Enable/disable the use of shorter share names
    - Disk spindown after user-configurable inactivity timeout
    - NFS sharing (through webui)
-   - Better compatibility with 3TB+ and Advanced Format HDDs
+   - Improved compatibility with 3TB+ and Advanced Format HDDs
 
 Networking:
    - Force acting as a Master Browser
@@ -73,7 +73,6 @@ Networking:
    - Advanced OpenVPN client and server support (all models except 
      RT-N16)
    - Netfilter ipset module, for efficient blacklist implemetnation
-   - Configurable IPv6 firewall
    - Configurable min/max UPNP ports
    - IPSec kernel support
    - DNS-based Filtering, can be applied globally or per client
@@ -107,7 +106,7 @@ integrated/enabled in the official firmware:
 - DualWAN and Repeater mode (while it was still under development
   by Asus)
 - OpenVPN client and server
-
+- Configurable IPv6 firewall
 
 
 Installation
@@ -566,12 +565,10 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 3.0.0.4.374.40 (xx-xxx-2014)
-   This version isn't available for the RT-N16 as support for the 
-   SDK5 platform is currently broken in the latest GPL sources.
-
-   - NEW: Merged with Asus's 374_4422 GPL.  Notable changes:
+   - NEW: Merged with Asus's 374_4561 GPL.  Notable changes:
        * Various security-related fixes
        * Redesigned Parental Control webui
+       * Notification in case of insecure configuration
 
    - NEW: Added OpenDNS Family Shield support to DNSFilter
    - NEW: Added support for up to three user-defined servers to DNSFilter
@@ -584,6 +581,7 @@ History
    - CHANGED: The RT-N66U is now compiled with EM enabled
               by default.  That means there will no longer be a separate
               experimental build for this.
+   - CHANGED: Updated dropbear to 2014.63
    - FIXED: Last24 page wasn't properly displaying the 
             Avg value (regression in 374.39)
    - FIXED: Clients with a configured IPv6 DNS would bypass
@@ -1781,6 +1779,7 @@ I want to give my special thanks to Asus for showing an interest in
 this project, and also providing me with support when needed.  Also, 
 thank you everyone who has donated through Paypal.  Much appreciated!
 
+Logo designed by r00t4rd3d.
 
 
 --- 
