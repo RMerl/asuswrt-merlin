@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 374.40 (xx-xxx-2014)
-===========================================
+Asuswrt-Merlin - build 374.40 Beta 1 (1-March-2014)
+===================================================
 
 About
 -----
@@ -564,7 +564,13 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-374.40 (xx-xxx-2014)
+374.40 Beta 1 (1-March-2014)
+   - KNOWN ISSUE: Some people are experiencing random reboots 
+     with the RT-AC68U running firmwares based on recent Asus GPL.
+     If you are are affected, please revert to 374.40 alpha4 for now.
+     Asus are looking into the issue, which affects this model since 
+     374_4422.
+
    - NEW: Merged with Asus's 374_4561 GPL.  Notable changes:
        * Various security-related fixes
        * Redesigned Parental Control webui
@@ -584,7 +590,7 @@ History
    - CHANGED: Updated dropbear to 2014.63
    - CHANGED: New type of glue for the webui header
    - CHANGED: Switched to a shorter version numbering scheme
-   - FIXED: RT-N16 builds (missing files were obtained from
+   - FIXED: RT-N16 firmware (missing files were obtained from
             the new GPL release Asus made for this model)
    - FIXED: Last24 page wasn't properly displaying the 
             Avg value (regression in 374.39)
