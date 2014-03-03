@@ -107,9 +107,10 @@ int SendHttpReq(unsigned char *des_ip)
         while(1)
         {
         	bzero(buffer, 512);
-                getlen = recv(sock_http, buffer, sizeof(buffer), 0);
+                getlen = recv(sock_http, buffer, sizeof(buffer) - 1, 0);
                 if (getlen > 0)
                 {
+
                         NMP_DEBUG_M("Check http response: %s\n", buffer);
                         if(!memcmp(buffer, "HTTP/1.", 7) &&
 			  (!memcmp(buffer+9, "2", 1)||!memcmp(buffer+9, "3", 1)||!memcmp(buffer+9, "401", 3)) )
