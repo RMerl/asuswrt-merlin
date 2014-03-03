@@ -202,8 +202,6 @@ int main(int argc, char *argv[])
         memcpy(my_ipaddr,  &router_addr.sin_addr, 4);
 
 	//Prepare scan 
-        memset(scan_ipaddr, 0x00, 4);
-        memcpy(scan_ipaddr, &router_addr.sin_addr, 3);
 	networkmap_fullscan = 1;
 	nvram_set("networkmap_fullscan", "1");
 
@@ -235,6 +233,9 @@ int main(int argc, char *argv[])
 		fullscan:
                 if(networkmap_fullscan == 1) { //Scan all IP address in the subnetwork
 		    if(scan_count == 0) { 
+			// (re)-start from the begining
+			memset(scan_ipaddr, 0x00, 4);
+			memcpy(scan_ipaddr, &router_addr.sin_addr, 3);
 	                arp_timeout.tv_sec = 0;
         	        arp_timeout.tv_usec = 50000;
                 	setsockopt(arp_sockfd, SOL_SOCKET, SO_RCVTIMEO, &arp_timeout, sizeof(arp_timeout));//set receive timeout
@@ -252,7 +253,7 @@ int main(int argc, char *argv[])
 		    if( scan_count<255 && memcmp(scan_ipaddr, my_ipaddr, 4) ) {
                         sent_arppacket(arp_sockfd, scan_ipaddr);
 		    }         
-		    else if(scan_count>=255) { //Scan completed
+		    else if(scan_count==255) { //Scan completed
                 	arp_timeout.tv_sec = 2;
                 	arp_timeout.tv_usec = 0; //Reset timeout at monitor state for decase cpu loading
                 	setsockopt(arp_sockfd, SOL_SOCKET, SO_RCVTIMEO, &arp_timeout, sizeof(arp_timeout));//set receive timeout
