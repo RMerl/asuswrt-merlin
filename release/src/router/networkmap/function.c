@@ -1471,7 +1471,7 @@ SMBretry:
 
                                                                         while(memcmp(buf+i, tmpch, 2) != 0)
                                                                         {
-										sprintf(SMB_OS, "%s%c", SMB_OS, buf[i]);
+										snprintf(SMB_OS, sizeof(SMB_OS), "%s%c", SMB_OS, buf[i]);
                                                                                 i++;
                                                                         }
                                                                         i += 2;
@@ -1485,7 +1485,7 @@ SMBretry:
                                                                                 
                                                                         while(memcmp(buf+i, tmpch, 2) != 0)
                                                                         {
-										sprintf(SMB_PriDomain,"%s%c",SMB_PriDomain,buf[i]);
+										snprintf(SMB_PriDomain, sizeof(SMB_PriDomain), "%s%c", SMB_PriDomain, buf[i]);
                                                                                 i++;
                                                                         }
                                                                         NMP_DEBUG_M("Primary Domain: %s\n", SMB_PriDomain);
@@ -1500,7 +1500,7 @@ SMBretry:
 
                                                                         while(memcmp(buf+i, tmpch, 2) != 0)
                                                                         {
-										sprintf(SMB_OS,"%s%c",SMB_OS,buf[i]);
+										snprintf(SMB_OS, sizeof(SMB_OS), "%s%c", SMB_OS, buf[i]);
                                                                                 i++;
                                                                         }
                                                                         i += 2;
@@ -1513,7 +1513,7 @@ SMBretry:
                                                                         i += 2;
                                                                         while(memcmp(buf+i, tmpch, 2) != 0)
                                                                         {
-										sprintf(SMB_PriDomain,"%s%c",SMB_PriDomain,buf[i]);
+										snprintf(SMB_PriDomain, sizeof(SMB_PriDomain), "%s%c", SMB_PriDomain, buf[i]);
                                                                                 i++;
                                                                         }
 									NMP_DEBUG_M("Primary Domain: %s\n", SMB_PriDomain);
@@ -1818,9 +1818,8 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
 	        my_dvinfo.nativeOS_len = 5;
         	my_dvinfo.nativeLanMan= nativeLanMan;
 	        my_dvinfo.nativeLanMan_len = 5;
-
-        	bzero(SMB_OS, 16);
-	        bzero(SMB_PriDomain, 10);
+		bzero(SMB_OS, sizeof(SMB_OS));
+	        bzero(SMB_PriDomain, sizeof(SMB_PriDomain));
 		sleep(1);
 
 		lock = file_lock("networkmap");
