@@ -1306,7 +1306,7 @@ void fini_wl(void)
 		(get_model() == MODEL_RTAC87U) ||
 		(get_model() == MODEL_RTAC66U) ||
 		(get_model() == MODEL_RTN66U))
-	modprobe_r("wl");
+	eval("rmmod","wl");
 #endif
 }
 
