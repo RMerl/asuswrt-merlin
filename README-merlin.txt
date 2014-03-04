@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 374.40 Beta 1 (1-March-2014)
-===================================================
+Asuswrt-Merlin - build 374.40 Beta 2 (xx-March-2014)
+====================================================
 
 About
 -----
@@ -564,6 +564,19 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+374.40 Beta 2 (xx-xxxx-2014)
+   - FIXED: Numerous buffer overruns in networkmap that would result
+            in crashes or empty/incomplete device list.  Was often 
+            visible on networks hosting a Windows Home Server machine.
+   - FIXED: Site survey was reporting 5G as being disabled on RT-N16.
+   - FIXED: Various issues related to the helper.sh script for postconf
+   - FIXED: The OpenVPN instance wasn't restarted if it was currently 
+            stopped due to a syntax error in its config and you had 
+            just corrected it.
+   - FIXED: Restarting the wireless service would stop emf/igs snooping
+            until they were manually restarted/recconfigured.
+
+
 374.40 Beta 1 (1-March-2014)
    - KNOWN ISSUE: Some people are experiencing random reboots 
      with the RT-AC68U running firmwares based on recent Asus GPL.
