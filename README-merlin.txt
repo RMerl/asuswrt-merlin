@@ -575,6 +575,8 @@ History
             just corrected it.
    - FIXED: Restarting the wireless service would stop emf/igs snooping
             until they were manually restarted/recconfigured.
+   - FIXED: Channels above 153 were missing on 5 GHz band if width
+            is set to 40 MHz (Asus bug)
 
 
 374.40 Beta 1 (1-March-2014)
