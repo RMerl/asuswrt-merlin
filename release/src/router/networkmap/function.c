@@ -30,7 +30,7 @@ int create_http_socket_ctrlpt(char *host, ushort destport);
 int create_msearch_ctrlpt(int Mx);
 int process_device_response(char *msg);
 void store_description(char *msg);
-                                                                                                                                             
+
 int ssdp_fd;
 int global_exit = FALSE;
 ushort return_value = FALSE;
@@ -51,7 +51,7 @@ void fixstr(const char *buf)
 
         for (i = 0; i < 16; i++)
         {
-                if (*p < 0x20) 
+                if (*p < 0x20)
 			*p = 0x0;
 		if (i == 15)
                         *p = '\0';
@@ -69,10 +69,10 @@ int SendHttpReq(unsigned char *des_ip)
         char buffer[512];
         char *dest_ip_ptr;
         struct timeval tv1, tv2, timeout={1, 0};
-                                                                                                                                             
+
         /* create socket */
         sock_http = socket(AF_INET, SOCK_STREAM, 0);
-                                                                                                                                             
+
         /* initialize value in dest */
         bzero(&dest, sizeof(dest));
         dest.sin_family = AF_INET;
@@ -92,18 +92,18 @@ int SendHttpReq(unsigned char *des_ip)
                 close(sock_http);
                 return 0 ;
         }
-                                                                                                                                             
+
         sprintf(buffer,  "GET / HTTP/1.1\r\nHost: %s\r\n\r\n", dest_ip_ptr);
-                                                                                                                                             
+
         if (send(sock_http, buffer, strlen(buffer), 0) == -1)
         {
                 perror("send:");
                 close(sock_http);
                 return 0 ;
         }
-                                                                                                                                             
+
         gettimeofday(&tv1, NULL);
-                                                                                                                                             
+
         while(1)
         {
         	bzero(buffer, 512);
@@ -127,11 +127,11 @@ int SendHttpReq(unsigned char *des_ip)
                         break;
                 }
         }
-                                                                                                                                             
+
         close(sock_http);
         return 0;
 }
-                                                                                                                                             
+
 /***** NBNS Name Query function *****/
 int Nbns_query(unsigned char *src_ip, unsigned char *dest_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail_info_tab)
 {
@@ -171,7 +171,7 @@ int Nbns_query(unsigned char *src_ip, unsigned char *dest_ip, P_CLIENT_DETAIL_IN
     {
         NMP_DEBUG_M("NBNS: bind error.\n");
         return -1;
-    }                                                                                                         
+    }
 
     setsockopt(sock_nbns, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));//set timeout
     memset(&other_addr1, 0, sizeof(other_addr1));
@@ -192,7 +192,7 @@ int Nbns_query(unsigned char *src_ip, unsigned char *dest_ip, P_CLIENT_DETAIL_IN
         recvlen = recvfrom(sock_nbns, recvbuf, sizeof(recvbuf), 0, (struct sockaddr *)&other_addr2, &other_addr_len2);
         if( recvlen > 0 ) {
 	    NMP_DEBUG_M("NBNS Response:\n");
-	    #if 0 //def DEBUG_MORE	
+	    #if 0 //def DEBUG_MORE
 	    	int x;
 	    	for(x=0; x<recvlen; x++)
 	    	    NMP_DEBUG_M("%02x ",recvbuf[x]);
@@ -238,7 +238,7 @@ int Nbns_query(unsigned char *src_ip, unsigned char *dest_ip, P_CLIENT_DETAIL_IN
                 break;
 	    }
         }
-	sleep(1); //2008.09.16 Yau add 
+	sleep(1); //2008.09.16 Yau add
     }
     close(sock_nbns);
     NMP_DEBUG_M("NBNS close socket\n");
@@ -260,7 +260,7 @@ int lpd515(unsigned char *dest_ip)
         	NMP_DEBUG_M("LPD515: socket create error.\n");
         	return -1;
     	}
-                                                                                                                                             
+
     	memset(&other_addr1, 0, sizeof(other_addr1));
     	other_addr1.sin_family = AF_INET;
     	other_addr1.sin_port = htons(LPD_PORT);
@@ -304,14 +304,14 @@ int raw9100(unsigned char *dest_ip)
 {
     struct sockaddr_in other_addr2;
     int sockfd2;
-    struct timeval timeout={0, 500000};                                                                                                                                             
+    struct timeval timeout={0, 500000};
     if ((sockfd2 = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
         NMP_DEBUG_M("RAW9100: socket create error.\n");
         return -1;
     }
-                                                                                                                                             
-                                                                                                                                             
+
+
     memset(&other_addr2, 0, sizeof(other_addr2));
     other_addr2.sin_family = AF_INET;
     other_addr2.sin_port = htons(RAW_PORT);
@@ -351,7 +351,7 @@ int open_socket_ipv4( unsigned char *src_ip )
         struct sockaddr_in local;
         int fd = -1, ittl;
         unsigned char ttl;
-                                                                                                                                             
+
         if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
         {
                 //printf("socket() failed: %s\n", strerror(errno));
@@ -385,7 +385,7 @@ int open_socket_ipv4( unsigned char *src_ip )
                 NMP_DEBUG_M("SO_RCVTIMEO failed: %s\n", strerror(errno));
                 return -1;
         }
-                                                                                                                 
+
         memset(&local, 0, sizeof(local));
         local.sin_family = AF_INET;
         local.sin_port = 0;
@@ -414,7 +414,7 @@ fail:
 void dns_decode_servername(char *name, char **buf)
 {
         int k, len, j;
-        
+
 	k = 0;
         len = *(*buf)++;
         for( j = 0; j<len ; j++)
@@ -468,21 +468,21 @@ int send_mdns_packet_ipv4 (unsigned char *src_ip, unsigned char *dest_ip)
         char dnsbuf[MAXDATASIZE];
         int dnsbuflen;
         int sockfd;
-                                                                                                   
+
         if((sockfd=open_socket_ipv4(src_ip))<0)
         {
               //printf("creat socket fail\n");
                 return -1;
         }
-                                                                                                                                  
+
         memset(&dst_addr, 0, sizeof(struct sockaddr_in));
         dst_addr.sin_family = AF_INET;
         dst_addr.sin_port = htons(MDNS_PORT);
         //inet_pton(AF_INET, IPV4_MCAST_GROUP, &dst_addr.sin_addr);
         memcpy(&dst_addr.sin_addr, dest_ip, 4);
-                                                                                                                                             
+
         dnsbuflen = 0;
-                                                                                                                                             
+
         dnsbuf[dnsbuflen++] = 0x00; //Transaction ID
         dnsbuf[dnsbuflen++] = 0x86;
         dnsbuf[dnsbuflen++] = 0x01; //Flag: Standard query
@@ -496,7 +496,7 @@ int send_mdns_packet_ipv4 (unsigned char *src_ip, unsigned char *dest_ip)
         dnsbuf[dnsbuflen++] = 0x0c;
         dnsbuf[dnsbuflen++] = 0x00; // Class : inet
         dnsbuf[dnsbuflen++] = 0x01;
-                                                                                                                                                                                                                                                                                      
+
         if(sendto(sockfd , dnsbuf, dnsbuflen , 0 ,(struct sockaddr *) &dst_addr, sizeof(dst_addr)) == -1)
         {
              //perror("sendto\n");
@@ -520,13 +520,13 @@ int send_mdns_packet_ipv4 (unsigned char *src_ip, unsigned char *dest_ip)
                         continue;
                 }
                 dns_header_s header;
-	
+
                 if (numread<sizeof(header))
                 {
                       //perror("invalid packet\n");
                         continue;
                 }
-	
+
                 if(dns_decode_respond(header,recv_buf,numread)==-1)
                 {
                         continue;
@@ -555,23 +555,23 @@ int ctrlpt(unsigned char *dest_ip)
 
         if((ssdp_fd = create_ssdp_socket_ctrlpt(ifname, port)) == -1)
                 return 0;
-                                                                                                                                             
+
         create_msearch_ctrlpt(3);
         signal(SIGALRM, interrupt);
         alarm(4);
-                                                                                                                                             
+
         global_exit = FALSE; //reset timeout flag
         memset(&description, 0, sizeof(struct device_info)); //reset description
-                                                                                                                                             
+
         //enter the top of the loop.
         while(global_exit == FALSE)
         {
                 addrlen = sizeof(destaddr);
                 memset(&destaddr, 0, addrlen);
-                                                                                                                                             
+
                 FD_ZERO(&rfds);
                 FD_SET(ssdp_fd, &rfds);
-                                                                                                                                             
+
                 n = select(ssdp_fd+1, &rfds, NULL, NULL, NULL);
                 if(n > 0)
                 {
@@ -579,7 +579,7 @@ int ctrlpt(unsigned char *dest_ip)
                         {
                                 nbytes = recvfrom(ssdp_fd, buf, sizeof(buf), 0, (struct sockaddr*)&destaddr, &addrlen);
                                 buf[nbytes] = '\0';
-                                                                                                                                             
+
                                 NMP_DEBUG_M("recv: %d from: %s\n", nbytes, inet_ntoa(destaddr.sin_addr));
                                 if( !memcmp(&destaddr.sin_addr, dest_ip, 4) )
                                 {
@@ -596,31 +596,31 @@ int ctrlpt(unsigned char *dest_ip)
         close(ssdp_fd);
         if(return_value == FALSE)
                 return 0;
-                                                                                                                                             
+
         return 1;
 }
-                                                                                                                                             
-                                                                                                                                             
+
+
 /*******************************************************************************************/
 static char *strip_chars(char *str, char *reject)
 {
         char *end;
-                                                                                                                                             
+
         str += strspn(str, reject);
         end = &str[strlen(str)-1];
         while (end > str && strpbrk(end, reject))
                 *end-- = '\0';
-                                                                                                                                             
+
         return str;
 }
-                                                                                                                                             
+
 void interrupt()
 {
         global_exit = TRUE;
         NMP_DEBUG_M("no upnp device of this ip\n");
         return_value = FALSE;
 }
-                                                                                                                                             
+
 /*****************************************************************************************/
 // create socket of ssdp
 // socket, bind, join multicast group.
@@ -634,11 +634,11 @@ int create_ssdp_socket_ctrlpt(char *ifname, ushort port)
         struct ip_mreqn mcreqn;
         int flag;
         u_char ttl;
-                                                                                                                                             
+
         // create socket
         if((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
                 goto error;
-                                                                                                                                             
+
         // get the src ip
         if((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
                 goto error;
@@ -650,7 +650,7 @@ int create_ssdp_socket_ctrlpt(char *ifname, ushort port)
         }
         memcpy(&inaddr, &(((struct sockaddr_in *)&ifreq.ifr_addr)->sin_addr),sizeof(struct in_addr));
         close(sockfd);
-                                                                                                                                             
+
         // make sure this interface is capable of MULTICAST ...
         memset(&ifreq, 0, sizeof(ifreq));
         strcpy(ifreq.ifr_name, ifname);
@@ -658,7 +658,7 @@ int create_ssdp_socket_ctrlpt(char *ifname, ushort port)
                 goto error;
         if((ifreq.ifr_flags & IFF_MULTICAST) == 0)
                 goto error;
-                                                                                                                                             
+
         // bind the socket to an address and port.
         flag = 1;
         setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *)&flag, sizeof(flag));
@@ -668,36 +668,36 @@ int create_ssdp_socket_ctrlpt(char *ifname, ushort port)
         srcaddr.sin_port = htons(port);
         if ( bind(fd, (struct sockaddr *) &srcaddr, sizeof(srcaddr)) )
                 goto error;
-                                                                                                                                             
+
         // join the multicast group
         memset(&ifreq, 0, sizeof(ifreq));
         strcpy(ifreq.ifr_name, ifname);
         if(ioctl(fd, SIOCGIFINDEX, &ifreq))
                 goto error;
-                                                                                                                                             
+
         memset(&mcreqn, 0, sizeof(mcreqn));
         mcreqn.imr_multiaddr.s_addr = inet_addr(SSDP_IP);
         mcreqn.imr_address.s_addr = srcaddr.sin_addr.s_addr;
         mcreqn.imr_ifindex = ifreq.ifr_ifindex;
         if(setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mcreqn, sizeof(mcreqn)))
                 goto error;
-                                                                                                                                             
+
         // restrict multicast messages sent on this socket
         // to only go out this interface and no other
         if(setsockopt(fd, IPPROTO_IP, IP_MULTICAST_IF, (char *)&srcaddr.sin_addr, sizeof(struct in_addr)))
                 goto error;
-                                                                                                                                             
+
         // set the multicast TTL
         ttl = 4;
         if(setsockopt(fd, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl)))
                 goto error;
-                                                                                                                                             
+
         return fd;
 error:
         close(fd);
         return -1;
 }
-                                                                                                                                             
+
 /****************************************************************************************/
 //construct the multicast address and send out the M-SEARCH advertisement packets.
 int create_msearch_ctrlpt(int Mx)
@@ -705,16 +705,16 @@ int create_msearch_ctrlpt(int Mx)
         struct sockaddr_in addr;
         char *data;
         char tmp[50];
-                                                                                                                                             
+
         addr.sin_family = AF_INET;
         addr.sin_addr.s_addr = inet_addr(SSDP_IP);
         addr.sin_port = htons(SSDP_PORT);
-                                                                                                                                             
+
         if(Mx < MIN_SEARCH_TIME)
                 Mx = MIN_SEARCH_TIME;
         if(Mx >MAX_SEARCH_TIME)
                 Mx = MAX_SEARCH_TIME;
-                                                                                                                                             
+
         data = (char *)malloc(300 * sizeof(char));
         *data = '\0';
         sprintf(tmp, "M-SEARCH * HTTP/1.1\r\n");
@@ -727,14 +727,15 @@ int create_msearch_ctrlpt(int Mx)
         strcat(data, tmp);
         sprintf(tmp, "MX:%d\r\n\r\n", Mx);
         strcat(data, tmp);
-                                                                                                                                             
+
         if(sendto(ssdp_fd, data, strlen(data), 0, (struct sockaddr *)&addr, sizeof(addr)) <0)
                 return 0;
-                                                                                                                                             
+
         return 1;
-                                                                                                                                             
+
 }
-                                                                                                                                             
+
+
 /************************************************************************************************/
 // process the device response "HTTP/1.1 200 OK"
 int process_device_response(char *msg)
@@ -758,7 +759,7 @@ int process_device_response(char *msg)
                 body +=2;
         else
                 return 0;
-                                                                                                                                             
+
         p = msg;
         // find the LOCATION information.
         while( p!= NULL && p < body)
@@ -772,7 +773,7 @@ int process_device_response(char *msg)
                 }
         }
         NMP_DEBUG_M("UPnP location=%s\n", location);
-                                                                                                                                             
+
         // get the destination ip
         location += 7;
 	i = 0;
@@ -794,7 +795,7 @@ int process_device_response(char *msg)
         //create a socket of http
         if ( (http_fd = create_http_socket_ctrlpt(host, destport)) == -1)
                 goto error;
-                                                                                                                                             
+
         //set the send data information.
         data = (char *)malloc(1500 * sizeof(char));
         memset(data, 0, 1500);
@@ -802,7 +803,7 @@ int process_device_response(char *msg)
         sprintf(data, "GET %s HTTP/1.1\r\nHOST: %s:%s\r\nACCEPT-LANGUAGE: zh-cn\r\n\r\n",\
                         location, host, port);
         //printf("%s\n",data);
-                                                                                                                                             
+
         //send the request to get the device description
         if((nbytes = send(http_fd, data, strlen(data), 0)) == -1)
                 goto error;
@@ -813,7 +814,7 @@ int process_device_response(char *msg)
         descri = (char *) malloc(6001*sizeof(char));
         memset(descri, 0, 6001);
         *descri ='\0';
-                                                                                                                                             
+
         //receive data of http socket
         len = 0;
 	setsockopt(http_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(struct timeval));
@@ -830,7 +831,7 @@ int process_device_response(char *msg)
 
         //store the useful information.
         store_description(descri);
-                                                                                                                                             
+
         free(descri);
         free(data);
         return 1;
@@ -840,7 +841,7 @@ error:
         free(descri);
         return 0;
 }
-                                                                                                                                             
+
 /*******************************************************************************************/
 //create a socket of http
 int create_http_socket_ctrlpt(char *host, ushort destport)
@@ -852,20 +853,21 @@ int create_http_socket_ctrlpt(char *host, ushort destport)
         // create out http socket
         if((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
                 return -1;
-                                                                                                                                             
+
         //set the tcp connect destination information
         destaddr.sin_addr.s_addr = inet_addr(host);
         destaddr.sin_family = AF_INET;
         destaddr.sin_port = htons(destport);
-                                                                                                                                             
+
         //connect to the device.
         if(connect(fd, (struct sockaddr *)&destaddr, sizeof(destaddr)) == -1)
                 return -1;
-                                                                                                                                             
+
         return fd;
-                                                                                                                                             
+
 }
-                                                                                                                                             
+
+
 /***************************************************************/
 // store the descirption information to sturct device_info.
 void store_description(char *msg)
@@ -883,7 +885,7 @@ void store_description(char *msg)
         p = strstr(msg, "<?xml");
         //printf("%s", p);
         body = strstr(msg, "</root>");
-                                                                                                                                             
+
         while( p!= NULL && p < body)
         {
                 // get rid of 'TAB' or 'Space' in the start of a line.
@@ -904,23 +906,23 @@ void store_description(char *msg)
                         //printf("end of the data\n");
                         break;
                 }
-                                                                                                                                             
+
                 line[i++] = *p++;
                 line[i] ='\0';
-                                                                                                                                             
+
                 if(p == body)
                 {
                         //printf("end of the data 2\n");
                         break;
                 }
-                                                                                                                                             
+
                 // judge whether this line is useful.
                 for(type = 0; type< sizeof(opts)/sizeof(*opts); type++)
                         if(strncmp(line, opts[type], strlen(opts[type])) == 0)
                                 break;
                 if(type == sizeof(opts)/sizeof(*opts))
                         continue;
-                                                                                                                                             
+
                 // get the information.
                 // eg. <manufacturer> information </manufacturer>
                 i = 0;
@@ -933,12 +935,12 @@ void store_description(char *msg)
 		}
                 line[i++] = *p++;
                 line[i] ='\0';
-                                                                                                                                             
+
                 for(j =0; line[j] != '<'; j++)
                         tmp[j] = line[j];
                 tmp[j] = '\0';
                 //printf("tmp = %s\n", tmp);
-                                                                                                                                             
+
                 switch(type)
                 {
                 case 0:
@@ -952,7 +954,7 @@ void store_description(char *msg)
 	                fclose(fp);
         	}
 	}
-#endif                         
+#endif
                         break;
                 case 1:
                         strcpy(description.manufacturer, tmp);
@@ -1014,7 +1016,7 @@ int EncodeName(unsigned char *name, unsigned char *buffer, unsigned short length
         }
         return length*2+2;
 }
-                                                                                                                                             
+
 int TranUnicode(UCHAR *uni, UCHAR *asc, USHORT length)
 {
         int i;
@@ -1049,10 +1051,10 @@ int SendSMBReq(UCHAR *des_ip, MY_DEVICE_INFO *my_info)
         USHORT tmplen = 0, tmplen2, tmplen3;
         int pos1, pos2, pos3, slip;
 	int smbretry_flag = 0;
-                                                                                                                                             
+
 	unsigned char nbss_buf[4];
         unsigned char nbss_header[4] = {0x81, 0x00, 0x00, 0x44};
-                                                                                                                                             
+
         UCHAR des_nbss_name[34];
         UCHAR my_nbss_name[34];
 	UCHAR smb_buf[98] = {
@@ -1087,7 +1089,7 @@ int SendSMBReq(UCHAR *des_ip, MY_DEVICE_INFO *my_info)
 
 	if((int)*(des_ip+3)==255)
               return 0;
-                                                                                                                                             
+
 SMBretry:
         if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
         {
@@ -1138,16 +1140,16 @@ SMBretry:
                                 bzero(buf, MAXDATASIZE);
                                 EncodeName(my_info->des_hostname, des_nbss_name, my_info->des_hostname_len);
                                 EncodeName(my_info->my_hostname, my_nbss_name, my_info->my_hostname_len);
-                                                                                                                                             
+
                                 memcpy(buf, nbss_header, sizeof(nbss_header));        // nbss base header
                                 offsetlen += sizeof(nbss_header); // 4
 
                                 memcpy(buf+offsetlen, des_nbss_name, sizeof(des_nbss_name)); // destination device host name, 34 bytes
                                 offsetlen += sizeof(des_nbss_name);
-                                                                                                                                             
+
                                 memcpy(buf+offsetlen, my_nbss_name, sizeof(my_nbss_name)); // client host name, 34 bytes
                                 offsetlen += sizeof(my_nbss_name);
-                                                                                                                                             
+
                                 if (send(sockfd, buf, offsetlen, 0) == -1)
                                 {
                                         perror("connect") ;
@@ -1208,12 +1210,12 @@ SMBretry:
                                 NBSS_HEADER nbss_hdr;
                                 SMB_HEADER  smb_hdr;
                                 bzero(buf, sizeof(buf));
-                                                                                                                                             
+
                                 nbss_hdr.msg_type = 0x00;
                                 nbss_hdr.flags = 0x00;
                                 nbss_hdr.length = htons(133);
                                 memcpy(buf, &nbss_hdr, 4);      // add nbss header
-                                                                                                                                             
+
                                 smb_hdr.Protocol[0] = 0xFF;
                                 smb_hdr.Protocol[1] = 0x53;
                                 smb_hdr.Protocol[2] = 0x4d;
@@ -1249,7 +1251,7 @@ SMBretry:
                                         return -1 ;
                                 }
                                 gettimeofday(&tv1, NULL);       // set nbss statrt time
-                                                                                                                                             
+
                                 operate = SMB_NEGOTIATE_RSP;
                         }
                         break;
@@ -1289,7 +1291,7 @@ SMBretry:
                                         operate = 0;
                                         break;
                                 }
-                                                                                                                                             
+
                         }
                         break;
                         case SMB_SESSON_ANDX_REQ:
@@ -1483,7 +1485,7 @@ SMBretry:
                                                                                 i++;
                                                                         }
                                                                         i += 2;
-                                                                                
+
                                                                         while(memcmp(buf+i, tmpch, 2) != 0)
                                                                         {
 										snprintf(SMB_PriDomain, sizeof(SMB_PriDomain), "%s%c", SMB_PriDomain, buf[i]);
@@ -1635,10 +1637,10 @@ Asus_Device_Discovery(unsigned char *src_ip, unsigned char *dest_ip, P_CLIENT_DE
 				p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 3;
 				break;
 			}
-			else 
+			else
 				retry--;
         	}
-	        else 
+	        else
         	    	retry--;
     	}
 	close(sock_dd);
@@ -1754,13 +1756,13 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
 		NMP_DEBUG("Find UPnP device: description= %s, modelname= %s\n",description.description, description.modelname);
 	        //parse description
 	        toLowerCase(description.description);
-        	if( strstr(description.description, "router")!=NULL ) 
+        	if( strstr(description.description, "router")!=NULL )
         	{
                 	p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 2;
         	}
 	        else if( (strstr(description.description, "ap")!=NULL) ||
         	         (strstr(description.description, "access pointer")!=NULL) ||
-			 (strstr(description.description, "wireless device")!=NULL) ) 
+			 (strstr(description.description, "wireless device")!=NULL) )
 	        {
         	        p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 3;
 	        }
@@ -1769,14 +1771,14 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
                 	p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 4;
         	}
 	        else if( (strstr(description.description, "cam")!=NULL) )
-	        {	
+	        {
         	        p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 5;
 	        }
                 else if( (strstr(description.description, "xbox")!=NULL))
                 {
                         p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 8;
                 }
-                else if( (strstr(description.description, "ps")!=NULL) ) 
+                else if( (strstr(description.description, "ps")!=NULL) )
                 {
                         p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 8;
                 }
@@ -1836,13 +1838,13 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
                         	p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 4;
 				NMP_DEBUG("Find: NAS Server!\n");
 			}
-	                else 
+	                else
 			{
        		                p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 6;
                                 NMP_DEBUG("Find: Nothing!\n");
                         }
 		}
-	        else 
+	        else
 		{
                 	p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 6;
                         NMP_DEBUG("Find: Nothing!\n");

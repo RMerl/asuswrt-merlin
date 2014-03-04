@@ -29,7 +29,7 @@
 #define MAXDATASIZE             512
 #define LPR                     0x02
 #define LPR_RESPONSE            0x00
-                                                                                                                                             
+
 //Service Port
 #define HTTP_PORT               80
 #define NBNS_PORT               137
@@ -104,14 +104,14 @@ typedef struct Raw_socket {
 // walf test
 typedef struct
 {
-	unsigned short  hardware_type; 
-   	unsigned short  protocol_type;           
+	unsigned short  hardware_type;
+   	unsigned short  protocol_type;
    	unsigned char hwaddr_len;
-   	unsigned char ipaddr_len;               
+   	unsigned char ipaddr_len;
    	unsigned short  message_type;
-   	unsigned char source_hwaddr[6];              
+   	unsigned char source_hwaddr[6];
    	unsigned char source_ipaddr[4];
-   	unsigned char dest_hwaddr[6];    
+   	unsigned char dest_hwaddr[6];
    	unsigned char dest_ipaddr[4];
 } ARP_HEADER;
 
@@ -133,7 +133,7 @@ typedef struct
   unsigned short datagram_len;
   unsigned short packet_off;
 } NETBIOS_D_HEADER;
-                                                                                                                                              
+
 /* NetBIOS Datagram data section */
 typedef struct
 {
@@ -195,7 +195,7 @@ struct service
         char name[LINE_SIZE];
         char url[LINE_SIZE];
 };
-                                                                                                                                             
+
 struct device_info
 {
         // name:                <friendlyName>
@@ -221,7 +221,7 @@ typedef struct {
        unsigned char flags;
        unsigned short length;
 } NBSS_HEADER;
-                                                                                                                                             
+
 union {
         struct {
             UCHAR  ErrorClass;        // Error class
@@ -230,7 +230,7 @@ union {
         } DosError;
         ULONG Status;                 // 32-bit error code
 } Status;
-                                                                                                                                             
+
 union {
         USHORT Pad[6];                // Ensure section is 12 bytes long
         struct {
@@ -270,7 +270,7 @@ typedef struct
     ULONG  Reserved;                      // must be 0
     ULONG  Capabilities;                  // Client capabilities
 } SMB_SESSION_SETUPX_REQ;
-                                                                                                                                             
+
 typedef struct
 {
     USHORT ByteCount;                     //Count of data bytes;    min = 0

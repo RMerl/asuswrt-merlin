@@ -104,12 +104,12 @@ int  sent_arppacket(int raw_sockfd, unsigned char * dst_ipaddr)
         ARP_HEADER * arp;
 	char raw_buffer[46];
 
-	memset(dst_sockll.sll_addr, -1, sizeof(dst_sockll.sll_addr));  // set dmac addr FF:FF:FF:FF:FF:FF                                                                                                                                              
+	memset(dst_sockll.sll_addr, -1, sizeof(dst_sockll.sll_addr));  // set dmac addr FF:FF:FF:FF:FF:FF
         if (raw_buffer == NULL)
         {
                  perror("ARP: Oops, out of memory\r");
                 return 1;
-        }                                                                                                                          
+        }
 	bzero(raw_buffer, 46);
 
         // Allow 14 bytes for the ethernet header
@@ -142,7 +142,7 @@ static void refresh_sig(int sig)
         NMP_DEBUG("Refresh network map!\n");
         networkmap_fullscan = 1;
         refresh_exist_table = 0;
-	scan_count = 0;	
+	scan_count = 0;
 	nvram_set("networkmap_status", "1");
 	eval("rm", "/var/client*");
 #if 0
@@ -240,7 +240,7 @@ int main(int argc, char *argv[])
         	        arp_timeout.tv_usec = 50000;
                 	setsockopt(arp_sockfd, SOL_SOCKET, SO_RCVTIMEO, &arp_timeout, sizeof(arp_timeout));//set receive timeout
 			NMP_DEBUG("Starting full scan!\n");
-			
+
                         //reset client tables
 			lock = file_lock("networkmap");
         		memset(p_client_detail_info_tab, 0x00, sizeof(CLIENT_DETAIL_INFO_TABLE));
@@ -252,7 +252,7 @@ int main(int argc, char *argv[])
 
 		    if( scan_count<255 && memcmp(scan_ipaddr, my_ipaddr, 4) ) {
                         sent_arppacket(arp_sockfd, scan_ipaddr);
-		    }         
+		    }
 		    else if(scan_count==255) { //Scan completed
                 	arp_timeout.tv_sec = 2;
                 	arp_timeout.tv_usec = 0; //Reset timeout at monitor state for decase cpu loading
@@ -315,7 +315,7 @@ int main(int argc, char *argv[])
                                     	p_client_detail_info_tab->mac_addr[i][0],p_client_detail_info_tab->mac_addr[i][1],
                                     	p_client_detail_info_tab->mac_addr[i][2],p_client_detail_info_tab->mac_addr[i][3],
                                     	p_client_detail_info_tab->mac_addr[i][4],p_client_detail_info_tab->mac_addr[i][5]);
-					
+
 					lock = file_lock("networkmap");
 	                                memcpy(p_client_detail_info_tab->ip_addr[i],
         	                                arp_ptr->source_ipaddr, 4);
