@@ -75,7 +75,7 @@ function initial(){
 
 	if (radio_2 == 0)
 		E("radio2warn").style.display = "";
-	if ((band5g_support != -1) && (radio_5 == 0))
+	if ((band5g_support) && (radio_5 == 0))
 		E("radio5warn").style.display = "";
 
 	update_site_info();

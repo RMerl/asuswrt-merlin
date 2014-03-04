@@ -933,7 +933,7 @@ function show_menu(){
 		notification.clickCallBack[0] = "location.href = 'Advanced_System_Content.asp';"
 	}else
 		notification.acpw = 0;
-
+/*
 	if(isNewFW('<% nvram_get("webs_state_info"); %>')){	//case2
 		notification.array[1] = 'noti_upgrade';
 		notification.upgrade = 1;
@@ -941,6 +941,7 @@ function show_menu(){
 		notification.action_desc[1] = '<#ASUSGATE_act_update#>';
 		notification.clickCallBack[1] = "location.href = 'Advanced_FirmwareUpgrade_Content.asp';"
 	}else
+*/
 		notification.upgrade = 0;
 	
 	if(band2g_support && noti_auth_mode_2g == 'open'){ //case3-1
