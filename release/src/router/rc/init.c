@@ -485,7 +485,7 @@ wl_defaults(void)
 				nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
 				nvram_match(strcat_r(prefix, "country_rev", tmp), "0"))*/
 			)
-			}
+			{
 				nvram_set(strcat_r(prefix, "reg_mode", tmp), "h");
 			}
 		}
