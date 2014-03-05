@@ -93,7 +93,7 @@ int SendHttpReq(unsigned char *des_ip)
                 return 0 ;
         }
 
-        sprintf(buffer,  "GET / HTTP/1.1\r\nHost: %s\r\n\r\n", dest_ip_ptr);
+        snprintf(buffer,  sizeof(buffer), "GET / HTTP/1.1\r\nHost: %s\r\n\r\n", dest_ip_ptr);
 
         if (send(sock_http, buffer, strlen(buffer), 0) == -1)
         {
@@ -800,7 +800,7 @@ int process_device_response(char *msg)
         data = (char *)malloc(1500 * sizeof(char));
         memset(data, 0, 1500);
         *data = '\0';
-        sprintf(data, "GET %s HTTP/1.1\r\nHOST: %s:%s\r\nACCEPT-LANGUAGE: zh-cn\r\n\r\n",\
+        snprintf(data, sizeof(data), "GET %s HTTP/1.1\r\nHOST: %s:%s\r\nACCEPT-LANGUAGE: zh-cn\r\n\r\n",\
                         location, host, port);
         //printf("%s\n",data);
 
