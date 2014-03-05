@@ -472,6 +472,7 @@ wl_defaults(void)
 		else
 			nvram_set(strcat_r(prefix, "vifs", tmp), "");
 
+#ifndef RTCONFIG_RALINK
 /* Set default reg_mode value since unlike Asus we don't enforce it at wlconf() time */
 		if (unit) {
 			if (    ((get_model() == MODEL_RTAC68U) &&
@@ -493,6 +494,7 @@ wl_defaults(void)
 		unit++;
 		subunit_x = 0;
 	}
+#endif
 
 #if defined (RTCONFIG_WLMODULE_RT3352_INIC_MII)
 	nvram_set("nic_lan_ifnames", nic_lan_ifnames); //reset value
