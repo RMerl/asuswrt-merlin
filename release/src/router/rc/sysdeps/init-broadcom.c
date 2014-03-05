@@ -3729,6 +3729,7 @@ void generate_wl_para(int unit, int subunit)
 		sprintf(tmp2, "%d", atoi(nvram_safe_get(strcat_r(prefix, "pmk_cache", tmp))) * 60);
 		nvram_set(strcat_r(prefix, "net_reauth", tmp), tmp2);
 
+#if 0
 		if (unit) {
 			if (	((get_model() == MODEL_RTAC68U) &&
 				nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
@@ -3745,6 +3746,7 @@ void generate_wl_para(int unit, int subunit)
 			}
 		}
 		else nvram_set(strcat_r(prefix, "reg_mode", tmp), "off");
+#endif
 
 		dbG("bw: %s\n", nvram_safe_get(strcat_r(prefix, "bw", tmp)));
 #ifdef RTCONFIG_BCMWL6
