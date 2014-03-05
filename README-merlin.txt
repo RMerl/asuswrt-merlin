@@ -577,6 +577,9 @@ History
             until they were manually restarted/recconfigured.
    - FIXED: Channels above 153 were missing on 5 GHz band if width
             is set to 40 MHz (Asus bug)
+   - FIXED: reg_mode was being enforced to "h" (EU region) or "off"
+            (others) since GPL 4422.  We now stick again to what's 
+            set in the webui by the end user.
 
 
 374.40 Beta 1 (1-March-2014)
