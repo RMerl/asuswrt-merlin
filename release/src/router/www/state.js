@@ -1,3 +1,16 @@
+/* Internet Explorer lacks this array method */
+if (!('indexOf' in Array.prototype)) {
+	Array.prototype.indexOf= function(find, i /*opt*/) {
+		if (i===undefined) i= 0;
+		if (i<0) i+= this.length;
+		if (i<0) i= 0;
+		for (var n= this.length; i<n; i++)
+			if (i in this && this[i]===find)
+				return i;
+		return -1;
+	};
+}
+
 ﻿String.prototype.toArray = function(){
 	var ret = eval(this.toString());
 	if(Object.prototype.toString.apply(ret) === '[object Array]')
@@ -26,10 +39,10 @@ Array.prototype.getIndexByValue2D = function(value){
 }
 
 Array.prototype.del = function(n){
-　if(n < 0)
-　　return this;
-　else
-　　return this.slice(0,n).concat(this.slice(n+1,this.length));
+	if(n < 0)
+		return this;
+	else
+		return this.slice(0,n).concat(this.slice(n+1,this.length));
 }
 
 // for compatibility jQuery trim on IE
