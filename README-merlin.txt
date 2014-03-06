@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 374.40 Beta 2 (xx-March-2014)
-====================================================
+Asuswrt-Merlin - build 374.40 Beta 2 (5-March-2014)
+===================================================
 
 About
 -----
@@ -564,7 +564,7 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-374.40 Beta 2 (xx-xxxx-2014)
+374.40 Beta 2 (5-March-2014)
    - FIXED: Numerous buffer overruns in networkmap that would result
             in crashes or empty/incomplete device list.  Was often 
             visible on networks hosting a Windows Home Server machine.
@@ -580,6 +580,8 @@ History
    - FIXED: reg_mode was being enforced to "h" (EU region) or "off"
             (others) since GPL 4422.  We now stick again to what's 
             set in the webui by the end user.
+  - FIXED: Allow LAN traffic while dualwan mode is set to lb (issue
+           caused by the default policy fix in beta 1)
 
 
 374.40 Beta 1 (1-March-2014)
