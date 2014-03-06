@@ -572,6 +572,9 @@ History
             (same as Asus's code, except we won't enforce 
             it to off in other scenarios, and will only do
             so if it was previously set to off).
+   - FIXED: Advanced wireless page broken on Internet Explorer, due
+            to missing Array.IndexOf() support in IE (Asus bug,
+            but I also blame Microsoft for this one)
 
 
 374.40 Beta 2 (5-March-2014)
