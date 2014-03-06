@@ -4008,6 +4008,8 @@ TRACE_PT("write url filter\n");
 	}
 #endif
 
+	fprintf(fp, "-A FORWARD -i %s -j ACCEPT\n", lan_if);
+
 	fprintf(fp, "COMMIT\n\n");
 	fclose(fp);
 
