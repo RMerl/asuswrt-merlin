@@ -79,7 +79,7 @@ function update_temperatures(){
 			if (band5g_support) {
 				code += "&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz:</b> <span>" + curr_coreTmp_5_raw + "</span>";
 			}
-			if ((productid == "RT-AC56U") || (productid == "RT-AC68U")) {
+			if ((based_modelid == "RT-AC56U") || (based_modelid == "RT-AC68U")) {
 				code +="&nbsp;&nbsp;-&nbsp;&nbsp;<b>CPU:</b> <span>" + curr_coreTmp_cpu +"&deg;C</span>";
 			}
 			$("temp_td").innerHTML = code;
@@ -184,20 +184,20 @@ function show_etherstate(){
 
 			if (tmpPort == "8") {		// CPU Port
 				break;
-			} else if (productid == "RT-AC56U") {
+			} else if (based_modelid == "RT-AC56U") {
 				tmpPort++;		// Port starts at 0
 				if (tmpPort == "5") tmpPort = 0;	// Last port is WAN
 			}                                                                                                                                                         
 			if (tmpPort == "0") {
 				port = "WAN";
 			} else {
-				if (productid == "RT-N16") tmpPort = 5 - tmpPort;
+				if (based_modelid == "RT-N16") tmpPort = 5 - tmpPort;
 				port = "LAN "+tmpPort;
 			}
 			entry = '<tr><td>' + port + '</td><td>' + (line[7] & 0xFFF) + '</td><td><span>' + state2 + '</span></td>';
 			entry += '<td>'+ devicename +'</td></tr>';
 
-			if (productid == "RT-N16")
+			if (based_modelid == "RT-N16")
 				code_ports = entry + code_ports;
 			else
 				code_ports += entry;
