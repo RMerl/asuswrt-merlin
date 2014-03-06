@@ -490,11 +490,10 @@ wl_defaults(void)
 			}
 		}
 		else nvram_set(strcat_r(prefix, "reg_mode", tmp), "off");
-
+#endif
 		unit++;
 		subunit_x = 0;
 	}
-#endif
 
 #if defined (RTCONFIG_WLMODULE_RT3352_INIC_MII)
 	nvram_set("nic_lan_ifnames", nic_lan_ifnames); //reset value
