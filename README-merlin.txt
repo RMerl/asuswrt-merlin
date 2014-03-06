@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 374.40 Beta 2 (5-March-2014)
-===================================================
+Asuswrt-Merlin - build 374.40 Beta 3 (xx-March-2014)
+====================================================
 
 About
 -----
@@ -564,6 +564,16 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+374.40 Beta 3 (x-March-2014)
+   - FIXED: Asuswrt was calling wl_defaults() every time the
+            wifi was restarted, causing Regulation Mode to be
+            overwritten.  Now we force it to h mode if the
+            router model and region requires DFS compliance
+            (same as Asus's code, except we won't enforce 
+            it to off in other scenarios, and will only do
+            so if it was previously set to off).
+
+
 374.40 Beta 2 (5-March-2014)
    - FIXED: Numerous buffer overruns in networkmap that would result
             in crashes or empty/incomplete device list.  Was often 
