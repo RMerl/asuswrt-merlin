@@ -580,6 +580,8 @@ History
             so if it was previously set to off).
    - FIXED: Advanced wireless page broken on Internet Explorer, due
             to missing Array.IndexOf() support in IE (Asus bug)
+   - FIXED: Incorrect model detection prevented CPU temperature
+            from being shown on the Sysinfo page on the "R" SKUs.
 
 
 374.40 Beta 2 (5-March-2014)
