@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 374.40 Beta 3 (xx-March-2014)
-====================================================
+Asuswrt-Merlin - build 374.40 (6-March-2014)
+============================================
 
 About
 -----
@@ -564,7 +564,13 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-374.40 Beta 3 (x-March-2014)
+374.40 (6-March-2014)
+   - KNOWN ISSUE: Some people are experiencing random reboots
+     with the RT-AC68U running firmwares based on recent Asus GPL.
+     If you are are affected, please revert to 374.40 alpha4 for now.
+     Asus are looking into the issue, which affects this model since
+     374_4422.
+
    - FIXED: Asuswrt was calling wl_defaults() every time the
             wifi was restarted, causing Regulation Mode to be
             overwritten.  Now we force it to h mode if the
@@ -573,21 +579,21 @@ History
             it to off in other scenarios, and will only do
             so if it was previously set to off).
    - FIXED: Advanced wireless page broken on Internet Explorer, due
-            to missing Array.IndexOf() support in IE (Asus bug,
-            but I also blame Microsoft for this one)
+            to missing Array.IndexOf() support in IE (Asus bug)
 
 
 374.40 Beta 2 (5-March-2014)
    - FIXED: Numerous buffer overruns in networkmap that would result
             in crashes or empty/incomplete device list.  Was often 
             visible on networks hosting a Windows Home Server machine.
+            (Asus bug)
    - FIXED: Site survey was reporting 5G as being disabled on RT-N16.
    - FIXED: Various issues related to the helper.sh script for postconf
    - FIXED: The OpenVPN instance wasn't restarted if it was currently 
             stopped due to a syntax error in its config and you had 
             just corrected it.
    - FIXED: Restarting the wireless service would stop emf/igs snooping
-            until they were manually restarted/recconfigured.
+            until they were manually restarted/recconfigured. (Asus bug)
    - FIXED: Channels above 153 were missing on 5 GHz band if width
             is set to 40 MHz (Asus bug)
    - FIXED: reg_mode was being enforced to "h" (EU region) or "off"
@@ -598,12 +604,6 @@ History
 
 
 374.40 Beta 1 (1-March-2014)
-   - KNOWN ISSUE: Some people are experiencing random reboots 
-     with the RT-AC68U running firmwares based on recent Asus GPL.
-     If you are are affected, please revert to 374.40 alpha4 for now.
-     Asus are looking into the issue, which affects this model since 
-     374_4422.
-
    - NEW: Merged with Asus's 374_4561 GPL.  Notable changes:
        * Various security-related fixes
        * Redesigned Parental Control webui
