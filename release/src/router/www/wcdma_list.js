@@ -142,10 +142,10 @@ function gen_list(){
 		passlist = new Array("", "indosat", "proxl", "", "3gprs", "smart", "123456", "esia", "indosat", "telkom", "aha");
 	}
 	else if(country == "MA"){
-		protolist = new Array("1", "1", "1", "4", "1");
-		isplist = new Array("Celcom", "Maxis", "Digi", "Yes", "U Mobile");
-		apnlist = new Array("celcom3g", "unet", "3gdgnet", "", "my3g");
-		daillist = new Array("*99***1#", "*99***1#", "*99#", "", "*99#");
+		protolist = new Array("1", "1", "1", "1", "4");
+		isplist = new Array("Celcom", "Maxis", "Digi", "U Mobile", "Yes");
+		apnlist = new Array("celcom3g", "unet", "3gdgnet", "my3g", "");
+		daillist = new Array("*99***1#", "*99***1#", "*99#", "*99#", "");
 		userlist = new Array("", "maxis", "", "", "");
 		passlist = new Array("", "wap", "", "", "");
 	}

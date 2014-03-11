@@ -161,9 +161,10 @@ void cli_recv_msg_request_success() {
 		if (!fwd->have_reply) {
 			fwd->have_reply = 1;
 			if (fwd->listenport == 0) {
-				/* The server should let us know which port was allocated if we requestd port 0 */
+				/* The server should let us know which port was allocated if we requested port 0 */
 				int allocport = buf_getint(ses.payload);
 				if (allocport > 0) {
+					fwd->listenport = allocport;
 					dropbear_log(LOG_INFO, "Allocated port %d for remote forward to %s:%d", 
 							allocport, fwd->connectaddr, fwd->connectport);
 				}
@@ -220,18 +221,33 @@ static int newtcpforwarded(struct Channel * channel) {
 	origaddr = buf_getstring(ses.payload, NULL);
 	origport = buf_getint(ses.payload);
 
-	/* Find which port corresponds */
+	/* Find which port corresponds. First try and match address as well as port,
+	in case they want to forward different ports separately ... */
 	for (iter = cli_opts.remotefwds->first; iter; iter = iter->next) {
 		fwd = (struct TCPFwdEntry*)iter->item;
 		if (origport == fwd->listenport
-				&& (strcmp(origaddr, fwd->listenaddr) == 0)) {
+				&& strcmp(origaddr, fwd->listenaddr) == 0) {
 			break;
 		}
 	}
 
+	if (!iter)
+	{
+		/* ... otherwise try to generically match the only forwarded port 
+		without address (also handles ::1 vs 127.0.0.1 vs localhost case).
+		rfc4254 is vague about the definition of "address that was connected" */
+		for (iter = cli_opts.remotefwds->first; iter; iter = iter->next) {
+			fwd = (struct TCPFwdEntry*)iter->item;
+			if (origport == fwd->listenport) {
+				break;
+			}
+		}
+	}
+
+
 	if (iter == NULL) {
 		/* We didn't request forwarding on that port */
-        cleantext(origaddr);
+        	cleantext(origaddr);
 		dropbear_log(LOG_INFO, "Server sent unrequested forward from \"%s:%d\"", 
                 origaddr, origport);
 		goto out;

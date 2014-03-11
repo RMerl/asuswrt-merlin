@@ -1,0 +1,13 @@
+Package: asuswebstorage
+Architecture: mipsel
+Priority: optional
+Section: net
+Version: 1.0.0.9.0.g666165e
+Maintainer: ASUS
+Source: http://127.0.0.1/
+URL: http://www.asusnetwork.net/cloud_sync.asp
+Description: Cloud client
+Depends: inotify,libcurl,openssl,libxml2,zlib   
+Suggests: 
+Conflicts: 
+Enabled: yes

@@ -28,6 +28,7 @@ a:active {
 }
 #updateProgress_bg{
 	margin-top:5px;
+	height:30px;
 	width:97%;
 	background:url(/images/quotabar_bg_progress.gif);
 	background-repeat: repeat-x;
@@ -40,28 +41,20 @@ a:active {
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <script>
 var diskOrder = parent.getSelectedDiskOrder();
-var pools = parent.computepools(diskOrder, "name");
 var diskmon_status = '<% nvram_get("diskmon_status"); %>';
 var usb_path1_diskmon_freq = '<% nvram_get("usb_path1_diskmon_freq"); %>';
 var usb_path1_diskmon_freq_time = '<% nvram_get("usb_path1_diskmon_freq_time"); %>';
 var usb_path2_diskmon_freq = '<% nvram_get("usb_path2_diskmon_freq"); %>';
 var usb_path2_diskmon_freq_time = '<% nvram_get("usb_path2_diskmon_freq_time"); %>';
 
-var _apps_pool_error = '<% apps_fsck_ret(); %>';
-if(_apps_pool_error != '')
-	var apps_pool_error = eval(_apps_pool_error);
-else
-	var apps_pool_error = [[""]];
-
-var usb_pool_error = ['<% nvram_get("usb_path1_pool_error"); %>', '<% nvram_get("usb_path2_pool_error"); %>'];
-
 var set_diskmon_time = "";
 var progressBar;
 var timer;
 var diskmon_freq_row;
 var $j = jQuery.noConflict();
-var stop_flag = 0;
+var stopScan = 0;
 var scan_done = 0;
+var apps_fsck_ret_update = new Array();
 
 function initial(){
 	document.getElementById("t0").className = "tab_NW";
@@ -69,9 +62,7 @@ function initial(){
 
 	load_schedule_value();
 	freq_change();
-
-	check_status(apps_pool_error);
-	check_status2(usb_pool_error);
+	check_status(parent.usbPorts[diskOrder-1]);
 }
 
 function load_schedule_value(){
@@ -190,12 +181,12 @@ function gen_port_option(){
 
 	free_options(document.form.diskmon_usbport);
 	for(var i = 0; i < foreign_disk_interface_names().length; ++i){
-		if(foreign_disk_interface_names()[i] == diskmon_usbport)
+		if(foreign_disk_interface_names()[i].charAt(0) == diskmon_usbport)
 			Beselected = 1;
 		else
 			Beselected = 0;
 
-		add_option(document.form.diskmon_usbport, decodeURIComponent(foreign_disk_model_info()[i]), foreign_disk_interface_names()[i], Beselected);
+		add_option(document.form.diskmon_usbport, decodeURIComponent(foreign_disk_model_info()[i]), foreign_disk_interface_names()[i].charAt(0), Beselected);
 	}
 
 	gen_part_option();
@@ -209,7 +200,7 @@ function gen_part_option(){
 
 	free_options(document.form.diskmon_part);
 	for(var i = 0; i < foreign_disk_interface_names().length; ++i){
-		if(foreign_disk_interface_names()[i] == disk_port){
+		if(foreign_disk_interface_names()[i].charAt(0) == disk_port){
 			disk_num = i;
 			break;
 		}
@@ -232,19 +223,22 @@ function gen_part_option(){
 }
 
 function go_scan(){
-	stop_flag = 0;
+	stopScan = 0;
 	if(!confirm("<#diskUtility_scan_hint#>")){
 		document.getElementById('scan_status_field').style.display = "";
 		document.getElementById('progressBar').style.display = "none";
 		return false;
 	}
-	scan_manually();
+
 	document.getElementById('loadingIcon').style.display = "";
 	document.getElementById('btn_scan').style.display = "none";
 	document.getElementById('btn_abort').style.display = "";
 	document.getElementById('progressBar').style.display = "";	
 	document.getElementById('scan_status_field').style.display = "none";	
+
+	scan_manually();
 }
+
 function show_loadingBar_field(){
 	document.getElementById('loadingIcon').style.display = "none";
 	showLoadingUpdate();
@@ -263,16 +257,16 @@ function showLoadingUpdate(){
     		showLoadingUpdate();
     	},
     	success: function(){
-				if(stop_flag == 0)
+				if(stopScan == 0)
 					document.getElementById("updateProgress").style.width = progressBar+"%";
 					
-				if( scan_status == 1 && stop_flag == 0){	// To control message of scanning status
+				if( scan_status == 1 && stopScan == 0){	// To control message of scanning status
 					if(progressBar >= 5)
 						progressBar =5;
 						
 					document.getElementById('scan_message').innerHTML = "<#diskUtility_initial#>";
 				}	
-				else if(scan_status == 2 && stop_flag == 0){
+				else if(scan_status == 2 && stopScan == 0){
 					if(progressBar <= 5)
 						progressBar = 6;
 					else if (progressBar >= 15)	
@@ -280,7 +274,7 @@ function showLoadingUpdate(){
 				
 					document.getElementById('scan_message').innerHTML = "<#diskUtility_umount#>";								
 				}
-				else if(scan_status == 3 && stop_flag == 0){
+				else if(scan_status == 3 && stopScan == 0){
 					if(progressBar <= 15)
 						progressBar = 16;
 					else if (progressBar >= 40)	
@@ -288,7 +282,7 @@ function showLoadingUpdate(){
 						
 					document.getElementById('scan_message').innerHTML = "Disk scanning ...";					
 				}	
-				else if(scan_status == 4 && stop_flag == 0){
+				else if(scan_status == 4 && stopScan == 0){
 					if(progressBar <= 40)
 						progressBar = 41;
 					else if (progressBar >= 90)	
@@ -296,7 +290,7 @@ function showLoadingUpdate(){
 						
 					document.getElementById('scan_message').innerHTML = "<#diskUtility_reMount#>";
 				}
-				else if(scan_status == 5 && stop_flag == 0){
+				else if(scan_status == 5 && stopScan == 0){
 					if(progressBar <= 90)
 						progressBar = 91;
 				
@@ -320,7 +314,7 @@ function showLoadingUpdate(){
 				document.form.diskmon_force_stop.disabled = false;
 				return false;
 			}
-			if(stop_flag == 0){
+			if(stopScan == 0){
 				document.getElementById('progress_bar_no').innerHTML = progressBar+"%";
 				progressBar++;
 			}		
@@ -332,7 +326,7 @@ function showLoadingUpdate(){
 
 function abort_scan(){
 	var progress_stop = 0;
-	stop_flag = 1;
+	stopScan = 1;
 	progress_stop = progressBar; // get progress value when press abort
 	clearTimeout(timer);
 	document.getElementById('scan_message').innerHTML = "<#diskUtility_stop#>";
@@ -345,10 +339,6 @@ function abort_scan(){
 	document.getElementById('progressBar').style.display  = "none";
 	stop_diskmon();
 	reset_force_stop();
-	//setTimeout("document.getElementById('loadingIcon').style.display = 'none'", 1000);			
-	//setTimeout('document.getElementById(\'btn_scan\').style.display = ""', 1000);	
-	//setTimeout('document.getElementById(\'btn_abort\').style.display = "none"', 1000);		
-	//setTimeout('document.getElementById(\'progressBar\').style.display  = "none"', 3000);					
 	setTimeout('disk_scan_status("")',1000);
 }
 
@@ -360,8 +350,9 @@ function disk_scan_status(){
     		disk_scan_status();
     	},
     	success: function(){
-				check_status(flag);
-				check_status2(usb_pool_error);
+				parent.apps_fsck_ret = apps_fsck_ret_update;
+				parent.genUsbDevices();
+				check_status(parent.usbPorts[diskOrder-1]);
   		}
   });
 }
@@ -385,15 +376,17 @@ function get_disk_log(){
 		document.getElementById("textarea_disk0").style.display = "";
 }
 
-function check_status(flag){
+function check_status(_device){
+	var diskOrder = _device.usbPath;
+
 	document.getElementById('scan_status_field').style.display = "";
 	parent.document.getElementById('ring_USBdisk_'+diskOrder).style.display = "";
 	if(navigator.appName.indexOf("Microsoft") >= 0)
 		parent.document.getElementById('iconUSBdisk_'+diskOrder).style.marginLeft = "0px";
 	else	
-		parent.document.getElementById('iconUSBdisk_'+diskOrder).style.marginLeft = "33px";
+		parent.document.getElementById('iconUSBdisk_'+diskOrder).style.marginLeft = "35px";
 
-	if(flag.length == 0){
+	if(parent.apps_fsck_ret.length == 0){
 		document.getElementById('disk_init_status').style.display = "";
 		document.getElementById('problem_found').style.display = "none";
 		document.getElementById('crash_found').style.display = "none";
@@ -402,32 +395,20 @@ function check_status(flag){
 	else{
 		var i, j;
 		var got_code_0, got_code_1, got_code_2, got_code_3;
-
-		got_code_0 = got_code_1 = got_code_2 = got_code_3 = 0;
-
-		for(i = 0; i < pools.length; ++i){
-			for(j = 0; j < flag.length; ++j){
-				if(pools[i] == flag[j][0]){
-					if(flag[j][1] == ""){
-						got_code_3 = 1;
-						continue;
-					}
-
-					switch(parseInt(flag[j][1])){
-						case 3: // don't or can't support.
-							got_code_3 = 1;
-							break;
-						case 2: // proceeding...
-							got_code_2 = 1;
-							break;
-						case 1: // find errors.
-							got_code_1 = 1;
-							break;
-						default: // no error.
-							got_code_0 = 1;
-							break;
-					}
-				}
+		for(i = 0; i < _device.partition.length; ++i){
+			switch(_device.partition[i].fsck){
+				case 0: // no error.
+					got_code_0 = 1;
+					break;
+				case 1: // find errors.
+					got_code_1 = 1;
+					break;
+				case 2: // proceeding...
+					got_code_2 = 1;
+					break;
+				default: // don't or can't support.
+					got_code_3 = 1;
+					break;
 			}
 		}
 
@@ -436,14 +417,14 @@ function check_status(flag){
 			document.getElementById('problem_found').style.display = "none";
 			document.getElementById('crash_found').style.display = "";
 			document.getElementById('scan_status_image').src = "/images/New_ui/networkmap/red.png";
-			if(stop_flag == 1 || scan_done == 1){
+			if(stopScan == 1 || scan_done == 1){
 				parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundImage = "url(/images/New_ui/networkmap/white_04.gif)";
 				parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 101%';
 			}
 			parent.document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '0% -202px';
 		}
 		else if(got_code_2){
-			if(stop_flag == 1){
+			if(stopScan == 1){
 				parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundImage = "url(/images/New_ui/networkmap/white_04.gif)";
 				parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 0%';
 			}
@@ -457,7 +438,7 @@ function check_status(flag){
 			document.getElementById('problem_found').style.display = "";
 			document.getElementById('crash_found').style.display = "none";
 			document.getElementById('scan_status_image').src = "/images/New_ui/networkmap/blue.png";
-			if(stop_flag == 1 || scan_done == 1){
+			if(stopScan == 1 || scan_done == 1){
 				parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundImage = "url(/images/New_ui/networkmap/white_04.gif)";
 				parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 50%';
 			}
@@ -466,10 +447,12 @@ function check_status(flag){
 
 		get_disk_log();
 	}
+
+	check_status2(_device);
 }
 
-function check_status2(usb_error){
-	if(usb_error[parseInt(parent.getDiskPort(diskOrder))-1] == "1"){
+function check_status2(device){
+	if(device.hasErrPart){
 		document.getElementById('disk_init_status').style.display = "none";
 		document.getElementById('problem_found').style.display = "none";
 		document.getElementById('crash_found').style.display = "";
@@ -482,12 +465,8 @@ function check_status2(usb_error){
 function scan_manually(){
 	document.form.diskmon_freq.disabled = true;
 	document.form.diskmon_freq_time.disabled = true;
-	//document.form.diskmon_policy.disabled = false;
-	//document.form.diskmon_usbport.disabled = true;
-	//document.form.diskmon_part.disabled = true;
 	document.form.diskmon_force_stop.disabled = true;
-	document.form.diskmon_usbport.value = parent.getDiskPort(diskOrder);
-	
+	document.form.diskmon_usbport.value = parent.usbPorts[diskOrder-1].node;
 	document.form.action_script.value = "start_diskscan";
 	document.form.submit();
 }
@@ -558,10 +537,10 @@ function reset_force_stop(){
 		</div>
 		<div id="progressBar" style="margin-left:9px;;margin-top:10px;display:none">
 			<div id="scan_message"></div>
-			<div id="updateProgress_bg"  >
+			<div id="updateProgress_bg">
 				<div>
-					<span id="progress_bar_no" style="position:absolute;margin-left:130px;margin-top:4px;" ></span>
-					<img id="updateProgress" src="/images/quotabar.gif" height="20px;" style="width:0%">
+					<span id="progress_bar_no" style="position:absolute;margin-left:130px;margin-top:7px;" ></span>
+					<img id="updateProgress" src="/images/quotabar.gif" height="30px;" style="width:0%">
 					
 				</div>
 			</div>

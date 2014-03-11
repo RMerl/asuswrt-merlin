@@ -928,6 +928,19 @@ setAllLedOn(void)
 			eval("wl", "-i", "eth1", "ledbh", "10", "7");
 			break;
 		}
+		case MODEL_RTAC87U:
+		{
+			led_control(LED_USB, LED_ON);
+			led_control(LED_USB3, LED_ON);
+			led_control(LED_TURBO, LED_ON);
+			eval("et", "robowr", "0", "0x18", "0x01ff");	// lan/wan ethernet/giga led
+			eval("et", "robowr", "0", "0x1a", "0x01e0");
+			eval("wl", "ledbh", "10", "1");			// wl 2.4G
+			/* Quantenna's fake 5g led */
+			gpio_write(LED_5G, 1);				// wl 5G
+			led_control(LED_5G, LED_ON);
+			break;
+		}
 		case MODEL_RTAC68U:
 		{
 			led_control(LED_USB, LED_ON);
@@ -1107,6 +1120,19 @@ setAllLedOff(void)
 			led_control(LED_LAN, LED_OFF);
 			led_control(LED_2G, LED_OFF);
 			eval("wl", "-i", "eth1", "ledbh", "10", "0");
+			break;
+		}
+		case MODEL_RTAC87U:
+		{
+			led_control(LED_USB, LED_OFF);
+			led_control(LED_USB3, LED_OFF);
+			led_control(LED_TURBO, LED_OFF);
+			eval("et", "robowr", "0", "0x18", "0x01e0");	// lan/wan ethernet/giga led
+			eval("et", "robowr", "0", "0x1a", "0x01e0");
+			eval("wl", "ledbh", "10", "0");			// wl 2.4G
+			/* Quantenna's fake 5g led */
+			gpio_write(LED_5G, 1);				// wl 5G
+			led_control(LED_5G, LED_OFF);
 			break;
 		}
 		case MODEL_RTAC68U:
@@ -2450,13 +2476,13 @@ next_info:
 
 				if (apinfos[i].wpa == 1){
 					if (apinfos[i].wid.key_mgmt == WPA_KEY_MGMT_IEEE8021X_)
-						fprintf(fp, "\"%s\",", "WPA");
+						fprintf(fp, "\"%s\",", "WPA-Enterprise");
 					else if (apinfos[i].wid.key_mgmt == WPA_KEY_MGMT_IEEE8021X2_)
-						fprintf(fp, "\"%s\",", "WPA2");
+						fprintf(fp, "\"%s\",", "WPA2-Enterprise");
 					else if (apinfos[i].wid.key_mgmt == WPA_KEY_MGMT_PSK_)
-						fprintf(fp, "\"%s\",", "WPA-PSK");
+						fprintf(fp, "\"%s\",", "WPA-Personal");
 					else if (apinfos[i].wid.key_mgmt == WPA_KEY_MGMT_PSK2_)
-						fprintf(fp, "\"%s\",", "WPA2-PSK");
+						fprintf(fp, "\"%s\",", "WPA2-Personal");
 					else if (apinfos[i].wid.key_mgmt == WPA_KEY_MGMT_NONE_)
 						fprintf(fp, "\"%s\",", "NONE");
 					else if (apinfos[i].wid.key_mgmt == WPA_KEY_MGMT_IEEE8021X_NO_WPA_)

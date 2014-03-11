@@ -20,17 +20,16 @@ export CFLAGS += -DMAC_REPEATER
 endif
 endif
 
-ifeq ($(RTN14U),y)
-export CFLAGS += -DRTN14U
+include $(SRCBASE)/.config
+
+ifneq ($(findstring DSL,$(BUILD_NAME)),)
+MODEL = $(subst -,_,$(BUILD_NAME))
+else
+MODEL = $(subst -,,$(BUILD_NAME))
 endif
 
-ifeq ($(RTAC52U),y)
-export CFLAGS += -DRTAC52U
-endif
+export CFLAGS += -D$(MODEL)
 
-ifeq ($(RTAC51U),y)
-export CFLAGS += -DRTAC51U
-endif
 
 LDFLAGS = -L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared -lcrypt -L$(TOP)/libbcmcrypto -lbcmcrypto
 
@@ -61,22 +60,6 @@ LDFLAGS += -L$(TOP)/curl-7.21.7/lib/.libs -lcurl
 LDFLAGS += -L$(TOP)/libxml2/.libs -lxml2
 LDFLAGS += -L$(TOP)/wb -lws
 LDFLAGS += -L$(TOP)/push_log -lpush_log
-endif
-
-ifeq ($(RTAC66U), y)
-CFLAGS += -DRTAC66U
-endif
-ifeq ($(RTN65U), y)
-CFLAGS += -DRTN65U
-endif
-ifeq ($(RTN56U), y)
-CFLAGS += -DRTN56U
-endif
-ifeq ($(BUILD_NAME), DSL-N55U)
-CFLAGS += -DDSL_N55U
-endif
-ifeq ($(BUILD_NAME), DSL-N55U-B)
-CFLAGS += -DDSL_N55U_B
 endif
 
 ifeq ($(RTCONFIG_ODMPID),y)
@@ -260,7 +243,9 @@ ifeq ($(RTCONFIG_PROXYSTA),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc psta_monitor
 endif
 endif
+ifeq ($(RTCONFIG_USB),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc usbled
+endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc ntp
 	@cd $(INSTALLDIR)/sbin && ln -sf rc autodet
 	@cd $(INSTALLDIR)/sbin && ln -sf rc ddns_updated
@@ -348,6 +333,7 @@ endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc get_phy_status
 	@cd $(INSTALLDIR)/sbin && ln -sf rc get_phy_speed
 	@cd $(INSTALLDIR)/sbin && ln -sf rc firmware_check
+	@cd $(INSTALLDIR)/sbin && ln -sf rc test_endian
 
 clean:
 	rm -f rc *.o .*.depend

@@ -129,12 +129,17 @@ var openvpn_clientlist_array = decodeURIComponent('<% nvram_char_to_ascii("", "v
 var openvpn_unit = '<% nvram_get("vpn_server_unit"); %>';
 var initial_vpn_mode = "<% nvram_get("VPNServer_mode"); %>";
 
+var openvpn_eas = '<% nvram_get("vpn_serverx_eas"); %>';
+var openvpn_enabled = (openvpn_eas.indexOf(''+(openvpn_unit)) >= 0);
+
 if (openvpn_unit == '1')
 	var service_state = (<% sysinfo("pid.vpnserver1"); %> > 0);
 else if (openvpn_unit == '2')
 	var service_state = (<% sysinfo("pid.vpnserver2"); %> > 0);
 else
 	var service_state = false;
+
+service_state |= openvpn_enabled;
 
 ciphersarray = [
 		["AES-128-CBC"],
@@ -160,7 +165,6 @@ ciphersarray = [
 
 function initial(){
 	show_menu();
-	change_mode(initial_vpn_mode);
 
 	check_dns_wins();
 
@@ -199,6 +203,9 @@ function initial(){
 
 	// Set these based on a compound field
 	setRadioValue(document.openvpn_form.vpn_server_x_dns, ((document.openvpn_form.vpn_serverx_dns.value.indexOf(''+(openvpn_unit)) >= 0) ? "1" : "0"));
+
+	// Display appropriate page
+	change_mode(initial_vpn_mode);
 
 	// Decode into editable format
 	openvpn_decodeKeys(0);

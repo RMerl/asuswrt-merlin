@@ -25,6 +25,12 @@ var myStorage = function() {
     		window.localStorage[storageName] = val;
 			else
 				$.cookie(storageName, val);
+    },
+    "gett": function(storageName) {
+			return $.cookie(storageName);
+    },
+    "sett": function(storageName, val) {
+    	$.cookie(storageName, val);
     }
 	}
 };

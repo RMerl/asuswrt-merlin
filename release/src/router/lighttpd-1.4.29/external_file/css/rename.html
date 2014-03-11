@@ -55,15 +55,17 @@ function doRenameOK(e) {
 		return;
 	}
 	
-	var regex = /[|\/\\?*"<>:`]/g;
-	if(this_isdir==1)
-		regex = /[|\/\\?*"<>:`.]/g;
-		
+	var regex = /[\\\/:*?"<>|]/g;	
  	if(newName.match(regex)) {
  		alert(m.getString('illegalchar'));
-  	return;
+  		return;
  	}
  	
+	if(newName.indexOf(".")==0) {
+ 		alert(m.getString('illegalchar2'));
+  		return;
+ 	}
+	
 	if(this_isdir==1){
 		if(oldFile.lastIndexOf('/')==oldFile.length-1)
 			oldFile = oldFile.substring(0, oldFile.length-1);

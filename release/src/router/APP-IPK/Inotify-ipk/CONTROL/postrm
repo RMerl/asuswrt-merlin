@@ -6,5 +6,5 @@ APPS_INSTALL_PATH=$APPS_MOUNTED_PATH/$APPS_INSTALL_FOLDER
 
 #rm progress
 rm -rf $APPS_INSTALL_PATH/bin/inotify
-rm -rf $APPS_INSTALL_PATH/etc/init.d/S50inotify
+#rm -rf $APPS_INSTALL_PATH/etc/init.d/S50inotify
 

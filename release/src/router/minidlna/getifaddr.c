@@ -53,20 +53,113 @@
 #include <net/if_dl.h>
 #endif
 #endif
-#ifdef HAVE_NETLINK
-#include <linux/rtnetlink.h>
-#include <linux/netlink.h>
-#endif
 #include "upnpglobalvars.h"
 #include "getifaddr.h"
-#include "minissdp.h"
 #include "log.h"
-#ifdef BCMARM
-#include "ifaddrs.c"
-#endif
 
-static int
-getifaddr(const char *ifname, int notify)
+static uint32_t
+get_netmask(struct sockaddr_in *netmask)
+{
+	uint32_t mask;
+	int i;
+
+	if (!netmask)
+		return 0;
+	mask = ntohl(netmask->sin_addr.s_addr);
+	for (i = 0; i < 32; i++)
+	{
+		if ((mask >> i) & 1)
+			break;
+	}
+	mask = 32 - i;
+
+	return mask;
+}
+
+int
+getifaddr(const char * ifname, char * buf, int len)
+{
+	/* SIOCGIFADDR struct ifreq *  */
+	uint32_t mask = 0;
+	int i;
+#if HAVE_GETIFADDRS
+	struct ifaddrs *ifap, *p;
+	struct sockaddr_in *addr_in;
+
+	if (getifaddrs(&ifap) != 0)
+	{
+		DPRINTF(E_ERROR, L_GENERAL, "getifaddrs(): %s\n", strerror(errno));
+		return -1;
+	}
+	for (p = ifap; p != NULL; p = p->ifa_next)
+	{
+		if (p->ifa_addr && p->ifa_addr->sa_family == AF_INET)
+		{
+			if (strcmp(p->ifa_name, ifname) != 0)
+				continue;
+			addr_in = (struct sockaddr_in *)p->ifa_addr;
+			if (!inet_ntop(AF_INET, &addr_in->sin_addr, buf, len))
+			{
+				DPRINTF(E_ERROR, L_GENERAL, "inet_ntop(): %s\n", strerror(errno));
+				break;
+			}
+			addr_in = (struct sockaddr_in *)p->ifa_netmask;
+			mask = get_netmask(addr_in);
+			break;
+		}
+	}
+	freeifaddrs(ifap);
+	if (!p)
+	{
+		DPRINTF(E_ERROR, L_GENERAL, "Network interface %s not found\n", ifname);
+		return -1;
+	}
+#else
+	int s;
+	struct ifreq ifr;
+	int ifrlen;
+	struct sockaddr_in * addr;
+
+	ifrlen = sizeof(ifr);
+	s = socket(PF_INET, SOCK_DGRAM, 0);
+	if (s < 0)
+	{
+		DPRINTF(E_ERROR, L_GENERAL, "socket(PF_INET, SOCK_DGRAM): %s\n", strerror(errno));
+		return -1;
+	}
+	strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
+	if (ioctl(s, SIOCGIFADDR, &ifr, &ifrlen) < 0)
+	{
+		DPRINTF(E_ERROR, L_GENERAL, "ioctl(s, SIOCGIFADDR, ...): %s\n", strerror(errno));
+		close(s);
+		return -1;
+	}
+	addr = (struct sockaddr_in *)&ifr.ifr_addr;
+	if (!inet_ntop(AF_INET, &addr->sin_addr, buf, len))
+	{
+		DPRINTF(E_ERROR, L_GENERAL, "inet_ntop(): %s\n", strerror(errno));
+		close(s);
+		return -1;
+	}
+	if (ioctl(s, SIOCGIFNETMASK, &ifr, &ifrlen) == 0)
+	{
+		addr = (struct sockaddr_in *)&ifr.ifr_netmask;
+		mask = get_netmask(addr);
+	}
+	else
+		DPRINTF(E_ERROR, L_GENERAL, "ioctl(s, SIOCGIFNETMASK, ...): %s\n", strerror(errno));
+	close(s);
+#endif
+	if (mask)
+	{
+		i = strlen(buf);
+		snprintf(buf+i, len-i, "/%u", mask);
+	}
+	return 0;
+}
+
+int
+getsysaddrs(void)
 {
 #if HAVE_GETIFADDRS
 	struct ifaddrs *ifap, *p;
@@ -77,41 +170,27 @@ getifaddr(const char *ifname, int notify)
 		DPRINTF(E_ERROR, L_GENERAL, "getifaddrs(): %s\n", strerror(errno));
 		return -1;
 	}
-
 	for (p = ifap; p != NULL; p = p->ifa_next)
 	{
-		if (!p->ifa_addr || p->ifa_addr->sa_family != AF_INET)
-			continue;
-		if (ifname && strcmp(p->ifa_name, ifname) != 0)
-			continue;
-		addr_in = (struct sockaddr_in *)p->ifa_addr;
-		if (!ifname && (p->ifa_flags & (IFF_LOOPBACK | IFF_SLAVE)))
-			continue;
-		memcpy(&lan_addr[n_lan_addr].addr, &addr_in->sin_addr, sizeof(lan_addr[n_lan_addr].addr));
-		if (!inet_ntop(AF_INET, &addr_in->sin_addr, lan_addr[n_lan_addr].str, sizeof(lan_addr[0].str)) )
+		if (p->ifa_addr && p->ifa_addr->sa_family == AF_INET)
 		{
-			DPRINTF(E_ERROR, L_GENERAL, "inet_ntop(): %s\n", strerror(errno));
-			continue;
-		}
-		addr_in = (struct sockaddr_in *)p->ifa_netmask;
-		memcpy(&lan_addr[n_lan_addr].mask, &addr_in->sin_addr, sizeof(lan_addr[n_lan_addr].mask));
-		lan_addr[n_lan_addr].snotify = OpenAndConfSSDPNotifySocket(lan_addr[n_lan_addr].addr.s_addr);
-		if (lan_addr[n_lan_addr].snotify >= 0)
-		{
-			if (notify)
-				SendSSDPNotifies(lan_addr[n_lan_addr].snotify, lan_addr[n_lan_addr].str,
-					runtime_vars.port, runtime_vars.notify_interval);
+			addr_in = (struct sockaddr_in *)p->ifa_addr;
+			if (p->ifa_flags & (IFF_LOOPBACK | IFF_SLAVE))
+				continue;
+			memcpy(&lan_addr[n_lan_addr].addr, &addr_in->sin_addr, sizeof(lan_addr[n_lan_addr].addr));
+			if (!inet_ntop(AF_INET, &addr_in->sin_addr, lan_addr[n_lan_addr].str, sizeof(lan_addr[0].str)) )
+			{
+				DPRINTF(E_ERROR, L_GENERAL, "inet_ntop(): %s\n", strerror(errno));
+				continue;
+			}
+			addr_in = (struct sockaddr_in *)p->ifa_netmask;
+			memcpy(&lan_addr[n_lan_addr].mask, &addr_in->sin_addr, sizeof(lan_addr[n_lan_addr].mask));
 			n_lan_addr++;
+			if (n_lan_addr >= MAX_LAN_ADDR)
+				break;
 		}
-		if (ifname || n_lan_addr >= MAX_LAN_ADDR)
-			break;
 	}
 	freeifaddrs(ifap);
-	if (ifname && !p)
-	{
-		DPRINTF(E_ERROR, L_GENERAL, "Network interface %s not found\n", ifname);
-		return -1;
-	}
 #else
 	int s = socket(PF_INET, SOCK_STREAM, 0);
 	struct sockaddr_in addr;
@@ -132,13 +211,11 @@ getifaddr(const char *ifname, int notify)
 	}
 
 	n = ifc.ifc_len / sizeof(struct ifreq);
-	for (i = 0; i < n; i++)
+	for (i=0; i < n; i++)
 	{
 		ifr = &ifc.ifc_req[i];
-		if (ifname && strcmp(ifr->ifr_name, ifname) != 0)
-			continue;
-		if (!ifname &&
-		    (ioctl(s, SIOCGIFFLAGS, ifr) < 0 || ifr->ifr_ifru.ifru_flags & IFF_LOOPBACK))
+		if (ioctl(s, SIOCGIFFLAGS, ifr) < 0 ||
+		    ifr->ifr_ifru.ifru_flags & IFF_LOOPBACK)
 			continue;
 		if (ioctl(s, SIOCGIFADDR, ifr) < 0)
 			continue;
@@ -154,23 +231,11 @@ getifaddr(const char *ifname, int notify)
 			continue;
 		memcpy(&addr, &(ifr->ifr_addr), sizeof(addr));
 		memcpy(&lan_addr[n_lan_addr].mask, &addr.sin_addr, sizeof(addr));
-		lan_addr[n_lan_addr].snotify = OpenAndConfSSDPNotifySocket(lan_addr[i].addr.s_addr);
-		if (lan_addr[n_lan_addr].snotify >= 0)
-		{
-			if (notify)
-				SendSSDPNotifies(lan_addr[n_lan_addr].snotify, lan_addr[n_lan_addr].str,
-					runtime_vars.port, runtime_vars.notify_interval);
-			n_lan_addr++;
-		}
-		if (ifname || n_lan_addr >= MAX_LAN_ADDR)
+		n_lan_addr++;
+		if (n_lan_addr >= MAX_LAN_ADDR)
 			break;
 	}
 	close(s);
-	if (ifname && i == n)
-	{
-		DPRINTF(E_ERROR, L_GENERAL, "Network interface %s not found\n", ifname);
-		return -1;
-	}
 #endif
 	return n_lan_addr;
 }
@@ -180,7 +245,7 @@ getsyshwaddr(char *buf, int len)
 {
 	unsigned char mac[6];
 	int ret = -1;
-#if defined(HAVE_GETIFADDRS) && !defined (__linux__)
+#if HAVE_GETIFADDRS
 	struct ifaddrs *ifap, *p;
 	struct sockaddr_in *addr_in;
 	uint8_t a;
@@ -301,92 +366,4 @@ get_remote_mac(struct in_addr ip_addr, unsigned char *mac)
 	}
 
 	return 0;
-}
-
-void
-reload_ifaces(int notify)
-{
-	int i;
-
-	for (i = 0; i < n_lan_addr; i++)
-	{
-		close(lan_addr[i].snotify);
-	}
-	n_lan_addr = 0;
-
-	if (runtime_vars.ifaces[0])
-	{
-		for (i = 0; runtime_vars.ifaces[i]; i++)
-		{
-			getifaddr(runtime_vars.ifaces[i], notify);
-		}
-	}
-	else
-		getifaddr(NULL, notify);
-
-	for (i = 0; i < n_lan_addr; i++)
-	{
-		DPRINTF(E_INFO, L_GENERAL, "Enabled interface %s/%s\n",
-			lan_addr[i].str, inet_ntoa(lan_addr[i].mask));
-	}
-}
-
-int
-OpenAndConfMonitorSocket(void)
-{
-#ifdef HAVE_NETLINK
-	struct sockaddr_nl addr;
-	int s;
-	int ret;
-
-	s = socket(PF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
-	if (s < 0)
-	{
-		perror("couldn't open NETLINK_ROUTE socket");
-		return -1;
-	}
-
-	memset(&addr, 0, sizeof(addr));
-	addr.nl_family = AF_NETLINK;
-	addr.nl_groups = RTMGRP_IPV4_IFADDR;
-
-	ret = bind(s, (struct sockaddr*)&addr, sizeof(addr));
-	if (ret < 0)
-	{
-		perror("couldn't bind");
-		return -1;
-	}
-
-	return s;
-#else
-	return -1;
-#endif
-}
-
-void
-ProcessMonitorEvent(int s)
-{
-#ifdef HAVE_NETLINK
-	int len;
-	char buf[4096];
-	struct nlmsghdr *nlh;
-	int changed = 0;
-
-	nlh = (struct nlmsghdr*)buf;
-
-	len = recv(s, nlh, sizeof(buf), 0);
-	if (len <= 0)
-		return;
-	while ((NLMSG_OK(nlh, len)) && (nlh->nlmsg_type != NLMSG_DONE))
-	{
-		if (nlh->nlmsg_type == RTM_NEWADDR ||
-		    nlh->nlmsg_type == RTM_DELADDR)
-		{
-			changed = 1;
-		}
-		nlh = NLMSG_NEXT(nlh, len);
-	}
-	if (changed)
-		reload_ifaces(1);
-#endif
 }

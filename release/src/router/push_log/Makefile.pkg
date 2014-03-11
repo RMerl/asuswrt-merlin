@@ -1,0 +1,64 @@
+export SRCBASE := $(shell pwd)
+export BUILD := $(shell (gcc -dumpmachine))
+export HOSTCC := gcc
+export PLATFORM := mipsel-uclibc
+CROSS_COMPILE := mipsel-linux-
+export CROSS_COMPILER := $(CROSS_COMPILE)
+export CONFIGURE := ./configure --host=mipsel-linux --build=$(BUILD)
+export TOOLCHAIN := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))/.. && pwd)
+export IPKG_TOOLS := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))/../../../ipkg-utils-1.7 && pwd)
+export LD_DIR := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))/../../../../staging && pwd)
+
+
+export CC := $(CROSS_COMPILE)gcc
+export AR := $(CROSS_COMPILE)ar
+export AS := $(CROSS_COMPILE)as
+export LD := $(CROSS_COMPILE)ld
+export NM := $(CROSS_COMPILE)nm
+export RANLIB := $(CROSS_COMPILE)ranlib
+export STRIP := $(CROSS_COMPILE)strip -R .note -R .comment
+export SIZE := $(CROSS_COMPILE)size
+
+export EXTRACFLAGS := -DBCMWPA2 -fno-delete-null-pointer-checks
+export INSTALLDIR := /opt
+export RANLIB := $(TOOLCHAIN)/bin/mipsel-linux-uclibc-ranlib
+export LD :=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-ld
+export CC := $(TOOLCHAIN)/bin/mipsel-linux-uclibc-gcc
+export AR := $(TOOLCHAIN)/bin/mipsel-linux-uclibc-ar
+export STRIP := $(TOOLCHAIN)/bin/mipsel-linux-uclibc-strip
+export SIZE := $(TOOLCHAIN)/bin/mipsel-linux-siz
+
+OBJS = push_log.o
+PROGS = libpush_log.so push_log
+
+CFLAGS += -fPIC $(EXTRACFLAGS) -Wall -DAPP_IPKG
+CFLAGS += -I. -I../wb/ws_src
+#CFLAGS += -I. -I$(LINUXDIR)/include -I$(TOP)/shared -I$(SRCBASE)/include -I$(TOP)/wb/ws_src
+
+LDFLAGS = -L. -lpush_log
+#LDFLAGS += -L$(TOP)/nvram$(BCMEX) -lnvram
+#LDFLAGS += -L$(TOP)/shared -lshared
+LDFLAGS += -L../openssl -lcrypto -lssl
+LDFLAGS += -L../curl-7.21.7/lib/.libs -lcurl
+LDFLAGS += -L../libxml2/.libs -lxml2 -lpthread
+LDFLAGS += -L../wb -lws
+LDFLAGS += -ldl
+ifeq ($(RTCONFIG_BCMARM),y)
+LDFLAGS += -lgcc_s
+endif
+
+all: $(PROGS)
+
+libpush_log.so: push_log.o
+	$(LD) -shared -o $@ $^
+
+push_log: libpush_log.so main.o
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
+
+install: all
+	$(STRIP) $(PROGS)
+	install -D libpush_log.so $(INSTALLDIR)/lib/libpush_log.so
+	install -D push_log $(INSTALLDIR)/sbin/push_log
+
+clean:
+	rm -f *.o $(PROGS)

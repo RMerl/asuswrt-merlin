@@ -87,6 +87,8 @@ static void sesssigchild_handler(int UNUSED(dummy)) {
 	struct sigaction sa_chld;
 	struct exitinfo *exit = NULL;
 
+	const int saved_errno = errno;
+
 	TRACE(("enter sigchld handler"))
 	while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
 		TRACE(("sigchld handler: pid %d", pid))
@@ -140,6 +142,8 @@ static void sesssigchild_handler(int UNUSED(dummy)) {
 	sigemptyset(&sa_chld.sa_mask);
 	sigaction(SIGCHLD, &sa_chld, NULL);
 	TRACE(("leave sigchld handler"))
+
+	errno = saved_errno;
 }
 
 /* send the exit status or the signal causing termination for a session */

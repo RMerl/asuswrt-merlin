@@ -29,16 +29,25 @@
 #ifndef __MINISSDP_H__
 #define __MINISSDP_H__
 
-int OpenAndConfSSDPReceiveSocket(void);
+int
+OpenAndConfSSDPReceiveSocket();
 
-int OpenAndConfSSDPNotifySocket(in_addr_t addr);
+int
+OpenAndConfSSDPNotifySockets(int * sockets);
 
-void SendSSDPNotifies(int s, const char *host, unsigned short port, unsigned int lifetime);
+void
+SendSSDPNotifies2(int * sockets,
+                  unsigned short port,
+                  unsigned int lifetime);
 
-void ProcessSSDPRequest(int s, unsigned short port);
+void
+ProcessSSDPRequest(int s, unsigned short port);
 
-int SendSSDPGoodbyes(void);
+int
+SendSSDPGoodbye(int * sockets, int n);
 
-int SubmitServicesToMiniSSDPD(const char *host, unsigned short port);
+int
+SubmitServicesToMiniSSDPD(const char * host, unsigned short port);
 
 #endif
+

@@ -415,17 +415,6 @@ enum {
 #define csprintf(args...)	do { } while(0)
 #endif
 
-int f_read(const char *path, void *buffer, int max)
-{
-        int f;
-        int n;
-
-        if ((f = open(path, O_RDONLY)) < 0) return -1;
-        n = read(f, buffer, max);
-        close(f);
-        return n;
-}
-
 int check_action(void)
 {
         int a;

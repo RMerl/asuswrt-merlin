@@ -47,7 +47,7 @@ nvram_init(void *unused)
 		goto err;
 
 	/* Map kernel string buffer into user space */
-	nvram_buf = mmap(NULL, NVRAM_SPACE, PROT_READ, MAP_SHARED, nvram_fd, 0);
+	nvram_buf = mmap(NULL, MAX_NVRAM_SPACE, PROT_READ, MAP_SHARED, nvram_fd, 0);
 	if (nvram_buf == MAP_FAILED) {
 		close(nvram_fd);
 		nvram_fd = -1;
@@ -170,6 +170,7 @@ static int _nvram_set(const char *name, const char *value)
 	}
 
 	ret = write(nvram_fd, buf, count);
+
 	if (ret < 0) perror(PATH_DEV_NVRAM);
 
 	if (buf != tmp) free(buf);

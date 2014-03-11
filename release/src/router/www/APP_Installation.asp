@@ -54,8 +54,6 @@ if(_apps_action == 'cancel')
 var webs_state_update;
 var webs_state_error;
 var webs_state_info;
-var usb_path1_index;
-var usb_path2_index;
 
 <% disk_pool_mapping_info(); %>
 
@@ -63,7 +61,7 @@ function initial(){
 	show_menu();
 
 	default_apps_array = [["AiDisk", "aidisk.asp", "<#AiDiskWelcome_desp1#>", "Aidisk.png", ""],
-												["Servers Center", tablink[3][1], "<#UPnPMediaServer_Help#>", "server.png", ""],
+												["<#Servers_Center#>", tablink[3][1], "<#UPnPMediaServer_Help#>", "server.png", ""],
 												["<#Network_Printer_Server#>", "PrinterServer.asp", "<#Network_Printer_desc#>", "PrinterServer.png", ""],
 												["3G/4G", "Advanced_Modem_Content.asp", "<#HSDPAConfig_hsdpa_enable_hint1#>", "modem.png", ""],
 												["Time Machine", "Advanced_TimeMachine.asp", "Time Machine Support.", "TimeMachine.png", "1.0.0.1"]];
@@ -682,6 +680,13 @@ function show_partition(){
 
 	if(pool_names() != "") //  avoid no_disk error
 		partitions_array = pool_devices(); 
+
+	var diskArray = new Array()
+	for(var i=0; i<foreign_disk_total_mounted_number().length; i++){
+		for(var j=0; j<foreign_disk_total_mounted_number()[i]; j++){
+			diskArray.push(foreign_disks()[i]);
+		}			
+	}
 	
 	$("app_table").style.display = "none";
 	htmlcode += '<table align="center" style="margin:auto;border-collapse:collapse;">';
@@ -696,16 +701,16 @@ function show_partition(){
 		if(apps_dev == partitions_array[i]){
 			curr_pool_name = pool_names()[i];
 			if(all_accessable_size > 1)
-				htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk" onclick="apps_form(\'install\',\''+ _appname +'\',\''+ partitions_array[i] +'\');"></div></td><td class="app_table_radius_right" style="width:200px;">\n';
+				htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk" onclick="apps_form(\'install\',\''+ _appname +'\',\''+ partitions_array[i] +'\');"></div></td><td class="app_table_radius_right" style="width:300px;">\n';
 			else
-				htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk_noquota"></div></td><td class="app_table_radius_right" style="width:200px;">\n';
+				htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk_noquota"></div></td><td class="app_table_radius_right" style="width:300px;">\n';
 			htmlcode += '<div class="app_desc"><b>'+ pool_names()[i] + ' (active)</b></div>';
 		}
 		else{
 			if(all_accessable_size > 1)
-				htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk" onclick="apps_form(\'switch\',\''+_appname+'\',\''+partitions_array[i]+'\');"></div></td><td class="app_table_radius_right" style="width:200px;">\n';
+				htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk" onclick="apps_form(\'switch\',\''+_appname+'\',\''+partitions_array[i]+'\');"></div></td><td class="app_table_radius_right" style="width:300px;">\n';
 			else
-				htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk_noquota"></div></td><td class="app_table_radius_right" style="width:200px;">\n';
+				htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk_noquota"></div></td><td class="app_table_radius_right" style="width:300px;">\n';
 			htmlcode += '<div class="app_desc"><b>'+ pool_names()[i] + '</b></div>'; 
 		}
 
@@ -715,6 +720,7 @@ function show_partition(){
 			htmlcode += '<div class="app_desc"><#Availablespace#>: <b>'+ all_accessable_size+" GB <span style=\'color:#FFCC00\'>(Disk quota can not less than 1GB)" + '</span></b></div>'; 
 
 		htmlcode += '<div class="app_desc"><#Totalspace#>: <b>'+ all_total_size+" GB" + '</b></div>'; 
+		htmlcode += '<div class="app_desc"><b>' + decodeURIComponent(diskArray[i]) + '</b></div>'; 
 		htmlcode += '</div><br/><br/></td></tr>\n';
 		mounted_partition++;
 	}

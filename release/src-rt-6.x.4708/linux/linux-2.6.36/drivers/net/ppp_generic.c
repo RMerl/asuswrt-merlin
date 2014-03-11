@@ -1,3 +1,4 @@
+/* Modified by Broadcom Corp. Portions Copyright (c) Broadcom Corp, 2012. */
 /*
  * Generic PPP layer for Linux.
  *
@@ -41,13 +42,11 @@
 #include <linux/ip.h>
 #include <linux/tcp.h>
 #include <linux/spinlock.h>
-#include <linux/smp_lock.h>
 #include <linux/rwsem.h>
 #include <linux/stddef.h>
 #include <linux/device.h>
 #include <linux/mutex.h>
 #include <linux/slab.h>
-#include <linux/ppp_async.h>
 #include <net/slhc_vj.h>
 #include <asm/atomic.h>
 
@@ -94,11 +93,10 @@ struct ppp_file {
 	int		dead;		/* unit/channel has been shut down */
 };
 
-#define PF_TO_X(pf, X)		((X *)((char *)(pf) - offsetof(X, file)))
+#define PF_TO_X(pf, X)		container_of(pf, X, file)
 
 #define PF_TO_PPP(pf)		PF_TO_X(pf, struct ppp)
 #define PF_TO_CHANNEL(pf)	PF_TO_X(pf, struct channel)
-#define ROUNDUP(n, x)          (((n) + (x) - 1) / (x))
 
 /*
  * Data structure describing one ppp unit.
@@ -114,7 +112,6 @@ struct ppp {
 	spinlock_t	rlock;		/* lock for receive side 58 */
 	spinlock_t	wlock;		/* lock for transmit side 5c */
 	int		mru;		/* max receive unit 60 */
-	int             mru_alloc;      /* MAX(1500,MRU) for dev_alloc_skb() */
 	unsigned int	flags;		/* control bits 64 */
 	unsigned int	xstate;		/* transmit state bits 68 */
 	unsigned int	rstate;		/* receive state bits 6c */
@@ -148,13 +145,14 @@ struct ppp {
 
 /*
  * Bits in flags: SC_NO_TCP_CCID, SC_CCP_OPEN, SC_CCP_UP, SC_LOOP_TRAFFIC,
- * SC_MULTILINK, SC_MP_SHORTSEQ, SC_MP_XSHORTSEQ, SC_COMP_TCP, SC_REJ_COMP_TCP.
+ * SC_MULTILINK, SC_MP_SHORTSEQ, SC_MP_XSHORTSEQ, SC_COMP_TCP, SC_REJ_COMP_TCP,
+ * SC_MUST_COMP
  * Bits in rstate: SC_DECOMP_RUN, SC_DC_ERROR, SC_DC_FERROR.
  * Bits in xstate: SC_COMP_RUN
  */
 #define SC_FLAG_BITS	(SC_NO_TCP_CCID|SC_CCP_OPEN|SC_CCP_UP|SC_LOOP_TRAFFIC \
 			 |SC_MULTILINK|SC_MP_SHORTSEQ|SC_MP_XSHORTSEQ \
-			 |SC_COMP_TCP|SC_REJ_COMP_TCP)
+			 |SC_COMP_TCP|SC_REJ_COMP_TCP|SC_MUST_COMP)
 
 /*
  * Private data structure for each channel.
@@ -647,9 +645,7 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 	case PPPIOCSMRU:
 		if (get_user(val, p))
 			break;
-		ppp->mru_alloc = ppp->mru = val;
-	        if (ppp->mru_alloc < PPP_MRU)
- 	            ppp->mru_alloc = PPP_MRU;   /* increase for broken peers */
+		ppp->mru = val;
 		err = 0;
 		break;
 
@@ -1075,6 +1071,56 @@ ppp_xmit_process(struct ppp *ppp)
 	ppp_xmit_unlock(ppp);
 }
 
+static inline struct sk_buff *
+pad_compress_skb(struct ppp *ppp, struct sk_buff *skb)
+{
+	struct sk_buff *new_skb;
+	int len;
+	int new_skb_size = ppp->dev->mtu +
+		ppp->xcomp->comp_extra + ppp->dev->hard_header_len;
+	int compressor_skb_size = ppp->dev->mtu +
+		ppp->xcomp->comp_extra + PPP_HDRLEN;
+	new_skb = alloc_skb(new_skb_size, GFP_ATOMIC);
+	if (!new_skb) {
+		if (net_ratelimit())
+			printk(KERN_ERR "PPP: no memory (comp pkt)\n");
+		return NULL;
+	}
+	if (ppp->dev->hard_header_len > PPP_HDRLEN)
+		skb_reserve(new_skb,
+			    ppp->dev->hard_header_len - PPP_HDRLEN);
+
+	/* compressor still expects A/C bytes in hdr */
+	len = ppp->xcomp->compress(ppp->xc_state, skb->data - 2,
+				   new_skb->data, skb->len + 2,
+				   compressor_skb_size);
+	if (len > 0 && (ppp->flags & SC_CCP_UP)) {
+		kfree_skb(skb);
+		skb = new_skb;
+		skb_put(skb, len);
+		skb_pull(skb, 2);	/* pull off A/C bytes */
+	} else if (len == 0) {
+		/* didn't compress, or CCP not up yet */
+		kfree_skb(new_skb);
+		new_skb = skb;
+	} else {
+		/*
+		 * (len < 0)
+		 * MPPE requires that we do not send unencrypted
+		 * frames.  The compressor will return -1 if we
+		 * should drop the frame.  We cannot simply test
+		 * the compress_proto because MPPE and MPPC share
+		 * the same number.
+		 */
+		if (net_ratelimit())
+			printk(KERN_ERR "ppp: compressor dropped pkt\n");
+		kfree_skb(skb);
+		kfree_skb(new_skb);
+		new_skb = NULL;
+	}
+	return new_skb;
+}
+
 /*
  * Compress and send a frame.
  * The caller should have locked the xmit path,
@@ -1155,66 +1201,20 @@ ppp_send_frame(struct ppp *ppp, struct sk_buff *skb)
 	case PPP_CCP:
 		/* peek at outbound CCP frames */
 		ppp_ccp_peek(ppp, skb, 0);
-                if (CCP_CODE(skb->data+2) == CCP_RESETACK
-                    && (ppp->xcomp->compress_proto == CI_MPPE
-                        || ppp->xcomp->compress_proto == CI_LZS)) {
-                    --ppp->dev->stats.tx_packets;
-                    ppp->dev->stats.tx_bytes -= skb->len - 2;
-                    kfree_skb(skb);
-                    return;
-               }
-
 		break;
 	}
 
 	/* try to do packet compression */
 	if ((ppp->xstate & SC_COMP_RUN) && ppp->xc_state &&
 	    proto != PPP_LCP && proto != PPP_CCP) {
-                int comp_ovhd = 0;
-                /* 
-                 * because of possible data expansion when MPPC or LZS
-                 * is used, allocate compressor's buffer 12.5% bigger
-                 * than MTU
-                 */
-                if (ppp->xcomp->compress_proto == CI_MPPE)
-                    comp_ovhd = ((ppp->dev->mtu * 9) / 8) + 1 + MPPE_OVHD;
-                else if (ppp->xcomp->compress_proto == CI_LZS)
-                    comp_ovhd = ((ppp->dev->mtu * 9) / 8) + 1 + LZS_OVHD;
-                new_skb = alloc_skb(ppp->dev->mtu + ppp->dev->hard_header_len
-                                    + comp_ovhd, GFP_ATOMIC);
-                if (new_skb == 0) {
-                        printk(KERN_ERR "PPP: no memory (comp pkt)\n");
-			goto drop;
-	 	}
-                if (ppp->dev->hard_header_len > PPP_HDRLEN)
-                        skb_reserve(new_skb,
-                                    ppp->dev->hard_header_len - PPP_HDRLEN);
- 
-                /* compressor still expects A/C bytes in hdr */
-                len = ppp->xcomp->compress(ppp->xc_state, skb->data - 2,
-                                           new_skb->data, skb->len + 2,
-                                           ppp->dev->mtu + PPP_HDRLEN);
-                if (len > 0 && (ppp->flags & SC_CCP_UP)) {
-                        kfree_skb(skb);
-                        skb = new_skb;
-                        skb_put(skb, len);
-                        skb_pull(skb, 2);       /* pull off A/C bytes */
-                } else if (len == 0) {
-                        /* didn't compress, or CCP not up yet */
-                        kfree_skb(new_skb);
-                } else {
-                        /*
-                         * (len < 0)
-                         * MPPE requires that we do not send unencrypted
-                         * frames.  The compressor will return -1 if we
-                         * should drop the frame.  We cannot simply test
-                         * the compress_proto because MPPE and MPPC share
-                         * the same number.
-                         */
-                        printk(KERN_ERR "ppp: compressor dropped pkt\n");
-                        kfree_skb(new_skb);
+		if (!(ppp->flags & SC_CCP_UP) && (ppp->flags & SC_MUST_COMP)) {
+			if (net_ratelimit())
+				printk(KERN_ERR "ppp: compression required but down - pkt dropped.\n");
 			goto drop;
 		}
+		skb = pad_compress_skb(ppp, skb);
+		if (!skb)
+			goto drop;
 	}
 
 	/*
@@ -1671,6 +1671,9 @@ ppp_receive_nonmp_frame(struct ppp *ppp, struct sk_buff *skb)
 	    (ppp->rstate & (SC_DC_FERROR | SC_DC_ERROR)) == 0)
 		skb = ppp_decompress_frame(ppp, skb);
 
+	if (ppp->flags & SC_MUST_COMP && ppp->rstate & SC_DC_FERROR)
+		goto err;
+
 	proto = PPP_PROTO(skb);
 	switch (proto) {
 	case PPP_VJC_COMP:
@@ -1850,14 +1853,7 @@ ppp_decompress_frame(struct ppp *ppp, struct sk_buff *skb)
 	return skb;
 
  err:
-        if (ppp->rcomp->compress_proto != CI_MPPE
-            && ppp->rcomp->compress_proto != CI_LZS) {
-            /*
-             * If decompression protocol isn't MPPE/MPPC or LZS, we set
-             * SC_DC_ERROR flag and wait for CCP_RESETACK
-             */
-            ppp->rstate |= SC_DC_ERROR;
-        }
+	ppp->rstate |= SC_DC_ERROR;
 	ppp_receive_error(ppp);
 	return skb;
 }
@@ -2569,7 +2565,6 @@ ppp_create_interface(struct net *net, int unit, int *retp)
 	ppp = netdev_priv(dev);
 	ppp->dev = dev;
 	ppp->mru = PPP_MRU;
-	ppp->mru_alloc = PPP_MRU;
 	init_ppp_file(&ppp->file, INTERFACE);
 	ppp->file.hdrlen = PPP_HDRLEN - 2;	/* don't count proto bytes */
 	for (i = 0; i < NUM_NP; ++i)
@@ -2629,9 +2624,9 @@ ppp_create_interface(struct net *net, int unit, int *retp)
 	ppp->ppp_net = net;
 
 #ifdef HNDCTF
-        if ((ctf_dev_register(kcih, dev, FALSE) != BCME_OK) ||
-            (ctf_enable(kcih, dev, TRUE, NULL) != BCME_OK))
-                ctf_dev_unregister(kcih, dev);
+	if ((ctf_dev_register(kcih, dev, FALSE) != BCME_OK) ||
+	    (ctf_enable(kcih, dev, TRUE, NULL) != BCME_OK))
+		ctf_dev_unregister(kcih, dev);
 #endif
 
 	atomic_inc(&ppp_unit_count);
@@ -2678,7 +2673,7 @@ static void ppp_shutdown_interface(struct ppp *ppp)
 		ppp->closing = 1;
 		ppp_unlock(ppp);
 #ifdef HNDCTF
-                ctf_dev_unregister(kcih, ppp->dev);
+		ctf_dev_unregister(kcih, ppp->dev);
 #endif
 		unregister_netdev(ppp->dev);
 	} else
@@ -2929,11 +2924,7 @@ static void *unit_find(struct idr *p, int n)
 void
 ppp_rxstats_upd(void *pppif, struct sk_buff *skb)
 {
-	if(pppif == NULL || skb == NULL)
-		return;
-	struct ppp *ppp = (struct ppp *)netdev_priv((const struct net_device *)pppif);
-	if (ppp == NULL)
-		return;
+	struct ppp *ppp = netdev_priv((const struct net_device *)pppif);
 	++ppp->dev->stats.rx_packets;
 	ppp->dev->stats.rx_bytes += skb->len;
 	ppp->last_recv = jiffies;
@@ -2942,11 +2933,7 @@ ppp_rxstats_upd(void *pppif, struct sk_buff *skb)
 void
 ppp_txstats_upd(void *pppif, struct sk_buff *skb)
 {
-	if(pppif == NULL || skb == NULL)
-		return;
-	struct ppp *ppp = (struct ppp *)netdev_priv((const struct net_device *)pppif);
-	if (ppp == NULL)
-		return;
+	struct ppp *ppp = netdev_priv((const struct net_device *)pppif);
 	++ppp->dev->stats.tx_packets;
 	ppp->dev->stats.tx_bytes += skb->len;
 	ppp->last_xmit = jiffies;
@@ -2954,7 +2941,6 @@ ppp_txstats_upd(void *pppif, struct sk_buff *skb)
 
 EXPORT_SYMBOL(ppp_rxstats_upd);
 EXPORT_SYMBOL(ppp_txstats_upd);
-
 #endif /* CTF_PPPOE */
 
 /* Module/initialization stuff */

@@ -540,7 +540,8 @@ inotify_remove_file(const char * path)
 
 	if( ends_with(path, ".srt") )
 	{
-		return sql_exec(db, "DELETE from CAPTIONS where PATH = '%q'", path);
+		rows = sql_exec(db, "DELETE from CAPTIONS where PATH = '%q'", path);
+		return rows;
 	}
 	/* Invalidate the scanner cache so we don't insert files into non-existent containers */
 	valid_cache = 0;
@@ -562,13 +563,11 @@ inotify_remove_file(const char * path)
 	else
 	{
 		/* Delete the parent containers if we are about to empty them. */
-		snprintf(sql, sizeof(sql), "SELECT PARENT_ID from OBJECTS where DETAIL_ID = %lld"
-		                           " and PARENT_ID not like '64$%%'",
-		                           (long long int)detailID);
+		snprintf(sql, sizeof(sql), "SELECT PARENT_ID from OBJECTS where DETAIL_ID = %lld", (long long int)detailID);
 		if( (sql_get_table(db, sql, &result, &rows, NULL) == SQLITE_OK) )
 		{
 			int i, children;
-			for( i = 1; i <= rows; i++ )
+			for( i=1; i <= rows; i++ )
 			{
 				/* If it's a playlist item, adjust the item count of the playlist */
 				if( strncmp(result[i], MUSIC_PLIST_ID, strlen(MUSIC_PLIST_ID)) == 0 )
@@ -582,6 +581,8 @@ inotify_remove_file(const char * path)
 					continue;
 				if( children < 2 )
 				{
+					sql_exec(db, "DELETE from DETAILS where ID ="
+					             " (SELECT DETAIL_ID from OBJECTS where OBJECT_ID = '%s')", result[i]);
 					sql_exec(db, "DELETE from OBJECTS where OBJECT_ID = '%s'", result[i]);
 
 					ptr = strrchr(result[i], '$');
@@ -589,6 +590,8 @@ inotify_remove_file(const char * path)
 						*ptr = '\0';
 					if( sql_get_int_field(db, "SELECT count(*) from OBJECTS where PARENT_ID = '%s'", result[i]) == 0 )
 					{
+						sql_exec(db, "DELETE from DETAILS where ID ="
+						             " (SELECT DETAIL_ID from OBJECTS where OBJECT_ID = '%s')", result[i]);
 						sql_exec(db, "DELETE from OBJECTS where OBJECT_ID = '%s'", result[i]);
 					}
 				}

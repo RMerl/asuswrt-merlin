@@ -210,8 +210,8 @@ char *get_usb_node_by_string(const char *target_string, char *ret, const int ret
 	char *ptr, *ptr_end;
 	int len;
 
-	memset(usb_port, 0, 8);
-	if(get_usb_port_by_string(target_string, usb_port, 8) == NULL)
+	memset(usb_port, 0, sizeof(usb_port));
+	if(get_usb_port_by_string(target_string, usb_port, sizeof(usb_port)) == NULL)
 		return NULL;
 
 	if((ptr = strstr(target_string, usb_port)) == NULL)
@@ -222,11 +222,11 @@ char *get_usb_node_by_string(const char *target_string, char *ret, const int ret
 	if((ptr_end = strchr(ptr, ':')) == NULL)
 		return NULL;
 
-	len = strlen(ptr)-strlen(ptr_end);
-	if(len > 16)
-		len = 16;
+	len = ptr_end - ptr;
+	if(len >= sizeof(buf))
+		len = sizeof(buf)-1;
 
-	memset(buf, 0, 16);
+	memset(buf, 0, sizeof(buf));
 	strncpy(buf, ptr, len);
 
 	if((ptr = strrchr(buf, '/')) == NULL)
@@ -604,70 +604,60 @@ char *get_path_by_node(const char *usb_node, char *buf, const int buf_size){
 	return buf;
 }
 
-char *get_usb_vid(const char *usb_node, char *buf, const int buf_size)
+static FILE *open_usb_target(const char *usb_node, const char *target, const int wait)
 {
 	FILE *fp;
-	char check_usb_port[8], target_file[128], *ptr;
-	int len;
+	char usb_port[8], target_file[128];
+	int retry = wait;
 
-	if(usb_node == NULL || get_usb_port_by_string(usb_node, check_usb_port, sizeof(check_usb_port)) == NULL)
+	if(usb_node == NULL || target == NULL ||
+	   get_usb_port_by_string(usb_node, usb_port, sizeof(usb_port)) == NULL)
 		return NULL;
 
-	memset(target_file, 0, 128);
-	sprintf(target_file, "%s/%s/idVendor", USB_DEVICE_PATH, usb_node);
-	if((fp = fopen(target_file, "r")) == NULL)
-		return NULL;
+	snprintf(target_file, sizeof(target_file), "%s/%s/%s", USB_DEVICE_PATH, usb_node, target);
 
-	memset(buf, 0, buf_size);
-	ptr = fgets(buf, buf_size, fp);
-	fclose(fp);
-	if(ptr == NULL)
-		return NULL;
+	while((fp = fopen(target_file, "r")) == NULL && retry-- > 0)
+		sleep(1);
 
-	len = strlen(buf);
-	buf[len-1] = 0;
-
-	return buf;
+	return fp;
 }
 
-char *get_usb_pid(const char *usb_node, char *buf, const int buf_size)
+unsigned int get_usb_vid(const char *usb_node)
 {
 	FILE *fp;
-	char check_usb_port[8], target_file[128], *ptr;
-	int len;
+	unsigned int val;
 
-	if(usb_node == NULL || get_usb_port_by_string(usb_node, check_usb_port, sizeof(check_usb_port)) == NULL)
-		return NULL;
+	if((fp = open_usb_target(usb_node, "idVendor", 0)) == NULL)
+		return 0;
 
-	memset(target_file, 0, 128);
-	sprintf(target_file, "%s/%s/idProduct", USB_DEVICE_PATH, usb_node);
-	if((fp = fopen(target_file, "r")) == NULL)
-		return NULL;
-
-	memset(buf, 0, buf_size);
-	ptr = fgets(buf, buf_size, fp);
+	if(fscanf(fp, "%x", &val) < 1)
+		val = 0;
 	fclose(fp);
-	if(ptr == NULL)
-		return NULL;
 
-	len = strlen(buf);
-	buf[len-1] = 0;
+	return val;
+}
 
-	return buf;
+unsigned int get_usb_pid(const char *usb_node)
+{
+	FILE *fp;
+	unsigned int val;
+
+	if((fp = open_usb_target(usb_node, "idProduct", 0)) == NULL)
+		return 0;
+
+	if(fscanf(fp, "%x", &val) < 1)
+		val = 0;
+	fclose(fp);
+
+	return val;
 }
 
 char *get_usb_manufacturer(const char *usb_node, char *buf, const int buf_size)
 {
 	FILE *fp;
-	char check_usb_port[8], target_file[128], *ptr;
-	int len;
+	char *ptr;
 
-	if(usb_node == NULL || get_usb_port_by_string(usb_node, check_usb_port, sizeof(check_usb_port)) == NULL)
-		return NULL;
-
-	memset(target_file, 0, 128);
-	sprintf(target_file, "%s/%s/manufacturer", USB_DEVICE_PATH, usb_node);
-	if((fp = fopen(target_file, "r")) == NULL)
+	if((fp = open_usb_target(usb_node, "manufacturer", 0)) == NULL)
 		return NULL;
 
 	memset(buf, 0, buf_size);
@@ -676,24 +666,15 @@ char *get_usb_manufacturer(const char *usb_node, char *buf, const int buf_size)
 	if(ptr == NULL)
 		return NULL;
 
-	len = strlen(buf);
-	buf[len-1] = 0;
-
-	return buf;
+	return strsep(&ptr, "\r\n");
 }
 
 char *get_usb_product(const char *usb_node, char *buf, const int buf_size)
 {
 	FILE *fp;
-	char check_usb_port[8], target_file[128], *ptr;
-	int len;
+	char *ptr;
 
-	if(usb_node == NULL || get_usb_port_by_string(usb_node, check_usb_port, sizeof(check_usb_port)) == NULL)
-		return NULL;
-
-	memset(target_file, 0, 128);
-	sprintf(target_file, "%s/%s/product", USB_DEVICE_PATH, usb_node);
-	if((fp = fopen(target_file, "r")) == NULL)
+	if((fp = open_usb_target(usb_node, "product", 0)) == NULL)
 		return NULL;
 
 	memset(buf, 0, buf_size);
@@ -702,24 +683,15 @@ char *get_usb_product(const char *usb_node, char *buf, const int buf_size)
 	if(ptr == NULL)
 		return NULL;
 
-	len = strlen(buf);
-	buf[len-1] = 0;
-
-	return buf;
+	return strsep(&ptr, "\r\n");
 }
 
 char *get_usb_serial(const char *usb_node, char *buf, const int buf_size)
 {
 	FILE *fp;
-	char check_usb_port[8], target_file[128], *ptr;
-	int len;
+	char *ptr;
 
-	if(usb_node == NULL || get_usb_port_by_string(usb_node, check_usb_port, sizeof(check_usb_port)) == NULL)
-		return NULL;
-
-	memset(target_file, 0, 128);
-	sprintf(target_file, "%s/%s/serial", USB_DEVICE_PATH, usb_node);
-	if((fp = fopen(target_file, "r")) == NULL)
+	if((fp = open_usb_target(usb_node, "serial", 0)) == NULL)
 		return NULL;
 
 	memset(buf, 0, buf_size);
@@ -728,24 +700,15 @@ char *get_usb_serial(const char *usb_node, char *buf, const int buf_size)
 	if(ptr == NULL)
 		return NULL;
 
-	len = strlen(buf);
-	buf[len-1] = 0;
-
-	return buf;
+	return strsep(&ptr, "\r\n");
 }
 
 char *get_usb_speed(const char *usb_node, char *buf, const int buf_size)
 {
 	FILE *fp;
-	char check_usb_port[8], target_file[128], *ptr;
-	int len;
+	char *ptr;
 
-	if(usb_node == NULL || get_usb_port_by_string(usb_node, check_usb_port, sizeof(check_usb_port)) == NULL)
-		return NULL;
-
-	memset(target_file, 0, 128);
-	sprintf(target_file, "%s/%s/speed", USB_DEVICE_PATH, usb_node);
-	if((fp = fopen(target_file, "r")) == NULL)
+	if((fp = open_usb_target(usb_node, "speed", 0)) == NULL)
 		return NULL;
 
 	memset(buf, 0, buf_size);
@@ -754,52 +717,31 @@ char *get_usb_speed(const char *usb_node, char *buf, const int buf_size)
 	if(ptr == NULL)
 		return NULL;
 
-	len = strlen(buf);
-	buf[len-1] = 0;
-
-	return buf;
+	return strsep(&ptr, "\r\n");
 }
 
 int get_usb_interface_number(const char *usb_node)
 {
 	FILE *fp;
-	char target_file[128], buf[8], *ptr;
+	int val;
 
-	if(usb_node == NULL || get_usb_port_by_string(usb_node, buf, sizeof(buf)) == NULL)
+	if((fp = open_usb_target(usb_node, "bNumInterfaces", 0)) == NULL)
 		return 0;
 
-	memset(target_file, 0, 128);
-	sprintf(target_file, "%s/%s/bNumInterfaces", USB_DEVICE_PATH, usb_node);
-	if((fp = fopen(target_file, "r")) == NULL)
-		return 0;
-
-	memset(buf, 0, sizeof(buf));
-	ptr = fgets(buf, sizeof(buf), fp);
+	if(fscanf(fp, "%d", &val) < 1)
+		val = 0;
 	fclose(fp);
-	if(ptr == NULL)
-		return 0;
 
-	return atoi(buf);
+	return val;
 }
 
 char *get_usb_interface_class(const char *interface_name, char *buf, const int buf_size)
 {
 	FILE *fp;
-	char check_usb_port[8], target_file[128], *ptr;
-	int retry, len;
+	char *ptr;
 
-	if(interface_name == NULL || get_usb_port_by_string(interface_name, check_usb_port, sizeof(check_usb_port)) == NULL)
-		return NULL;
-
-	memset(target_file, 0, 128);
-	sprintf(target_file, "%s/%s/bInterfaceClass", USB_DEVICE_PATH, interface_name);
-	retry = 0;
-	while((fp = fopen(target_file, "r")) == NULL && retry < MAX_WAIT_FILE){
-		++retry;
-		sleep(1); // Sometimes the class file would be built slowly, so try again.
-	}
-
-	if(fp == NULL){
+	// Sometimes the class file would be built slowly, so try again during MAX_WAIT_FILE
+	if((fp = open_usb_target(interface_name, "bInterfaceClass", MAX_WAIT_FILE)) == NULL){
 		usb_dbg("(%s): Fail to open the class file really!\n", interface_name);
 		return NULL;
 	}
@@ -810,30 +752,16 @@ char *get_usb_interface_class(const char *interface_name, char *buf, const int b
 	if(ptr == NULL)
 		return NULL;
 
-	len = strlen(buf);
-	buf[len-1] = 0;
-
-	return buf;
+	return strsep(&ptr, "\r\n");
 }
 
 char *get_usb_interface_subclass(const char *interface_name, char *buf, const int buf_size)
 {
 	FILE *fp;
-	char check_usb_port[8], target_file[128], *ptr;
-	int retry, len;
+	char *ptr;
 
-	if(interface_name == NULL || get_usb_port_by_string(interface_name, check_usb_port, sizeof(check_usb_port)) == NULL)
-		return NULL;
-
-	memset(target_file, 0, 128);
-	sprintf(target_file, "%s/%s/bInterfaceSubClass", USB_DEVICE_PATH, interface_name);
-	retry = 0;
-	while((fp = fopen(target_file, "r")) == NULL && retry < MAX_WAIT_FILE){
-		++retry;
-		sleep(1); // Sometimes the class file would be built slowly, so try again.
-	}
-
-	if(fp == NULL){
+	// Sometimes the class file would be built slowly, so try again during MAX_WAIT_FILE
+	if((fp = open_usb_target(interface_name, "bInterfaceSubClass", MAX_WAIT_FILE)) == NULL){
 		usb_dbg("(%s): Fail to open the class file really!\n", interface_name);
 		return NULL;
 	}
@@ -844,32 +772,22 @@ char *get_usb_interface_subclass(const char *interface_name, char *buf, const in
 	if(ptr == NULL)
 		return NULL;
 
-	len = strlen(buf);
-	buf[len-1] = 0;
-
-	return buf;
+	return strsep(&ptr, "\r\n");
 }
 
 int get_interface_numendpoints(const char *interface_name)
 {
 	FILE *fp;
-	char target_file[128], buf[8], *ptr;
+	int val;
 
-	if(interface_name == NULL || get_usb_port_by_string(interface_name, buf, sizeof(buf)) == NULL)
+	if((fp = open_usb_target(interface_name, "bNumEndpoints", 0)) == NULL)
 		return 0;
 
-	memset(target_file, 0, 128);
-	sprintf(target_file, "%s/%s/bNumEndpoints", USB_DEVICE_PATH, interface_name);
-	if((fp = fopen(target_file, "r")) == NULL)
-		return 0;
-
-	memset(buf, 0, sizeof(buf));
-	ptr = fgets(buf, sizeof(buf), fp);
+	if(fscanf(fp, "%d", &val) < 1)
+		val = 0;
 	fclose(fp);
-	if(ptr == NULL)
-		return 0;
 
-	return atoi(buf);
+	return val;
 }
 
 int get_interface_Int_endpoint(const char *interface_name)
@@ -896,11 +814,11 @@ int get_interface_Int_endpoint(const char *interface_name)
 	bNumEndpoints = get_interface_numendpoints(interface_name);
 	if(bNumEndpoints <= 0){
 		usb_dbg("(%s): No endpoints: %d.\n", interface_name, bNumEndpoints);
-		return 0;
+		goto leave;
 	}
 	else if(bNumEndpoints == 1){ // ex: GL04P
 		usb_dbg("(%s): It's a little impossible to be the control interface with a endpoint.\n", interface_name);
-		return 0;
+		goto leave;
 	}
 
 	end_count = 0;
@@ -922,7 +840,7 @@ int get_interface_Int_endpoint(const char *interface_name)
 		ptr = fgets(buf, sizeof(buf), fp);
 		fclose(fp);
 		if(ptr == NULL)
-			return 0;
+			goto leave;
 
 		if(!strncmp(buf, "03", 2)){
 			got_Int = 1;
@@ -931,6 +849,8 @@ int get_interface_Int_endpoint(const char *interface_name)
 		else if(end_count == bNumEndpoints)
 			break;
 	}
+
+leave:
 	closedir(interface_dir);
 
 	return got_Int;
@@ -1104,13 +1024,13 @@ int isACMInterface(const char *interface_name)
 	return 1;
 }
 
-int isRNDISInterface(const char *interface_name, const char *vid, const char *pid)
+int isRNDISInterface(const char *interface_name, const unsigned int vid, const unsigned int pid)
 {
 	char interface_class[4];
 	char target_file[128];
 	DIR *module_dir;
 
-	if(!strcmp(vid, "1076") && (!strcmp(pid, "8002") || !strcmp(pid, "8003")))
+	if(vid == 0x1076 && (pid == 0x8002 || pid == 0x8003))
 		return 1;
 
 	if(get_usb_interface_class(interface_name, interface_class, 4) == NULL)
@@ -1176,13 +1096,17 @@ int is_usb_modem_ready(void)
 {
 	char prefix[32], tmp[32];
 	char usb_act[8], usb_vid[8];
-	char port_path[8];
+	char usb_node[32], port_path[8];
 
 	if(nvram_match("modem_enable", "0"))
 		return 0;
 
-	memset(port_path, 0, 8);
-	strncpy(port_path, nvram_safe_get("usb_modem_act_path"), 8);
+	snprintf(usb_node, 32, "%s", nvram_safe_get("usb_modem_act_path"));
+	if(strlen(usb_node) <= 0)
+		return 0;
+
+	if(get_path_by_node(usb_node, port_path, 8) == NULL)
+		return 0;
 
 	memset(prefix, 0, 8);
 	sprintf(prefix, "usb_path%s", port_path);

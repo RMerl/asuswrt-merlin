@@ -177,7 +177,10 @@ extern int printk_ratelimit(void);
 extern int __printk_ratelimit(int ratelimit_jiffies, int ratelimit_burst);
 extern bool printk_timed_ratelimit(unsigned long *caller_jiffies,
 				unsigned int interval_msec);
-
+#ifdef CONFIG_DUMP_PREV_OOPS_MSG 
+extern void enable_oopsbuf(int onoff);
+extern int prepare_and_dump_previous_oops(void);
+#endif
 static inline void console_silent(void)
 {
 	console_loglevel = 0;

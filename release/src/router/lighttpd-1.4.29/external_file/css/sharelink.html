@@ -6,57 +6,370 @@
 <title></title>
 <style>
 html{
-	margin:0 0;
-	padding:0px;
+margin:0 0;
+padding:0px;
 }
 body{
-	display: block;
-	overflow: hidden;
-	background: #e8e8e8;
+display: block;
+overflow: hidden;
+background: #e8e8e8;
+color: rgb(80,90,100);
+font: 13px verdana, tahoma, arial, helvetica, sans-serif;
+}
+tr.odd {
+background-color: #E1FBF8;
+}
+tr.even {
+background-color: #DDD;
+}
+table#ntb { 
+border: 1px; 
+font-family: arial;
+font-size:100%;
+border-collpase:collpase; 
+}
+table thead {
+color:#F3F6FB;
+background-color: #595959;
+}
+.tab_container{
+overflow:auto;
+}
+.dellink, .delcheck{
+background:transparent url("style-theme.png") no-repeat top left;
+background-position: -400px -438px;
+width:40px;
+height:28px;
+}
+#share_file_list{
+height:300px;
+border-bottom: 1px solid #ccc;
+}
+#share_file_list #list{
+height:240px;
+overflow-y:auto;
+padding:0;
+}
+#share_expiration{
+height:80px;
 }
 </style>
 <script type="text/javascript" src="/smb/js/tools.js"></script>
+<script type="text/javascript" src="/smb/js/davclient_tools.js"></script>
 <script type="text/javascript">
-var this_url;
+var this_service="";
+var this_url="";
+var this_files="";
 var m = new lang();
 var g_storage = new myStorage();
 var is_private_ip = 0;
+var g_sharelink_array = new Array();
+
+function refreshShareFileList(){
+	
+	var table_html = "<table id='sharefiles' width='100%' border='0' style='table-layout:fixed'>";
+	table_html += "<thead><tr>";    		
+	table_html += "<th scope='col' class='filename' style='width:20%'>" + m.getString('table_filename') + "</th>";
+    table_html += "<th scope='col' class='remove' style='width:10%'>" + m.getString('func_delete') + "</th>";
+    table_html += "</tr></thead>";
+	
+	table_html += "<tbody id='ntb'>";
+				
+	for(var i=0; i<g_sharelink_array.length; i++){
+		var full_file_path = g_sharelink_array[i].file_path;		
+		var file_name = decodeURIComponent(g_sharelink_array[i].file_name);
+		var file_id = g_sharelink_array[i].id;
+		
+		if(full_file_path=="")
+			continue;
+		
+		table_html += "<tr nid='" + i + "' class='even'>";
+					
+		table_html += "<td fid='filename' align='center'><div style='overflow:hidden;text-overflow:ellipsis'>";
+		table_html += "<span class='sharefile' style='white-space:nowrap;' title='" + file_name + "'>" + file_name + "</span>";
+		table_html += "</div></td>";		
+		table_html += "<td fid='remove' align='center'><a>";
+		table_html += "<div class='dellink' title='remove' fileid='" + file_id + "' file='" + full_file_path + "' style='cursor:pointer'></div>";
+		table_html += "</a></td>";
+					
+		table_html += "</tr>";
+	}
+	
+	table_html += "</tbody>";      
+	table_html += "</table>";
+	
+	$("#share_file_list #list").empty();
+	$(table_html).appendTo($("#share_file_list #list"));
+	
+	$(".dellink").click(function(){
+		var r=confirm(m.getString('msg_confirm_delete_sharelink'));
+				
+		if (r==true){			
+			
+			for(var i=0; i<g_sharelink_array.length; i++){
+				if(g_sharelink_array[i].id==$(this).attr("fileid")){
+					g_sharelink_array.splice(i, 1);
+					refreshShareFileList();
+					break;
+				}
+			}
+		}
+	});
+}
 
 $("document").ready(function() {
 	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
 	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
 	m.setLanguage(lan);
 	
-	$('label#username').text(m.getString('title_username'));
-	$('label#password').text(m.getString('title_password'));
-	$('button#ok').text(m.getString('btn_apply'));
-	$('button#cancel').text(m.getString('btn_cancel'));
+	this_service = getUrlVars()["s"];
+	this_url = getUrlVars()["u"];
+	this_files = getUrlVars()["f"];
+	
+	var the_array = this_files.split(";");
+	
+	if(the_array.length<=0)
+		return;
+		
 	$('span#desc').text(m.getString('msg_sharelink'));
 	$('#sharelink_warning').text(m.getString('msg_sharelink_warning'));
+	$('#file_list_desc').text(m.getString('title_share_file'));
+	$('#expire_desc').text(m.getString('msg_expire_desc'));
+	$('#expire_label').text(m.getString('title_expire_time')+":");
+	$('#day_unit').text(m.getString('title_day_unit'));
+	$('input#cancel').attr("value", m.getString('btn_cancel'));
 	
-	this_url = getUrlVars()["v"];
-	is_private_ip = getUrlVars()["b"];
+	var select_html = "";
+	select_html += "<option value=\"0\" selected=\"selected\">" + m.getString('title_no_expire_time') + "</option>";
+	select_html += "<option value=\"3600\">" + m.getString('title_expire_one_hour') + "</option>";
+	select_html += "<option value=\"86400\">" + m.getString('title_expire_one_day') + "</option>";
+	select_html += "<option value=\"604800\">" + m.getString('title_expire_one_week') + "</option>";
+	select_html += "<option value=\"2592000\">" + m.getString('title_expire_one_month') + "</option>";
+	select_html += "<option value=\"custom\">" + m.getString('title_expire_custom') + "</option>";
 	
-	while( this_url.indexOf('%3Cbr%3E') != -1 )
-		this_url = this_url.replace('%3Cbr%3E','\n');
-	
-	while( this_url.indexOf('<br>') != -1 )
-		this_url = this_url.replace('<br>','\n');
-		
-	var content = "";
-	
-	content += m.getString('msg_sharelink_desc1');
-	content += 	this_url;
-	content += m.getString('msg_sharelink_desc2');
-	
-	if(is_private_ip==1){
-		content += m.getString('msg_sharelink_desc3');
+	$("#expire_day").empty();
+	$(select_html).appendTo($("#expire_day"));
+							
+	if(this_service=="facebook"){
+		$("#publish_sharelink").attr("value", m.getString("title_share2")+ " " +m.getString("title_facebook"));	
 	}
-	//$("#sharelink").html(content);
+	else if(this_service=="googleplus"){
+		$("#publish_sharelink").attr("value", m.getString("title_share2")+ " " +m.getString("title_googleplus"));	
+	}
+	else if(this_service=="twitter"){
+		$("#publish_sharelink").attr("value", m.getString("title_share2")+ " " +m.getString("title_twitter"));	
+	}
+	else if(this_service=="plurk"){
+		$("#publish_sharelink").attr("value", m.getString("title_share2")+ " " +m.getString("title_plurk"));	
+	}
+	else{
+		$("#publish_sharelink").attr("value", m.getString("title_gen_sharelink"));
+	}
 	
-	$("#sharelink").val(content);
+	for(var i=0; i<the_array.length; i++){
+		var full_file_path = the_array[i];		
+		var file_name = full_file_path.substring( full_file_path.lastIndexOf("/")+1, full_file_path.length );
+		
+		if(full_file_path=="")
+			continue;
+				
+		var obj = new Object;
+		obj.id = i;
+		obj.file_path = full_file_path;
+		obj.file_name = file_name;
+		obj.expire = 0;
+		
+		g_sharelink_array.push(obj);
+	}
 	
-	select_all();
+	the_array = null;
+	
+	refreshShareFileList();
+	
+	$("#publish_sharelink").click(function(){
+		
+		if(g_sharelink_array.length<=0)
+			return;
+		
+		var selectFiles = "";		
+		var webdav_mode = g_storage.get('webdav_mode');
+		var ddns_host_name = g_storage.get('ddns_host_name');    
+						
+		var hostName = (ddns_host_name=="") ? window.location.host : ddns_host_name;
+		if(hostName.indexOf(":")!=-1)
+			hostName = hostName.substring(0, hostName.indexOf(":"));
+				
+		var is_private_ip = isPrivateIP(hostName);
+				
+		if( webdav_mode == 0 ) //- Only enable http
+			hostName = "http://" + hostName + ":" + g_storage.get("http_port");
+		else
+			hostName = "https://" + hostName;
+		
+		var count = g_sharelink_array.length;
+		for(var i=0; i<count; i++){
+			selectFiles += g_sharelink_array[i].file_name;				
+			if(i!=count-1) selectFiles += ";";
+		}
+		
+		var expire_time = $("#expire_day").val();
+		var expire_time_title = $("#expire_day option:selected").text();
+		if(expire_time=="custom"){
+			expire_time = parseInt($("#input_expire_day").val())*86400;
+			expire_time_title = $("#input_expire_day").val() + m.getString("title_day_unit");
+		}
+		
+		var client = new davlib.DavClient();
+		client.initialize();
+		
+		client.GSL(this_url, this_url, selectFiles, expire_time, 1, function(error, content, statusstring){			
+			if(error==200){
+				
+				var data = parseXml(statusstring);				
+				var result = $(data).find('sharelink').text();
+						
+				if(result==''){
+					alert("Fail to parse xml!");
+					return;
+				}
+				
+				var result_sharelink = result.split(";");
+				var len = result_sharelink.length;
+				
+				if(this_service=="facebook"){
+					for(var i=0; i<len; i++){
+						var share_link = hostName + "/" + result_sharelink[i];
+						var sharetitle = m.getString('msg_sharelink_desc1');
+						var url = 'http://www.facebook.com/sharer.php?u=' + encodeURIComponent(share_link) + 
+								  "&t=" +  encodeURIComponent(sharetitle);	
+						window.open(url);
+					}
+					
+					parent.closeJqmWindow(0);
+				}
+				else if(this_service=="googleplus"){
+					for(var i=0; i<len; i++){
+						var share_link = hostName + "/" + result_sharelink[i];
+						var url = 'https://plus.google.com/share?url=' + encodeURIComponent(share_link);
+						window.open(url);
+					}
+					
+					parent.closeJqmWindow(0);
+				}
+				else if(this_service=="twitter"){
+					var share_content = "";
+					for(var i=0; i<len; i++){
+						var share_link = hostName + "/" + result_sharelink[i];
+						
+						share_content += share_link;
+						share_content += "<br><br>";
+					}
+					
+					var url = 'http://twitter.com/home/?status=' + encodeURIComponent(share_content);
+					window.open(url);
+					
+					parent.closeJqmWindow(0);
+				}
+				else if(this_service=="plurk"){
+					var share_content = "";
+
+					share_content += m.getString('msg_sharelink_desc1') + "\n\n";
+					
+					for(var i=0; i<len; i++){
+						var share_link = hostName + "/" + result_sharelink[i];
+						
+						share_content += share_link;
+						
+						if(i!=len-1)
+							share_content += "\n\n";
+					}
+					
+					var url = 'http://www.plurk.com/?qualifier=shares&status=' + encodeURIComponent(share_content);
+					window.open(url);
+					
+					parent.closeJqmWindow(0);
+				}
+				else{
+					var content = "";
+					content += m.getString('msg_sharelink_desc1');
+					var len = g_sharelink_array.length;
+					for(var i = 0; i < len; i++){
+						var share_link = hostName + "/" + result_sharelink[i];
+						content += share_link;
+						if(i!=len-1)
+							content += "\n\n";			
+					}	
+					
+					if(expire_time>0){
+						var share_expire_time = m.getString('msg_sharelink_desc2');
+						share_expire_time = share_expire_time.replace("%s", expire_time_title);					
+						content += share_expire_time;
+					}
+					
+					if(is_private_ip==1){
+						content += m.getString('msg_sharelink_desc3');
+					}
+					
+					$("#sharelink").val(content);
+	
+					$("#process_sharelink").hide();
+					$("#show_sharelink").show();
+					$("#publish_sharelink").hide();
+					
+					$('input#cancel').attr("value", m.getString('btn_apply'));
+				}
+			}
+			else if(error==405){
+				var msg = m.getString("msg_exceed_max_sharelink");
+				msg = msg.replace("%d", g_storage.get('max_sharelink'));
+				alert(msg);
+			}
+			else{
+				alert("Fail to generate share link!");	
+			}
+		});
+	});
+	
+	$("select.expire_day").change(function(){
+		if($(this).val() == "custom"){
+			$("#custom_expire_day").show();
+		}	
+		else{
+			$("#custom_expire_day").hide();
+		}
+	});
+	
+	$("#share-link-GooglePlus").click(function(){
+		var len = g_sharelink_array.length;
+		for(var i = 0; i < len; i++){
+			var sharelink = g_sharelink_array[i];
+			var url = 'https://plus.google.com/share?url=' + encodeURIComponent(sharelink);
+			window.open(url);		
+		}
+	});
+	
+	$("#share-link-Twitter").click(function(){
+		var url = 'http://twitter.com/home/?status=' + encodeURIComponent($("#sharelink").val());
+		window.open(url);
+	});
+	
+	$("#share-link-Plurk").click(function(){
+		var url = 'http://www.plurk.com/?qualifier=shares&status=' + encodeURIComponent($("#sharelink").val());
+		window.open(url);
+	});
+	
+	$("input.numInput").click(function() {
+   		$(this).select();
+	});
+	
+	$('input.numInput').keyup(function(e){
+		var pnumber = $(this).attr("value");		
+		if (!/^\d+$/.test(pnumber))
+    	{
+        	$(this).val(/^\d+/.exec($(this).val()));
+    	}
+    	return false;
+	});
 });
 
 function doCancel(e) {
@@ -88,32 +401,88 @@ function select_all(){
 </head>
 <body>
 
-<table width="100%" border="0" align="center" cellpadding="0" cellspacing="0" style="overflow:hidden;">	
+<table width="100%" border="0" align="center" cellpadding="0" cellspacing="0" style="overflow:hidden;table-layout:fixed">	
 	<tr>
-  		<td>
-			<table width="100%">
-				<td><tr>				  
-					<span id='desc'></span>
-				</td></tr>
-				<td><tr>				  
-					<textarea name="sharelink" id="sharelink" style="height:400px;width:570px" wrap="off"></textarea>
-				</td></tr>				
-			</table>  
+    	<td>
+        	<div style="background-color:#FF9100;width:100%;padding:5px;">
+        		<span id="sharelink_warning" name="sharelink_warning" style="color:#fff"></span>
+            </div>
+        </td>
+    </tr>
+    <tr style="height:10px;">
+    </tr>
+	<tr id="process_sharelink">
+  		<td>	  
+			<div id="config">            	
+            	<div id="share_file_list">
+                	<div style="margin:20px 0 0 10px">
+                        <p id="file_list_desc"></p>
+                        <div id="list"></div>
+                    </div>
+                </div>
+                <div id="share_expiration" class="share_setting">
+                	<div style="margin:20px 0 0 10px">
+                    	<p id="expire_desc"></p>
+                        <span id="expire_label"></span>
+                        <select id="expire_day" name="expire_day" class="expire_day">
+                        </select>
+                        <span id="custom_expire_day" style="display:none">
+                        	<input id="input_expire_day" class="numInput" maxlength="2" style="width:25px;" value="3"><span id="day_unit" style="padding-left:5px;">天</span>
+                        </span>
+                    </div>
+                </div>
+            	<!--
+                <fieldset title="Step 1">
+                    <legend id="legend_step_1">Share Files</legend>
+                    <div id="share_file_list" class="share_setting">			    	
+                    </div>
+                </fieldset>
+            
+                <fieldset title="Step 2">
+                    <legend id="legend_step_2">Expiration</legend>
+                    <div id="share_expiration" class="share_setting">
+                        <div style="margin:20px 0 0 10px">
+                        	<p id="expire_desc"></p>
+                            <span id="expire_label"></span>
+                            <select id="expire_day" name="expire_day" class="expire_day">
+                            </select>
+                            <span id="custom_expire_day" style="display:none">
+                                <input id="input_expire_day" class="numInput" maxlength="2" style="width:25px;" value="3"><span id="day_unit" style="padding-left:5px;">天</span>
+                            </span>
+                        </div>
+                    </div>
+                </fieldset>
+	 
+  				<input type="button" id="publish_sharelink" class="finish" value="Finish!" />
+                -->
+			</div>
     	</td>    
 	</tr>
-  	<!--<tr style='height:20px'></tr>-->
-    <tr>
-    	<td>
-    		<div id="sharelink_warning" name="sharelink_warning" style="margin:5px;color:#ff0000"></div>
-    	</td>
-    </tr>
+    <tr id="show_sharelink" style="display:none">
+  		<td>
+			<table width="100%">
+				<tr>
+                	<td>				  
+						<span id='desc'></span>
+					</td>
+                </tr>
+				<tr>
+                	<td>				  
+						<textarea name="sharelink" id="sharelink" style="height:370px;width:570px" wrap="off"></textarea>
+					</td>
+                </tr>				
+			</table>  
+    	</td>    
+	</tr>    
   	<tr>
   		<td>
-  			<div class="table_block_footer" style="text-align:right">
-    			<button id="ok" class="btnStyle" onClick="doCancel();">Close</button>
+  			<div class="table_block_footer" style="text-align:right;">
+            	<input type="button" name="publish_sharelink" id="publish_sharelink" class="btnStyle" value="" style="right:10px;bottom:10px"/>
+    			<input type="button" name="cancel" id="cancel" class="btnStyle" onclick="doCancel();" value="" style="right:10px;bottom:10px"/>
     		</div>
     	</td>
   	</tr>
 </table>
+
 </body>
 </html>

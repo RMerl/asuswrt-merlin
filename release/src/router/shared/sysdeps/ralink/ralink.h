@@ -293,7 +293,7 @@ typedef enum _RT_802_11_PHY_MODE {
 #define OFFSET_MTD_FACTORY	0x40000
 #define OFFSET_BOOT_VER		0x4018A
 #define OFFSET_COUNTRY_CODE	0x40188
-#if defined(RTN14U)
+#if defined(RTN14U) || defined(RTN11P)
 #define OFFSET_MAC_ADDR		0x40004
 #define OFFSET_MAC_ADDR_2G	0x40004 //only one MAC
 #define OFFSET_MAC_GMAC2	0x4018E

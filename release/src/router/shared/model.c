@@ -20,6 +20,9 @@ static const struct model_s model_list[] = {
 	{ "RT-AC56U",	MODEL_RTAC56U	},
 	{ "RT-AC66U",	MODEL_RTAC66U	},
 	{ "RT-AC68U",	MODEL_RTAC68U	},
+	{ "RT-AC68U_V2",MODEL_RTAC68U	},
+	{ "RT-AC69U",	MODEL_RTAC68U	},
+	{ "RT-AC87U",	MODEL_RTAC87U	},
 	{ "RT-AC53U",	MODEL_RTAC53U	},
 	{ "RT-N53",	MODEL_RTN53	},
 	{ "RT-N16",	MODEL_RTN16	},
@@ -46,6 +49,7 @@ static const struct model_s model_list[] = {
 	{ "DSL-N55U-B",	MODEL_DSLN55U	},
 #endif
 	{ "EA-N66",	MODEL_EAN66	},
+	{ "RT-N11P",	MODEL_RTN11P	},
 	{ "RT-N13U",	MODEL_RTN13U	},
 	{ "RT-N14U",	MODEL_RTN14U	},
 	{ "RT-AC52U",	MODEL_RTAC52U	},

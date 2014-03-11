@@ -71,7 +71,10 @@ function initial(){
 	
 	// the click event of the buttons
 	onEvent();
-	chech_usb();
+	if(!hadPlugged('storage')){
+		$("accountbtn").disabled = true;
+		$("sharebtn").disabled = true;	
+	}
 	
 	$("sharebtn").disabled = true;
 	$("accountbtn").disabled = true;
@@ -83,17 +86,6 @@ function enable_display(){
 	$("sharebtn").disabled = false;
 	$("accountbtn").disabled = false;
 	$("refreshbtn").disabled = false;
-}
-
-function chech_usb()
-{
-	var usb_path1 = '<% nvram_get("usb_path1"); %>';
-	var usb_path2 = '<% nvram_get("usb_path2"); %>';
-	
-	if (usb_path1 != "storage" && usb_path2 != "storage"){
-		$("accountbtn").disabled = true;
-		$("sharebtn").disabled = true;	
-	}
 }
 
 function get_disk_tree(){
@@ -231,8 +223,8 @@ function switchAccount(protocol){
 		case 1:
 			if(confirm(confirm_str_off)){
 				document.aidiskForm.action = "/aidisk/switch_share_mode.asp";
-				$("protocol").value = protocol;
-				$("mode").value = "share";
+				document.aidiskForm.protocol.value = protocol;
+				document.aidiskForm.mode.value = "share";
 				
 				showLoading();
 				document.aidiskForm.submit();
@@ -241,8 +233,8 @@ function switchAccount(protocol){
 		case 0:
 			if(confirm(confirm_str_on)){
 				document.aidiskForm.action = "/aidisk/switch_share_mode.asp";
-				$("protocol").value = protocol;
-				$("mode").value = "account";
+				document.aidiskForm.protocol.value = protocol;
+				document.aidiskForm.mode.value = "account";
 				
 				showLoading();
 				document.aidiskForm.submit();

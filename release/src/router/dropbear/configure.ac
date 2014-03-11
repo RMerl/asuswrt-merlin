@@ -371,16 +371,16 @@ AC_ARG_ENABLE(bundled-libtom,
 			AC_MSG_NOTICE(Forcing bundled libtom*)
 		else
 			BUNDLED_LIBTOM=0
-			AC_CHECK_LIB(tommath, mp_exptmod, , 
-				[AC_MSG_ERROR([Missing system libtomcrypt and --disable-bundled-libtom was specified])] )
-			AC_CHECK_LIB(tomcrypt, register_cipher, , 
+			AC_CHECK_LIB(tommath, mp_exptmod, LIBTOM_LIBS="$LIBTOM_LIBS -ltommath", 
+				[AC_MSG_ERROR([Missing system libtommath and --disable-bundled-libtom was specified])] )
+			AC_CHECK_LIB(tomcrypt, register_cipher, LIBTOM_LIBS="$LIBTOM_LIBS -ltomcrypt", 
 				[AC_MSG_ERROR([Missing system libtomcrypt and --disable-bundled-libtom was specified])] )
 		fi
 	],
 	[
 		BUNDLED_LIBTOM=0
-		AC_CHECK_LIB(tommath, mp_exptmod, , BUNDLED_LIBTOM=1)
-		AC_CHECK_LIB(tomcrypt, register_cipher, , BUNDLED_LIBTOM=1)
+		AC_CHECK_LIB(tommath, mp_exptmod, LIBTOM_LIBS="$LIBTOM_LIBS -ltommath", BUNDLED_LIBTOM=1)
+		AC_CHECK_LIB(tomcrypt, register_cipher, LIBTOM_LIBS="$LIBTOM_LIBS -ltomcrypt", BUNDLED_LIBTOM=1)
 	]
 )
 
@@ -388,6 +388,7 @@ if test $BUNDLED_LIBTOM = 1 ; then
 	AC_DEFINE(BUNDLED_LIBTOM,,Use bundled libtom) 
 fi
 
+AC_SUBST(LIBTOM_LIBS)
 AC_SUBST(BUNDLED_LIBTOM)
 
 dnl Added from OpenSSH 3.6.1p2's configure.ac

@@ -53,6 +53,15 @@ function initial(){
 		$("model_id").innerHTML = odmpid;
 	else
 		$("model_id").innerHTML = productid;
+
+	var buildno = '<% nvram_get("buildno"); %>';
+	var firmver = '<% nvram_get("firmver"); %>'
+	var extendno = '<% nvram_get("extendno"); %>';
+	if ((extendno == "") || (extendno == "0"))
+		$("fwver").innerHTML = firmver + "." + buildno;
+	else
+		$("fwver").innerHTML =  firmver + "." + buildno + '_' + extendno.split("-g")[0];
+
 	update_temperatures();
 	hwaccel_state();
 	show_etherstate();
@@ -70,7 +79,7 @@ function update_temperatures(){
 			if (band5g_support) {
 				code += "&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz:</b> <span>" + curr_coreTmp_5_raw + "</span>";
 			}
-			if ((productid == "RT-AC56U") || (productid == "RT-AC68U")) {
+			if ((based_modelid == "RT-AC56U") || (based_modelid == "RT-AC68U")) {
 				code +="&nbsp;&nbsp;-&nbsp;&nbsp;<b>CPU:</b> <span>" + curr_coreTmp_cpu +"&deg;C</span>";
 			}
 			$("temp_td").innerHTML = code;
@@ -90,8 +99,6 @@ function hwaccel_state(){
 			if ('<% nvram_get("cstats_enable"); %>' == '1') code += 'IPTraffic, ';
 			if ('<% nvram_get("qos_enable"); %>' == '1') code += 'QoS, ';
 			if ('<% nvram_get("sw_mode"); %>' == '2') code += 'Repeater mode, ';
-			if ('<% nvram_get("url_enable_x"); %>' == '1') code += 'URL filtering, ';
-			if ('<% nvram_get("keyword_enable_x"); %>' == '1') code += 'Keyword filtering, ';
 			if ('<% nvram_get("ctf_disable_modem"); %>' == '1') code += 'USB modem, ';
 
 			// We're disabled but we don't know why
@@ -177,20 +184,20 @@ function show_etherstate(){
 
 			if (tmpPort == "8") {		// CPU Port
 				break;
-			} else if (productid == "RT-AC56U") {
+			} else if (based_modelid == "RT-AC56U") {
 				tmpPort++;		// Port starts at 0
 				if (tmpPort == "5") tmpPort = 0;	// Last port is WAN
 			}                                                                                                                                                         
 			if (tmpPort == "0") {
 				port = "WAN";
 			} else {
-				if (productid == "RT-N16") tmpPort = 5 - tmpPort;
+				if (based_modelid == "RT-N16") tmpPort = 5 - tmpPort;
 				port = "LAN "+tmpPort;
 			}
 			entry = '<tr><td>' + port + '</td><td>' + (line[7] & 0xFFF) + '</td><td><span>' + state2 + '</span></td>';
 			entry += '<td>'+ devicename +'</td></tr>';
 
-			if (productid == "RT-N16")
+			if (based_modelid == "RT-N16")
 				code_ports = entry + code_ports;
 			else
 				code_ports += entry;
@@ -259,6 +266,11 @@ function show_etherstate(){
 						<th>Model</th>
 				        	<td id="model_id"><% nvram_get("productid"); %></td>
 					</tr>
+					<tr>
+						<th>Firmware Version</th>
+						<td id="fwver"></td>
+					</tr>
+
 					<tr>
 						<th>Firmware Build</th>
 						<td><% nvram_get("buildinfo"); %></td>

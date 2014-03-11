@@ -116,9 +116,9 @@ function applyRule(){
 
 		//updateDateTime(document.form.current_page.value);
 
-		if(document.form.keyword_enable_x[0].checked == true && document.form.keyword_enable_x_orig.value != 1 ||
-				document.form.keyword_enable_x[1].checked == true && document.form.keyword_enable_x_orig.value != 0)
-			FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
+//		if(document.form.keyword_enable_x[0].checked == true && document.form.keyword_enable_x_orig.value != 1 ||
+//				document.form.keyword_enable_x[1].checked == true && document.form.keyword_enable_x_orig.value != 0)
+//			FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
 
 		showLoading();
 		document.form.submit();

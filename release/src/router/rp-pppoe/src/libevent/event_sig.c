@@ -25,6 +25,7 @@ static char const RCSID[] =
 #include <sys/wait.h>
 #include <errno.h>
 #include <stddef.h>
+#include <fcntl.h>
 
 #include "event.h"
 #include "hash.h"
@@ -54,8 +55,9 @@ struct ChildEntry {
 
 static struct SynchronousSignalHandler SignalHandlers[MAX_SIGNALS];
 static int Pipe[2] = {-1, -1};
+static pid_t MyPid = (pid_t) -1;
+
 static EventHandler *PipeHandler = NULL;
-static sig_atomic_t PipeFull = 0;
 static hash_table child_process_table;
 
 static unsigned int child_hash(void *data)
@@ -89,18 +91,30 @@ DoPipe(EventSelector *es,
 {
     char buf[64];
     int i;
+    sigset_t set;
 
-    /* Clear buffer */
-    read(fd, buf, 64);
-    PipeFull = 0;
+    /* Clear pipe */
+    while (read(fd, buf, 64) == 64) {
+	;
+    }
 
     /* Fire handlers */
     for (i=0; i<MAX_SIGNALS; i++) {
 	if (SignalHandlers[i].fired &&
 	    SignalHandlers[i].handler) {
+
+	    /* Block signal while we call its handler */
+	    sigemptyset(&set);
+	    sigaddset(&set, i);
+	    sigprocmask(SIG_BLOCK, &set, NULL);
+
 	    SignalHandlers[i].handler(i);
+
+	    SignalHandlers[i].fired = 0;
+
+	    /* Unblock signal */
+	    sigprocmask(SIG_UNBLOCK, &set, NULL);
 	}
-	SignalHandlers[i].fired = 0;
     }
 }
 
@@ -120,11 +134,20 @@ sig_handler(int sig)
 	/* Ooops... */
 	return;
     }
-    SignalHandlers[sig].fired = 1;
-    if (!PipeFull) {
-	write(Pipe[1], &sig, 1);
-	PipeFull = 1;
+    if (getpid() != MyPid) {
+	/* Spuriously-caught signal caught in child! */
+	return;
     }
+
+    /* If there's no handler, ignore it */
+    if (!SignalHandlers[sig].handler) {
+	return;
+    }
+
+    SignalHandlers[sig].fired = 1;
+    int errno_save = errno;
+    write(Pipe[1], &sig, 1);
+    errno = errno_save;
 }
 
 /**********************************************************************
@@ -134,7 +157,8 @@ sig_handler(int sig)
 * %RETURNS:
 *  Nothing
 * %DESCRIPTION:
-*  Called *SYNCHRONOUSLY* to reap dead children.
+*  Called *SYNCHRONOUSLY* to reap dead children.  SIGCHLD is blocked
+*  during the execution of this function.
 ***********************************************************************/
 static void
 child_handler(int sig)
@@ -146,12 +170,13 @@ child_handler(int sig)
 
     while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
 	candidate.pid = (pid_t) pid;
+
 	ce = hash_find(&child_process_table, &candidate);
 	if (ce) {
+	    hash_remove(&child_process_table, ce);
 	    if (ce->handler) {
 		ce->handler(pid, status, ce->data);
 	    }
-	    hash_remove(&child_process_table, ce);
 	    free(ce);
 	}
     }
@@ -169,8 +194,13 @@ child_handler(int sig)
 static int
 SetupPipes(EventSelector *es)
 {
+    int flags;
+    int i;
+
     /* If already done, do nothing */
     if (PipeHandler) return 0;
+
+    MyPid = getpid();
 
     /* Initialize the child-process hash table */
     hash_init(&child_process_table,
@@ -181,6 +211,19 @@ SetupPipes(EventSelector *es)
     /* Open pipe to self */
     if (pipe(Pipe) < 0) {
 	return -1;
+    }
+
+    /* Make pipes non-blocking */
+    for (i=0; i<=1; i++) {
+	flags = fcntl(Pipe[i], F_GETFL, 0);
+	if (flags != -1) {
+	    flags = fcntl(Pipe[i], F_SETFL, flags | O_NONBLOCK);
+	}
+	if (flags == -1) {
+	    close(Pipe[0]);
+	    close(Pipe[1]);
+	    return -1;
+	}
     }
 
     PipeHandler = Event_AddHandler(es, Pipe[0],
@@ -253,6 +296,7 @@ Event_HandleChildExit(EventSelector *es,
 		      void *data)
 {
     struct ChildEntry *ce;
+    sigset_t set;
 
     if (Event_HandleSignal(es, SIGCHLD, child_handler) < 0) return -1;
     ce = malloc(sizeof(struct ChildEntry));
@@ -260,6 +304,15 @@ Event_HandleChildExit(EventSelector *es,
     ce->pid = pid;
     ce->data = data;
     ce->handler = handler;
+
+    /* Critical section: Don't let SIGCHLD mess hash_insert */
+    sigemptyset(&set);
+    sigaddset(&set, SIGCHLD);
+    sigprocmask(SIG_BLOCK, &set, NULL);
+
     hash_insert(&child_process_table, ce);
+
+    sigprocmask(SIG_UNBLOCK, &set, NULL);
+
     return 0;
 }

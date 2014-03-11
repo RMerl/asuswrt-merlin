@@ -24,18 +24,22 @@ function initial(){
 	parent.$("dummyShareway").value = "<% nvram_get("dummyShareway"); %>";
 	if(parent.$("dummyShareway").value == "")
 		parent.$("dummyShareway").value = 0;
-	showTextinWizard(parent.$("dummyShareway").value);		
+
+	//showTextinWizard(parent.$("dummyShareway").value);
+	showTextinWizard(1);
 }
 
+var et0macaddr_array = '<% nvram_get("et0macaddr"); %>'.split(':');
 function showTextinWizard(flag){
 	dummyShareway = flag;
 	
 	if(dummyShareway == 0){
 		parent.$("dummyShareway").value = dummyShareway;
 		
-		document.getElementsByName('dummyoption')[dummyShareway].focus();
-		document.getElementsByName('dummyoption')[dummyShareway].checked = true;
+		document.getElementsByName('dummyoption')[2].focus();
+		document.getElementsByName('dummyoption')[2].checked = true;
 		
+		$("share0_Hint").style.display = "";
 		$("share1").style.display = "none";				
 		$("target1").style.display = "none";
 		$("target2").style.display = "none";
@@ -43,14 +47,15 @@ function showTextinWizard(flag){
 	else if(dummyShareway == 1){
 		parent.$("dummyShareway").value = dummyShareway;
 		
-		document.getElementsByName('dummyoption')[dummyShareway].focus();
-		document.getElementsByName('dummyoption')[dummyShareway].checked = true;
+		document.getElementsByName('dummyoption')[0].focus();
+		document.getElementsByName('dummyoption')[0].checked = true;
 		
 		showtext($("user1"), '<% nvram_get("http_username"); %>');
 		
 		showtext($("user2"), "Family");
-		$("userpasswd2").value =  "Family";
+		$("userpasswd2").value =  "family" + et0macaddr_array[et0macaddr_array.length-2].toLowerCase() + et0macaddr_array[et0macaddr_array.length-1].toLowerCase();
 
+		$("share0_Hint").style.display = "none";
 		$("share1").style.display = "block";		
 		$("target1").style.display = "";
 		$("target2").style.display = "";
@@ -58,11 +63,12 @@ function showTextinWizard(flag){
 	else if(dummyShareway == 2){
 		parent.$("dummyShareway").value = dummyShareway;
 		
-		document.getElementsByName('dummyoption')[dummyShareway].focus();
-		document.getElementsByName('dummyoption')[dummyShareway].checked = true;
+		document.getElementsByName('dummyoption')[1].focus();
+		document.getElementsByName('dummyoption')[1].checked = true;
 		
 		showtext($("user1"), '<% nvram_get("http_username"); %>');
 		
+		$("share0_Hint").style.display = "none";
 		$("share1").style.display = "";		
 		$("target1").style.display = "";
 		$("target2").style.display = "none";
@@ -198,16 +204,21 @@ function checkPasswdValid(obj){
     <tr>
       <td valign="top">
 						<div style="margin-left:20px;">
-            <br/><p><input type="radio" id="d1" name="dummyoption" value="0" width="10" onclick="showTextinWizard(this.value);"/> 
-            				<label for="d1"><#Step2_method1#></label>
-            		</p>
             <br/><p><input type="radio" id="d2" name="dummyoption" value="1" width="10" onclick="showTextinWizard(this.value);"/> 
             				<label for="d2"><#Step2_method2#></label>
             		</p>
             <br/><p><input type="radio" id="d3" name="dummyoption" value="2" width="10" onclick="showTextinWizard(this.value);"/> 
             				<label for="d3"><#Step2_method3#></label>
             		</p>
+            <br/><p><input type="radio" id="d1" name="dummyoption" value="0" width="10" onclick="showTextinWizard(this.value);"/> 
+            				<label for="d1"><#Step2_method1#></label>
+            		</p>
 						</div>
+
+						<div id="share0_Hint" style="margin-top:10px;color:#FC0;margin-left:45px;">
+							<span><#AiDisk_shareHint#></span>
+						</div>
+
             <div id="share1" style="margin-top:30px;">
             	<table width="80%" border="1" align="center" cellpadding="2" cellspacing="0" bordercolor="#7ea7bd" class="FormTable_table">
                 	<tr>
@@ -219,7 +230,7 @@ function checkPasswdValid(obj){
                 
                 	<tr id="target1">
                   	<td height="35"><span id="user1" style="color:#FFFFFF;"></span></td>
-                  	<td><!--input type="text" name="userpasswd1" id="userpasswd1" value="" class="input_25_table"--></td>
+                  	<td>*</td>
                   	<td align="center"><img src="/images/New_ui/checkbox.png"></td>
                   	<td align="center"><img src="/images/New_ui/checkbox.png"></td>
                 	</tr>

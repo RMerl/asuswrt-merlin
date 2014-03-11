@@ -130,7 +130,9 @@ function submitForm(){
 	}
 
 	document.getElementById("skipButton").style.display = "none";
+	document.getElementById("nextButton").style.display = "none";
 	document.getElementById("loadingIcon").style.display = "";
+	document.getElementById("loadingNote").style.display = "";
 	changeiuiBackground(1);
 	document.form.action_wait.value	= eval("<% get_default_reboot_time(); %> + 30");
 	document.form.submit();
@@ -191,7 +193,9 @@ function connVerify(conn){
 			document.getElementById("theFieldset_apply").style.display = "none";
 		}
 		else{
+			document.getElementById("nextButton").style.display = "";
 			document.getElementById("loadingIcon").style.display = "none";
+			document.getElementById("loadingNote").style.display = "none";
 			document.getElementById("resetField").style.display = "none";	
 			document.getElementById("theFieldset").style.display = "none";			
 			document.getElementById("applyBtn").style.display = "none";
@@ -209,7 +213,9 @@ function connVerify(conn){
 			document.getElementById("theFieldset_apply").style.display = "none";
 		}
 		else{
+			document.getElementById("nextButton").style.display = "";
 			document.getElementById("loadingIcon").style.display = "none";
+			document.getElementById("loadingNote").style.display = "none";
 			document.getElementById("resetField").style.display = "";			
 			document.getElementById("theFieldset").style.display = "none";			
 			document.getElementById("applyBtn").style.display = "none";
@@ -711,7 +717,8 @@ function submitenter(myfield,e)
 	<div id="applyBtn" class="apply_gen" style="margin-top:20px">
 		<input type="button" id="skipButton" value="Skip" class="button_gen" onclick="goWireless();">
 		<input type="button" id="nextButton" value="<#CTL_Add_enrollee#>" class="button_gen" onclick="submitForm();">
-		<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></span>
+		<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif">	
+		<span id="loadingNote" style="display:none;"><#Modem_connect_waiting#></span>	
 	</div>
 
 	<fieldset class="theFieldset" id="theFieldset_apply" style="display:none;margin-top:10px">
@@ -727,7 +734,7 @@ function submitenter(myfield,e)
 <div id="Conn3GRetry" style="display:none">
 	<div>
 		<p class='QISGeneralFont' style="font-size:20px;line-height:30px;">
-			<#QKSet_detect_desc2#>: <span id="retryCount" style="color:#FC0"><span>
+			<#QKSet_detect_desc2#>: <span id="retryCount" style="color:#FC0"></span>
 		</p>
 	</div>
 	<br>

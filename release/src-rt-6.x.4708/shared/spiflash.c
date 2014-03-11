@@ -1,7 +1,7 @@
 /*
  * Broadcom QSPI serial flash interface
  *
- * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -284,7 +284,7 @@ mspi_writeread_continue(osl_t *osh, qspiregs_t *qspi, unsigned char *w_buf,
 #define ID_SST25VF040       0x44
 #define ID_SST25VF080       0x80
 
-/* NexFlash's manufacturer ID */
+/* Winbond/NexFlash's manufacturer ID */
 #define NXPART              0xEF
 
 /* A list of NexFlash device ID's - add others as needed */
@@ -735,11 +735,14 @@ spiflash_init(si_t *sih)
 	case SPANPART:
 	case MACRONIXPART:
 	case NUMONYXPART:
+	case NXPART:
 		/* ST compatible */
 		if (vendor_id == SPANPART)
 			name = "ST compatible";
 		else if (vendor_id == MACRONIXPART)
 			name = "ST compatible (Marconix)";
+		else if (vendor_id == NXPART)
+			name = "ST compatible (Winbond/NexFlash)";
 		else
 			name = "ST compatible (Micron)";
 

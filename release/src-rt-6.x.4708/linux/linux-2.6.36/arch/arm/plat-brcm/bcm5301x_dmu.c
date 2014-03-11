@@ -6,7 +6,7 @@
  * Documents:
  * Northstar_top_power_uarch_v1_0.pdf
  *
- * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -390,6 +390,8 @@ void dmu_gpiomux_init(void)
 static void __init soc_clocks_init(void * __iomem cru_regs_base,
 	struct clk * clk_ref)
 {
+	void * __iomem reg;
+	u32 val;
 
 	/* registers are already mapped with the rest of DMU block */
 	/* Update register base address */
@@ -413,6 +415,40 @@ static void __init soc_clocks_init(void * __iomem cru_regs_base,
 
 	/* Install clock sources into the lookup table */
 	clkdev_add_table(soc_clk_lookups, ARRAY_SIZE(soc_clk_lookups));
+
+	/* Correct GMAC 2.66G line rate issue, it should be 2Gbps */
+	/* This incorrect setting only exist in OTP present 4708 chip */
+	/* is a OTPed 4708 chip which Ndiv == 0x50 */
+	reg = clk_genpll.regs_base + 0x14;
+	val = readl(reg);
+	if (((val >> 20) & 0x3ff) == 0x50) {
+		/* CRU_CLKSET_KEY, unlock */
+		reg = clk_genpll.regs_base + 0x40;
+		val = 0x0000ea68;
+		writel(val, reg);
+
+		/* Change CH0_MDIV to 8 */
+		reg = clk_genpll.regs_base + 0x18;
+		val = readl(reg);
+		val &= ~((u32)0xff << 16);
+		val |= ((u32)0x8 << 16);
+		writel(val, reg);
+
+		/* Load Enable CH0 */
+		reg = clk_genpll.regs_base + 0x4;
+		val = readl(reg);
+		val &= ~(u32)0x1;
+		writel(val, reg);
+		val |= (u32)0x1;
+		writel(val, reg);
+		val &= ~(u32)0x1;
+		writel(val, reg);
+
+		/* CRU_CLKSET_KEY, lock */
+		reg = clk_genpll.regs_base + 0x40;
+		val = 0x0;
+		writel(val, reg);
+	}
 }
 
 void __init soc_dmu_init(struct clk *clk_ref)

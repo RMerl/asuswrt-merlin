@@ -73,7 +73,7 @@ function getWANStatus(){
 							getWANStatus();
 						}
 						else{
-							if(QIS_usb_path1 == "modem" || QIS_usb_path2 == "modem"){
+							if(parent.hadPlugged("modem")){
 								redirect_page("modem");
 							}	
 							else{
@@ -92,7 +92,7 @@ function getWANStatus(){
 				if(wanauxstate != 1 && wanstate == 2){ //success case
 					successcase++;
 					if(successcase > 1){
-						if(QIS_usb_path1 == "modem" || QIS_usb_path2 == "modem"){
+						if(parent.hadPlugged("modem")){
 							redirect_page("modem");
 						}	
 						else{
@@ -110,7 +110,7 @@ function getWANStatus(){
 						setTimeout("getWANStatus();", 2000);
 					}
 					else{
-						if(QIS_usb_path1 == "modem" || QIS_usb_path2 == "modem"){
+						if(parent.hadPlugged("modem")){
 							redirect_page("modem");
 						}	
 						else{

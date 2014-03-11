@@ -47,7 +47,7 @@ enum {
 	gpio_out,
 };
 
-#if defined(RTN14U) || defined(RTAC51U)
+#if defined(RTN14U) || defined(RTAC51U) || defined(RTN11P)
 /// RT-N14U mapping
 enum {
 	WAN_PORT=0,
@@ -412,7 +412,7 @@ int mt7620_vlan_unset(int vid)
 }
 
 
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)
 /**
  * Get TX or RX byte count of WAN and WANS_LAN
  * @unit:	WAN unit.
@@ -832,7 +832,7 @@ static void initialize_Vlan(int stb_bitmask)
 	switch_fini();
 }
 
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)
 static void fix_up_hwnat_for_wifi(void)
 {
 	int i, j, m, r, v, isp_profile_hwnat_not_safe = 0;
@@ -843,7 +843,7 @@ static void fix_up_hwnat_for_wifi(void)
 #if defined(RTAC52U) || defined(RTAC51U)
 		.wl_vid = { 21, 43 },		/* DP_RA0  ~ DP_RA3:  21, 22, 23, 24;	DP_RAI0  ~ DP_RAI3:  43, 44, 45, 46 */
 		.wl_wds_vid = { 37, 59 },	/* DP_WDS0 ~ DP_WDS3: 37, 38, 39, 40;	DP_WDSI0 ~ DP_WDSI3: 59, 60, 61, 62 */
-#elif defined(RTN14U)
+#elif defined(RTN14U) || defined(RTN11P)
 		.wl_vid = { 21, -1 },		/* DP_RA0  ~ DP_RA3:  21, 22, 23, 24;	DP_RAI0  ~ DP_RAI3:  43, 44, 45, 46 */
 		.wl_wds_vid = { 37, -1 },	/* DP_WDS0 ~ DP_WDS3: N/A;           	DP_WDSI0 ~ DP_WDSI3: N/A */
 #else
@@ -1197,7 +1197,7 @@ ralink_gpio_write_bit(int idx, int value)
 	}	
 	else if (idx==72) 
 	{              
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) //wlan led
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) //wlan led
 		req=RALINK_ATE_GPIO72;
 		idx=value;
 #else
@@ -1264,7 +1264,7 @@ ralink_gpio_init(unsigned int idx, int dir)
 	int fd, req;
 	unsigned long arg;
 	
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)
 	if(idx==72) //discard gpio72
 		return 0;
 #endif

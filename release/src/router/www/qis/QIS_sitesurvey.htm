@@ -73,7 +73,7 @@ var wlcKey = function(obj){
 
 		this.wpa_psk = obj.thekey;
 
-		if(obj.auth == "WPA-PSK")
+		if(obj.auth == "WPA-Personal")
 			this.auth_mode = "psk";
 		else
 			this.auth_mode = "psk2";
@@ -615,7 +615,7 @@ var bindEvent = {
 					initRow += unEncrypt;
 					initRow += connectBtn;
 				}
-				else if(Profiles[bindEvent.idx].auth == "WPA" || Profiles[bindEvent.idx].auth == "WPA2" ){
+				else if(Profiles[bindEvent.idx].auth == "WPA-Enterprise" || Profiles[bindEvent.idx].auth == "WPA2-Enterprise" ){
 					initRow += unSupport;
 				}
 				else{

@@ -25,10 +25,13 @@ export SIZE := $(CROSS_COMPILE)size
 obj-y = libdisk
 obj-y += libxml2
 obj-y += openssl
+obj-y += curl
 obj-y += pcre
 obj-y += samba
 obj-y += sqlite
 obj-y += lighttpd
+obj-y += wb
+obj-y += push_log
 obj-y += Aicloud-ipk
 
 all: $(obj-y)
@@ -41,10 +44,13 @@ clean:
 	@cd $(CURRENT)/libdisk && rm -f *.o write_webdav_conf
 	@$(MAKE) -C $(CURRENT)/libxml2 clean
 	@$(MAKE) -C $(CURRENT)/openssl clean
+	@$(MAKE) -C $(CURRENT)/curl-7.21.7 clean
 	@$(MAKE) -C $(CURRENT)/pcre-8.12 clean
 	@$(MAKE) -C $(CURRENT)/sqlite clean
 	@$(MAKE) -C $(CURRENT)/lighttpd-1.4.29 clean
 	@$(MAKE) -C $(CURRENT)/samba-3.5.8 -f Makefile.pkg clean
+	@$(MAKE) -C $(CURRENT)/wb -f Makefile.pkg clean
+	@$(MAKE) -C $(CURRENT)/push_log -f Makefile.pkg clean
 	@rm -rf AiCloud-ipk/opt/tmp/lib/*
 	@rm -rf AiCloud-ipk/opt/tmp/bin/*
 	@rm -rf *.ipk
@@ -82,6 +88,17 @@ openssl:openssl/stamp-h2
 	$(MAKE) -C $(CURRENT)/openssl
 	cp -rf $(CURRENT)/openssl/libssl.so.1.0.0 AiCloud-ipk/opt/tmp/lib/
 	cp -rf $(CURRENT)/openssl/libcrypto.so.1.0.0 AiCloud-ipk/opt/tmp/lib/
+	cp -rf $(CURRENT)/openssl/apps/openssl AiCloud-ipk/opt/tmp/bin/aicloud_openssl
+
+curl/stamp-h2:
+	#touch $@
+	@$(SEP)
+
+curl:curl/stamp-h2
+	cd curl-7.21.7 && \
+	AR=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-ar AS=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-as LD=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-ld NM=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-nm CC=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-gcc CPP="$(TOOLCHAIN)/bin/mipsel-linux-uclibc-gcc -E" GCC=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-gcc CXX=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-g++ RANLIB=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-ranlib STRIP=$(TOOLCHAIN)/bin/mipsel-linux-uclibc-strip \
+	./configure --build=i386-pc-linux-gnu --host=mipsel-linux --target=mipsel-linux --prefix=/opt --enable-http --with-ssl=$(CURRENT)//openssl
+	@$(MAKE) -C $(CURRENT)/curl-7.21.7
 
 pcre/stamp-h2:
 	#touch $@
@@ -116,6 +133,25 @@ samba:samba/stamp-h2
 	#@$(MAKE) -f Makefile.pkg
 	cp -rf $(CURRENT)/samba-3.5.8/source3/bin/libsmbclient.so.0 AiCloud-ipk/opt/tmp/lib/
 
+wb/stamp-h2:
+	#touch $@
+	@$(SEP)
+
+wb:wb/stamp-h2
+	@$(MAKE) -C $(CURRENT)/wb -f Makefile.pkg
+	#cd samba-3.5.8 && \
+	#@$(MAKE) -f Makefile.pkg
+	cp -rf $(CURRENT)/wb/libws.so AiCloud-ipk/opt/tmp/lib/
+
+push_log/stamp-h2:
+	#touch $@
+	@$(SEP)
+
+push_log:push_log/stamp-h2
+	@$(MAKE) -C $(CURRENT)/push_log -f Makefile.pkg
+	#cd samba-3.5.8 && \
+	#@$(MAKE) -f Makefile.pkg
+	cp -rf $(CURRENT)/push_log/libpush_log.so AiCloud-ipk/opt/tmp/lib/
 
 lighttpd/stamp-h2:
 	#touch $@
@@ -123,7 +159,7 @@ lighttpd/stamp-h2:
 
 lighttpd:lighttpd/stamp-h2
 	cd $(CURRENT)/lighttpd-1.4.29 && \
-	./configure --host=mipsel-linux --build=i686-pc-linux-gnu --prefix=/opt/ --with-pcre PCRECONFIG="$(SRCBASE)/pcre-8.12/pcre-config" --with-smbdav-props --with-openssl=$(SRCBASE)/openssl --with-openssl-includes=$(SRCBASE)/openssl/include/openssl --with-openssl-libs=$(SRCBASE)/openssl/ --with-webdav-props --with-smbdav-locks=yes --with-libsmbclient=$(SRCBASE)/samba-3.5.8/source3 --without-zlib --without-bzip2 --enable-shared --disable-static CFLAGS="-I$(SRCBASE)/pcre-8.12 -I$(TOOLCHAIN)/include -I$(SRCBASE)/sqlite -DHAVE_OPENSSL_SSL_H=1 -DHAVE_LIBSSL=1 -DEMBEDDED_EANBLE=1 -DAPP_IPKG=1" LIBS="-L$(TOOLCHAIN)/lib -ldl" LDFLAGS="-Wl,-rpath,$(SRCBASE)/pcre-8.12/.libs -Wl,-rpath,$(SRCBASE)/libxml2/.libs -Wl,-rpath,$(SRCBASE)/openssl" XML_CFLAGS="-I$(SRCBASE)/libxml2/include" XML_LIBS="-L$(SRCBASE)/libxml2/.libs -lxml2" SQLITE_CFLAGS="-I$(SRCBASE)/sqlite3" SQLITE_LIBS="-L$(SRCBASE)/sqlite/.libs -lsqlite3" PCRE_LIB="-L$(SRCBASE)/pcre-8.12/.libs -lpcre" PCRECONFIG="$(SRCBASE)/pcre-8.12/pcre-config" SSL_LIB="-L$(SRCBASE)/openssl -lcrypto -lssl"  --no-create --no-recursion
+	./configure --host=mipsel-linux --build=i686-pc-linux-gnu --prefix=/opt/ --with-pcre PCRECONFIG="$(SRCBASE)/pcre-8.12/pcre-config" --with-smbdav-props --with-openssl=$(SRCBASE)/openssl --with-openssl-includes=$(SRCBASE)/openssl/include/openssl --with-openssl-libs=$(SRCBASE)/openssl/ --with-webdav-props --with-smbdav-locks=yes --with-libsmbclient=$(SRCBASE)/samba-3.5.8/source3 --without-zlib --without-bzip2 --enable-shared --disable-static CFLAGS="-I$(SRCBASE)/pcre-8.12 -I$(TOOLCHAIN)/include -I$(SRCBASE)/sqlite -I$(SRCBASE)/push_log -DHAVE_OPENSSL_SSL_H=1 -DHAVE_LIBSSL=1 -DEMBEDDED_EANBLE=1 -DAPP_IPKG=1" LIBS="-L$(TOOLCHAIN)/lib -ldl -L$(SRCBASE)/push_log -lpush_log -L$(SRCBASE)/wb -lws" LDFLAGS="-Wl,-rpath,$(SRCBASE)/pcre-8.12/.libs -Wl,-rpath,$(SRCBASE)/libxml2/.libs -Wl,-rpath,$(SRCBASE)/openssl -Wl,-rpath,$(SRCBASE)/push_log -Wl,-rpath,$(SRCBASE)/wb" XML_CFLAGS="-I$(SRCBASE)/libxml2/include" XML_LIBS="-L$(SRCBASE)/libxml2/.libs -lxml2" SQLITE_CFLAGS="-I$(SRCBASE)/sqlite3" SQLITE_LIBS="-L$(SRCBASE)/sqlite/.libs -lsqlite3" PCRE_LIB="-L$(SRCBASE)/pcre-8.12/.libs -lpcre" PCRECONFIG="$(SRCBASE)/pcre-8.12/pcre-config" SSL_LIB="-L$(SRCBASE)/openssl -lcrypto -lssl"  --no-create --no-recursion
 	cd $(CURRENT)/lighttpd-1.4.29 && /bin/sh ./config.status
 	@$(MAKE) -C $(CURRENT)/lighttpd-1.4.29
 	cp -rf $(CURRENT)/lighttpd-1.4.29/src/lighttpd AiCloud-ipk/opt/tmp/bin/
@@ -146,12 +182,15 @@ lighttpd:lighttpd/stamp-h2
 	cp -rf $(CURRENT)/lighttpd-1.4.29/src/.libs/mod_usertrack.so AiCloud-ipk/opt/tmp/lib/aicloud_mod_usertrack.so
 	cp -rf $(CURRENT)/lighttpd-1.4.29/src/.libs/mod_webdav.so AiCloud-ipk/opt/tmp/lib/aicloud_mod_webdav.so
 	cp -rf $(CURRENT)/lighttpd-1.4.29/src/.libs/mod_aicloud_auth.so AiCloud-ipk/opt/tmp/lib/mod_aicloud_auth.so
+	cp -rf $(CURRENT)/lighttpd-1.4.29/src/.libs/liblightsql.so AiCloud-ipk/opt/tmp/lib/liblightsql.so
 
 Aicloud-ipk/stamp-h2:
 	#touch $@
 	@$(SEP)
-	cp -rf $(CURRENT)/lighttpd-1.4.29/src/external_file/css/* AiCloud-ipk/opt/etc/aicloud_UI/css/
-	cp -rf $(CURRENT)/lighttpd-1.4.29/src/external_file/js/* AiCloud-ipk/opt/etc/aicloud_UI/js/
+	rm -rf AiCloud-ipk/opt/etc/aicloud_UI/css/
+	rm -rf AiCloud-ipk/opt/etc/aicloud_UI/js/
+	cp -rf $(CURRENT)/lighttpd-1.4.29/src/external_file/css/ AiCloud-ipk/opt/etc/aicloud_UI/css/
+	cp -rf $(CURRENT)/lighttpd-1.4.29/src/external_file/js/ AiCloud-ipk/opt/etc/aicloud_UI/js/
 
 Aicloud-ipk:Aicloud-ipk/stamp-h2
 	mipsel-linux-strip AiCloud-ipk/opt/tmp/bin/*

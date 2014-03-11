@@ -2,7 +2,7 @@
  * Chip-specific hardware definitions for
  * Broadcom 802.11abg Networking Device Driver
  *
- * Copyright (C) 2013, Broadcom Corporation
+ * Copyright (C) 2014, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -10,7 +10,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: d11.h 427773 2013-10-04 19:53:12Z $
+ * $Id: d11.h 442776 2013-12-12 21:02:55Z $
  */
 
 #ifndef	_D11_H
@@ -439,7 +439,8 @@ union {
 	uint16	ifs_slot;		/* 0x684 */
 	uint16	PAD;			/* 0x686 */
 	uint16	ifs_ctl;		/* 0x688 */
-	uint16	PAD[0x3];		/* 0x68a - 0x68F */
+	uint16	ifs_boff;		/* 0x68a */
+	uint16	PAD[0x2];		/* 0x68c - 0x68F */
 	uint16	ifsstat;		/* 0x690 */
 	uint16	ifsmedbusyctl;		/* 0x692 */
 	uint16	iftxdur;		/* 0x694 */
@@ -2634,6 +2635,8 @@ enum prxs_subband_bphy {
 #define M_CCA_NOPKT_H	(M_CCA_STATS_BLK + 0x12)
 #define M_MAC_DOZE_L	(M_CCA_STATS_BLK + 0x14)
 #define M_MAC_DOZE_H	(M_CCA_STATS_BLK + 0x16)
+#define M_CCA_TXOP_L	(M_CCA_STATS_BLK + 0x18)
+#define M_CCA_TXOP_H	(M_CCA_STATS_BLK + 0x1a)
 
 #define M_CCA_FLAGS	(0x9b7 * 2)
 

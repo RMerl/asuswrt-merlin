@@ -152,7 +152,6 @@ int main(int argc, char **argv)
 
 	/* open a connection to the syslog daemon */
 	openlog("pptpd", LOG_PID, PPTP_FACILITY);
-	syslog(LOG_ERR, "MGR: Config file not found!");
 
 	/* process command line options */
 	while (1) {

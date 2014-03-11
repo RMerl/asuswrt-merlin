@@ -32,6 +32,14 @@
 extern bool si_arm_setclock(si_t *sih, uint32 armclock, uint32 ddrclock, uint32 axiclock);
 extern int cpu_turbo_mode;
 
+#ifdef RTAC87U
+#define	PWR_LED_GPIO	(1 << 1)	// GPIO 1
+#define	USB_LED_GPIO	(1 << 0)	// GPIO 0
+#define	TURBO_LED_GPIO	(1 << 4)	// GPIO 4
+#define	USB3_LED_GPIO	(1 << 14)	// GPIO 14
+#define USB_PWR1_GPIO	(1 << 9)	// GPIO 9
+#else	/* not RTAC87U */
+
 #ifndef RTN18U
 #define	PWR_LED_GPIO	(1 << 3)	// GPIO 3
 #else	/* RT-N18U */
@@ -45,7 +53,7 @@ extern int cpu_turbo_mode;
 #define	TURBO_LED_GPIO	(1 << 4)	// GPIO 4
 #define	USB3_LED_GPIO	(1 << 14)	// GPIO 14
 #else
-#ifndef RTN18U
+#ifndef RTN18U	/* RT-AC56U */
 #define	USB3_LED_GPIO	(1 << 0)	// GPIO 0
 #define	WAN_LED_GPIO	(1 << 1)	// GPIO 1
 #define	LAN_LED_GPIO	(1 << 2)	// GPIO 2
@@ -53,7 +61,6 @@ extern int cpu_turbo_mode;
 #else	/* RT-N18U */
 #define	WAN_LED_GPIO	(1 << 6)	// GPIO 6
 #define	LAN_LED_GPIO	(1 << 9)	// GPIO 9
-#define	USB_LED_GPIO	(1 << 3)	// GPIO 3
 #endif
 #endif
 
@@ -64,9 +71,14 @@ extern int cpu_turbo_mode;
 #endif
 #endif
 
-#ifdef RTN18U				// RT-N18U USB RESET
+#ifdef RTN18U				// RT-N18U
+#define	WL2G_LED_GPIO	(1 << 10)	// GPIO 10
+#define	USB_LED_GPIO	(1 << 3)	// GPIO 3
+#define	USB3_LED_GPIO	(1 << 14)	// GPIO 14
 #define USB_PWR1_GPIO	(1 << 13)	// GPIO 13
 #endif
+
+#endif	/* end of RTAC87U */
 
 void
 board_pinmux_init(si_t *sih)
@@ -88,21 +100,25 @@ board_pinmux_init(si_t *sih)
 	si_gpioouten(sih, TURBO_LED_GPIO, TURBO_LED_GPIO, GPIO_DRV_PRIORITY);
 #endif
 #ifndef RTN18U
+#ifndef RTAC87U
 	si_gpioouten(sih, WL5G_LED_GPIO, WL5G_LED_GPIO, GPIO_DRV_PRIORITY);
+#endif
 	si_gpioouten(sih, USB3_LED_GPIO, USB3_LED_GPIO, GPIO_DRV_PRIORITY);
 #endif
-#ifndef RTAC68U
+#if !defined(RTAC68U) && !defined(RTAC87U)
 	si_gpioouten(sih, WAN_LED_GPIO, WAN_LED_GPIO, GPIO_DRV_PRIORITY);
 	si_gpioouten(sih, LAN_LED_GPIO, LAN_LED_GPIO, GPIO_DRV_PRIORITY);
 #endif
 #ifndef RTN18U				// for RT-AC56U & RT-AC68U
 	si_gpioouten(sih, USB_PWR1_GPIO, USB_PWR1_GPIO, GPIO_DRV_PRIORITY);
-#ifndef RTAC68U
+#if !defined(RTAC68U) && !defined(RTAC87U)
 	si_gpioouten(sih, USB_PWR2_GPIO, USB_PWR2_GPIO, GPIO_DRV_PRIORITY);
 #endif
 #endif
-#ifdef RTN18U				// RT-N18U USB RESET
+#ifdef RTN18U				// RT-N18U
 	si_gpioouten(sih, USB_PWR1_GPIO, USB_PWR1_GPIO, GPIO_DRV_PRIORITY);
+	si_gpioouten(sih, WL2G_LED_GPIO, WL2G_LED_GPIO, GPIO_DRV_PRIORITY);
+	si_gpioouten(sih, USB3_LED_GPIO, USB3_LED_GPIO, GPIO_DRV_PRIORITY);
 #endif
 
 	si_gpioout(sih, PWR_LED_GPIO, 0, GPIO_DRV_PRIORITY);
@@ -111,21 +127,32 @@ board_pinmux_init(si_t *sih)
 	si_gpioout(sih, TURBO_LED_GPIO, 0, GPIO_DRV_PRIORITY);
 #endif
 #ifndef RTN18U				// for RT-AC56U & RT-AC68U to enable USB power
+#ifndef RTAC87U
 	si_gpioout(sih, WL5G_LED_GPIO, WL5G_LED_GPIO, GPIO_DRV_PRIORITY);
+#endif
 	si_gpioout(sih, USB3_LED_GPIO, USB3_LED_GPIO, GPIO_DRV_PRIORITY);
 #endif
-#ifndef RTAC68U
+#if !defined(RTAC68U) && !defined(RTAC87U)
 	si_gpioout(sih, WAN_LED_GPIO, WAN_LED_GPIO, GPIO_DRV_PRIORITY);
 	si_gpioout(sih, LAN_LED_GPIO, LAN_LED_GPIO, GPIO_DRV_PRIORITY);
 #endif
 #ifndef RTN18U				// for RT-AC56U & RT-AC68U to enable USB power
 	si_gpioout(sih, USB_PWR1_GPIO, USB_PWR1_GPIO, GPIO_DRV_PRIORITY);
-#ifndef RTAC68U
+#if !defined(RTAC68U) && !defined(RTAC87U)
 	si_gpioout(sih, USB_PWR2_GPIO, USB_PWR2_GPIO, GPIO_DRV_PRIORITY);
 #endif
 #endif
-#ifdef RTN18U				// for RT-N18U to enable USB power
+#ifdef RTN18U				// RT-N18U
+	/* enable USB power */
 	si_gpioout(sih, USB_PWR1_GPIO, USB_PWR1_GPIO, GPIO_DRV_PRIORITY);
+
+	/* power on LEDs */
+	si_gpioout(sih, PWR_LED_GPIO, PWR_LED_GPIO, GPIO_DRV_PRIORITY);
+	si_gpioout(sih, WL2G_LED_GPIO, WL2G_LED_GPIO, GPIO_DRV_PRIORITY);
+	si_gpioout(sih, WAN_LED_GPIO, WAN_LED_GPIO, GPIO_DRV_PRIORITY);
+	si_gpioout(sih, LAN_LED_GPIO, LAN_LED_GPIO, GPIO_DRV_PRIORITY);
+	si_gpioout(sih, USB_LED_GPIO, USB_LED_GPIO, GPIO_DRV_PRIORITY);
+	si_gpioout(sih, USB3_LED_GPIO, USB3_LED_GPIO, GPIO_DRV_PRIORITY);
 #endif
 }
 

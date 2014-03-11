@@ -891,7 +891,7 @@ function linkport(obj){
 							</tr>							
 							<tr>
 								<td width="21%">							
-									<input type="text" class="input_12_table" style="float:left;width:105px;" placeholder="<#Select_menu_default#>" name="qos_service_name_x_0" onKeyPress="return is_string(this, event)">
+									<input type="text" maxlength="32" class="input_12_table" style="float:left;width:105px;" placeholder="<#Select_menu_default#>" name="qos_service_name_x_0" onKeyPress="return is_string(this, event)">
 									<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullQoSList(this);" title="<#select_service#>">
 									<div id="QoSList_Block" class="QoSList_Block" onclick="hideClients_Block()"></div>
 								</td>
@@ -902,7 +902,7 @@ function linkport(obj){
 								</td>
 								
 								
-								<td width="14%"><input type="text" class="input_12_table" name="qos_port_x_0" onKeyPress="return is_portrange(this, event)"></td>
+								<td width="14%"><input type="text" maxlength="32" class="input_12_table" name="qos_port_x_0" onKeyPress="return is_portrange(this, event)"></td>
 								<td width="12%">
 									<select name="qos_proto_x_0" class="input_option" style="width:75px;" onChange="linkport(this);">
 										<option value="tcp">TCP</option>

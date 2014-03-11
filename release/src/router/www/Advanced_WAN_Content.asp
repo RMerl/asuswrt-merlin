@@ -274,8 +274,8 @@ function validForm(){
 	}
 	
 	if(document.form.wan_proto.value == "pppoe"){
-		if(!validate_number_range(document.form.wan_pppoe_mtu, 576, 1492)
-				|| !validate_number_range(document.form.wan_pppoe_mru, 576, 1492))
+		if(!validate_number_range(document.form.wan_pppoe_mtu, 576, 1500)
+				|| !validate_number_range(document.form.wan_pppoe_mru, 576, 1500))
 			return false;
 		
 		if(!validate_string(document.form.wan_pppoe_service)
@@ -751,8 +751,8 @@ function pass_checked(obj){
 								<td align="left">
 									<select id="wan_proto_menu" class="input_option" name="wan_proto" onchange="change_wan_type(this.value);fixed_change_wan_type(this.value);">
 										<option value="dhcp" <% nvram_match("wan_proto", "dhcp", "selected"); %>><#BOP_ctype_title1#></option>
-										<option value="pppoe" <% nvram_match("wan_proto", "pppoe", "selected"); %>>PPPoE</option>
 										<option value="static" <% nvram_match("wan_proto", "static", "selected"); %>><#BOP_ctype_title5#></option>
+										<option value="pppoe" <% nvram_match("wan_proto", "pppoe", "selected"); %>>PPPoE</option>
 										<option value="pptp" <% nvram_match("wan_proto", "pptp", "selected"); %>>PPTP</option>
 										<option value="l2tp" <% nvram_match("wan_proto", "l2tp", "selected"); %>>L2TP</option>										
 									</select>
@@ -960,11 +960,11 @@ function pass_checked(obj){
         	</tr>
 
         	<tr>
-      		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,30);">DHCP query frequency</a></th>
+		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,30);"><#DHCP_query_freq#></a></th>
         	<td>
         	<select name="dhcpc_mode" class="input_option">
-        		<option value="0" <% nvram_match(" dhcpc_mode", "0","selected"); %>>Normal Mode</option>
-        		<option value="1" <% nvram_match(" dhcpc_mode", "1","selected"); %>>Aggressive Mode</option>
+			<option value="0" <% nvram_match(" dhcpc_mode", "0","selected"); %>><#DHCPnormal#></option>
+			<option value="1" <% nvram_match(" dhcpc_mode", "1","selected"); %>><#DHCPaggressive#></option>
         	</select>
         	</td>
         	</tr>

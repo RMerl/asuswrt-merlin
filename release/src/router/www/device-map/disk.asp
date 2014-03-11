@@ -32,11 +32,7 @@ a:active {
 var diskOrder = parent.getSelectedDiskOrder();
 var _DMDiskNum = (pool_devices().getIndexByValue('<% nvram_get("apps_dev"); %>') < foreign_disk_total_mounted_number()[0])? 0 : 1;
 
-var all_accessable_size = parent.simpleNum2(parent.computeallpools(diskOrder, "size")-parent.computeallpools(diskOrder, "size_in_use"));
-var all_total_size = parent.simpleNum2(parent.computeallpools(diskOrder, "size"));
-var mountedNum = parent.getDiskMountedNum(diskOrder);
 var ddns_result = '<% nvram_get("ddns_return_code_chk");%>'; //Boyau
-
 <% get_AiDisk_status(); %>
 
 var FTP_status = get_ftp_status();  // FTP
@@ -54,8 +50,6 @@ function initial(){
 	$("t0").className = "tabclick_NW";
 	$("t1").className = "tab_NW";
 	flash_button();
-	showtext($("disk_model_name"), parent.getDiskModelName(diskOrder));
-	showtext($("disk_total_size"), parent.getDiskTotalSize(diskOrder));
 
 	if(!parent.media_support)
 		$("mediaserver_hyperlink").style.display = "none";
@@ -68,31 +62,40 @@ function initial(){
 		$("diskTab").style.display = "";
 	}
 
-	if(mountedNum > 0){
-		showtext($("disk_total_size"), all_total_size+" GB");		
-		showtext($("disk_avail_size"), all_accessable_size+" GB");		
-		//$("show_remove_button").style.display = "";
+	showDiskUsage(parent.usbPorts[diskOrder-1]);
+
+	if(sw_mode == "2" || sw_mode == "3" || sw_mode == "4")
+		$("aidisk_hyperlink").style.display = "none";
+}
+
+var thisForeignDisksIndex;
+function showDiskUsage(device){
+	document.getElementById("disk_model_name").innerHTML = device.deviceName;
+
+	if(device.mountNumber > 0){
+		showtext($("disk_total_size"), simpleNum(device.totalSize) + " GB");		
+		showtext($("disk_avail_size"), simpleNum(device.totalSize - device.totalUsed) +" GB");		
 		showdisklink();
-		DMhint(); //Download Master Hint for user
+		$("mounted_item1").style.display = "";
+		$("mounted_item2").style.display = "";
+		$("unmounted_refresh").style.display = "none";
 	}
 	else{
 		$("mounted_item1").style.display = "none";
 		$("mounted_item2").style.display = "none";
-		
-		//$("show_removed_string").style.display = "";
 		$("unmounted_refresh").style.display = "";
 	}
-	if(sw_mode == "2" || sw_mode == "3" || sw_mode == "4")
-		$("aidisk_hyperlink").style.display = "none";
 
 	for(var i = 0; i < apps_array.length; i++){
 		if(apps_array[i][0] == "downloadmaster" && apps_array[i][4] == "yes" && apps_array[i][3] == "yes"){
-			if(_DMDiskNum == diskOrder || foreign_disks().length == 1) {
+			if(device.hasAppDev){
 				$("dmLink").style.display = "";
-				break;
 			}
+			break;
 		}
 	}
+
+	thisForeignDisksIndex = device.node;
 }
 
 function showdisklink(){
@@ -200,36 +203,9 @@ function remove_disk(){
 		parent.showLoading();
 		
 		document.diskForm.action = "safely_remove_disk.asp";
-		document.diskForm.disk.value = parent.getDiskPort(this.diskOrder);
+		document.diskForm.disk.value = thisForeignDisksIndex;
 		setTimeout("document.diskForm.submit();", 1);
 	}
-}
-
-function DMhint(){
-	var size_of_first_partition = 0;
-	var format_of_first_partition = "";
-	var	mnt_type = '<% nvram_get("mnt_type"); %>';	
-	for(var i = 0; i < parent.pool_names().length; ++i){
-		if(parent.per_pane_pool_usage_kilobytes(i, diskOrder)[0] && parent.per_pane_pool_usage_kilobytes(i, diskOrder)[0] > 0){
-			size_of_first_partition = parent.simpleNum(parent.per_pane_pool_usage_kilobytes(i, diskOrder)[0]);
-			format_of_first_partition = parent.pool_types()[i];
-			break;
-		}
-	}
-	//alert(format_of_first_partition);
-	/*if(format_of_first_partition != 'vfat'
-			&& format_of_first_partition != 'msdos'
-			&& format_of_first_partition != 'ext2'
-			&& format_of_first_partition != 'ext3'
-			&& format_of_first_partition != 'fuseblk'){*/
-	/*if(mnt_type == "ntfs"){
-		$("DMhint").style.display = "block";
-		$("DMFail_reason").innerHTML = "<#DM_reason1#>";
-	}
-	else if(size_of_first_partition <= 1){	// 0.5 = 512 Mb.
-		$("DMhint").style.display = "block";
-		$("DMFail_reason").innerHTML = "<#DM_reason2#>";
-	}*/
 }
 </script>
 </head>
@@ -257,7 +233,7 @@ function DMhint(){
 	<tr>
     <td style="padding:5px 10px 0px 15px;">
     	<p class="formfonttitle_nwm"><#Modelname#>:</p>
-    	<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px; color:#FFFFFF;" id="disk_model_name"></p>
+			<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px; color:#FFFFFF;" id="disk_model_name"></p>
       <img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
     </td>
   </tr>
@@ -266,16 +242,16 @@ function DMhint(){
 <table id="mounted_item1" width="95%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="table1px">
   <tr>
     <td style="padding:5px 10px 0px 15px;">
-    	<p class="formfonttitle_nwm"><#Totalspace#>:</p>
-    	<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px; color:#FFFFFF;" id="disk_total_size"></p>
+    	<p class="formfonttitle_nwm"><#Availablespace#>:</p>
+    	<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px; color:#FFFFFF;" id="disk_avail_size"></p>
       <img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
     </td>
   </tr>
 
   <tr>
     <td style="padding:5px 10px 0px 15px;">
-    	<p class="formfonttitle_nwm"><#Availablespace#>:</p>
-    	<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px; color:#FFFFFF;" id="disk_avail_size"></p>
+    	<p class="formfonttitle_nwm"><#Totalspace#>:</p>
+    	<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px; color:#FFFFFF;" id="disk_total_size"></p>
       <img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
     </td>
   </tr>
@@ -346,7 +322,7 @@ function DMhint(){
 	</li>
 </ul>
 <div id="DMhint" class="DMhint">
-<#DM_hint1#> <span id="DMFail_reason"></span>
+	<#DM_hint1#> <span id="DMFail_reason"></span>
 </div>
 </div>
 

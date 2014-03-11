@@ -1,3 +1,47 @@
+2014.63 - Wednesday 19 February 2014
+
+- Fix ~. to terminate a client interactive session after waking a laptop
+  from sleep.
+
+- Changed port separator syntax again, now using host^port. This is because
+  IPv6 link-local addresses use %. Reported by Gui Iribarren
+
+- Avoid constantly relinking dropbearmulti target, fix "make install"
+  for multi target, thanks to Mike Frysinger
+
+- Avoid getting stuck in a loop writing huge key files, reported by Bruno
+  Thomsen
+
+- Don't link dropbearkey or dropbearconvert to libz or libutil, 
+  thanks to Nicolas Boos
+
+- Fix linking -lcrypt on systems without /usr/lib, thanks to Nicolas Boos
+
+- Avoid crash on exit due to cleaned up keys before last packets are sent,
+  debugged by Ronald Wahl
+
+- Fix a race condition in rekeying where Dropbear would exit if it received a
+  still-in-flight packet after initiating rekeying. Reported by Oliver Metz.
+  This is a longstanding bug but is triggered more easily since 2013.57
+
+- Fix README for ecdsa keys, from Caralin Patulea
+
+- Ensure that generated RSA keys are always exactly the length
+  requested. Previously Dropbear always generated N+16 or N+15 bit keys.
+  Thanks to Unit 193
+
+- Fix DROPBEAR_CLI_IMMEDIATE_AUTH mode which saves a network round trip if the
+  first public key succeeds. Still not enabled by default, needs more
+  compatibility testing with other implementations.
+
+- Fix for port 0 forwarding in the client and port forwarding with Apache MINA SSHD. Thanks to 
+
+- Fix for bad system linux/pkt-sched.h header file with older Linux
+kernels, from Steve Dover
+
+- Fix signal handlers so that errno is saved, thanks to Erik Ahlén for a patch
+  and Mark Wickham for independently spotting the same problem.
+
 2013.62 - Tuesday 3 December 2013
 
 - Disable "interactive" QoS connection options when a connection doesn't

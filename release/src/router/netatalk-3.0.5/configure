@@ -752,6 +752,8 @@ AVAHI_TPOLL_LIBS
 AVAHI_TPOLL_CFLAGS
 AVAHI_LIBS
 AVAHI_CFLAGS
+PKG_CONFIG_LIBDIR
+PKG_CONFIG_PATH
 PKG_CONFIG
 QUOTA_LIBS
 compiled_backends
@@ -970,6 +972,8 @@ LIBS
 CPPFLAGS
 CPP
 PKG_CONFIG
+PKG_CONFIG_PATH
+PKG_CONFIG_LIBDIR
 AVAHI_CFLAGS
 AVAHI_LIBS
 AVAHI_TPOLL_CFLAGS
@@ -1597,13 +1601,10 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --disable-maintainer-mode
-                          disable make rules and dependencies not useful (and
-                          sometimes confusing) to the casual installer
-  --enable-dependency-tracking
-                          do not reject slow dependency extractors
-  --disable-dependency-tracking
-                          speeds up one-time build
+  --disable-maintainer-mode  disable make rules and dependencies not useful
+			  (and sometimes confusing) to the casual installer
+  --disable-dependency-tracking  speeds up one-time build
+  --enable-dependency-tracking   do not reject slow dependency extractors
   --enable-shared[=PKGS]  build shared libraries [default=yes]
   --enable-static[=PKGS]  build static libraries [default=yes]
   --enable-fast-install[=PKGS]
@@ -1624,13 +1625,13 @@ Optional Features:
   --disable-sendfile       disable sendfile syscall
   --enable-developer      whether to enable developer build (ABI checking)
   --enable-fhs            use Filesystem Hierarchy Standard (FHS) compatibility
-  --enable-silent-rules   less verbose build output (undo: "make V=1")
-  --disable-silent-rules  verbose build output (undo: "make V=0")
+  --enable-silent-rules          less verbose build output (undo: `make V=1')
+  --disable-silent-rules         verbose build output (undo: `make V=0')
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-pic              try to use only PIC/non-PIC objects [default=use
+  --with-pic[=PKGS]       try to use only PIC/non-PIC objects [default=use
                           both]
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
   --with-sysroot=DIR Search for dependent libraries within DIR
@@ -1683,6 +1684,10 @@ Some influential environment variables:
               you have headers in a nonstandard directory <include dir>
   CPP         C preprocessor
   PKG_CONFIG  path to pkg-config utility
+  PKG_CONFIG_PATH
+              directories to add to pkg-config's search path
+  PKG_CONFIG_LIBDIR
+              path overriding pkg-config's built-in search path
   AVAHI_CFLAGS
               C compiler flags for AVAHI, overriding pkg-config
   AVAHI_LIBS  linker flags for AVAHI, overriding pkg-config
@@ -2050,11 +2055,6 @@ $as_echo "$ac_res" >&6; }
 ac_fn_c_check_header_mongrel ()
 {
   as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  # Added by Edison 20130918
-  if test "$shlibpath_tmp" != ""; then
-     eval "export LD_LIBRARY_PATH=$shlibpath_tmp;"
-  fi
-
   if eval \${$3+:} false; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
 $as_echo_n "checking for $2... " >&6; }
@@ -2784,10 +2784,9 @@ case $target_os in *\ *) target_os=`echo "$target_os" | sed 's/ /-/g'`;; esac
 test -n "$target_alias" &&
   test "$program_prefix$program_suffix$program_transform_name" = \
     NONENONEs,x,x, &&
-#marked by Edison 20130918
-#  program_prefix=${target_alias}-
+  program_prefix=${target_alias}-
 
-am__api_version='1.12'
+am__api_version='1.11'
 
 # Find a good install program.  We prefer a C program (faster),
 # so one script is as good as another.  But avoid the broken or
@@ -2884,6 +2883,9 @@ test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether build environment is sane" >&5
 $as_echo_n "checking whether build environment is sane... " >&6; }
+# Just in case
+sleep 1
+echo timestamp > conftest.file
 # Reject unsafe characters in $srcdir or the absolute working directory
 # name.  Accept space and tab only in the latter.
 am_lf='
@@ -2894,40 +2896,32 @@ case `pwd` in
 esac
 case $srcdir in
   *[\\\"\#\$\&\'\`$am_lf\ \	]*)
-    as_fn_error $? "unsafe srcdir value: '$srcdir'" "$LINENO" 5;;
+    as_fn_error $? "unsafe srcdir value: \`$srcdir'" "$LINENO" 5;;
 esac
 
-# Do 'set' in a subshell so we don't clobber the current shell's
+# Do `set' in a subshell so we don't clobber the current shell's
 # arguments.  Must try -L first in case configure is actually a
 # symlink; some systems play weird games with the mod time of symlinks
 # (eg FreeBSD returns the mod time of the symlink's containing
 # directory).
 if (
-   am_has_slept=no
-   for am_try in 1 2; do
-     echo "timestamp, slept: $am_has_slept" > conftest.file
-     set X `ls -Lt "$srcdir/configure" conftest.file 2> /dev/null`
-     if test "$*" = "X"; then
-	# -L didn't work.
-	set X `ls -t "$srcdir/configure" conftest.file`
-     fi
-     if test "$*" != "X $srcdir/configure conftest.file" \
-	&& test "$*" != "X conftest.file $srcdir/configure"; then
+   set X `ls -Lt "$srcdir/configure" conftest.file 2> /dev/null`
+   if test "$*" = "X"; then
+      # -L didn't work.
+      set X `ls -t "$srcdir/configure" conftest.file`
+   fi
+   rm -f conftest.file
+   if test "$*" != "X $srcdir/configure conftest.file" \
+      && test "$*" != "X conftest.file $srcdir/configure"; then
 
-	# If neither matched, then we have a broken ls.  This can happen
-	# if, for instance, CONFIG_SHELL is bash and it inherits a
-	# broken ls alias from the environment.  This has actually
-	# happened.  Such a system could not be considered "sane".
-	as_fn_error $? "ls -t appears to fail.  Make sure there is not a broken
-  alias in your environment" "$LINENO" 5
-     fi
-     if test "$2" = conftest.file || test $am_try -eq 2; then
-       break
-     fi
-     # Just in case.
-     sleep 1
-     am_has_slept=yes
-   done
+      # If neither matched, then we have a broken ls.  This can happen
+      # if, for instance, CONFIG_SHELL is bash and it inherits a
+      # broken ls alias from the environment.  This has actually
+      # happened.  Such a system could not be considered "sane".
+      as_fn_error $? "ls -t appears to fail.  Make sure there is not a broken
+alias in your environment" "$LINENO" 5
+   fi
+
    test "$2" = conftest.file
    )
 then
@@ -2939,16 +2933,6 @@ Check your system clock" "$LINENO" 5
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-# If we didn't sleep, we still need to ensure time stamps of config.status and
-# generated files are strictly newer.
-am_sleep_pid=
-if grep 'slept: no' conftest.file >/dev/null 2>&1; then
-  ( sleep 1 ) &
-  am_sleep_pid=$!
-fi
-
-rm -f conftest.file
-
 test "$program_prefix" != NONE &&
   program_transform_name="s&^&$program_prefix&;$program_transform_name"
 # Use a double $ so make ignores it.
@@ -2975,8 +2959,8 @@ if eval "$MISSING --run true"; then
   am_missing_run="$MISSING --run "
 else
   am_missing_run=
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: 'missing' script is too old or missing" >&5
-$as_echo "$as_me: WARNING: 'missing' script is too old or missing" >&2;}
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: \`missing' script is too old or missing" >&5
+$as_echo "$as_me: WARNING: \`missing' script is too old or missing" >&2;}
 fi
 
 if test x"${install_sh}" != xset; then
@@ -2988,10 +2972,10 @@ if test x"${install_sh}" != xset; then
   esac
 fi
 
-# Installed binaries are usually stripped using 'strip' when the user
-# run "make install-strip".  However 'strip' might not be the right
+# Installed binaries are usually stripped using `strip' when the user
+# run `make install-strip'.  However `strip' might not be the right
 # tool to use in cross-compilation environments, therefore Automake
-# will honor the 'STRIP' environment variable to overrule this program.
+# will honor the `STRIP' environment variable to overrule this program.
 if test "$cross_compiling" != no; then
   if test -n "$ac_tool_prefix"; then
   # Extract the first word of "${ac_tool_prefix}strip", so it can be a program name with args.
@@ -3130,6 +3114,12 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $MKDIR_P" >&5
 $as_echo "$MKDIR_P" >&6; }
 
+mkdir_p="$MKDIR_P"
+case $mkdir_p in
+  [\\/$]* | ?:[\\/]*) ;;
+  */*) mkdir_p="\$(top_builddir)/$mkdir_p" ;;
+esac
+
 for ac_prog in gawk mawk nawk awk
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
@@ -3233,7 +3223,6 @@ fi
 
 
 # Define the identity of the package.
-
  PACKAGE=netatalk
  VERSION=${NETATALK_VERSION}
 
@@ -3262,12 +3251,6 @@ AUTOHEADER=${AUTOHEADER-"${am_missing_run}autoheader"}
 
 
 MAKEINFO=${MAKEINFO-"${am_missing_run}makeinfo"}
-
-# For better backward compatibility.  To be removed once Automake 1.9.x
-# dies out for good.  For more background, see:
-# <http://lists.gnu.org/archive/html/automake/2012-07/msg00001.html>
-# <http://lists.gnu.org/archive/html/automake/2012-07/msg00014.html>
-mkdir_p='$(MKDIR_P)'
 
 # We need awk for the "check" target.  The system "awk" is bad on
 # some platforms.
@@ -4156,7 +4139,7 @@ am__quote=
 _am_result=none
 # First try GNU make style include.
 echo "include confinc" > confmf
-# Ignore all kinds of additional output from 'make'.
+# Ignore all kinds of additional output from `make'.
 case `$am_make -s -f confmf 2> /dev/null` in #(
 *the\ am__doit\ target*)
   am__include=include
@@ -4199,13 +4182,7 @@ else
   AMDEP_FALSE=
 fi
 
-# Added by Edison - 20130923
-# Check whether --with-ld-library-path was given.
-if test "${with_ld_library_path+set}" = set; then :
-  shlibpath_tmp=$with_ld_library_path
-else
-  shlibpath_tmp=""
-fi
+
 
 depcc="$CC"   am_compiler_list=
 
@@ -4218,8 +4195,8 @@ else
   # We make a subdir and do the tests there.  Otherwise we can end up
   # making bogus files that we don't know about and never remove.  For
   # instance it was reported that on HP-UX the gcc test will end up
-  # making a dummy file named 'D' -- because '-MD' means "put the output
-  # in D".
+  # making a dummy file named `D' -- because `-MD' means `put the output
+  # in D'.
   rm -rf conftest.dir
   mkdir conftest.dir
   # Copy depcomp to subdir because otherwise we won't find it if we're
@@ -4254,16 +4231,16 @@ else
     : > sub/conftest.c
     for i in 1 2 3 4 5 6; do
       echo '#include "conftst'$i'.h"' >> sub/conftest.c
-      # Using ": > sub/conftst$i.h" creates only sub/conftst1.h with
-      # Solaris 10 /bin/sh.
-      echo '/* dummy */' > sub/conftst$i.h
+      # Using `: > sub/conftst$i.h' creates only sub/conftst1.h with
+      # Solaris 8's {/usr,}/bin/sh.
+      touch sub/conftst$i.h
     done
     echo "${am__include} ${am__quote}sub/conftest.Po${am__quote}" > confmf
 
-    # We check with '-c' and '-o' for the sake of the "dashmstdout"
+    # We check with `-c' and `-o' for the sake of the "dashmstdout"
     # mode.  It turns out that the SunPro C++ compiler does not properly
-    # handle '-M -o', and we need to detect this.  Also, some Intel
-    # versions had trouble with output in subdirs.
+    # handle `-M -o', and we need to detect this.  Also, some Intel
+    # versions had trouble with output in subdirs
     am__obj=sub/conftest.${OBJEXT-o}
     am__minus_obj="-o $am__obj"
     case $depmode in
@@ -4272,8 +4249,8 @@ else
       test "$am__universal" = false || continue
       ;;
     nosideeffect)
-      # After this tag, mechanisms are not by side-effect, so they'll
-      # only be used when explicitly requested.
+      # after this tag, mechanisms are not by side-effect, so they'll
+      # only be used when explicitly requested
       if test "x$enable_dependency_tracking" = xyes; then
 	continue
       else
@@ -4281,7 +4258,7 @@ else
       fi
       ;;
     msvc7 | msvc7msys | msvisualcpp | msvcmsys)
-      # This compiler won't grok '-c -o', but also, the minuso test has
+      # This compiler won't grok `-c -o', but also, the minuso test has
       # not run yet.  These depmodes are late enough in the game, and
       # so weak that their functioning should not be impacted.
       am__obj=conftest.${OBJEXT-o}
@@ -4567,8 +4544,8 @@ esac
 
 
 
-macro_version='2.4'
-macro_revision='1.3293'
+macro_version='2.4.2'
+macro_revision='1.3337'
 
 
 
@@ -5313,6 +5290,11 @@ else
     lt_cv_sys_max_cmd_len=196608
     ;;
 
+  os2*)
+    # The test takes a long time on OS/2.
+    lt_cv_sys_max_cmd_len=8192
+    ;;
+
   osf*)
     # Dr. Hans Ekkehard Plesser reports seeing a kernel panic running configure
     # due to this test when exec_disable_arg_limit is 1 on Tru64. It is not
@@ -5352,7 +5334,7 @@ else
       # If test is not a shell built-in, we'll probably end up computing a
       # maximum length that is only half of the actual maximum length, but
       # we can't tell.
-      while { test "X"`func_fallback_echo "$teststring$teststring" 2>/dev/null` \
+      while { test "X"`env echo "$teststring$teststring" 2>/dev/null` \
 	         = "X$teststring$teststring"; } >/dev/null 2>&1 &&
 	      test $i != 17 # 1/2 MB should be enough
       do
@@ -5781,7 +5763,7 @@ irix5* | irix6* | nonstopux*)
   lt_cv_deplibs_check_method=pass_all
   ;;
 
-# This must be Linux ELF.
+# This must be glibc/ELF.
 linux* | k*bsd*-gnu | kopensolaris*-gnu)
   lt_cv_deplibs_check_method=pass_all
   ;;
@@ -6422,13 +6404,13 @@ old_postuninstall_cmds=
 if test -n "$RANLIB"; then
   case $host_os in
   openbsd*)
-    old_postinstall_cmds="$old_postinstall_cmds~\$RANLIB -t \$oldlib"
+    old_postinstall_cmds="$old_postinstall_cmds~\$RANLIB -t \$tool_oldlib"
     ;;
   *)
-    old_postinstall_cmds="$old_postinstall_cmds~\$RANLIB \$oldlib"
+    old_postinstall_cmds="$old_postinstall_cmds~\$RANLIB \$tool_oldlib"
     ;;
   esac
-  old_archive_cmds="$old_archive_cmds~\$RANLIB \$oldlib"
+  old_archive_cmds="$old_archive_cmds~\$RANLIB \$tool_oldlib"
 fi
 
 case $host_os in
@@ -6575,6 +6557,7 @@ for ac_symprfx in "" "_"; do
     # which start with @ or ?.
     lt_cv_sys_global_symbol_pipe="$AWK '"\
 "     {last_section=section; section=\$ 3};"\
+"     /^COFF SYMBOL TABLE/{for(i in hide) delete hide[i]};"\
 "     /Section length .*#relocs.*(pick any)/{hide[last_section]=1};"\
 "     \$ 0!~/External *\|/{next};"\
 "     / 0+ UNDEF /{next}; / UNDEF \([^|]\)*()/{next};"\
@@ -6963,7 +6946,7 @@ $as_echo "$lt_cv_cc_needs_belf" >&6; }
     CFLAGS="$SAVE_CFLAGS"
   fi
   ;;
-sparc*-*solaris*)
+*-*solaris*)
   # Find out which ABI we are using.
   echo 'int i;' > conftest.$ac_ext
   if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
@@ -6974,7 +6957,20 @@ sparc*-*solaris*)
     case `/usr/bin/file conftest.o` in
     *64-bit*)
       case $lt_cv_prog_gnu_ld in
-      yes*) LD="${LD-ld} -m elf64_sparc" ;;
+      yes*)
+        case $host in
+        i?86-*-solaris*)
+          LD="${LD-ld} -m elf_x86_64"
+          ;;
+        sparc*-*-solaris*)
+          LD="${LD-ld} -m elf64_sparc"
+          ;;
+        esac
+        # GNU ld 2.21 introduced _sol2 emulations.  Use them if available.
+        if ${LD-ld} -V | grep _sol2 >/dev/null 2>&1; then
+          LD="${LD-ld}_sol2"
+        fi
+        ;;
       *)
 	if ${LD-ld} -64 -r -o conftest2.o conftest.o >/dev/null 2>&1; then
 	  LD="${LD-ld} -64"
@@ -7614,7 +7610,13 @@ else
 	$LTCC $LTCFLAGS $LDFLAGS -o libconftest.dylib \
 	  -dynamiclib -Wl,-single_module conftest.c 2>conftest.err
         _lt_result=$?
-	if test -f libconftest.dylib && test ! -s conftest.err && test $_lt_result = 0; then
+	# If there is a non-empty error log, and "single_module"
+	# appears in it, assume the flag caused a linker warning
+        if test -s conftest.err && $GREP single_module conftest.err; then
+	  cat conftest.err >&5
+	# Otherwise, if the output was created with a 0 exit code from
+	# the compiler, it worked.
+	elif test -f libconftest.dylib && test $_lt_result -eq 0; then
 	  lt_cv_apple_cc_single_mod=yes
 	else
 	  cat conftest.err >&5
@@ -7625,6 +7627,7 @@ else
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $lt_cv_apple_cc_single_mod" >&5
 $as_echo "$lt_cv_apple_cc_single_mod" >&6; }
+
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -exported_symbols_list linker flag" >&5
 $as_echo_n "checking for -exported_symbols_list linker flag... " >&6; }
 if ${lt_cv_ld_exported_symbols_list+:} false; then :
@@ -7657,6 +7660,7 @@ rm -f core conftest.err conftest.$ac_objext \
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $lt_cv_ld_exported_symbols_list" >&5
 $as_echo "$lt_cv_ld_exported_symbols_list" >&6; }
+
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -force_load linker flag" >&5
 $as_echo_n "checking for -force_load linker flag... " >&6; }
 if ${lt_cv_ld_force_load+:} false; then :
@@ -7678,7 +7682,9 @@ _LT_EOF
       echo "$LTCC $LTCFLAGS $LDFLAGS -o conftest conftest.c -Wl,-force_load,./libconftest.a" >&5
       $LTCC $LTCFLAGS $LDFLAGS -o conftest conftest.c -Wl,-force_load,./libconftest.a 2>conftest.err
       _lt_result=$?
-      if test -f conftest && test ! -s conftest.err && test $_lt_result = 0 && $GREP forced_load conftest 2>&1 >/dev/null; then
+      if test -s conftest.err && $GREP force_load conftest.err; then
+	cat conftest.err >&5
+      elif test -f conftest && test $_lt_result -eq 0 && $GREP forced_load conftest >/dev/null 2>&1 ; then
 	lt_cv_ld_force_load=yes
       else
 	cat conftest.err >&5
@@ -8081,7 +8087,22 @@ fi
 
 # Check whether --with-pic was given.
 if test "${with_pic+set}" = set; then :
-  withval=$with_pic; pic_mode="$withval"
+  withval=$with_pic; lt_p=${PACKAGE-default}
+    case $withval in
+    yes|no) pic_mode=$withval ;;
+    *)
+      pic_mode=default
+      # Look at the argument we got.  We use all the common list separators.
+      lt_save_ifs="$IFS"; IFS="${IFS}$PATH_SEPARATOR,"
+      for lt_pkg in $withval; do
+	IFS="$lt_save_ifs"
+	if test "X$lt_pkg" = "X$lt_p"; then
+	  pic_mode=yes
+	fi
+      done
+      IFS="$lt_save_ifs"
+      ;;
+    esac
 else
   pic_mode=default
 fi
@@ -8133,6 +8154,10 @@ LIBTOOL_DEPS="$ltmain"
 
 # Always use our own libtool.
 LIBTOOL='$(SHELL) $(top_builddir)/libtool'
+
+
+
+
 
 
 
@@ -8618,7 +8643,9 @@ lt_prog_compiler_static=
     case $cc_basename in
     nvcc*) # Cuda Compiler Driver 2.2
       lt_prog_compiler_wl='-Xlinker '
-      lt_prog_compiler_pic='-Xcompiler -fPIC'
+      if test -n "$lt_prog_compiler_pic"; then
+        lt_prog_compiler_pic="-Xcompiler $lt_prog_compiler_pic"
+      fi
       ;;
     esac
   else
@@ -8709,17 +8736,32 @@ lt_prog_compiler_static=
 	;;
       *)
 	case `$CC -V 2>&1 | sed 5q` in
-	*Sun\ F* | *Sun*Fortran*)
+	*Sun\ Ceres\ Fortran* | *Sun*Fortran*\ [1-7].* | *Sun*Fortran*\ 8.[0-3]*)
 	  # Sun Fortran 8.3 passes all unrecognized flags to the linker
 	  lt_prog_compiler_pic='-KPIC'
 	  lt_prog_compiler_static='-Bstatic'
 	  lt_prog_compiler_wl=''
+	  ;;
+	*Sun\ F* | *Sun*Fortran*)
+	  lt_prog_compiler_pic='-KPIC'
+	  lt_prog_compiler_static='-Bstatic'
+	  lt_prog_compiler_wl='-Qoption ld '
 	  ;;
 	*Sun\ C*)
 	  # Sun C 5.9
 	  lt_prog_compiler_pic='-KPIC'
 	  lt_prog_compiler_static='-Bstatic'
 	  lt_prog_compiler_wl='-Wl,'
+	  ;;
+        *Intel*\ [CF]*Compiler*)
+	  lt_prog_compiler_wl='-Wl,'
+	  lt_prog_compiler_pic='-fPIC'
+	  lt_prog_compiler_static='-static'
+	  ;;
+	*Portland\ Group*)
+	  lt_prog_compiler_wl='-Wl,'
+	  lt_prog_compiler_pic='-fpic'
+	  lt_prog_compiler_static='-Bstatic'
 	  ;;
 	esac
 	;;
@@ -9082,7 +9124,6 @@ $as_echo_n "checking whether the $compiler linker ($LD) supports shared librarie
   hardcode_direct=no
   hardcode_direct_absolute=no
   hardcode_libdir_flag_spec=
-  hardcode_libdir_flag_spec_ld=
   hardcode_libdir_separator=
   hardcode_minus_L=no
   hardcode_shlibpath_var=unsupported
@@ -9332,8 +9373,7 @@ _LT_EOF
 	xlf* | bgf* | bgxlf* | mpixlf*)
 	  # IBM XL Fortran 10.1 on PPC cannot create shared libs itself
 	  whole_archive_flag_spec='--whole-archive$convenience --no-whole-archive'
-	  hardcode_libdir_flag_spec=
-	  hardcode_libdir_flag_spec_ld='-rpath $libdir'
+	  hardcode_libdir_flag_spec='${wl}-rpath ${wl}$libdir'
 	  archive_cmds='$LD -shared $libobjs $deplibs $linker_flags -soname $soname -o $lib'
 	  if test "x$supports_anon_versioning" = xyes; then
 	    archive_expsym_cmds='echo "{ global:" > $output_objdir/$libname.ver~
@@ -9712,6 +9752,7 @@ fi
 	# The linker will not automatically build a static lib if we build a DLL.
 	# _LT_TAGVAR(old_archive_from_new_cmds, )='true'
 	enable_shared_with_static_runtimes=yes
+	exclude_expsyms='_NULL_IMPORT_DESCRIPTOR|_IMPORT_DESCRIPTOR_.*'
 	export_symbols_cmds='$NM $libobjs $convenience | $global_symbol_pipe | $SED -e '\''/^[BCDGRS][ ]/s/.*[ ]\([^ ]*\)/\1,DATA/'\'' | $SED -e '\''/^[AITW][ ]/s/.*[ ]//'\'' | sort | uniq > $export_symbols'
 	# Don't use ranlib
 	old_postinstall_cmds='chmod 644 $oldlib'
@@ -9757,6 +9798,7 @@ fi
   hardcode_shlibpath_var=unsupported
   if test "$lt_cv_ld_force_load" = "yes"; then
     whole_archive_flag_spec='`for conv in $convenience\"\"; do test  -n \"$conv\" && new_convenience=\"$new_convenience ${wl}-force_load,$conv\"; done; func_echo_all \"$new_convenience\"`'
+
   else
     whole_archive_flag_spec=''
   fi
@@ -9785,10 +9827,6 @@ fi
       hardcode_shlibpath_var=no
       ;;
 
-    freebsd1*)
-      ld_shlibs=no
-      ;;
-
     # FreeBSD 2.2.[012] allows us to include c++rt0.o to get C++ constructor
     # support.  Future versions do this automatically, but an explicit c++rt0.o
     # does not break anything, and helps significantly (at the cost of a little
@@ -9801,7 +9839,7 @@ fi
       ;;
 
     # Unfortunately, older versions of FreeBSD 2 do not have this feature.
-    freebsd2*)
+    freebsd2.*)
       archive_cmds='$LD -Bshareable -o $lib $libobjs $deplibs $linker_flags'
       hardcode_direct=yes
       hardcode_minus_L=yes
@@ -9840,7 +9878,6 @@ fi
       fi
       if test "$with_gnu_ld" = no; then
 	hardcode_libdir_flag_spec='${wl}+b ${wl}$libdir'
-	hardcode_libdir_flag_spec_ld='+b $libdir'
 	hardcode_libdir_separator=:
 	hardcode_direct=yes
 	hardcode_direct_absolute=yes
@@ -10464,11 +10501,6 @@ esac
 
 
 
-
-
-
-
-
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking dynamic linker characteristics" >&5
 $as_echo_n "checking dynamic linker characteristics... " >&6; }
 
@@ -10558,7 +10590,7 @@ need_version=unknown
 
 case $host_os in
 aix3*)
-  version_type=linux
+  version_type=linux # correct to gnu/linux during the next big refactor
   library_names_spec='${libname}${release}${shared_ext}$versuffix $libname.a'
   shlibpath_var=LIBPATH
 
@@ -10567,7 +10599,7 @@ aix3*)
   ;;
 
 aix[4-9]*)
-  version_type=linux
+  version_type=linux # correct to gnu/linux during the next big refactor
   need_lib_prefix=no
   need_version=no
   hardcode_into_libs=yes
@@ -10632,7 +10664,7 @@ beos*)
   ;;
 
 bsdi[45]*)
-  version_type=linux
+  version_type=linux # correct to gnu/linux during the next big refactor
   need_version=no
   library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
   soname_spec='${libname}${release}${shared_ext}$major'
@@ -10771,16 +10803,12 @@ darwin* | rhapsody*)
   ;;
 
 dgux*)
-  version_type=linux
+  version_type=linux # correct to gnu/linux during the next big refactor
   need_lib_prefix=no
   need_version=no
   library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname$shared_ext'
   soname_spec='${libname}${release}${shared_ext}$major'
   shlibpath_var=LD_LIBRARY_PATH
-  ;;
-
-freebsd1*)
-  dynamic_linker=no
   ;;
 
 freebsd* | dragonfly*)
@@ -10790,11 +10818,18 @@ freebsd* | dragonfly*)
     objformat=`/usr/bin/objformat`
   else
     case $host_os in
-    freebsd[123]*) objformat=aout ;;
+    freebsd[23].*) objformat=aout ;;
     *) objformat=elf ;;
     esac
   fi
-  version_type=freebsd-$objformat
+  # Handle Gentoo/FreeBSD as it was Linux
+  case $host_vendor in
+    gentoo)
+      version_type=linux ;;
+    *)
+      version_type=freebsd-$objformat ;;
+  esac
+
   case $version_type in
     freebsd-elf*)
       library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext} $libname${shared_ext}'
@@ -10805,10 +10840,16 @@ freebsd* | dragonfly*)
       library_names_spec='${libname}${release}${shared_ext}$versuffix $libname${shared_ext}$versuffix'
       need_version=yes
       ;;
+    linux)
+      library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
+      soname_spec='${libname}${release}${shared_ext}$major'
+      need_lib_prefix=no
+      need_version=no
+      ;;
   esac
   shlibpath_var=LD_LIBRARY_PATH
   case $host_os in
-  freebsd2*)
+  freebsd2.*)
     shlibpath_overrides_runpath=yes
     ;;
   freebsd3.[01]* | freebsdelf3.[01]*)
@@ -10828,17 +10869,18 @@ freebsd* | dragonfly*)
   ;;
 
 gnu*)
-  version_type=linux
+  version_type=linux # correct to gnu/linux during the next big refactor
   need_lib_prefix=no
   need_version=no
   library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}${major} ${libname}${shared_ext}'
   soname_spec='${libname}${release}${shared_ext}$major'
   shlibpath_var=LD_LIBRARY_PATH
+  shlibpath_overrides_runpath=no
   hardcode_into_libs=yes
   ;;
 
 haiku*)
-  version_type=linux
+  version_type=linux # correct to gnu/linux during the next big refactor
   need_lib_prefix=no
   need_version=no
   dynamic_linker="$host_os runtime_loader"
@@ -10899,7 +10941,7 @@ hpux9* | hpux10* | hpux11*)
   ;;
 
 interix[3-9]*)
-  version_type=linux
+  version_type=linux # correct to gnu/linux during the next big refactor
   need_lib_prefix=no
   need_version=no
   library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
@@ -10915,7 +10957,7 @@ irix5* | irix6* | nonstopux*)
     nonstopux*) version_type=nonstopux ;;
     *)
 	if test "$lt_cv_prog_gnu_ld" = yes; then
-		version_type=linux
+		version_type=linux # correct to gnu/linux during the next big refactor
 	else
 		version_type=irix
 	fi ;;
@@ -10952,9 +10994,9 @@ linux*oldld* | linux*aout* | linux*coff*)
   dynamic_linker=no
   ;;
 
-# This must be Linux ELF.
+# This must be glibc/ELF.
 linux* | k*bsd*-gnu | kopensolaris*-gnu)
-  version_type=linux
+  version_type=linux # correct to gnu/linux during the next big refactor
   need_lib_prefix=no
   need_version=no
   library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
@@ -11036,7 +11078,7 @@ netbsd*)
   ;;
 
 newsos6)
-  version_type=linux
+  version_type=linux # correct to gnu/linux during the next big refactor
   library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
   shlibpath_var=LD_LIBRARY_PATH
   shlibpath_overrides_runpath=yes
@@ -11105,7 +11147,7 @@ rdos*)
   ;;
 
 solaris*)
-  version_type=linux
+  version_type=linux # correct to gnu/linux during the next big refactor
   need_lib_prefix=no
   need_version=no
   library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
@@ -11130,7 +11172,7 @@ sunos4*)
   ;;
 
 sysv4 | sysv4.3*)
-  version_type=linux
+  version_type=linux # correct to gnu/linux during the next big refactor
   library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
   soname_spec='${libname}${release}${shared_ext}$major'
   shlibpath_var=LD_LIBRARY_PATH
@@ -11154,7 +11196,7 @@ sysv4 | sysv4.3*)
 
 sysv4*MP*)
   if test -d /usr/nec ;then
-    version_type=linux
+    version_type=linux # correct to gnu/linux during the next big refactor
     library_names_spec='$libname${shared_ext}.$versuffix $libname${shared_ext}.$major $libname${shared_ext}'
     soname_spec='$libname${shared_ext}.$major'
     shlibpath_var=LD_LIBRARY_PATH
@@ -11185,7 +11227,7 @@ sysv5* | sco3.2v5* | sco5v6* | unixware* | OpenUNIX* | sysv4*uw2*)
 
 tpf*)
   # TPF is a cross-target only.  Preferred cross-host = GNU/Linux.
-  version_type=linux
+  version_type=linux # correct to gnu/linux during the next big refactor
   need_lib_prefix=no
   need_version=no
   library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
@@ -11195,7 +11237,7 @@ tpf*)
   ;;
 
 uts4*)
-  version_type=linux
+  version_type=linux # correct to gnu/linux during the next big refactor
   library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
   soname_spec='${libname}${release}${shared_ext}$major'
   shlibpath_var=LD_LIBRARY_PATH
@@ -11964,6 +12006,8 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 CC="$lt_save_CC"
+
+
 
 
 
@@ -13885,7 +13929,8 @@ $as_echo "yes" >&6; }
 *:*)
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-#    atalk_libname="lib"	#Modified as ".libs" by Edison in 20130923
+
+
     atalk_libname=".libs"
     ;;
 esac
@@ -14999,6 +15044,11 @@ $as_echo "#define NO_QUOTA_SUPPORT 1" >>confdefs.h
 
 
 
+
+
+
+
+
 if test "x$ac_cv_env_PKG_CONFIG_set" != "xset"; then
 	if test -n "$ac_tool_prefix"; then
   # Extract the first word of "${ac_tool_prefix}pkg-config", so it can be a program name with args.
@@ -15111,7 +15161,6 @@ $as_echo "yes" >&6; }
 $as_echo "no" >&6; }
 		PKG_CONFIG=""
 	fi
-
 fi
 
 	ZEROCONF_LIBS=""
@@ -15266,6 +15315,7 @@ if test -n "$AVAHI_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_AVAHI_CFLAGS=`$PKG_CONFIG --cflags " avahi-client >= 0.6 " 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -15282,6 +15332,7 @@ if test -n "$AVAHI_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_AVAHI_LIBS=`$PKG_CONFIG --libs " avahi-client >= 0.6 " 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -15292,6 +15343,8 @@ fi
 
 
 if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
         _pkg_short_errors_supported=yes
@@ -15299,9 +15352,9 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        AVAHI_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors " avahi-client >= 0.6 " 2>&1`
+	        AVAHI_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs " avahi-client >= 0.6 " 2>&1`
         else
-	        AVAHI_PKG_ERRORS=`$PKG_CONFIG --print-errors " avahi-client >= 0.6 " 2>&1`
+	        AVAHI_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs " avahi-client >= 0.6 " 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$AVAHI_PKG_ERRORS" >&5
@@ -15315,9 +15368,10 @@ installed software in a non-standard prefix.
 
 Alternatively, you may set the environment variables AVAHI_CFLAGS
 and AVAHI_LIBS to avoid the need to call pkg-config.
-See the pkg-config man page for more details.
-" "$LINENO" 5
+See the pkg-config man page for more details." "$LINENO" 5
 elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 	{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 as_fn_error $? "The pkg-config script could not be found or is too old.  Make sure it
@@ -15335,7 +15389,7 @@ else
 	AVAHI_LIBS=$pkg_cv_AVAHI_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-	:
+
 fi
 
 pkg_failed=no
@@ -15352,6 +15406,7 @@ if test -n "$AVAHI_TPOLL_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_AVAHI_TPOLL_CFLAGS=`$PKG_CONFIG --cflags " avahi-client >= 0.6.4 " 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -15368,6 +15423,7 @@ if test -n "$AVAHI_TPOLL_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_AVAHI_TPOLL_LIBS=`$PKG_CONFIG --libs " avahi-client >= 0.6.4 " 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -15378,6 +15434,8 @@ fi
 
 
 if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
         _pkg_short_errors_supported=yes
@@ -15385,18 +15443,18 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        AVAHI_TPOLL_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors " avahi-client >= 0.6.4 " 2>&1`
+	        AVAHI_TPOLL_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs " avahi-client >= 0.6.4 " 2>&1`
         else
-	        AVAHI_TPOLL_PKG_ERRORS=`$PKG_CONFIG --print-errors " avahi-client >= 0.6.4 " 2>&1`
+	        AVAHI_TPOLL_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs " avahi-client >= 0.6.4 " 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$AVAHI_TPOLL_PKG_ERRORS" >&5
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-                { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: This Avahi implementation is not supporting threaded poll objects. Maybe this is not what you want." >&5
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: This Avahi implementation is not supporting threaded poll objects. Maybe this is not what you want." >&5
 $as_echo "$as_me: WARNING: This Avahi implementation is not supporting threaded poll objects. Maybe this is not what you want." >&2;}
 elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: This Avahi implementation is not supporting threaded poll objects. Maybe this is not what you want." >&5
 $as_echo "$as_me: WARNING: This Avahi implementation is not supporting threaded poll objects. Maybe this is not what you want." >&2;}
 else
@@ -16038,9 +16096,7 @@ fi
 
   if test x$libgcrypt_config_prefix != x ; then
      if test x${LIBGCRYPT_CONFIG+set} != xset ; then
-#        LIBGCRYPT_CONFIG=$libgcrypt_config_prefix/bin/libgcrypt-config
-#Change libgcrypt-config path by Edison in 20130923
-        LIBGCRYPT_CONFIG=$libgcrypt_config_prefix/src/libgcrypt-config
+        LIBGCRYPT_CONFIG=$libgcrypt_config_prefix/bin/libgcrypt-config
      fi
   fi
 
@@ -16232,9 +16288,7 @@ fi
 	if test "$tryssl" = "yes"; then
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for SSL" >&5
 $as_echo_n "checking for SSL... " >&6; }
-#		for ssldir in "" $tryssldir /usr /usr/local/openssl /usr/$atalk_libname/openssl /usr/local/ssl /usr/$atalk_libname/ssl /usr/local /usr/pkg /opt /opt/openssl /usr/local/ssl ; do
-#Change for don't check ssl by Edison in 20130923
-		for ssldir in "" $tryssldir ; do
+		for ssldir in "" $tryssldir /usr /usr/local/openssl /usr/$atalk_libname/openssl /usr/local/ssl /usr/$atalk_libname/ssl /usr/local /usr/pkg /opt /opt/openssl /usr/local/ssl ; do
 			if test -f "$ssldir/include/openssl/cast.h" ; then
 				SSL_CFLAGS="$SSL_CFLAGS -I$ssldir/include -I$ssldir/include/openssl"
 				SSL_LIBS="$SSL_LIBS -L$ssldir/$atalk_libname -L$ssldir -lcrypto"
@@ -16425,10 +16479,8 @@ fi
                 break;
             fi
             for subdir in ${search_subdirs}; do
-#                { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Berkeley DB headers in ${bdbdir}/include${subdir}" >&5	#Edison modify
-#$as_echo_n "checking for Berkeley DB headers in ${bdbdir}/include${subdir}... " >&6; }
-#                                if test -f "${bdbdir}/include${subdir}/db.h" ; then
-#Change checking path by Edison in 20130923
+
+
                 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Berkeley DB headers in ${bdbdir}${subdir}" >&5
 $as_echo_n "checking for Berkeley DB headers in ${bdbdir}${subdir}... " >&6; }
                                 if test -f "${bdbdir}${subdir}/db.h" ; then
@@ -16436,15 +16488,9 @@ $as_echo_n "checking for Berkeley DB headers in ${bdbdir}${subdir}... " >&6; }
 $as_echo "yes" >&6; }
 
 
-#        { $as_echo "$as_me:${as_lineno-$LINENO}: checking ${bdbdir}/include${subdir}/db.h version >= ${DB_MAJOR_REQ}.${DB_MINOR_REQ}.${DB_PATCH_REQ}" >&5
-#$as_echo_n "checking ${bdbdir}/include${subdir}/db.h version >= ${DB_MAJOR_REQ}.${DB_MINOR_REQ}.${DB_PATCH_REQ}... " >&6; }
-#Change checking path by Edison in 20130923
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking ${bdbdir}${subdir}/db.h version >= ${DB_MAJOR_REQ}.${DB_MINOR_REQ}.${DB_PATCH_REQ}" >&5
 $as_echo_n "checking ${bdbdir}${subdir}/db.h version >= ${DB_MAJOR_REQ}.${DB_MINOR_REQ}.${DB_PATCH_REQ}... " >&6; }
 
-#    atalk_cv_bdb_MAJOR=`grep DB_VERSION_MAJOR "${bdbdir}/include${subdir}/db.h" | cut -f 3`
-#    atalk_cv_bdb_MINOR=`grep DB_VERSION_MINOR "${bdbdir}/include${subdir}/db.h" | cut -f 3`
-#Change checking path by Edison in 20130923
     atalk_cv_bdb_MAJOR=`grep DB_VERSION_MAJOR "${bdbdir}${subdir}/db.h" | cut -f 3`
     atalk_cv_bdb_MINOR=`grep DB_VERSION_MINOR "${bdbdir}${subdir}/db.h" | cut -f 3`
 
@@ -16471,7 +16517,7 @@ $as_echo "yes" >&6; }
                         bdblibdir="${bdbdir}/${atalk_libname}"
                         bdbbindir="${bdbdir}/bin"
 
-                        CPPFLAGS="-I${bdbdir}/include${subdir} $CPPFLAGS"
+                        CPPFLAGS="-I${bdbdir}${subdir} $CPPFLAGS"
                         LDFLAGS="-L$bdblibdir $LDFLAGS"
 
                                                                                                                                                                         eval export $shlibpath_var=$bdblibdir
@@ -16552,7 +16598,7 @@ fi
                         eval export $shlibpath_var=$saved_shlibpath_var
 
                         if test x"${atalk_cv_bdb_version}" = x"yes"; then
-                            BDB_CFLAGS="-I${bdbdir}/include${subdir}"
+                            BDB_CFLAGS="-I${bdbdir}${subdir}"
                             BDB_LIBS="-L${bdblibdir} ${atalk_cv_lib_db}"
                             if test x"$need_dash_r" = x"yes"; then
                                 BDB_LIBS="$BDB_LIBS -R${bdblibdir}"
@@ -16567,7 +16613,7 @@ fi
                            bdblibdir="${bdbdir}/lib"
                            bdbbindir="${bdbdir}/bin"
 
-                           CPPFLAGS="-I${bdbdir}/include${subdir} $CPPFLAGS"
+                           CPPFLAGS="-I${bdbdir}${subdir} $CPPFLAGS"
                            LDFLAGS="-L$bdblibdir $LDFLAGS"
 
                            eval export $shlibpath_var=$bdblibdir
@@ -16648,7 +16694,7 @@ fi
                            eval export $shlibpath_var=$saved_shlibpath_var
 
                            if test x"${atalk_cv_bdb_version}" = x"yes"; then
-                              BDB_CFLAGS="-I${bdbdir}/include${subdir}"
+                              BDB_CFLAGS="-I${bdbdir}${subdir}"
                               BDB_LIBS="-L${bdblibdir} ${atalk_cv_lib_db}"
                               if test x"$need_dash_r" = x"yes"; then
                                  BDB_LIBS="$BDB_LIBS -R${bdblibdir}"
@@ -18430,6 +18476,7 @@ if test -n "$DBUS_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_DBUS_CFLAGS=`$PKG_CONFIG --cflags "dbus-1 >= 1.1" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -18446,6 +18493,7 @@ if test -n "$DBUS_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_DBUS_LIBS=`$PKG_CONFIG --libs "dbus-1 >= 1.1" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -18456,6 +18504,8 @@ fi
 
 
 if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
         _pkg_short_errors_supported=yes
@@ -18463,17 +18513,17 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        DBUS_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "dbus-1 >= 1.1" 2>&1`
+	        DBUS_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "dbus-1 >= 1.1" 2>&1`
         else
-	        DBUS_PKG_ERRORS=`$PKG_CONFIG --print-errors "dbus-1 >= 1.1" 2>&1`
+	        DBUS_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "dbus-1 >= 1.1" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$DBUS_PKG_ERRORS" >&5
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-                have_dbus=no
+	have_dbus=no
 elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 	have_dbus=no
 else
 	DBUS_CFLAGS=$pkg_cv_DBUS_CFLAGS
@@ -18497,6 +18547,7 @@ if test -n "$DBUS_GLIB_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_DBUS_GLIB_CFLAGS=`$PKG_CONFIG --cflags "dbus-glib-1" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -18513,6 +18564,7 @@ if test -n "$DBUS_GLIB_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_DBUS_GLIB_LIBS=`$PKG_CONFIG --libs "dbus-glib-1" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -18523,6 +18575,8 @@ fi
 
 
 if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
         _pkg_short_errors_supported=yes
@@ -18530,17 +18584,17 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        DBUS_GLIB_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "dbus-glib-1" 2>&1`
+	        DBUS_GLIB_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "dbus-glib-1" 2>&1`
         else
-	        DBUS_GLIB_PKG_ERRORS=`$PKG_CONFIG --print-errors "dbus-glib-1" 2>&1`
+	        DBUS_GLIB_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "dbus-glib-1" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$DBUS_GLIB_PKG_ERRORS" >&5
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-                have_dbus_glib=no
+	have_dbus_glib=no
 elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 	have_dbus_glib=no
 else
 	DBUS_GLIB_CFLAGS=$pkg_cv_DBUS_GLIB_CFLAGS
@@ -18564,6 +18618,7 @@ if test -n "$DBUS_GTHREAD_CFLAGS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_DBUS_GTHREAD_CFLAGS=`$PKG_CONFIG --cflags "gthread-2.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -18580,6 +18635,7 @@ if test -n "$DBUS_GTHREAD_LIBS"; then
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
   pkg_cv_DBUS_GTHREAD_LIBS=`$PKG_CONFIG --libs "gthread-2.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
 fi
@@ -18590,6 +18646,8 @@ fi
 
 
 if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
         _pkg_short_errors_supported=yes
@@ -18597,17 +18655,17 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        DBUS_GTHREAD_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "gthread-2.0" 2>&1`
+	        DBUS_GTHREAD_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gthread-2.0" 2>&1`
         else
-	        DBUS_GTHREAD_PKG_ERRORS=`$PKG_CONFIG --print-errors "gthread-2.0" 2>&1`
+	        DBUS_GTHREAD_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gthread-2.0" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$DBUS_GTHREAD_PKG_ERRORS" >&5
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-                have_dbus_gthread=no
+	have_dbus_gthread=no
 elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 	have_dbus_gthread=no
 else
 	DBUS_GTHREAD_CFLAGS=$pkg_cv_DBUS_GTHREAD_CFLAGS
@@ -18973,10 +19031,10 @@ if test "${enable_silent_rules+set}" = set; then :
   enableval=$enable_silent_rules;
 fi
 
-case $enable_silent_rules in # (((
-  yes) AM_DEFAULT_VERBOSITY=0;;
-   no) AM_DEFAULT_VERBOSITY=1;;
-    *) AM_DEFAULT_VERBOSITY=0;;
+case $enable_silent_rules in
+yes) AM_DEFAULT_VERBOSITY=0;;
+no)  AM_DEFAULT_VERBOSITY=1;;
+*)   AM_DEFAULT_VERBOSITY=0;;
 esac
 am_make=${MAKE-make}
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $am_make supports nested variables" >&5
@@ -19121,14 +19179,6 @@ LIBOBJS=$ac_libobjs
 LTLIBOBJS=$ac_ltlibobjs
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking that generated files are newer than configure" >&5
-$as_echo_n "checking that generated files are newer than configure... " >&6; }
-   if test -n "$am_sleep_pid"; then
-     # Hide warnings about reused PIDs.
-     wait $am_sleep_pid 2>/dev/null
-   fi
-   { $as_echo "$as_me:${as_lineno-$LINENO}: result: done" >&5
-$as_echo "done" >&6; }
  if test -n "$EXEEXT"; then
   am__EXEEXT_TRUE=
   am__EXEEXT_FALSE='#'
@@ -19890,6 +19940,7 @@ pic_mode='`$ECHO "$pic_mode" | $SED "$delay_single_quote_subst"`'
 enable_fast_install='`$ECHO "$enable_fast_install" | $SED "$delay_single_quote_subst"`'
 SHELL='`$ECHO "$SHELL" | $SED "$delay_single_quote_subst"`'
 ECHO='`$ECHO "$ECHO" | $SED "$delay_single_quote_subst"`'
+PATH_SEPARATOR='`$ECHO "$PATH_SEPARATOR" | $SED "$delay_single_quote_subst"`'
 host_alias='`$ECHO "$host_alias" | $SED "$delay_single_quote_subst"`'
 host='`$ECHO "$host" | $SED "$delay_single_quote_subst"`'
 host_os='`$ECHO "$host_os" | $SED "$delay_single_quote_subst"`'
@@ -19972,7 +20023,6 @@ with_gnu_ld='`$ECHO "$with_gnu_ld" | $SED "$delay_single_quote_subst"`'
 allow_undefined_flag='`$ECHO "$allow_undefined_flag" | $SED "$delay_single_quote_subst"`'
 no_undefined_flag='`$ECHO "$no_undefined_flag" | $SED "$delay_single_quote_subst"`'
 hardcode_libdir_flag_spec='`$ECHO "$hardcode_libdir_flag_spec" | $SED "$delay_single_quote_subst"`'
-hardcode_libdir_flag_spec_ld='`$ECHO "$hardcode_libdir_flag_spec_ld" | $SED "$delay_single_quote_subst"`'
 hardcode_libdir_separator='`$ECHO "$hardcode_libdir_separator" | $SED "$delay_single_quote_subst"`'
 hardcode_direct='`$ECHO "$hardcode_direct" | $SED "$delay_single_quote_subst"`'
 hardcode_direct_absolute='`$ECHO "$hardcode_direct_absolute" | $SED "$delay_single_quote_subst"`'
@@ -20028,6 +20078,7 @@ _LTECHO_EOF'
 # Quote evaled strings.
 for var in SHELL \
 ECHO \
+PATH_SEPARATOR \
 SED \
 GREP \
 EGREP \
@@ -20078,7 +20129,6 @@ with_gnu_ld \
 allow_undefined_flag \
 no_undefined_flag \
 hardcode_libdir_flag_spec \
-hardcode_libdir_flag_spec_ld \
 hardcode_libdir_separator \
 exclude_expsyms \
 include_expsyms \
@@ -20852,7 +20902,7 @@ $as_echo "$as_me: executing $ac_file commands" >&6;}
     # Strip MF so we end up with the name of the file.
     mf=`echo "$mf" | sed -e 's/:.*$//'`
     # Check whether this is an Automake generated Makefile or not.
-    # We used to match only the files named 'Makefile.in', but
+    # We used to match only the files named `Makefile.in', but
     # some people rename them; so instead we look at the file content.
     # Grep'ing the first line is not enough: some people post-process
     # each Makefile.in and add a new line on top of each file to say so.
@@ -20886,19 +20936,21 @@ $as_echo X"$mf" |
       continue
     fi
     # Extract the definition of DEPDIR, am__include, and am__quote
-    # from the Makefile without running 'make'.
+    # from the Makefile without running `make'.
     DEPDIR=`sed -n 's/^DEPDIR = //p' < "$mf"`
     test -z "$DEPDIR" && continue
     am__include=`sed -n 's/^am__include = //p' < "$mf"`
     test -z "am__include" && continue
     am__quote=`sed -n 's/^am__quote = //p' < "$mf"`
+    # When using ansi2knr, U may be empty or an underscore; expand it
+    U=`sed -n 's/^U = //p' < "$mf"`
     # Find all dependency output files, they are included files with
     # $(DEPDIR) in their names.  We invoke sed twice because it is the
     # simplest approach to changing $(DEPDIR) to its actual value in the
     # expansion.
     for file in `sed -n "
       s/^$am__include $am__quote\(.*(DEPDIR).*\)$am__quote"'$/\1/p' <"$mf" | \
-	 sed -e 's/\$(DEPDIR)/'"$DEPDIR"'/g'`; do
+	 sed -e 's/\$(DEPDIR)/'"$DEPDIR"'/g' -e 's/\$U/'"$U"'/g'`; do
       # Make sure the directory exists.
       test -f "$dirpart/$file" && continue
       fdir=`$as_dirname -- "$file" ||
@@ -20952,8 +21004,8 @@ $as_echo X"$file" |
 # NOTE: Changes made to this file will be lost: look at ltmain.sh.
 #
 #   Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2003, 2004, 2005,
-#                 2006, 2007, 2008, 2009, 2010 Free Software Foundation,
-#                 Inc.
+#                 2006, 2007, 2008, 2009, 2010, 2011 Free Software
+#                 Foundation, Inc.
 #   Written by Gordon Matzigkeit, 1996
 #
 #   This file is part of GNU Libtool.
@@ -21006,6 +21058,9 @@ SHELL=$lt_SHELL
 
 # An echo program that protects backslashes.
 ECHO=$lt_ECHO
+
+# The PATH separator for the build system.
+PATH_SEPARATOR=$lt_PATH_SEPARATOR
 
 # The host system.
 host_alias=$host_alias
@@ -21307,10 +21362,6 @@ no_undefined_flag=$lt_no_undefined_flag
 # Flag to hardcode \$libdir into a binary during linking.
 # This must work even if \$libdir does not exist
 hardcode_libdir_flag_spec=$lt_hardcode_libdir_flag_spec
-
-# If ld is used when linking, flag to hardcode \$libdir into a binary
-# during linking.  This must work even if \$libdir does not exist.
-hardcode_libdir_flag_spec_ld=$lt_hardcode_libdir_flag_spec_ld
 
 # Whether we need a single "-rpath" flag with a separated argument.
 hardcode_libdir_separator=$lt_hardcode_libdir_separator

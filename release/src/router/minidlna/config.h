@@ -9,25 +9,26 @@
 #define OS_VERSION		"Linux/2.6.22.19"
 #define OS_URL			"http://www.asus.com/"
 
+#define HAVE_AVUTIL_H
+#define HAVE_AVCODEC_H
+#define HAVE_AVFORMAT_H
+
 #define HAVE_CLOCK_GETTIME 1
 #define HAVE_CLOCK_GETTIME_SYSCALL 1
-#define HAVE_GETIFADDRS 1
 #define HAVE_INOTIFY 1
-#define HAVE_LIBAVCODEC_AVCODEC_H 1
-#define HAVE_LIBAVFORMAT_AVFORMAT_H 1
-#define HAVE_LIBAVUTIL_AVUTIL_H 1
 #define HAVE_LINUX_SENDFILE_API 1
-#define HAVE_SENDFILE 1
 #define HAVE_SQLITE3_MALLOC 1
 #define HAVE_SQLITE3_PREPARE_V2 1
-#define HAVE_SYS_INOTIFY_H 1
-#define SCANDIR_CONST 1
 
 /* full path of the file database */
 #define DEFAULT_DB_PATH		"/tmp/minidlna"
 
 /* full path of the log directory */
 #define DEFAULT_LOG_PATH	"/tmp/minidlna"
+
+/* Comment the following line to use home made daemonize() func instead
+ * of BSD daemon() */
+#define USE_DAEMON
 
 /* Enable if the system inotify.h exists.  Otherwise our own inotify.h will be used. */
 #ifdef LINUX26

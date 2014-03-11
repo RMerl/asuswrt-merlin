@@ -59,7 +59,7 @@ function gen_port_option(){
 	free_options(document.form.diskmon_usbport);
 
 	for(var i = 0; i < foreign_disk_interface_names().length; ++i){
-		if(foreign_disk_interface_names()[i] == diskmon_usbport)
+		if(foreign_disk_interface_names()[i].charAt(0) == diskmon_usbport)
 			Beselected = 1;
 		else
 			Beselected = 0;
@@ -79,7 +79,7 @@ function gen_part_option(){
 	free_options(document.form.diskmon_part);
 
 	for(var i = 0; i < foreign_disk_interface_names().length; ++i)
-		if(foreign_disk_interface_names()[i] == disk_port){
+		if(foreign_disk_interface_names()[i].charAt(0) == disk_port){
 			disk_num = i;
 			break;
 		}

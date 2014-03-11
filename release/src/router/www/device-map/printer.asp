@@ -13,30 +13,22 @@
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/state.js"></script>
 <script>
-var printer_manufacturer_array = parent.printer_manufacturers();
-var printer_model_array = parent.printer_models(); 
-var printer_pool_array = parent.printer_pool();
-var printer_serialn_array = parent.printer_serialn();
-var printer_order = parent.get_clicked_device_order();
 
 function initial(){
-	if(printer_model_array.length > 0 ) {
-		showtext($("printerModel"), printer_manufacturer_array[printer_order]+" "+printer_model_array[printer_order]);
-		
-		if(printer_pool_array[printer_order] != ""){
-		if(printer_serialn_array()[printer_order] == "<% nvram_get("u2ec_serial"); %>")
-			showtext($("printerStatus"), '<#CTL_Enabled#>');
-			$("printer_button").style.display = "";
-			$("button_descrition").style.display = "";
-		}
-		else{
-			showtext($("printerStatus"), '<#CTL_Disabled#>');
-			$("printer_button").style.display = "none";
-			$("button_descrition").style.display = "none";
-		}
+	showtext($("printerModel"), parent.usbPorts[parent.currentUsbPort].deviceName);
+	
+	if(parent.usbPorts[parent.currentUsbPort].deviceName != ""
+			&& parent.usbPorts[parent.currentUsbPort].serialNum == "<% nvram_get("u2ec_serial"); %>")
+	{
+		showtext($("printerStatus"), '<#CTL_Enabled#>');
+		$("printer_button").style.display = "";
+		$("button_descrition").style.display = "";
 	}
-	else
-		showtext($("printerStatus"), '<% translate_x("System_Internet_Details_Item5_desc2"); %>');
+	else{
+		showtext($("printerStatus"), '<#CTL_Disabled#>');
+		$("printer_button").style.display = "none";
+		$("button_descrition").style.display = "none";
+	}
 
 	if('<% nvram_get("mfp_ip_monopoly"); %>' != "" && '<% nvram_get("mfp_ip_monopoly"); %>' != parent.login_ip_str()){
 		$("monoBtn").style.display = "none";

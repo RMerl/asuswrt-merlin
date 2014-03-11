@@ -24,7 +24,7 @@ Revision History:
 //
 // This field is updated by SVN
 //
-static const char s_FileVer[] = "$Id: ufsdvfs.c 217607 2013-11-27 12:41:47Z shura $";
+static const char s_FileVer[] = "$Id: ufsdvfs.c 219253 2013-12-17 12:34:23Z Mikhail.Belyshov $";
 
 //
 // Tune ufsdvfs.c
@@ -42,7 +42,7 @@ static const char s_FileVer[] = "$Id: ufsdvfs.c 217607 2013-11-27 12:41:47Z shur
 //#define UFSD_EMULATE_SMALL_READDIR_BUFFER 10
 
 #ifndef UFSD_SMART_DIRTY_SEC
-  #define UFSD_SMART_DIRTY_SEC  5
+  #define UFSD_SMART_DIRTY_SEC  1
 #endif
 
 #include <linux/version.h>
@@ -171,7 +171,7 @@ static const char s_FileVer[] = "$Id: ufsdvfs.c 217607 2013-11-27 12:41:47Z shur
 //
 #define Dbg  UFSD_LEVEL_VFS
 
-#define UFSD_PACKAGE_STAMP " " "lke_8.9.0_r217892_b13"
+#define UFSD_PACKAGE_STAMP " " "lke_8.9.0_r219253_b22"
 
 //
 // Used to trace driver version
@@ -203,9 +203,9 @@ static const char s_DriverVer[] = PACKAGE_VERSION
   ", bdi"
 #endif
 #ifdef UFSD_USE_FLUSH_THREAD
-  ", sd2"
+  ", sd2(" __stringify(UFSD_SMART_DIRTY_SEC) ")"
 #else
-  ", sd"
+  ", sd(" __stringify(UFSD_SMART_DIRTY_SEC) ")"
 #endif
 #ifdef WRITE_FLUSH_FUA
   ", fua"
@@ -419,6 +419,7 @@ typedef struct unode {
 // Stored in super_block.s_fs_info
 //
 typedef struct usuper {
+    struct super_block* sb;
     UINT64            MaxBlock;
     UINT64            Eod;          // End of directory
     UFSD_VOLUME*      Ufsd;
@@ -767,8 +768,12 @@ static inline void inc_nlink(struct inode* i){ i->i_nlink++; }
 //
 #if defined HAVE_DECL_WRITEBACK_INODES_SB_IF_IDLE_V1 && HAVE_DECL_WRITEBACK_INODES_SB_IF_IDLE_V1
   #define Writeback_inodes_sb_if_idle(s) writeback_inodes_sb_if_idle( (s) )
+  #define Writeback_inodes_sb(s) writeback_inodes_sb( (s) )
 #elif defined HAVE_DECL_WRITEBACK_INODES_SB_IF_IDLE_V2 && HAVE_DECL_WRITEBACK_INODES_SB_IF_IDLE_V2
   #define Writeback_inodes_sb_if_idle(s) writeback_inodes_sb_if_idle( (s), WB_REASON_FREE_MORE_MEM )
+  #define Writeback_inodes_sb(s) writeback_inodes_sb( (s), WB_REASON_FREE_MORE_MEM )
+#else
+  #define Writeback_inodes_sb(s)
 #endif
 
 
@@ -2224,6 +2229,8 @@ DoDelayedTasks(
   if ( 0 != VFlush || ( sbi->options.sync && UFSDAPI_IsVolumeDirty( sbi->Ufsd ) ) ){
     UFSDAPI_VolumeFlush( sbi->Ufsd, 2 == VFlush );
     atomic_set( &sbi->VFlush, 0 );
+    Writeback_inodes_sb( sbi->sb );
+    sync_blockdev( sb_dev( sbi->sb ) );
   }
 
   //
@@ -5640,6 +5647,11 @@ ufsd_file_extend(
   spin_unlock( &u->block_lock );
 
   if ( 0 != blocks && iblock + blocks >= ((new_size + (1u<<blkbits) - 1) >> blkbits) ) {
+    if ( !append ) {
+      i_size_write( i, new_size );
+      TIMESPEC_SECONDS( &i->i_mtime ) = TIMESPEC_SECONDS( &i->i_ctime ) = get_seconds();
+      mark_inode_dirty( i );
+    } 		
     DebugTrace(0, Dbg, ("preallocated in cache: [%"PSCT"x, %"PSCT"x) => %"PSCT"x\n", u->Vbn, u->Vbn + u->Len, u->Lbn));
     return 0;
   }
@@ -10356,6 +10368,8 @@ ufsd_sync_volume(
     UFSDAPI_VolumeFlush( sbi->Ufsd, wait );
     UnlockUfsd( sbi );
 
+    Writeback_inodes_sb( sb );
+
   } else {
 
     //
@@ -10387,7 +10401,11 @@ AddTimer(
     IN usuper* sbi
     )
 {
+#if UFSD_SMART_DIRTY_SEC
   mod_timer( &sbi->FlushTimer, HZ + sbi->LastDirty + msecs_to_jiffies( UFSD_SMART_DIRTY_SEC * 1000 ) );
+#else
+  mod_timer( &sbi->FlushTimer, HZ + sbi->LastDirty + msecs_to_jiffies( 500 ) );
+#endif
 }
 
 
@@ -10407,7 +10425,11 @@ flush_timer_fn(
     // Do not wake up flush thread
   } else {
     long dj = jiffies - sbi->LastDirty;
-    if ( dj <= 0 || jiffies_to_msecs( dj ) < UFSD_SMART_DIRTY_SEC * 1000 ) {
+    if ( dj <= 0
+#if UFSD_SMART_DIRTY_SEC
+      || jiffies_to_msecs( dj ) < UFSD_SMART_DIRTY_SEC * 1000
+#endif
+       ) {
       // Do not wake up flush thread
       // Sleep for another period
       AddTimer( sbi );
@@ -10473,7 +10495,11 @@ ufsd_flush_thread(
 
       DebugTrace(+1, Dbg, ("flush_thread: %p (%s)\n", sb, UFSD_BdGetName(sb)));
 
-      if ( dj <= 0 || (dt = jiffies_to_msecs( dj )) < UFSD_SMART_DIRTY_SEC * 1000 ) {
+      if ( dj <= 0
+#if UFSD_SMART_DIRTY_SEC
+        || (dt = jiffies_to_msecs( dj )) < UFSD_SMART_DIRTY_SEC * 1000
+#endif
+         ) {
         TRACE_ONLY( hint = "skip"; )
         AddTimer( sbi );
       } else {
@@ -10485,6 +10511,8 @@ ufsd_flush_thread(
         if ( !TryLockUfsd( sbi ) ){
           UFSDAPI_VolumeFlush( sbi->Ufsd, 1 );
           UnlockUfsd( sbi );
+          Writeback_inodes_sb( sb );
+          sync_blockdev( sb_dev(sb) );
           TRACE_ONLY( hint = "flushed"; )
         } else {
           //
@@ -10556,7 +10584,11 @@ ufsd_write_super(
   TRACE_ONLY( dt = 0; )
   DebugTrace(+1, Dbg, ("write_super: %p (%s)\n", sb, UFSD_BdGetName(sb)));
 
-  if ( dj <= 0 || (dt = jiffies_to_msecs( dj )) < UFSD_SMART_DIRTY_SEC * 1000 ) {
+  if ( dj <= 0
+#if UFSD_SMART_DIRTY_SEC
+    || (dt = jiffies_to_msecs( dj )) < UFSD_SMART_DIRTY_SEC * 1000
+#endif
+     ) {
     TRACE_ONLY( hint = "skip"; )
   } else {
     // Clear 's_dirt' to avoid next calls
@@ -10569,6 +10601,9 @@ ufsd_write_super(
       UFSDAPI_VolumeFlush( sbi->Ufsd, 0 );
       UnlockUfsd( sbi );
       TRACE_ONLY( hint = "flushed"; )
+
+      Writeback_inodes_sb( sb );
+      sync_blockdev( sb_dev(sb) );
 
     } else {
 
@@ -12032,6 +12067,7 @@ ufsd_read_super(
     return -ENOMEM;
 
   memset( sbi, 0, sizeof(usuper) );
+  sbi->sb = sb;
   Mutex_init( &sbi->ApiMutex );
   spin_lock_init( &sbi->ddt_lock );
   Mutex_init( &sbi->NoCaseMutex );

@@ -380,7 +380,8 @@ function submitForm(){
 	if(timezones[systime.getTimezoneOffset()] != undefined 
 			&& timezones[systime.getTimezoneOffset()] != "" 
 			&& document.form.time_zone.value != timezones[systime.getTimezoneOffset()]
-			&& parent.isFirst)
+			&& parent.isFirst
+			&& !parent.swisscom_support)
 	{
 				document.form.time_zone.disabled = false;
 				document.form.time_zone.value = timezones[systime.getTimezoneOffset()];

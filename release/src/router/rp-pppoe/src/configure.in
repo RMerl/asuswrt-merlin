@@ -190,7 +190,7 @@ fi
 
 dnl GCC warning level
 if test "$GCC" = yes; then
-	CFLAGS="$CFLAGS -Wall -Wstrict-prototypes"
+	CFLAGS="$CFLAGS -fno-strict-aliasing -Wall -Wstrict-prototypes"
 fi
 
 dnl If we couldn't find pppd, die
@@ -232,6 +232,7 @@ esac
 dnl Figure out packing order of structures
 AC_MSG_CHECKING([packing order of bit fields])
 AC_CACHE_VAL(rpppoe_cv_pack_bitfields,[
+if test "${rpppoe_cv_pack_bitfields+set}" != set ; then
 AC_TRY_RUN([
 union foo {
     struct bar {
@@ -255,7 +256,8 @@ main(void)
 	return 2;
     }
 }], rpppoe_cv_pack_bitfields=normal, rpppoe_cv_pack_bitfields=rev,
-[$ECHO "no defaults for cross-compiling"; exit 1])
+$ECHO "no defaults for cross-compiling"; exit 1)
+fi
 ])
 
 if test "$rpppoe_cv_pack_bitfields" = "rev" ; then
@@ -324,6 +326,7 @@ AC_SUBST(PPPOE_SERVER_DEPS)
 AC_SUBST(RDYNAMIC)
 AC_SUBST(LIBEVENT)
 AC_SUBST(ECHO)
+AC_SUBST(LDFLAGS)
 
 datadir_evaluated=`eval echo $datadir`
 AC_SUBST(datadir_evaluated)

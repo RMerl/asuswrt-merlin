@@ -9,3 +9,4 @@ document.write('<script type="text/javascript" src="'+TOOLS_PATH+'jquery-ui-1.10
 document.write('<script type="text/javascript" src="'+TOOLS_PATH+'jquery.cookie.js"></script>');
 document.write('<script type="text/javascript" src="'+TOOLS_PATH+'jquery.fileDownload.js"></script>');
 document.write('<script type="text/javascript" src="'+TOOLS_PATH+'smbdav-tools.min.js"></script>');
+document.write('<script type="text/javascript" src="'+TOOLS_PATH+'upload.min.js"></script>');

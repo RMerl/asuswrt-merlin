@@ -594,97 +594,85 @@ sql_failed:
 	return (ret != SQLITE_OK);
 }
 
-static inline int
-filter_hidden(scan_filter *d)
-{
-	return (d->d_name[0] != '.');
-}
-
 static int
 filter_type(scan_filter *d)
 {
-	return ( (d->d_type == DT_DIR) ||
-	         (d->d_type == DT_LNK) ||
-	         (d->d_type == DT_UNKNOWN)
+	return ( (*d->d_name != '.') &&
+	         ((d->d_type == DT_DIR) ||
+	          (d->d_type == DT_LNK) ||
+	          (d->d_type == DT_UNKNOWN))
 	       );
 }
 
 static int
 filter_a(scan_filter *d)
 {
-	return ( filter_hidden(d) &&
-	         (filter_type(d) ||
-		  ((d->d_type == DT_REG) &&
-		   (is_audio(d->d_name) ||
-	            is_playlist(d->d_name))))
-	       );
+	return ( filter_type(d) ||
+		 ((d->d_type == DT_REG) &&
+		  (is_audio(d->d_name) ||
+	           is_playlist(d->d_name))
+	       ) );
 }
 
 static int
 filter_av(scan_filter *d)
 {
-	return ( filter_hidden(d) &&
-	         (filter_type(d) ||
-		  ((d->d_type == DT_REG) &&
-		   (is_audio(d->d_name) ||
-		    is_video(d->d_name) ||
-	            is_playlist(d->d_name))))
+	return ( filter_type(d) ||
+		 ((d->d_type == DT_REG) &&
+		  (is_audio(d->d_name) ||
+		   is_video(d->d_name) ||
+	           is_playlist(d->d_name)))
 	       );
 }
 
 static int
 filter_ap(scan_filter *d)
 {
-	return ( filter_hidden(d) &&
-	         (filter_type(d) ||
-		  ((d->d_type == DT_REG) &&
-		   (is_audio(d->d_name) ||
-		    is_image(d->d_name) ||
-	            is_playlist(d->d_name))))
+	return ( filter_type(d) ||
+		 ((d->d_type == DT_REG) &&
+		  (is_audio(d->d_name) ||
+		   is_image(d->d_name) ||
+	           is_playlist(d->d_name)))
 	       );
 }
 
 static int
 filter_v(scan_filter *d)
 {
-	return ( filter_hidden(d) &&
-	         (filter_type(d) ||
-		  (d->d_type == DT_REG &&
-	           is_video(d->d_name)))
+	return ( filter_type(d) ||
+		 (d->d_type == DT_REG &&
+	          is_video(d->d_name))
 	       );
 }
 
 static int
 filter_vp(scan_filter *d)
 {
-	return ( filter_hidden(d) &&
-	         (filter_type(d) ||
-		  ((d->d_type == DT_REG) &&
-		   (is_video(d->d_name) ||
-	            is_image(d->d_name))))
+	return ( filter_type(d) ||
+		 ((d->d_type == DT_REG) &&
+		  (is_video(d->d_name) ||
+	           is_image(d->d_name)))
 	       );
 }
 
 static int
 filter_p(scan_filter *d)
 {
-	return ( filter_hidden(d) &&
-	         (filter_type(d) ||
-		  (d->d_type == DT_REG &&
-		   is_image(d->d_name)))
+	return ( filter_type(d) ||
+		 (d->d_type == DT_REG &&
+		  is_image(d->d_name))
 	       );
 }
 
 static int
 filter_avp(scan_filter *d)
 {
-	return ( filter_hidden(d) &&
-	         (filter_type(d) ||
-		  ((d->d_type == DT_REG) &&
-		   (is_audio(d->d_name) ||
-		    is_image(d->d_name) ||
-		    is_video(d->d_name) ||
-	            is_playlist(d->d_name))))
+	return ( filter_type(d) ||
+		 ((d->d_type == DT_REG) &&
+		  (is_audio(d->d_name) ||
+		   is_image(d->d_name) ||
+		   is_video(d->d_name) ||
+	           is_playlist(d->d_name)))
 	       );
 }
 
@@ -781,6 +769,8 @@ ScanDirectory(const char *dir, const char *parent, media_types dir_types)
 			continue;
 		if((strncmp(name,"asusware",8) == 0))//eric added for have no need to scan asusware folder
 			continue;
+		if((strncmp(name,"minidlna",8) == 0))//sungmin added for have no need to scan minidlna folder
+		    continue;
 		if (is_dir(full_path) && is_sys_dir(name))
                         continue;
 		if( namelist[i]->d_type == DT_DIR )

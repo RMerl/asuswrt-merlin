@@ -1,4 +1,13 @@
 include ../common.mak
+include $(SRCBASE)/.config
+
+ifneq ($(findstring DSL,$(BUILD_NAME)),)
+MODEL = $(subst -,_,$(BUILD_NAME))
+else
+MODEL = $(subst -,,$(BUILD_NAME))
+endif
+
+export CFLAGS += -D$(MODEL)
 
 ifeq ($(RTCONFIG_BCMARM),y)
 	pkg_type=arm
@@ -83,6 +92,7 @@ ifeq ($(RTCONFIG_RALINK_RT3883),y)
 	cp -rf wlan/RT3092_PCIe_LNA_2T2R_ALC_V1_2.bin $(INSTALLDIR)/rom/wlan/
 	cp -rf wlan/RT3662_AP_2T2R_V0_0.bin $(INSTALLDIR)/rom/wlan/
 endif
+
 
 ifeq ($(RTCONFIG_BCMARM),y)
 	mkdir -p $(INSTALLDIR)/rom/dlna

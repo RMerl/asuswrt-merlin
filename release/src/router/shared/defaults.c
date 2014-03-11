@@ -354,9 +354,6 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl0_itxbf", "0" },
 #endif
 #endif
-#ifndef RTCONFIG_RALINK
-	{ "debug_wl", "0" },
-#endif
 
 #if defined (RTCONFIG_WIRELESSREPEATER) || defined (RTCONFIG_PROXYSTA)
 	{ "wlc_list",			""	},
@@ -425,7 +422,9 @@ struct nvram_tuple router_defaults[] = {
 #ifdef RTCONFIG_BCMWL6
 	{ "wl_wmf_ucigmp_query", "0", 0 },	/* Disable Converting IGMP Query to ucast (default) */
 	{ "wl_wmf_mdata_sendup", "0", 0 },	/* Disable Sending Multicast Data to host  (default) */
+#ifdef RTCONFIG_BCMARM
 	{ "wl_wmf_ucast_upnp", "0", 0 },	/* Disable Converting upnp to ucast (default) */
+#endif
 	{ "wl_wmf_igmpq_filter", "0", 0 },	/* Disable igmp query filter */
 #endif
 #endif
@@ -457,7 +456,9 @@ struct nvram_tuple router_defaults[] = {
 
 #ifdef RTCONFIG_BCMWL6
 	{ "acs_ifnames", "", 0 },
-
+#ifdef RTAC68U
+	{ "acs_dfs", "0", 0},			/* disable DFS channels for acsd by default */
+#endif
 	{ "wl_wet_tunnel", "0", 0  },		/* Disable wet tunnel */
 
 	{ "dpsta_ifnames", "", 0  },
@@ -555,6 +556,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "lan_dnsenable_x", "0"},
 	{ "lan_dns1_x", ""},					/* x.x.x.x x.x.x.x ... */
 	{ "lan_dns2_x", ""},
+	{ "lan_dns_fwd_local", "0"},		/* Forward queries for local domain to upstream DNS server */
 	{ "lan_port", "80"},
 	{ "jumbo_frame_enable", "0"},
 
@@ -915,10 +917,6 @@ struct nvram_tuple router_defaults[] = {
 	{"MULTIFILTER_MAC", "" },
 	{"MULTIFILTER_DEVICENAME", "" },
 	{"MULTIFILTER_MACFILTER_DAYTIME", "" },
-	{"MULTIFILTER_LANTOWAN_ENABLE", "" },
-	{"MULTIFILTER_LANTOWAN_DESC", "" },
-	{"MULTIFILTER_LANTOWAN_PORT", "" },
-	{"MULTIFILTER_LANTOWAN_PROTO", "" },
 	{"MULTIFILTER_URL_ENABLE", "" },
 	{"MULTIFILTER_URL", "" },
 #endif	/* RTCONFIG_PARENTALCTRL */
@@ -927,6 +925,14 @@ struct nvram_tuple router_defaults[] = {
 	{ "yadns_mode", "1"},		/* 0: Undefended, 1: Safe, 2: Family */
 	{ "yadns_rulelist", ""},	/* List client modes <devname>hh:ww:aa:dd:dd:rr>mode... */
 #endif  /* RTCONFIG_YANDEXDNS */
+#ifdef RTCONFIG_DNSFILTER
+	{ "dnsfilter_enable_x", "0"},
+	{ "dnsfilter_mode", "0"},	/* Default to no global filtering (only per client rules) */
+	{ "dnsfilter_rulelist", ""},	/* List client modes <devname>hh:ww:aa:dd:dd:rr>mode... */
+	{ "dnsfilter_custom1", "8.8.8.8"},	/* User-defined DNS filter 1 */
+	{ "dnsfilter_custom2", "8.8.8.8"},     /* User-defined DNS filter 2 */
+	{ "dnsfilter_custom3", "8.8.8.8"},     /* User-defined DNS filter 3 */
+#endif
 	{ "fw_enable_x", "1" },
 	{ "fw_dos_x", "0" },
 	{ "fw_log_x", "none" },
@@ -937,6 +943,9 @@ struct nvram_tuple router_defaults[] = {
 	{ "fw_pt_h323", "1" },
 	{ "fw_pt_sip", "1" },
 	{ "fw_pt_pppoerelay", "0"},
+#ifdef RTCONFIG_BCMARM
+	{ "fw_pt_stun", "1"},
+#endif
 	{ "misc_http_x", "0" },
 	{ "misc_httpport_x", "8080" },
 #ifdef RTCONFIG_HTTPS
@@ -1032,18 +1041,18 @@ struct nvram_tuple router_defaults[] = {
 	{ "script_usbumount", ""},
 
 	{ "smbd_enable", "1"},
-	{ "smbd_autoshare", "1"},
+//	{ "smbd_autoshare", "1"},
 	{ "smbd_cpage", ""},
 	{ "smbd_cset", "utf8"},
 	{ "smbd_custom", ""},
 	{ "smbd_master", "0"},
-	{ "smbd_passwd", ""},
-	{ "smbd_shares", "share</mnt<Default Share<1<0>root$</Hidden Root<0<1"},
+//	{ "smbd_passwd", ""},
+//	{ "smbd_shares", "share</mnt<Default Share<1<0>root$</Hidden Root<0<1"},
 	{ "smbd_user", "nas"},
-	{ "smbd_wgroup", "WORKGROUP"},
+//	{ "smbd_wgroup", "WORKGROUP"},
 	{ "smbd_wins", "0"},
+	{ "smbd_wanac", "0"},
 	{ "smbd_simpler_naming", "0"},
-	{ "smbd_bind_wan", "0"},
 
 #ifdef RTCONFIG_NFS
 	{ "nfsd_enable", "0"},
@@ -1058,7 +1067,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "console_loglevel", "5"},	/* <  KERN_INFO */
 
 #if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2)
-	{ "jffs2_on", "0" },
+	{ "jffs2_on", "1" },
 	{ "jffs2_exec", "" },
 	{ "jffs2_format", "0" },
 #endif
@@ -1072,7 +1081,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "acc_num", "1"},
 	{ "acc_list", "admin>admin"},
 	{ "st_samba_mode", "1"},
-	{ "st_ftp_mode", "1"},
+	{ "st_ftp_mode", "2"},
 	{ "enable_ftp", "0"},
 	{ "enable_samba", "1"},
 	{ "st_max_user", "5"},
@@ -1642,6 +1651,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "ipv6_fw_enable",	"1"		},	// Default FORWARD table to DROP packets
 	{ "ipv6_fw_rulelist",	""		},	// IPv6 allowed forward rules
 	{ "ipv6_ra_conf",	"noneset"	},	// address configuration from WAN router advertisement
+	{ "ipv6_dhcp6s_enable",	"1"		},	// DHCP6 Server for LAN
 
 	{ "web_redirect", 	"1"		},	// Only NOLINK is redirected in default, it is overwrited in init_nvram
 	{ "disiosdet",		"1"		},
@@ -1676,7 +1686,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "Ate_continue_fail",		"3"},
 	{ "dev_fail_reboot",		"3"},
 	// Wireless parameters
-#if RTCONFIG_TIMEMACHINE
+#ifdef RTCONFIG_TIMEMACHINE
 	{"timemachine_enable", 		"0"},
 	{"tm_device_name", 		""},
 	{"tm_vol_size", 		"0"},
@@ -2125,7 +2135,9 @@ struct nvram_tuple router_defaults_override_type1[] = {
 #ifdef __CONFIG_EMF__
 	{ "emf_enable", "1", 0 },		/* Enable EMF by default */
 	{ "wl_wmf_ucigmp_query", "1", 0 },	/* Enable Converting IGMP Query to ucast */
+#ifdef RTCONFIG_BCMARM
 	{ "wl_wmf_ucast_upnp", "1", 0 },	/* Enable upnp to ucast conversion */
+#endif
 	{ "wl_wmf_igmpq_filter", "1", 0 },	/* Enable igmp query filter */
 #endif
 	{ "wl_acs_fcs_mode", "1", 0 },		/* Enable acsd fcs mode */

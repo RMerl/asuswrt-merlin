@@ -65,6 +65,9 @@ int btn_swmode_sw_router = 0xff;
 int btn_swmode_sw_repeater = 0xff;
 int btn_swmode_sw_ap = 0xff;
 #endif
+#ifdef RTCONFIG_QTN
+int reset_qtn_gpio = 0xff;
+#endif
 
 int init_gpio(void)
 {
@@ -85,6 +88,9 @@ int init_gpio(void)
 #endif  /* LAN4WAN_LED */
 #ifdef RTCONFIG_LED_ALL
 		, "led_all_gpio"
+#endif
+#ifdef RTCONFIG_QTN
+		, "reset_qtn_gpio"
 #endif
 			   };
 	int use_gpio, gpio_pin;
@@ -213,6 +219,9 @@ void get_gpio_values_once(void)
 #endif
 #ifdef RTCONFIG_LED_BTN
 	btn_led_gpio = nvram_get_int("btn_led_gpio");
+#endif
+#ifdef RTCONFIG_QTN
+	reset_qtn_gpio = nvram_get_int("reset_qtn_gpio");
 #endif
 }
 
@@ -358,7 +367,9 @@ int led_control(int which, int mode)
 				use_gpio = led_5g_gpio;
                         } else {
                                 use_gpio = led_5g_gpio;
-                        }
+			}
+			if(nvram_match("5g_fail", "1"))
+				return -1;
 			break;
 #ifdef RTCONFIG_LAN4WAN_LED
 		case LED_LAN1:
@@ -409,6 +420,11 @@ int led_control(int which, int mode)
                 case LED_TURBO:
                         use_gpio = led_turbo_gpio;
                         break;
+#ifdef RTCONFIG_QTN
+                case BTN_QTN_RESET:
+                        use_gpio = reset_qtn_gpio;
+                        break;
+#endif
 		default:
 			use_gpio = 0xff;
 			break;

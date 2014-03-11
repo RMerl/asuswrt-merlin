@@ -37,13 +37,10 @@ if('<% nvram_get("wl_unit"); %>' == '1')
 		country = '<% nvram_get("wl1_country_code"); %>';
 else		
 		country = '<% nvram_get("wl0_country_code"); %>';
-
-var model_name = '<% nvram_get("productid"); %>';
-var ac_model = model_name.indexOf('AC') > 0 ? true : false; 		
 		
 function initial(){
 	show_menu();
-	if(ac_model){
+	if(band5g_11ac_support){
 		regen_5G_mode(document.form.wl_nmode_x,'<% nvram_get("wl_unit"); %>')		
 	}
 	
@@ -101,6 +98,12 @@ function initial(){
 	if(!band5g_support)	
 		$("wl_unit_field").style.display = "none";
 
+		
+	if(based_modelid == "RT-AC68U"){
+		if('<% nvram_get("wl_unit"); %>' == '1' && country == "EU")
+			$('dfs_checkbox').style.display = "";
+	}	
+
 	if(sw_mode == 2 || sw_mode == 4)
 		document.form.wl_subunit.value = ('<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>') ? 1 : -1;
 				
@@ -140,7 +143,7 @@ function genBWTable(_unit){
 			bws = [0, 1, 2];
 			bwsDesc = ["20/40 MHz", "20 MHz", "40 MHz"];
 		}
-		else if (!ac_model){	//for RT-N66U SDK 6.x
+		else if (!band5g_11ac_support){	//for RT-N66U SDK 6.x
 			bws = [0, 1, 2];
 			bwsDesc = ["20/40 MHz", "20 MHz", "40 MHz"];		
 		}
@@ -203,11 +206,15 @@ function applyRule(){
 		if(sw_mode == 2 || sw_mode == 4)
 			document.form.action_wait.value = "5";
 
-		if(document.form.wl_bw.value == 1)
+		if(document.form.wl_bw.value == 1)		// 5GHz
 			document.form.wl_chanspec.value = document.form.wl_channel.value;
-		else
-			document.form.wl_chanspec.value = document.form.wl_channel.value + document.form.wl_nctrlsb.value;
-			
+		else{
+			if(document.form.wl_channel.value == 0)			// 2.4GHz, Auto case
+				document.form.wl_chanspec.value = document.form.wl_channel.value;
+			else	
+				document.form.wl_chanspec.value = document.form.wl_channel.value + document.form.wl_nctrlsb.value;
+		}	
+
 		document.form.submit();
 	}
 } 
@@ -277,13 +284,13 @@ function checkBW(){
 		else if('<% nvram_get("wl_unit"); %>' == 0 || document.form.preferred_lang.value == "UK")	//2.4GHz or UK for 40MHz
 			document.form.wl_bw.selectedIndex = 2;
 		else{	//5GHz else for 80MHz
-			if(ac_model)
+			if(band5g_11ac_support)
 				document.form.wl_bw.selectedIndex = 3;
 			else
 				document.form.wl_bw.selectedIndex = 2;
 				
 			if (wl_channel_list_5g.getIndexByValue("165") >= 0 ) // rm option 165 if not Auto
-						document.form.wl_channel.remove(wl_channel_list_5g.getIndexByValue("165"));			
+				document.form.wl_channel.remove(wl_channel_list_5g.getIndexByValue("165"));			
 		}
 	}
 }
@@ -301,7 +308,7 @@ function check_NOnly_to_GN(){
 					if(document.form.wl_nmode_x.value == "0")
 						$('wl_NOnly_note').innerHTML = '<br>* <#WLANConfig11n_Auto_note#>';
 					else{
-						if(ac_model)
+						if(band5g_11ac_support)
 							$('wl_NOnly_note').innerHTML = '<br>* <#WLANConfig11n_NAC_note#>';
 						else
 							$('wl_NOnly_note').innerHTML = '<br>* <#WLANConfig11n_NOnly_note#>';
@@ -503,10 +510,10 @@ function regen_5G_mode(obj,flag){
 					<th><a id="wl_channel_select" class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 3);"><#WLANConfig11b_Channel_itemname#></a></th>
 					<td>
 				 		<select name="wl_channel" class="input_option" onChange="change_channel(this);"></select>
+						<span id="dfs_checkbox" style="display:none"><input type="checkbox" name="acs_dfs" onClick="document.form.acs_dfs.value=(this.checked==true)?1:0;"  value="<% nvram_get("acs_dfs"); %>" <% nvram_match("acs_dfs", "1", "checked"); %>>DFS Support</input></span>
 					</td>
-			  </tr>
+			  </tr> 
 		  	<!-- end -->
-
 				<tr id="wl_nctrlsb_field">
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 15);"><#WLANConfig11b_EChannel_itemname#></a></th>
 					<td>
@@ -602,6 +609,17 @@ function regen_5G_mode(obj,flag){
 					</td>
 			  	</tr>
 			  
+				<tr>
+					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 9);">Protected Management Frames</a></th>
+					<td>
+				  		<select name="wl_mfp" class="input_option" >
+								<option value="0" <% nvram_match("wl_mfp", "0", "selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+								<option value="1" <% nvram_match("wl_mfp", "1", "selected"); %>>Capable</option>
+								<option value="2" <% nvram_match("wl_mfp", "2", "selected"); %>>Required</option>
+				  		</select>
+					</td>
+			  	</tr>
+			  
 			  	<tr>
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 11);"><#WLANConfig11b_x_Rekey_itemname#></a></th>
 					<td><input type="text" maxlength="7" name="wl_wpa_gtk_rekey" class="input_6_table"  value="<% nvram_get("wl_wpa_gtk_rekey"); %>" onKeyPress="return is_number(this,event);"></td>
@@ -624,7 +642,6 @@ function regen_5G_mode(obj,flag){
 <!--===================================Ending of Main Content===========================================-->
 
 	</td>
-	
 	<td width="10" align="center" valign="top"></td>
   </tr>
 </table>

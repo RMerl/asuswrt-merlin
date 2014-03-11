@@ -25,7 +25,6 @@
 
 #define MAX2(X,Y) ( (( X ) >=  ( Y )) ? ( X ) : ( Y ))
 
-
 /* Router Configuration Variables: */
 
 /* For each multicast interface: */
@@ -51,9 +50,9 @@
 
 /* Each prefix has an associated: */
 
-#define DFLT_AdvValidLifetime		86400 /* seconds */
+#define DFLT_AdvValidLifetime		86400	/* seconds */
 #define DFLT_AdvOnLinkFlag		1
-#define DFLT_AdvPreferredLifetime	14400 /* seconds */
+#define DFLT_AdvPreferredLifetime	14400	/* seconds */
 #define DFLT_AdvAutonomousFlag		1
 #define DFLT_DeprecatePrefixFlag	0
 #define DFLT_DecrementLifetimesFlag	0
@@ -61,7 +60,7 @@
 /* Each route has an associated: */
 #define DFLT_AdvRouteLifetime(iface)	(3 * (iface)->MaxRtrAdvInterval)
 
-#define DFLT_AdvRoutePreference		0 /* medium*/
+#define DFLT_AdvRoutePreference		0	/* medium */
 #define DFLT_RemoveRouteFlag		1
 
 /* RDNSS */
@@ -81,7 +80,7 @@
 #define MAX_FINAL_RTR_ADVERTISEMENTS	3
 #define MIN_DELAY_BETWEEN_RAS		3.0
 #define MIN_DELAY_BETWEEN_RAS_MIPv6     (30.0/1000.0)
-#define MAX_RA_DELAY_TIME		(1000.0/2.0) /* milliseconds */
+#define MAX_RA_DELAY_TIME		(1000.0/2.0)	/* milliseconds */
 
 /* Host constants: */
 
@@ -95,8 +94,8 @@
 #define MAX_UNICAST_SOLICIT		3
 #define MAX_ANYCAST_DELAY_TIME		1
 #define MAX_NEIGHBOR_ADVERTISEMENT	3
-#define REACHABLE_TIME			30000 /* milliseconds */
-#define RETRANS_TIMER			1000 /* milliseconds */
+#define REACHABLE_TIME			30000	/* milliseconds */
+#define RETRANS_TIMER			1000	/* milliseconds */
 #define DELAY_FIRST_PROBE_TIME		5
 #define MIN_RANDOM_FACTOR		(1.0/2.0)
 #define MAX_RANDOM_FACTOR		(3.0/2.0)
@@ -116,7 +115,7 @@
 #define	MAX_AdvLinkMTU			131072
 
 #define MIN_AdvReachableTime		100
-#define MAX_AdvReachableTime		3600000 /* 1 hour in milliseconds */
+#define MAX_AdvReachableTime		3600000	/* 1 hour in milliseconds */
 
 #define MIN_AdvRetransTimer		10
 #define MAX_AdvRetransTimer		3600000
@@ -153,33 +152,31 @@
 #define  ND_OPT_ROUTE_INFORMATION	24
 
 /* XXX: some libc's like KAME already had nd_opt_route_info! */
-struct nd_opt_route_info_local     /* route information */
-  {
-    uint8_t   nd_opt_ri_type;
-    uint8_t   nd_opt_ri_len;
-    uint8_t   nd_opt_ri_prefix_len;
-    uint8_t   nd_opt_ri_flags_reserved;
-    uint32_t  nd_opt_ri_lifetime;
-    struct in6_addr  nd_opt_ri_prefix;
-  };
+struct nd_opt_route_info_local {	/* route information */
+	uint8_t nd_opt_ri_type;
+	uint8_t nd_opt_ri_len;
+	uint8_t nd_opt_ri_prefix_len;
+	uint8_t nd_opt_ri_flags_reserved;
+	uint32_t nd_opt_ri_lifetime;
+	struct in6_addr nd_opt_ri_prefix;
+};
 
 /* the reserved field is 8 bits and we're interested of the middle two: 000xx000 */
 #define ND_OPT_RI_PRF_SHIFT	3
-#define ND_OPT_RI_PRF_MASK	(3 << ND_OPT_RI_PRF_SHIFT) /* 00011000 = 0x18 */
+#define ND_OPT_RI_PRF_MASK	(3 << ND_OPT_RI_PRF_SHIFT)	/* 00011000 = 0x18 */
 
 #undef ND_OPT_RDNSS_INFORMATION
 #define  ND_OPT_RDNSS_INFORMATION	25
 
 /* */
-struct nd_opt_rdnss_info_local
-{
-	uint8_t   			nd_opt_rdnssi_type;
-	uint8_t   			nd_opt_rdnssi_len;
-	uint16_t   			nd_opt_rdnssi_pref_flag_reserved;
-	uint32_t			nd_opt_rdnssi_lifetime;
-	struct in6_addr		nd_opt_rdnssi_addr1;
-	struct in6_addr		nd_opt_rdnssi_addr2;
-	struct in6_addr		nd_opt_rdnssi_addr3;
+struct nd_opt_rdnss_info_local {
+	uint8_t nd_opt_rdnssi_type;
+	uint8_t nd_opt_rdnssi_len;
+	uint16_t nd_opt_rdnssi_pref_flag_reserved;
+	uint32_t nd_opt_rdnssi_lifetime;
+	struct in6_addr nd_opt_rdnssi_addr1;
+	struct in6_addr nd_opt_rdnssi_addr2;
+	struct in6_addr nd_opt_rdnssi_addr3;
 };
 /* pref/flag/reserved field : yyyyx00000000000 (big endian) - 00000000yyyyx000 (little indian); where yyyy = pref, x = flag */
 #if BYTE_ORDER == BIG_ENDIAN
@@ -193,13 +190,12 @@ struct nd_opt_rdnss_info_local
 #define  ND_OPT_DNSSL_INFORMATION	31
 
 /* */
-struct nd_opt_dnssl_info_local
-{
-	uint8_t   			nd_opt_dnssli_type;
-	uint8_t   			nd_opt_dnssli_len;
-	uint16_t   			nd_opt_dnssli_reserved;
-	uint32_t			nd_opt_dnssli_lifetime;
-	unsigned char			nd_opt_dnssli_suffixes[];
+struct nd_opt_dnssl_info_local {
+	uint8_t nd_opt_dnssli_type;
+	uint8_t nd_opt_dnssli_len;
+	uint16_t nd_opt_dnssli_reserved;
+	uint32_t nd_opt_dnssli_lifetime;
+	unsigned char nd_opt_dnssli_suffixes[];
 };
 
 /* Flags */
@@ -227,13 +223,13 @@ struct nd_opt_dnssl_info_local
 
 #define MIN_MinRtrAdvInterval_MIPv6	(3.0/100.0)
 #define MIN_MaxRtrAdvInterval_MIPv6	(7.0/100.0)
-#define RTR_SOLICITATION_INTERVAL_MIPv6	1 /* Recommended value by MIPv6 */
+#define RTR_SOLICITATION_INTERVAL_MIPv6	1	/* Recommended value by MIPv6 */
 
 #define Cautious_MaxRtrAdvInterval      (2.0/10.0)
 #define Cautious_MaxRtrAdvInterval_Leeway      (2.0/100.0)
 
-#define MIN_HomeAgentLifetime		1 /* 0 must NOT be used */
-#define MAX_HomeAgentLifetime		65520 /* 18.2 hours in secs */
+#define MIN_HomeAgentLifetime		1	/* 0 must NOT be used */
+#define MAX_HomeAgentLifetime		65520	/* 18.2 hours in secs */
 
 /* #define MAX_RTR_SOLICITATIONS This MAY be ignored by MIPv6 */
 
@@ -245,7 +241,7 @@ struct nd_opt_dnssl_info_local
 #ifndef ND_OPT_HAI_FLAG_SUPPORT_MR
 #if BYTE_ORDER == BIG_ENDIAN
 #define ND_OPT_HAI_FLAG_SUPPORT_MR	0x8000
-#else /* BYTE_ORDER == LITTLE_ENDIAN */
+#else				/* BYTE_ORDER == LITTLE_ENDIAN */
 #define ND_OPT_HAI_FLAG_SUPPORT_MR	0x0080
 #endif
 #endif

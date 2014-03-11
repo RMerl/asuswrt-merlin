@@ -58,12 +58,18 @@ dropbear_rsa_key * gen_rsa_priv_key(unsigned int size) {
 		exit(1);
 	}
 
-	getrsaprime(key->p, &pminus, key->e, size/16);
-	getrsaprime(key->q, &qminus, key->e, size/16);
+	while (1) {
+		getrsaprime(key->p, &pminus, key->e, size/16);
+		getrsaprime(key->q, &qminus, key->e, size/16);
 
-	if (mp_mul(key->p, key->q, key->n) != MP_OKAY) {
-		fprintf(stderr, "RSA generation failed\n");
-		exit(1);
+		if (mp_mul(key->p, key->q, key->n) != MP_OKAY) {
+			fprintf(stderr, "RSA generation failed\n");
+			exit(1);
+		}
+
+		if ((unsigned int)mp_count_bits(key->n) == size) {
+			break;
+		}
 	}
 
 	/* lcm(p-1, q-1) */
@@ -91,16 +97,16 @@ static void getrsaprime(mp_int* prime, mp_int *primeminus,
 	unsigned char *buf;
 	DEF_MP_INT(temp_gcd);
 
-	buf = (unsigned char*)m_malloc(size_bytes+1);
+	buf = (unsigned char*)m_malloc(size_bytes);
 
 	m_mp_init(&temp_gcd);
 	do {
 		/* generate a random odd number with MSB set, then find the
 		   the next prime above it */
-		genrandom(buf, size_bytes+1);
-		buf[0] |= 0x80; /* MSB set */
+		genrandom(buf, size_bytes);
+		buf[0] |= 0x80;
 
-		bytes_to_mp(prime, buf, size_bytes+1);
+		bytes_to_mp(prime, buf, size_bytes);
 
 		/* find the next integer which is prime, 8 round of miller-rabin */
 		if (mp_prime_next_prime(prime, 8, 0) != MP_OKAY) {
@@ -122,7 +128,7 @@ static void getrsaprime(mp_int* prime, mp_int *primeminus,
 
 	/* now we have a good value for result */
 	mp_clear(&temp_gcd);
-	m_burn(buf, size_bytes+1);
+	m_burn(buf, size_bytes);
 	m_free(buf);
 }
 

@@ -11,5 +11,5 @@ chmod -R 777 $APPS_INSTALL_PATH/lib
 #ln -sf $APPS_INSTALL_PATH/etc/www/cloudui $APPS_INSTALL_PATH/etc/downloadmaster/cloudui
 
 chmod -R 777 $APPS_INSTALL_PATH
-chmod 777 $APPS_INSTALL_PATH/etc/init.d/S50webdavclient
+#chmod 777 $APPS_INSTALL_PATH/etc/init.d/S50webdavclient
 #chmod 777 $APPS_INSTALL_PATH/etc/init.d/asuswebstorage_base_link.sh

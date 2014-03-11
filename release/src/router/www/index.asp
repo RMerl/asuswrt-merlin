@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <html xmlns:v>
 <head>
-<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7"/>
+<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE9"/>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
@@ -23,62 +23,33 @@
 <script type="text/javascript" src="/detect.js"></script>
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <script>
+var $j = jQuery.noConflict();	
+
 if(location.pathname == "/"){
 	if('<% nvram_get("x_Setting"); %>' == '0')
 		location.href = '/QIS_wizard.htm?flag=welcome';
 	else if('<% nvram_get("w_Setting"); %>' == '0' && sw_mode != 2)
 		location.href = '/QIS_wizard.htm?flag=wireless';
 }
-// for client_function.js
 <% login_state_hook(); %>
 
+
+// Live Update
+var webs_state_update= '<% nvram_get("webs_state_update"); %>';
+var webs_state_error= '<% nvram_get("webs_state_error"); %>';
+var webs_state_info= '<% nvram_get("webs_state_info"); %>';
+
+
+// WAN
+<% wanlink(); %>
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
-
 var wanstate = -1;
 var wansbstate = -1;
 var wanauxstate = -1;
 var Dev3G = '<% nvram_get("d3g"); %>';
 var flag = '<% get_parameter("flag"); %>';
-
-var webs_state_update= '<% nvram_get("webs_state_update"); %>';
-var webs_state_error= '<% nvram_get("webs_state_error"); %>';
-var webs_state_info= '<% nvram_get("webs_state_info"); %>';
-var usb_path1_index = '<% nvram_get("usb_path1"); %>';
-var usb_path2_index = '<% nvram_get("usb_path2"); %>';
-
-<% wanlink(); %>
-<% get_printer_info(); %>
-
-var all_disks = "";
-var all_disk_interface;
-if(usb_support){
-	all_disks = foreign_disks().concat(blank_disks());
-	all_disk_interface = foreign_disk_interface_names().concat(blank_disk_interface_names());
-}
-
-var leases = [<% dhcp_leases(); %>];	// [[hostname, MAC, ip, lefttime], ...]
-var arps = [<% get_arp_table(); %>];		// [[ip, x, x, MAC, x, type], ...]
-var arls = [<% get_arl_table(); %>];		// [[MAC, port, x, x], ...]
-var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
-var ipmonitor = [<% get_static_client(); %>];	// [[IP, MAC, DeviceName, Type, http, printer, iTune], ...]
-var networkmap_fullscan = '<% nvram_match("networkmap_fullscan", "0", "done"); %>'; //2008.07.24 Add.  1 stands for complete, 0 stands for scanning.;
-var client_list_array = '<% get_client_detail_info(); %>';
-var $j = jQuery.noConflict();	
-
-var _apps_pool_error = '<% apps_fsck_ret(); %>';
-if(_apps_pool_error != '')
-	var apps_pool_error = eval(_apps_pool_error);
-else
-	var apps_pool_error = [[""]];
-
-var usb_path1_pool_error = '<% nvram_get("usb_path1_pool_error"); %>';
-var usb_path2_pool_error = '<% nvram_get("usb_path2_pool_error"); %>';
-
-if(all_disks != "")
-        var pool_name = pool_devices();
-
 var wan0_primary = '<% nvram_get("wan0_primary"); %>';
 var wan1_primary = '<% nvram_get("wan1_primary"); %>';
 var wans_dualwan_orig = '<% nvram_get("wans_dualwan"); %>';
@@ -88,8 +59,24 @@ if(wans_dualwan_orig.search(" ") == -1)
 else
 	var wans_flag = (wans_dualwan_orig.search("none") == -1) ? 1:0;
 
-var wlc_band = '<% nvram_get("wlc_band"); %>';
-	
+
+// Client list
+var leases = [<% dhcp_leases(); %>];	// [[hostname, MAC, ip, lefttime], ...]
+var arps = [<% get_arp_table(); %>];		// [[ip, x, x, MAC, x, type], ...]
+var arls = [<% get_arl_table(); %>];		// [[MAC, port, x, x], ...]
+var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
+var ipmonitor = [<% get_static_client(); %>];	// [[IP, MAC, DeviceName, Type, http, printer, iTune], ...]
+var networkmap_fullscan = '<% nvram_match("networkmap_fullscan", "0", "done"); %>'; //2008.07.24 Add.  1 stands for complete, 0 stands for scanning.;
+var client_list_array = '<% get_client_detail_info(); %>';
+
+
+// USB function
+var currentUsbPort = new Number();
+var usbPorts = new Array();
+
+// Wireless
+var wlc_band = '<% nvram_get("wlc_band"); %>';	
+
 function initial(){   
 	show_menu();
 	var isIE6 = navigator.userAgent.search("MSIE 6") > -1;
@@ -108,24 +95,34 @@ function initial(){
 	set_default_choice();
 	show_client_status();		
 
-	if(!parent.usb_support){
-		$("line3_td").height = '21px';
-		$("line3_img").src = '/images/New_ui/networkmap/line_one.png';
+	if(!parent.usb_support || usbPortMax == 0){
+		$("line3_td").height = '40px';
+		$("line3_img").src = '/images/New_ui/networkmap/line_dualwan.png';
 		$("clients_tr").colSpan = "3";
 		$("clients_tr").className = 'NM_radius';
 		$("clients_tr").width = '350';
 		$("clientspace_td").style.display = "none";
-		$("usb1_tr").style.display = "none";
-		$("usb2_tr").style.display = "none";
+		$("usb1_html").style.display = "none";
+		$("usb2_html").style.display = "none";
 		$("bottomspace_tr").style.display = "";
 	}
 
-	if(rc_support.search("usbX") == -1 || rc_support.search("usbX1") > -1){
-		$("deviceIcon_1").style.display = "none";
-		$("deviceDec_1").style.display = "none";
+	for(var i=0; i<usbPortMax; i++){
+		var tmpDisk = new newDisk();
+		tmpDisk.usbPath = i+1;
+		show_USBDevice(tmpDisk);
+
+		$("usbPathContianer_"+parseInt(i+1)).style.display = "";
+	}
+	for(var i=0; i<usbDevices.length; i++){
+	  var new_option = new Option(usbDevices[i].deviceName, usbDevices[i].deviceIndex);
+		document.getElementById('deviceOption_'+usbDevices[i].usbPath).options.add(new_option);
+		document.getElementById('deviceOption_'+usbDevices[i].usbPath).style.display = "";
+
+		if(typeof usbPorts[usbDevices[i].usbPath-1].deviceType == "undefined" || usbPorts[usbDevices[i].usbPath-1].deviceType == "")
+			show_USBDevice(usbDevices[i]);
 	}
 
-	show_device();
 	showMapWANStatus(sw_mode);
 
 	if(sw_mode != "1"){
@@ -195,23 +192,6 @@ function show_ddns_status(){
 var isMD5DDNSName = function(){
 	var macAddr = '<% nvram_get("et0macaddr"); %>'.toUpperCase().replace(/:/g, "");
 	return "A"+hexMD5(macAddr).toUpperCase()+".asuscomm.com";
-}
-
-function detectUSBStatusIndex(){
-	$j.ajax({
-    	url: '/update_diskinfo.asp',
-    	dataType: 'script',
-    	error: function(xhr){
-    		detectUSBStatusIndex();
-    	},
-    	success: function(){
-    		if((tmp_mount_0 == 0 && tmp_mount_0 != foreign_disk_total_mounted_number()[0]) 
-						|| (tmp_mount_1 == 0 && tmp_mount_1 != foreign_disk_total_mounted_number()[1])){
-						location.href = "/index.asp";
-				return 0;
-				}		
-  		}
-	});
 }
 
 function customize_NM_table(img){
@@ -333,165 +313,92 @@ function show_client_status(){
 	$("clientNumber").innerHTML = client_str;
 }
 
-function show_device(){
-	if(!usb_support){
-		usb_path1_index = "";
-		usb_path2_index = "";
-		return true;
-	}
-	else
-		all_disks = foreign_disks().concat(blank_disks());
 
-	switch(usb_path1_index){
+function show_USBDevice(device){
+	if(!usb_support || typeof device != "object")
+		return false;
+
+	switch(device.deviceType){
 		case "storage":
-			for(var i = 0; i < all_disks.length; ++i){
-				if(foreign_disk_interface_names()[i] == "1"){
-					disk_html(0, i);
-					check_status(apps_pool_error, i);
-					check_status2(usb_path1_pool_error, i);
-					break;
-				}
-			}
-			if(all_disk_interface.getIndexByValue("1") == -1)
-				no_device_html(0);
+			disk_html(device);
 			break;
+
 		case "printer":
-			printer_html(0, 0);
+			printer_html(device);
 			break;
+
 		case "audio":
+
 		case "webcam":
+
 		case "modem":
-			modem_html(0, 0);
+			modem_html(device);
 			break;
+
 		default:
-			no_device_html(0);
+			no_device_html(device.usbPath);
 	}
-	
-	// show the upper usb device
-	switch(usb_path2_index){
-		case "storage":
-			for(var i = 0; i < all_disks.length; ++i){
-				if(foreign_disk_interface_names()[i] == "2"){
-					disk_html(1, i);
-					check_status(apps_pool_error, i);
-					check_status2(usb_path2_pool_error, i);
-					break;
-				}
-			}
-			if(all_disk_interface.getIndexByValue("2") == -1)
-				no_device_html(1);
-			break;
-		case "printer":
-			printer_html(1, 1);
-			break;
-		case "audio":
-		case "webcam":
-		case "modem":
-			modem_html(1, 1);
-			break;
-		default:
-			no_device_html(1);
-	}
+
+	currentUsbPort = device.usbPath-1;
+	usbPorts[currentUsbPort] = device;
 }
 
-function disk_html(device_order, all_disk_order){
-	var device_icon = $("deviceIcon_"+device_order);
-	var device_dec = $("deviceDec_"+device_order);
+function disk_html(device){
 	var icon_html_code = '';
+
+	icon_html_code += '<a target="statusframe">\n';
+	icon_html_code += '<div id="iconUSBdisk_'+device.usbPath+'" class="iconUSBdisk" onclick="setSelectedDiskOrder(this.id);clickEvent(this);"></div>\n';
+	icon_html_code += '<div id="ring_USBdisk_'+device.usbPath+'" class="iconUSBdisk" style="display:none;z-index:1;"></div>\n';
+	icon_html_code += '</a>\n';
+	$("deviceIcon_" + device.usbPath).innerHTML = icon_html_code;
+
+	showDiskInfo(device);
+
+	// show ring
+	check_status(device);
+	// check_status2(usb_path1_pool_error, device.usbPath);
+}
+
+function showDiskInfo(device){
 	var dec_html_code = '';
-	
-	var disk_model_name = "";
-	var TotalSize;
-	var mount_num = getDiskMountedNum(all_disk_order);
-	var all_accessable_size;
 	var percentbar = 0;
 
-	if(all_disk_order < foreign_disks().length)
-		disk_model_name = decodeURIComponent(foreign_disk_model_info()[all_disk_order]);
-	else
-		disk_model_name = blank_disks()[all_disk_order-foreign_disks().length];
-	
-	icon_html_code += '<a target="statusframe">\n';
+	if(device.mountNumber > 0){
+		percentbar = simpleNum2((device.totalSize - device.totalUsed)/device.totalSize*100);
+		percentbar = Math.round(100 - percentbar);		
 
-	if(device_order == 0){
-		icon_html_code += '<div id="iconUSBdisk_'+all_disk_order+'" style="margin-top:20px;" class="iconUSBdisk" onclick="setSelectedDiskOrder(this.id);clickEvent(this);"></div>\n';
-		icon_html_code += '<div id="ring_USBdisk_'+all_disk_order+'" class="iconUSBdisk" style="display:none;z-index:1;"></div>\n';
-	}
-	else{
-		icon_html_code += '<div id="iconUSBdisk_'+all_disk_order+'" class="iconUSBdisk" onclick="setSelectedDiskOrder(this.id);clickEvent(this);"></div>\n';
-		icon_html_code += '<div id="ring_USBdisk_'+all_disk_order+'" class="iconUSBdisk" style="display:none;z-index:1;"></div>\n';
-	}
-	
-	icon_html_code += '</a>\n';
-	
-	dec_html_code += '<div class="formfonttitle_nwm" style="text-shadow: 1px 1px 0px black;text-align:center;margin-top:10px;">'+disk_model_name+'</div>\n';
-
-	if(mount_num > 0){
-		if(all_disk_order < foreign_disks().length)
-			TotalSize = simpleNum(foreign_disk_total_size()[all_disk_order]);
-		else
-			TotalSize = simpleNum(blank_disk_total_size()[all_disk_order-foreign_disks().length]);
-		
-		all_accessable_size = simpleNum2(computeallpools(all_disk_order, "size")-computeallpools(all_disk_order, "size_in_use"));
-		percentbar = simpleNum2((all_accessable_size)/TotalSize*100);
-		percentbar = Math.round(100-percentbar);		
-		dec_html_code += '<p id="diskDesc'+ foreign_disk_interface_names()[all_disk_order] +'" style="margin-top:5px;"><#Availablespace#>:</p><div id="diskquota" align="left" style="margin-top:5px;margin-bottom:10px;">\n';
-		dec_html_code += '<img src="images/quotabar.gif" width="'+percentbar+'" height="13">';
+		dec_html_code += '<p id="diskDesc'+ device.usbPath +'" style="margin-top:5px;"><#Availablespace#>:</p><div id="diskquota" align="left" style="margin-top:5px;margin-bottom:10px;">\n';
+		dec_html_code += '<img src="images/quotabar.gif" width="' + percentbar + '" height="13">';
 		dec_html_code += '</div>\n';
 	}
 	else{
-		all_disk_order++;
-		dec_html_code += '<span class="style1"><strong id="diskUnmount'+ all_disk_order +'"><#DISK_UNMOUNTED#></strong></span>\n';
+		dec_html_code += '<div class="style1"><strong id="diskUnmount'+ device.usbPath +'"><#DISK_UNMOUNTED#></strong></div>\n';
 	}
 
-	device_icon.innerHTML = icon_html_code;
-	device_dec.innerHTML = dec_html_code;
+	$("deviceDec_"+device.usbPath).innerHTML = dec_html_code;
 }
 
-function printer_html(device_seat, printer_order){
-	var printer_name = printer_manufacturers()[printer_order]+" "+printer_models()[printer_order];
-	var printer_status = "";
-	var device_icon = $("deviceIcon_"+device_seat);
-	var device_dec = $("deviceDec_"+device_seat);
+function printer_html(device){
 	var icon_html_code = '';
-	var dec_html_code = '';
-	
-	if(printer_serialn()[printer_order] == "<% nvram_get("u2ec_serial"); %>")
-		printer_status = '<#CTL_Enabled#>';
-	else
-		printer_status = '<#CTL_Disabled#>';
-	
 	icon_html_code += '<a href="device-map/printer.asp" target="statusframe">\n';
-	icon_html_code += '<div id="iconPrinter'+printer_order+'" class="iconPrinter" onclick="clickEvent(this);"></div>\n';
+	icon_html_code += '<div id="iconPrinter_' + device.usbPath + '" class="iconPrinter" onclick="clickEvent(this);"></div>\n';
 	icon_html_code += '</a>\n';
-	
-	dec_html_code += '<div class="formfonttitle_nwm" style="text-shadow: 1px 1px 0px black;text-align:center;margin-top:10px;"><span id="printerName'+device_seat+'">'+ printer_name +'</span></div>\n';
-	//dec_html_code += '<span class="style5">'+printer_status+'</span>\n';
-	
-	device_icon.innerHTML = icon_html_code;
-	device_dec.innerHTML = dec_html_code;
+	$("deviceIcon_" + device.usbPath).innerHTML = icon_html_code;
+
+	if(device.serialNum == '<% nvram_get("u2ec_serial"); %>')
+		$("deviceDec_" + device.usbPath).innerHTML = '<div style="margin:10px;"><#CTL_Enabled#></div>';
+	else
+		$("deviceDec_" + device.usbPath).innerHTML = '<div style="margin:10px;"><#CTL_Disabled#></div>';
 }
 
-function modem_html(device_seat, modem_order){
-	var modem_name = Dev3G;
-	var modem_status = "Connected";
-	var device_icon = $("deviceIcon_"+device_seat);
-	var device_dec = $("deviceDec_"+device_seat);
-	var icon_html_code = '';
-	var dec_html_code = '';
-	
+function modem_html(device){
+	var icon_html_code = '';	
 	icon_html_code += '<a href="device-map/modem.asp" target="statusframe">\n';
-	icon_html_code += '    <div id="iconModem'+modem_order+'" class="iconmodem" onclick="clickEvent(this);"></div>\n';
+	icon_html_code += '<div id="iconModem_' + device.usbPath + '" class="iconmodem" onclick="clickEvent(this);"></div>\n';
 	icon_html_code += '</a>\n';
-	
-	dec_html_code += modem_name+'<br>\n';
-	//dec_html_code += '<span class="style1"><strong>'+modem_status+'</strong></span>\n';
-	//dec_html_code += '<br>\n';
-	//dec_html_code += '<img src="images/signal_'+3+'.gif" align="middle">';
-	
-	device_dec.className = "clients";
-	device_icon.innerHTML = icon_html_code;
-	device_dec.innerHTML = dec_html_code;
+	$("deviceIcon_" + device.usbPath).innerHTML = icon_html_code;
+
+	$("deviceDec_" + device.usbPath).innerHTML = '<div style="margin:10px;">' + device.deviceName + '</div>';
 }
 
 function no_device_html(device_seat){
@@ -501,11 +408,14 @@ function no_device_html(device_seat){
 	var dec_html_code = '';
 	
 	icon_html_code += '<div class="iconNo"></div>';
-	dec_html_code += '<br/><span id="noUSB'+ device_seat +'">';
+	dec_html_code += '<div style="margin:20px" id="noUSB'+ device_seat +'">';
+
 	if(rc_support.search("usbX") > -1)
 		dec_html_code += '<#NoDevice#>';
-	else	dec_html_code += '<#CTL_nonsupported#>';
-	dec_html_code += '</span>\n';
+	else
+		dec_html_code += '<#CTL_nonsupported#>';
+
+	dec_html_code += '</div>\n';
 	device_icon.innerHTML = icon_html_code;
 	device_dec.innerHTML = dec_html_code;
 }
@@ -524,6 +434,7 @@ function clickEvent(obj){
 	var stitle;
 	var seat;
 	clicked_device_order = -1;
+
 	if(obj.id.indexOf("Internet") > 0){
 		if(!dualWAN_support){
 			check_wan_unit();
@@ -550,20 +461,24 @@ function clickEvent(obj){
 	}
 	else if(obj.id.indexOf("USBdisk") > 0){
 		icon = "iconUSBdisk";
-		stitle = "<#statusTitle_USB_Disk#>";		
+		stitle = "<#statusTitle_USB_Disk#>";
+		currentUsbPort = obj.id.slice(-1) - 1;
 	}
 	else if(obj.id.indexOf("Modem") > 0){
 		seat = obj.id.indexOf("Modem")+5;
-		clicked_device_order = parseInt(obj.id.substring(seat, seat+1));
+		clicked_device_order = obj.id.slice(-1);
+		currentUsbPort = obj.id.slice(-1) - 1;
 		icon = "iconmodem";
 		stitle = "<#menu5_4_4#>";
 		$("statusframe").src = "/device-map/modem.asp";
 	}
 	else if(obj.id.indexOf("Printer") > 0){
-		seat = obj.id.indexOf("Printer")+7;
+		seat = obj.id.indexOf("Printer") + 7;
 		clicked_device_order = parseInt(obj.id.substring(seat, seat+1));
+		currentUsbPort = obj.id.slice(-1) - 1;
 		icon = "iconPrinter";
 		stitle = "<#statusTitle_Printer#>";
+		$("statusframe").src = "/device-map/printer.asp";
 	}
 	else if(obj.id.indexOf("No") > 0){
 		icon = "iconNo";
@@ -580,17 +495,13 @@ function clickEvent(obj){
 
 	if(obj.id.indexOf("USBdisk") > 0){	// To control USB icon outter ring's color
 		if(diskUtility_support){
-			for(i=0;i < apps_pool_error.length ; i++){
-				if(pool_name[getSelectedDiskOrder()] == apps_pool_error[i][0]){
-					if(apps_pool_error[i][1] == 1){
-						$("statusframe").src = "/device-map/disk_utility.asp";
-						obj.style.backgroundPosition = '0% -202px';					
-					}	
-					else{
-						$("statusframe").src = "/device-map/disk.asp";	
-						obj.style.backgroundPosition = '0% -103px';
-					}	
-				}		
+			if(!usbPorts[obj.id.slice(-1)-1].hasErrPart){
+				$("statusframe").src = "/device-map/disk.asp";	
+				obj.style.backgroundPosition = '0% -103px';
+			}
+			else{
+				$("statusframe").src = "/device-map/disk_utility.asp";
+				obj.style.backgroundPosition = '0% -202px';
 			}
 		}
 		else{
@@ -600,8 +511,8 @@ function clickEvent(obj){
 	}
 	else{
 		obj.style.backgroundPosition = '0% 101%';
-			
 	}
+
 	$('helpname').innerHTML = stitle;	
 	avoidkey = icon;
 	lastClicked = obj;
@@ -641,9 +552,6 @@ function mouseEvent(obj, key){
 }//end of mouseEvent
 
 function MapUnderAPmode(){// if under AP mode, disable the Internet icon and show hint when mouseover.
-	
-		//showtext($("internetStatus"), "<#OP_AP_item#>");
-		
 		$("iconInternet").style.background = "url(/images/New_ui/networkmap/map-iconInternet-d.png) no-repeat";
 		$("iconInternet").style.cursor = "default";
 		
@@ -678,15 +586,17 @@ function showstausframe(page){
 	window.open("/device-map/"+page.toLowerCase()+".asp","statusframe");
 }
 
-function check_status(flag, diskOrder){
+function check_status(_device){
+	var diskOrder = _device.usbPath;
 	document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundImage = "url(/images/New_ui/networkmap/USB_2.png)";	
 	document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '0px -3px';
 	document.getElementById('iconUSBdisk_'+diskOrder).style.position = "absolute";
 	document.getElementById('iconUSBdisk_'+diskOrder).style.marginTop = "0px";
-	if(navigator.appName.indexOf("Microsoft") >= 0)
+
+	if(navigator.userAgent.indexOf("MSIE 8.0") >= 0)
 		document.getElementById('iconUSBdisk_'+diskOrder).style.marginLeft = "0px";
 	else
-		document.getElementById('iconUSBdisk_'+diskOrder).style.marginLeft = "33px";
+		document.getElementById('iconUSBdisk_'+diskOrder).style.marginLeft = "35px";
 
 	document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundImage = "url(/images/New_ui/networkmap/white_04.gif)";	
 	document.getElementById('ring_USBdisk_'+diskOrder).style.display = "";
@@ -696,57 +606,49 @@ function check_status(flag, diskOrder){
 
 	var i, j;
 	var got_code_0, got_code_1, got_code_2, got_code_3;
-
-	got_code_0 = got_code_1 = got_code_2 = got_code_3 = 0;
-
-	for(i = 0; i < pool_name.length; ++i){
-		for(j = 0; j < flag.length; ++j){
-			if(pool_name[i] == flag[j][0] && per_pane_pool_usage_kilobytes(i, diskOrder)[0] > 0){
-				if(flag[j][1] == ""){
-					got_code_3 = 1;
-					continue;
-				}
-
-				switch(parseInt(flag[j][1])){
-					case 3: // don't or can't support.
-						got_code_3 = 1;
-						break;
-					case 2: // proceeding...
-						got_code_2 = 1;
-						break;
-					case 1: // find errors.
-						got_code_1 = 1;
-						break;
-					default: // no error.
-						got_code_0 = 1;
-						break;
-				}
-			}
+	for(i = 0; i < _device.partition.length; ++i){
+		switch(_device.partition[i].fsck){
+			case 0: // no error.
+				got_code_0 = 1;
+				break;
+			case 1: // find errors.
+				got_code_1 = 1;
+				break;
+			case 2: // proceeding...
+				got_code_2 = 1;
+				break;
+			default: // don't or can't support.
+				got_code_3 = 1;
+				break;
 		}
 	}
 
 	if(got_code_1){
-		document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 101%';
+		// red
 		document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '0px -3px';
+		document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 101%';
 	}
 	else if(got_code_2 || got_code_3){
-		// do nothing.
+		// white
 	}
-	else{ // got_code_0
+	else{
+		// blue
 		document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '0px -3px';
 		document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 50%';
 	}
 }
 
+/*
 function check_status2(flag, diskOrder){
 	if(!diskUtility_support)
 		return true;
 
 	if(flag == 1){
-		document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 101%';
 		document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '0px -3px';		
+		document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 101%';
 	}
 }
+*/
 
 function check_wan_unit(){   //To check wan_unit, if USB Modem plug in change wan_unit to 1
 	if(wan0_primary == 1 && document.form.wan_unit.value == 1)
@@ -1076,18 +978,39 @@ function change_wan_state(primary_status, secondary_status){
 						</a>
 						<div class="clients" id="clientNumber" style="cursor:pointer;"></div>
 					</td>
+
 					<td width="36" rowspan="6" id="clientspace_td"></td>
-					<td id="usb1_tr" width="160" bgcolor="#444f53" align="center" valign="top" class="NM_radius_top">
-						<div style="margin-top:20px;" id="deviceIcon_0"></div><div id="deviceDec_0"></div>
+
+					<td id="usb1_html" width="160" bgcolor="#444f53" align="center" valign="top" class="NM_radius_top">
+						<div id="usbPathContianer_1" style="display:none">
+							<div style="margin-top:20px;margin-bottom:10px;" id="deviceIcon_1"></div>
+							<div>
+								<span id="deviceText_1"></span>
+								<select id="deviceOption_1" class="input_option" style="display:none;height:20px;width:130px;font-size:12px;"></select>	
+							</div>
+							<div id="deviceDec_1"></div>
+						</div>
 					</td>
+
 				</tr>				
-				<tr id="usb2_tr">
-					<td bgcolor="#444f53" align="center" valign="top" class="NM_radius_bottom"></td>
+
+				<tr id="usb2_html">
+					<td bgcolor="#444f53" align="center" valign="top" class="NM_radius_bottom">
+					</td>
+
 					<td height="150" bgcolor="#444f53" align="center" valign="top" class="NM_radius_bottom">
-						<div style="margin-top:10px;" id="deviceIcon_1"></div>
-						<div id="deviceDec_1"></div>
+						<div id="usbPathContianer_2" style="display:none">
+							<img style="margin-top:15px;width:150px;height:2px" src="/images/New_ui/networkmap/linetwo2.png">
+							<div style="margin-top:10px;margin-bottom:10px;" id="deviceIcon_2"></div>
+							<div>
+								<span id="deviceText_2"></span>
+								<select id="deviceOption_2" class="input_option" style="display:none;height:20px;width:130px;font-size:12px;"></select>	
+							</div>
+							<div id="deviceDec_2"></div>
+						</div>
 					</td>
 				</tr>
+
 				<tr id="bottomspace_tr" style="display:none">
 					<td colspan="3" height="200px"></td>
 				</tr>
@@ -1106,9 +1029,34 @@ function change_wan_state(primary_status, secondary_status){
 </select>		
 
 <script>
-if(flag == "Internet" || flag == "Client")
-	$("statusframe").src = "";
+	if(flag == "Internet" || flag == "Client")
+		$("statusframe").src = "";
+
 	initial();
+
+	document.getElementById('deviceOption_1').onchange = function(){
+		show_USBDevice(usbDevices[this.value]);
+		setSelectedDiskOrder('iconUSBdisk_1');
+
+		if(usbDevices[this.value].deviceType == "modem")
+			clickEvent(document.getElementById('iconModem_1'));
+		else if(usbDevices[this.value].deviceType == "printer")
+			clickEvent(document.getElementById('iconPrinter_1'));
+		else
+			clickEvent(document.getElementById('iconUSBdisk_1'));
+	}
+
+	document.getElementById('deviceOption_2').onchange = function(){
+		show_USBDevice(usbDevices[this.value]);
+		setSelectedDiskOrder('iconUSBdisk_2');
+
+		if(usbDevices[this.value].deviceType == "modem")
+			clickEvent(document.getElementById('iconModem_2'));
+		else if(usbDevices[this.value].deviceType == "printer")
+			clickEvent(document.getElementById('iconPrinter_2'));
+		else
+			clickEvent(document.getElementById('iconUSBdisk_2'));
+	}
 </script>
 </body>
 </html>

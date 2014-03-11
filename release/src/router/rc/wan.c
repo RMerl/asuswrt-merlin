@@ -55,6 +55,7 @@
 
 #include <linux/types.h>
 #include <linux/ethtool.h>
+#include <linux/if_vlan.h>
 
 #ifdef RTCONFIG_USB
 #include <disk_io_tools.h>
@@ -1101,9 +1102,10 @@ start_wan_if(int unit)
 	char nvram_name[32];
 	int i = 0;
 #ifdef RTCONFIG_USB_BECEEM
-	char uvid[8], upid[8];
+	unsigned int uvid, upid;
 #endif
 	int mtu;
+	struct vlan_ioctl_args ifv;
 
 	_dprintf("%s(%d)\n", __FUNCTION__, unit);
 	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
@@ -1189,11 +1191,9 @@ _dprintf("RNDIS/Beceem: start_wan_if.\n");
 
 					if(!strcmp(nvram_safe_get(nvram_name), "modem")){
 						snprintf(nvram_name, 32, "usb_path%s_vid", port_path);
-						memset(uvid, 0, 8);
-						strncpy(uvid, nvram_safe_get(nvram_name), 8);
+						uvid = strtoul(nvram_safe_get(nvram_name), NULL, 16);
 						snprintf(nvram_name, 32, "usb_path%s_pid", port_path);
-						memset(upid, 0, 8);
-						strncpy(upid, nvram_safe_get(nvram_name), 8);
+						upid = strtoul(nvram_safe_get(nvram_name), NULL, 16);
 
 						if(is_samsung_dongle(1, uvid, upid)){
 							modprobe("tun");
@@ -1492,6 +1492,39 @@ TRACE_PT("3g end.\n");
 
 			/* Bring up WAN interface */
 			ifconfig(wan_ifname, IFUP, ipaddr, netmask);
+
+			/* Increase WAN interface's MTU to allow pppoe MTU/MRU over 1492 (with 8 byte overhead) */
+			if (strcmp(wan_proto, "pppoe") == 0) {
+				/* Compute maximum required MTU by taking the maximum of the pppoe MRU and MTU values */
+				int mru = nvram_get_int(strcat_r(prefix, "pppoe_mru", tmp));
+				mtu = nvram_get_int(strcat_r(prefix, "pppoe_mtu", tmp));
+				if (mru > mtu)
+					mtu = mru;
+				if (mtu > 1492) {
+					if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) >= 0) {
+						/* First set parent device if vlan was configured */
+						strncpy(ifv.device1, wan_ifname, IFNAMSIZ);
+						ifv.cmd = GET_VLAN_REALDEV_NAME_CMD;
+						if (ioctl(s, SIOCGIFVLAN, &ifv) >= 0) {
+							strncpy(ifr.ifr_name, ifv.u.device2, IFNAMSIZ);
+							ifr.ifr_mtu = mtu + 8;
+							if (ioctl(s, SIOCSIFMTU, &ifr)) {
+								perror(wan_ifname);
+								logmessage("start_wan_if()", "Error setting MTU on %s to %d", ifv.u.device2, mtu);
+							}
+						}
+
+						/* Set WAN device */
+						strncpy(ifr.ifr_name, wan_ifname, IFNAMSIZ);
+						ifr.ifr_mtu = mtu + 8;
+						if (ioctl(s, SIOCSIFMTU, &ifr)) {
+							perror(wan_ifname);
+							logmessage("start_wan_if()", "Error setting MTU on %s to %d", wan_ifname, mtu);
+						}
+						close(s);
+					}
+				}
+			}
 
 			/* launch dhcp client and wait for lease forawhile */
 			if (dhcpenable) {
@@ -1893,7 +1926,7 @@ int update_resolvconf(void)
 			foreach(word, (*wan_dns ? wan_dns : wan_xdns), next)
 				fprintf(fp, "nameserver %s\n", word);
 		}
-#if RTCONFIG_OPENVPN
+#ifdef RTCONFIG_OPENVPN
 	}
 #endif
 	fclose(fp);
@@ -1929,9 +1962,11 @@ void wan6_up(const char *wan_ifname)
 	switch (service) {
 	case IPV6_NATIVE:
 	case IPV6_NATIVE_DHCP:
-	case IPV6_MANUAL:
 		if ((nvram_get_int("ipv6_accept_ra") & 1) != 0)
 			set_intf_ipv6_accept_ra(wan_ifname, 1);
+		break;
+	case IPV6_MANUAL:
+		set_intf_ipv6_accept_ra(wan_ifname, 0);
 		break;
 	case IPV6_6RD:
 		update_6rd_info();
@@ -2199,7 +2234,7 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 	}
 #endif
 
-#if defined(RTN65U) || defined(RTN56U) || defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U)
+#if defined(RTN65U) || defined(RTN56U) || defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)
 	reinit_hwnat(wan_unit);
 #endif
 
@@ -2800,10 +2835,7 @@ autodet_main(int argc, char *argv[])
 
 	i = 0;
 	while(i < mac_num && get_wan_state(unit) != WAN_STATE_CONNECTED){
-		if( !(nvram_match("wl_country_code", "SG") || //RT-N56U format
-		      nvram_match("regulation_domain", "SG") || //RT-N66U/AC66U format
-		      nvram_match("0:ccode", "SG")) //RT-AC56U/AC68U format 
-		) { // Singpore do not auto clone
+		if( !(nvram_match("wl0_country_code", "SG"))){ // Singpore do not auto clone
 			_dprintf("try clone %s\n", mac_clone[i]);
 			nvram_set(strcat_r(prefix, "hwaddr_x", tmp), mac_clone[i]);
 		}

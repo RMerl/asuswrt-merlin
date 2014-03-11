@@ -135,9 +135,9 @@ function applyRule(){
 
 		updateDateTime();
 
-		if(document.form.url_enable_x[0].checked == true && document.form.url_enable_x_orig.value != 1 ||
-				document.form.url_enable_x[1].checked == true && document.form.url_enable_x_orig.value != 0)
-			FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");	
+//		if(document.form.url_enable_x[0].checked == true && document.form.url_enable_x_orig.value != 1 ||
+//				document.form.url_enable_x[1].checked == true && document.form.url_enable_x_orig.value != 0)
+//			FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");	
 
 		showLoading();
 		document.form.submit();

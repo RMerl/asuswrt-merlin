@@ -1064,6 +1064,10 @@ function change_ddns_setting(v){
 				
 				showhide("wildcard_field",!disable_wild);
 		}
+		if(v == "WWW.NAMECHEAP.COM")
+			$("ddns_username_th").innerHTML = Untranslated.namecheap_username_title;
+		else
+			$("ddns_username_th").innerHTML = "<#LANHostConfig_x_DDNSUserName_itemname#>";
 }
 
 function change_common_radio(o, s, v, r){
@@ -2009,6 +2013,16 @@ function wl_auth_mode_change(isload){
 		}
 	}
 	
+	/*For Protected Management Frames, only enable for WPA2-Personal and WPA2-Enterprise, ARM platform,*/
+	if(wl_mfp_support && (document.form.wl_mfp != null) ){
+		if (mode == "psk2" || mode == "wpa2"){
+			inputCtrl(document.form.wl_mfp,  1);	
+		}
+		else{
+			inputCtrl(document.form.wl_mfp,  0);	
+		}
+	}
+		
 	change_wep_type(mode, isload);
 	
 	/* Save current network key index */

@@ -15,5 +15,5 @@ chmod -R 777 $APPS_INSTALL_PATH/lib
 chmod -R 777 $APPS_INSTALL_PATH
 chmod 777 $APPS_INSTALL_PATH/etc/init.d/S50aicloud
 
-cp -rf /opt/etc/asus_script/smartsync_remove /tmp
+cp -rf /opt/etc/apps_asus_script/smartsync_remove /tmp
 

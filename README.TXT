@@ -34,6 +34,9 @@ Set Up Environment (Tested in Fedora 8/9 and Ubuntu 10.04/12.04 LTS amd64)
 		libssl-dev
 		libxml2-dev
 		libelf1:i386
+		make
+		intltool
+		libglib2.0-dev
 
 	b. Fedora
 		sudo yum groupinstall "Development Tools"

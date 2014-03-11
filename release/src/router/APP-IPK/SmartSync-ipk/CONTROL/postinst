@@ -8,4 +8,4 @@ chmod -R 777 $APPS_INSTALL_PATH
 chmod 777 $APPS_INSTALL_PATH/etc/init.d/S50smartsync
 
 
-cp -rf /opt/etc/smartsync_script/smartsync_rm /tmp/
+cp -rf /opt/etc/apps_asus_script/smartsync_rm /tmp/

@@ -138,12 +138,6 @@
 /* Define to 1 if you have the `pam' library (-lpam). */
 #undef HAVE_LIBPAM
 
-/* Define to 1 if you have the `tomcrypt' library (-ltomcrypt). */
-#undef HAVE_LIBTOMCRYPT
-
-/* Define to 1 if you have the `tommath' library (-ltommath). */
-#undef HAVE_LIBTOMMATH
-
 /* Define to 1 if you have the <libutil.h> header file. */
 #undef HAVE_LIBUTIL_H
 

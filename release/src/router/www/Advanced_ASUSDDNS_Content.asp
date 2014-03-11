@@ -385,7 +385,7 @@ function cleandef(){
 				</td>
 			</tr>			
 			<tr>
-				<th><#LANHostConfig_x_DDNSUserName_itemname#></th>
+				<th id="ddns_username_th"><#LANHostConfig_x_DDNSUserName_itemname#></th>
 				<td><input type="text" maxlength="32" class="input_25_table" name="ddns_username_x" value="<% nvram_get("ddns_username_x"); %>" onKeyPress="return is_string(this, event)"></td>
 			</tr>
 			<tr>

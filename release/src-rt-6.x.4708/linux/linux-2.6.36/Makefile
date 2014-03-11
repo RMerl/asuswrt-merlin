@@ -572,6 +572,16 @@ else
 KBUILD_CFLAGS	+= -O2
 endif
 
+ifeq ($(CONFIG_LINUX_MTD),32)
+KBUILD_CFLAGS += -D"CONFIG_LINUX_MTD=32"
+endif
+ifeq ($(CONFIG_LINUX_MTD),64)
+KBUILD_CFLAGS += -D"CONFIG_LINUX_MTD=64"
+endif
+ifeq ($(CONFIG_LINUX_MTD),128)
+KBUILD_CFLAGS += -D"CONFIG_LINUX_MTD=128"
+endif
+
 include $(srctree)/arch/$(SRCARCH)/Makefile
 
 ifneq ($(CONFIG_FRAME_WARN),0)
@@ -604,6 +614,12 @@ endif
 
 ifdef CONFIG_FUNCTION_TRACER
 KBUILD_CFLAGS	+= -pg
+endif
+
+ifeq ($(CONFIG_ELF_CORE),y)
+KBUILD_CFLAGS	+= -DDEBUG
+KBUILD_CFLAGS	+= -g
+KBUILD_AFLAGS	+= -gdwarf-2
 endif
 
 # We trigger additional mismatches with less inlining

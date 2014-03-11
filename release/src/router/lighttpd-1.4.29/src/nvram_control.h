@@ -70,6 +70,21 @@ char* nvram_get_dms_enable();
 char* nvram_get_dms_dbcwd();
 char* nvram_get_dms_dir();
 char* nvram_get_ms_enable();
+int nvram_set_https_crt_save(const char* enable);
+int nvram_set_https_crt_cn(const char* cn);
+char* nvram_get_https_crt_cn();
+int nvram_setfile_https_crt_file(const char* file, int size);
+int nvram_getfile_https_crt_file(const char* file, int size);
+char* nvram_get_https_crt_file();
+char* nvram_get_odmpid();
+
+int nvram_set_value(const char* key, const char* value);
+char* nvram_get_value(const char* key);
+
+
+
+
+
 
 
 

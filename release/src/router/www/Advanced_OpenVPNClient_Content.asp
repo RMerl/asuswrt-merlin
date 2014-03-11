@@ -342,7 +342,7 @@ function applyRule(){
 	document.form.vpn_clientx_eas.value = tmp_value;
 
 	document.form.vpn_client_if.value = document.form.vpn_client_if_x.value;
-	
+
 	document.form.submit();
 
 }
@@ -399,6 +399,18 @@ function ovpnFileChecker(){
 			}
 	});
 }
+
+
+function update_local_ip(object){
+
+	if (object.name == "vpn_client_local_1")
+		document.form.vpn_client_local_2.value = object.value;
+	else if (object.name == "vpn_client_local_2")
+		document.form.vpn_client_local_1.value = object.value;
+
+	document.form.vpn_client_local.value = object.value;
+}
+
 
 </script>
 </head>
@@ -498,7 +510,7 @@ function ovpnFileChecker(){
 <input type="hidden" name="vpn_upload_type" value="ovpn">
 <input type="hidden" name="vpn_upload_unit" value="<% nvram_get("vpn_client_unit"); %>">
 <input type="hidden" name="vpn_client_if" value="<% nvram_get("vpn_client_if"); %>">
-
+<input type="hidden" name="vpn_client_local" value="<% nvram_get("vpn_client_local"); %>">
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
   <tr>
@@ -710,7 +722,7 @@ function ovpnFileChecker(){
 					<tr id="client_local_1">
 						<th>Local/remote endpoint addresses</th>
 						<td>
-							<input type="text" maxlength="15" class="input_15_table" name="vpn_client_local" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_client_local"); %>">
+							<input type="text" maxlength="15" class="input_15_table" name="vpn_client_local_1" onkeypress="return is_ipaddr(this, event);" onblur="update_local_ip(this);" value="<% nvram_get("vpn_client_local"); %>">
 							<input type="text" maxlength="15" class="input_15_table" name="vpn_client_remote" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_client_remote"); %>">
 						</td>
 					</tr>
@@ -718,7 +730,7 @@ function ovpnFileChecker(){
 					<tr id="client_local_2">
 						<th>Tunnel address/netmask</th>
 						<td>
-							<input type="text" maxlength="15" class="input_15_table" name="vpn_client_local" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_client_local"); %>">
+							<input type="text" maxlength="15" class="input_15_table" name="vpn_client_local_2" onkeypress="return is_ipaddr(this, event);" onblur="update_local_ip(this);" value="<% nvram_get("vpn_client_local"); %>">
 							<input type="text" maxlength="15" class="input_15_table" name="vpn_client_nm" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_client_nm"); %>">
 						</td>
 					</tr>

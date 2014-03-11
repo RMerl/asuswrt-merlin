@@ -395,9 +395,9 @@ function show_wsc_status(wps_infos){
 	
 
 	if(wps_infos[1].firstChild.nodeValue == "No")
-		$("wps_config_td").innerHTML = "No";
+		$("wps_config_td").innerHTML = "<#checkbox_No#>";
 	else
-		$("wps_config_td").innerHTML = "Yes";
+		$("wps_config_td").innerHTML = "<#checkbox_Yes#>";
 }
 
 function show_wsc_status2(wps_infos0, wps_infos1){
@@ -612,7 +612,7 @@ function _change_wl_unit_status(__unit){
 			</tr>
 
 			<tr>
-				<th>Configured</th>
+				<th><#wireless_configured#></th>
 				<td>
 					<div style="margin-left:-10px">
 						<table ><tr>
@@ -645,10 +645,10 @@ function _change_wl_unit_status(__unit){
 			
 			<tr id="wpsmethod_tr">
 				<th>
-			  	<span id="wps_method"><a class="hintstyle" href="javascript:void(0);" onclick="openHint(13,2);">WPS Method</a></span>
+			  	<span id="wps_method"><a class="hintstyle" href="javascript:void(0);" onclick="openHint(13,2);"><#WLANConfig11b_x_WPSMode_itemname#></a></span>
 			  </th>
 			  <td>
-					<input type="radio" name="wps_method" onclick="changemethod(0);" value="0">Push Button
+					<input type="radio" name="wps_method" onclick="changemethod(0);" value="0"><#WLANConfig11b_x_WPS_pushbtn#>
 					<input type="radio" name="wps_method" onclick="changemethod(1);" value="1"><#WLANConfig11b_x_WPSPIN_itemname#>
 			  	<input type="text" name="wps_sta_pin" id="wps_sta_pin" value="" size="8" maxlength="8" class="input_15_table">
 				  <div id="starBtn" style="margin-top:10px;"><input class="button_gen" type="button" style="margin-left:5px;" onClick="configCommand();" id="addEnrolleebtn_client" name="addEnrolleebtn"  value="<#wps_start_btn#>"></div>

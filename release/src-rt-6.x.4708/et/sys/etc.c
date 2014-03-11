@@ -16,7 +16,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: etc.c 430045 2013-10-17 01:04:26Z $
+ * $Id: etc.c 436117 2013-11-13 06:54:29Z $
  */
 
 #include <et_cfg.h>
@@ -690,6 +690,7 @@ etc_watchdog(etc_info_t *etc)
 			if (etc->reset_countdown == 0) {
 				et_reset(etc->et);
 				et_init(etc->et, ET_INIT_FULL | ET_INIT_INTRON);
+				ASSERT(0);
 			}
 		} else
 			etc->reset_countdown = 0;

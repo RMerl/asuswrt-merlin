@@ -687,7 +687,9 @@ typedef struct {
 	buffer *syslog_file;
 	buffer *product_image;
 	buffer *aicloud_version;
-	buffer *app_installation_url;
+	buffer *smartsync_version;
+	buffer *app_installation_url;	
+	unsigned int max_sharelink;
 } server_config;
 
 typedef struct {

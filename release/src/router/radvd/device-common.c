@@ -17,38 +17,32 @@
 #include "radvd.h"
 #include "defaults.h"
 
-int
-check_device(struct Interface *iface)
+int check_device(struct Interface *iface)
 {
-	struct ifreq	ifr;
+	struct ifreq ifr;
 
-	strncpy(ifr.ifr_name, iface->Name, IFNAMSIZ-1);
-	ifr.ifr_name[IFNAMSIZ-1] = '\0';
+	strncpy(ifr.ifr_name, iface->Name, IFNAMSIZ - 1);
+	ifr.ifr_name[IFNAMSIZ - 1] = '\0';
 
-	if (ioctl(sock, SIOCGIFFLAGS, &ifr) < 0)
-	{
+	if (ioctl(sock, SIOCGIFFLAGS, &ifr) < 0) {
 		if (!iface->IgnoreIfMissing)
-			flog(LOG_ERR, "ioctl(SIOCGIFFLAGS) failed for %s: %s",
-				iface->Name, strerror(errno));
+			flog(LOG_ERR, "ioctl(SIOCGIFFLAGS) failed for %s: %s", iface->Name, strerror(errno));
 		return (-1);
 	}
 
-	if (!(ifr.ifr_flags & IFF_UP))
-	{
+	if (!(ifr.ifr_flags & IFF_UP)) {
 		if (!iface->IgnoreIfMissing)
-                	flog(LOG_ERR, "interface %s is not UP", iface->Name);
+			flog(LOG_ERR, "interface %s is not UP", iface->Name);
 		return (-1);
 	}
 
-	if (!(ifr.ifr_flags & IFF_RUNNING))
-	{
+	if (!(ifr.ifr_flags & IFF_RUNNING)) {
 		if (!iface->IgnoreIfMissing)
-                	flog(LOG_ERR, "interface %s is not RUNNING", iface->Name);
+			flog(LOG_ERR, "interface %s is not RUNNING", iface->Name);
 		return (-1);
 	}
 
-	if (!iface->UnicastOnly && !(ifr.ifr_flags & IFF_MULTICAST))
-	{
+	if (!iface->UnicastOnly && !(ifr.ifr_flags & IFF_MULTICAST)) {
 		flog(LOG_INFO, "interface %s does not support multicast, forcing UnicastOnly", iface->Name);
 		iface->UnicastOnly = 1;
 	}
@@ -56,41 +50,35 @@ check_device(struct Interface *iface)
 	return 0;
 }
 
-int
-get_v4addr(const char *ifn, unsigned int *dst)
+int get_v4addr(const char *ifn, unsigned int *dst)
 {
-        struct ifreq    ifr;
-        struct sockaddr_in *addr;
-        int fd;
+	struct ifreq ifr;
+	struct sockaddr_in *addr;
+	int fd;
 
-        if( ( fd = socket(AF_INET,SOCK_DGRAM,0) ) < 0 )
-        {
-                flog(LOG_ERR, "create socket for IPv4 ioctl failed for %s: %s",
-                        ifn, strerror(errno));
-                return (-1);
-        }
+	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+		flog(LOG_ERR, "create socket for IPv4 ioctl failed for %s: %s", ifn, strerror(errno));
+		return (-1);
+	}
 
-        memset(&ifr, 0, sizeof(ifr));
-        strncpy(ifr.ifr_name, ifn, IFNAMSIZ-1);
-        ifr.ifr_name[IFNAMSIZ-1] = '\0';
-        ifr.ifr_addr.sa_family = AF_INET;
+	memset(&ifr, 0, sizeof(ifr));
+	strncpy(ifr.ifr_name, ifn, IFNAMSIZ - 1);
+	ifr.ifr_name[IFNAMSIZ - 1] = '\0';
+	ifr.ifr_addr.sa_family = AF_INET;
 
-        if (ioctl(fd, SIOCGIFADDR, &ifr) < 0)
-        {
-                flog(LOG_ERR, "ioctl(SIOCGIFADDR) failed for %s: %s",
-                        ifn, strerror(errno));
-                close( fd );
-                return (-1);
-        }
+	if (ioctl(fd, SIOCGIFADDR, &ifr) < 0) {
+		flog(LOG_ERR, "ioctl(SIOCGIFADDR) failed for %s: %s", ifn, strerror(errno));
+		close(fd);
+		return (-1);
+	}
 
-        addr = (struct sockaddr_in *)(&ifr.ifr_addr);
+	addr = (struct sockaddr_in *)(&ifr.ifr_addr);
 
-        dlog(LOG_DEBUG, 3, "IPv4 address for %s is %s", ifn,
-                inet_ntoa( addr->sin_addr ) );
+	dlog(LOG_DEBUG, 3, "IPv4 address for %s is %s", ifn, inet_ntoa(addr->sin_addr));
 
-        *dst = addr->sin_addr.s_addr;
+	*dst = addr->sin_addr.s_addr;
 
-        close( fd );
+	close(fd);
 
-        return 0;
+	return 0;
 }

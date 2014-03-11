@@ -1,16 +1,10 @@
 ﻿<?xml version="1.0" ?>
-<devicemap>
-  <% ajax_wanstate(); %>
-  <wan>usb=<% nvram_get("usb_path1"); %></wan>
-  <wan>usb=<% nvram_get("usb_path2"); %></wan>
+<devicemap>  <% ajax_wanstate(); %>
   <wan>monoClient=<% nvram_get("mfp_ip_monopoly"); %></wan>
-  <wan>cooler=<% nvram_get("cooler"); %></wan>
   <wan>wlc_state=<% nvram_get("wlc_state"); %></wan>
   <wan>wlc_sbstate=<% nvram_get("wlc_sbstate"); %></wan>
-  <wan>wifi_hw_switch=<% nvram_get("wl0_radio"); %></wan>
   <wan>psta:<% wlc_psta_state(); %></wan>
-  <wan>umount=<% nvram_get("usb_path1_removed"); %></wan>
-  <wan>umount=<% nvram_get("usb_path2_removed"); %></wan>
+  <wan>wifi_hw_switch=<% nvram_get("wl0_radio"); %></wan>
   <wan>ddnsRet=<% nvram_get("ddns_return_code_chk"); %></wan>
   <wan>ddnsUpdate=<% nvram_get("ddns_updated"); %></wan>
   <wan>wan_line_state=<% nvram_get("dsltmp_adslsyncsts"); %></wan>
@@ -25,4 +19,5 @@
   <vpn>vpn_client2_state=<% nvram_get("vpn_client2_state"); %></vpn>
   <vpn>vpnd_state=<% nvram_get("VPNServer_enable"); %></vpn>
   <% secondary_ajax_wanstate(); %>
+	<usb>'<% show_usb_path(); %>'</usb>
 </devicemap>

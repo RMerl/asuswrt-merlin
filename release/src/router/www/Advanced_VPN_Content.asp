@@ -843,7 +843,7 @@ function enable_openvpn(state){
 												</div>
 												<script type="text/javascript">
 														document.getElementById("exportToLocal").onclick = function(){
-															location.href = 'client.ovpn';
+															location.href = 'client<% nvram_get("vpn_server_unit"); %>.ovpn';
 														}
 
 														document.getElementById("exportViaEmail").onclick = function(){
@@ -872,8 +872,12 @@ function enable_openvpn(state){
 										<div id="wan_ctrl" class="formfontdesc"><#PPTP_desc2#> <% nvram_get("wan0_ipaddr"); %></div>
 										<div id="dualwan_ctrl" style="display:none;" class="formfontdesc"><#PPTP_desc2#> <span class="formfontdesc">Primary WAN IP : <% nvram_get("wan0_ipaddr"); %> </sapn><span class="formfontdesc">Secondary WAN IP : <% nvram_get("wan1_ipaddr"); %> </sapn></div>
 										<div class="formfontdesc" style="margin-top:-10px;font-weight: bolder;"><#PPTP_desc3#></div>
-										<div class="formfontdesc" style="margin-top:-10px;">
-											(7) <a id="faq" href="" target="_blank" style="font-family:Lucida Console;text-decoration:underline;"><#BOP_isp_heart_item#> FAQ</a>
+										<div class="formfontdesc" style="margin:-10px 0px 0px -15px;">
+											<ul>
+												<li>
+													<a id="faq" href="" target="_blank" style="font-family:Lucida Console;text-decoration:underline;"><#BOP_isp_heart_item#> FAQ</a>
+												</li>
+											</ul>
 										</div>
 
 										<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
@@ -975,7 +979,7 @@ function enable_openvpn(state){
 			<input type="hidden" name="action_wait" value="5">
 			<input type="hidden" name="flag" value="background">
 			<input type="hidden" name="PM_MAIL_SUBJECT" value="My ovpn file">
-			<input type="hidden" name="PM_MAIL_FILE" value="/www/client.ovpn">
+			<input type="hidden" name="PM_MAIL_FILE" value="/www/client<% nvram_get("vpn_server_unit"); %>.ovpn">
 			<input type="hidden" name="PM_LETTER_CONTENT" value="Here is the ovpn file.">
 
 			<div class="panelTableTitle">

@@ -38,7 +38,7 @@ function initial(){
 function init_setting(){
 	wItem = new Array(new Array("WWW", "80", "TCP"),new Array("TELNET", "23", "TCP"),new Array("FTP", "20:21", "TCP"));
 	free_options(document.form.LWKnownApps);
-	add_option(document.form.LWKnownApps, "User Defined", "User Defined", 1);
+	add_option(document.form.LWKnownApps, "<#IPConnection_TriggerList_userdefined#>", "User Defined", 1);
 	for (i = 0; i < wItem.length; i++){
 		add_option(document.form.LWKnownApps, wItem[i][0], wItem[i][0], 0);
 	}
@@ -142,7 +142,7 @@ function change_wizard(o, id){
 					else if(wItem[i][2] == "UDP")
 						document.form.filter_lw_proto_x_0.options[8].selected = 1;
 					
-					document.form.filter_wl_srcport_x_0.value = wItem[i][1];
+					document.form.filter_lw_srcport_x_0.value = wItem[i][1];
 				}
 				else{
 					if(wItem[i][2] == "TCP")
@@ -484,7 +484,7 @@ function updateDateTime(){
           						<th><#IPConnection_TriggerList_widzarddesc#></th>
             					<td>
             						<select name="LWKnownApps" class="input_option" onChange="change_wizard(this, 'LWKnownApps');">
-              							<option value="User Defined">User Defined</option>
+              							<option value="User Defined"><#IPConnection_TriggerList_userdefined#></option>
             						</select>
             					</td>
           					</tr>

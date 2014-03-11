@@ -6037,6 +6037,20 @@ typedef struct statreq {
 	uint16 reps;
 } statreq_t;
 
+#define WL_RRM_RPT_VER  0
+#define WL_RRM_RPT_MAX_PAYLOAD  64
+#define WL_RRM_RPT_MIN_PAYLOAD  7
+#define WL_RRM_RPT_FALG_ERR     0
+#define WL_RRM_RPT_FALG_OK      1
+typedef struct {
+	uint16 ver;		/* version */
+	struct ether_addr addr;	/* STA MAC addr */
+	uint32 timestamp;	/* timestamp of the report */
+	uint16 flag;		/* flag */
+	uint16 len;		/* length of payload data */
+	unsigned char data[WL_RRM_RPT_MAX_PAYLOAD];
+} statrpt_t;
+
 typedef struct wlc_l2keepalive_ol_params {
 	uint8 	flags;
 	uint8	prio;

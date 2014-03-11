@@ -215,9 +215,7 @@ function applyRule(){
 	else	
 		document.form.wans_lanport.disabled = true;
 
-	var tmp_pri_if = wans_dualwan_orig.split(" ")[0].toUpperCase();
-	var tmp_sec_if = wans_dualwan_orig.split(" ")[1].toUpperCase();	
-	if (tmp_pri_if == 'LAN' || tmp_sec_if == 'LAN') {
+	if (document.form.wans_primary.value == "lan" || document.form.wans_second.value == "lan") {
 		var port_conflict = false;
 		var lan_port_num = document.form.wans_lanport.value;
 		
@@ -899,7 +897,7 @@ function pullLANIPList(obj){
 					</tr>
 					</thead>
 					<tr>
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,1);">Enable Watch Dog</a></th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,1);"><#wandog_enable#></a></th>
             <td>
 						 		<input type="radio" value="1" name="wandog_enable_radio" class="content_input_fd" <% nvram_match("wandog_enable", "1", "checked"); %> onClick="appendModeOption2(this.value);"><#checkbox_Yes#>
 		 						<input type="radio" value="0" name="wandog_enable_radio" class="content_input_fd" <% nvram_match("wandog_enable", "0", "checked"); %> onClick="appendModeOption2(this.value);"><#checkbox_No#>
@@ -938,12 +936,12 @@ function pullLANIPList(obj){
 	    		<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable" style="margin-top:8px;">
 					  <thead>
 					  <tr>
-						<td colspan="2">Routing rules for dual WAN</td>
+						<td colspan="2"><#dualwan_routing_rule#></td>
 					  </tr>
 					  </thead>		
 
           				<tr>
-            				<th>Enable the Routing rules</th>
+            				<th><#dualwan_routing_rule_enable#></th>
             				<td>
 						  		<input type="radio" value="1" name="wans_routing_enable" class="content_input_fd" <% nvram_match("wans_routing_enable", "1", "checked"); %>><#checkbox_Yes#>
 		 							<input type="radio" value="0" name="wans_routing_enable" class="content_input_fd" <% nvram_match("wans_routing_enable", "0", "checked"); %>><#checkbox_No#>

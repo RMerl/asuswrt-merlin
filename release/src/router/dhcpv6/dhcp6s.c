@@ -310,6 +310,9 @@ main(argc, argv)
 	if (ifinit(device) == NULL)
 		exit(1);
 
+	if (debug == 2)
+		dumpfile(conffile);
+
 	if ((cfparse(conffile)) != 0) {
 		dprintf(LOG_ERR, FNAME, "failed to parse configuration file");
 		exit(1);

@@ -45,7 +45,7 @@
 #define OLD_DUT_DOMAIN_NAME2 "www.asusrouter.com"
 
 #define USBCORE_MOD	"usbcore"
-#if defined (RTCONFIG_USB_XHCI) || defined (RTCONFIG_USB_2XHCI2)
+#if defined (RTCONFIG_USB_XHCI)
 #define USB30_MOD	"xhci-hcd"
 #endif
 #define USB20_MOD	"ehci-hcd"
@@ -700,25 +700,30 @@ extern int asus_usb_interface(const char *device_name, const char *action);
 extern int asus_sg(const char *device_name, const char *action);
 extern int asus_usbbcm(const char *device_name, const char *action);
 #endif
+#ifdef RTCONFIG_USB_MODEM
+extern int is_create_file_dongle(const unsigned int vid, const unsigned int pid);
 #ifdef RTCONFIG_USB_BECEEM
+extern int is_beceem_dongle(const int mode, const unsigned int vid, const unsigned int pid);
+extern int is_samsung_dongle(const int mode, const unsigned int vid, const unsigned int pid);
+extern int is_gct_dongle(const int mode, const unsigned int vid, const unsigned int pid);
 extern int write_beceem_conf(const char *eth_node);
-extern int is_beceem_dongle(const int mode, const char *vid, const char *pid);
-extern int is_samsung_dongle(const int mode, const char *vid, const char *pid);
-extern int is_gct_dongle(const int mode, const char *vid, const char *pid);
 extern int write_gct_conf(void);
 #endif
-#ifdef RTCONFIG_USB_MODEM
-extern int is_create_file_dongle(const char *vid, const char *pid);
+extern int is_android_phone(const int mode, const unsigned int vid, const unsigned int pid);
+extern int is_storage_cd(const int mode, const unsigned int vid, const unsigned int pid);
+extern int write_3g_conf(FILE *fp, int dno, int aut, const unsigned int vid, const unsigned int pid);
+extern int init_3g_param(const char *port_path, const unsigned int vid, const unsigned int pid);
+extern int write_3g_ppp_conf(const char *modem_node);
 #endif
-extern int is_android_phone(const int mode, const char *vid, const char *pid);
-extern int write_3g_conf(FILE *fp, int dno, int aut, char *vid, char *pid);
-extern int init_3g_param(char *vid, char *pid, const char *port_path);
 
 //services.c
 extern void setup_leds();
 extern void write_static_leases(char *file);
 #ifdef RTCONFIG_YANDEXDNS
 extern const char *yandex_dns(int mode);
+#endif
+#ifdef RTCONFIG_DNSFILTER
+extern const char *dns_filter(int mode);
 #endif
 #ifdef RTCONFIG_DNSMASQ
 extern void restart_dnsmasq(int force);
@@ -855,6 +860,10 @@ extern int stop_8021x(void);
 #endif
 #ifdef RTCONFIG_DNSMASQ
 extern void stop_dnsmasq(int force);
+#endif
+#ifdef RTCONFIG_LLDP
+extern void stop_lldpd(void);
+extern int start_lldpd(void);
 #endif
 extern int firmware_check_main(int argc, char *argv[]);
 #ifdef RTCONFIG_DSL

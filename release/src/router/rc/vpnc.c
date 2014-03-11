@@ -95,7 +95,6 @@ start_vpnc(void)
 	FILE *fp;
 	char options[80];
 	char *pppd_argv[] = { "/usr/sbin/pppd", "file", options, NULL};
-//	char tmp[100], prefix[] = "vpnXXXXXXXXXX_";
 	char tmp[100], prefix[] = "vpnc_", wan_prefix[] = "wanXXXXXXXXXX_";
 	char buf[256];	/* although maximum length of pppoe_username/pppoe_passwd is 64. pppd accepts up to 256 characters. */
 	mode_t mask;
@@ -297,7 +296,7 @@ void
 stop_vpnc(void)
 {
 	char pidfile[sizeof("/var/run/ppp-vpnXXXXXXXXXX.pid")];
-	char tmp[100], prefix[] = "vpnc_", wan_prefix[] = "wanXXXXXXXXXX_";
+	char tmp[100], wan_prefix[] = "wanXXXXXXXXXX_";
 	
 	snprintf(wan_prefix, sizeof(wan_prefix), "wan%d_", wan_primary_ifunit());
 
@@ -407,15 +406,32 @@ int vpnc_update_resolvconf(void)
 	return 0;
 }
 
-void vpnc_start_firewall()
+void vpnc_add_firewall_rule()
 {
-	char tmp[100], prefix[] = "vpnc_";
+	char tmp[100], prefix[] = "vpnc_", wan_prefix[] = "wanXXXXXXXXXX_";
 	char *vpnc_ifname = nvram_safe_get(strcat_r(prefix, "pppoe_ifname", tmp));
-	if(check_if_file_exist(strcat_r("/tmp/ppp/link.", vpnc_ifname, tmp)))
+	char *wan_proto = NULL;
+	char lan_if[IFNAMSIZ+1];
+
+	strcpy(lan_if, nvram_safe_get("lan_ifname"));
+
+	if (check_if_file_exist(strcat_r("/tmp/ppp/link.", vpnc_ifname, tmp)))
 	{
-		eval("iptables", "-t", "nat", "-A", "PREROUTING", "-d", 
+		snprintf(wan_prefix, sizeof(wan_prefix), "wan%d_", wan_primary_ifunit());
+		wan_proto = nvram_safe_get(strcat_r(wan_prefix, "proto", tmp));
+		if (!strcmp(wan_proto, "dhcp") || !strcmp(wan_proto, "static"))
+			//eval("iptables", "-I", "FORWARD", "-p", "tcp", "--syn", "-j", "TCPMSS", "--clamp-mss-to-pmtu");
+			eval("iptables", "-I", "FORWARD", "-p", "tcp", "--tcp-flags", "SYN,RST", "SYN", "-j", "TCPMSS", "--clamp-mss-to-pmtu");
+#ifdef RTCONFIG_BCMARM
+		else	/* mark tcp connection to bypass CTF */
+			eval("iptables", "-t", "mangle", "-A", "FORWARD", "-p", "tcp", 
+				"-m", "state", "--state", "NEW","-j", "MARK", "--set-mark", "0x01");
+#endif
+
+		eval("iptables", "-A", "FORWARD", "-o", vpnc_ifname, "!", "-i", lan_if, "-j", "DROP");
+		eval("iptables", "-t", "nat", "-I", "PREROUTING", "-d", 
 			nvram_safe_get(strcat_r(prefix, "ipaddr", tmp)), "-j", "VSERVER");
-		eval("iptables", "-t", "nat", "-A", "POSTROUTING", "-o", 
+		eval("iptables", "-t", "nat", "-I", "POSTROUTING", "-o", 
 			vpnc_ifname, "!", "-s", nvram_safe_get(strcat_r(prefix, "ipaddr", tmp)), "-j", "MASQUERADE");
 	}
 }
@@ -423,21 +439,19 @@ void vpnc_start_firewall()
 void
 vpnc_up(char *vpnc_ifname)
 {
-//	FILE *nat_fp;
 	char tmp[100], prefix[] = "vpnc_", wan_prefix[] = "wanXXXXXXXXXX_";
-	char *wan_ifname;
+	char *wan_ifname = NULL, *wan_proto = NULL;
 
 	snprintf(wan_prefix, sizeof(wan_prefix), "wan%d_", wan_primary_ifunit());
+	wan_proto = nvram_safe_get(strcat_r(wan_prefix, "proto", tmp));
 
-	if (nvram_match(strcat_r(wan_prefix, "proto", tmp), "dhcp") || nvram_match(strcat_r(wan_prefix, "proto", tmp), "static"))
+	if (!strcmp(wan_proto, "dhcp") || !strcmp(wan_proto, "static"))
 		wan_ifname = nvram_safe_get(strcat_r(wan_prefix, "ifname", tmp));
 	else
 		wan_ifname = nvram_safe_get(strcat_r(wan_prefix, "pppoe_ifname", tmp));
 
 	/* Reset default gateway route via PPPoE interface */
 	route_del(wan_ifname, 0, "0.0.0.0", nvram_safe_get(strcat_r(wan_prefix, "gateway", tmp)), "0.0.0.0");
-//	route_del(wan_ifname, 0, nvram_safe_get(strcat_r(wan_prefix, "gateway", tmp)), NULL, "255.255.255.255");
-//	route_add(wan_ifname, 0, nvram_safe_get(strcat_r(wan_prefix, "gateway", tmp)), NULL, "255.255.255.255");
 	route_add(wan_ifname, 2, "0.0.0.0", nvram_safe_get(strcat_r(wan_prefix, "gateway", tmp)), "0.0.0.0");
 
 	/* Add the default gateway of VPN client */
@@ -449,10 +463,10 @@ vpnc_up(char *vpnc_ifname)
 	/* Add dns servers to resolv.conf */
 	vpnc_update_resolvconf();
 
-	update_vpnc_state(prefix, WAN_STATE_CONNECTED, 0);
-
 	/* Add firewall rules for VPN client */
-	vpnc_start_firewall();	
+	vpnc_add_firewall_rule();
+
+	update_vpnc_state(prefix, WAN_STATE_CONNECTED, 0);	
 }
 
 int
@@ -505,8 +519,58 @@ vpnc_ipup_main(int argc, char **argv)
 	nvram_set(strcat_r(prefix, "dns", tmp), buf);
 
 	vpnc_up(vpnc_ifname);
+
 	_dprintf("%s:: done\n", __FUNCTION__);
 	return 0;
+}
+
+void vpnc_del_firewall_rule()
+{
+	char tmp[100], prefix[] = "vpnc_", wan_prefix[] = "wanXXXXXXXXXX_";
+	char *vpnc_ifname = nvram_safe_get(strcat_r(prefix, "pppoe_ifname", tmp));
+	char *wan_proto = NULL;
+	char lan_if[IFNAMSIZ+1];
+
+	strcpy(lan_if, nvram_safe_get("lan_ifname"));
+
+	snprintf(wan_prefix, sizeof(wan_prefix), "wan%d_", wan_primary_ifunit());
+	wan_proto = nvram_safe_get(strcat_r(wan_prefix, "proto", tmp));
+	if (!strcmp(wan_proto, "dhcp") || !strcmp(wan_proto, "static"))
+		//eval("iptables", "-D", "FORWARD", "-p", "tcp", "--syn", "-j", "TCPMSS", "--clamp-mss-to-pmtu");
+		eval("iptables", "-D", "FORWARD", "-p", "tcp", "--tcp-flags", "SYN,RST", "SYN", "-j", "TCPMSS", "--clamp-mss-to-pmtu");
+#ifdef RTCONFIG_BCMARM
+	else
+		eval("iptables", "-t", "mangle", "-D", "FORWARD", "-p", "tcp", 
+			"-m", "state", "--state", "NEW","-j", "MARK", "--set-mark", "0x01");
+#endif
+
+	eval("iptables", "-D", "FORWARD", "-o", vpnc_ifname, "!", "-i", lan_if, "-j", "DROP");
+	eval("iptables", "-t", "nat", "-D", "PREROUTING", "-d", 
+		nvram_safe_get(strcat_r(prefix, "ipaddr", tmp)), "-j", "VSERVER");
+	eval("iptables", "-t", "nat", "-D", "POSTROUTING", "-o", 
+		vpnc_ifname, "!", "-s", nvram_safe_get(strcat_r(prefix, "ipaddr", tmp)), "-j", "MASQUERADE");
+}
+
+void
+vpnc_down(char *vpnc_ifname)
+{
+	char tmp[100], wan_prefix[] = "wanXXXXXXXXXX_";
+	char *wan_ifname = NULL, *wan_proto = NULL;
+
+	snprintf(wan_prefix, sizeof(wan_prefix), "wan%d_", wan_primary_ifunit());
+	wan_proto = nvram_safe_get(strcat_r(wan_prefix, "proto", tmp));
+
+	if (!strcmp(wan_proto, "dhcp") || !strcmp(wan_proto, "static"))
+		wan_ifname = nvram_safe_get(strcat_r(wan_prefix, "ifname", tmp));
+	else
+		wan_ifname = nvram_safe_get(strcat_r(wan_prefix, "pppoe_ifname", tmp));
+
+	/* Reset default gateway route */
+	route_del(wan_ifname, 2, "0.0.0.0", nvram_safe_get(strcat_r(wan_prefix, "gateway", tmp)), "0.0.0.0");
+	route_add(wan_ifname, 0, "0.0.0.0", nvram_safe_get(strcat_r(wan_prefix, "gateway", tmp)), "0.0.0.0");
+
+	/* Delete firewall rules for VPN client */
+	vpnc_del_firewall_rule();
 }
 
 /*
@@ -528,19 +592,15 @@ vpnc_ipdown_main(int argc, char **argv)
 
 	_dprintf("%s: unit=%d ifname=%s\n", __FUNCTION__, unit, vpnc_ifname);
 
-	// override wan_state to get real reason
+	/* override wan_state to get real reason */
 	update_vpnc_state(prefix, WAN_STATE_STOPPED, vpnc_pppstatus());
+
+	vpnc_down(vpnc_ifname);
 
 	/* Add dns servers to resolv.conf */
 	update_resolvconf();
 
 	unlink(strcat_r("/tmp/ppp/link.", vpnc_ifname, tmp));
-
-	/* Remove firewall rules */
-	eval("iptables", "-t", "nat", "-D", "PREROUTING", "-d", 
-			nvram_safe_get(strcat_r(prefix, "ipaddr", tmp)), "-j", "VSERVER");
-	eval("iptables", "-t", "nat", "-D", "POSTROUTING", "-o", 
-			vpnc_ifname, "!", "-s", nvram_safe_get(strcat_r(prefix, "ipaddr", tmp)), "-j", "MASQUERADE");
 
 	_dprintf("%s:: done\n", __FUNCTION__);
 	return 0;
@@ -590,9 +650,8 @@ vpnc_authfail_main(int argc, char **argv)
 		return 0;
 
 	_dprintf("%s: unit=%d ifname=%s\n", __FUNCTION__, unit, vpnc_ifname);
-//	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 
-	// override vpnc_state
+	/* override vpnc_state */
 	update_vpnc_state(prefix, WAN_STATE_STOPPED, WAN_STOPPED_REASON_PPP_AUTH_FAIL);
 
 	_dprintf("%s:: done\n", __FUNCTION__);

@@ -103,6 +103,8 @@ extern char *flashdrv_nvram;
 extern void LEDON(void);
 extern void LEDOFF(void);
 
+int nospare;
+
 static void
 board_console_add(void *regs, uint irq, uint baud_base, uint reg_shift)
 {
@@ -403,6 +405,7 @@ dump_nflash(int block_no)
 	printf("\ndone\n");
 }
 
+
 static void
 flash_nflash_init(void)
 {
@@ -503,6 +506,12 @@ flash_init(void)
 	memset(&fprobe, 0, sizeof(fprobe));
 
 	bootdev = soc_boot_dev((void *)sih);
+
+        if(nvram_match("nospare", "1"))
+                nospare = 1;
+        else
+                nospare = 0;
+
 #ifdef CFG_NFLASH
 	if (bootdev == SOC_BOOTDEV_NANDFLASH) {
 		nfl_info = hndnand_init(sih);

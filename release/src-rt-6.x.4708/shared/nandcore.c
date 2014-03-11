@@ -41,6 +41,8 @@
 #define NANDF_SMALL_BADBLOCK_POS	5
 #define NANDF_LARGE_BADBLOCK_POS	0
 
+extern int nospare;
+
 struct nandpart_timing_info {
 	const char	*name;
 	uint8	id[8];
@@ -88,6 +90,7 @@ static int nandcore_read(hndnand_t *nfl, uint64 offset, uint len, uchar *buf);
 static int nandcore_write(hndnand_t *nfl, uint64 offset, uint len, const uchar *buf);
 static int nandcore_erase(hndnand_t *nfl, uint64 offset);
 static int nandcore_checkbadb(hndnand_t *nfl, uint64 offset);
+static int nandcore_checkbadb_nospare(hndnand_t *nfl, uint64 offset);
 static int nandcore_mark_badb(hndnand_t *nfl, uint64 offset);
 static int nandcore_read_oob(hndnand_t *nfl, uint64 addr, uint8 *oob);
 
@@ -874,6 +877,70 @@ exit:
 }
 
 static int
+nandcore_checkbadb_nospare(hndnand_t *nfl, uint64 offset)
+{
+        si_t *sih = nfl->sih;
+        nandregs_t *nc = (nandregs_t *)nfl->core;
+        aidmp_t *ai = (aidmp_t *)nfl->wrap;
+        osl_t *osh;
+        int i;
+        uint off;
+        uint32 nand_intfc_status;
+        int ret = 0;
+        uint32 reg;
+
+        ASSERT(sih);
+
+        osh = si_osh(sih);
+        if ((offset >> 20) >= nfl->size)
+                return -1;
+        if ((offset & (nfl->blocksize - 1)) != 0) {
+                return -1;
+        }
+
+        /* Set the block address for the following commands */
+        reg = (R_REG(osh, &nc->cmd_ext_address) & ~NANDCMD_EXT_ADDR_MASK);
+        W_REG(osh, &nc->cmd_ext_address, (reg | (offset >> 32)));
+
+        for (i = 0; i < 2; i++) {
+                off = offset + (nfl->pagesize * i);
+                W_REG(osh, &nc->cmd_address, off);
+                nandcore_cmd(osh, nc, NANDCMD_SPARE_RD);
+                if (nandcore_poll(sih, nc) < 0) {
+                        ret = -1;
+                        goto exit;
+                }
+                nand_intfc_status = R_REG(osh, &nc->intfc_status) & NANDIST_SPARE_VALID;
+                if (nand_intfc_status != NANDIST_SPARE_VALID) {
+                        ret = -1;
+#ifdef BCMDBG
+                        printf("%s: Spare is not valid\n", __FUNCTION__);
+#endif
+                        goto exit;
+                }
+
+                /* Toggle as little endian */
+                OR_REG(osh, &ai->ioctrl, NAND_APB_LITTLE_ENDIAN);
+
+                if ((R_REG(osh, &nc->spare_area_read_ofs[0]) & 0xff) != 0xff) {
+                        ret = -1;
+#ifdef BCMDBG
+                        printf("%s: Bad Block (0x%llx)\n", __FUNCTION__, offset);
+#endif
+                }
+
+                /* Toggle as big endian */
+                AND_REG(osh, &ai->ioctrl, ~NAND_APB_LITTLE_ENDIAN);
+
+                if (ret == -1)
+                        break;
+        }
+
+exit:
+        return ret;
+}
+
+static int
 nandcore_checkbadb(hndnand_t *nfl, uint64 offset)
 {
 	si_t *sih = nfl->sih;
@@ -886,6 +953,9 @@ nandcore_checkbadb(hndnand_t *nfl, uint64 offset)
 	uint32 reg, oob_bi;
 	unsigned cache, col = 0;
 	uint32 rd_oob_byte, left_oob_byte;
+
+	if(nospare)
+		return nandcore_checkbadb_nospare(nfl, offset);
 
 	ASSERT(sih);
 

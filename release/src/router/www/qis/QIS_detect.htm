@@ -53,11 +53,11 @@ function getWANStatus(){
 			if(autodet_state == "" || autodet_state == "0"){
 				setTimeout('getWANStatus();', 1000);
 			}
-			if(autodet_state == 4 && (QIS_usb_path1 == "modem" || QIS_usb_path2 == "modem")){ // ethernet did not plug
+			if(autodet_state == 4 && parent.hadPlugged("modem")){ // ethernet did not plug
 				redirect_page("modem");
 			}	
 			else if(autodet_state == "2" && wanauxstate != "1"){
-				if(QIS_usb_path1 == "modem" || QIS_usb_path2 == "modem"){
+				if(parent.hadPlugged("modem")){
 					redirect_page("modem");
 				}	
 				else{

@@ -880,7 +880,7 @@ int network_write_chunkqueue(server *srv, connection *con, chunkqueue *cq) {
 		setsockopt(con->fd, IPPROTO_TCP, TCP_CORK, &corked, sizeof(corked));
 	}
 #endif
-
+	
 	if (srv_socket->is_ssl) {
 #ifdef USE_OPENSSL
 		ret = srv->network_ssl_backend_write(srv, con, con->ssl, cq);
@@ -888,7 +888,7 @@ int network_write_chunkqueue(server *srv, connection *con, chunkqueue *cq) {
 	} else {		
 		ret = srv->network_backend_write(srv, con, con->fd, cq);
 	}
-
+	
 	if (ret >= 0) {
 	   	chunkqueue_remove_finished_chunks(cq);
 		ret = chunkqueue_is_empty(cq) ? 0 : 1;

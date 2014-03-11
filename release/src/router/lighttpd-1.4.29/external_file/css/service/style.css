@@ -1,0 +1,138 @@
+.bicon, .user_image {
+background:transparent url("../style-theme.png") no-repeat top left;
+}
+.bicon {
+width:80px;
+height:60px;
+}
+.service_upload_image{
+visibility: visible; 
+max-height: 100%; 
+position: relative;
+margin: 0 auto;	
+}
+.service_image_container_cell {
+width: 30%;
+}
+.service_form_container_cell {
+width: 50%;
+padding-left: 10px;
+padding-top: 10px;
+vertical-align: top;
+}
+.x-item-disabled {
+opacity: 1 !important;
+-moz-opacity: 1 !important;
+filter: none !important;
+}
+.service_upload_image_container {
+position: relative;
+top: 0px;
+left: 10px;
+width: 135px !important;
+height: 90px !important;
+border: solid 1px gray;
+padding: 3px;
+box-shadow: 0px 0px 6px #000000;
+-webkit-box-shadow: 0px 0px 6px #000000;
+-moz-box-shadow: 0px 0px 6px #000000;
+filter: progid:DXImageTransform.Microsoft.Shadow(color='#666666', Direction=135, Strength=2);
+}
+.service_upload_image_container_body{
+width: 135px !important;
+height: 90px !important;
+}
+.x-panel-bwrap {
+overflow: hidden;
+zoom: 1;
+left: 0;
+top: 0;
+}
+.loading-img {
+display: block;
+position: absolute;
+top: 298px;
+left: 398px;
+}
+
+.x-form-field-wrap .x-form-addalbum {
+position: absolute;
+}
+.x-form-field-wrap .x-form-trigger {
+border-bottom-color: #6E7378;
+}
+button#cancel{	
+position: absolute;
+width: 80px;
+height: 30px;
+right: 10px;
+bottom: 10px;
+}
+button#upload_photo{	
+position: absolute;
+width: 80px;
+height: 30px;
+right: 100px;
+bottom: 10px;
+}
+#user_authorize {
+color: #3B5998;
+font-weight: bold;
+position: absolute;
+left: 80px;
+top: 90px;
+}
+.user_login_option {
+text-decoration: underline;
+cursor: pointer;
+}
+#user_deletetoken {
+color: #3B5998;
+position: absolute;
+left: 80px;
+top: 70px;
+cursor: pointer;
+}
+.service_image_upload_container{
+height:115px;
+overflow:auto;
+border:1px solid #ccc;
+background-color:#2A2A2A;
+color:#fff;
+}
+
+.folderDiv {
+background-position: -80px -175px;
+}
+.audiofileDiv {
+background-position: -400px -175px;
+}
+.pdffileDiv {
+background-position: -720px -175px;
+}
+.pptfileDiv {
+background-position: -480px -175px;
+}
+.docfileDiv {
+background-position: -560px -175px;
+}
+.xlsfileDiv {
+background-position: -640px -175px;
+}
+.fileDiv {
+background-position: -160px -175px;
+}
+.user_image{
+background-position: -240px -530px;
+width:54px;
+height:54px;
+}
+#tr_user_option{
+height:60px;	
+}
+#tr_image_upload{
+height:150px;	
+}
+#tr_album{
+height:50px;	
+}

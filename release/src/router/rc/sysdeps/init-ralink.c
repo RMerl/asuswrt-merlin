@@ -45,7 +45,7 @@ void init_devs(void)
 {
 #define MKNOD(name,mode,dev)	if(mknod(name,mode,dev)) perror("## mknod " name)
 
-#if defined(LINUX30) && !defined(RTN14U) && !defined(RTAC52U) && !defined(RTAC51U)
+#if defined(LINUX30) && !defined(RTN14U) && !defined(RTAC52U) && !defined(RTAC51U) && !defined(RTN11P)
 	/* Below device node are used by proprietary driver.
 	 * Thus, we cannot use GPL-only symbol to create/remove device node dynamically.
 	 */
@@ -58,12 +58,12 @@ void init_devs(void)
 	MKNOD("/dev/nvram", S_IFCHR | 0x666, makedev(228, 0));
 #else
 	MKNOD("/dev/video0", S_IFCHR | 0x666, makedev(81, 0));
-#if !defined(RTN14U) && !defined(RTAC52U) && !defined(RTAC51U)
+#if !defined(RTN14U) && !defined(RTAC52U) && !defined(RTAC51U) && !defined(RTN11P)
 	MKNOD("/dev/rtkswitch", S_IFCHR | 0x666, makedev(206, 0));
 #endif
 	MKNOD("/dev/spiS0", S_IFCHR | 0x666, makedev(217, 0));
 	MKNOD("/dev/i2cM0", S_IFCHR | 0x666, makedev(218, 0));
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)
 #else
 	MKNOD("/dev/rdm0", S_IFCHR | 0x666, makedev(254, 0));
 #endif
@@ -133,6 +133,7 @@ void generate_switch_para(void)
 			}
 			break;
 
+		case MODEL_RTN11P:	/* fall through */
 		case MODEL_RTN14U:	/* fall through */
 		case MODEL_RTAC51U:	/* fall through */
 		case MODEL_RTAC52U:
@@ -266,7 +267,7 @@ void config_switch()
 		dbG("software reset\n");
 		eval("rtkswitch", "27");	// software reset
 	}
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)
 	system("rtkswitch 8 0"); //Barton add
 #endif
 
@@ -507,7 +508,7 @@ void config_switch()
 	else if (is_apmode_enabled())
 	{
 		model = get_model();
-		if (model == MODEL_RTN65U || model == MODEL_RTN36U3 || MODEL_RTN14U || MODEL_RTAC52U || MODEL_RTAC51U)
+		if (model == MODEL_RTN65U || model == MODEL_RTN36U3 || model == MODEL_RTN14U || model == MODEL_RTAC52U || model == MODEL_RTAC51U || model == MODEL_RTN11P)
 			eval("rtkswitch", "8", "100");
 	}
 
@@ -662,7 +663,7 @@ void init_syspara(void)
 			ether_etoa(buffer, macaddr);
 	}
 
-#if !defined(RTN14U) // single band
+#if !defined(RTN14U) && !defined(RTN11P) // single band
 	if (FRead(dst, OFFSET_MAC_ADDR_2G, bytes)<0)
 	{
 		_dprintf("READ MAC address 2G: Out of scope\n");
@@ -674,7 +675,7 @@ void init_syspara(void)
 	}
 #endif
 
-#if defined(RTN14U) // single band
+#if defined(RTN14U) || defined(RTN11P) // single band
 	if (!mssid_mac_validate(macaddr))
 #else
 	if (!mssid_mac_validate(macaddr) || !mssid_mac_validate(macaddr2))
@@ -683,7 +684,7 @@ void init_syspara(void)
 	else
 		nvram_set("wl_mssid", "1");
 
-#if defined(RTN14U) // single band
+#if defined(RTN14U) || defined(RTN11P) // single band
 	nvram_set("et0macaddr", macaddr);
 	nvram_set("et1macaddr", macaddr);
 #else
@@ -853,6 +854,7 @@ void init_syspara(void)
 	sprintf(blver, "%s-0%c-0%c-0%c-0%c", trim_r(productid), buffer[0], buffer[1], buffer[2], buffer[3]);
 	nvram_set("blver", trim_r(blver));
 
+	_dprintf("mtd productid: %s\n", nvram_safe_get("productid"));
 	_dprintf("bootloader version: %s\n", nvram_safe_get("blver"));
 	_dprintf("firmware version: %s\n", nvram_safe_get("firmver"));
 
@@ -918,7 +920,7 @@ void init_syspara(void)
 #endif
 
 #ifdef RA_SINGLE_SKU
-#if defined(RTAC52U) || defined(RTAC51U)
+#if defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)
 	{
 		char *reg_spec;
 
@@ -945,6 +947,10 @@ void init_syspara(void)
 
 	nvram_set("firmver", rt_version);
 	nvram_set("productid", rt_buildname);
+
+	_dprintf("odmpid: %s\n", nvram_safe_get("odmpid"));
+	_dprintf("current FW productid: %s\n", nvram_safe_get("productid"));
+	_dprintf("current FW firmver: %s\n", nvram_safe_get("firmver"));
 }
 
 void generate_wl_para(int unit, int subunit)
@@ -1002,7 +1008,7 @@ void reinit_hwnat(int unit)
 	if (nvram_get_int("qos_enable"))
 		act = 0;
 
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)
 	if (act > 0 && !nvram_match("switch_wantag", "none") && !nvram_match("switch_wantag", ""))
 		act = 0;
 #endif
@@ -1032,7 +1038,7 @@ void reinit_hwnat(int unit)
 #endif
 	}
 
-#if defined(RTN65U) || defined(RTN56U) || defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U)
+#if defined(RTN65U) || defined(RTN56U) || defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)
 	if (act > 0) {
 #if defined(RTCONFIG_DUALWAN)
 		if (unit < 0 || unit > WAN_UNIT_SECOND || nvram_match("wans_mode", "lb")) {

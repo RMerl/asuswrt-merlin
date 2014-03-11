@@ -1832,11 +1832,12 @@ function menuHandler(event){
 	alert(event.srcElement.text);                    
 }
                    
-document.addEventListener("touchmove", function(e){
+//document.addEventListener("touchmove", function(e){
 	//e.preventDefault();
-}, false);
-    
+//}, false);
+
 (function($) {
+	
 	$.widget('mobile.tabbar', $.mobile.navbar, {
     	_create: function() {
 			// Set the theme before we call the prototype, which will 
@@ -1859,7 +1860,7 @@ document.addEventListener("touchmove", function(e){
       		this.element.find('a[href="' + url + '"]').addClass('ui-btn-active ui-state-persist');
     	}
 	});
-  
+  	
   	$(document).bind('pagecreate create', function(e) {  	
   		return $(e.target).find(":jqmData(role='tabbar')").tabbar();
   	});

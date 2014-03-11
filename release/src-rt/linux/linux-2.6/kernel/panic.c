@@ -77,9 +77,11 @@ NORET_TYPE void panic(const char * fmt, ...)
 	va_start(args, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, args);
 	va_end(args);
+#ifdef CONFIG_DUMP_PREV_OOPS_MSG
+	enable_oopsbuf(1);
+#endif
 	printk(KERN_EMERG "Kernel panic - not syncing: %s\n",buf);
 	bust_spinlocks(0);
-
 	/*
 	 * If we have crashed and we have a crash kernel loaded let it handle
 	 * everything else.
