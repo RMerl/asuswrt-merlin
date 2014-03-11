@@ -8,4 +8,6 @@ Makefile
 rdnssd/rdnssd
 *.a
 Makefile.in
+rdnssd/merge-hook
+po/POTFILES
 
