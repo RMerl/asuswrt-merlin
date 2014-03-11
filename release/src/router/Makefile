@@ -1290,7 +1290,7 @@ upnp: nvram$(BCMEX) shared iptables
 miniupnpd/config.h:
 	cd miniupnpd && ./genconfig.sh --leasefile
 
-miniupnpd: $(IPTABLES_TARGET)
+miniupnpd: $(IPTABLES_TARGET) miniupnpd/config.h
 	@$(SEP)
 	cp -f ./shared/version.h miniupnpd/.
 	$(MAKE) -C miniupnpd -f Makefile.linux
