@@ -1,10 +1,11 @@
-/* $Id: testobsdrdr.c,v 1.24 2012/04/18 19:42:03 nanard Exp $ */
+/* $Id: testobsdrdr.c,v 1.28 2014/03/06 13:02:47 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2012 Thomas Bernard
+ * (c) 2006-2014 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -17,6 +18,7 @@
 int runtime_flags = 0;
 const char * tag = 0;
 const char * anchor_name = "miniupnpd";
+const char * queue = NULL;
 
 void
 list_rules(void);
@@ -67,7 +69,7 @@ test_index(void)
 }
 
 int
-main(int arc, char * * argv)
+main(int argc, char * * argv)
 {
 	char buf[32];
 	char desc[64];
@@ -77,6 +79,12 @@ main(int arc, char * * argv)
 	unsigned int timestamp;
 	u_int64_t packets = 0;
 	u_int64_t bytes = 0;
+	int clear = 0;
+
+	if(argc > 1) {
+		if(0 == strcmp(argv[1], "--clear") || 0 == strcmp(argv[1], "-c"))
+			clear = 1;
+	}
 
 	openlog("testobsdrdr", LOG_PERROR, LOG_USER);
 	if(init_redirect() < 0)
@@ -88,12 +96,15 @@ main(int arc, char * * argv)
 	add_redirect_rule("ep0", 12123, "192.168.1.23", 1234);
 	add_redirect_rule2("ep0", 12155, "192.168.1.155", 1255, IPPROTO_TCP);
 #endif
-	add_redirect_rule2("ep0", "8.8.8.8", 12123, "192.168.1.125", 1234,
-	                   IPPROTO_UDP, "test description", 0);
-#if 0
-	add_redirect_rule2("em0", 12123, "127.1.2.3", 1234,
-	                   IPPROTO_TCP, "test description tcp");
-#endif
+	if(add_redirect_rule2("ep0", "8.8.8.8", 12123, "192.168.1.125", 1234,
+	                   IPPROTO_UDP, "test description", 0) < 0)
+		printf("add_redirect_rule2() #3 failed\n");
+	if(add_redirect_rule2("em0", NULL, 12123, "127.1.2.3", 1234,
+	                   IPPROTO_TCP, "test description tcp", 0) < 0)
+		printf("add_redirect_rule2() #4 failed\n");
+	if(add_filter_rule2("em0", NULL, "127.1.2.3", 12123, 1234, IPPROTO_TCP,
+	                 "test description tcp") < 0)
+		printf("add_filter_rule2() #1 failed\n");
 
 	list_rules();
 	list_eports_tcp();
@@ -113,20 +124,20 @@ main(int arc, char * * argv)
 
 	if(delete_redirect_rule("ep0", 12123, IPPROTO_UDP) < 0)
 		printf("delete_redirect_rule() failed\n");
-	else
-		printf("delete_redirect_rule() succeded\n");
 
 	if(delete_redirect_rule("ep0", 12123, IPPROTO_UDP) < 0)
 		printf("delete_redirect_rule() failed\n");
-	else
-		printf("delete_redirect_rule() succeded\n");
 
-#if 0
+	if(delete_redirect_and_filter_rules("em0", 12123, IPPROTO_TCP) < 0)
+		printf("delete_redirect_and_filter_rules() failed\n");
+
 	test_index();
 
-	clear_redirect_rules();
-	list_rules();
-#endif
+	if(clear) {
+		clear_redirect_rules();
+		clear_filter_rules();
+	}
+	/*list_rules();*/
 
 	return 0;
 }

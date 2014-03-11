@@ -1,4 +1,4 @@
-/* $Id: pcpserver.c,v 1.4 2013/12/16 16:02:19 nanard Exp $ */
+/* $Id: pcpserver.c,v 1.12 2014/02/28 17:50:22 nanard Exp $ */
 /* MiniUPnP project
  * Website : http://miniupnp.free.fr/
  * Author : Peter Tatrai
@@ -43,6 +43,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <time.h>
@@ -58,6 +59,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "upnpredirect.h"
 #include "commonrdr.h"
 #include "getifaddr.h"
+#include "asyncsendto.h"
 #include "pcp_msg_struct.h"
 
 #ifdef PCP_PEER
@@ -267,10 +269,10 @@ static void printPEEROpcodeVersion1(pcp_peer_v1_t *peer_buf)
 	syslog(LOG_DEBUG, "PCP PEER: v1 Opcode specific information. \n");
 	syslog(LOG_DEBUG, "Protocol: \t\t %d\n",peer_buf->protocol );
 	syslog(LOG_DEBUG, "Internal port: \t\t %d\n", ntohs(peer_buf->int_port) );
-	syslog(LOG_DEBUG, "External IP: \t\t %s\n", inet_ntop(AF_INET6, peer_buf->ext_ip,
+	syslog(LOG_DEBUG, "External IP: \t\t %s\n", inet_ntop(AF_INET6, &peer_buf->ext_ip,
 	       ext_addr,INET6_ADDRSTRLEN));
 	syslog(LOG_DEBUG, "External port port: \t\t %d\n", ntohs(peer_buf->ext_port) );
-	syslog(LOG_DEBUG, "PEER IP: \t\t %s\n", inet_ntop(AF_INET6, peer_buf->peer_ip,
+	syslog(LOG_DEBUG, "PEER IP: \t\t %s\n", inet_ntop(AF_INET6, &peer_buf->peer_ip,
 	       peer_addr,INET6_ADDRSTRLEN));
 	syslog(LOG_DEBUG, "PEER port port: \t\t %d\n", ntohs(peer_buf->peer_port) );
 }
@@ -283,10 +285,10 @@ static void printPEEROpcodeVersion2(pcp_peer_v2_t *peer_buf)
 	syslog(LOG_DEBUG, "PCP PEER: v2 Opcode specific information. \n");
 	syslog(LOG_DEBUG, "Protocol: \t\t %d\n",peer_buf->protocol );
 	syslog(LOG_DEBUG, "Internal port: \t\t %d\n", ntohs(peer_buf->int_port) );
-	syslog(LOG_DEBUG, "External IP: \t\t %s\n", inet_ntop(AF_INET6, peer_buf->ext_ip,
+	syslog(LOG_DEBUG, "External IP: \t\t %s\n", inet_ntop(AF_INET6, &peer_buf->ext_ip,
 	       ext_addr,INET6_ADDRSTRLEN));
 	syslog(LOG_DEBUG, "External port port: \t\t %d\n", ntohs(peer_buf->ext_port) );
-	syslog(LOG_DEBUG, "PEER IP: \t\t %s\n", inet_ntop(AF_INET6, peer_buf->peer_ip,
+	syslog(LOG_DEBUG, "PEER IP: \t\t %s\n", inet_ntop(AF_INET6, &peer_buf->peer_ip,
 	       peer_addr,INET6_ADDRSTRLEN));
 	syslog(LOG_DEBUG, "PEER port port: \t\t %d\n", ntohs(peer_buf->peer_port) );
 }
@@ -559,7 +561,7 @@ static int CheckExternalAddress(pcp_info_t* pcp_msg_info)
 		}
 	}
 
-	if (IN6_IS_ADDR_UNSPECIFIED(pcp_msg_info->ext_ip)) {
+	if (pcp_msg_info->ext_ip == NULL || IN6_IS_ADDR_UNSPECIFIED(pcp_msg_info->ext_ip)) {
 
 		pcp_msg_info->ext_ip = &external_addr;
 
@@ -804,7 +806,7 @@ static void CreatePCPMap(pcp_info_t *pcp_msg_info)
 	char desc[64];
 	char iaddr_old[INET_ADDRSTRLEN];
 	uint16_t iport_old;
-	unsigned int timestamp = time(NULL) + pcp_msg_info->lifetime;
+	unsigned int timestamp;
 	int r=0;
 
 	if (pcp_msg_info->ext_port == 0) {
@@ -828,6 +830,10 @@ static void CreatePCPMap(pcp_info_t *pcp_msg_info)
 					return;
 				}
 			} else {
+				syslog(LOG_INFO, "port %hu %s already redirected to %s:%hu, replacing",
+				       pcp_msg_info->ext_port, (pcp_msg_info->protocol==IPPROTO_TCP)?"tcp":"udp",
+				       iaddr_old, iport_old);
+				/* remove and then add again */
 				if (_upnp_delete_redir(pcp_msg_info->ext_port,
 						pcp_msg_info->protocol)==0) {
 					break;
@@ -836,6 +842,8 @@ static void CreatePCPMap(pcp_info_t *pcp_msg_info)
 			pcp_msg_info->ext_port++;
 		}
 	} while (r==0);
+
+	timestamp = time(NULL) + pcp_msg_info->lifetime;
 
 	if ((pcp_msg_info->ext_port == 0) ||
 	    (IN6_IS_ADDR_V4MAPPED(pcp_msg_info->int_ip) &&
@@ -978,10 +986,15 @@ static int processPCPRequest(void * req, int req_size, pcp_info_t *pcp_msg_info)
 	processedSize = 0;
 
 	/* discard request that exceeds maximal length,
-	   or that is shorter than 3
+	   or that is shorter than PCP_MIN_LEN (=24)
 	   or that is not the multiple of 4 */
-	if (req_size < PCP_MIN_LEN)
+	if (req_size < 3)
 		return 0; /* ignore msg */
+
+	if (req_size < PCP_MIN_LEN) {
+		pcp_msg_info->result_code = PCP_ERR_MALFORMED_REQUEST;
+		return 1; /* send response */
+	}
 
 	if ( (req_size > PCP_MAX_LEN) || ( (req_size & 3) != 0)) {
 		syslog(LOG_ERR, "PCP: Size of PCP packet(%d) is larger than %d bytes or "
@@ -1001,7 +1014,7 @@ static int processPCPRequest(void * req, int req_size, pcp_info_t *pcp_msg_info)
 	processedSize += sizeof(pcp_request_t);
 
 	if (common_req->ver == 1) {
-
+		/* legacy PCP version 1 support */
 		switch ( common_req->r_opcode & 0x7F ) {
 		case PCP_OPCODE_MAP:
 
@@ -1079,8 +1092,13 @@ static int processPCPRequest(void * req, int req_size, pcp_info_t *pcp_msg_info)
 		}
 
 	} else if (common_req->ver == 2) {
-
+		/* RFC 6887 PCP support
+		 * http://tools.ietf.org/html/rfc6887 */
 		switch ( common_req->r_opcode & 0x7F) {
+		case PCP_OPCODE_ANNOUNCE:
+			/* should check PCP Client's IP Address in request */
+			/* see http://tools.ietf.org/html/rfc6887#section-14.1 */
+			break;
 		case PCP_OPCODE_MAP:
 
 			remainingSize -= sizeof(pcp_map_v2_t);
@@ -1306,8 +1324,11 @@ int ProcessIncomingPCPPacket(int s, unsigned char *buff, int len,
 
 		createPCPResponse(buff, &pcp_msg_info);
 
-		len = (len + 3) & ~3;	/* round up resp. length to multiple of 4 */
-		len = sendto(s, buff, len, 0,
+		if(len < PCP_MIN_LEN)
+			len = PCP_MIN_LEN;
+		else
+			len = (len + 3) & ~3;	/* round up resp. length to multiple of 4 */
+		len = sendto_or_schedule(s, buff, len, 0,
 		           (struct sockaddr *)senderaddr, sizeof(struct sockaddr_in));
 		if( len < 0 ) {
 			syslog(LOG_ERR, "sendto(pcpserver): %m");

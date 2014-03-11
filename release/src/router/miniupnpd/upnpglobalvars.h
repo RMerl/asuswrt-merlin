@@ -1,7 +1,7 @@
-/* $Id: upnpglobalvars.h,v 1.36 2013/12/13 12:26:05 nanard Exp $ */
+/* $Id: upnpglobalvars.h,v 1.37 2014/02/06 09:52:03 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2012 Thomas Bernard
+ * (c) 2006-2014 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -139,6 +139,7 @@ extern struct lan_addr_list lan_addrs;
 #ifdef ENABLE_IPV6
 /* ipv6 address used for HTTP */
 extern char ipv6_addr_for_http_with_brackets[64];
+extern int ipv6_enabled;
 #endif
 
 extern const char * minissdpdsocketpath;

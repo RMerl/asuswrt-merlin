@@ -1,4 +1,35 @@
-$Id: Changelog.txt,v 1.347 2013/12/16 15:38:52 nanard Exp $
+$Id: Changelog.txt,v 1.358 2014/03/09 23:11:43 nanard Exp $
+
+2014/03/09:
+  IPv6 support in testgetifaddr
+
+2014/03/07:
+  NAT-PMP search an allowed eport instead of returning an error
+    if the original eport is not allowed.
+
+2014/03/06:
+  Fix add_filter_rule2() for pf.
+
+2014/02/28:
+  log message when shutting down
+  natpmp : avoid hang when all external ports in use
+
+2014/02/25:
+  add implementation of scheduled sendto (asyncsendto) in order
+  to retry failed sendto() calls or schedule sending of packets
+
+2014/02/24:
+  Defaulting to SSDP_RESPOND_SAME_VERSION
+
+2014/02/11:
+  Fix PCP Map renewal
+
+2014/02/06:
+  possibility to disable ipv6 at runtime
+
+2014/02/03:
+  PCP : Add support for ANNOUNCE requests
+  minixml now handle XML comments
 
 2013/12/16:
   Attempt to compile with OS X/pf

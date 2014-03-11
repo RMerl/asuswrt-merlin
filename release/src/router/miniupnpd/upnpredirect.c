@@ -1,7 +1,7 @@
-/* $Id: upnpredirect.c,v 1.81 2013/12/13 13:41:53 nanard Exp $ */
+/* $Id: upnpredirect.c,v 1.83 2014/03/09 23:08:05 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2012 Thomas Bernard
+ * (c) 2006-2014 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -422,6 +422,8 @@ _upnp_delete_redir(unsigned short eport, int proto)
 	int r;
 #if defined(__linux__)
 	r = delete_redirect_and_filter_rules(eport, proto);
+#elif defined(USE_PF)
+	r = delete_redirect_and_filter_rules(ext_if_name, eport, proto);
 #else
 	r = delete_redirect_rule(ext_if_name, eport, proto);
 	delete_filter_rule(ext_if_name, eport, proto);

@@ -1,6 +1,6 @@
-# $Id: Makefile.linux,v 1.80 2013/12/16 15:40:42 nanard Exp $
+# $Id: Makefile.linux,v 1.83 2014/03/09 23:10:13 nanard Exp $
 # MiniUPnP project
-# (c) 2006-2013 Thomas Bernard
+# (c) 2006-2014 Thomas Bernard
 # http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
 # Author : Thomas Bernard
 # for use with GNU Make
@@ -21,7 +21,16 @@
 # ./configure them and build them then miniupnpd will build using :
 # $ IPTABLESPATH=/path/to/iptables-1.4.1 make -f Makefile.linux
 #
-CFLAGS = -Wall -Os -D_GNU_SOURCE $(EXTRACFLAGS)
+#CFLAGS = -O -g -DDEBUG
+CFLAGS ?= -Os
+CFLAGS += -fno-strict-aliasing
+CFLAGS += -fno-common
+CFLAGS += -D_GNU_SOURCE
+CFLAGS += -Wall
+CFLAGS += -Wextra -Wstrict-prototypes -Wdeclaration-after-statement
+CFLAGS += $(EXTRACFLAGS)
+#CFLAGS += -Wno-missing-field-initializers
+#CFLAGS += -ansi	# iptables headers does use typeof which is a gcc extension
 CC ?= gcc
 RM = rm -f
 INSTALL = install
@@ -39,14 +48,12 @@ BASEOBJS = miniupnpd.o upnphttp.o upnpdescgen.o upnpsoap.o \
            upnpredirect.o getifaddr.o daemonize.o upnpglobalvars.o \
            options.o upnppermissions.o minissdp.o natpmp.o pcpserver.o \
            upnpevents.o upnputils.o getconnstatus.o \
-           upnppinhole.o pcplearndscp.o
+           upnppinhole.o pcplearndscp.o asyncsendto.o
 
 LNXOBJS = linux/getifstats.o linux/ifacewatcher.o linux/getroute.o
 NETFILTEROBJS = netfilter/iptcrdr.o netfilter/iptpinhole.o netfilter/nfct_get.o
 
 ALLOBJS = $(BASEOBJS) $(LNXOBJS) $(NETFILTEROBJS)
-
-ARCH ?= $(shell uname -m | grep -q "x86_64" && echo 64)
 
 ifdef IPTABLESPATH
 CFLAGS := $(CFLAGS) -I$(IPTABLESPATH)/include/
@@ -71,22 +78,14 @@ else	#ifdef IPTABLESPATH
 
 CFLAGS += -I../iptables/include
 LDFLAGS = -L../iptables -liptc
-
-endif	#ifdef IPTABLESPATH
-
-TEST := $(shell pkg-config --atleast-version=1.0.2 libnetfilter_conntrack && pkg-config --atleast-version=1.0.3 libmnl && echo 1)
-ifeq ($(TEST),1)
-CFLAGS += -DUSE_NFCT
-LIBS += $(shell pkg-config --static --libs-only-l libmnl)
-LIBS += $(shell pkg-config --static --libs-only-l libnetfilter_conntrack)
-endif # ($(TEST),1)
+endif   #ifdef IPTABLESPATH
 
 TESTUPNPDESCGENOBJS = testupnpdescgen.o upnpdescgen.o
 
 EXECUTABLES = miniupnpd
 #EXECUTABLES = miniupnpd testupnpdescgen testgetifstats \
 #              testupnppermissions miniupnpdctl testgetifaddr \
-#              testgetroute
+#              testgetroute testasyncsendto
 
 .PHONY:	all clean install depend genuuid
 
@@ -97,7 +96,7 @@ clean:
 	$(RM) $(EXECUTABLES)
 	$(RM) testupnpdescgen.o testgetifstats.o
 	$(RM) testupnppermissions.o testgetifaddr.o
-	$(RM) testgetroute.o
+	$(RM) testgetroute.o testasyncsendto.o
 	$(RM) miniupnpdctl.o
 
 install:	miniupnpd miniupnpd.8 miniupnpd.conf genuuid \
@@ -141,6 +140,9 @@ testgetifaddr:	testgetifaddr.o getifaddr.o
 
 testgetroute:	testgetroute.o linux/getroute.o upnputils.o -lnfnetlink
 
+testasyncsendto:	testasyncsendto.o asyncsendto.o upnputils.o \
+	linux/getroute.o -lnfnetlink
+
 miniupnpdctl:	miniupnpdctl.o
 
 config.h:	genconfig.sh VERSION
@@ -150,15 +152,15 @@ depend:	config.h
 	makedepend -f$(MAKEFILE_LIST) -Y \
 	$(ALLOBJS:.o=.c) $(TESTUPNPDESCGENOBJS:.o=.c) \
 	testgetifstats.c testupnppermissions.c testgetifaddr.c \
-	testgetroute.c miniupnpdctl.c 2>/dev/null
+	testgetroute.c testasyncsendto.c miniupnpdctl.c 2>/dev/null
 
 # DO NOT DELETE
 
 miniupnpd.o: config.h macros.h upnpglobalvars.h upnppermissions.h
 miniupnpd.o: miniupnpdtypes.h upnphttp.h upnpdescgen.h miniupnpdpath.h
 miniupnpd.o: getifaddr.h upnpsoap.h options.h minissdp.h upnpredirect.h
-miniupnpd.o: upnppinhole.h daemonize.h upnpevents.h natpmp.h commonrdr.h
-miniupnpd.o: upnputils.h ifacewatcher.h
+miniupnpd.o: upnppinhole.h daemonize.h upnpevents.h asyncsendto.h natpmp.h
+miniupnpd.o: pcpserver.h commonrdr.h upnputils.h ifacewatcher.h
 upnphttp.o: config.h upnphttp.h upnpdescgen.h miniupnpdpath.h upnpsoap.h
 upnphttp.o: upnpevents.h upnputils.h
 upnpdescgen.o: config.h getifaddr.h upnpredirect.h upnpdescgen.h
@@ -182,20 +184,24 @@ options.o: miniupnpdtypes.h
 upnppermissions.o: config.h upnppermissions.h
 minissdp.o: config.h upnpdescstrings.h miniupnpdpath.h upnphttp.h
 minissdp.o: upnpglobalvars.h upnppermissions.h miniupnpdtypes.h minissdp.h
-minissdp.o: upnputils.h getroute.h codelength.h
+minissdp.o: upnputils.h getroute.h asyncsendto.h codelength.h
 natpmp.o: macros.h config.h natpmp.h upnpglobalvars.h upnppermissions.h
 natpmp.o: miniupnpdtypes.h getifaddr.h upnpredirect.h commonrdr.h upnputils.h
-pcpserver.o: config.h
+natpmp.o: asyncsendto.h
+pcpserver.o: config.h pcpserver.h macros.h upnpglobalvars.h upnppermissions.h
+pcpserver.o: miniupnpdtypes.h pcplearndscp.h upnpredirect.h commonrdr.h
+pcpserver.o: getifaddr.h asyncsendto.h pcp_msg_struct.h
 upnpevents.o: config.h upnpevents.h miniupnpdpath.h upnpglobalvars.h
 upnpevents.o: upnppermissions.h miniupnpdtypes.h upnpdescgen.h upnputils.h
 upnputils.o: config.h upnputils.h upnpglobalvars.h upnppermissions.h
-upnputils.o: miniupnpdtypes.h
+upnputils.o: miniupnpdtypes.h getroute.h
 getconnstatus.o: getconnstatus.h getifaddr.h
 upnppinhole.o: macros.h config.h upnpredirect.h upnpglobalvars.h
 upnppinhole.o: upnppermissions.h miniupnpdtypes.h upnpevents.h
 upnppinhole.o: netfilter/iptpinhole.h
 pcplearndscp.o: config.h upnpglobalvars.h upnppermissions.h miniupnpdtypes.h
 pcplearndscp.o: pcplearndscp.h
+asyncsendto.o: asyncsendto.h
 linux/getifstats.o: config.h getifstats.h
 linux/ifacewatcher.o: config.h ifacewatcher.h config.h minissdp.h
 linux/ifacewatcher.o: miniupnpdtypes.h getifaddr.h upnpglobalvars.h
@@ -213,7 +219,8 @@ upnpdescgen.o: miniupnpdpath.h upnpglobalvars.h upnppermissions.h
 upnpdescgen.o: miniupnpdtypes.h upnpdescstrings.h upnpurns.h getconnstatus.h
 testgetifstats.o: getifstats.h
 testupnppermissions.o: upnppermissions.h config.h
-testgetifaddr.o: getifaddr.h
+testgetifaddr.o: config.h getifaddr.h
 testgetroute.o: getroute.h upnputils.h upnpglobalvars.h upnppermissions.h
 testgetroute.o: config.h miniupnpdtypes.h
+testasyncsendto.o: miniupnpdtypes.h config.h upnputils.h asyncsendto.h
 miniupnpdctl.o: macros.h

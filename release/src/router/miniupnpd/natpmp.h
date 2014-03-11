@@ -1,4 +1,4 @@
-/* $Id: natpmp.h,v 1.10 2013/12/13 12:44:48 nanard Exp $ */
+/* $Id: natpmp.h,v 1.11 2014/02/01 17:17:35 nanard Exp $ */
 /* MiniUPnP project
  * author : Thomas Bernard
  * website : http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
@@ -25,12 +25,6 @@ int ReceiveNATPMPOrPCPPacket(int s, struct sockaddr_in* senderaddr,
 
 void ProcessIncomingNATPMPPacket(int s, unsigned char *msg_buff, int len,
 	    struct sockaddr_in *senderaddr);
-
-#if 0
-int ScanNATPMPforExpiration(void);
-
-int CleanExpiredNATPMP(void);
-#endif
 
 void SendNATPMPPublicAddressChangeNotification(int * sockets, int n_sockets);
 

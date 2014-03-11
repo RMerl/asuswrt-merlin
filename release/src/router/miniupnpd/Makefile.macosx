@@ -32,7 +32,8 @@ FWNAME = $(shell [ `uname -r | cut -d. -f1` -ge 11  ] && echo "pf" || echo "ipfw
 STD_OBJS = miniupnpd.o upnphttp.o upnpdescgen.o upnpsoap.o \
           upnpredirect.o getifaddr.o daemonize.o upnpglobalvars.o \
           options.o upnppermissions.o minissdp.o natpmp.o \
-	  upnpevents.o getconnstatus.o upnputils.o
+          upnpevents.o getconnstatus.o upnputils.o \
+          asyncsendto.o
 MAC_OBJS = mac/getifstats.o bsd/ifacewatcher.o
 IPFW_OBJS = ipfw/ipfwrdr.o ipfw/ipfwaux.o
 PF_OBJS = pf/obsdrdr.o pf/pfpinhole.o

@@ -1,7 +1,7 @@
-/* $Id: upnpglobalvars.c,v 1.32 2013/12/13 14:07:09 nanard Exp $ */
+/* $Id: upnpglobalvars.c,v 1.34 2014/02/06 09:52:03 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2012 Thomas Bernard
+ * (c) 2006-2014 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -33,8 +33,11 @@ unsigned long upstream_bitrate = 0;
 /* startup time */
 time_t startup_time = 0;
 
+#ifdef ENABLE_PCP
+/* for PCP */
 unsigned long int min_lifetime = 120;
 unsigned long int max_lifetime = 86400;
+#endif
 
 int runtime_flags = 0;
 
@@ -118,6 +121,7 @@ struct lan_addr_list lan_addrs;
 #ifdef ENABLE_IPV6
 /* ipv6 address used for HTTP */
 char ipv6_addr_for_http_with_brackets[64];
+int ipv6_enabled = 1;
 #endif
 
 /* Path of the Unix socket used to communicate with MiniSSDPd */
