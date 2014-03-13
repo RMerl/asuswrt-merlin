@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 374.40 (6-March-2014)
+Asuswrt-Merlin - build 374.41 (xx-xxxx-2014)
 ============================================
 
 About
@@ -564,6 +564,11 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+374.41 (xx-xxxx-2014)
+   - FIXED: Language dropdown not properly shown with non-ASCII 
+            alphabets.
+
+
 374.40 (6-March-2014)
    - KNOWN ISSUE: Some people are experiencing random reboots
      with the RT-AC68U running firmwares based on recent Asus GPL.
