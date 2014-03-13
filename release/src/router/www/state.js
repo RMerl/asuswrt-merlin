@@ -1,4 +1,4 @@
-/* Internet Explorer lacks this array method */
+﻿/* Internet Explorer lacks this array method */
 if (!('indexOf' in Array.prototype)) {
 	Array.prototype.indexOf= function(find, i /*opt*/) {
 		if (i===undefined) i= 0;
@@ -11,7 +11,7 @@ if (!('indexOf' in Array.prototype)) {
 	};
 }
 
-﻿String.prototype.toArray = function(){
+String.prototype.toArray = function(){
 	var ret = eval(this.toString());
 	if(Object.prototype.toString.apply(ret) === '[object Array]')
 		return ret;
