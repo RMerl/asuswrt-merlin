@@ -1,7 +1,7 @@
-/* $Id: upnpglobalvars.h,v 1.35 2013/06/13 13:21:30 nanard Exp $ */
+/* $Id: upnpglobalvars.h,v 1.37 2014/02/06 09:52:03 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2012 Thomas Bernard
+ * (c) 2006-2014 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -31,6 +31,10 @@ extern unsigned long upstream_bitrate;
 
 /* statup time */
 extern time_t startup_time;
+
+extern unsigned long int min_lifetime;
+extern unsigned long int max_lifetime;
+
 
 /* runtime boolean flags */
 extern int runtime_flags;
@@ -67,8 +71,25 @@ extern char modelnumber[];
 #define PRESENTATIONURL_MAX_LEN (64)
 extern char presentationurl[];
 
+#ifdef ENABLE_MANUFACTURER_INFO_CONFIGURATION
 #define FRIENDLY_NAME_MAX_LEN (64)
 extern char friendly_name[];
+
+#define MANUFACTURER_NAME_MAX_LEN (64)
+extern char manufacturer_name[];
+
+#define MANUFACTURER_URL_MAX_LEN (64)
+extern char manufacturer_url[];
+
+#define MODEL_NAME_MAX_LEN (64)
+extern char model_name[];
+
+#define MODEL_DESCRIPTION_MAX_LEN (64)
+extern char model_description[];
+
+#define MODEL_URL_MAX_LEN (64)
+extern char model_url[];
+#endif
 
 /* UPnP permission rules : */
 extern struct upnpperm * upnppermlist;
@@ -80,6 +101,10 @@ extern unsigned int num_upnpperm;
 extern unsigned int nextnatpmptoclean_timestamp;
 extern unsigned short nextnatpmptoclean_eport;
 extern unsigned short nextnatpmptoclean_proto;
+#endif
+#ifdef PCP_SADSCP
+extern struct dscp_values* dscp_values_list;
+extern unsigned int num_dscp_values;
 #endif
 #endif
 
@@ -95,6 +120,7 @@ extern const char * tag;
 
 #ifdef USE_NETFILTER
 extern const char * miniupnpd_nat_chain;
+extern const char * miniupnpd_peer_chain;
 extern const char * miniupnpd_forward_chain;
 #ifdef ENABLE_6FC_SERVICE
 extern const char * miniupnpd_v6_filter_chain;
@@ -113,6 +139,7 @@ extern struct lan_addr_list lan_addrs;
 #ifdef ENABLE_IPV6
 /* ipv6 address used for HTTP */
 extern char ipv6_addr_for_http_with_brackets[64];
+extern int ipv6_enabled;
 #endif
 
 extern const char * minissdpdsocketpath;

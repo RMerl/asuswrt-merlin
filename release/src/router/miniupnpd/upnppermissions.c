@@ -1,7 +1,7 @@
-/* $Id: upnppermissions.c,v 1.17 2012/02/15 22:43:34 nanard Exp $ */
+/* $Id: upnppermissions.c,v 1.18 2014/03/07 10:43:29 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2012 Thomas Bernard
+ * (c) 2006-2014 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -223,6 +223,21 @@ match_permission(const struct upnpperm * perm,
 	return 1;
 }
 
+/* match_permission_internal()
+ * returns: 1 if address, iport matches the permission rule
+ *          0 if no match */
+static int
+match_permission_internal(const struct upnpperm * perm,
+                          struct in_addr address, u_short iport)
+{
+	if( (iport < perm->iport_min) || (perm->iport_max < iport))
+		return 0;
+	if( (address.s_addr & perm->mask.s_addr)
+	   != (perm->address.s_addr & perm->mask.s_addr) )
+		return 0;
+	return 1;
+}
+
 int
 check_upnp_rule_against_permissions(const struct upnpperm * permary,
                                     int n_perms,
@@ -243,5 +258,23 @@ check_upnp_rule_against_permissions(const struct upnpperm * permary,
 	}
 	syslog(LOG_DEBUG, "no permission rule matched : accept by default (n_perms=%d)", n_perms);
 	return 1;	/* Default : accept */
+}
+
+int
+find_allowed_eport(const struct upnpperm * permary,
+                   int n_perms,
+                   struct in_addr address, u_short iport,
+                   u_short *allowed_eport)
+{
+	int i;
+	for(i=0; i<n_perms; i++)
+	{
+		if(permary[i].type == UPNPPERM_ALLOW
+		  && match_permission_internal(permary + i, address, iport)) {
+			*allowed_eport = permary[i].eport_min;
+			return 1;
+		}
+	}
+	return 0;	/* no eport found */
 }
 

@@ -1,4 +1,4 @@
-/* $Id: iptcrdr.c,v 1.50 2012/10/03 14:49:08 nanard Exp $ */
+/* $Id: iptcrdr.c,v 1.51 2013/12/13 13:40:41 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2011 Thomas Bernard
@@ -14,6 +14,7 @@
 #include <arpa/inet.h>
 #include <dlfcn.h>
 #include <iptables.h>
+#include <linux/netfilter/xt_DSCP.h>
 #include <libiptc/libiptc.h>
 
 #include <linux/version.h>
@@ -70,6 +71,17 @@ addnatrule(int proto, unsigned short eport,
 static int
 add_filter_rule(int proto, const char * rhost,
                 const char * iaddr, unsigned short iport);
+
+static int
+addpeernatrule(int proto,
+           const char * eaddr, unsigned short eport,
+           const char * iaddr, unsigned short iport,
+           const char * rhost, unsigned short rport);
+
+static int
+addpeerdscprule(int proto, unsigned char dscp,
+           const char * iaddr, unsigned short iport,
+           const char * rhost, unsigned short rport);
 
 /* dummy init and shutdown functions */
 int init_redirect(void)
@@ -212,6 +224,41 @@ add_redirect_rule2(const char * ifname,
 	r = addnatrule(proto, eport, iaddr, iport, rhost);
 	if(r >= 0)
 		add_redirect_desc(eport, proto, desc, timestamp);
+	return r;
+}
+
+/* add_redirect_rule2() */
+int
+add_peer_redirect_rule2(const char * ifname,
+                   const char * rhost, unsigned short rport,
+                   const char * eaddr, unsigned short eport,
+                   const char * iaddr, unsigned short iport, int proto,
+                   const char * desc, unsigned int timestamp)
+{
+	int r;
+	UNUSED(ifname);
+
+	r = addpeernatrule(proto, eaddr, eport, iaddr, iport, rhost, rport);
+	if(r >= 0)
+		add_redirect_desc(eport, proto, desc, timestamp);
+	return r;
+}
+
+int
+add_peer_dscp_rule2(const char * ifname,
+                   const char * rhost, unsigned short rport,
+                   unsigned char dscp,
+                   const char * iaddr, unsigned short iport, int proto,
+                   const char * desc, unsigned int timestamp)
+{
+	int r;
+	UNUSED(ifname);
+	UNUSED(desc);
+	UNUSED(timestamp);
+
+	r = addpeerdscprule(proto, dscp, iaddr, iport, rhost, rport);
+/*	if(r >= 0)
+		add_redirect_desc(dscp, proto, desc, timestamp); */
 	return r;
 }
 
@@ -417,6 +464,120 @@ get_redirect_rule_by_index(int index,
 	return r;
 }
 
+/* get_peer_rule_by_index()
+ * return -1 when the rule was not found */
+int
+get_peer_rule_by_index(int index,
+                           char * ifname, unsigned short * eport,
+                           char * iaddr, int iaddrlen, unsigned short * iport,
+                           int * proto, char * desc, int desclen,
+                           char * rhost, int rhostlen, unsigned short * rport,
+                           unsigned int * timestamp,
+                           u_int64_t * packets, u_int64_t * bytes)
+{
+	int r = -1;
+#if USE_INDEX_FROM_DESC_LIST && 0
+	r = get_redirect_desc_by_index(index, eport, proto,
+	                               desc, desclen, timestamp);
+	if (r==0)
+	{
+		r = get_redirect_rule(ifname, *eport, *proto, iaddr, iaddrlen, iport,
+				      0, 0, packets, bytes);
+	}
+#else
+	int i = 0;
+	IPTC_HANDLE h;
+	const struct ipt_entry * e;
+	const struct ipt_entry_target * target;
+	const struct ip_nat_multi_range * mr;
+	const struct ipt_entry_match *match;
+	UNUSED(ifname);
+
+	h = iptc_init("nat");
+	if(!h)
+	{
+		syslog(LOG_ERR, "get_peer_rule_by_index() : "
+		                "iptc_init() failed : %s",
+		       iptc_strerror(errno));
+		return -1;
+	}
+	if(!iptc_is_chain(miniupnpd_peer_chain, h))
+	{
+		syslog(LOG_ERR, "chain %s not found", miniupnpd_peer_chain);
+	}
+	else
+	{
+#ifdef IPTABLES_143
+		for(e = iptc_first_rule(miniupnpd_peer_chain, h);
+		    e;
+			e = iptc_next_rule(e, h))
+#else
+		for(e = iptc_first_rule(miniupnpd_peer_chain, &h);
+		    e;
+			e = iptc_next_rule(e, &h))
+#endif
+		{
+			if(i==index)
+			{
+				*proto = e->ip.proto;
+				match = (const struct ipt_entry_match *)&e->elems;
+				if(0 == strncmp(match->u.user.name, "tcp", IPT_FUNCTION_MAXNAMELEN))
+				{
+					const struct ipt_tcp * info;
+					info = (const struct ipt_tcp *)match->data;
+					if (rport)
+						*rport = info->dpts[0];
+					if (iport)
+						*iport = info->spts[0];
+				}
+				else
+				{
+					const struct ipt_udp * info;
+					info = (const struct ipt_udp *)match->data;
+					if (rport)
+						*rport = info->dpts[0];
+					if (iport)
+						*iport = info->spts[0];
+				}
+				target = (void *)e + e->target_offset;
+				mr = (const struct ip_nat_multi_range *)&target->data[0];
+				*eport = ntohs(mr->range[0].min.all);
+				get_redirect_desc(*eport, *proto, desc, desclen, timestamp);
+				if(packets)
+					*packets = e->counters.pcnt;
+				if(bytes)
+					*bytes = e->counters.bcnt;
+				/* rhost */
+				if(rhost && rhostlen > 0) {
+					if(e->ip.dst.s_addr) {
+						snprintip(rhost, rhostlen, ntohl(e->ip.dst.s_addr));
+					} else {
+						rhost[0] = '\0';
+					}
+				}
+				if(iaddr && iaddrlen > 0) {
+					if(e->ip.src.s_addr) {
+						snprintip(iaddr, iaddrlen, ntohl(e->ip.src.s_addr));
+					} else {
+						rhost[0] = '\0';
+					}
+				}
+				r = 0;
+				break;
+			}
+			i++;
+		}
+	}
+	if(h)
+#ifdef IPTABLES_143
+		iptc_free(h);
+#else
+		iptc_free(&h);
+#endif
+#endif
+	return r;
+}
+
 /* delete_rule_and_commit() :
  * subfunction used in delete_redirect_and_filter_rules() */
 static int
@@ -459,7 +620,7 @@ delete_rule_and_commit(unsigned int index, IPTC_HANDLE h,
 int
 delete_redirect_and_filter_rules(unsigned short eport, int proto)
 {
-	int r = -1;
+	int r = -1, r2 = -1;
 	unsigned index = 0;
 	unsigned i = 0;
 	IPTC_HANDLE h;
@@ -576,22 +737,134 @@ delete_redirect_and_filter_rules(unsigned short eport, int proto)
 					if(iaddr != e->ip.dst.s_addr)
 						continue;
 					index = i;
+					syslog(LOG_INFO, "Trying to delete filter rule at index %u", index);
+					r = delete_rule_and_commit(index, h, miniupnpd_forward_chain, "delete_filter_rule");
+					h = NULL;
 					break;
 				}
 			}
-			syslog(LOG_INFO, "Trying to delete filter rule at index %u", index);
-			r = delete_rule_and_commit(index, h, miniupnpd_forward_chain, "delete_filter_rule");
+		}
+		if(h)
+#ifdef IPTABLES_143
+			iptc_free(h);
+#else
+			iptc_free(&h);
+#endif
+	}
+
+	/*delete PEER rule*/
+	if((h = iptc_init("nat")))
+	{
+		i = 0;
+		/* we must find the right index for the filter rule */
+#ifdef IPTABLES_143
+		for(e = iptc_first_rule(miniupnpd_peer_chain, h);
+		    e;
+			e = iptc_next_rule(e, h), i++)
+#else
+		for(e = iptc_first_rule(miniupnpd_peer_chain, &h);
+		    e;
+			e = iptc_next_rule(e, &h), i++)
+#endif
+		{
+			if(proto==e->ip.proto)
+			{
+				target = (void *)e + e->target_offset;
+				mr = (const struct ip_nat_multi_range *)&target->data[0];
+				if (eport != ntohs(mr->range[0].min.all)) {
+					continue;
+				}
+				iaddr = e->ip.src.s_addr;
+				match = (const struct ipt_entry_match *)&e->elems;
+				if(0 == strncmp(match->u.user.name, "tcp", IPT_FUNCTION_MAXNAMELEN))
+				{
+					const struct ipt_tcp * info;
+					info = (const struct ipt_tcp *)match->data;
+					iport = info->spts[0];
+				}
+				else
+				{
+					const struct ipt_udp * info;
+					info = (const struct ipt_udp *)match->data;
+					iport = info->dpts[0];
+				}
+
+				index = i;
+				syslog(LOG_INFO, "Trying to delete peer rule at index %u", index);
+				r2 = delete_rule_and_commit(index, h, miniupnpd_peer_chain, "delete_peer_rule");
+				h = NULL;
+				break;
+			}
 		}
 	}
+
+	if(h)
+#ifdef IPTABLES_143
+		iptc_free(h);
+#else
+		iptc_free(&h);
+#endif
+	/*delete DSCP rule*/
+	if((r2==0)&&(h = iptc_init("mangle")))
+	{
+		i = 0;
+		index = -1;
+		/* we must find the right index for the filter rule */
+#ifdef IPTABLES_143
+		for(e = iptc_first_rule(miniupnpd_nat_chain, h);
+		    e;
+			e = iptc_next_rule(e, h), i++)
+#else
+		for(e = iptc_first_rule(miniupnpd_nat_chain, &h);
+		    e;
+			e = iptc_next_rule(e, &h), i++)
+#endif
+		{
+			if(proto==e->ip.proto)
+			{
+				match = (const struct ipt_entry_match *)&e->elems;
+				/*syslog(LOG_DEBUG, "filter rule #%u: %s %s",
+				       i, match->u.user.name, inet_ntoa(e->ip.dst));*/
+				if(0 == strncmp(match->u.user.name, "tcp", IPT_FUNCTION_MAXNAMELEN))
+				{
+					const struct ipt_tcp * info;
+					info = (const struct ipt_tcp *)match->data;
+					if(iport != info->spts[0])
+						continue;
+				}
+				else
+				{
+					const struct ipt_udp * info;
+					info = (const struct ipt_udp *)match->data;
+					if(iport != info->spts[0])
+						continue;
+				}
+				if(iaddr != e->ip.src.s_addr)
+					continue;
+				index = i;
+				syslog(LOG_INFO, "Trying to delete dscp rule at index %u", index);
+				r2 = delete_rule_and_commit(index, h, miniupnpd_nat_chain, "delete_dscp_rule");
+				h = NULL;
+				break;
+			}
+		}
+	if (h)
+	#ifdef IPTABLES_143
+		iptc_free(h);
+	#else
+		iptc_free(&h);
+	#endif
+	}
+
 	del_redirect_desc(eport, proto);
-	return r;
+	return r*r2;
 }
 
 /* ==================================== */
 /* TODO : add the -m state --state NEW,ESTABLISHED,RELATED
  * only for the filter rule */
 static struct ipt_entry_match *
-get_tcp_match(unsigned short dport)
+get_tcp_match(unsigned short dport, unsigned short sport)
 {
 	struct ipt_entry_match *match;
 	struct ipt_tcp * tcpinfo;
@@ -602,15 +875,25 @@ get_tcp_match(unsigned short dport)
 	match->u.match_size = size;
 	strncpy(match->u.user.name, "tcp", sizeof(match->u.user.name));
 	tcpinfo = (struct ipt_tcp *)match->data;
-	tcpinfo->spts[0] = 0;		/* all source ports */
-	tcpinfo->spts[1] = 0xFFFF;
-	tcpinfo->dpts[0] = dport;	/* specified destination port */
-	tcpinfo->dpts[1] = dport;
+	if (sport == 0) {
+		tcpinfo->spts[0] = 0;		/* all source ports */
+		tcpinfo->spts[1] = 0xFFFF;
+	} else {
+		tcpinfo->spts[0] = sport;	   /* specified source port */
+		tcpinfo->spts[1] = sport;
+	}
+	if (dport == 0) {
+		tcpinfo->dpts[0] = 0;	   /* all destination ports */
+		tcpinfo->dpts[1] = 0xFFFF;
+	} else {
+		tcpinfo->dpts[0] = dport;	/* specified destination port */
+		tcpinfo->dpts[1] = dport;
+	}
 	return match;
 }
 
 static struct ipt_entry_match *
-get_udp_match(unsigned short dport)
+get_udp_match(unsigned short dport, unsigned short sport)
 {
 	struct ipt_entry_match *match;
 	struct ipt_udp * udpinfo;
@@ -621,10 +904,20 @@ get_udp_match(unsigned short dport)
 	match->u.match_size = size;
 	strncpy(match->u.user.name, "udp", sizeof(match->u.user.name));
 	udpinfo = (struct ipt_udp *)match->data;
-	udpinfo->spts[0] = 0;		/* all source ports */
-	udpinfo->spts[1] = 0xFFFF;
-	udpinfo->dpts[0] = dport;	/* specified destination port */
-	udpinfo->dpts[1] = dport;
+	if (sport == 0) {
+		udpinfo->spts[0] = 0;	   /* all source ports */
+		udpinfo->spts[1] = 0xFFFF;
+	} else {
+		udpinfo->spts[0] = sport;	   /* specified source port */
+		udpinfo->spts[1] = sport;
+	}
+	if (dport == 0) {
+		udpinfo->dpts[0] = 0;	   /* all destination ports */
+		udpinfo->dpts[1] = 0xFFFF;
+	} else {
+		udpinfo->dpts[0] = dport;   /* specified destination port */
+		udpinfo->dpts[1] = dport;
+	}
 	return match;
 }
 
@@ -649,6 +942,48 @@ get_dnat_target(const char * daddr, unsigned short dport)
 	range->flags |= IP_NAT_RANGE_MAP_IPS;
 	range->min.all = range->max.all = htons(dport);
 	range->flags |= IP_NAT_RANGE_PROTO_SPECIFIED;
+	return target;
+}
+
+static struct ipt_entry_target *
+get_snat_target(const char * saddr, unsigned short sport)
+{
+	struct ipt_entry_target * target;
+	struct ip_nat_multi_range * mr;
+	struct ip_nat_range * range;
+	size_t size;
+
+	size =   IPT_ALIGN(sizeof(struct ipt_entry_target))
+	       + IPT_ALIGN(sizeof(struct ip_nat_multi_range));
+	target = calloc(1, size);
+	target->u.target_size = size;
+	strncpy(target->u.user.name, "SNAT", sizeof(target->u.user.name));
+	/* one ip_nat_range already included in ip_nat_multi_range */
+	mr = (struct ip_nat_multi_range *)&target->data[0];
+	mr->rangesize = 1;
+	range = &mr->range[0];
+	range->min_ip = range->max_ip = inet_addr(saddr);
+	range->flags |= IP_NAT_RANGE_MAP_IPS;
+	range->min.all = range->max.all = htons(sport);
+	range->flags |= IP_NAT_RANGE_PROTO_SPECIFIED;
+	return target;
+}
+
+static struct ipt_entry_target *
+get_dscp_target(unsigned char dscp)
+{
+	struct ipt_entry_target * target;
+	struct xt_DSCP_info * di;
+	size_t size;
+
+	size =   IPT_ALIGN(sizeof(struct ipt_entry_target))
+	       + IPT_ALIGN(sizeof(struct xt_DSCP_info));
+	target = calloc(1, size);
+	target->u.target_size = size;
+	strncpy(target->u.user.name, "DSCP", sizeof(target->u.user.name));
+	/* one ip_nat_range already included in ip_nat_multi_range */
+	di = (struct xt_DSCP_info *)&target->data[0];
+	di->dscp=dscp;
 	return target;
 }
 
@@ -739,11 +1074,11 @@ addnatrule(int proto, unsigned short eport,
 	e->ip.proto = proto;
 	if(proto == IPPROTO_TCP)
 	{
-		match = get_tcp_match(eport);
+		match = get_tcp_match(eport, 0);
 	}
 	else
 	{
-		match = get_udp_match(eport);
+		match = get_udp_match(eport, 0);
 	}
 	e->nfcache = NFC_IP_DST_PT;
 	target = get_dnat_target(iaddr, iport);
@@ -771,6 +1106,126 @@ addnatrule(int proto, unsigned short eport,
 	free(e);
 	return r;
 }
+
+/* iptables -t nat -A MINIUPNPD-PCP-PEER -s iaddr -d rhost
+ *    -p proto --sport iport --dport rport -j SNAT
+ *    --to-source ext_ip:eport */
+static int
+addpeernatrule(int proto,
+           const char * eaddr, unsigned short eport,
+           const char * iaddr, unsigned short iport,
+           const char * rhost, unsigned short rport)
+{
+	int r = 0;
+	struct ipt_entry * e;
+	struct ipt_entry_match *match = NULL;
+	struct ipt_entry_target *target = NULL;
+
+	e = calloc(1, sizeof(struct ipt_entry));
+	e->ip.proto = proto;
+	/* TODO: Fill port matches and SNAT */
+	if(proto == IPPROTO_TCP)
+	{
+		match = get_tcp_match(rport, iport);
+	}
+	else
+	{
+		match = get_udp_match(rport, iport);
+	}
+	e->nfcache = NFC_IP_DST_PT | NFC_IP_SRC_PT;
+	target = get_snat_target(eaddr, eport);
+	e->nfcache |= NFC_UNKNOWN;
+	e = realloc(e, sizeof(struct ipt_entry)
+	               + match->u.match_size
+				   + target->u.target_size);
+	memcpy(e->elems, match, match->u.match_size);
+	memcpy(e->elems + match->u.match_size, target, target->u.target_size);
+	e->target_offset = sizeof(struct ipt_entry)
+	                   + match->u.match_size;
+	e->next_offset = sizeof(struct ipt_entry)
+	                 + match->u.match_size
+					 + target->u.target_size;
+
+	/* internal host */
+	if(iaddr && (iaddr[0] != '\0') && (0 != strcmp(iaddr, "*")))
+	{
+		e->ip.src.s_addr = inet_addr(iaddr);
+		e->ip.smsk.s_addr = INADDR_NONE;
+	}
+	/* remote host */
+	if(rhost && (rhost[0] != '\0') && (0 != strcmp(rhost, "*")))
+	{
+		e->ip.dst.s_addr = inet_addr(rhost);
+		e->ip.dmsk.s_addr = INADDR_NONE;
+	}
+
+	r = iptc_init_verify_and_append("nat", miniupnpd_peer_chain, e, "addpeernatrule()");
+	free(target);
+	free(match);
+	free(e);
+	return r;
+}
+
+/* iptables -t mangle -A MINIUPNPD -s iaddr -d rhost
+ *    -p proto --sport iport --dport rport -j DSCP
+ *    --set-dscp 0xXXXX                   */
+static int
+addpeerdscprule(int proto, unsigned char dscp,
+           const char * iaddr, unsigned short iport,
+           const char * rhost, unsigned short rport)
+{
+	int r = 0;
+	struct ipt_entry * e;
+	struct ipt_entry_match *match = NULL;
+	struct ipt_entry_target *target = NULL;
+
+	e = calloc(1, sizeof(struct ipt_entry));
+	e->ip.proto = proto;
+	/* TODO: Fill port matches and SNAT */
+	if(proto == IPPROTO_TCP)
+	{
+		match = get_tcp_match(rport, iport);
+	}
+	else
+	{
+		match = get_udp_match(rport, iport);
+	}
+	e->nfcache = NFC_IP_DST_PT | NFC_IP_SRC_PT;
+	target = get_dscp_target(dscp);
+	e->nfcache |= NFC_UNKNOWN;
+	e = realloc(e, sizeof(struct ipt_entry)
+	               + match->u.match_size
+				   + target->u.target_size);
+	memcpy(e->elems, match, match->u.match_size);
+	memcpy(e->elems + match->u.match_size, target, target->u.target_size);
+	e->target_offset = sizeof(struct ipt_entry)
+	                   + match->u.match_size;
+	e->next_offset = sizeof(struct ipt_entry)
+	                 + match->u.match_size
+					 + target->u.target_size;
+
+	/* internal host */
+	if(iaddr && (iaddr[0] != '\0') && (0 != strcmp(iaddr, "*")))
+	{
+		e->ip.src.s_addr = inet_addr(iaddr);
+		e->ip.smsk.s_addr = INADDR_NONE;
+	}
+	/* remote host */
+	if(rhost && (rhost[0] != '\0') && (0 != strcmp(rhost, "*")))
+	{
+		e->ip.dst.s_addr = inet_addr(rhost);
+		e->ip.dmsk.s_addr = INADDR_NONE;
+	}
+
+	r = iptc_init_verify_and_append("mangle", miniupnpd_nat_chain, e,
+	                                "addpeerDSCPrule()");
+	free(target);
+	free(match);
+	free(e);
+	return r;
+}
+
+
 /* ================================= */
 static struct ipt_entry_target *
 get_accept_target(void)
@@ -800,11 +1255,11 @@ add_filter_rule(int proto, const char * rhost,
 	e->ip.proto = proto;
 	if(proto == IPPROTO_TCP)
 	{
-		match = get_tcp_match(iport);
+		match = get_tcp_match(iport,0);
 	}
 	else
 	{
-		match = get_udp_match(iport);
+		match = get_udp_match(iport,0);
 	}
 	e->nfcache = NFC_IP_DST_PT;
 	e->ip.dst.s_addr = inet_addr(iaddr);

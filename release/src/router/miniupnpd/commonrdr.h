@@ -1,6 +1,6 @@
-/* $Id: commonrdr.h,v 1.8 2012/09/27 16:00:44 nanard Exp $ */
+/* $Id: commonrdr.h,v 1.9 2014/02/11 09:36:15 nanard Exp $ */
 /* MiniUPnP project
- * (c) 2006-2011 Thomas Bernard
+ * (c) 2006-2014 Thomas Bernard
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
@@ -10,6 +10,9 @@
 #include "config.h"
 
 /* init and shutdown functions */
+/* init_redirect() return values :
+ *  0 : OK
+ * -1 : error */
 int
 init_redirect(void);
 
@@ -17,7 +20,10 @@ void
 shutdown_redirect(void);
 
 /* get_redirect_rule() gets internal IP and port from
- * interface, external port and protocl
+ * interface, external port and protocol
+ * return value :
+ *  0 success (rule found)
+ * -1 error or rule not found
  */
 int
 get_redirect_rule(const char * ifname, unsigned short eport, int proto,
@@ -27,6 +33,10 @@ get_redirect_rule(const char * ifname, unsigned short eport, int proto,
                   unsigned int * timestamp,
                   u_int64_t * packets, u_int64_t * bytes);
 
+/* get_redirect_rule_by_index()
+ * return values :
+ *  0 success (rule found)
+ * -1 error or rule not found */
 int
 get_redirect_rule_by_index(int index,
                            char * ifname, unsigned short * eport,

@@ -1,7 +1,7 @@
-/* $Id: miniupnpd.c,v 1.176 2013/06/13 13:21:29 nanard Exp $ */
+/* $Id: miniupnpd.c,v 1.185 2014/02/28 12:14:26 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2013 Thomas Bernard
+ * (c) 2006-2014 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -63,8 +63,14 @@
 #include "miniupnpdtypes.h"
 #include "daemonize.h"
 #include "upnpevents.h"
+#include "asyncsendto.h"
 #ifdef ENABLE_NATPMP
 #include "natpmp.h"
+#ifdef ENABLE_PCP
+#include "pcpserver.h"
+#else
+#define PCP_MAX_LEN 32
+#endif
 #endif
 #include "commonrdr.h"
 #include "upnputils.h"
@@ -111,7 +117,8 @@ OpenAndConfHTTPSocket(unsigned short port)
 	int s;
 	int i = 1;
 #ifdef ENABLE_IPV6
-	struct sockaddr_in6 listenname;
+	struct sockaddr_in6 listenname6;
+	struct sockaddr_in listenname4;
 #else
 	struct sockaddr_in listenname;
 #endif
@@ -119,7 +126,7 @@ OpenAndConfHTTPSocket(unsigned short port)
 
 	if( (s = socket(
 #ifdef ENABLE_IPV6
-	                PF_INET6,
+	                ipv6_enabled ? PF_INET6 : PF_INET,
 #else
 	                PF_INET,
 #endif
@@ -148,19 +155,35 @@ OpenAndConfHTTPSocket(unsigned short port)
 	}
 
 #ifdef ENABLE_IPV6
-	memset(&listenname, 0, sizeof(struct sockaddr_in6));
-	listenname.sin6_family = AF_INET6;
-	listenname.sin6_port = htons(port);
-	listenname.sin6_addr = in6addr_any;
-	listenname_len =  sizeof(struct sockaddr_in6);
+	if(ipv6_enabled)
+	{
+		memset(&listenname6, 0, sizeof(struct sockaddr_in6));
+		listenname6.sin6_family = AF_INET6;
+		listenname6.sin6_port = htons(port);
+		listenname6.sin6_addr = in6addr_any;
+		listenname_len =  sizeof(struct sockaddr_in6);
+	} else {
+		memset(&listenname4, 0, sizeof(struct sockaddr_in));
+		listenname4.sin_family = AF_INET;
+		listenname4.sin_port = htons(port);
+		listenname4.sin_addr.s_addr = htonl(INADDR_ANY);
+		listenname_len =  sizeof(struct sockaddr_in);
+	}
 #else
+	memset(&listenname, 0, sizeof(struct sockaddr_in));
 	listenname.sin_family = AF_INET;
 	listenname.sin_port = htons(port);
 	listenname.sin_addr.s_addr = htonl(INADDR_ANY);
 	listenname_len =  sizeof(struct sockaddr_in);
 #endif
 
+#ifdef ENABLE_IPV6
+	if(bind(s,
+	        ipv6_enabled ? (struct sockaddr *)&listenname6 : (struct sockaddr *)&listenname4,
+	        listenname_len) < 0)
+#else
 	if(bind(s, (struct sockaddr *)&listenname, listenname_len) < 0)
+#endif
 	{
 		syslog(LOG_ERR, "bind(http): %m");
 		close(s);
@@ -176,6 +199,7 @@ OpenAndConfHTTPSocket(unsigned short port)
 
 	return s;
 }
+
 #ifdef ENABLE_NFQUEUE
 
 int identify_ip_protocol(char *payload) {
@@ -581,6 +605,7 @@ parselanaddr(struct lan_addr_s * lan_addr, const char * str)
 			p++;
 		if(*p=='.')
 		{
+			/* parse mask in /255.255.255.0 format */
 			while(*p && (*p=='.' || isdigit(*p)))
 				p++;
 			n = p - q;
@@ -593,6 +618,7 @@ parselanaddr(struct lan_addr_s * lan_addr, const char * str)
 		}
 		else
 		{
+			/* it is a /24 format */
 			int nbits = atoi(q);
 			if(nbits > 32 || nbits < 0)
 				goto parselan_error;
@@ -680,7 +706,10 @@ void complete_uuidvalues(void)
  * 5) check and write pid file
  * 6) set startup time stamp
  * 7) compute presentation URL
- * 8) set signal handlers */
+ * 8) set signal handlers
+ * 9) init random generator (srandom())
+ * 10) init redirection engine
+ * 11) reload mapping from leasefile */
 static int
 init(int argc, char * * argv, struct runtime_vars * v)
 {
@@ -773,10 +802,32 @@ init(int argc, char * * argv, struct runtime_vars * v)
 			case UPNPPRESENTATIONURL:
 				presurl = ary_options[i].value;
 				break;
+#ifdef ENABLE_MANUFACTURER_INFO_CONFIGURATION
 			case UPNPFRIENDLY_NAME:
 				strncpy(friendly_name, ary_options[i].value, FRIENDLY_NAME_MAX_LEN);
 				friendly_name[FRIENDLY_NAME_MAX_LEN-1] = '\0';
 				break;
+			case UPNPMANUFACTURER_NAME:
+				strncpy(manufacturer_name, ary_options[i].value, MANUFACTURER_NAME_MAX_LEN);
+				manufacturer_name[MANUFACTURER_NAME_MAX_LEN-1] = '\0';
+				break;
+			case UPNPMANUFACTURER_URL:
+				strncpy(manufacturer_url, ary_options[i].value, MANUFACTURER_URL_MAX_LEN);
+				manufacturer_url[MANUFACTURER_URL_MAX_LEN-1] = '\0';
+				break;
+			case UPNPMODEL_NAME:
+				strncpy(model_name, ary_options[i].value, MODEL_NAME_MAX_LEN);
+				model_name[MODEL_NAME_MAX_LEN-1] = '\0';
+				break;
+			case UPNPMODEL_DESCRIPTION:
+				strncpy(model_description, ary_options[i].value, MODEL_DESCRIPTION_MAX_LEN);
+				model_description[MODEL_DESCRIPTION_MAX_LEN-1] = '\0';
+				break;
+			case UPNPMODEL_URL:
+				strncpy(model_url, ary_options[i].value, MODEL_URL_MAX_LEN);
+				model_url[MODEL_URL_MAX_LEN-1] = '\0';
+				break;
+#endif
 #ifdef USE_NETFILTER
 			case UPNPFORWARDCHAIN:
 				miniupnpd_forward_chain = ary_options[i].value;
@@ -838,6 +889,20 @@ init(int argc, char * * argv, struct runtime_vars * v)
 					/*enablenatpmp = atoi(ary_options[i].value);*/
 				break;
 #endif
+#ifdef ENABLE_PCP
+			case UPNPPCPMINLIFETIME:
+					min_lifetime = atoi(ary_options[i].value);
+					if (min_lifetime > 120 ) {
+						min_lifetime = 120;
+					}
+				break;
+			case UPNPPCPMAXLIFETIME:
+					max_lifetime = atoi(ary_options[i].value);
+					if (max_lifetime > 86400 ) {
+						max_lifetime = 86400;
+					}
+				break;
+#endif
 #ifdef PF_ENABLE_FILTER_RULES
 			case UPNPQUICKRULES:
 				if(strcmp(ary_options[i].value, "no") == 0)
@@ -865,6 +930,14 @@ init(int argc, char * * argv, struct runtime_vars * v)
 				        optionsfile);
 			}
 		}
+#ifdef ENABLE_PCP
+		/* if lifetimes are inverse */
+		if (min_lifetime >= max_lifetime) {
+			fprintf(stderr, "Minimum lifetime (%lu) is greater than or equal to maximum lifetime (%lu).\n", min_lifetime, max_lifetime);
+			fprintf(stderr, "Check your configuration file.\n");
+			return 1;
+		}
+#endif
 	}
 #endif /* DISABLE_CONFIG_FILE */
 
@@ -902,6 +975,7 @@ init(int argc, char * * argv, struct runtime_vars * v)
 			} else
 				fprintf(stderr, "Option -%c takes one argument.\n", argv[i][1]);
 			break;
+#ifdef ENABLE_MANUFACTURER_INFO_CONFIGURATION
 		case 'z':
 			if(i+1 < argc)
 				strncpy(friendly_name, argv[++i], FRIENDLY_NAME_MAX_LEN);
@@ -909,6 +983,7 @@ init(int argc, char * * argv, struct runtime_vars * v)
 				fprintf(stderr, "Option -%c takes one argument.\n", argv[i][1]);
 			friendly_name[FRIENDLY_NAME_MAX_LEN-1] = '\0';
 			break;
+#endif
 		case 's':
 			if(i+1 < argc)
 				strncpy(serialnumber, argv[++i], SERIALNUMBER_MAX_LEN);
@@ -1193,6 +1268,10 @@ init(int argc, char * * argv, struct runtime_vars * v)
 		syslog(LOG_NOTICE, "Failed to set %s handler", "SIGUSR1");
 	}
 
+	/* initialize random number generator */
+	srandom((unsigned int)time(NULL));
+
+	/* initialize redirection engine (and pinholes) */
 	if(init_redirect() < 0)
 	{
 		syslog(LOG_ERR, "Failed to init redirection engine. EXITING");
@@ -1237,7 +1316,10 @@ print_usage:
 			"\n"
 			/*"[-l logfile] " not functionnal */
 			"\t\t[-u uuid] [-s serial] [-m model_number] \n"
-			"\t\t[-t notify_interval] [-P pid_filename] [-z fiendly_name]\n"
+			"\t\t[-t notify_interval] [-P pid_filename] "
+#ifdef ENABLE_MANUFACTURER_INFO_CONFIGURATION
+			"[-z fiendly_name]\n"
+#endif
 			"\t\t[-B down up] [-w url] [-r clean_ruleset_interval]\n"
 #ifdef USE_PF
                         "\t\t[-q queue] [-T tag]\n"
@@ -1292,7 +1374,7 @@ main(int argc, char * * argv)
 	int sudpv6 = -1;	/* IP v6 socket for receiving SSDP */
 #endif
 #ifdef ENABLE_NATPMP
-	int * snatpmp = NULL;
+	int * snatpmp = NULL;	/* also used for PCP */
 #endif
 #ifdef ENABLE_NFQUEUE
 	int nfqh = -1;
@@ -1363,7 +1445,11 @@ main(int argc, char * * argv)
 
 	syslog(LOG_INFO, "Starting%s%swith external interface %s",
 #ifdef ENABLE_NATPMP
+#ifdef ENABLE_PCP
+	       GETFLAG(ENABLENATPMPMASK) ? " NAT-PMP/PCP " : " ",
+#else
 	       GETFLAG(ENABLENATPMPMASK) ? " NAT-PMP " : " ",
+#endif
 #else
 	       " ",
 #endif
@@ -1396,7 +1482,8 @@ main(int argc, char * * argv)
 			       ipv6_addr_for_http_with_brackets);
 		} else {
 			memcpy(ipv6_addr_for_http_with_brackets, "[::1]", 6);
-			syslog(LOG_WARNING, "no HTTP IPv6 address");
+			syslog(LOG_WARNING, "no HTTP IPv6 address, disabling IPv6");
+			ipv6_enabled = 0;
 		}
 #endif
 
@@ -1411,10 +1498,13 @@ main(int argc, char * * argv)
 			}
 		}
 #ifdef ENABLE_IPV6
-		sudpv6 = OpenAndConfSSDPReceiveSocket(1);
-		if(sudpv6 < 0)
+		if(ipv6_enabled)
 		{
-			syslog(LOG_WARNING, "Failed to open socket for receiving SSDP (IP v6).");
+			sudpv6 = OpenAndConfSSDPReceiveSocket(1);
+			if(sudpv6 < 0)
+			{
+				syslog(LOG_WARNING, "Failed to open socket for receiving SSDP (IP v6).");
+			}
 		}
 #endif
 
@@ -1444,14 +1534,20 @@ main(int argc, char * * argv)
 	if(GETFLAG(ENABLENATPMPMASK))
 	{
 		if(OpenAndConfNATPMPSockets(snatpmp) < 0)
+#ifdef ENABLE_PCP
+		{
+			syslog(LOG_ERR, "Failed to open sockets for NAT-PMP/PCP.");
+		} else {
+			syslog(LOG_NOTICE, "Listening for NAT-PMP/PCP traffic on port %u",
+			       NATPMP_PORT);
+		}
+#else
 		{
 			syslog(LOG_ERR, "Failed to open sockets for NAT PMP.");
 		} else {
 			syslog(LOG_NOTICE, "Listening for NAT-PMP traffic on port %u",
 			       NATPMP_PORT);
 		}
-#if 0
-		ScanNATPMPforExpiration();
 #endif
 	}
 #endif
@@ -1568,28 +1664,6 @@ main(int argc, char * * argv)
 			syslog(LOG_DEBUG, "setting timeout to %u sec",
 			       (unsigned)timeout.tv_sec);
 		}
-#ifdef ENABLE_NATPMP
-#if 0
-		/* Remove expired NAT-PMP mappings */
-		while(nextnatpmptoclean_timestamp
-		     && (timeofday.tv_sec >= nextnatpmptoclean_timestamp + startup_time))
-		{
-			/*syslog(LOG_DEBUG, "cleaning expired NAT-PMP mappings");*/
-			if(CleanExpiredNATPMP() < 0) {
-				syslog(LOG_ERR, "CleanExpiredNATPMP() failed");
-				break;
-			}
-		}
-		if(nextnatpmptoclean_timestamp
-		  && timeout.tv_sec >= (nextnatpmptoclean_timestamp + startup_time - timeofday.tv_sec))
-		{
-			/*syslog(LOG_DEBUG, "setting timeout to %d sec",
-			       nextnatpmptoclean_timestamp + startup_time - timeofday.tv_sec);*/
-			timeout.tv_sec = nextnatpmptoclean_timestamp + startup_time - timeofday.tv_sec;
-			timeout.tv_usec = 0;
-		}
-#endif
-#endif
 #ifdef ENABLE_6FC_SERVICE
 		/* Clean up expired IPv6 PinHoles */
 		next_pinhole_ts = 0;
@@ -1687,6 +1761,38 @@ main(int argc, char * * argv)
 		upnpevents_selectfds(&readset, &writeset, &max_fd);
 #endif
 
+		/* queued "sendto" */
+		{
+			struct timeval next_send;
+			i = get_next_scheduled_send(&next_send);
+			if(i > 0) {
+#ifdef DEBUG
+				syslog(LOG_DEBUG, "%d queued sendto", i);
+#endif
+				i = get_sendto_fds(&writeset, &max_fd, &timeofday);
+				if(timeofday.tv_sec > next_send.tv_sec ||
+				   (timeofday.tv_sec == next_send.tv_sec && timeofday.tv_usec >= next_send.tv_usec)) {
+					if(i > 0) {
+						timeout.tv_sec = 0;
+						timeout.tv_usec = 0;
+					}
+				} else {
+					struct timeval tmp_timeout;
+					tmp_timeout.tv_sec = (next_send.tv_sec - timeofday.tv_sec);
+					tmp_timeout.tv_usec = (next_send.tv_usec - timeofday.tv_usec);
+					if(tmp_timeout.tv_usec < 0) {
+						tmp_timeout.tv_usec += 1000000;
+						tmp_timeout.tv_sec--;
+					}
+					if(timeout.tv_sec > tmp_timeout.tv_sec
+					   || (timeout.tv_sec == tmp_timeout.tv_sec && timeout.tv_usec > tmp_timeout.tv_usec)) {
+						timeout.tv_sec = tmp_timeout.tv_sec;
+						timeout.tv_usec = tmp_timeout.tv_usec;
+					}
+				}
+			}
+		}
+
 		if(select(max_fd+1, &readset, &writeset, 0, &timeout) < 0)
 		{
 			if(quitting) goto shutdown;
@@ -1694,6 +1800,9 @@ main(int argc, char * * argv)
 			syslog(LOG_ERR, "select(all): %m");
 			syslog(LOG_ERR, "Failed to select open sockets. EXITING");
 			return 1;	/* very serious cause of error */
+		}
+		if(try_sendto(&writeset) < 0) {
+			syslog(LOG_ERR, "try_sendto: %m");
 		}
 #ifdef USE_MINIUPNPDCTL
 		for(ectl = ctllisthead.lh_first; ectl;)
@@ -1767,7 +1876,26 @@ main(int argc, char * * argv)
 		{
 			if((snatpmp[i] >= 0) && FD_ISSET(snatpmp[i], &readset))
 			{
-				ProcessIncomingNATPMPPacket(snatpmp[i]);
+				unsigned char msg_buff[PCP_MAX_LEN];
+				struct sockaddr_in senderaddr;
+				int len;
+				memset(msg_buff, 0, PCP_MAX_LEN);
+				len = ReceiveNATPMPOrPCPPacket(snatpmp[i], &senderaddr,
+				       msg_buff, sizeof(msg_buff));
+				if (len < 1)
+					continue;
+#ifdef ENABLE_PCP
+				if (msg_buff[0]==0) {  /* version equals to 0 -> means NAT-PMP */
+					ProcessIncomingNATPMPPacket(snatpmp[i], msg_buff, len,
+							&senderaddr);
+				} else { /* everything else can be PCP */
+					ProcessIncomingPCPPacket(snatpmp[i], msg_buff, len,
+							&senderaddr);
+				}
+
+#else
+				ProcessIncomingNATPMPPacket(snatpmp[i], msg_buff, len, &senderaddr);
+#endif
 			}
 		}
 #endif
@@ -1902,6 +2030,22 @@ main(int argc, char * * argv)
 	}	/* end of main loop */
 
 shutdown:
+	syslog(LOG_NOTICE, "shutting down MiniUPnPd");
+	/* send good-bye */
+	if (GETFLAG(ENABLEUPNPMASK))
+	{
+#ifndef ENABLE_IPV6
+		if(SendSSDPGoodbye(snotify, addr_count) < 0)
+#else
+		if(SendSSDPGoodbye(snotify, addr_count * 2) < 0)
+#endif
+		{
+			syslog(LOG_ERR, "Failed to broadcast good-bye notifications");
+		}
+	}
+	/* try to send pending packets */
+	finalize_sendto();
+
 	/* close out open sockets */
 	while(upnphttphead.lh_first != NULL)
 	{
@@ -1942,14 +2086,6 @@ shutdown:
 	if (GETFLAG(ENABLEUPNPMASK))
 	{
 #ifndef ENABLE_IPV6
-		if(SendSSDPGoodbye(snotify, addr_count) < 0)
-#else
-		if(SendSSDPGoodbye(snotify, addr_count * 2) < 0)
-#endif
-		{
-			syslog(LOG_ERR, "Failed to broadcast good-bye notifications");
-		}
-#ifndef ENABLE_IPV6
 		for(i = 0; i < addr_count; i++)
 #else
 		for(i = 0; i < addr_count * 2; i++)
@@ -1957,6 +2093,7 @@ shutdown:
 			close(snotify[i]);
 	}
 
+	/* remove pidfile */
 	if(pidfilename && (unlink(pidfilename) < 0))
 	{
 		syslog(LOG_ERR, "Failed to remove pidfile %s: %m", pidfilename);

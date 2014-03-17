@@ -1,7 +1,7 @@
-/* $Id: testpfpinhole.c,v 1.10 2012/04/22 23:12:51 nanard Exp $ */
+/* $Id: testpfpinhole.c,v 1.11 2014/02/28 16:49:15 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2012 Thomas Bernard
+ * (c) 2012-2014 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -21,6 +21,7 @@ const char * tag = NULL;
 const char * anchor_name = "miniupnpd";
 const char * queue = NULL;
 
+#ifdef ENABLE_IPV6
 static int print_pinhole(int uid)
 {
 	int r;
@@ -32,11 +33,11 @@ static int print_pinhole(int uid)
 	unsigned int timestamp;
 	u_int64_t packets, bytes;
 
-	r = get_pinhole((unsigned short)uid,
-	                rem_host, sizeof(rem_host), &rem_port,
-	                int_client, sizeof(int_client), &int_port,
-	                &proto, &timestamp,
-	                &packets, &bytes);
+	r = get_pinhole_info((unsigned short)uid,
+	                     rem_host, sizeof(rem_host), &rem_port,
+	                     int_client, sizeof(int_client), &int_port,
+	                     &proto, &timestamp,
+	                     &packets, &bytes);
 	if(r < 0) {
 		fprintf(stderr, "get_pinhole(%d) returned %d\n", uid, r);
 	} else {
@@ -47,6 +48,7 @@ static int print_pinhole(int uid)
 	}
 	return r;
 }
+#endif
 
 int main(int argc, char * *argv)
 {

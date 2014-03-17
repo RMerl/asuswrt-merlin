@@ -1,7 +1,7 @@
-/* $Id: obsdrdr.c,v 1.74 2012/05/01 09:20:43 nanard Exp $ */
+/* $Id: obsdrdr.c,v 1.80 2014/03/06 13:02:46 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2012 Thomas Bernard
+ * (c) 2006-2014 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -9,15 +9,19 @@
  * pf rules created (with ext_if = xl1)
  * - OpenBSD up to version 4.6 :
  *     rdr pass on xl1 inet proto udp from any to any port = 54321 \
- *            label "test label" -> 192.168.0.141 port 12345
- *   or a rdr rule + a pass rule
+ *         keep state label "test label" -> 192.168.0.42 port 12345
+ *   or a rdr rule + a pass rule :
+ *     rdr quick on xl1 inet proto udp from any to any port = 54321 \
+ *         keep state label "test label" -> 192.168.0.42 port 12345
+ *     pass in quick on xl1 inet proto udp from any to 192.168.0.42 port = 12345 \
+ *          flags S/SA keep state label "test label"
  *
  * - OpenBSD starting from version 4.7
  *     match in on xl1 inet proto udp from any to any port 54321 \
- *            label "test label" rdr-to 192.168.0.141 port 12345
+ *            label "test label" rdr-to 192.168.0.42 port 12345
  *   or
  *     pass in quick on xl1 inet proto udp from any to any port 54321 \
- *            label "test label" rdr-to 192.168.0.141 port 12345
+ *            label "test label" rdr-to 192.168.0.42 port 12345
  *
  *
  *
@@ -45,6 +49,9 @@
 #ifdef __DragonFly__
 #include <net/pf/pfvar.h>
 #else
+#ifdef MACOSX
+#define PRIVATE 1
+#endif
 #include <net/pfvar.h>
 #endif
 #include <fcntl.h>
@@ -173,6 +180,45 @@ clear_redirect_rules(void)
 error:
 	return -1;
 }
+
+int
+clear_filter_rules(void)
+{
+#ifndef PF_ENABLE_FILTER_RULES
+	return 0;
+#else
+	struct pfioc_trans io;
+	struct pfioc_trans_e ioe;
+	if(dev<0) {
+		syslog(LOG_ERR, "pf device is not open");
+		return -1;
+	}
+	memset(&ioe, 0, sizeof(ioe));
+	io.size = 1;
+	io.esize = sizeof(ioe);
+	io.array = &ioe;
+#ifndef PF_NEWSTYLE
+	ioe.rs_num = PF_RULESET_FILTER;
+#else
+	/* ? */
+	ioe.type = PF_TRANS_RULESET;
+#endif
+	strlcpy(ioe.anchor, anchor_name, MAXPATHLEN);
+	if(ioctl(dev, DIOCXBEGIN, &io) < 0)
+	{
+		syslog(LOG_ERR, "ioctl(dev, DIOCXBEGIN, ...): %m");
+		goto error;
+	}
+	if(ioctl(dev, DIOCXCOMMIT, &io) < 0)
+	{
+		syslog(LOG_ERR, "ioctl(dev, DIOCXCOMMIT, ...): %m");
+		goto error;
+	}
+	return 0;
+error:
+	return -1;
+#endif
+}
 #endif
 
 /* add_redirect_rule2() :
@@ -219,9 +265,15 @@ add_redirect_rule2(const char * ifname,
 		pcr.rule.rdr.addr.type = PF_ADDR_ADDRMASK;
 #endif
 
+#ifdef MACOSX
+		pcr.rule.dst.xport.range.op = PF_OP_EQ;
+		pcr.rule.dst.xport.range.port[0] = htons(eport);
+		pcr.rule.dst.xport.range.port[1] = htons(eport);
+#else
 		pcr.rule.dst.port_op = PF_OP_EQ;
 		pcr.rule.dst.port[0] = htons(eport);
 		pcr.rule.dst.port[1] = htons(eport);
+#endif
 #ifndef PF_NEWSTYLE
 		pcr.rule.action = PF_RDR;
 #ifndef PF_ENABLE_FILTER_RULES
@@ -338,8 +390,11 @@ add_filter_rule2(const char * ifname,
 	struct pfioc_rule pcr;
 #ifndef PF_NEWSTYLE
 	struct pfioc_pooladdr pp;
-	struct pf_pooladdr *a;
 #endif
+#ifndef USE_IFNAME_IN_RULES
+	UNUSED(ifname);
+#endif
+	UNUSED(eport);
 	if(dev<0) {
 		syslog(LOG_ERR, "pf device is not open");
 		return -1;
@@ -363,9 +418,8 @@ add_filter_rule2(const char * ifname,
 	if(1)
 	{
 #endif
-
 		pcr.rule.dst.port_op = PF_OP_EQ;
-		pcr.rule.dst.port[0] = htons(eport);
+		pcr.rule.dst.port[0] = htons(iport);
 		pcr.rule.direction = PF_IN;
 		pcr.rule.action = PF_PASS;
 		pcr.rule.af = AF_INET;
@@ -398,33 +452,16 @@ add_filter_rule2(const char * ifname,
 			inet_pton(AF_INET, rhost, &pcr.rule.src.addr.v.a.addr.v4.s_addr);
 			pcr.rule.src.addr.v.a.mask.v4.s_addr = htonl(INADDR_NONE);
 		}
-#ifndef PF_NEWSTYLE
-		pcr.rule.rpool.proxy_port[0] = eport;
-		a = calloc(1, sizeof(struct pf_pooladdr));
-		inet_pton(AF_INET, iaddr, &a->addr.v.a.addr.v4.s_addr);
-		a->addr.v.a.mask.v4.s_addr = htonl(INADDR_NONE);
-		memcpy(&pp.addr, a, sizeof(struct pf_pooladdr));
-		TAILQ_INIT(&pcr.rule.rpool.list);
-		inet_pton(AF_INET, iaddr, &a->addr.v.a.addr.v4.s_addr);
-		TAILQ_INSERT_TAIL(&pcr.rule.rpool.list, a, entries);
-
-		/* we have any - any port = # keep state label */
 		/* we want any - iaddr port = # keep state label */
-		/* memcpy(&pcr.rule.dst, a, sizeof(struct pf_pooladdr)); */
-
-		memcpy(&pp.addr, a, sizeof(struct pf_pooladdr));
-		strlcpy(pcr.rule.label, desc, PF_RULE_LABEL_SIZE);
-		if(ioctl(dev, DIOCADDADDR, &pp) < 0)
-		{
-			syslog(LOG_ERR, "ioctl(dev, DIOCADDADDR, ...): %m");
-			r = -1;
-		}
-		else
-		{
-#else
+		inet_pton(AF_INET, iaddr, &pcr.rule.dst.addr.v.a.addr.v4.s_addr);
+		pcr.rule.dst.addr.v.a.mask.v4.s_addr = htonl(INADDR_NONE);
+#ifndef PF_NEWSTYLE
+		pcr.rule.rpool.proxy_port[0] = iport;
+		pcr.rule.rpool.proxy_port[1] = iport;
+		TAILQ_INIT(&pcr.rule.rpool.list);
+#endif
 		if(1)
 		{
-#endif
 			pcr.action = PF_CHANGE_GET_TICKET;
         	if(ioctl(dev, DIOCCHANGERULE, &pcr) < 0)
 			{
@@ -441,9 +478,6 @@ add_filter_rule2(const char * ifname,
 				}
 			}
 		}
-#ifndef PF_NEWSTYLE
-		free(a);
-#endif
 	}
 	return r;
 #endif
@@ -490,8 +524,13 @@ get_redirect_rule(const char * ifname, unsigned short eport, int proto,
 			syslog(LOG_ERR, "ioctl(dev, DIOCGETRULE): %m");
 			goto error;
 		}
+#ifdef MACOSX
+		if( (eport == ntohs(pr.rule.dst.xport.range.port[0]))
+		  && (eport == ntohs(pr.rule.dst.xport.range.port[1]))
+#else
 		if( (eport == ntohs(pr.rule.dst.port[0]))
 		  && (eport == ntohs(pr.rule.dst.port[1]))
+#endif
 		  && (pr.rule.proto == proto) )
 		{
 #ifndef PF_NEWSTYLE
@@ -561,8 +600,10 @@ error:
 	return -1;
 }
 
-int
-delete_redirect_rule(const char * ifname, unsigned short eport, int proto)
+static int
+priv_delete_redirect_rule(const char * ifname, unsigned short eport,
+                          int proto, unsigned short * iport,
+                          in_addr_t * iaddr)
 {
 	int i, n;
 	struct pfioc_rule pr;
@@ -591,10 +632,53 @@ delete_redirect_rule(const char * ifname, unsigned short eport, int proto)
 			syslog(LOG_ERR, "ioctl(dev, DIOCGETRULE): %m");
 			goto error;
 		}
+#ifdef MACOSX
+		if( (eport == ntohs(pr.rule.dst.xport.range.port[0]))
+		  && (eport == ntohs(pr.rule.dst.xport.range.port[1]))
+#else
 		if( (eport == ntohs(pr.rule.dst.port[0]))
 		  && (eport == ntohs(pr.rule.dst.port[1]))
+#endif
 		  && (pr.rule.proto == proto) )
 		{
+			/* retrieve iport in order to remove filter rule */
+#ifndef PF_NEWSTYLE
+			if(iport) *iport = pr.rule.rpool.proxy_port[0];
+			if(iaddr)
+			{
+				/* retrieve internal address */
+				struct pfioc_pooladdr pp;
+				memset(&pp, 0, sizeof(pp));
+				strlcpy(pp.anchor, anchor_name, MAXPATHLEN);
+				pp.r_action = PF_RDR;
+				pp.r_num = i;
+				pp.ticket = pr.ticket;
+				if(ioctl(dev, DIOCGETADDRS, &pp) < 0)
+				{
+					syslog(LOG_ERR, "ioctl(dev, DIOCGETADDRS, ...): %m");
+					goto error;
+				}
+				if(pp.nr != 1)
+				{
+					syslog(LOG_NOTICE, "No address associated with pf rule");
+					goto error;
+				}
+				pp.nr = 0;	/* first */
+				if(ioctl(dev, DIOCGETADDR, &pp) < 0)
+				{
+					syslog(LOG_ERR, "ioctl(dev, DIOCGETADDR, ...): %m");
+					goto error;
+				}
+				*iaddr = pp.addr.addr.v.a.addr.v4.s_addr;
+			}
+#else
+			if(iport) *iport = pr.rule.rdr.proxy_port[0];
+			if(iaddr)
+			{
+				/* retrieve internal address */
+				*iaddr = pr.rule.rdr.addr.v.a.addr.v4.s_addr;
+			}
+#endif
 			pr.action = PF_CHANGE_GET_TICKET;
         	if(ioctl(dev, DIOCCHANGERULE, &pr) < 0)
 			{
@@ -617,14 +701,23 @@ error:
 }
 
 int
-delete_filter_rule(const char * ifname, unsigned short eport, int proto)
+delete_redirect_rule(const char * ifname, unsigned short eport,
+                    int proto)
+{
+	return priv_delete_redirect_rule(ifname, eport, proto, NULL, NULL);
+}
+
+static int
+priv_delete_filter_rule(const char * ifname, unsigned short iport,
+                        int proto, in_addr_t iaddr)
 {
 #ifndef PF_ENABLE_FILTER_RULES
-	UNUSED(ifname); UNUSED(eport); UNUSED(proto);
+	UNUSED(ifname); UNUSED(iport); UNUSED(proto);
 	return 0;
 #else
 	int i, n;
 	struct pfioc_rule pr;
+	UNUSED(ifname);
 	if(dev<0) {
 		syslog(LOG_ERR, "pf device is not open");
 		return -1;
@@ -646,8 +739,16 @@ delete_filter_rule(const char * ifname, unsigned short eport, int proto)
 			syslog(LOG_ERR, "ioctl(dev, DIOCGETRULE): %m");
 			goto error;
 		}
-		if( (eport == ntohs(pr.rule.dst.port[0]))
-		  && (pr.rule.proto == proto) )
+#ifdef TEST
+syslog(LOG_DEBUG, "%2d port=%hu proto=%d addr=%8x",
+       i, ntohs(pr.rule.dst.port[0]), pr.rule.proto,
+       pr.rule.dst.addr.v.a.addr.v4.s_addr);
+/*pr.rule.dst.addr.v.a.mask.v4.s_addr*/
+#endif
+		if( (iport == ntohs(pr.rule.dst.port[0]))
+		  && (pr.rule.proto == proto) &&
+		   (iaddr == pr.rule.dst.addr.v.a.addr.v4.s_addr)
+		  )
 		{
 			pr.action = PF_CHANGE_GET_TICKET;
         	if(ioctl(dev, DIOCCHANGERULE, &pr) < 0)
@@ -668,6 +769,21 @@ delete_filter_rule(const char * ifname, unsigned short eport, int proto)
 error:
 	return -1;
 #endif
+}
+
+int
+delete_redirect_and_filter_rules(const char * ifname, unsigned short eport,
+                                 int proto)
+{
+	int r;
+	unsigned short iport;
+	in_addr_t iaddr;
+	r = priv_delete_redirect_rule(ifname, eport, proto, &iport, &iaddr);
+	if(r == 0)
+	{
+		r = priv_delete_filter_rule(ifname, iport, proto, iaddr);
+	}
+	return r;
 }
 
 int
@@ -710,7 +826,11 @@ get_redirect_rule_by_index(int index,
 		goto error;
 	}
 	*proto = pr.rule.proto;
+#ifdef MACOSX
+	*eport = ntohs(pr.rule.dst.xport.range.port[0]);
+#else
 	*eport = ntohs(pr.rule.dst.port[0]);
+#endif
 #ifndef PF_NEWSTYLE
 	*iport = pr.rule.rpool.proxy_port[0];
 #else
@@ -822,8 +942,13 @@ get_portmappings_in_range(unsigned short startport, unsigned short endport,
 			syslog(LOG_ERR, "ioctl(dev, DIOCGETRULE): %m");
 			continue;
 		}
+#ifdef MACOSX
+		eport = ntohs(pr.rule.dst.xport.range.port[0]);
+		if( (eport == ntohs(pr.rule.dst.xport.range.port[1]))
+#else
 		eport = ntohs(pr.rule.dst.port[0]);
 		if( (eport == ntohs(pr.rule.dst.port[1]))
+#endif
 		  && (pr.rule.proto == proto)
 		  && (startport <= eport) && (eport <= endport) )
 		{

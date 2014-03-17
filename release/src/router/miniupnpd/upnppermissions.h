@@ -1,7 +1,7 @@
-/* $Id: upnppermissions.h,v 1.9 2012/09/27 16:00:10 nanard Exp $ */
+/* $Id: upnppermissions.h,v 1.10 2014/03/07 10:43:29 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006 Thomas Bernard
+ * (c) 2006-2014 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -44,6 +44,15 @@ check_upnp_rule_against_permissions(const struct upnpperm * permary,
                                     int n_perms,
                                     u_short eport, struct in_addr address,
                                     u_short iport);
+
+/* find_allowed_eport()
+ * returns: 0 if no allowed eport for (address, iport) was found
+ *          1 and allowed_eport filled */
+int
+find_allowed_eport(const struct upnpperm * permary,
+                   int n_perms,
+                   struct in_addr address, u_short iport,
+                   u_short *allowed_eport);
 
 #ifdef USE_MINIUPNPDCTL
 void
