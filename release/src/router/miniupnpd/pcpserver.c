@@ -537,6 +537,7 @@ static int parsePCPOptions(void* pcp_buf, int* remainingSize,
 
 static int CheckExternalAddress(pcp_info_t* pcp_msg_info)
 {
+	/* can contain a IPv4-mapped IPv6 address */
 	static struct in6_addr external_addr;
 
 	if(use_ext_ip_addr) {
@@ -555,6 +556,7 @@ static int CheckExternalAddress(pcp_info_t* pcp_msg_info)
 			pcp_msg_info->result_code = PCP_ERR_NETWORK_FAILURE;
 			return -1;
 		}
+		/* how do we know which address we need ? IPv6 or IPv4 ? */
 		if(getifaddr_in6(ext_if_name, &external_addr) < 0) {
 			pcp_msg_info->result_code = PCP_ERR_NETWORK_FAILURE;
 			return -1;
