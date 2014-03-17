@@ -135,6 +135,7 @@ getifaddr(const char * ifname, char * buf, int len,
 int getifaddr_in6(const char * ifname, struct in6_addr * addr){
 	struct ifaddrs * ifap;
 	struct ifaddrs * ife;
+	int found = 0;
 
 	if(!ifname || ifname[0]=='\0')
 		return -1;
@@ -143,9 +144,8 @@ int getifaddr_in6(const char * ifname, struct in6_addr * addr){
 		syslog(LOG_ERR, "getifaddrs: %m");
 		return -1;
 	}
-	for(ife = ifap; ife; ife = ife->ifa_next)
+	for(ife = ifap; ife && !found; ife = ife->ifa_next)
 	{
-		int found = 0;
 		/* skip other interfaces if one was specified */
 		if(ifname && (0 != strcmp(ifname, ife->ifa_name)))
 			continue;
@@ -178,12 +178,9 @@ int getifaddr_in6(const char * ifname, struct in6_addr * addr){
 			}
 			break;
 		}
-		if (found) {
-			break;
-		}
 	}
 	freeifaddrs(ifap);
-	return 0;
+	return (found ? 0 : -1);
 }
 #endif
 
