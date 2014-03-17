@@ -555,12 +555,10 @@ static int CheckExternalAddress(pcp_info_t* pcp_msg_info)
 			pcp_msg_info->result_code = PCP_ERR_NETWORK_FAILURE;
 			return -1;
 		}
-#ifdef ENABLE_IPV6
 		if(getifaddr_in6(ext_if_name, &external_addr) < 0) {
 			pcp_msg_info->result_code = PCP_ERR_NETWORK_FAILURE;
 			return -1;
 		}
-#endif
 	}
 
 	if (pcp_msg_info->ext_ip == NULL || IN6_IS_ADDR_UNSPECIFIED(pcp_msg_info->ext_ip)) {
