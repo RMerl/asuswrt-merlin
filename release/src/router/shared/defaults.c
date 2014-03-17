@@ -703,6 +703,10 @@ struct nvram_tuple router_defaults[] = {
 	{ "upnp_clean_interval", "600" },
 	{ "upnp_clean_threshold", "20" },
 
+	// miniupnpd - PCP-related values
+	{ "upnp_min_lifetime", "120" },
+	{ "upnp_max_lifetime", "86400" },
+
 #ifdef RTCONFIG_DUALWAN // RTCONFIG_DUALWAN
 	{ "wans_mode", "fo" }, 		// off/failover/loadbance/routing(off/fo/lb/rt)
 #ifdef RTCONFIG_DSL

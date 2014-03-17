@@ -2815,6 +2815,7 @@ void start_upnp(void)
 	char tmp1[32], prefix[] = "wanXXXXXXXXXX_";
 	char et0macaddr[18];
 	int i;
+	int min_lifetime, max_lifetime;
 
 	if (getpid() != 1) {
 		notify_rc("start_upnp");
@@ -2922,6 +2923,15 @@ void start_upnp(void)
 					// by default allow only redirection of ports above 1024
 					fprintf(f, "allow 1024-65535 %s/%s 1024-65535\n", lanip, lanmask);
 				}
+
+				/* For PCP */
+				min_lifetime = nvram_get_int("upnp_min_lifetime");
+				max_lifetime = nvram_get_int("upnp_max_lifetime");
+
+				fprintf(f, "min_lifetime=%d\n"
+					   "max_lifetime=%d\n",
+					   (min_lifetime > 0 ? min_lifetime : 120),
+					   (max_lifetime > 0 ? max_lifetime : 86400));
 
 TRACE_PT("config 5\n");
 
