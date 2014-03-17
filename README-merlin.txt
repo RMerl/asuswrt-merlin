@@ -565,6 +565,8 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 374.41 (xx-xxxx-2014)
+   - NEW: Enabled PCP support in miniupnpd.
+   - CHANGED: Upgraded miniupnpd to 1.8.20140310.
    - FIXED: Language dropdown not properly shown with non-ASCII 
             alphabets.
 
