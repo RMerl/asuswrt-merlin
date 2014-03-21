@@ -566,6 +566,9 @@ History
 -------
 374.41 (xx-xxxx-2014)
    - NEW: Enabled PCP support in miniupnpd.
+   - NEW: Option to allow/deny FTP access from WAN.  Default is to
+          reject WAN connections.  The option can be found on the
+          USB Servers -> Misc page.
    - CHANGED: Upgraded miniupnpd to 1.8.20140310.
    - FIXED: Language dropdown not properly shown with non-ASCII 
             alphabets.
