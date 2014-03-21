@@ -1155,6 +1155,7 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 	// Port forwarding or Virtual Server
 	if (is_nat_enabled() && nvram_match("vts_enable_x", "1"))
 	{
+		int local_ftpport = nvram_get_int("vts_ftpport");
 		nvp = nv = strdup(nvram_safe_get("vts_rulelist"));
 		while (nv && (b = strsep(&nvp, "<")) != NULL) {
 			char *portv, *portp, *c;
@@ -1173,7 +1174,6 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 				if (strcmp(proto, "TCP") == 0 || strcmp(proto, "BOTH") == 0){
 					fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %s -j DNAT %s\n", c, dstips);
 
-					int local_ftpport = nvram_get_int("vts_ftpport");
 					if(!strcmp(c, "21") && local_ftpport != 0 && local_ftpport != 21)
 						fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %d -j DNAT --to-destination %s:21\n", local_ftpport, nvram_safe_get("lan_ipaddr"));
 				}
@@ -1400,6 +1400,7 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 	// Port forwarding or Virtual Server
 	if (is_nat_enabled() && nvram_match("vts_enable_x", "1"))
 	{
+		int local_ftpport = nvram_get_int("vts_ftpport");
 		nvp = nv = strdup(nvram_safe_get("vts_rulelist"));
 		while (nv && (b = strsep(&nvp, "<")) != NULL) {
 			char *portv, *portp, *c;
@@ -1418,7 +1419,6 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 				if (strcmp(proto, "TCP") == 0 || strcmp(proto, "BOTH") == 0){
 					fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %s -j DNAT %s\n", c, dstips);
 
-					int local_ftpport = nvram_get_int("vts_ftpport");
 					if(!strcmp(c, "21") && local_ftpport != 0 && local_ftpport != 21)
 						fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %d -j DNAT --to-destination %s:21\n", local_ftpport, nvram_safe_get("lan_ipaddr"));
 				}
