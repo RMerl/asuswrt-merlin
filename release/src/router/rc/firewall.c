@@ -2217,7 +2217,7 @@ TRACE_PT("writing Parental Control\n");
 #endif		
 		}
 
-		if (!nvram_match("enable_ftp", "0"))
+		if ((!nvram_match("enable_ftp", "0")) && (nvram_match("ftp_wanac", "1")))
 		{
 			fprintf(fp, "-A INPUT -p tcp -m tcp --dport 21 -j %s\n", logaccept);
 			int local_ftpport = nvram_get_int("vts_ftpport");
@@ -3192,7 +3192,7 @@ TRACE_PT("writing Parental Control\n");
 #endif
 		}
 
-		if (!nvram_match("enable_ftp", "0"))
+		if ((!nvram_match("enable_ftp", "0")) && (nvram_match("ftp_wanac", "1")))
 		{
 			fprintf(fp, "-A INPUT -p tcp -m tcp --dport 21 -j %s\n", logaccept);
 			int local_ftpport = nvram_get_int("vts_ftpport");

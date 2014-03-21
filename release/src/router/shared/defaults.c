@@ -1092,6 +1092,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "computer_name", ""},
 	{ "st_samba_workgroup", "WORKGROUP"},
 	{ "ftp_lang", "EN" },
+	{ "ftp_wanac", "0"},
 
 //#ifdef RTCONFIG_WEBDAV
 	{ "enable_webdav", "0"}, // 0: Disable, 1: enable
