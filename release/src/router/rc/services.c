@@ -1075,6 +1075,8 @@ void start_dhcp6s(void)
 }
 
 static pid_t pid_radvd = -1;
+void stop_radvd_only(void);
+void stop_radvd_without_stop_advertisement(void);
 
 void start_radvd(void)
 {
@@ -1198,25 +1200,22 @@ void start_radvd(void)
 		f_write_string("/proc/sys/net/ipv6/conf/all/forwarding", "1", 0, 0);
 #endif
 
-		// Reload config for an existing radvd instance
-		if (killall("radvd", SIGHUP) < 0) {
-			stop_radvd_only();
-			// Start radvd
-			argc = 1;
-			argv[argc++] = "-u";
-			argv[argc++] = nvram_safe_get("http_username");
-			if (nvram_get_int("ipv6_debug")) {
-				argv[argc++] = "-m";
-				argv[argc++] = "logfile";
-				argv[argc++] = "-d";
-				argv[argc++] = "5";
-			}
-			argv[argc] = NULL;
-			_eval(argv, NULL, 0, &pid);
+		stop_radvd_without_stop_advertisement();
+		// Start radvd
+		argc = 1;
+		argv[argc++] = "-u";
+		argv[argc++] = nvram_safe_get("http_username");
+		if (nvram_get_int("ipv6_debug")) {
+			argv[argc++] = "-m";
+			argv[argc++] = "logfile";
+			argv[argc++] = "-d";
+			argv[argc++] = "5";
+		}
+		argv[argc] = NULL;
+		_eval(argv, NULL, 0, &pid);
 
-			if (!nvram_contains_word("debug_norestart", "radvd")) {
-				pid_radvd = -2;
-			}
+		if (!nvram_contains_word("debug_norestart", "radvd")) {
+			pid_radvd = -2;
 		}
 	} else {
 		stop_radvd_only();
@@ -1238,6 +1237,15 @@ void stop_radvd_only(void)
 {
 	pid_radvd = -1;
 	killall_tk("radvd");
+#if 0
+	f_write_string("/proc/sys/net/ipv6/conf/all/forwarding", "0", 0, 0);
+#endif
+}
+
+void stop_radvd_without_stop_advertisement(void)
+{
+	pid_radvd = -1;
+	killall("radvd", SIGUSR2);
 #if 0
 	f_write_string("/proc/sys/net/ipv6/conf/all/forwarding", "0", 0, 0);
 #endif
