@@ -1075,8 +1075,8 @@ void start_dhcp6s(void)
 }
 
 static pid_t pid_radvd = -1;
-void stop_radvd_only(void);
-void stop_radvd_without_stop_advertisement(void);
+static void stop_radvd_only(void);
+static void stop_radvd_without_stop_advertisement(void);
 
 void start_radvd(void)
 {
@@ -1233,7 +1233,7 @@ void stop_radvd(void)
 	stop_radvd_only();
 }
 
-void stop_radvd_only(void)
+static void stop_radvd_only(void)
 {
 	pid_radvd = -1;
 	killall_tk("radvd");
@@ -1242,7 +1242,7 @@ void stop_radvd_only(void)
 #endif
 }
 
-void stop_radvd_without_stop_advertisement(void)
+static void stop_radvd_without_stop_advertisement(void)
 {
 	pid_radvd = -1;
 	killall("radvd", SIGUSR2);
