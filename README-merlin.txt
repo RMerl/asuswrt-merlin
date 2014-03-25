@@ -569,9 +569,17 @@ History
    - NEW: Option to allow/deny FTP access from WAN.  Default is to
           reject WAN connections.  The option can be found on the
           USB Servers -> Misc page.
+   - NEW: Option to control web redirection while Internet is 
+          down (configurable on the WAN page).
    - CHANGED: Upgraded miniupnpd to 1.8.20140310.
+   - CHANGED: Disk idle exclusion now supports up to 9 disks.
    - FIXED: Language dropdown not properly shown with non-ASCII 
             alphabets.
+   - FIXED: Filter out neighbour solicitation flood on Comcast's 
+            IPv6 network which would result in log spam from the 
+            tables getting filled.  The filter is enabled by 
+            default and can be controled with the 
+            "ipv6_neighsol_drop" nvram setting.
 
 
 374.40 (6-March-2014)
