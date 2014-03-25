@@ -2694,6 +2694,9 @@ void stop_lan_wl(void)
 			if (!strncmp(ifname, "ra", 2))
 				stop_wds_ra(lan_ifname, ifname);
 #endif
+#ifdef RTCONFIG_EMF
+			eval("emf", "del", "iface", lan_ifname, ifname);
+#endif
 			eval("brctl", "delif", lan_ifname, ifname);
 			ifconfig(ifname, 0, NULL, NULL);
 
@@ -2944,8 +2947,13 @@ void start_lan_wl(void)
 					i++;
 				}
 				if (!match)
-				eval("brctl", "addif", lan_ifname, ifname);
-
+				{
+					eval("brctl", "addif", lan_ifname, ifname);
+#ifdef RTCONFIG_EMF
+					if (nvram_get_int("emf_enable"))
+						eval("emf", "add", "iface", lan_ifname, ifname);
+#endif
+				}
 			}
 			free(wl_ifnames);
 		}

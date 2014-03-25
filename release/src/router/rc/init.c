@@ -1484,7 +1484,7 @@ int init_nvram(void)
 	nvram_set("ohci_ports", "");
 
 	/* treat no phy, no internet as disconnect */
-	nvram_set("web_redirect", "3");
+//	nvram_set("web_redirect", "3");
 #if 0
 	conf_swmode_support(model);
 #endif
