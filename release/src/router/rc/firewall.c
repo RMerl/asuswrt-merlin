@@ -2270,8 +2270,6 @@ TRACE_PT("writing Parental Control\n");
 		if (nvram_match("pptpd_enable", "1")) {
 			fprintf(fp, "-A INPUT -i %s -p tcp --dport %d -j %s\n", wan_if, 1723, logaccept);
 			fprintf(fp, "-A INPUT -p 47 -j %s\n",logaccept);
-			stop_pptpd();
-			start_pptpd();
 		}
 #endif
 
