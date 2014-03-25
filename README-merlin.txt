@@ -580,6 +580,8 @@ History
             tables getting filled.  The filter is enabled by 
             default and can be controled with the 
             "ipv6_neighsol_drop" nvram setting.
+  - FIXED: EMF wasn't properly configured after wireless was
+           restarted (patch from Vahur)
 
 
 374.40 (6-March-2014)
