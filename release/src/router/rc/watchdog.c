@@ -1721,7 +1721,7 @@ void watchdog(int sig)
 #if defined(RTCONFIG_JFFS2LOG) && (defined(RTCONFIG_JFFS2)||defined(RTCONFIG_BRCM_NAND_JFFS2))
 	syslog_commit_check();
 #endif
-	auto_firmware_check();
+//	auto_firmware_check();
 
 	return;
 }
