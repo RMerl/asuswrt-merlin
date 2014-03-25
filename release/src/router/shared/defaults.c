@@ -1658,7 +1658,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "ipv6_ra_conf",	"noneset"	},	// address configuration from WAN router advertisement
 	{ "ipv6_dhcp6s_enable",	"1"		},	// DHCP6 Server for LAN
 
-	{ "web_redirect", 	"1"		},	// Only NOLINK is redirected in default, it is overwrited in init_nvram
+	{ "web_redirect", 	"3"		},	// Redirect on NOLINK or NOINTERNET
 	{ "disiosdet",		"1"		},
 
 #ifdef RTCONFIG_FANCTRL
