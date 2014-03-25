@@ -4098,6 +4098,14 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 	eval("iptables", "-t", "mangle", "-A", "PREROUTING", "!", "-i", wan_if,
 	     "-d", wan_ip, "-j", "MARK", "--set-mark", "0xd001");
 
+/* Workaround for neighbour solicitation flood from Comcast */
+#ifdef RTCONFIG_IPV6
+	if (nvram_get_int("ipv6_neighsol_drop")) {
+		eval("ip6tables", "-t", "mangle", "-A", "PREROUTING", "-p", "icmpv6", "--icmpv6-type neighbor-solicitation",
+		     "-i", wan_if, "-d", "ff02::1:ff00:0/104", "-j", "DROP");
+	}
+#endif
+
 #ifdef CONFIG_BCMWL5
 	/* mark connect to bypass CTF */
 	if(nvram_match("ctf_disable", "0")) {
@@ -4177,6 +4185,16 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 
 		eval("iptables", "-t", "mangle", "-A", "PREROUTING", "!", "-i", wan_if,
 		     "-d", wan_ip, "-j", "MARK", "--set-mark", "0xd001");
+	}
+#endif
+
+/* Workaround for neighbour solicitation flood from Comcast */
+#ifdef RTCONFIG_IPV6
+	if (nvram_get_int("ipv6_neighsol_drop")) {
+		for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
+			eval("ip6tables", "-t", "mangle", "-A", "PREROUTING", "-p", "icmpv6", "--icmpv6-type neighbor-solicitation",
+			     "-i", get_wan_ifname(unit), "-d", "ff02::1:ff00:0/104", "-j", "DROP");
+		}
 	}
 #endif
 
