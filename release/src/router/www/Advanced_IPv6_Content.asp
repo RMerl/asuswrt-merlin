@@ -451,6 +451,7 @@ function showInputfield2(s, v){
 			$("ipv6_prefix_span").innerHTML = "";
 		inputCtrl(document.form.ipv6_dhcp_start_start, !enable);
 		inputCtrl(document.form.ipv6_dhcp_end_end, !enable);
+		inputCtrl(document.form.ipv6_dhcp_lifetime, !enable);
 		
 		if(!document.form.ipv6_dhcp_pd[0].checked){
 			if(document.form.ipv6_rtr_addr.value != "")
@@ -668,13 +669,13 @@ function validForm(){
     						document.form.ipv6_dhcp_end_end.select();    									
 								return false;
 						}
-			}
 			
-			if(!validate_range(document.form.ipv6_dhcp_lifetime, 120, 604800)){
-						document.form.ipv6_dhcp_lifetime.focus();
-						document.form.ipv6_dhcp_lifetime.select();
-						return false;	
-			}			
+						if(!validate_range(document.form.ipv6_dhcp_lifetime, 120, 604800)){
+								document.form.ipv6_dhcp_lifetime.focus();
+								document.form.ipv6_dhcp_lifetime.select();
+								return false;
+						}
+			}
 				
 				if(document.form.ipv6_dnsenable[1].checked){
 								if(document.form.ipv6_dns1.value=="" && document.form.ipv6_dns2.value=="" && document.form.ipv6_dns3.value==""){
