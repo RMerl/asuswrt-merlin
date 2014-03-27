@@ -192,6 +192,13 @@ int nvram_commit(void)
 {
 	int r = 0;
 	FILE *fp;
+
+	if (nvram_get(ASUS_STOP_COMMIT) != NULL)
+	{
+		cprintf("# skip nvram commit #\n");
+		return r;
+	}
+
 	fp = fopen("/var/log/commit_ret", "w");
 
 	if (wait_action_idle(10)) {
