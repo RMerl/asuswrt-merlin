@@ -135,9 +135,8 @@ struct sshsession {
 	unsigned dataallowed : 1; /* whether we can send data packets or we are in
 								 the middle of a KEX or something */
 
-	unsigned char requirenext[2]; /* bytes indicating what packets we require next, 
-									 or 0x00 for any. Second option can only be
-									 used if the first byte is also set */
+	unsigned char requirenext; /* byte indicating what packets we require next, 
+									 or 0x00 for any.  */
 
 	unsigned char ignorenext; /* whether to ignore the next packet,
 								 used for kex_follows stuff */
@@ -233,6 +232,7 @@ typedef enum {
 
 typedef enum {
 	STATE_NOTHING,
+	USERAUTH_WAIT,
 	USERAUTH_REQ_SENT,
 	USERAUTH_FAIL_RCVD,
 	USERAUTH_SUCCESS_RCVD,
@@ -267,6 +267,7 @@ struct clientsession {
 
 	int lastauthtype; /* either AUTH_TYPE_PUBKEY or AUTH_TYPE_PASSWORD,
 						 for the last type of auth we tried */
+	int ignore_next_auth_response;
 #ifdef ENABLE_CLI_INTERACT_AUTH
 	int auth_interact_failed; /* flag whether interactive auth can still
 								 be used */

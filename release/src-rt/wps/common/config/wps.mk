@@ -14,6 +14,8 @@ WPSFILES :=
 
 ifeq ($(BLDTYPE), debug)
 WPSFLAGS += -D_TUDEBUGTRACE
+else
+WPSFLAGS += -Os
 endif
 
 ifeq ($(WCN_NET), 1)

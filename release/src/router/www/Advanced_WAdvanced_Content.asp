@@ -114,7 +114,7 @@ function initial(){
 	inputCtrl(document.form.wl_itxbf, 0);
 	inputCtrl(document.form.usb_usb3, 0);
 
-	if(based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || based_modelid == "RT-AC66U" || based_modelid == "DSL-AC68U"){
+	if(based_modelid == "RT-AC87U" || based_modelid== "EA-AC87" || based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || based_modelid == "RT-AC66U" || based_modelid == "DSL-AC68U"){
 		if('<% nvram_get("wl_unit"); %>' == '1'){ // 5GHz
 			inputCtrl(document.form.wl_txbf, 1);
 			
@@ -124,9 +124,9 @@ function initial(){
 	}
 	
 	if('<% nvram_get("wl_unit"); %>' != '1'){ // 2.4GHz
-		if(based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || based_modelid == "DSL-AC68U" || based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || based_modelid == "RT-N65U"){
+		if(based_modelid == "RT-N18U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || based_modelid == "DSL-AC68U" || based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || based_modelid == "RT-N65U" || based_modelid == "RT-AC87U" ){
 			inputCtrl(document.form.usb_usb3, 1);
-			if(based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || based_modelid == "DSL-AC68U"){
+			if(based_modelid == "RT-N18U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || based_modelid == "RT-AC87U" || based_modelid == "DSL-AC68U"){
 				inputCtrl(document.form.wl_turbo_qam, 1);
 				inputCtrl(document.form.wl_txbf, 1);
 			}		

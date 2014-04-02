@@ -761,7 +761,7 @@ void start_dnsmasq(int force)
 
 #ifdef WEB_REDIRECT
 	/* Web redirection - all unresolvable will return the router's IP */
-	if(nvram_get_int("nat_state") == NAT_STATE_REDIRECT)
+	if((nvram_get_int("nat_state") == NAT_STATE_REDIRECT) && (nvram_get_int("web_redirect") > 0))
 		fprintf(fp, "address=/#/10.0.0.1\n");
 #endif
 
@@ -867,7 +867,9 @@ static void add_ip6_lanaddr(void)
 		eval("ip", "-6", "addr", "add", ip, "dev", nvram_safe_get("lan_ifname"));
 	}
 
-	if (!nvram_get_int("ipv6_dhcp_pd")) {
+	if ((get_ipv6_service() == IPV6_MANUAL) ||
+	   ((get_ipv6_service() == IPV6_NATIVE_DHCP) && !nvram_get_int("ipv6_dhcp_pd")))
+	{
 		p = ipv6_prefix(NULL);
 		if (*p) nvram_set("ipv6_prefix", p);
 	}
@@ -1064,6 +1066,8 @@ void start_dhcp6s(void)
 	use_custom_config("dhcp6s.conf", "/etc/dhcp6s.conf");
 	run_postconf("dhcp6s.postconf", "/etc/dhcp6s.conf");
 
+	eval("touch", "/etc/dhcp6sctlkey");
+
 	if (nvram_get_int("ipv6_debug"))
 		dhcp6s_argv[index++] = "-D";
 
@@ -1090,7 +1094,8 @@ void start_radvd(void)
 	stop_radvd();
 
 	stop_dhcp6s();
-	start_dhcp6s();
+
+	if (ipv6_enabled() && nvram_get_int("ipv6_dhcp6s_enable")) start_dhcp6s();
 
 	if (ipv6_enabled() && nvram_get_int("ipv6_radvd")) {
 		service = get_ipv6_service();
@@ -1099,7 +1104,6 @@ void start_radvd(void)
 		mtu = NULL;
 
 		switch (service) {
-		case IPV6_NATIVE_DHCP:
 		case IPV6_6TO4:
 		case IPV6_6IN4:
 		case IPV6_6RD:
@@ -1173,7 +1177,7 @@ void start_radvd(void)
 				next += sprintf(next, strlen(ipv6_dns_str) ? " %s" : "%s", p);
 			}
 
-			if ((get_ipv6_service() == IPV6_NATIVE_DHCP) && nvram_match("ipv6_dnsenable", "1"))
+			if ((service == IPV6_NATIVE_DHCP) && nvram_match("ipv6_dnsenable", "1"))
 				p = nvram_safe_get("ipv6_get_dns");
 			else
 				p = ipv6_dns_str;
@@ -1287,7 +1291,7 @@ void start_ipv6(void)
 	case IPV6_NATIVE:
 	case IPV6_MANUAL:
 	case IPV6_NATIVE_DHCP:
-		if (get_ipv6_service() == IPV6_NATIVE_DHCP)
+		if (service == IPV6_NATIVE_DHCP)
 		{
 			nvram_set("ipv6_prefix", "");
 			if (nvram_get_int("ipv6_dhcp_pd"))
@@ -1317,8 +1321,8 @@ void stop_ipv6(void)
 
 int no_need_to_start_wps(void)
 {
-	int i, wps_band, multiband = get_wps_multiband();
-	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
+	int i, j, wps_band, multiband = get_wps_multiband();
+	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX", prefix_mssid[] = "wlXXXXXXXXXX_mssid_";
 	char word[256], *next, ifnames[128];
 	int c = 0, ret = 0;
 
@@ -1347,6 +1351,19 @@ int no_need_to_start_wps(void)
 		    nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "radius"))
 			ret++;
 
+#ifdef RTCONFIG_RALINK
+		if (nvram_match("wl_mssid", "1"))
+#endif
+		for (j = 1; j < MAX_NO_MSSID; j++) {
+			sprintf(prefix_mssid, "wl%d.%d_", wps_band, j);
+			if (!nvram_match(strcat_r(prefix_mssid, "bss_enabled", tmp), "1"))
+				continue;
+			++c;
+			if (nvram_match(strcat_r(prefix_mssid, "auth_mode_x", tmp), "shared") ||
+			    strstr(nvram_safe_get(strcat_r(prefix_mssid, "auth_mode_x", tmp)), "wpa") ||
+			    nvram_match(strcat_r(prefix_mssid, "auth_mode_x", tmp), "radius"))
+				ret++;
+		}
 		i++;
 	}
 
@@ -1677,7 +1694,9 @@ int start_networkmap(int bootwait)
 	if (bootwait)
 		networkmap_argv[1] = "--bootwait";
 
+#ifndef RTCONFIG_RGMII_BRCM5301X
 	_eval(networkmap_argv, NULL, 0, &pid);
+#endif
 
 	return 0;
 }
@@ -1751,21 +1770,48 @@ int
 exec_8021x_start(int band, int is_iNIC)
 {
 	char tmp[100], prefix[] = "wlXXXXXXX_";
+	char *str;
+	int flag_8021x = 0;
+	int i;
 
-	snprintf(prefix, sizeof(prefix), "wl%d_", band);
+	if (nvram_get_int("sw_mode") == SW_MODE_REPEATER && nvram_get_int("wlc_band") == band)
+		return 0;
 
-	if (nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "wpa") ||
-		nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "wpa2") ||
-		nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "wpawpa2") ||
-		nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "radius"))
+	for (i = 0; i < MAX_NO_MSSID; i++)
+	{
+		if (i)
+		{
+			sprintf(prefix, "wl%d.%d_", band, i);
+
+			if (!nvram_match(strcat_r(prefix, "bss_enabled", tmp), "1"))
+				continue;
+		}
+		else
+			sprintf(prefix, "wl%d_", band);
+
+		str = nvram_safe_get(strcat_r(prefix, "auth_mode_x", tmp));
+
+		if(str && strlen(str) > 0)
+		{
+			if (    !strcmp(str, "radius") ||
+				!strcmp(str, "wpa") ||
+				!strcmp(str, "wpa2") ||
+				!strcmp(str, "wpawpa2") )
+			{ //need daemon
+				flag_8021x = 1;
+				break;
+			}
+		}
+	}
+
+	if(flag_8021x)
 	{
 		if (is_iNIC)
 			return xstart("rtinicapd");
 		else
 			return xstart("rt2860apd");
 	}
-	else
-		return 0;
+	return 0;
 }
 
 int
@@ -1796,22 +1842,10 @@ start_8021x(void)
 int
 exec_8021x_stop(int band, int is_iNIC)
 {
-	char tmp[100], prefix[] = "wlXXXXXXX_";
-
-	snprintf(prefix, sizeof(prefix), "wl%d_", band);
-
-	if (nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "wpa") ||
-		nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "wpa2") ||
-		nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "wpawpa2") ||
-		nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "radius"))
-	{
 		if (is_iNIC)
 			return killall("rtinicapd", SIGTERM);
 		else
 			return killall("rt2860apd", SIGTERM);
-	}
-	else
-		return 0;
 }
 
 int
@@ -2781,6 +2815,7 @@ void start_upnp(void)
 	char tmp1[32], prefix[] = "wanXXXXXXXXXX_";
 	char et0macaddr[18];
 	int i;
+	int min_lifetime, max_lifetime;
 
 	if (getpid() != 1) {
 		notify_rc("start_upnp");
@@ -2888,6 +2923,15 @@ void start_upnp(void)
 					// by default allow only redirection of ports above 1024
 					fprintf(f, "allow 1024-65535 %s/%s 1024-65535\n", lanip, lanmask);
 				}
+
+				/* For PCP */
+				min_lifetime = nvram_get_int("upnp_min_lifetime");
+				max_lifetime = nvram_get_int("upnp_max_lifetime");
+
+				fprintf(f, "min_lifetime=%d\n"
+					   "max_lifetime=%d\n",
+					   (min_lifetime > 0 ? min_lifetime : 120),
+					   (max_lifetime > 0 ? max_lifetime : 86400));
 
 TRACE_PT("config 5\n");
 
@@ -3256,6 +3300,21 @@ int stop_norton(void)
 
 #endif /* __CONFIG_NORTON__ */
 
+#ifdef RTCONFIG_QTN
+int reset_qtn(void)
+{
+	system("cp /rom/qtn/* /tmp/");
+        eval("ifconfig", "br0:0", "1.1.1.1", "netmask", "255.255.255.0");
+        sleep(1);
+        eval("tftpd");
+        led_control(BTN_QTN_RESET, LED_ON);
+        sleep(1);
+        led_control(BTN_QTN_RESET, LED_OFF);
+}
+
+#endif
+
+
 int
 start_services(void)
 {
@@ -3354,7 +3413,11 @@ start_services(void)
 
 #if defined(RTCONFIG_RALINK) && defined(RTCONFIG_WIRELESSREPEATER)
 	apcli_start();
-#endif	
+#endif
+
+#ifdef RTCONFIG_QTN
+	reset_qtn();
+#endif
 
 #ifdef RTCONFIG_SAMBASRV
 	start_samba();	// We might need it for wins/browsing services
@@ -3837,12 +3900,8 @@ again:
 #elif defined(RTCONFIG_TEMPROOTFS)
 				stop_lan_wl();
 #endif
-
 				if (!(r = build_temp_rootfs(TMP_ROOTFS_MNT_POINT)))
 					sw = 1;
-
-				/* isn't it already stopped in stop_uprage above? */
-				stop_wan();
 #ifdef RTCONFIG_DUAL_TRX
 				if (!nvram_match("nflash_swecc", "1"))
 				{
@@ -3850,11 +3909,6 @@ again:
 					eval("mtd-write", "-i", upgrade_file, "-d", "linux2");
 				}
 #endif
-				/* lighttpd* would be started again by restart_nasapps rc_service
-				 * that is triggered by hotplug.  Kill them or encounter SQUASHFS error.
-				 */
-				stop_all_webdav();
-
 				if (nvram_contains_word("rc_support", "nandflash"))	/* RT-AC56S,U/RT-AC68U/RT-N16UHP */
 					eval("mtd-write2", upgrade_file, "linux");
 				else
@@ -4212,6 +4266,7 @@ check_ddr_done:
 		(get_model() == MODEL_RTAC56S) ||
 		(get_model() == MODEL_RTAC56U) ||
 		(get_model() == MODEL_RTAC68U) ||
+		(get_model() == MODEL_RTAC87U) ||
 		(get_model() == MODEL_RTN12HP) ||
 		(get_model() == MODEL_APN12HP) ||
 		(get_model() == MODEL_RTN66U))
@@ -4337,6 +4392,20 @@ check_ddr_done:
 		start_firewall(wan_primary_ifunit(), 0);
 	}
 #endif
+	else if (strcmp(script, "ftpd_force") == 0)
+	{
+		nvram_set("st_ftp_force_mode", nvram_safe_get("st_ftp_mode"));
+		nvram_commit();
+
+		if(action&RC_SERVICE_STOP) {
+			stop_ftpd();
+		}
+		if(action&RC_SERVICE_START) {
+			start_ftpd();
+		}
+		/* for security concern, even if you stop ftp daemon, it is better to restart firewall to clean FTP port: 21. */
+		start_firewall(wan_primary_ifunit(), 0);
+	}
 #ifdef RTCONFIG_SAMBASRV
 	else if (strcmp(script, "samba") == 0)
 	{
@@ -5029,7 +5098,7 @@ _dprintf("test 2. turn off the USB power during %d seconds.\n", reset_seconds[re
 		}
 	}
 #endif
-#if defined (RTCONFIG_USB_XHCI) || defined (RTCONFIG_USB_2XHCI2)
+#if defined (RTCONFIG_USB_XHCI)
 #ifdef RTCONFIG_XHCIMODE
 	else if(!strcmp(script, "xhcimode")){
 		char param[32];
@@ -5294,7 +5363,7 @@ void stop_nat_rules(void)
 
 #ifdef WEB_REDIRECT
 	// dnsmasq will handle wildcard resolution
-	restart_dnsmasq(1);
+	if (nvram_get_int("web_redirect") > 0) restart_dnsmasq(1);
 #endif
 }
 
@@ -5306,6 +5375,7 @@ void set_acs_ifnames()
 	char word[256], *next;
 	char tmp[128], prefix[] = "wlXXXXXXXXXX_";
 	int unit;
+	int dfs_in_use = 0;
 
 	unit = 0;
 	memset(acs_ifnames, 0, sizeof(acs_ifnames));
@@ -5337,17 +5407,30 @@ void set_acs_ifnames()
 		nvram_set_int("wlready", 0);
 #endif
 
-	nvram_set("wl1_acs_fcs_mode", "0");
-
-	if (nvram_match("wl1_country_code", "EU") || nvram_match("wl1_country_code", "JP"))
+	if (nvram_match("wl1_country_code", "EU"))
+	{
+		if (nvram_match("acs_dfs", "1"))
+		{
+			nvram_set("wl1_acs_excl_chans", "");
+			dfs_in_use = 1;
+		}
+		else
+		{	/* exclude acsd from selecting chanspec 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80, 100, 100l, 100/80, 104, 104u, 104/80, 108, 108l, 108/80, 112, 112u, 112/80, 116, 132, 132l, 136, 136u, 140 */
+			nvram_set("wl1_acs_excl_chans",
+				  "0xd034,0xd836,0xe03a,0xd038,0xd936,0xe13a,0xd03c,0xd83e,0xe23a,0xd040,0xd93e,0xe33a,0xd064,0xd866,0xe06a,0xd068,0xd966,0xe16a,0xd06c,0xd86e,0xe26a,0xd070,0xd96e,0xe36a,0xd074,0xd084,0xd886,0xd088,0xd986,0xd08c");
+		}
+	}
+	else if (nvram_match("wl1_country_code", "JP"))
 	{
 		nvram_set("wl1_acs_excl_chans", "");
 	}
-	else	/* exclude acsd to select chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80 */
-	{
+	else
+	{	/* exclude acsd from selecting chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80 */
 		nvram_set("wl1_acs_excl_chans",
 			  "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a");
 	}
+
+	nvram_set_int("wl1_acs_dfs", dfs_in_use);
 }
 
 int
@@ -5565,6 +5648,7 @@ void restart_cstats(void)
 #ifdef RTCONFIG_DNSFILTER
 const char *dns_filter(int mode)
 {
+	char *dnsptr;
 	static const char *server[] = {
 		"",			/* 0: Unfiltered (handled separately below) */
 		"208.67.222.222",	/* 1: OpenDNS */
@@ -5572,16 +5656,35 @@ const char *dns_filter(int mode)
 		"199.85.126.20",	/* 3: Norton Connect Safe B (Security + Adult) */
 		"199.85.126.30",	/* 4: Norton Connect Safe C (Sec. + Adult + Violence */
 		"77.88.8.88",		/* 5: Secure Mode safe.dns.yandex.ru */
-		"77.88.8.7"		/* 6: Family Mode family.dns.yandex.ru */
+		"77.88.8.7",		/* 6: Family Mode family.dns.yandex.ru */
+		"208.67.222.123",	/* 7: OpenDNS Family Shield */
+		"",			/* 8: Custom1 */
+		"",			/* 9: Custom2 */
+		"",			/* 10: Custom3 */
+		""			/* 11: Router */
         };
 
-	if (mode > 6) mode = 0;
+	if (mode > 11) mode = 0;
 
-	// Unfiltered - return whichever DNS server DHCPD provides to clients, or our own IP if none defined by user
+	// Unfiltered - don't return anything, the calling function should take care of handling it
+        // (currently, dnsfilter_settings() will simply not enforce anything, as if dnsfilter was disabled)
 	if (mode == 0)
-		return ( nvram_invmatch("dhcp_dns1_x","") ? nvram_safe_get("dhcp_dns1_x") : nvram_safe_get("lan_ipaddr") );
+		return "";
+	// Custom IP, will fallback to router IP if it's not defined
+	else if (mode == 8)
+		dnsptr = nvram_safe_get("dnsfilter_custom1");
+	else if (mode == 9)
+		dnsptr = nvram_safe_get("dnsfilter_custom2");
+	else if (mode == 10)
+		dnsptr = nvram_safe_get("dnsfilter_custom3");
+	// Force to use what's returned by the router's DHCP server to clients (which means either
+        // the router's IP, or a user-defined nameserver from the DHCP webui page)
+	else if (mode == 11)
+		dnsptr = nvram_safe_get("dhcp_dns1_x");
+	else
+		dnsptr = server[mode];
 
-	return server[mode];
+	return (strlen(dnsptr) ? dnsptr : nvram_safe_get("lan_ipaddr"));
 }
 #endif
 

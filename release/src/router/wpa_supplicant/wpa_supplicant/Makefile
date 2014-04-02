@@ -16,6 +16,9 @@ CFLAGS += -I../src/utils
 CFLAGS += -I../src/common
 CFLAGS += -I../src/rsn_supp
 
+CFLAGS += -ffunction-sections -fdata-sections
+LDFLAGS += -ffunction-sections -fdata-sections -Wl,--gc-sections
+
 ALL=wpa_supplicant wpa_passphrase wpa_cli
 
 all: verify_config $(ALL) dynamic_eap_methods

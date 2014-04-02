@@ -330,35 +330,30 @@ static int wlconf(char *ifname, int unit, int subunit)
 				nvram_match(strcat_r(prefix, "nmode", tmp), "-1"))
 				eval("wl", "-i", ifname, "rtsthresh", "65535");
 #endif
-#if 0
 			if (unit) {
-				if (	((get_model() == MODEL_RTAC68U) &&
+				if ((get_model() == MODEL_RTAC68U) &&
 					nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
-					nvram_match(strcat_r(prefix, "country_rev", tmp), "13")) /*||
-					((get_model() == MODEL_RTAC66U) &&
-                                        nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
+					nvram_match(strcat_r(prefix, "country_rev", tmp), "13"))
+					eval("wl", "-i", ifname, "radarthrs",
+					"0x6ac", "0x30", "0x6a8", "0x30", "0x6a8", "0x30", "0x6a4", "0x30", "0x6a4", "0x30", "0x6a0", "0x30");
+#if 0
+				else if (((get_model() == MODEL_RTAC66U) &&
+					nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
                                         nvram_match(strcat_r(prefix, "country_rev", tmp), "13")) ||
 					((get_model() == MODEL_RTN66U) &&
 					nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
-					nvram_match(strcat_r(prefix, "country_rev", tmp), "0"))*/
+					nvram_match(strcat_r(prefix, "country_rev", tmp), "0"))
 				)
-						eval("wl", "-i", ifname, "radarthrs",
-							"0x6ac", "0x30", "0x6a8", "0x30", "0x6a8", "0x30", "0x6a8", "0x30", "0x6a4", "0x30", "0x6a0", "0x30");
-			}
+					eval("wl", "-i", ifname, "radarthrs",
+					"0x6ac", "0x30", "0x6a8", "0x30", "0x6a8", "0x30", "0x6a8", "0x30", "0x6a4", "0x30", "0x6a0", "0x30");
 #endif
+			}
 #endif
 			txpower = nvram_get_int(wl_nvname("TxPower", unit, 0));
 
 			dbG("unit: %d, txpower: %d\n", unit, txpower);
 
 			switch (model) {
-				case MODEL_RTN12HP:
-				case MODEL_APN12HP:
-
-					txpwr_rtn12hp(ifname, unit, subunit);
-
-					break;
-
 				default:
 
 					eval("wl", "-i", ifname, "txpwr1", "-1");
@@ -619,7 +614,7 @@ void wlconf_pre()
 #ifdef RTCONFIG_BCMARM
 		if (unit == 0)
 		{
-			if (model == MODEL_RTAC68U) {
+			if (model == MODEL_RTAC68U || model == MODEL_RTAC87U) {
 				if (nvram_match(strcat_r(prefix, "turbo_qam", tmp), "1"))
 					eval("wl", "-i", word, "vht_features", "3");
 				else
@@ -1121,6 +1116,7 @@ void start_lan(void)
 #ifdef CONFIG_BCMWL5
 #ifndef RTCONFIG_BRCM_USBAP
 	if ((get_model() == MODEL_RTAC68U) ||
+		(get_model() == MODEL_RTAC87U) ||
 		(get_model() == MODEL_RTAC66U) ||
 		(get_model() == MODEL_RTAC53U) ||
 		(get_model() == MODEL_RTAC53U) ||
@@ -1147,6 +1143,7 @@ void start_lan(void)
 		(get_model() == MODEL_RTAC56S) ||
 		(get_model() == MODEL_RTAC56U) ||
 		(get_model() == MODEL_RTAC68U) ||
+		(get_model() == MODEL_RTAC87U) ||
 		(get_model() == MODEL_RTN12HP) ||
 		(get_model() == MODEL_APN12HP) ||
 		(get_model() == MODEL_RTN66U))
@@ -1274,8 +1271,14 @@ void start_lan(void)
 				}
 #endif
 				// bring up interface
-				if (ifconfig(ifname, IFUP, NULL, NULL) != 0) continue;
-
+				if (ifconfig(ifname, IFUP, NULL, NULL) != 0){
+					if( strncmp(ifname, "eth2", 4)==0 && (
+					(get_model() == MODEL_RTAC56S) ||
+					(get_model() == MODEL_RTAC56U) ))
+						nvram_set("5g_fail", "1");      // gpio led
+					continue;
+				} else if(strncmp(ifname, "eth2", 4)==0)
+					nvram_unset("5g_fail");      // gpio led
 #ifdef RTCONFIG_RALINK
 				wlconf_ra(ifname);
 #endif
@@ -2270,6 +2273,7 @@ static void led_bh(int sw)
 			}
 			break;
 		case MODEL_RTAC68U:
+		case MODEL_RTAC87U:
 			if(sw)
 			{
 				eval("wl", "ledbh", "10", "7");
@@ -2316,6 +2320,7 @@ static void led_bh_prep(int post)
 			}
 			break;
 		case MODEL_RTAC68U:
+		case MODEL_RTAC87U:
 			if(post)
 			{
 				eval("wl", "ledbh", "10", "7");
@@ -2689,6 +2694,9 @@ void stop_lan_wl(void)
 			if (!strncmp(ifname, "ra", 2))
 				stop_wds_ra(lan_ifname, ifname);
 #endif
+#ifdef RTCONFIG_EMF
+			eval("emf", "del", "iface", lan_ifname, ifname);
+#endif
 			eval("brctl", "delif", lan_ifname, ifname);
 			ifconfig(ifname, 0, NULL, NULL);
 
@@ -2769,6 +2777,7 @@ void start_lan_wl(void)
 #ifdef CONFIG_BCMWL5
 #ifndef RTCONFIG_BRCM_USBAP
 	if ((get_model() == MODEL_RTAC68U) ||
+		(get_model() == MODEL_RTAC87U) ||
 		(get_model() == MODEL_RTAC66U) ||
 		(get_model() == MODEL_RTN66U)) {
 		modprobe("wl");
@@ -2789,6 +2798,7 @@ void start_lan_wl(void)
 		(get_model() == MODEL_RTAC56S) ||
 		(get_model() == MODEL_RTAC56U) ||
 		(get_model() == MODEL_RTAC68U) ||
+		(get_model() == MODEL_RTAC87U) ||
 		(get_model() == MODEL_RTN12HP) ||
 		(get_model() == MODEL_APN12HP) ||
 		(get_model() == MODEL_RTN66U))
@@ -2937,8 +2947,13 @@ void start_lan_wl(void)
 					i++;
 				}
 				if (!match)
-				eval("brctl", "addif", lan_ifname, ifname);
-
+				{
+					eval("brctl", "addif", lan_ifname, ifname);
+#ifdef RTCONFIG_EMF
+					if (nvram_get_int("emf_enable"))
+						eval("emf", "add", "iface", lan_ifname, ifname);
+#endif
+				}
 			}
 			free(wl_ifnames);
 		}
@@ -3322,7 +3337,7 @@ void stop_lan_wlport(void)
 		unit++;
 	}
 }
-
+#if 0
 static int
 net_dev_exist(const char *ifname)
 {
@@ -3355,7 +3370,7 @@ wl_dev_exist(void)
 
 	return val;
 }
-
+#endif
 #ifdef RTCONFIG_WIRELESSREPEATER
 void start_lan_wlc(void)
 {

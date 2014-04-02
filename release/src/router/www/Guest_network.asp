@@ -136,7 +136,7 @@ function gen_gntable_tr(unit, gn_array, slicesb){
 	htmlcode += '"><tr><th align="left" width="160px">';
 	htmlcode += '<table id="GNW_'+GN_band+'G" class="gninfo_th_table" align="left" style="margin:auto;border-collapse:collapse;">';
 	htmlcode += '<tr><th align="left" style="height:40px;"><#QIS_finish_wireless_item1#></th></tr>';
-	htmlcode += '<tr><th align="left" style="height:40px;"><#WLANConfig11b_AuthenticationMethod_itemname#></th></tr>';
+	htmlcode += "<tr><th align=\"left\" style=\"height:40px;\"><#WLANConfig11b_AuthenticationMethod_itemname#></th></tr>";
 	htmlcode += '<tr><th align="left" style="height:40px;"><#Network_key#></th></tr>';
 	htmlcode += '<tr><th align="left" style="height:40px;"><#mssid_time_remaining#></th></tr>';
 	if(sw_mode != "3"){
@@ -158,7 +158,9 @@ function gen_gntable_tr(unit, gn_array, slicesb){
 					htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');">'+ show_str +'</td></tr>';
 					htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');">'+ translate_auth(gn_array[i][2]) +'</td></tr>';
 					
-					if(gn_array[i][2].indexOf("psk") >= 0)
+					if(gn_array[i][2].indexOf("wpa") >= 0 || gn_array[i][2].indexOf("radius") >= 0)
+							show_str = "";
+					else if(gn_array[i][2].indexOf("psk") >= 0)
 							show_str = gn_array[i][4];
 					else if(gn_array[i][2] == "open" && gn_array[i][5] == "0")
 							show_str = "None";

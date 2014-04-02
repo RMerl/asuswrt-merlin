@@ -223,8 +223,8 @@ function switchAccount(protocol){
 		case 1:
 			if(confirm(confirm_str_off)){
 				document.aidiskForm.action = "/aidisk/switch_share_mode.asp";
-				$("protocol").value = protocol;
-				$("mode").value = "share";
+				document.aidiskForm.protocol.value = protocol;
+				document.aidiskForm.mode.value = "share";
 				
 				showLoading();
 				document.aidiskForm.submit();
@@ -233,8 +233,8 @@ function switchAccount(protocol){
 		case 0:
 			if(confirm(confirm_str_on)){
 				document.aidiskForm.action = "/aidisk/switch_share_mode.asp";
-				$("protocol").value = protocol;
-				$("mode").value = "account";
+				document.aidiskForm.protocol.value = protocol;
+				document.aidiskForm.mode.value = "account";
 				
 				showLoading();
 				document.aidiskForm.submit();

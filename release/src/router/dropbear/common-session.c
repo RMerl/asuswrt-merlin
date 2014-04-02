@@ -82,7 +82,7 @@ void common_session_init(int sock_in, int sock_out) {
 
 	initqueue(&ses.writequeue);
 
-	ses.requirenext[0] = SSH_MSG_KEXINIT;
+	ses.requirenext = SSH_MSG_KEXINIT;
 	ses.dataallowed = 1; /* we can send data until we actually 
 							send the SSH_MSG_KEXINIT */
 	ses.ignorenext = 0;
@@ -153,10 +153,9 @@ void session_loop(void(*loophandler)()) {
 		   SIGCHLD in svr-chansession is the only one currently. */
 		FD_SET(ses.signal_pipe[0], &readfd);
 
-		/* set up for channels which require reading/writing */
-		if (ses.dataallowed) {
-			setchannelfds(&readfd, &writefd);
-		}
+		/* set up for channels which can be read/written */
+		setchannelfds(&readfd, &writefd);
+
 		val = select(ses.maxfd+1, &readfd, &writefd, NULL, &timeout);
 
 		if (exitflag) {
@@ -217,9 +216,7 @@ void session_loop(void(*loophandler)()) {
 
 		/* process pipes etc for the channels, ses.dataallowed == 0
 		 * during rekeying ) */
-		if (ses.dataallowed) {
-			channelio(&readfd, &writefd);
-		}
+		channelio(&readfd, &writefd);
 
 		if (loophandler) {
 			loophandler();
@@ -244,7 +241,11 @@ void session_cleanup() {
 	if (ses.extra_session_cleanup) {
 		ses.extra_session_cleanup();
 	}
+
+	chancleanup();
 	
+	/* Cleaning up keys must happen after other cleanup
+	functions which might queue packets */
 	if (ses.session_id) {
 		buf_burn(ses.session_id);
 		buf_free(ses.session_id);
@@ -257,8 +258,6 @@ void session_cleanup() {
 	}
 	m_burn(ses.keys, sizeof(struct key_context));
 	m_free(ses.keys);
-
-	chancleanup();
 
 	TRACE(("leave session_cleanup"))
 }

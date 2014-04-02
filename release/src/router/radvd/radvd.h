@@ -36,148 +36,147 @@ struct Clients;
 #define USER_HZ 100
 
 struct Interface {
-	char			Name[IFNAMSIZ];	/* interface name */
+	char Name[IFNAMSIZ];	/* interface name */
 
-	struct in6_addr		if_addr;
-	unsigned int		if_index;
+	struct in6_addr if_addr;
+	unsigned int if_index;
 
-	uint8_t			init_racount;	/* Initial RAs */
+	uint8_t init_racount;	/* Initial RAs */
 
-	uint8_t			if_hwaddr[HWADDR_MAX];
-	int			if_hwaddr_len;
-	int			if_prefix_len;
-	int			if_maxmtu;
+	uint8_t if_hwaddr[HWADDR_MAX];
+	int if_hwaddr_len;
+	int if_prefix_len;
+	int if_maxmtu;
 
-	int			cease_adv;
+	int cease_adv;
 
-	struct timeval		last_ra_time;
+	struct timeval last_ra_time;
 
-	int			IgnoreIfMissing;
-	int			AdvSendAdvert;
-	double			MaxRtrAdvInterval;
-	double			MinRtrAdvInterval;
-	double			MinDelayBetweenRAs;
-	int			AdvManagedFlag;
-	int			AdvOtherConfigFlag;
-	uint32_t		AdvLinkMTU;
-	uint32_t		AdvReachableTime;
-	uint32_t		AdvRetransTimer;
-	uint8_t			AdvCurHopLimit;
-	int32_t			AdvDefaultLifetime;   /* XXX: really uint16_t but we need to use -1 */
-	int			AdvDefaultPreference;
-	int			AdvSourceLLAddress;
-	int			UnicastOnly;
+	int IgnoreIfMissing;
+	int AdvSendAdvert;
+	double MaxRtrAdvInterval;
+	double MinRtrAdvInterval;
+	double MinDelayBetweenRAs;
+	int AdvManagedFlag;
+	int AdvOtherConfigFlag;
+	uint32_t AdvLinkMTU;
+	uint32_t AdvReachableTime;
+	uint32_t AdvRetransTimer;
+	uint8_t AdvCurHopLimit;
+	int32_t AdvDefaultLifetime;	/* XXX: really uint16_t but we need to use -1 */
+	int AdvDefaultPreference;
+	int AdvSourceLLAddress;
+	int UnicastOnly;
 
 	/* Mobile IPv6 extensions */
-	int			AdvIntervalOpt;
-	int			AdvHomeAgentInfo;
-	int			AdvHomeAgentFlag;
-	uint16_t		HomeAgentPreference;
-	int32_t			HomeAgentLifetime;    /* XXX: really uint16_t but we need to use -1 */
+	int AdvIntervalOpt;
+	int AdvHomeAgentInfo;
+	int AdvHomeAgentFlag;
+	uint16_t HomeAgentPreference;
+	int32_t HomeAgentLifetime;	/* XXX: really uint16_t but we need to use -1 */
 
 	/* NEMO extensions */
-	int			AdvMobRtrSupportFlag;
+	int AdvMobRtrSupportFlag;
 
-	struct AdvPrefix	*AdvPrefixList;
-	struct AdvRoute		*AdvRouteList;
-	struct AdvRDNSS		*AdvRDNSSList;
-	struct AdvDNSSL		*AdvDNSSLList;
-	struct Clients		*ClientList;
-	struct timeval		last_multicast;
-	struct timeval		next_multicast;
+	struct AdvPrefix *AdvPrefixList;
+	struct AdvRoute *AdvRouteList;
+	struct AdvRDNSS *AdvRDNSSList;
+	struct AdvDNSSL *AdvDNSSLList;
+	struct Clients *ClientList;
+	struct timeval last_multicast;
+	struct timeval next_multicast;
 
 	/* Info whether this interface has failed in the past (and may need to be reinitialized) */
-	int			HasFailed;
+	int HasFailed;
 
-	struct Interface	*next;
+	struct Interface *next;
 };
 
 struct Clients {
-	struct in6_addr		Address;
-	struct Clients		*next;
+	struct in6_addr Address;
+	struct Clients *next;
 };
 
 struct AdvPrefix {
-	struct in6_addr		Prefix;
-	uint8_t			PrefixLen;
+	struct in6_addr Prefix;
+	uint8_t PrefixLen;
 
-	int			AdvOnLinkFlag;
-	int			AdvAutonomousFlag;
-	uint32_t		AdvValidLifetime;
-	uint32_t		AdvPreferredLifetime;
-	int			DeprecatePrefixFlag;
-	int			DecrementLifetimesFlag;
+	int AdvOnLinkFlag;
+	int AdvAutonomousFlag;
+	uint32_t AdvValidLifetime;
+	uint32_t AdvPreferredLifetime;
+	int DeprecatePrefixFlag;
+	int DecrementLifetimesFlag;
 
-	uint32_t		curr_validlft;
-	uint32_t		curr_preferredlft;
+	uint32_t curr_validlft;
+	uint32_t curr_preferredlft;
 
 	/* Mobile IPv6 extensions */
-	int             	AdvRouterAddr;
+	int AdvRouterAddr;
 
 	/* 6to4 etc. extensions */
-	char			if6to4[IFNAMSIZ];
-	int			enabled;
-	int			AutoSelected;
+	char if6to4[IFNAMSIZ];
+	int enabled;
+	int AutoSelected;
 
 	/* Select prefixes from this interface. */
-	char			if6[IFNAMSIZ];
+	char if6[IFNAMSIZ];
 
-	struct AdvPrefix	*next;
+	struct AdvPrefix *next;
 };
 
 /* More-Specific Routes extensions */
 
 struct AdvRoute {
-	struct in6_addr		Prefix;
-	uint8_t			PrefixLen;
+	struct in6_addr Prefix;
+	uint8_t PrefixLen;
 
-	int			AdvRoutePreference;
-	uint32_t		AdvRouteLifetime;
-	int			RemoveRouteFlag;
+	int AdvRoutePreference;
+	uint32_t AdvRouteLifetime;
+	int RemoveRouteFlag;
 
-	struct AdvRoute		*next;
+	struct AdvRoute *next;
 };
 
 /* Options for DNS configuration */
 
 struct AdvRDNSS {
-	int 			AdvRDNSSNumber;
-	uint32_t		AdvRDNSSLifetime;
-	int			FlushRDNSSFlag;
-	struct in6_addr		AdvRDNSSAddr1;
-	struct in6_addr		AdvRDNSSAddr2;
-	struct in6_addr		AdvRDNSSAddr3;
+	int AdvRDNSSNumber;
+	uint32_t AdvRDNSSLifetime;
+	int FlushRDNSSFlag;
+	struct in6_addr AdvRDNSSAddr1;
+	struct in6_addr AdvRDNSSAddr2;
+	struct in6_addr AdvRDNSSAddr3;
 
-	struct AdvRDNSS 	*next;
+	struct AdvRDNSS *next;
 };
 
 struct AdvDNSSL {
-	uint32_t		AdvDNSSLLifetime;
+	uint32_t AdvDNSSLLifetime;
 
-	int			AdvDNSSLNumber;
-	int			FlushDNSSLFlag;
-	char			**AdvDNSSLSuffixes;
+	int AdvDNSSLNumber;
+	int FlushDNSSLFlag;
+	char **AdvDNSSLSuffixes;
 
-	struct AdvDNSSL 	*next;
+	struct AdvDNSSL *next;
 };
 
 /* Mobile IPv6 extensions */
 
 struct AdvInterval {
-	uint8_t			type;
-	uint8_t			length;
-	uint16_t		reserved;
-	uint32_t		adv_ival;
+	uint8_t type;
+	uint8_t length;
+	uint16_t reserved;
+	uint32_t adv_ival;
 };
 
 struct HomeAgentInfo {
-	uint8_t			type;
-	uint8_t			length;
-	uint16_t		flags_reserved;
-	uint16_t		preference;
-	uint16_t		lifetime;
+	uint8_t type;
+	uint8_t length;
+	uint16_t flags_reserved;
+	uint16_t preference;
+	uint16_t lifetime;
 };
-
 
 /* gram.y */
 int yyparse(void);
@@ -193,8 +192,8 @@ void reset_prefix_lifetimes(void);
 /* timer.c */
 struct timeval next_timeval(double next);
 int timevaldiff(struct timeval const *a, struct timeval const *b);
-int next_time_msec(struct Interface const * iface);
-int expired(struct Interface const * iface);
+int next_time_msec(struct Interface const *iface);
+int expired(struct Interface const *iface);
 
 /* device.c */
 int update_device_info(struct Interface *);
@@ -223,22 +222,15 @@ int open_icmpv6_socket(void);
 /* send.c */
 int send_ra(struct Interface *iface, struct in6_addr *dest);
 int send_ra_forall(struct Interface *iface, struct in6_addr *dest);
-int really_send(
-		struct in6_addr const *dest,
-		unsigned int if_index,
-		struct in6_addr if_addr,
-		unsigned char * buff,
-		size_t len);
+int really_send(struct in6_addr const *dest, unsigned int if_index, struct in6_addr if_addr, unsigned char *buff, size_t len);
 
 /* process.c */
-void process(struct Interface *, unsigned char *, int,
-	struct sockaddr_in6 *, struct in6_pktinfo *, int);
+void process(struct Interface *, unsigned char *, int, struct sockaddr_in6 *, struct in6_pktinfo *, int);
 
 /* recv.c */
 int recv_rs_ra(unsigned char *, struct sockaddr_in6 *, struct in6_pktinfo **, int *);
 
 /* util.c */
-void mdelay(double);
 double rand_between(double, double);
 void print_addr(struct in6_addr *, char *);
 int check_rdnss_presence(struct AdvRDNSS *, struct in6_addr *);
@@ -267,21 +259,21 @@ int privsep_interface_retranstimer(const char *iface, uint32_t rettimer);
  * these are placed here because they're needed in all of socket.c, recv.c and send.c
  */
 #ifdef __linux__
-#  if defined IPV6_RECVHOPLIMIT || defined IPV6_RECVPKTINFO
-#    include <linux/version.h>
-#    if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,14)
-#      if defined IPV6_RECVHOPLIMIT && defined IPV6_2292HOPLIMIT
-#        undef IPV6_RECVHOPLIMIT
-#        define IPV6_RECVHOPLIMIT IPV6_2292HOPLIMIT
-#      endif
-#      if defined IPV6_RECVPKTINFO && defined IPV6_2292PKTINFO
-#        undef IPV6_RECVPKTINFO
-#        undef IPV6_PKTINFO
-#        define IPV6_RECVPKTINFO IPV6_2292PKTINFO
-#        define IPV6_PKTINFO IPV6_2292PKTINFO
-#      endif
-#    endif
-#  endif
+#if defined IPV6_RECVHOPLIMIT || defined IPV6_RECVPKTINFO
+#include <linux/version.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,14)
+#if defined IPV6_RECVHOPLIMIT && defined IPV6_2292HOPLIMIT
+#undef IPV6_RECVHOPLIMIT
+#define IPV6_RECVHOPLIMIT IPV6_2292HOPLIMIT
+#endif
+#if defined IPV6_RECVPKTINFO && defined IPV6_2292PKTINFO
+#undef IPV6_RECVPKTINFO
+#undef IPV6_PKTINFO
+#define IPV6_RECVPKTINFO IPV6_2292PKTINFO
+#define IPV6_PKTINFO IPV6_2292PKTINFO
+#endif
+#endif
+#endif
 #endif
 
 #endif

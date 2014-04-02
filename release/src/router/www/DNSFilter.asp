@@ -59,6 +59,9 @@ function initial(){
 
 	// dnsfilter_enable_x 0: disable, 1: enable, show mainTable & Protection level when enable, otherwise hide it
 	showhide("dnsfilter_mode",document.form.dnsfilter_enable_x.value);
+	showhide("dnsfilter_custom1", document.form.dnsfilter_enable_x.value);
+	showhide("dnsfilter_custom2", document.form.dnsfilter_enable_x.value);
+	showhide("dnsfilter_custom3", document.form.dnsfilter_enable_x.value);
 	showhide("mainTable", document.form.dnsfilter_enable_x.value);
 }
 
@@ -120,12 +123,17 @@ function gen_modeselect(name, value, onchange){
 	var code = "";
 	code +='<select class="input_option" name="'+name+'" value="'+value+'" onchange="'+onchange+'">';
 	code +='<option value="0"'+(value == 0 ? "selected" : "")+'>None</option>';
-	code +='<option value="1"'+(value == 1 ? "selected" : "")+'>OpenDNS</option>';
+	code +='<option value="11"'+(value == 11 ? "selected" : "")+'>Router</option>';
+	code +='<option value="1"'+(value == 1 ? "selected" : "")+'>OpenDNS Home</option>';
+	code +='<option value="7"'+(value == 7 ? "selected" : "")+'>OpenDNS Family</option>';
 	code +='<option value="2"'+(value == 2 ? "selected" : "")+'>Norton Safe</option>';
 	code +='<option value="3"'+(value == 3 ? "selected" : "")+'>Norton Family</option>';
 	code +='<option value="4"'+(value == 4 ? "selected" : "")+'>Norton Children</option>';
 	code +='<option value="5"'+(value == 5 ? "selected" : "")+'>Yandex Safe</option>';
 	code +='<option value="6"'+(value == 6 ? "selected" : "")+'>Yandex Family</option>';
+	code +='<option value="8"'+(value == 8 ? "selected" : "")+'>Custom 1</option>';
+	code +='<option value="9"'+(value == 9 ? "selected" : "")+'>Custom 2</option>';
+	code +='<option value="10"'+(value == 10 ? "selected" : "")+'>Custom 3</option>';
 	code +='</select>';
 	return code;
 }
@@ -351,11 +359,15 @@ function changeRow_main(r){
 							protection):
 							<ul>
 								<li><a target="_blank" style="font-weight: bolder; cursor:pointer;text-decoration: underline;" href="http://www.opendns.com/home-internet-security/">OpenDNS</a>
+								<ul><li>Home = Regular OpenDNS server (manually configurable through their portal)
+								<li>Family = Family Shield (pre-configured to block adult content)</ul>
 								<li><a target="_blank" style="font-weight: bolder; cursor:pointer;text-decoration: underline;" href="https://dns.norton.com/">Norton Connect Safe</a> (for home usage only)
 								<ul><li>Safe = Malicious content<li>Family = Malicious + Sexual content<li>Children = Malicious + Sexual + Mature content</ul>
 								<li><a target="_blank" style="font-weight: bolder; cursor:pointer;text-decoration: underline;" href="http://dns.yandex.com"><#YandexDNS#></a>
 								<ul><li>Safe = Malicious content<li>Family = Malicious + Sexual content</ul>
 							</ul>
+							<br>"None" will disable/bypass the filter, and "Router" will force clients to use the DNS provided
+							    by the router's DHCP server (or, the router itself if it's not defined).
 						</div>
 					</td>
 				</tr>
@@ -373,12 +385,18 @@ function changeRow_main(r){
 									function(){
 										document.form.dnsfilter_enable_x.value = 1;
 										showhide("dnsfilter_mode",1);
-										showhide("mainTable",1);	
+										showhide("dnsfilter_custom1",1);
+										showhide("dnsfilter_custom2",1);
+										showhide("dnsfilter_custom3",1);
+										showhide("mainTable",1);
 									},
 									function(){
 										document.form.dnsfilter_enable_x.value = 0;
 										showhide("dnsfilter_mode",0);
-										showhide("mainTable",0);	
+										showhide("dnsfilter_custom1",0);
+										showhide("dnsfilter_custom2",0);
+										showhide("dnsfilter_custom3",0);
+										showhide("mainTable",0);
 									},
 										{
 											switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
@@ -392,15 +410,38 @@ function changeRow_main(r){
 					<td>
 						<select name="dnsfilter_mode" class="input_option">
 							<option value="0" <% nvram_match("dnsfilter_mode", "0", "selected"); %>>No filtering</option>
-							<option value="1" <% nvram_match("dnsfilter_mode", "1", "selected"); %>>OpenDNS</option>
+							<option value="11" <% nvram_match("dnsfilter_mode", "11", "selected"); %>>Router</option>
+							<option value="1" <% nvram_match("dnsfilter_mode", "1", "selected"); %>>OpenDNS Home</option>
+							<option value="7" <% nvram_match("dnsfilter_mode", "7", "selected"); %>>OpenDNS Family</option>
 							<option value="2" <% nvram_match("dnsfilter_mode", "2", "selected"); %>>Norton Safe</option>
 							<option value="3" <% nvram_match("dnsfilter_mode", "3", "selected"); %>>Norton Family</option>
 							<option value="4" <% nvram_match("dnsfilter_mode", "4", "selected"); %>>Norton Children</option>
 							<option value="5" <% nvram_match("dnsfilter_mode", "5", "selected"); %>>Yandex Safe</option>
 							<option value="6" <% nvram_match("dnsfilter_mode", "6", "selected"); %>>Yandex Family</option>
+							<option value="8" <% nvram_match("dnsfilter_mode", "8", "selected"); %>>Custom 1</option>
+							<option value="9" <% nvram_match("dnsfilter_mode", "9", "selected"); %>>Custom 2</option>
+							<option value="10" <% nvram_match("dnsfilter_mode", "10", "selected"); %>>Custom 3</option>
 						</select>
 					</td>
 				</tr>
+				<tr id="dnsfilter_custom1">
+					<th width="200">Custom (user-defined) DNS 1</th>
+					<td>
+						<input type="text" maxlength="15" class="input_15_table" name="dnsfilter_custom1" value="<% nvram_get("dnsfilter_custom1"); %>" onKeyPress="return is_ipaddr(this,event)">
+					</td>
+				</tr>
+                                <tr id="dnsfilter_custom2">
+                                        <th width="200">Custom (user-defined) DNS 2</th>
+                                        <td>
+                                                <input type="text" maxlength="15" class="input_15_table" name="dnsfilter_custom2" value="<% nvram_get("dnsfilter_custom2"); %>" onKeyPress="return is_ipaddr(this,event)">
+                                        </td>
+                                </tr>
+                                <tr id="dnsfilter_custom3">
+                                        <th width="200">Custom (user-defined) DNS 3</th>
+                                        <td>
+                                                <input type="text" maxlength="15" class="input_15_table" name="dnsfilter_custom3" value="<% nvram_get("dnsfilter_custom3"); %>" onKeyPress="return is_ipaddr(this,event)">
+                                        </td>
+                                </tr>
 			</table>
 			<table id="list_table" width="100%" border="0" align="center" cellpadding="0" cellspacing="0" >
 				<tr>

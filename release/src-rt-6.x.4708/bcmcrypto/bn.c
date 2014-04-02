@@ -4,7 +4,7 @@
  * Code copied from openssl distribution and
  * Modified just enough so that compiles and runs standalone
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -2853,7 +2853,7 @@ BN_get_word(const BIGNUM *a)
 	if (n > sizeof(BN_ULONG))
 		return (BN_MASK2);
 	for (i = a->top-1; i >= 0; i--) {
-#ifndef SIXTY_FOUR_BIT     /* the data item > unsigned long */
+#ifndef SIXTY_FOUR_BIT /* the data item > unsigned long */
 		ret <<= BN_BITS4; /* stops the compiler complaining */
 		ret <<= BN_BITS4;
 #else
@@ -2881,7 +2881,7 @@ BN_set_word(BIGNUM *a, BN_ULONG w)
 		 * w >>= BN_BITS2 so compilers don't complain
 		 * on builds where sizeof(long) == BN_TYPES
 		 */
-#ifndef SIXTY_FOUR_BIT     /* the data item > unsigned long */
+#ifndef SIXTY_FOUR_BIT /* the data item > unsigned long */
 		w >>= BN_BITS4;
 		w >>= BN_BITS4;
 #else

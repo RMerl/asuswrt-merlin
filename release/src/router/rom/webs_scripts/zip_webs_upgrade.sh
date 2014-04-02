@@ -39,7 +39,8 @@ else
 	echo "---- s1= ----" >> /tmp/webs_upgrade.log
 	echo $s1 >> /tmp/webs_upgrade.log	
 	echo "---- s2= ----" >> /tmp/webs_upgrade.log
-	echo $s2 >> /tmp/webs_upgrade.log		
+	echo $s2 >> /tmp/webs_upgrade.log
+	/sbin/ejusb -1 0
 	rc rc_service stop_upgrade
 	if expr $s1 \> $s2 ; then		# /tmp free space Not enough
 		force_free_ram

@@ -474,8 +474,13 @@ void setchannelfds(fd_set *readfds, fd_set *writefds) {
 			continue;
 		}
 
-		/* Stuff to put over the wire */
-		if (channel->transwindow > 0) {
+		/* Stuff to put over the wire. 
+		Avoid queueing data to send if we're in the middle of a 
+		key re-exchange (!dataallowed), but still read from the 
+		FD if there's the possibility of "~."" to kill an 
+		interactive session (the read_mangler) */
+		if (channel->transwindow > 0
+		   && (ses.dataallowed || channel->read_mangler)) {
 
 			if (channel->readfd >= 0) {
 				FD_SET(channel->readfd, readfds);

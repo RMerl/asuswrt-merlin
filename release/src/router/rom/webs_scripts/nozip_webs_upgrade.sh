@@ -35,7 +35,8 @@ else
 	firmware_check_ret=`nvram get firmware_check`
 	if [ "$firmware_check_ret" == "1" ]; then
 		echo "---- fw check OK ----" >> /tmp/webs_upgrade.log
-		rc rc_service start_upgrade
+		/sbin/ejusb -1 0
+		rc rc_service restart_upgrade
 	else
 		echo "---- fw check error ----" >> /tmp/webs_upgrade.log
 		nvram set webs_state_error=3	# wrong fw

@@ -37,7 +37,10 @@ function wl_chanspec_list_change(){
 										else if(document.form.preferred_lang.value == "UK")		// auto for UK
 												wl_channel_list_5g[i] = wlextchannel_fourty(wl_channel_list_5g[i]);
 										else if(band5g_11ac_support){
-												if(country == "EU" && parseInt(wl_channel_list_5g[i]) >= 116 && parseInt(wl_channel_list_5g[i]) <= 140){	// belong to 40MHz	
+												if(country == "EU" && (parseInt(wl_channel_list_5g[i]) == 116 || parseInt(wl_channel_list_5g[i]) == 140)){		//	belong to 20MHz
+													wl_channel_list_5g[i] = wl_channel_list_5g[i];
+												}
+												else if(country == "EU" && parseInt(wl_channel_list_5g[i]) > 116 && parseInt(wl_channel_list_5g[i]) < 140){	// belong to 40MHz	
 														wl_channel_list_5g[i] = wlextchannel_fourty(wl_channel_list_5g[i]);
 												}else if(country == "TW" && parseInt(wl_channel_list_5g[i]) >= 56 && parseInt(wl_channel_list_5g[i]) <= 64){	// belong to 40MHz
 														wl_channel_list_5g[i] = wlextchannel_fourty(wl_channel_list_5g[i]);
@@ -68,8 +71,21 @@ function wl_chanspec_list_change(){
 						}
 						else if(bw_cap == "2"){		// 40MHz
 							$('wl_nctrlsb_field').style.display = "";
-								for(var i=0;i<wl_channel_list_5g.length;i++){
-									wl_channel_list_5g[i] = wlextchannel_fourty(wl_channel_list_5g[i]);	
+								for(var i=0;i<wl_channel_list_5g.length;i++){			
+									if(based_modelid == "RT-AC68U" && (country == "EU" && (parseInt(wl_channel_list_5g[i]) == 116 || parseInt(wl_channel_list_5g[i]) == 140)))
+										wl_channel_list_5g[i] = wl_channel_list_5g[i];
+									else
+										wl_channel_list_5g[i] = wlextchannel_fourty(wl_channel_list_5g[i]);	
+								}								
+								
+								if(wl_channel_list_5g.indexOf("116l") > -1){			// remove channel 116, 
+									var index = wl_channel_list_5g.indexOf("116l");
+									wl_channel_list_5g.splice(index, 1);
+								}
+		
+								if(wl_channel_list_5g.indexOf("140l" > -1)){			// remove channel 140
+									index = wl_channel_list_5g.indexOf("140l");
+									wl_channel_list_5g.splice(index, 1);
 								}
 						}
 						else{		//20MHz
@@ -78,10 +94,9 @@ function wl_chanspec_list_change(){
 												
 						if(wl_channel_list_5g[0] != "0")
 								wl_channel_list_5g.splice(0,0,"0");
-						
+			
 						add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value, 1);   //construct extension channel
-						chanspecs = wl_channel_list_5g;	
-						
+						chanspecs = wl_channel_list_5g;						
 				}else{	// hook failure to set chennel by static channels array									
 						if (bw_cap == "1") { // -- 20 MHz
 							if (country == "Q2")
@@ -342,5 +357,13 @@ function change_channel(obj){
 				add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value);
 			}
 		}
+	}
+	
+	if(based_modelid == "RT-AC68U"){
+		if(document.form.wl_channel.value  == 0)
+			document.form.acs_dfs.disabled = false;
+		else
+			document.form.acs_dfs.disabled = true;
+	
 	}
 }

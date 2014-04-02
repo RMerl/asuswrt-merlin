@@ -812,6 +812,10 @@ out:
 /* make sure that the socket closes */
 void m_close(int fd) {
 
+	if (fd == -1) {
+		return;
+	}
+
 	int val;
 	do {
 		val = close(fd);

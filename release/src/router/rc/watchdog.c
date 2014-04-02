@@ -70,13 +70,9 @@
 #define URGENT_PERIOD		100 * 1000	/* microsecond */
 #define RUSHURGENT_PERIOD	50 * 1000	/* microsecond */
 
-#ifdef BTN_SETUP
-#define SETUP_WAIT		3		/* seconds */
-#define SETUP_WAIT_COUNT	SETUP_WAIT * 10 /* 10 times a second */
-#define SETUP_TIMEOUT		60 		/* seconds */
-#define SETUP_TIMEOUT_COUNT	SETUP_TIMEOUT * 10 /* 60 times a second */
-#endif // BTN_SETUP
 #define WPS_TIMEOUT_COUNT	121 * 20
+#define WPS_WAIT		1		/* seconds */
+#define WPS_WAIT_COUNT		WPS_WAIT * 20	/* 20 times a second */
 
 //#if defined(RTCONFIG_JFFS2LOG) && defined(RTCONFIG_JFFS2)
 #if defined(RTCONFIG_JFFS2LOG) && (defined(RTCONFIG_JFFS2)||defined(RTCONFIG_BRCM_NAND_JFFS2))
@@ -157,6 +153,7 @@ void erase_nvram(void)
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
 		case MODEL_RTAC68U:
+		case MODEL_RTAC87U:
 			eval("mtd-erase2", "nvram");
 			break;
 		default:
@@ -170,6 +167,7 @@ int init_toggle(void)
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
 		case MODEL_RTAC68U:
+		case MODEL_RTAC87U:
 			nvram_set("btn_ez_radiotoggle", "1");
 			return BTN_WIFI_TOG;
 		default:
@@ -502,7 +500,7 @@ void btn_check(void)
 				}
 				else
 				{	/* Whenever it is pushed steady */
-					if (++btn_count_setup > SETUP_WAIT_COUNT)
+					if (++btn_count_setup > WPS_WAIT_COUNT)
 					{
 						btn_pressed_setup = BTNSETUP_START;
 						btn_count_setup = 0;
@@ -533,7 +531,7 @@ void btn_check(void)
 			    !wps_band_radio_off(get_radio_band(0)))
 			{
 				/* Whenever it is pushed steady, again... */
-				if (++btn_count_setup_second > SETUP_WAIT_COUNT)
+				if (++btn_count_setup_second > WPS_WAIT_COUNT)
 				{
 					btn_pressed_setup = BTNSETUP_START;
 					btn_count_setup_second = 0;
@@ -1226,7 +1224,7 @@ void swmode_check()
 void ddns_check(void)
 {
 	if(nvram_match("ddns_enable_x", "1") &&
-	   (nvram_match("wan0_state_t", "2") && nvram_match("wan0_auxstate_t", "0")) )
+	  (nvram_match("wan0_state_t", "2") && nvram_match("wan0_auxstate_t", "0")) )
 	{
 		if (pids("ez-ipupdate")) //ez-ipupdate is running!
 			return;
@@ -1279,6 +1277,27 @@ void syslog_commit_check(void)
 	return;
 }
 #endif
+
+static void auto_firmware_check()
+{
+	static int period = 2877;
+	int cycle_manual = nvram_get_int("fw_check_period");
+	int cycle = (cycle_manual > 1) ? cycle_manual : 2880;
+
+	period = (period + 1) % cycle;
+
+	if (!period)
+	{
+		eval("/usr/sbin/webs_update.sh");
+
+		if (nvram_get_int("webs_state_update") &&
+		    !nvram_get_int("webs_state_error") &&
+		    strlen(nvram_safe_get("webs_state_info")))
+			dbg("retrieve firmware information\n");
+		else
+			dbg("error retrieve firmware information!\n");
+	}
+}
 
 #ifdef RTCONFIG_PUSH_EMAIL
 
@@ -1702,6 +1721,7 @@ void watchdog(int sig)
 #if defined(RTCONFIG_JFFS2LOG) && (defined(RTCONFIG_JFFS2)||defined(RTCONFIG_BRCM_NAND_JFFS2))
 	syslog_commit_check();
 #endif
+//	auto_firmware_check();
 
 	return;
 }

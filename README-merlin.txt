@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 3.0.0.4.374.39 (xx-xxx-2014)
-===================================================
+Asuswrt-Merlin - build 374.41 (xx-xxxx-2014)
+============================================
 
 About
 -----
@@ -41,9 +41,9 @@ Here is a list of features that Asuswrt-merlin brings over the original
 firmware:
 
 System:
-   - Based on RT-AC68U 3.0.0.4.374_583 sources from Asus
+   - Based on 3.0.0.4.374_4561 sources from Asus
    - Various bugfixes and optimizations
-   - Some components were updated to newerversions, for improved
+   - Some components were updated to newer versions, for improved
      stability and security
    - Persistent JFFS partition
    - User scripts that run on specific events
@@ -58,7 +58,7 @@ Disk sharing:
    - Enable/disable the use of shorter share names
    - Disk spindown after user-configurable inactivity timeout
    - NFS sharing (through webui)
-   - Better compatibility with 3TB+ and Advanced Format HDDs
+   - Improved compatibility with 3TB+ and Advanced Format HDDs
 
 Networking:
    - Force acting as a Master Browser
@@ -73,7 +73,6 @@ Networking:
    - Advanced OpenVPN client and server support (all models except 
      RT-N16)
    - Netfilter ipset module, for efficient blacklist implemetnation
-   - Configurable IPv6 firewall
    - Configurable min/max UPNP ports
    - IPSec kernel support
    - DNS-based Filtering, can be applied globally or per client
@@ -106,8 +105,8 @@ integrated/enabled in the official firmware:
 - VPN client connection state report
 - DualWAN and Repeater mode (while it was still under development
   by Asus)
-- OpenVPN client and server support
-
+- OpenVPN client and server
+- Configurable IPv6 firewall
 
 
 Installation
@@ -504,10 +503,24 @@ provide basic filtering, but force your children's devices to use
 Norton Connect Safe's DNS server that filters out malicious, 
 adult, and general mature content.
 
+If using a global filter, then specific devices can be told to 
+bypass the global filter, by creating a client rule for these, 
+and setting it to "No Filtering".
+
+DNSFilter also lets you define up to three custom nameservers, for 
+use in filtering rules.  This will let you use any unsupported 
+filtering nameserver.
+
+You can configure a filter rule to force your clients to 
+use whichever DNS is provided by the router's DHCP server (if 
+you changed it from the default value, otherwise it will be 
+the router's IP).  Set the filtering rule to "Router" for this.
+
 Note that DNSFilter will interfere with resolution of local 
 hostnames.  This is a side effect of having devices forced to use 
 a specific external nameserver.  If this is an issue for you, then set 
 the default filter to "None", and only filter out specific devices.
+
 
 
 ** Layer7-based Netfilter module **
@@ -551,7 +564,115 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.4.374.39 (xx-xxx-2014)
+374.41 (xx-xxxx-2014)
+   - NEW: Enabled PCP support in miniupnpd.
+   - NEW: Option to allow/deny FTP access from WAN.  Default is to
+          reject WAN connections.  The option can be found on the
+          USB Servers -> Misc page.
+   - NEW: Option to control web redirection while Internet is 
+          down (configurable on the WAN page).
+   - CHANGED: Upgraded miniupnpd to 1.8.20140310.
+   - CHANGED: Disk idle exclusion now supports up to 9 disks.
+   - FIXED: Language dropdown not properly shown with non-ASCII 
+            alphabets.
+   - FIXED: Filter out neighbour solicitation flood on Comcast's 
+            IPv6 network which would result in log spam from the 
+            tables getting filled.  The filter is enabled by 
+            default and can be controled with the 
+            "ipv6_neighsol_drop" nvram setting.
+  - FIXED: EMF wasn't properly configured after wireless was
+           restarted (patch from Vahur)
+
+
+374.40 (6-March-2014)
+   - KNOWN ISSUE: Some people are experiencing random reboots
+     with the RT-AC68U running firmwares based on recent Asus GPL.
+     If you are are affected, please revert to 374.40 alpha4 for now.
+     Asus are looking into the issue, which affects this model since
+     374_4422.
+
+   - FIXED: Asuswrt was calling wl_defaults() every time the
+            wifi was restarted, causing Regulation Mode to be
+            overwritten.  Now we force it to h mode if the
+            router model and region requires DFS compliance
+            (same as Asus's code, except we won't enforce 
+            it to off in other scenarios, and will only do
+            so if it was previously set to off).
+   - FIXED: Advanced wireless page broken on Internet Explorer, due
+            to missing Array.IndexOf() support in IE (Asus bug)
+   - FIXED: Incorrect model detection prevented CPU temperature
+            from being shown on the Sysinfo page on the "R" SKUs.
+
+
+374.40 Beta 2 (5-March-2014)
+   - FIXED: Numerous buffer overruns in networkmap that would result
+            in crashes or empty/incomplete device list.  Was often 
+            visible on networks hosting a Windows Home Server machine.
+            (Asus bug)
+   - FIXED: Site survey was reporting 5G as being disabled on RT-N16.
+   - FIXED: Various issues related to the helper.sh script for postconf
+   - FIXED: The OpenVPN instance wasn't restarted if it was currently 
+            stopped due to a syntax error in its config and you had 
+            just corrected it.
+   - FIXED: Restarting the wireless service would stop emf/igs snooping
+            until they were manually restarted/recconfigured. (Asus bug)
+   - FIXED: Channels above 153 were missing on 5 GHz band if width
+            is set to 40 MHz (Asus bug)
+   - FIXED: reg_mode was being enforced to "h" (EU region) or "off"
+            (others) since GPL 4422.  We now stick again to what's 
+            set in the webui by the end user.
+  - FIXED: Allow LAN traffic while dualwan mode is set to lb (issue
+           caused by the default policy fix in beta 1)
+
+
+374.40 Beta 1 (1-March-2014)
+   - NEW: Merged with Asus's 374_4561 GPL.  Notable changes:
+       * Various security-related fixes
+       * Redesigned Parental Control webui
+       * Notification in case of insecure configuration
+
+   - NEW: Added OpenDNS Family Shield support to DNSFilter
+   - NEW: Added support for up to three user-defined servers to DNSFilter
+   - NEW: Added option to force DNSfilter clients to always use the DNS
+          provided to them by the router's DHCP server (which will be
+          the router itself if you didn't change it on the DHCP 
+          webui page)
+   - NEW: Option to disable the DHCP6 Server (code contributed by
+          kdarbyshirebryant)
+   - CHANGED: The RT-N66U is now compiled with EM enabled
+              by default.  That means there will no longer be a separate
+              experimental build for this.
+   - CHANGED: Updated dropbear to 2014.63
+   - CHANGED: New type of glue for the webui header
+   - CHANGED: Switched to a shorter version numbering scheme
+   - FIXED: RT-N16 firmware (missing files were obtained from
+            the new GPL release Asus made for this model)
+   - FIXED: Last24 page wasn't properly displaying the 
+            Avg value (regression in 374.39)
+   - FIXED: Clients with a configured IPv6 DNS would bypass
+            DNSFilter.  DNSFilter-enabled clients will now 
+            be prevented from using IPv6 nameservers, forcing 
+            them through the (IPv4-only) filtering nameserver
+   - FIXED: DNSFilter clients set to "None" would still be
+            forced through your WAN-configured nameservers,
+            preventing nameservers configured on the clients
+            from working.  Now they will fully ignore the DNSFilter 
+            settings.
+   - FIXED: The global DNSFilter would sometime not get properly
+            configured in the firewall.
+   - FIXED: When the firewall was disabled, the FORWARD chain
+            policy was still left to "DROP" - changed to "ACCEPT".
+   - FIXED: typo in SMB config ("use spne go") (Asus bug)
+   - FIXED: PPPoE with an MTU of 1500 requires the WAN interface 
+            to have its MTU set at 1508 (patch by pinwing)
+   - FIXED: IPv6 Prefix Delegation issues (patch by pinwing)
+   - FIXED: MTU setting on IPv6 connections (patch by pinwing)
+
+
+3.0.0.4.374.39 (31-Jan-2014)
+   This version isn't available for the RT-N16 as support for the 
+   SDK5 platform is currently broken in the latest GPL sources. 
+
    - NEW: Merged with Asus 374_583 GPL.  Notable changes:
       * USB hub support
    - NEW: DNS-based filtering.  Under Parental Control there is
@@ -572,11 +693,15 @@ History
   - CHANGED: Re-switched back to rp-pppoe 3.11 since nobody confirmed 
              that 3.10 worked better for them.
   - CHANGED: Allow PPPoE MTU up to 1500, for ISPs that support RFC 4638.
-  - CHANGED: Additional webui performance improvemnet by caching CSS.
+  - CHANGED: Additional webui performance improvement by caching CSS.
   - FIXED: DHCPv6 client failing to start if the router username was 
            changed from "admin" (Asus bug) (patch from Saintdev)
+  - FIXED: DHCPv6 client failing to request an IP with some ISPs 
+           such as Comcast (Asus bug) (patch from Saintdev)
   - FIXED: SMB shares were accessible over WAN, bypassing Netfilter
            (Asus bug) (AC56/AC68)
+  - FIXED: USB read speed would be limited by the QoS upstream
+           configuration (Asus bug) (AC56/AC68)
   - FIXED: Resolution of local machines with domain appended would fail 
            when using a nameserver that does not return nxdomain errors 
            (such as OpenDNS) (Asus bug)
@@ -590,6 +715,12 @@ History
            properly saved.
   - FIXED: Well-known services not properly applying settings on the
            Network Services Filtering page (Asus bug)
+  - FIXED: Webui crash when importing an ovpn with invalid cert/keys
+  - FIXED: resolv.conf not reverted to its original content after an 
+           OpenVPN client that gets DNS pushed to it would disconnect.
+  - FIXED: The average rates on the realtime traffic page would be 
+           calculated based on the max number of samples (300) instead of 
+           the currently collected number of samples (Asus bug)
   - REMOVED: YandexDNS has been removed, since its functionality is now
              provided by the new DNSFilter.
 
@@ -1698,6 +1829,7 @@ Website: http://www.lostrealm.ca/
 Github: https://github.com/RMerl/asuswrt-merlin
 Email: rmerl@lostrealm.ca
 Twitter: https://twitter.com/RMerlinDev
+IRC: #asuswrt on DALnet
 Download: http://www.lostrealm.ca/asuswrt-merlin/download
 
 Development news will be posted on Twitter.  You can also keep a closer 
@@ -1715,6 +1847,7 @@ I want to give my special thanks to Asus for showing an interest in
 this project, and also providing me with support when needed.  Also, 
 thank you everyone who has donated through Paypal.  Much appreciated!
 
+Logo designed by r00t4rd3d.
 
 
 --- 

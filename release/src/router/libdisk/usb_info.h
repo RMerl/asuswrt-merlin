@@ -75,8 +75,8 @@ extern char *get_interface_by_string(const char *target_string, char *ret, const
 extern char *get_interface_by_device(const char *device_name, char *buf, const int buf_size);
 extern char *get_path_by_node(const char *usb_node, char *buf, const int buf_size);
 
-extern char *get_usb_vid(const char *usb_node, char *buf, const int buf_size);
-extern char *get_usb_pid(const char *usb_node, char *buf, const int buf_size);
+extern unsigned int get_usb_vid(const char *usb_node);
+extern unsigned int get_usb_pid(const char *usb_node);
 extern char *get_usb_manufacturer(const char *usb_node, char *buf, const int buf_size);
 extern char *get_usb_product(const char *usb_node, char *buf, const int buf_size);
 extern char *get_usb_serial(const char *usb_node, char *buf, const int buf_size);
@@ -99,7 +99,7 @@ extern int isSerialNode(const char *device_name);
 extern int isACMNode(const char *device_name);
 extern int isSerialInterface(const char *interface_name);
 extern int isACMInterface(const char *interface_name);
-extern int isRNDISInterface(const char *interface_name, const char *vid, const char *pid);
+extern int isRNDISInterface(const char *interface_name, const unsigned int vid, const unsigned int pid);
 extern int isCDCETHInterface(const char *interface_name);
 #ifdef RTCONFIG_USB_BECEEM
 extern int isGCTInterface(const char *interface_name);

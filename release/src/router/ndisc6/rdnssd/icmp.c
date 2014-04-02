@@ -108,7 +108,7 @@ static int icmp_recv (int fd)
 			mylog("Get IPv6 address & DNS from DHCPv6");
 			if(last_flag != 1)
 				system("rc rc_service stop_ipv6");
-			nvram_set("ipv6_ra_conf", "oset");
+			nvram_set("ipv6_ra_conf", "mset");
 			system("rc rc_service start_dhcp6c");
 			last_flag = icmp6.nd_ra_flags_reserved;
 		}else if ( (icmp6.nd_ra_flags_reserved & ND_RA_FLAG_OTHER) && last_flag != icmp6.nd_ra_flags_reserved){

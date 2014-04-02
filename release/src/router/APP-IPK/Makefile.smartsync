@@ -4,11 +4,11 @@ export SRCBASE := $(shell pwd)/$(CURRENT)
 export BUILD := $(shell (gcc -dumpmachine))
 export HOSTCC := gcc
 export PLATFORM := mipsel-uclibc
-CROSS_COMPILE := mipsel-openwrt-linux-
+CROSS_COMPILE := mipsel-linux-
 export CROSS_COMPILER := $(CROSS_COMPILE)
 export CONFIGURE := ./configure --host=mipsel-linux --build=$(BUILD)
 export TOOLCHAIN := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))/.. && pwd)
-export IPKG_TOOLS := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))../../../../../toolchain/ipkg-utils-1.7 && pwd)
+export IPKG_TOOLS := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))../../../ipkg-utils-1.7 && pwd)
 export LD_DIR := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))../../../../staging && pwd)
 
 

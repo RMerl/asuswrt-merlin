@@ -15,7 +15,7 @@ CCFLAGS = -Os -Wall -I$(SRCBASE)/include -I../../shared -I$(SRCBASE)/include/emf
 
 ifeq ($(wildcard ./*.c),)
 all:
-	-cp prebuild/igs igs
+	-cp prebuilt/igs igs
 else
 all: igs
 endif
@@ -30,8 +30,8 @@ $(ALL_OBJS): %.o: %.c
 	$(CC) $(CCFLAGS) -c $<
 
 install: all
-	install -d $(INSTALLDIR)/igs$(BCMEX)/usr/sbin
-	install -m 755 igs $(INSTALLDIR)/igs$(BCMEX)/usr/sbin
+	install -d $(INSTALLDIR)/igs/usr/sbin
+	install -m 755 igs $(INSTALLDIR)/igs/usr/sbin
 
 .PHONY:	clean
 clean:

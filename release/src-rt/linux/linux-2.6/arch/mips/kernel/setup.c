@@ -505,6 +505,10 @@ static void __init arch_mem_init(char **cmdline_p)
 #endif
 	sparse_init();
 	paging_init();
+
+#ifdef CONFIG_DUMP_PREV_OOPS_MSG
+        reserve_bootmem(CPHYSADDR(CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR), CONFIG_DUMP_PREV_OOPS_MSG_BUF_LEN);
+#endif
 }
 
 static void __init resource_init(void)

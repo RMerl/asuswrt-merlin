@@ -1,7 +1,7 @@
 /*
  * WPS IE
  *
- * Copyright (C) 2013, Broadcom Corporation
+ * Copyright (C) 2012, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: wps_ie.h 383924 2013-02-08 04:14:39Z $
+ * $Id: wps_ie.h 268017 2011-06-21 09:48:46Z $
  */
 
 #ifndef __WPS_IE_H__
@@ -36,7 +36,7 @@ int wps_vndr_ext_obj_free(void *ptToFree);
 
 void *wps_vndr_ext_obj_alloc(int siBufferSize, char *pcOSName);
 /*
-*  Return the Vendor Extension Object Pointer allocated with buffer
+*  Return the Vendor Extension Object Pointer allocated with buffer 
 *     size siBufferSize. NULL if BufferSize is too big or malloc error.
 *  siBufferSize: < 0, the WPSM_VNDR_EXT_MAX_DATA_80211 will be allocated.
 *  pcOSName: pointer to char that contains OS name of an interface

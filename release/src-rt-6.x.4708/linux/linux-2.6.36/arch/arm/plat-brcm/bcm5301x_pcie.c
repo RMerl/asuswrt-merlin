@@ -776,7 +776,7 @@ static void __init soc_pcie_map_init(struct soc_pcie_port *port)
 	__raw_writel(addr | size,
 		port->reg_base + SOC_PCIE_SYS_IARR(1));
 #ifdef CONFIG_SPARSEMEM
-	addr = PHYS_OFFSET2 + SZ_128M;
+	addr = PHYS_OFFSET2;
 	__raw_writel(addr | 0x1,
 		port->reg_base + SOC_PCIE_SYS_IMAP2(0));
 	__raw_writel(addr | size,
@@ -1280,6 +1280,70 @@ out:
 	REG_UNMAP((void *)dmu_base);
 }
 
+static void __init
+bcm5301x_pcie_phy_init(void)
+{
+	uint32 ccb_mii_base;
+	uint32 *ccb_mii_mng_ctrl_addr;
+	uint32 *ccb_mii_mng_cmd_data_addr;
+	uint32 dmu_base, cru_straps_ctrl;
+	uint32 blkaddr = 0x863, regaddr;
+	uint32 sb = 1, op_w = 1, pa[3] = {0x0, 0x1, 0xf}, blkra = 0x1f, ta = 2;
+	uint32 i, val;
+
+	/* Check Chip ID */
+	if (!BCM4707_CHIP(CHIPID(sih->chip)))
+		return;
+
+	/* Reg map */
+	dmu_base = (uint32)REG_MAP(0x1800c000, 4096);
+	ccb_mii_base = (uint32)REG_MAP(0x18003000, 4096);
+	ccb_mii_mng_ctrl_addr = (uint32 *)ccb_mii_base;
+	ccb_mii_mng_cmd_data_addr = (uint32 *)(ccb_mii_base + 0x4);
+
+	/* Set MDC/MDIO for Internal phy */
+	SPINWAIT(((readl(ccb_mii_mng_ctrl_addr) >> 8 & 1) == 1), 1000);
+	writel(0x0000009a, ccb_mii_mng_ctrl_addr);
+
+	/* To improve PCIE phy jitter */
+	for (i = 0; i < (ARRAY_SIZE(soc_pcie_ports) - 1); i++) {
+		if (i == 2) {
+			cru_straps_ctrl = readl((uint32 *)(dmu_base + 0x2a0));
+
+			/* 3rd PCIE is not selected */
+			if (cru_straps_ctrl & 0x10)
+				break;
+		}
+
+		/* Change blkaddr */
+		SPINWAIT(((readl(ccb_mii_mng_ctrl_addr) >> 8 & 1) == 1), 1000);
+		val = (sb << 30) | (op_w << 28) | (pa[i] << 23) | (blkra << 18) |
+			(ta << 16) | (blkaddr << 4);
+		writel(val, ccb_mii_mng_cmd_data_addr);
+
+		/* Write 0x0190 to 0x13 regaddr */
+		SPINWAIT(((readl(ccb_mii_mng_ctrl_addr) >> 8 & 1) == 1), 1000);
+		regaddr = 0x13;
+		val = (sb << 30) | (op_w << 28) | (pa[i] << 23) | (regaddr << 18) |
+			(ta << 16) | 0x0190;
+		writel(val, ccb_mii_mng_cmd_data_addr);
+
+		/* Write 0x0191 to 0x19 regaddr */
+		SPINWAIT(((readl(ccb_mii_mng_ctrl_addr) >> 8 & 1) == 1), 1000);
+		regaddr = 0x19;
+		val = (sb << 30) | (op_w << 28) | (pa[i] << 23) | (regaddr << 18) |
+			(ta << 16) | 0x0191;
+		writel(val, ccb_mii_mng_cmd_data_addr);
+	}
+
+	/* Waiting MII Mgt interface idle */
+	SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
+
+	/* Reg unmap */
+	REG_UNMAP((void *)dmu_base);
+	REG_UNMAP((void *)ccb_mii_base);
+}
+
 static int __init soc_pcie_init(void)
 {
 	unsigned int i;
@@ -1292,6 +1356,9 @@ static int __init soc_pcie_init(void)
 	pci_scan_bus(0, &pcibios_ops, &soc_pcie_ports[0].hw_pci);
 
 	bcm5301x_3rd_pcie_init();
+
+	bcm5301x_pcie_phy_init();
+
 	for (i = 1; i < ARRAY_SIZE(soc_pcie_ports); i++) {
 		struct soc_pcie_port *port = &soc_pcie_ports[i];
 

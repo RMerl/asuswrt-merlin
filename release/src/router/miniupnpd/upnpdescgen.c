@@ -1,4 +1,4 @@
-/* $Id: upnpdescgen.c,v 1.75 2013/07/30 06:55:19 nanard Exp $ */
+/* $Id: upnpdescgen.c,v 1.76 2013/12/13 12:50:25 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2013 Thomas Bernard
@@ -145,14 +145,25 @@ static const struct XMLElt rootDesc[] =
 /* 5 */
 	{"/deviceType", DEVICE_TYPE_IGD},
 		/* urn:schemas-upnp-org:device:InternetGatewayDevice:1 or 2 */
+#ifdef ENABLE_MANUFACTURER_INFO_CONFIGURATION
 	{"/friendlyName", friendly_name/*ROOTDEV_FRIENDLYNAME*/},	/* required */
 	{"/manufacturer", ROOTDEV_MANUFACTURER},		/* required */
 /* 8 */
-	{"/manufacturerURL", ROOTDEV_MANUFACTURERURL},	/* optional */
-	{"/modelDescription", friendly_name}, /* recommended */
-	{"/modelName", friendly_name},			/* required */
+	{"/manufacturerURL", manufacturer_url/*ROOTDEV_MANUFACTURERURL*/},	/* optional */
+	{"/modelDescription", model_description/*ROOTDEV_MODELDESCRIPTION*/}, /* recommended */
+	{"/modelName", model_name/*ROOTDEV_MODELNAME*/},	/* required */
+	{"/modelNumber", modelnumber},
+	{"/modelURL", model_url/*ROOTDEV_MODELURL*/},
+#else
+	{"/friendlyName", ROOTDEV_FRIENDLYNAME},        /* required */
+	{"/manufacturer", ROOTDEV_MANUFACTURER},        /* required */
+/* 8 */
+	{"/manufacturerURL", ROOTDEV_MANUFACTURERURL},  /* optional */
+	{"/modelDescription", ROOTDEV_MODELDESCRIPTION}, /* recommended */
+	{"/modelName", ROOTDEV_MODELNAME},      /* required */
 	{"/modelNumber", modelnumber},
 	{"/modelURL", ROOTDEV_MODELURL},
+#endif
 	{"/serialNumber", serialnumber},
 	{"/UDN", uuidvalue_igd},	/* required */
 	/* see if /UPC is needed. */

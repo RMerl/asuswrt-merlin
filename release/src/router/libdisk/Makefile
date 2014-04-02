@@ -1,8 +1,11 @@
 include ../common.mak
+include $(SRCBASE)/.config
 
 OBJS = usb_info.o disk_io_tools.o disk_initial.o disk_share.o
 PROGS = libdisk.so write_smb_conf test_of_var_files
+ifneq ($(BUILD_NAME),RT-N10U)
 PROGS += test_disk1 test_disk2
+endif
 PROGS += test_share
 ifeq ($(RTCONFIG_WEBDAV),y)
 PROGS += write_webdav_conf
@@ -64,8 +67,10 @@ endif
 
 install: all
 	$(STRIP) $(PROGS)
+ifneq ($(BUILD_NAME),RT-N10U)
 	install -D test_disk1 $(INSTALLDIR)/sbin/test_disk1
 	install -D test_disk2 $(INSTALLDIR)/sbin/test_disk2
+endif
 	install -D test_share $(INSTALLDIR)/sbin/test_share
 
 	install -D libdisk.so $(INSTALLDIR)/lib/libdisk.so

@@ -40,18 +40,18 @@ void process_netlink_msg(int sock)
 	struct sockaddr_nl sa;
 	struct msghdr msg = { (void *)&sa, sizeof(sa), &iov, 1, NULL, 0, 0 };
 	struct nlmsghdr *nh;
-	struct ifinfomsg * ifinfo;
+	struct ifinfomsg *ifinfo;
 	struct rtattr *rta;
 	int rta_len;
-	char ifname[IF_NAMESIZE] = {""};
+	char ifname[IF_NAMESIZE] = { "" };
 	int reloaded = 0;
 
-	len = recvmsg (sock, &msg, 0);
+	len = recvmsg(sock, &msg, 0);
 	if (len == -1) {
 		flog(LOG_ERR, "recvmsg failed: %s", strerror(errno));
 	}
 
-	for (nh = (struct nlmsghdr *) buf; NLMSG_OK (nh, len); nh = NLMSG_NEXT (nh, len)) {
+	for (nh = (struct nlmsghdr *)buf; NLMSG_OK(nh, len); nh = NLMSG_NEXT(nh, len)) {
 		/* The end of multipart message. */
 		if (nh->nlmsg_type == NLMSG_DONE)
 			return;
@@ -71,8 +71,7 @@ void process_netlink_msg(int sock)
 				if (rta->rta_type == IFLA_OPERSTATE || rta->rta_type == IFLA_LINKMODE) {
 					if (ifinfo->ifi_flags & IFF_RUNNING) {
 						dlog(LOG_DEBUG, 3, "%s, ifindex %d, flags is running", ifname, ifinfo->ifi_index);
-					}
-					else {
+					} else {
 						dlog(LOG_DEBUG, 3, "%s, ifindex %d, flags is *NOT* running", ifname, ifinfo->ifi_index);
 					}
 					if (!reloaded) {
@@ -96,7 +95,7 @@ int netlink_socket(void)
 		flog(LOG_ERR, "Unable to open netlink socket: %s", strerror(errno));
 	}
 #if defined SOL_NETLINK && defined NETLINK_NO_ENOBUFS
-	else if (setsockopt(sock, SOL_NETLINK, NETLINK_NO_ENOBUFS, &val, sizeof(val)) < 0 ) {
+	else if (setsockopt(sock, SOL_NETLINK, NETLINK_NO_ENOBUFS, &val, sizeof(val)) < 0) {
 		flog(LOG_ERR, "Unable to setsockopt NETLINK_NO_ENOBUFS: %s", strerror(errno));
 	}
 #endif
@@ -104,7 +103,7 @@ int netlink_socket(void)
 	snl.nl_family = AF_NETLINK;
 	snl.nl_groups = RTMGRP_LINK;
 
-	rc = bind(sock, (struct sockaddr*)&snl, sizeof(snl));
+	rc = bind(sock, (struct sockaddr *)&snl, sizeof(snl));
 	if (rc == -1) {
 		flog(LOG_ERR, "Unable to bind netlink socket: %s", strerror(errno));
 		close(sock);
@@ -113,4 +112,3 @@ int netlink_socket(void)
 
 	return sock;
 }
-

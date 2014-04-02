@@ -72,6 +72,8 @@
 #define MS_PATH "ms_path"
 #define DMS_DBCWD "dms_dbcwd"
 #define DMS_DIR "dms_dir"
+#define HTTPS_CRT_CN "https_crt_cn"
+#define ODMPID "odmpid"
 #else
 #define DDNS_ENANBLE_X	"ddns_enable_x"
 #define DDNS_SERVER_X	"ddns_server_x"
@@ -114,11 +116,96 @@
 #define MS_DLNA "ms_dlna"
 #define DMS_DBCWD "dms_dbcwd"
 #define DMS_DIR "dms_dir"
+#define HTTPS_CRT_CN "https_crt_cn"
+#define HTTPS_CRT_SAVE "https_crt_save"
+#define HTTPS_CRT_FILE "https_crt_file"
+#define ODMPID "odmpid"
 #endif
 
 #define DBE 0
 
 #if defined APP_IPKG
+
+static const char base64_xlat[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+
+int base64_encode(const unsigned char *in, char *out, int inlen)
+{
+        char *o;
+
+        o = out;
+        while (inlen >= 3) {
+                *out++ = base64_xlat[*in >> 2];
+                *out++ = base64_xlat[((*in << 4) & 0x3F) | (*(in + 1) >> 4)];
+                ++in;	// note: gcc complains if *(++in)
+                *out++ = base64_xlat[((*in << 2) & 0x3F) | (*(in + 1) >> 6)];
+                ++in;
+                *out++ = base64_xlat[*in++ & 0x3F];
+                inlen -= 3;
+        }
+        if (inlen > 0) {
+                *out++ = base64_xlat[*in >> 2];
+                if (inlen == 2) {
+                        *out++ = base64_xlat[((*in << 4) & 0x3F) | (*(in + 1) >> 4)];
+                        ++in;
+                        *out++ = base64_xlat[((*in << 2) & 0x3F)];
+                }
+                else {
+                        *out++ = base64_xlat[(*in << 4) & 0x3F];
+                        *out++ = '=';
+                }
+                *out++ = '=';
+        }
+        return out - o;
+}
+
+
+int base64_decode_t(const char *in, unsigned char *out, int inlen)
+{
+        char *p;
+        int n;
+        unsigned long x;
+        unsigned char *o;
+        char c;
+
+        o = out;
+        n = 0;
+        x = 0;
+        while (inlen-- > 0) {
+                if (*in == '=') break;
+                if ((p = strchr(base64_xlat, c = *in++)) == NULL) {
+//			printf("ignored - %x %c\n", c, c);
+                        continue;	// note: invalid characters are just ignored
+                }
+                x = (x << 6) | (p - base64_xlat);
+                if (++n == 4) {
+                        *out++ = x >> 16;
+                        *out++ = (x >> 8) & 0xFF;
+                        *out++ = x & 0xFF;
+                        n = 0;
+                        x = 0;
+                }
+        }
+        if (n == 3) {
+                *out++ = x >> 10;
+                *out++ = (x >> 2) & 0xFF;
+        }
+        else if (n == 2) {
+                *out++ = x >> 4;
+        }
+        return out - o;
+}
+
+int base64_encoded_len(int len)
+{
+        return ((len + 2) / 3) * 4;
+}
+
+int base64_decoded_len(int len)
+{
+        return ((len + 3) / 4) * 3;
+}
+
 static inline char * strcat_r(const char *s1, const char *s2, char *buf)
 {
         strcpy(buf, s1);
@@ -127,6 +214,74 @@ static inline char * strcat_r(const char *s1, const char *s2, char *buf)
 }
 
 char *nvram_get(char *name);
+#define FW_CREATE	0
+#define FW_APPEND	1
+#define FW_NEWLINE	2
+
+unsigned long f_size(const char *path)	// 4GB-1	-1 = error
+{
+        struct stat st;
+        if (stat(path, &st) == 0) return st.st_size;
+        return (unsigned long)-1;
+}
+
+int f_write(const char *path, const void *buffer, int len, unsigned flags, unsigned cmode)
+{
+        static const char nl = '\n';
+        int f;
+        int r = -1;
+        mode_t m;
+
+        m = umask(0);
+        if (cmode == 0) cmode = 0666;
+        if ((f = open(path, (flags & FW_APPEND) ? (O_WRONLY|O_CREAT|O_APPEND) : (O_WRONLY|O_CREAT|O_TRUNC), cmode)) >= 0) {
+                if ((buffer == NULL) || ((r = write(f, buffer, len)) == len)) {
+                        if (flags & FW_NEWLINE) {
+                                if (write(f, &nl, 1) == 1) ++r;
+                        }
+                }
+                close(f);
+        }
+        umask(m);
+        return r;
+}
+
+int f_read(const char *path, void *buffer, int max)
+{
+        int f;
+        int n;
+
+        if ((f = open(path, O_RDONLY)) < 0) return -1;
+        n = read(f, buffer, max);
+        close(f);
+        return n;
+}
+
+static int _f_read_alloc(const char *path, char **buffer, int max, int z)
+{
+        unsigned long n;
+
+        *buffer = NULL;
+        if (max >= 0) {
+                if ((n = f_size(path)) != (unsigned long)-1) {
+                        if (n < max) max = n;
+                        if ((!z) && (max == 0)) return 0;
+                        if ((*buffer = malloc(max + z)) != NULL) {
+                                if ((max = f_read(path, *buffer, max)) >= 0) {
+                                        if (z) *(*buffer + max) = 0;
+                                        return max;
+                                }
+                                free(buffer);
+                        }
+                }
+        }
+        return -1;
+}
+
+int f_read_alloc(const char *path, char **buffer, int max)
+{
+        return _f_read_alloc(path, buffer, max, 0);
+}
 
 char *get_productid(void)
 {
@@ -153,7 +308,7 @@ char *nvram_get(char *name)
        ||strcmp(name,"swpjverno")==0||strcmp(name,"extendno")==0)
     {
 #endif
-        char tmp_name[256]="/opt/etc/asus_script/aicloud_nvram_check.sh";
+        char tmp_name[256]="/opt/etc/apps_asus_script/aicloud_nvram_check.sh";
         //char tmp_name[256]="/tmp/aicloud_nvram_check.sh";
         char *cmd_name;
         cmd_name=(char *)malloc(sizeof(char)*(strlen(tmp_name)+strlen(name)+2));
@@ -175,10 +330,11 @@ char *nvram_get(char *name)
     char *value = NULL;
     //value=(char *)malloc(256);
     //memset(value,'\0',sizeof(value));
-    char tmp[256]={0};
+    int file_size = f_size("/tmp/webDAV.conf");
+    char *tmp=(char *)malloc(sizeof(char)*(file_size+1));
     while(!feof(fp)){
         memset(tmp,'\0',sizeof(tmp));
-        fgets(tmp,sizeof(tmp),fp);
+        fgets(tmp,file_size+1,fp);
         if(strncmp(tmp,name,strlen(name))==0)
         {
             if(tmp[strlen(tmp)-1] == 10)
@@ -191,6 +347,7 @@ char *nvram_get(char *name)
             if(p == NULL || strlen(p) == 0)
             {
                 fclose(fp);
+                free(tmp);
                 return NULL;
             }
             else
@@ -204,62 +361,14 @@ char *nvram_get(char *name)
 
     }
     fclose(fp);
+    free(tmp);
     return value;
 }
 }
 char *nvram_safe_get(char *name)
 {
-        char tmp_name[256]="/opt/etc/asus_script/aicloud_nvram_check.sh";
-        //char tmp_name[256]="/tmp/aicloud_nvram_check.sh";
-        char *cmd_name;
-        cmd_name=(char *)malloc(sizeof(char)*(strlen(tmp_name)+strlen(name)+2));
-        memset(cmd_name,0,sizeof(cmd_name));
-        sprintf(cmd_name,"%s %s",tmp_name,name);
-        system(cmd_name);
-        free(cmd_name);
-
-        while(-1!=access("/tmp/aicloud_check.control",F_OK))
-            usleep(50);
-
-
-    FILE *fp;
-    if((fp=fopen("/tmp/webDAV.conf","r+"))==NULL)
-    {
-        return NULL;
-    }
-    char *value;
-    
-    char tmp[256]={0};
-    while(!feof(fp)){
-        memset(tmp,0,sizeof(tmp));
-        fgets(tmp,sizeof(tmp),fp);
-        if(strncmp(tmp,name,strlen(name))==0)
-        {
-            if(tmp[strlen(tmp)-1] == 10)
-            {
-                tmp[strlen(tmp)-1]='\0';
-            }
-            char *p=NULL;
-            p=strchr(tmp,'=');
-            p++;
-            if(p==NULL || strlen(p) == 0)
-            {
-                fclose(fp);
-                return NULL;
-            }
-            else
-            {
-            value=(char *)malloc(strlen(p)+1);
-            memset(value,'\0',sizeof(value));
-            strcpy(value,p);
-            if(value[strlen(value)-1]=='\n')
-                value[strlen(value)-1]='\0';
-        }
-
-    }
-    fclose(fp);
-    return value;
-}
+    char *p = nvram_get(name);
+            return p ? p : "";
 }
 int nvram_set(const char *name, const char *value)
 {
@@ -318,7 +427,7 @@ int nvram_set(const char *name, const char *value)
             if(strcmp(name,"webdav_last_login_info")==0)
             {
  				*/
-                char tmp_name[256]="/opt/etc/asus_script/aicloud_nvram_check.sh";
+                char tmp_name[256]="/opt/etc/apps_asus_script/aicloud_nvram_check.sh";
                 char *cmd_name_1;
                 cmd_name_1=(char *)malloc(sizeof(char)*(strlen(tmp_name)+strlen(name)+2));
                 memset(cmd_name_1,0,sizeof(cmd_name_1));
@@ -372,6 +481,50 @@ int nvram_commit(void)
         system(cmd);
         return 1;
 }
+int nvram_get_file(const char *key, const char *fname, int max)
+{
+        int n;
+        char *p;
+        char *b;
+        int r;
+
+        r = 0;
+        p = nvram_safe_get(key);
+        n = strlen(p);
+        if (n <= max) {
+                if ((b = malloc(base64_decoded_len(n) + 128)) != NULL) {
+                        n = base64_decode_t(p, b, n);
+                        if (n > 0) r = (f_write(fname, b, n, 0, 0644) == n);
+                        free(b);
+                }
+        }
+        return r;
+}
+
+int nvram_set_file(const char *key, const char *fname, int max)
+{
+        char *in;
+        char *out;
+        long len;
+        int n;
+        int r;
+
+        if ((len = f_size(fname)) > max) return 0;
+        max = (int)len;
+        r = 0;
+        if (f_read_alloc(fname, &in, max) == max) {
+                if ((out = malloc(base64_encoded_len(max) + 128)) != NULL) {
+                        n = base64_encode(in, out, max);
+                        out[n] = 0;
+                        nvram_set(key, out);
+                        free(out);
+                        r = 1;
+                }
+                free(in);
+        }
+        return r;
+}
+
 #elif defined USE_TCAPI
 
 #else
@@ -444,6 +597,8 @@ char* nvram_get_sharelink_str(void)
 int nvram_set_sharelink_str(const char* share_info)
 {
 #ifdef USE_TCAPI
+	if(strlen(share_info)>576)
+		return 0;
 	return tcapi_set(WEBDAV, SHARELINK, share_info);
 #else
 	return nvram_set(SHARELINK, share_info);
@@ -1041,6 +1196,89 @@ char* nvram_get_ms_enable(void)
 
 #else
 	return "1";
+#endif
+}
+
+int nvram_set_https_crt_cn(const char* cn)
+{
+#ifdef USE_TCAPI
+	tcapi_set(WEBDAV, HTTPS_CRT_CN, cn);
+#else
+	nvram_set(HTTPS_CRT_CN, cn);
+#endif
+	return 1;
+}
+
+char* nvram_get_https_crt_cn(){
+#ifdef USE_TCAPI		
+	return NULL;
+#else
+	return nvram_get(HTTPS_CRT_CN);
+#endif
+}
+
+int nvram_setfile_https_crt_file(const char* file, int size)
+{
+#ifdef USE_TCAPI
+	
+#else
+	nvram_set_file(HTTPS_CRT_FILE, file, size);
+#endif
+	return 1;
+}
+
+int nvram_getfile_https_crt_file(const char* file, int size)
+{
+#ifdef USE_TCAPI
+	
+#else
+	nvram_get_file(HTTPS_CRT_FILE, file, size);
+#endif
+	return 1;
+}
+
+char* nvram_get_https_crt_file()
+{
+#ifdef USE_TCAPI
+	
+#else
+	return nvram_get("https_crt_file");
+#endif
+}
+
+char* nvram_get_odmpid()
+{
+#ifdef USE_TCAPI
+	return NULL;
+#else
+	return nvram_get(ODMPID);
+#endif
+}
+
+int nvram_set_https_crt_save(const char* enable)
+{
+#ifdef USE_TCAPI
+	
+#else
+	nvram_set(HTTPS_CRT_SAVE, enable);
+#endif
+	return 1;
+}
+
+int nvram_set_value(const char* key, const char* value){
+#ifdef USE_TCAPI
+		
+#else
+	nvram_set(key, value);
+#endif
+	return 1;
+}
+
+char* nvram_get_value(const char* key){
+#ifdef USE_TCAPI
+	return NULL;
+#else
+	return nvram_get(key);
 #endif
 }
 

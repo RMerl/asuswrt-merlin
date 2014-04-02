@@ -337,6 +337,8 @@ out:
 static void sigchld_handler(int UNUSED(unused)) {
 	struct sigaction sa_chld;
 
+	const int saved_errno = errno;
+
 	while(waitpid(-1, NULL, WNOHANG) > 0); 
 
 	sa_chld.sa_handler = sigchld_handler;
@@ -344,13 +346,14 @@ static void sigchld_handler(int UNUSED(unused)) {
 	if (sigaction(SIGCHLD, &sa_chld, NULL) < 0) {
 		dropbear_exit("signal() error");
 	}
+	errno = saved_errno;
 }
 
 /* catch any segvs */
 static void sigsegv_handler(int UNUSED(unused)) {
 	fprintf(stderr, "Aiee, segfault! You should probably report "
 			"this as a bug to the developer\n");
-	exit(EXIT_FAILURE);
+	_exit(EXIT_FAILURE);
 }
 
 /* catch ctrl-c or sigterm */

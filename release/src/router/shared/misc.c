@@ -1001,6 +1001,7 @@ void bcmvlan_models(int model, char *vlan)
 {
 	switch (model) {
 	case MODEL_RTAC68U:
+	case MODEL_RTAC87U:
 	case MODEL_RTAC56S:
 	case MODEL_RTAC56U:
 	case MODEL_RTAC66U:

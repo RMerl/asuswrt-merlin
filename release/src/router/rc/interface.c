@@ -398,7 +398,7 @@ int start_vlan(void)
 			eval("vconfig", "set_ingress_map", vlan_id, prio, prio);
 		}
 	}
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)
 	eval("vconfig", "set_egress_map", "vlan2", "0", nvram_safe_get("switch_wan0prio"));
 #endif
 	close(s);
@@ -407,6 +407,10 @@ int start_vlan(void)
 	if(!nvram_match("switch_wantag", "none")&&!nvram_match("switch_wantag", ""))
 		set_wan_tag(&ifr.ifr_name);
 #endif
+#ifdef RTCONFIG_RGMII_BRCM5301X
+	eval("et", "robowr", "0x0", "0x5d", "0xfb", "1");
+#endif
+
 	return 0;
 }
 

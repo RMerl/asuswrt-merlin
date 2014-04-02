@@ -5,190 +5,16 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <link href="/smb/css/ui-progress-bar.css" media="screen" rel="stylesheet" type="text/css" />
 <title></title>
-<style>
-html{
-margin:0 0;
-padding:0px;
-}
-body{
-display: block;
-padding:0px;
-margin:0px;
-overflow:hidden;
-}
-#uploadRegion {
--moz-border-radius: 5px;
--webkit-border-radius: 5px;
-border-radius: 5px;
-padding: 0px;
-text-align: center;
-font: 20pt bold;
-font-family:"Segoe UI";
-color: #ffffff;
-left:0px;
-top:0px;
-width:100%;
-height:350px;
-background:#555A5D;
-}
-#uploadOption{
-background-color:#f1f1ef;
-border: #676965;
-border-style:solid;
-border-width:1px;
-height:auto;
-width:100%;
-text-align: left;
-}
-#inputnameRegion{
-border: 2px #BBB;
-width:100%;
-height:100%;
-background:#d8eaf6;
-}
-#upload_file_list{
-display: inline;
-font: 12pt bold;
-font-family:"Segoe UI";
-text-align: left;
-}
-.upload-dropzone-parent {
-height: 100%;
-width: 100%;
-position: relative;
-border-spacing: 20px;
-}
-.drag-drop-supported .upload-dropzone-cell {
-border: #DDD 4px dashed;
-border-radius: 2px;
-}
-.upload-dropzone-cell {
-width: 100%;
-text-align: center;
-position: relative;
-}
-.upload-dropzone {
-width: 100%;
-text-align: center;
-position: relative;
-}
-.upload-drop-here {
-font-weight: bold;
-font-size: 15px;
-color: #fff;
-padding: 0 10px;
-display: none;
-}
-.chrome-require {
-font-weight: bold;
-font-size: 20px;
-padding:10px;
-}
-.chrome-require a{
-color: #FDC049;
-text-decoration: none;
-}
-.chrome-require a:hover{
-color: #FDC049;
-text-decoration: underline;
-}
-.upload-drop-alt {
-display: none;
-padding: 15px 0 5px;
-font-weight: bold;
-font-size: 15px;
-color: #fff;
-}
-.upload-select-here, .upload-select-directorys-here{
-font-weight: bold;
-font-size: 15px;
-color: #fff;
-padding: 0 10px;
-}
-
-#nav {
-width: 100%;
-height: 100%;
-line-height: 2em;
-border: 1px solid #ccc;
-padding: 0;
-margin: 0;
-overflow: scroll;
-overflow-x: hidden;
-}
-li {
-border-top: 1px solid #ccc;
-}
-ul ul {
-text-indent: 1em;
-}
-ul ul ul {
-text-indent: 2em;
-}
-.ml-btn-1 {
-display: inline-block;
-text-decoration: none;
-font-family: "Segoe UI", Helvetica, Arial, sans-serif;
-font-size: 13px;
-font-weight: bold;
-line-height: 240%;
-color:#666;
-text-align: center;
-text-shadow: 0px 1px 0px rgba(255, 255, 255, 0.5);
-background-color: #FBFBFB;
-background-image: -moz-linear-gradient(53% 100% 90deg,#EBEBEB 0%,#FEFEFE 100%);
-background-image: -webkit-gradient(linear,53% 100%,53% 3%,color-stop(0, #EBEBEB),color-stop(1, #FEFEFE));
-background-image: -webkit-linear-gradient(90deg,#EBEBEB 0%,#FEFEFE 100%);
-background-image: -o-linear-gradient(90deg,#EBEBEB 0%,#FEFEFE 100%);
-background-image: -ms-linear-gradient(90deg,#EBEBEB 0%,#FEFEFE 100%);
-background-image: linear-gradient(90deg,#EBEBEB 0%,#FEFEFE 100%);
-/*width: 120px;
-height: 30px;*/
-border-color: #B4B4B4;
-border-width: 1px;
--moz-border-radius: 3px;
--webkit-border-radius: 3px;
-border-radius: 3px;
-border-style: solid;
--moz-box-shadow: 0px 0px 0px 3px rgba(0,0,0,0.05) ,inset 0px 1px 0px rgba(255,255,255,0.5);
--webkit-box-shadow: 0px 0px 0px 3px 
-rgba(0, 0, 0, 0.05) ,inset 0px 1px 0px 
-rgba(255, 255, 255, 0.5);
-box-shadow: 0px 0px 0px 3px 
-rgba(0, 0, 0, 0.05) ,inset 0px 1px 0px 
-rgba(255, 255, 255, 0.5);
--ms-filter: "progid:DXImageTransform.Microsoft.gradient(startColorstr=#fffefefe,endColorstr=#ffebebeb,GradientType=0) progid:DXImageTransform.Microsoft.Glow(Color=#ff000000,Strength=3)";
-filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#fffefefe,endColorstr=#ffebebeb,GradientType=0) progid:DXImageTransform.Microsoft.Glow(Color=#ff000000,Strength=3);
-}
-
-input[type="file"] {
-border: 1px solid #EEE;
-border-radius: 10px;
-padding: 8px;
-font-weight: bold;
-font-size: 15px;
-color: #fff;
-}
-
-div#divApplet{
-width:100px;
-height:40px;
-}
-.ml-btn-2{
-color:#FFBC3B;
-font-size:14px;
-}
-#upload-file-list-container{
-height:100%;	
-}
-</style>
 </head>
-<script type="text/javascript" src="/smb/js/tools.js"></script>
+<link rel="stylesheet" type="text/css" href="/smb/css/upload.css"/>
 <script type="text/javascript" src="/smb/js/davclient_tools.js"></script>
+<script type="text/javascript" src="/smb/js/tools.js"></script>
 <script type="text/javascript">
-	
+
 var m = new lang();
 var g_storage = new myStorage();
+var this_upload_files = new Array();
+var g_upload_handler;
 	
 function getUrlVars(){
 	var vars = [], hash;
@@ -202,24 +28,17 @@ function getUrlVars(){
 }
 
 function adjustLayout(){	
-	//alert($("table#main_table").height());
 	var h = parent.getFileViewHeight();
 	$("#main_table").css("height", h);
 	$("#uploadRegion").css("height", h-120);
 	$("#upload-file-list-container").css("height", h-144);
 }
 
-var this_upload_files = new Array();
-
 $("document").ready(function() {
 	
 	document.oncontextmenu = function() {return false;};
 	
-	var this_upload_index = 0;
-	var this_upload_count = 0;
-	var this_upload_total = 0;
-	//var this_upload_files = new Array();
-	var this_selected_files = new Array();
+	//var this_upload_total = 0;
 	var this_url = getUrlVars()["u"];
 	
 	//- show upload option, 0: show all, 1: show upload file, 2:show upload folder
@@ -254,15 +73,6 @@ $("document").ready(function() {
 		$('.select-files').hide();
 		$('.select-directorys').hide();
 	}
-	/*
-	$('.chrome-require').hide();
-	else{
-		$('.select-directorys').hide();
-		$('.chrome-require').show();
-		$('.upload-drop-here').text(m.getString('hint_selfile1'));
-		$('.upload-support-directorys').text(m.getString('hint_selfile6'));
-	}
-	*/
 	
 	$('.upload-drop-here').text(m.getString('hint_selfile1'));
 	$('.upload-support-directorys').text(m.getString('hint_selfile6'));
@@ -281,9 +91,6 @@ $("document").ready(function() {
 		g_support_html5 = 0;
 	}
 	
-	var webdav_client = new davlib.DavClient();
-	webdav_client.initialize();
-	
 	if(g_support_html5==1){
   		// Setup the dnd listeners.
   		var dropZone = document.getElementById('uploadRegion');
@@ -300,227 +107,26 @@ $("document").ready(function() {
 	if(document.getElementById('directorys'))
 		document.getElementById('directorys').addEventListener('change', handleFileSelect, false);
 	
-	function webdav_put_callbackfunction(error, content){
-		
-		if(error){
-			if(error==200||error==201||error==204 ) {
-				if(this_upload_files[this_upload_index].status=="done"){
-					//alert("file transferred done....call this upload files splice");
-					this_upload_files.splice(this_upload_index,1);
-					f_offset =0;
-					this_file_loaded_size =0;
-					//this_upload_count++;
-			  	}else{
-					//alert("In Progress");
-			  	}
-			}/*
-			else if(error==427){
-				//- If target folder is not exist!
+	document.querySelector('.readBytesButtons').addEventListener('click', function(evt) {
+		if (evt.target.tagName.toLowerCase() == 'button') {
+			 
+			if (!this_upload_files.length) {
+				alert(m.getString('warn_selfile'));
+				return;
+			}
+			
+			$('button#upload').hide();
 				
-				var path = this_upload_files[this_upload_index].thepath;
-				var openurl = addPathSlash(g_storage.get('openurl'));
-				var this_url = openurl + myencodeURI(path);
-				alert(this_url);
-				webdav_client.MKCOL(this_url, function(error){
-					this_upload_files[this_upload_index].status = "Init";
-					uploadFile();
-				});	
-				
-				return;				
-			}*/
-			else if(error==0){
-				this_upload_files[this_upload_index].status = "UploadFail";
-			}
-			else{
-				this_upload_files[this_upload_index].status = "UploadFail";
-				alert(m.getString(error));
-			}
+			g_storage.set('isOnUploadFile', "1");
+			g_storage.set('stopLogoutTimer', "1");
+			
+			//- Initialize upload handler
+			g_upload_handler = new uploadlib.WebDAVUploadHandler();
+			g_upload_handler.initialize(this_url, this_upload_files, webdav_put_progress_callbackfunction, webdav_put_complete_callbackfunction);
+			g_upload_handler.uploadFile();			
 		}
-		else if(content){
-			alert('content: ' + content);
-		}
-		
-		outputUploadResult();
-
-		//this_upload_count++;
-		if( uploadFile() == 0 ){	
-			showUploadProgress(m.getString('msg_upload_complete'), 100);				
-			//g_storage.set('stopLogoutTimer', "0");
-			//g_storage.set('isOnUploadFile', "0");
-			stop_upload();
-			parent.closeUploadPanel(1);
-		}
-	}
-	var this_file_loaded_size = 0;
-	function webdav_put_progress_callbackfunction(evt){
-		if(evt.lengthComputable) 
-		{ 
-			//this_file_loaded_size = this_file_loaded_size+evt.loaded;
-			var f = this_upload_files[this_upload_index];
-			//if(this_file_loaded_size/f.thefile.size ==1 )   this_upload_count++;
-			//alert(" this upload count= "+ this_upload_count);	
-			var isSegment=0;
-			if(evt.loaded>0 && (evt.loaded/evt.total==1)) {
-				//alert("evt.loaded == evt.total ="+evt.loaded);
-			  isSegment =1;
-			}
-			if(isSegment==1) {
-				this_file_loaded_size = this_file_loaded_size+evt.loaded;
-				//alert("segment =1 , loadded size ="+ this_file_loaded_size);
-			}
-			var part1 = 100*(this_upload_count/this_upload_total);
-			var part2 = (this_file_loaded_size/f.thefile.size)*(100/this_upload_total);
-			//var percentComplete = 100*( this_upload_count/this_upload_total) + 
-			//                      (evt.loaded/evt.total)*(100/this_upload_total);
-			var percentComplete = part1+part2;								  
-			//	alert("evt.total = "+ evt.total+ " , filesize = "+f.thefile.size + ", evt.loaded = "+ evt.loaded +", upload_index = "+ this_upload_index+", this uploadsize = "+this_file_loaded_size);		
-			//	alert("part1 = "+part1+", part2 = "+ part2 );		
-			showUploadProgress(m.getString('msg_upload1') + f.thefile.name + m.getString('msg_upload2') + " " + percentComplete.toFixed(2) + " %", percentComplete);
-			if(this_file_loaded_size/f.thefile.size ==1 ){
-				//alert("this file loaded size == f.thefile size == "+ this_file_loaded_size);
-				this_upload_count++;
-			}
-		}
-	}
-
-	function webdav_put_progress_callbackfunction_2(evt){
-		if(evt.lengthComputable) 
-		{ 
-			var percentComplete = 100*(this_upload_count/this_upload_total) + 
-			                      (evt.loaded/evt.total)*(100/this_upload_total);
-		
-			var f = this_upload_files[this_upload_index];
-				
-			showUploadProgress(m.getString('msg_upload1') + f.thefile.name + m.getString('msg_upload2') + " " + percentComplete.toFixed(2) + " %", percentComplete);
-		}
-	}
-	
-	function readBlob(pfile, opt_startByte, opt_stopByte) {		
-    	var start = opt_startByte;
-    	var stop = opt_stopByte;
-		
-    	var reader = new FileReader();
-		var bSliceAsBinary = 0;
-		
-    	// If we use onloadend, we need to check the readyState.
-    	reader.onloadend = function(evt) {
-      		if (evt.target.readyState == FileReader.DONE) { // DONE == 2      	
-      			var tURL = this_url + pfile.name;
-      			webdav_client.PUT(tURL, evt.target.result, bSliceAsBinary, 
-      				webdav_put_callbackfunction, webdav_put_progress_callbackfunction );
-      		}
-    	};
-
-		if (pfile.webkitSlice) {
-	    	var blob = pfile.webkitSlice(start, stop + 1);
-			reader.readAsArrayBuffer(blob);
-	    	bSliceAsBinary = 1;
-		} 
-		else if (pfile.mozSlice) {      
-	    	var blob = pfile.mozSlice(start, stop + 1);
-	    	reader.readAsBinaryString(blob);
-	    	bSliceAsBinary = 0;
-	  	}
-  	}
-	/*
-	function requiredFeaturesSupported() {
- 		return ( BlobBuilderSupported() && msSaveOrOpenBlobSupported() );
-  	}
-  
-  	function BlobBuilderSupported() {
-  		if (window.BlobBuilder) {
-    		// No change needed - the W3C standard API will be used by default.
-    	} 
-    	else if (window.MSBlobBuilder) {
-      		window.BlobBuilder = window.MSBlobBuilder;
-    	}
-    	else if (window.WebKitBlobBuilder) {
-      		window.BlobBuilder = window.WebKitBlobBuilder;
-    	}
-    	else if (window.MozBlobBuilder) {
-      		window.BlobBuilder = window.MozBlobBuilder;
-    	}   
-    	else {
-      		document.getElementById('bodyElement').innerHTML = "<h1>The BlobBuilder API is not supported - try upgrading your browser to the latest version.</h1>";
-      		return false;
-    	} // if-else
-      
-    	return true;
-  	} // BlobBuilderSupported
-    
-  	function msSaveOrOpenBlobSupported() {
-    	if (!window.navigator.msSaveOrOpenBlob) {
-       		document.getElementById('bodyElement').innerHTML = "<h1>The msSaveOrOpenBlob API is not supported - try upgrading your version of IE to the latest version.</h1>";            
-      		return false;
-    	}
-      
-  		return true;
-  	} // msSaveOrOpenBlobSupported
-  	*/
-	   
- 	function PutToWeb(path, pfile, opt_startByte, opt_stopByte, filesize) {		
-		var start = opt_startByte;
-		var stop = opt_stopByte;
-		
-		var reader = new FileReader();
-		var bSliceAsBinary = 0;
-		
-		// If we use onloadend, we need to check the readyState.
-		reader.onloadend = function(evt) {			
-			if (evt.target.readyState == FileReader.DONE) { // DONE == 2      	
-				var tURL = this_url + encodeURIComponent(path) + encodeURIComponent(pfile.name);
-				webdav_client.PUT(tURL, evt.target.result, bSliceAsBinary, start, stop, filesize, "T",
-					  webdav_put_callbackfunction, webdav_put_progress_callbackfunction  );
-			}
-		};
-		
-		if (pfile.webkitSlice) {
-			var blob = pfile.webkitSlice(start, stop + 1);
-			reader.readAsArrayBuffer(blob);
-			bSliceAsBinary = 1;
-		} 
-		else if (pfile.mozSlice) {      
-			var blob = pfile.mozSlice(start, stop + 1);
-			reader.readAsBinaryString(blob);
-			bSliceAsBinary = 0;
-		}
-		else {
-			var blob = pfile.slice(start, stop + 1);
-			reader.readAsArrayBuffer(blob);
-			bSliceAsBinary = 1;			
-    	}
-	}
-	
- 	var f_offset  =0;
-	var segment_size = 50*1024;
-	var loop_cnt =0;
-	function send_segment_data(f, filesize){
-		var start = f_offset;
-		var stop = start+ segment_size-1;
-		if(stop>= filesize){
-			stop = filesize - 1;
-			f.status ="done";
-		}
-		f_offset = stop+1;
-		
-		PutToWeb(f.thepath, f.thefile, start, stop, filesize);
-	}
-	
-	var current_file_size;	
-	function uploadFile(){	
-		for (var i = 0, f; f = this_upload_files[i]; i++) {			
-			loop_cnt =  Math.ceil(f.thefile.size/segment_size);
-			current_file_size = f.thefile.size;
-			if(f.status=="Init" || f.status=="Upload"){
-				this_upload_index = i;
-				f.status = "Upload";				
-				send_segment_data(f, f.thefile.size);
-				return 1;
-			}
-		}
-		return 0;
-	}
-	
+  	}, false);
+  	
 	$("#upload-files-list-view").click(function(){
 		$("#upload-container").hide();
 		$("#upload-file-list-container").fadeIn();
@@ -530,68 +136,6 @@ $("document").ready(function() {
 		$("#upload-container").fadeIn();
 		$("#upload-file-list-container").hide();
 	});
-	
-	document.querySelector('.readBytesButtons').addEventListener('click', function(evt) {
-		if (evt.target.tagName.toLowerCase() == 'button') {
-			 
-			if (!this_upload_files.length) {
-				alert(m.getString('warn_selfile'));
-				return;
-			}
-			
-			//$('button#upload').attr("disabled", "disabled");			
-			$('button#upload').hide();
-				
-			this_upload_total = this_upload_files.length;
-			f_offset =0;
-				
-			g_storage.set('isOnUploadFile', "1");
-			g_storage.set('stopLogoutTimer', "1");
-			uploadFile();			
-		}
-  	}, false);
-  	
-	function outputUploadResult(){
-		// files is a FileList of File objects. List some properties.
-    	var output = [];
-    
-    	for (var i = 0, f; f = this_upload_files[i]; i++) {
-			/*
-			output.push('<li><strong>', f.thefile.name, '</strong> (', f.thefile.type || 'n/a', ') - ',
-					  f.thefile.size, m.getString('upload_item'), m.getString(f.status), '</li>');*/
-                  
-      		if(g_storage.get('isOnUploadFile')==1)
-      			output.push('<li><strong>', f.thepath + f.thefile.name, '</strong> ', ' - ',
-                  f.thefile.size, m.getString('upload_item'), ' [ ', m.getString(f.status), ' ] ', '</li>');
-      		else
-     			output.push('<li id="', i, '"><strong>', f.thepath + f.thefile.name, '</strong> ', ' - ',
-                  f.thefile.size, m.getString('upload_item'), ' [ ', m.getString(f.status), ' ] ', '<button id="delete_item" item="', i, '">X</button></li>');
-    	}
-    
-    	document.getElementById('upload_file_list').innerHTML = '<ul id="nav">' + output.join('') + '</ul>'; 
-    	$("#upload-file-list-container").fadeIn();
-		$('#upload-files-list-view').show();
-		
-    	$("button#delete_item").click(function(){
-    		var del_item_id = $(this).attr("item");
-    		this_upload_files.splice(del_item_id, 1);    	
-    		outputUploadResult();
-    	});
-	}
-	
-	function showUploadProgress(status, progress_percent){		
-		var img = $('#div_upload');
-		img.css("display", "block");
-		
-		if(progress_percent<=0)
-			$('.ui-label').css("display", "none");
-		else{
-			var progressBar = $("#progress_bar");
-		  	$(".ui-progress", progressBar).css("width", progress_percent.toFixed(2) + "%");	    
-		  	$('.ui-label').css("display", "block");
-		  	$('.ui-label .value').text(status);
-		}
-	}
 	
 	function traverseFileTree(item, path) {
   		path = path || "";
@@ -699,12 +243,77 @@ function get_server_url(){
 }
 
 function stop_upload(){
-	console.log("stop_upload");
 	if( this_upload_files && this_upload_files.length > 0 )
 		this_upload_files.splice(0,this_upload_files.length);
 		
 	g_storage.set('stopLogoutTimer', "0");
 	g_storage.set('isOnUploadFile', "0");
+}
+
+function webdav_put_progress_callbackfunction(file_name, percent){	
+	if(percent==100){
+		showUploadProgress(m.getString('msg_upload_complete'), percent);
+	}
+	else{
+		showUploadProgress(m.getString('msg_upload1') + file_name + m.getString('msg_upload2') + " " + percent.toFixed(2) + " %", percent);	
+	}
+}
+
+function webdav_put_complete_callbackfunction(file_name, status, error, all_complete){
+	
+	if(status=="UploadFail"){
+		alert(m.getString(error));	
+	}
+			
+	outputUploadResult();
+
+	//this_upload_count++;
+	if( all_complete == true ){	
+		showUploadProgress(m.getString('msg_upload_complete'), 100);				
+		stop_upload();
+			
+		if(parent.closeUploadPanel)
+			parent.closeUploadPanel(1);
+	}
+}
+
+function outputUploadResult(){
+	// files is a FileList of File objects. List some properties.
+    var output = [];
+    
+    for (var i = 0, f; f = this_upload_files[i]; i++) {
+		if(g_storage.get('isOnUploadFile')==1)
+    		output.push('<li><strong>', f.thepath + f.thefile.name, '</strong> ', ' - ',
+                f.thefile.size, m.getString('upload_item'), ' [ ', m.getString(f.status), ' ] ', '</li>');
+    	else
+    		output.push('<li id="', i, '"><strong>', f.thepath + f.thefile.name, '</strong> ', ' - ',
+                f.thefile.size, m.getString('upload_item'), ' [ ', m.getString(f.status), ' ] ', '<button id="delete_item" item="', i, '">X</button></li>');
+    }
+    
+    document.getElementById('upload_file_list').innerHTML = '<ul id="nav">' + output.join('') + '</ul>'; 
+	
+    $("#upload-file-list-container").fadeIn();
+	$('#upload-files-list-view').show();
+		
+    $("button#delete_item").click(function(){
+    	var del_item_id = $(this).attr("item");
+    	this_upload_files.splice(del_item_id, 1);    	
+    	outputUploadResult();
+   	});
+}
+	
+function showUploadProgress(status, progress_percent){		
+	var img = $('#div_upload');
+	img.css("display", "block");
+		
+	if(progress_percent<=0)
+		$('.ui-label').css("display", "none");
+	else{
+		var progressBar = $("#progress_bar");
+	  	$(".ui-progress", progressBar).css("width", progress_percent.toFixed(2) + "%");	    
+	  	$('.ui-label').css("display", "block");
+	  	$('.ui-label .value').text(status);
+	}
 }
 </script>
 

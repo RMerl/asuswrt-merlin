@@ -2,7 +2,7 @@
  * Linux device driver for
  * Broadcom BCM47XX 10/100/1000 Mbps Ethernet Controller
  *
- * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: et_linux.c 427480 2013-10-03 19:09:47Z $
+ * $Id: et_linux.c 445736 2013-12-30 08:16:27Z $
  */
 
 #include <et_cfg.h>
@@ -165,7 +165,7 @@ static const struct ethtool_ops et_ethtool_ops =
 #ifdef ET_INGRESS_QOS
 #define TOSS_CAP	4
 #define PROC_CAP	4
-#endif /*ET_INGRESS_QOS*/
+#endif /* ET_INGRESS_QOS */
 
 MODULE_LICENSE("Proprietary");
 
@@ -2133,24 +2133,25 @@ et_sendup_chain(et_info_t *et, void *h)
 
 #ifdef ET_INGRESS_QOS
 static inline bool
-et_discard_rx(et_info_t *et, struct chops *chops, void *ch, uint8 *evh, uint8 prio, uint16 toss, int quota)
+et_discard_rx(et_info_t *et, struct chops *chops, void *ch, uint8 *evh, uint8 prio, uint16 toss,
+	int quota)
 {
 	uint16 left;
 
 	/* Regardless of DMA RX discard policy ICMP and IGMP packets are passed */
-	if (IP_PROT46(evh + ETHERVLAN_HDR_LEN) != IP_PROT_IGMP \
-         && IP_PROT46(evh + ETHERVLAN_HDR_LEN) != IP_PROT_ICMP) {
+	if (IP_PROT46(evh + ETHERVLAN_HDR_LEN) != IP_PROT_IGMP &&
+		IP_PROT46(evh + ETHERVLAN_HDR_LEN) != IP_PROT_ICMP) {
 		ASSERT(chops->activerxbuf);
 		left = (*chops->activerxbuf)(ch);
 		if (left < et->etc->dma_rx_thresh && toss < (quota << TOSS_CAP)) {
-			if ((et->etc->dma_rx_policy == DMA_RX_POLICY_TOS && \
-				prio != IPV4_TOS_CRITICAL) || \
-				(et->etc->dma_rx_policy == DMA_RX_POLICY_UDP && \
-					IP_PROT46(evh + ETHERVLAN_HDR_LEN) != IP_PROT_UDP)){
-						/* post new rx bufs asap */
-						(*chops->rxfill)(ch);
-						/* discard the packet */
-						return TRUE;
+			if ((et->etc->dma_rx_policy == DMA_RX_POLICY_TOS &&
+				prio != IPV4_TOS_CRITICAL) ||
+				(et->etc->dma_rx_policy == DMA_RX_POLICY_UDP &&
+				IP_PROT46(evh + ETHERVLAN_HDR_LEN) != IP_PROT_UDP)) {
+				/* post new rx bufs asap */
+				(*chops->rxfill)(ch);
+				/* discard the packet */
+				return TRUE;
 			}
 		}
 	}
@@ -2192,6 +2193,8 @@ et_rxevent(osl_t *osh, et_info_t *et, struct chops *chops, void *ch, int quota)
 		/* Get BRCM HDR len if any */
 		if (FA_RX_BCM_HDR((fa_t *)et->etc->fa)) {
 			bcm_hdr_t bhdr;
+
+			dataoff = HWRXOFF;
 			bhdr.word = NTOH32(*((uint32 *)(PKTDATA(et->osh, p) + dataoff)));
 			if (bhdr.oc10.op_code == 0x2)
 				dataoff += 4;
@@ -2302,7 +2305,7 @@ et_rxevent(osl_t *osh, et_info_t *et, struct chops *chops, void *ch, int quota)
 			PKTCINCRCNT(cd[i].chead);
 			PKTSETCHAINED(et->osh, p);
 			PKTCADDLEN(cd[i].chead, PKTLEN(et->osh, p));
-                        if (PKTCCNT(cd[i].chead) >= PKTCBND)
+			if (PKTCCNT(cd[i].chead) >= PKTCBND)
 	                        stop_chain = TRUE;
 		} else
 			PKTCENQTAIL(h, t, p);
@@ -2319,9 +2322,9 @@ et_rxevent(osl_t *osh, et_info_t *et, struct chops *chops, void *ch, int quota)
 		processed++;
 #ifdef ET_INGRESS_QOS
 		if (et->etc->dma_rx_policy) {
-                        left = (*chops->activerxbuf)(ch);
+			left = (*chops->activerxbuf)(ch);
 			/* Either we recovered or queued too many pkts or chain buffers are full */
-                        if (left + toss >= et->etc->dma_rx_thresh || \
+			if (left + toss >= et->etc->dma_rx_thresh ||
 				processed > (quota << PROC_CAP) || stop_chain) {
 				/* we reached quota already */
 				if (processed >= quota) {
@@ -2332,7 +2335,7 @@ et_rxevent(osl_t *osh, et_info_t *et, struct chops *chops, void *ch, int quota)
 			}
 		}
 		else
-#endif /*ET_INGRESS_QOS*/
+#endif /* ET_INGRESS_QOS */
 		{
 			/* we reached quota already */
 			if (processed >= quota) {

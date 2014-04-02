@@ -729,6 +729,20 @@ config CFE_NVRAM_CHK
         bool "Support nvram format check before commit to CFE"
         default n
 
+config DUMP_PREV_OOPS_MSG
+        bool "Dump previous kernel oops message"
+	default n if PRINTK
+
+config DUMP_PREV_OOPS_MSG_BUF_ADDR
+        hex "Buffer start address to store previous kernel oops message."
+        depends on DUMP_PREV_OOPS_MSG
+        default "0x07fff000" if BCM4706
+
+config DUMP_PREV_OOPS_MSG_BUF_LEN
+        hex "Buffer length to store previous kernel oops message."
+        depends on DUMP_PREV_OOPS_MSG
+        default "0x1000" if BCM4706
+
 endmenu
 
 config RWSEM_GENERIC_SPINLOCK

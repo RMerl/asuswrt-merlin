@@ -1,4 +1,4 @@
-/* $Id: getifaddr.h,v 1.8 2013/03/23 10:46:54 nanard Exp $ */
+/* $Id: getifaddr.h,v 1.9 2013/12/13 13:41:53 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2013 Thomas Bernard
@@ -9,6 +9,7 @@
 #define GETIFADDR_H_INCLUDED
 
 struct in_addr;
+struct in6_addr;
 
 /* getifaddr()
  * take a network interface name and write the
@@ -17,6 +18,9 @@ struct in_addr;
 int
 getifaddr(const char * ifname, char * buf, int len,
           struct in_addr * addr, struct in_addr * mask);
+
+int
+getifaddr_in6(const char * ifname, struct in6_addr* addr);
 
 /* find a non link local IP v6 address for the interface.
  * if ifname is NULL, look for all interfaces */

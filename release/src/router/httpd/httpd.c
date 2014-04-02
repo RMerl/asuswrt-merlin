@@ -123,54 +123,28 @@ char host_name[64];
 char Accept_Language[16];
 
 struct language_table language_tables[] = {
-	{"en-us", "EN"},
-	{"en", "EN"},
-	{"ru-ru", "RU"},
-	{"ru", "RU"},
-	{"fr", "FR"},
-	{"fr-fr", "FR"},
-	{"de-at", "DE"},
-	{"de-li", "DE"},
-	{"de-lu", "DE"},
-	{"de-de", "DE"},
-	{"de-ch", "DE"},
-	{"de", "DE"},
-	{"cs-cz", "CZ"},
-	{"cs", "CZ"},
-	{"pl-pl", "PL"},
-	{"pl", "PL"},
-	{"zh-tw", "TW"},
-	{"zh", "TW"},   
-	{"zh-hk", "TW"},
-	{"zh-cn", "CN"},
-	{"ms", "MS"},
-	{"ms-MY", "MS"},
-	{"ms-BN", "MS"},
-	{"th", "TH"},
-	{"th-TH", "TH"},
-	{"th-TH-TH", "TH"},
-	{"tr", "TR"},
-	{"tr-TR", "TR"},
-	{"da", "DA"},
-	{"da-DK", "DA"},
-	{"fi", "FI"},
-	{"fi-FI", "FI"},
-	{"no", "NO"},
-	{"nb-NO", "NO"},
-	{"nn-NO", "NO"},
-	{"sv", "SV"},
-	{"sv-FI", "SV"},
-	{"sv-SE", "SV"},
 	{"br", "BR"},
 	{"pt-BR", "BR"},
-	{"ja", "JP"},
-	{"ja-JP", "JP"},
+	{"zh-cn", "CN"},
+	{"zh-Hans-CN", "CN"},
+	{"cs", "CZ"},
+	{"cs-cz", "CZ"},
+	{"da", "DA"},
+	{"da-DK", "DA"},
+	{"de", "DE"},
+	{"de-at", "DE"},
+	{"de-ch", "DE"},
+	{"de-de", "DE"},
+	{"de-li", "DE"},
+	{"de-lu", "DE"},
+	{"en", "EN"},
+	{"en-us", "EN"},
 	{"es", "ES"},
 	{"es-ec", "ES"},
 	{"es-py", "ES"},
 	{"es-pa", "ES"},
 	{"es-ni", "ES"},
-        {"es-gt", "ES"},
+    {"es-gt", "ES"},
 	{"es-do", "ES"},
 	{"es-es", "ES"},
 	{"es-hn", "ES"},
@@ -186,14 +160,44 @@ struct language_table language_tables[] = {
 	{"es-cl", "ES"},
 	{"es-mx", "ES"},
 	{"es-sv", "ES"},
+	{"fi", "FI"},
+	{"fi-FI", "FI"},
+	{"fr", "FR"},
+	{"fr-fr", "FR"},
+	{"hu-hu", "HU"},
+	{"hu", "HU"},
 	{"it", "IT"},
 	{"it-it", "IT"},
 	{"it-ch", "IT"},
-	{"uk", "UK"},
-	{"hu-hu", "HU"},
-	{"hu", "HU"},
-	{"ro-ro", "RO"},
+	{"ja", "JP"},
+	{"ja-JP", "JP"},
+	{"ms", "MS"},
+	{"ms-MY", "MS"},
+	{"ms-BN", "MS"},
+	{"no", "NO"},
+	{"nb", "NO"},
+	{"nn", "NO"},
+	{"nb-NO", "NO"},
+	{"nn-NO", "NO"},
+	{"pl-pl", "PL"},
+	{"pl", "PL"},
+	{"ru", "RU"},
+	{"ru-ru", "RU"},
 	{"ro", "RO"},
+	{"ro-ro", "RO"},
+	{"sv", "SV"},
+	{"sv-FI", "SV"},
+	{"sv-SE", "SV"},
+	{"th", "TH"},
+	{"th-TH", "TH"},
+	{"th-TH-TH", "TH"},
+	{"tr", "TR"},
+	{"tr-TR", "TR"},
+	{"zh", "TW"}, 
+	{"zh-tw", "TW"},
+	{"zh-Hant-TW", "TW"},   
+	{"zh-hk", "TW"},
+	{"uk", "UK"},
 	{NULL, NULL}
 };
 
@@ -1615,7 +1619,7 @@ int main(int argc, char **argv)
 	signal(SIGCHLD, reapchild);	// 0527 add
 
 #ifdef RTCONFIG_HTTPS
-	if (do_ssl)
+	//if (do_ssl)
 		start_ssl();
 #endif
 
@@ -1798,8 +1802,10 @@ void start_ssl(void)
 			if (save) {
 				fprintf(stderr, "Save SSL certificate...\n"); // tmp test
 				if (nvram_get_file("https_crt_file", "/tmp/cert.tgz", 8192)) {
-					if (eval("tar", "-xzf", "/tmp/cert.tgz", "-C", "/", "etc/cert.pem", "etc/key.pem") == 0)
+					if (eval("tar", "-xzf", "/tmp/cert.tgz", "-C", "/", "etc/cert.pem", "etc/key.pem") == 0){
+						system("cat /etc/key.pem /etc/cert.pem > /etc/server.pem");
 						ok = 1;
+					}
 					unlink("/tmp/cert.tgz");
 				}
 			}

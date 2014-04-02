@@ -34,7 +34,7 @@ services.
 %setup -q
 
 %build
-export CFLAGS="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIE" 
+export CFLAGS="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIE -fno-strict-aliasing" 
 export LDFLAGS='-pie -Wl,-z,relro,-z,now,-z,noexecstack,-z,nodlopen'
 %configure --with-pidfile=%{_localstatedir}/run/radvd/radvd.pid
 make

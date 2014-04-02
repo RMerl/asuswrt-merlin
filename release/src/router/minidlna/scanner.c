@@ -769,6 +769,8 @@ ScanDirectory(const char *dir, const char *parent, media_types dir_types)
 			continue;
 		if((strncmp(name,"asusware",8) == 0))//eric added for have no need to scan asusware folder
 			continue;
+		if((strncmp(name,"minidlna",8) == 0))//sungmin added for have no need to scan minidlna folder
+		    continue;
 		if (is_dir(full_path) && is_sys_dir(name))
                         continue;
 		if( namelist[i]->d_type == DT_DIR )

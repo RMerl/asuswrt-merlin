@@ -288,8 +288,8 @@ global.davlib = new function() {
     
 		//charles mark	
     this.DavClient.prototype.PUT = function(path, content, sliceAsBinary,
-											                      start, stop, filesize, autoCreateFolder,
-											                      handler, 
+											start, stop, filesize, autoCreateFolder,
+											handler, 
                                             updateProgress, context, locktoken ) {
         /* perform a PUT request
             save the contents of a resource to the server
@@ -297,10 +297,10 @@ global.davlib = new function() {
         */
         var request = this._getRequest('PUT', path, handler, context);
         request.setRequestHeader("Content-type", "text/xml,charset=UTF-8");
-				/*
-				 for example  Content-Range: bytes 21010-47021/47022
-				 */
-				//alert("set request start ="+start+"stop="+stop+"filesize="+filesize+", sliceAsBinary="+sliceAsBinary);	
+		/*
+			 for example  Content-Range: bytes 21010-47021/47022
+		*/
+		//alert("set request start ="+start+"stop="+stop+"filesize="+filesize+", sliceAsBinary="+sliceAsBinary);	
         request.setRequestHeader("Content-Range", "bytes "+start+"-"+stop+"/"+filesize);
         
         if (locktoken) {
@@ -318,9 +318,9 @@ global.davlib = new function() {
         try{
         	if(sliceAsBinary == 0 && request.sendAsBinary != null){
         		request.sendAsBinary(content);
-					}
-					else if(sliceAsBinary == 1){
-						request.send(content);
+			}
+			else if(sliceAsBinary == 1){
+				request.send(content);
         	}
         	else{
         		throw '';
@@ -532,6 +532,12 @@ global.davlib = new function() {
 			request.send('');
 		};
 		
+		this.DavClient.prototype.GETNOTICE = function(path,timestamp,handler,context,locktoken){
+			var request = this._getRequest('GETNOTICE',path,handler,context);	
+			request.setRequestHeader("TIMESTAMP",timestamp);
+			request.send('');
+		};
+		
 		this.DavClient.prototype.GETFIRMVER = function(path,handler,context,locktoken){			
 			var request = this._getRequest('GETFIRMVER',path,handler,context);			
 			if(locktoken){
@@ -660,7 +666,58 @@ global.davlib = new function() {
 			};
 			request.send('');
 		};
-			
+		
+		this.DavClient.prototype.UPLOADTOFACEBOOK = function(path,name,title,album,token,handler,context,locktoken){			
+			var request = this._getRequest('UPLOADTOFACEBOOK',path,handler,context);
+			request.setRequestHeader("FILENAME", name);
+			request.setRequestHeader("TITLE", title);
+			request.setRequestHeader("ALBUM", album);
+			request.setRequestHeader("TOKEN", token);
+			if(locktoken){
+				request.setRequestHeader('If','<'+locktoken+'>');
+			};
+			request.send('');
+		};
+		
+		this.DavClient.prototype.UPLOADTOFLICKR = function(path,name,title,token,handler,context,locktoken){			
+			var request = this._getRequest('UPLOADTOFLICKR',path,handler,context);
+			request.setRequestHeader("FILENAME", name);
+			request.setRequestHeader("TITLE", title);
+			request.setRequestHeader("TOKEN", token);			
+			if(locktoken){
+				request.setRequestHeader('If','<'+locktoken+'>');
+			};
+			request.send('');
+		};
+		
+		this.DavClient.prototype.GENROOTCERTIFICATE = function(path,keylen,caname,email,country,state,ln,orag,ounit,cn,handler,context,locktoken){			
+			var request = this._getRequest('GENROOTCERTIFICATE',path,handler,context);	
+			request.setRequestHeader("KEYLEN", keylen); //- Private key length
+			request.setRequestHeader("CANAME", caname); //- CA name
+			request.setRequestHeader("EMAIL", email); //- email address
+			request.setRequestHeader("COUNTRY", country); //- Country Name(2 letter code)
+			request.setRequestHeader("STATE", state); //- State or Province Name(full name)
+			request.setRequestHeader("LN", ln); //- Locality Name(eg, city)
+			request.setRequestHeader("ORAG", orag);//- Organization Name(eg, company)
+			request.setRequestHeader("OUNIT", ounit); //- Organizational Unit Name(eg, section)
+			request.setRequestHeader("CN", cn); //- Common Name(eg. your name or your server's hostname)
+			request.send('');
+		};
+				
+		this.DavClient.prototype.APPLYAPP = function(path, action, nvram, service, handler,context,locktoken){			
+			var request = this._getRequest('APPLYAPP',path,handler,context);
+			request.setRequestHeader("ACTION_MODE", action);
+			request.setRequestHeader("SET_NVRAM", nvram);
+			request.setRequestHeader("RC_SERVICE", service);
+			request.send('');
+		};
+		
+		this.DavClient.prototype.NVRAMGET = function(path, key, handler,context,locktoken){			
+			var request = this._getRequest('NVRAMGET',path,handler,context);
+			request.setRequestHeader("KEY", key);
+			request.send('');
+		};
+		
     	// XXX not sure about the order of the args here
     	this.DavClient.prototype.PROPPATCH = function(path, handler, context, 
                                                   setprops, delprops,
@@ -1224,42 +1281,42 @@ global.davlib = new function() {
     // some helper functions
     this.getXmlHttpRequest = function() {
     		
-    		var sAgent = navigator.userAgent.toLowerCase();
-    		var isIE = (sAgent.indexOf("msie")!=-1); //IE
-    		var getInternetExplorerVersion = function(){
-				   var rv = -1; // Return value assumes failure.
-				   if (navigator.appName == 'Microsoft Internet Explorer')
-				   {
-				      var ua = navigator.userAgent;
-				      var re  = new RegExp("MSIE ([0-9]{1,}[\.0-9]{0,})");
-				      if (re.exec(ua) != null)
-				         rv = parseFloat( RegExp.$1 );
-				   }
-				   return rv;
-				};
+    	var sAgent = navigator.userAgent.toLowerCase();
+    	var isIE = (sAgent.indexOf("msie")!=-1); //IE
+    	var getInternetExplorerVersion = function(){
+			var rv = -1; // Return value assumes failure.
+			if (navigator.appName == 'Microsoft Internet Explorer')
+			{
+				var ua = navigator.userAgent;
+				var re  = new RegExp("MSIE ([0-9]{1,}[\.0-9]{0,})");
+				if (re.exec(ua) != null)
+					rv = parseFloat( RegExp.$1 );
+			}
+			return rv;
+		};
 				
-    		/*
-         instantiate an XMLHTTPRequest 
+    	/*
+        instantiate an XMLHTTPRequest 
 
-            this can be improved by testing the user agent better and, in case 
-            of IE, finding out which MSXML is installed and such, but it 
-            seems to work just fine for now
+        this can be improved by testing the user agent better and, in case 
+        of IE, finding out which MSXML is installed and such, but it 
+        seems to work just fine for now
         */
         
         try{
         	if(isIE&&getInternetExplorerVersion()<=8&&window.ActiveXObject){
         		return new window.ActiveXObject("Microsoft.XMLHTTP");
-          }
+          	}
         } 
         catch(e) { 
         };
 				
-				try{
-					return new XMLHttpRequest();
-	      } 
-	      catch(e) {
-	      	// not a Mozilla or Konqueror based browser
-	      };
+		try{
+			return new XMLHttpRequest();
+	    } 
+	    catch(e) {
+	    	// not a Mozilla or Konqueror based browser
+	    };
         
         alert('Your browser does not support XMLHttpRequest, required for ' +
                 'WebDAV access.');

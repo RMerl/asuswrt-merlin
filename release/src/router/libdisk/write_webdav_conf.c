@@ -98,7 +98,7 @@ char *get_productid(void)
 
 char *port_get(char *name)
 {
-	char tmp_name[256]="/opt/etc/asus_script/aicloud_nvram_check.sh";
+	char tmp_name[256]="/opt/etc/apps_asus_script/aicloud_nvram_check.sh";
         //char tmp_name[256]="/tmp/aicloud_nvram_check.sh";
         char *cmd_name;
         cmd_name=(char *)malloc(sizeof(char)*(strlen(tmp_name)+strlen(name)+2));
@@ -139,7 +139,7 @@ char *port_get(char *name)
 
 int webdav_match(char *name,int id)
 {
-	char tmp_name[256]="/opt/etc/asus_script/aicloud_nvram_check.sh";
+	char tmp_name[256]="/opt/etc/apps_asus_script/aicloud_nvram_check.sh";
         //char tmp_name[256]="/tmp/aicloud_nvram_check.sh";
         char *cmd_name;
         cmd_name=(char *)malloc(sizeof(char)*(strlen(tmp_name)+strlen(name)+2));
@@ -320,7 +320,9 @@ int main(int argc, char *argv[]) {
 	// ****
 	fprintf(fp, "compress.cache-dir          = \"/tmp/lighttpd/compress/\"\n");
 	fprintf(fp, "compress.filetype           = ( \"application/x-javascript\", \"text/css\", \"text/html\", \"text/plain\" )\n");
-	
+
+	fprintf(fp, "aicloud.max-sharelink             = 15\n");
+
 	// **** SambaDav setting
 	fprintf(fp, "$SERVER[\"socket\"]==\":%s\"{\n", get_webdav_http_port());
 //	fprintf(fp, "$SERVER[\"socket\"]==\":8999\"{\n");
@@ -345,6 +347,7 @@ int main(int argc, char *argv[]) {
 	fprintf(fp, "		webdav.activate=\"enable\"\n");
 	fprintf(fp, "		webdav.is-readonly=\"disable\"\n");
 //	fprintf(fp, "		webdav.sqlite-db-name=\"/tmp/lighttpd/webdav.db\"\n");
+	fprintf(fp, "       url.aicloud-auth-deny = (\"jplayer\")\n");
 	fprintf(fp, "	}\n");
 	fprintf(fp, "	else $HTTP[\"url\"] =~ \"^/favicon.ico$\"{\n");
     fprintf(fp, "		server.document-root = \"/\"\n");
@@ -356,7 +359,7 @@ int main(int argc, char *argv[]) {
     fprintf(fp, "		webdav.activate = \"enable\" \n");
     fprintf(fp, "		webdav.is-readonly = \"enable\"\n");
 	fprintf(fp, "	}\n");
-	fprintf(fp, "	else $HTTP[\"url\"] !~ \"^/smb($|/)\" { \n");
+	fprintf(fp, "	else $HTTP[\"url\"] !~ \"^/smb($|/|.)\" { \n");
 	fprintf(fp, "	    server.document-root = \"smb://\" \n");
    	fprintf(fp, "	    smbdav.activate = \"enable\" \n");
     fprintf(fp, "	    smbdav.is-readonly = \"disable\" \n");
@@ -481,7 +484,8 @@ WEBDAV_SETTING:
 	/*** Webdav_SSL ***/
 	/* default : https://192.168.1.1:443/webdav */
 	fprintf(fp, "$SERVER[\"socket\"]==\":%s\"{\n",get_webdav_https_port());
-	fprintf(fp, "	ssl.pemfile=\"/tmp/lighttpd/server.pem\"\n");
+	//fprintf(fp, "	ssl.pemfile=\"/tmp/lighttpd/server.pem\"\n");
+	fprintf(fp, " ssl.pemfile=\"/etc/server.pem\"\n");
 	fprintf(fp, "	ssl.engine=\"enable\"\n");
 	//fprintf(fp, "	alias.url=(\"/webdav\"=>\"/mnt/\")\n"); 
 //	fprintf(fp, "	$HTTP[\"url\"]=~\"^/usbdisk($|/)\"{\n");
@@ -504,6 +508,7 @@ WEBDAV_SETTING:
 	fprintf(fp, "		webdav.activate=\"enable\"\n");
 	fprintf(fp, "		webdav.is-readonly=\"disable\"\n");
 //	fprintf(fp, "		webdav.sqlite-db-name=\"/tmp/lighttpd/webdav.db\"\n");
+	fprintf(fp, "       url.aicloud-auth-deny = (\"jplayer\")\n");
 	fprintf(fp, "	}\n");
 	fprintf(fp, "	else $HTTP[\"url\"] =~ \"^/favicon.ico$\"{\n");
     fprintf(fp, "		server.document-root = \"/\"\n");
@@ -515,7 +520,13 @@ WEBDAV_SETTING:
     fprintf(fp, "		webdav.activate = \"enable\" \n");
     fprintf(fp, "		webdav.is-readonly = \"enable\"\n");
 	fprintf(fp, "	}\n");
-	fprintf(fp, "	else $HTTP[\"url\"] !~ \"^/smb($|/)\" { \n");
+	fprintf(fp, "   else $HTTP[\"url\"] =~ \"^/aicloud.crt$\"{\n");
+	fprintf(fp, "       server.document-root = \"/\"\n");
+	fprintf(fp, "       alias.url = ( \"/aicloud.crt\" => \"/etc/cert.pem\" ) \n");
+	fprintf(fp, "       webdav.activate = \"enable\" \n");
+	fprintf(fp, "       webdav.is-readonly = \"enable\"\n");
+	fprintf(fp, "   }\n");
+	fprintf(fp, "	else $HTTP[\"url\"] !~ \"^/smb($|/|.)\" { \n");
 	fprintf(fp, "	    server.document-root = \"smb://\" \n");
    	fprintf(fp, "	    smbdav.activate = \"enable\" \n");
     fprintf(fp, "	    smbdav.is-readonly = \"disable\" \n");

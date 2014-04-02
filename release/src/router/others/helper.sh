@@ -4,7 +4,7 @@
 # For use with Postconf scripts (and others)
 
 _quote() {
-    echo $1 | sed 's/[]\.|$(){}?+*^[]/\\&/g'
+	echo $1 | sed 's/[]\/()$*.^|[]/\\&/g'
 }
 
 # This function looks for a string, and inserts a specified string after it inside a given file
@@ -28,6 +28,5 @@ pc_replace() {
 # This function will append a given string at the end of a given file
 # $1 The line to append at the end, $2: Config file where to append
 pc_append() {
-	CONTENT=$(_quote "$1")
-	echo "$CONTENT" >> $2
+	echo "$1" >> $2
 }

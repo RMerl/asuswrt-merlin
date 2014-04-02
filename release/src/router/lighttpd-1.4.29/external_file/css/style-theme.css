@@ -9,7 +9,7 @@ font-weight:lighter;
 background-color:#000;
 }
 
-.sicon, .bicon, .picon, .button, .ocButton, .ticon, #logo, #treeBanner, #help_image, .navigation li dt, .themes_ctrl, .alsearch, .image-inner-wrapper {
+.sicon, .bicon, .picon, .button, .ocButton, .ticon, #logo, #treeBanner, #help_image, .navigation li dt, .themes_ctrl, .alsearch, .image-inner-wrapper, .ui-icon, .context-menu-submenu:after {
 background:transparent url("style-theme.png") no-repeat top left;
 }
 
@@ -187,7 +187,7 @@ height:200px;
 #main_left_region #hostview{
 margin:0;
 padding:0;
-width:300px;
+width:297px;
 height:320px;
 float:left;
 overflow-y: auto;
@@ -282,6 +282,7 @@ top: 0px;
 }
 
 #hostview .host_item #hostname, #hostview .scan_item #scanlabel{ 
+width:240px;
 height:25px;
 white-space:nowrap;
 font-family:"Segoe UI",Arial;
@@ -296,6 +297,8 @@ align:left;
 
 #hostview .host_item.usbdisk #hostname p{
 padding-top:0;
+text-overflow: ellipsis;
+overflow: hidden;
 }
 
 #hosticon{
@@ -353,7 +356,7 @@ width:75%;
 height:100%;
 /*min-width:810px;*/
 position: absolute;
-left:300px;
+left:297px;
 }
 /*--------------------------------------*/
 
@@ -364,7 +367,7 @@ width: 100%;
 height:32px;
 background-image:url("images/top_bottom_region_bg.png");
 background-repeat:repeat-x;
-border:#ff0000;
+border-top:1px solid;
 border-width:1px;
 }
 
@@ -447,15 +450,19 @@ display:none;
 margin:0;
 padding:0;
 width:500px;
-height:47px;
+/*height:47px;*/
+height:40px;
 float:left;
 position:absolute;
 display:block;
+/*
 background-image:url("images/button_panel_bg.png");
 background-repeat:repeat-x;
-z-index:15;
+*/
+background-color: #424242;
+z-index:0;
 bottom:0px;
-border-left:1px solid;
+/*border-left:1px solid;*/
 }
 
 #button_panel #ui_region{
@@ -481,7 +488,8 @@ padding:0;
 width:100%;
 height:100%;
 background-color:#484D50;
-position:relative;
+/*position:relative;*/
+position:absolute;
 display:none;
 }
 /*--------------------------------------*/
@@ -517,9 +525,11 @@ position:relative;
 background-position: -80px -175px;
 cursor:pointer;
 }
+/*
 #fileview .folderDiv.select {
 background-position: -80px -235px;
 }
+*/
 #fileview .folderDiv.sicon {
 background-position: 0 -430px;
 cursor:pointer;
@@ -531,57 +541,23 @@ position: absolute;
 left: 35px;
 top: 15px;
 }
-#fileview .selectDiv {
-background-position: -40px -390px;
-cursor:pointer;
-position: absolute;
-left: 25px;
-top: 10px;
-display:none;
-}
-
-#fileview .selectHintDiv {
-background-position: 0 -390px;
-position: absolute;
-left: 25px;
-top: 10px;
-display:none;
-}
 
 #fileview .checklist{
 position:relative;
 width:30px;
 height:40px;
-}
-
-#fileview .selectListDiv {
-background-position: -120px -390px;
-cursor:pointer;
-position: absolute;
-left: 0px;
-top: 0px;
-width:30px;
-height:40px;
-display:none;
-}
-
-#fileview .selectListHintDiv {
-background-position: -80px -390px;
-position: absolute;
-left: 0px;
-top: 0px;
-width:30px;
-height:40px;
-display:none;
+margin-top:7px;
 }
 
 #fileview .fileDiv {
 background-position: -160px -175px;
 cursor:pointer;
 }
+/*
 #fileview .fileDiv.select {
 background-position: -160px -235px;
 }
+*/
 #fileview .fileDiv.sicon {
 background-position: -40px -430px;
 cursor:pointer;
@@ -599,9 +575,11 @@ text-align:center;
 background-position: -240px -175px;
 cursor:pointer;
 }
+/*
 #fileview .imgfileDiv.select {
 background-position: -240px -235px;
 }
+*/
 #fileview .imgfileDiv.sicon {
 background-position: -80px -430px;
 cursor:pointer;
@@ -611,9 +589,11 @@ cursor:pointer;
 background-position: -320px -175px;
 cursor:pointer;
 }
+/*
 #fileview .videofileDiv.select {
 background-position: -320px -235px;
 }
+*/
 #fileview .videofileDiv.sicon {
 background-position: -120px -430px;
 cursor:pointer;
@@ -623,9 +603,10 @@ cursor:pointer;
 background-position: -400px -175px;
 cursor:pointer;
 }
+/*
 #fileview .audiofileDiv.select {
 background-position: -400px -235px;
-}
+}*/
 #fileview .audiofileDiv.sicon {
 background-position: -160px -430px;
 cursor:pointer;
@@ -634,10 +615,10 @@ cursor:pointer;
 #fileview .pptfileDiv {
 background-position: -480px -175px;
 cursor:pointer;
-}
+}/*
 #fileview .pptfileDiv.select {
 background-position: -480px -235px;
-}
+}*/
 #fileview .pptfileDiv.sicon {
 background-position: -200px -430px;
 cursor:pointer;
@@ -646,10 +627,10 @@ cursor:pointer;
 #fileview .docfileDiv {
 background-position: -560px -175px;
 cursor:pointer;
-}
+}/*
 #fileview .docfileDiv.select {
 background-position: -560px -235px;
-}
+}*/
 #fileview .docfileDiv.sicon {
 background-position: -240px -430px;
 cursor:pointer;
@@ -659,10 +640,10 @@ cursor:pointer;
 #fileview .xlsfileDiv {
 background-position: -640px -175px;
 cursor:pointer;
-}
+}/*
 #fileview .xlsfileDiv.select {
 background-position: -640px -235px;
-}
+}*/
 #fileview .xlsfileDiv.sicon {
 background-position: -280px -430px;
 cursor:pointer;
@@ -671,10 +652,10 @@ cursor:pointer;
 #fileview .pdffileDiv {
 background-position: -720px -175px;
 cursor:pointer;
-}
+}/*
 #fileview .pdffileDiv.select {
 background-position: -720px -235px;
-}
+}*/
 #fileview .pdffileDiv.sicon {
 background-position: -320px -430px;
 cursor:pointer;
@@ -724,6 +705,7 @@ width:120px;
 height:100px;
 text-align:center;
 margin:10px;
+position:relative;
 }
 
 #fileview .albumDiv:hover {
@@ -731,7 +713,6 @@ background-color:#00C2EB;
 }
 
 #fileview .albuminfo {
-/*width:120px;*/
 width:100%;
 height:20px;
 }
@@ -748,12 +729,14 @@ text-decoration:none;
 width:100%;
 height:100%;
 white-space: nowrap;
+text-overflow: ellipsis;
 }
 
 .thumb-table-parent {
 width:100%;
 height:100%;
 table-layout: fixed;
+cursor:pointer;
 }
 
 #fileview .music-album {
@@ -764,6 +747,36 @@ height:200px;
 #fileview .music-album-x {
 width:160px;
 height:120px;
+}
+
+.item-check{
+position: absolute;
+left:5px;
+top:5px;
+width: 20px;
+height: 20px;
+display:none;
+background-position: -480px -430px;
+cursor: pointer;
+}
+.item-check:hover{
+background-position: -480px -450px;
+}
+.x-view-selected{
+background-position: -480px -470px;	
+}
+.x-view-selected:hover{
+background-position: -480px -490px;	
+}
+.item-menu{
+position: absolute;
+right:5px;
+top:5px;
+width: 20px;
+height: 20px;
+display:none;
+background-position: -500px -430px;	
+cursor: pointer;
 }
 /*--------------------------------------*/
 
@@ -1228,7 +1241,8 @@ padding-right: 8px;
 text-align: center;
 font-size: 13px;
 font-weight: bold;
-height: 24px;
+/*height: 24px;*/
+height: 22px;
 overflow: hidden;
 cursor:pointer;
 }
@@ -1375,6 +1389,7 @@ white-space: nowrap;
 word-wrap:break-word;
 overflow:hidden;
 cursor:pointer;
+text-overflow: ellipsis;
 }
 .table-file-list tr.cbp{
 background-color:#1A1A1A;
@@ -1515,3 +1530,562 @@ height: 16px;
 color: #ccc;
 margin: 1px 0;
 }
+/*--------------------------------------------*/
+
+.select-window {
+position: absolute;
+z-index: 1000;
+visibility: visible;
+left: 50%;
+top: 1px;
+width: 350px;
+height: 30px;
+background-color: #F9EDBE;
+border-radius: 7px;
+border: solid 1px #F5B438;
+display:none;
+}
+
+.select-window-panel{
+width:100%;
+padding: 1px;
+margin: 0;
+overflow: hidden;
+}
+
+.select-window-toolbar-ct{
+width:100%;	
+height: 28px;
+}
+
+.select-window-toolbar-right{
+padding-right:10px;
+}
+
+.select-window-toolbar-ct td{
+font: 12px verdana, tahoma, arial, helvetica, sans-serif;
+white-space: nowrap;
+}
+
+.select-window .selected-desc-text {
+font-size: 12px;
+color: rgb(60, 70, 80);
+padding-left: 18px;
+}
+
+.x-btn-text {
+height: 16px;
+font-size: 12px;
+color: #E79800;
+text-decoration: underline;
+border: 0 none;
+background-color: transparent;
+padding-left: 3px;
+padding-right: 3px;
+cursor: pointer;
+margin: 0;
+overflow: visible;
+width: auto;
+-moz-outline: 0 none;
+outline: 0 none;
+}
+.x-btn-text:hover{
+color:#ff0000;	
+}
+
+/*!
+ * jQuery contextMenu - Plugin for simple contextMenu handling
+ *
+ * Version: git-master
+ *
+ * Authors: Rodney Rehm, Addy Osmani (patches for FF)
+ * Web: http://medialize.github.com/jQuery-contextMenu/
+ *
+ * Licensed under
+ *   MIT License http://www.opensource.org/licenses/mit-license
+ *   GPL v3 http://opensource.org/licenses/GPL-3.0
+ *
+ */
+
+.context-menu-list {
+margin:0; 
+padding:0;
+min-width: 120px;
+max-width: 250px;
+display: inline-block;
+position: absolute;
+list-style-type: none;
+border: 1px solid #DDD;
+background: #EEE;    
+-webkit-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+-moz-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+-ms-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+-o-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+font-family: verdana, tahoma, arial, helvetica, sans-serif;
+font: normal 12px tahoma, arial, helvetica, sans-serif;
+}
+
+.context-menu-item {
+padding: 2px 24px 2px 24px;
+background-color: #EEE;
+position: relative;
+-webkit-user-select: none;
+-moz-user-select: -moz-none;
+-ms-user-select: none;
+user-select: none;
+}
+
+.context-menu-separator {
+padding-bottom:0;
+border-bottom: 1px solid #DDD;
+}
+
+.context-menu-item > label > input,
+.context-menu-item > label > textarea {
+-webkit-user-select: text;
+-moz-user-select: text;
+-ms-user-select: text;
+user-select: text;
+}
+
+.context-menu-item.hover {
+cursor: pointer;
+background-color: #00BFFF;
+}
+
+.context-menu-item.disabled {
+color: #666;
+}
+
+.context-menu-input.hover,
+.context-menu-item.disabled.hover {
+cursor: default;
+background-color: #EEE;
+}
+
+.context-menu-submenu:after {
+content: "";
+color: #666;
+position: absolute;
+top: 0;
+right: 3px;
+z-index: 1;
+background-position: -541px -430px;
+width:10px;
+height:18px;
+}
+
+.context-menu-submenu.disabled:after {
+background-position: -541px -448px;
+}
+/* icons
+    #protip:
+    In case you want to use sprites for icons (which I would suggest you do) have a look at
+    http://css-tricks.com/13224-pseudo-spriting/ to get an idea of how to implement 
+    .context-menu-item.icon:before {}
+ */
+.context-menu-item.icon { min-height: 18px; background-repeat: no-repeat; background-position: 4px 2px; }
+.context-menu-item.icon-edit { background-image: url(images/page_white_edit.png); }
+.context-menu-item.icon-cut { background-image: url(images/cut.png); }
+.context-menu-item.icon-copy { background-image: url(images/page_white_copy.png); }
+.context-menu-item.icon-paste { background-image: url(images/page_white_paste.png); }
+.context-menu-item.icon-delete { background-image: url(images/page_white_delete.png); }
+.context-menu-item.icon-add { background-image: url(images/page_white_add.png); }
+.context-menu-item.icon-quit { background-image: url(images/door.png); }
+
+/* vertically align inside labels */
+.context-menu-input > label > * { vertical-align: top; }
+
+/* position checkboxes and radios as icons */
+.context-menu-input > label > input[type="checkbox"],
+.context-menu-input > label > input[type="radio"] {
+    margin-left: -17px;
+}
+.context-menu-input > label > span {
+    margin-left: 5px;
+}
+
+.context-menu-input > label,
+.context-menu-input > label > input[type="text"],
+.context-menu-input > label > textarea,
+.context-menu-input > label > select {
+    display: block;
+    width: 100%;
+    
+    -webkit-box-sizing: border-box;
+       -moz-box-sizing: border-box;
+        -ms-box-sizing: border-box;
+         -o-box-sizing: border-box;
+            box-sizing: border-box;
+}
+
+.context-menu-input > label > textarea {
+    height: 100px;
+}
+.context-menu-item > .context-menu-list {
+    display: none;
+    /* re-positioned by js */
+    right: -5px;
+    top: 5px;
+}
+
+.context-menu-item.hover > .context-menu-list {
+    display: block;
+}
+
+.context-menu-accesskey {
+    text-decoration: underline;
+}
+/*------------------------------*/
+.upload-x{
+-moz-border-radius: 5px;
+-webkit-border-radius: 5px;
+border-radius: 5px;
+padding: 0px;
+text-align: center;
+font: 20pt bold;
+font-family:"Segoe UI";
+color: #ffffff;
+left:0px;
+top:0px;
+width:100%;
+height:350px;
+background:#555A5D;	
+}
+#uploadRegion {
+}
+#onuploadRegion {
+display:none;
+}
+#uploadOption{
+background-color:#f1f1ef;
+border: #676965;
+border-style:solid;
+border-width:1px;
+height:auto;
+width:100%;
+text-align: left;
+}
+#inputnameRegion{
+border: 2px #BBB;
+width:100%;
+height:100%;
+background:#d8eaf6;
+}
+#upload_file_list{
+display: inline;
+font: 12pt bold;
+font-family:"Segoe UI";
+text-align: left;
+}
+.upload-dropzone-parent {
+height: 100%;
+width: 100%;
+position: relative;
+border-spacing: 20px;
+}
+.drag-drop-supported .upload-dropzone-cell {
+border: #DDD 4px dashed;
+border-radius: 2px;
+}
+.upload-dropzone-cell {
+width: 100%;
+text-align: center;
+position: relative;
+}
+.upload-dropzone {
+width: 100%;
+text-align: center;
+position: relative;
+}
+.upload-drop-here {
+font-weight: bold;
+font-size: 15px;
+color: #fff;
+padding: 0 10px;
+display: none;
+}
+.chrome-require {
+font-weight: bold;
+font-size: 20px;
+padding:10px;
+}
+.chrome-require a{
+color: #FDC049;
+text-decoration: none;
+}
+.chrome-require a:hover{
+color: #FDC049;
+text-decoration: underline;
+}
+.upload-drop-alt {
+display: none;
+padding: 15px 0 5px;
+font-weight: bold;
+font-size: 15px;
+color: #fff;
+}
+.upload-select-here, .upload-select-directorys-here{
+font-weight: bold;
+font-size: 15px;
+color: #fff;
+padding: 0 10px;
+}
+
+#nav {
+width: 100%;
+height: 100%;
+line-height: 2em;
+border: 1px solid #ccc;
+padding: 0;
+margin: 0;
+overflow: scroll;
+overflow-x: hidden;
+}
+#uploadRegion li {
+border-bottom: 1px solid #ccc;
+height:40px;
+}
+#uploadRegion ul ul {
+text-indent: 1em;
+}
+#uploadRegion ul ul ul {
+text-indent: 2em;
+}
+.ml-btn-1 {        
+-moz-box-shadow:inset 0px 1px 0px 0px #ffffff;
+-webkit-box-shadow:inset 0px 1px 0px 0px #ffffff;
+box-shadow:inset 0px 1px 0px 0px #ffffff;
+background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #ffffff), color-stop(1, #f6f6f6));
+background:-moz-linear-gradient(top, #ffffff 5%, #f6f6f6 100%);
+background:-webkit-linear-gradient(top, #ffffff 5%, #f6f6f6 100%);
+background:-o-linear-gradient(top, #ffffff 5%, #f6f6f6 100%);
+background:-ms-linear-gradient(top, #ffffff 5%, #f6f6f6 100%);
+background:linear-gradient(to bottom, #ffffff 5%, #f6f6f6 100%);
+filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#f6f6f6',GradientType=0);
+background-color:#ffffff;
+-moz-border-radius:6px;
+-webkit-border-radius:6px;
+border-radius:6px;
+border:1px solid #dcdcdc;
+display:inline-block;
+color:#666666;
+font-family:arial;
+font-size:12px;
+font-weight:bold;
+padding:5px 15px;
+text-decoration:none;
+text-shadow:0px 1px 0px #ffffff;
+margin:0 5px 0 5px;
+cursor:pointer;
+}
+.ml-btn-1:hover {        
+background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #f6f6f6), color-stop(1, #ffffff));
+background:-moz-linear-gradient(top, #f6f6f6 5%, #ffffff 100%);
+background:-webkit-linear-gradient(top, #f6f6f6 5%, #ffffff 100%);
+background:-o-linear-gradient(top, #f6f6f6 5%, #ffffff 100%);
+background:-ms-linear-gradient(top, #f6f6f6 5%, #ffffff 100%);
+background:linear-gradient(to bottom, #f6f6f6 5%, #ffffff 100%);
+filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#f6f6f6', endColorstr='#ffffff',GradientType=0);       
+background-color:#f6f6f6;
+}
+.ml-btn-1:active {
+position:relative;
+top:1px;
+}
+div#divApplet{
+width:100px;
+height:40px;
+}
+.ml-btn-2{
+color:#FFBC3B;
+font-size:14px;
+}
+#upload-file-list-container{
+height:100%;	
+}
+#delete_item{
+background-position: -400px -438px;
+width: 40px;
+height: 25px;
+cursor: pointer;
+display: inline-block;
+text-align: center;
+margin-top: 10px;
+}
+
+/*
+Copyright (c) 2010-2012 Ivan Vanderbyl
+Originally found at http://ivan.ly/ui
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+/* Webkit animation keyframes */
+@-webkit-keyframes animate-stripes {
+  to {
+    background-position: 0 0;
+  }
+
+  from {
+    background-position: 44px 0;
+  }
+}
+
+@-moz-keyframes animate-stripes {
+  to {
+    background-position: 0 0;
+  }
+
+  from {
+    background-position: 36px 0;
+  }
+}
+
+/* Bar which is placed behind the progress */
+.ui-progress-bar {
+  /* Usual setup stuff */
+  position: relative;
+  height: 25px;
+  /* Pad right so we don't cover the borders when fully progressed */
+  padding-right: 2px;
+  /* For browser that don't support gradients, we'll set a blanket background colour */
+  background-color: #abb2bc;
+  /* Rounds the ends, we specify an excessive amount to make sure they are completely rounded */
+  /* Adjust to your liking, and don't forget to adjust to the same amount in .ui-progress */
+  /*-moz-border-radius: 15px;
+  -webkit-border-radius: 15px;
+  -o-border-radius: 15px;
+  -ms-border-radius: 15px;
+  -khtml-border-radius: 15px;
+  border-radius: 15px;*/
+  /* Background gradient */
+  background: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #949daa), color-stop(100%, #abb2bc));
+  background: -webkit-linear-gradient(#949daa 0%, #abb2bc 100%);
+  background: -moz-linear-gradient(#949daa 0%, #abb2bc 100%);
+  background: -o-linear-gradient(#949daa 0%, #abb2bc 100%);
+  background: -ms-linear-gradient(#949daa 0%, #abb2bc 100%);
+  background: linear-gradient(#949daa 0%, #abb2bc 100%);
+  /* Give it the inset look by adding some shadows and highlights */
+  -moz-box-shadow: inset 0px 1px 2px 0px rgba(0, 0, 0, 0.5), 0px 1px 0px 0px white;
+  -webkit-box-shadow: inset 0px 1px 2px 0px rgba(0, 0, 0, 0.5), 0px 1px 0px 0px white;
+  -o-box-shadow: inset 0px 1px 2px 0px rgba(0, 0, 0, 0.5), 0px 1px 0px 0px white;
+  box-shadow: inset 0px 1px 2px 0px rgba(0, 0, 0, 0.5), 0px 1px 0px 0px white;
+  /* Alt colours */
+  /* Progress part of the progress bar */
+}
+.ui-progress-bar.blue .ui-progress {
+  background-color: #339BB9!important;
+  border: 1px solid #287a91;
+}
+.ui-progress-bar.error .ui-progress {
+  background-color: #C43C35 !important;
+  border: 1px solid #9c302a;
+}
+.ui-progress-bar.warning .ui-progress {
+  background-color: #D9B31A!important;
+  border: 1px solid #ab8d15;
+}
+.ui-progress-bar.success .ui-progress {
+  background-color: #57A957!important;
+  border: 1px solid #458845;
+}
+.ui-progress-bar.transition .ui-progress {
+  -moz-transition: background-color 0.5s ease-in, border-color 1.5s ease-out, box-shadow 1.5s ease-out;
+  -webkit-transition: background-color 0.5s ease-in, border-color 1.5s ease-out, box-shadow 1.5s ease-out;
+  -o-transition: background-color 0.5s ease-in, border-color 1.5s ease-out, box-shadow 1.5s ease-out;
+  transition: background-color 0.5s ease-in, border-color 1.5s ease-out, box-shadow 1.5s ease-out;
+}
+.ui-progress-bar .ui-progress {
+  /* Usual setup stuff */
+  position: relative;
+  display: block;
+  overflow: hidden;
+  /* Height should be 2px less than .ui-progress-bar so as to not cover borders and give it a look of being inset */
+  height: 23px;
+  /* Rounds the ends, we specify an excessive amount to make sure they are completely rounded */
+  /* Adjust to your liking, and don't forget to adjust to the same amount in .ui-progress-bar */
+  /*-moz-border-radius: 10px;
+  -webkit-border-radius: 10px;
+  -o-border-radius: 10px;
+  -ms-border-radius: 10px;
+  -khtml-border-radius: 10px;
+  border-radius: 10px;*/
+  /* Set the background size so the stripes work correctly */
+  -webkit-background-size: 44px 44px;
+  -moz-background-size: 36px 36px;
+  /* Webkit */
+  /* For browser that don't support gradients, we'll set a base background colour */
+  background-color: #74d04c;
+  /* Webkit background stripes and gradient */
+  background: -webkit-gradient(linear, 0 0, 44 44, color-stop(0, rgba(255, 255, 255, 0.17)), color-stop(0.25, rgba(255, 255, 255, 0.17)), color-stop(0.26, rgba(255, 255, 255, 0)), color-stop(0.5, rgba(255, 255, 255, 0)), color-stop(0.51, rgba(255, 255, 255, 0.17)), color-stop(0.75, rgba(255, 255, 255, 0.17)), color-stop(0.76, rgba(255, 255, 255, 0)), color-stop(1, rgba(255, 255, 255, 0))), -webkit-gradient(linear, left bottom, left top, color-stop(0, rgba(255, 255, 255, 0)), color-stop(1, rgba(255, 255, 255, 0.35))), #74d04c;
+  /* Mozilla (Firefox etc) background stripes */
+  /* Note: Mozilla's support for gradients is more true to the original design, allowing gradients at 30 degrees, as apposed to 45 degress in webkit. */
+  background: -moz-repeating-linear-gradient(top left -30deg, rgba(255, 255, 255, 0.17), rgba(255, 255, 255, 0.17) 15px, rgba(255, 255, 255, 0) 15px, rgba(255, 255, 255, 0) 30px), -moz-linear-gradient(rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0) 100%), #74d04c;
+  -moz-box-shadow: inset 0px 1px 0px 0px rgba(255, 255, 255, 0.4), inset 0px -1px 1px rgba(0, 0, 0, 0.2);
+  -webkit-box-shadow: inset 0px 1px 0px 0px rgba(255, 255, 255, 0.4), inset 0px -1px 1px rgba(0, 0, 0, 0.2);
+  -o-box-shadow: inset 0px 1px 0px 0px rgba(255, 255, 255, 0.4), inset 0px -1px 1px rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0px 1px 0px 0px rgba(255, 255, 255, 0.4), inset 0px -1px 1px rgba(0, 0, 0, 0.2);
+  /* Give it a higher contrast outline */
+  border: 1px solid #4c8932;
+  /* Animate */
+  -moz-animation: animate-stripes 2s linear infinite;
+  -webkit-animation: animate-stripes 2s linear infinite;
+  -o-animation: animate-stripes 2s linear infinite;
+  -ms-animation: animate-stripes 2s linear infinite;
+  -khtml-animation: animate-stripes 2s linear infinite;
+  animation: animate-stripes 2s linear infinite;
+  /* Style status label */
+}
+
+.ui-progress-bar span.ui-label {
+-moz-font-smoothing: antialiased;
+-webkit-font-smoothing: antialiased;
+-o-font-smoothing: antialiased;
+-ms-font-smoothing: antialiased;
+-khtml-font-smoothing: antialiased;
+font-smoothing: antialiased;
+font-size: 13px;
+position: absolute;
+right: 0;
+top:0;
+width:100%;
+text-align:center;
+line-height: 23px;
+padding-right: 12px;
+color: rgba(0, 0, 0, 0.6);
+text-shadow: rgba(255, 255, 255, 0.45) 0 1px 0px;
+white-space: nowrap;
+}
+.ui-progress-bar .ui-progress span.ui-label b {
+font-weight: bold;
+}
+
+a#btn_show_upload_panel{
+width:16px;
+height:60px;
+position:absolute;
+right:0px;
+bottom:72px;
+display:none;
+cursor:pointer;
+background-position: -520px -430px;
+}
+
+/*---------------------------------------------------*/

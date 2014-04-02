@@ -196,6 +196,7 @@ enum {
 	MODEL_UNKNOWN,
 	MODEL_DSLN55U,
 	MODEL_EAN66,
+	MODEL_RTN11P,
 	MODEL_RTN13U,
 	MODEL_RTN14U,
 	MODEL_RTAC52U,
@@ -220,6 +221,7 @@ enum {
 	MODEL_RTN66U,
 	MODEL_RTAC66U,
 	MODEL_RTAC68U,
+	MODEL_RTAC87U,
 	MODEL_RTAC56S,
 	MODEL_RTAC56U,
 	MODEL_RTAC53U,
@@ -329,6 +331,9 @@ extern int f_wait_notexists(const char *name, int max);
 #define BTN_SWMODE_SW_AP		7
 #define BTN_WIFI_TOG			8
 #define BTN_TURBO			9
+#ifdef RTCONFIG_QTN
+#define BTN_QTN_RESET			15
+#endif
 #define BTN_LED				0xA
 
 #define LED_POWER			0

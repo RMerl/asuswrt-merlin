@@ -243,6 +243,9 @@ main(argc, argv)
 		argv++;
 	}
 
+	if (debug == 2)
+		dumpfile(conffile);
+
 	if (infreq_mode == 0 && (cfparse(conffile)) != 0) {
 		dprintf(LOG_ERR, FNAME, "failed to parse configuration file");
 		exit(1);

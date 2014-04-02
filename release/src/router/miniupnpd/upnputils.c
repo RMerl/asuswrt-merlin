@@ -1,7 +1,7 @@
-/* $Id: upnputils.c,v 1.7 2013/04/20 09:03:18 nanard Exp $ */
+/* $Id: upnputils.c,v 1.8 2014/02/05 17:00:26 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2013 Thomas Bernard
+ * (c) 2006-2014 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -93,6 +93,7 @@ struct lan_addr_s *
 get_lan_for_peer(const struct sockaddr * peer)
 {
 	struct lan_addr_s * lan_addr = NULL;
+	char dbg_str[64];
 
 #ifdef ENABLE_IPV6
 	if(peer->sa_family == AF_INET6)
@@ -153,11 +154,15 @@ get_lan_for_peer(const struct sockaddr * peer)
 	}
 #endif
 
-	if(lan_addr)
-		syslog(LOG_DEBUG, "%s: found in LAN %s %s",
-		       "get_lan_for_peer()", lan_addr->ifname, lan_addr->str);
-	else
-		syslog(LOG_DEBUG, "%s: not found !", "get_lan_for_peer()");
+	sockaddr_to_string(peer, dbg_str, sizeof(dbg_str));
+	if(lan_addr) {
+		syslog(LOG_DEBUG, "%s: %s found in LAN %s %s",
+		       "get_lan_for_peer()", dbg_str,
+		       lan_addr->ifname, lan_addr->str);
+	} else {
+		syslog(LOG_DEBUG, "%s: %s not found !", "get_lan_for_peer()",
+		       dbg_str);
+	}
 	return lan_addr;
 }
 

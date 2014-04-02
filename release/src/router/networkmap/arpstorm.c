@@ -42,12 +42,12 @@ iface_bind(int fd, int ifindex)
 {
         int                     err;
         socklen_t               errlen = sizeof(err);
-                                                                                                                                             
+
         memset(&src_sockll, 0, sizeof(src_sockll));
         src_sockll.sll_family          = AF_PACKET;
         src_sockll.sll_ifindex         = ifindex;
         src_sockll.sll_protocol        = htons(ETH_P_ARP);
-                                                                                                                                             
+
         if (bind(fd, (struct sockaddr *) &src_sockll, sizeof(src_sockll)) == -1) {
                 perror("bind device ERR:\n");
                 return -1;
@@ -66,7 +66,7 @@ iface_bind(int fd, int ifindex)
                 perror("getsockname");
                 exit(2);
         }
-                                                                                                                                             
+
         if (src_sockll.sll_halen == 0) {
                 printf("Interface is not ARPable (no ll address)\n");
                 exit(2);
@@ -82,18 +82,18 @@ int create_socket(char *device)
         /* create socket */
         int sock_fd, device_id;
         sock_fd = socket(PF_PACKET, SOCK_DGRAM, 0); //2008.06.27 Yau change to UDP Socket
-                                                                                                                                             
+
         if(sock_fd < 0)
                 perror("create socket ERR:");
-                                                                                                                                             
+
         device_id = iface_get_id(sock_fd, device);
-                                                                                                                                             
+
         if (device_id == -1)
                printf("iface_get_id REEOR\n");
-                                                                                                                                             
+
         if ( iface_bind(sock_fd, device_id) < 0)
                 printf("iface_bind ERROR\n");
-                                                                                                                                             
+
         return sock_fd;
 }
 
@@ -103,12 +103,12 @@ int  sent_arppacket(int raw_sockfd, unsigned char * dst_ipaddr)
 
 	char raw_buffer[46];
 
-	memset(dst_sockll.sll_addr, -1, sizeof(dst_sockll.sll_addr));  // set dmac addr FF:FF:FF:FF:FF:FF                                                                                                                                              
+	memset(dst_sockll.sll_addr, -1, sizeof(dst_sockll.sll_addr));  // set dmac addr FF:FF:FF:FF:FF:FF
         if (raw_buffer == NULL)
         {
                  perror("ARP: Oops, out of memory\r");
                 return 1;
-        }                                                                                                                          
+        }
 	bzero(raw_buffer, 46);
 
         // Allow 14 bytes for the ethernet header
@@ -118,7 +118,7 @@ int  sent_arppacket(int raw_sockfd, unsigned char * dst_ipaddr)
         arp->hwaddr_len = 6;
         arp->ipaddr_len = 4;
         arp->message_type = htons(ARP_REQUEST);
-                                                                                                                                              
+
         // My hardware address and IP addresses
         memcpy(arp->source_hwaddr, my_hwaddr, 6);
         memcpy(arp->source_ipaddr, my_ipaddr, 4);
@@ -175,7 +175,7 @@ int main()
 		scan_ipaddr[3]++;
 		if( scan_count<255 && memcmp(scan_ipaddr, my_ipaddr, 4) ) {
                         sent_arppacket(arp_sockfd, scan_ipaddr);
-		}         
+		}
 		else if(scan_count>255) { //Scan completed
 			scan_count=0;
 			scan_ipaddr[3]=0;

@@ -12,6 +12,7 @@
 #
 
 include common.mak
+include $(SRCBASE)/.config
 
 ifneq ($(RTCONFIG_RALINK),y)
 export CFLAGS += -DBCMWPA2
@@ -25,6 +26,9 @@ export CFLAGS += -DPHYMON
 export CFLAGS += -DPROXYARP
 export CFLAGS += -DTRAFFIC_MGMT
 export CFLAGS += -DTRAFFIC_MGMT_RSSI_POLICY
+ifeq ($(RTCONFIG_BCMARM),y)
+export CFLAGS += -DMFP
+endif
 endif
 export CFLAGS += $(EXTRACFLAGS)
 endif
@@ -99,7 +103,7 @@ SEP=echo "\033[41;1m   $@   \033[0m"
 #
 obj-$(RTCONFIG_DMALLOC) += dmalloc
 
-ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U),y)
+ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U)$(RTN11P),y)
 obj-y += reg
 endif
 ifneq ($(RTCONFIG_BCMARM),y)
@@ -114,8 +118,10 @@ ifneq ($(findstring linux-3.x,$(LINUXDIR)),)
 obj-y += rt2880_app
 else
 obj-y += ated
+ifneq ($(RTN11P),y)
 obj-y += flash
-ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U),y)
+endif
+ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U)$(RTN11P),y)
 else
 obj-y += hw_nat
 endif
@@ -129,17 +135,14 @@ ifneq ($(or $(findstring linux-2.6.36,$(LINUXDIR)),$(findstring linux-3.x,$(LINU
 obj-y += iptables-1.4.x
 obj-y += iproute2-3.x
 else
-ifeq ($(RTAC53U),y)
-obj-y += iptables-1.4.x
-obj-y += iproute2-3.x
-else
 obj-y += iptables
 obj-y += iproute2
 endif
-endif
 
 obj-y += rc
+ifeq ($(RTCONFIG_USB),y)
 obj-y += rom
+endif
 obj-y += others
 obj-y += busybox
 obj-y += httpd
@@ -189,6 +192,7 @@ obj-y += libbcmcrypto
 #obj-y += cyassl
 obj-$(RTCONFIG_HTTPS) += mssl
 #obj-y += mdu
+obj-$(RTCONFIG_TFTP) += tftp
 
 # !!TB
 ifeq ($(RTCONFIG_USB),y)
@@ -224,8 +228,8 @@ obj-y += e2fsprogs
 obj-$(RTCONFIG_NFS) += nfs-utils
 obj-$(RTCONFIG_NFS) += portmap
 
-obj-y += dosfstools
-# obj-$(RTCONFIG_NTFS) += linux-ntfs-2.0.0
+#obj-y += dosfstools
+#obj-$(RTCONFIG_NTFS) += linux-ntfs-2.0.0
 obj-$(RTCONFIG_FTP) += vsftpd
 
 ifeq ($(CONFIG_LINUX26),y)
@@ -316,12 +320,9 @@ obj-$(RTCONFIG_TIMEMACHINE) += libgpg-error-1.10
 obj-$(RTCONFIG_TIMEMACHINE) += libgcrypt-1.5.1
 obj-$(RTCONFIG_TIMEMACHINE) += db-4.8.30
 obj-$(RTCONFIG_TIMEMACHINE) += netatalk-3.0.5
-ifeq ($(RTCONFIG_TIMEMACHINE),y)
+ifeq ($(or $(RTCONFIG_TIMEMACHINE),$(RTCONFIG_MDNS)),y)
 obj-$(RTCONFIG_TIMEMACHINE) += avahi-0.6.31
 obj-$(RTCONFIG_TIMEMACHINE) += expat-2.0.1
-else ifeq ($(RTCONFIG_MDNS),y)
-obj-$(RTCONFIG_MDNS) += avahi-0.6.31
-obj-$(RTCONFIG_MDNS) += expat-2.0.1
 else
 obj-$(RTCONFIG_MEDIA_SERVER) += avahi-0.6.31
 obj-$(RTCONFIG_MEDIA_SERVER) += expat-2.0.1
@@ -409,6 +410,7 @@ obj-$(UBIFS) += util-linux lzo zlib
 ifeq ($(RTCONFIG_RALINK),y)
 obj-$(RA_SKU) += ra_SingleSKU
 endif
+obj-$(RTCONFIG_BCMARM) += wl$(BCMEX)
 
 #obj-y += bonnie
 
@@ -648,11 +650,6 @@ endif
 
 	cd $(TARGETDIR)/lib/modules/*/kernel/drivers/net && mv bcm57xx/* . && rm -rf bcm57xx || true
 
-# Temporary, as we don't have up-to-date linkable objects from Asus, so use prebuilt modules (RM)
-ifneq ($(RTCONFIG_BCMARM),y)
-	cp emf/emf.ko $(TARGETDIR)/lib/modules/*/kernel/drivers/net/emf/
-	cp emf/igs.ko $(TARGETDIR)/lib/modules/*/kernel/drivers/net/igs/
-endif
 	cd $(TARGETDIR)/lib/modules/*/kernel/drivers/net && mv emf$(BCMEX)/* . && rm -rf emf$(BCMEX) || true
 	cd $(TARGETDIR)/lib/modules/*/kernel/drivers/net && mv igs$(BCMEX)/* . && rm -rf igs$(BCMEX) || true
 ifeq ($(RTAC53U),y)
@@ -741,13 +738,12 @@ endif
 	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/usbnet.*o $(PLATFORMDIR)/extras/ || true
 	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/asix.*o $(PLATFORMDIR)/extras/ || true
 	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/cdc_ether.*o $(PLATFORMDIR)/extras/ || true
-	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/net1080.*o $(PLATFORMDIR)/extras/ || true
 	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/rndis_host.*o $(PLATFORMDIR)/extras/ || true
-	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/zaurus.*o $(PLATFORMDIR)/extras/ || true
 	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/sierra.*o $(PLATFORMDIR)/extras/ || true
-	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/cdc_subset.*o $(PLATFORMDIR)/extras/ || true
-	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/ftdi_sio.*o $(PLATFORMDIR)/extras/ || true
-	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/pl2303.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(RTCONFIG_USB_MODEM),$(if $(RTCONFIG_USB_LESSMODEM),@mv,@cp -f),@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/net1080.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(RTCONFIG_USB_MODEM),$(if $(RTCONFIG_USB_LESSMODEM),@mv,@cp -f),@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/zaurus.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(RTCONFIG_USB_MODEM),$(if $(RTCONFIG_USB_LESSMODEM),@mv,@cp -f),@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/ftdi_sio.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(RTCONFIG_USB_MODEM),$(if $(RTCONFIG_USB_LESSMODEM),@mv,@cp -f),@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/pl2303.*o $(PLATFORMDIR)/extras/ || true
 
 	@mv $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/usbkbd.*o $(PLATFORMDIR)/extras/ || true
 	@mv $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/usbmouse.*o $(PLATFORMDIR)/extras/ || true
@@ -837,6 +833,12 @@ ifneq ($(RTCONFIG_BCMARM),y)
 	mv $(TARGETDIR)/lib/modules/$(LINUX_KERNEL)/modules.dep $(TARGETDIR)/lib/modules/
 else
 	mv $(TARGETDIR)/lib/modules/*/modules.dep $(TARGETDIR)/lib/modules/
+endif
+
+ifeq ($(RTCONFIG_QTN),y)
+	# install qtn boot-code and firmware
+	install -D qtnimage/topaz-linux.lzma.img $(TARGETDIR)/rom/qtn/topaz-linux.lzma.img
+	install -D qtnimage/u-boot.bin $(TARGETDIR)/rom/qtn/u-boot.bin
 endif
 	@echo ---
 
@@ -1286,9 +1288,9 @@ iptables-1.4.x-clean:
 upnp: nvram$(BCMEX) shared iptables
 
 miniupnpd/config.h:
-	cd miniupnpd && ./genconfig.sh --leasefile
+	cd miniupnpd && ./genconfig.sh --leasefile --vendorcfg --pcp
 
-miniupnpd: $(IPTABLES_TARGET)
+miniupnpd: $(IPTABLES_TARGET) miniupnpd/config.h
 	@$(SEP)
 	cp -f ./shared/version.h miniupnpd/.
 	$(MAKE) -C miniupnpd -f Makefile.linux
@@ -2580,7 +2582,7 @@ lighttpd-1.4.29/stamp-h1:
 	   ./preconfigure-script \
 	touch $@
 
-lighttpd-1.4.29: shared nvram$(BCMEX) libdisk samba-3.5.8 pcre-8.31 libxml2 sqlite libexif openssl lighttpd-1.4.29/stamp-h1
+lighttpd-1.4.29: shared nvram$(BCMEX) libdisk samba-3.5.8 pcre-8.31 libxml2 sqlite libexif openssl wb push_log lighttpd-1.4.29/stamp-h1
 	$(MAKE) -C lighttpd-1.4.29 $(PARALLEL_BUILD)
 ifeq ($(RTCONFIG_BCMARM),y)
 	$(MAKE) -C lighttpd-1.4.29/src copy-prebuild-arm
@@ -2604,10 +2606,10 @@ lighttpd-1.4.29-install: lighttpd-1.4.29
 
 	mkdir -p $(INSTALLDIR)/lighttpd-1.4.29/usr/lighttpd
 	mkdir -p $(INSTALLDIR)/lighttpd-1.4.29/usr/lighttpd/css & mkdir -p $(INSTALLDIR)/lighttpd-1.4.29/usr/lighttpd/js
-#install -D lighttpd-1.4.29/external_file/css/*.* $(INSTALLDIR)/lighttpd-1.4.29/usr/css
 	cp -rf  lighttpd-1.4.29/external_file/css/ $(INSTALLDIR)/lighttpd-1.4.29/usr/lighttpd
 	cp -rf  lighttpd-1.4.29/external_file/js/ $(INSTALLDIR)/lighttpd-1.4.29/usr/lighttpd
 	cp -f APP-IPK/AiCloud-ipk/CONTROL/control $(INSTALLDIR)/lighttpd-1.4.29/usr/lighttpd
+	cp -f APP-IPK/SmartSync-ipk/CONTROL/control $(INSTALLDIR)/lighttpd-1.4.29/usr/lighttpd/smartsync_control
 
 	$(STRIP) -s $(INSTALLDIR)/lighttpd-1.4.29/usr/lib/*.so
 	$(STRIP) -s $(INSTALLDIR)/lighttpd-1.4.29/usr/lib/*.so.0
@@ -2751,6 +2753,12 @@ inotify-install: inotify
 inotify-clean:
 	-@$(MAKE) -C inotify clean
 
+wl$(BCMEX):
+	-@$(MAKE) -C wl_arm
+	
+wl$(BCMEX)-install:
+	@$(SEP)
+
 #libgpg-error-1.10
 libgpg-error-1.10/stamp-h1:
 	cd $(TOP)/libgpg-error-1.10 && \
@@ -2839,18 +2847,21 @@ db-4.8.30-clean:
 
 #netatalk-3.0.5
 netatalk-3.0.5/stamp-h1: openssl libgcrypt-1.5.1 db-4.8.30
-	touch $(TOP)/netatalk-3.0.5/*
 	cd $(TOP)/netatalk-3.0.5 && \
 	$(CONFIGURE) CPPFLAGS="-I$(TOP)/db-4.8.30/build_unix -I$(TOP)/libgcrypt-1.5.1/src" \
 	LDFLAGS="-L$(TOP)/db-4.8.30/build_unix/.libs -L$(TOP)/libgcrypt-1.5.1/src/.libs" \
 	LIBS="-L$(TOP)/libgpg-error-1.10/src/.libs -lgpg-error -L$(TOP)/libgcrypt-1.5.1/src/.libs -lgcrypt" \
+	LD_LIBRARY_PATH="$(SRCBASE)/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3/lib" \
+	LIBGCRYPT_CONFIG="$(TOP)/libgcrypt-1.5.1/src/libgcrypt-config" \
 	--without-kerberos \
 	--with-bdb=$(TOP)/db-4.8.30/build_unix \
+	--with-cnid-cdb-backend \
 	--prefix=$(INSTALLDIR)/netatalk-3.0.5/usr \
+	--program-prefix= \
 	--with-ssl-dir=$(TOP)/openssl \
 	--disable-static \
 	--with-libgcrypt-dir=$(TOP)/libgcrypt-1.5.1 \
-	--with-ld-library-path=$(SRCBASE)/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3/lib
+	--without-dtrace
 	touch $@
 
 netatalk-3.0.5: netatalk-3.0.5/stamp-h1
@@ -3051,6 +3062,20 @@ ipset-install:
 	install ipset/*.so $(INSTALLDIR)/ipset/usr/lib/
 	$(STRIP) $(INSTALLDIR)/ipset/usr/lib/*.so
 	$(STRIP) $(INSTALLDIR)/ipset/usr/sbin/ipset
+
+tftp:
+	cd tftp-1.0 && CC=$(CC) && $(MAKE)
+
+tftp-clean:
+	cd tftp-1.0 && $(MAKE) clean
+
+tftp-install:
+	# TPTP server
+	install -D tftp-1.0/tftpd $(INSTALLDIR)/tftp/usr/sbin/tftpd
+	$(STRIP) -s $(INSTALLDIR)/tftp/usr/sbin/tftpd
+	# TFTP client
+	#install -D tftp-1.0/tftpc $(INSTALLDIR)/tftp/usr/sbin/tftpc
+	#$(STRIP) -s $(INSTALLDIR)/tftp/usr/sbin/tftpc
 
 NORTON_DIR := $(SRCBASE)/router/norton${BCMEX}
 

@@ -2,6 +2,7 @@
 ## Please check the configurion parameters below
 ##
 
+include ../common.mak
 ## Installation directory. By default, go in /usr/local.
 ## Distributions should probably use /, but they probably know better...
 ifndef PREFIX
@@ -108,6 +109,7 @@ CFLAGS=-Os -W -Wall -Wstrict-prototypes -Wmissing-prototypes -Wshadow \
 DEPFLAGS=-MMD
 XCFLAGS=$(CFLAGS) $(DEPFLAGS) $(WARN) $(HEADERS) $(WELIB_FLAG) $(WEDEF_FLAG)
 PICFLAG=-fPIC
+
 
 # Standard compilation targets
 all: $(STATIC) $(IWLIB) $(PROGS)

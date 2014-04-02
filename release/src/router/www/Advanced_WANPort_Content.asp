@@ -215,9 +215,7 @@ function applyRule(){
 	else	
 		document.form.wans_lanport.disabled = true;
 
-	var tmp_pri_if = wans_dualwan_orig.split(" ")[0].toUpperCase();
-	var tmp_sec_if = wans_dualwan_orig.split(" ")[1].toUpperCase();	
-	if (tmp_pri_if == 'LAN' || tmp_sec_if == 'LAN') {
+	if (document.form.wans_primary.value == "lan" || document.form.wans_second.value == "lan") {
 		var port_conflict = false;
 		var lan_port_num = document.form.wans_lanport.value;
 		

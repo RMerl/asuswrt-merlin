@@ -137,6 +137,9 @@ function applyRule(){
 			inputCtrl(document.form.wan_dns2_x, 1);
 		}
 
+		if(document.form.web_redirect.value != "<% nvram_get("web_redirect"); %>")
+			document.form.action_script += ";restart_firewall";
+
 		document.form.submit();	
 	}
 }
@@ -751,8 +754,8 @@ function pass_checked(obj){
 								<td align="left">
 									<select id="wan_proto_menu" class="input_option" name="wan_proto" onchange="change_wan_type(this.value);fixed_change_wan_type(this.value);">
 										<option value="dhcp" <% nvram_match("wan_proto", "dhcp", "selected"); %>><#BOP_ctype_title1#></option>
-										<option value="pppoe" <% nvram_match("wan_proto", "pppoe", "selected"); %>>PPPoE</option>
 										<option value="static" <% nvram_match("wan_proto", "static", "selected"); %>><#BOP_ctype_title5#></option>
+										<option value="pppoe" <% nvram_match("wan_proto", "pppoe", "selected"); %>>PPPoE</option>
 										<option value="pptp" <% nvram_match("wan_proto", "pptp", "selected"); %>>PPTP</option>
 										<option value="l2tp" <% nvram_match("wan_proto", "l2tp", "selected"); %>>L2TP</option>										
 									</select>
@@ -774,7 +777,17 @@ function pass_checked(obj){
 									<input type="radio" name="wan_nat_x" class="input" value="0" <% nvram_match("wan_nat_x", "0", "checked"); %>><#checkbox_No#>
 								</td>
 							</tr>				
-
+							<tr>
+								<th>Redirect to error page</th>
+								<td align="left">
+									<select id="web_redirect" class="input_option" name="web_redirect" onchange="change_webaebn_type(this.value);fixed_change_wan_type(this.value);">
+										<option value="0" <% nvram_match("web_redirect", "0", "selected"); %>>Never</option>
+										<option value="1" <% nvram_match("web_redirect", "1", "selected"); %>>When Link down</option>
+										<option value="2" <% nvram_match("web_redirect", "2", "selected"); %>>When WAN down</option>
+										<option value="3" <% nvram_match("web_redirect", "3", "selected"); %>>Link or WAN down</option>
+									</select>
+								</td>
+							</tr>
 							<tr>
 								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,23);"><#BasicConfig_EnableMediaServer_itemname#></a>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<a id="faq" href="" target="_blank" style="font-family:Lucida Console;text-decoration:underline;">UPnP&nbspFAQ</a></th>
 								<td>

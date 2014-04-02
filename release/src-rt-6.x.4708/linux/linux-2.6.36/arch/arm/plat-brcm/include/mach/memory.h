@@ -29,7 +29,7 @@
 #define CONSISTENT_DMA_SIZE     SZ_128M
 
 /* 2nd physical memory window */
-#define PHYS_OFFSET2		0x90000000
+#define PHYS_OFFSET2		0x98000000
 
 #if !defined(__ASSEMBLY__) && defined(CONFIG_ZONE_DMA)
 extern void bcm47xx_adjust_zones(unsigned long *size, unsigned long *hole);
@@ -50,11 +50,11 @@ extern void bcm47xx_adjust_zones(unsigned long *size, unsigned long *hole);
 
 #define __phys_to_virt(phys)						\
 	((phys) >= PHYS_OFFSET2 ? (phys) - PHYS_OFFSET2 + PAGE_OFFSET1 :	\
-	 (phys) + PAGE_OFFSET)
+	 (phys) - PHYS_OFFSET + PAGE_OFFSET)
 
 #define __virt_to_phys(virt)						\
 	 ((virt) >= PAGE_OFFSET1 ? (virt) - PAGE_OFFSET1 + PHYS_OFFSET2 :	\
-	  (virt) - PAGE_OFFSET)
+	  (virt) - PAGE_OFFSET + PHYS_OFFSET)
 
 #else
 #define __virt_to_phys(x)	((x) - PAGE_OFFSET + PHYS_OFFSET)

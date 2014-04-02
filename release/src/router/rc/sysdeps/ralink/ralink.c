@@ -582,7 +582,7 @@ setCountryCode_2G(const char *cc)
 	else if (!strcasecmp(cc, "FR")) ;
 	else if (!strcasecmp(cc, "GB")) ;
 	else if (!strcasecmp(cc, "GE")) ;
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)
 	else if (!strcasecmp(cc, "EU")) ;
 #endif
 	else if (!strcasecmp(cc, "GR")) ;
@@ -666,7 +666,7 @@ setCountryCode_2G(const char *cc)
 	memset(&CC[1], toupper(cc[1]), 1);
 	memset(&CC[2], 0, 1);
 
-#if defined(RTN14U)
+#if defined(RTN14U) || defined(RTN11P)
 	FWrite(CC, OFFSET_COUNTRY_CODE, 2);
 #else
 #define MTD_SIZE_FACTORY 0x10000
@@ -878,7 +878,7 @@ getPIN()
 int
 GetPhyStatus(void)
 {
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)
 	ATE_mt7620_esw_port_status();
 	return 1;
 #else
@@ -1990,31 +1990,33 @@ int gen_ralink_config(int band, int is_iNIC)
 	}
 
 	//IEEE8021X
-	str = nvram_safe_get(strcat_r(prefix, "auth_mode_x", tmp));
-	if (str && !strcmp(str, "radius") && ssid_num == 1)
-		fprintf(fp, "IEEE8021X=%d\n", 1);
-	else
-	{
-		memset(tmpstr, 0x0, sizeof(tmpstr));
+	memset(tmpstr, 0x0, sizeof(tmpstr));
 
-		for (i = 0; i < ssid_num; i++)
+	for (i = 0; i < MAX_NO_MSSID; i++)
+	{
+		if (sw_mode == SW_MODE_REPEATER && wlc_band == band && i != 1)
+				continue;
+		if (i)
 		{
-			if (i)
-				sprintf(tmpstr, "%s;", tmpstr);
+			sprintf(prefix_mssid, "wl%d.%d_", band, i);
 
-			sprintf(tmpstr, "%s%s", tmpstr, "0");
+			if (!nvram_match(strcat_r(prefix_mssid, "bss_enabled", temp), "1"))
+				continue;
 		}
-		fprintf(fp, "IEEE8021X=%s\n", tmpstr);
-	}
+		else
+			sprintf(prefix_mssid, "wl%d_", band);
 
-	if (str && !flag_8021x)
-	{
-		if (	!strcmp(str, "radius") ||
-			!strcmp(str, "wpa") ||
-			!strcmp(str, "wpa2") ||
-			!strcmp(str, "wpawpa2")	)
-			flag_8021x = 1;
+		if (nvram_match(strcat_r(prefix_mssid, "auth_mode_x", temp), "radius"))
+			sprintf(tmpstr, "%s%s", tmpstr, "1;");
+		else
+			sprintf(tmpstr, "%s%s", tmpstr, "0;");
 	}
+	if ((i = strlen(tmpstr)) > 0)
+	{
+		tmpstr[ i-1 ] = '\0';
+	}
+	fprintf(fp, "IEEE8021X=%s\n", tmpstr);
+
 
 	fprintf(fp, "IEEE80211H=0\n");
 #ifdef RTCONFIG_AP_CARRIER_DETECTION
@@ -2076,7 +2078,7 @@ int gen_ralink_config(int band, int is_iNIC)
 	{
 		fprintf(fp, "GreenAP=%d\n", 1);
 	}
-#elif defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U)
+#elif defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)
 	/// MT7620 GreenAP will impact TSSI, force to disable GreenAP here..
 	//  MT7620 GreenAP cause bad site survey result on RTAC52 2G.
 	{
@@ -2160,18 +2162,22 @@ int gen_ralink_config(int band, int is_iNIC)
 			else if (!strcmp(str, "wpa"))
 			{
 				sprintf(tmpstr, "%s%s", tmpstr, "WPA");
+				flag_8021x = 1;
 			}
 			else if (!strcmp(str, "wpa2"))
 			{
 				sprintf(tmpstr, "%s%s", tmpstr, "WPA2");
+				flag_8021x = 1;
 			}
 			else if (!strcmp(str, "wpawpa2"))
 			{
 				sprintf(tmpstr, "%s%s", tmpstr, "WPA1WPA2");
+				flag_8021x = 1;
 			}
 			else if ((!strcmp(str, "radius")))
 			{
 				sprintf(tmpstr, "%s%s", tmpstr, "OPEN");
+				flag_8021x = 1;
 			}
 			else
 			{
@@ -3095,45 +3101,67 @@ int gen_ralink_config(int band, int is_iNIC)
 //	fprintf(fp, "WirelessEvent=%d\n", 0);
 
 	//RADIUS_Server
-	if (!strcmp(nvram_safe_get(strcat_r(prefix, "radius_ipaddr", tmp)), ""))
-//		fprintf(fp, "RADIUS_Server=0;0;0;0;0;0;0;0\n");
-		fprintf(fp, "RADIUS_Server=\n");
-	else
-//		fprintf(fp, "RADIUS_Server=%s;0;0;0;0;0;0;0\n", nvram_safe_get(strcat_r(prefix, "radius_ipaddr", tmp)));
-		fprintf(fp, "RADIUS_Server=%s\n", nvram_safe_get(strcat_r(prefix, "radius_ipaddr", tmp)));
-
 	//RADIUS_Port
-	str = nvram_safe_get(strcat_r(prefix, "radius_port", tmp));
-	if (str && strlen(str))
-/*		
-		fprintf(fp, "RADIUS_Port=%d;%d;%d;%d;%d;%d;%d;%d\n",	atoi(str),
-									atoi(str),
-									atoi(str),
-									atoi(str),
-									atoi(str),
-									atoi(str),
-									atoi(str),
-									atoi(str));
-*/
-		fprintf(fp, "RADIUS_Port=%d\n",	atoi(str));
+	//RADIUS_Key
+	if(flag_8021x)
+	{
+		char RADIUS_Server[128];
+		char RADIUS_Port[64];
+		char *radius_server, *radius_port, *radius_key;
+
+		memset(RADIUS_Server, 0, sizeof(RADIUS_Server));
+		memset(RADIUS_Port, 0, sizeof(RADIUS_Port));
+		radius_server = nvram_safe_get(strcat_r(prefix, "radius_ipaddr", tmp));
+		radius_port   = nvram_safe_get(strcat_r(prefix, "radius_port", tmp));
+		radius_key    = nvram_safe_get(strcat_r(prefix, "radius_key", tmp));
+		j = 1;
+		for (i = 0; i < MAX_NO_MSSID; i++)
+		{
+			if (sw_mode == SW_MODE_REPEATER && wlc_band == band && i != 1)
+				continue;
+			if (i)
+			{
+				sprintf(prefix_mssid, "wl%d.%d_", band, i);
+
+				if (!nvram_match(strcat_r(prefix_mssid, "bss_enabled", temp), "1"))
+					continue;
+			}
+			else
+				sprintf(prefix_mssid, "wl%d_", band);
+
+			str = nvram_safe_get(strcat_r(prefix_mssid, "auth_mode_x", temp));
+			if(!strcmp(str,"wpa") || !strcmp(str,"wpa2") || !strcmp(str,"wpawpa2") || !strcmp(str,"radius"))
+			{
+				fprintf(fp, "RADIUS_Key%d=%s\n", j, radius_key);
+			}
+			else
+			{
+				fprintf(fp, "RADIUS_Key%d=\n", j);
+			}
+
+			sprintf(RADIUS_Server, "%s%s;", RADIUS_Server, radius_server);	//cannot be empty ";"
+			sprintf(RADIUS_Port  , "%s%s;", RADIUS_Port  , radius_port);	//cannot be empty ";"
+			j++;
+		}
+		for( ;j < MAX_NO_MSSID +1; j++)
+			fprintf(fp, "RADIUS_Key%d=\n", j);
+
+		if ((i = strlen(RADIUS_Server)) > 0)
+			RADIUS_Server[ i-1 ] = '\0';
+		if ((i = strlen(RADIUS_Port)) > 0)
+			RADIUS_Port[ i-1 ] = '\0';
+		fprintf(fp, "RADIUS_Server=%s\n", RADIUS_Server);
+		fprintf(fp, "RADIUS_Port=%s\n"  , RADIUS_Port);
+	}
 	else
 	{
 		warning = 50;
-/*
-		fprintf(fp, "RADIUS_Port=%d;%d;%d;%d;%d;%d;%d;%d\n", 1812, 1812, 1812, 1812, 1812, 1812, 1812, 1812);
-*/
-		fprintf(fp, "RADIUS_Port=%d\n", 1812);
+		for(j = 1; j < MAX_NO_MSSID +1; j++)
+			fprintf(fp, "RADIUS_Key%d=\n", j);
+		fprintf(fp, "RADIUS_Server=\n");
+		fprintf(fp, "RADIUS_Port=\n");	//default 1812
 	}
 
-	//RADIUS_Key
-	fprintf(fp, "RADIUS_Key1=%s\n", nvram_safe_get(strcat_r(prefix, "radius_key", tmp)));
-	fprintf(fp, "RADIUS_Key2=\n");
-	fprintf(fp, "RADIUS_Key3=\n");
-	fprintf(fp, "RADIUS_Key4=\n");
-	fprintf(fp, "RADIUS_Key5=\n");
-	fprintf(fp, "RADIUS_Key6=\n");
-	fprintf(fp, "RADIUS_Key7=\n");
-	fprintf(fp, "RADIUS_Key8=\n");
 
 	fprintf(fp, "RADIUS_Acct_Server=\n");
 	fprintf(fp, "RADIUS_Acct_Port=%d\n", 1813);
@@ -5524,7 +5552,7 @@ ate_run_in(void)
 }
 #endif // RTN65U
 
-#if !defined(RTN14U) && !defined(RTAC52U) && !defined(RTAC51U)
+#if !defined(RTN14U) && !defined(RTAC52U) && !defined(RTAC51U) && !defined(RTN11P)
 int Set_SwitchPort_LEDs(const char *group, const char *action)
 {
 	int groupNo;

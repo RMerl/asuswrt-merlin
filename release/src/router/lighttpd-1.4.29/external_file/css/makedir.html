@@ -28,7 +28,6 @@ $("document").ready(function() {
 	$('input#dir_name').attr("value", m.getString('default_dir_name'));
 	$('button#ok').text(m.getString('btn_ok'));
 	$('button#cancel').text(m.getString('btn_cancel'));
-	
 });
 
 function doOK(e) {
@@ -39,12 +38,18 @@ function doOK(e) {
 		return;
 	}
 	
-	var regex = /[|~\/\\?*"<>:`.]/g;
+	//var regex = /[|~\/\\?*"<>:`.]/g;
+	var regex = /[\\\/:*?"<>|]/g;
  	if(name.match(regex)) {
  		alert(m.getString('illegalchar'));
-  	return;
+  		return;
  	}
  	
+	if(name.indexOf(".")==0) {
+ 		alert(m.getString('illegalchar2'));
+  		return;
+ 	}
+	
 	parent.doMKDIR(name);
 };
 
@@ -59,24 +64,23 @@ function onKeyHandler(e){
 </script>
 </head>
 <body>
-
 <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
 	<tr>
-  	<td>
-    <div id="mainRegion">
-    	<input id='dir_name' type='text' value='' style='width:480px' maxlength='50' onKeyDown='onKeyHandler(event);'>
-		</div>
-    </td>    
-  </tr>
-  <tr style='height:20px'></tr>
-  <tr>
-  	<td>
-  	<div class="table_block_footer" style="text-align:right">
-    	<button id="ok" class='btnStyle' onmousedown="doOK();">OK</button>
-      <button id="cancel" class="btnStyle" onmousedown="doCancel();">Close</button>
-    </div>
-    </td>
-  </tr>
+  		<td>
+    		<div id="mainRegion">
+    			<input id='dir_name' type='text' value='' style='width:480px' maxlength='50' onKeyDown='onKeyHandler(event);'>
+			</div>
+    	</td>    
+  	</tr>
+  	<tr style='height:20px'></tr>
+  	<tr>
+  		<td>
+  			<div class="table_block_footer" style="text-align:right">
+    			<button id="ok" class='btnStyle' onmousedown="doOK();">OK</button>
+      			<button id="cancel" class="btnStyle" onmousedown="doCancel();">Close</button>
+    		</div>
+    	</td>
+	</tr>
 </table>
 </body>
 </html>

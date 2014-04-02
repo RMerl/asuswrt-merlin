@@ -89,6 +89,7 @@ _dprintf("*** jffs2: %d, %d\n", part, size);
 			case MODEL_RTAC56S: 
 			case MODEL_RTAC56U: 
 			case MODEL_RTAC68U: 
+			case MODEL_RTAC87U: 
 			case MODEL_RTN65U:
 			case MODEL_RTN14U: // it should be better to use LINUX_KERNEL_VERSION >= KERNEL_VERSION(2,6,36)
 			{

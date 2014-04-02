@@ -20,11 +20,10 @@
 
 #define LOG_TIME_FORMAT "%b %d %H:%M:%S"
 
-int log_open(int, char *, char*, int);
+int log_open(int, char *, char *, int);
 void flog(int, char *, ...);
 void dlog(int, int, char *, ...);
 int log_close(void);
 int log_reopen(void);
 void set_debuglevel(int);
 int get_debuglevel(void);
-

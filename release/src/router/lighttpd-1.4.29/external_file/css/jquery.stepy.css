@@ -1,0 +1,39 @@
+@CHARSET "UTF-8";
+
+body { font-size: 10px }
+
+.stepy-header { list-style: none; padding: 0; width: 724px }
+  .stepy-header li { cursor: pointer; float: left; padding: 10px }
+    .stepy-header li.stepy-error { background: url('../demo/img/error.png') no-repeat right top }
+    .stepy-header li div { color: #CCC; font: bold 2.8em verdana; text-shadow: 1px 1px #F8F8F8 }
+    .stepy-header li.stepy-active div { color: #369; cursor: auto }
+    .stepy-header li span { color: #CCC; font: 1.4em verdana }
+    .stepy-header li.stepy-active span { color: #BBB }
+
+.stepy-step { border: 1px solid #BBB; clear: left; padding: 15px 20px; width: 600px; -khtml-border-radius: 3px; -moz-border-radius: 3px; -opera-border-radius: 3px; -webkit-border-radius: 3px; border-radius: 3px }
+  .stepy-step legend { color: #4080BF; font: bold 1.8em arial; letter-spacing: .7px; padding: 0 2px 3px }
+  .stepy-step label { color: #222; display: block; font: bold 1.5em arial; letter-spacing: .7px; margin: 10px 0 3px 1px }
+
+  .stepy-step input,
+  .stepy-step textarea,
+  .stepy-step select { border: 1px solid #999; border-radius: 5px; color: #333; font-size: 1.4em; height: 27px; margin-bottom: 12px; padding: 3px; width: 90% }
+
+  .stepy-step select { height: 34px; padding-top: 5px }
+
+  .stepy-step textarea { height: 100px }
+
+  .stepy-navigator { height: 33px; margin-top: 20px }
+    .button-back { float: left }
+
+    .button-next,
+    .stepy-navigator input[type="submit"] { float: right }
+
+    .button-back,
+    .button-next,
+    .stepy-navigator input[type="submit"] { border: 1px solid #CCC; color: #7F0055; cursor: pointer; font: 1.2em verdana; padding: 7px 15px 8px; text-decoration: none; -khtml-border-radius: 3px; -moz-border-radius: 3px; -opera-border-radius: 3px; -webkit-border-radius: 3px; border-radius: 3px }
+
+    .stepy-navigator input[type="submit"] { background-color: transparent; border-color: #CCC; margin-bottom: 0; padding: 7px 15px 24px; width: 90px }
+
+    .button-back:hover,
+    .button-next:hover,
+    .stepy-navigator input[type="submit"]:hover { border-color: #BBB; color: #B07 }

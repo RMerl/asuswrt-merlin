@@ -14,7 +14,7 @@ helpcontent[0] = new Array("",
 						   "<#WLANConfig11b_WEPKey_itemtype1#>",
 						   "<#WLANConfig11b_WEPKey_itemtype2#>",
 						   "<#WLANConfig11b_ChannelBW_itemdesc#><br/><#WLANConfig11b_Wireless_Speed_itemname_3#>",
-						   "To locate the 40MHz channel in combination with the control channel", //<#WLANConfig11b_EChannel_itemdesc#>
+						   "<#WLANConfig11b_EChannel_itemdesc#>",
 							 "<#WLANConfig11b_TxPower_help1#>",
 							 "<#WLANConfig11b_TxPower_help#>",
 							 "WEP-64bits: <#WLANConfig11b_WEPKey_itemtype1#><br/>WEP-128bits: <#WLANConfig11b_WEPKey_itemtype2#>",
@@ -126,7 +126,7 @@ helpcontent[7] = new Array("",
 							 "<#qis_pppoe_help1#>",
 							 "<#isp_profile#>",
 							 "<#PPPConnection_Authentication_itemdesc#>",
-							 'Some ISP blocklist the MAC address if this MAC address  sends the DHCP queries too often. In this case, you can change the DHCP query frequency.<br/>Aggressive mode is the default mode. In this mode, if '+productid+' does not get the response from ISP, it sends query again after 20 seconds and try  3 times to increase obtaining IP speed.<br/>In normal mode, if '+productid+' does not get the response from ISP, it sends query again after 120 seconds and try 2 times.');
+							 '<#PPPConnection_Authentication_itemdesc2#>');
 //Firewall
 helpcontent[8] = new Array("",
 						   "<#FirewallConfig_WanLanLog_itemdesc#>",

@@ -1,7 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <push_log.h>
+
+#ifndef APP_IPKG
 #include <bcmnvram.h>
+#endif
 
 
 #if 0

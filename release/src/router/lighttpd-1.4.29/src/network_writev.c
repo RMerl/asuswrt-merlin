@@ -275,7 +275,7 @@ int network_write_chunkqueue_writev(server *srv, connection *con, int fd, chunkq
 
 			/* to_send = abs_mmap_end - abs_offset */
 			toSend = (c->file.mmap.offset + c->file.mmap.length) - (abs_offset);
-
+			
 			if (toSend < 0) {
 				log_error_write(srv, __FILE__, __LINE__, "soooo",
 						"toSend is negative:",

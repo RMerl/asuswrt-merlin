@@ -378,7 +378,8 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 		dhcp_argv[index++] = "-t2";
 		/* 5 seconds between packets (default 3 seconds) */
 		dhcp_argv[index++] = "-T5";
-		/* Wait 120 seconds before trying again (default 20 seconds) */
+		/* Wait 160 seconds before trying again (default 20 seconds) */
+		/* set to 160 to accomodate new timings enforced by Charter cable */
 		dhcp_argv[index++] = "-A160";
 	}
 
@@ -658,10 +659,10 @@ int dhcp6c_state_main(int argc, char **argv)
 
 	if (!wait_action_idle(10)) return 1;
 
-	if (nvram_get_int("ipv6_dhcp_pd"))
-	nvram_set("ipv6_rtr_addr", getifaddr(nvram_safe_get("lan_ifname"), AF_INET6, 0));
-
-	if (nvram_get_int("ipv6_dhcp_pd")) {
+	if ((get_ipv6_service() == IPV6_NATIVE_DHCP) &&
+		nvram_get_int("ipv6_dhcp_pd")) {
+		nvram_set("ipv6_rtr_addr",
+			  getifaddr(nvram_safe_get("lan_ifname"), AF_INET6, 0));
 		p = (char *)ipv6_prefix(NULL);
 		if (*p) nvram_set("ipv6_prefix", p);
 	}
@@ -711,7 +712,13 @@ start_dhcp6c(void)
 	if (!nvram_match("ipv6_ra_conf", "mset") &&
 		!nvram_get_int("ipv6_dhcp_pd") &&
 		nvram_match("ipv6_dnsenable", "0"))
+	{
+		// (re)start radvd and httpd
+		start_radvd();
+		start_httpd();
+
 		return -2;
+	}
 	if (nvram_match("ipv6_ra_conf", "noneset") &&
 		!nvram_get_int("ipv6_dhcp_pd"))
 		return -3;
@@ -757,12 +764,11 @@ start_dhcp6c(void)
 		if (nvram_match("ipv6_ra_conf", "mset"))
 		fprintf(fp,		"send ia-na %lu;\n", iaid);
 		fprintf(fp,		"send rapid-commit;\n");
-		if (nvram_match("ipv6_dnsenable", "1") &&
-			!nvram_match("ipv6_ra_conf", "noneset"))
+		if (nvram_match("ipv6_dnsenable", "1"))
 		fprintf(fp,		"request domain-name-servers;\n"
-					"request domain-name;\n"
-					"script \"/sbin/dhcp6c-state\";\n");
-		fprintf(fp,		"};\n");
+					"request domain-name;\n");
+		fprintf(fp, "script \"/sbin/dhcp6c-state\";\n"
+				"};\n");
 		if (nvram_get_int("ipv6_dhcp_pd"))
 		fprintf(fp,	"id-assoc pd %lu {\n"
 					"prefix-interface %s {\n"

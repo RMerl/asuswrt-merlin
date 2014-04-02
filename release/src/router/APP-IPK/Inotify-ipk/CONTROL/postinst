@@ -8,4 +8,4 @@ mv -f /opt/tmp/bin/* $APPS_INSTALL_PATH/bin/
 chmod -R 777 $APPS_INSTALL_PATH/bin
 
 chmod -R 777 $APPS_INSTALL_PATH
-chmod 777 $APPS_INSTALL_PATH/etc/init.d/S50inotify
+#chmod 777 $APPS_INSTALL_PATH/etc/init.d/S50inotify

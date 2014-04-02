@@ -25,8 +25,7 @@
  * address only, but only if it was configured.
  *
  */
-int
-send_ra_forall(struct Interface *iface, struct in6_addr *dest)
+int send_ra_forall(struct Interface *iface, struct in6_addr *dest)
 {
 	struct Clients *current;
 
@@ -35,14 +34,13 @@ send_ra_forall(struct Interface *iface, struct in6_addr *dest)
 		return send_ra(iface, dest);
 
 	/* If clients are configured, send the advertisement to all of them via unicast */
-	for (current = iface->ClientList; current; current = current->next)
-	{
+	for (current = iface->ClientList; current; current = current->next) {
 		char address_text[INET6_ADDRSTRLEN];
 		memset(address_text, 0, sizeof(address_text));
 		if (get_debuglevel() >= 5)
 			inet_ntop(AF_INET6, &current->Address, address_text, INET6_ADDRSTRLEN);
 
-                /* If a non-authorized client sent a solicitation, ignore it (logging later) */
+		/* If a non-authorized client sent a solicitation, ignore it (logging later) */
 		if (dest != NULL && memcmp(dest, &current->Address, sizeof(struct in6_addr)) != 0)
 			continue;
 		dlog(LOG_DEBUG, 5, "Sending RA to %s", address_text);
@@ -55,7 +53,7 @@ send_ra_forall(struct Interface *iface, struct in6_addr *dest)
 	if (dest == NULL)
 		return 0;
 
-        /* If we refused a client's solicitation, log it if debugging is high enough */
+	/* If we refused a client's solicitation, log it if debugging is high enough */
 	char address_text[INET6_ADDRSTRLEN];
 	memset(address_text, 0, sizeof(address_text));
 	if (get_debuglevel() >= 5)
@@ -65,19 +63,16 @@ send_ra_forall(struct Interface *iface, struct in6_addr *dest)
 	return 0;
 }
 
-static void
-send_ra_inc_len(size_t *len, int add)
+static void send_ra_inc_len(size_t * len, int add)
 {
 	*len += add;
-	if(*len >= MSG_SIZE_SEND)
-	{
+	if (*len >= MSG_SIZE_SEND) {
 		flog(LOG_ERR, "Too many prefixes, routes, rdnss or dnssl to fit in buffer.  Exiting.");
 		exit(1);
 	}
 }
 
-static time_t
-time_diff_secs(const struct timeval *time_x, const struct timeval *time_y)
+static time_t time_diff_secs(const struct timeval *time_x, const struct timeval *time_y)
 {
 	time_t secs_diff;
 
@@ -86,15 +81,14 @@ time_diff_secs(const struct timeval *time_x, const struct timeval *time_y)
 		secs_diff++;
 
 	return secs_diff;
-	
+
 }
 
-static void
-decrement_lifetime(const time_t secs, uint32_t *lifetime)
+static void decrement_lifetime(const time_t secs, uint32_t * lifetime)
 {
 
 	if (*lifetime > secs) {
-		*lifetime -= secs;	
+		*lifetime -= secs;
 	} else {
 		*lifetime = 0;
 	}
@@ -110,10 +104,9 @@ static void cease_adv_pfx_msg(const char *if_name, struct in6_addr *pfx, const i
 
 }
 
-int
-send_ra(struct Interface *iface, struct in6_addr *dest)
+int send_ra(struct Interface *iface, struct in6_addr *dest)
 {
-	uint8_t all_hosts_addr[] = {0xff,0x02,0,0,0,0,0,0,0,0,0,0,0,0,0,1};
+	uint8_t all_hosts_addr[] = { 0xff, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
 	struct nd_router_advert *radvert;
 	struct AdvPrefix *prefix;
 	struct AdvRoute *route;
@@ -128,12 +121,11 @@ send_ra(struct Interface *iface, struct in6_addr *dest)
 	size_t len = 0;
 	ssize_t err;
 
-
 	update_device_info(iface);
 
 	/* First we need to check that the interface hasn't been removed or deactivated */
-	if(check_device(iface) < 0) {
-		if (iface->IgnoreIfMissing)  /* a bit more quiet warning message.. */
+	if (check_device(iface) < 0) {
+		if (iface->IgnoreIfMissing)	/* a bit more quiet warning message.. */
 			dlog(LOG_DEBUG, 4, "interface %s does not exist, ignoring the interface", iface->Name);
 		else {
 			flog(LOG_WARNING, "interface %s does not exist, ignoring the interface", iface->Name);
@@ -160,16 +152,14 @@ send_ra(struct Interface *iface, struct in6_addr *dest)
 	if (!disableigmp6check && check_allrouters_membership(iface) < 0)
 		flog(LOG_WARNING, "problem checking all-routers membership on %s", iface->Name);
 
-	if (!iface->AdvSendAdvert)
-	{
+	if (!iface->AdvSendAdvert) {
 		dlog(LOG_DEBUG, 2, "AdvSendAdvert is off for %s", iface->Name);
 		return 0;
 	}
 
 	dlog(LOG_DEBUG, 3, "sending RA on %s", iface->Name);
 
-	if (dest == NULL)
-	{
+	if (dest == NULL) {
 		dest = (struct in6_addr *)all_hosts_addr;
 		gettimeofday(&iface->last_multicast, NULL);
 	}
@@ -183,85 +173,73 @@ send_ra(struct Interface *iface, struct in6_addr *dest)
 	iface->last_ra_time = time_now;
 
 	memset(buff, 0, sizeof(buff));
-	radvert = (struct nd_router_advert *) buff;
+	radvert = (struct nd_router_advert *)buff;
 
 	send_ra_inc_len(&len, sizeof(struct nd_router_advert));
 
-	radvert->nd_ra_type  = ND_ROUTER_ADVERT;
-	radvert->nd_ra_code  = 0;
+	radvert->nd_ra_type = ND_ROUTER_ADVERT;
+	radvert->nd_ra_code = 0;
 	radvert->nd_ra_cksum = 0;
 
-	radvert->nd_ra_curhoplimit	= iface->AdvCurHopLimit;
-	radvert->nd_ra_flags_reserved	=
-		(iface->AdvManagedFlag)?ND_RA_FLAG_MANAGED:0;
-	radvert->nd_ra_flags_reserved	|=
-		(iface->AdvOtherConfigFlag)?ND_RA_FLAG_OTHER:0;
+	radvert->nd_ra_curhoplimit = iface->AdvCurHopLimit;
+	radvert->nd_ra_flags_reserved = (iface->AdvManagedFlag) ? ND_RA_FLAG_MANAGED : 0;
+	radvert->nd_ra_flags_reserved |= (iface->AdvOtherConfigFlag) ? ND_RA_FLAG_OTHER : 0;
 	/* Mobile IPv6 ext */
-	radvert->nd_ra_flags_reserved   |=
-		(iface->AdvHomeAgentFlag)?ND_RA_FLAG_HOME_AGENT:0;
+	radvert->nd_ra_flags_reserved |= (iface->AdvHomeAgentFlag) ? ND_RA_FLAG_HOME_AGENT : 0;
 
 	if (iface->cease_adv) {
 		radvert->nd_ra_router_lifetime = 0;
 	} else {
 		/* if forwarding is disabled, send zero router lifetime */
-		radvert->nd_ra_router_lifetime	 =  !check_ip6_forwarding() ? htons(iface->AdvDefaultLifetime) : 0;
+		radvert->nd_ra_router_lifetime = !check_ip6_forwarding()? htons(iface->AdvDefaultLifetime) : 0;
 	}
-	radvert->nd_ra_flags_reserved   |=
-		(iface->AdvDefaultPreference << ND_OPT_RI_PRF_SHIFT) & ND_OPT_RI_PRF_MASK;
+	radvert->nd_ra_flags_reserved |= (iface->AdvDefaultPreference << ND_OPT_RI_PRF_SHIFT) & ND_OPT_RI_PRF_MASK;
 
-	radvert->nd_ra_reachable  = htonl(iface->AdvReachableTime);
+	radvert->nd_ra_reachable = htonl(iface->AdvReachableTime);
 	radvert->nd_ra_retransmit = htonl(iface->AdvRetransTimer);
 
 	prefix = iface->AdvPrefixList;
 
 	/*
-	 *	add prefix options
+	 *      add prefix options
 	 */
 
-	while(prefix)
-	{
-		if( prefix->enabled && (!prefix->DecrementLifetimesFlag || prefix->curr_preferredlft > 0) )
-		{
+	while (prefix) {
+		if (prefix->enabled && (!prefix->DecrementLifetimesFlag || prefix->curr_preferredlft > 0)) {
 			struct nd_opt_prefix_info *pinfo;
 
-			pinfo = (struct nd_opt_prefix_info *) (buff + len);
+			pinfo = (struct nd_opt_prefix_info *)(buff + len);
 
 			send_ra_inc_len(&len, sizeof(*pinfo));
 
-			pinfo->nd_opt_pi_type	     = ND_OPT_PREFIX_INFORMATION;
-			pinfo->nd_opt_pi_len	     = 4;
-			pinfo->nd_opt_pi_prefix_len  = prefix->PrefixLen;
+			pinfo->nd_opt_pi_type = ND_OPT_PREFIX_INFORMATION;
+			pinfo->nd_opt_pi_len = 4;
+			pinfo->nd_opt_pi_prefix_len = prefix->PrefixLen;
 
-			pinfo->nd_opt_pi_flags_reserved  =
-				(prefix->AdvOnLinkFlag)?ND_OPT_PI_FLAG_ONLINK:0;
-			pinfo->nd_opt_pi_flags_reserved	|=
-				(prefix->AdvAutonomousFlag)?ND_OPT_PI_FLAG_AUTO:0;
+			pinfo->nd_opt_pi_flags_reserved = (prefix->AdvOnLinkFlag) ? ND_OPT_PI_FLAG_ONLINK : 0;
+			pinfo->nd_opt_pi_flags_reserved |= (prefix->AdvAutonomousFlag) ? ND_OPT_PI_FLAG_AUTO : 0;
 			/* Mobile IPv6 ext */
-			pinfo->nd_opt_pi_flags_reserved |=
-				(prefix->AdvRouterAddr)?ND_OPT_PI_FLAG_RADDR:0;
+			pinfo->nd_opt_pi_flags_reserved |= (prefix->AdvRouterAddr) ? ND_OPT_PI_FLAG_RADDR : 0;
 
 			if (iface->cease_adv && prefix->DeprecatePrefixFlag) {
 				/* RFC4862, 5.5.3, step e) */
-				pinfo->nd_opt_pi_valid_time	= htonl(MIN_AdvValidLifetime);
+				pinfo->nd_opt_pi_valid_time = htonl(MIN_AdvValidLifetime);
 				pinfo->nd_opt_pi_preferred_time = 0;
 			} else {
 				if (prefix->DecrementLifetimesFlag) {
-					decrement_lifetime(secs_since_last_ra,
-								&prefix->curr_validlft);
-					
-					decrement_lifetime(secs_since_last_ra,
-								&prefix->curr_preferredlft);
+					decrement_lifetime(secs_since_last_ra, &prefix->curr_validlft);
+
+					decrement_lifetime(secs_since_last_ra, &prefix->curr_preferredlft);
 					if (prefix->curr_preferredlft == 0)
 						cease_adv_pfx_msg(iface->Name, &prefix->Prefix, prefix->PrefixLen);
 				}
-				pinfo->nd_opt_pi_valid_time	= htonl(prefix->curr_validlft);
+				pinfo->nd_opt_pi_valid_time = htonl(prefix->curr_validlft);
 				pinfo->nd_opt_pi_preferred_time = htonl(prefix->curr_preferredlft);
 
 			}
-			pinfo->nd_opt_pi_reserved2	= 0;
+			pinfo->nd_opt_pi_reserved2 = 0;
 
-			memcpy(&pinfo->nd_opt_pi_prefix, &prefix->Prefix,
-			       sizeof(struct in6_addr));
+			memcpy(&pinfo->nd_opt_pi_prefix, &prefix->Prefix, sizeof(struct in6_addr));
 			print_addr(&prefix->Prefix, addr_str);
 			dlog(LOG_DEBUG, 5, "adding prefix %s to advert for %s", addr_str, iface->Name);
 		}
@@ -272,32 +250,29 @@ send_ra(struct Interface *iface, struct in6_addr *dest)
 	route = iface->AdvRouteList;
 
 	/*
-	 *	add route options
+	 *      add route options
 	 */
 
-	while(route)
-	{
+	while (route) {
 		struct nd_opt_route_info_local *rinfo;
 
-		rinfo = (struct nd_opt_route_info_local *) (buff + len);
+		rinfo = (struct nd_opt_route_info_local *)(buff + len);
 
 		send_ra_inc_len(&len, sizeof(*rinfo));
 
-		rinfo->nd_opt_ri_type	     = ND_OPT_ROUTE_INFORMATION;
+		rinfo->nd_opt_ri_type = ND_OPT_ROUTE_INFORMATION;
 		/* XXX: the prefixes are allowed to be sent in smaller chunks as well */
-		rinfo->nd_opt_ri_len	     = 3;
-		rinfo->nd_opt_ri_prefix_len  = route->PrefixLen;
+		rinfo->nd_opt_ri_len = 3;
+		rinfo->nd_opt_ri_prefix_len = route->PrefixLen;
 
-		rinfo->nd_opt_ri_flags_reserved  =
-			(route->AdvRoutePreference << ND_OPT_RI_PRF_SHIFT) & ND_OPT_RI_PRF_MASK;
+		rinfo->nd_opt_ri_flags_reserved = (route->AdvRoutePreference << ND_OPT_RI_PRF_SHIFT) & ND_OPT_RI_PRF_MASK;
 		if (iface->cease_adv && route->RemoveRouteFlag) {
-			rinfo->nd_opt_ri_lifetime	= 0;
+			rinfo->nd_opt_ri_lifetime = 0;
 		} else {
-			rinfo->nd_opt_ri_lifetime	= htonl(route->AdvRouteLifetime);
+			rinfo->nd_opt_ri_lifetime = htonl(route->AdvRouteLifetime);
 		}
 
-		memcpy(&rinfo->nd_opt_ri_prefix, &route->Prefix,
-		       sizeof(struct in6_addr));
+		memcpy(&rinfo->nd_opt_ri_prefix, &route->Prefix, sizeof(struct in6_addr));
 
 		route = route->next;
 	}
@@ -305,33 +280,29 @@ send_ra(struct Interface *iface, struct in6_addr *dest)
 	rdnss = iface->AdvRDNSSList;
 
 	/*
-	 *	add rdnss options
+	 *      add rdnss options
 	 */
 
-	while(rdnss)
-	{
+	while (rdnss) {
 		struct nd_opt_rdnss_info_local *rdnssinfo;
 
-		rdnssinfo = (struct nd_opt_rdnss_info_local *) (buff + len);
+		rdnssinfo = (struct nd_opt_rdnss_info_local *)(buff + len);
 
-		send_ra_inc_len(&len, sizeof(*rdnssinfo) - (3-rdnss->AdvRDNSSNumber)*sizeof(struct in6_addr));
+		send_ra_inc_len(&len, sizeof(*rdnssinfo) - (3 - rdnss->AdvRDNSSNumber) * sizeof(struct in6_addr));
 
-		rdnssinfo->nd_opt_rdnssi_type	     = ND_OPT_RDNSS_INFORMATION;
-		rdnssinfo->nd_opt_rdnssi_len	     = 1 + 2*rdnss->AdvRDNSSNumber;
+		rdnssinfo->nd_opt_rdnssi_type = ND_OPT_RDNSS_INFORMATION;
+		rdnssinfo->nd_opt_rdnssi_len = 1 + 2 * rdnss->AdvRDNSSNumber;
 		rdnssinfo->nd_opt_rdnssi_pref_flag_reserved = 0;
 
 		if (iface->cease_adv && rdnss->FlushRDNSSFlag) {
-			rdnssinfo->nd_opt_rdnssi_lifetime	= 0;
+			rdnssinfo->nd_opt_rdnssi_lifetime = 0;
 		} else {
-			rdnssinfo->nd_opt_rdnssi_lifetime	= htonl(rdnss->AdvRDNSSLifetime);
+			rdnssinfo->nd_opt_rdnssi_lifetime = htonl(rdnss->AdvRDNSSLifetime);
 		}
 
-		memcpy(&rdnssinfo->nd_opt_rdnssi_addr1, &rdnss->AdvRDNSSAddr1,
-		       sizeof(struct in6_addr));
-		memcpy(&rdnssinfo->nd_opt_rdnssi_addr2, &rdnss->AdvRDNSSAddr2,
-		       sizeof(struct in6_addr));
-		memcpy(&rdnssinfo->nd_opt_rdnssi_addr3, &rdnss->AdvRDNSSAddr3,
-		       sizeof(struct in6_addr));
+		memcpy(&rdnssinfo->nd_opt_rdnssi_addr1, &rdnss->AdvRDNSSAddr1, sizeof(struct in6_addr));
+		memcpy(&rdnssinfo->nd_opt_rdnssi_addr2, &rdnss->AdvRDNSSAddr2, sizeof(struct in6_addr));
+		memcpy(&rdnssinfo->nd_opt_rdnssi_addr3, &rdnss->AdvRDNSSAddr3, sizeof(struct in6_addr));
 
 		rdnss = rdnss->next;
 	}
@@ -339,30 +310,27 @@ send_ra(struct Interface *iface, struct in6_addr *dest)
 	dnssl = iface->AdvDNSSLList;
 
 	/*
-	 *	add dnssl options
+	 *      add dnssl options
 	 */
 
-	while(dnssl)
-	{
+	while (dnssl) {
 		struct nd_opt_dnssl_info_local *dnsslinfo;
 		int const start_len = len;
 		int i;
 
-		dnsslinfo = (struct nd_opt_dnssl_info_local *) (buff + len);
+		dnsslinfo = (struct nd_opt_dnssl_info_local *)(buff + len);
 
-		send_ra_inc_len(&len, sizeof(dnsslinfo->nd_opt_dnssli_type) + 
-			sizeof(dnsslinfo->nd_opt_dnssli_len) +
-			sizeof(dnsslinfo->nd_opt_dnssli_reserved) +
-			sizeof(dnsslinfo->nd_opt_dnssli_lifetime)
-		);
+		send_ra_inc_len(&len, sizeof(dnsslinfo->nd_opt_dnssli_type) +
+				sizeof(dnsslinfo->nd_opt_dnssli_len) + sizeof(dnsslinfo->nd_opt_dnssli_reserved) + sizeof(dnsslinfo->nd_opt_dnssli_lifetime)
+		    );
 
-		dnsslinfo->nd_opt_dnssli_type		= ND_OPT_DNSSL_INFORMATION;
-		dnsslinfo->nd_opt_dnssli_reserved	= 0;
+		dnsslinfo->nd_opt_dnssli_type = ND_OPT_DNSSL_INFORMATION;
+		dnsslinfo->nd_opt_dnssli_reserved = 0;
 
 		if (iface->cease_adv && dnssl->FlushDNSSLFlag) {
-			dnsslinfo->nd_opt_dnssli_lifetime	= 0;
+			dnsslinfo->nd_opt_dnssli_lifetime = 0;
 		} else {
-			dnsslinfo->nd_opt_dnssli_lifetime	= htonl(dnssl->AdvDNSSLLifetime);
+			dnsslinfo->nd_opt_dnssli_lifetime = htonl(dnssl->AdvDNSSLLifetime);
 		}
 
 		for (i = 0; i < dnssl->AdvDNSSLNumber; i++) {
@@ -399,7 +367,7 @@ send_ra(struct Interface *iface, struct in6_addr *dest)
 
 		dnsslinfo->nd_opt_dnssli_len = (len - start_len) / 8;
 
-		if ( (len - start_len) % 8 != 0 ) {
+		if ((len - start_len) % 8 != 0) {
 			send_ra_inc_len(&len, 8 - (len - start_len) % 8);
 			++dnsslinfo->nd_opt_dnssli_len;
 		}
@@ -408,28 +376,27 @@ send_ra(struct Interface *iface, struct in6_addr *dest)
 	}
 
 	/*
-	 *	add MTU option
+	 *      add MTU option
 	 */
 
 	if (iface->AdvLinkMTU != 0) {
 		struct nd_opt_mtu *mtu;
 
-		mtu = (struct nd_opt_mtu *) (buff + len);
+		mtu = (struct nd_opt_mtu *)(buff + len);
 
 		send_ra_inc_len(&len, sizeof(*mtu));
 
-		mtu->nd_opt_mtu_type     = ND_OPT_MTU;
-		mtu->nd_opt_mtu_len      = 1;
+		mtu->nd_opt_mtu_type = ND_OPT_MTU;
+		mtu->nd_opt_mtu_len = 1;
 		mtu->nd_opt_mtu_reserved = 0;
-		mtu->nd_opt_mtu_mtu      = htonl(iface->AdvLinkMTU);
+		mtu->nd_opt_mtu_mtu = htonl(iface->AdvLinkMTU);
 	}
 
 	/*
 	 * add Source Link-layer Address option
 	 */
 
-	if (iface->AdvSourceLLAddress && iface->if_hwaddr_len > 0)
-	{
+	if (iface->AdvSourceLLAddress && iface->if_hwaddr_len > 0) {
 		uint8_t *ucp;
 		unsigned int i;
 
@@ -437,8 +404,8 @@ send_ra(struct Interface *iface, struct in6_addr *dest)
 
 		send_ra_inc_len(&len, 2 * sizeof(uint8_t));
 
-		*ucp++  = ND_OPT_SOURCE_LINKADDR;
-		*ucp++  = (uint8_t) ((iface->if_hwaddr_len + 16 + 63) >> 6);
+		*ucp++ = ND_OPT_SOURCE_LINKADDR;
+		*ucp++ = (uint8_t) ((iface->if_hwaddr_len + 16 + 63) >> 6);
 
 		i = (iface->if_hwaddr_len + 7) >> 3;
 
@@ -454,22 +421,19 @@ send_ra(struct Interface *iface, struct in6_addr *dest)
 	 * movement detection of mobile nodes
 	 */
 
-	if(iface->AdvIntervalOpt)
-	{
+	if (iface->AdvIntervalOpt) {
 		struct AdvInterval a_ival;
-                uint32_t ival;
-                if(iface->MaxRtrAdvInterval < Cautious_MaxRtrAdvInterval){
-                       ival  = ((iface->MaxRtrAdvInterval +
-                                 Cautious_MaxRtrAdvInterval_Leeway ) * 1000);
+		uint32_t ival;
+		if (iface->MaxRtrAdvInterval < Cautious_MaxRtrAdvInterval) {
+			ival = ((iface->MaxRtrAdvInterval + Cautious_MaxRtrAdvInterval_Leeway) * 1000);
 
-                }
-                else {
-                       ival  = (iface->MaxRtrAdvInterval * 1000);
-                }
- 		a_ival.type	= ND_OPT_RTR_ADV_INTERVAL;
-		a_ival.length	= 1;
-		a_ival.reserved	= 0;
-		a_ival.adv_ival	= htonl(ival);
+		} else {
+			ival = (iface->MaxRtrAdvInterval * 1000);
+		}
+		a_ival.type = ND_OPT_RTR_ADV_INTERVAL;
+		a_ival.length = 1;
+		a_ival.reserved = 0;
+		a_ival.adv_ival = htonl(ival);
 
 		buff_dest = len;
 		send_ra_inc_len(&len, sizeof(a_ival));
@@ -481,18 +445,14 @@ send_ra(struct Interface *iface, struct in6_addr *dest)
 	 * Dynamic Home Agent Address Discovery
 	 */
 
-	if(iface->AdvHomeAgentInfo &&
-	   (iface->AdvMobRtrSupportFlag || iface->HomeAgentPreference != 0 ||
-	    iface->HomeAgentLifetime != iface->AdvDefaultLifetime))
-
+	if (iface->AdvHomeAgentInfo && (iface->AdvMobRtrSupportFlag || iface->HomeAgentPreference != 0 || iface->HomeAgentLifetime != iface->AdvDefaultLifetime))
 	{
 		struct HomeAgentInfo ha_info;
- 		ha_info.type		= ND_OPT_HOME_AGENT_INFO;
-		ha_info.length		= 1;
-		ha_info.flags_reserved	=
-			(iface->AdvMobRtrSupportFlag)?ND_OPT_HAI_FLAG_SUPPORT_MR:0;
-		ha_info.preference	= htons(iface->HomeAgentPreference);
-		ha_info.lifetime	= htons(iface->HomeAgentLifetime);
+		ha_info.type = ND_OPT_HOME_AGENT_INFO;
+		ha_info.length = 1;
+		ha_info.flags_reserved = (iface->AdvMobRtrSupportFlag) ? ND_OPT_HAI_FLAG_SUPPORT_MR : 0;
+		ha_info.preference = htons(iface->HomeAgentPreference);
+		ha_info.lifetime = htons(iface->HomeAgentLifetime);
 
 		buff_dest = len;
 		send_ra_inc_len(&len, sizeof(ha_info));
@@ -511,14 +471,9 @@ send_ra(struct Interface *iface, struct in6_addr *dest)
 	return 0;
 }
 
-int really_send(
-		struct in6_addr const *dest,
-		unsigned int if_index,
-		struct in6_addr if_addr,
-		unsigned char * buff,
-		size_t len)
+int really_send(struct in6_addr const *dest, unsigned int if_index, struct in6_addr if_addr, unsigned char *buff, size_t len)
 {
-	char __attribute__((aligned(8))) chdr[CMSG_SPACE(sizeof(struct in6_pktinfo))];
+	char __attribute__ ((aligned(8))) chdr[CMSG_SPACE(sizeof(struct in6_pktinfo))];
 	struct in6_pktinfo *pkt_info;
 	struct msghdr mhdr;
 	struct cmsghdr *cmsg;
@@ -531,33 +486,31 @@ int really_send(
 	addr.sin6_port = htons(IPPROTO_ICMPV6);
 	memcpy(&addr.sin6_addr, dest, sizeof(struct in6_addr));
 
-
-	iov.iov_len  = len;
+	iov.iov_len = len;
 	iov.iov_base = (caddr_t) buff;
 
 	memset(chdr, 0, sizeof(chdr));
-	cmsg = (struct cmsghdr *) chdr;
+	cmsg = (struct cmsghdr *)chdr;
 
-	cmsg->cmsg_len   = CMSG_LEN(sizeof(struct in6_pktinfo));
+	cmsg->cmsg_len = CMSG_LEN(sizeof(struct in6_pktinfo));
 	cmsg->cmsg_level = IPPROTO_IPV6;
-	cmsg->cmsg_type  = IPV6_PKTINFO;
+	cmsg->cmsg_type = IPV6_PKTINFO;
 
 	pkt_info = (struct in6_pktinfo *)CMSG_DATA(cmsg);
 	pkt_info->ipi6_ifindex = if_index;
 	memcpy(&pkt_info->ipi6_addr, &if_addr, sizeof(struct in6_addr));
 
 #ifdef HAVE_SIN6_SCOPE_ID
-	if (IN6_IS_ADDR_LINKLOCAL(&addr.sin6_addr) ||
-		IN6_IS_ADDR_MC_LINKLOCAL(&addr.sin6_addr))
-			addr.sin6_scope_id = if_index;
+	if (IN6_IS_ADDR_LINKLOCAL(&addr.sin6_addr) || IN6_IS_ADDR_MC_LINKLOCAL(&addr.sin6_addr))
+		addr.sin6_scope_id = if_index;
 #endif
 
 	memset(&mhdr, 0, sizeof(mhdr));
-	mhdr.msg_name = (caddr_t)&addr;
+	mhdr.msg_name = (caddr_t) & addr;
 	mhdr.msg_namelen = sizeof(struct sockaddr_in6);
 	mhdr.msg_iov = &iov;
 	mhdr.msg_iovlen = 1;
-	mhdr.msg_control = (void *) cmsg;
+	mhdr.msg_control = (void *)cmsg;
 	mhdr.msg_controllen = sizeof(chdr);
 
 	err = sendmsg(sock, &mhdr, 0);

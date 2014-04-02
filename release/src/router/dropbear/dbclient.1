@@ -15,7 +15,7 @@ dbclient \- lightweight SSH client
 .B dbclient
 [
 .I args ]
-.I [user1]@host1[%port1],[user2]@host2[%port2],...
+.I [user1]@host1[^port1],[user2]@host2[^port2],...
 
 .SH DESCRIPTION
 .B dbclient
@@ -26,7 +26,7 @@ environments, while still being functional and secure enough for general use.
 .B \-p \fIport
 Connect to 
 .I port
-on the remote host. Alternatively a port can be specified as hostname%port.
+on the remote host. Alternatively a port can be specified as hostname^port.
 Default is 22.
 .TP
 .B \-i \fIidfile
@@ -127,7 +127,7 @@ Dropbear will also allow multiple "hops" to be specified, separated by commas. I
 this case a connection will be made to the first host, then a TCP forwarded 
 connection will be made through that to the second host, and so on. Hosts other than
 the final destination will not see anything other than the encrypted SSH stream. 
-A port for a host can be specified with a hash (eg matt@martello%44 ).
+A port for a host can be specified with a hash (eg matt@martello^44 ).
 This syntax can also be used with scp or rsync (specifying dbclient as the 
 ssh/rsh command). A file can be "bounced" through multiple SSH hops, eg
 

@@ -420,10 +420,12 @@ void vpnc_add_firewall_rule()
 		snprintf(wan_prefix, sizeof(wan_prefix), "wan%d_", wan_primary_ifunit());
 		wan_proto = nvram_safe_get(strcat_r(wan_prefix, "proto", tmp));
 		if (!strcmp(wan_proto, "dhcp") || !strcmp(wan_proto, "static"))
-			eval("iptables", "-I", "FORWARD", "-p", "tcp", "--syn", "-j", "TCPMSS", "--clamp-mss-to-pmtu");
-#ifdef CONFIG_BCMWL5
+			//eval("iptables", "-I", "FORWARD", "-p", "tcp", "--syn", "-j", "TCPMSS", "--clamp-mss-to-pmtu");
+			eval("iptables", "-I", "FORWARD", "-p", "tcp", "--tcp-flags", "SYN,RST", "SYN", "-j", "TCPMSS", "--clamp-mss-to-pmtu");
+#ifdef RTCONFIG_BCMARM
 		else	/* mark tcp connection to bypass CTF */
-			eval("iptables", "-t", "mangle", "-A", "FORWARD", "-p", "tcp", "-j", "MARK", "--set-mark", "0x01");
+			eval("iptables", "-t", "mangle", "-A", "FORWARD", "-p", "tcp", 
+				"-m", "state", "--state", "NEW","-j", "MARK", "--set-mark", "0x01");
 #endif
 
 		eval("iptables", "-A", "FORWARD", "-o", vpnc_ifname, "!", "-i", lan_if, "-j", "DROP");
@@ -534,10 +536,12 @@ void vpnc_del_firewall_rule()
 	snprintf(wan_prefix, sizeof(wan_prefix), "wan%d_", wan_primary_ifunit());
 	wan_proto = nvram_safe_get(strcat_r(wan_prefix, "proto", tmp));
 	if (!strcmp(wan_proto, "dhcp") || !strcmp(wan_proto, "static"))
-		eval("iptables", "-D", "FORWARD", "-p", "tcp", "--syn", "-j", "TCPMSS", "--clamp-mss-to-pmtu");
-#ifdef CONFIG_BCMWL5
+		//eval("iptables", "-D", "FORWARD", "-p", "tcp", "--syn", "-j", "TCPMSS", "--clamp-mss-to-pmtu");
+		eval("iptables", "-D", "FORWARD", "-p", "tcp", "--tcp-flags", "SYN,RST", "SYN", "-j", "TCPMSS", "--clamp-mss-to-pmtu");
+#ifdef RTCONFIG_BCMARM
 	else
-		eval("iptables", "-t", "mangle", "-D", "FORWARD", "-p", "tcp", "-j", "MARK", "--set-mark", "0x01");
+		eval("iptables", "-t", "mangle", "-D", "FORWARD", "-p", "tcp", 
+			"-m", "state", "--state", "NEW","-j", "MARK", "--set-mark", "0x01");
 #endif
 
 	eval("iptables", "-D", "FORWARD", "-o", vpnc_ifname, "!", "-i", lan_if, "-j", "DROP");

@@ -10,24 +10,26 @@ CFLAGS += -DRalink_WPS
 CFLAGS += -I$(TOP)/shared/sysdeps/ralink -I$(TOP)/wireless_tools
 endif
 
+include $(SRCBASE)/.config
+
+ifneq ($(findstring DSL,$(BUILD_NAME)),)
+MODEL = $(subst -,_,$(BUILD_NAME))
+else
+MODEL = $(subst -,,$(BUILD_NAME))
+endif
+
+export CFLAGS += -D$(MODEL)
+
+ifeq ($(RTN11P),y)
+CFLAGS += -DBAND_2G_ONLY
+endif
+
 ifeq ($(RTN14U),y)
-CFLAGS += -DBAND_2G_ONLY -DRTN14U
+CFLAGS += -DBAND_2G_ONLY
 endif
 
-ifeq ($(RTAC52U),y)
-CFLAGS += -DRTAC52U
-endif
-
-ifeq ($(RTAC51U),y)
-CFLAGS += -DRTAC51U
-endif
-
-ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U),y)
+ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U)$(RTN11P),y)
 CFLAGS += -DRA_ESW
-endif
-
-ifeq ($(RTN65U),y)
-CFLAGS += -DRTN65U
 endif
 
 ifeq ($(RTCONFIG_HTTPS),y)

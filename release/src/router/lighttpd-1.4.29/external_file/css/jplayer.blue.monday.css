@@ -405,9 +405,13 @@ div.jp-playlist ul {
 }
 
 div.jp-title li {
-	padding:5px 0;
-	font-weight:bold;
-	white-space: nowrap;
+padding:5px 0;
+font-weight:bold;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+width:300px;
+margin: 0 auto;
 }
 div.jp-playlist li {
 	padding:5px 0 4px 20px;

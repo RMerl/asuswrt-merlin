@@ -28,6 +28,8 @@ export BCMEX := _arm
 export EXTRA_FLAG := -lgcc_s
 export ARCH := arm
 export HOST := arm-linux
+export TOOLS := $(SRCBASE)/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3
+export RTVER := 0.9.32.1
 else
 export PLATFORM := mipsel-uclibc
 export CROSS_COMPILE := mipsel-uclibc-
@@ -36,6 +38,8 @@ export CONFIGURE := ./configure --host=mipsel-linux --build=$(BUILD)
 export HOSTCONFIG := linux-mipsel
 export ARCH := mips
 export HOST := mipsel-linux
+export TOOLS := $(SRCBASE)/../../tools/brcm/hndtools-mipsel-linux
+export RTVER := 0.9.30.1
 endif
 
 export PLT := $(ARCH)

@@ -249,6 +249,11 @@ config RTCONFIG_TUXERA
 	depends on RTCONFIG_USB
 	default n
 
+config RTCONFIG_TFAT
+	bool "Tuxera FAT module Support"
+	depends on RTCONFIG_USB
+	default n
+
 config RTCONFIG_NTFS
 	bool "NTFS Support"
 	depends on RTCONFIG_USB
@@ -292,6 +297,11 @@ config RTCONFIG_USB_PRINTER
 config RTCONFIG_USB_MODEM
 	bool "USB Modem Support"
 	depends on RTCONFIG_USB
+	default n
+
+config RTCONFIG_USB_LESSMODEM
+	bool "Less USB Modem Support"
+	depends on RTCONFIG_USB_MODEM
 	default n
 
 config RTCONFIG_USB_MODEM_PIN
@@ -486,10 +496,6 @@ config RTCONFIG_USB_XHCI
 	bool "XHCI"
 	default n
 
-config RTCONFIG_USB_2XHCI2
-	bool "XHCI2, XHCI is disabled by default"
-	default n
-
 config RTCONFIG_WLMODULE_RT3090_AP
 	bool "Wireless module RT3090 ap"
 	default n
@@ -587,3 +593,16 @@ config RTCONFIG_DNSFILTER
 	bool "DNS-based filtering Support"
 	depends on !RTCONFIG_YANDEXDNS
 	default n
+
+config RTCONFIG_TFTP
+	bool "TFTP server or client"
+	default n
+
+config RTCONFIG_QTN
+	bool "Quantenna boot-code and firmware"
+	default n
+
+config RTCONFIG_RGMII_BRCM5301X
+	bool "Config 5301x to RGMII mode"
+	default n
+

@@ -30,8 +30,7 @@ all: $(obj-y)
 	echo $(IPKG_TOOLS)
 
 clean:
-	@$(MAKE) -C $(CURRENT)/inotify clean
-	@rm -rf Inotify-ipk/opt/tmp/lib/*
+	@$(MAKE) -C $(CURRENT)/inotify -f Makefile.opt clean
 	@rm -rf Inotify-ipk/opt/tmp/bin/*
 	@rm -rf inotify_*.ipk
 	
@@ -40,7 +39,7 @@ inotify/stamp-h2:
 #	cd $(CURRENT)/inotify
 #	touch $@
 inotify: inotify/stamp-h2
-	@$(MAKE) -C $(CURRENT)/inotify
+	@$(MAKE) -C $(CURRENT)/inotify -f Makefile.opt
 	cp -rf $(CURRENT)/inotify/inotify Inotify-ipk/opt/tmp/bin/
 
 inotify-ipk:

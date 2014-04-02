@@ -54,7 +54,7 @@ dropbearkey's '-y' option.
 To run the server, you need to server keys, this is one-off:
 ./dropbearkey -t rsa -f dropbear_rsa_host_key
 ./dropbearkey -t dss -f dropbear_dss_host_key
-./dropbearkey -t ecdsa -f dropbear_dss_host_key
+./dropbearkey -t ecdsa -f dropbear_ecdsa_host_key
 
 or alternatively convert OpenSSH keys to Dropbear:
 ./dropbearconvert openssh dropbear /etc/ssh/ssh_host_dsa_key dropbear_dss_host_key
