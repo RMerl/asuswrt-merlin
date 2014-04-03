@@ -179,6 +179,9 @@ static int rctest_main(int argc, char *argv[])
 		else if (strcmp(argv[1], "fa_rev") == 0) {
 			_dprintf("(%d) done.\n", get_fa_rev());
 		}
+		else if (strcmp(argv[1], "fa_dump") == 0) {
+			_dprintf("(%d) done.\n", get_fa_dump());
+		}
 #endif
 		else {
 			printf("what?\n");

@@ -18,11 +18,18 @@ for CN in $NVCN; do
 done
 
 # create the key and certificate request
-openssl req -new -out /tmp/cert.csr -config openssl.config -keyout /tmp/privkey.pem -newkey rsa:1024 -passout pass:password
+#openssl req -new -out /tmp/cert.csr -config openssl.config -keyout /tmp/privkey.pem -newkey rsa:1024 -passout pass:password
 # remove the passphrase from the key
-openssl rsa -in /tmp/privkey.pem -out key.pem -passin pass:password
+#openssl rsa -in /tmp/privkey.pem -out key.pem -passin pass:password
 # convert the certificate request into a signed certificate
-openssl x509 -in /tmp/cert.csr -out cert.pem -req -signkey key.pem -setstartsecs $SECS -days 3653 -set_serial $1
+#openssl x509 -in /tmp/cert.csr -out cert.pem -req -signkey key.pem -setstartsecs $SECS -days 3653 -set_serial $1
+
+# create the key and certificate request
+OPENSSL_CONF=/etc/openssl.config openssl req -new -out /tmp/cert.csr -keyout /tmp/privkey.pem -newkey rsa:1024 -passout pass:password
+# remove the passphrase from the key
+OPENSSL_CONF=/etc/openssl.cnf openssl rsa -in /tmp/privkey.pem -out key.pem -passin pass:password
+# convert the certificate request into a signed certificate
+OPENSSL_CONF=/etc/openssl.cnf RANDFILE=/dev/urandom openssl x509 -in /tmp/cert.csr -out cert.pem -req -signkey key.pem -days 3653
 
 #	openssl x509 -in /etc/cert.pem -text -noout
 

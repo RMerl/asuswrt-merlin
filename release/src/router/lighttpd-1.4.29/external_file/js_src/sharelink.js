@@ -535,6 +535,7 @@ function createThumbView(query_type, parent_url, folder_array, file_array){
 		g_modal_window_height = 150;
 		$('#jqmMsg').css("display", "none");
 		$('#jqmTitleText').text(m.getString('title_download_folder'));
+		
 		if($modalWindow){
 			$modalWindow.jqmShow();
 		}
@@ -835,7 +836,7 @@ $(document).ready(function(){
 		g_show_modal = 1;
 		
 		var sAgent = navigator.userAgent.toLowerCase();
-    	var isIE = (sAgent.indexOf("msie")!=-1); //IE
+    	
    		var getInternetExplorerVersion = function(){
 		   var rv = -1; // Return value assumes failure.
 		   if (navigator.appName == 'Microsoft Internet Explorer')

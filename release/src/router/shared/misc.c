@@ -845,7 +845,6 @@ int nvram_get_int(const char *key)
 	return atoi(nvram_safe_get(key));
 }
 
-
 int nvram_set_int(const char *key, int value)
 {
 	char nvramstr[16];

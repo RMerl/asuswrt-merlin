@@ -41,6 +41,10 @@ config RTCONFIG_BCMFA
 	bool "BCM FA"
 	default n
 
+config RTCONFIG_RGMII_BCM_FA
+	bool "BCM FA on RGMII hardware"
+	default n
+
 config RTCONFIG_5301X
 	bool "Bcm 5301x"
 	default y
@@ -606,3 +610,6 @@ config RTCONFIG_RGMII_BRCM5301X
 	bool "Config 5301x to RGMII mode"
 	default n
 
+config RTCONFIG_N18UTXBF
+	bool "enable TXBF for RT-N18U"
+	default n

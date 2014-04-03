@@ -253,6 +253,9 @@ static void pptp_disconnect(void)
 	if (pptp_server) close(callmgr_sock);
 	close(pptp_fd);
 	//route_del(&rt); // don't delete, as otherwise it would try to use pppX in demand mode
+#ifdef RTCONFIG_VPNC
+	if (vpnc) route_del(&rt);
+#endif
 }
 
 static int open_callmgr(int call_id,struct in_addr inetaddr, char *phonenr,int window)

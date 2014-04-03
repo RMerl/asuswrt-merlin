@@ -85,10 +85,10 @@ function openLoginWindow(open_url){
 	login_html += '<fieldset width="120px">';
 	login_html += '<table>';
 	login_html += '<tr>';
-	login_html += '<td><label id="username">' + m.getString('title_username') + '</label></td><td><input name="username" type="text" id="username" autocapitalize="off" style="width:250px"></td>';
+	login_html += '<td><label id="username">' + m.getString('title_username') + '</label></td><td><input name="username" type="text" id="username" autocapitalize="off" maxlength="20" style="width:250px"></td>';
 	login_html += '</tr>';
 	login_html += '<tr>';
-	login_html += '<td><label id="password">' + m.getString('title_password') + '</label></td><td><input name="password" type="password" id="password" style="width:250px"></td>';
+	login_html += '<td><label id="password">' + m.getString('title_password') + '</label></td><td><input name="password" type="password" id="password" maxlength="16" style="width:250px"></td>';
 	login_html += '</tr>';
 	login_html += '</table>';
 	login_html += '</fieldset>';
@@ -1452,8 +1452,7 @@ $(document).ready(function(){
 		g_show_modal = 1;
 		
 		var sAgent = navigator.userAgent.toLowerCase();
-   	 	var isIE = (sAgent.indexOf("msie")!=-1); //IE
-    	var getInternetExplorerVersion = function(){
+   	 	var getInternetExplorerVersion = function(){
 		   var rv = -1; // Return value assumes failure.
 		   if (navigator.appName == 'Microsoft Internet Explorer')
 		   {

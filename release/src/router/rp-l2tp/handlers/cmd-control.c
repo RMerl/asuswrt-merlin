@@ -38,7 +38,7 @@ static char const RCSID[] =
 *  Sends a command to the server
 ***********************************************************************/
 static int
-send_cmd(char const *cmd)
+send_cmd(char const *cmd, char const *sockpath)
 {
     struct sockaddr_un addr;
     int fd;
@@ -52,7 +52,7 @@ send_cmd(char const *cmd)
 
     memset(&addr, 0, sizeof(addr));
     addr.sun_family = AF_LOCAL;
-    strncpy(addr.sun_path, "/var/run/l2tpctrl", sizeof(addr.sun_path) - 1);
+    strncpy(addr.sun_path, sockpath, sizeof(addr.sun_path) - 1);
 
     fd = socket(AF_LOCAL, SOCK_STREAM, 0);
     if (fd < 0) {
@@ -78,13 +78,20 @@ main(int argc, char *argv[])
     int fd;
     int n;
     char buf[4096];
+    char *sockpath = "/var/run/l2tpctrl";
+
+    if (argc > 2 && !strcmp(argv[1],"-s") && argv[2] && argv[2][0]) {
+	sockpath = argv[2];
+	argv += 2;
+	argc -= 2;
+    }
 
     if (argc != 2) {
-	fprintf(stderr, "Usage: %s command\n", argv[0]);
+	fprintf(stderr, "Usage: %s [-s socket] command\n", argv[0]);
 	return 1;
     }
 
-    fd = send_cmd(argv[1]);
+    fd = send_cmd(argv[1], sockpath);
     if (fd < 0) {
 	return 1;
     }

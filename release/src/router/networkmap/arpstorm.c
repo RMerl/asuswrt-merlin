@@ -13,6 +13,7 @@
 #include <bcmnvram.h>
 #include "networkmap.h"
 #include "endianness.h"
+#include <rtconfig.h>
 
 unsigned char my_hwaddr[6];
 unsigned char my_ipaddr[4];
@@ -148,7 +149,11 @@ int main()
 
 	//Get Router's IP/Mac
 	strcpy(router_ipaddr, nvram_safe_get("lan_ipaddr"));
+#ifdef RTCONFIG_RGMII_BRCM5301X
+	strcpy(router_mac, nvram_safe_get("et1macaddr"));
+#else
 	strcpy(router_mac, nvram_safe_get("et0macaddr"));
+#endif
         inet_aton(router_ipaddr, &router_addr.sin_addr);
         memcpy(my_ipaddr,  &router_addr.sin_addr, 4);
 

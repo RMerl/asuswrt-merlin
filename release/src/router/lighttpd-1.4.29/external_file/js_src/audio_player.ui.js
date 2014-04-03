@@ -477,12 +477,13 @@ function initAudioPlayer(){
 	var jplayer_solution = "html,flash";
 	var jplayer_supplied = "mp3";
 	var browserVer = navigator.userAgent;	
+	
 	if( browserVer.indexOf("Chrome") != -1 ||
 	    ( browserVer.indexOf("Safari") != -1 && ( isMacOS() || isWinOS() ) ) ){
 		jplayer_solution = "html";
 		jplayer_supplied = "mp3";
 	}
-	else if( browserVer.indexOf("MSIE") != -1 ||
+	else if( isIE() ||
 		     browserVer.indexOf("Firefox") != -1 ||
 		     browserVer.indexOf("Opera") != -1 ){	  
 		jplayer_solution = "flash";

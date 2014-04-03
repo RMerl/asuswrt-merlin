@@ -30,6 +30,7 @@ export ARCH := arm
 export HOST := arm-linux
 export TOOLS := $(SRCBASE)/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3
 export RTVER := 0.9.32.1
+export BCMSUB := brcmarm
 else
 export PLATFORM := mipsel-uclibc
 export CROSS_COMPILE := mipsel-uclibc-

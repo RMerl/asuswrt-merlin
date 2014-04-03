@@ -10,6 +10,7 @@ RTCONFIG_EAPOL=y
 # RTCONFIG_BCMARM is not set
 # RTCONFIG_BCMSMP is not set
 # RTCONFIG_BCMFA is not set
+# RTCONFIG_RGMII_BCM_FA is not set
 # RTCONFIG_5301X is not set
 # RTCONFIG_SSH is not set
 # RTCONFIG_CIFS is not set
@@ -141,4 +142,5 @@ RTCONFIG_HAS_5G=y
 # RTCONFIG_QTN is not set
 # RTCONFIG_TFTP is not set
 # RTCONFIG_RGMII_BRCM5301X is not set
+# RTCONFIG_N18UTXBF is not set
 

@@ -10,27 +10,7 @@ MODALIAS is set, ACTION == add {
 	exec /sbin/modprobe -q %MODALIAS% ;
 }
 
-SUBSYSTEM == usb, DEVICENAME ~~ ^([1-3]-[1-3]:[1-9].[0-9]+)$, ACTION ~~ ^(add|remove)$ {
-	exec /sbin/asus_usb_interface %DEVICENAME% %ACTION% ;
-}
-
-SUBSYSTEM == usb, DEVICENAME ~~ ^([1-3]-[1-3]:[1-9][1-9].[0-9]+)$, ACTION ~~ ^(add|remove)$ {
-	exec /sbin/asus_usb_interface %DEVICENAME% %ACTION% ;
-}
-
-SUBSYSTEM == usb, DEVICENAME ~~ ^([1-3]-[1-3].[0-9]:[1-9].[0-9]+)$, ACTION ~~ ^(add|remove)$ {
-	exec /sbin/asus_usb_interface %DEVICENAME% %ACTION% ;
-}
-
-SUBSYSTEM == usb, DEVICENAME ~~ ^([1-3]-[1-3].[0-9]:[1-9][1-9].[0-9]+)$, ACTION ~~ ^(add|remove)$ {
-	exec /sbin/asus_usb_interface %DEVICENAME% %ACTION% ;
-}
-
-SUBSYSTEM == usb, DEVICENAME ~~ ^([1-3]-[1-3].[0-9].[0-9]:[1-9].[0-9]+)$, ACTION ~~ ^(add|remove)$ {
-	exec /sbin/asus_usb_interface %DEVICENAME% %ACTION% ;
-}
-
-SUBSYSTEM == usb, DEVICENAME ~~ ^([1-3]-[1-3].[0-9].[0-9]:[1-9][1-9].[0-9]+)$, ACTION ~~ ^(add|remove)$ {
+SUBSYSTEM == usb, DEVICENAME ~~ ^([1-3]-[1-3][:.0-9]*+)$, ACTION ~~ ^(add|remove)$ {
 	exec /sbin/asus_usb_interface %DEVICENAME% %ACTION% ;
 }
 
@@ -54,11 +34,7 @@ SUBSYSTEM == block, DEVICENAME ~~ ^(sr[0-9]+)$, ACTION == add {
 	exec /sbin/asus_sr %DEVICENAME% %ACTION% ;
 }
 
-SUBSYSTEM == block, DEVICENAME ~~ ^(sd[a-z]+)$, ACTION ~~ ^(add|remove)$ {
-	exec /sbin/asus_sd %DEVICENAME% %ACTION% ;
-}
-
-SUBSYSTEM == block, DEVICENAME ~~ ^(sd[a-z][0-9]+)$, ACTION ~~ ^(add|remove)$ {
+SUBSYSTEM == block, DEVICENAME ~~ ^(sd[a-z][0-9]*+)$, ACTION ~~ ^(add|remove)$ {
 	exec /sbin/asus_sd %DEVICENAME% %ACTION% ;
 }
 

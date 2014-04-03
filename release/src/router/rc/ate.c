@@ -385,7 +385,11 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 	}
 #if defined(RTCONFIG_HAS_5G)
 	else if (!strcmp(command, "Set_MacAddr_5G")) {
+#ifdef RTCONFIG_QTN
+		if( !setMAC_5G_qtn(value))
+#else
 		if( !setMAC_5G(value))
+#endif
 		{
 			puts("ATE_ERROR_INCORRECT_PARAMETER");
 			return EINVAL;
@@ -667,7 +671,11 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 	}
 #if defined(RTCONFIG_HAS_5G)
 	else if (!strcmp(command, "Get_MacAddr_5G")) {
+#ifdef RTCONFIG_QTN
+		getMAC_5G_qtn();
+#else
 		getMAC_5G();
+#endif
 		return 0;
 	}
 #endif	/* RTCONFIG_HAS_5G */

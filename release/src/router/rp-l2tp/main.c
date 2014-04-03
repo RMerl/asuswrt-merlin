@@ -33,6 +33,7 @@ usage(int argc, char *argv[], int exitcode)
     fprintf(stderr, "Usage: %s [options]\n", argv[0]);
     fprintf(stderr, "Options:\n");
     fprintf(stderr, "-d level               -- Set debugging to 'level'\n");
+    fprintf(stderr, "-c file                -- Set config file\n");
     fprintf(stderr, "-p                     -- Set pid file\n");
     fprintf(stderr, "-f                     -- Do not fork\n");
     fprintf(stderr, "-h                     -- Print usage\n");
@@ -108,9 +109,10 @@ main(int argc, char *argv[])
     int opt;
     int do_fork = 1;
     int debugmask = 0;
+    char *config_file = SYSCONFDIR"/l2tp.conf";
     char *pidfile = "/var/run/l2tpd.pid";
 
-    while((opt = getopt(argc, argv, "d:p:fh")) != -1) {
+    while((opt = getopt(argc, argv, "d:c:p:fh")) != -1) {
 	switch(opt) {
 	case 'h':
 	    usage(argc, argv, EXIT_SUCCESS);
@@ -124,6 +126,9 @@ main(int argc, char *argv[])
 	case 'd':
 	    sscanf(optarg, "%d", &debugmask);
 	    break;
+        case 'c':
+            config_file = optarg;
+            break;
 	default:
 	    usage(argc, argv, EXIT_FAILURE);
 	}
@@ -140,7 +145,7 @@ main(int argc, char *argv[])
     }
 
     /* ASUS if (l2tp_parse_config_file(es, SYSCONFDIR"/l2tp/l2tp.conf") < 0) { */
-    if (l2tp_parse_config_file(es, SYSCONFDIR"/l2tp.conf") < 0) {
+    if (l2tp_parse_config_file(es, config_file) < 0) {
 	l2tp_die();
     }
 

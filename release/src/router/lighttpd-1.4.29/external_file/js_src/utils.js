@@ -242,16 +242,46 @@ function myencodeURI(iurl){
 	return myurl;
 }
 
+function isIE(){
+	var is_ie = false;
+	
+	if(navigator.userAgent.indexOf("MSIE")!=-1){
+		is_ie = true;
+	}
+	else if (!document.all) {
+		
+    	if (navigator.appName == 'Netscape')
+	   	{
+			var ua = navigator.userAgent;
+	        var re  = new RegExp("Trident/.*rv:([0-9]{1,}[\.0-9]{0,})");
+	        if (re.exec(ua) != null){	        	
+	        	rv = parseFloat( RegExp.$1 );
+	        	if(rv>=11)
+	        		is_ie = true;
+	        }
+		}
+	}
+	
+	return is_ie;
+}
+
 function getInternetExplorerVersion(){
-   var rv = -1; // Return value assumes failure.
-   if (navigator.appName == 'Microsoft Internet Explorer')
-   {
-      var ua = navigator.userAgent;
-      var re  = new RegExp("MSIE ([0-9]{1,}[\.0-9]{0,})");
-      if (re.exec(ua) != null)
-         rv = parseFloat( RegExp.$1 );
-   }
-   return rv;
+	var rv = -1; // Return value assumes failure.
+	if (navigator.appName == 'Microsoft Internet Explorer')
+   	{
+    	var ua = navigator.userAgent;
+      	var re  = new RegExp("MSIE ([0-9]{1,}[\.0-9]{0,})");
+      	if (re.exec(ua) != null)
+        	rv = parseFloat( RegExp.$1 );
+   	}
+   	else if (navigator.appName == 'Netscape')
+   	{
+		var ua = navigator.userAgent;
+        var re  = new RegExp("Trident/.*rv:([0-9]{1,}[\.0-9]{0,})");
+        if (re.exec(ua) != null)
+        	rv = parseFloat( RegExp.$1 );
+	}
+	return rv;
 }
 
 function getPageSize() {

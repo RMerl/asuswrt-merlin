@@ -54,6 +54,10 @@ OBJS += web-ralink.o
 else
 ifeq ($(RTCONFIG_BCMWL6),y)
 OBJS += web-broadcom-wl6.o
+ifeq ($(RTCONFIG_QTN),y)
+OBJS += web-qtn.o
+OBJS += find_host_addr.o
+endif
 else
 OBJS += web-broadcom.o
 endif
@@ -78,6 +82,10 @@ ifeq ($(RTCONFIG_BCMARM),y)
 CFLAGS += -I$(SRCBASE)/shared/bcmwifi/include
 CFLAGS += -I$(SRCBASE)/common/include
 LIBS += -lgcc_s
+ifeq ($(RTCONFIG_QTN),y)
+CFLAGS += -I$(TOP)/libqcsapi_client
+LIBS += -L$(TOP)/libqcsapi_client -lqcsapi_client
+endif
 endif
 
 ifeq ($(RTCONFIG_USB),y)
@@ -95,7 +103,11 @@ LIBS += -L$(TOP)/openssl -lssl -lcrypto
 endif
 
 export CFLAGS
+ifeq ($(RTCONFIG_QTN),y)
+vpath %.c sysdeps $(TOP)/libqcsapi_client/qcsapi_rpc_common/client
+else
 vpath %.c sysdeps
+endif
 
 all: httpd #test_apps
 

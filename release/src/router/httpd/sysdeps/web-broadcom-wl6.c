@@ -1843,11 +1843,13 @@ ej_wl_channel_list_2g(int eid, webs_t wp, int argc, char_t **argv)
 	return ej_wl_channel_list(eid, wp, argc, argv, 0);
 }
 
+#ifndef RTCONFIG_QTN
 int
 ej_wl_channel_list_5g(int eid, webs_t wp, int argc, char_t **argv)
 {
 	return ej_wl_channel_list(eid, wp, argc, argv, 1);
 }
+#endif
 
 static int ej_wl_rate(int eid, webs_t wp, int argc, char_t **argv, int unit)
 {
@@ -1860,6 +1862,11 @@ static int ej_wl_rate(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	char rate_buf[32];
 
 	sprintf(rate_buf, "0 Mbps");
+
+#ifdef RTCONFIG_QTN
+	if (unit != 0)
+		goto ERROR;
+#endif
 
 	foreach (word, nvram_safe_get("wl_ifnames"), next)
 		unit_max++;
@@ -3227,6 +3234,9 @@ int ej_wl_auth_list(int eid, webs_t wp, int argc, char_t **argv) {
 		goto exit;
 
 	foreach (word, nvram_safe_get("wl_ifnames"), next) {
+#ifdef RTCONFIG_QTN
+		if (unit != 0) break;
+#endif
 		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 		name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
 

@@ -120,7 +120,7 @@ static int switch_port_mapping[] = {
 	P7_PORT,	//0010 0000 0000 RGMII WAN
 };
 
-int esw_fd, esw_stb;
+int esw_fd;
 
 /* Model-specific LANx ==> Model-specific PortX mapping */
 const int lan_id_to_port_mapping[NR_WANLAN_PORT] = {
@@ -770,6 +770,20 @@ static void set_Vlan_PRIO(int prio)
 	nvram_set("vlan_prio", tmp);
 }
 
+//convert port mapping from  RT-N56U   to   RT-N14U / RT-AC52U / RT-AC51U (MT7620)
+static int convert_port_bitmask(int orig)
+{
+	int i, mask, result;
+	result = 0;
+	for(i = 0; i < NR_WANLAN_PORT; i++) {
+		mask = (1 << i);
+		if (orig & mask)
+			result |= (1 << switch_port_mapping[i]);
+	}
+	return result;
+}
+
+
 /**
  * @stb_bitmask:	bitmask of STB port(s)
  * 			e.g. bit0 = P0, bit1 = P1, etc.
@@ -797,7 +811,10 @@ static void initialize_Vlan(int stb_bitmask)
 	if (wanscap_lan && (!(get_wans_dualwan() & WANSCAP_WAN)) && !(!nvram_match("switch_wantag", "none") && !nvram_match("switch_wantag", "")))
 		wans_lan_vid = 2;
 
-	build_wan_lan_mask(esw_stb);
+	build_wan_lan_mask(0);
+	stb_bitmask = convert_port_bitmask(stb_bitmask);
+	lan_mask &= ~stb_bitmask;
+	wan_mask |= stb_bitmask;
 	_dprintf("%s: LAN/WAN/WANS_LAN portmask %08x/%08x/%08x\n", __func__, lan_mask, wan_mask, wans_lan_mask);
 
 	//VLAN member port: LAN, WANS_LAN
@@ -947,8 +964,8 @@ static void create_Vlan(int bitmask)
 {
 	unsigned int value;
 	char portmap[16];
-	int vid = atoi(nvram_safe_get("vlan_vid")) & 0xFFF;
-	int prio = atoi(nvram_safe_get("vlan_prio")) & 0x7;
+	int vid = nvram_get_int("vlan_vid") & 0xFFF;
+	int prio = nvram_get_int("vlan_prio") & 0x7;
 	int mbr = bitmask & 0xffff;
 	int untag = (bitmask >> 16) & 0xffff;
 	int i, mask;
@@ -1164,7 +1181,6 @@ ralink_gpio_write_bit(int idx, int value)
 	int fd;
        unsigned int req;
 
-	ralink_gpio_init(idx, gpio_out);
 	fd = open(GPIO_DEV, O_RDONLY);
 	if (fd < 0) {
 		perror(GPIO_DEV);
@@ -1223,7 +1239,6 @@ ralink_gpio_read_bit(int idx)
 	int fd;
 	unsigned int req;
 
-     	ralink_gpio_init(idx,gpio_in);
 	value = 0;
 	fd = open(GPIO_DEV, O_RDONLY);
 	if (fd < 0) {
@@ -1259,6 +1274,30 @@ ralink_gpio_read_bit(int idx)
 }
 
 int
+ralink_gpio_set_gpiomode(unsigned int idx, int isgpio)
+{
+	int fd;
+	unsigned long arg;
+
+
+	fd = open(GPIO_DEV, O_RDONLY);
+	if (fd < 0) {
+		perror(GPIO_DEV);
+		return -1;
+	}
+
+	arg = ((isgpio & 0xffff) << 16) | (idx & 0xffff);
+
+	if (ioctl(fd, RALINK_GPIO_SET_MODE, arg) < 0) {
+		perror("ioctl(RALINK_GPIO_SET_MODE)");
+		close(fd);
+		return -1;
+	}
+	close(fd);
+	return 0;
+}
+
+int
 ralink_gpio_init(unsigned int idx, int dir)
 {
 	int fd, req;
@@ -1268,6 +1307,8 @@ ralink_gpio_init(unsigned int idx, int dir)
 	if(idx==72) //discard gpio72
 		return 0;
 #endif
+
+	ralink_gpio_set_gpiomode(idx, 1);
 
 	fd = open(GPIO_DEV, O_RDONLY);
 	if (fd < 0) {

@@ -159,12 +159,15 @@ char dualwan_mode[8];
 
 char wandog_target[PATH_MAX];
 int wandog_delay, delay_detect;
+int WAN_FB_UNIT;
 #endif
 
 int scan_interval;
 int wandog_enable, wandog_maxfail;
 int max_disconn_count;
 int max_wait_time;
+int max_fb_count;
+int max_fb_wait_time;
 
 int http_sock, dns_sock, maxfd;
 clients client[MAX_USER];
@@ -175,6 +178,7 @@ char dst_url[256];
 #define S_IDLE -1
 #define S_COUNT 0
 int conn_changed_state[WAN_UNIT_MAX], changed_count[WAN_UNIT_MAX];
+unsigned int loop_sec;
 
 int conn_state_old[WAN_UNIT_MAX], conn_state[WAN_UNIT_MAX];
 int cross_state = 0;

@@ -115,7 +115,7 @@ void init_switch_dsl()
 
 	if (is_routing_enabled())
 	{
-		stbport = atoi(nvram_safe_get("switch_stb_x"));
+		stbport = nvram_get_int("switch_stb_x");
 		if (stbport < 0 || stbport > 6) stbport = 0;
 		dbG("STB port: %d\n", stbport);
 
@@ -247,7 +247,7 @@ void config_switch_dsl()
 	
 	if (is_routing_enabled())
 	{
-		stbport = atoi(nvram_safe_get("switch_stb_x"));
+		stbport = nvram_get_int("switch_stb_x");
 		if (stbport < 0 || stbport > 6) stbport = 0;
 		dbG("STB port: %d\n", stbport);
 

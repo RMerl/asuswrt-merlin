@@ -93,7 +93,7 @@ int SendHttpReq(unsigned char *des_ip)
                 return 0 ;
         }
 
-        snprintf(buffer,  sizeof(buffer), "GET / HTTP/1.1\r\nHost: %s\r\n\r\n", dest_ip_ptr);
+	snprintf(buffer,  sizeof(buffer), "GET / HTTP/1.1\r\nHost: %s\r\n\r\n", dest_ip_ptr);
 
         if (send(sock_http, buffer, strlen(buffer), 0) == -1)
         {
@@ -110,7 +110,6 @@ int SendHttpReq(unsigned char *des_ip)
                 getlen = recv(sock_http, buffer, sizeof(buffer) - 1, 0);
                 if (getlen > 0)
                 {
-
                         NMP_DEBUG_M("Check http response: %s\n", buffer);
                         if(!memcmp(buffer, "HTTP/1.", 7) &&
 			  (!memcmp(buffer+9, "2", 1)||!memcmp(buffer+9, "3", 1)||!memcmp(buffer+9, "401", 3)) )
@@ -735,7 +734,6 @@ int create_msearch_ctrlpt(int Mx)
 
 }
 
-
 /************************************************************************************************/
 // process the device response "HTTP/1.1 200 OK"
 int process_device_response(char *msg)
@@ -800,7 +798,7 @@ int process_device_response(char *msg)
         data = (char *)malloc(1500 * sizeof(char));
         memset(data, 0, 1500);
         *data = '\0';
-        snprintf(data, sizeof(data), "GET %s HTTP/1.1\r\nHOST: %s:%s\r\nACCEPT-LANGUAGE: zh-cn\r\n\r\n",\
+	snprintf(data, sizeof(data), "GET %s HTTP/1.1\r\nHOST: %s:%s\r\nACCEPT-LANGUAGE: zh-cn\r\n\r\n",\
                         location, host, port);
         //printf("%s\n",data);
 
@@ -867,7 +865,6 @@ int create_http_socket_ctrlpt(char *host, ushort destport)
 
 }
 
-
 /***************************************************************/
 // store the descirption information to sturct device_info.
 void store_description(char *msg)
@@ -926,7 +923,7 @@ void store_description(char *msg)
                 // get the information.
                 // eg. <manufacturer> information </manufacturer>
                 i = 0;
-                while(*p != '>' && p < body) 
+                while(*p != '>' && p < body)
 		{
 		    if(i<199)
                         line[i++] = *p++;
@@ -1756,7 +1753,7 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
 		NMP_DEBUG("Find UPnP device: description= %s, modelname= %s\n",description.description, description.modelname);
 	        //parse description
 	        toLowerCase(description.description);
-        	if( strstr(description.description, "router")!=NULL )
+		if( strstr(description.description, "router")!=NULL )
         	{
                 	p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 2;
         	}
@@ -1766,22 +1763,22 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
 	        {
         	        p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 3;
 	        }
-        	else if( (strstr(description.description, "nas")!=NULL) )
+		else if( strstr(description.description, "nas") )
         	{
                 	p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 4;
         	}
-	        else if( (strstr(description.description, "cam")!=NULL) )
+	        else if( strstr(description.description, "cam") )
 	        {
         	        p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 5;
 	        }
-                else if( (strstr(description.description, "xbox")!=NULL))
+                else if( strstr(description.modelname, "Xbox") )
                 {
                         p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 8;
                 }
-                else if( (strstr(description.description, "ps")!=NULL) )
-                {
-                        p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 8;
-                }
+		else if( strstr(description.description, "ps") )
+		{
+			p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 8;
+		}
 
 		//Copy modelname to device name if exist.
 		if(strcmp("",description.modelname) &&
@@ -1808,7 +1805,7 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
         	//Check SMB data
         	NMP_DEBUG("Check Samba... \n");
         	memcpy(des_hostname, NetBIOS_name, 16);
-		strcpy(my_hostname, MODEL_NAME); 
+		strcpy(my_hostname, MODEL_NAME);
 	       	my_dvinfo.des_hostname= des_hostname;
         	my_dvinfo.des_hostname_len = 16;
 	        my_dvinfo.my_hostname = my_hostname;

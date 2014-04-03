@@ -102,6 +102,22 @@ typedef unsigned long long u64;
 
 #include "sysinfo.h"
 
+#ifdef RTCONFIG_QTN
+
+#ifndef IW_ESSID_MAX_SIZE
+#define IW_ESSID_MAX_SIZE	32
+#endif
+#define QCSAPI_SSID_MAXLEN	(IW_ESSID_MAX_SIZE + 1)
+
+typedef char		string_16[17];
+typedef char		string_32[33];
+typedef char		string_64[65];
+typedef char		string_1024[1025];
+typedef char		qcsapi_SSID[QCSAPI_SSID_MAXLEN];
+typedef uint32_t	qcsapi_unsigned_int;
+
+#endif
+
 #ifdef RTCONFIG_HTTPS
 extern int do_ssl;
 extern int ssl_stream_fd;
@@ -1487,6 +1503,112 @@ static int validate_apply(webs_t wp) {
 					nvram_modified = 1;
 					nvram_modified_wl = 1;
 					_dprintf("set %s=%s\n", tmp, value);
+
+#ifdef RTCONFIG_QTN
+					if ((unit == 1) && (subunit <= 0))
+					{
+						if (!strcmp(tmp, "wl1_ssid"))
+							rpc_qcsapi_set_SSID(value);
+						else if (!strcmp(tmp, "wl1_closed"))
+							rpc_qcsapi_set_SSID_broadcast(value);
+						else if (!strcmp(tmp, "wl1_nmode_x"))
+							rpc_qcsapi_set_vht(value);
+						else if (!strcmp(tmp, "wl1_bw"))
+							rpc_qcsapi_set_bw(value);
+						else if (!strcmp(tmp, "wl1_chanspec"))
+						{
+							rpc_qcsapi_set_channel(value);
+							rpc_qcsapi_set_channel(value);
+						}
+						else if (!strcmp(tmp, "wl1_auth_mode_x"))
+							rpc_qcsapi_set_beacon_type(value);
+						else if (!strcmp(tmp, "wl1_crypto"))
+							rpc_qcsapi_set_WPA_encryption_modes(value);
+						else if (!strcmp(tmp, "wl1_wpa_psk"))
+							rpc_qcsapi_set_key_passphrase(value);
+						else if (!strcmp(tmp, "wl1_dtim"))
+							rpc_qcsapi_set_dtim(value);
+						else if (!strcmp(tmp, "wl1_bcn"))
+							rpc_qcsapi_set_beacon_interval(value);
+					}
+
+					qcsapi_SSID ssid;
+					ret = rpc_qcsapi_get_SSID(&ssid);
+					if (ret < 0)
+						dbG("rpc_qcsapi_get_SSID error, return: %d\n", ret);
+					else
+						dbG("current SSID: %s\n", ssid);
+
+					int current_option;
+					ret = rpc_qcsapi_get_SSID_broadcast(&current_option);
+					if (ret < 0)
+						dbG("rpc_qcsapi_get_SSID_broadcast error, return: %d\n", ret);
+					else
+						dbG("current SSID broadcast option: %s\n", current_option ? "True" : "False");
+
+					qcsapi_unsigned_int vht;
+					ret = rpc_qcsapi_get_vht(&vht);
+					if (ret < 0)
+						dbG("rpc_qcsapi_get_vht error, return: %d\n", ret);
+					else
+						dbG("current wireless mode: %s\n", (unsigned int) vht ? "11ac" : "11n");
+
+					qcsapi_unsigned_int bw;
+					ret = rpc_qcsapi_get_bw(&bw);
+					if (ret < 0)
+						dbG("rpc_qcsapi_get_bw error, return: %d\n", ret);
+					else
+						dbG("current channel bandwidth: %d MHz\n", bw);
+
+					qcsapi_unsigned_int channel;
+					ret = rpc_qcsapi_get_channel(&channel);
+					if (ret < 0)
+						dbG("rpc_qcsapi_get_channel error, return: %d\n", ret);
+					else
+						dbG("current channel: %d\n", channel);
+
+					string_1024 list_of_channels;
+					ret = rpc_qcsapi_get_channel_list(&list_of_channels);
+					if (ret < 0)
+						dbG("rpc_qcsapi_get_channel_list error, return: %d\n", ret);
+					else
+						dbG("current channel list: %s\n", list_of_channels);
+
+					string_16 current_beacon_type;
+					ret = rpc_qcsapi_get_beacon_type(&current_beacon_type);
+					if (ret < 0)
+						dbG("rpc_qcsapi_get_beacon_type error, return: %d\n", ret);
+					else
+						dbG("current beacon type: %s\n", current_beacon_type);
+
+					string_32 encryption_mode;
+					ret = rpc_qcsapi_get_WPA_encryption_modes(&encryption_mode);
+					if (ret < 0)
+						dbG("rpc_qcsapi_get_WPA_encryption_modes error, return: %d\n", ret);
+					else
+						dbG("current WPA encryption mode: %s\n", encryption_mode);
+
+					string_64 key_passphrase;
+					ret = rpc_qcsapi_get_key_passphrase(&key_passphrase);
+					if (ret < 0)
+						dbG("rpc_qcsapi_get_key_passphrase error, return: %d\n", ret);
+					else
+						dbG("current WPA preshared key: %s\n", key_passphrase);
+
+					qcsapi_unsigned_int dtim;
+					ret = rpc_qcsapi_get_dtim(&dtim);
+					if (ret < 0)
+						dbG("rpc_qcsapi_get_dtim error, return: %d\n", ret);
+					else
+						dbG("current DTIM interval: %d MHz\n", dtim);
+
+					qcsapi_unsigned_int beacon_interval;
+					ret = rpc_qcsapi_get_beacon_interval(&beacon_interval);
+					if (ret < 0)
+						dbG("rpc_qcsapi_get_beacon_interval error, return: %d\n", ret);
+					else
+						dbG("current Beacon interval: %d MHz\n", beacon_interval);
+#endif
 				}
 			}
 			else if(!strncmp(name, "wan_", 4) && unit != -1) {
@@ -1809,14 +1931,18 @@ static int ej_set_variables(int eid, webs_t wp, int argc, char_t **argv) {
 		char *name, *rport, *lip, *lport, *proto;
 
 		if(!strcmp(apiAction, "enable")){
-			nvram_set("vts_enable_x", "1");
-			nvram_commit();
-			notify_rc("restart_firewall");
+			if(nvram_match("vts_enable_x", "0")){
+				nvram_set("vts_enable_x", "1");
+				nvram_commit();
+				sys_reboot();
+			}
 		}
 		else if(!strcmp(apiAction, "disable")){
-			nvram_set("vts_enable_x", "0");
-			nvram_commit();
-			notify_rc("restart_firewall");
+			if(nvram_match("vts_enable_x", "1")){
+				nvram_set("vts_enable_x", "0");
+				nvram_commit();
+				sys_reboot();
+			}
 		}
 		else if(!strcmp(apiAction, "add")){
 			webVar_1 = websGetVar(wp, "name", "");
@@ -1921,7 +2047,7 @@ static int ej_set_variables(int eid, webs_t wp, int argc, char_t **argv) {
 				if(retStatus == 0){
 					nvram_set("vts_rulelist", nvramTmp);
 					nvram_commit();
-					notify_rc("restart_firewall"); // need to reboot if ctf is enabled.
+					notify_rc("restart_firewall");
 				}
 			}			
 		}
@@ -1967,15 +2093,23 @@ static int ej_set_variables(int eid, webs_t wp, int argc, char_t **argv) {
 			else{
 				nvram_set("qos_obw", webVar_1);
 				nvram_set("qos_ibw", webVar_2);
-				nvram_set("qos_enable", "1");
-				nvram_commit();
-				notify_rc("restart_qos"); // need to reboot if ctf is enabled.
+				if(nvram_match("qos_enable", "1")){
+					nvram_commit();
+					notify_rc("restart_qos");
+				}
+				else{
+					nvram_set("qos_enable", "1");
+					nvram_commit();
+					sys_reboot();
+				}
 			}
 		}
 		else if(!strcmp(apiAction, "disable")){
+			if(nvram_match("qos_enable", "1")){
 				nvram_set("qos_enable", "0");
 				nvram_commit();
-				notify_rc("restart_qos");
+				sys_reboot();
+			}
 		}
 		else if(!strcmp(apiAction, "add")){
 			webVar_1 = websGetVar(wp, "name", "");
@@ -2223,7 +2357,7 @@ char *Ch_conv(char *proto_name, int idx)
 static int enable_hwnat()
 {
 	int qos_userspec_app_en = 0;
-	int rulenum = atoi(nvram_safe_get("qos_rulenum_x")), idx_class = 0;
+	int rulenum = nvram_get_int("qos_rulenum_x"), idx_class = 0;
 	int ret = 0;
 	int unit;
 	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
@@ -3651,7 +3785,7 @@ ej_lan_ipv6_network(int eid, webs_t wp, int argc, char_t **argv)
 	ret += websWrite(wp, "%30s: %s\n", "WAN IPv6 Gateway",
 			 ipv6_gateway_address() ? : "");
 	ret += websWrite(wp, "%30s: %s/%d\n", "LAN IPv6 Address",
-			 nvram_safe_get("ipv6_rtr_addr"), atoi(nvram_safe_get("ipv6_prefix_length")));
+			 nvram_safe_get("ipv6_rtr_addr"), nvram_get_int("ipv6_prefix_length"));
 	ret += websWrite(wp, "%30s: %s\n", "LAN IPv6 Link-Local Address",
 			 getifaddr(nvram_safe_get("lan_ifname"), AF_INET6, GIF_LINKLOCAL | GIF_PREFIXLEN) ? : "");
 	if (service == IPV6_NATIVE_DHCP) {
@@ -3659,7 +3793,7 @@ ej_lan_ipv6_network(int eid, webs_t wp, int argc, char_t **argv)
 				 nvram_get_int("ipv6_dhcp_pd") ? "Enabled" : "Disabled");
 	}
 	ret += websWrite(wp, "%30s: %s/%d\n", "LAN IPv6 Prefix",
-			 nvram_safe_get("ipv6_prefix"), atoi(nvram_safe_get("ipv6_prefix_length")));
+			 nvram_safe_get("ipv6_prefix"), nvram_get_int("ipv6_prefix_length"));
 
 	if (service == IPV6_NATIVE_DHCP &&
 	    nvram_get_int("ipv6_dnsenable")) {
@@ -4600,7 +4734,23 @@ static int ej_available_disk_names_and_sizes(int eid, webs_t wp, int argc, char_
 	}
 	websWrite(wp, "];\n");
 	websWrite(wp, "}\n\n");
-	/* show total number of the mounted partition in this foreign disk */
+
+	/* show total number of the partitions in this foreign disk */
+	websWrite(wp, "function foreign_disk_pool_number(){\n");
+	websWrite(wp, "    return [");
+	first = 1;
+	for (follow_disk = disks_info; follow_disk != NULL; follow_disk = follow_disk->next){
+		if (first == 1)
+			first = 0;
+		else
+			websWrite(wp, ", ");
+
+		websWrite(wp, "\"%u\"", follow_disk->partition_number);
+	}
+	websWrite(wp, "];\n");
+	websWrite(wp, "}\n\n");
+
+	/* show total number of the mounted partitions in this foreign disk */
 	websWrite(wp, "function foreign_disk_total_mounted_number(){\n");
 	websWrite(wp, "    return [");
 	first = 1;
@@ -4614,6 +4764,7 @@ static int ej_available_disk_names_and_sizes(int eid, webs_t wp, int argc, char_
 	}
 	websWrite(wp, "];\n");
 	websWrite(wp, "}\n\n");
+
 	free_disk_data(&disks_info);
 
 	return 0;
@@ -5002,8 +5153,40 @@ apply_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 	}
 	else if (!strcmp(action_mode," Refresh "))
 	{
-		strcpy(SystemCmd, websGetVar(wp,"SystemCmd",""));
-		//csprintf("1. SystemCmd: %s.\n", SystemCmd);
+                char *system_cmd;
+                system_cmd = websGetVar(wp, "SystemCmd","");
+
+		if(strchr(system_cmd, '&')){
+			_dprintf("[httpd] Invalid SystemCmd!\n");
+			strcpy(SystemCmd, "");
+		}	
+		else if(!strcmp(current_url, "Main_Netstat_Content.asp") && (
+			strncasecmp(system_cmd, "netstat", 7) == 0
+		)){
+                        strcpy(SystemCmd, system_cmd);
+		}
+                else if(!strcmp(current_url, "Main_Analysis_Content.asp") && (
+                           strncasecmp(system_cmd, "ping", 4) == 0
+			|| strncasecmp(system_cmd, "traceroute", 10) == 0
+			|| strncasecmp(system_cmd, "nslookup", 8) == 0
+                )){
+                        strcpy(SystemCmd, system_cmd);
+                }
+                else if(!strcmp(current_url, "Main_WOL_Content.asp") && (
+                        strncasecmp(system_cmd, "ether-wake", 10) == 0
+                )){
+                        strcpy(SystemCmd, system_cmd);
+                }
+                else if(!strcmp(current_url, "Main_AdmStatus_Content.asp") && (
+                           strncasecmp(system_cmd, "run_telnetd", 11) == 0
+                )){
+                        strcpy(SystemCmd, system_cmd);
+                }
+		else{
+			_dprintf("[httpd] Invalid SystemCmd!\n");
+			strcpy(SystemCmd, "");
+		}
+
 		websRedirect(wp, current_url);
 		return 0;
 	}
@@ -5425,7 +5608,7 @@ static void
 do_upgrade_post(char *url, FILE *stream, int len, char *boundary)
 {
 	#define MAX_VERSION_LEN 64
-	char upload_fifo[] = "/tmp/linux.trx";
+	char upload_fifo[64] = "/tmp/linux.trx";
 	FILE *fifo = NULL;
 	char buf[4096];
 	int count, ch/*, ver_chk = 0*/;
@@ -5439,6 +5622,10 @@ do_upgrade_post(char *url, FILE *stream, int len, char *boundary)
 #if defined(RTCONFIG_SMALL_FW_UPDATE)
 	notify_rc("stop_upgrade");
 	stop_upgrade_once = 1;
+	/* Mount 16M ram disk to avoid out of memory */
+	system("mkdir /tmp/mytmpfs");
+	system("mount -t tmpfs -o size=16M,nr_inodes=10k,mode=700 tmpfs /tmp/mytmpfs");
+	snprintf(upload_fifo, sizeof(upload_fifo), "/tmp/mytmpfs/linux.trx");
 #endif
 
 	/* Look for our part */
@@ -6457,19 +6644,19 @@ int ej_get_AiDisk_status(int eid, webs_t wp, int argc, char **argv){
 	int first_pool, result, i;
 
 	websWrite(wp, "function get_cifs_status(){\n");
-	//websWrite(wp, "    return %d;\n", atoi(nvram_safe_get("samba_running")));
-	websWrite(wp, "    return %d;\n", atoi(nvram_safe_get("enable_samba")));
+	//websWrite(wp, "    return %d;\n", nvram_get_int("samba_running"));
+	websWrite(wp, "    return %d;\n", nvram_get_int("enable_samba"));
 	websWrite(wp, "}\n\n");
 
 	websWrite(wp, "function get_ftp_status(){\n");
-	//websWrite(wp, "    return %d;\n", atoi(nvram_safe_get("ftp_running")));
-	websWrite(wp, "    return %d;\n", atoi(nvram_safe_get("enable_ftp")));
+	//websWrite(wp, "    return %d;\n", nvram_get_int("ftp_running"));
+	websWrite(wp, "    return %d;\n", nvram_get_int("enable_ftp"));
 	websWrite(wp, "}\n\n");
 
 #ifdef RTCONFIG_WEBDAV_PENDING
 	websWrite(wp, "function get_webdav_status(){\n");
-	//websWrite(wp, "    return %d;\n", atoi(nvram_safe_get("ftp_running")));
-	websWrite(wp, "    return %d;\n", atoi(nvram_safe_get("enable_webdav")));
+	//websWrite(wp, "    return %d;\n", nvram_get_int("ftp_running"));
+	websWrite(wp, "    return %d;\n", nvram_get_int("enable_webdav"));
 	websWrite(wp, "}\n\n");
 #endif
 
@@ -6479,12 +6666,12 @@ int ej_get_AiDisk_status(int eid, webs_t wp, int argc, char **argv){
 
 	websWrite(wp, "function get_share_management_status(protocol){\n");
 	websWrite(wp, "    if (protocol == \"cifs\")\n");
-	websWrite(wp, "	return %d;\n", atoi(nvram_safe_get("st_samba_mode")));
+	websWrite(wp, "	return %d;\n", (nvram_get("st_samba_force_mode") == NULL && nvram_get_int("st_samba_mode") == 1)?4:nvram_get_int("st_samba_mode"));
 	websWrite(wp, "    else if (protocol == \"ftp\")\n");
-	websWrite(wp, "	return %d;\n", (nvram_get_int("st_ftp_force_mode") == 0 && nvram_get_int("st_ftp_mode") == 1)?2:nvram_get_int("st_ftp_mode"));
+	websWrite(wp, "	return %d;\n", (nvram_get("st_ftp_force_mode") == NULL && nvram_get_int("st_ftp_mode") == 1)?2:nvram_get_int("st_ftp_mode"));
 #ifdef RTCONFIG_WEBDAV_PENDING
 	websWrite(wp, "    else if (protocol == \"webdav\")\n");
-	websWrite(wp, "	return %d;\n", atoi(nvram_safe_get("st_webdav_mode")));
+	websWrite(wp, "	return %d;\n", nvram_get_int("st_webdav_mode"));
 #endif
 	websWrite(wp, "    else\n");
 	websWrite(wp, "	return -1;\n");
@@ -7086,11 +7273,12 @@ int ej_initial_folder_var_file(int eid, webs_t wp, int argc, char **argv)
 }
 
 int ej_set_share_mode(int eid, webs_t wp, int argc, char **argv){
-	int samba_mode = atoi(nvram_safe_get("st_samba_mode"));
-	int ftp_mode = atoi(nvram_safe_get("st_ftp_mode"));
-	int ftp_force_mode = atoi(nvram_safe_get("st_ftp_force_mode"));
+	int samba_mode = nvram_get_int("st_samba_mode");
+	int samba_force_mode = nvram_get_int("st_samba_force_mode");
+	int ftp_mode = nvram_get_int("st_ftp_mode");
+	int ftp_force_mode = nvram_get_int("st_ftp_force_mode");
 #ifdef RTCONFIG_WEBDAV_PENDING
-	int webdav_mode = atoi(nvram_safe_get("st_webdav_mode"));
+	int webdav_mode = nvram_get_int("st_webdav_mode");
 #endif
 	char *dummyShareway = websGetVar(wp, "dummyShareway", "");
 	char *protocol = websGetVar(wp, "protocol", "");
@@ -7113,7 +7301,7 @@ int ej_set_share_mode(int eid, webs_t wp, int argc, char **argv){
 	}
 	if (!strcmp(mode, "share")){
 		if (!strcmp(protocol, "cifs")){
-			if (samba_mode == 1 || samba_mode == 3)
+			if((samba_mode == 1 || samba_mode == 3) && samba_force_mode == 1)
 				goto SET_SHARE_MODE_SUCCESS;
 
 			nvram_set("st_samba_mode", "1");	// for test
@@ -7139,13 +7327,13 @@ int ej_set_share_mode(int eid, webs_t wp, int argc, char **argv){
 	}
 	else if (!strcmp(mode, "account")){
 		if (!strcmp(protocol, "cifs")){
-			if (samba_mode == 2 || samba_mode == 4)
+			if((samba_mode == 2 || samba_mode == 4) && samba_force_mode == 2)
 				goto SET_SHARE_MODE_SUCCESS;
 
 			nvram_set("st_samba_mode", "4");
 		}
 		else if (!strcmp(protocol, "ftp")){
-			if (ftp_mode == 2 && ftp_force_mode == 2)
+			if(ftp_mode == 2 && ftp_force_mode == 2)
 				goto SET_SHARE_MODE_SUCCESS;
 
 			nvram_set("st_ftp_mode", "2");
@@ -7173,7 +7361,7 @@ int ej_set_share_mode(int eid, webs_t wp, int argc, char **argv){
 	not_ej_initial_folder_var_file();
 
 	if (!strcmp(protocol, "cifs")) {
-		result = notify_rc_for_nas("restart_samba");
+		result = notify_rc_for_nas("restart_samba_force");
 	}
 	else if (!strcmp(protocol, "ftp")) {
 		result = notify_rc_for_nas("restart_ftpd_force");
@@ -8072,25 +8260,25 @@ int ej_apps_action(int eid, webs_t wp, int argc, char **argv){
 		if(strlen(apps_name) <= 0 || strlen(apps_flag) <= 0)
 			return 0;
 
-		sprintf(command, "start_apps_install %s %s", apps_name, apps_flag);
+		snprintf(command, sizeof(command), "start_apps_install %s %s", apps_name, apps_flag);
 	}
 	else if(!strcmp(apps_action, "stop")){
-		sprintf(command, "start_apps_stop");
+		snprintf(command, sizeof(command), "start_apps_stop");
 	}
 	else if(!strcmp(apps_action, "update")){
-		sprintf(command, "start_apps_update");
+		snprintf(command, sizeof(command), "start_apps_update");
 	}
 	else if(!strcmp(apps_action, "upgrade")){
 		if(strlen(apps_name) <= 0)
 			return 0;
 
-		sprintf(command, "start_apps_upgrade %s", apps_name);
+		snprintf(command, sizeof(command), "start_apps_upgrade %s", apps_name);
 	}
 	else if(!strcmp(apps_action, "remove")){
 		if(strlen(apps_name) <= 0)
 			return 0;
 
-		sprintf(command, "start_apps_remove %s", apps_name);
+		snprintf(command, sizeof(command), "start_apps_remove %s", apps_name);
 	}
 	else if(!strcmp(apps_action, "enable")){
 		if(strlen(apps_name) <= 0 || strlen(apps_flag) <= 0)
@@ -8099,16 +8287,16 @@ int ej_apps_action(int eid, webs_t wp, int argc, char **argv){
 		if(strcmp(apps_flag, "yes") && strcmp(apps_flag, "no"))
 			return 0;
 
-		sprintf(command, "start_apps_enable %s %s", apps_name, apps_flag);
+		snprintf(command, sizeof(command), "start_apps_enable %s %s", apps_name, apps_flag);
 	}
 	else if(!strcmp(apps_action, "switch")){
 		if(strlen(apps_name) <= 0 || strlen(apps_flag) <= 0)
 			return 0;
 
-		sprintf(command, "start_apps_switch %s %s", apps_name, apps_flag);
+		snprintf(command, sizeof(command), "start_apps_switch %s %s", apps_name, apps_flag);
 	}
 	else if(!strcmp(apps_action, "cancel")){
-		sprintf(command, "start_apps_cancel");
+		snprintf(command, sizeof(command), "start_apps_cancel");
 	}
 
 	if(strlen(command) > 0)
@@ -8237,8 +8425,8 @@ int ej_cloud_status(int eid, webs_t wp, int argc, char **argv){
 
 //Viz add to get partial string 2012.11.13
 void substr(char *dest, const char* src, unsigned int start, unsigned int cnt) {
-  strncpy(dest, src + start, cnt);
-  dest[cnt] = 0;
+	strncpy(dest, src + start, cnt);
+	dest[cnt] = 0;
 }
 
 //use for UI to avoid variable 'cloud_sync' JavaScript error, Jieming added at 2012.09.11
@@ -8673,7 +8861,7 @@ int ej_qos_packet(int eid, webs_t wp, int argc, char_t **argv)
 	strcpy(wan_ifname, strcat_r(prefix, "ifname", tmp));
 
 	a[0] = "1";
-  asp_ctcount(wp, 1, a);
+	asp_ctcount(wp, 1, a);
 
 	memset(rates, 0, sizeof(rates));
 	sprintf(s, "tc -s class ls dev %s", nvram_safe_get(wan_ifname));
@@ -9058,7 +9246,7 @@ ej_select_list(int eid, webs_t wp, int argc, char_t **argv)
 		ref1 = "sh_path_x";
 		ref2 = "sh_path";
 		refnum = "sh_num";
-		curr = atoi(nvram_get(ref1));
+		curr = nvram_get_int(ref1);
 		sprintf(idxstr, "%d", curr);
 		strcpy(tmpstr1, nvram_get(strcat_r(ref2, idxstr, tmpstr)));
 		sprintf(out, "%s", tmpstr1);
@@ -9071,7 +9259,7 @@ ej_select_list(int eid, webs_t wp, int argc, char_t **argv)
 		ref2 = "acc_username";
 		refnum = "acc_num";
 
-		curr = atoi(nvram_get(tmpstr));
+		curr = nvram_get_int(tmpstr);
 		noneFlag =1;
 	}
 	else if (strcmp(id, "Storage_x_AccAny")==0)
@@ -9085,7 +9273,7 @@ ej_select_list(int eid, webs_t wp, int argc, char_t **argv)
 		strcpy(out, "<option value=\"Guest\">Guest</option>");
 		ret += websWrite(wp, out);
 
-		for (i=0;i<atoi(nvram_get("acc_num"));i++)
+		for (i=0;i<nvram_get_int("acc_num");i++)
 		{
 			 sprintf(idxstr, "%d", i);
 			 strcpy(tmpstr1, nvram_get(strcat_r("acc_username", idxstr, tmpstr)));
@@ -9101,7 +9289,7 @@ ej_select_list(int eid, webs_t wp, int argc, char_t **argv)
 
 	hit = 0;
  
-	for (i=0;i<atoi(nvram_get(refnum));i++)
+	for (i=0;i<nvram_get_int(refnum);i++)
 	{     
  		 sprintf(idxstr, "%d", i);
 		 strcpy(tmpstr1, nvram_get(strcat_r(ref2, idxstr, tmpstr)));
@@ -9142,11 +9330,10 @@ ej_check_acpw(int eid, webs_t wp, int argc, char_t **argv)
 {
 	int retval = 0;
 	char result[2048];
-	char default_acpw[] = "admin";
-
+	
 	strcpy(result, "0");
 
-	if(!strcmp(default_acpw, nvram_safe_get("http_username")) && !strcmp(default_acpw, nvram_safe_get("http_passwd")))
+	if(!strcmp(nvram_default_get("http_username"), nvram_safe_get("http_username")) && !strcmp(nvram_default_get("http_passwd"), nvram_safe_get("http_passwd")))
 		strcpy(result, "1");
 
 	retval += websWrite(wp, result);

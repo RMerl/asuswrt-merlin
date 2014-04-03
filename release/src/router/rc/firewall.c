@@ -43,7 +43,7 @@
 #define WEBSTRFILTER 1
 #define CONTENTFILTER 1
 
-#define foreach_x(x)	for (i=0; i<atoi(nvram_safe_get(x)); i++)
+#define foreach_x(x)	for (i=0; i<nvram_get_int(x); i++)
 
 #ifdef RTCONFIG_IPV6
 char wan6face[IFNAMSIZ + 1];
@@ -1233,11 +1233,11 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 		if (nvram_match("webdav_aidisk", "1")) {
 			int port;
 
-			port = atoi(nvram_safe_get("webdav_https_port"));
+			port = nvram_get_int("webdav_https_port");
 			if (!port || port >= 65536)
 				port = 443;
 			fprintf(fp, "-A LOCALSRV -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d\n", port, lan_ip, port);
-			port = atoi(nvram_safe_get("webdav_http_port"));
+			port = nvram_get_int("webdav_http_port");
 			if (!port || port >= 65536)
 				port = 8082;
 			fprintf(fp, "-A LOCALSRV -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d\n", port, lan_ip, port);
@@ -1494,11 +1494,11 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 		if (nvram_match("webdav_aidisk", "1")) {
 			int port;
 
-			port = atoi(nvram_safe_get("webdav_https_port"));
+			port = nvram_get_int("webdav_https_port");
 			if (!port || port >= 65536)
 				port = 443;
 			fprintf(fp, "-A LOCALSRV -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d\n", port, lan_ip, port);
-			port = atoi(nvram_safe_get("webdav_http_port"));
+			port = nvram_get_int("webdav_http_port");
 			if (!port || port >= 65536)
 				port = 8082;
 			fprintf(fp, "-A LOCALSRV -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d\n", port, lan_ip, port);
@@ -2102,7 +2102,7 @@ TRACE_PT("writing Parental Control\n");
 		}
 
 #ifdef RTCONFIG_OLD_PARENTALCTRL
-		num = atoi(nvram_safe_get("macfilter_num_x"));
+		num = nvram_get_int("macfilter_num_x");
 
 		for(i = 0; i < num; ++i)
 		{
@@ -2521,11 +2521,11 @@ TRACE_PT("writing Parental Control\n");
 	if ( nvram_match("wan_proto", "pppoe"))
 	{
 		fprintf(fp, "-I FORWARD -p tcp --tcp-flags SYN,RST SYN -m tcpmss --mss %d: -j TCPMSS "
-			  "--set-mss %d\n", atoi(nvram_safe_get("wan_pppoe_mtu"))-39, atoi(nvram_safe_get("wan_pppoe_mtu"))-40);
+			  "--set-mss %d\n", nvram_get_int("wan_pppoe_mtu")-39, nvram_get_int("wan_pppoe_mtu")-40);
 		
 		if (strlen(macaccept)>0)
 			fprintf(fp, "-A %s -p tcp --tcp-flags SYN,RST SYN -m tcpmss --mss %d: -j TCPMSS "
-			  "--set-mss %d\n", macaccept, atoi(nvram_safe_get("wan_pppoe_mtu"))-39, atoi(nvram_safe_get("wan_pppoe_mtu"))-40);
+			  "--set-mss %d\n", macaccept, nvram_get_int("wan_pppoe_mtu")-39, nvram_get_int("wan_pppoe_mtu")-40);
 	}
 	if (nvram_match("wan_proto", "pptp"))
 	{
@@ -3068,7 +3068,7 @@ TRACE_PT("writing Parental Control\n");
 		}
 
 #ifdef RTCONFIG_OLD_PARENTALCTRL
-		num = atoi(nvram_safe_get("macfilter_num_x"));
+		num = nvram_get_int("macfilter_num_x");
 
 		for(i = 0; i < num; ++i)
 		{
@@ -3503,11 +3503,11 @@ TRACE_PT("writing Parental Control\n");
 	if ( nvram_match("wan_proto", "pppoe"))
 	{
 		fprintf(fp, "-I FORWARD -p tcp --tcp-flags SYN,RST SYN -m tcpmss --mss %d: -j TCPMSS "
-			  "--set-mss %d\n", atoi(nvram_safe_get("wan_pppoe_mtu"))-39, atoi(nvram_safe_get("wan_pppoe_mtu"))-40);
+			  "--set-mss %d\n", nvram_get_int("wan_pppoe_mtu")-39, nvram_get_int("wan_pppoe_mtu")-40);
 
 		if (strlen(macaccept)>0)
 			fprintf(fp, "-A %s -p tcp --tcp-flags SYN,RST SYN -m tcpmss --mss %d: -j TCPMSS "
-			  "--set-mss %d\n", macaccept, atoi(nvram_safe_get("wan_pppoe_mtu"))-39, atoi(nvram_safe_get("wan_pppoe_mtu"))-40);
+			  "--set-mss %d\n", macaccept, nvram_get_int("wan_pppoe_mtu")-39, nvram_get_int("wan_pppoe_mtu")-40);
 	}
 	if (nvram_match("wan_proto", "pptp"))
 	{
