@@ -402,6 +402,7 @@ etc_iovar(etc_info_t *etc, uint cmd, uint set, void *arg, int len)
 				struct bcmstrbuf b;
 				bcm_binit(&b, (char*)arg, len);
 				fa_dump(etc->fa, &b, FALSE);
+				fa_regs_show(etc->fa, &b);
 			}
 			break;
 		case IOV_FA_REV:

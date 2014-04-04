@@ -152,7 +152,7 @@ function valid_wan_ip() {
 								return;
         }
 				
-				document.getElementById("privateIP_notes").innerHTML = "The wireless router currently uses a private WAN IP address (192.168.x.x, 10,x,x,x, or 172.16.x.x). Please set DDNS service before initializing VPN server."
+				document.getElementById("privateIP_notes").innerHTML = "<#vpn_privateIP_hint#>"
 				document.getElementById("privateIP_notes").style.display = "";
 				return;
 }
@@ -752,7 +752,7 @@ function enable_openvpn(state){
 										</tr>
 										</thead>
 										<tr>
-											<th>Enable VPN Server</th>
+											<th><#vpn_enable#></th>
 											<td id="pptpd_enable_switch" style="display:none;">
 												<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="pptp_service_enable"></div>
 												<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden;">
@@ -809,7 +809,7 @@ function enable_openvpn(state){
 										</tr>
 
 										<tr>
-											<th>Server mode</th>
+											<th><#vpn_mode#></th>
 											<td>
 													<select name="VPNServer_mode_select" class="input_option" onchange="change_mode(this);">
 													</select>
@@ -835,10 +835,11 @@ function enable_openvpn(state){
 
 
 										<tr id="openvpn_export" style="display:none;">
-										<th>Export ovpn file</th>
+										<th><#vpn_export_ovpnfile#></th>
 											<td>
 												<div id="export_div">
-	              									<input id="exportToLocal" class="button_gen" type="button" value="Export" />
+	              									<input id="exportToLocal" class="button_gen" type="button" value="<#btn_Expor
+t#>" />
 	              									<input id="exportViaEmail" class="button_gen" type="button" value="via Email" />
 												</div>
 												<script type="text/javascript">

@@ -23,7 +23,7 @@ var enable_webdav = '<% nvram_get("enable_webdav"); %>';
 var ddns_enable_x = '<% nvram_get("ddns_enable_x"); %>';
 var ddns_hostname_x = '<% nvram_get("ddns_hostname_x"); %>';
 var webdav_https_port = '<% nvram_get("webdav_https_port"); %>';
-var macAddr = '<% nvram_get("et0macaddr"); %>'.toUpperCase().replace(/:/g, "");
+var macAddr = '<% nvram_get("lan_hwaddr"); %>'.toUpperCase().replace(/:/g, "");
 var MD5DDNSName = "A"+hexMD5(macAddr).toUpperCase()+".asuscomm.com";
 var restart_time = 0;
 

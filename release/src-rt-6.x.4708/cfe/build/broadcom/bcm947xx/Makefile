@@ -129,6 +129,7 @@ ifeq ($(strip $(RTAC68U)),1)
 CFLAGS += -DRTAC68U
 endif
 ifeq ($(strip $(RTAC87U)),1)
+MTDSIZE := 128
 CFLAGS += -DRTAC87U
 endif
 ifeq ($(strip $(RTN18U)),1)

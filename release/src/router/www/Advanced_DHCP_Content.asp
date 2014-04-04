@@ -244,7 +244,7 @@ function applyRule(){
 		var tmp_value = "";
 	
 		for(i=0; i<rule_num; i++){
-			tmp_value += "<"		
+			tmp_value += "<";
 			for(j=0; j<item_num-1; j++){	
 				tmp_value += $('dhcp_staticlist_table').rows[i].cells[j].innerHTML;
 				if(j != item_num-2)	

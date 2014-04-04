@@ -562,6 +562,10 @@ ifneq ($(CONFIG_BCM_FA),)
 KBUILD_CFLAGS += -DBCMFA
 endif
 
+ifneq ($(CONFIG_RGMII_BCM_FA),)
+KBUILD_CFLAGS += -DRGMII_BCM_FA
+endif
+
 ifneq ($(CONFIG_BCM47XX),)
 KBUILD_CFLAGS += -DBCM47XX
 endif

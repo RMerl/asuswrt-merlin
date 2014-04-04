@@ -114,23 +114,50 @@ function initial(){
 	inputCtrl(document.form.wl_itxbf, 0);
 	inputCtrl(document.form.usb_usb3, 0);
 
-	if(based_modelid == "RT-AC87U" || based_modelid== "EA-AC87" || based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || based_modelid == "RT-AC66U" || based_modelid == "DSL-AC68U"){
-		if('<% nvram_get("wl_unit"); %>' == '1'){ // 5GHz
+	if('<% nvram_get("wl_unit"); %>' == '1'){ // 5GHz
+		if( based_modelid == "RT-AC69U" || 
+			based_modelid == "RT-AC66U" || 
+			based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || 
+			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U" ||
+			based_modelid == "RT-AC87U" || based_modelid == "EA-AC87")
+		{
+			$('wl_txbf_desc').innerHTML = "802.11ac Beamforming";
 			inputCtrl(document.form.wl_txbf, 1);
-			
-			if(based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || based_modelid == "DSL-AC68U")
-				inputCtrl(document.form.wl_itxbf, 1);
 		}	
+
+		if( based_modelid == "RT-AC69U" ||
+			based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || 
+			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U" ||
+			based_modelid == "RT-AC87U" || based_modelid == "EA-AC87")
+		{
+			inputCtrl(document.form.wl_itxbf, 1);
+		}		
 	}
-	
-	if('<% nvram_get("wl_unit"); %>' != '1'){ // 2.4GHz
-		if(based_modelid == "RT-N18U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || based_modelid == "DSL-AC68U" || based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || based_modelid == "RT-N65U" || based_modelid == "RT-AC87U" ){
+	else{ // 2.4GHz
+		if( based_modelid == "RT-N18U" || 
+			based_modelid == "RT-N65U" || 
+			based_modelid == "RT-AC69U" || 
+			based_modelid == "RT-AC87U" ||
+			based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || 
+			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U")
+		{
 			inputCtrl(document.form.usb_usb3, 1);
-			if(based_modelid == "RT-N18U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || based_modelid == "RT-AC87U" || based_modelid == "DSL-AC68U"){
-				inputCtrl(document.form.wl_turbo_qam, 1);
-				inputCtrl(document.form.wl_txbf, 1);
-			}		
+		}	
+
+		if( based_modelid == "RT-N18U" || 
+			based_modelid == "RT-AC69U" || 
+			based_modelid == "RT-AC87U" || 
+			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U")
+		{
+			inputCtrl(document.form.wl_turbo_qam, 1);
+			$('wl_txbf_desc').innerHTML = "Explicit Beamforming";
+			inputCtrl(document.form.wl_txbf, 1);
 		}
+
+		if(based_modelid == "RT-N18U")
+		{
+			inputCtrl(document.form.wl_itxbf, 1);
+		}		
 	}
 
 	var mcast_rate = '<% nvram_get("wl_mrate_x"); %>';
@@ -546,7 +573,7 @@ function check_ampdu_rts(){
 		  			<div class="formfonttitle"><#menu5_1#> - <#menu5_1_6#></div>
 		  			<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 		 				<div class="formfontdesc"><#WLANConfig11b_display5_sectiondesc#></div>
-		 				<div id="svc_hint_div" style="display:none;margin-left:5px;"><span onClick="location.href='Advanced_System_Content.asp?af=ntp_server0'" style="color:#FFCC00;text-decoration:underline;cursor:pointer;">* Remind: Did not synchronize your system time with NTP server yet.</span></div>
+		 				<div id="svc_hint_div" style="display:none;margin-left:5px;"><span onClick="location.href='Advanced_System_Content.asp?af=ntp_server0'" style="color:#FFCC00;text-decoration:underline;cursor:pointer;"><#General_x_SystemTime_syncNTP#></span></div>
 		  			<div id="timezone_hint_div" style="margin-left:5px;display:none;"><span id="timezone_hint" onclick="location.href='Advanced_System_Content.asp?af=time_zone_select'" style="color:#FFCC00;text-decoration:underline;cursor:pointer;"></span></div>	
 
 					<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable" id="WAdvTable">	
@@ -840,7 +867,7 @@ function check_ampdu_rts(){
 					<!-- [MODELDEP] end -->
 
 					<tr>
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,24);"><#WLANConfig11b_x_ExpBeam#></a></th>
+						<th><a id="wl_txbf_desc" class="hintstyle" href="javascript:void(0);" onClick="openHint(3,24);">Explicit Beamforming</a></th>
 						<td>
 							<select name="wl_txbf" class="input_option">
 									<option value="0" <% nvram_match("wl_txbf", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
@@ -849,7 +876,7 @@ function check_ampdu_rts(){
 						</td>
 					</tr>					
 					<tr>
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,25);"><#WLANConfig11b_x_ImpBeam#></a></th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,25);">Universal Beamforming</a></th>
 						<td>
 							<select name="wl_itxbf" class="input_option" disabled>
 									<option value="0" <% nvram_match("wl_itxbf", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>

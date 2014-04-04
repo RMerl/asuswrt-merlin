@@ -38,6 +38,9 @@ var hours = 24;
 var lastHours = 0;
 var debugTime = 0;
 
+// disable auto log out
+AUTOLOGOUT_MAX_MINUTE = 0;
+
 function showHours()
 {
 	if (hours == lastHours) return;

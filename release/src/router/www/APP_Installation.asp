@@ -630,7 +630,7 @@ function show_apps(){
 	divdisplayctrl("", "none", "none", "none");
 	stoppullstate = 1;
 	calHeight(1);
-	cookie_help.set("hwaddr", '<% nvram_get("et0macaddr"); %>', 1000);
+	cookie_help.set("hwaddr", '<% nvram_get("lan_hwaddr"); %>', 1000);
 }
 
 /* 

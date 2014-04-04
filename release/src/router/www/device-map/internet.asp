@@ -605,8 +605,9 @@ function manualSetup(){
 							 },
 							 function() {
 								document.internetForm.wans_dualwan.value = wans_dualwan.split(" ")[0]+" none";
+								document.internetForm.wan_unit.value = 0;
 								document.internetForm.action_wait.value = '<% get_default_reboot_time(); %>';
-								document.internetForm.action_script.value = "reboot";
+								document.internetForm.action_script.value = "reboot";								
 								parent.showLoading();
 								document.internetForm.submit();	
 								return true;

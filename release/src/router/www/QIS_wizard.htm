@@ -63,12 +63,14 @@
 <script language="JavaScript" type="text/javascript" src="/ajax.js"></script>
 <script>
 var qisFlag = '<% get_parameter("flag"); %>'.toLowerCase();
+/*
 if(isMobile() && sw_mode != 2 && qisFlag != "sitesurvey" && qisFlag != "sitesurvey_mb")
 	location.href = "QIS_wizard_m.htm?flag=" + qisFlag;
+*/
 
 <% login_state_hook(); %>
 
-var parent_macaddr = '<% nvram_get("et0macaddr"); %>';
+var parent_macaddr = '<% nvram_get("lan_hwaddr"); %>';
 var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 
 var isRepeater = true;

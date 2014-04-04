@@ -59,14 +59,14 @@ helpcontent[3] = new Array("",
 						   "<#WLANConfig11b_x_EnhanInter_itemdesc#>", //21
 						   "<#WLANConfig11b_x_IgmpSnEnable_itemdesc#>",
 						   "<#WLANConfig11b_x_SchedEnable_itemdesc#>",
-							 "<#WLANConfig11b_x_ExpBeam_desc#>",
-							 "<#WLANConfig11b_x_ImpBeam_desc#>",
+							 "<#WLANConfig11b_x_ExpBeam_desc#> (It's also called [Explicit Beamforming].)",
+							 "<#WLANConfig11b_x_ImpBeam_desc#> (It's also called [Implicit Beamforming].)",
 							 "<#WLANConfig11b_x_AMPDU_desc#>",
 							 "<#WLANConfig11b_x_ACK_desc#>",
 							 "<#WLANConfig11b_x_TurboQAM_desc#>",
 							 "<#WLANConfig11b_x_ReduceUSB3_desc#>",
 							 "<#RTS_for_AMPDU#>",
-							 "In multiple AP or wireless router-repeater environment, client sometimes cannot automatically connect to the AP with better signal because it still connect to main wireless router. Enabling this feature would force disconnecting the client and main router when the signal strength is under the threshold and client can choose the AP with better signal."
+							 "<#WLANConfig11b_x_roamingassit_desc#>"
 							 );
 
 helpcontent[4] = new Array("",
@@ -126,7 +126,7 @@ helpcontent[7] = new Array("",
 							 "<#qis_pppoe_help1#>",
 							 "<#isp_profile#>",
 							 "<#PPPConnection_Authentication_itemdesc#>",
-							 '<#PPPConnection_Authentication_itemdesc2#>');
+							 "<#PPPConnection_Authentication_itemdesc2#>");
 //Firewall
 helpcontent[8] = new Array("",
 						   "<#FirewallConfig_WanLanLog_itemdesc#>",
@@ -150,7 +150,8 @@ helpcontent[11] = new Array("",
 							"<#LANHostConfig_x_ServerLogEnable_itemdesc#>",
 							"<#LANHostConfig_x_TimeZone_itemdesc#>",
 							"<#LANHostConfig_x_NTPServer_itemdesc#>",
-							"<#QIS_pass_desc2#> <#LANHostConfig_x_Password_itemdesc#>");
+							"<#QIS_pass_desc2#> <#LANHostConfig_x_Password_itemdesc#>",
+							"<#QIS_pass_desc2#> <#File_Pop_content_alert_desc3#>");
 //Log
 helpcontent[12] = new Array("",
 							"<#General_x_SystemUpTime_itemdesc#>",
@@ -258,4 +259,5 @@ helpcontent[26] = new Array("",
 							"<#dualwan_pingtime_target#>",
 							"<#dualwan_pingtime_interval#>",
 							"<#dualwan_pingtime_delay#>",
-							"<#dualwan_pingtime_upper#>");
+							"<#dualwan_pingtime_upper#>", 
+							"Once switched to secondary wan, firmware can still detect the primary wan. When primary wan keep IP over the set value (Interval+delay)*failback count, the connection switched back to primary wan.");

@@ -77,11 +77,11 @@ export SWPJNAME := $(shell git branch | grep "*" | grep "swpj-" | sed 's/.*swpj-
 
 ifneq ($(SWPJNAME),)
 export SWPJVERNO := $(shell cat $(SRCBASE)/router/APP-IPK/$(SWPJNAME)/CONTROL/control | grep "Version:" | sed 's/Version: //g')
+export SWPJEXTENDNO := $(shell git describe --match swpj_$(SWPJNAME)_$(SWPJVERNO) | sed 's/swpj_$(SWPJNAME)_$(SWPJVERNO)-//g')
 ifneq ($(SWPJVERNO),)
 export SWPJVER := $(SWPJNAME)_$(SWPJVERNO)_
-endif
-
 export SWPJEXTENDNO := $(shell git describe --match swpj_$(SWPJNAME)_$(SWPJVER) | sed 's/swpj_$(SWPJNAME)_$(SWPJVER)-//g')
+endif
 
 ifneq ($(SWPJEXTENDNO),)
 export EXTENDNO := $(SWPJEXTENDNO)
@@ -423,6 +423,10 @@ define RouterOptions
 	if [ "$(BCMFA)" = "y" ]; then \
 		sed -i "/RTCONFIG_BCMFA/d" $(1); \
 		echo "RTCONFIG_BCMFA=y" >>$(1); \
+	fi; \
+	if [ "$(RGMII_BCM_FA)" = "y" ]; then \
+		sed -i "/RTCONFIG_RGMII_BCM_FA/d" $(1); \
+		echo "RTCONFIG_RGMII_BCM_FA=y" >>$(1); \
 	fi; \
 	if [ "$(COMA)" = "y" ]; then \
 		sed -i "/RTCONFIG_COMA/d" $(1); \
@@ -950,6 +954,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_DNSFILTER/d" $(1); \
 		echo "RTCONFIG_DNSFILTER=y" >>$(1); \
 	fi; \
+	if [ "$(N18UTXBF)" = "y" ]; then \
+		sed -i "/RTCONFIG_N18UTXBF/d" $(1); \
+		echo "RTCONFIG_N18UTXBF=y" >>$(1); \
+	fi; \
 	)
 	$(call platformRouterOptions, $(1))
 endef
@@ -1272,16 +1280,8 @@ define KernelConfig
 			echo "CONFIG_USB_BECEEM=m" >>$(1); \
 		fi; \
 		if [ "$(LESSMODEM)" = "y" ]; then \
-			sed -i "/CONFIG_USB_NET_NET1080/d" $(1); \
-			echo "# CONFIG_USB_NET_NET1080 is not set" >>$(1); \
-			sed -i "/CONFIG_USB_NET_ZAURUS/d" $(1); \
-			echo "# CONFIG_USB_NET_ZAURUS is not set" >>$(1); \
 			sed -i "/CONFIG_HSO/d" $(1); \
 			echo "# CONFIG_HSO is not set" >>$(1); \
-			sed -i "/CONFIG_USB_SERIAL_FTDI_SIO/d" $(1); \
-			echo "# CONFIG_USB_SERIAL_FTDI_SIO is not set" >>$(1); \
-			sed -i "/CONFIG_USB_SERIAL_PL2303/d" $(1); \
-			echo "# CONFIG_USB_SERIAL_PL2303 is not set" >>$(1); \
 		fi; \
 	else \
 		sed -i "/CONFIG_USB_SERIAL/d" $(1); \

@@ -1,2 +1,2 @@
 ﻿<% wlc_psta_state(); %>
-child_macaddr = '<% nvram_get("et0macaddr"); %>';
+child_macaddr = '<% nvram_get("lan_hwaddr"); %>';

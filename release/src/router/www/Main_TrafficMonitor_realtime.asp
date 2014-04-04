@@ -41,6 +41,9 @@ var avgMode = 0;
 var wdog = null;
 var wdogWarn = null;
 
+// disable auto log out
+AUTOLOGOUT_MAX_MINUTE = 0;
+
 var ref = new TomatoRefresh('update.cgi', 'output=netdev', 2);
 
 ref.stop = function() {

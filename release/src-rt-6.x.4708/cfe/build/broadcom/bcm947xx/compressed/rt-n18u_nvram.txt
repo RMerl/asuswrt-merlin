@@ -428,7 +428,7 @@ devpath0=pci/1/1
 
 
 # Bootloader version
-bl_version=2.0.0.6
+bl_version=2.0.0.7
 
 # for NAND flash
 bootflags=1
@@ -444,3 +444,4 @@ model=RT-N18U
 
 # others
 wlopmode=1
+ATEMODE=1
