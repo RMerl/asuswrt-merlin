@@ -235,7 +235,7 @@ function applyRule(){
 					dms_dir_type_tmp_value += "<";
 					type_translate_tmp += document.getElementById("dlna_path_table").rows[i].cells[1].innerHTML.indexOf("Audio")>=0? "A":""; 
 					type_translate_tmp += document.getElementById("dlna_path_table").rows[i].cells[1].innerHTML.indexOf("Image")>=0? "P":"";
-					type_translate_tmp += document.getElementById("dlna_path_table").rows[i].cells[1].innerHTML.indexOf("Vedio")>=0? "V":"";			
+					type_translate_tmp += document.getElementById("dlna_path_table").rows[i].cells[1].innerHTML.indexOf("Video")>=0? "V":"";			
 					dms_dir_type_tmp_value += type_translate_tmp;			
 				}
 			}
@@ -644,13 +644,13 @@ function addRow_Group(upper){
 	
 	if(!document.form.type_A_audio.checked &&
 			!document.form.type_P_image.checked &&
-			!document.form.type_V_vedio.checked){
+			!document.form.type_V_video.checked){
 				dms_dir_type_x_tmp = "APV";
 	}
 	else{
 		dms_dir_type_x_tmp += document.form.type_A_audio.checked? "A" : "";
 		dms_dir_type_x_tmp += document.form.type_P_image.checked? "P" : "";
-		dms_dir_type_x_tmp += document.form.type_V_vedio.checked? "V" : "";
+		dms_dir_type_x_tmp += document.form.type_V_video.checked? "V" : "";
 	}
 	
 	//Viz check same rule  //match(path) is not accepted
@@ -670,7 +670,7 @@ function addRow_Group(upper){
 	document.getElementById("PATH").value = "/tmp/mnt";
 	document.form.type_A_audio.checked = true;
 	document.form.type_P_image.checked = true;
-	document.form.type_V_vedio.checked = true;
+	document.form.type_V_video.checked = true;
 	
 	show_dlna_path();
 }
@@ -701,7 +701,7 @@ function show_dlna_path(){
 			code +='<td width="45%" class="dlna_path_td">'+ dms_dir_x_array_row[i] +'</td>';
 				tmp_type += dms_dir_type_x_array_row[i].indexOf("A")>=0? "Audio " : "";
 				tmp_type += dms_dir_type_x_array_row[i].indexOf("P")>=0? "Image " : "";
-				tmp_type += dms_dir_type_x_array_row[i].indexOf("V")>=0? "Vedio " : "";
+				tmp_type += dms_dir_type_x_array_row[i].indexOf("V")>=0? "Video " : "";
 			code +='<td width="40%" class="dlna_path_td">'+ tmp_type +'</td>';
 				
 			code +='<td width="15%">';
@@ -922,7 +922,7 @@ function do_get_friendly_name(){
             	<td width="40%">
             		<input type="checkbox" class="input" name="type_A_audio" checked>&nbsp;Audio&nbsp;&nbsp;
 								<input type="checkbox" class="input" name="type_P_image" checked>&nbsp;Image&nbsp;&nbsp;
-								<input type="checkbox" class="input" name="type_V_vedio" checked>&nbsp;Vedio
+								<input type="checkbox" class="input" name="type_V_video" checked>&nbsp;Video
             	</td>
             	<td width="15%">
 									<input type="button" class="add_btn" onClick="addRow_Group(10);" value="">
