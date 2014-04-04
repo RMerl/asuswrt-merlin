@@ -1,5 +1,3 @@
-ufsd.ko
-jnl.ko
 .tmp_versions/
 libufsd.bin
 jnl.mod.c
