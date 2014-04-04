@@ -28,13 +28,24 @@ install:
 	@echo "[ufsd] Installing..."
 	@install -d $(INSTALLDIR)/usr/sbin
 	@install -d $(DSTDIR)
-#	@cp $(SRCFILE)/mkntfs $(INSTALLDIR)/usr/sbin
+	@cp $(SRCFILE)/mkntfs $(INSTALLDIR)/usr/sbin
 	@cp $(SRCFILE)/chkntfs $(INSTALLDIR)/usr/sbin
 	@cp $(SRCFILE)/ufsd.ko $(DSTDIR)
+ifeq ($(RTCONFIG_HFS),y)
 	@cp $(SRCFILE)/jnl.ko $(DSTDIR)
-#	@chmod 775 $(INSTALLDIR)/usr/sbin/mkntfs
+	@cp $(SRCFILE)/chkhfs $(INSTALLDIR)/usr/sbin/
+	@cp $(SRCFILE)/mkhfs $(INSTALLDIR)/usr/sbin
+endif
+	@cp $(SRCFILE)/memalloc $(INSTALLDIR)/usr/sbin
+	@chmod 775 $(INSTALLDIR)/usr/sbin/mkntfs
 	@chmod 775 $(INSTALLDIR)/usr/sbin/chkntfs
+ifeq ($(RTCONFIG_HFS),y)
+	@chmod 775 $(INSTALLDIR)/usr/sbin/chkhfs
+	@chmod 775 $(INSTALLDIR)/usr/sbin/mkhfs
+endif
 	@chmod 664 $(DSTDIR)/ufsd.ko
+ifeq ($(RTCONFIG_HFS),y)
 	@chmod 664 $(DSTDIR)/jnl.ko
+endif
 
 .phony: all clean install
