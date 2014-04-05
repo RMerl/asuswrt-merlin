@@ -36,7 +36,7 @@ ifeq ($(RTCONFIG_HFS),y)
 	@cp $(SRCFILE)/chkhfs $(INSTALLDIR)/usr/sbin/
 	@cp $(SRCFILE)/mkhfs $(INSTALLDIR)/usr/sbin
 endif
-	@cp $(SRCFILE)/memalloc $(INSTALLDIR)/usr/sbin
+#	@cp $(SRCFILE)/memalloc $(INSTALLDIR)/usr/sbin
 	@chmod 775 $(INSTALLDIR)/usr/sbin/mkntfs
 	@chmod 775 $(INSTALLDIR)/usr/sbin/chkntfs
 ifeq ($(RTCONFIG_HFS),y)
