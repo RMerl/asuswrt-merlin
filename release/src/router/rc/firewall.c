@@ -885,7 +885,7 @@ void convert_routes(void)
 	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
 	char *nv, *nvp, *b;
 	char *ip, *netmask, *gateway, *metric, *interface;
-	char wroutes[1024], lroutes[1024], mroutes[1024];
+	char wroutes[4096], lroutes[4096], mroutes[4096];
 
 	/* Disable Static if it's not enable */
 	wroutes[0] = 0;
