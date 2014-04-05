@@ -838,8 +838,7 @@ function enable_openvpn(state){
 										<th><#vpn_export_ovpnfile#></th>
 											<td>
 												<div id="export_div">
-	              									<input id="exportToLocal" class="button_gen" type="button" value="<#btn_Expor
-t#>" />
+	              									<input id="exportToLocal" class="button_gen" type="button" value="<#btn_Export#>" />
 	              									<input id="exportViaEmail" class="button_gen" type="button" value="via Email" />
 												</div>
 												<script type="text/javascript">
