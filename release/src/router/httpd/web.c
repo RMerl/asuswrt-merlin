@@ -5181,7 +5181,12 @@ apply_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
                            strncasecmp(system_cmd, "run_telnetd", 11) == 0
                 )){
                         strcpy(SystemCmd, system_cmd);
-                }
+		}
+		else if(!strcmp(current_url, "Main_ConnStatus_Content.asp") && (
+			strncasecmp(system_cmd, "netstat-nat", 11) == 0
+		)){
+			strcpy(SystemCmd, system_cmd);
+		}
 		else{
 			_dprintf("[httpd] Invalid SystemCmd!\n");
 			strcpy(SystemCmd, "");
