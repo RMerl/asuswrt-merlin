@@ -730,6 +730,8 @@ start_dhcp6c(void)
 	if (nvram_get_int("ipv6_dhcp_pd")) {
 		nvram_set("ipv6_rtr_addr", "");
 		nvram_set("ipv6_prefix", "");
+		nvram_set("ipv6_pd_vlifetime", "");
+		nvram_set("ipv6_pd_plifetime", "");
 	}
 
 	prefix_len = 64 - (nvram_get_int("ipv6_prefix_length") ? : 64);
