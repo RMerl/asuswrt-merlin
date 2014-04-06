@@ -69,7 +69,7 @@ int parental_clean_macfilter(void)
 	int tmp_idx, tmp_count;
 	char tmp_entry[21] = {0};
 
-	tmp_count = atoi(nvram_safe_get("macfilter_num_x"));
+	tmp_count = nvram_get_int("macfilter_num_x");
 	for( tmp_idx = 0; tmp_idx < tmp_count; ++tmp_idx){
 		snprintf(tmp_entry, 21 * sizeof(char), "macfilter_list_x%d", tmp_idx);
 		nvram_unset(tmp_entry);

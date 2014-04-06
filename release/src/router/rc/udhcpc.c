@@ -216,10 +216,6 @@ bound(void)
 		nvram_get_int(strcat_r(prefix, "lease", tmp))
 		);
 
-#ifdef RTCONFIG_VPNC
-	start_vpnc();
-#endif
-
 	_dprintf("udhcpc:: %s done\n", __FUNCTION__);
 	return 0;
 }

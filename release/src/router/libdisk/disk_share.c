@@ -113,7 +113,7 @@ int get_account_list(int *acc_num, char ***account_list)
 	char *tmp_ascii_user, *tmp_ascii_passwd;
 	char char_user[64];
 
-	*acc_num = atoi(nvram_safe_get("acc_num"));
+	*acc_num = nvram_get_int("acc_num");
 	if(*acc_num <= 0)
 		return 0;
 
@@ -1082,7 +1082,7 @@ extern int add_account(const char *const account, const char *const password){
 	memset(ascii_passwd, 0, 64);
 	char_to_ascii_safe(ascii_passwd, password, 64);
 
-	acc_num = atoi(nvram_safe_get("acc_num"));
+	acc_num = nvram_get_int("acc_num");
 	if(acc_num < 0)
 		acc_num = 0;
 	if(acc_num >= MAX_ACCOUNT_NUM){
@@ -1149,7 +1149,7 @@ extern int del_account(const char *const account){
 		return -1;
 	}
 
-	acc_num = atoi(nvram_safe_get("acc_num"));
+	acc_num = nvram_get_int("acc_num");
 	if(acc_num <= 0)
 		return 0;
 
@@ -1296,7 +1296,7 @@ extern int mod_account(const char *const account, const char *const new_account,
 		return -1;
 	}
 
-	acc_num = atoi(nvram_safe_get("acc_num"));
+	acc_num = nvram_get_int("acc_num");
 	if(acc_num <= 0)
 		return 0;
 

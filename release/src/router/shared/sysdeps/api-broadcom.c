@@ -69,7 +69,8 @@ uint32_t set_gpio(uint32_t gpio, uint32_t value)
 #ifdef RTCONFIG_BCMFA
 int get_fa_rev(void)
 {
-	int fd, rev, ret;
+	int fd, ret;
+	unsigned int rev;
 	struct ifreq ifr;
 	et_var_t var;
 
@@ -96,6 +97,37 @@ int get_fa_rev(void)
 skip:
 	return 0;
 }
+
+int get_fa_dump(void)
+{
+        int fd, rev, ret;
+        struct ifreq ifr;
+        et_var_t var;
+
+        fd = socket(AF_INET, SOCK_DGRAM, 0);
+        if (fd < 0) goto skip;
+
+        rev = 0;
+        var.set = 0;
+        var.cmd = IOV_FA_DUMP;
+        var.buf = &rev;
+        var.len = sizeof(rev);
+
+        memset(&ifr, 0, sizeof(ifr));
+        strcpy(ifr.ifr_name, "eth0");
+        ifr.ifr_data = (caddr_t) &var;
+
+        ret = ioctl(fd, SIOCSETGETVAR, (caddr_t)&ifr);
+        close(fd);
+        if (ret < 0)
+                goto skip;
+
+        return rev;
+
+skip:
+        return 0;
+}
+
 #endif
 
 int get_switch_model(void)

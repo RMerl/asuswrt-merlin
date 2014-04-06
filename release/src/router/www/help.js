@@ -3,7 +3,8 @@
 	the_array_is_end : "end here.",
 	Guest_Network_enable_ACL : "You must go to enable MAC filter",	
 	namecheap_username_title: "Domain Name",
-	link_rate : "Link rate"
+	link_rate : "Link rate",
+	valid_range_int : "Please enter a positive integer"
 };
 var clicked_help_string = "<#Help_init_word1#> <a class=\"hintstyle\" style=\"background-color:#7aa3bd\"><#Help_init_word2#></a> <#Help_init_word3#>";
 

@@ -43,23 +43,23 @@ function gen_country_list(){
 	countrylist.push(["Manual", ""]);
 
 	var got_country = 0;
-	free_options($("isp_countrys"));
-	$("isp_countrys").options.length = countrylist.length;
+	free_options(document.form.modem_country);
+	document.form.modem_country.options.length = countrylist.length;
 	for(var i = 0; i < countrylist.length; i++){
-		$("isp_countrys").options[i] = new Option(countrylist[i][0], countrylist[i][1]);
+		document.form.modem_country.options[i] = new Option(countrylist[i][0], countrylist[i][1]);
 		if(countrylist[i][1] == country){
 			got_country = 1;
-			$("isp_countrys").options[i].selected = "1";
+			document.form.modem_country.options[i].selected = "1";
 		}
 	}
 
 	if(!got_country)
-		$("isp_countrys").options[0].selected = "1";
+		document.form.modem_country.options[0].selected = "1";
 }
 
 // 1:WCDMA  2:CMDA2000  3.TD-SCDMA  4.WiMAX
 function gen_list(){
-	var country = $("isp_countrys").value;
+	var country = document.form.modem_country.value;
 
 	if(country == "AU"){
 		protolist = new Array("1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1");

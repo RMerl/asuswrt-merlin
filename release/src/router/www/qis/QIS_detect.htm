@@ -53,7 +53,10 @@ function getWANStatus(){
 			if(autodet_state == "" || autodet_state == "0"){
 				setTimeout('getWANStatus();', 1000);
 			}
-			if(autodet_state == 4 && parent.hadPlugged("modem")){ // ethernet did not plug
+			else if(wanstate  == "2" && wansbstate == "0" && wanauxstate == "0"){
+				redirect_page("wireless");
+			}			
+			else if(autodet_state == 4 && parent.hadPlugged("modem")){ // ethernet did not plug
 				redirect_page("modem");
 			}	
 			else if(autodet_state == "2" && wanauxstate != "1"){

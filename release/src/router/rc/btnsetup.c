@@ -178,8 +178,8 @@ int rand_seed_by_time(void)
 #ifdef OTS_SIMU
 int ots_simu(int stage)
 {
-	printf("ots check: %d %d\n", stage, atoi(nvram_safe_get("ots_simu_stage")));
-	if(stage==atoi(nvram_safe_get("ots_simu_stage")))
+	printf("ots check: %d %d\n", stage, nvram_get_int("ots_simu_stage"));
+	if(stage==nvram_get_int("ots_simu_stage"))
 	{
 		nvram_set("ots_simu_stage", "");
 		return 0;
@@ -342,10 +342,10 @@ int btn_setup_get_setting(PKT_SET_INFO_GW_QUICK *pkt)	// WLAN 2.4G
 	if(nvram_match("wl0_auth_mode_x", "open"))
 	{
 		pkt->WSetting.Auth=AUTHENTICATION_OPEN;
-		pkt->WSetting.Encrypt=atoi(nvram_safe_get("wl0_wep_x"));
+		pkt->WSetting.Encrypt=nvram_get_int("wl0_wep_x");
 		if (pkt->WSetting.Encrypt>ENCRYPTION_DISABLE)
 		{
-			pkt->WSetting.DefaultKey = atoi(nvram_safe_get("wl0_key"));
+			pkt->WSetting.DefaultKey = nvram_get_int("wl0_key");
 			sprintf(tmpbuf, "wl0_key%d", pkt->WSetting.DefaultKey);
 			strcpy(pkt->WSetting.Key, nvram_safe_get(tmpbuf));
 		}
@@ -353,10 +353,10 @@ int btn_setup_get_setting(PKT_SET_INFO_GW_QUICK *pkt)	// WLAN 2.4G
 	else if(nvram_match("wl0_auth_mode_x", "shared"))
 	{
 		pkt->WSetting.Auth=AUTHENTICATION_SHARED;
-		pkt->WSetting.Encrypt=atoi(nvram_safe_get("wl0_wep_x"));
+		pkt->WSetting.Encrypt=nvram_get_int("wl0_wep_x");
 		if (pkt->WSetting.Encrypt>ENCRYPTION_DISABLE)
 		{
-			pkt->WSetting.DefaultKey = atoi(nvram_safe_get("wl0_key"));
+			pkt->WSetting.DefaultKey = nvram_get_int("wl0_key");
 			sprintf(tmpbuf, "wl0_key%d", pkt->WSetting.DefaultKey);
 			strcpy(pkt->WSetting.Key, nvram_safe_get(tmpbuf));
 		}	
@@ -402,10 +402,10 @@ int btn_setup_get_setting2(PKT_SET_INFO_GW_QUICK *pkt)	// WLAN 5G
 	if(nvram_match("wl1_auth_mode_x", "open"))
 	{
 		pkt->WSetting.Auth=AUTHENTICATION_OPEN;
-		pkt->WSetting.Encrypt=atoi(nvram_safe_get("wl1_wep_x"));
+		pkt->WSetting.Encrypt=nvram_get_int("wl1_wep_x");
 		if (pkt->WSetting.Encrypt>ENCRYPTION_DISABLE)
 		{
-			pkt->WSetting.DefaultKey = atoi(nvram_safe_get("wl1_key"));
+			pkt->WSetting.DefaultKey = nvram_get_int("wl1_key");
 			sprintf(tmpbuf, "wl1_key%d", pkt->WSetting.DefaultKey);
 			strcpy(pkt->WSetting.Key, nvram_safe_get(tmpbuf));
 		}
@@ -413,10 +413,10 @@ int btn_setup_get_setting2(PKT_SET_INFO_GW_QUICK *pkt)	// WLAN 5G
 	else if(nvram_match("wl1_auth_mode_x", "shared"))
 	{
 		pkt->WSetting.Auth=AUTHENTICATION_SHARED;
-		pkt->WSetting.Encrypt=atoi(nvram_safe_get("wl1_wep_x"));
+		pkt->WSetting.Encrypt=nvram_get_int("wl1_wep_x");
 		if (pkt->WSetting.Encrypt>ENCRYPTION_DISABLE)
 		{
-			pkt->WSetting.DefaultKey = atoi(nvram_safe_get("wl1_key"));
+			pkt->WSetting.DefaultKey = nvram_get_int("wl1_key");
 			sprintf(tmpbuf, "wl1_key%d", pkt->WSetting.DefaultKey);
 			strcpy(pkt->WSetting.Key, nvram_safe_get(tmpbuf));
 		}	
@@ -1261,8 +1261,8 @@ int OTSPacketHandler(int sockfd)
 		     
 		     ezprobe_res = (PKT_EZPROBE_INFO *)(pdubuf_res+sizeof(IBOX_COMM_PKT_RES_EX));		
 
-		     ezprobe_res->isNotDefault = atoi(nvram_safe_get("x_Setting")) | atoi(nvram_safe_get("wl0_wsc_config_state")) | atoi(nvram_safe_get("wl1_wsc_config_state")); // for EZSetup to coexist w/ WSC
-		     ezprobe_res->isSetByOts = atoi(nvram_safe_get("x_EZSetup"));
+		     ezprobe_res->isNotDefault = nvram_get_int("x_Setting") | nvram_get_int("wl0_wsc_config_state") | nvram_get_int("wl1_wsc_config_state"); // for EZSetup to coexist w/ WSC
+		     ezprobe_res->isSetByOts = nvram_get_int("x_EZSetup");
 //		     ezprobe_res->isWAN = is_phyconnected(nvram_safe_get("wan_ifname"));
 		     ezprobe_res->isWAN = isWAN_detect();
 		     ezprobe_res->isDHCP = 0;

@@ -96,6 +96,7 @@ size_t dhcp_reply(struct dhcp_context *context, char *iface_name, int int_index,
 #ifdef HAVE_SCRIPT
   unsigned char *class = NULL;
 #endif
+  char *vendorid = NULL; 
 
   subnet_addr.s_addr = override.s_addr = 0;
 
@@ -460,9 +461,11 @@ size_t dhcp_reply(struct dhcp_context *context, char *iface_name, int int_index,
     {
       memcpy(daemon->dhcp_buff3, option_ptr(opt, 0), option_len(opt));
       vendor_class_len = option_len(opt);
+      daemon->dhcp_buff3[vendor_class_len+1] = '\0';
+      vendorid = daemon->dhcp_buff3;
     }
   match_vendor_opts(opt, daemon->dhcp_opts);
-  
+ 
   if (option_bool(OPT_LOG_OPTS))
     {
       if (sanitise(opt, daemon->namebuff))
@@ -607,7 +610,10 @@ size_t dhcp_reply(struct dhcp_context *context, char *iface_name, int int_index,
 				have_config(config, CONFIG_TIME) ? config->lease_time : 0xffffffff, 
 				now); 
 	      lease_set_interface(lease, int_index, now);
-	      
+
+	      if (vendorid)
+		lease_set_vendorid(lease, vendorid, now);
+ 
 	      clear_packet(mess, end);
 	      do_options(context, mess, end, NULL, hostname, get_domain(mess->yiaddr), 
 			 netid, subnet_addr, 0, 0, -1, NULL, vendor_class_len, now);
@@ -1353,6 +1359,10 @@ size_t dhcp_reply(struct dhcp_context *context, char *iface_name, int int_index,
 	  
 	  lease_set_expires(lease, time, now);
 	  lease_set_interface(lease, int_index, now);
+
+	  if (vendorid)
+            lease_set_vendorid(lease, vendorid, now);
+
 
 	  if (override.s_addr != 0)
 	    lease->override = override;
@@ -2295,7 +2305,7 @@ static void do_options(struct dhcp_context *context,
       if (in_list(req_options, OPTION_HOSTNAME) &&
 	  !option_find2(OPTION_HOSTNAME))
 	option_put_string(mess, end, OPTION_HOSTNAME, hostname, null_term);
-      
+
       if (fqdn_flags != 0)
 	{
 	  len = strlen(hostname) + 3;

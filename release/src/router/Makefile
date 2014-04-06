@@ -429,6 +429,7 @@ endif
 
 obj-$(RTCONFIG_TCPDUMP) += libpcap
 obj-$(RTCONFIG_TCPDUMP) += tcpdump-4.4.0
+obj-$(RTCONFIG_QTN) += libqcsapi_client
 
 # Merlin addons
 obj-n += wol
@@ -740,10 +741,6 @@ endif
 	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/cdc_ether.*o $(PLATFORMDIR)/extras/ || true
 	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/rndis_host.*o $(PLATFORMDIR)/extras/ || true
 	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/sierra.*o $(PLATFORMDIR)/extras/ || true
-	$(if $(RTCONFIG_USB_MODEM),$(if $(RTCONFIG_USB_LESSMODEM),@mv,@cp -f),@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/net1080.*o $(PLATFORMDIR)/extras/ || true
-	$(if $(RTCONFIG_USB_MODEM),$(if $(RTCONFIG_USB_LESSMODEM),@mv,@cp -f),@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/zaurus.*o $(PLATFORMDIR)/extras/ || true
-	$(if $(RTCONFIG_USB_MODEM),$(if $(RTCONFIG_USB_LESSMODEM),@mv,@cp -f),@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/ftdi_sio.*o $(PLATFORMDIR)/extras/ || true
-	$(if $(RTCONFIG_USB_MODEM),$(if $(RTCONFIG_USB_LESSMODEM),@mv,@cp -f),@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/pl2303.*o $(PLATFORMDIR)/extras/ || true
 
 	@mv $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/usbkbd.*o $(PLATFORMDIR)/extras/ || true
 	@mv $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/usbmouse.*o $(PLATFORMDIR)/extras/ || true
@@ -1255,6 +1252,7 @@ iptables-1.4.x-configure:
 iptables-1.4.x-install:
 	install -D iptables-1.4.x/iptables/.libs/xtables-multi $(INSTALLDIR)/iptables-1.4.x/usr/sbin/xtables-multi
 	cd $(INSTALLDIR)/iptables-1.4.x/usr/sbin && \
+		ln -sf xtables-multi iptables-save && \
 		ln -sf xtables-multi iptables-restore && \
 		ln -sf xtables-multi iptables
 	install -d $(INSTALLDIR)/iptables-1.4.x/usr/lib/xtables
@@ -1923,6 +1921,18 @@ tcpdump-4.4.0-install: tcpdump-4.4.0
 tcpdump-4.4.0-clean:
 	[ ! -f tcpdump-4.4.0/Makefile ] || $(MAKE) -C tcpdump-4.4.0 clean
 	@rm -f tcpdump-4.4.0/stamp-h1
+
+libqcsapi_client-install: libqcsapi_client
+	install -d $(INSTALLDIR)/libqcsapi_client/usr/lib/
+	install -d $(INSTALLDIR)/libqcsapi_client/usr/sbin/
+	install -D libqcsapi_client/libqcsapi_client.so.1.0.1 $(INSTALLDIR)/libqcsapi_client/usr/lib/
+	install -D libqcsapi_client/qcsapi_sockrpc $(INSTALLDIR)/libqcsapi_client/usr/sbin/
+	install -D libqcsapi_client/c_rpc_qcsapi_sample $(INSTALLDIR)/libqcsapi_client/usr/sbin/
+	$(STRIP) $(INSTALLDIR)/libqcsapi_client/usr/lib/*.so.*
+	$(STRIP) $(INSTALLDIR)/libqcsapi_client/usr/sbin/*
+	cd $(INSTALLDIR)/libqcsapi_client/usr/lib && \
+		ln -sf libqcsapi_client.so.1.0.1 libqcsapi_client.so.1 && \
+		ln -sf libqcsapi_client.so.1.0.1 libqcsapi_client.so
 
 libbcm:
 	@[ ! -f libbcm/Makefile ] || $(MAKE) -C libbcm

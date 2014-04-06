@@ -1916,8 +1916,8 @@ usb_dbg("3G: Auto setting.\n");
 			write_3g_conf(fp, SN_Onda_MSA14_4, 1, vid, pid);
 		else if(vid == 0x22de && pid == 0x6803)
 			write_3g_conf(fp, SN_WeTelecom_WMD300, 1, vid, pid);
-		/*else
-			write_3g_conf(fp, UNKNOWNDEV, 1, vid, pid);//*/
+		else if(vid == 0x12d1)
+			write_3g_conf(fp, UNKNOWNDEV, 1, vid, pid);
 		else{
 			fclose(fp);
 			unlink(conf_file);
@@ -2607,8 +2607,9 @@ int set_usb_common_nvram(const char *action, const char *device_name, const char
 		if(known_type == NULL){
 			snprintf(prefix, sizeof(prefix), "usb_path%s", port_path);
 			snprintf(been_type, 16, "%s", nvram_safe_get(prefix));
-			nvram_unset(prefix);
 
+			if(strcmp(been_type, "storage") || strlen(nvram_safe_get(strcat_r(prefix, "_speed", tmp))) <= 0)
+				nvram_unset(prefix);
 			if(strlen(nvram_safe_get(strcat_r(prefix, "_vid", tmp))) > 0)
 				nvram_unset(tmp);
 			if(strlen(nvram_safe_get(strcat_r(prefix, "_pid", tmp))) > 0)
@@ -2625,16 +2626,17 @@ int set_usb_common_nvram(const char *action, const char *device_name, const char
 				nvram_unset(tmp);
 		}
 		else{
-			snprintf(prefix, sizeof(prefix), "usb_path_%s", device_name);
-			nvram_unset(prefix);
-
 			if(!strcmp(known_type, "storage")){
+				snprintf(prefix, sizeof(prefix), "usb_path_%s", device_name);
+				nvram_unset(prefix);
 				nvram_unset(strcat_r(prefix, "_label", tmp));
 
 				ptr = device_name+strlen(device_name)-1;
 				if(!isdigit(*ptr)){
-					// for ATE. {
 					snprintf(prefix, sizeof(prefix), "usb_path%s", port_path);
+					if(strlen(nvram_safe_get(strcat_r(prefix, "_vid", tmp))) <= 0)
+						nvram_unset(prefix);
+					// for ATE. {
 					// Jerry5Chang added for unmount case. 2012.12.03
 					nvram_unset(strcat_r(prefix, "_removed", tmp));
 					nvram_unset(strcat_r(prefix, "_act", tmp)); // for DM.
@@ -2776,19 +2778,32 @@ int asus_sd(const char *device_name, const char *action){
 		memset(usb_node, 0, 32);
 		strcpy(usb_node, nvram_safe_get(buf1));
 
-#ifdef RTCONFIG_XHCIMODE
 		if(get_path_by_node(usb_node, port_path, 8) == NULL){
 			usb_dbg("(%s): Fail to get usb path.\n", usb_node);
 			file_unlock(isLock);
 			return 0;
 		}
 
-		snprintf(tmp, 100, "usb_path%s_speed", port_path);
-		snprintf(nvram_value, 32, "%s", nvram_safe_get(tmp));
+		snprintf(prefix, sizeof(prefix), "usb_path%s", port_path);
+
+#ifdef RTCONFIG_XHCIMODE
+		if(atoi(port_path) == 1 && nvram_get_int("usb_usb3") != 1 && !isdigit(*ptr)){
+			// Get the xhci mode.
+			if(f_read_string("/sys/module/xhci_hcd/parameters/usb2mode", buf1, 32) <= 0){
+				usb_dbg("(%s): Fail to get xhci mode.\n", device_name);
+				file_unlock(isLock);
+				return 0;
+			}
+			usb2mode = atoi(buf1);
+
+			snprintf(nvram_value, 32, "%s", nvram_safe_get(strcat_r(prefix, "_speed", tmp)));
+			if(usb2mode != 0 && strlen(nvram_value) > 0 && strcmp(nvram_value, "5000"))
+				notify_rc("restart_xhcimode 0");
+		}
 #endif
 
 		if(strlen(usb_node) > 0){
-			if(!isdigit(*ptr))
+			if(!strcmp(nvram_safe_get(prefix), "storage") && !isdigit(*ptr))
 				set_usb_common_nvram(action, device_name, usb_node, "storage");
 			usb_dbg("(%s): Remove Storage on USB node %s.\n", device_name, usb_node);
 		}
@@ -2814,21 +2829,6 @@ int asus_sd(const char *device_name, const char *action){
 		unsetenv("SUBSYSTEM");
 		unsetenv("MAJOR");
 		unsetenv("PHYSDEVBUS");
-
-#ifdef RTCONFIG_XHCIMODE
-		if(!strncmp(port_path, "1", 1) && nvram_get_int("usb_usb3") != 1){
-			// Get the xhci mode.
-			if(f_read_string("/sys/module/xhci_hcd/parameters/usb2mode", buf1, 32) <= 0){
-				usb_dbg("(%s): Fail to get xhci mode.\n", device_name);
-				file_unlock(isLock);
-				return 0;
-			}
-			usb2mode = atoi(buf1);
-
-			if(usb2mode != 0 && !isdigit(*ptr) && strlen(nvram_value) > 0 && strcmp(nvram_value, "5000"))
-				notify_rc("restart_xhcimode 0");
-		}
-#endif
 
 		file_unlock(isLock);
 		return 0;
@@ -2882,8 +2882,8 @@ int asus_sd(const char *device_name, const char *action){
 			return 0;
 		}
 
-		if(vid == 0x0bc2 &&
-				(pid == 0xa0a1 || pid == 0x5031)
+		if((vid == 0x0bc2 && (pid == 0xa0a1 || pid == 0x5031))
+				|| (vid == 0x174c && pid == 0x5106)
 				){
 			if(usb2mode != 1){
 				if(!isdigit(*ptr))
@@ -2930,6 +2930,7 @@ after_change_xhcimode:
 #endif
 
 	snprintf(prefix, sizeof(prefix), "usb_path%s", port_path);
+
 	memset(nvram_value, 0, 32);
 	strcpy(nvram_value, nvram_safe_get(prefix));
 	if(strcmp(nvram_value, "") && strcmp(nvram_value, "storage")){
@@ -3183,7 +3184,7 @@ int asus_sg(const char *device_name, const char *action){
 			xstart("usb_modeswitch", "-c", switch_file);
 		}
 	}
-	else if(strcmp(port_path, "3") // usb_path3 is worked for the built-in card reader.
+	else if(atoi(port_path) != 3 // usb_path3 is worked for the built-in card reader.
 			&& !is_create_file_dongle(vid, pid)
 			){
 		if(strcmp(nvram_safe_get("stop_sg_remove"), "1"))

@@ -275,6 +275,7 @@ void lease_update_file(time_t now)
 
 	  ourprintf(&err, " %s ", daemon->addrbuff);
 	  ourprintf(&err, "%s ", lease->hostname ? lease->hostname : "*");
+	  ourprintf(&err, "%s ", lease->ven_id ? lease->ven_id : "*"); 
 	  	  
 	  if (lease->clid && lease->clid_len != 0)
 	    {
@@ -1008,6 +1009,25 @@ void lease_set_interface(struct dhcp_lease *lease, int interface, time_t now)
 #ifdef HAVE_DHCP6
   slaac_add_addrs(lease, now, 0);
 #endif
+}
+
+void lease_set_vendorid(struct dhcp_lease *lease, char *vendor_id, time_t now)
+{
+  (void)now;
+  char *new_ven_id;
+
+  if (lease->ven_id && vendor_id && hostname_isequal(lease->ven_id, vendor_id))
+    return;
+
+  if (!vendor_id && !lease->ven_id)
+    return;
+
+  if ((new_ven_id = whine_malloc(strlen(vendor_id) + 1))) 
+  {
+    strcpy(new_ven_id, vendor_id);
+    lease->ven_id = new_ven_id;
+    lease->flags |= LEASE_CHANGED;
+  }
 }
 
 void rerun_scripts(void)

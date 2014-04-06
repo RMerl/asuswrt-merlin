@@ -452,7 +452,7 @@ function updateDateTime(){
 		  				<div class="formfontdesc"><#FirewallConfig_display1_sectiondesc#></div>
 		  				<div class="formfontdesc"><#FirewallConfig_display3_sectiondesc#></div>
 		  				<div class="formfontdesc" style="color:#FFCC00;"><#FirewallConfig_display4_sectiondesc#></div>	
-		  				<div id="svc_hint_div" style="display:none;"><span onClick="location.href='Advanced_System_Content.asp?af=ntp_server0'" style="color:#FFCC00;text-decoration:underline;cursor:pointer;">* Remind: Did not synchronize your system time with NTP server yet.</span></div>
+		  				<div id="svc_hint_div" style="display:none;"><span onClick="location.href='Advanced_System_Content.asp?af=ntp_server0'" style="color:#FFCC00;text-decoration:underline;cursor:pointer;"><#General_x_SystemTime_syncNTP#></span></div>
 		  				<div id="timezone_hint_div" style="display:none;"><span id="timezone_hint" onclick="location.href='Advanced_System_Content.asp?af=time_zone_select'" style="color:#FFCC00;text-decoration:underline;cursor:pointer;"></span></div>
 
 						<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">

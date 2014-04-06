@@ -351,7 +351,6 @@ struct nvram_tuple router_defaults[] = {
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_BCMARM
 	{ "wl_itxbf", "1" },
-	{ "wl0_itxbf", "0" },
 #endif
 #endif
 
@@ -708,7 +707,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "upnp_max_lifetime", "86400" },
 
 #ifdef RTCONFIG_DUALWAN // RTCONFIG_DUALWAN
-	{ "wans_mode", "fo" }, 		// off/failover/loadbance/routing(off/fo/lb/rt)
+	{ "wans_mode", "fo" }, 		// off/failover/failback/loadbance(off/fo/fb/lb)
 #ifdef RTCONFIG_DSL
 	{ "wans_dualwan", "dsl none"},
 #else
@@ -728,6 +727,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "wandog_interval", "5" },
 	{ "wandog_maxfail", "12" },
 	{ "wandog_delay", "0" },
+	{ "wandog_fb_count", "4" },
 #endif // RTCONFIG_DUALWAN
 
 #ifdef RTCONFIG_DSL
@@ -1084,7 +1084,7 @@ struct nvram_tuple router_defaults[] = {
 #ifdef RTCONFIG_USB
 	{ "acc_num", "1"},
 	{ "acc_list", "admin>admin"},
-	{ "st_samba_mode", "1"},
+	{ "st_samba_mode", "4"},
 	{ "st_ftp_mode", "2"},
 	{ "enable_ftp", "0"},
 	{ "enable_samba", "1"},
@@ -1152,11 +1152,14 @@ struct nvram_tuple router_defaults[] = {
 	{ "dms_enable", "1" 	},
 	{ "dms_rescan", "1"	},
 	{ "dms_port", "8200" 	},
-	{ "dms_dbdir", "/var/cache/minidlna"	},
+	{ "dms_dbdir", "/var/cache/minidlna"},
 	{ "dms_dir", "/tmp/mnt" },
 	{ "dms_tivo", "0"	},
 	{ "dms_stdlna", "0"	},
 	{ "dms_sas", 	"0"	},
+	{ "dms_dir_x", "</tmp/mnt"},
+	{ "dms_dir_type_x", "<AVP"},
+	{ "dms_friendly_name",""},
 	{ "daapd_enable", "0" 	},
 #endif
 
@@ -1201,6 +1204,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "http_enable", "0"}, // 0: http, 1: https, 2: both
 	{ "http_client", "0"},
 	{ "http_clientlist", "0"},
+	{ "http_autologout", "30"},
 
 	{ "temp_lang", ""},
 	{ "wollist", ""},
@@ -1657,10 +1661,11 @@ struct nvram_tuple router_defaults[] = {
 	{ "ipv6_fw_rulelist",	""		},	// IPv6 allowed forward rules
 	{ "ipv6_ra_conf",	"noneset"	},	// address configuration from WAN router advertisement
 	{ "ipv6_dhcp6s_enable",	"1"		},	// DHCP6 Server for LAN
+	{ "ipv6_neighsol_drop", "1"		},	// Filter out neighbour solicitation flood on Comcast network
 	{ "ipv6_pd_vlifetime",	""		},	// The valid lifetime for the prefix obtained via DHCPv6-PD
 	{ "ipv6_pd_plifetime",	""		},	// The preferred lifetime for the prefix obtained via DHCPv6-PD
 
-	{ "web_redirect", 	"1"		},	// Only NOLINK is redirected in default, it is overwrited in init_nvram
+	{ "web_redirect", 	"3"		},	// Redirect on NOLINK or NOINTERNET
 	{ "disiosdet",		"1"		},
 
 #ifdef RTCONFIG_FANCTRL

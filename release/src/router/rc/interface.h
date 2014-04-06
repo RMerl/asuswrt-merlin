@@ -77,7 +77,7 @@ enum {
  * char *cputag	- NULL: return config string excluding CPU port
  *		  PSTR: return config string including CPU port, tagged with PSTR, eg. 8|8t|8*
  */
-extern void _switch_gen_config(char *buf, const int ports[SWPORT_COUNT], int swmask, char *cputag);
+extern void _switch_gen_config(char *buf, const int ports[SWPORT_COUNT], int swmask, char *cputag, int wan);
 
 /* Generates switch ports config string
  * char *buf	- pointer to buffer[SWCFG_BUFSIZE] for result string

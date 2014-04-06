@@ -63,7 +63,7 @@ function showDST(){
 	var system_timezone_dut = "<% nvram_get("time_zone"); %>";
 	if(system_timezone_dut.search("DST") >= 0 && "<% nvram_get("time_zone_dst"); %>" == "1"){
 		document.getElementById('dstzone').style.display = "";
-		document.getElementById('dstzone').innerHTML = "* <#General_x_SystemTime_dst#>";
+		document.getElementById('dstzone').innerHTML = "<#General_x_SystemTime_dst#>";
 	}
 }
 

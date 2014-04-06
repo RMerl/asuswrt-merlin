@@ -140,6 +140,8 @@ function submitForm(){
 
 var wanstate;
 var RetryCountDown_fail = 10;
+var link_wan_status;
+var link_wan1_status;
 function detect3GConn(){
 	$j.ajax({
 		url: '/result_of_get_changed_status_QIS.asp',
@@ -155,12 +157,16 @@ function detect3GConn(){
 				detect3GConn();			
 		},
 		success: function(response){
-			if(wanstate == "2")
+			if(wanstate == "2"){
 				connVerify("1");
+			}
+			else if(link_wan_status == '2' || link_wan1_status == '2'){
+				connVerify("3");
+			}
 			else{
 				--RetryCountDown_fail;
 				if(RetryCountDown_fail < 1){
-					document.getElementById("retryCount").innerHTML = '<input type="button" id="nextButton" value="<#CTL_Detect_Again#>" class="button_gen" onclick="RetryCountDown_fail=10;detect3GConn();">';
+					document.getElementById("retryCount").innerHTML = '<input type="button" value="<#CTL_Detect_Again#>" class="button_gen" onclick="RetryCountDown_fail=10;detect3GConn();">';
 					connVerify("2");
 				}
 				else{
@@ -177,9 +183,39 @@ function goWireless(){
 	location.href = '/qis/QIS_wireless.htm';
 }
 
+function send_setting(){
+	$j.ajax({
+		url: '/setting_lan.htm',
+		dataType: 'script',
+		
+		error: function(xhr){
+			setTimeout("send_setting();", 1000);
+		},
+		success: function(response){
+			setTimeout(function(){
+				parent.location.href = "http://" + get_new_lanip() + '/QIS_wizard.htm?flag=detect';
+			}, 30000);
+		}
+	});
+}
+
 function connVerify(conn){
 	if(conn == 1){ // conn OK!
 		goWireless();
+	}	
+	else if(conn == 3){ // IP conflict!
+		document.getElementById("newIp").innerHTML = get_new_lanip();
+
+		document.getElementById("IpConflict").style.display = "";
+		document.getElementById("Conn3GFail").style.display = "none";
+		document.getElementById("tblsetting_1").style.display = "none";
+		document.getElementById("Conn3GRetry").style.display = "none";
+		document.getElementById("nextButton").style.display = "none";
+		document.getElementById("loadingIcon").style.display = "none";
+		document.getElementById("loadingNote").style.display = "none";
+		document.getElementById("resetField").style.display = "none";			
+		document.getElementById("theFieldset").style.display = "none";			
+		document.getElementById("applyBtn").style.display = "none";
 	}	
 	else if(conn == 0){ // retry..
 		document.getElementById("Conn3GFail").style.display = "none";
@@ -402,14 +438,14 @@ function switch_modem_mode(mode){
 
 function show_ISP_list(){
 	var removeItem = 0;
-	free_options($("modem_isp"));
-	$("modem_isp").options.length = isplist.length;
+	free_options(document.form.modem_isp);
+	document.form.modem_isp.options.length = isplist.length;
 
 	for(var i = 0; i < isplist.length; i++){
 	  if(protolist[i] == 4 && !wimax_support){
-			$("modem_isp").options.length = $("modem_isp").options.length - 1;
+			document.form.modem_isp.options.length = $("modem_isp").options.length - 1;
 
-			if($("modem_isp").options.length > 0)
+			if(document.form.modem_isp.options.length > 0)
 				continue;
 			else{
 				alert('We currently do not support this location, please use "Manual"!');
@@ -419,16 +455,16 @@ function show_ISP_list(){
 			}
 		}
 		else
-			$("modem_isp").options[i] = new Option(isplist[i], isplist[i]);
+			document.form.modem_isp.options[i] = new Option(isplist[i], isplist[i]);
 
 		if(isplist[i] == isp)
-			$("modem_isp").options[i].selected = 1;
+			document.form.modem_isp.options[i].selected = 1;
 	}
 }
 
 function show_APN_list(){
-	var ISPlist = $("modem_isp").value;
-	var Countrylist = $("isp_countrys").value;
+	var ISPlist = document.form.modem_isp.value;
+	var Countrylist = document.form.modem_country.value;
 
 	var isp_order = -1;
 	for(isp_order = 0; isp_order < isplist.length; ++isp_order){
@@ -588,6 +624,51 @@ function submitenter(myfield,e)
 	else
    	return true;
 }
+
+function get_new_lanip(){
+	var current_lanip = '<% nvram_get("lan_ipaddr"); %>';
+	var current_mask = '<% nvram_get("lan_netmask"); %>';
+	var reverse_mask_num = ~(inet_aton(current_mask));
+	var current_lanip_num = inet_aton(current_lanip);
+	var new_lanip_num = current_lanip_num+reverse_mask_num+1;
+	
+	return inet_ntoa(new_lanip_num);
+}
+
+function inet_aton(ip_str){
+	if(!ip_str)
+		return -1;
+	
+	var re = /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/;
+	if(re.test(ip_str)){
+		var v1 = parseInt(RegExp.$1);
+		var v2 = parseInt(RegExp.$2);
+		var v3 = parseInt(RegExp.$3);
+		var v4 = parseInt(RegExp.$4);
+		
+		if(v1 < 256 && v2 < 256 && v3 < 256 && v4 < 256)
+			return v1*256*256*256+v2*256*256+v3*256+v4;
+	}
+	
+	return -2;
+}
+
+function inet_ntoa(ip_num){
+	var v1, v2, v3, v4;
+	var ip_str = "";
+	
+	if(!ip_num || typeof(ip_num) != "number")
+		return null;
+	
+	v1 = (ip_num&0xff000000)>>>24;
+	v2 = (ip_num&0x00ff0000)>>>16;
+	v3 = (ip_num&0x0000ff00)>>>8;
+	v4 = (ip_num&0x000000ff);
+	
+	ip_str = v1+"."+v2+"."+v3+"."+v4;
+	
+	return ip_str;
+}
 </script>
 </head>
 
@@ -632,18 +713,18 @@ function submitenter(myfield,e)
 		</tr>
 
 		<tr>
-    	<th style="width:40%"><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,9);"><#HSDPAConfig_Country_itemname#></a></th>
-      <td>
-      	<select name="modem_country" id="isp_countrys" class="input_option" onchange="switch_modem_mode(document.form.modem_enable_option.value);reloadProfile();"></select>
+    		<th style="width:40%"><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,9);"><#HSDPAConfig_Country_itemname#></a></th>
+      		<td>
+      			<select name="modem_country" class="input_option" onchange="switch_modem_mode(document.form.modem_enable_option.value);reloadProfile();"></select>
 			</td>
 		</tr>
 
-    <tr>
-    	<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,8);"><#HSDPAConfig_ISP_itemname#></a></th>
-      <td>
-      	<select name="modem_isp" id="modem_isp" class="input_option" onchange="show_APN_list();"></select>
-      </td>
-    </tr>
+		<tr>
+    		<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,8);"><#HSDPAConfig_ISP_itemname#></a></th>
+			<td>
+      			<select name="modem_isp" class="input_option" onchange="show_APN_list();"></select>
+			</td>
+		</tr>
 
 		<tr>
 			<th>
@@ -661,11 +742,11 @@ function submitenter(myfield,e)
 			</td>
 		</tr>
 
-    <tr>
+		 <tr>
 			<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,3);"><#HSDPAConfig_private_apn_itemname#></a></th>
-      <td>
-      	<input id="modem_apn" name="modem_apn" class="input_20_table" type="text" value=""/>
-     		<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="display:none;position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="<#select_device_name#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
+			<td>
+				<input id="modem_apn" name="modem_apn" class="input_20_table" type="text" value=""/>
+     			<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="display:none;position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="<#select_device_name#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
 				<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
 			</td>
 		</tr>
@@ -731,25 +812,24 @@ function submitenter(myfield,e)
 	</fieldset>
 </div>
 
-<div id="Conn3GRetry" style="display:none">
+<div id="Conn3GRetry" style="display:none;">
 	<div>
-		<p class='QISGeneralFont' style="font-size:20px;line-height:30px;">
+		<p class="QISGeneralFont" style="font-size:20px;line-height:30px;">
 			<#QKSet_detect_desc2#>: <span id="retryCount" style="color:#FC0"></span>
 		</p>
 	</div>
 	<br>
 </div>
 
-<div id="Conn3GFail" style="display:none">
+<div id="Conn3GFail" style="display:none;">
 	<div>
-		<p class='QISGeneralFont' style="font-size:20px;line-height:30px;">
+		<p class="QISGeneralFont" style="font-size:20px;line-height:30px;">
 			Unable to connect to the Internet, please re-enter the information, or double-check your account data with your ISP.		
 		</p>
 	</div>
-
 	<div class="apply_gen" id="resetField" style="margin-top:30px">
-		<input type="button" id="nextButton" value="<#CTL_Reset_OOB#>" onclick="reset3G();" class="button_gen_long" >
-		<input type="button" id="nextButton" value="<#QKSet_wireless_webtitle#>" onclick="goWireless();" class="button_gen_long">
+		<input type="button" value="<#CTL_Reset_OOB#>" onclick="reset3G();" class="button_gen_long" >
+		<input type="button" value="<#QKSet_wireless_webtitle#>" onclick="goWireless();" class="button_gen_long">
 	</div>
 
 	<fieldset class="theFieldset" id="theFieldset" style="display:none;margin-top:10px">
@@ -760,6 +840,23 @@ function submitenter(myfield,e)
 			<a class="iuiA" onclick="goWireless();"><#QKSet_wireless_webtitle#></a>
 		</div>
 	</fieldset>
+</div>
+
+<div id="IpConflict" style="display:none;">
+	<div>
+		<p class="QISGeneralFont" style="font-size:20px;line-height:30px;">
+			<#web_redirect_reason6#>
+			<br>
+			<#web_redirect_case6_desc1#>&nbsp;<b id="newIp"></b>
+			<br>
+			<#web_redirect_case6_desc2#>
+		</p>
+	</div>
+	<div class="apply_gen" style="margin-top:30px">
+			<input type="button" value="Skip" class="button_gen" onclick="goWireless();">
+			<input type="button" value="<#CTL_next#>" class="button_gen" onclick="document.getElementById('loadingIcon_IpConflict').style.display='';send_setting();">
+			<img id="loadingIcon_IpConflict" style="display:none;" src="/images/InternetScan.gif">	
+	</div>
 </div>
 </form>
 </body>

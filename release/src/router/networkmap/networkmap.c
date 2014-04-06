@@ -16,6 +16,7 @@
 //2011.02 Yau add shard memory
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <rtconfig.h>
 
 unsigned char my_hwaddr[6];
 unsigned char my_ipaddr[4];
@@ -197,7 +198,11 @@ int main(int argc, char *argv[])
 
 	//Get Router's IP/Mac
 	strcpy(router_ipaddr, nvram_safe_get("lan_ipaddr"));
+#ifdef RTCONFIG_RGMII_BRCM5301X
+	strcpy(router_mac, nvram_safe_get("et1macaddr"));
+#else
 	strcpy(router_mac, nvram_safe_get("et0macaddr"));
+#endif
         inet_aton(router_ipaddr, &router_addr.sin_addr);
         memcpy(my_ipaddr,  &router_addr.sin_addr, 4);
 

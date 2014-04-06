@@ -190,7 +190,7 @@ function show_ddns_status(){
 
 
 var isMD5DDNSName = function(){
-	var macAddr = '<% nvram_get("et0macaddr"); %>'.toUpperCase().replace(/:/g, "");
+	var macAddr = '<% nvram_get("lan_hwaddr"); %>'.toUpperCase().replace(/:/g, "");
 	return "A"+hexMD5(macAddr).toUpperCase()+".asuscomm.com";
 }
 
@@ -345,7 +345,6 @@ function show_USBDevice(device){
 
 function disk_html(device){
 	var icon_html_code = '';
-
 	icon_html_code += '<a target="statusframe">\n';
 	icon_html_code += '<div id="iconUSBdisk_'+device.usbPath+'" class="iconUSBdisk" onclick="setSelectedDiskOrder(this.id);clickEvent(this);"></div>\n';
 	icon_html_code += '<div id="ring_USBdisk_'+device.usbPath+'" class="iconUSBdisk" style="display:none;z-index:1;"></div>\n';
@@ -607,7 +606,7 @@ function check_status(_device){
 	var i, j;
 	var got_code_0, got_code_1, got_code_2, got_code_3;
 	for(i = 0; i < _device.partition.length; ++i){
-		switch(_device.partition[i].fsck){
+		switch(parseInt(_device.partition[i].fsck)){
 			case 0: // no error.
 				got_code_0 = 1;
 				break;

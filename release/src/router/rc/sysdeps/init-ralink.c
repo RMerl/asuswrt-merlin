@@ -275,7 +275,7 @@ void config_switch()
 	{
 		char parm_buf[] = "XXX";
 
-		stbport = atoi(nvram_safe_get("switch_stb_x"));
+		stbport = nvram_get_int("switch_stb_x");
 		if (stbport < 0 || stbport > 6) stbport = 0;
 		dbG("ISP Profile/STB: %s/%d\n", nvram_safe_get("switch_wantag"), stbport);
 		/* stbport:	Model-independent	unifi_malaysia=1	otherwise
@@ -298,7 +298,7 @@ void config_switch()
 			int t, vlan_val = -1, prio_val = -1;
 			unsigned int mask = 0;
 
-//			voip_port = atoi(nvram_safe_get("voip_port"));
+//			voip_port = nvram_get_int("voip_port");
 			voip_port = 3;
 			if (voip_port < 0 || voip_port > 4)
 				voip_port = 0;		
@@ -457,7 +457,7 @@ void config_switch()
 		if (!nvram_get("switch_ctrlrate_unknown_unicast"))
 			controlrate_unknown_unicast = 0;
 		else
-			controlrate_unknown_unicast = atoi(nvram_get("switch_ctrlrate_unknown_unicast"));
+			controlrate_unknown_unicast = nvram_get_int("switch_ctrlrate_unknown_unicast");
 		if (controlrate_unknown_unicast < 0 || controlrate_unknown_unicast > 1024)
 			controlrate_unknown_unicast = 0;
 		if (controlrate_unknown_unicast)
@@ -470,7 +470,7 @@ void config_switch()
 		if (!nvram_get("switch_ctrlrate_unknown_multicast"))
 			controlrate_unknown_multicast = 0;
 		else
-			controlrate_unknown_multicast = atoi(nvram_get("switch_ctrlrate_unknown_multicast"));
+			controlrate_unknown_multicast = nvram_get_int("switch_ctrlrate_unknown_multicast");
 		if (controlrate_unknown_multicast < 0 || controlrate_unknown_multicast > 1024)
 			controlrate_unknown_multicast = 0;
 		if (controlrate_unknown_multicast)
@@ -483,7 +483,7 @@ void config_switch()
 		if (!nvram_get("switch_ctrlrate_multicast"))
 			controlrate_multicast = 0;
 		else
-			controlrate_multicast = atoi(nvram_get("switch_ctrlrate_multicast"));
+			controlrate_multicast = nvram_get_int("switch_ctrlrate_multicast");
 		if (controlrate_multicast < 0 || controlrate_multicast > 1024)
 			controlrate_multicast = 0;
 		if (controlrate_multicast)
@@ -496,7 +496,7 @@ void config_switch()
 		if (!nvram_get("switch_ctrlrate_broadcast"))
 			controlrate_broadcast = 0;
 		else
-			controlrate_broadcast = atoi(nvram_get("switch_ctrlrate_broadcast"));
+			controlrate_broadcast = nvram_get_int("switch_ctrlrate_broadcast");
 		if (controlrate_broadcast < 0 || controlrate_broadcast > 1024)
 			controlrate_broadcast = 0;
 		if (controlrate_broadcast)

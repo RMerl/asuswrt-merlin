@@ -761,7 +761,7 @@ void start_dnsmasq(int force)
 
 #ifdef WEB_REDIRECT
 	/* Web redirection - all unresolvable will return the router's IP */
-	if(nvram_get_int("nat_state") == NAT_STATE_REDIRECT)
+	if((nvram_get_int("nat_state") == NAT_STATE_REDIRECT) && (nvram_get_int("web_redirect") > 0))
 		fprintf(fp, "address=/#/10.0.0.1\n");
 #endif
 
@@ -1054,7 +1054,7 @@ void start_dhcp6s(void)
 				"};\n", nvram_safe_get("ipv6_rtr_addr"), nvram_get_int("ipv6_prefix_length"));
 		fprintf(fp,	"interface %s {\n"
 					"\taddress-pool pool1 %d;\n"
-				"};\n", nvram_safe_get("lan_ifname"), atoi(nvram_safe_get("ipv6_dhcp_lifetime")));
+				"};\n", nvram_safe_get("lan_ifname"), nvram_get_int("ipv6_dhcp_lifetime"));
 		fprintf(fp,	"pool pool1 {\n"
 					"\trange %s to %s;\n"
 				"};\n", nvram_safe_get("ipv6_dhcp_start"), nvram_safe_get("ipv6_dhcp_end"));
@@ -1328,11 +1328,16 @@ void start_ipv6(void)
 
 void stop_ipv6(void)
 {
+	char *lan_ifname = nvram_safe_get("lan_ifname");
+	char *wan_ifname = get_wan6face();
+
 	stop_radvd();
 	stop_ipv6_tunnel();
 	stop_dhcp6c();
+	eval("ip", "-6", "addr", "flush", "scope", "global", "dev", lan_ifname);
+	eval("ip", "-6", "addr", "flush", "scope", "global", "dev", wan_ifname);
 	eval("ip", "-6", "route", "flush", "scope", "all");
-	eval("ip", "-6", "neigh", "flush", "dev", nvram_safe_get("lan_ifname"));
+	eval("ip", "-6", "neigh", "flush", "dev", lan_ifname);
 }
 #endif
 
@@ -1713,9 +1718,7 @@ int start_networkmap(int bootwait)
 	if (bootwait)
 		networkmap_argv[1] = "--bootwait";
 
-#ifndef RTCONFIG_RGMII_BRCM5301X
 	_eval(networkmap_argv, NULL, 0, &pid);
-#endif
 
 	return 0;
 }
@@ -3427,7 +3430,8 @@ start_services(void)
 #ifdef RTCONFIG_WEBDAV
 	start_webdav();
 #else
-	system("sh /opt/etc/init.d/S50aicloud scan");
+	if(f_exists("/opt/etc/init.d/S50aicloud"))
+		system("sh /opt/etc/init.d/S50aicloud scan");
 #endif
 
 #if defined(RTCONFIG_RALINK) && defined(RTCONFIG_WIRELESSREPEATER)
@@ -3465,7 +3469,8 @@ stop_services(void)
 #ifdef RTCONFIG_WEBDAV
 	stop_webdav();
 #else
-	system("sh /opt/etc/init.d/S50aicloud scan");
+	if(f_exists("/opt/etc/init.d/S50aicloud"))
+		system("sh /opt/etc/init.d/S50aicloud scan");
 #endif
 
 #ifdef RTCONFIG_USB
@@ -3881,6 +3886,10 @@ again:
 			int sw = 0, r;
 			char upgrade_file[64] = "/tmp/linux.trx";
 			char *webs_state_info = nvram_safe_get("webs_state_info");
+
+#ifdef RTCONFIG_SMALL_FW_UPDATE
+			snprintf(upgrade_file,sizeof(upgrade_file),"/tmp/mytmpfs/linux.trx");
+#endif
 
 		#ifdef RTCONFIG_DSL
 			_dprintf("to do start_tc_upgrade\n");
@@ -4401,12 +4410,9 @@ check_ddr_done:
 #ifdef RTCONFIG_FTP
 	else if (strcmp(script, "ftpd") == 0)
 	{
-		if(action&RC_SERVICE_STOP) {
-			stop_ftpd();
-		}
-		if(action&RC_SERVICE_START) {
-			start_ftpd();
-		}
+		if(action&RC_SERVICE_STOP) stop_ftpd();
+		if(action&RC_SERVICE_START) start_ftpd();
+
 		/* for security concern, even if you stop ftp daemon, it is better to restart firewall to clean FTP port: 21. */
 		start_firewall(wan_primary_ifunit(), 0);
 	}
@@ -4416,12 +4422,9 @@ check_ddr_done:
 		nvram_set("st_ftp_force_mode", nvram_safe_get("st_ftp_mode"));
 		nvram_commit();
 
-		if(action&RC_SERVICE_STOP) {
-			stop_ftpd();
-		}
-		if(action&RC_SERVICE_START) {
-			start_ftpd();
-		}
+		if(action&RC_SERVICE_STOP) stop_ftpd();
+		if(action&RC_SERVICE_START) start_ftpd();
+
 		/* for security concern, even if you stop ftp daemon, it is better to restart firewall to clean FTP port: 21. */
 		start_firewall(wan_primary_ifunit(), 0);
 	}
@@ -4429,9 +4432,15 @@ check_ddr_done:
 	else if (strcmp(script, "samba") == 0)
 	{
 		if(action&RC_SERVICE_STOP) stop_samba();
-		if(action&RC_SERVICE_START) {
-			start_samba();
-		}
+		if(action&RC_SERVICE_START) start_samba();
+	}
+	else if (strcmp(script, "samba_force") == 0)
+	{
+		nvram_set("st_samba_force_mode", nvram_safe_get("st_samba_mode"));
+		nvram_commit();
+
+		if(action&RC_SERVICE_STOP) stop_samba();
+		if(action&RC_SERVICE_START) start_samba();
 	}
 #endif
 #ifdef RTCONFIG_WEBDAV
@@ -4447,10 +4456,12 @@ check_ddr_done:
 	}
 #else
 	else if (strcmp(script, "webdav") == 0){
-		system("sh /opt/etc/init.d/S50aicloud scan");
+		if(f_exists("/opt/etc/init.d/S50aicloud"))
+			system("sh /opt/etc/init.d/S50aicloud scan");
 	}
 	else if (strcmp(script, "setting_webdav") == 0){
-		system("sh /opt/etc/init.d/S50aicloud restart");
+		if(f_exists("/opt/etc/init.d/S50aicloud"))
+			system("sh /opt/etc/init.d/S50aicloud restart");
 	}
 #endif
 	else if (strcmp(script, "enable_webdav") == 0)
@@ -5005,10 +5016,12 @@ check_ddr_done:
 	{
 		start_sendmail();
 	}
+#ifdef RTCONFIG_DSL
 	else if (strcmp(script, "DSLsendmail") == 0)
 	{
 		start_DSLsendmail();
 	}	
+#endif
 #endif
 
 #ifdef RTCONFIG_VPNC
@@ -5382,7 +5395,7 @@ void stop_nat_rules(void)
 
 #ifdef WEB_REDIRECT
 	// dnsmasq will handle wildcard resolution
-	restart_dnsmasq(1);
+	if (nvram_get_int("web_redirect") > 0) restart_dnsmasq(1);
 #endif
 }
 
@@ -5400,6 +5413,9 @@ void set_acs_ifnames()
 	memset(acs_ifnames, 0, sizeof(acs_ifnames));
 
 	foreach (word, nvram_safe_get("wl_ifnames"), next) {
+#ifdef RTCONFIG_QTN
+		if (!strcmp(word, "wifi0")) break;
+#endif
 		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 
 		if (nvram_match(strcat_r(prefix, "radio", tmp), "1") &&

@@ -10,6 +10,16 @@ ifeq ($(RTCONFIG_BCMARM),y)
 LDFLAGS += -lgcc_s
 endif
 
+include $(SRCBASE)/.config
+
+ifneq ($(findstring DSL,$(BUILD_NAME)),)
+MODEL = $(subst -,_,$(BUILD_NAME))
+else
+MODEL = $(subst -,,$(BUILD_NAME))
+endif
+
+export CFLAGS += -D$(MODEL)
+
 #CFLAGS	+= -DDEBUG -DDEBUG_MORE
 
 all: $(EXEC) arpstorm

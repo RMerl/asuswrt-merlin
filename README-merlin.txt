@@ -41,7 +41,7 @@ Here is a list of features that Asuswrt-merlin brings over the original
 firmware:
 
 System:
-   - Based on 3.0.0.4.374_4561 sources from Asus
+   - Based on 3.0.0.4.374_4887 sources from Asus
    - Various bugfixes and optimizations
    - Some components were updated to newer versions, for improved
      stability and security
@@ -565,10 +565,40 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 374.41 (xx-xxxx-2014)
+   - NEW: Merged with Asus's 374_4887 GPL.  Notable changes:
+       * Fixed RT-AC68U random reboots
+       * More security fixes in the web server
+       * Improved Media server, SMB and FTP webui
+
    - NEW: Enabled PCP support in miniupnpd.
+   - NEW: Option to allow/deny FTP access from WAN.  Default is to
+          reject WAN connections.  The option can be found on the
+          USB Servers -> Misc page.
+   - NEW: Option to control web redirection while Internet is 
+          down (configurable on the WAN page).
    - CHANGED: Upgraded miniupnpd to 1.8.20140310.
+   - CHANGED: Disk idle exclusion now supports up to 9 disks.
    - FIXED: Language dropdown not properly shown with non-ASCII 
             alphabets.
+   - FIXED: Filter out neighbour solicitation flood on Comcast's 
+            IPv6 network which would result in log spam from the 
+            tables getting filled.  The filter is enabled by 
+            default and can be controled with the 
+            "ipv6_neighsol_drop" nvram setting.
+  - FIXED: EMF wasn't properly configured after wireless was
+           restarted (patch from Vahur)
+  - FIXED: Router crashing when more than around 30 static routes 
+           were entered
+  - FIXED: webui would die for some users when accessing the VPN Server 
+           config page and there were connected OpenVPN clients
+  - FIXED: Unable to enter a negative RSSI on the roaming assistant
+           section (Asus bug in 4887)
+  - FIXED: Couldn't obtain the list of active connections under 
+           System Log -> Connections (Asus bug in 4887)
+  - FIXED: Added missing iptables-save on ARM platform (AC56, AC68)
+  - REMOVED: The Media server database location is no longer
+             configurable, as we've switched to Asus's new 
+             automatic location selection.
 
 
 374.40 (6-March-2014)

@@ -24,9 +24,13 @@ function QKinternettype_load_body(){
 	parent.set_step("t0");		
 
 	//load Product img
-	if((odmpid != "" || odmpid != null) && odmpid != based_modelid
-		&& (odmpid == "RT-N66W")){
-		document.getElementById("ModelPid_img").src="/images/"+ odmpid +"Model_producticon.png";
+	if((odmpid != "" || odmpid != null) && odmpid != based_modelid){
+		if(odmpid == "RT-N66W" || odmpid == "RT-AC68W")
+			document.getElementById("ModelPid_img").src="/images/"+ odmpid +"Model_producticon.png";
+		else if(odmpid == "RT-AC68RW")
+			document.getElementById("ModelPid_img").src="/images/RT-AC68WModel_producticon.png";
+		else
+			document.getElementById("ModelPid_img").src="/images/Model_producticon.png";
 	}else
 		document.getElementById("ModelPid_img").src="/images/Model_producticon.png";
 

@@ -93,11 +93,11 @@ function hideCNT(_val){
 	}
 	else if(_val == "traceroute"){
 		$("pingCNT_tr").style.display = "none";
-		$("cmdDesc").innerHTML = "Trace the route to host.";
+		$("cmdDesc").innerHTML = "<#NetworkTools_tr#>";
 	}
 	else{
 		$("pingCNT_tr").style.display = "none";
-		$("cmdDesc").innerHTML = "Query the nameserver for the IP address of the given host optionally using a specified DNS server.";
+		$("cmdDesc").innerHTML = "<#NetworkTools_nslookup#>";
 	}
 }
 

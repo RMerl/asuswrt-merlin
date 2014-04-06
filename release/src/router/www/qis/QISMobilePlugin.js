@@ -1,4 +1,4 @@
-var child_macaddr = '<% nvram_get("et0macaddr"); %>';
+var child_macaddr = '<% nvram_get("lan_hwaddr"); %>';
 var sw_mode_submit = '<% nvram_get("sw_mode"); %>';
 if(parent.document.QKform.sw_mode)
 	sw_mode_submit = parent.document.QKform.sw_mode.value;

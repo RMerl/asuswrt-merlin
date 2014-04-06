@@ -185,6 +185,14 @@ setMAC_2G(const char *mac)
 			eval("nvram", "set", cmd_l );
 			puts(nvram_safe_get("et0macaddr"));
 			break;
+		case MODEL_RTAC87U:
+			memset(cmd_l, 0, 64);
+			sprintf(cmd_l, "asuscfeet1macaddr=%s", mac);
+			eval("nvram", "set", cmd_l );
+			sprintf(cmd_l, "asuscfe0:macaddr=%s", mac);
+			eval("nvram", "set", cmd_l );
+			puts(nvram_safe_get("et1macaddr"));
+			break;
 	}
 	return 1;
 }
@@ -1467,7 +1475,11 @@ getWiFiStatus(const char *ifc)
 int
 getMAC_2G(void)
 {
-	puts(nvram_safe_get("et0macaddr"));
+#ifdef RTCONFIG_RGMII_BRCM5301X
+	puts(nvram_safe_get("et1macaddr"));
+#else
+ 	puts(nvram_safe_get("et0macaddr"));
+#endif
 	return 0;
 }
 

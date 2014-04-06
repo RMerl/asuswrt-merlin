@@ -1598,6 +1598,28 @@ int main(int argc, char **argv)
         	}
 	}
 
+#ifdef RTCONFIG_QTN
+	time_t start_time = uptime();
+	int ret;
+QTN_RESET:
+	ret = c_rpc_qcsapi_init();
+	if (ret < 0) {
+		dbG("Qcsapi qcsapi init error, return: %d\n", ret);
+	}
+
+        if (nvram_get_int("qtn_restore_defaults"))
+	{
+		nvram_unset("qtn_restore_defaults");
+		eval("qcsapi_sockrpc", "update_bootcfg_param", "ipaddr", "1.1.1.2");
+                rpc_qcsapi_restore_default_config(0);
+		dbG("Restaring Qcsapi init...\n");
+		sleep(15);
+		goto QTN_RESET;
+	}
+
+	dbG("Qcsapi qcsapi init takes %d secodns\n", uptime() - start_time);
+#endif
+
 	//websSetVer();
 	//2008.08 magic
 	nvram_unset("login_timestamp");

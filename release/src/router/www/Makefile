@@ -224,11 +224,7 @@ ifneq ($(RTCONFIG_USB),y)
 	rm -rf $(INSTALLDIR)/www/disk_functions.js
 endif
 ifneq ($(MODEM),y)
-	-rm -f $(INSTALLDIR)/www/images/modem_unplug.png
-	-rm -f $(INSTALLDIR)/www/images/modem_plug.png
 	-rm -f $(INSTALLDIR)/www/qis/QIS_modem.htm
-	-rm -f $(INSTALLDIR)/www/qis/QIS_resetModem2.htm
-	-rm -f $(INSTALLDIR)/www/qis/QIS_resetModem.htm
 endif
 endif
 

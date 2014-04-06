@@ -98,7 +98,9 @@ extern int test_if_mount_point_of_pool(const char *dirname){
 extern int test_if_System_folder(const char *const dirname){
 	const char *const MS_System_folder[] = {"SYSTEM VOLUME INFORMATION", "RECYCLER", "RECYCLED", "$RECYCLE.BIN", NULL};
 	const char *const Linux_System_folder[] = {"lost+found", NULL};
+	const char *const Mac_System_folder[] = {"Backups.backupdb", "CNID", NULL};
 	int i;
+	char *ptr;
 
 	for(i = 0; MS_System_folder[i] != NULL; ++i){
 		if(!upper_strcmp(dirname, MS_System_folder[i]))
@@ -109,6 +111,16 @@ extern int test_if_System_folder(const char *const dirname){
 		if(!upper_strcmp(dirname, Linux_System_folder[i]))
 			return 1;
 	}
+
+	for(i = 0; Mac_System_folder[i] != NULL; ++i){
+		if(!upper_strcmp(dirname, Mac_System_folder[i]))
+			return 1;
+	}
+
+	i = strlen(dirname);
+	ptr = dirname+i-16;
+	if(i >= 16 && !strcmp(ptr, "Mac.sparsebundle"))
+		return 1;
 
 	return 0;
 }

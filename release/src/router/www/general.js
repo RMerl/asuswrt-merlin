@@ -302,7 +302,15 @@ function validate_range(o, _min, _max) {
 		o.select();
 		return false;
 	}
-	
+/*
+	var reg=/^(0|([1-9]\d*))$/;
+	if(!reg.test(o.value) && Untranslated.valid_range_int){
+		alert(Untranslated.valid_range_int);
+		o.focus();
+		o.select();
+		return false;
+	}
+*/
 	if(_min > _max){
 		var tmpNum = "";
 	
@@ -328,7 +336,15 @@ function validate_range(o, _min, _max) {
 
 function validate_range_sp(o, min, max, def) {		//allow to set "0"
 	if (o.value==0) return true;
-	
+
+	var reg=/^(0|([1-9]\d*))$/;
+	if(!reg.test(o.value) && Untranslated.valid_range_int){
+		alert(Untranslated.valid_range_int);
+		o.focus();
+		o.select();
+		return false;
+	}
+
 	if(o.value<min || o.value>max) {
 		alert('<#JS_validrange#> ' + min + ' <#JS_validrange_to#> ' + max + '.');
 		o.value = def;

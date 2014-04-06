@@ -87,7 +87,7 @@ var array_download_file = [];
 var g_open_url = '';
 var storage_key_map = {
 	"port": "http_port",
-    "agent": "user_agent"
+	"agent": "user_agent"
 };
 
 function showEnableJAVAUI(){
@@ -153,7 +153,8 @@ $("document").ready(function() {
 	var media_hostName = window.location.host;
 	if(media_hostName.indexOf(":")!=-1)
 		media_hostName = media_hostName.substring(0, media_hostName.indexOf(":"));		
-	var jar_file = "http://" + media_hostName + ":" + g_storage.get(storage_key_map["port"]) + '/smb/css/CloudUtil.jar';
+	//var jar_file = "http://" + media_hostName + ":" + g_storage.get(storage_key_map["port"]) + '/smb/css/CloudUtil.jar';
+	var jar_file = '/smb/css/CloudUtil.jar';
 				
 	var applet_html = '<applet name="AiCloud_Applet" id="AiCloud_Applet" ARCHIVE="';
 	applet_html += jar_file;

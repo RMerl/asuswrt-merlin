@@ -43,7 +43,7 @@
 #define WEBSTRFILTER 1
 #define CONTENTFILTER 1
 
-#define foreach_x(x)	for (i=0; i<atoi(nvram_safe_get(x)); i++)
+#define foreach_x(x)	for (i=0; i<nvram_get_int(x); i++)
 
 #ifdef RTCONFIG_IPV6
 char wan6face[IFNAMSIZ + 1];
@@ -885,7 +885,7 @@ void convert_routes(void)
 	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
 	char *nv, *nvp, *b;
 	char *ip, *netmask, *gateway, *metric, *interface;
-	char wroutes[1024], lroutes[1024], mroutes[1024];
+	char wroutes[4096], lroutes[4096], mroutes[4096];
 
 	/* Disable Static if it's not enable */
 	wroutes[0] = 0;
@@ -1233,11 +1233,11 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 		if (nvram_match("webdav_aidisk", "1")) {
 			int port;
 
-			port = atoi(nvram_safe_get("webdav_https_port"));
+			port = nvram_get_int("webdav_https_port");
 			if (!port || port >= 65536)
 				port = 443;
 			fprintf(fp, "-A LOCALSRV -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d\n", port, lan_ip, port);
-			port = atoi(nvram_safe_get("webdav_http_port"));
+			port = nvram_get_int("webdav_http_port");
 			if (!port || port >= 65536)
 				port = 8082;
 			fprintf(fp, "-A LOCALSRV -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d\n", port, lan_ip, port);
@@ -1494,11 +1494,11 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 		if (nvram_match("webdav_aidisk", "1")) {
 			int port;
 
-			port = atoi(nvram_safe_get("webdav_https_port"));
+			port = nvram_get_int("webdav_https_port");
 			if (!port || port >= 65536)
 				port = 443;
 			fprintf(fp, "-A LOCALSRV -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d\n", port, lan_ip, port);
-			port = atoi(nvram_safe_get("webdav_http_port"));
+			port = nvram_get_int("webdav_http_port");
 			if (!port || port >= 65536)
 				port = 8082;
 			fprintf(fp, "-A LOCALSRV -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d\n", port, lan_ip, port);
@@ -1613,7 +1613,9 @@ void redirect_setting(void)
 #endif
 
 	}
-	fprintf(redirect_fp, "-A PREROUTING ! -d %s/%s -p tcp --dport 80 -j DNAT --to-destination %s:18017\n", lan_ipaddr_t, lan_netmask_t, lan_ipaddr_t);
+	if (nvram_get_int("web_redirect") > 0)
+		fprintf(redirect_fp, "-A PREROUTING ! -d %s/%s -p tcp --dport 80 -j DNAT --to-destination %s:18017\n", lan_ipaddr_t, lan_netmask_t, lan_ipaddr_t);
+
 	fprintf(redirect_fp, "COMMIT\n");
 
 	fclose(redirect_fp);
@@ -2100,7 +2102,7 @@ TRACE_PT("writing Parental Control\n");
 		}
 
 #ifdef RTCONFIG_OLD_PARENTALCTRL
-		num = atoi(nvram_safe_get("macfilter_num_x"));
+		num = nvram_get_int("macfilter_num_x");
 
 		for(i = 0; i < num; ++i)
 		{
@@ -2270,8 +2272,6 @@ TRACE_PT("writing Parental Control\n");
 		if (nvram_match("pptpd_enable", "1")) {
 			fprintf(fp, "-A INPUT -i %s -p tcp --dport %d -j %s\n", wan_if, 1723, logaccept);
 			fprintf(fp, "-A INPUT -p 47 -j %s\n",logaccept);
-			stop_pptpd();
-			start_pptpd();
 		}
 #endif
 
@@ -2521,11 +2521,11 @@ TRACE_PT("writing Parental Control\n");
 	if ( nvram_match("wan_proto", "pppoe"))
 	{
 		fprintf(fp, "-I FORWARD -p tcp --tcp-flags SYN,RST SYN -m tcpmss --mss %d: -j TCPMSS "
-			  "--set-mss %d\n", atoi(nvram_safe_get("wan_pppoe_mtu"))-39, atoi(nvram_safe_get("wan_pppoe_mtu"))-40);
+			  "--set-mss %d\n", nvram_get_int("wan_pppoe_mtu")-39, nvram_get_int("wan_pppoe_mtu")-40);
 		
 		if (strlen(macaccept)>0)
 			fprintf(fp, "-A %s -p tcp --tcp-flags SYN,RST SYN -m tcpmss --mss %d: -j TCPMSS "
-			  "--set-mss %d\n", macaccept, atoi(nvram_safe_get("wan_pppoe_mtu"))-39, atoi(nvram_safe_get("wan_pppoe_mtu"))-40);
+			  "--set-mss %d\n", macaccept, nvram_get_int("wan_pppoe_mtu")-39, nvram_get_int("wan_pppoe_mtu")-40);
 	}
 	if (nvram_match("wan_proto", "pptp"))
 	{
@@ -3068,7 +3068,7 @@ TRACE_PT("writing Parental Control\n");
 		}
 
 #ifdef RTCONFIG_OLD_PARENTALCTRL
-		num = atoi(nvram_safe_get("macfilter_num_x"));
+		num = nvram_get_int("macfilter_num_x");
 
 		for(i = 0; i < num; ++i)
 		{
@@ -3503,11 +3503,11 @@ TRACE_PT("writing Parental Control\n");
 	if ( nvram_match("wan_proto", "pppoe"))
 	{
 		fprintf(fp, "-I FORWARD -p tcp --tcp-flags SYN,RST SYN -m tcpmss --mss %d: -j TCPMSS "
-			  "--set-mss %d\n", atoi(nvram_safe_get("wan_pppoe_mtu"))-39, atoi(nvram_safe_get("wan_pppoe_mtu"))-40);
+			  "--set-mss %d\n", nvram_get_int("wan_pppoe_mtu")-39, nvram_get_int("wan_pppoe_mtu")-40);
 
 		if (strlen(macaccept)>0)
 			fprintf(fp, "-A %s -p tcp --tcp-flags SYN,RST SYN -m tcpmss --mss %d: -j TCPMSS "
-			  "--set-mss %d\n", macaccept, atoi(nvram_safe_get("wan_pppoe_mtu"))-39, atoi(nvram_safe_get("wan_pppoe_mtu"))-40);
+			  "--set-mss %d\n", macaccept, nvram_get_int("wan_pppoe_mtu")-39, nvram_get_int("wan_pppoe_mtu")-40);
 	}
 	if (nvram_match("wan_proto", "pptp"))
 	{
@@ -4098,6 +4098,14 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 	eval("iptables", "-t", "mangle", "-A", "PREROUTING", "!", "-i", wan_if,
 	     "-d", wan_ip, "-j", "MARK", "--set-mark", "0xd001");
 
+/* Workaround for neighbour solicitation flood from Comcast */
+#ifdef RTCONFIG_IPV6
+	if (nvram_get_int("ipv6_neighsol_drop")) {
+		eval("ip6tables", "-t", "mangle", "-A", "PREROUTING", "-p", "icmpv6", "--icmpv6-type neighbor-solicitation",
+		     "-i", wan_if, "-d", "ff02::1:ff00:0/104", "-j", "DROP");
+	}
+#endif
+
 #ifdef CONFIG_BCMWL5
 	/* mark connect to bypass CTF */
 	if(nvram_match("ctf_disable", "0")) {
@@ -4177,6 +4185,16 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 
 		eval("iptables", "-t", "mangle", "-A", "PREROUTING", "!", "-i", wan_if,
 		     "-d", wan_ip, "-j", "MARK", "--set-mark", "0xd001");
+	}
+#endif
+
+/* Workaround for neighbour solicitation flood from Comcast */
+#ifdef RTCONFIG_IPV6
+	if (nvram_get_int("ipv6_neighsol_drop")) {
+		for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
+			eval("ip6tables", "-t", "mangle", "-A", "PREROUTING", "-p", "icmpv6", "--icmpv6-type neighbor-solicitation",
+			     "-i", get_wan_ifname(unit), "-d", "ff02::1:ff00:0/104", "-j", "DROP");
+		}
 	}
 #endif
 

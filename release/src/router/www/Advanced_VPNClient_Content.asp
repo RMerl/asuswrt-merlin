@@ -412,12 +412,12 @@ function show_vpnc_rulelist(){
 				vpnc_clientlist_col[2] == document.form.vpnc_heartbeat_x.value &&
 				vpnc_clientlist_col[3] == document.form.vpnc_pppoe_username.value)
 			{
-				if(vpnc_state_t == 0) // initial
+				if(vpnc_state_t == 0 || vpnc_state_t ==1) // Initial or Connecting
 					code +='<td width="10%"><img src="/images/InternetScan.gif"></td>';
-				else if(vpnc_state_t == 1) // disconnect
-					code +='<td width="10%"><img src="/images/button-close2.png" style="width:25px;"></td>';
-				else // connected
+				else if(vpnc_state_t == 2) // Connected
 					code +='<td width="10%"><img src="/images/checked_parentctrl.png" style="width:25px;"></td>';
+				else // Stop connection
+					code +='<td width="10%"><img src="/images/button-close2.png" style="width:25px;"></td>';
 			}
 			else
 				code +='<td width="10%">-</td>';
@@ -697,15 +697,15 @@ function del_Row(rowdata, flag){
 							  <div class="formfonttitle">VPN - VPN Client</div>
 					      <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 					      <div class="formfontdesc">
-									VPN (Virtual Private Network) client is often applied to allow a person connecting to VPN server to access private or special resource securely over a public network.<br>
-									However, some devices like set top box, smart TV or Blu-ray player are not able to install VPN software.<br>
-									ASUSWRT VPN client allows all devices in the network to enjoy the VPN function without installing VPN software in each device.<br>
+									<#vpnc_desc1#><br>
+									<#vpnc_desc2#><br>
+									<#vpnc_desc3#><br><br>
 									
-									To start a VPN connection, please follow the steps below:
+									<#vpnc_step#>
 									<ol>
-									<li>Add profile
-									<li>Select a VPN connection type
-									<li>Enter VPN authentication information provided by your VPN provider then connect.
+									<li><#vpnc_step1#>
+									<li><#vpnc_step2#>
+									<li><#vpnc_step3#>
 									</ol>
 								</div>
         			</tr>

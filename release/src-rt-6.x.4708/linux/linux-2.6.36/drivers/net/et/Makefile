@@ -37,6 +37,10 @@ et-objs		+= $(ETSRCDIR)/sys/etc_fa.o
 EXTRA_CFLAGS	+= -DETFA
 endif
 
+ifeq ($(CONFIG_RGMII_BCM_FA),y)
+EXTRA_CFLAGS	+= -DRGMII_BCM_FA
+endif
+
 obj-$(CONFIG_ET) := et.o
 
 EXTRA_CFLAGS	+= -DDMA -Werror

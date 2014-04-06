@@ -57,7 +57,6 @@ char *usb_dev_file = "/proc/bus/usb/devices";
 #define OP_UMOUNT		2
 #define OP_SETNVRAM		3
 
-void force_stop_dms(void);
 char *find_sddev_by_mountpoint(char *mountpoint);
 
 /* Adjust bdflush parameters.
@@ -72,7 +71,7 @@ void tune_bdflush(void)
 #ifndef RTCONFIG_BCMARM
 	f_write_string("/proc/sys/vm/dirty_expire_centisecs", "200", 0, 0);
 #else
-        printf("no tune_bdflush\n");
+	printf("no tune_bdflush\n");
 #endif
 }
 #else
@@ -86,7 +85,7 @@ void tune_bdflush(void)
 }
 #endif // LINUX26
 
-#define NFS_EXPORT	"/etc/exports"
+#define NFS_EXPORT     "/etc/exports"
 
 #ifdef RTCONFIG_USB_PRINTER
 void
@@ -193,16 +192,16 @@ int
 fill_smbpasswd_input_file(const char *passwd)
 {
 	FILE *fp;
-	
+
 	unlink("/tmp/smbpasswd");
 	fp = fopen("/tmp/smbpasswd", "w");
-	
+
 	if (fp && passwd)
 	{
 		fprintf(fp,"%s\n", passwd);
 		fprintf(fp,"%s\n", passwd);
 		fclose(fp);
-		
+
 		return 1;
 	}
 	else
@@ -223,7 +222,7 @@ void start_usb(void)
 
 	if (nvram_get_int("usb_enable")) {
 #ifdef RTCONFIG_BCMARM
-                hotplug_usb_init();
+		hotplug_usb_init();
 #endif
 		modprobe(USBCORE_MOD);
 
@@ -359,10 +358,7 @@ void start_usb(void)
 		modprobe("asix");
 		modprobe("cdc_ether");
 		modprobe("rndis_host");
-#ifndef RTCONFIG_USB_LESSMODEM
-		modprobe("net1080");
-		modprobe("zaurus");
-#endif
+		modprobe("cdc_ncm");
 #endif
 	}
 }
@@ -373,10 +369,7 @@ void remove_usb_modem_modules(void)
 #ifdef RTCONFIG_USB_BECEEM
 	modprobe_r("drxvi314");
 #endif
-#ifndef RTCONFIG_USB_LESSMODEM
-	modprobe_r("zaurus");
-	modprobe_r("net1080");
-#endif
+	modprobe_r("cdc_ncm");
 	modprobe_r("rndis_host");
 	modprobe_r("cdc_ether");
 	modprobe_r("asix");
@@ -532,7 +525,8 @@ void stop_usb_program(int mode)
 #ifdef RTCONFIG_WEBDAV
 	stop_webdav();
 #else
-	system("sh /opt/etc/init.d/S50aicloud scan");
+	if(f_exists("/opt/etc/init.d/S50aicloud"))
+		system("sh /opt/etc/init.d/S50aicloud scan");
 #endif
 
 #ifdef RTCONFIG_USB_PRINTER
@@ -588,6 +582,7 @@ void stop_usb(void)
 		modprobe_r(USBCORE_MOD);
 	}
 }
+
 
 #ifdef RTCONFIG_USB_PRINTER
 void start_usblpsrv(void)
@@ -654,12 +649,10 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *_type)
 
 #ifdef RTCONFIG_BCMARM
 			sprintf(options + strlen(options), ",allow_utime=0022" + (options[0] ? 0 : 1));
-#else
-			sprintf(options + strlen(options), ",allow_utime=0000" + (options[0] ? 0 : 1));
 #endif
 
 			if (nvram_invmatch("smbd_cset", ""))
-				sprintf(options + strlen(options), ",iocharset=%s%s", 
+				sprintf(options + strlen(options), ",iocharset=%s%s",
 						isdigit(nvram_get("smbd_cset")[0]) ? "cp" : "",
 						nvram_get("smbd_cset"));
 
@@ -705,11 +698,11 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *_type)
 				sprintf(options + strlen(options), ",codepage=%s" + (options[0] ? 0 : 1), cp);
 				sprintf(flagfn, "nls_cp%s", cp);
 				TRACE_PT("USB %s(%s) is setting the code page to %s!\n", mnt_dev, type, flagfn);
-			
+
 				cp = nvram_get("smbd_nlsmod");
 				if ((cp) && (*cp != 0) && (strcmp(cp, flagfn) != 0))
 				modprobe_r(cp);
-			
+
 				modprobe(flagfn);
 				nvram_set("smbd_nlsmod", flagfn);
 			}
@@ -1076,7 +1069,7 @@ _dprintf("%s: stop_cloudsync.\n", __FUNCTION__);
 	run_custom_script_blocking("unmount", mnt->mnt_dir);
 
 	sync();
-	sleep(1);	// Give some time for buffers to be physically written to disk
+	sleep(1);       // Give some time for buffers to be physically written to disk
 
 	for (count = 0; count < 35; count++) {
 		sync();
@@ -1805,8 +1798,8 @@ void write_ftpd_conf()
 	{
 		fprintf(fp, "enable_iconv=YES\n");
 		if (nvram_match("ftp_lang", "TW")) {
-			fprintf(fp, "remote_charset=cp950\n");		
-			modprobe("nls_cp950");	
+			fprintf(fp, "remote_charset=cp950\n");
+			modprobe("nls_cp950");
 		}
 		else if (nvram_match("ftp_lang", "CN")) {
 			fprintf(fp, "remote_charset=cp936\n");
@@ -1827,7 +1820,7 @@ void write_ftpd_conf()
 }
 
 /*
- * st_ftp_modex: 0:no-ftp, 1:anonymous, 2:account 
+ * st_ftp_modex: 0:no-ftp, 1:anonymous, 2:account
  */
 
 void
@@ -1841,9 +1834,9 @@ start_ftpd(void)
 	if (nvram_match("enable_ftp", "0")) return;
 
 	write_ftpd_conf();
-	
+
 	killall("vsftpd", SIGHUP);
-	
+
 	if (!pids("vsftpd"))
 		system("vsftpd /etc/vsftpd.conf &");
 
@@ -1920,7 +1913,7 @@ void enable_gro(int interval)
 	char path[64] = {0};
 	char parm[32] = {0};
 
-	if(nvram_get_int("gro_disable")) 
+	if(nvram_get_int("gro_disable"))
 		return;
 
 	/* enabled gso on vlan interface */
@@ -1961,14 +1954,12 @@ int suit_double_quote(const char *output, const char *input, int outsize){
 
 	return dst-output;
 }
-
 #if 0
 #ifdef RTCONFIG_BCMARM
 extern void del_samba_rules(void);
 extern void add_samba_rules(void);
 #endif
 #endif
-
 void
 start_samba(void)
 {
@@ -1980,6 +1971,7 @@ start_samba(void)
 	int cpu_num = sysconf(_SC_NPROCESSORS_CONF);
 	int taskset_ret = -1;
 #endif
+
 	if (getpid() != 1) {
 		notify_rc_after_wait("start_samba");
 		return;
@@ -1994,18 +1986,16 @@ start_samba(void)
 #ifdef RTCONFIG_GROCTRL
 	enable_gro(2);
 #endif
-
 #if 0
 #ifdef RTCONFIG_BCMARM
 	add_samba_rules();
 #endif
 #endif
-
 	mkdir_if_none("/var/run/samba");
 	mkdir_if_none("/etc/samba");
-	
+
 	unlink("/etc/smb.conf");
-	unlink("/etc/samba/smbpasswd");
+	unlink("/etc/smbpasswd");
 
 	/* write samba configure file*/
 	system("/sbin/write_smb_conf");
@@ -2013,7 +2003,7 @@ start_samba(void)
 	/* write smbpasswd  */
 	system("smbpasswd nobody \"\"");
 
-	acc_num = atoi(nvram_safe_get("acc_num"));
+	acc_num = nvram_get_int("acc_num");
 	if(acc_num < 0)
 		acc_num = 0;
 
@@ -2049,12 +2039,12 @@ _dprintf("%s: cmd=%s.\n", __FUNCTION__, cmd);
 	xstart("nmbd", "-D", "-s", "/etc/smb.conf");
 #ifdef RTCONFIG_BCMARM
 #ifdef SMP
-	if (cpu_num > 1)
+	if(cpu_num > 1)
 		taskset_ret = cpu_eval(NULL, "1", "ionice", "-c1", "-n0", "smbd", "-D", "-s", "/etc/smb.conf");
 	else
 		taskset_ret = eval("ionice", "-c1", "-n0", "smbd", "-D", "-s", "/etc/smb.conf");
 
-        if (taskset_ret != 0)
+	if(taskset_ret != 0)
 #endif
 #endif
 		xstart("smbd", "-D", "-s", "/etc/smb.conf");
@@ -2075,19 +2065,17 @@ void stop_samba(void)
 	/* clean up */
 	unlink("/var/log/smb");
 	unlink("/var/log/nmb");
-	
+
 	eval("rm", "-rf", "/var/run/samba");
 
 	logmessage("Samba Server", "smb daemon is stoped");
-
 #if 0
 #ifdef RTCONFIG_BCMARM
-        del_samba_rules();
+	del_samba_rules();
 #endif
 #endif
-
 #ifdef RTCONFIG_GROCTRL
-        enable_gro(0);
+	enable_gro(0);
 #endif
 }
 #endif	// RTCONFIG_SAMBASRV
@@ -2095,46 +2083,45 @@ void stop_samba(void)
 #ifdef RTCONFIG_MEDIA_SERVER
 #define MEDIA_SERVER_APP	"minidlna"
 
-#if 0		// Asuswrt-Merlin uses its own logic
-/* 
+/*
  * 1. if (dms_dbdir) exist and file.db there, use it
  * 2. find the first and the largest write-able directory in /tmp/mnt
- * 3. /var/cache/minidlna 
+ * 3. /var/cache/minidlna
  */
 int find_dms_dbdir_candidate(char *dbdir)
 {
-        disk_info_t *disk_list, *disk_info;
-        partition_info_t *partition_info, *picked;
-        u64 max_size = 256*1024;
+	disk_info_t *disk_list, *disk_info;
+	partition_info_t *partition_info, *picked;
+	u64 max_size = 256*1024;
 	int found;
 
-        disk_list = read_disk_data();
-        if(disk_list == NULL){
-                cprintf("Can't get any disk's information.\n");
-                return 0;
-        }
+	disk_list = read_disk_data();
+	if(disk_list == NULL){
+		cprintf("Can't get any disk's information.\n");
+		return 0;
+	}
 
 	found = 0;
 	picked = NULL;
 
-        for(disk_info = disk_list; disk_info != NULL; disk_info = disk_info->next) {
-                for(partition_info = disk_info->partitions; partition_info != NULL; partition_info = partition_info->next){
-                        if(partition_info->mount_point == NULL){
-                                cprintf("Skip if it can't be mounted.\n");
-                                continue;
-                        }
-			if(strncmp(partition_info->permission, "rw", 2)!=0) {
-				cprintf("Skip if permission is not rw\n"); 
+	for(disk_info = disk_list; disk_info != NULL; disk_info = disk_info->next) {
+		for(partition_info = disk_info->partitions; partition_info != NULL; partition_info = partition_info->next){
+			if(partition_info->mount_point == NULL){
+				cprintf("Skip if it can't be mounted.\n");
 				continue;
 			}
-                               
+			if(strncmp(partition_info->permission, "rw", 2)!=0) {
+				cprintf("Skip if permission is not rw\n");
+				continue;
+			}
+
 			if(partition_info->size_in_kilobytes > max_size && (partition_info->size_in_kilobytes - partition_info->used_kilobytes)>128*1024) {
 				max_size = partition_info->size_in_kilobytes;
 				picked = partition_info;
-			} 
-                }
-        }                          
-        if(picked && picked->mount_point) {
+			}
+		}
+	}
+	if(picked && picked->mount_point) {
 		strcpy(dbdir, picked->mount_point);
 		found = 1;
 	}
@@ -2151,21 +2138,21 @@ void find_dms_dbdir(char *dbdir)
 
   	strcpy(dbdir_t, nvram_safe_get("dms_dbdir"));
 
-        /* if previous dms_dbdir there, use it */
-        if(!strcmp(dbdir, nvram_default_get("dms_dbdir"))==0) {
-                sprintf(dbfile, "%s/file.db", dbdir_t);
-                if (check_if_file_exist(dbfile)) {
-                        strcpy(dbdir, dbdir_t);
-                        found = 1;
-                }
-        }
+	/* if previous dms_dbdir there, use it */
+	if(!strcmp(dbdir_t, nvram_default_get("dms_dbdir"))) {
+		sprintf(dbfile, "%s/file.db", dbdir_t);
+		if (check_if_file_exist(dbfile)) {
+			strcpy(dbdir, dbdir_t);
+			found = 1;
+		}
+	}
 
 	/* find the first write-able directory */
-        if(!found && find_dms_dbdir_candidate(dbdir_t)) {
+	if(!found && find_dms_dbdir_candidate(dbdir_t)) {
       		sprintf(dbdir, "%s/minidlna", dbdir_t);
 		found = 1;
 	}
-	
+
  	/* use default dir */
 	if(!found)
 		strcpy(dbdir, nvram_default_get("dms_dbdir"));
@@ -2174,7 +2161,11 @@ void find_dms_dbdir(char *dbdir)
 
 	return;
 }
-#endif
+
+#define TYPE_AUDIO	0x01
+#define TYPE_VIDEO	0x02
+#define TYPE_IMAGES	0x04
+#define ALL_MEDIA	0x07
 
 void start_dms(void)
 {
@@ -2183,15 +2174,23 @@ void start_dms(void)
 	char dbdir[100], *dmsdir;
 	char *argv[] = { MEDIA_SERVER_APP, "-f", "/etc/"MEDIA_SERVER_APP".conf", "-R", NULL };
 	static int once = 1;
-	int i;
+	int i, j;
 	char serial[18];
+	char *nv, *nvp, *b, *c;
+	char *nv2, *nvp2;
+	int dircount = 0, sharecount = 0;
+	char dirlist[32][1024];
+	unsigned char typelist[32];
+	int default_dms_dir_used = 0;
+	unsigned char type = 0;
+	char types[5];
 
 	if (getpid() != 1) {
 		notify_rc("start_dms");
 		return;
 	}
 
-	if(!is_routing_enabled() && !is_lan_connected())
+	if (!is_routing_enabled() && !is_lan_connected())
 		set_invoke_later(INVOKELATER_DMS);
 
 	if (nvram_get_int("dms_sas") == 0)
@@ -2210,24 +2209,80 @@ void start_dms(void)
 			// default: dmsdir=/tmp/mnt, dbdir=/var/cache/minidlna
 			// after setting dmsdir, dbdir="dmsdir"/minidlna
 
-			dmsdir = nvram_safe_get("dms_dir");
-			if(!check_if_dir_exist(dmsdir)) 
-				dmsdir = nvram_default_get("dms_dir");
+			nv = nvp = strdup(nvram_safe_get("dms_dir_x"));
+			nv2 = nvp2 = strdup(nvram_safe_get("dms_dir_type_x"));
 
-			strlcpy(dbdir, nvram_safe_get("dms_dbdir"), sizeof(dbdir));
+			if (nv) {
+				while ((b = strsep(&nvp, "<")) != NULL) {
+					if (!strlen(b)) continue;
 
-			// If dms_dbdir is the default and dms_dir is NOT the default,
-			// then use "<dms_dir>/minidlna" as dms_dbdir.
-			if (0 == strcmp(dbdir, nvram_default_get("dms_dbdir")) &&
-			    0 != strcmp(dmsdir, nvram_default_get("dms_dir"))) {
-				if(dmsdir[strlen(dmsdir)-1]=='/') sprintf(dbdir, "%sminidlna", dmsdir);
-				else sprintf(dbdir, "%s/minidlna", dmsdir);
+					if (!default_dms_dir_used &&
+						!strcmp(b, nvram_default_get("dms_dir")))
+						default_dms_dir_used = 1;
+
+					if (check_if_dir_exist(b))
+						strncpy(dirlist[dircount++], b, 1024);
+				}
 			}
 
-			// If dbdir is an empty string, use the default value
-			if (dbdir[0] == 0) strlcpy(dbdir, nvram_default_get("dms_dbdir"), sizeof(dbdir));
+			dircount = 0;
+			if (nv2) {
+				while ((c = strsep(&nvp2, "<")) != NULL) {
+					if (!strlen(c)) continue;
 
+					type = 0;
+					while (*c)
+					{
+						if (*c == ',')
+							break;
+
+						if (*c == 'A' || *c == 'a')
+							type |= TYPE_AUDIO;
+						else if (*c == 'V' || *c == 'v')
+							type |= TYPE_VIDEO;
+						else if (*c == 'P' || *c == 'p')
+							type |= TYPE_IMAGES;
+						else
+							type = ALL_MEDIA;
+
+						c++;
+					}
+
+					typelist[dircount++] = type;
+				}
+			}
+
+			if (nv) free(nv);
+			if (nv2) free(nv2);
+
+			if (!dircount)
+			{
+				strcpy(dirlist[dircount++], nvram_default_get("dms_dir"));
+				default_dms_dir_used = 1;
+			}
+
+			if (default_dms_dir_used)
+				find_dms_dbdir(dbdir);
+			else {
+				for (i = 0; i < dircount; i++)
+				{
+					if (!strcmp(dirlist[i], nvram_default_get("dms_dir")))
+						continue;
+
+					if (dirlist[i][strlen(dirlist[i])-1]=='/')
+						sprintf(dbdir, "%sminidlna", dirlist[i]);
+					else
+						sprintf(dbdir, "%s/minidlna", dirlist[i]);
+
+					break;
+				}
+			}
 			mkdir_if_none(dbdir);
+			if (!check_if_dir_exist(dbdir))
+			{
+				strcpy(dbdir, nvram_default_get("dms_dbdir"));
+				mkdir_if_none(dbdir);
+			}
 
 			nvram_set("dms_dbcwd", dbdir);
 
@@ -2240,28 +2295,63 @@ void start_dms(void)
 				"network_interface=%s\n"
 				"port=%d\n"
 				"friendly_name=%s\n"
-//				"db_dir=%s/.db\n"
 				"db_dir=%s\n"
 				"enable_tivo=%s\n"
 				"strict_dlna=%s\n"
 				"presentation_url=http://%s:80/\n"
 				"inotify=yes\n"
 				"notify_interval=600\n"
-				"album_art_names=Cover.jpg/cover.jpg/Thumb.jpg/thumb.jpg\n"
-				"media_dir=%s\n"
-				"serial=%s\n"
-				"model_number=%s.%s\n",
+				"album_art_names=Cover.jpg/cover.jpg/Thumb.jpg/thumb.jpg\n",
 				nvram_safe_get("lan_ifname"),
 				(port < 0) || (port >= 0xffff) ? 0 : port,
-				is_valid_hostname(nvram_get("computer_name")) ? nvram_get("computer_name") : get_productid(),
+				is_valid_hostname(nvram_get("dms_friendly_name")) ? nvram_get("dms_friendly_name") : get_productid(),
 				dbdir,
 				nvram_get_int("dms_tivo") ? "yes" : "no",
 				nvram_get_int("dms_stdlna") ? "yes" : "no",
-				nvram_safe_get("lan_ipaddr"),
-				dmsdir,
+				nvram_safe_get("lan_ipaddr"));
+
+			for (i = 0; i < dircount; i++)
+			{
+				type = typelist[i];
+
+				if (type == ALL_MEDIA)
+					types[0] = 0;
+				else
+				{
+					j = 0;
+					if (type & TYPE_AUDIO)
+						types[j++] = 'A';
+					if (type & TYPE_VIDEO)
+						types[j++] = 'V';
+					if (type & TYPE_IMAGES)
+						types[j++] = 'P';
+
+					types[j++] =  ',';
+					types[j] =  0;
+				}
+
+				if (check_if_dir_exist(dirlist[i]))
+				{
+					fprintf(f,
+						"media_dir=%s%s\n",
+						types,
+						dirlist[i]);
+
+					sharecount++;
+				}
+			}
+
+			if (!sharecount)
+			fprintf(f,
+				"media_dir=%s\n",
+				nvram_default_get("dms_dir"));
+
+			fprintf(f,
+				"serial=%s\n"
+				"model_number=%s.%s\n",
 				serial,
-				rt_version, rt_serialno
-				);
+				rt_version, rt_serialno);
+
 			append_custom_config(MEDIA_SERVER_APP".conf",f);
 
 			fclose(f);
@@ -2321,7 +2411,7 @@ write_mt_daapd_conf(char *servername)
 		return;
 
 	dmsdir = nvram_safe_get("dms_dir");
-	if(!check_if_dir_exist(dmsdir)) 
+	if(!check_if_dir_exist(dmsdir))
 		dmsdir = nvram_default_get("dms_dir");
 #if 1
 	fprintf(fp, "web_root /etc/web\n");
@@ -2455,7 +2545,7 @@ void write_webdav_permissions()
 	fp = fopen("/tmp/lighttpd/permissions", "w");
 	if (fp==NULL) return;
 
-	acc_num = atoi(nvram_safe_get("acc_num"));
+	acc_num = nvram_get_int("acc_num");
 	if(acc_num < 0)
 		acc_num = 0;
 
@@ -2510,7 +2600,7 @@ void start_webdav(void)	// added by Vanic
 	}
 /*
 #ifndef RTCONFIG_WEBDAV
-        system("sh /opt/etc/init.d/S50aicloud scan");
+	system("sh /opt/etc/init.d/S50aicloud scan");
 #else
 */
 	//static char *lighttpd_monitor_argv[] = { "lighttpd-monitor", NULL, NULL };
@@ -2518,7 +2608,7 @@ void start_webdav(void)	// added by Vanic
 
 	if (nvram_get_int("webdav_aidisk") || nvram_get_int("webdav_proxy"))
 		nvram_set("enable_webdav", "1");
-	else if (!nvram_get_int("webdav_aidisk") && !nvram_get_int("webdav_proxy") && nvram_get_int("enable_webdav")) 
+	else if (!nvram_get_int("webdav_aidisk") && !nvram_get_int("webdav_proxy") && nvram_get_int("enable_webdav"))
 	{
 		// enable both when enable_webdav by other apps
 		nvram_set("webdav_aidisk", "1");
@@ -2528,7 +2618,8 @@ void start_webdav(void)	// added by Vanic
 	if (nvram_match("enable_webdav", "0")) return;
 
 #ifndef RTCONFIG_WEBDAV
-        system("sh /opt/etc/init.d/S50aicloud scan");
+	if(f_exists("/opt/etc/init.d/S50aicloud"))
+		system("sh /opt/etc/init.d/S50aicloud scan");
 #else
 	/* WebDav directory */
 	mkdir_if_none("/tmp/lighttpd");
@@ -2539,13 +2630,13 @@ void start_webdav(void)	// added by Vanic
 
 	/* tmp/lighttpd/permissions */
 	write_webdav_permissions();
-	
+
 	/* WebDav SSL support */
 	//write_webdav_server_pem();
 
 	/* write WebDav configure file*/
 	system("/sbin/write_webdav_conf");
-	
+
 	if (!f_exists("/tmp/lighttpd.conf")) return;
 
 	if (!pids("lighttpd")){
@@ -2569,8 +2660,9 @@ void stop_webdav(void)
 	}
 
 #ifndef RTCONFIG_WEBDAV
-	system("sh /opt/etc/init.d/S50aicloud scan");
-#else	
+	if(f_exists("/opt/etc/init.d/S50aicloud"))
+		system("sh /opt/etc/init.d/S50aicloud scan");
+#else
 	if (pids("lighttpd-monitor")){
 		kill_pidfile_tk("/tmp/lighttpd/lighttpd-monitor.pid");
 		unlink("/tmp/lighttpd/lighttpd-monitor.pid");
@@ -2817,21 +2909,20 @@ void start_nas_services(int force)
 		return;
 	}
 
-	if(!check_if_dir_empty("/mnt")) 
+	if(!check_if_dir_empty("/mnt"))
 	{
 #ifdef RTCONFIG_WEBDAV
 		// webdav still needed if no disk is mounted
 		start_webdav();
 #else
-		system("sh /opt/etc/init.d/S50aicloud scan");
+		if(f_exists("/opt/etc/init.d/S50aicloud"))
+			system("sh /opt/etc/init.d/S50aicloud scan");
 #endif
-
 #ifdef RTCONFIG_SAMBASRV
 		if (nvram_get_int("smbd_master") || nvram_get_int("smbd_wins")) {
 			start_samba();
 		}
 #endif
-
 		return;
 	}
 
@@ -2842,7 +2933,6 @@ void start_nas_services(int force)
 #ifdef RTCONFIG_NFS
 	start_nfsd();
 #endif
-
 if (nvram_match("asus_mfg", "0")) {
 #ifdef RTCONFIG_FTP
 	start_ftpd();
@@ -2877,11 +2967,9 @@ void stop_nas_services(int force)
 #ifdef RTCONFIG_SAMBASRV
 	stop_samba();
 #endif
-
 #ifdef RTCONFIG_NFS
 	stop_nfsd();
 #endif
-
 #ifdef RTCONFIG_WEBDAV
 	//stop_webdav();
 #endif
@@ -2911,38 +2999,36 @@ void restart_sambaftp(int stop, int start)
 #ifdef RTCONFIG_SAMBASRV
 		stop_samba();
 #endif
-
 #ifdef RTCONFIG_NFS
 		stop_nfsd();
 #endif
-
 #ifdef RTCONFIG_FTP
 		stop_ftpd();
 #endif
 #ifdef RTCONFIG_WEBDAV
 		stop_webdav();
 #else
-		system("sh /opt/etc/init.d/S50aicloud scan");
+		if(f_exists("/opt/etc/init.d/S50aicloud"))
+			system("sh /opt/etc/init.d/S50aicloud scan");
 #endif
 	}
-	
+
 	if (start) {
 #ifdef RTCONFIG_SAMBA_SRV
 		create_passwd();
 		start_samba();
 #endif
-
 #ifdef RTCONFIG_NFS
 		start_nfsd();
 #endif
-
 #ifdef RTCONFIG_FTP
 		start_ftpd();
 #endif
 #ifdef RTCONFIG_WEBDAV
 		start_webdav();
 #else
-		system("sh /opt/etc/init.d/S50aicloud scan");
+		if(f_exists("/opt/etc/init.d/S50aicloud"))
+			system("sh /opt/etc/init.d/S50aicloud scan");
 #endif
 	}
 	file_unlock(fd);
@@ -3612,7 +3698,7 @@ void webdav_account_default(void)
 			if((vstrsep(b, ">", &accname, &accpasswd) != 2)) continue;
 
 			right = find_webdav_right(accname);
-				
+
 			if(i==0) sprintf(new, "%s>%d", accname, right);
 			else sprintf(new, "%s<%s>%d", new, accname, right);
 			i++;

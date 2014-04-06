@@ -18,6 +18,9 @@ CFLAGS += -I$(TOP)/shared/sysdeps/ralink -I$(TOP)/wireless_tools
 ifneq ($(findstring MAC_REPEATER=, $(shell cat $(LINUXDIR)/.config)),)
 export CFLAGS += -DMAC_REPEATER
 endif
+ifneq ($(findstring CONFIG_RT2860V2_AP_EDCCA_MONITOR=, $(shell cat $(LINUXDIR)/.config)),)
+export CFLAGS += -DCE_ADAPTIVITY
+endif
 endif
 
 include $(SRCBASE)/.config
@@ -38,6 +41,10 @@ CFLAGS += -I$(SRCBASE)/shared/bcmwifi/include -DHAVE_TYPE_FLOAT
 CFLAGS += -I$(SRCBASE)/common/include
 LDFLAGS += -L$(TOP)/libbcm -lbcm
 LDFLAGS += -lgcc_s
+ifeq ($(RTCONFIG_QTN),y)
+CFLAGS += -I$(TOP)/libqcsapi_client
+LDFLAGS += -L$(TOP)/libqcsapi_client -lqcsapi_client
+endif
 endif
 
 ifeq ($(RTCONFIG_BCMSMP),y)
@@ -190,8 +197,17 @@ ifeq ($(RTCONFIG_TIMEMACHINE),y)
 OBJS += timemachine.o
 endif
 
+ifeq ($(RTCONFIG_QTN),y)
+OBJS += qtn.o
+OBJS += find_host_addr.o
+endif
+
 ifeq ($(RTCONFIG_BCMARM),y)
+ifeq ($(RTCONFIG_QTN),y)
+vpath %.c sysdeps sysdeps/broadcom sysdeps/ralink sysdeps/qtn $(TOP)/libqcsapi_client/qcsapi_rpc_common/client $(SRCBASE)/shared
+else
 vpath %.c sysdeps sysdeps/broadcom sysdeps/ralink $(SRCBASE)/shared
+endif
 else
 vpath %.c sysdeps sysdeps/broadcom sysdeps/ralink
 endif

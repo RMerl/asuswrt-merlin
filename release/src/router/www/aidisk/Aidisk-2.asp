@@ -29,7 +29,7 @@ function initial(){
 	showTextinWizard(1);
 }
 
-var et0macaddr_array = '<% nvram_get("et0macaddr"); %>'.split(':');
+var lan_hwaddr_array = '<% nvram_get("lan_hwaddr"); %>'.split(':');
 function showTextinWizard(flag){
 	dummyShareway = flag;
 	
@@ -53,7 +53,7 @@ function showTextinWizard(flag){
 		showtext($("user1"), '<% nvram_get("http_username"); %>');
 		
 		showtext($("user2"), "Family");
-		$("userpasswd2").value =  "family" + et0macaddr_array[et0macaddr_array.length-2].toLowerCase() + et0macaddr_array[et0macaddr_array.length-1].toLowerCase();
+		$("userpasswd2").value =  "family" + lan_hwaddr_array[lan_hwaddr_array.length-2].toLowerCase() + lan_hwaddr_array[lan_hwaddr_array.length-1].toLowerCase();
 
 		$("share0_Hint").style.display = "none";
 		$("share1").style.display = "block";		

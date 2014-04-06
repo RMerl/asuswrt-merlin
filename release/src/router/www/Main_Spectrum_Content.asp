@@ -34,6 +34,9 @@ var spec_running = '<% nvram_get("spectrum_hook_is_running"); %>';
 
 var delay_time = 45;
 
+// disable auto log out
+AUTOLOGOUT_MAX_MINUTE = 0;
+
 function initial(){
 	show_menu();
 	if(wan_line_state != "up"){

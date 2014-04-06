@@ -444,11 +444,12 @@ int BCMFASTPATH_HOST ip_rcv(struct sk_buff *skb, struct net_device *dev, struct 
 	skb_orphan(skb);
 
 	/* Skip NF lookup of TCP ACKs for SMB data packets */
+#if 0
 	if (ip_hdr(skb)->protocol == IPPROTO_TCP) {
 		__be16 *th = (__be16 *)(((__u8 *)ip_hdr(skb)) + (ip_hdr(skb)->ihl << 2));
 		skb->tcpf_smb = (th[1] == htons(0x01bd)); /* SMB data */
 	}
-
+#endif
 	return NF_HOOK(NFPROTO_IPV4, NF_INET_PRE_ROUTING, skb, dev, NULL,
 		       ip_rcv_finish);
 

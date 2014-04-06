@@ -86,6 +86,7 @@
 #define RALINK_GPIO7140_CLEAR           0x33
 //GPIO72 is WLAN_LED
 #define RALINK_ATE_GPIO72		0x35
+#define RALINK_GPIO_SET_MODE		0x60
 /*
  * Address of RALINK_ Registers
  */

@@ -39,7 +39,7 @@ function validForm(){
 	showtext($("alert_msg2"), "");
 
 	// account name
-	var alert_str = validate_account($("account"), "noalert");
+	var alert_str = validate_username($("account"));
 
 	if(alert_str != ""){
 		showtext($("alert_msg1"), alert_str);
@@ -134,7 +134,7 @@ function validForm(){
     <tr>
       <th><#AiDisk_Account#>: </th>
       <td><input class="input_15_table" name="account" id="account" type="text" maxlength="20">
-      		<br/><span id="alert_msg1"></span>	
+      		<br/><span id="alert_msg1" style="color:#FC0;margin-left:8px;"></span>	
       </td>
     </tr>
     <tr>
@@ -144,7 +144,7 @@ function validForm(){
     <tr>
       <th><#Confirmpassword#>: </th>
       <td><input type="password" class="input_15_table" autocapitalization="off" name="confirm_password" id="confirm_password" onKeyPress="return is_string(this, event);" maxlength="17">
-      		<br/><span id="alert_msg2"></span>	
+      		<br/><span id="alert_msg2" style="color:#FC0;margin-left:8px;"></span>	
       </td>
     </tr>
 	</tbody>	

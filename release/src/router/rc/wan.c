@@ -18,7 +18,7 @@
  *
  * Copyright 2004, ASUSTeK Inc.
  * All Rights Reserved.
- * 
+ *
  * THIS SOFTWARE IS OFFERED "AS IS", AND BROADCOM GRANTS NO WARRANTIES OF ANY
  * KIND, EXPRESS OR IMPLIED, BY STATUTE, COMMUNICATION OR OTHERWISE. BROADCOM
  * SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
@@ -574,7 +574,7 @@ del_routes(char *prefix, char *var, char *ifname)
 
 	foreach(word, nvram_safe_get(strcat_r(prefix, var, tmp)), next) {
 		_dprintf("%s: %s\n", __FUNCTION__, word);
-		
+
 		netmask = word;
 		ipaddr = strsep(&netmask, ":");
 		if (!ipaddr || !netmask)
@@ -737,7 +737,7 @@ int enable_qos()
 	return 0;
 #endif
 	int qos_userspec_app_en = 0;
-	int rulenum = atoi(nvram_safe_get("qos_rulenum_x")), idx_class = 0;
+	int rulenum = nvram_get_int("qos_rulenum_x"), idx_class = 0;
 
 	/* Add class for User specify, 10:20(high), 10:40(middle), 10:60(low)*/
 	if (rulenum) {
@@ -785,7 +785,7 @@ int enable_qos()
  * (3) wan[x]_ipaddr/wan[x]_netmask/wan[x]_gateway/...:
  *    always keeps the latest updated ip/netmask/gateway in system
  *      static: it is the same as (1)
- *      dhcp: 
+ *      dhcp:
  *      	- before getting ip from dhcp server, it is 0.0.0.0
  *      	- after getting ip from dhcp server, it is updated
  *      l2tp/pptp/pppoe with static ip:
@@ -902,17 +902,17 @@ void update_wan6_state(char *prefix, int state, int reason)
 // cat /proc/net/arp
 // arp -na
 
-#ifdef RTCONFIG_DSL	
+#ifdef RTCONFIG_DSL
 static int start_ipoa()
 {
 	char tc_mac[32];
 	char ip_addr[32];
-	char ip_mask[32];	
+	char ip_mask[32];
 	char ip_gateway[32];
 	int try_cnt;
 	FILE* fp_dsl_mac;
-	FILE* fp_log;	
-	
+	FILE* fp_log;
+
 	int NeighborIpNum;
 	int i;
 	int NeiBaseIpNum;
@@ -933,20 +933,20 @@ static int start_ipoa()
 			break;
 		}
 		usleep(1000*1000);
-	}				
+	}
 
 #ifdef RTCONFIG_DUALWAN
 	if (get_dualwan_secondary()==WANS_DUALWAN_IF_DSL)
 	{
 		strcpy(ip_gateway, nvram_safe_get("wan1_gateway"));
 		strcpy(ip_addr, nvram_safe_get("wan1_ipaddr"));
-		strcpy(ip_mask, nvram_safe_get("wan1_netmask"));			
+		strcpy(ip_mask, nvram_safe_get("wan1_netmask"));
 	}
 	else
 	{
 		strcpy(ip_gateway, nvram_safe_get("wan0_gateway"));
 		strcpy(ip_addr, nvram_safe_get("wan0_ipaddr"));
-		strcpy(ip_mask, nvram_safe_get("wan0_netmask"));		
+		strcpy(ip_mask, nvram_safe_get("wan0_netmask"));
 	}
 #else
 	strcpy(ip_gateway, nvram_safe_get("wan0_gateway"));
@@ -995,17 +995,16 @@ static int start_ipoa()
 		sprintf(CmdBuf,"%s.%d",NeighborIpPrefix,i+NeiBaseIpNum);
 		eval("arp","-i","br0","-a",CmdBuf,"-s",tc_mac);
 	}
-	
+
 	return 0;
 }
-
 
 static int stop_ipoa()
 {
 	char ip_addr[32];
-	char ip_mask[32];	
+	char ip_mask[32];
 	char ip_gateway[32];
-	FILE* fp_log;	
+	FILE* fp_log;
 
 	int NeighborIpNum;
 	int i;
@@ -1014,29 +1013,27 @@ static int stop_ipoa()
 	int NetMaskLastIpNum;
 	char NeighborIpPrefix[32];
 	int ip_addr_dot_cnt;
-	char CmdBuf[128];	 
-	
+	char CmdBuf[128];
+
 #ifdef RTCONFIG_DUALWAN
 		if (get_dualwan_secondary()==WANS_DUALWAN_IF_DSL)
 		{
 			strcpy(ip_gateway, nvram_safe_get("wan1_gateway"));
 			strcpy(ip_addr, nvram_safe_get("wan1_ipaddr"));
-			strcpy(ip_mask, nvram_safe_get("wan1_netmask"));			
+			strcpy(ip_mask, nvram_safe_get("wan1_netmask"));
 		}
 		else
 		{
 			strcpy(ip_gateway, nvram_safe_get("wan0_gateway"));
 			strcpy(ip_addr, nvram_safe_get("wan0_ipaddr"));
-			strcpy(ip_mask, nvram_safe_get("wan0_netmask"));		
+			strcpy(ip_mask, nvram_safe_get("wan0_netmask"));
 		}
 #else
 		strcpy(ip_gateway, nvram_safe_get("wan0_gateway"));
 		strcpy(ip_addr, nvram_safe_get("wan0_ipaddr"));
-		strcpy(ip_mask, nvram_safe_get("wan0_netmask"));		
+		strcpy(ip_mask, nvram_safe_get("wan0_netmask"));
 #endif
 
-		
-	
 	// we only support maximum 256 neighbor host
 	if (strncmp("255.255.255",ip_mask,11) != 0)
 	{
@@ -1045,11 +1042,11 @@ static int stop_ipoa()
 		fclose(fp_log);
 		return -1;
 	}
-	
+
 	//
 	// do not send arp to neighborhood and gateway
 	//
-	
+
 	ip_addr_dot_cnt = 0;
 	for (i=0; i<sizeof(NeighborIpPrefix); i++)
 	{
@@ -1061,28 +1058,26 @@ static int stop_ipoa()
 		NeighborIpPrefix[i]=ip_addr[i];
 	}
 	NeighborIpPrefix[i] = 0;
-		
+
 	LastIpNum = atoi(&ip_addr[i+1]);
 	NetMaskLastIpNum = atoi(&ip_mask[12]);
 	NeighborIpNum = ((~NetMaskLastIpNum) + 1)&0xff;
 	NeiBaseIpNum = LastIpNum & NetMaskLastIpNum;
-			
+
 	//
 	// delete gateway host
 	//
 	eval("arp","-d",ip_gateway);
-	
+
 	// delete neighbor hosts
 	for (i=0; i<NeighborIpNum; i++)
 	{
 		sprintf(CmdBuf,"%s.%d",NeighborIpPrefix,i+NeiBaseIpNum);
 		eval("arp","-d",CmdBuf);
 	}
-	
+
 	return 0;
 }
-
-
 #endif
 
 void
@@ -1354,7 +1349,7 @@ TRACE_PT("3g end.\n");
 	if (dualwan_unit__nonusbif(unit)) {
 		convert_wan_nvram(prefix, unit);
 
-		/* make sure the connection exists and is enabled */ 
+		/* make sure the connection exists and is enabled */
 		wan_ifname = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
 		if(strlen(wan_ifname) <= 0)
 			return;
@@ -1460,8 +1455,8 @@ TRACE_PT("3g end.\n");
 
 		enable_ip_forward();
 
-		/* 
-		 * Configure PPPoE connection. The PPPoE client will run 
+		/*
+		 * Configure PPPoE connection. The PPPoE client will run
 		 * ip-up/ip-down scripts upon link's connect/disconnect.
 		 */
 		if (strcmp(wan_proto, "pppoe") == 0 ||
@@ -1609,8 +1604,8 @@ TRACE_PT("3g end.\n");
 
 				close(s);
 
-				/* 
-				 * Preset routes so that traffic can be sent to proper pppx even before 
+				/*
+				 * Preset routes so that traffic can be sent to proper pppx even before
 				 * the link is brought up.
 				 */
 				preset_wan_routes(wan_ifname);
@@ -1621,9 +1616,9 @@ TRACE_PT("3g end.\n");
 
 			update_wan_state(prefix, WAN_STATE_CONNECTING, 0);
 		}
-		/* 
-		 * Configure DHCP connection. The DHCP client will run 
-		 * 'udhcpc bound'/'udhcpc deconfig' upon finishing IP address 
+		/*
+		 * Configure DHCP connection. The DHCP client will run
+		 * 'udhcpc bound'/'udhcpc deconfig' upon finishing IP address
 		 * renew and release.
 		 */
 		else if (strcmp(wan_proto, "dhcp") == 0) {
@@ -1672,7 +1667,7 @@ TRACE_PT("3g end.\n");
 
 			/* Assign static IP address to i/f */
 			ifconfig(wan_ifname, IFUP,
-					nvram_safe_get(strcat_r(prefix, "ipaddr", tmp)), 
+					nvram_safe_get(strcat_r(prefix, "ipaddr", tmp)),
 					nvram_safe_get(strcat_r(prefix, "netmask", tmp)));
 
 #ifdef RTCONFIG_DSL
@@ -1710,10 +1705,6 @@ TRACE_PT("3g end.\n");
 
 			/* We are done configuration */
 			wan_up(wan_ifname);
-
-#ifdef RTCONFIG_VPNC
-			start_vpnc();
-#endif
 		}
 	}
 	else
@@ -1911,7 +1902,7 @@ int update_resolvconf(void)
 #endif
 		for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
 			char *wan_dns, *wan_xdns;
-	
+
 		/* TODO: Skip unused wans
 			if (wan disabled or inactive and it's not ppp with active man)
 				continue */
@@ -1963,10 +1954,12 @@ void wan6_up(const char *wan_ifname)
 	case IPV6_NATIVE:
 	case IPV6_NATIVE_DHCP:
 		if ((nvram_get_int("ipv6_accept_ra") & 1) != 0)
-			set_intf_ipv6_accept_ra(wan_ifname, 1);
+			ipv6_sysconf(wan_ifname, "accept_ra", 1);
+		ipv6_sysconf(wan_ifname, "forwarding", 0);
 		break;
 	case IPV6_MANUAL:
-		set_intf_ipv6_accept_ra(wan_ifname, 0);
+		ipv6_sysconf(wan_ifname, "accept_ra", 0);
+		ipv6_sysconf(wan_ifname, "forwarding", 1);
 		break;
 	case IPV6_6RD:
 		update_6rd_info();
@@ -1997,10 +1990,15 @@ void wan6_up(const char *wan_ifname)
 			dbG("WAN IPv6 address is the same as LAN IPv6 address!\n");
 			break;
 		}
-		snprintf(addr6, sizeof(addr6), "%s/%d", nvram_safe_get("ipv6_ipaddr"), nvram_get_int("ipv6_prefix_len_wan"));
+		sprintf(addr6, "%s/%d", nvram_safe_get("ipv6_ipaddr"), nvram_get_int("ipv6_prefix_len_wan"));
 		eval("ip", "-6", "addr", "add", addr6, "dev", (char *)wan_ifname);
 		eval("ip", "-6", "route", "del", "::/0");
 		eval("ip", "-6", "route", "add", "::/0", "via", nvram_safe_get("ipv6_gateway"), "dev", (char *)wan_ifname, "metric", "1");
+
+		/* workaround to update ndp entry for now */
+		eval("ping6", "-c", "2", "-I", (char *)wan_ifname, "ff02::1");
+		eval("ping6", "-c", "2", nvram_safe_get("ipv6_gateway"));
+
 		break;
 	case IPV6_6TO4:
 	case IPV6_6IN4:
@@ -2143,7 +2141,7 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 #endif
 
 		start_firewall(wan_unit, 0);
-		
+
 		/* setup static wan routes via physical device */
 		add_routes(prefix, "mroute", wan_ifname);
 
@@ -2427,11 +2425,11 @@ get_lan_ipaddr()
 
 	strncpy(ifr.ifr_name, "br0", IFNAMSIZ);
 	inaddr = (struct sockaddr_in *)&ifr.ifr_addr;
-	inet_aton("0.0.0.0", &inaddr->sin_addr);	
+	inet_aton("0.0.0.0", &inaddr->sin_addr);
 
 	/* Get IP address */
 	ioctl(s, SIOCGIFADDR, &ifr);
-	close(s);	
+	close(s);
 
 	ip_addr = ((struct sockaddr_in*)&ifr.ifr_addr)->sin_addr;
 //	fprintf(stderr, "current LAN IP address: %s\n", inet_ntoa(ip_addr));
@@ -2490,6 +2488,9 @@ found_default_route(int wan_unit)
 	unsigned int dest, mask;
 	char buf[256], device[256];
 	char *wanif;
+
+	if(wan_unit != wan_primary_ifunit())
+		return 1;
 
 	n = 0;
 	found = 0;
@@ -2705,7 +2706,7 @@ void convert_wan_nvram(char *prefix, int unit)
 
 	_dprintf("%s(%s)\n", __FUNCTION__, prefix);
 
-	// setup hwaddr			
+	// setup hwaddr
 	strcpy(macbuf, nvram_safe_get(strcat_r(prefix, "hwaddr_x", tmp)));
 	if (strlen(macbuf)!=0 && strcasecmp(macbuf, "FF:FF:FF:FF:FF:FF"))
 		nvram_set(strcat_r(prefix, "hwaddr", tmp), macbuf);
@@ -2748,13 +2749,13 @@ void dumparptable()
 
 	strcpy(macbuf, nvram_safe_get("wan0_hwaddr_x"));
 
-	// try pre-set mac 	
+	// try pre-set mac
 	if (strlen(macbuf)!=0 && strcasecmp(macbuf, "FF:FF:FF:FF:FF:FF"))
 		strcpy(mac_clone[mac_num++], macbuf);
-	
+
 	// try original mac
 	strcpy(mac_clone[mac_num++], nvram_safe_get("et0macaddr"));
-	
+
 	if (mac_num)
 	{
 		fprintf(stderr, "num of mac: %d\n", mac_num);
@@ -2775,7 +2776,7 @@ autodet_main(int argc, char *argv[])
 
 	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 
-	nvram_set_int("autodet_state", AUTODET_STATE_INITIALIZING);	
+	nvram_set_int("autodet_state", AUTODET_STATE_INITIALIZING);
 	nvram_set_int("autodet_auxstate", AUTODET_STATE_INITIALIZING);
 
 	// it shouldnot happen, because it is only called in default mode
@@ -2805,7 +2806,7 @@ autodet_main(int argc, char *argv[])
 
  	status = discover_all();
 
-	// check for pppoe status only, 
+	// check for pppoe status only,
 	if (get_wan_state(unit)==WAN_STATE_CONNECTED) {
 		nvram_set_int("autodet_state", AUTODET_STATE_FINISHED_OK);
 		if(status==2)
@@ -2849,7 +2850,6 @@ autodet_main(int argc, char *argv[])
 		}
 		++i;
 	}
-
 
 	if(i == mac_num){
 		nvram_set_int("autodet_state", AUTODET_STATE_FINISHED_FAIL);
