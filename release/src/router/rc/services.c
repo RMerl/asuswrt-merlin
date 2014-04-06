@@ -1085,6 +1085,8 @@ void start_radvd(void)
 	char *argv[] = { "radvd", NULL, NULL, NULL, NULL, NULL, NULL };
 	int pid, argc, service, cnt = 0;
 	char *p = NULL;
+	char *valid_lifetime, *preferred_lifetime;
+	int decrement_lifetime;
 
 	if (getpid() != 1) {
 		notify_rc("start_radvd");
@@ -1127,6 +1129,19 @@ void start_radvd(void)
 #else
 		do_dns = 0;
 #endif
+
+		valid_lifetime = NULL;
+		preferred_lifetime = NULL;
+		decrement_lifetime = 0;
+		if (do_6to4 | do_6rd) {
+			valid_lifetime = "300";
+			preferred_lifetime = "120";
+		} else if (service == IPV6_NATIVE_DHCP) {
+			valid_lifetime = nvram_get_int("ipv6_pd_vlifetime") ? nvram_safe_get("ipv6_pd_vlifetime") : NULL;
+			preferred_lifetime = nvram_get_int("ipv6_pd_plifetime") ? nvram_safe_get("ipv6_pd_plifetime") : NULL;
+			decrement_lifetime = (valid_lifetime || preferred_lifetime);
+		}
+
 		fprintf(f,
 			"interface %s\n"
 			"{\n"
@@ -1146,6 +1161,8 @@ void start_radvd(void)
 			" {\n"
 			"  AdvOnLink on;\n"
 			"  AdvAutonomous %s;\n"
+			"%s%s%s"
+			"%s%s%s"
 			"%s"
 			"%s%s%s"
 			" };\n",
@@ -1154,7 +1171,9 @@ void start_radvd(void)
 			mtu ? " AdvLinkMTU " : "", mtu ? : "", mtu ? ";\n" : "",
 			prefix,
 			nvram_get_int("ipv6_autoconf_type") ? "off" : "on",
-			do_6to4 | do_6rd ? "  AdvValidLifetime 300;\n  AdvPreferredLifetime 120;\n" : "",
+			valid_lifetime ? "  AdvValidLifetime " : "", valid_lifetime ? : "", valid_lifetime ? ";\n" : "",
+			preferred_lifetime ? "  AdvPreferredLifetime " : "", preferred_lifetime ? : "", preferred_lifetime ? ";\n" : "",
+			decrement_lifetime ? "  DecrementLifetimes on;\n" : "",
 			do_6to4 ? "  Base6to4Interface " : "",
 			do_6to4 ? get_wanface()  : "",
 			do_6to4 ? ";\n" : "");

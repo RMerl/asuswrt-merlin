@@ -675,6 +675,12 @@ int dhcp6c_state_main(int argc, char **argv)
 	if (env2nv("new_domain_name", "ipv6_get_domain"))
 		TRACE_PT("ipv6_get_domain=%s\n", nvram_safe_get("ipv6_get_domain"));
 
+	if (env2nv("new_valid_lifetime", "ipv6_pd_vlifetime"))
+		TRACE_PT("ipv6_pd_vlifetime=%s\n", nvram_safe_get("ipv6_pd_vlifetime"));
+
+	if (env2nv("new_preferred_lifetime", "ipv6_pd_plifetime"))
+		TRACE_PT("ipv6_pd_plifetime=%s\n", nvram_safe_get("ipv6_pd_plifetime"));
+
 	// (re)start radvd and httpd
 	start_radvd();
 	start_httpd();

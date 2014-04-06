@@ -71,6 +71,8 @@ static char nispserver_str[] = "new_nisp_servers";
 static char nispname_str[] = "new_nisp_name";
 static char bcmcsserver_str[] = "new_bcmcs_servers";
 static char bcmcsname_str[] = "new_bcmcs_name";
+static char vlifetime_str[] = "new_valid_lifetime";
+static char plifetime_str[] = "new_preferred_lifetime";
 
 int
 client6_script(scriptpath, state, optinfo)
@@ -83,6 +85,8 @@ client6_script(scriptpath, state, optinfo)
 	int nisservers, nisnamelen;
 	int nispservers, nispnamelen;
 	int bcmcsservers, bcmcsnamelen;
+	int plifetime;
+	int vlifetime;
 	char **envp, *s;
 	char reason[] = "REASON=NBI";
 	struct dhcp6_listval *v;
@@ -104,6 +108,8 @@ client6_script(scriptpath, state, optinfo)
 	nispnamelen = 0;
 	bcmcsservers = 0;
 	bcmcsnamelen = 0;
+	plifetime = 0;
+	vlifetime = 0;
 	envc = 2;     /* we at least include the reason and the terminator */
 
 	/* count the number of variables */
@@ -153,6 +159,19 @@ client6_script(scriptpath, state, optinfo)
 		bcmcsnamelen += v->val_vbuf.dv_len;
 	}
 	envc += bcmcsnamelen ? 1 : 0;
+
+	/*
+	 * Copy lifetimes so advertisements can include them.
+	 * This is required by RFC 3633 section 12.1.
+	 * TODO: How to handle multiple PDs?
+	 */
+	for (v = TAILQ_FIRST(&optinfo->iapd_list); v; v = TAILQ_NEXT(v, link))
+		vlifetime++;
+	envc += (vlifetime == 1) ? 1 : 0;
+
+	for (v = TAILQ_FIRST(&optinfo->iapd_list); v; v = TAILQ_NEXT(v, link))
+		plifetime++;
+	envc += (plifetime == 1) ? 1 : 0;
 
 	/* allocate an environments array */
 	if ((envp = malloc(sizeof (char *) * envc)) == NULL) {
@@ -376,6 +395,47 @@ client6_script(scriptpath, state, optinfo)
 		for (v = TAILQ_FIRST(&optinfo->bcmcsname_list); v;
 		    v = TAILQ_NEXT(v, link)) {
 			strlcat(s, v->val_vbuf.dv_buf, elen);
+			strlcat(s, " ", elen);
+		}
+	}
+
+	if (vlifetime == 1) {
+		elen = sizeof (vlifetime_str) +
+		    (10 + 1) * vlifetime + 1;
+		if ((s = envp[i++] = malloc(elen)) == NULL) {
+			dprintf(LOG_NOTICE, FNAME,
+			    "failed to allocate strings for valid lifetime");
+			ret = -1;
+			goto clean;
+		}
+		memset(s, 0, elen);
+		snprintf(s, elen, "%s=", vlifetime_str);
+		for (v = TAILQ_FIRST(&optinfo->iapd_list); v;
+		    v = TAILQ_NEXT(v, link)) {
+			char lifetime[11];
+			snprintf(lifetime, sizeof(lifetime), "%u", v->val_prefix6.vltime);
+			strlcat(s, lifetime, elen);
+			strlcat(s, " ", elen);
+
+		}
+	}
+
+	if (plifetime == 1) {
+		elen = sizeof (plifetime_str) +
+		    (10 + 1) * plifetime + 1;
+		if ((s = envp[i++] = malloc(elen)) == NULL) {
+			dprintf(LOG_NOTICE, FNAME,
+			    "failed to allocate strings for preferred lifetime");
+			ret = -1;
+			goto clean;
+		}
+		memset(s, 0, elen);
+		snprintf(s, elen, "%s=", plifetime_str);
+		for (v = TAILQ_FIRST(&optinfo->iapd_list); v;
+		    v = TAILQ_NEXT(v, link)) {
+			char lifetime[11];
+			snprintf(lifetime, sizeof(lifetime), "%u", v->val_prefix6.pltime);
+			strlcat(s, lifetime, elen);
 			strlcat(s, " ", elen);
 		}
 	}
