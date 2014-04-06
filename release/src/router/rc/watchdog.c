@@ -763,14 +763,15 @@ void timecheck(void)
 	}
 
 	// guest ssid expire check
-	if (strlen(nvram_safe_get("wl0_vifs")) || strlen(nvram_safe_get("wl1_vifs")))
+	if ((nvram_get_int("sw_mode") != SW_MODE_REPEATER) &&
+		(strlen(nvram_safe_get("wl0_vifs")) || strlen(nvram_safe_get("wl1_vifs"))))
 	{
 		lan_ifname = nvram_safe_get("lan_ifname");
 		sprintf(wl_vifs, "%s %s", nvram_safe_get("wl0_vifs"), nvram_safe_get("wl1_vifs"));
 
 		foreach (word, wl_vifs, next) {
 			snprintf(nv, sizeof(nv) - 1, "%s_expire_tmp", wif_to_vif(word));
-			expire = atoi(nvram_safe_get(nv));
+			expire = nvram_get_int(nv);
 
 			if (expire)
 			{
@@ -1501,9 +1502,9 @@ void rssi_check_unit(int unit)
 
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 
-	lrc = atoi(nvram_safe_get(strcat_r(prefix, "lrc", tmp)));
+	lrc = nvram_get_int(strcat_r(prefix, "lrc", tmp));
 	if(!lrc) lrc = 2;
-	if (!(lrsi = atoi(nvram_safe_get(strcat_r(prefix, "user_rssi", tmp)))))
+	if (!(lrsi = nvram_get_int(strcat_r(prefix, "user_rssi", tmp))))
 		return;
 
 #ifdef RTCONFIG_PROXYSTA
@@ -1640,6 +1641,30 @@ void rssi_check()
 }
 #endif
 
+static time_t	tt=0, tt_old=0;
+static int 	bcnt=0;
+void
+period_chk_cnt()
+{
+	time(&tt);
+	if(!tt_old)
+		tt_old = tt;
+
+	++bcnt;
+	if(tt - tt_old > 9 && tt - tt_old < 15) {
+		if(bcnt > 15) {
+			char buf[5];
+			_dprintf("\n\n\n!! >>> rush cpu count %d in 10 secs<<<\n\n\n", bcnt);
+			sprintf(buf, "%d", bcnt);
+			nvram_set("cpurush", buf);
+		}
+		tt_old = tt;
+		bcnt = 0;
+	} else if (tt - tt_old >= 15){
+		tt = tt_old = bcnt = 0;
+	}
+}
+
 /* wathchdog is runned in NORMAL_PERIOD, 1 seconds
  * check in each NORMAL_PERIOD
  *	1. button
@@ -1654,6 +1679,8 @@ void watchdog(int sig)
 #ifdef RTCONFIG_PUSH_EMAIL
 	push_mail();
 #endif
+	period_chk_cnt();
+
 	/* handle button */
 	btn_check();
 	if(nvram_match("asus_mfg", "0")

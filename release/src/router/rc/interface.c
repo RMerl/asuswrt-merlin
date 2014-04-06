@@ -67,8 +67,9 @@ static struct switch_config {
  * int swmask	- mask of logical ports to return
  * char *cputag	- NULL: return config string excluding CPU port
  *		  PSTR: return config string including CPU port, tagged with PSTR, eg. 8|8t|8*
+ * int wan	- config wan port or not
  */
-void _switch_gen_config(char *buf, const int ports[SWPORT_COUNT], int swmask, char *cputag)
+void _switch_gen_config(char *buf, const int ports[SWPORT_COUNT], int swmask, char *cputag, int wan)
 {
 	struct {
 		int port;
@@ -80,7 +81,18 @@ void _switch_gen_config(char *buf, const int ports[SWPORT_COUNT], int swmask, ch
 	if (!cputag)
 		mask &= ~SW_CPU;
 
-	for (i = count = 0; i < SWPORT_COUNT && mask; mask >>= 1, i++) {
+	if (wan && !cputag) {
+            for (n = i = count = 0; i < SWPORT_COUNT && mask; mask >>= 1, i++) {
+                if ((mask & 1U) == 0)
+                        continue;
+                res[n].port = ports[i];
+                res[n].tag = (i == SWPORT_CPU) ? cputag : "";
+                count++;
+                n++; 
+            }
+	}
+	else {
+	    for (i = count = 0; i < SWPORT_COUNT && mask; mask >>= 1, i++) {
 		if ((mask & 1U) == 0)
 			continue;
 		for (n = count; n > 0 && ports[i] < res[n - 1].port; n--)
@@ -88,8 +100,8 @@ void _switch_gen_config(char *buf, const int ports[SWPORT_COUNT], int swmask, ch
 		res[n].port = ports[i];
 		res[n].tag = (i == SWPORT_CPU) ? cputag : "";
 		count++;
+	    }
 	}
-
 	for (i = 0, ptr = buf; ptr && i < count; i++)
 		ptr += sprintf(ptr, i ? " %d%s" : "%d%s", res[i].port, res[i].tag);
 }
@@ -111,7 +123,7 @@ void switch_gen_config(char *buf, const int ports[SWPORT_COUNT], int index, int 
 		return;
 
 	mask = wan ? sw_config[index].wanmask : sw_config[index].lanmask;
-	_switch_gen_config(buf, ports, mask, cputag);
+	_switch_gen_config(buf, ports, mask, cputag, wan);
 }
 
 void gen_lan_ports(char *buf, const int sample[SWPORT_COUNT], int index, int index1, char *cputag){

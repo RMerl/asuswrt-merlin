@@ -91,7 +91,7 @@ function wl_chanspec_list_change(){
 						else{		//20MHz
 							$('wl_nctrlsb_field').style.display = "none";					
 						}
-												
+			
 						if(wl_channel_list_5g[0] != "0")
 								wl_channel_list_5g.splice(0,0,"0");
 			
@@ -360,10 +360,13 @@ function change_channel(obj){
 	}
 	
 	if(based_modelid == "RT-AC68U"){
-		if(document.form.wl_channel.value  == 0)
+		if(document.form.wl_channel.value  == 0){
+			$('dfs_checkbox').style.display = "";
 			document.form.acs_dfs.disabled = false;
-		else
+		}	
+		else{
+			$('dfs_checkbox').style.display = "none";
 			document.form.acs_dfs.disabled = true;
-	
+		}
 	}
 }

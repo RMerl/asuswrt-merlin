@@ -621,7 +621,7 @@ void reset_client_setting(int unit){
 void parse_openvpn_status(int unit){
 	FILE *fpi, *fpo;
 	char buf[512];
-	char *token;
+	char realip[25], virtip[25], username[32];
 
 	sprintf(buf, "/etc/openvpn/server%d/status", unit);
 	fpi = fopen(buf, "r");
@@ -636,18 +636,9 @@ void parse_openvpn_status(int unit){
 				break;
 			if(!strncmp(buf, "CLIENT_LIST", 11)) {
 				//printf("%s", buf);
-				token = strtok(buf, ",");	//CLIENT_LIST
-				token = strtok(NULL, ",");	//Common Name
-				token = strtok(NULL, ",");	//Real Address
-				fprintf(fpo, "%s ", token);
-				token = strtok(NULL, ",");	//Virtual Address
-				fprintf(fpo, "%s ", token);
-				token = strtok(NULL, ",");	//Bytes Received
-				token = strtok(NULL, ",");	//Bytes Sent
-				token = strtok(NULL, ",");	//Connected Since
-				token = strtok(NULL, ",");	//Connected Since (time_t)
-				token = strtok(NULL, ",");	//Username, include'\n'
-				fprintf(fpo, "%s", token);
+				if (sscanf(buf,"%*[^,],%*[^,],%[^,],%[^,],%*[^,],%*[^,],%*[^,],%*[^,],%31s", realip, virtip, username) == 3) {
+					fprintf(fpo,"%s %s %s\n", realip, virtip, username);
+				}
 			}
 		}
 		fclose(fpi);

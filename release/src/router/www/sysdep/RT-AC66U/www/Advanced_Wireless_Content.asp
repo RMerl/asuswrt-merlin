@@ -214,8 +214,8 @@ function applyRule(){
 			else	
 				document.form.wl_chanspec.value = document.form.wl_channel.value + document.form.wl_nctrlsb.value;
 		}	
-
-		document.form.submit();
+	
+	document.form.submit();
 	}
 } 
 
@@ -349,6 +349,13 @@ function regen_5G_mode(obj,flag){
 	
 	obj.value = '<% nvram_get("wl_nmode_x"); %>';
 }
+
+function check_DFS_support(obj){
+	if(obj.checked)
+		document.form.acs_dfs.value = 1;
+	else
+		document.form.acs_dfs.value = 0;
+}
 </script>
 </head>
 
@@ -411,6 +418,7 @@ function regen_5G_mode(obj,flag){
 <input type="hidden" name="wl_wep_x_orig" value='<% nvram_get("wl_wep_x"); %>'>
 <input type="hidden" name="wl_optimizexbox" value='<% nvram_get("wl_optimizexbox"); %>'>
 <input type="hidden" name="wl_subunit" value='-1'>
+<input type="hidden" name="acs_dfs" value='<% nvram_get("acs_dfs"); %>'>
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
   <tr>
@@ -493,7 +501,6 @@ function regen_5G_mode(obj,flag){
 						<!-- [N + AC] is not compatible with current guest network authentication method(TKIP or WEP),  Please go to <a id="gn_link" href="/Guest_network.asp?af=wl_NOnly_note" target="_blank" style="color:#FFCC00;font-family:Lucida Console;text-decoration:underline;">guest network</a> and change the authentication method. -->
 					</td>
 			  </tr>
-
 			 	<tr id="wl_bw_field">
 			   	<th><#WLANConfig11b_ChannelBW_itemname#></th>
 			   	<td>				    			
@@ -504,13 +511,12 @@ function regen_5G_mode(obj,flag){
 						</select>				
 			   	</td>
 			 	</tr>
-
 				<!-- ac channel -->			  
 				<tr>
 					<th><a id="wl_channel_select" class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 3);"><#WLANConfig11b_Channel_itemname#></a></th>
 					<td>
 				 		<select name="wl_channel" class="input_option" onChange="change_channel(this);"></select>
-						<span id="dfs_checkbox" style="display:none"><input type="checkbox" name="acs_dfs" onClick="document.form.acs_dfs.value=(this.checked==true)?1:0;"  value="<% nvram_get("acs_dfs"); %>" <% nvram_match("acs_dfs", "1", "checked"); %>>DFS Support</input></span>
+						<span id="dfs_checkbox" style="display:none"><input type="checkbox" onClick="check_DFS_support(this);"  <% nvram_match("acs_dfs", "1", "checked"); %>>Auto select channel including DFS channels</input></span>
 					</td>
 			  </tr> 
 		  	<!-- end -->
@@ -609,8 +615,8 @@ function regen_5G_mode(obj,flag){
 					</td>
 			  	</tr>
 			  
-				<tr>
-					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 9);">Protected Management Frames</a></th>
+				<tr style="display:none">
+					<th>Protected Management Frames</th>
 					<td>
 				  		<select name="wl_mfp" class="input_option" >
 								<option value="0" <% nvram_match("wl_mfp", "0", "selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>

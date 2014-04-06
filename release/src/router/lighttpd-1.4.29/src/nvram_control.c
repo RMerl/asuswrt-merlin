@@ -40,6 +40,7 @@
 #define ACC_LIST "acc_list"
 #define ACC_WEBDAVPROXY "acc_webdavproxy"
 #define ST_SAMBA_MODE "st_samba_mode"
+#define ST_SAMBA_FORCE_MODE "st_samba_force_mode"
 #define HTTP_USERNAME "username"	// #define HTTP_USERNAME "http_username"
 #define HTTP_PASSWD "web_passwd"	// #define HTTP_PASSWD "http_passwd"
 #define WEBDAVAIDISK "webdav_aidisk"
@@ -84,6 +85,7 @@
 #define ACC_LIST "acc_list"
 #define ACC_WEBDAVPROXY "acc_webdavproxy"
 #define ST_SAMBA_MODE "st_samba_mode"
+#define ST_SAMBA_FORCE_MODE "st_samba_force_mode"
 #define HTTP_USERNAME "http_username"
 #define HTTP_PASSWD "http_passwd"
 #define WEBDAVAIDISK "webdav_aidisk"
@@ -771,11 +773,19 @@ int nvram_get_st_samba_mode(void)
 #ifdef USE_TCAPI
 	char st_samba_mode[4] ={0};
 	int a = 0;
-	tcapi_get(SAMBA, ST_SAMBA_MODE, st_samba_mode);
+	tcapi_get(SAMBA, ST_SAMBA_FORCE_MODE, st_samba_mode);
+
+	if(strcmp(st_samba_mode,"")==0)
+		tcapi_get(SAMBA, ST_SAMBA_MODE, st_samba_mode);
+	
 	a = atoi(st_samba_mode);
 	return a;
 #else
-	char* res = nvram_get(ST_SAMBA_MODE);
+	char* res = nvram_get(ST_SAMBA_FORCE_MODE);
+
+	if(res==NULL)
+		res = nvram_get(ST_SAMBA_MODE);
+	
 	int a = atoi(res);
 #ifdef APP_IPKG
 	free(res);
@@ -1211,7 +1221,9 @@ int nvram_set_https_crt_cn(const char* cn)
 
 char* nvram_get_https_crt_cn(){
 #ifdef USE_TCAPI		
-	return NULL;
+	static char https_crt_cn[MAXLEN_TCAPI_MSG] = {0};
+	tcapi_get(WEBDAV, HTTPS_CRT_CN, https_crt_cn);
+	return https_crt_cn;
 #else
 	return nvram_get(HTTPS_CRT_CN);
 #endif

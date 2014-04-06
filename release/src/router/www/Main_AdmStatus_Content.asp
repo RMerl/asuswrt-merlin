@@ -33,6 +33,7 @@ function checkCmdRet(){
 				retArea.value = response.replace("XU6J03M6", " ");
 				retArea.scrollTop = retArea.scrollHeight;
 				document.form.SystemCmd.value = "";
+				document.form.SystemCmd.focus();
 				return false;
 			}
 
@@ -45,6 +46,9 @@ function checkCmdRet(){
 				document.getElementById("loadingIcon").style.display = "none";
 				_cmdBtn.disabled = false;
 				_cmdBtn.style.color = "#FFF";
+				retArea.scrollTop = retArea.scrollHeight;
+				document.form.SystemCmd.focus();
+
 				setTimeout("checkCmdRet();", 1000);
 			}
 			else{
@@ -63,7 +67,16 @@ function checkCmdRet(){
 </script>
 </head>  
 
-<body onLoad="document.form.SystemCmd.focus();" style="background-color: #21333e;">
+<body style="background-color: #21333e;">
+<script>
+	function doSth(){
+		document.form.SystemCmd.style.width = parseInt(document.getElementById("cmdTd").clientWidth) - 170;
+		document.form.SystemCmd.focus();		
+	}
+
+	window.onresize = function(){doSth();}
+	document.body.onload = function(){doSth();}
+</script>
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
 <form method="GET" name="form" action="/apply.cgi" target="hidden_frame"> 
 <input type="hidden" name="current_page" value="Main_AdmStatus_Content.asp">
@@ -84,8 +97,8 @@ function checkCmdRet(){
 	</thead>
 	<tbody>
 	<tr>
-		<td>
-			<input class="input_option" type="text" maxlength="255" size="60%" name="SystemCmd" value="">
+		<td id="cmdTd">
+			<input type="text" width="90%" name="SystemCmd" value="" class="input_option" style="padding-left:3px">
 			<input class="button_gen" id="cmdBtn" onClick="onSubmitCtrl(this, ' Refresh ')" type="submit" value="<#CTL_refresh#>" name="action">
 			<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></span>
 		</td>

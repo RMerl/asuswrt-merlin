@@ -574,9 +574,10 @@ function createVLC() {
 	g_this_video_hash = md5(g_this_video.substr(g_this_video.lastIndexOf("/")+1, g_this_video.length));
 	
 	var val = navigator.userAgent.toLowerCase();
-	if(val.indexOf("msie") > -1) g_isIE = true;
 	var osVer = navigator.appVersion.toLowerCase();
-	   
+	
+	g_isIE = isIE();
+	
 	if( osVer.indexOf("mac") != -1 ){
 		document.write("<video width='320' height='240' controls='controls'>");
   		document.write("<source src='");

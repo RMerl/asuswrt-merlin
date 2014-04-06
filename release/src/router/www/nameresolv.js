@@ -115,7 +115,7 @@ function oui_query(mac) {
 				return nd();
 			var retData = response.responseText.split("pre")[1].split("(base 16)")[1].replace("PROVINCE OF CHINA", "R.O.C").split("&lt;/");
 			overlib_str_tmp += "<p><span>.....................................</span></p>";
-			return overlib(overlib_str_tmp + "<p style='margin-top:5px'>Manufacturer:</p>" + retData[0]);
+			return overlib(overlib_str_tmp + "<p style='margin-top:5px'><#Manufacturer#> :</p>" + retData[0]);
 		}    
   });
 }

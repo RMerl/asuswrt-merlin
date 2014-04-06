@@ -101,7 +101,7 @@ $("document").ready(function() {
 	
 	var browserVer = navigator.userAgent.toLowerCase();
 	
-	if( browserVer.indexOf("msie") != -1 && 
+	if( isIE() && 
 		getInternetExplorerVersion() <= 7 ){
 		
 		$("table#table_login").remove();
@@ -311,7 +311,7 @@ function onKeyHandler(e){
 									</tr>
 									<tr height="5px"></tr>
 									<tr>
-					          			<td><input id="username" name="username" type="text" size="20" autocapitalize="off" style="font-size:20px;width:220px;height:36px"></td>
+					          			<td><input id="username" name="username" type="text" size="20" maxlength="20" autocapitalize="off" style="font-size:20px;width:220px;height:36px"></td>
 					          		</tr>
 					          		<tr style="height:10px"></tr>
                                   	<tr> 
@@ -319,7 +319,7 @@ function onKeyHandler(e){
                                   	</tr>
 					          		<tr height="5px"></tr>
 					          		<tr> 
-					            		<td><input id="password" name="password" type="password" size="20" style="font-size:20px;width:220px;height:36px" onkeydown="return onKeyHandler(event)"></td>
+					            		<td><input id="password" name="password" type="password" size="16" maxlength="16" style="font-size:20px;width:220px;height:36px" onkeydown="return onKeyHandler(event)"></td>
 					          		</tr>
 					           		<tr style="height:10px"></tr>
 					          		<tr class="captcha" style="display:none">

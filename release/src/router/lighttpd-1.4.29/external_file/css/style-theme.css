@@ -1370,6 +1370,7 @@ color:#fff;
 position: fixed; 
 top: 77px; 
 display:none;
+white-space: nowrap;
 }
 .table-file-list{
 color:#fff;
@@ -1383,6 +1384,7 @@ background-image: url("images/main_right_region_bg.png");
 .table-file-list tr th {
 background-color: #AFAFAF;
 color:#595959;
+overflow: hidden;
 }
 .table-file-list tr td{
 white-space: nowrap;
@@ -1405,7 +1407,10 @@ border-collpase:collpase;
 table-layout: fixed;
 }
 .table-file-list table thead {
-color:#F3F6FB;	
+color:#F3F6FB;
+}
+.table-file-list thead {
+white-space: nowrap;
 }
 .table-file-list table thead tr {
 background-color:#fff;

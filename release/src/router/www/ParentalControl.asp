@@ -843,6 +843,27 @@ function regen_lantowan(){
 		}
 	}
 }
+
+function genEnableArray_main(j, obj){
+        $("selAll").checked = false;
+        MULTIFILTER_ENABLE_row = MULTIFILTER_ENABLE.split('>');
+
+        if(obj.checked){
+                obj.parentNode.title = "1";
+                MULTIFILTER_ENABLE_row[j] = "1";
+        }
+        else{
+                obj.parentNode.title = "0";
+                MULTIFILTER_ENABLE_row[j] = "0";
+        }
+
+        MULTIFILTER_ENABLE = "";
+        for(i=0; i<MULTIFILTER_ENABLE_row.length; i++){
+                MULTIFILTER_ENABLE += MULTIFILTER_ENABLE_row[i];
+                if(i<MULTIFILTER_ENABLE_row.length-1)
+                        MULTIFILTER_ENABLE += ">";
+        }       
+}
 </script>
 </head>
 

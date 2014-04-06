@@ -588,6 +588,14 @@ et_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	if (!etc_chipmatch(pdev->vendor, pdev->device))
 		return -ENODEV;
 
+#ifdef RGMII_BCM_FA
+#ifdef ETFA
+	sprintf(name, "et%dmacaddr", unit);
+	if (getvar(NULL, name))
+		fa_set_aux_unit(si_kattach(SI_OSH), unit);
+#endif /* ETFA */
+#endif	/* RGMII_BCM_FA */
+
 	/* Map core unit to nvram unit for FA, otherwise, core unit is equal to nvram unit */
 	etc_unitmap(pdev->vendor, pdev->device, coreunit, &unit);
 

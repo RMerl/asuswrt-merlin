@@ -135,8 +135,9 @@ $("document").ready(function() {
 	var media_hostName = window.location.host;
 	if(media_hostName.indexOf(":")!=-1)
 		media_hostName = media_hostName.substring(0, media_hostName.indexOf(":"));		
-	var jar_file = "http://" + media_hostName + ":" + g_storage.get("http_port") + '/smb/css/CloudUtil.jar';
-				
+	//var jar_file = "http://" + media_hostName + ":" + g_storage.get("http_port") + '/smb/css/CloudUtil.jar';
+	var jar_file = '/smb/css/CloudUtil.jar';
+			
 	var applet_html = '<applet name="AiCloud_Applet" id="AiCloud_Applet" ARCHIVE="';
 	applet_html += jar_file;
 	applet_html += '" code="com.asus.aicloud.UploadFile.class" width="100%" height="100%" >';

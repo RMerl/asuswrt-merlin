@@ -413,12 +413,15 @@ function createListView(container, query_type, parent_url, folder_array, file_ar
 	html += '<table id="ntl" class="table-file-list">';
 	html += '<thead>';
 	html += '<tr>';
-	html += '<th style="width:3%"></th>';
-	html += '<th style="width:4%"></th>';
+	//html += '<th style="width:3%"></th>';
+	//html += '<th style="width:4%"></th>';
+	html += '<th style="width:30px"></th>';
+	html += '<th style="width:40px"></th>';
 	html += '<th style="width:58%">' + m.getString('table_filename') + '</th>';
 	html += '<th style="width:25%">' + m.getString('table_time') + '</th>';
 	html += '<th style="width:7%">' + m.getString('table_size') + '</th>';
-	html += '<th style="width:3%"></th>';
+	//html += '<th style="width:3%"></th>';
+	html += '<th style="width:30px"></th>';
 	html += '</tr>';
 	html += '</thead>';
 	

@@ -148,6 +148,11 @@ struct robo_info_s {
 	/* PLC */
 	bool	plc_hw;			/* PLC chip */
 #endif /* PLC */
+#ifdef RGMII_BCM_FA
+#ifdef BCMFA
+	int		aux_pid;
+#endif
+#endif /* BCMFA */
 };
 
 /* Power Save mode related functions */

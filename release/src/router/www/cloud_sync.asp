@@ -214,7 +214,7 @@ function showInvitation(){
 
 	cal_panel_block();
 	if(!isInvite){
-		$("invitationInfo").innerHTML = "<br/> Invalid invitation code!";
+		$("invitationInfo").innerHTML = "<br/> <#aicloud_invitation_invalid#>";
 		$j("#invitation").fadeIn(300);
 		$j("#invitationBg").fadeIn(300);
 	}
@@ -1218,14 +1218,14 @@ function refresh_captcha(){
    					<table width="99%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" id="cloudlistTable" style="margin-top:30px;">
 	  					<thead>
 	   					<tr>
-	   						<td colspan="6" id="cloud_synclist">Cloud List</td>
+	   						<td colspan="6" id="cloud_synclist"><#aicloud_cloud_list#></td>
 	   					</tr>
 	  					</thead>		  
 
     					<tr>
-      					<th width="10%"><!--a class="hintstyle" href="javascript:void(0);" onClick="openHint(18,2);"-->Provider<!--/a--></th>
+      					<th width="10%"><#Provider#></th>
     						<th width="25%"><#PPPConnection_UserName_itemname#></a></th>
-      					<th width="10%">Rule</a></th>
+      					<th width="10%"><#Cloudsync_Rule#></a></th>
       					<th width="30%"><#FolderName#></th>
       					<th width="15%"><#PPPConnection_x_WANLink_itemname#></th>
       					<th width="10%"><#CTL_del#></th>
@@ -1246,7 +1246,7 @@ function refresh_captcha(){
 					  <table width="99%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="cloudAddTable" style="margin-top:10px;display:none;">
 	  					<thead>
 	   					<tr>
-	   						<td colspan="6" id="cloud_synclist">Cloud List</td>
+	   						<td colspan="6" id="cloud_synclist"><#aicloud_cloud_list#></td>
 	   					</tr>
 	  					</thead>		  
 
@@ -1295,9 +1295,9 @@ function refresh_captcha(){
 							</th>
 							<td>
 								<select name="cloud_rule" class="input_option">
-									<option value="0">Sync</option>
-									<option value="1">Download to USB Disk</option>
-									<option value="2">Upload to Cloud</option>
+									<option value="0"><#Cloudsync_Rule_sync#></option>
+									<option value="1"><#Cloudsync_Rule_dl#></option>
+									<option value="2"><#Cloudsync_Rule_ul#></option>
 								</select>			
 							</td>
 						  </tr>

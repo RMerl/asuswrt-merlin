@@ -381,16 +381,26 @@ char *get_usb_node_by_device(const char *device_name, char *buf, const int buf_s
 }
 
 char *get_path_by_node(const char *usb_node, char *buf, const int buf_size){
-	char *ptr;
+	char usb_port[8], *hub_path;
+	int port_num = 0, len;
 
 	if(usb_node == NULL || buf == NULL || buf_size <= 0)
 		return NULL;
 
-	if((ptr = strchr(usb_node, '-')) == NULL)
+	// Get USB port.
+	if(get_usb_port_by_string(usb_node, usb_port, sizeof(usb_port)) == NULL)
 		return NULL;
 
-	memset(buf, 0, buf_size);
-	strncpy(buf, ptr+1, buf_size);
+	port_num = get_usb_port_number(usb_port);
+	if(port_num == 0)
+		return NULL;
+
+	if(strlen(usb_node) > (len = strlen(usb_port))){
+		hub_path = usb_node+len;
+		snprintf(buf, buf_size, "%d%s", port_num, hub_path);
+	}
+	else
+		snprintf(buf, buf_size, "%d", port_num);
 
 	return buf;
 }

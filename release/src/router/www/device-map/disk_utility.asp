@@ -370,7 +370,7 @@ function get_disk_log(){
 		}
 	});
 
-	if(parent.getDiskPort(diskOrder) == "2")
+	if(diskOrder == "2")
 		document.getElementById("textarea_disk1").style.display = "";
 	else
 		document.getElementById("textarea_disk0").style.display = "";
@@ -396,7 +396,7 @@ function check_status(_device){
 		var i, j;
 		var got_code_0, got_code_1, got_code_2, got_code_3;
 		for(i = 0; i < _device.partition.length; ++i){
-			switch(_device.partition[i].fsck){
+			switch(parseInt(_device.partition[i].fsck)){
 				case 0: // no error.
 					got_code_0 = 1;
 					break;

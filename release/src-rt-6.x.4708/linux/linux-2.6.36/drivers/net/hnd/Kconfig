@@ -31,6 +31,9 @@ config BCM_CTF
 config BCM_FA
         bool "BCM HW Flow Accelerator support"
         depends on BCM_CTF
+config RGMII_BCM_FA
+        bool "BCM HW Flow Accelerator RGMII support"
+        depends on BCM_CTF
 config WL_EMULATOR
 	bool "WL emulation using Gigabit ethernet"
 	depends on HND

@@ -18,6 +18,12 @@ define platformKernelConfig
 # prepare config_base
 # prepare prebuilt kernel binary
 	@( \
+	sed -i "/CONFIG_RGMII_BCM_FA/d" $(1); \
+	if [ "$(RGMII_BCM_FA)" = "y" ]; then \
+		echo "CONFIG_RGMII_BCM_FA=y" >> $(1); \
+	else \
+		echo "# CONFIG_RGMII_BCM_FA is not set" >> $(1); \
+	fi; \
 	if [ "$(BCMNAND)" = "y" ]; then \
 		sed -i "/CONFIG_MTD_NFLASH/d" $(1); \
 		echo "CONFIG_MTD_NFLASH=y" >>$(1); \

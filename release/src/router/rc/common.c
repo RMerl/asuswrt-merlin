@@ -1417,7 +1417,7 @@ void setup_dnsmq(int mode)
 		// setup ebtables
 		eval("ebtables", "-F");
 		eval("ebtables", "-t", "broute", "-F");
-		eval("ebtables", "-t", "broute", "-I", "BROUTING", "-p", "ipv4", "-d", "00:E0:11:22:33:44", "-j", "redirect", "--redirect-target", "DROP");
+		eval("ebtables", "-t", "broute", "-I", "BROUTING", "-d", "00:E0:11:22:33:44", "-j", "redirect", "--redirect-target", "DROP");
 	}
 	else {
 		eval("ebtables", "-F");

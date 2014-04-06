@@ -301,14 +301,14 @@ function switch_modem_mode(mode){
 
 function show_ISP_list(){
 	var removeItem = 0;
-	free_options($("modem_isp"));
-	$("modem_isp").options.length = isplist.length;
+	free_options(document.form.modem_isp);
+	document.form.modem_isp.options.length = isplist.length;
 
 	for(var i = 0; i < isplist.length; i++){
 	  if(protolist[i] == 4 && !wimax_support){
-			$("modem_isp").options.length = $("modem_isp").options.length - 1;
+			document.form.modem_isp.options.length = document.form.modem_isp.options.length - 1;
 
-			if($("modem_isp").options.length > 0)
+			if(document.form.modem_isp.options.length > 0)
 				continue;
 			else{
 				alert('We currently do not support this location, please use "Manual"!');
@@ -318,16 +318,16 @@ function show_ISP_list(){
 			}
 		}
 		else
-			$("modem_isp").options[i] = new Option(isplist[i], isplist[i]);
+			document.form.modem_isp.options[i] = new Option(isplist[i], isplist[i]);
 
 		if(isplist[i] == isp)
-			$("modem_isp").options[i].selected = 1;
+			document.form.modem_isp.options[i].selected = 1;
 	}
 }
 
 function show_APN_list(){
-	var ISPlist = $("modem_isp").value;
-	var Countrylist = $("isp_countrys").value;
+	var ISPlist = document.form.modem_isp.value;
+	var Countrylist = document.form.modem_country.value;
 
 	var isp_order = -1;
 	for(isp_order = 0; isp_order < isplist.length; ++isp_order){
@@ -623,14 +623,14 @@ function check_dongle_status(){
 					<tr>
           	<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,9);"><#HSDPAConfig_Country_itemname#></a></th>
             <td>
-            	<select name="modem_country" id="isp_countrys" class="input_option" onchange="switch_modem_mode(document.form.modem_enable_option.value);reloadProfile();"></select>
+            	<select name="modem_country" class="input_option" onchange="switch_modem_mode(document.form.modem_enable_option.value);reloadProfile();"></select>
 						</td>
 					</tr>
                                 
           <tr>
           	<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,8);"><#HSDPAConfig_ISP_itemname#></a></th>
             <td>
-            	<select name="modem_isp" id="modem_isp" class="input_option" onchange="show_APN_list();"></select>
+            	<select name="modem_isp" class="input_option" onchange="show_APN_list();"></select>
             </td>
           </tr>
 

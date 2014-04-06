@@ -47,6 +47,7 @@ function checkCmdRet(){
 				document.getElementById("cmdBtn").style.color = "#FFF";
 				document.getElementById("textarea").value = response.replace("XU6J03M6", " ");
 				document.form.SystemCmd.value = "";
+				document.form.SystemCmd.focus();
 				return false;
 			}
 
@@ -59,6 +60,9 @@ function checkCmdRet(){
 				document.getElementById("loadingIcon").style.display = "none";
 				document.getElementById("cmdBtn").disabled = false;
 				document.getElementById("cmdBtn").style.color = "#FFF";
+ 				retArea.scrollTop = retArea.scrollHeight;
+ 				document.form.SystemCmd.focus();
+
 				setTimeout("checkCmdRet();", 1000);
 			}
 			else{
