@@ -417,7 +417,7 @@ client6_script(scriptpath, state, optinfo)
 				if (v2->type == DHCP6_LISTVAL_PREFIX6) {
 					char lifetime[11];
 					snprintf(lifetime, sizeof(lifetime),
-					    "%u", v->val_prefix6.vltime);
+					    "%u", v2->val_prefix6.vltime);
 					strlcat(s, lifetime, elen);
 					strlcat(s, " ", elen);
 					break;
@@ -444,7 +444,7 @@ client6_script(scriptpath, state, optinfo)
 				if (v2->type == DHCP6_LISTVAL_PREFIX6) {
 					char lifetime[11];
 					snprintf(lifetime, sizeof(lifetime),
-					    "%u", v->val_prefix6.pltime);
+					    "%u", v2->val_prefix6.pltime);
 					strlcat(s, lifetime, elen);
 					strlcat(s, " ", elen);
 					break;
