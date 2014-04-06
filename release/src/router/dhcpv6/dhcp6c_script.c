@@ -412,7 +412,7 @@ client6_script(scriptpath, state, optinfo)
 		snprintf(s, elen, "%s=", vlifetime_str);
 		for (v = TAILQ_FIRST(&optinfo->iapd_list); v;
 		    v = TAILQ_NEXT(v, link)) {
-			for(v2 = TAILQ_FIRST(v->sublist); v2;
+			for(v2 = TAILQ_FIRST(&v->sublist); v2;
 			    v2 = TAILQ_NEXT(v2, link)) {
 				if (v2->type == DHCP6_LISTVAL_PREFIX6) {
 					char lifetime[11];
@@ -439,7 +439,7 @@ client6_script(scriptpath, state, optinfo)
 		snprintf(s, elen, "%s=", plifetime_str);
 		for (v = TAILQ_FIRST(&optinfo->iapd_list); v;
 		    v = TAILQ_NEXT(v, link)) {
-			for(v2 = TAILQ_FIRST(v->sublist); v2;
+			for(v2 = TAILQ_FIRST(&v->sublist); v2;
 			    v2 = TAILQ_NEXT(v2, link)) {
 				if (v2->type == DHCP6_LISTVAL_PREFIX6) {
 					char lifetime[11];
