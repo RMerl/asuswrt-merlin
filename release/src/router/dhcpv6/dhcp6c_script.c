@@ -89,7 +89,7 @@ client6_script(scriptpath, state, optinfo)
 	int vlifetime;
 	char **envp, *s;
 	char reason[] = "REASON=NBI";
-	struct dhcp6_listval *v;
+	struct dhcp6_listval *v, *v2;
 	pid_t pid, wpid;
 
 	/* if a script is not specified, do nothing */
@@ -167,11 +167,11 @@ client6_script(scriptpath, state, optinfo)
 	 */
 	for (v = TAILQ_FIRST(&optinfo->iapd_list); v; v = TAILQ_NEXT(v, link))
 		vlifetime++;
-	envc += (vlifetime == 1) ? 1 : 0;
+	envc += vlifetime ? 1 : 0;
 
 	for (v = TAILQ_FIRST(&optinfo->iapd_list); v; v = TAILQ_NEXT(v, link))
 		plifetime++;
-	envc += (plifetime == 1) ? 1 : 0;
+	envc += plifetime ? 1 : 0;
 
 	/* allocate an environments array */
 	if ((envp = malloc(sizeof (char *) * envc)) == NULL) {
@@ -399,7 +399,7 @@ client6_script(scriptpath, state, optinfo)
 		}
 	}
 
-	if (vlifetime == 1) {
+	if (vlifetime) {
 		elen = sizeof (vlifetime_str) +
 		    (10 + 1) * vlifetime + 1;
 		if ((s = envp[i++] = malloc(elen)) == NULL) {
@@ -412,15 +412,21 @@ client6_script(scriptpath, state, optinfo)
 		snprintf(s, elen, "%s=", vlifetime_str);
 		for (v = TAILQ_FIRST(&optinfo->iapd_list); v;
 		    v = TAILQ_NEXT(v, link)) {
-			char lifetime[11];
-			snprintf(lifetime, sizeof(lifetime), "%u", v->val_prefix6.vltime);
-			strlcat(s, lifetime, elen);
-			strlcat(s, " ", elen);
-
+			for(v2 = TAILQ_FIRST(v->sublist); v2;
+			    v2 = TAILQ_NEXT(v2, link)) {
+				if (v2->type == DHCP6_LISTVAL_PREFIX6) {
+					char lifetime[11];
+					snprintf(lifetime, sizeof(lifetime),
+					    "%u", v->val_prefix6.vltime);
+					strlcat(s, lifetime, elen);
+					strlcat(s, " ", elen);
+					break;
+				}
+			}
 		}
 	}
 
-	if (plifetime == 1) {
+	if (plifetime) {
 		elen = sizeof (plifetime_str) +
 		    (10 + 1) * plifetime + 1;
 		if ((s = envp[i++] = malloc(elen)) == NULL) {
@@ -433,10 +439,17 @@ client6_script(scriptpath, state, optinfo)
 		snprintf(s, elen, "%s=", plifetime_str);
 		for (v = TAILQ_FIRST(&optinfo->iapd_list); v;
 		    v = TAILQ_NEXT(v, link)) {
-			char lifetime[11];
-			snprintf(lifetime, sizeof(lifetime), "%u", v->val_prefix6.pltime);
-			strlcat(s, lifetime, elen);
-			strlcat(s, " ", elen);
+			for(v2 = TAILQ_FIRST(v->sublist); v2;
+			    v2 = TAILQ_NEXT(v2, link)) {
+				if (v2->type == DHCP6_LISTVAL_PREFIX6) {
+					char lifetime[11];
+					snprintf(lifetime, sizeof(lifetime),
+					    "%u", v->val_prefix6.pltime);
+					strlcat(s, lifetime, elen);
+					strlcat(s, " ", elen);
+					break;
+				}
+			}
 		}
 	}
 
