@@ -85,11 +85,10 @@ client6_script(scriptpath, state, optinfo)
 	int nisservers, nisnamelen;
 	int nispservers, nispnamelen;
 	int bcmcsservers, bcmcsnamelen;
-	int plifetime;
-	int vlifetime;
-	char **envp, *s;
+	int lifetimes;
+	char **envp, *s, *s2;
 	char reason[] = "REASON=NBI";
-	struct dhcp6_listval *v, *v2;
+	struct dhcp6_listval *v, *sv;
 	pid_t pid, wpid;
 
 	/* if a script is not specified, do nothing */
@@ -108,8 +107,7 @@ client6_script(scriptpath, state, optinfo)
 	nispnamelen = 0;
 	bcmcsservers = 0;
 	bcmcsnamelen = 0;
-	plifetime = 0;
-	vlifetime = 0;
+	lifetimes = 0;
 	envc = 2;     /* we at least include the reason and the terminator */
 
 	/* count the number of variables */
@@ -163,15 +161,19 @@ client6_script(scriptpath, state, optinfo)
 	/*
 	 * Copy lifetimes so advertisements can include them.
 	 * This is required by RFC 3633 section 12.1.
-	 * TODO: How to handle multiple PDs?
+	 * TODO: How to handle multiple prefixes?
 	 */
-	for (v = TAILQ_FIRST(&optinfo->iapd_list); v; v = TAILQ_NEXT(v, link))
-		vlifetime++;
-	envc += vlifetime ? 1 : 0;
-
-	for (v = TAILQ_FIRST(&optinfo->iapd_list); v; v = TAILQ_NEXT(v, link))
-		plifetime++;
-	envc += plifetime ? 1 : 0;
+	for (v = TAILQ_FIRST(&optinfo->iapd_list); v;
+	    v = TAILQ_NEXT(v, link)) {
+		for (sv = TAILQ_FIRST(&v->sublist); sv;
+		    sv = TAILQ_NEXT(sv, link)) {
+			if (sv->type == DHCP6_LISTVAL_PREFIX6) {
+				lifetimes++;
+			}
+		}
+	}
+	/* Valid and preferred lifetimes */
+	envc += lifetimes ? 2 : 0;
 
 	/* allocate an environments array */
 	if ((envp = malloc(sizeof (char *) * envc)) == NULL) {
@@ -399,9 +401,9 @@ client6_script(scriptpath, state, optinfo)
 		}
 	}
 
-	if (vlifetime) {
+	if (lifetimes) {
 		elen = sizeof (vlifetime_str) +
-		    (10 + 1) * vlifetime + 1;
+		    (10 + 1) * lifetimes + 1;
 		if ((s = envp[i++] = malloc(elen)) == NULL) {
 			dprintf(LOG_NOTICE, FNAME,
 			    "failed to allocate strings for valid lifetime");
@@ -410,43 +412,30 @@ client6_script(scriptpath, state, optinfo)
 		}
 		memset(s, 0, elen);
 		snprintf(s, elen, "%s=", vlifetime_str);
-		for (v = TAILQ_FIRST(&optinfo->iapd_list); v;
-		    v = TAILQ_NEXT(v, link)) {
-			for(v2 = TAILQ_FIRST(&v->sublist); v2;
-			    v2 = TAILQ_NEXT(v2, link)) {
-				if (v2->type == DHCP6_LISTVAL_PREFIX6) {
-					char lifetime[11];
-					snprintf(lifetime, sizeof(lifetime),
-					    "%u", v2->val_prefix6.vltime);
-					strlcat(s, lifetime, elen);
-					strlcat(s, " ", elen);
-					break;
-				}
-			}
-		}
-	}
-
-	if (plifetime) {
-		elen = sizeof (plifetime_str) +
-		    (10 + 1) * plifetime + 1;
-		if ((s = envp[i++] = malloc(elen)) == NULL) {
+		if ((s2 = envp[i++] = malloc(elen)) == NULL) {
 			dprintf(LOG_NOTICE, FNAME,
-			    "failed to allocate strings for preferred lifetime");
+			    "failed to allocate strings for pref. lifetime");
 			ret = -1;
 			goto clean;
 		}
-		memset(s, 0, elen);
-		snprintf(s, elen, "%s=", plifetime_str);
+		memset(s2, 0, elen);
+		snprintf(s2, elen, "%s=", plifetime_str);
 		for (v = TAILQ_FIRST(&optinfo->iapd_list); v;
 		    v = TAILQ_NEXT(v, link)) {
-			for(v2 = TAILQ_FIRST(&v->sublist); v2;
-			    v2 = TAILQ_NEXT(v2, link)) {
-				if (v2->type == DHCP6_LISTVAL_PREFIX6) {
+			for (sv = TAILQ_FIRST(&v->sublist); sv;
+			    sv = TAILQ_NEXT(sv, link)) {
+				if (sv->type == DHCP6_LISTVAL_PREFIX6) {
 					char lifetime[11];
+					/* Valid lifetime */
 					snprintf(lifetime, sizeof(lifetime),
-					    "%u", v2->val_prefix6.pltime);
+					    "%u", sv->val_prefix6.vltime);
 					strlcat(s, lifetime, elen);
 					strlcat(s, " ", elen);
+					/* Preferred lifetime */
+					snprintf(lifetime, sizeof(lifetime),
+					    "%u", sv->val_prefix6.pltime);
+					strlcat(s2, lifetime, elen);
+					strlcat(s2, " ", elen);
 					break;
 				}
 			}
