@@ -444,7 +444,7 @@ add_option (char *p[], int line, int unit)
 		if (streq (p[1], INLINE_FILE_TAG) && p[2])
 		{
 			sprintf(buf, "vpn_crt_client%d_ca", unit);
-			//write_encoded_crt(buf, strstr(p[2], "-----BEGIN"));
+			write_encoded_crt(buf, strstr(p[2], "-----BEGIN"));
 		}
 		else
 		{
@@ -456,7 +456,7 @@ add_option (char *p[], int line, int unit)
 		if (streq (p[1], INLINE_FILE_TAG) && p[2])
 		{
 			sprintf(buf, "vpn_crt_client%d_crt", unit);
-			//write_encoded_crt(buf, strstr(p[2], "-----BEGIN"));
+			write_encoded_crt(buf, strstr(p[2], "-----BEGIN"));
 		}
 		else
 		{
@@ -468,7 +468,7 @@ add_option (char *p[], int line, int unit)
 		if (streq (p[1], INLINE_FILE_TAG) && p[2])
 		{
 			sprintf(buf, "vpn_crt_client%d_key", unit);
-			//write_encoded_crt(buf, strstr(p[2], "-----BEGIN"));
+			write_encoded_crt(buf, strstr(p[2], "-----BEGIN"));
 		}
 		else
 		{
@@ -480,7 +480,7 @@ add_option (char *p[], int line, int unit)
 		if (streq (p[1], INLINE_FILE_TAG) && p[2])
 		{
 			sprintf(buf, "vpn_crt_client%d_static", unit);
-			//write_encoded_crt(buf, strstr(p[2], "-----BEGIN"));
+			write_encoded_crt(buf, strstr(p[2], "-----BEGIN"));
 		}
 		else
 		{
@@ -498,7 +498,7 @@ add_option (char *p[], int line, int unit)
 		if (streq (p[1], INLINE_FILE_TAG) && p[2])
 		{
 			sprintf(buf, "vpn_crt_client%d_static", unit);
-			//write_encoded_crt(buf, strstr(p[2], "-----BEGIN"));
+			write_encoded_crt(buf, strstr(p[2], "-----BEGIN"));
 		}
 		else
 		{
