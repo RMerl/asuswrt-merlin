@@ -78,11 +78,15 @@ function showDiskUsage(device){
 		showdisklink();
 		$("mounted_item1").style.display = "";
 		$("mounted_item2").style.display = "";
+        $("remove_disk_item").style.display = "";
+        $("mount_disk_item").style.display = "none";
 		$("unmounted_refresh").style.display = "none";
 	}
 	else{
 		$("mounted_item1").style.display = "none";
 		$("mounted_item2").style.display = "none";
+        $("remove_disk_item").style.display = "none";
+        $("mount_disk_item").style.display = "";
 		$("unmounted_refresh").style.display = "";
 	}
 
@@ -207,6 +211,17 @@ function remove_disk(){
 		setTimeout("document.diskForm.submit();", 1);
 	}
 }
+
+function mount_disk(){
+	var str = "<#Safelymountdisk_confirm#>";
+	if(confirm(str)){
+		parent.showLoading();
+		
+		document.diskForm.action = "safely_mount_disk.asp";
+		document.diskForm.disk.value = parent.getDiskPort(this.diskOrder);
+		setTimeout("document.diskForm.submit();", 1);
+	}
+}
 </script>
 </head>
 
@@ -229,6 +244,7 @@ function remove_disk(){
 	</td>
 </tr>
 </table>
+
 <table width="95%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="table1px" style="margin-top:-3px;">
 	<tr>
     <td style="padding:5px 10px 0px 15px;">
@@ -281,7 +297,7 @@ function remove_disk(){
   </tr>
 </table>
 
-<table width="95%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="table1px">
+<table id="remove_disk_item" width="95%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="table1px">
   <tr>
     <td height="50" style="padding:10px 15px 0px 15px;">
     	<p class="formfonttitle_nwm" style="float:left;width:138px; "><#Safelyremovedisk_title#>:</p>
@@ -290,6 +306,18 @@ function remove_disk(){
     </td>
   </tr>
 </table>
+
+<table id="mount_disk_item" width="95%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="table1px">
+  <tr>
+    <td height="50" style="padding:10px 15px 0px 15px;">
+    	<p class="formfonttitle_nwm" style="float:left;width:138px; "><#Safelymountdisk_title#>:</p>
+    	<input id="show_mount_button" class="button_gen" type="button" class="button" onclick="mount_disk();" value="<#btn_mount#>">
+    	<div id="show_mounted_string" style="display:none;"><#Safelymountdisk#></div>
+    </td>
+  </tr>
+</table>
+
+
 
 <div id="unmounted_refresh" style="padding:5px 0px 5px 25px; display:none">
 <ul style="font-size:11px; font-family:Arial; padding:0px; margin:0px; list-style:outside; line-height:150%;">

@@ -377,6 +377,11 @@ function show_banner(L3){// L3 = The third Level of Menu
 	banner_code +='<form method="post" name="diskForm_title" action="/device-map/safely_remove_disk.asp" target="hidden_frame">\n';
 	banner_code +='<input type="hidden" name="disk" value="">\n';
 	banner_code +='</form>\n';
+
+        banner_code +='<form method="post" name="diskForm_title" action="/device-map/safely_mount_disk.asp" target="hidden_frame">\n';
+        banner_code +='<input type="hidden" name="disk" value="">\n';
+        banner_code +='</form>\n';
+
 	
 	banner_code +='<form method="post" name="noti_ftp" action="/aidisk/switch_share_mode.asp" target="hidden_frame">\n';
 	banner_code +='<input type="hidden" name="protocol" value="ftp">\n';

@@ -592,6 +592,7 @@ ej_qos_packet	web.c	/^int ej_qos_packet(int eid, webs_t wp, int argc, char_t **a
 ej_radio_status	web.c	/^ej_radio_status(int eid, webs_t wp, int argc, char_t **argv)$/;"	f	file:
 ej_route_table	web.c	/^ej_route_table(int eid, webs_t wp, int argc, char_t **argv)$/;"	f
 ej_safely_remove_disk	web.c	/^static int ej_safely_remove_disk(int eid, webs_t wp, int argc, char_t **argv){$/;"	f	file:
+ej_safely_mount_disk   web.c   /^static int ej_safely_mount_disk(int eid, webs_t wp, int argc, char_t **argv){$/;"    f       file:
 ej_select_channel	web.c	/^ej_select_channel(int eid, webs_t wp, int argc, char_t **argv)$/;"	f	file:
 ej_select_list	web.c	/^ej_select_list(int eid, webs_t wp, int argc, char_t **argv)$/;"	f	file:
 ej_set_AiDisk_status	web.c	/^int ej_set_AiDisk_status(int eid, webs_t wp, int argc, char **argv){$/;"	f

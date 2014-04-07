@@ -206,6 +206,7 @@ ifneq ($(RTCONFIG_USB),y)
 	rm -rf $(INSTALLDIR)/www/switch_AiDisk_app.asp
 	rm -rf $(INSTALLDIR)/www/update_diskinfo.asp
 	rm -rf $(INSTALLDIR)/www/device-map/safely_remove_disk.asp
+	rm -rf $(INSTALLDIR)/www/device-map/safely_mount_disk.asp
 	rm -rf $(INSTALLDIR)/www/device-map/disk.asp
 	# disk utility
 	rm -rf $(INSTALLDIR)/www/device-map/disk_utility.asp
