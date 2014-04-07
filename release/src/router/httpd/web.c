@@ -6860,6 +6860,47 @@ static int ej_safely_remove_disk(int eid, webs_t wp, int argc, char_t **argv){
 	return 0;
 }
 
+
+static int ej_safely_mount_disk(int eid, webs_t wp, int argc, char_t **argv){
+	int result;
+	char *disk_port = websGetVar(wp, "disk", "");
+//	disk_info_t *disks_info = NULL, *follow_disk = NULL;
+//	int disk_num = 0;
+	int part_num = 0;
+	char *fn = "safely_mount_disk_error";
+
+	csprintf("disk_port = %s\n", disk_port);
+
+	if(!strcmp(disk_port, "all")){
+		result = eval("/sbin/hotplug2", "1", "0");
+		result = result + eval("/sbin/hotplug2", "2", "0");
+	}
+	else{
+		result = eval("/sbin/hotplug2", disk_port, "0");
+	}
+
+	if (result != 0){
+		insert_hook_func(wp, fn, "alert_msg.Action9");
+		return -1;
+	}
+
+	part_num = count_sddev_mountpoint();
+	csprintf("part_num = %d\n", part_num);
+
+//	if (disk_num > 1)
+	if (part_num > 0) {
+		result = eval("/sbin/check_proc_mounts_parts");
+		result = notify_rc_for_nas("restart_nasapps");
+	}
+	else {
+		result = notify_rc_for_nas("stop_nasapps");
+	}
+
+	insert_hook_func(wp, "safely_mount_disk_success", "");
+
+	return 0;
+}
+
 int ej_get_permissions_of_account(int eid, webs_t wp, int argc, char **argv){
 	disk_info_t *disks_info, *follow_disk;
 	partition_info_t *follow_partition;
@@ -9456,6 +9497,7 @@ struct ej_handler ej_handlers[] = {
 	{ "set_AiDisk_status", ej_set_AiDisk_status},
 	{ "get_all_accounts", ej_get_all_accounts},
 	{ "safely_remove_disk", ej_safely_remove_disk},
+	{ "safely_mount_disk", ej_safely_mount_disk},
 	{ "get_permissions_of_account", ej_get_permissions_of_account},
 	{ "set_account_permission", ej_set_account_permission},
 	{ "set_account_all_folder_permission", ej_set_account_all_folder_permission},
