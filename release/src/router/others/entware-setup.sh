@@ -104,6 +104,5 @@ eval sed -i 's,__Partition__,$entPartition,g' /jffs/scripts/post-mount
 chmod +x /jffs/scripts/post-mount
 
 echo -e "$INFO Starting Entware deployment....\n"
-wget http://wl500g-repo.googlecode.com/svn/ipkg/entware_install.sh
+wget http://entware.wl500g.info/binaries/entware/installer/entware_install.sh
 sh ./entware_install.sh
-
