@@ -3,10 +3,14 @@ include ../common.mak
 CFLAGS = -Wall -Os $(EXTRACFLAGS)
 CFLAGS += -I. -I$(TOP)/shared -I$(SRCBASE)/include -idirafter$(LINUXDIR)/include
 #CFLAGS += -ffunction-sections -fdata-sections
-LDFLAGS	=
+LDFLAGS	= -L../nvram$(BCMEX) -lnvram -L../shared -lshared $(LIBS)
 
 ifeq ($(RTCONFIG_BCMARM),y)
 LIBS = -lgcc_s
+endif
+
+ifeq ($(RTCONFIG_QTN),y)
+LDFLAGS += -L$(TOP)/libqcsapi_client -lqcsapi_client
 endif
 
 OBJS = cstats.o
@@ -15,7 +19,7 @@ all: cstats
 
 cstats: $(OBJS)
 	@echo " [cstats] CC -o $@"
-	@$(CC) $(LDFLAGS) -o $@ $(OBJS) -L../nvram$(BCMEX) -lnvram -L../shared -lshared $(LIBS)
+	@$(CC) $(LDFLAGS) -o $@ $(OBJS)
 
 	$(SIZECHECK)
 	$(CPTMP)
