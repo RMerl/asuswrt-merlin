@@ -306,7 +306,7 @@ void sys_script(char *name)
      {
 	   if (strcmp(SystemCmd, "")!=0)
 	   {
-		sprintf(SystemCmd, "%s > /tmp/syscmd.log 2>&1 && echo 'XU6J03M6' >> /tmp/syscmd.log &\n", SystemCmd);	// oleg patch
+		snprintf(SystemCmd, sizeof(SystemCmd), "%s > /tmp/syscmd.log 2>&1 && echo 'XU6J03M6' >> /tmp/syscmd.log &\n", SystemCmd);	// oleg patch
 	   	system(SystemCmd);
 		strcpy(SystemCmd,""); // Ensure we don't re-execute it again
 	   }
