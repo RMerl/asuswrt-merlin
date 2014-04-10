@@ -1286,7 +1286,7 @@ iptables-1.4.x-clean:
 upnp: nvram$(BCMEX) shared iptables
 
 miniupnpd/config.h:
-	cd miniupnpd && ./genconfig.sh --leasefile --vendorcfg --pcp
+	cd miniupnpd && ./genconfig.sh --leasefile --vendorcfg
 
 miniupnpd: $(IPTABLES_TARGET) miniupnpd/config.h
 	@$(SEP)
