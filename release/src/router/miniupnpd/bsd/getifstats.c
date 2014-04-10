@@ -12,6 +12,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #if defined(__FreeBSD__) || defined(__DragonFly__)
+#ifdef __DragonFly__
+#define _KERNEL_STRUCTURES
+#endif
 #include <net/if_var.h>
 #endif
 #if defined(__DragonFly__)

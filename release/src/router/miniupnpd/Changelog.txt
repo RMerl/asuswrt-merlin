@@ -1,4 +1,22 @@
-$Id: Changelog.txt,v 1.358 2014/03/09 23:11:43 nanard Exp $
+$Id: Changelog.txt,v 1.366 2014/03/24 11:03:50 nanard Exp $
+
+2014/03/24:
+  start work to enable IPv6 PCP operations
+
+2014/03/14:
+  reject renewal of subscribtion that already timeouted
+  Support for multiple URL in Callback: header (SUBSCRIBE)
+
+2014/03/13:
+  fix getifaddr_in6() (used for PCP)
+  implement permissions with PCP Map
+  fix upnp_event_notify_connect() when ENABLE_IPV6 is set
+
+2014/03/10:
+  Enable PCP by default.
+  Work in IPv6 on system where PF_INET6 are restricted to IPv6 only
+  change ipv6_enabled/ipv6fc_inbound_pinhole_allowed/ipv6fc_firewall_enabled
+    global vars to flags in runtime_flags
 
 2014/03/09:
   IPv6 support in testgetifaddr
@@ -166,6 +184,9 @@ VERSION 1.8 : released on 2013/02/06
 
 2012/07/14:
   Add -z command line option to change friendly name (thanks to Shawn Fisher)
+
+2012/07/10:
+  Detect port in use - patch by David Kerr
 
 2012/06/29:
   added DISABLE_CONFIG_FILE in options.h to disable miniupnpd.conf parsing

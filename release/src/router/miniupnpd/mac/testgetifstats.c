@@ -1,4 +1,4 @@
-/* $Id: testgetifstats.c,v 1.4 2012/03/05 20:36:20 nanard Exp $ */
+/* $Id: testgetifstats.c,v 1.3 2011/02/20 23:43:41 nanard Exp $ */
 /*
  * MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/

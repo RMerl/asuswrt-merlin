@@ -1,0 +1,36 @@
+- detect and inform of IP address changes or connectivity status change
+  => Done (ifacewatcher 2011/05)
+  To be improved.
+- improve logging.
+- add support for IPv6 thanks to http://www.upnp.org/download/Annex%20A%20-%20IPv6.doc
+  => work in progress
+  - send also NOTIFY packets in IPv6 => done (2012/04/06)
+  - make minissdpd know IPv6 also... => done
+- improve NAT-PMP compliance
+  => to be checked
+- Clean Option parsing/processing.
+  => done 2012/02/05
+
+- Option to hide the windows Interconnection icon and pop-up - something to do with optionally having a blank presentation_url
+  Done (2009/02/13)
+- Tomato's version used to dynamically include the local LAN IP and WAN IP as the windows icon name - if it was displayed...
+
+- I just enabled my lease file to save the port mappings so I don't have to recreate them every time miniupnp gets restarted but instead what happens is the lease file gets recreated and the leases erased. 
+  => Done (2009/02/14)
+
+- http://miniupnp.tuxfamily.org/forum/viewtopic.php?p=1091
+
+support IGD v2 : http://upnp.org/specs/gw/igd2/
+ - Lease Duration support (mandatory in v2) => DONE
+ - WANIPv6FirewallControl
+   - pf : updatepinhole to do
+   - netfilter : ok ?
+   - ipfw/ipf : TODO
+
+use non blocking sockets everywhere :
+ - HTTP => OK
+ - SSDP => OK
+ - NAT-PMP => OK
+ - not needed for miniupnpdctl
+
+implement port_in_use() for NetBSD and FreeBSD

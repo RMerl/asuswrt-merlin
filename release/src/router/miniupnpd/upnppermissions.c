@@ -223,6 +223,7 @@ match_permission(const struct upnpperm * perm,
 	return 1;
 }
 
+#if 0
 /* match_permission_internal()
  * returns: 1 if address, iport matches the permission rule
  *          0 if no match */
@@ -237,6 +238,7 @@ match_permission_internal(const struct upnpperm * perm,
 		return 0;
 	return 1;
 }
+#endif
 
 int
 check_upnp_rule_against_permissions(const struct upnpperm * permary,
@@ -258,23 +260,5 @@ check_upnp_rule_against_permissions(const struct upnpperm * permary,
 	}
 	syslog(LOG_DEBUG, "no permission rule matched : accept by default (n_perms=%d)", n_perms);
 	return 1;	/* Default : accept */
-}
-
-int
-find_allowed_eport(const struct upnpperm * permary,
-                   int n_perms,
-                   struct in_addr address, u_short iport,
-                   u_short *allowed_eport)
-{
-	int i;
-	for(i=0; i<n_perms; i++)
-	{
-		if(permary[i].type == UPNPPERM_ALLOW
-		  && match_permission_internal(permary + i, address, iport)) {
-			*allowed_eport = permary[i].eport_min;
-			return 1;
-		}
-	}
-	return 0;	/* no eport found */
 }
 

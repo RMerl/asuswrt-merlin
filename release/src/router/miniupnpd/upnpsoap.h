@@ -1,4 +1,4 @@
-/* $Id: upnpsoap.h,v 1.10 2012/09/27 15:46:18 nanard Exp $ */
+/* $Id: upnpsoap.h,v 1.8 2007/02/07 22:16:19 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006 Thomas Bernard

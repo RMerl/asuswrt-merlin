@@ -1,4 +1,4 @@
-/* $Id: upnpredirect.c,v 1.83 2014/03/09 23:08:05 nanard Exp $ */
+/* $Id: upnpredirect.c,v 1.82 2014/02/28 20:18:35 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2014 Thomas Bernard
@@ -23,6 +23,7 @@
 #include "upnpredirect.h"
 #include "upnpglobalvars.h"
 #include "upnpevents.h"
+#include "portinuse.h"
 #if defined(USE_NETFILTER)
 #include "netfilter/iptcrdr.h"
 #endif
@@ -165,7 +166,7 @@ int reload_from_lease_file()
 	if(!lease_file) return -1;
 	fd = fopen( lease_file, "r");
 	if (fd==NULL) {
-		syslog(LOG_DEBUG, "could not open lease file: %s", lease_file);
+		syslog(LOG_ERR, "could not open lease file: %s", lease_file);
 		return -1;
 	}
 	if(unlink(lease_file) < 0) {
@@ -287,25 +288,28 @@ upnp_redirect(const char * rhost, unsigned short eport,
 		 * xbox 360 does not keep track of the port it redirects and will
 		 * redirect another port when receiving ConflictInMappingEntry */
 		if(strcmp(iaddr, iaddr_old)==0 && iport==iport_old) {
-			/* redirection allready exists */
-			syslog(LOG_INFO, "port %hu %s already redirected to %s:%hu, replacing", eport, (proto==IPPROTO_TCP)?"tcp":"udp", iaddr_old, iport_old);
-			/* remove and then add again */
-			if(_upnp_delete_redir(eport, proto) < 0) {
-				syslog(LOG_ERR, "failed to remove port mapping");
-				return 0;
-			}
+			syslog(LOG_INFO, "ignoring redirect request as it matches existing redirect");
 		} else {
 
 			syslog(LOG_INFO, "port %hu protocol %s already redirected to %s:%hu",
 				eport, protocol, iaddr_old, iport_old);
 			return -2;
 		}
+#ifdef CHECK_PORTINUSE
+	} else if (port_in_use(ext_if_name, eport, proto, iaddr, iport) > 0) {
+		syslog(LOG_INFO, "port %hu protocol %s already in use",
+		       eport, protocol);
+		return -2;
+#endif /* CHECK_PORTINUSE */
+	} else {
+		timestamp = (leaseduration > 0) ? time(NULL) + leaseduration : 0;
+		syslog(LOG_INFO, "redirecting port %hu to %s:%hu protocol %s for: %s",
+			eport, iaddr, iport, protocol, desc);
+		return upnp_redirect_internal(rhost, eport, iaddr, iport, proto,
+		                              desc, timestamp);
 	}
-	timestamp = (leaseduration > 0) ? time(NULL) + leaseduration : 0;
-	syslog(LOG_INFO, "redirecting port %hu to %s:%hu protocol %s for: %s",
-		eport, iaddr, iport, protocol, desc);
-	return upnp_redirect_internal(rhost, eport, iaddr, iport, proto,
-									desc, timestamp);
+
+	return 0;
 }
 
 int
@@ -584,8 +588,8 @@ remove_unused_rules(struct rule_state * list)
 		{
 			if(packets == list->packets && bytes == list->bytes)
 			{
-				if(_upnp_delete_redir(list->eport, list->proto) >= 0)
-					n++;
+				_upnp_delete_redir(list->eport, list->proto);
+				n++;
 			}
 		}
 		tmp = list;

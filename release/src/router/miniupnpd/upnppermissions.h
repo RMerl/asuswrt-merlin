@@ -45,15 +45,6 @@ check_upnp_rule_against_permissions(const struct upnpperm * permary,
                                     u_short eport, struct in_addr address,
                                     u_short iport);
 
-/* find_allowed_eport()
- * returns: 0 if no allowed eport for (address, iport) was found
- *          1 and allowed_eport filled */
-int
-find_allowed_eport(const struct upnpperm * permary,
-                   int n_perms,
-                   struct in_addr address, u_short iport,
-                   u_short *allowed_eport);
-
 #ifdef USE_MINIUPNPDCTL
 void
 write_permlist(int fd, const struct upnpperm * permary,

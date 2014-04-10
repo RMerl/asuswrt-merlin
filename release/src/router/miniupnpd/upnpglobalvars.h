@@ -1,4 +1,4 @@
-/* $Id: upnpglobalvars.h,v 1.37 2014/02/06 09:52:03 nanard Exp $ */
+/* $Id: upnpglobalvars.h,v 1.38 2014/03/10 11:04:53 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2014 Thomas Bernard
@@ -51,6 +51,13 @@ extern int runtime_flags;
 #ifdef PF_ENABLE_FILTER_RULES
 #define PFNOQUICKRULESMASK	0x0040
 #endif
+#ifdef ENABLE_IPV6
+#define IPV6DISABLEDMASK	0x0080
+#endif
+#ifdef ENABLE_6FC_SERVICE
+#define IPV6FCFWDISABLEDMASK		0x0100
+#define IPV6FCINBOUNDDISALLOWEDMASK	0x0200
+#endif
 
 #define SETFLAG(mask)	runtime_flags |= mask
 #define GETFLAG(mask)	(runtime_flags & mask)
@@ -95,17 +102,9 @@ extern char model_url[];
 extern struct upnpperm * upnppermlist;
 extern unsigned int num_upnpperm;
 
-#ifdef ENABLE_NATPMP
-/* NAT-PMP */
-#if 0
-extern unsigned int nextnatpmptoclean_timestamp;
-extern unsigned short nextnatpmptoclean_eport;
-extern unsigned short nextnatpmptoclean_proto;
-#endif
 #ifdef PCP_SADSCP
 extern struct dscp_values* dscp_values_list;
 extern unsigned int num_dscp_values;
-#endif
 #endif
 
 /* For automatic removal of expired rules (with LeaseDuration) */
@@ -139,7 +138,6 @@ extern struct lan_addr_list lan_addrs;
 #ifdef ENABLE_IPV6
 /* ipv6 address used for HTTP */
 extern char ipv6_addr_for_http_with_brackets[64];
-extern int ipv6_enabled;
 #endif
 
 extern const char * minissdpdsocketpath;
@@ -147,11 +145,6 @@ extern const char * minissdpdsocketpath;
 /* BOOTID.UPNP.ORG and CONFIGID.UPNP.ORG */
 extern unsigned int upnp_bootid;
 extern unsigned int upnp_configid;
-
-#ifdef ENABLE_6FC_SERVICE
-extern int ipv6fc_firewall_enabled;
-extern int ipv6fc_inbound_pinhole_allowed;
-#endif
 
 #endif
 

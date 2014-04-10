@@ -1,4 +1,4 @@
-/* $Id: iptcrdr.c,v 1.51 2013/12/13 13:40:41 nanard Exp $ */
+/* $Id: iptcrdr.c,v 1.50 2012/10/03 14:49:08 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2011 Thomas Bernard
@@ -285,6 +285,22 @@ get_redirect_rule(const char * ifname, unsigned short eport, int proto,
                   unsigned int * timestamp,
                   u_int64_t * packets, u_int64_t * bytes)
 {
+	return get_nat_redirect_rule(miniupnpd_nat_chain,
+	                             ifname, eport, proto,
+	                             iaddr, iaddrlen, iport,
+	                             desc, desclen,
+	                             rhost, rhostlen,
+	                             timestamp, packets, bytes);
+}
+
+int
+get_nat_redirect_rule(const char * nat_chain_name, const char * ifname, unsigned short eport, int proto,
+                  char * iaddr, int iaddrlen, unsigned short * iport,
+                  char * desc, int desclen,
+                  char * rhost, int rhostlen,
+                  unsigned int * timestamp,
+                  u_int64_t * packets, u_int64_t * bytes)
+{
 	int r = -1;
 	IPTC_HANDLE h;
 	const struct ipt_entry * e;
@@ -301,18 +317,18 @@ get_redirect_rule(const char * ifname, unsigned short eport, int proto,
 		       iptc_strerror(errno));
 		return -1;
 	}
-	if(!iptc_is_chain(miniupnpd_nat_chain, h))
+	if(!iptc_is_chain(nat_chain_name, h))
 	{
-		syslog(LOG_ERR, "chain %s not found", miniupnpd_nat_chain);
+		syslog(LOG_ERR, "chain %s not found", nat_chain_name);
 	}
 	else
 	{
 #ifdef IPTABLES_143
-		for(e = iptc_first_rule(miniupnpd_nat_chain, h);
+		for(e = iptc_first_rule(nat_chain_name, h);
 		    e;
 			e = iptc_next_rule(e, h))
 #else
-		for(e = iptc_first_rule(miniupnpd_nat_chain, &h);
+		for(e = iptc_first_rule(nat_chain_name, &h);
 		    e;
 			e = iptc_next_rule(e, &h))
 #endif

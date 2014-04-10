@@ -1,4 +1,4 @@
-/* $Id: testiptcrdr_peer.c,v 1.1 2013/12/13 13:10:48 nanard Exp $ */
+/* $Id: testiptcrdr.c,v 1.18 2012/04/24 22:41:53 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2012 Thomas Bernard

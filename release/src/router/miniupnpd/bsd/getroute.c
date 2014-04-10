@@ -1,4 +1,4 @@
-/* $Id: getroute.c,v 1.3 2013/02/06 13:11:45 nanard Exp $ */
+/* $Id: getroute.c,v 1.4 2014/03/31 12:27:14 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2013 Thomas Bernard
@@ -83,7 +83,7 @@ get_src_for_route_to(const struct sockaddr * dst,
 				sa = (struct sockaddr *)p;
 				sockaddr_to_string(sa, tmp, sizeof(tmp));
 				syslog(LOG_DEBUG, "type=%d sa_len=%d sa_family=%d %s",
-				       i, sa->sa_len, sa->sa_family, tmp);
+				       i, SA_LEN(sa), sa->sa_family, tmp);
 				if((i == RTA_DST || i == RTA_GATEWAY) &&
 				   (src_len && src)) {
 					size_t len = 0;
@@ -113,7 +113,7 @@ get_src_for_route_to(const struct sockaddr * dst,
 						*index = sdl->sdl_index;
 				}
 #endif
-				p += sa->sa_len;
+				p += SA_LEN(sa);
 			}
 		}
 	}

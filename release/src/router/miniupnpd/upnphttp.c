@@ -1,8 +1,8 @@
-/* $Id: upnphttp.c,v 1.86 2013/02/07 10:26:07 nanard Exp $ */
+/* $Id: upnphttp.c,v 1.87 2014/03/14 21:26:01 nanard Exp $ */
 /* Project :  miniupnp
  * Website :  http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * Author :   Thomas Bernard
- * Copyright (c) 2005-2012 Thomas Bernard
+ * Copyright (c) 2005-2014 Thomas Bernard
  * This software is subject to the conditions detailed in the
  * LICENCE file included in this distribution.
  * */
@@ -163,14 +163,22 @@ ParseHttpHeaders(struct upnphttp * h)
 #ifdef ENABLE_EVENTS
 			else if(strncasecmp(line, "Callback", 8)==0)
 			{
+				/* The Callback can contain several urls :
+				 * If there is more than one URL, when the service sends
+				 * events, it will try these URLs in order until one
+				 * succeeds. One or more URLs each enclosed by angle
+				 * brackets ("<" and ">") */
 				p = colon;
 				while(*p != '<' && *p != '\r' )
 					p++;
 				n = 0;
-				while(p[n] != '>' && p[n] != '\r' )
+				while(p[n] != '\r')
 					n++;
-				h->req_CallbackOff = p + 1 - h->req_buf;
-				h->req_CallbackLen = MAX(0, n - 1);
+				while(n > 0 && p[n] != '>')
+					n--;
+				/* found last > character */
+				h->req_CallbackOff = p - h->req_buf;
+				h->req_CallbackLen = MAX(0, n + 1);
 			}
 			else if(strncasecmp(line, "SID", 3)==0)
 			{
@@ -375,6 +383,9 @@ ProcessHTTPPOST_upnphttp(struct upnphttp * h)
 
 #ifdef ENABLE_EVENTS
 /**
+ * checkCallbackURL()
+ * check that url is on originating IP
+ * extract first correct URL
  * returns 0 if the callback header value is not valid
  * 1 if it is valid.
  */
@@ -386,56 +397,76 @@ checkCallbackURL(struct upnphttp * h)
 	const char * p;
 	unsigned int i;
 
-	if(h->req_CallbackOff <= 0 || h->req_CallbackLen < 8)
+start_again:
+	if(h->req_CallbackOff <= 0 || h->req_CallbackLen < 10)
 		return 0;
-	if(memcmp(h->req_buf + h->req_CallbackOff, "http://", 7) != 0)
-		return 0;
-	ipv6 = 0;
+	if(memcmp(h->req_buf + h->req_CallbackOff, "<http://", 8) != 0) {
+		p = h->req_buf + h->req_CallbackOff + 1;
+		goto invalid;
+	}
+	/* extract host from url to addrstr[] */
 	i = 0;
-	p = h->req_buf + h->req_CallbackOff + 7;
+	p = h->req_buf + h->req_CallbackOff + 8;
 	if(*p == '[') {
 		p++;
 		ipv6 = 1;
-		while(*p != ']' && i < (sizeof(addrstr)-1)
+		while(*p != ']' && *p != '>' && i < (sizeof(addrstr)-1)
 		      && p < (h->req_buf + h->req_CallbackOff + h->req_CallbackLen))
 			addrstr[i++] = *(p++);
 	} else {
-		while(*p != '/' && *p != ':' && i < (sizeof(addrstr)-1)
+		ipv6 = 0;
+		while(*p != '/' && *p != ':' && *p != '>' && i < (sizeof(addrstr)-1)
 		      && p < (h->req_buf + h->req_CallbackOff + h->req_CallbackLen))
 			addrstr[i++] = *(p++);
 	}
 	addrstr[i] = '\0';
+	/* check addrstr */
 	if(ipv6) {
+#ifdef ENABLE_IPV6
 		struct in6_addr addr;
 		if(inet_pton(AF_INET6, addrstr, &addr) <= 0)
-			return 0;
-#ifdef ENABLE_IPV6
+			goto invalid;
 		if(!h->ipv6
 		  || (0!=memcmp(&addr, &(h->clientaddr_v6), sizeof(struct in6_addr))))
-			return 0;
+			goto invalid;
 #else
-		return 0;
+		goto invalid;
 #endif
 	} else {
 		struct in_addr addr;
 		if(inet_pton(AF_INET, addrstr, &addr) <= 0)
-			return 0;
+			goto invalid;
 #ifdef ENABLE_IPV6
 		if(h->ipv6) {
 			if(!IN6_IS_ADDR_V4MAPPED(&(h->clientaddr_v6)))
-				return 0;
+				goto invalid;
 			if(0!=memcmp(&addr, ((const char *)&(h->clientaddr_v6) + 12), 4))
-				return 0;
+				goto invalid;
 		} else {
 			if(0!=memcmp(&addr, &(h->clientaddr), sizeof(struct in_addr)))
-				return 0;
+				goto invalid;
 		}
 #else
 		if(0!=memcmp(&addr, &(h->clientaddr), sizeof(struct in_addr)))
-			return 0;
+			goto invalid;
 #endif
 	}
+	/* select only the good callback url */
+	while(p < h->req_buf + h->req_CallbackOff + h->req_CallbackLen && *p != '>')
+		p++;
+	h->req_CallbackOff++;	/* skip initial '<' */
+	h->req_CallbackLen = (int)(p - h->req_buf - h->req_CallbackOff);
 	return 1;
+invalid:
+	while(p < h->req_buf + h->req_CallbackOff + h->req_CallbackLen && *p != '>')
+		p++;
+	if(*p != '>') return 0;
+	while(p < h->req_buf + h->req_CallbackOff + h->req_CallbackLen && *p != '<')
+		p++;
+	if(*p != '<') return 0;
+	h->req_CallbackLen -= (int)(p - h->req_buf - h->req_CallbackOff);
+	h->req_CallbackOff = (int)(p - h->req_buf);
+	goto start_again;
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $Id: ipfwrdr.h,v 1.8 2012/09/27 15:44:10 nanard Exp $ */
+/* $Id: ipfwrdr.h,v 1.6 2012/02/11 13:10:57 nanard Exp $ */
 /*
  * MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/

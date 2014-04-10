@@ -1,7 +1,7 @@
-/* $Id: upnpdescgen.c,v 1.76 2013/12/13 12:50:25 nanard Exp $ */
+/* $Id: upnpdescgen.c,v 1.77 2014/03/10 11:04:53 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2013 Thomas Bernard
+ * (c) 2006-2014 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -1176,13 +1176,13 @@ genEventVars(int * len, const struct serviceDesc * s)
 			case FIREWALLENABLED_MAGICALVALUE:
 				/* see 2.4.2 of UPnP-gw-WANIPv6FirewallControl-v1-Service.pdf */
 				snprintf(tmp, sizeof(tmp), "%d",
-				         ipv6fc_firewall_enabled);
+				         GETFLAG(IPV6FCFWDISABLEDMASK) ? 0 : 1);
 				str = strcat_str(str, len, &tmplen, tmp);
 				break;
 			case INBOUNDPINHOLEALLOWED_MAGICALVALUE:
 				/* see 2.4.3 of UPnP-gw-WANIPv6FirewallControl-v1-Service.pdf */
 				snprintf(tmp, sizeof(tmp), "%d",
-				         ipv6fc_inbound_pinhole_allowed);
+				         GETFLAG(IPV6FCINBOUNDDISALLOWEDMASK) ? 0 : 1);
 				str = strcat_str(str, len, &tmplen, tmp);
 				break;
 #endif

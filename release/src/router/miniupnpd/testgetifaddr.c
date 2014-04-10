@@ -1,4 +1,4 @@
-/* $Id: testgetifaddr.c,v 1.8 2014/03/09 23:09:36 nanard Exp $ */
+/* $Id: testgetifaddr.c,v 1.7 2013/04/27 15:38:57 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2014 Thomas Bernard

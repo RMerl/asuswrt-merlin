@@ -1,4 +1,4 @@
-/* $Id: asyncsendto.c,v 1.2 2014/02/28 15:07:15 nanard Exp $ */
+/* $Id: $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2014 Thomas Bernard

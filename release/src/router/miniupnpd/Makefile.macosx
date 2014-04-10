@@ -33,7 +33,7 @@ STD_OBJS = miniupnpd.o upnphttp.o upnpdescgen.o upnpsoap.o \
           upnpredirect.o getifaddr.o daemonize.o upnpglobalvars.o \
           options.o upnppermissions.o minissdp.o natpmp.o \
           upnpevents.o getconnstatus.o upnputils.o \
-          asyncsendto.o
+          asyncsendto.o portinuse.o pcpserver.o
 MAC_OBJS = mac/getifstats.o bsd/ifacewatcher.o
 IPFW_OBJS = ipfw/ipfwrdr.o ipfw/ipfwaux.o
 PF_OBJS = pf/obsdrdr.o pf/pfpinhole.o
@@ -51,11 +51,13 @@ TEST_UPNPDESCGEN_OBJS = testupnpdescgen.o upnpdescgen.o
 TEST_GETIFSTATS_OBJS = testgetifstats.o mac/getifstats.o
 TEST_UPNPPERMISSIONS_OBJS = testupnppermissions.o upnppermissions.o
 TEST_GETIFADDR_OBJS = testgetifaddr.o getifaddr.o
+TEST_PORTINUSE_OBJS = testportinuse.o portinuse.o getifaddr.o
+TEST_ASYNCSENDTO_OBJS = testasyncsendto.o asyncsendto.o upnputils.o
 MINIUPNPDCTL_OBJS = miniupnpdctl.o
 
 EXECUTABLES = miniupnpd testupnpdescgen testgetifstats \
               testupnppermissions miniupnpdctl \
-              testgetifaddr
+              testgetifaddr testportinuse testasyncsendto
 
 LIBS =
 
@@ -116,6 +118,11 @@ testgetifaddr: config.h $(TEST_GETIFADDR_OBJS)
 testupnppermissions: config.h $(TEST_UPNPPERMISSIONS_OBJS)
 	$(CC) $(CFLAGS) -o $@ $(TEST_UPNPPERMISSIONS_OBJS)
 
+testasyncsendto: config.h $(TEST_ASYNCSENDTO_OBJS)
+	$(CC) $(CFLAGS) -o $@ $(TEST_ASYNCSENDTO_OBJS)
+
+testportinuse: config.h $(TEST_PORTINUSE_OBJS)
+	$(CC) $(CFLAGS) -o $@ $(TEST_PORTINUSE_OBJS)
 
 config.h: genconfig.sh
 	./genconfig.sh

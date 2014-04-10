@@ -1,4 +1,4 @@
-/* $Id: testipfrdr.c,v 1.4 2012/03/19 21:14:13 nanard Exp $ */
+/* $Id: testipfrdr.c,v 1.3 2007/10/01 16:21:23 nanard Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>

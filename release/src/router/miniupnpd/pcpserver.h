@@ -1,4 +1,4 @@
-/* $Id: pcpserver.h,v 1.2 2013/12/13 15:48:39 nanard Exp $ */
+/* $Id: pcpserver.h,v 1.3 2014/03/24 10:49:46 nanard Exp $ */
 /* MiniUPnP project
  * Website : http://miniupnp.free.fr/
  * Author : Peter Tatrai
@@ -36,12 +36,17 @@ POSSIBILITY OF SUCH DAMAGE.
 #define PCP_MIN_LEN           24
 #define PCP_MAX_LEN           1100
 
-struct sockaddr_in;
+struct sockaddr;
 
 /*
  * returns 0 upon success 1 otherwise
  */
 int ProcessIncomingPCPPacket(int s, unsigned char *msg_buff, int len,
-							struct sockaddr_in *senderaddr);
+                             const struct sockaddr *senderaddr);
+
+/*
+ * returns the socket
+ */
+int OpenAndConfPCPv6Socket(void);
 
 #endif /* PCPSERVER_H_INCLUDED */

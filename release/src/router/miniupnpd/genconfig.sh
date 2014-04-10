@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Id: genconfig.sh,v 1.70 2014/02/25 10:55:22 nanard Exp $
+# $Id: genconfig.sh,v 1.72 2014/03/10 10:17:17 nanard Exp $
 # miniupnp daemon
 # http://miniupnp.free.fr or http://miniupnp.tuxfamily.org/
 # (c) 2006-2014 Thomas Bernard
@@ -13,11 +13,8 @@ case "$argv" in
 	--strict) STRICT=1 ;;
 	--leasefile) LEASEFILE=1 ;;
 	--vendorcfg) VENDORCFG=1 ;;
-	--pcp) PCP=1 ;;
-	--pcp-peer)
-		PCP=1
-		PCP_PEER=1
-		;;
+	--pcp-peer) PCP_PEER=1 ;;
+	--portinuse) PORTINUSE=1 ;;
 	--help|-h)
 		echo "Usage : $0 [options]"
 		echo " --ipv6      enable IPv6"
@@ -25,8 +22,8 @@ case "$argv" in
 		echo " --strict    be more strict regarding compliance with UPnP specifications"
 		echo " --leasefile enable lease file"
 		echo " --vendorcfg enable configuration of manufacturer info"
-		echo " --pcp       enable PCP"
 		echo " --pcp-peer  enable PCP PEER operation"
+		echo " --portinuse enable port in use check"
 		exit 1
 		;;
 	*)
@@ -126,6 +123,7 @@ case $OS_NAME in
 		FW=pf
 		echo "#define USE_IFACEWATCHER 1" >> ${CONFIGFILE}
 		OS_URL=http://www.openbsd.org/
+		V6SOCKETS_ARE_V6ONLY=`sysctl -n net.inet6.ip6.v6only`
 		;;
 	FreeBSD)
 		VER=`grep '#define __FreeBSD_version' /usr/include/sys/param.h | awk '{print $3}'`
@@ -156,12 +154,14 @@ case $OS_NAME in
 		fi
 		echo "#define USE_IFACEWATCHER 1" >> ${CONFIGFILE}
 		OS_URL=http://www.freebsd.org/
+		V6SOCKETS_ARE_V6ONLY=`sysctl -n net.inet6.ip6.v6only`
 		;;
 	pfSense)
 		# we need to detect if PFRULE_INOUT_COUNTS macro is needed
 		FW=pf
 		echo "#define USE_IFACEWATCHER 1" >> ${CONFIGFILE}
 		OS_URL=http://www.pfsense.com/
+		V6SOCKETS_ARE_V6ONLY=`sysctl -n net.inet6.ip6.v6only`
 		;;
 	NetBSD)
 		if [ -f /etc/rc.subr ] && [ -f /etc/rc.conf ] ; then
@@ -334,6 +334,11 @@ case $FW in
 		;;
 esac
 
+# set V6SOCKETS_ARE_V6ONLY to 0 if it was not set above
+if [ -z "$V6SOCKETS_ARE_V6ONLY" ] ; then
+	V6SOCKETS_ARE_V6ONLY=0
+fi
+
 echo "Configuring compilation for [$OS_NAME] [$OS_VERSION] with [$FW] firewall software."
 echo "Please edit config.h for more compilation options."
 
@@ -362,15 +367,9 @@ echo "/* Comment the following line to disable NAT-PMP operations */" >> ${CONFI
 echo "#define ENABLE_NATPMP" >> ${CONFIGFILE}
 echo "" >> ${CONFIGFILE}
 
-if [ -n "$PCP" ]; then
 echo "/* Comment the following line to disable PCP operations */" >> ${CONFIGFILE}
 echo "#define ENABLE_PCP" >> ${CONFIGFILE}
 echo "" >> ${CONFIGFILE}
-else
-echo "/* Uncomment the following line to enable PCP operations */" >> ${CONFIGFILE}
-echo "/*#define ENABLE_PCP*/" >> ${CONFIGFILE}
-echo "" >> ${CONFIGFILE}
-fi
 
 echo "#ifdef ENABLE_PCP" >> ${CONFIGFILE}
 if [ -n "$PCP_PEER" ]; then
@@ -419,6 +418,14 @@ else
 fi
 echo "" >> ${CONFIGFILE}
 
+echo "/* Uncomment the following line to enable port in use check */" >> ${CONFIGFILE}
+if [ -n "$PORTINUSE" ]; then
+	echo "#define CHECK_PORTINUSE" >> ${CONFIGFILE}
+else
+	echo "/*#define CHECK_PORTINUSE*/" >> ${CONFIGFILE}
+fi
+echo "" >> ${CONFIGFILE}
+
 echo "/* Define one or none of the two following macros in order to make some" >> ${CONFIGFILE}
 echo " * clients happy. It will change the XML Root Description of the IGD." >> ${CONFIGFILE}
 echo " * Enabling the Layer3Forwarding Service seems to be the more compatible" >> ${CONFIGFILE}
@@ -432,6 +439,15 @@ if [ -n "$IPV6" ]; then
 	echo "#define ENABLE_IPV6" >> ${CONFIGFILE}
 else
 	echo "/*#define ENABLE_IPV6*/" >> ${CONFIGFILE}
+fi
+echo "" >> ${CONFIGFILE}
+
+echo "/* Define V6SOCKETS_ARE_V6ONLY if AF_INET6 sockets are restricted" >> ${CONFIGFILE}
+echo " * to IPv6 communications only. */" >> ${CONFIGFILE}
+if [ $V6SOCKETS_ARE_V6ONLY -eq 1 ] ; then
+	echo "#define V6SOCKETS_ARE_V6ONLY" >> ${CONFIGFILE}
+else
+	echo "/*#define V6SOCKETS_ARE_V6ONLY*/" >> ${CONFIGFILE}
 fi
 echo "" >> ${CONFIGFILE}
 
@@ -512,7 +528,7 @@ else
 fi
 echo "" >> ${CONFIGFILE}
 
-echo "#endif" >> ${CONFIGFILE}
+echo "#endif /* ${CONFIGMACRO} */" >> ${CONFIGFILE}
 
 ${MV} ${CONFIGFILE} ${CONFIGFILE_FINAL}
 

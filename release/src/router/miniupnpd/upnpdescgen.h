@@ -1,4 +1,4 @@
-/* $Id: upnpdescgen.h,v 1.24 2012/09/27 16:00:10 nanard Exp $ */
+/* $Id: upnpdescgen.h,v 1.22 2011/05/18 22:22:24 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2011 Thomas Bernard

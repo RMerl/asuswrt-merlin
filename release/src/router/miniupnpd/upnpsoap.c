@@ -1,7 +1,7 @@
-/* $Id: upnpsoap.c,v 1.121 2014/02/28 15:01:31 nanard Exp $ */
+/* $Id: upnpsoap.c,v 1.122 2014/03/10 11:04:53 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2013 Thomas Bernard
+ * (c) 2006-2014 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -1220,19 +1220,21 @@ GetFirewallStatus(struct upnphttp * h, const char * action)
 
 	bodylen = snprintf(body, sizeof(body), resp,
 		action, "urn:schemas-upnp-org:service:WANIPv6FirewallControl:1",
-		ipv6fc_firewall_enabled, ipv6fc_inbound_pinhole_allowed, action);
+	    GETFLAG(IPV6FCFWDISABLEDMASK) ? 0 : 1,
+	    GETFLAG(IPV6FCINBOUNDDISALLOWEDMASK) ? 0 : 1,
+	    action);
 	BuildSendAndCloseSoapResp(h, body, bodylen);
 }
 
 static int
 CheckStatus(struct upnphttp * h)
 {
-	if (!ipv6fc_firewall_enabled)
+	if (GETFLAG(IPV6FCFWDISABLEDMASK))
 	{
 		SoapError(h, 702, "FirewallDisabled");
 		return 0;
 	}
-	else if(!ipv6fc_inbound_pinhole_allowed)
+	else if(GETFLAG(IPV6FCINBOUNDDISALLOWEDMASK))
 	{
 		SoapError(h, 703, "InboundPinholeNotAllowed");
 		return 0;
@@ -1604,7 +1606,7 @@ GetOutboundPinholeTimeout(struct upnphttp * h, const char * action)
 	int opt=0, proto=0;
 	unsigned short iport, rport;
 
-	if (!ipv6fc_firewall_enabled)
+	if (GETFLAG(IPV6FCFWDISABLEDMASK))
 	{
 		SoapError(h, 702, "FirewallDisabled");
 		return;

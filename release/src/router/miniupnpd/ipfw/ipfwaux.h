@@ -1,4 +1,4 @@
-/* $Id: ipfwaux.h,v 1.5 2012/09/20 12:46:01 nanard Exp $ */
+/* $Id: ipfwaux.h,v 1.3 2011/02/20 23:43:41 nanard Exp $ */
 /*
  * MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
