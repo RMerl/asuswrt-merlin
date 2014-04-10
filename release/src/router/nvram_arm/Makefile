@@ -36,6 +36,9 @@ CFLAGS += -I$(SRCBASE)/shared/bcmwifi/include
 LDFLAGS += -lgcc_s
 endif
 
+ifeq ($(RTCONFIG_QTN),y)
+LDFLAGS += -L$(TOP)/libqcsapi_client -lqcsapi_client
+endif
 
 vpath %.c $(SRCBASE)/shared/nvram 
 

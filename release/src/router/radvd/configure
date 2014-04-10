@@ -2849,6 +2849,9 @@ $as_echo "bsd44" >&6; }
                 arch=bsd44
         ;;
         *darwin*)
+
+$as_echo "#define __APPLE_USE_RFC_2292 1" >>confdefs.h
+
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: bsd44 (darwin)" >&5
 $as_echo "bsd44 (darwin)" >&6; }
                 arch=bsd44

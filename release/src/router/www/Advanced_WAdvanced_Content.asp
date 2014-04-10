@@ -152,12 +152,8 @@ function initial(){
 			inputCtrl(document.form.wl_turbo_qam, 1);
 			$('wl_txbf_desc').innerHTML = "Explicit Beamforming";
 			inputCtrl(document.form.wl_txbf, 1);
-		}
-
-		if(based_modelid == "RT-N18U")
-		{
 			inputCtrl(document.form.wl_itxbf, 1);
-		}		
+		}	
 	}
 
 	var mcast_rate = '<% nvram_get("wl_mrate_x"); %>';
@@ -323,8 +319,9 @@ function validForm(){
 			}
 		}
 	}
-	
-	updateDateTime();	
+	if(sw_mode != 2)
+		updateDateTime();	
+
 	return true;
 }
 
@@ -494,9 +491,7 @@ function enable_wme_check(obj){
 
 /* AMPDU RTS for AC model, Jieming added at 2013.08.26 */
 function check_ampdu_rts(){
-	var ac_flag = based_modelid.search('AC');    //to check AC model or not
-
-	if(document.form.wl_nmode_x.value != 2 && ac_flag != -1 ){
+	if(document.form.wl_nmode_x.value != 2 && band5g_11ac_support){
 		$('ampdu_rts_tr').style.display = "";
 		if(document.form.wl_ampdu_rts.value == 1){
 			document.form.wl_rts.disabled = false;
@@ -510,7 +505,6 @@ function check_ampdu_rts(){
 	else{
 		document.form.wl_ampdu_rts.disabled = true;
 		$('ampdu_rts_tr').style.display = "none";
-	
 	}
 }
 </script>

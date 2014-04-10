@@ -2,7 +2,7 @@
 /*
 *  ########## DO NOT EDIT ###########
 
-Automatically generated on Thu Feb 20 22:44:54 PST 2014
+Automatically generated on Sat Mar 15 01:27:34 PDT 2014
 
 *
 * Adapter from qcsapi.h functions
@@ -87,6 +87,9 @@ int qcsapi_bootcfg_get_parameter(const char * param_name, char * param_value, co
 	struct qcsapi_bootcfg_get_parameter_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (param_value == NULL) {
+		return -EFAULT;
+	}
 	__req.param_name = (str)param_name;
 	if (param_value) {
 		param_value[0] = 0;
@@ -246,6 +249,9 @@ int qcsapi_wifi_get_scs_cce_channels(const char * ifname, qcsapi_unsigned_int * 
 	struct qcsapi_wifi_get_scs_cce_channels_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_prev_channel == NULL || p_cur_channel == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -404,6 +410,9 @@ int qcsapi_wifi_get_scs_status(const char * ifname, qcsapi_unsigned_int * p_scs_
 	struct qcsapi_wifi_get_scs_status_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_scs_status == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -679,6 +688,9 @@ int qcsapi_wifi_get_scs_stat_report(const char * ifname, struct qcsapi_scs_ranki
 	struct qcsapi_wifi_get_scs_stat_report_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (scs_rpt == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -760,6 +772,9 @@ int qcsapi_wifi_get_scs_currchan_report(const char * ifname, struct qcsapi_scs_c
 	struct qcsapi_wifi_get_scs_currchan_report_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (scs_currchan_rpt == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -807,6 +822,9 @@ int qcsapi_wifi_get_autochan_report(const char * ifname, struct qcsapi_autochan_
 	struct qcsapi_wifi_get_autochan_report_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (autochan_rpt == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -967,6 +985,9 @@ int qcsapi_wifi_get_scs_cca_intf(const char * ifname, const qcsapi_unsigned_int 
 	struct qcsapi_wifi_get_scs_cca_intf_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_cca_intf == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.the_channel = (unsigned int)the_channel;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -1008,6 +1029,9 @@ int qcsapi_wifi_get_scs_param_report(const char * ifname, struct qcsapi_scs_para
 	struct qcsapi_wifi_get_scs_param_report_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_scs_param_rpt == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.param_num = (unsigned long)param_num;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -1049,6 +1073,9 @@ int qcsapi_wifi_get_scs_dfs_reentry_request(const char * ifname, qcsapi_unsigned
 	struct qcsapi_wifi_get_scs_dfs_reentry_request_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_scs_dfs_reentry_request == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -1166,6 +1193,9 @@ int qcsapi_wifi_get_ocac_status(const char * ifname, qcsapi_unsigned_int * statu
 	struct qcsapi_wifi_get_ocac_status_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (status == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -1476,6 +1506,9 @@ int qcsapi_system_get_time_since_start(qcsapi_unsigned_int * p_elapsed_time)
 	struct qcsapi_system_get_time_since_start_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_elapsed_time == NULL) {
+		return -EFAULT;
+	}
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
 	while (1) {
@@ -1515,6 +1548,9 @@ int qcsapi_get_system_status(qcsapi_unsigned_int * p_status)
 	struct qcsapi_get_system_status_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_status == NULL) {
+		return -EFAULT;
+	}
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
 	while (1) {
@@ -1554,6 +1590,9 @@ int qcsapi_config_get_parameter(const char * ifname, const char * param_name, ch
 	struct qcsapi_config_get_parameter_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (param_value == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.param_name = (str)param_name;
 	if (param_value) {
@@ -1640,6 +1679,9 @@ int qcsapi_file_path_get_config(const qcsapi_file_path_config e_file_path, char 
 	struct qcsapi_file_path_get_config_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (file_path == NULL) {
+		return -EFAULT;
+	}
 	__req.e_file_path = (int)e_file_path;
 	if (file_path) {
 		file_path[0] = 0;
@@ -1801,6 +1843,9 @@ int qcsapi_interface_get_status(const char * ifname, char * interface_status)
 	struct qcsapi_interface_get_status_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (interface_status == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (interface_status) {
 		interface_status[0] = 0;
@@ -1845,6 +1890,9 @@ int qcsapi_interface_get_counter(const char * ifname, qcsapi_counter_type qcsapi
 	struct qcsapi_interface_get_counter_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_counter_value == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.qcsapi_counter = (int)qcsapi_counter;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -1886,6 +1934,9 @@ int qcsapi_interface_get_mac_addr(const char * ifname, qcsapi_mac_addr current_m
 	struct qcsapi_interface_get_mac_addr_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (current_mac_addr == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -1928,6 +1979,9 @@ int qcsapi_interface_set_mac_addr(const char * ifname, const qcsapi_mac_addr int
 	struct qcsapi_interface_set_mac_addr_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (interface_mac_addr == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	memcpy(__req.interface_mac_addr, interface_mac_addr, sizeof(const qcsapi_mac_addr));
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -1967,6 +2021,9 @@ int qcsapi_pm_get_counter(const char * ifname, qcsapi_counter_type qcsapi_counte
 	struct qcsapi_pm_get_counter_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_counter_value == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.qcsapi_counter = (int)qcsapi_counter;
 	__req.pm_interval = (str)pm_interval;
@@ -2009,6 +2066,9 @@ int qcsapi_pm_get_elapsed_time(const char * pm_interval, qcsapi_unsigned_int * p
 	struct qcsapi_pm_get_elapsed_time_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_elapsed_time == NULL) {
+		return -EFAULT;
+	}
 	__req.pm_interval = (str)pm_interval;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -2088,6 +2148,9 @@ int qcsapi_wifi_get_mode(const char * ifname, qcsapi_wifi_mode * p_wifi_mode)
 	struct qcsapi_wifi_get_mode_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_wifi_mode == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -2245,6 +2308,9 @@ int qcsapi_wifi_rfstatus(const char * ifname, qcsapi_unsigned_int * rfstatus)
 	struct qcsapi_wifi_rfstatus_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (rfstatus == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -2285,6 +2351,9 @@ int qcsapi_wifi_get_bw(const char * ifname, qcsapi_unsigned_int * p_bw)
 	struct qcsapi_wifi_get_bw_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_bw == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -2364,6 +2433,9 @@ int qcsapi_wifi_get_channel(const char * ifname, qcsapi_unsigned_int * p_current
 	struct qcsapi_wifi_get_channel_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_current_channel == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -2483,6 +2555,9 @@ int qcsapi_wifi_get_beacon_interval(const char * ifname, qcsapi_unsigned_int * p
 	struct qcsapi_wifi_get_beacon_interval_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_current_intval == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -2562,6 +2637,9 @@ int qcsapi_wifi_get_dtim(const char * ifname, qcsapi_unsigned_int * p_dtim)
 	struct qcsapi_wifi_get_dtim_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_dtim == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -2641,6 +2719,9 @@ int qcsapi_wifi_get_assoc_limit(const char * ifname, qcsapi_unsigned_int * p_ass
 	struct qcsapi_wifi_get_assoc_limit_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_assoc_limit == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -2720,6 +2801,9 @@ int qcsapi_wifi_get_BSSID(const char * ifname, qcsapi_mac_addr current_BSSID)
 	struct qcsapi_wifi_get_BSSID_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (current_BSSID == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -2762,6 +2846,9 @@ int qcsapi_wifi_get_SSID(const char * ifname, qcsapi_SSID SSID_str)
 	struct qcsapi_wifi_get_SSID_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (SSID_str == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (SSID_str) {
 		SSID_str[0] = 0;
@@ -2845,6 +2932,9 @@ int qcsapi_wifi_get_IEEE_802_11_standard(const char * ifname, char * IEEE_802_11
 	struct qcsapi_wifi_get_IEEE_802_11_standard_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (IEEE_802_11_standard == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (IEEE_802_11_standard) {
 		IEEE_802_11_standard[0] = 0;
@@ -2889,6 +2979,9 @@ int qcsapi_wifi_get_list_channels(const char * ifname, string_1024 list_of_chann
 	struct qcsapi_wifi_get_list_channels_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (list_of_channels == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (list_of_channels) {
 		list_of_channels[0] = 0;
@@ -2933,6 +3026,9 @@ int qcsapi_wifi_get_mode_switch(uint8_t * p_wifi_mode_switch_setting)
 	struct qcsapi_wifi_get_mode_switch_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_wifi_mode_switch_setting == NULL) {
+		return -EFAULT;
+	}
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
 	while (1) {
@@ -3010,6 +3106,9 @@ int qcsapi_wifi_get_disconn_info(const char * ifname, qcsapi_disconn_info * disc
 	struct qcsapi_wifi_get_disconn_info_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (disconn_info == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -3171,6 +3270,9 @@ int qcsapi_wifi_get_noise(const char * ifname, int * p_noise)
 	struct qcsapi_wifi_get_noise_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_noise == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -3211,6 +3313,9 @@ int qcsapi_wifi_get_rssi_by_chain(const char * ifname, int rf_chain, int * p_rss
 	struct qcsapi_wifi_get_rssi_by_chain_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_rssi == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.rf_chain = (int)rf_chain;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -3252,6 +3357,9 @@ int qcsapi_wifi_get_avg_snr(const char * ifname, int * p_snr)
 	struct qcsapi_wifi_get_avg_snr_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_snr == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -3292,6 +3400,9 @@ int qcsapi_get_primary_interface(char * ifname, size_t maxlen)
 	struct qcsapi_get_primary_interface_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (ifname == NULL) {
+		return -EFAULT;
+	}
 	if (ifname) {
 		ifname[0] = 0;
 	}
@@ -3336,6 +3447,9 @@ int qcsapi_get_interface_by_index(unsigned int if_index, char * ifname, size_t m
 	struct qcsapi_get_interface_by_index_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (ifname == NULL) {
+		return -EFAULT;
+	}
 	__req.if_index = (unsigned int)if_index;
 	if (ifname) {
 		ifname[0] = 0;
@@ -3381,6 +3495,9 @@ int qcsapi_wifi_set_wifi_macaddr(const qcsapi_mac_addr new_mac_addr)
 	struct qcsapi_wifi_set_wifi_macaddr_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (new_mac_addr == NULL) {
+		return -EFAULT;
+	}
 	memcpy(__req.new_mac_addr, new_mac_addr, sizeof(const qcsapi_mac_addr));
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -3419,6 +3536,9 @@ int qcsapi_interface_get_BSSID(const char * ifname, qcsapi_mac_addr current_BSSI
 	struct qcsapi_interface_get_BSSID_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (current_BSSID == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -3461,6 +3581,9 @@ int qcsapi_wifi_get_rates(const char * ifname, qcsapi_rate_type rate_type, strin
 	struct qcsapi_wifi_get_rates_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (supported_rates == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.rate_type = (int)rate_type;
 	if (supported_rates) {
@@ -3546,6 +3669,9 @@ int qcsapi_get_max_bitrate(const char * ifname, char * max_bitrate, const int ma
 	struct qcsapi_get_max_bitrate_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (max_bitrate == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (max_bitrate) {
 		max_bitrate[0] = 0;
@@ -3630,6 +3756,9 @@ int qcsapi_wifi_qos_get_param(const char * ifname, int the_queue, int the_param,
 	struct qcsapi_wifi_qos_get_param_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_value == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.the_queue = (int)the_queue;
 	__req.the_param = (int)the_param;
@@ -3715,6 +3844,9 @@ int qcsapi_wifi_get_wmm_ac_map(const char * ifname, string_64 mapping_table)
 	struct qcsapi_wifi_get_wmm_ac_map_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (mapping_table == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (mapping_table) {
 		mapping_table[0] = 0;
@@ -3799,6 +3931,9 @@ int qcsapi_wifi_get_dscp_8021p_map(const char * ifname, string_64 mapping_table)
 	struct qcsapi_wifi_get_dscp_8021p_map_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (mapping_table == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (mapping_table) {
 		mapping_table[0] = 0;
@@ -3843,6 +3978,9 @@ int qcsapi_wifi_get_dscp_ac_map(const char * ifname, u8_array_64 mapping_table)
 	struct qcsapi_wifi_get_dscp_ac_map_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (mapping_table == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -3925,6 +4063,9 @@ int qcsapi_wifi_set_dscp_ac_map(const char * ifname, const u8_array_64 dscp_list
 	struct qcsapi_wifi_set_dscp_ac_map_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (dscp_list == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	memcpy(__req.dscp_list, dscp_list, sizeof(const u8_array_64));
 	__req.dscp_list_len = (unsigned int)dscp_list_len;
@@ -3966,6 +4107,9 @@ int qcsapi_wifi_get_priority(const char * ifname, uint8_t * p_priority)
 	struct qcsapi_wifi_get_priority_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_priority == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -4087,6 +4231,9 @@ int qcsapi_wifi_get_dwell_times(const char * ifname, unsigned int * p_max_dwell_
 	struct qcsapi_wifi_get_dwell_times_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_max_dwell_time_active_chan == NULL || p_min_dwell_time_active_chan == NULL || p_max_dwell_time_passive_chan == NULL || p_min_dwell_time_passive_chan == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -4173,6 +4320,9 @@ int qcsapi_wifi_get_bgscan_dwell_times(const char * ifname, unsigned int * p_dwe
 	struct qcsapi_wifi_get_bgscan_dwell_times_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_dwell_time_active_chan == NULL || p_dwell_time_passive_chan == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -4292,6 +4442,9 @@ int qcsapi_wifi_get_scan_status(const char * ifname, int * scanstatus)
 	struct qcsapi_wifi_get_scan_status_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (scanstatus == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -4332,6 +4485,9 @@ int qcsapi_wifi_get_cac_status(const char * ifname, int * cacstatus)
 	struct qcsapi_wifi_get_cac_status_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (cacstatus == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -4411,6 +4567,9 @@ int qcsapi_wifi_get_tx_power(const char * ifname, const qcsapi_unsigned_int the_
 	struct qcsapi_wifi_get_tx_power_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_tx_power == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.the_channel = (unsigned int)the_channel;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -4492,6 +4651,9 @@ int qcsapi_wifi_get_bw_power(const char * ifname, const qcsapi_unsigned_int the_
 	struct qcsapi_wifi_get_bw_power_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_power_20M == NULL || p_power_40M == NULL || p_power_80M == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.the_channel = (unsigned int)the_channel;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -4621,6 +4783,9 @@ int qcsapi_wifi_get_carrier_interference(const char * ifname, int * ci)
 	struct qcsapi_wifi_get_carrier_interference_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (ci == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -4661,6 +4826,9 @@ int qcsapi_wifi_get_congestion_index(const char * ifname, int * ci)
 	struct qcsapi_wifi_get_congestion_index_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (ci == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -4701,6 +4869,9 @@ int qcsapi_wifi_get_supported_tx_power_levels(const char * ifname, string_128 av
 	struct qcsapi_wifi_get_supported_tx_power_levels_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (available_percentages == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (available_percentages) {
 		available_percentages[0] = 0;
@@ -4745,6 +4916,9 @@ int qcsapi_wifi_get_current_tx_power_level(const char * ifname, uint32_t * p_cur
 	struct qcsapi_wifi_get_current_tx_power_level_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_current_percentage == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -4824,6 +4998,9 @@ int qcsapi_wifi_get_power_constraint(const char * ifname, uint32_t * p_pwr_const
 	struct qcsapi_wifi_get_power_constraint_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_pwr_constraint == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -4903,6 +5080,9 @@ int qcsapi_wifi_get_tpc_interval(const char * ifname, uint32_t * p_tpc_interval)
 	struct qcsapi_wifi_get_tpc_interval_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_tpc_interval == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -4943,6 +5123,9 @@ int qcsapi_wifi_get_assoc_records(const char * ifname, int reset, qcsapi_assoc_r
 	struct qcsapi_wifi_get_assoc_records_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (records == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.reset = (int)reset;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -4997,6 +5180,9 @@ int qcsapi_wifi_get_ap_isolate(const char * ifname, int * p_ap_isolate)
 	struct qcsapi_wifi_get_ap_isolate_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_ap_isolate == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -5076,6 +5262,9 @@ int qcsapi_wifi_create_restricted_bss(const char * ifname, const qcsapi_mac_addr
 	struct qcsapi_wifi_create_restricted_bss_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (mac_addr == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	memcpy(__req.mac_addr, mac_addr, sizeof(const qcsapi_mac_addr));
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -5115,6 +5304,9 @@ int qcsapi_wifi_create_bss(const char * ifname, const qcsapi_mac_addr mac_addr)
 	struct qcsapi_wifi_create_bss_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (mac_addr == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	memcpy(__req.mac_addr, mac_addr, sizeof(const qcsapi_mac_addr));
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -5192,6 +5384,9 @@ int qcsapi_wds_add_peer(const char * ifname, const qcsapi_mac_addr peer_address)
 	struct qcsapi_wds_add_peer_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (peer_address == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	memcpy(__req.peer_address, peer_address, sizeof(const qcsapi_mac_addr));
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -5231,6 +5426,9 @@ int qcsapi_wds_remove_peer(const char * ifname, const qcsapi_mac_addr peer_addre
 	struct qcsapi_wds_remove_peer_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (peer_address == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	memcpy(__req.peer_address, peer_address, sizeof(const qcsapi_mac_addr));
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -5270,6 +5468,9 @@ int qcsapi_wds_get_peer_address(const char * ifname, const int index, qcsapi_mac
 	struct qcsapi_wds_get_peer_address_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (peer_address == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.index = (int)index;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -5313,6 +5514,9 @@ int qcsapi_wds_set_psk(const char * ifname, const qcsapi_mac_addr peer_address, 
 	struct qcsapi_wds_set_psk_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (peer_address == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	memcpy(__req.peer_address, peer_address, sizeof(const qcsapi_mac_addr));
 	__req.pre_shared_key = (str)pre_shared_key;
@@ -5353,6 +5557,9 @@ int qcsapi_wifi_get_beacon_type(const char * ifname, char * p_current_beacon)
 	struct qcsapi_wifi_get_beacon_type_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_current_beacon == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (p_current_beacon) {
 		p_current_beacon[0] = 0;
@@ -5436,6 +5643,9 @@ int qcsapi_wifi_get_WEP_key_index(const char * ifname, qcsapi_unsigned_int * p_k
 	struct qcsapi_wifi_get_WEP_key_index_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_key_index == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -5515,6 +5725,9 @@ int qcsapi_wifi_get_WEP_key_passphrase(const char * ifname, string_64 current_pa
 	struct qcsapi_wifi_get_WEP_key_passphrase_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (current_passphrase == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (current_passphrase) {
 		current_passphrase[0] = 0;
@@ -5598,6 +5811,9 @@ int qcsapi_wifi_get_WEP_encryption_level(const char * ifname, string_64 current_
 	struct qcsapi_wifi_get_WEP_encryption_level_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (current_encryption_level == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (current_encryption_level) {
 		current_encryption_level[0] = 0;
@@ -5642,6 +5858,9 @@ int qcsapi_wifi_get_basic_encryption_modes(const char * ifname, string_32 encryp
 	struct qcsapi_wifi_get_basic_encryption_modes_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (encryption_modes == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (encryption_modes) {
 		encryption_modes[0] = 0;
@@ -5725,6 +5944,9 @@ int qcsapi_wifi_get_basic_authentication_mode(const char * ifname, string_32 aut
 	struct qcsapi_wifi_get_basic_authentication_mode_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (authentication_mode == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (authentication_mode) {
 		authentication_mode[0] = 0;
@@ -5808,6 +6030,9 @@ int qcsapi_wifi_get_WEP_key(const char * ifname, qcsapi_unsigned_int key_index, 
 	struct qcsapi_wifi_get_WEP_key_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (current_passphrase == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.key_index = (unsigned int)key_index;
 	if (current_passphrase) {
@@ -5893,6 +6118,9 @@ int qcsapi_wifi_get_WPA_encryption_modes(const char * ifname, string_32 encrypti
 	struct qcsapi_wifi_get_WPA_encryption_modes_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (encryption_modes == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (encryption_modes) {
 		encryption_modes[0] = 0;
@@ -5976,6 +6204,9 @@ int qcsapi_wifi_get_WPA_authentication_mode(const char * ifname, string_32 authe
 	struct qcsapi_wifi_get_WPA_authentication_mode_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (authentication_mode == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (authentication_mode) {
 		authentication_mode[0] = 0;
@@ -6059,6 +6290,9 @@ int qcsapi_wifi_get_IEEE11i_encryption_modes(const char * ifname, string_32 encr
 	struct qcsapi_wifi_get_IEEE11i_encryption_modes_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (encryption_modes == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (encryption_modes) {
 		encryption_modes[0] = 0;
@@ -6142,6 +6376,9 @@ int qcsapi_wifi_get_IEEE11i_authentication_mode(const char * ifname, string_32 a
 	struct qcsapi_wifi_get_IEEE11i_authentication_mode_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (authentication_mode == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (authentication_mode) {
 		authentication_mode[0] = 0;
@@ -6225,6 +6462,9 @@ int qcsapi_wifi_get_michael_errcnt(const char * ifname, uint32_t * errcount)
 	struct qcsapi_wifi_get_michael_errcnt_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (errcount == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -6265,6 +6505,9 @@ int qcsapi_wifi_get_pre_shared_key(const char * ifname, const qcsapi_unsigned_in
 	struct qcsapi_wifi_get_pre_shared_key_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (pre_shared_key == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.key_index = (unsigned int)key_index;
 	if (pre_shared_key) {
@@ -6350,6 +6593,9 @@ int qcsapi_wifi_get_key_passphrase(const char * ifname, const qcsapi_unsigned_in
 	struct qcsapi_wifi_get_key_passphrase_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (passphrase == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.key_index = (unsigned int)key_index;
 	if (passphrase) {
@@ -6435,6 +6681,9 @@ int qcsapi_wifi_get_wpa_status(const char * ifname, char * wpa_status, char * ma
 	struct qcsapi_wifi_get_wpa_status_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (wpa_status == NULL || mac_addr == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (wpa_status) {
 		wpa_status[0] = 0;
@@ -6486,6 +6735,9 @@ int qcsapi_wifi_get_psk_auth_failures(const char * ifname, qcsapi_unsigned_int *
 	struct qcsapi_wifi_get_psk_auth_failures_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (count == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -6526,6 +6778,9 @@ int qcsapi_wifi_get_auth_state(const char * ifname, char * mac_addr, int * auth_
 	struct qcsapi_wifi_get_auth_state_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (mac_addr == NULL || auth_state == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (mac_addr) {
 		mac_addr[0] = 0;
@@ -6611,6 +6866,9 @@ int qcsapi_wifi_get_mac_address_filtering(const char * ifname, qcsapi_mac_addres
 	struct qcsapi_wifi_get_mac_address_filtering_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (current_mac_address_filtering == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -6651,6 +6909,9 @@ int qcsapi_wifi_authorize_mac_address(const char * ifname, const qcsapi_mac_addr
 	struct qcsapi_wifi_authorize_mac_address_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (address_to_authorize == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	memcpy(__req.address_to_authorize, address_to_authorize, sizeof(const qcsapi_mac_addr));
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -6690,6 +6951,9 @@ int qcsapi_wifi_deny_mac_address(const char * ifname, const qcsapi_mac_addr addr
 	struct qcsapi_wifi_deny_mac_address_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (address_to_deny == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	memcpy(__req.address_to_deny, address_to_deny, sizeof(const qcsapi_mac_addr));
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -6729,6 +6993,9 @@ int qcsapi_wifi_remove_mac_address(const char * ifname, const qcsapi_mac_addr ad
 	struct qcsapi_wifi_remove_mac_address_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (address_to_remove == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	memcpy(__req.address_to_remove, address_to_remove, sizeof(const qcsapi_mac_addr));
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -6768,6 +7035,9 @@ int qcsapi_wifi_is_mac_address_authorized(const char * ifname, const qcsapi_mac_
 	struct qcsapi_wifi_is_mac_address_authorized_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (address_to_verify == NULL || p_mac_address_authorized == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	memcpy(__req.address_to_verify, address_to_verify, sizeof(const qcsapi_mac_addr));
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -6809,6 +7079,9 @@ int qcsapi_wifi_get_authorized_mac_addresses(const char * ifname, char * list_ma
 	struct qcsapi_wifi_get_authorized_mac_addresses_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (list_mac_addresses == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (list_mac_addresses) {
 		list_mac_addresses[0] = 0;
@@ -6854,6 +7127,9 @@ int qcsapi_wifi_get_denied_mac_addresses(const char * ifname, char * list_mac_ad
 	struct qcsapi_wifi_get_denied_mac_addresses_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (list_mac_addresses == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (list_mac_addresses) {
 		list_mac_addresses[0] = 0;
@@ -6899,6 +7175,9 @@ int qcsapi_wifi_set_accept_oui_filter(const char * ifname, const qcsapi_mac_addr
 	struct qcsapi_wifi_set_accept_oui_filter_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (oui == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	memcpy(__req.oui, oui, sizeof(const qcsapi_mac_addr));
 	__req.flag = (int)flag;
@@ -6939,6 +7218,9 @@ int qcsapi_wifi_get_accept_oui_filter(const char * ifname, char * oui_list, cons
 	struct qcsapi_wifi_get_accept_oui_filter_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (oui_list == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (oui_list) {
 		oui_list[0] = 0;
@@ -7022,6 +7304,9 @@ int qcsapi_wifi_get_option(const char * ifname, qcsapi_option_type qcsapi_option
 	struct qcsapi_wifi_get_option_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_current_option == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.qcsapi_option = (int)qcsapi_option;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -7260,6 +7545,9 @@ int qcsapi_SSID_get_SSID_list(const char * ifname, const unsigned int arrayc, ch
 	struct qcsapi_SSID_get_SSID_list_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (list_SSID == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.arrayc = (unsigned int)arrayc;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -7346,6 +7634,9 @@ int qcsapi_SSID_get_protocol(const char * ifname, const qcsapi_SSID current_SSID
 	struct qcsapi_SSID_get_protocol_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (current_protocol == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.current_SSID = (str)current_SSID;
 	if (current_protocol) {
@@ -7391,6 +7682,9 @@ int qcsapi_SSID_get_encryption_modes(const char * ifname, const qcsapi_SSID curr
 	struct qcsapi_SSID_get_encryption_modes_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (encryption_modes == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.current_SSID = (str)current_SSID;
 	if (encryption_modes) {
@@ -7476,6 +7770,9 @@ int qcsapi_SSID_get_group_encryption(const char * ifname, const qcsapi_SSID curr
 	struct qcsapi_SSID_get_group_encryption_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (encryption_mode == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.current_SSID = (str)current_SSID;
 	if (encryption_mode) {
@@ -7561,6 +7858,9 @@ int qcsapi_SSID_get_authentication_mode(const char * ifname, const qcsapi_SSID c
 	struct qcsapi_SSID_get_authentication_mode_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (authentication_mode == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.current_SSID = (str)current_SSID;
 	if (authentication_mode) {
@@ -7646,6 +7946,9 @@ int qcsapi_SSID_get_pre_shared_key(const char * ifname, const qcsapi_SSID curren
 	struct qcsapi_SSID_get_pre_shared_key_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (pre_shared_key == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.current_SSID = (str)current_SSID;
 	__req.key_index = (unsigned int)key_index;
@@ -7733,6 +8036,9 @@ int qcsapi_SSID_get_key_passphrase(const char * ifname, const qcsapi_SSID curren
 	struct qcsapi_SSID_get_key_passphrase_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (passphrase == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.current_SSID = (str)current_SSID;
 	__req.key_index = (unsigned int)key_index;
@@ -7820,6 +8126,9 @@ int qcsapi_SSID_get_wps_SSID(const char * ifname, qcsapi_SSID wps_SSID)
 	struct qcsapi_SSID_get_wps_SSID_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (wps_SSID == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (wps_SSID) {
 		wps_SSID[0] = 0;
@@ -7905,6 +8214,9 @@ int qcsapi_wifi_show_vlan_config(string_4096 vtable)
 	struct qcsapi_wifi_show_vlan_config_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (vtable == NULL) {
+		return -EFAULT;
+	}
 	if (vtable) {
 		vtable[0] = 0;
 	}
@@ -7948,6 +8260,9 @@ int qcsapi_enable_vlan_pass_through(int * enabled)
 	struct qcsapi_enable_vlan_pass_through_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (enabled == NULL) {
+		return -EFAULT;
+	}
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
 	while (1) {
@@ -7987,6 +8302,9 @@ int qcsapi_wifi_set_vlan_promisc(int * enable)
 	struct qcsapi_wifi_set_vlan_promisc_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (enable == NULL) {
+		return -EFAULT;
+	}
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
 	while (1) {
@@ -8094,7 +8412,7 @@ int qcsapi_wps_registrar_report_pin(const char * ifname, const char * wps_pin)
 	return __resp.return_code;
 }
 
-int qcsapi_wps_registrar_get_pp_devname(const char * ifname, string_128 pp_devname)
+int qcsapi_wps_registrar_get_pp_devname(const char * ifname, int blacklist, string_128 pp_devname)
 {
 	int retries = 0;
 	CLIENT *clnt = qcsapi_adapter_get_client();
@@ -8103,7 +8421,11 @@ int qcsapi_wps_registrar_get_pp_devname(const char * ifname, string_128 pp_devna
 	struct qcsapi_wps_registrar_get_pp_devname_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (pp_devname == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
+	__req.blacklist = (int)blacklist;
 	if (pp_devname) {
 		pp_devname[0] = 0;
 	}
@@ -8138,7 +8460,7 @@ int qcsapi_wps_registrar_get_pp_devname(const char * ifname, string_128 pp_devna
 	return __resp.return_code;
 }
 
-int qcsapi_wps_registrar_set_pp_devname(const char * ifname, const string_128 pp_devname)
+int qcsapi_wps_registrar_set_pp_devname(const char * ifname, int update_blacklist, const string_256 pp_devname)
 {
 	int retries = 0;
 	CLIENT *clnt = qcsapi_adapter_get_client();
@@ -8148,6 +8470,7 @@ int qcsapi_wps_registrar_set_pp_devname(const char * ifname, const string_128 pp
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
 	__req.ifname = (str)ifname;
+	__req.update_blacklist = (int)update_blacklist;
 	__req.pp_devname = (str)pp_devname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -8186,6 +8509,9 @@ int qcsapi_wps_enrollee_report_button_press(const char * ifname, const qcsapi_ma
 	struct qcsapi_wps_enrollee_report_button_press_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (bssid == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	memcpy(__req.bssid, bssid, sizeof(const qcsapi_mac_addr));
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -8225,6 +8551,9 @@ int qcsapi_wps_enrollee_report_pin(const char * ifname, const qcsapi_mac_addr bs
 	struct qcsapi_wps_enrollee_report_pin_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (bssid == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	memcpy(__req.bssid, bssid, sizeof(const qcsapi_mac_addr));
 	__req.wps_pin = (str)wps_pin;
@@ -8265,6 +8594,9 @@ int qcsapi_wps_enrollee_generate_pin(const char * ifname, const qcsapi_mac_addr 
 	struct qcsapi_wps_enrollee_generate_pin_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (bssid == NULL || wps_pin == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	memcpy(__req.bssid, bssid, sizeof(const qcsapi_mac_addr));
 	if (wps_pin) {
@@ -8310,6 +8642,9 @@ int qcsapi_wps_get_ap_pin(const char * ifname, char * wps_pin, int force_regener
 	struct qcsapi_wps_get_ap_pin_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (wps_pin == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (wps_pin) {
 		wps_pin[0] = 0;
@@ -8432,6 +8767,9 @@ int qcsapi_wps_get_sta_pin(const char * ifname, char * wps_pin)
 	struct qcsapi_wps_get_sta_pin_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (wps_pin == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (wps_pin) {
 		wps_pin[0] = 0;
@@ -8476,6 +8814,9 @@ int qcsapi_wps_get_state(const char * ifname, char * wps_state, const qcsapi_uns
 	struct qcsapi_wps_get_state_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (wps_state == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (wps_state) {
 		wps_state[0] = 0;
@@ -8521,6 +8862,9 @@ int qcsapi_wps_get_configured_state(const char * ifname, char * wps_state, const
 	struct qcsapi_wps_get_configured_state_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (wps_state == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (wps_state) {
 		wps_state[0] = 0;
@@ -8566,6 +8910,9 @@ int qcsapi_wps_get_runtime_state(const char * ifname, char * state, int max_len)
 	struct qcsapi_wps_get_runtime_state_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (state == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (state) {
 		state[0] = 0;
@@ -8650,6 +8997,9 @@ int qcsapi_wps_get_param(const char * ifname, qcsapi_wps_param_type wps_type, ch
 	struct qcsapi_wps_get_param_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (wps_str == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.wps_type = (int)wps_type;
 	if (wps_str) {
@@ -8774,6 +9124,9 @@ int qcsapi_wps_on_hidden_ssid_status(const char * ifname, char * state, int max_
 	struct qcsapi_wps_on_hidden_ssid_status_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (state == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (state) {
 		state[0] = 0;
@@ -8858,6 +9211,9 @@ int qcsapi_wps_upnp_status(const char * ifname, char * reply, int reply_len)
 	struct qcsapi_wps_upnp_status_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (reply == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (reply) {
 		reply[0] = 0;
@@ -8942,6 +9298,9 @@ int qcsapi_wps_get_allow_pbc_overlap_status(const char * ifname, int * status)
 	struct qcsapi_wps_get_allow_pbc_overlap_status_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (status == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -9021,6 +9380,9 @@ int qcsapi_wps_get_access_control(const char * ifname, uint32_t * ctrl_state)
 	struct qcsapi_wps_get_access_control_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (ctrl_state == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -9178,6 +9540,9 @@ int qcsapi_wps_get_pbc_in_srcm(const char * ifname, qcsapi_unsigned_int * p_enab
 	struct qcsapi_wps_get_pbc_in_srcm_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_enabled == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -9256,6 +9621,9 @@ int qcsapi_registrar_get_default_pbc_bss(char * default_bss, int len)
 	struct qcsapi_registrar_get_default_pbc_bss_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (default_bss == NULL) {
+		return -EFAULT;
+	}
 	if (default_bss) {
 		default_bss[0] = 0;
 	}
@@ -9339,6 +9707,9 @@ int qcsapi_gpio_get_config(const uint8_t gpio_pin, qcsapi_gpio_config * p_gpio_c
 	struct qcsapi_gpio_get_config_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_gpio_config == NULL) {
+		return -EFAULT;
+	}
 	__req.gpio_pin = (unsigned int)gpio_pin;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -9379,6 +9750,9 @@ int qcsapi_led_get(const uint8_t led_ident, uint8_t * p_led_setting)
 	struct qcsapi_led_get_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_led_setting == NULL) {
+		return -EFAULT;
+	}
 	__req.led_ident = (unsigned int)led_ident;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -9504,6 +9878,9 @@ int qcsapi_wifi_get_count_associations(const char * ifname, qcsapi_unsigned_int 
 	struct qcsapi_wifi_get_count_associations_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_association_count == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -9544,6 +9921,9 @@ int qcsapi_wifi_get_associated_device_mac_addr(const char * ifname, const qcsapi
 	struct qcsapi_wifi_get_associated_device_mac_addr_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (device_mac_addr == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.device_index = (unsigned int)device_index;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -9587,6 +9967,9 @@ int qcsapi_wifi_get_associated_device_ip_addr(const char * ifname, const qcsapi_
 	struct qcsapi_wifi_get_associated_device_ip_addr_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (ip_addr == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.device_index = (unsigned int)device_index;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -9628,6 +10011,9 @@ int qcsapi_wifi_get_link_quality(const char * ifname, const qcsapi_unsigned_int 
 	struct qcsapi_wifi_get_link_quality_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_link_quality == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.association_index = (unsigned int)association_index;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -9669,6 +10055,9 @@ int qcsapi_wifi_get_rx_bytes_per_association(const char * ifname, const qcsapi_u
 	struct qcsapi_wifi_get_rx_bytes_per_association_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_rx_bytes == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.association_index = (unsigned int)association_index;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -9710,6 +10099,9 @@ int qcsapi_wifi_get_tx_bytes_per_association(const char * ifname, const qcsapi_u
 	struct qcsapi_wifi_get_tx_bytes_per_association_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_tx_bytes == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.association_index = (unsigned int)association_index;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -9751,6 +10143,9 @@ int qcsapi_wifi_get_rx_packets_per_association(const char * ifname, const qcsapi
 	struct qcsapi_wifi_get_rx_packets_per_association_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_rx_packets == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.association_index = (unsigned int)association_index;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -9792,6 +10187,9 @@ int qcsapi_wifi_get_tx_packets_per_association(const char * ifname, const qcsapi
 	struct qcsapi_wifi_get_tx_packets_per_association_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_tx_packets == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.association_index = (unsigned int)association_index;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -9833,6 +10231,9 @@ int qcsapi_wifi_get_tx_err_packets_per_association(const char * ifname, const qc
 	struct qcsapi_wifi_get_tx_err_packets_per_association_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_tx_err_packets == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.association_index = (unsigned int)association_index;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -9874,6 +10275,9 @@ int qcsapi_wifi_get_rssi_per_association(const char * ifname, const qcsapi_unsig
 	struct qcsapi_wifi_get_rssi_per_association_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_rssi == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.association_index = (unsigned int)association_index;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -9915,6 +10319,9 @@ int qcsapi_wifi_get_rssi_in_dbm_per_association(const char * ifname, const qcsap
 	struct qcsapi_wifi_get_rssi_in_dbm_per_association_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_rssi == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.association_index = (unsigned int)association_index;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -9956,6 +10363,9 @@ int qcsapi_wifi_get_bw_per_association(const char * ifname, const qcsapi_unsigne
 	struct qcsapi_wifi_get_bw_per_association_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_bw == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.association_index = (unsigned int)association_index;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -9997,6 +10407,9 @@ int qcsapi_wifi_get_tx_phy_rate_per_association(const char * ifname, const qcsap
 	struct qcsapi_wifi_get_tx_phy_rate_per_association_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_tx_phy_rate == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.association_index = (unsigned int)association_index;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -10038,6 +10451,9 @@ int qcsapi_wifi_get_rx_phy_rate_per_association(const char * ifname, const qcsap
 	struct qcsapi_wifi_get_rx_phy_rate_per_association_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_rx_phy_rate == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.association_index = (unsigned int)association_index;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -10070,6 +10486,94 @@ int qcsapi_wifi_get_rx_phy_rate_per_association(const char * ifname, const qcsap
 	return __resp.return_code;
 }
 
+int qcsapi_wifi_get_tx_mcs_per_association(const char * ifname, const qcsapi_unsigned_int association_index, qcsapi_unsigned_int * p_mcs)
+{
+	int retries = 0;
+	CLIENT *clnt = qcsapi_adapter_get_client();
+	enum clnt_stat __rpcret;
+	struct qcsapi_wifi_get_tx_mcs_per_association_request __req;
+	struct qcsapi_wifi_get_tx_mcs_per_association_response __resp;
+	memset(&__req, 0, sizeof(__req));
+	memset(&__resp, 0, sizeof(__resp));
+	if (p_mcs == NULL) {
+		return -EFAULT;
+	}
+	__req.ifname = (str)ifname;
+	__req.association_index = (unsigned int)association_index;
+	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
+	client_qcsapi_pre();
+	while (1) {
+		__rpcret = clnt_call(clnt, QCSAPI_WIFI_GET_TX_MCS_PER_ASSOCIATION_REMOTE,
+				(xdrproc_t)xdr_qcsapi_wifi_get_tx_mcs_per_association_request, (caddr_t)&__req,
+				(xdrproc_t)xdr_qcsapi_wifi_get_tx_mcs_per_association_response, (caddr_t)&__resp,
+				__timeout);
+		if (__rpcret == RPC_SUCCESS) {
+			client_qcsapi_post(0);
+			break;
+		} else {
+			clnt_perror (clnt, "qcsapi_wifi_get_tx_mcs_per_association call failed");
+			clnt_perrno (__rpcret);
+			if (retries >= retries_limit) {
+				client_qcsapi_post(1);
+				return -ENOLINK;
+			}
+			retries++;
+			client_qcsapi_reconnect();
+		}
+
+	}
+
+	if (p_mcs)
+		*p_mcs = __resp.p_mcs;
+	if (debug) { fprintf(stderr, "%s:%d %s post\n", __FILE__, __LINE__, __FUNCTION__); }
+
+	return __resp.return_code;
+}
+
+int qcsapi_wifi_get_rx_mcs_per_association(const char * ifname, const qcsapi_unsigned_int association_index, qcsapi_unsigned_int * p_mcs)
+{
+	int retries = 0;
+	CLIENT *clnt = qcsapi_adapter_get_client();
+	enum clnt_stat __rpcret;
+	struct qcsapi_wifi_get_rx_mcs_per_association_request __req;
+	struct qcsapi_wifi_get_rx_mcs_per_association_response __resp;
+	memset(&__req, 0, sizeof(__req));
+	memset(&__resp, 0, sizeof(__resp));
+	if (p_mcs == NULL) {
+		return -EFAULT;
+	}
+	__req.ifname = (str)ifname;
+	__req.association_index = (unsigned int)association_index;
+	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
+	client_qcsapi_pre();
+	while (1) {
+		__rpcret = clnt_call(clnt, QCSAPI_WIFI_GET_RX_MCS_PER_ASSOCIATION_REMOTE,
+				(xdrproc_t)xdr_qcsapi_wifi_get_rx_mcs_per_association_request, (caddr_t)&__req,
+				(xdrproc_t)xdr_qcsapi_wifi_get_rx_mcs_per_association_response, (caddr_t)&__resp,
+				__timeout);
+		if (__rpcret == RPC_SUCCESS) {
+			client_qcsapi_post(0);
+			break;
+		} else {
+			clnt_perror (clnt, "qcsapi_wifi_get_rx_mcs_per_association call failed");
+			clnt_perrno (__rpcret);
+			if (retries >= retries_limit) {
+				client_qcsapi_post(1);
+				return -ENOLINK;
+			}
+			retries++;
+			client_qcsapi_reconnect();
+		}
+
+	}
+
+	if (p_mcs)
+		*p_mcs = __resp.p_mcs;
+	if (debug) { fprintf(stderr, "%s:%d %s post\n", __FILE__, __LINE__, __FUNCTION__); }
+
+	return __resp.return_code;
+}
+
 int qcsapi_wifi_get_achievable_tx_phy_rate_per_association(const char * ifname, const qcsapi_unsigned_int association_index, qcsapi_unsigned_int * p_achievable_tx_phy_rate)
 {
 	int retries = 0;
@@ -10079,6 +10583,9 @@ int qcsapi_wifi_get_achievable_tx_phy_rate_per_association(const char * ifname, 
 	struct qcsapi_wifi_get_achievable_tx_phy_rate_per_association_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_achievable_tx_phy_rate == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.association_index = (unsigned int)association_index;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -10120,6 +10627,9 @@ int qcsapi_wifi_get_achievable_rx_phy_rate_per_association(const char * ifname, 
 	struct qcsapi_wifi_get_achievable_rx_phy_rate_per_association_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_achievable_rx_phy_rate == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.association_index = (unsigned int)association_index;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -10161,6 +10671,9 @@ int qcsapi_wifi_get_snr_per_association(const char * ifname, const qcsapi_unsign
 	struct qcsapi_wifi_get_snr_per_association_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_snr == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.association_index = (unsigned int)association_index;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -10202,6 +10715,9 @@ int qcsapi_wifi_get_time_associated_per_association(const char * ifname, const q
 	struct qcsapi_wifi_get_time_associated_per_association_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (time_associated == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.association_index = (unsigned int)association_index;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -10243,6 +10759,9 @@ int qcsapi_wifi_get_node_param(const char * ifname, const uint32_t node_index, q
 	struct qcsapi_wifi_get_node_param_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (input_param_str == NULL || report_result == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.node_index = (unsigned long)node_index;
 	__req.param_type = (int)param_type;
@@ -10305,6 +10824,9 @@ int qcsapi_wifi_get_node_counter(const char * ifname, const uint32_t node_index,
 	struct qcsapi_wifi_get_node_counter_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_value == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.node_index = (unsigned long)node_index;
 	__req.counter_type = (int)counter_type;
@@ -10348,6 +10870,9 @@ int qcsapi_wifi_get_node_stats(const char * ifname, const uint32_t node_index, i
 	struct qcsapi_wifi_get_node_stats_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_stats == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.node_index = (unsigned long)node_index;
 	__req.local_remote_flag = (int)local_remote_flag;
@@ -10403,6 +10928,9 @@ int qcsapi_wifi_get_max_queued(const char * ifname, const uint32_t node_index, i
 	struct qcsapi_wifi_get_max_queued_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (max_queued == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.node_index = (unsigned long)node_index;
 	__req.local_remote_flag = (int)local_remote_flag;
@@ -10446,6 +10974,9 @@ int qcsapi_wifi_get_hw_noise_per_association(const char * ifname, const qcsapi_u
 	struct qcsapi_wifi_get_hw_noise_per_association_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_hw_noise == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.association_index = (unsigned int)association_index;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -10487,6 +11018,9 @@ int qcsapi_wifi_get_list_regulatory_regions(string_128 list_regulatory_regions)
 	struct qcsapi_wifi_get_list_regulatory_regions_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (list_regulatory_regions == NULL) {
+		return -EFAULT;
+	}
 	if (list_regulatory_regions) {
 		list_regulatory_regions[0] = 0;
 	}
@@ -10530,6 +11064,9 @@ int qcsapi_regulatory_get_list_regulatory_regions(string_128 list_regulatory_reg
 	struct qcsapi_regulatory_get_list_regulatory_regions_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (list_regulatory_regions == NULL) {
+		return -EFAULT;
+	}
 	if (list_regulatory_regions) {
 		list_regulatory_regions[0] = 0;
 	}
@@ -10573,6 +11110,9 @@ int qcsapi_wifi_get_list_regulatory_channels(const char * region_by_name, const 
 	struct qcsapi_wifi_get_list_regulatory_channels_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (list_of_channels == NULL) {
+		return -EFAULT;
+	}
 	__req.region_by_name = (str)region_by_name;
 	__req.bw = (unsigned int)bw;
 	if (list_of_channels) {
@@ -10618,6 +11158,9 @@ int qcsapi_regulatory_get_list_regulatory_channels(const char * region_by_name, 
 	struct qcsapi_regulatory_get_list_regulatory_channels_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (list_of_channels == NULL) {
+		return -EFAULT;
+	}
 	__req.region_by_name = (str)region_by_name;
 	__req.bw = (unsigned int)bw;
 	if (list_of_channels) {
@@ -10663,6 +11206,9 @@ int qcsapi_regulatory_get_list_regulatory_bands(const char * region_by_name, str
 	struct qcsapi_regulatory_get_list_regulatory_bands_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (list_of_channels == NULL) {
+		return -EFAULT;
+	}
 	__req.region_by_name = (str)region_by_name;
 	if (list_of_channels) {
 		list_of_channels[0] = 0;
@@ -10707,6 +11253,9 @@ int qcsapi_wifi_get_regulatory_tx_power(const char * ifname, const qcsapi_unsign
 	struct qcsapi_wifi_get_regulatory_tx_power_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_tx_power == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.the_channel = (unsigned int)the_channel;
 	__req.region_by_name = (str)region_by_name;
@@ -10749,6 +11298,9 @@ int qcsapi_regulatory_get_regulatory_tx_power(const char * ifname, const qcsapi_
 	struct qcsapi_regulatory_get_regulatory_tx_power_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_tx_power == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.the_channel = (unsigned int)the_channel;
 	__req.region_by_name = (str)region_by_name;
@@ -10791,6 +11343,9 @@ int qcsapi_wifi_get_configured_tx_power(const char * ifname, const qcsapi_unsign
 	struct qcsapi_wifi_get_configured_tx_power_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_tx_power == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.the_channel = (unsigned int)the_channel;
 	__req.region_by_name = (str)region_by_name;
@@ -10834,6 +11389,9 @@ int qcsapi_regulatory_get_configured_tx_power(const char * ifname, const qcsapi_
 	struct qcsapi_regulatory_get_configured_tx_power_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_tx_power == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.the_channel = (unsigned int)the_channel;
 	__req.region_by_name = (str)region_by_name;
@@ -10955,6 +11513,9 @@ int qcsapi_wifi_get_regulatory_region(const char * ifname, char * region_by_name
 	struct qcsapi_wifi_get_regulatory_region_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (region_by_name == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (region_by_name) {
 		region_by_name[0] = 0;
@@ -11121,6 +11682,9 @@ int qcsapi_regulatory_get_db_version(int * p_version, const int index)
 	struct qcsapi_regulatory_get_db_version_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_version == NULL) {
+		return -EFAULT;
+	}
 	__req.index = (int)index;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -11161,6 +11725,9 @@ int qcsapi_wifi_get_list_DFS_channels(const char * region_by_name, const int DFS
 	struct qcsapi_wifi_get_list_DFS_channels_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (list_of_channels == NULL) {
+		return -EFAULT;
+	}
 	__req.region_by_name = (str)region_by_name;
 	__req.DFS_flag = (int)DFS_flag;
 	__req.bw = (unsigned int)bw;
@@ -11207,6 +11774,9 @@ int qcsapi_regulatory_get_list_DFS_channels(const char * region_by_name, const i
 	struct qcsapi_regulatory_get_list_DFS_channels_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (list_of_channels == NULL) {
+		return -EFAULT;
+	}
 	__req.region_by_name = (str)region_by_name;
 	__req.DFS_flag = (int)DFS_flag;
 	__req.bw = (unsigned int)bw;
@@ -11253,6 +11823,9 @@ int qcsapi_wifi_is_channel_DFS(const char * region_by_name, const qcsapi_unsigne
 	struct qcsapi_wifi_is_channel_DFS_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_channel_is_DFS == NULL) {
+		return -EFAULT;
+	}
 	__req.region_by_name = (str)region_by_name;
 	__req.the_channel = (unsigned int)the_channel;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -11294,6 +11867,9 @@ int qcsapi_regulatory_is_channel_DFS(const char * region_by_name, const qcsapi_u
 	struct qcsapi_regulatory_is_channel_DFS_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_channel_is_DFS == NULL) {
+		return -EFAULT;
+	}
 	__req.region_by_name = (str)region_by_name;
 	__req.the_channel = (unsigned int)the_channel;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -11335,6 +11911,9 @@ int qcsapi_wifi_get_dfs_cce_channels(const char * ifname, qcsapi_unsigned_int * 
 	struct qcsapi_wifi_get_dfs_cce_channels_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_prev_channel == NULL || p_cur_channel == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -11377,6 +11956,9 @@ int qcsapi_wifi_get_DFS_alt_channel(const char * ifname, qcsapi_unsigned_int * p
 	struct qcsapi_wifi_get_DFS_alt_channel_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_dfs_alt_chan == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -11533,6 +12115,9 @@ int qcsapi_wifi_get_csw_records(const char * ifname, int reset, qcsapi_csw_recor
 	struct qcsapi_wifi_get_csw_records_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (record == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.reset = (int)reset;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -11586,6 +12171,9 @@ int qcsapi_wifi_get_radar_status(const char * ifname, qcsapi_radar_status * rdst
 	struct qcsapi_wifi_get_radar_status_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (rdstatus == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -11627,6 +12215,9 @@ int qcsapi_wifi_get_results_AP_scan(const char * ifname, qcsapi_unsigned_int * p
 	struct qcsapi_wifi_get_results_AP_scan_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_count_APs == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -11667,6 +12258,9 @@ int qcsapi_wifi_get_count_APs_scanned(const char * ifname, qcsapi_unsigned_int *
 	struct qcsapi_wifi_get_count_APs_scanned_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_count_APs == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -11707,6 +12301,9 @@ int qcsapi_wifi_get_properties_AP(const char * ifname, const qcsapi_unsigned_int
 	struct qcsapi_wifi_get_properties_AP_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_ap_properties == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.index_AP = (unsigned int)index_AP;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -11840,6 +12437,9 @@ int qcsapi_wifi_get_mcs_rate(const char * ifname, qcsapi_mcs_rate current_mcs_ra
 	struct qcsapi_wifi_get_mcs_rate_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (current_mcs_rate == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (current_mcs_rate) {
 		current_mcs_rate[0] = 0;
@@ -11962,6 +12562,9 @@ int qcsapi_wifi_get_pairing_id(const char * ifname, char * pairing_id)
 	struct qcsapi_wifi_get_pairing_id_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (pairing_id == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (pairing_id) {
 		pairing_id[0] = 0;
@@ -12045,6 +12648,9 @@ int qcsapi_wifi_get_pairing_enable(const char * ifname, char * enable)
 	struct qcsapi_wifi_get_pairing_enable_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (enable == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (enable) {
 		enable[0] = 0;
@@ -12128,6 +12734,9 @@ int qcsapi_non_wps_get_pp_enable(const char * ifname, uint32_t * ctrl_state)
 	struct qcsapi_non_wps_get_pp_enable_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (ctrl_state == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -12208,6 +12817,9 @@ int qcsapi_errno_get_message(const int qcsapi_retval, char * error_msg, unsigned
 	struct qcsapi_errno_get_message_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (error_msg == NULL) {
+		return -EFAULT;
+	}
 	__req.qcsapi_retval = (int)qcsapi_retval;
 	if (error_msg) {
 		error_msg[0] = 0;
@@ -12253,6 +12865,9 @@ int qcsapi_get_interface_stats(const char * ifname, qcsapi_interface_stats * sta
 	struct qcsapi_get_interface_stats_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (stats == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -12306,6 +12921,9 @@ int qcsapi_get_phy_stats(const char * ifname, qcsapi_phy_stats * stats)
 	struct qcsapi_get_phy_stats_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (stats == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -12420,6 +13038,9 @@ int qcsapi_firmware_get_version(char * firmware_version, const qcsapi_unsigned_i
 	struct qcsapi_firmware_get_version_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (firmware_version == NULL) {
+		return -EFAULT;
+	}
 	if (firmware_version) {
 		firmware_version[0] = 0;
 	}
@@ -12504,6 +13125,9 @@ int qcsapi_set_soc_mac_addr(const char * ifname, qcsapi_mac_addr soc_mac_addr)
 	struct qcsapi_set_soc_mac_addr_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (soc_mac_addr == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -12546,6 +13170,9 @@ int qcsapi_get_custom_value(const char * custom_key, string_128 custom_value)
 	struct qcsapi_get_custom_value_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (custom_value == NULL) {
+		return -EFAULT;
+	}
 	__req.custom_key = (str)custom_key;
 	if (custom_value) {
 		custom_value[0] = 0;
@@ -12576,6 +13203,152 @@ int qcsapi_get_custom_value(const char * custom_key, string_128 custom_value)
 	if (custom_value && __resp.custom_value)
 		strcpy(custom_value,
 			__resp.custom_value);
+	if (debug) { fprintf(stderr, "%s:%d %s post\n", __FILE__, __LINE__, __FUNCTION__); }
+
+	return __resp.return_code;
+}
+
+int qcsapi_wifi_get_mlme_stats_per_mac(const char * ifname, const qcsapi_mac_addr client_mac_addr, qcsapi_mlme_stats * stats)
+{
+	int retries = 0;
+	CLIENT *clnt = qcsapi_adapter_get_client();
+	enum clnt_stat __rpcret;
+	struct qcsapi_wifi_get_mlme_stats_per_mac_request __req;
+	struct qcsapi_wifi_get_mlme_stats_per_mac_response __resp;
+	memset(&__req, 0, sizeof(__req));
+	memset(&__resp, 0, sizeof(__resp));
+	if (client_mac_addr == NULL || stats == NULL) {
+		return -EFAULT;
+	}
+	__req.ifname = (str)ifname;
+	memcpy(__req.client_mac_addr, client_mac_addr, sizeof(const qcsapi_mac_addr));
+	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
+	client_qcsapi_pre();
+	while (1) {
+		__rpcret = clnt_call(clnt, QCSAPI_WIFI_GET_MLME_STATS_PER_MAC_REMOTE,
+				(xdrproc_t)xdr_qcsapi_wifi_get_mlme_stats_per_mac_request, (caddr_t)&__req,
+				(xdrproc_t)xdr_qcsapi_wifi_get_mlme_stats_per_mac_response, (caddr_t)&__resp,
+				__timeout);
+		if (__rpcret == RPC_SUCCESS) {
+			client_qcsapi_post(0);
+			break;
+		} else {
+			clnt_perror (clnt, "qcsapi_wifi_get_mlme_stats_per_mac call failed");
+			clnt_perrno (__rpcret);
+			if (retries >= retries_limit) {
+				client_qcsapi_post(1);
+				return -ENOLINK;
+			}
+			retries++;
+			client_qcsapi_reconnect();
+		}
+
+	}
+
+	stats->auth = __resp.stats_auth;
+	stats->auth_fails = __resp.stats_auth_fails;
+	stats->assoc = __resp.stats_assoc;
+	stats->assoc_fails = __resp.stats_assoc_fails;
+	stats->deauth = __resp.stats_deauth;
+	stats->diassoc = __resp.stats_diassoc;
+	if (debug) { fprintf(stderr, "%s:%d %s post\n", __FILE__, __LINE__, __FUNCTION__); }
+
+	return __resp.return_code;
+}
+
+int qcsapi_wifi_get_mlme_stats_per_association(const char * ifname, const qcsapi_unsigned_int association_index, qcsapi_mlme_stats * stats)
+{
+	int retries = 0;
+	CLIENT *clnt = qcsapi_adapter_get_client();
+	enum clnt_stat __rpcret;
+	struct qcsapi_wifi_get_mlme_stats_per_association_request __req;
+	struct qcsapi_wifi_get_mlme_stats_per_association_response __resp;
+	memset(&__req, 0, sizeof(__req));
+	memset(&__resp, 0, sizeof(__resp));
+	if (stats == NULL) {
+		return -EFAULT;
+	}
+	__req.ifname = (str)ifname;
+	__req.association_index = (unsigned int)association_index;
+	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
+	client_qcsapi_pre();
+	while (1) {
+		__rpcret = clnt_call(clnt, QCSAPI_WIFI_GET_MLME_STATS_PER_ASSOCIATION_REMOTE,
+				(xdrproc_t)xdr_qcsapi_wifi_get_mlme_stats_per_association_request, (caddr_t)&__req,
+				(xdrproc_t)xdr_qcsapi_wifi_get_mlme_stats_per_association_response, (caddr_t)&__resp,
+				__timeout);
+		if (__rpcret == RPC_SUCCESS) {
+			client_qcsapi_post(0);
+			break;
+		} else {
+			clnt_perror (clnt, "qcsapi_wifi_get_mlme_stats_per_association call failed");
+			clnt_perrno (__rpcret);
+			if (retries >= retries_limit) {
+				client_qcsapi_post(1);
+				return -ENOLINK;
+			}
+			retries++;
+			client_qcsapi_reconnect();
+		}
+
+	}
+
+	stats->auth = __resp.stats_auth;
+	stats->auth_fails = __resp.stats_auth_fails;
+	stats->assoc = __resp.stats_assoc;
+	stats->assoc_fails = __resp.stats_assoc_fails;
+	stats->deauth = __resp.stats_deauth;
+	stats->diassoc = __resp.stats_diassoc;
+	if (debug) { fprintf(stderr, "%s:%d %s post\n", __FILE__, __LINE__, __FUNCTION__); }
+
+	return __resp.return_code;
+}
+
+int qcsapi_wifi_get_mlme_stats_macs_list(const char * ifname, qcsapi_mlme_stats_macs * macs_list)
+{
+	int retries = 0;
+	CLIENT *clnt = qcsapi_adapter_get_client();
+	enum clnt_stat __rpcret;
+	struct qcsapi_wifi_get_mlme_stats_macs_list_request __req;
+	struct qcsapi_wifi_get_mlme_stats_macs_list_response __resp;
+	memset(&__req, 0, sizeof(__req));
+	memset(&__resp, 0, sizeof(__resp));
+	if (macs_list == NULL) {
+		return -EFAULT;
+	}
+	__req.ifname = (str)ifname;
+	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
+	client_qcsapi_pre();
+	while (1) {
+		__rpcret = clnt_call(clnt, QCSAPI_WIFI_GET_MLME_STATS_MACS_LIST_REMOTE,
+				(xdrproc_t)xdr_qcsapi_wifi_get_mlme_stats_macs_list_request, (caddr_t)&__req,
+				(xdrproc_t)xdr_qcsapi_wifi_get_mlme_stats_macs_list_response, (caddr_t)&__resp,
+				__timeout);
+		if (__rpcret == RPC_SUCCESS) {
+			client_qcsapi_post(0);
+			break;
+		} else {
+			clnt_perror (clnt, "qcsapi_wifi_get_mlme_stats_macs_list call failed");
+			clnt_perrno (__rpcret);
+			if (retries >= retries_limit) {
+				client_qcsapi_post(1);
+				return -ENOLINK;
+			}
+			retries++;
+			client_qcsapi_reconnect();
+		}
+
+	}
+
+	{
+		int __i_0;
+		for (__i_0 = 0; __i_0 < ARRAY_SIZE(macs_list->addr); __i_0++) {
+			if (macs_list->addr[__i_0] && __resp.macs_list_addr[__i_0])
+		memcpy(macs_list->addr[__i_0],
+			__resp.macs_list_addr[__i_0],
+			sizeof(__resp.macs_list_addr[__i_0]));
+		}
+	}
 	if (debug) { fprintf(stderr, "%s:%d %s post\n", __FILE__, __LINE__, __FUNCTION__); }
 
 	return __resp.return_code;
@@ -12628,6 +13401,9 @@ int qcsapi_pm_get_mode(int * mode)
 	struct qcsapi_pm_get_mode_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (mode == NULL) {
+		return -EFAULT;
+	}
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
 	while (1) {
@@ -12667,6 +13443,9 @@ int qcsapi_vsp_get_state(const char * ifname, unsigned int param, unsigned int *
 	struct qcsapi_vsp_get_state_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (value == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.param = (unsigned int)param;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -12708,6 +13487,9 @@ int qcsapi_vsp_get_state_all(const char * ifname, unsigned int * value, unsigned
 	struct qcsapi_vsp_get_state_all_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (value == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.max = (unsigned int)max;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -12789,6 +13571,9 @@ int qcsapi_vsp_get_config(const char * ifname, unsigned int param, unsigned int 
 	struct qcsapi_vsp_get_config_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (value == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.param = (unsigned int)param;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -12830,6 +13615,9 @@ int qcsapi_vsp_get_config_all(const char * ifname, unsigned int * value, unsigne
 	struct qcsapi_vsp_get_config_all_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (value == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	__req.max = (unsigned int)max;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
@@ -13037,6 +13825,9 @@ int qcsapi_vsp_get_inactive_flags(const char * ifname, unsigned long * flags)
 	struct qcsapi_vsp_get_inactive_flags_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (flags == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -13146,6 +13937,119 @@ int qcsapi_wifi_test_traffic(const char * ifname, uint32_t period)
 	return __resp.return_code;
 }
 
+int qcsapi_wifi_add_ipff(qcsapi_unsigned_int ipaddr)
+{
+	int retries = 0;
+	CLIENT *clnt = qcsapi_adapter_get_client();
+	enum clnt_stat __rpcret;
+	struct qcsapi_wifi_add_ipff_request __req;
+	struct qcsapi_wifi_add_ipff_response __resp;
+	memset(&__req, 0, sizeof(__req));
+	memset(&__resp, 0, sizeof(__resp));
+	__req.ipaddr = (unsigned int)ipaddr;
+	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
+	client_qcsapi_pre();
+	while (1) {
+		__rpcret = clnt_call(clnt, QCSAPI_WIFI_ADD_IPFF_REMOTE,
+				(xdrproc_t)xdr_qcsapi_wifi_add_ipff_request, (caddr_t)&__req,
+				(xdrproc_t)xdr_qcsapi_wifi_add_ipff_response, (caddr_t)&__resp,
+				__timeout);
+		if (__rpcret == RPC_SUCCESS) {
+			client_qcsapi_post(0);
+			break;
+		} else {
+			clnt_perror (clnt, "qcsapi_wifi_add_ipff call failed");
+			clnt_perrno (__rpcret);
+			if (retries >= retries_limit) {
+				client_qcsapi_post(1);
+				return -ENOLINK;
+			}
+			retries++;
+			client_qcsapi_reconnect();
+		}
+
+	}
+
+	if (debug) { fprintf(stderr, "%s:%d %s post\n", __FILE__, __LINE__, __FUNCTION__); }
+
+	return __resp.return_code;
+}
+
+int qcsapi_wifi_del_ipff(qcsapi_unsigned_int ipaddr)
+{
+	int retries = 0;
+	CLIENT *clnt = qcsapi_adapter_get_client();
+	enum clnt_stat __rpcret;
+	struct qcsapi_wifi_del_ipff_request __req;
+	struct qcsapi_wifi_del_ipff_response __resp;
+	memset(&__req, 0, sizeof(__req));
+	memset(&__resp, 0, sizeof(__resp));
+	__req.ipaddr = (unsigned int)ipaddr;
+	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
+	client_qcsapi_pre();
+	while (1) {
+		__rpcret = clnt_call(clnt, QCSAPI_WIFI_DEL_IPFF_REMOTE,
+				(xdrproc_t)xdr_qcsapi_wifi_del_ipff_request, (caddr_t)&__req,
+				(xdrproc_t)xdr_qcsapi_wifi_del_ipff_response, (caddr_t)&__resp,
+				__timeout);
+		if (__rpcret == RPC_SUCCESS) {
+			client_qcsapi_post(0);
+			break;
+		} else {
+			clnt_perror (clnt, "qcsapi_wifi_del_ipff call failed");
+			clnt_perrno (__rpcret);
+			if (retries >= retries_limit) {
+				client_qcsapi_post(1);
+				return -ENOLINK;
+			}
+			retries++;
+			client_qcsapi_reconnect();
+		}
+
+	}
+
+	if (debug) { fprintf(stderr, "%s:%d %s post\n", __FILE__, __LINE__, __FUNCTION__); }
+
+	return __resp.return_code;
+}
+
+int qcsapi_wifi_get_ipff()
+{
+	int retries = 0;
+	CLIENT *clnt = qcsapi_adapter_get_client();
+	enum clnt_stat __rpcret;
+	struct qcsapi_wifi_get_ipff_request __req;
+	struct qcsapi_wifi_get_ipff_response __resp;
+	memset(&__req, 0, sizeof(__req));
+	memset(&__resp, 0, sizeof(__resp));
+	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
+	client_qcsapi_pre();
+	while (1) {
+		__rpcret = clnt_call(clnt, QCSAPI_WIFI_GET_IPFF_REMOTE,
+				(xdrproc_t)xdr_qcsapi_wifi_get_ipff_request, (caddr_t)&__req,
+				(xdrproc_t)xdr_qcsapi_wifi_get_ipff_response, (caddr_t)&__resp,
+				__timeout);
+		if (__rpcret == RPC_SUCCESS) {
+			client_qcsapi_post(0);
+			break;
+		} else {
+			clnt_perror (clnt, "qcsapi_wifi_get_ipff call failed");
+			clnt_perrno (__rpcret);
+			if (retries >= retries_limit) {
+				client_qcsapi_post(1);
+				return -ENOLINK;
+			}
+			retries++;
+			client_qcsapi_reconnect();
+		}
+
+	}
+
+	if (debug) { fprintf(stderr, "%s:%d %s post\n", __FILE__, __LINE__, __FUNCTION__); }
+
+	return __resp.return_code;
+}
+
 int qcsapi_get_temperature_info(int * temp_exter, int * temp_inter)
 {
 	int retries = 0;
@@ -13155,6 +14059,9 @@ int qcsapi_get_temperature_info(int * temp_exter, int * temp_inter)
 	struct qcsapi_get_temperature_info_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (temp_exter == NULL || temp_inter == NULL) {
+		return -EFAULT;
+	}
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
 	while (1) {
@@ -13240,6 +14147,9 @@ int qcsapi_calcmd_show_test_packet(qcsapi_unsigned_int * tx_packet_num, qcsapi_u
 	struct qcsapi_calcmd_show_test_packet_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (tx_packet_num == NULL || rx_packet_num == NULL || crc_packet_num == NULL) {
+		return -EFAULT;
+	}
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
 	while (1) {
@@ -13433,6 +14343,9 @@ int qcsapi_calcmd_get_test_mode_antenna_sel(qcsapi_unsigned_int * antenna_bit_ma
 	struct qcsapi_calcmd_get_test_mode_antenna_sel_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (antenna_bit_mask == NULL) {
+		return -EFAULT;
+	}
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
 	while (1) {
@@ -13472,6 +14385,9 @@ int qcsapi_calcmd_get_test_mode_mcs(qcsapi_unsigned_int * test_mode_mcs)
 	struct qcsapi_calcmd_get_test_mode_mcs_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (test_mode_mcs == NULL) {
+		return -EFAULT;
+	}
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
 	while (1) {
@@ -13511,6 +14427,9 @@ int qcsapi_calcmd_get_test_mode_bw(qcsapi_unsigned_int * test_mode_bw)
 	struct qcsapi_calcmd_get_test_mode_bw_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (test_mode_bw == NULL) {
+		return -EFAULT;
+	}
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
 	while (1) {
@@ -13550,6 +14469,9 @@ int qcsapi_calcmd_get_tx_power(qcsapi_calcmd_tx_power_rsp * tx_power)
 	struct qcsapi_calcmd_get_tx_power_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (tx_power == NULL) {
+		return -EFAULT;
+	}
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
 	while (1) {
@@ -13631,6 +14553,9 @@ int qcsapi_calcmd_get_test_mode_rssi(qcsapi_calcmd_rssi_rsp * test_mode_rssi)
 	struct qcsapi_calcmd_get_test_mode_rssi_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (test_mode_rssi == NULL) {
+		return -EFAULT;
+	}
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
 	while (1) {
@@ -13674,6 +14599,9 @@ int qcsapi_calcmd_set_mac_filter(int q_num, int sec_enable, const qcsapi_mac_add
 	struct qcsapi_calcmd_set_mac_filter_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (mac_addr == NULL) {
+		return -EFAULT;
+	}
 	__req.q_num = (int)q_num;
 	__req.sec_enable = (int)sec_enable;
 	memcpy(__req.mac_addr, mac_addr, sizeof(const qcsapi_mac_addr));
@@ -13714,6 +14642,9 @@ int qcsapi_calcmd_get_antenna_count(qcsapi_unsigned_int * antenna_count)
 	struct qcsapi_calcmd_get_antenna_count_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (antenna_count == NULL) {
+		return -EFAULT;
+	}
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
 	while (1) {
@@ -13790,6 +14721,9 @@ int qcsapi_get_carrier_id(qcsapi_unsigned_int * p_carrier_id)
 	struct qcsapi_get_carrier_id_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_carrier_id == NULL) {
+		return -EFAULT;
+	}
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
 	while (1) {
@@ -13907,6 +14841,9 @@ int qcsapi_wifi_get_vht(const char * ifname, qcsapi_unsigned_int * vht)
 	struct qcsapi_wifi_get_vht_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (vht == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -13947,6 +14884,9 @@ int qcsapi_wifi_get_spinor_jedecid(const char * ifname, unsigned int * p_jedecid
 	struct qcsapi_wifi_get_spinor_jedecid_response __resp;
 	memset(&__req, 0, sizeof(__req));
 	memset(&__resp, 0, sizeof(__resp));
+	if (p_jedecid == NULL) {
+		return -EFAULT;
+	}
 	__req.ifname = (str)ifname;
 	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
 	client_qcsapi_pre();
@@ -13973,6 +14913,90 @@ int qcsapi_wifi_get_spinor_jedecid(const char * ifname, unsigned int * p_jedecid
 
 	if (p_jedecid)
 		*p_jedecid = __resp.p_jedecid;
+	if (debug) { fprintf(stderr, "%s:%d %s post\n", __FILE__, __LINE__, __FUNCTION__); }
+
+	return __resp.return_code;
+}
+
+int qcsapi_wifi_set_nss_cap(const char * ifname, const qcsapi_mimo_type modulation, const qcsapi_unsigned_int nss)
+{
+	int retries = 0;
+	CLIENT *clnt = qcsapi_adapter_get_client();
+	enum clnt_stat __rpcret;
+	struct qcsapi_wifi_set_nss_cap_request __req;
+	struct qcsapi_wifi_set_nss_cap_response __resp;
+	memset(&__req, 0, sizeof(__req));
+	memset(&__resp, 0, sizeof(__resp));
+	__req.ifname = (str)ifname;
+	__req.modulation = (int)modulation;
+	__req.nss = (unsigned int)nss;
+	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
+	client_qcsapi_pre();
+	while (1) {
+		__rpcret = clnt_call(clnt, QCSAPI_WIFI_SET_NSS_CAP_REMOTE,
+				(xdrproc_t)xdr_qcsapi_wifi_set_nss_cap_request, (caddr_t)&__req,
+				(xdrproc_t)xdr_qcsapi_wifi_set_nss_cap_response, (caddr_t)&__resp,
+				__timeout);
+		if (__rpcret == RPC_SUCCESS) {
+			client_qcsapi_post(0);
+			break;
+		} else {
+			clnt_perror (clnt, "qcsapi_wifi_set_nss_cap call failed");
+			clnt_perrno (__rpcret);
+			if (retries >= retries_limit) {
+				client_qcsapi_post(1);
+				return -ENOLINK;
+			}
+			retries++;
+			client_qcsapi_reconnect();
+		}
+
+	}
+
+	if (debug) { fprintf(stderr, "%s:%d %s post\n", __FILE__, __LINE__, __FUNCTION__); }
+
+	return __resp.return_code;
+}
+
+int qcsapi_wifi_get_nss_cap(const char * ifname, const qcsapi_mimo_type modulation, qcsapi_unsigned_int * nss)
+{
+	int retries = 0;
+	CLIENT *clnt = qcsapi_adapter_get_client();
+	enum clnt_stat __rpcret;
+	struct qcsapi_wifi_get_nss_cap_request __req;
+	struct qcsapi_wifi_get_nss_cap_response __resp;
+	memset(&__req, 0, sizeof(__req));
+	memset(&__resp, 0, sizeof(__resp));
+	if (nss == NULL) {
+		return -EFAULT;
+	}
+	__req.ifname = (str)ifname;
+	__req.modulation = (int)modulation;
+	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
+	client_qcsapi_pre();
+	while (1) {
+		__rpcret = clnt_call(clnt, QCSAPI_WIFI_GET_NSS_CAP_REMOTE,
+				(xdrproc_t)xdr_qcsapi_wifi_get_nss_cap_request, (caddr_t)&__req,
+				(xdrproc_t)xdr_qcsapi_wifi_get_nss_cap_response, (caddr_t)&__resp,
+				__timeout);
+		if (__rpcret == RPC_SUCCESS) {
+			client_qcsapi_post(0);
+			break;
+		} else {
+			clnt_perror (clnt, "qcsapi_wifi_get_nss_cap call failed");
+			clnt_perrno (__rpcret);
+			if (retries >= retries_limit) {
+				client_qcsapi_post(1);
+				return -ENOLINK;
+			}
+			retries++;
+			client_qcsapi_reconnect();
+		}
+
+	}
+
+	if (nss)
+		*nss = __resp.nss;
 	if (debug) { fprintf(stderr, "%s:%d %s post\n", __FILE__, __LINE__, __FUNCTION__); }
 
 	return __resp.return_code;

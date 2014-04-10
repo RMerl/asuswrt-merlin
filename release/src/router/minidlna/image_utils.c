@@ -842,8 +842,8 @@ image_save_to_jpeg_buf(image_s * pimage, int * size)
 	return dst.buf;
 }
 
-int
-image_save_to_jpeg_file(image_s * pimage, const char * path)
+char *
+image_save_to_jpeg_file(image_s * pimage, char * path)
 {
 	int nwritten, size = 0;
 	unsigned char * buf;
@@ -851,16 +851,16 @@ image_save_to_jpeg_file(image_s * pimage, const char * path)
 
 	buf = image_save_to_jpeg_buf(pimage, &size);
 	if( !buf )
-		return -1;
+		return NULL;
  	dst_file = fopen(path, "w");
 	if( !dst_file )
 	{
 		free(buf);
-		return -1;
+		return NULL;
 	}
 	nwritten = fwrite(buf, 1, size, dst_file);
 	fclose(dst_file);
 	free(buf);
 
-	return (nwritten==size ? 0 : 1);
+	return (nwritten == size) ? path : NULL;
 }

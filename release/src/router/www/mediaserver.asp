@@ -44,32 +44,6 @@
 	height:20px;
 	width:736px;
 }
-.upnp_button_table{
-	width:730px;
-	background-color:#15191b;
-	margin-top:15px;
-	margin-right:5px;
-}
-.upnp_button_table th{
-	width:300px;
-	height:40px;
-	text-align:left;
-	background-color:#1f2d35;
-	font:Arial, Helvetica, sans-serif;
-	font-size:12px;
-	padding-left:10px;
-	color:#FFFFFF;
-	background: url(/images/general_th.gif) repeat;
-}	
-.upnp_button_table td{
-	width:436px;
-	height:40px;
-	background-color:#475a5f;
-	font:Arial, Helvetica, sans-serif;
-	font-size:12px;
-	padding-left:5px;
-	color:#FFFFFF;
-}	
 .upnp_icon{
 	background: url(/images/New_ui/USBExt/media_sever.jpg) no-repeat;
 	width:736px;
@@ -164,21 +138,38 @@ function initial(){
 	$("option5").innerHTML = '<table><tbody><tr><td><div id="index_img5"></div></td><td><div style="width:120px;"><#Menu_usb_application#></div></td></tr></tbody></table>';
 	$("option5").className = "m5_r";
 
-	if(dms_status[0] != "")
-		document.getElementById("dmsStatus").innerHTML = "Scanning.."
-
 	document.aidiskForm.protocol.value = PROTOCOL;
 	initial_dir();
 	check_dir_path();
 	
 	dlna_path_display();
 	do_get_friendly_name();
+	check_dms_status();
 	
 	if((calculate_height-3)*52 + 20 > 535)
 		$("upnp_icon").style.height = (calculate_height-3)*52 -70 + "px";
 	else
 		$("upnp_icon").style.height = "500px";	
 }
+
+function check_dms_status(){
+	 $j.ajax({
+    	url: '/ajax_dms_status.asp',
+    	dataType: 'script', 
+
+    	error: function(xhr){
+      		check_dms_status();
+    	},
+    	success: function(response){
+					if(dms_status[0] != "")
+							document.getElementById("dmsStatus").innerHTML = "Scanning..";
+					else		
+							document.getElementById("dmsStatus").innerHTML = "Idle";
+					setTimeout("check_dms_status();",5000);
+      }
+  });	
+}
+
 function initial_dir(){
 	var __layer_order = "0_0";
 	var url = "/getfoldertree.asp";
@@ -867,14 +858,14 @@ function do_get_friendly_name(){
 									$j('#radio_dms_enable').iphoneSwitch('<% nvram_get("dms_enable"); %>', 
 										 function() {
 										 	document.form.dms_friendly_name.parentNode.parentNode.style.display = "";
-											document.getElementById("dmsStatus").parentNode.parentNode.style.display = "";											
+											document.getElementById("dmsStatus").parentNode.parentNode.style.display = "";
 											document.getElementById("dlna_path_div").style.display = "";
 											show_dlna_path();
 											document.form.dms_enable.value = 1;											
 										 },
 										 function() {
 										 	document.form.dms_friendly_name.parentNode.parentNode.style.display = "none";
-											document.getElementById("dmsStatus").parentNode.parentNode.style.display = "none";											
+											document.getElementById("dmsStatus").parentNode.parentNode.style.display = "none";
 											document.getElementById("dlna_path_div").style.display = "none";
 											document.form.dms_enable.value = 0;
 											do_get_friendly_name();

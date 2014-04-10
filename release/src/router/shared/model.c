@@ -104,7 +104,7 @@ int get_blver(char *bls) {
         if(bls)
 		strcpy(buf, bls);
 	bp = buf;
-	while(tok = strsep((char**)&bp, delim))
+	while((tok = strsep((char**)&bp, delim)))
 		if(i < BLV_MAX)
 			bv[i++] = atoi(tok);
 

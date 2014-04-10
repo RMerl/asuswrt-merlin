@@ -268,6 +268,16 @@ config RTCONFIG_HFS
 	depends on RTCONFIG_USB
 	default n
 
+config RTCONFIG_PARAGON_HFS
+	bool "HFS Support by Paragon"
+	depends on RTCONFIG_HFS
+	default n
+
+config RTCONFIG_TUXERA_HFS
+	bool "HFS Support by Tuxera"
+	depends on RTCONFIG_HFS
+	default n
+
 config RTCONFIG_EXFAT
 	bool "exFAT Support"
 	depends on RTCONFIG_USB
@@ -608,6 +618,11 @@ config RTCONFIG_QTN
 
 config RTCONFIG_RGMII_BRCM5301X
 	bool "Config 5301x to RGMII mode"
+	default n
+
+config RTCONFIG_KERNEL_HFSPLUS
+	bool "Kernel HFSPLUS support"
+	depends on RTCONFIG_HFS
 	default n
 
 config RTCONFIG_N18UTXBF

@@ -788,6 +788,13 @@ unsigned int all_shmoo_RE_byte_FIFO(unsigned long phy_reg_base, unsigned long me
 	unsigned int  wl;
 	pack328_t packname;
 
+#ifdef ESMT_SUPPORT
+	/*check RT-AC68U boot up with 38 3 */
+	/* New DDR3, RE VDL >=43 will boot up panic */
+	unsigned int ddr3_revdlw_ovr=38;
+	unsigned int ddr3_revdlb_ovr=0;
+#endif
+
 	/* To make compiler happy - start */
 	unsigned long mem_test_base_ = mem_test_base;
 
@@ -798,6 +805,17 @@ unsigned int all_shmoo_RE_byte_FIFO(unsigned long phy_reg_base, unsigned long me
 
 	one_shmoo_RE_FIFO(word_new_step, byte_new_step, option, phy_reg_base, memc_reg_base,
 		mem_test_base);
+
+#ifdef ESMT_SUPPORT
+	if(ddr3_revdlw_ovr) {
+		word_new_step[0] = ddr3_revdlw_ovr;
+		word_new_step[1] = ddr3_revdlw_ovr;
+	}
+	if(ddr3_revdlb_ovr) {
+		byte_new_step[0] = ddr3_revdlb_ovr;
+		byte_new_step[1] = ddr3_revdlb_ovr;
+	}
+#endif
 
 	for (wl = 0; wl < (((option >> 8) & 0xFF) / BITS_PER_WL); wl ++) {
 		memsys_reg_offset = wl * PHY_REG_OFFSET_PER_WL + phy_reg_base
@@ -810,6 +828,10 @@ unsigned int all_shmoo_RE_byte_FIFO(unsigned long phy_reg_base, unsigned long me
 			word_new_step[wl]);
 		plot_name(packname, wl);
 		plot_dec_number(word_new_step[wl]);	/* NAME & step */
+#ifdef ESMT_SUPPORT
+		UART_OUT(SPACE);
+		plot_dec_number(byte_new_step[wl]);	/* NAME & step */
+#endif
 		tb_w(DDR40_CORE_PHY_WORD_LANE_0_VDL_OVRIDE_BYTE_RD_EN + memsys_reg_offset, data);
 
 		/* write back BIT_RD_EN values: 4 new values, 2 per WL (0,1) (2,3) */

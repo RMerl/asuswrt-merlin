@@ -1,0 +1,109 @@
+.\" Copyright (c) 1983, 1990, 1991, 1993, 2002
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" This code is derived from software contributed to Berkeley by
+.\" Robert Elz at The University of Melbourne.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)repquota.8	8.1 (Berkeley) 6/2/93
+.\"
+.Dd March 28, 2002
+.Dt REPQUOTA 8
+.Os BSD 4.2
+.Sh NAME
+.Nm repquota
+.Nd summarize quotas for a file system
+.Sh SYNOPSIS
+.Nm repquota
+.Op Fl g
+.Op Fl u
+.Op Fl v
+.Ar filesystem Ar ...
+.Nm repquota
+.Op Fl g
+.Op Fl u
+.Op Fl v
+.Fl a
+.Sh DESCRIPTION
+.Nm Repquota
+prints a summary of the disk usage and quotas for the
+specified file systems.
+.Pp
+Available options:
+.Bl -tag -width Ds
+.It Fl a
+Print the quotas of all the filesystems configured with
+a quota mount option file at its root.
+.It Fl g
+Print only group quotas (the default is to print both
+group and user quotas if they exist).
+.It Fl u
+Print only user quotas (the default is to print both
+group and user quotas if they exist).
+.It Fl v
+Print a header line before printing each filesystem quotas.
+.El
+.Pp
+For each user or group, the current
+number of files and amount of space (in kilobytes) is
+printed, along with any quotas created with
+.Xr edquota 8 .
+.Pp
+Only members of the operator group or the super-user may
+use this command.
+.Sh FILES
+Each of the following quota files is located at the root of the
+mounted filesystem.  The mount option files are empty files
+whose existence indicates that quotas are to be enabled
+for that filesystem.
+.Pp
+.Bl -tag -width .quota.ops.group -compact
+.It Pa .quota.user
+data file containing user quotas
+.It Pa .quota.group
+data file containing group quotas
+.It Pa .quota.ops.user
+mount option file used to enable user quotas
+.It Pa .quota.ops.group
+mount option file used to enable group quotas
+.El
+.Sh SEE ALSO
+.Xr quota 1 ,
+.Xr quotactl 2 ,
+.Xr edquota 8 ,
+.Xr quotacheck 8 ,
+.Xr quotaon 8
+.Sh DIAGNOSTICS
+Various messages about inaccessible files; self-explanatory.
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.2 .

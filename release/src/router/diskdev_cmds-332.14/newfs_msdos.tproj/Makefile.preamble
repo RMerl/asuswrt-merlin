@@ -1,0 +1,7 @@
+###############################################################################
+#  Makefile.preamble
+###############################################################################
+
+OTHER_GENERATED_OFILES = $(VERS_OFILE)
+-include ../Makefile.include
+OTHER_CFLAGS += -I../disklib

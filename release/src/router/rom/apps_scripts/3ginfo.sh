@@ -15,33 +15,16 @@ ifconfig
 echo ">"
 lsmod
 echo ">"
-nvram get certid
+nvram show|grep firm
 echo ">"
 nvram get Dev3G
 echo ">"
-nvram get firmver_sub
-echo ">"
-nvram show|grep dev_
-echo ">"
-nvram show|grep EVDO
-echo ">"
-nvram show|grep g3
-echo ">"
-nvram show|grep pin
-echo ">"
-nvram show|grep EVDO
-echo "hsdpa nvram:>"
-nvram show|grep hsdpa
-echo "modem nvram:>"
-nvram show|grep modem
-echo ">"
-nvram show|grep run_sh
-echo ">"
 nvram show|grep g3state
 echo ">"
-nvram show|grep g3progress
+nvram show|grep g3err
 echo ">"
-nvram show|grep err
+echo "modem nvram:>"
+nvram show|grep modem
 echo ">"
 echo "resolv.conf >"
 cat /etc/resolv.conf

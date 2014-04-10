@@ -819,11 +819,17 @@ GetPhyStatus(void)
 		/* WAN L1 L2 L3 L4 */
 		ports[0]=4; ports[1]=0; ports[2]=1; ports[3]=2; ports[4]=3;
 		break;
+
+	case MODEL_RTAC87U:
+		/* WAN L1 L2 L3 L4 */
+		ports[0]=0; ports[1]=5; ports[2]=3; ports[3]=2; ports[4]=1;
+		break;
+
 	case MODEL_RTAC68U:
 	case MODEL_RTN18U:
 	case MODEL_RTAC53U:
 		/* WAN L1 L2 L3 L4 */
-		ports[0]=0; ports[1]=1; ports[2]=2; ports[3]=3; ports[4]=4;
+		ports[0]=0; ports[1]=5; ports[2]=3; ports[3]=2; ports[4]=1;
 		break;
 	case MODEL_RTN66U:
 	case MODEL_RTAC66U:
@@ -938,15 +944,12 @@ setAllLedOn(void)
 		}
 		case MODEL_RTAC87U:
 		{
-			led_control(LED_USB, LED_ON);
-			led_control(LED_USB3, LED_ON);
-			led_control(LED_TURBO, LED_ON);
 			eval("et", "robowr", "0", "0x18", "0x01ff");	// lan/wan ethernet/giga led
 			eval("et", "robowr", "0", "0x1a", "0x01e0");
 			eval("wl", "ledbh", "10", "1");			// wl 2.4G
-			/* Quantenna's fake 5g led */
-			gpio_write(LED_5G, 1);				// wl 5G
-			led_control(LED_5G, LED_ON);
+#ifdef RTCONFIG_QTN
+			setAllLedOn_qtn();
+#endif
 			break;
 		}
 		case MODEL_RTAC68U:
@@ -1132,15 +1135,12 @@ setAllLedOff(void)
 		}
 		case MODEL_RTAC87U:
 		{
-			led_control(LED_USB, LED_OFF);
-			led_control(LED_USB3, LED_OFF);
-			led_control(LED_TURBO, LED_OFF);
 			eval("et", "robowr", "0", "0x18", "0x01e0");	// lan/wan ethernet/giga led
 			eval("et", "robowr", "0", "0x1a", "0x01e0");
 			eval("wl", "ledbh", "10", "0");			// wl 2.4G
-			/* Quantenna's fake 5g led */
-			gpio_write(LED_5G, 1);				// wl 5G
-			led_control(LED_5G, LED_OFF);
+#ifdef RTCONFIG_QTN
+			setAllLedOff_qtn();
+#endif
 			break;
 		}
 		case MODEL_RTAC68U:

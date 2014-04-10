@@ -726,7 +726,7 @@ void generate_switch_para(void)
 
 		case MODEL_RTAC87U:						/* 0  1  2  3  4 */
 		{				/* WAN L1 L2 L3 L4 CPU */	/*vision: WAN L1 L2 L3 L4 */
-			const int ports[SWPORT_COUNT] = { 0, 1, 2, 3, 5, 7 };
+			const int ports[SWPORT_COUNT] = { 0, 5, 3, 2, 1, 7 };
 			int wancfg = (!nvram_match("switch_wantag", "none")&&!nvram_match("switch_wantag", "")) ? SWCFG_DEFAULT : cfg;
 
 #ifdef RTCONFIG_DUALWAN
@@ -1436,8 +1436,13 @@ void init_syspara(void)
 			break;
 
 		default:
+#ifdef RTCONFIG_RGMII_BRCM5301X
+			if (!nvram_get("lan_hwaddr"))
+				nvram_set("lan_hwaddr", "00:22:15:A5:03:00");
+#else
 			if (!nvram_get("et0macaddr"))
 				nvram_set("et0macaddr", "00:22:15:A5:03:00");
+#endif
 			break;
 	}
 

@@ -70,7 +70,7 @@ _get_aactags(char *file, struct song_metadata *psong)
 	long current_offset = 0;
 	int current_size;
 	char current_atom[4];
-	char *current_data;
+	char *current_data = NULL;
 	int genre;
 	int len;
 
@@ -160,11 +160,12 @@ _get_aactags(char *file, struct song_metadata *psong)
 			}
 
 			free(current_data);
+			current_data = NULL;
 			current_offset += current_size;
 		}
 	}
-
 	fclose(fin);
+	free(current_data);
 
 	if(atom_offset == -1)
 		return -1;

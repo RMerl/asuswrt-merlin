@@ -55,7 +55,9 @@ enum upnpconfigoptions {
 	ENABLE_TIVO,			/* enable support for streaming images and music to TiVo */
 	ENABLE_DLNA_STRICT,		/* strictly adhere to DLNA specs */
 	ROOT_CONTAINER,			/* root ObjectID (instead of "0") */
-	USER_ACCOUNT			/* user account to run as */
+	USER_ACCOUNT,			/* user account to run as */
+	FORCE_SORT_CRITERIA,		/* force sorting by a given sort criteria */
+	MAX_CONNECTIONS			/* maximum number of simultaneous connections */
 };
 
 /* readoptionsfile()

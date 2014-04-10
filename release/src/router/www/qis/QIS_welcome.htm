@@ -23,7 +23,7 @@ function QKinternettype_load_body(){
 	parent.document.title = "<#Web_Title#> - Welcome!";
 	parent.set_step("t0");		
 
-	//load Product img
+	//load Product img //MODELDEP
 	if((odmpid != "" || odmpid != null) && odmpid != based_modelid){
 		if(odmpid == "RT-N66W" || odmpid == "RT-AC68W")
 			document.getElementById("ModelPid_img").src="/images/"+ odmpid +"Model_producticon.png";
@@ -75,14 +75,15 @@ function QKinternettype_load_body(){
 							document.getElementById("Productdesc_3").innerHTML = desc3_split[0];
 							document.getElementById("Productdesc_4").innerHTML = desc4_split[0];
 			}	
-	}else{
+	}
+	else{
 		document.getElementById("Productdesc_1").innerHTML = check_desc1;
 		document.getElementById("Productdesc_2").innerHTML = check_desc2;
 		document.getElementById("Productdesc_3").innerHTML = check_desc3;
 		document.getElementById("Productdesc_4").innerHTML = check_desc4;
 	}	
 	
-	if(based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U"){
+	if(based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U"){	//MODELDEP
 		document.getElementById("AreaHint").style.display = "";	
 		document.getElementById("desc_Hint_RT-AC68U").style.display = "";
 	}
@@ -222,70 +223,72 @@ function submitenter(myfield,e)
 <input type="hidden" name="flag" value="">
 <input type="hidden" name="sw_mode" value="1">
 <div class="QISmain" id="QISmain">
-		<div>
-			<table width="730px">
-				<tr>
-					<td align="left">
-						<div class="description_down"><#QIS_welcome_title#></div>
-					</td>
-					<td align="right">&nbsp;
-					</td>
-				</tr>
-			</table>
-		</div>
-		<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
-<br/>
+	<table  border=0 align="center" cellpadding="2" cellspacing="0">
+		<tr>
+			<td align="left"><div class="description_down"><#QIS_welcome_title#></div></td>
+		</tr>	
+		<tr>
+			<td>
+				<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+			</td>
+		</tr>	
+		<tr>
+			<td>
+				<table style="margin-left:20px;" width="98%" border=0 align="center" cellpadding="5" cellspacing="0">
+					<tr>
+						<td width="55%" colspan="2">
+							<div id="productDesc" style="font-style:italic;">				
+								<p style="font-size:20px;font-weight:bolder;margin-bottom:15px;"><#statusTitle_System#></p>
+								<ul>		
+									<li style="line-height:25px;" id="Productdesc_1"></li>
+									<li style="line-height:25px;" id="Productdesc_2"></li>
+									<li style="line-height:25px;" id="Productdesc_3"></li>
+									<li style="line-height:25px;" id="Productdesc_4"></li>
+								</ul>	
+							</div>
+						</td>
 
-<table style="margin-top:-45px;margin-left:20px;" width="98%" border=0 align="center" cellpadding="5" cellspacing="0">
-	<tr>
-		<td width="55%" colspan="2">
-			<div id="productDesc" style="font-style:italic;">				
-				<p style="font-size:20px;font-weight:bolder;margin-bottom:15px;"><#statusTitle_System#></p>
-				<ul>		
-					<li style="line-height:25px;" id="Productdesc_1"></li>
-					<li style="line-height:25px;" id="Productdesc_2"></li>
-					<li style="line-height:25px;" id="Productdesc_3"></li>
-					<li style="line-height:25px;" id="Productdesc_4"></li>
-				</ul>	
-			</div>
-		</td>
+						<td width="45%" height="394">
+							<div id="producticon"><img id="ModelPid_img" src=""></div>
+							<div id="wan_unplug" style="display:none;text-align:center;margin-top:-30px;*margin-top:25px;">
+							<img src="/images/qis/border.png">
+							<div style="margin-top:-330px">
+							<div class="QISGeneralFont" style="color:#FC0;font-weight:bolder;text-align:left;margin-left:25px;">
+								<#web_redirect_suggestion1#>
+							</div>
+							<br>
+							<div><img id="unplugImg"  src="/images/WANunplug.png"></div>
+							<div><img id="unplugImg1" style="margin-top:-198px;" src="/images/WANunplug_eth.png"></div>
+							<div><img id="unplugImg2" style="margin-top:-198px;display:none;" src="/images/WANunplug_usb.png"></div>							
+						</td>
+					</tr>
 
-		<td width="45%" height="394">
-			<div id="producticon"><img id="ModelPid_img" src=""></div>
-			<div id="wan_unplug" style="display:none;text-align:center;margin-top:-30px;*margin-top:25px;">
-				<img src="/images/qis/border.png">
-				<div style="margin-top:-330px">
-					<div class="QISGeneralFont" style="color:#FC0;font-weight:bolder;text-align:left;margin-left:25px;">
-						<#web_redirect_suggestion1#>
+					<tr>
+						<td colspan="3">
+							<!--p class="QISGeneralFont" style="margin-left:40px;"><#QIS_welcome_desc1#></p-->
+						</td>
+					</tr>
+
+					<tr>
+						<td colspan="3" align="center">
+							<input id="ManualBtn" class="button_gen_long" type="button" value="<#Manual_Setting_btn#>" style="display:none;white-space:normal;" onclick="submitForm(0)">
+							<input class="button_gen" id="btn_next_step" type="button" value="<#btn_go#>" onclick="update_wan_info();">
+							<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif">
+						</td>
+					</tr>	
+				</table>
+			</td>	
+		</tr>	
+		<tr>
+			<td>
+					<div id="AreaHint" style="display:none;">
+						<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+						<div id="desc_Hint_RT-AC68U" style="display:none;margin-left:50px;font-size:12px;">* <#QIS_welcome_remark1#></div>
 					</div>
-					<br>
-					<div><img id="unplugImg"  src="/images/WANunplug.png"></div>
-					<div><img id="unplugImg1" style="margin-top:-198px;" src="/images/WANunplug_eth.png"></div>
-					<div><img id="unplugImg2" style="margin-top:-198px;display:none;" src="/images/WANunplug_usb.png"></div>
-				<div>
-			</div>
-		</td>
-	</tr>
-
-	<tr>
-		<td colspan="3">
-			<!--p class="QISGeneralFont" style="margin-left:40px;"><#QIS_welcome_desc1#></p-->
-		</td>
-	</tr>
-
-	<tr>
-		<td colspan="3" align="center">
-			<input id="ManualBtn" class="button_gen_long" type="button" value="<#Manual_Setting_btn#>" style="display:none;white-space:normal;" onclick="submitForm(0)">
-			<input class="button_gen" id="btn_next_step" type="button" value="<#btn_go#>" onclick="update_wan_info();">
-			<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif">
-		</td>
-	</tr>	
-</table>
-	<div id="AreaHint" style="display:none;">
-		<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
-		<div id="desc_Hint_RT-AC68U" style="display:none;margin-left:50px;font-size:12px;">* <#QIS_welcome_remark1#></div>
-	</div>
-</div>
+			</td>
+		</tr>	
+	</table>
+</div>	
 
 <div style="display:none;" id="QISmain_m">
 	<div id="QISFeature" style="margin-left:-20px;">

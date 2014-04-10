@@ -81,6 +81,8 @@ RTCONFIG_DNSMASQ=y
 # RTCONFIG_NTFS is not set
 # RTCONFIG_NTFS3G is not set
 # RTCONFIG_HFS is not set
+# RTCONFIG_PARAGON_HFS is not set
+# RTCONFIG_TUXERA_HFS is not set
 # RTCONFIG_EXFAT is not set
 # RTCONFIG_UFSD_DEBUG is not set
 # RTCONFIG_DISK_MONITOR is not set
@@ -142,5 +144,5 @@ RTCONFIG_HAS_5G=y
 # RTCONFIG_QTN is not set
 # RTCONFIG_TFTP is not set
 # RTCONFIG_RGMII_BRCM5301X is not set
+# RTCONFIG_KERNEL_HFSPLUS is not set
 # RTCONFIG_N18UTXBF is not set
-

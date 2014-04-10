@@ -1,3 +1,20 @@
+/* MiniDLNA media server
+ * Copyright (C) 2013  NETGEAR
+ *
+ * This file is part of MiniDLNA.
+ *
+ * MiniDLNA is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ *
+ * MiniDLNA is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with MiniDLNA. If not, see <http://www.gnu.org/licenses/>.
+ */
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -32,21 +49,13 @@ struct client_type_s client_types[] =
 	{ EPS3,
 	  FLAG_DLNA | FLAG_MIME_AVI_DIVX,
 	  "PLAYSTATION 3",
-          "PLAYSTATION 3",
+	  "PLAYSTATION 3",
 	  EXAVClientInfo
 	},
 
-	{ ESamsungSeriesCTV,
+	{ ESamsungSeriesCDE,
 	  FLAG_SAMSUNG | FLAG_DLNA | FLAG_NO_RESIZE | FLAG_SAMSUNG_TV,
-	  "Samsung Series C TV",
-	  "SEC_HHP_TV",
-	  EUserAgent
-	},
-
-	/* User-Agent: DLNADOC/1.50 SEC_HHP_BD-D5100/1.0 */
-	{ ESamsungSeriesC,
-	  FLAG_SAMSUNG | FLAG_DLNA | FLAG_NO_RESIZE,
-	  "Samsung Series C",
+	  "Samsung Series C/D/E",
 	  "SEC_HHP_",
 	  EUserAgent
 	},
@@ -185,6 +194,13 @@ struct client_type_s client_types[] =
 	  EUserAgent
 	},
 
+	{ EStandardUPnP,
+	  0,
+	  "Generic UPnP 1.0",
+	  "UPnP/1.0",
+	  EUserAgent
+	},
+
 	{ 0, 0, NULL, 0 }
 };
 
@@ -207,7 +223,7 @@ SearchClientCache(struct in_addr addr, int quiet)
 				    memcmp(mac, clients[i].mac, 6) == 0)
 				{
 					/* Same MAC as last time when we were able to identify the client,
- 					 * so extend the timeout by another hour. */
+					 * so extend the timeout by another hour. */
 					clients[i].age = time(NULL);
 				}
 				else
@@ -240,9 +256,9 @@ AddClientCache(struct in_addr addr, int type)
 		clients[i].type = type;
 		clients[i].age = time(NULL);
 		DPRINTF(E_DEBUG, L_HTTP, "Added client [%s/%s/%02X:%02X:%02X:%02X:%02X:%02X] to cache slot %d.\n",
-		                         client_types[type].name, inet_ntoa(clients[i].addr),
-		                         clients[i].mac[0], clients[i].mac[1], clients[i].mac[2],
-		                         clients[i].mac[3], clients[i].mac[4], clients[i].mac[5], i);
+					client_types[type].name, inet_ntoa(clients[i].addr),
+					clients[i].mac[0], clients[i].mac[1], clients[i].mac[2],
+					clients[i].mac[3], clients[i].mac[4], clients[i].mac[5], i);
 		return 0;
 	}
 

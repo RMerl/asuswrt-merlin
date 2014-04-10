@@ -645,9 +645,19 @@ define RouterOptions
 			echo "RTCONFIG_NTFS=y" >>$(1); \
 			echo "RTCONFIG_NTFS3G=y" >>$(1); \
 		fi; \
-		if [ "$(HFS)" = "y" ]; then \
+		if [ "$(HFS)" != "" ]; then \
 			sed -i "/RTCONFIG_HFS/d" $(1); \
 			echo "RTCONFIG_HFS=y" >>$(1); \
+			if [ "$(HFS)" = "open" ]; then \
+				sed -i "/RTCONFIG_KERNEL_HFSPLUS/d" $(1); \
+				echo "RTCONFIG_KERNEL_HFSPLUS=y" >>$(1); \
+			elif [ "$(HFS)" = "paragon" ]; then \
+				sed -i "/RTCONFIG_PARAGON_HFS/d" $(1); \
+				echo "RTCONFIG_PARAGON_HFS=y" >>$(1); \
+			elif [ "$(HFS)" = "tuxera" ]; then \
+				sed -i "/RTCONFIG_TUXERA_HFS/d" $(1); \
+				echo "RTCONFIG_TUXERA_HFS=y" >>$(1); \
+			fi; \
 		fi; \
 		if [ "$(UFSDDEBUG)" = "y" ]; then \
 			sed -i "/RTCONFIG_UFSD_DEBUG/d" $(1); \
@@ -781,9 +791,9 @@ define RouterOptions
 	if [ "$(APP)" = "installed" ]; then \
 		sed -i "/RTCONFIG_APP_PREINSTALLED/d" $(1); \
 		echo "RTCONFIG_APP_PREINSTALLED=y" >>$(1); \
-	else \
-		sed -i "/RTCONFIG_APP_PREINSTALLED/d" $(1); \
-		echo "# RTCONFIG_APP_PREINSTALLED is not set" >>$(1); \
+	elif [ "$(APP)" = "network" ]; then \
+		sed -i "/RTCONFIG_APP_NETINSTALLED/d" $(1); \
+		echo "RTCONFIG_APP_NETINSTALLED=y" >>$(1); \
  	fi; \
 	if [ "$(STRACE)" = "y" ] ; then \
 		sed -i "/RTCONFIG_STRACE/d" $(1); \
@@ -808,13 +818,6 @@ define RouterOptions
         else \
                 echo "# CONFIG_DUMP_PREV_OOPS_MSG is not set" >>$(1); \
         fi; \
-	if [ "$(APP)" = "network" ]; then \
-		sed -i "/RTCONFIG_APP_NETINSTALLED/d" $(1); \
-		echo "RTCONFIG_APP_NETINSTALLED=y" >>$(1); \
-	else \
-		sed -i "/RTCONFIG_APP_NETINSTALLED/d" $(1); \
-		echo "# RTCONFIG_APP_NETINSTALLED is not set" >>$(1); \
-	fi; \
 	if [ "$(DNSMASQ)" = "y" ]; then \
 		sed -i "/RTCONFIG_DNSMASQ/d" $(1); \
 		echo "RTCONFIG_DNSMASQ=y" >>$(1); \
@@ -1573,6 +1576,14 @@ define KernelConfig
 	else \
 		echo "CONFIG_LINUX_MTD=$(LINUX_MTD)" >>$(1); \
 	fi; \
+	if [ "$(HFS)" = "open" ]; then \
+                sed -i "/CONFIG_HFS_FS/d" $(1); \
+                echo "CONFIG_HFS_FS=y" >>$(1); \
+		sed -i "/CONFIG_HFSPLUS_FS/d" $(1); \
+                echo "CONFIG_HFSPLUS_FS=y" >>$(1); \
+		sed -i "/CONFIG_MAC_PARTITION/d" $(1); \
+                echo "CONFIG_MAC_PARTITION=y" >>$(1); \
+        fi; \
 	)
 	$(call platformKernelConfig, $(1))
 	$(call extraKernelConfig, $(1))

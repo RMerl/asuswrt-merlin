@@ -2,10 +2,14 @@ include ../common.mak
 
 CFLAGS	= -Os -Wall $(EXTRACFLAGS) #-mips32
 CFLAGS	+= -I$(SRCBASE)/include -I$(TOP)/shared -DRTCONFIG_ISP_METER -DDEBUG
-LDFLAGS	=
+LDFLAGS	= -L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared
 
 ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U),y)
 CFLAGS += -DRA_ESW
+endif
+
+ifeq ($(RTCONFIG_QTN),y)
+LDFLAGS += -L$(TOP)/libqcsapi_client -lqcsapi_client
 endif
 
 OBJS = rstats.o
@@ -14,7 +18,7 @@ all: rstats
 
 rstats: $(OBJS)
 	@echo " [rstats] CC -o $@"
-	$(CC) $(LDFLAGS) -o $@ $(OBJS) -L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared
+	$(CC) $(LDFLAGS) -o $@ $(OBJS)
 
 	$(SIZECHECK)
 	$(CPTMP)

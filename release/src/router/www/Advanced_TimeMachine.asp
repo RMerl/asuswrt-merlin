@@ -151,7 +151,7 @@ function detectUSBStatusApp(){
 }
 
 function applyRule(){
-	if(availSpace < document.form.tm_vol_size.value){
+	if(parseInt(availSpace) < parseInt(document.form.tm_vol_size.value)){
 		alert("Exceed max available space!");
 		document.form.tm_vol_size.focus();
 		return false;

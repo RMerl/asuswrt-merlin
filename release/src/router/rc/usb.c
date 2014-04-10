@@ -290,9 +290,9 @@ void start_usb(void)
 #endif
 #ifdef RTCONFIG_HFS
 			if(nvram_get_int("usb_fs_hfs")){
-#ifdef RTCONFIG_TUXERA
+#ifdef RTCONFIG_TUXERA_HFS
 				modprobe("thfsplus");
-#else
+#elif defined(RTCONFIG_PARAGON_HFS)
 #ifdef RTCONFIG_UFSD_DEBUG
 				modprobe("ufsd_debug");
 #else
@@ -419,9 +419,9 @@ void remove_usb_storage_module(void)
 #endif
 #endif
 #ifdef RTCONFIG_HFS
-#ifdef RTCONFIG_TUXERA
+#ifdef RTCONFIG_TUXERA_HFS
 	modprobe_r("thfsplus");
-#else
+#elif defined(RTCONFIG_PARAGON_HFS)
 #ifdef RTCONFIG_UFSD_DEBUG
 	modprobe_r("ufsd_debug");
 	modprobe_r("jnl_debug");
@@ -724,6 +724,9 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *_type)
 #ifndef RTCONFIG_BCMARM
 			sprintf(options + strlen(options), ",noatime" + (options[0] ? 0 : 1));
 #endif
+#ifdef RTCONFIG_KERNEL_HFSPLUS
+			sprintf(options + strlen(options), ",force" + (options[0] ? 0 : 1));
+#endif
 
 			if(nvram_invmatch("usb_hfs_opt", ""))
 				sprintf(options + strlen(options), "%s%s", options[0] ? "," : "", nvram_safe_get("usb_hfs_opt"));
@@ -803,10 +806,13 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *_type)
 			/* try HFS in case it's installed */
 			if(ret != 0 && !strncmp(type, "hfs", 3)){
 				if (nvram_get_int("usb_fs_hfs")) {
-#ifdef RTCONFIG_TUXERA
+#ifdef RTCONFIG_TUXERA_HFS
 					ret = eval("mount", "-t", "thfsplus", "-o", options, mnt_dev, mnt_dir);
-#else
+#elif defined(RTCONFIG_PARAGON_HFS)
 					ret = eval("mount", "-t", "ufsd", "-o", options, mnt_dev, mnt_dir);
+#elif defined(RTCONFIG_KERNEL_HFSPLUS)
+					eval("fsck.hfsplus", "-f", mnt_dev);//Scan
+					ret = eval("mount", "-t", "hfsplus", "-o", options, mnt_dev, mnt_dir);
 #endif
 				}
 			}
@@ -2039,10 +2045,17 @@ _dprintf("%s: cmd=%s.\n", __FUNCTION__, cmd);
 	xstart("nmbd", "-D", "-s", "/etc/smb.conf");
 #ifdef RTCONFIG_BCMARM
 #ifdef SMP
+#if 0
 	if(cpu_num > 1)
 		taskset_ret = cpu_eval(NULL, "1", "ionice", "-c1", "-n0", "smbd", "-D", "-s", "/etc/smb.conf");
 	else
 		taskset_ret = eval("ionice", "-c1", "-n0", "smbd", "-D", "-s", "/etc/smb.conf");
+#else
+	if(cpu_num > 1)
+		taskset_ret = cpu_eval(NULL, "1", "smbd", "-D", "-s", "/etc/smb.conf");
+	else
+		taskset_ret = eval("smbd", "-D", "-s", "/etc/smb.conf");
+#endif
 
 	if(taskset_ret != 0)
 #endif
@@ -2460,8 +2473,8 @@ start_mt_daapd()
 	if (nvram_invmatch("daapd_enable", "1"))
 		return;
 
-	if (is_valid_hostname(nvram_safe_get("computer_name")))
-		strncpy(servername, nvram_safe_get("computer_name"), sizeof(servername));
+	if (is_valid_hostname(nvram_safe_get("daapd_friendly_name")))
+		strncpy(servername, nvram_safe_get("daapd_friendly_name"), sizeof(servername));
 	else
 		servername[0] = '\0';
 	if(strlen(servername)==0) strncpy(servername, get_productid(), sizeof(servername));
@@ -2908,6 +2921,9 @@ void start_nas_services(int force)
 		notify_rc_after_wait("start_nasapps");
 		return;
 	}
+
+	if(check_if_dir_exist("/mnt"))
+		eval("/usr/sbin/usbtest.sh");
 
 	if(!check_if_dir_empty("/mnt"))
 	{

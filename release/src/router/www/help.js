@@ -4,7 +4,10 @@
 	Guest_Network_enable_ACL : "You must go to enable MAC filter",	
 	namecheap_username_title: "Domain Name",
 	link_rate : "Link rate",
-	valid_range_int : "Please enter a positive integer"
+	http_username_hint : "Router login name only accept alphanumeric characters, under line and dash symbol. The first character cannot be dash [-] or under line [_].",
+	ASUSGATE_note6 : "Your DSL line appears to be unstable. We strongly recommend that you submit a feedback form for our analysis.",
+	ASUSGATE_act_feedback : "Feedback now"
+
 };
 var clicked_help_string = "<#Help_init_word1#> <a class=\"hintstyle\" style=\"background-color:#7aa3bd\"><#Help_init_word2#></a> <#Help_init_word3#>";
 

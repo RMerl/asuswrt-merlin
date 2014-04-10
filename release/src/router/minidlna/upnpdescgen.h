@@ -57,6 +57,7 @@ struct argument {
 	unsigned char relatedVar;	/* index of the related variable */
 };
 
+#define EVENTED 1<<7
 struct stateVar {
 	const char * name;
 	unsigned char itype;	/* MSB: sendEvent flag, 7 LSB: index in upnptypes */

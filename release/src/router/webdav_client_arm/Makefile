@@ -13,6 +13,12 @@ LDFLAGS = -L$(TOP)/neon/src/.libs -L$(TOP)/libxml2/.libs -L$(TOP)/nvram${BCMEX} 
 
 LIBS = -lpthread -lnvram -lneon -lxml2 -lshared -lz -lcrypto -lssl
 
+include ../common.mak
+ifeq ($(RTCONFIG_QTN),y)
+LDFLAGS += -L$(TOP)/libqcsapi_client
+LIBS += -lqcsapi_client
+endif
+
 ifeq ($(wildcard $(TOP)/webdav_client_arm/*.c),)
 all:
 	-cp -f prebuilt/webdav_client webdav_client

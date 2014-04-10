@@ -193,7 +193,7 @@ vc_scan(struct song_metadata *psong, const char *comment, const size_t length)
 
 	// ALBUM, ARTIST, PUBLISHER, COPYRIGHT, DISCNUMBER, ISRC, EAN/UPN, LABEL, LABELNO,
 	// LICENSE, OPUS, SOURCEMEDIA, TITLE, TRACKNUMBER, VERSION, ENCODED-BY, ENCODING,
-	// -- foollowing tags are muliples
+	// -- following tags are muliples
 	// COMPOSER, ARRANGER, LYRICIST, AUTHOR, CONDUCTOR, PERFORMER, ENSEMBLE, PART
 	// PARTNUMBER, GENRE, DATE, LOCATION, COMMENT
 	if(!strncasecmp(strbuf, "ALBUM=", 6))
@@ -209,6 +209,15 @@ vc_scan(struct song_metadata *psong, const char *comment, const size_t length)
 	else if(!strncasecmp(strbuf, "ARTISTSORT=", 11))
 	{
 		psong->contributor_sort[ROLE_ARTIST] = strdup(strbuf + 11);
+	}
+	else if(!strncasecmp(strbuf, "ALBUMARTIST=", 12))
+	{
+		if( *(strbuf+12) )
+			psong->contributor[ROLE_BAND] = strdup(strbuf + 12);
+	}
+	else if(!strncasecmp(strbuf, "ALBUMARTISTSORT=", 16))
+	{
+		psong->contributor_sort[ROLE_BAND] = strdup(strbuf + 16);
 	}
 	else if(!strncasecmp(strbuf, "TITLE=", 6))
 	{

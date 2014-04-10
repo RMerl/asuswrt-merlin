@@ -663,7 +663,7 @@ tsend (char *pFilename, struct sockaddr_in client, char *pMode, int tid)
 			      (struct sockaddr *) &ack,
 			      (socklen_t *) & client_len);
 
-		  usleep (1000);
+		  usleep (10);
 		}
 	      if (n < 0 && errno != EAGAIN)
 		{

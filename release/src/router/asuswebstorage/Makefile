@@ -18,9 +18,13 @@ ifeq ($(RTCONFIG_BCMARM),y)
 CFLAGS += -DHAVE_TYPE_FLOAT
 endif
 
+ifeq ($(RTCONFIG_QTN),y)
+LDFLAGS += -L$(TOP)/libqcsapi_client -lqcsapi_client
+endif
+
 ifeq ($(wildcard $(TOP)/asuswebstorage/*.c),)
 all:
-	-cp -f $(TOP)/asuswebstorage/prebuild/asuswebstorage asuswebstorage
+	-cp -f $(TOP)/asuswebstorage$(BCMEX)/prebuild/asuswebstorage asuswebstorage
 else
 all: asuswebstorage
 endif

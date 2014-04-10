@@ -3317,6 +3317,11 @@ void restart_wireless(void)
 
 	nvram_set_int("wlready", 1);
 
+#ifdef RTCONFIG_QTN
+	// logmessage("qtn", "[%s][%d] start_wireless_qtn", __FUNCTION__, __LINE__);
+	// start_wireless_qtn();
+#endif
+
 	file_unlock(lock);
 }
 
@@ -3562,4 +3567,25 @@ void set_device_hostname(void)
 	}
 
 }
+
+
+#ifdef RTCONFIG_QTN
+int reset_qtn(vod)
+{
+	system("cp /rom/qtn/* /tmp/");
+        eval("ifconfig", "br0:0", "1.1.1.1", "netmask", "255.255.255.0");
+        eval("tftpd");
+        led_control(BTN_QTN_RESET, LED_ON);
+        led_control(BTN_QTN_RESET, LED_OFF);
+}
+
+int start_qtn(void)
+{
+	reset_qtn();
+	sleep(8);
+	// start_wireless_qtn();
+	return 1;
+}
+
+#endif
 

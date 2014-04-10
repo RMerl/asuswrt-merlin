@@ -108,6 +108,9 @@ struct ieee80211_nodestats {
 	u_int32_t ns_rx_dropped;
 	u_int32_t ns_tx_dropped;
 
+	u_int32_t ns_rx_fragment_pkts;
+	u_int32_t ns_rx_vlan_pkts;
+
 	u_int32_t ns_ap_isolation_dropped;
 };
 
@@ -778,6 +781,7 @@ struct ieee80211_per_ap_scan_result {
 	int32_t		ap_rssi;
 	int32_t		ap_flags;
 	int32_t		ap_htcap;
+	int32_t		ap_vhtcap;
 	int32_t		ap_num_genies;
 	int8_t		ap_ie_buf[0];	/* just to remind there might be WPA/RSN/WSC IEs right behind*/
 };
@@ -1114,7 +1118,7 @@ enum {
 	IEEE80211_PARAM_BK_BITMAP_MODE = 169,   /* back bit map mode set */
 	IEEE80211_PARAM_PROBE_RES_RETRIES = 170,/* Controls probe response retries */
 	IEEE80211_PARAM_MUC_FLAGS = 171,	/* MuC flags */
-	IEEE80211_PARAM_NSS_CAP = 172,		/* Set max spatial streams for debugging */
+	IEEE80211_PARAM_HT_NSS_CAP = 172,	/* Set max spatial streams for HT mode */
 	IEEE80211_PARAM_ASSOC_LIMIT = 173,	/* STA assoc limit */
 	IEEE80211_PARAM_PWR_ADJUST_SCANCNT = 174,	/* Enable power Adjust if nearby stations don't associate */
 	IEEE80211_PARAM_PWR_ADJUST = 175,	/* ioctl to adjust rx gain */
@@ -1213,7 +1217,7 @@ enum {
 	IEEE80211_PARAM_EMI_POWER_SWITCHING = 266,	/* Enable/Disable EMI power switching */
 	IEEE80211_PARAM_CONFIG_BW_TXPOWER = 267,	/* Configure the TX powers different bandwidths */
 	IEEE80211_PARAM_SCAN_CANCEL = 268,			/* Cancel any ongoing scanning */
-
+	IEEE80211_PARAM_VHT_NSS_CAP = 269,	/* Set max spatial streams for VHT mode */
 };
 
 #define	SIOCG80211STATS			(SIOCDEVPRIVATE+2)
@@ -1248,6 +1252,7 @@ enum {
 #define SIOCDEV_SUBIO_GET_11H_11K_NODE_INFO	(SIOCDEV_SUBIO_BASE + 11)
 #define SIOCDEV_SUBIO_GET_DSCP2AC_MAP	(SIOCDEV_SUBIO_BASE + 12)
 #define SIOCDEV_SUBIO_SET_DSCP2AC_MAP	(SIOCDEV_SUBIO_BASE + 13)
+#define SIOCDEV_SUBIO_SET_MARK_DFS_CHAN	(SIOCDEV_SUBIO_BASE + 14)
 
 struct ieee80211_clone_params {
 	char icp_name[IFNAMSIZ];		/* device name */

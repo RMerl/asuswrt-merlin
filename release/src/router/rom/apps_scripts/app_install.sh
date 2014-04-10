@@ -347,7 +347,7 @@ if [ "$link_internet" != "1" ]; then
 	fi
 elif [ "$1" == "downloadmaster" ] && [ -z "$apps_from_internet" ]; then
 	app_update.sh optware.asus
-	if [ -z "$third_lib" ]; then
+	if [ -n "$third_lib" ]; then
 		cp -f $apps_local_space/optware.$third_lib $APPS_INSTALL_PATH/lib/ipkg/lists/
 	fi
 else

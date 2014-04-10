@@ -55,9 +55,6 @@ if(sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 1)
 	sw_mode = 4;
 var productid = '<#Web_Title2#>';
 var based_modelid = '<% nvram_get("productid"); %>';
-if (based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U"){
-	based_modelid = "RT-AC68U";
-}
 var hw_ver = '<% nvram_get("hardware_version"); %>';
 var uptimeStr = "<% uptime(); %>";
 var timezone = uptimeStr.substring(26,31);
@@ -168,8 +165,13 @@ if(sw_mode == 4)
 	localAP_support = false;
 
 var rrsut_support = false;
-if(based_modelid == "RT-AC56U" || based_modelid == "RT-AC56S"  || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || based_modelid == "RT-AC66U" || based_modelid == "RT-N66U") // MODELDEP
+if(based_modelid == "RT-AC56U" || based_modelid == "RT-AC56S"  
+	|| based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U" || based_modelid == "RT-AC69U" 
+	|| based_modelid == "RT-AC66U"
+	|| based_modelid == "RT-N66U"
+	|| based_modelid == "RT-AC87U"){ // MODELDEP
 	rrsut_support = true;
+}	
 
 var ufsd_support = isSupport("ufsd");
 
@@ -206,6 +208,8 @@ var st_samba_mode = '<% nvram_get("st_samba_mode"); %>';
 var st_samba_force_mode = '<% nvram_get("st_samba_force_mode"); %>';
 var enable_samba = '<% nvram_get("enable_samba"); %>';
 var enable_ftp = '<% nvram_get("enable_ftp"); %>';
+var dsl_loss_sync = '<% nvram_get("loss_sync"); %>';
+
 
 var newDisk = function(){
 	this.usbPath = "";
@@ -471,9 +475,9 @@ tabtitle[4] = new Array("", "IPv6");
 tabtitle[5] = new Array("", "VPN Status", "<#BOP_isp_heart_item#>", "<#vpn_Adv#>", "PPTP/L2TP Client", "OpenVPN Client");
 tabtitle[6] = new Array("", "<#menu5_1_1#>", "<#menu5_5_2#>", "<#menu5_5_5#>", "<#menu5_5_3#>", "<#menu5_5_4#>", "IPv6 <#menu5_5#>");
 tabtitle[7] = new Array("", "<#menu5_6_1#>", "<#menu5_6_2#>", "<#menu5_6_3#>", "<#menu5_6_4#>", "Performance tuning", "<#menu_dsl_setting#>");
-tabtitle[8] = new Array("", "<#menu5_7_2#>", "<#menu5_7_4#>", "<#menu5_7_3#>", "IPv6", "<#menu5_7_6#>", "<#menu5_7_5#>", "<#menu_dsl_log#>", "Spectrum", "<#Connections#>");
+tabtitle[8] = new Array("", "<#menu5_7_2#>", "<#menu5_7_4#>", "<#menu5_7_3#>", "IPv6", "<#menu5_7_6#>", "<#menu5_7_5#>", "<#menu_dsl_log#>", "<#Connections#>");
 tabtitle[9] = new Array("", "<#Network_Analysis#>", "Netstat", "<#NetworkTools_WOL#>");
-tabtitle[10] = new Array("", "QoS", "<#traffic_monitor#>");
+tabtitle[10] = new Array("", "QoS", "<#traffic_monitor#>", "Spectrum");
 tabtitle[11] = new Array("", "<#Parental_Control#>", "<#YandexDNS#>", "DNS Filtering");
 tabtitle[12] = new Array("", "Sysinfo", "Other Settings");
 
@@ -486,9 +490,9 @@ tablink[4] = new Array("", "Advanced_IPv6_Content.asp");
 tablink[5] = new Array("", "Advanced_VPNStatus.asp", "Advanced_VPN_Content.asp", "Advanced_VPNAdvanced_Content.asp", "Advanced_VPNClient_Content.asp", "Advanced_OpenVPNClient_Content.asp");
 tablink[6] = new Array("", "Advanced_BasicFirewall_Content.asp", "Advanced_URLFilter_Content.asp", "Advanced_KeywordFilter_Content.asp","Advanced_MACFilter_Content.asp", "Advanced_Firewall_Content.asp", "Advanced_Firewall_IPv6_Content.asp");
 tablink[7] = new Array("", "Advanced_OperationMode_Content.asp", "Advanced_System_Content.asp", "Advanced_FirmwareUpgrade_Content.asp", "Advanced_SettingBackup_Content.asp", "Advanced_PerformanceTuning_Content.asp", "Advanced_ADSL_Content.asp");
-tablink[8] = new Array("", "Main_LogStatus_Content.asp", "Main_WStatus_Content.asp", "Main_DHCPStatus_Content.asp", "Main_IPV6Status_Content.asp", "Main_RouteStatus_Content.asp", "Main_IPTStatus_Content.asp", "Main_AdslStatus_Content.asp", "Main_Spectrum_Content.asp", "Main_ConnStatus_Content.asp");
+tablink[8] = new Array("", "Main_LogStatus_Content.asp", "Main_WStatus_Content.asp", "Main_DHCPStatus_Content.asp", "Main_IPV6Status_Content.asp", "Main_RouteStatus_Content.asp", "Main_IPTStatus_Content.asp", "Main_AdslStatus_Content.asp", "Main_ConnStatus_Content.asp");
 tablink[9] = new Array("", "Main_Analysis_Content.asp", "Main_Netstat_Content.asp", "Main_WOL_Content.asp");
-tablink[10] = new Array("", "QoS_EZQoS.asp", "Main_TrafficMonitor_realtime.asp", "Main_TrafficMonitor_last24.asp", "Main_TrafficMonitor_daily.asp", "Main_TrafficMonitor_monthly.asp", "Main_TrafficMonitor_devrealtime.asp", "Main_TrafficMonitor_devdaily.asp", "Main_TrafficMonitor_devmonthly.asp", "Advanced_QOSUserPrio_Content.asp", "Advanced_QOSUserRules_Content.asp");
+tablink[10] = new Array("", "QoS_EZQoS.asp", "Main_TrafficMonitor_realtime.asp", "Main_Spectrum_Content.asp", "Main_TrafficMonitor_last24.asp", "Main_TrafficMonitor_daily.asp", "Main_TrafficMonitor_monthly.asp", "Main_TrafficMonitor_devrealtime.asp", "Main_TrafficMonitor_devdaily.asp", "Main_TrafficMonitor_devmonthly.asp", "Advanced_QOSUserPrio_Content.asp", "Advanced_QOSUserRules_Content.asp");
 tablink[11] = new Array("", "ParentalControl.asp", "YandexDNS.asp", "DNSFilter.asp");
 tablink[12] = new Array("", "Tools_Sysinfo.asp", "Tools_OtherSettings.asp");
 
@@ -527,7 +531,7 @@ function remove_url(){
 	if(!dsl_support) {
 		remove_menu_item(7, "Advanced_ADSL_Content.asp");
 		remove_menu_item(8, "Main_AdslStatus_Content.asp");
-		remove_menu_item(8, "Main_Spectrum_Content.asp");
+		remove_menu_item(10, "Main_Spectrum_Content.asp");
 	}
 	else {
 		menuL2_link[3] = "Advanced_DSL_Content.asp";
@@ -536,7 +540,7 @@ function remove_url(){
 		remove_menu_item(7, "Advanced_OperationMode_Content.asp");
 		
 		if(!spectrum_support)		// not to support Spectrum page.
-			remove_menu_item(8, "Main_Spectrum_Content.asp");
+			remove_menu_item(10, "Main_Spectrum_Content.asp");
 	}
 
 	if(hwmodeSwitch_support){
@@ -784,6 +788,11 @@ function show_menu(){
 			L2 = traffic_L2_dx; 
 			L3 = 2;
 		}
+		else if(current_url.indexOf("Main_Spectrum_") == 0){
+			L1 = traffic_L1_dx; 
+			L2 = traffic_L2_dx; 
+			L3 = 3;
+		}
 		else if(current_url.indexOf("ParentalControl") == 0){
 			L1 = traffic_L1_dx; 
 			L2 = traffic_L2_dx; 
@@ -1000,8 +1009,18 @@ function show_menu(){
 			notification.clickCallBack[5] = "showLoading();setTimeout('document.noti_samba.submit();', 1);setTimeout('notification.redirectsamba()', 2000);";
 	}else
 		notification.samba = 0;
-	
-	if( notification.acpw || notification.upgrade || notification.wifi_2g || notification.wifi_5g || notification.ftp || notification.samba){
+
+	//dsl_loss_sync  0: default / 1:need to feedback / 2:Feedback submitted
+	if(dsl_loss_sync == 1){         //case6	
+			notification.array[6] = 'noti_loss_sync';
+			notification.loss_sync = 1;
+			notification.desc[6] = Untranslated.ASUSGATE_note6;
+			notification.action_desc[6] = Untranslated.ASUSGATE_act_feedback;
+			notification.clickCallBack[6] = "location.href = '/Advanced_Feedback.asp';"
+	}else
+		notification.loss_sync = 0;
+
+	if( notification.acpw || notification.upgrade || notification.wifi_2g || notification.wifi_5g || notification.ftp || notification.samba || notification.loss_sync){
 		notification.stat = "on";
 		notification.flash = "on";
 		notification.run();
@@ -1960,7 +1979,7 @@ function validate_username(obj){
         if(re.test(obj.value)){
                 return "";
         }else{
-                return "<#File_Pop_content_alert_desc4#> <#JS_validstr1#> -";
+                return Untranslated.http_username_hint;
         }
 }
 
@@ -2369,7 +2388,7 @@ function refresh_info_status(xmldoc)
 						$("adsl_line_status").onclick = function(){openHint(24,6);}
 				}else if(wan_line_state == "wait for init"){
 						$("adsl_line_status").className = "linestatuselse";
-				}else if(wan_line_state == "init"){
+				}else if(wan_line_state == "init" || wan_line_state == "initializing"){
 						$("adsl_line_status").className = "linestatuselse";
 				}else{
 						$("adsl_line_status").className = "linestatusdown";
@@ -2584,13 +2603,14 @@ var notification = {
 	wifi_5g: 0,
 	ftp: 0,
 	samba: 0,
+	loss_sync: 0,
 	clicking: 0,
 	redirectftp:function(){location.href = 'Advanced_AiDisk_ftp.asp';},
 	redirectsamba:function(){location.href = 'Advanced_AiDisk_samba.asp';},
 	clickCallBack: [],
 	notiClick: function(){
 		// stop flashing after the event is checked.
-		cookie_help.set("notification_history", [notification.upgrade, notification.wifi_2g ,notification.wifi_5g ,notification.ftp ,notification.samba].join(), 1000);
+		cookie_help.set("notification_history", [notification.upgrade, notification.wifi_2g ,notification.wifi_5g ,notification.ftp ,notification.samba ,notification.loss_sync].join(), 1000);
 		clearInterval(notification.flashTimer);
 		document.getElementById("notification_status").className = "notification_on";
 
@@ -2639,7 +2659,7 @@ var notification = {
 			tarObj1.className = "notification_on1";
 		}
 
-		if(this.flash == "on" && getCookie_help("notification_history") != [notification.upgrade, notification.wifi_2g ,notification.wifi_5g ,notification.ftp ,notification.samba].join()){
+		if(this.flash == "on" && getCookie_help("notification_history") != [notification.upgrade, notification.wifi_2g ,notification.wifi_5g ,notification.ftp ,notification.samba ,notification.loss_sync].join()){
 			notification.flashTimer = setInterval(function(){
 				tarObj.className = (tarObj.className == "notification_on") ? "notification_off" : "notification_on";
 			}, 1000);
@@ -2649,7 +2669,7 @@ var notification = {
 	reset: function(){
 		this.stat = "off";
 		this.flash = "off";
-		this.flashTime = 100;
+		this.flashTimer = 100;
 		this.hoverText = "";
 		this.clickText = "";
 		this.upgrade = 0;
@@ -2657,6 +2677,7 @@ var notification = {
 		this.wifi_5g = 0;
 		this.ftp = 0;
 		this.samba = 0;
+		this.loss_sync = 0;
 		this.action_desc = [];
 		this.desc = [];
 		this.array = [];

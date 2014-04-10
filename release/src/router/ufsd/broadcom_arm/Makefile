@@ -1,6 +1,6 @@
 include ../../common.mak
 
-PACKAGE_TAG="lke_8.9.0_r219253_b22"
+PACKAGE_TAG="lke_8.9.0_r225078_b43"
 
 ifeq ($(DSTDIR),i)
 DSTDIR=.
@@ -33,11 +33,13 @@ package/Makefile:
 
 clean:
 	-[ ! -f package/Makefile ] || $(MAKE) -C package $@
-	-rm -f config.log package/config.status package/config.log package/ifslinux/config.h package/*.ko package/Makefile
+	-rm -f  config.log package/config.status package/config.log package/ifslinux/config.h package/*.ko package/Makefile
 
 install:
 	cp -f package/$(BINARY1) $(DSTDIR)
 	cp -f package/$(BINARY2) $(DSTDIR)
+	cp -f package/$(BINARY1) ./
+	cp -f package/$(BINARY2) ./
 
 .phony: all clean install
 

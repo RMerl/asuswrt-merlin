@@ -31,6 +31,7 @@ The file contains one or more interface definitions of the form:
 	list of route definitions
 	list of RDNSS definitions
 	list of DNSSL definitions
+	list of ABRO definitions
 .B };
 .fi
 
@@ -45,7 +46,7 @@ Prefix definitions are of the form:
 .B };
 .fi
 
-Prefix can be network prefix or the address of the inferface.
+Prefix can be network prefix or the address of the interface.
 The address of interface should be used when using Mobile IPv6
 extensions.
 
@@ -105,6 +106,16 @@ The definitions are of the form:
         list of IPv6 addresses
 .B };
 .fi
+
+ABRO (Authoritative Border Router Option) definitions are of the form:
+
+.nf
+.BR "abro " prefix / "length " {
+        list of abro specific options
+.B };
+.fi
+
+Prefix can be network prefix or the address of the interface.
 
 .SH INTERFACE SPECIFIC OPTIONS
 
@@ -546,6 +557,17 @@ Upon shutdown, announce the DNSSL entries with a zero second lifetime. This shou
 
 Default: on
 
+.SH ABRO SPECIFIC OPTIONS
+
+.TP
+.BR "AdvValidLifeTime " seconds
+The time in units of that the set of border router information is valid.
+A value of all zero bits assumes a default value of 10,000(~one week).
+
+.TP
+.BR "AdvVersionLow, AdvVersionHigh " unsigned integer
+Both forms 32-bit unsigned version number corresponding to the set of information contained in RA message.
+
 .SH EXAMPLES
 
 .nf
@@ -561,7 +583,7 @@ interface eth0
 .fi
 
 It says that router advertisement daemon should advertise
-(AdvSendAdvert on;) the prefix 2001:db8:0:1:: which has a lenght of 64
+(AdvSendAdvert on;) the prefix 2001:db8:0:1:: which has a length of 64
 on the interface eth0.  Also the prefix should be marked as autonomous
 (AdvAutonomous on;) and as on-link (AdvOnLink on;).  All the other
 options are left on their default values.
@@ -646,6 +668,24 @@ Furthermore, all RA requests of other clients are denied.
 This may come in handy if you want to roll out IPv6 only partially because
 some clients are broken or untested.
 
+For ABRO support
+.nf
+interface lowpan0
+{
+	AdvSendAdvert on;
+	UnicastOnly on;
+	AdvCurHopLimit 255;
+	prefix 2001:0db8:0100:f101::/64 {
+		AdvOnLink on;
+		AdvAutonomous on;
+		AdvRouterAddr on;
+	};
+	abro fe80::a200:0:0:1/64 {
+		AdvVersionLow 10;
+		AdvVersionHigh 2;
+		AdvValidLifeTime 2;
+	};
+};
 
 .SH FILES
 
@@ -690,7 +730,9 @@ RFC 3963, January 2005.
 .PP
 J. Jeong, S. Park, L. Beloeil, and S. Madanapalli, "IPv6 Router Advertisement Options for DNS Configuration",
 RFC 6106, November 2010.
-
+.PP
+Z. Shelby, S. Chakrabarti, E. Nordmark and  C. Bormann " Neighbor Discovery Optimization for IPv6 over Low-Power 
+Wireless Personal Area Networks (6LoWPANs)", RFC 6775, November 2012.
 .SH "SEE ALSO"
 
 .BR radvd (8),

@@ -447,7 +447,11 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 #endif /* RTCONFIG_NEW_REGULATION_DOMAIN */
 #ifdef CONFIG_BCMWL5
 	else if (!strcmp(command, "Set_RegulationDomain_5G")) {
+#ifdef RTCONFIG_QTN
+		if ( !setCountryCode_5G_qtn(value))
+#else
 		if ( !setCountryCode_5G(value))
+#endif
 		{
 			puts("ATE_ERROR_INCORRECT_PARAMETER");
 			return EINVAL;
@@ -463,7 +467,11 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 	else if (!strcmp(command, "Set_Regrev_5G")) {
+#ifdef RTCONFIG_QTN
+		if( !setRegrev_5G_qtn(value))
+#else
 		if( !setRegrev_5G(value))
+#endif
 		{
 			puts("ATE_ERROR_INCORRECT_PARAMETER");
 			return EINVAL;
@@ -724,7 +732,11 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 #endif	/* ! RTCONFIG_NEW_REGULATION_DOMAIN */
 #ifdef CONFIG_BCMWL5
 	else if (!strcmp(command, "Get_RegulationDomain_5G")) {
+#ifdef RTCONFIG_QTN
+		getCountryCode_5G_qtn();
+#else
 	   	getCountryCode_5G();
+#endif
 		return 0;
 	}
 	else if (!strcmp(command, "Get_Regrev_2G")) {
@@ -732,7 +744,11 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 	else if (!strcmp(command, "Get_Regrev_5G")) {
+#ifdef RTCONFIG_QTN
+		getRegrev_5G_qtn();
+#else
 		getRegrev_5G();
+#endif
 		return 0;
 	}
 #endif

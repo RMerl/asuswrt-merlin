@@ -45,6 +45,10 @@
 #include <wlscan.h>
 #include <sysinfo.h>
 
+#ifdef RTCONFIG_QTN
+#include "web-qtn.h"
+#endif
+
 enum {
 	NOTHING,
 	REBOOT,
@@ -1009,7 +1013,9 @@ dump_bss_info(int eid, webs_t wp, int argc, char_t **argv, wl_bss_info_t *bi)
 	char ssidbuf[SSID_FMT_BUF_LEN];
 	char chspec_str[CHANSPEC_STR_LEN];
 	wl_bss_info_107_t *old_bi;
+#ifndef RTCONFIG_QTN
 	int mcs_idx = 0;
+#endif
 	int retval = 0;
 
 	/* Convert version 107 to 109 */
@@ -1053,6 +1059,7 @@ dump_bss_info(int eid, webs_t wp, int argc, char_t **argv, wl_bss_info_t *bi)
 
 	retval += websWrite(wp, "BSSID: %s\t", wl_ether_etoa(&bi->BSSID));
 
+#ifndef RTCONFIG_QTN
 	retval += websWrite(wp, "Capability: ");
 	bi->capability = dtoh16(bi->capability);
 	if (bi->capability & DOT11_CAP_ESS) retval += websWrite(wp, "ESS ");
@@ -1065,6 +1072,7 @@ dump_bss_info(int eid, webs_t wp, int argc, char_t **argv, wl_bss_info_t *bi)
 	if (bi->capability & DOT11_CAP_AGILITY) retval += websWrite(wp, "Agility ");
 	if (bi->capability & DOT11_CAP_SHORTSLOT) retval += websWrite(wp, "ShortSlot ");
 	if (bi->capability & DOT11_CAP_CCK_OFDM) retval += websWrite(wp, "CCK-OFDM ");
+#endif
 	retval += websWrite(wp, "\n");
 
 	retval += websWrite(wp, "Supported Rates: ");
@@ -1073,7 +1081,7 @@ dump_bss_info(int eid, webs_t wp, int argc, char_t **argv, wl_bss_info_t *bi)
 	if (dtoh32(bi->ie_length))
 		retval += wl_dump_wpa_rsn_ies(eid, wp, argc, argv, (uint8 *)(((uint8 *)bi) + dtoh16(bi->ie_offset)),
 				    dtoh32(bi->ie_length));
-
+#ifndef RTCONFIG_QTN
 	if (dtoh32(bi->version) != LEGACY_WL_BSS_INFO_VERSION && bi->n_cap) {
 		if (bi->vht_cap)
 			retval += websWrite(wp, "VHT Capable:\n");
@@ -1121,7 +1129,7 @@ dump_bss_info(int eid, webs_t wp, int argc, char_t **argv, wl_bss_info_t *bi)
 			}
 		}
 	}
-
+#endif
 	if (dtoh32(bi->ie_length))
 	{
 		retval += wl_dump_wps(wp, (uint8 *)(((uint8 *)bi) + dtoh16(bi->ie_offset)),
@@ -1180,7 +1188,7 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 }
 
 sta_info_t *
-wl_sta_info(const char *ifname, struct ether_addr *ea)
+wl_sta_info(char *ifname, struct ether_addr *ea)
 {
 	static char buf[sizeof(sta_info_t)];
 	sta_info_t *sta = NULL;
@@ -1232,6 +1240,13 @@ print_rate_buf(int raw_rate, char *buf)
 }
 #endif
 
+int wl_control_channel(int unit);
+
+#ifdef RTCONFIG_QTN
+extern int wl_status_5g(int eid, webs_t wp, int argc, char_t **argv);
+extern int ej_wl_status_5g(int eid, webs_t wp, int argc, char_t **argv);
+#endif
+
 int
 ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 {
@@ -1275,8 +1290,28 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	else
 #endif
 	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
-	wl_ioctl(name, WLC_GET_RADIO, &val, sizeof(val));
-	val &= WL_RADIO_SW_DISABLE | WL_RADIO_HW_DISABLE;
+#ifdef RTCONFIG_QTN
+	if (unit)
+	{
+		ret = qcsapi_wifi_rfstatus(WIFINAME, (qcsapi_unsigned_int *) &val);
+		if (ret < 0)
+			dbG("qcsapi_wifi_rfstatus error, return: %d\n", ret);
+		else
+			val = !val;
+	}
+	else
+#endif
+	{
+		wl_ioctl(name, WLC_GET_RADIO, &val, sizeof(val));
+		val &= WL_RADIO_SW_DISABLE | WL_RADIO_HW_DISABLE;
+	}
+
+	if (val)
+	{
+		ret += websWrite(wp, "%s radio is disabled\n",
+			nvram_match(strcat_r(prefix, "nband", tmp), "1") ? "5 GHz" : "2.4 GHz");
+		return ret;
+	}
 
 	if (nvram_match(strcat_r(prefix, "mode", tmp), "wds")) {
 		// dump static info only for wds mode:
@@ -1284,14 +1319,12 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		ret += websWrite(wp, "Channel: %d\n", wl_control_channel(unit));
 	}
 	else {
+#ifdef RTCONFIG_QTN
+		if (unit)
+			ret += wl_status_5g(eid, wp, argc, argv);
+		else
+#endif
 		ret += wl_status(eid, wp, argc, argv, unit);
-	}
-
-	if (val) 
-	{
-		ret += websWrite(wp, "%s radio is disabled\n",
-			nvram_match(strcat_r(prefix, "nband", tmp), "1") ? "5 GHz" : "2.4 GHz");
-		return ret;
 	}
 
 	if (nvram_match(strcat_r(prefix, "mode", tmp), "ap"))
@@ -1334,6 +1367,14 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	}
 #endif
 
+#ifdef RTCONFIG_QTN
+	if (unit)
+	{
+		ret += ej_wl_status_5g(eid, wp, argc, argv);
+		return ret;
+	}
+#endif
+
 	/* buffers and length */
 	max_sta_count = 128;
 	maclist_size = sizeof(auth->count) + max_sta_count * sizeof(struct ether_addr);
@@ -1368,9 +1409,14 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 #endif
 
 	ret += websWrite(wp, "\n");
- 	ret += websWrite(wp, "Stations  (flags: P=Powersave Mode, S=Short GI, T=STBC, A=Associated, U=Authenticated)\n");
+#ifdef RTCONFIG_QTN
+ 	ret += websWrite(wp, "Stations  (flags: S=Short GI, T=STBC, A=Associated, U=Authenticated)\n");
+#else
+	ret += websWrite(wp, "Stations  (flags: P=Powersave Mode, S=Short GI, T=STBC, A=Associated, U=Authenticated)\n");
+#endif
+
  	ret += websWrite(wp, "----------------------------------------\n");
- 	
+
 	if (leaselist) {
 		ret += websWrite(wp, "%-18s%-16s%-16s%-8s%-15s%-10s%-5s\n",
 				"MAC", "IP Address", "Name", "  RSSI", "  Rx/Tx Rate", "Connected", "Flags");
@@ -1450,10 +1496,14 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 
 // Flags
 #ifdef RTCONFIG_BCMARM
+#ifndef RTCONFIG_QTN
 			ret += websWrite(wp, "%s%s%s",
 				(sta->flags & WL_STA_PS) ? "P" : " ",
 				((sta->ht_capabilities & WL_STA_CAP_SHORT_GI_20) || (sta->ht_capabilities & WL_STA_CAP_SHORT_GI_40)) ? "S" : " ",
 				((sta->ht_capabilities & WL_STA_CAP_TX_STBC) || (sta->ht_capabilities & WL_STA_CAP_RX_STBC_MASK)) ? "T" : " ");
+#else
+			ret += websWrite(wp, " ");
+#endif
 #else
 			ret += websWrite(wp, "%s",
 				(sta->flags & WL_STA_PS) ? "P" : " ");
@@ -3078,7 +3128,6 @@ static int wl_sta_list(int eid, webs_t wp, int argc, char_t **argv, int unit) {
 	int i, firstRow = 1;
 	char ea[ETHER_ADDR_STR_LEN];
 	char *value;
-	char word[256], *next;
 	char name_vif[] = "wlX.Y_XXXXXXXXXX";
 	int ii;
 	int ret = 0;
@@ -3198,11 +3247,15 @@ ej_wl_sta_list_2g(int eid, webs_t wp, int argc, char_t **argv)
 	return wl_sta_list(eid, wp, argc, argv, 0);
 }
 
+#ifndef RTCONFIG_QTN
 int
 ej_wl_sta_list_5g(int eid, webs_t wp, int argc, char_t **argv)
 {
 	return wl_sta_list(eid, wp, argc, argv, 1);
 }
+#else
+extern int ej_wl_sta_list_5g(int eid, webs_t wp, int argc, char_t **argv);
+#endif
 
 // no WME in WL500gP V2
 // MAC/associated/authorized
@@ -3235,7 +3288,9 @@ int ej_wl_auth_list(int eid, webs_t wp, int argc, char_t **argv) {
 
 	foreach (word, nvram_safe_get("wl_ifnames"), next) {
 #ifdef RTCONFIG_QTN
-		if (unit != 0) break;
+		if (unit != 0)
+			ret += ej_wl_sta_list_5g(eid, wp, argc, argv);
+		return ret;
 #endif
 		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 		name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
@@ -3553,11 +3608,13 @@ ej_wl_scan_2g(int eid, webs_t wp, int argc, char_t **argv)
 	return wl_scan(eid, wp, argc, argv, 0);
 }
 
+#ifndef RTCONFIG_QTN
 int
 ej_wl_scan_5g(int eid, webs_t wp, int argc, char_t **argv)
 {
 	return wl_scan(eid, wp, argc, argv, 1);
 }
+#endif
 
 #ifdef RTCONFIG_PROXYSTA
 #define	MAX_STA_COUNT	128

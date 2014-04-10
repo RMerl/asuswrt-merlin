@@ -505,7 +505,6 @@ struct nvram_tuple router_defaults[] = {
 	{ "ct_tcp_timeout",		""},
 	{ "ct_udp_timeout",		"30 180"},
 	{ "ct_timeout",			""},
-	{ "ct_max",			""}, //per model default value is assigned in init_nvram
 
 #ifndef RTCONFIG_RALINK
 	{ "ctf_disable",		"0"		},
@@ -1161,6 +1160,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "dms_dir_type_x", "<AVP"},
 	{ "dms_friendly_name",""},
 	{ "daapd_enable", "0" 	},
+	{ "daapd_friendly_name",""},
 #endif
 
 #ifdef DM
@@ -1261,6 +1261,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "modem_user", ""},
 	{ "modem_pass", ""},
 	{ "modem_ttlsid", ""},
+	{ "modem_mode", "0"}, // 0: auto, 2: 2G only, 3: 3G only, 4: 4G only, 43: 4G/3G.
 	{ "modem_running", "0"},
 #ifdef RTCONFIG_USB_MODEM_PIN
 	{ "modem_pincode_opt", "1"},
@@ -1950,25 +1951,25 @@ struct nvram_tuple router_state_defaults[] = {
 // name starting with 'dsl' are reserved for dsl unit
 // for temp variable please use dsltmp_xxx
 	{ "dsltmp_autodet_state", ""},
-	{ "dsltmp_autodet_vpi", "0"},	
+	{ "dsltmp_autodet_vpi", "0"},
 	{ "dsltmp_autodet_vci", "35"},
-	{ "dsltmp_autodet_encap", "0"},			
-// manually config	
-	{ "dsltmp_cfg_prctl", "0"},		
-	{ "dsltmp_cfg_vpi", "0"},	
-	{ "dsltmp_cfg_vci", "35"},		
-	{ "dsltmp_cfg_encap", "0"},			
+	{ "dsltmp_autodet_encap", "0"},
+// manually config
+	{ "dsltmp_cfg_prctl", "0"},
+	{ "dsltmp_cfg_vpi", "0"},
+	{ "dsltmp_cfg_vci", "35"},
+	{ "dsltmp_cfg_encap", "0"},
 	{ "dsltmp_cfg_iptv_idx", ""},
-	{ "dsltmp_cfg_iptv_num_pvc", "0"},	
+	{ "dsltmp_cfg_iptv_num_pvc", "0"},
 	{ "dsltmp_cfg_ispname", ""},
 	{ "dsltmp_cfg_country", ""},
-// tmp variable for QIS , it will write to dsl0_xxx after finish page	
+// tmp variable for QIS , it will write to dsl0_xxx after finish page
 	{ "dsltmp_qis_vpi", ""},
 	{ "dsltmp_qis_vci", ""},
 	{ "dsltmp_qis_proto", ""},
 	{ "dsltmp_qis_encap", ""},
 	{ "dsltmp_qis_pppoe_username", ""},
-	{ "dsltmp_qis_pppoe_passwd", ""},			
+	{ "dsltmp_qis_pppoe_passwd", ""},
 	{ "dsltmp_qis_pppoe_dial_on_demand", ""},
 	{ "dsltmp_qis_pppoe_idletime", ""},
 	{ "dsltmp_qis_pppoe_mtu", ""},
@@ -1978,27 +1979,27 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "dsltmp_qis_DHCPClient", ""},
 	{ "dsltmp_qis_ipaddr", ""},
 	{ "dsltmp_qis_netmask", ""},
-	{ "dsltmp_qis_gateway", ""},	
+	{ "dsltmp_qis_gateway", ""},
 	{ "dsltmp_qis_dnsenable", ""},
 	{ "dsltmp_qis_dns1", ""},
-	{ "dsltmp_qis_dns2", ""},	
+	{ "dsltmp_qis_dns2", ""},
 	{ "dsltmp_qis_svc_cat", ""},
-	{ "dsltmp_qis_pcr", ""},	
-	{ "dsltmp_qis_scr", ""},		
-	{ "dsltmp_qis_mbs", ""},			
-	{ "dsltmp_qis_pppoe_relay", ""},			
-	{ "dsltmp_qis_hwaddr", ""},				
-	{ "dsltmp_qis_admin_passwd", ""},					
+	{ "dsltmp_qis_pcr", ""},
+	{ "dsltmp_qis_scr", ""},
+	{ "dsltmp_qis_mbs", ""},
+	{ "dsltmp_qis_pppoe_relay", ""},
+	{ "dsltmp_qis_hwaddr", ""},
+	{ "dsltmp_qis_admin_passwd", ""},
 	{ "dsltmp_qis_admin_passwd_set", "0"},
-	{ "dsltmp_qis_dsl_pvc_set", "0"},	
+	{ "dsltmp_qis_dsl_pvc_set", "0"},
 // for DSL driver and tool
-	{ "dsltmp_tc_resp_to_d", ""},			
+	{ "dsltmp_tc_resp_to_d", ""},
 	{ "dsltmp_adslatequit", "0"},
-	{ "dsltmp_tcbootup", "0"},	
-	{ "dsltmp_adslsyncsts", ""},	
-	{ "dsltmp_adslsyncsts_detail", ""},	
+	{ "dsltmp_tcbootup", "0"},
+	{ "dsltmp_adslsyncsts", ""},
+	{ "dsltmp_adslsyncsts_detail", ""},
 // for web ui identify , 1=old ui, 2=asuswrt
-	{ "dsltmp_web_ui_ver", "2"},	
+	{ "dsltmp_web_ui_ver", "2"},
 #endif
 	{ "ddns_cache", ""},
 	{ "ddns_ipaddr", ""},
@@ -2008,7 +2009,17 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "ddns_return_code", ""},
 	{ "ddns_return_code_chk", ""},
 	{ "ddns_update_by_wdog", ""},
-	{ "reboot_time", "70"},	
+	{ "reboot_time", "70"},
+#ifdef RTCONFIG_USB_MODEM
+	{ "modem_vid", ""},
+	{ "g3state_pin", ""},
+	{ "g3state_z", ""},
+	{ "g3state_q0", ""},
+	{ "g3state_mode", ""},
+	{ "g3state_apn", ""},
+	{ "g3state_dial", ""},
+	{ "g3state_conn", ""},
+#endif
 	{ NULL, NULL }
 };
 

@@ -5353,6 +5353,8 @@ xdr_qcsapi_wps_registrar_get_pp_devname_request (XDR *xdrs, qcsapi_wps_registrar
 
 	 if (!xdr_str (xdrs, &objp->ifname))
 		 return FALSE;
+	 if (!xdr_int (xdrs, &objp->blacklist))
+		 return FALSE;
 	return TRUE;
 }
 
@@ -5374,6 +5376,8 @@ xdr_qcsapi_wps_registrar_set_pp_devname_request (XDR *xdrs, qcsapi_wps_registrar
 	register int32_t *buf;
 
 	 if (!xdr_str (xdrs, &objp->ifname))
+		 return FALSE;
+	 if (!xdr_int (xdrs, &objp->update_blacklist))
 		 return FALSE;
 	 if (!xdr_str (xdrs, &objp->pp_devname))
 		 return FALSE;
@@ -6442,6 +6446,54 @@ xdr_qcsapi_wifi_get_rx_phy_rate_per_association_response (XDR *xdrs, qcsapi_wifi
 	 if (!xdr_int (xdrs, &objp->return_code))
 		 return FALSE;
 	 if (!xdr_u_int (xdrs, &objp->p_rx_phy_rate))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_get_tx_mcs_per_association_request (XDR *xdrs, qcsapi_wifi_get_tx_mcs_per_association_request *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_str (xdrs, &objp->ifname))
+		 return FALSE;
+	 if (!xdr_u_int (xdrs, &objp->association_index))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_get_tx_mcs_per_association_response (XDR *xdrs, qcsapi_wifi_get_tx_mcs_per_association_response *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_int (xdrs, &objp->return_code))
+		 return FALSE;
+	 if (!xdr_u_int (xdrs, &objp->p_mcs))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_get_rx_mcs_per_association_request (XDR *xdrs, qcsapi_wifi_get_rx_mcs_per_association_request *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_str (xdrs, &objp->ifname))
+		 return FALSE;
+	 if (!xdr_u_int (xdrs, &objp->association_index))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_get_rx_mcs_per_association_response (XDR *xdrs, qcsapi_wifi_get_rx_mcs_per_association_response *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_int (xdrs, &objp->return_code))
+		 return FALSE;
+	 if (!xdr_u_int (xdrs, &objp->p_mcs))
 		 return FALSE;
 	return TRUE;
 }
@@ -8659,6 +8711,212 @@ xdr_qcsapi_get_custom_value_response (XDR *xdrs, qcsapi_get_custom_value_respons
 }
 
 bool_t
+xdr_qcsapi_wifi_get_mlme_stats_per_mac_request (XDR *xdrs, qcsapi_wifi_get_mlme_stats_per_mac_request *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_str (xdrs, &objp->ifname))
+		 return FALSE;
+	 if (!xdr_qcsapi_rpc_mac_addr (xdrs, objp->client_mac_addr))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_get_mlme_stats_per_mac_response (XDR *xdrs, qcsapi_wifi_get_mlme_stats_per_mac_response *objp)
+{
+	register int32_t *buf;
+
+
+	if (xdrs->x_op == XDR_ENCODE) {
+		buf = XDR_INLINE (xdrs, 7 * BYTES_PER_XDR_UNIT);
+		if (buf == NULL) {
+			 if (!xdr_int (xdrs, &objp->return_code))
+				 return FALSE;
+			 if (!xdr_u_int (xdrs, &objp->stats_auth))
+				 return FALSE;
+			 if (!xdr_u_int (xdrs, &objp->stats_auth_fails))
+				 return FALSE;
+			 if (!xdr_u_int (xdrs, &objp->stats_assoc))
+				 return FALSE;
+			 if (!xdr_u_int (xdrs, &objp->stats_assoc_fails))
+				 return FALSE;
+			 if (!xdr_u_int (xdrs, &objp->stats_deauth))
+				 return FALSE;
+			 if (!xdr_u_int (xdrs, &objp->stats_diassoc))
+				 return FALSE;
+		} else {
+			IXDR_PUT_LONG(buf, objp->return_code);
+			IXDR_PUT_U_LONG(buf, objp->stats_auth);
+			IXDR_PUT_U_LONG(buf, objp->stats_auth_fails);
+			IXDR_PUT_U_LONG(buf, objp->stats_assoc);
+			IXDR_PUT_U_LONG(buf, objp->stats_assoc_fails);
+			IXDR_PUT_U_LONG(buf, objp->stats_deauth);
+			IXDR_PUT_U_LONG(buf, objp->stats_diassoc);
+		}
+		return TRUE;
+	} else if (xdrs->x_op == XDR_DECODE) {
+		buf = XDR_INLINE (xdrs, 7 * BYTES_PER_XDR_UNIT);
+		if (buf == NULL) {
+			 if (!xdr_int (xdrs, &objp->return_code))
+				 return FALSE;
+			 if (!xdr_u_int (xdrs, &objp->stats_auth))
+				 return FALSE;
+			 if (!xdr_u_int (xdrs, &objp->stats_auth_fails))
+				 return FALSE;
+			 if (!xdr_u_int (xdrs, &objp->stats_assoc))
+				 return FALSE;
+			 if (!xdr_u_int (xdrs, &objp->stats_assoc_fails))
+				 return FALSE;
+			 if (!xdr_u_int (xdrs, &objp->stats_deauth))
+				 return FALSE;
+			 if (!xdr_u_int (xdrs, &objp->stats_diassoc))
+				 return FALSE;
+		} else {
+			objp->return_code = IXDR_GET_LONG(buf);
+			objp->stats_auth = IXDR_GET_U_LONG(buf);
+			objp->stats_auth_fails = IXDR_GET_U_LONG(buf);
+			objp->stats_assoc = IXDR_GET_U_LONG(buf);
+			objp->stats_assoc_fails = IXDR_GET_U_LONG(buf);
+			objp->stats_deauth = IXDR_GET_U_LONG(buf);
+			objp->stats_diassoc = IXDR_GET_U_LONG(buf);
+		}
+	 return TRUE;
+	}
+
+	 if (!xdr_int (xdrs, &objp->return_code))
+		 return FALSE;
+	 if (!xdr_u_int (xdrs, &objp->stats_auth))
+		 return FALSE;
+	 if (!xdr_u_int (xdrs, &objp->stats_auth_fails))
+		 return FALSE;
+	 if (!xdr_u_int (xdrs, &objp->stats_assoc))
+		 return FALSE;
+	 if (!xdr_u_int (xdrs, &objp->stats_assoc_fails))
+		 return FALSE;
+	 if (!xdr_u_int (xdrs, &objp->stats_deauth))
+		 return FALSE;
+	 if (!xdr_u_int (xdrs, &objp->stats_diassoc))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_get_mlme_stats_per_association_request (XDR *xdrs, qcsapi_wifi_get_mlme_stats_per_association_request *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_str (xdrs, &objp->ifname))
+		 return FALSE;
+	 if (!xdr_u_int (xdrs, &objp->association_index))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_get_mlme_stats_per_association_response (XDR *xdrs, qcsapi_wifi_get_mlme_stats_per_association_response *objp)
+{
+	register int32_t *buf;
+
+
+	if (xdrs->x_op == XDR_ENCODE) {
+		buf = XDR_INLINE (xdrs, 7 * BYTES_PER_XDR_UNIT);
+		if (buf == NULL) {
+			 if (!xdr_int (xdrs, &objp->return_code))
+				 return FALSE;
+			 if (!xdr_u_int (xdrs, &objp->stats_auth))
+				 return FALSE;
+			 if (!xdr_u_int (xdrs, &objp->stats_auth_fails))
+				 return FALSE;
+			 if (!xdr_u_int (xdrs, &objp->stats_assoc))
+				 return FALSE;
+			 if (!xdr_u_int (xdrs, &objp->stats_assoc_fails))
+				 return FALSE;
+			 if (!xdr_u_int (xdrs, &objp->stats_deauth))
+				 return FALSE;
+			 if (!xdr_u_int (xdrs, &objp->stats_diassoc))
+				 return FALSE;
+		} else {
+			IXDR_PUT_LONG(buf, objp->return_code);
+			IXDR_PUT_U_LONG(buf, objp->stats_auth);
+			IXDR_PUT_U_LONG(buf, objp->stats_auth_fails);
+			IXDR_PUT_U_LONG(buf, objp->stats_assoc);
+			IXDR_PUT_U_LONG(buf, objp->stats_assoc_fails);
+			IXDR_PUT_U_LONG(buf, objp->stats_deauth);
+			IXDR_PUT_U_LONG(buf, objp->stats_diassoc);
+		}
+		return TRUE;
+	} else if (xdrs->x_op == XDR_DECODE) {
+		buf = XDR_INLINE (xdrs, 7 * BYTES_PER_XDR_UNIT);
+		if (buf == NULL) {
+			 if (!xdr_int (xdrs, &objp->return_code))
+				 return FALSE;
+			 if (!xdr_u_int (xdrs, &objp->stats_auth))
+				 return FALSE;
+			 if (!xdr_u_int (xdrs, &objp->stats_auth_fails))
+				 return FALSE;
+			 if (!xdr_u_int (xdrs, &objp->stats_assoc))
+				 return FALSE;
+			 if (!xdr_u_int (xdrs, &objp->stats_assoc_fails))
+				 return FALSE;
+			 if (!xdr_u_int (xdrs, &objp->stats_deauth))
+				 return FALSE;
+			 if (!xdr_u_int (xdrs, &objp->stats_diassoc))
+				 return FALSE;
+		} else {
+			objp->return_code = IXDR_GET_LONG(buf);
+			objp->stats_auth = IXDR_GET_U_LONG(buf);
+			objp->stats_auth_fails = IXDR_GET_U_LONG(buf);
+			objp->stats_assoc = IXDR_GET_U_LONG(buf);
+			objp->stats_assoc_fails = IXDR_GET_U_LONG(buf);
+			objp->stats_deauth = IXDR_GET_U_LONG(buf);
+			objp->stats_diassoc = IXDR_GET_U_LONG(buf);
+		}
+	 return TRUE;
+	}
+
+	 if (!xdr_int (xdrs, &objp->return_code))
+		 return FALSE;
+	 if (!xdr_u_int (xdrs, &objp->stats_auth))
+		 return FALSE;
+	 if (!xdr_u_int (xdrs, &objp->stats_auth_fails))
+		 return FALSE;
+	 if (!xdr_u_int (xdrs, &objp->stats_assoc))
+		 return FALSE;
+	 if (!xdr_u_int (xdrs, &objp->stats_assoc_fails))
+		 return FALSE;
+	 if (!xdr_u_int (xdrs, &objp->stats_deauth))
+		 return FALSE;
+	 if (!xdr_u_int (xdrs, &objp->stats_diassoc))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_get_mlme_stats_macs_list_request (XDR *xdrs, qcsapi_wifi_get_mlme_stats_macs_list_request *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_str (xdrs, &objp->ifname))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_get_mlme_stats_macs_list_response (XDR *xdrs, qcsapi_wifi_get_mlme_stats_macs_list_response *objp)
+{
+	register int32_t *buf;
+
+	int i;
+	 if (!xdr_int (xdrs, &objp->return_code))
+		 return FALSE;
+	 if (!xdr_vector (xdrs, (char *)objp->macs_list_addr, 128,
+		sizeof (qcsapi_rpc_mac_addr), (xdrproc_t) xdr_qcsapi_rpc_mac_addr))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
 xdr_qcsapi_pm_set_mode_request (XDR *xdrs, qcsapi_pm_set_mode_request *objp)
 {
 	register int32_t *buf;
@@ -8946,6 +9204,66 @@ xdr_qcsapi_wifi_test_traffic_request (XDR *xdrs, qcsapi_wifi_test_traffic_reques
 
 bool_t
 xdr_qcsapi_wifi_test_traffic_response (XDR *xdrs, qcsapi_wifi_test_traffic_response *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_int (xdrs, &objp->return_code))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_add_ipff_request (XDR *xdrs, qcsapi_wifi_add_ipff_request *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_u_int (xdrs, &objp->ipaddr))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_add_ipff_response (XDR *xdrs, qcsapi_wifi_add_ipff_response *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_int (xdrs, &objp->return_code))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_del_ipff_request (XDR *xdrs, qcsapi_wifi_del_ipff_request *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_u_int (xdrs, &objp->ipaddr))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_del_ipff_response (XDR *xdrs, qcsapi_wifi_del_ipff_response *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_int (xdrs, &objp->return_code))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_get_ipff_request (XDR *xdrs, qcsapi_wifi_get_ipff_request *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_int (xdrs, &objp->__dummy_pad))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_get_ipff_response (XDR *xdrs, qcsapi_wifi_get_ipff_response *objp)
 {
 	register int32_t *buf;
 
@@ -9604,6 +9922,54 @@ xdr_qcsapi_wifi_get_spinor_jedecid_response (XDR *xdrs, qcsapi_wifi_get_spinor_j
 	 if (!xdr_int (xdrs, &objp->return_code))
 		 return FALSE;
 	 if (!xdr_u_int (xdrs, &objp->p_jedecid))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_set_nss_cap_request (XDR *xdrs, qcsapi_wifi_set_nss_cap_request *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_str (xdrs, &objp->ifname))
+		 return FALSE;
+	 if (!xdr_int (xdrs, &objp->modulation))
+		 return FALSE;
+	 if (!xdr_u_int (xdrs, &objp->nss))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_set_nss_cap_response (XDR *xdrs, qcsapi_wifi_set_nss_cap_response *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_int (xdrs, &objp->return_code))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_get_nss_cap_request (XDR *xdrs, qcsapi_wifi_get_nss_cap_request *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_str (xdrs, &objp->ifname))
+		 return FALSE;
+	 if (!xdr_int (xdrs, &objp->modulation))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_get_nss_cap_response (XDR *xdrs, qcsapi_wifi_get_nss_cap_response *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_int (xdrs, &objp->return_code))
+		 return FALSE;
+	 if (!xdr_u_int (xdrs, &objp->nss))
 		 return FALSE;
 	return TRUE;
 }

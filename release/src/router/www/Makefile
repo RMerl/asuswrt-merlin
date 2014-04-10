@@ -91,6 +91,7 @@ ifeq ($(RTCONFIG_4M_SFP),y)
 	rm -rf $(INSTALLDIR)/www/images/qis/winxp.jpg
 #	rm -rf $(INSTALLDIR)/www/Advanced_WANPort_Content.asp
 	rm -rf $(INSTALLDIR)/www/mediaserver.asp
+	rm -rf $(INSTALLDIR)/www/ajax_dms_status.asp
 	rm -rf $(INSTALLDIR)/www/Advanced_PerformanceTuning_Content.asp
 	rm -rf $(INSTALLDIR)/www/Advanced_IPv6_Content.asp
 	rm -rf $(INSTALLDIR)/www/Advacned_SwitchCtrl_Content.asp
@@ -181,6 +182,7 @@ ifneq ($(RTCONFIG_USB),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/printstatus.png
 	rm -rf $(INSTALLDIR)/www/aidisk
 	rm -rf $(INSTALLDIR)/www/mediaserver.asp
+	rm -rf $(INSTALLDIR)/www/ajax_dms_status.asp
 	rm -rf $(INSTALLDIR)/www/Advanced_AiDisk_ftp.asp
 	rm -rf $(INSTALLDIR)/www/Advanced_AiDisk_samba.asp
 	rm -rf $(INSTALLDIR)/www/Advanced_AiDisk_others.asp

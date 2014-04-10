@@ -30,8 +30,12 @@ int send_ra_forall(struct Interface *iface, struct in6_addr *dest)
 	struct Clients *current;
 
 	/* If no list of clients was specified for this interface, we broadcast */
-	if (iface->ClientList == NULL)
+	if (iface->ClientList == NULL) {
+		if (dest == NULL && iface->UnicastOnly) {
+			return 0;
+		}
 		return send_ra(iface, dest);
+	}
 
 	/* If clients are configured, send the advertisement to all of them via unicast */
 	for (current = iface->ClientList; current; current = current->next) {
@@ -112,6 +116,8 @@ int send_ra(struct Interface *iface, struct in6_addr *dest)
 	struct AdvRoute *route;
 	struct AdvRDNSS *rdnss;
 	struct AdvDNSSL *dnssl;
+	struct AdvLowpanCo *lowpanco;
+	struct AdvAbro *abroo;
 	struct timeval time_now;
 	time_t secs_since_last_ra;
 	char addr_str[INET6_ADDRSTRLEN];
@@ -241,7 +247,8 @@ int send_ra(struct Interface *iface, struct in6_addr *dest)
 
 			memcpy(&pinfo->nd_opt_pi_prefix, &prefix->Prefix, sizeof(struct in6_addr));
 			print_addr(&prefix->Prefix, addr_str);
-			dlog(LOG_DEBUG, 5, "adding prefix %s to advert for %s", addr_str, iface->Name);
+			dlog(LOG_DEBUG, 5, "adding prefix %s to advert for %s with %u seconds(s) valid lifetime and %u seconds(s) preferred time",
+				addr_str, iface->Name, ntohl(pinfo->nd_opt_pi_valid_time), ntohl(pinfo->nd_opt_pi_preferred_time));
 		}
 
 		prefix = prefix->next;
@@ -397,23 +404,48 @@ int send_ra(struct Interface *iface, struct in6_addr *dest)
 	 */
 
 	if (iface->AdvSourceLLAddress && iface->if_hwaddr_len > 0) {
-		uint8_t *ucp;
-		unsigned int i;
+		/*
+		4.6.1.  Source/Target Link-layer Address
 
-		ucp = (uint8_t *) (buff + len);
+		      0                   1                   2                   3
+		      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+		     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		     |     Type      |    Length     |    Link-Layer Address ...
+		     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
-		send_ra_inc_len(&len, 2 * sizeof(uint8_t));
+		   Fields:
 
-		*ucp++ = ND_OPT_SOURCE_LINKADDR;
-		*ucp++ = (uint8_t) ((iface->if_hwaddr_len + 16 + 63) >> 6);
+		      Type
+				     1 for Source Link-layer Address
+				     2 for Target Link-layer Address
 
-		i = (iface->if_hwaddr_len + 7) >> 3;
+		      Length         The length of the option (including the type and
+				     length fields) in units of 8 octets.  For example,
+				     the length for IEEE 802 addresses is 1 [IPv6-
+				     ETHER].
 
-		buff_dest = len;
+		      Link-Layer Address
+				     The variable length link-layer address.
 
-		send_ra_inc_len(&len, i);
+				     The content and format of this field (including
+				     byte and bit ordering) is expected to be specified
+				     in specific documents that describe how IPv6
+				     operates over different link layers.  For instance,
+				     [IPv6-ETHER].
 
-		memcpy(buff + buff_dest, iface->if_hwaddr, i);
+		*/
+		/* +2 for the ND_OPT_SOURCE_LINKADDR and the length (each occupy one byte) */
+		size_t const sllao_bytes = (iface->if_hwaddr_len / 8) + 2;
+		size_t const sllao_len = (sllao_bytes + 7) / 8;
+		uint8_t *sllao = (uint8_t *) (buff + len);
+
+		send_ra_inc_len(&len, sllao_len * 8);
+
+		*sllao++ = ND_OPT_SOURCE_LINKADDR;
+		*sllao++ = (uint8_t) sllao_len;
+
+		/* if_hwaddr_len is in bits, so divide by 8 to get the byte count. */
+		memcpy(sllao, iface->if_hwaddr, iface->if_hwaddr_len / 8);
 	}
 
 	/*
@@ -445,8 +477,7 @@ int send_ra(struct Interface *iface, struct in6_addr *dest)
 	 * Dynamic Home Agent Address Discovery
 	 */
 
-	if (iface->AdvHomeAgentInfo && (iface->AdvMobRtrSupportFlag || iface->HomeAgentPreference != 0 || iface->HomeAgentLifetime != iface->AdvDefaultLifetime))
-	{
+	if (iface->AdvHomeAgentInfo && (iface->AdvMobRtrSupportFlag || iface->HomeAgentPreference != 0 || iface->HomeAgentLifetime != iface->AdvDefaultLifetime)) {
 		struct HomeAgentInfo ha_info;
 		ha_info.type = ND_OPT_HOME_AGENT_INFO;
 		ha_info.length = 1;
@@ -457,6 +488,47 @@ int send_ra(struct Interface *iface, struct in6_addr *dest)
 		buff_dest = len;
 		send_ra_inc_len(&len, sizeof(ha_info));
 		memcpy(buff + buff_dest, &ha_info, sizeof(ha_info));
+	}
+
+	lowpanco = iface->AdvLowpanCoList;
+
+	/*
+	 * Add 6co option
+	 */
+
+	if (lowpanco) {
+		struct nd_opt_6co *co;
+		co = (struct nd_opt_6co *)(buff + len);
+
+		send_ra_inc_len(&len, sizeof(*co));
+
+		co->nd_opt_6co_type = ND_OPT_6CO;
+		co->nd_opt_6co_len = 3;
+		co->nd_opt_6co_context_len = lowpanco->ContextLength;
+		co->nd_opt_6co_c = lowpanco->ContextCompressionFlag;
+		co->nd_opt_6co_cid = lowpanco->AdvContextID;
+		co->nd_opt_6co_valid_lifetime = lowpanco->AdvLifeTime;
+		co->nd_opt_6co_con_prefix = lowpanco->AdvContextPrefix;
+	}
+
+	abroo = iface->AdvAbroList;
+
+	/*
+	 * Add ABRO option
+	 */
+
+	if (abroo) {
+		struct nd_opt_abro *abro;
+		abro = (struct nd_opt_abro *)(buff + len);
+
+		send_ra_inc_len(&len, sizeof(*abro));
+
+		abro->nd_opt_abro_type = ND_OPT_ABRO;
+		abro->nd_opt_abro_len = 3;
+		abro->nd_opt_abro_ver_low = abroo->Version[1];
+		abro->nd_opt_abro_ver_high = abroo->Version[0];
+		abro->nd_opt_abro_valid_lifetime = abroo->ValidLifeTime;
+		abro->nd_opt_abro_6lbr_address = abroo->LBRaddress;
 	}
 
 	err = really_send(dest, iface->if_index, iface->if_addr, buff, len);

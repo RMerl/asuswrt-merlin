@@ -724,6 +724,16 @@ static const qcsapi_entry qcsapi_entry_table[] =
 	  e_qcsapi_index,
 	  e_qcsapi_unsigned_int
 	},
+	{ e_qcsapi_wifi_get_tx_mcs_per_association,
+	  e_qcsapi_get_api,
+	  e_qcsapi_index,
+	  e_qcsapi_unsigned_int
+	},
+	{ e_qcsapi_wifi_get_rx_mcs_per_association,
+	  e_qcsapi_get_api,
+	  e_qcsapi_index,
+	  e_qcsapi_unsigned_int
+	},
 	{ e_qcsapi_wifi_get_achievable_tx_phy_rate_per_association,
 	  e_qcsapi_get_api,
 	  e_qcsapi_index,
@@ -1001,6 +1011,21 @@ static const qcsapi_entry qcsapi_entry_table[] =
 	},
 	{ e_qcsapi_br_vlan_promisc,
 	  e_qcsapi_set_system_value,
+	  e_qcsapi_none,
+	  e_qcsapi_string
+	},
+	{ e_qcsapi_add_ipff,
+	  e_qcsapi_set_system_value,
+	  e_qcsapi_none,
+	  e_qcsapi_string
+	},
+	{ e_qcsapi_del_ipff,
+	  e_qcsapi_set_system_value,
+	  e_qcsapi_none,
+	  e_qcsapi_string
+	},
+	{ e_qcsapi_get_ipff,
+	  e_qcsapi_get_system_value,
 	  e_qcsapi_none,
 	  e_qcsapi_string
 	},
@@ -1620,7 +1645,34 @@ static const qcsapi_entry qcsapi_entry_table[] =
 	  e_qcsapi_get_api_without_ifname,
 	  e_qcsapi_none,
 	  e_qcsapi_string
-	}
+	},
+	{ e_qcsapi_wifi_get_mlme_stats_per_mac,
+	  e_qcsapi_get_api,
+	  e_qcsapi_none,
+	  e_qcsapi_string,
+	},
+	{ e_qcsapi_wifi_get_mlme_stats_per_association,
+	  e_qcsapi_get_api,
+	  e_qcsapi_index,
+	  e_qcsapi_string,
+	},
+	{ e_qcsapi_wifi_get_mlme_stats_macs_list,
+	  e_qcsapi_get_api,
+	  e_qcsapi_none,
+	  e_qcsapi_string,
+	},
+	{
+	  e_qcsapi_get_nss_cap,
+	  e_qcsapi_get_api,
+	  e_qcsapi_modulation,
+	  e_qcsapi_string
+	},
+	{
+	  e_qcsapi_set_nss_cap,
+	  e_qcsapi_set_api,
+	  e_qcsapi_modulation,
+	  e_qcsapi_string
+	},
 };
 
 static const unsigned int	sizeof_entry_table = sizeof( qcsapi_entry_table ) / sizeof( qcsapi_entry_table[ 0 ] );

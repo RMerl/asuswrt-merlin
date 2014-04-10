@@ -101,6 +101,7 @@ SEP=echo "\033[41;1m   $@   \033[0m"
 #
 # standard packages
 #
+obj-$(RTCONFIG_QTN) += libqcsapi_client
 obj-$(RTCONFIG_DMALLOC) += dmalloc
 
 ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U)$(RTN11P),y)
@@ -274,10 +275,10 @@ else
 obj-$(RTCONFIG_NTFS) += ufsd
 endif
 endif
-ifeq ($(RTCONFIG_TUXERA),y)
-obj-$(RTCONFIG_HFS) += tuxera
-else
-obj-$(RTCONFIG_HFS) += ufsd
+ifeq ($(RTCONFIG_HFS),y)
+obj-$(RTCONFIG_PARAGON_HFS) += ufsd
+obj-$(RTCONFIG_TUXERA_HFS) += tuxera
+obj-$(RTCONFIG_KERNEL_HFSPLUS) += diskdev_cmds-332.14
 endif
 obj-$(RTCONFIG_EBTABLES) += ebtables
 obj-$(RTCONFIG_IPV6) += libdaemon
@@ -429,7 +430,6 @@ endif
 
 obj-$(RTCONFIG_TCPDUMP) += libpcap
 obj-$(RTCONFIG_TCPDUMP) += tcpdump-4.4.0
-obj-$(RTCONFIG_QTN) += libqcsapi_client
 
 # Merlin addons
 obj-n += wol
@@ -1140,7 +1140,7 @@ wb: openssl libxml2 curl-7.21.7
 
 push_log: wb
 
-rc: nvram$(BCMEX) shared libbcmcrypto libdisk $(PUSH_LOG)
+rc: nvram$(BCMEX) shared libbcmcrypto libdisk $(PUSH_LOG) $(if $(RTCONFIG_QTN),libqcsapi_client) $(if $(CONFIG_LIBBCM),libbcm)
 
 bridge/stamp-h1:
 	cd bridge && CFLAGS="-Os -g $(EXTRACFLAGS)" \
@@ -1301,7 +1301,7 @@ miniupnpd-install:
 	$(STRIP) $(INSTALLDIR)/miniupnpd/usr/sbin/miniupnpd
 
 # !!TB
-shared: busybox
+shared: busybox $(if $(RTCONFIG_QTN),libqcsapi_client)
 ifeq ($(RTCONFIG_RALINK),y)
 	make -C wireless_tools wireless.h	
 endif
@@ -1575,7 +1575,7 @@ radvd/stamp-h1:
 	LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections $(EXTRALDFLAGS)" \
 	$(CONFIGURE) --prefix="" --disable-dependency-tracking \
 	DAEMON_CFLAGS="-I$(TOP)/libdaemon" \
-	DAEMON_LIBS="-ldaemon -L$(TOP)/libdaemon/libdaemon/.libs $(EXTRALDFLAGS2)"
+	DAEMON_LIBS="-ldaemon -L$(TOP)/libdaemon/libdaemon/.libs $(EXTRALDFLAGS2) $(if $(RTCONFIG_QTN),-L$(TOP)/libqcsapi_client -lqcsapi_client)"
 	-@$(MAKE) -C radvd clean
 	@touch $@
 
@@ -2470,7 +2470,7 @@ openvpn/stamp-h1:
 	export OPENSSL_SSL_CFLAGS="-I$(TOP)/openssl/include"; \
 	export OPENSSL_SSL_LIBS="-L$(TOP)/openssl -lssl"; \
 	CFLAGS="-O3 -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \
-	LDFLAGS="$(EXTRALDFLAGS) -L$(TOP)/nvram$(BCMEX) -lnvram -L$(TOP)/shared -lshared -L$(TOP)/zlib -lz -L$(TOP)/lzo/src/.libs -L$(TOP)/openpam/lib/libpam/.libs -ffunction-sections -fdata-sections -Wl,--gc-sections" \
+	LDFLAGS="$(EXTRALDFLAGS) -L$(TOP)/nvram$(BCMEX) -lnvram -L$(TOP)/shared -lshared $(if $(RTCONFIG_QTN),-L$(TOP)/libqcsapi_client -lqcsapi_client) -L$(TOP)/zlib -lz -L$(TOP)/lzo/src/.libs -L$(TOP)/openpam/lib/libpam/.libs -ffunction-sections -fdata-sections -Wl,--gc-sections" \
 	CPPFLAGS="-I$(TOP)/lzo/include -I$(TOP)/openpam/include -I$(TOP)/shared -I$(SRCBASE)/include" \
 	IPROUTE="/usr/sbin/ip" \
 	$(CONFIGURE) --prefix=  --enable-iproute2 \
@@ -2588,9 +2588,11 @@ eapd$(BCMEX)-clean:
 	-@cd eapd$(BCMEX)/linux && make clean
 
 lighttpd-1.4.29/stamp-h1:
-	cd lighttpd-1.4.29 && \
-	   ./preconfigure-script \
-	touch $@
+ifneq ($(RTCONFIG_QTN),y)
+	cd lighttpd-1.4.29 && ./preconfigure-script touch $@
+else
+	cd lighttpd-1.4.29 && ./preconfigure-script-qtn touch $@
+endif
 
 lighttpd-1.4.29: shared nvram$(BCMEX) libdisk samba-3.5.8 pcre-8.31 libxml2 sqlite libexif openssl wb push_log lighttpd-1.4.29/stamp-h1
 	$(MAKE) -C lighttpd-1.4.29 $(PARALLEL_BUILD)
@@ -2936,7 +2938,7 @@ expat-2.0.1-clean:
 #avahi-0.6.31
 avahi-0.6.31/stamp-h1: shared nvram$(BCMEX) expat-2.0.1 libdaemon
 	cd $(TOP)/avahi-0.6.31 && \
-	$(CONFIGURE) LDFLAGS="-L$(TOP)/expat-2.0.1/.libs" CFLAGS="-I$(TOP)/expat-2.0.1/lib -I$(TOP)/shared -I$(SRCBASE)/include" --prefix=$(INSTALLDIR)/avahi-0.6.31/usr --with-distro=archlinux --disable-glib --disable-gobject --disable-qt3 --disable-qt4 --disable-gtk --disable-dbus --disable-gdbm --disable-python --disable-pygtk --disable-python-dbus --disable-mono --disable-monodoc --disable-gtk3 --with-xml=none  LIBDAEMON_LIBS="-L$(TOP)/libdaemon/libdaemon/.libs -ldaemon -L$(TOP)/nvram$(BCMEX) -lnvram -L$(TOP)/shared -lshared" LIBDAEMON_CFLAGS="-I$(TOP)/libdaemon" --disable-autoipd --with-xml=expat --disable-stack-protector --with-avahi-user="admin" --with-avahi-group="root" --enable-static=no
+	$(CONFIGURE) LDFLAGS="-L$(TOP)/expat-2.0.1/.libs" CFLAGS="-I$(TOP)/expat-2.0.1/lib -I$(TOP)/shared -I$(SRCBASE)/include" --prefix=$(INSTALLDIR)/avahi-0.6.31/usr --with-distro=archlinux --disable-glib --disable-gobject --disable-qt3 --disable-qt4 --disable-gtk --disable-dbus --disable-expat --disable-gdbm --disable-python --disable-pygtk --disable-python-dbus --disable-mono --disable-monodoc --disable-gtk3 --with-xml=none  LIBDAEMON_LIBS="-L$(TOP)/libdaemon/libdaemon/.libs -ldaemon -L$(TOP)/nvram$(BCMEX) -lnvram -L$(TOP)/shared -lshared $(if $(RTCONFIG_QTN),-L$(TOP)/libqcsapi_client -lqcsapi_client)" LIBDAEMON_CFLAGS="-I$(TOP)/libdaemon" --disable-autoipd --with-xml=expat --disable-stack-protector --with-avahi-user="admin" --with-avahi-group="root"
 	touch $@
 
 avahi-0.6.31: avahi-0.6.31/stamp-h1
@@ -3115,6 +3117,28 @@ email-3.1.3-clean:
 email-3.1.3-install: email-3.1.3
 	install -D email-3.1.3/src/email $(INSTALLDIR)/email-3.1.3/usr/sbin/email
 	$(STRIP) $(INSTALLDIR)/email-3.1.3/usr/sbin/email
+
+#diskdev_cmds-332.14
+diskdev_cmds-332.14:
+	@$(SEP)
+	cd $(TOP)/diskdev_cmds-332.14 && \
+	make -f Makefile.lnx
+
+diskdev_cmds-332.14-install: diskdev_cmds-332.14
+	install -D diskdev_cmds-332.14/newfs_hfs.tproj/newfs_hfs $(INSTALLDIR)/diskdev_cmds-332.14/usr/sbin/mkfs.hfsplus
+	install -D diskdev_cmds-332.14/fsck_hfs.tproj/fsck_hfs $(INSTALLDIR)/diskdev_cmds-332.14/usr/sbin/fsck.hfsplus
+	$(STRIP) $(INSTALLDIR)/diskdev_cmds-332.14/usr/sbin/mkfs.hfsplus
+	$(STRIP) $(INSTALLDIR)/diskdev_cmds-332.14/usr/sbin/fsck.hfsplus
+	cd $(INSTALLDIR)/diskdev_cmds-332.14/usr/sbin && \
+	ln -s mkfs.hfsplus mkfs.hfs && \
+	ln -s fsck.hfsplus fsck.hfs
+
+diskdev_cmds-332.14-clean:
+	cd $(TOP)/diskdev_cmds-332.14 && \
+	make -f Makefile.lnx clean
+	rm -f $(INSTALLDIR)/diskdev_cmds-332.14/usr/sbin/mkfs.hfs 
+	rm -f $(INSTALLDIR)/diskdev_cmds-332.14/usr/sbin/fsck.hfs 
+	
 
 #
 # Generic rules

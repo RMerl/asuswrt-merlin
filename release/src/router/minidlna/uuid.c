@@ -47,6 +47,10 @@ static uint32_t clock_seq;
 static const uint32_t clock_seq_max = 0x3fff; /* 14 bits */
 static int clock_seq_initialized;
 
+#ifndef CLOCK_MONOTONIC
+#define CLOCK_MONOTONIC CLOCK_REALTIME
+#endif
+
 unsigned long long
 monotonic_us(void)
 {

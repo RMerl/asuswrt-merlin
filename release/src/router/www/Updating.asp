@@ -16,6 +16,7 @@
 			|| parent.based_modelid == "RT-AC66U"
 			|| parent.based_modelid == "RT-AC68U"
 			|| parent.based_modelid == "RT-AC68U_V2"
+			|| parent.based_modelid == "DSL-AC68U"
 			|| parent.based_modelid == "RT-AC69U"){		//MODELDEP: RT-AC56S, RT-AC56U, RT-AC66U, RT-AC68U, RT-AC68U_V2, RT-AC69U 2014.01
 			reboot_needed_time += 30;
 			parent.showLoadingBar(reboot_needed_time);
@@ -25,7 +26,7 @@
 			reboot_needed_time += 40;
 			parent.showLoadingBar(reboot_needed_time);
 			reboot_needed_time += 2;
-                        setTimeout("parent.detect_httpd();", reboot_needed_time*1000);
+            setTimeout("parent.detect_httpd();", reboot_needed_time*1000);
 	}else{
 			parent.showLoadingBar(270);
 			setTimeout("parent.detect_httpd();", 272000);		

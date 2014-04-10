@@ -99,7 +99,8 @@ function initial(){
 		$("wl_unit_field").style.display = "none";
 
 		
-	if(based_modelid == "RT-AC68U"){
+	if(based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U" || based_modelid == "RT-AC69U"  
+		|| based_modelid == "RT-AC87U"){
 		if('<% nvram_get("wl_unit"); %>' == '1' && country == "EU")
 			$('dfs_checkbox').style.display = "";
 	}	

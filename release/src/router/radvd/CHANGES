@@ -1,3 +1,12 @@
+2014/03/18	release 1.10.0
+
+2014/03/12	dropped --singleprocess option completely
+		cleaned up some spelling error in the man pages
+
+2014/03/05	6LoWPAN-ND (RFC6775) support <Bhadram>
+
+2014/02/28	Bug fix 1048653 - UnicastOnly option still sends multicast RA
+
 2014/01/10	use -no-strict-aliasing
 
 2013/11/20	Fixed attempt to get multiple values in an ioctl

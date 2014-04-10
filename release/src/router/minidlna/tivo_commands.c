@@ -116,7 +116,7 @@ SendFormats(struct upnphttp *h, const char *sformat)
 }
 
 static char *
-unescape_tag(char *tag)
+tivo_unescape_tag(char *tag)
 {
 	modifyString(tag, "&amp;amp;", "&amp;");
 	modifyString(tag, "&amp;amp;lt;", "&lt;");
@@ -141,7 +141,7 @@ callback(void *args, int argc, char **argv, char **azColName)
 	if( strncmp(class, "item", 4) == 0 )
 	{
 		int flags = 0;
-		unescape_tag(title);
+		tivo_unescape_tag(title);
 		if( strncmp(mime, "audio", 5) == 0 )
 		{
 			flags |= FLAG_NO_PARAMS;
@@ -208,15 +208,15 @@ callback(void *args, int argc, char **argv, char **azColName)
 		{
 			return 0;
 		}
-		strcatf(str, "<Title>%s</Title>", unescape_tag(title));
+		strcatf(str, "<Title>%s</Title>", tivo_unescape_tag(title));
 		if( artist ) {
-			strcatf(str, "<ArtistName>%s</ArtistName>", unescape_tag(artist));
+			strcatf(str, "<ArtistName>%s</ArtistName>", tivo_unescape_tag(artist));
 		}
 		if( album ) {
-			strcatf(str, "<AlbumTitle>%s</AlbumTitle>", unescape_tag(album));
+			strcatf(str, "<AlbumTitle>%s</AlbumTitle>", tivo_unescape_tag(album));
 		}
 		if( genre ) {
-			strcatf(str, "<MusicGenre>%s</MusicGenre>", unescape_tag(genre));
+			strcatf(str, "<MusicGenre>%s</MusicGenre>", tivo_unescape_tag(genre));
 		}
 		if( resolution ) {
 			char *width = strsep(&resolution, "x");
@@ -277,7 +277,7 @@ callback(void *args, int argc, char **argv, char **azColName)
 		                 "<ContentType>x-tivo-container/folder</ContentType>"
 		               "</Content>"
 		             "</Links>",
-		             unescape_tag(title), count, id);
+		             tivo_unescape_tag(title), count, id);
 	}
 	strcatf(str, "</Item>");
 

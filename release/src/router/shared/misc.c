@@ -275,7 +275,7 @@ void reset_ipv6_linklocal_addr(const char *ifname, int flush)
 	static char buf[INET6_ADDRSTRLEN];
 	struct in6_addr addr;
 	struct ifreq ifr;
-	unsigned char *mac;
+	char *mac;
 	int fd;
 
 	if (!ifname ||
@@ -866,7 +866,7 @@ int nvram_get_file(const char *key, const char *fname, int max)
 	n = strlen(p);
 	if (n <= max) {
 		if ((b = malloc(base64_decoded_len(n) + 128)) != NULL) {
-			n = base64_decode(p, b, n);
+			n = base64_decode(p, (unsigned char *) b, n);
 			if (n > 0) r = (f_write(fname, b, n, 0, 0644) == n);
 			free(b);
 		}
@@ -900,7 +900,7 @@ int nvram_set_file(const char *key, const char *fname, int max)
 	r = 0;
 	if (f_read_alloc(fname, &in, max) == max) {
 		if ((out = malloc(base64_encoded_len(max) + 128)) != NULL) {
-			n = base64_encode(in, out, max);
+			n = base64_encode((unsigned char *) in, out, max);
 			out[n] = 0;
 			nvram_set(key, out);
 			free(out);

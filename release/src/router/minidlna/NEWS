@@ -1,3 +1,23 @@
+1.1.2 - Released 06-Mar-2014
+--------------------------------
+- Show client status on our basic presentation page.
+- Add a new force_sort_criteria option, to globally override the SortCriteria value sent by the client.
+- Fix a couple resource leaks.
+- Add configuration include file support.
+- Support DLNA/UPnP-AV searches issued by clients using the Grilo framework.
+- Fix some clients playing artwork instead of movie.
+- Fix bookmarks on Samsung Series E clients.
+- Add an extra folder level if there are multiple media locations.
+- Fix some multicast membership issues with changing network settings.
+- Make max number of children (connections) configurable.
+- Fix choppy playback with some file types on Panasonic clients by increasing the max connection limit.
+
+1.1.1 - Released 01-Nov-2013
+--------------------------------
+- Add network interface monitoring support on Linux.
+- Don't require a configured network interface to start up.
+- Fix some minor spec compliance issues.
+
 1.1.0 - Released 04-April-2013
 --------------------------------
 - Add support for other operating systems.

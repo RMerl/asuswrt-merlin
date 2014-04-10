@@ -36,7 +36,7 @@
 #include <vorbis/codec.h>
 #include <FLAC/metadata.h>
 
-#include "../config.h"
+#include "config.h"
 #ifdef HAVE_ICONV
 #include <iconv.h>
 #endif

@@ -82,7 +82,7 @@ check_usb2()
 {
 	if(usb_busy)
 		return 0;
-	else if((model==MODEL_RTN18U || model==MODEL_RTAC56U||model==MODEL_RTAC56S||model==MODEL_RTAC68U||model==MODEL_RTAC87U) && strlen(nvram_safe_get("usb_led2")) > 0)
+	else if((model==MODEL_RTN18U || model==MODEL_RTAC56U||model==MODEL_RTAC56S||model==MODEL_RTAC68U) && strlen(nvram_safe_get("usb_led2")) > 0)
 		return 1;
 	else
 		return 0;
@@ -93,7 +93,7 @@ check_usb3()
 {
 	if(usb_busy)
 		return 0;
-	else if((model==MODEL_RTN18U || model==MODEL_RTAC56U||model==MODEL_RTAC56S||model==MODEL_RTAC68U||model==MODEL_RTAC87U) && strlen(nvram_safe_get("usb_led1")) > 0)
+	else if((model==MODEL_RTN18U || model==MODEL_RTAC56U||model==MODEL_RTAC56S||model==MODEL_RTAC68U) && strlen(nvram_safe_get("usb_led1")) > 0)
 		return 1;
 	else
 		return 0;
@@ -107,7 +107,7 @@ static void no_blink(int sig)
 	alarmtimer(USBLED_NORMAL_PERIOD, 0);
 	status_usb = -1;
 #ifdef LED_USB3
-	if(model==MODEL_RTN18U || model==MODEL_RTAC56U || model==MODEL_RTAC56S || model==MODEL_RTAC68U || model==MODEL_RTAC87U)
+	if(model==MODEL_RTN18U || model==MODEL_RTAC56U || model==MODEL_RTAC56S || model==MODEL_RTAC68U)
 	{
 		got_usb2 = -1;
 		got_usb3 = -1;
@@ -140,7 +140,7 @@ static void usbled_exit(int sig)
 	alarmtimer(0, 0);
 	status_usb = 0;
 #ifdef LED_USB3
-	if(model==MODEL_RTN18U || model==MODEL_RTAC56U || model==MODEL_RTAC56S || model==MODEL_RTAC68U || model==MODEL_RTAC87U)
+	if(model==MODEL_RTN18U || model==MODEL_RTAC56U || model==MODEL_RTAC56S || model==MODEL_RTAC68U)
 	{
 		got_usb2 = 0;
 		got_usb3 = 0;
@@ -150,7 +150,7 @@ static void usbled_exit(int sig)
 
 	led_control(LED_USB, LED_OFF);
 #ifdef LED_USB3
-	if(model==MODEL_RTN18U || model==MODEL_RTAC56U || model==MODEL_RTAC56S || model==MODEL_RTAC68U || model==MODEL_RTAC87U)
+	if(model==MODEL_RTN18U || model==MODEL_RTAC56U || model==MODEL_RTAC56S || model==MODEL_RTAC68U)
 		led_control(LED_USB3, LED_OFF);
 #endif
 
@@ -166,7 +166,7 @@ static void usbled(int sig)
 	status_usb = usb_status();
 
 #ifdef LED_USB3
-	if(model==MODEL_RTN18U || model==MODEL_RTAC56U || model==MODEL_RTAC56S || model==MODEL_RTAC68U || model==MODEL_RTAC87U){
+	if(model==MODEL_RTN18U || model==MODEL_RTAC56U || model==MODEL_RTAC56S || model==MODEL_RTAC68U){
 		got_usb2_old = got_usb2;
 		got_usb2 = check_usb2();
 		got_usb3_old = got_usb3;
@@ -187,7 +187,7 @@ static void usbled(int sig)
 			)
 	{
 #ifdef LED_USB3
-		if(model==MODEL_RTN18U || model==MODEL_RTAC56U || model==MODEL_RTAC56S || model==MODEL_RTAC68U || model==MODEL_RTAC87U){
+		if(model==MODEL_RTN18U || model==MODEL_RTAC56U || model==MODEL_RTAC56S || model==MODEL_RTAC68U){
 			if(got_usb2 != got_usb2_old){
 				if(got_usb2)
 					led_control(LED_USB, LED_ON);

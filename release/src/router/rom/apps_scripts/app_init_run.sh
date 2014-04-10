@@ -88,9 +88,9 @@ for f in $APPS_RUN_DIR/S*; do
 	[ ! -e "$s" ] && s=$f
 
 	nice_cmd=
-	if [ "$tmp_apps_name" == "downloadmaster" ]; then
-		nice_cmd="nice -n 19"
-	fi
+	#if [ "$tmp_apps_name" == "downloadmaster" ]; then
+	#	nice_cmd="nice -n 19"
+	#fi
 
 	echo "$nice_cmd sh $s $2" | logger -c
 	$nice_cmd sh $s $2
@@ -117,8 +117,8 @@ for f in $APPS_RUN_DIR/S*; do
 	fi
 done
 
-dm2_trans_array=`ps|grep dm2_trans|grep -v grep|awk '{print $1}'`
-for tran in $dm2_trans_array; do
-	ionice -c3 -p $tran
-done
+#dm2_trans_array=`ps|grep dm2_trans|grep -v grep|awk '{print $1}'`
+#for tran in $dm2_trans_array; do
+#	ionice -c3 -p $tran
+#done
 

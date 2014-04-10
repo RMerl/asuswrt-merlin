@@ -33,7 +33,7 @@ extern bool si_arm_setclock(si_t *sih, uint32 armclock, uint32 ddrclock, uint32 
 extern int cpu_turbo_mode;
 
 #ifdef RTAC87U
-#define	PWR_LED_GPIO	(1 << 1)	// GPIO 1
+#define	PWR_LED_GPIO	(1 << 3)	// GPIO 3
 #define	USB_LED_GPIO	(1 << 0)	// GPIO 0
 #define	TURBO_LED_GPIO	(1 << 4)	// GPIO 4
 #define	USB3_LED_GPIO	(1 << 14)	// GPIO 14

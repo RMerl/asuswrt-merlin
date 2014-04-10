@@ -14,6 +14,10 @@ LDFLAGS += -L$(TOP)/curl-7.21.7/lib/.libs -lcurl
 LDFLAGS += -L$(TOP)/libxml2/.libs -lxml2
 LDFLAGS += -L$(TOP)/wb -lws
 
+ifeq ($(RTCONFIG_QTN),y)
+LDFLAGS += -L$(TOP)/libqcsapi_client -lqcsapi_client
+endif
+
 all: $(PROGS)
 
 libpush_log.so: push_log.o

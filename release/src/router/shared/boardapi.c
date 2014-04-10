@@ -453,6 +453,9 @@ int led_control(int which, int mode)
 	return 0;
 }
 
+extern uint32_t get_phy_status(uint32_t portmask);
+extern uint32_t set_phy_ctrl(uint32_t portmask, int ctrl);
+
 int wanport_status(int wan_unit)
 {
 #ifdef RTCONFIG_RALINK

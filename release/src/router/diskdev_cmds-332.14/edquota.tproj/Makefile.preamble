@@ -1,0 +1,113 @@
+###############################################################################
+#  NeXT Makefile.preamble Template
+#  Copyright 1993, NeXT Computer, Inc.
+#
+#  This Makefile is used for configuring the standard app makefiles associated
+#  with ProjectBuilder.  
+#  
+#  Use this template to set attributes for a project, sub-project, bundle, or
+#  palette.  Each node in the project's tree of sub-projects and bundles 
+#  should have it's own Makefile.preamble and Makefile.postamble.
+#
+###############################################################################
+## Configure the flags passed to $(CC) here.  These flags will also be 
+## inherited by all nested sub-projects and bundles.  Put your -I, -D, -U, and
+## -L flags here.  To change the default flags that get passed to ${CC} 
+## (e.g. change -O to -O2), see Makefile.postamble.
+
+# Flags passed to compiler (in addition to -g, -O, etc)
+OTHER_CFLAGS = 
+# Flags passed to ld (in addition to -ObjC, etc.)
+OTHER_LDFLAGS =	
+
+BUNDLELDFLAGS =            # use iff project is a bundle
+PALETTELDFLAGS =           # use iff project is a palette
+
+## Specify which headers in this project should be published to the outside 
+## world in a flat header directory given in PUBLIC_HEADER_DIR (which will be 
+## prepended by DSTROOT, below.  Any subset of these public headers can be
+## precompiled automatically after installation, with extra user-defined flags.
+PUBLIC_HEADER_DIR = 
+PUBLIC_HEADERS =
+PUBLIC_PRECOMPILED_HEADERS =
+PUBLIC_PRECOMPILED_HEADERS_CFLAGS =
+
+## Configure what is linked in at each level here.  Libraries are only used in
+## the final 'app' linking step.  Final 'app' linking is only done via the
+## 'app', 'debug', and 'profile' targets when they are invoked for
+## the top-level app.
+
+# Additional relocatables to be linked in at this level
+OTHER_OFILES = 
+# Additional libs to link apps against ('app' target)
+#OTHER_LIBS = 
+# Additional libs to link apps against ('debug' target)
+OTHER_DEBUG_LIBS = 
+# Additional libs to link apps against ('profile' target)
+OTHER_PROF_LIBS = 
+
+# More 'app' libraries when $(JAPANESE) = "YES"
+OTHER_JAPANESE_LIBS = 
+# More 'debug' libraries when $(JAPANESE) = "YES"
+OTHER_JAPANESE_DEBUG_LIBS = 
+# More 'profile' libs when $(JAPANESE) = "YES"
+OTHER_JAPANESE_PROF_LIBS = 
+
+# If this is a bundle, and you *know* the enclosing application will not
+# be linking with a library which you require in your bundle code, then
+# mention it here so that it gets linked into the bundle.  Note that this
+# is wasteful but sometimes necessary.
+BUNDLE_LIBS = 
+
+## Configure how things get built here.  Additional dependencies, sourcefiles, 
+## derived files, and build order should be specified here.
+
+# Other dependencies of this project
+OTHER_PRODUCT_DEPENDS =	
+# Built *before* building subprojects/bundles
+OTHER_INITIAL_TARGETS = 
+# Other source files maintained by .pre/postamble
+OTHER_SOURCEFILES = 
+# Additional files to be removed by `make clean' 
+OTHER_GARBAGE = 
+# Precompiled headers to be built before any compilation occurs (e.g., draw.p)
+PRECOMPS = 
+
+# Targets to be built before installation
+OTHER_INSTALL_DEPENDS =	
+
+# A virtual root directory (other than /) to be prepended to the $(INSTALLDIR) 
+# passed from ProjectBuilder.
+DSTROOT = 
+
+# Set the following to "YES" if you want the old behavior of recursively
+# cleaning all nested subprojects during 'make clean'.
+CLEAN_ALL_SUBPROJECTS =
+
+## Add more obscure source files here to cause them to be automatically 
+## processed by the appropriate tool.  Note that these files should also be
+## added to "Supporting Files" in ProjectBuilder.  The desired .o files that 
+## result from these files should also be added to OTHER_OFILES above so they
+## will be linked in.
+
+# .msg files that should have msgwrap run on them
+MSGFILES = 
+# .defs files that should have mig run on them
+DEFSFILES = 
+# .mig files (no .defs files) that should have mig run on them
+MIGFILES = 
+
+## Add additional Help directories here (add them to the project as "Other 
+## Resources" in Project Builder) so that they will be compressed into .store
+## files and copied into the app wrapper.  If the help directories themselves
+## need to also be in the app wrapper, then a cp command will need to be added
+## in an after_install target.
+OTHER_HELP_DIRS = 
+
+# Don't add more rules here unless you want the first one to be the default
+# target for make!  Put all your targets in Makefile.postamble.
+
+# To include a version string, project source must exist in a directory named
+# $(NAME).%d[.%d][.%d] and the following line must be uncommented.
+OTHER_GENERATED_OFILES = $(VERS_OFILE)
+-include ../Makefile.include

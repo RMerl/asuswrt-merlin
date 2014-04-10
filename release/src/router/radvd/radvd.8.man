@@ -33,8 +33,9 @@ is the router advertisement daemon for IPv6. It listens to router
 solicitations and sends router advertisements as described in
 "Neighbor Discovery for IP Version 6 (IPv6)" (RFC 4861).
 With these advertisements hosts can automatically configure their
-addresses and some other parameters. They also can choose a default
-router based on these advertisements.
+addresses and some other parameters. It also defines "Neighbor Discovery
+Optimization for IPv6 over Low-Power Wireless Personal Area Networks (6LoWPANs)" (RFC6775).
+They also can choose a default router based on these advertisements.
 
 Note that if debugging is not enabled,
 .B radvd
@@ -61,15 +62,6 @@ and then aborts.
 .TP
 .BR "\-h" , " \-\-help"
 Displays a short usage description and then aborts.
-.TP
-.BR "\-s" , " \-\-singleprocess"
-On Linux if 
-.I username
-is specified, privilege separation is enabled and there will be
-two processes.
-This option disables privilege separation, and as a result,
-the non-privileged radvd process does not have permissions to
-change interface configuration.
 .TP
 .BR "\-c" , " \-\-configtest"
 Test configuration and do startup tests and then exit.
@@ -178,10 +170,11 @@ suggestions please contact Reuben Hawkins <reubenhwk@gmail.com>.
 Pedro Roque	<roque@di.fc.ul.pt>	- wrote first version for Linux
 Lars Fenneberg	<lf@elemental.net>	- previous maintainer
 Nathan Lutchansky	<lutchann@litech.org>	- previous maintainer
-Reuben Hawkins	<reubenhwk@gmail.com>	- current maintainer
+Pekka Savola   <pekkas@netcore.fi>     - previous maintainer
 Craig Metz	<cmetz@inner.net>	- port to NRL's IPv6 code for BSD4.4
 Marko Myllynen	<myllynen@lut.fi>	- RFC 2461 update, Mobile IPv6 support
 Jim Paris	<jim@jtan.com>		- Privilege separation support
-Reuben Hawkins  <reubenhwk@gmail.com>   - Many fixes and cleanups
+Reuben Hawkins  <reubenhwk@gmail.com>   - current maintainer
 Pierre Ossman   <pierre@ossman.eu>      - RFC6106 (DNSSL) support
+Varka Bhadram 	<varkabhadram@gmail.com> - 6LoWPAN-ND (RFC6775) support
 .fi

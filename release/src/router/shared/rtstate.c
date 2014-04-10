@@ -180,6 +180,8 @@ int get_lanports_status(void)
 	return lanport_status();
 }
 
+extern int wanport_status(int wan_unit);
+
 // OR all wan port status
 int get_wanports_status(int wan_unit)
 {

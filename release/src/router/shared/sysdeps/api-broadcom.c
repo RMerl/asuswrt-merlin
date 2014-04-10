@@ -21,11 +21,26 @@
 #include <bcmutils.h>
 #include <bcmendian.h>
 
+#ifdef RTCONFIG_QTN
+#include "qcsapi_output.h"
+#include "qcsapi_rpc_common/client/find_host_addr.h"
+
+#include "qcsapi.h"
+#include "qcsapi_rpc/client/qcsapi_rpc_client.h"
+#include "qcsapi_rpc/generated/qcsapi_rpc.h"
+#include "qcsapi_driver.h"
+#include "call_qcsapi.h"
+
+#define WIFINAME "wifi0"
+#endif
+
 uint32_t gpio_dir(uint32_t gpio, int dir)
 {
 	/* FIXME
 	return bcmgpio_connect(gpio, dir);
 	 */
+
+	return 0;
 }
 
 #define swapportstatus(x) \
@@ -38,6 +53,9 @@ uint32_t gpio_dir(uint32_t gpio, int dir)
 	   ((data & 0x00000c00) >>  2);     \
     *(unsigned int*)&(x) = data;            \
 }
+
+extern uint32_t gpio_read(void);
+extern void gpio_write(uint32_t bitvalue, int en);
 
 uint32_t get_gpio(uint32_t gpio)
 {
@@ -100,32 +118,32 @@ skip:
 
 int get_fa_dump(void)
 {
-        int fd, rev, ret;
-        struct ifreq ifr;
-        et_var_t var;
+	int fd, rev, ret;
+	struct ifreq ifr;
+	et_var_t var;
 
-        fd = socket(AF_INET, SOCK_DGRAM, 0);
-        if (fd < 0) goto skip;
+	fd = socket(AF_INET, SOCK_DGRAM, 0);
+	if (fd < 0) goto skip;
 
-        rev = 0;
-        var.set = 0;
-        var.cmd = IOV_FA_DUMP;
-        var.buf = &rev;
-        var.len = sizeof(rev);
+	rev = 0;
+	var.set = 0;
+	var.cmd = IOV_FA_DUMP;
+	var.buf = &rev;
+	var.len = sizeof(rev);
 
-        memset(&ifr, 0, sizeof(ifr));
-        strcpy(ifr.ifr_name, "eth0");
-        ifr.ifr_data = (caddr_t) &var;
+	memset(&ifr, 0, sizeof(ifr));
+	strcpy(ifr.ifr_name, "eth0");
+	ifr.ifr_data = (caddr_t) &var;
 
-        ret = ioctl(fd, SIOCSETGETVAR, (caddr_t)&ifr);
-        close(fd);
-        if (ret < 0)
-                goto skip;
+	ret = ioctl(fd, SIOCSETGETVAR, (caddr_t)&ifr);
+	close(fd);
+	if (ret < 0)
+		goto skip;
 
-        return rev;
+	return rev;
 
 skip:
-        return 0;
+	return 0;
 }
 
 #endif
@@ -223,8 +241,11 @@ int phy_ioctl(int fd, int write, int phy, int reg, uint32_t *value)
 uint32_t get_phy_status(uint32_t portmask)
 {
 #undef RTN15U_WORKAROUND
-	int fd, i, model;
+	int fd, model;
 	uint32_t value, mask = 0;
+#ifndef BCM5301X
+	int i;
+#endif
 
 	model = get_switch();
 	if (model == SWITCH_UNKNOWN) return 0;
@@ -378,65 +399,64 @@ uint32_t set_phy_ctrl(uint32_t portmask, int ctrl)
 int
 check_crc(char *fname)
 {
-        FILE *fp;
-        int ret = 1;
-        int first_read = 1;
-        unsigned int len, count;
+	FILE *fp;
+	int ret = 1;
+	int first_read = 1;
+	unsigned int len, count;
 
-        void *ref;
-        struct trx_header trx;
-        uint32 crc;
-        static uint32 buf[16*1024];
+	struct trx_header trx;
+	uint32 crc;
+	static uint32 buf[16*1024];
 
-        fp = fopen(fname, "r");
-        if (fp == NULL)
-        {
-                _dprintf("Open trx fail!!!\n");
-                return 0;
-        }
+	fp = fopen(fname, "r");
+	if (fp == NULL)
+	{
+		_dprintf("Open trx fail!!!\n");
+		return 0;
+	}
 
-        /* Read header */
-        ret = fread((unsigned char *) &trx, 1, sizeof(struct trx_header), fp);
-        if (ret != sizeof(struct trx_header)) {
-                ret = 0;
-                _dprintf("read header error!!!\n");
-                goto done;
-        }
+	/* Read header */
+	ret = fread((unsigned char *) &trx, 1, sizeof(struct trx_header), fp);
+	if (ret != sizeof(struct trx_header)) {
+		ret = 0;
+		_dprintf("read header error!!!\n");
+		goto done;
+	}
 
-        /* Checksum over header */
-        crc = hndcrc32((uint8 *) &trx.flag_version,
-                       sizeof(struct trx_header) - OFFSETOF(struct trx_header, flag_version),
-                       CRC32_INIT_VALUE);
+	/* Checksum over header */
+	crc = hndcrc32((uint8 *) &trx.flag_version,
+		       sizeof(struct trx_header) - OFFSETOF(struct trx_header, flag_version),
+		       CRC32_INIT_VALUE);
 
-        for (len = ltoh32(trx.len) - sizeof(struct trx_header); len; len -= count) {
-                if (first_read) {
-                        count = MIN(len, sizeof(buf) - sizeof(struct trx_header));
-                        first_read = 0;
-                } else
-                        count = MIN(len, sizeof(buf));
+	for (len = ltoh32(trx.len) - sizeof(struct trx_header); len; len -= count) {
+		if (first_read) {
+			count = MIN(len, sizeof(buf) - sizeof(struct trx_header));
+			first_read = 0;
+		} else
+			count = MIN(len, sizeof(buf));
 
-                /* Read data */
-                ret = fread((unsigned char *) &buf, 1, count, fp);
-                if (ret != count) {
-                        ret = 0;
-                        _dprintf("read error!\n");
-                        goto done;
-                }
+		/* Read data */
+		ret = fread((unsigned char *) &buf, 1, count, fp);
+		if (ret != count) {
+			ret = 0;
+			_dprintf("read error!\n");
+			goto done;
+		}
 
-                /* Checksum over data */
-                crc = hndcrc32((uint8 *) &buf, count, crc);
-        }
-        /* Verify checksum */
-        //_dprintf("checksum: %u ? %u\n", ltoh32(trx.crc32), crc);
-        if (ltoh32(trx.crc32) != crc) {
-                ret = 0;
-                goto done;
-        }
+		/* Checksum over data */
+		crc = hndcrc32((uint8 *) &buf, count, crc);
+	}
+	/* Verify checksum */
+	//_dprintf("checksum: %u ? %u\n", ltoh32(trx.crc32), crc);
+	if (ltoh32(trx.crc32) != crc) {
+		ret = 0;
+		goto done;
+	}
 
 done:
-        fclose(fp);
+	fclose(fp);
 
-        return ret;
+	return ret;
 }
 
 /*
@@ -448,7 +468,7 @@ int check_imageheader(char *buf, long *filelen)
 {
 	long aligned;
 
-	if(strncmp(buf, IMAGE_HEADER, sizeof(IMAGE_HEADER) - 1) == 0)
+	if (strncmp(buf, IMAGE_HEADER, sizeof(IMAGE_HEADER) - 1) == 0)
 	{
 		memcpy(&aligned, buf + sizeof(IMAGE_HEADER) - 1, sizeof(aligned));
 		*filelen = aligned;
@@ -495,26 +515,52 @@ int check_imagefile(char *fname)
 	for (i--; i >= 0 && version.pid[i] == '\x20'; i--)
 		version.pid[i] = '\0';
 
-        if(!check_crc(fname)) {
-                _dprintf("check crc error!!!\n");
-                return 0;
-        }
+	if (!check_crc(fname)) {
+		_dprintf("check crc error!!!\n");
+		return 0;
+	}
 
 	model = get_model();
 
 	/* compare up to the first \0 or MAX_PID_LEN
 	 * nvram productid or hw model's original productid */
-	if (strncmp(nvram_safe_get("productid"), version.pid, MAX_PID_LEN) == 0 ||
-	    strncmp(get_modelid(model), version.pid, MAX_PID_LEN) == 0)
+	if (strncmp(nvram_safe_get("productid"), (char *) version.pid, MAX_PID_LEN) == 0 ||
+	    strncmp(get_modelid(model), (char *) (char *) version.pid, MAX_PID_LEN) == 0)
 		return 1;
 
 	/* common RT-N12 productid FW image */
 	if ((model == MODEL_RTN12B1 || model == MODEL_RTN12C1 ||
 	     model == MODEL_RTN12D1 || model == MODEL_RTN12VP || model == MODEL_RTN12HP || model == MODEL_RTN12HP_B1 ||model == MODEL_APN12HP) &&
-	     strncmp(get_modelid(MODEL_RTN12), version.pid, MAX_PID_LEN) == 0)
+	     strncmp(get_modelid(MODEL_RTN12), (char *) version.pid, MAX_PID_LEN) == 0)
 		return 1;
 
 	return 0;
+}
+
+char *wl_ifname_qtn(int unit, int subunit)
+{
+	static char tmp[128];
+	char prefix[] = "wlXXXXXXXXXX_";
+	int i, idx = -1;
+
+	for (i = 1; i < 4; i++)
+	{
+		snprintf(prefix, sizeof(prefix), "wl%d.%d_", unit, i);
+
+		if (nvram_match(strcat_r(prefix, "bss_enabled", tmp), "1"))
+			idx++;
+
+		if (i == subunit)
+			break;
+	}
+
+	if (idx == -1)
+		return strdup("");
+	else
+	{
+		sprintf(tmp, "wifi%d", idx + 1);
+		return strdup(tmp);
+	}
 }
 
 int get_radio(int unit, int subunit)
@@ -522,6 +568,35 @@ int get_radio(int unit, int subunit)
 	int n = 0;
 
 	//_dprintf("get radio %x %x %s\n", unit, subunit, nvram_safe_get(wl_nvname("ifname", unit, subunit)));
+
+#ifdef RTCONFIG_QTN
+	int ret;
+	char interface_status = 0;
+
+	if (unit)
+	{
+		if (subunit > 0)
+		{
+			ret = qcsapi_interface_get_status(wl_ifname_qtn(unit, subunit), &interface_status);
+			if (ret < 0)
+			{
+				dbG("qcsapi_interface_get_status error, return: %d\n", ret);
+
+				return 0;
+			}
+			return interface_status;
+		}
+		else
+		{
+			ret = qcsapi_wifi_rfstatus(WIFINAME, (qcsapi_unsigned_int *) &n);
+			if (ret < 0)
+				dbG("qcsapi_wifi_rfstatus error, return: %d\n", ret);
+
+			return n;
+		}
+	}
+	else
+#endif
 
 	return (wl_ioctl(nvram_safe_get(wl_nvname("ifname", unit, subunit)), WLC_GET_RADIO, &n, sizeof(n)) == 0) &&
 		!(n & (WL_RADIO_SW_DISABLE | WL_RADIO_HW_DISABLE));
@@ -544,24 +619,27 @@ void set_radio(int on, int unit, int subunit)
 
 #if defined(RTAC66U) || defined(BCM4352)
 	snprintf(tmp, sizeof(tmp), "%sradio", prefix);
-	if(!strcmp(tmp, "wl1_radio")){
-		if(on){
+	if (!strcmp(tmp, "wl1_radio")) {
+		if (on) {
 			nvram_set("led_5g", "1");
 #ifdef RTCONFIG_LED_BTN
 			if (nvram_get_int("AllLED"))
 #endif
 			led_control(LED_5G, LED_ON);
 		}
-		else{
+		else {
 			nvram_set("led_5g", "0");
 			led_control(LED_5G, LED_OFF);
 		}
 	}
 #endif
 
-	if(subunit>0) {
+	if (subunit > 0) {
+#ifdef RTCONFIG_QTN
+		if (unit) return;
+#endif
 		sprintf(tmpstr, "%d", subunit);
-		if(on) eval("wl", "-i", nvram_safe_get(wl_nvname("ifname", unit, 0)), "bss", "-C", tmpstr, "up");
+		if (on) eval("wl", "-i", nvram_safe_get(wl_nvname("ifname", unit, 0)), "bss", "-C", tmpstr, "up");
 		else eval("wl", "-i", nvram_safe_get(wl_nvname("ifname", unit, 0)), "bss", "-C", tmpstr, "down");
 
 		if (nvram_get_int("led_disable")==1) {
@@ -577,6 +655,16 @@ void set_radio(int on, int unit, int subunit)
 
 #if WL_BSS_INFO_VERSION >= 108
 	n = on ? (WL_RADIO_SW_DISABLE << 16) : ((WL_RADIO_SW_DISABLE << 16) | 1);
+#ifdef RTCONFIG_QTN
+	int ret;
+	if (unit)
+	{
+		ret = qcsapi_wifi_rfenable(WIFINAME, (qcsapi_unsigned_int) on);
+		if (ret < 0)
+			dbG("qcsapi_wifi_rfenable, return: %d\n", ret);
+	}
+	else
+#endif
 	wl_ioctl(nvram_safe_get(wl_nvname("ifname", unit, subunit)), WLC_SET_RADIO, &n, sizeof(n));
 	if (!on) {
 		//led(LED_WLAN, 0);
@@ -595,4 +683,3 @@ void set_radio(int on, int unit, int subunit)
 		led_control(LED_5G, LED_OFF);
 	}
 }
-

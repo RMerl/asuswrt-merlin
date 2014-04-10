@@ -59,7 +59,6 @@ struct option prog_opt[] = {
 	{"chrootdir", 1, 0, 't'},
 	{"version", 0, 0, 'v'},
 	{"help", 0, 0, 'h'},
-	{"singleprocess", 0, 0, 's'},
 	{"nodaemon", 0, 0, 'n'},
 #ifdef HAVE_NETLINK
 	{"disablenetlink", 0, 0, 'L'},
@@ -131,7 +130,7 @@ int main(int argc, char *argv[])
 	pidfile = PATH_RADVD_PID;
 
 	/* parse args */
-#define OPTIONS_STR "d:C:l:m:p:t:u:vhcsn"
+#define OPTIONS_STR "d:C:l:m:p:t:u:vhcn"
 #ifdef HAVE_GETOPT_LONG
 	while ((c = getopt_long(argc, argv, OPTIONS_STR, prog_opt, &opt_idx)) > 0)
 #else
@@ -181,9 +180,6 @@ int main(int argc, char *argv[])
 			break;
 		case 'c':
 			configtest = 1;
-			break;
-		case 's':
-			fprintf(stderr, "privsep is not optional.  This options will be removed in a near future release.");
 			break;
 		case 'n':
 			daemonize = 0;
@@ -464,7 +460,7 @@ void timer_handler(void *data)
 	dlog(LOG_DEBUG, 4, "timer_handler called for %s", iface->Name);
 
 	if (send_ra_forall(iface, NULL) != 0) {
-		return;
+		dlog(LOG_DEBUG, 4, "send_ra_forall failed on interface %s", iface->Name);
 	}
 
 	next = rand_between(iface->MinRtrAdvInterval, iface->MaxRtrAdvInterval);

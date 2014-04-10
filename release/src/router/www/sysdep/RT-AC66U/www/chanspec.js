@@ -359,7 +359,7 @@ function change_channel(obj){
 		}
 	}
 	
-	if(based_modelid == "RT-AC68U"){
+	if( (based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || based_modelid == "DSL-AC68U" || based_modelid == "RT-AC87U") && country == "EU"){
 		if(document.form.wl_channel.value  == 0){
 			$('dfs_checkbox').style.display = "";
 			document.form.acs_dfs.disabled = false;

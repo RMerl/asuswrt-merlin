@@ -1124,12 +1124,10 @@ cprintf("No USB Modem!\n");
 			return;
 		}
 #ifdef RTCONFIG_USB_MODEM_PIN
-		if(nvram_match("g3err", "1")) {
-			if(nvram_match("pinerr", "1")) {
+		if(nvram_match("g3err_pin", "1")){
 cprintf("PIN error previously!\n");
-				update_wan_state(prefix, WAN_STATE_STOPPED, WAN_STOPPED_REASON_PINCODE_ERR);
-				return;
-			}
+			update_wan_state(prefix, WAN_STATE_STOPPED, WAN_STOPPED_REASON_PINCODE_ERR);
+			return;
 		}
 #endif
 TRACE_PT("3g begin.\n");
@@ -1164,6 +1162,9 @@ TRACE_PT("3g begin.\n");
 			char *pppd_argv[] = { "/usr/sbin/pppd", "call", "3g", "nochecktime", NULL};
 
 			if(!nvram_match("stop_conn_3g", "1")){
+				if(strcmp(nvram_safe_get("stop_rewrite_3g_conf"), "1"))
+					eval("find_modem_node.sh");
+
 				_eval(pppd_argv, NULL, 0, NULL);
 
 				update_wan_state(prefix, WAN_STATE_CONNECTING, 0);
@@ -2711,7 +2712,11 @@ void convert_wan_nvram(char *prefix, int unit)
 	if (strlen(macbuf)!=0 && strcasecmp(macbuf, "FF:FF:FF:FF:FF:FF"))
 		nvram_set(strcat_r(prefix, "hwaddr", tmp), macbuf);
 #ifdef CONFIG_BCMWL5
+#ifdef RTCONFIG_RGMII_BRCM5301X
+	else nvram_set(strcat_r(prefix, "hwaddr", tmp), nvram_safe_get("lan_hwaddr"));
+#else
 	else nvram_set(strcat_r(prefix, "hwaddr", tmp), nvram_safe_get("et0macaddr"));
+#endif
 #elif defined RTCONFIG_RALINK
 	else nvram_set(strcat_r(prefix, "hwaddr", tmp), nvram_safe_get("et1macaddr"));
 #endif
@@ -2754,7 +2759,11 @@ void dumparptable()
 		strcpy(mac_clone[mac_num++], macbuf);
 
 	// try original mac
+#ifdef RTCONFIG_RGMII_BRCM5301X
+	strcpy(mac_clone[mac_num++], nvram_safe_get("lan_hwaddr"));
+#else
 	strcpy(mac_clone[mac_num++], nvram_safe_get("et0macaddr"));
+#endif
 
 	if (mac_num)
 	{

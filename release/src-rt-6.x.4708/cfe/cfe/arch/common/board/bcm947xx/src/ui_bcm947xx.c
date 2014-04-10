@@ -53,7 +53,7 @@ extern void FANON(void);
 
 /* define GPIOs*/
 #ifdef RTAC87U
-#define PWR_LED_GPIO	(1 << 1)	// GPIO 1, and used for WPS LED
+#define PWR_LED_GPIO	(1 << 3)	// GPIO 3
 #define RST_BTN_GPIO	(1 << 11)	// GPIO 11
 #define	TURBO_LED_GPIO	(1 << 4)	// GPIO 4
 #define WPS_BTN_GPIO	(1 << 2)	// GPIO 2

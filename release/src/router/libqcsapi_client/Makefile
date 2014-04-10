@@ -29,7 +29,7 @@ LIB_OBJS = \
 	qcsapi_rpc/generated/qcsapi_rpc_clnt_adapter.o	\
 
 #TARGETS = c_rpc_qcsapi_sample qcsapi_sockrpc qcsapi_sockrpc_static qcsapi_pcie qcsapi_pcie_static $(LIB_REALNAME)
-TARGETS = c_rpc_qcsapi_sample qcsapi_sockrpc
+TARGETS = c_rpc_qcsapi_sample qcsapi_sockrpc $(LIB_REALNAME)
 
 all: $(TARGETS)
 

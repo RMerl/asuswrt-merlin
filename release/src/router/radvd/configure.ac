@@ -31,6 +31,7 @@ case "$target" in
                 arch=bsd44
         ;;
         *darwin*)
+		AC_DEFINE([__APPLE_USE_RFC_2292], [1], [OS X 10.9 won't build radvd without this])
 		AC_MSG_RESULT([bsd44 (darwin)])
                 arch=bsd44
         ;;

@@ -44,26 +44,6 @@
 #include "sql.h"
 #include "log.h"
 
-#ifndef FF_PROFILE_H264_BASELINE
-#define FF_PROFILE_H264_BASELINE 66
-#endif
-#ifndef FF_PROFILE_H264_MAIN
-#define FF_PROFILE_H264_MAIN 77
-#endif
-#ifndef FF_PROFILE_H264_HIGH
-#define FF_PROFILE_H264_HIGH 100
-#endif
-#define FF_PROFILE_SKIP -100
-
-#if LIBAVCODEC_VERSION_MAJOR < 53
-#define AVMEDIA_TYPE_AUDIO CODEC_TYPE_AUDIO
-#define AVMEDIA_TYPE_VIDEO CODEC_TYPE_VIDEO
-#endif
-
-#if LIBAVUTIL_VERSION_INT < ((50<<16)+(13<<8)+0)
-#define av_strerror(x, y, z) snprintf(y, z, "%d", x)
-#endif
-
 #define FLAG_TITLE	0x00000001
 #define FLAG_ARTIST	0x00000002
 #define FLAG_ALBUM	0x00000004
@@ -242,33 +222,48 @@ parse_nfo(const char *path, metadata_t *m)
 	val = GetValueFromNameValueList(&xml, "title");
 	if( val )
 	{
+		char *esc_tag = unescape_tag(val, 1);
 		val2 = GetValueFromNameValueList(&xml, "episodetitle");
-		if( val2 )
-			xasprintf(&m->title, "%s - %s", val, val2);
-		else
-			m->title = strdup(val);
+		if( val2 ) {
+			char *esc_tag2 = unescape_tag(val2, 1);
+			xasprintf(&m->title, "%s - %s", esc_tag, esc_tag2);
+			free(esc_tag2);
+		} else {
+			m->title = escape_tag(esc_tag, 1);
+		}
+		free(esc_tag);
 	}
 
 	val = GetValueFromNameValueList(&xml, "plot");
-	if( val )
-		m->comment = strdup(val);
+	if( val ) {
+		char *esc_tag = unescape_tag(val, 1);
+		m->comment = escape_tag(esc_tag, 1);
+		free(esc_tag);
+	}
 
 	val = GetValueFromNameValueList(&xml, "capturedate");
-	if( val )
-		m->date = strdup(val);
+	if( val ) {
+		char *esc_tag = unescape_tag(val, 1);
+		m->date = escape_tag(esc_tag, 1);
+		free(esc_tag);
+	}
 
 	val = GetValueFromNameValueList(&xml, "genre");
 	if( val )
 	{
 		free(m->genre);
-		m->genre = strdup(val);
+		char *esc_tag = unescape_tag(val, 1);
+		m->genre = escape_tag(esc_tag, 1);
+		free(esc_tag);
 	}
 
 	val = GetValueFromNameValueList(&xml, "mime");
 	if( val )
 	{
 		free(m->mime);
-		m->mime = strdup(val);
+		char *esc_tag = unescape_tag(val, 1);
+		m->mime = escape_tag(esc_tag, 1);
+		free(esc_tag);
 	}
 
 	ClearNameValueList(&xml);
@@ -659,28 +654,27 @@ GetImageMetadata(const char *path, char *name)
 		else
 		{
 			thumb = 1;
-			//- 20130708 Sungmin add			
+			//- 20130708 Sungmin add
 			if(ed->data && ed->size)
-			{				
-				char* art_file;				
-				if( !thumb_cache_exists(path, &art_file) )				
-				{					
-					char cache_dir[MAXPATHLEN];					
-					strncpyt(cache_dir, art_file, sizeof(cache_dir));					
+			{
+				char* art_file;
+				if( !thumb_cache_exists(path, &art_file) )
+				{
+					char cache_dir[MAXPATHLEN];
+					strncpyt(cache_dir, art_file, sizeof(cache_dir));
 					make_dir(dirname(cache_dir), S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH);
-				   
+
 					FILE *thumb = fopen(art_file, "wb");
 					//DPRINTF(E_WARN, L_METADATA, " * cache_dir: %s\n", cache_dir);
 					//DPRINTF(E_WARN, L_METADATA, " * thumbnail: %s\n", art_file);
 					if(thumb)
-					{						
-						fwrite(ed->data, 1, ed->size, thumb);						
-						fclose(thumb);					
+					{
+						fwrite(ed->data, 1, ed->size, thumb);
+						fclose(thumb);
 					}
 				}
 				free(art_file);
 			}
-
 		}
 	}
 	//DEBUG DPRINTF(E_DEBUG, L_METADATA, " * thumbnail: %d\n", thumb);
@@ -1080,6 +1074,7 @@ GetVideoMetadata(const char *path, char *name)
 					switch( vc->profile )
 					{
 						case FF_PROFILE_H264_BASELINE:
+						case FF_PROFILE_H264_CONSTRAINED_BASELINE:
 							off += sprintf(m.dlna_pn+off, "BL_");
 							if( vc->width  <= 352 &&
 							    vc->height <= 288 &&
@@ -1102,6 +1097,7 @@ GetVideoMetadata(const char *path, char *name)
 						case FF_PROFILE_H264_MAIN:
 							off += sprintf(m.dlna_pn+off, "MP_");
 							if( vc->profile != FF_PROFILE_H264_BASELINE &&
+							    vc->profile != FF_PROFILE_H264_CONSTRAINED_BASELINE &&
 							    vc->profile != FF_PROFILE_H264_MAIN )
 							{
 								DPRINTF(E_DEBUG, L_METADATA, "Unknown AVC profile %d; assuming MP. [%s]\n",
@@ -1205,6 +1201,7 @@ GetVideoMetadata(const char *path, char *name)
 
 					switch( vc->profile ) {
 					case FF_PROFILE_H264_BASELINE:
+					case FF_PROFILE_H264_CONSTRAINED_BASELINE:
 						if( vc->width  <= 352 &&
 						    vc->height <= 288 )
 						{

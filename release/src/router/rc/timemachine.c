@@ -54,7 +54,11 @@ int generate_afp_config(char *mpname)
 
 	sprintf(afp_config, "%s/%s", AFP_CONFIG_PATH, AFP_CONFIG_FN);
 
+#ifdef RTCONFIG_RGMII_BRCM5301X
+	strcpy(et0macaddr, nvram_safe_get("lan_hwaddr"));
+#else
 	strcpy(et0macaddr, nvram_safe_get("et0macaddr"));
+#endif
 
 	/* Generate afp configuration file */
 	if (!(fp = fopen(afp_config, "w"))) {

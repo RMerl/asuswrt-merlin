@@ -1,0 +1,42 @@
+####	set path variable #####
+cur_dir=`pwd`									### current directory
+router_dir=$cur_dir/..
+mipsel_path=$TOOLCHAIN								### mipsel tool-chain path
+uclib=$TOOLCHAIN/lib								### mipsel lib path 
+uclib_inc=$TOOLCHAIN/include							### mipsel include path
+sqlite_dir=$cur_dir/../sqlite
+sqlite_inc=$sqlite_dir
+sqlite_lib=$sqlite_dir/.libs
+user=`echo $HOME`								### /home/XXXXX
+echo $cur_dir
+
+PCRE_VER=8.31
+
+####	Set compiler variable ####
+export CFLAGS="-I$cur_dir/../pcre-$PCRE_VER -I$uclib_inc -I$cur_dir/../sqlite -I$cur_dir/../curl-7.21.7/include -I$router_dir/../include -I$router_dir/nvram${BCMEX} -I$router_dir/shared -I$router_dir/libdisk -DHAVE_OPENSSL_SSL_H=1 -DHAVE_LIBSSL=1 -DEMBEDDED_EANBLE=1"
+export LIBS="-L$uclib -L$router_dir/shared -lshared -L$router_dir/nvram${BCMEX} -lnvram -L$router_dir/libqcsapi_client -lqcsapi_client -L$router_dir/libdisk -ldisk -lpthread  -L$router_dir/openssl -lcrypto -lssl -L$router_dir/curl-7.21.7/lib/.libs -lcurl -L$router_dir/libxml2/.libs -lxml2 -lpthread"
+export LDFLAGS="-L$uclib -ldl -L$cur_dir/../pcre-$PCRE_VER/.libs -lpcre -L$cur_dir/../libxml2/.libs -lxml2 -L$router_dir/openssl -L$cur_dir/../curl-7.21.7/lib/.libs"
+export XML_CFLAGS="-I$cur_dir/../libxml2/include"
+export XML_LIBS="-L$cur_dir/../libxml2/.libs -lxml2"
+export SQLITE_CFLAGS="-I$cur_dir/../sqlite"
+export SQLITE_LIBS="-L$cur_dir/../sqlite/.libs -lsqlite3"
+export CURL_CFLAGS="-I$cur_dir/../curl-7.21.7/include"
+export CURL_LIBS="-L$cur_dir/../curl-7.21.7/lib/.libs -lcurl"
+export PCRE_LIB="-L$cur_dir/../pcre-$PCRE_VER/.libs -lpcre"
+export PCRECONFIG="$cur_dir/../pcre-$PCRE_VER/pcre-config"
+export SSL_LIB="-L$router_dir/openssl -lcrypto -lssl"
+#export SSL_LIB="-L$router_dir/openssl -lcrypto -lssl -L$router_dir/shared -lshared -L$router_dir/nvram -lnvram"
+#export SSL_LIB="-L$router_dir/shared -lshared"
+#export SHARED_LIBS="-L$router_dir/shared -lshared"
+$CONFIGURE --prefix=$cur_dir/_inst \
+--with-pcre PCRECONFIG="$cur_dir/../pcre-$PCRE_VER/pcre-config" \
+--with-smbdav-props \
+--with-openssl=$router_dir/openssl \
+--with-openssl-includes=$router_dir/openssl/include/openssl \
+--with-openssl-libs=$router_dir/openssl/ \
+--with-smbdav-locks=yes \
+--with-libsmbclient=$cur_dir/../samba-3.5.8/source3 \
+--without-zlib \
+--without-bzip2 \
+--enable-shared \
+--disable-static

@@ -49,10 +49,29 @@ EH0*/
 #include <qcsapi_rpc/client/qcsapi_rpc_client.h>
 #include <qcsapi_rpc/generated/qcsapi_rpc.h>
 
+static int client_qcsapi_get_udp_retry_timeout(int *argc, char ***argv)
+{
+	int timeout = -1;
+
+	if (argc && argv && *argc >= 2 && strcmp((*argv)[1], "--udp-retry-timeout") == 0) {
+		timeout = atoi((const char *)(*argv)[2]);
+
+		/* move program argv[0] */
+		(*argv)[2] = (*argv)[0];
+
+		/* skip over --host <arg> args */
+		*argc = *argc - 2;
+		*argv = &(*argv)[2];
+	}
+
+	return timeout;
+}
+
 int main(int argc, char **argv)
 {
 	int ret;
 	const char *host;
+	int udp_retry_timeout;
 	CLIENT *clnt;
 	struct qcsapi_output output;
 
@@ -64,9 +83,18 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
+	udp_retry_timeout = client_qcsapi_get_udp_retry_timeout(&argc, &argv);
+
 	clnt = clnt_create(host, QCSAPI_PROG, QCSAPI_VERS, "udp");
 	if (clnt == NULL) {
 		clnt = clnt_create(host, QCSAPI_PROG, QCSAPI_VERS, "tcp");
+	} else {
+		if (udp_retry_timeout>0) {
+			struct timeval value;
+			value.tv_sec = (time_t)udp_retry_timeout;
+			value.tv_usec = (suseconds_t)0;
+			clnt_control(clnt, CLSET_RETRY_TIMEOUT, (char *)&value);
+		}
 	}
 
 	if (clnt == NULL) {

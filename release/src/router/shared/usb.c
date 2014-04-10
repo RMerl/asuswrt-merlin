@@ -96,9 +96,9 @@ char *detect_fs_type(char *device)
 	/* detect ext2/3/4 */
 	else if (buf[0x438] == 0x53 && buf[0x439] == 0xEF)
 	{
-		if(check_magic(&buf[0x45c], "ext3_chk"))
+		if(check_magic((char *) &buf[0x45c], "ext3_chk"))
 			return "ext3";
-		else if(check_magic(&buf[0x45c], "ext4_chk"))
+		else if(check_magic((char *) &buf[0x45c], "ext4_chk"))
 			return "ext4";
 		else
 			return "ext2";
@@ -534,12 +534,12 @@ void *xmalloc(size_t siz)
 {
 	return (malloc(siz));
 }
-
+#if 0
 static void *xrealloc(void *old, size_t size)
 {
 	return realloc(old, size);
 }
-
+#endif
 ssize_t full_read(int fd, void *buf, size_t len)
 {
 	return read(fd, buf, len);

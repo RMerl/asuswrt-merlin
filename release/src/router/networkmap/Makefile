@@ -10,6 +10,10 @@ ifeq ($(RTCONFIG_BCMARM),y)
 LDFLAGS += -lgcc_s
 endif
 
+ifeq ($(RTCONFIG_QTN),y)
+LDFLAGS += -L$(TOP)/libqcsapi_client -lqcsapi_client
+endif
+
 include $(SRCBASE)/.config
 
 ifneq ($(findstring DSL,$(BUILD_NAME)),)

@@ -43,7 +43,6 @@ static const struct {
 	const char * name;
 } optionids[] = {
 	{ UPNPIFNAME, "network_interface" },
-	{ UPNPLISTENING_IP, "listening_ip" },
 	{ UPNPPORT, "port" },
 	{ UPNPPRESENTATIONURL, "presentation_url" },
 	{ UPNPNOTIFY_INTERVAL, "notify_interval" },
@@ -62,7 +61,9 @@ static const struct {
 	{ ENABLE_TIVO, "enable_tivo" },
 	{ ENABLE_DLNA_STRICT, "strict_dlna" },
 	{ ROOT_CONTAINER, "root_container" },
-	{ USER_ACCOUNT, "user" }
+	{ USER_ACCOUNT, "user" },
+	{ FORCE_SORT_CRITERIA, "force_sort_criteria" },
+	{ MAX_CONNECTIONS, "max_connections" }
 };
 
 int
@@ -90,12 +91,6 @@ readoptionsfile(const char * fname)
 	if(!(hfile = fopen(fname, "r")))
 		return -1;
 
-	if(ary_options != NULL)
-	{
-		free(ary_options);
-		num_options = 0;
-	}
-
 	while(fgets(buffer, sizeof(buffer), hfile))
 	{
 		linenum++;
@@ -110,7 +105,7 @@ readoptionsfile(const char * fname)
 				t--;
 			}
 		}
-       
+
 		/* skip leading whitespaces */
 		name = buffer;
 		while(isspace(*name))
@@ -152,8 +147,11 @@ readoptionsfile(const char * fname)
 
 		if(id == UPNP_INVALID)
 		{
-			fprintf(stderr, "parsing error file %s line %d : %s=%s\n",
-			        fname, linenum, name, value);
+			if (strcmp(name, "include") == 0)
+				readoptionsfile(value);
+			else
+				fprintf(stderr, "parsing error file %s line %d : %s=%s\n",
+				        fname, linenum, name, value);
 		}
 		else
 		{

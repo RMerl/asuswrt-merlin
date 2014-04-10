@@ -193,7 +193,7 @@ get_real_mac(char *mac, int maclen)
 	if (ptr == NULL)
 		return -1;
 
-	ether_atoe(ptr, mac);
+	ether_atoe(ptr, (unsigned char *) mac);
 	return 0;
 }
 
@@ -210,13 +210,13 @@ get_wlmacstr_by_unit(char *unit)
 	if (!macaddr)
 		return NULL;
 
-	return macaddr;
+	return (unsigned char *) macaddr;
 }
 
 int
 get_lan_mac(unsigned char *mac)
 {
-	unsigned char *lanmac_str = nvram_get("lan_hwaddr");
+	char *lanmac_str = nvram_get("lan_hwaddr");
 
 	if (mac)
 		memset(mac, 0, 6);

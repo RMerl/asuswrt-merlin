@@ -40,6 +40,7 @@ fi
 autocheck_option=
 autofix_option=
 autofix=`nvram get apps_state_autofix`
+fs_mod=`nvram get usb_hfs_mod`
 
 log_file=`_get_fsck_logfile $2`
 log_option="> $log_file 2>&1"
@@ -48,9 +49,17 @@ if [ "$autofix" == "1" ]; then
 	if [ "$1" == "ntfs" ]; then
 		autocheck_option="-a"
 		autofix_option="-f"
-	elif [ "$1" == "hfs" ] || [ "$1" == "hfs+j" ] || [ "$1" == "hfs+jx" ]; then
-		autocheck_option="-a"
-		autofix_option="-f"
+	elif [ "$1" == "hfs" ] || [ "$1" == "hfsplus" ] || [ "$1" == "thfsplus" ] || [ "$1" == "hfs+j" ] || [ "$1" == "hfs+jx" ]; then
+		if [ "$fs_mod" == "open" ]; then
+			autocheck_option=
+			autofix_option="-f"
+		elif [ "$fs_mod" == "paragon" ]; then
+			autocheck_option="-a"
+			autofix_option="-f"
+		elif [ "$fs_mod" == "tuxera" ]; then
+			autocheck_option=
+			autofix_option=
+		fi
 	else
 		autocheck_option=
 		autofix_option=p
@@ -59,9 +68,17 @@ else
 	if [ "$1" == "ntfs" ]; then
 		autocheck_option="-a"
 		autofix_option=
-	elif [ "$1" == "hfs" ] || [ "$1" == "hfs+j" ] || [ "$1" == "hfs+jx" ]; then
-		autocheck_option="-a"
-		autofix_option=
+	elif [ "$1" == "hfs" ] || [ "$1" == "hfsplus" ] || [ "$1" == "thfsplus" ] || [ "$1" == "hfs+j" ] || [ "$1" == "hfs+jx" ]; then
+		if [ "$fs_mod" == "open" ]; then
+			autocheck_option="-q"
+			autofix_option=
+		elif [ "$fs_mod" == "paragon" ]; then
+			autocheck_option="-a"
+			autofix_option=
+		elif [ "$fs_mod" == "tuxera" ]; then
+			autocheck_option=
+			autofix_option=
+		fi
 	else
 		autocheck_option=n
 		autofix_option=
@@ -82,12 +99,18 @@ if [ "$1" == "ntfs" ]; then
 			break;
 		fi
 	done
-elif [ "$1" == "hfs" ] || [ "$1" == "hfs+j" ] || [ "$1" == "hfs+jx" ]; then
+elif [ "$1" == "hfs" ] || [ "$1" == "hfsplus" ] || [ "$1" == "thfsplus" ] || [ "$1" == "hfs+j" ] || [ "$1" == "hfs+jx" ]; then
 	c=0
 	RET=1
 	while [ ${c} -lt 4 -a ${RET} -ne 0 ] ; do
 		c=$((${c} + 1))
-		eval chkhfs $autocheck_option $autofix_option --verbose $2 $log_option
+		if [ "$fs_mod" == "open" ]; then
+			eval fsck.hfsplus $autocheck_option $autofix_option $2 $log_option
+		elif [ "$fs_mod" == "paragon" ]; then
+			eval chkhfs $autocheck_option $autofix_option --verbose $2 $log_option
+		elif [ "$fs_mod" == "tuxera" ]; then
+			eval fsck_hfs $autocheck_option $autofix_option $2 $log_option
+		fi
 		RET=$?
 		if [ ${RET} -ge 251 -a ${RET} -le 254 ] ; then
 			break;

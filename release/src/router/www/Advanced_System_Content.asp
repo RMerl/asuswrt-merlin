@@ -365,7 +365,7 @@ function validForm(){
 		document.form.misc_httpsport_x.focus();
 		return false;
 	}
-	else if(!validate_range_sp(document.form.http_autologout, 10, 999))
+	else if(!validate_range_sp(document.form.http_autologout, 10, 999, '<% nvram_get("http_autologout"); %>'))
 		return false;
 
 	return true;

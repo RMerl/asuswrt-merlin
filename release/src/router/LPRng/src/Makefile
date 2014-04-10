@@ -97,6 +97,11 @@ CFLAGS:= \
 USER_OBJS := 
 LDFLAGS   := -L$(TOP)/shared -lshared -L$(TOP)/nvram$(BCMEX) -lnvram
 
+include ../../common.mak
+ifeq ($(RTCONFIG_QTN),y)
+LDFLAGS += -L$(TOP)/libqcsapi_client -lqcsapi_client
+endif
+
 FILTER_DIR = ${libexecdir}/filters
 LPD_DIR    = ${sbindir}
 

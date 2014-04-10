@@ -2844,7 +2844,11 @@ void start_upnp(void)
 				if ((upnp_port < 0) || (upnp_port >= 0xFFFF)) upnp_port = 0;
 				char *lanip = nvram_safe_get("lan_ipaddr");
 				char *lanmask = nvram_safe_get("lan_netmask");
+#ifdef RTCONFIG_RGMII_BRCM5301X
+				strcpy(et0macaddr, nvram_safe_get("lan_hwaddr"));
+#else
 				strcpy(et0macaddr, nvram_safe_get("et0macaddr"));
+#endif
 				if (strlen(et0macaddr))
 					for (i = 0; i < strlen(et0macaddr); i++)
 						et0macaddr[i] = tolower(et0macaddr[i]);;
@@ -3087,7 +3091,11 @@ int generate_mdns_config()
 
 	sprintf(avahi_config, "%s/%s", AVAHI_CONFIG_PATH, AVAHI_CONFIG_FN);
 
+#ifdef RTCONFIG_RGMII_BRCM5301X
+	strcpy(et0macaddr, nvram_safe_get("lan_hwaddr"));
+#else
 	strcpy(et0macaddr, nvram_safe_get("et0macaddr"));
+#endif
 
 	/* Generate avahi configuration file */
 	if (!(fp = fopen(avahi_config, "w"))) {
@@ -3303,20 +3311,6 @@ int stop_norton(void)
 
 #endif /* __CONFIG_NORTON__ */
 
-#ifdef RTCONFIG_QTN
-int reset_qtn(void)
-{
-	system("cp /rom/qtn/* /tmp/");
-        eval("ifconfig", "br0:0", "1.1.1.1", "netmask", "255.255.255.0");
-        sleep(1);
-        eval("tftpd");
-        led_control(BTN_QTN_RESET, LED_ON);
-        sleep(1);
-        led_control(BTN_QTN_RESET, LED_OFF);
-}
-
-#endif
-
 
 int
 start_services(void)
@@ -3417,10 +3411,6 @@ start_services(void)
 
 #if defined(RTCONFIG_RALINK) && defined(RTCONFIG_WIRELESSREPEATER)
 	apcli_start();
-#endif
-
-#ifdef RTCONFIG_QTN
-	reset_qtn();
 #endif
 
 #ifdef RTCONFIG_SAMBASRV

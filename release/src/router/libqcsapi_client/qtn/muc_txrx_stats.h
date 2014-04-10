@@ -243,6 +243,10 @@ struct muc_tx_stats {
 	uint32_t	pppc_scale_rollback;	/* tx scale roll back because scale index over step */
 	uint32_t	pppc_0_gput;		/* times pppc comparing goodput and both are zero */
 	uint32_t	tx_max_power;
+	uint32_t	nc_csr_read_count;	/* number of times Node Cache was read */
+	uint32_t	nc_csr_write_count;	/* number of times Node Cache was written to */
+	uint32_t	nc_csr_done_watermark;	/* Node cache done retries high watermark */
+	uint32_t	nc_csr_watermark_count; /* Number of times read retries reached max */
 };
 
 /**

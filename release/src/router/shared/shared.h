@@ -566,4 +566,8 @@ extern void add_wan_phy(char *phy);
 /* semaphore.c */
 extern void init_spinlock(void);
 
+/* misc.c */
+extern int is_psta(int unit);
+extern int is_psr(int unit);
+
 #endif

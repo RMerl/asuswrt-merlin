@@ -546,7 +546,6 @@ struct dhcp_lease {
   unsigned char *clid;   /* clientid */
   char *hostname, *fqdn; /* name from client-hostname option or config */
   char *old_hostname;    /* hostname before it moved to another lease */
-  char *ven_id;		 /* vendor id */
   int flags;
   time_t expires;        /* lease expiry */
 #ifdef HAVE_BROKEN_RTC
