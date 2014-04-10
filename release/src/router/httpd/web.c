@@ -5073,29 +5073,29 @@ apply_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 		else if(!strcmp(current_url, "Main_Netstat_Content.asp") && (
 			strncasecmp(system_cmd, "netstat", 7) == 0
 		)){
-			strcpy(SystemCmd, system_cmd);
+			strncpy(SystemCmd, system_cmd, sizeof(SystemCmd));
 		}
 		else if(!strcmp(current_url, "Main_Analysis_Content.asp") && (
 			   strncasecmp(system_cmd, "ping", 4) == 0
 			|| strncasecmp(system_cmd, "traceroute", 10) == 0
 			|| strncasecmp(system_cmd, "nslookup", 8) == 0
 		)){
-			strcpy(SystemCmd, system_cmd);
+			strncpy(SystemCmd, system_cmd, sizeof(SystemCmd));
 		}
 		else if(!strcmp(current_url, "Main_WOL_Content.asp") && (
 			strncasecmp(system_cmd, "ether-wake", 10) == 0
 		)){
-			strcpy(SystemCmd, system_cmd);
+			strncpy(SystemCmd, system_cmd, sizeof(SystemCmd));
 		}
 		else if(!strcmp(current_url, "Main_AdmStatus_Content.asp") && (
 			strncasecmp(system_cmd, "run_telnetd", 11) == 0
 		)){
-			strcpy(SystemCmd, system_cmd);
+			strncpy(SystemCmd, system_cmd, sizeof(SystemCmd));
 		}
 		else if(!strcmp(current_url, "Main_ConnStatus_Content.asp") && (
 			strncasecmp(system_cmd, "netstat-nat", 11) == 0
 		)){
-			strcpy(SystemCmd, system_cmd);
+			strncpy(SystemCmd, system_cmd, sizeof(SystemCmd));
 		}
 		else{
 			_dprintf("[httpd] Invalid SystemCmd!\n");
