@@ -426,7 +426,7 @@ function applyRule(){
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_wait" value="3">
-<input type="hidden" name="action_script" value="restart_time">
+<input type="hidden" name="action_script" value="">
 <input type="hidden" name="wollist" value="<% nvram_get("wollist"); %>">
 </form>
 
