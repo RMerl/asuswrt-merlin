@@ -114,7 +114,7 @@ function detect_firmware(){
 
 function detect_update(){
 	
-	if(sw_mode != "1" | (link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2")){
+	if(sw_mode != "1" || (link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2")){
 		//setCookie("after_check", 1, 365);
   	document.start_update.action_mode.value="apply";
   	document.start_update.action_script.value="start_webs_update";  	
