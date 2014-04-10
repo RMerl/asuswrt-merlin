@@ -475,7 +475,7 @@ tabtitle[8] = new Array("", "<#menu5_7_2#>", "<#menu5_7_4#>", "<#menu5_7_3#>", "
 tabtitle[9] = new Array("", "<#Network_Analysis#>", "Netstat", "<#NetworkTools_WOL#>");
 tabtitle[10] = new Array("", "QoS", "<#traffic_monitor#>");
 tabtitle[11] = new Array("", "<#Parental_Control#>", "<#YandexDNS#>", "DNS Filtering");
-tabtitle[12] = new Array("", "Sysinfo", "Other Settings", "Run Cmd");
+tabtitle[12] = new Array("", "Sysinfo", "Other Settings");
 
 var tablink = new Array();
 tablink[0] = new Array("", "Advanced_Wireless_Content.asp", "Advanced_WWPS_Content.asp", "Advanced_WMode_Content.asp", "Advanced_ACL_Content.asp", "Advanced_WSecurity_Content.asp", "Advanced_WAdvanced_Content.asp", "Advanced_Wireless_Survey.asp");
@@ -490,7 +490,7 @@ tablink[8] = new Array("", "Main_LogStatus_Content.asp", "Main_WStatus_Content.a
 tablink[9] = new Array("", "Main_Analysis_Content.asp", "Main_Netstat_Content.asp", "Main_WOL_Content.asp");
 tablink[10] = new Array("", "QoS_EZQoS.asp", "Main_TrafficMonitor_realtime.asp", "Main_TrafficMonitor_last24.asp", "Main_TrafficMonitor_daily.asp", "Main_TrafficMonitor_monthly.asp", "Main_TrafficMonitor_devrealtime.asp", "Main_TrafficMonitor_devdaily.asp", "Main_TrafficMonitor_devmonthly.asp", "Advanced_QOSUserPrio_Content.asp", "Advanced_QOSUserRules_Content.asp");
 tablink[11] = new Array("", "ParentalControl.asp", "YandexDNS.asp", "DNSFilter.asp");
-tablink[12] = new Array("", "Tools_Sysinfo.asp", "Tools_OtherSettings.asp", "Tools_RunCmd.asp");
+tablink[12] = new Array("", "Tools_Sysinfo.asp", "Tools_OtherSettings.asp");
 
 //Level 2 Menu
 menuL2_title = new Array("", "<#menu5_1#>", "<#menu5_2#>", "<#menu5_3#>", "<#menu5_4#>", "IPv6", "VPN", "<#menu5_5#>", "<#menu5_6#>", "<#System_Log#>", "<#Network_Tools#>");

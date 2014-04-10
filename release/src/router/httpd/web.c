@@ -5187,9 +5187,6 @@ apply_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 		)){
 			strcpy(SystemCmd, system_cmd);
 		}
-		else if(!strcmp(current_url, "Tools_RunCmd.asp")){
-			strcpy(SystemCmd, system_cmd);
-		}
 		else{
 			_dprintf("[httpd] Invalid SystemCmd!\n");
 			strcpy(SystemCmd, "");
