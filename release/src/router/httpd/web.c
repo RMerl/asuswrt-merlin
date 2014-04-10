@@ -200,7 +200,7 @@ char *groupItem[MAX_GROUP_ITEM];
 char urlcache[128];
 char *next_host;
 int delMap[MAX_GROUP_COUNT];
-char SystemCmd[64];
+char SystemCmd[128];
 char UserID[32]="";
 char UserPass[32]="";
 char ProductID[32]="";
