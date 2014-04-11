@@ -3,19 +3,26 @@ Asuswrt-Merlin - build 374.41 (xx-xxxx-2014)
 
 About
 -----
-Asuswrt is the firmware developed by Asus for their newer routers.  They 
-are also porting it to some of their older models, like the RT-56U and 
-RT-N16.  While originally based on Tomato-RT, Asus has disabled some of 
-the original Tomato features, and added others.
+Asuswrt is the name of the common firmware Asus has developed 
+for their various router models.  Originally forked from 
+Tomato, it has since grown into a very different product, removing 
+some more technical features that were part of Tomato, but 
+also adding new original features such as support for dual WANs.
 
-Asuswrt-merlin is a customized version, which I am developing.
-The goal is to do some bugfixes and minor enhancements to Asus's 
-firmware, without targeting at full-blown advanced featuresets such as 
-provided by excellent projects like Tomato or DD-WRT.  Some of the 
-features that had been disabled by Asus have also been re-enabled.
-This aims to be a more restrained alternative for those who prefer to 
-stay closer to the original firmware, with limited risks of seeing new 
-features bring in new stability issues.  I value stability over 
+Asuswrt-merlin is a customized version of Asus's firmware. The goal is 
+to provide bugfixes and minor enhancements to Asus's firmware, with also 
+a few occasional feature additions.  This is done while retaining 
+the look and feel of the original firmware, and also ensuring that 
+the two codebases remain close enough so it will remain 
+possible to keep up with any new features brought by Asus in the 
+original firmware.
+
+This project's goal is NOT to develop yet another firmware filled with 
+many features that are rarely used by home users - that is already covered 
+by other excellent projects such as Tomato or DD-WRT.
+
+This more conservative approach will also help ensuring the highest 
+level of stability possible.  Priority is given to stability over 
 performance, and performance over features.
 
 
@@ -32,7 +39,7 @@ Supported devices are:
 NOTE: all the "R" versions (for example RT-N66R) are the same as their 
 "U" counterparts, they are just different packages aimed at large 
 retailers.  The firmware is 100% compatible with both U and R versions 
-of the routers.
+of the routers.  Same with the "W" variants that are simply white.
 
 
 Features
@@ -41,7 +48,7 @@ Here is a list of features that Asuswrt-merlin brings over the original
 firmware:
 
 System:
-   - Based on 3.0.0.4.374_4887 sources from Asus
+   - Based on 3.0.0.4.374_5047 sources (from RT-AC68U) from Asus
    - Various bugfixes and optimizations
    - Some components were updated to newer versions, for improved
      stability and security
@@ -59,6 +66,7 @@ Disk sharing:
    - Disk spindown after user-configurable inactivity timeout
    - NFS sharing (through webui)
    - Improved compatibility with 3TB+ and Advanced Format HDDs
+   - Allow or disable WAN access to the FTP server
 
 Networking:
    - Force acting as a Master Browser
@@ -96,7 +104,7 @@ A few features that first debuted in Asuswrt-Merlin have since been
 integrated/enabled in the official firmware:
 
 - 64K NVRAM for the RT-N66U
-- HTTPS
+- HTTPS webui
 - Turning WPS button into a radio on/off toggle
 - Use shorter share names (folder name only)
 - WakeOnLan web interface (with user-entered preset targets)
@@ -119,8 +127,8 @@ by flashing a firmware downloaded from Asus's website.
 NOTE: resetting to factory default after flashing is 
 strongly recommended for the following cases:
 
-- Switching between an SDK5 build and a regular build (RT-N66U)
-- Coming from Tomato/DD-WRT/OpenWRT firmwares
+- Updating from a firmware version that is more than 3 releases older
+- Switching from a Tomato/DD-WRT/OpenWRT firmware
 
 If upgrading from anything older and you experience issues, then 
 consider doing a factory default reset then as well.
@@ -565,21 +573,25 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 374.41 (xx-xxxx-2014)
-   - NEW: Merged with Asus's 374_4887 GPL.  Notable changes:
+   - NEW: Merged with Asus's 374_5047 GPL.  Notable changes:
        * Fixed RT-AC68U random reboots
-       * More security fixes in the web server
+       * Additionnal security fixes
        * Improved Media server, SMB and FTP webui
+       * minidlna and radvd updates
 
-   - NEW: Enabled PCP support in miniupnpd.
+   - NEW: PCP support in miniupnpd.
    - NEW: Option to allow/deny FTP access from WAN.  Default is to
           reject WAN connections.  The option can be found on the
-          USB Servers -> Misc page.
+          USB Servers -> FTP Share
    - NEW: Option to control web redirection while Internet is 
           down (configurable on the WAN page).
-   - CHANGED: Upgraded miniupnpd to 1.8.20140310.
+   - CHANGED: Upgraded miniupnpd to 1.8.20140401.
    - CHANGED: Disk idle exclusion now supports up to 9 disks.
-   - FIXED: Language dropdown not properly shown with non-ASCII 
-            alphabets.
+   - FIXED: WOL wasn't working.
+   - FIXED: Replaced webui glue with permanent concrete.  It won't
+            fall again.
+   - FIXED: Language dropdown not properly shown with 8-bit 
+            characters.
    - FIXED: Filter out neighbour solicitation flood on Comcast's 
             IPv6 network which would result in log spam from the 
             tables getting filled.  The filter is enabled by 
@@ -591,14 +603,17 @@ History
            were entered
   - FIXED: webui would die for some users when accessing the VPN Server 
            config page and there were connected OpenVPN clients
-  - FIXED: Unable to enter a negative RSSI on the roaming assistant
-           section (Asus bug in 4887)
-  - FIXED: Couldn't obtain the list of active connections under 
-           System Log -> Connections (Asus bug in 4887)
   - FIXED: Added missing iptables-save on ARM platform (AC56, AC68)
+  - FIXED: nvram factory default reset would sometime fail on MIPS
+           devices (N16, N66, AC66) (Patch by ryzhov_al)
   - REMOVED: The Media server database location is no longer
              configurable, as we've switched to Asus's new 
              automatic location selection.
+  - REMOVED: Removed the Run Cmd page as it was a security
+             risk.  This is also needed to keep in line with 
+             recent security fixes Asus applied to the
+             httpd backend to limit what external processes
+             it can run.
 
 
 374.40 (6-March-2014)
@@ -1864,7 +1879,38 @@ I want to give my special thanks to Asus for showing an interest in
 this project, and also providing me with support when needed.  Also, 
 thank you everyone who has donated through Paypal.  Much appreciated!
 
-Logo designed by r00t4rd3d.
+Finally, special thanks to r00t4rd3d for designing the Asuswrt-Merlin 
+logo.
+
+
+
+Disclaimer
+----------
+This is the part where you usually put a lot of legalese stuff that nobody 
+reads. I'm not a lawyer, so I'll just make it simple, using my own words 
+rather than some pre-crafted text that will bore you to death and that 
+nobody but a highly paid lawyer would even understand anyway:
+
+I take no responsibility for issues caused by this project. I do my best to 
+ensure that everything works fine. If something goes wrong, my apologies.
+
+Copyrights belong to the appropriate individuals/entities, under the appropriate 
+licences. GPL code is covered by GPL, proprietary code is (c)Copyright their 
+respective owners, yadda yadda.
+
+I try my best to honor the licences (as far as I can understand them, as a 
+normal human being). Anything GPL or otherwise open-sourced that I modify 
+will see my changes published to Github at some point. A release might get 
+delayed if I'm working using pre-release code. If it's GPL, it will eventually 
+be published - no need to send a volley of legal threats at me.
+
+In any other cases not covered, Common Sense prevails, and I shall also make use 
+of Good Will.
+
+Concerning privacy:
+
+This firmware does not contact me back in any way whatsoever. Not even through 
+any update checker - the only update code there is Asus's.
 
 
 --- 
