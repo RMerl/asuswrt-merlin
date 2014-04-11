@@ -646,17 +646,21 @@ define RouterOptions
 			echo "RTCONFIG_NTFS3G=y" >>$(1); \
 		fi; \
 		if [ "$(HFS)" != "" ]; then \
-			sed -i "/RTCONFIG_HFS/d" $(1); \
-			echo "RTCONFIG_HFS=y" >>$(1); \
 			if [ "$(HFS)" = "open" ]; then \
 				sed -i "/RTCONFIG_KERNEL_HFSPLUS/d" $(1); \
 				echo "RTCONFIG_KERNEL_HFSPLUS=y" >>$(1); \
+	                        sed -i "/RTCONFIG_HFS/d" $(1); \
+	                        echo "RTCONFIG_HFS=y" >>$(1); \
 			elif [ "$(HFS)" = "paragon" ]; then \
 				sed -i "/RTCONFIG_PARAGON_HFS/d" $(1); \
 				echo "RTCONFIG_PARAGON_HFS=y" >>$(1); \
+	                        sed -i "/RTCONFIG_HFS/d" $(1); \
+	                        echo "RTCONFIG_HFS=y" >>$(1); \
 			elif [ "$(HFS)" = "tuxera" ]; then \
 				sed -i "/RTCONFIG_TUXERA_HFS/d" $(1); \
 				echo "RTCONFIG_TUXERA_HFS=y" >>$(1); \
+	                        sed -i "/RTCONFIG_HFS/d" $(1); \
+	                        echo "RTCONFIG_HFS=y" >>$(1); \
 			fi; \
 		fi; \
 		if [ "$(UFSDDEBUG)" = "y" ]; then \
