@@ -16,7 +16,6 @@
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/detect.js"></script>
-<script type="text/javascript" src="/merlin.js"></script>
 <script>
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
@@ -89,11 +88,6 @@ function applyRule(){
         if(document.form.usb_fs_ntfs_sparse.value != "<% nvram_get("usb_fs_ntfs_sparse"); %>"){
         		FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
       	}
-
-	if (getRadioValue(document.form.ftp_wanac) != "<% nvram_get("ftp_wanac"); %>") {
-		document.form.action_script.value += ";restart_firewall";
-	}
-
         showLoading();
 				document.form.submit();
      }
@@ -217,8 +211,8 @@ function done_validating(action){
                                                 <input type="text" name="computer_name" id="computer_name" class="input_15_table" maxlength="15" value="<% nvram_get("computer_name"); %>">
                                         </td>
                                 </tr>
-				
-                                <tr>
+                        
+                        				<tr>
                                         <th>
                                             <a class="hintstyle" href="javascript:void(0);" onClick="openHint(17,3);"><#ShareNode_WorkGroup_itemname#></a>
                                         </th>
@@ -264,13 +258,6 @@ function done_validating(action){
                                                 </select>
                                         </td>
                                 </tr>
-                                <tr>
-					<th>Allow FTP access from WAN</th>
-					<td>
-						<input type="radio" name="ftp_wanac" class="input" value="1" <% nvram_match_x("", "ftp_wanac", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="ftp_wanac" class="input" value="0" <% nvram_match_x("", "ftp_wanac", "0", "checked"); %>><#checkbox_No#>
-					</td>
-				</tr>
 
 				<tr id = "ntfs_sparse_files" style="">
 					<th>NTFS Sparse Files support</th>

@@ -37,6 +37,7 @@ var PROTOCOL = "ftp";
 
 var NN_status = get_cifs_status();  // Network-Neighborhood
 var FTP_status = get_ftp_status(); // FTP
+var FTP_WAN_status = <% nvram_get("ftp_wanac"); %>;
 var AM_to_cifs = get_share_management_status("cifs");  // Account Management for Network-Neighborhood
 var AM_to_ftp = get_share_management_status("ftp");  // Account Management for FTP
 
@@ -413,6 +414,21 @@ function resultOfCreateAccount(){
 	refreshpage();
 }
 
+function switchWanStatus(state){
+
+	showLoading();
+	document.form.ftp_wanac.value = state;
+	document.form.action_script.value = "restart_firewall";
+	document.form.action_wait.value = "5";
+	document.form.flag.value = "nodetect";
+	document.form.action_mode.value = "apply";
+	document.form.submit();
+}
+
+function resultOfSwitchWanStatus(){
+        refreshpage(1);
+}
+
 function onEvent(){
 	// account action buttons
 	if(get_manage_type(PROTOCOL) == 1 && accounts.length < 6){
@@ -626,6 +642,8 @@ function unload_body(){
 <input type="hidden" name="action_script" value="">
 <input type="hidden" name="action_wait" value="">
 <input type="hidden" name="current_page" value="Advanced_AiDisk_ftp.asp">
+<input type="hidden" name="ftp_wanac" value="<% nvram_get("ftp_wanac"); %>">
+<input type="hidden" name="flag" value="">
 </form>
 
 <table width="983" border="0" align="center" cellpadding="0" cellspacing="0" class="content">
@@ -711,6 +729,28 @@ function unload_body(){
 						</div>	
 					</td>
 				</tr>										
+
+				<tr>
+				<th>Enable WAN access</th>
+					<td>
+						<div class="left" style="width:94px; float:left; cursor:pointer;" id="radio_wan_ftp_enable"></div>
+						<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
+							<script type="text/javascript">
+								$j('#radio_wan_ftp_enable').iphoneSwitch(FTP_WAN_status,
+									function() {
+										switchWanStatus(1);
+									},
+									function() {
+										switchWanStatus(0);
+									},
+									{
+										switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
+									}
+								);
+							</script>
+						</div>
+					</td>
+				</tr>
 			</table>
 			
 
