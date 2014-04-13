@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 374.41 (xx-xxxx-2014)
-============================================
+Asuswrt-Merlin - build 374.41 Beta 1 (13-Apr-2014)
+==================================================
 
 About
 -----
@@ -572,7 +572,7 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-374.41 (xx-xxxx-2014)
+374.41 Beta 1 (13-Apr-2014)
    - NEW: Merged with Asus's 374_5047 GPL.  Notable changes:
        * Fixed RT-AC68U random reboots
        * Additionnal security fixes
