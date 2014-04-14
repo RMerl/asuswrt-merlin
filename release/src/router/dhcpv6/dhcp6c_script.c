@@ -463,9 +463,6 @@ client6_script(scriptpath, state, optinfo)
 				}
 			}
 		}
-
-		for (i = 0; i < envc; i++)
-			dprintf(LOG_DEBUG, FNAME, "%s", envp[i]);
 	}
 
 	/* launch the script */
