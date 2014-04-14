@@ -71,6 +71,7 @@ static char nispserver_str[] = "new_nisp_servers";
 static char nispname_str[] = "new_nisp_name";
 static char bcmcsserver_str[] = "new_bcmcs_servers";
 static char bcmcsname_str[] = "new_bcmcs_name";
+static char iapdprefix_str[] = "new_iapd_prefix";
 static char vlifetime_str[] = "new_valid_lifetime";
 static char plifetime_str[] = "new_preferred_lifetime";
 
@@ -80,13 +81,13 @@ client6_script(scriptpath, state, optinfo)
 	int state;
 	struct dhcp6_optinfo *optinfo;
 {
-	int i, dnsservers, ntpservers, dnsnamelen, envc, elen, ret = 0;
+	int i, dnsservers, ntpservers, dnsnamelen, envc, elen, elen2, ret = 0;
 	int sipservers, sipnamelen;
 	int nisservers, nisnamelen;
 	int nispservers, nispnamelen;
 	int bcmcsservers, bcmcsnamelen;
-	int lifetimes;
-	char **envp, *s, *s2;
+	int iapd_prefix;
+	char **envp, *s, *s2, *s3;
 	char reason[] = "REASON=NBI";
 	struct dhcp6_listval *v, *sv;
 	pid_t pid, wpid;
@@ -107,7 +108,7 @@ client6_script(scriptpath, state, optinfo)
 	nispnamelen = 0;
 	bcmcsservers = 0;
 	bcmcsnamelen = 0;
-	lifetimes = 0;
+	iapd_prefix = 0;
 	envc = 2;     /* we at least include the reason and the terminator */
 
 	/* count the number of variables */
@@ -161,19 +162,18 @@ client6_script(scriptpath, state, optinfo)
 	/*
 	 * Copy lifetimes so advertisements can include them.
 	 * This is required by RFC 3633 section 12.1.
-	 * TODO: How to handle multiple prefixes?
 	 */
 	for (v = TAILQ_FIRST(&optinfo->iapd_list); v;
 	    v = TAILQ_NEXT(v, link)) {
 		for (sv = TAILQ_FIRST(&v->sublist); sv;
 		    sv = TAILQ_NEXT(sv, link)) {
 			if (sv->type == DHCP6_LISTVAL_PREFIX6) {
-				lifetimes++;
+				iapd_prefix++;
 			}
 		}
 	}
-	/* Valid and preferred lifetimes */
-	envc += lifetimes ? 2 : 0;
+	/* Prefix, valid and preferred lifetimes */
+	envc += iapd_prefix ? 3 : 0;
 
 	/* allocate an environments array */
 	if ((envp = malloc(sizeof (char *) * envc)) == NULL) {
@@ -401,9 +401,9 @@ client6_script(scriptpath, state, optinfo)
 		}
 	}
 
-	if (lifetimes) {
+	if (iapd_prefix) {
 		elen = sizeof (vlifetime_str) +
-		    (10 + 1) * lifetimes + 1;
+		    (10 + 1) * iapd_prefix + 1;
 		if ((s = envp[i++] = malloc(elen)) == NULL) {
 			dprintf(LOG_NOTICE, FNAME,
 			    "failed to allocate strings for valid lifetime");
@@ -420,12 +420,26 @@ client6_script(scriptpath, state, optinfo)
 		}
 		memset(s2, 0, elen);
 		snprintf(s2, elen, "%s=", plifetime_str);
+
+		elen2 = sizeof (iapdprefix_str) + 
+		    (INET6_ADDRSTRLEN + 4 + 1) * iapd_prefix + 1;
+		if ((s3 = envp[i++] = malloc(elen2)) == NULL) {
+			dprintf(LOG_NOTICE, FNAME,
+			    "failed to allocate strings for prefix and length");
+			ret = -1;
+			goto clean;
+		}
+		memset(s3, 0, elen2);
+		snprintf(s3, elen2, "%s=", iapdprefix_str);
+
 		for (v = TAILQ_FIRST(&optinfo->iapd_list); v;
 		    v = TAILQ_NEXT(v, link)) {
 			for (sv = TAILQ_FIRST(&v->sublist); sv;
 			    sv = TAILQ_NEXT(sv, link)) {
 				if (sv->type == DHCP6_LISTVAL_PREFIX6) {
 					char lifetime[11];
+					char plen[4];
+					char *addr;
 					/* Valid lifetime */
 					snprintf(lifetime, sizeof(lifetime),
 					    "%u", sv->val_prefix6.vltime);
@@ -436,10 +450,22 @@ client6_script(scriptpath, state, optinfo)
 					    "%u", sv->val_prefix6.pltime);
 					strlcat(s2, lifetime, elen);
 					strlcat(s2, " ", elen);
-					break;
+					/* Prefix */
+					addr =
+					    in6addr2str(&sv->val_prefix6.addr,0);
+					strlcat(s3, addr, elen2);
+					strlcat(s3, "/", elen2);
+					/* Prefix length, 3 chars or less */
+					snprintf(plen, sizeof(plen), "%d",
+					    sv->val_prefix6.plen);
+					strlcat(s3, plen, elen2);
+					strlcat(s3, " ", elen2);
 				}
 			}
 		}
+
+		for (i = 0; i < envc; i++)
+			dprintf(LOG_DEBUG, FNAME, "%s", envp[i]);
 	}
 
 	/* launch the script */
