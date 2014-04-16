@@ -71,7 +71,7 @@ else
 	cp -f webs_scripts/nozip_webs_upgrade.sh $(INSTALLDIR)/usr/sbin/webs_upgrade.sh
 	cp -f webs_scripts/nozip_webs_update.sh $(INSTALLDIR)/usr/sbin/webs_update.sh
 endif
-	cp -f others/usbtest.sh $(INSTALLDIR)/usr/sbin/usbtest.sh
+#	cp -f others/usbtest.sh $(INSTALLDIR)/usr/sbin/usbtest.sh
 
 	# remove comments, compress whitespace
 	sed 's/#.*//g;s/[ \t]\+/ /g;s/^[ \t]*//;s/[ \t]*$$//;/^$$/d' < rom/etc/services > $(INSTALLDIR)/rom/etc/services

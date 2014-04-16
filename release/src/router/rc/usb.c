@@ -2922,8 +2922,8 @@ void start_nas_services(int force)
 		return;
 	}
 
-	if(check_if_dir_exist("/mnt"))
-		eval("/usr/sbin/usbtest.sh");
+//	if(check_if_dir_exist("/mnt"))
+//		eval("/usr/sbin/usbtest.sh");
 
 	if(!check_if_dir_empty("/mnt"))
 	{
