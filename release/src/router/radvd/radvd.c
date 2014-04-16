@@ -88,11 +88,13 @@ volatile int sighup_received = 0;
 volatile int sigterm_received = 0;
 volatile int sigint_received = 0;
 volatile int sigusr1_received = 0;
+volatile int sigusr2_received = 0;
 
 void sighup_handler(int sig);
 void sigterm_handler(int sig);
 void sigint_handler(int sig);
 void sigusr1_handler(int sig);
+void sigusr2_handler(int sig);
 void timer_handler(void *data);
 void config_interface(void);
 void kickoff_adverts(void);
@@ -335,12 +337,17 @@ int main(int argc, char *argv[])
 	signal(SIGTERM, sigterm_handler);
 	signal(SIGINT, sigint_handler);
 	signal(SIGUSR1, sigusr1_handler);
+	signal(SIGUSR2, sigusr2_handler);
 
 	config_interface();
 	kickoff_adverts();
 	main_loop();
-	flog(LOG_INFO, "sending stop adverts", pidfile);
-	stop_adverts();
+	if (!sigusr2_received) {
+		flog(LOG_INFO, "sending stop adverts", pidfile);
+		stop_adverts();
+	} else {
+		flog(LOG_INFO, "not sending stop adverts", pidfile);
+	}
 	if (daemonize) {
 		flog(LOG_INFO, "removing %s", pidfile);
 		unlink(pidfile);
@@ -432,10 +439,11 @@ void main_loop(void)
 			dlog(LOG_INFO, 3, "poll returned early: %s", strerror(errno));
 		}
 
-		if (sigterm_received || sigint_received) {
-			flog(LOG_WARNING, "Exiting, sigterm or sigint received.\n");
+		if (sigterm_received || sigint_received || sigusr2_received) {
+			flog(LOG_WARNING, "Exiting, sigterm or sigint or sig usr2 received.\n");
 			break;
 		}
+
 
 		if (sighup_received) {
 			dlog(LOG_INFO, 3, "sig hup received.\n");
@@ -527,6 +535,8 @@ void stop_adverts(void)
 
 	/*
 	 *      send final RA (a SHOULD in RFC4861 section 6.2.5)
+	 *	if AdvSendAdvertisements becomes False or if interface is disable or if system is being shut down
+	 *	when restarting radvd, the method does not need to be called in all cases
 	 */
 
 	for (iface = IfaceList; iface; iface = iface->next) {
@@ -651,6 +661,18 @@ void sigusr1_handler(int sig)
 	signal(SIGUSR1, sigusr1_handler);
 
 	sigusr1_received = 1;
+}
+
+void sigusr2_handler(int sig)
+{
+	/* Linux has "one-shot" signals, reinstall the signal handler */
+	signal(SIGUSR2, sigusr2_handler);
+
+	++sigusr2_received;
+
+	if (sigusr2_received > 1) {
+		abort();
+	}
 }
 
 void reset_prefix_lifetimes(void)

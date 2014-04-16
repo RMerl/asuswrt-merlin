@@ -1075,6 +1075,8 @@ void start_dhcp6s(void)
 }
 
 static pid_t pid_radvd = -1;
+static void stop_radvd_only(void);
+static void stop_radvd_without_stop_advertisement(void);
 
 void start_radvd(void)
 {
@@ -1090,8 +1092,6 @@ void start_radvd(void)
 		notify_rc("start_radvd");
 		return;
 	}
-
-	stop_radvd();
 
 	stop_dhcp6s();
 
@@ -1116,7 +1116,7 @@ void start_radvd(void)
 		if (!(*prefix) || (strlen(prefix) <= 0)) prefix = "::";
 
 		// Create radvd.conf
-		if ((f = fopen("/etc/radvd.conf", "w")) == NULL) return;
+		if ((f = fopen("/etc/radvd.conf", "w")) == NULL) { stop_radvd_only(); return; }
 #if 0
 		ip = (char *)ipv6_router_address(NULL);
 #else
@@ -1199,6 +1199,8 @@ void start_radvd(void)
 #if 0
 		f_write_string("/proc/sys/net/ipv6/conf/all/forwarding", "1", 0, 0);
 #endif
+
+		stop_radvd_without_stop_advertisement();
 		// Start radvd
 		argc = 1;
 		argv[argc++] = "-u";
@@ -1215,6 +1217,8 @@ void start_radvd(void)
 		if (!nvram_contains_word("debug_norestart", "radvd")) {
 			pid_radvd = -2;
 		}
+	} else {
+		stop_radvd_only();
 	}
 }
 
@@ -1226,9 +1230,22 @@ void stop_radvd(void)
 	}
 
 	stop_dhcp6s();
+	stop_radvd_only();
+}
 
+static void stop_radvd_only(void)
+{
 	pid_radvd = -1;
 	killall_tk("radvd");
+#if 0
+	f_write_string("/proc/sys/net/ipv6/conf/all/forwarding", "0", 0, 0);
+#endif
+}
+
+static void stop_radvd_without_stop_advertisement(void)
+{
+	pid_radvd = -1;
+	killall("radvd", SIGUSR2);
 #if 0
 	f_write_string("/proc/sys/net/ipv6/conf/all/forwarding", "0", 0, 0);
 #endif
