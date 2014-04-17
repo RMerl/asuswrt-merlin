@@ -122,7 +122,7 @@ function hideClients_Block(){
 function gen_modeselect(name, value, onchange){
 	var code = "";
 	code +='<select class="input_option" name="'+name+'" value="'+value+'" onchange="'+onchange+'">';
-	code +='<option value="0"'+(value == 0 ? "selected" : "")+'>None</option>';
+	code +='<option value="0"'+(value == 0 ? "selected" : "")+'>No Filtering</option>';
 	code +='<option value="11"'+(value == 11 ? "selected" : "")+'>Router</option>';
 	code +='<option value="1"'+(value == 1 ? "selected" : "")+'>OpenDNS Home</option>';
 	code +='<option value="7"'+(value == 7 ? "selected" : "")+'>OpenDNS Family</option>';
@@ -366,7 +366,7 @@ function changeRow_main(r){
 								<li><a target="_blank" style="font-weight: bolder; cursor:pointer;text-decoration: underline;" href="http://dns.yandex.com"><#YandexDNS#></a>
 								<ul><li>Safe = Malicious content<li>Family = Malicious + Sexual content</ul>
 							</ul>
-							<br>"None" will disable/bypass the filter, and "Router" will force clients to use the DNS provided
+							<br>"No Filtering" will disable/bypass the filter, and "Router" will force clients to use the DNS provided
 							    by the router's DHCP server (or, the router itself if it's not defined).
 						</div>
 					</td>
