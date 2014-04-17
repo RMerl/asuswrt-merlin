@@ -931,7 +931,7 @@ function select_time_zone(){
         <tr>
           <th width="40%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_new#></a></th>
           <td>
-            <input type="password" autocapitalization="off" name="http_passwd2" tabindex="2" onKeyPress="return is_string(this, event);" onkeyup="chkPass(this.value, 'http_passwd');" onpaste="return false;" class="input_15_table" maxlength="16" />
+            <input type="password" autocapitalization="off" name="http_passwd2" tabindex="2" onKeyPress="return is_string(this, event);" onkeyup="chkPass(this.value, 'http_passwd');" onpaste="return false;" class="input_15_table" maxlength="30" />
             &nbsp;&nbsp;
             <div id="scorebarBorder" style="margin-left:140px; margin-top:-25px; display:none;" title="<#LANHostConfig_x_Password_itemSecur#>">
             		<div id="score"></div>
@@ -944,7 +944,7 @@ function select_time_zone(){
         <tr>
           <th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_retype#></a></th>
           <td>
-            <input type="password" autocapitalization="off" name="v_password2" tabindex="3" onKeyPress="return is_string(this, event);" onpaste="return false;" class="input_15_table" maxlength="16" /><br/><span id="alert_msg2" style="color:#FC0;margin-left:8px;"></span>
+            <input type="password" autocapitalization="off" name="v_password2" tabindex="3" onKeyPress="return is_string(this, event);" onpaste="return false;" class="input_15_table" maxlength="30" /><br/><span id="alert_msg2" style="color:#FC0;margin-left:8px;"></span>
           </td>
         </tr>
       </table>
