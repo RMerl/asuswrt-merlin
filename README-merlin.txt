@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 374.41 Beta 1 (13-Apr-2014)
-==================================================
+Asuswrt-Merlin - build 374.41 (18-Apr-2014)
+===========================================
 
 About
 -----
@@ -572,14 +572,14 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-374.41 Beta 1 (13-Apr-2014)
+374.41 (18-Apr-2014)
    - NEW: Merged with Asus's 374_5047 GPL.  Notable changes:
        * Fixed RT-AC68U random reboots
        * Additionnal security fixes
        * Improved Media server, SMB and FTP webui
        * minidlna and radvd updates
 
-   - NEW: PCP support in miniupnpd.
+   - NEW: PCP support (Port Control Protocol)
    - NEW: Option to allow/deny FTP access from WAN.  Default is to
           reject WAN connections.  The option can be found on the
           USB Servers -> FTP Share
@@ -587,16 +587,19 @@ History
           down (configurable on the WAN page).
    - CHANGED: Upgraded miniupnpd to 1.8.20140401.
    - CHANGED: Disk idle exclusion now supports up to 9 disks.
-   - FIXED: WOL wasn't working.
+   - FIXED: WOL wasn't working (Asus bug in 4887/5047)
    - FIXED: Replaced webui glue with permanent concrete.  It won't
             fall again.
    - FIXED: Language dropdown not properly shown with 8-bit 
             characters.
-   - FIXED: Filter out neighbour solicitation flood on Comcast's 
-            IPv6 network which would result in log spam from the 
-            tables getting filled.  The filter is enabled by 
-            default and can be controled with the 
-            "ipv6_neighsol_drop" nvram setting.
+   - FIXED: Comcast's IPv6 network would flood the LAN with
+            neighbour solicitation packets, which should normally
+            not cross beyond their modem.  There is now an ip6tables
+            rule to filter out those packets, preventing your log
+            from being spammed with table overflows.  The filter is
+            is enabled by default and can be disabled by setting the 
+            "ipv6_neighsol_drop" nvram setting to "0". (rule suggested
+            by diplomat7)
   - FIXED: EMF wasn't properly configured after wireless was
            restarted (patch from Vahur)
   - FIXED: Router crashing when more than around 30 static routes 
@@ -613,7 +616,9 @@ History
              risk.  This is also needed to keep in line with 
              recent security fixes Asus applied to the
              httpd backend to limit what external processes
-             it can run.
+             it can run, otherwise any malicious page could
+             run arbitrary commands on your router if you
+             were currently logged on a separate tab.
 
 
 374.40 (6-March-2014)
