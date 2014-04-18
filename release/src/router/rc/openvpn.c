@@ -72,6 +72,7 @@ void start_vpnclient(int clientNum)
 
 	vpnlog(VPN_LOG_INFO,"VPN GUI client backend starting...");
 
+	sprintf(&buffer[0], "vpnclient%d", clientNum);
 	if ( (pid = pidof(&buffer[0])) >= 0 )
 	{
 		vpnlog(VPN_LOG_NOTE, "VPN Client %d already running...", clientNum);
@@ -578,6 +579,7 @@ void start_vpnserver(int serverNum)
 
 	vpnlog(VPN_LOG_INFO,"VPN GUI server backend starting...");
 
+	sprintf(&buffer[0], "vpnserver%d", serverNum);
 	if ( (pid = pidof(&buffer[0])) >= 0 )
 	{
 		vpnlog(VPN_LOG_NOTE, "VPN Server %d already running...", serverNum);
