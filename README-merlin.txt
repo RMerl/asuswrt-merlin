@@ -609,6 +609,10 @@ History
   - FIXED: Added missing iptables-save on ARM platform (AC56, AC68)
   - FIXED: nvram factory default reset would sometime fail on MIPS
            devices (N16, N66, AC66) (Patch by ryzhov_al)
+  - FIXED: Under a certain situation the router could lose track of
+           whether an OpenVPN server/client instance was running or not.
+           This could result in the webui trying to restart it, and
+           returning an error message because it was already running.
   - REMOVED: The Media server database location is no longer
              configurable, as we've switched to Asus's new 
              automatic location selection.
