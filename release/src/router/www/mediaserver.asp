@@ -288,9 +288,9 @@ function get_tree_items(treeitems){
 	this.isLoading = 1;
 	var array_temp = new Array();
 	var array_temp_split = new Array();
-	for(var j=0;j<treeitems.length;j++){ // To hide folder 'Download2' & 'asusware'
+	for(var j=0;j<treeitems.length;j++){ // To hide folder 'asusware'
 		array_temp_split[j] = treeitems[j].split("#");
-		if( array_temp_split[j][0].match(/^Download2$/) || array_temp_split[j][0].match(/^asusware$/)	){
+		if( array_temp_split[j][0].match(/^asusware$/)	){
 			continue;					
 		}
 		
