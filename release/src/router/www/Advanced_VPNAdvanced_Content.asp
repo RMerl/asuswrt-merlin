@@ -1126,7 +1126,7 @@ function cal_panel_block(){
 									</tr>
 
 									<tr>
-										<th><#Port_Num#><br><i><#Setting_factorydefault_value#> : 1194</i></th>
+										<th>Port<br><i><#Setting_factorydefault_value#> : 1194</i></th>
 										<td>
 											<input type="text" maxlength="5" class="input_6_table" name="vpn_server_port" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 65535)" value="<% nvram_get("vpn_server_port"); %>" >
 										</td>
