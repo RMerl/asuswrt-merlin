@@ -775,6 +775,10 @@ void start_dnsmasq(int force)
 	/* Create resolv.conf with empty nameserver list */
 	f_write(dmresolv, NULL, 0, FW_APPEND, 0666);
 
+	// Make the router use dnsmasq for its own local resolution
+	unlink("/etc/resolv.conf");
+	symlink("/rom/etc/resolv.conf", "/etc/resolv.conf");    // nameserver 127.0.0.1
+
 	eval("dnsmasq", "--log-async");
 
 /* TODO: remove it for here !!!*/
@@ -813,6 +817,10 @@ void stop_dnsmasq(int force)
 		notify_rc("stop_dnsmasq");
 		return;
 	}
+
+	// Revert back to ISP-filled resolv.conf
+        unlink("/etc/resolv.conf");
+        symlink(dmresolv, "/etc/resolv.conf");
 
 	killall_tk("dnsmasq");
 
