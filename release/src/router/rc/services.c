@@ -3486,6 +3486,7 @@ stop_services(void)
 #ifdef RTCONFIG_IPV6
 	stop_rdnssd();
 	stop_radvd();
+	stop_dhcp6c();
 #endif
 	stop_wpsaide();
 	stop_wps();
@@ -3848,6 +3849,8 @@ again:
 			remove_conntrack();
 			killall("udhcpc", SIGTERM);
 #ifdef RTCONFIG_IPV6
+			stop_rdnssd();
+			stop_radvd();
 			stop_dhcp6c();
 #endif
 			stop_jffs2(1);
