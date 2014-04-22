@@ -43,6 +43,8 @@ var clients_info = getclients();
 
 var dnsfilter_rule_list = '<% nvram_get("dnsfilter_rulelist"); %>'.replace(/&#60/g, "<");
 var dnsfilter_rule_list_row = dnsfilter_rule_list.split('<');
+var obsolete_service = false;	// Set to true if during parsing an obsolete service is detected
+
 
 function initial(){
 	show_menu();
@@ -59,6 +61,17 @@ function initial(){
 
 	// dnsfilter_enable_x 0: disable, 1: enable, show mainTable & Protection level when enable, otherwise hide it
 	showhide("dnsfilter_mode",document.form.dnsfilter_enable_x.value);
+
+	// Handle obsolete/discontinued services
+	var mode = <% nvram_get("dnsfilter_mode"); %>;
+
+	if ((mode == 2) || (mode == 3) || (mode == 4)) {
+		obsolete_service = true;
+		document.form.dnsfilter_mode.value = 7;
+	}
+
+	if (obsolete_service) alert("Norton Connect Safe has been discontinued.  Defaulting to OpenDNS Family, please re-adjust your filters.");
+
 	showhide("dnsfilter_custom1", document.form.dnsfilter_enable_x.value);
 	showhide("dnsfilter_custom2", document.form.dnsfilter_enable_x.value);
 	showhide("dnsfilter_custom3", document.form.dnsfilter_enable_x.value);
@@ -126,11 +139,9 @@ function gen_modeselect(name, value, onchange){
 	code +='<option value="11"'+(value == 11 ? "selected" : "")+'>Router</option>';
 	code +='<option value="1"'+(value == 1 ? "selected" : "")+'>OpenDNS Home</option>';
 	code +='<option value="7"'+(value == 7 ? "selected" : "")+'>OpenDNS Family</option>';
-	code +='<option value="2"'+(value == 2 ? "selected" : "")+'>Norton Safe</option>';
-	code +='<option value="3"'+(value == 3 ? "selected" : "")+'>Norton Family</option>';
-	code +='<option value="4"'+(value == 4 ? "selected" : "")+'>Norton Children</option>';
 	code +='<option value="5"'+(value == 5 ? "selected" : "")+'>Yandex Safe</option>';
 	code +='<option value="6"'+(value == 6 ? "selected" : "")+'>Yandex Family</option>';
+	code +='<option value="12"'+(value == 12? "selected" : "")+'>Comodo Secure DNS</option>';
 	code +='<option value="8"'+(value == 8 ? "selected" : "")+'>Custom 1</option>';
 	code +='<option value="9"'+(value == 9 ? "selected" : "")+'>Custom 2</option>';
 	code +='<option value="10"'+(value == 10 ? "selected" : "")+'>Custom 3</option>';
@@ -140,6 +151,7 @@ function gen_modeselect(name, value, onchange){
 
 function gen_mainTable(){
 	var code = "";
+
 	code +='<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="FormTable_table" id="mainTable_table">';
 	code +='<thead><tr><td colspan="4"><#ConnectedClient#>&nbsp;(<#List_limit#>&nbsp;64)</td></tr></thead>';
 	code +='<tr><th width="40%"><#ParentalCtrl_username#></th>';
@@ -163,6 +175,10 @@ function gen_mainTable(){
 			var rule_mac = ruleArray[1];
 			var rule_mode = ruleArray[2];
 
+			if ((rule_mode == 2) || (rule_mode == 3) || (rule_mode == 4)) {
+				rule_mode = 7;
+				obsolete_service = true;
+			}
 			code +='<tr id="row'+i+'">';
 			code +='<td title="'+rule_devname+'">'+ rule_devname +'</td>';
 			code +='<td title="'+rule_mac+'">'+ rule_mac +'</td>';
@@ -361,10 +377,10 @@ function changeRow_main(r){
 								<li><a target="_blank" style="font-weight: bolder; cursor:pointer;text-decoration: underline;" href="http://www.opendns.com/home-internet-security/">OpenDNS</a>
 								<ul><li>Home = Regular OpenDNS server (manually configurable through their portal)
 								<li>Family = Family Shield (pre-configured to block adult content)</ul>
-								<li><a target="_blank" style="font-weight: bolder; cursor:pointer;text-decoration: underline;" href="https://dns.norton.com/">Norton Connect Safe</a> (for home usage only)
-								<ul><li>Safe = Malicious content<li>Family = Malicious + Sexual content<li>Children = Malicious + Sexual + Mature content</ul>
 								<li><a target="_blank" style="font-weight: bolder; cursor:pointer;text-decoration: underline;" href="http://dns.yandex.com"><#YandexDNS#></a>
 								<ul><li>Safe = Malicious content<li>Family = Malicious + Sexual content</ul>
+								<li><a target="_blank" style="font-weight: bolder; cursor:pointer;text-decoration: underline;" href="http://www.comodo.com/secure-dns/">Comodo Secure DNS</a>
+								<ul><li>Protects against malicious content</ul>
 							</ul>
 							<br>"No Filtering" will disable/bypass the filter, and "Router" will force clients to use the DNS provided
 							    by the router's DHCP server (or, the router itself if it's not defined).
@@ -413,11 +429,9 @@ function changeRow_main(r){
 							<option value="11" <% nvram_match("dnsfilter_mode", "11", "selected"); %>>Router</option>
 							<option value="1" <% nvram_match("dnsfilter_mode", "1", "selected"); %>>OpenDNS Home</option>
 							<option value="7" <% nvram_match("dnsfilter_mode", "7", "selected"); %>>OpenDNS Family</option>
-							<option value="2" <% nvram_match("dnsfilter_mode", "2", "selected"); %>>Norton Safe</option>
-							<option value="3" <% nvram_match("dnsfilter_mode", "3", "selected"); %>>Norton Family</option>
-							<option value="4" <% nvram_match("dnsfilter_mode", "4", "selected"); %>>Norton Children</option>
 							<option value="5" <% nvram_match("dnsfilter_mode", "5", "selected"); %>>Yandex Safe</option>
 							<option value="6" <% nvram_match("dnsfilter_mode", "6", "selected"); %>>Yandex Family</option>
+							<option value="12" <% nvram_match("dnsfilter_mode", "12", "selected"); %>>Comodo Secure DNS</option>
 							<option value="8" <% nvram_match("dnsfilter_mode", "8", "selected"); %>>Custom 1</option>
 							<option value="9" <% nvram_match("dnsfilter_mode", "9", "selected"); %>>Custom 2</option>
 							<option value="10" <% nvram_match("dnsfilter_mode", "10", "selected"); %>>Custom 3</option>
