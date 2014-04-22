@@ -5675,7 +5675,8 @@ const char *dns_filter(int mode)
 		"",			/* 8: Custom1 */
 		"",			/* 9: Custom2 */
 		"",			/* 10: Custom3 */
-		""			/* 11: Router */
+		"",			/* 11: Router */
+		"8.26.56.26"		/* 12: Comodo Secure DNS */
         };
 
 	if (mode > 11) mode = 0;
