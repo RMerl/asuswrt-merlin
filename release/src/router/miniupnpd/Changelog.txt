@@ -1,4 +1,18 @@
-$Id: Changelog.txt,v 1.366 2014/03/24 11:03:50 nanard Exp $
+$Id: Changelog.txt,v 1.369 2014/04/22 08:48:02 nanard Exp $
+
+2014/04/21:
+  Fix PCP when request contain 0 IPv4 external address
+  Remove pointer casting in natpmp.c
+
+2014/04/15:
+  rewrite iptables_*.sh scripts
+
+2014/04/12:
+  Add FreeBSD support for CHECK_PORTINUSE
+  Add PCP support for CHECK_PORTINUSE
+
+2014/04/09:
+  Add HTTPS support and skeleton of DeviceProtection implementation
 
 2014/03/24:
   start work to enable IPv6 PCP operations

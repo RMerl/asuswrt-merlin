@@ -1,4 +1,4 @@
-/* $Id: upnpsoap.c,v 1.122 2014/03/10 11:04:53 nanard Exp $ */
+/* $Id: upnpsoap.c,v 1.123 2014/04/09 12:39:54 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2014 Thomas Bernard
@@ -1827,6 +1827,104 @@ GetPinholePackets(struct upnphttp * h, const char * action)
 }
 #endif
 
+#ifdef ENABLE_DP_SERVICE
+static void
+SendSetupMessage(struct upnphttp * h, const char * action)
+{
+	static const char resp[] =
+		"<u:%sResponse "
+		"xmlns:u=\"%s\">"
+		"<NewOutMessage>%s</NewOutMessage>"
+		"</u:%sResponse>";
+	char body[1024];
+	int bodylen;
+	struct NameValueParserData data;
+	const char * ProtocolType;	/* string */
+	const char * InMessage;		/* base64 */
+	const char * OutMessage = "";	/* base64 */
+
+	ParseNameValue(h->req_buf + h->req_contentoff, h->req_contentlen, &data);
+	ProtocolType = GetValueFromNameValueList(&data, "NewProtocolType");	/* string */
+	InMessage = GetValueFromNameValueList(&data, "NewInMessage");	/* base64 */
+
+	if(ProtocolType == NULL || InMessage == NULL)
+	{
+		ClearNameValueList(&data);
+		SoapError(h, 402, "Invalid Args");
+		return;
+	}
+	/*if(strcmp(ProtocolType, "DeviceProtection:1") != 0)*/
+	if(strcmp(ProtocolType, "WPS") != 0)
+	{
+		ClearNameValueList(&data);
+		SoapError(h, 600, "Argument Value Invalid"); /* 703 ? */
+		return;
+	}
+	/* TODO : put here code for WPS */
+
+	bodylen = snprintf(body, sizeof(body), resp,
+	                   action, "urn:schemas-upnp-org:service:DeviceProtection:1",
+	                   OutMessage, action);
+	BuildSendAndCloseSoapResp(h, body, bodylen);
+	ClearNameValueList(&data);
+}
+
+static void
+GetSupportedProtocols(struct upnphttp * h, const char * action)
+{
+	static const char resp[] =
+		"<u:%sResponse "
+		"xmlns:u=\"%s\">"
+		"<NewProtocolList>%s</NewProtocolList>"
+		"</u:%sResponse>";
+	char body[1024];
+	int bodylen;
+	const char * ProtocolList =
+		"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+		"<SupportedProtocols xmlns=\"urn:schemas-upnp-org:gw:DeviceProtection\""
+		" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
+		" xsi:schemaLocation=\"urn:schemas-upnp-org:gw:DeviceProtection"
+		" http://www.upnp.org/schemas/gw/DeviceProtection-v1.xsd\">"
+		"<Introduction><Name>WPS</Name></Introduction>"
+		"<Login><Name>PKCS5</Name></Login>"
+		"</SupportedProtocols>";
+
+	bodylen = snprintf(body, sizeof(body), resp,
+	                   action, "urn:schemas-upnp-org:service:DeviceProtection:1",
+	                   ProtocolList, action);
+	BuildSendAndCloseSoapResp(h, body, bodylen);
+}
+
+static void
+GetAssignedRoles(struct upnphttp * h, const char * action)
+{
+	static const char resp[] =
+		"<u:%sResponse "
+		"xmlns:u=\"%s\">"
+		"<NewRoleList>%s</NewRoleList>"
+		"</u:%sResponse>";
+	char body[1024];
+	int bodylen;
+	const char * RoleList = "Public"; /* list of roles separated by spaces */
+
+#ifdef ENABLE_HTTPS
+	if(h->ssl != NULL) {
+		/* we should get the Roles of the session (based on client certificate) */
+		X509 * peercert;
+		peercert = SSL_get_peer_certificate(h->ssl);
+		if(peercert != NULL) {
+			RoleList = "Admin Basic";
+			X509_free(peercert);
+		}
+	}
+#endif
+
+	bodylen = snprintf(body, sizeof(body), resp,
+	                   action, "urn:schemas-upnp-org:service:DeviceProtection:1",
+	                   RoleList, action);
+	BuildSendAndCloseSoapResp(h, body, bodylen);
+}
+#endif
 
 /* Windows XP as client send the following requests :
  * GetConnectionTypeInfo
@@ -1884,6 +1982,12 @@ soapMethods[] =
 	{ "DeletePinhole", DeletePinhole},			/* Required */
 	{ "CheckPinholeWorking", CheckPinholeWorking},	/* Optional */
 	{ "GetPinholePackets", GetPinholePackets},	/* Required */
+#endif
+#ifdef ENABLE_DP_SERVICE
+	/* DeviceProtection */
+	{ "SendSetupMessage", SendSetupMessage},	/* Required */
+	{ "GetSupportedProtocols", GetSupportedProtocols},	/* Required */
+	{ "GetAssignedRoles", GetAssignedRoles},	/* Required */
 #endif
 	{ 0, 0 }
 };

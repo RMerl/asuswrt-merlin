@@ -15,6 +15,7 @@
 #include <errno.h>
 
 #include "asyncsendto.h"
+#include "upnputils.h"
 
 /* state diagram for a packet :
  *
@@ -159,6 +160,7 @@ int get_sendto_fds(fd_set * writefds, int * max_fd, const struct timeval * now)
 /* executed sendto() when needed */
 int try_sendto(fd_set * writefds)
 {
+	int ret = 0;
 	ssize_t n;
 	struct scheduled_send * elt;
 	struct scheduled_send * next;
@@ -166,8 +168,8 @@ int try_sendto(fd_set * writefds)
 		next = elt->entries.le_next;
 		if((elt->state == ESENDNOW) ||
 		   (elt->state == EWAITREADY && FD_ISSET(elt->sockfd, writefds))) {
-			syslog(LOG_DEBUG, "try_sendto(): %d bytes on socket %d",
-			       (int)elt->len, elt->sockfd);
+			syslog(LOG_DEBUG, "%s: %d bytes on socket %d",
+			       "try_sendto", (int)elt->len, elt->sockfd);
 			n = sendto(elt->sockfd, elt->buf, elt->len, elt->flags,
 			           elt->dest_addr, elt->addrlen);
 			if(n < 0) {
@@ -179,20 +181,26 @@ int try_sendto(fd_set * writefds)
 					/* retry once the socket is ready for writing */
 					elt->state = EWAITREADY;
 					continue;
+				} else {
+					char addr_str[64];
+					/* uncatched error */
+					if(sockaddr_to_string(elt->dest_addr, addr_str, sizeof(addr_str)) <= 0)
+						addr_str[0] = '\0';
+					syslog(LOG_ERR, "%s(sock=%d, len=%u, dest=%s): sendto: %m",
+					       "try_sendto", elt->sockfd, (unsigned)elt->len,
+					       addr_str);
+					ret--;
 				}
-				/* uncatched error */
-				/* remove from the list */
-				LIST_REMOVE(elt, entries);
-				free(elt);
-				return n;
-			} else {
-				/* remove from the list */
-				LIST_REMOVE(elt, entries);
-				free(elt);
+			} else if((int)n != (int)elt->len) {
+				syslog(LOG_WARNING, "%s: %d bytes sent out of %d",
+				       "try_sendto", (int)n, (int)elt->len);
 			}
+			/* remove from the list */
+			LIST_REMOVE(elt, entries);
+			free(elt);
 		}
 	}
-	return 0;
+	return ret;
 }
 
 /* maximum execution time for finalize_sendto() in milliseconds */

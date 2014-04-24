@@ -28,6 +28,35 @@
 
 #ifdef ENABLE_NATPMP
 
+#define INLINE static inline
+/* theses macros are designed to read/write unsigned short/long int
+ * from an unsigned char array in network order (big endian).
+ * Avoid pointer casting, so avoid accessing unaligned memory, which
+ * can crash with some cpu's */
+INLINE uint32_t readnu32(const uint8_t * p)
+{
+	return (p[0] << 24 | p[1] << 16 | p[2] << 8 | p[3]);
+}
+#define READNU32(p) readnu32(p)
+INLINE uint16_t readnu16(const uint8_t * p)
+{
+	return (p[0] << 8 | p[1]);
+}
+#define READNU16(p) readnu16(p)
+INLINE void writenu32(uint8_t * p, uint32_t n)
+{
+	p[0] = (n & 0xff000000) >> 24;
+	p[1] = (n & 0xff0000) >> 16;
+	p[2] = (n & 0xff00) >> 8;
+	p[3] = n & 0xff;
+}
+#define WRITENU32(p, n) writenu32(p, n)
+INLINE void writenu16(uint8_t * p, uint16_t n)
+{
+	p[0] = (n < 0xff00) >> 8;
+	p[1] = n & 0xff;
+}
+#define WRITENU16(p, n) writenu16(p, n)
 
 int OpenAndConfNATPMPSocket(in_addr_t addr)
 {
@@ -189,7 +218,7 @@ void ProcessIncomingNATPMPPacket(int s, unsigned char *msg_buff, int len,
 	/* setting response TIME STAMP :
 	 * time elapsed since its port mapping table was initialized on
 	 * startup or reset for any other reason */
-	*((uint32_t *)(resp+4)) = htonl(time(NULL) - startup_time);
+	WRITENU32(resp+4, time(NULL) - startup_time);
 	if(req[0] > 0) {
 		/* invalid version */
 		syslog(LOG_WARNING, "unsupported NAT-PMP version : %u",
@@ -213,9 +242,9 @@ void ProcessIncomingNATPMPPacket(int s, unsigned char *msg_buff, int len,
 			unsigned short iport_old;
 			unsigned int timestamp;
 
-			iport = ntohs(*((uint16_t *)(req+4)));
-			eport = ntohs(*((uint16_t *)(req+6)));
-			lifetime = ntohl(*((uint32_t *)(req+8)));
+			iport = READNU16(req+4);
+			eport = READNU16(req+6);
+			lifetime = READNU32(req+8);
 			proto = (req[1]==1)?IPPROTO_UDP:IPPROTO_TCP;
 			syslog(LOG_INFO, "NAT-PMP port mapping request : "
 			                 "%hu->%s:%hu %s lifetime=%us",
@@ -346,9 +375,9 @@ void ProcessIncomingNATPMPPacket(int s, unsigned char *msg_buff, int len,
 					break;
 				}
 			}
-			*((uint16_t *)(resp+8)) = htons(iport);	/* private port */
-			*((uint16_t *)(resp+10)) = htons(eport);	/* public port */
-			*((uint32_t *)(resp+12)) = htonl(lifetime);	/* Port Mapping lifetime */
+			WRITENU16(resp+8, iport);	/* private port */
+			WRITENU16(resp+10, eport);	/* public port */
+			WRITENU32(resp+12, lifetime);	/* Port Mapping lifetime */
 		}
 		resplen = 16;
 		break;
@@ -365,7 +394,6 @@ void ProcessIncomingNATPMPPacket(int s, unsigned char *msg_buff, int len,
 	}
 }
 
-
 /* SendNATPMPPublicAddressChangeNotification()
  * should be called when the public IP address changed */
 void SendNATPMPPublicAddressChangeNotification(int * sockets, int n_sockets)
@@ -381,7 +409,7 @@ void SendNATPMPPublicAddressChangeNotification(int * sockets, int n_sockets)
 	/* seconds since "start of epoch" :
 	 * time elapsed since the port mapping table was initialized on
 	 * startup or reset for any other reason */
-	*((uint32_t *)(notif+4)) = htonl(time(NULL) - startup_time);
+	WRITENU32(notif+4, time(NULL) - startup_time);
 #ifndef MULTIPLE_EXTERNAL_IP
 	FillPublicAddressResponse(notif, 0);
 	if(notif[3])

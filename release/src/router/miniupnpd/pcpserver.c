@@ -62,6 +62,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "getifaddr.h"
 #include "asyncsendto.h"
 #include "upnputils.h"
+#include "portinuse.h"
 #include "pcp_msg_struct.h"
 
 #ifdef PCP_PEER
@@ -315,8 +316,8 @@ static int parsePCPPEER_version1(pcp_peer_v1_t *peer_buf, \
 	pcp_msg_info->ext_port = ntohs(peer_buf->ext_port);
 	pcp_msg_info->peer_port = ntohs(peer_buf->peer_port);
 
-        pcp_msg_info->ext_ip = &peer_buf->ext_ip;
-        pcp_msg_info->peer_ip = &peer_buf->peer_ip;
+	pcp_msg_info->ext_ip = &peer_buf->ext_ip;
+	pcp_msg_info->peer_ip = &peer_buf->peer_ip;
 
 	if (pcp_msg_info->protocol == 0 && pcp_msg_info->int_port !=0 ){
 		syslog(LOG_ERR, "PCP PEER: protocol was ZERO, but internal port has non-ZERO value.");
@@ -340,9 +341,8 @@ static int parsePCPPEER_version2(pcp_peer_v2_t *peer_buf, \
 	pcp_msg_info->ext_port = ntohs(peer_buf->ext_port);
 	pcp_msg_info->peer_port = ntohs(peer_buf->peer_port);
 
-        pcp_msg_info->ext_ip = &peer_buf->ext_ip;
-        pcp_msg_info->peer_ip = &peer_buf->peer_ip;
-
+	pcp_msg_info->ext_ip = &peer_buf->ext_ip;
+	pcp_msg_info->peer_ip = &peer_buf->peer_ip;
 
 	if (pcp_msg_info->protocol == 0 && pcp_msg_info->int_port !=0 ){
 		syslog(LOG_ERR, "PCP PEER: protocol was ZERO, but internal port has non-ZERO value.");
@@ -544,11 +544,21 @@ static int parsePCPOptions(void* pcp_buf, int* remainingSize,
 }
 
 
+/* CheckExternalAddress()
+ * Check that suggested external address in request match a real external
+ * IP address.
+ * Suggested address can also be 0 IPv4 or IPv6 address.
+ *  (see http://tools.ietf.org/html/rfc6887#section-10 )
+ * return values :
+ *   0 : check is OK
+ *  -1 : check failed */
 static int CheckExternalAddress(pcp_info_t* pcp_msg_info)
 {
 	/* can contain a IPv4-mapped IPv6 address */
 	static struct in6_addr external_addr;
 
+	/* TODO : 1) be able to handle case with multiple external addresses
+	 *        2) handle correctly both IPv4 and IPv6 */
 	if(use_ext_ip_addr) {
 		if (inet_pton(AF_INET, use_ext_ip_addr,
 		              ((uint32_t*)external_addr.s6_addr)+3) == 1) {
@@ -572,10 +582,12 @@ static int CheckExternalAddress(pcp_info_t* pcp_msg_info)
 		}
 	}
 
-	if (pcp_msg_info->ext_ip == NULL || IN6_IS_ADDR_UNSPECIFIED(pcp_msg_info->ext_ip)) {
-
+	if (pcp_msg_info->ext_ip == NULL ||
+	    IN6_IS_ADDR_UNSPECIFIED(pcp_msg_info->ext_ip) ||
+	    (IN6_IS_ADDR_V4MAPPED(pcp_msg_info->ext_ip)
+	      && ((uint32_t *)pcp_msg_info->ext_ip->s6_addr)[3] == INADDR_ANY)) {
+		/* no suggested external address : use real external address */
 		pcp_msg_info->ext_ip = &external_addr;
-
 		return 0;
 	}
 
@@ -893,6 +905,19 @@ static void CreatePCPMap(pcp_info_t *pcp_msg_info)
 			continue;
 		}
 		any_eport_allowed = 1;
+#ifdef CHECK_PORTINUSE
+		if (port_in_use(ext_if_name, pcp_msg_info->ext_port, pcp_msg_info->protocol,
+		    pcp_msg_info->senderaddrstr, pcp_msg_info->int_port) > 0) {
+			syslog(LOG_INFO, "port %hu protocol %s already in use",
+			       pcp_msg_info->ext_port,
+			       (pcp_msg_info->protocol==IPPROTO_TCP)?"tcp":"udp");
+			pcp_msg_info->ext_port++;
+			if (pcp_msg_info->ext_port == 0) { /* skip port zero */
+				pcp_msg_info->ext_port++;
+			}
+			continue;
+		}
+#endif
 		r = get_redirect_rule(ext_if_name,
 		                  pcp_msg_info->ext_port,
 		                  pcp_msg_info->protocol,

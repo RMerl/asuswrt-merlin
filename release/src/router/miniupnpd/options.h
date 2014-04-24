@@ -2,7 +2,7 @@
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * author: Ryan Wagoner
- * (c) 2006-2013 Thomas Bernard
+ * (c) 2006-2014 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -18,7 +18,10 @@ enum upnpconfigoptions {
 	UPNPEXT_IFNAME = 1,		/* ext_ifname */
 	UPNPEXT_IP,				/* ext_ip */
 	UPNPLISTENING_IP,		/* listening_ip */
-	UPNPPORT,				/* "port" */
+	UPNPPORT,				/* "port" / "http_port" */
+#ifdef ENABLE_HTTPS
+	UPNPHTTPSPORT,			/* "https_port" */
+#endif
 	UPNPBITRATE_UP,			/* "bitrate_up" */
 	UPNPBITRATE_DOWN,		/* "bitrate_down" */
 	UPNPPRESENTATIONURL,	/* presentation_url */

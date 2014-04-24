@@ -3,11 +3,15 @@
 # Improved Miniupnpd iptables init script.
 # Checks for state of filter before doing anything..
 
-EXTIF=eth0
-IPTABLES=/sbin/iptables
-EXTIP="`LC_ALL=C /sbin/ifconfig $EXTIF | grep 'inet ' | awk '{print $2}' | sed -e 's/.*://'`"
-NDIRTY="`LC_ALL=C /sbin/iptables -t nat -L -n | grep 'MINIUPNPD' | awk '{printf $1}'`"
-FDIRTY="`LC_ALL=C /sbin/iptables -t filter -L -n | grep 'MINIUPNPD' | awk '{printf $1}'`"
+IPTABLES="`which iptables`" || exit 1
+IP="`which ip`" || exit 1
+
+#EXTIF=eth0
+EXTIF="`LC_ALL=C $IP -4 route | grep 'default' | sed -e 's/.*dev[[:space:]]*//' -e 's/[[:space:]].*//'`" || exit 1
+EXTIP="`LC_ALL=C $IP -4 addr show $EXTIF | awk '/inet/ { print $2 }' | cut -d "/" -f 1`"
+
+NDIRTY="`LC_ALL=C $IPTABLES -t nat -L -n | awk '/MINIUPNPD/ {printf $1}'`"
+FDIRTY="`LC_ALL=C $IPTABLES -t filter -L -n | awk '/MINIUPNPD/ {printf $1}'`"
 echo "External IP = $EXTIP"
 
 if [[ $NDIRTY = "MINIUPNPDChain" ]]; then

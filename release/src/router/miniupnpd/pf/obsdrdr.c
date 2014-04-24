@@ -1,4 +1,4 @@
-/* $Id: obsdrdr.c,v 1.80 2014/03/06 13:02:46 nanard Exp $ */
+/* $Id: obsdrdr.c,v 1.82 2014/04/15 23:15:25 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2014 Thomas Bernard
@@ -66,6 +66,10 @@
 #include "../config.h"
 #include "obsdrdr.h"
 #include "../upnpglobalvars.h"
+
+#ifndef USE_PF
+#error "USE_PF macro is undefined, check consistency between config.h and Makefile"
+#else
 
 /* list too keep timestamps for port mappings having a lease duration */
 struct timestamp_entry {
@@ -712,7 +716,7 @@ priv_delete_filter_rule(const char * ifname, unsigned short iport,
                         int proto, in_addr_t iaddr)
 {
 #ifndef PF_ENABLE_FILTER_RULES
-	UNUSED(ifname); UNUSED(iport); UNUSED(proto);
+	UNUSED(ifname); UNUSED(iport); UNUSED(proto); UNUSED(iaddr);
 	return 0;
 #else
 	int i, n;
@@ -1044,5 +1048,6 @@ list_rules(void)
 #endif
 	}
 }
-#endif
+#endif /* TEST */
 
+#endif /* USE_PF */

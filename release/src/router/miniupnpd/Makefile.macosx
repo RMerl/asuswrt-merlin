@@ -5,7 +5,7 @@
 #
 # To compile with pf with OS X 10.7+, you need to specify
 # path to XNU bsd sources :
-# INCLUDES="-I.../xnu/bsd I.../xnu/libkern" make -f Makefile.macosx
+# INCLUDES="-I.../xnu/bsd -I.../xnu/libkern" make -f Makefile.macosx
 #
 # To install use :
 # $ PREFIX=/dummyinstalldir make -f Makefile.macosx install

@@ -1,13 +1,15 @@
-/* $Id: $ */
+/* $Id: portinuse.c,v 1.3 2014/04/01 12:52:50 nanard Exp $ */
 /* MiniUPnP project
  * (c) 2007-2014 Thomas Bernard
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
-#if defined(__DragonFly__)
+
+#if defined(__DragonFly__) || defined(__FreeBSD__)
 #include <err.h>
 #include <stdlib.h>
 #endif
+
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -18,6 +20,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
 #if defined(__OpenBSD__)
 #include <sys/queue.h>
 #include <kvm.h>
@@ -30,7 +33,7 @@
 #include <netinet/in_pcb.h>
 #endif
 
-#if defined(__DragonFly__)
+#if defined(__DragonFly__) || defined(__FreeBSD__)
 #include <sys/socketvar.h>
 #include <sys/sysctl.h>
 /* sys/socketvar.h must be included above the following headers */
@@ -71,8 +74,10 @@ port_in_use(const char *if_name,
 	const char * udpfile = "/proc/net/udp";
 #endif
 
-	if(getifaddr(if_name, ip_addr_str, INET_ADDRSTRLEN, &ip_addr, NULL) < 0)
+	if(getifaddr(if_name, ip_addr_str, INET_ADDRSTRLEN, &ip_addr, NULL) < 0) {
 		ip_addr.s_addr = 0;
+		ip_addr_str[0] = '\0';
+	}
 
 	syslog(LOG_DEBUG, "Check protocol %s for port %d on ext_if %s %s, %08X",
 	    (proto==IPPROTO_TCP)?"tcp":"udp", eport, if_name,
@@ -260,14 +265,111 @@ static struct nlist list[] = {
 			}
 		}
 	}
-	if(buf) {
+	if (buf) {
+		free(buf);
+		buf = NULL;
+	}
+#elif defined(__FreeBSD__)
+	const char *varname;
+	struct xinpgen *xig, *exig;
+	struct xinpcb *xip;
+	struct xtcpcb *xtp;
+	struct inpcb *inp;
+	void *buf = NULL;
+	size_t len;
+
+	switch (proto) {
+	case IPPROTO_TCP:
+		varname = "net.inet.tcp.pcblist";
+		break;
+	case IPPROTO_UDP:
+		varname = "net.inet.udp.pcblist";
+		break;
+	default:
+		syslog(LOG_ERR, "port_in_use() unknown proto=%d", proto);
+		return -1;
+	}
+
+	if (sysctlbyname(varname, NULL, &len, NULL, 0) < 0) {
+		syslog(LOG_ERR, "sysctlbyname(%s, NULL, ...): %m", varname);
+		return -1;
+	}
+	buf = malloc(len);
+	if (buf == NULL) {
+		syslog(LOG_ERR, "malloc(%u) failed", (unsigned)len);
+		return -1;
+	}
+	if (sysctlbyname(varname, buf, &len, NULL, 0) < 0) {
+		syslog(LOG_ERR, "sysctlbyname(%s, buf, ...): %m", varname);
+		free(buf);
+		return -1;
+	}
+
+	xig = (struct xinpgen *)buf;
+	exig = (struct xinpgen *)(void *)((char *)buf + len - sizeof *exig);
+	if (xig->xig_len != sizeof *xig) {
+		syslog(LOG_WARNING, "struct xinpgen size mismatch; %ld vs %ld",
+		       (long)xig->xig_len, sizeof *xig);
+		free(buf);
+		return -1;
+	}
+	if (exig->xig_len != sizeof *exig) {
+		syslog(LOG_WARNING, "struct xinpgen size mismatch; %ld vs %ld",
+		       (long)exig->xig_len, sizeof *exig);
+		free(buf);
+		return -1;
+	}
+
+	while (1) {
+		xig = (struct xinpgen *)(void *)((char *)xig + xig->xig_len);
+		if (xig >= exig)
+			break;
+		switch (proto) {
+		case IPPROTO_TCP:
+			xtp = (struct xtcpcb *)xig;
+			if (xtp->xt_len != sizeof *xtp) {
+				syslog(LOG_WARNING, "struct xtcpcb size mismatch; %ld vs %ld",
+				       (long)xtp->xt_len, sizeof *xtp);
+				free(buf);
+				return -1;
+			}
+			inp = &xtp->xt_inp;
+			break;
+		case IPPROTO_UDP:
+			xip = (struct xinpcb *)xig;
+			if (xip->xi_len != sizeof *xip) {
+				syslog(LOG_WARNING, "struct xinpcb size mismatch : %ld vs %ld",
+				       (long)xip->xi_len, sizeof *xip);
+				free(buf);
+				return -1;
+			}
+			inp = &xip->xi_inp;
+			break;
+		default:
+			abort();
+		}
+		/* no support for IPv6 */
+		if ((inp->inp_vflag & INP_IPV6) != 0)
+			continue;
+		syslog(LOG_DEBUG, "%08lx:%hu %08lx:%hu <=> %hu %08lx:%hu",
+		       (u_long)inp->inp_laddr.s_addr, ntohs(inp->inp_lport),
+		       (u_long)inp->inp_faddr.s_addr, ntohs(inp->inp_fport),
+		       eport, (u_long)ip_addr.s_addr, iport
+		);
+		if (eport == (unsigned)ntohs(inp->inp_lport)) {
+			if (inp->inp_laddr.s_addr == INADDR_ANY || inp->inp_laddr.s_addr == ip_addr.s_addr) {
+				found++;
+				break;  /* don't care how many, just that we found at least one */
+			}
+		}
+	}
+	if (buf) {
 		free(buf);
 		buf = NULL;
 	}
 /* #elif __NetBSD__ */
-/* #elif __FreeBSD__ */
-/* TODO : FreeBSD / NetBSD / Darwin (OS X) / Solaris code */
 #else
+/* TODO : NetBSD / Darwin (OS X) / Solaris code */
 #error "No port_in_use() implementation available for this OS"
 #endif
 

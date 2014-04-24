@@ -1,10 +1,12 @@
 #! /bin/sh
 # $Id: iptables_removeall.sh,v 1.5 2011/05/16 12:11:37 nanard Exp $
-IPTABLES=/sbin/iptables
+IPTABLES="`which iptables`" || exit 1
+IP="`which ip`" || exit 1
 
 #change this parameters :
-EXTIF=eth0
-EXTIP="`LC_ALL=C /sbin/ifconfig $EXTIF | grep 'inet ' | awk '{print $2}' | sed -e 's/.*://'`"
+#EXTIF=eth0
+EXTIF="`LC_ALL=C $IP -4 route | grep 'default' | sed -e 's/.*dev[[:space:]]*//' -e 's/[[:space:]].*//'`" || exit 1
+EXTIP="`LC_ALL=C $IP -4 addr show $EXTIF | awk '/inet/ { print $2 }' | cut -d "/" -f 1`"
 
 #removing the MINIUPNPD chain for nat
 $IPTABLES -t nat -F MINIUPNPD

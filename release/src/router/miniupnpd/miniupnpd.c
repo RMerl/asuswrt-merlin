@@ -1,4 +1,4 @@
-/* $Id: miniupnpd.c,v 1.190 2014/03/24 10:49:44 nanard Exp $ */
+/* $Id: miniupnpd.c,v 1.194 2014/04/14 11:42:36 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2014 Thomas Bernard
@@ -205,7 +205,7 @@ OpenAndConfHTTPSocket(unsigned short port)
 }
 
 static struct upnphttp *
-ProcessIncomingHTTP(int shttpl)
+ProcessIncomingHTTP(int shttpl, const char * protocol)
 {
 	int shttp;
 	socklen_t clientnamelen;
@@ -229,13 +229,13 @@ ProcessIncomingHTTP(int shttpl)
 		char addr_str[64];
 
 		sockaddr_to_string((struct sockaddr *)&clientname, addr_str, sizeof(addr_str));
-		syslog(LOG_INFO, "HTTP connection from %s", addr_str);
+		syslog(LOG_INFO, "%s connection from %s", protocol, addr_str);
 		if(get_lan_for_peer((struct sockaddr *)&clientname) == NULL)
 		{
 			/* The peer is not a LAN ! */
 			syslog(LOG_WARNING,
-			       "HTTP peer %s is not from a LAN, closing the connection",
-			       addr_str);
+			       "%s peer %s is not from a LAN, closing the connection",
+			       protocol, addr_str);
 			close(shttp);
 		}
 		else
@@ -632,6 +632,9 @@ struct runtime_vars {
 	/* LAN IP addresses for SSDP traffic and HTTP */
 	/* moved to global vars */
 	int port;	/* HTTP Port */
+#ifdef ENABLE_HTTPS
+	int https_port;	/* HTTPS Port */
+#endif
 	int notify_interval;	/* seconds between SSDP announces */
 	/* unused rules cleaning related variables : */
 	int clean_ruleset_threshold;	/* threshold for removing unused rules */
@@ -833,6 +836,9 @@ init(int argc, char * * argv, struct runtime_vars * v)
 
 	LIST_INIT(&lan_addrs);
 	v->port = -1;
+#ifdef ENABLE_HTTPS
+	v->https_port = -1;
+#endif
 	v->notify_interval = 30;	/* seconds between SSDP announces */
 	v->clean_ruleset_threshold = 20;
 	v->clean_ruleset_interval = 0;	/* interval between ruleset check. 0=disabled */
@@ -875,6 +881,11 @@ init(int argc, char * * argv, struct runtime_vars * v)
 			case UPNPPORT:
 				v->port = atoi(ary_options[i].value);
 				break;
+#ifdef ENABLE_HTTPS
+			case UPNPHTTPSPORT:
+				v->https_port = atoi(ary_options[i].value);
+				break;
+#endif
 			case UPNPBITRATE_UP:
 				upstream_bitrate = strtoul(ary_options[i].value, 0, 0);
 				break;
@@ -1126,6 +1137,16 @@ init(int argc, char * * argv, struct runtime_vars * v)
 			if(i+1 < argc)
 				v->port = atoi(argv[++i]);
 			else
+				fprintf(stderr, "Option -%c takes one argument.\n", argv[i][1]);
+			break;
+#ifdef ENABLE_HTTPS
+		case 'H':
+			if(i+1 < argc)
+				v->https_port = atoi(argv[++i]);
+			else
+				fprintf(stderr, "Option -%c takes one argument.\n", argv[i][1]);
+			break;
+#endif
 #ifdef ENABLE_NFQUEUE
 		case 'Q':
 			if(i+1<argc)
@@ -1148,8 +1169,6 @@ init(int argc, char * * argv, struct runtime_vars * v)
 			}
 			break;
 #endif
-				fprintf(stderr, "Option -%c takes one argument.\n", argv[i][1]);
-			break;
 		case 'P':
 			if(i+1 < argc)
 				pidfilename = argv[++i];
@@ -1387,6 +1406,9 @@ print_usage:
 #else
 			"\t\t[-a listening_ip ext_ip]"
 #endif
+#ifdef ENABLE_HTTPS
+			" [-H https_port]"
+#endif
 			" [-p port] [-d]"
 #if defined(USE_PF) || defined(USE_IPF)
 			" [-L]"
@@ -1454,6 +1476,12 @@ main(int argc, char * * argv)
 #if defined(V6SOCKETS_ARE_V6ONLY) && defined(ENABLE_IPV6)
 	int shttpl_v4 = -1;	/* socket for HTTP (ipv4 only) */
 #endif
+#ifdef ENABLE_HTTPS
+	int shttpsl = -1;	/* socket for HTTPS */
+#if defined(V6SOCKETS_ARE_V6ONLY) && defined(ENABLE_IPV6)
+	int shttpsl_v4 = -1;	/* socket for HTTPS (ipv4 only) */
+#endif
+#endif /* ENABLE_HTTPS */
 	int sudp = -1;		/* IP v4 socket for receiving SSDP */
 #ifdef ENABLE_IPV6
 	int sudpv6 = -1;	/* IP v6 socket for receiving SSDP */
@@ -1497,6 +1525,10 @@ main(int argc, char * * argv)
 
 	if(init(argc, argv, &v) != 0)
 		return 1;
+#ifdef ENABLE_HTTPS
+	if(init_ssl() < 0)
+		return 1;
+#endif /* ENABLE_HTTPS */
 	/* count lan addrs */
 	addr_count = 0;
 	for(lan_addr = lan_addrs.lh_first; lan_addr != NULL; lan_addr = lan_addr->list.le_next)
@@ -1546,7 +1578,6 @@ main(int argc, char * * argv)
 
 	if(GETFLAG(ENABLEUPNPMASK))
 	{
-
 		/* open socket for HTTP connections. Listen on the 1st LAN address */
 #ifdef ENABLE_IPV6
 		shttpl = OpenAndConfHTTPSocket((v.port > 0) ? v.port : 0, 1);
@@ -1559,6 +1590,15 @@ main(int argc, char * * argv)
 			return 1;
 		}
 		if(v.port <= 0) {
+#ifdef ENABLE_IPV6
+			struct sockaddr_in6 sockinfo;
+			socklen_t len = sizeof(struct sockaddr_in6);
+			if (getsockname(shttpl, (struct sockaddr *)&sockinfo, &len) < 0) {
+				syslog(LOG_ERR, "getsockname(): %m");
+				return 1;
+			}
+			v.port = ntohs(sockinfo.sin6_port);
+#else /* ENABLE_IPV6 */
 			struct sockaddr_in sockinfo;
 			socklen_t len = sizeof(struct sockaddr_in);
 			if (getsockname(shttpl, (struct sockaddr *)&sockinfo, &len) < 0) {
@@ -1566,6 +1606,7 @@ main(int argc, char * * argv)
 				return 1;
 			}
 			v.port = ntohs(sockinfo.sin_port);
+#endif /* ENABLE_IPV6 */
 		}
 		syslog(LOG_NOTICE, "HTTP listening on port %d", v.port);
 #if defined(V6SOCKETS_ARE_V6ONLY) && defined(ENABLE_IPV6)
@@ -1576,6 +1617,47 @@ main(int argc, char * * argv)
 			return 1;
 		}
 #endif /* V6SOCKETS_ARE_V6ONLY */
+#ifdef ENABLE_HTTPS
+		/* https */
+#ifdef ENABLE_IPV6
+		shttpsl = OpenAndConfHTTPSocket((v.https_port > 0) ? v.https_port : 0, 1);
+#else /* ENABLE_IPV6 */
+		shttpsl = OpenAndConfHTTPSocket((v.https_port > 0) ? v.https_port : 0);
+#endif /* ENABLE_IPV6 */
+		if(shttpl < 0)
+		{
+			syslog(LOG_ERR, "Failed to open socket for HTTPS. EXITING");
+			return 1;
+		}
+		if(v.https_port <= 0) {
+#ifdef ENABLE_IPV6
+			struct sockaddr_in6 sockinfo;
+			socklen_t len = sizeof(struct sockaddr_in6);
+			if (getsockname(shttpsl, (struct sockaddr *)&sockinfo, &len) < 0) {
+				syslog(LOG_ERR, "getsockname(): %m");
+				return 1;
+			}
+			v.https_port = ntohs(sockinfo.sin6_port);
+#else /* ENABLE_IPV6 */
+			struct sockaddr_in sockinfo;
+			socklen_t len = sizeof(struct sockaddr_in);
+			if (getsockname(shttpsl, (struct sockaddr *)&sockinfo, &len) < 0) {
+				syslog(LOG_ERR, "getsockname(): %m");
+				return 1;
+			}
+			v.https_port = ntohs(sockinfo.sin_port);
+#endif /* ENABLE_IPV6 */
+		}
+		syslog(LOG_NOTICE, "HTTPS listening on port %d", v.https_port);
+#if defined(V6SOCKETS_ARE_V6ONLY) && defined(ENABLE_IPV6)
+		shttpsl_v4 =  OpenAndConfHTTPSocket(v.https_port, 0);
+		if(shttpsl_v4 < 0)
+		{
+			syslog(LOG_ERR, "Failed to open socket for HTTPS on port %hu (IPv4). EXITING", v.https_port);
+			return 1;
+		}
+#endif /* V6SOCKETS_ARE_V6ONLY */
+#endif /* ENABLE_HTTPS */
 #ifdef ENABLE_IPV6
 		if(find_ipv6_addr(NULL, ipv6_addr_for_http_with_brackets, sizeof(ipv6_addr_for_http_with_brackets)) > 0) {
 			syslog(LOG_NOTICE, "HTTP IPv6 address given to control points : %s",
@@ -1716,6 +1798,9 @@ main(int argc, char * * argv)
 				if (GETFLAG(ENABLEUPNPMASK))
 					SendSSDPNotifies2(snotify,
 				                  (unsigned short)v.port,
+#ifdef ENABLE_HTTPS
+					              (unsigned short)v.https_port,
+#endif
 				                  v.notify_interval << 1);
 				memcpy(&lasttimeofday, &timeofday, sizeof(struct timeval));
 				timeout.tv_sec = v.notify_interval;
@@ -1807,6 +1892,20 @@ main(int argc, char * * argv)
 			max_fd = MAX( max_fd, shttpl_v4);
 		}
 #endif
+#ifdef ENABLE_HTTPS
+		if (shttpsl >= 0)
+		{
+			FD_SET(shttpsl, &readset);
+			max_fd = MAX( max_fd, shttpsl);
+		}
+#if defined(V6SOCKETS_ARE_V6ONLY) && defined(ENABLE_IPV6)
+		if (shttpsl_v4 >= 0)
+		{
+			FD_SET(shttpsl_v4, &readset);
+			max_fd = MAX( max_fd, shttpsl_v4);
+		}
+#endif
+#endif /* ENABLE_HTTPS */
 #ifdef ENABLE_IPV6
 		if (sudpv6 >= 0)
 		{
@@ -1918,8 +2017,9 @@ main(int argc, char * * argv)
 			syslog(LOG_ERR, "Failed to select open sockets. EXITING");
 			return 1;	/* very serious cause of error */
 		}
-		if(try_sendto(&writeset) < 0) {
-			syslog(LOG_ERR, "try_sendto: %m");
+		i = try_sendto(&writeset);
+		if(i < 0) {
+			syslog(LOG_ERR, "try_sendto failed to send %d packets", -i);
 		}
 #ifdef USE_MINIUPNPDCTL
 		for(ectl = ctllisthead.lh_first; ectl;)
@@ -2043,13 +2143,21 @@ main(int argc, char * * argv)
 		if(sudp >= 0 && FD_ISSET(sudp, &readset))
 		{
 			/*syslog(LOG_INFO, "Received UDP Packet");*/
+#ifdef ENABLE_HTTPS
+			ProcessSSDPRequest(sudp, (unsigned short)v.port, (unsigned short)v.https_port);
+#else
 			ProcessSSDPRequest(sudp, (unsigned short)v.port);
+#endif
 		}
 #ifdef ENABLE_IPV6
 		if(sudpv6 >= 0 && FD_ISSET(sudpv6, &readset))
 		{
 			syslog(LOG_INFO, "Received UDP Packet (IPv6)");
+#ifdef ENABLE_HTTPS
+			ProcessSSDPRequest(sudpv6, (unsigned short)v.port, (unsigned short)v.https_port);
+#else
 			ProcessSSDPRequest(sudpv6, (unsigned short)v.port);
+#endif
 		}
 #endif
 #ifdef USE_IFACEWATCHER
@@ -2075,7 +2183,7 @@ main(int argc, char * * argv)
 		if(shttpl >= 0 && FD_ISSET(shttpl, &readset))
 		{
 			struct upnphttp * tmp;
-			tmp = ProcessIncomingHTTP(shttpl);
+			tmp = ProcessIncomingHTTP(shttpl, "HTTP");
 			if(tmp)
 			{
 				LIST_INSERT_HEAD(&upnphttphead, tmp, entries);
@@ -2085,13 +2193,37 @@ main(int argc, char * * argv)
 		if(shttpl_v4 >= 0 && FD_ISSET(shttpl_v4, &readset))
 		{
 			struct upnphttp * tmp;
-			tmp = ProcessIncomingHTTP(shttpl_v4);
+			tmp = ProcessIncomingHTTP(shttpl_v4, "HTTP");
 			if(tmp)
 			{
 				LIST_INSERT_HEAD(&upnphttphead, tmp, entries);
 			}
 		}
 #endif
+#ifdef ENABLE_HTTPS
+		if(shttpsl >= 0 && FD_ISSET(shttpsl, &readset))
+		{
+			struct upnphttp * tmp;
+			tmp = ProcessIncomingHTTP(shttpsl, "HTTPS");
+			if(tmp)
+			{
+				InitSSL_upnphttp(tmp);
+				LIST_INSERT_HEAD(&upnphttphead, tmp, entries);
+			}
+		}
+#if defined(V6SOCKETS_ARE_V6ONLY) && defined(ENABLE_IPV6)
+		if(shttpsl_v4 >= 0 && FD_ISSET(shttpsl_v4, &readset))
+		{
+			struct upnphttp * tmp;
+			tmp = ProcessIncomingHTTP(shttpsl_v4, "HTTPS");
+			if(tmp)
+			{
+				InitSSL_upnphttp(tmp);
+				LIST_INSERT_HEAD(&upnphttphead, tmp, entries);
+			}
+		}
+#endif
+#endif /* ENABLE_HTTPS */
 #ifdef ENABLE_NFQUEUE
 		/* process NFQ packets */
 		if(nfqh >= 0 && FD_ISSET(nfqh, &readset))
@@ -2202,6 +2334,9 @@ shutdown:
 		free(lan_addr);
 	}
 
+#ifdef ENABLE_HTTPS
+	free_ssl();
+#endif
 #ifdef ENABLE_NATPMP
 	free(snatpmp);
 #endif

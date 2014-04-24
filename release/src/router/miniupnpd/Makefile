@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.79 2014/03/31 12:21:23 nanard Exp $
+# $Id: Makefile,v 1.83 2014/04/18 08:24:41 nanard Exp $
 # MiniUPnP project
 # http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
 # Author: Thomas Bernard
@@ -34,10 +34,14 @@ STRIP = strip
 OSNAME != uname -s
 ARCH != uname -m
 .ifndef FWNAME
-.if exists(/usr/include/net/pfvar.h)
+#.if exists(/usr/include/net/pfvar.h)
+#FWNAME = pf
+#.else
+#FWNAME = ipf
+#.endif
+
+.if $(OSNAME) == "OpenBSD"
 FWNAME = pf
-.else
-FWNAME = ipf
 .endif
 
 # better way to find if we are using ipf or pf
@@ -45,7 +49,8 @@ FWNAME = ipf
 .if $(OSNAME) == "FreeBSD"
 FWNAME != . /etc/rc.subr; . /etc/rc.conf; \
           if checkyesno ipfilter_enable; then \
-          echo "ipf"; else echo "pf"; fi
+          echo "ipf"; elif checkyesno pf_enable; then \
+          echo "pf"; else echo "ipfw"; fi
 .endif
 
 .if $(OSNAME) == "NetBSD"
@@ -57,7 +62,8 @@ FWNAME != . /etc/rc.subr; . /etc/rc.conf; \
 .if $(OSNAME) == "DragonFly"
 FWNAME != . /etc/rc.subr; . /etc/rc.conf; \
           if checkyesno ipfilter; then \
-          echo "ipf"; else echo "pf"; fi
+          echo "ipf"; elif checkyesno pf_enable; then \
+          echo "pf"; else echo "ipfw"; fi
 .endif
 .endif
 
@@ -136,6 +142,8 @@ LIBS = -lkvm
 LIBS += -lsocket -lnsl -lkstat -lresolv
 .endif
 
+LIBS += -lssl -lcrypto
+
 # set PREFIX variable to install in the wanted place
 
 INSTALLBINDIR = $(PREFIX)/sbin
@@ -211,7 +219,7 @@ testasyncsendto:	config.h $(TESTASYNCSENDTOOBJS)
 	$(CC) $(CFLAGS) -o $@ $(TESTASYNCSENDTOOBJS)
 
 testportinuse:	config.h $(TESTPORTINUSEOBJS)
-	$(CC) $(CFLAGS) -o $@ $(TESTPORTINUSEOBJS) -lkvm
+	$(CC) $(CFLAGS) -o $@ $(TESTPORTINUSEOBJS) $(LIBS)
 
 # gmake :
 #	$(CC) $(CFLAGS) -o $@ $^
