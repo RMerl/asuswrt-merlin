@@ -7,10 +7,7 @@
  *
  *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *  Copyright (C) 2010 Fox Crypto B.V. <openvpn@fox-it.com>
- *
- *  Additions for eurephia plugin done by:
- *         David Sommerseth <dazo@users.sourceforge.net> Copyright (C) 2008-2009
- *
+ *  Copyright (C) 2008-2013 David Sommerseth <dazo@users.sourceforge.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -141,8 +138,6 @@ static const tls_cipher_name_pair tls_cipher_name_translation_table[] = {
     {"DHE-DSS-CAMELLIA128-SHA", "TLS-DHE-DSS-WITH-CAMELLIA-128-CBC-SHA"},
     {"DHE-DSS-CAMELLIA256-SHA256", "TLS-DHE-DSS-WITH-CAMELLIA-256-CBC-SHA256"},
     {"DHE-DSS-CAMELLIA256-SHA", "TLS-DHE-DSS-WITH-CAMELLIA-256-CBC-SHA"},
-    {"DHE-DSS-DES-CBC3-SHA", "TLS-DHE-DSS-WITH-3DES-EDE-CBC-SHA"},
-    {"DHE-DSS-DES-CBC-SHA", "TLS-DHE-DSS-WITH-DES-CBC-SHA"},
     {"DHE-DSS-SEED-SHA", "TLS-DHE-DSS-WITH-SEED-CBC-SHA"},
     {"DHE-RSA-AES128-GCM-SHA256", "TLS-DHE-RSA-WITH-AES-128-GCM-SHA256"},
     {"DHE-RSA-AES128-SHA256", "TLS-DHE-RSA-WITH-AES-128-CBC-SHA256"},
@@ -154,8 +149,6 @@ static const tls_cipher_name_pair tls_cipher_name_translation_table[] = {
     {"DHE-RSA-CAMELLIA128-SHA", "TLS-DHE-RSA-WITH-CAMELLIA-128-CBC-SHA"},
     {"DHE-RSA-CAMELLIA256-SHA256", "TLS-DHE-RSA-WITH-CAMELLIA-256-CBC-SHA256"},
     {"DHE-RSA-CAMELLIA256-SHA", "TLS-DHE-RSA-WITH-CAMELLIA-256-CBC-SHA"},
-    {"DHE-RSA-DES-CBC3-SHA", "TLS-DHE-RSA-WITH-3DES-EDE-CBC-SHA"},
-    {"DHE-RSA-DES-CBC-SHA", "TLS-DHE-RSA-WITH-DES-CBC-SHA"},
     {"DHE-RSA-SEED-SHA", "TLS-DHE-RSA-WITH-SEED-CBC-SHA"},
     {"DH-RSA-SEED-SHA", "TLS-DH-RSA-WITH-SEED-CBC-SHA"},
     {"ECDH-ECDSA-AES128-GCM-SHA256", "TLS-ECDH-ECDSA-WITH-AES-128-GCM-SHA256"},
@@ -242,6 +235,19 @@ static const tls_cipher_name_pair tls_cipher_name_translation_table[] = {
     {"SRP-RSA-3DES-EDE-CBC-SHA", "TLS-SRP-SHA-RSA-WITH-3DES-EDE-CBC-SHA"},
     {"SRP-RSA-AES-128-CBC-SHA", "TLS-SRP-SHA-RSA-WITH-AES-128-CBC-SHA"},
     {"SRP-RSA-AES-256-CBC-SHA", "TLS-SRP-SHA-RSA-WITH-AES-256-CBC-SHA"},
+#ifdef ENABLE_CRYPTO_OPENSSL
+    {"DEFAULT", "DEFAULT"},
+    {"ALL", "ALL"},
+    {"HIGH", "HIGH"},
+    {"MEDIUM", "MEDIUM"},
+    {"LOW", "LOW"},
+    {"ECDH", "ECDH"},
+    {"ECDSA", "ECDSA"},
+    {"EDH", "EDH"},
+    {"EXP", "EXP"},
+    {"RSA", "RSA"},
+    {"SRP", "SRP"},
+#endif
     {NULL, NULL}
 };
 
@@ -447,6 +453,27 @@ ssl_put_auth_challenge (const char *cr_str)
 #endif
 
 /*
+ * Parse a TLS version string, returning a TLS_VER_x constant.
+ * If version string is not recognized and extra == "or-highest",
+ * return tls_version_max().
+ */
+int
+tls_version_min_parse(const char *vstr, const char *extra)
+{
+  const int max_version = tls_version_max();
+  if (!strcmp(vstr, "1.0") && TLS_VER_1_0 <= max_version)
+    return TLS_VER_1_0;
+  else if (!strcmp(vstr, "1.1") && TLS_VER_1_1 <= max_version)
+    return TLS_VER_1_1;
+  else if (!strcmp(vstr, "1.2") && TLS_VER_1_2 <= max_version)
+    return TLS_VER_1_2;
+  else if (extra && !strcmp(extra, "or-highest"))
+    return max_version;
+  else
+    return TLS_VER_BAD;
+}
+
+/*
  * Initialize SSL context.
  * All files are in PEM format.
  */
@@ -495,12 +522,8 @@ init_ssl (const struct options *options, struct tls_root_ctx *new_ctx)
 #ifdef MANAGMENT_EXTERNAL_KEY
   else if ((options->management_flags & MF_EXTERNAL_KEY) && options->cert_file)
     {
-      openvpn_x509_cert_t *my_cert = NULL;
-      tls_ctx_load_cert_file(new_ctx, options->cert_file, options->cert_file_inline,
-	  &my_cert);
-      tls_ctx_use_external_private_key(new_ctx, my_cert);
-
-      tls_ctx_free_cert_file(my_cert);
+      tls_ctx_use_external_private_key(new_ctx, options->cert_file,
+	  options->cert_file_inline);
     }
 #endif
   else
@@ -508,7 +531,7 @@ init_ssl (const struct options *options, struct tls_root_ctx *new_ctx)
       /* Load Certificate */
       if (options->cert_file)
 	{
-          tls_ctx_load_cert_file(new_ctx, options->cert_file, options->cert_file_inline, NULL);
+          tls_ctx_load_cert_file(new_ctx, options->cert_file, options->cert_file_inline);
 	}
 
       /* Load Private Key */
@@ -1813,15 +1836,17 @@ push_peer_info(struct buffer *buf, struct tls_session *session)
 	  get_default_gateway (&rgi);
 	  if (rgi.flags & RGI_HWADDR_DEFINED)
 	    buf_printf (&out, "IV_HWADDR=%s\n", format_hex_ex (rgi.hwaddr, 6, 0, 1, ":", &gc));
+        }
 
-	  /* push env vars that begin with UV_ */
-	  for (e=es->list; e != NULL; e=e->next)
+      /* push env vars that begin with UV_ and IV_GUI_VER */
+      for (e=es->list; e != NULL; e=e->next)
+	{
+	  if (e->string)
 	    {
-	      if (e->string)
-		{
-		  if (!strncmp(e->string, "UV_", 3) && buf_safe(&out, strlen(e->string)+1))
-		    buf_printf (&out, "%s\n", e->string);
-		}
+	      if (((strncmp(e->string, "UV_", 3)==0 && session->opt->push_peer_info_detail >= 2)
+		   || (strncmp(e->string,"IV_GUI_VER=",sizeof("IV_GUI_VER=")-1)==0))
+		  && buf_safe(&out, strlen(e->string)+1))
+		buf_printf (&out, "%s\n", e->string);
 	    }
 	}
 

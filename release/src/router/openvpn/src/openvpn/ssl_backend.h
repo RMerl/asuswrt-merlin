@@ -36,12 +36,23 @@
 #ifdef ENABLE_CRYPTO_OPENSSL
 #include "ssl_openssl.h"
 #include "ssl_verify_openssl.h"
+#define SSLAPI SSLAPI_OPENSSL
 #endif
 #ifdef ENABLE_CRYPTO_POLARSSL
 #include "ssl_polarssl.h"
 #include "ssl_verify_polarssl.h"
+#define SSLAPI SSLAPI_POLARSSL
 #endif
 
+/* Ensure that SSLAPI got a sane value if SSL is disabled or unknown */
+#ifndef SSLAPI
+#define SSLAPI SSLAPI_NONE
+#endif
+
+/**
+ *  prototype for struct tls_session from ssl_common.h
+ */
+struct tls_session;
 
 /**
  * Get a tls_cipher_name_pair containing OpenSSL and IANA names for supplied TLS cipher name
@@ -88,6 +99,29 @@ void tls_free_lib();
  * Clear the underlying SSL library's error state.
  */
 void tls_clear_error();
+
+/**
+ * Parse a TLS version specifier
+ *
+ * @param vstr		The TLS version string
+ * @param extra	        An optional extra parameter, may be NULL
+ *
+ * @return 		One of the TLS_VER_x constants or TLS_VER_BAD
+ *                      if a parse error should be flagged.
+ */
+#define TLS_VER_BAD   -1
+#define TLS_VER_1_0    0 /* default */
+#define TLS_VER_1_1    1
+#define TLS_VER_1_2    2
+int tls_version_min_parse(const char *vstr, const char *extra);
+
+/**
+ * Return the maximum TLS version (as a TLS_VER_x constant)
+ * supported by current SSL implementation
+ *
+ * @return 		One of the TLS_VER_x constants (but not TLS_VER_BAD).
+ */
+int tls_version_max(void);
 
 /**
  * Initialise a library-specific TLS context for a server.
@@ -181,27 +215,13 @@ void tls_ctx_load_cryptoapi(struct tls_root_ctx *ctx, const char *cryptoapi_cert
  * Load certificate file into the given TLS context. If the given certificate
  * file contains a certificate chain, load the whole chain.
  *
- * If the x509 parameter is not NULL, the certificate will be returned in it.
- *
  * @param ctx			TLS context to use
  * @param cert_file		The file name to load the certificate from, or
  * 				"[[INLINE]]" in the case of inline files.
  * @param cert_file_inline	A string containing the certificate
- * @param x509			An optional certificate, if x509 is NULL,
- * 				do nothing, if x509 is not NULL, *x509 will be
- * 				allocated and filled with the loaded certificate.
- * 				*x509 must be NULL.
  */
 void tls_ctx_load_cert_file (struct tls_root_ctx *ctx, const char *cert_file,
-    const char *cert_file_inline, openvpn_x509_cert_t **x509
-    );
-
-/**
- * Free the given certificate
- *
- * @param x509			certificate to free
- */
-void tls_ctx_free_cert_file (openvpn_x509_cert_t *x509);
+    const char *cert_file_inline);
 
 /**
  * Load private key file into the given TLS context.
@@ -221,17 +241,19 @@ int tls_ctx_load_priv_file (struct tls_root_ctx *ctx, const char *priv_key_file,
 #ifdef MANAGMENT_EXTERNAL_KEY
 
 /**
- * Tell the management interface to load the external private key matching
- * the given certificate.
+ * Tell the management interface to load the given certificate and the external
+ * private key matching the given certificate.
  *
  * @param ctx			TLS context to use
- * @param cert			The certificate file to load the private key for
+ * @param cert_file		The file name to load the certificate from, or
  * 				"[[INLINE]]" in the case of inline files.
+ * @param cert_file_inline	A string containing the certificate
  *
  * @return 			1 if an error occurred, 0 if parsing was
  * 				successful.
  */
-int tls_ctx_use_external_private_key (struct tls_root_ctx *ctx, openvpn_x509_cert_t *cert);
+int tls_ctx_use_external_private_key (struct tls_root_ctx *ctx,
+    const char *cert_file, const char *cert_file_inline);
 #endif
 
 
@@ -291,7 +313,7 @@ void tls_ctx_personalise_random(struct tls_root_ctx *ctx);
  * @param session	The session associated with the given key_state
  */
 void key_state_ssl_init(struct key_state_ssl *ks_ssl,
-    const struct tls_root_ctx *ssl_ctx, bool is_server, void *session);
+    const struct tls_root_ctx *ssl_ctx, bool is_server, struct tls_session *session);
 
 /**
  * Free the SSL channel part of the given key state.
@@ -432,8 +454,10 @@ void print_details (struct key_state_ssl * ks_ssl, const char *prefix);
 /*
  * Show the TLS ciphers that are available for us to use in the OpenSSL
  * library.
+ *
+ * @param		- list of allowed TLS cipher, or NULL.
  */
-void show_available_tls_ciphers ();
+void show_available_tls_ciphers (const char *tls_ciphers);
 
 /*
  * The OpenSSL library has a notion of preference in TLS ciphers.  Higher

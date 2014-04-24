@@ -271,7 +271,7 @@ failover capability.
 .\"*********************************************************
 .TP
 .B \-\-remote-random-hostname
-Add a random string (6 characters) to first DNS label of hostname to prevent
+Prepend a random string (6 bytes, 12 hex characters) to hostname to prevent
 DNS caching.  For example, "foo.bar.gov" would be modified to
 "<random-chars>.foo.bar.gov".
 .\"*********************************************************
@@ -554,12 +554,15 @@ Set HTTP "User-Agent" string to
 .B user-agent.
 .\"*********************************************************
 .TP
-.B \-\-socks-proxy server [port]
+.B \-\-socks-proxy server [port] [authfile]
 Connect to remote host through a Socks5 proxy at address
 .B server
 and port
 .B port
 (default=1080).
+.B authfile
+(optional) is a file containing a username and password on 2 lines, or
+"stdin" to prompt from console.
 .\"*********************************************************
 .TP
 .B \-\-socks-proxy-retry
@@ -804,6 +807,17 @@ also specify
 .B \-\-dev-type tun
 or
 .B \-\-dev-type tap.
+
+Under Mac OS X this option can be used to specify the default tun
+implementation. Using
+.B \-\-dev\-node utun
+forces usage of the native Darwin tun kernel support. Use
+.B \-\-dev\-node utunN
+to select a specific utun instance. To force using the tun.kext (/dev/tunX) use
+.B \-\-dev\-node tun\fR.
+When not specifying a
+.B \-\-dev\-node
+option openvpn will first try to open utun, and fall back to tun.kext.
 
 On Windows systems, select the TAP-Win32 adapter which
 is named
@@ -1880,6 +1894,18 @@ reasons for having OpenVPN fail if it detects problems in a
 config file.  Having said that, there are valid reasons for wanting
 new software features to gracefully degrade when encountered by
 older software versions.
+
+It is also possible to tag a single directive so as not to trigger
+a fatal error if the directive isn't recognized.  To do this,
+prepend the following before the directive:
+.B setenv opt
+
+Versions prior to OpenVPN 2.3.3 will always ignore options set with the
+.B setenv opt
+directive.
+
+See also
+.B \-\-ignore-unknown-option
 .\"*********************************************************
 .TP
 .B \-\-setenv-safe name value
@@ -1891,6 +1917,25 @@ This directive is designed to be pushed by the server to clients,
 and the prepending of "OPENVPN_" to the environmental variable
 is a safety precaution to prevent a LD_PRELOAD style attack
 from a malicious or compromised server.
+.\"*********************************************************
+.TP
+.B \-\-ignore-unknown-option opt1 opt2 opt3 ... optN
+When one of options
+.B opt1 ... optN
+is encountered in the configuration file the configuration
+file parsing does not fail if this OpenVPN version does not
+support the option. Multiple
+.B \-\-ignore-unknown-option
+options can be given to support a larger number of options to ignore.
+
+This option should be used with caution, as there are good security
+reasons for having OpenVPN fail if it detects problems in a
+config file. Having said that, there are valid reasons for wanting
+new software features to gracefully degrade when encountered by
+older software versions.
+
+.B \-\-ignore-unknown-option
+is available since OpenVPN 2.3.3.
 .\"*********************************************************
 .TP
 .B \-\-script-security level
@@ -2037,6 +2082,16 @@ In many cases, the
 parameter can point to an empty directory, however
 complications can result when scripts or restarts
 are executed after the chroot operation.
+
+Note: if OpenVPN is built using the PolarSSL SSL
+library,
+.B \-\-chroot
+will only work if a /dev/urandom device node is available
+inside the chroot directory
+.B dir.
+This is due to the way PolarSSL works (it wants to open
+/dev/urandom every time randomness is needed, not just once
+at startup) and nothing OpenVPN can influence.
 .\"*********************************************************
 .TP
 .B \-\-setcon context
@@ -4214,6 +4269,15 @@ when you built your peer's certificate (see
 above).
 .\"*********************************************************
 .TP
+.B \-\-tls-version-min version ['or-highest']
+Sets the minimum
+TLS version we will accept from the peer (default is "1.0").
+Examples for version
+include "1.0", "1.1", or "1.2".  If 'or-highest' is specified
+and version is not recognized, we will only accept the highest TLS
+version supported by the local SSL implementation.
+.\"*********************************************************
+.TP
 .B \-\-pkcs12 file
 Specify a PKCS #12 file containing local private key,
 local certificate, and root CA certificate.
@@ -5938,6 +6002,16 @@ Client connection timestamp, formatted as a unix integer
 date/time value.
 Set prior to execution of the
 .B \-\-client-connect
+script.
+.\"*********************************************************
+.TP
+.B tls_digest_{n}
+Contains the certificate SHA1 fingerprint/digest hash value,
+where
+.B n
+is the verification level.  Only set for TLS connections.  Set prior
+to execution of
+.B \-\-tls-verify
 script.
 .\"*********************************************************
 .TP

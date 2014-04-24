@@ -103,8 +103,17 @@ tmp_rsa_cb (SSL * s, int is_export, int keylength)
   static RSA *rsa_tmp = NULL;
   if (rsa_tmp == NULL)
     {
+      int ret = -1;
+      BIGNUM *bn = BN_new();
+      rsa_tmp = RSA_new();
+
       msg (D_HANDSHAKE, "Generating temp (%d bit) RSA key", keylength);
-      rsa_tmp = RSA_generate_key (keylength, RSA_F4, NULL, NULL);
+
+      if(!bn || !BN_set_word(bn, RSA_F4) ||
+	  !RSA_generate_key_ex(rsa_tmp, keylength, bn, NULL))
+	msg(M_SSLERR, "Failed to generate temp RSA key");
+
+      if (bn) BN_free( bn );
     }
   return (rsa_tmp);
 }
@@ -114,10 +123,10 @@ tls_ctx_server_new(struct tls_root_ctx *ctx)
 {
   ASSERT(NULL != ctx);
 
-  ctx->ctx = SSL_CTX_new (TLSv1_server_method ());
+  ctx->ctx = SSL_CTX_new (SSLv23_server_method ());
 
   if (ctx->ctx == NULL)
-    msg (M_SSLERR, "SSL_CTX_new TLSv1_server_method");
+    msg (M_SSLERR, "SSL_CTX_new SSLv23_server_method");
 
   SSL_CTX_set_tmp_rsa_callback (ctx->ctx, tmp_rsa_cb);
 }
@@ -127,10 +136,10 @@ tls_ctx_client_new(struct tls_root_ctx *ctx)
 {
   ASSERT(NULL != ctx);
 
-  ctx->ctx = SSL_CTX_new (TLSv1_client_method ());
+  ctx->ctx = SSL_CTX_new (SSLv23_client_method ());
 
   if (ctx->ctx == NULL)
-    msg (M_SSLERR, "SSL_CTX_new TLSv1_client_method");
+    msg (M_SSLERR, "SSL_CTX_new SSLv23_client_method");
 }
 
 void
@@ -174,13 +183,46 @@ info_callback (INFO_CALLBACK_SSL_CONST SSL * s, int where, int ret)
     }
 }
 
+/*
+ * Return maximum TLS version supported by local OpenSSL library.
+ * Assume that presence of SSL_OP_NO_TLSvX macro indicates that
+ * TLSvX is supported.
+ */
+int
+tls_version_max(void)
+{
+#if defined(SSL_OP_NO_TLSv1_2)
+  return TLS_VER_1_2;
+#elif defined(SSL_OP_NO_TLSv1_1)
+  return TLS_VER_1_1;
+#else
+  return TLS_VER_1_0;
+#endif
+}
+
 void
 tls_ctx_set_options (struct tls_root_ctx *ctx, unsigned int ssl_flags)
 {
   ASSERT(NULL != ctx);
 
+  /* process SSL options including minimum TLS version we will accept from peer */
+  {
+    long sslopt = SSL_OP_SINGLE_DH_USE | SSL_OP_NO_TICKET | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3;
+    const int tls_version_min = (ssl_flags >> SSLF_TLS_VERSION_SHIFT) & SSLF_TLS_VERSION_MASK;
+    if (tls_version_min > TLS_VER_1_0)
+      sslopt |= SSL_OP_NO_TLSv1;
+#ifdef SSL_OP_NO_TLSv1_1
+    if (tls_version_min > TLS_VER_1_1)
+      sslopt |= SSL_OP_NO_TLSv1_1;
+#endif
+#ifdef SSL_OP_NO_TLSv1_2
+    if (tls_version_min > TLS_VER_1_2)
+      sslopt |= SSL_OP_NO_TLSv1_2;
+#endif
+    SSL_CTX_set_options (ctx->ctx, sslopt);
+  }
+
   SSL_CTX_set_session_cache_mode (ctx->ctx, SSL_SESS_CACHE_OFF);
-  SSL_CTX_set_options (ctx->ctx, SSL_OP_SINGLE_DH_USE);
   SSL_CTX_set_default_passwd_cb (ctx->ctx, pem_password_callback);
 
   /* Require peer certificate verification */
@@ -380,14 +422,32 @@ tls_ctx_load_pkcs12(struct tls_root_ctx *ctx, const char *pkcs12_file,
   /* Set Certificate Verification chain */
   if (load_ca_file)
    {
+     /* Add CAs from PKCS12 to the cert store and mark them as trusted. 
+      * They're also used to fill in the chain of intermediate certs as
+      * necessary.
+      */
      if (ca && sk_X509_num(ca))
       {
 	for (i = 0; i < sk_X509_num(ca); i++)
 	  {
-	      if (!X509_STORE_add_cert(ctx->ctx->cert_store,sk_X509_value(ca, i)))
+	    if (!X509_STORE_add_cert(ctx->ctx->cert_store,sk_X509_value(ca, i)))
 	      msg (M_SSLERR, "Cannot add certificate to certificate chain (X509_STORE_add_cert)");
 	    if (!SSL_CTX_add_client_CA(ctx->ctx, sk_X509_value(ca, i)))
 	      msg (M_SSLERR, "Cannot add certificate to client CA list (SSL_CTX_add_client_CA)");
+	  }
+      }
+   } else {
+     /* If trusted CA certs were loaded from a PEM file, and we ignore the
+      * ones in PKCS12, do load PKCS12-provided certs to the client extra
+      * certs chain just in case they include intermediate CAs needed to
+      * prove my identity to the other end. This does not make them trusted.
+      */
+     if (ca && sk_X509_num(ca))
+      {
+	for (i = 0; i < sk_X509_num(ca); i++)
+	  {
+	    if (!SSL_CTX_add_extra_chain_cert(ctx->ctx,sk_X509_value(ca, i)))
+	      msg (M_SSLERR, "Cannot add extra certificate to chain (SSL_CTX_add_extra_chain_cert)");
 	  }
       }
    }
@@ -423,9 +483,10 @@ tls_ctx_add_extra_certs (struct tls_root_ctx *ctx, BIO *bio)
     }
 }
 
-void
-tls_ctx_load_cert_file (struct tls_root_ctx *ctx, const char *cert_file,
-    const char *cert_file_inline, X509 **x509
+/* Like tls_ctx_load_cert, but returns a copy of the certificate in **X509 */
+static void
+tls_ctx_load_cert_file_and_copy (struct tls_root_ctx *ctx,
+    const char *cert_file, const char *cert_file_inline, X509 **x509
     )
 {
   BIO *in = NULL;
@@ -477,6 +538,13 @@ end:
     *x509 = x;
   else if (x)
     X509_free (x);
+}
+
+void
+tls_ctx_load_cert_file (struct tls_root_ctx *ctx, const char *cert_file,
+    const char *cert_file_inline)
+{
+  tls_ctx_load_cert_file_and_copy (ctx, cert_file, cert_file_inline, NULL);
 }
 
 void
@@ -616,14 +684,18 @@ rsa_priv_enc(int flen, const unsigned char *from, unsigned char *to, RSA *rsa, i
 }
 
 int
-tls_ctx_use_external_private_key (struct tls_root_ctx *ctx, X509 *cert)
+tls_ctx_use_external_private_key (struct tls_root_ctx *ctx,
+    const char *cert_file, const char *cert_file_inline)
 {
   RSA *rsa = NULL;
   RSA *pub_rsa;
   RSA_METHOD *rsa_meth;
+  X509 *cert = NULL;
 
   ASSERT (NULL != ctx);
   ASSERT (NULL != cert);
+
+  tls_ctx_load_cert_file_and_copy (ctx, cert_file, cert_file_inline, &cert);
 
   /* allocate custom RSA method object */
   ALLOC_OBJ_CLEAR (rsa_meth, RSA_METHOD);
@@ -659,10 +731,13 @@ tls_ctx_use_external_private_key (struct tls_root_ctx *ctx, X509 *cert)
   if (!SSL_CTX_use_RSAPrivateKey(ctx->ctx, rsa))
     goto err;
 
+  X509_free(cert);
   RSA_free(rsa); /* doesn't necessarily free, just decrements refcount */
   return 1;
 
  err:
+  if (cert)
+    X509_free(cert);
   if (rsa)
     RSA_free(rsa);
   else
@@ -694,7 +769,7 @@ tls_ctx_load_ca (struct tls_root_ctx *ctx, const char *ca_file,
   X509_STORE *store = NULL;
   X509_NAME *xn = NULL;
   BIO *in = NULL;
-  int i, added = 0;
+  int i, added = 0, prev = 0;
 
   ASSERT(NULL != ctx);
 
@@ -720,6 +795,11 @@ tls_ctx_load_ca (struct tls_root_ctx *ctx, const char *ca_file,
               X509_INFO *info = sk_X509_INFO_value (info_stack, i);
               if (info->crl)
                   X509_STORE_add_crl (store, info->crl);
+
+              if (tls_server && !info->x509)
+                {
+                  msg (M_SSLERR, "X509 name was missing in TLS mode");
+                }
 
               if (info->x509)
                 {
@@ -750,6 +830,15 @@ tls_ctx_load_ca (struct tls_root_ctx *ctx, const char *ca_file,
                       sk_X509_NAME_push (cert_names, xn);
                     }
                 }
+
+              if (tls_server) {
+                int cnum = sk_X509_NAME_num (cert_names);
+                if (cnum != (prev + 1)) {
+                  msg (M_WARN, "Cannot load CA certificate file %s (entry %d did not validate)", np(ca_file), added);
+                }
+                prev = cnum;
+              }
+
             }
           sk_X509_INFO_pop_free (info_stack, X509_INFO_free);
         }
@@ -757,8 +846,15 @@ tls_ctx_load_ca (struct tls_root_ctx *ctx, const char *ca_file,
       if (tls_server)
         SSL_CTX_set_client_CA_list (ctx->ctx, cert_names);
 
-      if (!added || (tls_server && sk_X509_NAME_num (cert_names) != added))
-        msg (M_SSLERR, "Cannot load CA certificate file %s", np(ca_file));
+      if (!added)
+        msg (M_SSLERR, "Cannot load CA certificate file %s (no entries were read)", np(ca_file));
+
+      if (tls_server) {
+        int cnum = sk_X509_NAME_num (cert_names);
+        if (cnum != added)
+          msg (M_SSLERR, "Cannot load CA certificate file %s (only %d of %d entries were valid X509 names)", np(ca_file), cnum, added);
+      }
+
       if (in)
         BIO_free (in);
     }
@@ -1015,7 +1111,7 @@ bio_read (BIO *bio, struct buffer *buf, int maxlen, const char *desc)
 }
 
 void
-key_state_ssl_init(struct key_state_ssl *ks_ssl, const struct tls_root_ctx *ssl_ctx, bool is_server, void *session)
+key_state_ssl_init(struct key_state_ssl *ks_ssl, const struct tls_root_ctx *ssl_ctx, bool is_server, struct tls_session *session)
 {
   ASSERT(NULL != ssl_ctx);
   ASSERT(ks_ssl);
@@ -1188,22 +1284,25 @@ print_details (struct key_state_ssl * ks_ssl, const char *prefix)
 }
 
 void
-show_available_tls_ciphers ()
+show_available_tls_ciphers (const char *cipher_list)
 {
-  SSL_CTX *ctx;
+  struct tls_root_ctx tls_ctx;
   SSL *ssl;
   const char *cipher_name;
   const char *print_name;
   const tls_cipher_name_pair *pair;
   int priority = 0;
 
-  ctx = SSL_CTX_new (TLSv1_method ());
-  if (!ctx)
+  tls_ctx.ctx = SSL_CTX_new (SSLv23_method ());
+  if (!tls_ctx.ctx)
     msg (M_SSLERR, "Cannot create SSL_CTX object");
 
-  ssl = SSL_new (ctx);
+  ssl = SSL_new (tls_ctx.ctx);
   if (!ssl)
     msg (M_SSLERR, "Cannot create SSL object");
+
+  if (cipher_list)
+    tls_ctx_restrict_ciphers(&tls_ctx, cipher_list);
 
   printf ("Available TLS Ciphers,\n");
   printf ("listed in order of preference:\n\n");
@@ -1222,7 +1321,7 @@ show_available_tls_ciphers ()
   printf ("\n");
 
   SSL_free (ssl);
-  SSL_CTX_free (ctx);
+  SSL_CTX_free (tls_ctx.ctx);
 }
 
 void
@@ -1232,7 +1331,7 @@ get_highest_preference_tls_cipher (char *buf, int size)
   SSL *ssl;
   const char *cipher_name;
 
-  ctx = SSL_CTX_new (TLSv1_method ());
+  ctx = SSL_CTX_new (SSLv23_method ());
   if (!ctx)
     msg (M_SSLERR, "Cannot create SSL_CTX object");
   ssl = SSL_new (ctx);

@@ -36,9 +36,6 @@
 /* Enable deferred authentication */
 #undef ENABLE_DEF_AUTH
 
-/* Enable support for the eurephia plug-in */
-#undef ENABLE_EUREPHIA
-
 /* We have persist tun capability */
 #undef ENABLE_FEATURE_TUN_PERSIST
 
@@ -72,7 +69,7 @@
 /* Enable PKCS11 */
 #undef ENABLE_PKCS11
 
-/* Enable systemd support */
+/* Enable plug-in support */
 #undef ENABLE_PLUGIN
 
 /* Enable TCP Server port sharing */
@@ -355,6 +352,9 @@
 /* Define to 1 if you have the <net/if_tun.h> header file. */
 #undef HAVE_NET_IF_TUN_H
 
+/* Define to 1 if you have the <net/if_utun.h> header file. */
+#undef HAVE_NET_IF_UTUN_H
+
 /* Define to 1 if you have the <net/tun/if_tun.h> header file. */
 #undef HAVE_NET_TUN_IF_TUN_H
 
@@ -480,6 +480,9 @@
 
 /* Define to 1 if you have the <sys/ioctl.h> header file. */
 #undef HAVE_SYS_IOCTL_H
+
+/* Define to 1 if you have the <sys/kern_control.h> header file. */
+#undef HAVE_SYS_KERN_CONTROL_H
 
 /* Define to 1 if you have the <sys/mman.h> header file. */
 #undef HAVE_SYS_MMAN_H

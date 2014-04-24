@@ -186,6 +186,8 @@ struct options
 
   /* enable forward compatibility for post-2.1 features */
   bool forward_compatible;
+  /* list of options that should be ignored even if unkown */
+  const char **  ignore_unknown_option;
 
   /* persist parms */
   bool persist_config;
@@ -458,6 +460,7 @@ struct options
   bool client;
   bool pull; /* client pull of config options from server */
   int push_continuation;
+  unsigned int push_option_types_found;
   const char *auth_user_pass_file;
   struct options_pre_pull *pre_pull;
 
