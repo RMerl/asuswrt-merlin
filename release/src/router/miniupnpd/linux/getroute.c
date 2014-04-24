@@ -5,6 +5,8 @@
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
+#ifdef UPNP_STRICT
+
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -170,3 +172,4 @@ error:
 	return -1;
 }
 
+#endif /* UPNP_STRICT */
