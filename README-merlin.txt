@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 374.41 (18-Apr-2014)
+Asuswrt-Merlin - build 374.42 (xx-xxx-2014)
 ===========================================
 
 About
@@ -508,8 +508,8 @@ security/parental filtering.  This can be done globally, or on a
 per device basis.  Each of them can have a different type of filtering 
 applied.  For example, you can have your LAN use OpenDNS's server to 
 provide basic filtering, but force your children's devices to use 
-Norton Connect Safe's DNS server that filters out malicious, 
-adult, and general mature content.
+Yandex's family DNS server that filters out malicious and adult
+content.
 
 If using a global filter, then specific devices can be told to 
 bypass the global filter, by creating a client rule for these, 
@@ -572,6 +572,17 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+374.42 (xx-xxx-2014)
+   - NEW: Added Comodo Secure DNS to supported DNSFilter services
+   - FIXED: Download2 folder wasn't selectable anymore on the
+            Media Server page.
+   - CHANGED: Removed Norton Connect Safe which seems to be discontinued
+              (their website has disappeared).  Users should switch to
+              either OpenDNS or OpenDNS Family Shield.
+   - CHANGED: Make the router use dnsmasq for local resolution
+              rather than always using the ISP DNS.
+
+
 374.41 (18-Apr-2014)
    - NEW: Merged with Asus's 374_5047 GPL.  Notable changes:
        * Fixed RT-AC68U random reboots
