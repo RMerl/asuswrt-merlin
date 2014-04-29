@@ -61,6 +61,9 @@ export STRIP := $(CROSS_COMPILE)strip -R .note -R .comment
 endif
 export SIZE := $(CROSS_COMPILE)size
 
+# Use a pkg-config wrapper to avoid pulling in host libs during cross-compilation.
+export PKG_CONFIG := $(shell which asuswrt-pkg-config)
+
 # Determine kernel version
 SCMD=sed -e 's,[^=]*=[        ]*\([^  ]*\).*,\1,'
 KVERSION:=	$(shell grep '^VERSION[ 	]*=' $(LINUXDIR)/Makefile|$(SCMD))
