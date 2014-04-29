@@ -2118,11 +2118,11 @@ endif
 flac/stamp-h1: libogg
 	cd flac && \
 	CFLAGS="-Os $(EXTRACFLAGS) -fPIC -ffunction-sections -fdata-sections" \
-	CPPFLAGS="-I$(TOP)/libogg/include" \
-	LDFLAGS="-L$(TOP)/libogg/src/.libs -fPIC -ffunction-sections -fdata-sections -Wl,--gc-sections" \
+	LDFLAGS="-fPIC -ffunction-sections -fdata-sections -Wl,--gc-sections" \
 	$(CONFIGURE) --enable-shared --enable-static --prefix='' --disable-rpath \
 		--disable-doxygen-docs --disable-xmms-plugin --disable-cpplibs \
-		--without-libiconv-prefix --disable-altivec --disable-3dnow --disable-sse
+		--without-libiconv-prefix --disable-altivec --disable-3dnow --disable-sse \
+		--with-ogg-includes=$(TOP)/libogg/include --with-ogg-libraries=$(TOP)/libogg/src/.libs
 	touch $@
 
 flac: flac/stamp-h1 libogg
