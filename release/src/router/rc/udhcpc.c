@@ -756,6 +756,7 @@ start_dhcp6c(void)
 		uint16 hwtype;
 	} __attribute__ ((__packed__)) duid;
 	uint16 duid_len = 0;
+	stop_dhcp6c();
 
 	/* Check if enabled */
 	if (get_ipv6_service() != IPV6_NATIVE_DHCP)
