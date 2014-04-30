@@ -576,11 +576,15 @@ History
    - NEW: Added Comodo Secure DNS to supported DNSFilter services
    - FIXED: Download2 folder wasn't selectable anymore on the
             Media Server page.
+   - FIXED: Pass correct valid and preferred lifetime to radvd when
+            using DHCPv6-PD (Patch by pinwing)
    - CHANGED: Removed Norton Connect Safe which seems to be discontinued
               (their website has disappeared).  Users should switch to
               either OpenDNS or OpenDNS Family Shield.
    - CHANGED: Make the router use dnsmasq for local resolution
               rather than always using the ISP DNS.
+   - CHANGED: Upgraded OpenVPN to 2.3.3.
+   - CHANGED: Upgraded miniupnpd to 1.8.20140422 (PCP-related fixes)
 
 
 374.41 (18-Apr-2014)
