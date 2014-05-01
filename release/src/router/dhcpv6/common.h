@@ -173,6 +173,7 @@ extern char *dhcp6optstr __P((int));
 extern char *dhcp6msgstr __P((int));
 extern char *dhcp6_stcodestr __P((u_int16_t));
 extern char *duidstr __P((struct duid *));
+extern char *dhcp6_statestr __P((int));
 extern char *dhcp6_event_statestr __P((struct dhcp6_event *));
 extern int get_rdvalue __P((int, void *, size_t));
 extern int duidcpy __P((struct duid *, struct duid *));
