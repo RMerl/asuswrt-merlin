@@ -195,6 +195,7 @@ extern int is_no_partition(const char *discname);
 enum {
 	MODEL_UNKNOWN,
 	MODEL_DSLN55U,
+	MODEL_DSLAC68U,
 	MODEL_EAN66,
 	MODEL_RTN11P,
 	MODEL_RTN13U,

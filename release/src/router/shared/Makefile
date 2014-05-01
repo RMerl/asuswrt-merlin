@@ -74,6 +74,9 @@ endif
 else
 OBJS += wl.o wl_linux.o
 OBJS += broadcom.o api-broadcom.o
+ifeq ($(RTCONFIG_DSL_TCLINUX),y)
+OBJS += api-tclinux.o
+endif
 endif
 
 ifeq ($(RTCONFIG_USB),y)

@@ -562,8 +562,7 @@ function QKfinish_load_body(){
 	$("#account_item")[0].innerHTML = "<#QIS_finish_admin_item1#>";
 	$("#account")[0].innerHTML = '<% nvram_get("http_username"); %>';
 	$("#password_item")[0].innerHTML = "<#QIS_finish_admin_item2#>";
-	var http_password = decodeURIComponent('<% nvram_char_to_ascii("", "http_passwd"); %>');
- 	$("#password")[0].innerHTML = http_password;
+ 	$("#password")[0].innerHTML = "*";
 	
 	//NTP sync or not
 	if('<% nvram_get("svc_ready"); %>' == '0')

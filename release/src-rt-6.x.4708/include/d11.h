@@ -10,7 +10,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: d11.h 442776 2013-12-12 21:02:55Z $
+ * $Id: d11.h 454474 2014-02-10 22:56:34Z $
  */
 
 #ifndef	_D11_H
@@ -775,6 +775,7 @@ union {
 #define MCMD_SLOWCAL		(1 <<  6)
 #define MCMD_SAMPLECOLL		MCMD_SKIP_SHMINIT /* reuse for sample collect */
 #define MCMD_BCNREL			(1 << 8 ) /* release anybuffered bcns from ucode  */
+#define MCMD_RX_NO_SLEEP	(1 << 13)	/* Disables sleep during RX */
 
 /* macintstatus/macintmask */
 #define	MI_MACSSPNDD		(1 <<  0)	/* MAC has gracefully suspended */

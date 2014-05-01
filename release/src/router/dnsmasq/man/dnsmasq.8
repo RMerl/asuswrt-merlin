@@ -13,7 +13,10 @@ Dnsmasq accepts DNS queries and either answers them from a small, local,
 cache or forwards them to a real, recursive, DNS server. It loads the
 contents of /etc/hosts so that local hostnames
 which do not appear in the global DNS can be resolved and also answers
-DNS queries for DHCP configured hosts. It can also act as the authoritative DNS server for one or more domains, allowing local names to appear in the global DNS.
+DNS queries for DHCP configured hosts. It can also act as the
+authoritative DNS server for one or more domains, allowing local names
+to appear in the global DNS. It can be configured to do DNSSEC
+validation.
 .PP
 The dnsmasq DHCP server supports static address assignments and multiple
 networks. It automatically
@@ -205,6 +208,14 @@ resolve in the global DNS to a A and/or AAAA record which points to
 the address dnsmasq is listening on. When an interface is specified,
 it may be qualified with "/4" or "/6" to specify only the IPv4 or IPv6
 addresses associated with the interface.
+.TP
+.B --local-service
+Accept DNS queries only from hosts whose address is on a local subnet,
+ie a subnet for which an interface exists on the server. This option
+only has effect is there are no --interface --except-interface,
+--listen-address or --auth-server options. It is intended to be set as
+a default on installation, to allow unconfigured installations to be
+useful but also safe from being used for DNS amplification attacks.
 .TP 
 .B \-2, --no-dhcp-interface=<interface name>
 Do not provide DHCP or TFTP on the specified interface, but do provide DNS service.
@@ -412,6 +423,14 @@ source address specified but the port may be specified directly as
 part of the source address. Forcing queries to an interface is not
 implemented on all platforms supported by dnsmasq.
 .TP
+.B --rev-server=<ip-address>/<prefix-len>,<ipaddr>[#<port>][@<source-ip>|<interface>[#<port>]]
+This is functionally the same as 
+.B --server, 
+but provides some syntactic sugar to make specifying address-to-name queries easier. For example
+.B --rev-server=1.2.3.0/24,192.168.0.1
+is exactly equivalent to 
+.B --server=/3.2.1.in-addr.arpa/192.168.0.1
+.TP
 .B \-A, --address=/<domain>/[domain/]<ipaddr>
 Specify an IP address to return for any host in the given domains.
 Queries in the domains are never forwarded and always replied to
@@ -579,19 +598,64 @@ Set the maximum number of concurrent DNS queries. The default value is
 where this needs to be increased is when using web-server log file
 resolvers, which can generate large numbers of concurrent queries.
 .TP
+.B --dnssec
+Validate DNS replies and cache DNSSEC data. When forwarding DNS queries, dnsmasq requests the 
+DNSSEC records needed to validate the replies. The replies are validated and the result returned as 
+the Authenticated Data bit in the DNS packet. In addition the DNSSEC records are stored in the cache, making 
+validation by clients more efficient. Note that validation by clients is the most secure DNSSEC mode, but for
+clients unable to do validation, use of the AD bit set by dnsmasq is useful, provided that the network between 
+the dnsmasq server and the client is trusted. Dnsmasq must be compiled with HAVE_DNSSEC enabled, and DNSSEC
+trust anchors provided, see 
+.B --trust-anchor.
+Because the DNSSEC validation process uses the cache, it is not
+permitted to reduce the cache size below the default when DNSSEC is
+enabled. The nameservers upstream of dnsmasq must be DNSSEC-capable,
+ie capable of returning DNSSEC records with data. If they are not,
+then dnsmasq will not be able to determine the trusted status of
+answers. In the default mode, this menas that all replies will be
+marked as untrusted. If 
+.B --dnssec-check-unsigned
+is set and the upstream servers don't support DNSSEC, then DNS service will be entirely broken.
+.TP
+.B --trust-anchor=[<class>],<domain>,<key-tag>,<algorithm>,<digest-type>,<digest>
+Provide DS records to act a trust anchors for DNSSEC
+validation. Typically these will be the DS record(s) for Zone Signing
+key(s) of the root zone,
+but trust anchors for limited domains are also possible. The current
+root-zone trust anchors may be donwloaded from https://data.iana.org/root-anchors/root-anchors.xml 
+.TP
+.B --dnssec-check-unsigned
+As a default, dnsmasq does not check that unsigned DNS replies are
+legitimate: they are assumed to be valid and passed on (without the
+"authentic data" bit set, of course). This does not protect against an
+attacker forging unsigned replies for signed DNS zones, but it is
+fast. If this flag is set, dnsmasq will check the zones of unsigned
+replies, to ensure that unsigned replies are allowed in those
+zones. The cost of this is more upstream queries and slower
+performance. See also the warning about upstream servers in the
+section on 
+.B --dnssec
+.TP
+.B --dnssec-no-timecheck
+DNSSEC signatures are only valid for specified time windows, and should be rejected outside those windows. This generates an
+interesting chicken-and-egg problem for machines which don't have a hardware real time clock. For these machines to determine the correct 
+time typically requires use of NTP and therefore DNS, but validating DNS requires that the correct time is already known. Setting this flag
+removes the time-window checks (but not other DNSSEC validation.) only until the dnsmasq process receives SIGHUP. The intention is
+that dnsmasq should be started with this flag when the platform determines that reliable time is not currently available. As soon as 
+reliable time is established, a SIGHUP should be sent to dnsmasq, which enables time checking, and purges the cache of DNS records
+which have not been throughly checked.
+.TP
 .B --proxy-dnssec
-A resolver on a client machine can do DNSSEC validation in two ways: it
-can perform the cryptograhic operations on the reply it receives, or
-it can rely on the upstream recursive nameserver to do the validation
-and set a bit in the reply if it succeeds. Dnsmasq is not a DNSSEC
-validator, so it cannot perform the validation role of the recursive nameserver,
-but it can pass through the validation results from its own upstream
-nameservers. This option enables this behaviour. You should only do
-this if you trust all the configured upstream nameservers 
-.I and the network between you and them.
-If you use the first DNSSEC mode, validating resolvers in clients,
-this option is not required. Dnsmasq always returns all the data
-needed for a client to do validation itself. 
+Copy the DNSSEC Authenticated Data bit from upstream servers to downstream clients and cache it.  This is an 
+alternative to having dnsmasq validate DNSSEC, but it depends on the security of the network between 
+dnsmasq and the upstream servers, and the trustworthiness of the upstream servers.
+.TP
+.B --dnssec-debug
+Set debugging mode for the DNSSEC validation, set the Checking Disabled bit on upstream queries, 
+and don't convert replies which do not validate to responses with
+a return code of SERVFAIL. Note that
+setting this may affect DNS behaviour in bad ways, it is not an
+extra-logging flag and should not be set in production.
 .TP
 .B --auth-zone=<domain>[,<subnet>[/<prefix length>][,<subnet>[/<prefix length>].....]]
 Define a DNS zone for which dnsmasq acts as authoritative server. Locally defined DNS records which are in the domain
@@ -611,7 +675,7 @@ Interface-name and address-literal subnet specifications may be used
 freely in the same --auth-zone declaration.
 
 The subnet(s) are also used to define in-addr.arpa and
-ipv6.arpa domains which are served for reverse-DNS queries. If not
+ip6.arpa domains which are served for reverse-DNS queries. If not
 specified, the prefix length defaults to 24 for IPv4 and 64 for IPv6.
 For IPv4 subnets, the prefix length should be have the value 8, 16 or 24
 unless you are familiar with RFC 2317 and have arranged the
@@ -718,7 +782,7 @@ or from /etc/ethers will be served. A static-only subnet with address
 all zeros may be used as a "catch-all" address to enable replies to all
 Information-request packets on a subnet which is provided with
 stateless DHCPv6, ie
-.B --dhcp=range=::,static
+.B --dhcp-range=::,static
 
 For IPv4, the <mode> may be 
 .B proxy
@@ -917,9 +981,11 @@ and to set the time-server address to 192.168.0.4, do
 .B --dhcp-option = 42,192.168.0.4 
 or 
 .B --dhcp-option = option:ntp-server, 192.168.0.4
-The special address 0.0.0.0 (or [::] for DHCPv6) is taken to mean "the address of the
-machine running dnsmasq". Data types allowed are comma separated
-dotted-quad IP addresses, a decimal number, colon-separated hex digits
+The special address 0.0.0.0 is taken to mean "the address of the
+machine running dnsmasq". 
+
+Data types allowed are comma separated
+dotted-quad IPv4 addresses, []-wrapped IPv6 addresses, a decimal number, colon-separated hex digits
 and a text string. If the optional tags are given then
 this option is only sent when all the tags are matched.
 
@@ -935,7 +1001,9 @@ keyword, followed by the option number or option name. The IPv6 option
 name space is disjoint from the IPv4 option name space. IPv6 addresses
 in options must be bracketed with square brackets, eg. 
 .B --dhcp-option=option6:ntp-server,[1234::56]
- 
+For IPv6, [::] means "the global address of
+the machine running dnsmasq", whilst [fd00::] is replaced with the
+ULA, if it exists, and [fe80::] with the link-local address.
 
 Be careful: no checking is done that the correct type of data for the
 option number is sent, it is quite possible to
@@ -1647,6 +1715,13 @@ files. If extension(s) are given, any files which end in those
 extensions are skipped. Any files whose names end in ~ or start with . or start and end
 with # are always skipped. This flag may be given on the command
 line or in a configuration file.
+.TP
+.B --servers-file=<file>
+A special case of 
+.B --conf-file
+which differs in two respects. Firstly, only --server and --rev-server are allowed 
+in the configuration file included. Secondly, the file is re-read and the configuration
+therein is updated when dnsmasq recieves SIGHUP.
 .SH CONFIG FILE
 At startup, dnsmasq reads
 .I /etc/dnsmasq.conf,
@@ -1687,12 +1762,22 @@ When it receives a SIGUSR1,
 writes statistics to the system log. It writes the cache size,
 the number of names which have had to removed from the cache before
 they expired in order to make room for new names and the total number
-of names that have been inserted into the cache. For each upstream
+of names that have been inserted into the cache. The number of cache hits and 
+misses and the number of authoritative queries answered are also given. For each upstream
 server it gives the number of queries sent, and the number which
 resulted in an error. In 
 .B --no-daemon
 mode or when full logging is enabled (-q), a complete dump of the
-contents of the cache is made.
+contents of the cache is made. 
+
+The cache statistics are also available in the DNS as answers to 
+queries of class CHAOS and type TXT in domain bind. The domain names are cachesize.bind, insertions.bind, evictions.bind, 
+misses.bind, hits.bind, auth.bind and servers.bind. An example command to query this, using the 
+.B dig
+utility would be
+
+dig +short chaos txt cachesize.bind
+
 .PP 
 When it receives SIGUSR2 and it is logging direct to a file (see
 .B --log-facility
@@ -1796,7 +1881,7 @@ which has tags will be used in preference  to an untagged
 .B dhcp-option,
 provided that _all_ the tags match somewhere in the
 set collected as described above. The prefix '!' on a tag means 'not'
-so --dhcp=option=tag:!purple,3,1.2.3.4 sends the option when the
+so --dhcp-option=tag:!purple,3,1.2.3.4 sends the option when the
 tag purple is not in the set of valid tags. (If using this in a
 command line rather than a configuration file, be sure to escape !,
 which is a shell metacharacter)
@@ -1948,7 +2033,7 @@ to particular hosts then
 will do so.
 
 Dnsmasq acts as an authoritative server for  in-addr.arpa and
-ipv6.arpa domains associated with the subnets given in auth-zone
+ip6.arpa domains associated with the subnets given in auth-zone
 declarations, so reverse (address to name) lookups can be simply
 configured with a suitable NS record, for instance in this example,
 where we allow 1.2.3.0/24 addresses.

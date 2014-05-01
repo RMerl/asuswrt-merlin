@@ -179,6 +179,14 @@ config RTCONFIG_DSL_ANNEX_B
 	bool "DSL Annex B Support"
 	default n
 
+config RTCONFIG_DSL_TCLINUX
+	bool "DSL Support with TCLINUX"
+	default n
+
+config RTCONFIG_VDSL
+	bool "VDSL Support"
+	default n
+
 config RTCONFIG_DUALWAN
 	bool "Dual WAN Support"
 	default n
@@ -469,6 +477,10 @@ config RTCONFIG_WIFI_TOG_BTN
 	bool "HW Button for WiFi toggle"
 	default n
 
+config RTCONFIG_WPS_RST_BTN
+	bool "HW Button for WPS and Restore dual function"
+	default n
+
 config RTCONFIG_TURBO
 	bool "HW Turbo Btn"
 	default n
@@ -627,4 +639,8 @@ config RTCONFIG_KERNEL_HFSPLUS
 
 config RTCONFIG_N18UTXBF
 	bool "enable TXBF for RT-N18U"
+	default n
+
+config RTCONFIG_BWDPI
+	bool "TrendMicro DPI engine and iQoS and Partenl Control"
 	default n

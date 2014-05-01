@@ -297,6 +297,9 @@ static const applets_t applets[] = {
 #endif
 	{ "firmware_check",		firmware_check_main             },
 	{ "service",			service_main			},
+#ifdef RTCONFIG_BWDPI
+	{ "bwdpi",			bwdpi_main			},
+#endif
 	{NULL, NULL}
 };
 
@@ -652,32 +655,31 @@ int main(int argc, char **argv)
 	}
 
 #ifdef RTCONFIG_BCMARM
-        /* mtd-erase2 [device] */
-        else if (!strcmp(base, "mtd-erase2")) {
-                if (argv[1] && ((!strcmp(argv[1], "boot")) ||
-                        (!strcmp(argv[1], "linux")) ||
-                        (!strcmp(argv[1], "linux2")) ||
-                        (!strcmp(argv[1], "rootfs")) ||
-                        (!strcmp(argv[1], "rootfs2")) ||
-                        (!strcmp(argv[1], "nvram")))) {
-
-                        return mtd_erase(argv[1]);
-                } else {
-                        fprintf(stderr, "usage: mtd-erase2 [device]\n");
-                        return EINVAL;
-                }
-        }
-        /* mtd-write2 [path] [device] */
-        else if (!strcmp(base, "mtd-write2")) {
-                if (argc >= 3)
-                        return mtd_write(argv[1], argv[2]);
-                else {
-                        fprintf(stderr, "usage: mtd-write2 [path] [device]\n");
-                        return EINVAL;
-                }
-        }
+	/* mtd-erase2 [device] */
+	else if (!strcmp(base, "mtd-erase2")) {
+		if (argv[1] && ((!strcmp(argv[1], "boot")) ||
+				(!strcmp(argv[1], "linux")) ||
+				(!strcmp(argv[1], "linux2")) ||
+				(!strcmp(argv[1], "rootfs")) ||
+				(!strcmp(argv[1], "rootfs2")) ||
+				(!strcmp(argv[1], "nvram")))) {
+			return mtd_erase(argv[1]);
+		} else {
+			fprintf(stderr, "usage: mtd-erase2 [device]\n");
+			return EINVAL;
+		}
+	}
+	/* mtd-write2 [path] [device] */
+	else if (!strcmp(base, "mtd-write2")) {
+		if (argc >= 3)
+			return mtd_write(argv[1], argv[2]);
+		else {
+			fprintf(stderr, "usage: mtd-write2 [path] [device]\n");
+			return EINVAL;
+		}
+	}
 #endif
-        else if(!strcmp(base, "test_endian")){
+	else if(!strcmp(base, "test_endian")){
 		int num = 0x04030201;
 		char c = *(char *)(&num);
 
@@ -751,6 +753,13 @@ int main(int argc, char **argv)
 
 		return 0;
 	}
+#ifdef RTCONFIG_USB_MODEM
+	else if(!strcmp(base, "write_3g_ppp_conf")){
+		write_3g_ppp_conf();
+
+		return 0;
+	}
+#endif
 	printf("Unknown applet: %s\n", base);
 	return 0;
 }

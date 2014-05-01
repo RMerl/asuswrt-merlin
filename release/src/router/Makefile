@@ -127,11 +127,10 @@ else
 obj-y += hw_nat
 endif
 endif
+endif
 ifeq ($(RTCONFIG_DSL),y)
 obj-y += dsl_drv_tool
 endif
-endif
-
 ifneq ($(or $(findstring linux-2.6.36,$(LINUXDIR)),$(findstring linux-3.x,$(LINUXDIR))),)
 obj-y += iptables-1.4.x
 obj-y += iproute2-3.x
@@ -140,6 +139,9 @@ obj-y += iptables
 obj-y += iproute2
 endif
 
+ifeq ($(RTCONFIG_BWDPI),y)
+obj-y += bwdpi
+endif
 obj-y += rc
 ifeq ($(RTCONFIG_USB),y)
 obj-y += rom
@@ -209,9 +211,11 @@ obj-$(RTCONFIG_USB_PRINTER) += LPRng
 
 obj-$(RTCONFIG_USB_MODEM) += sdparm-1.02
 obj-$(RTCONFIG_USB_MODEM) += comgt-0.32
+obj-$(RTCONFIG_USB_MODEM) += uqmi
 
 ifneq ($(or $(findstring linux-2.6.36.x,$(LINUXDIR)),$(findstring linux-2.6.36,$(LINUXDIR)),$(findstring linux-3.x,$(LINUXDIR))),)
-obj-$(RTCONFIG_USB_MODEM) += usbmodeswitch-1.2.3
+#obj-$(RTCONFIG_USB_MODEM) += usbmodeswitch-1.2.3
+obj-$(RTCONFIG_USB_MODEM) += usb-modeswitch-2.1.1
 else
 obj-$(RTCONFIG_USB_MODEM) += usbmodeswitch
 endif
@@ -740,6 +744,10 @@ endif
 	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/asix.*o $(PLATFORMDIR)/extras/ || true
 	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/cdc_ether.*o $(PLATFORMDIR)/extras/ || true
 	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/rndis_host.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/cdc_ncm.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/cdc_wdm.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/qmi_wwan.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/cdc_mbim.*o $(PLATFORMDIR)/extras/ || true
 	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/sierra.*o $(PLATFORMDIR)/extras/ || true
 
 	@mv $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/usbkbd.*o $(PLATFORMDIR)/extras/ || true
@@ -836,6 +844,15 @@ ifeq ($(RTCONFIG_QTN),y)
 	# install qtn boot-code and firmware
 	install -D qtnimage/topaz-linux.lzma.img $(TARGETDIR)/rom/qtn/topaz-linux.lzma.img
 	install -D qtnimage/u-boot.bin $(TARGETDIR)/rom/qtn/u-boot.bin
+endif
+ifeq ($(RTCONFIG_BWDPI),y)
+	install -d $(TARGETDIR)/usr/bwdpi/
+	cp -f bwdpi_bin/*.so $(TARGETDIR)/usr/bwdpi/
+	cp -f bwdpi_bin/*.ko $(TARGETDIR)/usr/bwdpi/
+	cp -f bwdpi_bin/*.trf $(TARGETDIR)/usr/bwdpi/
+	install -D bwdpi_bin/qosd $(TARGETDIR)/usr/sbin/qosd
+	install -D bwdpi_bin/wred $(TARGETDIR)/usr/sbin/wred
+	install -D bwdpi_bin/bwdpi-rule-agent $(TARGETDIR)/usr/sbin/bwdpi-rule-agent
 endif
 	@echo ---
 
@@ -1456,11 +1473,22 @@ usbmodeswitch-1.2.3: libusb-0.1.12
 		-Wl,-R/lib:/usr/lib:/opt/usr/lib:/usr/local/share -lpthread \
 		-I$(TOP)/libusb-0.1.12 -L$(TOP)/libusb-0.1.12/.libs -lusb"
 
-usbmodeswitch-1.2.3-install: usbmodeswitch-1.2.3 usbmodeswitch-1.2.3-install
+usbmodeswitch-1.2.3-install: usbmodeswitch-1.2.3
 	install -D usbmodeswitch-1.2.3/usb_modeswitch $(INSTALLDIR)/usbmodeswitch-1.2.3/usr/sbin/usb_modeswitch
 	$(STRIP) -s $(INSTALLDIR)/usbmodeswitch-1.2.3/usr/sbin/usb_modeswitch
 	@mkdir -p $(TARGETDIR)/rom/etc
 	@sed 's/#.*//g;s/[ \t]\+/ /g;s/^[ \t]*//;s/[ \t]*$$//;/^$$/d' < $(TOP)/usbmodeswitch-1.2.3/usb_modeswitch.conf > $(TARGETDIR)/rom/etc/usb_modeswitch.conf
+
+usb-modeswitch-2.1.1: libusb10
+	$(MAKE) -C $@ CC=$(CC) CFLAGS="-Os $(EXTRACFLAGS) \
+		-Wl,-R/lib:/usr/lib:/opt/usr/lib:/usr/local/share -lpthread \
+		-I$(TOP)/libusb10/libusb -L$(TOP)/libusb10/libusb/.libs -lusb-1.0"
+
+usb-modeswitch-2.1.1-install: usb-modeswitch-2.1.1
+	install -D usb-modeswitch-2.1.1/usb_modeswitch $(INSTALLDIR)/usb-modeswitch-2.1.1/usr/sbin/usb_modeswitch
+	$(STRIP) -s $(INSTALLDIR)/usb-modeswitch-2.1.1/usr/sbin/usb_modeswitch
+	@mkdir -p $(TARGETDIR)/rom/etc
+	@sed 's/#.*//g;s/[ \t]\+/ /g;s/^[ \t]*//;s/[ \t]*$$//;/^$$/d' < $(TOP)/usb-modeswitch-2.1.1/usb_modeswitch.conf > $(TARGETDIR)/rom/etc/usb_modeswitch.conf
 
 libusb-0.1.12/stamp-h1:
 	cd libusb-0.1.12 && CFLAGS="-Os -Wall $(EXTRACFLAGS)" LIBS="-lpthread" \
@@ -1614,7 +1642,7 @@ ndisc6-clean:
 ndisc6-install: ndisc6
 	install -D ndisc6/rdnssd/rdnssd $(INSTALLDIR)/ndisc6/usr/sbin/rdnssd
 	$(STRIP) $(INSTALLDIR)/ndisc6/usr/sbin/rdnssd
-ifeq ($(RTCONFIG_RALINK),y)
+ifneq ($(RTCONFIG_BCMWL6),y)
 	install -D $(shell dirname $(shell which $(CXX)))/../lib/librt.so.0 $(TARGETDIR)/lib/librt.so.0
 endif
 
@@ -1927,7 +1955,7 @@ libqcsapi_client-install: libqcsapi_client
 	install -d $(INSTALLDIR)/libqcsapi_client/usr/sbin/
 	install -D libqcsapi_client/libqcsapi_client.so.1.0.1 $(INSTALLDIR)/libqcsapi_client/usr/lib/
 	install -D libqcsapi_client/qcsapi_sockrpc $(INSTALLDIR)/libqcsapi_client/usr/sbin/
-	install -D libqcsapi_client/c_rpc_qcsapi_sample $(INSTALLDIR)/libqcsapi_client/usr/sbin/
+	# install -D libqcsapi_client/c_rpc_qcsapi_sample $(INSTALLDIR)/libqcsapi_client/usr/sbin/
 	$(STRIP) $(INSTALLDIR)/libqcsapi_client/usr/lib/*.so.*
 	$(STRIP) $(INSTALLDIR)/libqcsapi_client/usr/sbin/*
 	cd $(INSTALLDIR)/libqcsapi_client/usr/lib && \
@@ -3088,6 +3116,16 @@ tftp-install:
 	# TFTP client
 	#install -D tftp-1.0/tftpc $(INSTALLDIR)/tftp/usr/sbin/tftpc
 	#$(STRIP) -s $(INSTALLDIR)/tftp/usr/sbin/tftpc
+
+bwdpi:
+	cd bwdpi && CC=$(CC) && $(MAKE)
+
+bwdpi-clean:
+	cd bwdpi && $(MAKE) clean
+
+bwdpi-install: bwdpi
+	install -D bwdpi/libbwdpi.so $(INSTALLDIR)/bwdpi/usr/lib/libbwdpi.so
+	$(STRIP) $(INSTALLDIR)/bwdpi/usr/lib/libbwdpi.so
 
 NORTON_DIR := $(SRCBASE)/router/norton${BCMEX}
 

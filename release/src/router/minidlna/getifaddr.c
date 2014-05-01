@@ -154,7 +154,7 @@ getifaddr(const char *ifname)
 		memcpy(&addr, &(ifr->ifr_addr), sizeof(addr));
 		memcpy(&lan_addr[n_lan_addr].mask, &addr.sin_addr, sizeof(addr));
 		lan_addr[n_lan_addr].ifindex = if_nametoindex(ifr->ifr_name);
-		lan_addr[n_lan_addr].snotify = OpenAndConfSSDPNotifySocket(&lan_addr[i]);
+		lan_addr[n_lan_addr].snotify = OpenAndConfSSDPNotifySocket(&lan_addr[n_lan_addr]);
 		if (lan_addr[n_lan_addr].snotify >= 0)
 			n_lan_addr++;
 		if (ifname || n_lan_addr >= MAX_LAN_ADDR)

@@ -1,0 +1,17 @@
+*.o
+*.a
+qmi-errors.c
+qmi-message-ctl.c
+qmi-message-ctl.h
+qmi-message-dms.c
+qmi-message-dms.h
+qmi-message-nas.c
+qmi-message-nas.h
+qmi-message-pds.c
+qmi-message-pds.h
+qmi-message-wds.c
+qmi-message-wds.h
+qmi-message-wms.c
+qmi-message-wms.h
+uqmi
+

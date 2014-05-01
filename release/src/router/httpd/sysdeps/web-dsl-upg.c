@@ -51,10 +51,13 @@
 #include <bcmnvram.h>
 #include <bcmutils.h>
 #include <shutils.h>
+#include <asm/types.h>
+#ifdef RTCONFIG_RALINK
 #include <ralink.h>
 #include <iwlib.h>
 #include <stapriv.h>
 #include <ethutils.h>
+#endif
 #include <shared.h>
 #include <sys/mman.h>
 #ifndef O_BINARY

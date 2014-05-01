@@ -321,7 +321,9 @@ char *organize_tcpcheck_cmd(char *dns_list, char *cmd, int size){
 }
 
 int do_ping_detect(int wan_unit){
+#ifdef RTCONFIG_DUALWAN
 	char cmd[256];
+#endif
 #if 0
 	char buf[16], *next;
 	char prefix_wan[8], nvram_name[16], wan_dns[256];
@@ -680,7 +682,7 @@ int if_wan_phyconnected(int wan_unit){
 
 			if(link_wan[wan_unit] == 2)
 				logmessage("wanduck", "The local subnet is the same with the USB ethernet.");
-			else
+			else if(strcmp(nvram_safe_get("usb_modem_act_type"), "ncm"))
 				link_changed = 1;
 		}
 
@@ -1713,7 +1715,6 @@ int wanduck_main(int argc, char *argv[]){
 
 				disconn_case[current_wan_unit] = CASE_OTHERS;
 				conn_state[current_wan_unit] = DISCONN;
-
 				set_disconn_count(current_wan_unit, S_IDLE);
 			}
 			else{
@@ -1749,7 +1750,6 @@ int wanduck_main(int argc, char *argv[]){
 					conn_changed_state[current_wan_unit] = CONNED;
 
 				conn_state_old[current_wan_unit] = conn_state[current_wan_unit];
-
 				set_disconn_count(current_wan_unit, S_IDLE);
 			}
 			else if(conn_state[current_wan_unit] == DISCONN){
@@ -1768,11 +1768,11 @@ int wanduck_main(int argc, char *argv[]){
 				// when the other line is modem and not plugged, the current disconnected line would not count.
 				else if(!link_wan[other_wan_unit] && dualwan_unit__usbif(other_wan_unit))
 					set_disconn_count(current_wan_unit, S_IDLE);
+#endif
 				else if(get_disconn_count(current_wan_unit) == S_IDLE && current_state[current_wan_unit] != WAN_STATE_DISABLED
 						&& get_dualwan_by_unit(other_wan_unit) != WANS_DUALWAN_IF_NONE
 						)
 					set_disconn_count(current_wan_unit, S_COUNT);
-#endif
 			}
 
 			if(get_disconn_count(current_wan_unit) != S_IDLE){
@@ -1871,11 +1871,11 @@ int wanduck_main(int argc, char *argv[]){
 				// when the other line is modem and not plugged, the current disconnected line would not count.
 				else if(!link_wan[other_wan_unit] && dualwan_unit__usbif(other_wan_unit))
 					set_disconn_count(current_wan_unit, S_IDLE);
+#endif
 				else if(get_disconn_count(current_wan_unit) == S_IDLE && current_state[current_wan_unit] != WAN_STATE_DISABLED
 						&& get_dualwan_by_unit(other_wan_unit) != WANS_DUALWAN_IF_NONE
 						)
 					set_disconn_count(current_wan_unit, S_COUNT);
-#endif
 			}
 
 			if(other_wan_unit == WAN_FB_UNIT){
@@ -2002,9 +2002,9 @@ int wanduck_main(int argc, char *argv[]){
 				// when the other line is modem and not plugged, the current disconnected line would not count.
 				else if(!link_wan[other_wan_unit] && dualwan_unit__usbif(other_wan_unit))
 					set_disconn_count(current_wan_unit, S_IDLE);
+#endif
 				else if(get_disconn_count(current_wan_unit) == S_IDLE && current_state[current_wan_unit] != WAN_STATE_DISABLED)
 					set_disconn_count(current_wan_unit, S_COUNT);
-#endif
 			}
 
 			if(get_disconn_count(current_wan_unit) != S_IDLE){

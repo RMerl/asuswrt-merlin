@@ -85,6 +85,7 @@ var isrescan = 0;
 var getBand = '<% get_parameter("band"); %>';
 var isFirst = ('<% nvram_get("x_Setting"); %>' == '1') ? false : true;;
 var ISMOBILE = false;
+var isPassChanged = false;
 
 // live update
 var $j = jQuery.noConflict();
@@ -448,10 +449,6 @@ function check_DUT(){
 </div>
 <![endif]-->
 
-<!--div style="margin-top:0px;margin-left:0px;">
-	<span class="modelName_top" style="	margin-top:-34px;margin-left:260px;"><#Web_Title2#></span>
-</div-->
-
 <table width="998px" border="0" align="center" cellpadding="0" cellspacing="0">
 	<tr>
 		<td height="170px" width="998px" valign="top" background="/images/New_ui/midup_bg.png"></td>
@@ -496,7 +493,7 @@ function check_DUT(){
 	<input type="hidden" name="wan_nat_x" value="<% nvram_get("wan_nat_x"); %>">
 	<input type="hidden" name="wan_route_x" value="<% nvram_get("wan_route_x"); %>">
 	<input type="hidden" name="http_username" value="<% nvram_get("http_username"); %>">
-	<input type="hidden" name="http_passwd" value="<% nvram_get("http_passwd"); %>"> 
+	<input type="hidden" name="http_passwd" value=""> 
 	<input type="hidden" name="x_Setting" id="x_Setting" value="<% nvram_get("x_Setting"); %>" disabled>
 	<input type="hidden" name="sw_mode" value="<% nvram_get("sw_mode"); %>">
 	<!-- detect -->

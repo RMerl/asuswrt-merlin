@@ -706,7 +706,7 @@ l'un des sous-réseaux définis, ou dans un réseau correspondant à une plage D
 (ce comportement peut-être désactivé par
 .B constructor-noauth:
 ). Le ou les sous-réseaux sont également utilisé(s) pour définir les domaines
-in-addr.arpa et ipv6.arpa servant à l'interrogation DNS inverse. Si la longueur
+in-addr.arpa et ip6.arpa servant à l'interrogation DNS inverse. Si la longueur
 de préfixe n'est pas spécifiée, elle sera par défaut de 24 pour IPv4 et 64 pour
 IPv6. Dans le cas d'IPv4, la longueur du masque de réseau devrait-être de 8, 16
 ou 24, sauf si en cas de mise en place d'une délégation de la zone in-addr.arpa
@@ -2186,7 +2186,7 @@ spécifiques, vous pouvez le faire via :
 .fi
 
 Dnsmasq joue le rôle de serveur faisant autorité pour les domaines in-addr.arpa
-et ipv6.arpa associés aux sous-réseaux définis dans la déclaration de zone
+et ip6.arpa associés aux sous-réseaux définis dans la déclaration de zone
 auth-zone, ce qui fait que les requêtes DNS inversées (de l'adresse vers
 le nom) peuvent-simplement être configurées avec un enregistrement NS
 adéquat. Par exemple, comme nous définissons plus haut les adresses

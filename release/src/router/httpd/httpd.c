@@ -1637,6 +1637,18 @@ QTN_RESET:
 		nvram_set("1:macaddr", wl_ether_etoa((struct ether_addr *) &wl_mac_addr));
 		nvram_set("wl1_hwaddr", wl_ether_etoa((struct ether_addr *) &wl_mac_addr));
 	}
+
+	ret = qcsapi_wps_set_ap_pin(WIFINAME, nvram_safe_get("wps_device_pin"));
+	if (ret < 0)
+		dbG("Qcsapi qcsapi_wps_set_ap_pin %s error, return: %d\n", WIFINAME, ret);
+	ret = qcsapi_wps_registrar_set_pp_devname(WIFINAME, 0, (const char *) get_productid());
+	if (ret < 0)
+		dbG("Qcsapi qcsapi_wps_registrar_set_pp_devname %s error, return: %d\n", WIFINAME, ret);
+	ret = rpc_qcsapi_wifi_disable_wps(WIFINAME, !nvram_get_int("wps_enable"));
+	if (ret < 0)
+		dbG("Qcsapi rpc_qcsapi_wifi_disable_wps %s error, return: %d\n", WIFINAME, ret);
+
+	nvram_set("qtn_ready", "1");
 #endif
 
 	//websSetVer();

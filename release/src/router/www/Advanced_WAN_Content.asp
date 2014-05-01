@@ -39,7 +39,7 @@ wan_proto = '<% nvram_get("wan_proto"); %>';
 var wans_dualwan = '<% nvram_get("wans_dualwan"); %>';
 var nowWAN = '<% get_parameter("flag"); %>';
 
-if(dualWAN_support){
+if(dualWAN_support && ( wans_dualwan.search("wan") >= 0 || wans_dualwan.search("lan") >= 0)){
 	var wan_type_name = wans_dualwan.split(" ")[<% nvram_get("wan_unit"); %>].toUpperCase();
 	switch(wan_type_name){
 		case "DSL":
@@ -74,6 +74,7 @@ function initial(){
 	change_wan_type(document.form.wan_proto.value, 0);	
 	fixed_change_wan_type(document.form.wan_proto.value);
 	genWANSoption();
+	//change_wan_unit(document.form.wan_unit);
 	addOnlineHelp($("faq"), ["UPnP"]);
 	change_wan_type(document.form.wan_proto.value, 0);	
 	
@@ -93,15 +94,23 @@ function display_upnp_range(){
 	$("upnp_range_ext").style.display = (document.form.wan_upnp_enable[0].checked) ? "" : "none";
 }
 
-function change_wan_unit(){
-	if(document.form.wan_unit.options[document.form.wan_unit.selectedIndex].text == "DSL")
-		document.form.current_page.value = "Advanced_DSL_Content.asp";
-	else if(document.form.wan_unit.options[document.form.wan_unit.selectedIndex].text == "USB")
+function change_wan_unit(obj){
+	if(!dualWAN_support) return;
+	
+	if(obj.options[obj.selectedIndex].text == "DSL"){	
+		if(dsltmp_transmode == "atm")
+			document.form.current_page.value = "Advanced_DSL_Content.asp";
+		else //ptm
+			document.form.current_page.value = "Advanced_VDSL_Content.asp";	
+	}else if(document.form.dsltmp_transmode){
+		document.form.dsltmp_transmode.style.display = "none";
+	}
+	
+	if(obj.options[obj.selectedIndex].text == "USB") {
 		document.form.current_page.value = "Advanced_Modem_Content.asp";
-	else if(document.form.wan_unit.options[document.form.wan_unit.selectedIndex].text == "WAN" || document.form.wan_unit.options[document.form.wan_unit.selectedIndex].text == "LAN")
-		document.form.current_page.value = "Advanced_WAN_Content.asp";
-	else
-		return false;
+	}else if(obj.options[obj.selectedIndex].text == "WAN"|| obj.options[obj.selectedIndex].text == "Ethernet LAN"){
+		return false;					
+	}
 
 	FormActions("apply.cgi", "change_wan_unit", "", "");
 	document.form.target = "";
@@ -109,8 +118,12 @@ function change_wan_unit(){
 }
 
 function genWANSoption(){
-	for(i=0; i<wans_dualwan.split(" ").length; i++)
-		document.form.wan_unit.options[i] = new Option(wans_dualwan.split(" ")[i].toUpperCase(), i);
+	for(i=0; i<wans_dualwan.split(" ").length; i++){
+		var wans_dualwan_NAME = wans_dualwan.split(" ")[i].toUpperCase();
+		if(wans_dualwan_NAME == "LAN")
+			wans_dualwan_NAME = "Ethernet LAN";
+		document.form.wan_unit.options[i] = new Option(wans_dualwan_NAME, i);
+	}	
 	document.form.wan_unit.selectedIndex = '<% nvram_get("wan_unit"); %>';
 
 	if(wans_dualwan.search(" ") < 0 || wans_dualwan.split(" ")[1] == 'none' || !dualWAN_support)
@@ -292,9 +305,21 @@ function validForm(){
 				return false;
 	}
 	
-	if(document.form.wan_hostname.value.length > 0)
-		 if(!validate_string(document.form.wan_hostname))
-		 	return false;
+	if(document.form.wan_hostname.value.length > 0){
+		var alert_str = validate_hostname(document.form.wan_hostname);
+	
+		if(alert_str != ""){
+			showtext($("alert_msg1"), alert_str);
+			$("alert_msg1").style.display = "";
+			document.form.wan_hostname.focus();
+			document.form.wan_hostname.select();
+			return false;
+		}else{
+			$("alert_msg1").style.display = "none";
+  	}
+
+		document.form.wan_hostname.value = trim(document.form.wan_hostname.value);
+	}	
 	
 	if(document.form.wan_hwaddr_x.value.length > 0)
 			if(!check_macaddr(document.form.wan_hwaddr_x,check_hwaddr_flag(document.form.wan_hwaddr_x))){
@@ -737,7 +762,11 @@ function pass_checked(obj){
 							<tr>
 								<th><#wan_type#></th>
 								<td align="left">
-									<select id="" class="input_option" name="wan_unit" onchange="change_wan_unit();"></select>
+									<select class="input_option" name="wan_unit" onchange="change_wan_unit(this);"></select>
+									<!--select id="dsltmp_transmode" name="dsltmp_transmode" class="input_option" style="margin-left:7px;" onChange="change_dsl_transmode(this);">
+													<option value="atm" <% nvram_match("dsltmp_transmode", "atm", "selected"); %>>ADSL WAN (ATM)</option>
+													<option value="ptm" <% nvram_match("dsltmp_transmode", "ptm", "selected"); %>>VDSL WAN (PTM)</option>
+									</select-->
 								</td>
 							</tr>
 						</table>
@@ -962,7 +991,9 @@ function pass_checked(obj){
         	</tr>
         	<tr>
           	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,15);"><#PPPConnection_x_HostNameForISP_itemname#></a></th>
-          	<td><input type="text" name="wan_hostname" class="input_32_table" maxlength="32" value="<% nvram_get("wan_hostname"); %>" onkeypress="return is_string(this, event)"></td>
+          	<td>
+          		<div><input type="text" name="wan_hostname" class="input_32_table" maxlength="32" value="<% nvram_get("wan_hostname"); %>" onkeypress="return is_string(this, event)"><br/><span id="alert_msg1" style="color:#FC0;"></span></div>
+          	</td>
         	</tr>
         	<tr>
           	<th ><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,16);"><#PPPConnection_x_MacAddressForISP_itemname#></a></th>

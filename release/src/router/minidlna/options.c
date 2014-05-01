@@ -63,7 +63,8 @@ static const struct {
 	{ ROOT_CONTAINER, "root_container" },
 	{ USER_ACCOUNT, "user" },
 	{ FORCE_SORT_CRITERIA, "force_sort_criteria" },
-	{ MAX_CONNECTIONS, "max_connections" }
+	{ MAX_CONNECTIONS, "max_connections" },
+	{ MERGE_MEDIA_DIRS, "merge_media_dirs" }
 };
 
 int

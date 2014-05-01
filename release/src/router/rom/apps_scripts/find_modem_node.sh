@@ -1,20 +1,19 @@
 #!/bin/sh
-echo "This is a script to find the modem nodes out."
+echo "This is a script to find the modem act TTY nodes out."
 
 
 modem_act_path=`nvram get usb_modem_act_path`
-tty_home=/dev
-ppp_file=/tmp/ppp/peers/3g
+dev_home=/dev
 
 
 _find_act_devs(){
 	act_devs=
 
-	ttyUSB_devs=`cd $tty_home && ls ttyUSB* 2>/dev/null`
+	ttyUSB_devs=`cd $dev_home && ls ttyUSB* 2>/dev/null`
 	if [ -n "$ttyUSB_devs" ]; then
 		tty_devs=`echo $ttyUSB_devs`
 	fi
-	ttyACM_devs=`cd $tty_home && ls ttyACM* 2>/dev/null`
+	ttyACM_devs=`cd $dev_home && ls ttyACM* 2>/dev/null`
 	if [ -n "$ttyACM_devs" ]; then
 		ttyACM_devs=`echo $ttyACM_devs`
 
@@ -40,6 +39,17 @@ _find_in_out_devs(){
 	io_devs=
 
 	for dev in $1; do
+		t=`echo $dev |head -c 6`
+		if [ "$t" == "ttyACM" ]; then
+			if [ -n "$io_devs" ]; then
+				io_devs=$io_devs" "$dev
+			else
+				io_devs=$dev
+			fi
+
+			continue
+		fi
+
 		real_path=`readlink -f /sys/class/tty/$dev/device`"/.."
 		eps=`cd $real_path && ls -d ep_* 2>/dev/null`
 		if [ -z "$eps" ]; then
@@ -76,7 +86,7 @@ _find_dial_devs(){
 	dial_devs=
 
 	for dev in $1; do
-		chat -t 1 -e '' 'ATQ0 V1 E1 S0=0 &C1 &D2 +FCLASS=0' OK >> /dev/$dev < /dev/$dev 2>/dev/null
+		chat -t 1 -e '' 'ATQ0 V1 E1' OK >> /dev/$dev < /dev/$dev 2>/dev/null
 		if [ "$?" == "0" ]; then
 			if [ -n "$dial_devs" ]; then
 				dial_devs=$dial_devs" "$dev
@@ -246,25 +256,23 @@ _find_usb_path(){
 
 
 act_devs=`_find_act_devs`
-#echo "act_devs=$act_devs."
+echo "act_devs=$act_devs."
 
 io_devs=`_find_in_out_devs "$act_devs"`
-#echo "io_devs=$io_devs."
+echo "io_devs=$io_devs."
 
 dial_devs=`_find_dial_devs "$io_devs"`
-#echo "dial_devs=$dial_devs."
+echo "dial_devs=$dial_devs."
 
 first_int_dev=`_find_first_int_dev "$dial_devs"`
-#echo "first_int_dev=$first_int_dev."
+echo "first_int_dev=$first_int_dev."
 
 first_bulk_dev=`_except_first_int_dev "$dial_devs"`
-#echo "first_bulk_dev=$first_bulk_dev."
+echo "first_bulk_dev=$first_bulk_dev."
 
 path=`_find_usb_path "$modem_act_path"`
 echo "usb_path=$path."
 
-sed -i 's/'$first_int_dev'/'$first_bulk_dev'/g' $ppp_file
-
-nvram set usb_modem_act_dial=$first_bulk_dev
-nvram set usb_modem_act_talk=$first_int_dev
+nvram set usb_modem_act_int=$first_int_dev
+nvram set usb_modem_act_bulk=$first_bulk_dev
 

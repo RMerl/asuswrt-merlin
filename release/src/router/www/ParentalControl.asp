@@ -483,8 +483,10 @@ function redraw_selected_time(obj){
 		end_day =  parseInt(time_temp.substring(1,2));
 		start_time =  parseInt(time_temp.substring(2,4));
 		end_time =  parseInt(time_temp.substring(4,6));
+		if((start_day == end_day) && (end_time - start_time) < 0)	//for Sat 23 cross to Sun 00
+			end_day = 7;
 		
-		if(start_day == end_day){
+		if(start_day == end_day){			// non cross day
 			duration = end_time - start_time;
 			if(duration == 0)	//for whole selected
 				duration = 7*24;
@@ -507,7 +509,7 @@ function redraw_selected_time(obj){
 				duration--;
 				id = "";		
 			}	
-		}else{
+		}else{			// cross day
 			var duration_day = 0;
 			if(end_day - start_day < 0)
 				duration_day = 7 - start_day;

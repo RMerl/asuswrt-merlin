@@ -65,7 +65,9 @@ endif
 
 ifeq ($(RTCONFIG_DSL),y)
 OBJS += web-dsl.o
+ifeq ($(RTCONFIG_RALINK),y)
 OBJS += web-dsl-upg.o
+endif
 endif
 
 LIBS = -L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared

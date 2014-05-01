@@ -6,7 +6,9 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
+<script type="text/JavaScript" language="JavaScript" src="/jquery.js"></script>
 <script type="text/javascript">
+var $j = jQuery.noConflict();
 var page_modified = 0;
 var restart_time = 0;
 var rc_support = "<% nvram_get("rc_support"); %>"; 
@@ -73,6 +75,19 @@ function redirect_qis(){
 		parent.location.href = 'http://'+parent.document.form.lan_ipaddr.value+'/index.asp';
 }
 
+function update_dsl_info(){
+        $j.ajax({
+                url: '/start_dsl_autodet.asp',
+                dataType: 'script',
+                error: function(xhr){
+                        update_dsl_info();              
+                },
+                success: function(response){
+                                // trigger hook only
+                }
+        });     
+}
+
 function initial(){
 	if(getflag == "vpnClient" || getflag == "background" || action_script == "saveNvram"){
 		return false;
@@ -85,6 +100,9 @@ function initial(){
 	}
 	else if(next_page.indexOf("QIS_") >= 0){
 		if(dsl_support){
+			if(current_page.indexOf("QIS_annex_setting.htm") >= 0){
+				setTimeout("update_dsl_info();",700);
+			}
 			setTimeout("delay_redirect('"+next_page+"');", restart_time*1000);
 		}
 		else {
@@ -128,6 +146,9 @@ function initial(){
 			}
 		}
 	}
+	else if(current_page.indexOf("Feedback") >= 0){
+		setTimeout("parent.redirect();", 20000);		
+	}	
 	else if(getflag == "ddnscheck"){
 		setTimeout("parent.go_index_page();", 2000);
 	}
@@ -138,7 +159,6 @@ function initial(){
 	else if(action_script.indexOf("aidisk_asusddns_register") >= 0){
 		setTimeout("parent.checkDDNSReturnCode();", 1000);
 	}
- 	//else if(action_script.indexOf("adm_asusddns_register") >= 0) {
 	else if(action_script.indexOf("restart_ddns") >= 0) {
   		setTimeout("parent.parent.checkDDNSReturnCode();", 1000);
 	}

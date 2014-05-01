@@ -51,10 +51,12 @@
 #include <bcmnvram.h>
 #include <bcmutils.h>
 #include <shutils.h>
+#ifdef RTCONFIG_RALINK
 #include <ralink.h>
 #include <iwlib.h>
 #include <stapriv.h>
 #include <ethutils.h>
+#endif
 #include <shared.h>
 #include <sys/mman.h>
 #ifndef O_BINARY
@@ -119,12 +121,13 @@ static int dump_file(webs_t wp, char *filename)
  */
 int ej_dsl_get_parameter(int eid, webs_t wp, int argc, char_t **argv)
 {
-	int unit;
+	int unit, subunit;
 
 	unit = nvram_get_int("dsl_unit");
+	subunit = nvram_get_int("dsl_subunit");
 
 	// handle generate cases first
-	(void)copy_index_to_unindex("dsl_", unit, -1);
+	(void)copy_index_to_unindex("dsl_", unit, subunit);
 
 	return (websWrite(wp,""));
 }
@@ -244,26 +247,28 @@ int ej_get_isp_list(int eid, webs_t wp, int argc, char_t **argv){
 }
 
 int ej_get_DSL_WAN_list(int eid, webs_t wp, int argc, char_t **argv){
-        char buf[MAX_LINE_SIZE];
-        char buf2[MAX_LINE_SIZE];
-		char prefix[]="dslXXXXXX_", tmp[100];
-        int unit;
-        int j;        
-        int firstItem;
+	char buf[MAX_LINE_SIZE];
+	char buf2[MAX_LINE_SIZE];
+	char prefix[]="dslXXXXXX_", tmp[100];
+	int unit;
+	int j;
+	int firstItem;
 
+	if(nvram_match("dsltmp_transmode", "atm")) {
 		char *display_items[] = {"dsl_enable", "dsl_vpi", "dsl_vci","dsl_proto", "dsl_encap", 
 			"dsl_svc_cat", "dsl_pcr","dsl_scr","dsl_mbs",NULL};
 
 		for ( unit = 0; unit<8; unit++ ) {
 			snprintf(prefix, sizeof(prefix), "dsl%d_", unit);
+
 			firstItem = 1;
-			websWrite(wp, "[");			
+			websWrite(wp, "[");
 			for ( j = 0; display_items[j] != NULL; j++ ) {
-                if(firstItem == 1) {
-                        firstItem = 0;
+				if(firstItem == 1) {
+					firstItem = 0;
 				}
-                else {
-                        websWrite(wp, ", ");
+				else {
+					websWrite(wp, ", ");
 				}
 				strcpy(buf,nvram_safe_get(strcat_r(prefix, &display_items[j][4], tmp)));
 				if (strcmp(buf,"")==0) {
@@ -272,16 +277,52 @@ int ej_get_DSL_WAN_list(int eid, webs_t wp, int argc, char_t **argv){
 				else {
 					sprintf(buf2,"\"%s\"",buf);
 				}
-                websWrite(wp, "%s", buf2);
-	        }
-	        if (unit != 7) {
+				websWrite(wp, "%s", buf2);
+			}
+			if (unit != 7) {
 				websWrite(wp, "], ");
 			}
 			else {
-				websWrite(wp, "]");			
+				websWrite(wp, "]");
 			}
 		}
+	}
+	else {	//ptm
+		char *display_items[] = {"dsl_enable", "dsl_proto", "dsl_dot1q", "dsl_vid", NULL};
 
-        return 0;
+		for ( unit = 0; unit<8; unit++ ) {
+			if(unit)
+				snprintf(prefix, sizeof(prefix), "dsl8.%d_", unit);
+			else
+				snprintf(prefix, sizeof(prefix), "dsl8_");
+
+			firstItem = 1;
+			websWrite(wp, "[");
+			for ( j = 0; display_items[j] != NULL; j++ ) {
+				if(firstItem == 1) {
+					firstItem = 0;
+				}
+				else {
+					websWrite(wp, ", ");
+				}
+				strcpy(buf,nvram_safe_get(strcat_r(prefix, &display_items[j][4], tmp)));
+				if (strcmp(buf,"")==0) {
+					strcpy(buf2,"\"0\"");
+				}
+				else {
+					sprintf(buf2,"\"%s\"",buf);
+				}
+				websWrite(wp, "%s", buf2);
+			}
+			if (unit != 7) {
+				websWrite(wp, "], ");
+			}
+			else {
+				websWrite(wp, "]");
+			}
+		}
+	}
+
+	return 0;
 }
 

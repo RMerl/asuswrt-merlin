@@ -72,19 +72,19 @@ function wl_chanspec_list_change(){
 						else if(bw_cap == "2"){		// 40MHz
 							$('wl_nctrlsb_field').style.display = "";
 								for(var i=0;i<wl_channel_list_5g.length;i++){			
-									if(based_modelid == "RT-AC68U" && (country == "EU" && (parseInt(wl_channel_list_5g[i]) == 116 || parseInt(wl_channel_list_5g[i]) == 140)))
+									if((based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || based_modelid == "DSL-AC68U" || based_modelid == "RT-AC87U") && (country == "EU" && (parseInt(wl_channel_list_5g[i]) == 116 || parseInt(wl_channel_list_5g[i]) == 140)))
 										wl_channel_list_5g[i] = wl_channel_list_5g[i];
 									else
 										wl_channel_list_5g[i] = wlextchannel_fourty(wl_channel_list_5g[i]);	
 								}								
-								
-								if(wl_channel_list_5g.indexOf("116l") > -1){			// remove channel 116, 
-									var index = wl_channel_list_5g.indexOf("116l");
+	
+								if(wl_channel_list_5g.indexOf("116") != -1){			// remove channel 116, 
+									var index = wl_channel_list_5g.indexOf("116");
 									wl_channel_list_5g.splice(index, 1);
 								}
 		
-								if(wl_channel_list_5g.indexOf("140l" > -1)){			// remove channel 140
-									index = wl_channel_list_5g.indexOf("140l");
+								if(wl_channel_list_5g.indexOf("140") != -1){			// remove channel 140
+									index = wl_channel_list_5g.indexOf("140");
 									wl_channel_list_5g.splice(index, 1);
 								}
 						}
@@ -359,14 +359,33 @@ function change_channel(obj){
 		}
 	}
 	
-	if( (based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || based_modelid == "DSL-AC68U" || based_modelid == "RT-AC87U") && country == "EU"){
-		if(document.form.wl_channel.value  == 0){
-			$('dfs_checkbox').style.display = "";
-			document.form.acs_dfs.disabled = false;
-		}	
-		else{
-			$('dfs_checkbox').style.display = "none";
-			document.form.acs_dfs.disabled = true;
+	if(country == "EU"){		// for DFS channel
+		if((based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || based_modelid == "DSL-AC68U" || based_modelid == "RT-AC87U")){
+			if(document.form.wl_channel.value  == 0){
+				$('dfs_checkbox').style.display = "";
+				document.form.acs_dfs.disabled = false;
+			}	
+			else{
+				$('dfs_checkbox').style.display = "none";
+				document.form.acs_dfs.disabled = true;
+			}
 		}
 	}
+	else if(country == "US" || country == "SG"){			//for acs band1 channel
+		if(based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || based_modelid == "DSL-AC68U"
+		|| based_modelid == "RT-AC56U" || based_modelid == "RT-AC56S"
+		|| based_modelid == "RT-N18U"
+		|| based_modelid == "RT-AC66U"
+		|| based_modelid == "RT-N66U"
+		|| based_modelid == "RT-AC53U"){
+			if(document.form.wl_channel.value  == 0){
+				$('acs_band1_checkbox').style.display = "";
+				document.form.acs_band1.disabled = false;
+			}	
+			else{
+				$('acs_band1_checkbox').style.display = "none";
+				document.form.acs_band1.disabled = true;
+			}
+		}
+	}	
 }

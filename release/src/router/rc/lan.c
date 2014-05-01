@@ -226,7 +226,7 @@ static int wlconf(char *ifname, int unit, int subunit)
 
 	if (subunit < 0)
 	{
-#ifdef RcTCONFIG_QTN
+#ifdef RTCONFIG_QTN
 		if (unit == 1)
 			goto GEN_CONF;
 #endif
@@ -351,6 +351,11 @@ GEN_CONF:
 					nvram_match(strcat_r(prefix, "country_rev", tmp), "13"))
 					eval("wl", "-i", ifname, "radarthrs",
 					"0x6ac", "0x30", "0x6a8", "0x30", "0x6a8", "0x30", "0x6a4", "0x30", "0x6a4", "0x30", "0x6a0", "0x30");
+				else if ((get_model() == MODEL_DSLAC68U) &&
+					nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
+					nvram_match(strcat_r(prefix, "country_rev", tmp), "13"))
+					eval("wl", "-i", ifname, "radarthrs",
+					"0x6ac", "0x30", "0x6a8", "0x30", "0x6a8", "0x30", "0x6a8", "0x30", "0x6a4", "0x30", "0x6a0", "0x30");
 #elif defined(RTAC66U) || defined(RTN66U)
 #if 0
 				if (((get_model() == MODEL_RTAC66U) &&
@@ -637,7 +642,7 @@ void wlconf_pre()
 #ifdef RTCONFIG_BCMARM
 		if (unit == 0)
 		{
-			if (model == MODEL_RTN18U || model == MODEL_RTAC68U || model == MODEL_RTAC87U) {
+			if (model == MODEL_RTN18U || model == MODEL_RTAC68U || model == MODEL_DSLAC68U || model == MODEL_RTAC87U) {
 				if (nvram_match(strcat_r(prefix, "turbo_qam", tmp), "1"))
 					eval("wl", "-i", word, "vht_features", "3");
 				else
@@ -677,7 +682,7 @@ void wlconf_post(const char *ifname)
 		return;
 
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
-
+#if 0
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_BCMARM
 #ifdef RTAC68U
@@ -687,6 +692,7 @@ void wlconf_post(const char *ifname)
 		    nvram_match(strcat_r(prefix, "country_rev", tmp), "13"))
 			eval("wl", "-i", ifname, "dfs_channel_forced", "36");
 	}
+#endif
 #endif
 #endif
 #endif
@@ -1170,6 +1176,7 @@ void start_lan(void)
 #ifdef CONFIG_BCMWL5
 #ifndef RTCONFIG_BRCM_USBAP
 	if ((get_model() == MODEL_RTAC68U) ||
+		(get_model() == MODEL_DSLAC68U) ||
 		(get_model() == MODEL_RTAC87U) ||
 		(get_model() == MODEL_RTAC66U) ||
 		(get_model() == MODEL_RTAC53U) ||
@@ -1197,6 +1204,7 @@ void start_lan(void)
 		(get_model() == MODEL_RTAC56S) ||
 		(get_model() == MODEL_RTAC56U) ||
 		(get_model() == MODEL_RTAC68U) ||
+		(get_model() == MODEL_DSLAC68U) ||
 		(get_model() == MODEL_RTAC87U) ||
 		(get_model() == MODEL_RTN12HP) ||
 		(get_model() == MODEL_APN12HP) ||
@@ -1385,7 +1393,7 @@ void start_lan(void)
 #endif
 #ifdef RTCONFIG_QTN
 				if (!strcmp(ifname, "wifi0"))
-                                        continue;
+					continue;
 #endif
 				/* Don't attach the main wl i/f in wds mode */
 				match = 0, i = 0;
@@ -1546,6 +1554,9 @@ void start_lan(void)
 	}
 #endif
 
+#ifdef RTCONFIG_QTN
+	eval("ifconfig", "br0:0", "1.1.1.1", "netmask", "255.255.255.0");
+#endif
 	nvram_set("reload_svc_radio", "1");
 
 	_dprintf("%s %d\n", __FUNCTION__, __LINE__);
@@ -1790,7 +1801,9 @@ void hotplug_net(void)
 	char device_path[128], usb_path[PATH_MAX], usb_node[32], port_path[8];
 	char nvram_name[32];
 	char word[PATH_MAX], *next;
+#ifdef RTCONFIG_USB_BECEEM
 	int i, j;
+#endif
 #endif
 
 	if (!(interface = getenv("INTERFACE")) ||
@@ -1896,12 +1909,18 @@ NEITHER_WDS_OR_PSTA:
 		if(nvram_get_int("sw_mode") != SW_MODE_ROUTER)
 			return;
 
-		if ((unit = get_usbif_dualwan_unit()) < 0)
+		if ((unit = get_usbif_dualwan_unit()) < 0){
+			usb_dbg("(%s): in the current dual wan mode, didn't support the USB modem.\n", interface);
 			return;
+		}
 
 		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 
 		if(!strcmp(action, "add")){
+			unsigned int vid, pid;
+
+			logmessage("hotplug", "add net %s.", interface);
+
 			memset(device_path, 0, 128);
 			sprintf(device_path, "%s/%s/device", SYS_NET, interface);
 
@@ -1915,26 +1934,44 @@ NEITHER_WDS_OR_PSTA:
 			if(get_path_by_node(usb_node, port_path, 8) == NULL)
 				return;
 
+			vid = get_usb_vid(usb_node);
+			pid = get_usb_pid(usb_node);
+
 			memset(nvram_name, 0, 32);
 			sprintf(nvram_name, "usb_path%s_act", port_path);
+			snprintf(word, PATH_MAX, "%s", nvram_safe_get(nvram_name));
 
-			if(strcmp(nvram_safe_get(nvram_name), "") != 0)
-				return;
+			if(vid == 0x19d2 && pid == 0x0167 && !strcmp(word, "usb1")){
+				// ZTE MF821D use QMI:usb1 to connect.
+				logmessage("hotplug", "skip to set net %s.", interface);
+			}
+			else{
+				logmessage("hotplug", "set net %s.", interface);
+				nvram_set(nvram_name, interface);
+				nvram_set("usb_modem_act_path", usb_node);
 
-			nvram_set(nvram_name, interface);
-			nvram_set("usb_modem_act_path", usb_node);
+				nvram_set(strcat_r(prefix, "ifname", tmp), interface);
+			}
 
-			nvram_set(strcat_r(prefix, "ifname", tmp), interface);
-
+			// wait for Andorid phones.
 			_dprintf("hotplug net INTERFACE=%s ACTION=%s: wait 2 seconds...\n", interface, action);
 			sleep(2);
+
+#if 0
+			eval("find_modem_type.sh");
 
 #ifdef RTCONFIG_DUALWAN
 			if(!strcmp(nvram_safe_get("success_start_service"), "1"))
 #endif
-				start_wan_if(unit);
+				if(strcmp(nvram_safe_get("usb_modem_act_type"), "qmi")){
+					_dprintf("%s: start_wan_if(%d)!\n", __FUNCTION__, unit);
+					start_wan_if(unit);
+				}
+#endif
 		}
 		else{
+			logmessage("hotplug", "remove net %s.", interface);
+
 			snprintf(usb_node, 32, "%s", nvram_safe_get("usb_modem_act_path"));
 			if(strlen(usb_node) <= 0)
 				return;
@@ -1993,8 +2030,10 @@ NEITHER_WDS_OR_PSTA:
 			return;
 #endif
 
-		if ((unit = get_usbif_dualwan_unit()) < 0)
+		if ((unit = get_usbif_dualwan_unit()) < 0){
+			usb_dbg("(%s): in the current dual wan mode, didn't support the USB modem.\n", interface);
 			return;
+		}
 
 		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 
@@ -2032,10 +2071,12 @@ NEITHER_WDS_OR_PSTA:
 				// do nothing.
 			}
 
+#if 0
 			if(!strcmp(nvram_safe_get("success_start_service"), "1")){
 				_dprintf("%s: start_wan_if(%d)!\n", __FUNCTION__, unit);
 				start_wan_if(unit);
 			}
+#endif
 		}
 		else{
 			nvram_set(strcat_r(prefix, "ifname", tmp), "");
@@ -2070,8 +2111,10 @@ NEITHER_WDS_OR_PSTA:
 		if(nvram_get_int("sw_mode") != SW_MODE_ROUTER)
 			return;
 
-		if ((unit = get_usbif_dualwan_unit()) < 0)
+		if ((unit = get_usbif_dualwan_unit()) < 0){
+			usb_dbg("(%s): in the current dual wan mode, didn't support the USB modem.\n", interface);
 			return;
+		}
 
 		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 
@@ -2111,10 +2154,12 @@ NEITHER_WDS_OR_PSTA:
 				nvram_set("usb_modem_act_path", usb_node);
 			}
 
+#if 0
 			if(!strcmp(nvram_safe_get("success_start_service"), "1")){
 				_dprintf("%s: start_wan_if(%d)!\n", __FUNCTION__, unit);
 				start_wan_if(unit);
 			}
+#endif
 		}
 		else{
 			nvram_set(strcat_r(prefix, "ifname", tmp), "");
@@ -2351,6 +2396,7 @@ static void led_bh(int sw)
 				led_control(LED_5G, LED_OFF);
 			}
 			break;
+		case MODEL_DSLAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC87U:
 			if(sw)
@@ -2398,6 +2444,7 @@ static void led_bh_prep(int post)
 				eval("wl", "-i", "eth2", "maxassoc", "0");
 			}
 			break;
+		case MODEL_DSLAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC87U:
 			if(post)
@@ -2859,6 +2906,7 @@ void start_lan_wl(void)
 #ifdef CONFIG_BCMWL5
 #ifndef RTCONFIG_BRCM_USBAP
 	if ((get_model() == MODEL_RTAC68U) ||
+		(get_model() == MODEL_DSLAC68U) ||
 		(get_model() == MODEL_RTAC87U) ||
 		(get_model() == MODEL_RTAC66U) ||
 		(get_model() == MODEL_RTN66U)) {
@@ -2880,6 +2928,7 @@ void start_lan_wl(void)
 		(get_model() == MODEL_RTAC56S) ||
 		(get_model() == MODEL_RTAC56U) ||
 		(get_model() == MODEL_RTAC68U) ||
+		(get_model() == MODEL_DSLAC68U) ||
 		(get_model() == MODEL_RTAC87U) ||
 		(get_model() == MODEL_RTN12HP) ||
 		(get_model() == MODEL_APN12HP) ||
@@ -3268,7 +3317,6 @@ void restart_wireless(void)
 #ifdef RTCONFIG_BCMWL6
 	start_acsd();
 #endif
-
 #ifdef RTCONFIG_WL_AUTO_CHANNEL
 	if(nvram_match("AUTO_CHANNEL", "1")){
 		nvram_set("wl_channel", "6");
@@ -3300,9 +3348,7 @@ void restart_wireless(void)
 		// notify the change to wanduck.
 		kill_pidfile_s("/var/run/wanduck.pid", SIGUSR1);
 	}
-#endif
 
-#ifdef RTCONFIG_WIRELESSREPEATER
 	if(get_model() == MODEL_APN12HP &&
 		nvram_get_int("sw_mode") == SW_MODE_AP){
 		repeater_nat_setting();
@@ -3316,11 +3362,6 @@ void restart_wireless(void)
 #endif
 
 	nvram_set_int("wlready", 1);
-
-#ifdef RTCONFIG_QTN
-	// logmessage("qtn", "[%s][%d] start_wireless_qtn", __FUNCTION__, __LINE__);
-	// start_wireless_qtn();
-#endif
 
 	file_unlock(lock);
 }
@@ -3356,9 +3397,25 @@ void restart_wireless_wps(void)
 	start_8021x();
 #endif
 	start_wps();
-
+#ifdef RTCONFIG_BCMWL6
+	start_acsd();
+#endif
+#ifdef RTCONFIG_WL_AUTO_CHANNEL
+	if(nvram_match("AUTO_CHANNEL", "1")){
+		nvram_set("wl_channel", "6");
+		nvram_set("wl0_channel", "6");
+	}
+#endif
 	restart_wl();
 	lanaccess_wl();
+
+#ifdef CONFIG_BCMWL5
+	/* for MultiSSID */
+	if(!strcmp(nvram_safe_get("qos_enable"), "1")){
+		del_EbtablesRules(); // flush ebtables nat table
+		add_EbtablesRules();
+	}
+#endif
 
 	nvram_set_int("wlready", 1);
 
@@ -3573,10 +3630,10 @@ void set_device_hostname(void)
 int reset_qtn(vod)
 {
 	system("cp /rom/qtn/* /tmp/");
-        eval("ifconfig", "br0:0", "1.1.1.1", "netmask", "255.255.255.0");
-        eval("tftpd");
-        led_control(BTN_QTN_RESET, LED_ON);
-        led_control(BTN_QTN_RESET, LED_OFF);
+	eval("ifconfig", "br0:0", "1.1.1.1", "netmask", "255.255.255.0");
+	eval("tftpd");
+	led_control(BTN_QTN_RESET, LED_ON);
+	led_control(BTN_QTN_RESET, LED_OFF);
 }
 
 int start_qtn(void)

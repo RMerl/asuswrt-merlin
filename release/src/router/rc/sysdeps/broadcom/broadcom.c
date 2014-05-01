@@ -174,6 +174,7 @@ setMAC_2G(const char *mac)
  			break;
 		}
 
+		case MODEL_DSLAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
@@ -233,6 +234,7 @@ setMAC_5G(const char *mac)
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
 		case MODEL_RTAC68U:
+		case MODEL_DSLAC68U:
 		{
 			memset(cmd_l, 0, 64);
 			sprintf(cmd_l, "asuscfe1:macaddr=%s", mac);
@@ -258,6 +260,8 @@ setCountryCode_2G(const char *cc)
 	memset(cmd, 0, 32);
 
 	switch(model) {
+		case MODEL_DSLAC68U:
+		case MODEL_RTAC87U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
@@ -294,6 +298,7 @@ setCountryCode_5G(const char *cc)
 	memset(cmd, 0, 32);
 
 	switch(model) {
+		case MODEL_DSLAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
@@ -362,6 +367,8 @@ setRegrev_2G(const char *regrev)
 			break;
 		}
 
+		case MODEL_DSLAC68U:
+		case MODEL_RTAC87U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
@@ -407,6 +414,7 @@ setRegrev_5G(const char *regrev)
 			break;
 		}
 
+		case MODEL_DSLAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
@@ -825,6 +833,7 @@ GetPhyStatus(void)
 		ports[0]=0; ports[1]=5; ports[2]=3; ports[3]=2; ports[4]=1;
 		break;
 
+	case MODEL_DSLAC68U:
 	case MODEL_RTAC68U:
 	case MODEL_RTN18U:
 	case MODEL_RTAC53U:
@@ -942,11 +951,27 @@ setAllLedOn(void)
 			eval("wl", "-i", "eth1", "ledbh", "10", "7");
 			break;
 		}
+		case MODEL_DSLAC68U:
+		{
+			led_control(LED_USB3, LED_ON);
+			led_control(LED_WAN, LED_ON);
+			eval("et", "robowr", "0", "0x18", "0x01ff");	// lan/wan ethernet/giga led
+			eval("et", "robowr", "0", "0x1a", "0x01e0");
+			eval("wl", "ledbh", "10", "1");			// wl 2.4G
+			eval("wl", "-i", "eth2", "ledbh", "10", "1");	// wl 5G
+			/* 4360's fake 5g led */
+			gpio_write(LED_5G, 1);				// wl 5G
+			led_control(LED_5G, LED_ON);
+			eval("adslate", "led", "on");
+			break;
+		}
 		case MODEL_RTAC87U:
 		{
 			eval("et", "robowr", "0", "0x18", "0x01ff");	// lan/wan ethernet/giga led
 			eval("et", "robowr", "0", "0x1a", "0x01e0");
 			eval("wl", "ledbh", "10", "1");			// wl 2.4G
+			led_control(LED_WPS, LED_ON);
+			led_control(LED_WAN, LED_ON);
 #ifdef RTCONFIG_QTN
 			setAllLedOn_qtn();
 #endif
@@ -1133,11 +1158,27 @@ setAllLedOff(void)
 			eval("wl", "-i", "eth1", "ledbh", "10", "0");
 			break;
 		}
+		case MODEL_DSLAC68U:
+		{
+			led_control(LED_USB3, LED_OFF);
+			led_control(LED_WAN, LED_OFF);
+			eval("et", "robowr", "0", "0x18", "0x01e0");	// lan/wan ethernet/giga led
+			eval("et", "robowr", "0", "0x1a", "0x01e0");
+			eval("wl", "ledbh", "10", "0");			// wl 2.4G
+			eval("wl", "-i", "eth2", "ledbh", "10", "0");
+			/* 4360's fake 5g led */
+			gpio_write(LED_5G, 1);				// wl 5G
+			led_control(LED_5G, LED_OFF);
+			eval("adslate", "led", "off");
+			break;
+		}
 		case MODEL_RTAC87U:
 		{
 			eval("et", "robowr", "0", "0x18", "0x01e0");	// lan/wan ethernet/giga led
 			eval("et", "robowr", "0", "0x1a", "0x01e0");
 			eval("wl", "ledbh", "10", "0");			// wl 2.4G
+			led_control(LED_WPS, LED_OFF);
+			led_control(LED_WAN, LED_ON);
 #ifdef RTCONFIG_QTN
 			setAllLedOff_qtn();
 #endif
@@ -1280,6 +1321,24 @@ setATEModeLedOn(void){
 			led_control(LED_POWER, LED_ON);
 			eval("et", "robowr", "0", "0x18", "0x01ff");	// lan/wan ethernet/giga led
 			eval("et", "robowr", "0", "0x1a", "0x01e0");
+			break;
+		}
+		case MODEL_DSLAC68U:
+		{
+			led_control(LED_USB3, LED_ON);
+			led_control(LED_WAN, LED_ON);
+			eval("et", "robowr", "0", "0x18", "0x01ff");	// lan/wan ethernet/giga led
+			eval("et", "robowr", "0", "0x1a", "0x01e0");
+			break;
+		}
+		case MODEL_RTAC87U:
+		{
+			eval("et", "robowr", "0", "0x18", "0x01ff");	// lan/wan ethernet/giga led
+			eval("et", "robowr", "0", "0x1a", "0x01e0");
+			led_control(LED_WPS, LED_ON);
+#ifdef RTCONFIG_QTN
+			setAllLedOn_qtn();
+#endif
 			break;
 		}
 		case MODEL_RTAC68U:
@@ -1506,6 +1565,7 @@ getMAC_5G(void)
 			break;
 		}
 
+		case MODEL_DSLAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
@@ -1582,6 +1642,7 @@ getCountryCode_5G(void)
 	model = get_model();
 
 	switch(model) {
+		case MODEL_DSLAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
@@ -1635,6 +1696,8 @@ getRegrev_2G(void)
 			break;
 		}
 
+		case MODEL_DSLAC68U:
+		case MODEL_RTAC87U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
@@ -1668,6 +1731,7 @@ getRegrev_5G(void)
 			break;
 		}
 
+		case MODEL_DSLAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:

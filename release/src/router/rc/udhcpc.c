@@ -71,6 +71,9 @@ expires(char *wan_ifname, unsigned int in)
 static int
 deconfig(int zcip)
 {
+#ifdef RTCONFIG_DSL_TCLINUX //tmp
+	return 0;
+#endif
 	char *wan_ifname = safe_getenv("interface");
 	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
 	int unit = wan_ifunit(wan_ifname);

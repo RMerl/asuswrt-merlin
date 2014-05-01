@@ -49,9 +49,9 @@
 
 #define LED_CONTROL(led, flag) ralink_gpio_write_bit(led, flag)
 
-#ifdef RTCONFIG_WIRELESSREPEATER
+//#ifdef RTCONFIG_WIRELESSREPEATER
 char *wlc_nvname(char *keyword);
-#endif
+//#endif
 
 #if defined(RTAC52U) || defined(RTAC51U)
 #define VHT_SUPPORT /* 11AC */
@@ -743,16 +743,19 @@ int
 FREAD(unsigned int addr_sa, int len)
 {
 	unsigned char buffer[MAX_FRW];
-	char buffer_h[128];
+	char buffer_h[ MAX_FRW * 3 ];
 	memset(buffer, 0, sizeof(buffer));
 	memset(buffer_h, 0, sizeof(buffer_h));
 
+	if (len > MAX_FRW)
+	{
+		dbg("FREAD: cut to %d bytes\n", MAX_FRW);
+		len = MAX_FRW;
+	}
 	if (FRead(buffer, addr_sa, len)<0)
 		dbg("FREAD: Out of scope\n");
 	else
 	{
-		if (len > MAX_FRW)
-			len = MAX_FRW;
 		htoa(buffer, buffer_h, len);
 		puts(buffer_h);
 	}

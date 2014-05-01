@@ -1,7 +1,7 @@
 include ../.config
 
 EXEC = networkmap
-OBJS = function.o networkmap.o
+OBJS = function.o asusdiscovery.o networkmap.o
 
 CFLAGS  += -Wall -DASUS -DBCMNVRAM -I. -I$(TOP)/shared -I$(TOP)/kernel_header/include -I$(SRCBASE)/include
 CFLAGS  += -s -O2 -DNO_PARALLEL

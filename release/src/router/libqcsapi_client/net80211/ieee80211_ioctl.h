@@ -1218,6 +1218,8 @@ enum {
 	IEEE80211_PARAM_CONFIG_BW_TXPOWER = 267,	/* Configure the TX powers different bandwidths */
 	IEEE80211_PARAM_SCAN_CANCEL = 268,			/* Cancel any ongoing scanning */
 	IEEE80211_PARAM_VHT_NSS_CAP = 269,	/* Set max spatial streams for VHT mode */
+	IEEE80211_PARAM_FIXED_BW = 270,		/* Configure fixed tx bandwidth without changing BSS bandwidth */
+	IEEE80211_PARAM_DYN_RTSCTS = 271,	/* Dynamic RTS/CTS paramters */
 };
 
 #define	SIOCG80211STATS			(SIOCDEVPRIVATE+2)

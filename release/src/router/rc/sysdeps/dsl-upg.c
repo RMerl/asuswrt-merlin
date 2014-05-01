@@ -46,14 +46,17 @@
 #include <arpa/inet.h>
 #include <assert.h>
 #endif /* WEBS */
+#include <asm/types.h>
 #include <typedefs.h>
 #include <bcmnvram.h>
 #include <bcmutils.h>
 #include <shutils.h>
+#ifdef RTCONFIG_RALINK
 #include <ralink.h>
 #include <iwlib.h>
 #include <stapriv.h>
 #include <ethutils.h>
+#endif
 #include <shared.h>
 #include <sys/mman.h>
 #ifndef O_BINARY

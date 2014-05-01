@@ -2924,7 +2924,9 @@ static void *unit_find(struct idr *p, int n)
 void
 ppp_rxstats_upd(void *pppif, struct sk_buff *skb)
 {
+	if (pppif == NULL || skb == NULL) return;
 	struct ppp *ppp = netdev_priv((const struct net_device *)pppif);
+	if (ppp == NULL || ppp->dev == NULL) return;
 	++ppp->dev->stats.rx_packets;
 	ppp->dev->stats.rx_bytes += skb->len;
 	ppp->last_recv = jiffies;
@@ -2933,7 +2935,9 @@ ppp_rxstats_upd(void *pppif, struct sk_buff *skb)
 void
 ppp_txstats_upd(void *pppif, struct sk_buff *skb)
 {
+	if (pppif == NULL || skb == NULL) return;
 	struct ppp *ppp = netdev_priv((const struct net_device *)pppif);
+	if (ppp == NULL || ppp->dev == NULL) return;
 	++ppp->dev->stats.tx_packets;
 	ppp->dev->stats.tx_bytes += skb->len;
 	ppp->last_xmit = jiffies;

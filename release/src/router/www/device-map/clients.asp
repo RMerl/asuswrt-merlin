@@ -79,13 +79,28 @@ var $j = jQuery.noConflict();
 <% login_state_hook(); %>
 
 var DEVICE_TYPE = ["", "<#Device_type_01_PC#>", "<#Device_type_02_RT#>", "<#Device_type_03_AP#>", "<#Device_type_04_NS#>", "<#Device_type_05_IC#>", "<#Device_type_06_OD#>", "Printer", "TV Game Console"];
+var asus_device_list_buf = '<% nvram_get("asus_device_list"); %>';
+var asus_device_list = asus_device_list_buf.replace(/&#62/g, ">").replace(/&#60/g, ",<")
 var client_list_array = '<% get_client_detail_info(); %>';
 var client_list_row;
+var asus_device_list_row;
 var networkmap_scanning;
 var macfilter_rulelist_array = '<% nvram_get("macfilter_rulelist"); %>';
 var macfilter_rulelist_row = macfilter_rulelist_array.split('&#60'); 
 var macfilter_enable =  '<% nvram_get("macfilter_enable_x"); %>';
 var mapscanning = 0;
+var thisDevice;
+(function(){
+	var thisDeviceObj = {
+		type: '<3',
+		name: '<% nvram_get("productid"); %>',
+		ipaddr: '<% nvram_get("lan_ipaddr"); %>',
+		mac: '<% nvram_get("et0macaddr"); %>',
+		other: "1>2>0"
+	}
+
+	thisDevice = [thisDeviceObj.type, thisDeviceObj.name, thisDeviceObj.ipaddr, thisDeviceObj.mac, thisDeviceObj.other].join(">");
+})()
 
 function update_clients(e) {
   $j.ajax({
@@ -96,7 +111,8 @@ function update_clients(e) {
       setTimeout("update_clients();", 1000);
     },
     success: function(response) {
-			client_list_row = client_list_array.split('<');
+			asus_device_list = asus_device_list_buf.replace(/&#62/g, ">").replace(/&#60/g, "<");
+			merge_client_list();
 			showclient_list(0);
 			_showNextItem(listFlag);
 			if(networkmap_scanning == 1 || client_list_array == "")
@@ -114,9 +130,40 @@ function gotoMACFilter(){
 		parent.location.href = "/Advanced_MACFilter_Content.asp";
 }
 
+function check_subnet(){
+	var thisDevice_array = thisDevice.split('<');
+	var thisDevice_col = thisDevice_array[1].split('>');
+	for(var i = asus_device_list_row.length - 1; i > 0; i--){
+		var asus_device_list_col = asus_device_list_row[i].split('>');
+		if(asus_device_list_col.indexOf(thisDevice_col[2]) > 0){
+			asus_device_list_row.splice(i,1);
+			break;
+		}	
+	}
+}
+
+function merge_client_list(){
+	client_list_row = client_list_array.split('<');
+	asus_device_list_row = asus_device_list.split('<');
+	check_subnet();
+	for(var i = 1; i < asus_device_list_row.length; i++){
+		var asus_device_list_row_col = asus_device_list_row[i].split('>');
+		for(var j = client_list_row.length - 1; j > 0; j--){
+			find_idx = client_list_row[j].indexOf(asus_device_list_row_col[3]);
+			if (find_idx > 0){
+				client_list_row.splice(j,1);
+				break;
+			}
+		}
+	}
+		
+	client_list_row = asus_device_list_row.concat(client_list_row);
+	client_list_row.splice(asus_device_list_row.length,1);
+}
+
 function initial(){
 	if(client_list_array != ""){
-		client_list_row = client_list_array.split('<');
+		merge_client_list();
 		showclient_list(0);
 		setTimeout("_showNextItem(listFlag);", 1);
 	}
@@ -254,8 +301,6 @@ function showclient_list(list){
 				}
 				else if(j == client_list_col.length-4)
 					code += '';
-				else				
-					code += '<td width="36%" class="ClientName" onclick="oui_query(\'' + client_list_col[3] + '\');overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();">'+ client_list_col[j] +'</td>';
 			}
 			
 			if(parent.sw_mode == 1 && ParentalCtrl_support)

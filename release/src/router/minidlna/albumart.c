@@ -350,26 +350,17 @@ int64_t
 find_album_art(const char *path, const char *image_data, int image_size)
 {
 	char *album_art = NULL;
-	char *sql;
-	char **result;
-	int cols, rows;
 	int64_t ret = 0;
 
 	if( (image_size && (album_art = check_embedded_art(path, image_data, image_size))) ||
 	    (album_art = check_for_album_file(path)) )
 	{
-		sql = sqlite3_mprintf("SELECT ID from ALBUM_ART where PATH = '%q'", album_art ? album_art : path);
-		if( (sql_get_table(db, sql, &result, &rows, &cols) == SQLITE_OK) && rows )
-		{
-			ret = strtoll(result[1], NULL, 10);
-		}
-		else
+		ret = sql_get_int_field(db, "SELECT ID from ALBUM_ART where PATH = '%q'", album_art ? album_art : path);
+		if( !ret )
 		{
 			if( sql_exec(db, "INSERT into ALBUM_ART (PATH) VALUES ('%q')", album_art) == SQLITE_OK )
 				ret = sqlite3_last_insert_rowid(db);
 		}
-		sqlite3_free_table(result);
-		sqlite3_free(sql);
 	}
 	free(album_art);
 

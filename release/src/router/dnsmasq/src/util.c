@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2013 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2014 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -109,10 +109,10 @@ static int check_name(char *in)
   
   if (in[l-1] == '.')
     {
-      if (l == 1) return 0;
       in[l-1] = 0;
+      nowhite = 1;
     }
-  
+
   for (; (c = *in); in++)
     {
       if (c == '.')

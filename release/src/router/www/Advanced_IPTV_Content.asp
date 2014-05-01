@@ -39,7 +39,7 @@ function initial(){
 		document.form.action_wait.value = "<% get_default_reboot_time(); %>";				
 	}
 	show_menu();
-	if(!dsl_support) {	
+	if(!dsl_support) {
 		ISP_Profile_Selection(original_switch_wantag);
 	}
 	document.form.switch_stb_x.value = original_switch_stb_x;	
@@ -53,6 +53,11 @@ function initial(){
 		if(!manualstb_support) 
 			document.form.switch_wantag.remove(8);
 	}
+	
+	if(dualWAN_support)
+		document.getElementById("IPTV_desc_DualWAN").style.display = "";
+	else	
+		document.getElementById("IPTV_desc").style.display = "";
 }
 
 function load_ISP_profile() {
@@ -398,7 +403,8 @@ function validate_range_null(o, min, max, def) {		//Viz add 2013.03 allow to set
 		  <div>&nbsp;</div>
 		  <div class="formfonttitle"><#menu5_2#> - IPTV</div>
       <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-      <div class="formfontdesc"><#LANHostConfig_displayIPTV_sectiondesc#></div>
+      <div id="IPTV_desc" class="formfontdesc" style="display:none;"><#LANHostConfig_displayIPTV_sectiondesc#></div>
+      <div id="IPTV_desc_DualWAN" class="formfontdesc" style="display:none;"><#LANHostConfig_displayIPTV_sectiondesc2#></div>
 	  
 	  
 	  <!-- IPTV & VoIP Setting -->
@@ -474,7 +480,7 @@ function validate_range_null(o, min, max, def) {		//Viz add 2013.03 allow to set
 		</table>
 <!--###HTML_PREP_ELSE###-->
 <!--
-[DSL-N55U][DSL-N55U-B]
+[DSL-N55U][DSL-N55U-B][DSL-AC68U]
 {DSL do not support unifw}
 	  <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 	  	<thead>

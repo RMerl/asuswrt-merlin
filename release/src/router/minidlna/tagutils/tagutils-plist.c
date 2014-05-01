@@ -24,9 +24,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "misc.h"
 #include "tagutils.h"
-#include "textutils.h"
 #include "log.h"
 
 

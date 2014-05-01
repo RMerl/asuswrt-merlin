@@ -238,6 +238,7 @@ int main(int argc, char *argv[])
 		fullscan:
                 if(networkmap_fullscan == 1) { //Scan all IP address in the subnetwork
 		    if(scan_count == 0) { 
+			asusdiscovery();	//find asus device
 			// (re)-start from the begining
 			memset(scan_ipaddr, 0x00, 4);
 			memcpy(scan_ipaddr, &router_addr.sin_addr, 3);

@@ -999,6 +999,7 @@ uint32_t crc_calc(uint32_t crc, const char *buf, int len)
 void bcmvlan_models(int model, char *vlan)
 {
 	switch (model) {
+	case MODEL_DSLAC68U:
 	case MODEL_RTAC68U:
 	case MODEL_RTAC87U:
 	case MODEL_RTAC56S:
@@ -1116,6 +1117,9 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 
 		// find wired interface
 		strcpy(ifname_desc, "WIRED");
+
+		if(model == MODEL_DSLAC68U)
+			return 1;
 
 		// special handle for non-tag wan of broadcom solution
 		// pretend vlanX is must called after ethX
@@ -1315,7 +1319,9 @@ char *get_syslog_fname(unsigned int idx)
 int is_psta(int unit)
 {
 	if (unit < 0) return 0;
-
+#ifdef RTCONFIG_QTN
+	if (unit == 1) return 0;
+#endif
 	if ((nvram_get_int("sw_mode") == SW_MODE_AP) &&
 		(nvram_get_int("wlc_psta") == 1) &&
 		(nvram_get_int("wlc_band") == unit))
@@ -1327,7 +1333,9 @@ int is_psta(int unit)
 int is_psr(int unit)
 {
 	if (unit < 0) return 0;
-
+#ifdef RTCONFIG_QTN
+	if (unit == 1) return 0;
+#endif
 	if ((nvram_get_int("sw_mode") == SW_MODE_AP) &&
 		(nvram_get_int("wlc_psta") == 2) &&
 		(nvram_get_int("wlc_band") == unit))

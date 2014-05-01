@@ -119,8 +119,11 @@ function check_dongle_status(){
 
 function submitForm(){
 	document.form.http_username.value = parent.document.QKform.http_username.value;
-	document.form.http_passwd.value = parent.document.QKform.http_passwd.value;
-	
+	if(parent.document.QKform.http_passwd.value != ""){
+		document.form.http_passwd.value = parent.document.QKform.http_passwd.value;
+		document.form.http_passwd.disabled = false;
+	}
+
 	//check pin code
 	if(pin_opt && document.form.modem_pincode.value != ""){
 		if(document.form.modem_pincode.value.search(/^\d{4,8}$/)==-1) {
@@ -684,7 +687,7 @@ function inet_ntoa(ip_num){
 <input type="hidden" name="action_wait" value="<% get_default_reboot_time(); %>">
 <input type="hidden" name="modem_enable" value="<% nvram_get("modem_enable"); %>">
 <input type="hidden" name="http_username" value="<% nvram_get("http_username"); %>">
-<input type="hidden" name="http_passwd" value="<% nvram_get("http_passwd"); %>">
+<input type="hidden" name="http_passwd" value="" disabled>
 <input type="hidden" name="wans_dualwan" value="wan usb">
 <div class="QISmain" id="QISmain">
 	<div class="formfonttitle" style="padding:6 0 0 10;">

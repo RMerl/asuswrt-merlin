@@ -359,6 +359,9 @@ void start_usb(void)
 		modprobe("cdc_ether");
 		modprobe("rndis_host");
 		modprobe("cdc_ncm");
+		modprobe("cdc_wdm");
+		modprobe("qmi_wwan");
+		modprobe("cdc_mbim");
 #endif
 	}
 }
@@ -369,6 +372,9 @@ void remove_usb_modem_modules(void)
 #ifdef RTCONFIG_USB_BECEEM
 	modprobe_r("drxvi314");
 #endif
+	modprobe_r("cdc_mbim");
+	modprobe_r("qmi_wwan");
+	modprobe_r("cdc_wdm");
 	modprobe_r("cdc_ncm");
 	modprobe_r("rndis_host");
 	modprobe_r("cdc_ether");

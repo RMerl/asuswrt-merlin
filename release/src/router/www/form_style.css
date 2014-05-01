@@ -582,6 +582,34 @@
 	outline: none; /* for Firefox */
  	hlbr:expression(this.onFocus=this.blur()); /* for IE */
 }
+.button_gen_long_dis{
+	font-weight: bolder;
+	text-shadow: 1px 1px 0px black;
+  background: transparent url(/images/New_ui/logout_bt.png) no-repeat scroll center top;
+  border:0;
+  color: #333333;
+	height:34px;
+	font-family:Verdana;
+	font-size:12px;
+ 	width:150px; 	
+  overflow:visible;
+	/*cursor:pointer;*/
+	outline: none; /* for Firefox */
+ 	hlbr:expression(this.onFocus=this.blur()); /* for IE */
+}
+.button_gen_long_dis:hover	/*, .button:active*/{
+  background: transparent url(/images/New_ui/logout_btover.png) no-repeat scroll center top;
+  border:0;
+  color: #333333;
+	height:34px;
+	font-family:Verdana;
+	font-size:12px;
+ 	width:150px;
+  overflow:visible;
+	/*cursor:pointer;*/
+	outline: none; /* for Firefox */
+ 	hlbr:expression(this.onFocus=this.blur()); /* for IE */
+}
 .button_gen_long_touch{
   color: #FFFFFF;
 	background:url(/images/New_ui/contentbt_over.png) no-repeat;

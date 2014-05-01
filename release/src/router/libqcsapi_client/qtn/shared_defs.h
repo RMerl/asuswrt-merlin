@@ -505,6 +505,7 @@ enum qtn_ocac_cmds {
 #define QTN_IS_INTEL_NODE		0x0000400
 #define QTN_IS_IPAD_AIR_NODE		0x0000800
 #define QTN_IS_IPAD4_NODE		0x0001000
+#define QTN_DYN_ENABLE_RTS		0x0002000
 
 /*
  * Definitions relating to individual fields from phy_stats,

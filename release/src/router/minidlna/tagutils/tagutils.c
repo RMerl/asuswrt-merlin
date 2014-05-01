@@ -40,11 +40,8 @@
 #ifdef HAVE_ICONV
 #include <iconv.h>
 #endif
-
 #include <sqlite3.h>
 #include "tagutils.h"
-#include "misc.h"
-#include "textutils.h"
 #include "../metadata.h"
 #include "../utils.h"
 #include "../log.h"

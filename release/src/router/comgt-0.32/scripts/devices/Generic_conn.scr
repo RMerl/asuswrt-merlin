@@ -6,6 +6,9 @@ waitquiet 1 0.2
 system "nvram set g3state_pin=0"
 system "nvram set g3state_z=0"
 system "nvram set g3state_q0=0"
+system "nvram set g3state_cd=0"
+system "nvram set g3state_class=0"
+system "nvram set g3state_mode=0"
 system "nvram set g3state_apn=0"
 system "nvram set g3state_dial=0"
 system "nvram set g3state_conn=0"
@@ -65,12 +68,30 @@ goto error
 
 :set_parameters
 system "nvram set g3state_q0=1"
-send "ATQ0 V1 E1 S0=0 &C1 &D2 +FCLASS=0^m"
+send "ATQ0 V1 E1 &C1 &D2 S0=0^m"
 waitfor 10 "OK","ERR","ERROR"
 if % = -1 goto timeerror
-if % = 0 goto set_mode
+if % = 0 goto set_parameters2
 system "nvram set g3state_q0=-1"
 goto error
+
+
+:set_parameters2
+system "nvram set g3state_cd=1"
+send "AT&C1 &D2^m"
+waitfor 10 "OK","ERR","ERROR","COMMAND NOT SUPPORT"
+if % = -1 goto timeerror
+if % = 0 goto disable_fax
+system "nvram set g3state_cd=-1"
+
+
+:disable_fax
+system "nvram set g3state_class=1"
+send "AT+FCLASS=0^m"
+waitfor 10 "OK","ERR","ERROR","COMMAND NOT SUPPORT"
+if % = -1 goto timeerror
+if % = 0 goto set_mode
+system "nvram set g3state_class=-1"
 
 
 :set_mode

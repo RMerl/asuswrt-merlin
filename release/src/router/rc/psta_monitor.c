@@ -398,10 +398,12 @@ psta_monitor_main(int argc, char *argv[])
 {
 	FILE *fp;
 	sigset_t sigs_to_catch;
-
 	if (!is_psta(0) && !is_psta(1))
 		return 0;
-
+#ifdef RTCONFIG_QTN
+	if (nvram_get_int("wlc_band") == 1)
+		return 0;
+#endif
 	/* write pid */
 	if ((fp = fopen("/var/run/psta_monitor.pid", "w")) != NULL)
 	{

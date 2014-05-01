@@ -458,6 +458,7 @@ struct nvram_tuple router_defaults[] = {
 #ifdef RTAC68U
 	{ "acs_dfs", "0", 0},			/* disable DFS channels for acsd by default */
 #endif
+	{ "acs_band1", "0", 0},
 	{ "wl_wet_tunnel", "0", 0  },		/* Disable wet tunnel */
 
 	{ "dpsta_ifnames", "", 0  },
@@ -740,6 +741,10 @@ struct nvram_tuple router_defaults[] = {
 	{ "dslx_annex", "4" }, // Annex AIJLM
 #endif
 
+// Viz add dsl transmode
+	{ "dslx_transmode", "atm"},	//atm,ptm
+	{ "dsltmp_transmode", "atm"},	//atm,ptm for UI display
+
 // the following variables suppose can be removed
 	{ "dslx_nat", "1" },	
 	{ "dslx_upnp_enable", "1" },	
@@ -765,8 +770,15 @@ struct nvram_tuple router_defaults[] = {
 	{ "dslx_pppoe_ac", ""},
 	{ "dslx_pppoe_options", ""},	
 	{ "dslx_hwaddr", ""},
+#ifdef RTCONFIG_VDSL
+	{ "dslx_vdsl_target_snrm", "32767" },
+	{ "dslx_vdsl_tx_gain_off", "32767" },
+	{ "dslx_vdsl_rx_agc", "65535" },
+	{ "dslx_vdsl_upbo", "auto" },
+#endif
 //	
-	{ "dsl_unit", "0"}, 
+	{ "dsl_unit", "0"},
+	{ "dsl_subunit", "-1" },
 //
 	{ "dsl_enable", ""},
 	{ "dsl_vpi", ""},
@@ -779,6 +791,10 @@ struct nvram_tuple router_defaults[] = {
 	{ "dsl_pcr", "0"},
 	{ "dsl_scr", "0"},
 	{ "dsl_mbs", "0"},
+#ifdef RTCONFIG_VDSL
+	{ "dsl_dot1q", "0"},
+	{ "dsl_vid", ""},
+#endif
 
 // those PVC need to init first so that QIS internet/IPTV PVC setting could write to NVRAM
 	{ "dsl0_enable", "0"},
@@ -864,6 +880,67 @@ struct nvram_tuple router_defaults[] = {
 	{ "dslx_config_num", "0"},
 // for debug , program generated
 	{ "dslx_debug", "0"},	
+
+#ifdef RTCONFIG_VDSL
+	{ "dsl8_enable", "0"},
+	{ "dsl8_proto", ""},
+	{ "dsl8_dot1q", "0"},
+	{ "dsl8_vid", ""},
+	{ "dsl8.1_enable", "0"},
+	{ "dsl8.1_proto", ""},
+	{ "dsl8.1_dot1q", "0"},
+	{ "dsl8.1_vid", ""},
+	{ "dsl8.2_enable", "0"},
+	{ "dsl8.2_proto", ""},
+	{ "dsl8.2_dot1q", "0"},
+	{ "dsl8.2_vid", ""},
+	{ "dsl8.3_enable", "0"},
+	{ "dsl8.3_proto", ""},
+	{ "dsl8.3_dot1q", "0"},
+	{ "dsl8.3_vid", ""},
+	{ "dsl8.4_enable", "0"},
+	{ "dsl8.4_proto", ""},
+	{ "dsl8.4_dot1q", "0"},
+	{ "dsl8.4_vid", ""},
+	{ "dsl8.5_enable", "0"},
+	{ "dsl8.5_proto", ""},
+	{ "dsl8.5_dot1q", "0"},
+	{ "dsl8.5_vid", ""},
+	{ "dsl8.6_enable", "0"},
+	{ "dsl8.6_proto", ""},
+	{ "dsl8.6_dot1q", "0"},
+	{ "dsl8.6_vid", ""},
+	{ "dsl8.7_enable", "0"},
+	{ "dsl8.7_proto", ""},
+	{ "dsl8.7_dot1q", "0"},
+	{ "dsl8.7_vid", ""},
+//
+	{ "dsl9_enable", "0"},
+	{ "dsl9_proto", ""},
+	{ "dsl9_dot1q", "0"},
+	{ "dsl9_vid", ""},
+#endif
+
+#ifdef RTCONFIG_DSL_TCLINUX
+	{ "dsllog_fwver", ""},
+	{ "dsllog_drvver", ""},
+	//{ "dsllog_linestate", ""},	//dsltmp_adslsyncsts
+	{ "dsllog_opmode", ""},
+	{ "dsllog_adsltype", ""},
+	{ "dsllog_snrmargindown", ""},
+	{ "dsllog_snrmarginup", ""},
+	{ "dsllog_attendown", ""},
+	{ "dsllog_attenup", ""},
+	{ "dsllog_dataratedown", ""},
+	{ "dsllog_datarateup", ""},
+	{ "dsllog_attaindown", ""},
+	{ "dsllog_attainup", ""},
+	{ "dsllog_powerdown", ""},
+	{ "dsllog_powerup", ""},
+	{ "dsllog_crcdown", ""},
+	{ "dsllog_crcup", ""},
+#endif
+
 #endif
 
 	// NVRAM for start_firewall/start_qos
@@ -1352,6 +1429,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "vpnc_sbstate_t", "0"},
 	{ "vpnc_clientlist", ""},
 	{ "vpnc_connect_row", ""},
+	{ "vpnc_auto_conn", ""},
 #endif
 
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD) || defined(RTCONFIG_OPENVPN)
@@ -1602,6 +1680,16 @@ struct nvram_tuple router_defaults[] = {
 	{ "PM_hour", "0"},                              /* hours since midnight (0 to 23). */
 	{ "pushnotify_httplogin", "1"},
 	{ "pushnotify_diskmonitor", "1"},
+	{ "PM_attach_syslog", ""},
+	{ "PM_attach_cfgfile", ""},
+	{ "PM_attach_iptables", ""},
+	{ "fb_country", ""},
+	{ "fb_ISP", ""},
+	{ "fb_Subscribed_Info", ""},
+	{ "fb_email", ""},
+	{ "fb_availability", ""},
+	{ "fb_comment", ""},
+	{ "fb_email_dbg", ""},	//send to email address
 #endif
 
 #ifdef  __CONFIG_NORTON__
@@ -1952,10 +2040,11 @@ struct nvram_tuple router_state_defaults[] = {
 #ifdef RTCONFIG_DSL
 // name starting with 'dsl' are reserved for dsl unit
 // for temp variable please use dsltmp_xxx
-	{ "dsltmp_autodet_state", ""},
+	{ "dsltmp_autodet_state", "down"},
 	{ "dsltmp_autodet_vpi", "0"},
 	{ "dsltmp_autodet_vci", "35"},
 	{ "dsltmp_autodet_encap", "0"},
+	{ "dsltmp_autodet_wan_type", "ATM"},
 // manually config
 	{ "dsltmp_cfg_prctl", "0"},
 	{ "dsltmp_cfg_vpi", "0"},
@@ -1965,6 +2054,11 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "dsltmp_cfg_iptv_num_pvc", "0"},
 	{ "dsltmp_cfg_ispname", ""},
 	{ "dsltmp_cfg_country", ""},
+#ifdef RTCONFIG_VDSL
+	{ "dsltmp_cfg_dot1q", "0"},
+	{ "dsltmp_cfg_vid", ""},
+#endif
+
 // tmp variable for QIS , it will write to dsl0_xxx after finish page
 	{ "dsltmp_qis_vpi", ""},
 	{ "dsltmp_qis_vci", ""},
@@ -2002,6 +2096,10 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "dsltmp_adslsyncsts_detail", ""},
 // for web ui identify , 1=old ui, 2=asuswrt
 	{ "dsltmp_web_ui_ver", "2"},
+//	log sync status
+	{ "dsltmp_syncloss", "0"},
+	{ "dsltmp_syncloss_apply", "0"},
+
 #endif
 	{ "ddns_cache", ""},
 	{ "ddns_ipaddr", ""},
@@ -2017,6 +2115,8 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "g3state_pin", ""},
 	{ "g3state_z", ""},
 	{ "g3state_q0", ""},
+	{ "g3state_cd", ""},
+	{ "g3state_class", ""},
 	{ "g3state_mode", ""},
 	{ "g3state_apn", ""},
 	{ "g3state_dial", ""},
@@ -2164,7 +2264,7 @@ struct nvram_tuple router_defaults_override_type1[] = {
 	{ "wl_wmf_igmpq_filter", "1", 0 },	/* Enable igmp query filter */
 #endif
 	{ "wl_acs_fcs_mode", "1", 0 },		/* Enable acsd fcs mode */
-	{ "wl_acs_dfs", "1", 0 },		/* Enable first DFS chan Selection */
+	{ "wl_acs_dfs", "2", 0 },		/* Enable first DFS chan Selection */
 	{ "wl_dcs_csa_unicast", "1", 0 },	/* Enable unicast CSA */
 	/* Exclude ACSD to select 140l, 144u, 140/80, 144/80 to compatible with Ducati 11N */
 	{ "wl_acs_excl_chans", "0xd98e,0xd88e,0xe28a,0xe38a", 0 },
@@ -2174,6 +2274,7 @@ struct nvram_tuple router_defaults_override_type1[] = {
 	{ "wl_frameburst", "on", 0 },		/* BRCM Frambursting mode (off|on) */
 	{ "wl_amsdu", "off", 0 },		/* Default IPTV AMSDU setting */
 	{ "wl_rx_amsdu_in_ampdu", "off", 0 },	/* Media RX AMSDU In AMPDU setting */
+	{ "wl_cal_period", "0", 0 },		/* Disable periodic cal */
 	{ 0, 0, 0 }
 };
 

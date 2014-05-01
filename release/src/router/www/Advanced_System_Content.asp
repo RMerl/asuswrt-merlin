@@ -95,8 +95,7 @@ function initial(){
 	load_dst_d_Options();
 	load_dst_h_Options();
 	document.form.http_passwd2.value = "";
-	var http_password = decodeURIComponent("<% nvram_char_to_ascii("", "http_passwd"); %>");
-	chkPass(http_password, 'http_passwd');
+	//Viz banned 2014.04.17 chkPass(" ", 'http_passwd');
 	
 	if(svc_ready == "0")
 		$('svc_hint_div').style.display = "";	
@@ -170,8 +169,10 @@ function applyRule(){
 			return false;
 		}
 
-		if(document.form.http_passwd2.value.length > 0)
+		if(document.form.http_passwd2.value.length > 0){
 			document.form.http_passwd.value = document.form.http_passwd2.value;
+			document.form.http_passwd.disabled = false;
+		}
 
 		if(document.form.time_zone_dst_chk.checked){	// Exist dstoffset
 				time_zone_tmp = document.form.time_zone_select.value.split("_");	//0:time_zone 1:serial number
@@ -238,19 +239,6 @@ function validForm(){
 	showtext($("alert_msg1"), "");
 	showtext($("alert_msg2"), "");
 
-	var alert_str = validate_username(document.form.http_username);
-
-	if(alert_str != ""){
-		showtext($("alert_msg1"), alert_str);
-		document.form.http_username.focus();
-		document.form.http_username.select();
-		return false;
-	}else{
-        $("alert_msg1").style.display = "none";
-    }
-
-	document.form.http_username.value = trim(document.form.http_username.value);
-
 	if((document.form.sshd_enable[0].checked) && (document.form.sshd_authkeys.value.length == 0) && (!document.form.sshd_pass[0].checked)){
 		alert("You must configure at least one SSH authentication method!");
 		return false;
@@ -262,37 +250,41 @@ function validForm(){
 		document.form.http_username.select();
 		return false;
 	}
+	else{
+		var alert_str = validate_hostname(document.form.http_username);
 
-	if(document.form.http_username.value == "root"
-			|| document.form.http_username.value == "guest"
-			|| document.form.http_username.value == "anonymous"
-			){
-		showtext($("alert_msg1"), "<#USB_Application_account_alert#>");
-		document.form.http_username.focus();
-		document.form.http_username.select();
-		return false;
-	}
+		if(alert_str != ""){
+			showtext($("alert_msg1"), alert_str);
+			$("alert_msg1").style.display = "";
+			document.form.http_username.focus();
+			document.form.http_username.select();
+			return false;
+		}else{
+			$("alert_msg1").style.display = "none";
+  	}
 
-	if(document.form.http_username.value.length <= 1){
-		showtext($("alert_msg1"), "<#File_Pop_content_alert_desc2#>");
-		document.form.http_username.focus();
-		document.form.http_username.select();
-		return false;
-	}
+		document.form.http_username.value = trim(document.form.http_username.value);
 
-	if(document.form.http_username.value.length > 20){
-		showtext($("alert_msg1"), "<#File_Pop_content_alert_desc3#>");
-		document.form.http_username.focus();
-		document.form.http_username.select();
-		return false;
-	}
-
-	if(accounts.getIndexByValue(document.form.http_username.value) > 0
-			&& document.form.http_username.value != accounts[0]){	
-		showtext($("alert_msg1"), "<#File_Pop_content_alert_desc5#>");
-		document.form.http_username.focus();
-		document.form.http_username.select();
-		return false;
+		if(document.form.http_username.value == "root"
+				|| document.form.http_username.value == "guest"
+				|| document.form.http_username.value == "anonymous"
+		){
+				showtext($("alert_msg1"), "<#USB_Application_account_alert#>");
+				$("alert_msg1").style.display = "";
+				document.form.http_username.focus();
+				document.form.http_username.select();
+				return false;
+		}
+		else if(accounts.getIndexByValue(document.form.http_username.value) > 0
+				&& document.form.http_username.value != accounts[0]){		
+				showtext($("alert_msg1"), "<#File_Pop_content_alert_desc5#>");
+				$("alert_msg1").style.display = "";
+				document.form.http_username.focus();
+				document.form.http_username.select();
+				return false;
+		}else{
+				$("alert_msg1").style.display = "none";
+		}
 	}
 
 	if(document.form.http_passwd2.value != document.form.v_password2.value){
@@ -862,6 +854,11 @@ function select_time_zone(){
 		document.getElementById("dst_end").style.display="none";
 	}
 }
+
+function clean_scorebar(obj){
+	if(obj.value == "")
+		document.getElementById("scorebarBorder").style.display = "none";
+}
 </script>
 </head>
 
@@ -886,7 +883,7 @@ function select_time_zone(){
 <input type="hidden" name="time_zone_dst" value="<% nvram_get("time_zone_dst"); %>">
 <input type="hidden" name="time_zone" value="<% nvram_get("time_zone"); %>">
 <input type="hidden" name="time_zone_dstoff" value="<% nvram_get("time_zone_dstoff"); %>">
-<input type="hidden" name="http_passwd" value="<% nvram_get("http_passwd"); %>">
+<input type="hidden" name="http_passwd" value="" disabled>
 <input type="hidden" name="http_clientlist" value="<% nvram_get("http_clientlist"); %>">
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
@@ -931,20 +928,22 @@ function select_time_zone(){
         <tr>
           <th width="40%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_new#></a></th>
           <td>
-            <input type="password" autocapitalization="off" name="http_passwd2" tabindex="2" onKeyPress="return is_string(this, event);" onkeyup="chkPass(this.value, 'http_passwd');" onpaste="return false;" class="input_15_table" maxlength="16" />
+            <input type="password" autocapitalization="off" name="http_passwd2" tabindex="2" onKeyPress="return is_string(this, event);" onkeyup="chkPass(this.value, 'http_passwd');" onpaste="return false;" class="input_15_table" maxlength="16" onBlur="clean_scorebar(this);" />
             &nbsp;&nbsp;
             <div id="scorebarBorder" style="margin-left:140px; margin-top:-25px; display:none;" title="<#LANHostConfig_x_Password_itemSecur#>">
             		<div id="score"></div>
             		<div id="scorebar">&nbsp;</div>
-            </div>
-            <div style="margin:-25px 0px 0px 270px;"><input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.http_passwd2);pass_checked(document.form.v_password2);"><#QIS_show_pass#></div>
+            </div>            
           </td>
         </tr>
 
         <tr>
           <th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_retype#></a></th>
           <td>
-            <input type="password" autocapitalization="off" name="v_password2" tabindex="3" onKeyPress="return is_string(this, event);" onpaste="return false;" class="input_15_table" maxlength="16" /><br/><span id="alert_msg2" style="color:#FC0;margin-left:8px;"></span>
+            <input type="password" autocapitalization="off" name="v_password2" tabindex="3" onKeyPress="return is_string(this, event);" onpaste="return false;" class="input_15_table" maxlength="16" />
+            <div style="margin:-25px 0px 5px 135px;"><input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.http_passwd2);pass_checked(document.form.v_password2);"><#QIS_show_pass#></div>
+            <span id="alert_msg2" style="color:#FC0;margin-left:8px;"></span>
+            
           </td>
         </tr>
       </table>

@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="../form_style.css"  type="text/css">
 
 <script type="text/javascript" src="../state.js"></script>
+<script type="text/javascript" src="../help.js"></script>
 <script type="text/javascript">
 function clickevent(){
 	$("Submit").onclick = function(){
@@ -35,52 +36,38 @@ function checkDuplicateName(newname, teststr){
 }
 
 function validForm(){
-	showtext($("alert_msg1"), "");
 	showtext($("alert_msg2"), "");
 
-	// account name
-	var alert_str = validate_username($("account"));
-
-	if(alert_str != ""){
-		showtext($("alert_msg1"), alert_str);
-		$("account").focus();
-		return false;
-	}
-
-	$("account").value = trim($("account").value);
-	
 	if($("account").value.length == 0){
-		showtext($("alert_msg1"), "<#File_Pop_content_alert_desc1#>");
+		alert("<#File_Pop_content_alert_desc1#>");
 		$("account").focus();
 		return false;
 	}
+	else{
+		var alert_str = validate_hostname($("account"));
 
-	if($("account").value == "root"
-			|| $("account").value == "guest"
-			|| $("account").value == "anonymous"
-			){
-		showtext($("alert_msg1"), "<#USB_Application_account_alert#>");
-		$("account").focus();
-		return false;
-	}
+		if(alert_str != ""){
+			alert(alert_str);			
+			$("account").focus();
+			return false;
+		}			
 
-	if($("account").value.length <= 1){
-		showtext($("alert_msg1"), "<#File_Pop_content_alert_desc2#>");
-		$("account").focus();
-		return false;
-	}
+		$("account").value = trim($("account").value);
 
-	if($("account").value.length > 20){
-		showtext($("alert_msg1"), "<#File_Pop_content_alert_desc3#>");
-		$("account").focus();
-		return false;
-	}
-
-	if(checkDuplicateName($("account").value, parent.get_accounts())){
-		showtext($("alert_msg1"), "<#File_Pop_content_alert_desc5#>");
-		$("account").focus();
-		return false;
-	}
+		if($("account").value == "root"
+				|| $("account").value == "guest"
+				|| $("account").value == "anonymous"
+		){
+				alert("<#USB_Application_account_alert#>");				
+				$("account").focus();
+				return false;
+		}
+		else if(checkDuplicateName($("account").value, parent.get_accounts())){
+				alert("<#File_Pop_content_alert_desc5#>");				
+				$("account").focus();
+				return false;
+		}
+	}	
 
 	// password
 	if($("password").value.length <= 0 || $("confirm_password").value.length <= 0){
@@ -133,8 +120,8 @@ function validForm(){
     </tr>
     <tr>
       <th><#AiDisk_Account#>: </th>
-      <td><input class="input_15_table" name="account" id="account" type="text" maxlength="20">
-      		<br/><span id="alert_msg1" style="color:#FC0;margin-left:8px;"></span>	
+      <td>
+      	<input class="input_15_table" name="account" id="account" type="text" maxlength="20">      		
       </td>
     </tr>
     <tr>

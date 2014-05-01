@@ -245,6 +245,14 @@ function applyRule(){
 	if (document.form.wans_primary.value == "lan") document.form.next_page.value = "Advanced_WAN_Content.asp";
 	if (document.form.wans_primary.value == "usb") document.form.next_page.value = "Advanced_Modem_Content.asp";
 
+	if(wans_dualwan_orig.split(" ")[1] == "none")
+		document.form.wan_unit.value = 0;
+		
+	var reboot_time	= eval("<% get_default_reboot_time(); %>");
+	if(based_modelid =="DSL-AC68U")
+		reboot_time += 70;
+	document.form.action_wait.value = reboot_time;	
+
 	showLoading();
 	document.form.submit();
 }
@@ -254,20 +262,23 @@ function addWANOption(obj, wanscapItem){
 	if(dsl_support && obj.name == "wans_second"){
 		for(i=0; i<wanscapItem.length; i++){
 			if(wanscapItem[i] == "dsl"){
-				wanscapItem.splice(i,1);
+				wanscapItem.splice(i,1);	
 			}
 		}
 	}
 	
 	for(i=0; i<wanscapItem.length; i++){
 		if(wanscapItem[i].length > 0){
-			obj.options[i] = new Option(wanscapItem[i].toUpperCase(), wanscapItem[i]);
+			var wanscapName = wanscapItem[i].toUpperCase();
+			if(wanscapName == "LAN")
+				wanscapName = "Ethernet LAN";
+			obj.options[i] = new Option(wanscapName, wanscapItem[i]);
 		}	
 	}
 }
 
 function changeWANProto(obj){	
-	if(wans_flag == 1){
+	if(wans_flag == 1){	//dual WAN on
 		if(document.form.wans_primary.value == document.form.wans_second.value){
 			if(obj.name == "wans_primary"){
 				if(obj.value == "wan"){			
@@ -285,6 +296,9 @@ function changeWANProto(obj){
 						document.form.wans_second.value = "usb";
 						document.form.wans_second.index = 1;				
 					}
+				}else if (obj.value == "dsl"){
+					document.form.wans_second.value = "usb";
+					document.form.wans_second.index = 1;
 				}
 			}else if(obj.name == "wans_second"){
 				if(obj.value == "wan"){
@@ -729,7 +743,7 @@ function pullLANIPList(obj){
 <input type="hidden" name="next_page" value="Advanced_WANPort_Content.asp">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
-<input type="hidden" name="action_wait" value="<% get_default_reboot_time(); %>">
+<input type="hidden" name="action_wait" value="">
 <input type="hidden" name="action_script" value="reboot">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
@@ -765,7 +779,7 @@ function pullLANIPList(obj){
 								<tr>
 								  <td bgcolor="#4D595D" valign="top">
 								  <div>&nbsp;</div>
-								  <div class="formfonttitle"><#menu5_3#> - <#dualwan_port#></div>
+								  <div class="formfonttitle"><#menu5_3#> - <#dualwan#></div>
 								  <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 					  			<div class="formfontdesc"><#dualwan_desc#></div>
 									<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">

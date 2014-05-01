@@ -24,12 +24,36 @@
 #ifndef __UTILS_H__
 #define __UTILS_H__
 
+#include <stdarg.h>
+#include <sys/param.h>
+
 #include "minidlnatypes.h"
 
 /* String functions */
-int strcatf(struct string_s *str, char *fmt, ...);
-void strncpyt(char *dst, const char *src, size_t len);
-inline int xasprintf(char **strp, char *fmt, ...);
+/* We really want this one inlined, since it has a major performance impact */
+static inline int strcatf(struct string_s *str, const char *fmt, ...)
+{
+	int ret;
+	int size;
+	va_list ap;
+
+	if (str->off >= str->size)
+		return 0;
+
+	va_start(ap, fmt);
+	size = str->size - str->off;
+	ret = vsnprintf(str->data + str->off, size, fmt, ap);
+	str->off += MIN(ret, size);
+	va_end(ap);
+
+	return ret;
+}
+static inline void strncpyt(char *dst, const char *src, size_t len)
+{
+	strncpy(dst, src, len);
+	dst[len-1] = '\0';
+}
+int xasprintf(char **strp, char *fmt, ...);
 int ends_with(const char * haystack, const char * needle);
 char *trim(char *str);
 char *strstrc(const char *s, const char *p, const char t);

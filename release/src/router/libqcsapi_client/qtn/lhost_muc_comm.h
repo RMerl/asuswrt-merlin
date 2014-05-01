@@ -383,6 +383,16 @@ enum {
 	BW_HT160 = 160
 };
 
+/* QTN bandwidth defination */
+#define QTN_BW_20M	0
+#define QTN_BW_40M	1
+#define QTN_BW_80M	2
+
+/* Fixed bw command offset */
+#define QTN_BW_FIXED_BW		0x3
+#define QTN_BW_FIXED_BW_S	0
+#define QTN_BW_FIXED_EN		0x10
+#define QTN_BW_FIXED_EN_S	4
 
 struct qtn_csa_info {
 	uint64_t	req_tsf;		/* aim to change channels at this tsf */

@@ -189,6 +189,7 @@ extern uint32_t runtime_flags;
 #define DLNA_STRICT_MASK      0x0004
 #define NO_PLAYLIST_MASK      0x0008
 #define SYSTEMD_MASK          0x0010
+#define MERGE_MEDIA_DIRS_MASK 0x0020
 
 #define SETFLAG(mask)	runtime_flags |= mask
 #define GETFLAG(mask)	(runtime_flags & mask)

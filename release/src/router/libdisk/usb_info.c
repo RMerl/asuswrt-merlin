@@ -1013,12 +1013,16 @@ int isSerialInterface(const char *interface_name)
 
 int isACMInterface(const char *interface_name)
 {
-	char interface_class[4];
+	char interface_class[4], interface_subclass[4];
 
 	if(get_usb_interface_class(interface_name, interface_class, 4) == NULL)
 		return 0;
 
-	if(strcmp(interface_class, "02"))
+	if(get_usb_interface_subclass(interface_name, interface_subclass, 4) == NULL)
+		return 0;
+
+	// mbim interface is class: 02, subclass: 0e.
+	if(strcmp(interface_class, "02") || !strcmp(interface_subclass, "0e"))
 		return 0;
 
 	return 1;
@@ -1095,7 +1099,7 @@ int isGCTInterface(const char *interface_name){
 int is_usb_modem_ready(void)
 {
 	char prefix[32], tmp[32];
-	char usb_act[8], usb_vid[8];
+	char usb_act[8];
 	char usb_node[32], port_path[8];
 
 	if(nvram_match("modem_enable", "0"))
@@ -1108,17 +1112,12 @@ int is_usb_modem_ready(void)
 	if(get_path_by_node(usb_node, port_path, 8) == NULL)
 		return 0;
 
-	memset(prefix, 0, 8);
-	sprintf(prefix, "usb_path%s", port_path);
-
-	memset(usb_act, 0, 8);
-	strcpy(usb_act, nvram_safe_get(strcat_r(prefix, "_act", tmp)));
-	memset(usb_vid, 0, 8);
-	strcpy(usb_vid, nvram_safe_get(strcat_r(prefix, "_vid", tmp)));
+	snprintf(prefix, 32, "usb_path%s", port_path);
+	snprintf(usb_act, 8, "%s", nvram_safe_get(strcat_r(prefix, "_act", tmp)));
 
 	if(nvram_match(prefix, "modem") && strlen(usb_act) != 0){
 		// for the router dongle: Huawei E353, E3131.
-		if(!strncmp(usb_act, "eth", 3) && !strcmp(usb_vid, "12d1")){
+		if(!strncmp(usb_act, "eth", 3) || !strncmp(usb_act, "usb", 3)){
 			if(!strncmp(nvram_safe_get("lan_ipaddr"), "192.168.1.", 10))
 				return 2;
 		}

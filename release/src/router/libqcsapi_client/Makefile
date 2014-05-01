@@ -1,6 +1,7 @@
 include ../common.mak
 
 #CC = gcc
+#CFLAGS = -I. -fPIC -O -g -Wall -Werror -Wno-unused-variable -Wno-unused-parameter
 CFLAGS += -I. -fPIC -O -g -Wall -Werror -Wno-unused-variable -Wno-unused-parameter
 CFLAGS += -D_GNU_SOURCE
 
@@ -29,7 +30,7 @@ LIB_OBJS = \
 	qcsapi_rpc/generated/qcsapi_rpc_clnt_adapter.o	\
 
 #TARGETS = c_rpc_qcsapi_sample qcsapi_sockrpc qcsapi_sockrpc_static qcsapi_pcie qcsapi_pcie_static $(LIB_REALNAME)
-TARGETS = c_rpc_qcsapi_sample qcsapi_sockrpc $(LIB_REALNAME)
+TARGETS = qcsapi_sockrpc $(LIB_REALNAME)
 
 all: $(TARGETS)
 

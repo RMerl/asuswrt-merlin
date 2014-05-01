@@ -27,15 +27,28 @@ extern struct nvram_tuple router_defaults[];
 void convert_dsl_config_num()
 {
 	int config_num = 0;
-	if (nvram_match("dsl0_enable","1")) config_num++;
-	if (nvram_match("dsl1_enable","1")) config_num++;
-	if (nvram_match("dsl2_enable","1")) config_num++;
-	if (nvram_match("dsl3_enable","1")) config_num++;
-	if (nvram_match("dsl4_enable","1")) config_num++;
-	if (nvram_match("dsl5_enable","1")) config_num++;
-	if (nvram_match("dsl6_enable","1")) config_num++;
-	if (nvram_match("dsl7_enable","1")) config_num++;
-	nvram_set_int("dslx_config_num", config_num); 
+	if(nvram_match("dslx_transmode", "atm")) {
+		if (nvram_match("dsl0_enable","1")) config_num++;
+		if (nvram_match("dsl1_enable","1")) config_num++;
+		if (nvram_match("dsl2_enable","1")) config_num++;
+		if (nvram_match("dsl3_enable","1")) config_num++;
+		if (nvram_match("dsl4_enable","1")) config_num++;
+		if (nvram_match("dsl5_enable","1")) config_num++;
+		if (nvram_match("dsl6_enable","1")) config_num++;
+		if (nvram_match("dsl7_enable","1")) config_num++;
+	}
+	else {
+		if (nvram_match("dsl8_enable","1")) config_num++;
+		if (nvram_match("dsl8.1_enable","1")) config_num++;
+		if (nvram_match("dsl8.2_enable","1")) config_num++;
+		if (nvram_match("dsl8.3_enable","1")) config_num++;
+		if (nvram_match("dsl8.4_enable","1")) config_num++;
+		if (nvram_match("dsl8.5_enable","1")) config_num++;
+		if (nvram_match("dsl8.6_enable","1")) config_num++;
+		if (nvram_match("dsl8.7_enable","1")) config_num++;
+		//if (nvram_match("dsl9_enable","1")) config_num++;
+	}
+	nvram_set_int("dslx_config_num", config_num);
 }
 
 /* Paul modify 2013/1/23 */
@@ -97,31 +110,46 @@ void convert_dsl_wan()
 
 	if (conv_dsl_to_wan0)
 	{
-		if (nvram_match("dsl0_proto","pppoe") || nvram_match("dsl0_proto","pppoa")) {
-			nvram_set("wan0_proto","pppoe");
-			/* Turn off DHCP on MAN interface */
-			nvram_set_int("wan0_dhcpenable_x", 2);
-		}
-		else if (nvram_match("dsl0_proto","ipoa")) {
-			nvram_set("wan0_proto","static");
-		}
-		else if (nvram_match("dsl0_proto","bridge")) {
-			// disable nat
-			nvram_set("wan0_nat_x","0");
-
-			/* Paul add 2012/7/13, for Bridge connection type wan0_proto set to dhcp, and dsl_proto set as bridge */
-			nvram_set("wan0_proto","dhcp");
-			nvram_set("dsl_proto","bridge");
-		}
-		else if (nvram_match("dsl0_proto","mer")) {
-			if (nvram_match("dslx_DHCPClient","1")) {
+		if (nvram_match("dslx_transmode","ptm")) {
+			if (nvram_match("dsl8_proto","pppoe")) {
+				nvram_set("wan0_proto", "pppoe");
+				nvram_set_int("wan0_dhcpenable_x", 2);
+			}
+			else if (nvram_match("dsl8_proto","bridge")) {
+				nvram_set("wan0_nat_x","0");
 				nvram_set("wan0_proto","dhcp");
 			}
-			else {
-				nvram_set("wan0_proto","static");		
-			}
+			else
+				nvram_set("wan0_proto",nvram_safe_get("dsl8_proto"));
+				nvram_set("wan_proto",nvram_safe_get("wan0_proto"));
 		}
-		nvram_set("wan_proto",nvram_safe_get("wan0_proto"));
+		else {
+			if (nvram_match("dsl0_proto","pppoe") || nvram_match("dsl0_proto","pppoa")) {
+				nvram_set("wan0_proto","pppoe");
+				/* Turn off DHCP on MAN interface */
+				nvram_set_int("wan0_dhcpenable_x", 2);
+			}
+			else if (nvram_match("dsl0_proto","ipoa")) {
+				nvram_set("wan0_proto","static");
+			}
+			else if (nvram_match("dsl0_proto","bridge")) {
+				// disable nat
+				nvram_set("wan0_nat_x","0");
+
+				/* Paul add 2012/7/13, for Bridge connection type wan0_proto set to dhcp, and dsl_proto set as bridge */
+				nvram_set("wan0_proto","dhcp");
+				nvram_set("dsl_proto","bridge");
+			}
+			else if (nvram_match("dsl0_proto","mer")) {
+				if (nvram_match("dslx_DHCPClient","1")) {
+					nvram_set("wan0_proto","dhcp");
+				}
+				else {
+					nvram_set("wan0_proto","static");
+				}
+			}
+			nvram_set("wan_proto",nvram_safe_get("wan0_proto"));
+		}
 	}
 }
 
@@ -141,8 +169,11 @@ void remove_dsl_autodet(void)
 	nvram_set("dsltmp_adslatequit","1");
 	
 	for(x=2; x<=8; x++) {
+#ifdef RTCONFIG_RALINK
 		sprintf(wan_if, "eth2.1.%d", x);
-		eval("ifconfig", wan_if, "down");				
+		eval("ifconfig", wan_if, "down");
+#else
+#endif
 	}
 
 	nvram_set("dsltmp_autodet_state","");
@@ -194,11 +225,29 @@ dsl_defaults(void)
 		unit++;
 	}
 
+#ifdef RTCONFIG_VDSL
+	for(unit=8;unit<10;unit++) {
+		snprintf(prefix, sizeof(prefix), "dsl%d_", unit);
+
+		for (t = router_defaults; t->name; t++) {
+			if(strncmp(t->name, "dsl_", 4)!=0) continue;
+
+			if (!nvram_get(strcat_r(prefix, &t->name[4], tmp))) {
+				//_dprintf("_set %s = %s\n", tmp, t->value);
+				nvram_set(tmp, t->value);
+			}
+		}
+		unit++;
+	}
+#endif
+
+#ifndef RTCONFIG_DSL_TCLINUX
 	// dump trx header
 	// this is for upgrading check
 	// if trx is same, the upgrade procedure will be skiped
 	fprintf(stderr, "dump trx header..\n");
 	eval("dd", "if=/dev/mtd3", "of=/tmp/trx_hdr.bin", "count=1");
+#endif
 
 	convert_dsl_wan_settings(0);
 }
@@ -211,7 +260,7 @@ dsl_defaults(void)
 // from zcip.c and revised
 // Pick a random link local IP address on 169.254/16, except that
 // the first and last 256 addresses are reserved.
-static void pick_a_random_ipv4(char* buf_ip)
+void pick_a_random_ipv4(char* buf_ip)
 {
         unsigned tmp;
 		unsigned int tmp_ip;
@@ -226,10 +275,14 @@ static void pick_a_random_ipv4(char* buf_ip)
 
 void start_dsl()
 {
+#ifdef RTCONFIG_RALINK
 	// todo: is it necessary? 
 	init_dsl_before_start_wan();
-	char *argv_tp_init[] = {"tp_init", NULL};	
+#endif
+
+	char *argv_tp_init[] = {"tp_init", NULL};
 	int pid;
+	char buf_ip[32];
 
 	// if setting cfg file is from annex a, annex b will has invalid values
 	if(nvram_match("productid", "DSL-N55U-B"))
@@ -241,12 +294,16 @@ void start_dsl()
 		}
 	}
 	
-	eval("mkdir", "/tmp/adsl");
+	mkdir("/tmp/adsl", S_IRUSR | S_IWUSR | S_IXUSR);
 
 	/* Paul comment 2012/7/25, the "never overcommit" policy would cause Ralink WiFi driver kernel panic when configure DUT through external registrar. *
 	 * So let this value be the default which is 0, the kernel will estimate the amount of free memory left when userspace requests more memory. */
 	//system("echo 2 > /proc/sys/vm/overcommit_memory");
-	
+
+#ifndef RTCONFIG_RALINK
+	pick_a_random_ipv4(buf_ip);
+	eval("ifconfig", "vlan2", buf_ip);
+#endif
 
 #ifdef RTCONFIG_DUALWAN
 	if (get_dualwan_secondary()==WANS_DUALWAN_IF_NONE)
@@ -256,36 +313,57 @@ void start_dsl()
 			// it does not need to start dsl driver when using other modes
 			// but it still need to run tp_init to have firmware version info
 			printf("get modem info\n");
-			eval("tp_init", "eth_wan_mode_only");			
+			xstart("tp_init", "eth_wan_mode_only");
 			return;
 		}
 	}
 #endif
 
-	int config_num = nvram_get_int("dslx_config_num");
 	_eval(argv_tp_init, NULL, 0, &pid);
+
+	int config_num = nvram_get_int("dslx_config_num");
+
 	// IPTV
 	if (nvram_match("x_Setting", "1") && config_num > 1)
 	{
 		int x;
 		char wan_if[9];
-		char wan_num[2];		
-		char buf_ip[32];
+		char wan_num[2];
+		char vlan_id[8];
+
 		eval("brctl", "addbr", "br1");
 		for(x=2; x<=config_num; x++) {
-			sprintf(wan_if, "eth2.1.%d", x);
 			sprintf(wan_num, "%d", x);
+#ifdef RTCONFIG_RALINK
+			sprintf(wan_if, "eth2.1.%d", x);
 			eval("vconfig", "add", "eth2.1", wan_num);
-			eval("ifconfig", wan_if, "up");				
+#else
+			/* create IPTV PVC interface and begin from eth0.101 */
+			sprintf(wan_num, "%d", (100 + x -1));
+			sprintf(wan_if, "vlan%s", wan_num);
+			eval("vconfig", "set_name_type", "VLAN_PLUS_VID_NO_PAD");
+			eval("vconfig", "add", "eth0", wan_num);
+			//Set switch
+			sprintf(wan_num, "0x%04x", (100 + x -1));
+			eval("et", "robowr", "0x05", "0x83", "0x0021");
+			eval("et", "robowr", "0x05", "0x81", wan_num);
+			eval("et", "robowr", "0x05", "0x80", "0x0000");
+			eval("et", "robowr", "0x05", "0x80", "0x0080");
+#endif
+			eval("ifconfig", wan_if, "up");
 			eval("brctl", "addif", "br1", wan_if);
-		}	
+		}
+#ifdef RTCONFIG_RALINK
 		eval("brctl", "addif", "br1", "eth2.3");
+#else
+		eval("brctl", "addif", "br1", "vlan3");
+#endif
 		// it needs assign a IPv4 address to enable packet forwarding
 		pick_a_random_ipv4(buf_ip);
 		eval("ifconfig", "br1", "up");
 		eval("ifconfig", "br1", buf_ip);		
 	}
-
+#ifndef RTCONFIG_DSL_TCLINUX
 	// auto detection
 	if (nvram_match("x_Setting", "0") && config_num == 0)
 	{
@@ -297,10 +375,10 @@ void start_dsl()
 		char *argv_auto_det[] = {"auto_det", country_value, NULL};		
 		int pid;		
 		for(x=2; x<=8; x++) {
-			sprintf(wan_if, "eth2.1.%d", x);
 			sprintf(wan_num, "%d", x);
+			sprintf(wan_if, "eth2.1.%d", x);
 			eval("vconfig", "add", "eth2.1", wan_num);
-			eval("ifconfig", wan_if, "up");				
+			eval("ifconfig", wan_if, "up");
 		}
 		//
 		nvram_set("dsltmp_autodet_state", "Detecting");
@@ -308,6 +386,7 @@ void start_dsl()
 		get_country_code_from_rc(country_value);
 		_eval(argv_auto_det, NULL, 0, &pid);
 	}
+#endif	//nRTCONFIG_DSL_TCLINUX
 }
 
 void stop_dsl()

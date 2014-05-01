@@ -367,11 +367,21 @@ function submitForm(){
 				<th>RAS</th>
 				<td><input type="text" class="input_20_table" value="<% nvram_dump("adsl/tc_ras_ver.txt",""); %>" readonly="1"></td>
 			</tr>
+[DSL-AC68U]
+                        <tr>
+                                <th>DSL <#FW_item2#></th>
+                                <td><% nvram_get("dsllog_fwver"); %></td>
+                        </tr>
+                        <tr>
+                                <th><#adsl_fw_ver_itemname#></th>
+                                <td><% nvram_get("dsllog_drvver"); %></td>
+                        </tr>
 -->
+
 <!--###HTML_PREP_END###-->
 			<tr>
 				<th><#FW_item2#></th>
-				<td><input type="text" name="firmver_table" class="input_20_table" value="<% nvram_get("firmver"); %>.<% nvram_get("buildno"); %>_<% nvram_get("extendno"); %>" readonly="1"><!--/td-->
+				<td><input type="text" name="firmver_table" class="input_20_table" value="<% nvram_get("firmver"); %>.<% nvram_get("buildno"); %>_<% nvram_get("extendno"); %>" readonly="1">&nbsp&nbsp&nbsp<!--/td-->
 <!--
 						<input type="button" id="update" name="update" class="button_gen" onclick="detect_update();" value="<#liveupdate#>" />
 						<div id="check_states">

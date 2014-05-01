@@ -334,7 +334,10 @@ var btnAction = {
 		parent.w_Setting_tmp = document.form.w_Setting.value;
 		document.getElementById("loadingIcon").style.display = "";
 		document.form.http_username.value = parent.document.QKform.http_username.value;
-		document.form.http_passwd.value = parent.document.QKform.http_passwd.value;
+		if(parent.document.QKform.http_passwd.value != ""){
+			document.form.http_passwd.value = parent.document.QKform.http_passwd.value;
+			document.form.http_passwd.disabled = false;
+		}
 		document.form.flag.value = "wlcconnect";
 		document.form.action_mode.value = "apply";
 		document.form.action_wait.value = "50";
@@ -781,6 +784,10 @@ function showSiteTable(){
 		}
 		else{
 			for(var i = 0; i < Profiles.length; i++){
+				if(parent.based_modelid == "RT-AC87U" && Profiles[i].band.search("5G") != -1 && parent.isRepeater){ // SYSDEP, RT-AC87U does not support 5G repeater for now. 
+					continue;
+				}
+
 				if(Profiles[i].ssid == null || Profiles[i].ssid == "" || Profiles[i].ssid.search("%FFFF") != -1){
 					htmlCode += '<tr style="display:none"><td></td></tr>';
 					continue;
@@ -894,7 +901,7 @@ function QKInternet_load_body(){
 <!-- system end -->
 <input type="hidden" name="sw_mode" value="3">
 <input type="hidden" name="http_username" value="<% nvram_get("http_username"); %>">
-<input type="hidden" name="http_passwd" value="<% nvram_get("http_passwd"); %>">
+<input type="hidden" name="http_passwd" value="" disabled>
 <input type="hidden" name="x_Setting" value="1">
 <input type="hidden" name="w_Setting" value="1">
 <input type="hidden" name="lan_proto" value="dhcp">

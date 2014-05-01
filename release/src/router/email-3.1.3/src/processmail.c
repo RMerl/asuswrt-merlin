@@ -126,9 +126,9 @@ processRemote(const char *smtp_serv, int smtp_port, dstrbuf *msg)
 	struct addr *next=NULL;
 
 	email_addr = getConfValue("MY_EMAIL");
-	if (gethostname(nodename, sizeof(nodename) - 1) < 0) {
+	//if (gethostname(nodename, sizeof(nodename) - 1) < 0) {
 		snprintf(nodename, sizeof(nodename) - 1, "geek");
-	}
+	//}
 
 	/* Get other possible configuration values */
 	smtp_auth = getConfValue("SMTP_AUTH");

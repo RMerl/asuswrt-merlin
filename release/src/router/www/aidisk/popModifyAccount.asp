@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="../form_style.css"  type="text/css">
 
 <script type="text/javascript" src="../state.js"></script>
+<script type="text/javascript" src="../help.js"></script>
 <script type="text/javascript">
 var selectedAccount = parent.getSelectedAccount();
 
@@ -44,52 +45,37 @@ function checkDuplicateName(newname, teststr){
 }
 
 function validForm(){
-	showtext($("alert_msg1"), "");
 	showtext($("alert_msg2"), "");
 
-	// new_account name
-	if($("new_account").value.length > 0){
-		var alert_str = validate_username($("new_account"));
-		if(alert_str != ""){
-			showtext($("alert_msg1"), alert_str);
+	if($("new_account").value.length == 0){
+			alert("<#File_Pop_content_alert_desc1#>");
 			$("new_account").focus();
 			return false;
-		}
-
-		$("new_account").value = trim($("new_account").value);
-		if($("new_account").value.length == 0){
-			showtext($("alert_msg1"), "<#File_Pop_content_alert_desc1#>");
-			$("new_account").focus();
-			return false;
-		}
-		
-		if($("new_account").value == "root"
-				|| $("new_account").value == "guest"
-				|| $("new_account").value == "anonymous"
-				){
-			showtext($("alert_msg1"), "<#USB_Application_account_alert#>");
-			$("new_account").focus();
-			return false;
-		}
-
-		if($("new_account").value.length <= 1){
-			showtext($("alert_msg1"), "<#File_Pop_content_alert_desc2#>");
-			$("new_account").focus();
-			return false;
-		}
-
-		if($("new_account").value.length > 20){
-			showtext($("alert_msg1"), "<#File_Pop_content_alert_desc3#>");
-			$("new_account").focus();
-			return false;
-		}
-
-		if(checkDuplicateName($("new_account").value, parent.get_accounts()) &&
-			$("new_account").value != decodeURIComponent(selectedAccount)){			
-				showtext($("alert_msg1"), "<#File_Pop_content_alert_desc5#>");
+	}
+	else{				
+			var alert_str = validate_hostname($("new_account"));
+			if(alert_str != ""){
+				alert(alert_str);
 				$("new_account").focus();
 				return false;
-		}
+			}
+
+			$("new_account").value = trim($("new_account").value);
+				
+			if($("new_account").value == "root"
+					|| $("new_account").value == "guest"
+					|| $("new_account").value == "anonymous"
+			){
+					alert("<#USB_Application_account_alert#>");
+					$("new_account").focus();
+					return false;
+			}
+			else if(checkDuplicateName($("new_account").value, parent.get_accounts()) &&
+				$("new_account").value != decodeURIComponent(selectedAccount)){			
+					alert("<#File_Pop_content_alert_desc5#>");
+					$("new_account").focus();
+					return false;
+			}
 	}
 
 	// password
@@ -145,8 +131,8 @@ function validForm(){
     </tr>
     <tr>
       <th><#AiDisk_Account#>: </th>
-      <td><input class="input_15_table" name="new_account" id="new_account" type="text" maxlength="20">
-      		<br/><span id="alert_msg1" style="color:#FC0;margin-left:8px;"></span>	
+      <td>
+      	<input class="input_15_table" name="new_account" id="new_account" type="text" maxlength="20">
       </td>
     </tr>
     <tr>

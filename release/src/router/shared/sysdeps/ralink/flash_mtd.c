@@ -343,7 +343,7 @@ int FlashRead(const unsigned char *dst, int src, int count)
  */
 int FRead(const unsigned char *buf, int addr, int count)
 {
-	if (!buf || addr <= 0 || count <=0)
+	if (!buf || addr < 0 || count <=0)
 		return -1;
 
 	/* If address fall in old Factory partition, call FactoryRead() instead. */
