@@ -596,7 +596,7 @@ init_route_list (struct route_list *rl,
   if (rl->rgi.flags & RGI_ADDR_DEFINED)
     {
       setenv_route_addr (es, "net_gateway", rl->rgi.gateway.addr, -1);
-#ifdef ENABLE_DEBUG
+#if defined(ENABLE_DEBUG) && !defined(ENABLE_SMALL)
       print_default_gateway (D_ROUTE, &rl->rgi);
 #endif
     }
@@ -1983,10 +1983,16 @@ delete_route_ipv6 (const struct route_ipv6 *r6, const struct tuntap *tt, unsigne
     argv_printf_cat (&argv, "METRIC %d", r->metric);
 #endif
 
+  /* Windows XP to 7 "just delete" routes, wherever they came from, but
+   * in Windows 8(.1?), if you create them with "store=active", this is
+   * how you should delete them as well (pointed out by Cedric Tabary)
+   */
+  argv_printf_cat( &argv, " store=active" );
+
   argv_msg (D_ROUTE, &argv);
 
   netcmd_semaphore_lock ();
-  openvpn_execve_check (&argv, es, 0, "ERROR: Windows route add ipv6 command failed");
+  openvpn_execve_check (&argv, es, 0, "ERROR: Windows route delete ipv6 command failed");
   netcmd_semaphore_release ();
 
 #elif defined (TARGET_SOLARIS)

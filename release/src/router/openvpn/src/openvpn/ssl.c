@@ -486,12 +486,12 @@ init_ssl (const struct options *options, struct tls_root_ctx *new_ctx)
 
   if (options->tls_server)
     {
-      tls_ctx_server_new(new_ctx);
+      tls_ctx_server_new(new_ctx, options->ssl_flags);
       tls_ctx_load_dh_params(new_ctx, options->dh_file, options->dh_file_inline);
     }
   else				/* if client */
     {
-      tls_ctx_client_new(new_ctx);
+      tls_ctx_client_new(new_ctx, options->ssl_flags);
     }
 
   tls_ctx_set_options(new_ctx, options->ssl_flags);
@@ -1836,6 +1836,7 @@ push_peer_info(struct buffer *buf, struct tls_session *session)
 	  get_default_gateway (&rgi);
 	  if (rgi.flags & RGI_HWADDR_DEFINED)
 	    buf_printf (&out, "IV_HWADDR=%s\n", format_hex_ex (rgi.hwaddr, 6, 0, 1, ":", &gc));
+	  buf_printf (&out, "IV_SSL=%s\n", get_ssl_library_version() );
         }
 
       /* push env vars that begin with UV_ and IV_GUI_VER */
