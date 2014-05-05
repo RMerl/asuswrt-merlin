@@ -1105,13 +1105,15 @@ void start_radvd(void)
 		return;
 	}
 
-	stop_radvd();
+//	stop_radvd();
 
 	stop_dhcp6s();
 
-	if (ipv6_enabled() && nvram_get_int("ipv6_dhcp6s_enable")) start_dhcp6s();
+//	if (ipv6_enabled() && nvram_get_int("ipv6_dhcp6s_enable")) start_dhcp6s();
 
-	if (ipv6_enabled() && nvram_get_int("ipv6_radvd")) {
+	if (ipv6_enabled() && nvram_get_int("ipv6_radvd") &&
+	    // Create radvd.conf
+	    ((f = fopen("/etc/radvd.conf", "w")) != NULL)) {
 		service = get_ipv6_service();
 		do_6to4 = (service == IPV6_6TO4);
 		do_6rd = (service == IPV6_6RD);
@@ -1131,8 +1133,8 @@ void start_radvd(void)
 		}
 		if (!(*prefix) || (strlen(prefix) <= 0)) prefix = "::";
 
-		// Create radvd.conf
-		if ((f = fopen("/etc/radvd.conf", "w")) == NULL) return;
+//	    	// Create radvd.conf
+//	    	if ((f = fopen("/etc/radvd.conf", "w")) == NULL) return;
 #if 0
 		ip = (char *)ipv6_router_address(NULL);
 #else
@@ -1243,12 +1245,22 @@ void start_radvd(void)
 			argv[argc++] = "5";
 		}
 		argv[argc] = NULL;
-		_eval(argv, NULL, 0, &pid);
+		// Send SIGHUP to radvd so it will re-read config file
+		if (kill_pidfile_s("/var/run/radvd.pid", SIGHUP) != 0) {
+			// Start radvd if no signal could be send (not running)
+			stop_radvd();
+			_eval(argv, NULL, 0, &pid);
+		}
 
 		if (!nvram_contains_word("debug_norestart", "radvd")) {
 			pid_radvd = -2;
 		}
 	}
+	else {
+		stop_radvd();
+	}
+
+	if (ipv6_enabled() && nvram_get_int("ipv6_dhcp6s_enable")) start_dhcp6s();
 }
 
 void stop_radvd(void)
