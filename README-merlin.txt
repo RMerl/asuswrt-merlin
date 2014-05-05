@@ -573,17 +573,24 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 374.42 (xx-xxx-2014)
+   - NEW: Merged with Asus's 374_5656 GPL.
    - NEW: Added Comodo Secure DNS to supported DNSFilter services
    - FIXED: Download2 folder wasn't selectable anymore on the
             Media Server page.
    - FIXED: Pass correct valid and preferred lifetime to radvd when
             using DHCPv6-PD (Patch by pinwing)
-   - CHANGED: Removed Norton Connect Safe which seems to be discontinued
-              (their website has disappeared).  Users should switch to
-              either OpenDNS or OpenDNS Family Shield.
-   - CHANGED: Make the router use dnsmasq for local resolution
-              rather than always using the ISP DNS.
-   - CHANGED: Upgraded OpenVPN to 2.3.3.
+   - FIXED: IPv6 connectivity could be lost after 1-2 hours due
+            to the time shift caused by NTP at boot time
+            (Patch by pinwing)
+   - FIXED: Build system would sometime try to use the local system's
+            header/libs - use a pkg-config wrapper to avoid this
+            issue (Patch by ppuryear)
+   - FIXED: Erratic 5G led blinking behaviour as the watchdog's software-
+            based blinking was constantly writing to the wireless chip's 
+            registers for led control. (AC68)
+   - CHANGED: Make the router use dnsmasq for internal name
+              resolution rather than directly using the WAN DNS.
+   - CHANGED: Upgraded OpenVPN to 2.3.4.
    - CHANGED: Upgraded miniupnpd to 1.8.20140422 (PCP-related fixes)
 
 
