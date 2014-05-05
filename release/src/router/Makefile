@@ -1308,7 +1308,7 @@ miniupnpd/config.h:
 miniupnpd: $(IPTABLES_TARGET) miniupnpd/config.h
 	@$(SEP)
 	cp -f ./shared/version.h miniupnpd/.
-	$(MAKE) -C miniupnpd -f Makefile.linux
+	$(MAKE) -C miniupnpd -f Makefile.linux $(PARALLEL_BUILD)
 
 miniupnpd-clean:
 	-@$(MAKE) -C miniupnpd -f Makefile.linux clean
@@ -1608,7 +1608,7 @@ radvd/stamp-h1:
 	@touch $@
 
 radvd: libdaemon radvd/stamp-h1
-	make -C $@
+	make -C $@ $(PARALLEL_BUILD)
 
 radvd-clean:
 	-@ [ ! -f radvd/Makefile ] || $(MAKE) -C radvd distclean
@@ -2479,7 +2479,7 @@ openpam/stamp-h1:
 	touch $@
 
 openpam: openpam/stamp-h1
-	$(MAKE) -C openpam
+	$(MAKE) -C openpam $(PARALLEL_BUILD)
 
 openpam-install: openpam
 	install -D openpam/lib/libpam/.libs/libpam.so.2.0.0 $(INSTALLDIR)/openpam/usr/lib/libpam.so.2
@@ -2906,7 +2906,7 @@ netatalk-3.0.5/stamp-h1: openssl libgcrypt-1.5.1 db-4.8.30
 
 netatalk-3.0.5: netatalk-3.0.5/stamp-h1
 	@$(SEP)
-	@$(MAKE) -C netatalk-3.0.5
+	@$(MAKE) -C netatalk-3.0.5 $(PARALLEL_BUILD)
 
 netatalk-3.0.5-install: netatalk-3.0.5
 	install -D netatalk-3.0.5/etc/afpd/.libs/afpd $(INSTALLDIR)/netatalk-3.0.5/usr/sbin/afpd
@@ -2952,7 +2952,7 @@ expat-2.0.1/stamp-h1:
 
 expat-2.0.1: expat-2.0.1/stamp-h1
 	@$(SEP)
-	@$(MAKE) -C expat-2.0.1
+	@$(MAKE) -C expat-2.0.1 $(PARALLEL_BUILD)
 
 expat-2.0.1-install: expat-2.0.1
 	install -D expat-2.0.1/.libs/libexpat.so.1.5.2 $(INSTALLDIR)/expat-2.0.1/usr/lib/libexpat.so.1.5.2
@@ -2971,7 +2971,7 @@ avahi-0.6.31/stamp-h1: shared nvram$(BCMEX) expat-2.0.1 libdaemon
 
 avahi-0.6.31: avahi-0.6.31/stamp-h1
 	@$(SEP)
-	@$(MAKE) -C avahi-0.6.31
+	@$(MAKE) -C avahi-0.6.31 $(PARALLEL_BUILD)
 
 avahi-0.6.31-install: avahi-0.6.31
 	install -D avahi-0.6.31/avahi-daemon/.libs/avahi-daemon $(INSTALLDIR)/avahi-0.6.31/usr/sbin/avahi-daemon
