@@ -588,6 +588,8 @@ History
    - FIXED: Erratic 5G led blinking behaviour as the watchdog's software-
             based blinking was constantly writing to the wireless chip's 
             registers for led control. (AC68)
+   - FIXED: LEDs weren't all turning back on when coming out of
+            Stealth Mode (AC56)
    - CHANGED: Make the router use dnsmasq for internal name
               resolution rather than directly using the WAN DNS.
    - CHANGED: Upgraded OpenVPN to 2.3.4.
