@@ -708,7 +708,7 @@ static void update_nvram_prefix_lifetimes(char *p)
 
 int dhcp6c_state_main(int argc, char **argv)
 {
-	char *p;
+	char *p, *state;
 
 	TRACE_PT("begin\n");
 
@@ -732,7 +732,11 @@ int dhcp6c_state_main(int argc, char **argv)
 		TRACE_PT("ipv6_get_domain=%s\n", nvram_safe_get("ipv6_get_domain"));
 
 	// (re)start radvd and httpd
-	start_radvd();
+	state = getenv("state");
+	if (!state || (strcmp("RELEASE", state) != 0))
+		// Do not start radvd when dhcp6c released its address
+		// (i.e. when stop_dhcp6c is called)
+		start_radvd();
 	start_httpd();
 
 	TRACE_PT("end\n");
