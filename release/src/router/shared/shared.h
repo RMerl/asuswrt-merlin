@@ -358,6 +358,7 @@ extern int f_wait_notexists(const char *name, int max);
 #endif
 #define LED_TURBO			14
 #define LED_SWITCH			20
+#define LED_5G_FORCED			21	// Will handle ledbh & nvram flag
 
 #define	LED_OFF				0
 #define	LED_ON				1
