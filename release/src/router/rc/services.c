@@ -5734,8 +5734,7 @@ void setup_leds()
 #endif
 
 		if (nvram_match("wl1_radio", "1")) {
-			nvram_set("led_5g", "1");
-			led_control(LED_5G, LED_ON);
+			led_control(LED_5G_FORCED, LED_ON);
 		}
 		if (nvram_match("wl0_radio", "1")) {
 			led_control(LED_2G, LED_ON);
