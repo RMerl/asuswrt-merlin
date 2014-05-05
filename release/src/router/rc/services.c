@@ -5732,6 +5732,9 @@ void setup_leds()
 #ifdef RTCONFIG_USB
 		start_usbled();
 #endif
+#ifdef RTCONFIG_LED_ALL
+		led_control(LED_ALL, LED_ON);
+#endif
 
 		if (nvram_match("wl1_radio", "1")) {
 			led_control(LED_5G_FORCED, LED_ON);
