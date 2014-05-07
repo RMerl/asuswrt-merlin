@@ -2310,16 +2310,11 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 	}
 
 #ifdef RTCONFIG_VPNC
-#if defined(RTCONFIG_OPENVPN)
-	if(nvram_match("vpnc_proto", "openvpn"))
-		start_vpn_eas();
-#endif
 	if((nvram_match("vpnc_proto", "pptp") || nvram_match("vpnc_proto", "l2tp")) && nvram_match("vpnc_auto_conn", "1"))
 		start_vpnc();
-#else
+#endif
 #ifdef RTCONFIG_OPENVPN
 	start_vpn_eas();
-#endif
 #endif
 
 _dprintf("%s(%s): done.\n", __FUNCTION__, wan_ifname);
