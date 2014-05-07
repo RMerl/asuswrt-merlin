@@ -1865,7 +1865,7 @@ void stop_ftpd(void)
 
 	killall_tk("vsftpd");
 	unlink("/tmp/vsftpd.conf");
-	logmessage("FTP Server", "daemon is stoped");
+	logmessage("FTP Server", "daemon is stopped");
 }
 #endif	// RTCONFIG_FTP
 
@@ -2087,7 +2087,7 @@ void stop_samba(void)
 
 	eval("rm", "-rf", "/var/run/samba");
 
-	logmessage("Samba Server", "smb daemon is stoped");
+	logmessage("Samba Server", "smb daemon is stopped");
 #if 0
 #ifdef RTCONFIG_BCMARM
 	del_samba_rules();
@@ -2543,7 +2543,7 @@ stop_mt_daapd()
 
 	unlink("/etc/mt-daapd.conf");
 
-	logmessage("iTunes", "daemon is stoped");
+	logmessage("iTunes", "daemon is stopped");
 }
 #endif
 #endif	// RTCONFIG_MEDIA_SERVER
@@ -2701,7 +2701,7 @@ void stop_webdav(void)
 		unlink("/tmp/lighttpd/lighttpd-arpping.pid");
 	}
 
-	logmessage("WEBDAV Server", "daemon is stoped");
+	logmessage("WEBDAV Server", "daemon is stopped");
 #endif
 }
 //#endif	// RTCONFIG_WEBDAV
@@ -2720,7 +2720,7 @@ void stop_all_webdav(void)
 		kill_pidfile_tk("/tmp/lighttpd/lighttpd-arpping.pid");
 		unlink("/tmp/lighttpd/lighttpd-arpping.pid");
 	}
-	logmessage("WEBDAV Server", "arpping daemon is stoped");
+	logmessage("WEBDAV Server", "arpping daemon is stopped");
 }
 #endif
 
@@ -2894,7 +2894,7 @@ void stop_cloudsync(int type)
 		if(pids("webdav_client"))
 			killall_tk("webdav_client");
 
-		logmessage("Webdav_client", "daemon is stoped");
+		logmessage("Webdav_client", "daemon is stopped");
 	}
 	else if(type == 0){
 		if(pids("inotify") && !pids("webdav_client"))
@@ -2903,7 +2903,7 @@ void stop_cloudsync(int type)
 		if(pids("asuswebstorage"))
 			killall_tk("asuswebstorage");
 
-		logmessage("Cloudsync client", "daemon is stoped");
+		logmessage("Cloudsync client", "daemon is stopped");
 	}
 	else{
   	if(pids("inotify"))
@@ -2915,7 +2915,7 @@ void stop_cloudsync(int type)
 		if(pids("asuswebstorage"))
 			killall_tk("asuswebstorage");
 
-		logmessage("Cloudsync client and Webdav_client", "daemon is stoped");
+		logmessage("Cloudsync client and Webdav_client", "daemon is stopped");
 	}
 }
 //#endif
