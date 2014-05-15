@@ -2888,6 +2888,7 @@ db-4.8.30-clean:
 #netatalk-3.0.5
 netatalk-3.0.5/stamp-h1: openssl libgcrypt-1.5.1 db-4.8.30
 	cd $(TOP)/netatalk-3.0.5 && \
+	cp configure.asus configure && \
 	$(CONFIGURE) CPPFLAGS="-I$(TOP)/db-4.8.30/build_unix -I$(TOP)/libgcrypt-1.5.1/src" \
 	LDFLAGS="-L$(TOP)/db-4.8.30/build_unix/.libs -L$(TOP)/libgcrypt-1.5.1/src/.libs" \
 	LIBS="-L$(TOP)/libgpg-error-1.10/src/.libs -lgpg-error -L$(TOP)/libgcrypt-1.5.1/src/.libs -lgcrypt" \
