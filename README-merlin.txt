@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 374.42 (xx-xxx-2014)
-===========================================
+Asuswrt-Merlin - build 374.42 (9-Mai-2014)
+==========================================
 
 About
 -----
@@ -572,7 +572,7 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-374.42 (xx-xxx-2014)
+374.42 (9-Mai-2014)
    - NEW: Merged with Asus's 374_5656 GPL.
    - NEW: Added Comodo Secure DNS to supported DNSFilter services
    - FIXED: Download2 folder wasn't selectable anymore on the
@@ -581,6 +581,9 @@ History
             using DHCPv6-PD (Patch by pinwing)
    - FIXED: IPv6 connectivity could be lost after 1-2 hours due
             to the time shift caused by NTP at boot time
+            (Patch by pinwing)
+   - FIXED: Various IPv6 connectivity issues related to services
+            being (re)started at the wrong time, or twice.
             (Patch by pinwing)
    - FIXED: Build system would sometime try to use the local system's
             header/libs - use a pkg-config wrapper to avoid this
