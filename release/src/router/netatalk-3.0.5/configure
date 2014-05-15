@@ -16107,7 +16107,9 @@ fi
 
   if test x$libgcrypt_config_prefix != x ; then
      if test x${LIBGCRYPT_CONFIG+set} != xset ; then
-        LIBGCRYPT_CONFIG=$libgcrypt_config_prefix/bin/libgcrypt-config
+#        LIBGCRYPT_CONFIG=$libgcrypt_config_prefix/bin/libgcrypt-config
+#Change libgcrypt-config path by Edison in 20130923
+        LIBGCRYPT_CONFIG=$libgcrypt_config_prefix/src/libgcrypt-config
      fi
   fi
 
