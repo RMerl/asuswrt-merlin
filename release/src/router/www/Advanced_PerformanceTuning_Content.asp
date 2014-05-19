@@ -51,6 +51,10 @@ function initial(){
 	$("legend").innerHTML = code1 + code2;
 
 	if(based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || based_modelid == "DSL-AC68U"){
+
+		if ('<% sysinfo("cfe_version"); %>' >= "1.0.1.6") {
+			$("turbocompat").style.display = "";
+		}
 		document.form.selLED.onchange = function(){
 			document.form.btn_led_mode.value = 0;
 			document.form.selCLK.checked = false;
@@ -244,7 +248,9 @@ function getCookie(c_name)
 												<td colspan="2">LED button Behavior</td>
 											</tr>
 											</thead>
-											
+											<tr style="display:none;" id="turbocompat">
+												<td colspan="2"><span>Note: Your router bootloader version is incompatible with Turbo (overclock) mode.</span></td>
+											</tr>
 											<tr>
 												<th style="height:120px"><div align="center"><img src="/images/position.png"></div></th>
 												<td>
