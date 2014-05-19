@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 374.42 (9-Mai-2014)
-==========================================
+Asuswrt-Merlin - build 374.42_2 (16-May-2014)
+=============================================
 
 About
 -----
@@ -572,7 +572,11 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-374.42 (9-Mai-2014)
+374.42_2 (16-May-2014)
+   - FIXED: Time Machine support (AC56, Ac68)
+
+
+374.42 (9-May-2014)
    - NEW: Merged with Asus's 374_5656 GPL.
    - NEW: Added Comodo Secure DNS to supported DNSFilter services
    - FIXED: Download2 folder wasn't selectable anymore on the
