@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 374.42_2 (16-May-2014)
+Asuswrt-Merlin - build 374.43 (xx-xxx-2014)
 =============================================
 
 About
@@ -572,6 +572,25 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+374.43 (xx-xxx-2014)
+   - CHANGED: dnsmasq option 252 now defaults to an empty string,
+              to silence broken clients such as Win7.
+              Important: if you were previously using a customized
+              252 reply (to use with a valid wpad/pac file), you 
+              will need to use a postconf script to change the
+              default config instead of appending your own
+              config.
+              If you use DNS-based WPAD setting, you will need
+              to remove the 252 option using postconf, as IE will
+              not query for the DNS entry if there is a 252
+              option through DHCP, even if it fails to connect to it.
+
+   - FIXED: Media server page wouldn't let you enable the iTunes
+            server unless you also enabled DLNA (Asus bug)
+   - FIXED: Restricted guests still had access to the router (Asus
+            bug introduced in GPL 4887)
+
+
 374.42_2 (16-May-2014)
    - FIXED: Time Machine support (AC56, Ac68)
 
