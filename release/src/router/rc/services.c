@@ -707,6 +707,9 @@ void start_dnsmasq(int force)
 		if (nvram_get_int("dhcpd_auth") >= 0)
 			fprintf(fp, "dhcp-authoritative\n");
 
+		/* Workaround for broken Win7/IE behaviour */
+		fprintf(fp,"dhcp-option=252,\"\\n\"\n");
+
 		/* LAN Domain */
 		nv = nvram_safe_get("lan_domain");
 		if (*nv)
