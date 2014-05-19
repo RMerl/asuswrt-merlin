@@ -219,7 +219,8 @@ var folderlist = new Array();
 
 function applyRule(){	
 	
-		if(validForm()){
+	if(validForm()){
+		if(document.form.dms_enable.value == 1){
 			var rule_num = document.getElementById("dlna_path_table").rows.length;
 			var item_num = document.getElementById("dlna_path_table").rows[0].cells.length;
 			var dms_dir_tmp_value = "";
@@ -229,7 +230,7 @@ function applyRule(){
 				for(i=0; i<rule_num; i++){			
 					dms_dir_tmp_value += "<";
 					dms_dir_tmp_value += document.getElementById("dlna_path_table").rows[i].cells[0].innerHTML;
-			
+
 					var type_translate_tmp = "";
 					dms_dir_type_tmp_value += "<";
 					type_translate_tmp += document.getElementById("dlna_path_table").rows[i].cells[1].innerHTML.indexOf("Audio")>=0? "A":""; 
@@ -238,13 +239,13 @@ function applyRule(){
 					dms_dir_type_tmp_value += type_translate_tmp;			
 				}
 			}
-		
 			document.form.dms_dir_x.value = dms_dir_tmp_value;
 			document.form.dms_dir_type_x.value = dms_dir_type_tmp_value;	
 		}
-		else{
-			return false;
-		}
+	}
+	else{
+		return false;
+	}
 			
 
 	if(document.form.dms_enable.value == 0){
