@@ -2888,11 +2888,17 @@ db-4.8.30-clean:
 #netatalk-3.0.5
 netatalk-3.0.5/stamp-h1: openssl libgcrypt-1.5.1 db-4.8.30
 	cd $(TOP)/netatalk-3.0.5 && \
-	cp configure.asus configure && \
 	$(CONFIGURE) CPPFLAGS="-I$(TOP)/db-4.8.30/build_unix -I$(TOP)/libgcrypt-1.5.1/src" \
 	LDFLAGS="-L$(TOP)/db-4.8.30/build_unix/.libs -L$(TOP)/libgcrypt-1.5.1/src/.libs" \
+	LD_LIBRARY_PATH="$(SRCBASE)/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3/lib" \
 	LIBS="-L$(TOP)/libgpg-error-1.10/src/.libs -lgpg-error -L$(TOP)/libgcrypt-1.5.1/src/.libs -lgcrypt" \
 	LIBGCRYPT_CONFIG="$(TOP)/libgcrypt-1.5.1/src/libgcrypt-config" \
+	ac_cv_header_sys_xattr_h=yes ac_cv_search_getxattr='none required' \
+	ac_cv_func_getxattr=yes ac_cv_func_lgetxattr=yes ac_cv_func_fgetxattr=yes \
+	ac_cv_func_listxattr=yes ac_cv_func_llistxattr=yes ac_cv_func_flistxattr=yes \
+	ac_cv_func_removexattr=yes ac_cv_func_lremovexattr=yes ac_cv_func_fremovexattr=yes \
+	ac_cv_func_setxattr=yes ac_cv_func_lsetxattr=yes ac_cv_func_fsetxattr=yes \
+	ac_cv_func_sendfile=yes ac_cv_header_crypt_h=yes ac_cv_lib_crypt_main=yes \
 	--without-kerberos \
 	--with-bdb=$(TOP)/db-4.8.30/build_unix \
 	--prefix=$(INSTALLDIR)/netatalk-3.0.5/usr \
@@ -2900,7 +2906,6 @@ netatalk-3.0.5/stamp-h1: openssl libgcrypt-1.5.1 db-4.8.30
 	--with-ssl-dir=$(TOP)/openssl \
 	--disable-static \
 	--with-libgcrypt-dir=$(TOP)/libgcrypt-1.5.1 \
-	--with-ld-library-path=$(SRCBASE)/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3/lib \
 	--without-dtrace
 	touch $@
 
