@@ -1128,6 +1128,11 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 				backup_rx -= *rx;
 				backup_tx -= *tx;
 
+				// Do not assign negative values to unsigned variables.
+				// Backup variables can be null in case of non-eth0 WAN interface (like USB).
+				if (backup_rx < 0) backup_rx = 0;
+				if (backup_tx < 0) backup_tx = 0;
+
 				*rx2 = backup_rx;
 				*tx2 = backup_tx;				
 				strcpy(ifname_desc2, "INTERNET");
@@ -1142,7 +1147,9 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 		return 1;
 	}
 	// find in WAN interface
-	else if (ifname && (unit = get_wan_unit(ifname)) >= 0)
+	else if (ifname && (unit = get_wan_unit(ifname)) >= 0
+		// Prevent counting both wan%d_ifname and wan%d_pppoe_ifname
+		&& (strcmp(ifname, get_wan_ifname(unit)) == 0))
 	{
 		if (dualwan_unit__nonusbif(unit)) {
 #if defined(RA_ESW)
@@ -1153,9 +1160,7 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 				backup_rx = *rx;
 				backup_tx = *tx;
 			}
-			else if ((unit == wan_primary_ifunit())
-				// Prevent counting both wan%d_ifname and wan%d_pppoe_ifname
-				&& (strcmp(ifname, get_wan_ifname(unit)) == 0)) {
+			else if (unit == wan_primary_ifunit()) {
 				strcpy(ifname_desc, "INTERNET");
 				return 1;
 			}
