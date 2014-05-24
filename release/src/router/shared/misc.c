@@ -1046,6 +1046,7 @@ char *get_productid(void)
 
 long backup_rx = 0;
 long backup_tx = 0;
+int backup_set = 0;
 
 unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, unsigned long *tx, char *ifname_desc2, unsigned long *rx2, unsigned long *tx2)
 {
@@ -1124,23 +1125,16 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 		// special handle for non-tag wan of broadcom solution
 		// pretend vlanX is must called after ethX
 		if(nvram_match("switch_wantag", "none")) { //Don't calc if select IPTV
-			if(strlen(modelvlan) && strcmp(ifname, modelvlan)==0) {
+			if(backup_set && strlen(modelvlan) && strcmp(ifname, modelvlan)==0) {
 				backup_rx -= *rx;
 				backup_tx -= *tx;
 
-				// Do not assign negative values to unsigned variables.
-				// Backup variables can be 0 in case of non-eth0 WAN interface (like USB or PPP).
-				if (backup_rx < 0) backup_rx = 0;
-				if (backup_tx < 0) backup_tx = 0;
-
 				*rx2 = backup_rx;
 				*tx2 = backup_tx;				
-				
-				// Do not count this as internet if rx2 or tx2 are both 0. If that happens,
-				// the cause is likely due to backup variables becoming negative. In that
-				// case the actual WAN interface will be processed later on with the actual
-				// rx and tx values.
-				if (backup_rx | backup_tx) strcpy(ifname_desc2, "INTERNET");
+				strcpy(ifname_desc2, "INTERNET");
+
+				// Always reset.
+				backup_set = 0;
 			}
 		}//End of switch_wantag
 		return 1;
@@ -1164,6 +1158,7 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 			if(strlen(modelvlan) && strcmp(ifname, "eth0")==0) {
 				backup_rx = *rx;
 				backup_tx = *tx;
+				backup_set = 1;
 			}
 			else if (unit == wan_primary_ifunit()) {
 				strcpy(ifname_desc, "INTERNET");
