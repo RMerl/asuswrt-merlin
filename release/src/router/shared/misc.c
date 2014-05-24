@@ -1129,13 +1129,18 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 				backup_tx -= *tx;
 
 				// Do not assign negative values to unsigned variables.
-				// Backup variables can be null in case of non-eth0 WAN interface (like USB).
+				// Backup variables can be 0 in case of non-eth0 WAN interface (like USB or PPP).
 				if (backup_rx < 0) backup_rx = 0;
 				if (backup_tx < 0) backup_tx = 0;
 
 				*rx2 = backup_rx;
 				*tx2 = backup_tx;				
-				strcpy(ifname_desc2, "INTERNET");
+				
+				// Do not count this as internet if rx2 or tx2 are both 0. If that happens,
+				// the cause is likely due to backup variables becoming negative. In that
+				// case the actual WAN interface will be processed later on with the actual
+				// rx and tx values.
+				if (backup_rx | backup_tx) strcpy(ifname_desc2, "INTERNET");
 			}
 		}//End of switch_wantag
 		return 1;
