@@ -1,4 +1,4 @@
-/* $Id: natpmp.c,v 1.43 2014/03/24 10:49:45 nanard Exp $ */
+/* $Id: natpmp.c,v 1.47 2014/05/19 12:51:52 nanard Exp $ */
 /* MiniUPnP project
  * (c) 2007-2014 Thomas Bernard
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
@@ -14,6 +14,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/uio.h>
 
 #include "macros.h"
 #include "config.h"
@@ -161,9 +162,63 @@ static void FillPublicAddressResponse(unsigned char * resp, in_addr_t senderaddr
  */
 int ReceiveNATPMPOrPCPPacket(int s, struct sockaddr * senderaddr,
                              socklen_t * senderaddrlen,
+                             struct sockaddr_in6 * receiveraddr,
                              unsigned char * msg_buff, size_t msg_buff_size)
 {
+#if IPV6_PKTINFO
+	struct iovec iov;
+	uint8_t c[1000];
+	struct msghdr msg;
+	int n;
+	struct cmsghdr *h;
 
+	iov.iov_base = msg_buff;
+	iov.iov_len = msg_buff_size;
+	memset(&msg, 0, sizeof(msg));
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+	msg.msg_name = senderaddr;
+	msg.msg_namelen = *senderaddrlen;
+	msg.msg_control = c;
+	msg.msg_controllen = sizeof(c);
+
+	n = recvmsg(s, &msg, 0);
+	if(n < 0) {
+		/* EAGAIN, EWOULDBLOCK and EINTR : silently ignore (retry next time)
+		 * other errors : log to LOG_ERR */
+		if(errno != EAGAIN &&
+		   errno != EWOULDBLOCK &&
+		   errno != EINTR) {
+			syslog(LOG_ERR, "recvmsg(natpmp): %m");
+		}
+		return n;
+	}
+
+	if(receiveraddr) {
+		memset(receiveraddr, 0, sizeof(struct sockaddr_in6));
+	}
+	if ((msg.msg_flags & MSG_TRUNC) || (msg.msg_flags & MSG_CTRUNC)) {
+		syslog(LOG_WARNING, "%s: truncated message",
+		       "ReceiveNATPMPOrPCPPacket");
+	}
+	for(h = CMSG_FIRSTHDR(&msg); h;
+	    h = CMSG_NXTHDR(&msg, h)) {
+		if(h->cmsg_level == IPPROTO_IPV6 && h->cmsg_type == IPV6_PKTINFO) {
+			char tmp[INET6_ADDRSTRLEN];
+			struct in6_pktinfo *ipi6 = (struct in6_pktinfo *)CMSG_DATA(h);
+			syslog(LOG_DEBUG, "%s: packet destination: %s scope_id=%u",
+			       "ReceiveNATPMPOrPCPPacket",
+			       inet_ntop(AF_INET6, &ipi6->ipi6_addr, tmp, sizeof(tmp)),
+			       ipi6->ipi6_ifindex);
+			if(receiveraddr) {
+				receiveraddr->sin6_addr = ipi6->ipi6_addr;
+				receiveraddr->sin6_scope_id = ipi6->ipi6_ifindex;
+				receiveraddr->sin6_family = AF_INET6;
+				receiveraddr->sin6_port = htons(NATPMP_PORT);
+			}
+		}
+	}
+#else
 	int n;
 
 	n = recvfrom(s, msg_buff, msg_buff_size, 0,
@@ -179,6 +234,7 @@ int ReceiveNATPMPOrPCPPacket(int s, struct sockaddr * senderaddr,
 		}
 		return n;
 	}
+#endif
 
 	return n;
 }

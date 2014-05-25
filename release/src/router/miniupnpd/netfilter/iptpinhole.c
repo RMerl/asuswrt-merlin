@@ -16,7 +16,7 @@
 #include "iptpinhole.h"
 #include "../upnpglobalvars.h"
 
-#ifdef ENABLE_6FC_SERVICE
+#ifdef ENABLE_UPNPPINHOLE
 
 #include <iptables.h>
 #include <libiptc/libip6tc.h>
@@ -40,6 +40,7 @@ struct pinhole_t {
 	unsigned short dport;
 	unsigned short uid;
 	unsigned char proto;
+	char desc[];
 };
 
 void init_iptpinhole(void)
@@ -56,15 +57,16 @@ void shutdown_iptpinhole(void)
 static int
 add_to_pinhole_list(struct in6_addr * saddr, unsigned short sport,
                     struct in6_addr * daddr, unsigned short dport,
-                    int proto, unsigned int timestamp)
+                    int proto, const char *desc, unsigned int timestamp)
 {
 	struct pinhole_t * p;
 
-	p = calloc(1, sizeof(struct pinhole_t));
+	p = calloc(1, sizeof(struct pinhole_t) + strlen(desc) + 1);
 	if(!p) {
 		syslog(LOG_ERR, "add_to_pinhole_list calloc() error");
 		return -1;
 	}
+	strcpy(p->desc, desc);
 	memcpy(&p->saddr, saddr, sizeof(struct in6_addr));
 	p->sport = sport;
 	memcpy(&p->daddr, daddr, sizeof(struct in6_addr));
@@ -195,7 +197,7 @@ ip6tables -t raw -I PREROUTING %d -p %s -i %s --sport %hu -d %s --dport %hu -j T
 int add_pinhole(const char * ifname,
                 const char * rem_host, unsigned short rem_port,
                 const char * int_client, unsigned short int_port,
-                int proto, unsigned int timestamp)
+                int proto, const char * desc, unsigned int timestamp)
 {
 	int uid;
 	struct ip6t_entry * e;
@@ -238,7 +240,7 @@ int add_pinhole(const char * ifname,
 	}
 	uid = add_to_pinhole_list(&e->ipv6.src, rem_port,
 	                          &e->ipv6.dst, int_port,
-	                          proto, timestamp);
+	                          proto, desc, timestamp);
 	free(e);
 	return uid;
 }
@@ -318,9 +320,12 @@ update_pinhole(unsigned short uid, unsigned int timestamp)
 
 int
 get_pinhole_info(unsigned short uid,
-                 char * rem_host, int rem_hostlen, unsigned short * rem_port,
-                 char * int_client, int int_clientlen, unsigned short * int_port,
-                 int * proto, unsigned int * timestamp,
+                 char * rem_host, int rem_hostlen,
+                 unsigned short * rem_port,
+                 char * int_client, int int_clientlen,
+                 unsigned short * int_port,
+                 int * proto, char * desc, int desclen,
+                 unsigned int * timestamp,
                  u_int64_t * packets, u_int64_t * bytes)
 {
 	struct pinhole_t * p;
@@ -344,6 +349,8 @@ get_pinhole_info(unsigned short uid,
 		*proto = p->proto;
 	if(timestamp)
 		*timestamp = p->timestamp;
+	if (desc)
+		strncpy(desc, p->desc, desclen);
 	if(packets || bytes) {
 		/* theses informations need to be read from netfilter */
 		IP6TC_HANDLE h;
@@ -377,6 +384,16 @@ get_pinhole_info(unsigned short uid,
 	return 0;
 }
 
+int get_pinhole_uid_by_index(int index)
+{
+	struct pinhole_t * p;
+
+	for(p = pinhole_list.lh_first; p != NULL; p = p->entries.le_next)
+		if (!index--)
+			return p->uid;
+	return -1;
+}
+
 int
 clean_pinhole_list(unsigned int * next_timestamp)
 {
@@ -407,5 +424,4 @@ clean_pinhole_list(unsigned int * next_timestamp)
 	return n;
 }
 
-#endif
-
+#endif /* ENABLE_UPNPPINHOLE */

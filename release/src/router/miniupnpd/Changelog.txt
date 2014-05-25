@@ -1,4 +1,18 @@
-$Id: Changelog.txt,v 1.369 2014/04/22 08:48:02 nanard Exp $
+$Id: Changelog.txt,v 1.374 2014/05/22 07:56:32 nanard Exp $
+
+2014/05/22:
+  Add ipv6_bind_address (option "ipv6_listening_ip")
+  disable IPv6 when socket(PF_INTET6, ...) errors with EAFNOSUPPORT
+  Add IPV6 multicast membership only on selected "LAN" interfaces
+
+2014/05/20:
+  be more strict when parsing LAN addresses / interface names
+
+2014/05/19:
+  set source address for IPV6 packets sendto_schedule2() etc.
+
+2014/05/15:
+  Fix deletePortMappingRange()
 
 2014/04/21:
   Fix PCP when request contain 0 IPv4 external address

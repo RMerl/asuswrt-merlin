@@ -18,6 +18,9 @@ enum upnpconfigoptions {
 	UPNPEXT_IFNAME = 1,		/* ext_ifname */
 	UPNPEXT_IP,				/* ext_ip */
 	UPNPLISTENING_IP,		/* listening_ip */
+#ifdef ENABLE_IPV6
+	UPNPIPV6_LISTENING_IP,		/* listening address for IPv6 */
+#endif /* ENABLE_IPV6 */
 	UPNPPORT,				/* "port" / "http_port" */
 #ifdef ENABLE_HTTPS
 	UPNPHTTPSPORT,			/* "https_port" */
@@ -44,6 +47,7 @@ enum upnpconfigoptions {
 	UPNPENABLENATPMP,		/* enable_natpmp */
 	UPNPPCPMINLIFETIME,		/* minimum lifetime for PCP mapping */
 	UPNPPCPMAXLIFETIME,		/* maximum lifetime for PCP mapping */
+	UPNPPCPALLOWTHIRDPARTY,		/* allow third-party requests */
 #ifdef USE_NETFILTER
 	UPNPFORWARDCHAIN,
 	UPNPNATCHAIN,

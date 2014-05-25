@@ -39,10 +39,13 @@ POSSIBILITY OF SUCH DAMAGE.
 struct sockaddr;
 
 /*
+ * receiveraddr is only used for IPV6
+ *
  * returns 0 upon success 1 otherwise
  */
 int ProcessIncomingPCPPacket(int s, unsigned char *msg_buff, int len,
-                             const struct sockaddr *senderaddr);
+                             const struct sockaddr *senderaddr,
+                             const struct sockaddr_in6 *receiveraddr);
 
 /*
  * returns the socket

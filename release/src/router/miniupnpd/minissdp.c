@@ -32,6 +32,7 @@
 #define SSDP_MCAST_ADDR ("239.255.255.250")
 #define LL_SSDP_MCAST_ADDR "FF02::C"
 #define SL_SSDP_MCAST_ADDR "FF05::C"
+#define GL_SSDP_MCAST_ADDR "FF0E::C"
 
 /* maximum lenght of SSDP packets we are generating
  * (reception is done in a 1500byte buffer) */
@@ -66,27 +67,31 @@ AddMulticastMembership(int s, in_addr_t ifaddr)
 
 /* AddMulticastMembershipIPv6()
  * param s	socket (IPv6)
- * To be improved to target specific network interfaces */
+ * param ifindex : interface index (0 : All interfaces) */
 #ifdef ENABLE_IPV6
 static int
-AddMulticastMembershipIPv6(int s)
+AddMulticastMembershipIPv6(int s, unsigned int ifindex)
 {
 	struct ipv6_mreq mr;
-	/*unsigned int ifindex;*/
 
 	memset(&mr, 0, sizeof(mr));
-	inet_pton(AF_INET6, LL_SSDP_MCAST_ADDR, &mr.ipv6mr_multiaddr);
-	/*mr.ipv6mr_interface = ifindex;*/
-	mr.ipv6mr_interface = 0; /* 0 : all interfaces */
+	mr.ipv6mr_interface = ifindex;	/* 0 : all interfaces */
 #ifndef IPV6_ADD_MEMBERSHIP
 #define IPV6_ADD_MEMBERSHIP IPV6_JOIN_GROUP
 #endif
+	inet_pton(AF_INET6, LL_SSDP_MCAST_ADDR, &mr.ipv6mr_multiaddr);
 	if(setsockopt(s, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, &mr, sizeof(struct ipv6_mreq)) < 0)
 	{
 		syslog(LOG_ERR, "setsockopt(udp, IPV6_ADD_MEMBERSHIP): %m");
 		return -1;
 	}
 	inet_pton(AF_INET6, SL_SSDP_MCAST_ADDR, &mr.ipv6mr_multiaddr);
+	if(setsockopt(s, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, &mr, sizeof(struct ipv6_mreq)) < 0)
+	{
+		syslog(LOG_ERR, "setsockopt(udp, IPV6_ADD_MEMBERSHIP): %m");
+		return -1;
+	}
+	inet_pton(AF_INET6, GL_SSDP_MCAST_ADDR, &mr.ipv6mr_multiaddr);
 	if(setsockopt(s, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, &mr, sizeof(struct ipv6_mreq)) < 0)
 	{
 		syslog(LOG_ERR, "setsockopt(udp, IPV6_ADD_MEMBERSHIP): %m");
@@ -116,13 +121,18 @@ OpenAndConfSSDPReceiveSocket(int ipv6)
 	}
 
 	memset(&sockname, 0, sizeof(struct sockaddr_storage));
-	if(ipv6) {
+#ifdef ENABLE_IPV6
+	if(ipv6)
+	{
 		struct sockaddr_in6 * saddr = (struct sockaddr_in6 *)&sockname;
 		saddr->sin6_family = AF_INET6;
 		saddr->sin6_port = htons(SSDP_PORT);
-		saddr->sin6_addr = in6addr_any;
+		saddr->sin6_addr = ipv6_bind_addr;
 		sockname_len = sizeof(struct sockaddr_in6);
-	} else {
+	}
+	else
+#endif /* ENABLE_IPV6 */
+	{
 		struct sockaddr_in * saddr = (struct sockaddr_in *)&sockname;
 		saddr->sin_family = AF_INET;
 		saddr->sin_port = htons(SSDP_PORT);
@@ -155,10 +165,14 @@ OpenAndConfSSDPReceiveSocket(int ipv6)
 #ifdef ENABLE_IPV6
 	if(ipv6)
 	{
-		if(AddMulticastMembershipIPv6(s) < 0)
+		for(lan_addr = lan_addrs.lh_first; lan_addr != NULL; lan_addr = lan_addr->list.le_next)
 		{
-			syslog(LOG_WARNING,
-			        "Failed to add IPv6 multicast membership");
+			if(AddMulticastMembershipIPv6(s, lan_addr->index) < 0)
+			{
+				syslog(LOG_WARNING,
+				       "Failed to add IPv6 multicast membership for interface %s",
+				       lan_addr->str ? lan_addr->str : "NULL");
+			}
 		}
 	}
 	else
@@ -471,14 +485,15 @@ static struct {
 };
 
 static void
-SendSSDPNotify(int s, const struct sockaddr * dest,
+SendSSDPNotify(int s, const struct sockaddr * dest, socklen_t dest_len,
+               const char * dest_str,
                const char * host, unsigned short http_port,
 #ifdef ENABLE_HTTPS
                unsigned short https_port,
 #endif
                const char * nt, const char * suffix,
                const char * usn1, const char * usn2, const char * usn3,
-               unsigned int lifetime, int ipv6)
+               unsigned int lifetime)
 {
 	char bufr[SSDP_PACKET_MAX_LEN];
 	int n, l;
@@ -500,16 +515,17 @@ SendSSDPNotify(int s, const struct sockaddr * dest,
 		"BOOTID.UPNP.ORG: %u\r\n" /* UDA v1.1 */
 		"CONFIGID.UPNP.ORG: %u\r\n" /* UDA v1.1 */
 		"\r\n",
-		ipv6 ? "[" LL_SSDP_MCAST_ADDR "]" : SSDP_MCAST_ADDR,
-		SSDP_PORT,
-		lifetime,
-		host, (unsigned int)http_port,
+		dest_str, SSDP_PORT,			/* HOST: */
+		lifetime,						/* CACHE-CONTROL: */
+		host, (unsigned int)http_port,	/* LOCATION: */
 #ifdef ENABLE_HTTPS
-		host, (unsigned int)https_port,
+		host, (unsigned int)https_port,	/* SECURE-LOCATION: */
 #endif
-		nt, suffix, /* NT: */
-		usn1, usn2, usn3, suffix, /* USN: */
-		upnp_bootid, upnp_bootid, upnp_configid );
+		nt, suffix,						/* NT: */
+		usn1, usn2, usn3, suffix,		/* USN: */
+		upnp_bootid,					/* 01-NLS: */
+		upnp_bootid,					/* BOOTID.UPNP.ORG: */
+		upnp_configid );				/* CONFIGID.UPNP.ORG: */
 	if(l<0)
 	{
 		syslog(LOG_ERR, "%s: snprintf error", "SendSSDPNotify()");
@@ -521,13 +537,7 @@ SendSSDPNotify(int s, const struct sockaddr * dest,
 		       "SendSSDPNotify()", (unsigned)l, (unsigned)sizeof(bufr));
 		l = sizeof(bufr) - 1;
 	}
-	n = sendto_or_schedule(s, bufr, l, 0, dest,
-#ifdef ENABLE_IPV6
-		ipv6 ? sizeof(struct sockaddr_in6) : sizeof(struct sockaddr_in)
-#else
-		sizeof(struct sockaddr_in)
-#endif
-		);
+	n = sendto_or_schedule(s, bufr, l, 0, dest, dest_len);
 	if(n < 0)
 	{
 		syslog(LOG_ERR, "sendto(udp_notify=%d, %s): %m", s,
@@ -541,13 +551,7 @@ SendSSDPNotify(int s, const struct sockaddr * dest,
 	 * set of discovery messages more than once with some delay between
 	 * sets e.g. a few hundred milliseconds. To avoid network congestion
 	 * discovery messages SHOULD NOT be sent more than three times. */
-	n = sendto_schedule(s, bufr, l, 0, dest,
-#ifdef ENABLE_IPV6
-		ipv6 ? sizeof(struct sockaddr_in6) : sizeof(struct sockaddr_in),
-#else
-		sizeof(struct sockaddr_in),
-#endif
-		250);
+	n = sendto_schedule(s, bufr, l, 0, dest, dest_len, 250);
 	if(n < 0)
 	{
 		syslog(LOG_ERR, "sendto(udp_notify=%d, %s): %m", s,
@@ -571,6 +575,8 @@ SendSSDPNotifies(int s, const char * host, unsigned short http_port,
 #else
 	struct sockaddr_in sockname;
 #endif
+	socklen_t sockname_len;
+	const char * dest_str;
 	int i=0;
 	char ver_str[4];
 
@@ -579,17 +585,30 @@ SendSSDPNotifies(int s, const char * host, unsigned short http_port,
 	if(ipv6)
 	{
 		struct sockaddr_in6 * p = (struct sockaddr_in6 *)&sockname;
+		sockname_len = sizeof(struct sockaddr_in6);
 		p->sin6_family = AF_INET6;
 		p->sin6_port = htons(SSDP_PORT);
 		inet_pton(AF_INET6, LL_SSDP_MCAST_ADDR, &(p->sin6_addr));
+		dest_str = "[" LL_SSDP_MCAST_ADDR "]";
+		/* TODO : also send to SL_SSDP_MCAST_ADDR and GL_SSDP_MCAST_ADDR ? */
+		/* UPnP Device Architecture 1.1 :
+		 * Devices MUST multicast SSDP messages for each of the UPnP-enabled
+		 * interfaces. The scope of multicast SSDP messages MUST be
+		 * link local FF02::C if the message is sent from a link local address.
+		 * If the message is sent from a global address it MUST be multicast
+		 * using either global scope FF0E::C or site local scope FF05::C.
+		 * In networks with complex topologies and overlapping sites, use of
+		 * global scope is RECOMMENDED. */
 	}
 	else
 #endif
 	{
 		struct sockaddr_in *p = (struct sockaddr_in *)&sockname;
+		sockname_len = sizeof(struct sockaddr_in);
 		p->sin_family = AF_INET;
 		p->sin_port = htons(SSDP_PORT);
 		p->sin_addr.s_addr = inet_addr(SSDP_MCAST_ADDR);
+		dest_str = SSDP_MCAST_ADDR;
 	}
 
 	while(known_service_types[i].s)
@@ -598,24 +617,26 @@ SendSSDPNotifies(int s, const char * host, unsigned short http_port,
 			ver_str[0] = '\0';
 		else
 			snprintf(ver_str, sizeof(ver_str), "%d", known_service_types[i].version);
-		SendSSDPNotify(s, (struct sockaddr *)&sockname, host, http_port,
+		SendSSDPNotify(s, (struct sockaddr *)&sockname, sockname_len, dest_str,
+		               host, http_port,
 #ifdef ENABLE_HTTPS
 		               https_port,
 #endif
 		               known_service_types[i].s, ver_str,	/* NT: */
 		               known_service_types[i].uuid, "::",
 		               known_service_types[i].s, /* ver_str,	USN: */
-		               lifetime, ipv6);
+		               lifetime);
 		if(0==memcmp(known_service_types[i].s,
 		             "urn:schemas-upnp-org:device", sizeof("urn:schemas-upnp-org:device")-1))
 		{
-			SendSSDPNotify(s, (struct sockaddr *)&sockname, host, http_port,
+			SendSSDPNotify(s, (struct sockaddr *)&sockname, sockname_len, dest_str,
+			               host, http_port,
 #ifdef ENABLE_HTTPS
 			               https_port,
 #endif
 			               known_service_types[i].uuid, "",	/* NT: */
 			               known_service_types[i].uuid, "", "", /* ver_str,	USN: */
-			               lifetime, ipv6);
+			               lifetime);
 		}
 		i++;
 	}
@@ -1035,10 +1056,10 @@ ProcessSSDPData(int s, const char *bufr, int n,
 }
 
 static int
-SendSSDPbyebye(int s, const struct sockaddr * dest,
+SendSSDPbyebye(int s, const struct sockaddr * dest, socklen_t destlen,
+               const char * dest_str,
                const char * nt, const char * suffix,
-               const char * usn1, const char * usn2, const char * usn3,
-               int ipv6)
+               const char * usn1, const char * usn2, const char * usn3)
 {
 	int n, l;
 	char bufr[SSDP_PACKET_MAX_LEN];
@@ -1054,9 +1075,8 @@ SendSSDPbyebye(int s, const struct sockaddr * dest,
 	             "BOOTID.UPNP.ORG: %u\r\n" /* UDA v1.1 */
 	             "CONFIGID.UPNP.ORG: %u\r\n" /* UDA v1.1 */
 	             "\r\n",
-	             ipv6 ? "[" LL_SSDP_MCAST_ADDR "]" : SSDP_MCAST_ADDR,
-	             SSDP_PORT,
-	             nt, suffix,	/* NT: */
+	             dest_str, SSDP_PORT,		/* HOST : */
+	             nt, suffix,				/* NT: */
 	             usn1, usn2, usn3, suffix,	/* USN: */
 	             upnp_bootid, upnp_bootid, upnp_configid);
 	if(l<0)
@@ -1070,13 +1090,7 @@ SendSSDPbyebye(int s, const struct sockaddr * dest,
 		       "SendSSDPbyebye()", (unsigned)l, (unsigned)sizeof(bufr));
 		l = sizeof(bufr) - 1;
 	}
-	n = sendto_or_schedule(s, bufr, l, 0, dest,
-#ifdef ENABLE_IPV6
-	           ipv6 ? sizeof(struct sockaddr_in6) : sizeof(struct sockaddr_in)
-#else
-	           sizeof(struct sockaddr_in)
-#endif
-	          );
+	n = sendto_or_schedule(s, bufr, l, 0, dest, destlen);
 	if(n < 0)
 	{
 		syslog(LOG_ERR, "sendto(udp_shutdown=%d): %m", s);
@@ -1095,30 +1109,44 @@ SendSSDPbyebye(int s, const struct sockaddr * dest,
 int
 SendSSDPGoodbye(int * sockets, int n_sockets)
 {
-	struct sockaddr_in sockname;
+	struct sockaddr_in sockname4;
 #ifdef ENABLE_IPV6
 	struct sockaddr_in6 sockname6;
+	struct sockaddr * sockname;
+	socklen_t socknamelen;
 #endif
 	int i, j;
 	char ver_str[4];
 	int ret = 0;
 	int ipv6 = 0;
+	const char * dest_str;
 
-    memset(&sockname, 0, sizeof(struct sockaddr_in));
-    sockname.sin_family = AF_INET;
-    sockname.sin_port = htons(SSDP_PORT);
-    sockname.sin_addr.s_addr = inet_addr(SSDP_MCAST_ADDR);
+    memset(&sockname4, 0, sizeof(struct sockaddr_in));
+    sockname4.sin_family = AF_INET;
+    sockname4.sin_port = htons(SSDP_PORT);
+    sockname4.sin_addr.s_addr = inet_addr(SSDP_MCAST_ADDR);
 #ifdef ENABLE_IPV6
 	memset(&sockname6, 0, sizeof(struct sockaddr_in6));
 	sockname6.sin6_family = AF_INET6;
 	sockname6.sin6_port = htons(SSDP_PORT);
 	inet_pton(AF_INET6, LL_SSDP_MCAST_ADDR, &(sockname6.sin6_addr));
+#else
+	dest_str = SSDP_MCAST_ADDR;
 #endif
 
 	for(j=0; j<n_sockets; j++)
 	{
 #ifdef ENABLE_IPV6
 		ipv6 = j & 1;
+		if(ipv6) {
+			dest_str = "[" LL_SSDP_MCAST_ADDR "]";
+			sockname = (struct sockaddr *)&sockname6;
+			socknamelen = sizeof(struct sockaddr_in6);
+		} else {
+			dest_str = SSDP_MCAST_ADDR;
+			sockname = (struct sockaddr *)&sockname4;
+			socknamelen = sizeof(struct sockaddr_in);
+		}
 #endif
 	    for(i=0; known_service_types[i].s; i++)
 	    {
@@ -1128,26 +1156,26 @@ SendSSDPGoodbye(int * sockets, int n_sockets)
 				snprintf(ver_str, sizeof(ver_str), "%d", known_service_types[i].version);
 			ret += SendSSDPbyebye(sockets[j],
 #ifdef ENABLE_IPV6
-			                      ipv6 ? (struct sockaddr *)&sockname6 : (struct sockaddr *)&sockname,
+			                      sockname, socknamelen,
 #else
-			                      (struct sockaddr *)&sockname,
+			                      (struct sockaddr *)&sockname4, sizeof(struct sockaddr_in),
 #endif
+			                      dest_str,
 			                      known_service_types[i].s, ver_str,	/* NT: */
 			                      known_service_types[i].uuid, "::",
-			                      known_service_types[i].s, /* ver_str, USN: */
-			                      ipv6);
+			                      known_service_types[i].s); /* ver_str, USN: */
 			if(0==memcmp(known_service_types[i].s,
 			             "urn:schemas-upnp-org:device", sizeof("urn:schemas-upnp-org:device")-1))
 			{
 				ret += SendSSDPbyebye(sockets[j],
 #ifdef ENABLE_IPV6
-				                      ipv6 ? (struct sockaddr *)&sockname6 : (struct sockaddr *)&sockname,
+				                      sockname, socknamelen,
 #else
-				                      (struct sockaddr *)&sockname,
+				                      (struct sockaddr *)&sockname4, sizeof(struct sockaddr_in),
 #endif
+				                      dest_str,
 				                      known_service_types[i].uuid, "",	/* NT: */
-				                      known_service_types[i].uuid, "", "", /* ver_str, USN: */
-				                      ipv6);
+				                      known_service_types[i].uuid, "", ""); /* ver_str, USN: */
 			}
     	}
 	}

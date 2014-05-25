@@ -20,8 +20,10 @@
 
 int OpenAndConfNATPMPSockets(int * sockets);
 
+/* receiveraddr is only used with IPV6 sockets */
 int ReceiveNATPMPOrPCPPacket(int s, struct sockaddr * senderaddr,
                              socklen_t * senderaddrlen,
+                             struct sockaddr_in6 * receiveraddr,
                              unsigned char * msg_buff, size_t msg_buff_size);
 
 void ProcessIncomingNATPMPPacket(int s, unsigned char * msg_buff, int len,

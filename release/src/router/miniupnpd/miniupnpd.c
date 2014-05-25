@@ -1,4 +1,4 @@
-/* $Id: miniupnpd.c,v 1.194 2014/04/14 11:42:36 nanard Exp $ */
+/* $Id: miniupnpd.c,v 1.199 2014/05/19 23:14:25 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2014 Thomas Bernard
@@ -77,7 +77,7 @@
 #ifdef USE_IFACEWATCHER
 #include "ifacewatcher.h"
 #endif
-#ifdef ENABLE_6FC_SERVICE
+#ifdef ENABLE_UPNPPINHOLE
 #ifdef USE_NETFILTER
 void init_iptpinhole(void);
 #endif
@@ -113,9 +113,9 @@ volatile sig_atomic_t should_send_public_address_change_notif = 0;
  * setup the socket used to handle incoming HTTP connections. */
 static int
 #ifdef ENABLE_IPV6
-OpenAndConfHTTPSocket(unsigned short port, int ipv6)
+OpenAndConfHTTPSocket(unsigned short * port, int ipv6)
 #else
-OpenAndConfHTTPSocket(unsigned short port)
+OpenAndConfHTTPSocket(unsigned short * port)
 #endif
 {
 	int s;
@@ -128,13 +128,24 @@ OpenAndConfHTTPSocket(unsigned short port)
 #endif
 	socklen_t listenname_len;
 
-	if( (s = socket(
+	s = socket(
 #ifdef ENABLE_IPV6
-	                ipv6 ? PF_INET6 : PF_INET,
+	           ipv6 ? PF_INET6 : PF_INET,
 #else
-	                PF_INET,
+	           PF_INET,
 #endif
-	                SOCK_STREAM, 0)) < 0)
+	           SOCK_STREAM, 0);
+#ifdef ENABLE_IPV6
+	if(s < 0 && ipv6 && errno == EAFNOSUPPORT)
+	{
+		/* the system doesn't support IPV6 */
+		syslog(LOG_WARNING, "socket(PF_INET6, ...) failed with EAFNOSUPPORT, disabling IPv6");
+		SETFLAG(IPV6DISABLEDMASK);
+		ipv6 = 0;
+		s = socket(PF_INET, SOCK_STREAM, 0);
+	}
+#endif
+	if(s < 0)
 	{
 		syslog(LOG_ERR, "socket(http): %m");
 		return -1;
@@ -163,20 +174,20 @@ OpenAndConfHTTPSocket(unsigned short port)
 	{
 		memset(&listenname6, 0, sizeof(struct sockaddr_in6));
 		listenname6.sin6_family = AF_INET6;
-		listenname6.sin6_port = htons(port);
-		listenname6.sin6_addr = in6addr_any;
+		listenname6.sin6_port = htons(*port);
+		listenname6.sin6_addr = ipv6_bind_addr;
 		listenname_len =  sizeof(struct sockaddr_in6);
 	} else {
 		memset(&listenname4, 0, sizeof(struct sockaddr_in));
 		listenname4.sin_family = AF_INET;
-		listenname4.sin_port = htons(port);
+		listenname4.sin_port = htons(*port);
 		listenname4.sin_addr.s_addr = htonl(INADDR_ANY);
 		listenname_len =  sizeof(struct sockaddr_in);
 	}
 #else
 	memset(&listenname, 0, sizeof(struct sockaddr_in));
 	listenname.sin_family = AF_INET;
-	listenname.sin_port = htons(port);
+	listenname.sin_port = htons(*port);
 	listenname.sin_addr.s_addr = htonl(INADDR_ANY);
 	listenname_len =  sizeof(struct sockaddr_in);
 #endif
@@ -201,6 +212,29 @@ OpenAndConfHTTPSocket(unsigned short port)
 		return -1;
 	}
 
+	if(*port == 0) {
+#ifdef ENABLE_IPV6
+		if(ipv6) {
+			struct sockaddr_in6 sockinfo;
+			socklen_t len = sizeof(struct sockaddr_in6);
+			if (getsockname(s, (struct sockaddr *)&sockinfo, &len) < 0) {
+				syslog(LOG_ERR, "getsockname(): %m");
+			} else {
+				*port = ntohs(sockinfo.sin6_port);
+			}
+		} else {
+#endif /* ENABLE_IPV6 */
+			struct sockaddr_in sockinfo;
+			socklen_t len = sizeof(struct sockaddr_in);
+			if (getsockname(s, (struct sockaddr *)&sockinfo, &len) < 0) {
+				syslog(LOG_ERR, "getsockname(): %m");
+			} else {
+				*port = ntohs(sockinfo.sin_port);
+			}
+#ifdef ENABLE_IPV6
+		}
+#endif /* ENABLE_IPV6 */
+	}
 	return s;
 }
 
@@ -673,6 +707,7 @@ parselanaddr(struct lan_addr_s * lan_addr, const char * str)
 		if(getifaddr(lan_addr->ifname, lan_addr->str, sizeof(lan_addr->str),
 		             &lan_addr->addr, &lan_addr->mask) < 0)
 			goto parselan_error;
+		/*printf("%s => %s\n", lan_addr->ifname, lan_addr->str);*/
 	}
 	else
 	{
@@ -744,7 +779,10 @@ parselanaddr(struct lan_addr_s * lan_addr, const char * str)
 	}
 	else
 	{
-		fprintf(stderr, "Warning: please specify LAN network interface by name instead of IPv4 address\n");
+		fprintf(stderr,
+		        "Error: please specify LAN network interface by name instead of IPv4 address : %s\n",
+		        str);
+		return -1;
 	}
 #endif
 	return 0;
@@ -833,6 +871,9 @@ init(int argc, char * * argv, struct runtime_vars * v)
 
 	/* set initial values */
 	SETFLAG(ENABLEUPNPMASK);	/* UPnP is enabled by default */
+#ifdef ENABLE_IPV6
+	ipv6_bind_addr = in6addr_any;
+#endif /* ENABLE_IPV6 */
 
 	LIST_INIT(&lan_addrs);
 	v->port = -1;
@@ -872,12 +913,24 @@ init(int argc, char * * argv, struct runtime_vars * v)
 				}
 				if(parselanaddr(lan_addr, ary_options[i].value) != 0)
 				{
-					fprintf(stderr, "can't parse \"%s\" as valid lan address\n", ary_options[i].value);
+					fprintf(stderr, "can't parse \"%s\" as a valid "
+#ifndef ENABLE_IPV6
+					        "LAN address or "
+#endif
+					        "interface name\n", ary_options[i].value);
 					free(lan_addr);
 					break;
 				}
 				LIST_INSERT_HEAD(&lan_addrs, lan_addr, list);
 				break;
+#ifdef ENABLE_IPV6
+			case UPNPIPV6_LISTENING_IP:
+				if (inet_pton(AF_INET6, ary_options[i].value, &ipv6_bind_addr) < 1)
+				{
+					fprintf(stderr, "can't parse \"%s\" as valid IPv6 listening address", ary_options[i].value);
+				}
+				break;
+#endif /* ENABLE_IPV6 */
 			case UPNPPORT:
 				v->port = atoi(ary_options[i].value);
 				break;
@@ -994,6 +1047,10 @@ init(int argc, char * * argv, struct runtime_vars * v)
 					if (max_lifetime > 86400 ) {
 						max_lifetime = 86400;
 					}
+				break;
+			case UPNPPCPALLOWTHIRDPARTY:
+				if(strcmp(ary_options[i].value, "yes") == 0)
+					SETFLAG(PCP_ALLOWTHIRDPARTYMASK);
 				break;
 #endif
 #ifdef PF_ENABLE_FILTER_RULES
@@ -1206,7 +1263,11 @@ init(int argc, char * * argv, struct runtime_vars * v)
 				}
 				if(parselanaddr(lan_addr, argv[i]) != 0)
 				{
-					fprintf(stderr, "can't parse \"%s\" as valid lan address\n", argv[i]);
+					fprintf(stderr, "can't parse \"%s\" as a valid "
+#ifndef ENABLE_IPV6
+					        "LAN address or "
+#endif
+					        "interface name\n", argv[i]);
 					free(lan_addr);
 					break;
 				}
@@ -1241,7 +1302,7 @@ init(int argc, char * * argv, struct runtime_vars * v)
 				}
 				if(parselanaddr(lan_addr, val) != 0)
 				{
-					fprintf(stderr, "can't parse \"%s\" as valid lan address\n", val);
+					fprintf(stderr, "can't parse \"%s\" as a valid LAN address or interface name\n", val);
 					free(lan_addr);
 					free(val);
 					break;
@@ -1378,7 +1439,7 @@ init(int argc, char * * argv, struct runtime_vars * v)
 		syslog(LOG_ERR, "Failed to init redirection engine. EXITING");
 		return 1;
 	}
-#ifdef ENABLE_6FC_SERVICE
+#ifdef ENABLE_UPNPPINHOLE
 #ifdef USE_NETFILTER
 	init_iptpinhole();
 #endif
@@ -1519,7 +1580,7 @@ main(int argc, char * * argv)
 	struct rule_state * rule_list = 0;
 	struct timeval checktime = {0, 0};
 	struct lan_addr_s * lan_addr;
-#ifdef ENABLE_6FC_SERVICE
+#ifdef ENABLE_UPNPPINHOLE
 	unsigned int next_pinhole_ts;
 #endif
 
@@ -1578,79 +1639,49 @@ main(int argc, char * * argv)
 
 	if(GETFLAG(ENABLEUPNPMASK))
 	{
+		unsigned short listen_port;
+		listen_port = (v.port > 0) ? v.port : 0;
 		/* open socket for HTTP connections. Listen on the 1st LAN address */
 #ifdef ENABLE_IPV6
-		shttpl = OpenAndConfHTTPSocket((v.port > 0) ? v.port : 0, 1);
+		shttpl = OpenAndConfHTTPSocket(&listen_port, 1);
 #else /* ENABLE_IPV6 */
-		shttpl = OpenAndConfHTTPSocket((v.port > 0) ? v.port : 0);
+		shttpl = OpenAndConfHTTPSocket(&listen_port);
 #endif /* ENABLE_IPV6 */
 		if(shttpl < 0)
 		{
 			syslog(LOG_ERR, "Failed to open socket for HTTP. EXITING");
 			return 1;
 		}
-		if(v.port <= 0) {
-#ifdef ENABLE_IPV6
-			struct sockaddr_in6 sockinfo;
-			socklen_t len = sizeof(struct sockaddr_in6);
-			if (getsockname(shttpl, (struct sockaddr *)&sockinfo, &len) < 0) {
-				syslog(LOG_ERR, "getsockname(): %m");
-				return 1;
-			}
-			v.port = ntohs(sockinfo.sin6_port);
-#else /* ENABLE_IPV6 */
-			struct sockaddr_in sockinfo;
-			socklen_t len = sizeof(struct sockaddr_in);
-			if (getsockname(shttpl, (struct sockaddr *)&sockinfo, &len) < 0) {
-				syslog(LOG_ERR, "getsockname(): %m");
-				return 1;
-			}
-			v.port = ntohs(sockinfo.sin_port);
-#endif /* ENABLE_IPV6 */
-		}
+		v.port = listen_port;
 		syslog(LOG_NOTICE, "HTTP listening on port %d", v.port);
 #if defined(V6SOCKETS_ARE_V6ONLY) && defined(ENABLE_IPV6)
-		shttpl_v4 =  OpenAndConfHTTPSocket(v.port, 0);
-		if(shttpl_v4 < 0)
+		if(!GETFLAG(IPV6DISABLEDMASK))
 		{
-			syslog(LOG_ERR, "Failed to open socket for HTTP on port %hu (IPv4). EXITING", v.port);
-			return 1;
+			shttpl_v4 =  OpenAndConfHTTPSocket(&listen_port, 0);
+			if(shttpl_v4 < 0)
+			{
+				syslog(LOG_ERR, "Failed to open socket for HTTP on port %hu (IPv4). EXITING", v.port);
+				return 1;
+			}
 		}
 #endif /* V6SOCKETS_ARE_V6ONLY */
 #ifdef ENABLE_HTTPS
 		/* https */
+		listen_port = (v.https_port > 0) ? v.https_port : 0;
 #ifdef ENABLE_IPV6
-		shttpsl = OpenAndConfHTTPSocket((v.https_port > 0) ? v.https_port : 0, 1);
+		shttpsl = OpenAndConfHTTPSocket(&listen_port, 1);
 #else /* ENABLE_IPV6 */
-		shttpsl = OpenAndConfHTTPSocket((v.https_port > 0) ? v.https_port : 0);
+		shttpsl = OpenAndConfHTTPSocket(&listen_port);
 #endif /* ENABLE_IPV6 */
 		if(shttpl < 0)
 		{
 			syslog(LOG_ERR, "Failed to open socket for HTTPS. EXITING");
 			return 1;
 		}
-		if(v.https_port <= 0) {
-#ifdef ENABLE_IPV6
-			struct sockaddr_in6 sockinfo;
-			socklen_t len = sizeof(struct sockaddr_in6);
-			if (getsockname(shttpsl, (struct sockaddr *)&sockinfo, &len) < 0) {
-				syslog(LOG_ERR, "getsockname(): %m");
-				return 1;
-			}
-			v.https_port = ntohs(sockinfo.sin6_port);
-#else /* ENABLE_IPV6 */
-			struct sockaddr_in sockinfo;
-			socklen_t len = sizeof(struct sockaddr_in);
-			if (getsockname(shttpsl, (struct sockaddr *)&sockinfo, &len) < 0) {
-				syslog(LOG_ERR, "getsockname(): %m");
-				return 1;
-			}
-			v.https_port = ntohs(sockinfo.sin_port);
-#endif /* ENABLE_IPV6 */
-		}
+		v.https_port = listen_port;
 		syslog(LOG_NOTICE, "HTTPS listening on port %d", v.https_port);
 #if defined(V6SOCKETS_ARE_V6ONLY) && defined(ENABLE_IPV6)
-		shttpsl_v4 =  OpenAndConfHTTPSocket(v.https_port, 0);
+		shttpsl_v4 =  OpenAndConfHTTPSocket(&listen_port, 0);
 		if(shttpsl_v4 < 0)
 		{
 			syslog(LOG_ERR, "Failed to open socket for HTTPS on port %hu (IPv4). EXITING", v.https_port);
@@ -1853,7 +1884,7 @@ main(int argc, char * * argv)
 			syslog(LOG_DEBUG, "setting timeout to %u sec",
 			       (unsigned)timeout.tv_sec);
 		}
-#ifdef ENABLE_6FC_SERVICE
+#ifdef ENABLE_UPNPPINHOLE
 		/* Clean up expired IPv6 PinHoles */
 		next_pinhole_ts = 0;
 		upnp_clean_expired_pinholes(&next_pinhole_ts);
@@ -1862,7 +1893,7 @@ main(int argc, char * * argv)
 			timeout.tv_sec = next_pinhole_ts - timeofday.tv_sec;
 			timeout.tv_usec = 0;
 		}
-#endif
+#endif /* ENABLE_UPNPPINHOLE */
 
 		/* select open sockets (SSDP, HTTP listen, and all HTTP soap sockets) */
 		FD_ZERO(&readset);
@@ -2102,6 +2133,7 @@ main(int argc, char * * argv)
 				len = ReceiveNATPMPOrPCPPacket(snatpmp[i],
 				                               (struct sockaddr *)&senderaddr,
 				                               &senderaddrlen,
+				                               NULL,
 				                               msg_buff, sizeof(msg_buff));
 				if (len < 1)
 					continue;
@@ -2111,7 +2143,7 @@ main(int argc, char * * argv)
 					                            &senderaddr);
 				} else { /* everything else can be PCP */
 					ProcessIncomingPCPPacket(snatpmp[i], msg_buff, len,
-					                         (struct sockaddr *)&senderaddr);
+					                         (struct sockaddr *)&senderaddr, NULL);
 				}
 
 #else
@@ -2127,16 +2159,19 @@ main(int argc, char * * argv)
 			unsigned char msg_buff[PCP_MAX_LEN];
 			struct sockaddr_in6 senderaddr;
 			socklen_t senderaddrlen;
+			struct sockaddr_in6 receiveraddr;
 			int len;
 			memset(msg_buff, 0, PCP_MAX_LEN);
 			senderaddrlen = sizeof(senderaddr);
 			len = ReceiveNATPMPOrPCPPacket(spcp_v6,
 			                               (struct sockaddr *)&senderaddr,
 			                               &senderaddrlen,
+			                               &receiveraddr,
 			                               msg_buff, sizeof(msg_buff));
 			if(len >= 1)
 				ProcessIncomingPCPPacket(spcp_v6, msg_buff, len,
-				                         (struct sockaddr *)&senderaddr);
+				                         (struct sockaddr *)&senderaddr,
+				                         &receiveraddr);
 		}
 #endif
 		/* process SSDP packets */

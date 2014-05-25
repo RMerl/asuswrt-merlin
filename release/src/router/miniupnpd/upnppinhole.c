@@ -23,6 +23,14 @@
 #include "upnpredirect.h"
 #include "upnpglobalvars.h"
 #include "upnpevents.h"
+#include "upnppinhole.h"
+#ifdef __APPLE__
+/* XXX - Apple version of PF API seems to differ from what
+ * pf/pfpinhole.c expects so don't use that at least.. */
+#ifdef USE_PF
+#undef USE_PF
+#endif /* USE_PF */
+#endif /* __APPLE__ */
 #if defined(USE_NETFILTER)
 #include "netfilter/iptpinhole.h"
 #endif
@@ -34,7 +42,8 @@
 #if defined(USE_IPFW)
 #endif
 
-#ifdef ENABLE_6FC_SERVICE
+#ifdef ENABLE_UPNPPINHOLE
+
 #if 0
 int
 upnp_check_outbound_pinhole(int proto, int * timeout)
@@ -91,6 +100,7 @@ upnp_add_inboundpinhole(const char * raddr,
                         const char * iaddr,
                         unsigned short iport,
                         int proto,
+                        char * desc,
                         unsigned int leasetime,
                         int * uid)
 {
@@ -118,15 +128,13 @@ upnp_add_inboundpinhole(const char * raddr,
 	}
 	else
 #endif
-	{
 #if defined(USE_PF) || defined(USE_NETFILTER)
-		*uid = add_pinhole (0/*ext_if_name*/, raddr, rport,
-		                    iaddr, iport, proto, timestamp);
-		return 1;
+	*uid = add_pinhole (0/*ext_if_name*/, raddr, rport,
+	                    iaddr, iport, proto, desc, timestamp);
+	return *uid >= 0 ? 1 : -1;
 #else
-		return -42;	/* not implemented */
+	return -42;	/* not implemented */
 #endif
-	}
 }
 
 #if 0
@@ -203,7 +211,7 @@ upnp_add_inboundpinhole_internal(const char * raddr, unsigned short rport,
  *   0   OK
  *  -1   Internal error
  *  -2   NOT FOUND (no such entry)
- *  .. 
+ *  ..
  *  -42  Not implemented
  */
 int
@@ -212,7 +220,7 @@ upnp_get_pinhole_info(unsigned short uid,
                       unsigned short * rport,
                       char * iaddr, int iaddrlen,
                       unsigned short * iport,
-                      int * proto,
+                      int * proto, char * desc, int desclen,
                       unsigned int * leasetime,
                       unsigned int * packets)
 {
@@ -224,7 +232,8 @@ upnp_get_pinhole_info(unsigned short uid,
 	/*u_int64_t bytes_tmp;*/
 
 	r = get_pinhole_info(uid, raddr, raddrlen, rport,
-	                     iaddr, iaddrlen, iport, proto,
+	                     iaddr, iaddrlen, iport,
+	                     proto, desc, desclen,
 	                     leasetime ? &timestamp : NULL,
 	                     packets ? &packets_tmp : NULL,
 	                     NULL/*&bytes_tmp*/);
@@ -245,9 +254,21 @@ upnp_get_pinhole_info(unsigned short uid,
 	UNUSED(uid);
 	UNUSED(raddr); UNUSED(raddrlen); UNUSED(rport);
 	UNUSED(iaddr); UNUSED(iaddrlen); UNUSED(iport);
-	UNUSED(proto); UNUSED(leasetime); UNUSED(packets);
+	UNUSED(proto); UNUSED(desc); UNUSED(desclen);
+	UNUSED(leasetime); UNUSED(packets);
 	return -42;	/* not implemented */
 #endif
+}
+
+int
+upnp_get_pinhole_uid_by_index(int index)
+{
+#if defined (USE_NETFILTER)
+	return get_pinhole_uid_by_index(index);
+#else
+	UNUSED(index);
+	return -42;
+#endif /* defined (USE_NETFILTER) */
 }
 
 int
@@ -507,5 +528,5 @@ upnp_clean_expired_pinholes(unsigned int * next_timestamp)
 	return 0;	/* nothing to do */
 #endif
 }
-#endif
 
+#endif /* ENABLE_UPNPPINHOLE */

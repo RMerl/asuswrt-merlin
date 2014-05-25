@@ -531,6 +531,13 @@ else
 fi
 echo "" >> ${CONFIGFILE}
 
+cat >> ${CONFIGFILE} <<EOF
+#if defined(ENABLE_6FC_SERVICE) || (defined(ENABLE_PCP) && defined(ENABLE_IPV6))
+#define ENABLE_UPNPPINHOLE
+#endif
+
+EOF
+
 echo "#endif /* ${CONFIGMACRO} */" >> ${CONFIGFILE}
 
 ${MV} ${CONFIGFILE} ${CONFIGFILE_FINAL}

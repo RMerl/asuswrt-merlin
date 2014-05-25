@@ -33,10 +33,11 @@ STD_OBJS = miniupnpd.o upnphttp.o upnpdescgen.o upnpsoap.o \
           upnpredirect.o getifaddr.o daemonize.o upnpglobalvars.o \
           options.o upnppermissions.o minissdp.o natpmp.o \
           upnpevents.o getconnstatus.o upnputils.o \
-          asyncsendto.o portinuse.o pcpserver.o
-MAC_OBJS = mac/getifstats.o bsd/ifacewatcher.o
+          upnppinhole.o asyncsendto.o portinuse.o pcpserver.o
+MAC_OBJS = mac/getifstats.o bsd/ifacewatcher.o bsd/getroute.o
 IPFW_OBJS = ipfw/ipfwrdr.o ipfw/ipfwaux.o
-PF_OBJS = pf/obsdrdr.o pf/pfpinhole.o
+PF_OBJS = pf/obsdrdr.o
+# pf/pfpinhole.o # SHOULD be used, but doesn't compile on e.g. OS X 10.9.
 MISC_OBJS = upnpreplyparse.o minixml.o
 
 ALL_OBJS = $(STD_OBJS) $(MISC_OBJS) $(MAC_OBJS)
@@ -52,7 +53,7 @@ TEST_GETIFSTATS_OBJS = testgetifstats.o mac/getifstats.o
 TEST_UPNPPERMISSIONS_OBJS = testupnppermissions.o upnppermissions.o
 TEST_GETIFADDR_OBJS = testgetifaddr.o getifaddr.o
 TEST_PORTINUSE_OBJS = testportinuse.o portinuse.o getifaddr.o
-TEST_ASYNCSENDTO_OBJS = testasyncsendto.o asyncsendto.o upnputils.o
+TEST_ASYNCSENDTO_OBJS = testasyncsendto.o asyncsendto.o upnputils.o bsd/getroute.o
 MINIUPNPDCTL_OBJS = miniupnpdctl.o
 
 EXECUTABLES = miniupnpd testupnpdescgen testgetifstats \

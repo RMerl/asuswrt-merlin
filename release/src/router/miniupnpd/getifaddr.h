@@ -20,7 +20,7 @@ getifaddr(const char * ifname, char * buf, int len,
           struct in_addr * addr, struct in_addr * mask);
 
 int
-getifaddr_in6(const char * ifname, struct in6_addr* addr);
+getifaddr_in6(const char * ifname, int af, struct in6_addr* addr);
 
 /* find a non link local IP v6 address for the interface.
  * if ifname is NULL, look for all interfaces */

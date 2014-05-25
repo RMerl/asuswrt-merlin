@@ -1,4 +1,4 @@
-/* $Id: testpfpinhole.c,v 1.11 2014/02/28 16:49:15 nanard Exp $ */
+/* $Id: testpfpinhole.c,v 1.12 2014/05/15 21:23:43 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2012-2014 Thomas Bernard
@@ -32,11 +32,14 @@ static int print_pinhole(int uid)
 	int proto;
 	unsigned int timestamp;
 	u_int64_t packets, bytes;
+	char desc[64];
 
 	r = get_pinhole_info((unsigned short)uid,
 	                     rem_host, sizeof(rem_host), &rem_port,
 	                     int_client, sizeof(int_client), &int_port,
-	                     &proto, &timestamp,
+	                     &proto,
+	                     desc, sizeof(desc),
+	                     &timestamp,
 	                     &packets, &bytes);
 	if(r < 0) {
 		fprintf(stderr, "get_pinhole(%d) returned %d\n", uid, r);
@@ -44,6 +47,7 @@ static int print_pinhole(int uid)
 		printf("pinhole %d : [%s]:%hu => [%s]:%hu proto=%d ts=%u\n",
 		       uid, rem_host, rem_port, int_client, int_port,
 		       proto, timestamp);
+		printf("    desc='%s'\n", desc);
 		printf("    packets=%llu bytes=%llu\n", packets, bytes);
 	}
 	return r;
@@ -65,12 +69,12 @@ int main(int argc, char * *argv)
 		return 1;
 	}
 
-	uid = add_pinhole("ep0", "2001::1:2:3", 12345, "123::ff", 54321, IPPROTO_UDP, 424242);
+	uid = add_pinhole("ep0", "2001::1:2:3", 12345, "123::ff", 54321, IPPROTO_UDP, "description test 1", 424242);
 	if(uid < 0) {
 		fprintf(stderr, "add_pinhole() failed\n");
 	}
 	printf("add_pinhole() returned %d\n", uid);
-	uid = add_pinhole("ep0", NULL, 0, "dead:beef::42:42", 8080, IPPROTO_UDP, 4321000);
+	uid = add_pinhole("ep0", NULL, 0, "dead:beef::42:42", 8080, IPPROTO_UDP, "description test 2", 4321000);
 	if(uid < 0) {
 		fprintf(stderr, "add_pinhole() failed\n");
 	}
