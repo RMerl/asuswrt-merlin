@@ -4133,6 +4133,21 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 			     "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01");
 		}
 #endif
+#ifdef RTCONFIG_BCMARM
+		/* mark STUN connection*/
+		if (nvram_match("fw_pt_stun", "1")) {
+			eval("iptables", "-t", "mangle", "-A", "FORWARD",
+				"-p", "udp",
+				"-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01");
+		}
+
+#ifdef RTCONFIG_IPV6
+		if (get_ipv6_service() == IPV6_6IN4) {
+			eval("ip6tables", "-t", "mangle", "-A", "FORWARD",
+				"-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01");
+		}
+#endif
+#endif
 	}
 #endif
 }
