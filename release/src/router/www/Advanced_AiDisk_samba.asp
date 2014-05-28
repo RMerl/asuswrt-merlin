@@ -644,7 +644,7 @@ function validForm(){
 		return false;	
 	}
   else{
-		var workgroup_check = new RegExp('^[a-zA-Z0-9][a-zA-Z0-9\-\_\.]+$','gi');	  	
+	var workgroup_check = new RegExp('^[a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-\_\.]+$','gi');
   	if(!workgroup_check.test(document.form.st_samba_workgroup.value)){
 			alert("<#JS_validchar#>");               
 			document.form.st_samba_workgroup.focus();
