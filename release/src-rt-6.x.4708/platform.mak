@@ -47,7 +47,10 @@ define platformKernelConfig
 		cp -f $(SRCBASE)/router/ctf_arm/up/linux/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
 		cp -f $(SRCBASE)/router/ufsd/broadcom_arm_up/ufsd.ko.46_up router/ufsd/broadcom_arm/ufsd.ko; \
 	fi; \
-	if [ -d $(SRCBASE)/router/wl_arm/prebuilt ]; then \
+	if [ -d $(SRCBASE)/router/wl_arm/$(BUILD_NAME) ]; then \
+		mkdir $(SRCBASE)/wl/linux ; \
+		cp $(SRCBASE)/router/wl_arm/$(BUILD_NAME)/prebuilt/* $(SRCBASE)/wl/linux ; \
+	elif [ -d $(SRCBASE)/router/wl_arm/prebuilt ]; then \
 		mkdir $(SRCBASE)/wl/linux ; \
 		cp $(SRCBASE)/router/wl_arm/prebuilt/* $(SRCBASE)/wl/linux ; \
 	elif [ -d $(SRCBASE)/wl/sysdeps/$(BUILD_NAME) ]; then \
