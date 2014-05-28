@@ -79,7 +79,7 @@ var $j = jQuery.noConflict();
 <% login_state_hook(); %>
 
 var DEVICE_TYPE = ["", "<#Device_type_01_PC#>", "<#Device_type_02_RT#>", "<#Device_type_03_AP#>", "<#Device_type_04_NS#>", "<#Device_type_05_IC#>", "<#Device_type_06_OD#>", "Printer", "TV Game Console"];
-var asus_device_list_buf = '<% nvram_get("asus_device_list"); %>';
+var asus_device_list_buf = "<% nvram_get("asus_device_list"); %>";
 var asus_device_list = asus_device_list_buf.replace(/&#62/g, ">").replace(/&#60/g, ",<")
 var client_list_array = '<% get_client_detail_info(); %>';
 var client_list_row;
