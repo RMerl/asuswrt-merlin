@@ -572,7 +572,7 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-374.43 (xx-xxx-2014)
+374.43-alpha (xx-xxx-2014)
    - CHANGED: dnsmasq option 252 now defaults to an empty string,
               to silence broken clients such as Win7.
               Important: if you were previously using a customized
@@ -585,10 +585,20 @@ History
               not query for the DNS entry if there is a 252
               option through DHCP, even if it fails to connect to it.
 
+   - CHANGED: Updated miniupnpd to 1.8.20140523.
    - FIXED: Media server page wouldn't let you enable the iTunes
             server unless you also enabled DLNA (Asus bug)
    - FIXED: Restricted guests still had access to the router (Asus
             bug introduced in GPL 4887)
+   - FIXED: 6in4 traffic wasn't bypassing CTF if dualwan mode was
+            either disabled or set to failover mode
+   - FIXED: Single character workgroups were rejected as invalid
+            (Asus bug)
+   - FIXED: Networks with SSIDs containing single quotes
+            would break the client list (Asus bug)
+   - FIXED: Traffic Monitor results are wrong on PPPoE connections
+            (Asus bug) (Patch by pinwing, additional debugging 
+            by fantom1)
 
 
 374.42_2 (16-May-2014)
