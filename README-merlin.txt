@@ -573,6 +573,8 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 374.43-alpha (xx-xxx-2014)
+   - NEW: User-configurable refresh period to trigger a DDNS
+          update after a certain number of days.
    - CHANGED: dnsmasq option 252 now defaults to an empty string,
               to silence broken clients such as Win7.
               Important: if you were previously using a customized
@@ -586,6 +588,8 @@ History
               option through DHCP, even if it fails to connect to it.
 
    - CHANGED: Updated miniupnpd to 1.8.20140523.
+   - CHANGED: The JFFS2 partition is now disabled by default after
+              a factory default reset.
    - FIXED: Media server page wouldn't let you enable the iTunes
             server unless you also enabled DLNA (Asus bug)
    - FIXED: Restricted guests still had access to the router (Asus
@@ -599,6 +603,8 @@ History
    - FIXED: Traffic Monitor results are wrong on PPPoE connections
             (Asus bug) (Patch by pinwing, additional debugging 
             by fantom1)
+   - FIXED: Crash if entering close to 64 MACs plus their names on
+            the MAC filter page.
 
 
 374.42_2 (16-May-2014)
@@ -722,8 +728,8 @@ History
    - FIXED: reg_mode was being enforced to "h" (EU region) or "off"
             (others) since GPL 4422.  We now stick again to what's 
             set in the webui by the end user.
-  - FIXED: Allow LAN traffic while dualwan mode is set to lb (issue
-           caused by the default policy fix in beta 1)
+   - FIXED: Allow LAN traffic while dualwan mode is set to lb (issue
+            caused by the default policy fix in beta 1)
 
 
 374.40 Beta 1 (1-March-2014)
