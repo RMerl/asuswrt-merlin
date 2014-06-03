@@ -181,6 +181,9 @@ function validForm(){
 					return true;		
 			}
 		}else{
+
+			if(!validate_range(document.form.ddns_refresh_x, 0, 365))
+				return false;
 		
 			if(document.form.ddns_hostname_x.value == ""){
 					alert("<#LANHostConfig_x_DDNS_alarm_14#>");
@@ -397,6 +400,12 @@ function cleandef(){
 				<td>
 					<input type="radio" value="1" name="ddns_wildcard_x" onClick="return change_common_radio(this, 'LANHostConfig', 'ddns_wildcard_x', '1')" <% nvram_match("ddns_wildcard_x", "1", "checked"); %>><#checkbox_Yes#>
 					<input type="radio" value="0" name="ddns_wildcard_x" onClick="return change_common_radio(this, 'LANHostConfig', 'ddns_wildcard_x', '0')" <% nvram_match("ddns_wildcard_x", "0", "checked"); %>><#checkbox_No#>
+				</td>
+			</tr>
+			<tr>
+				<th>Forced refresh interval (in days)</th>
+				<td>
+					<input type="text" maxlength="3" name="ddns_refresh_x" class="input_3_table" value="<% nvram_get("ddns_refresh_x"); %>" onKeyPress="return is_number(this,event)">
 				</td>
 			</tr>
 			<tr style="display:none;">

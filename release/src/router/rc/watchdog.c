@@ -70,6 +70,7 @@
 #define NORMAL_PERIOD		1		/* second */
 #define URGENT_PERIOD		100 * 1000	/* microsecond */
 #define RUSHURGENT_PERIOD	50 * 1000	/* microsecond */
+#define DAY_PERIOD		2 * 60 * 24	/* 1 day (in 30 sec periods) */
 
 #define WPS_TIMEOUT_COUNT	121 * 20
 #define WPS_WAIT		1		/* seconds */
@@ -108,6 +109,7 @@ static int wsc_timeout = 0;
 static int btn_count_setup_second = 0;
 static int btn_pressed_toggle_radio = 0;
 #endif
+static long ddns_update_timer = 0;
 
 #ifdef RTCONFIG_WIRELESS_SWITCH
 // for WLAN sw init, only for slide switch
@@ -1302,6 +1304,7 @@ void ddns_check(void)
 		unlink("/tmp/ddns.cache");
 		logmessage("watchdog", "start ddns.");
 		notify_rc("start_ddns");
+		ddns_update_timer = 0;
 	}
 	return;
 }
@@ -1778,6 +1781,7 @@ period_chk_cnt()
 
 void watchdog(int sig)
 {
+	int period;
 #ifdef RTCONFIG_PUSH_EMAIL
 	push_mail();
 #endif
@@ -1844,6 +1848,14 @@ void watchdog(int sig)
 #if 0
 	cpu_usage_monitor();
 #endif
+
+	/* Force a DDNS update every "x" days - default is 21 days */
+	period = nvram_get_int("ddns_refresh_x");
+	if ((period) && (++ddns_update_timer >= (DAY_PERIOD * period))) {
+		ddns_update_timer = 0;
+		nvram_set("ddns_updated", "0");
+	}
+
 	ddns_check();
 
 //#if defined(RTCONFIG_JFFS2LOG) && defined(RTCONFIG_JFFS2)
