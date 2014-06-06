@@ -588,6 +588,9 @@ History
               option through DHCP, even if it fails to connect to it.
 
    - CHANGED: Updated miniupnpd to 1.8.20140523.
+   - CHANGED: Updated openssl to 1.0.0m.
+   - CHANGED: More backports from OpenSSL 1.0.2, improving SHA
+              performance.
    - CHANGED: The JFFS2 partition is now disabled by default after
               a factory default reset.
    - FIXED: Media server page wouldn't let you enable the iTunes
@@ -595,7 +598,7 @@ History
    - FIXED: Restricted guests still had access to the router (Asus
             bug introduced in GPL 4887)
    - FIXED: 6in4 traffic wasn't bypassing CTF if dualwan mode was
-            either disabled or set to failover mode
+            either disabled or set to failover mode (AC56/AC68)
    - FIXED: Single character workgroups were rejected as invalid
             (Asus bug)
    - FIXED: Networks with SSIDs containing single quotes
@@ -608,7 +611,7 @@ History
 
 
 374.42_2 (16-May-2014)
-   - FIXED: Time Machine support (AC56, Ac68)
+   - FIXED: Time Machine support (AC56, AC68)
 
 
 374.42 (9-May-2014)
