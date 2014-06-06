@@ -1322,6 +1322,10 @@ char *SSL_get_shared_ciphers(const SSL *s,char *buf,int len)
 
 	p=buf;
 	sk=s->session->ciphers;
+
+	if (sk_SSL_CIPHER_num(sk) == 0)
+		return NULL;
+
 	for (i=0; i<sk_SSL_CIPHER_num(sk); i++)
 		{
 		int n;
@@ -1629,7 +1633,9 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_CTX, ret, &ret->ex_data);
 
 	ret->extra_certs=NULL;
-	ret->comp_methods=SSL_COMP_get_compression_methods();
+	/* No compression for DTLS */
+	if (meth->version != DTLS1_VERSION)
+		ret->comp_methods=SSL_COMP_get_compression_methods();
 
 	ret->max_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH;
 
@@ -2107,7 +2113,7 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, const SSL_CIPHER *cs)
 #endif
 
 /* THIS NEEDS CLEANING UP */
-X509 *ssl_get_server_send_cert(SSL *s)
+CERT_PKEY *ssl_get_server_send_pkey(const SSL *s)
 	{
 	unsigned long alg_k,alg_a;
 	CERT *c;
@@ -2162,12 +2168,20 @@ X509 *ssl_get_server_send_cert(SSL *s)
 		i=SSL_PKEY_GOST01;
 	else /* if (alg_a & SSL_aNULL) */
 		{
-		SSLerr(SSL_F_SSL_GET_SERVER_SEND_CERT,ERR_R_INTERNAL_ERROR);
+		SSLerr(SSL_F_SSL_GET_SERVER_SEND_PKEY,ERR_R_INTERNAL_ERROR);
 		return(NULL);
 		}
-	if (c->pkeys[i].x509 == NULL) return(NULL);
 
-	return(c->pkeys[i].x509);
+	return c->pkeys + i;
+	}
+
+X509 *ssl_get_server_send_cert(const SSL *s)
+	{
+	CERT_PKEY *cpk;
+	cpk = ssl_get_server_send_pkey(s);
+	if (!cpk)
+		return NULL;
+	return cpk->x509;
 	}
 
 EVP_PKEY *ssl_get_sign_pkey(SSL *s,const SSL_CIPHER *cipher)

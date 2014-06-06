@@ -117,4 +117,11 @@ static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	return 1;
 	}
 
+#if defined(AES_ASM) && defined(BSAES_ASM) && (defined(__arm__) || defined(__arm))
+#include "arm_arch.h"
+#if __ARM_ARCH__>=7
+#define BSAES_CAPABLE  (OPENSSL_armcap_P & ARMV7_NEON)
+#endif
+#endif
+
 #endif

@@ -27,5 +27,8 @@ src/mkerrcodes
 src/mkerrcodes.h
 src/mkw32errmap.map.c
 src/versioninfo.rc
+src/err-codes.h
+src/err-sources.h
+src/gpg-error.h
 tests/t-strerror
 tests/t-syserror
