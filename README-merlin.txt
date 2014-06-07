@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 374.43 (xx-xxx-2014)
-=============================================
+Asuswrt-Merlin - build 374.43 (6-June-2014)
+===========================================
 
 About
 -----
@@ -572,7 +572,7 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-374.43-alpha (xx-xxx-2014)
+374.43 (6-June-2014)
    - NEW: User-configurable refresh period to trigger a DDNS
           update after a certain number of days.
    - CHANGED: dnsmasq option 252 now defaults to an empty string,
@@ -590,7 +590,7 @@ History
    - CHANGED: Updated miniupnpd to 1.8.20140523.
    - CHANGED: Updated openssl to 1.0.0m.
    - CHANGED: More backports from OpenSSL 1.0.2, improving SHA
-              performance.
+              performance on ARM routers.
    - CHANGED: The JFFS2 partition is now disabled by default after
               a factory default reset.
    - FIXED: Media server page wouldn't let you enable the iTunes
