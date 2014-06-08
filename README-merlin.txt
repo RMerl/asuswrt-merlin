@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 374.43 (6-June-2014)
-===========================================
+Asuswrt-Merlin - build 374.43_2 (7-June-2014)
+=============================================
 
 About
 -----
@@ -48,7 +48,7 @@ Here is a list of features that Asuswrt-merlin brings over the original
 firmware:
 
 System:
-   - Based on 3.0.0.4.374_5047 sources (from RT-AC68U) from Asus
+   - Based on 3.0.0.4.374_5656 sources (from RT-AC68U) from Asus
    - Various bugfixes and optimizations
    - Some components were updated to newer versions, for improved
      stability and security
@@ -572,6 +572,11 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+374.43_2 (7-June-2014)
+   - FIXED: NTFS disks couldn't be mounted (Paragon driver not
+            loading due to a kernel change) (AC56, AC68)
+
+
 374.43 (6-June-2014)
    - NEW: User-configurable refresh period to trigger a DDNS
           update after a certain number of days.
