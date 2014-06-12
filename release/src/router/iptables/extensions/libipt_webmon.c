@@ -3,7 +3,7 @@
  *  		Originally designed for use with Gargoyle router firmware (gargoyle-router.com)
  *
  *
- *  Copyright © 2008-2010 by Eric Bishop <eric@gargoyle-router.com>
+ *  Copyright © 2008-2011 by Eric Bishop <eric@gargoyle-router.com>
  * 
  *  This file is free software: you may copy, redistribute and/or modify it
  *  under the terms of the GNU General Public License as published by the
@@ -226,56 +226,45 @@ static void do_load(char* file, uint32_t max, unsigned char type)
 	{
 		unsigned char* data = NULL;
 		unsigned long data_length = 0;
-		if(strcmp(file, "/dev/null") == 0)
-		{
-			data = (unsigned char*)malloc(10);
-			if(data != NULL)
-			{
-				uint32_t* maxp = (uint32_t*)(data+1);
-				data_length = 3+sizeof(uint32_t);
-				data[0] = type;
-				*maxp = max;
-				data[ sizeof(uint32_t)+1 ] = ' ';
-				data[ sizeof(uint32_t)+1 ] = '\0';
-			}
-		}
-		else
+		char* file_data = NULL;
+		if(strcmp(file, "/dev/null") != 0)
 		{
 			FILE* in = fopen(file, "r");
 			if(in != NULL)
 			{
-				char* file_data = read_entire_file(in, 4096, &data_length);
+				file_data = (char*)read_entire_file(in, 4096, &data_length);
 				fclose(in);
-				if(file_data != NULL)
-				{
-					data_length = strlen(file_data) + sizeof(uint32_t)+2;
-					data = (unsigned char*)malloc(data_length);
-					if(data != NULL)
-					{
-						uint32_t* maxp = (uint32_t*)(data+1);
-						data[0] = type;
-						*maxp = max;
-						sprintf( (data+1+sizeof(uint32_t)),  "%s", file_data);
-					}
-					free(file_data);
-				}
 			}
 		}
-
-		if(data != NULL && data_length > 0)
+		if(file_data == NULL)
 		{
-			int sockfd = -1;
-			sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
-			if(sockfd >= 0)
+			file_data=strdup("");
+		}
+		
+		if(file_data != NULL)
+		{
+			data_length = strlen(file_data) + sizeof(uint32_t)+2;
+			data = (unsigned char*)malloc(data_length);
+			if(data != NULL)
 			{
-				setsockopt(sockfd, IPPROTO_IP, WEBMON_SET, data, data_length);
+				int sockfd = -1;
+				uint32_t* maxp = (uint32_t*)(data+1);
+				data[0] = type;
+				*maxp = max;
+				sprintf( (data+1+sizeof(uint32_t)),  "%s", file_data);
+			
+				sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+				if(sockfd >= 0)
+				{
+					setsockopt(sockfd, IPPROTO_IP, WEBMON_SET, data, data_length);
+					close(sockfd);
+				}
+				free(data);
 			}
-		}
-		if(data != NULL)
-		{
-			free(data);
+			free(file_data);
 		}
 	}
+
 }
 
 
@@ -388,7 +377,7 @@ void parse_ips_and_ranges(char* addr_str, struct ipt_webmon_info *info)
 				r.start = (uint32_t)sip.s_addr;
 				r.end   = (uint32_t)eip.s_addr;
 
-				if(info->num_exclude_ranges <  WEBMON_MAX_IP_RANGES  && ntohl(r.start) < ntohl(r.end) )
+				if(info->num_exclude_ranges <  WEBMON_MAX_IP_RANGES  && (unsigned long)ntohl(r.start) < (unsigned long)ntohl(r.end) )
 				{
 					(info->exclude_ranges)[ info->num_exclude_ranges ] = r;
 					info->num_exclude_ranges = info->num_exclude_ranges + 1;
