@@ -36,7 +36,7 @@
 #include <linux/netfilter_ipv4/ip_tables.h>
 #include <linux/netfilter_ipv4/ipt_webmon.h>
 
-#include "webmon_deps/tree_map.h"
+#include "tree_map.h"
 
 
 #include <linux/ktime.h>
