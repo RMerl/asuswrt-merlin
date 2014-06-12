@@ -33,7 +33,8 @@
  * we can use to check whether we need to deal with the new requirements
  * in pre-processor directives below
  */
-#include <iptables.h>  
+
+#include <xtables.h>
 #include <linux/netfilter_ipv4/ipt_webmon.h>
 
 #ifdef _XTABLES_H
@@ -128,13 +129,14 @@ static int parse(	int c,
 			char **argv,
 			int invert,
 			unsigned int *flags,
-#ifdef _XTABLES_H
+#ifdef XTABLES_VERSION
 			const void *entry,
+			struct xt_entry_match **match
 #else
 			const struct ipt_entry *entry,
 			unsigned int *nfcache,
-#endif			
 			struct ipt_entry_match **match
+#endif
 			)
 {
 	struct ipt_webmon_info *info = (struct ipt_webmon_info *)(*match)->data;
@@ -298,15 +300,31 @@ static void save(const struct ipt_ip *ip, const struct ipt_entry_match *match)
 	print_webmon_args(info);
 }
 
+
+
+
+#ifdef XTABLES_VERSION
+static struct xtables_match webmon = 
+{
+  .name = "webmon",
+  .version = XTABLES_VERSION,
+  .family = PF_INET,
+  .size = XT_ALIGN(sizeof(struct ipt_webmon_info)),
+  .userspacesize = XT_ALIGN(sizeof(struct ipt_webmon_info)),
+  .help = help,
+  .init = webmon_init,
+  .parse = parse,
+  .final_check = final_check,
+  .print = print,
+  .save = save,
+  .extra_opts = opts
+};
+#else
 static struct iptables_match webmon = 
 { 
 	.next		= NULL,
  	.name		= "webmon",
-	#ifdef XTABLES_VERSION_CODE
-		.version = XTABLES_VERSION,
-	#else
-		.version = IPTABLES_VERSION,
-	#endif
+	.version = IPTABLES_VERSION,
 	.size		= IPT_ALIGN(sizeof(struct ipt_webmon_info)),
 	.userspacesize	= IPT_ALIGN(sizeof(struct ipt_webmon_info)),
 	.help		= &help,
@@ -317,10 +335,15 @@ static struct iptables_match webmon =
 	.save		= &save,
 	.extra_opts	= opts
 };
+#endif
 
 void _init(void)
 {
-	register_match(&webmon);
+#ifdef XTABLES_VERSION
+  xtables_register_match(&webmon);
+#else
+  register_match(&webmon);
+#endif
 }
 
 
