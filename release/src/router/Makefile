@@ -304,7 +304,6 @@ obj-$(RTCONFIG_MEDIA_SERVER) += minidlna
 obj-$(RTCONFIG_MEDIA_SERVER) += libgdbm
 obj-$(RTCONFIG_MEDIA_SERVER) += mt-daapd
 #obj-$(RTCONFIG_MEDIA_SERVER) += mt-daapd-svn-1696
-#obj-$(RTCONFIG_MEDIA_SERVER) += mDNSResponder
 
 MEDIA_SERVER_STATIC=y
 
@@ -329,8 +328,7 @@ ifeq ($(or $(RTCONFIG_TIMEMACHINE),$(RTCONFIG_MDNS)),y)
 obj-$(RTCONFIG_TIMEMACHINE) += avahi-0.6.31
 obj-$(RTCONFIG_TIMEMACHINE) += expat-2.0.1
 else
-obj-$(RTCONFIG_MEDIA_SERVER) += avahi-0.6.31
-obj-$(RTCONFIG_MEDIA_SERVER) += expat-2.0.1
+obj-$(RTCONFIG_MEDIA_SERVER) += mDNSResponder
 endif
 
 #
@@ -2491,7 +2489,7 @@ openpam-clean:
 	@[ ! -f openpam/Makefile ] || $(MAKE) -C openpam clean
 	@rm -f openpam/stamp-h1
 
-openvpn/stamp-h1:
+openvpn/stamp-h1: lzo
 	cd openvpn && ./autogen.sh && \
 	export OPENSSL_CRYPTO_CFLAGS="-I$(TOP)/openssl/include"; \
 	export OPENSSL_CRYPTO_LIBS="-L$(TOP)/openssl -lcrypto"; \
@@ -3144,7 +3142,7 @@ norton${BCMEX}-install:
 	+$(MAKE) -C $(NORTON_DIR) install INSTALLDIR=$(INSTALLDIR)/norton${BCMEX}
 
 norton${BCMEX}-clean:
-	[ ! -f $(NORTEON_DIR)/Makefile ] || $(MAKE) -C $(NORTON_DIR) clean
+	[ ! -f $(NORTEON_DIR)/Makefile ] || -@$(MAKE) -C $(NORTON_DIR) clean
 
 .PHONY : email-3.1.3 email-3.1.3-clean
 email-3.1.3:
