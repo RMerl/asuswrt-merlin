@@ -1751,9 +1751,6 @@ struct nvram_tuple router_defaults[] = {
 	{ "ipv6_fw_rulelist",	""		},	// IPv6 allowed forward rules
 	{ "ipv6_ra_conf",	"noneset"	},	// address configuration from WAN router advertisement
 	{ "ipv6_dhcp6s_enable",	"1"		},	// DHCP6 Server for LAN
-	{ "ipv6_neighsol_drop", "1"		},	// Filter out neighbour solicitation flood on Comcast network
-	{ "ipv6_pd_vlifetime",	""		},	// The valid lifetime for the prefix obtained via DHCPv6-PD
-	{ "ipv6_pd_plifetime",	""		},	// The preferred lifetime for the prefix obtained via DHCPv6-PD
 
 	{ "web_redirect", 	"3"		},	// Redirect on NOLINK or NOINTERNET
 	{ "disiosdet",		"1"		},
