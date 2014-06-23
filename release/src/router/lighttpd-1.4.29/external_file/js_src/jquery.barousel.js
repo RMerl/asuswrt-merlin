@@ -6,7 +6,27 @@ www.juliendecaudin.com
 =============================*/
 
 (function ($) {
+	
+	$.fn.next = function(){
+		alert("next");
+	};
+	
+	$.fn.prev = function(){
+		alert("prev");
 		
+		var previousIndex;
+											
+        if (parseInt(settings.currentIndex) == 0) {
+        	previousIndex = parseInt(settings.totalItem) - 1;
+        } else {
+        	previousIndex = parseInt(settings.currentIndex) - 1;
+        }
+        
+        alert(previousIndex);
+        loadItem(settings, previousIndex);
+        settings.currentIndex = previousIndex;
+	};
+	
     $.fn.barousel = function (callerSettings) {
     	
         var settings = $.extend({
@@ -15,7 +35,6 @@ www.juliendecaudin.com
             contentLinksWrapper: null,
             navWrapper: '.barousel_nav',
             slideDuration: 3000, //duration of each slide in milliseconds
-            navType: 1, //1: boxes navigation; 2: prev/next navigation; 3: custom navigation
             fadeIn: 1, //fade between slides; activated by default
             fadeInSpeed: 500, //fade duration in milliseconds 
             manualCarousel: 0, //manual carousel if set to 1
@@ -51,7 +70,25 @@ www.juliendecaudin.com
 			resizeImage(settings, currentImage, settings.currentIndex);
 			//console.log("jquery.barousel->resize...settings.currentIndex="+settings.currentIndex);
 		});
-					  
+		
+		$(document).keydown(function(e) {
+			//- Esc
+			if (e.keyCode == 27) {
+				$(".barousel").remove();
+			}
+			else if(e.keyCode == 37){
+				//- left(prev) key				
+				if (settings.navFreeze == 0)			
+				prev(settings);
+			}
+			else if(e.keyCode == 39){
+				//- right(next) key
+				if (settings.navFreeze == 0)
+				next(settings);
+			}
+			 
+		});
+			  
         if (settings.imageWrapper.find('img[class*=intro]').length > 0) {
             settings.introActive = 1;
         }
@@ -59,32 +96,51 @@ www.juliendecaudin.com
 		//set the index of each image  
         settings.imageList.each(function (n) {
         	this.onload = function(e){
+        		
+        		settings.currentIndex = n;
+        		
 				settings.imageSize[settings.currentIndex] = { width:$(this).width(),
 															  height:$(this).height() };
-        			
+        		
+        		currentImage = $(settings.imageList[settings.currentIndex]);
+	
         		resizeImage(settings, $(this).get(0), settings.currentIndex); 
         			
-        		settings.onLoading = 0;
-        			
-        		currentImage = $(settings.imageList[settings.currentIndex]);
-        			
-        		if (settings.fadeIn == 0) {
-        			currentImage.show();
-        				
-        			if(settings.prevImage){
-			      		settings.prevImage.hide();
-		        	}
-        		}
-        		else{
-	        		settings.navFreeze = 1;
-			       	currentImage.fadeIn(settings.fadeInSpeed, function () {
-						if(settings.prevImage){
-							settings.prevImage.hide();	          	 
-							settings.prevImage.removeClass('previous');
-						}
-						settings.navFreeze = 0;	             
-			       	});
-	          	}
+        		currentImage.fadeIn(settings.fadeInSpeed, function () {
+	          		
+					if(settings.prevImage){
+						settings.prevImage.hide();	          	 
+						settings.prevImage.removeClass('previous');
+					}
+						
+			      	$(settings.contentList).hide();
+			      	
+			      	loadModuleContent(settings, n);
+			      	
+			      	//carousel functionnality (deactivated when the user click on an item)
+			       	if (settings.stopCarousel == 0) {
+			       		
+			           	settings.currentIndex = n;
+			           	
+			           	var nextIndex;
+			
+			           	if (settings.currentIndex == settings.totalItem - 1) {
+			               	nextIndex = 0;
+			           	} else {
+			               	nextIndex = parseInt(settings.currentIndex) + 1;
+			           	}
+			            
+			           	if (settings.manualCarousel == 0){
+			           		settings.timerCarousel = window.setTimeout(function(){
+			           			loadItem(settings, nextIndex);
+			           		}, settings.slideDuration);
+			       		}
+			       	}
+			       	
+			       	settings.onLoading = 0;
+			       	settings.navFreeze = 0;
+			       	showLoading(false);
+		       	});
         	};
          	this.index = n; 
         });
@@ -113,162 +169,137 @@ www.juliendecaudin.com
         }
 
         //build the navigation
-        if (settings.navType == 1) {
-        	//items navigation type
-            var strNavList = "<ul>";
-            settings.imageList.each(function (n) {
-            	var currentClass = "";
-                if (n == 0) currentClass = "current";
-                strNavList += "<li><a href='#' title='" + $(settings.contentList[n]).find('p.header').text() + "' class='" + currentClass + "'>&nbsp;</a></li>";
-            });
-            strNavList += "</ul>";
-            settings.navWrapper.append(strNavList);
-            settings.navList = settings.navWrapper.find('a'); //list of the items' nav link
-
-            //set the index of each nav link
-            settings.navList.each(function (n) { this.index = n; });
-
-        } 
-        else if (settings.navType == 2) {
-            var strNavList = "";
-            strNavList += "<div class='counter'><span class='counter_current'>1</span>/<span class='counter_total'>" + settings.totalItem + "</span></div>";
+		var strNavList = "";
+        strNavList += "<div class='counter'><span class='counter_current'>1</span>/<span class='counter_total'>" + settings.totalItem + "</span></div>";
                
-            if (settings.totalItem > 1){
-             	strNavList += "<div class='nav_btn nav_btn_icon prev transparent'><a href='#' title='prev'>&nbsp;</a></div>";
-             	strNavList += "<div class='nav_btn nav_btn_icon next transparent'><a href='#' title='next'>&nbsp;</a></div>";
-             	strNavList += "<div class='nav_btn_icon play transparent'><a href='#' title='play'>&nbsp;</a></div>";
-             	strNavList += "<div class='nav_btn_icon pause transparent'><a href='#' title='pause'>&nbsp;</a></div>";
-            }
+        if (settings.totalItem > 1){
+        	strNavList += "<div class='nav_btn nav_btn_icon prev transparent'><a href='#' title='prev'>&nbsp;</a></div>";
+            strNavList += "<div class='nav_btn nav_btn_icon next transparent'><a href='#' title='next'>&nbsp;</a></div>";
+            strNavList += "<div class='nav_btn_icon play transparent'><a href='#' title='play'>&nbsp;</a></div>";
+            strNavList += "<div class='nav_btn_icon pause transparent'><a href='#' title='pause'>&nbsp;</a></div>";
+		}
                 
-            strNavList += "<div class='nav_btn nav_btn_icon close transparent'><a href='#' title='close'>&nbsp;</a></div>";
+        strNavList += "<div class='nav_btn nav_btn_icon close transparent'><a href='#' title='close'>&nbsp;</a></div>";
                 
-            settings.navWrapper.append(strNavList);
-            settings.navList = settings.navWrapper.find('a'); //list of the items' nav link
+        settings.navWrapper.append(strNavList);
+        settings.navList = settings.navWrapper.find('a'); //list of the items' nav link
                 
-            $(".play").css("display", "block");
-            $(".pause").css("display", "none");
+        $(".play").css("display", "block");
+        $(".pause").css("display", "none");
                 
-        } 
-        else if (settings.navType == 3) {
-            //custom navigation [static build]
-            settings.navList = settings.navWrapper.find('a'); //list of the items' nav link
-            //set the index of each nav link
-            settings.navList.each(function (n) { this.index = n; });
-        }
+		//prev/next navigation type
+        settings.navList.each(function () {
+        	$(this).click(function () {
+            	if (settings.navFreeze == 0) {
+                	window.clearTimeout(settings.timerCarousel);
+                    settings.stopCarousel = 1;
 
-        //init the navigation click event
-        if (settings.navType == 1 || settings.navType == 3) {
-            //items navigation type
-            settings.navList.each(function (n) {
-            	$(this).click(function () {
-                	if (settings.navFreeze == 0) {
-                    	window.clearTimeout(settings.timerCarousel);
-                        settings.stopCarousel = 1;
-                        if (settings.currentIndex != n || settings.introActive == 1) {
-                        	loadItem(settings, n);
-                            settings.currentIndex = n;
-                        }
-                    }
-                    settings.introActive = 0;
-                    return false;
-                });
-            });
-        } 
-        else if (settings.navType == 2) {
-			//prev/next navigation type
-            settings.navList.each(function () {
-            	$(this).click(function () {
-                	if (settings.navFreeze == 0) {
-                    	window.clearTimeout(settings.timerCarousel);
-                       	settings.stopCarousel = 1;
-
-                       	if ($(this).parent().hasClass('prev')) {
-                       		var previousIndex;
-											
-                          	if (parseInt(settings.currentIndex) == 0) {
-                          		previousIndex = parseInt(settings.totalItem) - 1;
-                          	} else {
-                            	previousIndex = parseInt(settings.currentIndex) - 1;
-                          	}
-                          	loadItem(settings, previousIndex);
-                          	settings.currentIndex = previousIndex;
-                       } 
-                       else if ($(this).parent().hasClass('next')) {
-                          	var nextIndex;
-																
-                          	if (parseInt(settings.currentIndex) == (parseInt(settings.totalItem) - 1)) {
-                            	nextIndex = 0;
-                          	} else {
-                            	nextIndex = parseInt(settings.currentIndex) + 1;
-                          	}
-                          	loadItem(settings, nextIndex);
-                          	settings.currentIndex = nextIndex;
-                       } 
-                       else if ($(this).parent().hasClass('close')) {
-                            $(".barousel").remove();
-                       } 
-                       else if ($(this).parent().hasClass('play')) {
-                       		settings.manualCarousel = 0;
-                          	settings.stopCarousel = 0;
+                    if ($(this).parent().hasClass('prev')) {
+                    	prev(settings);
+                    } 
+                    else if ($(this).parent().hasClass('next')) {
+                    	next(settings);
+                    } 
+                    else if ($(this).parent().hasClass('close')) {
+                    	$(".barousel").remove();
+                    } 
+                    else if ($(this).parent().hasClass('play')) {
+                    	settings.manualCarousel = 0;
+                        settings.stopCarousel = 0;
                             	
-                          	$(".play").css("display", "none");
-                			$(".pause").css("display", "block");
+                        $(".play").css("display", "none");
+                		$(".pause").css("display", "block");
                 
-                          	var nextIndex;
+                        var nextIndex;
 											
-							if (settings.currentIndex == settings.totalItem - 1) {
-								nextIndex = 0;
-							} else {
-							   	nextIndex = parseInt(settings.currentIndex) + 1;
-							}
+						if (settings.currentIndex == settings.totalItem - 1) {
+							nextIndex = 0;
+						} else {
+						   	nextIndex = parseInt(settings.currentIndex) + 1;
+						}
 											        
-							if (settings.manualCarousel == 0){
-								var loadItemCall = function () { loadItem(settings, nextIndex); };
-								settings.timerCarousel = window.setTimeout(loadItemCall, settings.slideDuration);
-							}
-                       }
-                       else if ($(this).parent().hasClass('pause')) {
-                         	settings.manualCarousel = 1;
-                         	settings.stopCarousel = 1;
-                            	
-                         	$(".play").css("display", "block");
-                			$(".pause").css("display", "none");
-                       }
+						if (settings.manualCarousel == 0){
+							var loadItemCall = function () { loadItem(settings, nextIndex); };
+							settings.timerCarousel = window.setTimeout(loadItemCall, settings.slideDuration);
+						}
                     }
-                    settings.introActive = 0;
-                        
-                    return false;
-                });
-            });
+                    else if ($(this).parent().hasClass('pause')) {
+                    	settings.manualCarousel = 1;
+                        settings.stopCarousel = 1;
+                            	
+                        $(".play").css("display", "block");
+                		$(".pause").css("display", "none");
+                    }
+				}            
                 
-            settings.navWrapper.mousedown(function () {
-            	showHideNavBar(settings, true);
-            });
+                settings.introActive = 0;
+                return false;
+			});
+		});
                 
-            settings.navWrapper.mousemove(function () {                
-            	showHideNavBar(settings, true);
-            });
+		settings.navWrapper.mousedown(function () {
+        	showHideNavBar(settings, true);
+        });
+                
+        settings.navWrapper.mousemove(function () {                
+        	showHideNavBar(settings, true);
+        });
                	
-            settings.imageWrapper.mousemove(function () {                
-            	showHideNavBar(settings, true);
-            });
+        settings.imageWrapper.mousemove(function () {                
+        	showHideNavBar(settings, true);
+        });
                 
-            var showHideNavBarCall = function(){ showHideNavBar(settings, false); };
-            settings.timerHideNavBar = window.setInterval(showHideNavBarCall, settings.hideNavBarDuration);
-        }
-						
+        var showHideNavBarCall = function(){ showHideNavBar(settings, false); };
+        settings.timerHideNavBar = window.setInterval(showHideNavBarCall, settings.hideNavBarDuration);
+        					
         //start the carousel
         if (settings.manualCarousel == 0) {
-            var loadItemCall = function () { loadItem(settings, 1); };
-            settings.timerCarousel = window.setTimeout(loadItemCall, settings.slideDuration);
+           	var loadItemCall = function () { loadItem(settings, 1); };
+           	settings.timerCarousel = window.setTimeout(loadItemCall, settings.slideDuration);
         }
         else{
-            loadItem(settings, settings.startIndex, 1);
+           	loadItem(settings, settings.startIndex, 1);
         }
        	
         return this;
     };
-		
+	
+	var prev = function(settings){
+		settings.manualCarousel = 1;
+        settings.stopCarousel = 1;
+                           	
+        $(".play").css("display", "block");
+        $(".pause").css("display", "none");
+                			
+		var previousIndex;
+											
+        if (parseInt(settings.currentIndex) == 0) {
+         	previousIndex = parseInt(settings.totalItem) - 1;
+        } else {
+          	previousIndex = parseInt(settings.currentIndex) - 1;
+        }
+        loadItem(settings, previousIndex);
+        settings.currentIndex = previousIndex;
+	};
+	
+	var next = function(settings){
+		settings.manualCarousel = 1;
+        settings.stopCarousel = 1;
+                           	
+        $(".play").css("display", "block");
+        $(".pause").css("display", "none");
+        
+		var nextIndex;
+																
+        if (parseInt(settings.currentIndex) == (parseInt(settings.totalItem) - 1)) {
+        	nextIndex = 0;
+        } else {
+          	nextIndex = parseInt(settings.currentIndex) + 1;
+        }
+        loadItem(settings, nextIndex);
+        settings.currentIndex = nextIndex;
+	};
+	
 	var showHideNavBar = function(settings, bshow){
 		if(bshow){
 			$(settings.navWrapper).show();
@@ -313,19 +344,16 @@ www.juliendecaudin.com
 								
     var loadItem = function (settings, index, bStartImage) {
     		
-    		if( settings.onLoading == 1 ){
-    			return;
-    		}
-    		
+		showLoading(true);	
+    	
+		settings.onLoading = 1;
+    	settings.navFreeze = 1;
+
         //reset the nav link current state
-        if (settings.navType != 2) {
-            settings.navList.each(function (n) { $(this).removeClass('current'); });
-            $(settings.navList[index]).addClass('current');
-        }
-				
-				
-				
-        //Change the background image then display the new content
+        settings.navList.each(function (n) { $(this).removeClass('current'); });
+        $(settings.navList[index]).addClass('current');
+        
+		//Change the background image then display the new content
         var currentImage;
         if (settings.introActive == 1) {
             currentImage = $(settings.imageIntro);
@@ -333,79 +361,24 @@ www.juliendecaudin.com
             currentImage = $(settings.imageList[settings.currentIndex]);
         }
         
-        var nextImage = $(settings.imageList[index]);
+        currentImage.fadeOut( "fast", function() {
+    		
+    		if(bStartImage!=1){
+			    //- for clear memory
+    			currentImage.attr('src', '');
+			}
 				
-        if (!currentImage.hasClass('default')) { currentImage.attr('class', 'previous'); }
-        nextImage.attr('class', 'current');
-				
-				var already_load = 0;
-				
-				if(nextImage.attr('src')==''){
-					nextImage.hide();
-					settings.onLoading = 1;
-					nextImage.attr('src', nextImage.attr('path'));
-				}
-				else{
-					//- Already load
-					resizeImage(settings, settings.imageList[index], index);
-					already_load = 1;
-				}
-								
-				if(already_load==1){
-	        //fade-in effect
-		      if (settings.fadeIn == 0) {
-		          nextImage.show();
-		          if(bStartImage!=1) currentImage.hide();
-		          loadModuleContent(settings, index);
-		      } 
-		      else {
-		      		
-		          settings.navFreeze = 1;
-		          $(settings.contentList).hide();
-		          nextImage.fadeIn(settings.fadeInSpeed, function () {	          	 
-		          	 if(bStartImage!=1) currentImage.hide();	          	 
-		             currentImage.removeClass('previous');
-		             settings.navFreeze = 0;	             
-		          });
-		          
-		          $(settings.contentList).hide();
-		          
-		          if(bStartImage!=1)
-		          	settings.prevImage = currentImage;
-		          else
-		          	settings.prevImage = null;
-		             
-		      		loadModuleContent(settings, index);
-		      }
-				}
-				else{
-					if(bStartImage!=1)
-		      	settings.prevImage = currentImage;
-		      else
-		        settings.prevImage = null;
-		      
-		      $(settings.contentList).hide();
-		      loadModuleContent(settings, index);
-		    }
-	      	
-        //carousel functionnality (deactivated when the user click on an item)
-        if (settings.stopCarousel == 0) {
-            settings.currentIndex = index;
-            var nextIndex;
-
-            if (settings.currentIndex == settings.totalItem - 1) {
-                nextIndex = 0;
-            } else {
-                nextIndex = parseInt(settings.currentIndex) + 1;
-            }
-            
-            if (settings.manualCarousel == 0){
-            	var loadItemCall = function () { 
-            		loadItem(settings, nextIndex); 
-            	};
-            	settings.timerCarousel = window.setTimeout(loadItemCall, settings.slideDuration);
-          	}
-        }
+	        if (!currentImage.hasClass('default')) { currentImage.attr('class', 'previous'); }
+	    	
+			if(bStartImage!=1)
+			    settings.prevImage = currentImage;
+			else
+				settings.prevImage = null;
+			
+			var nextImage = $(settings.imageList[index]);	
+			nextImage.attr('class', 'current');
+			nextImage.attr('src', nextImage.attr('path'));
+  		});
     };
 
     var loadModuleContent = function (settings, index) {
@@ -426,9 +399,7 @@ www.juliendecaudin.com
         }
 				
         //update counter for previous/next nav
-        if (settings.navType == 2) {
-            $(settings.navWrapper).find('.counter_current').text(index + 1);
-        }
+        $(settings.navWrapper).find('.counter_current').text(index + 1);
     };
 
     var loadModuleContentAction = function (settings, index) {
@@ -442,4 +413,16 @@ www.juliendecaudin.com
         }
     };
 
+	var showLoading = function(bShow){
+    	if(bShow){
+    		var window_width = $(window).width();
+			var window_height = $(window).height();
+    		$(".barousel_loading").css("left", ( window_width - $(".barousel_loading").width() )/2);
+    		$(".barousel_loading").css("top", ( window_height - $(".barousel_loading").height() )/2);
+    		$(".barousel_loading").show();
+    	}
+    	else
+    		$(".barousel_loading").hide();
+    };
+	
 })(jQuery);

@@ -35,7 +35,8 @@
 <script>
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
+wan_proto_orig = '<% nvram_get("wan_proto"); %>';
+
 var wans_dualwan = '<% nvram_get("wans_dualwan"); %>';
 var nowWAN = '<% get_parameter("flag"); %>';
 
@@ -56,7 +57,7 @@ if(dualWAN_support && ( wans_dualwan.search("wan") >= 0 || wans_dualwan.search("
 <% wan_get_parameter(); %>
 
 var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
-var original_wan_type = wan_proto;
+var original_wan_type = wan_proto_orig;
 var original_wan_dhcpenable = parseInt('<% nvram_get("wan_dhcpenable_x"); %>');
 var original_dnsenable = parseInt('<% nvram_get("wan_dnsenable_x"); %>');
 var wan_unit_flag = '<% nvram_get("wan_unit"); %>';
@@ -109,7 +110,17 @@ function change_wan_unit(obj){
 	if(obj.options[obj.selectedIndex].text == "USB") {
 		document.form.current_page.value = "Advanced_Modem_Content.asp";
 	}else if(obj.options[obj.selectedIndex].text == "WAN"|| obj.options[obj.selectedIndex].text == "Ethernet LAN"){
-		return false;					
+		if(wans_dualwan == "wan lan" || wans_dualwan == "lan wan"){
+			if(obj.selectedIndex != wan_unit_flag){
+				document.form.wan_unit.value = obj.selectedIndex;
+			}	
+			else{ 
+				return false;
+			}
+		}
+		else{
+			return false;
+		}			
 	}
 
 	FormActions("apply.cgi", "change_wan_unit", "", "");
@@ -122,19 +133,18 @@ function genWANSoption(){
 		var wans_dualwan_NAME = wans_dualwan.split(" ")[i].toUpperCase();
 		if(wans_dualwan_NAME == "LAN")
 			wans_dualwan_NAME = "Ethernet LAN";
+			
 		document.form.wan_unit.options[i] = new Option(wans_dualwan_NAME, i);
 	}	
+	
 	document.form.wan_unit.selectedIndex = '<% nvram_get("wan_unit"); %>';
-
 	if(wans_dualwan.search(" ") < 0 || wans_dualwan.split(" ")[1] == 'none' || !dualWAN_support)
 		$("WANscap").style.display = "none";
 }
 
 function applyRule(){
-
 	if(validForm()){
 		showLoading();
-		
 		inputCtrl(document.form.wan_dhcpenable_x[0], 1);
 		inputCtrl(document.form.wan_dhcpenable_x[1], 1);
 		if(!document.form.wan_dhcpenable_x[0].checked){
@@ -153,7 +163,54 @@ function applyRule(){
 		if(document.form.web_redirect.value != "<% nvram_get("web_redirect"); %>")
 			document.form.action_script += ";restart_firewall";
 
+		// Turn CTF into level 1, and turn back to level 2 if there exists nvram ctf_fa_mode_close.
+		if(ctf.changeType() && ctf.getLevel() == 2 && ctf.level2_supprot){
+			FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
+		}
+
 		document.form.submit();	
+	}
+}
+
+var ctf = {
+	disable_force: '<% nvram_get("ctf_disable_force"); %>',
+	fa_mode_close: '<% nvram_get("ctf_fa_mode_close"); %>',
+	fa_mode: '<% nvram_get("ctf_fa_mode"); %>',
+	level2_supprot: ('<% nvram_get("ctf_fa_mode"); %>' == '') ? false : true,
+
+	changeType: function(){
+		if((document.form.wan_proto.value == 'dhcp' || document.form.wan_proto.value == 'static') && 
+		   (wan_proto_orig == "pppoe" || wan_proto_orig == "pptp" || wan_proto_orig == "l2tp"))
+			return true;
+		else if((document.form.wan_proto.value == "pppoe" || document.form.wan_proto.value == "pptp"	|| document.form.wan_proto.value == "l2tp") && 
+		   (wan_proto_orig == 'dhcp' || wan_proto_orig == 'static'))
+			return true;
+
+		return false;
+	},
+
+	getLevel: function(){
+		var curVal;
+
+		if(ctf.fa_mode_close != ''){
+			if(ctf.disable_force == 0 && ctf.fa_mode_close == 1)
+				curVal = 1;
+			else if(ctf.disable_force == 0 && ctf.fa_mode_close == 0)
+				curVal = 2;
+			else
+				curVal = 0;
+		}
+		else{
+			if(ctf.disable_force == 0 && ctf.fa_mode == 0)
+				curVal = 1;
+			else if(ctf.disable_force == 0 && ctf.fa_mode == 2)
+				curVal = 2;
+			else
+				curVal = 0;		
+		}
+
+		return curVal;
+
 	}
 }
 
@@ -181,52 +238,33 @@ function valid_IP(obj_name, obj_flag){
 			return true;
 		}
 		
-		if(ip_num > A_class_start && ip_num < A_class_end)
+		if(ip_num > A_class_start && ip_num < A_class_end){
+		   obj_name.value = ipFilterZero(ip_obj.value);
 			return true;
+		}
 		else if(ip_num > B_class_start && ip_num < B_class_end){
 			alert(ip_obj.value+" <#JS_validip#>");
 			ip_obj.focus();
 			ip_obj.select();
 			return false;
 		}
-		else if(ip_num > C_class_start && ip_num < C_class_end)
+		else if(ip_num > C_class_start && ip_num < C_class_end){
+			obj_name.value = ipFilterZero(ip_obj.value);
 			return true;
+		}
 		else{
 			alert(ip_obj.value+" <#JS_validip#>");
 			ip_obj.focus();
 			ip_obj.select();
 			return false;
-		}
-		
-		
+		}	
 }
 
 function validForm(){
 	if(!document.form.wan_dhcpenable_x[0].checked){// Set IP address by userself
 		if(!valid_IP(document.form.wan_ipaddr_x, "")) return false;  //WAN IP
 		if(!valid_IP(document.form.wan_gateway_x, "GW"))return false;  //Gateway IP		
-		
-		//Viz hold on this subnet issue cuz WAN setting hashighest prio 2013.01		
-		/*//WAN IP conflict with LAN ip subnet
-		if(matchSubnet2(document.form.wan_ipaddr_x.value, document.form.wan_netmask_x, document.form.lan_ipaddr.value, document.form.lan_netmask)){
-				document.form.wan_ipaddr_x.focus();
-				document.form.wan_ipaddr_x.select();
-				alert("<#IPConnection_x_WAN_LAN_conflict#>");
-				return false;
-		}
-						
-		//Gateway IP conflict with LAN ip subnet
-		var gateway_obj = document.form.wan_gateway_x;
-		var gateway_num = inet_network(gateway_obj.value);
-		if(gateway_num > 0 &&
-		   matchSubnet2(document.form.wan_gateway_x.value, document.form.wan_netmask_x, document.form.lan_ipaddr.value, document.form.lan_netmask)){
-				document.form.wan_gateway_x.focus();
-				document.form.wan_gateway_x.select();
-				alert("<#IPConnection_x_WAN_LAN_conflict#>");
-				return false;
-		}				
-		*/
-		
+
 		if(document.form.wan_gateway_x.value == document.form.wan_ipaddr_x.value){
 			document.form.wan_ipaddr_x.focus();
 			alert("<#IPConnection_warning_WANIPEQUALGatewayIP#>");
@@ -714,7 +752,7 @@ function pass_checked(obj){
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
 <input type="hidden" name="support_cdma" value="<% nvram_get("support_cdma"); %>">
 <input type="hidden" name="current_page" value="Advanced_WAN_Content.asp">
-<input type="hidden" name="next_page" value="">
+<input type="hidden" name="next_page" value="Advanced_WAN_Content.asp">
 <input type="hidden" name="group_id" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">

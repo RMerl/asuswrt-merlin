@@ -44,14 +44,18 @@ function wl_chanspec_list_change(){
 														wl_channel_list_5g[i] = wlextchannel_fourty(wl_channel_list_5g[i]);
 												}else if(country == "TW" && parseInt(wl_channel_list_5g[i]) >= 56 && parseInt(wl_channel_list_5g[i]) <= 64){	// belong to 40MHz
 														wl_channel_list_5g[i] = wlextchannel_fourty(wl_channel_list_5g[i]);
-												}else{	
+												}
+												else if(tmo_support && document.form.wl_nmode_x.value ==1){
+													wl_channel_list_5g[i] = wlextchannel_fourty(wl_channel_list_5g[i]);
+												}
+												else{	
 														wl_channel_list_5g[i] = wl_channel_list_5g[i]+"/80";												
 												}		
 										}
 										else{		// for 802.11n, RT-N66U
 											wl_channel_list_5g[i] = wlextchannel_fourty(wl_channel_list_5g[i]);									
 										}										
-								}								
+								}									
 						}
 						else if(bw_cap == "3"){	// [80 MHz]
 							$('wl_nctrlsb_field').style.display = "";

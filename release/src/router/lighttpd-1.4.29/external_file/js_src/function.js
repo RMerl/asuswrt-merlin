@@ -186,7 +186,7 @@ function download_folder(input){
 	var download_folder_list = "";
 	
 	if( input instanceof Array ){
-		var count = input.length;		
+		var count = input.length;
 		for(var i=0; i<count; i++){
 			download_folder_list += input[i];
 			if(i!=count-1) download_folder_list += ";";

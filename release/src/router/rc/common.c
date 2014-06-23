@@ -31,7 +31,6 @@
 #include <stdio.h>
 #include <net/if_arp.h>
 #include <time.h>
-#include <signal.h>
 #include <bcmnvram.h>
 #include <shutils.h>
 #include <sys/time.h>
@@ -62,6 +61,12 @@ in_addr_t inet_addr_(const char *cp)
 		return INADDR_ANY;
 	else
 		return a.s_addr;
+}
+
+inline int inet_equal(char *addr1, char *mask1, char *addr2, char *mask2)
+{
+	return ((inet_network(addr1) & inet_network(mask1)) ==
+		(inet_network(addr2) & inet_network(mask2)));
 }
 
 /* remove space in the end of string */

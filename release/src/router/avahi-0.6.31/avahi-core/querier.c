@@ -52,8 +52,8 @@ struct AvahiQuerier {
 void avahi_querier_free(AvahiQuerier *q) {
     assert(q);
 
-    AVAHI_LLIST_REMOVE(AvahiQuerier, queriers, q->interface->queriers, q);
-    avahi_hashmap_remove(q->interface->queriers_by_key, q->key);
+    AVAHI_LLIST_REMOVE(AvahiQuerier, queriers, q->interface->mdns.queriers, q);
+    avahi_hashmap_remove(q->interface->mdns.queriers_by_key, q->key);
 
     avahi_key_unref(q->key);
     avahi_time_event_free(q->time_event);
@@ -102,7 +102,7 @@ void avahi_querier_add(AvahiInterface *i, AvahiKey *key, struct timeval *ret_cti
     assert(i);
     assert(key);
 
-    if ((q = avahi_hashmap_lookup(i->queriers_by_key, key))) {
+    if ((q = avahi_hashmap_lookup(i->mdns.queriers_by_key, key))) {
 
         /* Someone is already browsing for records of this RR key */
         q->n_used++;
@@ -133,8 +133,8 @@ void avahi_querier_add(AvahiInterface *i, AvahiKey *key, struct timeval *ret_cti
     /* Schedule next queries */
     q->time_event = avahi_time_event_new(i->monitor->server->time_event_queue, avahi_elapse_time(&tv, q->sec_delay*1000, 0), querier_elapse_callback, q);
 
-    AVAHI_LLIST_PREPEND(AvahiQuerier, queriers, i->queriers, q);
-    avahi_hashmap_insert(i->queriers_by_key, q->key, q);
+    AVAHI_LLIST_PREPEND(AvahiQuerier, queriers, i->mdns.queriers, q);
+    avahi_hashmap_insert(i->mdns.queriers_by_key, q->key, q);
 
     /* Return the creation time. This is used for generating the
      * ALL_FOR_NOW event one second after the querier was initially
@@ -148,7 +148,7 @@ void avahi_querier_remove(AvahiInterface *i, AvahiKey *key) {
 
     /* There was no querier for this RR key, or it wasn't referenced
      * by anyone. */
-    if (!(q = avahi_hashmap_lookup(i->queriers_by_key, key)) || q->n_used <= 0)
+    if (!(q = avahi_hashmap_lookup(i->mdns.queriers_by_key, key)) || q->n_used <= 0)
         return;
 
     if ((--q->n_used) <= 0) {
@@ -175,7 +175,7 @@ static void remove_querier_callback(AvahiInterfaceMonitor *m, AvahiInterface *i,
     assert(i);
     assert(userdata);
 
-    if (i->announcing)
+    if (i->mdns.announcing)
         avahi_querier_remove(i, (AvahiKey*) userdata);
 }
 
@@ -198,7 +198,7 @@ static void add_querier_callback(AvahiInterfaceMonitor *m, AvahiInterface *i, vo
     assert(i);
     assert(cbdata);
 
-    if (i->announcing) {
+    if (i->mdns.announcing) {
         struct timeval tv;
         avahi_querier_add(i, cbdata->key, &tv);
 
@@ -230,7 +230,7 @@ int avahi_querier_shall_refresh_cache(AvahiInterface *i, AvahiKey *key) {
 
     /* Called by the cache maintainer */
 
-    if (!(q = avahi_hashmap_lookup(i->queriers_by_key, key)))
+    if (!(q = avahi_hashmap_lookup(i->mdns.queriers_by_key, key)))
         /* This key is currently not subscribed at all, so no cache
          * refresh is needed */
         return 0;
@@ -263,6 +263,6 @@ int avahi_querier_shall_refresh_cache(AvahiInterface *i, AvahiKey *key) {
 void avahi_querier_free_all(AvahiInterface *i) {
     assert(i);
 
-    while (i->queriers)
-        avahi_querier_free(i->queriers);
+    while (i->mdns.queriers)
+        avahi_querier_free(i->mdns.queriers);
 }

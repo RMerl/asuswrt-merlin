@@ -689,7 +689,7 @@ vsf_sysutil_set_lfp(int fd)
                           sizeof(lfp));
   if (retval != 0)
   {
-    ftp_dbg("setsockopt: lfp");
+    //ftp_dbg("setsockopt: lfp.\n");
   }
 }
 #else

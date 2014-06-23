@@ -83,7 +83,13 @@ libavahi_core_la_SOURCES = \
 	querier.c querier.h \
 	addr-util.h addr-util.c \
 	domain-util.h domain-util.c \
-	dns-srv-rr.h
+	dns-srv-rr.h \
+	llmnr-querier.c llmnr-querier.h \
+	llmnr-query-sched.c llmnr-query-sched.h \
+	verify.c verify.h \
+	llmnr-lookup.c llmnr-lookup.h \
+	llmnr-response.c llmnr-response.h \
+	llmnr-server.c 
 
 if HAVE_NETLINK
 libavahi_core_la_SOURCES += \

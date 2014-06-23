@@ -1,7 +1,7 @@
 /*
  * Routines for managing persistent storage of port mappings, etc.
  *
- * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: nvparse.c 406816 2013-06-10 22:14:46Z $
+ * $Id: nvparse.c 439346 2013-11-26 17:14:13Z $
  */
 
 #include <stdio.h>
@@ -103,7 +103,8 @@ get_autofw_port(int which, netconf_app_t *app)
 	snprintf(name, sizeof(name), "autofw_port%d", which);
 	if (!nvram_invmatch(name, ""))
 		return FALSE;
-	strncpy(value, nvram_get(name), sizeof(value));
+	strncpy(value, nvram_get(name), sizeof(value) - 1);
+	value[sizeof(value) - 1] = '\0';
 
 	/* Check for outbound port specification */
 	out_start = value;
@@ -191,10 +192,10 @@ get_autofw_port(int which, netconf_app_t *app)
 
 	/* Parse description */
 	if (desc)
-		strncpy(app->desc, desc, sizeof(app->desc));
+		strncpy(app->desc, desc, sizeof(app->desc) - 1);
 
 	/* Set interface name (match packets entering LAN interface) */
-	strncpy(app->match.in.name, nvram_safe_get("lan_ifname"), IFNAMSIZ);
+	strncpy(app->match.in.name, nvram_safe_get("lan_ifname"), sizeof(app->match.in.name) - 1);
 
 	/* Set LAN source port range (match packets from any source port) */
 	app->match.src.ports[1] = htons(0xffff);
@@ -312,6 +313,7 @@ get_forward_port(int which, netconf_nat_t *nat)
 	char name[] = "forward_portXXXXXXXXXX", value[1000];
 	char *wan_port0, *wan_port1, *lan_ipaddr, *lan_port0, *lan_port1, *proto;
 	char *enable, *desc;
+	char *nvram_get_ptr;
 
 	memset(nat, 0, sizeof(netconf_nat_t));
 
@@ -319,7 +321,11 @@ get_forward_port(int which, netconf_nat_t *nat)
 	snprintf(name, sizeof(name), "forward_port%d", which);
 	if (!nvram_invmatch(name, ""))
 		return FALSE;
-	strncpy(value, nvram_get(name), sizeof(value));
+	nvram_get_ptr = nvram_get(name);
+	if (strlen(nvram_get_ptr) >= sizeof(value))
+		return FALSE;
+	else
+		strncpy(value, nvram_get_ptr, sizeof(value));
 
 	/* Check for LAN IP address specification */
 	lan_ipaddr = value;
@@ -385,8 +391,10 @@ get_forward_port(int which, netconf_nat_t *nat)
 		nat->match.flags = NETCONF_DISABLED;
 
 	/* Parse description */
-	if (desc)
-		strncpy(nat->desc, desc, sizeof(nat->desc));
+	if (desc) {
+		strncpy(nat->desc, desc, sizeof(nat->desc) - 1);
+		nat->desc[sizeof(nat->desc) - 1] = '\0';
+	}
 	/* Set WAN source port range (match packets from any source port) */
 	nat->match.src.ports[1] = htons(0xffff);
 
@@ -530,15 +538,13 @@ valid_filter_client(const netconf_filter_t *start, const netconf_filter_t *end)
 		return FALSE;
 
 	/* Check day range */
-	if (start->match.days[0] < 0 || start->match.days[0] > 6 ||
-	    start->match.days[1] < 0 || start->match.days[1] > 6 ||
+	if (start->match.days[0] > 6 || start->match.days[1] > 6 ||
 	    start->match.days[0] != end->match.days[0] ||
 	    start->match.days[1] != end->match.days[1])
 		return FALSE;
 
 	/* Check time range */
-	if (start->match.secs[0] < 0 || start->match.secs[0] >= (24*60*60) ||
-	    start->match.secs[1] < 0 || start->match.secs[1] >= (24*60*60) ||
+	if (start->match.secs[1] >= (24*60*60) || start->match.secs[0] >= (24*60*60) ||
 	    start->match.secs[0] != end->match.secs[0] ||
 	    start->match.secs[1] != end->match.secs[1])
 		return FALSE;
@@ -553,6 +559,7 @@ get_filter_client(int which, netconf_filter_t *start, netconf_filter_t *end)
 	char *lan_ipaddr0, *lan_ipaddr1, *lan_port0, *lan_port1, *proto;
 	char *day_start, *day_end, *sec_start, *sec_end;
 	char *enable, *desc;
+	char *nvram_get_ptr;
 
 	memset(start, 0, sizeof(netconf_filter_t));
 	memset(end, 0, sizeof(netconf_filter_t));
@@ -564,7 +571,11 @@ get_filter_client(int which, netconf_filter_t *start, netconf_filter_t *end)
 	snprintf(name, sizeof(name), "filter_client%d", which);
 	if (!nvram_invmatch(name, ""))
 		return FALSE;
-	strncpy(value, nvram_get(name), sizeof(value));
+	nvram_get_ptr = nvram_get(name);
+	if (strlen(nvram_get_ptr) >= sizeof(value))
+		return FALSE;
+	else
+		strncpy(value, nvram_get_ptr, sizeof(value));
 
 	/* Check for port specification */
 	lan_port0 = value;
@@ -662,12 +673,18 @@ get_filter_client(int which, netconf_filter_t *start, netconf_filter_t *end)
 
 	/* Parse description */
 	if (desc) {
-		strncpy(start->desc, desc, sizeof(start->desc));
-		strncpy(end->desc, desc, sizeof(end->desc));
+		strncpy(start->desc, desc, sizeof(start->desc) - 1);
+		start->desc[sizeof(start->desc) - 1] = '\0';
+		strncpy(end->desc, desc, sizeof(end->desc) - 1);
+		end->desc[sizeof(end->desc) - 1] = '\0';
 	}
 
 	/* Set interface name (match packets entering LAN interface) */
-	strncpy(start->match.in.name, nvram_safe_get("lan_ifname"), IFNAMSIZ);
+	nvram_get_ptr = nvram_get("lan_ifname");
+	if (strlen(nvram_get_ptr) >= sizeof(start->match.in.name))
+		return FALSE;
+	else
+		strncpy(start->match.in.name, nvram_get_ptr, sizeof(start->match.in.name));
 
 	/* Set source port range (match packets from any source port) */
 	start->match.src.ports[1] = end->match.src.ports[1] = htons(0xffff);
@@ -915,7 +932,6 @@ del_filter_url(int which)
 #endif /* __CONFIG_URLFILTER__ */
 #endif	/* __CONFIG_NAT__ */
 
-#ifdef TRAFFIC_MGMT
 /*
  * Parser for DWM filter, convert string to binary structure
  * string format: prot, dscp, priority, favored, enable
@@ -924,43 +940,47 @@ del_filter_url(int which)
 bool
 get_trf_mgmt_dwm(char *prefix, int which, netconf_trmgmt_t *trm_dwm)
 {
-        char name[] = "wlx_tm_dwmXXXXX";
-        char value[64];
-        char *dscp, *prio, *favored, *enabled;
+	char name[] = "wlx_tm_dwmXXXXX";
+	char value[64];
+	char *dscp, *prio, *favored, *enabled;
+	char *nvram_ret;
 
-        bzero(trm_dwm, sizeof(netconf_trmgmt_t));
+	bzero(trm_dwm, sizeof(netconf_trmgmt_t));
 
-        snprintf(name, sizeof(name), "%stm_dwm%d", prefix, which);
-        if (!nvram_invmatch(name, ""))
-                return FALSE;
-        strncpy(value, nvram_get(name), sizeof(value));
+	snprintf(name, sizeof(name), "%stm_dwm%d", prefix, which);
+	if (!nvram_invmatch(name, ""))
+		return FALSE;
+	nvram_ret = nvram_get(name);
+	if (strlen(nvram_ret) >= sizeof(value))
+		return FALSE;
+	strncpy(value, nvram_ret, sizeof(value)); /* copy including trailing NULL */
 
-        /* Parse dscp */
-        prio = value;
-        dscp = strsep(&prio, ",");
-        if (!prio)
-                return FALSE;
-        trm_dwm->match.dscp = atoi(dscp);
+	/* Parse dscp */
+	prio = value;
+	dscp = strsep(&prio, ",");
+	if (!prio)
+		return FALSE;
+	trm_dwm->match.dscp = atoi(dscp);
 
-        /* Parse priority */
-        favored = prio;
-        prio = strsep(&favored, ",");
-        if (!favored)
-                return FALSE;
-        trm_dwm->prio = atoi(prio);
+	/* Parse priority */
+	favored = prio;
+	prio = strsep(&favored, ",");
+	if (!favored)
+		return FALSE;
+	trm_dwm->prio = atoi(prio);
 
-        /* Parse favored */
-        enabled = favored;
-        favored = strsep(&enabled, ",");
-        if (!enabled)
-                return FALSE;
-        trm_dwm->favored = atoi(favored);
+	/* Parse favored */
+	enabled = favored;
+	favored = strsep(&enabled, ",");
+	if (!enabled)
+		return FALSE;
+	trm_dwm->favored = atoi(favored);
 
-        /* Parse enable */
-        if (*enabled == '0')
-                trm_dwm->match.flags = NETCONF_DISABLED;
+	/* Parse enable */
+	if (*enabled == '0')
+		trm_dwm->match.flags = NETCONF_DISABLED;
 
-        return TRUE;
+	return TRUE;
 }
 
 /*
@@ -974,13 +994,18 @@ get_trf_mgmt_port(char *prefix, int which, netconf_trmgmt_t *trm)
 	char *proto;
 	char *enable;
 	char *sport, *dport, *macaddr, *prio, *flags;
+	char *nvram_ptr;
 
 	memset(trm, 0, sizeof(netconf_trmgmt_t));
 
 	snprintf(name, sizeof(name), "%stm%d", prefix, which);
 	if (!nvram_invmatch(name, ""))
 		return FALSE;
-	strncpy(value, nvram_get(name), sizeof(value));
+	nvram_ptr =  nvram_get(name);
+	if (strlen(nvram_ptr) >= sizeof(value))
+		return FALSE;
+	strncpy(value, nvram_ptr, sizeof(value) - 1);
+	value[sizeof(value) - 1] = '\0';
 
 	/* Parse protocol */
 	sport = value;
@@ -1042,37 +1067,37 @@ get_trf_mgmt_port(char *prefix, int which, netconf_trmgmt_t *trm)
 bool
 set_trf_mgmt_dwm(char *prefix, int which, const netconf_trmgmt_t *trm_dwm)
 {
-        char name[] = "wlx_tm_dwmXXXXX";
-        char value[64];
-        char *cur = value;
-        int len;
+	char name[] = "wlx_tm_dwmXXXXX";
+	char value[64];
+	char *cur = value;
+	int len;
 
-        /* Set prot,dscp,prio,favored,enabled */
-        snprintf(name, sizeof(name), "%stm_dwm%d", prefix, which);
-        len = sizeof(value);
+	/* Set prot,dscp,prio,favored,enabled */
+	snprintf(name, sizeof(name), "%stm_dwm%d", prefix, which);
+	len = sizeof(value);
 
-        /* Set DSCP */
-        cur = safe_snprintf(cur, &len, "%d", trm_dwm->match.dscp);
-        cur = safe_snprintf(cur, &len, ",");
+	/* Set DSCP */
+	cur = safe_snprintf(cur, &len, "%d", trm_dwm->match.dscp);
+	cur = safe_snprintf(cur, &len, ",");
 
-        /* Set Priority */
-        cur = safe_snprintf(cur, &len, "%d", trm_dwm->prio);
-        cur = safe_snprintf(cur, &len, ",");
+	/* Set Priority */
+	cur = safe_snprintf(cur, &len, "%d", trm_dwm->prio);
+	cur = safe_snprintf(cur, &len, ",");
 
-        /* Set Favored */
-        cur = safe_snprintf(cur, &len, "%d", trm_dwm->favored);
-        cur = safe_snprintf(cur, &len, ",");
+	/* Set Favored */
+	cur = safe_snprintf(cur, &len, "%d", trm_dwm->favored);
+	cur = safe_snprintf(cur, &len, ",");
 
-        /* Set enable */
-        if (trm_dwm->match.flags & NETCONF_DISABLED)
-                cur = safe_snprintf(cur, &len, "0");
-        else
-                cur = safe_snprintf(cur, &len, "1");
+	/* Set enable */
+	if (trm_dwm->match.flags & NETCONF_DISABLED)
+		cur = safe_snprintf(cur, &len, "0");
+	else
+		cur = safe_snprintf(cur, &len, "1");
 
-        if (nvram_set(name, value))
-                return FALSE;
+	if (nvram_set(name, value))
+		return FALSE;
 
-        return TRUE;
+	return TRUE;
 }
 
 /*
@@ -1134,10 +1159,10 @@ set_trf_mgmt_port(char *prefix, int which, const netconf_trmgmt_t *trm)
 bool
 del_trf_mgmt_dwm(char *prefix, int which)
 {
-        char name[] = "wlx_tm_dwmXXXXX";
+	char name[] = "wlx_tm_dwmXXXXX";
 
-        snprintf(name, sizeof(name), "%stm_dwm%d", prefix, which);
-        return (nvram_unset(name) == 0) ? TRUE : FALSE;
+	snprintf(name, sizeof(name), "%stm_dwm%d", prefix, which);
+	return (nvram_unset(name) == 0) ? TRUE : FALSE;
 }
 
 bool
@@ -1148,7 +1173,6 @@ del_trf_mgmt_port(char *prefix, int which)
 	snprintf(name, sizeof(name), "%stm%d", prefix, which);
 	return (nvram_unset(name) == 0) ? TRUE : FALSE;
 }
-#endif /* TRAFFIC_MGMT */
 
 /*
  * wl_wds<N> is authentication protocol dependant.
@@ -1162,7 +1186,8 @@ get_wds_wsec(int unit, int which, char *mac, char *role,
 	char name[] = "wlXXXXXXX_wdsXXXXXXX", value[1000], *next;
 
 	snprintf(name, sizeof(name), "wl%d_wds%d", unit, which);
-	strncpy(value, nvram_safe_get(name), sizeof(value));
+	strncpy(value, nvram_safe_get(name), sizeof(value) - 1);
+	value[sizeof(value) - 1] = '\0';
 	next = value;
 
 	/* separate mac */
@@ -1473,6 +1498,7 @@ convert_autofw_port(void)
 	netconf_app_t app;
 	bool valid;
 	int i;
+	char *nvram_get_ptr;
 
 	/* Maximum number of autofw_port entries was 10 */
 	for (i = 0; i < 10; i++) {
@@ -1482,7 +1508,11 @@ convert_autofw_port(void)
 		snprintf(name, sizeof(name), "autofw_port%d", i);
 		if (!nvram_invmatch(name, ""))
 			goto fail;
-		strncpy(value, nvram_get(name), sizeof(value));
+		nvram_get_ptr =  nvram_get(name);
+		if (strlen(nvram_get_ptr) >= sizeof(value))
+			goto fail;
+		else
+			strncpy(value, nvram_get_ptr, sizeof(value));
 
 		/* Check for outbound port specification */
 		out_start = value;
@@ -1572,11 +1602,17 @@ convert_autofw_port(void)
 			app.match.flags = NETCONF_DISABLED;
 
 		/* Parse description */
-		if (desc)
-			strncpy(app.desc, desc, sizeof(app.desc));
+		if (desc) {
+			strncpy(app.desc, desc, sizeof(app.desc) - 1);
+			app.desc[sizeof(app.desc) - 1] = '\0';
+		}
 
 		/* Set interface name (match packets entering LAN interface) */
-		strncpy(app.match.in.name, nvram_safe_get("lan_ifname"), IFNAMSIZ);
+		nvram_get_ptr =  nvram_safe_get("lan_ifname");
+		if (strlen(nvram_get_ptr) >= sizeof(app.match.in.name))
+			goto fail;
+		else
+			strncpy(app.match.in.name, nvram_get_ptr, sizeof(app.match.in.name));
 
 		/* Set LAN source port range (match packets from any source port) */
 		app.match.src.ports[1] = htons(0xffff);

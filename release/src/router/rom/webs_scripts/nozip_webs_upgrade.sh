@@ -7,13 +7,19 @@ wget_options="-q -t 2 -T $wget_timeout"
 nvram set webs_state_upgrade=0 # INITIALIZING
 nvram set webs_state_error=0
 
+touch /tmp/update_url
+update_url=`cat /tmp/update_url`
+#update_url="http://192.168.123.198"
+
 firmware_file=`nvram get productid`_`nvram get webs_state_info`_un.zip
 
 # get firmware zip file
 forsq=`nvram get apps_sq`
 urlpath=`nvram get webs_state_url`
 echo 3 > /proc/sys/vm/drop_caches
-if [ "$forsq" == "1" ]; then
+if [ "$update_url" != "" ]; then
+	wget $wget_options ${update_url}/$firmware_file -O /tmp/linux.trx
+elif [ "$forsq" == "1" ]; then
 	echo "---- wget fw sq ----" >> /tmp/webs_upgrade.log
 	wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ/$firmware_file -O /tmp/linux.trx
 elif [ "$urlpath" == "" ]; then

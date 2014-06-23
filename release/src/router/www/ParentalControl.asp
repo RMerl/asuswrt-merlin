@@ -6,7 +6,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
-<title><#Web_Title#> - <#Parental_Control#></title>
+<title id="web_title"><#Web_Title#> - <#Parental_Control#></title>
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
 <link rel="stylesheet" type="text/css" href="ParentalControl.css">
@@ -23,8 +23,6 @@
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/calendar/jquery-ui.js"></script> 
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
-<script type="text/javascript" src="tmmenu.js"></script>
-<script type="text/javascript" src="nameresolv.js"></script>
 <style>
   #selectable .ui-selecting { background: #FECA40; }
   #selectable .ui-selected { background: #F39814; color: white; }
@@ -59,6 +57,33 @@
 	border-bottom:solid 1px black;
 	border-right:solid 1px black;
 }
+
+#switch_menu{
+	text-align:right
+}
+#switch_menu span{
+	/*border:1px solid #222;*/
+	
+	border-radius:4px;
+	font-size:16px;
+	padding:3px;
+}
+/*#switch_menu span:hover{
+	box-shadow:0px 0px 5px 3px white;
+	background-color:#97CBFF;
+}*/
+.click:hover{
+	box-shadow:0px 0px 5px 3px white;
+	background-color:#97CBFF;
+}
+.clicked{
+	background-color:#2894FF;
+	box-shadow:0px 0px 5px 3px white;
+
+}
+.click{
+	background:#8E8E8E;
+}
 </style>
 <script>
 
@@ -77,7 +102,6 @@ var arls = [<% get_arl_table(); %>];		// [[MAC, port, x, x], ...]
 var ipmonitor = [<% get_static_client(); %>];	// [[IP, MAC, DeviceName, Type, http, printer, iTune], ...]
 var networkmap_fullscan = '<% nvram_match("networkmap_fullscan", "0", "done"); %>'; //2008.07.24 Add.  1 stands for complete, 0 stands for scanning.;
 var clients_info = getclients();
-var client_list_array = '<% get_client_detail_info(); %>';
 
 var MULTIFILTER_ENABLE = '<% nvram_get("MULTIFILTER_ENABLE"); %>'.replace(/&#62/g, ">");
 var MULTIFILTER_MAC = '<% nvram_get("MULTIFILTER_MAC"); %>'.replace(/&#62/g, ">");
@@ -189,6 +213,17 @@ function register_event(){
 
 function initial(){
 	show_menu();
+	if(bwdpi_support){
+		//show_inner_tab();
+		$('content_title').innerHTML = "AiProtection - Time Limits";
+		$('desc_title').innerHTML = "Time Limits allows you to set the time limit for a client's network usage. To use Time Limits:";
+		$('guest_image').src = "/images/New_ui/TimeLimits.png";
+		$('web_title').innerHTML = "<#Web_Title#> - Time Limited";
+		$('switch_menu').style.display = "";
+	}
+	
+	
+		
 	show_footer();
 	init_array(array);
 	init_cookie();
@@ -209,7 +244,7 @@ function initial(){
 	else
 		showhide("list_table",0);
 		
-	count_time();		
+	count_time();
 }
 
 /*------------ Mouse event of fake LAN IP select menu {-----------------*/
@@ -221,28 +256,27 @@ function setClientIP(devname, macaddr){
 }
 
 function showLANIPList(){
-	var code = "";
-	var show_name = "";
-	var client_list_array = '<% get_client_detail_info(); %>';	
-	var client_list_row = client_list_array.split('<');
+	var htmlCode = "";
+	for(var i=0; i<clientList.length;i++){
+		var clientObj = clientList[clientList[i]];
 
-	for(var i = 1; i < client_list_row.length; i++){
-		var client_list_col = client_list_row[i].split('>');
-		show_name = hostnamecache[client_list_col[2]];
-		client_list_col[1] = show_name;
+		if(clientObj.ip == "offline") clientObj.ip = "";
+		if(clientObj.name.length > 30) clientObj.name = clientObj.name.substring(0, 28) + "..";
 
-		if(client_list_col[1])
-			code += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\''+client_list_col[1]+'\', \''+client_list_col[3]+'\');"><strong>'+client_list_col[2]+'</strong> ';
-		else
-			code += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\''+client_list_col[3]+'\', \''+client_list_col[3]+'\');"><strong>'+client_list_col[2]+'</strong> ';
-			
-		if(show_name && show_name.length > 0)
-			code += '('+show_name+')';
-		code += ' </div></a>';
+		htmlCode += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\'';
+		htmlCode += clientObj.name;
+		htmlCode += '\', \'';
+		htmlCode += clientObj.mac;
+		htmlCode += '\');"><strong>';
+		htmlCode += clientObj.name;
+		htmlCode += '</strong></div></a><!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
 	}
-	
-	code +='<!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
-	$("ClientList_Block_PC").innerHTML = code;
+
+	$("ClientList_Block_PC").innerHTML = htmlCode;
+}
+
+function show_custome_name(){
+
 }
 
 function pullLANIPList(obj){
@@ -586,7 +620,6 @@ function select_all(){
 	}
 }
 
-
 function select_all_day(day){
 	var check_flag = 0
 	day = day.substring(4,5);
@@ -866,7 +899,28 @@ function genEnableArray_main(j, obj){
                         MULTIFILTER_ENABLE += ">";
         }       
 }
+
+function show_inner_tab(){
+	var code = "";
+	if(document.form.current_page.value == "ParentalControl.asp"){		
+		code += '<span class="clicked">Time Limits</span>';
+		code += '<a href="ParentalControl_WebProtector.asp">';
+		code += '<span style="margin-left:10px" class="click">Web & App Restriction</span>';
+		code += '</a>';
+	}
+	else{
+		code += '<a href="ParentalControl_WebProtector.asp">';
+		code += '<span class="click">Time Limits</span>';
+		code += '</a>';		
+		code += '<span style="margin-left:10px" class="clicked">Web & App Restriction</span>';	
+	}
+	
+	$('switch_menu').innerHTML = code;
+}
 </script>
+
+
+
 </head>
 
 <body onload="initial();" onunload="unload_body();" onselectstart="return false;">
@@ -911,8 +965,28 @@ function genEnableArray_main(j, obj){
 	<tr>
 		<td bgcolor="#4D595D" valign="top">
 		<div>&nbsp;</div>
-		<div class="formfonttitle"><#Parental_Control#></div>
-		<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+		<div>
+			<table width="730px">
+				<tr>
+					<td align="left">
+						<span id="content_title" class="formfonttitle"><#Parental_Control#></span>
+					</td>				
+					<td>
+						<div id="switch_menu" style="margin:-20px 0px 0px 232px;display:none;">
+							<a href="ParentalControl_WebProtector.asp">
+								<div style="background-image:url('images/New_ui/left-light.png');width:173px;height:40px;">
+									<div style="text-align:center;padding-top:9px;color:#FFFFFF;font-size:14px">Web & Apps Restrictions</div>
+								</div>
+							</a>
+							<div style="background-image:url('images/New_ui/right-dark.png');width:101px;height:40px;margin:-40px 0px 0px 173px;">
+								<div style="text-align:center;padding-top:9px;color:#93A9B1;font-size:14px">Time Limits</div>
+							</div>
+						</div>
+					<td>
+				</tr>
+			</table>
+			<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+		</div>
 		<div id="PC_desc">
 			<table width="700px" style="margin-left:25px;">
 				<tr>
@@ -921,7 +995,7 @@ function genEnableArray_main(j, obj){
 					</td>
 					<td>&nbsp;&nbsp;</td>
 					<td style="font-style: italic;font-size: 14px;">
-						<span><#ParentalCtrl_Desc#></span>
+						<span id="desc_title"><#ParentalCtrl_Desc#></span>
 						<ol>	
 							<li><#ParentalCtrl_Desc1#></li>
 							<li><#ParentalCtrl_Desc2#></li>

@@ -355,6 +355,11 @@ struct sk_buff {
 #if defined(HNDCTF) || defined(CTFPOOL)
 	__u32			pktc_flags;
 #endif
+#ifdef HNDCTF
+#ifdef RTCONFIG_BWDPI
+	void			*ctf_ipc_txif;
+#endif
+#endif
 #ifdef BCMFA
 #define BCM_FA_INVALID_IDX_VAL	0xFFF00000
 	__u32                   napt_idx;

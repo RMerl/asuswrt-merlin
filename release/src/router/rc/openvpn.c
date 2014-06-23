@@ -72,8 +72,7 @@ void start_vpnclient(int clientNum)
 
 	vpnlog(VPN_LOG_INFO,"VPN GUI client backend starting...");
 
-	sprintf(&buffer[0], "vpnclient%d", clientNum);
-	if ( (pid = pidof(&buffer[0])) >= 0 )
+	if ( (pid = pidof(&buffer[6])) >= 0 )
 	{
 		vpnlog(VPN_LOG_NOTE, "VPN Client %d already running...", clientNum);
 		vpnlog(VPN_LOG_INFO,"PID: %d", pid);
@@ -449,10 +448,10 @@ void start_vpnclient(int clientNum)
 	{
 		vpnlog(VPN_LOG_EXTRA,"Adding cron job");
 		argv[0] = "cru";
-		argv[1] = "a";	
+		argv[1] = "a";
 		sprintf(&buffer[0], "CheckVPNClient%d", clientNum);
 		argv[2] = &buffer[0];
-		sprintf(&buffer[strlen(&buffer[0])+1], "*/%d * * * * service vpnclient%d start", nvi, clientNum);
+		sprintf(&buffer[strlen(&buffer[0])+1], "*/%d * * * * service start_vpnclient%d", nvi, clientNum);
 		argv[3] = &buffer[strlen(&buffer[0])+1];
 		argv[4] = NULL;
 		_eval(argv, NULL, 0, NULL);
@@ -485,7 +484,7 @@ void stop_vpnclient(int clientNum)
 	// Remove cron job
 	vpnlog(VPN_LOG_EXTRA,"Removing cron job");
 	argv[0] = "cru";
-	argv[1] = "d";	
+	argv[1] = "d";
 	sprintf(&buffer[0], "CheckVPNClient%d", clientNum);
 	argv[2] = &buffer[0];
 	argv[3] = NULL;
@@ -579,8 +578,7 @@ void start_vpnserver(int serverNum)
 
 	vpnlog(VPN_LOG_INFO,"VPN GUI server backend starting...");
 
-	sprintf(&buffer[0], "vpnserver%d", serverNum);
-	if ( (pid = pidof(&buffer[0])) >= 0 )
+	if ( (pid = pidof(&buffer[6])) >= 0 )
 	{
 		vpnlog(VPN_LOG_NOTE, "VPN Server %d already running...", serverNum);
 		vpnlog(VPN_LOG_INFO,"PID: %d", pid);
@@ -727,7 +725,7 @@ void start_vpnserver(int serverNum)
 	else if ( cryptMode == SECRET )
 	{
 		fprintf(fp_client, "mode p2p\n");
-		
+
 		if ( ifType == TUN )
 		{
 			sprintf(&buffer[0], "vpn_server%d_local", serverNum);
@@ -815,6 +813,8 @@ void start_vpnserver(int serverNum)
 			sprintf(&buffer[0], "vpn_server%d_ccd_excl", serverNum);
 			if ( nvram_get_int(&buffer[0]) )
 				fprintf(fp, "ccd-exclusive\n");
+			else
+				fprintf(fp, "duplicate-cn\n");
 
 			sprintf(&buffer[0], "/etc/openvpn/server%d/ccd", serverNum);
 			mkdir(&buffer[0], 0700);
@@ -891,6 +891,8 @@ void start_vpnserver(int serverNum)
 
 			vpnlog(VPN_LOG_EXTRA,"CCD processing complete");
 		}
+		else
+			fprintf(fp, "duplicate-cn\n");
 
 		sprintf(&buffer[0], "vpn_server%d_pdns", serverNum);
 		if ( nvram_get_int(&buffer[0]) )
@@ -943,6 +945,7 @@ void start_vpnserver(int serverNum)
 			fprintf(fp, "duplicate-cn\n");
 		}
 
+		fprintf(fp_client, "ns-cert-type server\n");
 		//sprintf(&buffer[0], "vpn_crt_server%d_ca", serverNum);
 		//if ( !nvram_is_empty(&buffer[0]) )
 			fprintf(fp, "ca ca.crt\n");
@@ -1121,7 +1124,7 @@ void start_vpnserver(int serverNum)
 		// Only do this if we do not have both userauth and useronly enabled at the same time
 		if ( !(userauth && useronly) ) {
 			/*
-			   See if stored client cert was signed with our stored CA.  If not, it means 
+			   See if stored client cert was signed with our stored CA.  If not, it means
 			   the CA was changed by the user and the current client crt/key no longer match,
 			   so we should not insert them in the exported client ovp file.
 			*/
@@ -1227,7 +1230,6 @@ void start_vpnserver(int serverNum)
 	vpnlog(VPN_LOG_EXTRA,"Done writing certs/keys");
 	nvram_commit();
 
-	fprintf(fp_client, "ns-cert-type server\n");
 	fprintf(fp_client, "resolv-retry infinite\n");
 	fprintf(fp_client, "nobind\n");
 	fclose(fp_client);
@@ -1298,14 +1300,22 @@ void start_vpnserver(int serverNum)
 	{
 		vpnlog(VPN_LOG_EXTRA,"Adding cron job");
 		argv[0] = "cru";
-		argv[1] = "a";	
+		argv[1] = "a";
 		sprintf(&buffer[0], "CheckVPNServer%d", serverNum);
 		argv[2] = &buffer[0];
-		sprintf(&buffer[strlen(&buffer[0])+1], "*/%d * * * * service vpnserver%d start", nvi, serverNum);
+		sprintf(&buffer[strlen(&buffer[0])+1], "*/%d * * * * service start_vpnserver%d", nvi, serverNum);
 		argv[3] = &buffer[strlen(&buffer[0])+1];
 		argv[4] = NULL;
 		_eval(argv, NULL, 0, NULL);
 		vpnlog(VPN_LOG_EXTRA,"Done adding cron job");
+	}
+
+	if ( cryptMode == SECRET || cryptMode == CUSTOM)
+	{
+		sprintf(&buffer[0], "vpn_server%d_state", serverNum);
+		nvram_set(&buffer[0], "2");	//running
+		sprintf(&buffer[0], "vpn_server%d_errno", serverNum);
+		nvram_set(&buffer[0], "0");
 	}
 
 #ifdef LINUX26
@@ -1334,7 +1344,7 @@ void stop_vpnserver(int serverNum)
 	// Remove cron job
 	vpnlog(VPN_LOG_EXTRA,"Removing cron job");
 	argv[0] = "cru";
-	argv[1] = "d";	
+	argv[1] = "d";
 	sprintf(&buffer[0], "CheckVPNServer%d", serverNum);
 	argv[2] = &buffer[0];
 	argv[3] = NULL;
@@ -1455,7 +1465,7 @@ void stop_vpn_eas()
 {
 	char buffer[16], *cur;
 	int nums[4], i;
-	
+
 	// Parse and stop servers
 	strlcpy(&buffer[0], nvram_safe_get("vpn_serverx_eas"), sizeof(buffer));
 	if ( strlen(&buffer[0]) != 0 ) vpnlog(VPN_LOG_INFO, "Stopping OpenVPN servers (eas): %s", &buffer[0]);

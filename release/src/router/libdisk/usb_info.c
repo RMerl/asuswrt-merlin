@@ -206,40 +206,43 @@ char *get_device_type_by_node(const char *usb_node, char *buf, const int buf_siz
 
 char *get_usb_node_by_string(const char *target_string, char *ret, const int ret_size)
 {
-	char usb_port[8], buf[16];
-	char *ptr, *ptr_end;
+	char usb_port[32], buf[16];
+	char *ptr, *ptr2, *ptr3;
 	int len;
 
 	memset(usb_port, 0, sizeof(usb_port));
 	if(get_usb_port_by_string(target_string, usb_port, sizeof(usb_port)) == NULL)
 		return NULL;
-
 	if((ptr = strstr(target_string, usb_port)) == NULL)
 		return NULL;
 	if(ptr != target_string)
 		ptr += strlen(usb_port)+1;
 
-	if((ptr_end = strchr(ptr, ':')) == NULL)
+	if((ptr2 = strchr(ptr, ':')) == NULL)
 		return NULL;
+	ptr3 = ptr2;
+	*ptr3 = 0;
 
-	len = ptr_end - ptr;
-	if(len >= sizeof(buf))
-		len = sizeof(buf)-1;
+	if((ptr2 = strrchr(ptr, '/')) == NULL)
+		ptr2 = ptr;
+	else
+		ptr = ptr2+1;
+
+	len = strlen(ptr);
+	if(len > 16)
+		len = 16;
 
 	memset(buf, 0, sizeof(buf));
 	strncpy(buf, ptr, len);
 
-	if((ptr = strrchr(buf, '/')) == NULL)
-		ptr = buf;
-	else
-		++ptr;
-
-	len = strlen(ptr);
+	len = strlen(buf);
 	if(len > ret_size)
 		len = ret_size;
 
 	memset(ret, 0, ret_size);
-	strncpy(ret, ptr, len);
+	strncpy(ret, buf, len);
+
+	*ptr3 = ':';
 
 	return ret;
 }
@@ -580,7 +583,7 @@ char *get_interface_by_device(const char *device_name, char *buf, const int buf_
 }
 
 char *get_path_by_node(const char *usb_node, char *buf, const int buf_size){
-	char usb_port[8], *hub_path;
+	char usb_port[32], *hub_path;
 	int port_num = 0, len;
 
 	if(usb_node == NULL || buf == NULL || buf_size <= 0)
@@ -595,7 +598,7 @@ char *get_path_by_node(const char *usb_node, char *buf, const int buf_size){
 		return NULL;
 
 	if(strlen(usb_node) > (len = strlen(usb_port))){
-		hub_path = usb_node+len;
+		hub_path = (char *)usb_node+len;
 		snprintf(buf, buf_size, "%d%s", port_num, hub_path);
 	}
 	else
@@ -607,7 +610,7 @@ char *get_path_by_node(const char *usb_node, char *buf, const int buf_size){
 static FILE *open_usb_target(const char *usb_node, const char *target, const int wait)
 {
 	FILE *fp;
-	char usb_port[8], target_file[128];
+	char usb_port[32], target_file[128];
 	int retry = wait;
 
 	if(usb_node == NULL || target == NULL ||
@@ -1081,6 +1084,34 @@ int isCDCETHInterface(const char *interface_name)
 	return 1;
 }
 
+int isNCMInterface(const char *interface_name)
+{
+	char interface_class[4], interface_subclass[4];
+	char target_file[128];
+	DIR *module_dir;
+
+	if(get_usb_interface_class(interface_name, interface_class, 4) == NULL)
+		return 0;
+
+	if(strcmp(interface_class, "02"))
+		return 0;
+
+	if(get_usb_interface_subclass(interface_name, interface_subclass, 4) == NULL)
+		return 0;
+
+	if(strcmp(interface_subclass, "0d"))
+		return 0;
+
+	memset(target_file, 0, 128);
+	sprintf(target_file, "%s/%s", SYS_NCM_PATH, interface_name);
+	if((module_dir = opendir(target_file)) == NULL)
+		return 0;
+
+	closedir(module_dir);
+
+	return 1;
+}
+
 #ifdef RTCONFIG_USB_BECEEM
 int isGCTInterface(const char *interface_name){
 	char interface_class[4];
@@ -1101,6 +1132,7 @@ int is_usb_modem_ready(void)
 	char prefix[32], tmp[32];
 	char usb_act[8];
 	char usb_node[32], port_path[8];
+	char modem_type[16];
 
 	if(nvram_match("modem_enable", "0"))
 		return 0;
@@ -1114,10 +1146,15 @@ int is_usb_modem_ready(void)
 
 	snprintf(prefix, 32, "usb_path%s", port_path);
 	snprintf(usb_act, 8, "%s", nvram_safe_get(strcat_r(prefix, "_act", tmp)));
+	snprintf(modem_type, 16, "%s", nvram_safe_get("usb_modem_act_type"));
 
 	if(nvram_match(prefix, "modem") && strlen(usb_act) != 0){
 		// for the router dongle: Huawei E353, E3131.
-		if(!strncmp(usb_act, "eth", 3) || !strncmp(usb_act, "usb", 3)){
+		if(!strncmp(usb_act, "eth", 3) ||
+				(!strncmp(usb_act, "usb", 3) &&
+						(strcmp(modem_type, "qmi") && strcmp(modem_type, "rndis"))
+						)
+				){
 			if(!strncmp(nvram_safe_get("lan_ipaddr"), "192.168.1.", 10))
 				return 2;
 		}
@@ -1200,7 +1237,7 @@ char *find_sg_of_device(const char *device_name, char *buf, const int buf_size)
 {
 	DIR *dp;
 	struct dirent *file;
-	char target_usb_port[8], check_usb_port[8];
+	char target_usb_port[32], check_usb_port[32];
 	int got_sg = 0;
 
 	if(get_usb_port_by_device(device_name, target_usb_port, sizeof(target_usb_port)) == NULL)

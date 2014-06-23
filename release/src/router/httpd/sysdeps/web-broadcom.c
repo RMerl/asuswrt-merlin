@@ -230,21 +230,6 @@ wf_chspec_ntoa(chanspec_t chspec, char *buf)
 	return (buf);
 }
 
-char *
-wl_ether_etoa(const struct ether_addr *n)
-{
-	static char etoa_buf[ETHER_ADDR_LEN * 3];
-	char *c = etoa_buf;
-	int i;
-
-	for (i = 0; i < ETHER_ADDR_LEN; i++) {
-		if (i)
-			*c++ = ':';
-		c += sprintf(c, "%02X", n->octet[i] & 0xff);
-	}
-	return etoa_buf;
-}
-
 static int
 wlu_bcmp(const void *b1, const void *b2, int len)
 {
@@ -2640,6 +2625,7 @@ static int wl_sta_list(int eid, webs_t wp, int argc, char_t **argv, int unit) {
 	int max_sta_count, maclist_size;
 	int i, firstRow = 1;
 	char ea[ETHER_ADDR_STR_LEN];
+	scb_val_t scb_val;
 	char *value;
 	char name_vif[] = "wlX.Y_XXXXXXXXXX";
 	int ii;
@@ -2695,6 +2681,12 @@ static int wl_sta_list(int eid, webs_t wp, int argc, char_t **argv, int unit) {
 		value = (find_ethaddr_in_list((void *)&auth->ea[i], authorized))?"Yes":"No";
 		ret += websWrite(wp, ", \"%s\"", value);
 
+		memcpy(&scb_val.ea, &auth->ea[i], ETHER_ADDR_LEN);
+		if (wl_ioctl(name, WLC_GET_RSSI, &scb_val, sizeof(scb_val_t)))
+			ret += websWrite(wp, ", \"%d\"", 0);
+		else
+			ret += websWrite(wp, ", \"%d\"", scb_val.val);
+
 		ret += websWrite(wp, "]");
 	}
 
@@ -2739,6 +2731,12 @@ static int wl_sta_list(int eid, webs_t wp, int argc, char_t **argv, int unit) {
 
 				value = (find_ethaddr_in_list((void *)&auth->ea[ii], authorized))?"Yes":"No";
 				ret += websWrite(wp, ", \"%s\"", value);
+
+				memcpy(&scb_val.ea, &auth->ea[ii], ETHER_ADDR_LEN);
+				if (wl_ioctl(name, WLC_GET_RSSI, &scb_val, sizeof(scb_val_t)))
+					ret += websWrite(wp, ", \"%d\"", 0);
+				else
+					ret += websWrite(wp, ", \"%d\"", scb_val.val);
 
 				ret += websWrite(wp, "]");
 			}

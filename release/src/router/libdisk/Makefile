@@ -16,6 +16,7 @@ CFLAGS += -I. -I$(TOP)/shared -I$(SRCBASE)/include -I$(LINUXDIR)/include -Wall
 LDFLAGS_SO += -L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared
 LDFLAGS += $(LDFLAGS_SO) -L. -ldisk
 ifeq ($(RTCONFIG_BCMARM),y)
+CFLAGS += -I$(SRCBASE)/common/include
 LDFLAGS += -lgcc_s
 endif
 
@@ -32,6 +33,7 @@ ID_OBJS += $(TOP)/busybox/util-linux/volume_id/ext.o
 ID_OBJS += $(TOP)/busybox/util-linux/volume_id/fat.o
 ID_OBJS += $(TOP)/busybox/util-linux/volume_id/ntfs.o
 ID_OBJS += $(TOP)/busybox/util-linux/volume_id/hfs.o
+ID_OBJS += $(if $(EXFAT),$(TOP)/busybox/util-linux/volume_id/exfat.o)
 #ID_OBJS += libbb_stub.o
 
 #SHARE_STATIC=y

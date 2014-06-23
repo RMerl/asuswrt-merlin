@@ -97,10 +97,6 @@ struct ieee80211_htframe {
 	/* see below */
 } __packed;
 
-struct ieee80211_qoscntl {
-	u_int8_t i_qos[2];
-};
-
 struct ieee80211_ht_qosframe {
 	u_int8_t	i_fc[2];
 	u_int8_t	i_dur[2];
@@ -676,8 +672,8 @@ struct ieee80211_wme_acparams {
 #define IEEE80211_WME_PARAM_LEN	24
 #define WME_NUM_TID		16	/* 16 tids */
 #define WME_NUM_AC		4	/* 4 AC categories */
-#define WME_TID_UNKNOWN         (-1)
-#define WME_TID_NONQOS          (-2)
+#define WME_TID_UNKNOWN		(-1)
+#define WME_TID_NONQOS		(-2)
 #define WME_TID_VALID(_tid)	(((_tid) >= 0) && ((_tid) < WME_NUM_TID))
 
 #define WME_PARAM_ACI		0x60	/* Mask for ACI field */
@@ -703,12 +699,9 @@ struct ieee80211_wme_acparams {
 	 ((_tid) < 6) ? WME_AC_VI :	\
 	 WME_AC_VO)
 
-#define WME_TID_REMAP(_tid)	WME_AC_TO_TID((TID_TO_WME_AC(_tid)))
-
 /*
  * WME Parameter Element
  */
-
 struct ieee80211_wme_param {
 	u_int8_t param_id;
 	u_int8_t param_len;
@@ -2568,8 +2561,8 @@ enum {
 #define IEEE80211_CSA_TSF_LEN	(IEEE80211_CSA_LEN + 10)
 #define IEEE80211_NCW_ACT_LEN   3      /* Notify Channel Width Action size */
 
-#define IEEE80211_NODE_IDX_UNMAP(x)	((x) &~ 0x8000)
-#define IEEE80211_NODE_IDX_MAP(x)	((x) | 0x8000)
+#define IEEE80211_NODE_IDX_UNMAP(x)	(BR_SUBPORT_UNMAP(x))
+#define IEEE80211_NODE_IDX_MAP(x)	(BR_SUBPORT_MAP(x))
 #define IEEE80211_NODE_IDX_VALID(x)	((x) & 0x8000)
 #define IEEE80211_NODE_IDX_INVALID(x)	(!IEEE80211_NODE_IDX_VALID(x))
 
@@ -2740,6 +2733,14 @@ struct ieee80211_ie_vhtcap {
 #define IEEE80211_VHTCAP_GET_CHANWIDTH(vhtcap) \
 	(enum ieee80211_vht_chanwidth)(((vhtcap)->vht_cap[0] & 0x0C) >> 2)
 
+/* B4 RX LDPC support */
+#define IEEE80211_VHTCAP_GET_RXLDPC(vhtcap) \
+	(((vhtcap)->vht_cap[0] & 0x10) >> 4)
+
+/* B7 TX STBC */
+#define IEEE80211_VHTCAP_GET_TXSTBC(vhtcap) \
+	(((vhtcap)->vht_cap[1] & 0x80) >> 7)
+
 /* B8-10 RX STBC */
 #define IEEE80211_VHTCAP_GET_RXSTBC(vhtcap) \
 	(enum ieee80211_vht_rxstbc)((vhtcap)->vht_cap[1] & 0x07)
@@ -2752,6 +2753,10 @@ struct ieee80211_ie_vhtcap {
 #define IEEE80211_VHTCAP_GET_NUMSOUND(vhtcap) \
 	(u_int8_t)((vhtcap)->vht_cap[2] & 0x07)
 
+/* B22 VHT variant HT control field */
+#define IEEE80211_VHTCAP_GET_HTC_VHT(vhtcap) \
+	(((vhtcap)->vht_cap[2] & 0x40) >> 6)
+
 /* B23-25 Max. A-MPDU Length Exponent */
 #define IEEE80211_VHTCAP_GET_MAXAMPDUEXP(vhtcap) \
 	(enum ieee80211_vht_maxampduexp)((((vhtcap)->vht_cap[2] & 0x80) >> 7) | \
@@ -2760,6 +2765,14 @@ struct ieee80211_ie_vhtcap {
 /* B26-27 VHT Link Adaptation capable */
 #define IEEE80211_VHTCAP_GET_LNKADPTCAP(vhtcap) \
 	(enum ieee80211_vht_lnkadptcap)(((vhtcap)->vht_cap[3] & 0x0C) >> 2)
+
+/* B28 Rx Antenna pattern consistency */
+#define IEEE80211_VHTCAP_GET_RXANTPAT(vhtcap) \
+	(((vhtcap)->vht_cap[3] & 0x10) >> 4)
+
+/* B29 Tx Antenna pattern consistency */
+#define IEEE80211_VHTCAP_GET_TXANTPAT(vhtcap) \
+	(((vhtcap)->vht_cap[3] & 0x20) >> 5)
 
 /* B0-B15 RX VHT-MCS MAP for Spatial streams 1-8 */
 #define IEEE80211_VHTCAP_GET_RX_MCS_NSS(vhtcap) \

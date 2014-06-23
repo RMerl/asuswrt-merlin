@@ -33,6 +33,22 @@ config RTCONFIG_BCMARM
 	bool "Bcm Arm"
 	default n
 
+config RTCONFIG_BCM7
+	bool "Bcm sdk 7"
+	default n
+
+config RTCONFIG_NV128
+	bool "nvram size 128k"
+	default n
+
+config RTCONFIG_DHDAP
+	bool "Bcm7 dhdap"
+	default n
+
+config RTCONFIG_GMAC3
+	bool "Bcm7 gmac3"
+	default n
+
 config RTCONFIG_BCMSMP
 	bool "BCM SMP"
 	default n
@@ -113,12 +129,25 @@ config RTCONFIG_IPV6
 	bool "IPv6 Support"
 	default n
 
+config RTCONFIG_DNSMASQ6
+	bool "IPv6 SLAAC & DHCPv6 Support with dnsmasq"
+	depends on RTCONFIG_IPV6
+	default n
+
 config RTCONFIG_EBTABLES
 	bool "Ebtables"
 	default n
 
 config RTCONFIG_EMF
 	bool "Broadcom EMF (Efficient Multicast Forwarding & IGMP Snooping)"
+	default n
+
+config RTCONFIG_TOAD
+	bool "bcm toad"
+	default n
+
+config RTCONFIG_HSPOT
+	bool "HOTSPOT 2.0 support"
 	default n
 
 config RTCONFIG_FANCTRL
@@ -140,6 +169,10 @@ config RTCONFIG_WIRELESSWAN
 
 config RTCONFIG_WIRELESSREPEATER
 	bool "Repeater Mode"
+	default n
+
+config RTCONFIG_DISABLE_REPEATER_UI
+	bool "Hiden UI Repeater Mode"
 	default n
 
 config RTCONFIG_PROXYSTA
@@ -256,11 +289,6 @@ config RTCONFIG_USB_EXTRAS
 	depends on RTCONFIG_USB
 	default n
 
-config RTCONFIG_TUXERA
-	bool "Tuxera module Support"
-	depends on RTCONFIG_USB
-	default n
-
 config RTCONFIG_TFAT
 	bool "Tuxera FAT module Support"
 	depends on RTCONFIG_USB
@@ -269,6 +297,21 @@ config RTCONFIG_TFAT
 config RTCONFIG_NTFS
 	bool "NTFS Support"
 	depends on RTCONFIG_USB
+	default n
+
+config RTCONFIG_PARAGON_NTFS
+	bool "NTFS Support by Paragon"
+	depends on RTCONFIG_NTFS
+	default n
+
+config RTCONFIG_TUXERA_NTFS
+	bool "NTFS Support by Tuxera"
+	depends on RTCONFIG_NTFS
+	default n
+
+config RTCONFIG_OPEN_NTFS3G
+	bool "NTFS-3G Support"
+	depends on RTCONFIG_NTFS
 	default n
 
 config RTCONFIG_HFS
@@ -286,6 +329,11 @@ config RTCONFIG_TUXERA_HFS
 	depends on RTCONFIG_HFS
 	default n
 
+config RTCONFIG_KERNEL_HFSPLUS
+	bool "Kernel HFSPLUS support"
+	depends on RTCONFIG_HFS
+	default n
+
 config RTCONFIG_EXFAT
 	bool "exFAT Support"
 	depends on RTCONFIG_USB
@@ -293,16 +341,11 @@ config RTCONFIG_EXFAT
 
 config RTCONFIG_UFSD_DEBUG
 	bool "ufsd debug Support"
-	depends on RTCONFIG_NTFS || RTCONFIG_HFS
+	depends on RTCONFIG_PARAGON_NTFS || RTCONFIG_PARAGON_HFS
 	default n
 
 config RTCONFIG_DISK_MONITOR
 	bool "Disk monitor Support"
-	depends on RTCONFIG_USB
-	default n
-
-config RTCONFIG_NTFS3G
-	bool "NTFS-3G Support"
 	depends on RTCONFIG_USB
 	default n
 
@@ -350,10 +393,6 @@ config RTCONFIG_APP_NETINSTALLED
 	bool "Install APP Packages through Network Support"
 	depends on RTCONFIG_USB
 	default n
-
-config RTCONFIG_DNSMASQ
-	bool "Dnsmasq"
-	default y
 
 config RTCONFIG_RALINK
 	bool "Ralink Chip Support"
@@ -457,6 +496,10 @@ config RTCONFIG_WLAN_LED
 	bool "SW Control WLAN LED"
 	default n
 
+config RTCONFIG_EXT_LED_WPS
+	bool "used to standalone WPS LED(not POWER LED)"
+	default n
+
 config RTCONFIG_SWMODE_SWITCH
 	bool "HW Switch for SWMODE"
 	default n
@@ -481,8 +524,16 @@ config RTCONFIG_WPS_RST_BTN
 	bool "HW Button for WPS and Restore dual function"
 	default n
 
+config RTCONFIG_NEW_RST_BTN
+	bool "Set All LED off when restore to default"
+	default n
+
 config RTCONFIG_TURBO
 	bool "HW Turbo Btn"
+	default n
+
+config RTCONFIG_LED2_BTN
+	bool "HW LED Button, behavior 2, like RT-AC87U"
 	default n
 
 config RTCONFIG_LED_BTN
@@ -632,15 +683,18 @@ config RTCONFIG_RGMII_BRCM5301X
 	bool "Config 5301x to RGMII mode"
 	default n
 
-config RTCONFIG_KERNEL_HFSPLUS
-	bool "Kernel HFSPLUS support"
-	depends on RTCONFIG_HFS
-	default n
-
 config RTCONFIG_N18UTXBF
 	bool "enable TXBF for RT-N18U"
 	default n
 
 config RTCONFIG_BWDPI
 	bool "TrendMicro DPI engine and iQoS and Partenl Control"
+	default n
+
+config RTCONFIG_BONDING
+	bool "Linux Net Bonding"
+	default n
+
+config RTCONFIG_TMOBILE
+	bool "T-Mobile Support"
 	default n

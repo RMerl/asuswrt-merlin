@@ -381,9 +381,9 @@ function check_status(_device){
 
 	document.getElementById('scan_status_field').style.display = "";
 	parent.document.getElementById('ring_USBdisk_'+diskOrder).style.display = "";
-	if(navigator.appName.indexOf("Microsoft") >= 0)
+	/*if(navigator.appName.indexOf("Microsoft") >= 0)
 		parent.document.getElementById('iconUSBdisk_'+diskOrder).style.marginLeft = "0px";
-	else	
+	else	*/
 		parent.document.getElementById('iconUSBdisk_'+diskOrder).style.marginLeft = "35px";
 
 	if(parent.apps_fsck_ret.length == 0){

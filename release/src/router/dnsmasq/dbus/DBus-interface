@@ -40,6 +40,14 @@ ClearCache
 Returns nothing. Clears the domain name cache and re-reads
 /etc/hosts. The same as sending dnsmasq a HUP signal.
 
+SetFilterWin2KOption
+--------------------
+Takes boolean, sets or resets the --filterwin2k option.
+
+SetBogusPrivOption
+------------------
+Takes boolean, sets or resets the --bogus-priv option.
+
 SetServers
 ----------
 Returns nothing. Takes a set of arguments representing the new

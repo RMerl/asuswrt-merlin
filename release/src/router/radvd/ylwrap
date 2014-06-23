@@ -1,7 +1,7 @@
 #! /bin/sh
 # ylwrap - wrapper for lex/yacc invocations.
 
-scriptversion=2012-12-21.17; # UTC
+scriptversion=2013-01-12.17; # UTC
 
 # Copyright (C) 1996-2013 Free Software Foundation, Inc.
 #
@@ -40,7 +40,7 @@ get_dirname ()
 # guard FILE
 # ----------
 # The CPP macro used to guard inclusion of FILE.
-guard()
+guard ()
 {
   printf '%s\n' "$1"                                                    \
     | sed                                                               \
@@ -96,17 +96,17 @@ esac
 
 
 # The input.
-input="$1"
+input=$1
 shift
 # We'll later need for a correct munging of "#line" directives.
 input_sub_rx=`get_dirname "$input" | quote_for_sed`
-case "$input" in
+case $input in
   [\\/]* | ?:[\\/]*)
     # Absolute path; do nothing.
     ;;
   *)
     # Relative path.  Make it absolute.
-    input="`pwd`/$input"
+    input=`pwd`/$input
     ;;
 esac
 input_rx=`get_dirname "$input" | quote_for_sed`
@@ -132,8 +132,8 @@ sed_fix_filenames=
 # guard in its implementation file.
 sed_fix_header_guards=
 
-while test "$#" -ne 0; do
-  if test "$1" = "--"; then
+while test $# -ne 0; do
+  if test x"$1" = x"--"; then
     shift
     break
   fi
@@ -153,16 +153,14 @@ while test "$#" -ne 0; do
 done
 
 # The program to run.
-prog="$1"
+prog=$1
 shift
 # Make any relative path in $prog absolute.
-case "$prog" in
+case $prog in
   [\\/]* | ?:[\\/]*) ;;
-  *[\\/]*) prog="`pwd`/$prog" ;;
+  *[\\/]*) prog=`pwd`/$prog ;;
 esac
 
-# FIXME: add hostname here for parallel makes that run commands on
-# other machines.  But that might take us over the 14-char limit.
 dirname=ylwrap$$
 do_exit="cd '`pwd`' && rm -rf $dirname > /dev/null 2>&1;"' (exit $ret); exit $ret'
 trap "ret=129; $do_exit" 1
@@ -188,7 +186,7 @@ if test $ret -eq 0; then
       # otherwise prepend '../'.
       case $to in
         [\\/]* | ?:[\\/]*) target=$to;;
-        *) target="../$to";;
+        *) target=../$to;;
       esac
 
       # Do not overwrite unchanged header files to avoid useless
@@ -197,7 +195,7 @@ if test $ret -eq 0; then
       # output of all other files to a temporary file so we can
       # compare them to existing versions.
       if test $from != $parser; then
-        realtarget="$target"
+        realtarget=$target
         target=tmp-`printf '%s\n' "$target" | sed 's|.*[\\/]||g'`
       fi
 

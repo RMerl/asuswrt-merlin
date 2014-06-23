@@ -1,3 +1,5 @@
+include ../../.config
+
 VERSION = 2
 PATCHLEVEL = 6
 SUBLEVEL = 36
@@ -584,6 +586,14 @@ KBUILD_CFLAGS += -D"CONFIG_LINUX_MTD=64"
 endif
 ifeq ($(CONFIG_LINUX_MTD),128)
 KBUILD_CFLAGS += -D"CONFIG_LINUX_MTD=128"
+endif
+
+ifeq ($(BWDPI),y)
+KBUILD_CFLAGS += -DRTCONFIG_BWDPI
+endif
+
+ifeq ($(CONFIG_DUAL_TRX),y)
+KBUILD_CFLAGS += -DCONFIG_DUAL_TRX
 endif
 
 include $(srctree)/arch/$(SRCARCH)/Makefile

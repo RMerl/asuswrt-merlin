@@ -149,7 +149,8 @@ static void netlink_callback(AvahiNetlink *nl, struct nlmsghdr *n, void* userdat
          * it is Avahi will start to announce its records on this
          * interface and send out queries for subscribed records on
          * it */
-        avahi_hw_interface_check_relevant(hw);
+        avahi_hw_interface_check_relevant(hw, AVAHI_MDNS);
+        avahi_hw_interface_check_relevant(hw, AVAHI_LLMNR);
 
         /* Update any associated RRs of this interface. (i.e. the
          * _workstation._tcp record containing the MAC address) */
@@ -276,7 +277,8 @@ static void netlink_callback(AvahiNetlink *nl, struct nlmsghdr *n, void* userdat
          * attached relevant. Since we migh have added or removed an
          * address, let's have it check again whether the interface is
          * now relevant */
-        avahi_interface_check_relevant(i);
+        avahi_interface_check_relevant(i, AVAHI_MDNS);
+        avahi_interface_check_relevant(i, AVAHI_LLMNR);
 
         /* Update any associated RRs, like A or AAAA for our new/removed address */
         avahi_interface_update_rrs(i, 0);
@@ -312,7 +314,8 @@ static void netlink_callback(AvahiNetlink *nl, struct nlmsghdr *n, void* userdat
             m->list_complete = 1;
 
             /* So let's check if any interfaces are relevant now */
-            avahi_interface_monitor_check_relevant(m);
+            avahi_interface_monitor_check_relevant(m, AVAHI_MDNS);
+            avahi_interface_monitor_check_relevant(m, AVAHI_LLMNR);
 
             /* And update all RRs attached to any interface */
             avahi_interface_monitor_update_rrs(m, 0);

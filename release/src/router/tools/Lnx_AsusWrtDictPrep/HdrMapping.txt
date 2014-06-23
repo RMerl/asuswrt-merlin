@@ -20,3 +20,4 @@ IT=Italiano
 UK=Ukrainian
 HU=Hungarian
 RO=Romanian
+KR=한국어

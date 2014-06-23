@@ -404,7 +404,8 @@ void dhcp_packet(time_t now, int pxe_fd)
       memcpy(arp_req.arp_ha.sa_data, mess->chaddr, mess->hlen);
       /* interface name already copied in */
       arp_req.arp_flags = ATF_COM;
-      ioctl(daemon->dhcpfd, SIOCSARP, &arp_req);
+      if (ioctl(daemon->dhcpfd, SIOCSARP, &arp_req) == -1)
+	my_syslog(MS_DHCP | LOG_ERR, _("ARP-cache injection failed: %s"), strerror(errno));
     }
 #elif defined(HAVE_SOLARIS_NETWORK)
   else if ((ntohs(mess->flags) & 0x8000) || mess->hlen != ETHER_ADDR_LEN || mess->htype != ARPHRD_ETHER)

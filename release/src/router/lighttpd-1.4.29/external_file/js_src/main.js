@@ -1181,9 +1181,10 @@ function openSelItem(item){
 		if( webdav_mode==0 || webdav_mode==2 ){
 			  
 			if( isWinOS() ){
-				if( isBrowser("msie") && getInternetExplorerVersion() <= 7 ){
-					//- The VLC Plugin doesn't support IE 7 or less
+				if( isIE() && getInternetExplorerVersion() <= 8 ){
+					//- The VLC Plugin doesn't support IE 8 or less
 					alert(m.getString('msg_vlcsupport'));
+					return;
 				}
 				else{
 					var $modalWindow = $("div#modalWindow");
@@ -1281,10 +1282,10 @@ function addtoFavorite(){
 	var ddns = g_storage.get('ddns_host_name');
 	var favorite_url = "https://" + ddns;
 	var isIEmac = false;
-    var isMSIE = isBrowser("msie");
+    var isMSIE = isIE();
     
-	if(ddns==""){ 
-		favorite_url="https://router.asus.com/";
+	if(ddns==""){		
+		favorite_url = window.location.href;
 	}
 		
 	if ((typeof window.sidebar == "object") && (typeof window.sidebar.addPanel == "function")) {
@@ -1587,12 +1588,11 @@ $(document).ready(function(){
 	}
 	
 	function webdav_delfile_callbackfunction(error, statusstring, content){
-		
 		if(error){
 			if(error[0]==2){				
 			}
 			else{
-				alert(m.getString(error)+" : " + decodeURI(g_selected_files[0]));
+				alert(m.getString(error)+" : " + decodeURIComponent(g_selected_files[0]));
 				return;
 			}
 		}
@@ -1614,17 +1614,22 @@ $(document).ready(function(){
 		
 		if(g_select_array.length<=0)
 			return;
-			
-		var r=confirm(m.getString('del_files_msg'));
-		if (r!=true){
-			return;
-		}
 		
 		g_selected_files = null;
 		g_selected_files = new Array();
 		
 		for(var i=0; i<g_select_array.length;i++){			
 			g_selected_files.push( g_select_array[i].uhref );
+		}
+		
+		var r;
+		if(g_select_array.length==1)
+			r=confirm(m.getString('del_files_msg') + " - " + decodeURIComponent(g_select_array[0].title));
+		else
+			r=confirm(m.getString('del_files_msg'));
+			
+		if (r!=true){
+			return;
 		}
 		
 		g_webdav_client.DELETE(g_selected_files[0], webdav_delfile_callbackfunction );
@@ -2079,6 +2084,39 @@ $(document).ready(function(){
 			}
 		}
 		else if(func=="test_func"){
+			/*
+			g_webdav_client.GETCPUUSAGE("/", function(error, statusstring, content){				
+				if(error==200){
+					var data = parseXml(content);
+					var x = $(data);
+					var cpucount = parseInt(x.find("cpucount").text());
+					
+					for(var i=0; i<cpucount; i++){
+						var cpu = "cpu"+i;
+						var usage = x.find(cpu).text();
+						alert(cpu+"->"+usage);
+					}
+				}
+				else{
+					alert(error);	
+				}
+			});
+			
+			g_webdav_client.GETMEMORYUSAGE("/", function(error, statusstring, content){				
+				if(error==200){
+					var data = parseXml(content);
+					var x = $(data);
+					var nTotal = x.find("Total").text();
+					var nFree = x.find("Free").text();
+					var nUsed = x.find("Used").text();
+					alert(nTotal+", "+nFree+", "+nUsed);
+				}
+				else{
+					alert(error);	
+				}
+			});
+			*/
+			/*
 			g_webdav_client.GETNOTICE("/", "Dec 31 12:00:20", function(error, statusstring, content){				
 				if(error==200){
 					var data = parseXml(content);
@@ -2090,6 +2128,7 @@ $(document).ready(function(){
 					alert(error);	
 				}
 			});
+			*/
 			/*
 			g_webdav_client.APPLYAPP("/", "apply", "", "restart_webdav", function(error, statusstring, content){				
 				if(error==200){
@@ -2518,7 +2557,7 @@ $(document).ready(function(){
 				
 				if(uhref=="") return;
 				
-				var r=confirm(m.getString('del_files_msg') + " - " + file_name);
+				var r=confirm(m.getString('del_files_msg') + " - " + decodeURIComponent(file_name));
 				if (r!=true){
 					return;
 				}

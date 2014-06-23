@@ -98,7 +98,7 @@ char *ctladdr = DEFAULT_CLIENT_CONTROL_ADDR;
 char *ctlport = DEFAULT_CLIENT_CONTROL_PORT;
 
 #define DEFAULT_KEYFILE SYSCONFDIR "/dhcp6cctlkey"
-#endif	// USE_DHCP6CTL
+#endif
 
 #define CTLSKEW 300
 
@@ -829,7 +829,7 @@ client6_ifctl(ifname, command)
 
 	return (0);
 }
-#endif	// USE_DHCP6CTL
+#endif
 
 static struct dhcp6_timer *
 client6_expire_refreshtime(arg)

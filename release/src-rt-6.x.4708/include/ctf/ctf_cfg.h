@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -32,6 +32,10 @@
 #define CTFCFG_CMD_TUPLE_VALID	    3
 #define CTFCFG_CMD_DEFAULT_FWD_GET  4
 #define CTFCFG_CMD_DEFAULT_FWD_SET  5
+#ifdef RTCONFIG_BWDPI
+#define CTFCFG_CMD_UPD_MARK	    6
+#define CTFCFG_CMD_CHANGE_TXIF_TO_BR	7
+#endif
 
 #define CTFCFG_STATUS_SUCCESS			1
 #define CTFCFG_STATUS_FAILURE			2

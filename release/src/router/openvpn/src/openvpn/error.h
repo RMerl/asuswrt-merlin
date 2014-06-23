@@ -94,6 +94,7 @@ extern int x_msg_line_num;
 #define M_ERRNO           (1<<8)	 /* show errno description */
 
 #ifdef ENABLE_CRYPTO_OPENSSL
+#  define M_SSL_DH          (1<<9)
 #  define M_SSL             (1<<10)	 /* show SSL error */
 #endif
 
@@ -108,6 +109,7 @@ extern int x_msg_line_num;
 /* flag combinations which are frequently used */
 #define M_ERR     (M_FATAL | M_ERRNO)
 #define M_SSLERR  (M_FATAL | M_SSL)
+#define M_SSLDHERR  (M_FATAL | M_SSL_DH)
 #define M_USAGE   (M_USAGE_SMALL | M_NOPREFIX | M_OPTERR)
 #define M_CLIENT  (M_MSG_VIRT_OUT | M_NOMUTE | M_NOIPREFIX)
 

@@ -28,7 +28,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <signal.h>
 #include <dirent.h>
 #include <fcntl.h>
 #include <netdb.h>
@@ -45,7 +44,11 @@
 #include <disk_io_tools.h>
 #endif
 
+#ifdef RTCONFIG_TMOBILE
+#define DEFAULT_SCAN_INTERVAL 3
+#else
 #define DEFAULT_SCAN_INTERVAL 5
+#endif
 #define TCPCHECK_TIMEOUT 3
 #define PING_RESULT_FILE "/tmp/ping_success"
 #define RX_THRESHOLD 40

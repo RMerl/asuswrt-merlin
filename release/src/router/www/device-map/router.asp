@@ -71,6 +71,9 @@ function initial(){
 			$('t'+((parseInt(<% nvram_get("wlc_band"); %>+1))%2)).style.display = 'none';
 		}
 	}
+	else{
+		$("t0").style.display = "";	
+	}
 
 	if($("t1").className == "tabclick_NW" && 	parent.Rawifi_support)	//no exist Rawifi
 		$("wl_txbf_tr").style.display = "";		//Viz Add 2011.12 for RT-N56U Ralink 			
@@ -95,21 +98,25 @@ function initial(){
 	else
 		parent.show_middle_status(document.form.wl_auth_mode_x.value, parseInt(document.form.wl_wep_x.value));
 
-	flash_button();
-	automode_hint();		
+	flash_button();	
 }
 
 function tabclickhandler(wl_unit){
-	if((parent.sw_mode == 2 || parent.sw_mode == 4) && '<% nvram_get("wlc_band"); %>' == wl_unit)
-		document.form.wl_subunit.value = 1;
-	else
-		document.form.wl_subunit.value = -1;
+	if(wl_unit == 2){
+		location.href = "router_status.asp";
+	}
+	else{
+		if((parent.sw_mode == 2 || parent.sw_mode == 4) && '<% nvram_get("wlc_band"); %>' == wl_unit)
+			document.form.wl_subunit.value = 1;
+		else
+			document.form.wl_subunit.value = -1;
 
-	document.form.wl_unit.value = wl_unit;
-	document.form.current_page.value = "device-map/router.asp";
-	FormActions("/apply.cgi", "change_wl_unit", "", "");
-	document.form.target = "";
-	document.form.submit();
+		document.form.wl_unit.value = wl_unit;
+		document.form.current_page.value = "device-map/router.asp";
+		FormActions("/apply.cgi", "change_wl_unit", "", "");
+		document.form.target = "";
+		document.form.submit();
+	}
 }
 
 function disableAdvFn(){
@@ -223,7 +230,6 @@ function change_wlweptype(wep_type_obj){
 	}
 	
 	wl_wep_change();
-	automode_hint();
 }
 
 function wl_wep_change(){
@@ -286,6 +292,13 @@ var timeout = 1000;
 var delay = 500;
 var stopFlag=0;
 
+function detect_qtn_ready(){
+	if(parent.qtn_state_t != "1")
+		setTimeout('detect_qtn_ready();', 1000);
+	else
+		document.form.submit();
+}
+
 function submitForm(){
 	var auth_mode = document.form.wl_auth_mode_x.value;
 
@@ -322,7 +335,13 @@ function submitForm(){
 	document.form.wsc_config_state.value = "1";
 
 	parent.showLoading();
-	document.form.submit();	
+
+	if(based_modelid == "RT-AC87U" && "<% nvram_get("wl_unit"); %>" == "1"){
+		parent.stopFlag = '0';
+		detect_qtn_ready();
+	}else
+		document.form.submit();	
+
 	return true;
 }
 
@@ -388,14 +407,19 @@ function manualSetup(){
 <tr>
 	<td>		
 		<table width="100px" border="0" align="left" style="margin-left:8px;" cellpadding="0" cellspacing="0">
-  		<td>
+			<td>
 				<div id="t0" class="tabclick_NW" align="center" style="font-weight: bolder;display:none; margin-right:2px; width:90px;" onclick="tabclickhandler(0)">
 					<span id="span1" style="cursor:pointer;font-weight: bolder;">2.4GHz</span>
 				</div>
 			</td>
-  		<td>
+			<td>
 				<div id="t1" class="tab_NW" align="center" style="font-weight: bolder;display:none; margin-right:2px; width:90px;" onclick="tabclickhandler(1)">
 					<span id="span1" style="cursor:pointer;font-weight: bolder;">5GHz</span>
+				</div>
+			</td>
+			<td>
+				<div id="t2" class="tab_NW" align="center" style="font-weight: bolder; margin-right:2px; width:90px;" onclick="tabclickhandler(2)">
+					<span id="span1" style="cursor:pointer;font-weight: bolder;">Status</span>
 				</div>
 			</td>
 		</table>

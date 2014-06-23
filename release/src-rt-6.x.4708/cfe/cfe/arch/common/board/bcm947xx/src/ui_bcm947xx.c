@@ -567,6 +567,11 @@ ui_cmd_go(ui_cmdline_t *cmd, int argc, char *argv[])
 	int FW_err_count;
 	char FW_err[4];
 
+#ifdef DUAL_TRX
+        char *trx2_name = "nflash1.trx2";
+        int trx1_ret, trx2_ret;
+#endif
+
 	val = nvram_get("os_ram_addr");
 	if (val)
 		osaddr = bcm_strtoul(val, NULL, 16);
@@ -618,8 +623,26 @@ ui_cmd_go(ui_cmdline_t *cmd, int argc, char *argv[])
 #endif
         else {
                 xprintf("boot the image...\n"); // tmp test
+#ifdef DUAL_TRX
+                trx1_ret = check_trx(trx_name);
+                trx2_ret = check_trx(trx2_name);
+                xprintf("Check 2 trx result: %d, %d\n", trx1_ret, trx2_ret);
 
+                if( trx1_ret == 0 && trx2_ret != 0 ) {
+                        //copy trx1 -> trx2
+                        ret = ui_docommand("flash -size=48234496 nflash1.trx nflash1.trx2 -cfe");
+                }
+                else if( trx1_ret != 0 && trx2_ret == 0 ) {
+                        //copy trx2 -> trx1
+                        ret = ui_docommand("flash -size=50331648 nflash1.trx2 nflash1.trx -cfe");
+                        //check trx1 again
+                        trx1_ret = check_trx(trx_name);
+                        xprintf("Check trx1 result= %d\n", trx1_ret);
+                }
+                if(trx1_ret) { //trx1 failed
+#else
                 if (check_trx(trx_name) || nvram_match("asus_trx_test", "1")) {
+#endif
                         xprintf("Hello!! Enter Rescue Mode: (Check error)\n\n");
 			FW_err_count = atoi(nvram_get("Ate_FW_err"));
 			FW_err_count++;

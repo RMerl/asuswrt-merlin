@@ -22,6 +22,19 @@ function inet_network(ip_str){
 	return -2;
 }
 
+//Filtering ip address with leading zero, if end-user keyin IP 192.168.02.1, system auto filtering IP 192.168.2.1
+function ipFilterZero(ip_str){ 
+	var re = /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/;
+	if(re.test(ip_str)){
+		var v1 = parseInt(RegExp.$1);
+		var v2 = parseInt(RegExp.$2);
+		var v3 = parseInt(RegExp.$3);
+		var v4 = parseInt(RegExp.$4);
+		return v1+"."+v2+"."+v3+"."+v4;
+	}
+	return -2;
+}
+
 function isMask(ip_str){
 	if(!ip_str)
 		return 0;
@@ -525,7 +538,8 @@ function validate_ipaddr_final(o, v){
 			v == 'dhcp1_start' || v == 'dhcp1_end' ||
 			v == 'lan_ipaddr' || v == 'lan1_ipaddr' ||
 			v == 'staticip' || v == 'wl_radius_ipaddr' ||
-			v == 'dhcp_dns1_x' || v == 'dhcp_gateway_x' || v == 'dhcp_wins_x'){
+			v == 'dhcp_dns1_x' || v == 'dhcp_gateway_x' || v == 'dhcp_wins_x' ||
+			v == 'sip_server'){
 		if((v!='wan_ipaddr_x')&& (v1==255||v4==255||v1==0||v4==0||v1==127||v1==224)){
 			alert(o.value + " <#JS_validip#>");
 			
@@ -932,86 +946,10 @@ function onSubmitApply(s){
 			}
 		}
 	}	
+	
 	document.form.action_mode.value = "Update";
 	document.form.action_script.value = s;
 	return true;
-}
-
-function automode_hint(){ //Lock add 2009.11.05 for 54Mbps limitation in auto mode + WEP/TKIP.  Jieming modified at 2012.07.05
-	if(!document.form.wl_nmode_x){
-			if("<% nvram_get("wl_unit"); %>" == "1"){
-					var wl_nmode_flag = "<% nvram_get("wl1_nmode_x"); %>";
-			}else{
-				var wl_nmode_flag = "<% nvram_get("wl0_nmode_x"); %>";	
-			}	
-	}else{
-			var wl_nmode_flag = document.form.wl_nmode_x.value;
-	}		
-
-	//alert(wl_nmode_flag+" ; "+document.form.wl_unit.value+" , "+document.form.wl_auth_mode_x.value+" , "+document.form.wl_wep_x.value+" , "+document.form.wl_crypto.value);
-	if(wl_nmode_flag == "0" && 
-	  	( 
-	  		(document.form.wl_auth_mode_x.value == "open" && document.form.wl_wep_x.value != 0) ||
-	    	(document.form.wl_auth_mode_x.value == "shared" && document.form.wl_wep_x.value != 0 ) || 
-	    	(document.form.wl_auth_mode_x.value == "psk" && document.form.wl_crypto.value == "tkip") ||
-	    	(document.form.wl_auth_mode_x.value == "wpa" && document.form.wl_crypto.value == "tkip") ||
-	    	(document.form.wl_auth_mode_x.value == "radius")
-	    )
-	   ){
-		if(document.form.current_page.value == "Advanced_Wireless_Content.asp" 
-				|| document.form.current_page.value == "device-map/router.asp"
-				|| document.form.current_page.value.indexOf("Guest_network.asp")>=0){
-				$("wl_nmode_x_hint").style.display = "";
-		}
-				
-		if(psta_support
-				&& document.form.current_page.value.indexOf("device-map/router.asp") == -1
-				&& document.form.current_page.value.indexOf("Guest_network.asp") == -1 ){
-			if(!document.form.wl_bw) return false;
-			document.form.wl_bw.length = 1;
-			document.form.wl_bw[0] = new Option("20 MHz", 1);
-			wl_chanspec_list_change();
-		}
-	}
-	else{
-		if(psta_support && document.form.wl_bw){
-			genBWTable('<% nvram_get("wl_unit"); %>');
-		}
-		if(document.form.current_page.value == "Advanced_Wireless_Content.asp" 
-				|| document.form.current_page.value == "device-map/router.asp"
-				|| document.form.current_page.value.indexOf("Guest_network.asp")>=0 ){
-			$("wl_nmode_x_hint").style.display = "none";
-		}	
-	}	
-}
-
-function nmode_limitation(){ //Lock add 2009.11.05 for TKIP limitation in n mode. Only including tkip.
-	if(!document.form.wl_nmode_x){
-			if("<% nvram_get("wl_unit"); %>" == "1"){
-						var wl_nmode_x_flag = "<% nvram_get("wl1_nmode_x"); %>";
-			}else{
-						var wl_nmode_x_flag = "<% nvram_get("wl0_nmode_x"); %>";	
-			}		
-	}else{
-			var wl_nmode_x_flag = document.form.wl_nmode_x.value;	
-	}
-
-	if(wl_nmode_x_flag == "1"){
-		if((document.form.wl_auth_mode_x.value == "open" && (document.form.wl_wep_x.selectedIndex == "1" || document.form.wl_wep_x.selectedIndex == "2")) ||
-			document.form.wl_auth_mode_x.value == "shared" || 
-			document.form.wl_auth_mode_x.value == "psk" || 
-			document.form.wl_auth_mode_x.value == "radius"){
-		
-			alert("<#WLANConfig11n_nmode_limition_hint#>");
-			document.form.wl_auth_mode_x.selectedIndex = 3;
-		}
-		else if(document.form.wl_auth_mode_x.value == "wpa"){
-			alert("<#WLANConfig11n_nmode_limition_hint#>");
-			document.form.wl_auth_mode_x.selectedIndex = 6;
-		}
-
-		wl_auth_mode_change(0);
-	}
 }
 
 function handle_11ac_80MHz(){
@@ -2014,8 +1952,8 @@ function wl_auth_mode_change(isload){
 	}
 	
 	/*For Protected Management Frames, only enable for WPA2-Personal and WPA2-Enterprise, ARM platform,*/
-	if(wl_mfp_support && (document.form.wl_mfp != null) ){
-		if (mode == "psk2" || mode == "wpa2"){
+	if(wl_mfp_support && (document.form.wl_mfp != null)){
+		if ((mode == "psk2" || mode == "wpa2") && !(based_modelid == "RT-AC87U" && '<% nvram_get("wl_unit"); %>' == '1')){
 			inputCtrl(document.form.wl_mfp,  1);	
 		}
 		else{
@@ -2396,24 +2334,11 @@ function wep_key_index_change(obj){
 /* Handle WEP encryption changed */
 function wep_encryption_change(obj){
 	change_wlweptype(obj, 0);
-	//nmode_limitation();
-	automode_hint();
 }
 
 /* Handle Authentication Method changed */
 function authentication_method_change(obj){
 	wl_auth_mode_change(0);
-	
-	//disable temporary, Jieming added
-	/*if(obj.value == "psk" || obj.value == "psk2" || obj.value == "pskpsk2" || obj.name == "wl_crypto"){
-		document.form.wl_wpa_psk.focus();
-	}
-	else if(obj.value == "shared"){ 
-		document.form.wl_key.focus();
-	}*/
-		
-	//nmode_limitation();
-	automode_hint();
 }
 
 /* Handle wireless mode changed */
@@ -2435,22 +2360,48 @@ function wireless_mode_change(obj){
 	}
 
 	limit_auth_method();
-	//nmode_limitation();
-	automode_hint();
 	check_NOnly_to_GN();
 }
 
 /* To hide Shared key, WPA-Personal/Enterprise and RADIUS with 802.1X*/
-function limit_auth_method(){
+function limit_auth_method(g_unit){
 	var auth_method_array = document.form.wl_auth_mode_x.value;
 	if(sw_mode == 2){
-		var auth_array = [["Open System", "open"], ["Shared Key", "shared"], ["WPA-Personal", "psk"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"]];
+			if(based_modelid == "RT-AC87U" && g_unit)
+					var auth_array = [["Open System", "open"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"]];
+			else if(based_modelid == "RT-AC87U" && g_unit =='0')
+					var auth_array = [["Open System", "open"], ["Shared Key", "shared"], ["WPA-Personal", "psk"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"]];
+			else{		
+				if((based_modelid == "RT-AC87U" && '<% nvram_get("wl_unit"); %>' == '1'))
+					var auth_array = [["Open System", "open"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"]];
+				else
+					var auth_array = [["Open System", "open"], ["Shared Key", "shared"], ["WPA-Personal", "psk"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"]];
+			}
 	}
 	else if(document.form.wl_nmode_x.value != "2"){
-		var auth_array = [["Open System", "open"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"], ["WPA2-Enterprise", "wpa2"], ["WPA-Auto-Enterprise", "wpawpa2"]];
+		if(based_modelid == "RT-AC87U" && g_unit)
+				var auth_array = [["Open System", "open"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"]];
+			else if(based_modelid == "RT-AC87U" && g_unit=='0')
+				var auth_array = [["Open System", "open"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"], ["WPA2-Enterprise", "wpa2"], ["WPA-Auto-Enterprise", "wpawpa2"]];
+		else{
+			if((based_modelid == "RT-AC87U" && '<% nvram_get("wl_unit"); %>' == '1') || (based_modelid == "RT-AC87U" && g_unit))
+				var auth_array = [["Open System", "open"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"]];
+			else
+				var auth_array = [["Open System", "open"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"], ["WPA2-Enterprise", "wpa2"], ["WPA-Auto-Enterprise", "wpawpa2"]];
+		}
 	}
 	else{
-		var auth_array = [["Open System", "open"], ["Shared Key", "shared"], ["WPA-Personal", "psk"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"], ["WPA-Enterprise", "wpa"], ["WPA2-Enterprise", "wpa2"], ["WPA-Auto-Enterprise", "wpawpa2"], ["Radius with 802.1x", "radius"]];
+		if(based_modelid == "RT-AC87U" && g_unit)
+			var auth_array = [["Open System", "open"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"]];
+		else if(based_modelid == "RT-AC87U" && g_unit=='0')
+			var auth_array = [["Open System", "open"], ["Shared Key", "shared"], ["WPA-Personal", "psk"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"], ["WPA-Enterprise", "wpa"], ["WPA2-Enterprise", "wpa2"], ["WPA-Auto-Enterprise", "wpawpa2"], ["Radius with 802.1x", "radius"]];
+		else{
+			if((based_modelid == "RT-AC87U" && '<% nvram_get("wl_unit"); %>' == '1') || (based_modelid == "RT-AC87U" && g_unit))
+				var auth_array = [["Open System", "open"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"]];
+			else
+				var auth_array = [["Open System", "open"], ["Shared Key", "shared"], ["WPA-Personal", "psk"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"], ["WPA-Enterprise", "wpa"], ["WPA2-Enterprise", "wpa2"], ["WPA-Auto-Enterprise", "wpawpa2"], ["Radius with 802.1x", "radius"]];
+			
+		}
 	}
 	
 	free_options(document.form.wl_auth_mode_x);
@@ -2463,4 +2414,3 @@ function limit_auth_method(){
 		
 	authentication_method_change(document.form.wl_auth_mode_x);
 }
-

@@ -1,7 +1,7 @@
 /*
  * Network configuration layer (Linux)
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: netconf_linux.h 341899 2012-06-29 04:06:38Z $
+ * $Id: netconf_linux.h 358181 2012-09-21 13:59:23Z $
  */
 
 #ifndef _netconf_linux_h_
@@ -52,7 +52,11 @@
 #define ETH_ALEN ETHER_ADDR_LEN
 #include <linux/netfilter_ipv4/ipt_mac.h>
 #include <linux/netfilter_ipv4/ipt_state.h>
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 36))
+#include <linux/netfilter/xt_time.h>
+#else
 #include <linux/netfilter_ipv4/ipt_time.h>
+#endif
 #include <linux/netfilter_ipv4/ipt_TCPMSS.h>
 #include <linux/netfilter_ipv4/ipt_LOG.h>
 #include <linux/netfilter_ipv4/ip_autofw.h>

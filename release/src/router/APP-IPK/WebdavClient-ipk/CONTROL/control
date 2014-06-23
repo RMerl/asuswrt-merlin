@@ -2,7 +2,7 @@ Package: webdavclient
 Architecture: mipsel
 Priority: optional
 Section: net
-Version: 1.0.0.6.0.g81dccd6
+Version: 1.0.0.7.0.g0808190
 OptionalUtility:
 Maintainer: ASUS
 Source: http://127.0.0.1/

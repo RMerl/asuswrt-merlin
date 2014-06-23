@@ -15,10 +15,6 @@ install:
 	cp ../www $(INSTALLDIR)/. -rf
 	# INSTALL MODEL DEPENDENT files
 	cp ../www/sysdep/$(BUILD_NAME)/www $(INSTALLDIR)/. -rfL || true
-ifeq ($(RTN14U),y)   
-	### patch file
-	./model_patch $(INSTALLDIR)/www ../www/sysdep/$(BUILD_NAME)_patch/www || true
-endif
 	rm -rf $(INSTALLDIR)/www/Makefile
 	rm -rf $(INSTALLDIR)/www/sysdep
 	rm -rf $(INSTALLDIR)/www/gendict.pl
@@ -64,7 +60,19 @@ ifeq ($(RTCONFIG_SFP),y)
 	rm -rf $(INSTALLDIR)/www/images/PrinterServer
 	rm -rf $(INSTALLDIR)/www/images/appinstall
 endif
+ifeq ($(RTCONFIG_8M_SFP),y)
+	rm -rf $(INSTALLDIR)/www/images/New_ui/network_config.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/TimeLimits.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/QoS.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/rt.jpg
+	rm -rf $(INSTALLDIR)/www/images/New_ui/re.jpg
+	rm -rf $(INSTALLDIR)/www/images/New_ui/ap.jpg
+	rm -rf $(INSTALLDIR)/www/images/New_ui/mb.jpg
+endif
 ifeq ($(RTCONFIG_4M_SFP),y)
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/bg.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/client-list.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/client.png
 	rm -rf $(INSTALLDIR)/www/Main_ConnStatus_Content.asp
 	rm -rf $(INSTALLDIR)/www/svghtc
 	rm -rf $(INSTALLDIR)/www/svg.js
@@ -90,7 +98,7 @@ ifeq ($(RTCONFIG_4M_SFP),y)
 	rm -rf $(INSTALLDIR)/www/images/qis/win7_network_icon2.jpg
 	rm -rf $(INSTALLDIR)/www/images/qis/winxp.jpg
 #	rm -rf $(INSTALLDIR)/www/Advanced_WANPort_Content.asp
-	rm -rf $(INSTALLDIR)/www/mediaserver.asp
+#	rm -rf $(INSTALLDIR)/www/mediaserver.asp
 	rm -rf $(INSTALLDIR)/www/ajax_dms_status.asp
 	rm -rf $(INSTALLDIR)/www/Advanced_PerformanceTuning_Content.asp
 	rm -rf $(INSTALLDIR)/www/Advanced_IPv6_Content.asp
@@ -104,7 +112,7 @@ ifeq ($(RTCONFIG_4M_SFP),y)
 	rm -rf $(INSTALLDIR)/www/qis/QIS_internet_ruisp.htm
 	rm -rf $(INSTALLDIR)/www/qis/ruisp.js
 	rm -rf $(INSTALLDIR)/www/images/New_ui/network_config.png
-	rm -rf $(INSTALLDIR)/www/images/New_ui/parental-control.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/TimeLimits.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/QoS.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/rt.jpg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/re.jpg
@@ -114,7 +122,15 @@ endif
 ifneq ($(RTCONFIG_PROXYSTA),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/mb.jpg
 endif
-
+# Replace png file for RTCONFIG_TMOBILE
+ifeq ($(RTCONFIG_TMOBILE), y)
+	mv $(INSTALLDIR)/www/images/tmo_modem_plug.png $(INSTALLDIR)/www/images/modem_plug.png
+	mv $(INSTALLDIR)/www/images/tmo_modem_unplug.png $(INSTALLDIR)/www/images/modem_unplug.png
+else
+	rm -rf $(INSTALLDIR)/www/Passpoint_hidden.asp
+	rm -rf $(INSTALLDIR)/www/images/tmo_modem_plug.png
+	rm -rf $(INSTALLDIR)/www/images/tmo_modem_unplug.png
+endif
 ifeq ($(RTCONFIG_DSL),y)
 	rm -rf $(INSTALLDIR)/www/images/Model_producticon.png
 	rm -rf $(INSTALLDIR)/www/qis/QIS_welcome.htm
@@ -180,7 +196,7 @@ ifneq ($(RTCONFIG_USB),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/usbstatus.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/printstatus.png
 	rm -rf $(INSTALLDIR)/www/aidisk
-	rm -rf $(INSTALLDIR)/www/mediaserver.asp
+#	rm -rf $(INSTALLDIR)/www/mediaserver.asp
 	rm -rf $(INSTALLDIR)/www/ajax_dms_status.asp
 	rm -rf $(INSTALLDIR)/www/Advanced_AiDisk_ftp.asp
 	rm -rf $(INSTALLDIR)/www/Advanced_AiDisk_samba.asp
@@ -271,4 +287,35 @@ ifeq ($(RTCONFIG_ODMPID),y)
 	@if [ ! -e $(INSTALLDIR)/www/images/$(subst U,R,$(BUILD_NAME))Model_producticon.png ] ; then \
 		 ln -sf Model_producticon.png $(INSTALLDIR)/www/images/$(subst U,R,$(BUILD_NAME))Model_producticon.png ; \
 	fi
+endif
+
+ifneq ($(RTCONFIG_BWDPI),y)
+	rm -rf $(INSTALLDIR)/www/AiStream_Intelligence.asp
+	rm -rf $(INSTALLDIR)/www/AiStream_Live.asp
+	rm -rf $(INSTALLDIR)/www/AiStream_TrafficControl.asp
+	rm -rf $(INSTALLDIR)/www/AiStream_WebHistory.asp
+	rm -rf $(INSTALLDIR)/www/Home_Security.asp
+	rm -rf $(INSTALLDIR)/www/ParentalControl_Group.asp
+	rm -rf $(INSTALLDIR)/www/ParentalControl_HomeSecurity.asp
+	rm -rf $(INSTALLDIR)/www/ParentalControl_WebProtector.asp
+	rm -rf $(INSTALLDIR)/www/blocking.asp
+	rm -rf $(INSTALLDIR)/www/getTraffic.asp
+	rm -rf $(INSTALLDIR)/www/getWebHistory.asp
+	rm -rf $(INSTALLDIR)/www/images/New_ui/indicator.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/speedmeter.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/HomeProtection.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/TimeLimits.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/Web_Apps_Restriction.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/AiProtection.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/Home_Protection_Scenario.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/left-light.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/left-dark.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/right-light.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/right-dark.png	
+	rm -rf $(INSTALLDIR)/www/images/New_ui/tm_logo.png	
+else
+	rm -rf $(INSTALLDIR)/www/Main_TrafficMonitor_daily.asp
+	rm -rf $(INSTALLDIR)/www/Main_TrafficMonitor_last24.asp
+	rm -rf $(INSTALLDIR)/www/Main_TrafficMonitor_realtime.asp
+	rm -rf $(INSTALLDIR)/www/tmmenu.js
 endif

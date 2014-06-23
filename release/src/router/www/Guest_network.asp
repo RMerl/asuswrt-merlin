@@ -46,8 +46,8 @@ function initial(){
 	show_menu();	
 	//insertExtChannelOption();		
 
-	if(downsize_4m_support)
-		$("guest_image").parentNode.style.display = "none";
+	if(downsize_4m_support || downsize_8m_support)
+		document.getElementById("guest_image").parentNode.parentNode.removeChild(document.getElementById("guest_image").parentNode);
 
 	mbss_display_ctrl();
 	gen_gntable();
@@ -350,7 +350,7 @@ function validForm(){
 		if(!validate_wlphrase('WLANConfig11b', 'wl_phrase_x', document.form.wl_phrase_x))
 			return false;	
 	if(auth_mode == "psk" || auth_mode == "psk2" || auth_mode == "pskpsk2"){ //2008.08.04 lock modified
-		if(!validate_psk(document.form.wl_wpa_psk))
+		if(!validate_psk(document.form.wl_wpa_psk, document.form.wl_unit.value))
 			return false;
 	}
 	else{
@@ -388,7 +388,6 @@ function guest_divctrl(flag){
 		if(sw_mode == "3")
 				inputCtrl(document.form.wl_lanaccess, 0);
 		$("applyButton").style.display = "";
-		automode_hint();
 	}
 	else{
 		$("guest_table2").style.display = "";
@@ -453,7 +452,7 @@ function change_guest_unit(_unit, _subunit){
 	}
 	idx = _subunit - 1;
 
-	limit_auth_method();	
+	limit_auth_method(_unit);	
 	document.form.wl_unit.value = _unit;
 	document.form.wl_subunit.value = _subunit;
 	$("wl_vifname").innerHTML = document.form.wl_subunit.value;

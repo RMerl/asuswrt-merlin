@@ -246,14 +246,15 @@ int main(int argc, char *argv[])
 	}
 	// share mode
 	else if (nvram_match("st_samba_mode", "1") || nvram_match("st_samba_mode", "3")) {
-#ifdef RTCONFIG_TUXERA
+#if 0 // for Tuxera's samba.
 		fprintf(fp, "auth methods = guest\n");
 		fprintf(fp, "guest account = admin\n");
 		fprintf(fp, "map to guest = Bad Password\n");
 		fprintf(fp, "guest ok = yes\n");
-#endif
+#else
 		fprintf(fp, "security = SHARE\n");
 		fprintf(fp, "guest only = yes\n");
+#endif
 	}
 	else{
 		usb_dbg("samba mode: no\n");

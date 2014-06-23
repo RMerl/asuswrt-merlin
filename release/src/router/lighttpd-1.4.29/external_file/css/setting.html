@@ -254,8 +254,12 @@ function refreshShareLinkList(){
 			
 	if( webdav_mode == 0 ) //- Only enable http
 		hostName = "http://" + hostName + ":" + g_storage.get("http_port");
-	else
+	else{
 		hostName = "https://" + hostName;
+					
+		if(g_storage.get("https_port")!="443")
+			hostName += ":" + g_storage.get("https_port");
+	}
 	
 	var client = new davlib.DavClient();
 	client.initialize();
@@ -307,10 +311,10 @@ function refreshShareLinkList(){
 													
 					table_html += "<tr nid='" + i + "' class='even'>";
 					
-					table_html += "<td fid='check' align='center'><input type='checkbox' id='check_del' name='check_del' class='check_del' link='" + $(this).attr("url") + "'></td>";
+					table_html += "<td fid='check' align='center'><input type='checkbox' id='check_del' name='check_del' class='check_del' link=\"" + $(this).attr("url") + "\"></td>";
 					
 					table_html += "<td fid='filename' align='center'><div style='overflow:hidden;'>";
-					table_html += "<a class='share_link_url' uhref='" + url + "' href='#' title='" + filetitle + "' style='white-space:nowrap;'>" + filetitle + "</a>";
+					table_html += "<a class='share_link_url' uhref=\"" + url + "\" href='#' title=\"" + filetitle + "\" style='white-space:nowrap;'>" + filetitle + "</a>";
 					table_html += "</div></td>";
 					table_html += "<td fid='createtime' align='center'>" + createtime + "</td>";
 					if(expiretime==0){
@@ -322,7 +326,7 @@ function refreshShareLinkList(){
 						table_html += "<td fid='lefttime' align='center'>" + hour + " hours " + minute + " mins" + "</td>";
 					}
 					table_html += "<td fid='remove' align='center'><a>";
-					table_html += "<div class='dellink' title='remove' link='" + $(this).attr("url") + "' style='cursor:pointer'></div>";
+					table_html += "<div class='dellink' title='remove' link=\"" + $(this).attr("url") + "\" style='cursor:pointer'></div>";
 					table_html += "</a></td>";
 					
 					table_html += "</tr>";
@@ -353,7 +357,7 @@ function refreshShareLinkList(){
 					$("#filelink").css("top", $("body").height() - $("#filelink").height() );
 				else
 					$("#filelink").css("top", tempY );
-
+				
 				$("#resourcefile").attr("value",$(this).attr("uhref"));
 				$("#resourcefile").focus();
 				$("#resourcefile").select();

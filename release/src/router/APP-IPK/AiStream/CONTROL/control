@@ -1,0 +1,13 @@
+Package: AiStream
+Architecture: arm
+Priority: optional
+Section: 
+Version: 1.0.0.3
+Maintainer: ASUS
+Source: 
+URL: http://192.168.1.1
+Description: AiStream
+Depends: 
+Suggests: 
+Conflicts: 
+Enabled: yes

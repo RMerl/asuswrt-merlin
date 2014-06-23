@@ -727,8 +727,7 @@ void dhcp_construct_contexts(time_t now)
      
       if (context->flags & CONTEXT_GC && !(context->flags & CONTEXT_OLD))
 	{
-	  if ((context->flags & (CONTEXT_RA_ONLY | CONTEXT_RA_NAME | CONTEXT_RA_STATELESS)) ||
-	      option_bool(OPT_RA))
+	  if ((context->flags & CONTEXT_RA) || option_bool(OPT_RA))
 	    {
 	      /* previously constructed context has gone. advertise it's demise */
 	      context->flags |= CONTEXT_OLD;

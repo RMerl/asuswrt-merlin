@@ -71,6 +71,8 @@ enum {
 	CPU_PORT=6,
 	P7_PORT=7,
 };
+#define PORT_W4321
+
 #elif defined(RTN11P)
 /// RT-N11P mapping
 enum {
@@ -164,9 +166,10 @@ static unsigned int get_wan_port_mask(int wan_unit)
  */
 static unsigned int get_lan_port_mask(void)
 {
+	int sw_mode = nvram_get_int("sw_mode");
 	unsigned int m = nvram_get_int("lanports_mask");
 
-	if (nvram_get_int("sw_mode") == SW_MODE_AP)
+	if (sw_mode == SW_MODE_AP || __is_mediabridge_mode(sw_mode))
 		m = 0x1F;
 
 	return m;
@@ -496,12 +499,11 @@ static void build_wan_lan_mask(int stb)
 	int sw_mode = nvram_get_int("sw_mode");
 	char prefix[8], nvram_ports[20];
 
-	if (sw_mode == SW_MODE_AP) {
+	if (sw_mode == SW_MODE_AP || sw_mode == SW_MODE_REPEATER)
 		wanscap_lan = 0;
 
-		if (stb == 100)	/* Don't create WAN port. */
-			stb = 7;
-	}
+	if (stb == 100 && (sw_mode == SW_MODE_AP || __is_mediabridge_mode(sw_mode)))
+		stb = 7;	/* Don't create WAN port. */
 
 	if (wanscap_lan && (wans_lanport < 0 || wans_lanport > 4)) {
 		_dprintf("%s: invalid wans_lanport %d!\n", __func__, wans_lanport);
@@ -563,7 +565,7 @@ static void config_mt7620_esw_LANWANPartition(int type)
 	if (switch_init() < 0)
 		return;
 
-	if (sw_mode == SW_MODE_AP)
+	if (sw_mode == SW_MODE_AP || sw_mode == SW_MODE_REPEATER)
 		wanscap_lan = 0;
 
 	if (wanscap_lan && (wans_lanport < 0 || wans_lanport > 4)) {
@@ -610,7 +612,7 @@ static void config_mt7620_esw_LANWANPartition(int type)
 	__create_port_map(0xE0 | lan_mask, portmap);
 	mt7620_vlan_set(0, 1, portmap, 0);
 
-	if (sw_mode != SW_MODE_AP) {
+	if (sw_mode == SW_MODE_ROUTER) {
 		switch (wanscap_wanlan) {
 		case WANSCAP_WAN | WANSCAP_LAN:
 			//WAN: P7, P6, wan_mask
@@ -795,7 +797,7 @@ static void initialize_Vlan(int stb_bitmask)
 	if (switch_init() < 0)
 		return;
 
-	if (sw_mode == SW_MODE_AP)
+	if (sw_mode == SW_MODE_AP || sw_mode == SW_MODE_REPEATER)
 		wanscap_lan = 0;
 
 	if (wanscap_lan && (wans_lanport < 0 || wans_lanport > 4)) {
@@ -1486,20 +1488,20 @@ void ATE_mt7620_esw_port_status(void)
 		pS.speed[i] = (value >> 2) & 0x3;
 	}
 
-#if defined(RTAC52U)
+#if defined(PORT_W4321)
 	sprintf(buf, "W0=%C;L4=%C;L3=%C;L2=%C;L1=%C;",
-		(pS.link[0] == 1) ? (pS.speed[0] == 2) ? 'G' : 'M': 'X',
-		(pS.link[1] == 1) ? (pS.speed[1] == 2) ? 'G' : 'M': 'X',
-		(pS.link[2] == 1) ? (pS.speed[2] == 2) ? 'G' : 'M': 'X',
-		(pS.link[4] == 1) ? (pS.speed[4] == 2) ? 'G' : 'M': 'X',
-		(pS.link[3] == 1) ? (pS.speed[3] == 2) ? 'G' : 'M': 'X');
+		(pS.link[ WAN_PORT] == 1) ? (pS.speed[ WAN_PORT] == 2) ? 'G' : 'M': 'X',
+		(pS.link[LAN4_PORT] == 1) ? (pS.speed[LAN4_PORT] == 2) ? 'G' : 'M': 'X',
+		(pS.link[LAN3_PORT] == 1) ? (pS.speed[LAN3_PORT] == 2) ? 'G' : 'M': 'X',
+		(pS.link[LAN2_PORT] == 1) ? (pS.speed[LAN2_PORT] == 2) ? 'G' : 'M': 'X',
+		(pS.link[LAN1_PORT] == 1) ? (pS.speed[LAN1_PORT] == 2) ? 'G' : 'M': 'X');
 #else
 	sprintf(buf, "W0=%C;L1=%C;L2=%C;L3=%C;L4=%C;",
-		(pS.link[0] == 1) ? (pS.speed[0] == 2) ? 'G' : 'M': 'X',
-		(pS.link[1] == 1) ? (pS.speed[1] == 2) ? 'G' : 'M': 'X',
-		(pS.link[2] == 1) ? (pS.speed[2] == 2) ? 'G' : 'M': 'X',
-		(pS.link[3] == 1) ? (pS.speed[3] == 2) ? 'G' : 'M': 'X',
-		(pS.link[4] == 1) ? (pS.speed[4] == 2) ? 'G' : 'M': 'X');
+		(pS.link[ WAN_PORT] == 1) ? (pS.speed[ WAN_PORT] == 2) ? 'G' : 'M': 'X',
+		(pS.link[LAN1_PORT] == 1) ? (pS.speed[LAN1_PORT] == 2) ? 'G' : 'M': 'X',
+		(pS.link[LAN2_PORT] == 1) ? (pS.speed[LAN2_PORT] == 2) ? 'G' : 'M': 'X',
+		(pS.link[LAN3_PORT] == 1) ? (pS.speed[LAN3_PORT] == 2) ? 'G' : 'M': 'X',
+		(pS.link[LAN4_PORT] == 1) ? (pS.speed[LAN4_PORT] == 2) ? 'G' : 'M': 'X');
 #endif
 	puts(buf);
 

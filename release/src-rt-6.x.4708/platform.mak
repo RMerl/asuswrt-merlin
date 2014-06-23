@@ -43,9 +43,13 @@ define platformKernelConfig
 		sed -i "/CONFIG_MTD_BRCMNAND/d" $(1); \
 		echo "CONFIG_MTD_BRCMNAND=y" >>$(1); \
 	fi; \
+	cp -f $(SRCBASE)/router/ctf_arm/asus/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
 	if [ "$(ARMCPUSMP)" = "up" ]; then \
 		cp -f $(SRCBASE)/router/ctf_arm/up/linux/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
 		cp -f $(SRCBASE)/router/ufsd/broadcom_arm_up/ufsd.ko.46_up router/ufsd/broadcom_arm/ufsd.ko; \
+	fi; \
+	if [ "$(BWDPI)" = "y" ]; then \
+		cp -f $(SRCBASE)/router/ctf_arm/iqos/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
 	fi; \
 	if [ -d $(SRCBASE)/router/wl_arm/$(BUILD_NAME) ]; then \
 		mkdir $(SRCBASE)/wl/linux ; \

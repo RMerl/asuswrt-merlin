@@ -17,6 +17,7 @@
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/detect.js"></script>
+<script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <style>
 #ClientList_Block_PC{
 	border:1px outset #999;
@@ -80,7 +81,11 @@ for(var i=0; i<accounts.length; i++){
 if(accounts.length == 0)
 	accounts = ['<% nvram_get("http_username"); %>'];
 
-var theUrl = "router.asus.com";
+if(tmo_support)
+	var theUrl = "cellspot.router";	
+else
+	var theUrl = "router.asus.com";
+
 if(sw_mode == 3 || (sw_mode == 4))
 	theUrl = location.hostName;
 
@@ -311,7 +316,8 @@ function validForm(){
 			)
 		return false;
 
-	if(document.form.time_zone_dst_chk.checked
+	if(document.form.time_zone_dst_chk.checked 
+			&& document.getElementById("chkbox_time_zone_dst").style.display == ""
 			&& document.form.dst_start_m.value == document.form.dst_end_m.value
 			&& document.form.dst_start_w.value == document.form.dst_end_w.value
 			&& document.form.dst_start_d.value == document.form.dst_end_d.value){
@@ -448,7 +454,7 @@ var timezones = [
 	["UTC-1DST_1",	"(GMT+01:00) <#TZ29#>"],
 	["UTC-1_1_1",	"(GMT+01:00) <#TZ30#>"],
 	["UTC-1_2",	"(GMT+01:00) <#TZ31#>"],
-	["UTC-1_2_1",	"(GMT+01:00) <#TZ32#>"],
+	["UTC-1DST_2",	"(GMT+01:00) <#TZ32#>"],
 	["MET-1DST",	"(GMT+01:00) <#TZ33#>"],
 	["MET-1DST_1",	"(GMT+01:00) <#TZ34#>"],
 	["MEZ-1DST",	"(GMT+01:00) <#TZ35#>"],
@@ -748,27 +754,21 @@ function keyBoardListener(evt){
 //Viz add 2012.02 LAN client ip { start
 
 function showLANIPList(){
-	var code = "";
-	var show_name = "";
-	var client_list_array = '<% get_client_detail_info(); %>';	
-	var client_list_row = client_list_array.split('<');	
+	var htmlCode = "";
+	for(var i=0; i<clientList.length;i++){
+		var clientObj = clientList[clientList[i]];
 
-	for(var i = 1; i < client_list_row.length; i++){
-		var client_list_col = client_list_row[i].split('>');
-		if(client_list_col[1] && client_list_col[1].length > 20)
-			show_name = client_list_col[1].substring(0, 16) + "..";
-		else
-			show_name = client_list_col[1];	
+		if(clientObj.ip == "offline") clientObj.ip = "";
+		if(clientObj.name.length > 30) clientObj.name = clientObj.name.substring(0, 28) + "..";
 
-		//client_list_col[]  0:type 1:device 2:ip 3:mac 4: 5: 6:
-		code += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\''+client_list_col[2]+'\');"><strong>'+client_list_col[2]+'</strong> ';
-		
-		if(show_name && show_name.length > 0)
-				code += '( '+show_name+')';
-		code += ' </div></a>';
-		}
-	code +='<!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
-	$("ClientList_Block_PC").innerHTML = code;
+		htmlCode += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\'';
+		htmlCode += clientObj.ip;
+		htmlCode += '\');"><strong>';
+		htmlCode += clientObj.name;
+		htmlCode += '</strong></div></a><!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
+	}
+
+	$("ClientList_Block_PC").innerHTML = htmlCode;
 }
 
 function setClientIP(ipaddr){
@@ -928,7 +928,7 @@ function clean_scorebar(obj){
         <tr>
           <th width="40%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_new#></a></th>
           <td>
-            <input type="password" autocapitalization="off" name="http_passwd2" tabindex="2" onKeyPress="return is_string(this, event);" onkeyup="chkPass(this.value, 'http_passwd');" onpaste="return false;" class="input_15_table" maxlength="16" onBlur="clean_scorebar(this);" />
+            <input type="password" autocapitalization="off" autocomplete="off" name="http_passwd2" tabindex="2" onKeyPress="return is_string(this, event);" onkeyup="chkPass(this.value, 'http_passwd');" onpaste="return false;" class="input_15_table" maxlength="16" onBlur="clean_scorebar(this);" />
             &nbsp;&nbsp;
             <div id="scorebarBorder" style="margin-left:140px; margin-top:-25px; display:none;" title="<#LANHostConfig_x_Password_itemSecur#>">
             		<div id="score"></div>
@@ -940,7 +940,7 @@ function clean_scorebar(obj){
         <tr>
           <th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_retype#></a></th>
           <td>
-            <input type="password" autocapitalization="off" name="v_password2" tabindex="3" onKeyPress="return is_string(this, event);" onpaste="return false;" class="input_15_table" maxlength="16" />
+            <input type="password" autocapitalization="off" autocomplete="off" name="v_password2" tabindex="3" onKeyPress="return is_string(this, event);" onpaste="return false;" class="input_15_table" maxlength="16" />
             <div style="margin:-25px 0px 5px 135px;"><input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.http_passwd2);pass_checked(document.form.v_password2);"><#QIS_show_pass#></div>
             <span id="alert_msg2" style="color:#FC0;margin-left:8px;"></span>
             
@@ -1118,7 +1118,7 @@ function clean_scorebar(obj){
 		<tr>
 			<th>Auto Logout</th>
 			<td>
-				<input type="text" class="input_3_table" maxlength="3" name="http_autologout" value='<% nvram_get("http_autologout"); %>'> min
+				<input type="text" class="input_3_table" maxlength="3" name="http_autologout" value='<% nvram_get("http_autologout"); %>' onKeyPress="return is_number(this,event);" > min
 				<span>(0: Disable)</span>
 			</td>
 		</tr>

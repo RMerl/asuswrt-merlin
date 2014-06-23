@@ -5,28 +5,43 @@ wget_timeout=`nvram get apps_wget_timeout`
 wget_options="-q -t 2 -T $wget_timeout"
 
 nvram set webs_state_update=0 # INITIALIZING
+nvram set webs_state_flag=0   # 0: Don't do upgrade  1: Do upgrade	
 nvram set webs_state_error=0
 nvram set webs_state_url=""
+
+# current firmware information
+current_firm=`nvram get firmver`
+current_firm=`echo $current_firm | sed s/'\.'//g;`
+current_buildno=`nvram get buildno`
+current_extendno=`nvram get extendno`
+current_extendno=`echo $current_extendno | sed s/-g.*//;`
 
 # get firmware information
 forsq=`nvram get apps_sq`
 model=`nvram get productid`
 swisscom=`nvram show | grep rc_support | grep swisscom`
+tmo=`nvram show | grep rc_support | grep tmo`
 if [ "$forsq" == "1" ]; then
-	if [ "$swisscom" == "" ]; then
-		echo "---- update sq normal----" >> /tmp/webs_upgrade.log
-		wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ/wlan_update_v2.zip -O /tmp/wlan_update.txt
+	if [ "$swisscom" != "" ]; then
+                echo "---- update sq swisscom----" >> /tmp/webs_upgrade.log
+                wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ/wlan_update_swisscom.zip -O /tmp/wlan_update.txt
+	elif [ "$tmo" != "" ]; then
+		echo "---- update sq tmo----" >> /tmp/webs_upgrade.log
+                wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ/wlan_update_tmo.zip -O /tmp/wlan_update.txt
 	else
-		echo "---- update sq swisscom----" >> /tmp/webs_upgrade.log
-		wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ/wlan_update_swisscom.zip -O /tmp/wlan_update.txt		
+                echo "---- update sq normal----" >> /tmp/webs_upgrade.log
+                wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ/wlan_update_v2.zip -O /tmp/wlan_update.txt		
 	fi
 else
-	if [ "$swisscom" == "" ]; then
-		echo "---- update real normal----" >> /tmp/webs_upgrade.log
-		wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/wlan_update_v2.zip -O /tmp/wlan_update.txt
+	if [ "$swisscom" != "" ]; then
+                echo "---- update real swisscom----" >> /tmp/webs_upgrade.log
+                wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/wlan_update_swisscom.zip -O /tmp/wlan_update.txt
+        elif [ "$tmo" != "" ]; then
+                echo "---- update real tmo----" >> /tmp/webs_upgrade.log
+                wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/wlan_update_tmo.zip -O /tmp/wlan_update.txt
 	else
-		echo "---- update real swisscom----" >> /tmp/webs_upgrade.log
-		wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/wlan_update_swisscom.zip -O /tmp/wlan_update.txt
+                echo "---- update real normal----" >> /tmp/webs_upgrade.log
+                wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/wlan_update_v2.zip -O /tmp/wlan_update.txt
 	fi
 fi	
 
@@ -40,10 +55,32 @@ else
 	firmver=`echo $firmver | sed s/$buildno$//;`
 	extendno=`grep $model /tmp/wlan_update.txt | sed s/.*#EXT//;`
 	extendno=`echo $extendno | sed s/#.*//;`
+	lextendno=`echo $extendno | sed s/-g.*//;`
 	nvram set webs_state_info=${firmver}_${buildno}_${extendno}
 	urlpath=`grep $model /tmp/wlan_update.txt | sed s/.*#URL//;`	
 	urlpath=`echo $urlpath | sed s/#.*//;`	
 	nvram set webs_state_url=${urlpath}
 	rm -f /tmp/wlan_update.*
 fi
+
+echo "---- $current_firm $current_buildno $current_extendno----" >> /tmp/webs_upgrade.log
+if [ "$firmver" == "" ] || [ "$buildno" == "" ] || [ "$lextendno" == "" ]; then
+	nvram set webs_state_error=1	# exist no Info
+else
+	if [ "$current_buildno" -lt "$buildno" ]; then
+		echo "---- buildno: $buildno ----" >> /tmp/webs_upgrade.log
+		nvram set webs_state_flag=1	# Do upgrade
+	elif [ "$current_buildno" -eq "$buildno" ]; then
+		if [ "$current_firm" -lt "$firmver"]; then 
+				echo "---- firmver: $firmver ----" >> /tmp/webs_upgrade.log
+				nvram set webs_state_flag=1	# Do upgrade
+		elif [ "$current_firm" -eq "$firmver" ]; then
+			if [ "$current_extendno" -lt "$lextendno" ]; then
+				echo "---- lextendno: $lextendno ----" >> /tmp/webs_upgrade.log
+				nvram set webs_state_flag=1	# Do upgrade
+			fi
+		fi	
+	fi	
+fi
+
 nvram set webs_state_update=1

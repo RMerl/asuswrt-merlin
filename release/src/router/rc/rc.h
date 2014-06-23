@@ -28,6 +28,7 @@
 #include <netinet/in.h>
 #include <fcntl.h>
 #include <net/if.h>
+#include <signal.h>
 
 #include <bcmnvram.h>
 #include <bcmparams.h>
@@ -40,7 +41,11 @@
 
 #define IFUP (IFF_UP | IFF_RUNNING | IFF_BROADCAST | IFF_MULTICAST)
 
+#ifdef RTCONFIG_TMOBILE
+#define DUT_DOMAIN_NAME "cellspot.router"
+#else
 #define DUT_DOMAIN_NAME "router.asus.com"
+#endif
 #define OLD_DUT_DOMAIN_NAME1 "www.asusnetwork.net"
 #define OLD_DUT_DOMAIN_NAME2 "www.asusrouter.com"
 
@@ -342,6 +347,7 @@ extern void start_lan(void);
 extern void stop_lan(void);
 extern void do_static_routes(int add);
 extern void hotplug_net(void);
+extern int radio_switch(int subunit);
 extern int radio_main(int argc, char *argv[]);
 extern int wldist_main(int argc, char *argv[]);
 extern int update_lan_resolvconf(void);
@@ -443,6 +449,9 @@ extern int start_iQos(void);
 extern void stop_iQos(void);
 extern void del_iQosRules(void);
 extern int add_iQosRules(char *pcWANIF);
+#ifdef RTCONFIG_TMOBILE_QOS
+extern void add_EbtablesRules(void);
+#endif
 
 /* rtstate.c */
 extern void add_rc_support(char *feature);
@@ -494,9 +503,17 @@ extern void stop_ubifs(int stop);
 static inline void start_jffs2(void) { start_ubifs(); }
 static inline void stop_jffs2(int stop) { stop_ubifs(stop); }
 #elif defined(RTCONFIG_JFFS2) || defined(RTCONFIG_JFFSV1) || defined(RTCONFIG_BRCM_NAND_JFFS2)
+#ifdef RTCONFIG_TMOBILE
+extern void mount_2nd_jffs2(void);
+extern void format_mount_2nd_jffs2(void);
+#endif
 extern void start_jffs2(void);
 extern void stop_jffs2(int stop);
 #else
+#ifdef RTCONFIG_TMOBILE
+static inline void mount_2nd_jffs2(void) { }
+static inline void format_mount_2nd_jffs2(void) { }
+#endif
 static inline void start_jffs2(void) { }
 static inline void stop_jffs2(int stop) { }
 #endif
@@ -520,6 +537,11 @@ extern int phy_tempsense_main(int argc, char *argv[]);
 extern int psta_monitor_main(int argc, char *argv[]);
 #endif
 #endif
+
+#ifdef RTCONFIG_QTN
+extern int qtn_monitor_main(int argc, char *argv[]);
+#endif
+
 extern int radio_main(int argc, char *argv[]);
 
 // ntp.c
@@ -532,6 +554,7 @@ extern int start_ots(void);
 
 // common.c
 extern in_addr_t inet_addr_(const char *cp);	// oleg patch
+extern int inet_equal(char *addr1, char *mask1, char *addr2, char *mask2);
 extern void usage_exit(const char *cmd, const char *help) __attribute__ ((noreturn));
 #define modprobe(mod, args...) ({ char *argv[] = { "modprobe", "-s", mod, ## args, NULL }; _eval(argv, NULL, 0, NULL); })
 extern int modprobe_r(const char *mod);
@@ -715,7 +738,6 @@ extern int write_gct_conf(void);
 #endif
 extern int is_android_phone(const int mode, const unsigned int vid, const unsigned int pid);
 extern int is_storage_cd(const int mode, const unsigned int vid, const unsigned int pid);
-extern void get_wdm_by_usbnet(const char *usbnet, char *wdm_name, size_t size);
 extern int write_3g_conf(FILE *fp, int dno, int aut, const unsigned int vid, const unsigned int pid);
 extern int init_3g_param(const char *port_path, const unsigned int vid, const unsigned int pid);
 extern int write_3g_ppp_conf(void);
@@ -730,22 +752,21 @@ extern const char *yandex_dns(int mode);
 #ifdef RTCONFIG_DNSFILTER
 extern const char *dns_filter(int mode);
 #endif
-#ifdef RTCONFIG_DNSMASQ
-extern void restart_dnsmasq(int force);
+extern void start_dnsmasq(int force);
+extern void stop_dnsmasq(int force);
 extern void reload_dnsmasq(void);
-#else
-extern int restart_dns();
-#endif
 extern int ddns_updated_main(int argc, char *argv[]);
 #ifdef RTCONFIG_IPV6
 extern void start_ipv6_tunnel(void);
 extern void stop_ipv6_tunnel(void);
+#ifndef RTCONFIG_DNSMASQ6
 extern void start_radvd(void);
 extern void stop_radvd(void);
-extern void start_rdnssd(void);
-extern void stop_rdnssd(void);
 extern void start_dhcp6s(void);
 extern void stop_dhcp6s(void);
+#endif
+extern void start_rdnssd(void);
+extern void stop_rdnssd(void);
 extern void start_ipv6(void);
 extern void stop_ipv6(void);
 extern void ipv6_sysconf(const char *ifname, const char *name, int value);
@@ -754,7 +775,6 @@ extern int wps_band_radio_off(int wps_band);
 #ifdef CONFIG_BCMWL5
 extern void set_acs_ifnames();
 #endif
-extern int service_main(int argc, char *argv[]);
 void start_cstats(int new);
 void restart_cstats(void);
 void stop_cstats(void);
@@ -800,8 +820,23 @@ int site_survey_for_channel(int n, const char *wif, int *HT_EXT);
 #endif
 #endif	/* RTCONFIG_WIRELESSREPEATER */
 
+//speedtest.c
+extern int speedtest_main(int argc, char **argv);
+extern int speedtest();
+
 #ifdef RTCONFIG_BWDPI
 extern int bwdpi_main(int argc, char **argv);
+extern int bwdpi_monitor_main(int argc, char **argv);
+extern int bwdpi_check_main(int argc, char **argv);
+extern int show_wrs_main(int argc, char **argv);
+#endif
+#ifdef RTCONFIG_TMOBILE
+extern int sendm_main(int argc, char **argv);
+#endif
+
+#ifdef RTCONFIG_IPERF
+// monitor.c
+extern int monitor_main(int argc, char *argv[]);
 #endif
 
 #ifdef BTN_SETUP
@@ -867,14 +902,12 @@ extern int exec_8021x_stop(int band, int is_iNIC);
 extern int start_8021x(void);
 extern int stop_8021x(void);
 #endif
-#ifdef RTCONFIG_DNSMASQ
-extern void stop_dnsmasq(int force);
-#endif
 #ifdef RTCONFIG_LLDP
 extern void stop_lldpd(void);
 extern int start_lldpd(void);
 #endif
 extern int firmware_check_main(int argc, char *argv[]);
+extern int service_main(int argc, char *argv[]);
 #ifdef RTCONFIG_DSL
 extern int check_tc_upgrade(void);
 extern int start_tc_upgrade(void);

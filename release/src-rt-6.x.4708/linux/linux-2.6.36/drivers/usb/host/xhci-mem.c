@@ -1106,11 +1106,29 @@ int xhci_endpoint_init(struct xhci_hcd *xhci,
 		/* dig out max burst from ep companion desc */
 		max_packet = ep->ss_ep_comp.bMaxBurst;
 #ifdef CONFIG_BCM47XX
-		if(EP_TYPE(BULK_OUT_EP) == xhci_get_endpoint_type(udev, ep)){
-			printk("force burst = 0.\n");
-			max_packet = 0;
-		}
-#endif
+		do {
+			const int ext_cap_rbv_id = 255;
+			int ext_cap_rbv_offset;
+			void __iomem *echrbv;
+			u16 version;
+
+			/* find out offset of RBV extended capability header with cid 255 */
+			ext_cap_rbv_offset = xhci_find_ext_cap_by_id((void *)xhci->cap_regs,
+				XHCI_HCC_PARAMS_OFFSET, ext_cap_rbv_id);
+			/* skip if RBV extended capability is not found */
+			if (ext_cap_rbv_offset == 0)
+				break;
+			echrbv = (void *)xhci->cap_regs + ext_cap_rbv_offset;
+			xhci_dbg(xhci, "ECHRBV: 0x%x\n", xhci_readl(xhci, echrbv));
+			/* override max_packet to disable burst on BULK OUT if version is v1.0.0 (BCM4708 xHC) */
+			version = xhci_readl(xhci, echrbv) >> 16;
+			if ((version == 0x1000) &&
+				(xhci_get_endpoint_type(udev, ep) == EP_TYPE(BULK_OUT_EP))) {
+				max_packet = 0;
+				xhci_warn(xhci, "disable burst on ep %d\n", usb_endpoint_num(&ep->desc));
+			}
+		} while (0);
+#endif /* CONFIG_BCM47XX */
 		if (!max_packet)
 			xhci_warn(xhci, "WARN no SS endpoint bMaxBurst\n");
 		ep_ctx->ep_info2 |= MAX_BURST(max_packet);

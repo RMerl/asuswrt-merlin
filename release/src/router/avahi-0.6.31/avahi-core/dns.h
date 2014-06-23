@@ -79,6 +79,21 @@ int avahi_dns_packet_skip(AvahiDnsPacket *p, size_t length);
 int avahi_dns_packet_is_empty(AvahiDnsPacket *p);
 size_t avahi_dns_packet_space(AvahiDnsPacket *p);
 
+/* LLMNR Functions */
+AvahiDnsPacket* avahi_llmnr_packet_new_query(unsigned mtu);
+AvahiDnsPacket* avahi_llmnr_packet_new_response(unsigned mtu, int c);
+AvahiDnsPacket* avahi_llmnr_packet_new_reply(AvahiDnsPacket *p, unsigned mtu, int copy_queries, int c);
+
+int avahi_llmnr_packet_check_valid(AvahiDnsPacket *p);
+
+AvahiRecord* avahi_llmnr_packet_consume_record(AvahiDnsPacket *p);
+AvahiKey* avahi_llmnr_packet_consume_key(AvahiDnsPacket *p);
+
+/* New becasue LLMNR packets in Vista don't like message compression in RR's*/
+uint8_t* avahi_llmnr_packet_append_name(AvahiDnsPacket *p, const char *name);
+uint8_t* avahi_llmnr_packet_append_key(AvahiDnsPacket *p, AvahiKey *k);
+uint8_t* avahi_llmnr_packet_append_record(AvahiDnsPacket *p, AvahiRecord *r, unsigned max_ttl);
+
 #define AVAHI_DNS_FIELD_ID 0
 #define AVAHI_DNS_FIELD_FLAGS 1
 #define AVAHI_DNS_FIELD_QDCOUNT 2
@@ -86,11 +101,26 @@ size_t avahi_dns_packet_space(AvahiDnsPacket *p);
 #define AVAHI_DNS_FIELD_NSCOUNT 4
 #define AVAHI_DNS_FIELD_ARCOUNT 5
 
+#define AVAHI_LLMNR_FIELD_ID AVAHI_DNS_FIELD_ID
+#define AVAHI_LLMNR_FIELD_FLAGS AVAHI_DNS_FIELD_FLAGS
+#define AVAHI_LLMNR_FIELD_QDCOUNT AVAHI_DNS_FIELD_QDCOUNT
+#define AVAHI_LLMNR_FIELD_ANCOUNT AVAHI_DNS_FIELD_ANCOUNT
+#define AVAHI_LLMNR_FIELD_NSCOUNT AVAHI_DNS_FIELD_NSCOUNT
+#define AVAHI_LLMNR_FIELD_ARCOUNT AVAHI_DNS_FIELD_ARCOUNT
+
 #define AVAHI_DNS_FLAG_QR (1 << 15)
 #define AVAHI_DNS_FLAG_OPCODE (15 << 11)
 #define AVAHI_DNS_FLAG_RCODE (15)
 #define AVAHI_DNS_FLAG_TC (1 << 9)
 #define AVAHI_DNS_FLAG_AA (1 << 10)
+
+#define AVAHI_LLMNR_FLAG_QR (1 << 15)
+#define AVAHI_LLMNR_FLAG_OPCODE (15 << 11)
+#define AVAHI_LLMNR_FLAG_C (1 << 10)
+#define AVAHI_LLMNR_FLAG_TC (1 << 9)
+#define AVAHI_LLMNR_FLAG_T (1 << 8)
+#define AVAHI_LLMNR_FLAG_Z (15 << 4)
+#define AVAHI_LLMNR_FLAG_RCODE (15)
 
 #define AVAHI_DNS_FLAGS(qr, opcode, aa, tc, rd, ra, z, ad, cd, rcode) \
         (((uint16_t) !!qr << 15) |  \
@@ -101,6 +131,15 @@ size_t avahi_dns_packet_space(AvahiDnsPacket *p);
          ((uint16_t) !!ra << 7) | \
          ((uint16_t) !!ad << 5) | \
          ((uint16_t) !!cd << 4) | \
+         ((uint16_t) (rcode & 15)))
+
+#define AVAHI_LLMNR_FLAGS(qr, opcode, c, tc, t, z,rcode) \
+        (((uint16_t) !!qr << 15) |  \
+         ((uint16_t) (opcode & 15) << 11) | \
+         ((uint16_t) !!c << 10) | \
+         ((uint16_t) !!tc << 9) | \
+         ((uint16_t) !!t << 8) | \
+         ((uint16_t) (z & 15) << 4) | \
          ((uint16_t) (rcode & 15)))
 
 #define AVAHI_MDNS_SUFFIX_LOCAL "local"

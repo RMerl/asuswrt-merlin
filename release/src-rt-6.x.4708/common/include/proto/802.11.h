@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  *
  * Fundamental types and constants relating to 802.11
  *
- * $Id: 802.11.h 401759 2013-05-13 16:08:08Z $
+ * $Id: 802.11.h 440423 2013-12-02 19:54:50Z $
  */
 
 #ifndef _802_11_H_
@@ -780,6 +780,8 @@ BWL_PRE_PACKED_STRUCT struct dot11_qbss_load_ie {
 typedef struct dot11_qbss_load_ie dot11_qbss_load_ie_t;
 #define BSS_LOAD_IE_SIZE 	7	/* BSS load IE size */
 
+#define WLC_QBSS_LOAD_CHAN_FREE_MAX	0xff	/* max for channel free score */
+
 /* nom_msdu_size */
 #define FIXED_MSDU_SIZE 0x8000		/* MSDU size is fixed */
 #define MSDU_SIZE_MASK	0x7fff		/* (Nominal or fixed) MSDU size */
@@ -1369,6 +1371,8 @@ typedef struct ti_ie ti_ie_t;
 #define DOT11_EXT_CAP_DMS			26
 /* Interworking support bit position */
 #define DOT11_EXT_CAP_IW			31
+/* QoS map support bit position */
+#define DOT11_EXT_CAP_QOS_MAP		32
 /* service Interval granularity bit position and mask */
 #define DOT11_EXT_CAP_SI			41
 #define DOT11_EXT_CAP_SI_MASK			0x0E
@@ -1464,6 +1468,13 @@ typedef struct dot11_oper_mode_notif_ie dot11_oper_mode_notif_ie_t;
 #define DOT11_SM_ACTION_TPC_REP		3	/* d11 action TPC response */
 #define DOT11_SM_ACTION_CHANNEL_SWITCH	4	/* d11 action channel switch */
 #define DOT11_SM_ACTION_EXT_CSA		5	/* d11 extened CSA for 11n */
+
+/* QoS action ids */
+#define DOT11_QOS_ACTION_ADDTS_REQ	0	/* d11 action ADDTS request */
+#define DOT11_QOS_ACTION_ADDTS_RESP	1	/* d11 action ADDTS response */
+#define DOT11_QOS_ACTION_DELTS		2	/* d11 action DELTS */
+#define DOT11_QOS_ACTION_SCHEDULE	3	/* d11 action schedule */
+#define DOT11_QOS_ACTION_QOS_MAP	4	/* d11 action QOS map */
 
 /* HT action ids */
 #define DOT11_ACTION_ID_HT_CH_WIDTH	0	/* notify channel width action id */
@@ -2905,6 +2916,7 @@ typedef struct d11cnt {
 #define RWL_ACTION_WIFI_FRAG_TYPE	85 /* Fragment indicator for receiver */
 
 #define PROXD_AF_TYPE			11 /* Wifi proximity action frame type */
+#define BRCM_RELMACST_AF_TYPE	        12 /* RMC action frame type */
 
 #ifndef LINUX_POSTMOGRIFY_REMOVAL
 /*
@@ -2995,13 +3007,14 @@ BWL_PRE_PACKED_STRUCT struct member_of_brcm_prop_ie {
 typedef struct member_of_brcm_prop_ie member_of_brcm_prop_ie_t;
 
 #define MEMBER_OF_BRCM_PROP_IE_LEN		10	/* IE max length */
+#define MEMBER_OF_BRCM_PROP_IE_HDRLEN	        (sizeof(member_of_brcm_prop_ie_t))
 #define MEMBER_OF_BRCM_PROP_IE_TYPE		54
 
 /* BRCM Reliable Multicast IE */
 BWL_PRE_PACKED_STRUCT struct relmcast_brcm_prop_ie {
-	uchar id;
-	uchar len;
-	uchar oui[3];
+	uint8 id;
+	uint8 len;
+	uint8 oui[3];
 	uint8 type;           /* type inidicates what follows */
 	struct ether_addr ea;   /* The ack sender's MAC Adrress */
 	struct ether_addr mcast_ea;  /* The multicast MAC address */
@@ -3009,7 +3022,10 @@ BWL_PRE_PACKED_STRUCT struct relmcast_brcm_prop_ie {
 } BWL_POST_PACKED_STRUCT;
 typedef struct relmcast_brcm_prop_ie relmcast_brcm_prop_ie_t;
 
-#define RELMCAST_BRCM_PROP_IE_LEN	(sizeof(relmcast_brcm_prop_ie_t)-2)	/* IE length */
+/* IE length */
+/* BRCM_PROP_IE_LEN = sizeof(relmcast_brcm_prop_ie_t)-((sizeof (id) + sizeof (len)))? */
+#define RELMCAST_BRCM_PROP_IE_LEN	(sizeof(relmcast_brcm_prop_ie_t)-(2*sizeof(uint8)))
+
 #define RELMCAST_BRCM_PROP_IE_TYPE	55
 
 /* ************* HT definitions. ************* */
@@ -3131,7 +3147,15 @@ typedef struct ht_prop_cap_ie ht_prop_cap_ie_t;
 #define AMPDU_RX_FACTOR_16K     1       /* max rcv ampdu len (16kb) */
 #define AMPDU_RX_FACTOR_32K     2       /* max rcv ampdu len (32kb) */
 #define AMPDU_RX_FACTOR_64K     3       /* max rcv ampdu len (64kb) */
+
+/* AMPDU RX factors for VHT rates */
+#define AMPDU_RX_FACTOR_128K    4       /* max rcv ampdu len (128kb) */
+#define AMPDU_RX_FACTOR_256K    5       /* max rcv ampdu len (256kb) */
+#define AMPDU_RX_FACTOR_512K    6       /* max rcv ampdu len (512kb) */
+#define AMPDU_RX_FACTOR_1024K   7       /* max rcv ampdu len (1024kb) */
+
 #define AMPDU_RX_FACTOR_BASE    8*1024  /* ampdu factor base for rx len */
+#define AMPDU_RX_FACTOR_BASE_PWR	13	/* ampdu factor base for rx len in power of 2 */
 
 #define AMPDU_DELIMITER_LEN	4	/* length of ampdu delimiter */
 #define AMPDU_DELIMITER_LEN_MAX	63	/* max length of ampdu delimiter(enforced in HW) */
@@ -3476,6 +3500,7 @@ typedef struct vht_features_ie_hdr vht_features_ie_hdr_t;
 #define WFA_OUI_TYPE_WFD	10
 #endif /* WTDLS */
 #define WFA_OUI_TYPE_HS20	0x10
+#define WFA_OUI_TYPE_OSEN	0x12
 
 /* RSN authenticated key managment suite */
 #define RSN_AKM_NONE		0	/* None (IBSS) */
@@ -3487,8 +3512,12 @@ typedef struct vht_features_ie_hdr vht_features_ie_hdr_t;
 #define RSN_AKM_MFP_PSK		6	/* SHA256 key derivation, using Pre-shared Key */
 #define RSN_AKM_TPK			7	/* TPK(TDLS Peer Key) handshake */
 
+/* OSEN authenticated key managment suite */
+#define OSEN_AKM_UNSPECIFIED	RSN_AKM_UNSPECIFIED	/* Over 802.1x */
+
 /* Key related defines */
 #define DOT11_MAX_DEFAULT_KEYS	4	/* number of default keys */
+#define DOT11_MAX_IGTK_KEYS		2
 #define DOT11_MAX_KEY_SIZE	32	/* max size of any key */
 #define DOT11_MAX_IV_SIZE	16	/* max size of any IV */
 #define DOT11_EXT_IV_FLAG	(1<<5)	/* flag to indicate IV is > 4 bytes */
@@ -3502,6 +3531,8 @@ typedef struct vht_features_ie_hdr vht_features_ie_hdr_t;
 #define TKIP_EOM_SIZE		7	/* max size of TKIP EOM */
 #define TKIP_EOM_FLAG		0x5a	/* TKIP EOM flag byte */
 #define TKIP_KEY_SIZE		32	/* size of any TKIP key */
+#define TKIP_TK_SIZE		16
+#define TKIP_MIC_KEY_SIZE	8
 #define TKIP_MIC_AUTH_TX	16	/* offset to Authenticator MIC TX key */
 #define TKIP_MIC_AUTH_RX	24	/* offset to Authenticator MIC RX key */
 #define TKIP_MIC_SUP_RX		TKIP_MIC_AUTH_TX	/* offset to Supplicant MIC RX key */
@@ -3510,6 +3541,11 @@ typedef struct vht_features_ie_hdr vht_features_ie_hdr_t;
 #define AES_MIC_SIZE		8	/* size of AES MIC */
 #define BIP_KEY_SIZE		16	/* size of BIP key */
 #define BIP_MIC_SIZE		8   /* sizeof BIP MIC */
+
+#define AES_GCM_MIC_SIZE	16	/* size of MIC for 128-bit GCM - .11adD9 */
+
+#define AES256_KEY_SIZE		32	/* size of AES 256 key - .11acD5 */
+#define AES256_MIC_SIZE		16	/* size of MIC for 256 bit keys, incl BIP */
 
 /* WCN */
 #define WCN_OUI			"\x00\x50\xf2"	/* WCN OUI */
@@ -3570,7 +3606,7 @@ BWL_PRE_PACKED_STRUCT struct mmic_ie {
 	uint8   len;				/* IE length */
 	uint16  key_id;				/* key id */
 	uint8   ipn[6];				/* ipn */
-	uint8   mic[BIP_MIC_SIZE];	/* mic */
+	uint8   mic[16];			/* mic */
 } BWL_POST_PACKED_STRUCT;
 typedef struct mmic_ie mmic_ie_t;
 
@@ -3645,6 +3681,22 @@ typedef struct pu_buffer_status_ie pu_buffer_status_ie_t;
 #define TDLS_PU_BUFFER_STATUS_AC_BE		2
 #define TDLS_PU_BUFFER_STATUS_AC_VI		4
 #define TDLS_PU_BUFFER_STATUS_AC_VO		8
+
+/* TDLS Action Field Values */
+#define TDLS_SETUP_REQ				0
+#define TDLS_SETUP_RESP				1
+#define TDLS_SETUP_CONFIRM			2
+#define TDLS_TEARDOWN				3
+#define TDLS_PEER_TRAFFIC_IND			4
+#define TDLS_CHANNEL_SWITCH_REQ			5
+#define TDLS_CHANNEL_SWITCH_RESP		6
+#define TDLS_PEER_PSM_REQ			7
+#define TDLS_PEER_PSM_RESP			8
+#define TDLS_PEER_TRAFFIC_RESP			9
+#define TDLS_DISCOVERY_REQ			10
+
+/* 802.11z TDLS Public Action Frame action field */
+#define TDLS_DISCOVERY_RESP			14
 
 /* 802.11u GAS action frames */
 #define GAS_REQUEST_ACTION_FRAME				10
@@ -3722,6 +3774,7 @@ typedef struct pu_buffer_status_ie pu_buffer_status_ie_t;
 #define VENUE_OUTDOOR					11
 
 /* 802.11u network authentication type indicator */
+#define NATI_UNSPECIFIED							-1
 #define NATI_ACCEPTANCE_OF_TERMS_CONDITIONS			0
 #define NATI_ONLINE_ENROLLMENT_SUPPORTED			1
 #define NATI_HTTP_HTTPS_REDIRECTION					2
@@ -3752,11 +3805,15 @@ typedef struct pu_buffer_status_ie pu_buffer_status_ie_t;
 
 /* 802.11u IANA EAP method type numbers */
 #define REALM_EAP_TLS					13
+#define REALM_EAP_LEAP					17
 #define REALM_EAP_SIM					18
 #define REALM_EAP_TTLS					21
 #define REALM_EAP_AKA					23
+#define REALM_EAP_PEAP					25
+#define REALM_EAP_FAST					43
 #define REALM_EAP_PSK					47
 #define REALM_EAP_AKAP					50
+#define REALM_EAP_EXPANDED				254
 
 /* 802.11u authentication ID */
 #define REALM_EXPANDED_EAP						1
@@ -3768,6 +3825,7 @@ typedef struct pu_buffer_status_ie pu_buffer_status_ie_t;
 #define REALM_VENDOR_SPECIFIC_EAP				221
 
 /* 802.11u non-EAP inner authentication type */
+#define REALM_RESERVED_AUTH			0
 #define REALM_PAP					1
 #define REALM_CHAP					2
 #define REALM_MSCHAP				3
@@ -3782,6 +3840,8 @@ typedef struct pu_buffer_status_ie pu_buffer_status_ie_t;
 #define REALM_CERTIFICATE			6
 #define REALM_USERNAME_PASSWORD		7
 #define REALM_SERVER_SIDE			8
+#define REALM_RESERVED_CRED			9
+#define REALM_VENDOR_SPECIFIC_CRED	10
 
 /* 802.11u 3GPP PLMN */
 #define G3PP_GUD_VERSION		0
@@ -3795,6 +3855,29 @@ BWL_PRE_PACKED_STRUCT struct hs20_ie {
 } BWL_POST_PACKED_STRUCT;
 typedef struct hs20_ie hs20_ie_t;
 #define HS20_IE_LEN 5	/* HS20 IE length */
+
+/* IEEE 802.11 Annex E */
+typedef enum {
+	DOT11_2GHZ_20MHZ_CLASS_12		= 81,	/* Ch 1-11			 */
+	DOT11_5GHZ_20MHZ_CLASS_1		= 115,	/* Ch 36-48			 */
+	DOT11_5GHZ_20MHZ_CLASS_2_DFS	= 118,	/* Ch 52-64			 */
+	DOT11_5GHZ_20MHZ_CLASS_3		= 124,	/* Ch 149-161		 */
+	DOT11_5GHZ_20MHZ_CLASS_4_DFS	= 121,	/* Ch 100-140		 */
+	DOT11_5GHZ_20MHZ_CLASS_5		= 125,	/* Ch 149-165		 */
+	DOT11_5GHZ_40MHZ_CLASS_22		= 116,	/* Ch 36-44,   lower */
+	DOT11_5GHZ_40MHZ_CLASS_23_DFS 	= 119,	/* Ch 52-60,   lower */
+	DOT11_5GHZ_40MHZ_CLASS_24_DFS	= 122,	/* Ch 100-132, lower */
+	DOT11_5GHZ_40MHZ_CLASS_25		= 126,	/* Ch 149-157, lower */
+	DOT11_5GHZ_40MHZ_CLASS_27		= 117,	/* Ch 40-48,   upper */
+	DOT11_5GHZ_40MHZ_CLASS_28_DFS	= 120,	/* Ch 56-64,   upper */
+	DOT11_5GHZ_40MHZ_CLASS_29_DFS	= 123,	/* Ch 104-136, upper */
+	DOT11_5GHZ_40MHZ_CLASS_30		= 127,	/* Ch 153-161, upper */
+	DOT11_2GHZ_40MHZ_CLASS_32		= 83,	/* Ch 1-7,     lower */
+	DOT11_2GHZ_40MHZ_CLASS_33		= 84,	/* Ch 5-11,    upper */
+} dot11_op_class_t;
+
+/* QoS map */
+#define QOS_MAP_FIXED_LENGTH	(8 * 2)	/* DSCP ranges fixed with 8 entries */
 
 /* This marks the end of a packed structure section. */
 #include <packed_section_end.h>

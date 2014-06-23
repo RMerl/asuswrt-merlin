@@ -208,12 +208,12 @@ err:
 }
 
 static const struct net_device_ops qmi_wwan_netdev_ops = {
-        .ndo_open               = usbnet_open,
-        .ndo_stop               = usbnet_stop,
-        .ndo_start_xmit         = usbnet_start_xmit,
-        .ndo_tx_timeout         = usbnet_tx_timeout,
-        .ndo_change_mtu         = usbnet_change_mtu,
-        .ndo_set_mac_address    = qmi_wwan_mac_addr,
+	.ndo_open		= usbnet_open,
+	.ndo_stop		= usbnet_stop,
+	.ndo_start_xmit		= usbnet_start_xmit,
+	.ndo_tx_timeout		= usbnet_tx_timeout,
+	.ndo_change_mtu		= usbnet_change_mtu,
+	.ndo_set_mac_address	= qmi_wwan_mac_addr
 };
 
 static int qmi_wwan_bind(struct usbnet *dev, struct usb_interface *intf)
@@ -500,12 +500,12 @@ static const struct usb_device_id products[] = {
 	/* 3. Combined interface devices matching on interface number */
 	{QMI_FIXED_INTF(0x0408, 0xea42, 4)},	/* Yota / Megafon M100-1 */
 	{QMI_FIXED_INTF(0x12d1, 0x140c, 1)},	/* Huawei E173 */
-	{QMI_FIXED_INTF(0x19d2, 0x0002, 1)},
+	//{QMI_FIXED_INTF(0x19d2, 0x0002, 1)},	// ZTE MF637U: when use uqmi, it will notify USB_CDC_NOTIFY_SERIAL_STATE, and can't support.
 	{QMI_FIXED_INTF(0x19d2, 0x0012, 1)},
 	{QMI_FIXED_INTF(0x19d2, 0x0017, 3)},
 	{QMI_FIXED_INTF(0x19d2, 0x0021, 4)},
 	{QMI_FIXED_INTF(0x19d2, 0x0025, 1)},
-	{QMI_FIXED_INTF(0x19d2, 0x0031, 4)},
+	//{QMI_FIXED_INTF(0x19d2, 0x0031, 4)},	// ZTE MF633: when use uqmi, it will notify USB_CDC_NOTIFY_SERIAL_STATE, and can't support.
 	{QMI_FIXED_INTF(0x19d2, 0x0042, 4)},
 	{QMI_FIXED_INTF(0x19d2, 0x0049, 5)},
 	{QMI_FIXED_INTF(0x19d2, 0x0052, 4)},

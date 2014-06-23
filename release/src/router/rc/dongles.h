@@ -110,20 +110,23 @@
 #define SN_ZTE_MF190				0x0213
 #define SN_ZTE_ffe				0x0214
 #define SN_SE_MD400G				0x0215
-#define SN_DLINK_DWM_156			0x0216
-#define SN_Huawei_U8220				0x0217
-#define SN_Huawei_T_Mobile_NL			0x0218
-#define SN_ZTE_K3806Z				0x0219
-#define SN_Vibe_3G				0x0220
-#define SN_ZTE_MF637				0x0221
-#define SN_ONDA_MW836UP_K			0x0222
-#define SN_Huawei_V725				0x0223
-#define SN_Huawei_ET8282			0x0224
-#define SN_Huawei_E352				0x0225
-#define SN_Huawei_BM358				0x0226
-#define SN_Haier_CE_100				0x0227
-#define SN_Franklin_Wireless_U210_var		0x0228
-#define SN_DLINK_DWM_156_2			0x0229
+#define SN_DLINK_DWM_156_A1			0x2001
+#define SN_DLINK_DWM_156_A3			0x2002
+#define SN_DLINK_DWM_156_A7_1			0x2003
+#define SN_DLINK_DWM_156_A7_2			0x2004
+#define SN_DLINK_DWM_156_A7_3			0x2005
+#define SN_Huawei_U8220				0x0218
+#define SN_Huawei_T_Mobile_NL			0x0219
+#define SN_ZTE_K3806Z				0x0220
+#define SN_Vibe_3G				0x0221
+#define SN_ZTE_MF637				0x0222
+#define SN_ONDA_MW836UP_K			0x0223
+#define SN_Huawei_V725				0x0224
+#define SN_Huawei_ET8282			0x0225
+#define SN_Huawei_E352				0x0226
+#define SN_Huawei_BM358				0x0227
+#define SN_Haier_CE_100				0x0228
+#define SN_Franklin_Wireless_U210_var		0x0229
 #define SN_Exiss_E_190				0x0230
 #define SN_dealextreme				0x0231
 #define SN_CHU_628S				0x0232
@@ -216,5 +219,7 @@
 
 #define SN_WeTelecom_WMD300                     0x031e
 #define SN_Huawei_K5150                         0x031f
+
+#define SN_ZTE_MF823				0x0320
 
 #endif

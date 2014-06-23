@@ -1,7 +1,7 @@
 /*
  * Misc useful os-independent macros and functions.
  *
- * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -609,9 +609,16 @@ extern int bcm_format_ssid(char* buf, const uchar ssid[], uint ssid_len);
 #define BCME_NMODE_DISABLED		-41 	/* NMODE disabled */
 #define BCME_NONRESIDENT		-42 /* access to nonresident overlay */
 #define BCME_SCANREJECT			-43 	/* reject scan request */
-/* Leave gap between -44 and -46 to synchronize with trunk. */
+#define BCME_USAGE_ERROR                -44     /* WLCMD usage error */
+#define BCME_IOCTL_ERROR                -45     /* WLCMD ioctl error */
+#define BCME_SERIAL_PORT_ERR            -46     /* RWL serial port error */
 #define BCME_DISABLED                   -47     /* Disabled in this build */
-#define BCME_LAST			BCME_DISABLED
+#define BCME_DECERR				-48		/* Decrypt error */
+#define BCME_ENCERR				-49		/* Encrypt error */
+#define BCME_MICERR				-50		/* Integrity/MIC error */
+#define BCME_REPLAY				-51		/* Replay */
+#define BCME_IE_NOTFOUND		-52		/* IE not found */
+#define BCME_LAST			BCME_IE_NOTFOUND
 
 /* These are collection of BCME Error strings */
 #define BCMERRSTRINGTABLE {		\
@@ -659,10 +666,15 @@ extern int bcm_format_ssid(char* buf, const uchar ssid[], uint ssid_len);
 	"NMODE Disabled",		\
 	"Nonresident overlay access", \
 	"Scan Rejected",		\
-	"unused",			\
-	"unused",			\
-	"unused",			\
+	"WLCMD usage error",		\
+	"WLCMD ioctl error",		\
+	"RWL serial port error", 	\
 	"Disabled",			\
+	"Decrypt error", \
+	"Encrypt error", \
+	"MIC error", \
+	"Replay", \
+	"IE not found", \
 }
 
 #ifndef ABS

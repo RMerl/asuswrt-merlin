@@ -877,6 +877,19 @@ init_nflash_mtd_partitions(hndnand_t *nfl, struct mtd_info *mtd, size_t size)
 
 		nparts++;
 
+#ifdef CONFIG_DUAL_TRX /* ASUS Setup 2nd kernel MTD partition */
+                bcm947xx_nflash_parts[nparts].name = "linux2";
+                bcm947xx_nflash_parts[nparts].size = NFL_BOOT_OS_SIZE;
+                bcm947xx_nflash_parts[nparts].offset = NFL_BOOT_OS_SIZE;
+                nparts++;
+                /* Setup rootfs MTD partition */
+                bcm947xx_nflash_parts[nparts].name = "rootfs2";
+                bcm947xx_nflash_parts[nparts].size = NFL_BOOT_OS_SIZE - shift;
+                bcm947xx_nflash_parts[nparts].offset = NFL_BOOT_OS_SIZE + shift;
+                bcm947xx_nflash_parts[nparts].mask_flags = MTD_WRITEABLE;
+                nparts++;
+#endif /* End of ASUS 2nd FW partition*/
+
 #ifdef CONFIG_FAILSAFE_UPGRADE
 		/* Setup 2nd kernel MTD partition */
 		if (dual_image_on) {

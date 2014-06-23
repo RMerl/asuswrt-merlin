@@ -11,12 +11,15 @@
 <script>
 var m = new lang();
 var g_storage = new myStorage();
-var g_app_id = "37140360286c5cd9952023fa8b662a64";
-var g_shared_key = "804b51d14d840d6e";
 var g_bLoginFlickr = false;
 var g_token = "";
 var g_uid = "";
-var server_url = "http://develop.stage612.url.tw/auth/";
+//var g_app_id = "37140360286c5cd9952023fa8b662a64";
+//var g_shared_key = "804b51d14d840d6e";
+//var server_url = "http://develop.stage612.url.tw/auth/";
+var g_app_id = "c0466d7736e0275d062ce64aefaacfe0";
+var g_shared_key = "228e160cf8805246";
+var server_url = "http://oauth.asus.com/aicloud/";
 var ajax_dataType = "json";
 var g_uploadfile_url_array = new Array();
 var g_uploadfile_title_array = new Array();
@@ -217,7 +220,7 @@ function flickr_login(){
 	var b = window.location.href.indexOf("/",window.location.protocol.length+2);
 	var redirect_url = window.location.href.slice(0,b) + "/smb/css/service/callback.html";
 	
-	var url = server_url + "flickr_authorize.php?action=login&callback=_onFlickrLogin&redirect_uri=" + encodeURIComponent(redirect_url);
+	var url = server_url + "flickr_authorize.html?action=login&callback=_onFlickrLogin&redirect_uri=" + encodeURIComponent(redirect_url);
 	window.open(url);
 }
 
@@ -250,76 +253,11 @@ function onFlickrLogin( token, uid ){
 	g_token = token;
 	g_uid = decodeURIComponent(uid);
 	
-	g_storage.sett("flickr_access_token", g_token);
+	g_storage.sett("flickr_access_token", g_token);	
 	g_storage.sett("flickr_uid", g_uid);
 	
 	flickr_get_userprofile();
 }
-
-/*
-function getSignature(sSecretKey, sParameter) { 
-	sParameter = sParameter.replace('?',''); 
-	var aParameter = sParameter.split('&'); 
-	aParameter.sort(); 
-	var sSignature = sSecretKey; 
-	for(var i=0,j=aParameter.length;i<j;i++){ 
-		var sName = aParameter[i].split('=')[0]; 
-	    var sValue = aParameter[i].split('=')[1]; 
-	    sSignature += sName + sValue; 
-	}
-	return hex_md5(sSignature); 
-}
-
-function flickr_get_frob(){
-	var sParameter = '?method=flickr.auth.getFrob&api_key=' + g_app_id;
-	
-	//check token
-	var args = {};
-	args.method = "flickr.auth.getFrob";
-	args.api_key = g_app_id;
-	args.api_sig = getSignature(g_shared_key, sParameter);
-	
-	$.ajax({
-		url: "http://api.flickr.com/services/rest/",
-		data: args,
-	  	type: 'GET',
-	  	dataType: 'xml',
-	  	timeout: 20000,
-		success: function(xml){			
-			var frob = $(xml).find('frob').text();
-			flickr_get_token(frob);
-		},
-		error: function(err) {
-			//alert('Error occured: '+err.responseText);
-		}
-	});
-}
-
-function flickr_get_token(frob){
-	
-	var sParameter = '?method=flickr.auth.getToken&api_key=' + g_app_id + '&frob=' + frob;
-	
-	var args = {};
-	args.method = "flickr.auth.getToken";
-	args.api_key = g_app_id;
-	args.frob = frob;
-	args.api_sig = getSignature(g_shared_key, sParameter);
-	
-	$.ajax({
-		url: "http://api.flickr.com/services/rest/",
-		data: args,
-	  	type: 'GET',
-	  	dataType: 'text',
-	  	timeout: 20000,
-		success: function(xml){			
-			alert(xml);
-		},
-		error: function(err) {
-			//alert('Error occured: '+err.responseText);
-		}
-	});
-}
-*/
 
 function flickr_get_userprofile(){
 	
@@ -332,13 +270,12 @@ function flickr_get_userprofile(){
 	args.user_id = g_uid;
 	
 	$.ajax({
-		url: "http://api.flickr.com/services/rest/",
+		url: "https://api.flickr.com/services/rest/",
 		data: args,
 	  	type: 'GET',
 	  	dataType: 'xml',
 	  	timeout: 20000,
-		success: function(xml){			
-			
+		success: function(xml){
 			var id = $(xml).find('person').attr('id');
 			var iconserver = $(xml).find('person').attr('iconserver');
 			var iconfarm = $(xml).find('person').attr('iconfarm');
@@ -364,8 +301,8 @@ function flickr_get_userprofile(){
 			$("#upload_photo").removeAttr("disabled");
 			$("#addalbum").removeAttr("disabled");
 		},
-		error: function(err) {
-			alert('Error occured: '+err.responseText);
+		error: function(xhr, status, error) {
+  			alert(status+", "+error);
 		}
 	});
 }
@@ -382,7 +319,7 @@ function flickr_get_albumlist(){
 	args.user_id = g_uid;
 	
 	$.ajax({
-		url: "http://api.flickr.com/services/rest/",
+		url: "https://api.flickr.com/services/rest/",
 		data: args,
 	  	type: 'GET',
 	  	dataType: 'xml',
@@ -397,7 +334,7 @@ function flickr_get_albumlist(){
 			});
 		},
 		error: function(err) {
-			//alert('Error occured: '+err.responseText);
+			alert('Error occured: '+err.responseText);
 		}
 	});	
 }
@@ -420,7 +357,7 @@ function flickr_new_album(){
 	args.primary_photo_id = "876121100429";
 	
 	$.ajax({
-		url: "http://api.flickr.com/services/rest/",
+		url: "https://api.flickr.com/services/rest/",
 		data: args,
 	  	type: 'POST',
 	  	dataType: 'xml',
@@ -445,7 +382,7 @@ function flickr_checktoken(){
 	args.auth_token = g_token;
 	
 	$.ajax({
-		url: "http://api.flickr.com/services/rest/",
+		url: "https://api.flickr.com/services/rest/",
 		data: args,
 	  	type: 'GET',
 	  	dataType: 'text',
@@ -475,7 +412,7 @@ function setPhotoToSet(photo_id, photoset_id){
 	sParameter += "&api_sig=" + api_sig;
 					
 	$.ajax({
-		url: "http://api.flickr.com/services/rest/",
+		url: "https://api.flickr.com/services/rest/",
 		data: sParameter,
 		type: 'POST',
 		dataType: 'xml',
@@ -537,8 +474,8 @@ function flickr_upload_photo(){
 			return;
 				
 		var url = uploadfile_obj.url;
-		var filename = uploadfile_obj.filename;
-		var title = $("textarea." + uploadfile_obj.textAreaClassName).val();
+		var filename = myencodeURI(uploadfile_obj.filename);
+		var title = myencodeURI($("textarea." + uploadfile_obj.textAreaClassName).val());
 		var pos = count*$(".service_image_upload_container table").height();
 		var filext = uploadfile_obj.filext;
 		var this_url = url.substring(0, url.lastIndexOf("/"));

@@ -49,6 +49,8 @@ endif
 
 ifeq ($(RTCONFIG_BWDPI),y)
 CFLAGS += -I$(TOP)/bwdpi/
+CFLAGS += -I$(TOP)/httpd/
+CFLAGS += -I$(TOP)/util-linux/include
 LDFLAGS += -L$(TOP)/bwdpi -lbwdpi
 endif
 
@@ -72,6 +74,14 @@ LDFLAGS += -L$(TOP)/curl-7.21.7/lib/.libs -lcurl
 LDFLAGS += -L$(TOP)/libxml2/.libs -lxml2
 LDFLAGS += -L$(TOP)/wb -lws
 LDFLAGS += -L$(TOP)/push_log -lpush_log
+endif
+
+ifeq ($(RTCONFIG_TMOBILE),y)
+CFLAGS += -I$(TOP)/wb/ws_src
+LDFLAGS += -L$(TOP)/openssl -lcrypto -lssl
+LDFLAGS += -L$(TOP)/curl-7.21.7/lib/.libs -lcurl
+LDFLAGS += -L$(TOP)/libxml2/.libs -lxml2
+LDFLAGS += -L$(TOP)/wb -lws
 endif
 
 ifeq ($(RTCONFIG_ODMPID),y)
@@ -163,6 +173,7 @@ OBJS += vpn.o
 endif
 
 ifeq ($(RTCONFIG_OPENVPN),y)
+CFLAGS += -DRTCONFIG_CROND
 OBJS += openvpn.o
 endif
 
@@ -211,15 +222,28 @@ endif
 ifeq ($(RTCONFIG_QTN),y)
 OBJS += qtn.o
 OBJS += find_host_addr.o
+OBJS += qtn_monitor.o
+OBJS += web-qtn.o
 endif
 
 ifeq ($(RTCONFIG_BWDPI),y)
 OBJS += bwdpi.o
+OBJS += bwdpi_monitor.o
+OBJS += bwdpi_check.o
+endif
+
+OBJS += speedtest.o
+ifeq ($(RTCONFIG_TMOBILE),y)
+OBJS += sendm.o
+endif
+
+ifeq ($(RTCONFIG_IPERF),y)
+OBJS += monitor.o
 endif
 
 ifeq ($(RTCONFIG_BCMARM),y)
 ifeq ($(RTCONFIG_QTN),y)
-vpath %.c sysdeps sysdeps/broadcom sysdeps/ralink sysdeps/qtn $(TOP)/libqcsapi_client/qcsapi_rpc_common/client $(SRCBASE)/shared
+vpath %.c sysdeps sysdeps/broadcom sysdeps/ralink sysdeps/qtn $(TOP)/libqcsapi_client/qcsapi_rpc_common/client $(TOP)/httpd/sysdeps $(SRCBASE)/shared
 else
 vpath %.c sysdeps sysdeps/broadcom sysdeps/ralink $(SRCBASE)/shared
 endif
@@ -231,7 +255,7 @@ all: rc
 
 rc: $(OBJS)
 	@echo " [rc] CC $@"
-	@$(CC) -o $@ $^ $(LDFLAGS)
+	@$(CC) -o $@ $^ $(LDFLAGS) $(CFLAGS)
 
 	$(SIZECHECK)
 	$(CPTMP)
@@ -273,6 +297,14 @@ ifeq ($(RTCONFIG_BCMWL6),y)
 ifeq ($(RTCONFIG_PROXYSTA),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc psta_monitor
 endif
+endif
+ifeq ($(RTCONFIG_QTN),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc qtn_monitor
+	@cd $(INSTALLDIR)/sbin && ln -sf rc start_psta_qtn
+	@cd $(INSTALLDIR)/sbin && ln -sf rc start_ap_qtn
+	@cd $(INSTALLDIR)/sbin && ln -sf rc start_nodfs_scan_qtn
+	@cd $(INSTALLDIR)/sbin && ln -sf rc start_qtn_stateless
+	@cd $(INSTALLDIR)/sbin && ln -sf rc restart_qtn
 endif
 ifeq ($(RTCONFIG_USB),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc usbled
@@ -366,10 +398,19 @@ endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc firmware_check
 	@cd $(INSTALLDIR)/sbin && ln -sf rc test_endian
 ifeq ($(RTCONFIG_BWDPI),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc speedtest
 	@cd $(INSTALLDIR)/sbin && ln -sf rc bwdpi
+	@cd $(INSTALLDIR)/sbin && ln -sf rc bwdpi_monitor
+	@cd $(INSTALLDIR)/sbin && ln -sf rc bwdpi_check
 endif
 ifeq ($(RTCONFIG_USB_MODEM),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc write_3g_ppp_conf
+endif
+ifeq ($(RTCONFIG_TMOBILE),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc sendm
+endif
+ifeq ($(RTCONFIG_IPERF),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc monitor
 endif
 
 clean:

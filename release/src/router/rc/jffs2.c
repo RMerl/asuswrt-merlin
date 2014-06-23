@@ -28,6 +28,13 @@
 #else
 #define JFFS2_PARTITION	"jffs2"
 #endif
+
+#ifdef RTCONFIG_TMOBILE
+#define SECOND_JFFS2_PATH 	"/T-Mobile"
+#else
+#define SECOND_JFFS2_PATH	"/asus_jffs"
+#endif
+
 static void error(const char *message)
 {
 	char s[512];
@@ -35,6 +42,169 @@ static void error(const char *message)
 	snprintf(s, sizeof(s), "Error %s JFFS. Check the logs to see if they contain more details about this error.", message);
 	notice_set("jffs", s);
 }
+
+#ifdef RTCONFIG_TMOBILE
+#define SECOND_JFFS2_PARTITION  "asus"
+
+void mount_2nd_jffs2(void)
+{
+        int format = 0;
+        char s[256];
+        int size;
+        int part;
+        struct statfs sf;
+        int model = 0;
+	int i = 0;
+
+	_dprintf("Mount 2nd jffs2...\n");
+	while(1) {
+        	if (wait_action_idle(10)) break;
+		else i++;
+
+		if(i>=10) {
+			_dprintf("Mount 2nd jffs2 failed!");
+			return;
+		}
+	}
+
+        if (!mtd_getinfo(SECOND_JFFS2_PARTITION, &part, &size)) {
+		_dprintf("Can not get 2nd jffs2 information!");
+		return;
+	}
+	_dprintf("2nd jffs2: %d, %d\n", part, size);
+
+        model = get_model();
+
+        if (statfs(SECOND_JFFS2_PATH, &sf) == 0) {
+                switch(model) {
+                        case MODEL_RTAC56S:
+                        case MODEL_RTAC56U:
+			case MODEL_RTAC3200:
+                        case MODEL_DSLAC68U:
+                        case MODEL_RTAC68U:
+                        case MODEL_RTAC87U:
+                        case MODEL_RTN65U:
+                        case MODEL_RTN14U: // it should be better to use LINUX_KERNEL_VERSION >= KERNEL_VERSION(2,6,36)
+                        {
+                                if (sf.f_type != 0x73717368 /* squashfs */) {
+                                        // already mounted
+                                        notice_set("2nd_jffs", format ? "Formatted" : "Loaded");
+                                        return;
+                                }
+                                break;
+                        }
+                        default:
+                        {
+                                if (sf.f_type != 0x71736873 /* squashfs */) {
+                                        // already mounted
+                                        notice_set("2nd_jffs", format ? "Formatted" : "Loaded");
+                                        return;
+                                }
+                                break;
+                        }
+                }
+        }
+
+        modprobe(JFFS_NAME);
+        sprintf(s, MTD_BLKDEV(%d), part);
+
+	i = 0;
+        while(mount(s, SECOND_JFFS2_PATH, JFFS_NAME, MS_RDONLY, "") != 0) {
+		_dprintf("Mount 2nd jffs failed! Try again...\n");
+		if(i >= 10) {
+			_dprintf("Mount 2nd jffs 10 times failed, stop mount!");
+			break;
+		}
+		i++;
+        }
+
+	return;
+}
+
+void format_mount_2nd_jffs2(void)
+{
+        int format = 0;
+        char s[256];
+        int size;
+        int part;
+        const char *p;
+        struct statfs sf;
+        int model = 0;
+
+        if (!wait_action_idle(10)) return;
+
+        if (!mtd_getinfo(SECOND_JFFS2_PARTITION, &part, &size)) return;
+		_dprintf("Format 2nd jffs2: %d, %d\n", part, size);
+
+        model = get_model();
+
+        sprintf(s, "%d", size);
+        if (statfs(SECOND_JFFS2_PATH, &sf) == 0) {
+                switch(model) {
+                        case MODEL_RTAC56S:
+                        case MODEL_RTAC56U:
+			case MODEL_RTAC3200:
+                        case MODEL_DSLAC68U:
+                        case MODEL_RTAC68U:
+                        case MODEL_RTAC87U:
+                        case MODEL_RTN65U:
+                        case MODEL_RTN14U: // it should be better to use LINUX_KERNEL_VERSION >= KERNEL_VERSION(2,6,36)
+                        {
+                                if (sf.f_type != 0x73717368 /* squashfs */) {
+                                        // already mounted
+                                        notice_set("2nd_jffs", format ? "Formatted" : "Loaded");
+                                        return;
+                                }
+                                break;
+                        }
+                        default:
+                        {
+                                if (sf.f_type != 0x71736873 /* squashfs */) {
+                                        // already mounted
+                                        notice_set("2nd_jffs", format ? "Formatted" : "Loaded");
+                                        return;
+                                }
+                                break;
+                        }
+                }
+        }
+
+        if (!mtd_unlock(SECOND_JFFS2_PARTITION)) {
+                error("unlocking");
+                return;
+        }
+
+        modprobe(JFFS_NAME);
+        sprintf(s, MTD_BLKDEV(%d), part);
+        if (mount(s, SECOND_JFFS2_PATH, JFFS_NAME, MS_NOATIME, "") != 0) {
+                if( (get_model()==MODEL_RTAC56U || get_model()==MODEL_RTAC56S || get_model()==MODEL_RTAC3200 || get_model()==MODEL_RTAC68U || get_model()==MODEL_DSLAC68U || get_model()==MODEL_RTAC87U) ^ (!mtd_erase(JFFS_NAME)) ){
+                        error("formatting");
+                        return;
+                }
+
+                format = 1;
+                if (mount(s, SECOND_JFFS2_PATH, JFFS_NAME, MS_NOATIME, "") != 0) {
+                        _dprintf("*** jffs2 2-nd mount error\n");
+                        //modprobe_r(JFFS_NAME);
+                        error("mounting");
+                        return;
+                }
+        }
+
+	sprintf(s, "rm -rf %s/*", SECOND_JFFS2_PATH);
+        system(s);
+
+        notice_set("2nd_jffs", format ? "Formatted" : "Loaded");
+
+        if (((p = nvram_get("jffs2_exec")) != NULL) && (*p != 0)) {
+                chdir(SECOND_JFFS2_PATH);
+                system(p);
+                chdir("/");
+        }
+        run_userfile(SECOND_JFFS2_PATH, ".asusrouter", SECOND_JFFS2_PATH, 3);
+
+}
+#endif
 
 void start_jffs2(void)
 {
@@ -57,7 +227,7 @@ void start_jffs2(void)
 	if (!mtd_getinfo(JFFS2_PARTITION, &part, &size)) return;
 
 	model = get_model();
-_dprintf("*** jffs2: %d, %d\n", part, size);
+	_dprintf("*** jffs2: %d, %d\n", part, size);
 	if (nvram_match("jffs2_format", "1")) {
 		nvram_set("jffs2_format", "0");
 		nvram_commit_x();
@@ -84,13 +254,14 @@ _dprintf("*** jffs2: %d, %d\n", part, size);
 		}
 	}
 
-	if (statfs("/jffs", &sf) == 0) { 
+	if (statfs("/jffs", &sf) == 0) {
 		switch(model) {
-			case MODEL_RTAC56S: 
-			case MODEL_RTAC56U: 
+			case MODEL_RTAC56S:
+			case MODEL_RTAC56U:
+			case MODEL_RTAC3200:
 			case MODEL_DSLAC68U:
-			case MODEL_RTAC68U: 
-			case MODEL_RTAC87U: 
+			case MODEL_RTAC68U:
+			case MODEL_RTAC87U:
 			case MODEL_RTN65U:
 			case MODEL_RTN14U: // it should be better to use LINUX_KERNEL_VERSION >= KERNEL_VERSION(2,6,36)
 			{
@@ -112,6 +283,7 @@ _dprintf("*** jffs2: %d, %d\n", part, size);
 			}
 		}
 	}
+
 	if (nvram_get_int("jffs2_clean_fs")) {
 		if (!mtd_unlock(JFFS2_PARTITION)) {
 			error("unlocking");
@@ -122,7 +294,7 @@ _dprintf("*** jffs2: %d, %d\n", part, size);
 	sprintf(s, MTD_BLKDEV(%d), part);
 
 	if (mount(s, "/jffs", JFFS_NAME, MS_NOATIME, "") != 0) {
-                if( (model==MODEL_RTAC56U || model==MODEL_RTAC56S || model==MODEL_RTAC68U || model==MODEL_DSLAC68U || model==MODEL_RTAC87U) ^ (!mtd_erase(JFFS_NAME)) ){
+                if( (model==MODEL_RTAC56U || model==MODEL_RTAC56S || model==MODEL_RTAC3200 || model==MODEL_RTAC68U || model==MODEL_DSLAC68U || model==MODEL_RTAC87U) ^ (!mtd_erase(JFFS_NAME)) ){
                         error("formatting");
                         return;
                 }

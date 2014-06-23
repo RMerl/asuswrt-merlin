@@ -1,7 +1,7 @@
 
 define dsl_genbintrx_prolog
 	@( \
-	if [ "$(DSL_TCLINUX)" = "y" ]; then\
+	if [ "$(BUILD_NAME)" != "DSL-N55U" -a "$(BUILD_NAME)" != "DSL-N55U-B" ] ; then \
 		rm -rf image; \
 		mkdir image; \
 	else \
@@ -17,9 +17,7 @@ endef
 
 define dsl_genbintrx_epilog
 	@( \
-	if [ "$(DSL_TCLINUX)" = "y" ]; then \
-		echo "Do at build image"; \
-	else \
+	if [ "$(BUILD_NAME)" = "DSL-N55U" -o "$(BUILD_NAME)" = "DSL-N55U-B" ] ; then \
 		echo "start to generate DSL , BIN and trx"; \
 		cp -R asustools/autobuild-tool/make_img make_img; \
 		cp -R asustools/autobuild-tool/tc_asus_bin tc_asus_bin; \

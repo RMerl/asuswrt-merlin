@@ -41,6 +41,9 @@
 #include <linux/notifier.h>
 
 #include <asm/uaccess.h>
+#ifdef CONFIG_DUMP_PREV_OOPS_MSG
+#include <linux/ctype.h>
+#endif
 
 /*
  * for_each_console() allows you to iterate on each console
@@ -166,6 +169,90 @@ void log_buf_kexec_setup(void)
 	VMCOREINFO_SYMBOL(logged_chars);
 }
 #endif
+
+/*
+#define CONFIG_DUMP_PREV_OOPS_MSG 1
+#define CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR 0xC0000000
+#define	CONFIG_DUMP_PREV_OOPS_MSG_BUF_LEN 0x2000
+*/
+#ifdef CONFIG_DUMP_PREV_OOPS_MSG 
+struct oopsbuf_s {
+         char sig[8];
+         uint32_t len;
+         char buf[0];
+};
+
+#define OOPSBUF_SIG     "OopsBuf"
+#define MAX_PREV_OOPS_MSG_LEN   (CONFIG_DUMP_PREV_OOPS_MSG_BUF_LEN - sizeof(struct oopsbuf_s))
+static struct oopsbuf_s *oopsbuf = NULL;
+static int save_oopsmsg = 0;
+
+void enable_oopsbuf(int onoff)
+{
+        save_oopsmsg = !!onoff;
+}
+
+static inline void copy_char_to_oopsbuf(char c)
+{
+
+        if (likely(!save_oopsmsg))
+                return;
+        else if (unlikely((oopsbuf->len + 1) >= MAX_PREV_OOPS_MSG_LEN))
+                return;
+
+        oopsbuf->buf[oopsbuf->len++] = c;
+}
+
+int prepare_and_dump_previous_oops(void)
+{
+        int len;
+        unsigned char *u;
+        char *p, *q, log_prefix[] = "<?>>>>XXXXXX";
+        //printk("* KERNEL: prepare_and_dump_oops: %08x::%d\n", CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR, MAX_PREV_OOPS_MSG_LEN);
+
+        oopsbuf = (struct oopsbuf_s *) (CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR);
+
+        if (strncmp(oopsbuf->sig, OOPSBUF_SIG, strlen(OOPSBUF_SIG))) {
+                u = oopsbuf->sig;
+                printk("* Invalid signature of oopsbuf: %02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X (len %u)\n",
+                        u[0], u[1], u[2], u[3], u[4], u[5], u[6], u[7],
+                        oopsbuf->len);
+        }
+        if (oopsbuf->len > 32 && oopsbuf->len < MAX_PREV_OOPS_MSG_LEN) {
+                /* Fix-up oops message.
+                 * If message is broken by NULL character, use space character instead.
+                 * If character is not printable, use the '.' character instead.
+                 */
+                for (p = oopsbuf->buf, len = oopsbuf->len; len > 0; len--, p++) {
+                        if (*p == '\0')
+                                *p = ' ';
+                        else if (!isprint(*p) && *p != '\n')
+                                *p = '.';
+                }
+                *p = '\0';
+
+                p = oopsbuf->buf;
+                printk("_ Reboot message ... _______________________________________________________\n");
+                while ((q = strsep(&p, "\n"))) {
+                        if (q[0] == '<' && q[2] == '>' && q[1] >= '0' && q[1] <= '9') {
+                                strncpy(log_prefix, q, 3);
+                                log_prefix[3] = '\0';
+                                q += 3;
+                        } else {
+                                log_prefix[0] = '\0';
+                        }
+                        printk("%s>>> %s\n", log_prefix, q);
+                }
+                printk("____________________________________________________________________________\n");
+        }
+
+        /* Initialize oopsbuf */
+        strcpy(oopsbuf->sig, OOPSBUF_SIG);
+        oopsbuf->len = 0;
+        memset(oopsbuf->buf, 0, MAX_PREV_OOPS_MSG_LEN);
+        return 0;
+}
+#endif //End of CONFIG_DUMP_PREV_OOPS_MSG
 
 static int __init log_buf_len_setup(char *str)
 {
@@ -536,6 +623,9 @@ static void emit_log_char(char c)
 		con_start = log_end - log_buf_len;
 	if (logged_chars < log_buf_len)
 		logged_chars++;
+#ifdef CONFIG_DUMP_PREV_OOPS_MSG
+        copy_char_to_oopsbuf(c);
+#endif
 }
 
 /*

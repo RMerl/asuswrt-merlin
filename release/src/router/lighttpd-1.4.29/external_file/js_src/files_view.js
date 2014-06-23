@@ -141,7 +141,7 @@ function createThumbView(container, query_type, parent_url, folder_array, file_a
 	var html = "";
 	
 	//- Parent Path
-	if(query_type == 0) {
+	if(query_type == 0&&parent_url!="") {
 		html += '<div class="albumDiv fcb" qtype="1" isParent="1" isdir="1" uhref="' + parent_url + '">';
 		html += '<table class="thumb-table-parent">';
 		html += '<tbody>';
@@ -171,7 +171,7 @@ function createThumbView(container, query_type, parent_url, folder_array, file_a
 		html += '<div class="albumDiv fcb wcb" ';
 		html += ' title="';
 		html += this_title;
-		html += ' qtype="';
+		html += '" qtype="';
 		html += query_type;
 		html += '" isParent="0" isdir="1" uhref="';
 		html += folder_array[i].href;
@@ -428,7 +428,7 @@ function createListView(container, query_type, parent_url, folder_array, file_ar
 	html += '<tbody>';
 	
 	//- Parent Path
-	if(query_type == 0) {
+	if(query_type == 0&&parent_url!="") {
 		
 		html += '<tr class="listDiv fcb cbp" ';
 		html += 'qtype="1" isParent="1" isdir="1" uhref="';

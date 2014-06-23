@@ -94,6 +94,12 @@ function initial(){
 		$("wl_5g_mac").style.display = "none";
 		$("wl_unit_field").style.display = "none";
 	}	
+	
+	if(based_modelid == "RT-AC87U" && document.form.wl_unit[1].selected == true){
+		$("wds_mode_field").style.display = "none";
+		document.form.wl_mode_x.value="2";
+	}
+
 	wl_bwch_hint();
 	setTimeout("wds_scan();", 500);
 }
@@ -417,7 +423,7 @@ function wl_bwch_hint(){
 					<td colspan="2" style="color:#FFCC00;height:30px;" align="center"><#page_not_support_mode_hint#></td>
 			  </tr>
 			
-				<tr>
+				<tr id="wds_mode_field">
 					<th align="right">
 						<a class="hintstyle" href="javascript:void(0);"  onClick="openHint(1,1);">
 						<#WLANConfig11b_x_APMode_itemname#></a>

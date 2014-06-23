@@ -1,3 +1,5 @@
+2014/06/01	Add compiler attributes to type check format strings <Cristian Rodríguez>
+
 2014/03/18	release 1.10.0
 
 2014/03/12	dropped --singleprocess option completely

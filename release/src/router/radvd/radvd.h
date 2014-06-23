@@ -212,6 +212,7 @@ void reload_config(void);
 void reset_prefix_lifetimes(void);
 
 /* timer.c */
+int now(struct timeval *tv);
 struct timeval next_timeval(double next);
 int timevaldiff(struct timeval const *a, struct timeval const *b);
 int next_time_msec(struct Interface const *iface);

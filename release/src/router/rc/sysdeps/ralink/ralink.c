@@ -25,7 +25,6 @@
 #include <linux/sockios.h>
 #include <net/if_arp.h>
 #include <shutils.h>
-#include <sys/signal.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
@@ -461,12 +460,17 @@ int setRegSpec(const char *regSpec)
 	if (regSpec == NULL || regSpec[0] == '\0' || strlen(regSpec) > 3)
 		return -1;
 	if (!strcasecmp(regSpec, "CE")) ;
+#if !defined(RTAC51U)	//AC51 current support CE and NCC only.
 	else if (!strcasecmp(regSpec, "FCC")) ;
-#if defined(RTAC52U) || defined(RTAC51U)
+#endif
+#if defined(RTAC52U)
 	else if (!strcasecmp(regSpec, "SG")) ;
 #endif
 #if defined(RTAC52U)
 	else if (!strcasecmp(regSpec, "AU")) ;
+#endif
+#if defined(RTAC51U)
+	else if (!strcasecmp(regSpec, "NCC")) ;
 #endif
 	else
 		return -1;
@@ -1777,7 +1781,7 @@ int gen_ralink_config(int band, int is_iNIC)
 	}
 
 	//TxPower
-	str = nvram_safe_get(strcat_r(prefix, "TxPower", tmp));
+	str = nvram_safe_get(strcat_r(prefix, "txpower", tmp));
 	if (nvram_match(strcat_r(prefix, "radio", tmp), "0"))
 		fprintf(fp, "TxPower=%d\n", 0);
 	else if (str && strlen(str))

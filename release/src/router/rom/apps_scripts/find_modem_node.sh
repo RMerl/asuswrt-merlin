@@ -81,18 +81,38 @@ _find_in_out_devs(){
 	echo "$io_devs"
 }
 
-
 _find_dial_devs(){
 	dial_devs=
 
+	got_acm=0
 	for dev in $1; do
-		chat -t 1 -e '' 'ATQ0 V1 E1' OK >> /dev/$dev < /dev/$dev 2>/dev/null
+		t=`echo $dev |head -c 6`
+		if [ "$t" == "ttyACM" ]; then
+			got_acm=1
+			break
+		fi
+	done
+
+	count=0
+	for dev in $1; do
+		t=`echo $dev |head -c 6`
+		if [ $got_acm -eq 1 ] && [ "$t" == "ttyUSB" ]; then
+			continue
+		fi
+
+		chat -t 1 -e '' 'ATQ0' OK >> /dev/$dev < /dev/$dev 2>/dev/null
 		if [ "$?" == "0" ]; then
+			count=$((count+1))
+
 			if [ -n "$dial_devs" ]; then
 				dial_devs=$dial_devs" "$dev
 			else
 				dial_devs=$dev
 			fi
+		fi
+
+		if [ $count -eq 2 ]; then
+			break
 		fi
 	done
 

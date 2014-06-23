@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,7 @@
 
 #ifndef _TYPEDEFS_H_
 #define _TYPEDEFS_H_
+#define MAX_EVENT 16   /* Maximum number of event bit 128 */
 
 #ifdef SITE_TYPEDEFS
 

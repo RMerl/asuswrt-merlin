@@ -203,8 +203,12 @@ $("document").ready(function() {
 				
 		if( webdav_mode == 0 ) //- Only enable http
 			hostName = "http://" + hostName + ":" + g_storage.get("http_port");
-		else
+		else{
 			hostName = "https://" + hostName;
+			
+			if(g_storage.get("https_port")!="443")
+				hostName += ":" + g_storage.get("https_port");
+		}
 		
 		var count = g_sharelink_array.length;
 		for(var i=0; i<count; i++){

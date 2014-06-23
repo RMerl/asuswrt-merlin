@@ -58,6 +58,12 @@
     </option>
 
     <option>
+      <p><opt>aliases=</opt> Set a comma separated list of aliases for this
+      host. A separate CNAME record pointing to the FQDN of this host will
+      be registered for each of the listed aliases.</p>
+    </option>
+
+    <option>
       <p><opt>use-ipv4=</opt> Takes a boolean value ("yes" or
       "no"). If set to "no" avahi-daemon will not use IPv4
       sockets. Default is "yes".</p>

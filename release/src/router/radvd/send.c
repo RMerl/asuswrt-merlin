@@ -167,10 +167,10 @@ int send_ra(struct Interface *iface, struct in6_addr *dest)
 
 	if (dest == NULL) {
 		dest = (struct in6_addr *)all_hosts_addr;
-		gettimeofday(&iface->last_multicast, NULL);
+		now(&iface->last_multicast);
 	}
 
-	gettimeofday(&time_now, NULL);
+	now(&time_now);
 	secs_since_last_ra = time_diff_secs(&time_now, &iface->last_ra_time);
 	if (secs_since_last_ra < 0) {
 		secs_since_last_ra = 0;

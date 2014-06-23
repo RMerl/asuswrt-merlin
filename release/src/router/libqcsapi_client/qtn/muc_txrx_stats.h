@@ -247,6 +247,8 @@ struct muc_tx_stats {
 	uint32_t	nc_csr_write_count;	/* number of times Node Cache was written to */
 	uint32_t	nc_csr_done_watermark;	/* Node cache done retries high watermark */
 	uint32_t	nc_csr_watermark_count; /* Number of times read retries reached max */
+	uint32_t	auc_dtim_notify;
+	uint32_t	tx_beacon_done;
 };
 
 /**
@@ -518,6 +520,7 @@ struct muc_rx_stats {
 	u_int32_t	mac_irq_rx_strq_oflow;
 	u_int32_t	mac_irq_rx_bb_uflow_intr;
 	u_int32_t	mac_irq_rx_bb_oflow_intr;
+	u_int32_t	bb_irq_hready_wdg_reset;
 
 	/**
 	 * \internal

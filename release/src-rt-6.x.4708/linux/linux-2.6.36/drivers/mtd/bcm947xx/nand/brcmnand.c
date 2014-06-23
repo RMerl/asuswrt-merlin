@@ -752,6 +752,7 @@ brcmnand_dummy_func(struct mtd_info * mtd)
 }
 
 #ifdef CONFIG_MTD_PARTITIONS
+#define ASUS_BLOCK	10
 struct mtd_partition brcmnand_parts[] = {
 	{
 		.name = "brcmnand",
@@ -762,6 +763,11 @@ struct mtd_partition brcmnand_parts[] = {
 		.name = "jffs2",
 		.size = (32 * 0x100000UL),
 		.offset = (64 * 0x100000UL),
+	},
+	{
+		.name = "asus",
+		.size = 0,
+		.offset = 0
 	},
 	{
 		.name = 0,
@@ -782,6 +788,9 @@ init_brcmnand_mtd_partitions(struct mtd_info *mtd, uint64_t size)
 	if (knldev == SOC_KNLDEV_NANDFLASH)
 		offset = nfl_boot_os_size(brcmnand->nfl);
 
+#ifdef CONFIG_DUAL_TRX
+		offset = offset*2; //Dual Trx
+#endif
 	/* Since JFFS2 still uses uint32 for size, hence we have to force the size < 4GB */
 	if (size >= ((uint64_t)4 << 30))
 		size = ((uint64_t)4 << 30) - mtd->erasesize;
@@ -789,7 +798,11 @@ init_brcmnand_mtd_partitions(struct mtd_info *mtd, uint64_t size)
 	ASSERT(size > offset);
 
 	brcmnand_parts[0].offset = offset;
-	brcmnand_parts[0].size = size - offset;
+	brcmnand_parts[0].size = size - offset - (ASUS_BLOCK * mtd->erasesize);
+
+	//ASUS block 
+        brcmnand_parts[1].offset = size - (ASUS_BLOCK * mtd->erasesize);
+        brcmnand_parts[1].size = (ASUS_BLOCK * mtd->erasesize);
 
 	return brcmnand_parts;
 }

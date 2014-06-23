@@ -21,8 +21,8 @@
 #define LOG_TIME_FORMAT "%b %d %H:%M:%S"
 
 int log_open(int, char *, char *, int);
-void flog(int, char *, ...);
-void dlog(int, int, char *, ...);
+void flog(int, char *, ...) __attribute__ ((format (printf, 2, 3)));
+void dlog(int, int, char *, ...) __attribute__ ((format (printf, 3, 4)));
 int log_close(void);
 int log_reopen(void);
 void set_debuglevel(int);

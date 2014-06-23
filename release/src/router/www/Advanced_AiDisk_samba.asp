@@ -61,7 +61,7 @@ function initial(){
 	if(!WebDav_support)
 		$("clouddiskstr").style.display = "none";
 		
-	if (!ufsd_support)
+	if (!ntfs_sparse_support)
 		$('ntfs_sparse_files').style.display = "none";
 	else
 		$('ntfs_sparse_files').style.display = "";		

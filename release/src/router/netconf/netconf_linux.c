@@ -1,7 +1,7 @@
 /*
  * Network configuration layer (Linux)
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: netconf_linux.c 348995 2012-08-06 14:21:46Z $
+ * $Id: netconf_linux.c 358181 2012-09-21 13:59:23Z $
  */
 
 #include <stdio.h>
@@ -39,6 +39,15 @@
 #include <proto/ethernet.h>
 #include <netconf.h>
 #include <netconf_linux.h>
+
+#ifndef LINUX_2_6_36
+typedef struct ipt_time_info		time_info_t;
+#define TIME_INFO_EXTRA_BYTES		8
+#else
+typedef struct xt_time_info		time_info_t;
+#define TIME_INFO_EXTRA_BYTES		0
+#define IPT_ALIGN			XT_ALIGN
+#endif
 
 /* Loops over each match in the ipt_entry */
 #define for_each_ipt_match(match, entry) \
@@ -133,6 +142,79 @@ target_num(const struct ipt_entry *entry, struct iptc_handle *handle)
 		return -1;
 }
 
+#ifdef LINUX_2_6_36
+/* User: match.day, SUN/0~MON/1 ~ SAT/6 */
+/* Kernel: MON/1 ~ SAT/6~SUN/7 */
+/* Need special handle for Sunday */
+/* Be aware: we steal the flags bit 1 ~ 7 to store the begin day */
+static void
+get_days(unsigned int *days, time_info_t *time)
+{
+	int i, j;
+	char weekdays_map[7] = {0};
+
+	/* Translate from Kernel to User */
+	for (i = 1; i <= 7; i++) {
+		if (time->weekdays_match & (1 << i)) {
+			if (i == 7)
+				weekdays_map[0] = 1;
+			else
+				weekdays_map[i] = 1;
+		}
+	}
+
+	/* Begin day */
+	for (i = 1; i <= 7; i++) {
+		if (time->flags & (1 << i)) {
+			if (i == 7)
+				days[0] = 0;
+			else
+				days[0] = i;
+			break;
+		}
+	}
+
+	/* End day */
+	for (i = days[0], j = 0; j < 7; i = (i + 1) % 7, j++) {
+		if (weekdays_map[i])
+			days[1] = i;
+		else
+			break;
+	}
+}
+
+/* User: match.day, SUN/0~MON/1 ~ SAT/6 */
+/* Kernel: MON/1 ~ SAT/6~SUN/7 */
+/* Need special handle for Sunday */
+/* Be aware: we steal the flags bit 1 ~ 7 to store the begin day */
+static void
+set_days(unsigned int *days, time_info_t *time)
+{
+	int i;
+
+	for (i = days[0]; i != days[1]; i = (i + 1) % 7) {
+		if (!i)
+			time->weekdays_match |= (1 << 7);
+		else
+			time->weekdays_match |= (1 << i);
+	}
+
+	if (!days[1])
+		time->weekdays_match |= (1 << 7);
+	else
+		time->weekdays_match |= (1 << days[1]);
+
+	/* Use local time */
+	time->flags = XT_TIME_LOCAL_TZ;
+
+	/* Steal flags to store the begin day */
+	if (days[0] == 0)
+		time->flags |= (1 << 7);
+	else
+		time->flags |= (1 << days[0]);
+}
+#endif /* LINUX_2_6_36 */
+
 /*
  * Get a list of the current firewall entries
  * @param	fw_list	list of firewall entries
@@ -191,7 +273,7 @@ netconf_get_fw(netconf_fw_t *fw_list)
 				const struct ipt_entry_target *target;
 				struct ipt_mac_info *mac = NULL;
 				struct ipt_state_info *state = NULL;
-				struct ipt_time_info *time = NULL;
+				time_info_t *time = NULL;
 
 				/* Only know about TCP/UDP */
 				if (!netconf_valid_ipproto(entry->ip.proto))
@@ -320,25 +402,27 @@ netconf_get_fw(netconf_fw_t *fw_list)
 						continue;
 
 					/* We added 8 bytes of day range at the end */
-#ifndef LINUX_2_6_36
 					if (match->u.match_size < (IPT_ALIGN(sizeof(struct ipt_entry_match)) +
-								   IPT_ALIGN(sizeof(struct ipt_time_info) + 8)))
-#else /* linux-2.6.36 */
-					if (match->u.match_size < (XT_ALIGN(sizeof(struct ipt_entry_match)) +
-								   XT_ALIGN(sizeof(struct ipt_time_info) + 8)))
-#endif /* linux-2.6.36 */
+								   IPT_ALIGN(sizeof(time_info_t) + TIME_INFO_EXTRA_BYTES)))
 						continue;
 
-					time = (struct ipt_time_info *) &match->data[0];
+					time = (time_info_t *) &match->data[0];
 					break;
 				}
 				if (time) {
+#ifndef LINUX_2_6_36
 					unsigned int *days = (unsigned int *) &time[1];
 
 					fw->match.days[0] = days[0];
 					fw->match.days[1] = days[1];
 					fw->match.secs[0] = time->time_start;
 					fw->match.secs[1] = time->time_stop;
+#else
+					/* Get days from weekdays_match and flags */
+					get_days(fw->match.days, time);
+					fw->match.secs[0] = time->daytime_start;
+					fw->match.secs[1] = time->daytime_stop;
+#endif
 				}
 
 				/* Set target type */
@@ -508,7 +592,7 @@ netconf_fw_index(const netconf_fw_t *fw)
 				const struct ipt_entry_target *target;
 				struct ipt_mac_info *mac = NULL;
 				struct ipt_state_info *state = NULL;
-				struct ipt_time_info *time = NULL;
+				time_info_t *time = NULL;
 
 				/* Only know about TCP/UDP */
 				if (entry->ip.proto != fw->match.ipproto)
@@ -622,28 +706,34 @@ netconf_fw_index(const netconf_fw_t *fw)
 							continue;
 
 						/* We added 8 bytes of day range at the end */
-#ifndef LINUX_2_6_36
 						if (match->u.match_size < (IPT_ALIGN(sizeof(struct ipt_entry_match)) +
-									   IPT_ALIGN(sizeof(struct ipt_time_info) + 8)))
-#else
-						if (match->u.match_size < (XT_ALIGN(sizeof(struct ipt_entry_match)) +
-									   XT_ALIGN(sizeof(struct ipt_time_info) + 8)))
-#endif /* linux-2.6.36 */
+									   IPT_ALIGN(sizeof(time_info_t) + TIME_INFO_EXTRA_BYTES)))
 							continue;
 
-						time = (struct ipt_time_info *) &match->data[0];
+						time = (time_info_t *) &match->data[0];
 						break;
 					}
 
 					if (!time)
 						continue;
 					else {
+						unsigned int time_start, time_stop;
+#ifndef LINUX_2_6_36
 						unsigned int *days = (unsigned int *) &time[1];
 
+						time_start = time->time_start;
+						time_stop = time->time_stop;
+#else
+						unsigned int days[2];
+
+						time_start = time->daytime_start;
+						time_stop = time->daytime_stop;
+						get_days(days, time);
+#endif
 						if (fw->match.days[0] != days[0] ||
 						    fw->match.days[1] != days[1] ||
-						    fw->match.secs[0] != time->time_start ||
-						    fw->match.secs[1] != time->time_stop)
+						    fw->match.secs[0] != time_start ||
+						    fw->match.secs[1] != time_stop)
 							continue;
 					}
 				}
@@ -752,13 +842,8 @@ netconf_append_match(struct ipt_entry **pentry, const char *name, size_t match_d
 	struct ipt_entry_match *match;
 	size_t match_size = 0;
 
-#ifndef LINUX_2_6_36
 	match_size += IPT_ALIGN(sizeof(struct ipt_entry_match));
 	match_size += IPT_ALIGN(match_data_size);
-#else
-	match_size += XT_ALIGN(sizeof(struct ipt_entry_match));
-	match_size += XT_ALIGN(match_data_size);
-#endif /* linux-2.6.36 */
 
 	if (!(entry = realloc(*pentry, (*pentry)->next_offset + match_size))) {
 		perror("realloc");
@@ -791,13 +876,8 @@ netconf_append_target(struct ipt_entry **pentry, const char *name, size_t target
 	struct ipt_entry_target *target;
 	size_t target_size = 0;
 
-#ifndef LINUX_2_6_36
 	target_size += IPT_ALIGN(sizeof(struct ipt_entry_target));
 	target_size += IPT_ALIGN(target_data_size);
-#else
-	target_size += XT_ALIGN(sizeof(struct ipt_entry_target));
-	target_size += XT_ALIGN(target_data_size);
-#endif /* linux-2.6.36 */
 
 	if (!(entry = realloc(*pentry, (*pentry)->next_offset + target_size))) {
 		perror("realloc");
@@ -1038,10 +1118,11 @@ netconf_add_fw(netconf_fw_t *fw)
 
 	/* Match by local time */
 	if (fw->match.secs[0] || fw->match.secs[1]) {
-		struct ipt_time_info *time;
+		time_info_t *time;
+#ifndef LINUX_2_6_36
 		unsigned int *days;
 		int i;
-
+#endif
 		if (fw->match.secs[0] >= (24 * 60 * 60) || fw->match.secs[1] >= (24 * 60 * 60) ||
 		    fw->match.days[0] >= 7 || fw->match.days[1] >= 7) {
 			fprintf(stderr, "invalid time %d-%d:%d-%d\n",
@@ -1050,9 +1131,11 @@ netconf_add_fw(netconf_fw_t *fw)
 			goto err;
 		}
 
-		if (!(match = netconf_append_match(&entry, "time", sizeof(struct ipt_time_info) + 8)))
+		if (!(match = netconf_append_match(&entry, "time", sizeof(time_info_t) + TIME_INFO_EXTRA_BYTES)))
 			goto err;
-		time = (struct ipt_time_info *) &match->data[0];
+		time = (time_info_t *) &match->data[0];
+
+#ifndef LINUX_2_6_36
 		days = (unsigned int *) &time[1];
 		days[0] = fw->match.days[0];
 		days[1] = fw->match.days[1];
@@ -1062,6 +1145,18 @@ netconf_add_fw(netconf_fw_t *fw)
 		time->days_match |= (1 << fw->match.days[1]);
 		time->time_start = fw->match.secs[0];
 		time->time_stop = fw->match.secs[1];
+#else
+		/* We don't need absolute date match */
+		time->date_start = 0;
+		time->date_stop = ~0U;
+		/* Seconds per day */
+		time->daytime_start = fw->match.secs[0];
+		time->daytime_stop = fw->match.secs[1];
+		/* We don't need month days match */
+		time->monthdays_match = XT_TIME_ALL_MONTHDAYS;
+		/* Week days match */
+		set_days(fw->match.days, time);
+#endif
 	}
 
 	/* Allocate target */

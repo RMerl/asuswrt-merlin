@@ -1281,7 +1281,7 @@ fa_chip_rev(si_t *sih)
 		W_REG(si_osh(sih),
 			(uint32 *)((uint32)srab_base + CHIPCB_SRAB_CMDSTAT_OFFSET), 0x02400001);
 		rev = R_REG(si_osh(sih),
-#ifdef RGMII_BCM_FA
+#if 1
 			(uint32 *)((uint32)srab_base + CHIPCB_SRAB_RDL_OFFSET)) & 0xff;
 #else
 			(uint32 *)((uint32)srab_base + CHIPCB_SRAB_RDL_OFFSET)) & 0x3;

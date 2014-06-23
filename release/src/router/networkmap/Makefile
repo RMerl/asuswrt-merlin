@@ -7,6 +7,7 @@ CFLAGS  += -Wall -DASUS -DBCMNVRAM -I. -I$(TOP)/shared -I$(TOP)/kernel_header/in
 CFLAGS  += -s -O2 -DNO_PARALLEL
 LDFLAGS += -L$(TOP)/shared -lshared -L$(TOP)/nvram${BCMEX} -lnvram 
 ifeq ($(RTCONFIG_BCMARM),y)
+CFLAGS += -I$(SRCBASE)/common/include
 LDFLAGS += -lgcc_s
 endif
 
@@ -24,7 +25,8 @@ endif
 
 export CFLAGS += -D$(MODEL)
 
-#CFLAGS	+= -DDEBUG -DDEBUG_MORE
+CFLAGS	+= -DDEBUG -DDEBUG_MORE
+CFLAGS  += -DNMP_DB
 
 all: $(EXEC) arpstorm
 

@@ -44,6 +44,10 @@ ifeq ($(RTCONFIG_DNSMASQ),y)
 CFLAGS += -DDNSMASQ
 endif
 
+ifeq ($(RTCONFIG_BWDPI),y)
+CFLAGS += -I$(TOP)/bwdpi/
+endif
+
 OBJS = httpd.o cgi.o ej.o 
 OBJS += web.o common.o nvram_f.o 
 OBJS += aspbw.o initial_web_hook.o
@@ -102,6 +106,10 @@ endif
 ifeq ($(RTCONFIG_OPENVPN),y)
 OBJS += openvpn_options.o
 LIBS += -L$(TOP)/openssl -lssl -lcrypto
+endif
+
+ifeq ($(RTCONFIG_BWDPI),y)
+LIBS += -L$(TOP)/bwdpi -lbwdpi
 endif
 
 export CFLAGS

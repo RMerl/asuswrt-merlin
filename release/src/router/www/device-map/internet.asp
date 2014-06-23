@@ -20,17 +20,9 @@ var $j = jQuery.noConflict();
 <% wanlink(); %>
 <% secondary_wanlink(); %>
 
-var wanproto = '<% nvram_get("wan_proto"); %>';
-var dslproto = '<% nvram_get("dsl0_proto"); %>';
 var wanip = wanlink_ipaddr();
 var wandns = wanlink_dns();
 var wangateway = wanlink_gateway();
-var wanstate = -1;
-var wansbstate = -1;
-var wanauxstate = -1;
-var old_link_internet = -1;
-var lan_proto = '<% nvram_get("lan_proto"); %>';
-
 var wanxip = wanlink_xipaddr();
 var wanxdns = wanlink_xdns();
 var wanxgateway = wanlink_xgateway();
@@ -38,10 +30,19 @@ var wanxgateway = wanlink_xgateway();
 var secondary_wanip = secondary_wanlink_ipaddr();
 var secondary_wandns = secondary_wanlink_dns();
 var secondary_wangateway = secondary_wanlink_gateway();
-
 var secondary_wanxip = secondary_wanlink_xipaddr();
 var secondary_wanxdns = secondary_wanlink_xdns();
 var secondary_wanxgateway = secondary_wanlink_xgateway();
+
+var wanstate = -1;
+var wansbstate = -1;
+var wanauxstate = -1;
+var old_link_internet = -1;
+var lanproto = '<% nvram_get("lan_proto"); %>';
+
+// DSLTODO, single wan
+var wanproto = '<% nvram_get("wan_proto"); %>';
+var dslproto = '<% nvram_get("dsl0_proto"); %>';
 
 var wans_dualwan = '<% nvram_get("wans_dualwan"); %>';
 var wans_lanport = '<% nvram_get("wans_lanport"); %>';
@@ -97,8 +98,9 @@ function initial(){
 	flash_button();
 	// if dualwan enabled , show dualwan status
 	if(parent.wans_flag){
+		var unit = parent.document.form.dual_wan_flag.value; // 0: Priamry WAN, 1: Secondary WAN
 		var pri_if = wans_dualwan.split(" ")[0];
-		var sec_if = wans_dualwan.split(" ")[1];	
+		var sec_if = wans_dualwan.split(" ")[1];
 		pri_if = add_lanport_number(pri_if);
 		sec_if = add_lanport_number(sec_if);
 		pri_if = pri_if.toUpperCase();
@@ -123,16 +125,17 @@ function initial(){
 					showtext($j("#dualwan_current")[0], sec_if);		
 				}				
 				showtext($("dualwan_mode"), "<#dualwan_mode_lb#>");
-				loadBalance_form(parent.document.form.dual_wan_flag.value);  // 0: Priamry WAN, 1: Secondary WAN		
+				loadBalance_form(unit);
 			}
 			else{
 				//document.getElementById("wansMode").value = 2;
 				showtext($("dualwan_mode"), "<#dualwan_mode_fo#>");		
-				failover_form(parent.document.form.dual_wan_flag.value, pri_if, sec_if);
+				failover_form(unit, pri_if, sec_if);
 			}		
 		}
 	}
 	else{
+		var unit = 0;
 		if (wanlink_type() == "dhcp" || wanlink_xtype() == "dhcp") {
 		$('primary_lease_ctrl').style.display = "";
 		$('primary_expires_ctrl').style.display = "";
@@ -171,7 +174,7 @@ function initial(){
 		}else				
 			showtext($("RemoteAP"), decodeURIComponent("<% nvram_char_to_ascii("WLANConfig11b", "wlc_ssid"); %>"));
 				
-		if(lan_proto == "static")
+		if(lanproto == "static")
 			showtext($("LanProto"), "<#BOP_ctype_title5#>");
 		else
 			showtext($("LanProto"), "<#BOP_ctype_title1#>");
@@ -180,27 +183,7 @@ function initial(){
 			$('sitesurvey_tr').style.display = "";
 	}
 
-	if(wanlink_type() == "dhcp")
-		var wanlink_type_conv = "<#BOP_ctype_title1#>";
-	else 	if(wanlink_type() == "pppoe" ||wanlink_type() == "PPPOE")
-		var wanlink_type_conv = "PPPoE";
-	else 	if(wanlink_type() == "static")
-		var wanlink_type_conv = "<#BOP_ctype_title5#>";
-	else 	if(wanlink_type() == "pptp")
-		var wanlink_type_conv = "PPTP";
-	else 	if(wanlink_type() == "l2tp")
-		var wanlink_type_conv = "L2TP";
-	else
-		var wanlink_type_conv = wanlink_type();
-		
-	if (parent.dsl_support) {
-		if (wanproto == "pppoe") {
-			if (dslproto == "pppoa") wanlink_type_conv = "PPPoA";
-		}
-		else if (wanproto == "static") {
-			if (dslproto == "ipoa") wanlink_type_conv = "IPoA";
-		}		
-	}
+	update_connection_type(unit);
 
 	if (yadns_support) {
 		if (yadns_enable != 0) {
@@ -214,40 +197,40 @@ function initial(){
 		}
 	}
 
-	showtext($j("#connectionType")[0], wanlink_type_conv);
-	update_all_ip(wanip, wandns, wangateway , 0);
-	update_all_xip(wanxip, wanxdns, wanxgateway, 0);
+	update_all_ip(wanip, wandns, wangateway , unit);
+	update_all_xip(wanxip, wanxdns, wanxgateway, unit);
 }
 
 function update_connection_type(dualwan_unit){
-	if(dualwan_unit == 0){
-		if(wanlink_type() == "dhcp")
-			var wanlink_type_conv = "<#BOP_ctype_title1#>";
-		else 	if(wanlink_type() == "pppoe" ||wanlink_type() == "PPPOE")
-			var wanlink_type_conv = "PPPoE";
-		else 	if(wanlink_type() == "static")
-			var wanlink_type_conv = "<#BOP_ctype_title5#>";
-		else 	if(wanlink_type() == "pptp")
-			var wanlink_type_conv = "PPTP";
-		else 	if(wanlink_type() == "l2tp")
-			var wanlink_type_conv = "L2TP";
-		else
-			var wanlink_type_conv = wanlink_type();
-	}else{
-		if(secondary_wanlink_type() == "dhcp")
-			var wanlink_type_conv = "<#BOP_ctype_title1#>";
-		else 	if(secondary_wanlink_type() == "pppoe" ||secondary_wanlink_type() == "PPPOE")
-			var wanlink_type_conv = "PPPoE";
-		else 	if(secondary_wanlink_type() == "static")
-			var wanlink_type_conv = "<#BOP_ctype_title5#>";
-		else 	if(secondary_wanlink_type() == "pptp")
-			var wanlink_type_conv = "PPTP";
-		else 	if(secondary_wanlink_type() == "l2tp")
-			var wanlink_type_conv = "L2TP";
-		else
-			var wanlink_type_conv = secondary_wanlink_type();
-	
+	if(dualwan_unit == 0)
+		var wanlink_type_conv = wanlink_type();
+	else
+		var wanlink_type_conv = secondary_wanlink_type();
+
+	// DSLTODO, single wan?
+	if (dsl_support /* && dualwan_unit == 0 */) {
+		if (wanlink_type_conv == "pppoe") {
+			if (dslproto == "pppoa") wanlink_type_conv = dslproto;
+		} else if (wanproto == "static") {
+			if (dslproto == "ipoa") wanlink_type_conv = dslproto;
+		}
 	}
+
+	if(wanlink_type_conv == "dhcp")
+		wanlink_type_conv = "<#BOP_ctype_title1#>";
+	else if(wanlink_type_conv == "static")
+		wanlink_type_conv = "<#BOP_ctype_title5#>";
+	else if(wanlink_type_conv == "pppoe" || wanlink_type_conv == "PPPOE")
+		wanlink_type_conv = "PPPoE";
+	else if(wanlink_type_conv == "pptp")
+		wanlink_type_conv = "PPTP";
+	else if(wanlink_type_conv == "l2tp")
+		wanlink_type_conv = "L2TP";
+	else if(wanlink_type_conv == "pppoa")
+		wanlink_type_conv = "PPPoA";
+	else if(wanlink_type_conv == "ipoa")
+		wanlink_type_conv = "IPoA";
+
 	showtext($j("#connectionType")[0], wanlink_type_conv);
 }
 
@@ -301,20 +284,7 @@ function failover_form(fo_unit, primary_if, secondary_if){
 	if(fo_unit == 0){
 		have_lease = (wanlink_type() == "dhcp" || wanlink_xtype() == "dhcp");
 		showtext($j("#dualwan_current")[0], primary_if);
-		if(wanlink_type() == "dhcp")
-			var wanlink_type_conv = "<#BOP_ctype_title1#>";
-		else 	if(wanlink_type() == "pppoe" ||wanlink_type() == "PPPOE")
-			var wanlink_type_conv = "PPPoE";
-		else 	if(wanlink_type() == "static")
-			var wanlink_type_conv = "<#BOP_ctype_title5#>";
-		else 	if(wanlink_type() == "pptp")
-			var wanlink_type_conv = "PPTP";
-		else 	if(wanlink_type() == "l2tp")
-			var wanlink_type_conv = "L2TP";
-		else
-			var wanlink_type_conv = wanlink_type();
-			
-		showtext($j("#connectionType")[0], wanlink_type_conv);
+		update_connection_type(0);
 		$('primary_WANIP_ctrl').style.display = "";
 		$('secondary_WANIP_ctrl').style.display = "none";
 		$('primary_DNS_ctrl').style.display = "";
@@ -329,20 +299,7 @@ function failover_form(fo_unit, primary_if, secondary_if){
 	else{
 		have_lease = (secondary_wanlink_type() == "dhcp" || secondary_wanlink_xtype() == "dhcp");
 		showtext($j("#dualwan_current")[0], secondary_if);
-		if(secondary_wanlink_type() == "dhcp")
-			var secondary_wanlink_type_conv = "<#BOP_ctype_title1#>";
-		else 	if(secondary_wanlink_type() == "pppoe" ||secondary_wanlink_type() == "PPPOE")
-			var secondary_wanlink_type_conv = "PPPoE";
-		else 	if(secondary_wanlink_type() == "static")
-			var secondary_wanlink_type_conv = "<#BOP_ctype_title5#>";
-		else 	if(secondary_wanlink_type() == "pptp")
-			var secondary_wanlink_type_conv = "PPTP";
-		else 	if(secondary_wanlink_type() == "l2tp")
-			var secondary_wanlink_type_conv = "L2TP";
-		else
-			var secondary_wanlink_type_conv = secondary_wanlink_type();
-			
-		showtext($j("#connectionType")[0], secondary_wanlink_type_conv);
+		update_connection_type(1);
 		$('primary_WANIP_ctrl').style.display = "none";
 		$('secondary_WANIP_ctrl').style.display = "";
 		$('primary_DNS_ctrl').style.display = "none";
@@ -561,7 +518,7 @@ function manualSetup(){
 						$j('#radio_wan_enable').iphoneSwitch('<% nvram_get("wan_enable"); %>', 
 							 function() {
 								document.internetForm.wan_enable.value = "1";
-								if (parent.dsl_support) {
+								if (dsl_support) {
 									document.internetForm.dslx_link_enable.value = "1";
 									document.internetForm.dslx_link_enable.disabled = false;
 								}
@@ -571,7 +528,7 @@ function manualSetup(){
 							 },
 							 function() {
 								document.internetForm.wan_enable.value = "0";
-								if (parent.dsl_support) {
+								if (dsl_support) {
 									document.internetForm.dslx_link_enable.value = "0";
 									document.internetForm.dslx_link_enable.disabled = false;
 								}

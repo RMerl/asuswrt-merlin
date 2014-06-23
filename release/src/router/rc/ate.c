@@ -82,11 +82,11 @@ isNumber(const char *num)
 		return 0;
 }
 
-int 
+int
 isValidRegrev(char *regrev) {
 	char *c = regrev;
 	int len, i = 0, ret=0;
-	
+
 	len = strlen(regrev);
 
 	if( len==1 || len==2 ) {
@@ -206,7 +206,7 @@ int isValidSN(const char *sn)
 			return 0;
 		c++;
 		i++;
-	}	
+	}
 
 	return 1;
 }
@@ -273,7 +273,7 @@ Get_SD_Card_Info(void)
 		puts("0");
 		return 1;
 	}
-		
+
 	sprintf(check_cmd, "test_disk2 %s &> /var/sd_info.txt", nvram_safe_get("usb_path3_fs_path0"));
 	system(check_cmd);
 
@@ -308,7 +308,7 @@ Get_SD_Card_Folder(void)
 
 int Ej_device(const char *dev_no)
 {
-	if( dev_no==NULL || *dev_no<'1' || *dev_no>'9' ) 
+	if( dev_no==NULL || *dev_no<'1' || *dev_no>'9' )
 		return 0;
 	else {
 		eval("ejusb", (char*)dev_no);
@@ -321,6 +321,12 @@ int Ej_device(const char *dev_no)
 int asus_ate_command(const char *command, const char *value, const char *value2)
 {
 	_dprintf("===[ATE %s %s]===\n", command, value);
+#ifdef RTCONFIG_QTN
+	if(!nvram_match("qtn_ready", "1")){
+		_dprintf("ATE Error: wireless 5G not ready\n");
+		return 0;
+	}
+#endif
 	/*** ATE Set function ***/
 	if(!strcmp(command, "Set_StartATEMode")) {
 		nvram_set("asus_mfg", "1");
@@ -332,6 +338,10 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 			stop_wpsaide();
 			stop_wps();
 #ifdef RTCONFIG_BCMWL6
+#ifdef RTCONFIG_HSPOT
+			stop_hspotap();
+#endif
+			stop_igmp_proxy();
 			stop_acsd();
 #endif
 			stop_upnp();
@@ -340,12 +350,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 			stop_wanduck();
 			stop_logger();
 			stop_wanduck();
-#ifdef RTCONFIG_DNSMASQ
 			stop_dnsmasq(0);
-#else
-			stop_dns();
-			stop_dhcpd();
-#endif
 			stop_ots();
 			stop_networkmap();
 #ifdef RTCONFIG_USB
@@ -396,6 +401,16 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		}
 		return 0;
 	}
+#ifdef RTAC3200
+	else if (!strcmp(command, "Set_MacAddr_5G_2")) {
+		if( !setMAC_5G_2(value))
+                {
+                        puts("ATE_ERROR_INCORRECT_PARAMETER");
+                        return EINVAL;
+                }
+                return 0;
+	}
+#endif
 #endif	/* RTCONFIG_HAS_5G */
 #if defined(RTN14U)
 	else if (!strcmp(command, "eeprom")) {
@@ -408,7 +423,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 			return EINVAL;
 		return 0;
 	}
-#endif	
+#endif
 #if defined(RTCONFIG_NEW_REGULATION_DOMAIN)
 	else if (!strcmp(command, "Set_RegSpec")) {
 		if (setRegSpec(value) < 0)
@@ -496,13 +511,13 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 			dev.sll_protocol = htons(ETH_P_ALL);
 			dev.sll_ifindex = 4; // LAN
 			bind( fd, (struct sockaddr *) &dev, sizeof(dev));
-			
+
 			fd2 = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
 			dev2.sll_family = AF_PACKET;
 			dev2.sll_protocol = htons(ETH_P_ALL);
 			dev2.sll_ifindex = 5; // WAN
 			bind( fd2, (struct sockaddr *) &dev2, sizeof(dev2));
-	
+
 			if (value) {
 				if(strcmp(value,"WAN")==0)
 					do_flag = 2;
@@ -686,6 +701,12 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 #endif
 		return 0;
 	}
+#ifdef RTAC3200
+	else if (!strcmp(command, "Get_MacAddr_5G_2")) {
+		getMAC_5G_2();
+		return 0;
+	}
+#endif
 #endif	/* RTCONFIG_HAS_5G */
 	else if (!strcmp(command, "Get_Usb2p0_Port1_Infor")) {
 		Get_USB_Port_Info("1");
@@ -909,6 +930,27 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 #endif
+#ifdef RTCONFIG_QTN
+	else if (!strcmp(command, "Enable_Qtn_TelnetSrv")) {
+		enable_qtn_telnetsrv(1);
+		puts("1");
+		return 0;
+	}
+	else if (!strcmp(command, "Disable_Qtn_TelnetSrv")) {
+		enable_qtn_telnetsrv(0);
+		puts("1");
+		return 0;
+	}
+	else if (!strcmp(command, "Get_Qtn_TelnetSrv_Status")) {
+		getstatus_qtn_telnetsrv();
+		return 0;
+	}
+	else if (!strcmp(command, "Del_Qtn_Cal_Files")) {
+		del_qtn_cal_files();
+		puts("1");
+		return 0;
+	}
+#endif
 #ifdef CONFIG_BCMWL5
 	else if (!strcmp(command, "Get_WiFiStatus_2G")) {
 		if(!getWiFiStatus("2G"))
@@ -1008,7 +1050,12 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 #endif
-	else 
+#ifdef RTCONFIG_TMOBILE
+	else if(!strcmp(command, "Format_2nd_jffs2")) {
+		format_mount_2nd_jffs2();
+	}
+#endif
+	else
 	{
 		puts("ATE_UNSUPPORT");
 		return EINVAL;

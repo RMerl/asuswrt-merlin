@@ -12,10 +12,12 @@
 
 #define WIFINAME "wifi0"
 
-extern int rpc_qcsapi_init();
+extern int rpc_qcsapi_init(int verbose);
+extern int rpc_qtn_ready();
 extern int qcsapi_init(void);
 extern int rpc_qcsapi_restore_default_config(int flag);
 extern int rpc_qcsapi_bootcfg_commit(void);
+extern void rpc_set_radio(int unit, int subunit, int on);
 extern void rpc_show_config(void);
 extern void rpc_parse_nvram(const char *name, const char *value);
 extern int rpc_qcsapi_set_SSID(const char *ifname, const char *ssid);
@@ -33,6 +35,7 @@ extern int rpc_qcsapi_authorize_mac_address(const char *ifname, const char *maca
 extern int rpc_qcsapi_deny_mac_address(const char *ifname, const char *macaddr);
 extern int rpc_qcsapi_wds_set_psk(const char *ifname, const char *macaddr, const char *wpa_psk);
 extern int rpc_qcsapi_set_wlmaclist(const char *ifname);
+extern int rpc_update_ap_isolate(const char *ifname, const int isolate);
 extern void rpc_update_wlmaclist(void);
 extern void rpc_update_wdslist();
 extern void rpc_update_wds_psk(const char *wds_psk);

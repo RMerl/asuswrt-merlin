@@ -17,11 +17,19 @@
 
 # This file contains static ip address <-> host name mappings.  These
 # can be useful to publish services on behalf of a non-avahi enabled
-# device. Please bear in mind that host names are expected to be
-# fully qualified domain names, i.e. ending in .local!
+# device. 
 
+# <address> <host name> <publish protocol : UNSPEC/mDNS/LLMNR>
+# UNSPEC : If you don't know what to do.
+# mDNS : If you want to publish host name using mDNS protocol, Please 
+# bear in mind that host names published using mDNS are expected to be 
+# fully qualified domain names, i.e. ending in .local!
+# LLMNR : If you want to publish name using LLMNR protocol. In this case
+# host name could be a single label name or FQDN.
 # See avahi.hosts(5) for more information on this configuration file!
 
 # Examples:
-# 192.168.0.1 router.local
-# 2001::81:1 test.local
+#10.1.147.1 orange.local mDNS
+#10.1.147.2 mango LLMNR
+#10.1.147.2 router.local UNSPEC
+#2001::81:1 test.local UNSPEC

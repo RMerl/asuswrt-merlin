@@ -93,7 +93,7 @@ void load_sysparam(void)
 
 	snprintf(firmver_g, sizeof(firmver_g), "%s.%s", nvram_safe_get("firmver"), nvram_safe_get("buildno"));
 
-	strcpy(macstr, nvram_safe_get("et0macaddr"));
+	strcpy(macstr, nvram_safe_get("lan_hwaddr"));
 //	printf("mac: %d\n", strlen(macstr));
 	if (strlen(macstr)!=0) ether_atoe(macstr, mac);
 }
@@ -122,15 +122,6 @@ int main(int argc , char* argv[])
 
 	// Load system related static parameter
 	load_sysparam();
-
-#ifdef WCLIENT
-	// Signal for other tools
-	signal(SIGUSR1, sig_usr1);
-	signal(SIGUSR2, sig_usr2);
-
-	// Start state transaction
-	sta_info_init();
-#endif
 
 #ifdef PRNINFO //JYWeng: 20030325 for WL500g/WL500b
 	// Signal for reading Printer Information
@@ -199,9 +190,6 @@ int main(int argc , char* argv[])
 //			printf("got packet\n");
 			processReq(sockfd);
 		}
-#ifdef WCLIENT
-		sta_status_check();
-#endif
 	}
 }
 
@@ -655,27 +643,6 @@ void sig_usr1(int sig)
 }
 #endif
 
-#ifdef WCLIENT
-extern int wl_scan_disabled;
-void sig_usr1(int sig)
-{
-    //if (wl_scan_disabled) wl_scan_disabled=0;
-    //else wl_scan_disabled=1;
-    //sta_status_report(0, 1);
-    check_tools();
-}
-
-void sig_alrm(int sig)
-{
-    timeup = 1;
-}
-
-// Write current status of wireless
-void sig_usr2(int sig)
-{
-    sta_status_report(NULL, 1);
-}
-#endif
 /* to check use usb or parport printer */
 /* return TRUE when using USB		   */
 /* James Yeh 2002/12/25 02:13	       */

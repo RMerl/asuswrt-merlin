@@ -1,0 +1,13 @@
+Package: ui
+Architecture: mipsel,arm
+Priority: needed
+Section: 
+Version: 1.0.0.8
+Maintainer: ASUS
+Source: 
+URL: http://router.asus.com
+Description: Graphical User Interface
+Depends: 
+Suggests:
+Conflicts: 
+Enabled: yes

@@ -35,8 +35,14 @@ function initial(){
 
 function restoreRule(){
 	var alert_string = "<#Setting_factorydefault_hint1#>";
-	if(lan_ipaddr != "192.168.1.1")
-		alert_string += "<#Setting_factorydefault_iphint#>\n\n";			
+	if(tmo_support){
+               if(lan_ipaddr != "192.168.29.1")
+                        alert_string += "The default LAN IP of ZVMODELVZ is 192.168.29.1.\nIf you can't back setting page later, please renew IP configuration of your computer.\n\n";
+	}
+	else{
+		if(lan_ipaddr != "192.168.1.1")
+			alert_string += "<#Setting_factorydefault_iphint#>\n\n";	
+	}		
 	alert_string += "<#Setting_factorydefault_hint2#>";
 	if(confirm(alert_string)){
 		document.form.action1.blur();

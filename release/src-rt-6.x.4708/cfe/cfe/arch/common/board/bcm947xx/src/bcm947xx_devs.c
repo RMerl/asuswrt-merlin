@@ -418,6 +418,7 @@ flash_nflash_init(void)
 	int need_commit = 0;
 #endif
 
+printf("*** flash_nflash_init ***\n");
 	memset(&fprobe, 0, sizeof(fprobe));
 
 	nfl_info = hndnand_init(sih);
@@ -571,7 +572,6 @@ flash_init(void)
 			bootsz = 128 * 1024;
 	}
 	printf("Boot partition size = %d(0x%x)\n", bootsz, bootsz);
-
 #if CFG_NFLASH
 	if (nfl_info) {
 		fl_size_t flash_size = 0;
@@ -634,6 +634,12 @@ flash_init(void)
 		}
 #endif
 		flash_size = get_flash_size("nflash0") - nfl_boot_os_size(nfl_info);
+#ifdef DUAL_TRX
+                fprobe.flash_parts[j].fp_size = NFL_BOOT_OS_SIZE;
+                fprobe.flash_parts[j++].fp_name = "trx2";
+		flash_size -= NFL_BOOT_OS_SIZE;
+#endif
+
 		if (flash_size > 0) {
 			fprobe.flash_parts[j].fp_size = flash_size;
 			fprobe.flash_parts[j++].fp_name = "brcmnand";

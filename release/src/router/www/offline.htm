@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
 		<meta http-equiv="content-type" content="text/html;charset=utf-8" />
-		<title><% nvram_get("productid"); %></title>
+		<title>Find ASUS Device</title>
 		<style type="text/css">
   		.linkTo{
 		    text-shadow: 0px 1px 0px white;
@@ -15,19 +15,36 @@
 				text-align: left;
 			}
 		</style>
-	<script>
+		<script>
 			function initial(){
 				var based_modelid = "<% nvram_get("productid"); %>";
 				document.getElementById('desc1').innerHTML = "<#Offline_desc1#><br>";
 				document.getElementById('desc1').innerHTML += "<#Offline_desc2#><br>";
 				document.getElementById('desc1').innerHTML += "<#Offline_desc3#>";
-			}	
-		
- 	</script>
-</head>
+
+				setInterval(function(){
+					if(document.getElementById('loadingStr').innerHTML == ".")
+						document.getElementById('loadingStr').innerHTML = "..";
+					else if(document.getElementById('loadingStr').innerHTML == "..")
+						document.getElementById('loadingStr').innerHTML = "...";
+					else if(document.getElementById('loadingStr').innerHTML == "...")
+						document.getElementById('loadingStr').innerHTML = "";
+					else
+						document.getElementById('loadingStr').innerHTML = ".";
+				}, 500);
+			}
+
+			location.href = "http://find-device.local";
+ 		</script>
+	</head>
 	<body style="text-align:center;background: #DDD" onload="initial();">
     <div style="margin-top:100px;width:70%;margin-left:15%">
       <div class="linkTo" id="desc1"></div> 
+			<br>
+      <div class="linkTo">
+				Finding ASUS Device
+				<span id="loadingStr">.</span>
+			</div> 			
     </div>
 	</body>
 </html>

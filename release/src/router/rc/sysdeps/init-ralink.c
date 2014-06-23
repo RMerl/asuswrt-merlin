@@ -165,7 +165,7 @@ static void init_switch_ralink(void)
 #endif
 
 #ifdef RTCONFIG_SHP
-	if(nvram_get_int("qos_enable") || nvram_get_int("macfilter_enable_x") || nvram_get_int("lfp_disable_force")) {
+	if(nvram_get_int("qos_enable") == 1 || nvram_get_int("macfilter_enable_x") || nvram_get_int("lfp_disable_force")) {
 		nvram_set("lfp_disable", "1");
 	}
 	else {
@@ -250,15 +250,29 @@ static int __setup_vlan(int vid, int prio, unsigned int mask)
 int config_switch_for_first_time = 1;
 void config_switch()
 {
-	int model;
+	int model = get_model();
 	int stbport;
 	int controlrate_unknown_unicast;
 	int controlrate_unknown_multicast;
 	int controlrate_multicast;
 	int controlrate_broadcast;
+	int merge_wan_port_into_lan_ports;
 
 	dbG("link down all ports\n");
 	eval("rtkswitch", "17");	// link down all ports
+
+	switch (model) {
+	case MODEL_RTN11P:	/* fall through */
+	case MODEL_RTN14U:	/* fall through */
+	case MODEL_RTN36U3:	/* fall through */
+	case MODEL_RTN65U:	/* fall through */
+	case MODEL_RTAC51U:	/* fall through */
+	case MODEL_RTAC52U:	/* fall through */
+		merge_wan_port_into_lan_ports = 1;
+		break;
+	default:
+		merge_wan_port_into_lan_ports = 0;
+	}
 
 	if (config_switch_for_first_time)
 		config_switch_for_first_time = 0;
@@ -507,10 +521,16 @@ void config_switch()
 	}
 	else if (is_apmode_enabled())
 	{
-		model = get_model();
-		if (model == MODEL_RTN65U || model == MODEL_RTN36U3 || model == MODEL_RTN14U || model == MODEL_RTAC52U || model == MODEL_RTAC51U || model == MODEL_RTN11P)
+		if (merge_wan_port_into_lan_ports)
 			eval("rtkswitch", "8", "100");
 	}
+#if defined(RTCONFIG_WIRELESSREPEATER) && defined(RTCONFIG_PROXYSTA)
+	else if (is_mediabridge_mode())
+	{
+		if (merge_wan_port_into_lan_ports)
+			eval("rtkswitch", "8", "100");
+	}
+#endif
 
 #ifdef RTCONFIG_DSL
 	dbG("link up all ports\n");
@@ -637,6 +657,7 @@ void init_syspara(void)
 	char blver[20];
 	unsigned char txbf_para[33];
 	char ea[ETHER_ADDR_LEN];
+	const char *reg_spec_def;
 
 	nvram_set("buildno", rt_serialno);
 	nvram_set("extendno", rt_extendno);
@@ -734,10 +755,15 @@ void init_syspara(void)
 #else	/* ! RTCONFIG_NEW_REGULATION_DOMAIN */
 	dst = buffer;
 
+#if !defined(RTAC51U)
+	reg_spec_def = "FCC";
+#else
+	reg_spec_def = "CE";
+#endif
 	bytes = MAX_REGSPEC_LEN;
 	memset(dst, 0, MAX_REGSPEC_LEN+1);
 	if(FRead(dst, REGSPEC_ADDR, bytes) < 0)
-		nvram_set("reg_spec", "FCC"); // DEFAULT
+		nvram_set("reg_spec", reg_spec_def); // DEFAULT
 	else
 	{
 		for (i=(MAX_REGSPEC_LEN-1);i>=0;i--) {
@@ -747,7 +773,7 @@ void init_syspara(void)
 		if (dst[0]!=0x00)
 			nvram_set("reg_spec", dst);
 		else
-			nvram_set("reg_spec", "FCC"); // DEFAULT
+			nvram_set("reg_spec", reg_spec_def); // DEFAULT
 	}
 
 	if (FRead(dst, REG2G_EEPROM_ADDR, MAX_REGDOMAIN_LEN)<0 || memcmp(dst,"2G_CH", 5) != 0)
@@ -1006,7 +1032,7 @@ void reinit_hwnat(int unit)
 		return;
 
 	/* If QoS is enabled, disable hwnat. */
-	if (nvram_get_int("qos_enable"))
+	if (nvram_get_int("qos_enable") == 1 && nvram_get_int("qos_type") == 0)
 		act = 0;
 
 #if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)

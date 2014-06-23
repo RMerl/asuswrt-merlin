@@ -1,0 +1,166 @@
+#!/bin/sh
+
+base_scripts="/scripts"
+
+. ${base_scripts}/start-helpers.sh
+
+sleep 3
+
+if [ -f ${base_persistent_files}/stateless_slave_config ]; then
+	. ${base_persistent_files}/stateless_slave_config
+else
+	. ${base_scripts}/stateless_slave_config
+fi
+
+ifconfig_all_ether() {
+	echo_with_logging "=== Disabling network interfaces"
+	if [ -e /sys/class/net/eth1_0 ]; then
+		ifconfig eth1_0 $@
+	fi
+
+	if [ -e /sys/class/net/eth1_1 ]; then
+		ifconfig eth1_1 $@
+	fi
+}
+
+export QCSAPI_RPC_TARGET=${qcsapi_rpc_target}
+
+if [ `get_board_config bd_pcie` = "0" ]; then
+	INVOKE_QCSAPI="call_qcsapi"
+else
+	INVOKE_QCSAPI="qcsapi_pcie"
+fi
+
+echo_with_logging "=== Waiting for stateless slave to boot"
+sleep 2
+
+echo_with_logging "=== Starting stateless slave configuration"
+
+config_param_list="
+	bf
+	bw
+	channel
+	dhcpv6
+	f40
+	leds
+	mode
+	monitorreset
+	monitorrfenable
+	mcs
+	pwr
+	region
+	ssdp_flood
+	staticip
+	scs
+	vsp
+	tx_restrict
+	use3way
+	vht"
+
+for param in ${config_param_list}
+do
+	param_variable=wifi0_${param}
+	param_value=`eval echo -n $"$param_variable"`
+	if [ -n "${param_value}" ]; then
+		echo_with_logging "=== Setting ${param} to ${param_value}"
+		${INVOKE_QCSAPI} update_config_param wifi0 ${param} ${param_value}
+	fi
+done
+
+if [ -n "${slave_ipaddr}" ]; then
+	echo_with_logging "=== Setting IP address and netmask to ${slave_ipaddr}"
+	${INVOKE_QCSAPI} store_ipaddr ${slave_ipaddr}
+fi
+
+echo "=== get tweak_qcomm"
+tftp -g 1.1.1.1 -r tweak_qcomm -l /mnt/jffs2/tweak_qcomm
+chmod a+x /mnt/jffs2/tweak_qcomm &
+
+echo_with_logging "=== Running start-prod"
+${INVOKE_QCSAPI} startprod
+
+# On non PCIe boards we may lose ability to use QCSAPI RPC if we don't know slave IP address
+if [ ! `get_board_config bd_pcie` -gt 0 ]; then
+	if [ -n "${slave_ipaddr}" ]; then
+		export QCSAPI_RPC_TARGET=`echo ${slave_ipaddr} | awk -F'/' '{print $1}'`
+	else
+		echo_with_logging "=== Warning! PRC target IP is unknown!"
+	fi
+fi
+
+# Waiting for start-prod to finish
+echo_with_logging "=== waiting start-prod"
+sleep 10
+
+echo_with_logging "=== Setting security parameters"
+
+if [ "${wifi0_mode}" = "ap" ]; then
+	echo_with_logging "=== Setting AP parameters"
+	if [ -n "${wifi0_SSID}" ]; then
+		echo_with_logging "=== Setting SSID to ${wifi0_SSID}"
+		${INVOKE_QCSAPI} set_ssid wifi0 "${wifi0_SSID}"
+	fi
+	if [ -n "${wifi0_beacon}" ]; then
+		echo_with_logging "=== Setting Authentication protocol to ${wifi0_beacon}"
+		${INVOKE_QCSAPI} set_beacon wifi0 "${wifi0_beacon}"
+	fi
+	if [ -n "${wifi0_encryption}" ]; then
+		echo_with_logging "=== Setting WPA encryption mode to ${wifi0_encryption}"
+		${INVOKE_QCSAPI} set_WPA_encryption_modes wifi0 "${wifi0_encryption}"
+	fi
+	if [ -n "${wifi0_auth_mode}" ]; then
+		echo_with_logging "=== Setting WPA authentication mode to ${wifi0_auth_mode}"
+		${INVOKE_QCSAPI} set_WPA_authentication_mode wifi0 "${wifi0_auth_mode}"
+	fi
+	if [ -n "${wifi0_passphrase}" ]; then
+		PSK_LEN=`expr length ${wifi0_passphrase}`
+		if [ ${PSK_LEN} -gt 63 ] ; then
+			echo_with_logging "=== Setting PSK to ${wifi0_passphrase}"
+			${INVOKE_QCSAPI} set_pre_shared_key wifi0 0 "${wifi0_passphrase}"
+		else
+			echo_with_logging "=== Setting passphrase to ${wifi0_passphrase}"
+			${INVOKE_QCSAPI} set_passphrase wifi0 0 "${wifi0_passphrase}"
+		fi
+	fi
+
+	echo_with_logging "=== Starting wireless"
+	${INVOKE_QCSAPI} rfenable wifi0 1
+
+elif [ "${wifi0_mode}" = "sta" ]; then
+	${INVOKE_QCSAPI} remove_SSID wifi0 8f3610e3c9feabed953a6
+	echo_with_logging "=== Setting STA parameters"
+	if [ -n "${wifi0_SSID}" ]; then
+		echo_with_logging "=== Setting SSID to ${wifi0_SSID}"
+		${INVOKE_QCSAPI} create_SSID wifi0 "${wifi0_SSID}"
+	fi
+	if [ -n "${wifi0_beacon}" ]; then
+		echo_with_logging "=== Setting Authentication protocol to ${wifi0_beacon}"
+		${INVOKE_QCSAPI} SSID_set_proto wifi0 "${wifi0_SSID}" "${wifi0_beacon}"
+	fi
+	if [ -n "${wifi0_encryption}" ]; then
+		echo_with_logging "=== Setting encryption mode to ${wifi0_encryption}"
+		${INVOKE_QCSAPI} SSID_set_encryption_modes wifi0 "${wifi0_SSID}" "${wifi0_encryption}"
+	fi
+	if [ -n "${wifi0_auth_mode}" ]; then
+		echo_with_logging "=== Setting WPA authentication mode to ${wifi0_auth_mode}"
+		${INVOKE_QCSAPI} SSID_set_authentication_mode wifi0 "${wifi0_SSID}" "${wifi0_auth_mode}"
+	fi
+	if [ -n "${wifi0_passphrase}" ]; then
+		PSK_LEN=`expr length ${wifi0_passphrase}`
+		if [ ${PSK_LEN} -gt 63 ] ; then
+			echo_with_logging "=== Setting PSK to ${wifi0_passphrase}"
+			${INVOKE_QCSAPI} SSID_set_pre_shared_key wifi0 "${wifi0_SSID}" 0 "${wifi0_passphrase}"
+		else
+			echo_with_logging "=== Setting passphrase to ${wifi0_passphrase}"
+			${INVOKE_QCSAPI} SSID_set_passphrase wifi0 "${wifi0_SSID}" 0 "${wifi0_passphrase}"
+		fi
+	fi
+fi
+
+echo_with_logging "=== Applying security configuration"
+${INVOKE_QCSAPI} apply_security_config wifi0
+
+echo_with_logging "=== Apply some hardware wireless setting"
+ifconfig br0 169.254.39.2 netmask 255.255.255.0
+
+echo_with_logging "=== Done setting up stateless slave"

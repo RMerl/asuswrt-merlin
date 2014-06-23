@@ -1,6 +1,5 @@
 ﻿/* CSS Document */
 body {
-	background-color: #8fb9cc;
 }
 .top-title {text-align:Left;color:#ffffff;font-weight:bold;}
 .top-messgae {font-family :Verdana;font-size : 11px;text-align:left;color:#000000;font-weight:normal;text-align:left;background-color:#7aa3bd}
@@ -24,3 +23,214 @@ body {
 .top-messgaea {font-family :Verdana;font-size : 10px;text-align:left;color:#000000;font-weight:normal;text-align:left;background-color:#7aa3bd}
 .tbg2a{font-family :Verdana;font-size : 10px;text-align:center;color:#197b30;font-weight:normal;background-color:#9fccdd;}
 .tbg1a{font-family :Verdana;font-size : 10px;text-align:center;color:#23344d;font-weight:normal;background-color:#9fccdd}
+.clientIcon{
+	width:80px;
+	height:60px;
+	background-image:url('/images/New_ui/networkmap/client-list.png');
+	background-repeat:no-repeat;
+	background-position:50% 61.10%;
+	cursor:pointer;
+}
+.type0{
+	background-image:url('/images/New_ui/networkmap/client.png') !important;
+	background-position:57% 100% !important;
+}
+.type1{
+	background-position:50% 61.10% !important;
+}
+.type2{
+	background-position:50% 0.85% !important;
+}
+.type3{
+	background-position:50% 0.85% !important;
+}
+.type4{
+	background-position:50% 7.55% !important;
+}
+.type5{
+	background-position:50% 14.20% !important;
+}
+.type6{
+	background-image:url('/images/New_ui/networkmap/client.png') !important;
+	background-position:57% 100% !important;
+}
+.type7{
+	background-position:50% 81.10% !important;
+}
+.type8{
+	background-position:50% 94.50% !important;
+}
+.type9{
+	background-position:50% 20.95% !important;
+}
+.type10{
+	background-position:50% 27.65% !important;
+}
+.type11{
+	background-position:50% 34.35% !important
+}
+.type12{
+	background-position:50% 41.00% !important
+}
+.type13{
+	background-position:50% 47.75% !important
+}
+.type14{
+	background-position:50% 54.45% !important
+}
+.type15{
+	background-position:50% 67.75% !important
+}
+.type16{
+	background-position:50% 74.45% !important
+}
+.type17{
+	background-position:50% 87.80% !important
+}
+
+.type0:hover{
+	background-image:url('/images/New_ui/networkmap/client.png') !important;
+	background-position:57% 0% !important;
+}
+.type1:hover{
+	background-position:50% 64.40% !important;
+}
+.type2:hover{
+	background-position:50% 4.20% !important;
+}
+.type3:hover{
+	background-position:50% 4.20% !important;
+}
+.type4:hover{
+	background-position:50% 10.90% !important;
+}
+.type5:hover{
+	background-position:50% 17.60% !important;
+}
+.type6:hover{
+	background-image:url('/images/New_ui/networkmap/client.png') !important;
+	background-position:57% 0% !important;
+}
+.type7:hover{
+	background-position:50% 84.45% !important;
+}
+.type8:hover{
+	background-position:50% 97.85% !important;
+}
+.type9:hover{
+	background-position:50% 24.35% !important;
+}
+.type10:hover{
+	background-position:50% 30.95% !important;
+}
+.type11:hover{
+	background-position:50% 37.65% !important
+}
+.type12:hover{
+	background-position:50% 44.35% !important
+}
+.type13:hover{
+	background-position:50% 51.10% !important
+}
+.type14:hover{
+	background-position:50% 57.75% !important
+}
+.type15:hover{
+	background-position:50% 71.05% !important
+}
+.type16:hover{
+	background-position:50% 77.75% !important
+}
+.type17:hover{
+	background-position:50% 91.10% !important
+}
+
+.type0_clicked{
+	background-image:url('/images/New_ui/networkmap/client.png') !important;
+	background-position:57% 0% !important;
+}
+.type1_clicked{
+	background-position:50% 64.40% !important;
+}
+.type2_clicked{
+	background-position:50% 4.15% !important;
+}
+.type3_clicked{
+	background-position:50% 4.15% !important;
+}
+.type4_clicked{
+	background-position:50% 10.95% !important;
+}
+.type5_clicked{
+	background-position:50% 17.65% !important;
+}
+.type6_clicked{
+	background-image:url('/images/New_ui/networkmap/client.png') !important;
+	background-position:57% 0% !important;
+}
+.type7_clicked{
+	background-position:50% 84.45% !important;
+}
+.type8_clicked{
+	background-position:50% 97.85% !important;
+}
+.type9_clicked{
+	background-position:50% 24.35% !important;
+}
+.type10_clicked{
+	background-position:50% 31.00% !important;
+}
+.type11_clicked{
+	background-position:50% 37.70% !important
+}
+.type12_clicked{
+	background-position:50% 44.40% !important
+}
+.type13_clicked{
+	background-position:50% 51.10% !important
+}
+.type14_clicked{
+	background-position:50% 57.75% !important
+}
+.type15_clicked{
+	background-position:50% 71.05% !important
+}
+.type16_clicked{
+	background-position:50% 77.75% !important
+}
+.type17_clicked{
+	background-position:50% 91.15% !important
+}
+
+.clientBg{
+	font-family:Courier New, Courier, mono;
+	width:293px;
+	height:85px;
+	background-image:url('/images/New_ui/networkmap/bg.png');
+	background-repeat:no-repeat;
+}
+.radioIcon{
+  background: url(/images/survey/radio_status.png) no-repeat;
+}
+.radio_0{
+  background-position: 99% -0px;
+}
+.radio_1{
+  background-position: 99% -30px;
+}	
+.radio_2{
+  background-position: 99% -60px;
+}	
+.radio_3{
+  background-position: 99% -90px;
+}	
+.radio_4{
+  background-position: 99% -120px;
+}	
+.radio_5{
+  background-position: 99% -150px;
+}
+.radio_wired{
+  background: url(/images/New_ui/networkmap/wiredIcon.png) no-repeat !important;
+  background-position: 97% 1px !important;
+}

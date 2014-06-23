@@ -51,6 +51,7 @@ struct AvahiSRBLookup {
 
     AvahiWideAreaLookup *wide_area;
     AvahiMulticastLookup *multicast;
+    AvahiLLMNRLookup *llmnr;
 
     AvahiRList *cname_lookups;
 
@@ -65,15 +66,19 @@ static void transport_flags_from_domain(AvahiServer *s, AvahiLookupFlags *flags,
     assert(domain);
 
     assert(!((*flags & AVAHI_LOOKUP_USE_MULTICAST) && (*flags & AVAHI_LOOKUP_USE_WIDE_AREA)));
+    assert(!((*flags & AVAHI_LOOKUP_USE_MULTICAST) && (*flags & AVAHI_LOOKUP_USE_LLMNR)));
+    assert(!((*flags & AVAHI_LOOKUP_USE_WIDE_AREA) && (*flags & AVAHI_LOOKUP_USE_LLMNR)));
 
-    if (*flags & (AVAHI_LOOKUP_USE_MULTICAST|AVAHI_LOOKUP_USE_WIDE_AREA))
+    if (*flags & (AVAHI_LOOKUP_USE_MULTICAST|AVAHI_LOOKUP_USE_WIDE_AREA|AVAHI_LOOKUP_USE_LLMNR))
         return;
 
-    if (!s->wide_area_lookup_engine ||
-        !avahi_wide_area_has_servers(s->wide_area_lookup_engine) ||
-        avahi_domain_ends_with(domain, AVAHI_MDNS_SUFFIX_LOCAL) ||
-        avahi_domain_ends_with(domain, AVAHI_MDNS_SUFFIX_ADDR_IPV4) ||
-        avahi_domain_ends_with(domain, AVAHI_MDNS_SUFFIX_ADDR_IPV6))
+    if (avahi_is_valid_host_name(domain))
+        *flags |= AVAHI_LOOKUP_USE_LLMNR;
+    else if (!s->wide_area.wide_area_lookup_engine ||
+             !avahi_wide_area_has_servers(s->wide_area.wide_area_lookup_engine) ||
+             avahi_domain_ends_with(domain, AVAHI_MDNS_SUFFIX_LOCAL) ||
+             avahi_domain_ends_with(domain, AVAHI_MDNS_SUFFIX_ADDR_IPV4) ||
+             avahi_domain_ends_with(domain, AVAHI_MDNS_SUFFIX_ADDR_IPV6))
         *flags |= AVAHI_LOOKUP_USE_MULTICAST;
     else
         *flags |= AVAHI_LOOKUP_USE_WIDE_AREA;
@@ -106,6 +111,7 @@ static AvahiSRBLookup* lookup_new(
     l->key = avahi_key_ref(key);
     l->wide_area = NULL;
     l->multicast = NULL;
+    l->llmnr = NULL;
     l->cname_lookups = NULL;
     l->flags = flags;
 
@@ -136,6 +142,11 @@ static void lookup_unref(AvahiSRBLookup *l) {
     if (l->multicast) {
         avahi_multicast_lookup_free(l->multicast);
         l->multicast = NULL;
+    }
+
+    if (l->llmnr) {
+        avahi_llmnr_lookup_free(l->llmnr);
+        l->llmnr = NULL;
     }
 
     while (l->cname_lookups) {
@@ -316,21 +327,83 @@ static void lookup_multicast_callback(
     lookup_unref(l);
 }
 
-static int lookup_start(AvahiSRBLookup *l) {
+static void lookup_llmnr_callback(
+    AvahiLLMNRLookupEngine *e,
+    AvahiIfIndex interface,
+    AvahiProtocol protocol,
+    AvahiBrowserEvent event,
+    AvahiLookupResultFlags flags,
+    AvahiRecord *r,
+    void *userdata) {
+
+    AvahiSRBLookup *l = userdata;
+    AvahiSRecordBrowser *b;
+
+    assert(e);
     assert(l);
 
-    assert(!(l->flags & AVAHI_LOOKUP_USE_WIDE_AREA) != !(l->flags & AVAHI_LOOKUP_USE_MULTICAST));
-    assert(!l->wide_area && !l->multicast);
+    b = l->record_browser;
+
+    if (b->dead)
+        return;
+
+    lookup_ref(l);
+
+    switch(event) {
+        case AVAHI_BROWSER_NEW:
+            assert(r);
+
+            if (r->key->clazz == AVAHI_DNS_CLASS_IN &&
+                r->key->type == AVAHI_DNS_TYPE_CNAME)
+                lookup_handle_cname(l, interface, protocol, b->flags, r);
+            else
+                /* We are discrading packets originating from our own interface/s
+                   or should we accept them? TODO AVAHI_LOOKUP_RESULT_LOCAL*/
+                b->callback(b, interface, protocol, event, r, flags, b->userdata);
+            break;
+
+        case AVAHI_BROWSER_REMOVE:
+        case AVAHI_BROWSER_CACHE_EXHAUSTED:
+            abort();
+
+        case AVAHI_BROWSER_ALL_FOR_NOW:
+
+            b->callback(b, interface, protocol, event, NULL, flags, b->userdata);
+            break;
+
+        case AVAHI_BROWSER_FAILURE:
+            /* This event states that LLMNR query has been sent three times on specified
+            interface and protocol and we don't have any records available */
+            /*b->callback(b, interface, protocol, event, NULL, flags, b->userdata);
+            lookup_ref(l);*/
+            abort();
+    }
+
+    lookup_unref(l);
+}
+
+static int lookup_start(AvahiSRBLookup *l) {
+
+    assert(l);
+
+    assert((!(l->flags & AVAHI_LOOKUP_USE_WIDE_AREA) && !(l->flags & AVAHI_LOOKUP_USE_LLMNR)) ||
+           (!(l->flags & AVAHI_LOOKUP_USE_LLMNR) && !(l->flags & AVAHI_LOOKUP_USE_MULTICAST)) ||
+           (!(l->flags & AVAHI_LOOKUP_USE_MULTICAST) && !(l->flags & AVAHI_LOOKUP_USE_WIDE_AREA)));
+
+    assert(!l->wide_area && !l->multicast && !l->llmnr);
 
     if (l->flags & AVAHI_LOOKUP_USE_WIDE_AREA) {
-
-        if (!(l->wide_area = avahi_wide_area_lookup_new(l->record_browser->server->wide_area_lookup_engine, l->key, lookup_wide_area_callback, l)))
+        /* Wide Area */
+        if (!(l->wide_area = avahi_wide_area_lookup_new(l->record_browser->server->wide_area.wide_area_lookup_engine, l->key, lookup_wide_area_callback, l)))
             return -1;
-
+    } else if (l->flags & AVAHI_LOOKUP_USE_MULTICAST) {
+        /* Multicast */
+        if (!(l->multicast = avahi_multicast_lookup_new(l->record_browser->server->mdns.multicast_lookup_engine, l->interface, l->protocol, l->key, lookup_multicast_callback, l)))
+            return -1;
     } else {
-        assert(l->flags & AVAHI_LOOKUP_USE_MULTICAST);
-
-        if (!(l->multicast = avahi_multicast_lookup_new(l->record_browser->server->multicast_lookup_engine, l->interface, l->protocol, l->key, lookup_multicast_callback, l)))
+        /* LLMNR */
+        assert(l->flags & AVAHI_LOOKUP_USE_LLMNR);
+        if (!(l->llmnr = avahi_llmnr_lookup_new(l->record_browser->server->llmnr.llmnr_lookup_engine, l->interface, l->protocol, l->key, lookup_llmnr_callback, l)))
             return -1;
     }
 
@@ -342,15 +415,19 @@ static int lookup_scan_cache(AvahiSRBLookup *l) {
 
     assert(l);
 
-    assert(!(l->flags & AVAHI_LOOKUP_USE_WIDE_AREA) != !(l->flags & AVAHI_LOOKUP_USE_MULTICAST));
-
+    assert((!(l->flags & AVAHI_LOOKUP_USE_WIDE_AREA) && !(l->flags & AVAHI_LOOKUP_USE_LLMNR)) ||
+           (!(l->flags & AVAHI_LOOKUP_USE_LLMNR) && !(l->flags & AVAHI_LOOKUP_USE_MULTICAST)) ||
+           (!(l->flags & AVAHI_LOOKUP_USE_MULTICAST) && !(l->flags & AVAHI_LOOKUP_USE_WIDE_AREA)) );
 
     if (l->flags & AVAHI_LOOKUP_USE_WIDE_AREA) {
-        n = (int) avahi_wide_area_scan_cache(l->record_browser->server->wide_area_lookup_engine, l->key, lookup_wide_area_callback, l);
+        n = (int) avahi_wide_area_scan_cache(l->record_browser->server->wide_area.wide_area_lookup_engine, l->key, lookup_wide_area_callback, l);
+
+    } else if (l->flags & AVAHI_LOOKUP_USE_MULTICAST) {
+        n = (int) avahi_multicast_lookup_engine_scan_cache(l->record_browser->server->mdns.multicast_lookup_engine, l->interface, l->protocol, l->key, lookup_multicast_callback, l);
 
     } else {
-        assert(l->flags & AVAHI_LOOKUP_USE_MULTICAST);
-        n = (int) avahi_multicast_lookup_engine_scan_cache(l->record_browser->server->multicast_lookup_engine, l->interface, l->protocol, l->key, lookup_multicast_callback, l);
+        assert(l->flags & AVAHI_LOOKUP_USE_LLMNR);
+        n = (int) avahi_scan_llmnr_cache(l->record_browser->server->llmnr.llmnr_lookup_engine, l->interface, l->protocol, l->key, lookup_llmnr_callback, l);
     }
 
     return n;
@@ -386,11 +463,11 @@ static int lookup_go(AvahiSRBLookup *l) {
     /* Start the lookup */
     if (!l->record_browser->dead && l->ref > 1) {
 
-        if ((l->flags & AVAHI_LOOKUP_USE_MULTICAST) || n == 0)
+        if ((l->flags & AVAHI_LOOKUP_USE_MULTICAST) || (l->flags & AVAHI_LOOKUP_USE_LLMNR) || n == 0) {
             /* We do no start a query if the cache contained entries and we're on wide area */
-
             if (lookup_start(l) < 0)
                 n = -1;
+        }
     }
 
     lookup_unref(l);
@@ -455,7 +532,7 @@ static void lookup_drop_cname(AvahiSRBLookup *l, AvahiIfIndex interface, AvahiPr
 
 static void defer_callback(AVAHI_GCC_UNUSED AvahiTimeEvent *e, void *userdata) {
     AvahiSRecordBrowser *b = userdata;
-    int n;
+    int n = 0;
 
     assert(b);
     assert(!b->dead);
@@ -483,7 +560,8 @@ static void defer_callback(AVAHI_GCC_UNUSED AvahiTimeEvent *e, void *userdata) {
 
         b->callback(
             b, b->interface, b->protocol, AVAHI_BROWSER_FAILURE, NULL,
-            b->flags & AVAHI_LOOKUP_USE_WIDE_AREA ? AVAHI_LOOKUP_RESULT_WIDE_AREA : AVAHI_LOOKUP_RESULT_MULTICAST,
+            b->flags & AVAHI_LOOKUP_USE_WIDE_AREA ? AVAHI_LOOKUP_RESULT_WIDE_AREA :
+            (b->flags & AVAHI_LOOKUP_RESULT_MULTICAST ? AVAHI_LOOKUP_RESULT_MULTICAST : AVAHI_LOOKUP_RESULT_LLMNR),
             b->userdata);
 
         browser_cancel(b);
@@ -493,16 +571,19 @@ static void defer_callback(AVAHI_GCC_UNUSED AvahiTimeEvent *e, void *userdata) {
     /* Tell the client that we're done with the cache */
     b->callback(
         b, b->interface, b->protocol, AVAHI_BROWSER_CACHE_EXHAUSTED, NULL,
-        b->flags & AVAHI_LOOKUP_USE_WIDE_AREA ? AVAHI_LOOKUP_RESULT_WIDE_AREA : AVAHI_LOOKUP_RESULT_MULTICAST,
+        b->flags & AVAHI_LOOKUP_USE_WIDE_AREA ? AVAHI_LOOKUP_RESULT_WIDE_AREA :
+        (b->flags & AVAHI_LOOKUP_RESULT_MULTICAST ? AVAHI_LOOKUP_RESULT_MULTICAST : AVAHI_LOOKUP_RESULT_LLMNR),
         b->userdata);
 
-    if (!b->dead && b->root_lookup && b->root_lookup->flags & AVAHI_LOOKUP_USE_WIDE_AREA && n > 0) {
+    if (!b->dead && b->root_lookup &&
+        (b->root_lookup->flags & AVAHI_LOOKUP_USE_WIDE_AREA) &&
+        n > 0 ) {
 
         /* If we do wide area lookups and the the cache contained
          * entries, we assume that it is complete, and tell the user
          * so by firing ALL_FOR_NOW. */
 
-        b->callback(b, b->interface, b->protocol, AVAHI_BROWSER_ALL_FOR_NOW, NULL, AVAHI_LOOKUP_RESULT_WIDE_AREA, b->userdata);
+        b->callback(b, b->interface, b->protocol, AVAHI_BROWSER_ALL_FOR_NOW, NULL, AVAHI_LOOKUP_RESULT_LLMNR, b->userdata);
     }
 }
 
@@ -538,7 +619,7 @@ AvahiSRecordBrowser *avahi_s_record_browser_new(
     AVAHI_CHECK_VALIDITY_RETURN_NULL(server, AVAHI_PROTO_VALID(protocol), AVAHI_ERR_INVALID_PROTOCOL);
     AVAHI_CHECK_VALIDITY_RETURN_NULL(server, !avahi_key_is_pattern(key), AVAHI_ERR_IS_PATTERN);
     AVAHI_CHECK_VALIDITY_RETURN_NULL(server, avahi_key_is_valid(key), AVAHI_ERR_INVALID_KEY);
-    AVAHI_CHECK_VALIDITY_RETURN_NULL(server, AVAHI_FLAGS_VALID(flags, AVAHI_LOOKUP_USE_WIDE_AREA|AVAHI_LOOKUP_USE_MULTICAST), AVAHI_ERR_INVALID_FLAGS);
+    AVAHI_CHECK_VALIDITY_RETURN_NULL(server, AVAHI_FLAGS_VALID(flags, AVAHI_LOOKUP_USE_WIDE_AREA|AVAHI_LOOKUP_USE_MULTICAST|AVAHI_LOOKUP_USE_LLMNR), AVAHI_ERR_INVALID_FLAGS);
     AVAHI_CHECK_VALIDITY_RETURN_NULL(server, !(flags & AVAHI_LOOKUP_USE_WIDE_AREA) || !(flags & AVAHI_LOOKUP_USE_MULTICAST), AVAHI_ERR_INVALID_FLAGS);
 
     if (!(b = avahi_new(AvahiSRecordBrowser, 1))) {
@@ -606,8 +687,10 @@ void avahi_browser_cleanup(AvahiServer *server) {
         }
     }
 
-    if (server->wide_area_lookup_engine)
-        avahi_wide_area_cleanup(server->wide_area_lookup_engine);
-    avahi_multicast_lookup_engine_cleanup(server->multicast_lookup_engine);
+    if (server->wide_area.wide_area_lookup_engine)
+        avahi_wide_area_cleanup(server->wide_area.wide_area_lookup_engine);
+
+    avahi_multicast_lookup_engine_cleanup(server->mdns.multicast_lookup_engine);
+    avahi_llmnr_lookup_engine_cleanup(server->llmnr.llmnr_lookup_engine);
 }
 

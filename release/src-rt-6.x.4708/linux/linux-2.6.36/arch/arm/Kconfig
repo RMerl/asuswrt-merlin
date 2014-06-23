@@ -1168,6 +1168,24 @@ config CRASHLOG
 	depends on BCM947XX
 	default n
 
+config DUAL_TRX
+        bool "Support dual trx"
+        default n
+
+config DUMP_PREV_OOPS_MSG
+        bool "Dump previous kernel oops message"
+        default n if PRINTK
+
+config DUMP_PREV_OOPS_MSG_BUF_ADDR
+        hex "Buffer start address to store previous kernel oops message."
+        depends on DUMP_PREV_OOPS_MSG
+        default "0xC000000" if BRCMCHIP
+
+config DUMP_PREV_OOPS_MSG_BUF_LEN
+        hex "Buffer length to store previous kernel oops message."
+        depends on DUMP_PREV_OOPS_MSG
+        default "0x2000" if BRCMCHIP
+
 endmenu
 
 menu "Bus support"

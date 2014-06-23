@@ -18,6 +18,7 @@
   <vpn>vpn_client1_state=<% nvram_get("vpn_client1_state"); %></vpn>  
   <vpn>vpn_client2_state=<% nvram_get("vpn_client2_state"); %></vpn>
   <vpn>vpnd_state=<% nvram_get("VPNServer_enable"); %></vpn>
+  <qtn>qtn_state=<% nvram_get("qtn_ready"); %></qtn>
   <% secondary_ajax_wanstate(); %>
 	<usb>'<% show_usb_path(); %>'</usb>
 </devicemap>

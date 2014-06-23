@@ -15,7 +15,7 @@
 include $(TOP)/.config
 
 
-CFLAGS	+= -I. -I$(SRCBASE)/include -I$(SRCBASE)/common/include -I$(SRCBASE)/router/shared -Wall
+CFLAGS	+= -I. -I$(SRCBASE)/include ${WLAN_StdIncPathA} -I$(SRCBASE)/common/include -I$(SRCBASE)/router/shared -Wall
 #CFLAGS	+= -g -DDEBUG
 CFLAGS	+= -s
 ifeq ($(CONFIG_RTR_OPTIMIZE_SIZE),y)

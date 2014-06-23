@@ -16,11 +16,94 @@
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/detect.js"></script>
+<script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/calendar/jquery-ui.js"></script> 
+<style>
+.ui-slider {
+	position: relative;
+	text-align: left;
+}
+.ui-slider .ui-slider-handle {
+	position: absolute;
+	width: 12px;
+	height: 12px;
+}
+.ui-slider .ui-slider-range {
+	position: absolute;
+}
+.ui-slider-horizontal {
+	height: 6px;
+}
+
+.ui-widget-content {
+	border: 2px solid #000;
+	background-color:#000;
+}
+.ui-state-default,
+.ui-widget-content .ui-state-default,
+.ui-widget-header .ui-state-default {
+	border: 1px solid ;
+	background: #e6e6e6;
+	margin-top:-4px;
+	margin-left:-6px;
+}
+
+/* Corner radius */
+.ui-corner-all,
+.ui-corner-top,
+.ui-corner-left,
+.ui-corner-tl {
+	border-top-left-radius: 4px;
+}
+.ui-corner-all,
+.ui-corner-top,
+.ui-corner-right,
+.ui-corner-tr {
+	border-top-right-radius: 4px;
+}
+.ui-corner-all,
+.ui-corner-bottom,
+.ui-corner-left,
+.ui-corner-bl {
+	border-bottom-left-radius: 4px;
+}
+.ui-corner-all,
+.ui-corner-bottom,
+.ui-corner-right,
+.ui-corner-br {
+	border-bottom-right-radius: 4px;
+}
+
+.ui-slider-horizontal .ui-slider-range {
+	top: 0;
+	height: 100%;
+}
+
+#slider .ui-slider-range {
+	background: #93E7FF; 
+	border-top-left-radius: 3px;
+	border-top-right-radius: 1px;
+	border-bottom-left-radius: 3px;
+	border-bottom-right-radius: 1px;
+}
+#slider .ui-slider-handle { border-color: #93E7FF; }
+
+
+</style>
 <script>
+var $j = jQuery.noConflict();
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 //var flag = 0;
+
+//Get boot loader version and convert type form string to Integer
+var bl_version = '<% nvram_get("bl_version"); %>';
+var bl_version_array = bl_version.split(".");
+var bootLoader_ver = "";
+for(i=0;i<bl_version_array.length;i++){
+	bootLoader_ver +=bl_version_array[i];
+}
 
 <% login_state_hook(); %>
 <% wl_get_parameter(); %>
@@ -58,6 +141,7 @@ var wl_user_rssi_onload = '<% nvram_get("wl_user_rssi"); %>';
 
 function initial(){
 	show_menu();
+	register_event();
 	
 	if(userRSSI_support)
 		changeRSSI(wl_user_rssi_onload);
@@ -115,9 +199,10 @@ function initial(){
 	inputCtrl(document.form.usb_usb3, 0);
 
 	if('<% nvram_get("wl_unit"); %>' == '1'){ // 5GHz
-		if( based_modelid == "RT-AC69U" || 
-			based_modelid == "RT-AC66U" || 
-			based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || 
+		if(	based_modelid == "RT-AC3200" ||
+			based_modelid == "RT-AC69U" || 
+			based_modelid == "RT-AC66U" ||
+			based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" ||
 			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U" ||
 			based_modelid == "RT-AC87U" || based_modelid == "EA-AC87")
 		{
@@ -125,8 +210,9 @@ function initial(){
 			inputCtrl(document.form.wl_txbf, 1);
 		}	
 
-		if( based_modelid == "RT-AC69U" ||
-			based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || 
+		if(	based_modelid == "RT-AC3200" ||
+			based_modelid == "RT-AC69U" ||
+			based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" ||
 			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U" ||
 			based_modelid == "RT-AC87U" || based_modelid == "EA-AC87")
 		{
@@ -134,9 +220,10 @@ function initial(){
 		}		
 	}
 	else{ // 2.4GHz
-		if( based_modelid == "RT-N18U" || 
-			based_modelid == "RT-N65U" || 
-			based_modelid == "RT-AC69U" || 
+		if(	based_modelid == "RT-AC3200" ||
+			based_modelid == "RT-N18U" ||
+			based_modelid == "RT-N65U" ||
+			based_modelid == "RT-AC69U" ||
 			based_modelid == "RT-AC87U" ||
 			based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || 
 			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U")
@@ -144,12 +231,17 @@ function initial(){
 			inputCtrl(document.form.usb_usb3, 1);
 		}	
 
-		if( based_modelid == "RT-N18U" || 
-			based_modelid == "RT-AC69U" || 
-			based_modelid == "RT-AC87U" || 
+		if(	based_modelid == "RT-AC3200" ||
+			based_modelid == "RT-N18U" ||
+			based_modelid == "RT-AC69U" ||
+			based_modelid == "RT-AC87U" ||
 			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U")
 		{
-			inputCtrl(document.form.wl_turbo_qam, 1);
+			if(based_modelid == "RT-N18U" && bootLoader_ver < 2000)
+				inputCtrl(document.form.wl_turbo_qam, 0);
+			else
+				inputCtrl(document.form.wl_turbo_qam, 1);
+				
 			$('wl_txbf_desc').innerHTML = "Explicit Beamforming";
 			inputCtrl(document.form.wl_txbf, 1);
 			inputCtrl(document.form.wl_itxbf, 1);
@@ -195,20 +287,7 @@ function initial(){
 	}	
 		
 	loadDateTime();
-	
-	if(!power_support){
-		inputHideCtrl(document.form.wl_TxPower, 0);
-		inputHideCtrl(document.form.wl_TxPower_ra, 0);
-		
-	}else if(!Rawifi_support){
-		inputHideCtrl(document.form.wl_TxPower_ra, 0);
-		if(document.form.wl0_country_code.value == "EU" && document.form.wl_unit.value == 0){
-				$("maxTxPower").innerHTML = "100";
-		}		
-		
-	}else
-		inputHideCtrl(document.form.wl_TxPower, 0);		
-
+	adjust_tx_power();	
 	setFlag_TimeFiled();	
 	check_Timefield_checkbox();
 	control_TimeField();		
@@ -217,7 +296,64 @@ function initial(){
 		$('svc_hint_div').style.display = "";	
 	corrected_timezone();	
 	
-	check_ampdu_rts();
+	if(based_modelid == "RT-AC87U" && '<% nvram_get("wl_unit"); %>' == '1'){	//for RT-AC87U 5G Advanced setting
+		$("wl_mrate_select").style.display = "none";
+		$("wl_plcphdr_field").style.display = "none";
+		$("ampdu_rts_tr").style.display = "none";
+		$("rts_threshold").style.display = "none";
+		$("wl_frameburst_field").style.display = "none";
+		$("wl_wme_apsd_field").style.display = "none";
+		$("wl_ampdu_mpdu_field").style.display = "none";
+		$("wl_ack_ratio_field").style.display = "none";
+	}
+	
+	/*Airtime fairness, only for Broadcom ARM platform, except RT-AC87U 5G*/
+	if(	based_modelid == "RT-N18U" ||
+		based_modelid == "RT-AC56U" || based_modelid == "RT-AC56S" ||
+		based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U" ||
+		based_modelid == "RT-AC69U" ||
+		based_modelid == "RT-AC87U"){
+		
+		inputCtrl(document.form.wl_atf, 1);
+		if(based_modelid == "RT-AC87U" && '<% nvram_get("wl_unit"); %>' == '1')	
+			inputCtrl(document.form.wl_atf, 0);
+	}
+	else{
+		inputCtrl(document.form.wl_atf, 0);
+	}
+	
+	if(based_modelid != "RT-AC87U")
+		check_ampdu_rts();
+}
+
+function adjust_tx_power(){
+	var power_value_old = document.form.wl_TxPower.value;
+	var power_value_new = document.form.wl_txpower.value;
+	var translated_value = 0;
+	
+	if(!power_support){
+		inputHideCtrl(document.form.wl_txpower, 0);
+	}
+	else{
+		if(power_value_old != ""){
+			translated_value = parseInt(power_value_old/80*100);
+			if(translated_value >=100){
+				translated_value = 100;
+			}
+			else if(translated_value <=1){
+				translated_value = 1;			
+			}
+
+			$('slider').children[0].style.width = translated_value + "%";
+			$('slider').children[1].style.left = translated_value + "%";
+			document.form.wl_txpower.value = translated_value;
+		}
+		else{
+			$('slider').children[0].style.width = power_value_new + "%";
+			$('slider').children[1].style.left = power_value_new + "%";
+			document.form.wl_txpower.value = power_value_new;
+		}
+	}
 }
 
 function changeRSSI(_switch){
@@ -241,9 +377,8 @@ function applyRule(){
 			document.form.wl_HW_switch.disabled = false;
 		}
 		
-		if(power_support && Rawifi_support){
-			document.form.wl_TxPower.disabled = false;
-			document.form.wl_TxPower.value = document.form.wl_TxPower_ra.value;
+		if(power_support){
+			document.form.wl_TxPower.value = "";	
 		}		
 
 		if(document.form.usb_usb3.disabled == false && document.form.usb_usb3.value != '<% nvram_get("usb_usb3"); %>'){
@@ -255,7 +390,6 @@ function applyRule(){
 	}
 }
 
-var errFlag=0
 function validForm(){
 	if(sw_mode != "2"){
 		if(!validate_range(document.form.wl_frag, 256, 2346)
@@ -275,41 +409,14 @@ function validForm(){
 		return false;
 	
 	if(power_support && !Rawifi_support){
-		// CE@2.4GHz
-		if(document.form.wl0_country_code.value == "EU" && document.form.wl_unit.value == 0){
-			if(document.form.wl_TxPower.value > 100 && errFlag < 2){
-				alert("<#WLANConfig11b_TxPower_alert#>")
-				document.form.wl_TxPower.focus();
-				errFlag++;
-				return false;
-			}
-			else if(document.form.wl_TxPower.value > 200 && errFlag > 1)
-				document.form.wl_TxPower.value = 200;
-		}
-
-		if(!validate_range(document.form.wl_TxPower, 1, 200)){
-			document.form.wl_TxPower.value = 200;
-			document.form.wl_TxPower.focus();
-			document.form.wl_TxPower.select();
-			return false;
-		}
-
 		// MODELDEP
 		if(hw_ver.search("RTN12HP") != -1){
 		  FormActions("start_apply.htm", "apply", "set_wltxpower;reboot", "<% get_default_reboot_time(); %>");
 		}
 		else if(based_modelid == "RT-AC66U" || based_modelid == "RT-N66U"){
 			FormActions("start_apply.htm", "apply", "set_wltxpower;restart_wireless", "15");
-		}
-		
-  }else if(power_support && Rawifi_support){
-		if(!validate_range(document.form.wl_TxPower_ra, 1, 100)){
-			document.form.wl_TxPower_ra.value = 100;
-			document.form.wl_TxPower_ra.focus();
-			document.form.wl_TxPower_ra.select();
-			return false;
-		}  	
-  }
+		}	
+	}
 
 	if(userRSSI_support){
 		if(document.form.wl_user_rssi.value != 0){
@@ -319,6 +426,7 @@ function validForm(){
 			}
 		}
 	}
+	
 	if(sw_mode != 2)
 		updateDateTime();	
 
@@ -334,6 +442,7 @@ function disableAdvFn(row){
 		$("WAdvTable").deleteRow(i);
 	}
 }
+
 function loadDateTime(){
 	document.form.wl_radio_date_x_Sun.checked = getDateCheck(document.form.wl_radio_date_x.value, 0);
 	document.form.wl_radio_date_x_Mon.checked = getDateCheck(document.form.wl_radio_date_x.value, 1);
@@ -507,6 +616,40 @@ function check_ampdu_rts(){
 		$('ampdu_rts_tr').style.display = "none";
 	}
 }
+
+function register_event(){
+	$j(function() {
+		$j( "#slider" ).slider({
+			orientation: "horizontal",
+			range: "min",
+			min:1,
+			max: 100,
+			value:100,
+			slide:function(event, ui){
+				document.getElementById('wl_txpower').value = ui.value; 
+			},
+			stop:function(event, ui){
+				set_power(ui.value);	  
+			}
+		}); 
+	});
+}
+
+function set_power(power_value){	
+	if(power_value < 1){
+		power_value = 1;
+		alert("The minimun value of power is 1");
+	}
+	
+	if(power_value > 100){
+		power_value = 100;
+		alert("The maximun value of power is 1");
+	}
+	
+	$('slider').children[0].style.width = power_value + "%";
+	$('slider').children[1].style.left = power_value + "%";
+	document.form.wl_txpower.value = power_value;
+}
 </script>
 </head>
 
@@ -539,9 +682,10 @@ function check_ampdu_rts(){
 <input type="hidden" name="wl_radio_time2_x" value="<% nvram_get("wl_radio_time2_x"); %>">
 <input type="hidden" name="wl_subunit" value="-1">
 <input type="hidden" name="wl_amsdu" value="<% nvram_get("wl_amsdu"); %>">
-<input type="hidden" name="wl_TxPower_orig" value="<% nvram_get("wl_TxPower"); %>" disabled>
 <input type="hidden" name="wl0_country_code" value="<% nvram_get("wl0_country_code"); %>" disabled>
 <input type="hidden" name="wl_HW_switch" value="<% nvram_get("wl_HW_switch"); %>" disabled>
+<input type="hidden" name="wl_TxPower" value="<% nvram_get("wl_TxPower"); %>" >
+
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 	<tr>
 		<td width="17">&nbsp;</td>
@@ -707,7 +851,7 @@ function check_ampdu_rts(){
 							</select>
 						</td>
 					</tr>
-					<tr>
+					<tr id="wl_plcphdr_field">
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,20);"><#WLANConfig11n_PremblesType_itemname#></a></th>
 						<td>
 						<select name="wl_plcphdr" class="input_option">
@@ -738,19 +882,19 @@ function check_ampdu_rts(){
 			  				<input type="text" maxlength="4" name="wl_rts" class="input_6_table" value="<% nvram_get("wl_rts"); %>" onKeyPress="return is_number(this,event)">
 			  			</td>
 					</tr>
-					<tr>
+					<tr id="wl_dtim_field">
 			  			<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(3, 11);"><#WLANConfig11b_x_DTIM_itemname#></a></th>
 						<td>
 			  				<input type="text" maxlength="3" name="wl_dtim" class="input_6_table" value="<% nvram_get("wl_dtim"); %>" onKeyPress="return is_number(this,event)">
 						</td>			  
 					</tr>
-					<tr>
+					<tr id="wl_bcn_field">
 			  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 12);"><#WLANConfig11b_x_Beacon_itemname#></a></th>
 						<td>
 							<input type="text" maxlength="4" name="wl_bcn" class="input_6_table" value="<% nvram_get("wl_bcn"); %>" onKeyPress="return is_number(this,event)">
 						</td>
 					</tr>
-					<tr>
+					<tr id="wl_frameburst_field">
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 13);"><#WLANConfig11b_x_TxBurst_itemname#></a></th>
 						<td>
 							<select name="wl_frameburst" class="input_option">
@@ -789,7 +933,7 @@ function check_ampdu_rts(){
 							</select>
 			  			</td>
 					</tr>
-					<tr>
+					<tr id="wl_wme_apsd_field">
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,17);"><#WLANConfig11b_x_APSD_itemname#></a></th>
 						<td>
                   				<select name="wl_wme_apsd" class="input_option">
@@ -820,7 +964,7 @@ function check_ampdu_rts(){
 						</td>
 					</tr>
 
-					<tr> <!-- MODELDEP: RT-AC68U / RT-AC68U_V2 / RT-AC69U /DSL-AC68U Only  -->
+					<tr> <!-- MODELDEP: RT-AC3200 / RT-AC68U / RT-AC68U_V2 / RT-AC69U /DSL-AC68U Only  -->
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,29);"><#WLANConfig11b_x_ReduceUSB3#></a></th>
 						<td>
 							<select name="usb_usb3" class="input_option">
@@ -831,7 +975,7 @@ function check_ampdu_rts(){
 					</tr>
 					
 					<!-- [MODELDEP] for Broadcom SDK 6.x -->
-					<tr>
+					<tr id="wl_ampdu_mpdu_field">
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,26);"><#WLANConfig11b_x_AMPDU#></a></th>
 						<td>
 							<select name="wl_ampdu_mpdu" class="input_option">
@@ -840,7 +984,7 @@ function check_ampdu_rts(){
 							</select>
 						</td>
 					</tr>					
-					<tr>
+					<tr id="wl_ack_ratio_field">
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,27);"><#WLANConfig11b_x_ACK#></a></th>
 						<td>
 							<select name="wl_ack_ratio" class="input_option">
@@ -859,8 +1003,18 @@ function check_ampdu_rts(){
 						</td>
 					</tr>
 					<!-- [MODELDEP] end -->
-
+					<!--Broadcom ARM platform only, except RT-AC87U(5G) -->
 					<tr>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,28);">Airtime Fairness</a></th>
+						<td>
+							<select name="wl_atf" class="input_option">
+									<option value="0" <% nvram_match("wl_atf", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+									<option value="1" <% nvram_match("wl_atf", "1","selected"); %> ><#WLANConfig11b_WirelessCtrl_button1name#></option>
+							</select>
+						</td>
+					</tr>
+					
+					<tr id="wl_txbf_field">
 						<th><a id="wl_txbf_desc" class="hintstyle" href="javascript:void(0);" onClick="openHint(3,24);">Explicit Beamforming</a></th>
 						<td>
 							<select name="wl_txbf" class="input_option">
@@ -869,7 +1023,7 @@ function check_ampdu_rts(){
 							</select>
 						</td>
 					</tr>					
-					<tr>
+					<tr id="wl_itxbf_field">
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,25);">Universal Beamforming</a></th>
 						<td>
 							<select name="wl_itxbf" class="input_option" disabled>
@@ -889,27 +1043,23 @@ function check_ampdu_rts(){
 						</td>
 					</tr>					
 
-					<!-- BRCM Only : By Viz 2013.05 -->
-					<tr>
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 17);"><#WLANConfig11b_TxPower_itemname#></a></th>
-						<td>
-		  				<input type="text" maxlength="3" name="wl_TxPower" class="input_3_table" value="<% nvram_get("wl_TxPower"); %>" onKeyPress="return is_number(this, event);"> mW
-							<br><span>
-										<#WLANConfig11b_x_maxtxpower1#>
-										<span id="maxTxPower">200</span>mW
-										<#WLANConfig11b_x_maxtxpower2#>
-									</span>
-						</td>
-					</tr>
-					
-					<!-- RaLink Only : By Viz 2013.05 -->
 					<tr>
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 16);"><#WLANConfig11b_TxPower_itemname#></a></th>
 						<td>
-		  				<input type="text" maxlength="3" name="wl_TxPower_ra" class="input_3_table" value="<% nvram_get("wl_TxPower"); %>" onKeyPress="return is_number(this, event);"> %
+							<div>
+								<table>
+									<tr >
+										<td style="border:0px;width:60px;">
+											<input id="wl_txpower" name="wl_txpower" type="text" maxlength="3" class="input_3_table" value="<% nvram_get("wl_txpower"); %>" style="margin-left:-10px;" onkeyup="set_power(this.value);"> %
+										</td>					
+										<td style="border:0px;">
+											<div id="slider" style="width:200px;"></div>
+										</td>
+									</tr>
+								</table>
+							</div>
 						</td>
-					</tr>					
-
+					</tr>
 				</table>
 					
 						<div class="apply_gen">

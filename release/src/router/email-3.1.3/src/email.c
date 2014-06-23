@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <unistd.h>
 
 #include "getopt.h"
 
@@ -209,6 +210,14 @@ main(int argc, char **argv)
 	char *cc_string = NULL;
 	char *bcc_string = NULL;
 	const char *opts = "f:n:a:p:oVedvtb?c:s:r:u:i:g:m:H:x:";
+	FILE *fp;
+
+	fp = fopen(EMAIL_LOG_FILE, "r");
+	if( fp != NULL ){
+		printf("There is previous %s file so remove it !!\n", EMAIL_LOG_FILE);
+		fclose(fp);
+		unlink(EMAIL_LOG_FILE);
+	}
 
 	/* Set certian global options to NULL */
 	conf_file = NULL;

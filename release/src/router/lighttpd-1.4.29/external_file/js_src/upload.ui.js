@@ -501,8 +501,7 @@ function webdav_put_complete_callbackfunction(file_id, file_name, status, error,
 }
 
 function showUploadProgress(status, progress_percent){
-	$('#div_upload').show();
-		
+	$('#div_upload').show();	
 	if(progress_percent<=0)
 		$('.ui-label').css("display", "none");
 	else{

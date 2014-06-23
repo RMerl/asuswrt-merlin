@@ -34,6 +34,7 @@
 
 #include <bcmnvram.h>
 #include <wlioctl.h>
+#include <wlutils.h>
 
 #include <httpd.h>
 
@@ -42,29 +43,33 @@
 
 #include "web-qtn.h"
 
-#define MAX_RETRY_TIMES 30
-#define WIFINAME "wifi0"
+#define	MAX_RETRY_TIMES	30
+#define	MAX_TOTAL_TIME	120
+#define	WIFINAME	"wifi0"
 
 static int s_c_rpc_use_udp = 0;
+static int qtn_qcsapi_init = 0;
+static int qtn_init = 0;
 
 extern uint8 wf_chspec_ctlchan(chanspec_t chspec);
 extern chanspec_t wf_chspec_aton(const char *a);
-extern char *wl_ether_etoa(const struct ether_addr *n);
 extern char *wl_vifname_qtn(int unit, int subunit);
 
-int rpc_qcsapi_init()
+int rpc_qcsapi_init(int verbose)
 {
 	const char *host;
 	CLIENT *clnt;
 	int retry = 0;
+	time_t start_time = uptime();
 
-	nvram_set("111", "222");
 	/* setup RPC based on udp protocol */
 	do {
+		if (verbose)
 		dbG("#%d attempt to create RPC connection\n", retry + 1);
 
 		host = client_qcsapi_find_host_addr(0, NULL);
 		if (!host) {
+			if (verbose)
 			dbG("Cannot find the host\n");
 			sleep(1);
 			continue;
@@ -82,16 +87,52 @@ int rpc_qcsapi_init()
 			continue;
 		} else {
 			client_qcsapi_set_rpcclient(clnt);
+			qtn_qcsapi_init = 1;
 			return 0;
 		}
-	} while (retry++ < MAX_RETRY_TIMES);
+	} while ((retry++ < MAX_RETRY_TIMES) && ((uptime() - start_time) < MAX_TOTAL_TIME));
 
 	return -1;
+}
+
+int rpc_qtn_ready()
+{
+	int ret, qtn_ready;
+	int lock;
+
+	qtn_ready = nvram_get_int("qtn_ready");
+
+	lock = file_lock("qtn");
+
+	if (qtn_ready && !qtn_init)
+	{
+		ret = rpc_qcsapi_init(0);
+		if (ret < 0){
+			qtn_ready = 0;
+			dbG("rpc_qcsapi_init error, return: %d\n", ret);
+		}else
+		{
+			ret = qcsapi_init();
+			if (ret < 0){
+				qtn_ready = 0;
+				dbG("Qcsapi qcsapi_init error, return: %d\n", ret);
+			}else
+				qtn_init = 1;
+		}
+	}
+
+	file_unlock(lock);
+
+	nvram_set("wl1_country_code", nvram_safe_get("1:ccode"));
+	return qtn_ready;
 }
 
 int rpc_qcsapi_set_SSID(const char *ifname, const char *ssid)
 {
 	int ret;
+
+	if (!rpc_qtn_ready())
+		return -1;
 
 	ret = qcsapi_wifi_set_SSID(ifname, ssid);
 	if (ret < 0) {
@@ -108,6 +149,9 @@ int rpc_qcsapi_set_SSID_broadcast(const char *ifname, const char *option)
 	int ret;
 	int OPTION = 1 - atoi(option);
 
+	if (!rpc_qtn_ready())
+		return -1;
+
 	ret = qcsapi_wifi_set_option(ifname, qcsapi_SSID_broadcast, OPTION);
 	if (ret < 0) {
 		dbG("Qcsapi qcsapi_wifi_set_option::SSID_broadcast %s error, return: %d\n", ifname, ret);
@@ -122,6 +166,9 @@ int rpc_qcsapi_set_vht(const char *mode)
 {
 	int ret;
 	int VHT;
+
+	if (!rpc_qtn_ready())
+		return -1;
 
 	switch (atoi(mode))
 	{
@@ -147,6 +194,9 @@ int rpc_qcsapi_set_bw(const char *bw)
 {
 	int ret;
 	int BW = 20;
+
+	if (!rpc_qtn_ready())
+		return -1;
 
 	switch (atoi(bw))
 	{
@@ -176,6 +226,10 @@ int rpc_qcsapi_set_channel(const char *chspec_buf)
 {
 	int ret;
 	int channel = 0;
+	char str_ch[] = "149";
+
+	if (!rpc_qtn_ready())
+		return -1;
 
 	channel = wf_chspec_ctlchan(wf_chspec_aton(chspec_buf));
 
@@ -186,6 +240,14 @@ int rpc_qcsapi_set_channel(const char *chspec_buf)
 	}
 	dbG("Set channel of interface %s as: %d\n", WIFINAME, channel);
 
+	snprintf(str_ch, sizeof(str_ch), "%d", channel);
+	ret = qcsapi_config_update_parameter(WIFINAME, "channel", str_ch);
+	if (ret < 0) {
+		dbG("Qcsapi qcsapi_config_update_parameter %s error, return: %d\n", WIFINAME, ret);
+		return ret;
+	}
+	dbG("update channel to wireless_conf.txt %s as: %s\n", WIFINAME, str_ch);
+
 	return 0;
 }
 
@@ -193,6 +255,9 @@ int rpc_qcsapi_set_beacon_type(const char *ifname, const char *auth_mode)
 {
 	int ret;
 	char *p_new_beacon = NULL;
+
+	if (!rpc_qtn_ready())
+		return -1;
 
 	if (!strcmp(auth_mode, "open"))
 		p_new_beacon = strdup("Basic");
@@ -222,6 +287,9 @@ int rpc_qcsapi_set_WPA_encryption_modes(const char *ifname, const char *crypto)
 	int ret;
 	string_32 encryption_modes;
 
+	if (!rpc_qtn_ready())
+		return -1;
+
 	if (!strcmp(crypto, "tkip"))
 		strcpy(encryption_modes, "TKIPEncryption");
 	else if (!strcmp(crypto, "aes"))
@@ -245,6 +313,9 @@ int rpc_qcsapi_set_key_passphrase(const char *ifname, const char *wpa_psk)
 {
 	int ret;
 
+	if (!rpc_qtn_ready())
+		return -1;
+
 	ret = qcsapi_wifi_set_key_passphrase(ifname, 0, wpa_psk);
 	if (ret < 0) {
 		dbG("Qcsapi qcsapi_wifi_set_key_passphrase %s error, return: %d\n", ifname, ret);
@@ -265,6 +336,9 @@ int rpc_qcsapi_set_dtim(const char *dtim)
 	int ret;
 	int DTIM = atoi(dtim);
 
+	if (!rpc_qtn_ready())
+		return -1;
+
 	ret = qcsapi_wifi_set_dtim(WIFINAME, DTIM);
 	if (ret < 0) {
 		dbG("Qcsapi qcsapi_wifi_set_dtim %s error, return: %d\n", WIFINAME, ret);
@@ -279,6 +353,9 @@ int rpc_qcsapi_set_beacon_interval(const char *beacon_interval)
 {
 	int ret;
 	int BCN = atoi(beacon_interval);
+
+	if (!rpc_qtn_ready())
+		return -1;
 
 	ret = qcsapi_wifi_set_beacon_interval(WIFINAME, BCN);
 	if (ret < 0) {
@@ -295,6 +372,9 @@ int rpc_qcsapi_set_mac_address_filtering(const char *ifname, const char *mac_add
 	int ret;
 	qcsapi_mac_address_filtering MAF;
 	qcsapi_mac_address_filtering orig_mac_address_filtering;
+
+	if (!rpc_qtn_ready())
+		return -1;
 
 	ret = rpc_qcsapi_get_mac_address_filtering(ifname, &orig_mac_address_filtering);
 	if (ret < 0) {
@@ -332,10 +412,16 @@ void rpc_update_macmode(const char *mac_address_filtering)
 	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
 	int i, unit = 1;
 
+	if (!rpc_qtn_ready())
+		return;
+
 	ret = rpc_qcsapi_set_mac_address_filtering(WIFINAME, mac_address_filtering);
 	if (ret < 0) {
 		dbG("rpc_qcsapi_set_mac_address_filtering %s error, return: %d\n", WIFINAME, ret);
 	}
+
+	if (nvram_get_int("sw_mode") == SW_MODE_REPEATER && nvram_get_int("wlc_band"))
+		return;
 
 	for (i = 1; i < 4; i++)
 	{
@@ -355,6 +441,9 @@ int rpc_qcsapi_authorize_mac_address(const char *ifname, const char *macaddr)
 	int ret;
 	qcsapi_mac_addr address_to_authorize;
 
+	if (!rpc_qtn_ready())
+		return -1;
+
 	ether_atoe(macaddr, address_to_authorize);
 	ret = qcsapi_wifi_authorize_mac_address(ifname, address_to_authorize);
 	if (ret < 0) {
@@ -370,6 +459,9 @@ int rpc_qcsapi_deny_mac_address(const char *ifname, const char *macaddr)
 {
 	int ret;
 	qcsapi_mac_addr address_to_deny;
+
+	if (!rpc_qtn_ready())
+		return -1;
 
 	ether_atoe(macaddr, address_to_deny);
 	ret = qcsapi_wifi_deny_mac_address(ifname, address_to_deny);
@@ -387,6 +479,9 @@ int rpc_qcsapi_wds_set_psk(const char *ifname, const char *macaddr, const char *
 	int ret;
 	qcsapi_mac_addr peer_address;
 
+	if (!rpc_qtn_ready())
+		return -1;
+
 	ether_atoe(macaddr, peer_address);
 	ret = qcsapi_wds_set_psk(WIFINAME, peer_address, wpa_psk);
 	if (ret < 0) {
@@ -402,6 +497,9 @@ int rpc_qcsapi_get_SSID(const char *ifname, qcsapi_SSID *ssid)
 {
 	int ret;
 
+	if (!rpc_qtn_ready())
+		return -1;
+
 	ret = qcsapi_wifi_get_SSID(ifname, (char *) ssid);
 	if (ret < 0) {
 		dbG("Qcsapi qcsapi_wifi_get_SSID %s error, return: %d\n", ifname, ret);
@@ -414,6 +512,9 @@ int rpc_qcsapi_get_SSID(const char *ifname, qcsapi_SSID *ssid)
 int rpc_qcsapi_get_SSID_broadcast(const char *ifname, int *p_current_option)
 {
 	int ret;
+
+	if (!rpc_qtn_ready())
+		return -1;
 
 	ret = qcsapi_wifi_get_option(ifname, qcsapi_SSID_broadcast, p_current_option);
 	if (ret < 0) {
@@ -428,6 +529,9 @@ int rpc_qcsapi_get_vht(qcsapi_unsigned_int *vht)
 {
 	int ret;
 
+	if (!rpc_qtn_ready())
+		return -1;
+
 	ret = qcsapi_wifi_get_vht(WIFINAME, vht);
 	if (ret < 0) {
 		dbG("Qcsapi qcsapi_wifi_get_vht %s error, return: %d\n", WIFINAME, ret);
@@ -440,6 +544,9 @@ int rpc_qcsapi_get_vht(qcsapi_unsigned_int *vht)
 int rpc_qcsapi_get_bw(qcsapi_unsigned_int *p_bw)
 {
 	int ret;
+
+	if (!rpc_qtn_ready())
+		return -1;
 
 	ret = qcsapi_wifi_get_bw(WIFINAME, p_bw);
 	if (ret < 0) {
@@ -454,6 +561,9 @@ int rpc_qcsapi_get_channel(qcsapi_unsigned_int *p_channel)
 {
 	int ret;
 
+	if (!rpc_qtn_ready())
+		return -1;
+
 	ret = qcsapi_wifi_get_channel(WIFINAME, p_channel);
 	if (ret < 0) {
 		dbG("Qcsapi qcsapi_wifi_get_channel %s error, return: %d\n", WIFINAME, ret);
@@ -463,9 +573,29 @@ int rpc_qcsapi_get_channel(qcsapi_unsigned_int *p_channel)
 	return 0;
 }
 
+int rpc_qcsapi_get_snr(void)
+{
+	int ret;
+	int snr;
+
+	if (!rpc_qtn_ready())
+		return -1;
+
+	ret = qcsapi_wifi_get_avg_snr(WIFINAME, &snr);
+	if (ret < 0) {
+		dbG("Qcsapi qcsapi_wifi_get_avg_snr %s error, return: %d\n", WIFINAME, ret);
+		return 0;
+	}
+
+	return snr;
+}
+
 int rpc_qcsapi_get_channel_list(string_1024* list_of_channels)
 {
 	int ret;
+
+	if (!rpc_qtn_ready())
+		return -1;
 
 	ret = qcsapi_wifi_get_list_channels(WIFINAME, *list_of_channels);
 	if (ret < 0) {
@@ -480,6 +610,9 @@ int rpc_qcsapi_get_beacon_type(const char *ifname, char *p_current_beacon)
 {
 	int ret;
 
+	if (!rpc_qtn_ready())
+		return -1;
+
 	ret = qcsapi_wifi_get_beacon_type(ifname, p_current_beacon);
 	if (ret < 0) {
 		dbG("Qcsapi qcsapi_wifi_get_beacon_type %s error, return: %d\n", ifname, ret);
@@ -493,6 +626,9 @@ int rpc_qcsapi_get_WPA_encryption_modes(const char *ifname, char *p_current_encr
 {
 	int ret;
 
+	if (!rpc_qtn_ready())
+		return -1;
+
 	ret = qcsapi_wifi_get_WPA_encryption_modes(ifname, p_current_encryption_mode);
 	if (ret < 0) {
 		dbG("Qcsapi qcsapi_wifi_get_WPA_encryption_modes %s error, return: %d\n", ifname, ret);
@@ -505,6 +641,9 @@ int rpc_qcsapi_get_WPA_encryption_modes(const char *ifname, char *p_current_encr
 int rpc_qcsapi_get_key_passphrase(const char *ifname, char *p_current_key_passphrase)
 {
 	int ret;
+
+	if (!rpc_qtn_ready())
+		return -1;
 
 	ret = qcsapi_wifi_get_key_passphrase(ifname, 0, p_current_key_passphrase);
 	if (ret < 0) {
@@ -524,6 +663,9 @@ int rpc_qcsapi_get_dtim(qcsapi_unsigned_int *p_dtim)
 {
 	int ret;
 
+	if (!rpc_qtn_ready())
+		return -1;
+
 	ret = qcsapi_wifi_get_dtim(WIFINAME, p_dtim);
 	if (ret < 0) {
 		dbG("Qcsapi qcsapi_wifi_get_dtim %s error, return: %d\n", WIFINAME, ret);
@@ -536,6 +678,9 @@ int rpc_qcsapi_get_dtim(qcsapi_unsigned_int *p_dtim)
 int rpc_qcsapi_get_beacon_interval(qcsapi_unsigned_int *p_beacon_interval)
 {
 	int ret;
+
+	if (!rpc_qtn_ready())
+		return -1;
 
 	ret = qcsapi_wifi_get_beacon_interval(WIFINAME, p_beacon_interval);
 	if (ret < 0) {
@@ -550,6 +695,9 @@ int rpc_qcsapi_get_mac_address_filtering(const char* ifname, qcsapi_mac_address_
 {
 	int ret;
 
+	if (!rpc_qtn_ready())
+		return -1;
+
 	ret = qcsapi_wifi_get_mac_address_filtering(ifname, p_mac_address_filtering);
 	if (ret < 0) {
 		dbG("Qcsapi qcsapi_wifi_get_mac_address_filtering %s error, return: %d\n", ifname, ret);
@@ -562,6 +710,9 @@ int rpc_qcsapi_get_mac_address_filtering(const char* ifname, qcsapi_mac_address_
 int rpc_qcsapi_get_authorized_mac_addresses(const char *ifname, char *list_mac_addresses, const unsigned int sizeof_list)
 {
 	int ret;
+
+	if (!rpc_qtn_ready())
+		return -1;
 
 	ret = qcsapi_wifi_get_authorized_mac_addresses(ifname, list_mac_addresses, sizeof_list);
 	if (ret < 0) {
@@ -576,6 +727,9 @@ int rpc_qcsapi_get_denied_mac_addresses(const char *ifname, char *list_mac_addre
 {
 	int ret;
 
+	if (!rpc_qtn_ready())
+		return -1;
+
 	ret = qcsapi_wifi_get_denied_mac_addresses(ifname, list_mac_addresses, sizeof_list);
 	if (ret < 0) {
 		dbG("Qcsapi qcsapi_wifi_get_denied_mac_addresses %s error, return: %d\n", ifname, ret);
@@ -588,6 +742,9 @@ int rpc_qcsapi_get_denied_mac_addresses(const char *ifname, char *list_mac_addre
 int rpc_qcsapi_interface_get_mac_addr(const char *ifname, qcsapi_mac_addr *current_mac_addr)
 {
 	int ret;
+
+	if (!rpc_qtn_ready())
+		return -1;
 
 	ret = qcsapi_interface_get_mac_addr(ifname, (uint8_t *) current_mac_addr);
 	if (ret < 0) {
@@ -602,6 +759,9 @@ int rpc_qcsapi_wps_get_state(const char *ifname, char *wps_state, const qcsapi_u
 {
 	int ret;
 
+	if (!rpc_qtn_ready())
+		return -1;
+
 	ret = qcsapi_wps_get_state(ifname, wps_state, max_len);
 	if (ret < 0) {
 		dbG("Qcsapi qcsapi_wps_get_state %s error, return: %d\n", ifname, ret);
@@ -614,6 +774,9 @@ int rpc_qcsapi_wps_get_state(const char *ifname, char *wps_state, const qcsapi_u
 int rpc_qcsapi_wifi_disable_wps(const char *ifname, int disable_wps)
 {
 	int ret;
+
+	if (!rpc_qtn_ready())
+		return -1;
 
 	ret = qcsapi_wifi_disable_wps(ifname, disable_wps);
 	if (ret < 0) {
@@ -628,6 +791,9 @@ int rpc_qcsapi_wps_get_ap_pin(const char *ifname, char *wps_pin, int force_regen
 {
 	int ret;
 
+	if (!rpc_qtn_ready())
+		return -1;
+
 	ret = qcsapi_wps_get_ap_pin(ifname, wps_pin, force_regenerate);
 	if (ret < 0) {
 		dbG("Qcsapi qcsapi_wps_get_ap_pin %s error, return: %d\n", ifname, ret);
@@ -640,6 +806,9 @@ int rpc_qcsapi_wps_get_ap_pin(const char *ifname, char *wps_pin, int force_regen
 int rpc_qcsapi_wps_get_configured_state(const char *ifname, char *wps_state, const qcsapi_unsigned_int max_len)
 {
 	int ret;
+
+	if (!rpc_qtn_ready())
+		return -1;
 
 	ret = qcsapi_wps_get_configured_state(ifname, wps_state, max_len);
 	if (ret < 0) {
@@ -654,6 +823,9 @@ int rpc_qcsapi_wps_cancel(const char *ifname)
 {
 	int ret;
 
+	if (!rpc_qtn_ready())
+		return -1;
+
 	ret = qcsapi_wps_cancel(ifname);
 	if (ret < 0) {
 		dbG("Qcsapi qcsapi_wps_cancel %s error, return: %d\n", ifname, ret);
@@ -666,6 +838,9 @@ int rpc_qcsapi_wps_cancel(const char *ifname)
 int rpc_qcsapi_wps_registrar_report_button_press(const char *ifname)
 {
 	int ret;
+
+	if (!rpc_qtn_ready())
+		return -1;
 
 	ret = qcsapi_wps_registrar_report_button_press(ifname);
 	if (ret < 0) {
@@ -680,6 +855,9 @@ int rpc_qcsapi_wps_registrar_report_pin(const char *ifname, const char *wps_pin)
 {
 	int ret;
 
+	if (!rpc_qtn_ready())
+		return -1;
+
 	ret = qcsapi_wps_registrar_report_pin(ifname, wps_pin);
 	if (ret < 0) {
 		dbG("Qcsapi qcsapi_wps_registrar_report_pin %s error, return: %d\n", ifname, ret);
@@ -693,6 +871,14 @@ int rpc_qcsapi_restore_default_config(int flag)
 {
 	int ret;
 
+	if (!qtn_qcsapi_init) {
+		ret = rpc_qcsapi_init(1);
+		if (ret < 0){
+			dbG("[restore_default] rpc_qcsapi_init error, return: %d\n", ret);
+			return -1;
+		}
+	}
+
 	ret = qcsapi_restore_default_config(flag);
 	if (ret < 0) {
 		dbG("Qcsapi qcsapi_restore_default_config error, return: %d\n", ret);
@@ -700,12 +886,17 @@ int rpc_qcsapi_restore_default_config(int flag)
 	}
 	dbG("QTN restore default config successfully\n");
 
+	qtn_qcsapi_init = 0;
+
 	return 0;
 }
 
 int rpc_qcsapi_bootcfg_commit(void)
 {
 	int ret;
+
+	if (!rpc_qtn_ready())
+		return -1;
 
 	ret = qcsapi_bootcfg_commit();
 	if (ret < 0) {
@@ -721,6 +912,9 @@ void rpc_show_config(void)
 {
 	int ret;
 	char mac_address_filtering_mode[][8] = {"Disable", "Reject", "Accept"};
+
+	if (!rpc_qtn_ready())
+		return;
 
 	qcsapi_SSID ssid;
 	ret = rpc_qcsapi_get_SSID(WIFINAME, &ssid);
@@ -807,8 +1001,131 @@ void rpc_show_config(void)
 		dbG("current MAC filter mode of interface %s: %s\n", WIFINAME, mac_address_filtering_mode[mac_address_filtering]);
 }
 
+void rpc_set_radio(int unit, int subunit, int on)
+{
+	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
+	int ret;
+	char interface_status = 0;
+	qcsapi_mac_addr wl_macaddr;
+	char macbuf[13], macaddr_str[18];
+	unsigned long long macvalue;
+	unsigned char *macp;
+
+	if (subunit > 0)
+		snprintf(prefix, sizeof(prefix), "wl%d.%d_", unit, subunit);
+	else
+		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+
+	if (subunit > 0)
+	{
+		ret = qcsapi_interface_get_status(wl_vifname_qtn(unit, subunit), &interface_status);
+//		if (ret < 0)
+//			dbG("Qcsapi qcsapi_interface_get_status %s error, return: %d\n", wl_vifname_qtn(unit, subunit), ret);
+
+		if (on)
+		{
+			if (interface_status)
+			{
+				dbG("vif %s has existed already\n", wl_vifname_qtn(unit, subunit));
+
+				return;
+			}
+
+			memset(&wl_macaddr, 0, sizeof(wl_macaddr));
+			ret = qcsapi_interface_get_mac_addr(WIFINAME, (uint8_t *) wl_macaddr);
+			if (ret < 0)
+				dbG("Qcsapi qcsapi_interface_get_mac_addr %s error, return: %d\n", WIFINAME, ret);
+
+			sprintf(macbuf, "%02X%02X%02X%02X%02X%02X",
+				wl_macaddr[0],
+				wl_macaddr[1],
+				wl_macaddr[2],
+				wl_macaddr[3],
+				wl_macaddr[4],
+				wl_macaddr[5]);
+			macvalue = strtoll(macbuf, (char **) NULL, 16);
+			macvalue += subunit;
+			macp = (unsigned char*) &macvalue;
+			memset(macaddr_str, 0, sizeof(macaddr_str));
+			sprintf(macaddr_str, "%02X:%02X:%02X:%02X:%02X:%02X",
+				*(macp+5),
+				*(macp+4),
+				*(macp+3),
+				*(macp+2),
+				*(macp+1),
+				*(macp+0));
+			ether_atoe(macaddr_str, wl_macaddr);
+
+			ret = qcsapi_wifi_create_bss(wl_vifname_qtn(unit, subunit), wl_macaddr);
+			if (ret < 0)
+			{
+				dbG("Qcsapi qcsapi_wifi_create_bss %s error, return: %d\n",
+					wl_vifname_qtn(unit, subunit), ret);
+
+				return;
+			}
+
+			ret = rpc_qcsapi_set_SSID(wl_vifname_qtn(unit, subunit), nvram_safe_get(strcat_r(prefix, "ssid", tmp)));
+			if (ret < 0)
+				dbG("rpc_qcsapi_set_SSID %s error, return: %d\n",
+					wl_vifname_qtn(unit, subunit), ret);
+
+			ret = rpc_qcsapi_set_SSID_broadcast(wl_vifname_qtn(unit, subunit), nvram_safe_get(strcat_r(prefix, "closed", tmp)));
+			if (ret < 0)
+				dbG("rpc_qcsapi_set_SSID_broadcast %s error, return: %d\n",
+					wl_vifname_qtn(unit, subunit), ret);
+
+			ret = rpc_qcsapi_set_beacon_type(wl_vifname_qtn(unit, subunit), nvram_safe_get(strcat_r(prefix, "auth_mode_x", tmp)));
+			if (ret < 0)
+				dbG("rpc_qcsapi_set_beacon_type %s error, return: %d\n",
+					wl_vifname_qtn(unit, subunit), ret);
+
+			ret = rpc_qcsapi_set_WPA_encryption_modes(wl_vifname_qtn(unit, subunit), nvram_safe_get(strcat_r(prefix, "crypto", tmp)));
+			if (ret < 0)
+				dbG("rpc_qcsapi_set_WPA_encryption_modes %s error, return: %d\n",
+					wl_vifname_qtn(unit, subunit), ret);
+
+			ret = rpc_qcsapi_set_key_passphrase(wl_vifname_qtn(unit, subunit), nvram_safe_get(strcat_r(prefix, "wpa_psk", tmp)));
+			if (ret < 0)
+				dbG("rpc_qcsapi_set_key_passphrase %s error, return: %d\n",
+					wl_vifname_qtn(unit, subunit), ret);
+		}
+		else
+		{
+			ret = qcsapi_wifi_remove_bss(wl_vifname_qtn(unit, subunit));
+			if (ret < 0)
+				dbG("Qcsapi qcsapi_wifi_remove_bss %s error, return: %d\n",
+					wl_vifname_qtn(unit, subunit), ret);
+		}
+	}
+	else {
+		ret = qcsapi_wifi_rfenable(WIFINAME, (qcsapi_unsigned_int) on);
+		if (ret < 0)
+			dbG("Qcsapi qcsapi_wifi_rfenable %s, return: %d\n", WIFINAME, ret);
+	}
+}
+
+int rpc_update_ap_isolate(const char *ifname, const int isolate)
+{
+	int ret;
+
+	if(!rpc_qtn_ready())
+		return -1;
+
+	ret = qcsapi_wifi_set_ap_isolate(ifname, isolate);
+	if(ret < 0){
+		dbG("Qcsapi qcsapi_wifi_set_ap_isolate %s error, return: %d\n", ifname, ret);
+		return ret;
+	}
+
+	return 0;
+}
+
 void rpc_parse_nvram(const char *name, const char *value)
 {
+	if (!rpc_qtn_ready())
+		return;
+
 	if (!strcmp(name, "wl1_ssid"))
 		rpc_qcsapi_set_SSID(WIFINAME, value);
 	else if (!strcmp(name, "wl1_closed"))
@@ -818,10 +1135,7 @@ void rpc_parse_nvram(const char *name, const char *value)
 	else if (!strcmp(name, "wl1_bw"))
 		rpc_qcsapi_set_bw(value);
 	else if (!strcmp(name, "wl1_chanspec"))
-	{
 		rpc_qcsapi_set_channel(value);
-		rpc_qcsapi_set_channel(value);
-	}
 	else if (!strcmp(name, "wl1_auth_mode_x"))
 		rpc_qcsapi_set_beacon_type(WIFINAME, value);
 	else if (!strcmp(name, "wl1_crypto"))
@@ -832,6 +1146,8 @@ void rpc_parse_nvram(const char *name, const char *value)
 		rpc_qcsapi_set_dtim(value);
 	else if (!strcmp(name, "wl1_bcn"))
 		rpc_qcsapi_set_beacon_interval(value);
+	else if (!strcmp(name, "wl1_radio"))
+		rpc_set_radio(1, 0, nvram_get_int(name));
 	else if (!strcmp(name, "wl1_macmode"))
 		rpc_update_macmode(value);
 	else if (!strcmp(name, "wl1_maclist_x"))
@@ -842,6 +1158,8 @@ void rpc_parse_nvram(const char *name, const char *value)
 		rpc_update_wdslist();
 	else if (!strcmp(name, "wl1_wds_psk"))
 		rpc_update_wds_psk(value);
+	else if (!strcmp(name, "wl1_ap_isolate"))
+		rpc_update_ap_isolate(WIFINAME, atoi(value));
 	else if (!strncmp(name, "wl1.", 4))
 		rpc_update_mbss(name, value);
 
@@ -855,6 +1173,9 @@ int rpc_qcsapi_set_wlmaclist(const char *ifname)
 	char list_mac_addresses[1024];
 	char *m = NULL;
 	char *p, *pp;
+
+	if (!rpc_qtn_ready())
+		return -1;
 
 	ret = rpc_qcsapi_get_mac_address_filtering(ifname, &mac_address_filtering);
 	if (ret < 0)
@@ -927,9 +1248,15 @@ void rpc_update_wlmaclist(void)
 	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
 	int i, unit = 1;
 
+	if (!rpc_qtn_ready())
+		return;
+
 	ret = rpc_qcsapi_set_wlmaclist(WIFINAME);
 	if (ret < 0)
 		dbG("rpc_qcsapi_set_wlmaclist %s error, return: %d\n", WIFINAME, ret);
+
+	if (nvram_get_int("sw_mode") == SW_MODE_REPEATER && nvram_get_int("wlc_band"))
+                return;
 
 	for (i = 1; i < 4; i++)
 	{
@@ -950,6 +1277,9 @@ void rpc_update_wdslist()
 	qcsapi_mac_addr peer_address;
 	char *m = NULL;
 	char *p, *pp;
+
+	if (!rpc_qtn_ready())
+		return;
 
 	for (i = 0; i < 8; i++)
 	{
@@ -1008,6 +1338,9 @@ void rpc_update_wds_psk(const char *wds_psk)
 	int ret, i;
 	qcsapi_mac_addr peer_address;
 
+	if (!rpc_qtn_ready())
+		return;
+
 	if (nvram_match("wl1_mode_x", "0"))
 		return;
 
@@ -1043,6 +1376,9 @@ static void rpc_reload_mbss(int unit, int subunit, const char *name_mbss)
 	unsigned char set_type = 0;
 	int ret;
 	char *auth_mode;
+
+	if (!rpc_qtn_ready())
+		return;
 
 	if (subunit > 0)
 		snprintf(prefix, sizeof(prefix), "wl%d.%d_", unit, subunit);
@@ -1141,6 +1477,12 @@ void rpc_update_mbss(const char* name, const char *value)
 	unsigned long long macvalue;
 	unsigned char *macp;
 
+        if (nvram_get_int("sw_mode") == SW_MODE_REPEATER && nvram_get_int("wlc_band"))
+                return;
+
+	if (!rpc_qtn_ready())
+		return;
+
 	if (sscanf(name, "wl%d.%d_%s", &unit, &subunit, name_mbss) != 3)
 		return;
 
@@ -1221,12 +1563,22 @@ ej_wl_channel_list_5g(int eid, webs_t wp, int argc, char_t **argv)
 	string_1024 list_of_channels;
 	char *p;
 	int i = 0;;
+	char cur_ccode[20] = {0};
 
 	sprintf(tmp, "[\"%d\"]", 0);
 
-	ret = qcsapi_wifi_get_list_channels(WIFINAME, (char *) &list_of_channels);
+	if (!rpc_qtn_ready())
+		goto ERROR;
+
+	// ret = qcsapi_wifi_get_list_channels(WIFINAME, (char *) &list_of_channels);
+	ret = qcsapi_wifi_get_regulatory_region(WIFINAME, cur_ccode);
 	if (ret < 0) {
-		dbG("Qcsapi qcsapi_wifi_get_list_channels %s error, return: %d\n", WIFINAME, ret);
+		dbG("Qcsapi qcsapi_wifi_get_regulatory_region %s error, return: %d\n", WIFINAME, ret);
+		goto ERROR;
+	}
+	ret = qcsapi_regulatory_get_list_regulatory_channels(cur_ccode, 20 /* bw */, list_of_channels);
+	if (ret < 0) {
+		dbG("Qcsapi qcsapi_regulatory_get_list_regulatory_channels %s error, return: %d\n", WIFINAME, ret);
 		goto ERROR;
 	}
 
@@ -1259,6 +1611,12 @@ ej_wl_scan_5g(int eid, webs_t wp, int argc, char_t **argv)
 	int ret, i, j;
 	unsigned int ap_count = 0;
 	qcsapi_ap_properties ap_current;
+
+	if (!rpc_qtn_ready())
+	{
+		retval += websWrite(wp, "[]");
+		return retval;
+	}
 
 	ret = qcsapi_wifi_start_scan(WIFINAME);
 	if (ret < 0) {
@@ -1335,6 +1693,10 @@ ej_wl_sta_list_5g(int eid, webs_t wp, int argc, char_t **argv)
 	qcsapi_unsigned_int association_count = 0;
 	qcsapi_mac_addr sta_address;
 	int i, firstRow = 1;
+	int rssi;
+
+	if (!rpc_qtn_ready())
+		return retval;
 
 	ret = qcsapi_wifi_get_count_associations(WIFINAME, &association_count);
 	if (ret < 0) {
@@ -1342,6 +1704,7 @@ ej_wl_sta_list_5g(int eid, webs_t wp, int argc, char_t **argv)
 		return retval;
 	} else {
 		for (i = 0; i < association_count; ++i) {
+			rssi = 0;
 			ret = qcsapi_wifi_get_associated_device_mac_addr(WIFINAME, i, (uint8_t *) &sta_address);
 			if (ret < 0) {
 				dbG("Qcsapi qcsapi_wifi_get_associated_device_mac_addr %s error, return: %d\n", WIFINAME, ret);
@@ -1357,6 +1720,10 @@ ej_wl_sta_list_5g(int eid, webs_t wp, int argc, char_t **argv)
 				retval += websWrite(wp, "\"%s\"", wl_ether_etoa((struct ether_addr *) &sta_address));
 				retval += websWrite(wp, ", \"%s\"", "Yes");
 				retval += websWrite(wp, ", \"%s\"", !nvram_match("wl1_auth_mode_x", "open") ? "Yes" : "No");
+				ret= qcsapi_wifi_get_rssi_in_dbm_per_association(WIFINAME, i, &rssi);
+				if (ret < 0)
+					dbG("Qcsapi qcsapi_wifi_get_rssi_in_dbm_per_association %s error, return: %d\n", WIFINAME, ret);
+				retval += websWrite(wp, ", \"%d\"", rssi);
 
 				retval += websWrite(wp, "]");
 			}
@@ -1376,6 +1743,9 @@ wl_status_5g(int eid, webs_t wp, int argc, char_t **argv)
 	char chspec_str[8];
 	int is_nctrlsb_lower;
 
+	if (!rpc_qtn_ready())
+		return 0;
+
 	memset(&ssid, 0, sizeof(qcsapi_SSID));
 	ret = rpc_qcsapi_get_SSID(WIFINAME, &ssid);
 	if (ret < 0)
@@ -1391,7 +1761,7 @@ wl_status_5g(int eid, webs_t wp, int argc, char_t **argv)
 
 	retval += websWrite(wp, "RSSI: %d dBm\t", 0);
 
-	retval += websWrite(wp, "SNR: %d dB\t", 0);
+	retval += websWrite(wp, "SNR: %d dB\t", rpc_qcsapi_get_snr());
 
 	retval += websWrite(wp, "noise: %d dBm\t", rssi);
 
@@ -1436,6 +1806,9 @@ ej_wl_status_qtn(int eid, webs_t wp, int argc, char_t **argv, const char *ifname
 	qcsapi_unsigned_int association_count = 0, tx_phy_rate, rx_phy_rate, time_associated;
 	qcsapi_mac_addr sta_address;
 	int hr, min, sec;
+
+	if (!rpc_qtn_ready())
+		return retval;
 
 	ret = qcsapi_wifi_get_count_associations(ifname, &association_count);
 	if (ret >= 0) {
@@ -1492,6 +1865,9 @@ ej_wl_status_5g(int eid, webs_t wp, int argc, char_t **argv)
 	int i, unit = 1;
 	char prefix[] = "wlXXXXXXXXXX_", tmp[128];
 
+	if (!rpc_qtn_ready())
+		return ret;
+
 	ret += websWrite(wp, "\n");
 	ret += websWrite(wp, "Stations List                           \n");
 	ret += websWrite(wp, "----------------------------------------\n");
@@ -1500,6 +1876,9 @@ ej_wl_status_5g(int eid, webs_t wp, int argc, char_t **argv)
 			     "MAC", "Associated", "Authorized", "   RSSI", "Tx rate", "Rx rate", "Connect Time");
 
 	ret += ej_wl_status_qtn(eid, wp, argc, argv, WIFINAME);
+
+        if (nvram_get_int("sw_mode") == SW_MODE_REPEATER && nvram_get_int("wlc_band"))
+                return ret;
 
 	for (i = 1; i < 4; i++) {
 		sprintf(prefix, "wl%d.%d_", unit, i);
@@ -1515,6 +1894,9 @@ getWscStatusStr_qtn()
 {
 	int ret, state = -1;
 	char wps_state[32], state_str[32];
+
+	if (!rpc_qtn_ready())
+		return "5 GHz radio is not ready";
 
 	ret = rpc_qcsapi_wps_get_state(WIFINAME, wps_state, sizeof(wps_state));
 	if (ret < 0)
@@ -1556,12 +1938,13 @@ get_WPSConfiguredStr_qtn()
 	int ret;
 	char wps_configured_state[32];
 
+	if (!rpc_qtn_ready())
+		return "";
+
 	wps_configured_state[0] = 0;
 	ret = rpc_qcsapi_wps_get_configured_state(WIFINAME, wps_configured_state, sizeof(wps_configured_state));
 	if (ret < 0)
 		dbG("rpc_qcsapi_wps_get_configured_state %s error, return: %d\n", WIFINAME, ret);
-	else
-		dbG("wps_configured_state: %s (%d)\n", wps_configured_state, strlen(wps_configured_state));
 
 	if (!strcmp(wps_configured_state, "configured"))
 		return "Yes";
@@ -1574,6 +1957,9 @@ getWPSAuthMode_qtn()
 {
 	string_16 current_beacon_type;
 	int ret;
+
+	if (!rpc_qtn_ready())
+		return "";
 
 	memset(&current_beacon_type, 0, sizeof(current_beacon_type));
 	ret = rpc_qcsapi_get_beacon_type(WIFINAME, (char *) &current_beacon_type);
@@ -1597,6 +1983,9 @@ getWPSEncrypType_qtn()
 {
 	string_32 encryption_mode;
 	int ret;
+
+	if (!rpc_qtn_ready())
+		return "";
 
 	memset(&encryption_mode, 0, sizeof(encryption_mode));
 	ret = rpc_qcsapi_get_WPA_encryption_modes(WIFINAME, (char *) &encryption_mode);

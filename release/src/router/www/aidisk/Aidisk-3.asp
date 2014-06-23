@@ -92,7 +92,7 @@ function check_return_code(){
 	else if(this.ddns_return_code.indexOf('230')!=-1)
 		show_alert_block("<#LANHostConfig_x_DDNS_alarm_5#>");
 	else if(this.ddns_return_code.indexOf('233')!=-1)
-		show_alert_block("<#LANHostConfig_x_DDNS_alarm_hostname#> '"+this.ddns_hostname_x+"' <#LANHostConfig_x_DDNS_alarm_registered_2#> '"+this.ddns_old_name+"'.");
+		show_alert_block("<#LANHostConfig_x_DDNS_alarm_hostname#> '"+this.ddns_hostname_x+"' <#LANHostConfig_x_DDNS_alarm_registered_2#> '"+this.ddns_old_name+"'");
 	else if(this.ddns_return_code.indexOf('296')!=-1)
 		show_alert_block("<#LANHostConfig_x_DDNS_alarm_6#>");
 	else if(this.ddns_return_code.indexOf('297')!=-1)

@@ -29,6 +29,17 @@ span{
 
 <script>
 <% wanlink(); %>
+<% secondary_wanlink(); %>
+
+
+var wan_primary = "";
+var wan0_primary = '<% nvram_get("wan0_primary"); %>';
+var wan1_primary = '<% nvram_get("wan1_primary"); %>';
+
+if(wan0_primary == 1)
+	wan_primary = "wan0";
+else if(wan1_primary == 1)
+	wan_primary = "wan1";
 
 var auth_mode2 = '<% nvram_get("wl0_auth_mode_x"); %>';
 var wep_x2 = '<% nvram_get("wl0_wep_x"); %>';
@@ -52,6 +63,11 @@ var webs_state_update = '<% nvram_get("webs_state_update"); %>';
 var webs_state_upgrade = '<% nvram_get("webs_state_upgrade"); %>';
 var webs_state_error = '<% nvram_get("webs_state_error"); %>';
 var webs_state_info = '<% nvram_get("webs_state_info"); %>';
+
+if(parent.tmo_support)
+        var theUrl = "cellspot.router"; 
+else
+        var theUrl = "router.asus.com";
 
 var timezones = {
 	"UTC12":	"(GMT-12:00)",
@@ -515,7 +531,7 @@ function QKfinish_load_body(){
 	
 	if(wanlink_type() == "dhcp")
 		var wanlink_type_conv = "<#BOP_ctype_title1#>";
-	else 	if(wanlink_type() == "pppoe" ||wanlink_type() == "PPPOE" )
+	else 	if(wanlink_type() == "pppoe" || wanlink_type() == "PPPOE" )
 		var wanlink_type_conv = "PPPoE";
 	else 	if(wanlink_type() == "static")
 		var wanlink_type_conv = "<#BOP_ctype_title5#>";
@@ -524,9 +540,30 @@ function QKfinish_load_body(){
 	else 	if(wanlink_type() == "l2tp")
 		var wanlink_type_conv = "L2TP";
 	else
-		var wanlink_type_conv = wanlink_type();	
+		var wanlink_type_conv = wanlink_type();
+
+	if(secondary_wanlink_type() == "dhcp")
+		var secondary_wanlink_type_conv = "<#BOP_ctype_title1#>";
+	else 	if(secondary_wanlink_type() == "pppoe" || secondary_wanlink_type() == "PPPOE" )
+		var secondary_wanlink_type_conv = "PPPoE";
+	else 	if(secondary_wanlink_type() == "static")
+		var secondary_wanlink_type_conv = "<#BOP_ctype_title5#>";
+	else 	if(secondary_wanlink_type() == "pptp")
+		var secondary_wanlink_type_conv = "PPTP";
+	else 	if(secondary_wanlink_type() == "l2tp")
+		var secondary_wanlink_type_conv = "L2TP";
+	else
+		var secondary_wanlink_type_conv = secondary_wanlink_type();	
 	
-	$("#wantype")[0].innerHTML = wanlink_type_conv;
+	if(parent.dualWAN_support){
+		if(wan_primary == "wan0")
+			$("#wantype")[0].innerHTML = wanlink_type_conv;
+		else if(wan_primary == "wan1")	 
+			$("#wantype")[0].innerHTML = secondary_wanlink_type_conv;
+	
+	}
+	else
+		$("#wantype")[0].innerHTML = wanlink_type_conv;
 
 	// 2013.09.24 Viz: Hide this button to make sure User click 'next step'
 	//if('<% nvram_get("autodet_auxstate"); %>' == '6')
@@ -543,7 +580,7 @@ function QKfinish_load_body(){
 			$("#wlcstate")[0].innerHTML = "<#APSurvey_action_ConnectingStatus24#>";
 		}
 		else{
-			$("#wlcstate")[0].innerHTML = "<span style='color:#FC0;text-decoration:underline;cursor:pointer;' onclick=\"javascript:parent.location.href=\'http://router.asus.com/QIS_wizard.htm?flag=sitesurvey\';\"><#APSurvey_action_ConnectingStatus0#></span>";
+			$("#wlcstate")[0].innerHTML = "<span style='color:#FC0;text-decoration:underline;cursor:pointer;' onclick=\"javascript:parent.location.href=\'http://'+ theUrl +'/QIS_wizard.htm?flag=sitesurvey\';\"><#APSurvey_action_ConnectingStatus0#></span>";
 		}
 
 		$("#wlcip")[0].innerHTML = reIP;
@@ -552,7 +589,16 @@ function QKfinish_load_body(){
 		$(".wlcItem").css("display", "");
 	}
 	else{
-		$("#wanip")[0].innerHTML = wanlink_ipaddr();
+		if(parent.dualWAN_support){
+			if(wan_primary == "wan0")
+				$("#wanip")[0].innerHTML = wanlink_ipaddr();
+			else if(wan_primary == "wan1")	 
+				$("#wanip")[0].innerHTML = secondary_wanlink_ipaddr();
+		}
+		else{
+			$("#wanip")[0].innerHTML = wanlink_ipaddr();
+		}
+
 		$("#lanip_item")[0].innerHTML = "LAN IP";
 		$("#lanip")[0].innerHTML = reIP;
 		$(".wlcItem").css("display", "none");
@@ -631,7 +677,7 @@ function QKfinish_load_body(){
 }
 
 function gotoASUS(){
-	parent.location.href = "http://support.asus.com";
+	parent.location.href = "http://www.asus.com/support/";
 }
 
 function goto_tutorial(){

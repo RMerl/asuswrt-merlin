@@ -74,10 +74,9 @@ var g_image_player = {
 		}
 					   
 		div_html += '</div>';
-	  
 		div_html += '</div>';
 	  
-		//div_html += '<div class="barousel_nav"></div>';
+		div_html += '<div class="barousel_loading" style="position:absolute;display:none;z-index=99;"><img src="/smb/css/load.gif" width="18px" height="18px"/></div>';
 					  
 		div_html += '</div>';
 		
@@ -86,7 +85,6 @@ var g_image_player = {
 			.appendTo("body");
 	  
 		$('#image_slide_show').barousel({				
-			navType: 2,
 			manualCarousel: 1,
 			contentResize:0,
 			startIndex:default_index

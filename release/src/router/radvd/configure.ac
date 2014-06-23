@@ -31,7 +31,7 @@ case "$target" in
                 arch=bsd44
         ;;
         *darwin*)
-		AC_DEFINE([__APPLE_USE_RFC_2292], [1], [OS X 10.9 won't build radvd without this])
+		AC_DEFINE([__APPLE_USE_RFC_2292], [1], [OS X 10.9 wont build radvd without this])
 		AC_MSG_RESULT([bsd44 (darwin)])
                 arch=bsd44
         ;;
@@ -137,6 +137,16 @@ AC_CHECK_LIB(c, inet_ntop,,
 )
 # prevent caching
 unset ac_cv_lib_inet6_inet_ntop
+
+AC_CHECK_LIB(c, clock_gettime,,
+ AC_CHECK_LIB(rt, clock_gettime,
+  LIBS="$LIBS -lrt"
+  ,
+    AC_MSG_ERROR(can not continue without librt.a library - check your LDFLAGS)
+ )
+)
+# prevent caching
+unset ac_cv_lib_rt_clock_gettime
 
 PKG_CHECK_MODULES([DAEMON], libdaemon)
 

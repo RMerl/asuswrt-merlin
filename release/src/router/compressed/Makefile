@@ -67,7 +67,10 @@ SYSTEM		?= $(LINUXDIR)/vmlinux
 # Note: siutils.o appeared seperately on purpose to solve post reference problem of GCC
 OBJS-mips = boot.o sisdram.o sbsdram.o aisdram.o sflash.o hndmips.o sbutils.o aiutils.o siutils.o nicpci.o
 # We should not compile sbutils.o but need add more compile directive in siutils.c
-OBJS-arm = bootarm.o  aisdram_ca9.o siutils.o hndarm_ca9.o pcieinit_ca9.o sbutils.o aiutils.o nicpci.o
+OBJS-arm = bootarm.o  aisdram_ca9.o siutils.o hndarm_ca9.o pcieinit_ca9.o sbutils.o aiutils.o nicpci.o 
+ifeq ($(RTCONFIG_BCM7),y)
+OBJS-arm += pcie_core.o
+endif
 OBJECTS := $(OBJS-$(ARCH))
 OBJECTS += load.o hndchipc.o hndpmu.o min_osl.o bcmutils.o \
 	   bcmstdlib.o sromstubs.o nvramstubs.o
@@ -89,6 +92,9 @@ CFLAGS		+= -DUSE_LZMA -D_LZMA_NO_SYSTEM_SIZE_T -DBCMLZMA -I$(SRCBASE)/tools/misc
 
 CFLAGS		+= -I$(SRCBASE)/include -DBCMDRIVER
 ifeq ($(RTCONFIG_BCMARM),y)
+ifeq ($(RTCONFIG_BCM7),y)
+CFLAGS		+= ${WLAN_StdIncPathA}
+endif
 CFLAGS		+= -I$(SRCBASE)/common/include
 endif
 ASFLAGS		+= -I$(SRCBASE)/include

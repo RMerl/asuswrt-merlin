@@ -11,11 +11,13 @@
 <script>
 var m = new lang();
 var g_storage = new myStorage();
-var g_app_id = "445909645479173";
 var g_bLoginFacebook = false;
 var g_token = "";
 var g_uid = "";
-var server_url = "http://develop.stage612.url.tw/auth/";
+//var g_app_id = "445909645479173";
+//var server_url = "http://develop.stage612.url.tw/auth/";
+var g_app_id = "697618710295679";
+var server_url = "http://oauth.asus.com/aicloud/";
 var ajax_dataType = "json";
 var g_uploadfile_url_array = new Array();
 var g_uploadfile_title_array = new Array();
@@ -372,8 +374,8 @@ function facebook_upload_photo(){
 			return;
 				
 		var url = uploadfile_obj.url;
-		var filename = uploadfile_obj.filename;
-		var title = $("textarea." + uploadfile_obj.textAreaClassName).val();
+		var filename = myencodeURI(uploadfile_obj.filename);
+		var title = myencodeURI($("textarea." + uploadfile_obj.textAreaClassName).val());
 		var pos = count*$(".service_image_upload_container table").height();
 		var filext = uploadfile_obj.filext;
 		var this_url = url.substring(0, url.lastIndexOf("/"));

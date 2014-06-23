@@ -25,7 +25,7 @@ function QKinternettype_load_body(){
 
 	//load Product img //MODELDEP
 	if((odmpid != "" || odmpid != null) && odmpid != based_modelid){
-		if(odmpid == "RT-N66W" || odmpid == "RT-AC68W")
+		if(odmpid == "RT-N66W" || odmpid == "RT-AC66W" || odmpid == "RT-AC68W")
 			document.getElementById("ModelPid_img").src="/images/"+ odmpid +"Model_producticon.png";
 		else if(odmpid == "RT-AC68RW")
 			document.getElementById("ModelPid_img").src="/images/RT-AC68WModel_producticon.png";
@@ -105,6 +105,9 @@ function submitForm(mode){
 }
 
 function detect_if_wan_plug(flag){
+	if(parent.tmo_support && parent.ISMOBILE)
+		submitForm(1);
+
 	$.ajax({
 		url: '/result_of_get_changed_status_QIS.asp',
 		dataType: 'script',
@@ -119,6 +122,13 @@ function detect_if_wan_plug(flag){
 				}	
 				else if(flag == null){
 					document.getElementById("producticon").style.display = "none";
+					if(based_modelid == "RT-AC87U"){
+						document.getElementById("noti_wan_uplus").style.display = "none";
+						document.getElementById("Productdesc_1").innerHTML = "<#web_redirect_suggestion1#>";
+						document.getElementById("Productdesc_2").innerHTML = 'After connecting the router to the modem, click "GO" to launch the quick setup wizard.';
+						document.getElementById("Productdesc_3").innerHTML = 'If you need to set up '+based_modelid+' WAN connection offline or change the operation mode to access point, click "Manual Setting".';
+						document.getElementById("Productdesc_4").innerHTML = 'For security reasons, we will ask you to set up the login name and password in the next  step.';
+					}
 
 					if(parent.ISMOBILE){
 						document.getElementById("wan_unplug_m").style.display = "";
@@ -168,6 +178,11 @@ function update_wan_info(flag){
 	});	
 }
 
+function skip(){
+	changeiuiBackground2("loadingIcon_skip",1);
+	location.href='/qis/QIS_admin_pass.htm';
+}
+
 function startPoll(){
 	if(parent.ISMOBILE){	
 		if(document.getElementById("unplugImg1_m").style.display == "none"){
@@ -180,7 +195,7 @@ function startPoll(){
 		}
 	}
 	else{
-		if(usb_flag != ""){
+		if(usb_flag != "" && based_modelid != "RT-AC87U"){
 			if(document.getElementById("unplugImg1").style.display == "none"){
 				$("#unplugImg2").fadeOut(500);
 				setTimeout('$("#unplugImg1").fadeIn(500);', 500);	
@@ -250,16 +265,18 @@ function submitenter(myfield,e)
 
 						<td width="45%" height="370">
 							<div id="producticon"><img id="ModelPid_img" src=""></div>
-							<div id="wan_unplug" style="display:none;text-align:center;margin-top:-30px;*margin-top:25px;">
-							<img src="/images/qis/border.png">
-							<div style="margin-top:-330px">
-							<div class="QISGeneralFont" style="color:#FC0;font-weight:bolder;text-align:left;margin-left:25px;">
-								<#web_redirect_suggestion1#>
-							</div>
-							<br>
-							<div><img id="unplugImg"  src="/images/WANunplug.png"></div>
-							<div><img id="unplugImg1" style="margin-top:-198px;" src="/images/WANunplug_eth.png"></div>
-							<div><img id="unplugImg2" style="margin-top:-198px;display:none;" src="/images/WANunplug_usb.png"></div>							
+							<div id="wan_unplug" style="display:none;text-align:center;margin-top:-70px;*margin-top:25px;">
+								<img src="/images/qis/border.png">
+								<div style="margin-top:-330px">
+									<div id="noti_wan_uplus" class="QISGeneralFont" style="color:#FC0;font-weight:bolder;text-align:left;margin-left:25px;">
+										<#web_redirect_suggestion1#>
+									</div>
+									<br>
+									<div><img id="unplugImg"  src="/images/WANunplug.png"></div>
+									<div><img id="unplugImg1" style="margin-top:-178px;" src="/images/WANunplug_eth.png"></div>
+									<div><img id="unplugImg2" style="margin-top:-178px;display:none;" src="/images/WANunplug_usb.png"></div>
+								</div>	
+							</div>	
 						</td>
 					</tr>
 
@@ -301,12 +318,20 @@ function submitenter(myfield,e)
 		<img id="unplugImg2_m" style="margin-top: -220px;display:none;" src="/images/WANunplug_usb.png">
 	</div><br>
 	<fieldset class="theFieldset">
-		<div class="row">
+		<div id="nextBtn" class="row">
 			<a id="loadingIcon_iui" class="iuiA" onclick="update_wan_info();"><#CTL_next#></a>
 		</div>
-		<div class="row_end">
-			<a class="iuiA" onclick="location.href='/qis/QIS_admin_pass.htm';">Skip</a>
+		<div id="skipBtn" class="row">
+			<a id="loadingIcon_skip" class="iuiA" onclick="skip();"><#CTL_next#></a>
 		</div>
+		<script>
+			if(!parent.tmo_support){
+				document.getElementById("skipBtn").style.display = "none";
+			}
+			else{
+				document.getElementById("nextBtn").style.display = "none";
+			}	
+		</script>
 	</fieldset>
 </div>
 </form>

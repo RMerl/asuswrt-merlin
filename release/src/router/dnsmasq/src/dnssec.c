@@ -1682,6 +1682,9 @@ int dnssec_validate_reply(time_t now, struct dns_header *header, size_t plen, ch
   GETSHORT(qtype, p1);
   GETSHORT(qclass, p1);
   ans_start = p1;
+
+  if (qtype == T_ANY)
+    have_answer = 1;
  
   /* Can't validate an RRISG query */
   if (qtype == T_RRSIG)
@@ -2132,7 +2135,7 @@ static int check_rrs(unsigned char *p, struct dns_header *header, size_t plen, i
   int i, type, class, rdlen;
   unsigned char *pp;
   
-  for (i = 0; i < ntohs(header->ancount) + ntohs(header->nscount); i++)
+  for (i = 0; i < ntohs(header->ancount) + ntohs(header->nscount) + ntohs(header->arcount); i++)
     {
       pp = p;
 
@@ -2178,7 +2181,7 @@ size_t filter_rrsigs(struct dns_header *header, size_t plen)
   static int rr_sz = 0;
   
   unsigned char *p = (unsigned char *)(header+1);
-  int i, rdlen, qtype, qclass, rr_found, chop_an, chop_ns;
+  int i, rdlen, qtype, qclass, rr_found, chop_an, chop_ns, chop_ar;
 
   if (ntohs(header->qdcount) != 1 ||
       !(p = skip_name(p, header, plen, 4)))
@@ -2189,7 +2192,9 @@ size_t filter_rrsigs(struct dns_header *header, size_t plen)
 
   /* First pass, find pointers to start and end of all the records we wish to elide:
      records added for DNSSEC, unless explicity queried for */
-  for (rr_found = 0, chop_ns = 0, chop_an = 0, i = 0; i < ntohs(header->ancount) + ntohs(header->nscount); i++)
+  for (rr_found = 0, chop_ns = 0, chop_an = 0, chop_ar = 0, i = 0; 
+       i < ntohs(header->ancount) + ntohs(header->nscount) + ntohs(header->arcount);
+       i++)
     {
       unsigned char *pstart = p;
       int type, class;
@@ -2217,8 +2222,10 @@ size_t filter_rrsigs(struct dns_header *header, size_t plen)
 	  
 	  if (i < ntohs(header->ancount))
 	    chop_an++;
-	  else
+	  else if (i < (ntohs(header->nscount) + ntohs(header->ancount)))
 	    chop_ns++;
+	  else
+	    chop_ar++;
 	}
       else if (!ADD_RDLEN(header, p, plen, rdlen))
 	return plen;
@@ -2255,7 +2262,8 @@ size_t filter_rrsigs(struct dns_header *header, size_t plen)
   plen = p - (unsigned char *)header;
   header->ancount = htons(ntohs(header->ancount) - chop_an);
   header->nscount = htons(ntohs(header->nscount) - chop_ns);
-  
+  header->arcount = htons(ntohs(header->arcount) - chop_ar);
+
   /* Fourth pass, fix up pointers in the remaining records */
   p = (unsigned char *)(header+1);
   

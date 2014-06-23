@@ -139,7 +139,7 @@ static int send_to_dns_server(AvahiWideAreaLookup *l, AvahiDnsPacket *p) {
         if (l->engine->fd_ipv4 < 0)
             return -1;
 
-        return avahi_send_dns_packet_ipv4(l->engine->fd_ipv4, AVAHI_IF_UNSPEC, p, NULL, &a->data.ipv4, AVAHI_DNS_PORT);
+        return avahi_send_dns_packet_ipv4(l->engine->fd_ipv4, AVAHI_IF_UNSPEC, p, NULL, &a->data.ipv4, AVAHI_DNS_PORT, AVAHI_WIDE_AREA);
 
     } else {
         assert(a->proto == AVAHI_PROTO_INET6);
@@ -147,7 +147,7 @@ static int send_to_dns_server(AvahiWideAreaLookup *l, AvahiDnsPacket *p) {
         if (l->engine->fd_ipv6 < 0)
             return -1;
 
-        return avahi_send_dns_packet_ipv6(l->engine->fd_ipv6, AVAHI_IF_UNSPEC, p, NULL, &a->data.ipv6, AVAHI_DNS_PORT);
+        return avahi_send_dns_packet_ipv6(l->engine->fd_ipv6, AVAHI_IF_UNSPEC, p, NULL, &a->data.ipv6, AVAHI_DNS_PORT, AVAHI_WIDE_AREA);
     }
 }
 

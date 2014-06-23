@@ -40,6 +40,10 @@
 	#include <rtstate.h>
 #endif
 
+#ifdef RTCONFIG_QTN
+#include "web-qtn.h"
+#endif
+
 //#define DEBUG
 #define K 1024
 #define M (1024 * 1024)
@@ -671,6 +675,9 @@ static void calc(void)
 #ifdef RTCONFIG_ISP_METER
         char traffic[64];
 #endif
+#ifdef RTCONFIG_QTN
+	qcsapi_unsigned_int l_counter_value;
+#endif
 
 	rx2 = 0;
 	tx2 = 0;
@@ -682,7 +689,7 @@ static void calc(void)
 	fgets(buf, sizeof(buf), f);	// "
 	while (fgets(buf, sizeof(buf), f)) {
 		if ((p = strchr(buf, ':')) == NULL) continue;
-//_dprintf("\n=== %s\n", buf);
+			//_dprintf("\n=== %s\n", buf);
 		*p = 0;
 		if ((ifname = strrchr(buf, ' ')) == NULL) ifname = buf;
 			else ++ifname;
@@ -693,10 +700,14 @@ static void calc(void)
 
 		if(!netdev_calc(ifname, ifname_desc, &counter[0], &counter[1], ifname_desc2, &rx2, &tx2))
 			continue;
-//_dprintf(">>> %s, %s, %lu, %lu, %s, %lu, %lu, %s <<<\n",ifname, ifname_desc, counter[0], counter[1], ifname_desc2, rx2, tx2);
+		//_dprintf(">>> %s, %s, %lu, %lu, %s, %lu, %lu, %s <<<\n",ifname, ifname_desc, counter[0], counter[1], ifname_desc2, rx2, tx2);
+#ifdef RTCONFIG_QTN		
+		if (!strcmp(ifname, nvram_safe_get("wl_ifname")))
+				strcpy(ifname_desc2, "WIRELESS1");
+#endif			
 loopagain:
-		sp = speed;
 
+		sp = speed;
 		for (i = speed_count; i > 0; --i) {
 			if (strcmp(sp->ifname, ifname_desc) == 0) break;
 			++sp;
@@ -722,14 +733,11 @@ loopagain:
 			memset(counter, 0, sizeof(counter));
 		}
 		else {
+
 			sp->sync = -1;
 
 			tick = current_uptime - sp->utime;
 			n = tick / INTERVAL;
-			if (n < 1) {
-				//_dprintf("%s: %s is a little early... %d < %d\n", __FUNCTION__, ifname_desc, tick, INTERVAL);
-				goto loopjudge;
-			}
 
 			sp->utime += (n * INTERVAL);
 			//_dprintf("%s: %s n=%d tick=%d\n", __FUNCTION__, ifname, n, tick);
@@ -754,7 +762,7 @@ loopagain:
 					sp->speed[sp->tail][i] = counter[i] / n;
 				}
 			}
-		}
+		}		
 
 		// todo: split, delay
 
@@ -771,22 +779,22 @@ loopagain:
 			bump(history.monthly, &history.monthlyp, MAX_NMONTHLY,
 				(tms->tm_year << 16) | ((uint32_t)tms->tm_mon << 8), counter);
 #ifdef RTCONFIG_ISP_METER
-                        today_rx = last_day_rx + (history.daily[history.dailyp].counter[0]/K);
-                        today_tx = last_day_tx + (history.daily[history.dailyp].counter[1]/K);
-                        memset(traffic, 0, 64);
-                        sprintf(traffic, "%lu", today_rx);
-                        nvram_set("isp_day_rx", traffic);
-                        memset(traffic, 0, 64);
-                        sprintf(traffic, "%lu", today_tx);
-                        nvram_set("isp_day_tx", traffic);
-                        month_rx = last_month_rx + (history.monthly[history.monthlyp].counter[0]/K) - reset_base_month_rx;
-                        month_tx = last_month_tx + (history.monthly[history.monthlyp].counter[1]/K) - reset_base_month_tx;
-                        memset(traffic, 0, 64);
-                        sprintf(traffic, "%lu", month_rx);
-                        nvram_set("isp_month_rx", traffic);
-                        memset(traffic, 0, 64);
-                        sprintf(traffic, "%lu", month_tx);
-                        nvram_set("isp_month_tx", traffic);
+			today_rx = last_day_rx + (history.daily[history.dailyp].counter[0]/K);
+			today_tx = last_day_tx + (history.daily[history.dailyp].counter[1]/K);
+			memset(traffic, 0, 64);
+			sprintf(traffic, "%lu", today_rx);
+			nvram_set("isp_day_rx", traffic);
+			memset(traffic, 0, 64);
+			sprintf(traffic, "%lu", today_tx);
+			nvram_set("isp_day_tx", traffic);
+			month_rx = last_month_rx + (history.monthly[history.monthlyp].counter[0]/K) - reset_base_month_rx;
+			month_tx = last_month_tx + (history.monthly[history.monthlyp].counter[1]/K) - reset_base_month_tx;
+			memset(traffic, 0, 64);
+			sprintf(traffic, "%lu", month_rx);
+			nvram_set("isp_month_rx", traffic);
+			memset(traffic, 0, 64);
+			sprintf(traffic, "%lu", month_tx);
+			nvram_set("isp_month_tx", traffic);
 #ifdef DEBUG
 _dprintf("CUR MONTH Rx= %lu = %lu + %llu - %lu\n",month_rx,last_month_rx,(history.monthly[history.monthlyp].counter[0]/K), reset_base_month_rx);
 _dprintf("CUR MONTH Tx= %lu = %lu + %llu - %lu\n",month_tx,last_month_tx,(history.monthly[history.monthlyp].counter[0]/K), reset_base_month_tx);
@@ -794,17 +802,22 @@ _dprintf("CUR MONTH Tx= %lu = %lu + %llu - %lu\n",month_tx,last_month_tx,(histor
 #endif
 		}
 
-loopjudge:
-		if(strlen(ifname_desc2)) {
+#ifdef RTCONFIG_QTN  //RT-AC87
+		if(!rpc_qtn_ready())	continue;
+		if (strlen(ifname_desc2)) 
+		{
 			strcpy(ifname_desc, ifname_desc2);
-			counter[0] = rx2;
-			counter[1] = tx2;
+			qcsapi_interface_get_counter(WIFINAME, qcsapi_total_bytes_received, &l_counter_value);
+			counter[0] = l_counter_value;
+			qcsapi_interface_get_counter(WIFINAME, qcsapi_total_bytes_sent, &l_counter_value);
+			counter[1] = l_counter_value;
 			strcpy(ifname_desc2, "");
 			goto loopagain;
 		}
-	}
+#endif
+	}			
 	fclose(f);
-
+			
 	// cleanup stale entries
 	for (i = 0; i < speed_count; ++i) {
 		sp = &speed[i];

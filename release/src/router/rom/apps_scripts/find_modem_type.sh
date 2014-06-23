@@ -11,6 +11,7 @@ _find_act_type(){
 	nodes=`cd $home && ls -d $1:* 2>/dev/null`
 
 	got_tty=0
+	got_other=0
 	for node in $nodes; do
 		path=`readlink -f $home/$node/driver 2>/dev/null`
 
@@ -22,30 +23,34 @@ _find_act_type(){
 			got_tty=1
 			continue
 		elif [ "$t" == "cdc_ether" ]; then
+			got_other=1
 			echo "ecm"
 			break
 		elif [ "$t" == "rndis_host" ]; then
+			got_other=1
 			echo "rndis"
 			break
 		elif [ "$t" == "asix" ]; then
+			got_other=1
 			echo "asix"
 			break
 		elif [ "$t" == "qmi_wwan" ]; then
+			got_other=1
 			echo "qmi"
 			break
 		elif [ "$t" == "cdc_ncm" ]; then
+			got_other=1
 			echo "ncm"
 			break
 		elif [ "$t" == "cdc_mbim" ]; then
+			got_other=1
 			echo "mbim"
 			break
 		fi
 	done
 
-	if [ $got_tty -eq 1 ]; then
+	if [ $got_tty -eq 1 ] && [ $got_other -ne 1 ]; then
 		echo "tty"
-	else
-		echo ""
 	fi
 }
 

@@ -330,6 +330,14 @@ void update_nvram_status(int flag)
 			nvram_set_int(buf, ST_RUNNING);
 		}
 		break;
+	case SSLPARAM_ERROR:
+		sprintf(buf, "vpn_%s_errno", p);
+		nvram_set_int(buf, ERRNO_SSL);
+		break;
+	case SSLPARAM_DH_ERROR:
+		sprintf(buf, "vpn_%s_errno", p);
+		nvram_set_int(buf, ERRNO_DH);
+		break;
 	}
 }
 

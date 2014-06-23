@@ -2,7 +2,7 @@ Package: inotify
 Architecture: mipsel
 Priority: optional
 Section: net
-Version: 1.0.0.6.0.g8220971
+Version: 1.0.0.7.0.g0808190
 Maintainer: ASUS
 Source: http://127.0.0.1/
 URL:

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -42,9 +42,17 @@
 #define CTF_ACTION_BYTECNT	(1 << 7)
 #define CTF_ACTION_PPPOE_ADD	(1 << 8)
 #define CTF_ACTION_PPPOE_DEL	(1 << 9)
+#ifdef RTCONFIG_BWDPI
+#define CTF_ACTION_BR_AS_TXIF	(1 << 10)
+#endif
 
 #define CTF_SUSPEND_TCP		(1 << 0)
 #define CTF_SUSPEND_UDP		(1 << 1)
+
+#ifdef RTCONFIG_BWDPI
+#define CTF_SUSPEND_TCP_MASK		0x55555555
+#define CTF_SUSPEND_UDP_MASK		0xAAAAAAAA
+#endif
 
 #define	ctf_attach(osh, n, m, c, a) \
 	(ctf_attach_fn ? ctf_attach_fn(osh, n, m, c, a) : NULL)
@@ -92,6 +100,12 @@
 #define ctf_live(ci, i, v6)		(CTF_ENAB(ci) ? (ci)->fn.live(ci, i, v6) : FALSE)
 #endif /* BCMFA */
 
+#ifdef RTCONFIG_BWDPI
+/* For broadstream iqos */
+#define ctf_fwdcb_register(ci, cb)           \
+		(CTF_ENAB(ci) ? (ci)->fn.ctf_fwdcb_register(ci, cb) : BCME_OK)
+#endif
+
 #define CTFCNTINCR(s) ((s)++)
 #define CTFCNTADD(s, c) ((s) += (c))
 
@@ -106,6 +120,9 @@
 #define PPPOE_PROT_PPP		0x0021
 #define PPPOE_PROT_PPP_IP6	0x0057
 
+#ifdef RTCONFIG_BWDPI
+#define CTF_DROP_PACKET	-2	/* Don't osl_startxmit if fwdcb return this */
+#endif
 
 typedef struct ctf_pub	ctf_t;
 typedef struct ctf_brc	ctf_brc_t;
@@ -151,6 +168,12 @@ typedef int32 (*ctf_fa_register_t)(ctf_t *ci, ctf_fa_cb_t facb, void *fa);
 typedef void (*ctf_live_t)(ctf_t *ci, ctf_ipc_t *ipc, bool v6);
 #endif /* BCMFA */
 
+#ifdef RTCONFIG_BWDPI
+/* For broadstream iqos */
+typedef int (*ctf_fwdcb_t)(void *skb, ctf_ipc_t *ipc);
+typedef int32 (*ctf_fwdcb_register_t)(ctf_t *ci, ctf_fwdcb_t fwdcb);
+#endif
+
 struct ctf_brc_hot {
 	struct ether_addr	ea;	/* Dest address */
 	ctf_brc_t		*brcp;	/* BRC entry corresp to dest mac */
@@ -188,6 +211,10 @@ typedef struct ctf_fn {
 	ctf_fa_register_t	fa_register;
 	ctf_live_t		live;
 #endif /* BCMFA */
+	/* For broadstream iqos */
+#ifdef RTCONFIG_BWDPI
+	ctf_fwdcb_register_t	ctf_fwdcb_register;
+#endif
 } ctf_fn_t;
 
 struct ctf_pub {
@@ -241,6 +268,9 @@ struct ctf_ipc {
 	struct	ether_addr	dhost;		/* Destination MAC address */
 	struct	ether_addr	shost;		/* Source MAC address */
 	void			*txif;		/* Target interface to send */
+#ifdef RTCONFIG_BWDPI
+	void			*txbif;		/* Target Bridge interface to send */
+#endif
 	uint32			action;		/* NAT and/or VLAN actions */
 	ctf_brc_t		*brcp;		/* BRC entry corresp to source mac */
 	uint32			live;		/* Counter used to expire the entry */
@@ -257,6 +287,10 @@ struct ctf_ipc {
 	void			*pkt;		/* Received packet */
 	uint8			flags;		/* Flags for multiple purpose */
 #endif /* BCMFA */
+#ifdef RTCONFIG_BWDPI
+	/* For broadstream iqos, counter is increased by ipc_tcp_susp or ipc_udp_susp */
+	int			susp_cnt;
+#endif
 };
 
 extern ctf_t *ctf_kattach(osl_t *osh, uint8 *name);
@@ -296,5 +330,7 @@ do { \
 	} \
 } while (0)
 
-
+#ifdef RTCONFIG_BWDPI
+#define	CTF_IS_PKTTOBR(p)	PKTISTOBR(p)
+#endif
 #endif /* _HNDCTF_H_ */

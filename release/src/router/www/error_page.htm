@@ -219,6 +219,17 @@ var done_setting_lan = 0;
 var winH, winW;
 var progress, y;
 
+//2014.05 Viz add for T-MOBILE 
+var rc_support = "<% nvram_get("rc_support"); %>";
+function isSupport(_ptn){
+	return (rc_support.search(_ptn) == -1) ? false : true;
+}
+var tmo_support = isSupport("tmo");
+if(tmo_support)
+        var theUrl = "cellspot.router"; 
+else
+        var theUrl = "router.asus.com";
+
 var casenum = '<% get_parameter("flag"); %>';
 
 function initial(){
@@ -301,18 +312,18 @@ function initial(){
 		$("#suggestion").hide();
 	}
 	else if(casenum == 8){
-		new_lan_ip = get_new_lanip();		
-		showtext($("#failReason1")[0], "<#APSurvey_action_ConnectingStatus0#>");
 		
+		showtext($("#failReason1")[0], "<#APSurvey_action_ConnectingStatus0#>");		
 		if(LoginIP != "0.0.0.0" && LoginIP != nowIP){
 					$("#case8")[0].innerHTML = html_code_notlogin;
 					$("#Epage_Suggest1")[0].style.display= "none";
 					$("#Epage_Suggest2")[0].style.display= "";
-		}else{		
+		}
+		else{		
 				html_code += "<ul>\n";
 				html_code += "<li><#APSurvey_action_search_again_hint2#>";
 				html_code += "<span style=\"text-align: right;\">\n";
-				html_code += "<input type=\"button\" class=\"button_gen\" width=\"72\" onclick=\"javascript:location.href=\'http://router.asus.com/QIS_wizard.htm?flag=sitesurvey\';\" value=\"<#QIS_rescan#>\">";
+				html_code += "<input type=\"button\" class=\"button_gen\" width=\"72\" onclick=\"javascript:location.href=\'http://"+ theUrl +"/QIS_wizard.htm?flag=sitesurvey\';\" value=\"<#QIS_rescan#>\">";
 				html_code += "</span>\n";
 				html_code += "</li>\n";
 
@@ -417,11 +428,21 @@ function detect_router(){
 }
 
 function get_new_lanip(){
-	var reverse_mask_num = ~(inet_aton(current_mask));
-	var current_lanip_num = inet_aton(current_lanip);
-	var new_lanip_num = current_lanip_num+reverse_mask_num+1;
-	
-	return inet_ntoa(new_lanip_num);
+	if(tmo_support){		
+		if(current_lanip.indexOf("192.168.29") >= 0)
+				return "192.168.24.1";
+		else
+				return "192.168.29.1";	
+		
+	}
+	else{
+		
+		var reverse_mask_num = ~(inet_aton(current_mask));
+		var current_lanip_num = inet_aton(current_lanip);
+		var new_lanip_num = current_lanip_num+reverse_mask_num+1;
+			
+		return inet_ntoa(new_lanip_num);
+	}	
 }
 
 function inet_aton(ip_str){

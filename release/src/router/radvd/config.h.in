@@ -113,5 +113,5 @@
    otherwise.. */
 #undef _GNU_SOURCE
 
-/* OS X 10.9 won't build radvd without this */
+/* OS X 10.9 wont build radvd without this */
 #undef __APPLE_USE_RFC_2292

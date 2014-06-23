@@ -23,21 +23,22 @@ CFLAGS	+= -s
 
 ifeq (2_6_36,$(LINUX_VERSION))
 CFLAGS += -DLINUX26 -DLINUX_2_6_36
-CFLAGS  += -I$(TOP)/iptables-1.4.12/src/include
-LDFLAGS += -L. -L$(TOP)/iptables-1.4.12
+CFLAGS  += -I$(TOP)/iptables-1.4.x/include
+LDFLAGS += -L. -L$(TOP)/iptables-1.4.x/libiptc/.libs
 CFLAGS += -D__EXPORTED_HEADERS__ -fPIC
-else ifeq (2_6,$(LINUX_VERSION))
-CFLAGS += -DLINUX26
-CFLAGS  += -I$(TOP)/iptables-1.x/include
-LDFLAGS += -L. -L$(TOP)/iptables-1.x/libiptc
 else
+CFLAGS += -DLINUX26
 CFLAGS  += -I$(TOP)/iptables/include
 LDFLAGS += -L. -L$(TOP)/iptables/libiptc
 endif
 
+ifeq (2_6_36,$(LINUX_VERSION))
+CFLAGS  += -I. -I$(TOP)/shared -I$(SRCBASE)/include -I$(SRCBASE)/common/include -I$(LINUXDIR)/include -Wall
+else
 CFLAGS	+= -I. -I$(TOP)/shared -I$(SRCBASE)/include -I$(LINUXDIR)/include -Wall
+endif
 
-all: libnetconf.so netconf
+all: libnetconf.so #netconf
 
 install: all
 	install -D libnetconf.so $(INSTALLDIR)/usr/lib/libnetconf.so

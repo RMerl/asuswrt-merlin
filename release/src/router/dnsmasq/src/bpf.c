@@ -376,7 +376,7 @@ void route_init(void)
     die(_("cannot create PF_ROUTE socket: %s"), NULL, EC_BADNET);
 }
 
-void route_sock(time_t now)
+void route_sock(void)
 {
   struct if_msghdr *msg;
   int rc = recv(daemon->routefd, daemon->packet, daemon->packet_buff_sz, 0);
@@ -401,7 +401,7 @@ void route_sock(time_t now)
    else if (msg->ifm_type == RTM_NEWADDR)
      {
        del_family = 0;
-       newaddress(now);
+       send_newaddr();
      }
    else if (msg->ifm_type == RTM_DELADDR)
      {
@@ -439,7 +439,7 @@ void route_sock(time_t now)
 	       of += sizeof(long) - (diff & (sizeof(long) - 1));
 	   }
        
-       newaddress(now);
+       send_newaddr();
      }
 }
 

@@ -256,40 +256,43 @@ char *get_usb_port_by_device(const char *device_name, char *buf, const int buf_s
 
 char *get_usb_node_by_string(const char *target_string, char *ret, const int ret_size)
 {
-	char usb_port[8], buf[16];
-	char *ptr, *ptr_end;
+	char usb_port[32], buf[16];
+	char *ptr, *ptr2, *ptr3;
 	int len;
 
-	memset(usb_port, 0, 8);
-	if(get_usb_port_by_string(target_string, usb_port, 8) == NULL)
+	memset(usb_port, 0, sizeof(usb_port));
+	if(get_usb_port_by_string(target_string, usb_port, sizeof(usb_port)) == NULL)
 		return NULL;
-
 	if((ptr = strstr(target_string, usb_port)) == NULL)
 		return NULL;
 	if(ptr != target_string)
 		ptr += strlen(usb_port)+1;
 
-	if((ptr_end = strchr(ptr, ':')) == NULL)
+	if((ptr2 = strchr(ptr, ':')) == NULL)
 		return NULL;
+	ptr3 = ptr2;
+	*ptr3 = 0;
 
-	len = strlen(ptr)-strlen(ptr_end);
+	if((ptr2 = strrchr(ptr, '/')) == NULL)
+		ptr2 = ptr;
+	else
+		ptr = ptr2+1;
+
+	len = strlen(ptr);
 	if(len > 16)
 		len = 16;
 
-	memset(buf, 0, 16);
+	memset(buf, 0, sizeof(buf));
 	strncpy(buf, ptr, len);
 
-	if((ptr = strrchr(buf, '/')) == NULL)
-		ptr = buf;
-	else
-		++ptr;
-
-	len = strlen(ptr);
+	len = strlen(buf);
 	if(len > ret_size)
 		len = ret_size;
 
 	memset(ret, 0, ret_size);
-	strncpy(ret, ptr, len);
+	strncpy(ret, buf, len);
+
+	*ptr3 = ':';
 
 	return ret;
 }
@@ -381,7 +384,7 @@ char *get_usb_node_by_device(const char *device_name, char *buf, const int buf_s
 }
 
 char *get_path_by_node(const char *usb_node, char *buf, const int buf_size){
-	char usb_port[8], *hub_path;
+	char usb_port[32], *hub_path;
 	int port_num = 0, len;
 
 	if(usb_node == NULL || buf == NULL || buf_size <= 0)
@@ -396,7 +399,7 @@ char *get_path_by_node(const char *usb_node, char *buf, const int buf_size){
 		return NULL;
 
 	if(strlen(usb_node) > (len = strlen(usb_port))){
-		hub_path = usb_node+len;
+		hub_path = (char *)usb_node+len;
 		snprintf(buf, buf_size, "%d%s", port_num, hub_path);
 	}
 	else
@@ -1033,13 +1036,13 @@ int is_partition_name(const char *device_name, u32 *partition_order){
 int find_partition_label(const char *dev_name, char *label){
 	struct volume_id id;
 	char dev_path[128];
-	char usb_port[8];
+	char usb_port[32];
 	char nvram_label[32], nvram_value[512];
 
 	if(label) *label = 0;
 
-	memset(usb_port, 0, 8);
-	if(get_usb_port_by_device(dev_name, usb_port, 8) == NULL)
+	memset(usb_port, 0, 32);
+	if(get_usb_port_by_device(dev_name, usb_port, 32) == NULL)
 		return 0;
 
 	memset(nvram_label, 0, 32);
@@ -1072,6 +1075,10 @@ int find_partition_label(const char *dev_name, char *label){
 		goto ret;
 	if(volume_id_probe_hfs_hfsplus(&id) == 0 || id.error)
 		goto ret;
+#if defined(RTCONFIG_EXFAT)
+	if(volume_id_probe_exfat(&id) == 0 || id.error)
+		goto ret;
+#endif
 
 ret:
 	volume_id_free_buffer(&id);

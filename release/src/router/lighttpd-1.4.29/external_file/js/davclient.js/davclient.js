@@ -393,7 +393,8 @@ global.davlib = new function() {
                     already exists (optional)
         */        
         var request = this._getRequest('MOVE', path, handler, context);
-        var tourl = this._generateUrl(topath);        
+        var tourl = this._generateUrl(topath); 
+        
         request.setRequestHeader("Destination", tourl);
         if (overwrite) {
             request.setRequestHeader("Overwrite", overwrite);
@@ -679,7 +680,7 @@ global.davlib = new function() {
 			request.send('');
 		};
 		
-		this.DavClient.prototype.UPLOADTOFLICKR = function(path,name,title,token,handler,context,locktoken){			
+		this.DavClient.prototype.UPLOADTOFLICKR = function(path,name,title,token,handler,context,locktoken){
 			var request = this._getRequest('UPLOADTOFLICKR',path,handler,context);
 			request.setRequestHeader("FILENAME", name);
 			request.setRequestHeader("TITLE", title);
@@ -718,6 +719,16 @@ global.davlib = new function() {
 			request.send('');
 		};
 		
+		this.DavClient.prototype.GETCPUUSAGE = function(path, handler,context,locktoken){			
+			var request = this._getRequest('GETCPUUSAGE',path,handler,context);
+			request.send('');
+		};
+		
+		this.DavClient.prototype.GETMEMORYUSAGE = function(path, handler,context,locktoken){			
+			var request = this._getRequest('GETMEMORYUSAGE',path,handler,context);
+			request.send('');
+		};
+		
     	// XXX not sure about the order of the args here
     	this.DavClient.prototype.PROPPATCH = function(path, handler, context, 
                                                   setprops, delprops,
@@ -740,109 +751,109 @@ global.davlib = new function() {
 			request.send(xml);
 		};
 
-    this.DavClient.prototype.LOCK = function(path, owner, handler, context, 
+    	this.DavClient.prototype.LOCK = function(path, owner, handler, context, 
                                              scope, type, depth, timeout,
                                              locktoken) {
-        /* perform a LOCK request
+	        /* perform a LOCK request
+	
+	            set a lock on a resource
+	
+	            'owner' - a URL to identify the owner of the lock to be set
+	            'scope' - the scope of the lock, can be 'exclusive' or 'shared'
+	            'type' - the type of lock, can be 'write' (somewhat strange, eh?)
+	            'depth' - can be used to lock (part of) a branch (use 'infinity' as
+	                        value) or just a single target (default)
+	            'timeout' - set the timeout in seconds
+	        */
+	        if (!scope) {
+	            scope = 'exclusive';
+	        };
+	        if (!type) {
+	            type = 'write';
+	        };
+	        var request = this._getRequest('LOCK', path, handler, context);
+	        if (depth) {
+	            request.setRequestHeader('Depth', depth);
+	        }else{
+	        	request.setRequestHeader('Depth', 0);
+	        }
+	        if (!timeout) {
+	            timeout = "Infinite, Second-4100000000";
+	        } else {
+	            timeout = 'Second-' + timeout;
+	        };
+	        if (locktoken) {
+	            request.setRequestHeader('If', '<' + locktoken + '>');
+	        };
+	        request.setRequestHeader("Content-Type", "text/xml; charset=UTF-8");
+	        request.setRequestHeader('Timeout', timeout);
+	        var xml = this._getLockXml(owner, scope, type);        
+	        request.send(xml);
+	    };
 
-            set a lock on a resource
+	    this.DavClient.prototype.UNLOCK = function(path, locktoken, 
+	                                               handler, context) {
+	        /* perform an UNLOCK request
+	
+	            unlock a previously locked file
+	
+	            'token' - the opaque lock token, as can be retrieved from 
+	                        content.locktoken using a LOCK request.
+	        */
+	        var request = this._getRequest('UNLOCK', path, handler, context);
+	        request.setRequestHeader("Lock-Token", '<' + locktoken + '>');
+	        request.send('');
+	    };
 
-            'owner' - a URL to identify the owner of the lock to be set
-            'scope' - the scope of the lock, can be 'exclusive' or 'shared'
-            'type' - the type of lock, can be 'write' (somewhat strange, eh?)
-            'depth' - can be used to lock (part of) a branch (use 'infinity' as
-                        value) or just a single target (default)
-            'timeout' - set the timeout in seconds
-        */
-        if (!scope) {
-            scope = 'exclusive';
-        };
-        if (!type) {
-            type = 'write';
-        };
-        var request = this._getRequest('LOCK', path, handler, context);
-        if (depth) {
-            request.setRequestHeader('Depth', depth);
-        }else{
-        	request.setRequestHeader('Depth', 0);
-        }
-        if (!timeout) {
-            timeout = "Infinite, Second-4100000000";
-        } else {
-            timeout = 'Second-' + timeout;
-        };
-        if (locktoken) {
-            request.setRequestHeader('If', '<' + locktoken + '>');
-        };
-        request.setRequestHeader("Content-Type", "text/xml; charset=UTF-8");
-        request.setRequestHeader('Timeout', timeout);
-        var xml = this._getLockXml(owner, scope, type);        
-        request.send(xml);
-    };
+	    this.DavClient.prototype._getRequest = function(method, path, 
+	                                                    handler, context) {
+	        /* prepare a request */
+	        var request = davlib.getXmlHttpRequest();
+	        if (method == 'LOCK') {
+	            // LOCK requires parsing of the body on 200, so has to be treated
+	            // differently
+	            request.onreadystatechange = this._wrapLockHandler(handler, 
+	                                                            request, context);
+	        } else {
+	            request.onreadystatechange = this._wrapHandler(handler, 
+	                                                            request, context);
+	        };
+	        	
+	        var url = this._generateUrl(path);        
+	        request.open(method, url, true);
+	        
+	        // refuse all encoding, since the browsers don't seem to support it...
+	        //request.setRequestHeader('Accept-Encoding', ' ');
+	        
+	        return request
+	    };
 
-    this.DavClient.prototype.UNLOCK = function(path, locktoken, 
-                                               handler, context) {
-        /* perform an UNLOCK request
-
-            unlock a previously locked file
-
-            'token' - the opaque lock token, as can be retrieved from 
-                        content.locktoken using a LOCK request.
-        */
-        var request = this._getRequest('UNLOCK', path, handler, context);
-        request.setRequestHeader("Lock-Token", '<' + locktoken + '>');
-        request.send('');
-    };
-
-    this.DavClient.prototype._getRequest = function(method, path, 
-                                                    handler, context) {
-        /* prepare a request */
-        var request = davlib.getXmlHttpRequest();
-        if (method == 'LOCK') {
-            // LOCK requires parsing of the body on 200, so has to be treated
-            // differently
-            request.onreadystatechange = this._wrapLockHandler(handler, 
-                                                            request, context);
-        } else {
-            request.onreadystatechange = this._wrapHandler(handler, 
-                                                            request, context);
-        };
-        	
-        var url = this._generateUrl(path);        
-        request.open(method, url, true);
-        
-        // refuse all encoding, since the browsers don't seem to support it...
-        //request.setRequestHeader('Accept-Encoding', ' ');
-        
-        return request
-    };
-
-    this.DavClient.prototype._wrapHandler = function(handler, request,
-                                                     context) {
-        /* wrap the handler with a callback
-
-            The callback handles multi-status parsing and calls the client's
-            handler when done
-        */
-        var self = this;
-        function HandlerWrapper() {
-            this.execute = function() {            	
-                if (request.readyState == 4) {
-                    var status = request.status.toString();
-                    var headers = self._parseHeaders(
-                                        request.getAllResponseHeaders());
-                    var content = request.responseText;
-                    if (status == '207') {                    	
-                        //content = self._parseMultiStatus(content);                        
-                    };
-                    var statusstring = davlib.STATUS_CODES[status];
-                    handler.call(context, status, statusstring, 
-                                    content, headers);
-                };
-            };
-        };
-        return (new HandlerWrapper().execute);
-    };
+	    this.DavClient.prototype._wrapHandler = function(handler, request,
+	                                                     context) {
+	        /* wrap the handler with a callback
+	
+	            The callback handles multi-status parsing and calls the client's
+	            handler when done
+	        */
+	        var self = this;
+	        function HandlerWrapper() {
+	            this.execute = function() {            	
+	                if (request.readyState == 4) {
+	                    var status = request.status.toString();
+	                    var headers = self._parseHeaders(
+	                                        request.getAllResponseHeaders());
+	                    var content = request.responseText;
+	                    if (status == '207') {                    	
+	                        //content = self._parseMultiStatus(content);                        
+	                    };
+	                    var statusstring = davlib.STATUS_CODES[status];
+	                    handler.call(context, status, statusstring, 
+	                                    content, headers);
+	                };
+	            };
+	        };
+	        return (new HandlerWrapper().execute);
+	    };
 
     this.DavClient.prototype._wrapLockHandler = function(handler, request, 
                                                          context) {

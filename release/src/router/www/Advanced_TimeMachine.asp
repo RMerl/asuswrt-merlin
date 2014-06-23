@@ -8,7 +8,7 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<title><#Web_Title#> - Time Machine</title>
+<title><#Web_Title#> - <#TimeMach#></title>
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="other.css">
@@ -281,7 +281,7 @@ function cal_panel_block(obj_id){
 					<table width="730px">
 						<tr>
 							<td align="left">
-								<span class="formfonttitle">Time Machine</span>
+								<span class="formfonttitle"><#TimeMach#></span>
 							</td>
 							<td align="right">
 								<img onclick="go_setting('/APP_Installation.asp')" align="right" style="cursor:pointer;position:absolute;margin-left:-20px;margin-top:-30px;" title="Back to USB Extension" src="/images/backprev.png" onMouseOver="this.src='/images/backprevclick.png'" onMouseOut="this.src='/images/backprev.png'">
@@ -297,17 +297,16 @@ function cal_panel_block(obj_id){
 								<img src="/images/New_ui/USBExt/time_machine_banner.png">
 							</td>
 							<td>
-								1. Enable Time machine.<br>
-								2. Select a target disk partition. <br>
-								3. Set usage limitation if you want and click [Apply]. <br>
-								4. Start to backup (<a href="http://www.asus.com/support/Knowledge-Detail/11/2/RTAC68U/3FEED048-5AC2-4B97-ABAE-DE609DDBC151/" target="_blank" style="text-decoration:underline;">How to use APPLE Time Machine?</a>).<br>
-								5. <a href="https://www.youtube.com/watch?v=Bc3oYW1cmcQ" target="_blank" style="text-decoration:underline;">Time Machine tutorial</a>.<br>
-								6. <a href="http://www.asus.com/support/Knowledge-Detail/11/2/RTAC68U/25DFAE22-873C-4796-91C4-5CF1F08A2064/" target="_blank" style="text-decoration:underline;">Time Machine FAQ</a>.<br>
+								1. <#TimeMach_enable#><br>
+								2. <#TimeMach_target#> <br>
+								3. <#TimeMach_usage_limit#><br>
+								4. <#TimeMach_backup#> ( <a href="http://www.asus.com/support/Knowledge-Detail/11/2/RTAC68U/3FEED048-5AC2-4B97-ABAE-DE609DDBC151/" target="_blank" style="text-decoration:underline;"><#TimeMach_AppleURL#></a> )<br>
+								5. <a href="https://www.youtube.com/watch?v=Bc3oYW1cmcQ" target="_blank" style="text-decoration:underline;"><#TimeMach_tutol#></a><br>
+								6. <a href="http://www.asus.com/support/Knowledge-Detail/11/2/RTAC68U/25DFAE22-873C-4796-91C4-5CF1F08A2064/" target="_blank" style="text-decoration:underline;"><#TimeMach_FAQ#></a><br>
 								<span style="color:#FC0">
-									* We recommend you use an Ethernet connection for the initial backup. <br>
-									* Initial backup may take a while depending on the size of your OSX volume. Consider starting the first backup in
-        the evening so it will complete overnight. <br>
-									* Please use disk utility to repair the disk if your backup process hanged.				
+									* <#TimeMach_recommand1#> <br>
+									* <#TimeMach_recommand2#> <br>
+									* <#TimeMach_recommand3#>
 								</span>
 							</td>
 						</tr>
@@ -322,7 +321,7 @@ function cal_panel_block(obj_id){
 					</thead>							
 
 					<tr>
-						<th>Enable Time Machine</th>
+						<th><#TimeMach_enable#></th>
 						<td>
 							<div class="left" style="width:94px; float:left; cursor:pointer;" id="radio_timemachine_enable"></div>
 							<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
@@ -349,14 +348,14 @@ function cal_panel_block(obj_id){
 					</tr>
 
 					<tr id="backupPath_tr">
-						<th>Backup Path</a></th>
+						<th><#TimeMach_backuppath#></a></th>
 						<td>
 							<input class="button_gen" onclick="selPartition()" type="button" value="<#Select_btn#>"/>
 							<span id="tmPath" style="font-family: Lucida Console;"></span>
 		   			</td>
 					</tr>
 					<tr id="volSize_tr">
-						<th>TimeMachine Volume Size</a></th>
+						<th><#TimeMach_vol_size#></a></th>
 						<td>
 							<input id="tm_vol_size" name="tm_vol_size" maxlength="3" class="input_6_table" type="text" maxLength="8" value="<% nvram_get("tm_vol_size"); %>"/> GB (0: <#Limitless#>)
 							&nbsp;<span id="maxVolSize"></span>

@@ -20,7 +20,6 @@ default_target: all
 .PHONY : default_target
 
 install: all
-	make -C libubox install
 	install -D $(TARGET) $(INSTALLDIR)/$(PREFIX)/sbin/$(TARGET)
 	$(STRIP) $(INSTALLDIR)/$(PREFIX)/sbin/$(TARGET)
 .PHONY : install

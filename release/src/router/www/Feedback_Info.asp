@@ -20,7 +20,7 @@
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/detect.js"></script>
 <script>
-var fb_response = "<% nvram_get("feedbackresponse"); %>";
+var fb_state = "<% nvram_get("fb_state"); %>";
 	
 function initial(){
 	show_menu();
@@ -28,12 +28,12 @@ function initial(){
 }
 
 function check_info(){
-	//Viz if(fb_response == "1"){
-		document.getElementById("fb_success").style.display = "";
-		
-	//Viz }else{	// 0:default 2:Fail 3:limit reached
-		//Viz document.getElementById("fb_fail").style.display = "";		
-	//Viz }
+	document.getElementById("fb_success").style.display = "";
+	if(fb_state == "2"){
+		document.getElementById("fb_fail").style.display = "";
+	}else{	// 0:init 2:Fail 3:limit reached?
+		//document.getElementById("fb_fail").style.display = "";
+	}
 }
 
 function redirect(){
@@ -95,6 +95,12 @@ function redirect(){
 	<br>
 	<div class="feedback_info_0">Thanks for taking the time to submit your feedback.</div>
 	<br>
+<div id="fb_fail" style="display:none;" class="feedback_info_1">
+	However system currently experiencing issue connecting to mail server, it could be caused by your ISP blocked SMTP port 25. Thus please send us an email directly (<a href="mailto:xdsl_feedback@asus.com?Subject=<%nvram_get("productid");%>" target="_top" style="color:#FFCC00;">xdsl_feedback@asus.com </a>). Simply copy from following text area and paste as mail content.
+	<br>
+	<textarea name="fb_fail_content" cols="70" rows="10" style="width:99%; font-family:'Courier New', Courier, mono; font-size:13px;background:#475A5F;color:#FFFFFF;"><% nvram_dump("fb_fail_content", ""); %></textarea>
+	<br>
+</div>
 	<br>
 	<div class="feedback_info_1">We are working hard to improve the firmware of <#Web_Title2#> and your feedback is very important to us. However due to the volume of feedback, please expect a slight delay in email responses.</div>
 	<br>
@@ -102,9 +108,6 @@ function redirect(){
 	<div class="feedback_info_1">To get help from other users, you could post your question in the <a href="http://vip.asus.com/forum/topic.aspx?board_id=11&SLanguage=en-us" style="color:#FFCC00;" target="_blank">ASUS VIP Forum</a>.</div>
 	<br>
 	<br>	
-</div>
-
-<div id="fb_fail" style="display:none;">
 </div>
 
 <div id="fb_deny" style="display:none;">

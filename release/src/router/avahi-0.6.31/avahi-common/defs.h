@@ -232,7 +232,12 @@ typedef enum {
     AVAHI_ENTRY_GROUP_REGISTERING,   /**< The entries of the group are currently being registered */
     AVAHI_ENTRY_GROUP_ESTABLISHED,   /**< The entries have successfully been established */
     AVAHI_ENTRY_GROUP_COLLISION,     /**< A name collision for one of the entries in the group has been detected, the entries have been withdrawn */
-    AVAHI_ENTRY_GROUP_FAILURE        /**< Some kind of failure happened, the entries have been withdrawn */
+    AVAHI_ENTRY_GROUP_FAILURE,       /**< Some kind of failure happened, the entries have been withdrawn */
+    AVAHI_ENTRY_GROUP_LLMNR_UNCOMMITED = AVAHI_ENTRY_GROUP_UNCOMMITED,
+    AVAHI_ENTRY_GROUP_LLMNR_VERIFYING = AVAHI_ENTRY_GROUP_REGISTERING,  
+    AVAHI_ENTRY_GROUP_LLMNR_ESTABLISHED = AVAHI_ENTRY_GROUP_ESTABLISHED,
+    AVAHI_ENTRY_GROUP_LLMNR_COLLISION = AVAHI_ENTRY_GROUP_COLLISION,
+    AVAHI_ENTRY_GROUP_LLMNR_FAILURE = AVAHI_ENTRY_GROUP_FAILURE
 } AvahiEntryGroupState;
 
 /** @} */
@@ -252,7 +257,9 @@ typedef enum {
     AVAHI_PUBLISH_UPDATE = 64,          /**< Update existing records instead of adding new ones */
 /** \cond fulldocs */
     AVAHI_PUBLISH_USE_WIDE_AREA = 128,  /**< Register the record using wide area DNS (i.e. unicast DNS update) */
-    AVAHI_PUBLISH_USE_MULTICAST = 256   /**< Register the record using multicast DNS */
+    AVAHI_PUBLISH_USE_MULTICAST = 256,  /**< Register the record using multicast DNS */
+    AVAHI_PUBLISH_USE_LLMNR = 512,
+    AVAHI_PUBLISH_NO_VERIFY = 1024
 /** \endcond */
 } AvahiPublishFlags;
 
@@ -263,7 +270,8 @@ typedef enum {
     AVAHI_LOOKUP_USE_MULTICAST = 2,    /**< Force lookup via multicast DNS */
 /** \endcond */
     AVAHI_LOOKUP_NO_TXT = 4,           /**< When doing service resolving, don't lookup TXT record */
-    AVAHI_LOOKUP_NO_ADDRESS = 8        /**< When doing service resolving, don't lookup A/AAAA record */
+    AVAHI_LOOKUP_NO_ADDRESS = 8,       /**< When doing service resolving, don't lookup A/AAAA record */
+    AVAHI_LOOKUP_USE_LLMNR = 16
 } AvahiLookupFlags;
 
 /** Some flags for lookup callback functions */
@@ -273,11 +281,16 @@ typedef enum {
     AVAHI_LOOKUP_RESULT_MULTICAST = 4,      /**< This response originates from multicast DNS */
     AVAHI_LOOKUP_RESULT_LOCAL = 8,          /**< This record/service resides on and was announced by the local host. Only available in service and record browsers and only on AVAHI_BROWSER_NEW. */
     AVAHI_LOOKUP_RESULT_OUR_OWN = 16,       /**< This service belongs to the same local client as the browser object. Only available in avahi-client, and only for service browsers and only on AVAHI_BROWSER_NEW. */
-    AVAHI_LOOKUP_RESULT_STATIC = 32         /**< The returned data has been defined statically by some configuration option */
+    AVAHI_LOOKUP_RESULT_STATIC = 32,        /**< The returned data has been defined statically by some configuration option */
+    AVAHI_LOOKUP_RESULT_LLMNR = 64
 } AvahiLookupResultFlags;
 
 /** @} */
-
+typedef enum {
+    AVAHI_MDNS,
+    AVAHI_LLMNR,
+    AVAHI_WIDE_AREA
+} AvahiPublishProtocol;
 /** @{ \name Events */
 
 /** Type of callback event when browsing */
@@ -347,6 +360,7 @@ enum {
 
 /** The default TTL for RRs which contain a host name of some kind. */
 #define AVAHI_DEFAULT_TTL_HOST_NAME (120)
+#define AVAHI_DEFAULT_LLMNR_TTL_HOST_NAME (30)
 
 /** The default TTL for all other records. */
 #define AVAHI_DEFAULT_TTL (75*60)

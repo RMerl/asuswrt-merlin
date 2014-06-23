@@ -147,7 +147,8 @@ int set_pwr_usb(int boolOn){
 	switch(get_model()) {
 		case MODEL_RTAC68U:
 			if((nvram_get_int("HW_ver") != 170) &&
-				(atof(nvram_safe_get("HW_ver")) != 1.10))
+			   (atof(nvram_safe_get("HW_ver")) != 1.10) &&
+			   (atof(nvram_safe_get("HW_ver")) != 2.10))
 				return 0;
 			break;
 	}

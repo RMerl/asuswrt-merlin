@@ -791,7 +791,7 @@ function divdisplayctrl(flag1, flag2, flag3, flag4){
 			$("realLink").href = _quick_dmlink;
 		}
 		else{
-			$("quick_dmlink").onclick = function(){alert(Untranslated.DM_DisableHint);return false;}
+			$("quick_dmlink").onclick = function(){alert("<#DM_DisableHint#>");return false;}
 		}	
 			
 		$("return_btn").style.display = "";

@@ -42,16 +42,34 @@ fatal(const char *message, ...)
 {
 	int tmp_error = errno;
 	va_list vp;
+	FILE *fp;
+
+	fp = fopen(EMAIL_LOG_FILE, "a+b");
+	if( fp == NULL ){
+	    printf("open file error!!\n");
+	    return;
+	}
 
 	va_start(vp, message);
 	fprintf(stderr, "email: FATAL: ");
+	fputs("email: FATAL: ", fp);
+
 	vfprintf(stderr, message, vp);
+	vfprintf(fp, message, vp);
 
 	/* if message has a \n mark, don't call perror */
 	if (strchr(message, '\n') == NULL) {
 		fprintf(stderr, ": %s\n", strerror(tmp_error));
+
+		fputs(": ",fp);
+		fputs(strerror(tmp_error), fp);
 	}
 	va_end(vp);
+
+	fputs("\n",fp);
+	fclose(fp);
+
+	system("nvram set fb_state=2");
 }
 
 /**

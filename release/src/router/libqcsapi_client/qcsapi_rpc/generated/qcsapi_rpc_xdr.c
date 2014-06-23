@@ -1283,6 +1283,56 @@ xdr_qcsapi_config_update_parameter_response (XDR *xdrs, qcsapi_config_update_par
 }
 
 bool_t
+xdr_qcsapi_config_get_ssid_parameter_request (XDR *xdrs, qcsapi_config_get_ssid_parameter_request *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_str (xdrs, &objp->ifname))
+		 return FALSE;
+	 if (!xdr_str (xdrs, &objp->param_name))
+		 return FALSE;
+	 if (!xdr_uint32_t (xdrs, &objp->max_param_len))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_config_get_ssid_parameter_response (XDR *xdrs, qcsapi_config_get_ssid_parameter_response *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_int (xdrs, &objp->return_code))
+		 return FALSE;
+	 if (!xdr_str (xdrs, &objp->param_value))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_config_update_ssid_parameter_request (XDR *xdrs, qcsapi_config_update_ssid_parameter_request *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_str (xdrs, &objp->ifname))
+		 return FALSE;
+	 if (!xdr_str (xdrs, &objp->param_name))
+		 return FALSE;
+	 if (!xdr_str (xdrs, &objp->param_value))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_config_update_ssid_parameter_response (XDR *xdrs, qcsapi_config_update_ssid_parameter_response *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_int (xdrs, &objp->return_code))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
 xdr_qcsapi_file_path_get_config_request (XDR *xdrs, qcsapi_file_path_get_config_request *objp)
 {
 	register int32_t *buf;
@@ -7169,6 +7219,26 @@ xdr_qcsapi_regulatory_get_db_version_response (XDR *xdrs, qcsapi_regulatory_get_
 }
 
 bool_t
+xdr_qcsapi_regulatory_apply_tx_power_cap_request (XDR *xdrs, qcsapi_regulatory_apply_tx_power_cap_request *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_int (xdrs, &objp->capped))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_regulatory_apply_tx_power_cap_response (XDR *xdrs, qcsapi_regulatory_apply_tx_power_cap_response *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_int (xdrs, &objp->return_code))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
 xdr_qcsapi_wifi_get_list_DFS_channels_request (XDR *xdrs, qcsapi_wifi_get_list_DFS_channels_request *objp)
 {
 	register int32_t *buf;
@@ -8671,6 +8741,50 @@ xdr_qcsapi_wifi_get_ipff_response (XDR *xdrs, qcsapi_wifi_get_ipff_response *obj
 	 if (!xdr_int (xdrs, &objp->return_code))
 		 return FALSE;
 	 if (!xdr_str (xdrs, &objp->buf))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_get_rts_threshold_request (XDR *xdrs, qcsapi_wifi_get_rts_threshold_request *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_str (xdrs, &objp->ifname))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_get_rts_threshold_response (XDR *xdrs, qcsapi_wifi_get_rts_threshold_response *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_int (xdrs, &objp->return_code))
+		 return FALSE;
+	 if (!xdr_u_int (xdrs, &objp->rts_threshold))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_set_rts_threshold_request (XDR *xdrs, qcsapi_wifi_set_rts_threshold_request *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_str (xdrs, &objp->ifname))
+		 return FALSE;
+	 if (!xdr_u_int (xdrs, &objp->rts_threshold))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_set_rts_threshold_response (XDR *xdrs, qcsapi_wifi_set_rts_threshold_response *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_int (xdrs, &objp->return_code))
 		 return FALSE;
 	return TRUE;
 }

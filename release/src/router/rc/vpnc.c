@@ -40,7 +40,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <net/if_arp.h>
-#include <signal.h>
 
 #define L2TP_VPNC_PID	"/var/run/l2tpd-vpnc.pid"
 #define L2TP_VPNC_CTRL	"/var/run/l2tpctrl-vpnc"
@@ -236,14 +235,15 @@ start_vpnc(void)
 	fprintf(fp, "ip-pre-up-script %s\n", "/tmp/ppp/vpnc-ip-pre-up");
 	fprintf(fp, "auth-fail-script %s\n", "/tmp/ppp/vpnc-auth-fail");
 
+#if 0 /* unsupported */
 #ifdef RTCONFIG_IPV6
 	switch (get_ipv6_service()) {
-		case IPV6_NATIVE:
 		case IPV6_NATIVE_DHCP:
 		case IPV6_MANUAL:
 			fprintf(fp, "+ipv6\n");
 			break;
         }
+#endif
 #endif
 
 	/* user specific options */
@@ -393,7 +393,7 @@ int vpnc_update_resolvconf(void)
 		return errno;
 	}
 
-#if 0
+#if 0 /* unsupported */
 #ifdef RTCONFIG_IPV6
 	/* Handle IPv6 DNS before IPv4 ones */
 	if (ipv6_enabled()) {
@@ -421,11 +421,7 @@ int vpnc_update_resolvconf(void)
 
 	file_unlock(lock);
 
-#ifdef RTCONFIG_DNSMASQ
 	reload_dnsmasq();
-#else
-	restart_dns();
-#endif
 
 	return 0;
 }

@@ -20,11 +20,12 @@
 
 <script>
 var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
+var level2CTF_supprot = ('<% nvram_get("ctf_fa_mode"); %>' == '') ? false : true;
 
 function initial(){
 	show_menu();
 
-	if('<% nvram_get("ctf_fa_mode"); %>' != ''){
+	if(level2CTF_supprot){
 		document.form.ctf_level.length = 0;
 		add_option(document.form.ctf_level, "<#WLANConfig11b_WirelessCtrl_buttonname#>", 0, getCtfLevel(0));
 		add_option(document.form.ctf_level, "Level 1 CTF", 1, getCtfLevel(1));
@@ -33,21 +34,38 @@ function initial(){
 }
 
 /*
-					ctf_disable_force   ctf_fa_mode
-Disable   1                   0
-Level 1   0                   0
-Level 2   0                   2 
+for RT-AC87U:
+		 ctf_disable_force   ctf_fa_mode_close
+Level 1          0                   1
+Level 2          0                   0 
+Disable          1                   1
 
+for Others:
+         ctf_disable_force   ctf_fa_mode
+Level 1          0                0
+Level 2          0                2 
+Disable          1                0
 */
+
 function getCtfLevel(val){
 	var curVal;
 
-	if(document.form.ctf_disable_force.value == 0 && document.form.ctf_fa_mode.value == 0)
-		curVal = 1;
-	else if(document.form.ctf_disable_force.value == 0 && document.form.ctf_fa_mode.value == 2)
-		curVal = 2;
-	else
-		curVal = 0;
+	if(based_modelid == 'RT-AC87U'){ // MODELDEP: RT-AC87U
+		if(document.form.ctf_disable_force.value == 0 && document.form.ctf_fa_mode_close.value == 1)
+			curVal = 1;
+		else if(document.form.ctf_disable_force.value == 0 && document.form.ctf_fa_mode_close.value == 0)
+			curVal = 2;
+		else
+			curVal = 0;
+	}
+	else{
+		if(document.form.ctf_disable_force.value == 0 && document.form.ctf_fa_mode.value == 0)
+			curVal = 1;
+		else if(document.form.ctf_disable_force.value == 0 && document.form.ctf_fa_mode.value == 2)
+			curVal = 2;
+		else
+			curVal = 0;		
+	}
 
 	if(curVal == val)
 		return true;
@@ -56,17 +74,37 @@ function getCtfLevel(val){
 }
 
 function applyRule(){
-	if(document.form.ctf_level.value == 1){
-		document.form.ctf_disable_force.value = 0;
-		document.form.ctf_fa_mode.value = 0;
-	}
-	else if(document.form.ctf_level.value == 2){
-		document.form.ctf_disable_force.value = 0;
-		document.form.ctf_fa_mode.value = 2;
+	if(based_modelid == 'RT-AC87U'){ // MODELDEP: RT-AC87U
+		document.form.ctf_fa_mode.disabled = true;
+
+		if(document.form.ctf_level.value == 1){
+			document.form.ctf_disable_force.value = 0;
+			document.form.ctf_fa_mode_close.value = 1;
+		}
+		else if(document.form.ctf_level.value == 2){
+			document.form.ctf_disable_force.value = 0;
+			document.form.ctf_fa_mode_close.value = 0;
+		}
+		else{
+			document.form.ctf_disable_force.value = 1;
+			document.form.ctf_fa_mode_close.value = 1;
+		}
 	}
 	else{
-		document.form.ctf_disable_force.value = 1;
-		document.form.ctf_fa_mode.value = 0;
+		document.form.ctf_fa_mode_close.disabled = true;
+
+		if(document.form.ctf_level.value == 1){
+			document.form.ctf_disable_force.value = 0;
+			document.form.ctf_fa_mode.value = 0;
+		}
+		else if(document.form.ctf_level.value == 2){
+			document.form.ctf_disable_force.value = 0;
+			document.form.ctf_fa_mode.value = 2;
+		}
+		else{
+			document.form.ctf_disable_force.value = 1;
+			document.form.ctf_fa_mode.value = 0;
+		}
 	}
 
 	if(valid_form()){
@@ -115,6 +153,7 @@ function valid_form(){
 <input type="hidden" name="action_wait" value="60">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
+<input type="hidden" name="ctf_fa_mode_close" value="<% nvram_get("ctf_fa_mode_close"); %>">
 <input type="hidden" name="ctf_fa_mode" value="<% nvram_get("ctf_fa_mode"); %>">
 <input type="hidden" name="ctf_disable_force" value="<% nvram_get("ctf_disable_force"); %>">
 
@@ -145,7 +184,7 @@ function valid_form(){
 		  
 		  <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
       <tr>
-      <th><!--a class="hintstyle" href="javascript:void(0);" onClick="openHint(4,4);"--><#jumbo_frame#><!--/a--></th>
+      <th><#jumbo_frame#></th>
           <td>
 						<select name="jumbo_frame_enable" class="input_option">
 							<option class="content_input_fd" value="0" <% nvram_match("jumbo_frame_enable", "0","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
@@ -154,7 +193,7 @@ function valid_form(){
           </td>
       </tr>
       <tr>
-      <th>NAT Acceleration</th>
+      <th><#NAT_Acceleration#></th>
           <td>
 						<select name="ctf_level" class="input_option">
 							<option class="content_input_fd" value="0" <% nvram_match("ctf_disable_force", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>

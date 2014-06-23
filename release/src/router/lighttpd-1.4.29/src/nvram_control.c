@@ -91,7 +91,7 @@
 #define WEBDAVAIDISK "webdav_aidisk"
 #define WEBDAVPROXY "webdav_proxy"
 #define SHARELINK "share_link"
-#define ETHMACADDR "et0macaddr"
+#define ETHMACADDR "lan_hwaddr"
 #define FIRMVER "firmver"
 #define BUILDNO "buildno"
 #define ST_WEBDAV_MODE "st_webdav_mode"
@@ -291,7 +291,7 @@ char *get_productid(void)
         char *odmpid = nvram_get("odmpid");
         if(odmpid != NULL)
         {
-        if (*odmpid)
+        	if (*odmpid)
                 productid = odmpid;
         }
         return productid;
@@ -370,7 +370,7 @@ char *nvram_get(char *name)
 char *nvram_safe_get(char *name)
 {
     char *p = nvram_get(name);
-            return p ? p : "";
+	return p ? p : "";
 }
 int nvram_set(const char *name, const char *value)
 {
@@ -834,7 +834,8 @@ char* nvram_get_router_mac(void)
 	tcapi_get(INFOETH, ETHMACADDR, router_mac);
 	return router_mac;
 #else
-	return nvram_get(ETHMACADDR);
+	char* mac = nvram_get(ETHMACADDR);
+	return mac;
 #endif
 }
 

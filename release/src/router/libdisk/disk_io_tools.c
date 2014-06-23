@@ -118,7 +118,7 @@ extern int test_if_System_folder(const char *const dirname){
 	}
 
 	i = strlen(dirname);
-	ptr = dirname+i-16;
+	ptr = (char *)dirname+i-16;
 	if(i >= 16 && !strcmp(ptr, "Mac.sparsebundle"))
 		return 1;
 

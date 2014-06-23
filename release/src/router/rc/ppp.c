@@ -37,10 +37,6 @@
 #include <usb_info.h>
 #endif
 
-#ifdef RTCONFIG_IPV6
-static int wait_ppp_count = 0;
-#endif
-
 /*
 * parse ifname to retrieve unit #
 */
@@ -161,10 +157,6 @@ ipdown_main(int argc, char **argv)
 	_dprintf("%s: unit=%d ifname=%s\n", __FUNCTION__, unit, wan_ifname);
 	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 
-#ifdef RTCONFIG_IPV6
-	wait_ppp_count = -2;
-#endif
-
 	wan_down(wan_ifname);
 
 	// override wan_state to get real reason
@@ -217,24 +209,8 @@ int ip6up_main(int argc, char **argv)
 	if (!wan_ifname || strlen(wan_ifname) <= 0)
 		return 0;
 
-        switch (get_ipv6_service()) {
-                case IPV6_NATIVE:
-                case IPV6_NATIVE_DHCP:
-			wait_ppp_count = 10;
-			while ((!is_intf_up(wan_ifname) || !getifaddr(wan_ifname, AF_INET6, 0))
-				&& (wait_ppp_count-- > 0))
-				sleep(1);
-			break;
-		default:
-			wait_ppp_count = 0;
-			break;
-	}
-
-	if (wait_ppp_count != -2)
-	{
-		wan6_up(wan_ifname);	
-		start_firewall(0, 0);
-	}
+	wan6_up(wan_ifname);
+	start_firewall(0, 0);
 
 	return 0;
 }
@@ -242,8 +218,6 @@ int ip6up_main(int argc, char **argv)
 int ip6down_main(int argc, char **argv)
 {
 	char *wan_ifname = safe_getenv("IFNAME");
-
-	wait_ppp_count = -2;
 
 	wan6_down(wan_ifname);
 

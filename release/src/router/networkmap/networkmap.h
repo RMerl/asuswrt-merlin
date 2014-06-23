@@ -85,6 +85,7 @@ typedef unsigned long ULONG;
 typedef struct {
         unsigned char   ip_addr[255][4];
         unsigned char   mac_addr[255][6];
+	unsigned char   user_define[255][16];
 	unsigned char   device_name[255][16];
         int             type[255];
         int             http[255];

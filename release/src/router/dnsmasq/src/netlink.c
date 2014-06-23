@@ -38,7 +38,7 @@
 static struct iovec iov;
 static u32 netlink_pid;
 
-static int nl_async(struct nlmsghdr *h);
+static void nl_async(struct nlmsghdr *h);
 
 void netlink_init(void)
 {
@@ -142,7 +142,7 @@ int iface_enumerate(int family, void *parm, int (*callback)())
   struct nlmsghdr *h;
   ssize_t len;
   static unsigned int seq = 0;
-  int callback_ok = 1, newaddr = 0;
+  int callback_ok = 1;
 
   struct {
     struct nlmsghdr nlh;
@@ -191,21 +191,10 @@ int iface_enumerate(int family, void *parm, int (*callback)())
 	if (h->nlmsg_seq != seq || h->nlmsg_pid != netlink_pid || h->nlmsg_type == NLMSG_ERROR)
 	  {
 	    /* May be multicast arriving async */
-	    if (nl_async(h))
-	      {
-		newaddr = 1; 
-		enumerate_interfaces(1); /* reset */
-	      }
+	    nl_async(h);
 	  }
 	else if (h->nlmsg_type == NLMSG_DONE)
-	  {
-	    /* handle async new interface address arrivals, these have to be done
-	       after we complete as we're not re-entrant */
-	    if (newaddr) 
-	      newaddress(dnsmasq_time());
-		
-	    return callback_ok;
-	  }
+	  return callback_ok;
 	else if (h->nlmsg_type == RTM_NEWADDR && family != AF_UNSPEC && family != AF_LOCAL)
 	  {
 	    struct ifaddrmsg *ifa = NLMSG_DATA(h);  
@@ -330,11 +319,11 @@ int iface_enumerate(int family, void *parm, int (*callback)())
     }
 }
 
-void netlink_multicast(time_t now)
+void netlink_multicast(void)
 {
   ssize_t len;
   struct nlmsghdr *h;
-  int flags, newaddr = 0;
+  int flags;
   
   /* don't risk blocking reading netlink messages here. */
   if ((flags = fcntl(daemon->netlinkfd, F_GETFL)) == -1 ||
@@ -343,24 +332,19 @@ void netlink_multicast(time_t now)
   
   if ((len = netlink_recv()) != -1)
     for (h = (struct nlmsghdr *)iov.iov_base; NLMSG_OK(h, (size_t)len); h = NLMSG_NEXT(h, len))
-      if (nl_async(h))
-	newaddr = 1;
+      nl_async(h);
   
   /* restore non-blocking status */
   fcntl(daemon->netlinkfd, F_SETFL, flags);
-  
-  if (newaddr) 
-    newaddress(now);
 }
 
-static int nl_async(struct nlmsghdr *h)
+static void nl_async(struct nlmsghdr *h)
 {
   if (h->nlmsg_type == NLMSG_ERROR)
     {
       struct nlmsgerr *err = NLMSG_DATA(h);
       if (err->error != 0)
 	my_syslog(LOG_ERR, _("netlink returns error: %s"), strerror(-(err->error)));
-      return 0;
     }
   else if (h->nlmsg_pid == 0 && h->nlmsg_type == RTM_NEWROUTE) 
     {
@@ -385,18 +369,15 @@ static int nl_async(struct nlmsghdr *h)
 	      else if (daemon->rfd_save && daemon->rfd_save->refcount != 0)
 		fd = daemon->rfd_save->fd;
 	      else
-		return 0;
+		return;
 	      
 	      while(sendto(fd, daemon->packet, daemon->packet_len, 0,
 			   &daemon->srv_save->addr.sa, sa_len(&daemon->srv_save->addr)) == -1 && retry_send()); 
 	    }
 	}
-      return 0;
     }
   else if (h->nlmsg_type == RTM_NEWADDR || h->nlmsg_type == RTM_DELADDR) 
-    return 1; /* clever bind mode - rescan */
-  
-  return 0;
+    send_newaddr();
 }
 #endif
 

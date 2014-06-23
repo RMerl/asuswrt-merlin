@@ -2576,14 +2576,35 @@ et_error(et_info_t *et, struct sk_buff *skb, void *rxh)
 	}
 }
 
+#ifdef CONFIG_IP_NF_DNSMQ
+typedef int (*dnsmqHitHook)(struct sk_buff *skb);
+extern dnsmqHitHook dnsmq_hit_hook;
+#endif
+
 static inline int32
 et_ctf_forward(et_info_t *et, struct sk_buff *skb)
 {
+#if defined(HNDCTF) && defined(RTCONFIG_BWDPI)
+	int ret;
+#endif
+
+#ifdef CONFIG_IP_NF_DNSMQ
+	if(dnsmq_hit_hook&&dnsmq_hit_hook(skb))
+		return (BCME_ERROR);
+#endif
+
 #ifdef HNDCTF
+#ifdef RTCONFIG_BWDPI
 	/* try cut thru first */
+	if (CTF_ENAB(et->cih) && (ret = ctf_forward(et->cih, skb, skb->dev)) != BCME_ERROR) {
+		if (ret == BCME_EPERM)
+			PKTCFREE(et->osh, skb, FALSE);
+		return (BCME_OK);
+	}
+#else
 	if (CTF_ENAB(et->cih) && ctf_forward(et->cih, skb, skb->dev) != BCME_ERROR)
 		return (BCME_OK);
-
+#endif
 	/* clear skipct flag before sending up */
 	PKTCLRSKIPCT(et->osh, skb);
 #endif /* HNDCTF */
@@ -2673,6 +2694,9 @@ et_sendup(et_info_t *et, struct sk_buff *skb)
 	if (et_ctf_forward(et, skb) != BCME_ERROR)
 		return;
 
+#ifdef RTCONFIG_BWDPI
+	PKTCLRTOBR(etc->osh, skb);
+#endif
 	if (PKTISFAFREED(skb)) {
 		/* HW FA ate it */
 		PKTCLRFAAUX(skb);

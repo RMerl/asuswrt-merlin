@@ -429,8 +429,8 @@ devpath0=pci/1/1
 # Power-Per-Rate settings:
 0:cckbw202gpo=0
 0:cckbw20ul2gpo=0
-0:mcsbw202gpo=0x88653320
-0:mcsbw402gpo=0x88653320
+0:mcsbw202gpo=0xea642000
+0:mcsbw402gpo=0xea642000
 0:dot11agofdmhrbw202gpo=0x6533
 0:ofdmlrbw202gpo=0
 0:sb20in40hrpo=0
@@ -461,7 +461,7 @@ devpath0=pci/1/1
 #1:leddc=0xFFFF
 
 # Bootloader version
-bl_version=1.0.3.1
+bl_version=1.0.3.2
 
 # for NAND flash
 bootflags=1

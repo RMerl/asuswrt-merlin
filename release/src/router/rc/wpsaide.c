@@ -15,7 +15,6 @@
  * MA 02111-1307 USA
  */
 
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

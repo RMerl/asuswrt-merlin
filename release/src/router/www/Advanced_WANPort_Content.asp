@@ -90,7 +90,13 @@ function initial(){
 	addWANOption(document.form.wans_second, wans_caps_secondary.split(" "));
 	document.form.wans_primary.value = wans_dualwan_orig.split(" ")[0];	
 	form_show(wans_flag);		
-	showLANIPList();	
+	showLANIPList();
+
+	if(based_modelid == "RT-AC87U"){ //MODELDEP: RT-AC87 : Quantenna port
+                document.form.wans_lanport1.remove(0);   //Primary LAN1
+                document.form.wans_lanport2.remove(0);   //Secondary LAN1
+        }
+
 }
 
 function form_show(v){
@@ -162,6 +168,12 @@ function form_show(v){
 function applyRule(){
 	if(wans_flag == 1){
 		document.form.wans_dualwan.value = document.form.wans_primary.value +" "+ document.form.wans_second.value;
+		
+		if(!dsl_support && (document.form.wans_dualwan.value == "usb lan" || document.form.wans_dualwan.value == "lan usb")){
+			alert("WAN port should be selected in Dual WAN.");
+			document.form.wans_primary.focus();
+			return;
+		}
 		document.form.wan_unit.value = "<% nvram_get("wan_unit"); %>";
 		if(document.form.wans_mode.value == "lb"){
 			if(document.form.wans_lb_ratio_0.value !=0 && document.form.wans_lb_ratio_1.value!=0)	// To check LoadBalance ratio value is zero or not, Jieming add 2012/08/01
@@ -285,8 +297,14 @@ function changeWANProto(obj){
 					document.form.wans_second.value = "usb";
 					document.form.wans_second.index = 1;
 				}else if (obj.value == "usb"){
-					document.form.wans_second.value = "lan";
-					document.form.wans_second.index = 2;					
+					if(!dsl_support){
+						document.form.wans_second.value = "wan";
+						document.form.wans_second.index = 0;
+					}
+					else{
+						document.form.wans_second.value = "lan";
+						document.form.wans_second.index = 2;
+					}
 				}else if (obj.value == "lan"){
 					if(!dsl_support){		//for DSL model, because DSL type can't set to secondary wan
 						document.form.wans_second.value = "wan";
@@ -296,27 +314,26 @@ function changeWANProto(obj){
 						document.form.wans_second.value = "usb";
 						document.form.wans_second.index = 1;				
 					}
-				}else if (obj.value == "dsl"){
+				}
+				else if (obj.value == "dsl"){
 					document.form.wans_second.value = "usb";
 					document.form.wans_second.index = 1;
 				}
-			}else if(obj.name == "wans_second"){
+			}
+			else if(obj.name == "wans_second"){
 				if(obj.value == "wan"){
 					document.form.wans_primary.value = "usb";
 					document.form.wans_primary.index = 1;
-				}else if (obj.value == "usb"){
-					document.form.wans_primary.value = "lan";
-					document.form.wans_primary.index = 2;
-				}else if (obj.value == "lan"){
+				}else if (obj.value == "usb" || obj.value == "lan"){
 					if(!dsl_support){
-						document.form.wans_primary.value = "wan";
-						document.form.wans_primary.index = 0;
+							document.form.wans_primary.value = "wan";
+							document.form.wans_primary.index = 0;
 					}
 					else{
-						document.form.wans_primary.value = "dsl";
-						document.form.wans_primary.index = 0;					
-					}
-				}	
+							document.form.wans_primary.value = "dsl";
+							document.form.wans_primary.index = 0;
+					}					
+				}
 			}			
 		}
 		appendLANoption1(document.form.wans_primary);

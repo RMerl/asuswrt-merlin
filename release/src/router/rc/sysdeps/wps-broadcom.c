@@ -21,7 +21,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <signal.h>
 #include <unistd.h>
 #include <errno.h>
 #include <sys/time.h>
@@ -145,7 +144,7 @@ start_wps_method(void)
 				dbG("rpc_qcsapi_wps_registrar_report_button_press %s error, return: %d\n", WIFINAME, retval);
 		}
 
-		return;
+		return 0;
 	}
 #endif
 
@@ -258,73 +257,6 @@ stop_wps_method(void)
 
 	return 0;
 }
-
-#ifdef RTCONFIG_QTN
-int rpc_qcsapi_wps_get_state(const char *ifname, char *wps_state, const qcsapi_unsigned_int max_len)
-{
-	int ret;
-
-	ret = qcsapi_wps_get_state(ifname, wps_state, max_len);
-	if (ret < 0) {
-		dbG("Qcsapi qcsapi_wps_get_state %s error, return: %d\n", ifname, ret);
-		return ret;
-	}
-
-	return 0;
-}
-
-int rpc_qcsapi_wifi_disable_wps(const char *ifname, int disable_wps)
-{
-	int ret;
-
-	ret = qcsapi_wifi_disable_wps(ifname, disable_wps);
-	if (ret < 0) {
-		dbG("Qcsapi qcsapi_wifi_disable_wps %s error, return: %d\n", ifname, ret);
-		return ret;
-	}
-
-	return 0;
-}
-
-int rpc_qcsapi_wps_cancel(const char *ifname)
-{
-	int ret;
-
-	ret = qcsapi_wps_cancel(ifname);
-	if (ret < 0) {
-		dbG("Qcsapi qcsapi_wps_cancel %s error, return: %d\n", ifname, ret);
-		return ret;
-	}
-
-	return 0;
-}
-
-int rpc_qcsapi_wps_registrar_report_button_press(const char *ifname)
-{
-	int ret;
-
-	ret = qcsapi_wps_registrar_report_button_press(ifname);
-	if (ret < 0) {
-		dbG("Qcsapi qcsapi_wps_registrar_report_button_press %s error, return: %d\n", ifname, ret);
-		return ret;
-	}
-
-	return 0;
-}
-
-int rpc_qcsapi_wps_registrar_report_pin(const char *ifname, const char *wps_pin)
-{
-	int ret;
-
-	ret = qcsapi_wps_registrar_report_pin(ifname, wps_pin);
-	if (ret < 0) {
-		dbG("Qcsapi qcsapi_wps_registrar_report_pin %s error, return: %d\n", ifname, ret);
-		return ret;
-	}
-
-	return 0;
-}
-#endif
 
 int is_wps_stopped(void)
 {

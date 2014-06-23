@@ -15,13 +15,11 @@ function getUrlVars(){
 function loadHandler(){
 	var callback =  getUrlVars()["callback"];
 	var token = getUrlVars()["token"];
-	var uid = getUrlVars()["uid"];
-	
+	var uid = getUrlVars()["uid"];	
 	if (callback) {
 		eval('callback = window.opener.' + callback);
 		callback(token, uid);
 	}
-	
 	window.close();
 }
 </script>

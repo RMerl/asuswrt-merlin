@@ -17,20 +17,20 @@
 // stub for wlconf, etc.
 struct nvram_tuple router_defaults[] = {
 	// NVRAM for init_syspara: system paraamters getting from MFG/NVRAM Area
- 	//{ "boardflags", "" }, 
+	//{ "boardflags", "" },
 	//{ "productid", "" },
 	//{ "firmver", "" },
 	//{ "hardware_version", "" }, // bootloader and hardware version
-	//{ "et0macaddr", "" }, 
-	//{ "wl0macaddr", "" }, 
+	//{ "et0macaddr", "" },
+	//{ "wl0macaddr", "" },
 	//{ "wl1macaddr", "" },
 
 	// NVRAM for restore_defaults: system wide parameters
 	{ "nvramver", RTCONFIG_NVRAM_VER},
 	{ "restore_defaults",	"0"	},	// Set to 0 to not restore defaults on boot
-	{ "sw_mode", "1" 		}, 	// big switch for different mode 
+	{ "sw_mode", "1" 		}, 	// big switch for different mode
 	{ "preferred_lang", "EN"	},
-	// NVRAM from init_nvram: system wide parameters accodring to model and mode 
+	// NVRAM from init_nvram: system wide parameters accodring to model and mode
 	//{ "wan_ifnames", "" },
 	//{ "lan_ifnames", "" },
 	//{ "lan1_ifnames", "" },
@@ -40,7 +40,10 @@ struct nvram_tuple router_defaults[] = {
 	//{ "vlan2ports", "" },
 	/* Guest H/W parameters */
 
-	// NVRAM for switch	
+	//Use to do force submit form request
+	{ "force_change", "0"},
+
+	// NVRAM for switch
 	{ "switch_stb_x", "0"}, 		// oleg patch
 	{ "switch_wantag", "none"},		//for IPTV/VoIP case
 	{ "switch_wan0tagid", "" },		//Wan Port
@@ -72,8 +75,85 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_bss_enabled", "1", 0 },		/* Service set Enable (1) or disable (0) radio */
 						/* See "default_get" below. */
 #ifdef __CONFIG_HSPOT__
-	{ "wl_bss_hs2_enabled", "1", 0 },	/* Service set Hotspot Enable (1), disable (0) radio */
-						/* See "default_get" below. */
+	{ "wl_hsflag",		"3159", 0 },	/* Passpoint Flags */
+#ifdef RTCONFIG_TMOBILE
+	{ "wl_hs2en",		"1", 0 },
+#else
+	{ "wl_hs2en",		"0", 0 },	/* Passpoint Enable (1), disable (0) radio */
+#endif
+	{ "wl_hs2cap",		"1", 0 },	/* Passpoint Realese 2 (1), Realese 1 (0) radio */
+	{ "wl_opercls",		"3", 0 },	/* Operating Class */
+	{ "wl_anonai",		"anonymous.com", 0 },   /* Anonymous NAI */
+
+	{ "wl_oplist",		"Wi-Fi Alliance!eng|"
+	"\x57\x69\x2d\x46\x69\xe8\x81\x94\xe7\x9b\x9f!chi", 0 }, /* Operator Friendly Name List */
+
+	{ "wl_homeqlist",	"mail.example.com:rfc4282", 0 }, /* NAIHomeRealmQueryList */
+	{ "wl_wanmetrics",	"1:0:0=2500>384=0>0=0", 0 }, /* WAN Metrics */
+	{ "wl_osu_ssid",	"OSU", 0}, /* OSU SSID */
+
+	{ "wl_osu_frndname",	"SP Red Test Only!eng|"
+	"\x53\x50\x20\xEB\xB9\xA8\xEA\xB0\x95\x20\xED\x85\x8C"
+	"\xEC\x8A\xA4\xED\x8A\xB8\x20\xEC\xA0\x84\xEC\x9A\xA9!kor", 0}, /* OSU Friendly Name */
+
+	{ "wl_osu_uri",
+	"https://osu-server.r2-testbed.wi-fi.org/", 0}, /* OSU Server URI */
+
+	{ "wl_osu_nai",		"", 0}, /* OSU NAI */
+	{ "wl_osu_method",	"1", 0}, /* OSU Method */
+
+	{ "wl_osu_icons",
+	"icon_red_zxx.png+icon_red_eng.png", 0}, /* OSU Icons */
+
+	{ "wl_osu_servdesc", "Free service for test purpose!eng|"
+	"\xED\x85\x8C\xEC\x8A\xA4\xED\x8A\xB8\x20\xEB\xAA\xA9"
+	"\xEC\xA0\x81\xEC\x9C\xBC\xEB\xA1\x9C\x20\xEB\xAC\xB4"
+	"\xEB\xA3\x8C\x20\xEC\x84\x9C\xEB\xB9\x84\xEC\x8A\xA4!kor", 0}, /* OSU Serv Desc */
+
+	/* ---- Passpoint Flags  ----------------------------------- */
+	{ "wl_gascbdel",	"0", 0 },	/* GAS CB Delay */
+	{ "wl_4framegas",	"0", 0 },	/* 4 Frame GAS */
+
+	/* ---- temporary ----------------------------------- */
+	{ "wl_osuicon_id",	"1", 0 },	/* OSU Provider's Icon ID */
+	{ "wl_conn_id",		"1", 0 },	/* Connection Capability ID */
+
+// #ifdef __CONFIG_802_11U__
+	{ "wl_u11en",		"1", 0 },	/* 802.11u IW Enable (1), disable (0) radio */
+	{ "wl_iwint",		"0", 0 },	/* Internet Enable (1), disable (0) radio */
+	{ "wl_iwnettype",	"2", 0 },	/* Select Access Network Type */
+	{ "wl_hessid",		"50:6F:9A:00:11:22",  0 },	/* Interworking HESSID */
+	{ "wl_ipv4addr",	"3", 0 },	/* Select IPV4 Address Type Availability */
+	{ "wl_ipv6addr",	"0", 0 },	/* Select IPV6 Address Type Availability */
+
+	{ "wl_netauthlist", "accepttc=+"
+	"httpred=https://tandc-server.wi-fi.org",  0 },	/* Network Authentication Type List */
+
+	{ "wl_venuegrp",	"2", 0 },	/* Venue Group */
+	{ "wl_venuetype",	"8", 0 },	/* Venue Type  */
+
+	{ "wl_venuelist",
+	"57692D466920416C6C69616E63650A"
+	"3239383920436F7070657220526F61640A"
+	"53616E746120436C6172612C2043412039"
+	"353035312C2055534121656E677C"
+	"57692D4669E88194E79B9FE5AE9EE9AA8CE5AEA40A"
+	"E4BA8CE4B99DE585ABE4B99DE5B9B4E5BA93E69F8FE8B7AF0A"
+	"E59CA3E5858BE68B89E68B892C20E58AA0E588A9E7A68FE5B0"
+	"BCE4BA9A39353035312C20E7BE8EE59BBD21636869",  0 },	/* Venue Name List */
+
+	{ "wl_ouilist",		"506F9A;001BC504BD", 0 },	/* Roaming Consortium List */
+	{ "wl_3gpplist",	"",  0 },	/* 3GPP Cellular Network Information List */
+	{ "wl_domainlist",	"",  0 },	/* Domain Name List */
+
+	{ "wl_realmlist",
+	"mail.example.com+0+21=2,4#5,7?"
+	"cisco.com+0+21=2,4#5,7?"
+	"wi-fi.org+0+21=2,4#5,7?"
+	"wi-fi.org+0+13=5,6?"
+	"example.com+0+13=5,6",  0 },	/* NAI Realm List */
+//#endif  /* __CONFIG_802_11U__ */
+
 #endif  /* __CONFIG_HSPOT__ */
 //	{ "wl_country_code", "", 0 },		/* Country Code (default obtained from driver) */
 #ifndef RTCONFIG_RALINK
@@ -187,6 +267,9 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_nband", "2", 0},			/* N-BAND */
 	{ "wl0_nband", "2"},			/* 2.4 GHz */
 	{ "wl1_nband", "1"},			/* 5 GHz */
+#ifdef RTAC3200
+	{ "wl2_nband", "1"},                    /* 5 GHz */
+#endif
 	{ "wl_nmcsidx", "-1", 0},		/* MCS Index for N - rate */
 	{ "wl_nmode", "-1", 0},			/* N-mode */
 	{ "wl_rifs_advert", "auto", 0},		/* RIFS mode advertisement */
@@ -314,10 +397,13 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_nas_dbg", "0", 0 },		/* Enable/Disable NAS Debugging messages */
 #endif
 
-	// ASUS used only?	
+	// ASUS used only?
 	{ "wl_nmode_x", 		"0"	},	/* 0/1/2, auto/nonly,bgmixed */
 #ifdef RTCONFIG_BCMWL6
 	{ "wl_bw",			"0"	},	/* 0/1/2/3 auto/20/40/80MHz */
+#ifdef RTCONFIG_QTN
+	{ "wl1_bw",			"3"	},	/* 0/1/2/3 auto/20/40/80MHz */
+#endif
 #else
 	{ "wl_bw",			"1"	},	/* 0/1/2 20, 20/40, 40MHz */
 #endif
@@ -332,13 +418,8 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_phrase_x",		""	},	// Passphrase	// Add
 	{ "wl_lanaccess", 		"off"	},
 	{ "wl_expire", 			"0"	},
-	{ "wl_mbss", 		""	},
-#ifdef RTCONFIG_RALINK
-	{ "wl_TxPower",			"100" 	},
-#else
-//	{ "wl_TxPower", 		"0"	},
-	{ "wl_TxPower",			"80"	},
-#endif
+	{ "wl_mbss",			""	},
+	{ "wl_txpower",			"100"	},
 
 #if defined (RTCONFIG_RALINK) || defined (RTCONFIG_BCMWL6)
 #if defined(RTAC53U)
@@ -352,6 +433,9 @@ struct nvram_tuple router_defaults[] = {
 #ifdef RTCONFIG_BCMARM
 	{ "wl_itxbf", "1" },
 #endif
+#endif
+#ifndef RTCONFIG_RALINK
+	{ "debug_wl", "0" },
 #endif
 
 #if defined (RTCONFIG_WIRELESSREPEATER) || defined (RTCONFIG_PROXYSTA)
@@ -429,7 +513,7 @@ struct nvram_tuple router_defaults[] = {
 #endif
 #endif
 
-// WPS 
+// WPS
 //	#if defined (W7_LOGO) || defined (WIFI_LOGO)
 	{ "wps_enable", "1"},
 //	#else
@@ -455,18 +539,22 @@ struct nvram_tuple router_defaults[] = {
 
 #ifdef RTCONFIG_BCMWL6
 	{ "acs_ifnames", "", 0 },
-#ifdef RTAC68U
+#if defined(RTAC68U)
 	{ "acs_dfs", "0", 0},			/* disable DFS channels for acsd by default */
 #endif
 	{ "acs_band1", "0", 0},
+
 	{ "wl_wet_tunnel", "0", 0  },		/* Disable wet tunnel */
 
 	{ "dpsta_ifnames", "", 0  },
 	{ "dpsta_policy", "1", 0  },
 	{ "dpsta_lan_uif", "1", 0  },
 #ifdef TRAFFIC_MGMT_RSSI_POLICY
-	{ "wl_trf_mgmt_rssi_policy", "0", 0 }, /* Disable RSSI (default) */
+	{ "wl_trf_mgmt_rssi_policy", "0", 0 },	/* Disable RSSI (default) */
 #endif /* TRAFFIC_MGMT */
+#ifdef RTCONFIG_BCMARM
+	{ "wl_atf", "0", 0 }, 			/* Airtime Fairness */
+#endif
 
 	/* Tx Beamforming */
 	{ "wl_txbf_bfr_cap", "1", 0 },
@@ -497,6 +585,11 @@ struct nvram_tuple router_defaults[] = {
 
 	{ "wl_pspretend_retry_limit", "0", 0 }, /* Disable PsPretend */
 	{ "wl_pspretend_threshold", "0", 0 },	/* Disable PsPretend Threshold */
+	{ "wl_taf_enable", "0", 0 }, 		/* Disable TAF */
+	{ "wl_dfs_pref", "" },			/* DFS Preferred channel value  */
+	{ "wl_probresp_mf", "0", 0 },   	/* MAC filter based probe response  */
+	{ "wl_probresp_sw", "1", 0 },   	/* SW probe response  */
+	{ "wl_vht_features", "-1", 0 }, 	/* VHT features  */
 
 	{ "bsd_enable", "0", 0 },		/* Disable Band Steer Daemon */
 #endif
@@ -511,11 +604,16 @@ struct nvram_tuple router_defaults[] = {
 	{ "ctf_disable",		"0"		},
 	{ "ctf_disable_force", 		"0"		},
 #ifdef RTCONFIG_BCMFA
-	{ "ctf_fa_mode",                "0"             },
+	{ "ctf_fa_mode",		"0"		},
+#ifdef RTCONFIG_RGMII_BCM_FA
+	{ "ctf_fa_mode_close",		"0"		},
 #endif
+#endif
+#if 0
 #ifdef RTCONFIG_USB_MODEM
 	// TODO: for the bad CTF. After updating CTF, need to mark these codes.
 	{ "ctf_disable_modem", 		"0"		},
+#endif
 #endif
 #ifndef RTCONFIG_BCMARM
 #if defined(RTAC53U)
@@ -532,7 +630,7 @@ struct nvram_tuple router_defaults[] = {
 //	{ "pktc_disable", 		"0"		},
 //#endif
 
-	// NVRAM for start_lan: 
+	// NVRAM for start_lan:
 // LAN H/W parameters
 	{ "lan_hwnames",		""		},	// LAN driver names (e.g. et0)
 	{ "lan_hwaddr",			""		},	// LAN interface MAC address
@@ -540,14 +638,23 @@ struct nvram_tuple router_defaults[] = {
 	// LAN TCP/IP parameters
 	{ "lan_unit",			"-1"		},
 	{ "lan_proto",			"static"	},	// DHCP server [static|dhcp]	//Barry add 2004 09 16
+#ifdef RTCONFIG_TMOBILE
+	{ "lan_ipaddr",			"192.168.29.1"	},	// LAN IP address
+	{ "lan_ipaddr_rt",		"192.168.29.1"	},
+#else
 	{ "lan_ipaddr",			"192.168.1.1"	},	// LAN IP address
 	{ "lan_ipaddr_rt",		"192.168.1.1"	},
+#endif
 	{ "lan_netmask",		"255.255.255.0"	},	// LAN netmask
 	{ "lan_netmask_rt",		"255.255.255.0" },
 	{ "lan_gateway",		"0.0.0.0"	},	// LAN Gateway
 
 	{ "lan_wins",			""		},	// x.x.x.x x.x.x.x ...
+#ifdef RTCONFIG_TMOBILE
+	{ "lan_domain",			"T-mobile.com"	},	// LAN domain name
+#else
 	{ "lan_domain",			""		},	// LAN domain name
+#endif
 	{ "lan_lease",			"86400"		},	// LAN lease time in seconds
 	{ "lan_stp",			"1"		},	// LAN spanning tree protocol
 	{ "lan_route",			""		},	// Static routes (ipaddr:netmask:gateway:metric:ifname ...)
@@ -580,8 +687,13 @@ struct nvram_tuple router_defaults[] = {
 	// NVRAM for start_dhcpd
 	// DHCP server parameters
 	{ "dhcp_enable_x", "1" },
+#ifdef RTCONFIG_TMOBILE
+	{ "dhcp_start", "192.168.29.100"},
+	{ "dhcp_end", "192.168.29.254"},
+#else
 	{ "dhcp_start", "192.168.1.2"},
 	{ "dhcp_end", "192.168.1.254"},
+#endif
 	{ "dhcp_lease", "86400" },
 	{ "dhcp_gateway_x", "" },
 	{ "dhcp_dns1_x", "" },
@@ -604,9 +716,18 @@ struct nvram_tuple router_defaults[] = {
 	{ "dhcp1_static_x", "0"},
 	{ "dhcp1_staticlist", ""},
 
+#ifdef RTCONFIG_TMOBILE
+	{ "time_zone", "PST8DST" },
+#else
 	{ "time_zone", "GMT0" },
+#endif
+#ifdef RTCONFIG_TMOBILE
+	{ "time_zone_dst", "1" },
+	{ "time_zone_dstoff", "M3.2.0/2,M11.1.0/2" },
+#else
 	{ "time_zone_dst", "0" },
 	{ "time_zone_dstoff", "" },
+#endif
 	{ "ntp_server1", "time.nist.gov" },
 	{ "ntp_server0", "pool.ntp.org" },
 
@@ -615,10 +736,14 @@ struct nvram_tuple router_defaults[] = {
 	{ "sr_rulelist", ""},
 	{ "dr_enable_x", "1" }, // oleg patch
 	{ "mr_enable_x", "0" }, // oleg patch
-	
+
 	// Domain Name
+#ifdef RTCONFIG_TMOBILE
+	{ "local_domain", "cellspot.router"},
+#else
 	{ "local_domain", "router.asus.com"},
-	
+#endif
+
 	// NVRAM for switch control
 //#ifdef RTCONFIG_SWITCH_CONTROL_8367
 #ifdef RTCONFIG_RALINK
@@ -684,7 +809,11 @@ struct nvram_tuple router_defaults[] = {
 	/* Misc WAN parameters */
 
 	{ "wan_desc", ""},		/* WAN connection description */
+#ifdef RTCONFIG_TMOBILE
+	{ "wan_upnp_enable", "0"},	// upnp igd
+#else
 	{ "wan_upnp_enable", "1"}, 	// upnp igd
+#endif
 	{ "wan_pppoe_relay", "0" },
 	{ "wan_dhcpc_options",""},  // Optional arguments for udhcpc
 	{ "wan_mtu", "1500"},		// WAN MTU (non-PPP based)
@@ -740,15 +869,22 @@ struct nvram_tuple router_defaults[] = {
 #else
 	{ "dslx_annex", "4" }, // Annex AIJLM
 #endif
+#ifdef RTCONFIG_VDSL
+	{ "dslx_vdsl_target_snrm", "32767" },
+	{ "dslx_vdsl_tx_gain_off", "32767" },
+	{ "dslx_vdsl_rx_agc", "65535" },
+	{ "dslx_vdsl_upbo", "auto" },
+	{ "dslx_vdsl_profile", "0" },
+#endif
 
 // Viz add dsl transmode
 	{ "dslx_transmode", "atm"},	//atm,ptm
 	{ "dsltmp_transmode", "atm"},	//atm,ptm for UI display
 
 // the following variables suppose can be removed
-	{ "dslx_nat", "1" },	
-	{ "dslx_upnp_enable", "1" },	
-	{ "dslx_link_enable", "1" },	
+	{ "dslx_nat", "1" },
+	{ "dslx_upnp_enable", "1" },
+	{ "dslx_link_enable", "1" },
 	{ "dslx_DHCPClient", "1" },
 	{ "dslx_dhcp_clientid", "" },	//Required by some ISP using RFC 1483 MER.
 	{ "dslx_ipaddr", "0.0.0.0"},	/* IP address */
@@ -756,27 +892,21 @@ struct nvram_tuple router_defaults[] = {
 	{ "dslx_gateway", "0.0.0.0"},	/* gateway */
 	{ "dslx_dnsenable", "1"},
 	{ "dslx_dns1", ""},
-	{ "dslx_dns2", ""},	
-// now use switch_stb_x	
+	{ "dslx_dns2", ""},
+// now use switch_stb_x
 	{ "dslx_pppoe_username", ""},
 	{ "dslx_pppoe_passwd", ""},
 	// this one is no longer to use
 	//{ "dslx_pppoe_dial_on_demand", ""},
 	{ "dslx_pppoe_idletime", "0"},
 	{ "dslx_pppoe_mtu", "1492"},
-	// this one is no longer to use	
+	// this one is no longer to use
 //	{ "dslx_pppoe_mru", ""},
 	{ "dslx_pppoe_service", ""},
 	{ "dslx_pppoe_ac", ""},
-	{ "dslx_pppoe_options", ""},	
+	{ "dslx_pppoe_options", ""},
 	{ "dslx_hwaddr", ""},
-#ifdef RTCONFIG_VDSL
-	{ "dslx_vdsl_target_snrm", "32767" },
-	{ "dslx_vdsl_tx_gain_off", "32767" },
-	{ "dslx_vdsl_rx_agc", "65535" },
-	{ "dslx_vdsl_upbo", "auto" },
-#endif
-//	
+//
 	{ "dsl_unit", "0"},
 	{ "dsl_subunit", "-1" },
 //
@@ -785,7 +915,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "dsl_vci", ""},
 	{ "dsl_encap", ""},
 	{ "dsl_proto", ""},
-	
+
 	/* Paul modify 2012/8/6, set default Service Category to UBR without PCR, with PCR, SCR and MBS set to 0. */
 	{ "dsl_svc_cat", "0"},
 	{ "dsl_pcr", "0"},
@@ -815,7 +945,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "dsl1_svc_cat", ""},
 	{ "dsl1_pcr", ""},
 	{ "dsl1_scr", ""},
-	{ "dsl1_mbs", ""},	
+	{ "dsl1_mbs", ""},
 //
 	{ "dsl2_enable", "0"},
 	{ "dsl2_vpi", ""},
@@ -825,7 +955,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "dsl2_svc_cat", ""},
 	{ "dsl2_pcr", ""},
 	{ "dsl2_scr", ""},
-	{ "dsl2_mbs", ""},	
+	{ "dsl2_mbs", ""},
 //
 	{ "dsl3_enable", "0"},
 	{ "dsl3_vpi", ""},
@@ -875,11 +1005,11 @@ struct nvram_tuple router_defaults[] = {
 	{ "dsl7_svc_cat", ""},
 	{ "dsl7_pcr", ""},
 	{ "dsl7_scr", ""},
-	{ "dsl7_mbs", ""},	
+	{ "dsl7_mbs", ""},
 // number of PVC , program generated
 	{ "dslx_config_num", "0"},
 // for debug , program generated
-	{ "dslx_debug", "0"},	
+	{ "dslx_debug", "0"},
 
 #ifdef RTCONFIG_VDSL
 	{ "dsl8_enable", "0"},
@@ -921,36 +1051,25 @@ struct nvram_tuple router_defaults[] = {
 	{ "dsl9_vid", ""},
 #endif
 
-#ifdef RTCONFIG_DSL_TCLINUX
-	{ "dsllog_fwver", ""},
-	{ "dsllog_drvver", ""},
-	//{ "dsllog_linestate", ""},	//dsltmp_adslsyncsts
-	{ "dsllog_opmode", ""},
-	{ "dsllog_adsltype", ""},
-	{ "dsllog_snrmargindown", ""},
-	{ "dsllog_snrmarginup", ""},
-	{ "dsllog_attendown", ""},
-	{ "dsllog_attenup", ""},
-	{ "dsllog_dataratedown", ""},
-	{ "dsllog_datarateup", ""},
-	{ "dsllog_attaindown", ""},
-	{ "dsllog_attainup", ""},
-	{ "dsllog_powerdown", ""},
-	{ "dsllog_powerup", ""},
-	{ "dsllog_crcdown", ""},
-	{ "dsllog_crcup", ""},
-#endif
-
 #endif
 
 	// NVRAM for start_firewall/start_qos
 	// QOS
 	// Maybe removed later
+#ifdef RTCONFIG_TMOBILE_QOS
+	{ "qos_rulelist", "<T-Mobile 2.4G>>>any>>1<T-Mobile 5G>>>any>>1<Generic 2.4G>>>any>>2<Generic 5G>>>any>>2"},
+#else
 	{ "qos_rulelist", "<Web Surf>>80>tcp>0~512>0<HTTPS>>443>tcp>0~512>0<File Transfer>>80>tcp>512~>3<File Transfer>>443>tcp>512~>3"},
+#endif
 
 	{ "qos_orates",	"80-100,10-100,5-100,3-100,2-95,0-0,0-0,0-0,0-0,0-0"},
 	{ "qos_irates",	"100,100,100,100,100,0,0,0,0,0"},
-	{ "qos_enable",			"0"				},
+	{ "qos_enable",			"0"				}, // 0: off, 1: on
+#ifdef RTCONFIG_BWDPI
+	{ "qos_type",			"1"				}, // 0: Traditional, 1: Intelligence.
+#else
+	{ "qos_type",			"0"				}, // 0: Traditional, 1: Intelligence.
+#endif
 	{ "qos_method",			"0"				},
 	{ "qos_sticky",			"1"				},
 	{ "qos_ack",			"on"				},
@@ -965,7 +1084,6 @@ struct nvram_tuple router_defaults[] = {
 	{ "qos_burst0",			""				},
 	{ "qos_burst1",			""				},
 	{ "qos_default",		"3"				},
-
 
 	// TriggerList
 	{ "autofw_enable_x", "0" },
@@ -1000,6 +1118,21 @@ struct nvram_tuple router_defaults[] = {
 	{"MULTIFILTER_MACFILTER_DAYTIME", "" },
 	{"MULTIFILTER_URL_ENABLE", "" },
 	{"MULTIFILTER_URL", "" },
+
+#ifdef RTCONFIG_BWDPI
+	// TrendMicro module
+	{ "wrs_enable", "0" },
+	{ "wrs_rulelist", "" },			// <switch1>MAC1>Adult1>...<switch2>MAC2>Adult2>...
+	{ "wrs_cc_enable", "0" },
+	{ "wrs_vp_enable", "0" },
+	{ "wrs_app_enable", "0" },
+	{ "wrs_app_rulelist", "" },		// <switch1>MAC1>Commercial1>...<switch2>MAC2>Commercial2>...
+	{ "wrs_blocking_type", "0" },		// 0: TrendMicro type, 1: 404 error page
+	{ "bwdpi_alive", "10" },		// check dpi engine alive timeout
+	{ "bwdpi_app_rulelist", "9,20<4<0,5,6,15,17<8<13,24<1,3,14<7,10,11,21,23<<" },
+	{ "bwdpi_test", "2" },			// backup plan : bwdpi_test=2
+	{ "TM_EULA", "0"},			// EULA of Trend Micro
+#endif
 #endif	/* RTCONFIG_PARENTALCTRL */
 #ifdef RTCONFIG_YANDEXDNS
 	{ "yadns_enable_x", "0"},	/* 0: disable, 1: enable Yandex.DNS */
@@ -1033,8 +1166,8 @@ struct nvram_tuple router_defaults[] = {
 	{ "misc_httpsport_x", "8443" },
 #endif
 	{ "misc_ping_x", "0" },
-	{ "misc_lpr_x", "0" },	
-	
+	{ "misc_lpr_x", "0" },
+
 	// UrlList
 	{ "url_enable_x", "0"},
 	{ "url_date_x", "1111111"},
@@ -1108,6 +1241,9 @@ struct nvram_tuple router_defaults[] = {
 #ifdef RTCONFIG_NTFS
 	{ "usb_fs_ntfs", "1"},
 	{ "usb_fs_ntfs_sparse", "0"},
+#endif
+#ifdef RTCONFIG_EXFAT
+	{ "usb_fs_exfat", "1"},
 #endif
 #ifdef RTCONFIG_HFS
 	{ "usb_fs_hfs", "1"},
@@ -1230,12 +1366,13 @@ struct nvram_tuple router_defaults[] = {
 	{ "dms_rescan", "1"	},
 	{ "dms_port", "8200" 	},
 	{ "dms_dbdir", "/var/cache/minidlna"},
-	{ "dms_dir", "/tmp/mnt" },
+	{ "dms_dir", "/mnt"	},
 	{ "dms_tivo", "0"	},
 	{ "dms_stdlna", "0"	},
 	{ "dms_sas", 	"0"	},
-	{ "dms_dir_x", "</tmp/mnt"},
+	{ "dms_dir_x", "</mnt"},
 	{ "dms_dir_type_x", "<AVP"},
+	{ "dms_dir_manual", "0"	},
 	{ "dms_friendly_name",""},
 	{ "daapd_enable", "0" 	},
 	{ "daapd_friendly_name",""},
@@ -1278,11 +1415,16 @@ struct nvram_tuple router_defaults[] = {
 	{ "apps_state_autofix", "1" },
 
 	{ "http_username", "admin" },
+#ifdef RTCONFIG_TMOBILE
+	{ "http_passwd", "password" },
+#else
 	{ "http_passwd", "admin" },
+#endif
 	{ "http_enable", "0"}, // 0: http, 1: https, 2: both
 	{ "http_client", "0"},
 	{ "http_clientlist", "0"},
 	{ "http_autologout", "30"},
+	{ "custom_clientlist", ""},	// for custom client list
 
 	{ "temp_lang", ""},
 	{ "wollist", ""},
@@ -1303,9 +1445,12 @@ struct nvram_tuple router_defaults[] = {
 #ifdef RTCONFIG_LED_BTN
 	{ "btn_led", "0"},
 	{ "btn_led_mode", "0"},
+#ifdef RTAC87U
+	{ "LED_switch_count", "1"},
+#endif
 #endif
 #ifdef RTCONFIG_TURBO
-	{ "btn_turbo", "0"},
+	{ "btn_turbo", "1"},
 #endif
 	 /* APCLI/STA parameters */
 	#if 0
@@ -1431,6 +1576,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "vpnc_clientlist", ""},
 	{ "vpnc_connect_row", ""},
 	{ "vpnc_auto_conn", ""},
+	{ "vpnc_appendix", ""},
 #endif
 
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD) || defined(RTCONFIG_OPENVPN)
@@ -1657,8 +1803,8 @@ struct nvram_tuple router_defaults[] = {
 #endif
 
 #ifdef RTCONFIG_PUSH_EMAIL
-	{ "PM_enable", "0"},                            /* Enable Push Mail feature. */
-	{ "PM_type", "0"},                              /* Send the tracking to the of xDSL team's official gmail.  */
+	{ "PM_enable", "0"},				/* Enable Push Mail feature. */
+	{ "PM_type", "0"},				/* Send the tracking to the of xDSL team's official gmail.  */
 	{ "PM_SMTP_SERVER", ""},
 	{ "PM_SMTP_PORT", ""},
 	{ "PM_MY_NAME", ""},
@@ -1672,13 +1818,13 @@ struct nvram_tuple router_defaults[] = {
 	{ "PM_LETTER_PATH", ""},
 	{ "PM_MAIL_FILE", ""},
 	{ "PM_MAIL_TARGET", ""},
-	{ "PM_title", ""},                              /* The title of mail. */
-	{ "PM_target", ""},                             /* The address of Mail Server. */
-	{ "PM_restart", "0"},                           /* reset the Push Mail Service. */
-	{ "PM_freq", "0"},                              /* 0:daily, 1:weekly, 2:monthly. */
-	{ "PM_mon", "0"},                               /* months since January (0 to 11). */
-	{ "PM_day", "0"},                               /* days since Sunday (0 to 6 Sunday=0). */
-	{ "PM_hour", "0"},                              /* hours since midnight (0 to 23). */
+	{ "PM_title", ""},				/* The title of mail. */
+	{ "PM_target", ""},				/* The address of Mail Server. */
+	{ "PM_restart", "0"},				/* reset the Push Mail Service. */
+	{ "PM_freq", "0"},				/* 0:daily, 1:weekly, 2:monthly. */
+	{ "PM_mon", "0"},				/* months since January (0 to 11). */
+	{ "PM_day", "0"},				/* days since Sunday (0 to 6 Sunday=0). */
+	{ "PM_hour", "0"},				/* hours since midnight (0 to 23). */
 	{ "pushnotify_httplogin", "1"},
 	{ "pushnotify_diskmonitor", "1"},
 	{ "PM_attach_syslog", ""},
@@ -1691,6 +1837,11 @@ struct nvram_tuple router_defaults[] = {
 	{ "fb_availability", ""},
 	{ "fb_comment", ""},
 	{ "fb_email_dbg", ""},	//send to email address
+	{ "fb_state", ""},
+#ifdef RTCONFIG_DSL
+	// for web ui udentify , 0=notificaton, 1=close
+	{ "fb_experience", "0"},
+#endif
 #endif
 
 #ifdef  __CONFIG_NORTON__
@@ -1708,8 +1859,8 @@ struct nvram_tuple router_defaults[] = {
 
 #ifdef RTCONFIG_IPV6
 	// IPv6 parameters
-	{ "ipv6_service",	"disabled"	},	// disabled/staic6/dhcp6/6to4/6in4/6rd/other
-	{ "ipv6_ifdev",		"ppp"		},	
+	{ "ipv6_service",	"disabled"	},	// disabled/dhcp6/6in4/6to4/6rd/other
+	{ "ipv6_ifdev",		"ppp"		},
 	{ "ipv6_prefix",	""		},	// The global-scope IPv6 prefix to route/advertise
 	{ "ipv6_prefix_length",	"64"		},	// The bit length of the prefix. Used by dhcp6c. For radvd, /64 is always assumed.
 	{ "ipv6_dhcp_pd",	"1"		},	// Enable DHCP-PD (DHCP Prefix Delegation) by default
@@ -1718,12 +1869,11 @@ struct nvram_tuple router_defaults[] = {
 	{ "ipv6_ipaddr",	""		},	// used in ipv6_service other
 	{ "ipv6_gateway",	""		},	// used in ipv6_service other
 	{ "ipv6_radvd",		"1"		},	// Enable Router Advertisement (radvd)
-	{ "ipv6_accept_ra",	"1"		},	// Accept RA from WAN (0x1) / LAN (0x2)
-	{ "ipv6_ifname",	"six0"		},	// The interface facing the rest of the IPv6 world
 	{ "ipv6_relay",		"192.88.99.1"	},	// IPv6 Anycast Address
 	{ "ipv6_tun_v4end",	"0.0.0.0"	},	// Foreign IPv4 endpoint of SIT tunnel
 	{ "ipv6_tun_addr",	""		},	// IPv6 address to assign to local tunnel endpoint
-	{ "ipv6_tun_addrlen",	"64"		},	// CIDR prefix length for tunnel's IPv6 address	
+	{ "ipv6_tun_addrlen",	"64"		},	// CIDR prefix length for tunnel's IPv6 address
+	{ "ipv6_tun_peer",	""		},	// IPv6 address of remote tunnel endpoint
 	{ "ipv6_tun_mtu",	"0"		},	// Tunnel MTU, 0 for default
 	{ "ipv6_tun_ttl",	"255"		},	// Tunnel TTL
 	{ "ipv6_6rd_dhcp",	"1"		},
@@ -1742,7 +1892,6 @@ struct nvram_tuple router_defaults[] = {
 	{ "ipv6_dnsenable",	"1"		},
 	{ "ipv6_get_domain",	""		},	// domain name which got by dhcp6c
 	{ "ipv6_debug",		"0"		},
-#endif
 	{ "ipv6_autoconf_type", "0"		},	// IPv6 LAN auconfiguration type, 0: stateless, 1: stateful
 	{ "ipv6_dhcp_lifetime", "86400"		},	// valid lifetimes of IPv6 prefix in seconds
 	{ "ipv6_dhcp_start",	""		},	// start of address pool
@@ -1751,9 +1900,22 @@ struct nvram_tuple router_defaults[] = {
 	{ "ipv6_fw_rulelist",	""		},	// IPv6 allowed forward rules
 	{ "ipv6_ra_conf",	"noneset"	},	// address configuration from WAN router advertisement
 	{ "ipv6_dhcp6s_enable",	"1"		},	// DHCP6 Server for LAN
-
+#endif
 	{ "web_redirect", 	"3"		},	// Redirect on NOLINK or NOINTERNET
 	{ "disiosdet",		"1"		},
+
+#ifdef RTCONFIG_TMOBILE
+	{ "smtp_gw",		""		},	// STMP server
+	{ "smtp_port",		""		},	// Server port
+	{ "myname",		""		},	// Name
+	{ "mymail",		""		},	// Email address
+	{ "smtp_auth",		"1"		},	// Authentication protocol, 1: Login 0: Plain
+	{ "auth_user",		""		},	// Username
+	{ "auth_pass",		""		},	// Password
+	{ "to_mail",		""		},	// Recipient
+	{ "sendsub",		""		},	// Subject
+	{ "sendmsg",		""		},	// Content
+#endif
 
 #ifdef RTCONFIG_FANCTRL
 	{ "fanctrl_dutycycle",		"0"},
@@ -2083,6 +2245,7 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "dsltmp_qis_mbs", ""},
 	{ "dsltmp_qis_pppoe_relay", ""},
 	{ "dsltmp_qis_hwaddr", ""},
+	{ "dsltmp_qis_admin_username", ""},
 	{ "dsltmp_qis_admin_passwd", ""},
 	{ "dsltmp_qis_admin_passwd_set", "0"},
 	{ "dsltmp_qis_dsl_pvc_set", "0"},
@@ -2098,6 +2261,26 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "dsltmp_syncloss", "0"},
 	{ "dsltmp_syncloss_apply", "0"},
 
+#ifdef RTCONFIG_DSL_TCLINUX
+	{ "dsllog_fwver", ""},
+	{ "dsllog_drvver", ""},
+	//{ "dsllog_linestate", ""},	//dsltmp_adslsyncsts
+	{ "dsllog_opmode", ""},
+	{ "dsllog_adsltype", ""},
+	{ "dsllog_snrmargindown", ""},
+	{ "dsllog_snrmarginup", ""},
+	{ "dsllog_attendown", ""},
+	{ "dsllog_attenup", ""},
+	{ "dsllog_dataratedown", ""},
+	{ "dsllog_datarateup", ""},
+	{ "dsllog_attaindown", ""},
+	{ "dsllog_attainup", ""},
+	{ "dsllog_powerdown", ""},
+	{ "dsllog_powerup", ""},
+	{ "dsllog_crcdown", ""},
+	{ "dsllog_crcup", ""},
+#endif
+
 #endif
 	{ "ddns_cache", ""},
 	{ "ddns_ipaddr", ""},
@@ -2109,7 +2292,6 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "ddns_update_by_wdog", ""},
 	{ "reboot_time", "70"},
 #ifdef RTCONFIG_USB_MODEM
-	{ "modem_vid", ""},
 	{ "g3state_pin", ""},
 	{ "g3state_z", ""},
 	{ "g3state_q0", ""},
@@ -2120,6 +2302,8 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "g3state_dial", ""},
 	{ "g3state_conn", ""},
 #endif
+	{ "custom_clientlist",			""}, /* for customize device name  */
+	{ "nmp_client_list",		""},
 	{ NULL, NULL }
 };
 
@@ -2231,11 +2415,297 @@ struct nvram_tuple bcm4360ac_defaults[] = {
 	{ 0, 0, 0 }
 };
 #else
+#ifdef RTAC3200
+struct nvram_tuple bcm4360ac_defaults[] = {
+	{ "devpath0", "pcie/1/1", 0 },
+	{ "0:devpath0", "sb/1/", 0 },
+	{ "0:boardrev", "0x1421", 0 },
+	{ "0:boardvendor", "0x14e4", 0 },
+	{ "0:devid", "0x43bc", 0 },
+	{ "0:sromrev", "11", 0 },
+	{ "0:boardflags", "0x30000000", 0 },
+	{ "0:boardflags2", "0x200002", 0 },
+	{ "0:venid", "0x14e4", 0 },
+	{ "0:boardflags3", "0x0", 0 },
+	{ "0:macaddr", "00:90:4C:A4:50:00", 0 },
+	{ "0:ccode", "Q2", 0 },
+	{ "0:regrev", "12", 0 },
+	{ "0:aa5g", "7", 0 },
+	{ "0:aga0", "0x0", 0 },
+	{ "0:aga1", "0x0", 0 },
+	{ "0:aga2", "0x0", 0 },
+	{ "0:txchain", "7", 0 },
+	{ "0:rxchain", "7", 0 },
+	{ "0:antswitch", "0", 0 },
+	{ "0:femctrl", "3", 0 },
+	{ "0:tssiposslope5g", "1", 0 },
+	{ "0:epagain5g", "0", 0 },
+	{ "0:pdgain5g", "4", 0 },
+	{ "0:tworangetssi5g", "0", 0 },
+	{ "0:papdcap5g", "0", 0 },
+	{ "0:gainctrlsph", "0", 0 },
+	{ "0:tempthresh", "120", 0 },
+	{ "0:tempoffset", "255", 0 },
+	{ "0:rawtempsense", "0x1ff", 0 },
+	{ "0:tempsense_slope", "0xff", 0 },
+	{ "0:tempcorrx", "0x3f", 0 },
+	{ "0:tempsense_option", "0x3", 0 },
+	{ "0:xtalfreq", "40000", 0 },
+	{ "0:phycal_tempdelta", "15", 0 },
+	{ "0:temps_period", "5", 0 },
+	{ "0:temps_hysteresis", "5", 0 },
+	{ "0:pdoffset40ma0", "4369", 0 },
+	{ "0:pdoffset40ma1", "4369", 0 },
+	{ "0:pdoffset40ma2", "4369", 0 },
+	{ "0:pdoffset80ma0", "0", 0 },
+	{ "0:pdoffset80ma1", "0", 0 },
+	{ "0:pdoffset80ma2", "0", 0 },
+	{ "0:subband5gver", "0x4", 0 },
+	{ "0:mcsbw205glpo", "0", 0 },
+	{ "0:mcsbw405glpo", "0", 0 },
+	{ "0:mcsbw805glpo", "0", 0 },
+	{ "0:mcsbw1605glpo", "0", 0 },
+	{ "0:mcsbw205gmpo", "0xFFFDA844", 0 },
+	{ "0:mcsbw405gmpo", "0xFFFDA844", 0 },
+	{ "0:mcsbw805gmpo", "0xFFFDA844", 0 },
+	{ "0:mcsbw1605gmpo", "0", 0 },
+	{ "0:mcsbw205ghpo", "0xFFFDA844", 0 },
+	{ "0:mcsbw405ghpo", "0xFFFDA844", 0 },
+	{ "0:mcsbw805ghpo", "0xFFFDA844", 0 },
+	{ "0:mcsbw1605ghpo", "0", 0 },
+	{ "0:mcslr5glpo", "0", 0 },
+	{ "0:mcslr5gmpo", "0", 0 },
+	{ "0:mcslr5ghpo", "0", 0 },
+	{ "0:dot11agduphrpo", "0", 0 },
+	{ "0:dot11agduplrpo", "0", 0 },
+	{ "0:rxgainerr5ga0", "63,63,63,63", 0 },
+	{ "0:rxgainerr5ga1", "31,31,31,31", 0 },
+	{ "0:rxgainerr5ga2", "31,31,31,31", 0 },
+	{ "0:rxgains5gmelnagaina0", "2", 0 },
+	{ "0:rxgains5gmtrisoa0", "5", 0 },
+	{ "0:rxgains5gmtrelnabypa0", "1", 0 },
+	{ "0:rxgains5ghelnagaina0", "2", 0 },
+	{ "0:rxgains5ghtrisoa0", "5", 0 },
+	{ "0:rxgains5ghtrelnabypa0", "1", 0 },
+	{ "0:rxgains5gelnagaina0", "1", 0 },
+	{ "0:rxgains5gtrisoa0", "7", 0 },
+	{ "0:rxgains5gtrelnabypa0", "1", 0 },
+	{ "0:maxp5ga0", "54,90,90,106", 0 },
+	{ "0:pa5ga0", "0xff4c,0x18df,0xfd12,0xff52,0x195d,0xfd11,0xfefa,0x1704,0xfce9,0xff42,0x1cf2,0xfc8b", 0 },
+	{ "0:rxgains5gmelnagaina1", "2", 0 },
+	{ "0:rxgains5gmtrisoa1", "4", 0 },
+	{ "0:rxgains5gmtrelnabypa1", "1", 0 },
+	{ "0:rxgains5ghelnagaina1", "2", 0 },
+	{ "0:rxgains5ghtrisoa1", "4", 0 },
+	{ "0:rxgains5ghtrelnabypa1", "1", 0 },
+	{ "0:rxgains5gelnagaina1", "1", 0 },
+	{ "0:rxgains5gtrisoa1", "6", 0 },
+	{ "0:rxgains5gtrelnabypa1", "1", 0 },
+	{ "0:maxp5ga1", "54,90,90,106", 0 },
+	{ "0:pa5ga1", "0xff5c,0x19ba,0xfd12,0xff3e,0x1932,0xfcf5,0xff34,0x1b80,0xfc9e,0xff3f,0x1c63,0xfc99", 0 },
+	{ "0:rxgains5gmelnagaina2", "3", 0 },
+	{ "0:rxgains5gmtrisoa2", "4", 0 },
+	{ "0:rxgains5gmtrelnabypa2", "1", 0 },
+	{ "0:rxgains5ghelnagaina2", "3", 0 },
+	{ "0:rxgains5ghtrisoa2", "4", 0 },
+	{ "0:rxgains5ghtrelnabypa2", "1", 0 },
+	{ "0:rxgains5gelnagaina2", "1", 0 },
+	{ "0:rxgains5gtrisoa2", "5", 0 },
+	{ "0:rxgains5gtrelnabypa2", "1", 0 },
+	{ "0:maxp5ga2", "54,90,90,106", 0 },
+	{ "0:pa5ga2", "0xff38,0x18f3,0xfcef,0xff4f,0x1a3d,0xfcef,0xff42,0x1c86,0xfc98,0xff3e,0x1c59,0xfc99", 0 },
+	{ "0:ledbh0", "11", 0 },
+	{ "0:ledbh1", "11", 0 },
+	{ "0:ledbh2", "11", 0 },
+	{ "0:ledbh3", "11", 0 },
+	{ "devpath1", "pcie/2/3", 0 },
+	{ "1:devpath1", "sb/1/", 0 },
+	{ "1:boardrev", "0x1421", 0 },
+	{ "1:boardvendor", "0x14e4", 0 },
+	{ "1:devid", "0x43bc", 0 },
+	{ "1:sromrev", "11", 0 },
+	{ "1:boardflags", "0x30000000", 0 },
+	{ "1:boardflags2", "0x200002", 0 },
+	{ "1:venid", "0x14e4", 0 },
+	{ "1:boardflags3", "0x0", 0 },
+	{ "1:macaddr", "00:91:4C:A1:50:00", 0 },
+	{ "1:ccode", "Q2", 0 },
+	{ "1:regrev", "12", 0 },
+	{ "1:aa5g", "7", 0 },
+	{ "1:aga0", "0x0", 0 },
+	{ "1:aga1", "0x0", 0 },
+	{ "1:aga2", "0x0", 0 },
+	{ "1:txchain", "7", 0 },
+	{ "1:rxchain", "7", 0 },
+	{ "1:antswitch", "0", 0 },
+	{ "1:femctrl", "3", 0 },
+	{ "1:tssiposslope5g", "1", 0 },
+	{ "1:epagain5g", "0", 0 },
+	{ "1:pdgain5g", "4", 0 },
+	{ "1:tworangetssi5g", "0", 0 },
+	{ "1:papdcap5g", "0", 0 },
+	{ "1:gainctrlsph", "0", 0 },
+	{ "1:tempthresh", "120", 0 },
+	{ "1:tempoffset", "255", 0 },
+	{ "1:rawtempsense", "0x1ff", 0 },
+	{ "1:tempsense_slope", "0xff", 0 },
+	{ "1:tempcorrx", "0x3f", 0 },
+	{ "1:tempsense_option", "0x3", 0 },
+	{ "1:xtalfreq", "40000", 0 },
+	{ "1:phycal_tempdelta", "15", 0 },
+	{ "1:temps_period", "5", 0 },
+	{ "1:temps_hysteresis", "5", 0 },
+	{ "1:pdoffset40ma0", "4369", 0 },
+	{ "1:pdoffset40ma1", "4369", 0 },
+	{ "1:pdoffset40ma2", "4369", 0 },
+	{ "1:pdoffset80ma0", "0", 0 },
+	{ "1:pdoffset80ma1", "0", 0 },
+	{ "1:pdoffset80ma2", "0", 0 },
+	{ "1:subband5gver", "0x4", 0 },
+	{ "1:mcsbw205glpo", "0", 0 },
+	{ "1:mcsbw405glpo", "0", 0 },
+	{ "1:mcsbw805glpo", "0", 0 },
+	{ "1:mcsbw1605glpo", "0", 0 },
+	{ "1:mcsbw205gmpo", "0xFFFDA844", 0 },
+	{ "1:mcsbw405gmpo", "0xFFFDA844", 0 },
+	{ "1:mcsbw805gmpo", "0xFFFDA844", 0 },
+	{ "1:mcsbw1605gmpo", "0", 0 },
+	{ "1:mcsbw205ghpo", "0xFFFDA844", 0 },
+	{ "1:mcsbw405ghpo", "0xFFFDA844", 0 },
+	{ "1:mcsbw805ghpo", "0xFFFDA844", 0 },
+	{ "1:mcsbw1605ghpo", "0", 0 },
+	{ "1:mcslr5glpo", "0", 0 },
+	{ "1:mcslr5gmpo", "0", 0 },
+	{ "1:mcslr5ghpo", "0", 0 },
+	{ "1:dot11agduphrpo", "0", 0 },
+	{ "1:dot11agduplrpo", "0", 0 },
+	{ "1:rxgainerr5ga0", "63,63,63,63", 0 },
+	{ "1:rxgainerr5ga1", "31,31,31,31", 0 },
+	{ "1:rxgainerr5ga2", "31,31,31,31", 0 },
+	{ "1:rxgains5gmelnagaina0", "2", 0 },
+	{ "1:rxgains5gmtrisoa0", "5", 0 },
+	{ "1:rxgains5gmtrelnabypa0", "1", 0 },
+	{ "1:rxgains5ghelnagaina0", "2", 0 },
+	{ "1:rxgains5ghtrisoa0", "5", 0 },
+	{ "1:rxgains5ghtrelnabypa0", "1", 0 },
+	{ "1:rxgains5gelnagaina0", "1", 0 },
+	{ "1:rxgains5gtrisoa0", "7", 0 },
+	{ "1:rxgains5gtrelnabypa0", "1", 0 },
+	{ "1:maxp5ga0", "64,90,90,106", 0 },
+	{ "1:pa5ga0", "0xff4c,0x18df,0xfd12,0xff52,0x195d,0xfd11,0xfefa,0x1704,0xfce9,0xff42,0x1cf2,0xfc8b", 0 },
+	{ "1:rxgains5gmelnagaina1", "2", 0 },
+	{ "1:rxgains5gmtrisoa1", "4", 0 },
+	{ "1:rxgains5gmtrelnabypa1", "1", 0 },
+	{ "1:rxgains5ghelnagaina1", "2", 0 },
+	{ "1:rxgains5ghtrisoa1", "4", 0 },
+	{ "1:rxgains5ghtrelnabypa1", "1", 0 },
+	{ "1:rxgains5gelnagaina1", "1", 0 },
+	{ "1:rxgains5gtrisoa1", "6", 0 },
+	{ "1:rxgains5gtrelnabypa1", "1", 0 },
+	{ "1:maxp5ga1", "64,90,90,106", 0 },
+	{ "1:pa5ga1", "0xff5c,0x19ba,0xfd12,0xff3e,0x1932,0xfcf5,0xff34,0x1b80,0xfc9e,0xff3f,0x1c63,0xfc99", 0 },
+	{ "1:rxgains5gmelnagaina2", "3", 0 },
+	{ "1:rxgains5gmtrisoa2", "4", 0 },
+	{ "1:rxgains5gmtrelnabypa2", "1", 0 },
+	{ "1:rxgains5ghelnagaina2", "3", 0 },
+	{ "1:rxgains5ghtrisoa2", "4", 0 },
+	{ "1:rxgains5ghtrelnabypa2", "1", 0 },
+	{ "1:rxgains5gelnagaina2", "1", 0 },
+	{ "1:rxgains5gtrisoa2", "5", 0 },
+	{ "1:rxgains5gtrelnabypa2", "1", 0 },
+	{ "1:maxp5ga2", "64,90,90,106", 0 },
+	{ "1:pa5ga2", "0xff38,0x18f3,0xfcef,0xff4f,0x1a3d,0xfcef,0xff42,0x1c86,0xfc98,0xff3e,0x1c59,0xfc99", 0 },
+	{ "1:ledbh0", "11", 0 },
+	{ "1:ledbh1", "11", 0 },
+	{ "1:ledbh2", "11", 0 },
+	{ "1:ledbh3", "11", 0 },
+	{ "devpath2", "pcie/2/4", 0 },
+	{ "2:devpath2", "sb/1/", 0 },
+	{ "2:boardrev", "0x1421", 0 },
+	{ "2:boardvendor", "0x14e4", 0 },
+	{ "2:devid", "0x43bb", 0 },
+	{ "2:sromrev", "11", 0 },
+	{ "2:boardflags", "0x1000", 0 },
+	{ "2:boardflags2", "0x100002", 0 },
+	{ "2:venvid", "0x14e4", 0 },
+	{ "2:boardflags3", "0x4000005", 0 },
+	{ "2:macaddr", "00:90:4c:02:e0:00", 0 },
+	{ "2:ccode", "Q2", 0 },
+	{ "2:regrev", "12", 0 },
+	{ "2:aa2g", "7", 0 },
+	{ "2:agbg0", "0x0", 0 },
+	{ "2:agbg1", "0x0", 0 },
+	{ "2:agbg2", "0x0", 0 },
+	{ "2:txchain", "7", 0 },
+	{ "2:rxchain", "7", 0 },
+	{ "2:antswitch", "0", 0 },
+	{ "2:femctrl", "3", 0 },
+	{ "2:tssiposslope2g", "1", 0 },
+	{ "2:epagain2g", "0", 0 },
+	{ "2:pdgain2g", "21", 0 },
+	{ "2:tworangetssi2g", "0", 0 },
+	{ "2:papdcap2g", "0", 0 },
+	{ "2:gainctrlsph", "0", 0 },
+	{ "2:tempthresh", "120", 0 },
+	{ "2:tempoffset", "255", 0 },
+	{ "2:rawtempsense", "0x1ff", 0 },
+	{ "2:tempsense_slope", "0xff", 0 },
+	{ "2:tempcorrx", "0x3f", 0 },
+	{ "2:tempsense_option", "0x3", 0 },
+	{ "2:xtalfreq", "40000", 0 },
+	{ "2:phycal_tempdelta", "15", 0 },
+	{ "2:temps_period", "5", 0 },
+	{ "2:temps_hysteresis", "5", 0 },
+	{ "2:pdoffset2g40ma0", "15", 0 },
+	{ "2:pdoffset2g40ma1", "15", 0 },
+	{ "2:pdoffset2g40ma2", "15", 0 },
+	{ "2:pdoffset2g40mvalid", "1", 0 },
+	{ "2:pdoffset40ma0", "0", 0 },
+	{ "2:pdoffset40ma1", "0", 0 },
+	{ "2:pdoffset40ma2", "0", 0 },
+	{ "2:pdoffset80ma0", "0", 0 },
+	{ "2:pdoffset80ma1", "0", 0 },
+	{ "2:pdoffset80ma2", "0", 0 },
+	{ "2:cckbw202gpo", "0", 0 },
+	{ "2:cckbw20ul2gpo", "0", 0 },
+	{ "2:mcsbw202gpo", "0xFFFDA844", 0 },
+	{ "2:mcsbw402gpo", "0xFFFDA844", 0 },
+	{ "2:dot11agofdmhrbw202gpo", "0xDB97", 0 },
+	{ "2:ofdmlrbw202gpo", "0", 0 },
+	{ "2:dot11agduphrpo", "0", 0 },
+	{ "2:dot11agduplrpo", "0", 0 },
+	{ "2:rxgainerr2ga0", "63", 0 },
+	{ "2:rxgainerr2ga1", "31", 0 },
+	{ "2:rxgainerr2ga2", "31", 0 },
+	{ "2:rpcal2g", "0", 0 },
+	{ "2:maxp2ga0", "106", 0 },
+	{ "2:pa2ga0", "0xFF40,0x19AA,0xFCF4", 0 },
+	{ "2:rxgains2gelnagaina0", "4", 0 },
+	{ "2:rxgains2gtrisoa0", "7", 0 },
+	{ "2:rxgains2gtrelnabypa0", "1", 0 },
+	{ "2:maxp2ga1", "106", 0 },
+	{ "2:pa2ga1", "0xFF45,0x1A03,0xFCF6", 0 },
+	{ "2:rxgains2gelnagaina1", "4", 0 },
+	{ "2:rxgains2gtrisoa1", "7", 0 },
+	{ "2:rxgains2gtrelnabypa1", "1", 0 },
+	{ "2:maxp2ga2", "106", 0 },
+	{ "2:pa2ga2", "0xFF3A,0x19B5,0xFCE8", 0 },
+	{ "2:rxgains2gelnagaina2", "4", 0 },
+	{ "2:rxgains2gtrisoa2", "7", 0 },
+	{ "2:rxgains2gtrelnabypa2", "1", 0 },
+	{ "2:ledbh0", "11", 0 },
+	{ "2:ledbh1", "11", 0 },
+	{ "2:ledbh2", "11", 0 },
+	{ "2:ledbh3", "11", 0 },
+	{ 0, 0, 0 }
+};
+#else
 struct nvram_tuple bcm4360ac_defaults[] = {
 	{ "0:ledbh10", "7", 0 },
 	{ "1:ledbh10", "7", 0 },
 	{ 0, 0, 0 }
 };
+#endif
 #endif
 #endif
 

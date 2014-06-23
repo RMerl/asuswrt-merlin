@@ -68,6 +68,11 @@ for(var x=0; x < apps_array.length; x++){	//check if AiCloud has installed
 var ddns_hostname = '<% nvram_get("ddns_hostname_x"); %>';
 var https_port = '<% nvram_get("webdav_https_port"); %>';
 
+if(tmo_support)
+	var theUrl = "cellspot.router"; 
+else
+	var theUrl = "router.asus.com";
+
 function initial(){
 	show_menu();
 	addOnlineHelp($("faq0"), ["samba"]);
@@ -108,11 +113,11 @@ function initial(){
 		/* private */
 		case 0:
 			if(https_port == 443)
-				$("accessMethod").innerHTML = '<#aicloud_disk_case0#>';
+				$("accessMethod").innerHTML = 'Enter AiCloud <a id="cloud_url" style="font-weight: bolder;text-decoration: underline;" href="https://router.asus.com" target="_blank">https://router.asus.com</a>';
 			else{
-				$("accessMethod").innerHTML = '<#aicloud_disk_case0#>';
-				$('cloud_url').href = "https://router.asus.com:" + https_port;
-				$('cloud_url').innerHTML = "https://router.asus.com:" + https_port;
+				$("accessMethod").innerHTML = 'Enter AiCloud <a id="cloud_url" style="font-weight: bolder;text-decoration: underline;" href="https://router.asus.com" target="_blank">https://router.asus.com</a>';
+				$('cloud_url').href = "https://"+ theUrl +":" + https_port;
+				$('cloud_url').innerHTML = "https://"+ theUrl +":" + https_port;
 			}
 			break;
 		/* public */
@@ -120,15 +125,15 @@ function initial(){
 			$("privateIpOnly").style.display = "none";
 			if('<% nvram_get("ddns_enable_x"); %>' == '1' && ddns_hostname != ''){
 				if(https_port == 443) // if the port number of https is 443, hide it
-					$("accessMethod").innerHTML = '<#aicloud_disk_case11#> <a style="font-weight: bolder;text-decoration: underline;word-break:break-all;" href="https://'+ ddns_hostname + ':'+ https_port +' "target="_blank">https://'+ ddns_hostname +'</a><br />';
+					$("accessMethod").innerHTML = 'Enter AiCloud <a style="font-weight: bolder;text-decoration: underline;word-break:break-all;" href="https://'+ ddns_hostname + ':'+ https_port +' "target="_blank">https://'+ ddns_hostname +'</a><br />';
 				else
-					$("accessMethod").innerHTML = '<#aicloud_disk_case11#> <a style="font-weight: bolder;text-decoration: underline;word-break:break-all;" href="https://'+ ddns_hostname + ':'+ https_port +' "target="_blank">https://'+ ddns_hostname +':'+ https_port +'</a><br />';
+					$("accessMethod").innerHTML = 'Enter AiCloud <a style="font-weight: bolder;text-decoration: underline;word-break:break-all;" href="https://'+ ddns_hostname + ':'+ https_port +' "target="_blank">https://'+ ddns_hostname +':'+ https_port +'</a><br />';
 				
-				$("accessMethod").innerHTML += '<#aicloud_disk_case12#>';
+				$("accessMethod").innerHTML += 'To modify the ddns name, please click <a style="font-weight: bolder;text-decoration: underline;" href="/Advanced_ASUSDDNS_Content.asp?af=DDNSName" target="_blank">here</a>.';
 			}
 			else{
-				$("accessMethod").innerHTML = '<#aicloud_disk_case21#><br />';
-				$("accessMethod").innerHTML += '<#aicloud_disk_case22#>';
+				$("accessMethod").innerHTML = 'Enter AiCloud <a id="cloud_url" style="font-weight: bolder;text-decoration: underline;" href="https://router.asus.com" target="_blank">https://router.asus.com</a>';
+				$("accessMethod").innerHTML += '<br/>Register for an ASUS DDNS <a style="font-weight: bolder;text-decoration: underline;" href="/Advanced_ASUSDDNS_Content.asp" target="_blank">here</a> to access the cloud disk online.';
 			}
 			break;
 	}
@@ -618,7 +623,7 @@ function update_applist(e){
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
 	<div id="agreement_panel" class="panel_folder" style="margin-top: -100px;display:none;position:absolute;">
-			<div class="machineName" style="font-family:Microsoft JhengHei;font-size:12pt;font-weight:bolder; margin-top:25px;margin-left:30px;">Term of use</div>
+			<div class="machineName" style="font-family:Microsoft JhengHei;font-size:12pt;font-weight:bolder; margin-top:25px;margin-left:30px;height:35px;">Term of use</div>
 			<div class="folder_tree">Thank you for using our AiCloud firmware, AiCloud mobile application and AiCloud portal website(“AiCloud”). AiCloud is provided by ASUSTeK Computer Inc. (“ASUS”). This notice constitutes a valid and binding agreement between ASUS. By using AiCloud, YOU, AS A USER, EXPRESSLY ACKNOWLEGE THAT YOU HAVE READ AND UNDERSTAND AND AGREE TO BE BOUND BY THE TERMS OF USE NOTICE (“NOTICE”) AND ANY NEW VERSIONS HEREOF.
 <br><br>
 <b>1.LICENSE</b><br>
@@ -777,45 +782,29 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 									  <tr bgcolor="#444f53">
 									    <td colspan="5" bgcolor="#444f53" class="cloud_main_radius">
 												<div style="padding:10px;width:95%;font-style:italic;font-size:14px;">
-													<#step_use_aicloud#>
-												  <ol style="-webkit-margin-after: 0em;word-break:normal;">
-										        <li style="margin-bottom:7px;">
-															<#download_aicloud#><br> 
-															<a href="https://play.google.com/store/apps/details?id=com.asustek.aicloud" target="_blank"><img border="0" src="/images/cloudsync/googleplay.png" width="100px"></a>
-															<a href="https://itunes.apple.com/us/app/aicloud-lite/id527118674" target="_blank"><img src="/images/cloudsync/AppStore.png" border="0"  width="100px"></a>
-														</li>
-										        <li style="margin-bottom:7px;">															
-															<#connect_through_wifi#>
-														</li>
-										        <li style="margin-bottom:7px;">
-															<#access_service#>
-														</li>
-												  </ol>
-
-												  <ul style="-webkit-margin-after: 0em;word-break:normal;" id="privateIpOnly">
-										        <li style="margin-top:-5px;">
-															<span>
-																<#aicloud_for_privateIP1#>&nbsp;
-																<#aicloud_for_privateIP2#>&nbsp;
-	       												<#aicloud_for_privateIP3#>
-															</span>
-														</li>
-												  </ul>
-												  <ul style="-webkit-margin-after: 0em;word-break:normal;">
-										        <li style="margin-top:-5px;">
-															<span>
-																<#aicloud_bandwidth1#><br>
-																<ul>	
-																	<li><#aicloud_bandwidth2_1#></li>
-																	<li><#aicloud_bandwidth2_2#></li>
-																	<li><#aicloud_bandwidth2_3#></li>
-																	<li><#aicloud_bandwidth2_4#></li>
-																</ul>			
-	       												<#aicloud_bandwidth3#>
-															</span>
-														</li>
-												  </ul>												  
-
+												ASUS AiCloud keeps you connected to your data wherever and whenever you have an Internet connection. It links your home network and online Web storage service and lets you access it through the AiCloud mobile app on your iOS or Android smartphone or through a personalised URL in a Web browser. Now all your data can go where you do.
+													<br/><br/>
+													<table width="100%" >
+														<tr>
+															<td>
+																<ul style="margin: 0px;padding-left:15px;" >
+																	<li style="margin-top:-5px;">
+																 	<div id="accessMethod"></div>
+																 	</li>
+																 	<li style="margin-top:-5px;">
+																	 Find tutorial videos <a style="font-weight: bolder;text-decoration: underline;" href="http://www.youtube.com/asusrouters" target="_blank">GO</a>
+																	</li>
+																	<li style="margin-top:-5px;">
+																	 Find FAQs <a style="font-weight: bolder;text-decoration: underline;" href="http://event.asus.com/2012/nw/aicloud/faq.html" target="_blank">GO</a>
+																	</li>
+																</ul>
+															</td>
+															<td align="right" valign="top"  nowrap="nowrap">
+																<a href="https://play.google.com/store/apps/details?id=com.asustek.aicloud" target="_blank"><img border="0" src="/images/cloudsync/googleplay.png" width="100px"></a>
+																<a href="https://itunes.apple.com/us/app/aicloud-lite/id527118674" target="_blank"><img src="/images/cloudsync/AppStore.png" border="0"  width="100px"></a>
+															</td>
+														</tr>
+													</table>
 												</div>
 											</td>
 									  </tr>
@@ -844,9 +833,8 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 
 									    <td>
 												<div style="padding:10px;width:95%;font-style:italic;font-size:14px;">
-													<#aicloud_disk1#>&nbsp
-													<#aicloud_disk2#><br />
-													<div id="accessMethod"></div>
+													Connect a USB storage device to your compatible ASUS router to access data files and stream your media straight to your AiCloud app or from a unique Web link in a Web browser.
+													
 													<!--br>
 													<br>
 													<img style="margin-left:200px;" src="/images/cloudsync/AiDesk.png"-->
@@ -907,9 +895,7 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 											</td>
 									    <td width="">
 												<div style="padding:10px;width:95%;font-style:italic;font-size:14px;">
-													<#smart_access1#><br />
-													<#smart_access2#><br />
-													<#smart_access3#>
+													Whether you're using Windows®, Mac OS, or even Linux PCs,ASUS AiCloud lets you access, stream, and share your home network or online storage data through a personalised Web link.
 													<!--br>
 													<br>
 													<img style="margin-left:200px;" src="/images/cloudsync/SmartSync.png"-->
@@ -971,8 +957,7 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 											</td>
 									    <td width="">
 												<div style="padding:10px;width:95%;font-style:italic;font-size:14px;">
-													<#smart_sync1#><br />
-													<#smart_sync2#>
+													Smart Sync keeps all media files, data, and other content you want to share from online storage services like <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asuswebstorage.com/navigate/" target="_blank">ASUS webstorage</a>, your home network, and even other AiCloud-enabled networks up to date in real time to easily share and access the same file version wherever you are.
 													<!--br>
 													<br>
 													<img style="margin-left:200px;" src="/images/cloudsync/SmartAccess.png"-->

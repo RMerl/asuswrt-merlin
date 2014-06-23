@@ -18,6 +18,14 @@ var wlc_scan_state = '0';
 var systime = new Date();
 var isDefault = false;
 
+if(parent.tmo_support && parent.document.QKform.sw_mode.value == 1){
+		var fd_wl0_ssid =		decodeURIComponent("<% nvram_char_to_ascii("", "wl0_ssid_tmo"); %>");
+ 		if(band5g_support)
+				var fd_wl1_ssid =		decodeURIComponent("<% nvram_char_to_ascii("", "wl1_ssid_tmo"); %>");
+		/*factory default same one psk for 2.4G & 5G */
+		var fd_wpa_psk = decodeURIComponent("<% nvram_char_to_ascii("", "wl_wpa_psk_tmo"); %>");
+}
+
 var timezones = {
 	"720":"UTC12",
 	"660":"UTC11",
@@ -57,6 +65,15 @@ var timezones = {
 function QKWireless_load_body(){
 	parent.document.title = "<#Web_Title#> - <#QKSet_wireless_webtitle#>";
 	parent.set_step("t3");
+
+	if(parent.tmo_support && parent.document.QKform.sw_mode.value == 1){
+			document.getElementById("skipButton").style.display = "";
+			if(parent.ISMOBILE){
+				document.getElementById("loadingIcon_fd_div").style.display = "";
+				document.getElementById("mobile_wireless_desc").innerHTML = "You can rename your networks (SSIDs) and update your passwords from this page.";	
+				document.getElementById("mobile_psk_desc").innerHTML = "For advanced setup functionality please visit http://cellspot.router from a computer web browser.";
+			}	
+	}
 
 	if(parent.ISMOBILE){
 		hideObjs();
@@ -106,8 +123,12 @@ function QKWireless_load_body(){
 	
 		//while %w_Setting% == 1
 		if(parent.w_Setting_tmp == 1 && parent.document.QKform.sw_mode.value != "2"){
+			if(parent.tmo_support)
+					$("Continued_PrevSetting").innerHTML = "Do you want to use the default wireless security settings?";
+			else
+					$("Continued_PrevSetting").innerHTML = "<#QIS_Previous_WLKey#>";					
+					
 			$("Continued_PrevSetting").style.display = "";
-			$("Continued_PrevSetting").innerHTML = "<#QIS_Previous_WLKey#>";
 			$("radio_Continued_PrevSetting").style.display = "";
 			document.form.Cont_PrevSetting[0].checked = true;		
 			document.getElementById("btn_next_step").focus();
@@ -125,6 +146,71 @@ function QKWireless_load_body(){
 			document.form.wl0_ssid.focus();		
 		}
 	}
+}
+
+function setFactoryDefault(){
+	var wl_confirm = 0;
+	changeiuiBackground2("loadingIcon_fd",1);
+
+	/* Viz 2014.06 tmo_support Only care about Router mode for now.  */
+	document.form.wl0_ssid.value = fd_wl0_ssid;
+	document.form.wl0_wpa_psk.value = fd_wpa_psk;
+	document.form.wl0_auth_mode_x.value = "psk2";
+	document.form.wl0_crypto.value = "aes";	
+
+	if(band5g_support){
+		document.form.wl1_ssid.value = fd_wl1_ssid;
+		document.form.wl1_wpa_psk.value = fd_wpa_psk;
+		document.form.wl1_auth_mode_x.value = "psk2";
+		document.form.wl1_crypto.value = "aes";
+	}
+
+	/* For router mode Only start */
+	document.form.flag.value = "finish";
+	document.form.sw_mode.value = parent.document.QKform.sw_mode.value;
+	if(document.form.sw_mode.value == 1){
+			document.form.wlc_band.disabled = true;
+			document.form.wlc_ssid.disabled = true;
+			document.form.wlc_wep.disabled = true;
+			document.form.wlc_key.disabled = true;
+			document.form.wlc_wep_key.disabled = true;
+			document.form.wlc_auth_mode.disabled = true;
+			document.form.wlc_crypto.disabled = true;
+			document.form.wlc_wpa_psk.disabled = true;
+			document.form.wlc_ure_ssid.disabled = true;
+			document.form.wlc_psta.disabled = true;
+	}
+	/* For router mode Only end */
+
+	/* Viz add to set time_zone automatically 2013.05 start */
+	if(timezones[systime.getTimezoneOffset()] != undefined 
+			&& timezones[systime.getTimezoneOffset()] != "" 
+			&& document.form.time_zone.value != timezones[systime.getTimezoneOffset()]
+			&& parent.isFirst
+			&& !parent.swisscom_support)
+	{
+				document.form.time_zone.disabled = false;
+				document.form.time_zone.value = timezones[systime.getTimezoneOffset()];
+				// document.form.action_script.value += ";restart_time";
+	}
+	/* Viz add to set time_zone automatically 2013.05 end */	
+	child_macaddr = '';
+	parent.w_Setting_tmp = document.form.w_Setting.value;
+	document.getElementById("loadingIcon").style.display = "";
+	document.form.http_username.value = parent.document.QKform.http_username.value;
+
+	if(parent.document.QKform.http_passwd.value != ""){
+		document.form.http_passwd.value = parent.document.QKform.http_passwd.value;
+		document.form.http_passwd.disabled = false;
+	}
+
+	if(parent.tmo_support)
+		document.form.x_Setting.disabled = false;
+
+	document.form.wan_nat_x.value = parent.document.QKform.wan_nat_x.value;
+	document.form.target = "hidden_frame";
+	document.form.next_page.value = "/qis/QIS_finish.htm";	
+	document.form.submit();
 }
 
 function submitForm(){
@@ -175,18 +261,28 @@ function submitForm(){
 			
 			document.form.wl1_wpa_psk.value	= parent.document.QKform.wlc_wpa_psk.value;
 			document.form.wl0_auth_mode_x.value = parent.document.QKform.wlc_auth_mode.value;
-			if(document.form.wl0_auth_mode_x.value == "pak2")
+			if(document.form.wl0_auth_mode_x.value == "psk2")
 				document.form.wl0_crypto.value = "aes";
-			else if(document.form.wl0_auth_mode_x.value == "pak")
+			else if(document.form.wl0_auth_mode_x.value == "psk")
 				document.form.wl0_crypto.value = "tkip";
 		}
 		else{
-			/* use previous settings */		
-			document.form.wl0_ssid.value = decodeURIComponent("<% nvram_char_to_ascii("", "wl0_ssid"); %>");
-			document.form.wl0_wpa_psk.value = decodeURIComponent("<% nvram_char_to_ascii("", "wl0_wpa_psk"); %>");
-			document.form.wl0_auth_mode_x.value = "<% nvram_get("wl0_auth_mode_x"); %>";
-			document.form.wl0_crypto.value = "<% nvram_get("wl0_crypto"); %>";
-			document.form.wl0_wep_x.value = "<% nvram_get("wl0_wep_x"); %>";
+			if(parent.tmo_support){
+					/* use default settings */		
+					document.form.wl0_ssid.value = fd_wl0_ssid;
+					document.form.wl0_wpa_psk.value = fd_wpa_psk;
+					document.form.wl0_auth_mode_x.value = "psk2";
+					document.form.wl0_crypto.value = "aes";
+					document.form.wl0_wep_x.value = "<% nvram_get("wl0_wep_x"); %>";
+			}
+			else{
+					/* use previous settings */		
+					document.form.wl0_ssid.value = decodeURIComponent("<% nvram_char_to_ascii("", "wl0_ssid"); %>");
+					document.form.wl0_wpa_psk.value = decodeURIComponent("<% nvram_char_to_ascii("", "wl0_wpa_psk"); %>");
+					document.form.wl0_auth_mode_x.value = "<% nvram_get("wl0_auth_mode_x"); %>";
+					document.form.wl0_crypto.value = "<% nvram_get("wl0_crypto"); %>";
+					document.form.wl0_wep_x.value = "<% nvram_get("wl0_wep_x"); %>";
+			}		
 		}
 	}	
 	
@@ -228,18 +324,28 @@ function submitForm(){
 				
 				document.form.wl1_wpa_psk.value	= parent.document.QKform.wlc_wpa_psk.value;
 				document.form.wl1_auth_mode_x.value = parent.document.QKform.wlc_auth_mode.value;
-				if(document.form.wl1_auth_mode_x.value == "pak2")
+				if(document.form.wl1_auth_mode_x.value == "psk2")
 					document.form.wl1_crypto.value = "aes";
-				else if(document.form.wl1_auth_mode_x.value == "pak")
+				else if(document.form.wl1_auth_mode_x.value == "psk")
 					document.form.wl1_crypto.value = "tkip";			
 			}
 			else{
-				/* use previous settings */		
-				document.form.wl1_ssid.value = decodeURIComponent("<% nvram_char_to_ascii("", "wl1_ssid"); %>");
-				document.form.wl1_wpa_psk.value = decodeURIComponent("<% nvram_char_to_ascii("", "wl1_wpa_psk"); %>");
-				document.form.wl1_auth_mode_x.value = "<% nvram_get("wl1_auth_mode_x"); %>";		
-				document.form.wl1_crypto.value = "<% nvram_get("wl1_crypto"); %>";
-				document.form.wl1_wep_x.value = "<% nvram_get("wl1_wep_x"); %>";
+				if(parent.tmo_support){
+					/* use default settings */		
+					document.form.wl1_ssid.value = fd_wl1_ssid;
+					document.form.wl1_wpa_psk.value = fd_wpa_psk;
+					document.form.wl1_auth_mode_x.value = "psk2";
+					document.form.wl1_crypto.value = "aes";
+					document.form.wl1_wep_x.value = "<% nvram_get("wl1_wep_x"); %>";
+				}
+				else{
+					/* use previous settings */		
+					document.form.wl1_ssid.value = decodeURIComponent("<% nvram_char_to_ascii("", "wl1_ssid"); %>");
+					document.form.wl1_wpa_psk.value = decodeURIComponent("<% nvram_char_to_ascii("", "wl1_wpa_psk"); %>");
+					document.form.wl1_auth_mode_x.value = "<% nvram_get("wl1_auth_mode_x"); %>";		
+					document.form.wl1_crypto.value = "<% nvram_get("wl1_crypto"); %>";
+					document.form.wl1_wep_x.value = "<% nvram_get("wl1_wep_x"); %>";
+				}	
 			}
 		}
 	}	
@@ -399,6 +505,13 @@ function submitForm(){
 	}
 
 	document.form.wan_nat_x.value = parent.document.QKform.wan_nat_x.value;
+
+	if(parent.based_modelid == "RT-AC87U")
+		document.form.action_wait.value	= "20";
+
+	if(parent.tmo_support)
+		document.form.x_Setting.disabled = false;
+
 	document.form.target = "hidden_frame";
 	document.form.next_page.value = "/qis/QIS_finish.htm";	
 	document.form.submit();
@@ -516,14 +629,26 @@ function PrevSetting(v){
 	if(v == 0){
 		inputCtrl(document.form.wl0_ssid,0);
 		inputCtrl(document.form.wl0_wpa_psk,0);
-		document.form.wl0_ssid.value = decodeURIComponent('<% nvram_char_to_ascii("", "wl0_ssid"); %>');
-		document.form.wl0_wpa_psk.value = decodeURIComponent('<% nvram_char_to_ascii("", "wl0_wpa_psk"); %>');
+		if(parent.tmo_support){
+				document.form.wl0_ssid.value = fd_wl0_ssid;
+				document.form.wl0_wpa_psk.value = fd_wpa_psk;
+		}
+		else{
+				document.form.wl0_ssid.value = decodeURIComponent('<% nvram_char_to_ascii("", "wl0_ssid"); %>');
+				document.form.wl0_wpa_psk.value = decodeURIComponent('<% nvram_char_to_ascii("", "wl0_wpa_psk"); %>');
+		}		
 		if(band5g_support){
 				inputCtrl(document.form.sync_with_2ghz,0);
 				inputCtrl(document.form.wl1_ssid,0);
 				inputCtrl(document.form.wl1_wpa_psk,0);	
-				document.form.wl1_ssid.value = decodeURIComponent('<% nvram_char_to_ascii("", "wl1_ssid"); %>');
-				document.form.wl1_wpa_psk.value = decodeURIComponent('<% nvram_char_to_ascii("", "wl1_wpa_psk"); %>');
+				if(parent.tmo_support){
+						document.form.wl1_ssid.value = fd_wl1_ssid;
+						document.form.wl1_wpa_psk.value = fd_wpa_psk;
+				}
+				else{		
+						document.form.wl1_ssid.value = decodeURIComponent('<% nvram_char_to_ascii("", "wl1_ssid"); %>');
+						document.form.wl1_wpa_psk.value = decodeURIComponent('<% nvram_char_to_ascii("", "wl1_wpa_psk"); %>');
+				}		
 		}				
 	}else{
 		inputCtrl(document.form.wl0_ssid,1);
@@ -793,7 +918,7 @@ function detect_LANStatus(_flag){
 		</div>
 
 <div style="display:none;" id="field_mobile">
-	<span class="QISGeneralFont" style="margin-left:0px;"><#qis_wireless_setting#></span><br><br>
+	<span id="mobile_wireless_desc" class="QISGeneralFont" style="margin-left:0px;"><#qis_wireless_setting#></span><br><br>
 	<div class="itemTitle">2.4 GHz - <#Security#></div>
 	<fieldset>
 				<div class="row">
@@ -822,7 +947,7 @@ function detect_LANStatus(_flag){
 		</fieldset>
 	</div>
 	<br />
-	<div class="QISGeneralFont"><#qis_wireless_setting_skdesc#></div>
+	<div id="mobile_psk_desc" class="QISGeneralFont"><#qis_wireless_setting_skdesc#></div>
 	<br />
 </div>
 
@@ -884,15 +1009,17 @@ function detect_LANStatus(_flag){
 </fieldset>
 
 <fieldset class="theFieldset" id="theFieldset" style="display:none;">
-	<div class="row_end">
-		<a id="loadingIcon_iui" class="iuiA" onclick="submitForm();"><#CTL_next#></a>
-	</div>
+	<div class="row"><a id="loadingIcon_iui" class="iuiA" onclick="submitForm();"><#CTL_next#></a></div>
+	<div id="loadingIcon_fd_div" class="row_end" style="display:none;"><a id="loadingIcon_fd" class="iuiA" onclick="setFactoryDefault();">Use factory default</a></div>
 </fieldset>
 
 <div id="applyBtn" class="apply_gen" style="margin-top:10px">
-  <input type="button" id="prevButton" value="<#CTL_prev#>" onclick="gotoprev(document.form);" style="display:none" class="button_gen">
-  <input type="submit" id="btn_next_step" value="<#CTL_apply#>" class="button_gen">
-	<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></span>
+		<span>
+			<input type="button" id="skipButton" value="Use factory default" onclick="setFactoryDefault();" style="display:none;" class="button_gen_long">
+			<input type="button" id="prevButton" value="<#CTL_prev#>" onclick="gotoprev(document.form);" style="display:none;" class="button_gen">
+			<input type="submit" id="btn_next_step" value="<#CTL_apply#>" class="button_gen">
+			<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif">
+		</span>
 </div>
 </form>
 </body>

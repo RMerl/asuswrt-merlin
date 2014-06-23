@@ -91,10 +91,6 @@ typedef unsigned int __u32;   // 1225 ham
 #endif
 #include "bcmnvram_f.h"
 
-#ifdef RTCONFIG_QTN
-#include "web-qtn.h"
-#endif
-
 /* A multi-family sockaddr. */
 typedef union {
     struct sockaddr sa;
@@ -175,6 +171,8 @@ struct language_table language_tables[] = {
 	{"it-ch", "IT"},
 	{"ja", "JP"},
 	{"ja-JP", "JP"},
+	{"ko", "KR"},
+	{"ko-kr", "KR"},
 	{"ms", "MS"},
 	{"ms-MY", "MS"},
 	{"ms-BN", "MS"},
@@ -756,6 +754,13 @@ handle_request(void)
 				{
 					if (strcasecmp(p, pLang->Lang)==0)
 					{
+						char dictname[32];
+						sprintf(dictname, "%s.dict", pLang->Target_Lang);
+						if(!check_if_file_exist(dictname))
+						{
+							//_dprintf("language(%s) is not supported!!\n", pLang->Target_Lang);
+							continue;
+						}
 						snprintf(Accept_Language,sizeof(Accept_Language),"%s",pLang->Target_Lang);
 						if (is_firsttime ())    {
 							nvram_set("preferred_lang", Accept_Language);
@@ -1571,10 +1576,6 @@ void reapchild()	// 0527 add
 	wait(NULL);
 }
 
-#ifdef RTCONFIG_QTN
-extern char *wl_ether_etoa(const struct ether_addr *n);
-#endif
-
 int do_ssl = 0; 	// use Global for HTTPS upgrade judgment in web.c
 int ssl_stream_fd; 	// use Global for HTTPS stream fd in web.c
 int main(int argc, char **argv)
@@ -1605,51 +1606,6 @@ int main(int argc, char **argv)
 			}
 		}
 	}
-
-#ifdef RTCONFIG_QTN
-	time_t start_time = uptime();
-	int ret;
-QTN_RESET:
-	ret = rpc_qcsapi_init();
-	if (ret < 0) {
-		dbG("Qcsapi qcsapi init error, return: %d\n", ret);
-	}
-	else if (nvram_get_int("qtn_restore_defaults"))
-	{
-		nvram_unset("qtn_restore_defaults");
-//		eval("qcsapi_sockrpc", "update_bootcfg_param", "ipaddr", "1.1.1.2");
-		rpc_qcsapi_restore_default_config(0);
-		dbG("Restaring Qcsapi init...\n");
-		sleep(15);
-		goto QTN_RESET;
-	}
-
-	qcsapi_init();
-
-	dbG("Qcsapi qcsapi init takes %ld seconds\n", uptime() - start_time);
-
-	qcsapi_mac_addr wl_mac_addr;
-	ret = rpc_qcsapi_interface_get_mac_addr(WIFINAME, &wl_mac_addr);
-	if (ret < 0)
-		dbG("rpc_qcsapi_interface_get_mac_addr, return: %d\n", ret);
-	else
-	{
-		nvram_set("1:macaddr", wl_ether_etoa((struct ether_addr *) &wl_mac_addr));
-		nvram_set("wl1_hwaddr", wl_ether_etoa((struct ether_addr *) &wl_mac_addr));
-	}
-
-	ret = qcsapi_wps_set_ap_pin(WIFINAME, nvram_safe_get("wps_device_pin"));
-	if (ret < 0)
-		dbG("Qcsapi qcsapi_wps_set_ap_pin %s error, return: %d\n", WIFINAME, ret);
-	ret = qcsapi_wps_registrar_set_pp_devname(WIFINAME, 0, (const char *) get_productid());
-	if (ret < 0)
-		dbG("Qcsapi qcsapi_wps_registrar_set_pp_devname %s error, return: %d\n", WIFINAME, ret);
-	ret = rpc_qcsapi_wifi_disable_wps(WIFINAME, !nvram_get_int("wps_enable"));
-	if (ret < 0)
-		dbG("Qcsapi rpc_qcsapi_wifi_disable_wps %s error, return: %d\n", WIFINAME, ret);
-
-	nvram_set("qtn_ready", "1");
-#endif
 
 	//websSetVer();
 	//2008.08 magic

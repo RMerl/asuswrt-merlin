@@ -794,7 +794,7 @@ and
 for details.)
 
 For IPv6, the mode may be some combination of
-.B ra-only, slaac, ra-names, ra-stateless.
+.B ra-only, slaac, ra-names, ra-stateless, ra-advrouter.
 
 .B ra-only
 tells dnsmasq to offer Router Advertisement only on this subnet,
@@ -828,6 +828,11 @@ can be combined  with
 .B ra-stateless
 and
 .B slaac.
+
+.B ra-advrouter
+enables a mode where router address(es) rather than prefix(es) are included in the advertisements.
+This is described in RFC-3775 section 7.2 and is used in mobile IPv6. In this mode the interval option
+is also included, as described in RFC-3775 section 7.3.
 
 .TP
 .B \-G, --dhcp-host=[<hwaddr>][,id:<client_id>|*][,set:<tag>][,<ipaddr>][,<hostname>][,<lease_time>][,ignore]

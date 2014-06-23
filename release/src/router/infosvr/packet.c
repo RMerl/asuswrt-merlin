@@ -241,7 +241,6 @@ int PackSetInfoCurrentAP(char *pdubuf, char *mac, char *password, PKT_GET_INFO_A
 
 int UnpackSetInfoCurrentAP(char *pdubuf, DWORD tid, char *mac)
 {
-	PKT_GET_INFO_EX1 *body;
 	int err;
 	
 	err = UnpackResHdr(pdubuf, NET_CMD_ID_SETINFO, tid, mac);

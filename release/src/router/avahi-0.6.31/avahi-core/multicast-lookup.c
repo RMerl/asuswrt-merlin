@@ -230,10 +230,10 @@ static void scan_interface_callback(AvahiInterfaceMonitor *m, AvahiInterface *i,
 
     cbdata->interface = i;
 
-    avahi_cache_walk(i->cache, cbdata->key, scan_cache_callback, cbdata);
+    avahi_cache_walk(i->mdns.cache, cbdata->key, scan_cache_callback, cbdata);
 
     if (cbdata->cname_key)
-        avahi_cache_walk(i->cache, cbdata->cname_key, scan_cache_callback, cbdata);
+        avahi_cache_walk(i->mdns.cache, cbdata->cname_key, scan_cache_callback, cbdata);
 
     cbdata->interface = NULL;
 }

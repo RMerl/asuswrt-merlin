@@ -27,7 +27,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <signal.h>
 #include <sys/time.h>
 #include <unistd.h>
 #include <bcmnvram.h>
@@ -38,6 +37,8 @@
 #include <wlioctl.h>
 #ifdef PSTA_DEBUG
 #include <rc.h>
+#else
+#include <signal.h>
 #endif
 
 #ifdef RTCONFIG_BCMWL6
@@ -160,7 +161,7 @@ wl_scan(int unit)
 	wl_bss_info_t *bi;
 	wl_bss_info_107_t *old_bi;
 	uint i, ap_count = 0;
-	char ssid_str[128], macstr[18], tmp[NVRAM_BUFSIZE];
+	char ssid_str[128], macstr[18];
 
 	if (wl_get_scan_results(unit) == NULL)
 		return 0;
@@ -212,9 +213,9 @@ wl_scan(int unit)
 		for (i = 0; i < ap_count; i++)
 		{
 			memset(ssid_str, 0, sizeof(ssid_str));
-			char_to_ascii(ssid_str, trim_r(ap_list[i].ssid));
+			char_to_ascii(ssid_str, (const char *) trim_r(ap_list[i].ssid));
 
-			ether_etoa(&ap_list[i].BSSID, macstr);
+			ether_etoa((const unsigned char *) &ap_list[i].BSSID, macstr);
 			if (psta_debug)
 			dbg("%-4d%-33s%-18s\n",
 				ap_list[i].channel,
@@ -339,7 +340,7 @@ PSTA_ERR:
 	if (psta)
 	{
 		count_bss_down = 0;
-		ether_etoa(&bssid, macaddr);
+		ether_etoa((const unsigned char *) &bssid, macaddr);
 		if (psta_debug) dbg("psta send keepalive nulldata to %s\n", macaddr);
 		eval("wl", "-i", name, "send_nulldata", macaddr);
 #ifdef PSTA_DEBUG

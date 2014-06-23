@@ -588,7 +588,7 @@ static size_t process_reply(struct dns_header *header, time_t now, struct server
      header->hb4 &= ~HB4_AD;
   
   if (OPCODE(header) != QUERY || (RCODE(header) != NOERROR && RCODE(header) != NXDOMAIN))
-    return n;
+    return resize_packet(header, n, pheader, plen);
   
   /* Complain loudly if the upstream server is non-recursive. */
   if (!(header->hb4 & HB4_RA) && RCODE(header) == NOERROR && ntohs(header->ancount) == 0 &&
@@ -1347,13 +1347,20 @@ static int do_check_sign(time_t now, struct dns_header *header, size_t plen, cha
 { 
   char *name_start;
   unsigned char *p;
-  int status = dnssec_validate_ds(now, header, plen, name, keyname, class);
-  
-  if (status != STAT_INSECURE)
-    {
-      if (status == STAT_NO_DS)
-	status = STAT_INSECURE;
-      return status;
+  int status;
+
+  /* In this case only, a SERVFAIL reply allows us to continue up the tree, looking for a 
+     suitable NSEC reply to DS queries. */
+  if (RCODE(header) != SERVFAIL)
+    { 
+      status = dnssec_validate_ds(now, header, plen, name, keyname, class);
+      
+      if (status != STAT_INSECURE)
+	{
+	  if (status == STAT_NO_DS)
+	    status = STAT_INSECURE;
+	  return status;
+	}
     }
   
   p = (unsigned char *)(header+1);
@@ -1446,8 +1453,13 @@ static int  tcp_check_for_unsigned_zone(time_t now, struct dns_header *header, s
 	      newhash = hash_questions(header, (unsigned int)m, name);
 	      if (newhash && memcmp(hash, newhash, HASH_SIZE) == 0)
 		{
-		  /* Note this trashes all three name workspaces */
-		  status = tcp_key_recurse(now, STAT_NEED_DS_NEG, header, m, class, name, keyname, server, keycount);
+		   /* In this case only, a SERVFAIL reply allows us to continue up the tree, looking for a 
+		      suitable NSEC reply to DS queries. */
+		  if (RCODE(header) == SERVFAIL)
+		    status = STAT_INSECURE;
+		  else
+		    /* Note this trashes all three name workspaces */
+		    status = tcp_key_recurse(now, STAT_NEED_DS_NEG, header, m, class, name, keyname, server, keycount);
 		  
 		  /* We've found a DS which proves the bit of the DNS where the
 		     original query is, is unsigned, so the answer is OK, 
@@ -1823,6 +1835,10 @@ unsigned char *tcp_request(int confd, time_t now,
 			}
 		      
 		      *length = htons(size);
+
+		      /* get query name again for logging - may have been overwritten */
+		      if (!(gotname = extract_request(header, (unsigned int)size, daemon->namebuff, &qtype)))
+			strcpy(daemon->namebuff, "query");
 		      
 		      if (!read_write(last_server->tcpfd, packet, size + sizeof(u16), 0) ||
 			  !read_write(last_server->tcpfd, &c1, 1, 1) ||
@@ -1836,8 +1852,6 @@ unsigned char *tcp_request(int confd, time_t now,
 		      
 		      m = (c1 << 8) | c2;
 		      
-		      if (!gotname)
-			strcpy(daemon->namebuff, "query");
 		      if (last_server->addr.sa.sa_family == AF_INET)
 			log_query(F_SERVER | F_IPV4 | F_FORWARD, daemon->namebuff, 
 				  (struct all_addr *)&last_server->addr.in.sin_addr, NULL); 

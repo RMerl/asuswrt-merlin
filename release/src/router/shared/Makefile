@@ -1,4 +1,5 @@
 include ../common.mak
+include $(SRCBASE)/.config
 
 CFLAGS += -Os -Wall $(EXTRACFLAGS) -fPIC
 CFLAGS += -I. -I$(TOP)/shared -I$(SRCBASE)/include
@@ -16,12 +17,15 @@ endif
 ifeq ($(RTCONFIG_BCMWL6),y)
 CFLAGS += -I$(SRCBASE)/shared/bcmwifi/include
 CFLAGS += -I$(SRCBASE)/common/include
+ifeq ($(RTCONFIG_BCM7)$(RTCONFIG_HSPOT),y)
+CFLAGS += ${WLAN_StdIncPathA}
+endif
 else
 CFLAGS += -I$(SRCBASE)/shared
 endif
 
 ifeq ($(RTCONFIG_QTN),y)
-CFLAGS += -I$(TOP)/libqcsapi_client
+CFLAGS += -I$(TOP)/libqcsapi_client -I$(TOP)/httpd
 LDFLAGS += -L$(TOP)/libqcsapi_client -lqcsapi_client
 endif
 
@@ -53,11 +57,20 @@ endif
 
 CFLAGS += -DTRAFFIC_MGMT
 
+ifeq ($(RTCONFIG_BCM7)$(RTCONFIG_HSPOT),y)
+CFLAGS += -DD11AC_IOTYPES
+endif
+
 OBJS = shutils.o linux_timer.o defaults.o model.o rtstate.o boardapi.o
 OBJS += misc.o version.o files.o strings.o process.o 
 OBJS += bin_sem_asus.o semaphore.o pids.o notify_rc.o discover.o
 OBJS += base64.o
 OBJS += nvparse.o
+ifeq ($(RTCONFIG_BCM7),y)
+OBJS += et_linux.o bcmwifi_channels.o
+else ifeq ($(RTCONFIG_HSPOT),y)
+OBJS += bcmwifi_channels.o
+endif
 
 ifeq ($(RTCONFIG_RALINK),y)
 OBJS += $(TOP)/wireless_tools/iwlib.o
@@ -86,13 +99,24 @@ OBJS += $(TOP)/busybox/util-linux/volume_id/util2.o
 OBJS += $(TOP)/busybox/util-linux/volume_id/fat.o
 OBJS += $(TOP)/busybox/util-linux/volume_id/ntfs.o
 OBJS += $(TOP)/busybox/util-linux/volume_id/linux_swap.o
+OBJS += $(if $(HFS),$(TOP)/busybox/util-linux/volume_id/hfs.o)
+OBJS += $(if $(EXFAT),$(TOP)/busybox/util-linux/volume_id/exfat.o)
 endif
 
 ifeq ($(RTCONFIG_BCMARM),y)
 OBJS += ifaddrs.o
 endif
 
-vpath %.c sysdeps sysdeps/broadcom sysdeps/ralink $(SRCBASE)/shared/ $(SRCBASE)/shared/bcmwifi/src $(WLAN_ComponentSrcDirs)
+ifeq ($(RTCONFIG_QTN),y)
+OBJS += find_host_addr.o
+OBJS += web-qtn.o
+endif
+
+ifeq ($(RTCONFIG_QTN),y)
+vpath %.c sysdeps sysdeps/broadcom sysdeps/ralink $(SRCBASE)/shared/ $(SRCBASE)/shared/bcmwifi/src $(WLAN_ComponentSrcDirs) $(TOP)/libqcsapi_client/qcsapi_rpc_common/client $(TOP)/httpd/sysdeps
+else
+vpath %.c sysdeps sysdeps/broadcom sysdeps/ralink $(SRCBASE)/shared/ $(SRCBASE)/shared/bcmwifi/src $(WLAN_StdSrcDirsA) $(WLAN_ComponentSrcDirs) 
+endif
 
 all: libshared.so libshared.a
 

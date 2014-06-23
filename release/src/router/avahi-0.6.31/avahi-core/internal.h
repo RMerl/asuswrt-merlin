@@ -40,6 +40,10 @@ typedef struct AvahiEntry AvahiEntry;
 #include "multicast-lookup.h"
 #include "dns-srv-rr.h"
 
+#include "llmnr-querier.h"
+#include "verify.h"
+#include "llmnr-lookup.h"
+
 #define AVAHI_LEGACY_UNICAST_REFLECT_SLOTS_MAX 100
 
 #define AVAHI_FLAGS_VALID(flags, max) (!((flags) & ~(max)))
@@ -61,6 +65,11 @@ struct AvahiLegacyUnicastReflectSlot {
     AvahiTimeEvent *time_event;
 };
 
+typedef enum {
+    AVAHI_ENTRY_MDNS,
+    AVAHI_ENTRY_LLMNR
+} AvahiEntryType;
+
 struct AvahiEntry {
     AvahiServer *server;
     AvahiSEntryGroup *group;
@@ -76,8 +85,26 @@ struct AvahiEntry {
     AVAHI_LLIST_FIELDS(AvahiEntry, by_key);
     AVAHI_LLIST_FIELDS(AvahiEntry, by_group);
 
-    AVAHI_LLIST_HEAD(AvahiAnnouncer, announcers);
+    /* Type to decide whether an mDNS entry of LLMNR */
+    AvahiEntryType type;
+
+    union {
+        struct {
+            AVAHI_LLIST_HEAD(AvahiAnnouncer, announcers);
+        } mdns;
+
+        struct {
+            AVAHI_LLIST_HEAD(AvahiLLMNREntryVerify, verifiers);
+        } llmnr;
+    } proto;
 };
+
+
+typedef enum {
+    AVAHI_GROUP_UNSET,
+    AVAHI_GROUP_MDNS,
+    AVAHI_GROUP_LLMNR
+} AvahiSEntryGroupType;
 
 struct AvahiSEntryGroup {
     AvahiServer *server;
@@ -87,13 +114,22 @@ struct AvahiSEntryGroup {
     void* userdata;
     AvahiSEntryGroupCallback callback;
 
-    unsigned n_probing;
+    AvahiSEntryGroupType type;
+    union {
+        struct {
+            unsigned n_probing;
+            unsigned n_register_try;
 
-    unsigned n_register_try;
-    struct timeval register_time;
-    AvahiTimeEvent *register_time_event;
+            struct timeval register_time;
+            AvahiTimeEvent *register_time_event;
+            struct timeval established_at;
+        } mdns;
 
-    struct timeval established_at;
+        struct {
+            unsigned n_verifying;
+            unsigned n_entries;
+        } llmnr;
+    } proto;
 
     AVAHI_LLIST_FIELDS(AvahiSEntryGroup, groups);
     AVAHI_LLIST_HEAD(AvahiEntry, entries);
@@ -105,10 +141,51 @@ struct AvahiServer {
     AvahiInterfaceMonitor *monitor;
     AvahiServerConfig config;
 
-    AVAHI_LLIST_HEAD(AvahiEntry, entries);
-    AvahiHashmap *entries_by_key;
+    struct {
+        /* mDNS entries and groups */
+        AVAHI_LLIST_HEAD(AvahiEntry, entries);
+        AvahiHashmap *entries_by_key;
+        AVAHI_LLIST_HEAD(AvahiSEntryGroup, groups);
+        int need_entry_cleanup, need_group_cleanup;
 
-    AVAHI_LLIST_HEAD(AvahiSEntryGroup, groups);
+        /*mDNS sockets and watch objects */
+        int fd_ipv4, fd_ipv6,
+        /* The following two sockets two are used for reflection only */
+        fd_legacy_unicast_ipv4, fd_legacy_unicast_ipv6;
+
+        AvahiWatch *watch_ipv4, *watch_ipv6,
+        *watch_legacy_unicast_ipv4, *watch_legacy_unicast_ipv6;
+
+        /* mDNS record list to assemble responses*/
+        AvahiRecordList *record_list;
+
+        AvahiSEntryGroup *hinfo_entry_group;
+        AvahiSEntryGroup *browse_domain_entry_group;
+
+        AvahiMulticastLookupEngine *multicast_lookup_engine;
+    } mdns;
+
+    struct {
+        /* LLMNR entries and groups */
+        AVAHI_LLIST_HEAD(AvahiEntry, entries);
+        AvahiHashmap *entries_by_key;
+        AVAHI_LLIST_HEAD(AvahiSEntryGroup, groups);
+        int need_entry_cleanup, need_group_cleanup;
+
+        /* LLMNR sockets and watch objects */
+        int fd_ipv4, fd_ipv6;
+        AvahiWatch *watch_ipv4, *watch_ipv6;
+
+        /* LLMNR record list to assemble LLMNR responses */
+        AvahiRecordList *record_list;
+
+        AvahiLLMNRLookupEngine *llmnr_lookup_engine;
+
+    } llmnr;
+
+    struct {
+        AvahiWideAreaLookupEngine *wide_area_lookup_engine;
+    } wide_area;
 
     AVAHI_LLIST_HEAD(AvahiSRecordBrowser, record_browsers);
     AvahiHashmap *record_browser_hashmap;
@@ -120,7 +197,7 @@ struct AvahiServer {
     AVAHI_LLIST_HEAD(AvahiSServiceResolver, service_resolvers);
     AVAHI_LLIST_HEAD(AvahiSDNSServerBrowser, dns_server_browsers);
 
-    int need_entry_cleanup, need_group_cleanup, need_browser_cleanup;
+    int need_browser_cleanup;
 
     /* Used for scheduling RR cleanup */
     AvahiTimeEvent *cleanup_time_event;
@@ -129,23 +206,11 @@ struct AvahiServer {
 
     char *host_name, *host_name_fqdn, *domain_name;
 
-    int fd_ipv4, fd_ipv6,
-        /* The following two sockets two are used for reflection only */
-        fd_legacy_unicast_ipv4, fd_legacy_unicast_ipv6;
-
-    AvahiWatch *watch_ipv4, *watch_ipv6,
-        *watch_legacy_unicast_ipv4, *watch_legacy_unicast_ipv6;
-
     AvahiServerState state;
     AvahiServerCallback callback;
     void* userdata;
 
-    AvahiSEntryGroup *hinfo_entry_group;
-    AvahiSEntryGroup *browse_domain_entry_group;
     unsigned n_host_rr_pending;
-
-    /* Used for assembling responses */
-    AvahiRecordList *record_list;
 
     /* Used for reflection of legacy unicast packets */
     AvahiLegacyUnicastReflectSlot **legacy_unicast_reflect_slots;
@@ -157,8 +222,6 @@ struct AvahiServer {
     /* The local service cookie */
     uint32_t local_service_cookie;
 
-    AvahiMulticastLookupEngine *multicast_lookup_engine;
-    AvahiWideAreaLookupEngine *wide_area_lookup_engine;
 };
 
 void avahi_entry_free(AvahiServer*s, AvahiEntry *e);

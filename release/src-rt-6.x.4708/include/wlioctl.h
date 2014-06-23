@@ -4,7 +4,7 @@
  *
  * Definitions subject to change without notice.
  *
- * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -2419,15 +2419,15 @@ typedef struct {
 #define TX_POWER_T_VERSION	44
 
 typedef struct chanspec_txpwr_max {
-	chanspec_t chanspec;	/* chanspec */
-	uint8 txpwr_max;	/* max txpwr in all the rates */
+	chanspec_t chanspec;   /* chanspec */
+	uint8 txpwr_max;       /* max txpwr in all the rates */
 	uint8 padding;
 } chanspec_txpwr_max_t;
 
 typedef struct  wl_chanspec_txpwr_max {
 	uint16 ver;			/* version of this struct */
 	uint16 len;			/* length in bytes of this structure */
-	uint32 count;			/* number of elements of (chanspec, txpwr_max) pair */
+	uint32 count;		/* number of elements of (chanspec, txpwr_max) pair */
 	chanspec_txpwr_max_t txpwr[1];	/* array of (chanspec, max_txpwr) pair */
 } wl_chanspec_txpwr_max_t;
 
@@ -2949,10 +2949,10 @@ typedef struct {
 	uint32	pciereset;	/* Secondary Bus Reset issued by driver */
 	uint32	cfgrestore;	/* configspace restore by driver */
 
-	uint32	rxdma_frame;	/* count for rx dma */
-	uint32	rxdma_inactivity;	/* cleared when rxdma handler is serviced or increased in watchdog */
-	uint32	rxdma_stuck;	/* count for rx stuck */
-	uint32	reset_countdown;
+	uint32  rxdma_frame;	/* count for rx dma */
+	uint32  rxdma_inactivity;	/* cleared when rxdma handler is serviced or increased in watchdog */
+	uint32  rxdma_stuck;	/* count for rx stuck */
+	uint32  reset_countdown;
 } wl_cnt_t;
 
 #ifndef LINUX_POSTMOGRIFY_REMOVAL
@@ -6055,11 +6055,11 @@ typedef struct statreq {
 	uint16 reps;
 } statreq_t;
 
-#define WL_RRM_RPT_VER  0
-#define WL_RRM_RPT_MAX_PAYLOAD  64
-#define WL_RRM_RPT_MIN_PAYLOAD  7
-#define WL_RRM_RPT_FALG_ERR     0
-#define WL_RRM_RPT_FALG_OK      1
+#define WL_RRM_RPT_VER	0
+#define WL_RRM_RPT_MAX_PAYLOAD	64
+#define WL_RRM_RPT_MIN_PAYLOAD	7
+#define WL_RRM_RPT_FALG_ERR	0
+#define WL_RRM_RPT_FALG_OK	1
 typedef struct {
 	uint16 ver;		/* version */
 	struct ether_addr addr;	/* STA MAC addr */
@@ -6132,6 +6132,46 @@ typedef struct wl_taf_sta {
 #define WL_WDSIFTYPE_WDS   0x1 /* The interface is WDS type. */
 #define WL_WDSIFTYPE_DWDS  0x2 /* The interface is DWDS type. */
 
+typedef struct wl_bssload_static {
+	bool is_static;
+	uint16 sta_count;
+	uint8 chan_util;
+	uint16 aac;
+} wl_bssload_static_t;
+
+/* Received Beacons lengths information */
+#define WL_LAST_BCNS_INFO_FIXED_LEN		OFFSETOF(wlc_bcn_len_hist_t, bcnlen_ring)
+typedef struct wlc_bcn_len_hist {
+	uint16	ver;				/* version field */
+	uint16	cur_index;			/* current pointed index in ring buffer */
+	uint32	max_bcnlen;		/* Max beacon length received */
+	uint32	min_bcnlen;		/* Min beacon length received */
+	uint32	ringbuff_len;		/* Length of the ring buffer 'bcnlen_ring' */
+	uint32	bcnlen_ring[1];	/* ring buffer storing received beacon lengths */
+} wlc_bcn_len_hist_t;
+
+#ifdef ATE_BUILD
+/* Buffer of size WLC_SAMPLECOLLECT_MAXLEN (=10240 for 4345a0 ACPHY)
+ * gets copied to this, multiple times
+ */
+typedef enum wl_gpaio_option {
+	GPAIO_PMU_AFELDO,
+	GPAIO_PMU_TXLDO,
+	GPAIO_PMU_VCOLDO,
+	GPAIO_PMU_LNALDO,
+	GPAIO_PMU_ADCLDO,
+	GPAIO_PMU_CLEAR
+} wl_gpaio_option_t;
+#endif /* ATE_BUILD */
+
+/* IO Var Operations - the Value of iov_op In wlc_ap_doiovar */
+typedef enum wlc_ap_iov_operation {
+	WLC_AP_IOV_OP_DELETE                   = -1,
+	WLC_AP_IOV_OP_DISABLE                  = 0,
+	WLC_AP_IOV_OP_ENABLE                   = 1,
+	WLC_AP_IOV_OP_MANUAL_AP_BSSCFG_CREATE  = 2,
+	WLC_AP_IOV_OP_MANUAL_STA_BSSCFG_CREATE = 3
+} wlc_ap_iov_oper_t;
 typedef struct {
 	uint32 config;	/* MODE: AUTO (-1), Disable (0), Enable (1) */
 	uint32 status;	/* Current state: Disabled (0), Enabled (1) */

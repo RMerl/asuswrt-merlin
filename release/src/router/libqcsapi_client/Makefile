@@ -1,5 +1,5 @@
-include ../common.mak
 
+include ../common.mak
 #CC = gcc
 #CFLAGS = -I. -fPIC -O -g -Wall -Werror -Wno-unused-variable -Wno-unused-parameter
 CFLAGS += -I. -fPIC -O -g -Wall -Werror -Wno-unused-variable -Wno-unused-parameter

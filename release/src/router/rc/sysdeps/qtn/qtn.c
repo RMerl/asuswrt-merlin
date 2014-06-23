@@ -6,18 +6,9 @@
 #include <bcmnvram.h>
 #include <shutils.h>
 
-#include "qcsapi_output.h"
-#include "qcsapi_rpc_common/client/find_host_addr.h"
-
-#include "qcsapi.h"
-#include "qcsapi_rpc/client/qcsapi_rpc_client.h"
-#include "qcsapi_rpc/generated/qcsapi_rpc.h"
-#include "qcsapi_driver.h"
-#include "call_qcsapi.h"
-
-#define MAX_RETRY_TIMES 30
-
-static int s_c_rpc_use_udp = 0;
+#include "shared.h"
+#include "web-qtn.h"
+#include "net80211/ieee80211_dfs_reentry.h"
 
 static int lock_qtn_apscan = -1;
 
@@ -29,45 +20,30 @@ extern void file_unlock(int lockfd);
 extern void char_to_ascii(const char *output, const char *input);
 
 char cmd[32];
+#define	WIFINAME	"wifi0"
 #if 0
 void inc_mac(char *mac, int plus);
 #endif
-int rpc_qcsapi_init()
-{
-	const char *host;
-	CLIENT *clnt;
-	int retry = 0;
 
-	/* setup RPC based on udp protocol */
-	do {
-		// remove due to ATE command output format
-		// fprintf(stderr, "#%d attempt to create RPC connection\n", retry + 1);
+struct txpower_ac_qtn_s {
+	uint16 min;
+	uint16 max;
+	uint8 pwr;
+};
 
-		host = client_qcsapi_find_host_addr(0, NULL);
-		if (!host) {
-			fprintf(stderr, "Cannot find the host\n");
-			sleep(1);
-			continue;
-		}
-
-		if (!s_c_rpc_use_udp) {
-			clnt = clnt_create(host, QCSAPI_PROG, QCSAPI_VERS, "tcp");
-		} else {
-			clnt = clnt_create(host, QCSAPI_PROG, QCSAPI_VERS, "udp");
-		}
-
-		if (clnt == NULL) {
-			clnt_pcreateerror(host);
-			sleep(1);
-			continue;
-		} else {
-			client_qcsapi_set_rpcclient(clnt);
-			return 0;
-		}
-	} while (retry++ < MAX_RETRY_TIMES);
-
-	return -1;
-}
+static const struct txpower_ac_qtn_s txpower_list_qtn_rtac87u[] = {
+#if !defined(RTCONFIG_RALINK)
+	/* 1 ~ 25% */
+	{ 1, 25, 14},
+	/* 26 ~ 50% */
+	{ 26, 50, 17},
+	/* 51 ~ 75% */
+	{ 51, 75, 20},
+	/* 76 ~ 100% */
+	{ 76, 100, 23},
+#endif	/* !RTCONFIG_RALINK */
+	{ 0, 0, 0x0}
+};
 
 int
 setCountryCode_5G_qtn(const char *cc)
@@ -78,8 +54,7 @@ setCountryCode_5G_qtn(const char *cc)
 	if( cc==NULL || !isValidCountryCode(cc) )
 		return 0;
 
-	ret = rpc_qcsapi_init();
-	if (ret < 0) {
+	if (!rpc_qtn_ready()) {
 		fprintf(stderr, "ATE command error\n");
 		return -1;
 	}
@@ -114,11 +89,10 @@ int setRegrev_5G_qtn(const char *regrev)
 	int ret;
 	char value[20] = {0};
 
-	if( regrev==NULL || !isValidRegrev(regrev) )
+	if( regrev==NULL || !isValidRegrev((char *)regrev) )
 		return 0;
 
-	ret = rpc_qcsapi_init();
-	if (ret < 0) {
+	if (!rpc_qtn_ready()) {
 		fprintf(stderr, "ATE command error\n");
 		return -1;
 	}
@@ -156,8 +130,8 @@ int setMAC_5G_qtn(const char *mac)
 	if( mac==NULL || !isValidMacAddr(mac) )
 		return 0;
 
-	ret = rpc_qcsapi_init();
-	if (ret < 0) {
+	if (!rpc_qtn_ready())
+	{
 		fprintf(stderr, "ATE command error\n");
 		return -1;
 	}
@@ -194,7 +168,10 @@ int getMAC_5G_qtn(void)
 	int ret;
 	char value[20] = {0};
 
-	ret = rpc_qcsapi_init();
+	if (!rpc_qtn_ready()) {
+		fprintf(stderr, "ATE command error\n");
+		return -1;
+	}
 	ret = qcsapi_bootcfg_get_parameter("ethaddr", value, sizeof(value));
 	if (ret < 0) {
 		fprintf(stderr, "ATE command error\n");
@@ -204,27 +181,11 @@ int getMAC_5G_qtn(void)
 	return 1;
 }
 
-//int start_wireless_qtn(void)
-//{
-//	int ret;
-//
-//	ret = rpc_qcsapi_init();
-//
-//	ret = qcsapi_wifi_set_SSID(WIFINAME,nvram_safe_get("wl1_ssid"));
-//	if(!nvram_match("wl1_auth_mode_x", "open")){
-//		rpc_qcsapi_set_beacon_type(nvram_safe_get("wl1_auth_mode_x"));
-//		rpc_qcsapi_set_WPA_encryption_modes(nvram_safe_get("wl1_crypto"));
-//		rpc_qcsapi_set_key_passphrase(nvram_safe_get("wl1_wpa_psk"));
-//	}
-//	return 1;
-//}
-
 int setAllLedOn_qtn(void)
 {
 	int ret;
 
-	ret = rpc_qcsapi_init();
-	if (ret < 0) {
+	if (!rpc_qtn_ready()) {
 		fprintf(stderr, "ATE command error\n");
 		return -1;
 	}
@@ -245,11 +206,16 @@ int setAllLedOff_qtn(void)
 {
 	int ret;
 
-	ret = rpc_qcsapi_init();
-	if (ret < 0) {
+	if (!rpc_qtn_ready()) {
 		fprintf(stderr, "ATE command error\n");
 		return -1;
 	}
+	ret = qcsapi_wifi_run_script("router_command.sh", "wifi_led_off");
+	if (ret < 0) {
+		fprintf(stderr, "[led] router_command.sh: wifi_led_off error\n");
+		return -1;
+	}
+
 	ret = qcsapi_led_set(1, 0);
 	if (ret < 0) {
 		fprintf(stderr, "ATE command error\n");
@@ -270,8 +236,7 @@ int Get_channel_list_qtn(int unit)
 	string_1024 list_of_channels;
 	char cur_ccode[20] = {0};
 
-	ret = rpc_qcsapi_init();
-	if (ret < 0) {
+	if (!rpc_qtn_ready()) {
 		fprintf(stderr, "ATE command error\n");
 		return -1;
 	}
@@ -413,11 +378,9 @@ int wlcscan_core_qtn(char *ofile, char *ifname)
 	qcsapi_ap_properties	params;
 	char buff[256];
 	FILE *fp_apscan;
-	int ret;
 
-	ret = rpc_qcsapi_init();
-	if (ret < 0) {
-		fprintf(stderr, "[%s][%d]rpc_qcsapi_init error\n", __FUNCTION__, __LINE__);
+	if (!rpc_qtn_ready()) {
+		dbG("5 GHz radio is not ready\n");
 		return -1;
 	}
 	/* clean APSCAN_INFO */
@@ -432,6 +395,7 @@ int wlcscan_core_qtn(char *ofile, char *ifname)
 		dbg("fail to start AP scan\n");
 		return 0;
 	}
+	fprintf(stderr, "ok to start AP scan\n");
 
 	// loop for check scan status
 	while(1){
@@ -482,6 +446,483 @@ int wlcscan_core_qtn(char *ofile, char *ifname)
 		}
 	}
 	fclose(fp_apscan);
+	return 1;
+}
+
+int GetPhyStatus_qtn(void)
+{
+	int ret;
+
+	if (!rpc_qtn_ready()) {
+		fprintf(stderr, "ATE command error\n");
+		return -1;
+	}
+	ret = qcsapi_wifi_run_script("set_test_mode", "get_eth_1000m");
+	if (ret < 0) {
+		ret = qcsapi_wifi_run_script("set_test_mode", "get_eth_100m");
+		if (ret < 0) {
+			ret = qcsapi_wifi_run_script("set_test_mode", "get_eth_10m");
+			if (ret < 0) {
+				// fprintf(stderr, "ATE command error\n");
+				return 0;
+			}else{
+				return 10;
+			}
+		}else{
+			return 100;
+		}
+		return -1;
+	}else{
+		return 1000;
+	}
+	return 0;
+}
+
+int start_ap_qtn(void)
+{
+	int ret;
+	int			 qcsapi_retval;
+	unsigned int		 iter;
+	char ssid[65];
+
+	if (!rpc_qtn_ready()) {
+		dbG("5 GHz radio is not ready\n");
+		return -1;
+	}
+
+	logmessage("start_ap", "AP is running...");
+
+#if 0
+	qcsapi_retval = qcsapi_wifi_reload_in_mode(WIFINAME, qcsapi_access_point);
+
+	if (qcsapi_retval >= 0) {
+		fprintf(stderr, "reload to AP mode successfuly\n" );
+	} else {
+		fprintf(stderr, "reload to AP mode failed\n" );
+	}
+#endif
+	sprintf(ssid, "%s", nvram_safe_get("wl1_ssid"));
+	ret = qcsapi_wifi_set_SSID(WIFINAME, ssid);
+
+	// check security
+	char auth[8];
+	char crypto[16];
+	char beacon[] = "WPAand11i";
+	char encryption[] = "TKIPandAESEncryption";
+	char key[65];
+	uint32_t index = 0;
+
+	strncpy(auth, nvram_safe_get("wl1_auth_mode_x"), sizeof(auth));
+	strncpy(crypto, nvram_safe_get("wl1_crypto"), sizeof(crypto));
+	strncpy(key, nvram_safe_get("wl1_wpa_psk"), sizeof(key));
+
+	if(!strcmp(auth, "psk2") && !strcmp(crypto, "aes")){
+		memcpy(beacon, "11i", strlen("11i") + 1);
+		memcpy(encryption, "AESEncryption", strlen("AESEncryption") + 1);
+	}
+	else if(!strcmp(auth, "pskpsk2") && !strcmp(crypto, "aes") ){
+		memcpy(beacon, "WPAand11i", strlen("WPAand11i") + 1);
+		memcpy(encryption, "AESEncryption", strlen("AESEncryption") + 1);
+	}
+	else if(!strcmp(auth, "pskpsk2") && !strcmp(crypto, "tkip+aes") ){
+		memcpy(beacon, "WPAand11i", strlen("WPAand11i") + 1);
+		memcpy(encryption, "TKIPandAESEncryption", strlen("TKIPandAESEncryption") + 1);
+	}
+	else{
+		logmessage("start_ap", "No security in use\n");
+		memcpy(beacon, "Basic", strlen("Basic") + 1);
+	}
+
+	logmessage("start_ap", "ssid=%s, auth=%s, crypto=%s, encryption=%s, key=%s\n", ssid, auth, crypto, encryption, key);
+	if(!strcmp(auth, "open")){
+		if(qcsapi_wifi_set_WPA_authentication_mode(WIFINAME, "NONE") < 0)
+			logmessage("start_ap", "fail to setup a open-none ap\n");
+		if(qcsapi_wifi_set_beacon_type(WIFINAME, beacon) < 0)
+			logmessage("start_ap", "fail to setup beacon type in ap\n");
+	}
+	else{
+		if(qcsapi_wifi_set_beacon_type(WIFINAME, beacon) < 0)
+			logmessage("start_ap", "fail to setup beacon type in ap\n");
+		if(qcsapi_wifi_set_WPA_authentication_mode(WIFINAME, "PSKAuthentication") < 0)
+			logmessage("start_ap", "fail to setup authentiocation type in ap\n");
+		if(qcsapi_wifi_set_key_passphrase(WIFINAME, index, key) < 0)
+			logmessage("start_ap", "fail to set key in ap\n");
+		if(qcsapi_wifi_set_WPA_encryption_modes(WIFINAME, encryption) < 0)
+			logmessage("start_ap", "fail to set encryption mode in ap\n");
+	}
+
+	logmessage("start_ap", "start_ap done!\n");
+
+	return 1;
+}
+
+int start_psta_qtn(void)
+{
+	static qcsapi_SSID	 array_ssids[10 /* MAX_SSID_LIST_SIZE */];
+	int			 qcsapi_retval;
+	unsigned int		 iter;
+	qcsapi_unsigned_int	 sizeof_list = 2 /* DEFAULT_SSID_LIST_SIZE */ ;
+	char			*list_ssids[10 /* MAX_SSID_LIST_SIZE */ + 1];
+	int ret;
+
+	if (!rpc_qtn_ready()) {
+		dbG("5 GHz radio is not ready\n");
+		return -1;
+	}
+
+	logmessage("start_psta", "media bridge is running...");
+
+	qcsapi_retval = qcsapi_wifi_reload_in_mode(WIFINAME, qcsapi_station);
+
+	if (qcsapi_retval >= 0) {
+		fprintf(stderr, "reload to STA mode successfuly\n" );
+	} else {
+		fprintf(stderr, "reload to STA mode failed\n" );
+	}
+
+	for (iter = 0; iter < sizeof_list; iter++) {
+		list_ssids[iter] = array_ssids[iter];
+		*(list_ssids[iter]) = '\0';
+	}
+
+	qcsapi_retval = qcsapi_SSID_get_SSID_list(WIFINAME, sizeof_list, &list_ssids[0]);
+	if (qcsapi_retval >= 0) {
+		for (iter = 0; iter < sizeof_list; iter++) {
+			if ((list_ssids[iter] == NULL) || strlen(list_ssids[iter]) < 1) {
+				break;
+			}
+			fprintf(stderr, "remove [%s]\n", list_ssids[iter]);
+			qcsapi_SSID_remove_SSID(WIFINAME, array_ssids[iter]);
+		}
+	}
+
+	// verify ssid, if not exists, create new one
+	char ssid[33];
+	strncpy(ssid, nvram_safe_get("wlc_ssid"), sizeof(ssid));
+	logmessage("start_psta", "verify ssid [%s]", ssid);
+	if(qcsapi_SSID_verify_SSID(WIFINAME, ssid) < 0){
+		logmessage("start_psta", "Not such SSID in sta mode\n");
+		if(qcsapi_SSID_create_SSID(WIFINAME, ssid) < 0)
+			logmessage("start_psta", "fail to create SSID in sta mode\n");
+	}
+
+	// check security
+	char auth[8];
+	char crypto[16];
+	char beacon[] = "WPAand11i";
+	char encryption[] = "TKIPandAESEncryption";
+	char key[65];
+	uint32_t index = 0;
+
+	strncpy(auth, nvram_safe_get("wlc_auth_mode"), sizeof(auth));
+	strncpy(crypto, nvram_safe_get("wlc_crypto"), sizeof(crypto));
+	strncpy(key, nvram_safe_get("wlc_wpa_psk"), sizeof(key));
+
+	if(!strcmp(auth, "psk2") && !strcmp(crypto, "aes")){
+		memcpy(beacon, "11i", strlen("11i") + 1);
+		memcpy(encryption, "AESEncryption", strlen("AESEncryption") + 1);
+	}
+	else if(!strcmp(auth, "pskpsk2") && !strcmp(crypto, "aes") ){
+		memcpy(beacon, "WPAand11i", strlen("WPAand11i") + 1);
+		memcpy(encryption, "AESEncryption", strlen("AESEncryption") + 1);
+	}
+	else if(!strcmp(auth, "pskpsk2") && !strcmp(crypto, "tkip+aes") ){
+		memcpy(beacon, "WPAand11i", strlen("WPAand11i") + 1);
+		memcpy(encryption, "TKIPandAESEncryption", strlen("TKIPandAESEncryption") + 1);
+	}
+	else{
+		logmessage("start_psta", "not support such authentication & encryption\n");
+	}
+
+	logmessage("start_psta", "ssid=%s, auth=%s, crypto=%s, encryption=%s, key=%s\n", ssid, auth, crypto, encryption, key);
+	if(!strcmp(auth, "open")){
+		if(qcsapi_SSID_set_authentication_mode(WIFINAME, ssid, "NONE") < 0)
+			logmessage("start_psta", "fail to setup a open-none sta\n");
+	}
+	else{
+		if(qcsapi_SSID_set_protocol(WIFINAME, ssid, beacon) < 0)
+			logmessage("start_psta", "fail to setup protocol in sta\n");
+		if(qcsapi_SSID_set_authentication_mode(WIFINAME, ssid, "PSKAuthentication") < 0)
+			logmessage("start_psta", "fail to setup authentiocation type in sta\n");
+		if(qcsapi_SSID_set_key_passphrase(WIFINAME, ssid, index, key) < 0)
+			logmessage("start_psta", "fail to set key in sta\n");
+	}
+
+	// eval("wpa_cli", "reconfigure");
+	ret = qcsapi_wifi_run_script("router_command.sh", "wpa_cli_reconfigure");
+	if (ret < 0) {
+		fprintf(stderr, "[psta] router_command.sh: wpa_cli_reconfigure error\n");
+		return -1;
+	}
+
+	logmessage("start_psta", "start_psta done!\n");
+
+	return 1;
+}
+
+int start_nodfs_scan_qtn(void)
+{
+	int		 qcsapi_retval;
+	int pick_flags = 0;
+
+	logmessage("dfs", "start dfs scan\n");
+
+	pick_flags = IEEE80211_PICK_CLEAREST;
+	pick_flags |= IEEE80211_PICK_NONDFS;
+
+	if (!rpc_qtn_ready()) {
+		dbG("5 GHz radio is not ready\n");
+		return -1;
+	}
+	qcsapi_retval = qcsapi_wifi_start_scan_ext(WIFINAME, pick_flags);
+	if (qcsapi_retval >= 0) {
+		logmessage("nodfs_scan", "complete");
+	}else{
+		logmessage("nodfs_scan", "scan not complete");
+	}
+
+	return 1;
+}
+
+int enable_qtn_telnetsrv(int enable_flag)
+{
+	int ret;
+
+	if (!rpc_qtn_ready()) {
+		fprintf(stderr, "ATE command error\n");
+		return -1;
+	}
+	if(enable_flag == 0){
+		ret = qcsapi_wifi_run_script("set_test_mode", "enable_telnet_srv 0");
+	}else{
+		ret = qcsapi_wifi_run_script("set_test_mode", "enable_telnet_srv 1");
+	}
+	if (ret < 0) {
+		fprintf(stderr, "[ate] set telnet server error\n");
+		return -1;
+	}
+	return 0;
+}
+
+int getstatus_qtn_telnetsrv(void)
+{
+	int ret;
+	char value[20] = {0};
+
+	if (!rpc_qtn_ready()) {
+		fprintf(stderr, "ATE command error\n");
+		return -1;
+	}
+
+	ret = qcsapi_bootcfg_get_parameter("QTNTELNETSRV", value, sizeof(value));
+	if (ret < 0) {
+		fprintf(stderr, "[ate] get telnet server status error\n");
+		puts("0");
+		return -1;
+	}else{
+		fprintf(stderr, "[ate] get telnet server status:[%s]\n", value);
+		puts("1");
+	}
+	return 0;
+}
+
+int del_qtn_cal_files(void)
+{
+	int ret;
+
+	if (!rpc_qtn_ready()) {
+		fprintf(stderr, "ATE command error\n");
+		return -1;
+	}
+	ret = qcsapi_wifi_run_script("set_test_mode", "del_cal_files");
+	if (ret < 0) {
+		fprintf(stderr, "[ate] delete calibration files error\n");
+		return -1;
+	}
+	return 0;
+}
+
+int get_tx_power_qtn(void)
+{
+	const struct txpower_ac_qtn_s *p_to_table;
+	int txpower = 80;
+
+	p_to_table = &txpower_list_qtn_rtac87u[0];
+	txpower = nvram_get_int("wl1_txpower");
+
+	for (p_to_table; p_to_table->min != 0; ++p_to_table) {
+		if (txpower >= p_to_table->min && txpower <= p_to_table->max) {
+			dbG("txpoewr between: min:[%d] to max:[%d]\n", p_to_table->min, p_to_table->max);
+			return p_to_table->pwr;
+		}
+	}
+
+	if ( p_to_table->min == 0 )
+		dbG("no correct power offset!\n");
+
+	/* default max power */
+	return 23;
+}
+
+typedef uint16 chanspec_t;
+extern uint8 wf_chspec_ctlchan(chanspec_t chspec);
+extern chanspec_t wf_chspec_aton(const char *a);
+
+int gen_stateless_conf(void)
+{
+	int ret;
+	FILE *fp;
+
+	int l_len;
+	// check security
+	char auth[8];
+	char crypto[16];
+	char beacon[] = "WPAand11i";
+	char encryption[] = "TKIPandAESEncryption";
+	char key[65];
+	char ssid[65];
+	char region[5];
+	int channel = wf_chspec_ctlchan(wf_chspec_aton(nvram_safe_get("wl1_chanspec")));
+	int bw = atoi(nvram_safe_get("wl1_bw"));
+	uint32_t index = 0;
+
+	sprintf(ssid, "%s", nvram_safe_get("wl1_ssid"));
+	sprintf(region, "%s", nvram_safe_get("1:ccode"));
+	dbg("[stateless] channel:[%d]\n", channel);
+	dbg("[stateless] bw:[%d]\n", bw);
+
+	fp = fopen("/tmp/stateless_slave_config", "w");
+
+	if(nvram_get_int("sw_mode") == SW_MODE_AP &&
+		nvram_get_int("wlc_psta") == 1 &&
+		nvram_get_int("wlc_band") == 1){
+		/* media bridge mode */
+		fprintf(fp, "wifi0_mode=sta\n");
+
+		strncpy(auth, nvram_safe_get("wlc_auth_mode"), sizeof(auth));
+		strncpy(crypto, nvram_safe_get("wlc_crypto"), sizeof(crypto));
+		strncpy(key, nvram_safe_get("wlc_wpa_psk"), sizeof(key));
+
+		strncpy(ssid, nvram_safe_get("wlc_ssid"), sizeof(ssid));
+		fprintf(fp, "wifi0_SSID=\"%s\"\n", ssid);
+
+		logmessage("start_psta", "ssid=%s, auth=%s, crypto=%s, encryption=%s, key=%s\n", ssid, auth, crypto, encryption, key);
+
+		/* convert security from nvram to qtn */
+		if(!strcmp(auth, "psk2") && !strcmp(crypto, "aes")){
+			fprintf(fp, "wifi0_auth_mode=PSKAuthentication\n");
+			fprintf(fp, "wifi0_beacon=11i\n");
+			fprintf(fp, "wifi0_encryption=AESEncryption\n");
+			fprintf(fp, "wifi0_passphrase=%s\n", key);
+		}
+		else if(!strcmp(auth, "pskpsk2") && !strcmp(crypto, "aes") ){
+			fprintf(fp, "wifi0_auth_mode=PSKAuthentication\n");
+			fprintf(fp, "wifi0_beacon=WPAand11i\n");
+			fprintf(fp, "wifi0_encryption=AESEncryption\n");
+			fprintf(fp, "wifi0_passphrase=%s\n", key);
+		}
+		else if(!strcmp(auth, "pskpsk2") && !strcmp(crypto, "tkip+aes") ){
+			fprintf(fp, "wifi0_auth_mode=PSKAuthentication\n");
+			fprintf(fp, "wifi0_beacon=WPAand11i\n");
+			fprintf(fp, "wifi0_encryption=TKIPandAESEncryption\n");
+			fprintf(fp, "wifi0_passphrase=%s\n", key);
+		}
+		else{
+			logmessage("start_psta", "No security in use\n");
+			fprintf(fp, "wifi0_auth_mode=NONE\n");
+			fprintf(fp, "wifi0_beacon=Basic\n");
+		}
+
+		/* auto channel for media bridge mode */
+		channel = 0;
+	}else{
+		/* not media bridge mode */
+		fprintf(fp, "wifi0_mode=ap\n");
+
+		strncpy(auth, nvram_safe_get("wl1_auth_mode_x"), sizeof(auth));
+		strncpy(crypto, nvram_safe_get("wl1_crypto"), sizeof(crypto));
+		strncpy(key, nvram_safe_get("wl1_wpa_psk"), sizeof(key));
+
+		strncpy(ssid, nvram_safe_get("wl1_ssid"), sizeof(ssid));
+		fprintf(fp, "wifi0_SSID=\"%s\"\n", ssid);
+
+		if(!strcmp(auth, "psk2") && !strcmp(crypto, "aes")){
+			fprintf(fp, "wifi0_auth_mode=PSKAuthentication\n");
+			fprintf(fp, "wifi0_beacon=11i\n");
+			fprintf(fp, "wifi0_encryption=AESEncryption\n");
+			fprintf(fp, "wifi0_passphrase=%s\n", key);
+		}
+		else if(!strcmp(auth, "pskpsk2") && !strcmp(crypto, "aes") ){
+			fprintf(fp, "wifi0_auth_mode=PSKAuthentication\n");
+			fprintf(fp, "wifi0_beacon=WPAand11i\n");
+			fprintf(fp, "wifi0_encryption=AESEncryption\n");
+			fprintf(fp, "wifi0_passphrase=%s\n", key);
+		}
+		else if(!strcmp(auth, "pskpsk2") && !strcmp(crypto, "tkip+aes") ){
+			fprintf(fp, "wifi0_auth_mode=PSKAuthentication\n");
+			fprintf(fp, "wifi0_beacon=WPAand11i\n");
+			fprintf(fp, "wifi0_encryption=TKIPandAESEncryption\n");
+			fprintf(fp, "wifi0_passphrase=%s\n", key);
+		}
+		else{
+			logmessage("start_ap", "No security in use\n");
+			fprintf(fp, "wifi0_beacon=Basic\n");
+		}
+	}
+
+	for( l_len = 0 ; l_len < strlen(region); l_len++){
+		region[l_len] = tolower(region[l_len]);
+	}
+	fprintf(fp, "wifi0_region=%s\n", region);
+	nvram_set("wl1_country_code", nvram_safe_get("1:ccode"));
+	fprintf(fp, "wifi0_vht=1\n");
+	if(bw==1) fprintf(fp, "wifi0_bw=20\n");
+	else if(bw==2) fprintf(fp, "wifi0_bw=40\n");
+	else if(bw==3) fprintf(fp, "wifi0_bw=80\n");
+	else fprintf(fp, "wifi0_bw=80\n");
+
+	/* if media bridge mode, always auto channel */
+	fprintf(fp, "wifi0_channel=%d\n", channel);
+	fprintf(fp, "wifi0_pwr=%d\n", get_tx_power_qtn());
+	if(nvram_get_int("wl1_itxbf") == 1 || nvram_get_int("wl1_txbf") == 1){
+		fprintf(fp, "wifi0_bf=1\n");
+	}else{
+		fprintf(fp, "wifi0_bf=0\n");
+	}
+	fprintf(fp, "wifi0_staticip=1\n");
+	fprintf(fp, "slave_ipaddr=\"192.168.1.111/16\"\n");
+
+	fclose(fp);
+
+	return 1;
+}
+
+void rpc_parse_nvram_from_httpd(int unit, int subunit);
+
+int runtime_config_qtn(int unit, int subunit)
+{
+	int ret;
+
+	if (!rpc_qtn_ready()) {
+		dbG("qcsapi error\n");
+		return -1;
+	}
+	if ( unit == 1 && subunit == -1 ){
+		dbG("Global QTN settings\n");
+		if(nvram_get_int("wl1_itxbf") == 1 || nvram_get_int("wl1_txbf") == 1){
+			dbG("[bf] set_bf_on\n");
+			qcsapi_wifi_run_script("router_command.sh", "set_bf_on");
+			ret = qcsapi_config_update_parameter(WIFINAME, "bf", "1");
+			if (ret < 0) dbG("qcsapi error\n");
+		}else{
+			dbG("[bf] set_bf_off\n");
+			qcsapi_wifi_run_script("router_command.sh", "set_bf_off");
+			ret = qcsapi_config_update_parameter(WIFINAME, "bf", "0");
+			if (ret < 0) dbG("qcsapi error\n");
+		}
+		gen_stateless_conf();
+	}
+	rpc_parse_nvram_from_httpd(unit, subunit);
 	return 1;
 }
 

@@ -8,7 +8,9 @@ global.uploadlib = new function() {
 	var this_upload_index = 0;
 	var this_upload_total = 0;
 	var f_offset  = 0;
-	var segment_size = 50*1024;
+	//var segment_size = 50*1024;
+	var segment_size = 5*1024*1024; //- 5MB
+	
 	//var loop_cnt = 0;
 	//var current_file_size;
 	var this_file_loaded_size = 0;
@@ -85,7 +87,8 @@ global.uploadlib = new function() {
 		// If we use onloadend, we need to check the readyState.
 		reader.onloadend = function(evt) {			
 			if (evt.target.readyState == FileReader.DONE) { // DONE == 2   
-				//alert(evt.target.result.byteLength);  	
+				//alert(evt.target.result.byteLength);
+				  	
 				var tURL = this_upload_handler.url + encodeURIComponent(path) + encodeURIComponent(pfile.name);
 				this_upload_handler.webdav.PUT(tURL, 
 					evt.target.result, 
@@ -122,7 +125,7 @@ global.uploadlib = new function() {
 	this.WebDAVUploadHandler.prototype._progress_callbackfunction = function(evt){
 		if(this_upload_files.length<=0)
 			return;
-			
+		
 		if(evt.lengthComputable) { 
 			//this_file_loaded_size = this_file_loaded_size+evt.loaded;
 			var f = this_upload_files[this_upload_index];
@@ -138,7 +141,6 @@ global.uploadlib = new function() {
 			}
 			
 			if(isUploadSegmentOK==1) {
-				
 				//var size = evt.loaded;
 				var size = segment_size;
 				

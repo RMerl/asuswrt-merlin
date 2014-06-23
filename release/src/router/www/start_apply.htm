@@ -8,11 +8,13 @@
 <link rel="icon" href="images/favicon.png">
 <script type="text/JavaScript" language="JavaScript" src="/jquery.js"></script>
 <script type="text/javascript">
-var $j = jQuery.noConflict();
+if(typeof jQuery != "undefined") var $j = jQuery.noConflict();
+
 var page_modified = 0;
 var restart_time = 0;
 var rc_support = "<% nvram_get("rc_support"); %>"; 
 var dsl_support = (rc_support.search("dsl") == -1) ? false : true;
+var tmo_support = (rc_support.search("tmo") == -1) ? false : true;
 
 var current_page = '<% get_parameter("current_page"); %>';
 var next_page = '<% get_parameter("next_page"); %>';
@@ -21,6 +23,11 @@ var action_mode = '<% get_parameter("action_mode"); %>';
 var action_wait = '<% get_parameter("action_wait"); %>';
 var group_id = '<% get_parameter("group_id"); %>';
 var getflag = '<% get_parameter("flag"); %>';
+
+if(tmo_support)
+        var theUrl = "cellspot.router"; 
+else
+        var theUrl = "router.asus.com";
 
 function started_validating(){
 }
@@ -69,23 +76,21 @@ function redirect(){
 }
 
 function redirect_qis(){
-	/*if('<% nvram_get("sw_mode"); %>' == '1')
-		parent.location.href = 'http://router.asus.com/index.asp';
-	else*/
-		parent.location.href = 'http://'+parent.document.form.lan_ipaddr.value+'/index.asp';
+	parent.location.href = 'http://'+parent.document.form.lan_ipaddr.value+'/index.asp';
 }
 
 function update_dsl_info(){
-        $j.ajax({
-                url: '/start_dsl_autodet.asp',
-                dataType: 'script',
-                error: function(xhr){
-                        update_dsl_info();              
-                },
-                success: function(response){
-                                // trigger hook only
-                }
-        });     
+	if(typeof $j == "undefined") return false;
+
+	$j.ajax({
+		url: '/start_dsl_autodet.asp',
+		dataType: 'script',
+		error: function(xhr){
+			update_dsl_info();              
+		},
+		success: function(response){
+		}
+	});     
 }
 
 function initial(){
@@ -146,8 +151,12 @@ function initial(){
 			}
 		}
 	}
+	else if(current_page.indexOf("ParentalControl_") >= 0){
+		parent.showLoading(restart_time, "waiting");
+		setTimeout("parent.parent.detectLANstatus('"+current_page+"', '');", restart_time*1000);		
+	}
 	else if(current_page.indexOf("Feedback") >= 0){
-		setTimeout("parent.redirect();", 20000);		
+		setTimeout("parent.redirect();", 60000);
 	}	
 	else if(getflag == "ddnscheck"){
 		setTimeout("parent.go_index_page();", 2000);
@@ -229,6 +238,7 @@ function initial(){
 		}
 	}
 	else{
+		
 		if(current_page.length > 0){
 			setTimeout("top_delay_redirect('"+current_page+"');", restart_time*1000);
 		}

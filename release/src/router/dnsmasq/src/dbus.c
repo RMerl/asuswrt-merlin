@@ -44,6 +44,12 @@ const char* introspection_xml_template =
 "    <method name=\"SetServersEx\">\n"
 "      <arg name=\"servers\" direction=\"in\" type=\"aas\"/>\n"
 "    </method>\n"
+"    <method name=\"SetFilterWin2KOption\">\n"
+"      <arg name=\"filterwin2k\" direction=\"in\" type=\"b\"/>\n"
+"    </method>\n"
+"    <method name=\"SetBogusPrivOption\">\n"
+"      <arg name=\"boguspriv\" direction=\"in\" type=\"b\"/>\n"
+"    </method>\n"
 "    <signal name=\"DhcpLeaseAdded\">\n"
 "      <arg name=\"ipaddr\" type=\"s\"/>\n"
 "      <arg name=\"hwaddr\" type=\"s\"/>\n"
@@ -150,13 +156,16 @@ static void dbus_read_servers(DBusMessage *message)
 	      dbus_message_iter_get_basic(&iter, &p[i]);
 	      dbus_message_iter_next (&iter);
 	      if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_BYTE)
-		break;
+		{
+		  i++;
+		  break;
+		}
 	    }
 
 #ifndef HAVE_IPV6
 	  my_syslog(LOG_WARNING, _("attempt to set an IPv6 server address via DBus - no IPv6 support"));
 #else
-	  if (i == sizeof(struct in6_addr)-1)
+	  if (i == sizeof(struct in6_addr))
 	    {
 	      memcpy(&addr.in6.sin6_addr, p, sizeof(struct in6_addr));
 #ifdef HAVE_SOCKADDR_SA_LEN
@@ -372,6 +381,30 @@ static DBusMessage* dbus_read_servers_ex(DBusMessage *message, int strings)
   return error;
 }
 
+static DBusMessage *dbus_set_bool(DBusMessage *message, int flag, char *name)
+{
+  DBusMessageIter iter;
+  dbus_bool_t enabled;
+
+  if (!dbus_message_iter_init(message, &iter) || dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_BOOLEAN)
+    return dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS, "Expected boolean argument");
+  
+  dbus_message_iter_get_basic(&iter, &enabled);
+
+  if (enabled)
+    { 
+      my_syslog(LOG_INFO, "Enabling --%s option from D-Bus", name);
+      set_option_bool(flag);
+    }
+  else
+    {
+      my_syslog(LOG_INFO, "Disabling --$s option from D-Bus", name);
+      reset_option_bool(flag);
+    }
+
+  return NULL;
+}
+
 DBusHandlerResult message_handler(DBusConnection *connection, 
 				  DBusMessage *message, 
 				  void *user_data)
@@ -414,6 +447,14 @@ DBusHandlerResult message_handler(DBusConnection *connection,
     {
       reply = dbus_read_servers_ex(message, 1);
       new_servers = 1;
+    }
+  else if (strcmp(method, "SetFilterWin2KOption") == 0)
+    {
+      reply = dbus_set_bool(message, OPT_FILTER, "filterwin2k");
+    }
+  else if (strcmp(method, "SetBogusPrivOption") == 0)
+    {
+      reply = dbus_set_bool(message, OPT_BOGUSPRIV, "bogus-priv");
     }
   else if (strcmp(method, "ClearCache") == 0)
     clear_cache = 1;

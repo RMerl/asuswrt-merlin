@@ -28,7 +28,33 @@ var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 var $j = jQuery.noConflict();
 
 function init(){
-		ddns_load_body();	
+        ddns_load_body();
+}
+
+function check_update(){
+    var ddns_ipaddr_t = '<% nvram_get("ddns_ipaddr"); %>';
+    ddns_ipaddr_t = ddns_ipaddr_t.replace(/&#10/g,"");
+    var ddns_server_x_t = '<% nvram_get("ddns_server_x"); %>';
+    var ddns_hostname_x_t = '<% nvram_get("ddns_hostname_x"); %>';
+    var ddns_updated_t = '<% nvram_get("ddns_updated"); %>';
+        if ((wanlink_ipaddr() == ddns_ipaddr_t) &&
+             (ddns_server_x_t == document.form.ddns_server_x.value) &&
+             (ddns_hostname_x_t == document.form.ddns_hostname_x.value) &&
+                 ddns_updated_t == '1') {
+            force_update();
+        }else{
+            document.form.submit();
+            showLoading();
+        }
+}
+
+function force_update() {
+    var r = confirm("IP address, server and hostname have not changed since the last update. If you want to update, please click 'yes'");
+    if (r == true) {
+            document.form.submit();
+            showLoading();
+    }else
+                return false;
 }
 
 function valid_wan_ip() {
@@ -39,7 +65,7 @@ function valid_wan_ip() {
         var B_class_end = inet_network("172.31.255.255");
         var C_class_start = inet_network("192.168.0.0");
         var C_class_end = inet_network("192.168.255.255");
-        
+       
         var ip_obj = wanlink_ipaddr();
         var ip_num = inet_network(ip_obj);
         var ip_class = "";
@@ -51,116 +77,115 @@ function valid_wan_ip() {
         else if(ip_num > C_class_start && ip_num < C_class_end)
                 ip_class = 'C';
         else if(ip_num != 0){
-		showhide("wan_ip_hide2", 0);
-		showhide("wan_ip_hide3", 0);
-		return;
+        showhide("wan_ip_hide2", 0);
+        showhide("wan_ip_hide3", 0);
+        return;
         }
-	showhide("wan_ip_hide2", 1);
-	showhide("wan_ip_hide3", 0);
-	return;
+    showhide("wan_ip_hide2", 1);
+    showhide("wan_ip_hide3", 0);
+    return;
 }
 
 function ddns_load_body(){
-	show_menu();
-	valid_wan_ip();
+    show_menu();
+    valid_wan_ip();
 
-	var hostname_x = '<% nvram_get("ddns_hostname_x"); %>';
-	var ddns_return_code = '<% nvram_get_ddns("LANHostConfig","ddns_return_code"); %>';
-	var ddns_old_name = '<% nvram_get("ddns_old_name"); %>';
-	var ddns_server_x = '<% nvram_get("ddns_server_x"); %>';
-	
-	if('<% nvram_get("ddns_enable_x"); %>' == 1){
-			inputCtrl(document.form.ddns_server_x, 1);
-			document.getElementById('ddns_hostname_tr').style.display = "";
-			if('<% nvram_get("ddns_server_x"); %>' == "WWW.ASUS.COM" || '<% nvram_get("ddns_server_x"); %>' == ""){
-					document.form.ddns_hostname_x.parentNode.style.display = "none";
-					document.form.DDNSName.parentNode.style.display = "";
-					var ddns_hostname_title = hostname_x.substring(0, hostname_x.indexOf('.asuscomm.com'));
-					if(hostname_x != '' && ddns_hostname_title)
-							document.getElementById("DDNSName").value = ddns_hostname_title;
-					else
-							document.getElementById("DDNSName").value = "<#asusddns_inputhint#>";
-			}else{
-					document.form.ddns_hostname_x.parentNode.style.display = "";
-					document.form.DDNSName.parentNode.style.display = "none";
-					inputCtrl(document.form.ddns_username_x, 1);
-					inputCtrl(document.form.ddns_passwd_x, 1);					
-					if(hostname_x != '')
-							document.getElementById("ddns_hostname_x").value = hostname_x;
-					else
-							document.getElementById("ddns_hostname_x").value = "<#asusddns_inputhint#>";
-			}
-			change_ddns_setting(document.form.ddns_server_x.value);		
-	}else{
-			inputCtrl(document.form.ddns_server_x, 0);
-			document.getElementById('ddns_hostname_tr').style.display = "none";
-			inputCtrl(document.form.ddns_username_x, 0);
-			inputCtrl(document.form.ddns_passwd_x, 0);
-			document.form.ddns_wildcard_x[0].disabled= 1;
-			document.form.ddns_wildcard_x[1].disabled= 1;
-			showhide("wildcard_field",0);
-	}	
-	
-	hideLoading();
+    var hostname_x = '<% nvram_get("ddns_hostname_x"); %>';
+    var ddns_return_code = '<% nvram_get_ddns("LANHostConfig","ddns_return_code"); %>';
+    var ddns_old_name = '<% nvram_get("ddns_old_name"); %>';
+    var ddns_server_x = '<% nvram_get("ddns_server_x"); %>';
+   
+    if('<% nvram_get("ddns_enable_x"); %>' == 1){
+            inputCtrl(document.form.ddns_server_x, 1);
+            document.getElementById('ddns_hostname_tr').style.display = "";
+            if('<% nvram_get("ddns_server_x"); %>' == "WWW.ASUS.COM" || '<% nvram_get("ddns_server_x"); %>' == ""){
+                    document.form.ddns_hostname_x.parentNode.style.display = "none";
+                    document.form.DDNSName.parentNode.style.display = "";
+                    var ddns_hostname_title = hostname_x.substring(0, hostname_x.indexOf('.asuscomm.com'));
+                    if(hostname_x != '' && ddns_hostname_title)
+                            document.getElementById("DDNSName").value = ddns_hostname_title;
+                    else
+                            document.getElementById("DDNSName").value = "<#asusddns_inputhint#>";
+            }else{
+                    document.form.ddns_hostname_x.parentNode.style.display = "";
+                    document.form.DDNSName.parentNode.style.display = "none";
+                    inputCtrl(document.form.ddns_username_x, 1);
+                    inputCtrl(document.form.ddns_passwd_x, 1);                   
+                    if(hostname_x != '')
+                            document.getElementById("ddns_hostname_x").value = hostname_x;
+                    else
+                            document.getElementById("ddns_hostname_x").value = "<#asusddns_inputhint#>";
+            }
+            change_ddns_setting(document.form.ddns_server_x.value);       
+    }else{
+            inputCtrl(document.form.ddns_server_x, 0);
+            document.getElementById('ddns_hostname_tr').style.display = "none";
+            inputCtrl(document.form.ddns_username_x, 0);
+            inputCtrl(document.form.ddns_passwd_x, 0);
+            document.form.ddns_wildcard_x[0].disabled= 1;
+            document.form.ddns_wildcard_x[1].disabled= 1;
+            showhide("wildcard_field",0);
+    }   
+   
+    hideLoading();
 
-	if(ddns_return_code == 'register,-1')
-		alert("<#LANHostConfig_x_DDNS_alarm_2#>");
-	else if(ddns_return_code.indexOf('200')!=-1){
-		alert("<#LANHostConfig_x_DDNS_alarm_3#>");
-		showhide("wan_ip_hide2", 0);
-		if(ddns_server_x == "WWW.ASUS.COM")
-			showhide("wan_ip_hide3", 1);		
-	}else if(ddns_return_code.indexOf('203')!=-1)
-		alert("<#LANHostConfig_x_DDNS_alarm_hostname#> '"+hostname_x+"' <#LANHostConfig_x_DDNS_alarm_registered#>");
-	else if(ddns_return_code.indexOf('220')!=-1){
-		alert("<#LANHostConfig_x_DDNS_alarm_4#>");
-		showhide("wan_ip_hide2", 0);
-		if(ddns_server_x == "WWW.ASUS.COM")
-			showhide("wan_ip_hide3", 1);		
-	}else if(ddns_return_code == 'register,230'){
-		alert("<#LANHostConfig_x_DDNS_alarm_5#>");
-		showhide("wan_ip_hide2", 0);
-		if(ddns_server_x == "WWW.ASUS.COM")
-			showhide("wan_ip_hide3", 1);		
-	}else if(ddns_return_code.indexOf('233')!=-1)
-		alert("<#LANHostConfig_x_DDNS_alarm_hostname#> '"+hostname_x+"' <#LANHostConfig_x_DDNS_alarm_registered_2#> '"+ddns_old_name+"'.");
-	else if(ddns_return_code.indexOf('296')!=-1)
-		alert("<#LANHostConfig_x_DDNS_alarm_6#>");
-	else if(ddns_return_code.indexOf('297')!=-1)
-		alert("<#LANHostConfig_x_DDNS_alarm_7#>");
-	else if(ddns_return_code.indexOf('298')!=-1)
-		alert("<#LANHostConfig_x_DDNS_alarm_8#>");
-	else if(ddns_return_code.indexOf('299')!=-1)
-		alert("<#LANHostConfig_x_DDNS_alarm_9#>");
-	else if(ddns_return_code.indexOf('401')!=-1)
-		alert("<#LANHostConfig_x_DDNS_alarm_10#>");
-	else if(ddns_return_code.indexOf('407')!=-1)
-		alert("<#LANHostConfig_x_DDNS_alarm_11#>");
-	else if(ddns_return_code == 'Time-out')
-		alert("<#LANHostConfig_x_DDNS_alarm_1#>");
-	else if(ddns_return_code =='unknown_error')
-		alert("<#LANHostConfig_x_DDNS_alarm_2#>");
-  	else if(ddns_return_code =='connect_fail')
-		alert("<#qis_fail_desc7#>");
-  	else if(ddns_return_code =='no_change')
-    		alert("<#LANHostConfig_x_DDNS_alarm_nochange#>");
-  	/*else if(ddns_return_code =='ddns_query')
-    		alert("<#LANHostConfig_x_DDNSHostnameCheck_buttonname#>");*/
+    if(ddns_return_code == 'register,-1')
+        alert("<#LANHostConfig_x_DDNS_alarm_2#>");
+    else if(ddns_return_code.indexOf('200')!=-1){
+        alert("<#LANHostConfig_x_DDNS_alarm_3#>");
+        showhide("wan_ip_hide2", 0);
+        if(ddns_server_x == "WWW.ASUS.COM")
+            showhide("wan_ip_hide3", 1);       
+    }else if(ddns_return_code.indexOf('203')!=-1)
+        alert("<#LANHostConfig_x_DDNS_alarm_hostname#> '"+hostname_x+"' <#LANHostConfig_x_DDNS_alarm_registered#>");
+    else if(ddns_return_code.indexOf('220')!=-1){
+        alert("<#LANHostConfig_x_DDNS_alarm_4#>");
+        showhide("wan_ip_hide2", 0);
+        if(ddns_server_x == "WWW.ASUS.COM")
+            showhide("wan_ip_hide3", 1);       
+    }else if(ddns_return_code == 'register,230'){
+        alert("<#LANHostConfig_x_DDNS_alarm_5#>");
+        showhide("wan_ip_hide2", 0);
+        if(ddns_server_x == "WWW.ASUS.COM")
+            showhide("wan_ip_hide3", 1);       
+    }else if(ddns_return_code.indexOf('233')!=-1)
+        alert("<#LANHostConfig_x_DDNS_alarm_hostname#> '"+hostname_x+"' <#LANHostConfig_x_DDNS_alarm_registered_2#> '"+ddns_old_name+"'");
+    else if(ddns_return_code.indexOf('296')!=-1)
+        alert("<#LANHostConfig_x_DDNS_alarm_6#>");
+    else if(ddns_return_code.indexOf('297')!=-1)
+        alert("<#LANHostConfig_x_DDNS_alarm_7#>");
+    else if(ddns_return_code.indexOf('298')!=-1)
+        alert("<#LANHostConfig_x_DDNS_alarm_8#>");
+    else if(ddns_return_code.indexOf('299')!=-1)
+        alert("<#LANHostConfig_x_DDNS_alarm_9#>");
+    else if(ddns_return_code.indexOf('401')!=-1)
+        alert("<#LANHostConfig_x_DDNS_alarm_10#>");
+    else if(ddns_return_code.indexOf('407')!=-1)
+        alert("<#LANHostConfig_x_DDNS_alarm_11#>");
+    else if(ddns_return_code == 'Time-out')
+        alert("<#LANHostConfig_x_DDNS_alarm_1#>");
+    else if(ddns_return_code =='unknown_error')
+        alert("<#LANHostConfig_x_DDNS_alarm_2#>");
+      else if(ddns_return_code =='connect_fail')
+        alert("<#qis_fail_desc7#>");
+      else if(ddns_return_code =='no_change')
+            alert("<#LANHostConfig_x_DDNS_alarm_nochange#>");
+      /*else if(ddns_return_code =='ddns_query')
+            alert("<#LANHostConfig_x_DDNSHostnameCheck_buttonname#>");*/
         else if(ddns_return_code =='auth_fail')
                 alert("<#qis_fail_desc1#>");
-  	else if(ddns_return_code !='')
-    		alert("<#LANHostConfig_x_DDNS_alarm_2#>");
+      else if(ddns_return_code !='')
+            alert("<#LANHostConfig_x_DDNS_alarm_2#>");
 }
 
 function applyRule(){
-	if(validForm()){
-		if(document.form.ddns_enable_x[0].checked == true && document.form.ddns_server_x.selectedIndex == 0){
-				//document.form.action_script.value = "adm_asusddns_register";				
-				document.form.ddns_hostname_x.value = document.form.DDNSName.value+".asuscomm.com";	
-		}
-		showLoading();
-		document.form.submit();	
-	}
+    if(validForm()){
+        if(document.form.ddns_enable_x[0].checked == true && document.form.ddns_server_x.selectedIndex == 0){
+                //document.form.action_script.value = "adm_asusddns_register";               
+                document.form.ddns_hostname_x.value = document.form.DDNSName.value+".asuscomm.com";   
+        }
+        check_update();
+    }
 }
 
 function validForm(){

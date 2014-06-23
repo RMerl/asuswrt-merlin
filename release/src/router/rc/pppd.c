@@ -40,7 +40,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <net/if_arp.h>
-#include <signal.h>
 
 static int
 handle_special_char_for_pppd(char *buf, size_t buf_size, char *src)
@@ -212,7 +211,6 @@ _dprintf("%s: unit=%d.\n", __FUNCTION__, unit);
 
 #ifdef RTCONFIG_IPV6
 	switch (get_ipv6_service()) {
-	case IPV6_NATIVE:
 	case IPV6_NATIVE_DHCP:
 	case IPV6_MANUAL:
 		if (nvram_match("ipv6_ifdev", "ppp"))

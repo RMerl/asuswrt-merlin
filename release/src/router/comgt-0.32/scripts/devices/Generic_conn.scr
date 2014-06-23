@@ -3,7 +3,6 @@ set com 115200n81
 set senddelay 0.05
 waitquiet 1 0.2
 
-system "nvram set g3state_pin=0"
 system "nvram set g3state_z=0"
 system "nvram set g3state_q0=0"
 system "nvram set g3state_cd=0"
@@ -12,48 +11,6 @@ system "nvram set g3state_mode=0"
 system "nvram set g3state_apn=0"
 system "nvram set g3state_dial=0"
 system "nvram set g3state_conn=0"
-
-system "nvram set g3state_pin=1"
-let $x=$rpipe("nvram get modem_pincode")
-let l=len($x)
-if l=0 goto ready
-if l<>4 goto pinerror
-
-
-:test
-let c=0
-let $c=$mid($x,c,1)
-if $c<"0" goto pinerror
-if $c>"9" goto pinerror
-inc c
-if c<4 goto test
-let a=val($x)
-if a<0 goto pinerror
-if a>9999 goto pinerror
-let $c=$left($x,4)
-let $y=$rpipe("nvram get g3err_pin")
-let a=val($y)
-if a=1 goto pinerror
-if a=3 goto pinerror2
-
-send "AT+CPIN?^m"
-waitfor 20 "SIM PIN","READY","ERROR","ERR"
-if % = -1 goto pintimeerror
-if % = 0 goto enterpin
-if % = 1 goto ready
-goto pinerror
-
-
-:enterpin
-system "nvram set g3state_pin=2"
-send "AT+CPIN=\""
-send $c
-send "\"^m"
-waitfor 20 "OK","ERR","ERROR","+CME ERROR"
-if % = -1 goto pintimeerror
-if % = 0 goto ready
-#system "nvram set g3err_pin=3"
-#goto pinerror2
 
 
 :ready
@@ -68,7 +25,7 @@ goto error
 
 :set_parameters
 system "nvram set g3state_q0=1"
-send "ATQ0 V1 E1 &C1 &D2 S0=0^m"
+send "ATQ0 V1 E1 S0=0^m"
 waitfor 10 "OK","ERR","ERROR"
 if % = -1 goto timeerror
 if % = 0 goto set_parameters2
@@ -240,32 +197,9 @@ print "CONNECTED\n"
 exit 0
 
 
-:pinerror
-system "nvram set g3err_pin=1"
-print "ERROR: PIN code must be 4 decimal digits only.\n"
-print "Caution! - entering the wrong PIN code three times will lock the SIM.\n"
-send "ATH^m"
-exit 1
-
-
-:pinerror2
-system "nvram set g3err_pin=3"
-print "ERROR: PIN code is incorrect at present.\n"
-print "Caution! - entering the wrong PIN code three times will lock the SIM.\n"
-send "ATH^m"
-exit 1
-
-
-:pintimeerror
-system "nvram set g3err_pin=2"
-print "ERROR: timeout, device did not respond to PIN command entry.\n"
-send "ATH^m"
-exit 1
-
-
 :apnerror
 system "nvram set g3err_apn=1"
-print "ERROR entering APN.\n"
+print "ERROR entering APN\n"
 print \"The COMGTAPN env variable is not set.\n"
 send "ATH^m"
 exit 1
@@ -273,21 +207,21 @@ exit 1
 
 :apntimeerror
 system "nvram set g3err_apn=2"
-print \"ERROR entering APN.\n"
-print "The device timeout.\n"
+print \"ERROR entering APN\n"
+print "The device timeout\n"
 send "ATH^m"
 exit 1
 
 
 :error
 system "nvram set g3err_conn=1"
-print "CONNECT ERROR.\n"
+print "CONNECT ERROR\n"
 send "ATH^m"
 exit 1
 
 
 :timeerror
 system "nvram set g3err_conn=2"
-print "CONNECT TIMEOUT.\n"
+print "CONNECT TIMEOUT\n"
 send "ATH^m"
 exit 1

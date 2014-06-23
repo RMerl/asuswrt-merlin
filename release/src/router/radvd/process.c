@@ -154,7 +154,7 @@ static void process_rs(struct Interface *iface, unsigned char *msg, int len, str
 		opt_str += optlen;
 	}
 
-	gettimeofday(&tv, NULL);
+	now(&tv);
 
 	delay = MAX_RA_DELAY_TIME * rand() / (RAND_MAX + 1.0);
 

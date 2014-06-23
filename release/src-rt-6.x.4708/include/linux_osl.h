@@ -1,7 +1,7 @@
 /*
  * Linux OS Independent Layer
  *
- * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -558,12 +558,21 @@ do { \
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 36)
 #define	SKIPCT	(1 << 2)
 #define	CHAINED	(1 << 3)
+#ifdef RTCONFIG_BWDPI
+#define	TOBR	(1 << 5)	/* Sync with other branch */
+#endif
 #define	PKTSETSKIPCT(osh, skb)	(((struct sk_buff*)(skb))->pktc_flags |= SKIPCT)
 #define	PKTCLRSKIPCT(osh, skb)	(((struct sk_buff*)(skb))->pktc_flags &= (~SKIPCT))
 #define	PKTSKIPCT(osh, skb)	(((struct sk_buff*)(skb))->pktc_flags & SKIPCT)
 #define	PKTSETCHAINED(osh, skb)	(((struct sk_buff*)(skb))->pktc_flags |= CHAINED)
 #define	PKTCLRCHAINED(osh, skb)	(((struct sk_buff*)(skb))->pktc_flags &= (~CHAINED))
 #define	PKTISCHAINED(skb)	(((struct sk_buff*)(skb))->pktc_flags & CHAINED)
+#ifdef RTCONFIG_BWDPI
+#define	PKTSETTOBR(osh, skb)	(((struct sk_buff*)(skb))->pktc_flags |= TOBR)
+#define	PKTCLRTOBR(osh, skb)	(((struct sk_buff*)(skb))->pktc_flags &= (~TOBR))
+#define	PKTISTOBR(skb)		(((struct sk_buff*)(skb))->pktc_flags & TOBR)
+#define	PKTSETCTFIPCTXIF(skb, ifp)	(((struct sk_buff*)(skb))->ctf_ipc_txif = ifp)
+#endif
 #else
 #define	SKIPCT	(1 << 18)
 #define	CHAINED	(1 << 19)
@@ -573,6 +582,12 @@ do { \
 #define	PKTSETCHAINED(osh, skb)	(((struct sk_buff*)(skb))->mac_len |= CHAINED)
 #define	PKTCLRCHAINED(osh, skb)	(((struct sk_buff*)(skb))->mac_len &= (~CHAINED))
 #define	PKTISCHAINED(skb)	(((struct sk_buff*)(skb))->mac_len & CHAINED)
+#ifdef RTCONFIG_BWDPI
+#define	PKTSETCTFIPCTXIF(skb, ifp)
+#define	PKTSETTOBR(osh, skb)
+#define	PKTCLRTOBR(osh, skb)
+#define	PKTISTOBR(skb)	FALSE
+#endif
 #endif /* 2.6.36 */
 #else /* 2.6.22 */
 #define	SKIPCT	(1 << 2)
@@ -583,6 +598,12 @@ do { \
 #define	PKTSETCHAINED(osh, skb)	(((struct sk_buff*)(skb))->__unused |= CHAINED)
 #define	PKTCLRCHAINED(osh, skb)	(((struct sk_buff*)(skb))->__unused &= (~CHAINED))
 #define	PKTISCHAINED(skb)	(((struct sk_buff*)(skb))->__unused & CHAINED)
+#ifdef RTCONFIG_BWDPI
+#define	PKTSETCTFIPCTXIF(skb, ifp)
+#define	PKTSETTOBR(osh, skb)
+#define	PKTCLRTOBR(osh, skb)
+#define	PKTISTOBR(skb)	FALSE
+#endif
 #endif /* 2.6.22 */
 typedef struct ctf_mark {
 	uint32	value;

@@ -48,6 +48,7 @@ endif
 ifneq ($(HTTP_VERSION),)
 	-install -m 0644 packages/asuslighttpd_$(HTTP_VERSION)_$(pkg_type).ipk $(INSTALLDIR)/rom
 endif
+
 	-install -m 0644 packages/openssl_*_$(pkg_type).ipk $(INSTALLDIR)/rom
 	-install -m 0644 packages/zlib_*_$(pkg_type).ipk $(INSTALLDIR)/rom
 	-install -m 0644 packages/libcurl_*_$(pkg_type).ipk $(INSTALLDIR)/rom
@@ -60,9 +61,11 @@ endif
 	-install -m 0644 packages/spawn-fcgi_*_$(pkg_type).ipk $(INSTALLDIR)/rom
 endif
 
-	install -m 0755 apps_scripts/asusrouter $(INSTALLDIR)/rom/.asusrouter
 	mkdir -p $(INSTALLDIR)/usr/sbin
+ifeq ($(RTCONFIG_USB),y)
+	install -m 0755 apps_scripts/asusrouter $(INSTALLDIR)/rom/.asusrouter
 	install -m 0755 apps_scripts/*.sh $(INSTALLDIR)/usr/sbin
+endif
 	#install -m 0755 webs_scripts/*.sh $(INSTALLDIR)/usr/sbin
 ifeq ($(RTCONFIG_AUTOLIVEUPDATE_ZIP),y)
 	cp -f webs_scripts/zip_webs_upgrade.sh $(INSTALLDIR)/usr/sbin/webs_upgrade.sh
@@ -71,7 +74,9 @@ else
 	cp -f webs_scripts/nozip_webs_upgrade.sh $(INSTALLDIR)/usr/sbin/webs_upgrade.sh
 	cp -f webs_scripts/nozip_webs_update.sh $(INSTALLDIR)/usr/sbin/webs_update.sh
 endif
-#	cp -f others/usbtest.sh $(INSTALLDIR)/usr/sbin/usbtest.sh
+ifeq ($(RTCONFIG_USB),y)
+# 	cp -f others/usbtest.sh $(INSTALLDIR)/usr/sbin/usbtest.sh
+endif
 
 	# remove comments, compress whitespace
 	sed 's/#.*//g;s/[ \t]\+/ /g;s/^[ \t]*//;s/[ \t]*$$//;/^$$/d' < rom/etc/services > $(INSTALLDIR)/rom/etc/services
@@ -97,12 +102,22 @@ endif
 
 ifeq ($(RTCONFIG_BCMARM),y)
 	mkdir -p $(INSTALLDIR)/rom/dlna
-ifeq ($(RTAC56U), y)
+ifeq ($(RTAC3200),y)
+	cp -rf dlna/icon_sm.rtac68u.jpg $(INSTALLDIR)/rom/dlna/icon_sm.jpg
+	cp -rf dlna/icon_sm.rtac68u.png $(INSTALLDIR)/rom/dlna/icon_sm.png
+	cp -rf dlna/icon_lrg.rtac68u.jpg $(INSTALLDIR)/rom/dlna/icon_lrg.jpg
+	cp -rf dlna/icon_lrg.rtac68u.png $(INSTALLDIR)/rom/dlna/icon_lrg.png
+else ifeq ($(RTAC56U), y)
 	cp -rf dlna/icon_sm.rtac56u.jpg $(INSTALLDIR)/rom/dlna/icon_sm.jpg
 	cp -rf dlna/icon_sm.rtac56u.png $(INSTALLDIR)/rom/dlna/icon_sm.png
 	cp -rf dlna/icon_lrg.rtac56u.jpg $(INSTALLDIR)/rom/dlna/icon_lrg.jpg
 	cp -rf dlna/icon_lrg.rtac56u.png $(INSTALLDIR)/rom/dlna/icon_lrg.png
-else ifneq (,$(filter y, $(RTAC68U) $(DSLAC68U) ) )
+else ifeq ($(RTAC87U), y)
+	cp -rf dlna/icon_sm.rtac87u.jpg $(INSTALLDIR)/rom/dlna/icon_sm.jpg
+	cp -rf dlna/icon_sm.rtac87u.png $(INSTALLDIR)/rom/dlna/icon_sm.png
+	cp -rf dlna/icon_lrg.rtac87u.jpg $(INSTALLDIR)/rom/dlna/icon_lrg.jpg
+	cp -rf dlna/icon_lrg.rtac87u.png $(INSTALLDIR)/rom/dlna/icon_lrg.png
+else ifeq ($(RTAC68U)$(DSLAC68U),y)
 	cp -rf dlna/icon_sm.rtac68u.jpg $(INSTALLDIR)/rom/dlna/icon_sm.jpg
 	cp -rf dlna/icon_sm.rtac68u.png $(INSTALLDIR)/rom/dlna/icon_sm.png
 	cp -rf dlna/icon_lrg.rtac68u.jpg $(INSTALLDIR)/rom/dlna/icon_lrg.jpg

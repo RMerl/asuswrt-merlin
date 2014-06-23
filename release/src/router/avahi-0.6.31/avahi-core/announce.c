@@ -41,8 +41,10 @@ static void remove_announcer(AvahiServer *s, AvahiAnnouncer *a) {
     if (a->time_event)
         avahi_time_event_free(a->time_event);
 
-    AVAHI_LLIST_REMOVE(AvahiAnnouncer, by_interface, a->interface->announcers, a);
-    AVAHI_LLIST_REMOVE(AvahiAnnouncer, by_entry, a->entry->announcers, a);
+    AVAHI_LLIST_REMOVE(AvahiAnnouncer, by_interface, a->interface->mdns.announcers, a);
+
+    assert(a->entry->type == AVAHI_ENTRY_MDNS);
+    AVAHI_LLIST_REMOVE(AvahiAnnouncer, by_entry, a->entry->proto.mdns.announcers, a);
 
     avahi_free(a);
 }
@@ -71,11 +73,11 @@ static void next_state(AvahiAnnouncer *a);
 void avahi_s_entry_group_check_probed(AvahiSEntryGroup *g, int immediately) {
     AvahiEntry *e;
     assert(g);
-    assert(!g->dead);
+    assert(!g->dead && g->type == AVAHI_GROUP_MDNS);
 
     /* Check whether all group members have been probed */
 
-    if (g->state != AVAHI_ENTRY_GROUP_REGISTERING || g->n_probing > 0)
+    if (g->state != AVAHI_ENTRY_GROUP_REGISTERING || g->proto.mdns.n_probing > 0)
         return;
 
     avahi_s_entry_group_change_state(g, AVAHI_ENTRY_GROUP_ESTABLISHED);
@@ -85,8 +87,9 @@ void avahi_s_entry_group_check_probed(AvahiSEntryGroup *g, int immediately) {
 
     for (e = g->entries; e; e = e->by_group_next) {
         AvahiAnnouncer *a;
+        assert(e->type == AVAHI_ENTRY_MDNS);
 
-        for (a = e->announcers; a; a = a->by_entry_next) {
+        for (a = e->proto.mdns.announcers; a; a = a->by_entry_next) {
 
             if (a->state != AVAHI_WAITING)
                 continue;
@@ -113,7 +116,7 @@ static void next_state(AvahiAnnouncer *a) {
 
     if (a->state == AVAHI_WAITING) {
 
-        assert(a->entry->group);
+        assert(a->entry->group && a->entry->group->type == AVAHI_GROUP_MDNS);
 
         avahi_s_entry_group_check_probed(a->entry->group, 1);
 
@@ -123,8 +126,8 @@ static void next_state(AvahiAnnouncer *a) {
             /* Probing done */
 
             if (a->entry->group) {
-                assert(a->entry->group->n_probing);
-                a->entry->group->n_probing--;
+                assert(a->entry->group->type == AVAHI_GROUP_MDNS && a->entry->group->proto.mdns.n_probing);
+                a->entry->group->proto.mdns.n_probing--;
             }
 
             if (a->entry->group && a->entry->group->state == AVAHI_ENTRY_GROUP_REGISTERING)
@@ -185,10 +188,10 @@ static AvahiAnnouncer *get_announcer(AvahiServer *s, AvahiEntry *e, AvahiInterfa
     AvahiAnnouncer *a;
 
     assert(s);
-    assert(e);
+    assert(e && e->type == AVAHI_ENTRY_MDNS);
     assert(i);
 
-    for (a = e->announcers; a; a = a->by_entry_next)
+    for (a = e->proto.mdns.announcers; a; a = a->by_entry_next)
         if (a->interface == i)
             return a;
 
@@ -201,6 +204,7 @@ static void go_to_initial_state(AvahiAnnouncer *a) {
 
     assert(a);
     e = a->entry;
+    assert(e->type == AVAHI_ENTRY_MDNS);
 
     if ((e->flags & AVAHI_PUBLISH_UNIQUE) && !(e->flags & AVAHI_PUBLISH_NO_PROBE))
         a->state = AVAHI_PROBING;
@@ -217,8 +221,10 @@ static void go_to_initial_state(AvahiAnnouncer *a) {
     a->n_iteration = 1;
     a->sec_delay = 1;
 
-    if (a->state == AVAHI_PROBING && e->group)
-        e->group->n_probing++;
+    if (a->state == AVAHI_PROBING && e->group) {
+        assert(e->group->type == AVAHI_GROUP_MDNS);
+        e->group->proto.mdns.n_probing++;
+    }
 
     if (a->state == AVAHI_PROBING)
         set_timeout(a, avahi_elapse_time(&tv, 0, AVAHI_PROBE_JITTER_MSEC));
@@ -234,9 +240,9 @@ static void new_announcer(AvahiServer *s, AvahiInterface *i, AvahiEntry *e) {
     assert(s);
     assert(i);
     assert(e);
-    assert(!e->dead);
+    assert(!e->dead && e->type == AVAHI_ENTRY_MDNS);
 
-    if (!avahi_interface_match(i, e->interface, e->protocol) || !i->announcing || !avahi_entry_is_commited(e))
+    if (!avahi_interface_match(i, e->interface, e->protocol) || !i->mdns.announcing || !avahi_entry_is_commited(e))
         return;
 
     /* We don't want duplicate announcers */
@@ -253,8 +259,8 @@ static void new_announcer(AvahiServer *s, AvahiInterface *i, AvahiEntry *e) {
     a->entry = e;
     a->time_event = NULL;
 
-    AVAHI_LLIST_PREPEND(AvahiAnnouncer, by_interface, i->announcers, a);
-    AVAHI_LLIST_PREPEND(AvahiAnnouncer, by_entry, e->announcers, a);
+    AVAHI_LLIST_PREPEND(AvahiAnnouncer, by_interface, i->mdns.announcers, a);
+    AVAHI_LLIST_PREPEND(AvahiAnnouncer, by_entry, e->proto.mdns.announcers, a);
 
     go_to_initial_state(a);
 }
@@ -265,10 +271,10 @@ void avahi_announce_interface(AvahiServer *s, AvahiInterface *i) {
     assert(s);
     assert(i);
 
-    if (!i->announcing)
+    if (!i->mdns.announcing)
         return;
 
-    for (e = s->entries; e; e = e->entries_next)
+    for (e = s->mdns.entries; e; e = e->entries_next)
         if (!e->dead)
             new_announcer(s, i, e);
 }
@@ -279,7 +285,7 @@ static void announce_walk_callback(AvahiInterfaceMonitor *m, AvahiInterface *i, 
     assert(m);
     assert(i);
     assert(e);
-    assert(!e->dead);
+    assert(!e->dead && e->type == AVAHI_ENTRY_MDNS);
 
     new_announcer(m->server, i, e);
 }
@@ -287,7 +293,7 @@ static void announce_walk_callback(AvahiInterfaceMonitor *m, AvahiInterface *i, 
 void avahi_announce_entry(AvahiServer *s, AvahiEntry *e) {
     assert(s);
     assert(e);
-    assert(!e->dead);
+    assert(!e->dead && e->type == AVAHI_ENTRY_MDNS);
 
     avahi_interface_monitor_walk(s->monitor, e->interface, e->protocol, announce_walk_callback, e);
 }
@@ -296,11 +302,13 @@ void avahi_announce_group(AvahiServer *s, AvahiSEntryGroup *g) {
     AvahiEntry *e;
 
     assert(s);
-    assert(g);
+    assert(g && g->type == AVAHI_GROUP_MDNS);
 
     for (e = g->entries; e; e = e->by_group_next)
-        if (!e->dead)
+        if (!e->dead) {
+            assert(e->type == AVAHI_ENTRY_MDNS);
             avahi_announce_entry(s, e);
+        }
 }
 
 int avahi_entry_is_registered(AvahiServer *s, AvahiEntry *e, AvahiInterface *i) {
@@ -309,7 +317,7 @@ int avahi_entry_is_registered(AvahiServer *s, AvahiEntry *e, AvahiInterface *i) 
     assert(s);
     assert(e);
     assert(i);
-    assert(!e->dead);
+    assert(!e->dead && e->type == AVAHI_ENTRY_MDNS);
 
     if (!(a = get_announcer(s, e, i)))
         return 0;
@@ -326,7 +334,7 @@ int avahi_entry_is_probing(AvahiServer *s, AvahiEntry *e, AvahiInterface *i) {
     assert(s);
     assert(e);
     assert(i);
-    assert(!e->dead);
+    assert(!e->dead && e->type == AVAHI_ENTRY_MDNS);
 
     if (!(a = get_announcer(s, e, i)))
         return 0;
@@ -340,14 +348,16 @@ void avahi_entry_return_to_initial_state(AvahiServer *s, AvahiEntry *e, AvahiInt
     AvahiAnnouncer *a;
 
     assert(s);
-    assert(e);
+    assert(e && e->type == AVAHI_ENTRY_MDNS);
     assert(i);
 
     if (!(a = get_announcer(s, e, i)))
         return;
 
-    if (a->state == AVAHI_PROBING && a->entry->group)
-        a->entry->group->n_probing--;
+    if (a->state == AVAHI_PROBING && a->entry->group) {
+        assert(a->entry->group->type == AVAHI_GROUP_MDNS);
+        a->entry->group->proto.mdns.n_probing--;
+    }
 
     go_to_initial_state(a);
 }
@@ -370,9 +380,10 @@ static int is_duplicate_entry(AvahiServer *s, AvahiEntry *e) {
     AvahiEntry *i;
 
     assert(s);
-    assert(e);
+    assert(e && e->type == AVAHI_ENTRY_MDNS);
 
-    for (i = avahi_hashmap_lookup(s->entries_by_key, e->record->key); i; i = i->by_key_next) {
+    for (i = avahi_hashmap_lookup(s->mdns.entries_by_key, e->record->key); i; i = i->by_key_next) {
+        assert(i->type == AVAHI_ENTRY_MDNS);
 
         if ((i == e) || (i->dead))
             continue;
@@ -393,7 +404,7 @@ static void send_goodbye_callback(AvahiInterfaceMonitor *m, AvahiInterface *i, v
     assert(m);
     assert(i);
     assert(e);
-    assert(!e->dead);
+    assert(!e->dead && e->type == AVAHI_ENTRY_MDNS);
 
     if (!avahi_interface_match(i, e->interface, e->protocol))
         return;
@@ -420,14 +431,18 @@ static void reannounce(AvahiAnnouncer *a) {
 
     assert(a);
     e = a->entry;
+    assert(e->type == AVAHI_ENTRY_MDNS);
 
     /* If the group this entry belongs to is not even commited, there's nothing to reannounce */
-    if (e->group && (e->group->state == AVAHI_ENTRY_GROUP_UNCOMMITED || e->group->state == AVAHI_ENTRY_GROUP_COLLISION))
-        return;
+    if (e->group) {
+        assert(e->group->type == AVAHI_GROUP_MDNS);
+        if (e->group->state == AVAHI_ENTRY_GROUP_UNCOMMITED || e->group->state == AVAHI_ENTRY_GROUP_COLLISION)
+            return;
+    }
 
     /* Because we might change state we decrease the probing counter first */
     if (a->state == AVAHI_PROBING && a->entry->group)
-        a->entry->group->n_probing--;
+        a->entry->group->proto.mdns.n_probing--;
 
     if (a->state == AVAHI_PROBING ||
         (a->state == AVAHI_WAITING && (e->flags & AVAHI_PUBLISH_UNIQUE) && !(e->flags & AVAHI_PUBLISH_NO_PROBE)))
@@ -453,7 +468,7 @@ static void reannounce(AvahiAnnouncer *a) {
 
     /* Now let's increase the probing counter again */
     if (a->state == AVAHI_PROBING && e->group)
-        e->group->n_probing++;
+        e->group->proto.mdns.n_probing++;
 
     a->n_iteration = 1;
     a->sec_delay = 1;
@@ -474,7 +489,7 @@ static void reannounce_walk_callback(AvahiInterfaceMonitor *m, AvahiInterface *i
     assert(m);
     assert(i);
     assert(e);
-    assert(!e->dead);
+    assert(!e->dead && e->type == AVAHI_ENTRY_MDNS);
 
     if (!(a = get_announcer(m->server, e, i)))
         return;
@@ -486,7 +501,7 @@ void avahi_reannounce_entry(AvahiServer *s, AvahiEntry *e) {
 
     assert(s);
     assert(e);
-    assert(!e->dead);
+    assert(!e->dead && e->type == AVAHI_ENTRY_MDNS);
 
     avahi_interface_monitor_walk(s->monitor, e->interface, e->protocol, reannounce_walk_callback, e);
 }
@@ -496,29 +511,30 @@ void avahi_goodbye_interface(AvahiServer *s, AvahiInterface *i, int send_goodbye
     assert(i);
 
     if (send_goodbye)
-        if (i->announcing) {
+        if (i->mdns.announcing) {
             AvahiEntry *e;
 
-            for (e = s->entries; e; e = e->entries_next)
+            for (e = s->mdns.entries; e; e = e->entries_next) {
+                assert(e->type == AVAHI_ENTRY_MDNS);
                 if (!e->dead)
                     send_goodbye_callback(s->monitor, i, e);
+            }
         }
 
     if (remove)
-        while (i->announcers)
-            remove_announcer(s, i->announcers);
+        while (i->mdns.announcers)
+            remove_announcer(s, i->mdns.announcers);
 }
 
 void avahi_goodbye_entry(AvahiServer *s, AvahiEntry *e, int send_goodbye, int remove) {
     assert(s);
-    assert(e);
+    assert(e && e->type == AVAHI_ENTRY_MDNS);
 
     if (send_goodbye)
         if (!e->dead)
             avahi_interface_monitor_walk(s->monitor, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, send_goodbye_callback, e);
 
     if (remove)
-        while (e->announcers)
-            remove_announcer(s, e->announcers);
+        while (e->proto.mdns.announcers)
+            remove_announcer(s, e->proto.mdns.announcers);
 }
-

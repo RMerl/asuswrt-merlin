@@ -20,6 +20,9 @@
 #endif
 
 #include "wanduck.h"
+#ifdef RTCONFIG_TMOBILE
+#include <sys/reboot.h>
+#endif
 
 #define NO_DETECT_INTERNET
 #define NO_IOS_DETECT_INTERNET
@@ -242,12 +245,16 @@ static void get_network_nvram(int signo){
 static void notify_nvram_changed(int signo)
 {
 	int unit;
+	char prefix[32]="wanXXXXXX_";
+	char tmp[100]="";
 
 	if ((unit = get_usbif_dualwan_unit()) >= 0)
 		link_wan[unit] = is_usb_modem_ready();
 	else
 		csprintf("# wanduck: nvram changed: Don't enable the USB line!\n");
 
+	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+	nvram_set_int(strcat_r(prefix, "is_usb_modem_ready", tmp), link_wan[unit]);
 	csprintf("# wanduck: nvram changed: x_Setting=%d, link_modem=%d.\n", !isFirstUse, link_wan[unit]);
 }
 #endif
@@ -1166,7 +1173,7 @@ void run_dns_serv(int sockfd){
 	memset(line, 0, MAXLINE);
 	memset(&cliaddr, 0, clilen);
 	
-	if((n = recvfrom(sockfd, line, MAXLINE, 0, (struct sockaddr *)&cliaddr, &clilen)) == 0)	// client close
+	if((n = recvfrom(sockfd, line, MAXLINE, 0, (struct sockaddr *)&cliaddr, (socklen_t *)&clilen)) == 0)	// client close
 		return;
 	else if(n < 0){
 		perror("wanduck read");
@@ -1262,6 +1269,23 @@ void record_conn_status(int wan_unit){
 			disconn_case_old[wan_unit] = CASE_MISROUTE;
 
 			logmessage(log_title, "The LAN's subnet may be the same with the WAN's subnet.");
+#ifdef RTCONFIG_TMOBILE
+			logmessage(log_title, "reset LAN subnet and dhcp pool.");
+			if(!strncmp(nvram_safe_get("lan_ipaddr"), "192.168.29.", 11))
+			{
+				nvram_set("lan_ipaddr"   , "192.168.24.1");
+				nvram_set("lan_ipaddr_rt", "192.168.24.1");
+				nvram_set("dhcp_start"   , "192.168.24.100");
+				nvram_set("dhcp_end"	 , "192.168.24.254");
+			} else {
+				nvram_set("lan_ipaddr"   , "192.168.29.1");
+				nvram_set("lan_ipaddr_rt", "192.168.29.1");
+				nvram_set("dhcp_start"   , "192.168.29.100");
+				nvram_set("dhcp_end"	 , "192.168.29.254");
+			}
+			nvram_commit();
+			reboot(RB_AUTOBOOT);
+#endif
 		}
 		else{	// disconn_case[wan_unit] == CASE_OTHERS
 			if(disconn_case_old[wan_unit] == CASE_OTHERS)
@@ -1291,12 +1315,14 @@ void set_disconn_count(int wan_unit, int flag){
 	changed_count[wan_unit] = flag;
 }
 
-int switch_wan_line(const int wan_unit){
+int switch_wan_line(const int wan_unit, const int restart_other){
 #ifdef RTCONFIG_USB_MODEM
 	int retry, lock;
 #endif
 	char cmd[32];
 	int unit;
+	char prefix[32]="wanXXXXXX_";
+	char tmp[100]="";
 
 	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit)
 		if(unit == wan_unit)
@@ -1308,8 +1334,11 @@ int switch_wan_line(const int wan_unit){
 		return 0;
 #ifdef RTCONFIG_USB_MODEM
 	else if (dualwan_unit__usbif(wan_unit)) {
-		if(!link_wan[wan_unit])
+		if(!link_wan[wan_unit]) {
+			snprintf(prefix, sizeof(prefix), "wan%d_", wan_unit);
+			nvram_set_int(strcat_r(prefix, "is_usb_modem_ready", tmp), link_wan[wan_unit]);
 			return 0; // No modem in USB ports.
+		}
 	}
 #endif
 
@@ -1336,21 +1365,36 @@ int switch_wan_line(const int wan_unit){
 
 	// TODO: don't know if it's necessary?
 	// clean or restart the other line.
-#ifdef RTCONFIG_DUALWAN
-	if(!strcmp(dualwan_mode, "fo") || !strcmp(dualwan_mode, "fb"))
-#endif
+	if(restart_other)
 	{
 		for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
 			if(unit == wan_unit)
 				continue;
 
 			memset(cmd, 0, 32);
-			sprintf(cmd, "restart_wan_if %d", !wan_unit);
+			sprintf(cmd, "restart_wan_if %d", unit);
 TRACE_PT("%s.\n", cmd);
 			notify_rc_and_wait(cmd);
 			sleep(1);
 		}
 	}
+#ifdef RTCONFIG_USB_MODEM
+	else{
+		for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
+			if(unit == wan_unit)
+				continue;
+
+			if(dualwan_unit__nonusbif(unit))
+				continue;
+
+			memset(cmd, 0, 32);
+			sprintf(cmd, "stop_wan_if %d", unit);
+TRACE_PT("%s.\n", cmd);
+			notify_rc_and_wait(cmd);
+			sleep(1);
+		}
+	}
+#endif
 
 	// restart the primary line.
 	memset(cmd, 0, 32);
@@ -1382,6 +1426,7 @@ int wanduck_main(int argc, char *argv[]){
 	int wan_unit;
 	char prefix_wan[8];
 	char cmd[32];
+	char tmp[100]="";
 #ifdef RTCONFIG_WIRELESSREPEATER
 	char domain_mapping[64];
 #endif
@@ -1466,6 +1511,10 @@ int wanduck_main(int argc, char *argv[]){
 		strcat_r(prefix_wan, "auxstate_t", nvram_auxstate[wan_unit]);
 
 		set_disconn_count(wan_unit, S_IDLE);
+#ifdef RTCONFIG_USB_MODEM		
+		nvram_set_int(strcat_r(prefix_wan, "is_usb_modem_ready", tmp), link_wan[wan_unit]);
+#endif		
+	
 	}
 
 	loop_sec = uptime();
@@ -2098,6 +2147,10 @@ int wanduck_main(int argc, char *argv[]){
 				if(conn_changed_state[current_wan_unit] == C2D){
 #ifdef RTCONFIG_DSL /* Paul add 2012/10/18 */
 					led_control(LED_WAN, LED_OFF);
+#elif RTAC87U
+					led_control(LED_WAN, LED_ON);
+					eval("et", "robowr", "0", "0x18", "0x01fe");
+					eval("et", "robowr", "0", "0x1a", "0x01fe");
 #endif
 					csprintf("\n# Enable direct rule if not tunnelled (C2D)\n");
 				}
@@ -2116,7 +2169,7 @@ int wanduck_main(int argc, char *argv[]){
 					// the current line is USB and be plugged off.
 					if (!link_wan[current_wan_unit] && dualwan_unit__usbif(current_wan_unit)) {
 						csprintf("\n# wanduck(C2D): Modem was plugged off and try to Switch the other line.\n");
-						switch_wan_line(other_wan_unit);
+						switch_wan_line(other_wan_unit, 1);
 
 #ifdef RTCONFIG_DSL /* Paul add 2013/7/29, for Non-DualWAN 3G/4G WAN -> DSL WAN, auto Fail-Back feature */
 #ifndef RTCONFIG_DUALWAN
@@ -2147,6 +2200,10 @@ int wanduck_main(int argc, char *argv[]){
 			if(rule_setup == 1 && !isFirstUse){
 #ifdef RTCONFIG_DSL /* Paul add 2013/7/30 */
 				led_control(LED_WAN, LED_ON);
+#elif RTAC87U
+				led_control(LED_WAN, LED_OFF);
+				eval("et", "robowr", "0", "0x18", "0x01ff");
+				eval("et", "robowr", "0", "0x1a", "0x01ff");
 #endif
 				csprintf("\n# Disable direct rule if not tunnelled (D2C)\n");
 				rule_setup = 0;
@@ -2168,7 +2225,7 @@ int wanduck_main(int argc, char *argv[]){
 					csprintf("# Switching the connect to the first WAN line...\n");
 				else
 					csprintf("# Switching the connect to the second WAN line...\n");
-				switch_wan_line(other_wan_unit);
+				switch_wan_line(other_wan_unit, 1);
 			}
 		}
 		// phy connected -> disconnected -> connected
@@ -2181,7 +2238,7 @@ int wanduck_main(int argc, char *argv[]){
 				&& get_disconn_count(other_wan_unit) >= max_fb_count
 				){
 			csprintf("# wanduck: returning the connect to the %d WAN line...\n", other_wan_unit);
-			switch_wan_line(other_wan_unit);
+			switch_wan_line(other_wan_unit, 0);
 		}
 #endif
 
@@ -2197,7 +2254,7 @@ WANDUCK_SELECT:
 				continue;
 		}
 		else if(FD_ISSET(http_sock, &rset)){
-			if((cur_sockfd = accept(http_sock, (struct sockaddr *)&cliaddr, &clilen)) <= 0){
+			if((cur_sockfd = accept(http_sock, (struct sockaddr *)&cliaddr, (socklen_t *)&clilen)) <= 0){
 				perror("http accept");
 				continue;
 			}

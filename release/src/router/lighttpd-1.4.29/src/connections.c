@@ -470,6 +470,8 @@ static int connection_handle_write_prepare(server *srv, connection *con) {
 		case HTTP_METHOD_GENROOTCERTIFICATE:
 		case HTTP_METHOD_APPLYAPP:
 		case HTTP_METHOD_NVRAMGET:
+		case HTTP_METHOD_GETCPUUSAGE:
+		case HTTP_METHOD_GETMEMORYUSAGE:
 		   	//Cdbg(DBE,"http method= %s break;",connection_get_state(con->request.http_method));
 			break;
 		case HTTP_METHOD_OPTIONS:
@@ -755,17 +757,18 @@ static int parser_share_link(server *srv, connection *con){
 		char* decode_str=NULL;
 		int bExpired=0;
 
-		#if EMBEDDED_EANBLE
-#ifdef APP_IPKG
+	#if EMBEDDED_EANBLE
+		#ifdef APP_IPKG
 		char *router_mac=nvram_get_router_mac();
       	sprintf(mac,"%s",router_mac);
 		free(router_mac);
-#else
-		strcpy( mac, nvram_get_router_mac() );
-#endif
 		#else
-		get_mac_address("eth0", &mac);					
+		char *router_mac=nvram_get_router_mac();
+		strcpy(mac, (router_mac==NULL) ? "00:12:34:56:78:90" : router_mac);
 		#endif
+	#else
+		get_mac_address("eth0", &mac);					
+	#endif
 		
 		Cdbg(DBE, "mac=%s", mac);
 		

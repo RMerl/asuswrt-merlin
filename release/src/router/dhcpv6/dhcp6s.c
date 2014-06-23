@@ -72,8 +72,10 @@
 #include <timer.h>
 #include <auth.h>
 #include <base64.h>
+#ifdef USE_DHCP6CTL
 #include <control.h>
 #include <dhcp6_ctl.h>
+#endif
 #include <signal.h>
 #include <lease.h>
 
@@ -132,9 +134,11 @@ char *device = NULL;
 int ifidx;
 int insock;			/* inbound UDP port */
 int outsock;			/* outbound UDP port */
+#ifdef USE_DHCP6CTL
 int ctlsock = -1;		/* control TCP port */
 char *ctladdr = DEFAULT_SERVER_CONTROL_ADDR;
 char *ctlport = DEFAULT_SERVER_CONTROL_PORT;
+#endif
 
 static const struct sockaddr_in6 *sa6_any_downstream, *sa6_any_relay;
 static struct msghdr rmh;
@@ -144,9 +148,11 @@ static char *conffile = DHCP6S_CONF;
 static char *rmsgctlbuf;
 static struct duid server_duid;
 static struct dhcp6_list arg_dnslist;
+#ifdef USE_DHCP6CTL
 static char *ctlkeyfile = DEFAULT_KEYFILE;
 static struct keyinfo *ctlkey = NULL;
 static int ctldigestlen;
+#endif
 static char *pid_file = DHCP6S_PIDFILE;
 
 static inline int get_val32 __P((char **, int *, u_int32_t *));
@@ -155,9 +161,11 @@ static inline int get_val __P((char **, int *, void *, size_t));
 static void usage __P((void));
 static void server6_init __P((void));
 static void server6_mainloop __P((void));
+#ifdef USE_DHCP6CTL
 static int server6_do_ctlcommand __P((char *, ssize_t));
 static void server6_reload __P((void));
 static void server6_stop __P((void));
+#endif
 static void server6_recv __P((int));
 static void process_signals __P((void));
 static void server6_signal __P((int));
@@ -265,9 +273,11 @@ main(argc, argv)
 		case 'f':
 			foreground++;
 			break;
+#ifdef USE_DHCP6CTL
 		case 'k':
 			ctlkeyfile = optarg;
 			break;
+#endif
 		case 'n':
 			warnx("-n dnsserv option was obsoleted.  "
 			    "use configuration file.");
@@ -282,9 +292,11 @@ main(argc, argv)
 			dlv->val_addr6 = a;
 			TAILQ_INSERT_TAIL(&arg_dnslist, dlv, link);
 			break;
+#ifdef USE_DHCP6CTL
 		case 'p':
 			ctlport = optarg;
 			break;
+#endif
 		case 'P':
 			pid_file = optarg;
 			break;
@@ -356,8 +368,11 @@ static void
 usage()
 {
 	fprintf(stderr,
-	    "usage: dhcp6s [-c configfile] [-dDf] [-k ctlkeyfile] "
-	    "[-p ctlport] [-P pidfile] intface\n");
+	    "usage: dhcp6s [-c configfile] [-dDf] "
+#if USE_DHCP6CTL
+	    "[-k ctlkeyfile] [-p ctlport] "
+#endif
+	    "[-P pidfile] intface\n");
 	exit(0);
 }
 
@@ -393,11 +408,13 @@ server6_init()
 		exit(1);
 	}
 
+#ifdef USE_DHCP6CTL
 	if (dhcp6_ctl_authinit(ctlkeyfile, &ctlkey, &ctldigestlen) != 0) {
 		dprintf(LOG_NOTICE, FNAME,
 		    "failed to initialize control message authentication");
 		/* run the server anyway */
 	}
+#endif
 
 	/* initialize send/receive buffer */
 	iov.iov_base = (caddr_t)rdatabuf;
@@ -575,6 +592,7 @@ server6_init()
 		(const struct sockaddr_in6*)&sa6_any_relay_storage;
 	freeaddrinfo(res);
 
+#ifdef USE_DHCP6CTL
 	/* set up control socket */
 	if (ctlkey == NULL)
 		dprintf(LOG_NOTICE, FNAME, "skip opening control port");
@@ -584,6 +602,7 @@ server6_init()
 		    "failed to initialize control channel");
 		exit(1);
 	}
+#endif
 
 	if (signal(SIGTERM, server6_signal) == SIG_ERR) {
 		dprintf(LOG_WARNING, FNAME, "failed to set signal: %s",
@@ -620,11 +639,13 @@ server6_mainloop()
 		FD_ZERO(&r);
 		FD_SET(insock, &r);
 		maxsock = insock;
+#ifdef USE_DHCP6CTL
 		if (ctlsock >= 0) {
 			FD_SET(ctlsock, &r);
 			maxsock = (insock > ctlsock) ? insock : ctlsock;
 			(void)dhcp6_ctl_setreadfds(&r, &maxsock);
 		}
+#endif
 
 		ret = select(maxsock + 1, &r, NULL, NULL, w);
 		switch (ret) {
@@ -643,6 +664,7 @@ server6_mainloop()
 
 		if (FD_ISSET(insock, &r))
 			server6_recv(insock);
+#ifdef USE_DHCP6CTL
 		if (ctlsock >= 0) {
 			if (FD_ISSET(ctlsock, &r)) {
 				(void)dhcp6_ctl_acceptcommand(ctlsock,
@@ -650,6 +672,7 @@ server6_mainloop()
 			}
 			(void)dhcp6_ctl_readcommand(&r);
 		}
+#endif
 	}
 }
 
@@ -696,6 +719,7 @@ get_val(bpp, lenp, valp, vallen)
 	return (0);
 }
 
+#ifdef USE_DHCP6CTL
 static int
 server6_do_ctlcommand(buf, len)
 	char *buf;
@@ -853,6 +877,7 @@ server6_stop()
 
 	exit (0);
 }
+#endif
 
 static void
 server6_recv(s)

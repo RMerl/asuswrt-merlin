@@ -58,6 +58,12 @@ function initial(){
 		document.getElementById("IPTV_desc_DualWAN").style.display = "";
 	else	
 		document.getElementById("IPTV_desc").style.display = "";
+
+	if(based_modelid == "RT-AC87U"){ //MODELDEP: RT-AC87 : Quantenna port
+		document.form.switch_stb_x.remove(5);	//LAN1 & LAN2
+		document.form.switch_stb_x.remove(1);	//LAN1
+	}
+
 }
 
 function load_ISP_profile() {

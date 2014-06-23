@@ -1,6 +1,6 @@
 include ../common.mak
 
-CFLAGS	= -Os -Wall $(EXTRACFLAGS) #-mips32
+CFLAGS	+= -Os -Wall $(EXTRACFLAGS) #-mips32
 CFLAGS	+= -I$(SRCBASE)/include -I$(TOP)/shared -DRTCONFIG_ISP_METER -DDEBUG
 LDFLAGS	= -L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared
 
@@ -8,7 +8,12 @@ ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U),y)
 CFLAGS += -DRA_ESW
 endif
 
+ifeq ($(RTCONFIG_BCMARM),y)
+CFLAGS += -I$(SRCBASE)/common/include
+endif
+
 ifeq ($(RTCONFIG_QTN),y)
+CFLAGS += -I$(TOP)/libqcsapi_client -I$(TOP)/httpd
 LDFLAGS += -L$(TOP)/libqcsapi_client -lqcsapi_client
 endif
 

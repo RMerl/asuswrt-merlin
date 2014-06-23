@@ -106,8 +106,6 @@ function initial(){
 	if("<% nvram_get("wl_closed"); %>" == 1){
 		$('WPS_hideSSID_hint').style.display = "";	
 	}	
-	
-	automode_hint();
 }
 
 function check_channel_2g(){

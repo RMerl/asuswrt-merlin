@@ -85,7 +85,8 @@ const char *avahi_strerror(int error) {
         N_("Not permitted"),
         N_("Invalid argument"),
         N_("Is empty"),
-        N_("The requested operation is invalid because redundant")
+        N_("The requested operation is invalid because redundant"),
+        N_("New entry is requested to be published with invalid group")
     };
 
     avahi_init_i18n();

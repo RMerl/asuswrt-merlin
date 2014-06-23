@@ -285,7 +285,7 @@ static void waitforconnects()
       }
       else if (FD_ISSET(cons[i]->socket, &writefds)) {
 				/* Boggle.  It's not always good.  select() is weird. */
-				if (getpeername(cons[i]->socket, (struct sockaddr *)&dummysock, &dummyint))
+				if (getpeername(cons[i]->socket, (struct sockaddr *)&dummysock, (socklen_t *)&dummyint))
 					failedconnect(i);
 				else
 					goodconnect(i);

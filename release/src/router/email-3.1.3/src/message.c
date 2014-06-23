@@ -287,7 +287,8 @@ attachFiles(const char *boundary, dstrbuf *out)
 		FILE *current = fopen(next_file, "r");
 		if (!current) {
 			fatal("Could not open attachment: %s", next_file);
-			return (ERROR);
+			//return (ERROR);
+			continue; //skip nonexistent file, Sam 2014/04/30
 		}
 
 		/* If the user specified an absolute path, just get the file name */

@@ -54,7 +54,7 @@ static void remove_entry(AvahiCache *c, AvahiCacheEntry *e) {
     if (e->time_event)
         avahi_time_event_free(e->time_event);
 
-    avahi_multicast_lookup_engine_notify(c->server->multicast_lookup_engine, c->interface, e->record, AVAHI_BROWSER_REMOVE);
+    avahi_multicast_lookup_engine_notify(c->server->mdns.multicast_lookup_engine, c->interface, e->record, AVAHI_BROWSER_REMOVE);
 
     avahi_record_unref(e->record);
 
@@ -360,7 +360,7 @@ void avahi_cache_update(AvahiCache *c, AvahiRecord *r, int cache_flush, const Av
             c->n_entries++;
 
             /* Notify subscribers */
-            avahi_multicast_lookup_engine_notify(c->server->multicast_lookup_engine, c->interface, e->record, AVAHI_BROWSER_NEW);
+            avahi_multicast_lookup_engine_notify(c->server->mdns.multicast_lookup_engine, c->interface, e->record, AVAHI_BROWSER_NEW);
         }
 
         e->origin = *a;

@@ -102,6 +102,9 @@ function initial(){
 	setScenerion(sw_mode_orig);
 	Senario_shift();
 
+	if(downsize_4m_support || downsize_8m_support)
+		document.getElementById("Senario").style.display = "none";
+
 	if(!repeater_support)
 		$("repeaterMode").style.display = "none";
 
@@ -292,7 +295,7 @@ function setScenerion(mode){
 		document.form.sw_mode.value = 2;
 		$j("#Senario").css("height", "");
 		$j("#Senario").css("background","url(/images/New_ui/re.jpg) center no-repeat");
-		$j("#Senario").css("margin-bottom", "60px");
+		$j("#Senario").css("margin-bottom", "30px");
 		$j("#radio2").css("display", "none");
 		$j("#Internet_span").css("display", "block");
 		$j("#ap-line").css("display", "none");
@@ -307,7 +310,7 @@ function setScenerion(mode){
 		document.form.sw_mode.value = 3;
 		$j("#Senario").css("height", "");
 		$j("#Senario").css("background","url(/images/New_ui/ap.jpg) center no-repeat");
-		$j("#Senario").css("margin-bottom", "60px");
+		$j("#Senario").css("margin-bottom", "30px");
 		$j("#radio2").css("display", "none");
 		$j("#Internet_span").css("display", "block");
 		$j("#ap-line").css("display", "none");
@@ -330,7 +333,7 @@ function setScenerion(mode){
 
 		$j("#Senario").css("height", "300px");
 		$j("#Senario").css("background", "url(/images/New_ui/mb.jpg) center no-repeat");
-		$j("#Senario").css("margin-bottom", "-20px");
+		$j("#Senario").css("margin-bottom", "-40px");
 		$j("#radio2").css("display", "none");
 		$j("#Internet_span").css("display", "block");
 		$j("#ap-line").css("display", "none");
@@ -345,7 +348,7 @@ function setScenerion(mode){
 		document.form.sw_mode.value = 1;
 		$j("#Senario").css("height", "");
 		$j("#Senario").css("background","url(/images/New_ui/rt.jpg) center no-repeat");
-		$j("#Senario").css("margin-bottom", "60px");
+		$j("#Senario").css("margin-bottom", "30px");
 		$j("#radio2").hide();
 		$j("#Internet_span").hide();
 		$j("#ap-line").css("display", "none");	
@@ -541,10 +544,10 @@ function cancel_SSID_Block(){
 								<div>&nbsp;</div>
 								<div class="formfonttitle"><#menu5_6_adv#> - <#menu5_6_1_title#></div>
 								<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-								<div class="formfontdesc" style="*margin-bottom:-25px;"><#OP_desc1#></div>
+								<div class="formfontdesc"><#OP_desc1#></div>
 							</td>
 						</tr>
-						<tr bgcolor="#4D595D" valign="top">
+						<tr bgcolor="#4D595D" valign="top" style="height:15%">
 							<td>
 								<div style="width:95%; margin:0 auto; padding-bottom:3px;">
 									<span style="font-size:16px; font-weight:bold;color:white;text-shadow:1px 1px 0px black">
@@ -556,15 +559,17 @@ function cancel_SSID_Block(){
 										&nbsp;&nbsp;
 										<span id="mbMode"><input type="radio" name="sw_mode_radio" class="input" value="4" onclick="setScenerion(4);" <% nvram_match("sw_mode", "4", "checked"); %>>Media bridge</span>
 									</span>
-									<div id="mode_desc" style="position:relative;display:block;margin-top:10px;margin-left:5px;height:60px;z-index:75;">
-										<#OP_GW_desc#>
-									</div>
-										<br/><br/>
-									<div id="Senario" style="margin-top:40px; margin-bottom:60px;">
-										<!--div id="ap-line" style="border:0px solid #333; width:133px; height:41px; position:absolute; background:url(/images/wanlink.gif) no-repeat;"></div-->
-										<div id="Unplug-hint" style="border:2px solid red; background-color:#FFF; padding:3px;margin:0px 0px 0px 150px;width:250px; position:absolute; display:block; display:none;"><#web_redirect_suggestion1#></div>
-									</div>	
+									<br/><br/>
+									<span style="word-wrap:break-word;word-break:break-all"><label id="mode_desc"></label></span>
 								</div>
+							</td>
+						</tr>
+						<tr bgcolor="#4D595D" valign="top" style="height:70%">
+                 					 <td>
+							        <div id="Senario" >
+								<!--div id="ap-line" style="border:0px solid #333; width:133px; height:41px; position:absolute; background:url(/images/wanlink.gif) no-repeat;"></div-->
+								<div id="Unplug-hint" style="border:2px solid red; background-color:#FFF; padding:3px;margin:0px 0px 0px 150px;width:250px; position:absolute; display:block; display:none;"><#web_redirect_suggestion1#></div>
+						         	</div>	
 								<div class="apply_gen">
 									<input name="button" type="button" class="button_gen" onClick="saveMode();" value="<#CTL_onlysave#>">
 								</div>

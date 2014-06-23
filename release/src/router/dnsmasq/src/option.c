@@ -2583,9 +2583,11 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
 		if (strcmp(a[leasepos], "static") == 0)
 		  new->flags |= CONTEXT_STATIC | CONTEXT_DHCP;
 		else if (strcmp(a[leasepos], "ra-only") == 0 || strcmp(a[leasepos], "slaac") == 0 )
-		  new->flags |= CONTEXT_RA_ONLY | CONTEXT_RA;
+		  new->flags |= CONTEXT_RA;
 		else if (strcmp(a[leasepos], "ra-names") == 0)
 		  new->flags |= CONTEXT_RA_NAME | CONTEXT_RA;
+		else if (strcmp(a[leasepos], "ra-advrouter") == 0)
+		  new->flags |= CONTEXT_RA_ROUTER | CONTEXT_RA;
 		else if (strcmp(a[leasepos], "ra-stateless") == 0)
 		  new->flags |= CONTEXT_RA_STATELESS | CONTEXT_DHCP | CONTEXT_RA;
 		else if (leasepos == 1 && inet_pton(AF_INET6, a[leasepos], &new->end6))
@@ -2615,7 +2617,7 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
 	    
 	    if (new->prefix != 64)
 	      {
-		if ((new->flags & (CONTEXT_RA_ONLY | CONTEXT_RA_NAME | CONTEXT_RA_STATELESS)))
+		if (new->flags & CONTEXT_RA)
 		  ret_err(_("prefix length must be exactly 64 for RA subnets"));
 		else if (new->flags & CONTEXT_TEMPLATE)
 		  ret_err(_("prefix length must be exactly 64 for subnet constructors"));

@@ -339,7 +339,7 @@ int main(int argc, char *argv[])
 	config_interface();
 	kickoff_adverts();
 	main_loop();
-	flog(LOG_INFO, "sending stop adverts", pidfile);
+	flog(LOG_INFO, "sending stop adverts");
 	stop_adverts();
 	if (daemonize) {
 		flog(LOG_INFO, "removing %s", pidfile);
@@ -499,12 +499,12 @@ void kickoff_adverts(void)
 	for (iface = IfaceList; iface; iface = iface->next) {
 		double next;
 
-		gettimeofday(&iface->last_ra_time, NULL);
+		now(&iface->last_ra_time);
 
 		if (iface->UnicastOnly)
 			continue;
 
-		gettimeofday(&iface->last_multicast, NULL);
+		now(&iface->last_multicast);
 
 		/* TODO: AdvSendAdvert is being checked in send_ra now so it can be removed here. */
 		if (!iface->AdvSendAdvert)

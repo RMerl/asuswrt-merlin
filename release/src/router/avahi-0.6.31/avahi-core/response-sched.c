@@ -258,7 +258,7 @@ static void send_response_packet(AvahiResponseScheduler *s, AvahiResponseJob *rj
     }
 
     avahi_dns_packet_set_field(p, AVAHI_DNS_FIELD_ANCOUNT, n);
-    avahi_interface_send_packet(s->interface, p);
+    avahi_interface_send_packet(s->interface, p, AVAHI_MDNS);
     avahi_dns_packet_free(p);
 }
 

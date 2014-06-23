@@ -25,7 +25,7 @@ static void blockdata_expand(int n)
 {
   struct blockdata *new = whine_malloc(n * sizeof(struct blockdata));
   
-  if (new)
+  if (n > 0 && new)
     {
       int i;
       
@@ -46,14 +46,19 @@ void blockdata_init(void)
   blockdata_alloced = 0;
   blockdata_count = 0;
   blockdata_hwm = 0;
-  
-  blockdata_expand((daemon->cachesize * 100) / sizeof(struct blockdata));
+
+  /* Note that daemon->cachesize is enforced to have non-zero size if OPT_DNSSEC_VALID is set */  
+  if (option_bool(OPT_DNSSEC_VALID))
+    blockdata_expand((daemon->cachesize * 100) / sizeof(struct blockdata));
 }
 
 void blockdata_report(void)
 {
-  my_syslog(LOG_INFO, _("DNSSEC memory in use %u, max %u, allocated %u"), 
-	    blockdata_count * sizeof(struct blockdata),  blockdata_hwm * sizeof(struct blockdata),  blockdata_alloced * sizeof(struct blockdata));
+  if (option_bool(OPT_DNSSEC_VALID))
+    my_syslog(LOG_INFO, _("DNSSEC memory in use %u, max %u, allocated %u"), 
+	      blockdata_count * sizeof(struct blockdata),  
+	      blockdata_hwm * sizeof(struct blockdata),  
+	      blockdata_alloced * sizeof(struct blockdata));
 } 
 
 struct blockdata *blockdata_alloc(char *data, size_t len)

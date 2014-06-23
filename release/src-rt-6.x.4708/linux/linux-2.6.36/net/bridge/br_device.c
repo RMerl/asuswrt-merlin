@@ -25,6 +25,11 @@
 
 #include <typedefs.h>
 #include <bcmdefs.h>
+#ifdef HNDCTF
+#ifdef RTCONFIG_BWDPI
+#include <ctf/hndctf.h>
+#endif
+#endif
 
 /* net device transmit always called with BH disabled */
 netdev_tx_t BCMFASTPATH_HOST br_dev_xmit(struct sk_buff *skb, struct net_device *dev)
@@ -34,6 +39,31 @@ netdev_tx_t BCMFASTPATH_HOST br_dev_xmit(struct sk_buff *skb, struct net_device 
 	struct net_bridge_fdb_entry *dst;
 	struct net_bridge_mdb_entry *mdst;
 	struct br_cpu_netstats *brstats = this_cpu_ptr(br->stats);
+	
+#ifdef HNDCTF
+#ifdef RTCONFIG_BWDPI
+	/* For broadstream iqos inbound traffic. 
+	  * Inbound traffic need to apply qdisc rule to br interface, and ctf need to use 
+	  * dev_queue_xmit of bridge dev to transmit packet. 
+	  * Add fastpath here to forward packet from br to eth0/1/2 directly if this packet 
+	  * is cached in ctf ip entry.
+	  */
+	if (CTF_IS_PKTTOBR(skb)) {
+		const struct net_device_ops *ops = NULL;
+		struct net_device *tmpdev = skb->dev;
+		int rc = -1;
+
+		ops = ((struct net_device *)(skb->ctf_ipc_txif))->netdev_ops;
+		if (ops) {
+			skb->dev = (struct net_device *)(skb->ctf_ipc_txif);
+			rc = ops->ndo_start_xmit(skb, (struct net_device *)(skb->ctf_ipc_txif));
+			if (rc == NETDEV_TX_OK)
+				return rc;
+			skb->dev = tmpdev;
+		}
+	}
+#endif /* HNDCTF */
+#endif
 
 #ifdef CONFIG_BRIDGE_NETFILTER
 	if (skb->nf_bridge && (skb->nf_bridge->mask & BRNF_BRIDGED_DNAT)) {

@@ -1,0 +1,243 @@
+/*
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
+ *
+ * Copyright 2014, ASUSTeK Inc.
+ * All Rights Reserved.
+ * 
+ * THIS SOFTWARE IS OFFERED "AS IS", AND ASUS GRANTS NO WARRANTIES OF ANY
+ * KIND, EXPRESS OR IMPLIED, BY STATUTE, COMMUNICATION OR OTHERWISE. BROADCOM
+ * SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A SPECIFIC PURPOSE OR NONINFRINGEMENT CONCERNING THIS SOFTWARE.
+ *
+ */
+
+#include <stdio.h>
+#include <string.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <bcmnvram.h>
+#include <shutils.h>
+#include <wlutils.h>
+#include <shared.h>
+
+#ifdef RTCONFIG_QTN
+#include "web-qtn.h"
+
+static void
+cleanup(void)
+{
+	remove("/var/run/qtn_monitor.pid");
+	exit(0);
+}
+
+static void
+qtn_monitor_exit(int sig)
+{
+	if (sig == SIGTERM)
+		cleanup();
+}
+
+void rpc_parse_nvram_from_httpd(int unit, int subunit)
+{
+	if (!rpc_qtn_ready())
+		return;
+
+	if (unit == 1 && subunit == -1){
+		// rpc_qcsapi_set_SSID(WIFINAME, value);
+		rpc_qcsapi_set_SSID_broadcast(WIFINAME, nvram_safe_get("wl1_closed"));
+		rpc_qcsapi_set_vht(nvram_safe_get("wl1_nmode_x"));
+		// rpc_qcsapi_set_bw(value);
+		// rpc_qcsapi_set_channel(value);
+		// rpc_qcsapi_set_beacon_type(WIFINAME, value);
+		// rpc_qcsapi_set_WPA_encryption_modes(WIFINAME, value);
+		// rpc_qcsapi_set_key_passphrase(WIFINAME, value);
+		rpc_qcsapi_set_dtim(nvram_safe_get("wl1_dtim"));
+		rpc_qcsapi_set_beacon_interval(nvram_safe_get("wl1_bcn"));
+		rpc_set_radio(1, 0, nvram_get_int("wl1_radio"));
+		rpc_update_macmode(nvram_safe_get("wl1_macmode"));
+		rpc_update_wlmaclist();
+		rpc_update_wdslist();
+		rpc_update_wdslist();
+		rpc_update_wds_psk(nvram_safe_get("wl1_wds_psk"));
+		rpc_update_ap_isolate(WIFINAME, atoi(nvram_safe_get("wl1_ap_isolate")));
+	}else if (unit == 1 && subunit == 1){
+		if(nvram_get_int("wl1.1_bss_enabled") == 1){
+			rpc_update_mbss("wl1.1_ssid", nvram_safe_get("wl1.1_ssid"));
+			rpc_update_mbss("wl1.1_bss_enabled", nvram_safe_get("wl1.1_bss_enabled"));
+			rpc_update_mbss("wl1.1_wpa_psk", nvram_safe_get("wl1.1_wpa_psk"));
+			rpc_update_mbss("wl1.1_wpa_gtk_rekey", nvram_safe_get("wl1.1_wpa_gtk_rekey"));
+			rpc_update_mbss("wl1.1_auth_mode_x", nvram_safe_get("wl1.1_auth_mode_x"));
+			rpc_update_mbss("wl1.1_mbss", nvram_safe_get("wl1.1_mbss"));
+		}
+	}else if (unit == 1 && subunit == 2){
+		if(nvram_get_int("wl1.2_bss_enabled") == 1){
+			rpc_update_mbss("wl1.2_ssid", nvram_safe_get("wl1.2_ssid"));
+			rpc_update_mbss("wl1.2_bss_enabled", nvram_safe_get("wl1.2_bss_enabled"));
+			rpc_update_mbss("wl1.2_wpa_psk", nvram_safe_get("wl1.2_wpa_psk"));
+			rpc_update_mbss("wl1.2_wpa_gtk_rekey", nvram_safe_get("wl1.2_wpa_gtk_rekey"));
+			rpc_update_mbss("wl1.2_auth_mode_x", nvram_safe_get("wl1.2_auth_mode_x"));
+			rpc_update_mbss("wl1.2_mbss", nvram_safe_get("wl1.2_mbss"));
+		}
+	}else if (unit == 1 && subunit == 3){
+		if(nvram_get_int("wl1.3_bss_enabled") == 1){
+			rpc_update_mbss("wl1.3_ssid", nvram_safe_get("wl1.3_ssid"));
+			rpc_update_mbss("wl1.3_bss_enabled", nvram_safe_get("wl1.3_bss_enabled"));
+			rpc_update_mbss("wl1.3_wpa_psk", nvram_safe_get("wl1.3_wpa_psk"));
+			rpc_update_mbss("wl1.3_wpa_gtk_rekey", nvram_safe_get("wl1.3_wpa_gtk_rekey"));
+			rpc_update_mbss("wl1.3_auth_mode_x", nvram_safe_get("wl1.3_auth_mode_x"));
+			rpc_update_mbss("wl1.3_mbss", nvram_safe_get("wl1.3_mbss"));
+		}
+	}else{
+		dbG("error: no this 5G IF\n");
+	}
+
+//	rpc_show_config();
+}
+
+int 
+qtn_monitor_main(int argc, char *argv[])
+{
+	FILE *fp;
+	sigset_t sigs_to_catch;
+	int ret, retval = 0;
+	time_t start_time = uptime();
+
+	/* write pid */
+	if ((fp = fopen("/var/run/qtn_monitor.pid", "w")) != NULL)
+	{
+		fprintf(fp, "%d", getpid());
+		fclose(fp);
+	}
+
+	/* set the signal handler */
+	sigemptyset(&sigs_to_catch);
+	sigaddset(&sigs_to_catch, SIGTERM);
+	sigprocmask(SIG_UNBLOCK, &sigs_to_catch, NULL);
+
+	signal(SIGTERM, qtn_monitor_exit);
+
+QTN_RESET:
+	ret = rpc_qcsapi_init(1);
+	if (ret < 0) {
+		dbG("rpc_qcsapi_init error, return: %d\n", ret);
+		retval = -1;
+		goto ERROR;
+	}
+#if 0	/* replaced by STATELESS, send configuration from brcm to qtn */
+	else if (nvram_get_int("qtn_restore_defaults"))
+	{
+		nvram_unset("qtn_restore_defaults");
+		rpc_qcsapi_restore_default_config(0);
+		dbG("Restaring Qcsapi init...\n");
+		sleep(15);
+		goto QTN_RESET;
+	}
+#endif
+
+#if 0
+	if(nvram_get_int("sw_mode") == SW_MODE_AP &&
+		nvram_get_int("wlc_psta") == 1 &&
+		nvram_get_int("wlc_band") == 1){
+		dbG("[sw_mode] start QTN PSTA mode\n");
+		start_psta_qtn();
+	}
+#endif
+
+	ret = qcsapi_init();
+	if (ret < 0)
+	{
+		dbG("Qcsapi qcsapi_init error, return: %d\n", ret);
+		retval = -1;
+		goto ERROR;
+	}
+	else
+		dbG("Qcsapi qcsapi init takes %ld seconds\n", uptime() - start_time);
+
+	dbG("defer lanport_ctrl(1)\n");
+	lanport_ctrl(1);
+	eval("ifconfig", "br0:1", "down");
+	nvram_set("qtn_ready", "1");
+
+	dbG("[QTN] update router_command.sh from brcm to qtn\n");
+	qcsapi_wifi_run_script("set_test_mode", "update_router_command");
+
+#if 1	/* STATELESS */
+	if(nvram_get_int("sw_mode") == SW_MODE_AP &&
+		nvram_get_int("wlc_psta") == 1 &&
+		nvram_get_int("wlc_band") == 1){
+		dbG("[sw_mode] skip start_psta_qtn, QTN will run scripts automatically\n");
+		// start_psta_qtn();
+	}else{
+		dbG("[***] rpc_parse_nvram_from_httpd\n");
+		rpc_parse_nvram_from_httpd(1,-1);	/* wifi0 */
+		rpc_parse_nvram_from_httpd(1,1);	/* wifi1 */
+		rpc_parse_nvram_from_httpd(1,2);	/* wifi2 */
+		rpc_parse_nvram_from_httpd(1,3);	/* wifi3 */
+		dbG("[sw_mode] skip start_ap_qtn, QTN will run scripts automatically\n");
+		// start_ap_qtn();
+		qcsapi_mac_addr wl_mac_addr;
+		ret = rpc_qcsapi_interface_get_mac_addr(WIFINAME, &wl_mac_addr);
+		if (ret < 0)
+			dbG("rpc_qcsapi_interface_get_mac_addr, return: %d\n", ret);
+		else
+		{
+			nvram_set("1:macaddr", wl_ether_etoa((struct ether_addr *) &wl_mac_addr));
+			nvram_set("wl1_hwaddr", wl_ether_etoa((struct ether_addr *) &wl_mac_addr));
+		}
+
+		rpc_update_wdslist();
+
+		ret = qcsapi_wps_set_ap_pin(WIFINAME, nvram_safe_get("wps_device_pin"));
+		if (ret < 0)
+			dbG("Qcsapi qcsapi_wps_set_ap_pin %s error, return: %d\n", WIFINAME, ret);
+
+		ret = qcsapi_wps_registrar_set_pp_devname(WIFINAME, 0, (const char *) get_productid());
+		if (ret < 0)
+			dbG("Qcsapi qcsapi_wps_registrar_set_pp_devname %s error, return: %d\n", WIFINAME, ret);
+
+		ret = rpc_qcsapi_wifi_disable_wps(WIFINAME, !nvram_get_int("wps_enable"));
+		if (ret < 0)
+			dbG("Qcsapi rpc_qcsapi_wifi_disable_wps %s error, return: %d\n", WIFINAME, ret);
+
+		rpc_set_radio(1, 0, nvram_get_int("wl1_radio"));
+
+	}
+#endif
+
+	if(nvram_get_int("sw_mode") == SW_MODE_ROUTER ||
+		(nvram_get_int("sw_mode") == SW_MODE_AP &&
+			nvram_get_int("wlc_psta") == 0)){
+		if(nvram_get_int("wl1_chanspec") == 0){
+			dbG("[dfs] start nodfs scanning and selection\n");
+			start_nodfs_scan_qtn();
+		}
+	}
+	if(nvram_get_int("sw_mode") == SW_MODE_AP &&
+		nvram_get_int("wlc_psta") == 1 &&
+		nvram_get_int("wlc_band") == 0){
+		ret = qcsapi_wifi_reload_in_mode(WIFINAME, qcsapi_station);
+		if (ret < 0)
+			dbG("qtn reload_in_mode STA fail\n");
+	}
+
+	dbG("[dbg] qtn_monitor startup\n");
+ERROR:
+	remove("/var/run/qtn_monitor.pid");
+
+	return retval;
+}
+#endif

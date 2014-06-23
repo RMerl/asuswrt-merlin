@@ -352,6 +352,11 @@ void x_msg_va (const unsigned int flags, const char *format, va_list arglist)
 	}
     }
 
+  if (flags & M_SSL)
+    update_nvram_status(SSLPARAM_ERROR);
+  else if (flags & M_SSL_DH)
+    update_nvram_status(SSLPARAM_DH_ERROR);
+
   if (flags & M_FATAL)
     msg (M_INFO, "Exiting due to fatal error");
 

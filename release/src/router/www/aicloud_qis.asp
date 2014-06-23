@@ -67,7 +67,11 @@ function initial(){
 		else{
 			$("process_status").style.display = "none";
 			$("aicloud_learn_more").style.display = "none";
-			$("aicloud_main_text").innerHTML = 'Invalid IP Address! You can set wan ip <a href="Advanced_WAN_Content.asp" style="text-decoration:underline">here</a>, or go to <a href="https://router.asus.com/" style="text-decoration:underline">aicloud</a>.';
+			if(tmo_support)
+				var theUrl = "cellspot.router"; 
+			else
+				var theUrl = "router.asus.com";	
+			$("aicloud_main_text").innerHTML = 'Invalid IP Address! You can set wan ip <a href="Advanced_WAN_Content.asp" style="text-decoration:underline">here</a>, or go to <a href="https://'+ theUrl +'" style="text-decoration:underline">aicloud</a>.';
 		}
 	}
 	else{

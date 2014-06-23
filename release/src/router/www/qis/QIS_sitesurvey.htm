@@ -784,7 +784,8 @@ function showSiteTable(){
 		}
 		else{
 			for(var i = 0; i < Profiles.length; i++){
-				if(parent.based_modelid == "RT-AC87U" && Profiles[i].band.search("5G") != -1 && parent.isRepeater){ // SYSDEP, RT-AC87U does not support 5G repeater for now. 
+				if(parent.based_modelid == "RT-AC87U" && Profiles[i].band.search("5G") != -1 && parent.isRepeater){ // SYSDEP, RT-AC87U does not support 5G repeater for now.
+					htmlCode += '<tr style="display:none"><td></td></tr>'; 
 					continue;
 				}
 

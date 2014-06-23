@@ -478,6 +478,9 @@ static int ui_cmd_flash(ui_cmdline_t *cmd,int argc,char *argv[])
     uint8_t SCODE[5] = {0x53, 0x43, 0x4F, 0x44, 0x45};
 #endif // RESCUE_MODE
     int cfe = 0;
+#ifdef DUAL_TRX
+    int write_trx2 = 0;
+#endif
 
 #ifdef CFG_NFLASH
 	int ndump = cmd_sw_isset(cmd, "-ndump");
@@ -604,9 +607,13 @@ static int ui_cmd_flash(ui_cmdline_t *cmd,int argc,char *argv[])
 
     if (cmd_sw_value(cmd,"-size",&x)) {
         size = atoi(x);
+	bufsize = size;
         }
 
     cfe = cmd_sw_isset(cmd, "-cfe");
+#ifdef DUAL_TRX
+    write_trx2 = cmd_sw_isset(cmd, "-onlytrx1");
+#endif
 
     /* Fix up the ptr and size for reading from memory
      * and skip loading to go directly to programming
@@ -625,8 +632,7 @@ static int ui_cmd_flash(ui_cmdline_t *cmd,int argc,char *argv[])
 
     srcdevtype = cfe_getdevinfo(fname) & CFE_DEV_MASK;
 
-    xprintf("Reading %s: ",fname);
-
+    xprintf("Reading %s:\n",fname);
     switch (srcdevtype) {
 	case CFE_DEV_FLASH:
 	    sfd = cfe_open(fname);
@@ -634,7 +640,6 @@ static int ui_cmd_flash(ui_cmdline_t *cmd,int argc,char *argv[])
 		return ui_showerror(sfd,"Could not open source device");
 		}
 	    memset(ptr,0xFF,bufsize);
-
 
 	    if (cfe_ioctl(sfd,IOCTL_FLASH_GETINFO,
 			  (unsigned char *) &flashinfo,
@@ -817,6 +822,9 @@ program:
      * Open the destination flash device.
      */
 
+#ifdef DUAL_TRX
+Open_dev:
+#endif
     fh = cfe_open(flashdev);
     if (fh < 0) {
 	xprintf("Could not open device '%s'\n",flashdev);
@@ -907,6 +915,14 @@ program:
         xprintf("copysize=%d, amtcopy=%d \n", copysize, amtcopy);
         if (copysize == amtcopy) {
                 xprintf("done. %d bytes written\n",amtcopy);
+#ifdef DUAL_TRX
+        if((srcdevtype == 10) && !strcmp(flashdev, "nflash1.trx") && !write_trx2) {
+                strcpy(flashdev, "nflash1.trx2");
+                cfe_close(fh);
+                write_trx2 = 1;
+                goto Open_dev;
+        }
+#endif
 		if(!cfe) {
                 	for (i=0; i<6; i++)
 	                       send_rescueack(0x0006, 0x0001);

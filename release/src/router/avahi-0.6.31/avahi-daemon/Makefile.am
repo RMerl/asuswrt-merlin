@@ -50,6 +50,7 @@ avahi_daemon_SOURCES = \
 	simple-protocol.c simple-protocol.h \
 	static-services.c static-services.h \
 	static-hosts.c static-hosts.h \
+	cnames.c cnames.h \
 	ini-file-parser.c ini-file-parser.h \
 	setproctitle.c setproctitle.h \
 	sd-daemon.h sd-daemon.c \

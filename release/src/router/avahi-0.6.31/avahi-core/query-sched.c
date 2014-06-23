@@ -218,7 +218,7 @@ static int packet_add_query_job(AvahiQueryScheduler *s, AvahiDnsPacket *p, Avahi
         return 0;
 
     /* Add all matching known answers to the list */
-    avahi_cache_walk(s->interface->cache, qj->key, known_answer_walk_callback, s);
+    avahi_cache_walk(s->interface->mdns.cache, qj->key, known_answer_walk_callback, s);
 
     job_mark_done(s, qj);
 
@@ -250,7 +250,7 @@ static void append_known_answers_and_send(AvahiQueryScheduler *s, AvahiDnsPacket
 
             avahi_dns_packet_set_field(p, AVAHI_DNS_FIELD_FLAGS, avahi_dns_packet_get_field(p, AVAHI_DNS_FIELD_FLAGS) | AVAHI_DNS_FLAG_TC);
             avahi_dns_packet_set_field(p, AVAHI_DNS_FIELD_ANCOUNT, n);
-            avahi_interface_send_packet(s->interface, p);
+            avahi_interface_send_packet(s->interface, p, AVAHI_MDNS);
             avahi_dns_packet_free(p);
 
             p = avahi_dns_packet_new_query(s->interface->hardware->mtu);
@@ -266,7 +266,7 @@ static void append_known_answers_and_send(AvahiQueryScheduler *s, AvahiDnsPacket
     }
 
     avahi_dns_packet_set_field(p, AVAHI_DNS_FIELD_ANCOUNT, n);
-    avahi_interface_send_packet(s->interface, p);
+    avahi_interface_send_packet(s->interface, p, AVAHI_MDNS);
     avahi_dns_packet_free(p);
 }
 

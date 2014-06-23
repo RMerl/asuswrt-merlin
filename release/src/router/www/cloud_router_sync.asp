@@ -172,6 +172,11 @@ var host_macaddr = macAddr.split(':');
 var isMD5DDNSName = "A"+hexMD5(macAddr).toUpperCase()+".asuscomm.com";
 var webdav_aidisk = '<% nvram_get("webdav_aidisk"); %>';
 var webdav_proxy = '<% nvram_get("webdav_proxy"); %>';
+
+if(tmo_support)
+        var theUrl = "cellspot.router"; 
+else
+        var theUrl = "router.asus.com";
 	
 if(!rrsut_support){
 	alert("This function is not supported on this system.");
@@ -693,7 +698,7 @@ function show_invitation(share_link_url){
 		
 	$('invite_rule').innerHTML = "Sync rule: "+sync_rule_desc;
 	//$('invite_share').innerHTML = url_name + "/" +share_link_url;
-	$('invite_share').innerHTML = "http://router.asus.com/" + share_link_url;
+	$('invite_share').innerHTML = "http://"+ theUrl +"/" + share_link_url;
 	$("mailto").innerHTML = appendMailTo();
 	
 	cal_panel_block('invitation_block');
@@ -759,7 +764,7 @@ function applyRule(sharelink){
 		document.form.submit();
 }
 var url_combined = "";
-function domain_name_select(){
+function domain_name_select(){  
 	if(!Block_chars(document.form.router_sync_desc, ["<", ">"]))
 		return false;
 
@@ -782,6 +787,8 @@ function domain_name_select(){
 		return false;
 	}
 
+    $("update_scan").style.display = '';
+    $("applyButton").disabled = true;
 	var i;
 	if(ip_flag == 0){ // Public IP
 		if(ddns_enable == 1){
@@ -792,6 +799,7 @@ function domain_name_select(){
 			document.ddns_form.ddns_enable_x.value = 1;
 			document.ddns_form.ddns_server_x.value = "WWW.ASUS.COM";
 			document.ddns_form.ddns_hostname_x.value = isMD5DDNSName;
+			
 			document.ddns_form.submit();
 		}
 	}
@@ -905,7 +913,7 @@ function show_view_info(obj_id){
 		sync_rule_desc = "Client to host";	
 	
 	$('invite_rule').innerHTML = "Sync rule: "+sync_rule_desc;
-	$('invite_share').innerHTML = "http://router.asus.com/"+share_link_hashed;	
+	$('invite_share').innerHTML = "http://"+ theUrl +"/"+share_link_hashed;	
 	$('invite_captcha').innerHTML = "Security code: "+ router_synclist_captcha[j];
 	$('invite_captcha').innerHTML += "<br><br>We strongly suggest you giving this code separately to your friends.";
 	$("mailto").innerHTML = appendMailTo();
@@ -989,6 +997,63 @@ var hint_string = "";
 hint_string += "<#routerSync_rule_both#><br>";
 hint_string += "<#routerSync_rule_StoC#><br>";
 hint_string += "<#routerSync_rule_CtoS#>";
+
+function checkDDNSReturnCode(){
+    $j.ajax({
+    	url: '/ajax_ddnscode.asp',
+    	dataType: 'script', 
+
+    	error: function(xhr){
+      		checkDDNSReturnCode();
+    	},
+    	success: function(response){
+            if(ddns_return_code == 'ddns_query')
+        	    setTimeout("checkDDNSReturnCode();", 500);
+            else{ 
+                if(ddns_return_code.indexOf('200')!=-1 
+                || ddns_return_code.indexOf('220')!=-1 
+                || ddns_return_code == 'register,230'
+                || ddns_return_code =='no_change'){                                             
+                    url_combined += "https://" + ddns_host_name;
+			        apply_sharelink();			    
+	        }
+	        else{
+                    if(ddns_return_code == 'register,-1')
+                        alert("<#LANHostConfig_x_DDNS_alarm_2#>");
+	            else if(ddns_return_code.indexOf('203')!=-1)
+		        alert("<#LANHostConfig_x_DDNS_alarm_hostname#> '"+hostname_x+"' <#LANHostConfig_x_DDNS_alarm_registered#>");
+                    else if(ddns_return_code.indexOf('233')!=-1)
+		        alert("<#LANHostConfig_x_DDNS_alarm_hostname#> '"+hostname_x+"' <#LANHostConfig_x_DDNS_alarm_registered_2#> '"+ddns_old_name+"'");
+	            else if(ddns_return_code.indexOf('296')!=-1)
+		        alert("<#LANHostConfig_x_DDNS_alarm_6#>");
+	            else if(ddns_return_code.indexOf('297')!=-1)
+	                alert("<#LANHostConfig_x_DDNS_alarm_7#>");
+	            else if(ddns_return_code.indexOf('298')!=-1)
+         	        alert("<#LANHostConfig_x_DDNS_alarm_8#>");
+	            else if(ddns_return_code.indexOf('299')!=-1)
+		        alert("<#LANHostConfig_x_DDNS_alarm_9#>");
+	            else if(ddns_return_code.indexOf('401')!=-1)
+                        alert("<#LANHostConfig_x_DDNS_alarm_10#>");
+	            else if(ddns_return_code.indexOf('407')!=-1)
+		        alert("<#LANHostConfig_x_DDNS_alarm_11#>");
+	            else if(ddns_return_code == 'Time-out')
+	                alert("<#LANHostConfig_x_DDNS_alarm_1#>");
+	            else if(ddns_return_code =='unknown_error')
+                        alert("<#LANHostConfig_x_DDNS_alarm_2#>");
+  	            else if(ddns_return_code =='connect_fail')
+		        alert("<#qis_fail_desc7#>");
+                    else if(ddns_return_code =='auth_fail')
+                        alert("<#qis_fail_desc1#>");
+                    else if(ddns_return_code !='')
+    		        alert("<#LANHostConfig_x_DDNS_alarm_2#>");	
+    		          
+    		     refreshpage();   	    
+		 }			    
+            }    
+       }
+   });
+}
+
 </script>
 </head>
 

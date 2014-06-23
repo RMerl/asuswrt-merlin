@@ -107,7 +107,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <signal.h>
 #include <unistd.h>
 #include <errno.h>
 #include <sys/fcntl.h>
@@ -282,50 +281,6 @@ void nvram_set_str(const char *nvram_name, char *value, int size)
 	tmpbuf[size] = 0;
 	memcpy(tmpbuf, value, size);
 	nvram_set(nvram_name, tmpbuf);
-}
-
-int
-start_sdhcpd(void)
-{
-	FILE *fp;
-	char *dhcpd_argv[] = {"udhcpd", "/tmp/udhcpd.conf", NULL, NULL};
-	pid_t pid;
-
-	if (nvram_match("lan_proto", "dhcp")) return 0;
-	//ifconfig(nvram_safe_get("lan_ifname"), IFUP,
-	//	 nvram_safe_get("lan_ipaddr"), "255.255.255.0");
-	//_dprintf("%s %s %s %s\n",
-	//	nvram_safe_get("lan_ifname"),
-	//	nvram_safe_get("dhcp_start"),
-	//	nvram_safe_get("dhcp_end"),
-	//	nvram_safe_get("lan_lease"));
-
-	if (!(fp = fopen("/tmp/udhcpd-br0.leases", "a"))) {
-		perror("/tmp/udhcpd-br0.leases");
-		return errno;
-	}
-	fclose(fp);
-
-	/* Write configuration file based on current information */
-	if (!(fp = fopen("/tmp/udhcpd.conf", "w"))) {
-		perror("/tmp/udhcpd.conf");
-		return errno;
-	}
-	
-	fprintf(fp, "pidfile /var/run/udhcpd-br0.pid\n");
-	fprintf(fp, "start %s\n", nvram_safe_get("dhcp_start"));
-	fprintf(fp, "end %s\n", nvram_safe_get("dhcp_end"));
-	fprintf(fp, "interface %s\n", nvram_safe_get("lan_ifname"));
-	fprintf(fp, "remaining yes\n");
-	fprintf(fp, "lease_file /tmp/udhcpd-br0.leases\n");
-	fprintf(fp, "option subnet %s\n", nvram_safe_get("lan_netmask"));
-	fprintf(fp, "option router %s\n", nvram_safe_get("lan_ipaddr"));
-	fprintf(fp, "option lease 3600\n");
-	fclose(fp);
-	
-	_eval(dhcpd_argv, NULL, 0, &pid);
-	//_dprintf("done\n");
-	return 0;
 }
 
 int btn_setup_get_setting(PKT_SET_INFO_GW_QUICK *pkt)	// WLAN 2.4G
@@ -913,7 +868,7 @@ int OTSStart(int flag)
 	if (flag)
 	{
 		//stop_service_main(1);
-		start_sdhcpd();
+		/* start_sdhcpd(); */
 		strcpy(sharedkeystr, nvram_safe_get("sharedkeystr"));
 		tw = (TEMP_WIRELESS *)sharedkeystr;
 		nvram_set("sharedkeystr", "");
@@ -926,7 +881,7 @@ int OTSStart(int flag)
 	{
 #ifdef FULL_EZSETUP
 		stop_service_main(1);
-		start_sdhcpd();
+		/* start_sdhcpd(); */
 
 		BN_register_RAND(ots_rand);
 
@@ -1558,10 +1513,10 @@ finish:
 		bs_mode=BTNSETUP_NONE;
 		sleep(2);
 		stop_wan();
-		stop_dhcpd();
+		stop_dnsmasq(); /* stop_dhcpd(); */
 		//convert_asus_values(1);
 		//nvram_commit_safe();
-		start_dhcpd();
+		start_dnsmasq(0); /* start_dhcpd(); */
 		start_wan();
 #else
 		

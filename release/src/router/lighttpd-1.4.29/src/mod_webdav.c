@@ -3610,19 +3610,20 @@ propmatch_cleanup:
 
 		int sharelink_save_count = get_sharelink_save_count();
 		int file_count = 0;
-		char* tmp_filename = strdup(buffer_filename->ptr);
+		
+		char* tmp_filename = strdup(buffer_filename->ptr);		
 		char *pch = strtok(tmp_filename, ";");				
 		while(pch!=NULL){
 			file_count++;
 			pch = strtok(NULL,";");
 		}
 		free(tmp_filename);
-		
-		if(sharelink_save_count+file_count>srv->srvconf.max_sharelink){
+
+		if(toShare==1&&sharelink_save_count+file_count>srv->srvconf.max_sharelink){
 			con->http_status = 405;
 			return HANDLER_FINISHED;
 		}
-		
+
 		char auth[100]="\0";		
 		if(con->aidisk_username->used && con->aidisk_passwd->used)
 			sprintf(auth, "%s:%s", con->aidisk_username->ptr, con->aidisk_passwd->ptr);
@@ -5359,6 +5360,7 @@ propmatch_cleanup:
 		
 		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "FILENAME"))) {
 			filename = ds->value;
+			buffer_urldecode_path(filename);
 		} else {
 			con->http_status = 400;
 			return HANDLER_FINISHED;
@@ -5366,6 +5368,7 @@ propmatch_cleanup:
 
 		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "TITLE"))) {
 			title = ds->value;
+			buffer_urldecode_path(title);
 		} else {
 			con->http_status = 400;
 			return HANDLER_FINISHED;
@@ -5491,6 +5494,7 @@ propmatch_cleanup:
 		
 		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "FILENAME"))) {
 			filename = ds->value;
+			buffer_urldecode_path(filename);
 		} else {
 			con->http_status = 400;
 			return HANDLER_FINISHED;
@@ -5498,6 +5502,7 @@ propmatch_cleanup:
 
 		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "TITLE"))) {
 			title = ds->value;
+			buffer_urldecode_path(title);
 		} else {
 			con->http_status = 400;
 			return HANDLER_FINISHED;
@@ -5517,7 +5522,11 @@ propmatch_cleanup:
 			return HANDLER_FINISHED;
 		}
 #endif		
-		char api_key[100] = "37140360286c5cd9952023fa8b662a64";
+		//char api_key[100] = "37140360286c5cd9952023fa8b662a64";
+		//char secret[100] = "804b51d14d840d6e";
+		char api_key[100] = "c0466d7736e0275d062ce64aefaacfe0";
+		char secret[100] = "228e160cf8805246";
+
 		CURL *curl;
 		CURLcode rt;
 		struct curl_httppost *formpost = NULL;
@@ -5532,7 +5541,7 @@ propmatch_cleanup:
 
 			/* Set Host to target in HTTP header, and set response handler
 		 	* function */
-			curl_easy_setopt(curl, CURLOPT_URL, "http://api.flickr.com/services/upload/");
+			curl_easy_setopt(curl, CURLOPT_URL, "https://api.flickr.com/services/upload/");
 			/* curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L); */
 
 			/*
@@ -5541,7 +5550,7 @@ propmatch_cleanup:
 			Cdbg(1, "input_string=%s", input_string);
 			md5String(secret, input_string, md5);	
 			*/
-			char secret[100] = "804b51d14d840d6e";
+			
 			md5sum(md5, 7, secret, "api_key", api_key, "auth_token", auth_token->ptr, "title", title->ptr);			
 			Cdbg(1, "md5=%s", md5);
 			
@@ -5579,6 +5588,9 @@ propmatch_cleanup:
 			             CURLFORM_COPYNAME, "photo",
 			             CURLFORM_FILE, photo_path, CURLFORM_END);
 
+			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
+			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
+			
 			curl_easy_setopt(curl, CURLOPT_HTTPPOST, formpost);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_callback_func);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_str);

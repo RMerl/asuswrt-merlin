@@ -78,6 +78,19 @@ function changeiuiBackground(loading){
 	}
 }
 
+function changeiuiBackground2(obj,loading){
+	if(!parent.ISMOBILE) return false;
+
+	if(loading){
+		document.getElementById(obj).style.background = 'url(/images/InternetScan.gif) no-repeat right center';
+		document.getElementById(obj).style.marginRight = '5px';
+	}
+	else{
+		document.getElementById(obj).style.background = 'url(/iui/listArrow.png) no-repeat right center';
+		document.getElementById(obj).style.marginRight = '0px';
+	}
+}
+
 function hideObjs(){
 	if(document.getElementById("splitLine"))
 		document.getElementById("splitLine").style.display = "none";

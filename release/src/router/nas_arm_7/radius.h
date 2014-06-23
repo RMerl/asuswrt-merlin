@@ -1,0 +1,188 @@
+/*
+ * Remote Authentication Dial In User Service (RADIUS) definitions
+ *
+ * See RFCs 2865 and 2869
+ *
+ * Copyright (C) 2014, Broadcom Corporation
+ * All Rights Reserved.
+ * 
+ * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
+ * the contents of this file may not be disclosed to third parties, copied
+ * or duplicated in any form, in whole or in part, without the prior
+ * written permission of Broadcom Corporation.
+ *
+ * $Id: radius.h 450927 2014-01-23 14:13:36Z $
+ */
+
+#ifndef _radius_h_
+#define _radius_h_
+
+/* RADIUS packet format */
+typedef struct {
+	unsigned char code;			/* RADIUS code */
+	unsigned char id;			/* RADIUS Packet identifier */
+	unsigned short length;			/* Length including header */
+	unsigned char vector[16];		/* Request/response authenticator */
+	unsigned char attributes[1];		/* Attribute value pairs (optional) */
+} radius_header_t;
+
+#define RADIUS_HEADER_LEN 20
+#define RADIUS_MAX_LEN 4096
+#define RADIUS_MAX_ATTRIBUTES ((RADIUS_MAX_LEN - RADIUS_HEADER_LEN) / 255 + 1)
+
+/* RADIUS codes */
+#define RADIUS_ACCESS_REQUEST 1
+#define RADIUS_ACCESS_ACCEPT  2
+#define RADIUS_ACCESS_REJECT  3
+#define RADIUS_ACCOUNTING_REQUEST 4
+#define RADIUS_ACCOUNTING_RESPONSE 5
+#define RADIUS_ACCESS_CHALLENGE 11
+#define RADIUS_STATUS_SERVER 12
+#define RADIUS_STATUS_CLIENT 13
+#define RADIUS_RESERVED 255
+
+/* RADIUS attributes */
+#define RD_TP_USER_NAME 1
+#define RD_TP_USER_PASSWORD 2
+#define RD_TP_CHAP_PASSWORD 3
+#define RD_TP_NAS_IP_ADDRESS 4
+#define RD_TP_NAS_PORT 5
+#define RD_TP_SERVICE_TYPE 6
+#define RD_TP_FRAMED_PROTOCOL 7
+#define RD_TP_FRAMED_IP_ADDRESS 8
+#define RD_TP_FRAMED_IP_NETMASK 9
+#define RD_TP_FRAMED_ROUTING 10
+#define RD_TP_FILTER_ID 11
+#define RD_TP_FRAMED_MTU 12
+#define RD_TP_FRAMED_COMPRESSION 13
+#define RD_TP_LOGIN_IP_HOST 14
+#define RD_TP_LOGIN_SERVICE 15
+#define RD_TP_LOGIN_TCP_PORT 16
+#define RD_TP_UNASSIGNED 17
+#define RD_TP_REPLY_MESSAGE 18
+#define RD_TP_CALLBACK_NUMBER 19
+#define RD_TP_CALLBACK_ID 20
+#define RD_TP_UNASSIGNED2 21
+#define RD_TP_FRAMED_ROUTE 22
+#define RD_TP_FRAMED_IPX_NETWORK 23
+#define RD_TP_STATE 24
+#define RD_TP_CLASS 25
+#define RD_TP_VENDOR_SPECIFIC 26
+#define RD_TP_SESSION_TIMEOUT 27
+#define RD_TP_IDLE_TIMEOUT 28
+#define RD_TP_TERMINATING_ACTION 29
+#define RD_TP_CALLED_STATION_ID 30
+#define RD_TP_CALLING_STATION_ID 31
+#define RD_TP_NAS_IDENTIFIER 32
+#define RD_TP_PROXY_STATE 33
+#define RD_TP_LOGIN_LAT_SERVICE 34
+#define RD_TP_LOGIN_LAT_NODE 35
+#define RD_TP_LOGIN_LAT_GROUP 36
+#define RD_TP_FRAMED_APPLETALK_LINK 37
+#define RD_TP_FRAMED_APPLETALK_NETWORK 38
+#define RD_TP_FRAMED_APPLETALK_ZONE 39
+#define RD_TP_ACCT_STATUS_TYPE 40
+#define RD_TP_ACCT_DELAY_TIME 41
+#define RD_TP_ACCT_INPUT_OCTETS 42
+#define RD_TP_ACCT_OUTPUT_OCTETS 43
+#define RD_TP_ACCT_SESSION_ID 44
+#define RD_TP_ACCT_AUTHENTIC 45
+#define RD_TP_ACCT_SESSION_TIME 46
+#define RD_TP_ACCT_INPUT_PACKETS 47
+#define RD_TP_ACCT_OUTPUT_PACKETS 48
+#define RD_TP_ACCT_TERMINATE_CAUSE 49
+#define RD_TP_ACCT_MULTI_SESSION_ID 50
+#define RD_TP_ACCT_LINK_COUNT 51
+#define RD_TP_ACCT_INPUT_GIGAWORDS 52
+#define RD_TP_ACCT_OUTPUT_GIGAWORDS 53
+/* 54 Unused */
+#define RD_TP_EVENT_TIMESTAMP 55
+/* 56-59 Unused */
+#define RD_TP_CHAP_CHALLENGE 60
+#define RD_TP_NAS_PORT_TYPE 61
+#define RD_TP_PORT_LIMIT 62
+#define RD_TP_LOGIN_LAT_PORT 63
+#define RD_TP_TUNNEL_TYPE 64
+#define RD_TP_TUNNEL_MEDIUM_TYPE 65
+#define RD_TP_TUNNEL_CLIENT_ENDPOINT 66
+#define RD_TP_TUNNEL_SERVER_ENDPOINT 67
+#define RD_TP_TUNNEL_CONNECTION 68
+#define RD_TP_TUNNEL_PASSWORD 69
+#define RD_TP_ARAP_PASSWORD 70
+#define RD_TP_ARAP_FEATURES 71
+#define RD_TP_ARAP_ZONE_ACCESS 72
+#define RD_TP_ARAP_SECURITY 73
+#define RD_TP_ARAP_SECURITY_DATA 74
+#define RD_TP_PASSWORD_RETRY 75
+#define RD_TP_PROMPT 76
+#define RD_TP_CONNECT_INFO 77
+#define RD_TP_CONFIGURATION_TOKEN 78
+#define RD_TP_EAP_MESSAGE 79
+#define RD_TP_MESSAGE_AUTHENTICATOR 80
+#define RD_TP_TUNNEL_PRIVATE_GROUP_ID 81
+#define RD_TP_TUNNEL_ASSIGNMENT_ID 82
+#define RD_TP_TUNNEL_TUNNEL_PREFERENCE 83
+#define RD_TP_TUNNEL_PACKETS_LOST 86
+#define RD_TP_NAS_PORT_ID 87
+#define RD_TP_TUNNEL_CLIENT_AUTH_ID 90
+#define RD_TP_TUNNEL_SERVER_AUTH_ID 91
+#define RD_TP_ASCEND_MODEM_PORTNO 120
+#define RD_TP_ASCEND_MODEM_SLOTNO 121
+#define RD_TP_ASCEND_MULTILINK_ID 187
+#define RD_TP_ASCEND_NUM_IN_MULTILINK 188
+#define RD_TP_ASCEND_FIRST_DEST 189
+#define RD_TP_ASCEND_PRE_INPUT_OCTETS 190
+#define RD_TP_ASCEND_PRE_OUTPUT_OCTETS 191
+#define RD_TP_ASCEND_PRE_INPUT_PACKETS 192
+#define RD_TP_ASCEND_PRE_OUTPUT_PACKETS 193
+#define RD_TP_ASCEND_MAXIMUM_TIME 194
+#define RD_TP_ASCEND_DISCONNECT_CAUSE 195
+#define RD_TP_ASCEND_CONNECT_PROGRESS 196
+#define RD_TP_ASCEND_DATA_RATE 197
+#define RD_TP_ASCEND_PRESESSION_TIME 198
+#define RD_TP_ASCEND_ASSIGN_IP_POOL 218
+#define RD_TP_ASCEND_XMIT_RATE 255
+
+/* RADIUS vendors */
+#define RD_VENDOR_ACC			5
+#define RD_VENDOR_CISCO			9
+#define RD_VENDOR_SHIVA			166
+#define RD_VENDOR_LIVINGSTON		307
+#define RD_VENDOR_MICROSOFT		311
+#define RD_VENDOR_3COM			429
+#define RD_VENDOR_ASCEND		529
+#define RD_VENDOR_BAY			1584
+#define RD_VENDOR_FOUNDRY		1991
+#define RD_VENDOR_VERSANET		2180
+#define RD_VENDOR_REDBACK		2352
+#define RD_VENDOR_JUNIPER		2636
+#define RD_VENDOR_APTIS			2637
+#define RD_VENDOR_COSINE		3085
+#define RD_VENDOR_SHASTA		3199
+#define RD_VENDOR_NOMADIX		3309
+#define RD_VENDOR_UNISPHERE		4874
+#define RD_VENDOR_ISSANNI		5948
+#define RD_VENDOR_QUINTUM		6618
+#define RD_VENDOR_COLUBRIS		8744
+#define RD_VENDOR_COLUMBIA_UNIVERSITY	11862
+#define RD_VENDOR_WFA	40808
+#define RD_VENDOR_WFA_SR_VALUE	1
+#define RD_VENDOR_WFA_AP_VALUE	2
+#define RD_VENDOR_WFA_STA_VALUE	3
+#define RD_VENDOR_WFA_DAR_VALUE	4
+#define RD_VENDOR_WFA_SIU_VALUE	5
+
+/* Microsoft vendor-specific RADIUS attributes */
+#define RD_MS_MPPE_POLICY		7
+#define RD_MS_MPPE_TYPE			8
+#define RD_MS_MPPE_SEND			16
+#define RD_MS_MPPE_RECV			17
+
+
+/* RADIUS UDP port */
+#define RADIUS_PORT 1812
+
+/* NAS-Port-Type */
+#define NAS_PORT_TYPE_WIRELESS_IEEE80211	19
+
+#endif /* _radius_h_ */

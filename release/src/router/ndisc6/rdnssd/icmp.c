@@ -56,7 +56,8 @@
 #define mylog(fmt, args...) { dbg(fmt, ## args); dbg("\n"); syslog(0, fmt, ## args); }
 static int icmp_recv (int fd)
 {
-		static uint8_t last_flag = 1;
+		static unsigned last_flag = 1;
+		unsigned flags;
 		struct nd_router_advert icmp6;
 		uint8_t buf[65536 - sizeof (icmp6)], cbuf[CMSG_SPACE (sizeof (int))];
 		struct iovec iov[2] =
@@ -95,7 +96,7 @@ static int icmp_recv (int fd)
 		}
 
 		/* Parses RA prefix flag, check m & o bit are set or not (IPv6 spec 1.12) */
-		if(icmp6.nd_ra_router_lifetime == 0)
+		if (icmp6.nd_ra_router_lifetime == 0)
 		{
 			mylog("IPv6 router lifetime reach 0");
 			system("rc rc_service stop_ipv6");
@@ -103,41 +104,35 @@ static int icmp_recv (int fd)
 			return 0;
 		}
 
-		if( (icmp6.nd_ra_flags_reserved & ND_RA_FLAG_MANAGED) && last_flag != icmp6.nd_ra_flags_reserved){
-			/*Get Address & DNS from DHCPv6*/
-			mylog("Get IPv6 address & DNS from DHCPv6");
-			if(last_flag != 1)
-				system("rc rc_service stop_ipv6");
-			nvram_set("ipv6_ra_conf", "mset");
-			system("rc rc_service start_dhcp6c");
-			last_flag = icmp6.nd_ra_flags_reserved;
-		}else if ( (icmp6.nd_ra_flags_reserved & ND_RA_FLAG_OTHER) && last_flag != icmp6.nd_ra_flags_reserved){
-			/*Get Address from RA & get DNS from DHCPv6*/
-			mylog("Get IPv6 address from RA & get DNS from DHCPv6");
+		flags = icmp6.nd_ra_flags_reserved & (ND_RA_FLAG_MANAGED | ND_RA_FLAG_OTHER);
+		if (flags != last_flag)
+		{
 			if (last_flag != 1)
 				system("rc rc_service stop_ipv6");
-			nvram_set("ipv6_ra_conf", "oset");
-			system("rc rc_service start_dhcp6c");
-			last_flag = icmp6.nd_ra_flags_reserved;
-		}else if ((icmp6.nd_ra_flags_reserved & (ND_RA_FLAG_MANAGED | ND_RA_FLAG_OTHER)) == 0){
-			/*Get Address & DNS from RA*/
-			mylog("Get IPv6 address & DNS from RA");
-			if(last_flag != icmp6.nd_ra_flags_reserved){
-				if(last_flag != 1)
-					system("rc rc_service stop_ipv6");
+			mylog("Get IPv6 address from %s & DNS from %s",
+				(flags & ND_RA_FLAG_MANAGED) ? "DHCPv6" : "RA",
+				(flags & (ND_RA_FLAG_MANAGED | ND_RA_FLAG_OTHER)) ? "DHCPv6" : "RA");
+			if (flags & ND_RA_FLAG_MANAGED)
+				nvram_set("ipv6_ra_conf", "mset");
+			else if (flags & ND_RA_FLAG_OTHER)
+				nvram_set("ipv6_ra_conf", "oset");
+			else
 				nvram_set("ipv6_ra_conf", "noneset");
-				system("rc rc_service start_dhcp6c");
-				last_flag = icmp6.nd_ra_flags_reserved;
-			}
+			system("rc rc_service start_dhcp6c");
+			last_flag = flags;
 
-			if (nvram_match("ipv6_dnsenable", "1")) {
-PARSES_RA:
+			if ((flags & (ND_RA_FLAG_MANAGED | ND_RA_FLAG_OTHER)) == 0 &&
+			    nvram_match("ipv6_dnsenable", "1"))
+			{
+
 		/* Parses RA options */
 		len -= sizeof (icmp6);
 		return parse_nd_opts((struct nd_opt_hdr *) buf, len, src.sin6_scope_id);
 
 			}
 		}
+
+		return 0;
 }
 
 static int icmp_socket()

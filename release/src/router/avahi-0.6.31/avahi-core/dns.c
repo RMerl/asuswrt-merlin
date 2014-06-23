@@ -875,3 +875,222 @@ size_t avahi_rdata_serialize(AvahiRecord *record, void *rdata, size_t max_size) 
 
     return p.size;
 }
+
+/* LLMNR Functions */
+/* New LLMNR Query */
+AvahiDnsPacket* avahi_llmnr_packet_new_query(unsigned mtu) {
+    AvahiDnsPacket *p;
+
+    if (!(p = avahi_dns_packet_new(mtu)))
+        return NULL;
+
+    avahi_dns_packet_set_field(p, AVAHI_LLMNR_FIELD_FLAGS, AVAHI_LLMNR_FLAGS(0, 0, 0, 0, 0, 0, 0));
+
+    return p;
+}
+
+AvahiDnsPacket* avahi_llmnr_packet_new_response(unsigned mtu, int c) {
+    AvahiDnsPacket *p;
+
+    if (!(p = avahi_dns_packet_new(mtu)))
+        return NULL;
+
+    avahi_dns_packet_set_field(p, AVAHI_LLMNR_FIELD_FLAGS, AVAHI_LLMNR_FLAGS(1, 0, c, 0, 0, 0, 0));
+
+    return p;
+}
+
+/* New becasue LLMNR packets in Vista don't like message compression in RR's*/
+uint8_t* avahi_llmnr_packet_append_name(AvahiDnsPacket *p, const char *name) {
+    uint8_t *d, *saved_ptr = NULL;
+    size_t saved_size;
+
+    assert(p);
+    assert(name);
+
+    saved_size = p->size;
+    saved_ptr = avahi_dns_packet_extend(p, 0);
+
+    while (*name) {
+        const char *pname;
+        char label[64];
+
+        pname = name;
+
+        if (!(avahi_unescape_label(&name, label, sizeof(label))))
+            goto fail;
+
+        if (!(d = avahi_dns_packet_append_string(p, label)))
+            goto fail;
+    }
+
+    if (!(d = avahi_dns_packet_extend(p, 1)))
+        goto fail;
+
+    *d = 0;
+
+    return saved_ptr;
+
+fail:
+    p->size = saved_size;
+    avahi_dns_packet_cleanup_name_table(p);
+
+    return NULL;
+}
+
+/* New LLMNR Reply */
+AvahiDnsPacket* avahi_llmnr_packet_new_reply(AvahiDnsPacket *p, unsigned mtu, int copy_queries, int c) {
+    AvahiDnsPacket *r;
+    assert(p);
+
+    if (!(r = avahi_llmnr_packet_new_response(mtu, c)))
+        return NULL;
+
+    if (copy_queries) {
+        unsigned saved_rindex;
+        uint32_t n;
+
+        saved_rindex = p->rindex;
+        p->rindex = AVAHI_DNS_PACKET_HEADER_SIZE;
+
+        for (n = avahi_dns_packet_get_field(p, AVAHI_LLMNR_FIELD_QDCOUNT); n > 0; n--) {
+            AvahiKey *k;
+
+            if ((k = avahi_llmnr_packet_consume_key(p))) {
+                avahi_llmnr_packet_append_key(r, k);
+                avahi_key_unref(k);
+            }
+        }
+
+        p->rindex = saved_rindex;
+        avahi_dns_packet_set_field(r, AVAHI_LLMNR_FIELD_QDCOUNT, avahi_dns_packet_get_field(p, AVAHI_LLMNR_FIELD_QDCOUNT));
+    }
+
+    avahi_dns_packet_set_field(r, AVAHI_LLMNR_FIELD_ID, avahi_dns_packet_get_field(p, AVAHI_LLMNR_FIELD_ID));
+    avahi_dns_packet_set_field(r, AVAHI_LLMNR_FIELD_ANCOUNT, 0);
+    avahi_dns_packet_set_field(r, AVAHI_LLMNR_FIELD_NSCOUNT, 0);
+    avahi_dns_packet_set_field(r, AVAHI_LLMNR_FIELD_ARCOUNT, 0);
+    return r;
+}
+
+int avahi_llmnr_packet_check_valid(AvahiDnsPacket *p) {
+    uint16_t flags;
+
+    assert(p);
+
+    /* OPCODE */
+    if ((avahi_dns_packet_check_valid(p) < 0))
+        return -1;
+
+    flags = avahi_dns_packet_get_field(p, AVAHI_LLMNR_FIELD_FLAGS);
+
+    /* RCODE in incoming queries is to be ignored*/
+    /* RCODE in incoming responses is to be checked*/
+    if (flags & AVAHI_LLMNR_FLAG_Z)
+        return -1;
+
+    return 0;
+}
+
+AvahiRecord* avahi_llmnr_packet_consume_record(AvahiDnsPacket *p) {
+    AvahiRecord *r;
+    int unicast_response;
+
+    if (!(r = avahi_dns_packet_consume_record(p, &unicast_response)))
+        return NULL;
+
+    /* LLMNR uses standard class values. So unicast response
+    should be zero in all cases */
+    assert(!unicast_response);
+
+/*    unicast_response = (uint32_t) (unicast_response);
+    unicast_response = ~unicast_response;
+    unicast_response = unicast_response << 28;
+    unicast_response = ~unicast_response;
+    r->key->clazz = r->key->clazz & unicast_response; */
+
+    return r;
+}
+
+AvahiKey* avahi_llmnr_packet_consume_key(AvahiDnsPacket *p) {
+    AvahiKey *key;
+    int unicast_response;
+
+    if (!(key = avahi_dns_packet_consume_key(p, &unicast_response)))
+        return NULL;
+
+    assert(!unicast_response);
+/*    unicast_response = (uint32_t) (unicast_response);
+    avahi_log_info("UR : %d", unicast_response);
+    unicast_response = ~unicast_response;
+    avahi_log_info("UR : %d", unicast_response);
+    unicast_response = unicast_response << 28;
+    avahi_log_info("UR : %d", unicast_response);
+    unicast_response = ~unicast_response;
+    avahi_log_info("UR : %d", unicast_response);
+
+    key->clazz = key->clazz & unicast_response; */
+
+    return key;
+}
+
+/* we can't use avahi_dns_packet_append_name()
+So it's better to define them again */
+uint8_t* avahi_llmnr_packet_append_key(AvahiDnsPacket *p, AvahiKey *k) {
+    uint8_t *t;
+    size_t size;
+
+    assert(p);
+    assert(k);
+
+    size = p->size;
+
+    if (!(t = avahi_llmnr_packet_append_name(p, k->name)) ||
+        !avahi_dns_packet_append_uint16(p, k->type) ||
+        !avahi_dns_packet_append_uint16(p, k->clazz) ) {
+        p->size = size;
+        avahi_dns_packet_cleanup_name_table(p);
+
+        return NULL;
+    }
+
+    return t;
+}
+
+/* Need append_rdata in /avahi-core/dns.c to be defines as non-static */
+uint8_t* avahi_llmnr_packet_append_record(AvahiDnsPacket *p, AvahiRecord *r, unsigned max_ttl) {
+    uint8_t *t, *l, *start;
+    size_t size;
+
+    assert(p);
+    assert(r);
+
+    size = p->size;
+
+    if (!(t = avahi_dns_packet_append_name(p, r->key->name)) ||
+        !avahi_dns_packet_append_uint16(p, r->key->type) ||
+        !avahi_dns_packet_append_uint16(p, r->key->clazz)||
+        !avahi_dns_packet_append_uint32(p, (max_ttl && r->ttl > max_ttl) ? max_ttl : r->ttl) ||
+        !(l = avahi_dns_packet_append_uint16(p, 0)))
+            goto fail;
+
+    start = avahi_dns_packet_extend(p, 0);
+
+    if (append_rdata(p, r) < 0)
+        goto fail;
+
+    size = avahi_dns_packet_extend(p, 0) - start;
+    assert(size <= AVAHI_DNS_RDATA_MAX);
+
+    l[0] = (uint8_t) ((uint16_t) size >> 8);
+    l[1] = (uint8_t) ((uint16_t) size);
+
+    return t;
+
+fail:
+    p->size = size;
+    avahi_dns_packet_cleanup_name_table(p);
+
+    return NULL;
+}
+
