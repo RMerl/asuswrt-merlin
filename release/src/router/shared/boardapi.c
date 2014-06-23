@@ -306,7 +306,11 @@ int led_control(int which, int mode)
 	model = get_model();
 
 	// Did the user disable the leds?
-	if ((mode == LED_ON) && (nvram_get_int("led_disable") == 1))
+	if ((mode == LED_ON) && (nvram_get_int("led_disable") == 1) && (which != LED_TURBO)
+#ifdef RTCONFIG_QTN
+		&& (which != BTN_QTN_RESET)
+#endif
+	)
 		return 0;
 
 	get_gpio_values_once();
