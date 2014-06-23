@@ -2749,7 +2749,11 @@ endif
 lighttpd-1.4.29: shared nvram$(BCMEX) libdisk samba-3.5.8 pcre-8.31 libxml2 sqlite libexif openssl wb push_log lighttpd-1.4.29/stamp-h1
 	$(MAKE) -C lighttpd-1.4.29 $(PARALLEL_BUILD)
 ifeq ($(RTCONFIG_BCMARM),y)
+ifeq ($(RTCONFIG_QTN),y)
+	$(MAKE) -C lighttpd-1.4.29/src copy-prebuild-arm-qtn
+else
 	$(MAKE) -C lighttpd-1.4.29/src copy-prebuild-arm
+endif
 else
 	$(MAKE) -C lighttpd-1.4.29/src copy-prebuild
 endif

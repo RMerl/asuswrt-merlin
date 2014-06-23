@@ -76,6 +76,13 @@ copy-prebuild-arm:
 		cp ../prebuild_arm/mod_aicloud_auth.so.l .libs/mod_aicloud_auth.so; \
 	fi
 
+copy-prebuild-arm-qtn:
+	if test -d '../prebuild_arm_qtn' ; then \
+		cp ../prebuild_arm_qtn/mod_smbdav.so.l .libs/mod_smbdav.so; \
+		cp ../prebuild_arm_qtn/mod_aidisk_access.so.l .libs/mod_aidisk_access.so; \
+		cp ../prebuild_arm_qtn/mod_sharelink.so.l .libs/mod_sharelink.so; \
+		cp ../prebuild_arm_qtn/mod_aicloud_auth.so.l .libs/mod_aicloud_auth.so; \
+	fi
 BUILT_SOURCES = parsers versionstamp 
 MAINTAINERCLEANFILES = configparser.c configparser.h mod_ssi_exprparser.c mod_ssi_exprparser.h
 CLEANFILES = versionstamp.h versionstamp.h.tmp
