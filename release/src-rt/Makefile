@@ -951,6 +951,9 @@ define RouterOptions
 	if [ "$(IPSEC)" = "y" ]; then \
 		sed -i "/RTCONFIG_IPSEC/d" $(1); \
 		echo "RTCONFIG_IPSEC=y" >>$(1); \
+	else \
+		sed -i "/RTCONFIG_IPSEC/d" $(1); \
+		echo "# RTCONFIG_IPSEC is not set" >>$(1); \
 	fi; \
 	if [ "$(KYIVSTAR)" = "y" ]; then \
 		sed -i "/RTCONFIG_KYIVSTAR/d" $(1); \
