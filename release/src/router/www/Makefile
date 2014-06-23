@@ -313,9 +313,9 @@ ifneq ($(RTCONFIG_BWDPI),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/right-light.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/right-dark.png	
 	rm -rf $(INSTALLDIR)/www/images/New_ui/tm_logo.png	
-else
-	rm -rf $(INSTALLDIR)/www/Main_TrafficMonitor_daily.asp
-	rm -rf $(INSTALLDIR)/www/Main_TrafficMonitor_last24.asp
-	rm -rf $(INSTALLDIR)/www/Main_TrafficMonitor_realtime.asp
-	rm -rf $(INSTALLDIR)/www/tmmenu.js
+#else
+#	rm -rf $(INSTALLDIR)/www/Main_TrafficMonitor_daily.asp
+#	rm -rf $(INSTALLDIR)/www/Main_TrafficMonitor_last24.asp
+#	rm -rf $(INSTALLDIR)/www/Main_TrafficMonitor_realtime.asp
+#	rm -rf $(INSTALLDIR)/www/tmmenu.js
 endif
