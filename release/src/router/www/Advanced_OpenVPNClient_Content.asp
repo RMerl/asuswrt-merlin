@@ -423,7 +423,7 @@ function update_local_ip(object){
 			</tr>
 			<tr>
 				<div style="margin-left:30px; margin-top:10px;">
-					<p>Only paste the content of the <span style="color:#FFCC00;">----- BEGIN xxx ----- </span>/<span style="color:#FFCC00;"> ----- END xxx -----</span> block (including those two lines).
+					<p><#vpn_openvpn_KC_Edit1#> <span style="color:#FFCC00;">----- BEGIN xxx ----- </span>/<span style="color:#FFCC00;"> ----- END xxx -----</span> <#vpn_openvpn_KC_Edit2#>
 					<p>Limit: 3499 characters per field
 				</div>
 				<div style="margin:5px;*margin-left:-5px;"><img style="width: 730px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
@@ -582,7 +582,7 @@ function update_local_ip(object){
 					    </td>
 					</tr>
 					<tr>
-							<th>Import ovpn file</th>
+							<th><#vpn_openvpnc_importovpn#></th>
 						<td>
 							<input id="ovpnfile" type="file" name="file" class="input" style="color:#FFCC00;*color:#000;">
 							<input id="" class="button_gen" onclick="ImportOvpn();" type="button" value="<#CTL_upload#>" />
@@ -609,7 +609,7 @@ function update_local_ip(object){
  					</tr>
 
 					<tr>
-						<th>Interface Type</th>
+						<th><#vpn_openvpn_interface#></th>
 			        		<td>
 			       				<select name="vpn_client_if_x"  onclick="update_visibility();" class="input_option">
 							</select>
@@ -617,7 +617,7 @@ function update_local_ip(object){
 					</tr>
 
 					<tr>
-						<th>Protocol</th>
+						<th><#IPConnection_VServerProto_itemname#></th>
 			        		<td>
 			       				<select name="vpn_client_proto" class="input_option">
 								<option value="tcp-client" <% nvram_match("vpn_client_proto","tcp-client","selected"); %> >TCP</option>
@@ -635,7 +635,7 @@ function update_local_ip(object){
 					</tr>
 
 					<tr>
-						<th>Firewall</th>
+						<th><#menu5_5#></th>
 			        	<td>
 			        		<select name="vpn_client_firewall" class="input_option" onclick="update_visibility();" >
 								<option value="auto" <% nvram_match("vpn_client_firewall","auto","selected"); %> >Automatic</option>
@@ -646,7 +646,7 @@ function update_local_ip(object){
 					</tr>
 
 					<tr>
-						<th>Authorization Mode</th>
+						<th><#vpn_openvpn_Auth#></th>
 			        	<td>
 			        		<select name="vpn_client_crypt" class="input_option" onclick="update_visibility();">
 								<option value="tls" <% nvram_match("vpn_client_crypt","tls","selected"); %> >TLS</option>
@@ -680,7 +680,7 @@ function update_local_ip(object){
 						</td>
 					</tr>
 					<tr id="client_useronly">
-						<th>Username Auth. Only<br><i>(Must define certificate authority)</i></th>
+						<th><#vpn_openvpn_AuthOnly#><br><i>(Must define certificate authority)</i></th>
 						<td>
 							<input type="radio" name="vpn_client_useronly" class="input" value="1" onclick="update_visibility();" <% nvram_match_x("", "vpn_client_useronly", "1", "checked"); %>><#checkbox_Yes#>
 							<input type="radio" name="vpn_client_useronly" class="input" value="0" onclick="update_visibility();" <% nvram_match_x("", "vpn_client_useronly", "0", "checked"); %>><#checkbox_No#>
@@ -689,7 +689,7 @@ function update_local_ip(object){
  					</tr>
 
 					<tr id="client_hmac">
-						<th>Extra HMAC authorization<br><i>(tls-auth)</i></th>
+						<th><#vpn_openvpn_AuthHMAC#><br><i>(tls-auth)</i></th>
 			        	<td>
 			        		<select name="vpn_client_hmac" class="input_option">
 								<option value="-1" <% nvram_match("vpn_client_hmac","-1","selected"); %> >Disabled</option>
@@ -747,7 +747,7 @@ function update_local_ip(object){
 					</thead>
 
 					<tr>
-						<th>Poll Interval<br><i>(in minutes, 0 to disable)</th>
+						<th><#vpn_openvpn_PollInterval#><br><i>( <#zero_disable#> )</i></th>
 						<td>
 							<input type="text" maxlength="4" class="input_6_table" name="vpn_client_poll" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 0, 1440)" value="<% nvram_get("vpn_client_poll"); %>">
 						</td>
@@ -775,7 +775,7 @@ function update_local_ip(object){
 					</tr>
 
 					<tr>
-						<th>Encryption cipher</th>
+						<th><#vpn_openvpn_Encrypt#></th>
 			        	<td>
 			        		<select name="vpn_client_cipher" class="input_option">
 								<option value="<% nvram_get("vpn_client_cipher"); %>" selected><% nvram_get("vpn_client_cipher"); %></option>
@@ -784,7 +784,7 @@ function update_local_ip(object){
 					</tr>
 
 					<tr>
-						<th>Compression</th>
+						<th><#vpn_openvpn_Compression#></th>
 			        	<td>
 			        		<select name="vpn_client_comp" class="input_option">
 								<option value="-1" <% nvram_match("vpn_client_comp","-1","selected"); %> >Disabled</option>
@@ -819,7 +819,7 @@ function update_local_ip(object){
  					</tr>
 
 					<tr>
-						<th>Custom Configuration</th>
+						<th><#vpn_openvpn_CustomConf#></th>
 						<td>
 							<textarea rows="8" class="textarea_ssh_table" name="vpn_client_custom" cols="55" maxlength="15000"><% nvram_clean_get("vpn_client_custom"); %></textarea>
 						</td>
