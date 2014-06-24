@@ -482,7 +482,7 @@ function show_banner(L3){// L3 = The third Level of Menu
 
 //Level 3 Tab
 var tabtitle = new Array();
-tabtitle[0] = new Array("", "<#menu5_1_1#>", "Passpoint", "<#menu5_1_2#>", "WDS", "<#menu5_1_4#>", "<#menu5_1_5#>", "<#menu5_1_6#>", "Site Survey");
+tabtitle[0] = new Array("", "<#menu5_1_1#>", "Passpoint", "<#menu5_1_2#>", "WDS", "<#menu5_1_4#>", "<#menu5_1_5#>", "<#menu5_1_6#>");
 tabtitle[1] = new Array("", "<#menu5_2_1#>", "<#menu5_2_2#>", "<#menu5_2_3#>", "IPTV", "Switch Control");
 tabtitle[2] = new Array("", "<#menu5_3_1#>", "<#dualwan#>", "<#menu5_3_3#>", "<#menu5_3_4#>", "<#menu5_3_5#>", "<#menu5_3_6#>", "<#NAT_passthrough_itemname#>", "<#menu5_4_4#>");
 tabtitle[3] = new Array("", "<#UPnPMediaServer#>", "<#menu5_4_1#>", "NFS Exports" , "<#menu5_4_2#>");
@@ -493,17 +493,17 @@ tabtitle[7] = new Array("", "<#menu5_6_1#>", "<#menu5_6_2#>", "<#menu5_6_3#>", "
 tabtitle[8] = new Array("", "<#menu5_7_2#>", "<#menu5_7_4#>", "<#menu5_7_3#>", "IPv6", "<#menu5_7_6#>", "<#menu5_7_5#>", "<#menu_dsl_log#>", "<#Connections#>");
 tabtitle[9] = new Array("", "<#Network_Analysis#>", "Netstat", "<#NetworkTools_WOL#>", "SMTP Client");
 if(bwdpi_support){
-	tabtitle[10] = new Array("", "Live", "QoS", "Web History", "<#traffic_monitor#>");
-	//tabtitle[11] = new Array("", "Group", "Time Limited", "Web Protector", "Apps Filter", "Home Security", "<#YandexDNS#>");
+	tabtitle[10] = new Array("", "Live", "QoS", "Web History", "Traffic Monitoring");
+	//tabtitle[11] = new Array("", "Group", "Time Limited", "Web Protector", "Apps Filter", "Home Security", "<#YandexDNS#>", "DNS Filtering");
 	tabtitle[11] = new Array("", "Home Protection", "Parental Control", "DNS Filtering");
-	tabtitle[12] = new Array("", "Time Limits", "Web & Apps Restriction");
-	tabtitle[13] = new Array("", "Sysinfo", "Other Settings");
+	tabtitle[13] = new Array("", "Time Limits", "Web & Apps Restriction");
 }
 else{
 	tabtitle[10] = new Array("", "QoS", "<#traffic_monitor#>", "Spectrum");
 	tabtitle[11] = new Array("", "<#Parental_Control#>", "<#YandexDNS#>", "DNS Filtering");
-	tabtitle[12] = new Array("", "Sysinfo", "Other Settings");
 }
+
+tabtitle[12] = new Array("", "Sysinfo", "Other Settings");
 
 var tablink = new Array();
 tablink[0] = new Array("", "Advanced_Wireless_Content.asp", "Advanced_WPassPoint_Content.asp", "Advanced_WWPS_Content.asp", "Advanced_WMode_Content.asp", "Advanced_ACL_Content.asp", "Advanced_WSecurity_Content.asp", "Advanced_WAdvanced_Content.asp");
@@ -517,20 +517,16 @@ tablink[7] = new Array("", "Advanced_OperationMode_Content.asp", "Advanced_Syste
 tablink[8] = new Array("", "Main_LogStatus_Content.asp", "Main_WStatus_Content.asp", "Main_DHCPStatus_Content.asp", "Main_IPV6Status_Content.asp", "Main_RouteStatus_Content.asp", "Main_IPTStatus_Content.asp", "Main_AdslStatus_Content.asp", "Main_ConnStatus_Content.asp");
 tablink[9] = new Array("", "Main_Analysis_Content.asp", "Main_Netstat_Content.asp", "Main_WOL_Content.asp", "SMTP_Client.asp");
 if(bwdpi_support){
-	tablink[10] = new Array("", "AiStream_Live.asp", "QoS_EZQoS.asp", "AiStream_WebHistory.asp", "AiStream_TrafficControl.asp", "Main_TrafficMonitor_realtime.asp", "AiStream_WebHistory.asp", "Main_Spectrum_Content.asp", "Main_TrafficMonitor_last24.asp",  "Main_TrafficMonitor_daily.asp", "Advanced_QOSUserPrio_Content.asp", "Advanced_QOSUserRules_Content.asp", "AiStream_Intelligence.asp", "Main_TrafficMonitor_realtime.asp");
+	tablink[10] = new Array("", "AiStream_Live.asp", "QoS_EZQoS.asp", "AiStream_WebHistory.asp", /*("AiStream_TrafficControl.asp",*/ "Main_TrafficMonitor_realtime.asp", "AiStream_WebHistory.asp", "Main_Spectrum_Content.asp", "Main_TrafficMonitor_last24.asp",  "Main_TrafficMonitor_daily.asp", "Advanced_QOSUserPrio_Content.asp", "Advanced_QOSUserRules_Content.asp", "AiStream_Intelligence.asp");
 	//tablink[11] = new Array("", "ParentalControl_Group.asp", "ParentalControl.asp", "ParentalControl_WebProtector.asp", "ParentalControl_AppsFilter.asp", "ParentalControl_HomeSecurity.asp", "YandexDNS.asp");
 	tablink[11] = new Array("", "ParentalControl_HomeSecurity.asp", "ParentalControl_WebProtector.asp", "DNSFilter.asp");
-	tablink[12] = new Array("", "ParentalControl.asp" , "ParentalControl_WebProtector.asp");
-	tablink[13] = new Array("", "Tools_Sysinfo.asp", "Tools_OtherSettings.asp");
-	}
+	//tablink[13] = new Array("", "ParentalControl.asp" , "ParentalControl_WebProtector.asp");
+}
 else{
 	tablink[10] = new Array("", "QoS_EZQoS.asp", "Main_TrafficMonitor_realtime.asp", "Main_Spectrum_Content.asp", "Main_TrafficMonitor_last24.asp", "Main_TrafficMonitor_daily.asp", "Advanced_QOSUserPrio_Content.asp", "Advanced_QOSUserRules_Content.asp");
-	tablink[11] = new Array("", "ParentalControl.asp", "YandexDNS.asp", "DNSFilter.asp");
-	tablink[12] = new Array("", "Tools_Sysinfo.asp", "Tools_OtherSettings.asp");
-	}
-
-
-tablink[10] = new Array("", "QoS_EZQoS.asp", "Main_TrafficMonitor_realtime.asp", "Main_Spectrum_Content.asp", "Main_TrafficMonitor_last24.asp", "Main_TrafficMonitor_daily.asp", "Main_TrafficMonitor_monthly.asp", "Main_TrafficMonitor_devrealtime.asp", "Main_TrafficMonitor_devdaily.asp", "Main_TrafficMonitor_devmonthly.asp", "Advanced_QOSUserPrio_Content.asp", "Advanced_QOSUserRules_Content.asp");
+	tablink[11] = new Array("", "ParentalControl.asp", "YandexDNS.asp");
+}
+tablink[12] = new Array("", "Tools_Sysinfo.asp", "Tools_OtherSettings.asp");
 
 //Level 2 Menu
 menuL2_title = new Array("", "<#menu5_1#>", "<#menu5_2#>", "<#menu5_3#>", "<#menu5_4#>", "IPv6", "VPN", "<#menu5_5#>", "<#menu5_6#>", "<#System_Log#>", "<#Network_Tools#>");
@@ -541,11 +537,11 @@ if(bwdpi_support){
 	//menuL1_title = new Array("", "<#menu1#>", "<#Guest_Network#>", "Adaptive QoS", "AiProtection", "<#Menu_usb_application#>", "AiCloud", "<#menu5#>");
 	menuL1_title = new Array("", "<#menu1#>", "<#Guest_Network#>", "AiProtection", "Adaptive QoS",  "<#Menu_usb_application#>", "AiCloud", "Tools", "<#menu5#>");
 	//menuL1_link = new Array("", "index.asp", "Guest_network.asp", "AiStream_Live.asp", "Home_Security.asp", "APP_Installation.asp", "cloud_main.asp", "");menuL1_title = new Array("", "<#menu1#>", "<#Guest_Network#>", "Adaptive QoS", "AiProtection", "<#Menu_usb_application#>", "AiCloud", "<#menu5#>");
-	menuL1_link = new Array("", "index.asp", "Guest_network.asp", "Home_Security.asp", "AiStream_Live.asp",  "APP_Installation.asp", "cloud_main.asp", tablink[13][1], "");
+	menuL1_link = new Array("", "index.asp", "Guest_network.asp", "Home_Security.asp", "AiStream_Live.asp",  "APP_Installation.asp", "cloud_main.asp", "Tools_Sysinfo.asp","");
 }
 else{
 	menuL1_title = new Array("", "<#menu1#>", "<#Guest_Network#>", "<#Menu_TrafficManager#>", "<#Parental_Control#>", "<#Menu_usb_application#>", "AiCloud", "Tools", "<#menu5#>");
-	menuL1_link = new Array("", "index.asp", "Guest_network.asp", "QoS_EZQoS.asp", "ParentalControl.asp", "APP_Installation.asp", "cloud_main.asp", tablink[12][1], "");
+	menuL1_link = new Array("", "index.asp", "Guest_network.asp", "QoS_EZQoS.asp", "ParentalControl.asp", "APP_Installation.asp", "cloud_main.asp", "Tools_Sysinfo.asp", "");
 }
 
 var calculate_height = menuL1_link.length+tablink.length-2;
@@ -556,13 +552,13 @@ if(bwdpi_support){
 else{
 	var traffic_L1_dx = 3;
 }
-
+//var traffic_L1_dx = 3;
 var traffic_L2_dx = 11;
 
 function remove_url(){
 	remove_menu_item(2, "Advanced_Modem_Content.asp");
 	remove_menu_item(11, "ParentalControl_Group.asp");		//hide temporary for phrase 1 ASUSWRT 1.5, Jieming added at 2014/05/07
-
+	
 	if('<% nvram_get("start_aicloud"); %>' == '0')
 		menuL1_link[6] = "cloud__main.asp"
 
@@ -900,7 +896,7 @@ function show_menu(){
 		}
 		else if(current_url.indexOf("Tools_") == 0){
 			L1 = 7;
-			L2 = 14;
+			L2 = 13;
 			L3 = 1;
 		}
 
@@ -921,26 +917,24 @@ function show_menu(){
 		L1 = 6;
 
 	if(current_url.indexOf("ParentalControl") == 0){
-		traffic_L3_dx = 0;
+		traffic_L3_dx = 0
 		if(ParentalCtrl2_support && (yadns_support || dnsfilter_support)){
-			if(bwdpi_support){
-				traffic_L1_dx = 3;
-				traffic_L2_dx = 12;
-				if(current_url.indexOf("ParentalControl.asp") == 0)
-					traffic_L3_dx = 2
-				else if(current_url.indexOf("ParentalControl_WebProtector") == 0)
-					traffic_L3_dx = 3		
-			}
-			else{
-				traffic_L1_dx = 4;
-				traffic_L2_dx = 12;
-				if(current_url.indexOf("ParentalControl.asp") == 0)
-					traffic_L3_dx = 2	
-			}
-			
-			L1 = traffic_L1_dx;	
-			L2 = traffic_L2_dx;
-			L3 = traffic_L2_dx;
+                        if(bwdpi_support){
+                                traffic_L1_dx = 3;
+                                traffic_L2_dx = 12;
+                                if(current_url.indexOf("ParentalControl.asp") == 0)
+                                        traffic_L3_dx = 2;
+                                else if(current_url.indexOf("ParentalControl_WebProtector") == 0)
+                                        traffic_L3_dx = 2;
+                                else if(current_url.indexOf("ParentalControl_HomeSecurity.asp") == 0)
+                                        traffic_L3_dx = 1;
+                        }
+                        else{
+                                traffic_L1_dx = 4;
+                                traffic_L2_dx = 12;
+                        }
+			L1 = traffic_L1_dx;
+			L3 = traffic_L3_dx
 		}
 		else if(ParentalCtrl2_support){
 			if(bwdpi_support){
@@ -995,25 +989,21 @@ function show_menu(){
 	
 	if(current_url.indexOf("YandexDNS") == 0){
 		if(ParentalCtrl2_support && yadns_support){
-			traffic_L1_dx = 4;
+			traffic_L1_dx = 3;
 			traffic_L2_dx = 12;
 			L1 = traffic_L1_dx;	
 			L2 = traffic_L2_dx;
-			L3 = 2;
+			L3 = 3;
 		}	
 	}
 
 	if(current_url.indexOf("DNSFilter") == 0){
 		if(ParentalCtrl2_support && dnsfilter_support){
-			traffic_L1_dx = 4;
+			traffic_L1_dx = 3;
 			traffic_L2_dx = 12;
 			L1 = traffic_L1_dx;
 			L2 = traffic_L2_dx;
-			if(bwdpi_support){
-				L3 = 3;
-			} else {
-				L3 = 2;
-			}
+			L3 = 3;
 		}
 	}
 
@@ -1686,7 +1676,7 @@ function browser_compatibility(){
 		if(current_url.indexOf("Guest_network") == 0)
 			document.getElementById("FormTitle").style.marginTop = "-140px";
 		/*if(current_url.indexOf("ParentalControl.asp") == 0 && !yadns_support)			//mark temporary, need to check 4M flash model. Jieming added at 2014/05/09
-			document.getElementById("FormTitle").style.marginTop = "-140px";	*/		
+			document.getElementById("FormTitle").style.marginTop = "-140px";	*/
 	}
 
 	if(isiOS){
