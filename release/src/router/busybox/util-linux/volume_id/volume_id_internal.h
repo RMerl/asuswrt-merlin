@@ -214,6 +214,8 @@ int FAST_FUNC volume_id_probe_luks(struct volume_id *id /*,uint64_t off*/);
 
 int FAST_FUNC volume_id_probe_ntfs(struct volume_id *id /*,uint64_t off*/);
 
+int FAST_FUNC volume_id_probe_exfat(struct volume_id *id /*,uint64_t off*/);
+
 int FAST_FUNC volume_id_probe_ocfs2(struct volume_id *id /*,uint64_t off*/);
 
 int FAST_FUNC volume_id_probe_reiserfs(struct volume_id *id /*,uint64_t off*/);

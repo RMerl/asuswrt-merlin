@@ -666,12 +666,21 @@ static void add_client_options(struct dhcp_packet *packet)
  * client reverts to using the IP broadcast address.
  */
 
-static int raw_bcast_from_client_config_ifindex(struct dhcp_packet *packet)
+static int raw_bcast_from_client_config_ifindex(struct dhcp_packet *packet, uint32_t ciaddr)
 {
 	return udhcp_send_raw_packet(packet,
-		/*src*/ INADDR_ANY, CLIENT_PORT,
+		/*src*/ ciaddr, CLIENT_PORT,
 		/*dst*/ INADDR_BROADCAST, SERVER_PORT, MAC_BCAST_ADDR,
 		client_config.ifindex);
+}
+
+static int bcast_or_ucast(struct dhcp_packet *packet, uint32_t ciaddr, uint32_t server)
+{
+	if (server)
+		return udhcp_send_kernel_packet(packet,
+			ciaddr, CLIENT_PORT,
+			server, SERVER_PORT);
+	return raw_bcast_from_client_config_ifindex(packet, ciaddr);
 }
 
 /* Broadcast a DHCP discover packet to the network, with an optionally requested IP */
@@ -697,7 +706,7 @@ static NOINLINE int send_discover(uint32_t xid, uint32_t requested)
 	add_client_options(&packet);
 
 	bb_info_msg("Sending discover...");
-	return raw_bcast_from_client_config_ifindex(&packet);
+	return raw_bcast_from_client_config_ifindex(&packet, INADDR_ANY);
 }
 
 /* Broadcast a DHCP request message */
@@ -741,7 +750,7 @@ static NOINLINE int send_select(uint32_t xid, uint32_t server, uint32_t requeste
 
 	addr.s_addr = requested;
 	bb_info_msg("Sending select for %s...", inet_ntoa(addr));
-	return raw_bcast_from_client_config_ifindex(&packet);
+	return raw_bcast_from_client_config_ifindex(&packet, INADDR_ANY);
 }
 
 /* Unicast or broadcast a DHCP renew message */
@@ -780,11 +789,7 @@ static NOINLINE int send_renew(uint32_t xid, uint32_t server, uint32_t ciaddr)
 	add_client_options(&packet);
 
 	bb_info_msg("Sending renew...");
-	if (server)
-		return udhcp_send_kernel_packet(&packet,
-			ciaddr, CLIENT_PORT,
-			server, SERVER_PORT);
-	return raw_bcast_from_client_config_ifindex(&packet);
+	return bcast_or_ucast(&packet, ciaddr, server);
 }
 
 #if ENABLE_FEATURE_UDHCPC_ARPING
@@ -813,7 +818,7 @@ static NOINLINE int send_decline(/*uint32_t xid,*/ uint32_t server, uint32_t req
 	udhcp_add_simple_option(&packet, DHCP_SERVER_ID, server);
 
 	bb_info_msg("Sending decline...");
-	return raw_bcast_from_client_config_ifindex(&packet);
+	return raw_bcast_from_client_config_ifindex(&packet, INADDR_ANY);
 }
 #endif
 
@@ -833,7 +838,11 @@ static int send_release(uint32_t server, uint32_t ciaddr)
 	udhcp_add_simple_option(&packet, DHCP_SERVER_ID, server);
 
 	bb_info_msg("Sending release...");
-	return udhcp_send_kernel_packet(&packet, ciaddr, CLIENT_PORT, server, SERVER_PORT);
+	/* Note: normally we unicast here since "server" is not zero.
+	 * However, there _are_ people who run "address-less" DHCP servers,
+	 * and reportedly ISC dhcp client and Windows allow that.
+	 */
+	return bcast_or_ucast(&packet, ciaddr, server);
 }
 
 /* Returns -1 on errors that are fatal for the socket, -2 for those that aren't */
@@ -1228,7 +1237,7 @@ static void client_background(void)
 int udhcpc_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int udhcpc_main(int argc UNUSED_PARAM, char **argv)
 {
-	uint8_t *temp, *message;
+	uint8_t *message;
 	const char *str_V, *str_h, *str_F, *str_r;
 	IF_FEATURE_UDHCP_PORT(char *str_P;)
 	void *clientid_mac_ptr;
@@ -1638,6 +1647,8 @@ int udhcpc_main(int argc UNUSED_PARAM, char **argv)
 		case INIT_SELECTING:
 			/* Must be a DHCPOFFER */
 			if (*message == DHCPOFFER) {
+				uint8_t *temp;
+
 /* What exactly is server's IP? There are several values.
  * Example DHCP offer captured with tchdump:
  *
@@ -1657,14 +1668,19 @@ int udhcpc_main(int argc UNUSED_PARAM, char **argv)
  * might work too.
  * "Next server" and router are definitely wrong ones to use, though...
  */
+/* We used to ignore pcakets without DHCP_SERVER_ID.
+ * I've got user reports from people who run "address-less" servers.
+ * They either supply DHCP_SERVER_ID of 0.0.0.0 or don't supply it at all.
+ * They say ISC DHCP client supports this case.
+ */
+				server_addr = 0;
 				temp = udhcp_get_option(&packet, DHCP_SERVER_ID);
 				if (!temp) {
-					bb_error_msg("no server ID, ignoring packet");
-					continue;
-					/* still selecting - this server looks bad */
+					bb_error_msg("no server ID, using 0.0.0.0");
+				} else {
+					/* it IS unaligned sometimes, don't "optimize" */
+					move_from_unaligned32(server_addr, temp);
 				}
-				/* it IS unaligned sometimes, don't "optimize" */
-				move_from_unaligned32(server_addr, temp);
 				/*xid = packet.xid; - already is */
 				requested_ip = packet.yiaddr;
 
@@ -1682,6 +1698,7 @@ int udhcpc_main(int argc UNUSED_PARAM, char **argv)
 			if (*message == DHCPACK) {
 				uint32_t lease_seconds;
 				struct in_addr temp_addr;
+				uint8_t *temp;
 
 				temp = udhcp_get_option(&packet, DHCP_LEASE_TIME);
 				if (!temp) {
@@ -1759,6 +1776,26 @@ int udhcpc_main(int argc UNUSED_PARAM, char **argv)
 				continue; /* back to main loop */
 			}
 			if (*message == DHCPNAK) {
+				/* If network has more than one DHCP server,
+				 * "wrong" server can reply first, with a NAK.
+				 * Do not interpret it as a NAK from "our" server.
+				 */
+				if (server_addr != 0) {
+					uint32_t svid;
+					uint8_t *temp;
+
+					temp = udhcp_get_option(&packet, DHCP_SERVER_ID);
+					if (!temp) {
+ non_matching_svid:
+						log1("%s with wrong server ID, ignoring packet",
+							"Received DHCP NAK"
+						);
+						continue;
+					}
+					move_from_unaligned32(svid, temp);
+					if (svid != server_addr)
+						goto non_matching_svid;
+				}
 				/* return to init state */
 				bb_info_msg("Received DHCP NAK");
 				udhcp_run_script(&packet, "nak");

@@ -734,6 +734,15 @@ config FEATURE_VOLUMEID_FAT
 	help
 	  TODO
 
+config FEATURE_VOLUMEID_EXFAT
+	bool "exFAT filesystem"
+	default y
+	depends on VOLUMEID
+	help
+	  exFAT (extended FAT) is a proprietary file system designed especially
+	  for flash drives. It has many features from NTFS, but with less
+	  overhead. exFAT is used on most SDXC cards for consumer electronics.
+
 config FEATURE_VOLUMEID_HFS
 	bool "hfs filesystem"
 	default y

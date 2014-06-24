@@ -32,6 +32,7 @@ lib-$(CONFIG_FEATURE_VOLUMEID_LINUXSWAP)        += linux_swap.o
 ### lib-$(CONFIG_FEATURE_VOLUMEID_MAC)              += mac.o
 ### lib-$(CONFIG_FEATURE_VOLUMEID_MSDOS)            += msdos.o
 lib-$(CONFIG_FEATURE_VOLUMEID_NTFS)             += ntfs.o
+lib-$(CONFIG_FEATURE_VOLUMEID_EXFAT)            += exfat.o
 lib-$(CONFIG_FEATURE_VOLUMEID_REISERFS)         += reiserfs.o
 lib-$(CONFIG_FEATURE_VOLUMEID_UDF)              += udf.o
 ### lib-$(CONFIG_FEATURE_VOLUMEID_UFS)              += ufs.o
