@@ -28,8 +28,8 @@ $(ALL_OBJS): %.o: %.c
 	$(CC) $(CCFLAGS) -c $<
 
 install: all
-	install -d $(INSTALLDIR)/emf/usr/sbin
-	install -m 755 emf $(INSTALLDIR)/emf/usr/sbin
+	install -d $(INSTALLDIR)/emf$(BCMEX)/usr/sbin
+	install -m 755 emf $(INSTALLDIR)/emf$(BCMEX)/usr/sbin
 
 .PHONY:	clean
 clean:

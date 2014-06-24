@@ -1,7 +1,5 @@
-include ../../common.mak
-
 #
-# $Id: Makefile 241182 2011-02-17 21:50:03Z $
+# $Id: Makefile 382663 2013-02-03 04:40:03Z $
 #
 
 CROSS =
@@ -11,9 +9,9 @@ STRIP = $(CROSS)strip
 
 ALL_OBJS = emfu.o emfu_linux.o
 
-CCFLAGS = -Os -Wall -I$(SRCBASE)/include -I../../shared -I$(SRCBASE)/include/emf/emf
+CCFLAGS = -Os -Wall -I$(SRCBASE)/include -I$(SRCBASE)/common/include -I$(SRCBASE)/shared -I$(SRCBASE)/include/emf/emf -I$(SRCBASE)/router/shared
 
-ifeq ($(wildcard ./*.c),)
+ifneq ($(wildcard ./prebuilt),)
 all:
 	-cp prebuilt/emf emf
 else
@@ -30,8 +28,8 @@ $(ALL_OBJS): %.o: %.c
 	$(CC) $(CCFLAGS) -c $<
 
 install: all
-	install -d $(INSTALLDIR)/emf/usr/sbin
-	install -m 755 emf $(INSTALLDIR)/emf/usr/sbin
+	install -d $(INSTALLDIR)/emf$(BCMEX)/usr/sbin
+	install -m 755 emf $(INSTALLDIR)/emf$(BCMEX)/usr/sbin
 
 .PHONY:	clean
 clean:
