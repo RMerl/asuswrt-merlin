@@ -62,6 +62,11 @@ typedef unsigned long long u64;
 
 #include "sysinfo.h"
 
+#ifdef RTCONFIG_QTN
+#include "web-qtn.h"
+#endif
+
+unsigned int get_qtn_temperature(void);
 unsigned int get_phy_temperature(int radio);
 unsigned int get_wifi_clients(int radio, int querytype);
 
@@ -187,8 +192,14 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			if (sscanf(type,"temperature.%d", &radio) != 1)
 				temperature = 0;
 			else
-				temperature = get_phy_temperature(radio);
-
+			{
+#ifdef RTCONFIG_QTN
+				if (radio == 5)
+					temperature = get_qtn_temperature();
+				else
+#endif
+					temperature = get_phy_temperature(radio);
+			}
 			if (temperature == 0)
 				strcpy(result,"<i>disabled</i>");
 			else
@@ -333,6 +344,19 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 	return retval;
 }
 
+#ifdef RTCONFIG_QTN
+unsigned int get_qtn_temperature(void)
+{
+        int temp_external, temp_internal;
+	if (!rpc_qtn_ready())
+		return 0;
+
+        if (qcsapi_get_temperature_info(&temp_external, &temp_internal) >= 0)
+		return temp_internal / 1000000.0f;
+
+	return 0;
+}
+#endif
 
 unsigned int get_phy_temperature(int radio)
 {
