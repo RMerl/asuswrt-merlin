@@ -21,6 +21,8 @@
 var $j = jQuery.noConflict();
 
 function initial(){
+	if (!dnsfilter_support)
+		$("dnsfilter").style.display = "none";
 	show_menu();
 }
 
@@ -110,6 +112,19 @@ function initial(){
 													<div class="app_desc" style="height:60px;">
 														<li>Time limits</li>
 														<li>Web & Apps Restrictions</li>											
+													</div>
+												</td>
+											</tr>
+											<tr id="dnsfilter">
+												<td align="center" class="app_table_radius_left" style="width:85px;">
+												</td>
+												<td class="app_table_radius_right" style="width:350px;height:120px;"">
+													<div class="app_name">
+														<a style="text-decoration: underline;" href="DNSFilter.asp">DNS Filtering</a>
+													</div>
+													<div class="app_desc" style="height:60px;">
+														<li>Block malicious websites</li>
+														<li>Block mature websites</li>
 													</div>
 												</td>
 											</tr>

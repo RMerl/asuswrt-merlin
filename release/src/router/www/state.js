@@ -524,7 +524,7 @@ if(bwdpi_support){
 }
 else{
 	tablink[10] = new Array("", "QoS_EZQoS.asp", "Main_TrafficMonitor_realtime.asp", "Main_Spectrum_Content.asp", "Main_TrafficMonitor_last24.asp", "Main_TrafficMonitor_daily.asp", "Advanced_QOSUserPrio_Content.asp", "Advanced_QOSUserRules_Content.asp");
-	tablink[11] = new Array("", "ParentalControl.asp", "YandexDNS.asp");
+	tablink[11] = new Array("", "ParentalControl.asp", "YandexDNS.asp", "DNSFilter.asp");
 }
 tablink[12] = new Array("", "Tools_Sysinfo.asp", "Tools_OtherSettings.asp");
 
@@ -552,7 +552,6 @@ if(bwdpi_support){
 else{
 	var traffic_L1_dx = 3;
 }
-//var traffic_L1_dx = 3;
 var traffic_L2_dx = 11;
 
 function remove_url(){
@@ -932,9 +931,11 @@ function show_menu(){
                         else{
                                 traffic_L1_dx = 4;
                                 traffic_L2_dx = 12;
+				traffic_L3_dx = 1;
                         }
 			L1 = traffic_L1_dx;
-			L3 = traffic_L3_dx
+			L2 = traffic_L2_dx;
+			L3 = traffic_L3_dx;
 		}
 		else if(ParentalCtrl2_support){
 			if(bwdpi_support){
@@ -977,7 +978,7 @@ function show_menu(){
 		}	
 	}	
 	
-	if(	current_url.indexOf("Advanced_DSL_Content") == 0 || 
+	if(current_url.indexOf("Advanced_DSL_Content") == 0 || 
 			current_url.indexOf("Advanced_VDSL_Content") == 0 ||
 			current_url.indexOf("Advanced_WAN_Content") == 0){
 			traffic_L1_dx = 0;
