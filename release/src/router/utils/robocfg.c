@@ -411,7 +411,7 @@ main(int argc, char *argv[])
 		perror("SIOCETHTOOL: your ethernet module is either unsupported or outdated");
 		exit(1);
 	} else
-	if (strcmp(info.driver, "et0") && strcmp(info.driver, "b44")) {
+	if (strcmp(info.driver, "et0") && strcmp(info.driver, "b44") && strcmp(info.driver, "et1")) {
 		fprintf(stderr, "No suitable module found for %s (managed by %s)\n", 
 			robo.ifr.ifr_name, info.driver);
 		exit(1);
