@@ -134,7 +134,7 @@ void format_mount_2nd_jffs2(void)
         if (!wait_action_idle(10)) return;
 
         if (!mtd_getinfo(SECOND_JFFS2_PARTITION, &part, &size)) return;
-		_dprintf("Format 2nd jffs2: %d, %d\n", part, size);
+	_dprintf("Format 2nd jffs2: %d, %d\n", part, size);
 
         model = get_model();
 
@@ -205,7 +205,7 @@ void format_mount_2nd_jffs2(void)
 
 }
 #endif
-
+/* */
 void start_jffs2(void)
 {
 	if (!nvram_match("jffs2_on", "1")) {
@@ -213,7 +213,6 @@ void start_jffs2(void)
 		return;
 	}
 
-	int result = 0;
 	int format = 0;
 	char s[256];
 	int size;
@@ -221,23 +220,29 @@ void start_jffs2(void)
 	const char *p;
 	struct statfs sf;
 	int model = 0;
+	int i = 0;
 
-	if (!wait_action_idle(10)) return;
+        while(1) {
+		if (wait_action_idle(10)) break;
+		else i++;
+
+		if(i>=10) {
+			_dprintf("Mount jffs2 failed!");
+			return;
+		}
+	}
 
 	if (!mtd_getinfo(JFFS2_PARTITION, &part, &size)) return;
 
 	model = get_model();
-	_dprintf("*** jffs2: %d, %d\n", part, size);
+	_dprintf("start jffs2: %d, %d\n", part, size);
 	if (nvram_match("jffs2_format", "1")) {
 		nvram_set("jffs2_format", "0");
 		nvram_commit_x();
-		result = mtd_erase(JFFS_NAME);
-
-		if (!result) {
+		if (!mtd_erase(JFFS_NAME)) {
 			error("formatting");
 			return;
 		}
-
 		format = 1;
 	}
 
@@ -254,14 +259,14 @@ void start_jffs2(void)
 		}
 	}
 
-	if (statfs("/jffs", &sf) == 0) {
+	if (statfs("/jffs", &sf) == 0) { 
 		switch(model) {
-			case MODEL_RTAC56S:
-			case MODEL_RTAC56U:
+			case MODEL_RTAC56S: 
+			case MODEL_RTAC56U: 
 			case MODEL_RTAC3200:
 			case MODEL_DSLAC68U:
-			case MODEL_RTAC68U:
-			case MODEL_RTAC87U:
+			case MODEL_RTAC68U: 
+			case MODEL_RTAC87U: 
 			case MODEL_RTN65U:
 			case MODEL_RTN14U: // it should be better to use LINUX_KERNEL_VERSION >= KERNEL_VERSION(2,6,36)
 			{
@@ -294,7 +299,7 @@ void start_jffs2(void)
 	sprintf(s, MTD_BLKDEV(%d), part);
 
 	if (mount(s, "/jffs", JFFS_NAME, MS_NOATIME, "") != 0) {
-                if( (model==MODEL_RTAC56U || model==MODEL_RTAC56S || model==MODEL_RTAC3200 || model==MODEL_RTAC68U || model==MODEL_DSLAC68U || model==MODEL_RTAC87U) ^ (!mtd_erase(JFFS_NAME)) ){
+		if (!mtd_erase(JFFS_NAME)) {
                         error("formatting");
                         return;
                 }
@@ -343,7 +348,6 @@ void start_jffs2(void)
 
 	if (!check_if_dir_exist("/jffs/scripts/")) mkdir("/jffs/scripts/", 0755);
 	if (!check_if_dir_exist("/jffs/configs/")) mkdir("/jffs/configs/", 0755);
-
 }
 
 void stop_jffs2(int stop)
@@ -355,7 +359,7 @@ void stop_jffs2(int stop)
 
 	if (!wait_action_idle(10)) return;
 
-	if ((statfs("/jffs", &sf) == 0) && (sf.f_type != 0x71736873)) {
+	if ((statfs("/jffs", &sf) == 0) && (sf.f_type != 0x73717368) && (sf.f_type != 0x71736873)) {
 		// is mounted
 		run_userfile("/jffs", ".autostop", "/jffs", 5);
 		run_nvscript("script_autostop", "/jffs", 5);
