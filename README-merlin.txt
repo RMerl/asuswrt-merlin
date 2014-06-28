@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 374.43_2 (7-June-2014)
+Asuswrt-Merlin - build 374.44 (xx-xxxx-2014)
 =============================================
 
 About
@@ -35,6 +35,7 @@ Supported devices are:
  * RT-AC66U
  * RT-AC56U
  * RT-AC68U
+ * RT-AC87U (Experimental)
 
 NOTE: all the "R" versions (for example RT-N66R) are the same as their 
 "U" counterparts, they are just different packages aimed at large 
@@ -48,11 +49,10 @@ Here is a list of features that Asuswrt-merlin brings over the original
 firmware:
 
 System:
-   - Based on 3.0.0.4.374_5656 sources (from RT-AC68U) from Asus
+   - Based on 3.0.0.4.376_1088 sources (from RT-AC87U) from Asus
    - Various bugfixes and optimizations
    - Some components were updated to newer versions, for improved
      stability and security
-   - Persistent JFFS partition
    - User scripts that run on specific events
    - Cron jobs
    - Ability to customize the config files used by the router services
@@ -82,7 +82,7 @@ Networking:
      RT-N16)
    - Netfilter ipset module, for efficient blacklist implemetnation
    - Configurable min/max UPNP ports
-   - IPSec kernel support
+   - IPSec kernel support (MIPS devices only)
    - DNS-based Filtering, can be applied globally or per client
 
 Web interface:
@@ -115,6 +115,7 @@ integrated/enabled in the official firmware:
   by Asus)
 - OpenVPN client and server
 - Configurable IPv6 firewall
+- Persistent JFFS partition
 
 
 Installation
@@ -162,8 +163,8 @@ I do not recommend doing frequent writes to this area, as it will
 prematuraly wear out the flash storage.  This is a good place to put 
 files that are written once like scripts or kernel modules, or that 
 rarely get written to (like once a day).  Storing files that constantly 
-get written to (like logfiles) is NOT recommended - use a USB disk for 
-that.
+get written to (like very busy logfiles) is NOT recommended - use a 
+USB disk for that.
 
 
 
@@ -572,6 +573,36 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+376.44 (xx-xxx-2014)
+   IMPORTANT: Make a backup of your JFFS partition if upgrading
+              an RT-AC56U or RT-AC68U!  The partition layout
+              has been changed.
+
+   - NEW: Merged with Asus's 376_1088 GPL (internal).
+          Summary of changes:
+            * New networkmap, lets users edit device names,
+              assign icons to devices, etc...
+            * Reworked IPv6 support
+            * Fix for Traffic Monitoring (replaces our own fix)
+            * And a lot more
+  - NEW: Added experimental support for RT-AC87U (still
+         work in progress - Stealth Mode not finished yet)
+  - CHANGED: The JFFS partition on ARM devices now uses
+             Asus's code, which means the whole unused space
+             is now used for the JFFS partition.
+             (AC56, AC68)
+  - REMOVED: IPSEC support removed from ARM devices, as it's
+             not compatible with the new DPI kernel modules.
+             The option remains available in the build
+             environment if anyone wishes to create their
+             own IPSEC-enabled build, however they must ensure
+             that they disable the BWDPI option. (AC56, AC68)
+  - REMOVED: Reverted various IPv6-related patches as they
+             conflicted with Asus's own changes.  These might
+             make it back at a later time if deemed
+             necessary.
+
+
 374.43_2 (7-June-2014)
    - FIXED: NTFS disks couldn't be mounted (Paragon driver not
             loading due to a kernel change) (AC56, AC68)
