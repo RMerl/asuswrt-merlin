@@ -4,5 +4,3 @@
 *.o
 *.depend
 rc
-bwdpi.c
-bwdpi.h
