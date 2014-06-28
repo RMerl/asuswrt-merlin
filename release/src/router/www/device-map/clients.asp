@@ -20,6 +20,8 @@ p{
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/jquery.xdomainajax.js"></script>
 <script type="text/javascript" src="/help.js"></script>
+<script type="text/javascript" src="/tmmenu.js"></script>
+<script type="text/javascript" src="/nameresolv.js"></script>
 <script>
 overlib.isOut = true;
 var $j = jQuery.noConflict();
@@ -37,6 +39,8 @@ var pagesVar = {
 		pagesVar.startArray = [0];
 	}
 }
+
+var mapscanning = 0;
 
 function initial(){
 	parent.hideEditBlock();
@@ -176,35 +180,6 @@ function ajaxCallJsonp(target){
     });
 }
 
-function oui_query(mac){
-	if(clientList[mac].callback != ""){
-		ajaxCallJsonp("http://" + clientList[mac].ip + ":" + clientList[mac].callback + "/callback.asp?output=netdev&jsoncallback=?");
-	}
-
-	var tab = new Array();
-	tab = mac.split(mac.substr(2,1));
-	$j.ajax({
-	    url: 'http://standards.ieee.org/cgi-bin/ouisearch?'+ tab[0] + '-' + tab[1] + '-' + tab[2],
-		type: 'GET',
-	    error: function(xhr) {
-			if(overlib.isOut)
-				return true;
-			else
-				oui_query(mac);
-	    },
-	    success: function(response) {
-			if(overlib.isOut) return nd();
-
-			var retData = response.responseText.split("pre")[1].split("(base 16)")[1].replace("PROVINCE OF CHINA", "R.O.C").split("&lt;/");
-			overlibStrTmp  = retOverLibStr(clientList[mac]);
-			overlibStrTmp += "<p><span>.....................................</span></p><p style='margin-top:5px'><#Manufacturer#> :</p>";
-			overlibStrTmp += retData[0];
-
-			return overlib(overlibStrTmp);
-		}    
-	});
-}
-
 function popupCustomTable(mac){
 	parent.popupEditBlock(clientList[mac]);
 }
@@ -221,7 +196,7 @@ function updateClientList(e){
 				drawClientList();
 				parent.show_client_status(totalClientNum.online);
 			}
-
+			$("loadingIcon").style.display = (mapscanning == 1 ? "" : "none");
 			setTimeout("updateClientList();", 3000);				
 		}    
 	});
@@ -341,6 +316,7 @@ function updateClientList(e){
 
 <br/>
 <img height="25" id="leftBtn" onclick="updatePagesVar('-');" style="cursor:pointer;margin-left:10px;" src="/images/arrow-left.png">
+<img id="loadingIcon" src="/images/InternetScan.gif">
 <input type="button" id="refresh_list" class="button_gen" onclick="document.form.submit();" value="<#CTL_refresh#>" style="margin-left:70px;">
 <img height="25" id="rightBtn" onclick="updatePagesVar('+');" style="cursor:pointer;margin-left:50px;" src="/images/arrow-right.png">
 </body>
