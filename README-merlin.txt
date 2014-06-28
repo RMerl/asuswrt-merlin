@@ -591,6 +591,15 @@ History
              Asus's code, which means the whole unused space
              is now used for the JFFS partition.
              (AC56, AC68)
+  - CHANGED: Download Master packages are no longer included
+             in the firmware on AC56/AC68 devices due to lack of
+             space.  This simply means that on first install,
+             they will be downloaded from Asus's servers instead
+             of copied from flash - it might slow down the
+             initial install, however everything will work
+             the same afterward. AC87 is fine due to its
+             larger rootfs partition. (AC56, AC68)
+
   - REMOVED: IPSEC support removed from ARM devices, as it's
              not compatible with the new DPI kernel modules.
              The option remains available in the build
