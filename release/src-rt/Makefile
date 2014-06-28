@@ -235,7 +235,7 @@ ifeq ($(CONFIG_RALINK),y)
 		echo -n "PA/LNA: " ; \
 		if [ "`grep -c \"^CONFIG_INTERNAL_PA_INTERNAL_LNA\>\" $(LINUXDIR)/.config`" -gt 0 ] ; then \
 			echo "Internal PA + Internal LNA" ; \
-			if [ "$(BUILD_NAME)" = "RT-N14U" ] || [ "$(BUILD_NAME)" = "RT-AC51U" ] ; then \
+			if [ "$(BUILD_NAME)" = "RT-N14U" ] || [ "$(BUILD_NAME)" = "RT-AC51U" ] || [ "$(BUILD_NAME)" = "RT-N11P" ] ; then \
 				echo "Check PA/LNA: OK" ; \
 			else \
 				mv -f image/$(IMGNAME).trx image/$(IMGNAME)_int_PA_int_LNA.trx ; \
@@ -275,6 +275,10 @@ else
 endif
 	ctools/trx_asus -i image/linux-lzma.trx -r $(BUILD_NAME),$(KERNEL_VER).$(FS_VER),image/$(IMGNAME).trx
 	@rm -f image/linux-lzma.trx
+endif
+
+ifeq ($(DSL_TCLINUX),y)
+	cat image/$(IMGNAME).trx tc_fw/tclinux.bin > image/$(IMGNAME)_DSL.trx
 endif
 	@echo ""
 
@@ -564,6 +568,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_WIFI_TOG_BTN/d" $(1); \
 		echo "RTCONFIG_WIFI_TOG_BTN=y" >>$(1); \
 	fi; \
+	if [ "$(BTN_WPS_RST)" = "y" ]; then \
+		sed -i "/RTCONFIG_WPS_RST_BTN/d" $(1); \
+		echo "RTCONFIG_WPS_RST_BTN=y" >>$(1); \
+	fi; \
 	if [ "$(TURBO)" = "y" ]; then \
 		sed -i "/RTCONFIG_TURBO/d" $(1); \
 		echo "RTCONFIG_TURBO=y" >>$(1); \
@@ -603,6 +611,18 @@ define RouterOptions
 			echo "RTCONFIG_DSL_ANNEX_B=y" >>$(1); \
 		else \
 			echo "# RTCONFIG_DSL_ANNEX_B is not set" >>$(1); \
+		fi; \
+		if [ "$(DSL_TCLINUX)" = "y" ]; then \
+			sed -i "/RTCONFIG_DSL_TCLINUX/d" $(1); \
+			echo "RTCONFIG_DSL_TCLINUX=y" >>$(1); \
+		else \
+			echo "# RTCONFIG_DSL_TCLINUX is not set" >>$(1); \
+		fi; \
+		if [ "$(VDSL)" = "y" ]; then \
+			sed -i "/RTCONFIG_VDSL/d" $(1); \
+			echo "RTCONFIG_VDSL=y" >>$(1); \
+		else \
+			echo "# RTCONFIG_VDSL is not set" >>$(1); \
 		fi; \
 	fi; \
 	if [ "$(DUALWAN)" = "y" ]; then \
@@ -965,6 +985,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_N18UTXBF/d" $(1); \
 		echo "RTCONFIG_N18UTXBF=y" >>$(1); \
 	fi; \
+	if [ "$(BWDPI)" = "y" ]; then \
+		sed -i "/RTCONFIG_BWDPI/d" $(1); \
+		echo "RTCONFIG_BWDPI=y" >>$(1); \
+	fi; \
 	)
 	$(call platformRouterOptions, $(1))
 endef
@@ -995,6 +1019,36 @@ define BusyboxOptions
 		if [ "$(CONFIG_LINUX26)" = "y" ]; then \
 			sed -i "/CONFIG_FEATURE_SYSLOGD_READ_BUFFER_SIZE/d" $(1); \
 			echo "CONFIG_FEATURE_SYSLOGD_READ_BUFFER_SIZE=512" >>$(1); \
+		fi; \
+		if [ "$(DSL)" = "y" ]; then \
+			sed -i "/CONFIG_TFTP/d" $(1); \
+			echo "CONFIG_TFTP=y" >>$(1); \
+			sed -i "/CONFIG_TFTPD/d" $(1); \
+			echo "# CONFIG_TFTPD is not set" >>$(1); \
+			sed -i "/CONFIG_FEATURE_TFTP_GET/d" $(1); \
+			echo "CONFIG_FEATURE_TFTP_GET=y" >>$(1); \
+			sed -i "/CONFIG_FEATURE_TFTP_PUT/d" $(1); \
+			echo "CONFIG_FEATURE_TFTP_PUT=y" >>$(1); \
+			sed -i "/CONFIG_FEATURE_TFTP_BLOCKSIZE/d" $(1); \
+			echo "# CONFIG_FEATURE_TFTP_BLOCKSIZE is not set" >>$(1); \
+			sed -i "/CONFIG_FEATURE_TFTP_PROGRESS_BAR/d" $(1); \
+			echo "# CONFIG_FEATURE_TFTP_PROGRESS_BAR is not set" >>$(1); \
+			sed -i "/CONFIG_TFTP_DEBUG/d" $(1); \
+			echo "# CONFIG_TFTP_DEBUG is not set" >>$(1); \
+			if [ "$(DSL_TCLINUX)" = "y" ]; then \
+				sed -i "/CONFIG_TELNET/d" $(1); \
+				echo "CONFIG_TELNET=y" >>$(1); \
+				sed -i "/CONFIG_FEATURE_TELNET_TTYPE/d" $(1); \
+				echo "# CONFIG_FEATURE_TELNET_TTYPE is not set" >>$(1); \
+				sed -i "/CONFIG_FEATURE_TELNET_AUTOLOGIN/d" $(1); \
+				echo "# CONFIG_FEATURE_TELNET_AUTOLOGIN is not set" >>$(1); \
+				sed -i "/CONFIG_TELNETD/d" $(1); \
+				echo "CONFIG_TELNETD=y" >>$(1); \
+				sed -i "/CONFIG_FEATURE_TELNETD_STANDALONE/d" $(1); \
+				echo "CONFIG_FEATURE_TELNETD_STANDALONE=y" >>$(1); \
+				sed -i "/CONFIG_FEATURE_TELNETD_INETD_WAIT/d" $(1); \
+				echo "# CONFIG_FEATURE_TELNETD_INETD_WAIT is not set" >>$(1); \
+			fi;\
 		fi; \
 	fi; \
 	if [ "$(USB)" = "USB" ]; then \
@@ -1353,8 +1407,6 @@ define KernelConfig
 		if [ "$(CONFIG_LINUX26)" = "y" ]; then \
 			sed -i "/CONFIG_NF_CONNTRACK_IPV6/d" $(1); \
 			echo "CONFIG_NF_CONNTRACK_IPV6=y" >>$(1); \
-			sed -i "/CONFIG_NETFILTER_XT_MATCH_HL/d" $(1); \
-			echo "CONFIG_NETFILTER_XT_MATCH_HL=m" >>$(1); \
 			sed -i "/CONFIG_IPV6_ROUTER_PREF/d" $(1); \
 			echo "CONFIG_IPV6_ROUTER_PREF=y" >>$(1); \
 			sed -i "/CONFIG_IPV6_SIT\b/d" $(1); \
@@ -1379,8 +1431,6 @@ define KernelConfig
 			echo "CONFIG_IPV6_SIT_6RD=y" >>$(1); \
 			sed -i "/CONFIG_IPV6_MULTIPLE_TABLES/d" $(1); \
 			echo "CONFIG_IPV6_MULTIPLE_TABLES=y" >>$(1); \
-			sed -i "/CONFIG_IP6_NF_MATCH_HL/d" $(1); \
-			echo "CONFIG_IP6_NF_MATCH_HL=m" >>$(1); \
 			sed -i "/CONFIG_IP6_NF_FTP/d" $(1); \
 			echo "CONFIG_IP6_NF_FTP=m" >>$(1); \
 			sed -i "/CONFIG_IP6_NF_MATCH_LIMIT/d" $(1); \
@@ -1567,6 +1617,14 @@ define KernelConfig
 		if [ "$(BUILD_NAME)" = "RT-AC66U" ] || [ "$(BUILD_NAME)" = "RT-N66U" ]; then \
 			echo "CONFIG_DUMP_PREV_OOPS_MSG=y" >>$(1); \
 			echo "CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR=0x07FFE000" >>$(1); \
+			echo "CONFIG_DUMP_PREV_OOPS_MSG_BUF_LEN=0x2000" >>$(1); \
+		elif [ "$(BUILD_NAME)" = "RT-N65U" ]; then \
+			echo "CONFIG_DUMP_PREV_OOPS_MSG=y" >>$(1); \
+			echo "CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR=0x01810000" >>$(1); \
+			echo "CONFIG_DUMP_PREV_OOPS_MSG_BUF_LEN=0x2000" >>$(1); \
+		elif [ "$(RALINK)" = "y" -o "$(QCA)" = "y" ]; then \
+			echo "CONFIG_DUMP_PREV_OOPS_MSG=y" >>$(1); \
+			echo "CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR=0x03300000" >>$(1); \
 			echo "CONFIG_DUMP_PREV_OOPS_MSG_BUF_LEN=0x2000" >>$(1); \
 		else \
 			echo "# CONFIG_DUMP_PREV_OOPS_MSG is not set" >>$(1); \

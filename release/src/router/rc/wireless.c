@@ -149,6 +149,9 @@ int wlcscan_main(void)
 		nvram_set_int("wlc_scan_state", WLCSCAN_STATE_2G+i);
 		i++;
 	}
+#ifdef RTCONFIG_QTN
+	wlcscan_core_qtn(APSCAN_INFO, "wifi0");
+#endif
 	nvram_set_int("wlc_scan_state", WLCSCAN_STATE_FINISHED);
 	return 1;
 }

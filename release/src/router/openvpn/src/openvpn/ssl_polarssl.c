@@ -67,7 +67,7 @@ tls_clear_error()
 }
 
 void
-tls_ctx_server_new(struct tls_root_ctx *ctx)
+tls_ctx_server_new(struct tls_root_ctx *ctx, unsigned int ssl_flags)
 {
   ASSERT(NULL != ctx);
   CLEAR(*ctx);
@@ -84,7 +84,7 @@ tls_ctx_server_new(struct tls_root_ctx *ctx)
 }
 
 void
-tls_ctx_client_new(struct tls_root_ctx *ctx)
+tls_ctx_client_new(struct tls_root_ctx *ctx, unsigned int ssl_flags)
 {
   ASSERT(NULL != ctx);
   CLEAR(*ctx);
@@ -1066,6 +1066,16 @@ get_highest_preference_tls_cipher (char *buf, int size)
 
   cipher_name = ssl_get_ciphersuite_name(*ciphers);
   strncpynt (buf, cipher_name, size);
+}
+
+char *
+get_ssl_library_version(void)
+{
+    static char polar_version[30];
+    unsigned int pv = version_get_number();
+    sprintf( polar_version, "PolarSSL %d.%d.%d",
+		(pv>>24)&0xff, (pv>>16)&0xff, (pv>>8)&0xff );
+    return polar_version;
 }
 
 #endif /* defined(ENABLE_SSL) && defined(ENABLE_CRYPTO_POLARSSL) */

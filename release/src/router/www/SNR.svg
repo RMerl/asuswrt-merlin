@@ -144,6 +144,8 @@ function updateSVG(){
 			E('xunitfq2').setAttribute('x', "46%");	////Tune position: 552
 		}else if(top.snr.length == 512)
 			X_array = 64;
+		else if(top.snr.length == 4096)
+			X_array = 512;
 		else
 			X_array = 0;
 		

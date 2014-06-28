@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2013 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2014 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -962,6 +962,8 @@ size_t dhcp_reply(struct dhcp_context *context, char *iface_name, int int_index,
     case DHCPDISCOVER:
       if (ignore || have_config(config, CONFIG_DISABLE))
 	{
+	  if (option_bool(OPT_QUIET_DHCP))
+	    return 0;
 	  message = _("ignored");
 	  opt = NULL;
 	}

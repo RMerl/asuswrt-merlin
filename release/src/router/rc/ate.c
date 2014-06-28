@@ -798,7 +798,11 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 	}
 #if defined(RTCONFIG_HAS_5G)
 	else if (!strcmp(command, "Get_ChannelList_5G")) {
+#ifdef RTCONFIG_QTN
+		if (!Get_ChannelList_5G_qtn())
+#else
 		if (!Get_ChannelList_5G())
+#endif
 			puts("ATE_ERROR");
 		return 0;
 	}

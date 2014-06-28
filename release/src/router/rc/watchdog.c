@@ -50,6 +50,7 @@
 #include <sys/wait.h>
 #include <sys/ioctl.h>
 #include <sys/reboot.h>
+#include <sys/sysinfo.h>
 #ifdef RTCONFIG_PUSH_EMAIL
 #include <push_log.h>
 #endif
@@ -69,10 +70,16 @@
 #define NORMAL_PERIOD		1		/* second */
 #define URGENT_PERIOD		100 * 1000	/* microsecond */
 #define RUSHURGENT_PERIOD	50 * 1000	/* microsecond */
+#define DAY_PERIOD		2 * 60 * 24	/* 1 day (in 30 sec periods) */
 
 #define WPS_TIMEOUT_COUNT	121 * 20
 #define WPS_WAIT		1		/* seconds */
 #define WPS_WAIT_COUNT		WPS_WAIT * 20	/* 20 times a second */
+
+#ifdef RTCONFIG_WPS_RST_BTN
+#define WPS_RST_DO_WPS_COUNT		( 1*10)	/*  1 seconds */
+#define WPS_RST_DO_RESTORE_COUNT	(10*10)	/* 10 seconds */
+#endif	/* RTCONFIG_WPS_RST_BTN */
 
 //#if defined(RTCONFIG_JFFS2LOG) && defined(RTCONFIG_JFFS2)
 #if defined(RTCONFIG_JFFS2LOG) && (defined(RTCONFIG_JFFS2)||defined(RTCONFIG_BRCM_NAND_JFFS2))
@@ -102,6 +109,7 @@ static int wsc_timeout = 0;
 static int btn_count_setup_second = 0;
 static int btn_pressed_toggle_radio = 0;
 #endif
+static long ddns_update_timer = 0;
 
 #ifdef RTCONFIG_WIRELESS_SWITCH
 // for WLAN sw init, only for slide switch
@@ -153,6 +161,7 @@ void erase_nvram(void)
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
 		case MODEL_RTAC68U:
+		case MODEL_DSLAC68U:
 		case MODEL_RTAC87U:
 			eval("mtd-erase2", "nvram");
 			break;
@@ -167,6 +176,7 @@ int init_toggle(void)
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
 		case MODEL_RTAC68U:
+		case MODEL_DSLAC68U:
 		case MODEL_RTAC87U:
 			nvram_set("btn_ez_radiotoggle", "1");
 			return BTN_WIFI_TOG;
@@ -241,12 +251,14 @@ void btn_check(void)
 		TRACE_PT("button RESET pressed\n");
 
 	/*--------------- Add BTN_RST MFG test ------------------------*/
+#ifndef RTCONFIG_WPS_RST_BTN
 #ifdef RTCONFIG_DSL /* Paul add 2013/4/2 */
 			if((btn_count % 2)==0)
 				led_control(0, 1);
 			else
 				led_control(0, 0);
 #endif
+#endif	/* ! RTCONFIG_WPS_RST_BTN */
 			if (!btn_pressed)
 			{
 				btn_pressed = 1;
@@ -255,6 +267,9 @@ void btn_check(void)
 			}
 			else
 			{	/* Whenever it is pushed steady */
+#ifdef RTCONFIG_WPS_RST_BTN
+				btn_count++;
+#else	/* ! RTCONFIG_WPS_RST_BTN */
 				if (++btn_count > RESET_WAIT_COUNT)
 				{
 					fprintf(stderr, "You can release RESET button now!\n");
@@ -278,6 +293,7 @@ void btn_check(void)
 						led_control(LED_POWER, LED_ON);
 #endif
 				}
+#endif	/* ! RTCONFIG_WPS_RST_BTN */
 			}
 	}
 #ifdef RTCONFIG_WIRELESS_SWITCH
@@ -332,6 +348,34 @@ void btn_check(void)
 #endif
 	else
 	{
+#ifdef RTCONFIG_WPS_RST_BTN
+		if (btn_pressed == 0)
+			;
+		else if (btn_count < WPS_RST_DO_RESTORE_COUNT)
+		{
+			if (btn_count < WPS_RST_DO_RESTORE_COUNT && btn_count >= WPS_RST_DO_WPS_COUNT
+			   &&  !no_need_to_start_wps()
+			   &&  !wps_band_radio_off(get_radio_band(0))
+			   && !nvram_match("wps_ign_btn", "1")
+			)
+			{
+				btn_pressed_setup = BTNSETUP_DETECT;
+				btn_count_setup = WPS_WAIT_COUNT;	//to trigger WPS
+				alarmtimer(0, RUSHURGENT_PERIOD);
+			}
+			else
+			{
+				btn_pressed_setup = BTNSETUP_NONE;
+				btn_count_setup = 0;
+				alarmtimer(NORMAL_PERIOD, 0);
+			}
+
+			btn_count = 0;
+			btn_pressed = 0;
+			led_control(LED_POWER, LED_ON);
+		}
+		else if (btn_count >= WPS_RST_DO_RESTORE_COUNT)	// to do restore
+#else	/* ! RTCONFIG_WPS_RST_BTN */
 		if (btn_pressed == 1)
 		{
 			btn_count = 0;
@@ -340,6 +384,7 @@ void btn_check(void)
 			alarmtimer(NORMAL_PERIOD, 0);
 		}
 		else if (btn_pressed == 2)
+#endif	/* ! RTCONFIG_WPS_RST_BTN */
 		{
 			led_control(LED_POWER, LED_OFF);
 			alarmtimer(0, 0);
@@ -480,8 +525,17 @@ void btn_check(void)
 	}
 #endif
 
+#ifdef RTCONFIG_BCMWL6
+#ifdef RTCONFIG_PROXYSTA
+        if (is_psta(0) || is_psta(1))
+                return;
+#endif
+#endif
 	if (btn_pressed_setup < BTNSETUP_START)
 	{
+#ifdef RTCONFIG_WPS_RST_BTN
+		if (btn_pressed_setup == BTNSETUP_DETECT)
+#else
 		if (button_pressed(BTN_WPS) &&
 		    !no_need_to_start_wps() &&
 		    !wps_band_radio_off(get_radio_band(0)) &&
@@ -489,6 +543,7 @@ void btn_check(void)
 		    nvram_match("btn_ez_radiotoggle", "0") &&
 #endif
 		    !nvram_match("wps_ign_btn", "1"))
+#endif	/* ! RTCONFIG_WPS_RST_BTN */
 		{
 			TRACE_PT("button WPS pressed\n");
 
@@ -526,6 +581,7 @@ void btn_check(void)
 	else 
 	{
 		if (!nvram_match("wps_ign_btn", "1")) {
+#ifndef RTCONFIG_WPS_RST_BTN
 			if (button_pressed(BTN_WPS) &&
 			    !no_need_to_start_wps() &&
 			    !wps_band_radio_off(get_radio_band(0)))
@@ -544,6 +600,7 @@ void btn_check(void)
 					wsc_timeout = WPS_TIMEOUT_COUNT;
 				}
 			}
+#endif	/* ! RTCONFIG_WPS_RST_BTN */
 
 			if (is_wps_stopped() || --wsc_timeout == 0)
 			{
@@ -1247,6 +1304,7 @@ void ddns_check(void)
 		unlink("/tmp/ddns.cache");
 		logmessage("watchdog", "start ddns.");
 		notify_rc("start_ddns");
+		ddns_update_timer = 0;
 	}
 	return;
 }
@@ -1455,6 +1513,53 @@ void push_mail(void)
 		count ++;
 	}
 	//debug.javi
+}
+#endif
+
+#ifdef RTCONFIG_DSL
+
+#define DSL_LOSS_TIME_TH	18000
+
+void dsl_sync_check(void)
+{
+	static long last_loss_time = 0;
+	static int last_status = 0;	//0: others, 1: up
+	struct sysinfo info;
+
+	if(nvram_get_int("dsltmp_syncloss_apply")) {
+		nvram_set("dsltmp_syncloss_apply", "0");
+		nvram_set("dsltmp_adslsyncsts", "down");
+		nvram_set("dsltmp_syncloss", "0");
+		last_loss_time = 0;
+		last_status = 0;
+	}
+
+	if(nvram_match("dsltmp_syncloss", "2"))
+		return;
+
+	if(nvram_match("dsltmp_adslsyncsts", "up")) {
+		if(!last_status)
+			last_status = 1;
+	}
+	else {
+		if(last_status) {
+			last_status = 0;
+			sysinfo(&info);
+			if(!last_loss_time) {	//first time
+				last_loss_time = info.uptime;
+			}
+			else {
+				if(info.uptime - last_loss_time < DSL_LOSS_TIME_TH) {
+					nvram_set("dsltmp_syncloss", "1");
+				}
+				else {
+					last_loss_time = info.uptime;
+				}
+			}
+		}
+		else
+			;//wait to up
+	}
 }
 #endif
 
@@ -1676,6 +1781,7 @@ period_chk_cnt()
 
 void watchdog(int sig)
 {
+	int period;
 #ifdef RTCONFIG_PUSH_EMAIL
 	push_mail();
 #endif
@@ -1742,6 +1848,14 @@ void watchdog(int sig)
 #if 0
 	cpu_usage_monitor();
 #endif
+
+	/* Force a DDNS update every "x" days - default is 21 days */
+	period = nvram_get_int("ddns_refresh_x");
+	if ((period) && (++ddns_update_timer >= (DAY_PERIOD * period))) {
+		ddns_update_timer = 0;
+		nvram_set("ddns_updated", "0");
+	}
+
 	ddns_check();
 
 //#if defined(RTCONFIG_JFFS2LOG) && defined(RTCONFIG_JFFS2)
@@ -1749,6 +1863,10 @@ void watchdog(int sig)
 	syslog_commit_check();
 #endif
 //	auto_firmware_check();
+
+#ifdef RTCONFIG_DSL
+	dsl_sync_check();
+#endif
 
 	return;
 }
@@ -1798,6 +1916,8 @@ watchdog_main(int argc, char *argv[])
 	nvram_set("btn_rst", "0");
 	nvram_set("btn_ez", "0");
 	nvram_set("btn_wifi_sw", "0");
+	nvram_set("dsltmp_syncloss", "0");
+	nvram_set("dsltmp_syncloss_apply", "0");
 #endif
 	nvram_unset("wps_ign_btn");
 

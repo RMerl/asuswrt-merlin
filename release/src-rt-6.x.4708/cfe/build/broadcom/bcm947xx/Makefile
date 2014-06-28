@@ -72,6 +72,7 @@ CFG_SDRAM_PARAM_FROM_EMBEDDED_NVRAM := 1
 # Additional options
 COMPRESSED_CFE := 1
 RESCUE_MODE := 1        # disable for tmp
+DSLAC68U := 0
 RTAC68U := 0
 PATYPE := 0
 MTDSIZE := 32
@@ -128,10 +129,16 @@ endif
 ifeq ($(strip $(RTAC68U)),1)
 CFLAGS += -DRTAC68U
 endif
+
+ifeq ($(strip $(DSLAC68U)),1)
+CFLAGS += -DDSLAC68U
+endif
+
 ifeq ($(strip $(RTAC87U)),1)
 MTDSIZE := 128
 CFLAGS += -DRTAC87U
 endif
+
 ifeq ($(strip $(RTN18U)),1)
 CFLAGS += -DRTN18U
 endif

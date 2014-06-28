@@ -987,13 +987,21 @@ static int start_ipoa()
 	//
 	// add gateway host
 	//
+#ifdef RTCONFIG_DSL_TCLINUX
+	eval("arp","-i",nvram_safe_get("wan0_ifname"),"-a",ip_gateway,"-s",tc_mac);
+#else
 	eval("arp","-i","br0","-a",ip_gateway,"-s",tc_mac);
+#endif
 
 	// add neighbor hosts
 	for (i=0; i<NeighborIpNum; i++)
 	{
 		sprintf(CmdBuf,"%s.%d",NeighborIpPrefix,i+NeiBaseIpNum);
+#ifdef RTCONFIG_DSL_TCLINUX
+		eval("arp","-i",nvram_safe_get("wan0_ifname"),"-a",CmdBuf,"-s",tc_mac);
+#else
 		eval("arp","-i","br0","-a",CmdBuf,"-s",tc_mac);
+#endif
 	}
 
 	return 0;
@@ -1080,6 +1088,18 @@ static int stop_ipoa()
 }
 #endif
 
+#ifdef RTCONFIG_USB_MODEM
+void run_qmi_connect(const char *usbnet){
+	char wdm_dev[32];
+
+	killall_tk("uqmi");
+
+	get_wdm_by_usbnet(usbnet, wdm_dev, 32);
+
+	eval("uqmi", "-d", wdm_dev, "--keep-client-id", "wds", "--start-network", nvram_safe_get("modem_apn"));
+}
+#endif
+
 void
 start_wan_if(int unit)
 {
@@ -1144,7 +1164,12 @@ TRACE_PT("3g begin.\n");
 		kill_pidfile_s(dhcp_pid_file, SIGUSR2);
 		kill_pidfile_s(dhcp_pid_file, SIGTERM);
 
-		if((fp = fopen(PPP_CONF_FOR_3G, "r")) != NULL){
+		eval("find_modem_type.sh");
+		eval("find_modem_node.sh");
+
+		if(!strcmp(nvram_safe_get("usb_modem_act_type"), "tty")
+				&& write_3g_ppp_conf()
+				&& (fp = fopen(PPP_CONF_FOR_3G, "r")) != NULL){
 			fclose(fp);
 
 			// run as ppp proto.
@@ -1162,9 +1187,6 @@ TRACE_PT("3g begin.\n");
 			char *pppd_argv[] = { "/usr/sbin/pppd", "call", "3g", "nochecktime", NULL};
 
 			if(!nvram_match("stop_conn_3g", "1")){
-				if(strcmp(nvram_safe_get("stop_rewrite_3g_conf"), "1"))
-					eval("find_modem_node.sh");
-
 				_eval(pppd_argv, NULL, 0, NULL);
 
 				update_wan_state(prefix, WAN_STATE_CONNECTING, 0);
@@ -1172,7 +1194,7 @@ TRACE_PT("3g begin.\n");
 			else
 				TRACE_PT("stop_conn_3g was set.\n");
 		}
-		// RNDIS interface: usbX, Beceem interface: usbbcm -> ethX.
+		// RNDIS, QMI interface: usbX, Beceem interface: usbbcm -> ethX.
 		else{
 			wan_ifname = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
 			if(strlen(wan_ifname) <= 0){
@@ -1275,9 +1297,12 @@ _dprintf("RNDIS/Beceem: start_wan_if.\n");
 			nvram_set(strcat_r(prefix, "dhcpenable_x", tmp), "1");
 			nvram_set(strcat_r(prefix, "dnsenable_x", tmp), "1");
 
-			// Android phone, RNDIS interface.
+			// Android phone, RNDIS, QMI interface.
 			if(!strncmp(wan_ifname, "usb", 3)){
 				if(!nvram_match("stop_conn_3g", "1")){
+					if(!strcmp(nvram_safe_get("usb_modem_act_type"), "qmi"))
+						run_qmi_connect(wan_ifname);
+
 					start_udhcpc(wan_ifname, unit, &pid);
 					update_wan_state(prefix, WAN_STATE_CONNECTING, 0);
 				}
@@ -1991,7 +2016,7 @@ void wan6_up(const char *wan_ifname)
 			dbG("WAN IPv6 address is the same as LAN IPv6 address!\n");
 			break;
 		}
-		sprintf(addr6, "%s/%d", nvram_safe_get("ipv6_ipaddr"), nvram_get_int("ipv6_prefix_len_wan"));
+		snprintf(addr6, sizeof(addr6), "%s/%d", nvram_safe_get("ipv6_ipaddr"), nvram_get_int("ipv6_prefix_len_wan"));
 		eval("ip", "-6", "addr", "add", addr6, "dev", (char *)wan_ifname);
 		eval("ip", "-6", "route", "del", "::/0");
 		eval("ip", "-6", "route", "add", "::/0", "via", nvram_safe_get("ipv6_gateway"), "dev", (char *)wan_ifname, "metric", "1");
@@ -2284,6 +2309,10 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 		refresh_ntpc();
 	}
 
+#ifdef RTCONFIG_VPNC
+	if((nvram_match("vpnc_proto", "pptp") || nvram_match("vpnc_proto", "l2tp")) && nvram_match("vpnc_auto_conn", "1"))
+		start_vpnc();
+#endif
 #ifdef RTCONFIG_OPENVPN
 	start_vpn_eas();
 #endif

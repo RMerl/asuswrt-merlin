@@ -98,17 +98,28 @@ function initial(){
 	if(!band5g_support)	
 		$("wl_unit_field").style.display = "none";
 
-		
-	if(based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U" || based_modelid == "RT-AC69U"  
-		|| based_modelid == "RT-AC87U"){
-		if('<% nvram_get("wl_unit"); %>' == '1' && country == "EU")
-			$('dfs_checkbox').style.display = "";
-	}	
-
 	if(sw_mode == 2 || sw_mode == 4)
 		document.form.wl_subunit.value = ('<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>') ? 1 : -1;
 				
 	change_wl_nmode(document.form.wl_nmode_x);
+	if(country == "EU"){		//display checkbox of DFS channel under 5GHz
+		if(based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U" || based_modelid == "RT-AC69U"  
+		|| based_modelid == "RT-AC87U"){
+			if(document.form.wl_channel.value  == '0' && '<% nvram_get("wl_unit"); %>' == '1')
+				$('dfs_checkbox').style.display = "";
+		}
+	}
+	else if(country == "US" || country == "SG"){		//display checkbox of band1 channel under 5GHz
+		if(based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || based_modelid == "DSL-AC68U"
+		|| based_modelid == "RT-AC56U" || based_modelid == "RT-AC56S"
+		|| based_modelid == "RT-N18U"
+		|| based_modelid == "RT-AC66U"
+		|| based_modelid == "RT-N66U"
+		|| based_modelid == "RT-AC53U"){		
+			if(document.form.wl_channel.value  == '0' && '<% nvram_get("wl_unit"); %>' == '1')
+				$('acs_band1_checkbox').style.display = "";					
+		}
+	}	
 }
 
 function change_wl_nmode(o){
@@ -357,6 +368,13 @@ function check_DFS_support(obj){
 	else
 		document.form.acs_dfs.value = 0;
 }
+
+function check_acs_band1_support(obj){
+	if(obj.checked)
+		document.form.acs_band1.value = 1;
+	else
+		document.form.acs_band1.value = 0;
+}
 </script>
 </head>
 
@@ -420,6 +438,7 @@ function check_DFS_support(obj){
 <input type="hidden" name="wl_optimizexbox" value='<% nvram_get("wl_optimizexbox"); %>'>
 <input type="hidden" name="wl_subunit" value='-1'>
 <input type="hidden" name="acs_dfs" value='<% nvram_get("acs_dfs"); %>'>
+<input type="hidden" name="acs_band1" value='<% nvram_get("acs_band1"); %>'>
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
   <tr>
@@ -518,6 +537,7 @@ function check_DFS_support(obj){
 					<td>
 				 		<select name="wl_channel" class="input_option" onChange="change_channel(this);"></select>
 						<span id="dfs_checkbox" style="display:none"><input type="checkbox" onClick="check_DFS_support(this);"  <% nvram_match("acs_dfs", "1", "checked"); %>>Auto select channel including DFS channels</input></span>
+						<span id="acs_band1_checkbox" style="display:none"><input type="checkbox" onClick="check_acs_band1_support(this);"  <% nvram_match("acs_band1", "1", "checked"); %>>Auto select channel including band1 channels</input></span>
 					</td>
 			  </tr> 
 		  	<!-- end -->

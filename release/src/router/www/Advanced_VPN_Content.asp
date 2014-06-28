@@ -616,7 +616,8 @@ function change_mode(obj){
 function check_vpn_server_state(){
 		if('<% nvram_get("VPNServer_mode"); %>' == 'openvpn' && openvpn_enabled == '1' && service_state != '2'){
 				document.getElementById('export_div').style.display = "none";
-				document.getElementById('openvpn_initial').style.display = "";
+				document.getElementById('openvpn_initial').style.display = "none";
+				document.getElementById('openvpn_starting').style.display = "";
 				update_vpn_server_state();
 		}
 }
@@ -637,11 +638,13 @@ function update_vpn_server_state(){
 				if(vpnd_state == '1'){
 					// Initializing
 					setTimeout("update_vpn_server_state();", 1000);
-
+					document.getElementById('openvpn_starting').style.display = "none";
+					document.getElementById('openvpn_initial').style.display = "";
 				}else if(vpnd_state == '0') {
-					// Failed to start after 20 secs - config issue?  Warn the user.
-					if (starting++ > 20) {
+					// Failed to switch to initializing status after 5 secs - config issue?  Warn the user.
+					if (starting++ > 5) {
 						document.getElementById('openvpn_initial').style.display = "none";
+						document.getElementById('openvpn_starting').style.display = "none";
 						document.getElementById('openvpn_failed').style.display = "";
 						return;
 					}
@@ -650,6 +653,7 @@ function update_vpn_server_state(){
 				}else if(vpnd_state == '-1') {
 					// openvpn failed with an error code
 					document.getElementById('openvpn_initial').style.display = "none";
+					document.getElementById('openvpn_starting').style.display = "none";
 					document.getElementById('openvpn_failed').style.display = "";
 					document.getElementById('openvpn_errno').innerHTML="  (Error code: " + vpnd_errno + ")";
 					return;
@@ -850,6 +854,12 @@ function enable_openvpn(state){
 															showMailPanel();
 														}	
 												</script>
+												<div id="openvpn_starting" style="display:none;margin-left:5px;">
+													<span>
+														Starting the server...
+														<img id="starting" src="images/InternetScan.gif" />
+													</span>
+												</div>
 												<div id="openvpn_initial" style="display:none;margin-left:5px;">
 													<span>
 														Initializing the settings of the OpenVPN server, this may take a few minutes...
@@ -858,7 +868,7 @@ function enable_openvpn(state){
 												</div>
 												<div id="openvpn_failed" style="display:none;margin-left:5px;">
 													<span>
-														Error when starting the OpenVPN server!  Check your configuration and try again.  <span id="openvpn_errno"></span>
+														OpenVPN server failed to start!  Check your configuration, then try disabling and re-enabling it.  <span id="openvpn_errno"></span>
 													</span>
 												</div>
 											</td>

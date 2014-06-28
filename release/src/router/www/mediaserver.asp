@@ -121,16 +121,23 @@ var dms_dir_type_x_array = '<% nvram_get("dms_dir_type_x"); %>';
 
 function dlna_path_display(){
 	if("<% nvram_get("dms_enable"); %>" == 1){
-		document.form.dms_friendly_name.parentNode.parentNode.style.display = "";
+		document.form.dms_friendly_name.parentNode.parentNode.parentNode.style.display = "";
 		document.getElementById("dmsStatus").parentNode.parentNode.style.display = "";		
 		document.getElementById("dlna_path_div").style.display = "";
 		show_dlna_path();
 	}
 	else{
-		document.form.dms_friendly_name.parentNode.parentNode.style.display = "none";
+		document.form.dms_friendly_name.parentNode.parentNode.parentNode.style.display = "none";
 		document.getElementById("dmsStatus").parentNode.parentNode.style.display = "none";		
 		document.getElementById("dlna_path_div").style.display = "none";
 	}
+}
+
+function daapd_display(){
+	if("<% nvram_get("daapd_enable"); %>" == 1)
+		document.form.daapd_friendly_name.parentNode.parentNode.parentNode.style.display = "";
+	else
+		document.form.daapd_friendly_name.parentNode.parentNode.parentNode.style.display = "none";
 }
 
 function initial(){
@@ -142,8 +149,10 @@ function initial(){
 	initial_dir();
 	check_dir_path();
 	
+	daapd_display();
 	dlna_path_display();
-	do_get_friendly_name();
+	do_get_friendly_name("daapd");
+	do_get_friendly_name("dms");
 	check_dms_status();
 	
 	if((calculate_height-3)*52 + 20 > 535)
@@ -208,10 +217,10 @@ var dm_dir = new Array();
 var WH_INT=0,Floder_WH_INT=0,General_WH_INT=0;
 var folderlist = new Array();
 
-function applyRule(){
-	//document.form.dms_dir.value = $("PATH").value;
-	if(document.form.dms_enable.value == 1){
-		if(validForm()){
+function applyRule(){	
+	
+	if(validForm()){
+		if(document.form.dms_enable.value == 1){
 			var rule_num = document.getElementById("dlna_path_table").rows.length;
 			var item_num = document.getElementById("dlna_path_table").rows[0].cells.length;
 			var dms_dir_tmp_value = "";
@@ -221,7 +230,7 @@ function applyRule(){
 				for(i=0; i<rule_num; i++){			
 					dms_dir_tmp_value += "<";
 					dms_dir_tmp_value += document.getElementById("dlna_path_table").rows[i].cells[0].innerHTML;
-			
+
 					var type_translate_tmp = "";
 					dms_dir_type_tmp_value += "<";
 					type_translate_tmp += document.getElementById("dlna_path_table").rows[i].cells[1].innerHTML.indexOf("Audio")>=0? "A":""; 
@@ -230,34 +239,75 @@ function applyRule(){
 					dms_dir_type_tmp_value += type_translate_tmp;			
 				}
 			}
-		
 			document.form.dms_dir_x.value = dms_dir_tmp_value;
 			document.form.dms_dir_type_x.value = dms_dir_type_tmp_value;	
 		}
-		else{
-			return false;
-		}
-			
 	}
 	else{
+		return false;
+	}
+			
+
+	if(document.form.dms_enable.value == 0){
 		document.form.dms_friendly_name.disabled = true;
 		document.form.dms_dir_x.disabled = true;
 		document.form.dms_dir_type_x.disabled = true;
 	}
 	
 	showLoading();
-	FormActions("start_apply.htm", "apply", "restart_media", "3");
+	FormActions("start_apply.htm", "apply", "restart_media", "5");
 	document.form.submit();
 }
 
 function validForm(){
-	var re = new RegExp('^[a-zA-Z0-9][a-zA-Z0-9\.\-]*[a-zA-Z0-9]$','gi');
-  if(!re.test(document.form.dms_friendly_name.value) && document.form.dms_friendly_name.value != ""){
-      alert("<#JS_validchar#>");                
-      document.form.dms_friendly_name.focus();
-      document.form.dms_friendly_name.select();
-	 	return false;
-  }
+
+if(document.form.daapd_enable.value == 1){	
+	if(document.form.daapd_friendly_name.value.length == 0){
+		showtext($("alert_msg1"), "<#JS_fieldblank#>");
+		document.form.daapd_friendly_name.focus();
+		document.form.daapd_friendly_name.select();
+		return false;
+	}
+	else{
+		
+		var alert_str1 = validate_hostname(document.form.daapd_friendly_name);
+		if(alert_str1 != ""){
+			showtext($("alert_msg1"), alert_str1);
+			$("alert_msg1").style.display = "";
+			document.form.daapd_friendly_name.focus();
+			document.form.daapd_friendly_name.select();
+			return false;
+		}else{
+			$("alert_msg1").style.display = "none";
+  	}
+
+		document.form.daapd_friendly_name.value = trim(document.form.daapd_friendly_name.value);
+	}	
+}
+
+if(document.form.dms_enable.value == 1){
+	if(document.form.dms_friendly_name.value.length == 0){
+		showtext($("alert_msg2"), "<#JS_fieldblank#>");
+		document.form.dms_friendly_name.focus();
+		document.form.dms_friendly_name.select();
+		return false;
+	}
+	else{
+		
+		var alert_str2 = validate_hostname(document.form.dms_friendly_name);
+		if(alert_str2 != ""){
+			showtext($("alert_msg2"), alert_str2);
+			$("alert_msg2").style.display = "";
+			document.form.dms_friendly_name.focus();
+			document.form.dms_friendly_name.select();
+			return false;
+		}else{
+			$("alert_msg2").style.display = "none";
+  	}
+
+		document.form.dms_friendly_name.value = trim(document.form.dms_friendly_name.value);
+	}	
+}	
 	
 	return true;	
 }
@@ -599,10 +649,14 @@ function del_Row(r){
   var dms_dir_x_tmp = "";
   var dms_dir_type_x_tmp = "";  
 	for(var k=0; k<document.getElementById("dlna_path_table").rows.length; k++){
+			var tmp_type = "";
 			dms_dir_x_tmp += "&#60";
 			dms_dir_x_tmp += document.getElementById("dlna_path_table").rows[k].cells[0].innerHTML;
 			dms_dir_type_x_tmp += "&#60";
-			dms_dir_type_x_tmp += document.getElementById("dlna_path_table").rows[k].cells[1].innerHTML;
+				tmp_type += document.getElementById("dlna_path_table").rows[k].cells[1].innerHTML.indexOf("Audio")>=0? "A " : "";
+				tmp_type += document.getElementById("dlna_path_table").rows[k].cells[1].innerHTML.indexOf("Image")>=0? "P " : "";
+				tmp_type += document.getElementById("dlna_path_table").rows[k].cells[1].innerHTML.indexOf("Vedio")>=0? "V " : "";
+			dms_dir_type_x_tmp += tmp_type;
 	}
 	
 	dms_dir_x_array = dms_dir_x_tmp;
@@ -681,7 +735,7 @@ function show_dlna_path(){
 	var dms_dir_type_x_array_row = dms_dir_type_x_array.split('&#60');	
 	var code = "";
 	
-	code +='<table width="100%" cellspacing="0" cellpadding="4" align="center" class="list_table" id="dlna_path_table">';
+	code +='<table width="98%" cellspacing="0" cellpadding="4" align="center" class="list_table" id="dlna_path_table">';
 	if(dms_dir_x_array_row.length == 1)
 		code +='<tr><td style="color:#FFCC00;" colspan="6"><#IPConnection_VSList_Norule#></td></tr>';
 	else{		
@@ -704,16 +758,29 @@ function show_dlna_path(){
 	$("dlna_path_Block").innerHTML = code;	
 }
 
-function do_get_friendly_name(){
-	var friendly_name	= "";
-	if("<% nvram_get("dms_friendly_name"); %>" != "")
-		friendly_name = "<% nvram_get("dms_friendly_name"); %>";
-	else if("<% nvram_get("odmpid"); %>" != "")	
-		friendly_name = "<% nvram_get("odmpid"); %>";
-	else	
-		friendly_name = "<% nvram_get("productid"); %>";
+function do_get_friendly_name(v){
+if(v == "daapd"){
+	var friendly_name_daapd	= "";
+	if("<% nvram_get("daapd_friendly_name"); %>" != "")
+		friendly_name_daapd = "<% nvram_get("daapd_friendly_name"); %>";
+	else if("<% nvram_get("odmpid"); %>" != "")
+		friendly_name_daapd = "<% nvram_get("odmpid"); %>";
+	else
+		friendly_name_daapd = "<% nvram_get("productid"); %>";
 	
-	document.form.dms_friendly_name.value = friendly_name;
+	document.form.daapd_friendly_name.value = friendly_name_daapd;
+}	
+else if(v == "dms"){	
+	var friendly_name_dms	= "";
+	if("<% nvram_get("dms_friendly_name"); %>" != "")
+		friendly_name_dms = "<% nvram_get("dms_friendly_name"); %>";
+	else if("<% nvram_get("odmpid"); %>" != "")	
+		friendly_name_dms = "<% nvram_get("odmpid"); %>";
+	else	
+		friendly_name_dms = "<% nvram_get("productid"); %>";
+	
+	document.form.dms_friendly_name.value = friendly_name_dms;
+}	
 }
 
 </script>
@@ -769,6 +836,7 @@ function do_get_friendly_name(){
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="current_page" value="mediaserver.asp">
 <input type="hidden" name="next_page" value="mediaserver.asp">
+<input type="hidden" name="flag" value="nodetect">
 <input type="hidden" name="action_mode" value="">
 <input type="hidden" name="action_script" value="">
 <input type="hidden" name="action_wait" value="">
@@ -794,10 +862,10 @@ function do_get_friendly_name(){
 
 <!--=====Beginning of Main Content=====-->
 <div id="upnp_table" class="upnp_table" align="left" border="0" cellpadding="0" cellspacing="0">
-<table>
+<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
   <tr>
   	<td>
-				<div style="width:730px">
+				<div>
 					<table width="730px">
 						<tr>
 							<td align="left">
@@ -818,7 +886,7 @@ function do_get_friendly_name(){
   <tr>
    	<td>
    		<div>
-   		<table id="iTunes" width="100%" border="1" align="center" cellpadding="4" cellspacing="1" bordercolor="#6b8fa3" class="FormTable">
+   		<table id="iTunes" width="98%" border="1" align="center" cellpadding="4" cellspacing="1" bordercolor="#6b8fa3" class="FormTable">
  				<thead>
 					<tr><td colspan="2">iTunes Server</td></tr>
 				</thead>  
@@ -830,10 +898,13 @@ function do_get_friendly_name(){
 							<script type="text/javascript">
 									$j('#radio_daapd_enable').iphoneSwitch('<% nvram_get("daapd_enable"); %>', 
 										 function() {
-											submit_mediaserver("daapd_enable", 0);
+										 	document.form.daapd_friendly_name.parentNode.parentNode.parentNode.style.display = "";										 	
+											document.form.daapd_enable.value = 1;
 										 },
 										 function() {
-											submit_mediaserver("daapd_enable", 1);
+											document.form.daapd_friendly_name.parentNode.parentNode.parentNode.style.display = "none";
+											document.form.daapd_enable.value = 0;
+											do_get_friendly_name("daapd");
 										 },
 										 {
 											switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
@@ -842,10 +913,16 @@ function do_get_friendly_name(){
 							</script>
         		</td>
        	</tr>
+       	<tr>
+       		<th>iTunes Server Name</th>
+					<td>
+						<div><input name="daapd_friendly_name" type="text" style="margin-left:15px;" class="input_15_table" value=""><br/><div id="alert_msg1" style="color:#FC0;margin-left:10px;"></div></div>
+					</td>
+      	</tr>
       	</table> 
       </div>	
       <div style="margin-top:10px;">
-   		<table id="dlna" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+   		<table id="dlna" width="98%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
    			<thead>
 					<tr><td colspan="2"><#UPnPMediaServer#></td></tr>
 				</thead>
@@ -857,18 +934,18 @@ function do_get_friendly_name(){
 							<script type="text/javascript">
 									$j('#radio_dms_enable').iphoneSwitch('<% nvram_get("dms_enable"); %>', 
 										 function() {
-										 	document.form.dms_friendly_name.parentNode.parentNode.style.display = "";
+										 	document.form.dms_friendly_name.parentNode.parentNode.parentNode.style.display = "";
 											document.getElementById("dmsStatus").parentNode.parentNode.style.display = "";
 											document.getElementById("dlna_path_div").style.display = "";
 											show_dlna_path();
-											document.form.dms_enable.value = 1;											
+											document.form.dms_enable.value = 1;									
 										 },
 										 function() {
-										 	document.form.dms_friendly_name.parentNode.parentNode.style.display = "none";
+										 	document.form.dms_friendly_name.parentNode.parentNode.parentNode.style.display = "none";
 											document.getElementById("dmsStatus").parentNode.parentNode.style.display = "none";
 											document.getElementById("dlna_path_div").style.display = "none";
 											document.form.dms_enable.value = 0;
-											do_get_friendly_name();
+											do_get_friendly_name("dms");
 										 },
 										 {
 											switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
@@ -881,9 +958,9 @@ function do_get_friendly_name(){
        	<tr>
        		<th>Media Server Name</th>
 					<td>
-						<input name="dms_friendly_name" type="text" style="margin-left:15px;" class="input_15_table" value="">
+						<div><input name="dms_friendly_name" type="text" style="margin-left:15px;" class="input_15_table" value=""><br/><div id="alert_msg2" style="color:#FC0;margin-left:10px;"></div></div>
 					</td>
-      	</tr>       	    
+      	</tr>
    			<tr>
         	<th>Media Server Status</th>
         	<td><span id="dmsStatus" style="margin-left:15px">Idle</span>
@@ -894,7 +971,7 @@ function do_get_friendly_name(){
       	</div>
       	
       	<div id="dlna_path_div">
-      	<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
+      	<table width="98%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
 			  	<thead>
 			  		<tr>
 						<td colspan="3" id="GWStatic">Media Server Path&nbsp;(<#List_limit#>&nbsp;10)</td>

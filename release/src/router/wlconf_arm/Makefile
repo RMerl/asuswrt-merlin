@@ -1,7 +1,7 @@
 #
 # Router Wireless Interface Configuration Utility Makefile
 #
-# Copyright (C) 2012, Broadcom Corporation
+# Copyright (C) 2013, Broadcom Corporation
 # All Rights Reserved.
 # 
 # This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,12 +9,12 @@
 # or duplicated in any form, in whole or in part, without the prior
 # written permission of Broadcom Corporation.
 #
-# $Id: Makefile 401201 2013-05-09 03:06:42Z $
+# $Id: Makefile 382650 2013-02-03 04:37:57Z $
 #
 
 include $(SRCBASE)/router/.config
 
-CFLAGS	+= -I. -I$(TOP)/shared -I$(SRCBASE)/include -Wall
+CFLAGS	+= -I. -I$(TOP)/shared -I$(SRCBASE)/include -I$(SRCBASE)/common/include -Wall
 CFLAGS	+= $(WLAN_ComponentIncPath)
 #CFLAGS	+= -g -DDEBUG
 CFLAGS	+= -s
@@ -30,14 +30,11 @@ ifeq ($(RTCONFIG_QTN),y)
 LDFLAGS += -L$(TOP)/libqcsapi_client -lqcsapi_client
 endif
 
-OBJS := wlconf.o
+vpath %.c $(SRCBASE)/shared $(WLAN_ComponentSrcDirs)
 
-ifeq ($(wildcard $(SRCBASE)/wlconf$(BCMEX)/*.c),)
-all:
-	-cp -f prebuilt/wlconf wlconf
-else
+OBJS := wlconf.o bcmwifi_channels.o
+
 all: wlconf
-endif
 
 clean:
 	rm -f *.o wlconf

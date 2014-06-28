@@ -29,10 +29,10 @@
 #include "log.h"
 
 static FILE *log_fp = NULL;
-static int default_log_level = E_WARN;
+static const int _default_log_level = E_WARN;
 int log_level[L_MAX];
 
-char *facility_name[] = {
+const char *facility_name[] = {
 	"general",
 	"artwork",
 	"database",
@@ -45,7 +45,7 @@ char *facility_name[] = {
 	0
 };
 
-char *level_name[] = {
+const char *level_name[] = {
 	"off",					// E_OFF
 	"fatal",				// E_FATAL
 	"error",				// E_ERROR
@@ -63,60 +63,58 @@ log_close(void)
 		fclose(log_fp);
 }
 
+int find_matching_name(const char* str, const char* names[]) {
+	if (str == NULL) return -1;
+
+	const char* start = strpbrk(str, ",=");
+	int level, c = (start != NULL) ? start - str : strlen(str);
+	for (level = 0; names[level] != 0; level++) {
+		if (!(strncasecmp(names[level], str, c)))
+			return level;
+	}
+	return -1;
+}
+
 int
 log_init(const char *fname, const char *debug)
 {
 	int i;
 	FILE *fp;
-	short int log_level_set[L_MAX];
+
+	int level = find_matching_name(debug, level_name);
+	int default_log_level = (level == -1) ? _default_log_level : level;
+
+	for (i=0; i<L_MAX; i++)
+		log_level[i] = default_log_level;
 
 	if (debug)
 	{
-		const char *rhs, *lhs, *nlhs, *p;
-		int n;
+		const char *rhs, *lhs, *nlhs;
 		int level, facility;
-		memset(&log_level_set, 0, sizeof(log_level_set));
+
 		rhs = nlhs = debug;
 		while (rhs && (rhs = strchr(rhs, '='))) {
 			rhs++;
-			p = strchr(rhs, ',');
-			n = p ? p - rhs : strlen(rhs);
-			for (level=0; level_name[level]; level++) {
-				if (!(strncasecmp(level_name[level], rhs, n)))
-					break;
-			}
-			lhs = nlhs;
-			rhs = nlhs = p;
-			if (!(level_name[level])) {
-				// unknown level
+			level = find_matching_name(rhs, level_name);
+			if (level == -1) {
+				DPRINTF(E_WARN, L_GENERAL, "unknown level in debug string: %s", debug);
 				continue;
 			}
+
+			lhs = nlhs;
+			rhs = nlhs = strchr(rhs, ',');
 			do {
 				if (*lhs==',') lhs++;
-				p = strpbrk(lhs, ",=");
-				n = p ? p - lhs : strlen(lhs);
-				for (facility=0; facility_name[facility]; facility++) {
-					if (!(strncasecmp(facility_name[facility], lhs, n)))
-						break;
-				}
-				if ((facility_name[facility])) {
+				facility = find_matching_name(lhs, facility_name);
+				if (facility == -1) {
+					DPRINTF(E_WARN, L_GENERAL, "unknown debug facility in debug string: %s", debug);
+				} else {
 					log_level[facility] = level;
-					log_level_set[facility] = 1;
 				}
-				lhs = p;
+
+				lhs = strpbrk(lhs, ",=");
 			} while (*lhs && *lhs==',');
 		}
-		for (i=0; i<L_MAX; i++)
-		{
-			if( !log_level_set[i] )
-			{
-				log_level[i] = default_log_level;
-			}
-		}
-	}
-	else {
-		for (i=0; i<L_MAX; i++)
-			log_level[i] = default_log_level;
 	}
 
 	if (!fname)					// use default i.e. stdout

@@ -105,7 +105,8 @@ struct driver_info {
  * Affects statistic (counters) and short packet handling.
  */
 #define FLAG_MULTI_PACKET	0x2000
-#define FLAG_RX_ASSEMBLE	0x4000	/* rx packets may span >1 frames */
+//#define FLAG_RX_ASSEMBLE	0x4000	/* rx packets may span >1 frames */
+#define FLAG_NOARP		0x8000  /* device can't do ARP */
 
 	/* init device ... can sleep, or cause probe() failure */
 	int	(*bind)(struct usbnet *, struct usb_interface *);
@@ -204,8 +205,7 @@ struct skb_data {	/* skb->cb is one of these */
 
 extern int usbnet_open(struct net_device *net);
 extern int usbnet_stop(struct net_device *net);
-extern netdev_tx_t usbnet_start_xmit(struct sk_buff *skb,
-				     struct net_device *net);
+extern netdev_tx_t usbnet_start_xmit(struct sk_buff *skb, struct net_device *net);
 extern void usbnet_tx_timeout(struct net_device *net);
 extern int usbnet_change_mtu(struct net_device *net, int new_mtu);
 

@@ -1,7 +1,7 @@
 #
 # Linux acsd Makefile
 #
-# Copyright (C) 2013, Broadcom Corporation
+# Copyright (C) 2014, Broadcom Corporation
 # All Rights Reserved.
 # 
 # This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -40,9 +40,9 @@ OBJS += acs_dfsr.o chan_utils.o
 install: all
 	install -d $(INSTALLDIR)/usr/sbin/
 	install acsd $(INSTALLDIR)/usr/sbin/
-	#install acs_cli $(INSTALLDIR)/usr/sbin/
+#	install acs_cli $(INSTALLDIR)/usr/sbin/
 	$(STRIP) $(INSTALLDIR)/usr/sbin/acsd
-	#$(STRIP) $(INSTALLDIR)/usr/sbin/acs_cli
+#	$(STRIP) $(INSTALLDIR)/usr/sbin/acs_cli
 
 clean:
 	rm -f *.o *.a *.so acsd acs_cli

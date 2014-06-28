@@ -61,8 +61,12 @@ static void ntp_service()
 		if (is_routing_enabled())
 			notify_rc("restart_upnp");
 #ifdef RTCONFIG_IPV6
-		if (get_ipv6_service() != IPV6_DISABLED)
-			notify_rc("restart_radvd");
+		if (get_ipv6_service() != IPV6_DISABLED) {
+			if (get_ipv6_service() != IPV6_NATIVE_DHCP)
+				notify_rc("restart_radvd");
+			else
+				notify_rc("restart_rdnssd");
+		}
 #endif
 #ifdef RTCONFIG_DISK_MONITOR
 			notify_rc("restart_diskmon");

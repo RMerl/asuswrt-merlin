@@ -31,12 +31,12 @@ typedef enum {
 	ICONV_FATAL
 } iconv_result;
 
+#ifdef HAVE_ICONV
 static iconv_result
 do_iconv(const char* to_ces, const char* from_ces,
-	 char *inbuf,  size_t inbytesleft,
+	 ICONV_CONST char *inbuf,  size_t inbytesleft,
 	 char *outbuf_orig, size_t outbytesleft_orig)
 {
-#ifdef HAVE_ICONV
 	size_t rc;
 	iconv_result ret = ICONV_OK;
 
@@ -65,10 +65,16 @@ do_iconv(const char* to_ces, const char* from_ces,
 	iconv_close(cd);
 
 	return ret;
-#else // HAVE_ICONV
-	return ICONV_FATAL;
-#endif // HAVE_ICONV
 }
+#else // HAVE_ICONV
+static iconv_result
+do_iconv(const char* to_ces, const char* from_ces,
+	 char *inbuf,  size_t inbytesleft,
+	 char *outbuf_orig, size_t outbytesleft_orig)
+{
+	return ICONV_FATAL;
+}
+#endif // HAVE_ICONV
 
 #define N_LANG_ALT 8
 struct {

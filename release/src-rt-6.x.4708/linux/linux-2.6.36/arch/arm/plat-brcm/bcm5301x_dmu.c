@@ -428,10 +428,17 @@ static void __init soc_clocks_init(void * __iomem cru_regs_base,
 		writel(val, reg);
 
 		/* Change CH0_MDIV to 8 */
+		/* After changing the CH0_MDIV to 8, the customer has been reporting that
+		 * there are differences between input throughput vs. output throughput.
+		 * The output throughput is slightly lower (927.537 mbps input rate vs. 927.49
+		 * mbps output rate).  Below is the solution to fix it.
+		 * 1. Change the oscillator on WLAN reference board from 25.000 to 25.001
+		 * 2. Change the CH0_MDIV to 7
+		 */
 		reg = clk_genpll.regs_base + 0x18;
 		val = readl(reg);
 		val &= ~((u32)0xff << 16);
-		val |= ((u32)0x8 << 16);
+		val |= ((u32)0x7 << 16);
 		writel(val, reg);
 
 		/* Load Enable CH0 */

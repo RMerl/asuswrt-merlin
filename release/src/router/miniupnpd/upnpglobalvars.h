@@ -35,7 +35,6 @@ extern time_t startup_time;
 extern unsigned long int min_lifetime;
 extern unsigned long int max_lifetime;
 
-
 /* runtime boolean flags */
 extern int runtime_flags;
 #define LOGPACKETSMASK		0x0001
@@ -57,6 +56,9 @@ extern int runtime_flags;
 #ifdef ENABLE_6FC_SERVICE
 #define IPV6FCFWDISABLEDMASK		0x0100
 #define IPV6FCINBOUNDDISALLOWEDMASK	0x0200
+#endif
+#ifdef ENABLE_PCP
+#define PCP_ALLOWTHIRDPARTYMASK	0x0400
 #endif
 
 #define SETFLAG(mask)	runtime_flags |= mask
@@ -121,7 +123,7 @@ extern const char * tag;
 extern const char * miniupnpd_nat_chain;
 extern const char * miniupnpd_peer_chain;
 extern const char * miniupnpd_forward_chain;
-#ifdef ENABLE_6FC_SERVICE
+#ifdef ENABLE_UPNPPINHOLE
 extern const char * miniupnpd_v6_filter_chain;
 #endif
 #endif
@@ -138,6 +140,10 @@ extern struct lan_addr_list lan_addrs;
 #ifdef ENABLE_IPV6
 /* ipv6 address used for HTTP */
 extern char ipv6_addr_for_http_with_brackets[64];
+
+/* address used to bind local services */
+extern struct in6_addr ipv6_bind_addr;
+
 #endif
 
 extern const char * minissdpdsocketpath;

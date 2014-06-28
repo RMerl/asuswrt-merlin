@@ -270,20 +270,20 @@ reltime(unsigned int seconds, char *cs)
 //2008.08 magic{
 void websRedirect(webs_t wp, char_t *url)
 {
-	//printf("Redirect to : %s\n", url);
 	websWrite(wp, T("<html><head>\r\n"));
-	if(check_if_file_exist(url)){
-		
+
+	if(strchr(url, '>') || strchr(url, '<'))
+	{
+		websWrite(wp, T("<meta http-equiv=\"refresh\" content=\"0; url=http://%s\">\r\n"), gethost());
+	}
+	else
+	{
 #ifdef RTCONFIG_HTTPS
 		if(do_ssl)
 			websWrite(wp, T("<meta http-equiv=\"refresh\" content=\"0; url=https://%s/%s\">\r\n"), gethost(), url);
 		else
 #endif
 		websWrite(wp, T("<meta http-equiv=\"refresh\" content=\"0; url=http://%s/%s\">\r\n"), gethost(), url);
-	}
-	else{
-		_dprintf("[httpd] Requested file not found!\n");
-		websWrite(wp, T("<meta http-equiv=\"refresh\" content=\"0; url=http://%s\">\r\n"), gethost());
 	}
 
 	websWrite(wp, T("<meta http-equiv=\"Content-Type\" content=\"text/html\">\r\n"));
@@ -1340,8 +1340,11 @@ void copy_index_to_unindex(char *prefix, int unit, int subunit)
 	}
 }
 
-#define NVRAM_MODIFIED_BIT 	1
-#define NVRAM_MODIFIED_WL_BIT 	2
+#define NVRAM_MODIFIED_BIT		1
+#define NVRAM_MODIFIED_WL_BIT		2
+#ifdef RTCONFIG_QTN
+#define NVRAM_MODIFIED_WL_QTN_BIT	4
+#endif
 
 int validate_instance(webs_t wp, char *name)
 {
@@ -1373,7 +1376,10 @@ int validate_instance(webs_t wp, char *name)
 				found = NVRAM_MODIFIED_BIT|NVRAM_MODIFIED_WL_BIT;
 #ifdef RTCONFIG_QTN
 				if (!strncmp(tmp, "wl1", 3))
+				{
 					rpc_parse_nvram(tmp, value);
+					found |= NVRAM_MODIFIED_WL_QTN_BIT;
+				}
 #endif
 			}
 		}
@@ -1441,6 +1447,9 @@ static int validate_apply(webs_t wp) {
 	char tmp[3500], prefix[32];
 	int unit=-1, subunit=-1;
 	int nvram_modified = 0;
+#ifdef RTCONFIG_QTN
+	int nvram_modified_qtn = 0;
+#endif
 	int nvram_modified_wl = 0;
 	int acc_modified = 0;
 	int ret;
@@ -1463,6 +1472,9 @@ static int validate_apply(webs_t wp) {
 			if((ret=validate_instance(wp, name))) {
 				if(ret&NVRAM_MODIFIED_BIT) nvram_modified = 1;
 				if(ret&NVRAM_MODIFIED_WL_BIT) nvram_modified_wl = 1;
+#ifdef RTCONFIG_QTN
+				if(ret&NVRAM_MODIFIED_WL_QTN_BIT) nvram_modified_qtn = 1;
+#endif
 			}
 		}
 		else {
@@ -1512,8 +1524,11 @@ static int validate_apply(webs_t wp) {
 					_dprintf("set %s=%s\n", tmp, value);
 
 #ifdef RTCONFIG_QTN
-					if ((unit == 1) && (subunit <= 0))
+					if (unit == 1)
+					{
 						rpc_parse_nvram(tmp, value);
+						nvram_modified_qtn = 1;
+					}
 #endif
 				}
 			}
@@ -1664,6 +1679,11 @@ static int validate_apply(webs_t wp) {
 			nvram_set("w_Setting", "1");
 		nvram_commit();
 	}
+
+#ifdef RTCONFIG_QTN
+	if (nvram_modified_qtn)
+		rpc_qcsapi_bootcfg_commit();
+#endif
 
 	return nvram_modified;
 }
@@ -2204,6 +2224,20 @@ static int ej_update_variables(int eid, webs_t wp, int argc, char_t **argv) {
 		}
 
 		if(do_apply || has_modify) {
+#ifdef RTCONFIG_QTN
+			/* early stop wps for QTN */
+			if (strcmp(action_script, "restart_wireless") == 0
+			  ||strcmp(action_script, "restart_net") == 0)
+			{
+				if (nvram_get_int("qtn_ready"))
+				{
+					rpc_qcsapi_wifi_disable_wps(WIFINAME, 1);
+
+					if (nvram_get_int("wps_enable"))
+					rpc_qcsapi_wifi_disable_wps(WIFINAME, !nvram_get_int("wps_enable"));
+				}
+			}
+#endif
 			if (strlen(action_script) > 0) {
 				memset(notify_cmd, 0, 32);
 				if(strstr(action_script, "_wan_if"))
@@ -2224,10 +2258,6 @@ static int ej_update_variables(int eid, webs_t wp, int argc, char_t **argv) {
 				else
 					websWrite(wp, "<script>restart_needed_time(%d);</script>\n", atoi(action_wait) + 5);
 			}
-			else
-#elif defined(RTCONFIG_QTN)
-			if (strcmp(action_script, "restart_wireless") == 0)
-				rpc_qcsapi_bootcfg_commit();
 			else
 #endif
 			websWrite(wp, "<script>restart_needed_time(%d);</script>\n", atoi(action_wait));
@@ -5230,6 +5260,15 @@ wps_finish:
 
 		websRedirect(wp, current_url);
 	}
+	else if (!strcmp(action_mode, "change_dslx_transmode"))
+	{
+		action_para = websGetVar(wp, "dsltmp_transmode", "");
+
+		if(action_para)
+			nvram_set("dsltmp_transmode", action_para);
+
+		websRedirect(wp, current_url);
+	}
 	else if (!strcmp(action_mode, "change_lan_unit"))
 	{
 		action_para = websGetVar(wp, "lan_unit","");
@@ -5241,7 +5280,6 @@ wps_finish:
 	}
 	else if (!strcmp(action_mode, "refresh_networkmap"))
 	{
-		printf("@@@ Signal to networkmap!!!\n");
 		doSystem("killall -%d networkmap", SIGUSR1);
 
 		websRedirect(wp, current_url);
@@ -5660,20 +5698,34 @@ do_upgrade_post(char *url, FILE *stream, int len, char *boundary)
 	fclose(fifo);
 	fifo = NULL;
 #ifdef RTCONFIG_DSL
-// unclear logic
-//	if(dsl_check_imagefile_str(upload_fifo))
-//	{
-		// 1 = valid
-		// 0 = invalid
-		int ret_val_sep;
-		ret_val_sep = separate_tc_fw_from_trx();
-		// should router update tc fw?
-		if (ret_val_sep)
-		{
-			if(check_tc_firmware_crc()) /* return 0 when pass */
-				goto err;
-		}
-//	}
+
+	int ret_val_sep;
+#ifdef RTCONFIG_RALINK
+	ret_val_sep = separate_tc_fw_from_trx();	//TODO: merge truncated_trx
+
+	// should router update tc fw?
+	if (ret_val_sep)
+	{
+		if(check_tc_firmware_crc()) /* return 0 when pass */
+			goto err;
+	}
+	//TODO: if merge truncated_trx() to separate_tc_fw_from_trx()
+	//then all use check_imagefile(upload_fifo)
+#else
+	ret_val_sep = separate_tc_fw_from_trx(upload_fifo);
+
+	// should router update tc fw?
+	if (ret_val_sep)
+	{
+		if(check_tc_firmware_crc()) /* return 0 when pass */
+			goto err;
+		nvram_set_int("reboot_time", nvram_get_int("reboot_time")+100);
+	}
+
+	if(!check_imagefile(upload_fifo)) /* 0: illegal image; 1: legal image */
+		goto err;
+#endif
+
 #else
 	if(!check_imagefile(upload_fifo)) /* 0: illegal image; 1: legal image */
 		goto err;
@@ -5699,6 +5751,7 @@ do_upgrade_cgi(char *url, FILE *stream)
 	if (upgrade_err == 0)
 	{
 #ifdef RTCONFIG_DSL
+#ifdef RTCONFIG_RALINK
 		int ret_val_trunc;
 		ret_val_trunc = truncate_trx();
 		printf("truncate_trx ret=%d\n",ret_val_trunc);
@@ -5720,6 +5773,7 @@ do_upgrade_cgi(char *url, FILE *stream)
 				// it will call rc_service automatically for firmware upgrading
 			}
 		}
+#endif
 #endif
 #if !defined(RTCONFIG_SMALL_FW_UPDATE)
 		if (!stop_upgrade_once)
@@ -6521,6 +6575,7 @@ struct except_mime_handler except_mime_handlers[] = {
 	{ "general.js", MIME_EXCEPTION_NOAUTH_FIRST|MIME_EXCEPTION_NORESETTIME},
 	{ "help.js", MIME_EXCEPTION_NOAUTH_FIRST|MIME_EXCEPTION_NORESETTIME},
 	{ "start_autodet.asp", MIME_EXCEPTION_NOAUTH_FIRST|MIME_EXCEPTION_NORESETTIME},
+	{ "start_dsl_autodet.asp", MIME_EXCEPTION_NOAUTH_FIRST|MIME_EXCEPTION_NORESETTIME},
 	{ "start_apply.htm", MIME_EXCEPTION_NOAUTH_FIRST|MIME_EXCEPTION_NORESETTIME},
 	{ "start_apply2.htm", MIME_EXCEPTION_NOAUTH_FIRST|MIME_EXCEPTION_NORESETTIME},
 	{ "setting_lan.htm", MIME_EXCEPTION_NOAUTH_FIRST|MIME_EXCEPTION_NORESETTIME},
@@ -8001,11 +8056,11 @@ int ej_set_account_all_folder_permission(int eid, webs_t wp, int argc, char **ar
 }
 
 int ej_apps_fsck_ret(int eid, webs_t wp, int argc, char **argv){
+#ifdef RTCONFIG_DISK_MONITOR
 	disk_info_t *disk_list, *disk_info;
 	partition_info_t *partition_info;
 	FILE *fp;
 
-#ifdef RTCONFIG_DISK_MONITOR
 	disk_list = read_disk_data();
 	if(disk_list == NULL){
 		websWrite(wp, "[]");
@@ -8988,6 +9043,14 @@ int ej_bandwidth(int eid, webs_t wp, int argc, char_t **argv)
 
 //Ren.B
 #ifdef RTCONFIG_DSL
+
+// 2014.02 Viz {
+int start_dsl_autodet(int eid, webs_t wp, int argc, char **argv) {
+	notify_rc("start_dsl_autodet");
+	return 0;
+}
+// }
+
 int ej_spectrum(int eid, webs_t wp, int argc, char_t **argv)
 {
 	int sig;
@@ -9414,6 +9477,7 @@ struct ej_handler ej_handlers[] = {
 	{ "wl_extent_channel", ej_wl_extent_channel},
 #endif
 #ifdef RTCONFIG_DSL
+	{ "start_dsl_autodet", start_dsl_autodet},
 	{ "get_isp_list", ej_get_isp_list},
 	{ "get_DSL_WAN_list", ej_get_DSL_WAN_list},
 #endif

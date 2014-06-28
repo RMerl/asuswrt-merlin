@@ -51,6 +51,10 @@ function initial(){
 	$("legend").innerHTML = code1 + code2;
 
 	if(based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || based_modelid == "DSL-AC68U"){
+
+		if ('<% sysinfo("cfe_version"); %>' >= "1.0.1.6") {
+			$("turbocompat").style.display = "";
+		}
 		document.form.selLED.onchange = function(){
 			document.form.btn_led_mode.value = 0;
 			document.form.selCLK.checked = false;
@@ -181,7 +185,6 @@ function getCookie(c_name)
 									  <div class="formfonttitle"><#menu5_6_adv#> - Performance tuning</div>
 									  <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 									  <!--div class="formfontdesc"><#PerformaceTuning_desc#></div-->
-									  <div class="formfontdesc">Fine tune the radio power to enhance/decrease the coverage and change the cooler spin mode.Please note: If the output power is increased for long distance signal transmission, the client also need to use high power card to get the best performance.</div>
 									</td>
 								</tr>
 
@@ -244,7 +247,9 @@ function getCookie(c_name)
 												<td colspan="2">LED button Behavior</td>
 											</tr>
 											</thead>
-											
+											<tr style="display:none;" id="turbocompat">
+												<td colspan="2"><span>Note: Your router bootloader version is incompatible with Turbo (overclock) mode.</span></td>
+											</tr>
 											<tr>
 												<th style="height:120px"><div align="center"><img src="/images/position.png"></div></th>
 												<td>

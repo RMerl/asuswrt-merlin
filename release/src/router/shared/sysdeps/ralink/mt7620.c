@@ -47,7 +47,7 @@ enum {
 	gpio_out,
 };
 
-#if defined(RTN14U) || defined(RTAC51U) || defined(RTN11P)
+#if defined(RTN14U) || defined(RTAC51U)
 /// RT-N14U mapping
 enum {
 	WAN_PORT=0,
@@ -58,18 +58,6 @@ enum {
 	P5_PORT=5,
 	CPU_PORT=6,
 	P7_PORT=7,
-};
-//0:WAN, 1:LAN, lan_wan_partition[][0] is port0
-static const int lan_wan_partition[9][NR_WANLAN_PORT] = {
-	/* P0, P1, P2, P3, P4 = W, L1, L2, L3, L4 */
-	{0,1,1,1,1}, //WLLLL
-	{0,0,1,1,1}, //WWLLL
-	{0,1,0,1,1}, //WLWLL
-	{0,1,1,0,1}, //WLLWL
-	{0,1,1,1,0}, //WLLLW
-	{0,0,0,1,1}, //WWWLL
-	{0,1,1,0,0}, //WLLWW
-	{1,1,1,1,1}  //ALL
 };
 #elif defined(RTAC52U)
 /// RT-AC52U mapping
@@ -83,19 +71,32 @@ enum {
 	CPU_PORT=6,
 	P7_PORT=7,
 };
-//0:WAN, 1:LAN, lan_wan_partition[][0] is port0
-static const int lan_wan_partition[9][NR_WANLAN_PORT] = {
-	/* P0, P1, P2, P3, P4 = W, L4, L3, L1, L2 */
-	{0,1,1,1,1}, //WLLLL
-	{0,1,1,0,1}, //WLLWL  port3	--> port1
-	{0,1,1,1,0}, //WLLLW  port4	--> port2
-	{0,1,0,1,1}, //WLWLL  port2	--> port3
-	{0,0,1,1,1}, //WWLLL  port1	--> port4
-	{0,1,1,0,0}, //WLLWW  port3+4	--> port1+2
-	{0,0,0,1,1}, //WWWLL  port1+2	--> port3+4
-	{1,1,1,1,1}, //ALL
+#elif defined(RTN11P)
+/// RT-N11P mapping
+enum {
+	WAN_PORT=4,
+	LAN1_PORT=3,
+	LAN2_PORT=2,
+	LAN3_PORT=1,
+	LAN4_PORT=0,
+	P5_PORT=5,
+	CPU_PORT=6,
+	P7_PORT=7,
 };
 #endif
+
+#define BIT(n)	(1 << (n))
+/* 0: LAN, 1:WAN or STB */
+static const int lan_wan_partition[] = {
+	BIT( WAN_PORT ),					// WAN
+	BIT( WAN_PORT ) | BIT( LAN1_PORT ),			// WAN + LAN1
+	BIT( WAN_PORT ) | BIT( LAN2_PORT ),			// WAN + LAN2
+	BIT( WAN_PORT ) | BIT( LAN3_PORT ),			// WAN + LAN3
+	BIT( WAN_PORT ) | BIT( LAN4_PORT ),			// WAN + LAN4
+	BIT( WAN_PORT ) | BIT( LAN1_PORT ) | BIT( LAN2_PORT ),	// WAN + LAN1+2
+	BIT( WAN_PORT ) | BIT( LAN3_PORT ) | BIT( LAN4_PORT ),	// WAN + LAN3+4
+	0,							// ALL LAN
+};
 
 /* Final model-specific LAN/WAN/WANS_LAN partition definitions.
  * bit0: P0, bit1: P1, bit2: P2, bit3: P3, bit4: P4
@@ -489,7 +490,7 @@ static void get_mt7620_esw_phy_linkStatus(unsigned int mask, unsigned int *linkS
 
 static void build_wan_lan_mask(int stb)
 {
-	int i, unit;
+	int unit;
 	int wanscap_lan = get_wans_dualwan() & WANSCAP_LAN;
 	int wans_lanport = nvram_get_int("wans_lanport");
 	int sw_mode = nvram_get_int("sw_mode");
@@ -508,19 +509,14 @@ static void build_wan_lan_mask(int stb)
 	}
 
 	lan_mask = wan_mask = wans_lan_mask = 0;
-	for (i = 0; i < NR_WANLAN_PORT; ++i) {
-		switch (lan_wan_partition[stb][i]) {
-		case 0:
-			wan_mask |= 1U << i;
-			break;
-		case 1:
-			lan_mask |= 1U << i;
-			break;
-		default:
-			_dprintf("%s: Unknown LAN/WAN port definition. (stb %d i %d val %d)\n",
-				__func__, stb, i, lan_wan_partition[stb][i]);
-		}
+	if(stb < 0 || stb >= ARRAY_SIZE(lan_wan_partition))
+	{
+		_dprintf("%s: invalid partition index: %d\n", __func__, stb);
+		stb = 0;
 	}
+
+	wan_mask = lan_wan_partition[stb];
+	lan_mask = ((1<<NR_WANLAN_PORT) -1) & ~lan_wan_partition[stb];
 
 	//DUALWAN
 	if (wanscap_lan) {

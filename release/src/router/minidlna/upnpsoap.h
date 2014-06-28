@@ -33,9 +33,6 @@
 #define PV_NAMESPACE \
 	" xmlns:pv=\"http://www.pv.com/pvns/\""
 
-#define FLAG_FREE_OBJECT_ID     0x40000000
-#define FLAG_ROOT_CONTAINER     0x80000000
-
 struct Response
 {
 	struct string_s *str;

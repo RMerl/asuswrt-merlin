@@ -672,6 +672,8 @@ static void calc(void)
         char traffic[64];
 #endif
 
+	rx2 = 0;
+	tx2 = 0;
 	now = time(0);
 	exclude = nvram_safe_get("rstats_exclude");
 

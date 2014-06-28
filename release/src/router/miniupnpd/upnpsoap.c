@@ -772,12 +772,23 @@ DeletePortMappingRange(struct upnphttp * h, const char * action)
 		return;
 	}
 
+	syslog(LOG_INFO, "%s: deleting external ports: %hu-%hu, protocol: %s",
+	       action, startport, endport, protocol);
+
 	port_list = upnp_get_portmappings_in_range(startport, endport,
 	                                           protocol, &number);
+	if(number == 0)
+	{
+		SoapError(h, 730, "PortMappingNotFound");
+		ClearNameValueList(&data);
+		return;
+	}
+
 	for(i = 0; i < number; i++)
 	{
 		r = upnp_delete_redirection(port_list[i], protocol);
-		/* TODO : check return value for errors */
+		syslog(LOG_INFO, "%s: deleting external port: %hu, protocol: %s: %s",
+		       action, port_list[i], protocol, r < 0 ? "failed" : "ok");
 	}
 	free(port_list);
 	BuildSendAndCloseSoapResp(h, resp, sizeof(resp)-1);
@@ -1494,7 +1505,7 @@ AddPinhole(struct upnphttp * h, const char * action)
 	 * InternalClient and Protocol are the same than an existing pinhole,
 	 * but LeaseTime is different, the device MUST extend the existing
 	 * pinhole's lease time and return the UniqueID of the existing pinhole. */
-	r = upnp_add_inboundpinhole(rem_host, rport, int_ip, iport, proto, ltime, &uid);
+	r = upnp_add_inboundpinhole(rem_host, rport, int_ip, iport, proto, "IGD2 pinhole", ltime, &uid);
 
 	switch(r)
 	{
@@ -1559,7 +1570,9 @@ UpdatePinhole(struct upnphttp * h, const char * action)
 	 * it doesn't have access to, because of its public access */
 	n = upnp_get_pinhole_info(uid, NULL, 0, NULL,
 	                          iaddr, sizeof(iaddr), &iport,
-	                          NULL, NULL, NULL);
+	                          NULL, /* proto */
+	                          NULL, 0, /* desc, desclen */
+	                          NULL, NULL);
 	if (n >= 0)
 	{
 		if(PinholeVerification(h, iaddr, iport) <= 0)
@@ -1681,7 +1694,9 @@ DeletePinhole(struct upnphttp * h, const char * action)
 	 * it doesn't have access to, because of its public access */
 	n = upnp_get_pinhole_info(uid, NULL, 0, NULL,
 	                          iaddr, sizeof(iaddr), &iport,
-	                          &proto, &leasetime, NULL);
+	                          &proto,
+	                          NULL, 0, /* desc, desclen */
+	                          &leasetime, NULL);
 	if (n >= 0)
 	{
 		if(PinholeVerification(h, iaddr, iport) <= 0)
@@ -1748,7 +1763,9 @@ CheckPinholeWorking(struct upnphttp * h, const char * action)
 	r = upnp_get_pinhole_info(uid,
 	                          NULL, 0, NULL,
 	                          iaddr, sizeof(iaddr), &iport,
-	                          NULL, NULL, &packets);
+	                          NULL, /* proto */
+	                          NULL, 0, /* desc, desclen */
+	                          NULL, &packets);
 	if (r >= 0)
 	{
 		if(PinholeVerification(h, iaddr, iport) <= 0)
@@ -1807,7 +1824,9 @@ GetPinholePackets(struct upnphttp * h, const char * action)
 	 * it doesn't have access to, because of its public access */
 	n = upnp_get_pinhole_info(uid, NULL, 0, NULL,
 	                          iaddr, sizeof(iaddr), &iport,
-	                          &proto, &leasetime, &packets);
+	                          &proto,
+	                          NULL, 0, /* desc, desclen */
+	                          &leasetime, &packets);
 	if (n >= 0)
 	{
 		if(PinholeVerification(h, iaddr, iport)<=0)
@@ -2014,7 +2033,7 @@ ExecuteSoapAction(struct upnphttp * h, const char * action, int n)
 		while(soapMethods[i].methodName)
 		{
 			len = strlen(soapMethods[i].methodName);
-			if(strncmp(p, soapMethods[i].methodName, len) == 0)
+			if((len == methodlen) && memcmp(p, soapMethods[i].methodName, len) == 0)
 			{
 #ifdef DEBUG
 				syslog(LOG_DEBUG, "Remote Call of SoapMethod '%s'\n",

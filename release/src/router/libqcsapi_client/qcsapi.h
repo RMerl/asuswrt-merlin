@@ -959,6 +959,7 @@ typedef enum {
 	qcsapi_specific_scan,
 	qcsapi_GI_probing,
 	qcsapi_GI_fixed,
+	qcsapi_stbc,
 	qcsapi_nosuch_option = 0
 } qcsapi_option_type;
 
@@ -1115,6 +1116,10 @@ typedef enum
 	 */
 	qcsapi_wps_ap_setup_locked,
 	/**
+	 * wps vendor for specific action in WPS process
+	 */
+	qcsapi_wps_vendor_spec,
+	/**
 	 * The label pin of the ap which is configured in the hostapd.conf
 	 */
 	qcsapi_wps_ap_pin,
@@ -1122,6 +1127,15 @@ typedef enum
 	 * flag to force broadcast uuid
 	 */
 	qcsapi_wps_force_broadcast_uuid,
+	/**
+	 * decide the action after ap pin failure occur
+	 */
+	qcsapi_wps_ap_pin_fail_method,
+	/**
+	 * max retry count of ap pin fail in auto_lockdown mode
+	 */
+	qcsapi_wps_auto_lockdown_max_retry,
+
 	/**
 	 * Last configuration error of WPS registrar
 	 */
@@ -3222,6 +3236,29 @@ extern int	qcsapi_restore_default_config( int flag );
 /*following functions in mygroup4: Network Interface APIs*/
 
 /**
+ * \brief Stores IP address in a persistent storage.
+ *
+ * Stores IP address of the primary bridge interface in a file system. It will be used on reboot
+ * or on stateless initialization after startprod invocation.
+ *
+ * \param ipaddr IPv4 address
+ * \param netmask Network mask
+ *
+ * \return 0 if the call succeeded.
+ * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi store_ipaddr ipaddr/netmask</c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ *
+ * See @ref mysection4_1_4 "section here" for more details on error codes and error messages.
+ */
+extern int qcsapi_store_ipaddr(qcsapi_unsigned_int ipaddr, qcsapi_unsigned_int netmask);
+
+/**
  * @brief Enable or disable an interface.
  *
  * Enable (or disable) an interface. Use <c>qcsapi_interface_get_status</c> to establish
@@ -3563,6 +3600,26 @@ extern int	qcsapi_wifi_reload_in_mode( const char *ifname, const qcsapi_wifi_mod
  * Unless an error occurs, the output will be the string <c>complete</c>.
  */
 extern int	qcsapi_wifi_rfenable( const char *ifname, const qcsapi_unsigned_int onoff );
+
+/**
+ * \brief Start stateless board
+ *
+ * This API call triggers initial configuration of connected stateless board after all the 
+ * parameters have been set.
+ *
+ * \return 0 on success.
+ * \return A negative value if an error occurred.  See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \warning This API relies on the script '/scripts/start-prod' being present on the board to work.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi startprod \<WiFi interface\></c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int	qcsapi_wifi_startprod( void );
 
 /**
  * \brief Get the current radio status.
@@ -4993,6 +5050,28 @@ extern int qcsapi_wifi_set_bw_power(const char *ifname,
 			const int power_20M,
 			const int power_40M,
 			const int power_80M);
+/**
+ * \brief Set the transmit power for 20/40/80MHz bandwidths.
+ *
+ * This API call sets the current transmit powers for a particular channel.
+ * The TX powers are in dBm unit.
+ *
+ * \param ifname \wifi0
+ * \param the_channel the channel for which the tx power is set.
+ * \param power_20M tx power for 20MHz bandwidth to be set.
+ * \param power_40M tx power for 40MHz bandwidth to be set.
+ * \param power_80M tx power for 80MHz bandwidth to be set.
+ *
+ * \note This API is only available on the primary WiFi interface.
+ *
+ * \return negative value on error, 0 on success.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi set_bw_power \<WiFi interface\> \<channel\> \<power_20M\> \<power_40M\> \<power_80M\></c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>'.
+ */
 extern int qcsapi_regulatory_set_bw_power(const char *ifname,
 			const qcsapi_unsigned_int the_channel,
 			const int power_20M,
@@ -5984,6 +6063,56 @@ extern int qcsapi_wifi_get_auth_state(const char *ifname,
 			char *mac_addr,
 			int *auth_state);
 
+/**
+ * \brief Set security defer mode
+ *
+ * This API call is used to set the current hostapd/wpa_supplicant configuration mode for a given interface
+ *
+ * \param ifname \wifi0
+ * \param defer will indicate the  current hostapd/wpa_supplicant configuration mode 0: immediate mode 1:defer mode
+ * \note This API works only for wifi0 interface.
+ *
+ * \return >= 0 on success, < 0 on error.
+ *
+ * \callqcsapi
+ *
+ * call_qcsapi set_security_defer_mode \<wifi interface\> {0 | 1}</c>
+ */
+int qcsapi_wifi_set_security_defer_mode(const char *ifname, int defer);
+
+/**
+ * \brief Get security defer mode
+ *
+ * This API call is used to get the current hostapd/wpa_supplicant configuration mode for a given interface
+ *
+ * \param ifname \wifi0
+ * \param defer will store the  current hostapd/wpa_supplicant configuration mode 0: immediate mode 1:defer mode
+ *
+ * \note This API works only for wifi0 interface.
+ *
+ * \return >= 0 on success, < 0 on error.
+ *
+ * \call_qcsapi
+ *
+ * <c>call_qcsapi get_security_defer_mode \<wifi interface\></c>
+ */
+int qcsapi_wifi_get_security_defer_mode(const char *ifname, int *defer);
+
+/**
+ * \brief Apply security config
+ *
+ * This API call is used to configure/reconfigure the current hostapd/wpa_supplicant configration.
+ *
+ * \param ifname \wifi0
+ * \note This API works across all wifi interfaces.
+ *
+ * \return >= 0 on success, < 0 on error.
+ *
+ * \call_qcsapi
+ *
+ * <c>call_qcsapi apply_security_config \<wifi interface\></c>
+ */
+extern int qcsapi_wifi_apply_security_config(const char *ifname);
 
 /**@}*/
 
@@ -6996,7 +7125,7 @@ extern int qcsapi_wifi_show_vlan_config(string_4096 vtable);
  *
  * See @ref mysection4_1_4 "section here" for more details on error codes and error messages.
  */
-extern int qcsapi_enable_vlan_pass_through(int *enabled);
+extern int qcsapi_enable_vlan_pass_through(int enabled);
 
 /**
  * \brief Enable and disable VLAN promiscuous mode.
@@ -7019,7 +7148,7 @@ extern int qcsapi_enable_vlan_pass_through(int *enabled);
  *
  * See @ref mysection4_1_4 "section here" for more details on error codes and error messages.
  */
-extern int	qcsapi_wifi_set_vlan_promisc(int *enable);
+extern int	qcsapi_wifi_set_vlan_promisc(int enable);
 /**@}*/
 
 /*
@@ -7225,7 +7354,7 @@ extern int	qcsapi_wps_enrollee_generate_pin( const char *ifname, const qcsapi_ma
  *
  * \note this API can only be called on an AP device.
  *
- * \param ifname \wifi0
+ * \param ifname each interface in MBSS
  * \param wps_pin return parameter for containing the NULL terminated string.
  * \param force_regenerate whether to force the AP daemon (hostapd) to regenerate
  * the WPS PIN - a random PIN - for this call.
@@ -7253,7 +7382,7 @@ extern int	qcsapi_wps_get_ap_pin( const char *ifname, char *wps_pin, int force_r
  *
  * \note this API can only be called on an AP device.
  *
- * \param ifname \wifi0
+ * \param ifname each interface in MBSS
  * \param wps_pin return parameter for containing the NULL terminated string.
  *
  * \return >= 0 success, < 0 or -qcsapi_only_on_AP on error.
@@ -7272,7 +7401,7 @@ extern int	qcsapi_wps_set_ap_pin(const char *ifname, const char *wps_pin);
  *
  * \note this API can only be called on an AP device.
  *
- * \param ifname \wifi0
+ * \param ifname each interface in MBSS
  *
  * \return >= 0 success, < 0 or -qcsapi_parameter_not_found on error.
  * \callqcsapi
@@ -7282,6 +7411,26 @@ extern int	qcsapi_wps_set_ap_pin(const char *ifname, const char *wps_pin);
  * Unless an error occurs, the output will be the string <c>complete</c>.
  */
 extern int	qcsapi_wps_save_ap_pin(const char *ifname);
+
+/**
+ * \brief enable/disable ap pin function
+ *
+ * This API call is used to enable/disable external registrar
+ * configure this AP when wps state is not configured
+ *
+ * \note this API can only be called on an AP device.
+ *
+ * \param ifname each interface in MBSS
+ * \param enable
+ *
+ * \return >= 0 success, < 0 or -qcsapi_parameter_not_found on error.
+ * \callqcsapi
+ *
+ * <c>call_qcsapi enable_wps_ap_pin \<WiFi interface\> <0 | 1></c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
+extern int	qcsapi_wps_enable_ap_pin(const char *ifname, int enable);
 
 /**
  * @brief Generate a new PIN randomly
@@ -8714,6 +8863,25 @@ extern int	qcsapi_wifi_get_hw_noise_per_association(
  * Some listed regions may be synonyms, e.g. "Europe" and "eu" are synonyms as are "USA" and "us".
  */
 extern int	qcsapi_wifi_get_list_regulatory_regions( string_128 list_regulatory_regions );
+
+/*Transmit power by regulatory authority*/
+/**
+ * \brief Get the list of WiFi regulatory regions from regulatory database.
+ *
+ * Use this API to get a list of the regulatory regions supported by the current firmware.
+ * String will contain a list of regions, each separated by a comma.
+ *
+ * \param list_regulatory_regions the string where the results are returned.
+ *
+ * \return -EFAULT on error, or 0.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_list_regulatory_regions \<WiFi interface\></c>
+ *
+ * The output will be the list of regulatory regions that the firmware supports.
+ * Some listed regions may be synonyms, e.g. "Europe" and "eu" are synonyms as are "USA" and "us".
+ */
 extern int	qcsapi_regulatory_get_list_regulatory_regions( string_128 list_regulatory_regions );
 
 /**
@@ -8743,16 +8911,69 @@ extern int	qcsapi_regulatory_get_list_regulatory_regions( string_128 list_regula
  * Output is the list of channels valid for that region separated by commas.
  *
  * Example:<br>
- * <c>call_qcsapi get_list_regulatory_channels EU</c>
+ * <c>call_qcsapi get_list_regulatory_channels eu</c>
  */
 extern int	qcsapi_wifi_get_list_regulatory_channels(const char *region_by_name,
 							 const qcsapi_unsigned_int bw,
 							 string_1024 list_of_channels);
+/**
+ * \brief Get the List of Regulatory Channels from regulatory database.
+ *
+ * Use this API to get the list of channels authorized for use in the indicated regulatory region.
+ * Bandwidth parameter should be 20, 40 or 80.  Valid channels are returned
+ * in the <c>list_of_channels</c> parameter as a list of numeric values separated by commas.
+ * This API is provided as a reference and a convenience; its use is not required to insure regulatory compliance.
+ *
+ * \param region_by_name the regulatory region for which the channel list is expected.
+ * \param bw the bandwidth that is currently used. 80MHz, 40Mhz or 20Mhz.
+ * \param list_of_channels the list of channels returned.
+ *
+ * \return -EFAULT, -EINVAL, -EOPNOTSUPP or other negative values on
+ * error, or 0 on success.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_regulatory_channels \<region\> \<20 | 40 | 80></c>
+ *
+ * <c>call_qcsapi get_list_regulatory_channels \<region\> \<20 | 40 | 80></c>
+ *
+ * where <c>\<regulatory region\></c> should be one of the regions listed in by the get list
+ * regulatory regions API / command.  Final parameter is the bandwidth and is optional.
+ * If not present, the system will use the current configured bandwidth, defaulting to 80 if that cannot be established.
+ * Output is the list of channels valid for that region separated by commas.
+ *
+ * Example:<br>
+ * <c>call_qcsapi get_list_regulatory_channels eu</c>
+ */
 extern int	qcsapi_regulatory_get_list_regulatory_channels(const char *region_by_name,
 							 const qcsapi_unsigned_int bw,
 							 string_1024 list_of_channels);
 
-extern int qcsapi_regulatory_get_list_regulatory_bands(const char *region_by_name, string_128 list_of_channels);
+/**
+ * \brief Get the List of Regulatory bands from regulatory database.
+ *
+ * Use this API to get the list of band authorized for use in the indicated regulatory region.
+ * Valid channels are returned in the <c>list_of_bands</c> parameter as a list of numeric values separated by commas.
+ * This API is provided as a reference and a convenience; its use is not required to insure regulatory compliance.
+ *
+ * \param region_by_name the regulatory region for which the channel list is expected.
+ * \param list_of_bands the list of bands returned.
+ *
+ * \return -EFAULT, -EINVAL, -EOPNOTSUPP or other negative values on
+ * error, or 0 on success.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_list_regulatory_bands \<regulatory region\>
+ *
+ * where <c>\<regulatory region\></c> should be one of the regions listed in by the get list
+ * regulatory regions API / command.
+ * Output is the list of bands valid for that region separated by commas.
+ *
+ * Example:<br>
+ * <c>call_qcsapi get_list_regulatory_bands eu</c>
+ */
+extern int qcsapi_regulatory_get_list_regulatory_bands(const char *region_by_name, string_128 list_of_bands);
 
 /**
  * \brief Get the Regulatory Transmit Power.
@@ -8790,6 +9011,37 @@ extern int	qcsapi_wifi_get_regulatory_tx_power(const char *ifname,
 						    const char *region_by_name,
 						    int *p_tx_power);
 
+/**
+ * \brief Get the Regulatory Transmit Power from regulatory database.
+ *
+ * This API call gets the transmit power in a regulatory region for a particular
+ * channel.
+ *
+ * \param ifname \wifi0
+ * \param the_channel the channel for which the tx power is returned.
+ * \param region_by_name the regulatory region for which the tx power is returned.
+ * \param p_tx_power the result which contains the transmit power.
+ *
+ * \return -EFAULT, -EOPNOTSUPP or other negative values on error, or 0 on success.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_regulatory_tx_power \<WiFi interface\> \<channel\> \<region\></c>
+ *
+ * Unless an error occurs, the output will be the channel number.
+ * eg. 20<br>
+ * Examples:<br>
+ *   A valid call:
+ * @code
+ *	quantenna # call_qcsapi get_regulatory_tx_power wifi0 100 eu
+ *	22
+ * @endcode
+ *   An invalid call:
+ * @code
+ *	quantenna # call_qcsapi get_regulatory_tx_power wifi0 188 eu
+ *	QCS API error 22: Invalid argument
+ * @endcode
+ */
 extern int qcsapi_regulatory_get_regulatory_tx_power(const char *ifname,
 	    const qcsapi_unsigned_int the_channel,
 	    const char *region_by_name,
@@ -8834,6 +9086,40 @@ extern int	qcsapi_wifi_get_configured_tx_power(const char *ifname,
 						    const char *region_by_name,
 						    const qcsapi_unsigned_int bw,
 						    int *p_tx_power);
+/**
+ * \brief Get WiFi Configured TX power from regulatory database.
+ *
+ * This API call gets the configured transmit power in a regulatory region
+ * for a particular channel.
+ *
+ * \param ifname \wifi0
+ * \param the_channel the channel for which the tx power is returned.
+ * \param region_by_name the regulatory region for which the tx power is returned.
+ * \param bw the bandwidth that is currently used. 80Mhz, 40Mhz or 20Mhz.
+ * \param p_tx_power the result which contains the transmit power.
+ *
+ * \return -EFAULT, -EOPNOTSUPP or other negative values on error, or 0 on success.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_configured_tx_power \<WiFi interface\> &lt;channel&gt; &lt;region&gt;</c>
+ *
+ * Unless an error occurs, the output will be the channel number.
+ * Examples:<br>
+ * @code
+ *	quantenna # call_qcsapi get_configured_tx_power wifi0 100 eu 40
+ *	19
+ *	quantenna # call_qcsapi get_configured_tx_power wifi0 100 eu 20
+ *	19
+ *	quantenna # call_qcsapi get_configured_tx_power wifi0 64 eu 40
+ *	15
+ *	quantenna # call_qcsapi get_configured_tx_power wifi0 64 eu 20
+ *	15
+ *	quantenna # call_qcsapi get_configured_tx_power wifi0 188 eu 20
+ *	QCSAPI error 22: Invalid argument
+ * @endcode
+ * Note: Numeric TX power results are just examples.  Actual TX Power values may differ from what is shown above.
+ */
 extern int qcsapi_regulatory_get_configured_tx_power(const char *ifname,
 							const qcsapi_unsigned_int the_channel,
 							const char *region_by_name,
@@ -8858,12 +9144,28 @@ extern int qcsapi_regulatory_get_configured_tx_power(const char *ifname,
  */
 extern int	qcsapi_wifi_set_regulatory_region(const char *ifname,
 						  const char *region_by_name);
+/**
+ * \brief Set the Regulatory Region supported by regulatory database.
+ *
+ * This API call sets the regulatory region on a given interface.
+ *
+ * \param ifname \wifi0
+ * \param region_by_name the regulatory region.
+ *
+ * \return -EFAULT, -EOPNOTSUPP or other negative values on error, or 0 on success.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi set_regulatory_region \<WiFi interface\> \<region\></c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
 extern int	qcsapi_regulatory_set_regulatory_region(const char *ifname,
 		  const char *region_by_name);
 /**
- * \brief Get the Regulatory Region.
+ * \brief Get the current Regulatory Region.
  *
- * This API call gets the regulatory region on a given interface.
+ * This API call gets the current regulatory region on a given interface.
  *
  * \param ifname \wifi0
  * \param region_by_name the regulatory region that is currently configured.
@@ -8923,13 +9225,32 @@ extern int	qcsapi_wifi_set_regulatory_channel(const char *ifname,
 						   const char *region_by_name,
 						   const qcsapi_unsigned_int tx_power_offset);
 
+/**
+ * \brief Set WiFi Regulatory Channel supported by regulatory database.
+ *
+ * This API call sets the transmit power adjusting the offset on a given channel
+ * on a given region(should be current region) for the passed in interface.
+ *
+ * \param ifname \wifi0
+ * \param the_channel the channel for which the tx power is returned.
+ * \param region_by_name the regulatory region for which the tx power is modified
+ * \param tx_power_offset the offset in integer from the currently configured tx power.
+ *
+ * \return -EOPNOTSUPP or other negative values on error, or 0 on success.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi set_regulatory_channel \<WiFi interface\> \<channel\> \<region\> \<offset\></c>
+ *
+ * Unless an error occurs, the output will be the string <c>complete</c>.
+ */
 extern int	qcsapi_regulatory_set_regulatory_channel(const char *ifname,
 						   const qcsapi_unsigned_int the_channel,
 						   const char *region_by_name,
 						   const qcsapi_unsigned_int tx_power_offset);
 
 /**
- * \brief Get regulatory database version number
+ * \brief Get regulatory database version number from regulatory database.
  *
  * This API call gets the regulatory database version number
  *
@@ -8998,6 +9319,54 @@ extern int	qcsapi_wifi_get_list_DFS_channels(const char *region_by_name,
 						  const qcsapi_unsigned_int bw,
 						  string_1024 list_of_channels);
 
+/*
+ * DFS
+ */
+/**@addtogroup DFSAPIs
+ *@{*/
+
+/**
+ * @brief Get the list of DFS channels
+ *
+ * Use this API to get a list of all channels that require following the DFS protocols,
+ * or alternately a list of channels that do not require the DFS protocols.
+ *
+ * \param region_by_name the region to return. Has the same interpretation as with the regulatory authority APIs.
+ * \param DFS_flag set to 1 to get a list of DFS affected channels, set to 0 to get the complement list of channels.
+ * \param bw the bandwidth in use - either 20 or 40 to represent 20MHz and 40MHz respectively.
+ * \param list_of_channels return parameter to contain the comma delimited list of channels.
+ *
+ * \return 0 if the call succeeded.
+ * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi get_list_DFS_channels \<regulatory region\> \<1 | 0\> \<20 | 40 | 80\></c>
+ *
+ * where \<regulatory region\> should be one of the regions listed in by the get list regulatory
+ * regions API/command.
+ *
+ * Choices for the other two parameters are as shown above.
+ *
+ * Unless an error occurs, the output will be a list of channels, each value separated by a comma.
+ *
+ * See @ref mysection4_1_4 "section here" for more details on error codes and error messages.
+ *
+ * <b>Examples:</b>
+ *
+ * To get the list of 80 MHz channels that require following the DFS protocols for Europe, enter:
+ *
+ * <c>call_qcsapi get_list_DFS_channels eu 1 80</c>
+ *
+ * To get the list of 40 MHz channels that require following the DFS protocols for Europe, enter:
+ *
+ * <c>call_qcsapi get_list_DFS_channels eu 1 40</c>
+ *
+ * To get the list of 20 MHz channels that do not require DFS protocols for the US, enter:
+ *
+ * <c>call_qcsapi get_list_DFS_channels us 0 20</c>
+ */
 extern int	qcsapi_regulatory_get_list_DFS_channels(const char *region_by_name,
 						  const int DFS_flag,
 						  const qcsapi_unsigned_int bw,
@@ -9032,6 +9401,31 @@ extern int	qcsapi_wifi_is_channel_DFS(const char *region_by_name,
 					   const qcsapi_unsigned_int the_channel,
 					   int *p_channel_is_DFS);
 
+/**
+ * @brief Is the given channel a DFS channel.
+ *
+ * Use this API to determine whether a particular channel is subject to the DFS protocols.
+ *
+ * \param region_by_name the region to return. Has the same interpretation as with the regulatory authority APIs.
+ * \param the_channel unsigned integer from 0 to 255. The channel must be valid for the referenced regulatory region.
+ * \param p_channel_is_DFS return value which is set to 1 if the channel is affected by DFS, set to 0 otherwise.
+ *
+ * \return 0 if the call succeeded.
+ * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
+ * for error codes and messages.
+ *
+ * \callqcsapi
+ *
+ * <c>call_qcsapi is_channel_DFS \<regulatory region\> \<channel\></c>
+ *
+ * where &lt;regulatory region&gt; should be one of the regions listed in by the get list regulatory
+ * regions API / command and &lt;channel&gt; is an unsigned integer.
+ *
+ * Unless an error occurs, the output will be either 0 or 1 depending on
+ * whether DFS protocols are required for the referenced channel.
+ *
+ * See @ref mysection4_1_4 "section here" for more details on error codes and error messages.
+ */
 extern int	qcsapi_regulatory_is_channel_DFS(const char *region_by_name,
 					   const qcsapi_unsigned_int the_channel,
 					   int *p_channel_is_DFS);
@@ -9811,7 +10205,7 @@ extern int	qcsapi_flash_image_update( const char *image_file, qcsapi_flash_parti
  *
  * Unless an error occurs, the output will be the string <c>complete</c>.
  */
-extern int qcsapi_set_soc_mac_addr(const char *ifname, qcsapi_mac_addr soc_mac_addr);
+extern int qcsapi_set_soc_mac_addr(const char *ifname, const qcsapi_mac_addr soc_mac_addr);
 
 /**
  * @brief Get a custom value.
@@ -10414,6 +10808,9 @@ extern int qcsapi_wifi_test_traffic(const char *ifname, uint32_t period);
  * Packets matching these addresses will be flood-forwarded to every interface and every associated
  * station.
  *
+ * \note SSDP (239.255.255.250) and LNCB (224.0.0.0/24) packets are always flood-forwarded and do
+ * not need to be added to this table.
+ *
  * \param ipaddr the multicast IPv4 address to be added to the table
  *
  * \return 0 if the call succeeded.
@@ -10452,6 +10849,9 @@ extern int qcsapi_wifi_del_ipff(qcsapi_unsigned_int ipaddr);
 /**
  * \brief Display the contents of the flood-forwarding table
  *
+ * \note SSDP (239.255.255.250) and LNCB (224.0.0.0/24) packets are always flood-forwarded, even
+ * if not added to this table.
+ *
  * \return 0 if the call succeeded.
  * \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
  * for error codes and messages.
@@ -10460,11 +10860,12 @@ extern int qcsapi_wifi_del_ipff(qcsapi_unsigned_int ipaddr);
  *
  * <c>call_qcsapi get_ipff</c>
  *
- * Unless an error occurs, the output will be the string <c>complete</c>.
+ * Unless an error occurs, the output is a list of configured multicast IP addresses,
+ * separated by newline characters.<c>complete</c>.
  *
  * See @ref mysection4_1_4 "section here" for more details on error codes and error messages.
  */
-extern int qcsapi_wifi_get_ipff(void);
+extern int qcsapi_wifi_get_ipff(char *buf, int buflen);
 
 /**@}*/
 

@@ -10,7 +10,8 @@
 
 #include "config.h"
 
-#ifdef ENABLE_6FC_SERVICE
+#ifdef ENABLE_UPNPPINHOLE
+
 /* functions to be used by WANIPv6_FirewallControl implementation */
 
 #if 0
@@ -26,8 +27,9 @@ upnp_check_outbound_pinhole(int proto, int * timeout);
  * .. = error */
 int
 upnp_add_inboundpinhole(const char * raddr, unsigned short rport,
-              const char * iaddr, unsigned short iport,
-              int proto, unsigned int leasetime, int * uid);
+                        const char * iaddr, unsigned short iport,
+                        int proto, char * desc,
+                        unsigned int leasetime, int * uid);
 
 /*
  * return values :
@@ -39,9 +41,17 @@ upnp_get_pinhole_info(unsigned short uid,
                       unsigned short * rport,
                       char * iaddr, int iaddrlen,
                       unsigned short * iport,
-                      int * proto,
+                      int * proto, char * desc, int desclen,
                       unsigned int * leasetime,
                       unsigned int * packets);
+
+/*
+ * return values:
+ * -1 = not found
+ * 0 .. 65535 = uid of the rule for the index
+ */
+int
+upnp_get_pinhole_uid_by_index(int index);
 
 /* update the lease time */
 int
@@ -63,8 +73,6 @@ upnp_check_pinhole_working(const char * uid, char * eaddr, char * iaddr, unsigne
 int
 upnp_clean_expired_pinholes(unsigned int * next_timestamp);
 
-#endif /* ENABLE_6FC_SERVICE */
+#endif /* ENABLE_UPNPPINHOLE */
 
-#endif
-
-
+#endif /* !UPNPPINHOLE_H_INCLUDED */

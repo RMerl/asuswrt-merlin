@@ -52,6 +52,14 @@ extern void GPIO_INIT(void);
 extern void FANON(void);
 
 /* define GPIOs*/
+
+#ifdef DSLAC68U
+#define PWR_LED_GPIO	(1 << 3)	// GPIO 3
+#define RST_BTN_GPIO	(1 << 11)	// GPIO 11
+#define WPS_BTN_GPIO	(1 << 7)	// GPIO 7
+
+#else	//not DSLAC68U
+
 #ifdef RTAC87U
 #define PWR_LED_GPIO	(1 << 3)	// GPIO 3
 #define RST_BTN_GPIO	(1 << 11)	// GPIO 11
@@ -59,6 +67,7 @@ extern void FANON(void);
 #define WPS_BTN_GPIO	(1 << 2)	// GPIO 2
 
 #else	/* RTAC87U */
+
 #ifdef RTN18U
 #define PWR_LED_GPIO	(1 << 0)	// GPIO 0
 #define RST_BTN_GPIO	(1 << 7)	// GPIO 7
@@ -84,6 +93,8 @@ extern void FANON(void);
 #endif
 
 #endif	/* end of RTAC87U */
+
+#endif	//end of DSLAC68U
 
 static int
 ui_cmd_reboot(ui_cmdline_t *cmd, int argc, char *argv[])

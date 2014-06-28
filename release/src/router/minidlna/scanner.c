@@ -880,7 +880,7 @@ start_scanner()
 		strncpyt(path, media_path->path, sizeof(path));
 		bname = basename(path);
 		/* If there are multiple media locations, add a level to the ContentDirectory */
-		if( media_dirs && media_dirs->next )
+		if( !GETFLAG(MERGE_MEDIA_DIRS_MASK) && media_dirs->next )
 		{
 			int startID = get_next_available_id("OBJECTS", BROWSEDIR_ID);
 			id = insert_directory(bname, path, BROWSEDIR_ID, "", startID);

@@ -736,7 +736,7 @@ function validForm(){
 function applyRule(){
 	if(validForm()){
 
-		if(document.form.ipv6_service.value=="dhcp6"){				
+		if(document.form.ipv6_service.value=="dhcp6"){	
 				if(document.form.ipv6_dhcp_pd[1].checked){
 					
 					document.form.ipv6_prefix_length.disabled = false;
@@ -771,6 +771,13 @@ function applyRule(){
 				 (document.form.ipv6_service.value != "disabled" && document.form.ipv6_service_orig.value == "disabled"))
     		FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
 		}*/
+
+		if(based_modelid == "RT-AC66U" || based_modelid == "RT-N66U" )	//Viz 2014.16: SDK 6.x need to shut down CTF while switch 6in4, do reboot
+		{ // MODELDEP: RT-AC66U, RT-N66U
+			if((document.form.ipv6_service.value != document.form.ipv6_service_orig.value) 
+				&& (document.form.ipv6_service.value == "6in4" || document.form.ipv6_service_orig.value == "6in4"))
+    		FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
+		}
 	
 		document.form.ipv6_accept_ra.value=1;			// 0/1/2 default:1	
 		showLoading();		

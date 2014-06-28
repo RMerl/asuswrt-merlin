@@ -104,6 +104,7 @@ typedef enum {
 	e_qcsapi_errno_get_message = 1,
 	e_qcsapi_first_entry_point = e_qcsapi_errno_get_message,
 
+	e_qcsapi_store_ipaddr,
 	e_qcsapi_interface_enable,
 	e_qcsapi_interface_get_BSSID,
 	e_qcsapi_interface_get_mac_addr,
@@ -144,6 +145,7 @@ typedef enum {
 	e_qcsapi_wifi_reload_in_mode,
 	e_qcsapi_wifi_rfenable,
 	e_qcsapi_wifi_rfstatus,
+	e_qcsapi_wifi_startprod,
 	e_qcsapi_wifi_get_bw,
 	e_qcsapi_wifi_set_bw,
 	e_qcsapi_wifi_get_BSSID,
@@ -286,6 +288,7 @@ typedef enum {
 	e_qcsapi_wps_get_ap_pin,
 	e_qcsapi_wps_set_ap_pin,
 	e_qcsapi_wps_save_ap_pin,
+	e_qcsapi_wps_enable_ap_pin,
 	e_qcsapi_wps_get_sta_pin,
 	e_qcsapi_wps_get_state,
 	e_qcsapi_wps_get_configured_state,
@@ -490,6 +493,10 @@ typedef enum {
 
 	e_qcsapi_get_nss_cap,
 	e_qcsapi_set_nss_cap,
+
+	e_qcsapi_get_security_defer_mode,
+	e_qcsapi_set_security_defer_mode,
+	e_qcsapi_apply_security_config,
 
 	e_qcsapi_nosuch_api = 0
 } qcsapi_entry_point;

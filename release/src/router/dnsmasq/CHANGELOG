@@ -1,3 +1,129 @@
+version 2.70
+            Fix crash, introduced in 2.69, on TCP request when dnsmasq
+	    compiled with DNSSEC support, but running without DNSSEC
+	    enabled. Thanks to Manish Sing for spotting that one.
+
+
+version 2.69
+	    Implement dynamic interface discovery on *BSD. This allows
+	    the contructor: syntax to be used in dhcp-range for DHCPv6
+	    on the BSD platform. Thanks to Matthias Andree for
+	    valuable research on how to implement this.
+
+	    Fix infinite loop associated with some --bogus-nxdomain
+	    configs. Thanks fogobogo for the bug report.
+
+	    Fix missing RA RDNS option with configuration like
+	    --dhcp-option=option6:23,[::] Thanks to Tsachi Kimeldorfer
+	    for spotting the problem.
+
+	    Add [fd00::] and [fe80::] as special addresses in DHCPv6
+	    options, analogous to [::]. [fd00::] is replaced with the
+	    actual ULA of the interface on the machine running
+	    dnsmasq, [fe80::] with the link-local address. 
+	    Thanks to Tsachi Kimeldorfer for championing this.
+
+	    DNSSEC validation and caching. Dnsmasq needs to be
+	    compiled with this enabled, with 
+	    
+	    make dnsmasq COPTS=-DHAVE_DNSSEC
+	    
+	    this add dependencies on the nettle crypto library and the 
+	    gmp maths library. It's possible to have these linked
+	    statically with
+	    
+	    make dnsmasq COPTS='-DHAVE_DNSSEC -DHAVE_DNSSEC_STATIC'
+	    
+	    which bloats the dnsmasq binary, but saves the size of 
+	    the shared libraries which are much bigger.
+
+	    To enable, DNSSEC, you will need a set of
+	    trust-anchors. Now that the TLDs are signed, this can be
+	    the keys for the root zone, and for convenience they are
+	    included in trust-anchors.conf in the dnsmasq
+	    distribution. You should of course check that these are
+	    legitimate and up-to-date. So, adding
+	    
+	    conf-file=/path/to/trust-anchors.conf
+	    dnssec
+
+	    to your config is all thats needed to get things
+	    working. The upstream nameservers have to be DNSSEC-capable
+	    too, of course. Many ISP nameservers aren't, but the
+	    Google public nameservers (8.8.8.8 and 8.8.4.4) are.
+	    When DNSSEC is configured, dnsmasq validates any queries 
+	    for domains which are signed. Query results which are 
+	    bogus are replaced with SERVFAIL replies, and results 
+	    which are correctly signed have the AD bit set. In 
+	    addition, and just as importantly, dnsmasq supplies 
+	    correct DNSSEC information to clients which are doing 
+	    their own validation, and caches DNSKEY, DS and RRSIG
+	    records, which significantly improve the performance of 
+	    downstream validators. Setting --log-queries will show 
+	    DNSSEC in action.
+
+	    If a domain is returned from an upstream nameserver without 
+	    DNSSEC signature, dnsmasq by default trusts this. This 
+	    means that for unsigned zone (still the majority) there 
+	    is effectively no cost for having DNSSEC enabled. Of course
+	    this allows an attacker to replace a signed record with a 
+	    false unsigned record. This is addressed by the 
+	    --dnssec-check-unsigned flag, which instructs dnsmasq
+	    to prove that an unsigned record is legitimate, by finding  
+	    a secure proof that the zone containing the record is not
+	    signed. Doing this has costs (typically one or two extra
+	    upstream queries). It also has a nasty failure mode if
+	    dnsmasq's upstream nameservers are not DNSSEC capable. 
+	    Without --dnssec-check-unsigned using such an upstream
+	    server will simply result in not queries being validated; 
+	    with --dnssec-check-unsigned enabled and a 
+	    DNSSEC-ignorant upstream server, _all_ queries will fail.
+
+	    Note that DNSSEC requires that the local time is valid and 
+	    accurate, if not then DNSSEC validation will fail. NTP 
+	    should be running. This presents a problem for routers
+	    without a battery-backed clock. To set the time needs NTP 
+	    to do DNS lookups, but lookups will fail until NTP has run.
+	    To address this, there's a flag, --dnssec-no-timecheck 
+	    which disables the time checks (only) in DNSSEC. When dnsmasq
+	    is started and the clock is not synced, this flag should
+	    be used. As soon as the clock is synced, SIGHUP dnsmasq. 
+	    The SIGHUP clears the cache of partially-validated data and
+	    resets the no-timecheck flag, so that all DNSSEC checks 
+	    henceforward will be complete.
+	    
+	    The development of DNSSEC in dnsmasq was started by 
+	    Giovanni Bajo, to whom huge thanks are owed. It has been
+	    supported by Comcast, whose techfund grant has allowed for 
+	    an invaluable period of full-time work to get it to 
+	    a workable state.
+ 
+	    Add --rev-server. Thanks to Dave Taht for suggesting this.
+	    
+	    Add --servers-file. Allows dynamic update of upstream servers 
+	    full access to configuration. 
+
+	    Add --local-service. Accept DNS queries only from hosts 
+            whose address is on a local subnet, ie a subnet for which 
+            an interface exists on the server. This option
+            only has effect if there are no --interface --except-interface,
+            --listen-address or --auth-server options. It is intended 
+            to be set as a default on installation, to allow
+            unconfigured installations to be useful but also safe from 
+	    being used for DNS amplification attacks.
+
+	    Fix crashes in cache_get_cname_target() when dangling CNAMEs
+	    encountered. Thanks to Andy and the rt-n56u project for
+	    find this and helping to chase it down.
+
+	    Fix wrong RCODE in authoritative DNS replies to PTR queries. The
+	    correct answer was included, but the RCODE was set to NXDOMAIN.
+	    Thanks to Craig McQueen for spotting this.
+
+	    Make statistics available as DNS queries in the .bind TLD as 
+	    well as logging them.
+
+
 version 2.68
             Use random addresses for DHCPv6 temporary address
             allocations, instead of algorithmically determined stable

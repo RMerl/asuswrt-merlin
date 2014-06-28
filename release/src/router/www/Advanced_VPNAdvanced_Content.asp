@@ -1323,8 +1323,8 @@ function cal_panel_block(){
 									</thead>
 
 									<tr>
-										<th width="36%"><#PPPConnection_UserName_itemname#></th>
-										<th width="20%"><#IPConnection_ExternalIPAddress_itemname#></th>
+										<th width="36%">Common Name</th>
+										<th width="20%">Subnet</th>
 										<th width="20%"><#IPConnection_x_ExternalSubnetMask_itemname#></th>
 										<th width="12%">Push</th>
 										<th width="12%"><#list_add_delete#></th>

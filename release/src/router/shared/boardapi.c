@@ -343,6 +343,18 @@ int led_control(int which, int mode)
 				use_gpio = led_2g_gpio;
 			}
 			break;
+		case LED_5G_FORCED:
+	                if (model == MODEL_RTAC68U) {
+				if (mode == LED_ON) {
+					nvram_set("led_5g", "1");
+		                        eval("wl", "-i", "eth2", "ledbh", "10", "7");
+				} else if (mode == LED_OFF) {
+					nvram_set("led_5g", "0");
+					eval("wl", "-i", "eth2", "ledbh", "10", "0");
+				}
+				use_gpio = led_5g_gpio;
+			}
+			// Fall through regular LED_5G to handle other models
 		case LED_5G:
 			if ((model == MODEL_RTN66U) || (model == MODEL_RTN16)) {
                                 if (mode == LED_ON)
@@ -355,15 +367,6 @@ int led_control(int which, int mode)
 					nvram_set("led_5g", "1");
 				else if (mode == LED_OFF)
 					nvram_set("led_5g", "0");
-				use_gpio = led_5g_gpio;
-			} else if (model == MODEL_RTAC68U) {
-				if (mode == LED_ON) {
-					nvram_set("led_5g", "1");
-					eval("wl", "-i", "eth2", "ledbh", "10", "7");
-				} else if (mode == LED_OFF) {
-					nvram_set("led_5g", "0");
-					eval("wl", "-i", "eth2", "ledbh", "10", "0");
-				}
 				use_gpio = led_5g_gpio;
                         } else {
                                 use_gpio = led_5g_gpio;

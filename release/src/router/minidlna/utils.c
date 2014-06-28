@@ -33,33 +33,7 @@
 #include "upnpglobalvars.h"
 #include "log.h"
 
-inline int
-strcatf(struct string_s *str, const char *fmt, ...)
-{
-	int ret;
-	int size;
-	va_list ap;
-
-	if (str->off >= str->size)
-		return 0;
-
-	va_start(ap, fmt);
-	size = str->size - str->off;
-	ret = vsnprintf(str->data + str->off, size, fmt, ap);
-	str->off += MIN(ret, size);
-	va_end(ap);
-
-	return ret;
-}
-
-inline void
-strncpyt(char *dst, const char *src, size_t len)
-{
-	strncpy(dst, src, len);
-	dst[len-1] = '\0';
-}
-
-inline int
+int
 xasprintf(char **strp, char *fmt, ...)
 {
 	va_list args;

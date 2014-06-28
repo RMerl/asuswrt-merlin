@@ -71,6 +71,9 @@ expires(char *wan_ifname, unsigned int in)
 static int
 deconfig(int zcip)
 {
+#ifdef RTCONFIG_DSL_TCLINUX //tmp
+	return 0;
+#endif
 	char *wan_ifname = safe_getenv("interface");
 	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
 	int unit = wan_ifunit(wan_ifname);
@@ -647,9 +650,65 @@ static int env2nv(char *env, char *nv)
 	return 0;
 }
 
+static void update_nvram_prefix_lifetimes(char *p)
+{
+	char *ptr_prefix, *ptr_vlft, *ptr_plft, *ptr_no_length;
+	char *cur_prefix, *cur_vlft, *cur_plft;
+
+	// Get environment variables
+	char *env_prefix = getenv("new_iapd_prefix");
+	char *env_vlft = getenv("new_valid_lifetime");
+	char *env_plft = getenv("new_preferred_lifetime");
+
+	// Check environment variables are set
+	if (env_prefix && env_vlft && env_plft) {
+		// Do not modify environment variables directly
+		env_prefix = strdup(env_prefix);
+		env_vlft = env_prefix ? strdup(env_vlft) : NULL;
+		env_plft = env_vlft ? strdup(env_plft) : NULL;
+		// Check copies were created properly
+		if (env_plft) {
+			// Retrieve first token		
+			cur_prefix = strtok_r(env_prefix, " ", &ptr_prefix);
+			cur_vlft = strtok_r(env_vlft, " ", &ptr_vlft);
+			cur_plft = strtok_r(env_plft, " ", &ptr_plft);
+			
+			while (cur_prefix) {
+				// Remove length part
+				cur_prefix = strtok_r(cur_prefix, "/", &ptr_no_length);
+				// Check against prefix
+				if (strcmp(cur_prefix, p) == 0) break;
+				// Next token if if no match
+				cur_prefix = strtok_r(NULL, " ", &ptr_prefix);
+				cur_vlft = strtok_r(NULL, " ", &ptr_vlft);
+				cur_plft = strtok_r(NULL, " ", &ptr_plft);
+			}
+			// Check if prefix was found
+			if (cur_prefix) {
+				// Update valid lifetime (if different)
+				if (!nvram_match("ipv6_pd_vlifetime", cur_vlft)) {
+					nvram_set("ipv6_pd_vlifetime", cur_vlft);
+					TRACE_PT("ipv6_pd_vlifetime=%s\n", nvram_safe_get("ipv6_pd_vlifetime"));
+				}
+				// Update preferred lifetime (if different)
+				if (!nvram_match("ipv6_pd_plifetime", cur_plft)) {
+					nvram_set("ipv6_pd_plifetime", cur_plft);
+					TRACE_PT("ipv6_pd_plifetime=%s\n", nvram_safe_get("ipv6_pd_plifetime"));
+				}
+			}
+		} else {
+			perror("update_nvram_prefix_lifetimes");
+		}
+		// Cleanup copies
+		free(env_prefix);
+		free(env_plft);
+		free(env_vlft);
+	}
+}
+
 int dhcp6c_state_main(int argc, char **argv)
 {
-	char *p;
+	char *p, *state;
 
 	TRACE_PT("begin\n");
 
@@ -661,6 +720,7 @@ int dhcp6c_state_main(int argc, char **argv)
 			  getifaddr(nvram_safe_get("lan_ifname"), AF_INET6, 0));
 		p = (char *)ipv6_prefix(NULL);
 		if (*p) nvram_set("ipv6_prefix", p);
+		if (*p) update_nvram_prefix_lifetimes(p);
 	}
 
 	if (env2nv("new_domain_name_servers", "ipv6_get_dns")) {
@@ -672,7 +732,11 @@ int dhcp6c_state_main(int argc, char **argv)
 		TRACE_PT("ipv6_get_domain=%s\n", nvram_safe_get("ipv6_get_domain"));
 
 	// (re)start radvd and httpd
-	start_radvd();
+	state = getenv("state");
+	if (!state || (strcmp("RELEASE", state) != 0))
+		// Do not start radvd when dhcp6c released its address
+		// (i.e. when stop_dhcp6c is called)
+		start_radvd();
 	start_httpd();
 
 	TRACE_PT("end\n");
@@ -699,6 +763,7 @@ start_dhcp6c(void)
 		uint16 hwtype;
 	} __attribute__ ((__packed__)) duid;
 	uint16 duid_len = 0;
+	stop_dhcp6c();
 
 	/* Check if enabled */
 	if (get_ipv6_service() != IPV6_NATIVE_DHCP)
@@ -724,6 +789,8 @@ start_dhcp6c(void)
 	if (nvram_get_int("ipv6_dhcp_pd")) {
 		nvram_set("ipv6_rtr_addr", "");
 		nvram_set("ipv6_prefix", "");
+		nvram_set("ipv6_pd_vlifetime", "");
+		nvram_set("ipv6_pd_plifetime", "");
 	}
 
 	prefix_len = 64 - (nvram_get_int("ipv6_prefix_length") ? : 64);

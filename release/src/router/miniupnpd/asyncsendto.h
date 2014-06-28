@@ -11,15 +11,26 @@
 /* sendto_schedule() : see sendto(2)
  * schedule sendto() call after delay (milliseconds) */
 ssize_t
-sendto_schedule(int sockfd, const void *buf, size_t len, int flags,
-                const struct sockaddr *dest_addr, socklen_t addrlen,
-                unsigned int delay);
+sendto_schedule2(int sockfd, const void *buf, size_t len, int flags,
+                 const struct sockaddr *dest_addr, socklen_t addrlen,
+                 const struct sockaddr_in6 *src_addr,
+                 unsigned int delay);
+
+#define sendto_schedule(sockfd, buf, len, flags, dest_addr, addrlen, delay) \
+        sendto_schedule2(sockfd, buf, len, flags, dest_addr, addrlen, NULL, delay)
 
 /* sendto_schedule() : see sendto(2)
  * try sendto() at once and schedule if EINTR/EAGAIN/EWOULDBLOCK */
 ssize_t
 sendto_or_schedule(int sockfd, const void *buf, size_t len, int flags,
                    const struct sockaddr *dest_addr, socklen_t addrlen);
+
+/* same as sendto_schedule() except it will try to set source address
+ * (for IPV6 only) */
+ssize_t
+sendto_or_schedule2(int sockfd, const void *buf, size_t len, int flags,
+                   const struct sockaddr *dest_addr, socklen_t addrlen,
+                   const struct sockaddr_in6 *src_addr);
 
 /* get_next_scheduled_send()
  * return number of scheduled sendto

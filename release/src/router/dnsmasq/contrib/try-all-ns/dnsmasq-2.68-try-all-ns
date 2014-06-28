@@ -1,0 +1,29 @@
+From: Jesse Glick <jglick@cloudbees.com>
+To: dnsmasq-discuss@lists.thekelleys.org.uk
+Subject: Re: [Dnsmasq-discuss] Ability to delegate to one server but fall
+ back to another after NXDOMAIN?
+
+
+On Wed, Jan 15, 2014 at 12:30 PM, Simon Kelley <simon@thekelleys.org.uk> wrote:
+> > There's a (very old) patch in contrib/try-all-ns that would make a starting point
+This does not apply against trunk, so I tried to rework it. The
+following appears to do what I expect:
+
+diff --git a/src/forward.c b/src/forward.c
+index 8167229..76070b5 100644
+--- a/src/forward.c
++++ b/src/forward.c
+@@ -610,7 +610,11 @@ void reply_query(int fd, int family, time_t now)
+
+   if ((RCODE(header) == SERVFAIL || RCODE(header) == REFUSED) &&
+       !option_bool(OPT_ORDER) &&
+-      forward->forwardall == 0)
++      forward->forwardall == 0 ||
++      /* try each in turn */
++      RCODE(header) == NXDOMAIN &&
++      option_bool(OPT_ORDER) &&
++      server->next != NULL)
+     /* for broken servers, attempt to send to another one. */
+     {
+       unsigned char *pheader;
+

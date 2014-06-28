@@ -13,10 +13,12 @@
 <link rel="stylesheet" type="text/css" href="/form_style.css">
 <link rel="stylesheet" type="text/css" href="/aidisk/AiDisk_style.css">
 <script type="text/javascript" src="/state.js"></script>
+<script type="text/javascript" src="/general.js"></script>
+<script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/disk_functions.js"></script>
 <script type="text/javascript" src="/aidisk/AiDisk_folder_tree.js"></script>
-<script type="text/javascript" src="/help.js"></script>
+<script type="text/javascript" src="/detect.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript">
@@ -65,6 +67,11 @@ function initial(){
 	
 	// show the kinds of permission
 	showPermissionTitle();
+	if("<% nvram_get("ddns_enable_x"); %>" == 1)
+		document.getElementById("machine_name").innerHTML = "<% nvram_get("ddns_hostname_x"); %>";
+	else
+		document.getElementById("machine_name").innerHTML = "<#Web_Title2#>";
+		
 
 	// show mask
 	if(get_manage_type(PROTOCOL)){
@@ -240,10 +247,10 @@ function showPermissionTitle(){
 var controlApplyBtn = 0;
 function showApplyBtn(){
 	if(this.controlApplyBtn == 1){
-		$("changePermissionBtn").className = "button_gen";
+		$("changePermissionBtn").className = "button_gen_long";
 		$("changePermissionBtn").disabled = false;
 	}else{
-		$("changePermissionBtn").className = "button_gen_dis";
+		$("changePermissionBtn").className = "button_gen_long_dis";
 		$("changePermissionBtn").disabled = true;
 	}	
 }
@@ -613,6 +620,23 @@ function unload_body(){
 	$("modifyFolderBtn").onmouseover = function(){};
 	$("modifyFolderBtn").onmouseout = function(){};
 }
+
+function applyRule(){
+    if(validForm()){
+        showLoading();
+				document.form.submit();
+     }
+}
+
+function validForm(){
+	if(!validate_range(document.form.st_max_user, 1, 5)){
+			document.form.st_max_user.focus();
+			document.form.st_max_user.select();
+			return false;
+	}
+
+	return true;
+}
 </script>
 </head>
 
@@ -638,13 +662,13 @@ function unload_body(){
 <form method="post" name="form" action="/start_apply.htm" target="hidden_frame">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
-<input type="hidden" name="action_mode" value="">
-<input type="hidden" name="action_script" value="">
-<input type="hidden" name="action_wait" value="">
+<input type="hidden" name="action_mode" value="apply">
+<input type="hidden" name="action_script" value="restart_ftpsamba">
+<input type="hidden" name="action_wait" value="5">
+<input type="hidden" name="modified" value="0">
 <input type="hidden" name="current_page" value="Advanced_AiDisk_ftp.asp">
 <input type="hidden" name="ftp_wanac" value="<% nvram_get("ftp_wanac"); %>">
 <input type="hidden" name="flag" value="">
-</form>
 
 <table width="983" border="0" align="center" cellpadding="0" cellspacing="0" class="content">
   <tr>
@@ -729,7 +753,29 @@ function unload_body(){
 						</div>	
 					</td>
 				</tr>										
-
+				<tr>
+					<th>
+						<a class="hintstyle" href="javascript:void(0);" onClick="openHint(17,1);"><#ShareNode_MaximumLoginUser_itemname#></a>
+					</th>
+					<td>
+						<input type="text" name="st_max_user" class="input_3_table" maxlength="1" value="<% nvram_get("st_max_user"); %>" onKeyPress="return is_number(this, event);">
+					</td>
+				</tr>
+				<tr>
+					<th>
+						<a class="hintstyle" href="javascript:void(0);" onClick="openHint(17,9);"><#ShareNode_FTPLANG_itemname#></a>
+					</th>
+					<td>
+						<select name="ftp_lang" class="input_option">
+								<option value="CN" <% nvram_match("ftp_lang", "CN", "selected"); %>>GBK</option><!-- <#ShareNode_FTPLANG_optionname3#> -->
+								<option value="TW" <% nvram_match("ftp_lang", "TW", "selected"); %>>Big5</option><!-- <#ShareNode_FTPLANG_optionname2#> -->
+								<option value="EN" <% nvram_match("ftp_lang", "EN", "selected"); %>>UTF-8</option><!--<#ShareNode_FTPLANG_optionname1#>-->
+								<!-- Viz for Common N16 : RU CZ  -->	
+								<option value="RU" <% nvram_match("ftp_lang", "RU", "selected"); %>><#ShareNode_FTPLANG_optionname4#></option>
+								<option value="CZ" <% nvram_match("ftp_lang", "CZ", "selected"); %>><#ShareNode_FTPLANG_optionname5#></option>
+						</select>
+					</td>
+				</tr>
 				<tr>
 				<th>Enable WAN access</th>
 					<td>
@@ -752,7 +798,10 @@ function unload_body(){
 					</td>
 				</tr>
 			</table>
-			
+
+			<div class="apply_gen">
+					<input type="button" class="button_gen" value="<#CTL_apply#>" onclick="applyRule();">
+			</div>
 
 			<!-- The table of share. -->
 			<div id="shareStatus">
@@ -804,8 +853,7 @@ function unload_body(){
 			  		<table width="480"  border="0" cellspacing="0" cellpadding="0" class="FileStatusTitle">
 		  	    		<tr>
 		    	  			<td width="290" height="20" align="left">
-				    			<div class="machineName"><#Web_Title2#></div>
-				    			<!--<img src="/images/500icon.gif" width="20" height="20" hspace="2" align="absmiddle">-->
+				    			<div id="machine_name" class="machineName"></div>
 				    		</td>
 				  		<td>
 				    			<div id="permissionTitle"></div>
@@ -815,7 +863,7 @@ function unload_body(){
 			 	 <!-- the tree of folders -->
   		      	<div id="e0" style="font-size:10pt; margin-top:2px;"></div>
 			  	<div style="text-align:center; margin:10px auto; border-top:1px dotted #CCC; width:95%; padding:2px;">
-			    		<input name="changePermissionBtn" id="changePermissionBtn" type="button" value="<#CTL_apply#>" class="button_gen_dis" disabled="disabled">
+			    		<input name="changePermissionBtn" id="changePermissionBtn" type="button" value="Save Permission" class="button_gen_long_dis" disabled="disabled">
 			  	</div>
 		    		</td>
 		    		<!-- The right side table of folders.    End -->
@@ -835,12 +883,11 @@ function unload_body(){
   <td width="10"></td>
   </tr>
 </table>
-
 			</td>
     <td width="10" align="center" valign="top">&nbsp;</td>
 	</tr>
 </table>
-
+</form>
 
 
 

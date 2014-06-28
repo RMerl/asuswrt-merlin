@@ -106,6 +106,12 @@ dep:
 cfez.bin: cfez
 	$(OBJCOPY) $< $@
 	$(OBJCOPYSREC) $< cfez.srec
+
+ifeq ($(DSLAC68U), 1)
+	../../../../../ctools/nvserial -i cfez.bin -o cfe_dsl-ac68u.bin -s 00 dsl-ac68u_nvram.txt
+	cp cfe_dsl-ac68u.bin ../../../..
+endif
+
 ifeq ($(RTAC87U), 1)
 	../../../../../ctools/nvserial -i cfez.bin -o cfe_rt-ac87u.bin -s 00 rt-ac87u_nvram.txt
 	cp cfe_rt-ac87u.bin ../../../..
@@ -135,6 +141,14 @@ else
 		cp cfe_rt-ac56u.bin ../../../..
 endif
 endif
+endif
+ifeq ($(DSLAC68U), 1)
+	@if [ "$(CFEZ_MAXSIZE)" != "" ]; then \
+		if [ "`wc -c < cfe_dsl-ac68u.bin`" -gt "$(CFEZ_MAXSIZE)" ]; then \
+			echo "*** ERROR *** : cfe_dsl-ac68u.bin bootrom image size: `wc -c < cfe_dsl-ac68u.bin` exceeds limit: $(CFEZ_MAXSIZE)"; \
+		fi ; \
+	fi
+endif
 ifeq ($(RTAC68U), 1)
 	@if [ "$(CFEZ_MAXSIZE)" != "" ]; then \
 		if [ "`wc -c < cfe_rt-ac68u.bin`" -gt "$(CFEZ_MAXSIZE)" ]; then \
@@ -154,7 +168,6 @@ else
 			echo "*** ERROR *** : cfe_rt-ac56u.bin bootrom image size: `wc -c < cfe_rt-ac56u.bin` exceeds limit: $(CFEZ_MAXSIZE)"; \
 		fi ; \
 	fi
-endif
 endif
 endif
 

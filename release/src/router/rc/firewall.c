@@ -3481,11 +3481,11 @@ TRACE_PT("writing Parental Control\n");
 				while (portv && (dstports = strsep(&portp, ",")) != NULL) {
 					if (strcmp(proto, "TCP") == 0 || strcmp(proto, "BOTH") == 0)
 						fprintf(fp_ipv6, "-A FORWARD -m state --state NEW -p tcp -m tcp %s -d %s --dport %s -j %s\n", 
-						        srciprule, dstip, dstports, logaccept);
+							srciprule, dstip, dstports, logaccept);
 					if (strcmp(proto, "UDP") == 0 || strcmp(proto, "BOTH") == 0)
 						fprintf(fp_ipv6, "-A FORWARD -m state --state NEW -p udp -m udp %s -d %s --dport %s -j %s\n", 
-						        srciprule, dstip, dstports, logaccept);
-                                        // Handle raw protocol in port field, no val1:val2 allowed
+							srciprule, dstip, dstports, logaccept);
+					// Handle raw protocol in port field, no val1:val2 allowed
 					if (strcmp(proto, "OTHER") == 0) {
 						protono = strsep(&dstports, ":");
 						fprintf(fp_ipv6, "-A FORWARD -p %s %s -d %s -j %s\n", protono, srciprule, dstip, logaccept);
@@ -4004,6 +4004,13 @@ TRACE_PT("write url filter\n");
 			     "-p", "udp",
 			     "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01");
 		}
+
+#ifdef RTCONFIG_IPV6
+		if (get_ipv6_service() == IPV6_6IN4) {
+			eval("ip6tables", "-t", "mangle", "-A", "FORWARD",
+			     "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01");
+		}
+#endif
 #endif
 	}
 #endif
@@ -4126,6 +4133,21 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 			     "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01");
 		}
 #endif
+#ifdef RTCONFIG_BCMARM
+		/* mark STUN connection*/
+		if (nvram_match("fw_pt_stun", "1")) {
+			eval("iptables", "-t", "mangle", "-A", "FORWARD",
+				"-p", "udp",
+				"-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01");
+		}
+
+#ifdef RTCONFIG_IPV6
+		if (get_ipv6_service() == IPV6_6IN4) {
+			eval("ip6tables", "-t", "mangle", "-A", "FORWARD",
+				"-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01");
+		}
+#endif
+#endif
 	}
 #endif
 }
@@ -4149,14 +4171,6 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 
 			add_iQosRules(wan_if);
 		}
-#ifdef RTCONFIG_BCMARM
-		/* mark STUN connection*/
-		if (nvram_match("fw_pt_stun", "1")) {
-			eval("iptables", "-t", "mangle", "-A", "FORWARD",
-			     "-p", "udp",
-			     "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01");
-		}
-#endif
 	}
 	else {
 		eval("iptables", "-t", "mangle", "-F");
@@ -4218,6 +4232,22 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 			     "-o", lan_if, "-s", lan_class, "-d", lan_class,
 			     "-m", "state", "--state NEW", "-j", "MARK", "--set-mark", "0x01");
 		}
+#endif
+
+#ifdef RTCONFIG_BCMARM
+                /* mark STUN connection*/
+                if (nvram_match("fw_pt_stun", "1")) {
+                        eval("iptables", "-t", "mangle", "-A", "FORWARD",
+                             "-p", "udp",
+                             "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01");
+                }
+
+#ifdef RTCONFIG_IPV6
+		if (get_ipv6_service() == IPV6_6IN4) {
+			eval("ip6tables", "-t", "mangle", "-A", "FORWARD",
+			     "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01");
+		}
+#endif
 #endif
 	}
 #endif

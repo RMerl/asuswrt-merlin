@@ -20,9 +20,11 @@
 </style>
 <script type="text/javascript" language="JavaScript" src="../state.js"></script>
 <script type="text/javascript" language="JavaScript" src="../help.js"></script>
+<script type="text/JavaScript" language="JavaScript" src="../jquery.js"></script>
 <script type="text/javascript">
-
+var $j = jQuery.noConflict();
 var accounts = [<% get_all_accounts(); %>];
+
 if(accounts.length == 0)
 	accounts = ['<% nvram_get("http_username"); %>'];
 
@@ -43,21 +45,19 @@ function QKinternettype_load_body(){
 		document.getElementById("theFieldset2").style.display = "";
 		document.getElementById("tblsetting_1").style.display = "none";
 		parent.set_step("welcome");
-		var http_password = decodeURIComponent("<% nvram_char_to_ascii("", "http_passwd"); %>");
-		chkPass(http_password, 'http_passwd');
+		//Viz banned 2014.04.17 chkPass(" ", 'http_passwd');
 	}
 	else{
 		parent.document.title = "<#Web_Title#> - Welcome!";
 		parent.set_step("t0");
 		document.getElementById("tblsetting_1").style.display = "";
 		document.form.http_passwd.focus();
- 		var http_password = decodeURIComponent("<% nvram_char_to_ascii("", "http_passwd"); %>");
-		chkPass(http_password, 'http_passwd');
+		//Viz banned 2014.04.17 chkPass(" ", 'http_passwd');
 
 		if (dsl_support) {
 			document.getElementById("prev_btn").style.display = "none";
 			var detect_status = '<% nvram_get("dsltmp_autodet_state"); %>';	
-			if ( (detect_status == "Detecting") || (detect_status == "wait_for_init") ||
+			if ( (detect_status == "Detecting") || (detect_status == "wait_for_init") || (detect_status == "init") ||
 				(detect_status == "initializing") ||(detect_status == "up") || (detect_status == "down")) {
 				document.form.next_page.value = "/qis/QIS_detect.htm";
 			}
@@ -77,6 +77,11 @@ function QKinternettype_load_body(){
 	}
 	
 	document.form.http_username.value= accounts[0];	
+
+	if(parent.based_modelid == "DSL-AC68U"){
+			var RetryCountDown_fail = 5;
+			update_dsl_info();
+	}
 }
 
 function submitForm(){
@@ -88,20 +93,6 @@ function submitForm(){
 	else
 		showtext($("alert_msg2"), "");
 
-	var alert_str = validate_username(document.form.http_username);
-
-	if(alert_str != ""){
-		showtext($("alert_msg1"), alert_str);
-		document.form.http_username.focus();
-		document.form.http_username.select();
-		changeiuiBackground(0);
-		return false;
-	}else{
-		$("alert_msg1").style.display = "none";
-	}
-
-	document.form.http_username.value = trim(document.form.http_username.value);
-
 	if(document.form.http_username.value.length == 0){
 		showtext($("alert_msg1"), "<#File_Pop_content_alert_desc1#>");
 		document.form.http_username.focus();
@@ -109,42 +100,45 @@ function submitForm(){
 		changeiuiBackground(0);
 		return false;
 	}
+	else{
+		
+		var alert_str = validate_hostname(document.form.http_username);
+		if(alert_str != ""){
+			showtext($("alert_msg1"), alert_str);
+			$("alert_msg1").style.display = "";
+			document.form.http_username.focus();
+			document.form.http_username.select();
+			changeiuiBackground(0);
+			return false;
+		}else{
+			$("alert_msg1").style.display = "none";
+		}
 
-	if(document.form.http_username.value == "root"
-			|| document.form.http_username.value == "guest"
-			|| document.form.http_username.value == "anonymous"
-			){
-		showtext($("alert_msg1"), "<#USB_Application_account_alert#>");
-		document.form.http_username.focus();
-		document.form.http_username.select();
-		changeiuiBackground(0);
-		return false;
-	}
+		document.form.http_username.value = trim(document.form.http_username.value);
 
-	if(document.form.http_username.value.length <= 1){
-		showtext($("alert_msg1"), "<#File_Pop_content_alert_desc2#>");
-		document.form.http_username.focus();
-		document.form.http_username.select();
-		changeiuiBackground(0);
-		return false;
-	}
-
-	if(document.form.http_username.value.length > 20){
-		showtext($("alert_msg1"), "<#File_Pop_content_alert_desc3#>");
-		document.form.http_username.focus();
-		document.form.http_username.select();
-		changeiuiBackground(0);
-		return false;
-	}
-
-	if(accounts.getIndexByValue(document.form.http_username.value) > 0
-			&& document.form.http_username.value != accounts[0]){		
-		showtext($("alert_msg1"), "<#File_Pop_content_alert_desc5#>");
-		document.form.http_username.focus();
-		document.form.http_username.select();
-		changeiuiBackground(0);
-		return false;
-	}
+		if(document.form.http_username.value == "root"
+				|| document.form.http_username.value == "guest"
+				|| document.form.http_username.value == "anonymous"
+		){
+				showtext($("alert_msg1"), "<#USB_Application_account_alert#>");
+				$("alert_msg1").style.display = "";
+				document.form.http_username.focus();
+				document.form.http_username.select();
+				changeiuiBackground(0);
+				return false;
+		}
+		else if(accounts.getIndexByValue(document.form.http_username.value) > 0
+				&& document.form.http_username.value != accounts[0]){		
+				showtext($("alert_msg1"), "<#File_Pop_content_alert_desc5#>");
+				$("alert_msg1").style.display = "";
+				document.form.http_username.focus();
+				document.form.http_username.select();
+				changeiuiBackground(0);
+				return false;
+		}else{
+				$("alert_msg1").style.display = "none";
+		}
+	}	
 	
 	if(document.form.http_passwd.value.length <= 0 || document.form.v_password2.value.length <= 0){
 		if(parent.ISMOBILE)
@@ -195,6 +189,8 @@ function submitForm(){
 
 	parent.document.QKform.http_username.value = document.form.http_username.value;
 	parent.document.QKform.http_passwd.value = document.form.http_passwd.value;
+	isPassChanged = true;
+
 	document.form.flag.value = "";
 
 	if(parent.flag_manual == 1)
@@ -221,6 +217,44 @@ function gotoPrev(){
 /* password item show or not */
 function pass_checked(obj){
 	switchType(obj, document.form.show_pass_1.checked, true);
+}
+
+function update_dsl_info(){
+	$j.ajax({
+		url: '/start_dsl_autodet.asp',
+		dataType: 'script',
+		error: function(xhr){
+			update_dsl_info();		
+		},
+		success: function(response){
+				// trigger hook only
+		}
+	});	
+}
+/*
+function getWANStatus(){
+	$.ajax({
+		url: '/result_of_get_changed_status_QIS.asp',
+		dataType: 'script',
+
+		error: function(xhr){
+			--RetryCountDown_fail;
+			if(RetryCountDown_fail < 1){
+				alert("<#Disconnected#>!");
+				refreshpage();
+			}
+			else
+				getWANStatus();
+		},
+		success: function(response){
+			// trigger hook only
+		});
+}
+*/
+
+function clean_scorebar(obj){
+	if(obj.value == "")
+		document.getElementById("scorebarBorder").style.display = "none";
 }
 </script>
 </head>  
@@ -267,7 +301,7 @@ function pass_checked(obj){
 		<tr>
 			<th width="240"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_new#></a></th>
 			<td class="QISformtd">
-				<input type="password" autocapitalization="off" value="" name="http_passwd" tabindex="2" style="height:25px;" class="input_15_table" maxlength="16" onkeyup="chkPass(this.value, 'http_passwd');" onpaste="return false;"/>
+				<input type="password" autocapitalization="off" value="" name="http_passwd" tabindex="2" style="height:25px;" class="input_15_table" maxlength="16" onkeyup="chkPass(this.value, 'http_passwd');" onpaste="return false;"/ onBlur="clean_scorebar(this);">
 			&nbsp;&nbsp;
 			<div id="scorebarBorder" style="margin-left:140px; margin-top:-26px; display:none;" title="<#LANHostConfig_x_Password_itemSecur#>">
 				<div id="score" style="margin-top:3px;"></div>
@@ -279,13 +313,13 @@ function pass_checked(obj){
 			<th width="240"><span class="hintstyle"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_retype#></a></span></th>
 			<td class="QISformtd">
 				<input type="password" autocapitalization="off" value="" name="v_password2" tabindex="3" style="height:25px;" class="input_15_table" maxlength="16" onpaste="return false;" />
-				<span id="alert_msg2" style="color:#FC0;margin-left:8px;"></span>
+				<div style="margin:-25px 0px 0px 135px;"><input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.http_passwd);pass_checked(document.form.v_password2);"><#QIS_show_pass#></div>
 			</td>
 		</tr>
 		<tr>
 			<th width="240"></th>
 			<td>
-				<div style="margin-top:-5px;"><input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.http_passwd);pass_checked(document.form.v_password2);"><#QIS_show_pass#></div>
+				<span id="alert_msg2" style="color:#FC0;margin-left:8px;"></span>
 			</td>
 		</tr>
 	</table>

@@ -127,11 +127,10 @@ else
 obj-y += hw_nat
 endif
 endif
+endif
 ifeq ($(RTCONFIG_DSL),y)
 obj-y += dsl_drv_tool
 endif
-endif
-
 ifneq ($(or $(findstring linux-2.6.36,$(LINUXDIR)),$(findstring linux-3.x,$(LINUXDIR))),)
 obj-y += iptables-1.4.x
 obj-y += iproute2-3.x
@@ -140,6 +139,9 @@ obj-y += iptables
 obj-y += iproute2
 endif
 
+ifeq ($(RTCONFIG_BWDPI),y)
+obj-y += bwdpi
+endif
 obj-y += rc
 ifeq ($(RTCONFIG_USB),y)
 obj-y += rom
@@ -209,9 +211,11 @@ obj-$(RTCONFIG_USB_PRINTER) += LPRng
 
 obj-$(RTCONFIG_USB_MODEM) += sdparm-1.02
 obj-$(RTCONFIG_USB_MODEM) += comgt-0.32
+obj-$(RTCONFIG_USB_MODEM) += uqmi
 
 ifneq ($(or $(findstring linux-2.6.36.x,$(LINUXDIR)),$(findstring linux-2.6.36,$(LINUXDIR)),$(findstring linux-3.x,$(LINUXDIR))),)
-obj-$(RTCONFIG_USB_MODEM) += usbmodeswitch-1.2.3
+#obj-$(RTCONFIG_USB_MODEM) += usbmodeswitch-1.2.3
+obj-$(RTCONFIG_USB_MODEM) += usb-modeswitch-2.1.1
 else
 obj-$(RTCONFIG_USB_MODEM) += usbmodeswitch
 endif
@@ -300,7 +304,6 @@ obj-$(RTCONFIG_MEDIA_SERVER) += minidlna
 obj-$(RTCONFIG_MEDIA_SERVER) += libgdbm
 obj-$(RTCONFIG_MEDIA_SERVER) += mt-daapd
 #obj-$(RTCONFIG_MEDIA_SERVER) += mt-daapd-svn-1696
-#obj-$(RTCONFIG_MEDIA_SERVER) += mDNSResponder
 
 MEDIA_SERVER_STATIC=y
 
@@ -325,8 +328,7 @@ ifeq ($(or $(RTCONFIG_TIMEMACHINE),$(RTCONFIG_MDNS)),y)
 obj-$(RTCONFIG_TIMEMACHINE) += avahi-0.6.31
 obj-$(RTCONFIG_TIMEMACHINE) += expat-2.0.1
 else
-obj-$(RTCONFIG_MEDIA_SERVER) += avahi-0.6.31
-obj-$(RTCONFIG_MEDIA_SERVER) += expat-2.0.1
+obj-$(RTCONFIG_MEDIA_SERVER) += mDNSResponder
 endif
 
 #
@@ -740,6 +742,10 @@ endif
 	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/asix.*o $(PLATFORMDIR)/extras/ || true
 	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/cdc_ether.*o $(PLATFORMDIR)/extras/ || true
 	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/rndis_host.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/cdc_ncm.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/cdc_wdm.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/qmi_wwan.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/cdc_mbim.*o $(PLATFORMDIR)/extras/ || true
 	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/sierra.*o $(PLATFORMDIR)/extras/ || true
 
 	@mv $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/usbkbd.*o $(PLATFORMDIR)/extras/ || true
@@ -836,6 +842,15 @@ ifeq ($(RTCONFIG_QTN),y)
 	# install qtn boot-code and firmware
 	install -D qtnimage/topaz-linux.lzma.img $(TARGETDIR)/rom/qtn/topaz-linux.lzma.img
 	install -D qtnimage/u-boot.bin $(TARGETDIR)/rom/qtn/u-boot.bin
+endif
+ifeq ($(RTCONFIG_BWDPI),y)
+	install -d $(TARGETDIR)/usr/bwdpi/
+	cp -f bwdpi_bin/*.so $(TARGETDIR)/usr/bwdpi/
+	cp -f bwdpi_bin/*.ko $(TARGETDIR)/usr/bwdpi/
+	cp -f bwdpi_bin/*.trf $(TARGETDIR)/usr/bwdpi/
+	install -D bwdpi_bin/qosd $(TARGETDIR)/usr/sbin/qosd
+	install -D bwdpi_bin/wred $(TARGETDIR)/usr/sbin/wred
+	install -D bwdpi_bin/bwdpi-rule-agent $(TARGETDIR)/usr/sbin/bwdpi-rule-agent
 endif
 	@echo ---
 
@@ -1291,7 +1306,7 @@ miniupnpd/config.h:
 miniupnpd: $(IPTABLES_TARGET) miniupnpd/config.h
 	@$(SEP)
 	cp -f ./shared/version.h miniupnpd/.
-	$(MAKE) -C miniupnpd -f Makefile.linux
+	$(MAKE) -C miniupnpd -f Makefile.linux $(PARALLEL_BUILD)
 
 miniupnpd-clean:
 	-@$(MAKE) -C miniupnpd -f Makefile.linux clean
@@ -1456,11 +1471,22 @@ usbmodeswitch-1.2.3: libusb-0.1.12
 		-Wl,-R/lib:/usr/lib:/opt/usr/lib:/usr/local/share -lpthread \
 		-I$(TOP)/libusb-0.1.12 -L$(TOP)/libusb-0.1.12/.libs -lusb"
 
-usbmodeswitch-1.2.3-install: usbmodeswitch-1.2.3 usbmodeswitch-1.2.3-install
+usbmodeswitch-1.2.3-install: usbmodeswitch-1.2.3
 	install -D usbmodeswitch-1.2.3/usb_modeswitch $(INSTALLDIR)/usbmodeswitch-1.2.3/usr/sbin/usb_modeswitch
 	$(STRIP) -s $(INSTALLDIR)/usbmodeswitch-1.2.3/usr/sbin/usb_modeswitch
 	@mkdir -p $(TARGETDIR)/rom/etc
 	@sed 's/#.*//g;s/[ \t]\+/ /g;s/^[ \t]*//;s/[ \t]*$$//;/^$$/d' < $(TOP)/usbmodeswitch-1.2.3/usb_modeswitch.conf > $(TARGETDIR)/rom/etc/usb_modeswitch.conf
+
+usb-modeswitch-2.1.1: libusb10
+	$(MAKE) -C $@ CC=$(CC) CFLAGS="-Os $(EXTRACFLAGS) \
+		-Wl,-R/lib:/usr/lib:/opt/usr/lib:/usr/local/share -lpthread \
+		-I$(TOP)/libusb10/libusb -L$(TOP)/libusb10/libusb/.libs -lusb-1.0"
+
+usb-modeswitch-2.1.1-install: usb-modeswitch-2.1.1
+	install -D usb-modeswitch-2.1.1/usb_modeswitch $(INSTALLDIR)/usb-modeswitch-2.1.1/usr/sbin/usb_modeswitch
+	$(STRIP) -s $(INSTALLDIR)/usb-modeswitch-2.1.1/usr/sbin/usb_modeswitch
+	@mkdir -p $(TARGETDIR)/rom/etc
+	@sed 's/#.*//g;s/[ \t]\+/ /g;s/^[ \t]*//;s/[ \t]*$$//;/^$$/d' < $(TOP)/usb-modeswitch-2.1.1/usb_modeswitch.conf > $(TARGETDIR)/rom/etc/usb_modeswitch.conf
 
 libusb-0.1.12/stamp-h1:
 	cd libusb-0.1.12 && CFLAGS="-Os -Wall $(EXTRACFLAGS)" LIBS="-lpthread" \
@@ -1580,7 +1606,7 @@ radvd/stamp-h1:
 	@touch $@
 
 radvd: libdaemon radvd/stamp-h1
-	make -C $@
+	make -C $@ $(PARALLEL_BUILD)
 
 radvd-clean:
 	-@ [ ! -f radvd/Makefile ] || $(MAKE) -C radvd distclean
@@ -1614,7 +1640,7 @@ ndisc6-clean:
 ndisc6-install: ndisc6
 	install -D ndisc6/rdnssd/rdnssd $(INSTALLDIR)/ndisc6/usr/sbin/rdnssd
 	$(STRIP) $(INSTALLDIR)/ndisc6/usr/sbin/rdnssd
-ifeq ($(RTCONFIG_RALINK),y)
+ifneq ($(RTCONFIG_BCMWL6),y)
 	install -D $(shell dirname $(shell which $(CXX)))/../lib/librt.so.0 $(TARGETDIR)/lib/librt.so.0
 endif
 
@@ -1927,7 +1953,7 @@ libqcsapi_client-install: libqcsapi_client
 	install -d $(INSTALLDIR)/libqcsapi_client/usr/sbin/
 	install -D libqcsapi_client/libqcsapi_client.so.1.0.1 $(INSTALLDIR)/libqcsapi_client/usr/lib/
 	install -D libqcsapi_client/qcsapi_sockrpc $(INSTALLDIR)/libqcsapi_client/usr/sbin/
-	install -D libqcsapi_client/c_rpc_qcsapi_sample $(INSTALLDIR)/libqcsapi_client/usr/sbin/
+	# install -D libqcsapi_client/c_rpc_qcsapi_sample $(INSTALLDIR)/libqcsapi_client/usr/sbin/
 	$(STRIP) $(INSTALLDIR)/libqcsapi_client/usr/lib/*.so.*
 	$(STRIP) $(INSTALLDIR)/libqcsapi_client/usr/sbin/*
 	cd $(INSTALLDIR)/libqcsapi_client/usr/lib && \
@@ -2118,11 +2144,11 @@ endif
 flac/stamp-h1: libogg
 	cd flac && \
 	CFLAGS="-Os $(EXTRACFLAGS) -fPIC -ffunction-sections -fdata-sections" \
-	CPPFLAGS="-I$(TOP)/libogg/include" \
-	LDFLAGS="-L$(TOP)/libogg/src/.libs -fPIC -ffunction-sections -fdata-sections -Wl,--gc-sections" \
+	LDFLAGS="-fPIC -ffunction-sections -fdata-sections -Wl,--gc-sections" \
 	$(CONFIGURE) --enable-shared --enable-static --prefix='' --disable-rpath \
 		--disable-doxygen-docs --disable-xmms-plugin --disable-cpplibs \
-		--without-libiconv-prefix --disable-altivec --disable-3dnow --disable-sse
+		--without-libiconv-prefix --disable-altivec --disable-3dnow --disable-sse \
+		--with-ogg-includes=$(TOP)/libogg/include --with-ogg-libraries=$(TOP)/libogg/src/.libs
 	touch $@
 
 flac: flac/stamp-h1 libogg
@@ -2451,7 +2477,7 @@ openpam/stamp-h1:
 	touch $@
 
 openpam: openpam/stamp-h1
-	$(MAKE) -C openpam
+	$(MAKE) -C openpam $(PARALLEL_BUILD)
 
 openpam-install: openpam
 	install -D openpam/lib/libpam/.libs/libpam.so.2.0.0 $(INSTALLDIR)/openpam/usr/lib/libpam.so.2
@@ -2463,7 +2489,7 @@ openpam-clean:
 	@[ ! -f openpam/Makefile ] || $(MAKE) -C openpam clean
 	@rm -f openpam/stamp-h1
 
-openvpn/stamp-h1:
+openvpn/stamp-h1: lzo
 	cd openvpn && ./autogen.sh && \
 	export OPENSSL_CRYPTO_CFLAGS="-I$(TOP)/openssl/include"; \
 	export OPENSSL_CRYPTO_LIBS="-L$(TOP)/openssl -lcrypto"; \
@@ -2862,12 +2888,17 @@ netatalk-3.0.5/stamp-h1: openssl libgcrypt-1.5.1 db-4.8.30
 	cd $(TOP)/netatalk-3.0.5 && \
 	$(CONFIGURE) CPPFLAGS="-I$(TOP)/db-4.8.30/build_unix -I$(TOP)/libgcrypt-1.5.1/src" \
 	LDFLAGS="-L$(TOP)/db-4.8.30/build_unix/.libs -L$(TOP)/libgcrypt-1.5.1/src/.libs" \
-	LIBS="-L$(TOP)/libgpg-error-1.10/src/.libs -lgpg-error -L$(TOP)/libgcrypt-1.5.1/src/.libs -lgcrypt" \
 	LD_LIBRARY_PATH="$(SRCBASE)/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3/lib" \
+	LIBS="-L$(TOP)/libgpg-error-1.10/src/.libs -lgpg-error -L$(TOP)/libgcrypt-1.5.1/src/.libs -lgcrypt" \
 	LIBGCRYPT_CONFIG="$(TOP)/libgcrypt-1.5.1/src/libgcrypt-config" \
+	ac_cv_header_sys_xattr_h=yes ac_cv_search_getxattr='none required' \
+	ac_cv_func_getxattr=yes ac_cv_func_lgetxattr=yes ac_cv_func_fgetxattr=yes \
+	ac_cv_func_listxattr=yes ac_cv_func_llistxattr=yes ac_cv_func_flistxattr=yes \
+	ac_cv_func_removexattr=yes ac_cv_func_lremovexattr=yes ac_cv_func_fremovexattr=yes \
+	ac_cv_func_setxattr=yes ac_cv_func_lsetxattr=yes ac_cv_func_fsetxattr=yes \
+	ac_cv_func_sendfile=yes ac_cv_header_crypt_h=yes ac_cv_lib_crypt_main=yes \
 	--without-kerberos \
 	--with-bdb=$(TOP)/db-4.8.30/build_unix \
-	--with-cnid-cdb-backend \
 	--prefix=$(INSTALLDIR)/netatalk-3.0.5/usr \
 	--program-prefix= \
 	--with-ssl-dir=$(TOP)/openssl \
@@ -2878,7 +2909,7 @@ netatalk-3.0.5/stamp-h1: openssl libgcrypt-1.5.1 db-4.8.30
 
 netatalk-3.0.5: netatalk-3.0.5/stamp-h1
 	@$(SEP)
-	@$(MAKE) -C netatalk-3.0.5
+	@$(MAKE) -C netatalk-3.0.5 $(PARALLEL_BUILD)
 
 netatalk-3.0.5-install: netatalk-3.0.5
 	install -D netatalk-3.0.5/etc/afpd/.libs/afpd $(INSTALLDIR)/netatalk-3.0.5/usr/sbin/afpd
@@ -2924,7 +2955,7 @@ expat-2.0.1/stamp-h1:
 
 expat-2.0.1: expat-2.0.1/stamp-h1
 	@$(SEP)
-	@$(MAKE) -C expat-2.0.1
+	@$(MAKE) -C expat-2.0.1 $(PARALLEL_BUILD)
 
 expat-2.0.1-install: expat-2.0.1
 	install -D expat-2.0.1/.libs/libexpat.so.1.5.2 $(INSTALLDIR)/expat-2.0.1/usr/lib/libexpat.so.1.5.2
@@ -2943,7 +2974,7 @@ avahi-0.6.31/stamp-h1: shared nvram$(BCMEX) expat-2.0.1 libdaemon
 
 avahi-0.6.31: avahi-0.6.31/stamp-h1
 	@$(SEP)
-	@$(MAKE) -C avahi-0.6.31
+	@$(MAKE) -C avahi-0.6.31 $(PARALLEL_BUILD)
 
 avahi-0.6.31-install: avahi-0.6.31
 	install -D avahi-0.6.31/avahi-daemon/.libs/avahi-daemon $(INSTALLDIR)/avahi-0.6.31/usr/sbin/avahi-daemon
@@ -3089,6 +3120,16 @@ tftp-install:
 	#install -D tftp-1.0/tftpc $(INSTALLDIR)/tftp/usr/sbin/tftpc
 	#$(STRIP) -s $(INSTALLDIR)/tftp/usr/sbin/tftpc
 
+bwdpi:
+	cd bwdpi && CC=$(CC) && $(MAKE)
+
+bwdpi-clean:
+	cd bwdpi && $(MAKE) clean
+
+bwdpi-install: bwdpi
+	install -D bwdpi/libbwdpi.so $(INSTALLDIR)/bwdpi/usr/lib/libbwdpi.so
+	$(STRIP) $(INSTALLDIR)/bwdpi/usr/lib/libbwdpi.so
+
 NORTON_DIR := $(SRCBASE)/router/norton${BCMEX}
 
 .PHONY: norton${BCMEX} norton${BCMEX}-install norton${BCMEX}-clean
@@ -3101,7 +3142,7 @@ norton${BCMEX}-install:
 	+$(MAKE) -C $(NORTON_DIR) install INSTALLDIR=$(INSTALLDIR)/norton${BCMEX}
 
 norton${BCMEX}-clean:
-	[ ! -f $(NORTEON_DIR)/Makefile ] || $(MAKE) -C $(NORTON_DIR) clean
+	[ ! -f $(NORTEON_DIR)/Makefile ] || -@$(MAKE) -C $(NORTON_DIR) clean
 
 .PHONY : email-3.1.3 email-3.1.3-clean
 email-3.1.3:

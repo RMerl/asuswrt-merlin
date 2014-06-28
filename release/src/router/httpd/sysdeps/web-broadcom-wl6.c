@@ -2119,6 +2119,13 @@ int wl_wps_info(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	int retval = 0;
 	char tmp[128], prefix[]="wlXXXXXXX_";
 	char *wps_sta_pin;
+#ifdef RTCONFIG_QTN
+	int ret;
+	qcsapi_SSID ssid;
+	string_64 key_passphrase;
+	char wps_pin[16];
+#endif
+
 
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 
@@ -2126,37 +2133,106 @@ int wl_wps_info(int eid, webs_t wp, int argc, char_t **argv, int unit)
 
 	//0. WSC Status
 	if (!strcmp(nvram_safe_get(strcat_r(prefix, "wps_mode", tmp)), "enabled"))
+	{
+#ifdef RTCONFIG_QTN
+		if (unit)
+			retval += websWrite(wp, "<wps_info>%s</wps_info>\n", getWscStatusStr_qtn());
+		else
+#endif
 		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", getWscStatusStr());
+	}
 	else
 		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", "Not used");
 
 	//1. WPSConfigured
+#ifdef RTCONFIG_QTN
+	if (unit)
+		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", get_WPSConfiguredStr_qtn());
+	else
+#endif
 	if (!wps_is_oob())
 		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", "Yes");
 	else
 		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", "No");
 
 	//2. WPSSSID
-	memset(tmpstr, 0, sizeof(tmpstr));
-	char_to_ascii(tmpstr, nvram_safe_get(strcat_r(prefix, "ssid", tmp)));
-	retval += websWrite(wp, "<wps_info>%s</wps_info>\n", tmpstr);
+#ifdef RTCONFIG_QTN
+	if (unit)
+	{
+		memset(&ssid, 0, sizeof(qcsapi_SSID));
+		ret = rpc_qcsapi_get_SSID(WIFINAME, &ssid);
+		if (ret < 0)
+			dbG("rpc_qcsapi_get_SSID %s error, return: %d\n", WIFINAME, ret);
+
+		memset(tmpstr, 0, sizeof(tmpstr));
+		char_to_ascii(tmpstr, ssid);
+		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", tmpstr);
+	}
+	else
+#else
+	{
+		memset(tmpstr, 0, sizeof(tmpstr));
+		char_to_ascii(tmpstr, nvram_safe_get(strcat_r(prefix, "ssid", tmp)));
+		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", tmpstr);
+	}
+#endif
 
 	//3. WPSAuthMode
-	memset(tmpstr, 0, sizeof(tmpstr));
-	getWPSAuthMode(unit, tmpstr);
-	retval += websWrite(wp, "<wps_info>%s</wps_info>\n", tmpstr);
+#ifdef RTCONFIG_QTN
+	if (unit)
+		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", getWPSAuthMode_qtn());
+	else
+#endif
+	{
+		memset(tmpstr, 0, sizeof(tmpstr));
+		getWPSAuthMode(unit, tmpstr);
+		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", tmpstr);
+	}
 
 	//4. EncrypType
-	memset(tmpstr, 0, sizeof(tmpstr));
-	getWPSEncrypType(unit, tmpstr);
-	retval += websWrite(wp, "<wps_info>%s</wps_info>\n", tmpstr);
+#ifdef RTCONFIG_QTN
+	if (unit)
+		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", getWPSEncrypType_qtn());
+	else
+#endif
+	{
+		memset(tmpstr, 0, sizeof(tmpstr));
+		getWPSEncrypType(unit, tmpstr);
+		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", tmpstr);
+	}
 
 	//5. DefaultKeyIdx
-	memset(tmpstr, 0, sizeof(tmpstr));
-	sprintf(tmpstr, "%s", nvram_safe_get(strcat_r(prefix, "key", tmp)));
-	retval += websWrite(wp, "<wps_info>%s</wps_info>\n", tmpstr);
+#ifdef RTCONFIG_QTN
+	if (unit)
+		retval += websWrite(wp, "<wps_info>%d</wps_info>\n", 1);
+	else
+#endif
+	{
+		memset(tmpstr, 0, sizeof(tmpstr));
+		sprintf(tmpstr, "%s", nvram_safe_get(strcat_r(prefix, "key", tmp)));
+		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", tmpstr);
+	}
 
 	//6. WPAKey
+#ifdef RTCONFIG_QTN
+	if (unit)
+	{
+		memset(&key_passphrase, 0, sizeof(key_passphrase));
+		ret = rpc_qcsapi_get_key_passphrase(WIFINAME, (char *) &key_passphrase);
+		if (ret < 0)
+			dbG("rpc_qcsapi_get_key_passphrase %s error, return: %d\n", WIFINAME, ret);
+
+		if (!strlen(key_passphrase))
+			retval += websWrite(wp, "<wps_info>None</wps_info>\n");
+		else
+		{
+			memset(tmpstr, 0, sizeof(tmpstr));
+			char_to_ascii(tmpstr, key_passphrase);
+			retval += websWrite(wp, "<wps_info>%s</wps_info>\n", tmpstr);
+		}
+	}
+	else
+#endif
 	if (!strlen(nvram_safe_get(strcat_r(prefix, "wpa_psk", tmp))))
 		retval += websWrite(wp, "<wps_info>None</wps_info>\n");
 	else
@@ -2167,11 +2243,39 @@ int wl_wps_info(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	}
 
 	//7. AP PIN Code
-	memset(tmpstr, 0, sizeof(tmpstr));
-	sprintf(tmpstr, "%s", nvram_safe_get("wps_device_pin"));
-	retval += websWrite(wp, "<wps_info>%s</wps_info>\n", tmpstr);
+#ifdef RTCONFIG_QTN
+	if (unit)
+	{
+		wps_pin[0] = 0;
+		ret = rpc_qcsapi_wps_get_ap_pin(WIFINAME, wps_pin, 0);
+		if (ret < 0)
+			dbG("rpc_qcsapi_wps_get_ap_pin %s error, return: %d\n", WIFINAME, ret);
+
+		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", wps_pin);
+	}
+	else
+#endif
+	{
+		memset(tmpstr, 0, sizeof(tmpstr));
+		sprintf(tmpstr, "%s", nvram_safe_get("wps_device_pin"));
+		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", tmpstr);
+	}
 
 	//8. Saved WPAKey
+#ifdef RTCONFIG_QTN
+	if (unit)
+	{
+		if (!strlen(key_passphrase))
+			retval += websWrite(wp, "<wps_info>None</wps_info>\n");
+		else
+		{
+			memset(tmpstr, 0, sizeof(tmpstr));
+			char_to_ascii(tmpstr, key_passphrase);
+			retval += websWrite(wp, "<wps_info>%s</wps_info>\n", tmpstr);
+		}
+	}
+	else
+#endif
 	if (!strlen(nvram_safe_get(strcat_r(prefix, "wpa_psk", tmp))))
 	{
 		retval += websWrite(wp, "<wps_info>None</wps_info>\n");

@@ -392,7 +392,12 @@ function submitForm(){
 	parent.w_Setting_tmp = document.form.w_Setting.value;
 	document.getElementById("loadingIcon").style.display = "";
 	document.form.http_username.value = parent.document.QKform.http_username.value;
-	document.form.http_passwd.value = parent.document.QKform.http_passwd.value;
+
+	if(parent.document.QKform.http_passwd.value != ""){
+		document.form.http_passwd.value = parent.document.QKform.http_passwd.value;
+		document.form.http_passwd.disabled = false;
+	}
+
 	document.form.wan_nat_x.value = parent.document.QKform.wan_nat_x.value;
 	document.form.target = "hidden_frame";
 	document.form.next_page.value = "/qis/QIS_finish.htm";	
@@ -748,7 +753,7 @@ function detect_LANStatus(_flag){
 <input type="hidden" name="lan_ipaddr_rt" value="" disabled>
 <input type="hidden" name="lan_netmask_rt" value="" disabled>
 <input type="hidden" name="http_username" value="<% nvram_get("http_username"); %>">
-<input type="hidden" name="http_passwd" value="<% nvram_get("http_passwd"); %>">
+<input type="hidden" name="http_passwd" value="" disabled>
 <input type="hidden" name="sw_mode" value="">
 <input type="hidden" name="x_Setting" value="1" disabled>
 <input type="hidden" name="w_Setting" value="1">

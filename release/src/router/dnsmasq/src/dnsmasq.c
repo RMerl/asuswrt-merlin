@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2013 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2014 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -81,15 +81,28 @@ int main (int argc, char **argv)
   umask(022); /* known umask, create leases and pid files as 0644 */
 
   read_opts(argc, argv, compile_opts);
-    
+ 
   if (daemon->edns_pktsz < PACKETSZ)
     daemon->edns_pktsz = PACKETSZ;
+#ifdef HAVE_DNSSEC
+  /* Enforce min packet big enough for DNSSEC */
+  if (option_bool(OPT_DNSSEC_VALID) && daemon->edns_pktsz < EDNS_PKTSZ)
+    daemon->edns_pktsz = EDNS_PKTSZ;
+#endif
+
   daemon->packet_buff_sz = daemon->edns_pktsz > DNSMASQ_PACKETSZ ? 
     daemon->edns_pktsz : DNSMASQ_PACKETSZ;
   daemon->packet = safe_malloc(daemon->packet_buff_sz);
-
+  
   daemon->addrbuff = safe_malloc(ADDRSTRLEN);
-
+  
+#ifdef HAVE_DNSSEC
+  if (option_bool(OPT_DNSSEC_VALID))
+    {
+      daemon->keyname = safe_malloc(MAXDNAME);
+      daemon->workspacename = safe_malloc(MAXDNAME);
+    }
+#endif
 
 #ifdef HAVE_DHCP
   if (!daemon->lease_file)
@@ -131,6 +144,19 @@ int main (int argc, char **argv)
     }
 #endif
   
+  if (option_bool(OPT_DNSSEC_VALID))
+    {
+#ifdef HAVE_DNSSEC
+      if (!daemon->ds)
+	die(_("No trust anchors provided for DNSSEC"), NULL, EC_BADCONF);
+      
+      if (daemon->cachesize < CACHESIZ)
+	die(_("Cannot reduce cache size from default when DNSSEC enabled"), NULL, EC_BADCONF);
+#else 
+      die(_("DNSSEC not available: set HAVE_DNSSEC in src/config.h"), NULL, EC_BADCONF);
+#endif
+    }
+
 #ifndef HAVE_TFTP
   if (option_bool(OPT_TFTP))
     die(_("TFTP server not available: set HAVE_TFTP in src/config.h"), NULL, EC_BADCONF);
@@ -182,7 +208,7 @@ int main (int argc, char **argv)
 	    daemon->doing_dhcp6 = 1;
 	  if (context->flags & CONTEXT_RA)
 	    daemon->doing_ra = 1;
-#ifndef  HAVE_LINUX_NETWORK
+#if !defined(HAVE_LINUX_NETWORK) && !defined(HAVE_BSD_NETWORK)
 	  if (context->flags & CONTEXT_TEMPLATE)
 	    die (_("dhcp-range constructor not available on this platform"), NULL, EC_BADCONF);
 #endif 
@@ -220,13 +246,15 @@ int main (int argc, char **argv)
     ipset_init();
 #endif
 
-#ifdef HAVE_LINUX_NETWORK
+#if  defined(HAVE_LINUX_NETWORK)
   netlink_init();
-  
-  if (option_bool(OPT_NOWILD) && option_bool(OPT_CLEVERBIND))
-    die(_("cannot set --bind-interfaces and --bind-dynamic"), NULL, EC_BADCONF);
+#elif defined(HAVE_BSD_NETWORK)
+  route_init();
 #endif
 
+  if (option_bool(OPT_NOWILD) && option_bool(OPT_CLEVERBIND))
+    die(_("cannot set --bind-interfaces and --bind-dynamic"), NULL, EC_BADCONF);
+  
   if (!enumerate_interfaces(1) || !enumerate_interfaces(0))
     die(_("failed to find list of interfaces: %s"), NULL, EC_MISC);
   
@@ -279,7 +307,12 @@ int main (int argc, char **argv)
 #endif
   
   if (daemon->port != 0)
-    cache_init();
+    {
+      cache_init();
+#ifdef HAVE_DNSSEC
+      blockdata_init();
+#endif
+    }
     
   if (option_bool(OPT_DBUS))
 #ifdef HAVE_DBUS
@@ -364,7 +397,7 @@ int main (int argc, char **argv)
   piperead = pipefd[0];
   pipewrite = pipefd[1];
   /* prime the pipe to load stuff first time. */
-  send_event(pipewrite, EVENT_RELOAD, 0, NULL); 
+  send_event(pipewrite, EVENT_INIT, 0, NULL); 
 
   err_pipe[1] = -1;
   
@@ -629,10 +662,22 @@ int main (int argc, char **argv)
     }
 #endif
 
+  if (option_bool(OPT_LOCAL_SERVICE))
+    my_syslog(LOG_INFO, _("DNS service limited to local subnets"));
+  
+#ifdef HAVE_DNSSEC
+  if (option_bool(OPT_DNSSEC_VALID))
+    {
+      my_syslog(LOG_INFO, _("DNSSEC validation enabled"));
+      if (option_bool(OPT_DNSSEC_TIME))
+	my_syslog(LOG_INFO, _("DNSSEC signature timestamps not checked until first cache reload"));
+    }
+#endif
+
   if (log_err != 0)
     my_syslog(LOG_WARNING, _("warning: failed to change owner of %s: %s"), 
 	      daemon->log_file, strerror(log_err));
-
+  
   if (bind_fallback)
     my_syslog(LOG_WARNING, _("setting --bind-interfaces option because of OS limitations"));
 
@@ -808,11 +853,14 @@ int main (int argc, char **argv)
 	}
 #endif
 
-#ifdef HAVE_LINUX_NETWORK
+#if defined(HAVE_LINUX_NETWORK)
       FD_SET(daemon->netlinkfd, &rset);
       bump_maxfd(daemon->netlinkfd, &maxfd);
+#elif defined(HAVE_BSD_NETWORK)
+      FD_SET(daemon->routefd, &rset);
+      bump_maxfd(daemon->routefd, &maxfd);
 #endif
-      
+
       FD_SET(piperead, &rset);
       bump_maxfd(piperead, &maxfd);
 
@@ -867,9 +915,12 @@ int main (int argc, char **argv)
 	  warn_bound_listeners();
 	}
 
-#ifdef HAVE_LINUX_NETWORK
+#if defined(HAVE_LINUX_NETWORK)
       if (FD_ISSET(daemon->netlinkfd, &rset))
 	netlink_multicast(now);
+#elif defined(HAVE_BSD_NETWORK)
+      if (FD_ISSET(daemon->routefd, &rset))
+	route_sock(now);
 #endif
 
       /* Check for changes to resolv files once per second max. */
@@ -1073,7 +1124,7 @@ static void async_event(int pipe, time_t now)
 {
   pid_t p;
   struct event_desc ev;
-  int i;
+  int i, check = 0;
   char *msg;
   
   /* NOTE: the memory used to return msg is leaked: use msgs in events only
@@ -1083,12 +1134,36 @@ static void async_event(int pipe, time_t now)
     switch (ev.event)
       {
       case EVENT_RELOAD:
-	clear_cache_and_reload(now);
-	if (daemon->port != 0 && daemon->resolv_files && option_bool(OPT_NO_POLL))
+#ifdef HAVE_DNSSEC
+	if (option_bool(OPT_DNSSEC_VALID) && option_bool(OPT_DNSSEC_TIME))
 	  {
-	    reload_servers(daemon->resolv_files->name);
-	    check_servers();
+	    my_syslog(LOG_INFO, _("now checking DNSSEC signature timestamps"));
+	    reset_option_bool(OPT_DNSSEC_TIME);
+	  } 
+#endif
+	/* fall through */
+	
+      case EVENT_INIT:
+	clear_cache_and_reload(now);
+	
+	if (daemon->port != 0)
+	  {
+	    if (daemon->resolv_files && option_bool(OPT_NO_POLL))
+	      {
+		reload_servers(daemon->resolv_files->name);
+		check = 1;
+	      }
+
+	    if (daemon->servers_file)
+	      {
+		read_servers_file();
+		check = 1;
+	      }
+
+	    if (check)
+	      check_servers();
 	  }
+
 #ifdef HAVE_DHCP
 	rerun_scripts();
 #endif
@@ -1179,6 +1254,7 @@ static void async_event(int pipe, time_t now)
 	    close(daemon->helperfd);
 	  }
 #endif
+	
 #if defined(HAVE_DHCP) && defined(HAVE_LEASEFILE_EXPIRE)
 	if (daemon->dhcp || daemon->dhcp6)
 	  lease_flush_file(now);
@@ -1311,7 +1387,7 @@ static int set_dns_listeners(time_t now, fd_set *set, int *maxfdp)
   
   /* will we be able to get memory? */
   if (daemon->port != 0)
-    get_new_frec(now, &wait);
+    get_new_frec(now, &wait, 0);
   
   for (serverfdp = daemon->sfds; serverfdp; serverfdp = serverfdp->next)
     {

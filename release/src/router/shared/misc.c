@@ -999,6 +999,7 @@ uint32_t crc_calc(uint32_t crc, const char *buf, int len)
 void bcmvlan_models(int model, char *vlan)
 {
 	switch (model) {
+	case MODEL_DSLAC68U:
 	case MODEL_RTAC68U:
 	case MODEL_RTAC87U:
 	case MODEL_RTAC56S:
@@ -1043,8 +1044,9 @@ char *get_productid(void)
 	return productid;
 }
 
-int backup_rx;
-int backup_tx;
+long backup_rx = 0;
+long backup_tx = 0;
+int backup_set = 0;
 
 unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, unsigned long *tx, char *ifname_desc2, unsigned long *rx2, unsigned long *tx2)
 {
@@ -1117,16 +1119,22 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 		// find wired interface
 		strcpy(ifname_desc, "WIRED");
 
+		if(model == MODEL_DSLAC68U)
+			return 1;
+
 		// special handle for non-tag wan of broadcom solution
 		// pretend vlanX is must called after ethX
 		if(nvram_match("switch_wantag", "none")) { //Don't calc if select IPTV
-			if(strlen(modelvlan) && strcmp(ifname, modelvlan)==0) {
+			if(backup_set && strlen(modelvlan) && strcmp(ifname, modelvlan)==0) {
 				backup_rx -= *rx;
 				backup_tx -= *tx;
 
 				*rx2 = backup_rx;
 				*tx2 = backup_tx;				
 				strcpy(ifname_desc2, "INTERNET");
+
+				// Always reset.
+				backup_set = 0;
 			}
 		}//End of switch_wantag
 		return 1;
@@ -1138,7 +1146,9 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 		return 1;
 	}
 	// find in WAN interface
-	else if (ifname && (unit = get_wan_unit(ifname)) >= 0)
+	else if (ifname && (unit = get_wan_unit(ifname)) >= 0
+		// Prevent counting both wan%d_ifname and wan%d_pppoe_ifname
+		&& (strcmp(ifname, get_wan_ifname(unit)) == 0))
 	{
 		if (dualwan_unit__nonusbif(unit)) {
 #if defined(RA_ESW)
@@ -1148,6 +1158,7 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 			if(strlen(modelvlan) && strcmp(ifname, "eth0")==0) {
 				backup_rx = *rx;
 				backup_tx = *tx;
+				backup_set = 1;
 			}
 			else if (unit == wan_primary_ifunit()) {
 				strcpy(ifname_desc, "INTERNET");
@@ -1315,7 +1326,9 @@ char *get_syslog_fname(unsigned int idx)
 int is_psta(int unit)
 {
 	if (unit < 0) return 0;
-
+#ifdef RTCONFIG_QTN
+	if (unit == 1) return 0;
+#endif
 	if ((nvram_get_int("sw_mode") == SW_MODE_AP) &&
 		(nvram_get_int("wlc_psta") == 1) &&
 		(nvram_get_int("wlc_band") == unit))
@@ -1327,7 +1340,9 @@ int is_psta(int unit)
 int is_psr(int unit)
 {
 	if (unit < 0) return 0;
-
+#ifdef RTCONFIG_QTN
+	if (unit == 1) return 0;
+#endif
 	if ((nvram_get_int("sw_mode") == SW_MODE_AP) &&
 		(nvram_get_int("wlc_psta") == 2) &&
 		(nvram_get_int("wlc_band") == unit))

@@ -1266,7 +1266,7 @@ int ej_wl_auth_list(int eid, webs_t wp, int argc, char_t **argv)
 exit:
 	return 0;
 }
-
+#if defined(RTN65U)
 static void convertToUpper(char *str)
 {
 	if(str == NULL)
@@ -1280,7 +1280,7 @@ static void convertToUpper(char *str)
 		str++;
 	}
 }
-
+#endif
 static int wl_scan(int eid, webs_t wp, int argc, char_t **argv, int unit)
 {
 	int retval = 0, i = 0, apCount = 0;

@@ -19,9 +19,139 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+#ifdef HAVE_MACHINE_ENDIAN_H
+#include <machine/endian.h>
+#else
+#include <endian.h>
+#endif
+
+static inline uint16_t
+le16_to_cpu(uint16_t le16)
+{
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+	return le16;
+#else
+	uint16_t be16 = ((le16 << 8) & 0xff00) | ((le16 >> 8) & 0x00ff);
+	return be16;
+#endif
+}
+
+static inline uint32_t
+le32_to_cpu(uint32_t le32)
+{
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+	return le32;
+#else
+	uint32_t be32 =
+		((le32 << 24) & 0xff000000) |
+		((le32 << 8) & 0x00ff0000) |
+		((le32 >> 8) & 0x0000ff00) |
+		((le32 >> 24) & 0x000000ff);
+	return be32;
+#endif
+}
+
+static inline uint64_t
+le64_to_cpu(uint64_t le64)
+{
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+	return le64;
+#else
+	uint64_t be64;
+	uint8_t *le64p = (uint8_t*)&le64;
+	uint8_t *be64p = (uint8_t*)&be64;
+	be64p[0] = le64p[7];
+	be64p[1] = le64p[6];
+	be64p[2] = le64p[5];
+	be64p[3] = le64p[4];
+	be64p[4] = le64p[3];
+	be64p[5] = le64p[2];
+	be64p[6] = le64p[1];
+	be64p[7] = le64p[0];
+	return be64;
+#endif
+}
+
+static inline uint32_t
+cpu_to_be32(uint32_t cpu32)
+{
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+	uint32_t be32 =
+		((cpu32 << 24) & 0xff000000) |
+		((cpu32 << 8) & 0x00ff0000) |
+		((cpu32 >> 8) & 0x0000ff00) |
+		((cpu32 >> 24) & 0x000000ff);
+	return be32;
+#else
+	return cpu32;
+#endif
+}
+
+static inline uint8_t
+fget_byte(FILE *fp)
+{
+	uint8_t d;
+
+	if (!fread(&d, sizeof(d), 1, fp))
+		return 0;
+	return d;
+}
+
+static inline uint16_t
+fget_le16(FILE *fp)
+{
+	uint16_t d;
+
+	if (!fread(&d, sizeof(d), 1, fp))
+		return 0;
+	d = le16_to_cpu(d);
+	return d;
+}
+
+static inline uint32_t
+fget_le32(FILE *fp)
+{
+	uint32_t d;
+
+	if (!fread(&d, sizeof(d), 1, fp))
+		return 0;
+	d = le32_to_cpu(d);
+	return d;
+}
+
+// NOTE: support U+0000 ~ U+FFFF only.
+static int
+utf16le_to_utf8(char *dst, int n, uint16_t utf16le)
+{
+	uint16_t wc = le16_to_cpu(utf16le);
+	if (wc < 0x80)
+	{
+		if (n < 1)
+			return 0;
+		*dst++ = wc & 0xff;
+		return 1;
+	}
+	else if (wc < 0x800)
+	{
+		if (n < 2)
+			return 0;
+		*dst++ = 0xc0 | (wc>>6);
+		*dst++ = 0x80 | (wc & 0x3f);
+		return 2;
+	}
+	else
+	{
+		if (n < 3)
+			return 0;
+		*dst++ = 0xe0 | (wc>>12);
+		*dst++ = 0x80 | ((wc>>6) & 0x3f);
+		*dst++ = 0x80 | (wc & 0x3f);
+		return 3;
+	}
+}
 
 static int
-_asf_read_file_properties(FILE *fp, asf_file_properties_t *p, __u32 size)
+_asf_read_file_properties(FILE *fp, asf_file_properties_t *p, uint32_t size)
 {
 	int len;
 
@@ -86,7 +216,7 @@ _asf_read_audio_stream(FILE *fp, struct song_metadata *psong, int size)
 }
 
 static int
-_asf_read_media_stream(FILE *fp, struct song_metadata *psong, __u32 size)
+_asf_read_media_stream(FILE *fp, struct song_metadata *psong, uint32_t size)
 {
 	asf_media_stream_t s;
 	avi_audio_format_t wfx;
@@ -118,7 +248,7 @@ _asf_read_media_stream(FILE *fp, struct song_metadata *psong, __u32 size)
 }
 
 static int
-_asf_read_stream_object(FILE *fp, struct song_metadata *psong, __u32 size)
+_asf_read_stream_object(FILE *fp, struct song_metadata *psong, uint32_t size)
 {
 	asf_stream_object_t s;
 	int len;
@@ -143,7 +273,7 @@ _asf_read_stream_object(FILE *fp, struct song_metadata *psong, __u32 size)
 }
 
 static int
-_asf_read_extended_stream_object(FILE *fp, struct song_metadata *psong, __u32 size)
+_asf_read_extended_stream_object(FILE *fp, struct song_metadata *psong, uint32_t size)
 {
 	int i, len;
 	long off;
@@ -198,7 +328,7 @@ _asf_read_extended_stream_object(FILE *fp, struct song_metadata *psong, __u32 si
 }
 
 static int
-_asf_read_header_extension(FILE *fp, struct song_metadata *psong, __u32 size)
+_asf_read_header_extension(FILE *fp, struct song_metadata *psong, uint32_t size)
 {
 	off_t pos;
 	long off;
@@ -237,11 +367,11 @@ static int
 _asf_load_string(FILE *fp, int type, int size, char *buf, int len)
 {
 	unsigned char data[2048];
-	__u16 wc;
+	uint16_t wc;
 	int i, j;
-	__s32 *wd32;
-	__s64 *wd64;
-	__s16 *wd16;
+	int32_t *wd32;
+	int64_t *wd64;
+	int16_t *wd16;
 
 	i = 0;
 	if(size && (size <= sizeof(data)) && (size == fread(data, 1, size, fp)))
@@ -252,8 +382,8 @@ _asf_load_string(FILE *fp, int type, int size, char *buf, int len)
 		case ASF_VT_UNICODE:
 			for(j = 0; j < size; j += 2)
 			{
-				wd16 = (__s16 *) &data[j];
-				wc = (__u16)*wd16;
+				wd16 = (int16_t *) &data[j];
+				wc = (uint16_t)*wd16;
 				i += utf16le_to_utf8(&buf[i], len - i, wc);
 			}
 			break;
@@ -269,14 +399,14 @@ _asf_load_string(FILE *fp, int type, int size, char *buf, int len)
 		case ASF_VT_DWORD:
 			if(size >= 4)
 			{
-				wd32 = (__s32 *) &data[0];
+				wd32 = (int32_t *) &data[0];
 				i = snprintf(buf, len, "%d", le32_to_cpu(*wd32));
 			}
 			break;
 		case ASF_VT_QWORD:
 			if(size >= 8)
 			{
-				wd64 = (__s64 *) &data[0];
+				wd64 = (int64_t *) &data[0];
 #if __WORDSIZE == 64
 				i = snprintf(buf, len, "%ld", le64_to_cpu(*wd64));
 #else
@@ -287,7 +417,7 @@ _asf_load_string(FILE *fp, int type, int size, char *buf, int len)
 		case ASF_VT_WORD:
 			if(size >= 2)
 			{
-				wd16 = (__s16 *) &data[0];
+				wd16 = (int16_t *) &data[0];
 				i = snprintf(buf, len, "%d", le16_to_cpu(*wd16));
 			}
 			break;

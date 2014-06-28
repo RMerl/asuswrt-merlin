@@ -93,9 +93,9 @@ const char * tag = 0;
 /* chain name to use, both in the nat table
  * and the filter table */
 const char * miniupnpd_nat_chain = "UPNP";
-const char * miniupnpd_forward_chain = "UPNP";
 const char * miniupnpd_peer_chain = "UPNP-PCP-PEER";
-#ifdef ENABLE_6FC_SERVICE
+const char * miniupnpd_forward_chain = "UPNP";
+#ifdef ENABLE_UPNPPINHOLE
 const char * miniupnpd_v6_filter_chain = "UPNP";
 #endif
 
@@ -110,6 +110,9 @@ struct lan_addr_list lan_addrs;
 #ifdef ENABLE_IPV6
 /* ipv6 address used for HTTP */
 char ipv6_addr_for_http_with_brackets[64];
+
+/* address used to bind local services */
+struct in6_addr ipv6_bind_addr;
 #endif
 
 /* Path of the Unix socket used to communicate with MiniSSDPd */

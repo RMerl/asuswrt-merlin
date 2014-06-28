@@ -18,7 +18,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: wlioctl.h 427697 2013-10-04 09:42:19Z $
+ * $Id: wlioctl.h 455621 2014-02-14 20:59:32Z $
  */
 
 #ifndef _wlioctl_h_
@@ -2418,6 +2418,22 @@ typedef struct {
 #define WL_TXPPR_LENGTH	(sizeof(wl_txppr_t))
 #define TX_POWER_T_VERSION	44
 
+typedef struct chanspec_txpwr_max {
+	chanspec_t chanspec;	/* chanspec */
+	uint8 txpwr_max;	/* max txpwr in all the rates */
+	uint8 padding;
+} chanspec_txpwr_max_t;
+
+typedef struct  wl_chanspec_txpwr_max {
+	uint16 ver;			/* version of this struct */
+	uint16 len;			/* length in bytes of this structure */
+	uint32 count;			/* number of elements of (chanspec, txpwr_max) pair */
+	chanspec_txpwr_max_t txpwr[1];	/* array of (chanspec, max_txpwr) pair */
+} wl_chanspec_txpwr_max_t;
+
+#define WL_CHANSPEC_TXPWR_MAX_VER	1
+#define WL_CHANSPEC_TXPWR_MAX_LEN	(sizeof(wl_chanspec_txpwr_max_t))
+
 /* Defines used with channel_bandwidth for curpower */
 #define WL_BW_20MHZ 		0
 #define WL_BW_40MHZ 		1
@@ -2936,6 +2952,7 @@ typedef struct {
 	uint32	rxdma_frame;	/* count for rx dma */
 	uint32	rxdma_inactivity;	/* cleared when rxdma handler is serviced or increased in watchdog */
 	uint32	rxdma_stuck;	/* count for rx stuck */
+	uint32	reset_countdown;
 } wl_cnt_t;
 
 #ifndef LINUX_POSTMOGRIFY_REMOVAL
@@ -5117,6 +5134,7 @@ typedef struct {
 	int8 bgnoise;
 	uint32 glitch_cnt;
 	uint8 ccastats;
+	uint8 chan_idle;
 	uint timestamp;
 } chanim_acs_record_t;
 

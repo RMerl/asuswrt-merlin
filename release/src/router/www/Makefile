@@ -114,16 +114,21 @@ endif
 ifneq ($(RTCONFIG_PROXYSTA),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/mb.jpg
 endif
+
 ifeq ($(RTCONFIG_DSL),y)
 	rm -rf $(INSTALLDIR)/www/images/Model_producticon.png
 	rm -rf $(INSTALLDIR)/www/qis/QIS_welcome.htm
-endif
-ifneq ($(BUILD_NAME),DSL-N55U)
-ifneq ($(BUILD_NAME),DSL-N55U-B)
+	rm -rf $(INSTALLDIR)/www/images/New_ui/rt.jpg
+	rm -rf $(INSTALLDIR)/www/images/New_ui/ap.jpg
+else
 	rm -rf $(INSTALLDIR)/www/Main_Spectrum_Content.asp
 	rm -rf $(INSTALLDIR)/www/SNR.svg
 	rm -rf $(INSTALLDIR)/www/BPC.svg
 	rm -rf $(INSTALLDIR)/www/ajax_signals.asp
+endif
+
+ifneq ($(BUILD_NAME),DSL-N55U)
+ifneq ($(BUILD_NAME),DSL-N55U-B)
 ifneq ($(BUILD_NAME),RT-N56U)
 ifneq ($(RTCONFIG_CLOUDSYNC),y)
 	rm -rf $(INSTALLDIR)/www/images/cloudsync
@@ -134,13 +139,7 @@ ifneq ($(RTCONFIG_CLOUDSYNC),y)
 	rm -rf $(INSTALLDIR)/www/*cloud*.asp
 endif
 endif
-else
-	rm -rf $(INSTALLDIR)/www/images/New_ui/rt.jpg
-	rm -rf $(INSTALLDIR)/www/images/New_ui/ap.jpg
 endif
-else
-	rm -rf $(INSTALLDIR)/www/images/New_ui/rt.jpg
-	rm -rf $(INSTALLDIR)/www/images/New_ui/ap.jpg
 endif
 
 ifneq ($(RTCONFIG_IPV6),y)

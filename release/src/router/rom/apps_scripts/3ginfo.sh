@@ -24,7 +24,7 @@ echo ">"
 nvram show|grep g3err
 echo ">"
 echo "modem nvram:>"
-nvram show|grep modem
+nvram show|grep modem_
 echo ">"
 echo "resolv.conf >"
 cat /etc/resolv.conf

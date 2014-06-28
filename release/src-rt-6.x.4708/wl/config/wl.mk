@@ -14,7 +14,7 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
 # OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-# $Id: wl.mk 445565 2013-12-27 09:13:08Z $
+# $Id: wl.mk 455621 2014-02-14 20:59:32Z $
 
 
 
@@ -407,6 +407,9 @@ endif
 			WLFLAGS += -DWL_AP_TPC
 		endif
 #endif
+		ifeq ($(WL_CHANSPEC_TXPWR_MAX),1)
+			WLFLAGS += -DWL_CHANSPEC_TXPWR_MAX
+		endif
 	endif
 	WLFILES_SRC_HI += src/wl/sys/wlc_dfs.c
 	ifeq ($(WLC_DISABLE_DFS_RADAR_SUPPORT),1)
@@ -2278,4 +2281,9 @@ endif
 # Work-arounds for ROM compatibility to handle ROM that exclude MFP support.
 ifeq ($(WLC_MFP_ROM_COMPAT),1)
 	EXTRA_DFLAGS += -DWLC_MFP_ROM_COMPAT
+endif
+
+# This feature disables mac sleep on 11AC router platforms (zero packet loss).
+ifeq ($(WLMAC_RX_NO_SLEEP),1)
+	WLFLAGS += -DWLMAC_RX_NO_SLEEP
 endif

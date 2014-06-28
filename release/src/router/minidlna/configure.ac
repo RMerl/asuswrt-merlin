@@ -14,11 +14,11 @@
 # License along with MiniDLNA; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 # USA.
-AC_INIT(MiniDLNA,1.1.0,,minidlna)
+AC_INIT(MiniDLNA,1.1.3,,minidlna)
 #LT_INIT
 
 AC_CANONICAL_TARGET
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([subdir-objects])
 AC_CONFIG_HEADERS([config.h])
 AM_SILENT_RULES([yes])
 
@@ -31,10 +31,9 @@ AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION(0.18)
 
 # Checks for programs.
-# AC_PROG_CXX
 AC_PROG_AWK
 AC_PROG_CC
-# AC_PROG_CPP
+AM_PROG_CC_C_O
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET

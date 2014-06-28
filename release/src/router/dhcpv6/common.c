@@ -3173,7 +3173,13 @@ duidstr(duid)
 char *dhcp6_event_statestr(ev)
 	struct dhcp6_event *ev;
 {
-	switch(ev->state) {
+	return dhcp6_statestr(ev->state);
+}
+
+char *dhcp6_statestr(state)
+	int state;
+{
+	switch(state) {
 	case DHCP6S_INIT:
 		return ("INIT");
 	case DHCP6S_SOLICIT:

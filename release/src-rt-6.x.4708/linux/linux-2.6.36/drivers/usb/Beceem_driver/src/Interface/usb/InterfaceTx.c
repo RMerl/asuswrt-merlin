@@ -208,7 +208,7 @@ static __inline int TransmitTcb(PS_INTERFACE_ADAPTER psIntfAdapter, PUSB_TCB pTc
 	struct urb *urb = pTcb->urb;
 	int retval = 0;
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,36)	
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,36)
 	urb->transfer_buffer = usb_alloc_coherent(psIntfAdapter->udev, len, GFP_ATOMIC, &urb->transfer_dma);
 #else
 	urb->transfer_buffer = usb_buffer_alloc(psIntfAdapter->udev, len, GFP_ATOMIC, &urb->transfer_dma);

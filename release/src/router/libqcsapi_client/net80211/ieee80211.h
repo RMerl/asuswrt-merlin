@@ -3120,8 +3120,9 @@ enum {
  * the 802.11 spec.  The max may be wrong for jumbo frames.
  */
 #define	IEEE80211_RTS_DEFAULT		512
-#define	IEEE80211_RTS_MIN		1
-#define	IEEE80211_RTS_MAX		2346
+#define	IEEE80211_RTS_MIN		0
+#define	IEEE80211_RTS_MAX		65536
+#define	IEEE80211_RTS_THRESH_OFF	(IEEE80211_RTS_MAX + 1)
 
 /*
  * Regulatory extension identifier for country IE.

@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2013 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2014 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 struct iface_param {
   struct dhcp_context *current;
   struct dhcp_relay *relay;
-  struct in6_addr fallback, relay_local;
+  struct in6_addr fallback, relay_local, ll_addr, ula_addr;
   int ind, addr_match;
 };
 
@@ -158,6 +158,8 @@ void dhcp6_packet(time_t now)
       parm.ind = if_index;
       parm.addr_match = 0;
       memset(&parm.fallback, 0, IN6ADDRSZ);
+      memset(&parm.ll_addr, 0, IN6ADDRSZ);
+      memset(&parm.ula_addr, 0, IN6ADDRSZ);
       
       for (context = daemon->dhcp6; context; context = context->next)
 	if (IN6_IS_ADDR_UNSPECIFIED(&context->start6) && context->prefix == 0)
@@ -210,7 +212,7 @@ void dhcp6_packet(time_t now)
       lease_prune(NULL, now); /* lose any expired leases */
       
       port = dhcp6_reply(parm.current, if_index, ifr.ifr_name, &parm.fallback, 
-			 sz, &from.sin6_addr, now);
+			 &parm.ll_addr, &parm.ula_addr, sz, &from.sin6_addr, now);
       
       lease_update_file(now);
       lease_update_dns(0);
@@ -309,6 +311,11 @@ static int complete_context6(struct in6_addr *local,  int prefix,
   
   if (if_index == param->ind)
     {
+      if (IN6_IS_ADDR_LINKLOCAL(local))
+	param->ll_addr = *local;
+      else if (IN6_IS_ADDR_ULA(local))
+	param->ula_addr = *local;
+
       if (!IN6_IS_ADDR_LOOPBACK(local) &&
 	  !IN6_IS_ADDR_LINKLOCAL(local) &&
 	  !IN6_IS_ADDR_MULTICAST(local))
@@ -720,7 +727,6 @@ void dhcp_construct_contexts(time_t now)
      
       if (context->flags & CONTEXT_GC && !(context->flags & CONTEXT_OLD))
 	{
-	  
 	  if ((context->flags & (CONTEXT_RA_ONLY | CONTEXT_RA_NAME | CONTEXT_RA_STATELESS)) ||
 	      option_bool(OPT_RA))
 	    {

@@ -994,13 +994,14 @@ static inline void adjust_hwnat_wifi_offloading(void) { }
 // in restart_wireless for wlx_mrate_x, etc
 void reinit_hwnat(int unit)
 {
-	int nat_x = -1, prim_unit = wan_primary_ifunit();
-	int i, l, t, link_wan = 1, link_wans_lan = 1;
+	int prim_unit = wan_primary_ifunit();
 	int act = 1;	/* -1/0/otherwise: ignore/remove hwnat/load hwnat */
+#if defined(RTCONFIG_DUALWAN)
+	int nat_x = -1, i, l, t, link_wan = 1, link_wans_lan = 1;
 	int wans_cap = get_wans_dualwan() & WANSCAP_WAN;
 	int wanslan_cap = get_wans_dualwan() & WANSCAP_LAN;
 	char nat_x_str[] = "wanX_nat_xXXXXXX";
-	
+#endif
 	if (!nvram_get_int("hwnat"))
 		return;
 

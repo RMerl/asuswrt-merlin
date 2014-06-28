@@ -1,0 +1,6 @@
+*.o
+*.a
+*src/email
+Makefile
+*/Makefile
+dlib/include/config.h

@@ -198,7 +198,11 @@ int get_wanports_status(int wan_unit)
 #ifdef RTCONFIG_DUALWAN
 	if(get_dualwan_by_unit(wan_unit) == WANS_DUALWAN_IF_LAN)
 	{
-		return rtkswitch_wanPort_phyStatus(wan_unit); //Paul modify 2012/12/4	
+	#ifdef RTCONFIG_RALINK
+		return rtkswitch_wanPort_phyStatus(wan_unit); //Paul modify 2012/12/4
+	#else
+		return wanport_status(wan_unit);
+	#endif
 	}
 #endif
 	// TO CHENI:

@@ -66,7 +66,7 @@ xdr_qcsapi_bootcfg_get_parameter_request (XDR *xdrs, qcsapi_bootcfg_get_paramete
 
 	 if (!xdr_str (xdrs, &objp->param_name))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->max_param_len))
+	 if (!xdr_uint32_t (xdrs, &objp->max_param_len))
 		 return FALSE;
 	return TRUE;
 }
@@ -407,7 +407,7 @@ xdr_qcsapi_wifi_get_scs_stat_report_response (XDR *xdrs, qcsapi_wifi_get_scs_sta
 	int i;
 
 	if (xdrs->x_op == XDR_ENCODE) {
-		buf = XDR_INLINE (xdrs, (2 +  32  + 32  + 32  + 32  + 32  + 32  + 32 )* BYTES_PER_XDR_UNIT);
+		buf = XDR_INLINE (xdrs, (2 + ( 32  + 32  + 32 )) * BYTES_PER_XDR_UNIT);
 		if (buf == NULL) {
 			 if (!xdr_int (xdrs, &objp->return_code))
 				 return FALSE;
@@ -422,81 +422,63 @@ xdr_qcsapi_wifi_get_scs_stat_report_response (XDR *xdrs, qcsapi_wifi_get_scs_sta
 			 if (!xdr_vector (xdrs, (char *)objp->scs_rpt_txpwr, 32,
 				sizeof (u_int), (xdrproc_t) xdr_u_int))
 				 return FALSE;
-			 if (!xdr_vector (xdrs, (char *)objp->scs_rpt_metric, 32,
-				sizeof (long), (xdrproc_t) xdr_long))
-				 return FALSE;
+
+		} else {
+		IXDR_PUT_LONG(buf, objp->return_code);
+		IXDR_PUT_U_LONG(buf, objp->scs_rpt_num);
+		{
+			register u_int *genp;
+
+			for (i = 0, genp = objp->scs_rpt_chan;
+				i < 32; ++i) {
+				IXDR_PUT_U_LONG(buf, *genp++);
+			}
+		}
+		{
+			register u_int *genp;
+
+			for (i = 0, genp = objp->scs_rpt_dfs;
+				i < 32; ++i) {
+				IXDR_PUT_U_LONG(buf, *genp++);
+			}
+		}
+		{
+			register u_int *genp;
+
+			for (i = 0, genp = objp->scs_rpt_txpwr;
+				i < 32; ++i) {
+				IXDR_PUT_U_LONG(buf, *genp++);
+			}
+		}
+		}
+		 if (!xdr_vector (xdrs, (char *)objp->scs_rpt_metric, 32,
+			sizeof (int32_t), (xdrproc_t) xdr_int32_t))
+			 return FALSE;
+		buf = XDR_INLINE (xdrs, ( 32 ) * BYTES_PER_XDR_UNIT);
+		if (buf == NULL) {
 			 if (!xdr_vector (xdrs, (char *)objp->scs_rpt_cca_intf, 32,
 				sizeof (u_int), (xdrproc_t) xdr_u_int))
 				 return FALSE;
-			 if (!xdr_vector (xdrs, (char *)objp->scs_rpt_pmbl_ap, 32,
-				sizeof (u_long), (xdrproc_t) xdr_u_long))
-				 return FALSE;
-			 if (!xdr_vector (xdrs, (char *)objp->scs_rpt_pmbl_sta, 32,
-				sizeof (u_long), (xdrproc_t) xdr_u_long))
-				 return FALSE;
+
 		} else {
-			IXDR_PUT_LONG(buf, objp->return_code);
-			IXDR_PUT_U_LONG(buf, objp->scs_rpt_num);
-			{
-				register u_int *genp;
+		{
+			register u_int *genp;
 
-				for (i = 0, genp = objp->scs_rpt_chan;
-					i < 32; ++i) {
-					IXDR_PUT_U_LONG(buf, *genp++);
-				}
-			}
-			{
-				register u_int *genp;
-
-				for (i = 0, genp = objp->scs_rpt_dfs;
-					i < 32; ++i) {
-					IXDR_PUT_U_LONG(buf, *genp++);
-				}
-			}
-			{
-				register u_int *genp;
-
-				for (i = 0, genp = objp->scs_rpt_txpwr;
-					i < 32; ++i) {
-					IXDR_PUT_U_LONG(buf, *genp++);
-				}
-			}
-			{
-				register long *genp;
-
-				for (i = 0, genp = objp->scs_rpt_metric;
-					i < 32; ++i) {
-					IXDR_PUT_LONG(buf, *genp++);
-				}
-			}
-			{
-				register u_int *genp;
-
-				for (i = 0, genp = objp->scs_rpt_cca_intf;
-					i < 32; ++i) {
-					IXDR_PUT_U_LONG(buf, *genp++);
-				}
-			}
-			{
-				register u_long *genp;
-
-				for (i = 0, genp = objp->scs_rpt_pmbl_ap;
-					i < 32; ++i) {
-					IXDR_PUT_U_LONG(buf, *genp++);
-				}
-			}
-			{
-				register u_long *genp;
-
-				for (i = 0, genp = objp->scs_rpt_pmbl_sta;
-					i < 32; ++i) {
-					IXDR_PUT_U_LONG(buf, *genp++);
-				}
+			for (i = 0, genp = objp->scs_rpt_cca_intf;
+				i < 32; ++i) {
+				IXDR_PUT_U_LONG(buf, *genp++);
 			}
 		}
+		}
+		 if (!xdr_vector (xdrs, (char *)objp->scs_rpt_pmbl_ap, 32,
+			sizeof (uint32_t), (xdrproc_t) xdr_uint32_t))
+			 return FALSE;
+		 if (!xdr_vector (xdrs, (char *)objp->scs_rpt_pmbl_sta, 32,
+			sizeof (uint32_t), (xdrproc_t) xdr_uint32_t))
+			 return FALSE;
 		return TRUE;
 	} else if (xdrs->x_op == XDR_DECODE) {
-		buf = XDR_INLINE (xdrs, (2 +  32  + 32  + 32  + 32  + 32  + 32  + 32 )* BYTES_PER_XDR_UNIT);
+		buf = XDR_INLINE (xdrs, (2 + ( 32  + 32  + 32 )) * BYTES_PER_XDR_UNIT);
 		if (buf == NULL) {
 			 if (!xdr_int (xdrs, &objp->return_code))
 				 return FALSE;
@@ -511,78 +493,60 @@ xdr_qcsapi_wifi_get_scs_stat_report_response (XDR *xdrs, qcsapi_wifi_get_scs_sta
 			 if (!xdr_vector (xdrs, (char *)objp->scs_rpt_txpwr, 32,
 				sizeof (u_int), (xdrproc_t) xdr_u_int))
 				 return FALSE;
-			 if (!xdr_vector (xdrs, (char *)objp->scs_rpt_metric, 32,
-				sizeof (long), (xdrproc_t) xdr_long))
-				 return FALSE;
+
+		} else {
+		objp->return_code = IXDR_GET_LONG(buf);
+		objp->scs_rpt_num = IXDR_GET_U_LONG(buf);
+		{
+			register u_int *genp;
+
+			for (i = 0, genp = objp->scs_rpt_chan;
+				i < 32; ++i) {
+				*genp++ = IXDR_GET_U_LONG(buf);
+			}
+		}
+		{
+			register u_int *genp;
+
+			for (i = 0, genp = objp->scs_rpt_dfs;
+				i < 32; ++i) {
+				*genp++ = IXDR_GET_U_LONG(buf);
+			}
+		}
+		{
+			register u_int *genp;
+
+			for (i = 0, genp = objp->scs_rpt_txpwr;
+				i < 32; ++i) {
+				*genp++ = IXDR_GET_U_LONG(buf);
+			}
+		}
+		}
+		 if (!xdr_vector (xdrs, (char *)objp->scs_rpt_metric, 32,
+			sizeof (int32_t), (xdrproc_t) xdr_int32_t))
+			 return FALSE;
+		buf = XDR_INLINE (xdrs, ( 32 ) * BYTES_PER_XDR_UNIT);
+		if (buf == NULL) {
 			 if (!xdr_vector (xdrs, (char *)objp->scs_rpt_cca_intf, 32,
 				sizeof (u_int), (xdrproc_t) xdr_u_int))
 				 return FALSE;
-			 if (!xdr_vector (xdrs, (char *)objp->scs_rpt_pmbl_ap, 32,
-				sizeof (u_long), (xdrproc_t) xdr_u_long))
-				 return FALSE;
-			 if (!xdr_vector (xdrs, (char *)objp->scs_rpt_pmbl_sta, 32,
-				sizeof (u_long), (xdrproc_t) xdr_u_long))
-				 return FALSE;
+
 		} else {
-			objp->return_code = IXDR_GET_LONG(buf);
-			objp->scs_rpt_num = IXDR_GET_U_LONG(buf);
-			{
-				register u_int *genp;
+		{
+			register u_int *genp;
 
-				for (i = 0, genp = objp->scs_rpt_chan;
-					i < 32; ++i) {
-					*genp++ = IXDR_GET_U_LONG(buf);
-				}
-			}
-			{
-				register u_int *genp;
-
-				for (i = 0, genp = objp->scs_rpt_dfs;
-					i < 32; ++i) {
-					*genp++ = IXDR_GET_U_LONG(buf);
-				}
-			}
-			{
-				register u_int *genp;
-
-				for (i = 0, genp = objp->scs_rpt_txpwr;
-					i < 32; ++i) {
-					*genp++ = IXDR_GET_U_LONG(buf);
-				}
-			}
-			{
-				register long *genp;
-
-				for (i = 0, genp = objp->scs_rpt_metric;
-					i < 32; ++i) {
-					*genp++ = IXDR_GET_LONG(buf);
-				}
-			}
-			{
-				register u_int *genp;
-
-				for (i = 0, genp = objp->scs_rpt_cca_intf;
-					i < 32; ++i) {
-					*genp++ = IXDR_GET_U_LONG(buf);
-				}
-			}
-			{
-				register u_long *genp;
-
-				for (i = 0, genp = objp->scs_rpt_pmbl_ap;
-					i < 32; ++i) {
-					*genp++ = IXDR_GET_U_LONG(buf);
-				}
-			}
-			{
-				register u_long *genp;
-
-				for (i = 0, genp = objp->scs_rpt_pmbl_sta;
-					i < 32; ++i) {
-					*genp++ = IXDR_GET_U_LONG(buf);
-				}
+			for (i = 0, genp = objp->scs_rpt_cca_intf;
+				i < 32; ++i) {
+				*genp++ = IXDR_GET_U_LONG(buf);
 			}
 		}
+		}
+		 if (!xdr_vector (xdrs, (char *)objp->scs_rpt_pmbl_ap, 32,
+			sizeof (uint32_t), (xdrproc_t) xdr_uint32_t))
+			 return FALSE;
+		 if (!xdr_vector (xdrs, (char *)objp->scs_rpt_pmbl_sta, 32,
+			sizeof (uint32_t), (xdrproc_t) xdr_uint32_t))
+			 return FALSE;
 	 return TRUE;
 	}
 
@@ -600,16 +564,16 @@ xdr_qcsapi_wifi_get_scs_stat_report_response (XDR *xdrs, qcsapi_wifi_get_scs_sta
 		sizeof (u_int), (xdrproc_t) xdr_u_int))
 		 return FALSE;
 	 if (!xdr_vector (xdrs, (char *)objp->scs_rpt_metric, 32,
-		sizeof (long), (xdrproc_t) xdr_long))
+		sizeof (int32_t), (xdrproc_t) xdr_int32_t))
 		 return FALSE;
 	 if (!xdr_vector (xdrs, (char *)objp->scs_rpt_cca_intf, 32,
 		sizeof (u_int), (xdrproc_t) xdr_u_int))
 		 return FALSE;
 	 if (!xdr_vector (xdrs, (char *)objp->scs_rpt_pmbl_ap, 32,
-		sizeof (u_long), (xdrproc_t) xdr_u_long))
+		sizeof (uint32_t), (xdrproc_t) xdr_uint32_t))
 		 return FALSE;
 	 if (!xdr_vector (xdrs, (char *)objp->scs_rpt_pmbl_sta, 32,
-		sizeof (u_long), (xdrproc_t) xdr_u_long))
+		sizeof (uint32_t), (xdrproc_t) xdr_uint32_t))
 		 return FALSE;
 	return TRUE;
 }
@@ -631,7 +595,7 @@ xdr_qcsapi_wifi_get_scs_currchan_report_response (XDR *xdrs, qcsapi_wifi_get_scs
 
 
 	if (xdrs->x_op == XDR_ENCODE) {
-		buf = XDR_INLINE (xdrs, 10 * BYTES_PER_XDR_UNIT);
+		buf = XDR_INLINE (xdrs, 9 * BYTES_PER_XDR_UNIT);
 		if (buf == NULL) {
 			 if (!xdr_int (xdrs, &objp->return_code))
 				 return FALSE;
@@ -651,23 +615,23 @@ xdr_qcsapi_wifi_get_scs_currchan_report_response (XDR *xdrs, qcsapi_wifi_get_scs
 				 return FALSE;
 			 if (!xdr_u_int (xdrs, &objp->scs_currchan_rpt_rx_ms))
 				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->scs_currchan_rpt_pmbl))
-				 return FALSE;
+
 		} else {
-			IXDR_PUT_LONG(buf, objp->return_code);
-			IXDR_PUT_U_LONG(buf, objp->scs_currchan_rpt_chan);
-			IXDR_PUT_U_LONG(buf, objp->scs_currchan_rpt_cca_try);
-			IXDR_PUT_U_LONG(buf, objp->scs_currchan_rpt_cca_idle);
-			IXDR_PUT_U_LONG(buf, objp->scs_currchan_rpt_cca_busy);
-			IXDR_PUT_U_LONG(buf, objp->scs_currchan_rpt_cca_intf);
-			IXDR_PUT_U_LONG(buf, objp->scs_currchan_rpt_cca_tx);
-			IXDR_PUT_U_LONG(buf, objp->scs_currchan_rpt_tx_ms);
-			IXDR_PUT_U_LONG(buf, objp->scs_currchan_rpt_rx_ms);
-			IXDR_PUT_U_LONG(buf, objp->scs_currchan_rpt_pmbl);
+		IXDR_PUT_LONG(buf, objp->return_code);
+		IXDR_PUT_U_LONG(buf, objp->scs_currchan_rpt_chan);
+		IXDR_PUT_U_LONG(buf, objp->scs_currchan_rpt_cca_try);
+		IXDR_PUT_U_LONG(buf, objp->scs_currchan_rpt_cca_idle);
+		IXDR_PUT_U_LONG(buf, objp->scs_currchan_rpt_cca_busy);
+		IXDR_PUT_U_LONG(buf, objp->scs_currchan_rpt_cca_intf);
+		IXDR_PUT_U_LONG(buf, objp->scs_currchan_rpt_cca_tx);
+		IXDR_PUT_U_LONG(buf, objp->scs_currchan_rpt_tx_ms);
+		IXDR_PUT_U_LONG(buf, objp->scs_currchan_rpt_rx_ms);
 		}
+		 if (!xdr_uint32_t (xdrs, &objp->scs_currchan_rpt_pmbl))
+			 return FALSE;
 		return TRUE;
 	} else if (xdrs->x_op == XDR_DECODE) {
-		buf = XDR_INLINE (xdrs, 10 * BYTES_PER_XDR_UNIT);
+		buf = XDR_INLINE (xdrs, 9 * BYTES_PER_XDR_UNIT);
 		if (buf == NULL) {
 			 if (!xdr_int (xdrs, &objp->return_code))
 				 return FALSE;
@@ -687,20 +651,20 @@ xdr_qcsapi_wifi_get_scs_currchan_report_response (XDR *xdrs, qcsapi_wifi_get_scs
 				 return FALSE;
 			 if (!xdr_u_int (xdrs, &objp->scs_currchan_rpt_rx_ms))
 				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->scs_currchan_rpt_pmbl))
-				 return FALSE;
+
 		} else {
-			objp->return_code = IXDR_GET_LONG(buf);
-			objp->scs_currchan_rpt_chan = IXDR_GET_U_LONG(buf);
-			objp->scs_currchan_rpt_cca_try = IXDR_GET_U_LONG(buf);
-			objp->scs_currchan_rpt_cca_idle = IXDR_GET_U_LONG(buf);
-			objp->scs_currchan_rpt_cca_busy = IXDR_GET_U_LONG(buf);
-			objp->scs_currchan_rpt_cca_intf = IXDR_GET_U_LONG(buf);
-			objp->scs_currchan_rpt_cca_tx = IXDR_GET_U_LONG(buf);
-			objp->scs_currchan_rpt_tx_ms = IXDR_GET_U_LONG(buf);
-			objp->scs_currchan_rpt_rx_ms = IXDR_GET_U_LONG(buf);
-			objp->scs_currchan_rpt_pmbl = IXDR_GET_U_LONG(buf);
+		objp->return_code = IXDR_GET_LONG(buf);
+		objp->scs_currchan_rpt_chan = IXDR_GET_U_LONG(buf);
+		objp->scs_currchan_rpt_cca_try = IXDR_GET_U_LONG(buf);
+		objp->scs_currchan_rpt_cca_idle = IXDR_GET_U_LONG(buf);
+		objp->scs_currchan_rpt_cca_busy = IXDR_GET_U_LONG(buf);
+		objp->scs_currchan_rpt_cca_intf = IXDR_GET_U_LONG(buf);
+		objp->scs_currchan_rpt_cca_tx = IXDR_GET_U_LONG(buf);
+		objp->scs_currchan_rpt_tx_ms = IXDR_GET_U_LONG(buf);
+		objp->scs_currchan_rpt_rx_ms = IXDR_GET_U_LONG(buf);
 		}
+		 if (!xdr_uint32_t (xdrs, &objp->scs_currchan_rpt_pmbl))
+			 return FALSE;
 	 return TRUE;
 	}
 
@@ -722,7 +686,7 @@ xdr_qcsapi_wifi_get_scs_currchan_report_response (XDR *xdrs, qcsapi_wifi_get_scs
 		 return FALSE;
 	 if (!xdr_u_int (xdrs, &objp->scs_currchan_rpt_rx_ms))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->scs_currchan_rpt_pmbl))
+	 if (!xdr_uint32_t (xdrs, &objp->scs_currchan_rpt_pmbl))
 		 return FALSE;
 	return TRUE;
 }
@@ -745,7 +709,7 @@ xdr_qcsapi_wifi_get_autochan_report_response (XDR *xdrs, qcsapi_wifi_get_autocha
 	int i;
 
 	if (xdrs->x_op == XDR_ENCODE) {
-		buf = XDR_INLINE (xdrs, (2 +  32  + 32  + 32  + 32  + 32  + 32  + 32 )* BYTES_PER_XDR_UNIT);
+		buf = XDR_INLINE (xdrs, (2 + ( 32  + 32  + 32 )) * BYTES_PER_XDR_UNIT);
 		if (buf == NULL) {
 			 if (!xdr_int (xdrs, &objp->return_code))
 				 return FALSE;
@@ -760,81 +724,50 @@ xdr_qcsapi_wifi_get_autochan_report_response (XDR *xdrs, qcsapi_wifi_get_autocha
 			 if (!xdr_vector (xdrs, (char *)objp->autochan_rpt_txpwr, 32,
 				sizeof (u_int), (xdrproc_t) xdr_u_int))
 				 return FALSE;
-			 if (!xdr_vector (xdrs, (char *)objp->autochan_rpt_metric, 32,
-				sizeof (long), (xdrproc_t) xdr_long))
-				 return FALSE;
-			 if (!xdr_vector (xdrs, (char *)objp->autochan_rpt_numbeacons, 32,
-				sizeof (u_long), (xdrproc_t) xdr_u_long))
-				 return FALSE;
-			 if (!xdr_vector (xdrs, (char *)objp->autochan_rpt_cci, 32,
-				sizeof (u_long), (xdrproc_t) xdr_u_long))
-				 return FALSE;
-			 if (!xdr_vector (xdrs, (char *)objp->autochan_rpt_aci, 32,
-				sizeof (u_long), (xdrproc_t) xdr_u_long))
-				 return FALSE;
+
 		} else {
-			IXDR_PUT_LONG(buf, objp->return_code);
-			IXDR_PUT_U_LONG(buf, objp->autochan_rpt_num);
-			{
-				register u_int *genp;
+		IXDR_PUT_LONG(buf, objp->return_code);
+		IXDR_PUT_U_LONG(buf, objp->autochan_rpt_num);
+		{
+			register u_int *genp;
 
-				for (i = 0, genp = objp->autochan_rpt_chan;
-					i < 32; ++i) {
-					IXDR_PUT_U_LONG(buf, *genp++);
-				}
-			}
-			{
-				register u_int *genp;
-
-				for (i = 0, genp = objp->autochan_rpt_dfs;
-					i < 32; ++i) {
-					IXDR_PUT_U_LONG(buf, *genp++);
-				}
-			}
-			{
-				register u_int *genp;
-
-				for (i = 0, genp = objp->autochan_rpt_txpwr;
-					i < 32; ++i) {
-					IXDR_PUT_U_LONG(buf, *genp++);
-				}
-			}
-			{
-				register long *genp;
-
-				for (i = 0, genp = objp->autochan_rpt_metric;
-					i < 32; ++i) {
-					IXDR_PUT_LONG(buf, *genp++);
-				}
-			}
-			{
-				register u_long *genp;
-
-				for (i = 0, genp = objp->autochan_rpt_numbeacons;
-					i < 32; ++i) {
-					IXDR_PUT_U_LONG(buf, *genp++);
-				}
-			}
-			{
-				register u_long *genp;
-
-				for (i = 0, genp = objp->autochan_rpt_cci;
-					i < 32; ++i) {
-					IXDR_PUT_U_LONG(buf, *genp++);
-				}
-			}
-			{
-				register u_long *genp;
-
-				for (i = 0, genp = objp->autochan_rpt_aci;
-					i < 32; ++i) {
-					IXDR_PUT_U_LONG(buf, *genp++);
-				}
+			for (i = 0, genp = objp->autochan_rpt_chan;
+				i < 32; ++i) {
+				IXDR_PUT_U_LONG(buf, *genp++);
 			}
 		}
+		{
+			register u_int *genp;
+
+			for (i = 0, genp = objp->autochan_rpt_dfs;
+				i < 32; ++i) {
+				IXDR_PUT_U_LONG(buf, *genp++);
+			}
+		}
+		{
+			register u_int *genp;
+
+			for (i = 0, genp = objp->autochan_rpt_txpwr;
+				i < 32; ++i) {
+				IXDR_PUT_U_LONG(buf, *genp++);
+			}
+		}
+		}
+		 if (!xdr_vector (xdrs, (char *)objp->autochan_rpt_metric, 32,
+			sizeof (int32_t), (xdrproc_t) xdr_int32_t))
+			 return FALSE;
+		 if (!xdr_vector (xdrs, (char *)objp->autochan_rpt_numbeacons, 32,
+			sizeof (uint32_t), (xdrproc_t) xdr_uint32_t))
+			 return FALSE;
+		 if (!xdr_vector (xdrs, (char *)objp->autochan_rpt_cci, 32,
+			sizeof (uint32_t), (xdrproc_t) xdr_uint32_t))
+			 return FALSE;
+		 if (!xdr_vector (xdrs, (char *)objp->autochan_rpt_aci, 32,
+			sizeof (uint32_t), (xdrproc_t) xdr_uint32_t))
+			 return FALSE;
 		return TRUE;
 	} else if (xdrs->x_op == XDR_DECODE) {
-		buf = XDR_INLINE (xdrs, (2 +  32  + 32  + 32  + 32  + 32  + 32  + 32 )* BYTES_PER_XDR_UNIT);
+		buf = XDR_INLINE (xdrs, (2 + ( 32  + 32  + 32 )) * BYTES_PER_XDR_UNIT);
 		if (buf == NULL) {
 			 if (!xdr_int (xdrs, &objp->return_code))
 				 return FALSE;
@@ -849,78 +782,47 @@ xdr_qcsapi_wifi_get_autochan_report_response (XDR *xdrs, qcsapi_wifi_get_autocha
 			 if (!xdr_vector (xdrs, (char *)objp->autochan_rpt_txpwr, 32,
 				sizeof (u_int), (xdrproc_t) xdr_u_int))
 				 return FALSE;
-			 if (!xdr_vector (xdrs, (char *)objp->autochan_rpt_metric, 32,
-				sizeof (long), (xdrproc_t) xdr_long))
-				 return FALSE;
-			 if (!xdr_vector (xdrs, (char *)objp->autochan_rpt_numbeacons, 32,
-				sizeof (u_long), (xdrproc_t) xdr_u_long))
-				 return FALSE;
-			 if (!xdr_vector (xdrs, (char *)objp->autochan_rpt_cci, 32,
-				sizeof (u_long), (xdrproc_t) xdr_u_long))
-				 return FALSE;
-			 if (!xdr_vector (xdrs, (char *)objp->autochan_rpt_aci, 32,
-				sizeof (u_long), (xdrproc_t) xdr_u_long))
-				 return FALSE;
+
 		} else {
-			objp->return_code = IXDR_GET_LONG(buf);
-			objp->autochan_rpt_num = IXDR_GET_U_LONG(buf);
-			{
-				register u_int *genp;
+		objp->return_code = IXDR_GET_LONG(buf);
+		objp->autochan_rpt_num = IXDR_GET_U_LONG(buf);
+		{
+			register u_int *genp;
 
-				for (i = 0, genp = objp->autochan_rpt_chan;
-					i < 32; ++i) {
-					*genp++ = IXDR_GET_U_LONG(buf);
-				}
-			}
-			{
-				register u_int *genp;
-
-				for (i = 0, genp = objp->autochan_rpt_dfs;
-					i < 32; ++i) {
-					*genp++ = IXDR_GET_U_LONG(buf);
-				}
-			}
-			{
-				register u_int *genp;
-
-				for (i = 0, genp = objp->autochan_rpt_txpwr;
-					i < 32; ++i) {
-					*genp++ = IXDR_GET_U_LONG(buf);
-				}
-			}
-			{
-				register long *genp;
-
-				for (i = 0, genp = objp->autochan_rpt_metric;
-					i < 32; ++i) {
-					*genp++ = IXDR_GET_LONG(buf);
-				}
-			}
-			{
-				register u_long *genp;
-
-				for (i = 0, genp = objp->autochan_rpt_numbeacons;
-					i < 32; ++i) {
-					*genp++ = IXDR_GET_U_LONG(buf);
-				}
-			}
-			{
-				register u_long *genp;
-
-				for (i = 0, genp = objp->autochan_rpt_cci;
-					i < 32; ++i) {
-					*genp++ = IXDR_GET_U_LONG(buf);
-				}
-			}
-			{
-				register u_long *genp;
-
-				for (i = 0, genp = objp->autochan_rpt_aci;
-					i < 32; ++i) {
-					*genp++ = IXDR_GET_U_LONG(buf);
-				}
+			for (i = 0, genp = objp->autochan_rpt_chan;
+				i < 32; ++i) {
+				*genp++ = IXDR_GET_U_LONG(buf);
 			}
 		}
+		{
+			register u_int *genp;
+
+			for (i = 0, genp = objp->autochan_rpt_dfs;
+				i < 32; ++i) {
+				*genp++ = IXDR_GET_U_LONG(buf);
+			}
+		}
+		{
+			register u_int *genp;
+
+			for (i = 0, genp = objp->autochan_rpt_txpwr;
+				i < 32; ++i) {
+				*genp++ = IXDR_GET_U_LONG(buf);
+			}
+		}
+		}
+		 if (!xdr_vector (xdrs, (char *)objp->autochan_rpt_metric, 32,
+			sizeof (int32_t), (xdrproc_t) xdr_int32_t))
+			 return FALSE;
+		 if (!xdr_vector (xdrs, (char *)objp->autochan_rpt_numbeacons, 32,
+			sizeof (uint32_t), (xdrproc_t) xdr_uint32_t))
+			 return FALSE;
+		 if (!xdr_vector (xdrs, (char *)objp->autochan_rpt_cci, 32,
+			sizeof (uint32_t), (xdrproc_t) xdr_uint32_t))
+			 return FALSE;
+		 if (!xdr_vector (xdrs, (char *)objp->autochan_rpt_aci, 32,
+			sizeof (uint32_t), (xdrproc_t) xdr_uint32_t))
+			 return FALSE;
 	 return TRUE;
 	}
 
@@ -938,16 +840,16 @@ xdr_qcsapi_wifi_get_autochan_report_response (XDR *xdrs, qcsapi_wifi_get_autocha
 		sizeof (u_int), (xdrproc_t) xdr_u_int))
 		 return FALSE;
 	 if (!xdr_vector (xdrs, (char *)objp->autochan_rpt_metric, 32,
-		sizeof (long), (xdrproc_t) xdr_long))
+		sizeof (int32_t), (xdrproc_t) xdr_int32_t))
 		 return FALSE;
 	 if (!xdr_vector (xdrs, (char *)objp->autochan_rpt_numbeacons, 32,
-		sizeof (u_long), (xdrproc_t) xdr_u_long))
+		sizeof (uint32_t), (xdrproc_t) xdr_uint32_t))
 		 return FALSE;
 	 if (!xdr_vector (xdrs, (char *)objp->autochan_rpt_cci, 32,
-		sizeof (u_long), (xdrproc_t) xdr_u_long))
+		sizeof (uint32_t), (xdrproc_t) xdr_uint32_t))
 		 return FALSE;
 	 if (!xdr_vector (xdrs, (char *)objp->autochan_rpt_aci, 32,
-		sizeof (u_long), (xdrproc_t) xdr_u_long))
+		sizeof (uint32_t), (xdrproc_t) xdr_uint32_t))
 		 return FALSE;
 	return TRUE;
 }
@@ -1029,7 +931,7 @@ xdr_qcsapi_wifi_get_scs_param_report_request (XDR *xdrs, qcsapi_wifi_get_scs_par
 
 	 if (!xdr_str (xdrs, &objp->ifname))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->param_num))
+	 if (!xdr_uint32_t (xdrs, &objp->param_num))
 		 return FALSE;
 	return TRUE;
 }
@@ -1041,9 +943,9 @@ xdr_qcsapi_wifi_get_scs_param_report_response (XDR *xdrs, qcsapi_wifi_get_scs_pa
 
 	 if (!xdr_int (xdrs, &objp->return_code))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->p_scs_param_rpt_scs_cfg_param))
+	 if (!xdr_uint32_t (xdrs, &objp->p_scs_param_rpt_scs_cfg_param))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->p_scs_param_rpt_scs_signed_param_flag))
+	 if (!xdr_uint32_t (xdrs, &objp->p_scs_param_rpt_scs_signed_param_flag))
 		 return FALSE;
 	return TRUE;
 }
@@ -1339,7 +1241,7 @@ xdr_qcsapi_config_get_parameter_request (XDR *xdrs, qcsapi_config_get_parameter_
 		 return FALSE;
 	 if (!xdr_str (xdrs, &objp->param_name))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->max_param_len))
+	 if (!xdr_uint32_t (xdrs, &objp->max_param_len))
 		 return FALSE;
 	return TRUE;
 }
@@ -1438,6 +1340,28 @@ xdr_qcsapi_restore_default_config_request (XDR *xdrs, qcsapi_restore_default_con
 
 bool_t
 xdr_qcsapi_restore_default_config_response (XDR *xdrs, qcsapi_restore_default_config_response *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_int (xdrs, &objp->return_code))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_store_ipaddr_request (XDR *xdrs, qcsapi_store_ipaddr_request *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_u_int (xdrs, &objp->ipaddr))
+		 return FALSE;
+	 if (!xdr_u_int (xdrs, &objp->netmask))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_store_ipaddr_response (XDR *xdrs, qcsapi_store_ipaddr_response *objp)
 {
 	register int32_t *buf;
 
@@ -1708,6 +1632,26 @@ xdr_qcsapi_wifi_rfenable_request (XDR *xdrs, qcsapi_wifi_rfenable_request *objp)
 
 bool_t
 xdr_qcsapi_wifi_rfenable_response (XDR *xdrs, qcsapi_wifi_rfenable_response *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_int (xdrs, &objp->return_code))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_startprod_request (XDR *xdrs, qcsapi_wifi_startprod_request *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_int (xdrs, &objp->__dummy_pad))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_startprod_response (XDR *xdrs, qcsapi_wifi_startprod_response *objp)
 {
 	register int32_t *buf;
 
@@ -2149,68 +2093,17 @@ xdr_qcsapi_wifi_get_disconn_info_response (XDR *xdrs, qcsapi_wifi_get_disconn_in
 {
 	register int32_t *buf;
 
-
-	if (xdrs->x_op == XDR_ENCODE) {
-		buf = XDR_INLINE (xdrs, 6 * BYTES_PER_XDR_UNIT);
-		if (buf == NULL) {
-			 if (!xdr_int (xdrs, &objp->return_code))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->disconn_info_asso_sta_count))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->disconn_info_disconn_count))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->disconn_info_sequence))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->disconn_info_up_time))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->disconn_info_resetflag))
-				 return FALSE;
-		} else {
-			IXDR_PUT_LONG(buf, objp->return_code);
-			IXDR_PUT_U_LONG(buf, objp->disconn_info_asso_sta_count);
-			IXDR_PUT_U_LONG(buf, objp->disconn_info_disconn_count);
-			IXDR_PUT_U_LONG(buf, objp->disconn_info_sequence);
-			IXDR_PUT_U_LONG(buf, objp->disconn_info_up_time);
-			IXDR_PUT_U_LONG(buf, objp->disconn_info_resetflag);
-		}
-		return TRUE;
-	} else if (xdrs->x_op == XDR_DECODE) {
-		buf = XDR_INLINE (xdrs, 6 * BYTES_PER_XDR_UNIT);
-		if (buf == NULL) {
-			 if (!xdr_int (xdrs, &objp->return_code))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->disconn_info_asso_sta_count))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->disconn_info_disconn_count))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->disconn_info_sequence))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->disconn_info_up_time))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->disconn_info_resetflag))
-				 return FALSE;
-		} else {
-			objp->return_code = IXDR_GET_LONG(buf);
-			objp->disconn_info_asso_sta_count = IXDR_GET_U_LONG(buf);
-			objp->disconn_info_disconn_count = IXDR_GET_U_LONG(buf);
-			objp->disconn_info_sequence = IXDR_GET_U_LONG(buf);
-			objp->disconn_info_up_time = IXDR_GET_U_LONG(buf);
-			objp->disconn_info_resetflag = IXDR_GET_U_LONG(buf);
-		}
-	 return TRUE;
-	}
-
 	 if (!xdr_int (xdrs, &objp->return_code))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->disconn_info_asso_sta_count))
+	 if (!xdr_uint32_t (xdrs, &objp->disconn_info_asso_sta_count))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->disconn_info_disconn_count))
+	 if (!xdr_uint32_t (xdrs, &objp->disconn_info_disconn_count))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->disconn_info_sequence))
+	 if (!xdr_uint32_t (xdrs, &objp->disconn_info_sequence))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->disconn_info_up_time))
+	 if (!xdr_uint32_t (xdrs, &objp->disconn_info_up_time))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->disconn_info_resetflag))
+	 if (!xdr_uint32_t (xdrs, &objp->disconn_info_resetflag))
 		 return FALSE;
 	return TRUE;
 }
@@ -2356,7 +2249,7 @@ xdr_qcsapi_get_primary_interface_request (XDR *xdrs, qcsapi_get_primary_interfac
 {
 	register int32_t *buf;
 
-	 if (!xdr_u_long (xdrs, &objp->maxlen))
+	 if (!xdr_uint32_t (xdrs, &objp->maxlen))
 		 return FALSE;
 	return TRUE;
 }
@@ -2380,7 +2273,7 @@ xdr_qcsapi_get_interface_by_index_request (XDR *xdrs, qcsapi_get_interface_by_in
 
 	 if (!xdr_u_int (xdrs, &objp->if_index))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->maxlen))
+	 if (!xdr_uint32_t (xdrs, &objp->maxlen))
 		 return FALSE;
 	return TRUE;
 }
@@ -3101,7 +2994,7 @@ xdr_qcsapi_wifi_wait_scan_completes_request (XDR *xdrs, qcsapi_wifi_wait_scan_co
 
 	 if (!xdr_str (xdrs, &objp->ifname))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->timeout))
+	 if (!xdr_uint32_t (xdrs, &objp->timeout))
 		 return FALSE;
 	return TRUE;
 }
@@ -3456,7 +3349,7 @@ xdr_qcsapi_wifi_get_current_tx_power_level_response (XDR *xdrs, qcsapi_wifi_get_
 
 	 if (!xdr_int (xdrs, &objp->return_code))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->p_current_percentage))
+	 if (!xdr_uint32_t (xdrs, &objp->p_current_percentage))
 		 return FALSE;
 	return TRUE;
 }
@@ -3468,7 +3361,7 @@ xdr_qcsapi_wifi_set_power_constraint_request (XDR *xdrs, qcsapi_wifi_set_power_c
 
 	 if (!xdr_str (xdrs, &objp->ifname))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->pwr_constraint))
+	 if (!xdr_uint32_t (xdrs, &objp->pwr_constraint))
 		 return FALSE;
 	return TRUE;
 }
@@ -3500,7 +3393,7 @@ xdr_qcsapi_wifi_get_power_constraint_response (XDR *xdrs, qcsapi_wifi_get_power_
 
 	 if (!xdr_int (xdrs, &objp->return_code))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->p_pwr_constraint))
+	 if (!xdr_uint32_t (xdrs, &objp->p_pwr_constraint))
 		 return FALSE;
 	return TRUE;
 }
@@ -3512,7 +3405,7 @@ xdr_qcsapi_wifi_set_tpc_interval_request (XDR *xdrs, qcsapi_wifi_set_tpc_interva
 
 	 if (!xdr_str (xdrs, &objp->ifname))
 		 return FALSE;
-	 if (!xdr_long (xdrs, &objp->tpc_interval))
+	 if (!xdr_int32_t (xdrs, &objp->tpc_interval))
 		 return FALSE;
 	return TRUE;
 }
@@ -3544,7 +3437,7 @@ xdr_qcsapi_wifi_get_tpc_interval_response (XDR *xdrs, qcsapi_wifi_get_tpc_interv
 
 	 if (!xdr_int (xdrs, &objp->return_code))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->p_tpc_interval))
+	 if (!xdr_uint32_t (xdrs, &objp->p_tpc_interval))
 		 return FALSE;
 	return TRUE;
 }
@@ -3567,60 +3460,13 @@ xdr_qcsapi_wifi_get_assoc_records_response (XDR *xdrs, qcsapi_wifi_get_assoc_rec
 	register int32_t *buf;
 
 	int i;
-
-	if (xdrs->x_op == XDR_ENCODE) {
-		 if (!xdr_int (xdrs, &objp->return_code))
-			 return FALSE;
-		 if (!xdr_vector (xdrs, (char *)objp->records_addr, 32,
-			sizeof (qcsapi_rpc_mac_addr), (xdrproc_t) xdr_qcsapi_rpc_mac_addr))
-			 return FALSE;
-		buf = XDR_INLINE (xdrs, ( 32 ) * BYTES_PER_XDR_UNIT);
-		if (buf == NULL) {
-			 if (!xdr_vector (xdrs, (char *)objp->records_timestamp, 32,
-				sizeof (u_long), (xdrproc_t) xdr_u_long))
-				 return FALSE;
-		} else {
-			{
-				register u_long *genp;
-
-				for (i = 0, genp = objp->records_timestamp;
-					i < 32; ++i) {
-					IXDR_PUT_U_LONG(buf, *genp++);
-				}
-			}
-		}
-		return TRUE;
-	} else if (xdrs->x_op == XDR_DECODE) {
-		 if (!xdr_int (xdrs, &objp->return_code))
-			 return FALSE;
-		 if (!xdr_vector (xdrs, (char *)objp->records_addr, 32,
-			sizeof (qcsapi_rpc_mac_addr), (xdrproc_t) xdr_qcsapi_rpc_mac_addr))
-			 return FALSE;
-		buf = XDR_INLINE (xdrs, ( 32 ) * BYTES_PER_XDR_UNIT);
-		if (buf == NULL) {
-			 if (!xdr_vector (xdrs, (char *)objp->records_timestamp, 32,
-				sizeof (u_long), (xdrproc_t) xdr_u_long))
-				 return FALSE;
-		} else {
-			{
-				register u_long *genp;
-
-				for (i = 0, genp = objp->records_timestamp;
-					i < 32; ++i) {
-					*genp++ = IXDR_GET_U_LONG(buf);
-				}
-			}
-		}
-	 return TRUE;
-	}
-
 	 if (!xdr_int (xdrs, &objp->return_code))
 		 return FALSE;
 	 if (!xdr_vector (xdrs, (char *)objp->records_addr, 32,
 		sizeof (qcsapi_rpc_mac_addr), (xdrproc_t) xdr_qcsapi_rpc_mac_addr))
 		 return FALSE;
 	 if (!xdr_vector (xdrs, (char *)objp->records_timestamp, 32,
-		sizeof (u_long), (xdrproc_t) xdr_u_long))
+		sizeof (uint32_t), (xdrproc_t) xdr_uint32_t))
 		 return FALSE;
 	return TRUE;
 }
@@ -4308,7 +4154,7 @@ xdr_qcsapi_wifi_get_michael_errcnt_response (XDR *xdrs, qcsapi_wifi_get_michael_
 
 	 if (!xdr_int (xdrs, &objp->return_code))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->errcount))
+	 if (!xdr_uint32_t (xdrs, &objp->errcount))
 		 return FALSE;
 	return TRUE;
 }
@@ -4477,6 +4323,70 @@ xdr_qcsapi_wifi_get_auth_state_response (XDR *xdrs, qcsapi_wifi_get_auth_state_r
 	 if (!xdr_str (xdrs, &objp->mac_addr))
 		 return FALSE;
 	 if (!xdr_int (xdrs, &objp->auth_state))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_set_security_defer_mode_request (XDR *xdrs, qcsapi_wifi_set_security_defer_mode_request *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_str (xdrs, &objp->ifname))
+		 return FALSE;
+	 if (!xdr_int (xdrs, &objp->defer))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_set_security_defer_mode_response (XDR *xdrs, qcsapi_wifi_set_security_defer_mode_response *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_int (xdrs, &objp->return_code))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_get_security_defer_mode_request (XDR *xdrs, qcsapi_wifi_get_security_defer_mode_request *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_str (xdrs, &objp->ifname))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_get_security_defer_mode_response (XDR *xdrs, qcsapi_wifi_get_security_defer_mode_response *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_int (xdrs, &objp->return_code))
+		 return FALSE;
+	 if (!xdr_int (xdrs, &objp->defer))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_apply_security_config_request (XDR *xdrs, qcsapi_wifi_apply_security_config_request *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_str (xdrs, &objp->ifname))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wifi_apply_security_config_response (XDR *xdrs, qcsapi_wifi_apply_security_config_response *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_int (xdrs, &objp->return_code))
 		 return FALSE;
 	return TRUE;
 }
@@ -5221,9 +5131,9 @@ xdr_qcsapi_wifi_vlan_config_request (XDR *xdrs, qcsapi_wifi_vlan_config_request 
 		 return FALSE;
 	 if (!xdr_int (xdrs, &objp->cmd))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->vlanid))
+	 if (!xdr_uint32_t (xdrs, &objp->vlanid))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->flags))
+	 if (!xdr_uint32_t (xdrs, &objp->flags))
 		 return FALSE;
 	return TRUE;
 }
@@ -5265,7 +5175,7 @@ xdr_qcsapi_enable_vlan_pass_through_request (XDR *xdrs, qcsapi_enable_vlan_pass_
 {
 	register int32_t *buf;
 
-	 if (!xdr_int (xdrs, &objp->__dummy_pad))
+	 if (!xdr_int (xdrs, &objp->enabled))
 		 return FALSE;
 	return TRUE;
 }
@@ -5277,8 +5187,6 @@ xdr_qcsapi_enable_vlan_pass_through_response (XDR *xdrs, qcsapi_enable_vlan_pass
 
 	 if (!xdr_int (xdrs, &objp->return_code))
 		 return FALSE;
-	 if (!xdr_int (xdrs, &objp->enabled))
-		 return FALSE;
 	return TRUE;
 }
 
@@ -5287,7 +5195,7 @@ xdr_qcsapi_wifi_set_vlan_promisc_request (XDR *xdrs, qcsapi_wifi_set_vlan_promis
 {
 	register int32_t *buf;
 
-	 if (!xdr_int (xdrs, &objp->__dummy_pad))
+	 if (!xdr_int (xdrs, &objp->enable))
 		 return FALSE;
 	return TRUE;
 }
@@ -5298,8 +5206,6 @@ xdr_qcsapi_wifi_set_vlan_promisc_response (XDR *xdrs, qcsapi_wifi_set_vlan_promi
 	register int32_t *buf;
 
 	 if (!xdr_int (xdrs, &objp->return_code))
-		 return FALSE;
-	 if (!xdr_int (xdrs, &objp->enable))
 		 return FALSE;
 	return TRUE;
 }
@@ -5522,6 +5428,28 @@ xdr_qcsapi_wps_save_ap_pin_request (XDR *xdrs, qcsapi_wps_save_ap_pin_request *o
 
 bool_t
 xdr_qcsapi_wps_save_ap_pin_response (XDR *xdrs, qcsapi_wps_save_ap_pin_response *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_int (xdrs, &objp->return_code))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wps_enable_ap_pin_request (XDR *xdrs, qcsapi_wps_enable_ap_pin_request *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_str (xdrs, &objp->ifname))
+		 return FALSE;
+	 if (!xdr_int (xdrs, &objp->enable))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_wps_enable_ap_pin_response (XDR *xdrs, qcsapi_wps_enable_ap_pin_response *objp)
 {
 	register int32_t *buf;
 
@@ -5837,7 +5765,7 @@ xdr_qcsapi_wps_set_access_control_request (XDR *xdrs, qcsapi_wps_set_access_cont
 
 	 if (!xdr_str (xdrs, &objp->ifname))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->ctrl_state))
+	 if (!xdr_uint32_t (xdrs, &objp->ctrl_state))
 		 return FALSE;
 	return TRUE;
 }
@@ -5869,7 +5797,7 @@ xdr_qcsapi_wps_get_access_control_response (XDR *xdrs, qcsapi_wps_get_access_con
 
 	 if (!xdr_int (xdrs, &objp->return_code))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->ctrl_state))
+	 if (!xdr_uint32_t (xdrs, &objp->ctrl_state))
 		 return FALSE;
 	return TRUE;
 }
@@ -6601,7 +6529,7 @@ xdr_qcsapi_wifi_get_node_param_request (XDR *xdrs, qcsapi_wifi_get_node_param_re
 
 	 if (!xdr_str (xdrs, &objp->ifname))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->node_index))
+	 if (!xdr_uint32_t (xdrs, &objp->node_index))
 		 return FALSE;
 	 if (!xdr_int (xdrs, &objp->param_type))
 		 return FALSE;
@@ -6727,7 +6655,7 @@ xdr_qcsapi_wifi_get_node_counter_request (XDR *xdrs, qcsapi_wifi_get_node_counte
 
 	 if (!xdr_str (xdrs, &objp->ifname))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->node_index))
+	 if (!xdr_uint32_t (xdrs, &objp->node_index))
 		 return FALSE;
 	 if (!xdr_int (xdrs, &objp->counter_type))
 		 return FALSE;
@@ -6755,7 +6683,7 @@ xdr_qcsapi_wifi_get_node_stats_request (XDR *xdrs, qcsapi_wifi_get_node_stats_re
 
 	 if (!xdr_str (xdrs, &objp->ifname))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->node_index))
+	 if (!xdr_uint32_t (xdrs, &objp->node_index))
 		 return FALSE;
 	 if (!xdr_int (xdrs, &objp->local_remote_flag))
 		 return FALSE;
@@ -6767,152 +6695,37 @@ xdr_qcsapi_wifi_get_node_stats_response (XDR *xdrs, qcsapi_wifi_get_node_stats_r
 {
 	register int32_t *buf;
 
-
-	if (xdrs->x_op == XDR_ENCODE) {
-		 if (!xdr_int (xdrs, &objp->return_code))
-			 return FALSE;
-		 if (!xdr_qcsapi_rpc_u64str (xdrs, objp->p_stats_tx_bytes))
-			 return FALSE;
-		buf = XDR_INLINE (xdrs, 6 * BYTES_PER_XDR_UNIT);
-		if (buf == NULL) {
-			 if (!xdr_u_long (xdrs, &objp->p_stats_tx_pkts))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->p_stats_tx_discard))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->p_stats_tx_err))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->p_stats_tx_unicast))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->p_stats_tx_multicast))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->p_stats_tx_broadcast))
-				 return FALSE;
-
-		} else {
-		IXDR_PUT_U_LONG(buf, objp->p_stats_tx_pkts);
-		IXDR_PUT_U_LONG(buf, objp->p_stats_tx_discard);
-		IXDR_PUT_U_LONG(buf, objp->p_stats_tx_err);
-		IXDR_PUT_U_LONG(buf, objp->p_stats_tx_unicast);
-		IXDR_PUT_U_LONG(buf, objp->p_stats_tx_multicast);
-		IXDR_PUT_U_LONG(buf, objp->p_stats_tx_broadcast);
-		}
-		 if (!xdr_qcsapi_rpc_u64str (xdrs, objp->p_stats_rx_bytes))
-			 return FALSE;
-		buf = XDR_INLINE (xdrs, 7 * BYTES_PER_XDR_UNIT);
-		if (buf == NULL) {
-			 if (!xdr_u_long (xdrs, &objp->p_stats_rx_pkts))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->p_stats_rx_discard))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->p_stats_rx_err))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->p_stats_rx_unicast))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->p_stats_rx_multicast))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->p_stats_rx_broadcast))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->p_stats_rx_unknown))
-				 return FALSE;
-		} else {
-			IXDR_PUT_U_LONG(buf, objp->p_stats_rx_pkts);
-			IXDR_PUT_U_LONG(buf, objp->p_stats_rx_discard);
-			IXDR_PUT_U_LONG(buf, objp->p_stats_rx_err);
-			IXDR_PUT_U_LONG(buf, objp->p_stats_rx_unicast);
-			IXDR_PUT_U_LONG(buf, objp->p_stats_rx_multicast);
-			IXDR_PUT_U_LONG(buf, objp->p_stats_rx_broadcast);
-			IXDR_PUT_U_LONG(buf, objp->p_stats_rx_unknown);
-		}
-		return TRUE;
-	} else if (xdrs->x_op == XDR_DECODE) {
-		 if (!xdr_int (xdrs, &objp->return_code))
-			 return FALSE;
-		 if (!xdr_qcsapi_rpc_u64str (xdrs, objp->p_stats_tx_bytes))
-			 return FALSE;
-		buf = XDR_INLINE (xdrs, 6 * BYTES_PER_XDR_UNIT);
-		if (buf == NULL) {
-			 if (!xdr_u_long (xdrs, &objp->p_stats_tx_pkts))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->p_stats_tx_discard))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->p_stats_tx_err))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->p_stats_tx_unicast))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->p_stats_tx_multicast))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->p_stats_tx_broadcast))
-				 return FALSE;
-
-		} else {
-		objp->p_stats_tx_pkts = IXDR_GET_U_LONG(buf);
-		objp->p_stats_tx_discard = IXDR_GET_U_LONG(buf);
-		objp->p_stats_tx_err = IXDR_GET_U_LONG(buf);
-		objp->p_stats_tx_unicast = IXDR_GET_U_LONG(buf);
-		objp->p_stats_tx_multicast = IXDR_GET_U_LONG(buf);
-		objp->p_stats_tx_broadcast = IXDR_GET_U_LONG(buf);
-		}
-		 if (!xdr_qcsapi_rpc_u64str (xdrs, objp->p_stats_rx_bytes))
-			 return FALSE;
-		buf = XDR_INLINE (xdrs, 7 * BYTES_PER_XDR_UNIT);
-		if (buf == NULL) {
-			 if (!xdr_u_long (xdrs, &objp->p_stats_rx_pkts))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->p_stats_rx_discard))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->p_stats_rx_err))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->p_stats_rx_unicast))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->p_stats_rx_multicast))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->p_stats_rx_broadcast))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->p_stats_rx_unknown))
-				 return FALSE;
-		} else {
-			objp->p_stats_rx_pkts = IXDR_GET_U_LONG(buf);
-			objp->p_stats_rx_discard = IXDR_GET_U_LONG(buf);
-			objp->p_stats_rx_err = IXDR_GET_U_LONG(buf);
-			objp->p_stats_rx_unicast = IXDR_GET_U_LONG(buf);
-			objp->p_stats_rx_multicast = IXDR_GET_U_LONG(buf);
-			objp->p_stats_rx_broadcast = IXDR_GET_U_LONG(buf);
-			objp->p_stats_rx_unknown = IXDR_GET_U_LONG(buf);
-		}
-	 return TRUE;
-	}
-
 	 if (!xdr_int (xdrs, &objp->return_code))
 		 return FALSE;
 	 if (!xdr_qcsapi_rpc_u64str (xdrs, objp->p_stats_tx_bytes))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->p_stats_tx_pkts))
+	 if (!xdr_uint32_t (xdrs, &objp->p_stats_tx_pkts))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->p_stats_tx_discard))
+	 if (!xdr_uint32_t (xdrs, &objp->p_stats_tx_discard))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->p_stats_tx_err))
+	 if (!xdr_uint32_t (xdrs, &objp->p_stats_tx_err))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->p_stats_tx_unicast))
+	 if (!xdr_uint32_t (xdrs, &objp->p_stats_tx_unicast))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->p_stats_tx_multicast))
+	 if (!xdr_uint32_t (xdrs, &objp->p_stats_tx_multicast))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->p_stats_tx_broadcast))
+	 if (!xdr_uint32_t (xdrs, &objp->p_stats_tx_broadcast))
 		 return FALSE;
 	 if (!xdr_qcsapi_rpc_u64str (xdrs, objp->p_stats_rx_bytes))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->p_stats_rx_pkts))
+	 if (!xdr_uint32_t (xdrs, &objp->p_stats_rx_pkts))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->p_stats_rx_discard))
+	 if (!xdr_uint32_t (xdrs, &objp->p_stats_rx_discard))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->p_stats_rx_err))
+	 if (!xdr_uint32_t (xdrs, &objp->p_stats_rx_err))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->p_stats_rx_unicast))
+	 if (!xdr_uint32_t (xdrs, &objp->p_stats_rx_unicast))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->p_stats_rx_multicast))
+	 if (!xdr_uint32_t (xdrs, &objp->p_stats_rx_multicast))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->p_stats_rx_broadcast))
+	 if (!xdr_uint32_t (xdrs, &objp->p_stats_rx_broadcast))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->p_stats_rx_unknown))
+	 if (!xdr_uint32_t (xdrs, &objp->p_stats_rx_unknown))
 		 return FALSE;
 	return TRUE;
 }
@@ -6924,7 +6737,7 @@ xdr_qcsapi_wifi_get_max_queued_request (XDR *xdrs, qcsapi_wifi_get_max_queued_re
 
 	 if (!xdr_str (xdrs, &objp->ifname))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->node_index))
+	 if (!xdr_uint32_t (xdrs, &objp->node_index))
 		 return FALSE;
 	 if (!xdr_int (xdrs, &objp->local_remote_flag))
 		 return FALSE;
@@ -6940,7 +6753,7 @@ xdr_qcsapi_wifi_get_max_queued_response (XDR *xdrs, qcsapi_wifi_get_max_queued_r
 
 	 if (!xdr_int (xdrs, &objp->return_code))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->max_queued))
+	 if (!xdr_uint32_t (xdrs, &objp->max_queued))
 		 return FALSE;
 	return TRUE;
 }
@@ -7078,7 +6891,7 @@ xdr_qcsapi_regulatory_get_list_regulatory_bands_response (XDR *xdrs, qcsapi_regu
 
 	 if (!xdr_int (xdrs, &objp->return_code))
 		 return FALSE;
-	 if (!xdr_str (xdrs, &objp->list_of_channels))
+	 if (!xdr_str (xdrs, &objp->list_of_bands))
 		 return FALSE;
 	return TRUE;
 }
@@ -7583,94 +7396,17 @@ xdr_qcsapi_wifi_get_csw_records_response (XDR *xdrs, qcsapi_wifi_get_csw_records
 	register int32_t *buf;
 
 	int i;
-
-	if (xdrs->x_op == XDR_ENCODE) {
-		buf = XDR_INLINE (xdrs, (3 +  32  + 32 )* BYTES_PER_XDR_UNIT);
-		if (buf == NULL) {
-			 if (!xdr_int (xdrs, &objp->return_code))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->record_cnt))
-				 return FALSE;
-			 if (!xdr_long (xdrs, &objp->record_index))
-				 return FALSE;
-			 if (!xdr_vector (xdrs, (char *)objp->record_channel, 32,
-				sizeof (u_long), (xdrproc_t) xdr_u_long))
-				 return FALSE;
-			 if (!xdr_vector (xdrs, (char *)objp->record_timestamp, 32,
-				sizeof (u_long), (xdrproc_t) xdr_u_long))
-				 return FALSE;
-		} else {
-			IXDR_PUT_LONG(buf, objp->return_code);
-			IXDR_PUT_U_LONG(buf, objp->record_cnt);
-			IXDR_PUT_LONG(buf, objp->record_index);
-			{
-				register u_long *genp;
-
-				for (i = 0, genp = objp->record_channel;
-					i < 32; ++i) {
-					IXDR_PUT_U_LONG(buf, *genp++);
-				}
-			}
-			{
-				register u_long *genp;
-
-				for (i = 0, genp = objp->record_timestamp;
-					i < 32; ++i) {
-					IXDR_PUT_U_LONG(buf, *genp++);
-				}
-			}
-		}
-		return TRUE;
-	} else if (xdrs->x_op == XDR_DECODE) {
-		buf = XDR_INLINE (xdrs, (3 +  32  + 32 )* BYTES_PER_XDR_UNIT);
-		if (buf == NULL) {
-			 if (!xdr_int (xdrs, &objp->return_code))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->record_cnt))
-				 return FALSE;
-			 if (!xdr_long (xdrs, &objp->record_index))
-				 return FALSE;
-			 if (!xdr_vector (xdrs, (char *)objp->record_channel, 32,
-				sizeof (u_long), (xdrproc_t) xdr_u_long))
-				 return FALSE;
-			 if (!xdr_vector (xdrs, (char *)objp->record_timestamp, 32,
-				sizeof (u_long), (xdrproc_t) xdr_u_long))
-				 return FALSE;
-		} else {
-			objp->return_code = IXDR_GET_LONG(buf);
-			objp->record_cnt = IXDR_GET_U_LONG(buf);
-			objp->record_index = IXDR_GET_LONG(buf);
-			{
-				register u_long *genp;
-
-				for (i = 0, genp = objp->record_channel;
-					i < 32; ++i) {
-					*genp++ = IXDR_GET_U_LONG(buf);
-				}
-			}
-			{
-				register u_long *genp;
-
-				for (i = 0, genp = objp->record_timestamp;
-					i < 32; ++i) {
-					*genp++ = IXDR_GET_U_LONG(buf);
-				}
-			}
-		}
-	 return TRUE;
-	}
-
 	 if (!xdr_int (xdrs, &objp->return_code))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->record_cnt))
+	 if (!xdr_uint32_t (xdrs, &objp->record_cnt))
 		 return FALSE;
-	 if (!xdr_long (xdrs, &objp->record_index))
+	 if (!xdr_int32_t (xdrs, &objp->record_index))
 		 return FALSE;
 	 if (!xdr_vector (xdrs, (char *)objp->record_channel, 32,
-		sizeof (u_long), (xdrproc_t) xdr_u_long))
+		sizeof (uint32_t), (xdrproc_t) xdr_uint32_t))
 		 return FALSE;
 	 if (!xdr_vector (xdrs, (char *)objp->record_timestamp, 32,
-		sizeof (u_long), (xdrproc_t) xdr_u_long))
+		sizeof (uint32_t), (xdrproc_t) xdr_uint32_t))
 		 return FALSE;
 	return TRUE;
 }
@@ -7690,52 +7426,13 @@ xdr_qcsapi_wifi_get_radar_status_response (XDR *xdrs, qcsapi_wifi_get_radar_stat
 {
 	register int32_t *buf;
 
-
-	if (xdrs->x_op == XDR_ENCODE) {
-		buf = XDR_INLINE (xdrs, 4 * BYTES_PER_XDR_UNIT);
-		if (buf == NULL) {
-			 if (!xdr_int (xdrs, &objp->return_code))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->rdstatus_channel))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->rdstatus_flags))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->rdstatus_ic_radardetected))
-				 return FALSE;
-		} else {
-			IXDR_PUT_LONG(buf, objp->return_code);
-			IXDR_PUT_U_LONG(buf, objp->rdstatus_channel);
-			IXDR_PUT_U_LONG(buf, objp->rdstatus_flags);
-			IXDR_PUT_U_LONG(buf, objp->rdstatus_ic_radardetected);
-		}
-		return TRUE;
-	} else if (xdrs->x_op == XDR_DECODE) {
-		buf = XDR_INLINE (xdrs, 4 * BYTES_PER_XDR_UNIT);
-		if (buf == NULL) {
-			 if (!xdr_int (xdrs, &objp->return_code))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->rdstatus_channel))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->rdstatus_flags))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->rdstatus_ic_radardetected))
-				 return FALSE;
-		} else {
-			objp->return_code = IXDR_GET_LONG(buf);
-			objp->rdstatus_channel = IXDR_GET_U_LONG(buf);
-			objp->rdstatus_flags = IXDR_GET_U_LONG(buf);
-			objp->rdstatus_ic_radardetected = IXDR_GET_U_LONG(buf);
-		}
-	 return TRUE;
-	}
-
 	 if (!xdr_int (xdrs, &objp->return_code))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->rdstatus_channel))
+	 if (!xdr_uint32_t (xdrs, &objp->rdstatus_channel))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->rdstatus_flags))
+	 if (!xdr_uint32_t (xdrs, &objp->rdstatus_flags))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->rdstatus_ic_radardetected))
+	 if (!xdr_uint32_t (xdrs, &objp->rdstatus_ic_radardetected))
 		 return FALSE;
 	return TRUE;
 }
@@ -8092,7 +7789,7 @@ xdr_qcsapi_non_wps_set_pp_enable_request (XDR *xdrs, qcsapi_non_wps_set_pp_enabl
 
 	 if (!xdr_str (xdrs, &objp->ifname))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->ctrl_state))
+	 if (!xdr_uint32_t (xdrs, &objp->ctrl_state))
 		 return FALSE;
 	return TRUE;
 }
@@ -8124,7 +7821,7 @@ xdr_qcsapi_non_wps_get_pp_enable_response (XDR *xdrs, qcsapi_non_wps_get_pp_enab
 
 	 if (!xdr_int (xdrs, &objp->return_code))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->ctrl_state))
+	 if (!xdr_uint32_t (xdrs, &objp->ctrl_state))
 		 return FALSE;
 	return TRUE;
 }
@@ -8192,152 +7889,37 @@ xdr_qcsapi_get_interface_stats_response (XDR *xdrs, qcsapi_get_interface_stats_r
 {
 	register int32_t *buf;
 
-
-	if (xdrs->x_op == XDR_ENCODE) {
-		 if (!xdr_int (xdrs, &objp->return_code))
-			 return FALSE;
-		 if (!xdr_qcsapi_rpc_u64str (xdrs, objp->stats_tx_bytes))
-			 return FALSE;
-		buf = XDR_INLINE (xdrs, 6 * BYTES_PER_XDR_UNIT);
-		if (buf == NULL) {
-			 if (!xdr_u_long (xdrs, &objp->stats_tx_pkts))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_tx_discard))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_tx_err))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_tx_unicast))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_tx_multicast))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_tx_broadcast))
-				 return FALSE;
-
-		} else {
-		IXDR_PUT_U_LONG(buf, objp->stats_tx_pkts);
-		IXDR_PUT_U_LONG(buf, objp->stats_tx_discard);
-		IXDR_PUT_U_LONG(buf, objp->stats_tx_err);
-		IXDR_PUT_U_LONG(buf, objp->stats_tx_unicast);
-		IXDR_PUT_U_LONG(buf, objp->stats_tx_multicast);
-		IXDR_PUT_U_LONG(buf, objp->stats_tx_broadcast);
-		}
-		 if (!xdr_qcsapi_rpc_u64str (xdrs, objp->stats_rx_bytes))
-			 return FALSE;
-		buf = XDR_INLINE (xdrs, 7 * BYTES_PER_XDR_UNIT);
-		if (buf == NULL) {
-			 if (!xdr_u_long (xdrs, &objp->stats_rx_pkts))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_rx_discard))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_rx_err))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_rx_unicast))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_rx_multicast))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_rx_broadcast))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_rx_unknown))
-				 return FALSE;
-		} else {
-			IXDR_PUT_U_LONG(buf, objp->stats_rx_pkts);
-			IXDR_PUT_U_LONG(buf, objp->stats_rx_discard);
-			IXDR_PUT_U_LONG(buf, objp->stats_rx_err);
-			IXDR_PUT_U_LONG(buf, objp->stats_rx_unicast);
-			IXDR_PUT_U_LONG(buf, objp->stats_rx_multicast);
-			IXDR_PUT_U_LONG(buf, objp->stats_rx_broadcast);
-			IXDR_PUT_U_LONG(buf, objp->stats_rx_unknown);
-		}
-		return TRUE;
-	} else if (xdrs->x_op == XDR_DECODE) {
-		 if (!xdr_int (xdrs, &objp->return_code))
-			 return FALSE;
-		 if (!xdr_qcsapi_rpc_u64str (xdrs, objp->stats_tx_bytes))
-			 return FALSE;
-		buf = XDR_INLINE (xdrs, 6 * BYTES_PER_XDR_UNIT);
-		if (buf == NULL) {
-			 if (!xdr_u_long (xdrs, &objp->stats_tx_pkts))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_tx_discard))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_tx_err))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_tx_unicast))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_tx_multicast))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_tx_broadcast))
-				 return FALSE;
-
-		} else {
-		objp->stats_tx_pkts = IXDR_GET_U_LONG(buf);
-		objp->stats_tx_discard = IXDR_GET_U_LONG(buf);
-		objp->stats_tx_err = IXDR_GET_U_LONG(buf);
-		objp->stats_tx_unicast = IXDR_GET_U_LONG(buf);
-		objp->stats_tx_multicast = IXDR_GET_U_LONG(buf);
-		objp->stats_tx_broadcast = IXDR_GET_U_LONG(buf);
-		}
-		 if (!xdr_qcsapi_rpc_u64str (xdrs, objp->stats_rx_bytes))
-			 return FALSE;
-		buf = XDR_INLINE (xdrs, 7 * BYTES_PER_XDR_UNIT);
-		if (buf == NULL) {
-			 if (!xdr_u_long (xdrs, &objp->stats_rx_pkts))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_rx_discard))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_rx_err))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_rx_unicast))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_rx_multicast))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_rx_broadcast))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_rx_unknown))
-				 return FALSE;
-		} else {
-			objp->stats_rx_pkts = IXDR_GET_U_LONG(buf);
-			objp->stats_rx_discard = IXDR_GET_U_LONG(buf);
-			objp->stats_rx_err = IXDR_GET_U_LONG(buf);
-			objp->stats_rx_unicast = IXDR_GET_U_LONG(buf);
-			objp->stats_rx_multicast = IXDR_GET_U_LONG(buf);
-			objp->stats_rx_broadcast = IXDR_GET_U_LONG(buf);
-			objp->stats_rx_unknown = IXDR_GET_U_LONG(buf);
-		}
-	 return TRUE;
-	}
-
 	 if (!xdr_int (xdrs, &objp->return_code))
 		 return FALSE;
 	 if (!xdr_qcsapi_rpc_u64str (xdrs, objp->stats_tx_bytes))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_tx_pkts))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_tx_pkts))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_tx_discard))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_tx_discard))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_tx_err))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_tx_err))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_tx_unicast))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_tx_unicast))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_tx_multicast))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_tx_multicast))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_tx_broadcast))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_tx_broadcast))
 		 return FALSE;
 	 if (!xdr_qcsapi_rpc_u64str (xdrs, objp->stats_rx_bytes))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_rx_pkts))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_rx_pkts))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_rx_discard))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_rx_discard))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_rx_err))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_rx_err))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_rx_unicast))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_rx_unicast))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_rx_multicast))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_rx_multicast))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_rx_broadcast))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_rx_broadcast))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_rx_unknown))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_rx_unknown))
 		 return FALSE;
 	return TRUE;
 }
@@ -8358,230 +7940,49 @@ xdr_qcsapi_get_phy_stats_response (XDR *xdrs, qcsapi_get_phy_stats_response *obj
 	register int32_t *buf;
 
 	int i;
-
-	if (xdrs->x_op == XDR_ENCODE) {
-		buf = XDR_INLINE (xdrs, 13 * BYTES_PER_XDR_UNIT);
-		if (buf == NULL) {
-			 if (!xdr_int (xdrs, &objp->return_code))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_tstamp))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_assoc))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_channel))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_atten))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_cca_total))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_cca_tx))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_cca_rx))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_cca_int))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_cca_idle))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_rx_pkts))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_rx_gain))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_rx_cnt_crc))
-				 return FALSE;
-
-		} else {
-		IXDR_PUT_LONG(buf, objp->return_code);
-		IXDR_PUT_U_LONG(buf, objp->stats_tstamp);
-		IXDR_PUT_U_LONG(buf, objp->stats_assoc);
-		IXDR_PUT_U_LONG(buf, objp->stats_channel);
-		IXDR_PUT_U_LONG(buf, objp->stats_atten);
-		IXDR_PUT_U_LONG(buf, objp->stats_cca_total);
-		IXDR_PUT_U_LONG(buf, objp->stats_cca_tx);
-		IXDR_PUT_U_LONG(buf, objp->stats_cca_rx);
-		IXDR_PUT_U_LONG(buf, objp->stats_cca_int);
-		IXDR_PUT_U_LONG(buf, objp->stats_cca_idle);
-		IXDR_PUT_U_LONG(buf, objp->stats_rx_pkts);
-		IXDR_PUT_U_LONG(buf, objp->stats_rx_gain);
-		IXDR_PUT_U_LONG(buf, objp->stats_rx_cnt_crc);
-		}
-		 if (!xdr_qcsapi_rpc_floatstr (xdrs, objp->stats_rx_noise))
-			 return FALSE;
-		buf = XDR_INLINE (xdrs, 8 * BYTES_PER_XDR_UNIT);
-		if (buf == NULL) {
-			 if (!xdr_u_long (xdrs, &objp->stats_tx_pkts))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_tx_defers))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_tx_touts))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_tx_retries))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_cnt_sp_fail))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_cnt_lp_fail))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_last_rx_mcs))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_last_tx_mcs))
-				 return FALSE;
-
-		} else {
-		IXDR_PUT_U_LONG(buf, objp->stats_tx_pkts);
-		IXDR_PUT_U_LONG(buf, objp->stats_tx_defers);
-		IXDR_PUT_U_LONG(buf, objp->stats_tx_touts);
-		IXDR_PUT_U_LONG(buf, objp->stats_tx_retries);
-		IXDR_PUT_U_LONG(buf, objp->stats_cnt_sp_fail);
-		IXDR_PUT_U_LONG(buf, objp->stats_cnt_lp_fail);
-		IXDR_PUT_U_LONG(buf, objp->stats_last_rx_mcs);
-		IXDR_PUT_U_LONG(buf, objp->stats_last_tx_mcs);
-		}
-		 if (!xdr_qcsapi_rpc_floatstr (xdrs, objp->stats_last_rssi))
-			 return FALSE;
-		 if (!xdr_vector (xdrs, (char *)objp->stats_last_rssi_array, 4,
-			sizeof (qcsapi_rpc_floatstr), (xdrproc_t) xdr_qcsapi_rpc_floatstr))
-			 return FALSE;
-		 if (!xdr_qcsapi_rpc_floatstr (xdrs, objp->stats_last_rcpi))
-			 return FALSE;
-		 if (!xdr_qcsapi_rpc_floatstr (xdrs, objp->stats_last_evm))
-			 return FALSE;
-		 if (!xdr_vector (xdrs, (char *)objp->stats_last_evm_array, 4,
-			sizeof (qcsapi_rpc_floatstr), (xdrproc_t) xdr_qcsapi_rpc_floatstr))
-			 return FALSE;
-		return TRUE;
-	} else if (xdrs->x_op == XDR_DECODE) {
-		buf = XDR_INLINE (xdrs, 13 * BYTES_PER_XDR_UNIT);
-		if (buf == NULL) {
-			 if (!xdr_int (xdrs, &objp->return_code))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_tstamp))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_assoc))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_channel))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_atten))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_cca_total))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_cca_tx))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_cca_rx))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_cca_int))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_cca_idle))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_rx_pkts))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_rx_gain))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_rx_cnt_crc))
-				 return FALSE;
-
-		} else {
-		objp->return_code = IXDR_GET_LONG(buf);
-		objp->stats_tstamp = IXDR_GET_U_LONG(buf);
-		objp->stats_assoc = IXDR_GET_U_LONG(buf);
-		objp->stats_channel = IXDR_GET_U_LONG(buf);
-		objp->stats_atten = IXDR_GET_U_LONG(buf);
-		objp->stats_cca_total = IXDR_GET_U_LONG(buf);
-		objp->stats_cca_tx = IXDR_GET_U_LONG(buf);
-		objp->stats_cca_rx = IXDR_GET_U_LONG(buf);
-		objp->stats_cca_int = IXDR_GET_U_LONG(buf);
-		objp->stats_cca_idle = IXDR_GET_U_LONG(buf);
-		objp->stats_rx_pkts = IXDR_GET_U_LONG(buf);
-		objp->stats_rx_gain = IXDR_GET_U_LONG(buf);
-		objp->stats_rx_cnt_crc = IXDR_GET_U_LONG(buf);
-		}
-		 if (!xdr_qcsapi_rpc_floatstr (xdrs, objp->stats_rx_noise))
-			 return FALSE;
-		buf = XDR_INLINE (xdrs, 8 * BYTES_PER_XDR_UNIT);
-		if (buf == NULL) {
-			 if (!xdr_u_long (xdrs, &objp->stats_tx_pkts))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_tx_defers))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_tx_touts))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_tx_retries))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_cnt_sp_fail))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_cnt_lp_fail))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_last_rx_mcs))
-				 return FALSE;
-			 if (!xdr_u_long (xdrs, &objp->stats_last_tx_mcs))
-				 return FALSE;
-
-		} else {
-		objp->stats_tx_pkts = IXDR_GET_U_LONG(buf);
-		objp->stats_tx_defers = IXDR_GET_U_LONG(buf);
-		objp->stats_tx_touts = IXDR_GET_U_LONG(buf);
-		objp->stats_tx_retries = IXDR_GET_U_LONG(buf);
-		objp->stats_cnt_sp_fail = IXDR_GET_U_LONG(buf);
-		objp->stats_cnt_lp_fail = IXDR_GET_U_LONG(buf);
-		objp->stats_last_rx_mcs = IXDR_GET_U_LONG(buf);
-		objp->stats_last_tx_mcs = IXDR_GET_U_LONG(buf);
-		}
-		 if (!xdr_qcsapi_rpc_floatstr (xdrs, objp->stats_last_rssi))
-			 return FALSE;
-		 if (!xdr_vector (xdrs, (char *)objp->stats_last_rssi_array, 4,
-			sizeof (qcsapi_rpc_floatstr), (xdrproc_t) xdr_qcsapi_rpc_floatstr))
-			 return FALSE;
-		 if (!xdr_qcsapi_rpc_floatstr (xdrs, objp->stats_last_rcpi))
-			 return FALSE;
-		 if (!xdr_qcsapi_rpc_floatstr (xdrs, objp->stats_last_evm))
-			 return FALSE;
-		 if (!xdr_vector (xdrs, (char *)objp->stats_last_evm_array, 4,
-			sizeof (qcsapi_rpc_floatstr), (xdrproc_t) xdr_qcsapi_rpc_floatstr))
-			 return FALSE;
-	 return TRUE;
-	}
-
 	 if (!xdr_int (xdrs, &objp->return_code))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_tstamp))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_tstamp))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_assoc))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_assoc))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_channel))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_channel))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_atten))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_atten))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_cca_total))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_cca_total))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_cca_tx))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_cca_tx))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_cca_rx))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_cca_rx))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_cca_int))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_cca_int))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_cca_idle))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_cca_idle))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_rx_pkts))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_rx_pkts))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_rx_gain))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_rx_gain))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_rx_cnt_crc))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_rx_cnt_crc))
 		 return FALSE;
 	 if (!xdr_qcsapi_rpc_floatstr (xdrs, objp->stats_rx_noise))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_tx_pkts))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_tx_pkts))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_tx_defers))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_tx_defers))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_tx_touts))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_tx_touts))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_tx_retries))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_tx_retries))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_cnt_sp_fail))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_cnt_sp_fail))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_cnt_lp_fail))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_cnt_lp_fail))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_last_rx_mcs))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_last_rx_mcs))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->stats_last_tx_mcs))
+	 if (!xdr_uint32_t (xdrs, &objp->stats_last_tx_mcs))
 		 return FALSE;
 	 if (!xdr_qcsapi_rpc_floatstr (xdrs, objp->stats_last_rssi))
 		 return FALSE;
@@ -8605,7 +8006,7 @@ xdr_qcsapi_reset_all_counters_request (XDR *xdrs, qcsapi_reset_all_counters_requ
 
 	 if (!xdr_str (xdrs, &objp->ifname))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->node_index))
+	 if (!xdr_uint32_t (xdrs, &objp->node_index))
 		 return FALSE;
 	 if (!xdr_int (xdrs, &objp->local_remote_flag))
 		 return FALSE;
@@ -8673,6 +8074,8 @@ xdr_qcsapi_set_soc_mac_addr_request (XDR *xdrs, qcsapi_set_soc_mac_addr_request 
 
 	 if (!xdr_str (xdrs, &objp->ifname))
 		 return FALSE;
+	 if (!xdr_qcsapi_rpc_mac_addr (xdrs, objp->soc_mac_addr))
+		 return FALSE;
 	return TRUE;
 }
 
@@ -8682,8 +8085,6 @@ xdr_qcsapi_set_soc_mac_addr_response (XDR *xdrs, qcsapi_set_soc_mac_addr_respons
 	register int32_t *buf;
 
 	 if (!xdr_int (xdrs, &objp->return_code))
-		 return FALSE;
-	 if (!xdr_qcsapi_rpc_mac_addr (xdrs, objp->soc_mac_addr))
 		 return FALSE;
 	return TRUE;
 }
@@ -9163,7 +8564,7 @@ xdr_qcsapi_vsp_get_inactive_flags_response (XDR *xdrs, qcsapi_vsp_get_inactive_f
 
 	 if (!xdr_int (xdrs, &objp->return_code))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->flags))
+	 if (!xdr_uint32_t (xdrs, &objp->flags))
 		 return FALSE;
 	return TRUE;
 }
@@ -9197,7 +8598,7 @@ xdr_qcsapi_wifi_test_traffic_request (XDR *xdrs, qcsapi_wifi_test_traffic_reques
 
 	 if (!xdr_str (xdrs, &objp->ifname))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->period))
+	 if (!xdr_uint32_t (xdrs, &objp->period))
 		 return FALSE;
 	return TRUE;
 }
@@ -9257,7 +8658,7 @@ xdr_qcsapi_wifi_get_ipff_request (XDR *xdrs, qcsapi_wifi_get_ipff_request *objp)
 {
 	register int32_t *buf;
 
-	 if (!xdr_int (xdrs, &objp->__dummy_pad))
+	 if (!xdr_int (xdrs, &objp->buflen))
 		 return FALSE;
 	return TRUE;
 }
@@ -9268,6 +8669,8 @@ xdr_qcsapi_wifi_get_ipff_response (XDR *xdrs, qcsapi_wifi_get_ipff_response *obj
 	register int32_t *buf;
 
 	 if (!xdr_int (xdrs, &objp->return_code))
+		 return FALSE;
+	 if (!xdr_str (xdrs, &objp->buf))
 		 return FALSE;
 	return TRUE;
 }
@@ -9612,53 +9015,10 @@ xdr_qcsapi_calcmd_get_tx_power_response (XDR *xdrs, qcsapi_calcmd_get_tx_power_r
 	register int32_t *buf;
 
 	int i;
-
-	if (xdrs->x_op == XDR_ENCODE) {
-		buf = XDR_INLINE (xdrs, (1 +  4 )* BYTES_PER_XDR_UNIT);
-		if (buf == NULL) {
-			 if (!xdr_int (xdrs, &objp->return_code))
-				 return FALSE;
-			 if (!xdr_vector (xdrs, (char *)objp->tx_power_value, 4,
-				sizeof (u_long), (xdrproc_t) xdr_u_long))
-				 return FALSE;
-		} else {
-			IXDR_PUT_LONG(buf, objp->return_code);
-			{
-				register u_long *genp;
-
-				for (i = 0, genp = objp->tx_power_value;
-					i < 4; ++i) {
-					IXDR_PUT_U_LONG(buf, *genp++);
-				}
-			}
-		}
-		return TRUE;
-	} else if (xdrs->x_op == XDR_DECODE) {
-		buf = XDR_INLINE (xdrs, (1 +  4 )* BYTES_PER_XDR_UNIT);
-		if (buf == NULL) {
-			 if (!xdr_int (xdrs, &objp->return_code))
-				 return FALSE;
-			 if (!xdr_vector (xdrs, (char *)objp->tx_power_value, 4,
-				sizeof (u_long), (xdrproc_t) xdr_u_long))
-				 return FALSE;
-		} else {
-			objp->return_code = IXDR_GET_LONG(buf);
-			{
-				register u_long *genp;
-
-				for (i = 0, genp = objp->tx_power_value;
-					i < 4; ++i) {
-					*genp++ = IXDR_GET_U_LONG(buf);
-				}
-			}
-		}
-	 return TRUE;
-	}
-
 	 if (!xdr_int (xdrs, &objp->return_code))
 		 return FALSE;
 	 if (!xdr_vector (xdrs, (char *)objp->tx_power_value, 4,
-		sizeof (u_long), (xdrproc_t) xdr_u_long))
+		sizeof (uint32_t), (xdrproc_t) xdr_uint32_t))
 		 return FALSE;
 	return TRUE;
 }
@@ -9699,53 +9059,10 @@ xdr_qcsapi_calcmd_get_test_mode_rssi_response (XDR *xdrs, qcsapi_calcmd_get_test
 	register int32_t *buf;
 
 	int i;
-
-	if (xdrs->x_op == XDR_ENCODE) {
-		buf = XDR_INLINE (xdrs, (1 +  4 )* BYTES_PER_XDR_UNIT);
-		if (buf == NULL) {
-			 if (!xdr_int (xdrs, &objp->return_code))
-				 return FALSE;
-			 if (!xdr_vector (xdrs, (char *)objp->test_mode_rssi_value, 4,
-				sizeof (long), (xdrproc_t) xdr_long))
-				 return FALSE;
-		} else {
-			IXDR_PUT_LONG(buf, objp->return_code);
-			{
-				register long *genp;
-
-				for (i = 0, genp = objp->test_mode_rssi_value;
-					i < 4; ++i) {
-					IXDR_PUT_LONG(buf, *genp++);
-				}
-			}
-		}
-		return TRUE;
-	} else if (xdrs->x_op == XDR_DECODE) {
-		buf = XDR_INLINE (xdrs, (1 +  4 )* BYTES_PER_XDR_UNIT);
-		if (buf == NULL) {
-			 if (!xdr_int (xdrs, &objp->return_code))
-				 return FALSE;
-			 if (!xdr_vector (xdrs, (char *)objp->test_mode_rssi_value, 4,
-				sizeof (long), (xdrproc_t) xdr_long))
-				 return FALSE;
-		} else {
-			objp->return_code = IXDR_GET_LONG(buf);
-			{
-				register long *genp;
-
-				for (i = 0, genp = objp->test_mode_rssi_value;
-					i < 4; ++i) {
-					*genp++ = IXDR_GET_LONG(buf);
-				}
-			}
-		}
-	 return TRUE;
-	}
-
 	 if (!xdr_int (xdrs, &objp->return_code))
 		 return FALSE;
 	 if (!xdr_vector (xdrs, (char *)objp->test_mode_rssi_value, 4,
-		sizeof (long), (xdrproc_t) xdr_long))
+		sizeof (int32_t), (xdrproc_t) xdr_int32_t))
 		 return FALSE;
 	return TRUE;
 }
@@ -9843,9 +9160,9 @@ xdr_qcsapi_set_carrier_id_request (XDR *xdrs, qcsapi_set_carrier_id_request *obj
 {
 	register int32_t *buf;
 
-	 if (!xdr_u_long (xdrs, &objp->carrier_id))
+	 if (!xdr_uint32_t (xdrs, &objp->carrier_id))
 		 return FALSE;
-	 if (!xdr_u_long (xdrs, &objp->update_uboot))
+	 if (!xdr_uint32_t (xdrs, &objp->update_uboot))
 		 return FALSE;
 	return TRUE;
 }

@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2013 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2014 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -108,108 +108,6 @@ static void remove_watch(DBusWatch *watch, void *data)
   w = data; /* no warning */
 }
 
-static void add_update_server(union mysockaddr *addr,
-                              union mysockaddr *source_addr,
-			      const char *interface,
-                              const char *domain)
-{
-  struct server *serv;
-
-  /* See if there is a suitable candidate, and unmark */
-  for (serv = daemon->servers; serv; serv = serv->next)
-    if ((serv->flags & SERV_FROM_DBUS) &&
-       (serv->flags & SERV_MARK))
-      {
-	if (domain)
-	  {
-	    if (!(serv->flags & SERV_HAS_DOMAIN) || !hostname_isequal(domain, serv->domain))
-	      continue;
-	  }
-	else
-	  {
-	    if (serv->flags & SERV_HAS_DOMAIN)
-	      continue;
-	  }
-	
-	serv->flags &= ~SERV_MARK;
-
-        break;
-      }
-  
-  if (!serv && (serv = whine_malloc(sizeof (struct server))))
-    {
-      /* Not found, create a new one. */
-      memset(serv, 0, sizeof(struct server));
-      
-      if (domain && !(serv->domain = whine_malloc(strlen(domain)+1)))
-	{
-	  free(serv);
-          serv = NULL;
-        }
-      else
-        {
-	  serv->next = daemon->servers;
-	  daemon->servers = serv;
-	  serv->flags = SERV_FROM_DBUS;
-	  if (domain)
-	    {
-	      strcpy(serv->domain, domain);
-	      serv->flags |= SERV_HAS_DOMAIN;
-	    }
-	}
-    }
-  
-  if (serv)
-    {
-      if (interface)
-	strcpy(serv->interface, interface);
-      else
-	serv->interface[0] = 0;
-            
-      if (source_addr->in.sin_family == AF_INET &&
-          addr->in.sin_addr.s_addr == 0 &&
-          serv->domain)
-        serv->flags |= SERV_NO_ADDR;
-      else
-        {
-          serv->flags &= ~SERV_NO_ADDR;
-          serv->addr = *addr;
-          serv->source_addr = *source_addr;
-        }
-    }
-}
-
-static void mark_dbus(void)
-{
-  struct server *serv;
-
-  /* mark everything from DBUS */
-  for (serv = daemon->servers; serv; serv = serv->next)
-    if (serv->flags & SERV_FROM_DBUS)
-      serv->flags |= SERV_MARK;
-}
-
-static void cleanup_dbus()
-{
-  struct server *serv, *tmp, **up;
-
-  /* unlink and free anything still marked. */
-  for (serv = daemon->servers, up = &daemon->servers; serv; serv = tmp) 
-    {
-      tmp = serv->next;
-      if (serv->flags & SERV_MARK)
-       {
-         server_gone(serv);
-         *up = serv->next;
-         if (serv->domain)
-	   free(serv->domain);
-	 free(serv);
-       }
-      else 
-       up = &serv->next;
-    }
-}
-
 static void dbus_read_servers(DBusMessage *message)
 {
   DBusMessageIter iter;
@@ -218,8 +116,8 @@ static void dbus_read_servers(DBusMessage *message)
   
   dbus_message_iter_init(message, &iter);
 
-  mark_dbus();
-
+  mark_servers(SERV_FROM_DBUS);
+  
   while (1)
     {
       int skip = 0;
@@ -289,13 +187,13 @@ static void dbus_read_servers(DBusMessage *message)
 	  domain = NULL;
 	
 	if (!skip)
-	  add_update_server(&addr, &source_addr, NULL, domain);
+	  add_update_server(SERV_FROM_DBUS, &addr, &source_addr, NULL, domain);
      
       } while (dbus_message_iter_get_arg_type(&iter) == DBUS_TYPE_STRING); 
     }
    
   /* unlink and free anything still marked. */
-  cleanup_dbus();
+  cleanup_servers();
 }
 
 static DBusMessage* dbus_read_servers_ex(DBusMessage *message, int strings)
@@ -319,7 +217,7 @@ static DBusMessage* dbus_read_servers_ex(DBusMessage *message, int strings)
                                     strings ? "Expected array of string" : "Expected array of string arrays");
      }
  
-  mark_dbus();
+  mark_servers(SERV_FROM_DBUS);
 
   /* array_iter points to each "as" element in the outer array */
   dbus_message_iter_recurse(&iter, &array_iter);
@@ -327,6 +225,7 @@ static DBusMessage* dbus_read_servers_ex(DBusMessage *message, int strings)
     {
       const char *str = NULL;
       union  mysockaddr addr, source_addr;
+      int flags = 0;
       char interface[IF_NAMESIZE];
       char *str_addr, *str_domain = NULL;
 
@@ -416,16 +315,19 @@ static DBusMessage* dbus_read_servers_ex(DBusMessage *message, int strings)
       memset(&interface, 0, sizeof(interface));
 
       /* parse the IP address */
-      addr_err = parse_server(str_addr, &addr, &source_addr, (char *) &interface, NULL);
-
-      if (addr_err)
-        {
+      if ((addr_err = parse_server(str_addr, &addr, &source_addr, (char *) &interface, &flags)))
+	{
           error = dbus_message_new_error_printf(message, DBUS_ERROR_INVALID_ARGS,
                                                 "Invalid IP address '%s': %s",
                                                 str, addr_err);
           break;
         }
-
+      
+      /* 0.0.0.0 for server address == NULL, for Dbus */
+      if (addr.in.sin_family == AF_INET &&
+          addr.in.sin_addr.s_addr == 0)
+        flags |= SERV_NO_ADDR;
+      
       if (strings)
 	{
 	  char *p;
@@ -439,7 +341,7 @@ static DBusMessage* dbus_read_servers_ex(DBusMessage *message, int strings)
 	    else 
 	      p = NULL;
 	    
-	    add_update_server(&addr, &source_addr, interface, str_domain);
+	    add_update_server(flags | SERV_FROM_DBUS, &addr, &source_addr, interface, str_domain);
 	  } while ((str_domain = p));
 	}
       else
@@ -454,7 +356,7 @@ static DBusMessage* dbus_read_servers_ex(DBusMessage *message, int strings)
 	      dbus_message_iter_get_basic(&string_iter, &str);
 	    dbus_message_iter_next (&string_iter);
 	    
-	    add_update_server(&addr, &source_addr, interface, str);
+	    add_update_server(flags | SERV_FROM_DBUS, &addr, &source_addr, interface, str);
 	  } while (dbus_message_iter_get_arg_type(&string_iter) == DBUS_TYPE_STRING);
 	}
 	 
@@ -462,7 +364,7 @@ static DBusMessage* dbus_read_servers_ex(DBusMessage *message, int strings)
       dbus_message_iter_next(&array_iter);
     }
 
-  cleanup_dbus();
+  cleanup_servers();
 
   if (dup)
     free(dup);

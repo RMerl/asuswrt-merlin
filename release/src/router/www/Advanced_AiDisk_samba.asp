@@ -8,15 +8,16 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<title><#Web_Title#> - <#menu5_4_2#></title>
+<title><#Web_Title#> - <#menu5_4_1#></title>
 <link rel="stylesheet" type="text/css" href="/index_style.css">
 <link rel="stylesheet" type="text/css" href="/form_style.css">
 <link rel="stylesheet" type="text/css" href="/aidisk/AiDisk_style.css">
 <script type="text/javascript" src="/state.js"></script>
+<script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/disk_functions.js"></script>
 <script type="text/javascript" src="/aidisk/AiDisk_folder_tree.js"></script>
-<script type="text/javascript" src="/help.js"></script>
+<script type="text/javascript" src="/detect.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript">
@@ -59,6 +60,11 @@ function initial(){
 
 	if(!WebDav_support)
 		$("clouddiskstr").style.display = "none";
+		
+	if (!ufsd_support)
+		$('ntfs_sparse_files').style.display = "none";
+	else
+		$('ntfs_sparse_files').style.display = "";		
 	
 	// show accounts
 	showAccountMenu();
@@ -239,10 +245,10 @@ function showPermissionTitle(){
 var controlApplyBtn = 0;
 function showApplyBtn(){
 	if(this.controlApplyBtn == 1){
-		$("changePermissionBtn").className = "button_gen";
+		$("changePermissionBtn").className = "button_gen_long";
 		$("changePermissionBtn").disabled = false;
 	}else{
-		$("changePermissionBtn").className = "button_gen_dis";
+		$("changePermissionBtn").className = "button_gen_long_dis";
 		$("changePermissionBtn").disabled = true;
 	}
 }
@@ -596,6 +602,59 @@ function unload_body(){
 	$("modifyFolderBtn").onmouseover = function(){};
 	$("modifyFolderBtn").onmouseout = function(){};
 }
+
+function applyRule(){
+    if(validForm()){
+				if(document.form.usb_fs_ntfs_sparse.value != "<% nvram_get("usb_fs_ntfs_sparse"); %>")
+        		FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
+        
+        showLoading();
+				document.form.submit();
+     }
+}
+
+function validForm(){
+	
+	if(document.form.computer_name.value.length == 0){
+		showtext($("alert_msg1"), "<#JS_fieldblank#>");
+		document.form.computer_name.focus();
+		document.form.computer_name.select();
+		return false;
+	}
+	else{
+		
+		var alert_str = validate_hostname(document.form.computer_name);
+		if(alert_str != ""){
+			showtext($("alert_msg1"), alert_str);
+			$("alert_msg1").style.display = "";
+			document.form.computer_name.focus();
+			document.form.computer_name.select();
+			return false;
+		}else{
+			$("alert_msg1").style.display = "none";
+  	}
+
+		document.form.computer_name.value = trim(document.form.computer_name.value);
+	}
+				  
+	if(document.form.st_samba_workgroup.value.length == 0){
+		alert("<#JS_fieldblank#>");
+		document.form.st_samba_workgroup.focus();
+		document.form.st_samba_workgroup.select();
+		return false;	
+	}
+  else{
+	var workgroup_check = new RegExp('^[a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-\_\.]+$','gi');
+  	if(!workgroup_check.test(document.form.st_samba_workgroup.value)){
+			alert("<#JS_validchar#>");               
+			document.form.st_samba_workgroup.focus();
+			document.form.st_samba_workgroup.select();
+			return false;
+		}   
+	}
+
+  return true;
+}
 </script>
 </head>
 
@@ -621,12 +680,11 @@ function unload_body(){
 <form method="post" name="form" action="/start_apply.htm" target="hidden_frame">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
-<input type="hidden" name="computer_name" value="<% nvram_char_to_ascii("Storage", "computer_name"); %>">
-<input type="hidden" name="action_mode" value="">
-<input type="hidden" name="action_script" value="">
-<input type="hidden" name="action_wait" value="">
+<input type="hidden" name="action_mode" value="apply">
+<input type="hidden" name="action_script" value="restart_ftpsamba;restart_dnsmasq">
+<input type="hidden" name="action_wait" value="5">
+<input type="hidden" name="modified" value="0">
 <input type="hidden" name="current_page" value="Advanced_AiDisk_samba.asp">
-</form>
 
 <table width="983" border="0" align="center" cellpadding="0" cellspacing="0" class="content">
   <tr>
@@ -710,8 +768,58 @@ function unload_body(){
 							<span id="loginMethod" style="color:#FC0"></span>
 						</div>
 					</td>
-				</tr>										
+				</tr>
+				<tr>
+					<th>
+						<a class="hintstyle" href="javascript:void(0);" onClick="openHint(17,2);"><#ShareNode_DeviceName_itemname#></a>
+					</th>
+					<td>
+						<div><input type="text" name="computer_name" id="computer_name" class="input_20_table" maxlength="20" value="<% nvram_get("computer_name"); %>"><br/><span id="alert_msg1" style="color:#FC0;"></span></div>
+					</td>
+				</tr>
+				<tr>
+					<th>
+						<a class="hintstyle" href="javascript:void(0);" onClick="openHint(17,3);"><#ShareNode_WorkGroup_itemname#></a>
+					</th>
+					<td>
+						<input type="text" name="st_samba_workgroup" class="input_20_table" maxlength="16" value="<% nvram_get("st_samba_workgroup"); %>">
+					</td>
+				</tr>
+				<tr>
+					<th>Simpler share naming<br><i>(without the disk name)</i></th>
+					<td>
+						<input type="radio" name="smbd_simpler_naming" class="input" value="1" <% nvram_match_x("", "smbd_simpler_naming", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="smbd_simpler_naming" class="input" value="0" <% nvram_match_x("", "smbd_simpler_naming", "0", "checked"); %>><#checkbox_No#>
+					</td>
+				</tr>
+
+				<tr>
+					<th>Force as Master Browser</i></th>
+					<td>
+						<input type="radio" name="smbd_master" class="input" value="1" <% nvram_match_x("", "smbd_master", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="smbd_master" class="input" value="0" <% nvram_match_x("", "smbd_master", "0", "checked"); %>><#checkbox_No#>
+					</td>
+				</tr>
+					<th>Set as WINS server</i></th>
+					<td>
+						<input type="radio" name="smbd_wins" class="input" value="1" <% nvram_match_x("", "smbd_wins", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="smbd_wins" class="input" value="0" <% nvram_match_x("", "smbd_wins", "0", "checked"); %>><#checkbox_No#>
+					</td>
+				</tr>
+				<tr id="ntfs_sparse_files" style="">
+					<th>NTFS Sparse Files support</th>
+					<td>
+							<select name="usb_fs_ntfs_sparse" class="input_option">
+								<option class="content_input_fd" value="0" <% nvram_match("usb_fs_ntfs_sparse", "0","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+								<option class="content_input_fd" value="1" <% nvram_match("usb_fs_ntfs_sparse", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
+							</select>
+					</td>
+				</tr>				
 			</table>
+			
+			<div class="apply_gen">
+					<input type="button" class="button_gen" value="<#CTL_apply#>" onclick="applyRule();">
+			</div>			
 
 			<!-- The table of share. -->
 			<div id="shareStatus">
@@ -765,7 +873,7 @@ function unload_body(){
 			    <table width="480"  border="0" cellspacing="0" cellpadding="0" class="FileStatusTitle">
 		  	    <tr>
 		    	  		<td width="290" height="20" align="left">
-				    		<div class="machineName"><#Web_Title2#></div>
+				    		<div class="machineName"><% nvram_get("computer_name"); %></div>
 				    	</td>
 				  <td>
 				    <div id="permissionTitle"></div>
@@ -777,7 +885,7 @@ function unload_body(){
 			  <div id="e0" style="font-size:10pt; margin-top:2px;"></div>
 			  
 			  <div style="text-align:center; margin:10px auto; border-top:1px dotted #CCC; width:95%; padding:2px;">
-			    <input name="changePermissionBtn" id="changePermissionBtn" type="button" value="<#CTL_apply#>" class="button_gen_dis" disabled="disabled">
+			    <input name="changePermissionBtn" id="changePermissionBtn" type="button" value="Save Permission" class="button_gen_long_dis" disabled="disabled">
 			  </div>
 		    </td>
           </tr>
@@ -797,9 +905,7 @@ function unload_body(){
     <td width="10" align="center" valign="top">&nbsp;</td>
 	</tr>
 </table>
-
-
-
+</form>
 
 <div id="footer"></div>
 

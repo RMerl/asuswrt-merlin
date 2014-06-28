@@ -122,6 +122,30 @@ int is_storage_cd(const int mode, const unsigned int vid, const unsigned int pid
 	return 0;
 }
 
+void get_wdm_by_usbnet(const char *usbnet, char *wdm_name, size_t size){
+	DIR *dir;
+	struct dirent *dp;
+	char tmp[100];
+
+	*wdm_name = 0;
+
+	snprintf(tmp, 100, "%s/%s/device/", SYS_NET, usbnet);
+
+	if((dir = opendir(tmp))){
+		while((dp = readdir(dir)) != NULL){
+			if(!strncmp(dp->d_name, "usb:cdc-wdm", 11)){
+				snprintf(wdm_name, size, "/dev/%s", dp->d_name+4);
+				break;
+			}
+		}
+
+		closedir(dir);
+	}
+
+	_dprintf("%s: usb=%s, wdm=%s.\n", __FUNCTION__, usbnet, wdm_name);
+	_dprintf("done\n");
+}
+
 int write_3g_conf(FILE *fp, int dno, int aut, const unsigned int vid, const unsigned int pid)
 {
 	switch(dno){
@@ -1507,8 +1531,23 @@ int write_3g_conf(FILE *fp, int dno, int aut, const unsigned int vid, const unsi
 			fprintf(fp, "DefaultProduct=0x%04x\n",	0x6803);
 			fprintf(fp, "TargetVendor=0x%04x\n",	0x22de);
 			fprintf(fp, "TargetProduct=0x%04x\n",	0x6801);
+#if 0
 			fprintf(fp, "MessageContent=%s\n",	"5553424312345678000000000000061e000000000000000000000000000000");
 			fprintf(fp, "MessageContent2=%s\n",	"5553424312345679000000000000061b000000020000000000000000000000");
+#else
+			fprintf(fp, "StandardEject=1\n");
+#endif
+			break;
+		case SN_Huawei_K5150:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x12d1);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x1f16);
+#if 1
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x12d1);
+			fprintf(fp, "TargetProductList=%s\n", "14f8,1575");
+			fprintf(fp, "MessageContent=%s\n",	"55534243123456780000000000000011062000000101000100000000000000");
+#else
+			fprintf(fp, "Configuration=2\n");
+#endif
 			break;
 		default:
 			fprintf(fp, "\n");
@@ -1914,6 +1953,8 @@ usb_dbg("3G: Auto setting.\n");
 			write_3g_conf(fp, SN_Onda_MSA14_4, 1, vid, pid);
 		else if(vid == 0x22de && pid == 0x6803)
 			write_3g_conf(fp, SN_WeTelecom_WMD300, 1, vid, pid);
+		else if(vid == 0x12d1 && pid == 0x1f16)
+			write_3g_conf(fp, SN_Huawei_K5150, 1, vid, pid);
 		else if(vid == 0x12d1)
 			write_3g_conf(fp, UNKNOWNDEV, 1, vid, pid);
 		else{
@@ -2102,7 +2143,8 @@ usb_dbg("3G: manaul setting.\n");
 	return 1;
 }
 
-int write_3g_ppp_conf(const char *modem_node){
+int write_3g_ppp_conf(void){
+	char modem_node[16];
 	FILE *fp;
 	char usb_node[32];
 	unsigned int vid, pid;
@@ -2110,13 +2152,19 @@ int write_3g_ppp_conf(const char *modem_node){
 	char prefix[] = "wanXXXXXXXXXX_", tmp[100];
 	int retry, lock;
 
+	snprintf(modem_node, 16, "%s", nvram_safe_get("usb_modem_act_int"));
+	if(strlen(modem_node) <= 0){
+		usb_dbg(": Fail to get the act modem node.\n");
+		return 0;
+	}
+
 	if(get_device_type_by_device(modem_node) != DEVICE_TYPE_MODEM){
 		usb_dbg("(%s): test 1.\n", modem_node);
 		return 0;
 	}
 
 	if ((wan_unit = get_usbif_dualwan_unit()) < 0) {
-		usb_dbg("(%s): test 2.\n", modem_node);
+		usb_dbg("(%s): Don't enable the USB interface as the WAN type yet.\n", modem_node);
 		return 0;
 	}
 
@@ -2629,7 +2677,7 @@ int set_usb_common_nvram(const char *action, const char *device_name, const char
 				nvram_unset(prefix);
 				nvram_unset(strcat_r(prefix, "_label", tmp));
 
-				ptr = device_name+strlen(device_name)-1;
+				ptr = (char *)device_name+strlen(device_name)-1;
 				if(!isdigit(*ptr)){
 					snprintf(prefix, sizeof(prefix), "usb_path%s", port_path);
 					if(strlen(nvram_safe_get(strcat_r(prefix, "_vid", tmp))) <= 0)
@@ -2767,7 +2815,7 @@ int asus_sd(const char *device_name, const char *action){
 		return 0;
 	}
 
-	ptr = device_name+strlen(device_name)-1;
+	ptr = (char *)device_name+strlen(device_name)-1;
 
 	// If remove the device?
 	if(!check_hotplug_action(action)){
@@ -3354,8 +3402,9 @@ int asus_tty(const char *device_name, const char *action){
 			nvram_unset(tmp);
 			nvram_unset(strcat_r(prefix, "_act_def", tmp));
 			nvram_unset("usb_modem_act_path");
-			nvram_unset("usb_modem_act_dial");
-			nvram_unset("usb_modem_act_talk");
+			nvram_unset("usb_modem_act_type");
+			nvram_unset("usb_modem_act_int");
+			nvram_unset("usb_modem_act_bulk");
 
 			// TODO: for the bad CTF. After updating CTF, need to mark these codes.
 			if(nvram_match("ctf_disable_modem", "1")){
@@ -3585,16 +3634,6 @@ usb_dbg("(%s): cur_val=%d, tmp_val=%d.\n", device_name, cur_val, tmp_val);
 
 		// Wait all ttyUSB nodes to ready.
 		sleep(1);
-
-		// Write dial config file.
-		if(!write_3g_ppp_conf(current_act)){
-			usb_dbg("(%s): Fail to write PPP's conf for 3G process!\n", device_name);
-			file_unlock(isLock_tty);
-			file_unlock(isLock);
-			return 0;
-		}
-		else
-			usb_dbg("(%s): Had wrrtten the 3g ppp file.\n", device_name);
 	}
 	else{ // isACMNode(device_name).
 		// Find the control interface of cdc-acm.
@@ -3607,19 +3646,8 @@ usb_dbg("(%s): cur_val=%d, tmp_val=%d.\n", device_name, cur_val, tmp_val);
 
 		if(!strcmp(device_name, "ttyACM0")){
 			nvram_set(strcat_r(prefix, "_act", tmp), device_name);
-
-			// Write dial config file.
-			if(!write_3g_ppp_conf(device_name)){
-				usb_dbg("(%s): Fail to write PPP's conf for 3G process!\n", device_name);
-				file_unlock(isLock_tty);
-				file_unlock(isLock);
-				return 0;
-			}
-			else
-				usb_dbg("(%s): Had wrrtten the 3g ppp file.\n", device_name);
 		}
 		else{
-			usb_dbg("(%s): Skip to write PPP's conf.\n", device_name);
 			file_unlock(isLock_tty);
 			file_unlock(isLock);
 			return 0;
@@ -3631,6 +3659,9 @@ usb_dbg("(%s): cur_val=%d, tmp_val=%d.\n", device_name, cur_val, tmp_val);
 	if(!nvram_match("wans_mode", "off") && strcmp(current_def, "1")){
 #endif
 		if ((wan_unit = get_usbif_dualwan_unit()) >= 0) {
+			// show the manual-setting dongle in Networkmap when it was plugged after reboot.
+			init_3g_param(port_path, vid, pid);
+
 #if 0
 			// TODO: for the bad CTF. After updating CTF, need to mark these codes.
 			if(nvram_invmatch("ctf_disable", "1") && nvram_invmatch("ctf_disable_modem", "1")){
@@ -3651,9 +3682,6 @@ usb_dbg("(%s): got tty nodes and notify restart wan(%d)...\n", device_name, wan_
 			sprintf(cmd, "restart_wan_if %d", wan_unit);
 			notify_rc_and_wait(cmd);
 #endif
-
-			// show the manual-setting dongle in Networkmap when it was plugged after reboot.
-			init_3g_param(port_path, vid, pid);
 		}
 #ifdef RTCONFIG_DUALWAN
 		else
@@ -4064,7 +4092,7 @@ int asus_usb_interface(const char *device_name, const char *action){
 		eval("insmod", "option", modem_cmd, buf);
 		sleep(1);
 	}
-	else{ // isACMInterface(device_name)
+	else if(isACMInterface(device_name)){
 		usb_dbg("(%s): Runing USB ACM...\n", device_name);
 		modprobe("cdc-acm");
 		sleep(1);

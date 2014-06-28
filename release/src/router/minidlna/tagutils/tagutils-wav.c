@@ -100,7 +100,7 @@ _get_wavtags(char *filename, struct song_metadata *psong)
 		//        isprint(hdr[3]) ? hdr[3] : '?',
 		//        block_len);
 
-		if(block_len < 0)
+		if(block_len > psong->file_size)
 		{
 			close(fd);
 			DPRINTF(E_WARN, L_SCANNER, "Bad block len: %s\n", filename);

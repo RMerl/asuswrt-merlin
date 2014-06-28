@@ -491,5 +491,4 @@ VOID putUsbSuspend(struct work_struct *work)
 	return;
 }
 #endif
-
 #endif

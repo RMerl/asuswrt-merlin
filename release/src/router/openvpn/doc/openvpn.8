@@ -2322,18 +2322,23 @@ is NOT specified.
 .\"*********************************************************
 .TP
 .B \-\-multihome
-Configure a multi-homed UDP server.  This option can be used when
-OpenVPN has been configured to listen on all interfaces, and will
-attempt to bind client sessions to the interface on which packets
-are being received, so that outgoing packets will be sent out
-of the same interface.  Note that this option is only relevant for
-UDP servers and currently is only implemented on Linux.
+Configure a multi-homed UDP server.  This option needs to be used when
+a server has more than one IP address (e.g. multiple interfaces, or
+secondary IP addresses), and is not using
+.B \-\-local
+to force binding to one specific address only.  This option will
+add some extra lookups to the packet path to ensure that the UDP reply
+packets are always sent from the address that the client is
+talking to. This is not supported on all platforms, and it adds more
+processing, so it's not enabled by default.
 
-Note: clients connecting to a
-.B \-\-multihome
-server should always use the
-.B \-\-nobind
-option.
+Note: this option is only relevant for UDP servers.
+
+Note 2: if you do an IPv6+IPv4 dual-stack bind on a Linux machine with
+multiple IPv4 address, connections to IPv4 addresses will not work
+right on kernels before 3.15, due to missing kernel support for the
+IPv4-mapped case (some distributions have ported this to earlier kernel
+versions, though).
 .\"*********************************************************
 .TP
 .B \-\-echo [parms...]
@@ -4270,12 +4275,18 @@ above).
 .\"*********************************************************
 .TP
 .B \-\-tls-version-min version ['or-highest']
-Sets the minimum
+Enable TLS version negotiation, and set the minimum
 TLS version we will accept from the peer (default is "1.0").
 Examples for version
 include "1.0", "1.1", or "1.2".  If 'or-highest' is specified
 and version is not recognized, we will only accept the highest TLS
 version supported by the local SSL implementation.
+
+If this options is not set, the code in OpenVPN 2.3.4 will default
+to using TLS 1.0 only, without any version negotiation.  This reverts
+the beaviour to what OpenVPN versions up to 2.3.2 did, as it turned
+out that TLS version negotiation can lead to handshake problems due
+to new signature algorithms in TLS 1.2.
 .\"*********************************************************
 .TP
 .B \-\-pkcs12 file
@@ -5409,9 +5420,11 @@ option can be used BEFORE this option to produce debugging information.
 .SS IPv6 Related Options
 .\"*********************************************************
 The following options exist to support IPv6 tunneling in peer-to-peer
-and client-server mode.  As of now, this is just very basic
-documentation of the IPv6-related options. More documentation can be
-found on http://www.greenie.net/ipv6/openvpn.html.
+and client-server mode.  All options are modeled after their IPv4
+counterparts, so more detailed explanations given there apply here
+as well (except for
+.B \-\-topology
+, which has no effect on IPv6).
 .TP
 .B --ifconfig-ipv6 ipv6addr/bits ipv6remote
 configure IPv6 address
@@ -5438,7 +5451,8 @@ pool starts at
 .B ipv6addr
 and increments by +1 for every new client (linear mode).  The
 .B /bits
-setting controls the size of the pool.
+setting controls the size of the pool.  Due to implementation details,
+the pool size must be between /64 and /112.
 .TP
 .B --ifconfig-ipv6-push ipv6addr/bits ipv6remote
 for ccd/ per-client static IPv6 interface configuration, see
@@ -6032,12 +6046,18 @@ where
 is the verification level.  Only set for TLS connections.  Set prior
 to execution of
 .B \-\-tls-verify
-script. This is in the form of a hex string like "37AB46E0", which is
-suitable for doing serial-based OCSP queries (with OpenSSL, you have
-to prepend "0x" to the string). If something goes wrong while reading
+script. This is in the form of a decimal string like "933971680", which is
+suitable for doing serial-based OCSP queries (with OpenSSL, do not
+prepend "0x" to the string) If something goes wrong while reading
 the value from the certificate it will be an empty string, so your
 code should check that.
 See the contrib/OCSP_check/OCSP_check.sh script for an example.
+.\"*********************************************************
+.TP
+.B tls_serial_hex_{n}
+Like
+.B tls_serial_{n}\fR,
+but in hex form (e.g. "12:34:56:78:9A").
 .\"*********************************************************
 .TP
 .B tun_mtu

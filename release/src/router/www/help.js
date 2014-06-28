@@ -4,7 +4,7 @@
 	Guest_Network_enable_ACL : "You must go to enable MAC filter",	
 	namecheap_username_title: "Domain Name",
 	link_rate : "Link rate",
-	http_username_hint : "Router login name only accept alphanumeric characters, under line and dash symbol. The first character cannot be dash [-] or under line [_].",
+	validate_hostname_hint : "The host name only accept alphanumeric characters, under line and dash symbol. The first character cannot be dash [-] or under line [_]. <#File_Pop_content_alert_desc2#>",
 	ASUSGATE_note6 : "Your DSL line appears to be unstable. We strongly recommend that you submit a feedback form for our analysis.",
 	ASUSGATE_act_feedback : "Feedback now"
 
@@ -2118,68 +2118,6 @@ function chkPass(pwd, flag) {
 			nScore = parseInt(nScore - (nSeqSymbol * nMultSeqSymbol)); 
 			sSeqSymbol = "- " + parseInt(nSeqSymbol * nMultSeqSymbol);
 		}
-		//$("nAlphasOnlyBonus").innerHTML = sAlphasOnly; 
-		//$("nNumbersOnlyBonus").innerHTML = sNumbersOnly; 
-		//$("nRepCharBonus").innerHTML = sRepChar; 
-		//$("nConsecAlphaUCBonus").innerHTML = sConsecAlphaUC; 
-		//$("nConsecAlphaLCBonus").innerHTML = sConsecAlphaLC; 
-		//$("nConsecNumberBonus").innerHTML = sConsecNumber;
-		//$("nSeqAlphaBonus").innerHTML = sSeqAlpha; 
-		//$("nSeqNumberBonus").innerHTML = sSeqNumber; 
-		//$("nSeqSymbolBonus").innerHTML = sSeqSymbol; 
-
-		/* Determine if mandatory requirements have been met and set image indicators accordingly */
-		/*
-		var arrChars = [nLength,nAlphaUC,nAlphaLC,nNumber,nSymbol];
-		var arrCharsIds = ["nLength","nAlphaUC","nAlphaLC","nNumber","nSymbol"];
-		var arrCharsLen = arrChars.length;
-		for (var c=0; c < arrCharsLen; c++) {
-			var oImg = $('div_' + arrCharsIds[c]);
-			var oBonus = $(arrCharsIds[c] + 'Bonus');
-			//$(arrCharsIds[c]).innerHTML = arrChars[c];
-			if (arrCharsIds[c] == "nLength") { var minVal = parseInt(nMinPwdLen - 1); } else { var minVal = 0; }
-			//if (arrChars[c] == parseInt(minVal + 1)) { nReqChar++; oImg.className = "pass"; oBonus.parentNode.className = "pass"; }
-			//else if (arrChars[c] > parseInt(minVal + 1)) { nReqChar++; oImg.className = "exceed"; oBonus.parentNode.className = "exceed"; }
-			//else { oImg.className = "fail"; oBonus.parentNode.className = "fail"; }
-		}
-		nRequirements = nReqChar;
-		if (pwd.length >= nMinPwdLen) { var nMinReqChars = 3; } else { var nMinReqChars = 4; }
-		if (nRequirements > nMinReqChars) {  // One or more required characters exist
-			nScore = parseInt(nScore + (nRequirements * 2)); 
-			sRequirements = "+ " + parseInt(nRequirements * 2);
-		}
-		//$("nRequirementsBonus").innerHTML = sRequirements;
-		*/
-
-		/* Determine if additional bonuses need to be applied and set image indicators accordingly */
-		/*
-		var arrChars = [nMidChar,nRequirements];
-		var arrCharsIds = ["nMidChar","nRequirements"];
-		var arrCharsLen = arrChars.length;
-		for (var c=0; c < arrCharsLen; c++) {
-			var oImg = $('div_' + arrCharsIds[c]);
-			var oBonus = $(arrCharsIds[c] + 'Bonus');
-			//$(arrCharsIds[c]).innerHTML = arrChars[c];
-			if (arrCharsIds[c] == "nRequirements") { var minVal = nMinReqChars; } else { var minVal = 0; }
-			//if (arrChars[c] == parseInt(minVal + 1)) { oImg.className = "pass"; oBonus.parentNode.className = "pass"; }
-			//else if (arrChars[c] > parseInt(minVal + 1)) { oImg.className = "exceed"; oBonus.parentNode.className = "exceed"; }
-			//else { oImg.className = "fail"; oBonus.parentNode.className = "fail"; }
-		}
-		*/
-
-		/* Determine if suggested requirements have been met and set image indicators accordingly */
-		/*
-		var arrChars = [nAlphasOnly,nNumbersOnly,nRepChar,nConsecAlphaUC,nConsecAlphaLC,nConsecNumber,nSeqAlpha,nSeqNumber,nSeqSymbol];
-		var arrCharsIds = ["nAlphasOnly","nNumbersOnly","nRepChar","nConsecAlphaUC","nConsecAlphaLC","nConsecNumber","nSeqAlpha","nSeqNumber","nSeqSymbol"];
-		var arrCharsLen = arrChars.length;
-		for (var c=0; c < arrCharsLen; c++) {
-			var oImg = $('div_' + arrCharsIds[c]);
-			var oBonus = $(arrCharsIds[c] + 'Bonus');
-			//$(arrCharsIds[c]).innerHTML = arrChars[c];
-			//if (arrChars[c] > 0) { oImg.className = "warn"; oBonus.parentNode.className = "warn"; }
-			//else { oImg.className = "pass"; oBonus.parentNode.className = "pass"; }
-		}
-		*/
 		
 		/* Determine complexity based on overall score */
 		if (nScore > 100) { nScore = 100; } else if (nScore < 0) { nScore = 0; }
@@ -2197,8 +2135,7 @@ function chkPass(pwd, flag) {
 	else {
 		/* Display default score criteria to client */
 		if(flag == 'http_passwd'){
-				orig_pwd = decodeURIComponent("<% nvram_char_to_ascii("", "http_passwd"); %>");
-				chkPass(orig_pwd, 'http_passwd');
+			chkPass(" ", 'http_passwd');
 		}
 	}
 }

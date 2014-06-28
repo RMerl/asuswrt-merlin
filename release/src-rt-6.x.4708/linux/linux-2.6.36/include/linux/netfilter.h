@@ -180,9 +180,7 @@ static inline int nf_hook_thresh(u_int8_t pf, unsigned int hook,
 				 int (*okfn)(struct sk_buff *), int thresh)
 {
 #ifndef CONFIG_NETFILTER_DEBUG
-	if (skb->tcpf_smb)
-		return 1;
-	else if (list_empty(&nf_hooks[pf][hook]))
+	if (list_empty(&nf_hooks[pf][hook]))
 		return 1;
 #endif
 	return nf_hook_slow(pf, hook, skb, indev, outdev, okfn, thresh);

@@ -37,6 +37,7 @@
 #include <linux/init.h>
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>
+#include <linux/ctype.h>
 #include <linux/ethtool.h>
 #include <linux/workqueue.h>
 #include <linux/mii.h>
@@ -157,6 +158,43 @@ int usbnet_get_endpoints(struct usbnet *dev, struct usb_interface *intf)
 }
 EXPORT_SYMBOL_GPL(usbnet_get_endpoints);
 
+/**
+ * hex_to_bin - convert a hex digit to its real value
+ * @ch: ascii character represents hex digit
+ *
+ * hex_to_bin() converts one hex digit to its actual value or -1 in case of bad
+ * input.
+ */
+int hex_to_bin(char ch)
+{
+	if ((ch >= '0') && (ch <= '9'))
+		return ch - '0';
+	ch = tolower(ch);
+	if ((ch >= 'a') && (ch <= 'f'))
+		return ch - 'a' + 10;
+	return -1;
+}
+
+int usbnet_get_ethernet_addr(struct usbnet *dev, int iMACAddress)
+{
+	int		tmp, i;
+	unsigned char	buf [13];
+
+	tmp = usb_string(dev->udev, iMACAddress, buf, sizeof buf);
+	if (tmp != 12) {
+		dev_dbg(&dev->udev->dev,
+			"bad MAC string %d fetch, %d\n", iMACAddress, tmp);
+		if (tmp >= 0)
+			tmp = -EINVAL;
+		return tmp;
+	}
+	for (i = tmp = 0; i < 6; i++, tmp += 2)
+		dev->net->dev_addr [i] =
+			(hex_to_bin(buf[tmp]) << 4) + hex_to_bin(buf[tmp + 1]);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(usbnet_get_ethernet_addr);
+
 static void intr_complete (struct urb *urb);
 
 static int init_status (struct usbnet *dev, struct usb_interface *intf)
@@ -224,7 +262,7 @@ EXPORT_SYMBOL_GPL(usbnet_skb_return);
  *
  *-------------------------------------------------------------------------*/
 
-static int usbnet_change_mtu (struct net_device *net, int new_mtu)
+int usbnet_change_mtu (struct net_device *net, int new_mtu)
 {
 	struct usbnet	*dev = netdev_priv(net);
 	int		ll_mtu = new_mtu + net->hard_header_len;
@@ -247,6 +285,7 @@ static int usbnet_change_mtu (struct net_device *net, int new_mtu)
 
 	return 0;
 }
+EXPORT_SYMBOL_GPL(usbnet_change_mtu);
 
 /*-------------------------------------------------------------------------*/
 
@@ -500,6 +539,39 @@ static void intr_complete (struct urb *urb)
 		deverr(dev, "intr resubmit --> %d", status);
 }
 
+void usbnet_pause_rx(struct usbnet *dev)
+{
+	set_bit(EVENT_RX_PAUSED, &dev->flags);
+
+	dev_dbg(&dev->udev->dev, "paused rx queue enabled\n");
+}
+EXPORT_SYMBOL_GPL(usbnet_pause_rx);
+
+void usbnet_resume_rx(struct usbnet *dev)
+{
+	struct sk_buff *skb;
+	int num = 0;
+
+	clear_bit(EVENT_RX_PAUSED, &dev->flags);
+
+	while ((skb = skb_dequeue(&dev->rxq_pause)) != NULL) {
+		usbnet_skb_return(dev, skb);
+		num++;
+	}
+
+	tasklet_schedule(&dev->bh);
+
+	dev_dbg(&dev->udev->dev,
+		  "paused rx queue disabled, %d skbs requeued\n", num);
+}
+EXPORT_SYMBOL_GPL(usbnet_resume_rx);
+
+void usbnet_purge_paused_rxq(struct usbnet *dev)
+{
+	skb_queue_purge(&dev->rxq_pause);
+}
+EXPORT_SYMBOL_GPL(usbnet_purge_paused_rxq);
+
 /*-------------------------------------------------------------------------*/
 
 // unlink pending rx/tx; completion handlers do all other cleanup
@@ -548,7 +620,7 @@ EXPORT_SYMBOL_GPL(usbnet_unlink_rx_urbs);
 
 // precondition: never called in_interrupt
 
-static int usbnet_stop (struct net_device *net)
+int usbnet_stop (struct net_device *net)
 {
 	struct usbnet		*dev = netdev_priv(net);
 	int			temp;
@@ -591,6 +663,7 @@ static int usbnet_stop (struct net_device *net)
 
 	return 0;
 }
+EXPORT_SYMBOL_GPL(usbnet_stop);
 
 /*-------------------------------------------------------------------------*/
 
@@ -598,7 +671,7 @@ static int usbnet_stop (struct net_device *net)
 
 // precondition: never called in_interrupt
 
-static int usbnet_open (struct net_device *net)
+int usbnet_open (struct net_device *net)
 {
 	struct usbnet		*dev = netdev_priv(net);
 	int			retval = 0;
@@ -660,6 +733,7 @@ static int usbnet_open (struct net_device *net)
 done:
 	return retval;
 }
+EXPORT_SYMBOL_GPL(usbnet_open);
 
 /*-------------------------------------------------------------------------*/
 
@@ -901,7 +975,7 @@ static void tx_complete (struct urb *urb)
 
 /*-------------------------------------------------------------------------*/
 
-static void usbnet_tx_timeout (struct net_device *net)
+void usbnet_tx_timeout (struct net_device *net)
 {
 	struct usbnet		*dev = netdev_priv(net);
 
@@ -910,10 +984,11 @@ static void usbnet_tx_timeout (struct net_device *net)
 
 	// FIXME: device recovery -- reset?
 }
+EXPORT_SYMBOL_GPL(usbnet_tx_timeout);
 
 /*-------------------------------------------------------------------------*/
 
-static int usbnet_start_xmit (struct sk_buff *skb, struct net_device *net)
+netdev_tx_t usbnet_start_xmit (struct sk_buff *skb, struct net_device *net)
 {
 	struct usbnet		*dev = netdev_priv(net);
 	int			length;
@@ -996,7 +1071,7 @@ drop:
 	}
 	return retval;
 }
-
+EXPORT_SYMBOL_GPL(usbnet_start_xmit);
 
 /*-------------------------------------------------------------------------*/
 

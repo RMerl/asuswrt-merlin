@@ -7,7 +7,7 @@
 <script>
 function set_AiDisk_status_error(error_msg){
 	alert(error_msg);
-	parent.resultOfSwitchAppStatus(error_msg);
+	parent.resultOfSwitchAppStatus();
 }
 
 function set_AiDisk_status_success(){

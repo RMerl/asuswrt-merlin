@@ -2461,8 +2461,7 @@ static INT bcm_char_ioctl(struct inode *inode, struct file *filp,
 }
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,36)
-static INT bcm_char_unlocked_ioctl(struct file *filp,
-                                        UINT cmd, ULONG arg)
+static INT bcm_char_unlocked_ioctl(struct file *filp, UINT cmd, ULONG arg)
 {
 	return bcm_char_ioctl(NULL, filp, cmd, arg);
 }

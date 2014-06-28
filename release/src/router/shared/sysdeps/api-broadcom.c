@@ -472,6 +472,9 @@ int check_imageheader(char *buf, long *filelen)
 	{
 		memcpy(&aligned, buf + sizeof(IMAGE_HEADER) - 1, sizeof(aligned));
 		*filelen = aligned;
+#ifdef RTCONFIG_DSL_TCLINUX
+		*filelen+=0x790000;
+#endif
 		_dprintf("image len: %x\n", aligned);
 		return 1;
 	}
@@ -537,31 +540,120 @@ int check_imagefile(char *fname)
 	return 0;
 }
 
-char *wl_ifname_qtn(int unit, int subunit)
+#ifdef RTCONFIG_QTN
+char *wl_vifname_qtn(int unit, int subunit)
 {
 	static char tmp[128];
-	char prefix[] = "wlXXXXXXXXXX_";
-	int i, idx = -1;
 
-	for (i = 1; i < 4; i++)
+	if ((subunit > 0) && (subunit < 4))
 	{
-		snprintf(prefix, sizeof(prefix), "wl%d.%d_", unit, i);
-
-		if (nvram_match(strcat_r(prefix, "bss_enabled", tmp), "1"))
-			idx++;
-
-		if (i == subunit)
-			break;
-	}
-
-	if (idx == -1)
-		return strdup("");
-	else
-	{
-		sprintf(tmp, "wifi%d", idx + 1);
+		sprintf(tmp, "wifi%d", subunit);
 		return strdup(tmp);
 	}
+	else
+		return strdup("");
 }
+
+int rpc_qcsapi_set_SSID(const char *ifname, const char *ssid)
+{
+	int ret;
+
+	ret = qcsapi_wifi_set_SSID(ifname, ssid);
+	if (ret < 0) {
+		dbG("Qcsapi qcsapi_wifi_set_SSID %s error, return: %d\n", ifname, ret);
+		return ret;
+	}
+	dbG("Set SSID of interface %s as: %s\n", ifname, ssid);
+
+	return 0;
+}
+
+int rpc_qcsapi_set_SSID_broadcast(const char *ifname, const char *option)
+{
+	int ret;
+	int OPTION = 1 - atoi(option);
+
+	ret = qcsapi_wifi_set_option(ifname, qcsapi_SSID_broadcast, OPTION);
+	if (ret < 0) {
+		dbG("Qcsapi qcsapi_wifi_set_option::SSID_broadcast %s error, return: %d\n", ifname, ret);
+		return ret;
+	}
+	dbG("Set Broadcast SSID of interface %s as: %s\n", ifname, OPTION ? "TRUE" : "FALSE");
+
+	return 0;
+}
+
+int rpc_qcsapi_set_beacon_type(const char *ifname, const char *auth_mode)
+{
+	int ret;
+	char *p_new_beacon = NULL;
+
+	if (!strcmp(auth_mode, "open"))
+		p_new_beacon = strdup("Basic");
+        else if (!strcmp(auth_mode, "psk"))
+		p_new_beacon = strdup("WPA");
+        else if (!strcmp(auth_mode, "psk2"))
+		p_new_beacon = strdup("11i");
+        else if (!strcmp(auth_mode, "pskpsk2"))
+		p_new_beacon = strdup("WPAand11i");
+	else
+		p_new_beacon = strdup("Basic");
+
+	ret = qcsapi_wifi_set_beacon_type(ifname, p_new_beacon);
+	if (ret < 0) {
+		dbG("Qcsapi qcsapi_wifi_set_beacon_type %s error, return: %d\n", ifname, ret);
+		return ret;
+	}
+	dbG("Set beacon type of interface %s as: %s\n", ifname, p_new_beacon);
+
+	if (p_new_beacon) free(p_new_beacon);
+
+	return 0;
+}
+
+int rpc_qcsapi_set_WPA_encryption_modes(const char *ifname, const char *crypto)
+{
+	int ret;
+	string_32 encryption_modes;
+
+	if (!strcmp(crypto, "tkip"))
+		strcpy(encryption_modes, "TKIPEncryption");
+        else if (!strcmp(crypto, "aes"))
+		strcpy(encryption_modes, "AESEncryption");
+        else if (!strcmp(crypto, "tkip+aes"))
+		strcpy(encryption_modes, "TKIPandAESEncryption");
+	else
+		strcpy(encryption_modes, "AESEncryption");
+
+	ret = qcsapi_wifi_set_WPA_encryption_modes(ifname, encryption_modes);
+	if (ret < 0) {
+		dbG("Qcsapi qcsapi_wifi_set_WPA_encryption_modes %s error, return: %d\n", ifname, ret);
+		return ret;
+	}
+	dbG("Set WPA encryption mode of interface %s as: %s\n", ifname, encryption_modes);
+
+	return 0;
+}
+
+int rpc_qcsapi_set_key_passphrase(const char *ifname, const char *wpa_psk)
+{
+	int ret;
+
+	ret = qcsapi_wifi_set_key_passphrase(ifname, 0, wpa_psk);
+	if (ret < 0) {
+		dbG("Qcsapi qcsapi_wifi_set_key_passphrase %s error, return: %d\n", ifname, ret);
+
+		ret = qcsapi_wifi_set_pre_shared_key(ifname, 0, wpa_psk);
+		if (ret < 0)
+			dbG("Qcsapi qcsapi_wifi_set_pre_shared_key %s error, return: %d\n", ifname, ret);
+
+		return ret;
+	}
+	dbG("Set WPA preshared key of interface %s as: %s\n", wpa_psk, ifname);
+
+	return 0;
+}
+#endif
 
 int get_radio(int unit, int subunit)
 {
@@ -577,20 +669,17 @@ int get_radio(int unit, int subunit)
 	{
 		if (subunit > 0)
 		{
-			ret = qcsapi_interface_get_status(wl_ifname_qtn(unit, subunit), &interface_status);
-			if (ret < 0)
-			{
-				dbG("qcsapi_interface_get_status error, return: %d\n", ret);
+			ret = qcsapi_interface_get_status(wl_vifname_qtn(unit, subunit), &interface_status);
+//			if (ret < 0)
+//				dbG("Qcsapi qcsapi_interface_get_status %s error, return: %d\n", wl_vifname_qtn(unit, subunit), ret);
 
-				return 0;
-			}
 			return interface_status;
 		}
 		else
 		{
 			ret = qcsapi_wifi_rfstatus(WIFINAME, (qcsapi_unsigned_int *) &n);
-			if (ret < 0)
-				dbG("qcsapi_wifi_rfstatus error, return: %d\n", ret);
+//			if (ret < 0)
+//				dbG("Qcsapi qcsapi_wifi_rfstatus %s error, return: %d\n", wl_vifname_qtn(unit, subunit), ret);
 
 			return n;
 		}
@@ -605,8 +694,15 @@ int get_radio(int unit, int subunit)
 void set_radio(int on, int unit, int subunit)
 {
 	uint32 n;
-	char tmpstr[32];
 	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
+#ifdef RTCONFIG_QTN
+	int ret;
+	char interface_status = 0;
+	qcsapi_mac_addr wl_macaddr;
+	char macbuf[13], macaddr_str[18];
+	unsigned long long macvalue;
+	unsigned char *macp;
+#endif
 
 	//_dprintf("set radio %x %x %x %s\n", on, unit, subunit, nvram_safe_get(wl_nvname("ifname", unit, subunit)));
 
@@ -636,11 +732,94 @@ void set_radio(int on, int unit, int subunit)
 
 	if (subunit > 0) {
 #ifdef RTCONFIG_QTN
-		if (unit) return;
+		if (unit)
+		{
+			ret = qcsapi_interface_get_status(wl_vifname_qtn(unit, subunit), &interface_status);
+//			if (ret < 0)
+//				dbG("Qcsapi qcsapi_interface_get_status %s error, return: %d\n", wl_vifname_qtn(unit, subunit), ret);
+
+			if (on)
+			{
+				if (interface_status)
+				{
+					dbG("vif %s has existed already\n", wl_vifname_qtn(unit, subunit));
+
+					return;
+				}
+
+				ret = qcsapi_interface_get_mac_addr(WIFINAME, (uint8_t *) wl_macaddr);
+				if (ret < 0)
+					dbG("Qcsapi qcsapi_interface_get_mac_addr %s error, return: %d\n", WIFINAME, ret);
+
+				sprintf(macbuf, "%02X%02X%02X%02X%02X%02X",
+					wl_macaddr[0],
+					wl_macaddr[1],
+					wl_macaddr[2],
+					wl_macaddr[3],
+					wl_macaddr[4],
+					wl_macaddr[5]);
+				macvalue = strtoll(macbuf, (char **) NULL, 16);
+				macvalue += subunit;
+				macp = (unsigned char*) &macvalue;
+				memset(macaddr_str, 0, sizeof(macaddr_str));
+				sprintf(macaddr_str, "%02X:%02X:%02X:%02X:%02X:%02X",
+					*(macp+5),
+					*(macp+4),
+					*(macp+3),
+					*(macp+2),
+					*(macp+1),
+					*(macp+0));
+				ether_atoe(macaddr_str, wl_macaddr);
+
+				ret = qcsapi_wifi_create_bss(wl_vifname_qtn(unit, subunit), wl_macaddr);
+				if (ret < 0)
+				{
+					dbG("Qcsapi qcsapi_wifi_create_bss %s error, return: %d\n",
+						wl_vifname_qtn(unit, subunit), ret);
+
+					return;
+				}
+
+				ret = rpc_qcsapi_set_SSID(wl_vifname_qtn(unit, subunit), nvram_safe_get(strcat_r(prefix, "ssid", tmp)));
+				if (ret < 0)
+					dbG("rpc_qcsapi_set_SSID %s error, return: %d\n",
+						wl_vifname_qtn(unit, subunit), ret);
+
+				ret = rpc_qcsapi_set_SSID_broadcast(wl_vifname_qtn(unit, subunit), nvram_safe_get(strcat_r(prefix, "closed", tmp)));
+				if (ret < 0)
+					dbG("rpc_qcsapi_set_SSID_broadcast %s error, return: %d\n",
+						wl_vifname_qtn(unit, subunit), ret);
+
+				ret = rpc_qcsapi_set_beacon_type(wl_vifname_qtn(unit, subunit), nvram_safe_get(strcat_r(prefix, "auth_mode_x", tmp)));
+				if (ret < 0)
+					dbG("rpc_qcsapi_set_beacon_type %s error, return: %d\n",
+						wl_vifname_qtn(unit, subunit), ret);
+
+				ret = rpc_qcsapi_set_WPA_encryption_modes(wl_vifname_qtn(unit, subunit), nvram_safe_get(strcat_r(prefix, "crypto", tmp)));
+				if (ret < 0)
+					dbG("rpc_qcsapi_set_WPA_encryption_modes %s error, return: %d\n",
+						wl_vifname_qtn(unit, subunit), ret);
+
+				ret = rpc_qcsapi_set_key_passphrase(wl_vifname_qtn(unit, subunit), nvram_safe_get(strcat_r(prefix, "wpa_psk", tmp)));
+				if (ret < 0)
+					dbG("rpc_qcsapi_set_key_passphrase %s error, return: %d\n",
+						wl_vifname_qtn(unit, subunit), ret);
+			}
+			else
+			{
+				ret = qcsapi_wifi_remove_bss(wl_vifname_qtn(unit, subunit));
+				if (ret < 0)
+					dbG("Qcsapi qcsapi_wifi_remove_bss %s error, return: %d\n",
+						wl_vifname_qtn(unit, subunit), ret);
+			}
+		}
+		else
 #endif
-		sprintf(tmpstr, "%d", subunit);
-		if (on) eval("wl", "-i", nvram_safe_get(wl_nvname("ifname", unit, 0)), "bss", "-C", tmpstr, "up");
-		else eval("wl", "-i", nvram_safe_get(wl_nvname("ifname", unit, 0)), "bss", "-C", tmpstr, "down");
+		{
+			sprintf(tmp, "%d", subunit);
+			if (on) eval("wl", "-i", nvram_safe_get(wl_nvname("ifname", unit, 0)), "bss", "-C", tmp, "up");
+			else eval("wl", "-i", nvram_safe_get(wl_nvname("ifname", unit, 0)), "bss", "-C", tmp, "down");
+		}
 
 		if (nvram_get_int("led_disable")==1) {
 			led_control(LED_2G, LED_OFF);
@@ -656,12 +835,11 @@ void set_radio(int on, int unit, int subunit)
 #if WL_BSS_INFO_VERSION >= 108
 	n = on ? (WL_RADIO_SW_DISABLE << 16) : ((WL_RADIO_SW_DISABLE << 16) | 1);
 #ifdef RTCONFIG_QTN
-	int ret;
 	if (unit)
 	{
 		ret = qcsapi_wifi_rfenable(WIFINAME, (qcsapi_unsigned_int) on);
 		if (ret < 0)
-			dbG("qcsapi_wifi_rfenable, return: %d\n", ret);
+			dbG("Qcsapi qcsapi_wifi_rfenable %s, return: %d\n", WIFINAME, ret);
 	}
 	else
 #endif

@@ -199,7 +199,6 @@ config USB_NET_CDC_EEM
 config USB_NET_CDC_NCM
 	tristate "CDC NCM support"
 	depends on USB_USBNET
-	default y
 	help
 	  This driver provides support for CDC NCM (Network Control Model
 	  Device USB Class Specification). The CDC NCM specification is
@@ -214,6 +213,24 @@ config USB_NET_CDC_NCM
 	    * ST-Ericsson M570 HSPA+ Mobile Broadband Modem (reference design)
 	    * ST-Ericsson M343 HSPA Mobile Broadband Modem (reference design)
 	    * Ericsson F5521gw Mobile Broadband Module
+
+config USB_NET_CDC_MBIM
+	tristate "CDC MBIM support"
+	depends on USB_USBNET
+	select USB_WDM
+	select USB_NET_CDC_NCM
+	help
+	  This driver provides support for CDC MBIM (Mobile Broadband
+	  Interface Model) devices. The CDC MBIM specification is
+	  available from <http://www.usb.org/>.
+
+	  MBIM devices require configuration using the management
+	  protocol defined by the MBIM specification.  This driver
+	  provides unfiltered access to the MBIM control channel
+	  through the associated /dev/cdc-wdmx character device.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called cdc_mbim.
 
 config USB_NET_DM9601
 	tristate "Davicom DM9601 based USB 1.1 10/100 ethernet devices"
@@ -403,6 +420,28 @@ config USB_CDC_PHONET
 	  Choose this option to support the Phonet interface to a Nokia
 	  cellular modem, as found on most Nokia handsets with the
 	  "PC suite" USB profile.
+
+config USB_NET_QMI_WWAN
+	tristate "QMI WWAN driver for Qualcomm MSM based 3G and LTE modems"
+	depends on USB_USBNET
+	select USB_WDM
+	help
+	  Support WWAN LTE/3G devices based on Qualcomm Mobile Data Modem
+	  (MDM) chipsets.  Examples of such devices are
+	    * Huawei E392/E398
+
+	  This driver will only drive the ethernet part of the chips.
+	  The devices require additional configuration to be usable.
+	  Multiple management interfaces with linux drivers are
+	  available:
+
+	    * option: AT commands on /dev/ttyUSBx
+	    * cdc-wdm: Qualcomm MSM Interface (QMI) protocol on /dev/cdc-wdmx
+
+	  A modem manager with support for QMI is recommended.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called qmi_wwan.
 
 config USB_IPHETH
 	tristate "Apple iPhone USB Ethernet driver"
