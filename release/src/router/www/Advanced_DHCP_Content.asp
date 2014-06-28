@@ -423,7 +423,7 @@ function showLANIPList(){
 		htmlCode += '\', \'';
 		htmlCode += clientObj.ip;
 		htmlCode += '\');"><strong>';
-		htmlCode += clientObj.name;
+		htmlCode += clientObj.ip + '</strong>&nbsp;&nbsp;(' + clientObj.name + ')';
 		htmlCode += '</strong></div></a><!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';
 	}
 
