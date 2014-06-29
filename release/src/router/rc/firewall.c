@@ -4181,7 +4181,7 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 				"-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01");
 #else
 			eval("ip6tables", "-t", "mangle", "-A", "FORWARD",
-
+				"-m", "state", "--state", "NEW", "-j", "SKIPLOG");
 #endif
 		}
 #endif
