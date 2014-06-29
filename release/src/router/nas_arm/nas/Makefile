@@ -50,7 +50,11 @@ UTLOBJS = bcmwpa.o bcmutils.o
 
 ifeq ($(wildcard ../*.c), )
 all:
+ifeq ($(RTCONFIG_QTN),y)
+	-cp ./prebuilt/nas_qtn nas
+else
 	-cp ./prebuilt/nas .
+endif
 else
 all: nas
 endif
