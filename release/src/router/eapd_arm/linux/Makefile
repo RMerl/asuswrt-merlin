@@ -47,7 +47,11 @@ endif
 
 ifeq ($(wildcard $(SRCBASE)/router/eapd/*.c),)
 all:
+ifeq ($(RTCONFIG_QTN),y)
+	-cp prebuild/eapd_qtn eapd
+else
 	-cp prebuild/eapd eapd
+endif
 else
 all: eapd
 endif

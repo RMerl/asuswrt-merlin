@@ -29,7 +29,11 @@ vpath %.c $(SRCBASE)/shared/ $(SRCBASE)/shared/bcmwifi/src
 
 ifeq ($(wildcard $(SRCBASE)/router/acsd${BCMEX}/*.c),)
 all:
+ifeq ($(RTCONFIG_QTN),y)
+	-cp -f prebuilt/acsd_qtn acsd
+else
 	-cp -f prebuilt/acsd acsd
+endif
 else
 all: acsd
 endif
