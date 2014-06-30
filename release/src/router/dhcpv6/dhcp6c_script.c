@@ -78,14 +78,14 @@ client6_script(scriptpath, state, optinfo)
 	int state;
 	struct dhcp6_optinfo *optinfo;
 {
-	int i, dnsservers, ntpservers, dnsnamelen, envc, elen, elen2, ret = 0;
+	int i, dnsservers, ntpservers, dnsnamelen, envc, elen, ret = 0;
 	int sipservers, sipnamelen;
 	int nisservers, nisnamelen;
 	int nispservers, nispnamelen;
 	int bcmcsservers, bcmcsnamelen;
 	char **envp, *s;
 	char reason[] = "REASON=NBI";
-	struct dhcp6_listval *v, *sv;
+	struct dhcp6_listval *v;
 	pid_t pid, wpid;
 
 	/* if a script is not specified, do nothing */
