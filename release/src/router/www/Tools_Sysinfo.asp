@@ -97,7 +97,7 @@ function hwaccel_state(){
 		else {
 			code += " <i> - incompatible with:<span>  ";	// Two trailing spaces
 			if ('<% nvram_get("cstats_enable"); %>' == '1') code += 'IPTraffic, ';
-			if ('<% nvram_get("qos_enable"); %>' == '1') code += 'QoS, ';
+			if (('<% nvram_get("qos_enable"); %>' == '1') && ('<% nvram_get("qos_type"); %>' == '0')) code += 'QoS, ';
 			if ('<% nvram_get("sw_mode"); %>' == '2') code += 'Repeater mode, ';
 			if ('<% nvram_get("ctf_disable_modem"); %>' == '1') code += 'USB modem, ';
 
