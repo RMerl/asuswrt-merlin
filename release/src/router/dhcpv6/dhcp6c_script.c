@@ -106,8 +106,6 @@ client6_script(scriptpath, state, optinfo)
 	bcmcsnamelen = 0;
 	envc = 2;     /* we at least include the reason and the terminator */
 
-	envc++; /* state */
-
 	/* count the number of variables */
 	for (v = TAILQ_FIRST(&optinfo->dns_list); v; v = TAILQ_NEXT(v, link))
 		dnsservers++;
@@ -175,16 +173,6 @@ client6_script(scriptpath, state, optinfo)
 		ret = -1;
 		goto clean;
 	}
-	/* state */
-	elen = 6 + 7 + 1; /* "state=" + dhcp6_statestr (max 7) + NUL */
-	if ((s = envp[i++] = malloc(elen)) == NULL) {
-		dprintf(LOG_NOTICE, FNAME,
-		    "failed to allocate state strings");
-		ret = -1;
-		goto clean;
-	}
-	memset(s, 0, elen);
-	snprintf(s, elen, "state=%s", dhcp6_statestr(state));
 	/* "var=addr1 addr2 ... addrN" + null char for termination */
 	if (dnsservers) {
 		elen = sizeof (dnsserver_str) +
