@@ -1186,6 +1186,9 @@ void start_dhcp6s(void)
 	if (!ipv6_enabled())
 		return;
 
+	if (!nvram_get_int("ipv6_dhcp6s_enable"))
+		return;
+
 	service = get_ipv6_service();
 	stateful = (service == IPV6_NATIVE_DHCP) ?
 		nvram_get_int("ipv6_autoconf_type") : 0;
