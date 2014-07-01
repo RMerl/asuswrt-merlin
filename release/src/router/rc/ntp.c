@@ -60,12 +60,14 @@ static void ntp_service()
 #ifdef RTCONFIG_IPV6
 #ifndef RTCONFIG_DNSMASQ6
 /* switch to monotonic clock usage *//*
-		if (get_ipv6_service() != IPV6_DISABLED) {
+		if (get_ipv6_service() != IPV6_DISABLED && get_ipv6_service() != IPV6_NATIVE_DHCP) {
 			notify_rc("restart_dhcp6s");
 			notify_rc("restart_radvd");
 		}
 */
 #endif
+		if (get_ipv6_service() == IPV6_NATIVE_DHCP)
+			notify_rc("restart_rdnssd");
 #endif
 #ifdef RTCONFIG_DISK_MONITOR
 		notify_rc("restart_diskmon");

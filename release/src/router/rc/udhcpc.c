@@ -790,6 +790,8 @@ start_dhcp6c(void)
 	int prefix_len;
 	int need_wanaddr, need_prefix, need_dns;
 
+	stop_dhcp6c();
+
 	/* Check if enabled */
 	if (get_ipv6_service() != IPV6_NATIVE_DHCP)
 		return 0;

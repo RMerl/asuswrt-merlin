@@ -1301,10 +1301,13 @@ void start_radvd(void)
 	char *dns[3];
 	int dns_count, i;
 #endif
-if (getpid() != 1) {
+
+	if (getpid() != 1) {
 		notify_rc("start_radvd");
 		return;
 	}
+
+	stop_radvd();
 
 	if (!ipv6_enabled())
 		return;
