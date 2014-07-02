@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 374.44 (xx-xxxx-2014)
+Asuswrt-Merlin - build 376.44 (xx-xxxx-2014)
 =============================================
 
 About
@@ -577,7 +577,6 @@ History
    IMPORTANT: Make a backup of your JFFS partition if upgrading
               an RT-AC56U or RT-AC68U!  The partition layout
               has been changed.
-
    - NEW: Merged with Asus's 376_1088 GPL (internal).
           Summary of changes:
             * New networkmap, lets users edit device names,
@@ -599,7 +598,6 @@ History
              initial install, however everything will work
              the same afterward. AC87 is fine due to its
              larger rootfs partition. (AC56, AC68)
-
   - REMOVED: IPSEC support removed from ARM devices, as it's
              not compatible with the new DPI kernel modules.
              The option remains available in the build
