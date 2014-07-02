@@ -78,14 +78,6 @@ struct wireless_dev;
 #define net_xmit_eval(e)	((e) == NET_XMIT_CN? 0 : (e))
 #define net_xmit_errno(e)	((e) != NET_XMIT_CN ? -ENOBUFS : 0)
 
-enum netdev_tx {
-	__NETDEV_TX_MIN  = INT_MIN,     /* make sure enum is signed */
-	NETDEV_TX_OK     = 0x00,        /* driver took care of packet */
-	NETDEV_TX_BUSY   = 0x10,        /* driver tx path was busy*/
-	NETDEV_TX_LOCKED = 0x20,        /* driver tx lock was already taken */
-};
-typedef enum netdev_tx netdev_tx_t;
-
 #endif
 
 #define MAX_ADDR_LEN	32		/* Largest hardware address length */

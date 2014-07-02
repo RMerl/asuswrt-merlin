@@ -221,6 +221,7 @@ obj-$(CONFIG_USB_PEGASUS)       += usb/
 obj-$(CONFIG_USB_RTL8150)       += usb/
 obj-$(CONFIG_USB_USBNET)        += usb/
 obj-$(CONFIG_USB_ZD1201)        += usb/
+obj-$(CONFIG_USB_IPHETH)	+= usb/
 
 #
 # Broadcom HND devices

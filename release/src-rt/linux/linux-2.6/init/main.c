@@ -568,9 +568,7 @@ printk("start_kernel\n");
 		printk("start_kernel(): bug: interrupts were enabled early\n");
 	early_boot_irqs_on();
 	local_irq_enable();
-#ifdef CONFIG_DUMP_PREV_OOPS_MSG 
-	prepare_and_dump_previous_oops();
-#endif
+
 	/*
 	 * HACK ALERT! This is early. We're enabling the console before
 	 * we've done PCI setups etc, and console_init() must be aware of
@@ -609,6 +607,9 @@ printk("start_kernel\n");
 	calibrate_delay();
 	pidmap_init();
 	pgtable_cache_init();
+#ifdef CONFIG_DUMP_PREV_OOPS_MSG 
+        prepare_and_dump_previous_oops();
+#endif
 	prio_tree_init();
 	anon_vma_init();
 #ifdef CONFIG_X86

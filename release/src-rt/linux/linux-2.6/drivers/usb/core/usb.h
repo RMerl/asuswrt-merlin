@@ -1,20 +1,24 @@
+#include <linux/pm.h>
+
 /* Functions local to drivers/usb/core/ */
 
-extern int usb_create_sysfs_dev_files (struct usb_device *dev);
-extern void usb_remove_sysfs_dev_files (struct usb_device *dev);
-extern int usb_create_sysfs_intf_files (struct usb_interface *intf);
-extern void usb_remove_sysfs_intf_files (struct usb_interface *intf);
-extern int usb_create_ep_files(struct device *parent, struct usb_host_endpoint *endpoint,
+extern int usb_create_sysfs_dev_files(struct usb_device *dev);
+extern void usb_remove_sysfs_dev_files(struct usb_device *dev);
+extern int usb_create_sysfs_intf_files(struct usb_interface *intf);
+extern void usb_remove_sysfs_intf_files(struct usb_interface *intf);
+extern int usb_create_ep_files(struct device *parent,
+				struct usb_host_endpoint *endpoint,
 				struct usb_device *udev);
 extern void usb_remove_ep_files(struct usb_host_endpoint *endpoint);
 
-extern void usb_enable_endpoint(struct usb_device *dev,
-		struct usb_host_endpoint *ep);
-extern void usb_disable_endpoint (struct usb_device *dev, unsigned int epaddr);
-extern void usb_disable_interface (struct usb_device *dev,
-		struct usb_interface *intf);
+extern void usb_enable_endpoint(struct usb_device *dev, struct usb_host_endpoint *ep);
+extern void usb_enable_interface(struct usb_device *dev, struct usb_interface *intf);
+extern void usb_disable_endpoint(struct usb_device *dev, unsigned int epaddr);
+extern void usb_disable_interface(struct usb_device *dev, struct usb_interface *intf);
 extern void usb_release_interface_cache(struct kref *ref);
-extern void usb_disable_device (struct usb_device *dev, int skip_ep0);
+extern void usb_disable_device(struct usb_device *dev, int skip_ep0);
+extern int usb_deauthorize_device(struct usb_device *);
+extern int usb_authorize_device(struct usb_device *);
 extern void usb_detect_quirks(struct usb_device *udev);
 extern int usb_remove_device(struct usb_device *udev);
 
@@ -29,6 +33,13 @@ extern int usb_match_device(struct usb_device *dev,
 			    const struct usb_device_id *id);
 extern void usb_forced_unbind_intf(struct usb_interface *intf);
 extern void usb_rebind_intf(struct usb_interface *intf);
+
+extern int usb_hub_claim_port(struct usb_device *hdev, unsigned port,
+		void *owner);
+extern int usb_hub_release_port(struct usb_device *hdev, unsigned port,
+		void *owner);
+extern void usb_hub_release_all_ports(struct usb_device *hdev, void *owner);
+extern bool usb_device_is_owned(struct usb_device *udev);
 
 extern int  usb_hub_init(void);
 extern void usb_hub_cleanup(void);
@@ -78,6 +89,7 @@ static inline void usb_pm_unlock(struct usb_device *udev) {}
 extern void usb_autosuspend_device(struct usb_device *udev);
 extern void usb_try_autosuspend_device(struct usb_device *udev);
 extern int usb_autoresume_device(struct usb_device *udev);
+extern int usb_remote_wakeup(struct usb_device *dev);
 
 #else
 
@@ -88,9 +100,13 @@ static inline int usb_autoresume_device(struct usb_device *udev)
 	return 0;
 }
 
+static inline int usb_remote_wakeup(struct usb_device *udev)
+{
+	return 0;
+}
+
 #endif
 
-extern struct workqueue_struct *ksuspend_usb_wq;
 extern struct bus_type usb_bus_type;
 extern struct device_type usb_device_type;
 extern struct device_type usb_if_device_type;
@@ -160,4 +176,3 @@ extern void usb_notify_add_device(struct usb_device *udev);
 extern void usb_notify_remove_device(struct usb_device *udev);
 extern void usb_notify_add_bus(struct usb_bus *ubus);
 extern void usb_notify_remove_bus(struct usb_bus *ubus);
-

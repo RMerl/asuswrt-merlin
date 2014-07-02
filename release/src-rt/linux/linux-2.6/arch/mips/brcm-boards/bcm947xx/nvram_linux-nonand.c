@@ -1282,12 +1282,130 @@ int get_embedded_block(struct mtd_info *mtd, char *buf, size_t erasesize,
         return -ENXIO;
 }
 
+#ifdef CFE_NVRAM_CHK_SUPPORT
+static int cfe_nvram_chk()
+{
+        char *name, *value, *end, *eq;
+        unsigned int i;
+        int ret, name_head, nvram_len;
+        unsigned char *ptr;
+
+        if(cfe_buf == NULL||cfe_mtd == NULL)
+                if((ret = cfe_init()))
+                        return ret;
+/*
+        printk("cfe_nvram_chk: dump data\n");
+        printk("\n####################\n");
+        for(i=0, ptr=(unsigned char *)cfe_nvram_header; i< cfe_embedded_size; i++, ptr++)
+        {
+                if(i%16==0) printk("%04x: %02x ", i, *ptr);
+                else if(i%16==15) printk("%02x\n", *ptr);
+                else if(i%16==7) printk("%02x - ", *ptr);
+                else printk("%02x ", *ptr);
+        }
+        printk("\n####################\n");
+        printk("\ncfe_nvram_chk: cfe_nvram_header(%08x)\n", (unsigned int)cfe_nvram_header);
+        printk("cfe_nvram_chk: cfe_nvram_header->len=%d(0x%08x)\n", cfe_nvram_header->len, cfe_nvram_header->len);
+*/
+
+        nvram_len = cfe_nvram_header->len;
+        name = (char *) &cfe_nvram_header[1];
+        end = (char *) cfe_nvram_header + nvram_len - 2;
+        end[0] = end[1] = '\0';
+        name_head = (int)name;
+        i = 0;
+        for (; *name; name = value + strlen(value) + 1) {
+//              printk("%04x: %s\n",i, name);
+                if (!(eq = strchr(name, '='))) {
+                        printk("*** Illegal nvram format at %04x: %s !!!!\n", i, name);
+                        return 0;
+                }
+
+                *eq = '\0';
+                value = eq + 1;
+                *eq = '=';
+
+                i += strlen(name)+1;
+        }
+        if(((int)name - name_head) < 0x0f00) {
+                printk("Unexpect \\0 inside nvram: %04x\n", ((int)name -name_head));
+                return 0;
+        }
+
+        return 1;
+}
+
+static int cfe_nvram_scan()
+{
+        char *name, *value, *end, *eq, *pfix;
+        unsigned int i;
+        int ret, name_head, nvram_len;
+        unsigned char *ptr;
+
+	/*
+        printk("cfe_nvram_scan: dump data\n");
+        printk("\n####################\n");
+        for(i=0, ptr=(unsigned char *)cfe_nvram_header; i< cfe_embedded_size; i++, ptr++)
+        {
+                if(i%16==0) printk("%04x: %02x ", i, *ptr);
+                else if(i%16==15) printk("%02x\n", *ptr);
+                else if(i%16==7) printk("%02x - ", *ptr);
+                else printk("%02x ", *ptr);
+        }
+        printk("\n####################\n");
+        printk("\ncfe_nvram_scan: cfe_nvram_header(%08x)\n", (unsigned int)cfe_nvram_header);
+        printk("cfe_nvram_scan: cfe_nvram_header->len=%d(0x%08x)\n", cfe_nvram_header->len, cfe_nvram_header->len);
+	*/
+
+        nvram_len = cfe_nvram_header->len;
+        name = (char *) &cfe_nvram_header[1];
+        end = (char *) cfe_nvram_header + nvram_len - 2;
+        end[0] = end[1] = '\0';
+        name_head = (int)name;
+
+redo:
+        for (; *name; name = value + strlen(value) + 1) {
+retry:
+                if (!(eq = strchr(name, '='))) {
+                        if( ((int)name - name_head) >= cfe_nvram_header->len)
+                                break;
+                        else {
+                                if(name[1] != '\0')
+                                        name++;
+                                else
+                                        name += 2;
+                                goto retry;
+                        }
+                }
+                *eq = '\0';
+                value = eq + 1;
+                _nvram_set(name, value);
+                *eq = '=';
+                nvram_len += strlen(name)+1;
+        }
+        if(((int)name - name_head) < 0xf4b) {
+printk("Unexpect \\0 inside nvram\n");
+                pfix = name-5;
+//printk("pfix= %s\n", pfix);
+                if(!strcmp("0x14", pfix)) {
+                        memset(--name, 'E', 1);
+                        memset(++name, '4', 1);
+                        name += 2;
+                        nvram_len++;
+                        goto redo;
+                }
+        }
+
+        return 1;
+}
+#endif
+
 static int cfe_init(void)
 {
         size_t erasesize;
         int i;
         int ret = 0;
-printk("!!! cfe_init !!!\n");
+
         /* Find associated MTD device */
         for (i = 0; i < MAX_MTD_DEVICES; i++) {
                 cfe_mtd = get_mtd_device(NULL, i);
@@ -1324,6 +1442,11 @@ printk("!!! cfe_init !!!\n");
                 goto fail;
 
         printk("cfe_init: cfe_nvram_header(%08x)\n", (unsigned int) cfe_nvram_header);
+
+#ifdef CFE_NVRAM_CHK_SUPPORT //Scan & fix, only for RT-N66U
+	cfe_nvram_scan();
+#endif
+
 	bcm947xx_watchdog_disable();
 
         return 0;
@@ -1469,59 +1592,6 @@ static int cfe_dump(void)
         }
         return 0;
 }
-
-#ifdef CFE_NVRAM_CHK_SUPPORT
-static int cfe_nvram_chk()
-{
-	char *name, *value, *end, *eq;
-        unsigned int i;
-        int ret, name_head, nvram_len;
-        unsigned char *ptr;
-
-        if(cfe_buf == NULL||cfe_mtd == NULL)
-                if((ret = cfe_init()))
-                        return ret;
-/*
-        printk("cfe_nvram_chk: dump data\n");
-        printk("\n####################\n");
-        for(i=0, ptr=(unsigned char *)cfe_nvram_header; i< cfe_embedded_size; i++, ptr++)
-        {
-                if(i%16==0) printk("%04x: %02x ", i, *ptr);
-                else if(i%16==15) printk("%02x\n", *ptr);
-                else if(i%16==7) printk("%02x - ", *ptr);
-                else printk("%02x ", *ptr);
-        }
-        printk("\n####################\n");
-        printk("\ncfe_nvram_chk: cfe_nvram_header(%08x)\n", (unsigned int)cfe_nvram_header);
-        printk("cfe_nvram_chk: cfe_nvram_header->len=%d(0x%08x)\n", cfe_nvram_header->len, cfe_nvram_header->len);
-*/
-	nvram_len = cfe_nvram_header->len;
-        name = (char *) &cfe_nvram_header[1];
-        end = (char *) cfe_nvram_header + nvram_len - 2;
-        end[0] = end[1] = '\0';
-	name_head = (int)name;
-	i = 0;	
-        for (; *name; name = value + strlen(value) + 1) {
-//        	printk("%04x: %s\n",i, name);
-                if (!(eq = strchr(name, '='))) {
-			printk("*** Illegal nvram format at %04x: %s !!!!\n", i, name);
-                        return 0;
-		}
-
-                *eq = '\0';
-                value = eq + 1;
-                *eq = '=';
-
-		i += strlen(name)+1;
-        }
-        if(((int)name - name_head) < 0x0f4b) {
-		printk("Unexpect \\0 inside nvram: %04x\n", ((int)name -name_head));
-		return 0;
-	}
-
-	return 1;
-}
-#endif
 
 static int cfe_commit(void)
 {

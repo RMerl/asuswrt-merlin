@@ -1164,7 +1164,7 @@ void usb_enable_endpoint(struct usb_device *dev, struct usb_host_endpoint *ep)
  *
  * Enables all the endpoints for the interface's current altsetting.
  */
-static void usb_enable_interface(struct usb_device *dev,
+void usb_enable_interface(struct usb_device *dev,
 				 struct usb_interface *intf)
 {
 	struct usb_host_interface *alt = intf->cur_altsetting;

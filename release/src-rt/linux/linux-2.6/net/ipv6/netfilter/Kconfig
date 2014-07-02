@@ -144,6 +144,18 @@ config IP6_NF_TARGET_LOG
 
 	  To compile it as a module, choose M here.  If unsure, say N.
 
+config IP6_NF_TARGET_SKIPLOG
+	tristate "SKIPLOG target support"
+	depends on IP6_NF_FILTER
+	---help---
+
+	  This option will NOT bypass the bridging and routing paths for packet by CTF.
+	  configuration like:
+
+	  ip6tables -A RREROUTING -p tcp -j SKIPLOG
+
+	  To compile it as a module, choose M here.  If unsure, say N.
+
 config IP6_NF_TARGET_REJECT
 	tristate "REJECT target support"
 	depends on IP6_NF_FILTER

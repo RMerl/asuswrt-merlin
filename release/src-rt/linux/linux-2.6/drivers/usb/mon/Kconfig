@@ -3,9 +3,8 @@
 #
 
 config USB_MON
-	bool "USB Monitor"
+	tristate "USB Monitor"
 	depends on USB!=n
-	default y
 	help
 	  If you say Y here, a component which captures the USB traffic
 	  between peripheral-specific drivers and HC drivers will be built.

@@ -667,7 +667,7 @@ static struct rt6_info *rt6_alloc_cow(struct rt6_info *ort, struct in6_addr *dad
 			}
 
 			if (net_ratelimit())
-				printk(KERN_WARNING
+				printk(KERN_DEBUG
 				       "Neighbour table overflow.\n");
 			dst_free(&rt->u.dst);
 			return NULL;

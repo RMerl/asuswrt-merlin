@@ -393,8 +393,11 @@ static int proc_read_usblpid(char *page, char **start, off_t off, int count, int
 static int proc_get_usblpid(struct usblp *usblp)
 {
 //JYWeng 20031212: set this as global	char *strtmp, *str_dev_id, *strunknown="unknown"; // Added by PaN
-	char *strtmp, *str_dev_id; // Added by PaN: JYWeng 20031212: modified from the above
+	char *str_dev_id; // Added by PaN: JYWeng 20031212: modified from the above
+#if 0
+	char *strtmp; // Added by PaN: JYWeng 20031212: modified from the above
 	int i, unk = 0; // Added by PaN
+#endif
 	int length, err;
 	int retval = 0;
 
@@ -718,9 +721,12 @@ static long usblp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 //JYWeng 20031212: set this as global	struct parport_splink_device_info prn_info_tmp, *prn_info; // Added by PaN
 	struct print_buffer *user_buf; // Added by PaN
 //JYWeng 20031212: set this as global	char *strtmp, *str_dev_id, *strunknown="unknown"; // Added by PaN
-	char *strtmp, *str_dev_id; // Added by PaN: JYWeng 20031212: modified from the above
+	char *str_dev_id; // Added by PaN: JYWeng 20031212: modified from the above
+#if 0
+	char *strtmp; // Added by PaN: JYWeng 20031212: modified from the above
 	//int i, unk=0; // Added by PaN
 	int unk=0; // Added by PaN ---remove declaration of i for i is declared below: JY
+#endif
 	int length, err, i;
 	unsigned char newChannel;
 	int status;
