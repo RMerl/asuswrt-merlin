@@ -339,7 +339,7 @@ int led_control(int which, int mode)
 					eval("wl", "-i", "eth1", "ledbh", "3", "7");
 				else if (mode == LED_OFF)
 					eval("wl", "-i", "eth1", "ledbh", "3", "0");
-			} else if (model == MODEL_RTAC68U) {
+			} else if ((model == MODEL_RTAC68U) || (model == MODEL_RTAC87U)) {
 				if (mode == LED_ON)
 					eval("wl", "ledbh", "10", "7");
 				else if (mode == LED_OFF)
@@ -349,7 +349,7 @@ int led_control(int which, int mode)
 			}
 			break;
 		case LED_5G_FORCED:
-	                if (model == MODEL_RTAC68U) {
+			if (model == MODEL_RTAC68U) {
 				if (mode == LED_ON) {
 					nvram_set("led_5g", "1");
 		                        eval("wl", "-i", "eth2", "ledbh", "10", "7");
@@ -409,16 +409,12 @@ int led_control(int which, int mode)
 			use_gpio = have_fan_gpio;
 			break;
 		case LED_SWITCH:
-			if ((model == MODEL_RTN66U) || (model == MODEL_RTAC66U) || (model == MODEL_RTN16) || (model == MODEL_RTAC56U) || (model == MODEL_RTAC68U)) {
-				if (mode == LED_ON)
-				{
-					eval("et", "robowr", "0x00", "0x18", "0x01ff");
-					eval("et", "robowr", "0x00", "0x1a", "0x01ff");
-				} else if (mode == LED_OFF)
-				{
-					eval("et", "robowr", "0x00", "0x18", "0x01e0");
-					eval("et", "robowr", "0x00", "0x1a", "0x01e0");
-				}
+			if (mode == LED_ON) {
+				eval("et", "robowr", "0x00", "0x18", "0x01ff");
+				eval("et", "robowr", "0x00", "0x1a", "0x01ff");
+			} else if (mode == LED_OFF) {
+				eval("et", "robowr", "0x00", "0x18", "0x01e0");
+				eval("et", "robowr", "0x00", "0x1a", "0x01e0");
 			}
 			use_gpio = 0xff;
 			break;
