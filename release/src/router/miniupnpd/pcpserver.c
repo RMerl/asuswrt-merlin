@@ -1578,8 +1578,8 @@ int ProcessIncomingPCPPacket(int s, unsigned char *buff, int len,
 	if (!GETFLAG(PCP_ALLOWTHIRDPARTYMASK)) {
 		lan_addr = get_lan_for_peer(senderaddr);
 		if(lan_addr == NULL) {
-			syslog(LOG_WARNING, "PCP packet sender %s not from a LAN, ignoring",
-			       addr_str);
+//			syslog(LOG_WARNING, "PCP packet sender %s not from a LAN, ignoring",
+//			       addr_str);
 			return 0;
 		}
 	}
