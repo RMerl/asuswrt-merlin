@@ -405,7 +405,7 @@ function show_etherstate(){
 							Authenticated: <span><% sysinfo("conn.wifi.5.authe"); %></span>
 						</td>
 					</tr>
-					<tr id="wifi5_clients_tr_qtn">
+					<tr id="wifi5_clients_tr_qtn" style="display:none;">
 						<th>Wireless clients (5 GHz)</th>
 						<td>
                                                         Associated: <span><% sysinfo("conn.wifi.5.assoc"); %></span>
