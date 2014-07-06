@@ -165,7 +165,7 @@ function overHint(itemNum){
 			if ((extent_chan_arr[0] == 0) || (extent_chan_arr[0] == undefined) || (extent_chan_arr[0] == control_chan_arr[0]))
 				wifiDesc += "Channel " + control_chan_arr[0];
 			else
-				wifiDesc += "Channels "+ low_channel(control_chan_arr[0],extent_chan_arr[0]) + "+" + high_channel(control_chan_arr[0],extent_chan_arr[0])
+				wifiDesc += "Channels "+ low_channel(control_chan_arr[0],extent_chan_arr[0]) + "+" + high_channel(control_chan_arr[0],extent_chan_arr[0]);
 		} else {
 			wifiDesc = "<b>2.4G:</b> <#btn_Disabled#>";
 		}
@@ -176,7 +176,7 @@ function overHint(itemNum){
 				if ((extent_chan_arr[1] == 0) || (extent_chan_arr[1] == undefined) || (extent_chan_arr[1] == control_chan_arr[1]))
 					wifiDesc += "Channel " + control_chan_arr[1]
 				else
-					wifiDesc += "Channels "+ low_channel(control_chan_arr[1], extent_chan_arr[1]) + "+" + high_channel(control_chan_arr[1],extent_chan_arr[1])
+					wifiDesc += "Channels "+ control_chan_arr[1] + "/" + extent_chan_arr[1] + " MHz";
 			} else {
 				wifiDesc += "<br><b>&nbsp;&nbsp;5G:</b> <#btn_Disabled#>"
 			}

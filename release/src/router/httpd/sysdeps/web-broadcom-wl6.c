@@ -1757,9 +1757,35 @@ wl_extent_channel(int unit)
 	wl_bss_info_107_t *old_bi;
 	char tmp[128], prefix[] = "wlXXXXXXXXXX_";
 	char *name;
+#ifdef RTCONFIG_QTN
+	qcsapi_unsigned_int bw;
+#endif
 
-	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
-	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
+        snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+        name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
+
+	if (unit == 1) {
+#ifdef RTCONFIG_QTN
+		if (rpc_qcsapi_get_bw(&bw) >= 0) {
+			return bw;
+		} else {
+			return 0;
+		}
+#else
+		if ((ret = wl_ioctl(name, WLC_GET_BSSID, &bssid, ETHER_ADDR_LEN)) == 0) {
+			/* The adapter is associated. */
+			*(uint32*)buf = htod32(WLC_IOCTL_MAXLEN);
+			if ((ret = wl_ioctl(name, WLC_GET_BSS_INFO, buf, WLC_IOCTL_MAXLEN)) < 0)
+				return 0;
+			bi = (wl_bss_info_t*)(buf + 4);
+
+			return bw_chspec_to_mhz(bi->chanspec);
+		} else {
+			return 0;
+		}
+#endif
+
+	}
 
 	if ((ret = wl_ioctl(name, WLC_GET_BSSID, &bssid, ETHER_ADDR_LEN)) == 0) {
 		/* The adapter is associated. */
@@ -1802,6 +1828,19 @@ wl_control_channel(int unit)
 	wl_bss_info_107_t *old_bi;
 	char tmp[128], prefix[] = "wlXXXXXXXXXX_";
 	char *name;
+#ifdef RTCONFIG_QTN
+	qcsapi_unsigned_int p_channel;
+#endif
+
+#ifdef RTCONFIG_QTN
+	if (unit == 1) {
+		if (rpc_qcsapi_get_channel(&p_channel) >= 0) {
+			return p_channel;
+		} else {
+			return 0;
+		}
+	}
+#endif
 
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
