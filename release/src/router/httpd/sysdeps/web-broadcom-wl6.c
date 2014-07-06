@@ -1307,9 +1307,7 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	int ii, jj;
 	char *arplist = NULL, *arplistptr;
 	char *leaselist = NULL, *leaselistptr;
-#ifdef RTCONFIG_DNSMASQ
 	char hostnameentry[16];
-#endif
 	char ipentry[40], macentry[18];
 	int found;
 	char rxrate[12], txrate[12];
@@ -1460,9 +1458,7 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	arplist = read_whole_file("/proc/net/arp");
 	/* Obtain lease list - we still need the arp list for
 	   cases where a device uses a static IP rather than DHCP */
-#ifdef RTCONFIG_DNSMASQ
 	leaselist = read_whole_file("/var/lib/misc/dnsmasq.leases");
-#endif
 
 	ret += websWrite(wp, "\n");
 #ifdef RTCONFIG_QTN
@@ -1502,7 +1498,6 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			ret += websWrite(wp, "%-16s", (found ? ipentry : ""));
 		}
 
-#ifdef RTCONFIG_DNSMASQ
 		// Retrieve hostname from dnsmasq leases
 		if (leaselist) {
 			leaselistptr = leaselist;
@@ -1519,7 +1514,6 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 
 			ret += websWrite(wp, "%-15s ", (found ? hostnameentry : ""));
 		}
-#endif
 
 // RSSI
 		memcpy(&scb_val.ea, &auth->ea[i], ETHER_ADDR_LEN);
@@ -1636,7 +1630,6 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 					ret += websWrite(wp, "%-16s", (found ? ipentry : ""));
 				}
 
-#ifdef RTCONFIG_DNSMASQ
 				// Retrieve hostname from dnsmasq leases
 				if (leaselist) {
 					leaselistptr = leaselist;
@@ -1653,7 +1646,6 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 
 					ret += websWrite(wp, "%-15s ", (found ? hostnameentry : ""));
 				}
-#endif
 
 // RSSI
 				memcpy(&scb_val.ea, &auth->ea[ii], ETHER_ADDR_LEN);
