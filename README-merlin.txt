@@ -608,6 +608,8 @@ History
              conflicted with Asus's own changes.  These might
              make it back at a later time if deemed
              necessary.
+  - FIXED: Missing mDNSResponder daemon preventing mt-daapd
+           from working on MIPS devices (N16,N66,AC66)
 
 
 374.43_2 (7-June-2014)
