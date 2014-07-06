@@ -390,6 +390,9 @@ unsigned int get_wifi_clients(int radio, int querytype)
 	struct maclist *clientlist;
 	int max_sta_count, maclist_size;
 	int val, count = 0;
+#ifdef RTCONFIG_QTN
+	qcsapi_unsigned_int association_count = 0;
+#endif
 
 	if (radio == 2) {
 		name = "eth1";
@@ -398,6 +401,23 @@ unsigned int get_wifi_clients(int radio, int querytype)
 	} else {
 		return 0;
 	}
+
+#ifdef RTCONFIG_QTN
+	if (radio == 5) {
+
+		if (nvram_match("wl1_radio", "0"))
+			return -1;	// Best way I can find to check if it's disabled
+
+		if (!rpc_qtn_ready())
+			return -1;
+
+		if (querytype == SI_WL_QUERY_ASSOC) {
+			if (qcsapi_wifi_get_count_associations("wifi0", &association_count) >= 0)
+				return association_count;
+		}
+		return -1;	// All other queries aren't supported by QTN
+	}
+#endif
 
 	wl_ioctl(name, WLC_GET_RADIO, &val, sizeof(val));
 	if (val == 1)

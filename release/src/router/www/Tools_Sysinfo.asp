@@ -47,6 +47,10 @@ overlib.isOut = true;
 function initial(){
 	show_menu();
 	if (!band5g_support) $("wifi5_clients_tr").style.display = "none";
+	if (based_modelid == "RT-AC87U") {
+		$("wifi5_clients_tr").style.display = "none";
+		$("wifi5_clients_tr_qtn").style.display = "";
+	}
 	showbootTime();
 
 	if (odmpid != "")
@@ -399,6 +403,12 @@ function show_etherstate(){
 							Associated: <span><% sysinfo("conn.wifi.5.assoc"); %></span>&nbsp;&nbsp;-&nbsp;&nbsp;
 							Authorized: <span><% sysinfo("conn.wifi.5.autho"); %></span>&nbsp;&nbsp;-&nbsp;&nbsp;
 							Authenticated: <span><% sysinfo("conn.wifi.5.authe"); %></span>
+						</td>
+					</tr>
+					<tr id="wifi5_clients_tr_qtn">
+						<th>Wireless clients (5 GHz)</th>
+						<td>
+                                                        Associated: <span><% sysinfo("conn.wifi.5.assoc"); %></span>
 						</td>
 					</tr>
 				</table>
