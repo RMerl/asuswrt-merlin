@@ -72,7 +72,8 @@ function initial(){
 	showclock();
 	showbootTime();
 	showDST();
-	document.getElementById('textarea').scrollTop = 9999999;//make Scroll_y bottom
+	var retArea = document.getElementById('textarea');
+	retArea.scrollTop = retArea.scrollHeight - retArea.clientHeight;
 }
 </script>
 </head>
