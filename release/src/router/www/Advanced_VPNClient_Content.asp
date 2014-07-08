@@ -415,7 +415,7 @@ function edit_auto_conn(idx, obj){
 		if(temp_value.charAt(0) == "<")	//rempve the 1st "<"
 				temp_value = temp_value.substr(1,temp_value.length);
 		
-		document.vpnclientForm.vpnc_appendix.value = temp_value;
+		document.form.vpnc_appendix.value = temp_value;
 		document.form.vpnc_appendix.value = temp_value;
 }
 
@@ -739,7 +739,7 @@ function del_Row(rowdata, flag){
 	}
 	if(vpnc_appendix_value.charAt(0) == "<")	//remove the 1st "<"
 				vpnc_appendix_value = vpnc_appendix_value.substr(1,vpnc_appendix_value.length);	
-	document.vpnclientForm.vpnc_appendix.value = vpnc_appendix_value;
+	document.form.vpnc_appendix.value = vpnc_appendix_value;
 	
 	if(flag == "vpnc_enable"){	//remove connecting rule.
 			document.form.vpnc_proto.value = "disable";
@@ -751,9 +751,9 @@ function del_Row(rowdata, flag){
 
 		document.form.action_script.value = "restart_vpncall";
 			if("<% nvram_get("vpnc_proto"); %>" == "openvpn")					
-					document.vpnclientForm.vpn_clientx_eas.value = "";
+					document.form.vpn_clientx_eas.value = "";
 			else
-					document.vpnclientForm.vpnc_auto_conn.value = "";		
+					document.form.vpnc_auto_conn.value = "";		
 	}
 
 	document.form.vpnc_clientlist.value = vpnc_clientlist_array;
