@@ -296,7 +296,7 @@ function update_visibility(){
 		ccd = 0;
 	else
 		ccd = getRadioValue(document.openvpn_form.vpn_server_ccd);
-	dns = getRadioValue(document.openvpn_form.vpn_serverx_dns);
+	dns = getRadioValue(document.openvpn_form.vpn_server_x_dns);
 
 	showhide("server_snnm", ((auth == "tls") && (iface == "tun")));
 	showhide("server_plan", ((auth == "tls") && (iface == "tun")));
