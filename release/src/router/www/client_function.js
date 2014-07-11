@@ -516,3 +516,83 @@ function genClientList(){
 
 	totalClientNum.wired = parseInt(totalClientNum.online - totalClientNum.wireless);
 }
+
+
+/* Exported from device-map/clients.asp */
+
+function retOverLibStr(client){
+	var overlibStr = "<p><#MAC_Address#>:</p>" + client.mac.toUpperCase();
+
+	if(client.ssid)
+		overlibStr += "<p>SSID:</p>" + client.ssid;
+	if(client.isLogin)
+		overlibStr += "<p><#CTL_localdevice#>:</p>YES";
+	if(client.isPrinter)
+		overlibStr += "<p><#Device_service_Printer#></p>YES";
+	if(client.isITunes)
+		overlibStr += "<p><#Device_service_iTune#></p>YES";
+	if(client.isWL > 0)
+		overlibStr += "<p><#Wireless_Radio#>:</p>" + ((client.isWL == 2) ? "5GHz (" : "2.4GHz (") + client.rssi + "db)";
+
+	return overlibStr;
+}
+
+function ajaxCallJsonp(target){    
+    var data = $j.getJSON(target, {format: "json"});
+
+    data.success(function(msg){
+    	parent.retObj = msg;
+		parent.db("Success!");
+    });
+
+    data.error(function(msg){
+		parent.db("Error on fetch data!")
+    });
+}
+
+function oui_query(mac){
+	if (typeof clientList[mac] != "undefined"){
+		if(clientList[mac].callback != ""){
+			ajaxCallJsonp("http://" + clientList[mac].ip + ":" + clientList[mac].callback + "/callback.asp?output=netdev&jsoncallback=?");
+		}
+	}
+
+	var tab = new Array();
+	tab = mac.split(mac.substr(2,1));
+	$j.ajax({
+	    url: 'http://standards.ieee.org/cgi-bin/ouisearch?'+ tab[0] + '-' + tab[1] + '-' + tab[2],
+		type: 'GET',
+	    error: function(xhr) {
+			if(overlib.isOut)
+				return true;
+			else
+				oui_query(mac);
+	    },
+	    success: function(response) {
+			if(overlib.isOut) return nd();
+
+			var retData = response.responseText.split("pre")[1].split("(base 16)")[1].replace("PROVINCE OF CHINA", "R.O.C").split("&lt;/");
+
+			if (typeof clientList[mac] != "undefined")
+				overlibStrTmp  = retOverLibStr(clientList[mac]);
+			else
+				overlibStrTmp = "<p><#MAC_Address#>:</p>" + mac.toUpperCase();
+
+			overlibStrTmp += "<p><span>.....................................</span></p><p style='margin-top:5px'><#Manufacturer#> :</p>";
+			overlibStrTmp += retData[0];
+
+			return overlib(overlibStrTmp);
+		}    
+	});
+}
+
+function clientFromIP(ip) {
+	for(var i=0; i<clientList.length;i++){
+		var clientObj = clientList[clientList[i]];
+		if(clientObj.ip == ip) return clientObj;
+	}
+	return 0;
+}
+
+/* End exported functions */
+

@@ -24,7 +24,7 @@ p{
 <script language="JavaScript" type="text/javascript" src="/detect.js"></script>
 <script language="JavaScript" type="text/javascript" src="/tmhist.js"></script>
 <script language="JavaScript" type="text/javascript" src="/tmmenu.js"></script>
-<script language="JavaScript" type="text/javascript" src="/nameresolv.js"></script>
+<script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/jquery.xdomainajax.js"></script>
 <script>
@@ -69,6 +69,7 @@ function initial(){
 	update_temperatures();
 	hwaccel_state();
 	show_etherstate();
+	updateClientList();
 }
 
 function update_temperatures(){
@@ -170,13 +171,8 @@ function show_etherstate(){
 			} else {
 				overlib_str = "<p><#MAC_Address#>:</p>" + devicemac;
 
-				// Walk down arp cache and retrieve from hostname cache
-				for (var j = 0; j < arplist.length; ++j) {
-					if (arplist[j][3].toUpperCase() == devicemac) {
-						hostname = hostnamecache[arplist[j][0]];
-						break;
-					}
-				}
+				if (clientList[devicemac])
+					hostname = clientList[devicemac].name;
 
 				if ((hostname != "") && (typeof hostname !== 'undefined')) {
 					devicename = '<span class="ClientName" onclick="oui_query(\'' + devicemac +'\');;overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ hostname +'</span>';
@@ -209,8 +205,23 @@ function show_etherstate(){
 	}
 	code += code_ports + '</table>';
 	$("etherstate_td").innerHTML = code;
+}
 
-	if (hostnamecache['ready'] == 0) setTimeout(show_etherstate, 500);
+function updateClientList(e){
+	$j.ajax({
+		url: '/update_clients.asp',
+		dataType: 'script', 
+		error: function(xhr) {
+			setTimeout("updateClientList();", 1000);
+		},
+		success: function(response){
+			if(isJsonChanged(originData, originDataTmp)){
+				show_etherstate();
+			}
+
+			setTimeout("updateClientList();", 3000);
+		}
+	});
 }
 
 </script>

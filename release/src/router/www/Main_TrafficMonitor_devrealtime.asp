@@ -20,7 +20,7 @@
 <script language="JavaScript" type="text/javascript" src="tmhist.js"></script>
 <script language="JavaScript" type="text/javascript" src="popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="merlin.js"></script>
-<script language="JavaScript" type="text/javascript" src="/nameresolv.js"></script>
+<script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 
 <script type='text/javascript'>
 
@@ -194,9 +194,12 @@ function redraw() {
 		hostslisted.push(b[0]);
 
 		var h = b[0];
+		var clientObj;
+
 		if (getRadioValue(document.form._f_show_hostnames) == 1) {
-			if(hostnamecache[b[0]] != null) {
-				h = "<b>" + hostnamecache[b[0]] + '</b>  <small>(' + b[0] + ')</small>';
+			clientObj = clientFromIP(b[0]);
+			if ((clientObj) && (clientObj.name != "")) {
+				h = "<b>" + clientObj.name + '</b>  <small>(' + b[0] + ')</small>';
 			}
 		}
 
@@ -236,8 +239,6 @@ function redraw() {
 			"");
 
 	E('bwm-details-grid').innerHTML = grid + '</table>';
-
-	if (hostnamecache['ready'] == 0) setTimeout(redraw, 500);
 }
 
 

@@ -21,7 +21,6 @@ p{
 <script type="text/javascript" src="/jquery.xdomainajax.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/tmmenu.js"></script>
-<script type="text/javascript" src="/nameresolv.js"></script>
 <script>
 overlib.isOut = true;
 var $j = jQuery.noConflict();

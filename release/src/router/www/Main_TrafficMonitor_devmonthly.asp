@@ -18,9 +18,12 @@
 <script language="JavaScript" type="text/javascript" src="/tmhist.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/merlin.js"></script>
-<script language="JavaScript" type="text/javascript" src="/nameresolv.js"></script>
-
+<script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
+<script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/jquery.xdomainajax.js"></script>
 <script type='text/javascript'>
+
+var $j = jQuery.noConflict();
 
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
@@ -128,10 +131,12 @@ function redraw() {
 			}
 
 			var h = b[1];
+			var clientObj;
 
 			if (getRadioValue(document.form._f_show_hostnames) == 1) {
-				if(hostnamecache[b[1]] != null) {
-					h = "<b>" + hostnamecache[b[1]] + '</b>  <small>(' + b[1] + ')</small>';
+				clientObj = clientFromIP(b[1]);
+				if ((clientObj) && (clientObj.name != "")) {
+					h = "<b>" + clientObj.name + '</b>  <small>(' + b[1] + ')</small>';
 				}
 			}
 
@@ -150,8 +155,6 @@ function redraw() {
 		grid +='<tr><td style="color:#FFCC00;" colspan="5"><#IPConnection_VSList_Norule#></td></tr>';
 
 	E('bwm-monthly-grid').innerHTML = grid + '</table>';
-
-	if (hostnamecache['ready'] == 0) setTimeout(redraw, 500);
 }
 
 
@@ -318,7 +321,7 @@ function init() {
 	initDate('ymd');
 	monthly_history.sort(cmpDualFields);
 	init_filter_dates(2);
-	redraw();
+	updateClientList();
 }
 
 
@@ -394,6 +397,22 @@ function switchPage(page){
 		return false;
 }
 
+function updateClientList(e){
+	$j.ajax({
+		url: '/update_clients.asp',
+		dataType: 'script',
+		error: function(xhr) {
+			setTimeout("updateClientList();", 1000);
+		},
+		success: function(response){
+			if(isJsonChanged(originData, originDataTmp)){
+				redraw();
+			}
+
+			setTimeout("updateClientList();", 3000);
+		}
+	});
+}
 
 </script>
 </head>
