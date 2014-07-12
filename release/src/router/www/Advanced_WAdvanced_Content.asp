@@ -305,6 +305,7 @@ function initial(){
 		$("wl_wme_apsd_field").style.display = "none";
 		$("wl_ampdu_mpdu_field").style.display = "none";
 		$("wl_ack_ratio_field").style.display = "none";
+		$("wl_regmode_field").style.display = "none";
 	}
 	
 	/*Airtime fairness, only for Broadcom ARM platform, except RT-AC87U 5G*/
@@ -1033,7 +1034,7 @@ function set_power(power_value){
 						</td>
 					</tr>					
 
-					<tr>
+					<tr id="wl_regmode_field">
 						<th>Regulation mode</th>
 						<td>
 							<select name="wl_reg_mode" class="input_option">
