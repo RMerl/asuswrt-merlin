@@ -125,7 +125,9 @@ function initial(){
 	}else{
 			document.getElementById('btn_ez_radiotoggle_tr').style.display = "";
 	}	
-	
+
+	refresh_sshd_options('<% nvram_get("sshd_enable"); %>');
+
 	if(sw_mode != 1){
 		$('misc_http_x_tr').style.display ="none";
 		hideport(0);
@@ -859,6 +861,24 @@ function clean_scorebar(obj){
 	if(obj.value == "")
 		document.getElementById("scorebarBorder").style.display = "none";
 }
+
+function refresh_sshd_options(flag){
+	var state;
+
+	if (flag == 1)
+		state = "";
+	else
+		state = "none";
+
+	$("sshd_fwd_field").style.display = state;
+	$("sshd_wan_field").style.display = state;
+	$("sshd_keyauth_field").style.display = state;
+	$("sshd_bfp_field").style.display = state;
+	$("sshd_pswd_log_field").style.display = state;
+	$("sshd_lanport_field").style.display = state;
+
+}
+
 </script>
 </head>
 
@@ -970,6 +990,74 @@ function clean_scorebar(obj){
           </tr>
       </table>
 
+	<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+		<thead>
+			<tr>
+				<td colspan="2">Shell access</td>
+			</tr>
+		</thead>
+		<tr>
+			<th><#Enable_Telnet#></th>
+			<td>
+				<input type="radio" name="telnetd_enable" class="input" value="1" <% nvram_match_x("LANHostConfig", "telnetd_enable", "1", "checked"); %>><#checkbox_Yes#>
+				<input type="radio" name="telnetd_enable" class="input" value="0" <% nvram_match_x("LANHostConfig", "telnetd_enable", "0", "checked"); %>><#checkbox_No#>
+			</td>
+		</tr>
+
+		<tr>
+			<th>Enable SSH</th>
+			<td>
+				<input type="radio" name="sshd_enable" class="input" onClick="refresh_sshd_options(1);" value="1" <% nvram_match_x("LANHostConfig", "sshd_enable", "1", "checked"); %>><#checkbox_Yes#>
+				<input type="radio" name="sshd_enable" class="input" onClick="refresh_sshd_options(0);" value="0" <% nvram_match_x("LANHostConfig", "sshd_enable", "0", "checked"); %>><#checkbox_No#>
+			</td>
+		</tr>
+
+		<tr id="sshd_fwd_field">
+			<th>Allow SSH Port Forwarding</th>
+			<td>
+				<input type="radio" name="sshd_forwarding" class="input" value="1" <% nvram_match_x("LANHostConfig", "sshd_forwarding", "1", "checked"); %>><#checkbox_Yes#>
+				<input type="radio" name="sshd_forwarding" class="input" value="0" <% nvram_match_x("LANHostConfig", "sshd_forwarding", "0", "checked"); %>><#checkbox_No#>
+			</td>
+		</tr>
+
+		<tr id="sshd_lanport_field">
+			<th>SSH service port</th>
+			<td>
+				<input type="text" maxlength="5" class="input_6_table" name="sshd_port" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 65535)" value="<% nvram_get("sshd_port"); %>">
+			</td>
+		</tr>
+
+		<tr id="sshd_wan_field">
+			<th>Allow SSH access from WAN</th>
+			<td>
+				<input type="radio" name="sshd_wan" class="input" value="1" <% nvram_match_x("LANHostConfig", "sshd_wan", "1", "checked"); %>><#checkbox_Yes#>
+				<input type="radio" name="sshd_wan" class="input" value="0" <% nvram_match_x("LANHostConfig", "sshd_wan", "0", "checked"); %>><#checkbox_No#>
+			</td>
+		</tr>
+		<tr id="sshd_pswd_log_field">
+			<th>Allow SSH password login</th>
+			<td>
+				<input type="radio" name="sshd_pass" class="input" value="1" <% nvram_match_x("LANHostConfig", "sshd_pass", "1", "checked"); %>><#checkbox_Yes#>
+				<input type="radio" name="sshd_pass" class="input" value="0" <% nvram_match_x("LANHostConfig", "sshd_pass", "0", "checked"); %>><#checkbox_No#>
+			</td>
+		</tr>
+		<tr id="sshd_bfp_field">
+			<th>Enable SSH Brute Force Protection</th>
+			<td>
+				<input type="radio" name="sshd_bfp" class="input" value="1" <% nvram_match_x("LANHostConfig", "sshd_bfp", "1", "checked"); %>><#checkbox_Yes#>
+				<input type="radio" name="sshd_bfp" class="input" value="0" <% nvram_match_x("LANHostConfig", "sshd_bfp", "0", "checked"); %>><#checkbox_No#>
+			</td>
+		</tr>
+
+		<tr id="sshd_keyauth_field">
+			<th>SSH Authentication key</th>
+			<td>
+				<textarea rows="8" class="textarea_ssh_table" name="sshd_authkeys" style="width:95%;" maxlength="3499"><% nvram_clean_get("sshd_authkeys"); %></textarea>
+				<span id="ssh_alert_msg"></span>
+			</td>
+		</tr>
+	</table>
+
       <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable" style="margin-top:8px;">
       	<thead>
 	  	<tr>
@@ -1028,66 +1116,6 @@ function clean_scorebar(obj){
         </tr>
 
 				<tr>
-				  <th><#Enable_Telnet#></th>
-				  <td>
-				    <input type="radio" name="telnetd_enable" class="input" value="1" <% nvram_match_x("LANHostConfig", "telnetd_enable", "1", "checked"); %>><#checkbox_Yes#>
-				    <input type="radio" name="telnetd_enable" class="input" value="0" <% nvram_match_x("LANHostConfig", "telnetd_enable", "0", "checked"); %>><#checkbox_No#>
-				  </td>
-				</tr>
-                                
-				<tr>
-					<th>Enable SSH</th>
-					<td>
-						<input type="radio" name="sshd_enable" class="input" value="1" <% nvram_match_x("LANHostConfig", "sshd_enable", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="sshd_enable" class="input" value="0" <% nvram_match_x("LANHostConfig", "sshd_enable", "0", "checked"); %>><#checkbox_No#>
-					</td>
-				</tr>
-        
-				<tr>
-					<th>Allow SSH Port Forwarding</th>
-					<td>
-						<input type="radio" name="sshd_forwarding" class="input" value="1" <% nvram_match_x("LANHostConfig", "sshd_forwarding", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="sshd_forwarding" class="input" value="0" <% nvram_match_x("LANHostConfig", "sshd_forwarding", "0", "checked"); %>><#checkbox_No#>
-           
-					</td>
-					</tr>
-
-					<tr id="ssh_lanport">
-						<th>SSH service port</th>
-						<td>
-							<input type="text" maxlength="5" class="input_6_table" name="sshd_port" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 65535)" value="<% nvram_get("sshd_port"); %>">
-						</td>        
-					</tr>
-
-					<tr>
-						<th>Allow SSH access from WAN</th>
-						<td>
-							<input type="radio" name="sshd_wan" class="input" value="1" <% nvram_match_x("LANHostConfig", "sshd_wan", "1", "checked"); %>><#checkbox_Yes#>
-							<input type="radio" name="sshd_wan" class="input" value="0" <% nvram_match_x("LANHostConfig", "sshd_wan", "0", "checked"); %>><#checkbox_No#>
-						</td>
-					</tr>
-					<tr>
-						<th>Allow SSH password login</th>
-						<td>
-							<input type="radio" name="sshd_pass" class="input" value="1" <% nvram_match_x("LANHostConfig", "sshd_pass", "1", "checked"); %>><#checkbox_Yes#>
-							<input type="radio" name="sshd_pass" class="input" value="0" <% nvram_match_x("LANHostConfig", "sshd_pass", "0", "checked"); %>><#checkbox_No#>
-						</td>
-					</tr>
-                                                <th>Enable SSH Brute Force Protection</th>
-                                                <td>
-                                                        <input type="radio" name="sshd_bfp" class="input" value="1" <% nvram_match_x("LANHostConfig", "sshd_bfp", "1", "checked"); %>><#checkbox_Yes#>
-                                                        <input type="radio" name="sshd_bfp" class="input" value="0" <% nvram_match_x("LANHostConfig", "sshd_bfp", "0", "checked"); %>><#checkbox_No#>
-                                                </td>
-                                        </tr>
-
-					<tr>
-						<th>SSH Authentication key</th>
-						<td>
-							<textarea rows="8" class="textarea_ssh_table" name="sshd_authkeys" cols="55" maxlength="3499"><% nvram_clean_get("sshd_authkeys"); %></textarea>
-							<span id="ssh_alert_msg"></span>
-						</td>
-				</tr>
-
 		  	<tr id="https_tr">
 					<th><#WLANConfig11b_AuthenticationMethod_itemname#></th>
 					<td>
