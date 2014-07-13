@@ -27,6 +27,9 @@ void start_sshd(void)
 	int dirty = 0;
 	char buf[2048];
 
+        if (!nvram_match("sshd_enable", "1"))
+                return;
+
 	mkdir("/etc/dropbear", 0700);
 	mkdir("/root/.ssh", 0700);
 
