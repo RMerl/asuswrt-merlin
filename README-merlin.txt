@@ -35,7 +35,7 @@ Supported devices are:
  * RT-AC66U
  * RT-AC56U
  * RT-AC68U
- * RT-AC87U (Experimental)
+ * RT-AC87U
 
 NOTE: all the "R" versions (for example RT-N66R) are the same as their 
 "U" counterparts, they are just different packages aimed at large 
@@ -577,15 +577,16 @@ History
    IMPORTANT: Make a backup of your JFFS partition if upgrading
               an RT-AC56U or RT-AC68U!  The partition layout
               has been changed.
+
    - NEW: Merged with Asus's 376_1088 GPL (internal).
           Summary of changes:
             * New networkmap, lets users edit device names,
               assign icons to devices, etc...
             * Reworked IPv6 support
             * Fix for Traffic Monitoring (replaces our own fix)
+            * 3G/4G fixes
             * And a lot more
-  - NEW: Added experimental support for RT-AC87U (still
-         work in progress - Stealth Mode not finished yet)
+  - NEW: Added support for RT-AC87U.
   - CHANGED: The JFFS partition on ARM devices now uses
              Asus's code, which means the whole unused space
              is now used for the JFFS partition.
@@ -598,6 +599,11 @@ History
              initial install, however everything will work
              the same afterward. AC87 is fine due to its
              larger rootfs partition. (AC56, AC68)
+  - CHANGED: The wifi notification icon will now report
+             channel and channel width for the 5 GHz band,
+             as the extension channel wasn't always accurately
+             reported.
+  - CHANGED: Reworked layout of SSH settings on System page.
   - REMOVED: IPSEC support removed from ARM devices, as it's
              not compatible with the new DPI kernel modules.
              The option remains available in the build
@@ -610,6 +616,8 @@ History
              necessary.
   - FIXED: Missing mDNSResponder daemon preventing mt-daapd
            from working on MIPS devices (N16,N66,AC66)
+  - FIXED: System Log wouldn't properly be positionned
+           at the bottom (Patch by John9527)
 
 
 374.43_2 (7-June-2014)
