@@ -3445,7 +3445,9 @@ start_services(void)
 	start_toads();
 #endif
 
-//	start_upnp();
+        // Only start if it wasn't already started by another service
+        if (!pids("miniupnpd"))
+                start_upnp();
 
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
 	start_pptpd();
