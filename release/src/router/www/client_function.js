@@ -581,7 +581,7 @@ function oui_query(mac){
 			overlibStrTmp += "<p><span>.....................................</span></p><p style='margin-top:5px'><#Manufacturer#> :</p>";
 			overlibStrTmp += retData[0];
 
-			return overlib(overlibStrTmp);
+			return overlib(overlibStrTmp, HAUTO, VAUTO);
 		}    
 	});
 }
