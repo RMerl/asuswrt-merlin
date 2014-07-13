@@ -1276,7 +1276,7 @@ function cal_panel_block(){
 							<div id="helpname" style="padding-top:10px;font-size:16px;"></div>
 						</div>							
 						<div>
-							<iframe id="statusframe" class="NM_radius_bottom" style="margin-left:45px;margin-top:-2px;" name="statusframe" width="320" height="680" frameborder="0" allowtransparency="true" style="background-color:transparent; margin-left:10px;" src="device-map/router.asp"></iframe>
+							<iframe id="statusframe" class="NM_radius_bottom" style="margin-left:45px;margin-top:-2px;" name="statusframe" width="320" height="680" frameborder="0" allowtransparency="true" style="background-color:transparent; margin-left:10px;" src="device-map/router_status.asp"></iframe>
 						</div>
 					</td>	
 				</tr>			
