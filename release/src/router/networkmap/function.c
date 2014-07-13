@@ -1775,10 +1775,6 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
                 {
                         p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 8;
                 }
-		else if( strstr(description.description, "ps") )
-		{
-			p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 8;
-		}
 
 		//Copy modelname to device name if exist.
 		if(strcmp("",description.modelname) &&
