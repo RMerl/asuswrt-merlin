@@ -1224,8 +1224,8 @@ wl_extent_channel(int unit)
 			return 0;
 
 		bi = (wl_bss_info_t*)(buf + 4);
-		if (unit == 1) {	// Return bandwidth instead of channel
-			return bw_chspec_to_mhz(bi->chanspec);
+		if (unit == 1) {	// We don't support 5 GHz on older SDK5 devices
+			return 0;
 		}
 
 		if (dtoh32(bi->version) == WL_BSS_INFO_VERSION ||
