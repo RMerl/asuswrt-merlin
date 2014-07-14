@@ -88,7 +88,7 @@ function drawClientList(tab){
 		clientHtmlTd += '"></div></td><td style="height:30px;" class="radioIcon radio_';
 		clientHtmlTd += convRSSI(clientObj.rssi);
 		if (clientObj.rssi != "") {
-			clientHtmlTd += '"title="' + ((clientHtmlTd.isWL == 2) ? "5GHz   (" : "2.4GHz   (") + clientObj.rssi + "dB)";
+			clientHtmlTd += '"title="' + ((clientObj.isWL == 2) ? "5GHz   (" : "2.4GHz   (") + clientObj.rssi + "dB)";
 		}
 		clientHtmlTd += '">';
 		clientHtmlTd += clientObj.name;
