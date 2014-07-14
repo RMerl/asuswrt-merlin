@@ -618,6 +618,8 @@ History
            from working on MIPS devices (N16,N66,AC66)
   - FIXED: System Log wouldn't properly be positionned
            at the bottom (Patch by John9527)
+  - FIXED: DNSFilter clients configured to bypass DNSFilter
+           would still be prevented from using an IPv6 DNS.
 
 
 374.43_2 (7-June-2014)
