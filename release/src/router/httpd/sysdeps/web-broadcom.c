@@ -236,19 +236,6 @@ wlu_bcmp(const void *b1, const void *b2, int len)
 	return (memcmp(b1, b2, len));
 }
 
-static const uint8 wf_chspec_bw_mhz[] =
-{5, 10, 20, 40, 80, 160, 160};
-
-/* convert bandwidth from chanspec to MHz */
-static uint
-bw_chspec_to_mhz(chanspec_t chspec)
-{
-	uint bw;
-
-	bw = (chspec & WL_CHANSPEC_BW_MASK) >> WL_CHANSPEC_BW_SHIFT;
-	return (bw >= WF_NUM_BW ? 0 : wf_chspec_bw_mhz[bw]);
-}
-
 /*
  * Traverse a string of 1-byte tag/1-byte length/variable-length value
  * triples, returning a pointer to the substring whose first element
