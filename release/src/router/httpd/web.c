@@ -8905,9 +8905,7 @@ static int ej_netdev(int eid, webs_t wp, int argc, char_t **argv)
 
 				if (!netdev_calc(ifname, ifname_desc, &rx, &tx, ifname_desc2, &rx2, &tx2)) continue;
 
-#if 0
 loopagain:
-#endif
 				if (!strncmp(ifname_desc, "WIRELESS0", 9)) {
 					wl0_valid = 1;
 					wl0_all_rx += rx;
@@ -8920,7 +8918,6 @@ loopagain:
 					ret += websWrite(wp, "%c'%s':{rx:0x%lx,tx:0x%lx}\n", comma, ifname_desc, rx, tx);
 					comma = ',';
 				}
-#if 0
 				if(strlen(ifname_desc2)) {
 					strcpy(ifname_desc, ifname_desc2);
 					rx = rx2;
@@ -8928,7 +8925,6 @@ loopagain:
 					strcpy(ifname_desc2, "");
 					goto loopagain;
 				}
-#endif				
 			}
 #ifdef RTCONFIG_QTN  //RT-AC87U
 			if (rpc_qtn_ready()) {

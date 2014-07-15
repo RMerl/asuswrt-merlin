@@ -814,7 +814,17 @@ _dprintf("CUR MONTH Tx= %lu = %lu + %llu - %lu\n",month_tx,last_month_tx,(histor
 			strcpy(ifname_desc2, "");
 			goto loopagain;
 		}
+#else
+		if (strlen(ifname_desc2)) 
+		{
+			strcpy(ifname_desc, ifname_desc2);
+			counter[0] = rx2;
+			counter[1] = tx2;
+                        strcpy(ifname_desc2, "");
+                        goto loopagain;
+		}
 #endif
+
 	}			
 	fclose(f);
 			

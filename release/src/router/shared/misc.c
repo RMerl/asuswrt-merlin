@@ -1062,8 +1062,8 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 	char tmp[100];
 	char modelvlan[32];
 	int i, j, model, unit;
-	strcpy(ifname_desc2, "");
 
+	strcpy(ifname_desc2, "");
 	model = get_model();
 	bcmvlan_models(model, modelvlan);
 
@@ -1116,7 +1116,7 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 						}
 						j++;
 					}
-				sprintf(ifname_desc, "WIRELESS%d.%d", 0, j);
+					sprintf(ifname_desc, "WIRELESS%d.%d", 0, j);
 					return 1;
 				}
 				i++;
@@ -1130,6 +1130,21 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 		if(model == MODEL_DSLAC68U)
 			return 1;
 
+		// special handle for non-tag wan of broadcom solution
+		// pretend vlanX is must called after ethX
+		if(nvram_match("switch_wantag", "none")) { //Don't calc if select IPTV
+			if(backup_set && strlen(modelvlan) && strcmp(ifname, modelvlan)==0) {
+				backup_rx -= *rx;
+				backup_tx -= *tx;
+
+				*rx2 = backup_rx;
+				*tx2 = backup_tx;				
+				strcpy(ifname_desc2, "INTERNET");
+
+				// Always reset.
+				backup_set = 0;
+			}
+		}//End of switch_wantag
 		return 1;
 	}
 	// find bridge interface
@@ -1139,33 +1154,28 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 		return 1;
 	}
 	// find in WAN interface
-	else if (ifname && (unit = get_wan_unit(ifname)) >= 0)	{
+	else if (ifname && (unit = get_wan_unit(ifname)) >= 0
+		// Prevent counting both wan%d_ifname and wan%d_pppoe_ifname
+		&& (strcmp(ifname, get_wan_ifname(unit)) == 0))
+	{
 		if (dualwan_unit__nonusbif(unit)) {
 #if defined(RA_ESW)
 			get_mt7620_wan_unit_bytecount(unit, tx, rx);
 #endif
 
-
-				if (unit == WAN_UNIT_FIRST) {
-					strcpy(ifname_desc, "INTERNET");
-					return 1;
-				}
-				else {
-					sprintf(ifname_desc,"INTERNET%d", unit);
-					return 1;
-				}
-
-
-
-		}
-		else if (dualwan_unit__usbif(unit)) {
-
-			if (unit == wan_primary_ifunit()) {
+			if(strlen(modelvlan) && strcmp(ifname, "eth0")==0) {
+				backup_rx = *rx;
+				backup_tx = *tx;
+				backup_set = 1;
+			}
+			else if (unit == wan_primary_ifunit()) {
 				strcpy(ifname_desc, "INTERNET");
 				return 1;
 			}
-			else{
-				sprintf(ifname_desc,"INTERNET%d", unit);
+		}
+		else if (dualwan_unit__usbif(unit)) {
+			if (unit == wan_primary_ifunit()) {
+				strcpy(ifname_desc, "INTERNET");
 				return 1;
 			}
 		}
@@ -1176,6 +1186,7 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 
 	return 0;
 }
+
 
 // 0: Not private subnet, 1: A class, 2: B class, 3: C class.
 int is_private_subnet(const char *ip)
