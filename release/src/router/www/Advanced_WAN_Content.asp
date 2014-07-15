@@ -344,7 +344,7 @@ function validForm(){
 	}
 	
 	if(document.form.wan_hostname.value.length > 0){
-		var alert_str = validate_hostname(document.form.wan_hostname);
+		var alert_str = validate_fqdn(document.form.wan_hostname);
 	
 		if(alert_str != ""){
 			showtext($("alert_msg1"), alert_str);

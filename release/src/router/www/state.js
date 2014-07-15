@@ -2305,6 +2305,15 @@ function validate_hostname(obj){
         }
 }
 
+function validate_fqdn(obj){
+	var re = new RegExp("^[a-zA-Z0-9][a-zA-Z0-9\-\_\.]+$","gi");
+	if(re.test(obj.value)){
+		return "";
+	}else{
+		return "<#JS_validhostname#>";
+	}
+}
+
 function validate_account(string_obj, flag){
 	var invalid_char = "";
 
