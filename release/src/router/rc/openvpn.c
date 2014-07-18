@@ -1356,7 +1356,7 @@ void stop_vpnserver(int serverNum)
 	sprintf(&buffer[0], "/etc/openvpn/fw/server%d-fw.sh", serverNum);
 	argv[0] = "sed";
 	argv[1] = "-i";
-	argv[2] = "s/-A/-D/g;s/-I/-D/g;s/\ 2\ /\ /g";
+	argv[2] = "s/-A/-D/g;s/-I/-D/g;s/FORWARD\ [0-9]\ /FORWARD\ /g";
 	argv[3] = &buffer[0];
 	argv[4] = NULL;
 	if (!_eval(argv, NULL, 0, NULL))
