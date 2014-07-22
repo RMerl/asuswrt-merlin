@@ -604,6 +604,8 @@ History
              as the extension channel wasn't always accurately
              reported.
   - CHANGED: Reworked layout of SSH settings on System page.
+  - CHNAGED: Allow FQDN (hostname + domain) rather than just
+             hostnames on the WAN page (some ISPs require that)
   - REMOVED: IPSEC support removed from ARM devices, as it's
              not compatible with the new DPI kernel modules.
              The option remains available in the build
