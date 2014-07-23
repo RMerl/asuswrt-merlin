@@ -206,6 +206,12 @@ obj-$(RTCONFIG_BWDPI) += bwdpi
 obj-$(RTCONFIG_BWDPI) += sqlite
 obj-$(RTCONFIG_BWDPI) += bwdpi_sqlite
 
+# Temporary workaround to separate different emf builds
+ifeq ($(RTCONFIG_BWDPI),y)
+export DPI := _dpi
+endif
+
+
 obj-y += rc
 obj-y += rom
 obj-y += others
@@ -245,7 +251,7 @@ obj-y += eapd$(BCMEX)$(EX7)/linux
 obj-$(CONFIG_LIBBCM) += libbcm
 obj-$(CONFIG_LIBUPNP) += libupnp
 obj-$(RTCONFIG_WPS) += wps$(BCMEX)$(EX7)
-obj-$(RTCONFIG_EMF) += emf$(BCMEX)$(EX7)
+obj-$(RTCONFIG_EMF) += emf$(BCMEX)$(EX7)$(DPI)
 obj-$(RTCONFIG_EMF) += igs
 endif
 
@@ -2629,29 +2635,29 @@ hotplug2-install: hotplug2
 	$(MAKE) -C hotplug2 install PREFIX=$(INSTALLDIR)/hotplug2 SUBDIRS=""
 	$(MAKE) -C hotplug2/examples install PREFIX=$(INSTALLDIR)/hotplug2/rom KERNELVER=$(LINUX_KERNEL)
 
-emf$(BCMEX)$(EX7):
-	$(MAKE) -C emf$(BCMEX)$(EX7)/emfconf CROSS=$(CROSS_COMPILE)
+emf$(BCMEX)$(EX7)$(DPI):
+	$(MAKE) -C emf$(BCMEX)$(EX7)$(DPI)/emfconf CROSS=$(CROSS_COMPILE)
 
-emf$(BCMEX)$(EX7)-install:
+emf$(BCMEX)$(EX7)$(DPI)-install:
 ifeq ($(RTCONFIG_EMF),y)
 	install -d $(TARGETDIR)
-	$(MAKE) -C emf$(BCMEX)$(EX7)/emfconf CROSS=$(CROSS_COMPILE) INSTALLDIR=$(INSTALLDIR) install
+	$(MAKE) -C emf$(BCMEX)$(EX7)$(DPI)/emfconf CROSS=$(CROSS_COMPILE) INSTALLDIR=$(INSTALLDIR) install
 endif
 
-emf$(BCMEX)$(EX7)-clean:
-	-@$(MAKE) -C emf$(BCMEX)$(EX7)/emfconf clean
+emf$(BCMEX)$(EX7)$(DPI)-clean:
+	-@$(MAKE) -C emf$(BCMEX)$(EX7)$(DPI)/emfconf clean
 
 igs:
-	$(MAKE) -C emf$(BCMEX)$(EX7)/igsconf CROSS=$(CROSS_COMPILE)
+	$(MAKE) -C emf$(BCMEX)$(EX7)$(DPI)/igsconf CROSS=$(CROSS_COMPILE)
 
 igs-install:
 ifeq ($(RTCONFIG_EMF),y)
 	install -d $(TARGETDIR)
-	$(MAKE) -C emf$(BCMEX)$(EX7)/igsconf CROSS=$(CROSS_COMPILE) INSTALLDIR=$(INSTALLDIR) install
+	$(MAKE) -C emf$(BCMEX)$(EX7)$(DPI)/igsconf CROSS=$(CROSS_COMPILE) INSTALLDIR=$(INSTALLDIR) install
 endif
 
 igs-clean:
-	-@$(MAKE) -C emf$(BCMEX)$(EX7)/igsconf clean
+	-@$(MAKE) -C emf$(BCMEX)$(EX7)$(DPI)/igsconf clean
 
 ebtables: kernel_header dummy
 	$(MAKE) -C ebtables CC=$(CC) LD=$(LD) \
