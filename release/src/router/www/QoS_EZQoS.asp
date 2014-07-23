@@ -26,6 +26,13 @@ function initial(){
 	if(downsize_4m_support)
 		$("guest_image").parentNode.style.display = "none";
 	
+	if(bwdpi_support){
+		$('content_title').innerHTML = "Adaptive QoS - QoS";
+	}
+	else{
+		$('content_title').innerHTML = "<#Menu_TrafficManager#> - QoS";
+	}
+	
 	if(document.form.qos_enable.value==1){
 		$('upload_tr').style.display = "";
 		$('download_tr').style.display = "";		
@@ -47,8 +54,8 @@ function initial(){
 		if(document.form.qos_enable.value == 1){
 			if(document.form.qos_type.value == 0){		//Traditional Type
 				document.getElementById("settingSelection").length = 1;
-				add_option($("settingSelection"), '<#qos_user_prio#>', 3, 0);
-				add_option($("settingSelection"), '<#qos_user_rules#>', 4, 0);
+				add_option($("settingSelection"), '<#qos_user_rules#>', 3, 0);
+				add_option($("settingSelection"), '<#qos_user_prio#>', 4, 0);
 			}
 			else{		//Intelligence Type
 				add_option($("settingSelection"), 'Intelligence Type', 2, 0);
@@ -58,21 +65,26 @@ function initial(){
 	}
 	else{
 		document.getElementById("settingSelection").length = 1;
-		add_option($("settingSelection"), '<#qos_user_prio#>', 3, 0);
-		add_option($("settingSelection"), '<#qos_user_rules#>', 4, 0);
+		add_option($("settingSelection"), '<#qos_user_rules#>', 3, 0);
+		add_option($("settingSelection"), '<#qos_user_prio#>', 4, 0);
 	}
 }
 
 function init_changeScale(_obj_String){
 	if($(_obj_String).value > 999){
 		$(_obj_String+"_scale").value = "Mb/s";
-		$(_obj_String).value = Math.round(($(_obj_String).value/1024)*100)/100;
+		$(_obj_String).value = Math.round(($(_obj_String).value/1024)*1000)/1000;
 	}
+	else
+	{
+		$(_obj_String+"_scale").value = "Kb/s";
+	}
+	
 }
 
 function changeScale(_obj_String){
 	if($(_obj_String+"_scale").value == "Mb/s")
-		$(_obj_String).value = Math.round(($(_obj_String).value/1024)*100)/100;
+		$(_obj_String).value = Math.round(($(_obj_String).value/1024)*1000)/1000;
 	else
 		$(_obj_String).value = Math.round($(_obj_String).value*1024);
 }
@@ -81,7 +93,7 @@ function switchPage(page){
 	if(page == "1")	
 		location.href = "/QoS_EZQoS.asp";
 	else if(page == "2")	
-		location.href = "/AiStream_Intelligence.asp";
+		location.href = "/AdaptiveQoS_Intelligence.asp";
 	else if(page == "3")	
 		location.href = "/Advanced_QOSUserRules_Content.asp";
 	else if(page == "4")	
@@ -98,8 +110,22 @@ function submitQoS(){
 				document.form.qos_obw.select();
 				return;
 		}
+		else if(isNaN(document.form.qos_obw.value))
+		{
+				alert("<#JS_validchar#>");
+				document.form.qos_obw.focus();
+				document.form.qos_obw.select();
+				return;
+		}
 		if(document.form.qos_ibw.value.length == 0 || document.form.qos_ibw.value == 0){
 				alert("<#JS_fieldblank#>");
+				document.form.qos_ibw.focus();
+				document.form.qos_ibw.select();
+				return;
+		}
+		else if(isNaN(document.form.qos_ibw.value))
+		{
+				alert("<#JS_validchar#>");
 				document.form.qos_ibw.focus();
 				document.form.qos_ibw.select();
 				return;
@@ -112,6 +138,10 @@ function submitQoS(){
 			document.form.action_script.value = "restart_qos;restart_firewall";
 		}	
 	}	
+
+	//avoiding first number is point, auto change .XXX->0.XXX
+	document.form.qos_obw.value = document.form.qos_obw.value*1; 
+	document.form.qos_ibw.value = document.form.qos_ibw.value*1;
 
 	if($("qos_obw_scale").value == "Mb/s")
 		document.form.qos_obw.value = Math.round(document.form.qos_obw.value*1024);
@@ -145,7 +175,7 @@ function change_qos_type(value){
 			document.form.action_script.value = "restart_qos;restart_firewall";
 		else{
 			document.form.action_script.value = "reboot";
-			document.form.next_page.value = "AiStream_Intelligence.asp";
+			document.form.next_page.value = "AdaptiveQoS_Intelligence.asp";
 		}	
 	}
 
@@ -195,7 +225,7 @@ function change_qos_type(value){
 									<table width="100%">
 										<tr>
 											<td  class="formfonttitle" align="left">								
-												<div>QoS</div>
+												<div id="content_title">Adaptive QoS - QoS</div>
 											</td>
 											<td align="right" >
 												<div>
@@ -220,7 +250,13 @@ function change_qos_type(value){
 													<img id="guest_image" src="/images/New_ui/QoS.png">
 												</td>
 												<td style="font-style: italic;font-size: 14px;">
-													<div class="formfontdesc" style="line-height:20px;"><#ezqosDesw#></div>
+													<!--div class="formfontdesc" style="line-height:20px;"><#ezqosDesw#></div-->
+													<div class="formfontdesc" style="line-height:20px;">The Quality of Service (QoS) ensures the network's speed performance and RT-AC87U provides both intelligence and traditional QoS.
+Intelligence QoS lets you easily optimize internet tasks bandwidth priority such as gaming, Web Surfing, video chatting, downloading and more. 
+If you want to manually assign the priority and bandwidth for specific mac address, IP or port, please select the traditional QoS.
+To enable QoS function, click the QoS slide switch , and fill in the upload and download 
+Get the bandwidth information from ISP or go to <a href="http://speedtest.net" target="_blank" style="text-decoration:underline;">http://speedtest.net</a> to check bandwidth.
+													</div>
 													<div class="formfontdesc">
 														<a id="faq" href="" target="_blank" style="text-decoration:underline;">QoS FAQ</a>
 													</div>
@@ -244,8 +280,8 @@ function change_qos_type(value){
 																document.form.qos_enable.value = 1;
 																if(document.form.qos_enable_orig.value != 1){
 																	document.form.action_script.value = "reboot";
-																	if($('int_type').checked == true)
-																		document.form.next_page.value = "AiStream_Intelligence.asp";
+																	if($('int_type').checked == true && bwdpi_support)
+																		document.form.next_page.value = "AdaptiveQoS_Intelligence.asp";
 																	else
 																		document.form.next_page.value = "Advanced_QOSUserRules_Content.asp";
 																}																
@@ -279,20 +315,20 @@ function change_qos_type(value){
 										<tr id="upload_tr">
 											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(20, 2);"><#upload_bandwidth#></a></th>
 											<td>
-												<input type="text" maxlength="10" id="qos_obw" name="qos_obw" onKeyPress="return is_number(this,event);" class="input_15_table" value="<% nvram_get("qos_obw"); %>">
+												<input type="text" maxlength="10" id="qos_obw" name="qos_obw" onKeyPress="return is_number_float(this,event);" class="input_15_table" value="<% nvram_get("qos_obw"); %>">
 												<select id="qos_obw_scale" class="input_option" style="width:87px;" onChange="changeScale('qos_obw');">
 													<option value="Kb/s">Kb/s</option>
-													<option value="Mb/s" selected>Mb/s</option>
+													<option value="Mb/s">Mb/s</option>
 												</select>
 											</td>
 										</tr>											
 										<tr id="download_tr">
 											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(20, 2);"><#download_bandwidth#></a></th>
 											<td>
-												<input type="text" maxlength="10" id="qos_ibw" name="qos_ibw" onKeyPress="return is_number(this,event);" class="input_15_table" value="<% nvram_get("qos_ibw"); %>">
+												<input type="text" maxlength="10" id="qos_ibw" name="qos_ibw" onKeyPress="return is_number_float(this,event);" class="input_15_table" value="<% nvram_get("qos_ibw"); %>">
 												<select id="qos_ibw_scale" class="input_option" style="width:87px;" onChange="changeScale('qos_ibw');">
 													<option value="Kb/s">Kb/s</option>
-													<option value="Mb/s" selected>Mb/s</option>
+													<option value="Mb/s">Mb/s</option>
 												</select>
 											</td>
 										</tr>										
@@ -320,7 +356,6 @@ function change_qos_type(value){
 		</td>	
 	</tr>
 </table>
-
 
 <div id="footer"></div>
 </body>

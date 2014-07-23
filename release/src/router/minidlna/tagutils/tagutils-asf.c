@@ -92,7 +92,7 @@ fget_byte(FILE *fp)
 {
 	uint8_t d;
 
-	if (!fread(&d, sizeof(d), 1, fp))
+	if (fread(&d, sizeof(d), 1, fp) != 1)
 		return 0;
 	return d;
 }
@@ -102,7 +102,7 @@ fget_le16(FILE *fp)
 {
 	uint16_t d;
 
-	if (!fread(&d, sizeof(d), 1, fp))
+	if (fread(&d, sizeof(d), 1, fp) != 1)
 		return 0;
 	d = le16_to_cpu(d);
 	return d;
@@ -113,7 +113,7 @@ fget_le32(FILE *fp)
 {
 	uint32_t d;
 
-	if (!fread(&d, sizeof(d), 1, fp))
+	if (fread(&d, sizeof(d), 1, fp) != 1)
 		return 0;
 	d = le32_to_cpu(d);
 	return d;
@@ -226,6 +226,8 @@ _asf_read_media_stream(FILE *fp, struct song_metadata *psong, uint32_t size)
 	if(len > size)
 		len = size;
 
+	memset(&s, 0, sizeof(s));
+
 	if(len != fread(&s.MajorType, 1, len, fp))
 		return -1;
 
@@ -257,6 +259,8 @@ _asf_read_stream_object(FILE *fp, struct song_metadata *psong, uint32_t size)
 	if(size < len)
 		return -1;
 
+	memset(&s, 0, sizeof(s));
+
 	if(len != fread(&s.StreamType, 1, len, fp))
 		return -1;
 
@@ -284,6 +288,8 @@ _asf_read_extended_stream_object(FILE *fp, struct song_metadata *psong, uint32_t
 
 	if(size < sizeof(asf_extended_stream_object_t))
 		return -1;
+
+	memset(&xs, 0, sizeof(xs));
 
 	len = sizeof(xs) - offsetof(asf_extended_stream_object_t, StartTime);
 	if(len != fread(&xs.StartTime, 1, len, fp))
@@ -369,9 +375,9 @@ _asf_load_string(FILE *fp, int type, int size, char *buf, int len)
 	unsigned char data[2048];
 	uint16_t wc;
 	int i, j;
+	int16_t *wd16;
 	int32_t *wd32;
 	int64_t *wd64;
-	int16_t *wd16;
 
 	i = 0;
 	if(size && (size <= sizeof(data)) && (size == fread(data, 1, size, fp)))
@@ -407,11 +413,7 @@ _asf_load_string(FILE *fp, int type, int size, char *buf, int len)
 			if(size >= 8)
 			{
 				wd64 = (int64_t *) &data[0];
-#if __WORDSIZE == 64
-				i = snprintf(buf, len, "%ld", le64_to_cpu(*wd64));
-#else
-				i = snprintf(buf, len, "%lld", le64_to_cpu(*wd64));
-#endif
+				i = snprintf(buf, len, "%lld", (long long)le64_to_cpu(*wd64));
 			}
 			break;
 		case ASF_VT_WORD:
@@ -561,7 +563,8 @@ _get_asffileinfo(char *file, struct song_metadata *psong)
 
 		if(pos + tmp.Size > hdr.Size)
 		{
-			DPRINTF(E_ERROR, L_SCANNER, "Size overrun reading header object %I64x\n", tmp.Size);
+			DPRINTF(E_ERROR, L_SCANNER, "Size overrun reading header object %llu\n",
+				(unsigned long long)tmp.Size);
 			break;
 		}
 

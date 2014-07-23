@@ -38,7 +38,7 @@ function cmpHist(a, b)
 function checkRstats()
 {
 	if (nvram.rstats_enable != '1') {
-		W('<div class="note-disabled">Bandwidth monitoring disabled.</b><br><br><a href="admin-bwm.asp">Enable &raquo;</a></div>');
+		W('<div class="note-disabled">Bandwidth Monitoring disabled.</b><br><br><a href="admin-bwm.asp">Enable &raquo;</a></div>');
 		E('rstats').style.display = 'none';
 	}
 	else if (rstats_busy) {

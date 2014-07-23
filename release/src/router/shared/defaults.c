@@ -71,44 +71,40 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_phytypes", "", 0 },		/* List of supported wireless bands (e.g. "ga") */
 	{ "wl_radioids", "", 0 },		/* List of radio IDs */
 	{ "wl_ssid", "ASUS", 0 },		/* Service set ID (network name) */
+#ifndef RTAC3200
 	{ "wl1_ssid", "ASUS_5G" },
+#else
+	{ "wl0_ssid", "ASUS_5G_low" },
+	{ "wl1_ssid", "ASUS" },
+	{ "wl2_ssid", "ASUS_5G_high" },
+#endif
 	{ "wl_bss_enabled", "1", 0 },		/* Service set Enable (1) or disable (0) radio */
 						/* See "default_get" below. */
 #ifdef __CONFIG_HSPOT__
 	{ "wl_hsflag",		"3159", 0 },	/* Passpoint Flags */
-#ifdef RTCONFIG_TMOBILE
-	{ "wl_hs2en",		"1", 0 },
-#else
 	{ "wl_hs2en",		"0", 0 },	/* Passpoint Enable (1), disable (0) radio */
-#endif
 	{ "wl_hs2cap",		"1", 0 },	/* Passpoint Realese 2 (1), Realese 1 (0) radio */
 	{ "wl_opercls",		"3", 0 },	/* Operating Class */
-	{ "wl_anonai",		"anonymous.com", 0 },   /* Anonymous NAI */
+	{ "wl_anonai",		"anonymous.com", 0 },	/* Anonymous NAI */
 
-	{ "wl_oplist",		"Wi-Fi Alliance!eng|"
-	"\x57\x69\x2d\x46\x69\xe8\x81\x94\xe7\x9b\x9f!chi", 0 }, /* Operator Friendly Name List */
+	{ "wl_oplist",		"T-Mobile!eng", 0 },	/* Operator Friendly Name List */
 
-	{ "wl_homeqlist",	"mail.example.com:rfc4282", 0 }, /* NAIHomeRealmQueryList */
-	{ "wl_wanmetrics",	"1:0:0=2500>384=0>0=0", 0 }, /* WAN Metrics */
-	{ "wl_osu_ssid",	"OSU", 0}, /* OSU SSID */
+	{ "wl_homeqlist",	"t-mobile.com:rfc4282", 0 },/* NAIHomeRealmQueryList */
+	{ "wl_wanmetrics",	"1:0:0=2500>384=0>0=0", 0 },/* WAN Metrics */
+	{ "wl_osu_ssid",	"CellSpot_AutoConnect", 0}, /* OSU SSID */
 
-	{ "wl_osu_frndname",	"SP Red Test Only!eng|"
-	"\x53\x50\x20\xEB\xB9\xA8\xEA\xB0\x95\x20\xED\x85\x8C"
-	"\xEC\x8A\xA4\xED\x8A\xB8\x20\xEC\xA0\x84\xEC\x9A\xA9!kor", 0}, /* OSU Friendly Name */
+	{ "wl_osu_frndname",	"T-Mobile!eng", 0},	/* OSU Friendly Name */
 
 	{ "wl_osu_uri",
-	"https://osu-server.r2-testbed.wi-fi.org/", 0}, /* OSU Server URI */
+	"https://osu-server.t-mobile.com/", 0},	/* OSU Server URI */
 
-	{ "wl_osu_nai",		"", 0}, /* OSU NAI */
-	{ "wl_osu_method",	"1", 0}, /* OSU Method */
+	{ "wl_osu_nai",		"", 0},		/* OSU NAI */
+	{ "wl_osu_method",	"1", 0},	/* OSU Method */
 
 	{ "wl_osu_icons",
-	"icon_red_zxx.png+icon_red_eng.png", 0}, /* OSU Icons */
+	"icon_red_zxx.png+icon_red_eng.png", 0},/* OSU Icons */
 
-	{ "wl_osu_servdesc", "Free service for test purpose!eng|"
-	"\xED\x85\x8C\xEC\x8A\xA4\xED\x8A\xB8\x20\xEB\xAA\xA9"
-	"\xEC\xA0\x81\xEC\x9C\xBC\xEB\xA1\x9C\x20\xEB\xAC\xB4"
-	"\xEB\xA3\x8C\x20\xEC\x84\x9C\xEB\xB9\x84\xEC\x8A\xA4!kor", 0}, /* OSU Serv Desc */
+	{ "wl_osu_servdesc", "T-Mobile Passpoint service!eng", 0}, /* OSU Serv Desc */
 
 	/* ---- Passpoint Flags  ----------------------------------- */
 	{ "wl_gascbdel",	"0", 0 },	/* GAS CB Delay */
@@ -118,43 +114,36 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_osuicon_id",	"1", 0 },	/* OSU Provider's Icon ID */
 	{ "wl_conn_id",		"1", 0 },	/* Connection Capability ID */
 
-// #ifdef __CONFIG_802_11U__
-	{ "wl_u11en",		"1", 0 },	/* 802.11u IW Enable (1), disable (0) radio */
-	{ "wl_iwint",		"0", 0 },	/* Internet Enable (1), disable (0) radio */
-	{ "wl_iwnettype",	"2", 0 },	/* Select Access Network Type */
+//#ifdef __CONFIG_802_11U__
+	{ "wl_u11en",		"0", 0 },	/* 802.11u IW Enable (1), disable (0) radio */
+	{ "wl_iwint",		"1", 0 },	/* Internet Enable (1), disable (0) radio */
+	{ "wl_iwnettype",	"0", 0 },	/* Select Access Network Type */
 	{ "wl_hessid",		"50:6F:9A:00:11:22",  0 },	/* Interworking HESSID */
 	{ "wl_ipv4addr",	"3", 0 },	/* Select IPV4 Address Type Availability */
 	{ "wl_ipv6addr",	"0", 0 },	/* Select IPV6 Address Type Availability */
 
 	{ "wl_netauthlist", "accepttc=+"
-	"httpred=https://tandc-server.wi-fi.org",  0 },	/* Network Authentication Type List */
+	"httpred=https://t-mobile.com",  0 },	/* Network Authentication Type List */
 
-	{ "wl_venuegrp",	"2", 0 },	/* Venue Group */
-	{ "wl_venuetype",	"8", 0 },	/* Venue Type  */
+	{ "wl_venuegrp",	"0", 0 },	/* Venue Group */
+	{ "wl_venuetype",	"0", 0 },	/* Venue Type  */
 
 	{ "wl_venuelist",
-	"57692D466920416C6C69616E63650A"
-	"3239383920436F7070657220526F61640A"
-	"53616E746120436C6172612C2043412039"
-	"353035312C2055534121656E677C"
-	"57692D4669E88194E79B9FE5AE9EE9AA8CE5AEA40A"
-	"E4BA8CE4B99DE585ABE4B99DE5B9B4E5BA93E69F8FE8B7AF0A"
-	"E59CA3E5858BE68B89E68B892C20E58AA0E588A9E7A68FE5B0"
-	"BCE4BA9A39353035312C20E7BE8EE59BBD21636869",  0 },	/* Venue Name List */
+	"542D4D6F62696C6521656E67",  0 },	/* Venue Name List */
 
 	{ "wl_ouilist",		"506F9A;001BC504BD", 0 },	/* Roaming Consortium List */
-	{ "wl_3gpplist",	"",  0 },	/* 3GPP Cellular Network Information List */
-	{ "wl_domainlist",	"",  0 },	/* Domain Name List */
+	{ "wl_3gpplist",	"310:260;310:310",  0 },	/* 3GPP Cellular Network Information List */
+	{ "wl_domainlist",	"t-mobile.com",  0 },		/* Domain Name List */
 
 	{ "wl_realmlist",
-	"mail.example.com+0+21=2,4#5,7?"
-	"cisco.com+0+21=2,4#5,7?"
-	"wi-fi.org+0+21=2,4#5,7?"
-	"wi-fi.org+0+13=5,6?"
-	"example.com+0+13=5,6",  0 },	/* NAI Realm List */
+	"wlan.mnc260.mcc310.3gppnetwork.org+0+21=2,4#5,7?"
+	"wlan.mnc260.mcc310.3gppnetwork.org+0+13=5,6?"
+	"wlan.mnc310.mcc310.3gppnetwork.org+0+21=2,4#5,7?"
+	"wlan.mnc310.mcc310.3gppnetwork.org+0+13=5,6" , 0 },	/* NAI Realm List */
 //#endif  /* __CONFIG_802_11U__ */
 
 #endif  /* __CONFIG_HSPOT__ */
+
 //	{ "wl_country_code", "", 0 },		/* Country Code (default obtained from driver) */
 #ifndef RTCONFIG_RALINK
 	{ "wl_country_rev", "", 0 },		/* Regrev Code (default obtained from driver) */
@@ -222,6 +211,9 @@ struct nvram_tuple router_defaults[] = {
 #endif
 	{ "wl_mrate_x", "0" },			/* ralink auto rate */
 	{ "wl_frameburst", "on", 0 },		/* BRCM Frambursting mode (off|on) */
+#if defined (RTCONFIG_BCMARM) && !defined (RTCONFIG_BCM7)
+	{ "frameburst_dyn", "0", 0 },           /* Frameburst controlled dynamically if on */
+#endif
 	{ "wl_rateset", "default", 0 },		/* "default" or "all" or "12" */
 	{ "wl_frag", "2346", 0 },		/* Fragmentation threshold */
 	{ "wl_rts", "2347", 0 },		/* RTS threshold */
@@ -263,13 +255,16 @@ struct nvram_tuple router_defaults[] = {
 #ifdef RTCONFIG_WL_AUTO_CHANNEL
 	{"AUTO_CHANNEL", "1"},			/*0: real channel; 1: Auto; for RT-N12HP & RT-N14UHP*/
 #endif
-#ifndef RTCONFIG_RALINK
+
 	{ "wl_nband", "2", 0},			/* N-BAND */
-	{ "wl0_nband", "2"},			/* 2.4 GHz */
-	{ "wl1_nband", "1"},			/* 5 GHz */
 #ifdef RTAC3200
-	{ "wl2_nband", "1"},                    /* 5 GHz */
+	{ "wl0_nband", "1"},
+	{ "wl2_nband", "1"},
+#else
+	{ "wl1_nband", "1"},			/* 5 GHz */
 #endif
+
+#ifndef RTCONFIG_RALINK
 	{ "wl_nmcsidx", "-1", 0},		/* MCS Index for N - rate */
 	{ "wl_nmode", "-1", 0},			/* N-mode */
 	{ "wl_rifs_advert", "auto", 0},		/* RIFS mode advertisement */
@@ -299,6 +294,9 @@ struct nvram_tuple router_defaults[] = {
 	/* Default AMPDU regular rate retry limit per-tid setting */
 	{ "wl_ampdu_rr_rtylimit_tid", "3 3 3 3 3 3 3 3", 0 },
 	{ "wl_amsdu", "auto", 0 },		/* Default AMSDU setting */
+#if defined (RTCONFIG_BCMARM) && !defined (RTCONFIG_BCM7)
+	{ "wl_rx_amsdu_in_ampdu", "auto", 0 },	/* Default RX AMSDU In AMPDU setting */
+#endif
 	{ "wl_rx_amsdu_in_ampdu", "auto", 0 },	/* Default RX AMSDU In AMPDU setting */
 	{ "wl_obss_coex", "1", 0 },		/* Default OBSS Coexistence setting - OFF */
 #ifdef RTCONFIG_BCMWL6
@@ -314,9 +312,19 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_auth_mode", "none", 0 },		/* Network authentication mode (radius|none) */
 	{ "wl_wpa_psk", "", 0 },		/* WPA pre-shared key */
 	{ "wl_wpa_gtk_rekey", "3600", 0 },		/* GTK rotation interval */
+#ifndef RTCONFIG_TMOBILE
 	{ "wl_radius_ipaddr", "", 0 },		/* RADIUS server IP address */
 	{ "wl_radius_key", "", 0 },		/* RADIUS shared secret */
 	{ "wl_radius_port", "1812", 0 },	/* RADIUS server UDP port */
+#else
+	{ "wl_radius_ipaddr", "127.0.0.1", 0 },
+	{ "wl_radius_key", "secret", 0 },
+	{ "wl_radius_port", "1812", 0 },
+	{ "wl0_radius_port", "1814", 0 },
+	{ "wl1_radius_port", "1815", 0 },
+	{ "wl_tmo_radius_ipaddr", "aaa.geo.t-mobile.com", 0 },	/* TMO RADIUS server IP address */
+	{ "wl_tmo_radius_port", "2083", 0 },	/* TMO RADIUS server UDP port */
+#endif
 	{ "wl_crypto", "tkip+aes", 0 },		/* WPA data encryption */
 #if 0
 	{ "wl_net_reauth", "3600", 0 },		/* Network Re-auth/PMK caching duration */
@@ -427,11 +435,17 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_txbf", "0" },
 #else
 	{ "wl_txbf", "1" },
+#ifdef RTCONFIG_QTN
+	{ "wl1_txbf", "1" },
+#endif
 #endif
 #endif
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_BCMARM
 	{ "wl_itxbf", "1" },
+#ifdef RTCONFIG_QTN
+	{ "wl1_itxbf", "1" },
+#endif
 #endif
 #endif
 #ifndef RTCONFIG_RALINK
@@ -508,7 +522,9 @@ struct nvram_tuple router_defaults[] = {
 #ifdef RTCONFIG_BCMARM
 	{ "wl_wmf_ucast_upnp", "0", 0 },	/* Disable Converting upnp to ucast (default) */
 #endif
+#ifndef RTCONFIG_BCM7
 	{ "wl_wmf_igmpq_filter", "0", 0 },	/* Disable igmp query filter */
+#endif
 #endif
 #endif
 #endif
@@ -559,6 +575,9 @@ struct nvram_tuple router_defaults[] = {
 	/* Tx Beamforming */
 	{ "wl_txbf_bfr_cap", "1", 0 },
 	{ "wl_txbf_bfe_cap", "1", 0 },
+#ifdef RTCONFIG_BCM7
+	{ "wl_txbf_imp", "1", 0 },
+#endif
 #ifndef RTCONFIG_BCMARM
 	{ "wl_txbf_timer", "25", 0 },
 #endif
@@ -567,7 +586,11 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_acs_fcs_mode", "0", 0 },		/* acsd disable FCS mode */
 	{ "wl_dcs_csa_unicast", "0", 0 },	/* disable unicast csa */
 	{ "wl_acs_excl_chans", "", 0 },		/* acsd exclude chanspec list */
+#ifdef RTCONFIG_BCM7
+	{ "wl_acs_dfs", "2", 0 },		/* acsd fcs disable init DFS chan */
+#else
 	{ "wl_acs_dfs", "0", 0 },		/* acsd fcs disable init DFS chan */
+#endif
 	{ "wl_acs_dfsr_immediate", "300 3", 0 },   /* immediate if > 3 switches last 5 minutes */
 	{ "wl_acs_dfsr_deferred", "604800 5", 0 }, /* deferred if > 5 switches in last 7 days */
 	{ "wl_acs_dfsr_activity", "30 10240", 0 }, /* active: >10k I/O in the last 30 seconds */
@@ -580,18 +603,27 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_acs_chan_flop_period", "70", 0 },	/* acsd fcs chan flip-flop time */
 	{ "wl_intfer_period", "1", 0 },		/* acsd fcs sample period */
 	{ "wl_intfer_cnt", "3", 0 },		/* acsd fcs sample cnt */
-	{ "wl_intfer_txfail", "16", 0 },	/* fcs non-TCP txfail threshold setting */
+	{ "wl_intfer_txfail", "5", 0 },		/* fcs non-TCP txfail threshold setting */
 	{ "wl_intfer_tcptxfail", "5", 0 },	/* fcs TCP txfail threshold setting */
 
 	{ "wl_pspretend_retry_limit", "0", 0 }, /* Disable PsPretend */
+#ifndef RTCONFIG_BCM7
 	{ "wl_pspretend_threshold", "0", 0 },	/* Disable PsPretend Threshold */
+#else
 	{ "wl_taf_enable", "0", 0 }, 		/* Disable TAF */
+#endif
+
+	{ "bsd_role", "0", 0 },			/* Disable Band Steer Daemon */
+	{ "bsd_hport", "9877", 0 },		/* BSD helper port */
+	{ "bsd_pport", "9878", 0 },		/* BSD Primary port */
+	{ "bsd_helper", "192.168.1.2", 0 },	/* BSD primary ipaddr */
+	{ "bsd_primary", "192.168.1.1", 0 },	/* BSD Helper ipaddr */
+#ifdef RTCONFIG_BCM7
 	{ "wl_dfs_pref", "" },			/* DFS Preferred channel value  */
 	{ "wl_probresp_mf", "0", 0 },   	/* MAC filter based probe response  */
 	{ "wl_probresp_sw", "1", 0 },   	/* SW probe response  */
 	{ "wl_vht_features", "-1", 0 }, 	/* VHT features  */
-
-	{ "bsd_enable", "0", 0 },		/* Disable Band Steer Daemon */
+#endif
 #endif
 
 	// make sure its purpose
@@ -865,16 +897,18 @@ struct nvram_tuple router_defaults[] = {
 	{ "dslx_sra", "1" }, /* Paul add 2012/10/15, for setting SRA. */
 	{ "dslx_bitswap", "1" }, /* Paul add 2013/10/23, for Bitswap control. */
 #ifdef RTCONFIG_DSL_ANNEX_B //Paul add 2012/8/21
-	{ "dslx_annex", "0" }, // Annex B
+	{ "dslx_annex", "6" }, // Annex BJM (EnumAdslTypeB_J_M)
 #else
-	{ "dslx_annex", "4" }, // Annex AIJLM
+	{ "dslx_annex", "4" }, // Annex AIJLM(EnumAdslTypeA_I_J_L_M)
 #endif
+	{ "dslx_ginp", "1" },
 #ifdef RTCONFIG_VDSL
 	{ "dslx_vdsl_target_snrm", "32767" },
 	{ "dslx_vdsl_tx_gain_off", "32767" },
 	{ "dslx_vdsl_rx_agc", "65535" },
 	{ "dslx_vdsl_upbo", "auto" },
 	{ "dslx_vdsl_profile", "0" },
+	{ "dslx_rmvlan", "0" },
 #endif
 
 // Viz add dsl transmode
@@ -1127,11 +1161,14 @@ struct nvram_tuple router_defaults[] = {
 	{ "wrs_vp_enable", "0" },
 	{ "wrs_app_enable", "0" },
 	{ "wrs_app_rulelist", "" },		// <switch1>MAC1>Commercial1>...<switch2>MAC2>Commercial2>...
-	{ "wrs_blocking_type", "0" },		// 0: TrendMicro type, 1: 404 error page
+	{ "wrs_mals_list", "" },		// wrs malicious website
+	{ "bwdpi_rsa_check", "0" },		// signature update check
 	{ "bwdpi_alive", "10" },		// check dpi engine alive timeout
-	{ "bwdpi_app_rulelist", "9,20<4<0,5,6,15,17<8<13,24<1,3,14<7,10,11,21,23<<" },
+	{ "bwdpi_app_rulelist", "9,20<8<4<0,5,6,15,17<13,24<1,3,14<7,10,11,21,23<<" }, // default APP priority of QoS
 	{ "bwdpi_test", "2" },			// backup plan : bwdpi_test=2
+	{ "bwdpi_sig_ver", "" },		// dpi engine signature version
 	{ "TM_EULA", "0"},			// EULA of Trend Micro
+	{ "apps_analysis", "0"},		// Apps Analysis in Adaptive QoS Live
 #endif
 #endif	/* RTCONFIG_PARENTALCTRL */
 #ifdef RTCONFIG_YANDEXDNS
@@ -1313,7 +1350,11 @@ struct nvram_tuple router_defaults[] = {
 	{ "webdav_proxy", "0"},
 	{ "webdav_aidisk", "0"},
 	{ "webdav_http_port", "8082"},
+#ifdef RTCONFIG_TMOBILE
+	{ "webdav_https_port", "0"},
+#else
 	{ "webdav_https_port", "443"},
+#endif
 	{ "acc_webdavproxy", "admin>1"}, //0: Only show USBDisk, 1: show USBDisk and Smb pc
 	{ "enable_webdav_captcha", "0"}, // 0: disable, 1: enable
 	{ "enable_webdav_lock", "0"}, // 0: disable, 1: enable
@@ -1354,7 +1395,11 @@ struct nvram_tuple router_defaults[] = {
 #endif
 
 #ifdef RTCONFIG_HTTPS
+#ifdef RTCONFIG_TMOBILE
+	{ "https_lanport", "443"},
+#else
 	{ "https_lanport", "8443"},
+#endif
 	{ "https_crt_file", ""},
 	{ "https_crt_save", "0"},
 	{ "https_crt_gen", "1"},
@@ -1473,6 +1518,17 @@ struct nvram_tuple router_defaults[] = {
 
 	{ "record_lanaddr", ""},
 	{ "telnetd_enable", "0"},
+#ifdef RTCONFIG_SSH
+	{ "sshd_enable", "0"},
+	{ "sshd_port", "22"},
+	{ "sshd_remote", "0"},
+	{ "sshd_rport", "22222"},
+	{ "sshd_pass", "1"},
+	{ "sshd_forwarding", "0"},
+	{ "sshd_authkeys",    ""},
+	{ "sshd_wan","0"},
+	{ "sshd_bfp","0"},
+#endif
 
 	{ "Dev3G", "AUTO"},
 	{ "modem_enable", "1"}, // 0: disabled, 1: WCDMA, 2: CDMA2000, 3: TD-SCDMA, 4: WiMAX.
@@ -1536,16 +1592,6 @@ struct nvram_tuple router_defaults[] = {
 	#else
 	{"telnetd", "1"},
 	#endif
-
-#if defined(RTCONFIG_SSH)
-	{"sshd_enable", "0"},
-	{"sshd_port", "22"},
-	{"sshd_pass","1"},
-	{"sshd_authkeys",""},
-	{"sshd_forwarding","0"},
-	{"sshd_wan","0"},
-	{"sshd_bfp","0"},
-#endif
 
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
 	{"pptpd_enable", 	"0"},
@@ -1838,6 +1884,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "fb_comment", ""},
 	{ "fb_email_dbg", ""},	//send to email address
 	{ "fb_state", ""},
+	{ "fb_browserInfo", ""},
 #ifdef RTCONFIG_DSL
 	// for web ui udentify , 0=notificaton, 1=close
 	{ "fb_experience", "0"},
@@ -1898,7 +1945,9 @@ struct nvram_tuple router_defaults[] = {
 	{ "ipv6_dhcp_end",	""		},	// end of address pool
 	{ "ipv6_fw_enable",	"1"		},	// Default FORWARD table to DROP packets
 	{ "ipv6_fw_rulelist",	""		},	// IPv6 allowed forward rules
+#ifdef RTCONFIG_WIDEDHCP6
 	{ "ipv6_ra_conf",	"noneset"	},	// address configuration from WAN router advertisement
+#endif /* RTCONFIG_WIDEDHCP6 */
 	{ "ipv6_dhcp6s_enable",	"1"		},	// DHCP6 Server for LAN
 #endif
 	{ "web_redirect", 	"3"		},	// Redirect on NOLINK or NOINTERNET
@@ -1977,6 +2026,9 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "asus_mfg", "0"},
 	{ "btn_rst", "0"},
 	{ "btn_ez", "0"},
+#ifdef RTCONFIG_WIFI_TOG_BTN
+        { "btn_wifi_toggle", "0"},
+#endif
 
 	{ "wan_primary", "0" }, // Always first run in WAN port.
 	{ "wan0_primary", "1" },
@@ -2417,19 +2469,85 @@ struct nvram_tuple bcm4360ac_defaults[] = {
 #else
 #ifdef RTAC3200
 struct nvram_tuple bcm4360ac_defaults[] = {
-	{ "devpath0", "pcie/1/1", 0 },
+	{ "devpath1", "pcie/1/4", 0 },
+	{ "1:devpath1", "sb/1/", 0 },
+	{ "1:boardrev", "0x1421", 0 },
+	{ "1:boardvendor", "0x14e4", 0 },
+	{ "1:devid", "0x43bb", 0 },
+	{ "1:sromrev", "11", 0 },
+	{ "1:boardflags", "0x20001000", 0 },
+	{ "1:boardflags2", "0x00100002", 0 },
+	{ "1:venvid", "0x14e4", 0 },
+	{ "1:boardflags3", "0x4000005", 0 },
+	{ "1:aa2g", "7", 0 },
+	{ "1:agbg0", "0x0", 0 },
+	{ "1:agbg1", "0x0", 0 },
+	{ "1:agbg2", "0x0", 0 },
+	{ "1:txchain", "7", 0 },
+	{ "1:rxchain", "7", 0 },
+	{ "1:antswitch", "0", 0 },
+	{ "1:femctrl", "3", 0 },
+	{ "1:tssiposslope2g", "1", 0 },
+	{ "1:epagain2g", "0", 0 },
+	{ "1:pdgain2g", "21", 0 },
+	{ "1:tworangetssi2g", "0", 0 },
+	{ "1:papdcap2g", "0", 0 },
+	{ "1:gainctrlsph", "0", 0 },
+	{ "1:tempthresh", "120", 0 },
+	{ "1:tempoffset", "255", 0 },
+	{ "1:rawtempsense", "0x1ff", 0 },
+	{ "1:tempsense_slope", "0xff", 0 },
+	{ "1:tempcorrx", "0x3f", 0 },
+	{ "1:tempsense_option", "0x3", 0 },
+	{ "1:xtalfreq", "40000", 0 },
+	{ "1:phycal_tempdelta", "15", 0 },
+	{ "1:temps_period", "5", 0 },
+	{ "1:temps_hysteresis", "5", 0 },
+	{ "1:pdoffset2g40ma0", "15", 0 },
+	{ "1:pdoffset2g40ma1", "15", 0 },
+	{ "1:pdoffset2g40ma2", "15", 0 },
+	{ "1:pdoffset2g40mvalid", "1", 0 },
+	{ "1:pdoffset40ma0", "0", 0 },
+	{ "1:pdoffset40ma1", "0", 0 },
+	{ "1:pdoffset40ma2", "0", 0 },
+	{ "1:pdoffset80ma0", "0", 0 },
+	{ "1:pdoffset80ma1", "0", 0 },
+	{ "1:pdoffset80ma2", "0", 0 },
+	{ "1:cckbw202gpo", "0", 0 },
+	{ "1:cckbw20ul2gpo", "0", 0 },
+	{ "1:dot11agofdmhrbw202gpo", "0xdb97", 0 },
+	{ "1:ofdmlrbw202gpo", "0", 0 },
+	{ "1:dot11agduphrpo", "0", 0 },
+	{ "1:dot11agduplrpo", "0", 0 },
+	{ "1:rxgainerr2ga0", "63", 0 },
+	{ "1:rxgainerr2ga1", "31", 0 },
+	{ "1:rxgainerr2ga2", "31", 0 },
+	{ "1:maxp2ga0", "106", 0 },
+	{ "1:rxgains2gelnagaina0", "4", 0 },
+	{ "1:rxgains2gtrisoa0", "7", 0 },
+	{ "1:rxgains2gtrelnabypa0", "1", 0 },
+	{ "1:maxp2ga1", "106", 0 },
+	{ "1:rxgains2gelnagaina1", "4", 0 },
+	{ "1:rxgains2gtrisoa1", "7", 0 },
+	{ "1:rxgains2gtrelnabypa1", "1", 0 },
+	{ "1:maxp2ga2", "106", 0 },
+	{ "1:rxgains2gelnagaina2", "4", 0 },
+	{ "1:rxgains2gtrisoa2", "7", 0 },
+	{ "1:rxgains2gtrelnabypa2", "1", 0 },
+	{ "1:ledbh0", "11", 0 },
+	{ "1:ledbh1", "11", 0 },
+	{ "1:ledbh2", "11", 0 },
+	{ "1:ledbh3", "11", 0 },
+	{ "devpath0", "pcie/1/3", 0 },
 	{ "0:devpath0", "sb/1/", 0 },
 	{ "0:boardrev", "0x1421", 0 },
 	{ "0:boardvendor", "0x14e4", 0 },
 	{ "0:devid", "0x43bc", 0 },
 	{ "0:sromrev", "11", 0 },
-	{ "0:boardflags", "0x30000000", 0 },
-	{ "0:boardflags2", "0x200002", 0 },
+	{ "0:boardflags", "0x30048000", 0 },
+	{ "0:boardflags2", "0x00220102", 0 },
 	{ "0:venid", "0x14e4", 0 },
 	{ "0:boardflags3", "0x0", 0 },
-	{ "0:macaddr", "00:90:4C:A4:50:00", 0 },
-	{ "0:ccode", "Q2", 0 },
-	{ "0:regrev", "12", 0 },
 	{ "0:aa5g", "7", 0 },
 	{ "0:aga0", "0x0", 0 },
 	{ "0:aga1", "0x0", 0 },
@@ -2461,17 +2579,8 @@ struct nvram_tuple bcm4360ac_defaults[] = {
 	{ "0:pdoffset80ma1", "0", 0 },
 	{ "0:pdoffset80ma2", "0", 0 },
 	{ "0:subband5gver", "0x4", 0 },
-	{ "0:mcsbw205glpo", "0", 0 },
-	{ "0:mcsbw405glpo", "0", 0 },
-	{ "0:mcsbw805glpo", "0", 0 },
 	{ "0:mcsbw1605glpo", "0", 0 },
-	{ "0:mcsbw205gmpo", "0xFFFDA844", 0 },
-	{ "0:mcsbw405gmpo", "0xFFFDA844", 0 },
-	{ "0:mcsbw805gmpo", "0xFFFDA844", 0 },
 	{ "0:mcsbw1605gmpo", "0", 0 },
-	{ "0:mcsbw205ghpo", "0xFFFDA844", 0 },
-	{ "0:mcsbw405ghpo", "0xFFFDA844", 0 },
-	{ "0:mcsbw805ghpo", "0xFFFDA844", 0 },
 	{ "0:mcsbw1605ghpo", "0", 0 },
 	{ "0:mcslr5glpo", "0", 0 },
 	{ "0:mcslr5gmpo", "0", 0 },
@@ -2487,164 +2596,57 @@ struct nvram_tuple bcm4360ac_defaults[] = {
 	{ "0:rxgains5ghelnagaina0", "2", 0 },
 	{ "0:rxgains5ghtrisoa0", "5", 0 },
 	{ "0:rxgains5ghtrelnabypa0", "1", 0 },
-	{ "0:rxgains5gelnagaina0", "1", 0 },
-	{ "0:rxgains5gtrisoa0", "7", 0 },
+	{ "0:rxgains5gelnagaina0", "2", 0 },
+	{ "0:rxgains5gtrisoa0", "5", 0 },
 	{ "0:rxgains5gtrelnabypa0", "1", 0 },
-	{ "0:maxp5ga0", "54,90,90,106", 0 },
-	{ "0:pa5ga0", "0xff4c,0x18df,0xfd12,0xff52,0x195d,0xfd11,0xfefa,0x1704,0xfce9,0xff42,0x1cf2,0xfc8b", 0 },
+	{ "0:maxp5ga0", "90,90,90,106", 0 },
 	{ "0:rxgains5gmelnagaina1", "2", 0 },
-	{ "0:rxgains5gmtrisoa1", "4", 0 },
+	{ "0:rxgains5gmtrisoa1", "5", 0 },
 	{ "0:rxgains5gmtrelnabypa1", "1", 0 },
 	{ "0:rxgains5ghelnagaina1", "2", 0 },
-	{ "0:rxgains5ghtrisoa1", "4", 0 },
+	{ "0:rxgains5ghtrisoa1", "5", 0 },
 	{ "0:rxgains5ghtrelnabypa1", "1", 0 },
-	{ "0:rxgains5gelnagaina1", "1", 0 },
-	{ "0:rxgains5gtrisoa1", "6", 0 },
+	{ "0:rxgains5gelnagaina1", "2", 0 },
+	{ "0:rxgains5gtrisoa1", "5", 0 },
 	{ "0:rxgains5gtrelnabypa1", "1", 0 },
 	{ "0:maxp5ga1", "54,90,90,106", 0 },
-	{ "0:pa5ga1", "0xff5c,0x19ba,0xfd12,0xff3e,0x1932,0xfcf5,0xff34,0x1b80,0xfc9e,0xff3f,0x1c63,0xfc99", 0 },
-	{ "0:rxgains5gmelnagaina2", "3", 0 },
-	{ "0:rxgains5gmtrisoa2", "4", 0 },
+	{ "0:rxgains5gmelnagaina2", "2", 0 },
+	{ "0:rxgains5gmtrisoa2", "5", 0 },
 	{ "0:rxgains5gmtrelnabypa2", "1", 0 },
-	{ "0:rxgains5ghelnagaina2", "3", 0 },
-	{ "0:rxgains5ghtrisoa2", "4", 0 },
+	{ "0:rxgains5ghelnagaina2", "2", 0 },
+	{ "0:rxgains5ghtrisoa2", "5", 0 },
 	{ "0:rxgains5ghtrelnabypa2", "1", 0 },
-	{ "0:rxgains5gelnagaina2", "1", 0 },
+	{ "0:rxgains5gelnagaina2", "2", 0 },
 	{ "0:rxgains5gtrisoa2", "5", 0 },
 	{ "0:rxgains5gtrelnabypa2", "1", 0 },
 	{ "0:maxp5ga2", "54,90,90,106", 0 },
-	{ "0:pa5ga2", "0xff38,0x18f3,0xfcef,0xff4f,0x1a3d,0xfcef,0xff42,0x1c86,0xfc98,0xff3e,0x1c59,0xfc99", 0 },
 	{ "0:ledbh0", "11", 0 },
 	{ "0:ledbh1", "11", 0 },
 	{ "0:ledbh2", "11", 0 },
 	{ "0:ledbh3", "11", 0 },
-	{ "devpath1", "pcie/2/3", 0 },
-	{ "1:devpath1", "sb/1/", 0 },
-	{ "1:boardrev", "0x1421", 0 },
-	{ "1:boardvendor", "0x14e4", 0 },
-	{ "1:devid", "0x43bc", 0 },
-	{ "1:sromrev", "11", 0 },
-	{ "1:boardflags", "0x30000000", 0 },
-	{ "1:boardflags2", "0x200002", 0 },
-	{ "1:venid", "0x14e4", 0 },
-	{ "1:boardflags3", "0x0", 0 },
-	{ "1:macaddr", "00:91:4C:A1:50:00", 0 },
-	{ "1:ccode", "Q2", 0 },
-	{ "1:regrev", "12", 0 },
-	{ "1:aa5g", "7", 0 },
-	{ "1:aga0", "0x0", 0 },
-	{ "1:aga1", "0x0", 0 },
-	{ "1:aga2", "0x0", 0 },
-	{ "1:txchain", "7", 0 },
-	{ "1:rxchain", "7", 0 },
-	{ "1:antswitch", "0", 0 },
-	{ "1:femctrl", "3", 0 },
-	{ "1:tssiposslope5g", "1", 0 },
-	{ "1:epagain5g", "0", 0 },
-	{ "1:pdgain5g", "4", 0 },
-	{ "1:tworangetssi5g", "0", 0 },
-	{ "1:papdcap5g", "0", 0 },
-	{ "1:gainctrlsph", "0", 0 },
-	{ "1:tempthresh", "120", 0 },
-	{ "1:tempoffset", "255", 0 },
-	{ "1:rawtempsense", "0x1ff", 0 },
-	{ "1:tempsense_slope", "0xff", 0 },
-	{ "1:tempcorrx", "0x3f", 0 },
-	{ "1:tempsense_option", "0x3", 0 },
-	{ "1:xtalfreq", "40000", 0 },
-	{ "1:phycal_tempdelta", "15", 0 },
-	{ "1:temps_period", "5", 0 },
-	{ "1:temps_hysteresis", "5", 0 },
-	{ "1:pdoffset40ma0", "4369", 0 },
-	{ "1:pdoffset40ma1", "4369", 0 },
-	{ "1:pdoffset40ma2", "4369", 0 },
-	{ "1:pdoffset80ma0", "0", 0 },
-	{ "1:pdoffset80ma1", "0", 0 },
-	{ "1:pdoffset80ma2", "0", 0 },
-	{ "1:subband5gver", "0x4", 0 },
-	{ "1:mcsbw205glpo", "0", 0 },
-	{ "1:mcsbw405glpo", "0", 0 },
-	{ "1:mcsbw805glpo", "0", 0 },
-	{ "1:mcsbw1605glpo", "0", 0 },
-	{ "1:mcsbw205gmpo", "0xFFFDA844", 0 },
-	{ "1:mcsbw405gmpo", "0xFFFDA844", 0 },
-	{ "1:mcsbw805gmpo", "0xFFFDA844", 0 },
-	{ "1:mcsbw1605gmpo", "0", 0 },
-	{ "1:mcsbw205ghpo", "0xFFFDA844", 0 },
-	{ "1:mcsbw405ghpo", "0xFFFDA844", 0 },
-	{ "1:mcsbw805ghpo", "0xFFFDA844", 0 },
-	{ "1:mcsbw1605ghpo", "0", 0 },
-	{ "1:mcslr5glpo", "0", 0 },
-	{ "1:mcslr5gmpo", "0", 0 },
-	{ "1:mcslr5ghpo", "0", 0 },
-	{ "1:dot11agduphrpo", "0", 0 },
-	{ "1:dot11agduplrpo", "0", 0 },
-	{ "1:rxgainerr5ga0", "63,63,63,63", 0 },
-	{ "1:rxgainerr5ga1", "31,31,31,31", 0 },
-	{ "1:rxgainerr5ga2", "31,31,31,31", 0 },
-	{ "1:rxgains5gmelnagaina0", "2", 0 },
-	{ "1:rxgains5gmtrisoa0", "5", 0 },
-	{ "1:rxgains5gmtrelnabypa0", "1", 0 },
-	{ "1:rxgains5ghelnagaina0", "2", 0 },
-	{ "1:rxgains5ghtrisoa0", "5", 0 },
-	{ "1:rxgains5ghtrelnabypa0", "1", 0 },
-	{ "1:rxgains5gelnagaina0", "1", 0 },
-	{ "1:rxgains5gtrisoa0", "7", 0 },
-	{ "1:rxgains5gtrelnabypa0", "1", 0 },
-	{ "1:maxp5ga0", "64,90,90,106", 0 },
-	{ "1:pa5ga0", "0xff4c,0x18df,0xfd12,0xff52,0x195d,0xfd11,0xfefa,0x1704,0xfce9,0xff42,0x1cf2,0xfc8b", 0 },
-	{ "1:rxgains5gmelnagaina1", "2", 0 },
-	{ "1:rxgains5gmtrisoa1", "4", 0 },
-	{ "1:rxgains5gmtrelnabypa1", "1", 0 },
-	{ "1:rxgains5ghelnagaina1", "2", 0 },
-	{ "1:rxgains5ghtrisoa1", "4", 0 },
-	{ "1:rxgains5ghtrelnabypa1", "1", 0 },
-	{ "1:rxgains5gelnagaina1", "1", 0 },
-	{ "1:rxgains5gtrisoa1", "6", 0 },
-	{ "1:rxgains5gtrelnabypa1", "1", 0 },
-	{ "1:maxp5ga1", "64,90,90,106", 0 },
-	{ "1:pa5ga1", "0xff5c,0x19ba,0xfd12,0xff3e,0x1932,0xfcf5,0xff34,0x1b80,0xfc9e,0xff3f,0x1c63,0xfc99", 0 },
-	{ "1:rxgains5gmelnagaina2", "3", 0 },
-	{ "1:rxgains5gmtrisoa2", "4", 0 },
-	{ "1:rxgains5gmtrelnabypa2", "1", 0 },
-	{ "1:rxgains5ghelnagaina2", "3", 0 },
-	{ "1:rxgains5ghtrisoa2", "4", 0 },
-	{ "1:rxgains5ghtrelnabypa2", "1", 0 },
-	{ "1:rxgains5gelnagaina2", "1", 0 },
-	{ "1:rxgains5gtrisoa2", "5", 0 },
-	{ "1:rxgains5gtrelnabypa2", "1", 0 },
-	{ "1:maxp5ga2", "64,90,90,106", 0 },
-	{ "1:pa5ga2", "0xff38,0x18f3,0xfcef,0xff4f,0x1a3d,0xfcef,0xff42,0x1c86,0xfc98,0xff3e,0x1c59,0xfc99", 0 },
-	{ "1:ledbh0", "11", 0 },
-	{ "1:ledbh1", "11", 0 },
-	{ "1:ledbh2", "11", 0 },
-	{ "1:ledbh3", "11", 0 },
-	{ "devpath2", "pcie/2/4", 0 },
+	{ "devpath2", "pcie/2/1", 0 },
 	{ "2:devpath2", "sb/1/", 0 },
 	{ "2:boardrev", "0x1421", 0 },
 	{ "2:boardvendor", "0x14e4", 0 },
-	{ "2:devid", "0x43bb", 0 },
+	{ "2:devid", "0x43bc", 0 },
 	{ "2:sromrev", "11", 0 },
-	{ "2:boardflags", "0x1000", 0 },
-	{ "2:boardflags2", "0x100002", 0 },
-	{ "2:venvid", "0x14e4", 0 },
-	{ "2:boardflags3", "0x4000005", 0 },
-	{ "2:macaddr", "00:90:4c:02:e0:00", 0 },
-	{ "2:ccode", "Q2", 0 },
-	{ "2:regrev", "12", 0 },
-	{ "2:aa2g", "7", 0 },
-	{ "2:agbg0", "0x0", 0 },
-	{ "2:agbg1", "0x0", 0 },
-	{ "2:agbg2", "0x0", 0 },
+	{ "2:boardflags", "0x30048000", 0 },
+	{ "2:boardflags2", "0x00220102", 0 },
+	{ "2:venid", "0x14e4", 0 },
+	{ "2:boardflags3", "0x0", 0 },
+	{ "2:aa5g", "7", 0 },
+	{ "2:aga0", "0x0", 0 },
+	{ "2:aga1", "0x0", 0 },
+	{ "2:aga2", "0x0", 0 },
 	{ "2:txchain", "7", 0 },
 	{ "2:rxchain", "7", 0 },
 	{ "2:antswitch", "0", 0 },
 	{ "2:femctrl", "3", 0 },
-	{ "2:tssiposslope2g", "1", 0 },
-	{ "2:epagain2g", "0", 0 },
-	{ "2:pdgain2g", "21", 0 },
-	{ "2:tworangetssi2g", "0", 0 },
-	{ "2:papdcap2g", "0", 0 },
+	{ "2:tssiposslope5g", "1", 0 },
+	{ "2:epagain5g", "0", 0 },
+	{ "2:pdgain5g", "4", 0 },
+	{ "2:tworangetssi5g", "0", 0 },
+	{ "2:papdcap5g", "0", 0 },
 	{ "2:gainctrlsph", "0", 0 },
 	{ "2:tempthresh", "120", 0 },
 	{ "2:tempoffset", "255", 0 },
@@ -2656,43 +2658,54 @@ struct nvram_tuple bcm4360ac_defaults[] = {
 	{ "2:phycal_tempdelta", "15", 0 },
 	{ "2:temps_period", "5", 0 },
 	{ "2:temps_hysteresis", "5", 0 },
-	{ "2:pdoffset2g40ma0", "15", 0 },
-	{ "2:pdoffset2g40ma1", "15", 0 },
-	{ "2:pdoffset2g40ma2", "15", 0 },
-	{ "2:pdoffset2g40mvalid", "1", 0 },
-	{ "2:pdoffset40ma0", "0", 0 },
-	{ "2:pdoffset40ma1", "0", 0 },
-	{ "2:pdoffset40ma2", "0", 0 },
+	{ "2:pdoffset40ma0", "4369", 0 },
+	{ "2:pdoffset40ma1", "4369", 0 },
+	{ "2:pdoffset40ma2", "4369", 0 },
 	{ "2:pdoffset80ma0", "0", 0 },
 	{ "2:pdoffset80ma1", "0", 0 },
 	{ "2:pdoffset80ma2", "0", 0 },
-	{ "2:cckbw202gpo", "0", 0 },
-	{ "2:cckbw20ul2gpo", "0", 0 },
-	{ "2:mcsbw202gpo", "0xFFFDA844", 0 },
-	{ "2:mcsbw402gpo", "0xFFFDA844", 0 },
-	{ "2:dot11agofdmhrbw202gpo", "0xDB97", 0 },
-	{ "2:ofdmlrbw202gpo", "0", 0 },
+	{ "2:subband5gver", "0x4", 0 },
+	{ "2:mcsbw1605glpo", "0", 0 },
+	{ "2:mcsbw1605gmpo", "0", 0 },
+	{ "2:mcsbw1605ghpo", "0", 0 },
+	{ "2:mcslr5glpo", "0", 0 },
+	{ "2:mcslr5gmpo", "0", 0 },
+	{ "2:mcslr5ghpo", "0", 0 },
 	{ "2:dot11agduphrpo", "0", 0 },
 	{ "2:dot11agduplrpo", "0", 0 },
-	{ "2:rxgainerr2ga0", "63", 0 },
-	{ "2:rxgainerr2ga1", "31", 0 },
-	{ "2:rxgainerr2ga2", "31", 0 },
-	{ "2:rpcal2g", "0", 0 },
-	{ "2:maxp2ga0", "106", 0 },
-	{ "2:pa2ga0", "0xFF40,0x19AA,0xFCF4", 0 },
-	{ "2:rxgains2gelnagaina0", "4", 0 },
-	{ "2:rxgains2gtrisoa0", "7", 0 },
-	{ "2:rxgains2gtrelnabypa0", "1", 0 },
-	{ "2:maxp2ga1", "106", 0 },
-	{ "2:pa2ga1", "0xFF45,0x1A03,0xFCF6", 0 },
-	{ "2:rxgains2gelnagaina1", "4", 0 },
-	{ "2:rxgains2gtrisoa1", "7", 0 },
-	{ "2:rxgains2gtrelnabypa1", "1", 0 },
-	{ "2:maxp2ga2", "106", 0 },
-	{ "2:pa2ga2", "0xFF3A,0x19B5,0xFCE8", 0 },
-	{ "2:rxgains2gelnagaina2", "4", 0 },
-	{ "2:rxgains2gtrisoa2", "7", 0 },
-	{ "2:rxgains2gtrelnabypa2", "1", 0 },
+	{ "2:rxgainerr5ga0", "63,63,63,63", 0 },
+	{ "2:rxgainerr5ga1", "31,31,31,31", 0 },
+	{ "2:rxgainerr5ga2", "31,31,31,31", 0 },
+	{ "2:rxgains5gmelnagaina0", "2", 0 },
+	{ "2:rxgains5gmtrisoa0", "5", 0 },
+	{ "2:rxgains5gmtrelnabypa0", "1", 0 },
+	{ "2:rxgains5ghelnagaina0", "2", 0 },
+	{ "2:rxgains5ghtrisoa0", "5", 0 },
+	{ "2:rxgains5ghtrelnabypa0", "1", 0 },
+	{ "2:rxgains5gelnagaina0", "2", 0 },
+	{ "2:rxgains5gtrisoa0", "5", 0 },
+	{ "2:rxgains5gtrelnabypa0", "1", 0 },
+	{ "2:maxp5ga0", "90,90,90,106", 0 },
+	{ "2:rxgains5gmelnagaina1", "2", 0 },
+	{ "2:rxgains5gmtrisoa1", "5", 0 },
+	{ "2:rxgains5gmtrelnabypa1", "1", 0 },
+	{ "2:rxgains5ghelnagaina1", "2", 0 },
+	{ "2:rxgains5ghtrisoa1", "5", 0 },
+	{ "2:rxgains5ghtrelnabypa1", "1", 0 },
+	{ "2:rxgains5gelnagaina1", "2", 0 },
+	{ "2:rxgains5gtrisoa1", "5", 0 },
+	{ "2:rxgains5gtrelnabypa1", "1", 0 },
+	{ "2:maxp5ga1", "90,90,90,106", 0 },
+	{ "2:rxgains5gmelnagaina2", "2", 0 },
+	{ "2:rxgains5gmtrisoa2", "5", 0 },
+	{ "2:rxgains5gmtrelnabypa2", "1", 0 },
+	{ "2:rxgains5ghelnagaina2", "2", 0 },
+	{ "2:rxgains5ghtrisoa2", "5", 0 },
+	{ "2:rxgains5ghtrelnabypa2", "1", 0 },
+	{ "2:rxgains5gelnagaina2", "2", 0 },
+	{ "2:rxgains5gtrisoa2", "5", 0 },
+	{ "2:rxgains5gtrelnabypa2", "1", 0 },
+	{ "2:maxp5ga2", "90,90,90,106", 0 },
 	{ "2:ledbh0", "11", 0 },
 	{ "2:ledbh1", "11", 0 },
 	{ "2:ledbh2", "11", 0 },
@@ -2715,34 +2728,56 @@ struct nvram_tuple router_defaults_override_type1[] = {
 	{ "lan_stp", "0", 0 },			/* LAN spanning tree protocol */
 	{ "wl_wmf_bss_enable", "1", 0 },	/* WMF Enable for IPTV Media or WiFi+PLC */
 	{ "wl_reg_mode", "h", 0 },		/* Regulatory: 802.11H(h) */
+#ifndef RTCONFIG_BCM7
 	{ "wl_wet_tunnel", "1", 0  },		/* Enable wet tunnel */
 	{ "wl_taf_enable", "1", 0  },		/* Enable TAF */
+	{ "wl_taf_rule", "0x15", 0  },		/* Default TAF rule on SSID, RATE and AID */
 
 	/* EBOS feature Media router default */
 	{ "wl_ebos_enable", "0", 0 },		/* EBOS feature on */
-	{ "wl_ebos_flags", "104", 0 },		/* 104(0x68) pseudo-round robin */
+	{ "wl_ebos_flags", "0x68", 0 },		/* 104(0x68) video links */
+	{ "wl_ebos_transit", "-1", 0 },	         /* transit limit for video links */
+	{ "wl_ebos_prr_flags", "0xa41", 0 },	/* pseudo-round robin data links */
 	{ "wl_ebos_prr_threshold", "0x0f000000", 0 },	/* pseudo-round robin threshold */
+	{ "wl_ebos_prr_transit", "-1", 0 },	/* pseudo-round robin transit limit */
 
+	/* Airtime fairness */
+	{ "wl_atf", "1", 0 },		/* ATF feature on */
+#else
+	{ "wl_taf_enable", "0", 0 },		/* Disable TAF */
+#endif
 #ifdef __CONFIG_EMF__
 	{ "emf_enable", "1", 0 },		/* Enable EMF by default */
 	{ "wl_wmf_ucigmp_query", "1", 0 },	/* Enable Converting IGMP Query to ucast */
 #ifdef RTCONFIG_BCMARM
 	{ "wl_wmf_ucast_upnp", "1", 0 },	/* Enable upnp to ucast conversion */
 #endif
+#ifndef RTCONFIG_BCM7
 	{ "wl_wmf_igmpq_filter", "1", 0 },	/* Enable igmp query filter */
 #endif
+#endif
 	{ "wl_acs_fcs_mode", "1", 0 },		/* Enable acsd fcs mode */
+#ifndef RTCONFIG_BCM7
 	{ "wl_acs_dfs", "2", 0 },		/* Enable first DFS chan Selection */
+#endif
 	{ "wl_dcs_csa_unicast", "1", 0 },	/* Enable unicast CSA */
 	/* Exclude ACSD to select 140l, 144u, 140/80, 144/80 to compatible with Ducati 11N */
 	{ "wl_acs_excl_chans", "0xd98e,0xd88e,0xe28a,0xe38a", 0 },
 	{ "wl_pspretend_retry_limit", "5", 0 }, /* Enable PsPretend */
+#ifndef RTCONFIG_BCM7
 	{ "wl_pspretend_threshold", "0", 0 },	/* Disable PsPretend Threshold */
 	{ "wl_acs_chan_dwell_time", "70", 0 },	/* WAR for AP to stay on DFS chan */
 	{ "wl_frameburst", "on", 0 },		/* BRCM Frambursting mode (off|on) */
+#ifdef RTCONFIG_BCMARM
+	{ "frameburst_dyn", "0", 0 },		/* Frameburst controlled dynamically if on */
+#endif
+#endif
 	{ "wl_amsdu", "off", 0 },		/* Default IPTV AMSDU setting */
 	{ "wl_rx_amsdu_in_ampdu", "off", 0 },	/* Media RX AMSDU In AMPDU setting */
 	{ "wl_cal_period", "0", 0 },		/* Disable periodic cal */
+#ifdef RTCONFIG_BCM7
+	{ "wl_psta_inact", "0", 0 },		/* PSTA inactivity timer */
+#endif
 	{ 0, 0, 0 }
 };
 
@@ -2791,7 +2826,8 @@ nvram_default_get(const char *name)
 			return "0";
 		}
 	}
-
+#ifdef RTCONFIG_BCMARM
+#ifndef RTCONFIG_BCM7
 #ifdef __CONFIG_HSPOT__
 	if (strcmp(fixed_name, "wl_bss_hs2_enabled") == 0) {
 		if (name[3] == '.' || name[4] == '.') { /* Virtual interface */
@@ -2799,7 +2835,7 @@ nvram_default_get(const char *name)
 		}
 	}
 #endif  /* __CONFIG_HSPOT__ */
-
+#endif
 	if (!strcmp(nvram_safe_get("devicemode"), "1")) {
 		for (idx = 0; router_defaults_override_type1[idx].name != NULL; idx++) {
 			if (strcmp(router_defaults_override_type1[idx].name, fixed_name) == 0) {
@@ -2807,7 +2843,7 @@ nvram_default_get(const char *name)
 			}
 		}
 	}
-
+#endif
 	for (idx = 0; router_defaults[idx].name != NULL; idx++) {
 		if (strcmp(router_defaults[idx].name, fixed_name) == 0) {
 			return router_defaults[idx].value;
@@ -2823,6 +2859,8 @@ nvram_validate_all(char *prefix, bool restore)
 	struct nvram_tuple *t;
 	char tmp[100];
 	char *v;
+
+	return;
 
 	for (t = router_defaults; t->name; t++) {
 		if (!strncmp(t->name, "wl_", 3)) {

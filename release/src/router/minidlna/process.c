@@ -76,8 +76,6 @@ process_handle_child_termination(int signal)
 			else
 				break;
 		}
-		else if (pid == 0)
-			break;
 		--number_of_children;
 	}
 }
@@ -143,7 +141,7 @@ process_check_if_running(const char *fname)
 
 	memset(buffer, 0, 64);
 
-	if(read(pidfile, buffer, 63))
+	if(read(pidfile, buffer, 63) > 0)
 	{
 		if( (pid = atol(buffer)) > 0)
 		{

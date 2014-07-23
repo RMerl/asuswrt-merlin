@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <html xmlns:v>
 <head>
-<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE9"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
@@ -96,12 +96,6 @@ wan_proto = '<% nvram_get("wan_proto"); %>';
 var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 var client_ip = login_ip_str();
 var client_mac = login_mac_str();
-var leases = [<% dhcp_leases(); %>];	// [[hostname, MAC, ip, lefttime], ...]
-var arps = [<% get_arp_table(); %>];		// [[ip, x, x, MAC, x, type], ...]
-var arls = [<% get_arl_table(); %>];		// [[MAC, port, x, x], ...]
-var ipmonitor = [<% get_static_client(); %>];	// [[IP, MAC, DeviceName, Type, http, printer, iTune], ...]
-var networkmap_fullscan = '<% nvram_match("networkmap_fullscan", "0", "done"); %>'; //2008.07.24 Add.  1 stands for complete, 0 stands for scanning.;
-var clients_info = getclients();
 
 var MULTIFILTER_ENABLE = '<% nvram_get("MULTIFILTER_ENABLE"); %>'.replace(/&#62/g, ">");
 var MULTIFILTER_MAC = '<% nvram_get("MULTIFILTER_MAC"); %>'.replace(/&#62/g, ">");
@@ -215,19 +209,17 @@ function initial(){
 	show_menu();
 	if(bwdpi_support){
 		//show_inner_tab();
-		$('content_title').innerHTML = "AiProtection - Time Limits";
-		$('desc_title').innerHTML = "Time Limits allows you to set the time limit for a client's network usage. To use Time Limits:";
 		$('guest_image').src = "/images/New_ui/TimeLimits.png";
-		$('web_title').innerHTML = "<#Web_Title#> - Time Limited";
+		$('content_title').innerHTML = "AiProtection - Time scheduling";
+		$('desc_title').innerHTML = "Time Scheduling allows you to set the time limit for a client's network usage. To use Time Scheduling:";		
+		//$('web_title').innerHTML = "<#Web_Title#> - Time Scheduling";
+		$('PC_enable').innerHTML = "Enable Time Scheduling";
 		$('switch_menu').style.display = "";
 	}
-	
-	
-		
+
 	show_footer();
 	init_array(array);
-	init_cookie();
-	
+	init_cookie();	
 	if(downsize_4m_support)
 		$("guest_image").parentNode.style.display = "none";
 
@@ -238,7 +230,7 @@ function initial(){
 	}
 
 	gen_mainTable();
-	showLANIPList();
+	setTimeout("showLANIPList();", 1000);	
 	if(<% nvram_get("MULTIFILTER_ALL"); %>)
 		showhide("list_table",1);
 	else
@@ -269,7 +261,7 @@ function showLANIPList(){
 		htmlCode += clientObj.mac;
 		htmlCode += '\');"><strong>';
 		htmlCode += clientObj.name;
-		htmlCode += '</strong></div></a><!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
+		htmlCode += '</strong></div></a><!--[if lte IE 6.5]><script>alert("<#ALERT_TO_CHANGE_BROWSER#>");</script><![endif]-->';	
 	}
 
 	$("ClientList_Block_PC").innerHTML = htmlCode;
@@ -903,16 +895,16 @@ function genEnableArray_main(j, obj){
 function show_inner_tab(){
 	var code = "";
 	if(document.form.current_page.value == "ParentalControl.asp"){		
-		code += '<span class="clicked">Time Limits</span>';
-		code += '<a href="ParentalControl_WebProtector.asp">';
-		code += '<span style="margin-left:10px" class="click">Web & App Restriction</span>';
+		code += '<span class="clicked">Time Scheduling</span>';
+		code += '<a href="AiProtection_WebProtector.asp">';
+		code += '<span style="margin-left:10px" class="click">Web & Apps Filters</span>';
 		code += '</a>';
 	}
 	else{
-		code += '<a href="ParentalControl_WebProtector.asp">';
-		code += '<span class="click">Time Limits</span>';
+		code += '<a href="AiProtection_WebProtector.asp">';
+		code += '<span class="click">Time Scheduling</span>';
 		code += '</a>';		
-		code += '<span style="margin-left:10px" class="clicked">Web & App Restriction</span>';	
+		code += '<span style="margin-left:10px" class="clicked">Web & Apps Filters</span>';	
 	}
 	
 	$('switch_menu').innerHTML = code;
@@ -965,27 +957,27 @@ function show_inner_tab(){
 	<tr>
 		<td bgcolor="#4D595D" valign="top">
 		<div>&nbsp;</div>
-		<div>
+		<div style="margin-top:-5px;">
 			<table width="730px">
 				<tr>
-					<td align="left">
-						<span id="content_title" class="formfonttitle"><#Parental_Control#></span>
+					<td align="left" >
+						<div id="content_title" class="formfonttitle" style="width:400px"><#Parental_Control#></div>
 					</td>				
-					<td>
-						<div id="switch_menu" style="margin:-20px 0px 0px 232px;display:none;">
-							<a href="ParentalControl_WebProtector.asp">
+					<td style="width:300px">
+						<div id="switch_menu" style="margin:-20px 0px 0px -20px;;display:none;">
+							<a href="AiProtection_WebProtector.asp">
 								<div style="background-image:url('images/New_ui/left-light.png');width:173px;height:40px;">
-									<div style="text-align:center;padding-top:9px;color:#FFFFFF;font-size:14px">Web & Apps Restrictions</div>
+									<div style="text-align:center;padding-top:9px;color:#FFFFFF;font-size:14px">Web & Apps Filters</div>
 								</div>
 							</a>
-							<div style="background-image:url('images/New_ui/right-dark.png');width:101px;height:40px;margin:-40px 0px 0px 173px;">
-								<div style="text-align:center;padding-top:9px;color:#93A9B1;font-size:14px">Time Limits</div>
+							<div style="background-image:url('images/New_ui/right-dark.png');width:172px;height:40px;margin:-40px 0px 0px 173px;">
+								<div style="text-align:center;padding-top:9px;color:#93A9B1;font-size:14px">Time Scheduling</div>
 							</div>
 						</div>
 					<td>
 				</tr>
 			</table>
-			<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+			<div style="margin:0px 0px 10px 5px;"><img src="/images/New_ui/export/line_export.png"></div>
 		</div>
 		<div id="PC_desc">
 			<table width="700px" style="margin-left:25px;">
@@ -1017,7 +1009,7 @@ function show_inner_tab(){
 			<!--=====Beginning of Main Content=====-->
 			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 				<tr>
-					<th><#ParentalCtrl_Enable#></th>
+					<th id="PC_enable"><#ParentalCtrl_Enable#></th>
 					<td>
 						<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_ParentControl_enable"></div>
 						<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
@@ -1054,7 +1046,7 @@ function show_inner_tab(){
 								<tr>
 									<th width="20%"><#General_x_SystemTime_itemname#></th>
 									<td align="left"><input type="text" id="system_time" name="system_time" class="devicepin" value="" readonly="1" style="font-size:12px;width:200px;">
-										<div id="svc_hint_div" style="display:none;"><span onClick="location.href='Advanced_System_Content.asp?af=ntp_server0'" style="color:#FFCC00;text-decoration:underline;cursor:pointer;">* Remind: Did not synchronize your system time with NTP server yet.</span></div>
+										<div id="svc_hint_div" style="display:none;"><span onClick="location.href='Advanced_System_Content.asp?af=ntp_server0'" style="color:#FFCC00;text-decoration:underline;cursor:pointer;"><#General_x_SystemTime_syncNTP#></span></div>
 		  								<div id="timezone_hint_div" style="display:none;"><span id="timezone_hint" onclick="location.href='Advanced_System_Content.asp?af=time_zone_select'" style="color:#FFCC00;text-decoration:underline;cursor:pointer;"></span></div>
 									</td>
 								</tr>

@@ -83,6 +83,8 @@ export SWPJVER := $(SWPJNAME)_$(SWPJVERNO)_
 export SWPJEXTENDNO := $(shell git describe --match swpj_$(SWPJNAME)_$(SWPJVER) | sed 's/swpj_$(SWPJNAME)_$(SWPJVER)-//g')
 endif
 
+export SWPJEXTENDNO := $(shell git describe --match swpj_$(SWPJNAME)_$(SWPJVERNO) | sed 's/swpj_$(SWPJNAME)_$(SWPJVERNO)-//g')
+
 ifneq ($(SWPJEXTENDNO),)
 export EXTENDNO := $(SWPJEXTENDNO)
 else
@@ -91,7 +93,7 @@ endif
 endif
 
 include ./platform.mak
-include ./dsl.mak
+-include ./dsl.mak
 -include .config
 
 ifeq ($(ARM),y)
@@ -143,6 +145,7 @@ else
 KERNEL_BINARY=$(LINUXDIR)/arch/mips/brcm-boards/bcm947xx/compressed/zImage
 endif
 endif
+
 export IMGNAME := $(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO)_$(SWPJVER)$(EXTENDNO)
 export PBDIR   := ../../../asuswrt.prebuilt/$(BUILD_NAME).$(KERNEL_VER).$(FS_VER).$(SERIALNO).$(EXTENDNO)
 
@@ -185,8 +188,8 @@ all: rt_ver rt_ver_ntools
 
 image:
 	@if [ -z "$(BUILD_NAME)" ]; then \
-		echo "No BUILD_NAME is assigned"; \
-		exit 1; \
+	    echo "No BUILD_NAME is assigned"; \
+	    exit 1; \
 	fi
 
 	@rm -f image/$(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO).trx
@@ -235,7 +238,7 @@ ifeq ($(CONFIG_RALINK),y)
 		echo -n "PA/LNA: " ; \
 		if [ "`grep -c \"^CONFIG_INTERNAL_PA_INTERNAL_LNA\>\" $(LINUXDIR)/.config`" -gt 0 ] ; then \
 			echo "Internal PA + Internal LNA" ; \
-			if [ "$(BUILD_NAME)" = "RT-N14U" ] || [ "$(BUILD_NAME)" = "RT-AC51U" ] || [ "$(BUILD_NAME)" = "RT-N11P" ] ; then \
+			if [ "$(BUILD_NAME)" = "RT-N14U" ] || [ "$(BUILD_NAME)" = "RT-AC51U" ] || [ "$(BUILD_NAME)" = "RT-N11P" ] || [ "$(BUILD_NAME)" = "RT-N54U" ] ; then \
 				echo "Check PA/LNA: OK" ; \
 			else \
 				mv -f image/$(IMGNAME).trx image/$(IMGNAME)_int_PA_int_LNA.trx ; \
@@ -279,7 +282,20 @@ endif
 
 ifeq ($(DSL_TCLINUX),y)
 	cat image/$(IMGNAME).trx tc_fw/tclinux.bin > image/$(IMGNAME)_DSL.trx
+#ifeq ($(HTTPS),y)
+#	openssl sha1 -sign $(SRCBASE)/../../buildtools/private.pem -out image/$(IMGNAME)_DSL_rsa.zip image/$(IMGNAME)_DSL.trx
+#endif
 endif
+
+#general rsasign file
+#ifeq ($(HTTPS),y)
+#ifeq ($(BCM7),y)
+#	openssl sha1 -sign $(SRCBASE)/../../../buildtools/private.pem -out image/$(IMGNAME)_rsa.zip image/$(IMGNAME).trx
+#else
+#	openssl sha1 -sign $(SRCBASE)/../../buildtools/private.pem -out image/$(IMGNAME)_rsa.zip image/$(IMGNAME).trx
+#endif
+#endif
+
 	@echo ""
 
 bin_file:
@@ -588,10 +604,6 @@ define RouterOptions
 		sed -i "/RTCONFIG_TURBO/d" $(1); \
 		echo "RTCONFIG_TURBO=y" >>$(1); \
 	fi; \
-	if [ "$(LED2_BTN)" = "y" ]; then \
-		sed -i "/RTCONFIG_LED2_BTN/d" $(1); \
-		echo "RTCONFIG_LED2_BTN=y" >>$(1); \
-	fi; \
 	if [ "$(LED_BTN)" = "y" ]; then \
 		sed -i "/RTCONFIG_LED_BTN/d" $(1); \
 		echo "RTCONFIG_LED_BTN=y" >>$(1); \
@@ -835,7 +847,7 @@ define RouterOptions
 	elif [ "$(APP)" = "network" ] && [ "$(TMOBILE)" != "y" ]; then \
 		sed -i "/RTCONFIG_APP_NETINSTALLED/d" $(1); \
 		echo "RTCONFIG_APP_NETINSTALLED=y" >>$(1); \
- 	fi; \
+	fi; \
 	if [ "$(STRACE)" = "y" ] ; then \
 		sed -i "/RTCONFIG_STRACE/d" $(1); \
 		echo "RTCONFIG_STRACE=y" >>$(1); \
@@ -981,6 +993,22 @@ define RouterOptions
 		sed -i "/RTCONFIG_GDB/d" $(1); \
 		echo "RTCONFIG_GDB=y" >>$(1); \
         fi; \
+	if [ "$(UIDEBUG)" = "y" ]; then \
+		sed -i "/RTCONFIG_UIDEBUG/d" $(1); \
+		echo "RTCONFIG_UIDEBUG=y" >>$(1); \
+		sed -i "/RTCONFIG_CIFS/d" $(1); \
+		echo "RTCONFIG_CIFS=y" >>$(1); \
+		sed -i "/RTCONFIG_AUTODICT/d" $(1); \
+		echo "RTCONFIG_AUTODICT=n" >>$(1); \
+	fi; \
+	if [ "$(ROG)" = "y" ]; then \
+		sed -i "/RTCONFIG_ROG/d" $(1); \
+		echo "RTCONFIG_ROG=y" >>$(1); \
+	fi; \
+	if [ "$(GEOIP)" = "y" ]; then \
+		sed -i "/RTCONFIG_GEOIP/d" $(1); \
+		echo "RTCONFIG_GEOIP=y" >>$(1); \
+	fi; \
 	if [ "$(SINGLE_2G)" = "y" ]; then \
 		sed -i "/RTCONFIG_HAS_5G/d" $(1); \
 		echo "# RTCONFIG_HAS_5G is not set" >>$(1); \
@@ -1013,15 +1041,39 @@ define RouterOptions
 		sed -i "/RTCONFIG_TMOBILE/d" $(1); \
 		echo "RTCONFIG_TMOBILE=y" >>$(1); \
 		sed -i "/RTCONFIG_HSPOT/d" $(1); \
-		echo "RTCONFIG_HSPOT=y" >>$(1); \
+		echo "# RTCONFIG_HSPOT is not set" >>$(1); \
 		sed -i "/RTCONFIG_CLOUDSYNC/d" $(1); \
 		echo "# RTCONFIG_CLOUDSYNC is not set" >>$(1); \
 		sed -i "/RTCONFIG_WEBDAV/d" $(1); \
 		echo "# RTCONFIG_WEBDAV is not set" >>$(1); \
 	fi; \
+	if [ "$(BCM7)" = "y" ]; then \
+		sed -i "/RTCONFIG_BCM7/d" $(1); \
+		echo "RTCONFIG_BCM7=y" >>$(1); \
+		sed -i "/RTCONFIG_TOAD/d" $(1); \
+		echo "RTCONFIG_TOAD=y" >>$(1); \
+		sed -i "/RTCONFIG_BCMBSD/d" $(1); \
+		echo "RTCONFIG_BCMBSD=y" >>$(1); \
+		sed -i "/RTCONFIG_BCMDCS/d" $(1); \
+		echo "RTCONFIG_BCMDCS=y" >>$(1); \
+		sed -i "/RTCONFIG_TRAFFIC_MGMT_RSSI_POLICY/d" $(1); \
+		echo "RTCONFIG_TRAFFIC_MGMT_RSSI_POLICY=y" >>$(1); \
+	fi; \
+	if [ "$(DHDAP)" = "y" ]; then \
+		sed -i "/RTCONFIG_DHDAP/d" $(1); \
+		echo "RTCONFIG_DHDAP=y" >>$(1); \
+	fi; \
+	if [ "$(GMAC3)" = "y" ]; then \
+		sed -i "/RTCONFIG_GMAC3/d" $(1); \
+		echo "RTCONFIG_GMAC3=y" >>$(1); \
+	fi; \
 	if [ "$(HSPOT)" = "y" ]; then \
 		sed -i "/RTCONFIG_HSPOT/d" $(1); \
 		echo "RTCONFIG_HSPOT=y" >>$(1); \
+	fi; \
+	if [ "$(NVSIZE)" != "" ]; then \
+		sed -i "/RTCONFIG_NV$(NVSIZE)/d" $(1); \
+		echo "RTCONFIG_NV$(NVSIZE)=y" >>$(1); \
 	fi; \
 	if [ "$(BONDING)" = "y" ]; then \
 		sed -i "/RTCONFIG_BONDING/d" $(1); \
@@ -1183,7 +1235,7 @@ define BusyboxOptions
 		echo "# CONFIG_AWK is not set" >>$(1); \
 		sed -i "/CONFIG_WC/d" $(1); \
 		echo "# CONFIG_WC is not set" >>$(1); \
-	else \
+	fi; \
 	if [ "$(SLIM)" = "y" ]; then \
 		sed -i "/CONFIG_AWK/d" $(1); \
 		echo "# CONFIG_AWK is not set" >>$(1); \
@@ -1261,7 +1313,6 @@ define BusyboxOptions
 			echo "CONFIG_SENDMAIL=y" >>$(1); \
 		fi; \
 	fi; \
-	fi; \
 	if [ "$(DISKTEST)" = "y" ]; then \
 		sed -i "/CONFIG_HDPARM/d" $(1); \
 		echo "CONFIG_HDPARM=y" >>$(1); \
@@ -1278,13 +1329,13 @@ define BusyboxOptions
 		sed -i "/CONFIG_FEATURE_SHOW_THREADS/d" $(1); \
 		echo "CONFIG_FEATURE_SHOW_THREADS=y" >>$(1); \
 	fi; \
-	if [ "$(EXFAT)" = "y" ]; then \
-		sed -i "/CONFIG_FEATURE_VOLUMEID_EXFAT/d" $(1); \
-		echo "CONFIG_FEATURE_VOLUMEID_EXFAT=y" >>$(1); \
-	fi; \
 	if [ "$(TMOBILE)" = "y" ]; then \
 		sed -i "/CONFIG_FEATURE_UDHCP_RFC3397/d" $(1); \
 		echo "CONFIG_FEATURE_UDHCP_RFC3397=y" >>$(1); \
+	fi; \
+	if [ "$(EXFAT)" = "y" ]; then \
+		sed -i "/CONFIG_FEATURE_VOLUMEID_EXFAT/d" $(1); \
+		echo "CONFIG_FEATURE_VOLUMEID_EXFAT=y" >>$(1); \
 	fi; \
 	)
 	$(call platformBusyboxOptions, $(1))
@@ -1678,7 +1729,7 @@ define KernelConfig
 			echo "CONFIG_DUMP_PREV_OOPS_MSG=y" >>$(1); \
 			echo "CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR=0x01810000" >>$(1); \
 			echo "CONFIG_DUMP_PREV_OOPS_MSG_BUF_LEN=0x2000" >>$(1); \
-		elif [ "$(BUILD_NAME)" = "RT-AC68U" ]; then \
+		elif [ "$(BUILD_NAME)" = "RT-AC68U" ] || [ "$(BUILD_NAME)" = "TM-AC1900" ] || [ "$(BUILD_NAME)" = "RT-AC3200" ]; then \
 			echo "CONFIG_DUMP_PREV_OOPS_MSG=y" >>$(1); \
 			echo "CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR=0xC0000000" >>$(1); \
 			echo "CONFIG_DUMP_PREV_OOPS_MSG_BUF_LEN=0x2000" >>$(1); \
@@ -1691,6 +1742,10 @@ define KernelConfig
 		fi; \
 	else \
 		echo "# CONFIG_DUMP_PREV_OOPS_MSG is not set" >>$(1); \
+	fi; \
+	if [ "$(DHDAP)" = "y" ]; then \
+		sed -i "/CONFIG_DHDAP/d" $(1); \
+		echo "CONFIG_DHDAP=m" >>$(1); \
 	fi; \
 	sed -i "/CONFIG_LINUX_MTD/d" $(1); \
 	if [ "$(TMOBILE)" = "y" ]; then \
@@ -1795,7 +1850,7 @@ define save_src_config
 	fi ;
 endef
 
-rt-% RT-% ea-% EA-%:
+rt-% RT-% ea-% EA-% tm-% TM-%:
 	$(call save_src_config, $@)
 	$(MAKE) bin
 
@@ -1838,6 +1893,10 @@ setprofile:
 		echo "RTCONFIG_WLMODULE_MT7610_AP=y" >> router/.config; \
 	fi
 
+	@if grep -q "CONFIG_RLT_WIFI=m" $(LINUXDIR)/.config ; then \
+		sed -i "/RTCONFIG_WLMODULE_RLT_WIFI/d" router/.config; \
+		echo "RTCONFIG_WLMODULE_RLT_WIFI=y" >> router/.config; \
+	fi
 	@$(MAKE) -C router oldconfig
 
 cleanlibc:

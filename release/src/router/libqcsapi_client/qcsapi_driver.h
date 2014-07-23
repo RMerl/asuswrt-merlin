@@ -414,6 +414,7 @@ typedef enum {
 	e_qcsapi_wifi_get_scs_dfs_reentry_request,
 	e_qcsapi_wifi_get_scs_cca_intf,
 	e_qcsapi_wifi_get_scs_param,
+	e_qcsapi_wifi_set_scs_stats,
 
 	e_qcsapi_wifi_start_ocac,
 	e_qcsapi_wifi_stop_ocac,
@@ -504,6 +505,11 @@ typedef enum {
 	e_qcsapi_set_security_defer_mode,
 	e_qcsapi_apply_security_config,
 
+	e_qcsapi_wifi_set_intra_bss_isolate,
+	e_qcsapi_wifi_get_intra_bss_isolate,
+	e_qcsapi_wifi_set_bss_isolate,
+	e_qcsapi_wifi_get_bss_isolate,
+	e_qcsapi_wifi_get_disassoc_reason,
 	e_qcsapi_nosuch_api = 0
 } qcsapi_entry_point;
 

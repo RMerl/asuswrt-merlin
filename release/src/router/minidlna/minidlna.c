@@ -65,6 +65,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <pthread.h>
+#include <limits.h>
 #include <libgen.h>
 #include <pwd.h>
 
@@ -359,7 +360,8 @@ rescan:
 		else if (ret == 2)
 			DPRINTF(E_WARN, L_GENERAL, "Removed media_dir detected; rescanning...\n");
 		else
-			DPRINTF(E_WARN, L_GENERAL, "Database version mismatch; need to recreate...\n");
+			DPRINTF(E_WARN, L_GENERAL, "Database version mismatch (%d=>%d); need to recreate...\n",
+				ret, DB_VERSION);
 		sqlite3_close(db);
 
 		snprintf(cmd, sizeof(cmd), "rm -rf %s/files.db %s/art_cache", db_path, db_path);
@@ -426,7 +428,7 @@ writepidfile(const char *fname, int pid, uid_t uid)
 		if (uid > 0)
 		{
 			if (chown(dir, uid, -1) != 0)
-				DPRINTF(E_WARN, L_GENERAL, "Unable to change pidfile ownership: %s\n",
+				DPRINTF(E_WARN, L_GENERAL, "Unable to change pidfile %s ownership: %s\n",
 					dir, strerror(errno));
 		}
 	}
@@ -442,19 +444,26 @@ writepidfile(const char *fname, int pid, uid_t uid)
 	if (fprintf(pidfile, "%d\n", pid) <= 0)
 	{
 		DPRINTF(E_ERROR, L_GENERAL, 
-			"Unable to write to pidfile %s: %s\n", fname);
+			"Unable to write to pidfile %s: %s\n", fname, strerror(errno));
 		ret = -1;
 	}
 	if (uid > 0)
 	{
 		if (fchown(fileno(pidfile), uid, -1) != 0)
-			DPRINTF(E_WARN, L_GENERAL, "Unable to change pidfile ownership: %s\n",
-				pidfile, strerror(errno));
+			DPRINTF(E_WARN, L_GENERAL, "Unable to change pidfile %s ownership: %s\n",
+				fname, strerror(errno));
 	}
 
 	fclose(pidfile);
 
 	return ret;
+}
+
+static int strtobool(const char *str)
+{
+	return ((strcasecmp(str, "yes") == 0) ||
+		(strcasecmp(str, "true") == 0) ||
+		(atoi(str) == 1));
 }
 
 // add for getting scanning status
@@ -478,13 +487,6 @@ void remove_scantag(void)
 	snprintf(path, sizeof(path), "%s/scantag", db_path);
 
 	unlink(path);
-}
-
-static int strtobool(const char *str)
-{
-	return ((strcasecmp(str, "yes") == 0) ||
-		(strcasecmp(str, "true") == 0) ||
-		(atoi(str) == 1));
 }
 
 /* init phase :
@@ -714,7 +716,8 @@ init(int argc, char **argv)
 				runtime_vars.root_container = IMAGE_ID;
 				break;
 			default:
-				DPRINTF(E_ERROR, L_GENERAL, "Invalid root container! [%s]\n",
+				runtime_vars.root_container = ary_options[i].value;
+				DPRINTF(E_WARN, L_GENERAL, "Using arbitrary root container [%s]\n",
 					ary_options[i].value);
 				break;
 			}
@@ -1204,8 +1207,6 @@ main(int argc, char **argv)
 		tivo_bcast.sin_addr.s_addr = htonl(getBcastAddress());
 		tivo_bcast.sin_port = htons(2190);
 	}
-	else
-		sbeacon = -1;
 #endif
 
 	reload_ifaces(0);
@@ -1251,7 +1252,7 @@ main(int argc, char **argv)
 					timeout.tv_usec = lastnotifytime.tv_usec - timeofday.tv_usec;
 			}
 #ifdef TIVO_SUPPORT
-			if (GETFLAG(TIVO_MASK))
+			if (sbeacon >= 0)
 			{
 				if (timeofday.tv_sec >= (lastbeacontime.tv_sec + beacon_interval))
 				{

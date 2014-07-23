@@ -40,9 +40,9 @@ var wanauxstate = -1;
 var old_link_internet = -1;
 var lanproto = '<% nvram_get("lan_proto"); %>';
 
-// DSLTODO, single wan
 var wanproto = '<% nvram_get("wan_proto"); %>';
 var dslproto = '<% nvram_get("dsl0_proto"); %>';
+var dslx_transmode = '<% nvram_get("dslx_transmode"); %>';
 
 var wans_dualwan = '<% nvram_get("wans_dualwan"); %>';
 var wans_lanport = '<% nvram_get("wans_lanport"); %>';
@@ -147,7 +147,11 @@ function initial(){
 		$('goSetting').style.display = "";
 		
 		if(dualWAN_support){
-			if(parent.document.form.dual_wan_flag.value == 0){
+			if(dsl_support && wans_dualwan.split(" ")[0] == "usb" && parent.document.form.dual_wan_flag.value == 0){
+				$("goDualWANSetting").style.display = "none";
+				$("dualwan_enable_button").style.display = "none";
+			}
+			else if(parent.document.form.dual_wan_flag.value == 0){
 				$("goDualWANSetting").style.display = "none";
 				$("dualwan_enable_button").style.display = "";
 			}
@@ -207,12 +211,12 @@ function update_connection_type(dualwan_unit){
 	else
 		var wanlink_type_conv = secondary_wanlink_type();
 
-	// DSLTODO, single wan?
-	if (dsl_support /* && dualwan_unit == 0 */) {
-		if (wanlink_type_conv == "pppoe") {
-			if (dslproto == "pppoa") wanlink_type_conv = dslproto;
-		} else if (wanproto == "static") {
-			if (dslproto == "ipoa") wanlink_type_conv = dslproto;
+	if (dsl_support) {
+		if( wans_dualwan.split(" ")[dualwan_unit] == "dsl" ) {
+			if(dslx_transmode == "atm") {
+				if (dslproto == "pppoa" || dslproto == "ipoa")
+					wanlink_type_conv = dslproto;
+			}
 		}
 	}
 
@@ -553,7 +557,10 @@ function manualSetup(){
 				<script type="text/javascript">
 						$j('#radio_dualwan_enable').iphoneSwitch(parent.wans_flag, 
 							 function() {
-								document.internetForm.wans_dualwan.value = wans_dualwan.split(" ")[0]+" usb";
+								if(wans_dualwan.split(" ")[0] == "usb")
+									document.internetForm.wans_dualwan.value = wans_dualwan.split(" ")[0]+" wan";
+								else
+									document.internetForm.wans_dualwan.value = wans_dualwan.split(" ")[0]+" usb";
 								document.internetForm.action_wait.value = '<% get_default_reboot_time(); %>';
 								document.internetForm.action_script.value = "reboot";
 								parent.showLoading();

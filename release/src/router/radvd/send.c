@@ -76,18 +76,6 @@ static void send_ra_inc_len(size_t * len, int add)
 	}
 }
 
-static time_t time_diff_secs(const struct timeval *time_x, const struct timeval *time_y)
-{
-	time_t secs_diff;
-
-	secs_diff = time_x->tv_sec - time_y->tv_sec;
-	if ((time_x->tv_usec - time_y->tv_usec) >= 500000)
-		secs_diff++;
-
-	return secs_diff;
-
-}
-
 static void decrement_lifetime(const time_t secs, uint32_t * lifetime)
 {
 
@@ -118,8 +106,8 @@ int send_ra(struct Interface *iface, struct in6_addr *dest)
 	struct AdvDNSSL *dnssl;
 	struct AdvLowpanCo *lowpanco;
 	struct AdvAbro *abroo;
-	struct timeval time_now;
-	time_t secs_since_last_ra;
+	struct timespec time_now;
+	int64_t secs_since_last_ra;
 	char addr_str[INET6_ADDRSTRLEN];
 
 	unsigned char buff[MSG_SIZE_SEND];
@@ -167,14 +155,14 @@ int send_ra(struct Interface *iface, struct in6_addr *dest)
 
 	if (dest == NULL) {
 		dest = (struct in6_addr *)all_hosts_addr;
-		now(&iface->last_multicast);
+		clock_gettime(CLOCK_MONOTONIC, &iface->last_multicast);
 	}
 
-	now(&time_now);
-	secs_since_last_ra = time_diff_secs(&time_now, &iface->last_ra_time);
+	clock_gettime(CLOCK_MONOTONIC, &time_now);
+	secs_since_last_ra = timespecdiff(&time_now, &iface->last_ra_time) / 1000;
 	if (secs_since_last_ra < 0) {
 		secs_since_last_ra = 0;
-		flog(LOG_WARNING, "gettimeofday() went backwards!");
+		flog(LOG_WARNING, "clock_gettime(CLOCK_MONOTONIC) went backwards!");
 	}
 	iface->last_ra_time = time_now;
 

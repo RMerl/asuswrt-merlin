@@ -67,15 +67,6 @@ do
 	fi
 done
 
-if [ -n "${slave_ipaddr}" ]; then
-	echo_with_logging "=== Setting IP address and netmask to ${slave_ipaddr}"
-	${INVOKE_QCSAPI} store_ipaddr ${slave_ipaddr}
-fi
-
-echo "=== get tweak_qcomm"
-tftp -g 1.1.1.1 -r tweak_qcomm -l /mnt/jffs2/tweak_qcomm
-chmod a+x /mnt/jffs2/tweak_qcomm &
-
 echo_with_logging "=== Running start-prod"
 ${INVOKE_QCSAPI} startprod
 
@@ -161,6 +152,18 @@ echo_with_logging "=== Applying security configuration"
 ${INVOKE_QCSAPI} apply_security_config wifi0
 
 echo_with_logging "=== Apply some hardware wireless setting"
-ifconfig br0 169.254.39.2 netmask 255.255.255.0
+# ifconfig br0 169.254.39.2 netmask 255.255.255.0
+
+if [ -n "${server_ipaddr}" ]; then
+	echo_with_logging "=== Setting IP address and netmask to ${server_ipaddr}"
+	# ${INVOKE_QCSAPI} store_ipaddr ${slave_ipaddr}
+	ifconfig br0 ${server_ipaddr} netmask 255.255.255.0
+fi
+
+echo "=== skip get tweak_qcomm"
+# tftp -g ${client_ipaddr} -r tweak_qcomm -l /mnt/jffs2/tweak_qcomm
+# chmod 777 /mnt/jffs2/tweak_qcomm &
+# sleep 5
+# /mnt/jffs2/tweak_qcomm &
 
 echo_with_logging "=== Done setting up stateless slave"

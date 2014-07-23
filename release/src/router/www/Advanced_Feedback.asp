@@ -63,7 +63,7 @@ function applyRule(){
 						return false;
 				}
 		}
-	
+		document.form.fb_browserInfo.value = navigator.userAgent;
 		showLoading(60);
 		document.form.submit();
 	}
@@ -110,6 +110,7 @@ function isEmail(strE) {
 <input type="hidden" name="PM_attach_iptables" value="">	
 <input type="hidden" name="feedbackresponse" value="<% nvram_get("feedbackresponse"); %>">
 <input type="hidden" name="fb_experience" value="<% nvram_get("fb_experience"); %>">
+<input type="hidden" name="fb_browserInfo" value="">
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 <tr>
 <td width="17">&nbsp;</td>

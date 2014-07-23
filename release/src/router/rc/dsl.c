@@ -198,6 +198,7 @@ void convert_dsl_wan_settings(int req)
 	{
 		convert_dsl_config_num();
 		eval("req_dsl_drv", "reloadpvc");		
+		eval("req_dsl_drv", "rmvlan", nvram_safe_get("dslx_rmvlan"));
 		convert_dsl_wan();		
 	}
 
@@ -283,16 +284,6 @@ void start_dsl()
 	char *argv_tp_init[] = {"tp_init", NULL};
 	int pid;
 	char buf_ip[32];
-
-	// if setting cfg file is from annex a, annex b will has invalid values
-	if(nvram_match("productid", "DSL-N55U-B"))
-	{
-		if (nvram_get_int("dslx_annex") != 0)
-		{
-			nvram_set_int("dslx_annex", 0); //Paul add 2012/8/22, for Annex B model should always be 0
-			nvram_set_int("dslx_config_num", 0);
-		}
-	}
 	
 	mkdir("/tmp/adsl", S_IRUSR | S_IWUSR | S_IXUSR);
 

@@ -2,7 +2,7 @@
 /*
 *  ########## DO NOT EDIT ###########
 
-Automatically generated on Mon Jun  2 05:05:59 PDT 2014
+Automatically generated on Mon Jul  7 21:21:49 PDT 2014
 
 *
 * Adapter from qcsapi.h functions
@@ -808,6 +808,45 @@ int qcsapi_wifi_get_scs_currchan_report(const char * ifname, struct qcsapi_scs_c
 	scs_currchan_rpt->tx_ms = __resp.scs_currchan_rpt_tx_ms;
 	scs_currchan_rpt->rx_ms = __resp.scs_currchan_rpt_rx_ms;
 	scs_currchan_rpt->pmbl = __resp.scs_currchan_rpt_pmbl;
+	if (debug) { fprintf(stderr, "%s:%d %s post\n", __FILE__, __LINE__, __FUNCTION__); }
+
+	return __resp.return_code;
+}
+
+int qcsapi_wifi_set_scs_stats(const char * ifname, uint16_t start)
+{
+	int retries = 0;
+	CLIENT *clnt = qcsapi_adapter_get_client();
+	enum clnt_stat __rpcret;
+	struct qcsapi_wifi_set_scs_stats_request __req;
+	struct qcsapi_wifi_set_scs_stats_response __resp;
+	memset(&__req, 0, sizeof(__req));
+	memset(&__resp, 0, sizeof(__resp));
+	__req.ifname = (str)ifname;
+	__req.start = (unsigned int)start;
+	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
+	client_qcsapi_pre();
+	while (1) {
+		__rpcret = clnt_call(clnt, QCSAPI_WIFI_SET_SCS_STATS_REMOTE,
+				(xdrproc_t)xdr_qcsapi_wifi_set_scs_stats_request, (caddr_t)&__req,
+				(xdrproc_t)xdr_qcsapi_wifi_set_scs_stats_response, (caddr_t)&__resp,
+				__timeout);
+		if (__rpcret == RPC_SUCCESS) {
+			client_qcsapi_post(0);
+			break;
+		} else {
+			clnt_perror (clnt, "qcsapi_wifi_set_scs_stats call failed");
+			clnt_perrno (__rpcret);
+			if (retries >= retries_limit) {
+				client_qcsapi_post(1);
+				return -ENOLINK;
+			}
+			retries++;
+			client_qcsapi_reconnect();
+		}
+
+	}
+
 	if (debug) { fprintf(stderr, "%s:%d %s post\n", __FILE__, __LINE__, __FUNCTION__); }
 
 	return __resp.return_code;
@@ -5402,6 +5441,170 @@ int qcsapi_wifi_set_ap_isolate(const char * ifname, const int new_ap_isolate)
 			break;
 		} else {
 			clnt_perror (clnt, "qcsapi_wifi_set_ap_isolate call failed");
+			clnt_perrno (__rpcret);
+			if (retries >= retries_limit) {
+				client_qcsapi_post(1);
+				return -ENOLINK;
+			}
+			retries++;
+			client_qcsapi_reconnect();
+		}
+
+	}
+
+	if (debug) { fprintf(stderr, "%s:%d %s post\n", __FILE__, __LINE__, __FUNCTION__); }
+
+	return __resp.return_code;
+}
+
+int qcsapi_wifi_get_intra_bss_isolate(const char * ifname, qcsapi_unsigned_int * p_ap_isolate)
+{
+	int retries = 0;
+	CLIENT *clnt = qcsapi_adapter_get_client();
+	enum clnt_stat __rpcret;
+	struct qcsapi_wifi_get_intra_bss_isolate_request __req;
+	struct qcsapi_wifi_get_intra_bss_isolate_response __resp;
+	memset(&__req, 0, sizeof(__req));
+	memset(&__resp, 0, sizeof(__resp));
+	if (p_ap_isolate == NULL) {
+		return -EFAULT;
+	}
+	__req.ifname = (str)ifname;
+	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
+	client_qcsapi_pre();
+	while (1) {
+		__rpcret = clnt_call(clnt, QCSAPI_WIFI_GET_INTRA_BSS_ISOLATE_REMOTE,
+				(xdrproc_t)xdr_qcsapi_wifi_get_intra_bss_isolate_request, (caddr_t)&__req,
+				(xdrproc_t)xdr_qcsapi_wifi_get_intra_bss_isolate_response, (caddr_t)&__resp,
+				__timeout);
+		if (__rpcret == RPC_SUCCESS) {
+			client_qcsapi_post(0);
+			break;
+		} else {
+			clnt_perror (clnt, "qcsapi_wifi_get_intra_bss_isolate call failed");
+			clnt_perrno (__rpcret);
+			if (retries >= retries_limit) {
+				client_qcsapi_post(1);
+				return -ENOLINK;
+			}
+			retries++;
+			client_qcsapi_reconnect();
+		}
+
+	}
+
+	if (p_ap_isolate)
+		*p_ap_isolate = __resp.p_ap_isolate;
+	if (debug) { fprintf(stderr, "%s:%d %s post\n", __FILE__, __LINE__, __FUNCTION__); }
+
+	return __resp.return_code;
+}
+
+int qcsapi_wifi_set_intra_bss_isolate(const char * ifname, const qcsapi_unsigned_int new_ap_isolate)
+{
+	int retries = 0;
+	CLIENT *clnt = qcsapi_adapter_get_client();
+	enum clnt_stat __rpcret;
+	struct qcsapi_wifi_set_intra_bss_isolate_request __req;
+	struct qcsapi_wifi_set_intra_bss_isolate_response __resp;
+	memset(&__req, 0, sizeof(__req));
+	memset(&__resp, 0, sizeof(__resp));
+	__req.ifname = (str)ifname;
+	__req.new_ap_isolate = (unsigned int)new_ap_isolate;
+	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
+	client_qcsapi_pre();
+	while (1) {
+		__rpcret = clnt_call(clnt, QCSAPI_WIFI_SET_INTRA_BSS_ISOLATE_REMOTE,
+				(xdrproc_t)xdr_qcsapi_wifi_set_intra_bss_isolate_request, (caddr_t)&__req,
+				(xdrproc_t)xdr_qcsapi_wifi_set_intra_bss_isolate_response, (caddr_t)&__resp,
+				__timeout);
+		if (__rpcret == RPC_SUCCESS) {
+			client_qcsapi_post(0);
+			break;
+		} else {
+			clnt_perror (clnt, "qcsapi_wifi_set_intra_bss_isolate call failed");
+			clnt_perrno (__rpcret);
+			if (retries >= retries_limit) {
+				client_qcsapi_post(1);
+				return -ENOLINK;
+			}
+			retries++;
+			client_qcsapi_reconnect();
+		}
+
+	}
+
+	if (debug) { fprintf(stderr, "%s:%d %s post\n", __FILE__, __LINE__, __FUNCTION__); }
+
+	return __resp.return_code;
+}
+
+int qcsapi_wifi_get_bss_isolate(const char * ifname, qcsapi_unsigned_int * p_ap_isolate)
+{
+	int retries = 0;
+	CLIENT *clnt = qcsapi_adapter_get_client();
+	enum clnt_stat __rpcret;
+	struct qcsapi_wifi_get_bss_isolate_request __req;
+	struct qcsapi_wifi_get_bss_isolate_response __resp;
+	memset(&__req, 0, sizeof(__req));
+	memset(&__resp, 0, sizeof(__resp));
+	if (p_ap_isolate == NULL) {
+		return -EFAULT;
+	}
+	__req.ifname = (str)ifname;
+	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
+	client_qcsapi_pre();
+	while (1) {
+		__rpcret = clnt_call(clnt, QCSAPI_WIFI_GET_BSS_ISOLATE_REMOTE,
+				(xdrproc_t)xdr_qcsapi_wifi_get_bss_isolate_request, (caddr_t)&__req,
+				(xdrproc_t)xdr_qcsapi_wifi_get_bss_isolate_response, (caddr_t)&__resp,
+				__timeout);
+		if (__rpcret == RPC_SUCCESS) {
+			client_qcsapi_post(0);
+			break;
+		} else {
+			clnt_perror (clnt, "qcsapi_wifi_get_bss_isolate call failed");
+			clnt_perrno (__rpcret);
+			if (retries >= retries_limit) {
+				client_qcsapi_post(1);
+				return -ENOLINK;
+			}
+			retries++;
+			client_qcsapi_reconnect();
+		}
+
+	}
+
+	if (p_ap_isolate)
+		*p_ap_isolate = __resp.p_ap_isolate;
+	if (debug) { fprintf(stderr, "%s:%d %s post\n", __FILE__, __LINE__, __FUNCTION__); }
+
+	return __resp.return_code;
+}
+
+int qcsapi_wifi_set_bss_isolate(const char * ifname, const qcsapi_unsigned_int new_ap_isolate)
+{
+	int retries = 0;
+	CLIENT *clnt = qcsapi_adapter_get_client();
+	enum clnt_stat __rpcret;
+	struct qcsapi_wifi_set_bss_isolate_request __req;
+	struct qcsapi_wifi_set_bss_isolate_response __resp;
+	memset(&__req, 0, sizeof(__req));
+	memset(&__resp, 0, sizeof(__resp));
+	__req.ifname = (str)ifname;
+	__req.new_ap_isolate = (unsigned int)new_ap_isolate;
+	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
+	client_qcsapi_pre();
+	while (1) {
+		__rpcret = clnt_call(clnt, QCSAPI_WIFI_SET_BSS_ISOLATE_REMOTE,
+				(xdrproc_t)xdr_qcsapi_wifi_set_bss_isolate_request, (caddr_t)&__req,
+				(xdrproc_t)xdr_qcsapi_wifi_set_bss_isolate_response, (caddr_t)&__resp,
+				__timeout);
+		if (__rpcret == RPC_SUCCESS) {
+			client_qcsapi_post(0);
+			break;
+		} else {
+			clnt_perror (clnt, "qcsapi_wifi_set_bss_isolate call failed");
 			clnt_perrno (__rpcret);
 			if (retries >= retries_limit) {
 				client_qcsapi_post(1);
@@ -15440,6 +15643,49 @@ int qcsapi_wifi_get_nss_cap(const char * ifname, const qcsapi_mimo_type modulati
 
 	if (nss)
 		*nss = __resp.nss;
+	if (debug) { fprintf(stderr, "%s:%d %s post\n", __FILE__, __LINE__, __FUNCTION__); }
+
+	return __resp.return_code;
+}
+
+int qcsapi_wifi_get_disassoc_reason(const char * ifname, qcsapi_unsigned_int * reason)
+{
+	int retries = 0;
+	CLIENT *clnt = qcsapi_adapter_get_client();
+	enum clnt_stat __rpcret;
+	struct qcsapi_wifi_get_disassoc_reason_request __req;
+	struct qcsapi_wifi_get_disassoc_reason_response __resp;
+	memset(&__req, 0, sizeof(__req));
+	memset(&__resp, 0, sizeof(__resp));
+	if (reason == NULL) {
+		return -EFAULT;
+	}
+	__req.ifname = (str)ifname;
+	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
+	client_qcsapi_pre();
+	while (1) {
+		__rpcret = clnt_call(clnt, QCSAPI_WIFI_GET_DISASSOC_REASON_REMOTE,
+				(xdrproc_t)xdr_qcsapi_wifi_get_disassoc_reason_request, (caddr_t)&__req,
+				(xdrproc_t)xdr_qcsapi_wifi_get_disassoc_reason_response, (caddr_t)&__resp,
+				__timeout);
+		if (__rpcret == RPC_SUCCESS) {
+			client_qcsapi_post(0);
+			break;
+		} else {
+			clnt_perror (clnt, "qcsapi_wifi_get_disassoc_reason call failed");
+			clnt_perrno (__rpcret);
+			if (retries >= retries_limit) {
+				client_qcsapi_post(1);
+				return -ENOLINK;
+			}
+			retries++;
+			client_qcsapi_reconnect();
+		}
+
+	}
+
+	if (reason)
+		*reason = __resp.reason;
 	if (debug) { fprintf(stderr, "%s:%d %s post\n", __FILE__, __LINE__, __FUNCTION__); }
 
 	return __resp.return_code;

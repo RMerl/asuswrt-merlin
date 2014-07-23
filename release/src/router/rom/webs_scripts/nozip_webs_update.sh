@@ -23,24 +23,24 @@ swisscom=`nvram show | grep rc_support | grep swisscom`
 tmo=`nvram show | grep rc_support | grep tmo`
 if [ "$forsq" == "1" ]; then
 	if [ "$swisscom" != "" ]; then
-                echo "---- update sq swisscom----" >> /tmp/webs_upgrade.log
+                echo "---- update sq swisscom----" > /tmp/webs_upgrade.log
                 wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ/wlan_update_swisscom.zip -O /tmp/wlan_update.txt
 	elif [ "$tmo" != "" ]; then
-		echo "---- update sq tmo----" >> /tmp/webs_upgrade.log
+		echo "---- update sq tmo----" > /tmp/webs_upgrade.log
                 wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ/wlan_update_tmo.zip -O /tmp/wlan_update.txt
 	else
-                echo "---- update sq normal----" >> /tmp/webs_upgrade.log
+                echo "---- update sq normal----" > /tmp/webs_upgrade.log
                 wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ/wlan_update_v2.zip -O /tmp/wlan_update.txt		
 	fi
 else
 	if [ "$swisscom" != "" ]; then
-                echo "---- update real swisscom----" >> /tmp/webs_upgrade.log
+                echo "---- update real swisscom----" > /tmp/webs_upgrade.log
                 wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/wlan_update_swisscom.zip -O /tmp/wlan_update.txt
         elif [ "$tmo" != "" ]; then
-                echo "---- update real tmo----" >> /tmp/webs_upgrade.log
+                echo "---- update real tmo----" > /tmp/webs_upgrade.log
                 wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/wlan_update_tmo.zip -O /tmp/wlan_update.txt
 	else
-                echo "---- update real normal----" >> /tmp/webs_upgrade.log
+                echo "---- update real normal----" > /tmp/webs_upgrade.log
                 wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/wlan_update_v2.zip -O /tmp/wlan_update.txt
 	fi
 fi	

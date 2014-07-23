@@ -7,7 +7,7 @@
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
-<link rel="icon" href="images/favicon.png"><title><#Web_Title#> - <#menu2#></title>
+<link rel="icon" href="images/favicon.png"><title><#Web_Title#> - <#UPnPMediaServer#></title>
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="usp_style.css">
@@ -237,7 +237,7 @@ function applyRule(){
 								dms_dir_type_tmp_value += "<";
 								type_translate_tmp += document.getElementById("dlna_path_table").rows[i].cells[1].innerHTML.indexOf("Audio")>=0? "A":"";
 								type_translate_tmp += document.getElementById("dlna_path_table").rows[i].cells[1].innerHTML.indexOf("Image")>=0? "P":"";
-								type_translate_tmp += document.getElementById("dlna_path_table").rows[i].cells[1].innerHTML.indexOf("Vedio")>=0? "V":"";
+								type_translate_tmp += document.getElementById("dlna_path_table").rows[i].cells[1].innerHTML.indexOf("Video")>=0? "V":"";
 								dms_dir_type_tmp_value += type_translate_tmp;
 							}
 						}
@@ -345,9 +345,11 @@ function get_tree_items(treeitems){
 	this.isLoading = 1;
 	var array_temp = new Array();
 	var array_temp_split = new Array();
-	for(var j=0;j<treeitems.length;j++){ // To hide folder 'asusware'
-		array_temp_split[j] = treeitems[j].split("#");
-		if( array_temp_split[j][0].match(/^asusware$/)	){
+	for(var j=0;j<treeitems.length;j++){
+		//treeitems[j] : "Download2#22#0"
+		array_temp_split[j] = treeitems[j].split("#"); 
+		// Mipsel:asusware  Mipsbig:asusware.big  Armel:asusware.arm  // To hide folder 'asusware'
+		if( array_temp_split[j][0].match(/^asusware$/)	|| array_temp_split[j][0].match(/^asusware.big$/) || array_temp_split[j][0].match(/^asusware.arm$/) ){
 			continue;
 		}
 
@@ -662,7 +664,7 @@ function del_Row(r){
 			dms_dir_type_x_tmp += "&#60";
 				tmp_type += document.getElementById("dlna_path_table").rows[k].cells[1].innerHTML.indexOf("Audio")>=0? "A " : "";
 				tmp_type += document.getElementById("dlna_path_table").rows[k].cells[1].innerHTML.indexOf("Image")>=0? "P " : "";
-				tmp_type += document.getElementById("dlna_path_table").rows[k].cells[1].innerHTML.indexOf("Vedio")>=0? "V " : "";
+				tmp_type += document.getElementById("dlna_path_table").rows[k].cells[1].innerHTML.indexOf("Video")>=0? "V " : "";
 			dms_dir_type_x_tmp += tmp_type;
 	}
 
@@ -899,7 +901,7 @@ function set_dms_dir(obj){
 				</div>
 				<div style="margin:5px;"><img src="/images/New_ui/export/line_export.png"></div>
 
-			<div class="formfontdesc"><#upnp_Desc#></div>	<!-- "upnp_Desc" is a untranslated string. -->
+			<div id="upnp_desc_id" class="formfontdesc"><#upnp_Desc#></div>
 		</td>
   </tr>
 
@@ -934,7 +936,7 @@ function set_dms_dir(obj){
         		</td>
        	</tr>
        	<tr>
-       		<th>iTunes Server Name</th>
+       		<th><#iTunesServer_itemname#></th>
 					<td>
 						<div><input name="daapd_friendly_name" type="text" style="margin-left:15px;" class="input_15_table" value=""><br/><div id="alert_msg1" style="color:#FC0;margin-left:10px;"></div></div>
 					</td>
@@ -947,7 +949,7 @@ function set_dms_dir(obj){
 					<tr><td colspan="2"><#UPnPMediaServer#></td></tr>
 				</thead>
    			<tr>
-        	<th>Enable DLNA Media Server</th>
+        	<th><#DLNA_enable#></th>
         	<td>
         			<div class="left" style="width:94px; position:relative; left:3%;" id="radio_dms_enable"></div>
 							<div class="clear"></div>
@@ -979,21 +981,21 @@ function set_dms_dir(obj){
         		</td>
        	</tr>
        	<tr>
-       		<th>Media Server Name</th>
+       		<th><#DLNA_itemname#></th>
 					<td>
 						<div><input name="dms_friendly_name" type="text" style="margin-left:15px;" class="input_15_table" value=""><br/><div id="alert_msg2" style="color:#FC0;margin-left:10px;"></div></div>
 					</td>
       	</tr>
    			<tr>
-        	<th>Media Server Status</th>
+        	<th><#DLNA_status#></th>
         	<td><span id="dmsStatus" style="margin-left:15px">Idle</span>
         	</td>
        	</tr>
    			<tr>
-        	<th>Media Server Path Setting</th>
+        	<th><#DLNA_path_setting#></th>
         	<td>
-        		<input type="radio" value="0" name="dms_dir_manual_x" class="input" onClick="set_dms_dir(this);" <% nvram_match("dms_dir_manual", "0", "checked"); %>>All Disks Shared
-						<input type="radio" value="1" name="dms_dir_manual_x" class="input" onClick="set_dms_dir(this);" <% nvram_match("dms_dir_manual", "1", "checked"); %>>Manual Media Server Path
+        		<input type="radio" value="0" name="dms_dir_manual_x" class="input" onClick="set_dms_dir(this);" <% nvram_match("dms_dir_manual", "0", "checked"); %>><#DLNA_path_shared#>
+						<input type="radio" value="1" name="dms_dir_manual_x" class="input" onClick="set_dms_dir(this);" <% nvram_match("dms_dir_manual", "1", "checked"); %>><#DLNA_path_manual#>
         	</td>
        	</tr>
       	</table>
@@ -1003,13 +1005,13 @@ function set_dms_dir(obj){
       	<table width="98%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
 			  	<thead>
 			  		<tr>
-						<td colspan="3" id="GWStatic">Manual Media Server Path&nbsp;(<#List_limit#>&nbsp;10)</td>
+						<td colspan="3" id="GWStatic"><#DLNA_path_manual#>&nbsp;(<#List_limit#>&nbsp;10)</td>
 			  		</tr>
 			  	</thead>
 
 			  	<tr>
-		  			<th>Media Server Directory</th>
-        		<th>Shared Content Type</th>
+		  			<th><#DLNA_directory#></th>
+        		<th><#DLNA_contenttype#></th>
         		<th><#list_add_delete#></th>
 			  	</tr>
 			  	<tr>

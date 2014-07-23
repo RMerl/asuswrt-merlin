@@ -28,7 +28,7 @@ ifeq ($(RTN14U),y)
 CFLAGS += -DBAND_2G_ONLY
 endif
 
-ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U)$(RTN11P),y)
+ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U)$(RTN11P)$(RTN54U),y)
 CFLAGS += -DRA_ESW
 endif
 
@@ -59,7 +59,6 @@ else
 ifeq ($(RTCONFIG_BCMWL6),y)
 OBJS += web-broadcom-wl6.o
 ifeq ($(RTCONFIG_QTN),y)
-OBJS += web-qtn.o
 OBJS += find_host_addr.o
 endif
 else
@@ -72,6 +71,10 @@ OBJS += web-dsl.o
 ifeq ($(RTCONFIG_RALINK),y)
 OBJS += web-dsl-upg.o
 endif
+endif
+
+ifeq ($(RTCONFIG_GEOIP),y)
+OBJS += geoiplookup.o
 endif
 
 LIBS = -L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared
@@ -89,7 +92,7 @@ CFLAGS += -I$(SRCBASE)/shared/bcmwifi/include
 CFLAGS += -I$(SRCBASE)/common/include
 LIBS += -lgcc_s
 ifeq ($(RTCONFIG_QTN),y)
-CFLAGS += -I$(TOP)/libqcsapi_client
+CFLAGS += -I$(TOP)/libqcsapi_client -I$(TOP)/shared/sysdeps/qtn
 LIBS += -L$(TOP)/libqcsapi_client -lqcsapi_client
 endif
 endif
@@ -112,9 +115,14 @@ ifeq ($(RTCONFIG_BWDPI),y)
 LIBS += -L$(TOP)/bwdpi -lbwdpi
 endif
 
+ifeq ($(RTCONFIG_GEOIP),y)
+CFLAGS += -I$(TOP)/GeoIP-1.6.2/libGeoIP
+LIBS += -L$(TOP)/GeoIP-1.6.2/libGeoIP/.libs -lGeoIP
+endif
+
 export CFLAGS
 ifeq ($(RTCONFIG_QTN),y)
-vpath %.c sysdeps $(TOP)/libqcsapi_client/qcsapi_rpc_common/client
+vpath %.c sysdeps $(TOP)/libqcsapi_client/qcsapi_rpc_common/client $(TOP)/shared/sysdeps/qtn
 else
 vpath %.c sysdeps
 endif

@@ -1,0 +1,13 @@
+# how to build under MinGW/MSYS:
+# (first you need to build & "install" zlib)
+
+export "CFLAGS=-O3 -I/usr/local/include"
+export "LDFLAGS=-L/usr/local/lib -lwsock32 -lws2_32"
+./configure
+make
+cp data/GeoIP.dat test/
+make check
+
+# note that GeoIP.dat file should be placed in the
+# same place as GeoIP-enabled executable modules!
+# there's NO DEFAULT PATH concept on Win32 :)

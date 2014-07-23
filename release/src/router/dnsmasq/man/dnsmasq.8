@@ -1550,6 +1550,7 @@ Treat DHCP request packets arriving at any of the <alias> interfaces
 as if they had arrived at <interface>. This option is necessary when
 using "old style" bridging on BSD platforms, since
 packets arrive at tap interfaces which don't have an IP address.
+A trailing '*' wildcard can be used in each <alias>.
 .TP
 .B \-s, --domain=<domain>[,<address range>[,local]]
 Specifies DNS domains for the DHCP server. Domains may be be given 

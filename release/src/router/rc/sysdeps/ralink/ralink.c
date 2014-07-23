@@ -52,7 +52,7 @@
 char *wlc_nvname(char *keyword);
 //#endif
 
-#if defined(RTAC52U) || defined(RTAC51U)
+#if defined(RTAC52U) || defined(RTAC51U) 
 #define VHT_SUPPORT /* 11AC */
 #endif
 
@@ -460,7 +460,7 @@ int setRegSpec(const char *regSpec)
 	if (regSpec == NULL || regSpec[0] == '\0' || strlen(regSpec) > 3)
 		return -1;
 	if (!strcasecmp(regSpec, "CE")) ;
-#if !defined(RTAC51U)	//AC51 current support CE and NCC only.
+#if !defined(RTAC51U) ||  !defined(RTN54U)	//AC51 current support CE and NCC only.
 	else if (!strcasecmp(regSpec, "FCC")) ;
 #endif
 #if defined(RTAC52U)
@@ -469,7 +469,7 @@ int setRegSpec(const char *regSpec)
 #if defined(RTAC52U)
 	else if (!strcasecmp(regSpec, "AU")) ;
 #endif
-#if defined(RTAC51U)
+#if defined(RTAC51U) ||  defined(RTN54U) 
 	else if (!strcasecmp(regSpec, "NCC")) ;
 #endif
 	else
@@ -586,7 +586,7 @@ setCountryCode_2G(const char *cc)
 	else if (!strcasecmp(cc, "FR")) ;
 	else if (!strcasecmp(cc, "GB")) ;
 	else if (!strcasecmp(cc, "GE")) ;
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) 
 	else if (!strcasecmp(cc, "EU")) ;
 #endif
 	else if (!strcasecmp(cc, "GR")) ;
@@ -885,7 +885,7 @@ getPIN()
 int
 GetPhyStatus(void)
 {
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) 
 	ATE_mt7620_esw_port_status();
 	return 1;
 #else
@@ -2107,7 +2107,7 @@ int gen_ralink_config(int band, int is_iNIC)
 	{
 		fprintf(fp, "GreenAP=%d\n", 1);
 	}
-#elif defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)
+#elif defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U)
 	/// MT7620 GreenAP will impact TSSI, force to disable GreenAP here..
 	//  MT7620 GreenAP cause bad site survey result on RTAC52 2G.
 	{
@@ -2814,11 +2814,23 @@ int gen_ralink_config(int band, int is_iNIC)
 	//HT_GI
 	str = nvram_safe_get(strcat_r(prefix, "HT_GI", tmp));
 	if (str && strlen(str))
+	{   
 		fprintf(fp, "HT_GI=%d\n", atoi(str));
+#if defined(RTN54U)
+#if defined(VHT_SUPPORT)
+		fprintf(fp, "VHT_SGI=%d\n", atoi(str));
+#endif		
+#endif		
+	}
 	else
 	{
 		warning = 39;
 		fprintf(fp, "HT_GI=%d\n", 1);
+#if defined(RTN54U)
+#if defined(VHT_SUPPORT)
+		fprintf(fp, "VHT_SGI=%d\n", 1);
+#endif		
+#endif		
 	}
 
 	//HT_STBC
@@ -4087,6 +4099,8 @@ getSiteSurvey(int band,char* ofile)
 						fprintf(fp, "\"%s\",", "bg");
 					else if(strcmp(ssap->SiteSurvey[i].wmode,"11b/g/n")==0)   
 						fprintf(fp, "\"%s\",", "bgn");
+					else if(strcmp(ssap->SiteSurvey[i].wmode,"11ac   ")==0)   
+						fprintf(fp, "\"%s\",", "ac");
 					else	
 						fprintf(fp, "\"%s\",", "");
 
@@ -5586,7 +5600,7 @@ ate_run_in(void)
 }
 #endif // RTN65U
 
-#if !defined(RTN14U) && !defined(RTAC52U) && !defined(RTAC51U) && !defined(RTN11P)
+#if !defined(RTN14U) && !defined(RTAC52U) && !defined(RTAC51U) && !defined(RTN11P) && !defined(RTN54U)
 int Set_SwitchPort_LEDs(const char *group, const char *action)
 {
 	int groupNo;

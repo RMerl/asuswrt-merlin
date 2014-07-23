@@ -232,7 +232,7 @@ void dhcp_packet(time_t now, int pxe_fd)
   for (bridge = daemon->bridges; bridge; bridge = bridge->next)
     {
       for (alias = bridge->alias; alias; alias = alias->next)
-	if (strncmp(ifr.ifr_name, alias->iface, IF_NAMESIZE) == 0)
+	if (wildcard_matchn(alias->iface, ifr.ifr_name, IF_NAMESIZE))
 	  {
 	    if (!(iface_index = if_nametoindex(bridge->iface)))
 	      {

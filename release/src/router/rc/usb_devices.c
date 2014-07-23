@@ -3426,6 +3426,9 @@ int asus_tty(const char *device_name, const char *action){
 			nvram_unset("usb_modem_act_type");
 			nvram_unset("usb_modem_act_int");
 			nvram_unset("usb_modem_act_bulk");
+			nvram_unset("usb_modem_act_vid");
+			nvram_unset("usb_modem_act_pid");
+			nvram_unset("usb_modem_act_signal");
 #if 0
 			// TODO: for the bad CTF. After updating CTF, need to mark these codes.
 			if(nvram_match("ctf_disable_modem", "1")){
@@ -3539,6 +3542,8 @@ int asus_tty(const char *device_name, const char *action){
 		nvram_set("usb_modem_act_path", usb_node);
 		snprintf(buf1, 32, "%u",  vid);
 		nvram_set("usb_modem_act_vid", buf1);
+		snprintf(buf1, 32, "%u",  pid);
+		nvram_set("usb_modem_act_pid", buf1);
 	}
 
 	// Find the control node of modem.
@@ -3659,7 +3664,7 @@ usb_dbg("(%s): cur_val=%d, tmp_val=%d.\n", device_name, cur_val, tmp_val);
 	}
 	else{ // isACMNode(device_name).
 		// Find the control interface of cdc-acm.
-		if(!isACMInterface(interface_name)){
+		if(!isACMInterface(interface_name, 1, vid, pid)){
 			usb_dbg("(%s): Not control interface!\n", device_name);
 			file_unlock(isLock_tty);
 			file_unlock(isLock);
@@ -3890,6 +3895,9 @@ int asus_usb_interface(const char *device_name, const char *action){
 
 #ifdef RTCONFIG_USB_MODEM
 		if(!strcmp(device_type, "modem")){
+			snprintf(nvram_usb_path, 16, "usb_path%s_act", port_path);
+			snprintf(buf, 64, "%s", nvram_safe_get(nvram_usb_path));
+
 			// remove the device between adding interface and adding tty.
 			modprobe_r("option");
 #if LINUX_KERNEL_VERSION >= KERNEL_VERSION(2,6,36)
@@ -3900,24 +3908,24 @@ int asus_usb_interface(const char *device_name, const char *action){
 #ifdef RTCONFIG_USB_BECEEM
 			modprobe_r("drxvi314");
 
-			if(pids("madwimax"))
-				killall_tk("madwimax");
+			vid = atoi(nvram_safe_get("usb_modem_act_vid"));
+			pid = atoi(nvram_safe_get("usb_modem_act_pid"));
+			if(is_samsung_dongle(1, vid, pid) || is_gct_dongle(1, vid, pid)){
+				nvram_unset("usb_modem_act_path");
+				nvram_unset("usb_modem_act_vid");
+				nvram_unset("usb_modem_act_pid");
+				nvram_unset(nvram_usb_path);
 
-			if(pids("gctwimax")){
-				killall_tk("gctwimax");
-				unlink(WIMAX_CONF);
-	                }
+				// Notify wanduck to switch the wan line to WAN port.
+				kill_pidfile_s("/var/run/wanduck.pid", SIGUSR2);
+			}
 #endif
 
-			memset(conf_file, 0, 32);
-			sprintf(conf_file, "%s.%s", USB_MODESWITCH_CONF, port_path);
+			snprintf(conf_file, 32, "%s.%s", USB_MODESWITCH_CONF, port_path);
 			unlink(conf_file);
 
-			memset(nvram_usb_path, 0, 16);
-			sprintf(nvram_usb_path, "usb_path%s_act", port_path);
-
 			// When ACM dongles are removed, there are no removed hotplugs of ttyACM nodes.
-			if(!strncmp(nvram_safe_get(nvram_usb_path), "ttyACM", 6)){
+			if(!strncmp(buf, "ttyACM", 6)){
 				// No methods let DUT restore the normal state after removing the ACM dongle.
 				notify_rc("reboot");
 			}
@@ -3953,8 +3961,7 @@ int asus_usb_interface(const char *device_name, const char *action){
 	// there is no any bounded drivers with Some Sierra dongles in the default state.
 	if(vid == 0x1199 && isStorageInterface(device_name)){
 		if(init_3g_param(port_path, vid, pid)){
-			memset(modem_cmd, 0, sizeof(modem_cmd));
-			sprintf(modem_cmd, "%s.%s", USB_MODESWITCH_CONF, port_path);
+			snprintf(modem_cmd, 64, "%s.%s", USB_MODESWITCH_CONF, port_path);
 
 			if(strcmp(nvram_safe_get("stop_ui_remove"), "1")){
 				usb_dbg("(%s): Running usb_modeswitch...\n", device_name);
@@ -3966,8 +3973,8 @@ int asus_usb_interface(const char *device_name, const char *action){
 		}
 	}
 
-	if(!isSerialInterface(device_name)
-			&& !isACMInterface(device_name)
+	if(!isSerialInterface(device_name, 1, vid, pid)
+			&& !isACMInterface(device_name, 1, vid, pid)
 			&& !isRNDISInterface(device_name, vid, pid)
 			&& !isCDCETHInterface(device_name)
 			&& !isNCMInterface(device_name)
@@ -4002,12 +4009,17 @@ int asus_usb_interface(const char *device_name, const char *action){
 	set_usb_common_nvram(action, device_name, usb_node, "modem");
 
 	// Don't support the second modem device on a DUT.
+#if 0
 	if(hadSerialModule() || hadACMModule() || hadRNDISModule()
 #ifdef RTCONFIG_USB_BECEEM
 			|| hadBeceemModule()
 			|| hadGCTModule()
 #endif
-			){
+			)
+#else
+	if(strcmp(nvram_safe_get("usb_modem_act_path"), "") && strcmp(nvram_safe_get("usb_modem_act_path"), usb_node))
+#endif
+	{
 		usb_dbg("(%s): Had inserted the modem module.\n", device_name);
 		file_unlock(isLock);
 		return 0;
@@ -4060,44 +4072,32 @@ int asus_usb_interface(const char *device_name, const char *action){
 	else if(is_samsung_dongle(1, vid, pid)){ // Samsung U200
 		// need to run one time and fillfull the nvram: usb_path%d_act.
 		usb_dbg("(%s): Runing madwimax...\n", device_name);
-		modprobe("tun");
-		sleep(1);
 
-		retry = 0;
-		while(retry < 3){
-			if(pids("madwimax")){
-				killall_tk("madwimax");
-				sleep(1);
+		snprintf(buf, 64, "usb_path%s_act", port_path);
+		nvram_set(buf, "wimax0");
+		nvram_set("usb_modem_act_path", usb_node);
+		snprintf(buf, 64, "%u",  vid);
+		nvram_set("usb_modem_act_vid", buf);
+		snprintf(buf, 64, "%u",  pid);
+		nvram_set("usb_modem_act_pid", buf);
 
-				++retry;
-			}
-			else
-				break;
-		}
-
-		xstart("madwimax");
+		// Notify wanduck that DUT can switch the wan line to the USB Modem.
+		kill_pidfile_s("/var/run/wanduck.pid", SIGUSR2);
 	}
 	else if(is_gct_dongle(1, vid, pid)){
 		// need to run one time and fillfull the nvram: usb_path%d_act.
 		usb_dbg("(%s): Runing GCT dongle...\n", device_name);
-		modprobe("tun");
-		sleep(1);
 
-		retry = 0;
-		while(retry < 3){
-			if(pids("gctwimax")){
-				killall_tk("gctwimax");
-				sleep(1);
+		snprintf(buf, 64, "usb_path%s_act", port_path);
+		nvram_set(buf, "wimax0");
+		nvram_set("usb_modem_act_path", usb_node);
+		snprintf(buf, 64, "%u",  vid);
+		nvram_set("usb_modem_act_vid", buf);
+		snprintf(buf, 64, "%u",  pid);
+		nvram_set("usb_modem_act_pid", buf);
 
-				++retry;
-			}
-			else
-				break;
-		}
-
-		write_gct_conf();
-
-		xstart("gctwimax", "-C", WIMAX_CONF);
+		// Notify wanduck that DUT can switch the wan line to the USB Modem.
+		kill_pidfile_s("/var/run/wanduck.pid", SIGUSR2);
 	}
 	else
 #endif
@@ -4116,21 +4116,19 @@ int asus_usb_interface(const char *device_name, const char *action){
 	else if(!strcmp(nvram_safe_get("stop_ui_insmod"), "1")){
 		usb_dbg("(%s): Don't insmod the serial modules.\n", device_name);
 	}
-	else if(isSerialInterface(device_name)){
+	else if(isSerialInterface(device_name, 1, vid, pid)){
 		usb_dbg("(%s): Runing USB serial with (0x%04x/0x%04x)...\n", device_name, vid, pid);
 		sleep(1);
 		modprobe("usbserial");
 #if LINUX_KERNEL_VERSION >= KERNEL_VERSION(2,6,36)
 		modprobe("usb_wwan");
 #endif
-		memset(modem_cmd, 0, sizeof(modem_cmd));
-		sprintf(modem_cmd, "vendor=0x%04x", vid);
-		memset(buf, 0, sizeof(buf));
-		sprintf(buf, "product=0x%04x", pid);
+		snprintf(modem_cmd, 64, "vendor=0x%04x", vid);
+		snprintf(buf, 64, "product=0x%04x", pid);
 		eval("insmod", "option", modem_cmd, buf);
 		sleep(1);
 	}
-	else if(isACMInterface(device_name)){
+	else if(isACMInterface(device_name, 1, vid, pid)){
 		usb_dbg("(%s): Runing USB ACM...\n", device_name);
 		modprobe("cdc-acm");
 		sleep(1);

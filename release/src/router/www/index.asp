@@ -15,15 +15,6 @@
 <link rel="stylesheet" type="text/css" href="NM_style.css">
 <link rel="stylesheet" type="text/css" href="other.css">
 <link rel="stylesheet" type="text/css" href="/device-map/device-map.css">
-<script type="text/javascript" src="/md5.js"></script>
-<script type="text/javascript" src="/state.js"></script>
-<script type="text/javascript" src="/popup.js"></script>
-<script type="text/javascript" src="/disk_functions.js"></script>
-<script type="text/javascript" src="/help.js"></script>
-<script type="text/javascript" src="/detect.js"></script>
-<script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
-<script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
-
 <style type="text/css">
 .contentM_qis{
 	position:absolute;
@@ -76,6 +67,14 @@
 	background-color:#84C1FF;
 }
 </style>
+<script type="text/javascript" src="/md5.js"></script>
+<script type="text/javascript" src="/state.js"></script>
+<script type="text/javascript" src="/popup.js"></script>
+<script type="text/javascript" src="/disk_functions.js"></script>
+<script type="text/javascript" src="/help.js"></script>
+<script type="text/javascript" src="/detect.js"></script>
+<script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
 var $j = jQuery.noConflict();	
 
@@ -115,12 +114,7 @@ else
 
 
 // Client list
-var leases = [<% dhcp_leases(); %>];	// [[hostname, MAC, ip, lefttime], ...]
-var arps = [<% get_arp_table(); %>];		// [[ip, x, x, MAC, x, type], ...]
-var arls = [<% get_arl_table(); %>];		// [[MAC, port, x, x], ...]
 var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
-var ipmonitor = [<% get_static_client(); %>];	// [[IP, MAC, DeviceName, Type, http, printer, iTune], ...]
-var networkmap_fullscan = '<% nvram_match("networkmap_fullscan", "0", "done"); %>'; //2008.07.24 Add.  1 stands for complete, 0 stands for scanning.;
 var client_list_array = '<% get_client_detail_info(); %>';
 
 // USB function
@@ -168,9 +162,9 @@ function initial(){
 		var tmpDisk = new newDisk();
 		tmpDisk.usbPath = i+1;
 		show_USBDevice(tmpDisk);
-
 		$("usbPathContianer_"+parseInt(i+1)).style.display = "";
 	}
+	
 	for(var i=0; i<usbDevices.length; i++){
 	  var new_option = new Option(usbDevices[i].deviceName, usbDevices[i].deviceIndex);
 		document.getElementById('deviceOption_'+usbDevices[i].usbPath).options.add(new_option);
@@ -212,7 +206,6 @@ function initial(){
 		$("bgimg").options[NM_table_img[4]].selected = 1;
 	}
 	update_wan_status();
-	//custom_ip($('ipaddr_field_chk'));
 }
 
 function show_ddns_status(){
@@ -787,7 +780,7 @@ function change_wan_state(primary_status, secondary_status){
 	if (!dualWAN_support)
 		return true;
 
-	if(wans_mode == "fo"){
+	if(wans_mode == "fo" || wans_mode == "fb"){
 		if(wan_unit == 0){
 			$('primary_status').innerHTML = primary_status;
 			if(primary_status == "Disconnected"){				
@@ -954,15 +947,6 @@ function edit_delete(){
 	}
 }
 
-/*function custom_ip(obj){
-	if($(obj.id).checked){
-		inputCtrl($('ipaddr_field'), 1);
-	}
-	else{
-		inputCtrl($('ipaddr_field'), 0);
-	}	
-}*/
-
 function show_custom_image(flag){
 	if(flag == "cancel"){	
 		$('edit_client_block').style.height = "250px";
@@ -990,7 +974,7 @@ function select_image(type){
 	document.getElementById('client_image').className = type;
 
 	if(type == "type0" || type == "type6")
-		document.getElementById('client_image').style.backgroundSize = "75px";
+		document.getElementById('client_image').style.backgroundSize = "74px";
 	else
 		document.getElementById('client_image').style.backgroundSize = "130px";		
 }
@@ -1094,6 +1078,7 @@ function cal_panel_block(){
 	<input type="hidden" name="action_wait" value="1">
 	<input type="hidden" name="custom_clientlist" value="">
 </form>
+
 <div id="edit_client_block" class="contentM_qis" style="box-shadow: 3px 3px 10px #000;display:none;">
 	<table class="QISform_wireless" border=0 align="center" cellpadding="5" cellspacing="0" style="padding:5px 10px 0px 10px;">
 		<tr>
@@ -1400,6 +1385,17 @@ function cal_panel_block(){
 		else
 			clickEvent(document.getElementById('iconUSBdisk_2'));
 	}
+
+	setTimeout("document.networkmapdRefresh.submit();", 2000);
 </script>
 </body>
+
+<form method="post" name="networkmapdRefresh" action="/apply.cgi" target="hidden_frame">
+	<input type="hidden" name="action_mode" value="refresh_networkmap">
+	<input type="hidden" name="action_script" value="">
+	<input type="hidden" name="action_wait" value="1">
+	<input type="hidden" name="current_page" value="httpd_check.htm">
+	<input type="hidden" name="next_page" value="httpd_check.htm">
+</form>
+
 </html>

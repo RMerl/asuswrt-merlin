@@ -25,16 +25,28 @@ wan_proto = '<% nvram_get("wan_proto"); %>';
 <% wl_get_parameter(); %>
 
 var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
-var ouilist_orig = '<% nvram_get("wl_ouilist"); %>';
-var domainlist_orig = '<% nvram_get("wl_domainlist"); %>';
-//var domainlist_orig = 'dsgf.dsdf dfgdf.dgdfg.dfg dffd.dhdg';
-var realmlist_orig = '<% nvram_get("wl_realmlist"); %>';
-var the3gpplist_orig = '<% nvram_get("wl_3gpplist"); %>';
-//var the3gpplist_orig = '245:456;324345:78768;4545:3434;';
+if("<% nvram_get("wl_unit"); %>" == "1"){
+	var ouilist_orig = '<% nvram_get("wl1.3_ouilist"); %>';
+	var domainlist_orig = '<% nvram_get("wl1.3_domainlist"); %>';
+	var realmlist_orig = '<% nvram_get("wl1.3_realmlist"); %>';
+	var the3gpplist_orig = '<% nvram_get("wl1.3_3gpplist"); %>';
+
+}
+else{
+	var ouilist_orig = '<% nvram_get("wl0.3_ouilist"); %>';
+	var domainlist_orig = '<% nvram_get("wl0.3_domainlist"); %>';
+	var realmlist_orig = '<% nvram_get("wl0.3_realmlist"); %>';
+	var the3gpplist_orig = '<% nvram_get("wl0.3_3gpplist"); %>';
+
+}
 
 function initial(){
 	show_menu();
-	
+
+        // special case after modifing GuestNetwork/Passpoint
+        if("<% nvram_get("wl_unit"); %>" == "-1" && "<% nvram_get("wl_subunit"); %>" == "-1"){
+                change_wl_unit();
+        }	
 	get_ssid_info();
 	get_wireless_info();
 	get_ouilist();
@@ -42,17 +54,65 @@ function initial(){
 	get_realmlist();
 	get_3gpplist();
 	get_passpoint_info();
+	get_radius_setting();
 }
 
 function get_ssid_info(){
-		//based_modelid+"<br>
-		document.getElementById("ssid_info").innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl_ssid"); %>');
-																							
+	if("<% nvram_get("wl_unit"); %>" == "1")
+		document.getElementById("ssid_info").innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl1.3_ssid"); %>');
+	else
+		document.getElementById("ssid_info").innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl0.3_ssid"); %>');
 }
 
 function get_wireless_info(){
-		//based_modelid+"<br>
-		document.getElementById("wireless_info").innerHTML = "Auth mode : <% nvram_get("wl_auth_mode_x"); %>";
+		var authmode = get_authmode();		
+		document.getElementById("wireless_info").innerHTML = authmode;
+}
+
+function get_authmode(){
+	var temp ="";
+	if("<% nvram_get("wl_unit"); %>" == "1"){
+	        if("<% nvram_get("wl1_auth_mode_x"); %>" == "open")
+                        temp = "Open System";
+	        else if("<% nvram_get("wl1_auth_mode_x"); %>" == "shared")
+                        temp = "Shared Key";
+	        else if("<% nvram_get("wl1_auth_mode_x"); %>" == "psk")
+                        temp = "WPA-Personal";
+	        else if("<% nvram_get("wl1_auth_mode_x"); %>" == "psk2")
+                        temp = "WPA2-Personal";
+	        else if("<% nvram_get("wl1_auth_mode_x"); %>" == "pskpsk2")
+                        temp = "WPA-Auto-Personal";
+	        else if("<% nvram_get("wl1_auth_mode_x"); %>" == "wpa")
+                        temp = "WPA-Enterprise";
+	        else if("<% nvram_get("wl1_auth_mode_x"); %>" == "wpa2")
+                        temp = "WPA2-Enterprise";
+	        else if("<% nvram_get("wl1_auth_mode_x"); %>" == "wpawpa2")
+                        temp = "WPA-Auto-Enterprise";
+	        else if("<% nvram_get("wl1_auth_mode_x"); %>" == "radius")
+                        temp = "Radius with 802.1x";
+	}
+	else{
+	        if("<% nvram_get("wl0_auth_mode_x"); %>" == "open")
+                        temp = "Open System";
+        	else if("<% nvram_get("wl0_auth_mode_x"); %>" == "shared")
+                        temp = "Shared Key";
+	        else if("<% nvram_get("wl0_auth_mode_x"); %>" == "psk")
+                        temp = "WPA-Personal";
+        	else if("<% nvram_get("wl0_auth_mode_x"); %>" == "psk2")
+                        temp = "WPA2-Personal";
+	        else if("<% nvram_get("wl0_auth_mode_x"); %>" == "pskpsk2")
+                        temp = "WPA-Auto-Personal";
+        	else if("<% nvram_get("wl0_auth_mode_x"); %>" == "wpa")
+                        temp = "WPA-Enterprise";
+	        else if("<% nvram_get("wl0_auth_mode_x"); %>" == "wpa2")
+                        temp = "WPA2-Enterprise";
+        	else if("<% nvram_get("wl0_auth_mode_x"); %>" == "wpawpa2")
+                        temp = "WPA-Auto-Enterprise";
+	        else if("<% nvram_get("wl0_auth_mode_x"); %>" == "radius")
+                        temp = "Radius with 802.1x";
+	}
+	
+	return temp;
 }
 
 function get_ouilist(){
@@ -181,77 +241,81 @@ function get_3gpplist(){
 }
 
 function get_passpoint_info(){
-		if("<% nvram_get("wl0_hs2en"); %>" == "1")
-			var wl0hs2en = "ON";
-		else	
-			var wl0hs2en = "OFF";
-		document.getElementById("passpoint_info").innerHTML = "2.4GHz: "+wl0hs2en;
-			
-		if(band5g_support){	
+		if("<% nvram_get("wl_unit"); %>" == "1"){
+			if("<% nvram_get("wl0_hs2en"); %>" == "1")
+				var wl0hs2en = "ON";
+			else	
+				var wl0hs2en = "OFF";
+			document.getElementById("passpoint_info").innerHTML = wl0hs2en;
+		}	
+		else if("<% nvram_get("wl_unit"); %>" == "1"){
 			if("<% nvram_get("wl1_hs2en"); %>" == "1")
 				var wl1hs2en = "ON";
 			else	
 				var wl1hs2en = "OFF";
 				
-			document.getElementById("passpoint_info").innerHTML += "<br>5GHz: "+wl1hs2en;
+			document.getElementById("passpoint_info").innerHTML += wl1hs2en;
 		}						
+}
+
+function get_radius_setting(){
+	if("<% nvram_get("wl_unit"); %>" == "1"){
+		document.form.wl_radius_ipaddr.value = "<% nvram_get("wl1.3_radius_ipaddr"); %>";
+		document.form.wl_radius_port.value = "<% nvram_get("wl1.3_radius_port"); %>";
+		document.form.wl_radius_key.value = "<% nvram_get("wl1.3_radius_key"); %>";
+	}
+	else{
+		document.form.wl_radius_ipaddr.value = "<% nvram_get("wl0.3_radius_ipaddr"); %>";
+		document.form.wl_radius_port.value = "<% nvram_get("wl0.3_radius_port"); %>";
+		document.form.wl_radius_key.value = "<% nvram_get("wl0.3_radius_key"); %>";
+	}
 }
 
 function applyRule(){
 	if(validForm()){
 		
 		if(document.form.wl_u11en_x[1].checked)
-				document.form.wl0_u11en.value = "0";
+				document.form.wl_u11en.value = "0";
 		else
-				document.form.wl0_u11en.value = "1";
+				document.form.wl_u11en.value = "1";
 		
-		document.form.wl0_iwnettype.value = document.form.wl_iwnettype_x.value;
+		document.form.wl_iwnettype.value = document.form.wl_iwnettype_x.value;
 		
 		for(var y=0;y<=3;y++){
-				if(document.form.wl0_ouilist.value == "" && document.getElementById("wl_ouilist_"+y).value != "")
-						document.form.wl0_ouilist.value = document.getElementById("wl_ouilist_"+y).value;
-				else if(document.form.wl0_ouilist.value != "" && document.getElementById("wl_ouilist_"+y).value != ""){
-						document.form.wl0_ouilist.value += ";";
-						document.form.wl0_ouilist.value += document.getElementById("wl_ouilist_"+y).value;
+				if(document.form.wl_ouilist.value == "" && document.getElementById("wl_ouilist_"+y).value != "")
+						document.form.wl_ouilist.value = document.getElementById("wl_ouilist_"+y).value;
+				else if(document.form.wl_ouilist.value != "" && document.getElementById("wl_ouilist_"+y).value != ""){
+						document.form.wl_ouilist.value += ";";
+						document.form.wl_ouilist.value += document.getElementById("wl_ouilist_"+y).value;
 				}		
 		}
-		//alert(document.form.wl0_ouilist.value);
+
 		for(var y=0;y<=7;y++){
-				if(document.form.wl0_domainlist.value == "" && document.getElementById("wl_domainlist_"+y).value != "")
-						document.form.wl0_domainlist.value = document.getElementById("wl_domainlist_"+y).value;
-				else if(document.form.wl0_domainlist.value != "" && document.getElementById("wl_domainlist_"+y).value != ""){
-						document.form.wl0_domainlist.value += " ";
-						document.form.wl0_domainlist.value += document.getElementById("wl_domainlist_"+y).value;
+				if(document.form.wl_domainlist.value == "" && document.getElementById("wl_domainlist_"+y).value != "")
+						document.form.wl_domainlist.value = document.getElementById("wl_domainlist_"+y).value;
+				else if(document.form.wl_domainlist.value != "" && document.getElementById("wl_domainlist_"+y).value != ""){
+						document.form.wl_domainlist.value += " ";
+						document.form.wl_domainlist.value += document.getElementById("wl_domainlist_"+y).value;
 				}		
 		}
-		//alert(document.form.wl0_domainlist.value);		
 		
 		for(var y=0;y<=4;y++){
-				if(document.form.wl0_realmlist.value == "" && document.getElementById("wl_realmlist_"+y).value != "")
-						document.form.wl0_realmlist.value = document.getElementById("wl_realmlist_"+y).value;
-				else if(document.form.wl0_realmlist.value != "" && document.getElementById("wl_realmlist_"+y).value != ""){
-						document.form.wl0_realmlist.value += "?";
-						document.form.wl0_realmlist.value += document.getElementById("wl_realmlist_"+y).value;
+				if(document.form.wl_realmlist.value == "" && document.getElementById("wl_realmlist_"+y).value != "")
+						document.form.wl_realmlist.value = document.getElementById("wl_realmlist_"+y).value;
+				else if(document.form.wl_realmlist.value != "" && document.getElementById("wl_realmlist_"+y).value != ""){
+						document.form.wl_realmlist.value += "?";
+						document.form.wl_realmlist.value += document.getElementById("wl_realmlist_"+y).value;
 				}		
 		}
-		//alert(document.form.wl0_realmlist.value);
 		
 		for(var y=0;y<=5;y++){
-				if(document.form.wl0_3gpplist.value == "" && (document.getElementById("wl_3gpplist_"+y+"_0").value != "" || document.getElementById("wl_3gpplist_"+y+"_1").value != ""))
-						document.form.wl0_3gpplist.value = document.getElementById("wl_3gpplist_"+y+"_0").value+":"+document.getElementById("wl_3gpplist_"+y+"_1").value;
-				else if(document.form.wl0_3gpplist.value != "" && (document.getElementById("wl_3gpplist_"+y+"_0").value != "" || document.getElementById("wl_3gpplist_"+y+"_1").value != "")){
-						document.form.wl0_3gpplist.value += ";";
-						document.form.wl0_3gpplist.value += document.getElementById("wl_3gpplist_"+y+"_0").value+":"+document.getElementById("wl_3gpplist_"+y+"_1").value;
+				if(document.form.wl_3gpplist.value == "" && (document.getElementById("wl_3gpplist_"+y+"_0").value != "" || document.getElementById("wl_3gpplist_"+y+"_1").value != ""))
+						document.form.wl_3gpplist.value = document.getElementById("wl_3gpplist_"+y+"_0").value+":"+document.getElementById("wl_3gpplist_"+y+"_1").value;
+				else if(document.form.wl_3gpplist.value != "" && (document.getElementById("wl_3gpplist_"+y+"_0").value != "" || document.getElementById("wl_3gpplist_"+y+"_1").value != "")){
+						document.form.wl_3gpplist.value += ";";
+						document.form.wl_3gpplist.value += document.getElementById("wl_3gpplist_"+y+"_0").value+":"+document.getElementById("wl_3gpplist_"+y+"_1").value;
 				}		
 		}
-		//alert(document.form.wl0_3gpplist.value);		
-		
-		document.form.wl1_u11en.value = document.form.wl0_u11en.value;
-		document.form.wl1_iwnettype.value = document.form.wl0_iwnettype.value;
-		document.form.wl1_ouilist.value = document.form.wl0_ouilist.value;
-		document.form.wl1_domainlist.value = document.form.wl0_domainlist.value;
-		document.form.wl1_realmlist.value = document.form.wl0_realmlist.value;
-		document.form.wl1_3gpplist.value = document.form.wl0_3gpplist.value;
 				
 		showLoading();
 		document.form.submit();
@@ -260,8 +324,10 @@ function applyRule(){
 
 function validForm(){		
 
-	/*
-	if(!validate_ipaddr_final(document.form.wl_radius_ipaddr, 'wl_radius_ipaddr'))
+        if(!validate_range(document.form.wl_maxassoc, 1, 128))
+                        return false;      
+
+	if(!validate_ipaddr_final(document.form.wl_radius_ipaddr, 'hs_radius_ipaddr'))
 		return false;
 	
 	if(!validate_range(document.form.wl_radius_port, 0, 65535))
@@ -269,10 +335,7 @@ function validForm(){
 	
 	if(!validate_string(document.form.wl_radius_key))
 		return false;
-	*/
-	if(!validate_range(document.form.wl_maxassoc, 1, 128))
-			return false;				
-	
+		
 	return true;
 }
 
@@ -305,19 +368,13 @@ function enable_u11(flag){
 <input type="hidden" name="action_wait" value="3">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
-<input type="hidden" name="wl_subunit" value="-1">
-<input type="hidden" name="wl0_u11en" value="">
-<input type="hidden" name="wl0_iwnettype" value="">
-<input type="hidden" name="wl0_ouilist" value="">
-<input type="hidden" name="wl0_domainlist" value="">
-<input type="hidden" name="wl0_realmlist" value="">
-<input type="hidden" name="wl0_3gpplist" value="">
-<input type="hidden" name="wl1_u11en" value="">
-<input type="hidden" name="wl1_iwnettype" value="">
-<input type="hidden" name="wl1_ouilist" value="">
-<input type="hidden" name="wl1_domainlist" value="">
-<input type="hidden" name="wl1_realmlist" value="">
-<input type="hidden" name="wl1_3gpplist" value="">
+<input type="hidden" name="wl_subunit" value="3"><!-- tmo_support: RT-AC68U fixed wlx.3 -->
+<input type="hidden" name="wl_u11en" value="">
+<input type="hidden" name="wl_iwnettype" value="">
+<input type="hidden" name="wl_ouilist" value="">
+<input type="hidden" name="wl_domainlist" value="">
+<input type="hidden" name="wl_realmlist" value="">
+<input type="hidden" name="wl_3gpplist" value="">
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 	<tr>
@@ -395,6 +452,14 @@ function enable_u11(flag){
 		</table>
 				
 		<table id="MainTable2" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable" style="margin-top:10px;">
+                        <tr>
+                                <th width="30%">Passpoint Status</th>
+                                <td>
+                                        <!-- content? -->
+                                        <div id="passpoint_info"></div>
+                                </td>
+                        </tr>
+
 			<tr>
 				<th width="30%">OUI List</th>
 				<td>					
@@ -408,24 +473,24 @@ function enable_u11(flag){
 			<tr>
 				<th width="30%">Domain List</th>
 				<td>
-					<input type="text" id="wl_domainlist_0" name="wl_domainlist_0" class="input_32_table" maxlength="32" value="" onkeypress="return is_string(this, event)"><br>
-					<input type="text" id="wl_domainlist_1" name="wl_domainlist_1" class="input_32_table" maxlength="32" value="" onkeypress="return is_string(this, event)"><br>
-					<input type="text" id="wl_domainlist_2" name="wl_domainlist_2" class="input_32_table" maxlength="32" value="" onkeypress="return is_string(this, event)"><br>
-					<input type="text" id="wl_domainlist_3" name="wl_domainlist_3" class="input_32_table" maxlength="32" value="" onkeypress="return is_string(this, event)"><br>
-					<input type="text" id="wl_domainlist_4" name="wl_domainlist_4" class="input_32_table" maxlength="32" value="" onkeypress="return is_string(this, event)"><br>
-					<input type="text" id="wl_domainlist_5" name="wl_domainlist_5" class="input_32_table" maxlength="32" value="" onkeypress="return is_string(this, event)"><br>
-					<input type="text" id="wl_domainlist_6" name="wl_domainlist_6" class="input_32_table" maxlength="32" value="" onkeypress="return is_string(this, event)"><br>
-					<input type="text" id="wl_domainlist_7" name="wl_domainlist_7" class="input_32_table" maxlength="32" value="" onkeypress="return is_string(this, event)">
+					<input type="text" id="wl_domainlist_0" name="wl_domainlist_0" class="input_32_table" maxlength="64" value="" onkeypress="return is_string(this, event)"><br>
+					<input type="text" id="wl_domainlist_1" name="wl_domainlist_1" class="input_32_table" maxlength="64" value="" onkeypress="return is_string(this, event)"><br>
+					<input type="text" id="wl_domainlist_2" name="wl_domainlist_2" class="input_32_table" maxlength="64" value="" onkeypress="return is_string(this, event)"><br>
+					<input type="text" id="wl_domainlist_3" name="wl_domainlist_3" class="input_32_table" maxlength="64" value="" onkeypress="return is_string(this, event)"><br>
+					<input type="text" id="wl_domainlist_4" name="wl_domainlist_4" class="input_32_table" maxlength="64" value="" onkeypress="return is_string(this, event)"><br>
+					<input type="text" id="wl_domainlist_5" name="wl_domainlist_5" class="input_32_table" maxlength="64" value="" onkeypress="return is_string(this, event)"><br>
+					<input type="text" id="wl_domainlist_6" name="wl_domainlist_6" class="input_32_table" maxlength="64" value="" onkeypress="return is_string(this, event)"><br>
+					<input type="text" id="wl_domainlist_7" name="wl_domainlist_7" class="input_32_table" maxlength="64" value="" onkeypress="return is_string(this, event)">
 				</td>
 			</tr>
 			<tr>
 				<th width="30%">Realm List</th>
 				<td>					
-					<input type="text" id="wl_realmlist_0" name="wl_realmlist_0" class="input_32_table" maxlength="32" value="" onkeypress="return is_string(this, event)"><br>
-					<input type="text" id="wl_realmlist_1" name="wl_realmlist_1" class="input_32_table" maxlength="32" value="" onkeypress="return is_string(this, event)"><br>
-					<input type="text" id="wl_realmlist_2" name="wl_realmlist_2" class="input_32_table" maxlength="32" value="" onkeypress="return is_string(this, event)"><br>
-					<input type="text" id="wl_realmlist_3" name="wl_realmlist_3" class="input_32_table" maxlength="32" value="" onkeypress="return is_string(this, event)"><br>
-					<input type="text" id="wl_realmlist_4" name="wl_realmlist_4" class="input_32_table" maxlength="32" value="" onkeypress="return is_string(this, event)">
+					<input type="text" id="wl_realmlist_0" name="wl_realmlist_0" class="input_32_table" maxlength="64" value="" onkeypress="return is_string(this, event)"><br>
+					<input type="text" id="wl_realmlist_1" name="wl_realmlist_1" class="input_32_table" maxlength="64" value="" onkeypress="return is_string(this, event)"><br>
+					<input type="text" id="wl_realmlist_2" name="wl_realmlist_2" class="input_32_table" maxlength="64" value="" onkeypress="return is_string(this, event)"><br>
+					<input type="text" id="wl_realmlist_3" name="wl_realmlist_3" class="input_32_table" maxlength="64" value="" onkeypress="return is_string(this, event)"><br>
+					<input type="text" id="wl_realmlist_4" name="wl_realmlist_4" class="input_32_table" maxlength="64" value="" onkeypress="return is_string(this, event)">
 				</td>
 			</tr>			
 			<tr>
@@ -441,13 +506,6 @@ function enable_u11(flag){
 				</td>
 			</tr>
 			<tr>
-				<th width="30%">Passpoint Status</th>
-				<td>
-					<!-- content? -->
-					<div id="passpoint_info"></div>
-				</td>
-			</tr>			
-			<tr>
 				<th width="30%">Number of Users allowed to connect</th>
 				<td>
 					<input type="text" name="wl_maxassoc" class="input_3_table" maxlength="3" value="<% nvram_get("wl_maxassoc"); %>" onkeypress="return is_number(this, event)">
@@ -456,28 +514,28 @@ function enable_u11(flag){
 			<tr>
 			<th>
 				<a class="hintstyle" href="javascript:void(0);"  onClick="openHint(2,1);">
-			  	<#WLANAuthentication11a_ExAuthDBIPAddr_itemname#></a>			  
+			  	AAA <#WLANAuthentication11a_ExAuthDBIPAddr_itemname#></a>			  
 			</th>
 			<td>
-				<input type="text" maxlength="15" class="input_15_table" name="wl_radius_ipaddr" value="<% nvram_get("wl_radius_ipaddr"); %>" onKeyPress="return is_ipaddr(this, event)">
+				<input type="text" maxlength="15" class="input_15_table" name="wl_radius_ipaddr" value="" onKeyPress="return is_ipaddr(this, event)">
 			</td>
 		</tr>
 		<tr>
 			<th>
 				<a class="hintstyle" href="javascript:void(0);"  onClick="openHint(2,2);">
-			  	<#WLANAuthentication11a_ExAuthDBPortNumber_itemname#></a>
+			  	AAA <#WLANAuthentication11a_ExAuthDBPortNumber_itemname#></a>
 			</th>
 			<td>
-				<input type="text" maxlength="5" class="input_6_table" name="wl_radius_port" value="<% nvram_get("wl_radius_port"); %>" onkeypress="return is_number(this,event)"/>
+				<input type="text" maxlength="5" class="input_6_table" name="wl_radius_port" value="" onkeypress="return is_number(this,event)"/>
 			</td>
 		</tr>
 		<tr>
 			<th >
 				<a class="hintstyle" href="javascript:void(0);"  onClick="openHint(2,3);">
-				<#WLANAuthentication11a_ExAuthDBPassword_itemname#></a>
+				AAA <#WLANAuthentication11a_ExAuthDBPassword_itemname#></a>
 			</th>
 			<td>
-				<input type="password" autocapitalization="off" maxlength="64" class="input_32_table" name="wl_radius_key" value="<% nvram_get("wl_radius_key"); %>">
+				<input type="password" autocapitalization="off" maxlength="64" class="input_32_table" name="wl_radius_key" value="">
 			</td>
 		</tr>
 		</table>

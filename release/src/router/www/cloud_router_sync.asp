@@ -385,11 +385,18 @@ function get_tree_items(treeitems){
 	this.isLoading = 1;
 	var array_temp = new Array();
 	var array_temp_split = new Array();
-	for(var j=0;j<treeitems.length;j++){ // To hide folder 'Download2' & 'asusware'
-		array_temp_split[j] = treeitems[j].split("#");
-		if( array_temp_split[j][0].match(/^Download2$/) || array_temp_split[j][0].match(/^asusware$/)	){
+	for(var j=0;j<treeitems.length;j++){
+		//treeitems[j] : "Download2#22#0"
+		array_temp_split[j] = treeitems[j].split("#"); 
+		// Mipsel:asusware  Mipsbig:asusware.big  Armel:asusware.arm  // To hide folder 'asusware'
+		if( array_temp_split[j][0].match(/^asusware$/)	|| array_temp_split[j][0].match(/^asusware.big$/) || array_temp_split[j][0].match(/^asusware.arm$/) ){
 			continue;					
 		}
+
+		//Specific folder 'Download2/Complete'
+		if( array_temp_split[j][0].match(/^Download2$/) ){
+			treeitems[j] = "Download2/Complete"+"#"+array_temp_split[j][1]+"#"+array_temp_split[j][2];
+		}		
 		
 		array_temp.push(treeitems[j]);
 	}
@@ -1229,13 +1236,13 @@ function checkDDNSReturnCode(){
 								<img src="images/New_ui/midup_bg.png" width="751px;">							
 								<table  width="736px" height="200px;" style="text-align:left;margin-left:15px;position:absolute;margin-top:-130px;*margin-left:-740px;*margin-top:0px;">
 									<tr style="height:40px;">
-										<th width="25%">Description</th>
+										<th width="25%"><#IPConnection_autofwDesc_itemname#></th>
 										<td>
 											<input name="router_sync_desc" type="text" class="input_32_table" style="height:25px;font-size:13px;"  value="My new sync">
 										</td>
 									</tr>
 									<tr id="host_name_tr">
-										<th width="25%">Host Name</th>
+										<th width="25%"><#LANHostConfig_x_DDNSHostNames_itemname#></th>
 										<td>
 											<select id="protocol_type" class="input_option" style="height:27px;">
 												<option value="0">Http</option>
@@ -1257,13 +1264,13 @@ function checkDDNSReturnCode(){
 									</tr>
 									<tr style="height:40px;">
 										<th>
-											<div style="margin-top:5px;">Sync rule</div>
+											<div style="margin-top:5px;"><#Cloudsync_Rule#></div>
 										</th>
 										<td>										
 											<select name="router_sync_rule" class="input_option" style="height:27px;">
-												<option value="0">Two way sync</option>
-												<option value="1">Host to client</option>
-												<option value="2">Client to host</option>
+												<option value="0"><#routerSync_ruleBoth#></option>
+												<option value="1"><#routerSync_ruleStoC#></option>
+												<option value="2"><#routerSync_ruleCtoS#></option>
 											</select>
 											<span>											
 												<img align="center" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png" onclick="overlib(hint_string)" onmouseout="return nd();">
@@ -1271,11 +1278,11 @@ function checkDDNSReturnCode(){
 										</td>				
 									</tr>
 									<tr style="height:40px;">
-										<th>Security code</th>
+										<th><#routerSync_Security_code#></th>
 										<td>
 											<div >
 												<select id="captcha_rule" class="input_option" onchange="captcha_style()" style="height:27px;">
-													<option value="0">None</option>
+													<option value="0"><#wl_securitylevel_0#></option>
 													<option value="1">Manual assign</option>
 													<option value="2">Auto generate</option>
 												</select>
@@ -1319,8 +1326,8 @@ function checkDDNSReturnCode(){
 	  					</thead>		  
     					<tr>
 							<th width="10%"><#Provider#></th>
-							<th width="25%">Description</a></th>
-							<th width="10%">Sync Rule</a></th>
+							<th width="25%"><#IPConnection_autofwDesc_itemname#></a></th>
+							<th width="10%"><#Cloudsync_Rule#></a></th>
 							<th width="30%">Local Sync Folder</th>
 							<th width="15%">Invitation</th>
 							<th width="10%"><#CTL_del#></th>

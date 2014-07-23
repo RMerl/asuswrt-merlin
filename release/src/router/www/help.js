@@ -1,11 +1,11 @@
 ﻿var Untranslated = {
 	fw_size_higher_mem : 'Memory space is NOT enough to upgrade on internet. Please wait for rebooting.',
 	the_array_is_end : "end here.",
-	Guest_Network_enable_ACL : "You must go to enable MAC filter",	
 	namecheap_username_title: "Domain Name",
 	link_rate : "Link rate",
 	ASUSGATE_note6 : "Your DSL line appears to be unstable. We strongly recommend that you submit a feedback form for our analysis.",
 	ASUSGATE_note7 : "If you are experiencing any DSL related issues or have any comments / suggestions, please feel free to inform our support team.",
+	JS_validclientname : "Client device name only accept alphanumeric characters, under line and dash symbol. The first character cannot be dash \"-\" or under line \"_\".",
 	ASUSGATE_act_feedback : "Feedback now",
 	intelligence_type_desc : "Intelligence QoS type supports you to modify APPs category priority based on router stream. QoS type switching will only keep priority configuration for each client",
 	traditional_type_desc : "Traditional QoS type offers you advanced configure item including port, protocol and transferred. QoS type switching will only keep priority configuration for each client."
@@ -136,7 +136,56 @@ function overHint(itemNum){
 	var statusmenu = "";
 	var title2 = 0;
 	var title5 = 0;
-
+	
+	if(itemNum == 91){
+		statusmenu ="<span>This category includes Diablo, WOW, Steam game and XBOX, etc. Move this category up for better game experience.</span>";
+	}
+	else if(itemNum == 92){
+		statusmenu ="<span>This category includes Youtube, Vimeo, iTunes, Hulu, Netflix and Spotify,etc. Move this category up for better networking experience.</span>";
+	}
+	else if(itemNum == 93){
+		statusmenu ="<span>This category includes VoIP, Instant Messaging, Mail service,etc. You can adjust their priorities according to your preference.</span>";
+	}
+	else if(itemNum == 94){
+		statusmenu ="<span>This category includes general web service and social network applications like flickr, twitter, facebook, tumblr, google toolbar,etc.</span>";
+	}
+	else if(itemNum == 95){
+		statusmenu ="<span>This category includes peer to peer and file transfer related software like uTorrent, BitTorrent, Dropbox, 4Shared and FTP applications,etc. It is recommended to leave file transfer category at a lower priority.</span>";
+	}
+	if(itemNum == 96){
+		statusmenu ="<span>All the activities not included in Game, Streaming Media, Online Chat & Communication, Web Surfing and File Transfer.</span>";
+	}
+	
+	//for AiProtection-Router Security Scan
+	if(itemNum == 23)		
+		statusmenu += "<span>Enable Infected device detecting and blocked to detects any suspicious connections or activities and blocks them to prevent data stealing.</span>";
+	if(itemNum == 22)		
+		statusmenu += "<span>Enable Intruder Prevention to prevent cracker invasion via vulnerability of router or device software.</span>";
+	if(itemNum == 21)		
+		statusmenu += "<span>Enable Malicious site blocking to restricts access to known malicious websites.</span>";
+	if(itemNum == 20)		
+		statusmenu += "<span>Disable guest login for Network Place Share to avoid unauthorized user have chance to access your data.</span>";
+	if(itemNum == 19)		
+		statusmenu += "<span>Disable Anonymous login to FTP share to avoid unauthorized user have chance to access your data.</span>";
+	if(itemNum == 18)		
+		statusmenu += "<span>Disable Port forwarding to prevent your router from cracker access via specific port.</span>";
+	if(itemNum == 17)		
+		statusmenu += "<span>Disable Port trigger to prevent your router from cracker access via specific port.</span>";
+	if(itemNum == 16)		
+		statusmenu += "<span>Disable DMZ to avoid all the inbounds packets are redirected to the computer exposing on internet.</span>";
+	if(itemNum == 15)		
+		statusmenu += "<span>Disable PING from WAN to avoid cracker can connect to router from external network.</span>";
+	if(itemNum == 14)		
+		statusmenu += "<span>Disable Web access from WAN to prevent your router from external control.</span>";
+	if(itemNum == 13)		
+		statusmenu += "<span>Disable UPnP service to avoid any program have chance to use UPnP port to alter a your router's settings.</span>";
+	if(itemNum == 12)		
+		statusmenu += "<span>Your wireless network is insecure because there is not wireless password. Click the hyper link to set the password.</span>";
+	if(itemNum == 11)		
+		statusmenu += "<span>Please make your network password more complex for better security.</span>";	
+	if(itemNum == 10)		
+		statusmenu += "<span>Please change your login username and password for better router security.</span>";	
+	
 	// Viz add 2013.04 for dsl sync status
 	if(itemNum == 9){
 		statusmenu = "<div class='StatusHint'>ADSL :</div>";
@@ -2131,7 +2180,7 @@ function chkPass(pwd, flag) {
 		
 		/* Determine complexity based on overall score */
 		if (nScore > 100) { nScore = 100; } else if (nScore < 0) { nScore = 0; }
-		if(document.form.current_page.value != "ParentalControl_HomeSecurity.asp"){	
+		if(document.form.current_page.value != "AiProtection_HomeProtection.asp"){	
 			if (nScore >= 0 && nScore < 20) { sComplexity = "<#PASS_score0#>"; }
 			else if (nScore >= 20 && nScore < 40) { sComplexity = "<#PASS_score1#>"; }
 			else if (nScore >= 40 && nScore < 60) { sComplexity = "<#PASS_score2#>"; }
@@ -2147,7 +2196,7 @@ function chkPass(pwd, flag) {
 		}
 		
 		/* Display updated score criteria to client */
-		if(document.form.current_page.value != "ParentalControl_HomeSecurity.asp"){		//for Router weakness status, Jimeing added at 2014/06/07
+		if(document.form.current_page.value != "AiProtection_HomeProtection.asp"){		//for Router weakness status, Jimeing added at 2014/06/07
 			$('scorebarBorder').style.display = "";
 			oScorebar.style.backgroundPosition = "-" + parseInt(nScore * 4) + "px";
 		}

@@ -63,6 +63,7 @@
 #include "upnpglobalvars.h"
 #include "getifaddr.h"
 #include "minissdp.h"
+#include "utils.h"
 #include "log.h"
 #ifdef BCMARM
 #include "ifaddrs.c"
@@ -175,7 +176,7 @@ getsyshwaddr(char *buf, int len)
 {
 	unsigned char mac[6];
 	int ret = -1;
-#if defined(HAVE_GETIFADDRS) && !defined (__linux__)
+#if defined(HAVE_GETIFADDRS) && !defined (__linux__) && !defined (__sun__)
 	struct ifaddrs *ifap, *p;
 	struct sockaddr_in *addr_in;
 	uint8_t a;
@@ -193,7 +194,7 @@ getsyshwaddr(char *buf, int len)
 			a = (htonl(addr_in->sin_addr.s_addr) >> 0x18) & 0xFF;
 			if (a == 127)
 				continue;
-#ifdef __linux__
+#if defined(__linux__)
 			struct ifreq ifr;
 			int fd;
 			fd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -230,20 +231,29 @@ getsyshwaddr(char *buf, int len)
 
 	ifaces = if_nameindex();
 	if (!ifaces)
+	{
+		close(fd);
 		return ret;
+	}
 
 	for (if_idx = ifaces; if_idx->if_index; if_idx++)
 	{
-		strncpy(ifr.ifr_name, if_idx->if_name, IFNAMSIZ);
+		strncpyt(ifr.ifr_name, if_idx->if_name, IFNAMSIZ);
 		if (ioctl(fd, SIOCGIFFLAGS, &ifr) < 0)
 			continue;
 		if (ifr.ifr_ifru.ifru_flags & IFF_LOOPBACK)
 			continue;
 		if (ioctl(fd, SIOCGIFHWADDR, &ifr) < 0)
 			continue;
+#ifdef __sun__
+		if (MACADDR_IS_ZERO(ifr.ifr_addr.sa_data))
+			continue;
+		memcpy(mac, ifr.ifr_addr.sa_data, 6);
+#else
 		if (MACADDR_IS_ZERO(ifr.ifr_hwaddr.sa_data))
 			continue;
 		memcpy(mac, ifr.ifr_hwaddr.sa_data, 6);
+#endif
 		ret = 0;
 		break;
 	}
@@ -359,6 +369,7 @@ OpenAndConfMonitorSocket(void)
 	if (ret < 0)
 	{
 		perror("couldn't bind");
+		close(s);
 		return -1;
 	}
 

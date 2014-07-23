@@ -25,7 +25,7 @@
 	*margin-top:27px;
 	margin-left:2px;
 	*margin-left:-223px;
-	width:215px;
+	width:185px;
 	text-align:left;	
 	height:auto;
 	overflow-y:auto;
@@ -68,7 +68,7 @@ var sr_rulelist_array = '<% nvram_get("sr_rulelist"); %>';
 function initial(){
 	show_menu();
 	showsr_rulelist();
-	showLANIPList();
+	setTimeout("showLANIPList();", 1000);
 }
 
 function applyRule(){
@@ -293,7 +293,7 @@ function showLANIPList(){
 }
 
 function setClientIP(ipaddr){
-	document.form.sr_ipaddr_x_0.value = ipaddr;
+	document.form.sr_gateway_x_0.value = ipaddr;
 	hideClients_Block();
 	over_var = 0;
 }
@@ -407,13 +407,13 @@ function Ctrl_LANIPList(obj){
 			  
 			  <tr>
 			  	<!-- client info -->		
-					<td width="34%">
-						<input type="text" class="input_20_table" maxlength="15" name="sr_ipaddr_x_0" style="margin-left:-22px;width:215px;" onKeyPress="return is_ipaddr(this, event)" onClick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}">
-						<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;" onclick="pullLANIPList(this);" title="<#select_IP#>" onmouseover="over_var=1;" onmouseout="over_var=0;">						
-						<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
-					</td>
+					<td width="18%">
+						<input type="text" class="input_20_table" maxlength="15" name="sr_ipaddr_x_0" onKeyPress="return is_ipaddr(this, event)">
 					<td width="18%"><input type="text" maxlength="15" class="input_15_table" name="sr_netmask_x_0" onKeyPress="return is_ipaddr(this, event)" ></td>
-					<td width="18%"><input type="text" maxlength="15" class="input_15_table" name="sr_gateway_x_0" onKeyPress="return is_ipaddr(this, event)" ></td>
+					<td width="34%"><input type="text" class="input_20_table" maxlength="15" name="sr_gateway_x_0" style="margin-left:-22px;width:180px;" onKeyPress="return is_ipaddr(this, event)"  onClick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}">
+					<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;" onclick="pullLANIPList(this);" title="<#1335#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
+					<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
+					</td>
 					<td width="8%"><input type="text" maxlength="3" class="input_3_table" name="sr_matric_x_0"  onKeyPress="return is_number(this, event);"></td>
 					<td width="10%">
 						<select name="sr_if_x_0" class="input_option" style="width:62px;" onchange="Ctrl_LANIPList(this);">

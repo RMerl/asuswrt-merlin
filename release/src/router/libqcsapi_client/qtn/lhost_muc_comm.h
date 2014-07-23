@@ -199,6 +199,7 @@ struct host_rxdesc {
 	struct host_rxdesc	*rd_pa;
 	struct host_rxdesc	*rd_va;
 	uint32_t		vlan_cfg; /* VLAN requirement on this frame */
+	void			*node;		/* Where the frame was from */
 	uint8_t			gain_db;
 };
 

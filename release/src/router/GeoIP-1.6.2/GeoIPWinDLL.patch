@@ -1,0 +1,183 @@
+Index: GeoIP.c
+===================================================================
+RCS file: /home/maxmind/geoip/c/libGeoIP/GeoIP.c,v
+retrieving revision 1.32
+retrieving revision 1.33
+diff -u -r1.32 -r1.33
+--- GeoIP.c	25 Aug 2002 22:42:48 -0000	1.32
++++ GeoIP.c	27 Aug 2002 06:50:02 -0000	1.33
+@@ -23,16 +23,24 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
++#ifndef _WIN32
+ #include <netdb.h>
++#endif	/* _WIN32 */
+ #include <assert.h>
+ #include <sys/types.h> /* for fstat */
+ #include <sys/stat.h>	/* for fstat */
+ #include "zlib.h"
+ #include "time.h"
+ 
++#ifndef _WIN32
++#include <unistd.h>
+ #include <netinet/in.h>
+ #include <arpa/inet.h>
+ #include <sys/socket.h>
++#else
++#include <io.h>
++#include <windows.h>
++#endif	/* _WIN32 */
+ 
+ #define COUNTRY_BEGIN 16776960;
+ const int RECORD_LENGTH = 3;
+@@ -57,9 +65,66 @@
+ const char *GeoIPUpdateHost = "updates.maxmind.com";
+ const char *GeoIPHTTPRequest = "GET /app/update?license_key=%s HTTP/1.0\nHost: updates.maxmind.com\n\n";
+ 
++#ifdef _WIN32
++char * _dat_in_module_path () {
++	HMODULE GeoIPdll;
++	struct _stat st;
++	int i;
++	char * buf;
++
++	buf			= (char *) malloc(MAX_PATH);
++
++	GeoIPdll = GetModuleHandle("GeoIP.dll");
++	if (!GeoIPdll)
++	{
++		GeoIPdll = GetModuleHandle(NULL);
++		if (!GeoIPdll)
++			return NULL;
++	}
++	GetModuleFileName(GeoIPdll, buf, MAX_PATH);
++	for (i = strlen(buf); (i >= 0) && (buf[i] != '\\'); i--);
++	if (i)
++	{
++		buf[i] = '\0';
++		strcat(buf, "\\");
++		strcat(buf, GeoIPDBFileName);
++		if (_stat(buf, &st) == 0)
++			return buf;
++	}
++
++	free(buf);
++	return NULL;
++}
++
++char * _dat_path_in_regkey () {
++	DWORD lpdwDisposition, type, size = MAX_PATH;
++	HKEY hkGeoIP;
++	char * buf, * filename;
++
++	buf			= (char *) malloc(MAX_PATH);
++	filename	= (char *) malloc(MAX_PATH);
++
++	if (RegCreateKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\MaxMind\\GeoIP", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkGeoIP, &lpdwDisposition) != ERROR_SUCCESS)
++		return NULL;
++	if (RegQueryValueEx(hkGeoIP, "DATADIR", 0, &type, buf, &size) != ERROR_SUCCESS)
++		strcpy(buf, "%SystemRoot%\\SYSTEM32");
++	if (RegSetValueEx(hkGeoIP, "DATADIR", 0, REG_EXPAND_SZ, buf, strlen(buf)) != ERROR_SUCCESS)
++		return NULL;
++	ExpandEnvironmentStrings(buf, filename, MAX_PATH);
++
++	free(buf);
++	strcat(filename, "\\");
++	strcat(filename, GeoIPDBFileName);
++
++	return filename;
++}
++#endif	/* _WIN32 */
++
+ GeoIP* GeoIP_new (int flags) {
+ 	char * filename;
+ 	GeoIP * gi;
++
++#ifndef _WIN32
+ 	filename = malloc(sizeof(char) * (strlen(DATADIR)+strlen(GeoIPDBFileName)+2));
+ 	if (filename == NULL)
+ 		return NULL;
+@@ -67,6 +132,17 @@
+ 	strcat(filename, DATADIR);
+ 	strcat(filename, "/");
+ 	strcat(filename, GeoIPDBFileName);
++#else
++	filename = _dat_in_module_path();
++	if (filename == NULL)
++		filename = _dat_path_in_regkey();
++	if (filename == NULL)
++	{
++		fprintf(stderr,"Unable to query registry for database location\n");
++		return NULL;
++	}
++#endif	/* _WIN32 */
++
+ 	gi = GeoIP_open (filename, flags);
+ 	free(filename);
+ 	return gi;
+@@ -96,7 +172,7 @@
+ 			}
+ 			gi->cache = (unsigned char *) malloc(sizeof(unsigned char) * buf.st_size);
+ 			if (gi->cache != NULL) {
+-				if (fread(gi->cache, sizeof(unsigned char), buf.st_size, gi->GeoIPDatabase) != buf.st_size) {
++				if (fread(gi->cache, sizeof(unsigned char), buf.st_size, gi->GeoIPDatabase) != (unsigned) buf.st_size) {
+ 					fprintf(stderr,"Error reading file %s\n",filename);
+ 					free(gi->cache);
+ 					free(gi);
+Index: GeoIP.h
+===================================================================
+RCS file: /home/maxmind/geoip/c/libGeoIP/GeoIP.h,v
+retrieving revision 1.19
+retrieving revision 1.20
+diff -u -r1.19 -r1.20
+--- GeoIP.h	20 Aug 2002 00:52:00 -0000	1.19
++++ GeoIP.h	27 Aug 2002 06:50:02 -0000	1.20
+@@ -45,25 +45,31 @@
+ extern const char * GeoIP_country_name[246];
+ extern const char * GeoIPConfFile;
+ 
+-GeoIP* GeoIP_new(int flags);
+-GeoIP* GeoIP_open(char * filename, int flags);
+-void GeoIP_delete(GeoIP* gi);
+-const char *GeoIP_country_code_by_addr (GeoIP* gi, const char *addr);
+-const char *GeoIP_country_code_by_name (GeoIP* gi, const char *host);
+-const char *GeoIP_country_code3_by_addr (GeoIP* gi, const char *addr);
+-const char *GeoIP_country_code3_by_name (GeoIP* gi, const char *host);
+-const char *GeoIP_country_name_by_addr (GeoIP* gi, const char *addr);
+-const char *GeoIP_country_name_by_name (GeoIP* gi, const char *host);
+-short int GeoIP_country_id_by_addr (GeoIP* gi, const char *addr);
+-short int GeoIP_country_id_by_name (GeoIP* gi, const char *host);
++#ifdef _WIN32
++#define GEOIP_API __declspec(dllexport)
++#else
++#define GEOIP_API
++#endif	/* _WIN32 */
+ 
+-char *GeoIP_database_info (GeoIP* gi);
+-short int GeoIP_update_database (GeoIP* gi, char * license_key, int verbose);
++GEOIP_API GeoIP* GeoIP_new(int flags);
++GEOIP_API GeoIP* GeoIP_open(char * filename, int flags);
++GEOIP_API void GeoIP_delete(GeoIP* gi);
++GEOIP_API const char *GeoIP_country_code_by_addr (GeoIP* gi, const char *addr);
++GEOIP_API const char *GeoIP_country_code_by_name (GeoIP* gi, const char *host);
++GEOIP_API const char *GeoIP_country_code3_by_addr (GeoIP* gi, const char *addr);
++GEOIP_API const char *GeoIP_country_code3_by_name (GeoIP* gi, const char *host);
++GEOIP_API const char *GeoIP_country_name_by_addr (GeoIP* gi, const char *addr);
++GEOIP_API const char *GeoIP_country_name_by_name (GeoIP* gi, const char *host);
++GEOIP_API short int GeoIP_country_id_by_addr (GeoIP* gi, const char *addr);
++GEOIP_API short int GeoIP_country_id_by_name (GeoIP* gi, const char *host);
+ 
+-int _seek_country (GeoIP* gi, const int offset, unsigned long ipnum, int depth);
+-unsigned long _addr_to_num (const char *addr);
+-unsigned long _h_addr_to_num (unsigned char *addr);
+-short int _is_ipaddr (const char *name);
++GEOIP_API char *GeoIP_database_info (GeoIP* gi);
++GEOIP_API short int GeoIP_update_database (GeoIP* gi, char * license_key, int verbose);
++
++GEOIP_API int _seek_country (GeoIP* gi, const int offset, unsigned long ipnum, int depth);
++GEOIP_API unsigned long _addr_to_num (const char *addr);
++GEOIP_API unsigned long _h_addr_to_num (unsigned char *addr);
+ 
+ #ifdef __cplusplus
+ }

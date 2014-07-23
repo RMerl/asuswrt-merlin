@@ -97,8 +97,9 @@ function initial(){
 	}
 	else
 		show_wl_maclist_x();
-		
-	showWLMACList();		
+
+	setTimeout("showWLMACList();", 1000);	
+
 	if(!band5g_support)	
 		$("wl_unit_field").style.display = "none";
 		

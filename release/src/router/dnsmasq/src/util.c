@@ -608,3 +608,22 @@ int wildcard_match(const char* wildcard, const char* match)
 
   return *wildcard == *match;
 }
+
+/* The same but comparing a maximum of NUM characters, like strncmp.  */
+int wildcard_matchn(const char* wildcard, const char* match, int num)
+{
+  while (*wildcard && *match && num)
+    {
+      if (*wildcard == '*')
+        return 1;
+
+      if (*wildcard != *match)
+        return 0; 
+
+      ++wildcard;
+      ++match;
+      --num;
+    }
+
+  return (!num) || (*wildcard == *match);
+}

@@ -109,7 +109,7 @@ function initial(){
 	}
 	//}Viz 2011.10
 	showdhcp_staticlist();
-	showLANIPList();
+	setTimeout("showLANIPList();", 1000);
 
 	if(pptpd_support){
 		var chk_vpn = check_vpn();
@@ -311,8 +311,8 @@ function validate_dhcp_range(ip_obj){
 
 function validForm(){
 	var re = new RegExp('^[a-zA-Z0-9][a-zA-Z0-9\.\-]*[a-zA-Z0-9]$','gi');
-  if(!re.test(document.form.lan_domain.value) && document.form.lan_domain.value != ""){
-      alert("<#JS_validchar#>");
+ 	if((!re.test(document.form.lan_domain.value) || document.form.lan_domain.value.indexOf("asuscomm.com") > 0) && document.form.lan_domain.value != ""){
+	alert("<#JS_validchar#>");
       document.form.lan_domain.focus();
       document.form.lan_domain.select();
 	 	return false;

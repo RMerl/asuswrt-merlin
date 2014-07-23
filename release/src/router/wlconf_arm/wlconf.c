@@ -1605,7 +1605,7 @@ wlconf(char *name)
 	char tmp[100], tmp2[100], prefix[PREFIX_LEN];
 	char var[80], *next, *str, *addr = NULL;
 	/* Pay attention to buffer length requirements when using this */
-	char buf[WLC_IOCTL_SMLEN] __attribute__ ((aligned(4)));
+	char buf[WLC_IOCTL_SMLEN*2] __attribute__ ((aligned(4)));
 	char *country;
 	char *country_rev;
 	wlc_rev_info_t rev;
@@ -1704,8 +1704,9 @@ wlconf(char *name)
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 
 	/* Restore defaults if per-interface parameters do not exist */
-	restore_defaults = !nvram_get(strcat_r(prefix, "ifname", tmp));
-	nvram_validate_all(prefix, restore_defaults);
+//	restore_defaults = !nvram_get(strcat_r(prefix, "ifname", tmp));
+	restore_defaults = !strlen(nvram_safe_get(strcat_r(prefix, "ifname", tmp)));
+//	nvram_validate_all(prefix, restore_defaults);
 	nvram_set(strcat_r(prefix, "ifname", tmp), name);
 	nvram_set(strcat_r(prefix, "hwaddr", tmp), ether_etoa((uchar *)buf, eaddr));
 	snprintf(buf, sizeof(buf), "%d", unit);

@@ -464,7 +464,7 @@ extern int zcip_wan(int argc, char **argv);
 extern int start_zcip(char *wan_ifname);
 
 #ifdef RTCONFIG_IPV6
-extern int dhcp6c_state_main(int argc, char **argv);
+extern int dhcp6c_wan(int argc, char **argv);
 extern int start_dhcp6c(void);
 extern void stop_dhcp6c(void);
 #endif
@@ -598,8 +598,10 @@ extern void stop_if_misc(void);
 extern int mssid_mac_validate(const char *macaddr);
 
 // ssh.c
+#ifdef RTCONFIG_SSH
 extern void start_sshd(void);
 extern void stop_sshd(void);
+#endif
 
 // usb.c
 #ifdef RTCONFIG_USB
@@ -757,16 +759,17 @@ extern void stop_dnsmasq(int force);
 extern void reload_dnsmasq(void);
 extern int ddns_updated_main(int argc, char *argv[]);
 #ifdef RTCONFIG_IPV6
+extern void add_ip6_lanaddr(void);
 extern void start_ipv6_tunnel(void);
 extern void stop_ipv6_tunnel(void);
-#ifndef RTCONFIG_DNSMASQ6
+#ifdef RTCONFIG_WIDEDHCP6
 extern void start_radvd(void);
 extern void stop_radvd(void);
 extern void start_dhcp6s(void);
 extern void stop_dhcp6s(void);
-#endif
 extern void start_rdnssd(void);
 extern void stop_rdnssd(void);
+#endif /* RTCONFIG_WIDEDHCP6 */
 extern void start_ipv6(void);
 extern void stop_ipv6(void);
 extern void ipv6_sysconf(const char *ifname, const char *name, int value);
@@ -829,6 +832,7 @@ extern int bwdpi_main(int argc, char **argv);
 extern int bwdpi_monitor_main(int argc, char **argv);
 extern int bwdpi_check_main(int argc, char **argv);
 extern int show_wrs_main(int argc, char **argv);
+extern int rsasign_sig_check_main(int argc, char *argv[]);
 #endif
 #ifdef RTCONFIG_TMOBILE
 extern int sendm_main(int argc, char **argv);
@@ -866,6 +870,9 @@ extern int run_app_script(const char *pkg_name, const char *pkg_action);
 extern int start_telnetd(void);
 extern void stop_telnetd(void);
 extern int run_telnetd(void);
+#ifdef RTCONFIG_SSH
+extern int run_sshd(void);
+#endif
 extern void start_hotplug2(void);
 extern void stop_services(void);
 extern void stop_logger(void);
@@ -907,6 +914,9 @@ extern void stop_lldpd(void);
 extern int start_lldpd(void);
 #endif
 extern int firmware_check_main(int argc, char *argv[]);
+#ifdef RTCONFIG_HTTPS
+extern int rsasign_check_main(int argc, char *argv[]);
+#endif
 extern int service_main(int argc, char *argv[]);
 #ifdef RTCONFIG_DSL
 extern int check_tc_upgrade(void);

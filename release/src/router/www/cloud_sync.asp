@@ -752,11 +752,18 @@ function get_tree_items(treeitems){
 	this.isLoading = 1;
 	var array_temp = new Array();
 	var array_temp_split = new Array();
-	for(var j=0;j<treeitems.length;j++){ // To hide folder 'Download2' & 'asusware'
-		array_temp_split[j] = treeitems[j].split("#");
-		if( array_temp_split[j][0].match(/^Download2$/) || array_temp_split[j][0].match(/^asusware$/)	){
+	for(var j=0;j<treeitems.length;j++){
+		//treeitems[j] : "Download2#22#0"
+		array_temp_split[j] = treeitems[j].split("#"); 
+		// Mipsel:asusware  Mipsbig:asusware.big  Armel:asusware.arm  // To hide folder 'asusware'
+		if( array_temp_split[j][0].match(/^asusware$/)	|| array_temp_split[j][0].match(/^asusware.big$/) || array_temp_split[j][0].match(/^asusware.arm$/) ){
 			continue;					
 		}
+
+		//Specific folder 'Download2/Complete'
+		if( array_temp_split[j][0].match(/^Download2$/) ){
+			treeitems[j] = "Download2/Complete"+"#"+array_temp_split[j][1]+"#"+array_temp_split[j][2];
+		}		
 		
 		array_temp.push(treeitems[j]);
 	}
@@ -1279,9 +1286,7 @@ function refresh_captcha(){
 						  </tr>						  				
 					  				
 						  <tr>
-							<th width="30%" style="font-family: Calibri;font-weight: bolder;">
-								Folder
-							</th>
+							<th width="30%" style="font-family: Calibri;font-weight: bolder;"><#routerSync_folder#></th>
 							<td>
 			          <input type="text" id="PATH" class="input_30_table" style="height: 23px;" name="cloud_dir" value="" onclick=""/>
 		  					<input name="button" type="button" class="button_gen" onclick="get_disk_tree();" value="Browser"/>
@@ -1290,9 +1295,7 @@ function refresh_captcha(){
 						  </tr>
 
 						  <tr>
-							<th width="30%" style="font-family: Calibri;font-weight: bolder;">
-								Rule
-							</th>
+							<th width="30%" style="font-family: Calibri;font-weight: bolder;"><#Cloudsync_Rule#></th>
 							<td>
 								<select name="cloud_rule" class="input_option">
 									<option value="0"><#Cloudsync_Rule_sync#></option>
@@ -1302,9 +1305,7 @@ function refresh_captcha(){
 							</td>
 						  </tr>
 						  <tr>
-							<th width="30%" style="font-family: Calibri;font-weight: bolder;">
-								Security code
-							</th>
+							<th width="30%" style="font-family: Calibri;font-weight: bolder;"><#routerSync_Security_code#></th>
 							<td>
 								<div style="color:#FC0;"><input id="security_code_field" name="security_code_field" type="text" maxlength="6" class="input_32_table" style="height: 23px;width:100px;margin-right:10px;" >OTP Authentication</div>
 							</td>

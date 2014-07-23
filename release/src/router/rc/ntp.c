@@ -58,14 +58,14 @@ static void ntp_service()
 		if (is_routing_enabled())
 			notify_rc("restart_upnp");
 #ifdef RTCONFIG_IPV6
-#ifndef RTCONFIG_DNSMASQ6
+#ifdef RTCONFIG_WIDEDHCP6
 /* switch to monotonic clock usage *//*
 		if (get_ipv6_service() != IPV6_DISABLED) {
 			notify_rc("restart_dhcp6s");
 			notify_rc("restart_radvd");
 		}
 */
-#endif
+#endif /* RTCONFIG_WIDEDHCP6 */
 #endif
 #ifdef RTCONFIG_DISK_MONITOR
 		notify_rc("restart_diskmon");

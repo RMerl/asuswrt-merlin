@@ -12,7 +12,7 @@ LDFLAGS += -L$(TOP)/libqcsapi_client -lqcsapi_client
 endif
 
 # ASUSWRT
-OBJS += iqos.o wrs.o stat.o dpi.o web_history.o wrs_app.o data_collect.o
+OBJS += iqos.o wrs.o stat.o dpi.o web_history.o wrs_app.o data_collect.o tools.o
 
 # TrendMicro
 OBJS += usr_ioctl.o conf_app.o
@@ -25,6 +25,7 @@ ifeq ($(wildcard $(SRCBASE)/router/bwdpi/*.c),)
 all:
 	-cp -f prebuilt/libbwdpi.so libbwdpi.so
 	-cp -f prebuilt/wrs wrs
+	-cp -f prebuilt/bwdpi.h bwdpi.h
 else
 all: libbwdpi.so wrs
 endif

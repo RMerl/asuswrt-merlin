@@ -440,8 +440,8 @@ void generate_switch_para(void)
 			else{
 				switch_gen_config(lan, ports, cfg, 0, "*");
 				switch_gen_config(wan, ports, wancfg, 1, "");
-				nvram_set("vlan1ports", lan);
-				nvram_set("vlan2ports", wan);
+				nvram_set("vlan0ports", lan);
+				nvram_set("vlan1ports", wan);
 				switch_gen_config(lan, ports, cfg, 0, NULL);
 				switch_gen_config(wan, ports, wancfg, 1, NULL);
 				nvram_set("lanports", lan);
@@ -540,8 +540,8 @@ void generate_switch_para(void)
 			else{
 				switch_gen_config(lan, ports, cfg, 0, "*");
 				switch_gen_config(wan, ports, wancfg, 1, "");
-				nvram_set("vlan1ports", lan);
-				nvram_set("vlan2ports", wan);
+				nvram_set("vlan0ports", lan);
+				nvram_set("vlan1ports", wan);
 				switch_gen_config(lan, ports, cfg, 0, NULL);
 				switch_gen_config(wan, ports, wancfg, 1, NULL);
 				nvram_set("lanports", lan);
@@ -1253,6 +1253,9 @@ void init_switch()
 	generate_switch_para();
 
 #ifdef CONFIG_BCMWL5
+#ifdef RTAC3200
+	nvram_set("ctf_disable_force", "1");
+#endif
 	// ctf should be disabled when some functions are enabled
 	if (nvram_get_int("cstats_enable") || (nvram_get_int("qos_enable") == 1 && nvram_get_int("qos_type") == 0) /*|| nvram_get_int("url_enable_x") || nvram_get_int("keyword_enable_x")*/ || nvram_get_int("ctf_disable_force")
 // #ifdef RTCONFIG_WIRELESSREPEATER
@@ -1458,6 +1461,42 @@ reset_mssid_hwaddr(int unit)
 	}
 }
 
+#ifdef RTCONFIG_BCM7
+void load_wl()
+{
+	char module[80], *modules, *next;
+#ifdef RTCONFIG_DHDAP
+	modules = "dpsta dhd wl";
+#else
+	modules = "dpsta wl";
+#endif
+	int i = 0, maxwl_eth = 0, maxunit = -1;
+	int unit = -1;
+	char ifname[16] = {0};
+	char instance_base[128];
+
+	foreach(module, modules, next) {
+		if ((strcmp(module, "dhd") == 0) || (strcmp(module, "wl") == 0)) {
+			/* Search for existing wl devices and the max unit number used */
+			for (i = 1; i <= DEV_NUMIFS; i++) {
+			snprintf(ifname, sizeof(ifname), "eth%d", i);
+				if (!wl_probe(ifname)) {
+					if (!wl_ioctl(ifname, WLC_GET_INSTANCE, &unit,
+					sizeof(unit))) {
+						maxwl_eth = i;
+						maxunit = (unit > maxunit) ? unit : maxunit;
+					}
+				}
+			}
+			snprintf(instance_base, sizeof(instance_base), "instance_base=%d", maxunit + 1);
+			eval("insmod", module, instance_base);
+		}
+		else
+			eval("insmod", module);
+	}
+}
+#endif
+
 void init_wl(void)
 {
 #ifdef RTCONFIG_EMF
@@ -1474,34 +1513,15 @@ void init_wl(void)
 			break;
 	}
 #endif
-#ifdef RTCONFIG_DHDAP
-	char module[80], *modules, *next;
-	modules = "dhd wl";
-	int i = 0, maxwl_eth = 0, maxunit = -1;
-	int unit = -1;
-	char ifname[16] = {0};
-	char instance_base[128];
-
-	/* Search for existing wl devices and the max unit number used */
-	for (i = 1; i <= DEV_NUMIFS; i++) {
-	snprintf(ifname, sizeof(ifname), "eth%d", i);
-		if (!wl_probe(ifname)) {
-			if (!wl_ioctl(ifname, WLC_GET_INSTANCE, &unit,
-		   	sizeof(unit))) {
-				maxwl_eth = i;
-				maxunit = (unit > maxunit) ? unit : maxunit;
-			}
-		}
-	}
-	snprintf(instance_base, sizeof(instance_base), "instance_base=%d", maxunit + 1);
-
-	eval("insmod", module, instance_base);
+#ifdef RTCONFIG_BCM7
+	load_wl();
 #else
 	modprobe("wl");
 #endif
-
+#ifndef RTCONFIG_BCMARM
 #if defined(NAS_GTK_PER_STA) && defined(PROXYARP)
 	modprobe("proxyarp");
+#endif
 #endif
 
 #ifdef RTCONFIG_BRCM_USBAP
@@ -1578,8 +1598,10 @@ void init_wl(void)
 
 void fini_wl(void)
 {
+#ifndef RTCONFIG_BCMARM
 #if defined(NAS_GTK_PER_STA) && defined(PROXYARP)
 	modprobe_r("proxyarp");
+#endif
 #endif
 
 #ifndef RTCONFIG_BRCM_USBAP
@@ -1590,6 +1612,12 @@ void fini_wl(void)
 		(get_model() == MODEL_RTAC66U) ||
 		(get_model() == MODEL_RTN66U))
 	eval("rmmod","wl");
+#endif
+#ifdef RTCONFIG_BCM7
+#ifdef RTCONFIG_DHDAP
+	modprobe_r("dhd");
+#endif
+	modprobe_r("dpsta");
 #endif
 }
 
@@ -3374,7 +3402,7 @@ void generate_wl_para(int unit, int subunit)
 
 	char tmp[100], prefix[]="wlXXXXXXX_";
 	char tmp2[100], prefix2[]="wlXXXXXXX_";
-	char list[3500];
+	char *list;
 	char *nv, *nvp, *b, *c;
 #ifndef RTCONFIG_BCMWL6
 	char word[256], *next;
@@ -3565,10 +3593,6 @@ void generate_wl_para(int unit, int subunit)
 	memset(tmp, 0, sizeof(tmp));
 	memset(tmp2, 0, sizeof(tmp2));
 
-#ifdef RTCONFIG_TMOBILE
-	nvram_set(strcat_r(prefix, "osu_ssid", tmp), nvram_safe_get(strcat_r(prefix, "ssid", tmp2)));
-#endif
-
 	if (nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "shared"))
 		nvram_set(strcat_r(prefix, "auth", tmp), "1");
 	else nvram_set(strcat_r(prefix, "auth", tmp), "0");
@@ -3615,8 +3639,11 @@ void generate_wl_para(int unit, int subunit)
 		nvram_set(strcat_r(prefix, "preauth", tmp), "");
 
 	if (!nvram_match(strcat_r(prefix, "macmode", tmp), "disabled")) {
-		list[0] = 0;
+
 		nv = nvp = strdup(nvram_safe_get(strcat_r(prefix, "maclist_x", tmp)));
+		list = (char*) malloc(sizeof(char) * (strlen(nv)+1));
+		list[0] = 0;
+
 		if (nv) {
 			while ((b = strsep(&nvp, "<")) != NULL) {
 				if (strlen(b)==0) continue;
@@ -3629,6 +3656,7 @@ void generate_wl_para(int unit, int subunit)
 			free(nv);
 		}
 		nvram_set(strcat_r(prefix, "maclist", tmp), list);
+		free(list);
 	}
 	else
 		nvram_set(strcat_r(prefix, "maclist", tmp), "");
@@ -3669,8 +3697,10 @@ void generate_wl_para(int unit, int subunit)
 		// handle wireless wds list
 		if (!nvram_match(strcat_r(prefix, "mode_x", tmp), "0")) {
 			if (nvram_match(strcat_r(prefix, "wdsapply_x", tmp), "1")) {
-				list[0] = 0;
 				nv = nvp = strdup(nvram_safe_get(strcat_r(prefix, "wdslist", tmp)));
+				list = (char*) malloc(sizeof(char) * (strlen(nv)+1));
+				list[0] = 0;
+
 				if (nv) {
 					while ((b = strsep(&nvp, "<")) != NULL) {
 						if (strlen(b)==0) continue;
@@ -3683,6 +3713,7 @@ void generate_wl_para(int unit, int subunit)
 				}
 				nvram_set(strcat_r(prefix, "wds", tmp), list);
 				nvram_set(strcat_r(prefix, "lazywds", tmp), "0");
+				free(list);
 			}
 			else {
 				nvram_set(strcat_r(prefix, "wds", tmp), "");
@@ -3747,7 +3778,7 @@ void generate_wl_para(int unit, int subunit)
 			nvram_set(strcat_r(prefix, "nreqd", tmp), "0");
 #endif
 			nvram_set(strcat_r(prefix, "vreqd", tmp), "1");
-			nvram_set(strcat_r(prefix, "gmode", tmp), !unit ? "1" : "-1");	// 1: 54g Auto, 4: 4g Performance, 5: 54g LRS, 0: 802.11b Only
+			nvram_set(strcat_r(prefix, "gmode", tmp), nvram_match(strcat_r(prefix, "nband", tmp2), "2") ? "1" : "-1");	// 1: 54g Auto, 4: 4g Performance, 5: 54g LRS, 0: 802.11b Only
 			nvram_set(strcat_r(prefix, "rate", tmp), "0");
 #ifdef RTCONFIG_BCMWL6
 			nvram_set(strcat_r(prefix, "bss_opmode_cap_reqd", tmp), "0");	// no requirements on joining devices
@@ -3761,7 +3792,7 @@ void generate_wl_para(int unit, int subunit)
 			nvram_set(strcat_r(prefix, "nreqd", tmp), "1");
 #endif
 			nvram_set(strcat_r(prefix, "vreqd", tmp), "0");
-			nvram_set(strcat_r(prefix, "gmode", tmp), !unit ? "1" : "-1");
+			nvram_set(strcat_r(prefix, "gmode", tmp), nvram_match(strcat_r(prefix, "nband", tmp), "2") ? "1" : "-1");
 			nvram_set(strcat_r(prefix, "rate", tmp), "0");
 #ifdef RTCONFIG_BCMWL6
 			nvram_set(strcat_r(prefix, "bss_opmode_cap_reqd", tmp), "2");	// devices must advertise HT (11n) capabilities to be allowed to associate
@@ -3775,10 +3806,10 @@ void generate_wl_para(int unit, int subunit)
 			nvram_set(strcat_r(prefix, "nreqd", tmp), "0");
 #endif
 			nvram_set(strcat_r(prefix, "vreqd", tmp), "0");
-			nvram_set(strcat_r(prefix, "gmode", tmp), !unit ? "1" : "-1");
+			nvram_set(strcat_r(prefix, "gmode", tmp), nvram_match(strcat_r(prefix, "nband", tmp), "2") ? "1" : "-1");
 			nvram_set(strcat_r(prefix, "rate", tmp), "0");
 #ifdef RTCONFIG_BCMWL6
-			if (!unit)
+			if (nvram_match(strcat_r(prefix, "nband", tmp), "2"))
 			nvram_set(strcat_r(prefix, "bss_opmode_cap_reqd", tmp), "1");	// devices must advertise ERP (11g) capabilities to be allowed to associate
 			else
 			nvram_set(strcat_r(prefix, "bss_opmode_cap_reqd", tmp), "0");   // no requirements on joining devices
@@ -3792,7 +3823,7 @@ void generate_wl_para(int unit, int subunit)
 			nvram_set(strcat_r(prefix, "nreqd", tmp), "0");
 #endif
 			nvram_set(strcat_r(prefix, "vreqd", tmp), "0");
-			nvram_set(strcat_r(prefix, "gmode", tmp), !unit ? "2" : "-1");
+			nvram_set(strcat_r(prefix, "gmode", tmp), nvram_match(strcat_r(prefix, "nband", tmp), "2") ? "2" : "-1");
 			nvram_set(strcat_r(prefix, "rate", tmp), "0");
 #ifdef RTCONFIG_BCMWL6
 			nvram_set(strcat_r(prefix, "bss_opmode_cap_reqd", tmp), "1");	// devices must advertise ERP (11g) capabilities to be allowed to associate
@@ -3806,7 +3837,7 @@ void generate_wl_para(int unit, int subunit)
 			nvram_set(strcat_r(prefix, "nreqd", tmp), "0");
 #endif
 			nvram_set(strcat_r(prefix, "vreqd", tmp), "0");
-			nvram_set(strcat_r(prefix, "gmode", tmp), !unit ? "0" : "-1");
+			nvram_set(strcat_r(prefix, "gmode", tmp), nvram_match(strcat_r(prefix, "nband", tmp), "2") ? "0" : "-1");
 			nvram_set(strcat_r(prefix, "rate", tmp), "0");
 #ifdef RTCONFIG_BCMWL6
 			nvram_set(strcat_r(prefix, "bss_opmode_cap_reqd", tmp), "0");	// no requirements on joining devices
@@ -3838,7 +3869,7 @@ void generate_wl_para(int unit, int subunit)
 			nvram_set(strcat_r(prefix, "nreqd", tmp), "0");
 #endif
 			nvram_set(strcat_r(prefix, "vreqd", tmp), "0");
-			nvram_set(strcat_r(prefix, "gmode", tmp), !unit ? "1" : "-1");
+			nvram_set(strcat_r(prefix, "gmode", tmp), nvram_match(strcat_r(prefix, "nband", tmp), "2") ? "1" : "-1");
 			nvram_set(strcat_r(prefix, "rate", tmp), "0");
 #ifdef RTCONFIG_BCMWL6
 			nvram_set(strcat_r(prefix, "bss_opmode_cap_reqd", tmp), "0");	// no requirements on joining devices
@@ -3846,7 +3877,7 @@ void generate_wl_para(int unit, int subunit)
 		}
 #ifdef RTCONFIG_BCMWL6
 		else if (nvram_match(strcat_r(prefix, "nmode_x", tmp), "3") && 	// ac only
-			 unit)
+			 nvram_match(strcat_r(prefix, "nband", tmp), "1"))
 		{
 			nvram_set(strcat_r(prefix, "nmcsidx", tmp), "-1");	// auto rate
 			nvram_set(strcat_r(prefix, "nmode", tmp), "-1");
@@ -3897,12 +3928,10 @@ void generate_wl_para(int unit, int subunit)
 		else if (nvram_match(strcat_r(prefix, "bw", tmp), "2"))		// 40M
 		{
 			nvram_set(strcat_r(prefix, "bw_cap", tmp), "3");
-#ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_PROXYSTA
 			if (is_psta(unit) || is_psr(unit))
 				nvram_set(strcat_r(prefix, "obss_coex", tmp), "1");
 			else
-#endif
 #endif
 			nvram_set(strcat_r(prefix, "obss_coex", tmp), "0");
 		}
@@ -3912,16 +3941,15 @@ void generate_wl_para(int unit, int subunit)
 				nvram_set(strcat_r(prefix, "bw_cap", tmp), "3");
 			else
 				nvram_set(strcat_r(prefix, "bw_cap", tmp), "7");
-#ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_PROXYSTA
 			if (is_psta(unit) || is_psr(unit))
 				nvram_set(strcat_r(prefix, "obss_coex", tmp), "1");
 			else
 #endif
-#endif
 			nvram_set(strcat_r(prefix, "obss_coex", tmp), "0");
 		}
 
+		if (nvram_match(strcat_r(prefix, "nband", tmp), "1"))		// 5G
 		chanspec_fix(unit);
 
 //		if (unit)
@@ -3937,6 +3965,9 @@ void generate_wl_para(int unit, int subunit)
 				nvram_set(strcat_r(prefix, "txbf_bfe_cap", tmp), "0");
 			}
 		}
+#ifdef RTCONFIG_BCM7
+		nvram_set(strcat_r(prefix, "txbf_imp", tmp), nvram_safe_get(strcat_r(prefix, "itxbf", tmp2)));
+#endif
 #else
 		if (nvram_match(strcat_r(prefix, "bw", tmp), "1"))
 		{
@@ -3983,9 +4014,11 @@ void generate_wl_para(int unit, int subunit)
 		nvram_set_int(strcat_r(prefix, "wmf_mdata_sendup", tmp), /*i ? 1 :*/ 0);
 #ifdef RTCONFIG_BCMARM
 		nvram_set_int(strcat_r(prefix, "wmf_ucast_upnp", tmp), /*i ? 1 :*/ 0);
+#ifndef RTCONFIG_BCM7
 		nvram_set_int(strcat_r(prefix, "wmf_igmpq_filter", tmp), /*i ? 1 :*/ 0);
 #endif
-		nvram_set_int(strcat_r(prefix, "acs_fcs_mode", tmp), i && (unit == 1) ? 1 : 0);
+#endif
+		nvram_set_int(strcat_r(prefix, "acs_fcs_mode", tmp), i && nvram_match(strcat_r(prefix, "nband", tmp), "1") ? 1 : 0);
 		nvram_set_int(strcat_r(prefix, "dcs_csa_unicast", tmp), i ? 1 : 0);
 #endif
 #else
@@ -3995,7 +4028,9 @@ void generate_wl_para(int unit, int subunit)
 		nvram_set_int(strcat_r(prefix, "wmf_mdata_sendup", tmp), 0);
 #ifdef RTCONFIG_BCMARM
 		nvram_set_int(strcat_r(prefix, "wmf_ucast_upnp", tmp), 0);
+#ifndef RTCONFIG_BCM7
 		nvram_set_int(strcat_r(prefix, "wmf_igmpq_filter", tmp), 0);
+#endif
 #endif
 		nvram_set_int(strcat_r(prefix, "acs_fcs_mode", tmp), 0);
 		nvram_set_int(strcat_r(prefix, "dcs_csa_unicast", tmp), 0);
@@ -4005,7 +4040,7 @@ void generate_wl_para(int unit, int subunit)
 		sprintf(tmp2, "%d", nvram_get_int(strcat_r(prefix, "pmk_cache", tmp)) * 60);
 		nvram_set(strcat_r(prefix, "net_reauth", tmp), tmp2);
 
-		if (unit) {
+		if (nvram_match(strcat_r(prefix, "nband", tmp), "1")) {
 			if (	((get_model() == MODEL_RTAC68U || get_model() == MODEL_DSLAC68U) &&
 				nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
 				nvram_match(strcat_r(prefix, "reg_mode", tmp), "off") &&
@@ -4037,12 +4072,21 @@ void generate_wl_para(int unit, int subunit)
 	{
 		if (nvram_match(strcat_r(prefix, "bss_enabled", tmp), "1"))
 		{
+#ifdef RTCONFIG_TMOBILE
+			if (subunit == 3)
+			nvram_set(strcat_r(prefix, "osu_ssid", tmp), nvram_safe_get(strcat_r(prefix, "ssid", tmp2)));
+#endif
 			nvram_set(strcat_r(prefix, "bss_maxassoc", tmp), nvram_safe_get(strcat_r(prefix2, "bss_maxassoc", tmp2)));
 			nvram_set(strcat_r(prefix, "ap_isolate", tmp), nvram_safe_get(strcat_r(prefix2, "ap_isolate", tmp2)));
 			nvram_set(strcat_r(prefix, "net_reauth", tmp), nvram_safe_get(strcat_r(prefix2, "net_reauth", tmp2)));
-			nvram_set(strcat_r(prefix, "radius_ipaddr", tmp), nvram_safe_get(strcat_r(prefix2, "radius_ipaddr", tmp2)));
-			nvram_set(strcat_r(prefix, "radius_key", tmp), nvram_safe_get(strcat_r(prefix2, "radius_key", tmp2)));
-			nvram_set(strcat_r(prefix, "radius_port", tmp), nvram_safe_get(strcat_r(prefix2, "radius_port", tmp2)));
+#ifdef RTCONFIG_TMOBILE
+			if (subunit != 3)
+#endif
+			{
+				nvram_set(strcat_r(prefix, "radius_ipaddr", tmp), nvram_safe_get(strcat_r(prefix2, "radius_ipaddr", tmp2)));
+				nvram_set(strcat_r(prefix, "radius_key", tmp), nvram_safe_get(strcat_r(prefix2, "radius_key", tmp2)));
+				nvram_set(strcat_r(prefix, "radius_port", tmp), nvram_safe_get(strcat_r(prefix2, "radius_port", tmp2)));
+			}
 			nvram_set(strcat_r(prefix, "wme", tmp), nvram_safe_get(strcat_r(prefix2, "wme", tmp2)));
 			nvram_set(strcat_r(prefix, "wme_bss_disable", tmp), nvram_safe_get(strcat_r(prefix2, "wme_bss_disable", tmp2)));
 			nvram_set(strcat_r(prefix, "wpa_gtk_rekey", tmp), nvram_safe_get(strcat_r(prefix2, "wpa_gtk_rekey", tmp2)));
@@ -4087,7 +4131,7 @@ void generate_wl_para(int unit, int subunit)
 		nvram_set(strcat_r(prefix, "nmcsidx", tmp), "-2");	// legacy rate
 		nvram_set(strcat_r(prefix, "nmode", tmp), "0");
 		nvram_set(strcat_r(prefix, "nreqd", tmp), "0");
-		if (!unit)
+		if (nvram_match(strcat_r(prefix, "nband", tmp), "2"))
 		nvram_set(strcat_r(prefix, "gmode", tmp), "1");
 		nvram_set(strcat_r(prefix, "bw", tmp), "1");		// reset to default setting
 #ifdef RTCONFIG_BCMWL6

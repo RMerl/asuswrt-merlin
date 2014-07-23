@@ -1030,15 +1030,7 @@ remove_dups(char *inlist, int inlist_size)
 int
 ure_any_enabled(void)
 {
-	char *temp;
-	char nv_param[NVRAM_MAX_PARAM_LEN];
-
-	sprintf(nv_param, "ure_disable");
-	temp = nvram_safe_get(nv_param);
-	if (temp && (strncmp(temp, "0", 1) == 0))
-		return 1;
-	else
-		return 0;
+	return nvram_match("ure_disable", "0");
 }
 
 

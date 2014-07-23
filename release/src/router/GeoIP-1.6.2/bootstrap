@@ -1,0 +1,28 @@
+#!/bin/sh
+
+# dl the dat file if needed
+DIR="$( cd "$( dirname "$0"  )" && pwd  )"
+
+# download geolite database for the tests
+mkdir -p $DIR/data
+if [ ! -f $DIR/data/GeoIP.dat  ]; then
+      curl http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/GeoIP.dat.gz | gzip -d > $DIR/data/GeoIP.dat
+fi
+
+# make sure  to use the installed libtool
+rm -f ltmain.sh
+autoreconf -fiv
+
+###################################################
+# the steps below may help with outdated toolsets
+
+# disable dependency trackeing for OS X with multiply arch option's
+# automake -i --gnu --add-missing
+
+
+#aclocal \
+#&& automake -i --gnu --add-missing \
+#&& autoconf
+
+#LIBTOOLIZE=$( which libtoolize glibtoolize | head -1 )
+#$LIBTOOLIZE -f

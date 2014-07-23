@@ -1,0 +1,111 @@
+﻿.splitLine{
+	background-image: url('/images/New_ui/export/line_export.png');
+	background-repeat: no-repeat;
+	height: 3px;
+	width: 100%;
+}
+.trafficIcons{
+	width:56px;
+	height:56px;
+	background-image:url('/images/New_ui/networkmap/client-list.png');
+	background-repeat:no-repeat;
+	border-radius:10px;
+	margin-left:10px;
+	background-position:50% 61.10%;
+}
+.appIcons{
+	width:56px;
+	height:56px;
+	background-repeat:no-repeat;
+	margin-left:10px;
+}
+.txNarrow{
+	width:0;
+	height:0;
+	border-width:0 7px 10px 7px;
+	border-style:solid;
+	border-color:#444F53 #444F53 #93E7FF #444F53;
+}
+.rxNarrow{
+	width:0;
+	height:0;
+	border-width:10px 7px 0 7px;
+	border-style:solid;
+	border-color:#93E7FF #444F53 #444F53 #444F53;
+}
+.barContainer{
+	padding:3px;
+	background-color:#000;
+	border-radius:10px;
+}
+.barContainer div{
+	background-color:#93E7FF;
+	border-radius:5px;
+}
+.slim{
+	height:6px;
+}
+.weight{
+	height:8px;
+}
+#indicator_upload, #indicator_download{
+	-webkit-transform:rotate(-123deg);
+    -moz-transform:rotate(-123deg);
+    -o-transform:rotate(-123deg);
+    msTransform:rotate(-123deg);
+    transform:rotate(-123deg);
+}
+#appTrafficDiv{
+	margin-top: 10px;
+	width:99%;
+	height:510px;
+	background-color:#444f53;
+	border-radius:10px;
+	margin-left:4px;
+	font-size:12px;
+	font-family: Lucida Console;
+	overflow:auto;
+	cursor:pointer;
+}
+/*
+#appTrafficDiv div table:hover{
+	cursor: pointer;
+	color: #000;
+	background-color: #66777D;
+	font-weight: bolder;
+}
+*/
+.appName{
+	width:180px;
+	font-size:14px;
+}
+.trafficNum{
+	position:absolute;
+	font-size:24px;
+	text-align:center;
+	width:60px;
+	font-family: Lucida Console;
+	margin:147px 0px 0px 187px;
+}
+.speedMeter{
+	background-image:url('images/New_ui/speedmeter.png');
+	height:188px;
+	width:270px;
+	background-repeat:no-repeat;
+	margin:-10px 0px 0px 70px
+}
+.speedIndictor{
+	background-image:url('images/New_ui/indicator.png');
+	position:absolute;
+	height:100px;
+	width:50px;
+	background-repeat:no-repeat;
+	margin:-110px 0px 0px 194px;
+}
+.erHint{
+	text-align:center;
+	color:#FC0;
+}
+.dots{
+	border-top:1px dotted #333;	
+}

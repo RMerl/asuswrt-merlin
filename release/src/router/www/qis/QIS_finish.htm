@@ -739,15 +739,33 @@ function submitenter(myfield,event){
 
 function set_timezone(){
 	var systime = new Date();
-	var system_timezone_dut = document.form.time_zone.value;
-	var system_timezone = parseInt(document.form.time_zone_x.value.substring(3));
-	var client_timezone = systime.getTimezoneOffset();
-	if(parent.isFirst && (system_timezone*60 != client_timezone)){		
-		systime_millsec += (-client_timezone*60000);
+	Date.prototype.stdTimezoneOffset_north = function() {
+    var jan = new Date(this.getFullYear(), 0, 1);
+    var jul = new Date(this.getFullYear(), 6, 1);
+    return Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+	}
+
+	Date.prototype.stdTimezoneOffset_south = function() {
+    var jan = new Date(this.getFullYear(), 0, 1);
+    var jul = new Date(this.getFullYear(), 6, 1);
+    return Math.min(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+	}
+
+	Date.prototype.dst = function() {
+    return (this.getTimezoneOffset() < this.stdTimezoneOffset_north() || this.getTimezoneOffset() > this.stdTimezoneOffset_south());
 	}	
+	
+	var system_timezone_dut = document.form.time_zone.value;
+	var system_timezone = parseInt(document.form.time_zone_x.value.substring(3));	
+	var client_timezone = systime.getTimezoneOffset();
+
+	if(parent.isFirst && (system_timezone*60 != client_timezone)){		//Tune DUT time while x_Setting=0
+			systime_millsec += (-client_timezone*60000);			
+	}
+	
 	document.getElementById('change_tz').innerHTML = timezones[system_timezone_dut];
 
-	if(system_timezone_dut.search("DST") >= 0 && "<% nvram_get("time_zone_dst"); %>" == "1"){
+	if(system_timezone_dut.search("DST") >= 0){
 		document.getElementById('dstzone').style.display = "";
 		document.getElementById('dstzone').innerHTML = "<#General_x_SystemTime_dst#>";
 	}

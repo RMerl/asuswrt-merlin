@@ -368,7 +368,7 @@ char* GetBW(int BW)
 		case BW_40:
 			return "40M";
 
-#if defined(RTAC52U) || defined(RTAC51U)
+#if defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U) 
 		case BW_80:
 			return "80M";
 #endif
@@ -393,7 +393,7 @@ char* GetPhyMode(int Mode)
 		case MODE_HTGREENFIELD:
 			return "GREEN";
 
-#if defined(RTAC52U) || defined(RTAC51U)
+#if defined(RTAC52U) || defined(RTAC51U)  || defined(RTN54U) 
 		case MODE_VHT:
 			return "VHT";
 #endif
@@ -469,7 +469,7 @@ _fn_(_st_ HTSetting)							\
 
 int FN_GETRATE(getRate,      MACHTTRANSMIT_SETTING)		//getRate(MACHTTRANSMIT_SETTING)
 int FN_GETRATE(getRate_2g,   MACHTTRANSMIT_SETTING_2G)		//getRate_2g(MACHTTRANSMIT_SETTING_2G)
-#if defined(RTAC52U) || defined(RTAC51U)
+#if defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U) 
 int FN_GETRATE(getRate_11ac, MACHTTRANSMIT_SETTING_11AC)	//getRate_11ac(MACHTTRANSMIT_SETTING_11AC)
 #endif
 
@@ -630,7 +630,7 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	else
 		ret+=websWrite(wp, "OP Mode		: AP\n");
 
-#if defined(RTAC52U) || defined(RTAC51U)
+#if defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U) 
 	if (unit == 1)
 	{
 		char *p = tmp;
@@ -733,7 +733,7 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		for (i=0;i<mp->Num;i++) {
 #if defined(RTN65U)
 			SHOW_STA_INFO(mp->Entry, i, RT_802_11_MAC_ENTRY_RT3352_iNIC, getRate_2g);
-#elif defined(RTAC52U) || defined(RTAC51U)
+#elif defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U) 
 			SHOW_STA_INFO(mp2->Entry, i, RT_802_11_MAC_ENTRY_2G, getRate_2g);
 #else
 			SHOW_STA_INFO(mp2->Entry, i, RT_802_11_MAC_ENTRY_2G, getRate_2g);
@@ -744,7 +744,7 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		for (i=0;i<mp->Num;i++) {
 #if defined(RTN65U)
 			SHOW_STA_INFO(mp->Entry, i, RT_802_11_MAC_ENTRY_RT3883, getRate_2g);
-#elif defined(RTAC52U) || defined(RTAC51U)
+#elif defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U) 
 			SHOW_STA_INFO(mp2->Entry, i, RT_802_11_MAC_ENTRY_11AC, getRate_11ac);
 #else
 			SHOW_STA_INFO(mp->Entry, i, RT_802_11_MAC_ENTRY_RT3883, getRate_2g);

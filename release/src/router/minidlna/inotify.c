@@ -297,7 +297,7 @@ inotify_insert_file(char * name, const char * path)
 	/* Is it cover art for another file? */
 	if( is_image(path) )
 		update_if_album_art(path);
-	else if( ends_with(path, ".srt") )
+	else if( is_caption(path) )
 		check_for_captions(path, 0);
 
 	/* Check if we're supposed to be scanning for this file type in this directory */
@@ -360,7 +360,7 @@ inotify_insert_file(char * name, const char * path)
 	ts = sql_get_int_field(db, "SELECT TIMESTAMP from DETAILS where PATH = '%q'", path);
 	if( !ts && is_playlist(path) && (sql_get_int_field(db, "SELECT ID from PLAYLISTS where PATH = '%q'", path) > 0) )
 	{
-		DPRINTF(E_DEBUG, L_INOTIFY, "Re-reading modified playlist.\n", path);
+		DPRINTF(E_DEBUG, L_INOTIFY, "Re-reading modified playlist (%s).\n", path);
 		inotify_remove_file(path);
 		next_pl_fill = 1;
 	}
@@ -422,7 +422,7 @@ inotify_insert_file(char * name, const char * path)
 	if( !depth )
 	{
 		//DEBUG DPRINTF(E_DEBUG, L_INOTIFY, "Inserting %s\n", name);
-		insert_file(name, path, id+2, get_next_available_id("OBJECTS", id));
+		insert_file(name, path, id+2, get_next_available_id("OBJECTS", id), types);
 		sqlite3_free(id);
 		if( (is_audio(path) || is_playlist(path)) && next_pl_fill != 1 )
 		{
@@ -538,7 +538,7 @@ inotify_remove_file(const char * path)
 	int64_t detailID;
 	int rows, playlist;
 
-	if( ends_with(path, ".srt") )
+	if( is_caption(path) )
 	{
 		return sql_exec(db, "DELETE from CAPTIONS where PATH = '%q'", path);
 	}
@@ -689,7 +689,8 @@ start_inotify()
 		}
 		else
 		{
-			length = read(pollfds[0].fd, buffer, BUF_LEN);  
+			length = read(pollfds[0].fd, buffer, BUF_LEN);
+			buffer[BUF_LEN-1] = '\0';
 		}
 
 		i = 0;
@@ -703,8 +704,8 @@ start_inotify()
 					i += EVENT_SIZE + event->len;
 					continue;
 				}
-				esc_name = modifyString(strdup(event->name), "&", "&amp;amp;");
-				sprintf(path_buf, "%s/%s", get_path_from_wd(event->wd), event->name);
+				esc_name = modifyString(strdup(event->name), "&", "&amp;amp;", 0);
+				snprintf(path_buf, sizeof(path_buf), "%s/%s", get_path_from_wd(event->wd), event->name);
 				if ( event->mask & IN_ISDIR && (event->mask & (IN_CREATE|IN_MOVED_TO)) )
 				{
 					DPRINTF(E_DEBUG, L_INOTIFY,  "The directory %s was %s.\n",

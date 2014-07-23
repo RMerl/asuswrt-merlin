@@ -14,7 +14,7 @@
 #define SMTP_AUTH_USER "xdsl_feedback"
 #define SMTP_AUTH_PASS "asus#1234"
 #define FB_FILE "/tmp/xdslissuestracking"
-#define	MAIL_CONF "/etc/email/email.conf"
+#define	MAIL_CONF "/tmp/var/tmp/data"
 #define TOP_FILE "/tmp/top.txt"
 #define FREE_FILE "/tmp/free.txt"
 #define IPTABLES_FILE "/tmp/fb_iptables.txt"
@@ -82,7 +82,6 @@ void start_DSLsendmail(void)
 	int nValue=0;
 
 	/* write the configuration file.*/
-	mkdir_if_none("/etc/email");
 	if (!(fp = fopen(MAIL_CONF, "w"))) {
 		logmessage("email", "Failed to send mail!\n");
 		return;
@@ -135,7 +134,7 @@ void start_DSLsendmail(void)
 		sprintf(attach_syslog_cmd,"-a /tmp/syslog.log ");
 		if(check_if_file_exist("/tmp/syslog.log-1"))
 			strcat(attach_syslog_cmd, "-a /tmp/syslog.log-1 ");
-		eval("adslate", "getdmesg");
+		eval("req_dsl_drv", "getdmesg");
 		if(check_if_file_exist("/tmp/adsl/dmesg.txt"))
 			strcat(attach_syslog_cmd, "-a /tmp/adsl/dmesg.txt");
 	}
@@ -173,6 +172,12 @@ void start_DSLsendmail(void)
 		fputs("\nPIN Code: ", fp);
 		fputs(nvram_safe_get("wps_device_pin"), fp);
 
+		fputs("\nMAC Address: ", fp);
+		fputs(nvram_safe_get("wl0_hwaddr"), fp);
+
+		fputs("\nBrowser: ", fp);
+		fputs(nvram_safe_get("fb_browserInfo"), fp);
+
 		fputs("\nConfigured DSL Modulation: ", fp);
 		switch(nvram_get_int("dslx_modulation")) {
 			case 0:
@@ -201,14 +206,6 @@ void start_DSLsendmail(void)
 		}
 
 		fputs("\nConfigured Annex Mode: ", fp);
-		if( !strcmp(get_productid(), "DSL-N55U-B") ) {
-			switch(nvram_get_int("dslx_annex")) {
-				case 0:
-					fputs("Annex B", fp);
-					break;
-			}
-		}
-		else {
 			switch(nvram_get_int("dslx_annex")) {
 				case 0:
 					fputs("Annex A", fp);
@@ -229,10 +226,9 @@ void start_DSLsendmail(void)
 					fputs("Annex B", fp);
 					break;
 				case 6:
-					fputs("Annex B/J/M", fp);
+					fputs("Annex B/J", fp);
 					break;
 			}
-		}
 
 		fputs("\nStability Adjustment(ADSL): ", fp);
 		nValue = nvram_get_int("dslx_snrm_offset");
@@ -287,6 +283,9 @@ void start_DSLsendmail(void)
 
 		fputs("\nBitswap: ", fp);
 		fputs(nvram_safe_get("dslx_bitswap"), fp);
+
+		fputs("\nG.INP: ", fp);
+		fputs(nvram_safe_get("dslx_ginp"), fp);
 
 		fputs("\nMonitor line stability: ", fp);
 		if(nvram_match("dsltmp_syncloss", "1")){
@@ -419,9 +418,10 @@ void start_DSLsendmail(void)
 		}
 		fclose(fp);
 	}
-	sprintf(cmd, "cat %s | /usr/sbin/email -s \"%s\" -a %s -a %s %s %s %s %s"
+	sprintf(cmd, "cat %s | /usr/sbin/email -c %s -s \"%s feedback from %s\" -a %s -a %s %s %s %s %s"
 		, FB_FILE
-		, get_productid()
+		, MAIL_CONF
+		, get_productid(), nvram_safe_get("fb_email")
 		, TOP_FILE
 		, FREE_FILE
 		, attach_iptables_cmd
@@ -461,7 +461,6 @@ void start_DSLsendmail(void)
 		unlink(FB_FILE);
 	}
 
-	unlink(MAIL_CONF);
 	unlink(TOP_FILE);
 	unlink(FREE_FILE);
 	unlink(IPTABLES_FILE);

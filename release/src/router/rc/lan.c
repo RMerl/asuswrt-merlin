@@ -79,7 +79,10 @@ void update_lan_state(int state, int reason)
 #ifdef RTCONFIG_QTN	/* AP and Repeater mode, workaround to infosvr, RT-AC87U bug#38, bug#44, bug#46 */
 	_dprintf("%s(workaround to infosvr)\n", __FUNCTION__);
 	eval("ifconfig", "br0:0", "169.254.39.3", "netmask", "255.255.255.0");
-	eval("ifconfig", "br0:0", "169.254.39.1", "netmask", "255.255.255.0");
+	if(!nvram_match("QTN_RPC_CLIENT", ""))
+		eval("ifconfig", "br0:0", nvram_safe_get("QTN_RPC_CLIENT"), "netmask", "255.255.255.0");
+	else
+		eval("ifconfig", "br0:0", "169.254.39.1", "netmask", "255.255.255.0");
 #endif
 
 	nvram_set_int(strcat_r(prefix, "state_t", tmp), state);
@@ -319,11 +322,12 @@ GEN_CONF:
 			eval("wl", "-i", ifname, "ampdu_rts", "1");	// driver default setting
 		else
 			eval("wl", "-i", ifname, "ampdu_rts", "0");
-
+#ifndef RTCONFIG_BCM7
 		if (nvram_match(strcat_r(prefix, "itxbf", tmp), "1"))
 			eval("wl", "-i", ifname, "txbf_imp", "1");	// driver default setting
 		else
 			eval("wl", "-i", ifname, "txbf_imp", "0");
+#endif
 #endif
 #else
 // Disabled since we are still using 5.100
@@ -370,8 +374,8 @@ GEN_CONF:
 				nvram_match(strcat_r(prefix, "nmode", tmp), "-1"))
 				eval("wl", "-i", ifname, "rtsthresh", "65535");
 #endif
-			if (unit) {
-#if defined(DSLAC68U)
+			if (nvram_match(strcat_r(prefix, "nband", tmp), "1")) {
+#if defined(DSL_AC68U)
 				if (	nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
 					nvram_match(strcat_r(prefix, "country_rev", tmp), "13"))
 					eval("wl", "-i", ifname, "radarthrs",
@@ -386,11 +390,11 @@ GEN_CONF:
 #if 0
 				if (((get_model() == MODEL_RTAC66U) &&
 					nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
-					nvram_match(strcat_r(prefix, "country_rev", tmp), "13")) ||
+					nvram_match(strcat_r(prefix, "country_rev", tmp), "13") &&
+					nvram_match(strcat_r(prefix, "dfs", tmp), "1")) ||
 					((get_model() == MODEL_RTN66U) &&
 					nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
-					nvram_match(strcat_r(prefix, "country_rev", tmp), "0"))
-				)
+					nvram_match(strcat_r(prefix, "country_rev", tmp), "0")))
 					eval("wl", "-i", ifname, "radarthrs",
 					"0x6ac", "0x30", "0x6a8", "0x30", "0x6a8", "0x30", "0x6a8", "0x30", "0x6a4", "0x30", "0x6a0", "0x30");
 #endif
@@ -729,7 +733,7 @@ void wlconf_pre()
 		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_BCMARM
-		if (unit == 0)
+		if (nvram_match(strcat_r(prefix, "nband", tmp), "2"))
 		{
 			if (model == MODEL_RTN18U || model == MODEL_RTAC3200 || model == MODEL_RTAC68U || model == MODEL_DSLAC68U || model == MODEL_RTAC87U) {
 				if (nvram_match(strcat_r(prefix, "turbo_qam", tmp), "1"))
@@ -757,12 +761,16 @@ void wlconf_pre()
 #endif
 		unit++;
 	}
+
+	if (no_need_to_start_wps() ||
+	    wps_band_ssid_broadcast_off(get_radio_band(nvram_get_int("wps_band"))))
+		nvram_set("wps_enable", "0");
 }
 
 void wlconf_post(const char *ifname)
 {
 	int unit = -1;
-	char prefix[] = "wlXXXXXXXXXX_";
+	char prefix[] = "wlXXXXXXXXXX_", tmp[100];
 
 	if (ifname == NULL) return;
 
@@ -771,6 +779,14 @@ void wlconf_post(const char *ifname)
 		return;
 
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+
+#ifdef RTAC66U
+	if (!strcmp(ifname, "eth2")) {
+		if (nvram_match(strcat_r(prefix, "country_code", tmp), "Q2") &&
+			nvram_match(strcat_r(prefix, "country_rev", tmp), "33"))
+		eval("wl", "-i", ifname, "radioreg", "0x892", "0x5068", "cr0");
+	}
+#endif
 }
 #endif
 
@@ -927,6 +943,10 @@ void start_wl(void)
 #endif /* CONFIG_BCMWL5 */
 #ifdef RTCONFIG_USER_LOW_RSSI
 	init_wllc();
+#endif
+
+#ifdef RTCONFIG_QTN
+	start_qtn_monitor();
 #endif
 }
 
@@ -1257,7 +1277,11 @@ void start_lan(void)
 		(get_model() == MODEL_RTAC53U) ||
 		(get_model() == MODEL_RTAC53U) ||
 		(get_model() == MODEL_RTN66U)) {
+#ifdef RTCONFIG_BCM7
+		load_wl();
+#else
 		modprobe("wl");
+#endif
 #ifndef RTCONFIG_BCMARM
 #if defined(NAS_GTK_PER_STA) && defined(PROXYARP)
 		modprobe("proxyarp");
@@ -1357,7 +1381,10 @@ void start_lan(void)
 #endif
 
 		inet_aton(nvram_safe_get("lan_ipaddr"), (struct in_addr *)&ip);
-
+#ifdef RTCONFIG_TMOBILE_TMP
+		restore_defaults_tmobile_hs2();
+		wl_defaults();
+#endif
 		hwaddrset = 0;
 		sta = 0;
 		if ((lan_ifnames = strdup(nvram_safe_get("lan_ifnames"))) != NULL) {
@@ -1667,7 +1694,10 @@ gmac3_no_swbr:
 #endif
 
 #ifdef RTCONFIG_QTN
-	eval("ifconfig", "br0:0", "168.254.39.1", "netmask", "255.255.255.0");
+	if(!nvram_match("QTN_RPC_CLIENT", ""))
+		eval("ifconfig", "br0:0", nvram_safe_get("QTN_RPC_CLIENT"), "netmask", "255.255.255.0");
+	else
+		eval("ifconfig", "br0:0", "169.254.39.1", "netmask", "255.255.255.0");
 #endif
 	nvram_set("reload_svc_radio", "1");
 
@@ -1840,9 +1870,21 @@ void stop_lan(void)
 
 	update_lan_state(LAN_STATE_STOPPED, 0);
 
+#ifdef RTCONFIG_BCMFA
+	fa_nvram_adjust();
+#endif
+#ifdef RTCONFIG_GMAC3
+	/* Ajuest GMAC3 NVRAM variables */
+	gmac3_nvram_adjust();
+#endif
+
 	killall("udhcpc", SIGUSR2);
 	killall("udhcpc", SIGTERM);
 	unlink("/tmp/udhcpc_lan");
+
+#ifdef RTCONFIG_QTN
+	nvram_unset("qtn_ready");
+#endif
 
 	_dprintf("%s %d\n", __FUNCTION__, __LINE__);
 }
@@ -2055,7 +2097,6 @@ NEITHER_WDS_OR_PSTA:
 		if(!strcmp(action, "add")) {
 			unsigned int vid, pid;
 			char buf[8];
-			char skip_int[8];
 
 			logmessage("hotplug", "add net %s.", interface);
 
@@ -2073,18 +2114,14 @@ NEITHER_WDS_OR_PSTA:
 
 			vid = get_usb_vid(usb_node);
 			pid = get_usb_pid(usb_node);
+logmessage("hotplug", "Got net %s, vid 0x%x, pid 0x%x.", interface, vid, pid);
 
 			snprintf(nvram_name, 32, "usb_path%s_act", port_path);
 			snprintf(word, PATH_MAX, "%s", nvram_safe_get(nvram_name));
 
-			if(vid == 0x12d1 && pid == 0x140c) // Huawei new E398 use usb1 to connect.
-				snprintf(skip_int, 8, "%s", "usb0");
-			else // other dongles use usb 0 to connect.
-				snprintf(skip_int, 8, "%s", "usb1");
-
-			if(!strcmp(word, skip_int)){
-				// If there are 2 usbX, skip the incorrect interface.
-				logmessage("hotplug", "skip to set net %s, vid 0x%x, pid 0x%x.", interface, vid, pid);
+			if(!strcmp(word, "usb1") && strcmp(interface, "usb1")){
+				// If there are 2 usbX, use QMI:usb1 to connect.
+				logmessage("hotplug", "skip to set net %s.", interface);
 			}
 			else{
 				logmessage("hotplug", "set net %s.", interface);
@@ -2094,6 +2131,8 @@ NEITHER_WDS_OR_PSTA:
 				nvram_set("usb_modem_act_path", usb_node);
 				snprintf(buf, 8, "%u", vid);
 				nvram_set("usb_modem_act_vid", buf);
+				snprintf(buf, 8, "%u", pid);
+				nvram_set("usb_modem_act_pid", buf);
 
 				nvram_set(strcat_r(prefix, "ifname", tmp), interface);
 			}
@@ -2103,16 +2142,15 @@ NEITHER_WDS_OR_PSTA:
 			// wait for Andorid phones.
 			_dprintf("hotplug net INTERFACE=%s ACTION=%s: wait 2 seconds...\n", interface, action);
 			sleep(2);
-#if 0
 
+			if(!strcmp(nvram_safe_get("success_start_service"), "1")
 #ifdef RTCONFIG_DUALWAN
-			if(!strcmp(nvram_safe_get("success_start_service"), "1"))
+					&& (dualwan_unit__usbif(wan_primary_ifunit()) || nvram_match("wans_mode", "lb"))
 #endif
-				if(strcmp(nvram_safe_get("usb_modem_act_type"), "qmi")) {
-					_dprintf("%s: start_wan_if(%d)!\n", __FUNCTION__, unit);
-					start_wan_if(unit);
-				}
-#endif
+					){
+				_dprintf("%s: start_wan_if(%d)!\n", __FUNCTION__, unit);
+				start_wan_if(unit);
+			}
 		}
 		else{
 			logmessage("hotplug", "remove net %s.", interface);
@@ -2130,6 +2168,7 @@ NEITHER_WDS_OR_PSTA:
 				nvram_unset(nvram_name);
 				nvram_unset("usb_modem_act_path");
 				nvram_unset("usb_modem_act_vid");
+				nvram_unset("usb_modem_act_pid");
 			}
 
 			if(strlen(port_path) <= 0)
@@ -2219,12 +2258,15 @@ NEITHER_WDS_OR_PSTA:
 			}
 
 			eval("find_modem_type.sh");
-#if 0
-			if(!strcmp(nvram_safe_get("success_start_service"), "1")) {
+
+			if(!strcmp(nvram_safe_get("success_start_service"), "1")
+#ifdef RTCONFIG_DUALWAN
+					&& (dualwan_unit__usbif(wan_primary_ifunit()) || nvram_match("wans_mode", "lb"))
+#endif
+					){
 				_dprintf("%s: start_wan_if(%d)!\n", __FUNCTION__, unit);
 				start_wan_if(unit);
 			}
-#endif
 		}
 		else{
 			nvram_set(strcat_r(prefix, "ifname", tmp), "");
@@ -2255,106 +2297,44 @@ NEITHER_WDS_OR_PSTA:
 		kill_pidfile_s("/var/run/wanduck.pid", SIGUSR2);
 	}
 #ifdef RTCONFIG_USB_BECEEM
-	else if(!strncmp(interface, "wimax", 5)) {
+	// WiMAX: madwimax, gctwimax.
+	else if(!strncmp(interface, "wimax", 5)){
 		if(nvram_get_int("sw_mode") != SW_MODE_ROUTER)
 			return;
 
-		if ((unit = get_usbif_dualwan_unit()) < 0) {
+		if((unit = get_usbif_dualwan_unit()) < 0){
 			usb_dbg("(%s): in the current dual wan mode, didn't support the USB modem.\n", interface);
 			return;
 		}
 
 		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 
-		if(!strcmp(action, "add")) {
+		if(!strcmp(action, "add")){
+			snprintf(usb_node, 32, "%s", nvram_safe_get("usb_modem_act_path"));
+			if(strlen(usb_node) <= 0)
+				return;
+			if(get_path_by_node(usb_node, port_path, 8) == NULL)
+				return;
+
 			nvram_set(strcat_r(prefix, "ifname", tmp), interface);
 
 			_dprintf("hotplug net INTERFACE=%s ACTION=%s: wait 2 seconds...\n", interface, action);
 			sleep(2);
 
-			memset(port_path, 0, 8);
-			for(i = 1; i <= MAX_USB_PORT; ++i) { // MAX USB port number is 3.
-				snprintf(nvram_name, 32, "usb_path%d", i);
-				if(!strcmp(nvram_safe_get(nvram_name), "modem")) {
-					snprintf(port_path, 8, "%d", i);
-					break;
-				}
+			snprintf(nvram_name, 32, "usb_path%s_act", port_path);
+			nvram_set(nvram_name, interface);
 
-				for(j = 1; j <= MAX_USB_HUB_PORT; ++j) {
-					snprintf(nvram_name, 32, "usb_path%d.%d", i, j);
-					if(!strcmp(nvram_safe_get(nvram_name), "modem")) {
-						snprintf(port_path, 8, "%d.%d", i, j);
-						break;
-					}
-				}
-
-				if(strlen(port_path) > 0)
-					break;
-			}
-
-			if(strlen(port_path) > 0) {
-				snprintf(nvram_name, 32, "usb_path%s_act", port_path);
-				nvram_set(nvram_name, interface);
-
-				snprintf(nvram_name, 32, "usb_path%s_node", port_path);
-				snprintf(usb_node, 32, "%s", nvram_safe_get(nvram_name));
-
-				nvram_set("usb_modem_act_path", usb_node);
-			}
-
-#if 0
-			if(!strcmp(nvram_safe_get("success_start_service"), "1")) {
-				_dprintf("%s: start_wan_if(%d)!\n", __FUNCTION__, unit);
+			if(!strcmp(nvram_safe_get("success_start_service"), "1")
+#ifdef RTCONFIG_DUALWAN
+					&& (dualwan_unit__usbif(wan_primary_ifunit()) || nvram_match("wans_mode", "lb"))
+#endif
+					){
+				_dprintf("%s: and(%d)!\n", __FUNCTION__, unit);
 				start_wan_if(unit);
 			}
-#endif
 		}
-		else{
-			nvram_set(strcat_r(prefix, "ifname", tmp), "");
-
-			snprintf(usb_node, 32, "%s", nvram_safe_get("usb_modem_act_path"));
-			if(strlen(usb_node) <= 0)
-				return;
-
-			if(get_path_by_node(usb_node, port_path, 8) == NULL)
-				return;
-
-			snprintf(nvram_name, 32, "usb_path%s_act", port_path);
-
-			if(!strcmp(nvram_safe_get(nvram_name), interface)) {
-				nvram_unset(nvram_name);
-				nvram_unset("usb_modem_act_path");
-			}
-
-			int i = 0;
-			while(i < 3) {
-				if(pids("madwimax")) {
-					killall_tk("madwimax");
-					sleep(1);
-
-					++i;
-				}
-				else
-					break;
-			}
-
-			i = 0;
-			while(i < 3) {
-				if(pids("gctwimax")) {
-					killall_tk("gctwimax");
-					sleep(1);
-
-					++i;
-				}
-				else
-					break;
-			}
-
-			modprobe_r("tun");
-		}
-
-		// Notify wanduck to switch the wan line to WAN port.
-		kill_pidfile_s("/var/run/wanduck.pid", SIGUSR2);
+		else // remove: do nothing.
+			;
 	}
 #endif
 #endif
@@ -3034,7 +3014,15 @@ void start_lan_wl(void)
 		(get_model() == MODEL_RTAC87U) ||
 		(get_model() == MODEL_RTAC66U) ||
 		(get_model() == MODEL_RTN66U)) {
+#ifdef RTCONFIG_BCM7
+#ifdef RTCONFIG_EMF
+		modprobe("emf");
+		modprobe("igs");
+#endif
+		load_wl();
+#else
 		modprobe("wl");
+#endif
 #ifndef RTCONFIG_BCMARM
 #if defined(NAS_GTK_PER_STA) && defined(PROXYARP)
 		modprobe("proxyarp");
@@ -3133,6 +3121,9 @@ void start_lan_wl(void)
 							if (!strcmp(nv3, wif_to_vif(ifname)))
 							{
 								nvram_set(nv2, nvram_safe_get(nv));
+#ifdef RTCONFIG_TMOBILE
+								if (nvram_get_int("wl_subunit") != 3)
+#endif
 								nvram_set("wl_unit", "-1");
 								nvram_set("wl_subunit", "-1");
 							}
@@ -3459,6 +3450,14 @@ void restart_wireless(void)
 	init_nvram();	// init nvram lan_ifnames
 	wl_defaults();	// init nvram wlx_ifnames & lan_ifnames
 	sleep(2);	// delay to avoid start interface on stoping.
+
+#ifdef RTCONFIG_BCMFA
+	fa_nvram_adjust();
+#endif
+#ifdef RTCONFIG_GMAC3
+	/* Ajuest GMAC3 NVRAM variables */
+	gmac3_nvram_adjust();
+#endif
 	start_lan_wl();
 
 	reinit_hwnat(-1);
@@ -3541,7 +3540,7 @@ void restart_wireless_wps(void)
 	stop_acsd();
 #ifdef RTCONFIG_HSPOT
 	stop_igmp_proxy();
-        stop_hspotap();
+	stop_hspotap();
 #endif
 #endif
 	stop_wps();
@@ -3817,7 +3816,10 @@ int reset_qtn(int restart)
 	system("cp /rom/qtn/* /tmp/");
 	if( restart == 0){
 		lanport_ctrl(0);
-		eval("ifconfig", "br0:0", "169.254.39.1", "netmask", "255.255.255.0");
+		if(!nvram_match("QTN_RPC_CLIENT", ""))
+			eval("ifconfig", "br0:0", nvram_safe_get("QTN_RPC_CLIENT"), "netmask", "255.255.255.0");
+		else
+			eval("ifconfig", "br0:0", "169.254.39.1", "netmask", "255.255.255.0");
 		eval("ifconfig", "br0:1", "1.1.1.1", "netmask", "255.255.255.0");
 		eval("tftpd");
 	}
@@ -3857,6 +3859,7 @@ int reset_qtn(int restart)
 
 int start_qtn(void)
 {
+	gen_rpc_qcsapi_ip();
 	reset_qtn(0);
 
 	return 0;

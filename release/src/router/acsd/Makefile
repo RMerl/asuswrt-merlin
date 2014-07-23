@@ -11,6 +11,7 @@
 #
 # $Id: Makefile 341899 2012-06-29 04:06:38Z $
 #
+include ../.config
 
 CFLAGS	+= -I. -I$(TOP)/shared -I$(SRCBASE)/include -Wall
 #CFLAGS	+= $(if $(WLAN_ComponentIncPath),$(WLAN_ComponentIncPath),$(addprefix -I,$(wildcard $(SRCBASE)/shared/bcmwifi/include)))
@@ -18,6 +19,7 @@ CFLAGS	+= -I. -I$(TOP)/shared -I$(SRCBASE)/include -Wall
 CFLAGS	+= -s -O2
 LDFLAGS += -L$(TOP)/nvram -L$(INSTALLDIR)/nvram/usr/lib -lnvram
 LDFLAGS += -L$(TOP)/shared -L$(INSTALLDIR)/shared/usr/lib -lshared
+
 LDFLAGS += $(EXTRA_LDFLAGS)
 
 vpath %.c $(SRCBASE)/shared/
@@ -48,3 +50,4 @@ acsd: bcmutils.o ${OBJS}
 
 acs_cli: acsd_cli.o acsd_utils.o
 	$(CC) $(CFLAGS) $^ -o $@  $(LDFLAGS)
+

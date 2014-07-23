@@ -1068,6 +1068,7 @@ ej_dump(int eid, webs_t wp, int argc, char_t **argv)
 		sprintf(filename, "/tmp/xdslissuestracking");
 		if(check_if_file_exist(filename)) {
 			eval("sed", "-i", "/PIN Code:/d", filename);
+			eval("sed", "-i", "/MAC Address:/d", filename);
 			eval("sed", "-i", "/E-mail:/d", filename);
 			ret += dump_file(wp, filename);
 			unlink(filename);
@@ -1793,6 +1794,7 @@ bool isNumber(const char*s) {
    return e != NULL && *e == (char)0;
 }
 
+#ifdef RTCONFIG_ROG
 static int ej_set_variables(int eid, webs_t wp, int argc, char_t **argv) {
 	char *apiName;
 	char *apiAction;
@@ -2289,6 +2291,7 @@ static int ej_set_variables(int eid, webs_t wp, int argc, char_t **argv) {
 
 	return 0;
 }
+#endif
 
 static int ej_update_variables(int eid, webs_t wp, int argc, char_t **argv) {
 	char *action_mode;
@@ -4152,7 +4155,7 @@ static int ej_get_changed_status(int eid, webs_t wp, int argc, char_t **argv){
 	char *arp_info = read_whole_file("/proc/net/arp");
 #ifdef RTCONFIG_USB
 	char *disk_info = read_whole_file(PARTITION_FILE);
-	char *mount_info = read_whole_file("/proc/mounts");
+	char *mount_info = read_whole_file(MOUNT_FILE);
 #endif
 	u32 arp_info_len, disk_info_len, mount_info_len;
 //	u32 arp_change, disk_change;
@@ -5090,6 +5093,8 @@ apply_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 		nvram_set("lan_ipaddr", "192.168.1.1");
 		websApply(wp, "Restarting.asp");
 		shutdown(fileno(wp), SHUT_RDWR);
+		nvram_set("restore_defaults", "1");
+		nvram_commit();
 		sys_default();
 		return (0);
 	}
@@ -6669,25 +6674,24 @@ int
 count_sddev_mountpoint()
 {
 	FILE *procpt;
-	char line[256], devname[32], mpname[32], system_type[10], mount_mode[96];
+	char line[PATH_MAX], devname[32], mpname[32], system_type[10], mount_mode[PATH_MAX];
 	int dummy1, dummy2, count = 0;
 
-	if ((procpt = fopen("/proc/mounts", "r")) != NULL)
-	while (fgets(line, sizeof(line), procpt))
-	{
-		if (sscanf(line, "%s %s %s %s %d %d", devname, mpname, system_type, mount_mode, &dummy1, &dummy2) != 6)
-			continue;
+	if((procpt = fopen(MOUNT_FILE, "r")) != NULL){
+		while(fgets(line, sizeof(line), procpt)){
+			if(sscanf(line, "%s %s %s %s %d %d", devname, mpname, system_type, mount_mode, &dummy1, &dummy2) != 6)
+				continue;
 
-		if (strstr(devname, "/dev/sd"))
-			count++;
+			if(strstr(devname, "/dev/sd"))
+				count++;
+		}
 	}
 
-	if (procpt)
+	if(procpt)
 		fclose(procpt);
 
 	return count;
 }
-
 
 static int notify_rc_for_nas(char *cmd)
 {
@@ -9390,6 +9394,37 @@ ej_bwdpi_device(int eid, webs_t wp, int argc, char_t **argv)
 
 	return retval;
 }
+
+static int
+ej_bwdpi_redirect_page_status(int eid, webs_t wp, int argc, char_t **argv)
+{
+	int retval = 0;
+	char *cat_id;	
+	int catid;
+
+	// get device info of someone.
+	cat_id = websGetVar(wp, "cat_id", "");
+	catid = atoi(cat_id);
+	redirect_page_status(catid, &retval, wp);
+
+	return retval;
+}
+#endif
+
+#ifdef RTCONFIG_GEOIP
+static int
+ej_geoiplookup(int eid, webs_t wp, int argc, char_t **argv)
+{
+	int unit;
+	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
+	char *wanip;
+
+	unit = wan_primary_ifunit();
+	wan_prefix(unit, prefix);
+	wanip = nvram_safe_get(strcat_r(prefix, "ipaddr", tmp));
+
+	return websWrite(wp, "%s", geoiplookup_by_ip(wanip));
+}
 #endif
 
 struct ej_handler ej_handlers[] = {
@@ -9447,7 +9482,9 @@ struct ej_handler ej_handlers[] = {
 #endif
 //2008.08 magic{
 	{ "update_variables", ej_update_variables},
+#ifdef RTCONFIG_ROG
 	{ "set_variables", ej_set_variables},
+#endif
 	{ "convert_asus_variables", convert_asus_variables},
 	{ "asus_nvram_commit", asus_nvram_commit},
 	{ "notify_services", ej_notify_services},
@@ -9576,6 +9613,10 @@ struct ej_handler ej_handlers[] = {
 	{ "bwdpi_status", ej_bwdpi_status},
 	{ "bwdpi_history", ej_bwdpi_history},
 	{ "bwdpi_device_info", ej_bwdpi_device},
+	{ "bwdpi_redirect_info", ej_bwdpi_redirect_page_status},
+#endif
+#ifdef RTCONFIG_GEOIP
+	{ "geoiplookup", ej_geoiplookup},
 #endif
 	{ NULL, NULL }
 };

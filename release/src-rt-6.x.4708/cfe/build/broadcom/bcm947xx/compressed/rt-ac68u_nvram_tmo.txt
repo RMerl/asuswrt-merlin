@@ -560,3 +560,6 @@ model=RT-AC68U
 ATEMODE=1
 HW_ver=170
 nospare=1
+
+# decides if rescue 
+no_rescue=0

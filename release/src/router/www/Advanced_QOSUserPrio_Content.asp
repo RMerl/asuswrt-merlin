@@ -27,6 +27,13 @@ var qos_irates = '<% nvram_get("qos_irates"); %>';
 
 function initial(){
 	show_menu();
+	if(bwdpi_support){
+		$('content_title').innerHTML = "Adaptive QoS - Traditional";
+	}
+	else{
+		$('content_title').innerHTML = "<#Menu_TrafficManager#> - QoS";
+	}
+	
 	init_changeScale("qos_obw");
 	init_changeScale("qos_ibw");
 	//load_QoS_rule();		
@@ -242,7 +249,7 @@ function switchPage(page){
 						<table width="100%" >
 						<tr >
 						<td  class="formfonttitle" align="left">								
-										<div style="margin-top:5px;"><#Menu_TrafficManager#> - QoS</div>
+										<div id="content_title" style="margin-top:5px;"></div>
 									</td>
 						<td align="right" >	
 						<div style="margin-top:5px;">

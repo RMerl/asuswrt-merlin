@@ -7,6 +7,7 @@ modem_enable=`nvram get modem_enable`
 modem_act_node=`nvram get usb_modem_act_int`
 modem_type=`nvram get usb_modem_act_type`
 modem_vid=`nvram get usb_modem_act_vid`
+modem_pid=`nvram get usb_modem_act_pid`
 modem_pin=`nvram get modem_pincode`
 modem_apn=`nvram get modem_apn`
 
@@ -108,10 +109,41 @@ if [ "$modem_vid" == "8193" ];then
 	echo "successfull to register network."
 elif [ "$modem_type" == "qmi" ]; then
 	wdm=`_get_wdm_by_usbnet $1`
+
+	echo "QMI: try if the network is registered..."
+	uqmi -d $wdm --keep-client-id wds --start-network $modem_apn >/tmp/at_ret
+	ret=`cat /tmp/at_ret |grep "handle="`
+	if [ "$ret" != "" ]; then
+		echo "successfull to register network."
+		exit 0
+	elif [ "$modem_vid" == "4817" ] && [ "$modem_pid" == "5132" ]; then
+		echo "Restarting the MT and set it as online mode..."
+		nvram set usb_modem_reset_huawei=1
+		chat -t 1 -e '' 'AT+CFUN=1,1' OK >> /dev/$modem_act_node < /dev/$modem_act_node 2>/tmp/at_ret
+		tries=1
+		ret=""
+		while [ $tries -le 30 ] && [ "$ret" == "" ]; do
+			echo "wait the modem to wake up...$tries"
+			sleep 1
+
+			chat -t 1 -e '' 'AT+CGATT?' OK >> /dev/$modem_act_node < /dev/$modem_act_node 2>/tmp/at_ret
+			ret=`grep "+CGATT: 1" /tmp/at_ret`
+			tries=$((tries + 1))
+		done
+
+		if [ "$ret" == "" ]; then
+			echo "fail to reset the modem, please check."
+			exit 1
+		fi
+
+		echo "successfull to reset the modem."
+		nvram unset usb_modem_reset_huawei
+	fi
+
 	tries=1
 	ret=""
-	while [ $tries -le 30 ]; do
-		echo "wait for network registered...$tries"
+	while [ $tries -le 15 ]; do
+		echo "QMI: wait for network registered...$tries"
 		sleep 1
 
 		uqmi -d $wdm --keep-client-id wds --start-network $modem_apn >/tmp/at_ret

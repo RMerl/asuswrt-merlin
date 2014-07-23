@@ -1322,7 +1322,9 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	if (is_psta(1 - unit))
 	{
 		ret += websWrite(wp, "%s radio is disabled\n",
-			nvram_match(strcat_r(prefix, "nband", tmp), "1") ? "5 GHz" : "2.4 GHz");
+			(wl_control_channel(unit) > 0) ?
+			((wl_control_channel(unit) > CH_MAX_2G_CHANNEL) ? "5 GHz" : "2.4 GHz") :
+			(nvram_match(strcat_r(prefix, "nband", tmp), "1") ? "5 GHz" : "2.4 GHz"));
 		return ret;
 	}
 #endif
@@ -1363,7 +1365,9 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	if (val)
 	{
 		ret += websWrite(wp, "%s radio is disabled\n",
-			nvram_match(strcat_r(prefix, "nband", tmp), "1") ? "5 GHz" : "2.4 GHz");
+			(wl_control_channel(unit) > 0) ?
+			((wl_control_channel(unit) > CH_MAX_2G_CHANNEL) ? "5 GHz" : "2.4 GHz") :
+			(nvram_match(strcat_r(prefix, "nband", tmp), "1") ? "5 GHz" : "2.4 GHz"));
 		return ret;
 	}
 
@@ -3558,12 +3562,16 @@ int ej_wl_auth_list(int eid, webs_t wp, int argc, char_t **argv) {
 
 	foreach (word, nvram_safe_get("wl_ifnames"), next) {
 #ifdef RTCONFIG_QTN
-		if (unit != 0)
-		{
-			if (rpc_qtn_ready())
-			ret += ej_wl_sta_list_5g(eid, wp, argc, argv);
+		if (unit) {
+			if (rpc_qtn_ready()){
+				if (firstRow == 1)
+					firstRow = 0;
+				else
+					ret += websWrite(wp, ", ");
+				ret += ej_wl_sta_list_5g(eid, wp, argc, argv);
+			}
+			return ret;
 		}
-		return ret;
 #endif
 		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 		name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));

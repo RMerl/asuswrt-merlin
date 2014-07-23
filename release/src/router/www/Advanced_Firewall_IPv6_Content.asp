@@ -8,7 +8,7 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<title><#Web_Title#> - IPv6 Firewall</title>
+<title><#Web_Title#> - <#menu5_5_6#></title>
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
@@ -414,14 +414,11 @@ function changeBgColor(obj, num){
 	<tr>
 		<td bgcolor="#4D595D" valign="top"  >
 		<div>&nbsp;</div>
-		<div class="formfonttitle"><#menu5_5#> - IPv6 Firewall</div>
+		<div class="formfonttitle"><#menu5_5#> - <#menu5_5_6#></div>
 		<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 		<div>
-			<div class="formfontdesc">All outbound traffic coming from IPv6 hosts on your LAN is allowed, as well
-                        as related inbound traffic.  Any other inbound traffic must be specifically allowed here.</div>
-			<div class="formfontdesc">You can leave the remote IP empty to allow traffic from any remote host.
-                        A subnet can also be specified (2001::111:222:333/64 for example).
-		</div>
+			<div class="formfontdesc"><#FirewallIPv6_itemdesc1#></div>
+			<div class="formfontdesc"><#FirewallIPv6_itemdesc2#></div>
 
 		<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable">
 					  <thead>
@@ -431,7 +428,7 @@ function changeBgColor(obj, num){
 					  </thead>
 
           	<tr>
-            	<th>Enable IPv6 Firewall</th>
+            	<th><#FirewallIPv6_enable#></th>
             	<td>
             		<input type="radio" value="1" name="ipv6_fw_enable" <% nvram_match("ipv6_fw_enable", "1", "checked"); %>><#checkbox_Yes#>
             		<input type="radio" value="0" name="ipv6_fw_enable" <% nvram_match("ipv6_fw_enable", "0", "checked"); %>><#checkbox_No#>
@@ -460,7 +457,7 @@ function changeBgColor(obj, num){
 	            		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,25);"><#IPConnection_VServerIP_itemname#></a></th>
 				<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,24);"><#FirewallConfig_LanWanSrcPort_itemname#></a></th>
 	            		<th><#IPConnection_VServerProto_itemname#></th>
-				<th>Add / Delete</th>
+				<th><#list_add_delete#></th>
           		</tr>  
           		        
           		<tr>

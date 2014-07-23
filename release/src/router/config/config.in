@@ -129,10 +129,10 @@ config RTCONFIG_IPV6
 	bool "IPv6 Support"
 	default n
 
-config RTCONFIG_DNSMASQ6
-	bool "IPv6 SLAAC & DHCPv6 Support with dnsmasq"
+config RTCONFIG_WIDEDHCP6
+	bool "IPv6 SLAAC & DHCPv6 Support with wide-dhcp6 & rdnssd"
 	depends on RTCONFIG_IPV6
-	default n
+	default y
 
 config RTCONFIG_EBTABLES
 	bool "Ebtables"
@@ -142,8 +142,20 @@ config RTCONFIG_EMF
 	bool "Broadcom EMF (Efficient Multicast Forwarding & IGMP Snooping)"
 	default n
 
+config RTCONFIG_BCMBSD
+	bool "Brcm Band Steer Selection"
+	default n
+
+config RTCONFIG_BCMDCS
+	bool "Broadcom Dynamic Channel Selection"
+	default n
+
+config RTCONFIG_TRAFFIC_MGMT_RSSI_POLICY
+	bool "Traffic Management RSSI policy"
+	default n
+
 config RTCONFIG_TOAD
-	bool "bcm toad"
+	bool "Traffic Ordering Agent Daemon"
 	default n
 
 config RTCONFIG_HSPOT
@@ -532,10 +544,6 @@ config RTCONFIG_TURBO
 	bool "HW Turbo Btn"
 	default n
 
-config RTCONFIG_LED2_BTN
-	bool "HW LED Button, behavior 2, like RT-AC87U"
-	default n
-
 config RTCONFIG_LED_BTN
 	bool "HW LED Button"
 	default n
@@ -583,6 +591,10 @@ config RTCONFIG_WLMODULE_RT3352_INIC_MII
 
 config RTCONFIG_WLMODULE_MT7610_AP
 	bool "Wireless module MT7610 ap"
+	default n
+
+config RTCONFIG_WLMODULE_RLT_WIFI
+	bool "Wireless module RLT WIFI"
 	default n
 
 config RTCONFIG_PSISTLOG
@@ -697,4 +709,16 @@ config RTCONFIG_BONDING
 
 config RTCONFIG_TMOBILE
 	bool "T-Mobile Support"
+	default n
+
+config RTCONFIG_UIDEBUG
+	bool "Enable UI debug mode"
+	default n
+
+config RTCONFIG_ROG
+	bool "Get APP Traffic from ROG client"
+	default n
+
+config RTCONFIG_GEOIP
+	bool "determine country by IP address"
 	default n

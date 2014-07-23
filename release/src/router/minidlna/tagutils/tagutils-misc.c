@@ -190,7 +190,12 @@ vc_scan(struct song_metadata *psong, const char *comment, const size_t length)
 	{
 		if( strncasecmp(comment, "LYRICS=", 7) != 0 )
 		{
-			DPRINTF(E_WARN, L_SCANNER, "Vorbis %.*s too long [%s]\n", (index(comment, '=')-comment), comment, psong->path);
+			const char *eq = strchr(comment, '=');
+			int len = 8;
+			if (eq)
+				len = eq - comment;
+			DPRINTF(E_WARN, L_SCANNER, "Vorbis %.*s too long [%s]\n",
+				len, comment, psong->path);
 		}
 		return;
 	}

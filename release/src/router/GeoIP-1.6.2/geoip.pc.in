@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=@prefix@
+libdir=@libdir@
+includedir=@includedir@
+datadir=@datarootdir@
+
+Name: geoip
+Description: A non-DNS IP-to-country resolver library.
+Version: @VERSION@
+Libs: -L${libdir} -lGeoIP
+Cflags: -I${includedir}/
+databasedir=${datadir}/GeoIP

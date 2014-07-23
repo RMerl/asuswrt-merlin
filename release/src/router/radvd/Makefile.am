@@ -87,7 +87,7 @@ man_MANS = \
 	radvdump.8
 
 EXTRA_DIST = \
-	CHANGES \
+	CHANGES-1 \
 	COPYRIGHT \
 	INTRO.html \
 	VERSION \

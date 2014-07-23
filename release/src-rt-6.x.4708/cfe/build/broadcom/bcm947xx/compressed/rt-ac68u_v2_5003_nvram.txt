@@ -582,7 +582,7 @@ devpath1=pci/2/1
 1:tempoffset=0
 
 # Bootloader version
-bl_version=1.0.2.4
+bl_version=1.0.2.5
 
 # for NAND flash
 bootflags=1
@@ -601,3 +601,4 @@ model=RT-AC68U
 ATEMODE=1
 HW_ver=2.10
 PA=5003
+nospare=1

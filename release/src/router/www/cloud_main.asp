@@ -122,7 +122,6 @@ function initial(){
 			break;
 		/* public */
 		case 1:
-			$("privateIpOnly").style.display = "none";
 			if('<% nvram_get("ddns_enable_x"); %>' == '1' && ddns_hostname != ''){
 				if(https_port == 443) // if the port number of https is 443, hide it
 					$("accessMethod").innerHTML = 'Enter AiCloud <a style="font-weight: bolder;text-decoration: underline;word-break:break-all;" href="https://'+ ddns_hostname + ':'+ https_port +' "target="_blank">https://'+ ddns_hostname +'</a><br />';

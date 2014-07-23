@@ -116,16 +116,16 @@ function updateLAN()
 	var ie = window.ActiveXObject;
 
 	if (ie)
-		makeRequest_ie_lan('/WPS_info.asp');
+		makeRequest_ie_lan('/httpd_check.htm');
 	else
-		makeRequest_lan('/WPS_info.asp');
+		makeRequest_lan('/httpd_check.htm');
 }
 
 function refresh_laninfo(xmldoc)
 {
-	var wpss=xmldoc.getElementsByTagName("wps");
+	var httpds=xmldoc.getElementsByTagName("httpd");
 	
-	if (wpss!=null && wpss[0]!=null)
+	if (httpds!=null && httpds[0]!=null)
 	{
 		if($("drword")){
 			$("drword").innerHTML = "<#DrSurf_sweet_advise2#><br/><br/>";

@@ -47,7 +47,7 @@ enum {
 	gpio_out,
 };
 
-#if defined(RTN14U) || defined(RTAC51U)
+#if defined(RTN14U) || defined(RTAC51U) ||defined(RTN54U)
 /// RT-N14U mapping
 enum {
 	WAN_PORT=0,
@@ -169,7 +169,7 @@ static unsigned int get_lan_port_mask(void)
 	int sw_mode = nvram_get_int("sw_mode");
 	unsigned int m = nvram_get_int("lanports_mask");
 
-	if (sw_mode == SW_MODE_AP || __is_mediabridge_mode(sw_mode))
+	if (sw_mode == SW_MODE_AP)
 		m = 0x1F;
 
 	return m;
@@ -416,7 +416,7 @@ int mt7620_vlan_unset(int vid)
 }
 
 
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) 
 /**
  * Get TX or RX byte count of WAN and WANS_LAN
  * @unit:	WAN unit.
@@ -768,7 +768,7 @@ static void set_Vlan_PRIO(int prio)
 	nvram_set("vlan_prio", tmp);
 }
 
-//convert port mapping from  RT-N56U   to   RT-N14U / RT-AC52U / RT-AC51U (MT7620)
+//convert port mapping from  RT-N56U   to   RT-N14U / RT-AC52U / RT-AC51U (MT7620) /RT-N54U
 static int convert_port_bitmask(int orig)
 {
 	int i, mask, result;
@@ -847,7 +847,7 @@ static void initialize_Vlan(int stb_bitmask)
 	switch_fini();
 }
 
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U)
 static void fix_up_hwnat_for_wifi(void)
 {
 	int i, j, m, r, v, isp_profile_hwnat_not_safe = 0;
@@ -855,7 +855,7 @@ static void fix_up_hwnat_for_wifi(void)
 	char bss[] = "wl0.1_bss_enabledXXXXXX";
 	char mode_x[] = "wl0_mode_xXXXXXX";
 	struct wifi_if_vid_s w = {
-#if defined(RTAC52U) || defined(RTAC51U)
+#if defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U)
 		.wl_vid = { 21, 43 },		/* DP_RA0  ~ DP_RA3:  21, 22, 23, 24;	DP_RAI0  ~ DP_RAI3:  43, 44, 45, 46 */
 		.wl_wds_vid = { 37, 59 },	/* DP_WDS0 ~ DP_WDS3: 37, 38, 39, 40;	DP_WDSI0 ~ DP_WDSI3: 59, 60, 61, 62 */
 #elif defined(RTN14U) || defined(RTN11P)
@@ -1211,7 +1211,7 @@ ralink_gpio_write_bit(int idx, int value)
 	}	
 	else if (idx==72) 
 	{              
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) //wlan led
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) //wlan led
 		req=RALINK_ATE_GPIO72;
 		idx=value;
 #else
@@ -1301,7 +1301,7 @@ ralink_gpio_init(unsigned int idx, int dir)
 	int fd, req;
 	unsigned long arg;
 	
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)  || defined(RTN54U)
 	if(idx==72) //discard gpio72
 		return 0;
 #endif

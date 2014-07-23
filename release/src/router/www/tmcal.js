@@ -208,10 +208,10 @@ function loadData()
 				for (j = (h.rx.length - updateMaxL); j < h.rx.length; ++j) {
 					t = h.rx[j];
 					if (t > h.rx_max) h.rx_max = t;
-					h.rx_total += t;
+							h.rx_total += t;
 					t = h.tx[j];
 					if (t > h.tx_max) h.tx_max = t;
-					h.tx_total += t;
+							h.tx_total += t;
 				}
 				h.rx_avg = h.rx_total / (h.count ? h.count : updateMaxL);
 				h.tx_avg = h.tx_total / (h.count ? h.count : updateMaxL);
@@ -234,8 +234,13 @@ function loadData()
 				t = '<#tm_wired#>';
 			else if (i == "BRIDGE")				
 				t = 'LAN';
-			else if (i == "INTERNET")
-				t = '<#Internet#>';
+			else if (i == "INTERNET"){
+				if(dualWAN_support)
+					t = '<#dualwan_primary#>';
+				else
+					t = '<#Internet#>';
+			}else if (i == "INTERNET1")
+				t = '<#dualwan_secondary#>';				
 			else if (i.search("WIRELESS") > -1 && i.search(".") > -1)
 				t = 'NotUsed';
 			else
@@ -243,22 +248,36 @@ function loadData()
  
 			if(t != "LAN" && t != "NotUsed"){ // hide Tabs
 				if(i == "INTERNET")
-					tabs[0] = ['speed-tab-' + i, t];
+					tabs.push(['speed-tab-' + i, t]);
+				else if(i == "INTERNET1")
+					tabs.push(['speed-tab-' + i, t]);
 				else if	(i == "WIRED")
-					tabs[1] = ['speed-tab-' + i, t];
+					tabs.push(['speed-tab-' + i, t]);
 				else if	(i == "WIRELESS0")
-					tabs[2] = ['speed-tab-' + i, t];
+					tabs.push(['speed-tab-' + i, t]);
 				else if	(i == "WIRELESS1")
-					tabs[3] = ['speed-tab-' + i, t];			
+					tabs.push(['speed-tab-' + i, t]);
 				else if	(i == "BRIDGE")
-					tabs[4] = ['speed-tab-' + i, t];	
+					tabs.push(['speed-tab-' + i, t]);//tabs[4] = ['speed-tab-' + i, t];
 					
 			//	tabs.push(['speed-tab-' + i, t]);
 
 			
 			}
 		}
-
+		
+		//Sort tab by Viz 2014.06
+		var tabsort = ["speed-tab-INTERNET,<#Internet#>", "speed-tab-INTERNET,<#dualwan_primary#>","speed-tab-INTERNET1,<#dualwan_secondary#>","speed-tab-WIRED,<#tm_wired#>","speed-tab-WIRELESS0,<#tm_wireless#> (2.4GHz)","speed-tab-WIRELESS1,<#tm_wireless#> (5GHz)","speed-tab-BRIDGE,LAN"];
+		var sortabs = [];		
+		for(var i=0;i<tabsort.length;i++){
+			for(var j=0;j<tabs.length;j++){	
+				if(tabsort[i] == tabs[j]){
+					sortabs.push(tabs[j]);
+				}	
+			}
+		}
+		tabs = sortabs;
+		
 		/*tabs = tabs.sort(
 			function(a, b) {
 				if (a[1] < b[1]) return -1;

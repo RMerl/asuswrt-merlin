@@ -155,6 +155,10 @@ function initial(){
 		parent.showLoading(restart_time, "waiting");
 		setTimeout("parent.parent.detectLANstatus('"+current_page+"', '');", restart_time*1000);		
 	}
+	else if(current_page.indexOf("AiProtection_") >= 0){
+		parent.showLoading(restart_time, "waiting");
+		setTimeout("parent.parent.detectLANstatus('"+current_page+"', '');", restart_time*1000);		
+	}
 	else if(current_page.indexOf("Feedback") >= 0){
 		setTimeout("parent.redirect();", 60000);
 	}	

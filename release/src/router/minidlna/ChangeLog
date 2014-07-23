@@ -1,0 +1,17 @@
+1.1.3 - Released 05-June-2014
+--------------------------------
+- Enhance log level settings.
+- Fix Samsung browsing when root_container is set.
+- Add Clang compiling support.
+- Fix compiling on systems without iconv.
+- Add merge_media_dirs option, to revert to the old behavior.
+- Add Asus O!Play client support.
+- Fix Broken SSDP multicast membership addition.
+- Fix crash bug with an emtpy filter argument.
+- Accept SMI subtitles in addition to SRT.
+- Add BubbleUPnP detection and enable subtitle support.
+- Allow the user to specify an arbitrary root container.
+- Add libavcodec > 54 / libav 10 compatibility.
+- Get embedded cover art from video files with recent libavformat versions.
+- Disable Samsung DCM10 capability, as it breaks compatibility with new models.
+- Add subtitle support for NetFront™ Living Connect middleware-based clients.

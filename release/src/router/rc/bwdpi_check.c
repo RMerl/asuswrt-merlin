@@ -22,38 +22,9 @@ void start_bwdpi_check()
 
 static void run_engine()
 {
-	char buf[16];
-	dev_wan = get_wan_ifname(0);
-
 	if(!f_exists("/dev/detector") || !f_exists("/dev/idpfw")){
-		if(!f_exists(TMP_BWDPI)) eval("mkdir", "-p", TMP_BWDPI);
-
-		eval("mknod", "/dev/detector", "c", "190", "0");
-		eval("mknod", "/dev/idpfw", "c", "191", "0");
-
-		eval("iptables", "-t", "mangle", "-N", "BWDPI_FILTER");
-		eval("iptables", "-t", "mangle", "-F", "BWDPI_FILTER");
-		eval("iptables", "-t", "mangle", "-A", "BWDPI_FILTER", "-i", dev_wan, "-p", "udp", "--sport", "68", "--dport", "67", "-j", "DROP");
-		eval("iptables", "-t", "mangle", "-A", "BWDPI_FILTER", "-i", dev_wan, "-p", "udp", "--sport", "67", "--dport", "68", "-j", "DROP");
-		eval("iptables", "-t", "mangle", "-A", "PREROUTING", "-i", dev_wan, "-p", "udp", "-j", "BWDPI_FILTER");
-
-		sprintf(buf, "dev_wan=%s", dev_wan);
-		eval("insmod", "/usr/bwdpi/IDP.ko");
-		eval("insmod", "/usr/bwdpi/bw_forward.ko", buf, "sess_num=30000");
-		eval("insmod", "/usr/bwdpi/ct_notification.ko");
-
-		if(!f_exists("/tmp/bwdpi/bwdpi.app.db")){
-			eval("cp", "-rf", "/usr/bwdpi/rule.trf", DATABASE);
-			chdir(TMP_BWDPI);
-			eval("bwdpi-rule-agent", "-g", "-R");
-			chdir("/");
-			eval("rm", "-rf", DATABASE);
-		}
+		run_dpi_engine_service();
 	}
-	
-	start_wrs();
-	start_dc();
-	simple_setting();
 
 	if(!f_exists("/tmp/bwdpi/bwdpi.app.db")){
 		stop_dpi_engine_service();

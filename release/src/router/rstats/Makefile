@@ -13,7 +13,7 @@ CFLAGS += -I$(SRCBASE)/common/include
 endif
 
 ifeq ($(RTCONFIG_QTN),y)
-CFLAGS += -I$(TOP)/libqcsapi_client -I$(TOP)/httpd
+CFLAGS += -I$(TOP)/libqcsapi_client -I$(TOP)/shared/sysdeps/qtn
 LDFLAGS += -L$(TOP)/libqcsapi_client -lqcsapi_client
 endif
 

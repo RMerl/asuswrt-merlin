@@ -16,17 +16,70 @@ var wlc_state = '0';
 var wlc_sbstate = '0';
 var wlc_scan_state = '0';
 var systime = new Date();
+Date.prototype.stdTimezoneOffset_north = function() {
+    var jan = new Date(this.getFullYear(), 0, 1);
+    var jul = new Date(this.getFullYear(), 6, 1);
+    return Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+}
+
+Date.prototype.stdTimezoneOffset_south = function() {
+    var jan = new Date(this.getFullYear(), 0, 1);
+    var jul = new Date(this.getFullYear(), 6, 1);
+    return Math.min(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+}
+
+Date.prototype.dst = function() {
+		//alert(this.getTimezoneOffset()+" <= north:"+this.stdTimezoneOffset_north()+" ; "+this.getTimezoneOffset()+" => south:"+this.stdTimezoneOffset_south());
+    return (this.getTimezoneOffset() < this.stdTimezoneOffset_north() || this.getTimezoneOffset() > this.stdTimezoneOffset_south());
+}
+
 var isDefault = false;
 
 if(parent.tmo_support && parent.document.QKform.sw_mode.value == 1){
-		var fd_wl0_ssid =		decodeURIComponent("<% nvram_char_to_ascii("", "wl0_ssid_tmo"); %>");
+		var fd_wl0_ssid = decodeURIComponent("<% nvram_char_to_ascii("", "wl0_ssid_tmo"); %>");
  		if(band5g_support)
-				var fd_wl1_ssid =		decodeURIComponent("<% nvram_char_to_ascii("", "wl1_ssid_tmo"); %>");
+				var fd_wl1_ssid = decodeURIComponent("<% nvram_char_to_ascii("", "wl1_ssid_tmo"); %>");
 		/*factory default same one psk for 2.4G & 5G */
 		var fd_wpa_psk = decodeURIComponent("<% nvram_char_to_ascii("", "wl_wpa_psk_tmo"); %>");
 }
 
 var timezones = {
+	"720":"UTC12",
+	"660":"UTC11",
+	"600":"UTC10",
+	"540":"NAST9DST",
+	"480":"PST8DST",
+	"420":"MST7_2",
+	"360":"UTC6",
+	"300":"UTC5_1",
+	"240":"UTC4_1",
+	"210":"NST3.30DST",
+	"180":"UTC3",
+	"120":"NORO2DST",
+	"60":"UTC1",
+	"0":"GMT0",
+	"-60":"UTC-1_1_1",
+	"-120":"UTC-2_1",
+	"-180":"UTC-3_1",
+	"-210":"UTC-3.30DST",
+	"-240":"UTC-4_2",
+	"-270":"UTC-4.30",
+	"-300":"UTC-5",
+	"-330":"UTC-5.30_1",
+	"-345":"UTC-5.45",
+	"-360":"UTC-6_1",
+	"-390":"UTC-6.30",
+	"-420":"UTC-7",
+	"-480":"CCT-8",
+	"-540":"JST",
+	"-570":"UTC-9.30",
+	"-600":"UTC-10_3",
+	"-660":"UTC-11_2",
+	"-720":"UTC-12",
+	"-780":"UTC-13"
+};
+
+var timezones_dst = {
 	"720":"UTC12",
 	"660":"UTC11",
 	"600":"UTC10",
@@ -40,34 +93,35 @@ var timezones = {
 	"180":"EBST3DST_1",
 	"120":"NORO2DST",
 	"60":"EUT1DST",
-	"0":"GMT0",
-	"-60":"MET-1DST_1",
+	"0":"GMT0DST_1",
+	"-60":"UTC-1DST_1",
 	"-120":"UTC-2DST",
-	"-180":"UTC-3_1",
+	"-180":"IST-3DST",
 	"-210":"UTC-3.30DST",
-	"-240":"UTC-4_2",
+	"-240":"UTC-4DST_2",
 	"-270":"UTC-4.30",
 	"-300":"UTC-5",
 	"-330":"UTC-5.30_1",
 	"-345":"UTC-5.45",
-	"-360":"UTC-6_1",
+	"-360":"RFT-6DST",
 	"-390":"UTC-6.30",
 	"-420":"UTC-7",
-	"-480":"CCT-8",
+	"-480":"WAS-8DST",
 	"-540":"JST",
 	"-570":"CST-9.30DST",
-	"-600":"UTC-10_3",
+	"-600":"TST-10TDT",
 	"-660":"UTC-11_2",
-	"-720":"UTC-12",
+	"-720":"NZST-12DST",
 	"-780":"UTC-13"
 };
  
-function QKWireless_load_body(){
+function QKWireless_load_body(){	
 	parent.document.title = "<#Web_Title#> - <#QKSet_wireless_webtitle#>";
 	parent.set_step("t3");
 
 	if(parent.tmo_support && parent.document.QKform.sw_mode.value == 1){
-			document.getElementById("skipButton").style.display = "";
+			// hide this temporary cause radio has the same function in tmo_support
+			// document.getElementById("skipButton").style.display = "";
 			if(parent.ISMOBILE){
 				document.getElementById("loadingIcon_fd_div").style.display = "";
 				document.getElementById("mobile_wireless_desc").innerHTML = "You can rename your networks (SSIDs) and update your passwords from this page.";	
@@ -181,19 +235,7 @@ function setFactoryDefault(){
 			document.form.wlc_psta.disabled = true;
 	}
 	/* For router mode Only end */
-
-	/* Viz add to set time_zone automatically 2013.05 start */
-	if(timezones[systime.getTimezoneOffset()] != undefined 
-			&& timezones[systime.getTimezoneOffset()] != "" 
-			&& document.form.time_zone.value != timezones[systime.getTimezoneOffset()]
-			&& parent.isFirst
-			&& !parent.swisscom_support)
-	{
-				document.form.time_zone.disabled = false;
-				document.form.time_zone.value = timezones[systime.getTimezoneOffset()];
-				// document.form.action_script.value += ";restart_time";
-	}
-	/* Viz add to set time_zone automatically 2013.05 end */	
+	
 	child_macaddr = '';
 	parent.w_Setting_tmp = document.form.w_Setting.value;
 	document.getElementById("loadingIcon").style.display = "";
@@ -482,18 +524,33 @@ function submitForm(){
 		}
 	}
 
-	/* Viz add to set time_zone automatically 2013.05 start */
+	/* Viz patched to set time_zone automatically 2014.06 start */
 	if(timezones[systime.getTimezoneOffset()] != undefined 
 			&& timezones[systime.getTimezoneOffset()] != "" 
 			&& document.form.time_zone.value != timezones[systime.getTimezoneOffset()]
 			&& parent.isFirst
 			&& !parent.swisscom_support)
 	{
-				document.form.time_zone.disabled = false;
-				document.form.time_zone.value = timezones[systime.getTimezoneOffset()];
+				document.form.time_zone.disabled = false;				
+				if(systime.dst()){					
+					if(timezones_dst[systime.getTimezoneOffset()+60] != "")
+						document.form.time_zone.value = timezones_dst[systime.getTimezoneOffset()+60];
+					else if(document.form.time_zone.value == "")
+						document.form.time_zone.value = timezones_dst[0];
+				}
+				else{
+					if(timezones[systime.getTimezoneOffset()] != "")
+						document.form.time_zone.value = timezones[systime.getTimezoneOffset()];	
+					else if(document.form.time_zone.value == "")
+						document.form.time_zone.value = timezones_dst[0];	
+					
+					document.form.time_zone_dst.disabled = false;	
+					document.form.time_zone_dst.value = "0";	//Do disable dstoff
+				}
+					
 				// document.form.action_script.value += ";restart_time";
 	}
-	/* Viz add to set time_zone automatically 2013.05 end */	
+	/* Viz patched to set time_zone automatically 2014.06 end */
 	child_macaddr = '';
 	parent.w_Setting_tmp = document.form.w_Setting.value;
 	document.getElementById("loadingIcon").style.display = "";
@@ -845,6 +902,7 @@ function detect_LANStatus(_flag){
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
 <!-- timezone -->
 <input type="hidden" name="time_zone" value="<% nvram_get("time_zone"); %>" disabled>
+<input type="hidden" name="time_zone_dst" value="<% nvram_get("time_zone_dst"); %>" disabled>
 <!-- wireless -->
 <input type="hidden" name="wl0_ssid2" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_ssid"); %>">
 <input type="hidden" name="wl0_auth_mode_x" id="wl0_auth_mode_x" value="">

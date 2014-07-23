@@ -68,7 +68,7 @@ function drawClientList(tab){
 	genClientList();
 	pagesVar.endIndex = pagesVar.startIndex + pagesVar.CLIENTSPERPAGE;
 	while(i < pagesVar.endIndex){
-		var clientObj = clientList[clientList[i]];
+		var clientObj = clientList[clientList[i]];	
 
 		// fileter /*
 		if(i > clientList.length-1) break;
@@ -194,6 +194,8 @@ function updateClientList(e){
 			setTimeout("updateClientList();", 1000);
 		},
 		success: function(response){
+			document.getElementById("loadingIcon").style.visibility = (networkmap_fullscan == 1) ? "visible" : "hidden";
+
 			if(isJsonChanged(originData, originDataTmp)){
 				drawClientList();
 				parent.show_client_status(totalClientNum.online);
@@ -320,6 +322,7 @@ function updateClientList(e){
 <img height="25" id="leftBtn" onclick="updatePagesVar('-');" style="cursor:pointer;margin-left:10px;" src="/images/arrow-left.png">
 <img id="loadingIcon" src="/images/InternetScan.gif">
 <input type="button" id="refresh_list" class="button_gen" onclick="document.form.submit();" value="<#CTL_refresh#>" style="margin-left:70px;">
-<img height="25" id="rightBtn" onclick="updatePagesVar('+');" style="cursor:pointer;margin-left:50px;" src="/images/arrow-right.png">
+<img src="/images/InternetScan.gif" id="loadingIcon" style="visibility:hidden">
+<img height="25" id="rightBtn" onclick="updatePagesVar('+');" style="cursor:pointer;margin-left:25px;" src="/images/arrow-right.png">
 </body>
 </html>

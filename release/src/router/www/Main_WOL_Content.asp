@@ -59,7 +59,7 @@
 function initial(){
 	show_menu();
 	showwollist();
-	showLANIPList();
+	setTimeout("showLANIPList();", 1000);
 }
 
 function onSubmitCtrl(o, s) {

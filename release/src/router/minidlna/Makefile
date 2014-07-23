@@ -67,7 +67,7 @@ BASEOBJS = minidlna.o upnphttp.o upnpdescgen.o upnpsoap.o \
 	   options.o minissdp.o uuid.o upnpevents.o \
 	   sql.o utils.o metadata.o scanner.o inotify.o \
 	   tivo_utils.o tivo_beacon.o tivo_commands.o \
-	   tagutils/textutils.o tagutils/misc.o tagutils/tagutils.o \
+	   tagutils/tagutils.o \
 	   playlist.o image_utils.o albumart.o log.o clients.o
 
 ALLOBJS = $(BASEOBJS) $(LNXOBJS)
@@ -104,6 +104,7 @@ clean:
 	$(RM) $(ALLOBJS)
 	$(RM) $(EXECUTABLES)
 	$(RM) testupnpdescgen.o
+	$(RM) osver.h
 
 distclean: clean
 #	$(RM) config.h
@@ -128,7 +129,7 @@ testupnpdescgen:	$(TESTUPNPDESCGENOBJS)
 config.h:	genconfig.sh
 #	./genconfig.sh
 
-depend:	#config.h
+depend:	config.h
 	makedepend -f$(MAKEFILE_LIST) -Y \
 	$(ALLOBJS:.o=.c) $(TESTUPNPDESCGENOBJS:.o=.c) 2>/dev/null
 
@@ -160,9 +161,7 @@ testupnpdescgen.o: config.h upnpdescgen.h
 scanner.o: upnpglobalvars.h metadata.h utils.h sql.h scanner.h log.h playlist.h scanner_sqlite.h
 metadata.o: upnpglobalvars.h metadata.h albumart.h utils.h sql.h log.h
 albumart.o: upnpglobalvars.h albumart.h utils.h image_utils.h sql.h log.h
-tagutils/misc.o: tagutils/misc.h
-tagutils/textutils.o: tagutils/misc.h tagutils/textutils.h log.h
-tagutils/tagutils.o: tagutils/tagutils-asf.c tagutils/tagutils-flc.c tagutils/tagutils-plist.c tagutils/tagutils-misc.c
+tagutils/tagutils.o: tagutils/tagutils-asf.c tagutils/tagutils-flc.c tagutils/tagutils-plist.c
 tagutils/tagutils.o: tagutils/tagutils-aac.c tagutils/tagutils-asf.h tagutils/tagutils-flc.h tagutils/tagutils-mp3.c tagutils/tagutils-wav.c
 tagutils/tagutils.o: tagutils/tagutils-ogg.c tagutils/tagutils-aac.h tagutils/tagutils.h tagutils/tagutils-mp3.h tagutils/tagutils-ogg.h log.h
 playlist.o: playlist.h

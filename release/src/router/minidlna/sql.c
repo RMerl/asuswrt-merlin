@@ -33,8 +33,8 @@ sql_exec(sqlite3 *db, const char *fmt, ...)
 	//DPRINTF(E_DEBUG, L_DB_SQL, "SQL: %s\n", sql);
 
 	va_start(ap, fmt);
-
 	sql = sqlite3_vmprintf(fmt, ap);
+	va_end(ap);
 	ret = sqlite3_exec(db, sql, 0, 0, &errMsg);
 	if( ret != SQLITE_OK )
 	{
@@ -75,8 +75,8 @@ sql_get_int_field(sqlite3 *db, const char *fmt, ...)
 	sqlite3_stmt	*stmt;
 	
 	va_start(ap, fmt);
-
 	sql = sqlite3_vmprintf(fmt, ap);
+	va_end(ap);
 
 	//DPRINTF(E_DEBUG, L_DB_SQL, "sql: %s\n", sql);
 
@@ -118,9 +118,68 @@ sql_get_int_field(sqlite3 *db, const char *fmt, ...)
 			ret = -1;
 			break;
  	}
-
 	sqlite3_free(sql);
 	sqlite3_finalize(stmt);
+
+	return ret;
+}
+
+int64_t
+sql_get_int64_field(sqlite3 *db, const char *fmt, ...)
+{
+	va_list		ap;
+	int		counter, result;
+	char		*sql;
+	int64_t		ret;
+	sqlite3_stmt	*stmt;
+	
+	va_start(ap, fmt);
+	sql = sqlite3_vmprintf(fmt, ap);
+	va_end(ap);
+
+	//DPRINTF(E_DEBUG, L_DB_SQL, "sql: %s\n", sql);
+
+	switch (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL))
+	{
+		case SQLITE_OK:
+			break;
+		default:
+			DPRINTF(E_ERROR, L_DB_SQL, "prepare failed: %s\n%s\n", sqlite3_errmsg(db), sql);
+			sqlite3_free(sql);
+			return -1;
+	}
+
+	for (counter = 0;
+	     ((result = sqlite3_step(stmt)) == SQLITE_BUSY || result == SQLITE_LOCKED) && counter < 2;
+	     counter++) {
+		 /* While SQLITE_BUSY has a built in timeout,
+		    SQLITE_LOCKED does not, so sleep */
+		 if (result == SQLITE_LOCKED)
+		 	sleep(1);
+	}
+
+	switch (result)
+	{
+		case SQLITE_DONE:
+			/* no rows returned */
+			ret = 0;
+			break;
+		case SQLITE_ROW:
+			if (sqlite3_column_type(stmt, 0) == SQLITE_NULL)
+			{
+				ret = 0;
+				break;
+			}
+			ret = sqlite3_column_int64(stmt, 0);
+			break;
+		default:
+			DPRINTF(E_WARN, L_DB_SQL, "%s: step failed: %s\n%s\n", __func__, sqlite3_errmsg(db), sql);
+			ret = -1;
+			break;
+ 	}
+	sqlite3_free(sql);
+	sqlite3_finalize(stmt);
+
 	return ret;
 }
 
@@ -133,15 +192,15 @@ sql_get_text_field(sqlite3 *db, const char *fmt, ...)
 	char            *str;
 	sqlite3_stmt    *stmt;
 
-	va_start(ap, fmt);
-
 	if (db == NULL)
 	{
 		DPRINTF(E_WARN, L_DB_SQL, "db is NULL\n");
 		return NULL;
 	}
 
+	va_start(ap, fmt);
 	sql = sqlite3_vmprintf(fmt, ap);
+	va_end(ap);
 
 	//DPRINTF(E_DEBUG, L_DB_SQL, "sql: %s\n", sql);
 
@@ -195,8 +254,8 @@ sql_get_text_field(sqlite3 *db, const char *fmt, ...)
 			str = NULL;
 			break;
 	}
-
 	sqlite3_finalize(stmt);
+
 	return str;
 }
 
@@ -214,7 +273,7 @@ db_upgrade(sqlite3 *db)
 	if (db_vers < 1)
 		return -1;
 	if (db_vers < 9)
-		return 9;
+		return db_vers;
 	sql_exec(db, "PRAGMA user_version = %d", DB_VERSION);
 
 	return 0;

@@ -709,10 +709,6 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *_type)
 			sprintf(options + strlen(options), ",noatime" + (options[0] ? 0 : 1));
 #endif
 
-#ifdef RTCONFIG_TUXERA_NTFS
-			sprintf(options + strlen(options), ",iostreaming" + (options[0] ? 0 : 1));
-#endif
-
 			if (nvram_invmatch("usb_ntfs_opt", ""))
 				sprintf(options + strlen(options), "%s%s", options[0] ? "," : "", nvram_safe_get("usb_ntfs_opt"));
 		}
@@ -1968,6 +1964,7 @@ start_samba(void)
 	int cpu_num = sysconf(_SC_NPROCESSORS_CONF);
 	int taskset_ret = -1;
 #endif
+	char smbd_cmd[32];
 
 	if (getpid() != 1) {
 		notify_rc_after_wait("start_samba");
@@ -2034,24 +2031,34 @@ _dprintf("%s: cmd=%s.\n", __FUNCTION__, cmd);
 		free(nv);
 
 	xstart("nmbd", "-D", "-s", "/etc/smb.conf");
+
+#if defined(RTCONFIG_TFAT) || defined(RTCONFIG_TUXERA_NTFS) || defined(RTCONFIG_TUXERA_HFS) || defined(RTCONFIG_EXFAT)
+	if(nvram_get_int("enable_samba_tuxera") == 1)
+		snprintf(smbd_cmd, 32, "%s/smbd", "/usr/bin");
+	else
+		snprintf(smbd_cmd, 32, "%s/smbd", "/usr/sbin");
+#else
+	snprintf(smbd_cmd, 32, "%s/smbd", "/usr/sbin");
+#endif
+
 #ifdef RTCONFIG_BCMARM
 #ifdef SMP
 #if 0
 	if(cpu_num > 1)
-		taskset_ret = cpu_eval(NULL, "1", "ionice", "-c1", "-n0", "smbd", "-D", "-s", "/etc/smb.conf");
+		taskset_ret = cpu_eval(NULL, "1", "ionice", "-c1", "-n0", smbd_cmd, "-D", "-s", "/etc/smb.conf");
 	else
-		taskset_ret = eval("ionice", "-c1", "-n0", "smbd", "-D", "-s", "/etc/smb.conf");
+		taskset_ret = eval("ionice", "-c1", "-n0", smbd_cmd, "-D", "-s", "/etc/smb.conf");
 #else
 	if(cpu_num > 1)
-		taskset_ret = cpu_eval(NULL, "1", "smbd", "-D", "-s", "/etc/smb.conf");
+		taskset_ret = cpu_eval(NULL, "1", smbd_cmd, "-D", "-s", "/etc/smb.conf");
 	else
-		taskset_ret = eval("smbd", "-D", "-s", "/etc/smb.conf");
+		taskset_ret = eval(smbd_cmd, "-D", "-s", "/etc/smb.conf");
 #endif
 
 	if(taskset_ret != 0)
 #endif
 #endif
-		xstart("smbd", "-D", "-s", "/etc/smb.conf");
+		xstart(smbd_cmd, "-D", "-s", "/etc/smb.conf");
 
 	logmessage("Samba Server", "daemon is started");
 

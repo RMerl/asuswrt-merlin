@@ -26,11 +26,13 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <limits.h>
 #include <fcntl.h>
 #include <errno.h>
 
 #include "minidlnatypes.h"
 #include "upnpglobalvars.h"
+#include "utils.h"
 #include "log.h"
 
 int
@@ -143,20 +145,27 @@ strcasestrc(const char *s, const char *p, const char t)
 } 
 
 char *
-modifyString(char * string, const char * before, const char * after)
+modifyString(char *string, const char *before, const char *after, int noalloc)
 {
 	int oldlen, newlen, chgcnt = 0;
 	char *s, *p;
 
+	/* If there is no match, just return */
+	s = strstr(string, before);
+	if (!s)
+		return string;
+
 	oldlen = strlen(before);
 	newlen = strlen(after);
-	if( newlen > oldlen )
+	if (newlen > oldlen)
 	{
-		s = string;
-		while( (p = strstr(s, before)) )
+		if (noalloc)
+			return string;
+
+		while ((p = strstr(s, before)))
 		{
 			chgcnt++;
-			s = p+oldlen;
+			s = p + oldlen;
 		}
 		s = realloc(string, strlen(string)+((newlen-oldlen)*chgcnt)+1);
 		/* If we failed to realloc, return the original alloc'd string */
@@ -167,10 +176,10 @@ modifyString(char * string, const char * before, const char * after)
 	}
 
 	s = string;
-	while( s )
+	while (s)
 	{
-		p = strcasestr(s, before);
-		if( !p )
+		p = strstr(s, before);
+		if (!p)
 			return string;
 		memmove(p + newlen, p + oldlen, strlen(p + oldlen) + 1);
 		memcpy(p, after, newlen);
@@ -189,10 +198,10 @@ unescape_tag(const char *tag, int force_alloc)
 			|| strstr(tag, "&quot;") )
 	{
 		esc_tag = strdup(tag);
-		esc_tag = modifyString(esc_tag, "&amp;", "&");
-		esc_tag = modifyString(esc_tag, "&lt;", "<");
-		esc_tag = modifyString(esc_tag, "&gt;", ">");
-		esc_tag = modifyString(esc_tag, "&quot;", "\"");
+		esc_tag = modifyString(esc_tag, "&amp;", "&", 1);
+		esc_tag = modifyString(esc_tag, "&lt;", "<", 1);
+		esc_tag = modifyString(esc_tag, "&gt;", ">", 1);
+		esc_tag = modifyString(esc_tag, "&quot;", "\"", 1);
 	}
 	else if( force_alloc )
 		esc_tag = strdup(tag);
@@ -208,10 +217,10 @@ escape_tag(const char *tag, int force_alloc)
 	if( strchr(tag, '&') || strchr(tag, '<') || strchr(tag, '>') || strchr(tag, '"') )
 	{
 		esc_tag = strdup(tag);
-		esc_tag = modifyString(esc_tag, "&", "&amp;amp;");
-		esc_tag = modifyString(esc_tag, "<", "&amp;lt;");
-		esc_tag = modifyString(esc_tag, ">", "&amp;gt;");
-		esc_tag = modifyString(esc_tag, "\"", "&amp;quot;");
+		esc_tag = modifyString(esc_tag, "&", "&amp;amp;", 0);
+		esc_tag = modifyString(esc_tag, "<", "&amp;lt;", 0);
+		esc_tag = modifyString(esc_tag, ">", "&amp;gt;", 0);
+		esc_tag = modifyString(esc_tag, "\"", "&amp;quot;", 0);
 	}
 	else if( force_alloc )
 		esc_tag = strdup(tag);
@@ -219,14 +228,16 @@ escape_tag(const char *tag, int force_alloc)
 	return esc_tag;
 }
 
-void
-strip_ext(char * name)
+char *
+strip_ext(char *name)
 {
-	char * period;
+	char *period;
 
 	period = strrchr(name, '.');
-	if( period )
+	if (period)
 		*period = '\0';
+
+	return period;
 }
 
 /* Code basically stolen from busybox */
@@ -280,14 +291,14 @@ make_dir(char * path, mode_t mode)
 
 /* Simple, efficient hash function from Daniel J. Bernstein */
 unsigned int
-DJBHash(const char *str, int len)
+DJBHash(uint8_t *data, int len)
 {
 	unsigned int hash = 5381;
 	unsigned int i = 0;
 
-	for(i = 0; i < len; str++, i++)
+	for(i = 0; i < len; data++, i++)
 	{
-		hash = ((hash << 5) + hash) + (*str);
+		hash = ((hash << 5) + hash) + (*data);
 	}
 
 	return hash;
@@ -399,6 +410,12 @@ int
 is_playlist(const char * file)
 {
 	return (ends_with(file, ".m3u") || ends_with(file, ".pls"));
+}
+
+int
+is_caption(const char * file)
+{
+	return (ends_with(file, ".srt") || ends_with(file, ".smi"));
 }
 
 int

@@ -1,6 +1,3 @@
-sleep 30
-iwpriv wifi0 pc_override 1 &
-iwpriv wifi0 dynamic_ac 0 &
-writemem 0xE6090344 1 &
-writemem 0xE6090248 0x200 &
-echo "=== tweak done"
+# sleep 5
+# iwpriv wifi0 pc_override 1 &
+echo "=== skip tweak done"

@@ -17,10 +17,6 @@ ifeq ($(RTCONFIG_QTN),y)
 LDFLAGS += -L$(TOP)/libqcsapi_client
 LIBS += -lqcsapi_client
 endif
-ifeq ($(RTCONFIG_BCMARM),y)
-CFLAGS += -I$(SRCBASE)/common/include
-endif
-
 
 ifeq ($(wildcard $(TOP)/webdav_client_arm/*.c),)
 all:

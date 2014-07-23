@@ -32,8 +32,8 @@ if [ ! -d "$APPS_INSTALL_PATH" ]; then
 	exit 1
 fi
 
-APPS_MOUNTED_FS=`mount |grep "/dev/$APPS_DEV on " |awk '{print $5}'`
-if [ -z "$APPS_MOUNTED_FS" ]; then
+APPS_MOUNTED_TYPE=`mount |grep "/dev/$APPS_DEV on " |awk '{print $5}'`
+if [ -z "$APPS_MOUNTED_TYPE" ]; then
 	echo "$1 had not mounted yet!"
 	nvram set apps_state_error=2
 	exit 1
@@ -51,7 +51,13 @@ for obj in $objs; do
 	fi
 
 	if [ "$obj" != "bin" ] && [ "$obj" != "lib" ] && [ ! -e "$APPS_INSTALL_PATH/$obj" ]; then
-		if [ "$APPS_MOUNTED_FS" != "vfat" ] || [ ! -L "$APPS_PATH/$obj" ]; then
+		if [ "$APPS_MOUNTED_TYPE" != "vfat" ] && [ "$APPS_MOUNTED_TYPE" != "tfat" ]; then
+			cp -rf $APPS_PATH/$obj $APPS_INSTALL_PATH
+			if [ "$?" != "0" ]; then
+				nvram set apps_state_error=10
+				exit 1
+			fi
+		elif [ ! -L "$APPS_PATH/$obj" ]; then
 			cp -rf $APPS_PATH/$obj $APPS_INSTALL_PATH
 			if [ "$?" != "0" ]; then
 				nvram set apps_state_error=10
@@ -68,7 +74,13 @@ for obj in $objs; do
 	fi
 
 	if [ ! -e "$APPS_INSTALL_PATH/bin/$obj" ]; then
-		if [ "$APPS_MOUNTED_FS" != "vfat" ] || [ ! -L "$APPS_PATH/bin/$obj" ]; then
+		if [ "$APPS_MOUNTED_TYPE" != "vfat" ] && [ "$APPS_MOUNTED_TYPE" != "tfat" ]; then
+			cp -rf $APPS_PATH/bin/$obj $APPS_INSTALL_PATH/bin
+			if [ "$?" != "0" ]; then
+				nvram set apps_state_error=10
+				exit 1
+			fi
+		elif [ ! -L "$APPS_PATH/bin/$obj" ]; then
 			cp -rf $APPS_PATH/bin/$obj $APPS_INSTALL_PATH/bin
 			if [ "$?" != "0" ]; then
 				nvram set apps_state_error=10
@@ -85,7 +97,13 @@ for obj in $objs; do
 	fi
 
 	if [ ! -e "$APPS_INSTALL_PATH/lib/$obj" ]; then
-		if [ "$APPS_MOUNTED_FS" != "vfat" ] || [ ! -L "$APPS_PATH/lib/$obj" ]; then
+		if [ "$APPS_MOUNTED_TYPE" != "vfat" ] && [ "$APPS_MOUNTED_TYPE" != "tfat" ]; then
+			cp -rf $APPS_PATH/lib/$obj $APPS_INSTALL_PATH/lib
+			if [ "$?" != "0" ]; then
+				nvram set apps_state_error=10
+				exit 1
+			fi
+		elif [ ! -L "$APPS_PATH/lib/$obj" ]; then
 			cp -rf $APPS_PATH/lib/$obj $APPS_INSTALL_PATH/lib
 			if [ "$?" != "0" ]; then
 				nvram set apps_state_error=10

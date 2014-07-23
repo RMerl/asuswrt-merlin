@@ -401,7 +401,7 @@ void route_sock(void)
    else if (msg->ifm_type == RTM_NEWADDR)
      {
        del_family = 0;
-       send_newaddr();
+       queue_event(EVENT_NEWADDR);
      }
    else if (msg->ifm_type == RTM_DELADDR)
      {
@@ -439,7 +439,7 @@ void route_sock(void)
 	       of += sizeof(long) - (diff & (sizeof(long) - 1));
 	   }
        
-       send_newaddr();
+       queue_event(EVENT_NEWADDR);
      }
 }
 

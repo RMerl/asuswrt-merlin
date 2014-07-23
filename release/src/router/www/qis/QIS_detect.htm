@@ -56,6 +56,9 @@ function getWANStatus(){
 			else if( qtn_ready_t != "1" && '<% nvram_get("productid"); %>' == "RT-AC87U"){
 				setTimeout('getWANStatus();', 1000);
 			}
+			else if(autodet_state == "2" && autodet_auxstate == "6"){
+				redirect_page("internet_type");
+			}
 			else if(wanstate  == "2" && wansbstate == "0" && wanauxstate == "0"){
 				redirect_page("wireless");
 			}			

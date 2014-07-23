@@ -1148,7 +1148,11 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 		if ((wan_port = nvram_get_int("misc_httpsport_x")) == 0)
 			wan_port = 8443;
 		fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%s\n",
+#ifdef RTCONFIG_TMOBILE
+			wan_port, lan_ip, "443");
+#else
 			wan_port, lan_ip, nvram_safe_get("https_lanport"));
+#endif
 #endif
 	}
 
@@ -1235,7 +1239,11 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 
 			port = nvram_get_int("webdav_https_port");
 			if (!port || port >= 65536)
+#ifdef RTCONFIG_TMOBILE
+				port = 8443;
+#else
 				port = 443;
+#endif
 			fprintf(fp, "-A LOCALSRV -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d\n", port, lan_ip, port);
 			port = nvram_get_int("webdav_http_port");
 			if (!port || port >= 65536)
@@ -1406,12 +1414,16 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 		if ((wan_port = nvram_get_int("misc_httpport_x")) == 0)
 			wan_port = 8080;
 		fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%s\n",
-				wan_port, lan_ip, nvram_safe_get("lan_port"));
+			wan_port, lan_ip, nvram_safe_get("lan_port"));
 #ifdef RTCONFIG_HTTPS
 		if ((wan_port = nvram_get_int("misc_httpsport_x")) == 0)
 			wan_port = 8443;
 		fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%s\n",
-				wan_port, lan_ip, nvram_safe_get("https_lanport"));
+#ifdef RTCONFIG_TMOBILE
+			wan_port, lan_ip, "443");
+#else
+			wan_port, lan_ip, nvram_safe_get("https_lanport"));
+#endif
 #endif
 	}
 
@@ -1514,7 +1526,11 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 
 			port = nvram_get_int("webdav_https_port");
 			if (!port || port >= 65536)
+#ifdef RTCONFIG_TMOBILE
+				port = 8443;
+#else
 				port = 443;
+#endif
 			fprintf(fp, "-A LOCALSRV -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d\n", port, lan_ip, port);
 			port = nvram_get_int("webdav_http_port");
 			if (!port || port >= 65536)
@@ -2093,6 +2109,10 @@ filter_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 TRACE_PT("writing Parental Control\n");
 		config_daytime_string(fp, logaccept, logdrop);
 
+#ifdef RTCONFIG_IPV6
+                if (ipv6_enabled())
+                        config_daytime_string(fp_ipv6, logaccept, logdrop);
+#endif
 		dtype = logdrop;
 		ftype = logaccept;
 
@@ -2233,7 +2253,11 @@ TRACE_PT("writing Parental Control\n");
 		{
 			fprintf(fp, "-A INPUT -p tcp -m tcp -d %s --dport %s -j %s\n", lan_ip, nvram_safe_get("lan_port"), logaccept);
 #ifdef RTCONFIG_HTTPS
+#ifdef RTCONFIG_TMOBILE
+			fprintf(fp, "-A INPUT -p tcp -m tcp -d %s --dport %s -j %s\n", lan_ip, "443", logaccept);
+#else
 			fprintf(fp, "-A INPUT -p tcp -m tcp -d %s --dport %s -j %s\n", lan_ip, nvram_safe_get("https_lanport"), logaccept);
+#endif
 #endif
 		}
 
@@ -2245,6 +2269,20 @@ TRACE_PT("writing Parental Control\n");
 				fprintf(fp, "-A INPUT -p tcp -m tcp --dport %d -j %s\n", local_ftpport, logaccept);
 		}
 
+		// Open ssh to WAN
+		if ((nvram_match("sshd_wan", "1")) && (nvram_get_int("sshd_port"))) {
+			if (nvram_match("sshd_bfp", "1")) {
+				fprintf(fp,"-N SSHBFP\n");
+				fprintf(fp, "-A SSHBFP -m recent --set --name SSH --rsource\n");
+				fprintf(fp, "-A SSHBFP -m recent --update --seconds 60 --hitcount 4 --name SSH --rsource -j %s\n", logdrop);
+				fprintf(fp, "-A SSHBFP -j %s\n", logaccept);
+				fprintf(fp, "-A INPUT -i %s -p tcp --dport %d -m state --state NEW -j SSHBFP\n", wan_if, nvram_get_int("sshd_port"));
+			}
+			else
+			{
+				fprintf(fp, "-A INPUT -i %s -p tcp --dport %d -j %s\n", wan_if, nvram_get_int("sshd_port"), logaccept);
+			}
+		}
 #ifdef RTCONFIG_WEBDAV
 		if (nvram_match("enable_webdav", "1"))
 		{
@@ -2302,21 +2340,6 @@ TRACE_PT("writing Parental Control\n");
 			break;
 		}
 #endif
-
-		// Open ssh to WAN
-		if ((nvram_match("sshd_wan", "1")) && (nvram_get_int("sshd_port"))) {
-			if (nvram_match("sshd_bfp", "1")) {
-				fprintf(fp,"-N SSHBFP\n");
-				fprintf(fp, "-A SSHBFP -m recent --set --name SSH --rsource\n");
-				fprintf(fp, "-A SSHBFP -m recent --update --seconds 60 --hitcount 4 --name SSH --rsource -j %s\n", logdrop);
-				fprintf(fp, "-A SSHBFP -j %s\n", logaccept);
-				fprintf(fp, "-A INPUT -i %s -p tcp --dport %d -m state --state NEW -j SSHBFP\n", wan_if, nvram_get_int("sshd_port"));
-			}
-			else
-			{
-			fprintf(fp, "-A INPUT -i %s -p tcp --dport %d -j %s\n", wan_if, nvram_get_int("sshd_port"), logaccept);
-			}
-		}
 
 		fprintf(fp, "-A INPUT -j %s\n", logdrop);
 	}
@@ -2406,12 +2429,12 @@ TRACE_PT("writing Parental Control\n");
 // oleg patch ~
 	/* Drop the wrong state, INVALID, packets */
 	fprintf(fp, "-A FORWARD -m state --state INVALID -j %s\n", logdrop);
-#if 0
+//#if 0
 #ifdef RTCONFIG_IPV6
 	if (ipv6_enabled())
 	fprintf(fp_ipv6, "-A FORWARD -m state --state INVALID -j %s\n", logdrop);
 #endif
-#endif
+//#endif
 	if (strlen(macaccept)>0)
 	{
 		fprintf(fp, "-A %s -m state --state INVALID -j %s\n", macaccept, logdrop);
@@ -2679,6 +2702,11 @@ TRACE_PT("writing Parental Control\n");
 #else
 	// MAC address in list and in time period -> ACCEPT.
 	fprintf(fp, "-A PControls -j %s\n", logaccept);
+#ifdef RTCONFIG_IPV6
+	if (ipv6_enabled())
+		fprintf(fp_ipv6, "-A PControls -j %s\n", logaccept);
+#endif
+
 #endif
 
 	// Block VPN traffic
@@ -2965,7 +2993,7 @@ filter_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 {
 	FILE *fp;	// oleg patch
 #ifdef RTCONFIG_IPV6
-	FILE *fp_ipv6;
+	FILE *fp_ipv6 = NULL;
 	char *protono;
 #endif
 	char *proto, *flag, *srcip, *srcport, *dstip, *dstport;
@@ -3000,7 +3028,7 @@ filter_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 	int n;
 	char *ip;
 #endif
-	int v4v6_ok;
+	int v4v6_ok = IPT_V4;
 
 	if ((fp=fopen("/tmp/filter_rules", "w"))==NULL) return;
 
@@ -3055,6 +3083,11 @@ filter_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 	if(nvram_get_int("MULTIFILTER_ALL") != 0 && count_pc_rules() > 0){
 TRACE_PT("writing Parental Control\n");
 		config_daytime_string(fp, logaccept, logdrop);
+
+#ifdef RTCONFIG_IPV6
+		if (ipv6_enabled())
+			config_daytime_string(fp_ipv6, logaccept, logdrop);
+#endif
 
 		dtype = logdrop;
 		ftype = logaccept;
@@ -3721,6 +3754,11 @@ TRACE_PT("writing Parental Control\n");
 #else
 	// MAC address in list and in time period -> ACCEPT.
 	fprintf(fp, "-A PControls -j %s\n", logaccept);
+#ifdef RTCONFIG_IPV6
+	if (ipv6_enabled())
+		fprintf(fp_ipv6, "-A PControls -j %s\n", logaccept);
+#endif
+
 #endif
 
 	// Block VPN traffic
@@ -4183,6 +4221,24 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 			eval("ip6tables", "-t", "mangle", "-A", "FORWARD",
 				"-m", "state", "--state", "NEW", "-j", "SKIPLOG");
 #endif
+		}
+#endif
+
+#if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
+                //Set mark if ppp connection without encryption
+                if( nvram_match("pptpd_enable", "1") && (nvram_get_int("pptpd_mppe")>7) ) {
+                        eval("iptables", "-t", "mangle", "-A", "FORWARD",
+                             "-p", "tcp",
+                             "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01");
+                }
+#endif
+
+#if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
+		//Set mark if ppp connection without encryption
+		if( nvram_match("pptpd_enable", "1") && (nvram_get_int("pptpd_mppe")>7) ) {
+			eval("iptables", "-t", "mangle", "-A", "FORWARD",
+			     "-p", "tcp",
+			     "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01");
 		}
 #endif
 	}

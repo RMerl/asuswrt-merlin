@@ -128,6 +128,9 @@ ifeq ($(RTCONFIG_TMOBILE), y)
 	mv $(INSTALLDIR)/www/images/tmo_modem_unplug.png $(INSTALLDIR)/www/images/modem_unplug.png
 else
 	rm -rf $(INSTALLDIR)/www/Passpoint_hidden.asp
+	rm -rf $(INSTALLDIR)/www/Advanced_WAdvPassPoint_Content.asp
+	rm -rf $(INSTALLDIR)/www/Advanced_WPassPoint_Content.asp
+	rm -rf $(INSTALLDIR)/www/SMTP_Client.asp
 	rm -rf $(INSTALLDIR)/www/images/tmo_modem_plug.png
 	rm -rf $(INSTALLDIR)/www/images/tmo_modem_unplug.png
 endif
@@ -290,19 +293,17 @@ ifeq ($(RTCONFIG_ODMPID),y)
 endif
 
 ifneq ($(RTCONFIG_BWDPI),y)
-	rm -rf $(INSTALLDIR)/www/AiStream_Intelligence.asp
-	rm -rf $(INSTALLDIR)/www/AiStream_Live.asp
-	rm -rf $(INSTALLDIR)/www/AiStream_TrafficControl.asp
-	rm -rf $(INSTALLDIR)/www/AiStream_WebHistory.asp
-	rm -rf $(INSTALLDIR)/www/Home_Security.asp
-	rm -rf $(INSTALLDIR)/www/ParentalControl_Group.asp
-	rm -rf $(INSTALLDIR)/www/ParentalControl_HomeSecurity.asp
-	rm -rf $(INSTALLDIR)/www/ParentalControl_WebProtector.asp
+	rm -rf $(INSTALLDIR)/www/AdaptiveQoS_Intelligence.asp
+	rm -rf $(INSTALLDIR)/www/AdaptiveQoS_Bandwidth_Monitor.asp
+	rm -rf $(INSTALLDIR)/www/AdaptiveQoS_WebHistory.asp
+	rm -rf $(INSTALLDIR)/www/AiProtection_HomeSecurity.asp
+	rm -rf $(INSTALLDIR)/www/AiProtection_Group.asp
+	rm -rf $(INSTALLDIR)/www/AiProtection_HomeProtection.asp
+	rm -rf $(INSTALLDIR)/www/AiProtection_WebProtector.asp
 	rm -rf $(INSTALLDIR)/www/blocking.asp
 	rm -rf $(INSTALLDIR)/www/getTraffic.asp
 	rm -rf $(INSTALLDIR)/www/getWebHistory.asp
-	rm -rf $(INSTALLDIR)/www/images/New_ui/indicator.png
-	rm -rf $(INSTALLDIR)/www/images/New_ui/speedmeter.png
+	rm -rf $(INSTALLDIR)/www/tm_eula.html
 	rm -rf $(INSTALLDIR)/www/images/New_ui/HomeProtection.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/TimeLimits.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/Web_Apps_Restriction.png
@@ -313,6 +314,13 @@ ifneq ($(RTCONFIG_BWDPI),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/right-light.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/right-dark.png	
 	rm -rf $(INSTALLDIR)/www/images/New_ui/tm_logo.png	
+	rm -rf $(INSTALLDIR)/www/images/New_ui/tm_logo_power.png	
+	rm -rf $(INSTALLDIR)/www/images/New_ui/TM_product.png	
+	rm -rf $(INSTALLDIR)/www/images/New_ui/sample_35.png
+ifneq ($(RTCONFIG_ROG),y)
+	rm -rf $(INSTALLDIR)/www/images/New_ui/indicator.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/speedmeter.png
+endif
 #else
 #	rm -rf $(INSTALLDIR)/www/Main_TrafficMonitor_daily.asp
 #	rm -rf $(INSTALLDIR)/www/Main_TrafficMonitor_last24.asp

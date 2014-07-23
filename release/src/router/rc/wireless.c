@@ -50,12 +50,18 @@ start_nas(void)
 	stop_nas();
 
 	system("nas&");
+#ifdef RTCONFIG_TMOBILE
+	system("radpd");
+#endif
 }
 
 void
 stop_nas(void)
 {
 	killall_tk("nas");
+#ifdef RTCONFIG_TMOBILE
+	killall_tk("radpd");
+#endif
 }
 #ifdef REMOVE
 void notify_nas(const char *ifname)

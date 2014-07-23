@@ -58,7 +58,7 @@ struct client_type_s client_types[] =
 	/* User-Agent: DLNADOC/1.50 SEC_HHP_BD-D5100/1.0 */
 	{ ESamsungSeriesCDEBDP,
 	  FLAG_SAMSUNG | FLAG_DLNA | FLAG_NO_RESIZE,
-	  "Samsung Series [CDE] BDP",
+	  "Samsung Series [CDEF] BDP",
 	  "SEC_HHP_BD",
 	  EUserAgent
 	},
@@ -66,8 +66,8 @@ struct client_type_s client_types[] =
 	/* User-Agent: DLNADOC/1.50 SEC_HHP_[TV]UE40D7000/1.0 */
 	/* User-Agent: DLNADOC/1.50 SEC_HHP_ Family TV/1.0 */
 	{ ESamsungSeriesCDE,
-	  FLAG_SAMSUNG | FLAG_DLNA | FLAG_NO_RESIZE | FLAG_SAMSUNG_DCM10,
-	  "Samsung Series [CDE]",
+	  FLAG_SAMSUNG | FLAG_DLNA | FLAG_NO_RESIZE,
+	  "Samsung Series [CDEF]",
 	  "SEC_HHP_",
 	  EUserAgent
 	},
@@ -91,6 +91,14 @@ struct client_type_s client_types[] =
 	  FLAG_DLNA | FLAG_FORCE_SORT,
 	  "Panasonic",
 	  "Panasonic",
+	  EUserAgent
+	},
+
+	/* User-Agent: IPI/1.0 UPnP/1.0 DLNADOC/1.50 */
+	{ ENetFrontLivingConnect,
+	  FLAG_DLNA | FLAG_FORCE_SORT | FLAG_CAPTION_RES,
+	  "NetFront Living Connect",
+	  "IPI/1",
 	  EUserAgent
 	},
 
@@ -203,6 +211,13 @@ struct client_type_s client_types[] =
 	  FLAG_DLNA | FLAG_MIME_AVI_AVI | FLAG_CAPTION_RES,
 	  "Asus OPlay Mini/Mini+",
 	  "O!Play",
+	  EUserAgent
+	},
+
+	{ EBubbleUPnP,
+	  FLAG_CAPTION_RES,
+	  "BubbleUPnP",
+	  "BubbleUPnP",
 	  EUserAgent
 	},
 

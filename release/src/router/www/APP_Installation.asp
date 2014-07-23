@@ -61,7 +61,7 @@ function initial(){
 	show_menu();
 
 	default_apps_array = [["AiDisk", "aidisk.asp", "<#AiDiskWelcome_desp1#>", "Aidisk.png", ""],
-												["<#Servers_Center#>", tablink[3][1], "<#UPnPMediaServer_Help#>", "server.png", ""],
+												["<#Servers_Center#>", tablink[4][1], "<#UPnPMediaServer_Help#>", "server.png", ""],
 												["<#Network_Printer_Server#>", "PrinterServer.asp", "<#Network_Printer_desc#>", "PrinterServer.png", ""],
 												["3G/4G", "Advanced_Modem_Content.asp", "<#HSDPAConfig_hsdpa_enable_hint1#>", "modem.png", ""],
 												["Time Machine", "Advanced_TimeMachine.asp", "Time Machine Support.", "TimeMachine.png", "1.0.0.1"]];

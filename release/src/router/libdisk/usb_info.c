@@ -150,7 +150,7 @@ char *get_device_type_by_node(const char *usb_node, char *buf, const int buf_siz
 		else
 #endif
 #ifdef RTCONFIG_USB_MODEM
-		if(isSerialInterface(interface_name) || isACMInterface(interface_name))
+		if(isSerialInterface(interface_name, 0, 0, 0) || isACMInterface(interface_name, 0, 0, 0))
 			++got_modem;
 		else
 #endif
@@ -1001,9 +1001,15 @@ int isBeceemNode(const char *device_name)
 }
 #endif
 
-int isSerialInterface(const char *interface_name)
+int isSerialInterface(const char *interface_name, const int specifics, const unsigned int vid, const unsigned int pid)
 {
 	char interface_class[4];
+
+	if(specifics){
+		// HTC M8
+		if(vid == 0x0bb4 && (pid == 0x0f64 || pid == 0x0f60))
+			return 0;
+	}
 
 	if(get_usb_interface_class(interface_name, interface_class, 4) == NULL)
 		return 0;
@@ -1014,9 +1020,15 @@ int isSerialInterface(const char *interface_name)
 	return 1;
 }
 
-int isACMInterface(const char *interface_name)
+int isACMInterface(const char *interface_name, const int specifics, const unsigned int vid, const unsigned int pid)
 {
 	char interface_class[4], interface_subclass[4];
+
+	if(specifics){
+		// HTC M8
+		if(vid == 0x0bb4 && (pid == 0x0f64 || pid == 0x0f60))
+			return 0;
+	}
 
 	if(get_usb_interface_class(interface_name, interface_class, 4) == NULL)
 		return 0;

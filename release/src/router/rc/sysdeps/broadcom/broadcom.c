@@ -1032,21 +1032,23 @@ setAllLedOn(void)
 		case MODEL_RTAC68U:
 		case MODEL_RTAC3200:
 		{
+#ifdef RTAC68U
 			led_control(LED_USB, LED_ON);
 			led_control(LED_USB3, LED_ON);
 			led_control(LED_TURBO, LED_ON);
+#endif
 			eval("et", "robowr", "0", "0x18", "0x01ff");	// lan/wan ethernet/giga led
 			eval("et", "robowr", "0", "0x1a", "0x01e0");
 			eval("wl", "ledbh", "10", "1");			// wl 2.4G
 			eval("wl", "-i", "eth2", "ledbh", "10", "1");	// wl 5G
 #ifdef RTAC3200
 			eval("wl", "-i", "eth3", "ledbh", "10", "1");	// wl 5G
+			led_control(LED_WPS, LED_ON);
 #endif
 			/* 4360's fake 5g led */
-#ifdef RTAC68U
 			gpio_write(LED_5G, 1);				// wl 5G
 			led_control(LED_5G, LED_ON);
-#endif
+
 			break;
 		}
 		case MODEL_RTAC56S:
@@ -1245,21 +1247,23 @@ setAllLedOff(void)
 		case MODEL_RTAC68U:
 		case MODEL_RTAC3200:
 		{
+#ifdef RTAC68U
 			led_control(LED_USB, LED_OFF);
 			led_control(LED_USB3, LED_OFF);
 			led_control(LED_TURBO, LED_OFF);
+#endif
 			eval("et", "robowr", "0", "0x18", "0x01e0");	// lan/wan ethernet/giga led
 			eval("et", "robowr", "0", "0x1a", "0x01e0");
 			eval("wl", "ledbh", "10", "0");			// wl 2.4G
 			eval("wl", "-i", "eth2", "ledbh", "10", "0");
 #ifdef RTAC3200
 			eval("wl", "-i", "eth3", "ledbh", "10", "0");
+			led_control(LED_WPS, LED_OFF);
 #endif
 			/* 4360's fake 5g led */
-#ifdef RTAC68U
 			gpio_write(LED_5G, 1);				// wl 5G
 			led_control(LED_5G, LED_OFF);
-#endif
+
 			break;
 		}
 		case MODEL_RTAC66U:
@@ -2615,9 +2619,9 @@ next_info:
 			printf("[wlcscan] Output %s error\n", ofile);
 		}else{
 			for (i = 0; i < ap_count; i++){
-				if(apinfos[i].ctl_ch < 0 ){
+				/*if(apinfos[i].ctl_ch < 0 ){
 					fprintf(fp, "\"ERR_BNAD\",");
-				}else if( apinfos[i].ctl_ch > 0 &&
+				}else */if( apinfos[i].ctl_ch > 0 &&
 							 apinfos[i].ctl_ch < 14){
 					fprintf(fp, "\"2G\",");
 				}else if( apinfos[i].ctl_ch > 14 &&
@@ -3030,12 +3034,6 @@ restore_defaults_tmobile(void)
 	nvram_set("wl0.1_lanaccess", "off");
 	nvram_set("wl0.2_ssid", "CellSpot_2.4GHz_Guest2");
 	nvram_set("wl0.2_lanaccess", "off");
-	nvram_set("wl0.3_ssid", "CellSpot_AutoConnect");
-#ifdef RTCONFIG_TMOBILE_TMP
-	nvram_set("wl0.3_lanaccess", "off");
-	nvram_set("wl0.3_bss_enabled", "0");
-	nvram_set("wl0.3_bss_maxassoc", "8");
-#endif
 	sprintf((char *) ssid, "CellSpot_5GHz_%s", ssidbase);
 	nvram_set("wl1_ssid", (const char *) ssid);
 	nvram_set("wl1_ssid_tmo", (const char *) ssid);
@@ -3043,12 +3041,6 @@ restore_defaults_tmobile(void)
 	nvram_set("wl1.1_lanaccess", "off");
 	nvram_set("wl1.2_ssid", "CellSpot_5GHz_Guest2");
 	nvram_set("wl1.2_lanaccess", "off");
-	nvram_set("wl1.3_ssid", "CellSpot_AutoConnect");
-#ifdef RTCONFIG_TMOBILE_TMP
-	nvram_set("wl1.3_lanaccess", "off");
-	nvram_set("wl1.3_bss_enabled", "0");
-	nvram_set("wl1.3_bss_maxassoc", "8");
-#endif
 	nvram_set("wl0_auth_mode_x", "psk2");
 	nvram_set("wl1_auth_mode_x", "psk2");
 	nvram_set("wl0_crypto", "aes");
@@ -3057,6 +3049,96 @@ restore_defaults_tmobile(void)
 	nvram_set("wl1_wpa_psk", (const char *) key);
 	nvram_set("wl_wpa_psk_tmo", (const char *) key);
 }
+
+void
+restore_defaults_tmobile_hs2(void)
+{
+	nvram_set("wl0.3_ssid", "CellSpot_AutoConnect");
+	nvram_set("wl0.3_osu_ssid", "CellSpot_AutoConnect");
+	nvram_set("wl0.3_auth_mode_x", "wpa2");
+	nvram_set("wl0.3_crypto", "aes");
+	nvram_set("wl0.3_lanaccess", "off");
+	nvram_set("wl0.3_bss_enabled", "1");
+	nvram_set("wl0.3_bss_maxassoc", "8");
+	nvram_set("wl0.3_radius_ipaddr", "127.0.0.1");
+	nvram_set("wl0.3_radius_key", "secret");
+	nvram_set("wl0.3_radius_port", "1814");
+
+	nvram_set("wl1.3_ssid", "CellSpot_AutoConnect");
+	nvram_set("wl1.3_osu_ssid", "CellSpot_AutoConnect");
+	nvram_set("wl1.3_auth_mode_x", "wpa2");
+	nvram_set("wl1.3_crypto", "aes");
+	nvram_set("wl1.3_lanaccess", "off");
+	nvram_set("wl1.3_bss_enabled", "1");
+	nvram_set("wl1.3_bss_maxassoc", "8");
+	nvram_set("wl1.3_radius_ipaddr", "127.0.0.1");
+	nvram_set("wl1.3_radius_key", "secret");
+	nvram_set("wl1.3_radius_port", "1815");
+}
+#endif
+
+#ifdef RTCONFIG_TMOBILE
+struct nvram_tuple router_defaults_hs2[] = {
+	{ "wl_hsflag",		"3159", 0 },	/* Passpoint Flags */
+	{ "wl_hs2en",		"1", 0 },	/* Passpoint Enable (1), disable (0) radio */
+	{ "wl_hs2cap",		"1", 0 },	/* Passpoint Realese 2 (1), Realese 1 (0) radio */
+	{ "wl_opercls",		"3", 0 },	/* Operating Class */
+	{ "wl_anonai",		"anonymous.com", 0 },	/* Anonymous NAI */
+
+	{ "wl_oplist",		"T-Mobile!eng", 0 },	/* Operator Friendly Name List */
+
+	{ "wl_homeqlist",	"t-mobile.com:rfc4282", 0 },/* NAIHomeRealmQueryList */
+	{ "wl_wanmetrics",	"1:0:0=2500>384=0>0=0", 0 },/* WAN Metrics */
+	{ "wl_osu_ssid",	"CellSpot_AutoConnect", 0}, /* OSU SSID */
+
+	{ "wl_osu_frndname",	"T-Mobile!eng", 0},	/* OSU Friendly Name */
+
+	{ "wl_osu_uri",
+	"https://osu-server.t-mobile.com/", 0},	/* OSU Server URI */
+
+	{ "wl_osu_nai",		"", 0},		/* OSU NAI */
+	{ "wl_osu_method",	"1", 0},	/* OSU Method */
+
+	{ "wl_osu_icons",
+	"icon_red_zxx.png+icon_red_eng.png", 0},/* OSU Icons */
+
+	{ "wl_osu_servdesc", "T-Mobile Passpoint service!eng", 0}, /* OSU Serv Desc */
+
+	/* ---- Passpoint Flags  ----------------------------------- */
+	{ "wl_gascbdel",	"0", 0 },	/* GAS CB Delay */
+	{ "wl_4framegas",	"0", 0 },	/* 4 Frame GAS */
+
+	/* ---- temporary ----------------------------------- */
+	{ "wl_osuicon_id",	"1", 0 },	/* OSU Provider's Icon ID */
+	{ "wl_conn_id",		"1", 0 },	/* Connection Capability ID */
+
+	{ "wl_u11en",		"1", 0 },	/* 802.11u IW Enable (1), disable (0) radio */
+	{ "wl_iwint",		"1", 0 },	/* Internet Enable (1), disable (0) radio */
+	{ "wl_iwnettype",	"0", 0 },	/* Select Access Network Type */
+	{ "wl_hessid",		"50:6F:9A:00:11:22",  0 },	/* Interworking HESSID */
+	{ "wl_ipv4addr",	"3", 0 },	/* Select IPV4 Address Type Availability */
+	{ "wl_ipv6addr",	"0", 0 },	/* Select IPV6 Address Type Availability */
+
+	{ "wl_netauthlist", "accepttc=+"
+	"httpred=https://t-mobile.com",  0 },	/* Network Authentication Type List */
+
+	{ "wl_venuegrp",	"0", 0 },	/* Venue Group */
+	{ "wl_venuetype",	"0", 0 },	/* Venue Type  */
+
+	{ "wl_venuelist",
+	"542D4D6F62696C6521656E67",  0 },	/* Venue Name List */
+
+	{ "wl_ouilist",		"506F9A;001BC504BD", 0 },	/* Roaming Consortium List */
+	{ "wl_3gpplist",	"310:260;310:310",  0 },	/* 3GPP Cellular Network Information List */
+	{ "wl_domainlist",	"t-mobile.com",  0 },		/* Domain Name List */
+
+	{ "wl_realmlist",
+	"wlan.mnc260.mcc310.3gppnetwork.org+0+21=2,4#5,7?"
+	"wlan.mnc260.mcc310.3gppnetwork.org+0+13=5,6?"
+	"wlan.mnc310.mcc310.3gppnetwork.org+0+21=2,4#5,7?"
+	"wlan.mnc310.mcc310.3gppnetwork.org+0+13=5,6", 0 },	/* NAI Realm List */
+	{ NULL, NULL }
+};
 #endif
 
 int

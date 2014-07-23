@@ -1,0 +1,83 @@
+odhcp6c - Embedded DHCPv6 Client
+
+
+** Abstract **
+
+odhcp6c is a minimal DHCPv6 and RA-client for use in embedded Linux systems
+especially routers. It compiles to only about 30 KB (-Os -s).
+
+
+** Features **
+
+1. IPv6 bootstrap from different environments with autodetection
+	a) RA only
+	b) RA + stateless DHCPv6
+	c) RA + stateful DHCPv6 (either IA_NA or IA_PD or both)
+
+2. Handling of non-temporary addresses (IA_NA)
+	a) handling of valid and preferred lifetimes
+	b) automatic fallback to stateless or PD-only mode
+
+3. Support for DHCPv6 extension
+	a) Reconfigure-Messages
+	b) Prefix Delegation (including handling of valid and preferred lifetimes)
+	c) Prefix Exclusion
+	d) DNS Configuration Options
+	e) NTP Options
+	f) SIP Options
+	g) Information-Refresh Options
+	h) Configurable SOL_MAX_RT
+	i) DS-Lite AFTR-Name Option
+	j) Prefix Class (experimental)
+	k) CER-ID (experimental)
+	l) Softwire address and port mapped clients (experimental)
+
+4. Support for requesting and parsing Router Advertisements
+	a) parsing of prefixes, routes, MTU and RDNSS options
+
+
+** Compiling **
+
+odhcp6c uses cmake:
+* To prepare a Makefile use:  "cmake ." 
+* To build / install use: "make" / "make install" afterwards.
+* To build DEB or RPM packages use: "make package" afterwards.
+
+
+** State Script **
+
+The state script is called whenever the DHCPv6 state changes.
+The script is called with the following parameters: <interface> <state>
+
+
+States:
+* started		The DHCPv6 client has been started
+* bound			A suitable server was found and addresses or prefixes acquired		
+* informed		A stateless information request returned updated information
+* updated		Updated information was received from the DHCPv6 server
+* ra-updated		Updated information was received from via Router Advertisement
+* rebound		The DHCPv6 client switched to another server
+* unbound		The DHCPv6 client lost all DHCPv6 servers and will restart
+* stopped		The DHCPv6 client has been stopped
+
+
+Environment:
+* RDNSS			A space-separated list of recursive DNS servers
+* DOMAINS		A space-separated list of DNS search domains
+* SNTP_IP		A space-separated list of SNTP server IP addresses
+* SNTP_FQDN		A space-separated list of SNTP server FQDNs
+* SIP_IP		A space-separated list of SIP servers
+* SIP_DOMAIN		A space-separated list of SIP domains
+* OPTION_<num>		Custom option received as base-16
+* PREFIXES		A space-separated list of prefixes currently assigned
+				Format: <prefix>/<length>,preferred,valid[,excluded=<excluded-prefix>/<length>][,class=<prefix class #>]
+* ADDRESSES		A space-separated list of addresses currently assigned
+				Format: <address>/<length>,preferred,valid
+* RA_ADDRESSES		A space-separated list of addresses from RA-prefixes
+				Format: <address>/<length>,preferred,valid
+* RA_ROUTES		A space-separated list of routes from the RA
+				Format: <address>/<length>,gateway,valid,metric
+* RA_DNS		A space-separated list of recursive DNS servers from the RA
+* AFTR			The DS-Lite AFTR domain name
+* AFTR_IP		The DS-Lite AFTR resolved IPv6 address
+* MAPE / MAPT / LW4O6	Softwire rules for MAPE, MAPT and LW4O6

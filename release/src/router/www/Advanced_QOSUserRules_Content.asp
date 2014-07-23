@@ -83,13 +83,19 @@ function key_event(evt){
 
 function initial(){
 	show_menu();
+	if(bwdpi_support){
+		$('content_title').innerHTML = "Adaptive QoS - Traditional";
+	}
+	else{
+		$('content_title').innerHTML = "<#Menu_TrafficManager#> - QoS";
+	}
+	
 	showqos_rulelist();
-
 	load_QoS_rule();
 	if('<% nvram_get("qos_enable"); %>' == "1")
 		$('is_qos_enable_desc').style.display = "none";
 		
-	showLANIPList();	
+	setTimeout("showLANIPList();", 1000);
 }
 
 function applyRule(){	
@@ -832,8 +838,8 @@ function linkport(obj){
 						<table width="100%" >
 						<tr >
 						<td  class="formfonttitle" align="left">								
-										<div style="margin-top:5px;"><#Menu_TrafficManager#> - QoS</div>
-									</td>
+							<div id="content_title" style="margin-top:5px;"></div>
+						</td>
 						<td align="right" >	
 						<div style="margin-top:5px;">
 							<select onchange="switchPage(this.options[this.selectedIndex].value)" class="input_option">
@@ -879,10 +885,10 @@ function linkport(obj){
 			
 							<tr>
 								<th><#BM_UserList1#></th>
-								<th><a href="javascript:void(0);" onClick="openHint(18,6);"><div class="table_text">Source IP or MAC</div></a></th>
+								<th><a href="javascript:void(0);" onClick="openHint(18,6);"><div class="table_text"><#BM_UserList2#></div></a></th>
 								<th><a href="javascript:void(0);" onClick="openHint(18,4);"><div class="table_text"><#BM_UserList3#></div></a></th>
 								<th><div class="table_text"><#IPConnection_VServerProto_itemname#></div></th>
-								<th><a href="javascript:void(0);" onClick="openHint(18,5);"><div class="table_text"><div class="table_text">Transferred</div></a></th>
+								<th><a href="javascript:void(0);" onClick="openHint(18,5);"><div class="table_text"><div class="table_text"><#UserQoS_transferred#></div></a></th>
 								<th><#BM_UserList4#></th>
 								<th><#list_add_delete#></th>
 							</tr>							

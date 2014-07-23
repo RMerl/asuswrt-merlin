@@ -25,7 +25,8 @@ function redirect1(){
 		parent.$('drword').innerHTML = "<#Setting_factorydefault_iphint#><br/>";
 		setTimeout("parent.hideLoading()",1000);
 		setTimeout("parent.dr_advise();",1000);
-		if(parent.location.hostname.search('router.asus') != -1)
+		if((!parent.tmo_support && parent.location.hostname.search('router.asus') != -1)
+		||(parent.tmo_support && parent.location.hostname.search('cellspot.router') != -1))
 			parent.location.href = 'http://'+ theUrl +'/QIS_wizard.htm?flag=welcome';
 		else		
 			parent.location.href = 'http://<% nvram_default_get("lan_ipaddr"); %>/QIS_wizard.htm?flag=welcome';

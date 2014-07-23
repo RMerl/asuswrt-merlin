@@ -1,0 +1,301 @@
+###################################################################
+#
+## Makefile for building GeoIP stuff (NetWare version - gnu make)
+## To build the binaries you need awk, GNU make and gcc / nlmconv
+## or Metrowerks CodeWarrior CommandlineTools.  
+## Usage: make -f Makefile.netware [all|dist|clean|distclean]
+##
+## hacked by: Guenter Knauf
+#
+###################################################################
+
+# Edit the path below to point to the base of your Novell NDK.
+ifndef NDKBASE
+NDKBASE	= c:/novell
+endif
+
+# Edit the path below to point to your zlib sources and libs.
+ifndef ZLIBSDK
+ZLIBSDK = d:/projects/cw/zlib-1.2.3
+endif
+
+ifndef DISTDIR
+DISTDIR	= GeoIP-$(GEOIP_VERSION_STR)-bin-nw
+endif
+ARCHIVE	= $(DISTDIR).zip
+
+# Edit the vars below to change NLM target settings.
+TARGETS	:= $(patsubst apps/%.c,%.nlm,$(wildcard apps/*.c))
+DESCR	= $(subst .def,,$(notdir $@)) $(GEOIP_VERSION_STR)
+COMPANY	= MaxMind LLC
+COPYR	= Copyright (C) 2003-2013 MaxMind, Inc.  All Rights Reserved.
+WWWURL	= http://dev.maxmind.com/geoip/downloadable#C_API-3
+MTSAFE	= YES
+STACK	= 64000
+#SCREEN	= none
+DATADIR	= sys:/etc/GeoIP
+CONFDIR	= sys:/etc
+
+# Comment the line below if you dont want to link with the static libz.lib.
+LSTATIC = 1
+
+# Edit the var below to point to your lib architecture.
+ifndef LIBARCH
+LIBARCH = LIBC
+endif
+
+# must be equal to DEBUG or NDEBUG
+DB	= NDEBUG
+# DB	= DEBUG
+# Optimization: -O<n> or debugging: -g
+ifeq ($(DB),NDEBUG)
+	OPT	= -O2
+	OBJDIR	= release
+else
+	OPT	= -g
+	OBJDIR	= debug
+endif
+OBJLIB	= lib-$(OBJDIR)
+
+# Include the version info retrieved from header.
+-include $(OBJDIR)/version.inc
+
+# Global tools and toolflags used with all compilers.
+ZIP	= zip -qzR9
+CP	= cp -afv
+MV	= mv -fv
+# RM	= rm -f
+# if you want to mark the target as MTSAFE you will need a tool for
+# generating the xdc data for the linker; here's a minimal tool:
+# http://www.gknw.com/development/prgtools/mkxdc.zip
+MPKXDC	= mkxdc
+
+# The following line defines your compiler.
+ifdef METROWERKS
+	CC = mwccnlm
+else
+	CC = gcc
+endif
+
+# Global flags for all compilers
+CFLAGS	= $(OPT) -D$(DB) -DNETWARE -nostdinc
+CFLAGS	+= -DGEOIPDATADIR=\"$(DATADIR)\"
+CFLAGS	+= -DSYSCONFDIR=\"$(CONFDIR)\"
+
+ifeq ($(CC),mwccnlm)
+LD	= mwldnlm
+LDFLAGS	= -nostdlib $(PRELUDE) $(LDLIBS) $(LIBOBJS) $(OBJDIR)/$(basename $@).o -o $@ -commandfile
+AR	= mwldnlm
+ARFLAGS	= -type library -w nocmdline $(OBJDIR)/*.o -o
+LIBEXT	= lib
+CFLAGS	+= -msgstyle gcc -gccinc -opt nointrinsics -proc 586
+CFLAGS	+= -relax_pointers
+#CFLAGS	+= -w on
+ifeq ($(LIBARCH),LIBC)
+	PRELUDE = $(SDK_LIBC)/imports/libcpre.o
+	CFLAGS += -align 4
+else
+	PRELUDE = "$(METROWERKS)/Novell Support/Libraries/runtime/prelude.obj"
+#	CFLAGS += -include "$(METROWERKS)/Novell Support/Headers/nlm_prefix.h"
+	CFLAGS += -align 1
+endif
+else
+LD	= nlmconv
+LDFLAGS	= -T
+AR	= ar
+ARFLAGS	= -cq
+LIBEXT	= lib
+CFLAGS	+= -fno-builtin -fpack-struct -fpcc-struct-return -fno-strict-aliasing
+CFLAGS	+= -Wall -Wno-unused #-Wno-format # -pedantic
+ifeq ($(LIBARCH),LIBC)
+	PRELUDE = $(SDK_LIBC)/imports/libcpre.gcc.o
+else
+	PRELUDE = $(SDK_CLIB)/imports/clibpre.gcc.o
+	CFLAGS += -include $(NDKBASE)/nlmconv/genlm.h
+endif
+endif
+DESCR += ($(LIBARCH)) - $(CC) build
+
+NDK_ROOT = $(NDKBASE)/ndk
+SDK_CLIB = $(NDK_ROOT)/nwsdk
+SDK_LIBC = $(NDK_ROOT)/libc
+
+ifeq ($(LIBARCH),LIBC)
+	INCLUDES += -I$(SDK_LIBC)/include -I$(SDK_LIBC)/include/nks
+	# INCLUDES += -I$(SDK_LIBC)/include/winsock
+	CFLAGS += -D_POSIX_SOURCE
+	# CFLAGS += -D__ANSIC__
+else
+	INCLUDES += -I$(SDK_CLIB)/include/nlm -I$(SDK_CLIB)/include
+	# INCLUDES += -I$(SDK_CLIB)/include/nlm/obsolete
+	CFLAGS += -DNETDB_USE_INTERNET
+endif
+
+INCLUDES += -I./libGeoIP
+INCLUDES += -I$(ZLIBSDK)
+CFLAGS	+= $(INCLUDES)
+
+ifeq ($(MTSAFE),YES)
+	XDCOPT = -n
+endif
+ifeq ($(MTSAFE),NO)
+	XDCOPT = -u
+endif
+
+LIBPATH	+= -L$(ZLIBSDK)/nw/release
+ifdef LSTATIC
+	LDLIBS	+= $(ZLIBSDK)/nw/release/libz.$(LIBEXT)
+else
+	IMPORTS	+= @$(ZLIBSDK)/nw/release/libz.imp
+	MODULES	+= libz
+endif
+
+ifeq ($(findstring linux,$(OSTYPE)),linux)
+DL	= '
+#-include $(NDKBASE)/nlmconv/ncpfs.inc
+endif
+
+vpath %.c ./apps ./libGeoIP
+
+LIBOBJS	= $(OBJLIB)/GeoIP.o $(OBJLIB)/GeoIPCity.o
+UPDOBJS	= $(OBJLIB)/GeoIPUpdate.o $(OBJLIB)/md5.o $(OBJDIR)/base64.o
+LIBOBJS += $(UPDOBJS)
+
+.PRECIOUS: $(OBJLIB)/%.o $(OBJDIR)/%.o $(OBJDIR)/%.def
+
+
+all: prebuild $(TARGETS)
+
+prebuild: $(OBJLIB) $(OBJDIR) $(OBJDIR)/version.inc
+
+dist: $(DISTDIR) all $(DISTDIR)/readme_bin.txt
+	@$(CP) *.nlm $(DISTDIR)
+	@$(CP) Changelog $(DISTDIR)
+	@$(CP) README.md $(DISTDIR)
+	@$(CP) conf/GeoIP.conf.default $(DISTDIR)
+	@$(CP) data/GeoIP.dat $(DISTDIR)
+	@echo Creating $(ARCHIVE)
+	@$(ZIP) $(ARCHIVE) $(DISTDIR)/* < $(DISTDIR)/readme_bin.txt
+
+clean:
+	-$(RM) -r $(OBJDIR) $(OBJLIB)
+	-$(RM) $(TARGETS)
+
+distclean:
+	-$(RM) -r $(DISTDIR)
+	-$(RM) $(ARCHIVE)
+
+%.nlm: $(OBJDIR)/%.def $(LIBOBJS) $(OBJDIR)/%.o $(OBJDIR)/%.xdc
+	@echo Linking $@
+	@-$(RM) $@
+	@$(LD) $(LDFLAGS) $<
+
+$(DISTDIR):
+	@mkdir $@
+
+$(OBJDIR):
+	@mkdir $@
+
+$(OBJLIB):
+	@mkdir $@
+
+$(OBJDIR)/%.o: %.c
+#	@echo Compiling $<
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJLIB)/%.o: %.c
+#	@echo Compiling $<
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/version.inc: configure.in $(OBJDIR)
+	@echo Creating $@
+	@awk -f get_ver.awk $< > $@
+
+$(OBJDIR)/%.xdc: Makefile.netware
+	@echo Creating $@
+	@$(MPKXDC) $(XDCOPT) $@
+
+$(OBJDIR)/%.def: Makefile.netware
+	@echo Creating $@
+	@echo $(DL)# DEF file for linking with $(LD)$(DL) > $@
+	@echo $(DL)# Do not edit this file - it is created by make!$(DL) >> $@
+	@echo $(DL)# All your changes will be lost!!$(DL) >> $@
+	@echo $(DL)#$(DL) >> $@
+	@echo $(DL)copyright "$(COPYR)"$(DL) >> $@
+	@echo $(DL)description "$(DESCR)"$(DL) >> $@
+	@echo $(DL)version $(GEOIP_VERSION)$(DL) >> $@
+ifdef NLMTYPE
+	@echo $(DL)type $(NLMTYPE)$(DL) >> $@
+endif
+ifdef STACK
+	@echo $(DL)stack $(STACK)$(DL) >> $@
+endif
+ifdef SCREEN
+	@echo $(DL)screenname "$(SCREEN)"$(DL) >> $@
+else
+	@echo $(DL)screenname "DEFAULT"$(DL) >> $@
+endif
+ifeq ($(DB),DEBUG)
+	@echo $(DL)debug$(DL) >> $@
+endif
+	@echo $(DL)threadname "$(subst .def,,$(notdir $@))"$(DL) >> $@
+ifdef XDCOPT
+	@echo $(DL)xdcdata $(@:.def=.xdc)$(DL) >> $@
+endif
+ifeq ($(LDRING),0)
+	@echo $(DL)flag_on 16$(DL) >> $@
+endif
+ifeq ($(LDRING),3)
+	@echo $(DL)flag_on 512$(DL) >> $@
+endif
+ifeq ($(LIBARCH),CLIB)
+	@echo $(DL)start _Prelude$(DL) >> $@
+	@echo $(DL)exit _Stop$(DL) >> $@
+	@echo $(DL)import @$(SDK_CLIB)/imports/clib.imp$(DL) >> $@
+	@echo $(DL)import @$(SDK_CLIB)/imports/threads.imp$(DL) >> $@
+	@echo $(DL)import @$(SDK_CLIB)/imports/nlmlib.imp$(DL) >> $@
+	@echo $(DL)module clib$(DL) >> $@
+else
+	@echo $(DL)flag_on 64$(DL) >> $@
+	@echo $(DL)pseudopreemption$(DL) >> $@
+	@echo $(DL)start _LibCPrelude$(DL) >> $@
+	@echo $(DL)exit _LibCPostlude$(DL) >> $@
+	@echo $(DL)check _LibCCheckUnload$(DL) >> $@
+	@echo $(DL)import @$(SDK_LIBC)/imports/libc.imp$(DL) >> $@
+	@echo $(DL)import @$(SDK_LIBC)/imports/netware.imp$(DL) >> $@
+	@echo $(DL)module libc$(DL) >> $@
+endif
+ifdef MODULES
+	@echo $(DL)module $(MODULES)$(DL) >> $@
+endif
+ifdef EXPORTS
+	@echo $(DL)export $(EXPORTS)$(DL) >> $@
+endif
+ifdef IMPORTS
+	@echo $(DL)import $(IMPORTS)$(DL) >> $@
+endif
+ifeq ($(LD),nlmconv)
+ifdef LDLIBS
+	@echo $(DL)input $(LDLIBS)$(DL) >> $@
+endif
+	@echo $(DL)input $(PRELUDE)$(DL) >> $@
+	@echo $(DL)input $(LIBOBJS)$(DL) >> $@
+	@echo $(DL)input $(@:.def=.o)$(DL) >> $@
+	@echo $(DL)output $(notdir $(@:.def=.nlm))$(DL) >> $@
+endif
+
+$(DISTDIR)/readme_bin.txt: Makefile.netware
+	@echo Creating $@
+	@echo $(DL)This is a binary distribution for NetWare platform.$(DL) > $@
+	@echo $(DL)GeoIP version $(GEOIP_VERSION_STR)$(DL) >> $@
+ifndef LSTATIC
+	@echo $(DL)These binaries depend on libz.nlm in the search path!$(DL) >> $@
+endif
+	@echo $(DL)Please download the complete GeoIP package for$(DL) >> $@
+	@echo $(DL)any further documentation:$(DL) >> $@
+	@echo $(DL)$(WWWURL)$(DL) >> $@
+
+info:
+	@echo Targets to build: $(TARGETS)
+
+

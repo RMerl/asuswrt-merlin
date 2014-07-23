@@ -133,7 +133,12 @@ typedef struct {
 	version_t fs;
 	char 	  productid[MAX_STRING];
 	version_t hw[MAX_VER*2];
+#ifdef TMOBILE
+	char      brand[MAX_STRING];
+	char	  pad[20];
+#else
 	char	  pad[32];
+#endif
 } TAIL;
 
 /* usage:
@@ -156,6 +161,9 @@ int create_asus(const char *optarg)
 	if(!pid) return 0;
 	
 	strncpy(&asus_tail.productid[0], pid, MAX_STRING);
+#ifdef TMOBILE
+	strncpy(&asus_tail.brand[0], "elibom-t", MAX_STRING);
+#endif
 
 	ver = strsep(&next, ",");
 	if(!ver) return 0;	

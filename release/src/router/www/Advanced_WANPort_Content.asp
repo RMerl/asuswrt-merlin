@@ -90,7 +90,7 @@ function initial(){
 	addWANOption(document.form.wans_second, wans_caps_secondary.split(" "));
 	document.form.wans_primary.value = wans_dualwan_orig.split(" ")[0];	
 	form_show(wans_flag);		
-	showLANIPList();
+	setTimeout("showLANIPList();", 1000);
 
 	if(based_modelid == "RT-AC87U"){ //MODELDEP: RT-AC87 : Quantenna port
                 document.form.wans_lanport1.remove(0);   //Primary LAN1
@@ -282,7 +282,11 @@ function addWANOption(obj, wanscapItem){
 	for(i=0; i<wanscapItem.length; i++){
 		if(wanscapItem[i].length > 0){
 			var wanscapName = wanscapItem[i].toUpperCase();
-			if(wanscapName == "LAN")
+	               //MODELDEP: DSL-N55U, DSL-N55U-B, DSL-AC68U, DSL-AC68R
+        	        if(wanscapName == "LAN" && 
+                	        (productid == "DSL-N55U" || productid == "DSL-N55U-B" || productid == "DSL-AC68U" || productid == "DSL-AC68R")) 
+				wanscapName = "Ethernet WAN";
+                	else if(wanscapName == "LAN")
 				wanscapName = "Ethernet LAN";
 			obj.options[i] = new Option(wanscapName, wanscapItem[i]);
 		}	
@@ -436,8 +440,18 @@ function appendModeOption(v){
 			document.getElementById("routing_table").style.display = "none";
 
 			document.getElementById("fb_span").style.display = "";
-			document.form.wans_mode.value = '<% nvram_get("wans_mode"); %>';
-			document.getElementById("fb_checkbox").checked = (document.form.wans_mode.value == "fb" ? true : false);
+			if("<% nvram_get("wans_mode"); %>" == "fb" ? true : false)
+			{
+				document.getElementById("fb_checkbox").checked = true;
+				document.getElementById("wandog_fb_count_tr").style.display = "";
+				document.form.wans_mode.value = "fb";
+			}
+			else
+			{
+				document.getElementById("fb_checkbox").checked = false;
+				document.getElementById("wandog_fb_count_tr").style.display = "none";
+				document.form.wans_mode.value = "fo";
+			}
 		}
 }
 
@@ -866,7 +880,7 @@ function pullLANIPList(obj){
 													<option value="fo"><#dualwan_mode_fo#></option>
 													<option value="lb" <% nvram_match("wans_mode", "lb", "selected"); %>><#dualwan_mode_lb#></option>
 												</select>
-										  		<span id="fb_span" style="display:none"><input type="checkbox" id="fb_checkbox">Allow failback</span>
+										  		<span id="fb_span" style="display:none"><input type="checkbox" id="fb_checkbox"><#dualwan_failback_allow#></span>
 										  		<script>
 										  			document.getElementById("fb_checkbox").onclick = function(){
 										  				document.form.wans_mode.value = (this.checked == true ? "fb" : "fo");
@@ -940,7 +954,7 @@ function pullLANIPList(obj){
 					</tr>
 
 					<tr id="wandog_fb_count_tr">
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,6);">Failback count</a></th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,6);"><#dualwan_failback_count#></a></th>
 						<td>
 		        		<input type="text" name="wandog_fb_count" class="input_3_table" maxlength="2" value="<% nvram_get("wandog_fb_count"); %>" onKeyPress="return is_number(this, event);" placeholder="12">
 						</td>

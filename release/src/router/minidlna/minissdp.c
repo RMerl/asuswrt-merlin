@@ -63,11 +63,13 @@ AddMulticastMembership(int s, struct lan_addr_s *iface)
 #ifdef HAVE_STRUCT_IP_MREQN
 	struct ip_mreqn imr;	/* Ip multicast membership */
 	/* setting up imr structure */
+	memset(&imr, '\0', sizeof(imr));
 	imr.imr_multiaddr.s_addr = inet_addr(SSDP_MCAST_ADDR);
 	imr.imr_ifindex = iface->ifindex;
 #else
 	struct ip_mreq imr;	/* Ip multicast membership */
 	/* setting up imr structure */
+	memset(&imr, '\0', sizeof(imr));
 	imr.imr_multiaddr.s_addr = inet_addr(SSDP_MCAST_ADDR);
 	imr.imr_interface.s_addr = iface->addr.s_addr;
 #endif
@@ -234,7 +236,7 @@ SendSSDPResponse(int s, struct sockaddr_in sockname, int st_no,
 		(runtime_vars.notify_interval<<1)+10,
 		tmstr,
 		known_service_types[st_no],
-		(st_no>1?"1":""),
+		(st_no > 1 ? "1" : ""),
 		uuidvalue,
 		(st_no > 0 ? "::" : ""),
 		(st_no > 0 ? known_service_types[st_no] : ""),
@@ -364,7 +366,7 @@ ParseUPnPClient(char *location)
 	{
 		nread += n;
 		buf[nread] = '\0';
-		n = nread;
+		n = nread - 4;
 		p = buf;
 
 		while (!off && (n-- > 0))
@@ -772,7 +774,7 @@ SubmitServicesToMiniSSDPD(const char *host, unsigned short port)
 		return -1;
 	}
 	addr.sun_family = AF_UNIX;
-	strncpy(addr.sun_path, minissdpdsocketpath, sizeof(addr.sun_path));
+	strncpyt(addr.sun_path, minissdpdsocketpath, sizeof(addr.sun_path));
 	if (connect(s, (struct sockaddr *)&addr, sizeof(struct sockaddr_un)) < 0)
 	{
 		DPRINTF(E_ERROR, L_SSDP, "connect(\"%s\"): %s",

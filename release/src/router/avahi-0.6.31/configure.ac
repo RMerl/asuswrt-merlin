@@ -24,6 +24,7 @@ AC_CONFIG_SRCDIR([avahi-core/server.c])
 AC_CONFIG_MACRO_DIR([common])
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE([foreign 1.11 -Wall -Wno-portability silent-rules tar-pax])
+AM_MAINTAINER_MODE
 
 AC_SUBST(PACKAGE_URL, [http://avahi.org/])
 

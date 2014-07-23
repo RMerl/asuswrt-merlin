@@ -1,0 +1,84 @@
+#NMAKE makefile for Windows developers. 
+#Produces a static library (GeoIP.lib). 
+ 
+################################################################# 
+# configuration section 
+################################################################ 
+ 
+# place to put the GeoIP.dat database file 
+# !!! Please keep the 2 \\ as directory separators !!! 
+# 
+GEOIPDATADIR="C:\\Windows\\SYSTEM32" 
+# 
+# System inc, lib, and bin directories 
+!ifndef INSTDIR 
+INSTDIR="C:\GeoIP-1.4.5" 
+!endif 
+ 
+# Location where GeoIP.lib should be installed my "make install" 
+INSTALL_LIB=$(INSTDIR)\Lib 
+ 
+#Location where .h files should be installed by "make install". 
+INSTALL_INC=$(INSTDIR)\Include 
+ 
+#Location where programs should be installed by "make install". 
+INSTALL_BIN=$(INSTDIR)\Bin 
+ 
+################################################################ 
+# end configuration section 
+################################################################ 
+ 
+DATA_DIR=data 
+ 
+DATA_FILE=GeoIP.dat 
+ 
+LIB_DIR = libGeoIP 
+ 
+TEST_DIR=test 
+ 
+APP_DIR=apps 
+ 
+GEOIP_LIB = GeoIP.lib 
+ 
+APP_PROGRAMS = geoiplookup.exe 
+ 
+TEST_PROGRAMS = benchmark.exe test-geoip.exe 
+ 
+all: GeoIP.lib test_progs app_progs 
+ 
+$(GEOIP_LIB): 
+   cd $(LIB_DIR) 
+   $(MAKE) -nologo -f Makefile.vc GEOIPDATADIR=$(GEOIPDATADIR) 
+   cd .. 
+ 
+test_progs: 
+   cd $(TEST_DIR) 
+   $(MAKE) -nologo -f Makefile.vc 
+   cd .. 
+ 
+app_progs: 
+   cd $(APP_DIR) 
+   $(MAKE) -nologo -f Makefile.vc 
+   cd .. 
+ 
+test:   $(GEOIP_LIB) test_progs 
+   cd $(TEST_DIR) 
+   benchmark.exe 
+   test-geoip.exe 
+   cd .. 
+ 
+install: $(GEOIP_LIB) app_progs 
+   cd $(LIB_DIR) 
+   copy $(GEOIP_LIB) $(INSTALL_LIB) 
+   copy *.h $(INSTALL_INC) 
+   cd ..\$(APP_DIR) 
+   copy $(APP_PROGRAMS) $(INSTALL_BIN) 
+   cd ..\$(DATA_DIR) 
+   copy $(DATA_FILE) $(GEOIPDATADIR) 
+   cd .. 
+ 
+clean: 
+   del $(LIB_DIR)\*.obj $(LIB_DIR)\*.lib \ 
+   $(APP_DIR)\*.obj $(APP_DIR)\*.exe \ 
+   $(TEST_DIR)\*.obj $(TEST_DIR)\*.exe 
+ 

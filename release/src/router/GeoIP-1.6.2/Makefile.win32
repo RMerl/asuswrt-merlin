@@ -1,0 +1,232 @@
+###################################################################
+#
+## Makefile for building GeoIP stuff (Win32 version - gnu make)
+## To build the binaries you need awk, GNU make and MingW32 gcc
+## or Metrowerks CodeWarrior CommandlineTools.  
+## Usage: make -f Makefile.win32 [all|dist|clean|distclean]
+##
+## hacked by: Guenter Knauf
+#
+###################################################################
+
+# Edit the path below to point to your zlib sources and libs.
+ifndef ZLIBSDK
+ZLIBSDK = d:/projects/mingw32/zlib-1.2.3
+endif
+
+ifndef DISTDIR
+DISTDIR	= GeoIP-$(GEOIP_VERSION_STR)-bin-w32
+endif
+ARCHIVE	= $(DISTDIR).zip
+
+# Edit the vars below to change EXE target settings.
+TARGETS	:= $(patsubst apps/%.c,%.exe,$(wildcard apps/*.c))
+DESCR	= $(subst .rc,,$(notdir $@)) $(GEOIP_VERSION_STR)
+COMPANY	= MaxMind LLC
+COPYR	= © 2003-2006 MaxMind LLC  All Rights Reserved.
+WWWURL	= http://www.maxmind.com/app/c
+LICENSE	= Licensed under LGPL
+ICON 	= geoip.ico
+DATADIR	= c:/GeoIP
+CONFDIR	= c:/GeoIP
+
+# Comment the line below if you dont want to link with the static libz.lib.
+LSTATIC = 1
+
+# must be equal to DEBUG or NDEBUG
+DB	= NDEBUG
+# DB	= DEBUG
+# Optimization: -O<n> or debugging: -g
+ifeq ($(DB),NDEBUG)
+	OPT	= -O2
+	OBJDIR	= release
+else
+	OPT	= -g
+	OBJDIR	= debug
+endif
+OBJLIB	= lib-$(OBJDIR)
+
+# Include the version info retrieved from header.
+-include $(OBJDIR)/version.inc
+
+# Global tools and toolflags used with all compilers.
+ZIP	= zip -qzR9
+CP	= cp -afv
+MV	= mv -fv
+# RM	= rm -f
+RE	= reimp -d
+DLLTOOL	= dlltool
+DTFLAGS	= -k
+
+# The following line defines your compiler.
+ifdef METROWERKS
+	CC = mwcc
+else
+	CC = gcc
+endif
+
+# Global flags for all compilers
+CFLAGS	= $(OPT) -D$(DB) -D_WIN32
+# -nostdinc
+CFLAGS	+= -DHAVE_STDINT_H
+CFLAGS	+= -DGEOIPDATADIR=\"$(DATADIR)\"
+CFLAGS	+= -DSYSCONFDIR=\"$(CONFDIR)\"
+
+ifeq ($(CC),mwcc)
+LD	= mwld
+LDFLAGS	= -nostdlib
+LIBPATH	= -lr "$(METROWERKS)/MSL" -lr "$(METROWERKS)/Win32-x86 Support/Libraries"
+CWLIBS	= -lMSL_Runtime_x86.lib -lMSL_C_x86.lib -lMSL_Extras_x86.lib
+LDLIBS	= -lkernel32.lib -luser32.lib $(CWLIBS)
+AR	= mwld
+ARFLAGS	= -type library -w nocmdline $(OBJDIR)/*.o -o
+LIBEXT	= lib
+RC	= mwwinrc
+CFLAGS	+= -nostdinc
+CFLAGS	+= -msgstyle gcc -gccinc -opt nointrinsics -proc 586
+CFLAGS	+= -relax_pointers
+#CFLAGS	+= -w on
+CFLAGS	+= -ir "$(METROWERKS)/MSL" -ir "$(METROWERKS)/Win32-x86 Support/Headers"
+else
+LD	= gcc
+LDFLAGS	= -s
+AR	= ar
+ARFLAGS	= -cq
+LIBEXT	= a
+RC	= windres
+RCFLAGS	= -I rc -O coff -i
+CFLAGS	+= -Wall -Wno-unused # -Wno-format #-pedantic
+endif
+
+INCLUDES += -I./libGeoIP
+INCLUDES += -I$(ZLIBSDK)
+CFLAGS	+= $(INCLUDES)
+
+LDLIBS	+= -lwsock32
+LIBPATH	+= -L$(ZLIBSDK)
+ifdef LSTATIC
+	LDLIBS	+= -lz
+else
+	LDLIBS	+= -lzdll
+endif
+
+ifeq ($(findstring linux,$(OSTYPE)),linux)
+DL	= '
+#-include $(NDKBASE)/nlmconv/ncpfs.inc
+endif
+
+vpath %.c ./apps ./libGeoIP
+
+LIBOBJS	= $(OBJLIB)/GeoIP.o $(OBJLIB)/GeoIPCity.o
+UPDOBJS	= $(OBJLIB)/GeoIPUpdate.o $(OBJLIB)/md5.o $(OBJLIB)/base64.o
+LIBOBJS += $(UPDOBJS)
+
+.PRECIOUS: $(OBJLIB)/%.o $(OBJDIR)/%.o $(OBJDIR)/%.rc
+
+all: prebuild $(TARGETS)
+
+prebuild: $(OBJLIB) $(OBJDIR) $(OBJDIR)/version.inc
+
+dist: $(DISTDIR) all $(DISTDIR)/readme_bin.txt
+	@$(CP) *.exe $(DISTDIR)
+	@$(CP) Changelog $(DISTDIR)
+	@$(CP) README.md $(DISTDIR)
+	@$(CP) conf/GeoIP.conf.default $(DISTDIR)
+	@$(CP) data/GeoIP.dat $(DISTDIR)
+	@echo Creating $(ARCHIVE)
+	@$(ZIP) $(ARCHIVE) $(DISTDIR)/* < $(DISTDIR)/readme_bin.txt
+
+clean:
+	-$(RM) -r $(OBJDIR) $(OBJLIB)
+	-$(RM) $(TARGETS)
+
+distclean:
+	-$(RM) -r $(DISTDIR)
+	-$(RM) $(ARCHIVE)
+
+%.exe: $(OBJDIR)/%.res $(LIBOBJS) $(OBJDIR)/%.o
+	@echo Linking $@
+	@-$(RM) $@
+	$(LD) $(LDFLAGS) -o $@ $^ $(LIBPATH) $(LDLIBS)
+#	$(LD) $(LDFLAGS) $(LIBPATH) $(LIBFILES) -o $@ $^
+
+$(DISTDIR):
+	@mkdir $@
+
+$(OBJDIR):
+	@mkdir $@
+
+$(OBJLIB):
+	@mkdir $@
+
+$(OBJDIR)/%.o: %.c
+#	@echo Compiling $<
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJLIB)/%.o: %.c
+#	@echo Compiling $<
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/version.inc: configure.in $(OBJDIR)
+	@echo Creating $@
+	@awk -f get_ver.awk $< > $@
+
+$(OBJDIR)/%.res: $(OBJDIR)/%.rc
+	@echo Creating $@
+	@$(RC) $(RCFLAGS) $< -o $@
+
+$(OBJDIR)/%.rc: Makefile.win32
+	@echo 1 VERSIONINFO > $@
+	@echo  FILEVERSION $(GEOIP_VERSION),0 >> $@
+	@echo  PRODUCTVERSION $(GEOIP_VERSION),0 >> $@
+	@echo  FILEFLAGSMASK 0x3fL >> $@
+	@echo  FILEOS 0x40004L >> $@
+	@echo  FILEFLAGS 0x0L >> $@
+	@echo  FILETYPE 0x1L >> $@
+	@echo  FILESUBTYPE 0x0L >> $@
+	@echo BEGIN >> $@
+	@echo   BLOCK "StringFileInfo" >> $@
+	@echo   BEGIN >> $@
+	@echo     BLOCK "040904E4" >> $@
+	@echo     BEGIN >> $@
+	@echo       VALUE "LegalCopyright","$(COPYR)\0" >> $@
+ifdef COMPANY
+	@echo       VALUE "CompanyName","$(COMPANY)\0" >> $@
+endif
+ifdef LICENSE
+	@echo       VALUE "License","$(LICENSE)\0" >> $@
+endif
+	@echo       VALUE "ProductName","$(basename $(notdir $@))\0" >> $@
+	@echo       VALUE "ProductVersion","$(GEOIP_VERSION_STR)\0" >> $@
+	@echo       VALUE "FileDescription","$(DESCR)\0" >> $@
+	@echo       VALUE "FileVersion","$(GEOIP_VERSION_STR)\0" >> $@
+	@echo       VALUE "InternalName","$(basename $(notdir $@))\0" >> $@
+	@echo       VALUE "OriginalFilename","$(basename $(notdir $@)).exe\0" >> $@
+	@echo       VALUE "WWW","$(WWWURL)\0" >> $@
+	@echo     END >> $@
+	@echo   END >> $@
+	@echo   BLOCK "VarFileInfo" >> $@
+	@echo   BEGIN >> $@
+	@echo     VALUE "Translation", 0x409, 1252 >> $@
+	@echo   END >> $@
+	@echo END >> $@
+ifdef ICON
+	@echo 10 ICON DISCARDABLE "$(ICON)" >> $@
+endif
+
+$(DISTDIR)/readme_bin.txt: Makefile.win32
+	@echo Creating $@
+	@echo $(DL)This is a binary distribution for Win32 platform.$(DL) > $@
+	@echo $(DL)GeoIP version $(GEOIP_VERSION_STR)$(DL) >> $@
+ifndef LSTATIC
+	@echo $(DL)These binaries depend on zlib1.dll in the search path!$(DL) >> $@
+endif
+	@echo $(DL)Please download the complete GeoIP package for$(DL) >> $@
+	@echo $(DL)any further documentation:$(DL) >> $@
+	@echo $(DL)$(WWWURL)$(DL) >> $@
+
+info:
+	@echo Targets to build: $(TARGETS)
+
+
+

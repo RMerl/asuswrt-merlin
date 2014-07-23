@@ -200,8 +200,7 @@ function initial(){
 
 	if('<% nvram_get("wl_unit"); %>' == '1'){ // 5GHz
 		if(	based_modelid == "RT-AC3200" ||
-			based_modelid == "RT-AC69U" || 
-			based_modelid == "RT-AC66U" ||
+			based_modelid == "RT-AC69U" || based_modelid == "TM-AC1900" ||
 			based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" ||
 			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U" ||
 			based_modelid == "RT-AC87U" || based_modelid == "EA-AC87")
@@ -211,7 +210,7 @@ function initial(){
 		}	
 
 		if(	based_modelid == "RT-AC3200" ||
-			based_modelid == "RT-AC69U" ||
+			based_modelid == "RT-AC69U" || based_modelid == "TM-AC1900" ||
 			based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" ||
 			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U" ||
 			based_modelid == "RT-AC87U" || based_modelid == "EA-AC87")
@@ -223,7 +222,7 @@ function initial(){
 		if(	based_modelid == "RT-AC3200" ||
 			based_modelid == "RT-N18U" ||
 			based_modelid == "RT-N65U" ||
-			based_modelid == "RT-AC69U" ||
+			based_modelid == "RT-AC69U" || based_modelid == "TM-AC1900" ||
 			based_modelid == "RT-AC87U" ||
 			based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || 
 			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U")
@@ -233,7 +232,7 @@ function initial(){
 
 		if(	based_modelid == "RT-AC3200" ||
 			based_modelid == "RT-N18U" ||
-			based_modelid == "RT-AC69U" ||
+			based_modelid == "RT-AC69U" || based_modelid == "TM-AC1900" ||
 			based_modelid == "RT-AC87U" ||
 			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U")
 		{
@@ -242,7 +241,7 @@ function initial(){
 			else
 				inputCtrl(document.form.wl_turbo_qam, 1);
 				
-			$('wl_txbf_desc').innerHTML = "Explicit Beamforming";
+			$('wl_txbf_desc').innerHTML = "<#WLANConfig11b_x_ExpBeam#>";
 			inputCtrl(document.form.wl_txbf, 1);
 			inputCtrl(document.form.wl_itxbf, 1);
 		}	
@@ -312,7 +311,7 @@ function initial(){
 	if(	based_modelid == "RT-N18U" ||
 		based_modelid == "RT-AC56U" || based_modelid == "RT-AC56S" ||
 		based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U" ||
-		based_modelid == "RT-AC69U" ||
+		based_modelid == "RT-AC69U" || based_modelid == "TM-AC1900" ||
 		based_modelid == "RT-AC87U"){
 		
 		inputCtrl(document.form.wl_atf, 1);
@@ -333,7 +332,7 @@ function adjust_tx_power(){
 	var translated_value = 0;
 	
 	if(!power_support){
-		inputHideCtrl(document.form.wl_txpower, 0);
+		$("wl_txPower_field").style.display = "none";
 	}
 	else{
 		if(power_value_old != ""){
@@ -965,7 +964,7 @@ function set_power(power_value){
 						</td>
 					</tr>
 
-					<tr> <!-- MODELDEP: RT-AC3200 / RT-AC68U / RT-AC68U_V2 / RT-AC69U /DSL-AC68U Only  -->
+					<tr> <!-- MODELDEP: RT-AC3200 / RT-AC68U / RT-AC68U_V2 / RT-AC69U / TM-AC1900 / DSL-AC68U Only  -->
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,29);"><#WLANConfig11b_x_ReduceUSB3#></a></th>
 						<td>
 							<select name="usb_usb3" class="input_option">
@@ -1016,7 +1015,7 @@ function set_power(power_value){
 					</tr>
 					
 					<tr id="wl_txbf_field">
-						<th><a id="wl_txbf_desc" class="hintstyle" href="javascript:void(0);" onClick="openHint(3,24);">Explicit Beamforming</a></th>
+						<th><a id="wl_txbf_desc" class="hintstyle" href="javascript:void(0);" onClick="openHint(3,24);"><#WLANConfig11b_x_ExpBeam#></a></th>
 						<td>
 							<select name="wl_txbf" class="input_option">
 									<option value="0" <% nvram_match("wl_txbf", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
@@ -1025,7 +1024,7 @@ function set_power(power_value){
 						</td>
 					</tr>					
 					<tr id="wl_itxbf_field">
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,25);">Universal Beamforming</a></th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,25);"><#WLANConfig11b_x_uniBeam#></a></th>
 						<td>
 							<select name="wl_itxbf" class="input_option" disabled>
 									<option value="0" <% nvram_match("wl_itxbf", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
@@ -1044,7 +1043,7 @@ function set_power(power_value){
 						</td>
 					</tr>					
 
-					<tr>
+					<tr id="wl_txPower_field">
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 16);"><#WLANConfig11b_TxPower_itemname#></a></th>
 						<td>
 							<div>

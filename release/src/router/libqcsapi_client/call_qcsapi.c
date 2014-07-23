@@ -431,6 +431,7 @@ static const struct
 	{ e_qcsapi_wifi_get_scs_dfs_reentry_request,	"get_scs_dfs_reentry_request" },
 	{ e_qcsapi_wifi_get_scs_cca_intf,		"get_scs_cca_intf" },
 	{ e_qcsapi_wifi_get_scs_param,			"get_scs_params" },
+	{ e_qcsapi_wifi_set_scs_stats,			"set_scs_stats" },
 
 	{ e_qcsapi_wifi_start_ocac,			"start_ocac" },
 	{ e_qcsapi_wifi_stop_ocac,			"stop_ocac" },
@@ -501,6 +502,11 @@ static const struct
 	{ e_qcsapi_set_security_defer_mode,		"set_security_defer_mode"},
 	{ e_qcsapi_apply_security_config,		"apply_security_config"},
 
+	{ e_qcsapi_wifi_set_intra_bss_isolate,		"set_intra_bss_isolate" },
+	{ e_qcsapi_wifi_get_intra_bss_isolate,		"get_intra_bss_isolate" },
+	{ e_qcsapi_wifi_set_bss_isolate,		"set_bss_isolate" },
+	{ e_qcsapi_wifi_get_bss_isolate,		"get_bss_isolate" },
+	{ e_qcsapi_wifi_get_disassoc_reason,	"get_disassoc"},
 	{ e_qcsapi_nosuch_api, NULL }
 };
 
@@ -736,6 +742,77 @@ static const struct{
 	{"scs_tx_time_compensation",		SCS_TX_TIME_COMPENSTATION_START},
 	{"scs_rx_time_compensation",		SCS_RX_TIME_COMPENSTATION_START}
 };
+
+static const struct
+{
+        int	reason_code;
+        const char              *reason_string;
+} qcsapi_disassoc_reason_list[] =
+{
+	{  0, "No disassoc reason reported" },
+	{  1, "Unspecified reason" },
+	{  2, "Previous authentication no longer valid" },
+	{  3, "Deauthenticated because sending STA is leaving (or has left) IBSS or ESS" },
+	{  4, "Disassociated due to inactivity" },
+	{  5, "Disassociated because AP is unable to handle all currently associated STAs" },
+	{  6, "Class 2 frame received from nonauthenticated STA" },
+	{  7, "Class 3 frame received from nonassociated STA" },
+	{  8, "Disassociated because sending STA is leaving (or has left) BSS" },
+	{  9, "STA requesting (re)association is not authenticated with responding STA" },
+	{ 10, "Disassociated because the information in the Power Capability element is unacceptable" },
+	{ 11, "Disassociated because the information in the Supported Channels element is unacceptable" },
+	{ 12, "Reserved" },
+	{ 13, "Invalid information element, i.e., an information element defined in this standard for which the content does not meet the specifications in Clause 7" },
+	{ 14, "Message integrity code (MIC) failure" },
+	{ 15, "4-Way Handshake timeout" },
+	{ 16, "Group Key Handshake timeout" },
+	{ 17, "Information element in 4-Way Handshake different from (Re)Association Request/Probe Response/Beacon frame" },
+	{ 18, "Invalid group cipher" },
+	{ 19, "Invalid pairwise cipher" },
+	{ 20, "Invalid AKMP" },
+	{ 21, "Unsupported RSN information element version" },
+	{ 22, "Invalid RSN information element capabilities" },
+	{ 23, "IEEE 802.1X authentication failed" },
+	{ 24, "Cipher suite rejected because of the security policy" },
+	{ 25, "TDLS direct-link teardown due to TDLS peer STA unreachable via the TDLS direct link" },
+	{ 26, "TDLS direct-link teardown for unspecified reason" },
+	{ 27, "Disassociated because session terminated by SSP request" },
+	{ 28, "Disassociated because of lack of SSP roaming agreement" },
+	{ 29, "Requested service rejected because of SSP cipher suite or AKM requirement " },
+	{ 30, "Requested service not authorized in this location" },
+	{ 31, "TS deleted because QoS AP lacks sufficient bandwidth for this QoS STA due to a change in BSS service characteristics or operational mode" },
+	{ 32, "Disassociated for unspecified, QoS-related reason" },
+	{ 33, "Disassociated because QoS AP lacks sufficient bandwidth for this QoS STA" },
+	{ 34, "Disassociated because excessive number of frames need to be acknowledged, but are not acknowledged due to AP transmissions and/or poor channel conditions" },
+	{ 35, "Disassociated because STA is transmitting outside the limits of its TXOPs" },
+	{ 36, "Requested from peer STA as the STA is leaving the BSS (or resetting)" },
+	{ 37, "Requested from peer STA as it does not want to use the mechanism" },
+	{ 38, "Requested from peer STA as the STA received frames using the mechanism for which a setup is required" },
+	{ 39, "Requested from peer STA due to timeout" },
+	{ 45, "Peer STA does not support the requested cipher suite" },
+	{ 46, "Disassociated because authorized access limit reached" },
+	{ 47, "Disassociated due to external service requirements" },
+	{ 48, "Invalid FT Action frame count" },
+	{ 49, "Invalid pairwise master key identifier (PMKI)" },
+	{ 50, "Invalid MDE" },
+	{ 51, "Invalid FTE" },
+	{ 52, "SME cancels the mesh peering instance with the reason other than reaching the maximum number of peer mesh STAs" },
+	{ 53, "The mesh STA has reached the supported maximum number of peer mesh STAs" },
+	{ 54, "The received information violates the Mesh Configuration policy configured in the mesh STA profile" },
+	{ 55, "The mesh STA has received a Mesh Peering Close message requesting to close the mesh peering" },
+	{ 56, "The mesh STA has re-sent dot11MeshMaxRetries Mesh Peering Open messages, without receiving a Mesh Peering Confirm message" },
+	{ 57, "The confirmTimer for the mesh peering instance times out" },
+	{ 58, "The mesh STA fails to unwrap the GTK or the values in the wrapped contents do not match" },
+	{ 59, "The mesh STA receives inconsistent information about the mesh parameters between Mesh Peering Management frames" },
+	{ 60, "The mesh STA fails the authenticated mesh peering exchange because due to failure in selecting either the pairwise ciphersuite or group ciphersuite" },
+	{ 61, "The mesh STA does not have proxy information for this external destination" },
+	{ 62, "The mesh STA does not have forwarding information for this destination" },
+	{ 63, "The mesh STA determines that the link to the next hop of an active path in its forwarding information is no longer usable" },
+	{ 64, "The Deauthentication frame was sent because the MAC address of the STA already exists in the mesh BSS. See 11.3.3 (Additional mechanisms for an AP collocated with a mesh STA)" },
+	{ 65, "The mesh STA performs channel switch to meet regulatory requirements" },
+	{ 66, "The mesh STA performs channel switch with unspecified reason" },
+};
+
 static int		verbose_flag = 0;
 static unsigned int	call_count = 1;
 static unsigned int	delay_time = 0;
@@ -11200,6 +11277,33 @@ call_qcsapi_wifi_set_scs_cca_intf_smth_fctr(call_qcsapi_bundle *p_calling_bundle
 }
 
 static int
+call_qcsapi_wifi_set_scs_stats(call_qcsapi_bundle *p_calling_bundle, int argc, char *argv[])
+{
+	int statval = 0;
+	int qcsapi_retval = 0;
+	const char *the_interface = p_calling_bundle->caller_interface;
+	qcsapi_output *print = p_calling_bundle->caller_output;
+	uint16_t start = 1;
+
+	if (argc > 0) {
+		start = (uint16_t) atoi(argv[0]);
+	}
+
+	qcsapi_retval = qcsapi_wifi_set_scs_stats(the_interface, start);
+
+	if (qcsapi_retval >= 0) {
+		if (verbose_flag >= 0) {
+			print_out(print, "complete\n");
+		}
+	} else {
+		report_qcsapi_error(p_calling_bundle, qcsapi_retval);
+		statval = 1;
+	}
+
+	return statval;
+}
+
+static int
 call_qcsapi_wifi_set_vendor_fix(call_qcsapi_bundle *p_calling_bundle, int argc, char *argv[])
 {
 	int		statval = 0;
@@ -14871,6 +14975,141 @@ call_qcsapi_wifi_apply_security_config(const call_qcsapi_bundle *p_calling_bundl
 	return retval;
 }
 
+static int
+call_qcsapi_wifi_set_intra_bss_isolate(call_qcsapi_bundle *p_calling_bundle,
+		int argc, char *argv[])
+{
+	int statval = 0;
+	int qcsapi_retval = 0;
+	const char *the_interface = p_calling_bundle->caller_interface;
+	qcsapi_output *print = p_calling_bundle->caller_output;
+	qcsapi_unsigned_int enable;
+
+	if (argc < 1) {
+		print_err(print, "Not enough parameters, count is %d\n", argc);
+		return 1;
+	}
+
+	enable = (qcsapi_unsigned_int)atoi(argv[0]);
+	if (enable > 1) {
+		print_err(print, "bad parameter %s\n", argv[0]);
+		return 1;
+	}
+
+	qcsapi_retval = qcsapi_wifi_set_intra_bss_isolate(the_interface, enable);
+	if (qcsapi_retval >= 0) {
+		if (verbose_flag >= 0)
+			print_out(print, "complete\n");
+	} else {
+		report_qcsapi_error(p_calling_bundle, qcsapi_retval);
+		statval = 1;
+	}
+
+	return statval;
+}
+
+static int
+call_qcsapi_wifi_get_intra_bss_isolate(call_qcsapi_bundle *p_calling_bundle,
+		int argc, char *argv[])
+{
+	int statval = 0;
+	int qcsapi_retval = 0;
+	const char *the_interface = p_calling_bundle->caller_interface;
+	qcsapi_output *print = p_calling_bundle->caller_output;
+	qcsapi_unsigned_int enable;
+
+	qcsapi_retval = qcsapi_wifi_get_intra_bss_isolate(the_interface, &enable);
+	if (qcsapi_retval >= 0) {
+		if (verbose_flag >= 0)
+			print_out(print, "%u\n", enable);
+	} else {
+		report_qcsapi_error(p_calling_bundle, qcsapi_retval);
+		statval = 1;
+	}
+
+	return statval;
+}
+
+static int
+call_qcsapi_wifi_set_bss_isolate(call_qcsapi_bundle *p_calling_bundle,
+		int argc, char *argv[])
+{
+	int statval = 0;
+	int qcsapi_retval = 0;
+	const char *the_interface = p_calling_bundle->caller_interface;
+	qcsapi_output *print = p_calling_bundle->caller_output;
+	qcsapi_unsigned_int enable;
+
+	if (argc < 1) {
+		print_err(print, "Not enough parameters, count is %d\n", argc);
+		return 1;
+	}
+
+	enable = (qcsapi_unsigned_int)atoi(argv[0]);
+	if (enable > 1) {
+		print_err(print, "bad parameter %s\n", argv[0]);
+		return 1;
+	}
+
+	qcsapi_retval = qcsapi_wifi_set_bss_isolate(the_interface, enable);
+	if (qcsapi_retval >= 0) {
+		if (verbose_flag >= 0)
+			print_out(print, "complete\n");
+	} else {
+		report_qcsapi_error(p_calling_bundle, qcsapi_retval);
+		statval = 1;
+	}
+
+	return statval;
+}
+
+static int
+call_qcsapi_wifi_get_bss_isolate(call_qcsapi_bundle *p_calling_bundle,
+		int argc, char *argv[])
+{
+	int statval = 0;
+	int qcsapi_retval = 0;
+	const char *the_interface = p_calling_bundle->caller_interface;
+	qcsapi_output *print = p_calling_bundle->caller_output;
+	qcsapi_unsigned_int enable;
+
+	qcsapi_retval = qcsapi_wifi_get_bss_isolate(the_interface, &enable);
+	if (qcsapi_retval >= 0) {
+		if (verbose_flag >= 0)
+			print_out(print, "%u\n", enable);
+	} else {
+		report_qcsapi_error(p_calling_bundle, qcsapi_retval);
+		statval = 1;
+	}
+
+	return statval;
+}
+
+static int
+call_qcsapi_wifi_get_disassoc_reason(call_qcsapi_bundle *call, int argc, char *argv[])
+{
+        int rc = 0;
+        int qcsapi_retval;
+
+        qcsapi_unsigned_int     disassoc_reason;
+        qcsapi_output *print = call->caller_output;
+        const char *the_interface = call->caller_interface;
+
+        qcsapi_retval = qcsapi_wifi_get_disassoc_reason( the_interface, &disassoc_reason);
+        if (qcsapi_retval >= 0) {
+		if (disassoc_reason <= ARRAY_SIZE(qcsapi_disassoc_reason_list)) {
+			print_out(print,"Disassoc Reason Code - %d: %s\n", disassoc_reason, qcsapi_disassoc_reason_list[disassoc_reason].reason_string);
+		} else {
+			print_out(print,"Reserved Code [%d]", disassoc_reason);
+		}
+        } else {
+                report_qcsapi_error(call, qcsapi_retval);
+                rc = 1;
+        }
+
+        return rc;
+}
+
 /* end of programs to call individual QCSAPIs */
 
 static int
@@ -15937,6 +16176,10 @@ call_particular_qcsapi( call_qcsapi_bundle *p_calling_bundle, int argc, char *ar
 		statval = call_qcsapi_wifi_get_scs_param(p_calling_bundle, argc, argv);
 		break;
 
+	  case e_qcsapi_wifi_set_scs_stats:
+		statval = call_qcsapi_wifi_set_scs_stats(p_calling_bundle, argc, argv);
+		break;
+
 	  case e_qcsapi_wifi_start_ocac:
 		statval = call_qcsapi_wifi_start_ocac(p_calling_bundle, argc, argv);
 		break;
@@ -16167,7 +16410,21 @@ call_particular_qcsapi( call_qcsapi_bundle *p_calling_bundle, int argc, char *ar
 	  case e_qcsapi_apply_security_config:
 		statval = call_qcsapi_wifi_apply_security_config(p_calling_bundle, argc, argv);
 		break;
-
+	  case e_qcsapi_wifi_set_intra_bss_isolate:
+		statval = call_qcsapi_wifi_set_intra_bss_isolate(p_calling_bundle, argc, argv);
+		break;
+	  case e_qcsapi_wifi_get_intra_bss_isolate:
+		statval = call_qcsapi_wifi_get_intra_bss_isolate(p_calling_bundle, argc, argv);
+		break;
+	  case e_qcsapi_wifi_set_bss_isolate:
+		statval = call_qcsapi_wifi_set_bss_isolate(p_calling_bundle, argc, argv);
+		break;
+	  case e_qcsapi_wifi_get_bss_isolate:
+		statval = call_qcsapi_wifi_get_bss_isolate(p_calling_bundle, argc, argv);
+		break;
+	  case e_qcsapi_wifi_get_disassoc_reason:
+		statval = call_qcsapi_wifi_get_disassoc_reason(p_calling_bundle, argc, argv);
+		break;
 	  default:
 		print_out( print, "no interface program (yet) for QCS API enum %d\n", p_calling_bundle->caller_qcsapi );
 	}

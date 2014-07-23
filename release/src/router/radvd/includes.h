@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <time.h>
 #include <syslog.h>
 #include <unistd.h>
@@ -98,6 +99,10 @@
 
 #ifdef HAVE_IFADDRS_H
 #include <ifaddrs.h>
+#endif
+
+#if defined CLOCK_HIGHRES && !defined CLOCK_MONOTONIC
+#define CLOCK_MONOTONIC CLOCK_HIGHRES
 #endif
 
 /* Uclibc : include/netinet/icmpv6.h - Added by Bhadram*/

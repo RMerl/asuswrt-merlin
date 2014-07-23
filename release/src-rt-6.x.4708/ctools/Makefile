@@ -1,5 +1,10 @@
+include ../.config
+
 CC = gcc
 CFLAGS = -O3 -Wall
+ifeq ($(TMOBILE),y)
+export CFLAGS += -DTMOBILE
+endif
 
 all: trx_asus
 

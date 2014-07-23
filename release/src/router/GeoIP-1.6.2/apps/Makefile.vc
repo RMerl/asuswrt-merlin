@@ -1,0 +1,25 @@
+#NMAKE makefile for Windows developers. 
+#Produces a static library (GeoIP.lib). 
+ 
+COMPILER=cl 
+ 
+LINK = link -nologo 
+ 
+CFLAGS=-DWIN32 -MD -nologo 
+ 
+GEOIPINC = -I..\libGeoIP 
+ 
+CC1 = $(COMPILER) $(CFLAGS) $(GEOIPINC) 
+ 
+GEOIPLIB = ..\libGeoIP\GeoIP.lib 
+ 
+EXTRA_LIBS= advapi32.lib wsock32.lib 
+ 
+AR=lib 
+ 
+APPS: geoiplookup.exe 
+ 
+geoiplookup.exe: geoiplookup.c 
+   $(CC1) -c geoiplookup.c 
+   $(LINK) geoiplookup.obj $(GEOIPLIB)
+

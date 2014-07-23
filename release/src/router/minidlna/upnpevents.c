@@ -67,6 +67,7 @@
 #include "upnpglobalvars.h"
 #include "upnpdescgen.h"
 #include "uuid.h"
+#include "utils.h"
 #include "log.h"
 
 /* stuctures definitions */
@@ -130,7 +131,7 @@ newSubscriber(const char * eventurl, const char * callback, int callbacklen)
 	memcpy(tmp->callback, callback, callbacklen);
 	tmp->callback[callbacklen] = '\0';
 	/* make a dummy uuid */
-	strncpy(tmp->uuid, uuidvalue, sizeof(tmp->uuid));
+	strncpyt(tmp->uuid, uuidvalue, sizeof(tmp->uuid));
 	if( get_uuid_string(tmp->uuid+5) != 0 )
 	{
 		tmp->uuid[sizeof(tmp->uuid)-1] = '\0';

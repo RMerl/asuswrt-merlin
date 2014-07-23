@@ -11,9 +11,14 @@ in=`cat`
 
 if grep "^\#[[:space:]]*define[[:space:]]*$search" config.h >/dev/null 2>&1 || \
     echo $in | grep $search >/dev/null 2>&1; then
-
+# Nasty, nasty, in --copy, arg 2 is another config to search for, use with NO_GMP
     if [ $op = "--copy" ]; then
-	pkg="$*"
+	if grep "^\#[[:space:]]*define[[:space:]]*$pkg" config.h >/dev/null 2>&1 || \
+            echo $in | grep $pkg >/dev/null 2>&1; then
+	    pkg=""
+	else 
+	    pkg="$*"
+	fi
     elif grep "^\#[[:space:]]*define[[:space:]]*${search}_STATIC" config.h >/dev/null 2>&1 || \
 	      echo $in | grep ${search}_STATIC >/dev/null 2>&1; then
 	pkg=`$pkg  --static $op $*`

@@ -29,13 +29,11 @@
 #ifndef __UPNPDESCSTRINGS_H__
 #define __UPNPDESCSTRINGS_H__
 
-#include "config.h"
-
 /* strings used in the root device xml description */
 #define ROOTDEV_MANUFACTURERURL		"http://www.asus.com/"
 #define ROOTDEV_MANUFACTURER		"ASUSTeK Computer Inc."
 #define ROOTDEV_MODELNAME		"Windows Media Connect compatible"
-#define ROOTDEV_MODELDESCRIPTION	OS_NAME
+#define ROOTDEV_MODELDESCRIPTION	"MiniDLNA on " OS_NAME
 #define ROOTDEV_MODELURL		"http://www.asus.com/"
 
 #endif

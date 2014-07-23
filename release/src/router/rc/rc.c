@@ -152,7 +152,7 @@ static int rctest_main(int argc, char *argv[])
 					system("echo 2 > /proc/sys/net/ipv4/conf/all/force_igmp_version");
 #endif
 
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U)
 					if (!(!nvram_match("switch_wantag", "none")&&!nvram_match("switch_wantag", "")))
 #endif
 					{
@@ -298,7 +298,7 @@ static const applets_t applets[] = {
 	{ "udhcpc_lan",			udhcpc_lan			},
 	{ "zcip",			zcip_wan			},
 #ifdef RTCONFIG_IPV6
-	{ "dhcp6c-state",		dhcp6c_state_main		},
+	{ "dhcp6c",			dhcp6c_wan			},
 #endif
 #ifdef RTCONFIG_WPS
 	{ "wpsaide",			wpsaide_main			},
@@ -323,12 +323,16 @@ static const applets_t applets[] = {
 	{ "disk_remove",		diskremove_main			},
 #endif
 	{ "firmware_check",		firmware_check_main             },
+#ifdef RTCONFIG_HTTPS
+	{ "rsasign_check",		rsasign_check_main		},
+#endif
 	{ "service",		service_main		},
 	{ "speedtest",			speedtest_main			},
 #ifdef RTCONFIG_BWDPI
 	{ "bwdpi",				bwdpi_main			},
 	{ "bwdpi_monitor",		bwdpi_monitor_main		},
 	{ "bwdpi_check",		bwdpi_check_main		},
+	{ "rsasign_sig_check",		rsasign_sig_check_main		},
 #endif
 #ifdef RTCONFIG_TMOBILE
 	{ "sendm",			sendm_main			},
@@ -649,6 +653,12 @@ int main(int argc, char **argv)
 		run_telnetd();
 		return 0;
 	}
+#ifdef RTCONFIG_SSH
+	else if(!strcmp(base, "run_sshd")) {
+		start_sshd();
+		return 0;
+	}
+#endif
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
 	else if(!strcmp(base, "run_pptpd")) {
 		start_pptpd();

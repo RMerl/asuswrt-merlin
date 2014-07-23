@@ -290,6 +290,20 @@ function validate_groupchar(ch){
 	return true;
 }
 
+function is_number_float(o,event)
+{
+	keyPressed = event.keyCode ? event.keyCode : event.which;
+
+	if (is_functionButton(event)){
+		return true;
+	}
+
+	if ((keyPressed == 46) || (keyPressed>47 && keyPressed<58))
+		return true;
+	else
+		return false;
+}
+
 function is_number(o,event){	
 	keyPressed = event.keyCode ? event.keyCode : event.which;
 	
@@ -456,7 +470,7 @@ function validate_ipaddr_final(o, v){
 				v == 'dhcp1_start' || v=='dhcp1_end' ||
 				v == 'lan_ipaddr' || v=='lan_netmask' ||
 				v=='lan1_ipaddr' || v=='lan1_netmask' ||
-				v == 'wl_radius_ipaddr') {	
+				v == 'wl_radius_ipaddr' || v == 'hs_radius_ipaddr') {	
 			alert("<#JS_fieldblank#>");
 			
 			if(v == 'wan_ipaddr_x'){

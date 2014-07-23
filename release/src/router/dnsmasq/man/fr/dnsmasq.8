@@ -1659,7 +1659,7 @@ Traiter les requêtes DHCP arrivant sur n'importe laquelle des interfaces <alias
 comme si elles arrivaient de l'interface <interface>. Cette option est
 nécessaire lors de l'utilisation de pont ethernet "ancien mode" sur plate-forme
 BSD, puisque dans ce cas les paquets arrivent sur des interfaces "tap" n'ont
-pas d'adresse IP.
+pas d'adresse IP.  Chaque <alias> peut finir avec un simple '*' joker.
 .TP
 .B \-s, --domain=<domaine>[,<gamme d'adresses>[,local]]
 Spécifie le domaine du serveur DHCP. Le domaine peut être donné de manière

@@ -36,6 +36,15 @@ var contentM_height_orig = parent.document.getElementById("contentM").height;
 function QKinternettype_load_body(){
 	parent.document.title = "<#Web_Title#> - <#QKSet_type_head#>";
 
+	if('<% nvram_get("autodet_state"); %>' != "2" && '<% nvram_get("autodet_auxstate"); %>' != "6"){
+		document.getElementById("wd3").style.display = "";
+		document.getElementById("wd4").style.display = "";
+		document.getElementById("wd5").style.display = "";
+		document.getElementById("wd3_1").style.display = "";
+		document.getElementById("wd4_1").style.display = "";
+		document.getElementById("wd5_1").style.display = "";
+	}
+
 	if(parent.ISMOBILE){
 		parent.set_step("detect");
 		document.getElementById("field_general").style.display = "none";
@@ -74,7 +83,7 @@ function QKinternettype_load_body(){
 		if(!parent.manualstb_support) 
 			document.applyForm.switch_wantag.remove(8);
 
-		detect_if_wan_plug();
+		detect_if_wan_plug();			
 	}
 }
 
@@ -444,27 +453,27 @@ function detect_if_wan_plug(flag){
 		  <td><span class="wan_type_dec"><#BOP_ctype_item2#></span></td>
 		</tr>
 
-		<tr>
+		<tr id="wd3" style="display:none;">
 		  <td align="center"><input type="radio" id="d3" name="x_WANType" value="4" onClick="focus_radio(this)" onKeyPress="return submitenter(this,event)"></td>
 		  <td class="wan_type_title"><label for="d3"><#BOP_ctype_title5#></label></td>
 		</tr>
-		<tr>
+		<tr id="wd3_1" style="display:none;">
 		  <td align="center"></td>
 		  <td><span class="wan_type_dec"><#BOP_ctype_item5#></span></td>
 		</tr>
-		<tr>
+		<tr id="wd4" style="display:none;">
 			<td align="center"><input type="radio" id="d4" name="x_WANType" value="2" onClick="focus_radio(this)" onKeyPress="return submitenter(this,event)"></td>
 			<td class="wan_type_title"><label for="d4">PPTP</label></td>
 		</tr>
-		<tr>
+		<tr id="wd4_1" style="display:none;">
 			<td align="center"></td>
 			<td><span class="wan_type_dec"><#BOP_ctype_item3#></span></td>
 		</tr>
-		<tr>
+		<tr id="wd5" style="display:none;">
 			<td align="center"><input type="radio" id="d5" name="x_WANType" value="3" onClick="focus_radio(this)" onKeyPress="return submitenter(this,event)"></td>
 			<td class="wan_type_title"><label for="d5">L2TP </label></td>
 		</tr>
-		<tr>
+		<tr id="wd5_1" style="display:none;">
 		  <td align="center"></td>
 		  <td><span class="wan_type_dec"><#BOP_ctype_item4#></span></td>
 		</tr>

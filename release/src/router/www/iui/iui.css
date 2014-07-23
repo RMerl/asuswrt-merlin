@@ -19,7 +19,7 @@ body > *:not(.toolbar) {
     margin: 0;
     padding: 0;
     left: 0;
-    top: 45px;
+    top: 50px;
     width: 100%;
     height: auto;
     min-height: 100%;
@@ -63,9 +63,9 @@ body > .toolbar {
 
 .toolbar > h1 {
     overflow: hidden;
-    padding-top: 10px;
+    padding-top: 0px;
     height: 45px;
-    font-size: 20px;
+    font-size: 18px;
     /*width: 150px;*/
     font-weight: bold;
     text-shadow: rgba(0, 0, 0, 0.4) 0px -1px 0;
@@ -73,7 +73,9 @@ body > .toolbar {
     text-overflow: ellipsis;
     white-space: nowrap;
     color: #FFFFFF;
-		line-height: 10px;
+	line-height: 20px;
+    margin-bottom: 5px;
+    margin-top: 5px;
 }
 
 body.landscape > .toolbar > h1 {

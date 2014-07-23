@@ -1559,7 +1559,6 @@ int reload_servers(char *fname)
   return gotone;
 }
 
-#if defined(HAVE_LINUX_NETWORK) || defined(HAVE_BSD_NETWORK)
 /* Called when addresses are added or deleted from an interface */
 void newaddress(time_t now)
 {
@@ -1584,7 +1583,6 @@ void newaddress(time_t now)
 #endif
 }
 
-#endif
 
 
 

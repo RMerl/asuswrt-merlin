@@ -96,6 +96,11 @@ CFLAGS += -I$(SRCBASE)/include -I$(SRCBASE)/wps/common/include	\
 
 LDFLAGS += $(EXTRA_LDFLAGS)
 
+ifeq ($(RTCONFIG_HTTPS),y)
+CFLAGS += -I$(TOP)/openssl/include/openssl
+LDFLAGS += -L$(TOP)/openssl -lcrypto -lssl
+endif
+
 ifeq ($(RTCONFIG_QTN),y)
 LDFLAGS += -L$(TOP)/libqcsapi_client -lqcsapi_client
 endif

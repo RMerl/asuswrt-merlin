@@ -60,7 +60,7 @@ if [ ! -f "$APPS_INSTALL_PATH/$nonautorun_file" ]; then
 	rm -rf $APPS_INSTALL_PATH/$autorun_file
 	cp -f $apps_local_space/$autorun_file $APPS_INSTALL_PATH
 	if [ "$?" != "0" ]; then
-		nvram set apps_state_error=10
+		nvram set apps_state_error=100
 		exit 1
 	fi
 else
@@ -184,7 +184,7 @@ if [ ! -f "$APPS_INSTALL_PATH/bin/ipkg" ] || [ -z "$had_uclibc" ]; then
 fi
 
 APPS_MOUNTED_TYPE=`mount |grep "/dev/$APPS_DEV on " |awk '{print $5}'`
-if [ "$APPS_MOUNTED_TYPE" == "vfat" ]; then
+if [ "$APPS_MOUNTED_TYPE" == "vfat" ] || [ "$APPS_MOUNTED_TYPE" == "tfat" ]; then
 	app_move_to_pool.sh $APPS_DEV
 	if [ "$?" != "0" ]; then
 		# apps_state_error was already set by app_move_to_pool.sh.

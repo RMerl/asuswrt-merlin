@@ -48,7 +48,7 @@ done
 
 nvram set apps_state_autorun=1 # CHECKING_POOL
 APPS_MOUNTED_TYPE=`mount |grep "/dev/$APPS_DEV on " |awk '{print $5}'`
-if [ "$APPS_MOUNTED_TYPE" == "vfat" ]; then
+if [ "$APPS_MOUNTED_TYPE" == "vfat" ] || [ "$APPS_MOUNTED_TYPE" == "tfat" ]; then
 	link_ready=`app_check_pool.sh $APPS_DEV`
 	if [ "$link_ready" == "Non-linked" ]; then
 		echo "Building the link of $APPS_MOUNTED_PATH."

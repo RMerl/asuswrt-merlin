@@ -6,7 +6,6 @@
 #include "shutils.h"
 #include "shared.h"
 
-
 static int crc_table_empty = 1;
 static unsigned long crc_table[256];
 

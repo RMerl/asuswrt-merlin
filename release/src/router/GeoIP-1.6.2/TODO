@@ -1,0 +1,60 @@
+Rutger Okhuizen 7/31/2006
+
+Implement waiting algorithm for GEOIP_CHECK_CACHE,
+so stat is called on every lookup.
+
+-----------------------
+
+Maurice Cinquini
+
+*** ifndef WIN32 on netdb.h ? ***
+In GeoIPCity.c you don't "#ifndef WIN32" the netdb.h include,
+but in GeoIP.c you do.  Which one is right?
+
+*** Warnings in GeoIP-1.2.1 before I made changes ***
+GeoIPUpdate.c:73: warning: implicit declaration of function `_setup_dbfilename'
+    I suggest a GeoIP_private.h file to include prototypes for
+    _setup_dbfilename and other private functions also used by GeoIPCity.c
+
+*** Drop the GeoIP_*_by_addr API calls ***
+And now that I think of it, why do you need a seperate
+GeoIP_region_by_addr and GeoIP_region_by_name since
+the later does the work of the former just as efficently.
+For backward compatibility you could #define GeoIP_region_by_addr
+to GeoIP_region_by_name
+
+
+
+
+Performance improvements suggested by Jason Linhart
+1. cluster nodes to improve disk performance when using GEOIP_STANDARD
+2. evaluate preformance of replacing binary tree with nodes containing 4 children
+
+Write function to list countries, sorted by name.  Chris Gibbs contributed this which could be
+used:
+
+ int GeoIP_country_sorted_index[246] = {
+  0, 5, 8, 61, 14, 3, 11, 7, 12, 6, 13, 9, 17, 1, 16, 15, 18, 32, 25, 21,
+ 20,36, 22, 37, 27, 28, 33, 30, 19, 35, 34, 31, 104, 29, 24, 23, 26,
+114, 47, 38, 52,121, 41, 207, 46, 48, 53, 39, 49, 116, 42, 40, 45,
+ 50, 44, 97, 51, 54, 55, 58, 57, 59, 60, 216, 62, 64, 203, 87, 66,
+ 63, 68, 2, 71, 73, 70, 69, 74, 75, 80, 170,208, 76, 84, 79, 56, 81,
+82, 88, 83, 78, 86, 91, 90, 85, 92, 93, 98, 95, 228, 96,94, 99, 107,
+ 103, 100, 106, 105, 101, 102, 108, 109, 111, 110, 122, 112, 115,
+ 118,119, 120, 113, 123, 132, 124, 129, 128, 133, 126, 130, 131,
+ 143, 139, 137,151,153, 150, 140, 148, 138, 145, 146, 149, 238,
+ 152, 72, 136, 135, 142, 147, 134,154, 141, 155, 164, 163, 161,
+10, 156, 166, 160, 157, 159, 165, 158, 144, 162, 167,173, 180,
+178, 168, 171, 181, 169, 172, 176, 174, 179, 177, 182, 183, 184,
+185,186, 193, 117, 125, 175, 229, 236, 198, 202, 187, 199, 189,
+197, 192, 196,194,188, 200, 240, 89, 67, 127, 190, 201, 195, 205,
+191, 43, 204, 220, 211, 221,210,209, 212, 215, 218, 214, 217,
+213,206, 219, 223, 222, 4, 77, 225, 224, 226,227,234, 230, 233,
+ 231,232, 235, 65, 237, 239, 242, 241, 243, 244, 245};
+
+--------------------------------
+
+Jude Nagurney 11/04/2012
+Proxy Authorization needs to decode reserved/unsafe characters
+which may be encoded in the proxy credentials before
+base64-encoding the Proxy-Authorization data.

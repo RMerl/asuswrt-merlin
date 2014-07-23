@@ -179,9 +179,6 @@ _ogg_vorbis_process(ogg_stream_processor *stream, ogg_page *page,
 		ogg_int64_t gp = ogg_page_granulepos(page);
 		if(gp > 0)
 		{
-			if(gp < inf->lastgranulepos)
-				DPRINTF(E_WARN, L_SCANNER, "granulepos in stream %d decreases from %lld to %lld",
-					stream->num, inf->lastgranulepos, gp);
 			inf->lastgranulepos = gp;
 		}
 		else
@@ -402,7 +399,8 @@ _ogg_get_next_page(FILE *f, ogg_sync_state *sync, ogg_page *page,
 	while((ret = ogg_sync_pageout(sync, page)) <= 0)
 	{
 		if(ret < 0)
-			DPRINTF(E_WARN, L_SCANNER, "Hole in data found at approximate offset %lld bytes. Corrupted ogg.\n", *written);
+			DPRINTF(E_WARN, L_SCANNER, "Hole in data found at approximate offset %lld bytes. Corrupted ogg.\n",
+				(long long)*written);
 
 		buffer = ogg_sync_buffer(sync, 4500); // chunk=4500
 		bytes = fread(buffer, 1, 4500, f);

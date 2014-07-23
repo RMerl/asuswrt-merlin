@@ -25,22 +25,25 @@
 #define __METADATA_H__
 
 typedef struct metadata_s {
-	char *title;
-	char *artist;
-	char *creator;
-	char *album;
-	char *genre;
-	char *comment;
-	char *channels;
-	char *bitrate;
-	char *frequency;
-	char *bps;
-	char *resolution;
-	char *rotation;
-	char *duration;
-	char *date;
-	char *mime;
-	char *dlna_pn;
+	char *       title;
+	char *       artist;
+	char *       creator;
+	char *       album;
+	char *       genre;
+	char *       comment;
+	unsigned int disc;
+	unsigned int track;
+	unsigned int channels;
+	unsigned int bitrate;
+	unsigned int frequency;
+	unsigned int rotation;
+	char *       resolution;
+	char *       duration;
+	char *       date;
+	char *       mime;
+	char *       dlna_pn;
+	int          thumb_size;
+	uint8_t *    thumb_data;
 } metadata_t;
 
 typedef enum {

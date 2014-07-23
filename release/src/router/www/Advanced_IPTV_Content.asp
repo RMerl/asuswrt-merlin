@@ -38,6 +38,12 @@ function initial(){
 		document.form.action_script.value = "reboot";		
 		document.form.action_wait.value = "<% get_default_reboot_time(); %>";				
 	}
+	if(vdsl_support) {
+		if(document.form.dslx_rmvlan.value == "1")
+			document.form.dslx_rmvlan_check.checked = true;
+		else
+			document.form.dslx_rmvlan_check.checked = false;
+	}
 	show_menu();
 	if(!dsl_support) {
 		ISP_Profile_Selection(original_switch_wantag);
@@ -349,6 +355,13 @@ function validate_range_null(o, min, max, def) {		//Viz add 2013.03 allow to set
 	return true;
 }
 
+function change_rmvlan(){
+	if(document.form.dslx_rmvlan_check.checked == true)
+		document.form.dslx_rmvlan.value = 1;
+	else
+		document.form.dslx_rmvlan.value = 0;
+}
+
 </script>
 </head>
 
@@ -385,6 +398,7 @@ function validate_range_null(o, min, max, def) {		//Viz add 2013.03 allow to set
 <input type="hidden" name="action_wait" value="10">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
+<input type="hidden" name="dslx_rmvlan" value='<% nvram_get("dslx_rmvlan"); %>'>
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
   <tr>
@@ -486,7 +500,7 @@ function validate_range_null(o, min, max, def) {		//Viz add 2013.03 allow to set
 		</table>
 <!--###HTML_PREP_ELSE###-->
 <!--
-[DSL-N55U][DSL-N55U-B][DSL-AC68U]
+[DSL-N55U][DSL-N55U-B]
 {DSL do not support unifw}
 	  <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 	  	<thead>
@@ -509,6 +523,29 @@ function validate_range_null(o, min, max, def) {		//Viz add 2013.03 allow to set
 		</td>
 		</tr>
 		</table>
+[DSL-AC68U]
+	<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+		<thead>
+			<tr>
+				<td colspan="2">Port</td>
+			</tr>
+		</thead>
+		<tr id="wan_stb_x">
+			<th width="30%"><#Layer3Forwarding_x_STB_itemname#></th>
+			<td align="left">
+				<select name="switch_stb_x" class="input_option">
+				<option value="0" <% nvram_match( "switch_stb_x", "0", "selected"); %>><#wl_securitylevel_0#></option>
+				<option value="1" <% nvram_match( "switch_stb_x", "1", "selected"); %>>LAN1</option>
+				<option value="2" <% nvram_match( "switch_stb_x", "2", "selected"); %>>LAN2</option>
+				<option value="3" <% nvram_match( "switch_stb_x", "3", "selected"); %>>LAN3</option>
+				<option value="4" <% nvram_match( "switch_stb_x", "4", "selected"); %>>LAN4</option>
+				<option value="5" <% nvram_match( "switch_stb_x", "5", "selected"); %>>LAN1 & LAN2</option>
+				<option value="6" <% nvram_match( "switch_stb_x", "6", "selected"); %>>LAN3 & LAN4</option>
+				</select>
+				<input type="checkbox" name="dslx_rmvlan_check" id="dslx_rmvlan_check" value="" onClick="change_rmvlan();"> Remove VLAN TAG from DSL WAN</input>
+			</td>
+		</tr>
+	</table>
 -->
 <!--###HTML_PREP_END###-->	  
 	  

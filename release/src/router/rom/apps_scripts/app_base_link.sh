@@ -25,7 +25,7 @@ APP_LINK_LIB=$APP_LINK_DIR/lib
 APP_FS_TYPE=`mount | grep $APPS_MOUNTED_PATH | sed -e "s,.*on.* type \([^ ]*\) (.*$,\1,"`
 
 APPS_MOUNTED_TYPE=`mount |grep "/dev/$APPS_DEV on " |awk '{print $5}'`
-if [ "$APPS_MOUNTED_TYPE" != "vfat" ]; then
+if [ "$APPS_MOUNTED_TYPE" != "vfat" ] && [ "$APPS_MOUNTED_TYPE" != "tfat" ]; then
 	if [ "$APP_FS_TYPE" != "fuseblk" ] ; then
 		chmod -R 777 $APPS_INSTALL_PATH
 	fi

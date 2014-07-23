@@ -38,6 +38,9 @@ var timerID = null;
 var timerRunning = false;
 var timeout = 2000;
 var delay = 1000;
+var wl_ssid_closed = "<% nvram_get("wl_closed"); %>";
+var curState = 0;
+var band_string = "";
 
 function reject_wps(auth_mode, wep){
 	return (auth_mode == "open" && wep != "0") || auth_mode == "shared" || auth_mode == "psk" || auth_mode == "wpa" || auth_mode == "wpa2" || auth_mode == "wpawpa2" || auth_mode == "radius";
@@ -198,7 +201,17 @@ function ValidateChecksum(PIN){
 }
 
 function PIN_PBC_Check(){
+	var array_temp = new Array();
 	if(document.form.wps_sta_pin.value != ""){
+		if(document.form.wps_sta_pin.value.indexOf(' ')!= -1){
+			array_temp = document.form.wps_sta_pin.value.split(" ");
+			document.form.wps_sta_pin.value = array_temp[0] + array_temp[1];
+		}
+		else if(document.form.wps_sta_pin.value.indexOf('-')!= -1){
+			array_temp = document.form.wps_sta_pin.value.split("-");
+			document.form.wps_sta_pin.value = array_temp[0] + array_temp[1];
+		}
+			
 		if(document.form.wps_sta_pin.value.length != 8 || !ValidateChecksum(document.form.wps_sta_pin.value)){
 			alert("<#JS_InvalidPIN#>");
 			document.form.wps_sta_pin.focus();
@@ -312,9 +325,11 @@ function show_wsc_status(wps_infos){
 
 		if(wps_infos[12].firstChild.nodeValue == 0){
 			$("wps_band_word").innerHTML = "2.4GHz";
+			band_string = "2.4GHz";
 		}
 		else if(wps_infos[12].firstChild.nodeValue == 1){
 			$("wps_band_word").innerHTML = "5GHz";
+			band_string = "5GHz";
 		}	
 		$("switchWPSbtn").style.display = "";
 	}
@@ -577,6 +592,12 @@ function _change_wl_unit_status(__unit){
 						<script type="text/javascript">
 							$j('#radio_wps_enable').iphoneSwitch('<% nvram_get("wps_enable"); %>', 
 								 function() {
+									if(wl_ssid_closed == 1){
+										alert("If you want to enable WPS, you need to disable hiding " + band_string + " SSID first");
+										$j('#iphone_switch').animate({backgroundPosition: -37}, "slow", function() {});
+										return false;
+									}
+								 
 									document.form.wps_enable.value = "1";
 									enableWPS();
 								 },
@@ -650,7 +671,7 @@ function _change_wl_unit_status(__unit){
 			  <td>
 					<input type="radio" name="wps_method" onclick="changemethod(0);" value="0"><#WLANConfig11b_x_WPS_pushbtn#>
 					<input type="radio" name="wps_method" onclick="changemethod(1);" value="1"><#WLANConfig11b_x_WPSPIN_itemname#>
-			  	<input type="text" name="wps_sta_pin" id="wps_sta_pin" value="" size="8" maxlength="8" class="input_15_table">
+			  	<input type="text" name="wps_sta_pin" id="wps_sta_pin" value="" size="9" maxlength="9" class="input_15_table">
 				  <div id="starBtn" style="margin-top:10px;"><input class="button_gen" type="button" style="margin-left:5px;" onClick="configCommand();" id="addEnrolleebtn_client" name="addEnrolleebtn"  value="<#wps_start_btn#>"></div>
 				</td>
 			</tr>

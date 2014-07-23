@@ -41,7 +41,6 @@ wl_channel_list_2g = '<% channel_list_2g(); %>';
 wl_channel_list_5g = '<% channel_list_5g(); %>';
 
 function initial(){
-	$('ACL_disabled_hint').innerHTML = Untranslated.Guest_Network_enable_ACL;
 	$('enable_macfilter').innerHTML = "<#enable_macmode#>";
 	show_menu();	
 	//insertExtChannelOption();		
@@ -145,7 +144,11 @@ function gen_gntable_tr(unit, gn_array, slicesb){
 	htmlcode += '<tr><th align="left" style="height:40px;"></th></tr>';		
 	htmlcode += '</table></th>';
 	
-	for(var i=0; i<gn_array.length; i++){			
+	if(tmo_support)	//keep wlx.3 for usingg Passpoint
+		var gn_array_length = gn_array.length-1;
+	else	
+		var gn_array_length = gn_array.length;
+	for(var i=0; i<gn_array_length; i++){			
 			var subunit = i+1+slicesb*4;
 			var show_str;
 			htmlcode += '<td><table id="GNW_'+GN_band+'G'+i+'" class="gninfo_table" align="center" style="margin:auto;border-collapse:collapse;">';			
@@ -183,12 +186,12 @@ function gen_gntable_tr(unit, gn_array, slicesb){
 							var expire_hr = Math.floor(gn_array[i][13]/3600);
 							var expire_min = Math.floor((gn_array[i][13]%3600)/60);
 							if(expire_hr > 0)
-									htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');"><b id="expire_hr_'+i+'">'+ expire_hr + '</b> Hr <b id="expire_min_'+i+'">' + expire_min +'</b> Min</td></tr>';
+									htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');"><b id="expire_hr_'+i+'">'+ expire_hr + '</b> <#Hour#> <b id="expire_min_'+i+'">' + expire_min +'</b> <#Minute#></td></tr>';
 							else{
 									if(expire_min > 0)
-											htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');"><b id="expire_min_'+i+'">' + expire_min +'</b> Min</td></tr>';
+											htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');"><b id="expire_min_'+i+'">' + expire_min +'</b> <#Minute#></td></tr>';
 									else
-											htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');"><b id="expire_min_'+i+'">< 1</b> Min</td></tr>';
+											htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');"><b id="expire_min_'+i+'">< 1</b> <#Minute#></td></tr>';
 							}				
 					}					
 					
@@ -203,13 +206,13 @@ function gen_gntable_tr(unit, gn_array, slicesb){
 										
 			if(gn_array[i][0] == "1"){
 					htmlcode += '<tr><td align="center" class="gninfo_table_bottom"></td></tr>';
-					htmlcode += '<tfoot><tr><td align="center"><input type="button" class="button_gen" value="<#btn_disable#>" onclick="close_guest_unit('+ unit +','+ subunit +');"></td></tr></tfoot>';
+					htmlcode += '<tfoot><tr><td align="center"><input type="button" class="button_gen" value="<#btn_remove#>" onclick="close_guest_unit('+ unit +','+ subunit +');"></td></tr></tfoot>';
 			}
 			htmlcode += '</table></td>';		
 	}	
 
 	if(slicesb > 0){
-		for(var td=0; td<(4-gn_array.length); td++)
+		for(var td=0; td<(4-gn_array_length); td++)
 			htmlcode += '<td style="width:135px"></td>';
 	}			
 
@@ -828,9 +831,9 @@ function genBWTable(_unit){
 					<th><#Access_Time#></th>
 					<td>
          		<input type="radio" value="1" name="wl_expire_radio" class="content_input_fd" onClick="">
-						<input type="text" maxlength="2" name="wl_expire_hr" class="input_3_table"  value="" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 0, 23)"> Hr
-						<input type="text" maxlength="2" name="wl_expire_min" class="input_3_table"  value="" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 0, 59)"> Min
-         		<input type="radio" value="0" name="wl_expire_radio" class="content_input_fd" onClick="">Limitless
+						<input type="text" maxlength="2" name="wl_expire_hr" class="input_3_table"  value="" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 0, 23)"> <#Hour#>
+						<input type="text" maxlength="2" name="wl_expire_min" class="input_3_table"  value="" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 0, 59)"> <#Minute#>
+         		<input type="radio" value="0" name="wl_expire_radio" class="content_input_fd" onClick=""><#Limitless#>
 					</td>
 			 	</tr>
 
@@ -853,7 +856,7 @@ function genBWTable(_unit){
 						</select>
 						&nbsp;
 						<span id="ACL_enabled_hint" style="cursor:pointer;display:none;text-decoration:underline;" onclick="goToACLFilter();"><#FirewallConfig_MFList_groupitemname#></span>
-						<span id="ACL_disabled_hint" style="cursor:pointer;display:none;text-decoration:underline;" onclick="goToACLFilter();"></span>				
+						<span id="ACL_disabled_hint" style="cursor:pointer;display:none;text-decoration:underline;" onclick="goToACLFilter();"><#Guest_Network_enable_ACL#></span>	
 					</td>
 				</tr>
 			</table>

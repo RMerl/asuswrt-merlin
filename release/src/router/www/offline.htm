@@ -21,30 +21,12 @@
 				document.getElementById('desc1').innerHTML = "<#Offline_desc1#><br>";
 				document.getElementById('desc1').innerHTML += "<#Offline_desc2#><br>";
 				document.getElementById('desc1').innerHTML += "<#Offline_desc3#>";
-
-				setInterval(function(){
-					if(document.getElementById('loadingStr').innerHTML == ".")
-						document.getElementById('loadingStr').innerHTML = "..";
-					else if(document.getElementById('loadingStr').innerHTML == "..")
-						document.getElementById('loadingStr').innerHTML = "...";
-					else if(document.getElementById('loadingStr').innerHTML == "...")
-						document.getElementById('loadingStr').innerHTML = "";
-					else
-						document.getElementById('loadingStr').innerHTML = ".";
-				}, 500);
 			}
-
-			location.href = "http://find-device.local";
  		</script>
 	</head>
 	<body style="text-align:center;background: #DDD" onload="initial();">
     <div style="margin-top:100px;width:70%;margin-left:15%">
       <div class="linkTo" id="desc1"></div> 
-			<br>
-      <div class="linkTo">
-				Finding ASUS Device
-				<span id="loadingStr">.</span>
-			</div> 			
     </div>
 	</body>
 </html>

@@ -53,14 +53,8 @@ var client_mac = login_mac_str();
 var overlib_str0 = new Array();	//Viz add 2011.07 for record longer virtual srvr rule desc
 var overlib_str = new Array();	//Viz add 2011.07 for record longer virtual srvr portrange value
 
-var leases = [<% dhcp_leases(); %>];	// [[hostname, MAC, ip, lefttime], ...]
-var arps = [<% get_arp_table(); %>];		// [[ip, x, x, MAC, x, type], ...]
-var arls = [<% get_arl_table(); %>];		// [[MAC, port, x, x], ...]
 var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
-var ipmonitor = [<% get_static_client(); %>];	// [[IP, MAC, DeviceName, Type, http, printer, iTune], ...]
-var networkmap_fullscan = '<% nvram_match("networkmap_fullscan", "0", "done"); %>'; //2008.07.24 Add.  1 stands for complete, 0 stands for scanning.;
 
-var clients_info = getclients();
 var vts_rulelist_array = "<% nvram_char_to_ascii("","vts_rulelist"); %>";
 var ctf_disable = '<% nvram_get("ctf_disable"); %>';
 
@@ -68,7 +62,7 @@ function initial(){
 	show_menu();
 	loadAppOptions();
 	loadGameOptions();
-	showLANIPList();	
+	setTimeout("showLANIPList();", 1000);	
 	showvts_rulelist();
 	addOnlineHelp($("faq"), ["ASUSWRT", "port", "forwarding"]);
 

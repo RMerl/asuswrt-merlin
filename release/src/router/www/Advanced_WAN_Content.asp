@@ -109,7 +109,9 @@ function change_wan_unit(obj){
 	
 	if(obj.options[obj.selectedIndex].text == "USB") {
 		document.form.current_page.value = "Advanced_Modem_Content.asp";
-	}else if(obj.options[obj.selectedIndex].text == "WAN"|| obj.options[obj.selectedIndex].text == "Ethernet LAN"){
+	}else if(obj.options[obj.selectedIndex].text == "WAN" 
+			|| obj.options[obj.selectedIndex].text == "Ethernet LAN"
+			|| obj.options[obj.selectedIndex].text == "Ethernet WAN"){
 		if(wans_dualwan == "wan lan" || wans_dualwan == "lan wan"){
 			if(obj.selectedIndex != wan_unit_flag){
 				document.form.wan_unit.value = obj.selectedIndex;
@@ -131,9 +133,12 @@ function change_wan_unit(obj){
 function genWANSoption(){
 	for(i=0; i<wans_dualwan.split(" ").length; i++){
 		var wans_dualwan_NAME = wans_dualwan.split(" ")[i].toUpperCase();
-		if(wans_dualwan_NAME == "LAN")
-			wans_dualwan_NAME = "Ethernet LAN";
-			
+                //MODELDEP: DSL-N55U, DSL-N55U-B, DSL-AC68U, DSL-AC68R
+                if(wans_dualwan_NAME == "LAN" && 
+                        (productid == "DSL-N55U" || productid == "DSL-N55U-B" || productid == "DSL-AC68U" || productid == "DSL-AC68R")) 
+                        wans_dualwan_NAME = "Ethernet WAN";
+                else if(wans_dualwan_NAME == "LAN")
+                        wans_dualwan_NAME = "Ethernet LAN";		
 		document.form.wan_unit.options[i] = new Option(wans_dualwan_NAME, i);
 	}	
 	

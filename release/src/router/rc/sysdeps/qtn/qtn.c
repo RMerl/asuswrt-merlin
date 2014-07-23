@@ -891,6 +891,8 @@ int gen_stateless_conf(void)
 	}
 	fprintf(fp, "wifi0_staticip=1\n");
 	fprintf(fp, "slave_ipaddr=\"192.168.1.111/16\"\n");
+	fprintf(fp, "server_ipaddr=\"%s\"\n", nvram_safe_get("QTN_RPC_SERVER"));
+	fprintf(fp, "client_ipaddr=\"%s\"\n", nvram_safe_get("QTN_RPC_CLIENT"));
 
 	fclose(fp);
 
@@ -924,5 +926,50 @@ int runtime_config_qtn(int unit, int subunit)
 	}
 	rpc_parse_nvram_from_httpd(unit, subunit);
 	return 1;
+}
+
+/* start: 169.254.39.1, 0x127fea9 */
+/* end: 169.254.39.254, 0xfe27fea9 */
+int gen_rpc_qcsapi_ip(void)
+{
+	int i;
+	unsigned int j;
+	unsigned char *hwaddr;
+	char hwaddr_5g[18];
+	struct ifreq ifr;
+	struct in_addr start, addr;
+	int hw_len;
+	FILE *fp_qcsapi_conf;
+
+	/* BRCM */
+	ether_atoe(nvram_safe_get("lan_hwaddr"), (unsigned char *)&ifr.ifr_hwaddr.sa_data);
+	for (j = 0, i = 0; i < 6; i++){
+		j += ifr.ifr_hwaddr.sa_data[i] + (j << 6) + (j << 16) - j;
+	}
+	start.s_addr = htonl(ntohl(0x127fea9 /* start */) +
+		((j + 0 /* c->addr_epoch */) % (1 + ntohl(0xfe27fea9 /* end */) - ntohl(0x127fea9 /* start */))));
+	nvram_set("QTN_RPC_CLIENT", inet_ntoa(start));
+
+	/* QTN */
+	strcpy(hwaddr_5g, nvram_safe_get("lan_hwaddr"));
+	inc_mac(hwaddr_5g, 4);
+	ether_atoe(hwaddr_5g, (unsigned char *)&ifr.ifr_hwaddr.sa_data);
+	for (j = 0, i = 0; i < 6; i++){
+		j += ifr.ifr_hwaddr.sa_data[i] + (j << 6) + (j << 16) - j;
+	}
+	start.s_addr = htonl(ntohl(0x127fea9 /* start */) +
+		((j + 0 /* c->addr_epoch */) % (1 + ntohl(0xfe27fea9 /* end */) - ntohl(0x127fea9 /* start */))));
+	nvram_set("QTN_RPC_SERVER", inet_ntoa(start));
+	if ((fp_qcsapi_conf = fopen("/etc/qcsapi_target_ip.conf", "w")) == NULL){
+		logmessage("qcsapi", "write qcsapi conf error");
+	}else{
+		fprintf(fp_qcsapi_conf, "%s", nvram_safe_get("QTN_RPC_SERVER"));
+		fclose(fp_qcsapi_conf);
+		logmessage("qcsapi", "write qcsapi conf ok");
+	}
+
+#if 0
+	do_ping_detect(); /* refer wanduck.c */
+#endif
 }
 

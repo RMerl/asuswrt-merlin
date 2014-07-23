@@ -5,8 +5,8 @@ EXTRA_CFLAGS := -DLINUX26 -DCONFIG_BCMWL5 -DDEBUG_NOISY -DDEBUG_RCTEST -pipe -DT
 export CONFIG_LINUX26=y
 export CONFIG_BCMWL5=y
 
-#export PARALLEL_BUILD :=
-export PARALLEL_BUILD := -j`grep -c '^processor' /proc/cpuinfo`
+export PARALLEL_BUILD :=
+#export PARALLEL_BUILD := -j`grep -c '^processor' /proc/cpuinfo`
 
 define platformRouterOptions
 endef
@@ -44,12 +44,20 @@ define platformKernelConfig
 		echo "CONFIG_MTD_BRCMNAND=y" >>$(1); \
 	fi; \
 	cp -f $(SRCBASE)/router/ctf_arm/asus/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
-	if [ "$(ARMCPUSMP)" = "up" ]; then \
-		cp -f $(SRCBASE)/router/ctf_arm/up/linux/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
-		cp -f $(SRCBASE)/router/ufsd/broadcom_arm_up/ufsd.ko.46_up router/ufsd/broadcom_arm/ufsd.ko; \
-	fi; \
-	if [ "$(BWDPI)" = "y" ]; then \
-		cp -f $(SRCBASE)/router/ctf_arm/iqos/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
+	if [ "$(BCM7)" = "y" ]; then \
+		if [ "$(ARMCPUSMP)" = "up" ]; then \
+			cp -f $(SRCBASE)/router/ctf_arm/bcm7_up/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
+		else \
+			cp -f $(SRCBASE)/router/ctf_arm/bcm7/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
+		fi; \
+	else \
+		if [ "$(ARMCPUSMP)" = "up" ]; then \
+			cp -f $(SRCBASE)/router/ctf_arm/up/linux/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
+			cp -f $(SRCBASE)/router/ufsd/broadcom_arm_up/ufsd.ko.46_up router/ufsd/broadcom_arm/ufsd.ko; \
+		fi; \
+		if [ "$(BWDPI)" = "y" ]; then \
+			cp -f $(SRCBASE)/router/ctf_arm/iqos/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
+		fi; \
 	fi; \
 	if [ -d $(SRCBASE)/router/wl_arm/$(BUILD_NAME) ]; then \
 		mkdir $(SRCBASE)/wl/linux ; \
@@ -60,10 +68,10 @@ define platformKernelConfig
 	elif [ -d $(SRCBASE)/wl/sysdeps/$(BUILD_NAME) ]; then \
 		if [ -d $(SRCBASE)/wl/sysdeps/$(BUILD_NAME)/linux ]; then \
                 	cp -rf $(SRCBASE)/wl/sysdeps/$(BUILD_NAME)/linux $(SRCBASE)/wl/. ; \
-		 fi; \
-   		 if [ -d $(SRCBASE)/wl/sysdeps/$(BUILD_NAME)/clm ]; then \
+		fi; \
+   		if [ -d $(SRCBASE)/wl/sysdeps/$(BUILD_NAME)/clm ]; then \
                 	cp -f $(SRCBASE)/wl/sysdeps/$(BUILD_NAME)/clm/src/wlc_clm_data.c $(SRCBASE)/wl/clm/src/. ; \
-		 fi; \
+		fi; \
         else \
 		if [ -d $(SRCBASE)/wl/sysdeps/default/linux ]; then \
                       	cp -rf $(SRCBASE)/wl/sysdeps/default/linux $(SRCBASE)/wl/. ; \

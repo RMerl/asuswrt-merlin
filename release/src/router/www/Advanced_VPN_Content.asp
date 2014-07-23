@@ -632,6 +632,8 @@ function check_vpn_server_state(){
 
 
 var starting = 0;
+
+/* original
 function update_vpn_server_state(){
 
 	$j.ajax({
@@ -672,6 +674,47 @@ function update_vpn_server_state(){
 				}
 			}
 	});	
+}
+*/
+function update_vpn_server_state(){
+$j.ajax({
+    		url: '/ajax_openvpn_server.asp',
+    		dataType: 'script',
+
+    		error: function(xhr){
+    				setTimeout("update_vpn_server_state();", 1000);
+    		},
+
+    		success: function(){
+    				if(vpnd_state != '2' && (vpn_server1_errno == '1' || vpn_server1_errno == '2')){
+    						document.getElementById('openvpn_initial').style.display = "none";    						
+      					document.getElementById('openvpn_error_message').innerHTML = "<span>Routing conflict! <p>Please check your IP address configuration of client profile on advanced setting page or check routing table on system log.</span>";
+      					document.getElementById('openvpn_error_message').style.display = "";
+      			}
+      			else if(vpnd_state != '2' && vpn_server1_errno == '4'){
+      					document.getElementById('openvpn_initial').style.display = "none";
+      					document.getElementById('openvpn_error_message').innerHTML = "<span>Certification Auth. /Server cert. /Server Key field error! <p>Please check your contents of Keys&Certification on advanced setting page.</span>";
+      					document.getElementById('openvpn_error_message').style.display = "";
+      			}
+      			else if(vpnd_state != '2' && vpn_server1_errno == '5'){
+      					document.getElementById('openvpn_initial').style.display = "none";
+      					document.getElementById('openvpn_error_message').innerHTML = "<span>Diffle Hellman parameters field error!  <p>Please check your contents of Keys&Certification on advanced setting page.</span>";
+      					document.getElementById('openvpn_error_message').style.display = "";
+      			}
+      			else if(vpnd_state == '-1' && vpn_server1_errno == '0'){
+      					document.getElementById('openvpn_initial').style.display = "none";
+      					document.getElementById('openvpn_error_message').innerHTML = "<span>OpenVPN server daemon start fail!  <p>Please check your device environment or contents on advanced setting page.</span>";
+      					document.getElementById('openvpn_error_message').style.display = "";
+      			}
+      			else if(vpnd_state != '2'){
+      					setTimeout("update_vpn_server_state();", 1000);
+      			}
+      			else{	// OpenVPN server ready , vpn_server1_state==2
+      					setTimeout("location.href='Advanced_VPN_Content.asp';", 1000);
+      					return;
+						}
+  			}
+  		});	
 }
 
 function showMailPanel(){
@@ -876,11 +919,8 @@ function enable_openvpn(state){
 														<img id="initialing" src="images/InternetScan.gif" />
 													</span>
 												</div>
-												<div id="openvpn_failed" style="display:none;margin-left:5px;">
-													<span>
-														OpenVPN server failed to start!  Check your configuration, then try disabling and re-enabling it.  <span id="openvpn_errno"></span>
-													</span>
-												</div>
+												<div id="openvpn_error_message" style="display:none;margin-left:5px;">              											
+												</div>	
 											</td>
 										</tr>
 									</table>
@@ -1067,7 +1107,7 @@ function enable_openvpn(state){
 							<option value="smtp.gmail.com" <% nvram_match( "PM_SMTP_SERVER", "smtp.gmail.com", "selected"); %>>Google Gmail</option>
 				    </select>
 						<script>
-							var smtpServer = new Array()
+							var smtpList = new Array()
 							smtpList = [
 								{smtpServer: "smtp.gmail.com", smtpPort: "587", smtpDomain: "gmail.com"},
 								{end: 0}

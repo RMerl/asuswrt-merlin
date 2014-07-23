@@ -111,7 +111,7 @@ _get_wavtags(char *filename, struct song_metadata *psong)
 		{
 			//DEBUG DPRINTF(E_DEBUG,L_SCANNER,"Found 'fmt ' header\n");
 			len = 16;
-			if(!read(fd, fmt, len) || (len != 16))
+			if(read(fd, fmt, len) != len)
 			{
 				close(fd);
 				DPRINTF(E_WARN, L_SCANNER, "Bad .wav file: can't read fmt: %s\n",

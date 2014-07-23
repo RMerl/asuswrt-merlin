@@ -180,6 +180,10 @@ function hideHidden_slide(divIdtoBeHidden, idArray){
 
 function QIS_load_body(){
 	redirectPage($("flag").value);
+
+	if(tmo_support)
+		document.getElementById("pageTitle").innerHTML = "<div>T-Mobile</div><div>Wi-Fi CellSpot and Router";
+
 	document.getElementById("contentM").height = document.getElementById("screen1").clientHeight+5;
 }
 
@@ -336,8 +340,8 @@ function gotoFinish(forward_page, page_flag){
 		<h1 id="pageTitle"><#statusTitle_System#></h1>
 		<a style="visibility: hidden;" class="button_right" id="_backBtn" style="right: 6px;" onclick="location.href='Logout.asp';">Logout</a>
 	</div>
-	<div id="screen1" title="<#Web_Title2#>" class="panel" selected="true" style="margin-top: -4px;">
-		<iframe scrolling="auto" width="100%" id="contentM" height="auto" frameborder="0" style="background-image:url('/iui/Button_low.jpg');"></iframe>
+	<div id="screen1" title="<#Web_Title2#>" class="panel" selected="true">
+		<iframe scrolling="auto" width="100%" name="contentM" id="contentM" height="auto" frameborder="0" style="background-image:url('/iui/Button_low.jpg');"></iframe>
 	</div>
 
 	<form method="post" name="QKform">

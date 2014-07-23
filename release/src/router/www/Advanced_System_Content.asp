@@ -113,7 +113,7 @@ function initial(){
 		$("http_clientlist_Block").style.display = "none";
 	}
 	else{
-		showLANIPList();
+		setTimeout("showLANIPList();", 1000);
 		hide_https_lanport(document.form.http_enable.value);
 		hide_https_wanport(document.form.http_enable.value);
 	}	
@@ -125,9 +125,7 @@ function initial(){
 	}else{
 			document.getElementById('btn_ez_radiotoggle_tr').style.display = "";
 	}	
-
-	refresh_sshd_options('<% nvram_get("sshd_enable"); %>');
-
+	
 	if(sw_mode != 1){
 		$('misc_http_x_tr').style.display ="none";
 		hideport(0);
@@ -142,9 +140,15 @@ function initial(){
 		$("https_port").style.display = "none";
 	else if('<% nvram_get("http_enable"); %>' == 1)
 		$("http_port").style.display = "none";
-
-	document.form.http_username.value= accounts[0];
-	document.form.sshd_authkeys.value = document.form.sshd_authkeys.value.replace(/>/gm,"\r\n");
+		
+	document.form.http_username.value= accounts[0];	
+	if(ssh_support){
+		check_sshd_enable('<% nvram_get("sshd_enable"); %>');
+		document.form.sshd_authkeys.value = document.form.sshd_authkeys.value.replace(/>/gm,"\r\n");
+	}	
+	else{
+		$('ssh_table').style.display = "none";	
+	}	
 }
 
 var time_zone_tmp="";
@@ -236,7 +240,6 @@ function applyRule(){
 				}
 			}   
 		}
-
 		showLoading();
 		document.form.submit();
 	}
@@ -245,11 +248,6 @@ function applyRule(){
 function validForm(){	
 	showtext($("alert_msg1"), "");
 	showtext($("alert_msg2"), "");
-
-	if((document.form.sshd_enable[0].checked) && (document.form.sshd_authkeys.value.length == 0) && (!document.form.sshd_pass[0].checked)){
-		alert("You must configure at least one SSH authentication method!");
-		return false;
-	}
 
 	if(document.form.http_username.value.length == 0){
 		showtext($("alert_msg1"), "<#File_Pop_content_alert_desc1#>");
@@ -268,7 +266,7 @@ function validForm(){
 			return false;
 		}else{
 			$("alert_msg1").style.display = "none";
-  	}
+		}
 
 		document.form.http_username.value = trim(document.form.http_username.value);
 
@@ -334,7 +332,7 @@ function validForm(){
 		if (!validate_range(document.form.misc_httpport_x, 1024, 65535))
 			return false;
 	
-	if (HTTPS_support && !validate_range(document.form.https_lanport, 1024, 65535))
+		if (HTTPS_support && !validate_range(document.form.https_lanport, 1024, 65535) && !tmo_support)
 			return false;
 
 		if (HTTPS_support && !validate_range(document.form.misc_httpsport_x, 1024, 65535))
@@ -345,6 +343,19 @@ function validForm(){
 		document.form.misc_httpsport_x.value = '<% nvram_get("misc_httpsport_x"); %>';
 	}	
 
+	if(document.form.sshd_enable[0].checked){
+		if (!validate_range(document.form.sshd_port, 0, 65535))
+			return false;
+	}
+	else{
+		document.form.sshd_port.disabled = true;
+	}
+
+	if((document.form.sshd_enable[0].checked) && (document.form.sshd_authkeys.value.length == 0) && (!document.form.sshd_pass[0].checked)){
+		alert("You must configure at least one SSH authentication method!");
+		return false;
+	}
+	
 	if(isPortConflict(document.form.misc_httpport_x.value)){
 		alert(isPortConflict(document.form.misc_httpport_x.value));
 		document.form.misc_httpport_x.focus();
@@ -355,7 +366,7 @@ function validForm(){
 		document.form.misc_httpsport_x.focus();
 		return false;
 	}
-	else if(isPortConflict(document.form.https_lanport.value) && HTTPS_support){
+	else if(isPortConflict(document.form.https_lanport.value) && HTTPS_support && !tmo_support){
 		alert(isPortConflict(document.form.https_lanport.value));
 		document.form.https_lanport.focus();
 		return false;
@@ -655,6 +666,11 @@ function load_dst_h_Options(){
 }
 
 function hide_https_lanport(_value){
+	if(tmo_support){
+		$("https_lanport").style.display = "none";
+		return false;
+	}
+
 	if(sw_mode == '1' || sw_mode == '2'){
 		var https_lanport_num = "<% nvram_get("https_lanport"); %>";
 		$("https_lanport").style.display = (_value == "0") ? "none" : "";
@@ -862,7 +878,7 @@ function clean_scorebar(obj){
 		document.getElementById("scorebarBorder").style.display = "none";
 }
 
-function refresh_sshd_options(flag){
+function check_sshd_enable(obj_value){
 	var state;
 
 	if (flag == 1)
@@ -870,15 +886,32 @@ function refresh_sshd_options(flag){
 	else
 		state = "none";
 
-	$("sshd_fwd_field").style.display = state;
-	$("sshd_wan_field").style.display = state;
-	$("sshd_keyauth_field").style.display = state;
+	$("remote_forwarding_tr").style.display = state;
+	$("remote_access_tr").style.display = state;
+	$("auth_keys_tr").style.display = state;
 	$("sshd_bfp_field").style.display = state;
-	$("sshd_pswd_log_field").style.display = state;
-	$("sshd_lanport_field").style.display = state;
-
+	$("sshd_password_tr").style.display = state;
+	$("sshd_port_tr").style.display = state;
 }
 
+/*function sshd_remote_access(obj_value){
+	if(obj_value == 1){
+		$('remote_access_port_tr').style.display = "";
+	}
+	else{
+		$('remote_access_port_tr').style.display = "none";
+	}
+}*/
+
+/*function sshd_forward(obj_value){
+	if(obj_value == 1){
+		$('remote_forwarding_port_tr').style.display = "";
+	}
+	else{
+		$('remote_forwarding_port_tr').style.display = "none";
+	}
+
+}*/
 </script>
 </head>
 
@@ -924,249 +957,242 @@ function refresh_sshd_options(flag){
 		<td valign="top">
 <table width="760px" border="0" cellpadding="4" cellspacing="0" class="FormTitle" id="FormTitle">
 	<tbody>
-
 	<tr>
-  <td bgcolor="#4D595D" valign="top">
-		  <div>&nbsp;</div>
-		  <div class="formfonttitle"><#menu5_6_adv#> - <#menu5_6_2#></div>
-		  <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-		  <div class="formfontdesc"><#Syste_title#></div>
+		<td bgcolor="#4D595D" valign="top">
+			<div>&nbsp;</div>
+			<div class="formfonttitle"><#menu5_6_adv#> - <#menu5_6_2#></div>
+			<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+			<div class="formfontdesc"><#Syste_title#></div>
 
-	  	<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
-	  	<thead>
-	  	<tr>
-          <td colspan="2"><#PASS_changepasswd#></td>
-        </tr>
-    	</thead>
-        <tr>
-          <th width="40%"><#Router_Login_Name#></th>
-          <td>
-				<div><input type="text" id="http_username" name="http_username" tabindex="1" style="height:25px;" class="input_15_table" maxlength="20"><br/><span id="alert_msg1" style="color:#FC0;margin-left:8px;"></span></div>
-          </td>
-        </tr>
-
-        <tr>
-          <th width="40%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_new#></a></th>
-          <td>
-            <input type="password" autocapitalization="off" autocomplete="off" name="http_passwd2" tabindex="2" onKeyPress="return is_string(this, event);" onkeyup="chkPass(this.value, 'http_passwd');" onpaste="return false;" class="input_15_table" maxlength="16" onBlur="clean_scorebar(this);" />
-            &nbsp;&nbsp;
-            <div id="scorebarBorder" style="margin-left:140px; margin-top:-25px; display:none;" title="<#LANHostConfig_x_Password_itemSecur#>">
-            		<div id="score"></div>
-            		<div id="scorebar">&nbsp;</div>
-            </div>            
-          </td>
-        </tr>
-
-        <tr>
-          <th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_retype#></a></th>
-          <td>
-            <input type="password" autocapitalization="off" autocomplete="off" name="v_password2" tabindex="3" onKeyPress="return is_string(this, event);" onpaste="return false;" class="input_15_table" maxlength="16" />
-            <div style="margin:-25px 0px 5px 135px;"><input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.http_passwd2);pass_checked(document.form.v_password2);"><#QIS_show_pass#></div>
-            <span id="alert_msg2" style="color:#FC0;margin-left:8px;"></span>
-            
-          </td>
-        </tr>
-      </table>
-
-<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
-                <thead>
-                <tr>
-          <td colspan="2">Persistent JFFS2 partition</td>
-        </tr>
-        </thead>
-           <tr>
-              <th>Enable JFFS partition</th>
-              <td>
-                  <input type="radio" name="jffs2_on" class="input" value="1" <% nvram_match_x("LANHostConfig", "jffs2_on", "1", "checked"); %>><#checkbox_Yes#>
-                  <input type="radio" name="jffs2_on" class="input" value="0" <% nvram_match_x("LANHostConfig", "jffs2_on", "0", "checked"); %>><#checkbox_No#>
-              </td>
-          </tr>
-          <tr>
-              <th>Format JFFS partition at next boot</th>
-              <td>
-                  <input type="radio" name="jffs2_format" class="input" value="1" <% nvram_match_x("LANHostConfig", "jffs2_format", "1", "checked"); %>><#checkbox_Yes#>
-                  <input type="radio" name="jffs2_format" class="input" value="0" <% nvram_match_x("LANHostConfig", "jffs2_format", "0", "checked"); %>><#checkbox_No#>
-              </td>
-          </tr>
-      </table>
-
-	<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
-		<thead>
-			<tr>
-				<td colspan="2">Shell access</td>
-			</tr>
-		</thead>
-		<tr>
-			<th><#Enable_Telnet#></th>
-			<td>
-				<input type="radio" name="telnetd_enable" class="input" value="1" <% nvram_match_x("LANHostConfig", "telnetd_enable", "1", "checked"); %>><#checkbox_Yes#>
-				<input type="radio" name="telnetd_enable" class="input" value="0" <% nvram_match_x("LANHostConfig", "telnetd_enable", "0", "checked"); %>><#checkbox_No#>
-			</td>
-		</tr>
-
-		<tr>
-			<th>Enable SSH</th>
-			<td>
-				<input type="radio" name="sshd_enable" class="input" onClick="refresh_sshd_options(1);" value="1" <% nvram_match_x("LANHostConfig", "sshd_enable", "1", "checked"); %>><#checkbox_Yes#>
-				<input type="radio" name="sshd_enable" class="input" onClick="refresh_sshd_options(0);" value="0" <% nvram_match_x("LANHostConfig", "sshd_enable", "0", "checked"); %>><#checkbox_No#>
-			</td>
-		</tr>
-
-		<tr id="sshd_fwd_field">
-			<th>Allow SSH Port Forwarding</th>
-			<td>
-				<input type="radio" name="sshd_forwarding" class="input" value="1" <% nvram_match_x("LANHostConfig", "sshd_forwarding", "1", "checked"); %>><#checkbox_Yes#>
-				<input type="radio" name="sshd_forwarding" class="input" value="0" <% nvram_match_x("LANHostConfig", "sshd_forwarding", "0", "checked"); %>><#checkbox_No#>
-			</td>
-		</tr>
-
-		<tr id="sshd_lanport_field">
-			<th>SSH service port</th>
-			<td>
-				<input type="text" maxlength="5" class="input_6_table" name="sshd_port" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 65535)" value="<% nvram_get("sshd_port"); %>">
-			</td>
-		</tr>
-
-		<tr id="sshd_wan_field">
-			<th>Allow SSH access from WAN</th>
-			<td>
-				<input type="radio" name="sshd_wan" class="input" value="1" <% nvram_match_x("LANHostConfig", "sshd_wan", "1", "checked"); %>><#checkbox_Yes#>
-				<input type="radio" name="sshd_wan" class="input" value="0" <% nvram_match_x("LANHostConfig", "sshd_wan", "0", "checked"); %>><#checkbox_No#>
-			</td>
-		</tr>
-		<tr id="sshd_pswd_log_field">
-			<th>Allow SSH password login</th>
-			<td>
-				<input type="radio" name="sshd_pass" class="input" value="1" <% nvram_match_x("LANHostConfig", "sshd_pass", "1", "checked"); %>><#checkbox_Yes#>
-				<input type="radio" name="sshd_pass" class="input" value="0" <% nvram_match_x("LANHostConfig", "sshd_pass", "0", "checked"); %>><#checkbox_No#>
-			</td>
-		</tr>
-		<tr id="sshd_bfp_field">
-			<th>Enable SSH Brute Force Protection</th>
-			<td>
-				<input type="radio" name="sshd_bfp" class="input" value="1" <% nvram_match_x("LANHostConfig", "sshd_bfp", "1", "checked"); %>><#checkbox_Yes#>
-				<input type="radio" name="sshd_bfp" class="input" value="0" <% nvram_match_x("LANHostConfig", "sshd_bfp", "0", "checked"); %>><#checkbox_No#>
-			</td>
-		</tr>
-
-		<tr id="sshd_keyauth_field">
-			<th>SSH Authentication key</th>
-			<td>
-				<textarea rows="8" class="textarea_ssh_table" name="sshd_authkeys" style="width:95%;" maxlength="3499"><% nvram_clean_get("sshd_authkeys"); %></textarea>
-				<span id="ssh_alert_msg"></span>
-			</td>
-		</tr>
-	</table>
-
-      <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable" style="margin-top:8px;">
-      	<thead>
-	  	<tr>
-          <td colspan="2"><#t2Misc#></td>
-        </tr>
-    	</thead>
-	<tr id="btn_ez_radiotoggle_tr">
-		<th><#WPS_btn_behavior#></th>
-		<td>
-			<input type="radio" name="btn_ez_radiotoggle" class="input" value="1" <% nvram_match_x("", "btn_ez_radiotoggle", "1", "checked"); %>><#WPS_btn_toggle#>
-			<input type="radio" name="btn_ez_radiotoggle" class="input" value="0" <% nvram_match_x("", "btn_ez_radiotoggle", "0", "checked"); %>><#WPS_btn_actWPS#>
-		</td>
-	</tr>
-        <tr>
-          <th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,1)"><#LANHostConfig_x_ServerLogEnable_itemname#></a></th>
-          <td><input type="text" maxlength="15" class="input_15_table" name="log_ipaddr" value="<% nvram_get("log_ipaddr"); %>" onKeyPress="return is_ipaddr(this, event)" ></td>
-        </tr>
-        <tr>
-          <th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,2)"><#LANHostConfig_x_TimeZone_itemname#></a></th>
-          <td>
-            <select name="time_zone_select" class="input_option" onchange="select_time_zone();">          
-            </select>
-          	<div>
-          		<span id="chkbox_time_zone_dst" style="color:white;display:none;">
-          			<input type="checkbox" name="time_zone_dst_chk" id="time_zone_dst_chk" <% nvram_match("time_zone_dst", "1", "checked"); %> class="input" onClick="daylight_save_check();">
-          			<label for="time_zone_dst_chk"><span id="adj_dst"></span></label>
-          			<br>
-          		</span>	
-          		<span id="dst_start" style="color:white;display:none;">
-          				<b>DST start time</b>
-          				<select name="dst_start_m" class="input_option" onchange=""></select>&nbsp;month &nbsp;
-          				<select name="dst_start_w" class="input_option" onchange=""></select>&nbsp;week &nbsp;
-          				<select name="dst_start_d" class="input_option" onchange=""></select>&nbsp;weekday &nbsp;
-          				<select name="dst_start_h" class="input_option" onchange=""></select>&nbsp;hour &nbsp;
-          			<br>
-          		</span>
-          		<span id="dst_end" style="color:white;display:none;">
-          			<b>DST end time</b>&nbsp;&nbsp;
-    	      			<select name="dst_end_m" class="input_option" onchange=""></select>&nbsp;month &nbsp;
-  	        			<select name="dst_end_w" class="input_option" onchange=""></select>&nbsp;week &nbsp;
-	          			<select name="dst_end_d" class="input_option" onchange=""></select>&nbsp;weekday &nbsp;
-          				<select name="dst_end_h" class="input_option" onchange=""></select>&nbsp;hour &nbsp;
-          				<br>
-          		</span>          			
-            	<span id="timezone_hint" style="display:none;"></span>
-          	</div>
-            </td>
-        </tr>
-        <tr>
-        	<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,3)"><#LANHostConfig_x_NTPServer_itemname#></a></th>
-        	<td>
-				<input type="text" maxlength="256" class="input_32_table" name="ntp_server0" value="<% nvram_get("ntp_server0"); %>" onKeyPress="return is_string(this, event);">
-    	      	<a href="javascript:openLink('x_NTPServer1')"  name="x_NTPServer1_link" style=" margin-left:5px; text-decoration: underline;"><#LANHostConfig_x_NTPServer1_linkname#></a>
-				<div id="svc_hint_div" style="display:none;"><span style="color:#FFCC00;"><#General_x_SystemTime_syncNTP#></span></div>
-			</td>
-        </tr>
+			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+			<thead>
+				<tr>
+					<td colspan="2"><#PASS_changepasswd#></td>
+				</tr>
+			</thead>
+				<tr>
+				  <th width="40%"><#Router_Login_Name#></th>
+					<td>
+						<div><input type="text" id="http_username" name="http_username" tabindex="1" style="height:25px;" class="input_15_table" maxlength="20"><br/><span id="alert_msg1" style="color:#FC0;margin-left:8px;"></span></div>
+					</td>
+				</tr>
 
 				<tr>
-		  	<tr id="https_tr">
+					<th width="40%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_new#></a></th>
+					<td>
+						<input type="password" autocapitalization="off" autocomplete="off" name="http_passwd2" tabindex="2" onKeyPress="return is_string(this, event);" onkeyup="chkPass(this.value, 'http_passwd');" onpaste="return false;" class="input_15_table" maxlength="16" onBlur="clean_scorebar(this);" />
+						&nbsp;&nbsp;
+						<div id="scorebarBorder" style="margin-left:140px; margin-top:-25px; display:none;" title="<#LANHostConfig_x_Password_itemSecur#>">
+							<div id="score"></div>
+							<div id="scorebar">&nbsp;</div>
+						</div>            
+					</td>
+				</tr>
+
+				<tr>
+					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_retype#></a></th>
+					<td>
+						<input type="password" autocapitalization="off" autocomplete="off" name="v_password2" tabindex="3" onKeyPress="return is_string(this, event);" onpaste="return false;" class="input_15_table" maxlength="16" />
+						<div style="margin:-25px 0px 5px 135px;"><input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.http_passwd2);pass_checked(document.form.v_password2);"><#QIS_show_pass#></div>
+						<span id="alert_msg2" style="color:#FC0;margin-left:8px;"></span>
+					
+					</td>
+				</tr>
+			</table>
+			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+				<thead>
+					<tr>
+						<td colspan="2">Persistent JFFS2 partition</td>
+					</tr>
+				</thead>
+				<tr>
+					<th>Enable JFFS partition</th>
+					<td>
+						<input type="radio" name="jffs2_on" class="input" value="1" <% nvram_match("jffs2_on", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="jffs2_on" class="input" value="0" <% nvram_match("jffs2_on", "0", "checked"); %>><#checkbox_No#>
+					</td>
+				</tr>
+				<tr>
+					<th>Format JFFS partition at next boot</th>
+    				<td>
+    					<input type="radio" name="jffs2_format" class="input" value="1" <% nvram_match("jffs2_format", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="jffs2_format" class="input" value="0" <% nvram_match("jffs2_format", "0", "checked"); %>><#checkbox_No#>
+					</td>
+				</tr>
+			</table>
+			<table id="ssh_table" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable" style="margin-top:8px;">
+				<thead>
+					<tr>
+						<td colspan="2">SSH Daemon</td>
+					</tr>
+				</thead>
+				<tr>
+					<th>Enable SSH</th>
+					<td>
+						<input type="radio" name="sshd_enable" class="input" onClick="refresh_sshd_options(1);" value="1" <% nvram_match("sshd_enable", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="sshd_enable" class="input" onClick="refresh_sshd_options(0);" value="0" <% nvram_match("sshd_enable", "0", "checked"); %>><#checkbox_No#>
+					</td>
+				</tr>
+
+				<tr id="remote_forwarding_tr">
+					<th>Allow SSH Port Forwarding</th>
+					<td>
+						<input type="radio" name="sshd_forwarding" class="input" value="1" <% nvram_match("sshd_forwarding", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="sshd_forwarding" class="input" value="0" <% nvram_match("sshd_forwarding", "0", "checked"); %>><#checkbox_No#>
+					</td>
+				</tr>
+
+				<tr id="sshd_port_tr">
+					<th>SSH service port</th>
+					<td>
+						<input type="text" maxlength="5" class="input_6_table" name="sshd_port" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 65535)" value="<% nvram_get("sshd_port"); %>">
+					</td>
+				</tr>
+
+				<tr id="remote_access_tr">
+					<th>Allow SSH access from WAN</th>
+					<td>
+						<input type="radio" name="sshd_wan" class="input" value="1" <% nvram_match("sshd_wan", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="sshd_wan" class="input" value="0" <% nvram_match("sshd_wan", "0", "checked"); %>><#checkbox_No#>
+					</td>
+				</tr>
+				<tr id="sshd_password_tr">
+					<th>Allow SSH password login</th>
+					<td>
+						<input type="radio" name="sshd_pass" class="input" value="1" <% nvram_match("sshd_pass", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="sshd_pass" class="input" value="0" <% nvram_match("sshd_pass", "0", "checked"); %>><#checkbox_No#>
+					</td>
+				</tr>
+				<tr id="sshd_bfp_field">
+					<th>Enable SSH Brute Force Protection</th>
+					<td>
+						<input type="radio" name="sshd_bfp" class="input" value="1" <% nvram_match("sshd_bfp", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="sshd_bfp" class="input" value="0" <% nvram_match("sshd_bfp", "0", "checked"); %>><#checkbox_No#>
+					</td>
+				</tr>
+
+				<tr id="auth_keys_tr">
+					<th>SSH Authentication key</th>
+					<td>
+						<textarea rows="8" class="textarea_ssh_table" name="sshd_authkeys" style="width:95%;" maxlength="3499"><% nvram_clean_get("sshd_authkeys"); %></textarea>
+						<span id="ssh_alert_msg"></span>
+					</td>
+				</tr>
+			</table>
+			
+			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable" style="margin-top:8px;">
+				<thead>
+					<tr>
+					  <td colspan="2"><#t2Misc#></td>
+					</tr>
+				</thead>
+				<tr id="btn_ez_radiotoggle_tr">
+					<th><#WPS_btn_behavior#></th>
+					<td>
+						<input type="radio" name="btn_ez_radiotoggle" class="input" value="1" <% nvram_match_x("", "btn_ez_radiotoggle", "1", "checked"); %>><#WPS_btn_toggle#>
+						<input type="radio" name="btn_ez_radiotoggle" class="input" value="0" <% nvram_match_x("", "btn_ez_radiotoggle", "0", "checked"); %>><#WPS_btn_actWPS#>
+					</td>
+				</tr>
+				<tr>
+					<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,1)"><#LANHostConfig_x_ServerLogEnable_itemname#></a></th>
+					<td><input type="text" maxlength="15" class="input_15_table" name="log_ipaddr" value="<% nvram_get("log_ipaddr"); %>" onKeyPress="return is_ipaddr(this, event)" ></td>
+				</tr>
+				<tr>
+					<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,2)"><#LANHostConfig_x_TimeZone_itemname#></a></th>
+					<td>
+						<select name="time_zone_select" class="input_option" onchange="select_time_zone();"></select>				
+						<div>
+							<span id="chkbox_time_zone_dst" style="color:white;display:none;">
+								<input type="checkbox" name="time_zone_dst_chk" id="time_zone_dst_chk" <% nvram_match("time_zone_dst", "1", "checked"); %> class="input" onClick="daylight_save_check();">
+								<label for="time_zone_dst_chk"><span id="adj_dst"></span></label>
+								<br>
+							</span>	
+							<span id="dst_start" style="color:white;display:none;">
+								<b>DST start time</b>
+								<select name="dst_start_m" class="input_option" onchange=""></select>&nbsp;month &nbsp;
+								<select name="dst_start_w" class="input_option" onchange=""></select>&nbsp;week &nbsp;
+								<select name="dst_start_d" class="input_option" onchange=""></select>&nbsp;weekday &nbsp;
+								<select name="dst_start_h" class="input_option" onchange=""></select>&nbsp;hour &nbsp;
+								<br>
+							</span>
+							<span id="dst_end" style="color:white;display:none;">
+								<b>DST end time</b>&nbsp;&nbsp;
+								<select name="dst_end_m" class="input_option" onchange=""></select>&nbsp;month &nbsp;
+								<select name="dst_end_w" class="input_option" onchange=""></select>&nbsp;week &nbsp;
+								<select name="dst_end_d" class="input_option" onchange=""></select>&nbsp;weekday &nbsp;
+								<select name="dst_end_h" class="input_option" onchange=""></select>&nbsp;hour &nbsp;
+								<br>
+							</span>          			
+							<span id="timezone_hint" style="display:none;"></span>
+						</div>
+					</td>
+				</tr>
+				<tr>
+					<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,3)"><#LANHostConfig_x_NTPServer_itemname#></a></th>
+					<td>
+						<input type="text" maxlength="256" class="input_32_table" name="ntp_server0" value="<% nvram_get("ntp_server0"); %>" onKeyPress="return is_string(this, event);">
+						<a href="javascript:openLink('x_NTPServer1')"  name="x_NTPServer1_link" style=" margin-left:5px; text-decoration: underline;"><#LANHostConfig_x_NTPServer1_linkname#></a>
+						<div id="svc_hint_div" style="display:none;"><span style="color:#FFCC00;"><#General_x_SystemTime_syncNTP#></span></div>
+					</td>
+				</tr>
+				<tr>
+					<th><#Enable_Telnet#></th>
+					<td>
+						<input type="radio" name="telnetd_enable" class="input" value="1" <% nvram_match("telnetd_enable", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="telnetd_enable" class="input" value="0" <% nvram_match("telnetd_enable", "0", "checked"); %>><#checkbox_No#>
+					</td>
+				</tr>
+				<tr id="https_tr">
 					<th><#WLANConfig11b_AuthenticationMethod_itemname#></th>
 					<td>
-				  	<select name="http_enable" class="input_option" onchange="hide_https_lanport(this.value);hide_https_wanport(this.value);">
+						<select name="http_enable" class="input_option" onchange="hide_https_lanport(this.value);hide_https_wanport(this.value);">
 							<option value="0" <% nvram_match("http_enable", "0", "selected"); %>>HTTP</option>
 							<option value="1" <% nvram_match("http_enable", "1", "selected"); %>>HTTPS</option>
 							<option value="2" <% nvram_match("http_enable", "2", "selected"); %>>BOTH</option>
-				  	</select>				  	
+						</select>				  	
 					</td>
-		  	</tr>
+				</tr>
 
-		  	<tr id="https_lanport">
+				<tr id="https_lanport">
 					<th>HTTPS Lan port</th>
-          <td>
+					<td>
 						<input type="text" maxlength="5" class="input_6_table" name="https_lanport" value="<% nvram_get("https_lanport"); %>" onKeyPress="return is_number(this,event);" onBlur="change_url(this.value, 'https_lan');">
 						<span id="https_access_page"></span>
 					</td>
-		  	</tr>
-		  	
-        <tr id="misc_http_x_tr">
-          	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(8,2);"><#FirewallConfig_x_WanWebEnable_itemname#></a></th>
-           	<td>
-             		<input type="radio" value="1" name="misc_http_x" class="input" onClick="hideport(1);return change_common_radio(this, 'FirewallConfig', 'misc_http_x', '1')" <% nvram_match("misc_http_x", "1", "checked"); %>><#checkbox_Yes#>
-             		<input type="radio" value="0" name="misc_http_x" class="input" onClick="hideport(0);return change_common_radio(this, 'FirewallConfig', 'misc_http_x', '0')" <% nvram_match("misc_http_x", "0", "checked"); %>><#checkbox_No#>
-           	</td>
-        </tr>   					
-        
-		<tr>
-			<th>Auto Logout</th>
-			<td>
-				<input type="text" class="input_3_table" maxlength="3" name="http_autologout" value='<% nvram_get("http_autologout"); %>' onKeyPress="return is_number(this,event);" > min
-				<span>(0: Disable)</span>
-			</td>
-		</tr>
+				</tr>
+				
+				<tr id="misc_http_x_tr">
+					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(8,2);"><#FirewallConfig_x_WanWebEnable_itemname#></a></th>
+					<td>
+						<input type="radio" value="1" name="misc_http_x" class="input" onClick="hideport(1);return change_common_radio(this, 'FirewallConfig', 'misc_http_x', '1')" <% nvram_match("misc_http_x", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" value="0" name="misc_http_x" class="input" onClick="hideport(0);return change_common_radio(this, 'FirewallConfig', 'misc_http_x', '0')" <% nvram_match("misc_http_x", "0", "checked"); %>><#checkbox_No#>
+					</td>
+				</tr>   					
 
-        <tr id="accessfromwan_port">
-           	<th align="right"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(8,3);"><#FirewallConfig_x_WanWebPort_itemname#></a></th>
-           	<td>
-								<span style="margin-left:5px;" id="http_port">HTTP: <input type="text" maxlength="5" name="misc_httpport_x" class="input_6_table" value="<% nvram_get("misc_httpport_x"); %>" onKeyPress="return is_number(this,event);"/>&nbsp;&nbsp;</span>
-								<span style="margin-left:5px;" id="https_port">HTTPS: <input type="text" maxlength="5" name="misc_httpsport_x" class="input_6_table" value="<% nvram_get("misc_httpsport_x"); %>" onKeyPress="return is_number(this,event);"/></span>
-						</td>
-        </tr>		  	
+				<tr id="accessfromwan_port">
+					<th align="right"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(8,3);"><#FirewallConfig_x_WanWebPort_itemname#></a></th>
+					<td>
+						<span style="margin-left:5px;" id="http_port">HTTP: <input type="text" maxlength="5" name="misc_httpport_x" class="input_6_table" value="<% nvram_get("misc_httpport_x"); %>" onKeyPress="return is_number(this,event);"/>&nbsp;&nbsp;</span>
+						<span style="margin-left:5px;" id="https_port">HTTPS: <input type="text" maxlength="5" name="misc_httpsport_x" class="input_6_table" value="<% nvram_get("misc_httpsport_x"); %>" onKeyPress="return is_number(this,event);"/></span>
+					</td>
+				</tr>		  	
+			
+				<tr>
+					<th><#System_AutoLogout#></th>
+					<td>
+						<input type="text" class="input_3_table" maxlength="3" name="http_autologout" value='<% nvram_get("http_autologout"); %>' onKeyPress="return is_number(this,event);" > <#Minute#>
+						<span>(<#zero_disable#>)</span>
+					</td>
+				</tr>
 
 				<tr id="http_client_tr">
-				  <th><#System_login_specified_IP#></th>
-				  <td>
-				    <input type="radio" name="http_client" class="input" value="1" <% nvram_match_x("", "http_client", "1", "checked"); %>><#checkbox_Yes#>
-				    <input type="radio" name="http_client" class="input" value="0" <% nvram_match_x("", "http_client", "0", "checked"); %>><#checkbox_No#>
-				  </td>
+					<th><#System_login_specified_IP#></th>
+					<td>
+						<input type="radio" name="http_client" class="input" value="1" <% nvram_match_x("", "http_client", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="http_client" class="input" value="0" <% nvram_match_x("", "http_client", "0", "checked"); %>><#checkbox_No#>
+					</td>
 				</tr>
-      </table>
+			</table>
 
 			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" id="http_client_table">
 				<thead>
@@ -1174,40 +1200,36 @@ function refresh_sshd_options(flag){
 						<td colspan="4"><#System_login_specified_Iplist#>&nbsp;(<#List_limit#>&nbsp;4)</td>
 					</tr>
 				</thead>
-			
-			  <tr>
+				
+				<tr>
 					<th width="80%"><#ConnectedClient#></th>
 					<th width="20%"><#list_add_delete#></th>
 				</tr>
 
 				<tr>
-					<!-- client info -->
+						<!-- client info -->
 					<td width="80%">
-				 		<input type="text" class="input_32_table" maxlength="15" name="http_client_ip_x_0"  onKeyPress="" onClick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}">
+						<input type="text" class="input_32_table" maxlength="15" name="http_client_ip_x_0"  onKeyPress="" onClick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}">
 						<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="<#select_client#>" onmouseover="over_var=1;" onmouseout="over_var=0;">	
 						<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>	
-				 	</td>
-				 	<td width="20%">	
-				  		<input class="add_btn" type="button" onClick="addRow(document.form.http_client_ip_x_0, 4);" value="">
-				 	</td>	
+					 </td>
+					 <td width="20%">	
+						<input class="add_btn" type="button" onClick="addRow(document.form.http_client_ip_x_0, 4);" value="">
+					 </td>	
 				</tr>
 			</table>
-     	<div id="http_clientlist_Block"></div>
-
-     	<div class="apply_gen">
-     		<input name="button" type="button" class="button_gen" onclick="applyRule();" value="<#CTL_apply#>"/>
-     	</div>
-      
-      </td></tr>
+			<div id="http_clientlist_Block"></div>
+			<div class="apply_gen">
+				<input name="button" type="button" class="button_gen" onclick="applyRule();" value="<#CTL_apply#>"/>
+			</div>   
+		</td>
+	</tr>
 </tbody>
 
 </table></td>
 </form>
-
-
-
         </tr>
-      </table>				
+    </table>				
 		<!--===================================Ending of Main Content===========================================-->		
 	</td>
 		

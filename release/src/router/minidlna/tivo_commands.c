@@ -118,11 +118,11 @@ SendFormats(struct upnphttp *h, const char *sformat)
 static char *
 tivo_unescape_tag(char *tag)
 {
-	modifyString(tag, "&amp;amp;", "&amp;");
-	modifyString(tag, "&amp;amp;lt;", "&lt;");
-	modifyString(tag, "&amp;lt;", "&lt;");
-	modifyString(tag, "&amp;amp;gt;", "&gt;");
-	modifyString(tag, "&amp;gt;", "&gt;");
+	modifyString(tag, "&amp;amp;", "&amp;", 1);
+	modifyString(tag, "&amp;amp;lt;", "&lt;", 1);
+	modifyString(tag, "&amp;lt;", "&lt;", 1);
+	modifyString(tag, "&amp;amp;gt;", "&gt;", 1);
+	modifyString(tag, "&amp;gt;", "&gt;", 1);
 	return tag;
 }
 
@@ -308,7 +308,7 @@ SendItemDetails(struct upnphttp *h, int64_t item)
 	args.requested = 1;
 	xasprintf(&sql, SELECT_COLUMNS
 	               "from OBJECTS o left join DETAILS d on (d.ID = o.DETAIL_ID)"
-		       " where o.DETAIL_ID = %lld group by o.DETAIL_ID", item);
+		       " where o.DETAIL_ID = %lld group by o.DETAIL_ID", (long long)item);
 	DPRINTF(E_DEBUG, L_TIVO, "%s\n", sql);
 	ret = sqlite3_exec(db, sql, callback, (void *) &args, &zErrMsg);
 	free(sql);

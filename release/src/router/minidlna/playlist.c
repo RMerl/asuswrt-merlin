@@ -44,7 +44,7 @@ insert_playlist(const char * path, char * name)
 	int items = 0, matches, ret;
 	char type[4];
 
-	strncpy(type, strrchr(name, '.')+1, 4);
+	strncpyt(type, strrchr(name, '.')+1, 4);
 
 	if( start_plist(path, NULL, &file, NULL, type) != 0 )
 	{
@@ -105,11 +105,11 @@ gen_dir_hash(const char *path)
 		return 0;
 	
 
-	return DJBHash(dir, len);
+	return DJBHash((uint8_t *)dir, len);
 }
 
 int
-fill_playlists()
+fill_playlists(void)
 {
 	int rows, i, found, len;
 	char **result;
@@ -138,7 +138,7 @@ fill_playlists()
 		last_dir = NULL;
 		last_hash = 0;
 
-		strncpy(type, strrchr(plpath, '.')+1, 4);
+		strncpyt(type, strrchr(plpath, '.')+1, 4);
 
 		if( start_plist(plpath, NULL, &file, NULL, type) != 0 )
 			continue;
@@ -221,9 +221,12 @@ found:
 				if( !last_dir )
 				{
 					last_dir = sql_get_text_field(db, "SELECT PATH from DETAILS where ID = %lld", detailID);
-					fname = strrchr(last_dir, '/');
-					if( fname )
-						*fname = '\0';
+					if( last_dir )
+					{
+						fname = strrchr(last_dir, '/');
+						if( fname )
+							*fname = '\0';
+					}
 					last_hash = hash;
 				}
 				found++;
@@ -233,7 +236,7 @@ found:
 				DPRINTF(E_DEBUG, L_SCANNER, "- %s not found in db\n", fname);
 				if( strchr(fname, '\\') )
 				{
-					fname = modifyString(fname, "\\", "/");
+					fname = modifyString(fname, "\\", "/", 1);
 					goto retry;
 				}
 				else if( (fname = strchr(fname, '/')) )

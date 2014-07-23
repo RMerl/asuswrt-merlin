@@ -10,6 +10,9 @@ version 2.72
 
 	    Add DBus methods SetFilterWin2KOption and SetBogusPrivOption
 	    Thanks to the Smoothwall project for the patch.
+
+	    Fix failure to build against Nettle-3.0. Thanks to Steven 
+	    Barth for spotting this and finding the fix. 
 	    
 
 version 2.71

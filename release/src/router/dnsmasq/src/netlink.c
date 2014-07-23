@@ -356,28 +356,10 @@ static void nl_async(struct nlmsghdr *h)
       struct rtmsg *rtm = NLMSG_DATA(h);
       
       if (rtm->rtm_type == RTN_UNICAST && rtm->rtm_scope == RT_SCOPE_LINK)
-	{
-  	  /* Force re-reading resolv file right now, for luck. */
-	  daemon->last_resolv = 0;
-	  
-	  if (daemon->srv_save)
-	    {
-	      int fd;
-
-	      if (daemon->srv_save->sfd)
-		fd = daemon->srv_save->sfd->fd;
-	      else if (daemon->rfd_save && daemon->rfd_save->refcount != 0)
-		fd = daemon->rfd_save->fd;
-	      else
-		return;
-	      
-	      while(sendto(fd, daemon->packet, daemon->packet_len, 0,
-			   &daemon->srv_save->addr.sa, sa_len(&daemon->srv_save->addr)) == -1 && retry_send()); 
-	    }
-	}
+	queue_event(EVENT_NEWROUTE);
     }
   else if (h->nlmsg_type == RTM_NEWADDR || h->nlmsg_type == RTM_DELADDR) 
-    send_newaddr();
+    queue_event(EVENT_NEWADDR);
 }
 #endif
 

@@ -470,7 +470,7 @@ void timer_handler(void *data)
 		next = min(MAX_INITIAL_RTR_ADVERT_INTERVAL, next);
 	}
 
-	iface->next_multicast = next_timeval(next);
+	iface->next_multicast = next_timespec(next);
 }
 
 void config_interface(void)
@@ -499,12 +499,12 @@ void kickoff_adverts(void)
 	for (iface = IfaceList; iface; iface = iface->next) {
 		double next;
 
-		now(&iface->last_ra_time);
+		clock_gettime(CLOCK_MONOTONIC, &iface->last_ra_time);
 
 		if (iface->UnicastOnly)
 			continue;
 
-		now(&iface->last_multicast);
+		clock_gettime(CLOCK_MONOTONIC, &iface->last_multicast);
 
 		/* TODO: AdvSendAdvert is being checked in send_ra now so it can be removed here. */
 		if (!iface->AdvSendAdvert)
@@ -516,7 +516,7 @@ void kickoff_adverts(void)
 			iface->init_racount++;
 
 			next = min(MAX_INITIAL_RTR_ADVERT_INTERVAL, iface->MaxRtrAdvInterval);
-			iface->next_multicast = next_timeval(next);
+			iface->next_multicast = next_timespec(next);
 		}
 	}
 }
@@ -685,11 +685,11 @@ int drop_root_privileges(const char *username)
 	if (pw) {
 		if (initgroups(username, pw->pw_gid) != 0 || setgid(pw->pw_gid) != 0 || setuid(pw->pw_uid) != 0) {
 			flog(LOG_ERR, "Couldn't change to '%.32s' uid=%d gid=%d", username, pw->pw_uid, pw->pw_gid);
-			return (-1);
+			return -1;
 		}
 	} else {
 		flog(LOG_ERR, "Couldn't find user '%.32s'", username);
-		return (-1);
+		return -1;
 	}
 	return 0;
 }
@@ -702,7 +702,7 @@ int check_conffile_perm(const char *username, const char *conf_file)
 
 	if (fp == NULL) {
 		flog(LOG_ERR, "can't open %s: %s", conf_file, strerror(errno));
-		return (-1);
+		return -1;
 	}
 	fclose(fp);
 
@@ -712,17 +712,17 @@ int check_conffile_perm(const char *username, const char *conf_file)
 	pw = getpwnam(username);
 
 	if (stat(conf_file, &stbuf) || pw == NULL)
-		return (-1);
+		return -1;
 
 	if (stbuf.st_mode & S_IWOTH) {
 		flog(LOG_ERR, "Insecure file permissions (writable by others): %s", conf_file);
-		return (-1);
+		return -1;
 	}
 
 	/* for non-root: must not be writable by self/own group */
 	if (strncmp(username, "root", 5) != 0 && ((stbuf.st_mode & S_IWGRP && pw->pw_gid == stbuf.st_gid) || (stbuf.st_mode & S_IWUSR && pw->pw_uid == stbuf.st_uid))) {
 		flog(LOG_ERR, "Insecure file permissions (writable by self/group): %s", conf_file);
-		return (-1);
+		return -1;
 	}
 
 	return 0;
@@ -756,7 +756,7 @@ int check_ip6_forwarding(void)
 #ifdef HAVE_SYS_SYSCTL_H
 	if (!fp && sysctl(forw_sysctl, sizeof(forw_sysctl) / sizeof(forw_sysctl[0]), &value, &size, NULL, 0) < 0) {
 		flog(LOG_DEBUG, "Correct IPv6 forwarding sysctl branch not found, " "perhaps the kernel interface has changed?");
-		return (0);	/* this is of advisory value only */
+		return 0;	/* this is of advisory value only */
 	}
 #endif
 
@@ -771,29 +771,29 @@ int check_ip6_forwarding(void)
 	if (!warned && value != 1 && value != 2) {
 		warned = 1;
 		flog(LOG_DEBUG, "IPv6 forwarding setting is: %u, should be 1 or 2", value);
-		return (-1);
+		return -1;
 	}
 #else
 	if (!warned && value != 1) {
 		warned = 1;
 		flog(LOG_DEBUG, "IPv6 forwarding setting is: %u, should be 1", value);
-		return (-1);
+		return -1;
 	}
 #endif				/* __linux__ */
 
-	return (0);
+	return 0;
 }
 
 int readin_config(char *fname)
 {
 	if ((yyin = fopen(fname, "r")) == NULL) {
 		flog(LOG_ERR, "can't open %s: %s", fname, strerror(errno));
-		return (-1);
+		return -1;
 	}
 
 	if (yyparse() != 0) {
 		flog(LOG_ERR, "error parsing or activating the config file: %s", fname);
-		return (-1);
+		return -1;
 	}
 
 	fclose(yyin);

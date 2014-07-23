@@ -85,6 +85,13 @@ sub load
 		if (/\(NEEDED\)\s+Shared library: \[(.+)\]/) {
 			push(@{$elf_lib{$base}}, $1);
 		}
+		elsif (/\(SONAME\)\s+Library soname: \[(.+)\]/) {
+			if (!($1 eq $base))
+			{
+				$elf_lib_soname{$base} = $1;
+				$elf_lib_soname{$1} = $base;
+			}
+		}
 		elsif (/Symbol table for image:/) {
 			last;
 		}
@@ -235,6 +242,10 @@ sub fixDyn
 	fixDynDep("wl", "libbcmcrypto.so");
 	fixDynDep("nas", "libc.so.0");
 	fixDynDep("wl", "libc.so.0");
+
+	fixDynDep("libneon.so.27.2.6", "libz.so.1");
+	fixDynDep("libneon.so.27.2.6", "libcrypto.so.1.0.0");
+	fixDynDep("mod_create_captcha_image.so", "mod_webdav.so");
 }
 
 sub usersOf
@@ -248,7 +259,7 @@ sub usersOf
 	@x = ();
 	foreach $e (@elfs) {
 		foreach $l (@{$elf_lib{$e}}) {
-			if ($l eq $name) {
+			if ($l eq $name || (defined($elf_lib_soname{$l}) && $elf_lib_soname{$l} eq $name)) {
 				if ((!defined $sym) || (defined $elf_ext{$e}{$sym})) {
 					push(@x, $e);
 				}
@@ -387,6 +398,31 @@ sub genXref
 	close($f);
 }
 
+sub verifyUnresolved
+{
+	my $name;
+	my $sym;
+	my $lib;
+	my $found;
+	my @unresolved;
+
+	foreach $name (@elfs) {
+		foreach $sym (keys %{$elf_ext{$name}}) {
+			$found = 0;
+			foreach $lib (@{$elf_lib{$name}}) {
+				if (defined($elf_exp{$lib}{$sym}) || (defined($elf_lib_soname{$lib}) && defined($elf_exp{$elf_lib_soname{$lib}}{$sym}))) {
+					$found = 1;
+					last;
+				}
+			}
+			if($found == 0) {
+				print "WARNING: unresolved $name---$sym\n";
+				push(@unresolved, "$name---$sym");
+			}
+		}
+	}
+	return @unresolved;
+}
 
 sub genSO
 {
@@ -434,7 +470,11 @@ sub genSO
 		}
 	}
 #	print "$cmd -u... ${arc}\n";	
-	if (scalar(@used) == 0) {
+	my @u = usersOf($name);
+	if ((scalar(@used) == 0) && (scalar(@u) > 0)) {
+		print "$name: WARNING: Library symbol is not used by anything, but linked by (@u). so keep it ...\n";
+	}
+	elsif (scalar(@used) == 0) {
 		print "$name: WARNING: Library is not used by anything, deleting...\n";
 		unlink $so;
 #		<>;
@@ -498,6 +538,8 @@ if ($ARGV[0] eq "--noopt") {
 # libpthread.so.0 completely screws it up - at least in the current toolchain
 # (binutils 2.20.1 / gcc 4.2.4) :(
 $libpthreadwar = "-u pthread_mutexattr_init -u pthread_mutexattr_settype -u pthread_mutexattr_destroy";
+
+verifyUnresolved();
 
 genSO("${root}/lib/libc.so.0", "${uclibc}/lib/libc.a", "${stripshared}", "-init __uClibc_init ${uclibc}/lib/optinfo/interp.os");
 genSO("${root}/lib/libresolv.so.0", "${uclibc}/lib/libresolv.a", "${stripshared}");

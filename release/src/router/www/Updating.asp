@@ -18,7 +18,8 @@
 			|| parent.based_modelid == "RT-AC68U_V2"
 			|| parent.based_modelid == "DSL-AC68U"
 			|| parent.based_modelid == "RT-AC69U"
-			|| parent.based_modelid == "RT-AC3200"){	//MODELDEP: RT-AC56S, RT-AC56U, RT-AC66U, RT-AC68U, RT-AC68U_V2, RT-AC69U, RT-AC3200 2014.06
+			|| parent.based_modelid == "TM-AC1900"
+			|| parent.based_modelid == "RT-AC3200"){	//MODELDEP: RT-AC56S, RT-AC56U, RT-AC66U, RT-AC68U, RT-AC68U_V2, RT-AC69U, TM-AC1900, RT-AC3200 2014.06
 			reboot_needed_time += 30;
 			parent.showLoadingBar(reboot_needed_time);
 			reboot_needed_time += 2;

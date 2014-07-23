@@ -1224,6 +1224,14 @@ enum {
 	IEEE80211_PARAM_TUNEPD_DONE = 273,              /* Specify number of tunning packets to send for power detector tuning */
 	IEEE80211_PARAM_BF_RX_STS = 274,	/* Set max BF sounding receive STS */
 	IEEE80211_PARAM_PC_OVERRIDE = 275,              /* RSSI based Power-contraint override */
+	IEEE80211_PARAM_INTRA_BSS_ISOLATE = 276,/* Intra BSS isolation */
+	IEEE80211_PARAM_BSS_ISOLATE = 277,      /* BSS isolation */
+	IEEE80211_PARAM_RX_AMSDU_ENABLE = 278,     /* RX AMSDU: 0 - disable, 1 - enable, 2 - enable dynamically */
+	IEEE80211_PARAM_DISASSOC_REASON = 279,	/* Get Disassoc reason */
+	IEEE80211_PARAM_RX_AMSDU_THRESHOLD_CCA = 280,	/* The threshold of cca intf for dynamic RX AMSDU */
+	IEEE80211_PARAM_RX_AMSDU_THRESHOLD_PMBL = 281,	/* The threshold of pmbl error for dynamic RX AMSDU */
+	IEEE80211_PARAM_RX_AMSDU_PMBL_WF_SP = 282,	/* The weight factor of short preamble error for calculating the pmbl error */
+	IEEE80211_PARAM_RX_AMSDU_PMBL_WF_LP = 283,	/* The weight factor of long preamble error for calculating the pmbl error */
 };
 
 #define	SIOCG80211STATS			(SIOCDEVPRIVATE+2)

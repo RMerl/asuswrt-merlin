@@ -96,6 +96,11 @@ CFLAGS += -I$(SRCBASE)/include -I$(SRCBASE)/wps/common/include	\
 
 LDFLAGS += $(EXTRA_LDFLAGS)
 
+ifeq ($(RTCONFIG_HTTPS),y)
+CFLAGS += -I$(TOP)/openssl/include/openssl
+LDFLAGS += -L$(TOP)/openssl -lcrypto -lssl
+endif
+
 WPSM_LIBS = -lnvram -lbcm -lshared -lbcmcrypto -lm -lc
 # Set link libraries search path
 export LIBPATH  = -L$(TOP)/libbcmcrypto -L$(INSTALLDIR)/libbcmcrypto/usr/lib
