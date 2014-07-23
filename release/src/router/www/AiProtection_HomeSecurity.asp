@@ -115,12 +115,13 @@ function initial(){
 													</div>
 												</td>
 											</tr>
+
 											<tr id="dnsfilter">
-												<td align="center" class="app_table_radius_left" style="width:
+												<td align="center" class="app_table_radius_left" style="width:85px;">
 												</td>
-												<td class="app_table_radius_right" style="width:350px;height:1
+												<td class="app_table_radius_right" style="width:350px;height:120px;"">
 													<div class="app_name">
-														<a style="text-decoration: underline;" href="D
+														<a style="text-decoration: underline;" href="DNSFilter.asp">DNS Filtering</a>
 													</div>
 													<div class="app_desc" style="height:60px;">
 														<li>Block malicious websites</li>
