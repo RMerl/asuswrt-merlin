@@ -39,7 +39,6 @@ var arps = [<% get_arp_table(); %>];		// [[ip, x, x, MAC, x, type], ...]
 var arls = [<% get_arl_table(); %>];		// [[MAC, port, x, x], ...]
 var ipmonitor = [<% get_static_client(); %>];	// [[IP, MAC, DeviceName, Type, http, printer, iTune], ...]
 var networkmap_fullscan = '<% nvram_match("networkmap_fullscan", "0", "done"); %>'; //2008.07.24 Add.  1 stands for complete, 0 stands for scanning.;
-var clients_info = getclients();
 
 var dnsfilter_rule_list = '<% nvram_get("dnsfilter_rulelist"); %>'.replace(/&#60/g, "<");
 var dnsfilter_rule_list_row = dnsfilter_rule_list.split('<');
