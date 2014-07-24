@@ -1,0 +1,41 @@
+DOSFSLABEL(8)         set or get MS-DOS filesystem label         DOSFSLABEL(8)
+
+
+
+NAME
+       dosfslabel - set or get MS-DOS filesystem label
+
+
+SYNOPSIS
+       dosfslabel DEVICE [LABEL]
+
+
+DESCRIPTION
+       dosfslabel set or gets a MS-DOS filesystem label from a given device.
+
+       If the label is omitted, then the label name of the specified device is
+       written on the standard output. A label can't be longer than 11 bytes.
+
+
+OPTIONS
+       -h, --help
+           Displays a help message.
+
+       -V, --version
+           Shows version.
+
+
+SEE ALSO
+       dosfsck(8)
+       mkdosfs(8)
+
+
+AUTHORS
+       dosfstools  were   written   by   Werner   Almesberger   <werner.almes‐
+       berger@lrc.di.epfl.ch>,  Roman Hodek <Roman.Hodek@informatik.uni-erlan‐
+       gen.de>,   Daniel   Baumann   <daniel@debian.org>,    Sougata    Santra
+       <sougata@tuxera.com> (Tuxera Inc.) and others.
+
+
+
+Tuxera FAT 3013.9.27              2013-04-08                     DOSFSLABEL(8)

@@ -1,0 +1,87 @@
+NTFSCK(8)                                                            NTFSCK(8)
+
+
+
+NAME
+       ntfsck - check and repair an NTFS file system
+
+SYNOPSIS
+       ntfsck [options] device
+
+DESCRIPTION
+       ntfsck  will  check and repair an NTFS file system located on device or
+       an NTFS image file.
+
+OPTIONS
+       Below is a summary of all the options that ntfsck accepts.  Nearly  all
+       options  have two equivalent names. The short name is preceded by - and
+       the long name is preceded by --.  Any single letter options, that don't
+       take  an  argument, can be combined into a single command, e.g.  -fv is
+       equivalent to -f -v.  Long named options  can  be  abbreviated  to  any
+       unique prefix of their name.
+
+       -a, --automatic-repair
+              Repair  the volume if it appears to be in need of a repair. This
+              options makes ntfsck exit immediately if the volume  appears  to
+              be  in  order  (no  dirty flag set, logfile clean, no hibernated
+              Windows session, ...), but otherwise a full repair is performed.
+
+       -c, --fast-check
+              Check if volume is dirty then exit. If the volume is dirty  then
+              the exit value will be 100.
+
+       -P, --no-progress-bar
+              Don't show progress bars.
+
+       -C, --no-alloc-check
+              Don't  check  cluster allocations. This option speeds up ntfsck.
+              Use this option with caution.
+
+       -O, --no-orpan-check
+              Don't check for orphaned files. This option speeds up ntfsck.
+
+       -M, --no-mft-scan
+              Don't scan $MFT. This option typically slows down ntfsck.
+
+       -S, --no-sync
+              Don't sync NTFS metadata before exit. This option speeds up ntf‐
+              sck   however   it's   safe   to  use  only  if  device  is  not
+              removed/ejected.
+
+       -F, --file FILE
+              Check and repair FILE only. FILE is absolute path to a  file  or
+              directory.
+
+       -i, --inode NUMBER
+              Correct inode NUMBER only and its children.
+
+       -f, --force
+              This  will override some sensible defaults. Use this option with
+              caution.
+
+       -h, --help
+              Show a list of options with a brief description of each one.
+
+       -V, --version
+              Show the version number of ntfsck.
+
+EXIT CODE
+       The exit code returned by ntfsck is one of the followings:
+              0      - No errors or file system was successfully repaired
+              1      - File system errors could not be corrected
+              23     - Volume is read-only
+              100    - Volume is dirty, needs check (--fast-check was used)
+
+BUGS
+       If you find a bug please send an email describing the problem to  ntfs-
+       support@tuxera.com.
+
+AVAILABILITY
+       ntfsck is part of the Tuxera NTFS package.
+
+SEE ALSO
+       mkntfs(8)
+
+
+
+Tuxera NTFS Utilities 3014.5.21  October 2012                        NTFSCK(8)

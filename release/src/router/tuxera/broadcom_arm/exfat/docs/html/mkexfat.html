@@ -1,0 +1,199 @@
+<!-- Creator     : groff version 1.21 -->
+<!-- CreationDate: Mon Jul 14 01:50:21 2014 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       h1      { text-align: center }
+</style>
+<title>MKEXFAT</title>
+
+</head>
+<body>
+
+<h1 align="center">MKEXFAT</h1>
+
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#OPTIONS">OPTIONS</a><br>
+<a href="#BUGS">BUGS</a><br>
+<a href="#AUTHORS">AUTHORS</a><br>
+<a href="#AVAILABILITY">AVAILABILITY</a><br>
+<a href="#SEE ALSO">SEE ALSO</a><br>
+
+<hr>
+
+
+<h2>NAME
+<a name="NAME"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">mkexfat &minus;
+create an exFAT file system</p>
+
+<h2>SYNOPSIS
+<a name="SYNOPSIS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>mkexfat</b>
+[<i>options</i>] <i>device</i></p>
+
+<h2>DESCRIPTION
+<a name="DESCRIPTION"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><i><b>mkexfat</b></i>
+is used to create an exFAT file system on a device (usually
+a disk or flash partition) or image. <i>device</i> is the
+special file corresponding to the device (e.g. <i>/dev/sdXX,
+/dev/block/mmcblk1p1</i>) or an image file.</p>
+
+<h2>OPTIONS
+<a name="OPTIONS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Below is a
+summary of all the options that <b>mkexfat</b> accepts.
+Nearly all options have two equivalent names. The short name
+is preceded by <b>&minus;</b> and the long name is preceded
+by <b>&minus;&minus;</b>. <b><br>
+&minus;a</b>, <b>&minus;&minus;alignment</b> ALIGNMENT</p>
+
+<p style="margin-left:22%;">The alignment of the different
+exFAT regions, specified in bytes. For instance if a certain
+type of flash memory might perform best if the internal
+structures are aligned to 4 MiB boundaries, alignment should
+be specified as 4194304.</p>
+
+<p style="margin-left:11%;"><b>&minus;c</b>,
+<b>&minus;&minus;cluster&minus;size</b> SIZE</p>
+
+<p style="margin-left:22%;">Set the cluster size (in bytes)
+of the volume to <b>SIZE</b>. The default is to determine
+optimal cluster size automatically.</p>
+
+<p style="margin-left:11%;"><b>&minus;f</b>,
+<b>&minus;&minus;force</b></p>
+
+<p style="margin-left:22%;">Allow formatting an exFAT
+volume for which the physical sector size cannot be
+automatically detected (for example an image file).</p>
+
+<p style="margin-left:11%;"><b>&minus;g</b>,
+<b>&minus;&minus;guid</b> GUID</p>
+
+<p style="margin-left:22%;">Set the volume GUID of the
+volume to <b>GUID</b> (the default is to not set any volume
+GUID).</p>
+
+<p style="margin-left:11%;"><b>&minus;l</b>,
+<b>&minus;&minus;volume&minus;label</b> STRING</p>
+
+<p style="margin-left:22%;">Set the volume label for the
+filesystem. The volume label can be up to 11 UTF&minus;16
+units long, i.e. in most cases 11 characters.</p>
+
+<p style="margin-left:11%;"><b>&minus;s</b>,
+<b>&minus;&minus;sector&minus;size</b> SIZE</p>
+
+<p style="margin-left:22%;">Set the volume sector size (in
+bytes) to <b>SIZE</b>. The default is to detect sector size
+automatically. Note: This option should probably never be
+used when formatting devices directly as most exFAT drivers
+won&rsquo;t be able to use an exFAT volume where the volume
+sector size doesn&rsquo;t match the physical sector size
+(though exFAT/U can in fact do this).</p>
+
+<p style="margin-left:11%;"><b>&minus;v</b>,
+<b>&minus;&minus;verbose</b></p>
+
+<p style="margin-left:22%;">Makes <b>mkexfat</b> emit
+certain status messages related to the formatting
+process.</p>
+
+
+<p style="margin-left:11%;"><b>&minus;&minus;sda&minus;strict</b></p>
+
+<p style="margin-left:22%;">Forces the formatted volume to
+adhere to SD Association recommendations.</p>
+
+
+<p style="margin-left:11%;"><b>&minus;&minus;sda&minus;whole</b></p>
+
+<p style="margin-left:22%;">Performs a whole device
+formatting, including partition table, according to the SD
+Association recommendations. This option should only be used
+with whole devices (e.g. <i>/dev/mmcblk0</i>) and never
+partitions (e.g. <i>/dev/mmcblk0p1</i>).</p>
+
+
+<p style="margin-left:11%;"><b>&minus;&minus;sda&minus;relax</b></p>
+
+<p style="margin-left:22%;">Relaxes sanity checks for
+<b>&minus;&minus;sda&minus;strict</b> and
+<b>&minus;&minus;sda&minus;whole</b> to allow formatting
+devices that don&rsquo;t comply to the size specifications
+of SD cards to be formatted according to the SD Association
+guidelines.</p>
+
+<p style="margin-left:22%; margin-top: 1em">NOTE: This
+option is only a modifier to
+<b>&minus;&minus;sda&minus;strict</b> and
+<b>&minus;&minus;sda&minus;whole</b> and does not do
+anything on its own.</p>
+
+
+<p style="margin-left:11%;"><b>&minus;&minus;discard</b></p>
+
+<p style="margin-left:22%;">This option sends a
+&rsquo;discard&rsquo; command, like TRIM, to the device
+which will zero all data on it.</p>
+
+<h2>BUGS
+<a name="BUGS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">If you find a
+bug please send an email describing the problem to
+exfat-support@tuxera.com.</p>
+
+<h2>AUTHORS
+<a name="AUTHORS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>mkexfat</b>
+was written by Erik Larsson, Tuxera Inc.</p>
+
+<h2>AVAILABILITY
+<a name="AVAILABILITY"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>mkexfat</b>
+is part of the <b>Tuxera exFAT</b> package.</p>
+
+<h2>SEE ALSO
+<a name="SEE ALSO"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>exfat&minus;u</b>(8)</p>
+<hr>
+</body>
+</html>

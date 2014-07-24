@@ -1,0 +1,325 @@
+<!-- Creator     : groff version 1.21 -->
+<!-- CreationDate: Mon Jul 14 01:50:02 2014 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       h1      { text-align: center }
+</style>
+<title>MKDOSFS</title>
+
+</head>
+<body>
+
+<h1 align="center">MKDOSFS</h1>
+
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#OPTIONS">OPTIONS</a><br>
+<a href="#BUGS">BUGS</a><br>
+<a href="#AUTHOR">AUTHOR</a><br>
+<a href="#ACKNOWLEDGMENTS">ACKNOWLEDGMENTS</a><br>
+<a href="#SEE ALSO">SEE ALSO</a><br>
+
+<hr>
+
+
+<h2>NAME
+<a name="NAME"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>mkdosfs</b>
+&minus; create an MS-DOS file system under Linux</p>
+
+<h2>SYNOPSIS
+<a name="SYNOPSIS"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>mkdosfs|mkfs.msdos|mkfs.vfat</b>
+[ <b>&minus;a</b> ] [ <b>&minus;A</b> ] [ <b>&minus;b</b>
+<i>sector-of-backup</i> ] [ <b>&minus;c</b> ] [
+<b>&minus;l</b> <i>filename</i> ] [ <b>&minus;C</b> ] [
+<b>&minus;f</b> <i>number-of-FATs</i> ] [ <b>&minus;F</b>
+<i>FAT-size</i> ] [ <b>&minus;h</b>
+<i>number-of-hidden-sectors</i> ] [ <b>&minus;i</b>
+<i>volume-id</i> ] [ <b>&minus;I</b> ] [ <b>&minus;m</b>
+<i>message-file</i> ] [ <b>&minus;n</b> <i>volume-name</i> ]
+[ <b>&minus;r</b> <i>root-dir-entries</i> ] [
+<b>&minus;R</b> <i>number-of-reserved-sectors</i> ] [
+<b>&minus;s</b> <i>sectors-per-cluster</i> ] [
+<b>&minus;S</b> <i>logical-sector-size</i> ] [
+<b>&minus;v</b> ] <i>device</i> [ <i>block-count</i> ]</p>
+
+<h2>DESCRIPTION
+<a name="DESCRIPTION"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>mkdosfs</b>
+is used to create an MS-DOS file system under Linux on a
+device (usually a disk partition). <i>device</i> is the
+special file corresponding to the device (e.g /dev/hdXX).
+<i>block-count</i> is the number of blocks on the device. If
+omitted, <b>mkdosfs</b> automatically determines the file
+system size.</p>
+
+<h2>OPTIONS
+<a name="OPTIONS"></a>
+</h2>
+
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p style="margin-top: 1em"><b>&minus;a</b></p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p style="margin-top: 1em">Normally, for any filesystem
+except very small ones, <b>mkdosfs</b> will align all the
+data structures to cluster size, to make sure that as long
+as the partition is properly aligned, so will all the data
+structures in the filesystem. This option disables
+alignment; this may provide a handful of additional clusters
+of storage at the expense of a significant performance
+degradation on RAIDs, flash media or large-sector hard
+disks.</p> </td></tr>
+</table>
+
+<p style="margin-left:11%;"><b>&minus;b</b>
+<i>sector-of-backup</i></p>
+
+<p style="margin-left:22%;">Selects the location of the
+backup boot sector for FAT32. Default depends on number of
+reserved sectors, but usually is sector 6. The backup must
+be within the range of reserved sectors.</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p><b>&minus;c</b></p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>Check the device for bad blocks before creating the file
+system.</p> </td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p><b>&minus;C</b></p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>Create the file given as <i>device</i> on the command
+line, and write the to-be-created file system to it. This
+can be used to create the new file system in a file instead
+of on a real device, and to avoid using <b>dd</b> in advance
+to create a file of appropriate size. With this option, the
+<i>block-count</i> must be given, because otherwise the
+intended size of the file system wouldn&rsquo;t be known.
+The file created is a sparse file, which actually only
+contains the meta-data areas (boot sector, FATs, and root
+directory). The data portions won&rsquo;t be stored on the
+disk, but the file nevertheless will have the correct size.
+The resulting file can be copied later to a floppy disk or
+other device, or mounted through a loop device.</p></td></tr>
+</table>
+
+<p style="margin-left:11%;"><b>&minus;f</b>
+<i>number-of-FATs</i></p>
+
+<p style="margin-left:22%;">Specify the number of file
+allocation tables in the file system. The default is 2.
+Currently the Linux MS-DOS file system does not support more
+than 2 FATs.</p>
+
+<p style="margin-left:11%;"><b>&minus;F</b>
+<i>FAT-size</i></p>
+
+<p style="margin-left:22%;">Specifies the type of file
+allocation tables used (12, 16 or 32 bit). If nothing is
+specified, <b>mkdosfs</b> will automatically select between
+12, 16 and 32 bit, whatever fits better for the file system
+size.</p>
+
+<p style="margin-left:11%;"><b>&minus;h</b>
+<i>number-of-hidden-sectors</i></p>
+
+<p style="margin-left:22%;">Select the number of hidden
+sectors in the volume. Apparently some digital cameras get
+indigestion if you feed them a CF card without such hidden
+sectors, this option allows you to satisfy them. Assumes
+&acute;0&acute; if no value is given on the command
+line.</p>
+
+<p style="margin-left:11%;"><i>&minus;i volume-id</i></p>
+
+<p style="margin-left:22%;">Sets the volume ID of the newly
+created file system; <i>volume-id</i> is a 32-bit
+hexadecimal number (for example, 2e24ec82). The default is a
+number which depends on the file system creation time.</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p><b>&minus;I</b></p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>It is typical for fixed disk devices to be partitioned
+so, by default, you are not permitted to create a filesystem
+across the entire device. <b>mkdosfs</b> will complain and
+tell you that it refuses to work. This is different when
+using MO disks. One doesn&rsquo;t always need partitions on
+MO disks. The file system can go directly to the whole disk.
+Under other OSes this is known as the
+&rsquo;superfloppy&rsquo; format.</p></td></tr>
+</table>
+
+<p style="margin-left:22%; margin-top: 1em">This switch
+will force <b>mkdosfs</b> to work properly.</p>
+
+<p style="margin-left:11%;"><b>&minus;l</b>
+<i>filename</i></p>
+
+<p style="margin-left:22%;">Read the bad blocks list from
+<i>filename</i>.</p>
+
+<p style="margin-left:11%;"><b>&minus;m</b>
+<i>message-file</i></p>
+
+<p style="margin-left:22%;">Sets the message the user
+receives on attempts to boot this file system without having
+properly installed an operating system. The message file
+must not exceed 418 bytes once line feeds have been
+converted to carriage return-line feed combinations, and
+tabs have been expanded. If the filename is a hyphen (-),
+the text is taken from standard input.</p>
+
+<p style="margin-left:11%;"><b>&minus;n</b>
+<i>volume-name</i></p>
+
+<p style="margin-left:22%;">Sets the volume name (label) of
+the file system. The volume name can be up to 11 characters
+long. The default is no label.</p>
+
+<p style="margin-left:11%;"><b>&minus;r</b>
+<i>root-dir-entries</i></p>
+
+<p style="margin-left:22%;">Select the number of entries
+available in the root directory. The default is 112 or 224
+for floppies and 512 for hard disks.</p>
+
+<p style="margin-left:11%;"><b>&minus;R</b>
+<i>number-of-reserved-sectors</i></p>
+
+<p style="margin-left:22%;">Select the number of reserved
+sectors. With FAT32 format at least 2 reserved sectors are
+needed, the default is 32. Otherwise the default is 1 (only
+the boot sector).</p>
+
+<p style="margin-left:11%;"><b>&minus;s</b>
+<i>sectors-per-cluster</i></p>
+
+<p style="margin-left:22%;">Specify the number of disk
+sectors per cluster. Must be a power of 2, i.e. 1, 2, 4, 8,
+... 128.</p>
+
+<p style="margin-left:11%;"><b>&minus;S</b>
+<i>logical-sector-size</i></p>
+
+<p style="margin-left:22%;">Specify the number of bytes per
+logical sector. Must be a power of 2 and greater than or
+equal to 512, i.e. 512, 1024, 2048, 4096, 8192, 16384, or
+32768.</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p><b>&minus;v</b></p></td>
+<td width="8%"></td>
+<td width="27%">
+
+
+<p>Verbose execution.</p></td>
+<td width="51%">
+</td></tr>
+</table>
+
+<h2>BUGS
+<a name="BUGS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>mkdosfs</b>
+can not create boot-able file systems. This isn&rsquo;t as
+easy as you might think at first glance for various reasons
+and has been discussed a lot already. <b>mkdosfs</b> simply
+will not support it ;)</p>
+
+<h2>AUTHOR
+<a name="AUTHOR"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Dave Hudson
+&lt;dave@humbug.demon.co.uk&gt;; Peter Anvin
+&lt;hpa@yggdrasil.com&gt;; Roman Hodek
+&lt;roman@hodek.net&gt;; Sougata Santra
+&lt;sougata@tuxera.com&gt; (Tuxera Inc.)</p>
+
+<h2>ACKNOWLEDGMENTS
+<a name="ACKNOWLEDGMENTS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>mkdosfs</b>
+is based on code from <b>mke2fs</b> (written by Remy Card -
+&lt;card@masi.ibp.fr&gt;) which is itself based on
+<b>mkfs</b> (written by Linus Torvalds -
+&lt;torvalds@cs.helsinki.fi&gt;).</p>
+
+<h2>SEE ALSO
+<a name="SEE ALSO"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>dosfsck</b>(8),
+<b>dosfslabel</b>(8)</p>
+<hr>
+</body>
+</html>
