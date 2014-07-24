@@ -115,7 +115,6 @@ function initial() {
 
 	document.aidiskForm.protocol.value = PROTOCOL;
 	initial_dir();
-	check_dir_path();
 }
 
 function initial_dir(){
