@@ -31,15 +31,6 @@ wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 <% login_state_hook(); %>
 
-var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
-var client_ip = login_ip_str();
-var client_mac = login_mac_str();
-var leases = [<% dhcp_leases(); %>];	// [[hostname, MAC, ip, lefttime], ...]
-var arps = [<% get_arp_table(); %>];		// [[ip, x, x, MAC, x, type], ...]
-var arls = [<% get_arl_table(); %>];		// [[MAC, port, x, x], ...]
-var ipmonitor = [<% get_static_client(); %>];	// [[IP, MAC, DeviceName, Type, http, printer, iTune], ...]
-var networkmap_fullscan = '<% nvram_match("networkmap_fullscan", "0", "done"); %>'; //2008.07.24 Add.  1 stands for complete, 0 stands for scanning.;
-
 var dnsfilter_rule_list = '<% nvram_get("dnsfilter_rulelist"); %>'.replace(/&#60/g, "<");
 var dnsfilter_rule_list_row = dnsfilter_rule_list.split('<');
 
