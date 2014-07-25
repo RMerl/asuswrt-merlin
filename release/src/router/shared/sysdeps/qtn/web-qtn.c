@@ -1930,7 +1930,7 @@ ej_wl_status_qtn(int eid, webs_t wp, int argc, char_t **argv, const char *ifname
 
 			retval += websWrite(wp, "%02d:%02d:%02d  ", hr, min, sec);
 
-			retval += websWrite(wp, "%s", "A", !nvram_match("wl1_auth_mode_x", "open") ? "U" : "");
+			retval += websWrite(wp, "A%s", !nvram_match("wl1_auth_mode_x", "open") ? "U" : "");
 
 			retval += websWrite(wp, "\n");
 		}
