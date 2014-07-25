@@ -49,7 +49,7 @@ Here is a list of features that Asuswrt-merlin brings over the original
 firmware:
 
 System:
-   - Based on 3.0.0.4.376_1088 sources (from RT-AC87U) from Asus
+   - Based on 3.0.0.4.376_1779 sources (from RT-AC87U) from Asus
    - Various bugfixes and optimizations
    - Some components were updated to newer versions, for improved
      stability and security
@@ -82,7 +82,7 @@ Networking:
      RT-N16)
    - Netfilter ipset module, for efficient blacklist implemetnation
    - Configurable min/max UPNP ports
-   - IPSec kernel support (MIPS devices only)
+   - IPSec kernel support (except RT-AC87)
    - DNS-based Filtering, can be applied globally or per client
 
 Web interface:
@@ -533,19 +533,14 @@ the default filter to "None", and only filter out specific devices.
 
 
 ** Layer7-based Netfilter module **
-Support for layer7 rules in iptables has been enabled.  You will need 
-to manually configure the iptables rules to make use of it - there is 
-no web interface exposing this.  The defined protocols can be found in 
-/etc/l7-protocols.
+Support for layer7 rules in iptables has been enabled on MIPS-based
+routers (RT-N16/N66/AC66).  You will need to manually configure the 
+iptables rules to make use of it - there is no web interface exposing 
+this.  The defined protocols can be found in /etc/l7-protocols.
 
 To use it, you must first load the module:
 
    modprobe xt_layer7
-
-Additionally, ARM devices such as the RT-AC56 and RT-AC68 require that 
-you manually enable traffic accounting, with the following command:
-
-   echo 1 > nf_conntrack_acct
 
 An example iptable rules that would mark all SSH-related packets 
 with the value "22", for processing later on in another chain:
@@ -578,13 +573,14 @@ History
               an RT-AC56U or RT-AC68U!  The partition layout
               has been changed.
 
-   - NEW: Merged with Asus's 376_1088 GPL (internal).
+   - NEW: Merged with Asus's 376_1779 GPL
           Summary of changes:
             * New networkmap, lets users edit device names,
               assign icons to devices, etc...
             * Reworked IPv6 support
             * Fix for Traffic Monitoring (replaces our own fix)
             * 3G/4G fixes
+            * New filesystem driver provider for NTFS/HFS+/FAT
             * And a lot more
   - NEW: Added support for RT-AC87U.
   - CHANGED: The JFFS partition on ARM devices now uses
@@ -603,19 +599,20 @@ History
              channel and channel width for the 5 GHz band,
              as the extension channel wasn't always accurately
              reported.
-  - CHANGED: Reworked layout of SSH settings on System page.
+  - CHANGED: Reworked layout of SSH settings on System page (based 
+             on Asus's own WIP)
   - CHNAGED: Allow FQDN (hostname + domain) rather than just
              hostnames on the WAN page (some ISPs require that)
-  - REMOVED: IPSEC support removed from ARM devices, as it's
-             not compatible with the new DPI kernel modules.
-             The option remains available in the build
-             environment if anyone wishes to create their
-             own IPSEC-enabled build, however they must ensure
-             that they disable the BWDPI option. (AC56, AC68)
+  - CHANGED: Made all models (except RT-N16) use the new filesystem
+             drivers from Tuxera, resulting in general improved 
+             USB disk performance (and hopefully improved 
+             reliability as well).
   - REMOVED: Reverted various IPv6-related patches as they
              conflicted with Asus's own changes.  These might
              make it back at a later time if deemed
              necessary.
+  - REMOVED: Removed layer7 filtering support in Netfilter from 
+             ARM devices due to compatibility issues (AC56,AC68)
   - FIXED: Missing mDNSResponder daemon preventing mt-daapd
            from working on MIPS devices (N16,N66,AC66)
   - FIXED: System Log wouldn't properly be positionned
