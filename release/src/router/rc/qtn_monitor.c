@@ -248,8 +248,9 @@ ERROR:
 	remove("/var/run/qtn_monitor.pid");
 
 	if (nvram_get_int("led_disable") == 1) {
-                                qcsapi_wifi_run_script("router_command.sh", "wifi_led_off");
-                                qcsapi_led_set(1, 0);
+		setAllLedOff_qtn();
+//                                qcsapi_wifi_run_script("router_command.sh", "wifi_led_off");
+//                                qcsapi_led_set(1, 0);
 	}
 	return retval;
 }
