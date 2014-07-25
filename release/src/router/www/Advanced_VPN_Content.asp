@@ -686,22 +686,22 @@ $j.ajax({
     		},
 
     		success: function(){
-    				if(vpnd_state != '2' && (vpn_server1_errno == '1' || vpn_server1_errno == '2')){
+    				if(vpnd_state != '2' && vpnd_errno == '1' || vpnd_errno == '2')){
     						document.getElementById('openvpn_initial').style.display = "none";    						
       					document.getElementById('openvpn_error_message').innerHTML = "<span>Routing conflict! <p>Please check your IP address configuration of client profile on advanced setting page or check routing table on system log.</span>";
       					document.getElementById('openvpn_error_message').style.display = "";
       			}
-      			else if(vpnd_state != '2' && vpn_server1_errno == '4'){
+      			else if(vpnd_state != '2' && vpnd_errno == '4'){
       					document.getElementById('openvpn_initial').style.display = "none";
       					document.getElementById('openvpn_error_message').innerHTML = "<span>Certification Auth. /Server cert. /Server Key field error! <p>Please check your contents of Keys&Certification on advanced setting page.</span>";
       					document.getElementById('openvpn_error_message').style.display = "";
       			}
-      			else if(vpnd_state != '2' && vpn_server1_errno == '5'){
+      			else if(vpnd_state != '2' && vpnd_errno == '5'){
       					document.getElementById('openvpn_initial').style.display = "none";
       					document.getElementById('openvpn_error_message').innerHTML = "<span>Diffle Hellman parameters field error!  <p>Please check your contents of Keys&Certification on advanced setting page.</span>";
       					document.getElementById('openvpn_error_message').style.display = "";
       			}
-      			else if(vpnd_state == '-1' && vpn_server1_errno == '0'){
+      			else if(vpnd_state == '-1' && vpnd_errno == '0'){
       					document.getElementById('openvpn_initial').style.display = "none";
       					document.getElementById('openvpn_error_message').innerHTML = "<span>OpenVPN server daemon start fail!  <p>Please check your device environment or contents on advanced setting page.</span>";
       					document.getElementById('openvpn_error_message').style.display = "";
