@@ -39,7 +39,7 @@ var timerRunning = false;
 var timeout = 2000;
 var delay = 1000;
 var wl_ssid_closed = "<% nvram_get("wl_closed"); %>";
-var curState = 0;
+var curState = "<% nvram_get("wps_enable"); %>";
 var band_string = "";
 
 function reject_wps(auth_mode, wep){
