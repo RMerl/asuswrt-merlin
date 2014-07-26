@@ -320,7 +320,6 @@ function updateClientList(e){
 
 <br/>
 <img height="25" id="leftBtn" onclick="updatePagesVar('-');" style="cursor:pointer;margin-left:10px;" src="/images/arrow-left.png">
-<img id="loadingIcon" src="/images/InternetScan.gif">
 <input type="button" id="refresh_list" class="button_gen" onclick="document.form.submit();" value="<#CTL_refresh#>" style="margin-left:70px;">
 <img src="/images/InternetScan.gif" id="loadingIcon" style="visibility:hidden">
 <img height="25" id="rightBtn" onclick="updatePagesVar('+');" style="cursor:pointer;margin-left:25px;" src="/images/arrow-right.png">
