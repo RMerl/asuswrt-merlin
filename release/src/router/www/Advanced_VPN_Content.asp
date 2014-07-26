@@ -686,7 +686,7 @@ $j.ajax({
     		},
 
     		success: function(){
-    				if(vpnd_state != '2' && vpnd_errno == '1' || vpnd_errno == '2')){
+    				if(vpnd_state != '2' && (vpnd_errno == '1' || vpnd_errno == '2')){
     						document.getElementById('openvpn_initial').style.display = "none";    						
       					document.getElementById('openvpn_error_message').innerHTML = "<span>Routing conflict! <p>Please check your IP address configuration of client profile on advanced setting page or check routing table on system log.</span>";
       					document.getElementById('openvpn_error_message').style.display = "";
