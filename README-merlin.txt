@@ -568,10 +568,16 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-376.44 (xx-xxx-2014)
+376.44-beta1 (26-Jul-2014)
    IMPORTANT: Make a backup of your JFFS partition if upgrading
               an RT-AC56U or RT-AC68U!  The partition layout
               has been changed.
+
+   KNOWN ISSUE: Ethernet ports report on RT-AC87U are
+                inaccurate.  The same issue occurs with
+                Broadcom's own "et" userspace tool.  Unknown
+                if this is a bug in the current Asus code or
+                a technical limitation of the QTN integration.
 
    - NEW: Merged with Asus's 376_1779 GPL
           Summary of changes:
@@ -619,6 +625,8 @@ History
            at the bottom (Patch by John9527)
   - FIXED: DNSFilter clients configured to bypass DNSFilter
            would still be prevented from using an IPv6 DNS.
+  - FIXED: Broken WPS button on webui (fix backported from
+           Asus's 376_2044)
 
 
 374.43_2 (7-June-2014)
