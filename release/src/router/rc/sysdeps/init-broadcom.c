@@ -3050,6 +3050,69 @@ int set_wltxpower()
 				break;
 
 			case MODEL_RTN66U:
+#ifdef RTCONFIG_ENGINEERING_MODE
+				if (nvram_match(strcat_r(prefix, "nband", tmp), "2"))	// 2.4G
+				{
+					if (nvram_match(strcat_r(prefix, "country_code", tmp), "US"))
+					{
+						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "2"))
+						{
+							nvram_set(strcat_r(prefix, "country_rev", tmp), "2");
+							nvram_set(strcat_r(prefix2, "regrev", tmp2), "2");
+							commit_needed++;
+						}
+						commit_needed++;
+					}
+					else if (nvram_match(strcat_r(prefix, "country_code", tmp), "Q2"))
+					{
+						nvram_set("regulation_domain_5G", "US");
+						nvram_set(strcat_r(prefix, "country_code", tmp), "US");
+						nvram_set(strcat_r(prefix2, "ccode", tmp2), "US");
+						nvram_set(strcat_r(prefix, "country_rev", tmp), "2");
+						nvram_set(strcat_r(prefix2, "regrev", tmp2), "2");
+						commit_needed++;
+					}
+					else if (nvram_match(strcat_r(prefix, "country_code", tmp), "EU"))
+					{
+						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "5"))
+						{
+							nvram_set(strcat_r(prefix, "country_rev", tmp), "5");
+							nvram_set(strcat_r(prefix2, "regrev", tmp2), "5");
+							commit_needed++;
+						}
+					}
+				}
+				else
+				{
+					if (nvram_match(strcat_r(prefix, "country_code", tmp), "US"))
+					{
+						nvram_set("regulation_domain_5G", "Q2");
+						nvram_set(strcat_r(prefix, "country_code", tmp), "Q2");
+						nvram_set(strcat_r(prefix2, "ccode", tmp2), "Q2");
+						nvram_set(strcat_r(prefix, "country_rev", tmp), "0");
+						nvram_set(strcat_r(prefix2, "regrev", tmp2), "0");
+						commit_needed++;
+					}
+					else if (nvram_match(strcat_r(prefix, "country_code", tmp), "Q2"))
+					{
+						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "0"))
+						{
+							nvram_set(strcat_r(prefix, "country_rev", tmp), "0");
+							nvram_set(strcat_r(prefix2, "regrev", tmp2), "0");
+							commit_needed++;
+						}
+					}
+					else if (nvram_match(strcat_r(prefix, "country_code", tmp), "EU"))
+					{
+						if (!nvram_match(strcat_r(prefix2, "regrev", tmp2), "3"))
+						{
+							nvram_set(strcat_r(prefix, "country_rev", tmp), "3");
+							nvram_set(strcat_r(prefix2, "regrev", tmp2), "3");
+							commit_needed++;
+						}
+					}
+				}
+#endif
 				if (set_wltxpower_once || nvram_match("bl_version", "1.0.0.9")) {
 					if (nvram_match(strcat_r(prefix, "nband", tmp), "2"))		// 2.4G
 					{
