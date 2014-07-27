@@ -1386,7 +1386,6 @@ function cal_panel_block(){
 			clickEvent(document.getElementById('iconUSBdisk_2'));
 	}
 
-	setTimeout("document.networkmapdRefresh.submit();", 2000);
 </script>
 </body>
 
