@@ -374,8 +374,10 @@ function oui_query(mac){
 
 			overlibStrTmp += "<p><span>.....................................</span></p><p style='margin-top:5px'><#Manufacturer#> :</p>";
 			overlibStrTmp += retData[0];
-
-			return overlib(overlibStrTmp, HAUTO, VAUTO);
+			if (current_url == "clients.asp")
+				return overlib(overlibStrTmp, HAUTO, VAUTO);
+			else
+				return overlib(overlibStrTmp);
 		}    
 	});
 }

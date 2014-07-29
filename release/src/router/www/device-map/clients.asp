@@ -98,7 +98,7 @@ function drawClientList(tab){
 		clientHtmlTd += clientObj.mac;
 		clientHtmlTd += '\');return overlib(\'';
 		clientHtmlTd += retOverLibStr(clientObj);
-		clientHtmlTd += '\');" onmouseout="nd();">';
+		clientHtmlTd += '\', HAUTO, VAUTO);" onmouseout="nd();">';
 		clientHtmlTd += clientObj.mac;
 		clientHtmlTd += '</td></tr></table></div>';
 		i++;
