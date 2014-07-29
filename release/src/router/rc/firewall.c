@@ -3240,6 +3240,21 @@ TRACE_PT("writing Parental Control\n");
 #endif
 		}
 
+		// Open ssh to WAN
+		if ((nvram_match("sshd_wan", "1")) && (nvram_get_int("sshd_port"))) {
+			if (nvram_match("sshd_bfp", "1")) {
+				fprintf(fp,"-N SSHBFP\n");
+				fprintf(fp, "-A SSHBFP -m recent --set --name SSH --rsource\n");
+				fprintf(fp, "-A SSHBFP -m recent --update --seconds 60 --hitcount 4 --name SSH --rsource -j %s\n", logdrop);
+				fprintf(fp, "-A SSHBFP -j %s\n", logaccept);
+				fprintf(fp, "-A INPUT -p tcp --dport %d -m state --state NEW -j SSHBFP\n", nvram_get_int("sshd_port"));
+			}
+			else
+			{
+				fprintf(fp, "-A INPUT -p tcp --dport %d -j %s\n", nvram_get_int("sshd_port"), logaccept);
+			}
+		}
+
 		if ((!nvram_match("enable_ftp", "0")) && (nvram_match("ftp_wanac", "1")))
 		{
 			fprintf(fp, "-A INPUT -p tcp -m tcp --dport 21 -j %s\n", logaccept);
@@ -3261,10 +3276,6 @@ TRACE_PT("writing Parental Control\n");
 			}
 		}
 #endif
-
-// Open ssh to WAN
-                if ((nvram_match("sshd_wan", "1")) && (nvram_get_int("sshd_port")))
-                        fprintf(fp, "-A INPUT -p tcp -m tcp --dport %d -j %s\n", nvram_get_int("sshd_port"), logaccept);
 
 		if (!nvram_match("misc_ping_x", "0"))
 		{
