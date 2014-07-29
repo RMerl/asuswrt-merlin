@@ -293,6 +293,7 @@ case $OS_NAME in
 #		echo "#ifdef RTCONFIG_IPV6" >> ${CONFIGFILE}
 #		echo "#define ENABLE_IPV6" >> ${CONFIGFILE}
 #		echo "#endif" >> ${CONFIGFILE}
+		echo "#define DELAY_MSEARCH_RESPONSE" >> ${CONFIGFILE}
 		FW=netfilter
 		;;
 	Darwin)
@@ -511,13 +512,13 @@ else
 fi
 echo "" >> ${CONFIGFILE}
 
-echo "/* Wait a little before answering M-SEARCH request */" >> ${CONFIGFILE}
-if [ -n "$STRICT" ] ; then
-	echo "#define DELAY_MSEARCH_RESPONSE" >> ${CONFIGFILE}
-else
-	echo "/*#define DELAY_MSEARCH_RESPONSE*/" >> ${CONFIGFILE}
-fi
-echo "" >> ${CONFIGFILE}
+#echo "/* Wait a little before answering M-SEARCH request */" >> ${CONFIGFILE}
+#if [ -n "$STRICT" ] ; then
+#	echo "#define DELAY_MSEARCH_RESPONSE" >> ${CONFIGFILE}
+#else
+#	echo "/*#define DELAY_MSEARCH_RESPONSE*/" >> ${CONFIGFILE}
+#fi
+#echo "" >> ${CONFIGFILE}
 
 echo "/* disable reading and parsing of config file (miniupnpd.conf) */" >> ${CONFIGFILE}
 echo "/*#define DISABLE_CONFIG_FILE*/" >> ${CONFIGFILE}
