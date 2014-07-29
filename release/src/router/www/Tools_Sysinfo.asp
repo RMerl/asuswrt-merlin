@@ -147,10 +147,8 @@ function show_etherstate(){
 	var entry;
 
 	var t = etherstate.split('>');
-
 	for (var i = 0; i < t.length; ++i) {
 		var line = t[i].split(/[\s]+/);
-
 		if (line[11])
 			devicemac = line[11].toUpperCase();
 		else
@@ -183,15 +181,22 @@ function show_etherstate(){
 			tmpPort = line[1].replace(":","");
 
 			if (tmpPort == "8") {		// CPU Port
-				break;
+				continue;
 			} else if (based_modelid == "RT-AC56U") {
 				tmpPort++;		// Port starts at 0
 				if (tmpPort == "5") tmpPort = 0;	// Last port is WAN
-			}                                                                                                                                                         
+			} else if (based_modelid == "RT-AC87U") {
+				if (tmpPort == "4")
+					continue;	// This is the internal LAN port
+				if (tmpPort == "5") {
+					tmpPort = "4";	// This is the LAN 4 port from QTN
+					devicename = "&lt;unknown&gt;";
+				}
+			}
 			if (tmpPort == "0") {
 				port = "WAN";
 			} else {
-				if (based_modelid == "RT-N16") tmpPort = 5 - tmpPort;
+				if ((based_modelid == "RT-N16") || (based_modelid == "RT-AC87U"))  tmpPort = 5 - tmpPort;
 				port = "LAN "+tmpPort;
 			}
 			entry = '<tr><td>' + port + '</td><td>' + (line[7] & 0xFFF) + '</td><td><span>' + state2 + '</span></td>';

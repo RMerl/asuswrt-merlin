@@ -324,9 +324,16 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				for (j=0; (j < len); j++) {
 					if (buffer[j] == '\n') buffer[j] = '>';
 				}
-				strncpy(result, buffer, sizeof result);
+#ifdef RTCONFIG_QTN
+				j = GetPhyStatus_qtn();
+				snprintf(result, sizeof result, (j > 0 ? "%sPort 5: %dFD enabled stp: none vlan: 1 jumbo: off mac: 00:00:00:00:00:00>" :
+							 "%sPort 5: DOWN enabled stp: none vlan: 1 jumbo: off mac: 00:00:00:00:00:00>"),
+							  buffer, j);
+#else
+                                strncpy(result, buffer, sizeof result);
+#endif
+                                free(buffer);
 
-				free(buffer);
 			}
 			unlink("/tmp/output.txt");
 		} else {
@@ -349,6 +356,34 @@ unsigned int get_qtn_temperature(void)
         if (qcsapi_get_temperature_info(&temp_external, &temp_internal) >= 0)
 		return temp_internal / 1000000.0f;
 
+	return 0;
+}
+
+int GetPhyStatus_qtn(void)
+{
+	int ret;
+
+	if (!rpc_qtn_ready()) {
+		return -1;
+	}
+	ret = qcsapi_wifi_run_script("set_test_mode", "get_eth_1000m");
+	if (ret < 0) {
+		ret = qcsapi_wifi_run_script("set_test_mode", "get_eth_100m");
+		if (ret < 0) {
+			ret = qcsapi_wifi_run_script("set_test_mode", "get_eth_10m");
+			if (ret < 0) {
+				// fprintf(stderr, "ATE command error\n");
+				return 0;
+			}else{
+				return 10;
+			}
+		}else{
+			return 100;
+		}
+		return -1;
+	}else{
+		return 1000;
+	}
 	return 0;
 }
 #endif
