@@ -3792,7 +3792,7 @@ void generate_wl_para(int unit, int subunit)
 			nvram_set(strcat_r(prefix, "nreqd", tmp), "1");
 #endif
 			nvram_set(strcat_r(prefix, "vreqd", tmp), "0");
-			nvram_set(strcat_r(prefix, "gmode", tmp), nvram_match(strcat_r(prefix, "nband", tmp), "2") ? "1" : "-1");
+			nvram_set(strcat_r(prefix, "gmode", tmp), nvram_match(strcat_r(prefix, "nband", tmp2), "2") ? "1" : "-1");
 			nvram_set(strcat_r(prefix, "rate", tmp), "0");
 #ifdef RTCONFIG_BCMWL6
 			nvram_set(strcat_r(prefix, "bss_opmode_cap_reqd", tmp), "2");	// devices must advertise HT (11n) capabilities to be allowed to associate
@@ -3806,7 +3806,7 @@ void generate_wl_para(int unit, int subunit)
 			nvram_set(strcat_r(prefix, "nreqd", tmp), "0");
 #endif
 			nvram_set(strcat_r(prefix, "vreqd", tmp), "0");
-			nvram_set(strcat_r(prefix, "gmode", tmp), nvram_match(strcat_r(prefix, "nband", tmp), "2") ? "1" : "-1");
+			nvram_set(strcat_r(prefix, "gmode", tmp), nvram_match(strcat_r(prefix, "nband", tmp2), "2") ? "1" : "-1");
 			nvram_set(strcat_r(prefix, "rate", tmp), "0");
 #ifdef RTCONFIG_BCMWL6
 			if (nvram_match(strcat_r(prefix, "nband", tmp), "2"))
@@ -3823,7 +3823,7 @@ void generate_wl_para(int unit, int subunit)
 			nvram_set(strcat_r(prefix, "nreqd", tmp), "0");
 #endif
 			nvram_set(strcat_r(prefix, "vreqd", tmp), "0");
-			nvram_set(strcat_r(prefix, "gmode", tmp), nvram_match(strcat_r(prefix, "nband", tmp), "2") ? "2" : "-1");
+			nvram_set(strcat_r(prefix, "gmode", tmp), nvram_match(strcat_r(prefix, "nband", tmp2), "2") ? "2" : "-1");
 			nvram_set(strcat_r(prefix, "rate", tmp), "0");
 #ifdef RTCONFIG_BCMWL6
 			nvram_set(strcat_r(prefix, "bss_opmode_cap_reqd", tmp), "1");	// devices must advertise ERP (11g) capabilities to be allowed to associate
@@ -3837,7 +3837,7 @@ void generate_wl_para(int unit, int subunit)
 			nvram_set(strcat_r(prefix, "nreqd", tmp), "0");
 #endif
 			nvram_set(strcat_r(prefix, "vreqd", tmp), "0");
-			nvram_set(strcat_r(prefix, "gmode", tmp), nvram_match(strcat_r(prefix, "nband", tmp), "2") ? "0" : "-1");
+			nvram_set(strcat_r(prefix, "gmode", tmp), nvram_match(strcat_r(prefix, "nband", tmp2), "2") ? "0" : "-1");
 			nvram_set(strcat_r(prefix, "rate", tmp), "0");
 #ifdef RTCONFIG_BCMWL6
 			nvram_set(strcat_r(prefix, "bss_opmode_cap_reqd", tmp), "0");	// no requirements on joining devices
@@ -3869,7 +3869,7 @@ void generate_wl_para(int unit, int subunit)
 			nvram_set(strcat_r(prefix, "nreqd", tmp), "0");
 #endif
 			nvram_set(strcat_r(prefix, "vreqd", tmp), "0");
-			nvram_set(strcat_r(prefix, "gmode", tmp), nvram_match(strcat_r(prefix, "nband", tmp), "2") ? "1" : "-1");
+			nvram_set(strcat_r(prefix, "gmode", tmp), nvram_match(strcat_r(prefix, "nband", tmp2), "2") ? "1" : "-1");
 			nvram_set(strcat_r(prefix, "rate", tmp), "0");
 #ifdef RTCONFIG_BCMWL6
 			nvram_set(strcat_r(prefix, "bss_opmode_cap_reqd", tmp), "0");	// no requirements on joining devices
@@ -4018,7 +4018,7 @@ void generate_wl_para(int unit, int subunit)
 		nvram_set_int(strcat_r(prefix, "wmf_igmpq_filter", tmp), /*i ? 1 :*/ 0);
 #endif
 #endif
-		nvram_set_int(strcat_r(prefix, "acs_fcs_mode", tmp), i && nvram_match(strcat_r(prefix, "nband", tmp), "1") ? 1 : 0);
+		nvram_set_int(strcat_r(prefix, "acs_fcs_mode", tmp), i && nvram_match(strcat_r(prefix, "nband", tmp2), "1") ? 1 : 0);
 		nvram_set_int(strcat_r(prefix, "dcs_csa_unicast", tmp), i ? 1 : 0);
 #endif
 #else
