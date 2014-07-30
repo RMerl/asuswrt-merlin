@@ -15,6 +15,7 @@ At this time, the supported devices are:
 - RT-N66U
 - RT-AC66U
 - RT-AC68U
+- RT-AC87U
 
 Firmware builds can be downloaded from the official download site:
 
