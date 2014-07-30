@@ -1533,7 +1533,7 @@ void write_vpn_dnsmasq_config(FILE* f)
 	char nv[16];
 	char buf[24];
 	char *pos, ch;
-	int cur;
+	int cur, ch2;
 	DIR *dir;
 	struct dirent *file;
 	FILE *dnsf;
@@ -1577,8 +1577,8 @@ void write_vpn_dnsmasq_config(FILE* f)
 
 					while( !feof(dnsf) )
 					{
-						ch = fgetc(dnsf);
-						fputc(ch==255?'\n':ch, f);
+						ch2 = fgetc(dnsf);
+						fputc(ch2==EOF?'\n':ch2, f);
 					}
 
 					fclose(dnsf);
@@ -1594,7 +1594,7 @@ int write_vpn_resolv(FILE* f)
 	struct dirent *file;
 	char *fn, ch, num, buf[24];
 	FILE *dnsf;
-	int strictlevel = 0;
+	int strictlevel = 0, ch2;
 
 	if ( chdir("/etc/openvpn/dns") )
 		return 0;
@@ -1618,8 +1618,8 @@ int write_vpn_resolv(FILE* f)
 
 			while( !feof(dnsf) )
 			{
-				ch = fgetc(dnsf);
-				fputc(ch==255?'\n':ch, f);
+				ch2 = fgetc(dnsf);
+				fputc(ch2==EOF?'\n':ch2, f);
 			}
 
 			fclose(dnsf);
