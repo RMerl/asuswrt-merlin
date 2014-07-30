@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 376.44-Beta1 (26-Jul-2014)
+Asuswrt-Merlin - build 376.44-Beta2 (29-Jul-2014)
 =================================================
 
 About
@@ -568,6 +568,21 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+376.44-beta2 (29-Jul-2014)
+  - NEW: HFS+ support for MIPS devices (N16/N66/AC66).
+         N16 also uses Tuxera now.
+  - CHANGED: Updated N66U driver to Asus's 1071 build
+  - CHANGED: Implemented RT-AC87U report of LAN port 4
+  - FIXED: RT-AC87U port order was wrong on SYsinfo page
+  - FIXED: Minidlna issues with Philips smart TVs
+  - FIXED: Incorrect state report of port 1 on AC87U.  
+           MAC and VLAN cannot be retrieved (AC87U)
+  - FIXED: SSHD brute force protection wasn't working if
+           Dual WAN was enabled and set to LB mode.
+  - FIXED: Miniupnpd error flood in Syslog when using a
+           Plex server on your LAN
+
+
 376.44-beta1 (26-Jul-2014)
    IMPORTANT: Make a backup of your JFFS partition if upgrading
               an RT-AC56U or RT-AC68U!  The partition layout
