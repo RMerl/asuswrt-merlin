@@ -35,7 +35,7 @@ install:
 	@install -d $(INSTALLDIR)/usr/sbin
 ifeq ($(RTCONFIG_TFAT),y)
 	@cp -f $(SRCFILE)/fat/kernel-module/tfat.ko $(DSTDIR)
-	#install -D $(SRCFILE)/fat/tools/fsck_msdos $(INSTALLDIR)/usr/sbin/fsck_msdos
+	install -D $(SRCFILE)/fat/tools/fsck_msdos $(INSTALLDIR)/usr/sbin/fsck_msdos
 ifneq ($(NO_MKTOOLS),y)
 	install -D $(SRCFILE)/fat/tools/newfs_msdos $(INSTALLDIR)/usr/sbin/newfs_msdos
 	#install -D $(SRCFILE)/fat/tools/fatdebug $(INSTALLDIR)/usr/sbin/fatdebug
