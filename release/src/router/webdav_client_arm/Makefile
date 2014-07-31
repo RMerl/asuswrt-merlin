@@ -20,7 +20,11 @@ endif
 
 ifeq ($(wildcard $(TOP)/webdav_client_arm/*.c),)
 all:
+ifeq ($(RTCONFIG_QTN),y)
+	-cp -f $(TOP)/webdav_client_arm/prebuilt/webdav_client_qtn webdav_client
+else
 	-cp -f $(TOP)/webdav_client_arm/prebuilt/webdav_client webdav_client
+endif
 else
 all: webdav_client
 endif
