@@ -2,13 +2,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <html xmlns:v>
 <head>
-<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7"/>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<title>Check AiCloud</title>
+<title>Check AiCloud 2.0</title>
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <script type="text/javascript" src="/state.js"></script>
@@ -217,11 +217,11 @@ function restart_needed_time(second){
 	<div style="width:95%;height:500px;position:relative;padding:10px;font-style:italic;font-size:14px;background-color:#21333E;color:#fff">
 		<div style="background-image:url('/images/aicloud_logo.png');width:250px;height:50px;left:110px;top:80px;position:absolute;"></div>
 		<div id="aicloud_main_text" style="width:320px;position:absolute;top:150px;left:120px;font-size:18px;">
-			ASUS AiCloud keeps you connected to your
+			ASUS AiCloud 2.0 keeps you connected to your
 		data wherever and whenever you have an
 		Internet connection. It links your home
 		network and online Web storage service*
-		and lets you access it through the AiCloud
+		and lets you access it through the AiCloud 2.0
 		mobile app on your iOS or Android
 		smartphone or through a personalized URL
 		in a Web browser. Now all your data can go

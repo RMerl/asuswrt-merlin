@@ -437,6 +437,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_txbf", "1" },
 #ifdef RTCONFIG_QTN
 	{ "wl1_txbf", "1" },
+	{ "wl1_80211h", "0" },
 #endif
 #endif
 #endif
@@ -899,6 +900,7 @@ struct nvram_tuple router_defaults[] = {
 #ifdef RTCONFIG_DSL_ANNEX_B //Paul add 2012/8/21
 	{ "dslx_annex", "6" }, // Annex BJM (EnumAdslTypeB_J_M)
 #else
+	{"dslx_testlab", "disable"}, //Country-Specific Setting for AU or GB, default = disable.
 	{ "dslx_annex", "4" }, // Annex AIJLM(EnumAdslTypeA_I_J_L_M)
 #endif
 	{ "dslx_ginp", "1" },
@@ -2312,6 +2314,7 @@ struct nvram_tuple router_state_defaults[] = {
 //	log sync status
 	{ "dsltmp_syncloss", "0"},
 	{ "dsltmp_syncloss_apply", "0"},
+	{ "dsltmp_syncup_cnt", "0"},
 
 #ifdef RTCONFIG_DSL_TCLINUX
 	{ "dsllog_fwver", ""},

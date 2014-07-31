@@ -1,3 +1,4 @@
+#include <sys/sysinfo.h>
 #include <rc.h>
 #include <stdlib.h>
 #include <bcmnvram.h>
@@ -19,65 +20,14 @@
 #define FREE_FILE "/tmp/free.txt"
 #define IPTABLES_FILE "/tmp/fb_iptables.txt"
 
-/*
- * Reads file and returns contents
- * @param	fd	file descriptor
- * @return	contents of file or NULL if an error occurred
- */
-char *
-fd2str(int fd)
-{
-	char *buf = NULL;
-	size_t count = 0, n;
-
-	do {
-		buf = realloc(buf, count + 512);
-		n = read(fd, buf + count, 512);
-		if (n < 0) {
-			free(buf);
-			buf = NULL;
-		}
-		count += n;
-	} while (n == 512);
-
-	close(fd);
-	if (buf)
-		buf[count] = '\0';
-	return buf;
-}
-
-/*
- * Reads file and returns contents
- * @param	path	path to file
- * @return	contents of file or NULL if an error occurred
- */
-char *
-file2str(const char *path)
-{
-	int fd;
-
-	if ((fd = open(path, O_RDONLY)) == -1) {
-		perror(path);
-		return NULL;
-	}
-
-	return fd2str(fd);
-}
-
 void start_DSLsendmail(void)
 {
 	FILE *fp;
-	char cmd[512] = {0};
 	char buf[1024] = {0};
-	char tmp_val[70] = {0};
-	char tmpContent[70] = {0};
-	char attach_syslog_cmd[70] = {0};
-	char attach_cfgfile_cmd[70] = {0};
-	char attach_iptables_cmd[256] = {0};
-	char up_time[128];
-	char *str = file2str("/proc/uptime");
-	unsigned int up = atoi(str);
-	unsigned int dsl_up_time = 0, current_up=0;
+	char cmd[1024] = {0};
+	char attach_cmd[512] = {0};
+	struct sysinfo info;
+	long sys_uptime = 0, dsl_uptime = 0;
 	int days=0, hours=0, minutes=0;
 	int nValue=0;
 
@@ -86,8 +36,6 @@ void start_DSLsendmail(void)
 		logmessage("email", "Failed to send mail!\n");
 		return;
 	}
-
-	nvram_set("fb_state", "0");
 
 	sprintf(buf,
 		"SMTP_SERVER = '%s'\n"
@@ -109,46 +57,47 @@ void start_DSLsendmail(void)
 	);
 	fputs(buf,fp);
 	fclose(fp);
-	current_up = up;
-	if (up > 60*60*24) {
-		days = up / (60*60*24);
-		up %= 60*60*24;
-	}
-	if (up > 60*60) {
-		hours = up / (60*60);
-		up %= 60*60;
-	}
-	if (up > 60) {
-		minutes = up / 60;
-		up %= 60;
-	}
-	sprintf(up_time, "%d days, %d hours, %d minutes, %d seconds", days, hours, minutes, up);
+
+	nvram_set("fb_state", "0");
 
 	//add some system information
 	sprintf(cmd, "free > %s", FREE_FILE);
 	system(cmd);
+	if(check_if_file_exist(FREE_FILE))
+		sprintf(attach_cmd + strlen(attach_cmd), "-a %s ", FREE_FILE);
+
 	sprintf(cmd, "top -n 1 > %s", TOP_FILE);
 	system(cmd);
+	if(check_if_file_exist(TOP_FILE))
+		sprintf(attach_cmd + strlen(attach_cmd), "-a %s ", TOP_FILE);
 
+	eval("req_dsl_drv", "dumplog");
+	if(check_if_file_exist(LOG_RECORD_FILE))
+		sprintf(attach_cmd + strlen(attach_cmd), "-a %s ", LOG_RECORD_FILE);
+
+	if(check_if_file_exist(SYNC_LOG_FILE))
+		sprintf(attach_cmd + strlen(attach_cmd), "-a %s ", SYNC_LOG_FILE);
+
+	//user checked
 	if(nvram_match("PM_attach_syslog", "1")){
-		sprintf(attach_syslog_cmd,"-a /tmp/syslog.log ");
+		strcat(attach_cmd,"-a /tmp/syslog.log ");
 		if(check_if_file_exist("/tmp/syslog.log-1"))
-			strcat(attach_syslog_cmd, "-a /tmp/syslog.log-1 ");
+			strcat(attach_cmd, "-a /tmp/syslog.log-1 ");
 		eval("req_dsl_drv", "getdmesg");
 		if(check_if_file_exist("/tmp/adsl/dmesg.txt"))
-			strcat(attach_syslog_cmd, "-a /tmp/adsl/dmesg.txt");
+			strcat(attach_cmd, "-a /tmp/adsl/dmesg.txt ");
 	}
 
 	if(nvram_match("PM_attach_cfgfile", "1")){
 		nvram_commit();
 		eval("nvram", "save", "/tmp/settings");
-		sprintf(attach_cfgfile_cmd, "-a /tmp/settings");
+		strcat(attach_cmd, "-a /tmp/settings ");
 	}
 
 	if(nvram_match("PM_attach_iptables", "1")){
 		sprintf(cmd, "iptables-save > %s", IPTABLES_FILE);
 		system(cmd);
-		sprintf(attach_iptables_cmd, "-a %s", IPTABLES_FILE);
+		sprintf(attach_cmd + strlen(attach_cmd), "-a %s ", IPTABLES_FILE);
 	}
 
 	fp = fopen(FB_FILE, "w");
@@ -158,8 +107,8 @@ void start_DSLsendmail(void)
 		fputs(get_productid(), fp);
 
 		fputs("\nFirmware Version: ", fp);
-		sprintf(tmp_val, "%s.%s_%s", nvram_safe_get("firmver"), nvram_safe_get("buildno"), nvram_safe_get("extendno"));
-		fputs(tmp_val, fp);
+		fprintf(fp, "%s.%s_%s", nvram_safe_get("firmver"), nvram_safe_get("buildno"), nvram_safe_get("extendno"));
+
 		fputs("\nInner Version: ", fp);
 		fputs(nvram_safe_get("innerver"), fp);
 
@@ -230,6 +179,9 @@ void start_DSLsendmail(void)
 					break;
 			}
 
+		fputs("\nCountry-Specific Setting: ", fp);
+		fputs(nvram_safe_get("dslx_testlab"), fp);
+
 		fputs("\nStability Adjustment(ADSL): ", fp);
 		nValue = nvram_get_int("dslx_snrm_offset");
 		if(nValue == 0)
@@ -295,31 +247,45 @@ void start_DSLsendmail(void)
 		else{
 			fputs(nvram_safe_get("dsltmp_syncloss"), fp);
 		}
+		fprintf(fp, " / %s", nvram_safe_get("dsltmp_syncup_cnt"));
+
+		sysinfo(&info);
+		sys_uptime = info.uptime;
+		dsl_uptime = sys_uptime - nvram_get_int("adsl_timestamp");
 
 		fputs("\nSystem Up time: ", fp);
-		fputs(up_time, fp);
+		if (sys_uptime > 60*60*24) {
+			days = sys_uptime / (60*60*24);
+			sys_uptime %= 60*60*24;
+		}
+		if (sys_uptime > 60*60) {
+			hours = sys_uptime / (60*60);
+			sys_uptime %= 60*60;
+		}
+		if (sys_uptime > 60) {
+			minutes = sys_uptime / 60;
+			sys_uptime %= 60;
+		}
+		fprintf(fp, "%d days, %d hours, %d minutes, %ld seconds", days, hours, minutes, sys_uptime);
 
 		fputs("\nDSL Up time: ", fp);
-		sprintf(tmp_val, "%s", nvram_safe_get("adsl_timestamp"));
-		if( nvram_match("dsltmp_adslsyncsts", "up") && atoi(tmp_val) > 0){
+		if( nvram_match("dsltmp_adslsyncsts", "up") && dsl_uptime > 0){
 			days = 0;
 			hours = 0;
 			minutes = 0;
-			dsl_up_time = current_up - atoi(tmp_val);
-			if (dsl_up_time > 60*60*24) {
-				days = dsl_up_time / (60*60*24);
-				dsl_up_time %= 60*60*24;
+			if (dsl_uptime > 60*60*24) {
+				days = dsl_uptime / (60*60*24);
+				dsl_uptime %= 60*60*24;
 			}
-			if (dsl_up_time > 60*60) {
-				hours = dsl_up_time / (60*60);
-				dsl_up_time %= 60*60;
+			if (dsl_uptime > 60*60) {
+				hours = dsl_uptime / (60*60);
+				dsl_uptime %= 60*60;
 			}
-			if (dsl_up_time > 60) {
-				minutes = dsl_up_time / 60;
-				dsl_up_time %= 60;
+			if (dsl_uptime > 60) {
+				minutes = dsl_uptime / 60;
+				dsl_uptime %= 60;
 			}
-			sprintf(up_time, "%d days, %d hours, %d minutes, %d seconds", days, hours, minutes, dsl_up_time);
-			fputs(up_time, fp);
+			fprintf(fp, "%d days, %d hours, %d minutes, %ld seconds", days, hours, minutes, dsl_uptime);
 		}
 
 		fputs("\n", fp);
@@ -375,24 +341,19 @@ void start_DSLsendmail(void)
 		}
 
 		if(nvram_safe_get("fb_country") != 0){
-			sprintf(tmpContent, "\nCountry: %s\n", nvram_safe_get("fb_country"));
-			fputs(tmpContent, fp);
+			fprintf(fp, "\nCountry: %s\n", nvram_safe_get("fb_country"));
 		}
 
-		sprintf(tmpContent, "Time Zone: %s\n", nvram_safe_get("time_zone_x"));
-		fputs(tmpContent, fp);
+		fprintf(fp, "Time Zone: %s\n", nvram_safe_get("time_zone_x"));
 
 		if(nvram_invmatch("fb_ISP", "")){
-			sprintf(tmpContent, "ISP: %s\n", nvram_safe_get("fb_ISP"));
-			fputs(tmpContent, fp);
+			fprintf(fp, "ISP: %s\n", nvram_safe_get("fb_ISP"));
 		}
 		if(nvram_invmatch("fb_Subscribed_Info", "")){
-			sprintf(tmpContent, "Subscribed Package: %s\n", nvram_safe_get("fb_Subscribed_Info"));
-			fputs(tmpContent, fp);
+			fprintf(fp, "Subscribed Package: %s\n", nvram_safe_get("fb_Subscribed_Info"));
 		}
 		if(nvram_invmatch("fb_email", "")){
-			sprintf(tmpContent, "E-mail: %s\n", nvram_safe_get("fb_email"));
-			fputs(tmpContent, fp);
+			fprintf(fp, "E-mail: %s\n", nvram_safe_get("fb_email"));
 		}
 		if(nvram_match("dslx_transmode", "atm")){
 			fprintf(fp, "VPI/VCI: %s/%s\n", nvram_safe_get("dsl0_vpi"), nvram_safe_get("dsl0_vci"));
@@ -408,8 +369,7 @@ void start_DSLsendmail(void)
 			fprintf(fp, "VLAN ID: %s\n", nvram_safe_get("dsl8_vid"));
 		}
 		if(nvram_invmatch("fb_availability", "")){
-			sprintf(tmpContent, "DSL connection: %s\n", nvram_safe_get("fb_availability"));
-			fputs(tmpContent, fp);
+			fprintf(fp, "DSL connection: %s\n", nvram_safe_get("fb_availability"));
 		}
 		if(nvram_invmatch("fb_comment", "")){
 			fputs("Comments:\n", fp);
@@ -418,15 +378,11 @@ void start_DSLsendmail(void)
 		}
 		fclose(fp);
 	}
-	sprintf(cmd, "cat %s | /usr/sbin/email -c %s -s \"%s feedback from %s\" -a %s -a %s %s %s %s %s"
+	sprintf(cmd, "cat %s | /usr/sbin/email -c %s -s \"%s feedback from %s\" %s %s"
 		, FB_FILE
 		, MAIL_CONF
 		, get_productid(), nvram_safe_get("fb_email")
-		, TOP_FILE
-		, FREE_FILE
-		, attach_iptables_cmd
-		, attach_cfgfile_cmd
-		, attach_syslog_cmd
+		, attach_cmd
 		, (!nvram_match("fb_email_dbg", ""))? nvram_safe_get("fb_email_dbg"): MY_EMAIL
 		);
 
@@ -463,5 +419,6 @@ void start_DSLsendmail(void)
 
 	unlink(TOP_FILE);
 	unlink(FREE_FILE);
+	unlink(LOG_RECORD_FILE);
 	unlink(IPTABLES_FILE);
 }

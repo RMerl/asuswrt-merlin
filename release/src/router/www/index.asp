@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <html xmlns:v>
 <head>
-<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE9"/>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
@@ -163,8 +163,10 @@ function initial(){
 		tmpDisk.usbPath = i+1;
 		show_USBDevice(tmpDisk);
 		$("usbPathContianer_"+parseInt(i+1)).style.display = "";
+		
 	}
 	
+	check_usb3();
 	for(var i=0; i<usbDevices.length; i++){
 	  var new_option = new Option(usbDevices[i].deviceName, usbDevices[i].deviceIndex);
 		document.getElementById('deviceOption_'+usbDevices[i].usbPath).options.add(new_option);
@@ -409,7 +411,8 @@ function showDiskInfo(device){
 		percentbar = simpleNum2((device.totalSize - device.totalUsed)/device.totalSize*100);
 		percentbar = Math.round(100 - percentbar);		
 
-		dec_html_code += '<p id="diskDesc'+ device.usbPath +'" style="margin-top:5px;"><#Availablespace#>:</p><div id="diskquota" align="left" style="margin-top:5px;margin-bottom:10px;">\n';
+		//dec_html_code += '<p id="diskDesc'+ device.usbPath +'" style="margin-top:5px;"><#Availablespace#>:</p><div id="diskquota" align="left" style="margin-top:5px;margin-bottom:10px;">\n';
+		dec_html_code += '<div id="diskquota" align="left" style="margin-top:5px;margin-bottom:10px;">\n';
 		dec_html_code += '<img src="images/quotabar.gif" width="' + percentbar + '" height="13">';
 		dec_html_code += '</div>\n';
 	}
@@ -450,7 +453,7 @@ function no_device_html(device_seat){
 	var dec_html_code = '';
 	
 	icon_html_code += '<div class="iconNo"></div>';
-	dec_html_code += '<div style="margin:20px" id="noUSB'+ device_seat +'">';
+	dec_html_code += '<div style="margin:10px" id="noUSB'+ device_seat +'">';
 
 	if(rc_support.search("usbX") > -1)
 		dec_html_code += '<#NoDevice#>';
@@ -780,7 +783,7 @@ function change_wan_state(primary_status, secondary_status){
 	if (!dualWAN_support)
 		return true;
 
-	if(wans_mode == "fo" || wans_mode == "fb"){
+	if(wans_mode == "fo"){
 		if(wan_unit == 0){
 			$('primary_status').innerHTML = primary_status;
 			if(primary_status == "Disconnected"){				
@@ -1016,6 +1019,16 @@ function cal_panel_block(){
 	}
 
 	$("edit_client_block").style.marginLeft = blockmarginLeft + "px";
+}
+
+function check_usb3(){
+	if(based_modelid == "RT-AC87U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC56U" || based_modelid == "RT-N18U" || based_modelid == "DSL-AC68U"){
+		document.getElementById('usb1_image').src = "images/New_ui/networkmap/USB3.png";
+	}
+	else if(based_modelid == "RT-N65U"){
+		document.getElementById('usb1_image').src = "images/New_ui/networkmap/USB3.png";
+		document.getElementById('usb2_image').src = "images/New_ui/networkmap/USB3.png";
+	}
 }
 </script>
 </head>
@@ -1309,16 +1322,16 @@ function cal_panel_block(){
 					<td id="usb1_html" width="160" bgcolor="#444f53" align="center" valign="top" class="NM_radius_top">
 						<div id="usbPathContianer_1" style="display:none">
 							<div style="margin-top:20px;margin-bottom:10px;" id="deviceIcon_1"></div>
-							<div>
+							<div><img id="usb1_image" src="images/New_ui/networkmap/USB2.png"></div>
+							<div style="margin:10px 0px;">
 								<span id="deviceText_1"></span>
 								<select id="deviceOption_1" class="input_option" style="display:none;height:20px;width:130px;font-size:12px;"></select>	
 							</div>
+							
 							<div id="deviceDec_1"></div>
 						</div>
 					</td>
-
 				</tr>				
-				
 				<tr id="usb2_html">
 					<td bgcolor="#444f53" align="center" valign="top" class="NM_radius_bottom">
 						<!--a id="" href="device-map/clients.asp" target="statusframe">
@@ -1330,10 +1343,11 @@ function cal_panel_block(){
 						<div id="usbPathContianer_2" style="display:none">
 							<img style="margin-top:15px;width:150px;height:2px" src="/images/New_ui/networkmap/linetwo2.png">
 							<div style="margin-top:10px;margin-bottom:10px;" id="deviceIcon_2"></div>
-							<div>
+							<div><img id="usb2_image" src="images/New_ui/networkmap/USB2.png"></div>
+							<div style="margin:10px 0px;>
 								<span id="deviceText_2"></span>
 								<select id="deviceOption_2" class="input_option" style="display:none;height:20px;width:130px;font-size:12px;"></select>	
-							</div>
+							</div>						
 							<div id="deviceDec_2"></div>
 						</div>
 					</td>

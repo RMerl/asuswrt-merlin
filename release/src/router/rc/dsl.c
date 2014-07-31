@@ -156,25 +156,23 @@ void convert_dsl_wan()
 
 void remove_dsl_autodet(void)
 {
-	int AdslReady = 0;
-	int WaitAdslCnt;
+#ifdef RTCONFIG_RALINK
 	int x;
 	char wan_if[9];
-	char wan_num[2];	
+#endif
 
 	// not autodet , direct return
 	if (nvram_match("dsltmp_autodet_state","")) return;
 
 	// ask auto_det to quit
 	nvram_set("dsltmp_adslatequit","1");
-	
-	for(x=2; x<=8; x++) {
+
 #ifdef RTCONFIG_RALINK
+	for(x=2; x<=8; x++) {
 		sprintf(wan_if, "eth2.1.%d", x);
 		eval("ifconfig", wan_if, "down");
-#else
-#endif
 	}
+#endif
 
 	nvram_set("dsltmp_autodet_state","");
 }
@@ -182,8 +180,6 @@ void remove_dsl_autodet(void)
 
 void convert_dsl_wan_settings(int req)
 {
-	char buf[32];
-
 	if (req == 0)
 	{
 		convert_dsl_config_num();
@@ -197,11 +193,10 @@ void convert_dsl_wan_settings(int req)
 	if (req == 2)
 	{
 		convert_dsl_config_num();
-		eval("req_dsl_drv", "reloadpvc");		
+		eval("req_dsl_drv", "reloadpvc");
 		eval("req_dsl_drv", "rmvlan", nvram_safe_get("dslx_rmvlan"));
-		convert_dsl_wan();		
+		convert_dsl_wan();
 	}
-
 }
 
 void
@@ -209,7 +204,6 @@ dsl_defaults(void)
 {
 	struct nvram_tuple *t;
 	char prefix[]="dslXXXXXX_", tmp[100];
-	char word[256], *next;
 	int unit;
 
 	for(unit=0;unit<8;unit++) {	
@@ -320,7 +314,6 @@ void start_dsl()
 		int x;
 		char wan_if[9];
 		char wan_num[2];
-		char vlan_id[8];
 
 		eval("brctl", "addbr", "br1");
 		for(x=2; x<=config_num; x++) {

@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <html xmlns:v>
 <head>
-<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7"/>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
@@ -62,46 +62,18 @@
 	color:#FFFFFF;
 	cursor:pointer;
 }
-.rsstatus_gif_Img_L{
-	background-image:url(images/cloudsync/left_right_trans.gif);
-	background-position: 10px -0px; width: 59px; height: 38px;
-}
-.rsstatus_gif_Img_LR{
-	background-image:url(images/cloudsync/left_right_trans.gif);
-	background-position: 10px -47px; width: 59px; height: 38px;
-}
-.rsstatus_gif_Img_R{
-	background-image:url(images/cloudsync/left_right_trans.gif);
-	background-position: 10px -97px; width: 59px; height: 38px;
-}
-.rsstatus_png_Img_error{
-	background-image:url(images/cloudsync/left_right_done.png);
-	background-position: -0px -0px; width: 59px; height: 38px;
-}
-.rsstatus_png_Img_L_ok{
-	background-image:url(images/cloudsync/left_right_done.png);
-	background-position: -0px -47px; width: 59px; height: 38px;
-}
-.rsstatus_png_Img_R_ok{
-	background-image:url(images/cloudsync/left_right_done.png);
-	background-position: -0px -95px; width: 59px; height: 38px;
-}
-.rsstatus_png_Img_LR_ok{
-	background-image:url(images/cloudsync/left_right_done.png);
-	background-position: -0px -142px; width: 59px; height: 38px;
-}
 
-.status_gif_Img_L{
+.status_gif_Img_2{
 	background-image:url(images/cloudsync/left_right_trans.gif);
 	background-position: 10px -0px; width: 59px; height: 38px;
 }
-.status_gif_Img_LR{
-	background-image:url(images/cloudsync/left_right_trans.gif);
-	background-position: 10px -47px; width: 59px; height: 38px;
-}
-.status_gif_Img_R{
+.status_gif_Img_1{
 	background-image:url(images/cloudsync/left_right_trans.gif);
 	background-position: 10px -97px; width: 59px; height: 38px;
+}
+.status_gif_Img_0{
+	background-image:url(images/cloudsync/left_right_trans.gif);
+	background-position: 10px -47px; width: 59px; height: 38px;
 }
 
 .status_png_Img_error{
@@ -141,9 +113,28 @@
 	visibility:visible;
 	background:rgba(0, 0, 0, 0.85) none repeat scroll 0 0 !important;
 }
+.cloudListUserName{
+	font-size:16px;
+	font-family: Calibri;
+	font-weight: bolder;
+	text-decoration:underline; 
+	cursor:pointer;
+}
+.contentM_qis{
+	position:absolute;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	z-index:200;
+	background-color:#2B373B;
+	margin-left:226px;
+	margin-top: 10px;
+	width:740px;
+}
 </style>
 <script>
 var $j = jQuery.noConflict();
+window.onresize = cal_panel_block;
 <% login_state_hook(); %>
 <% get_AiDisk_status(); %>
 <% disk_pool_mapping_info(); %>
@@ -175,21 +166,25 @@ var rs_fullcapa="0";
 var rs_usedcapa="0";
 <% UI_rs_status(); %>
 
-var curRule = -1;
+var curRule = {
+	WebStorage: -1,
+	RouterSync: -1,
+	Dropbox:-1,
+	SambaClient: -1,
+	end: 0
+}
+
 var enable_cloudsync = '<% nvram_get("enable_cloudsync"); %>';
-var cloud_sync =decodeURIComponent('<% nvram_char_to_ascii("","cloud_sync"); %>');
-/* type>user>password>url>rule>dir>enable */
+var cloud_sync = decodeURIComponentSafe('<% nvram_char_to_ascii("","cloud_sync"); %>');
 var cloud_synclist_array = cloud_sync.replace(/>/g, "&#62").replace(/</g, "&#60"); 
 var cloud_synclist_all = new Array(); 
-var showEditTable = 0;
-var isonEdit = -1;
+var editRule = -1;
 var rulenum;
 var disk_flag=0;
 var FromObject = "0";
 var lastClickedObj = 0;
 var _layer_order = "";
 var PROTOCOL = "cifs";
-window.onresize = cal_panel_block;
 
 function initial(){
 	show_menu();	
@@ -212,7 +207,7 @@ function showInvitation(){
 	if(window.scrollTo)
 		window.scrollTo(0,0);
 
-	cal_panel_block();
+	cal_panel_block("cloudAddTable_div");
 	if(!isInvite){
 		$("invitationInfo").innerHTML = "<br/> <#aicloud_invitation_invalid#>";
 		$j("#invitation").fadeIn(300);
@@ -349,51 +344,66 @@ function Do_addRow_Group(){
 }
 
 function edit_Row(r){
-	document.form.cloud_username.value = cloud_synclist_all[r][1];
-	document.form.cloud_password.value = cloud_synclist_all[r][2];
-	document.form.cloud_dir.value = cloud_synclist_all[r][5].substring(4);
-	document.form.cloud_rule.value = cloud_synclist_all[r][4];
+	if(cloud_synclist_all == "")
+		return true;
+		
+	if(cloud_synclist_all[r][0] == 0){
+		change_service("WebStorage");
+		document.form.cloud_username.value = cloud_synclist_all[r][1];
+		document.form.cloud_password.value = cloud_synclist_all[r][2];
+		document.form.cloud_rule.value = cloud_synclist_all[r][4];
+		document.form.cloud_dir.value = cloud_synclist_all[r][5].substring(4);	
+	}
+	else if(cloud_synclist_all[r][0] == 3){
+		change_service("Dropbox");
+		document.form.cloud_username.value = cloud_synclist_all[r][2];
+		document.form.cloud_password.value = cloud_synclist_all[r][3];
+		document.form.cloud_rule.value = cloud_synclist_all[r][5];
+		document.form.cloud_dir.value = cloud_synclist_all[r][6].substring(4);	
+	}
+	else if(cloud_synclist_all[r][0] == 4){
+		change_service("Samba");
+		document.form.sambaclient_name.value = cloud_synclist_all[r][1];
+		document.form.sambaclient_ip.value = cloud_synclist_all[r][2];
+		document.form.sambaclient_sharefolder.value = cloud_synclist_all[r][3];
+		document.form.cloud_username.value = cloud_synclist_all[r][4];
+		document.form.cloud_password.value = cloud_synclist_all[r][5];
+		document.form.cloud_rule.value = cloud_synclist_all[r][6];
+		document.form.cloud_dir.value = cloud_synclist_all[r][7].substring(4);	
+	}
+	else{
+		var ftp_protocol_temp ="";
+		change_service("FTP");
+		ftp_protocol_temp = cloud_synclist_all[r][4].split(":")[0];			// to check first element ftp or others.
+		document.form.cloud_username.value = cloud_synclist_all[r][2];
+		document.form.cloud_password.value = cloud_synclist_all[r][3];
+		if(ftp_protocol_temp == "ftp"){
+			document.form.ftp_url.value = cloud_synclist_all[r][4].substring(6);
+			$('ftp_protocol')[0].selected = "selected";
+		}
+		document.form.ftp_root_path.value = cloud_synclist_all[r][5];
+		document.form.cloud_rule.value = cloud_synclist_all[r][7];
+		document.form.cloud_dir.value = cloud_synclist_all[r][8].substring(4);	
+		
+	}
 }
 
-function del_Row(_rulenum){
-	var cloud_synclist_row;
-	cloud_synclist_array = cloud_sync.replace(/>/g, "&#62").replace(/</g, "&#60"); 
-	cloud_synclist_row = cloud_synclist_array.split('&#60');
-	cloud_synclist_row[_rulenum-1] = "";
-	cloud_synclist_array = "";
-
-	for(var i=0; i<cloud_synclist_row.length; i++){
-		if(cloud_synclist_row[i] == "")
-			continue;
-		if(cloud_synclist_array != "")
- 			cloud_synclist_array += "<";
-		cloud_synclist_array += cloud_synclist_row[i];
-	}
-
-	document.form.cloud_sync.value = cloud_synclist_array.replace(/&#62/g, ">").replace(/&#60/g, "<");
-	$("update_scan").style.display = '';
+function delRow(_rulenum){
+	document.form.cloud_sync.value = cloud_sync.split('<').del(_rulenum-1).join("<");
 	FormActions("start_apply.htm", "apply", "restart_cloudsync", "2");
 	showLoading();
 	document.form.submit();
 }
 
-var hasWebStorageAcc = false;
 function showcloud_synclist(){
 	var rsnum = 0;
 	var cloud_synclist_row = cloud_synclist_array.split('&#60');
 	var code = "";
-	var dir_temp = "";
-	var dir_path = "";
 	rulenum = 0;
 
 	code +='<table width="99%" cellspacing="0" cellpadding="4" align="center" class="list_table" id="cloud_synclist_table">';
-	if(enable_cloudsync == '0' && cloud_synclist_row != ""){
+	if(enable_cloudsync == '0' && cloud_synclist_array != "")
 		code +='<tr height="55px"><td style="color:#FFCC00;" colspan="6"><#nosmart_sync#></td>';
-		hasWebStorageAcc = true;
-	}
-	else if(enable_cloudsync == '0'){
-		code +='<tr height="55px"><td style="color:#FFCC00;" colspan="6"><#nosmart_sync#></td>';
-	}
 	else if($("usb_status").className == "usbstatusoff")
 		code +='<tr height="55px"><td style="color:#FFCC00;" colspan="6"><#no_usb_found#></td>';
 	else if(cloud_synclist_array == "")
@@ -403,77 +413,104 @@ function showcloud_synclist(){
 			rulenum++;
 			code +='<tr id="row'+i+'" height="55px">';
 			var cloud_synclist_col = cloud_synclist_row[i].split('&#62');
-			var wid = [10, 25, 0, 0, 10, 30, 15];
+			cloud_synclist_all[i] = cloud_synclist_col;
+			var wid = [10, 25, 10, 30, 15, 10];
+			var cloudListTableItem = {
+				provider: "",
+				icon: "",
+				username: "",
+				token: "",
+				rule: "",
+				ruleId: "",
+				path: "",
+				syncStatus: "",
+				syncStatusId: 0,
+				syncStatusDefaultStr: " - ",
+				end: ""
+			}	
 
 			if(cloud_synclist_col[0] == 0){ // ASUS WebStorage
-				$("creatBtn").style.display = "none";
-				hasWebStorageAcc = true;
-				cloud_synclist_all[i] = cloud_synclist_col;
-				for(var j = 0; j < cloud_synclist_col.length; j++){
-					if(j == 2 || j == 3){ 
-						continue;
-					}
-					else{
-						if(j == 0)
-							code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><img width="30px" src="/images/cloudsync/ASUS-WebStorage.png"></td>';
-						else if(j == 1){
-							if(cloud_synclist_col[j].length > 20)
-								code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><span style="font-size:16px;font-family: Calibri;font-weight: bolder;text-decoration:underline; cursor:pointer"  onclick="isonEdit='+rulenum+';showEditTable=1;showAddTable('+rulenum+');" title='+cloud_synclist_col[j]+'>'+ cloud_synclist_col[j].substring(0, 17) +'...</span></td>';
-							else
-								code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><span style="font-size:16px;font-family: Calibri;font-weight: bolder;text-decoration:underline; cursor:pointer"  onclick="isonEdit='+rulenum+';showEditTable=1;showAddTable('+rulenum+');">'+ cloud_synclist_col[j] +'</span></td>';
-						}	
-						else if(j == 4){
-							curRule = cloud_synclist_col[j];
-							if(cloud_synclist_col[j] == 2)
-								code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><div id="status_image"><div class="status_gif_Img_L"></div></div></td>';//code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><img id="statusImg" width="45px" src="/images/cloudsync/left.gif"></td>';
-							else if(cloud_synclist_col[j] == 1)
-								code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><div id="status_image"><div class="status_gif_Img_R"></div></div></td>';
-							else
-								code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><div id="status_image"><div class="status_gif_Img_LR"></div></div></td>';
-						}
-						else if(j == 6){
-							code +='<td width="'+wid[j]+'%" id="cloudStatus"></td>';
-						}
-						else{
-							dir_temp = cloud_synclist_col[j].split("/");
-							if(dir_temp[dir_temp.length-1].length > 21){
-								dir_path = "/" + dir_temp[3] + "/" +dir_temp[4].substring(0,18) + "...";
-								code +='<td width="'+wid[j]+'%"><span style="display:none;">'+ cloud_synclist_col[j] +'</span><span style="word-break:break-all;" title='+cloud_synclist_col[j].substr(8, cloud_synclist_col[j].length)+'>'+ dir_path +'</span></td>';
-							}	
-							else{
-								dir_path = cloud_synclist_col[j].substr(8, cloud_synclist_col[j].length);
-								code +='<td width="'+wid[j]+'%"><span style="display:none;">'+ cloud_synclist_col[j] +'</span><span style="word-break:break-all;" >'+ dir_path +'</span></td>';
-							}		
-						}
-					}
-				}
-				code += '<td width="10%"><input class="remove_btn" onclick="del_Row('+rulenum+');" value=""/></td>';
+				cloudListTableItem.provider = cloud_synclist_col[0];
+				cloudListTableItem.icon = "ASUS-WebStorage.png";
+				cloudListTableItem.username = cloud_synclist_col[1];
+				cloudListTableItem.rule = cloud_synclist_col[4];
+				cloudListTableItem.ruleId = "status_image";
+				cloudListTableItem.path = cloud_synclist_col[5];
+				cloudListTableItem.syncStatus = cloud_synclist_col[6];
+				cloudListTableItem.syncStatusId = "cloudStatus";
+				cloudListTableItem.syncStatusDefaultStr = "Waiting..."
+				curRule.WebStorage = cloudListTableItem.rule; 
 			}
-			else if(cloud_synclist_col[0] == 1){ // Router Sync
-				for(var j = 0; j < cloud_synclist_col.length; j++){
-					if(j == 0)
-						code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><img width="30px" src="/images/cloudsync/rssync.png"></td>';
-					else if(j == 1)
-						code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><span style="font-size:16px;font-family:Calibri;font-weight:bolder;" onclick="">'+ cloud_synclist_col[j] +'</span></td>';
-					else if(j == 3){
-						curRule = cloud_synclist_col[j];
-						if(cloud_synclist_col[j] == 2)
-							code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><div id="rsstatus_image_'+rsnum+'"><div class="rsstatus_gif_Img_L"></div></div></td>';//code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><img id="rsstatusImg" width="45px" src="/images/cloudsync/left.gif"></td>';
-						else if(cloud_synclist_col[j] == 1)
-							code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><div id="rsstatus_image_'+rsnum+'"><div class="rsstatus_gif_Img_R"></div></div></td>';
-						else
-							code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><div id="rsstatus_image_'+rsnum+'"><div class="rsstatus_gif_Img_LR"></div></div></td>';
-					}
-					else if(j == 5)
-						code +='<td width="'+wid[j]+'%"><span style="display:none;">'+ cloud_synclist_col[j] +'</span><span style="word-break:break-all;">'+ cloud_synclist_col[j].substr(4, cloud_synclist_col[j].length) +'</span></td>';
-				}				
-				code +='<td width="'+wid[j]+'%" id="rsStatus_'+rsnum+'">Waiting...</td>';
-				code += '<td width="10%"><input class="remove_btn" onclick="del_Row('+rulenum+');" value=""/></td>';
+			else if(cloud_synclist_col[0] == 1){ // Router to router sync
+				cloudListTableItem.provider = cloud_synclist_col[0];
+				cloudListTableItem.icon = "rssync.png";
+				cloudListTableItem.username = cloud_synclist_col[1];
+				cloudListTableItem.rule = cloud_synclist_col[3];
+				cloudListTableItem.ruleId = "rsstatus_image_" + rsnum;
+				cloudListTableItem.path = cloud_synclist_col[5];
+				cloudListTableItem.syncStatusId = "rsStatus_" + rsnum;
+				cloudListTableItem.syncStatusDefaultStr = "Waiting..."
 				rsnum++;
+				curRule.RouterSync = cloudListTableItem.rule;
+			}
+			else if(cloud_synclist_col[0] == 2){ // FTP Client
+				cloudListTableItem.provider = cloud_synclist_col[0];
+				cloudListTableItem.icon = "ftp_server.png";
+				if(cloud_synclist_col[2] == "" && cloud_synclist_col[3] == "")
+					cloudListTableItem.username = "anonymous";
+				else
+					cloudListTableItem.username = cloud_synclist_col[2];			
+				
+				cloudListTableItem.rule = cloud_synclist_col[7];
+				cloudListTableItem.ruleId = "ftpclient_status_image";
+				cloudListTableItem.path = cloud_synclist_col[8];
+				cloudListTableItem.syncStatusId = "cloudStatus_ftpclient";
+				cloudListTableItem.syncStatusDefaultStr = "Waiting...";
+				curRule.ftpclient = cloudListTableItem.rule; 
+			}
+			else if(cloud_synclist_col[0] == 3){ // Dropbox
+				cloudListTableItem.provider = cloud_synclist_col[0];
+				cloudListTableItem.icon = "dropbox.png";
+				cloudListTableItem.username = cloud_synclist_col[2];
+				cloudListTableItem.token = cloud_synclist_col[3];
+				cloudListTableItem.rule = cloud_synclist_col[5];
+				cloudListTableItem.ruleId = "dropbox_status_image";
+				cloudListTableItem.path = cloud_synclist_col[6];
+				cloudListTableItem.syncStatusId = "cloudStatus_dropbox";
+				cloudListTableItem.syncStatusDefaultStr = "Waiting...";
+				curRule.Dropbox = cloudListTableItem.rule;
+			}
+			else if(cloud_synclist_col[0] == 4){ // SambaClient
+				cloudListTableItem.provider = cloud_synclist_col[0];
+				cloudListTableItem.icon = "ftp_server.png";
+				cloudListTableItem.username = cloud_synclist_col[4];
+				cloudListTableItem.rule = cloud_synclist_col[6];
+				cloudListTableItem.ruleId = "sambaclient_status_image"
+				cloudListTableItem.path = cloud_synclist_col[7];
+				cloudListTableItem.syncStatusId = "cloudStatus_sambaclient";
+				cloudListTableItem.syncStatusDefaultStr = "Waiting..."
+				curRule.SambaClient = cloudListTableItem.rule;
 			}
 			else{
-				code += '';
+				continue;
 			}
+
+			// HTML constructor
+			code += '<td width="'+wid[0]+'%"><img src="/images/cloudsync/'+ cloudListTableItem.icon +'"></td>';
+
+			code += '<td width="'+wid[1]+'%"><span';
+
+			if(cloudListTableItem.provider == 3){
+				code += ' id="cloudListUserName_' + cloudListTableItem.username + '"';
+				getDropBoxClientName(cloudListTableItem.token, cloudListTableItem.username);
+			}
+
+			code += ' class="cloudListUserName" onclick="editRule='+rulenum+';showAddTable('+cloudListTableItem.provider+','+i+');" title=' + cloudListTableItem.username + '>' + cloudListTableItem.username.shorter(20) + '</span></td>';
+
+			code += '<td width="'+wid[2]+'%"><div id="' + cloudListTableItem.ruleId + '"><div class="status_gif_Img_' + cloudListTableItem.rule + '"></div></div></td>';
+			code += '<td width="'+wid[3]+'%"><span style="word-break:break-all;" title=' + cloudListTableItem.path.substr(8, cloudListTableItem.path.length)+ '>' + cloudListTableItem.path.substr(8, cloudListTableItem.path.length).shorter(20) +'</span></td>';
+			code += '<td width="'+wid[4]+'%" id="' + cloudListTableItem.syncStatusId + '">' + cloudListTableItem.syncStatusDefaultStr + '</td>';
+			code += '<td width="'+wid[5]+'%"><input class="remove_btn" onclick="delRow('+rulenum+');" value=""/></td>';
 
 			if(updateCloudStatus_counter == 0){
 				updateCloudStatus();
@@ -481,8 +518,25 @@ function showcloud_synclist(){
 			}
 		}
 	}
+
 	code +='</table>';
 	$("cloud_synclist_Block").innerHTML = code;
+}
+
+function getDropBoxClientName(token, uid){
+    $j.ajax({
+    	url: 'https://api.dropbox.com/1/account/info?access_token=' + token,
+    	dataType: 'json', 
+    	error: function(xhr){
+      		getDropBoxClientName();
+    	},
+    	success: function(response){
+    		if(document.getElementById("cloudListUserName_" + uid))
+    			document.getElementById("cloudListUserName_" + uid).innerHTML = response.email;
+    		else
+      			getDropBoxClientName();    			
+    	}
+    })
 }
 
 var updateCloudStatus_counter = 0;
@@ -500,7 +554,7 @@ function updateCloudStatus(){
 					if($("cloudStatus")){
 						if(cloud_status.toUpperCase() == "DOWNUP"){
 							cloud_status = "SYNC";
-							$("status_image").firstChild.className="status_gif_Img_LR";
+							$("status_image").firstChild.className="status_gif_Img_0";
 						}
 						else if(cloud_status.toUpperCase() == "ERROR"){
 							$("status_image").firstChild.className="status_png_Img_error";
@@ -509,16 +563,16 @@ function updateCloudStatus(){
 							$("status_image").firstChild.className="status_png_Img_error";
 						}
 						else if(cloud_status.toUpperCase() == "UPLOAD"){
-							$("status_image").firstChild.className="status_gif_Img_L";
+							$("status_image").firstChild.className="status_gif_Img_2";
 						}
 						else if(cloud_status.toUpperCase() == "DOWNLOAD"){
-							$("status_image").firstChild.className="status_gif_Img_R";
+							$("status_image").firstChild.className="status_gif_Img_1";
 						}
 						else if(cloud_status.toUpperCase() == "SYNC"){
 							cloud_status = "Finish";
-							if(curRule == 2){
+							if(curRule.WebStorage == 2){
 								$("status_image").firstChild.className="status_png_Img_L_ok";
-							}else if(curRule == 1){
+							}else if(curRule.WebStorage == 1){
 								$("status_image").firstChild.className="status_png_Img_R_ok";
 							}else{
 								$("status_image").firstChild.className="status_png_Img_LR_ok";
@@ -531,16 +585,15 @@ function updateCloudStatus(){
 							_cloud_msg +=  "<b>";
 							_cloud_msg += cloud_status;
 							_cloud_msg += ": </b><br />";
-							_cloud_msg += "<span style=\\'word-break:break-all;\\'>" + decodeURIComponent(cloud_obj) + "</span>";
+							_cloud_msg += "<span style=\\'word-break:break-all;\\'>" + decodeURIComponentSafe(cloud_obj) + "</span>";
 						}
 						else if(cloud_msg){
 							if(cloud_msg == "Need to enter the CAPTCHA"){
 								if(captcha_flag == 0){
-									showEditTable = 1;
-									showAddTable(1);
+									showAddTable(0);
 									$('captcha_tr').style.display = "";															
 									autoFocus('captcha_field');	
-									$('captcha_iframe').src= CAPTCHA_URL;						
+									$('captcha_iframe').src = CAPTCHA_URL;
 									captcha_flag = 1;
 								}
 							}
@@ -560,30 +613,191 @@ function updateCloudStatus(){
 						$("cloudStatus").innerHTML = '<div style="text-decoration:underline; cursor:pointer" onmouseout="return nd();" onclick="return overlib(\''+ _cloud_msg +'\');">'+ _cloud_status +'</div>';
 					}
 
+					//dropbox
+					if($("cloudStatus_dropbox")){
+						if( cloud_dropbox_status.toUpperCase() == "DOWNUP"){
+							 cloud_dropbox_status = "SYNC";
+							$("dropbox_status_image").firstChild.className="status_gif_Img_0";
+						}
+						else if( cloud_dropbox_status.toUpperCase() == "ERROR"){
+							$("dropbox_status_image").firstChild.className="status_png_Img_error";
+						}
+						else if( cloud_dropbox_status.toUpperCase() == "INPUT CAPTCHA"){
+							$("dropbox_status_image").firstChild.className="status_png_Img_error";
+						}
+						else if( cloud_dropbox_status.toUpperCase() == "UPLOAD"){
+							$("dropbox_status_image").firstChild.className="status_gif_Img_2";
+						}
+						else if( cloud_dropbox_status.toUpperCase() == "DOWNLOAD"){
+							$("dropbox_status_image").firstChild.className="status_gif_Img_1";
+						}
+						else if( cloud_dropbox_status.toUpperCase() == "SYNC"){
+							 cloud_dropbox_status = "Finish";
+							if(curRule.Dropbox == 2){
+								$("dropbox_status_image").firstChild.className="status_png_Img_L_ok";
+							}else if(curRule.Dropbox == 1){
+								$("dropbox_status_image").firstChild.className="status_png_Img_R_ok";
+							}else{
+								$("dropbox_status_image").firstChild.className="status_png_Img_LR_ok";
+							}	
+						}
+
+	
+						// handle msg
+						var _cloud_dropbox_msg = "";
+						if(cloud_dropbox_obj != ""){
+							_cloud_dropbox_msg +=  "<b>";
+							_cloud_dropbox_msg += cloud_dropbox_status;
+							_cloud_dropbox_msg += ": </b><br />";
+							_cloud_dropbox_msg += "<span style=\\'word-break:break-all;\\'>" + decodeURIComponentSafe(cloud_dropbox_obj) + "</span>";
+						}
+						else if(cloud_dropbox_msg){
+							_cloud_dropbox_msg += cloud_dropbox_msg;
+						}
+						else{
+							_cloud_dropbox_msg += "<#aicloud_no_record#>";
+						}
+	
+						// handle status
+						var _cloud_dropbox_status;
+						if(cloud_dropbox_status != "")
+							_cloud_dropbox_status = cloud_dropbox_status;
+						else
+							_cloud_dropbox_status = "";
+	
+						$("cloudStatus_dropbox").innerHTML = '<div style="text-decoration:underline; cursor:pointer" onmouseout="return nd();" onclick="return overlib(\''+ _cloud_dropbox_msg +'\');">'+ _cloud_dropbox_status +'</div>';
+					}
+					
+					// ftp client
+					if($("cloudStatus_ftpclient")){
+						if( cloud_ftpclient_status.toUpperCase() == "DOWNUP"){
+							 cloud_ftpclient_status = "SYNC";
+							$("ftpclient_status_image").firstChild.className="status_gif_Img_0";
+						}
+						else if( cloud_ftpclient_status.toUpperCase() == "ERROR"){
+							$("ftpclient_status_image").firstChild.className="status_png_Img_error";
+						}
+						else if( cloud_ftpclient_status.toUpperCase() == "UPLOAD"){
+							$("ftpclient_status_image").firstChild.className="status_gif_Img_2";
+						}
+						else if( cloud_ftpclient_status.toUpperCase() == "DOWNLOAD"){
+							$("ftpclient_status_image").firstChild.className="status_gif_Img_1";
+						}
+						else if( cloud_ftpclient_status.toUpperCase() == "SYNC"){
+							 cloud_ftpclient_status = "Finish";
+							if(curRule.ftpclient == 2){
+								$("ftpclient_status_image").firstChild.className="status_png_Img_L_ok";
+							}else if(curRule.ftpclient == 1){
+								$("ftpclient_status_image").firstChild.className="status_png_Img_R_ok";
+							}else{
+								$("ftpclient_status_image").firstChild.className="status_png_Img_LR_ok";
+							}	
+						}
+
+	
+						// handle msg
+						var _cloud_ftpclient_msg = "";
+						if(cloud_ftpclient_obj != ""){
+							_cloud_ftpclient_msg +=  "<b>";
+							_cloud_ftpclient_msg += cloud_ftpclient_status;
+							_cloud_ftpclient_msg += ": </b><br />";
+							_cloud_ftpclient_msg += "<span style=\\'word-break:break-all;\\'>" + decodeURIComponentSafe(cloud_ftpclient_obj) + "</span>";
+						}
+						else if(cloud_dropbox_msg){
+							_cloud_ftpclient_msg += cloud_ftpclient_msg;
+						}
+						else{
+							_cloud_ftpclient_msg += "<#aicloud_no_record#>";
+						}
+	
+						// handle status
+						var _cloud_ftpclient_status;
+						if(cloud_ftpclient_status != "")
+							_cloud_ftpclient_status = cloud_ftpclient_status;
+						else
+							_cloud_ftpclient_status = "";
+	
+						$("cloudStatus_ftpclient").innerHTML = '<div style="text-decoration:underline; cursor:pointer" onmouseout="return nd();" onclick="return overlib(\''+ _cloud_ftpclient_msg +'\');">'+ _cloud_ftpclient_status +'</div>';
+					}
+
+					// samba client
+					
+					if($("cloudStatus_sambaclient")){
+						if( cloud_sambaclient_status.toUpperCase() == "DOWNUP"){
+							 cloud_sambaclient_status = "SYNC";
+							$("sambaclient_status_image").firstChild.className="status_gif_Img_0";
+						}
+						else if( cloud_sambaclient_status.toUpperCase() == "ERROR"){
+							$("sambaclient_status_image").firstChild.className="status_png_Img_error";
+						}
+						else if( cloud_sambaclient_status.toUpperCase() == "UPLOAD"){
+							$("sambaclient_status_image").firstChild.className="status_gif_Img_2";
+						}
+						else if( cloud_sambaclient_status.toUpperCase() == "DOWNLOAD"){
+							$("sambaclient_status_image").firstChild.className="status_gif_Img_1";
+						}
+						else if( cloud_sambaclient_status.toUpperCase() == "SYNC"){
+							 cloud_sambaclient_status = "Finish";
+							if(curRule.SambaClient == 2){
+								$("sambaclient_status_image").firstChild.className="status_png_Img_L_ok";
+							}else if(curRule.SambaClient == 1){
+								$("sambaclient_status_image").firstChild.className="status_png_Img_R_ok";
+							}else{
+								$("sambaclient_status_image").firstChild.className="status_png_Img_LR_ok";
+							}	
+						}
+
+	
+						// handle msg
+						var _cloud_sambaclient_msg = "";
+						if(cloud_sambaclient_obj != ""){
+							_cloud_sambaclient_msg +=  "<b>";
+							_cloud_sambaclient_msg += cloud_sambaclient_status;
+							_cloud_sambaclient_msg += ": </b><br />";
+							_cloud_sambaclient_msg += "<span style=\\'word-break:break-all;\\'>" + decodeURIComponentSafe(cloud_sambaclient_obj) + "</span>";
+						}
+						else if(cloud_dropbox_msg){
+							_cloud_sambaclient_msg += cloud_sambaclient_msg;
+						}
+						else{
+							_cloud_sambaclient_msg += "<#aicloud_no_record#>";
+						}
+	
+						// handle status
+						var _cloud_sambaclient_status;
+						if(cloud_sambaclient_status != "")
+							_cloud_sambaclient_status = cloud_sambaclient_status;
+						else
+							_cloud_v_status = "";
+	
+						$("cloudStatus_sambaclient").innerHTML = '<div style="text-decoration:underline; cursor:pointer" onmouseout="return nd();" onclick="return overlib(\''+ _cloud_sambaclient_msg +'\');">'+ _cloud_sambaclient_status +'</div>';
+					}
+					
 					// Router Sync
 					if(rs_rulenum == "") rs_rulenum = 0;
+
 					if($("rsStatus_"+rs_rulenum)){
 						if(rs_status.toUpperCase() == "DOWNUP"){
 							rs_status = "SYNC";
-							$("rsstatus_image_"+rs_rulenum).firstChild.className="rsstatus_gif_Img_LR";
+							$("rsstatus_image_"+rs_rulenum).firstChild.className="status_gif_Img_0";
 						}
 						else if(rs_status.toUpperCase() == "ERROR"){
-							$("rsstatus_image_"+rs_rulenum).firstChild.className="rsstatus_png_Img_error";
+							$("rsstatus_image_"+rs_rulenum).firstChild.className="status_png_Img_error";
 						}
 						else if(rs_status.toUpperCase() == "UPLOAD"){
-							$("rsstatus_image_"+rs_rulenum).firstChild.className="rsstatus_gif_Img_L";
+							$("rsstatus_image_"+rs_rulenum).firstChild.className="status_gif_Img_2";
 						}
 						else if(rs_status.toUpperCase() == "DOWNLOAD"){
-							$("rsstatus_image_"+rs_rulenum).firstChild.className="rsstatus_gif_Img_R";
+							$("rsstatus_image_"+rs_rulenum).firstChild.className="status_gif_Img_1";
 						}
 						else if(rs_status.toUpperCase() == "SYNC"){
 							rs_status = "Finish";
-							if(curRule == 2){
-								$("rsstatus_image_"+rs_rulenum).firstChild.className="rsstatus_png_Img_L_ok";
-							}else if(curRule == 1){
-								$("rsstatus_image_"+rs_rulenum).firstChild.className="rsstatus_png_Img_R_ok";
+							if(curRule.RouterSync == 2){
+								$("rsstatus_image_"+rs_rulenum).firstChild.className="status_png_Img_L_ok";
+							}else if(curRule.RouterSync == 1){
+								$("rsstatus_image_"+rs_rulenum).firstChild.className="status_png_Img_R_ok";
 							}else{
-								$("rsstatus_image_"+rs_rulenum).firstChild.className="rsstatus_png_Img_LR_ok";
+								$("rsstatus_image_"+rs_rulenum).firstChild.className="status_png_Img_LR_ok";
 							}	
 						}
 	
@@ -593,7 +807,7 @@ function updateCloudStatus(){
 							_rs_msg +=  "<b>";
 							_rs_msg += rs_status;
 							_rs_msg += ": </b><br />";
-							_rs_msg += "<span style=\\'word-break:break-all;\\'>" + decodeURIComponent(rs_obj) + "</span>";
+							_rs_msg += "<span style=\\'word-break:break-all;\\'>" + decodeURIComponentSafe(rs_obj) + "</span>";
 						}
 						else if(rs_msg){
 							_rs_msg += rs_msg;
@@ -611,24 +825,64 @@ function updateCloudStatus(){
    });
 }
 
-function validform(){
+function convStr(_str){
+	if(_str.toUpperCase() == "SYNC")
+		return "Finish";
+	else
+		return _str;
+}
+
+function validform(){	
+	if($('select_service').innerHTML != "WebStorage"
+	&& $('select_service').innerHTML != "Dropbox"
+	&& $('select_service').innerHTML != "FTP server"
+	&& $('select_service').innerHTML != "Samba"){
+		alert("Please select the provider!!");
+		return false;
+	}
+	
 	if(!validate_string(document.form.cloud_dir))
 		return false;
 
 	if(!Block_chars(document.form.cloud_username, ["<", ">"]))
 		return false;
 
-	if(document.form.cloud_username.value == ''){
-		alert("<#File_Pop_content_alert_desc1#>");
-		return false;
+	if($('select_service').innerHTML == "Samba"){
+		if(document.form.sambaclient_name.value == ''){
+			alert("The Samba can't NULL");
+			document.form.sambaclient_name.focus();
+			return false;
+		}
+		else if(document.form.sambaclient_ip.value == ''){
+			alert("The Server address can't NULL");
+			document.form.sambaclient_ip.focus();
+			return false;
+		}
+		else if(document.form.sambaclient_sharefolder.value == ''){
+			alert("The Share folder can't NULL");
+			document.form.sambaclient_sharefolder.focus();
+			return false;
+		}
 	}
+	
+	if($('select_service').innerHTML != "FTP server"){		// to allow ftp client could use anonymous/anonymous, blank field, Jieming added at 2013/12/09
+		if(document.form.cloud_username.value == ''){
+			alert("<#File_Pop_content_alert_desc1#>");
+			document.form.cloud_username.focus();
+			return false;
+		}
+	}
+
 
 	if(!Block_chars(document.form.cloud_password, ["<", ">"]))
 		return false;
 
-	if(document.form.cloud_password.value == ''){
-		alert("<#File_Pop_content_alert_desc6#>");
-		return false;
+	if($('select_service').innerHTML != "FTP server"){		// to allow ftp client could use anonymous/anonymous, blank field, Jieming added at 2013/12/09
+		if(document.form.cloud_password.value == ''){
+			alert("<#File_Pop_content_alert_desc6#>");
+			document.form.cloud_password.focus();
+			return false;
+		}
 	}
 
 	/*if(document.form.cloud_password.value.length < 8){ //disable to check length of password temporary, Jieming added at 2013.08.13
@@ -636,8 +890,10 @@ function validform(){
 		return false;
 	}*/
 	
-	if(document.form.cloud_dir.value.split("/").length < 4 || document.form.cloud_dir.value == ''){
+	//if(document.form.cloud_dir.value.split("/").length < 4 || document.form.cloud_dir.value == ''){
+	if(document.form.cloud_dir.value == ''){
 		alert("<#ALERT_OF_ERROR_Input10#>");
+		document.form.cloud_dir.focus();
 		return false;
 	}
 	return true;
@@ -645,82 +901,124 @@ function validform(){
 
 function applyRule(){
 	if(validform()){
-		var cloud_synclist_row;
-		var cloud_synclist_col;
-		var cloud_synclist_array_tmp = cloud_sync; 
+		var cloud_synclist_rules = cloud_sync.split('<');
+		var newRule = new Array();
+		var cloud_list_temp = new Array();
 
-		if(isonEdit != -1){
-			cloud_synclist_row = cloud_synclist_array_tmp.split('<');
-			cloud_synclist_row[isonEdit-1] = "";
+		if($('select_service').innerHTML == "WebStorage"){
+			newRule.push(0);
+			newRule.push(document.form.cloud_username.value);
+			newRule.push(document.form.cloud_password.value);
 
-			// rebuild cloud_synclist_array_tmp
-			cloud_synclist_array_tmp = "";		
-			for(var i=0; i<cloud_synclist_row.length; i++){
-				if(cloud_synclist_row[i] == "")
-					continue;
-				if(cloud_synclist_array_tmp != "")
-		 			cloud_synclist_array_tmp += "<";
-				cloud_synclist_array_tmp += cloud_synclist_row[i];
+			if(document.form.captcha_field.value == "" && document.form.security_code_field.value == ""){
+				newRule.push("none");
 			}
+			else{
+				newRule.push(document.form.security_code_field.value+'#'+document.form.captcha_field.value);
+			}
+
+			newRule.push(document.form.cloud_rule.value);
+			newRule.push("/tmp"+document.form.cloud_dir.value);
+			newRule.push(1);
+		}
+		else if($('select_service').innerHTML == "Dropbox"){
+			newRule.push(3);
+			newRule.push(1);
+			newRule.push(document.form.cloud_username.value);
+			newRule.push(document.form.cloud_password.value);
+			newRule.push(1);
+			newRule.push(document.form.cloud_rule.value);
+			newRule.push("/tmp"+document.form.cloud_dir.value);
+		}
+		else if($('select_service').innerHTML == "FTP server"){
+
+			newRule.push(2);
+			newRule.push(0);
+			newRule.push(document.form.cloud_username.value);
+			newRule.push(document.form.cloud_password.value);
+			document.form.ftp_url.value = $('ftp_protocol').value + document.form.ftp_url.value
+			newRule.push(document.form.ftp_url.value);
+			newRule.push(document.form.ftp_root_path.value);
+			newRule.push(1);
+			newRule.push(document.form.cloud_rule.value);
+			newRule.push("/tmp"+document.form.cloud_dir.value);
+		}
+		else if($('select_service').innerHTML == "Samba"){
+			//[0] = Provider, [1] = Work Group, [2] = Server IP address, [3] = Server share folder, [4] = Username, [5] = Password, [6] = Cloud rule, [7]  = Cloud dir
+			newRule.push(4);
+			newRule.push(document.form.sambaclient_name.value);
+			newRule.push(document.form.sambaclient_ip.value);
+			newRule.push(document.form.sambaclient_sharefolder.value);
+			newRule.push(document.form.cloud_username.value);
+			newRule.push(document.form.cloud_password.value);
+			newRule.push(document.form.cloud_rule.value);
+			newRule.push("/tmp"+document.form.cloud_dir.value);	
+		}
+
+		if(editRule != -1){
+			cloud_synclist_rules[editRule-1] = newRule.join(">");
+		}
+		else{
+			cloud_synclist_rules.push(newRule.join(">"));
 		}
 		
-		if(cloud_sync != ""){
-			cloud_synclist_row = cloud_synclist_array_tmp.split('<');
-			for(i=0;i< cloud_synclist_row.length;i++){
-				cloud_synclist_col = cloud_synclist_row[i].split('>');
-				if(document.form.cloud_username.value == cloud_synclist_col[1])
-					cloud_synclist_array_tmp = "";
-				else
-					cloud_synclist_array_tmp += '<';			
-			}
-		}
-
-		if(document.form.captcha_field.value == "" && document.form.security_code_field.value == "")
-			cloud_synclist_array_tmp += '0>'+document.form.cloud_username.value+'>'+document.form.cloud_password.value+'>none>'+document.form.cloud_rule.value+'>'+"/tmp"+document.form.cloud_dir.value+'>1';
-		else
-			cloud_synclist_array_tmp += '0>'+document.form.cloud_username.value+'>'+document.form.cloud_password.value+'>'+document.form.security_code_field.value +'#'+ document.form.captcha_field.value+'>'+document.form.cloud_rule.value+'>'+"/tmp"+document.form.cloud_dir.value+'>1';
-
 		
-		showcloud_synclist();
-		document.form.cloud_sync.value = cloud_synclist_array_tmp;
-		document.form.cloud_username.value = '';
-		document.form.cloud_password.value = '';
-		document.form.cloud_rule.value = '';
-		document.form.cloud_dir.value = '';
-		document.form.enable_cloudsync.value = 1;
-		showEditTable = 0;
-		showAddTable();
-		$("update_scan").style.display = '';
+		/* To avoid first element of array will be null, Jieming added at 2013.11.13 */
+		if(cloud_synclist_rules[0] == ""){
+			for(i=0;i<cloud_synclist_rules.length -1;i++){
+				cloud_list_temp[i] = cloud_synclist_rules[i+1];			
+			}
+			document.form.cloud_sync.value = cloud_list_temp.join("<");
+		}
+		else{
+			document.form.cloud_sync.value = cloud_synclist_rules.join("<");
+		}
+	
 		FormActions("start_apply.htm", "apply", "restart_cloudsync", "2");
 		showLoading();
-
-		if(document.form.cloud_sync.value.charAt(0) == "<")
-			document.form.cloud_sync.value = document.form.cloud_sync.value.substring(1);
-
 		document.form.submit();
 	}
 }
 
-function showAddTable(r){
-	if(showEditTable == 1){ // edit
+function convSrv(val){
+	if(val == 0) return "webstorage";
+
+	/* Todo */
+	//else if(val == 1) return "routersync";
+
+	else if(val == 2) return "ftpserver";
+	else if(val == 3) return "dropbox";
+	else if(val == 4) return "sambaclient";
+	else if(val == 9) return "new_rule";
+	else  return "unknown";
+}
+
+function showAddTable(srv, row_number){
+	var _srv = convSrv(srv);
+	cal_panel_block("cloudAddTable_div");
+
+	if(_srv == "webstorage"
+	|| _srv == "ftpserver"
+	|| _srv == "dropbox"
+	|| _srv == "sambaclient"){
 		$j("#cloudAddTable").fadeIn();
 		$("creatBtn").style.display = "none";
-		$j("#applyBtn").fadeIn();
-
-		if(typeof r != "undefined"){
-			edit_Row(r-1);
-		}
+		$j("#applyDiv").fadeIn();
+		edit_Row(row_number);	
 	}
-	else{ // list
+	else if(_srv == "new_rule"){
+		$j("#cloudAddTable").fadeIn();
+		$("creatBtn").style.display = "none";
+		$j("#applyDiv").fadeIn();
+		change_service("WebStorage");
+		$("cloud_username").value = "";
+		$("cloud_password").value = "";
+		$("PATH").value = "";
+	}
+	else{
 		$("cloudAddTable").style.display = "none";
-		if(!hasWebStorageAcc){
-			$j("#creatBtn").fadeIn();
-			$("applyBtn").style.display = "none";
-		}
-		else{
-			$("creatBtn").style.display = "none";
-			$("applyBtn").style.display = "none";			
-		}
+		$j("#creatBtn").fadeIn();
+		$("applyDiv").style.display = "none";
 	}
 }
 
@@ -731,7 +1029,8 @@ function get_disk_tree(){
 		alert('<#no_usb_found#>');
 		return false;	
 	}
-	cal_panel_block();
+	
+	cal_panel_block("folderTree_panel");
 	$j("#folderTree_panel").fadeIn(300);
 	get_layer_items("0");
 }
@@ -1039,8 +1338,14 @@ function confirm_folderTree(){
 	$j("#folderTree_panel").fadeOut(300);
 }
 
-function cal_panel_block(){
+function cal_panel_block(obj){
 	var blockmarginLeft;
+	var multiple = 0;
+	if(obj == "cloudAddTable_div")
+		multiple = 0.2;
+	else
+		multiple = 0.25;	// for panel ID 'folderTree_panel'
+
 	if (window.innerWidth)
 		winWidth = window.innerWidth;
 	else if ((document.body) && (document.body.clientWidth))
@@ -1053,15 +1358,119 @@ function cal_panel_block(){
 	if(winWidth >1050){	
 		winPadding = (winWidth-1050)/2;	
 		winWidth = 1105;
-		blockmarginLeft= (winWidth*0.25)+winPadding;
+		blockmarginLeft= (winWidth*multiple)+winPadding;
 	}
 	else if(winWidth <=1050){
-		blockmarginLeft= (winWidth)*0.25+document.body.scrollLeft;	
+		blockmarginLeft= (winWidth)*multiple + document.body.scrollLeft;	
 
 	}
 
-	$("folderTree_panel").style.marginLeft = blockmarginLeft+"px";
+	$(obj).style.marginLeft = blockmarginLeft+"px";
 	$("invitation").style.marginLeft = blockmarginLeft+"px";
+}
+
+function change_service(obj){
+	$j('#WebStorage').parent().css('display','none');
+	$j('#Dropbox').parent().css('display','none');
+	$j('#ftp_server').parent().css('display','none');	
+	$j('#Samba').parent().css('display','none');	
+	
+	if(obj == "WebStorage"){
+		// $('select_service').style.background = "url('/images/cloudsync/ASUS-WebStorage.png') no-repeat";
+		$('select_service').innerHTML = "WebStorage";  	
+		$('sambaclient_name').parentNode.parentNode.style.display = "none";
+		$('sambaclient_ip').parentNode.parentNode.style.display = "none";
+		$('sambaclient_sharefolder').parentNode.parentNode.style.display = "none";
+		$('ftp_url').parentNode.parentNode.style.display = "none";
+		$('ftp_port').parentNode.parentNode.style.display = "none";
+		$('ftp_root_path').parentNode.parentNode.style.display = "none";
+		//$('cloud_rule').parentNode.parentNode.style.display = "";
+		document.form.security_code_field.disabled = false;
+		document.getElementById("security_code_tr").style.display = "";
+		document.getElementById("cloud_username_tr").style.display = "";
+		document.getElementById("cloud_password_tr").style.display = "";
+		document.getElementById("applyBtn").style.display = "";
+		document.getElementById("authBtn").style.display = "none";
+		document.getElementById("authHint").style.display = "none";
+	}
+	else if(obj == "Dropbox"){
+		// $('select_service').style.background = "url('/images/cloudsync/dropbox.png') no-repeat"; 
+		$('select_service').innerHTML = "Dropbox"; 	
+		$('sambaclient_name').parentNode.parentNode.style.display = "none";
+		$('sambaclient_ip').parentNode.parentNode.style.display = "none";
+		$('sambaclient_sharefolder').parentNode.parentNode.style.display = "none";
+		$('ftp_url').parentNode.parentNode.style.display = "none";
+		$('ftp_port').parentNode.parentNode.style.display = "none";
+		$('ftp_root_path').parentNode.parentNode.style.display = "none";
+		//$('cloud_rule').parentNode.parentNode.style.display = "";
+		document.form.security_code_field.disabled = true;
+		document.getElementById("security_code_tr").style.display = "none";
+		document.getElementById("cloud_username_tr").style.display = "none";
+		document.getElementById("cloud_password_tr").style.display = "none";
+		document.getElementById("applyBtn").style.display = "none";
+		document.getElementById("authBtn").style.display = "";
+		document.getElementById("authHint").style.display = "none";
+	}
+	else if(obj == "FTP"){
+		// $('select_service').style.background = "url('/images/cloudsync/ftp_server.png') no-repeat";
+		$('select_service').innerHTML = "FTP server"; 	
+		$('sambaclient_name').parentNode.parentNode.style.display = "none";
+		$('sambaclient_ip').parentNode.parentNode.style.display = "none";
+		$('sambaclient_sharefolder').parentNode.parentNode.style.display = "none";
+		$('ftp_url').parentNode.parentNode.style.display = "";
+		$('ftp_port').parentNode.parentNode.style.display = "";
+		$('ftp_root_path').parentNode.parentNode.style.display = "";
+		//$('cloud_rule').parentNode.parentNode.style.display = "none";
+		document.form.security_code_field.disabled = true;
+		document.getElementById("security_code_tr").style.display = "none";
+		document.getElementById("cloud_username_tr").style.display = "";
+		document.getElementById("cloud_password_tr").style.display = "";
+		document.getElementById("applyBtn").style.display = "";
+		document.getElementById("authBtn").style.display = "none";
+		document.getElementById("authHint").style.display = "none";
+	}
+	else if(obj == "Samba"){
+		$('select_service').innerHTML = "Samba";  	
+		$('sambaclient_name').parentNode.parentNode.style.display = "";
+		$('sambaclient_ip').parentNode.parentNode.style.display = "";
+		$('sambaclient_sharefolder').parentNode.parentNode.style.display = "";
+		$('ftp_url').parentNode.parentNode.style.display = "none";
+		$('ftp_port').parentNode.parentNode.style.display = "none";
+		$('ftp_root_path').parentNode.parentNode.style.display = "none";
+		document.form.security_code_field.disabled = false;
+		document.getElementById("security_code_tr").style.display = "none";
+		document.getElementById("cloud_username_tr").style.display = "";
+		document.getElementById("cloud_password_tr").style.display = "";
+		document.getElementById("applyBtn").style.display = "";
+		document.getElementById("authBtn").style.display = "none";
+		document.getElementById("authHint").style.display = "none";
+	}
+
+	var ss_support = '<% nvram_get("ss_support"); %>';	
+	$j("#povider_tr").hover(
+		function(){     // for mouse enter event
+			if(isSupport(ss_support, "asuswebstorage"))
+				$j('#WebStorage').parent().css('display','block');
+			if(isSupport(ss_support, "dropbox"))
+				$j('#Dropbox').parent().css('display','block');
+			if(isSupport(ss_support, "ftp"))
+				$j('#ftp_server').parent().css('display','block');
+			if(isSupport(ss_support, "samba")){
+				$j('#Samba').parent().css('display','block');
+			}
+		},
+		function(){		// for mouse leave event
+			$j('#WebStorage').parent().css('display','none');
+			$j('#Dropbox').parent().css('display','none');
+			$j('#ftp_server').parent().css('display','none');		
+			$j('#Samba').parent().css('display','none');
+		}	
+	);
+}
+
+// parsing ss_support (Smart Sync)
+function isSupport(_nvramvalue, _ptn){
+	return (_nvramvalue.search(_ptn) == -1) ? false : true;
 }
 
 var captcha_flag = 0;
@@ -1075,6 +1484,59 @@ function refresh_captcha(){
 	}
 }
 
+function cal_addTable_block(){
+	var blockmarginLeft;
+	if (window.innerWidth)
+		winWidth = window.innerWidth;
+	else if ((document.body) && (document.body.clientWidth))
+		winWidth = document.body.clientWidth;
+		
+	if (document.documentElement  && document.documentElement.clientHeight && document.documentElement.clientWidth){
+		winWidth = document.documentElement.clientWidth;
+	}
+
+	if(winWidth >1050){	
+		winPadding = (winWidth-1050)/2;	
+		winWidth = 1105;
+		blockmarginLeft= (winWidth*0.2)+winPadding;
+	}
+	else if(winWidth <=1050){
+		blockmarginLeft= (winWidth)*0.2+document.body.scrollLeft;	
+	}
+
+	$("cloudAddTable_div").style.marginLeft = blockmarginLeft+"px";
+}
+
+//- Login dropbox
+function dropbox_login(){
+	var b = window.location.href.indexOf("/",window.location.protocol.length+2);
+	var app_key = "qah4ku73k3qmigj";
+	var redirect_url = "https://oauth.asus.com/aicloud/dropbox.html";			
+	var callback_url = window.location.href.slice(0,b) + "/dropbox_callback.htm,onDropBoxLogin"; 
+
+	var url = "https://www.dropbox.com/1/oauth2/authorize?response_type=token&client_id=" + app_key;
+	url += "&redirect_uri=" + encodeURIComponent(redirect_url);
+	url += "&state=" + encodeURIComponent(callback_url);
+	url += "&force_reapprove=true";
+			
+	window.open(url,"mywindow","menubar=1,resizable=0,width=630,height=550");
+}
+
+//- Login success callback function
+function onDropBoxLogin(token, uid){
+	if(token.search("error") == -1){
+		document.form.cloud_username.value = uid;
+		document.form.cloud_password.value = token;
+		document.getElementById("applyBtn").style.display = "";
+		document.getElementById("authBtn").style.display = "none";
+		document.getElementById("authHint").style.display = "";
+	}
+	else{
+		document.getElementById("applyBtn").style.display = "none";
+		document.getElementById("authBtn").style.display = "";
+		document.getElementById("authHint").style.display = "none";
+	}
+}
 </script>
 </head>
 
@@ -1137,7 +1599,164 @@ function refresh_captcha(){
 <input type="hidden" name="action_wait" value="1">
 <input type="hidden" name="cloud_sync" value="">
 <input type="hidden" name="enable_cloudsync" value="<% nvram_get("enable_cloudsync"); %>">
+<div id="cloudAddTable_div" class="contentM_qis" style="box-shadow: 3px 3px 10px #000;">
+					<table width="99%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="cloudAddTable" style="margin-top:10px;margin-bottom:10px;display:none;">
+	  					<thead>
+	   					<tr>
+	   						<td colspan="6" id="cloud_synclist"><#aicloud_cloud_list#></td>
+	   					</tr>
+	  					</thead>		  
+							<tr>
+								<th width="30%" style="height:40px;font-family: Calibri;font-weight: bolder;">
+									Provider
+								</th>
+								<td>				
+									<ul id="povider_tr" class="navigation" style="margin:-15px 0 0 -39px;*margin:-20px 0 0 0;">  
+										<li >
+											<dl>
+												<dt>
+													<div id="select_service" style="height:35px;margin:-4px 0px 0px 0px;padding:4px;" value="">Add new account</div>
+												</dt> 
+												<dd style="text-align: center;font-weight: bold;font-size: 13px;padding:3px;width:139px;" onclick="change_service('WebStorage');"> 
+													<div id="WebStorage" style="background: url('/images/cloudsync/ASUS-WebStorage.png') no-repeat; height:35px;"><a style="text-align:left;padding:10px 0px 0px 45px;">WebStorage</a></div>
+												</dd>
+												<dd style="text-align: center;font-weight: bold;font-size: 13px;padding:3px;width:139px;" onclick="change_service('Dropbox');">  
+													<div id="Dropbox" style="background: url('/images/cloudsync/dropbox.png') no-repeat; height:35px;"><a style="text-align:left;padding:10px 0px 0px 45px;">Dropbox</a></div>								
+												</dd>
+												<dd style="text-align: center;font-weight: bold;font-size: 13px;padding:3px;width:139px;" onclick="change_service('FTP');">  
+													<div id="ftp_server" style="background: url('/images/cloudsync/ftp_server.png') no-repeat; height:35px;"><a style="text-align:left;padding:10px 0px 0px 45px;">FTP server</a></div>
+												</dd>
+												<dd style="text-align: center;font-weight: bold;font-size: 13px;padding:3px;width:139px;" onclick="change_service('Samba');">  
+													<div id="Samba" style="background: url('/images/cloudsync/ftp_server.png') no-repeat; height:35px;"><a style="text-align:left;padding:10px 0px 0px 45px;">Samba</a></div>
+												</dd>
+											</dl>
+										</li>
+									</ul>
+								</td>
+							</tr>	
+						<tr style="display:none;">
+							<th width="30%" style="font-family: Calibri;font-weight: bolder;">
+								Work Group
+							</th>			
+							<td>
+							  <input type="text"  class="input_32_table" style="height: 23px;" id="sambaclient_name" name="sambaclient_name" value="WORKGROUP">
+							</td>
+						</tr>	
+						<tr style="display:none;">
+							<th width="30%" style="font-family: Calibri;font-weight: bolder;">
+								Server IP address
+							</th>			
+							<td>
+							  <input type="text"  class="input_32_table" style="height: 23px;" id="sambaclient_ip" name="sambaclient_ip" value="">
+							</td>
+						</tr>	
+						<tr style="display:none;">
+							<th width="30%" style="font-family: Calibri;font-weight: bolder;">
+								Server share folder
+							</th>			
+							<td>
+							  <input type="text"  class="input_32_table" style="height: 23px;" id="sambaclient_sharefolder" name="sambaclient_sharefolder" value="">
+							</td>
+						</tr>	
+						<tr style="display:none;">
+							<th width="30%" style="font-family: Calibri;font-weight: bolder;">
+								Server IP
+							</th>			
+							<td>
+								<select id="ftp_protocol" name="ftp_protocol" class="input_option">
+									<option value="ftp://">FTP</option>								
+								</select>
+								<input type="text" maxlength="32" class="input_32_table" style="height: 23px;" id="ftp_url" name="ftp_url" value="">
+							</td>
+						</tr>		
+						<tr style="display:none;">
+							<th width="30%" style="font-family: Calibri;font-weight: bolder;">
+								<#IPConnection_VSList_ftpport#>
+							</th>			
+							<td>
+							  <input type="text" maxlength="32" class="input_32_table" style="height: 23px;" id="ftp_port" name="ftp_port" value="21">
+							</td>
+						</tr>	
+						<tr style="display:none;">
+							<th width="30%" style="font-family: Calibri;font-weight: bolder;">
+								Remote Path
+							</th>			
+							<td>
+							  <input type="text" class="input_32_table" style="height: 23px;" id="ftp_root_path" name="ftp_root_path" value="">
+							</td>
+						</tr>	
+							
+						  <tr id="cloud_username_tr">
+							<th width="30%" style="font-family: Calibri;font-weight: bolder;">
+								<#AiDisk_Account#>
+							</th>			
+							<td>
+							  <input type="text" maxlength="32"class="input_32_table" style="height: 23px;" id="cloud_username" name="cloud_username" value="">
+							</td>
+						  </tr>	
 
+						  <tr id="cloud_password_tr">
+							<th width="30%" style="font-family: Calibri;font-weight: bolder;">
+								<#PPPConnection_Password_itemname#>
+							</th>			
+							<td>
+								<input id="cloud_password" name="cloud_password" type="password" autocapitalization="off" onBlur="switchType(this, false);" onFocus="switchType(this, true);" class="input_32_table" style="height: 23px;" value="">
+							</td>
+						  </tr>						  				
+					  								
+						  <tr>
+							<th width="30%" style="font-family: Calibri;font-weight: bolder;">
+								<#routerSync_folder#>
+							</th>
+							<td>
+							<input type="text" id="PATH" class="input_32_table" style="height: 23px;" name="cloud_dir" value="" onclick="" autocomplete="off"/>
+		  					<input name="button" type="button" class="button_gen_short" onclick="get_disk_tree();" value="Browser"/>
+								<div id="noUSB" style="color:#FC0;display:none;margin-left: 3px;"><#no_usb_found#></div>
+							</td>
+						  </tr>
+
+						  <tr>
+							<th width="30%" style="font-family: Calibri;font-weight: bolder;">
+								<#Cloudsync_Rule#>
+							</th>
+							<td>
+								<select id="cloud_rule" name="cloud_rule" class="input_option">
+									<option value="0"><#Cloudsync_Rule_sync#></option>
+									<option value="1"><#Cloudsync_Rule_dl#></option>
+									<option value="2"><#Cloudsync_Rule_ul#></option>
+								</select>			
+							</td>
+						  </tr>
+
+						  <tr id="security_code_tr">
+							<th width="30%" style="font-family: Calibri;font-weight: bolder;">
+								<#routerSync_Security_code#> code
+							</th>
+							<td>
+								<div style="color:#FC0;"><input id="security_code_field" name="security_code_field" type="text" maxlength="6" class="input_32_table" style="height: 23px;width:100px;margin-right:10px;" >OTP Authentication</div>
+							</td>
+						  </tr>
+						  <tr height="45px;" id="captcha_tr" style="display:none;">
+							<th width="30%" style="font-family: Calibri;font-weight: bolder;">
+								Captcha
+							</th>			
+							<td style="height:85px;">
+								<div style="height:25px;"><input id="captcha_field" name="captcha_field" type="text" maxlength="6" class="input_32_table" style="height: 23px;width:100px;margin-top:8px;" autocomplete="off"></div>
+								<div id="captcha_hint" style="color:#FC0;height:25px;margin-top:10px;">Please input the captcha</div>						
+								<div>
+									<iframe id="captcha_iframe" frameborder="0" scrolling="no" src="" style="width:230px;height:80px;*width:210px;*height:87px;margin:-60px 0 0 160px;*margin-left:165px;"></iframe>
+								</div>
+								<div style="color:#FC0;text-decoration:underline;height:35px;margin:-35px 0px 0px 380px;cursor:pointer" onclick="refresh_captcha();"><#CTL_refresh#></div>   
+							</td>
+						  </tr>
+						</table>
+							<div class="apply_gen" style="margin-top:20px;margin-bottom:10px;display:none;background-color: #2B373B;" id="applyDiv">
+	  					<input name="button" type="button" class="button_gen" onclick="showAddTable();" value="<#CTL_Cancel#>"/>
+	  					<input id="applyBtn" name="button" type="button" class="button_gen" onclick="applyRule()" value="<#CTL_apply#>"/>
+	  					<input id="authBtn" name="button" type="button" class="button_gen" onclick="dropbox_login()" value="Authenticate"/>
+	  					<span id="authHint" style="color:#FC0;display:none">Authenticated!</span>
+	  				</div>
+</div>
 <table border="0" align="center" cellpadding="0" cellspacing="0" class="content">
 	<tr>
 		<td valign="top" width="17">&nbsp;</td>
@@ -1152,7 +1771,7 @@ function refresh_captcha(){
 					<tbody>
 					<tr>
 						<td>
-							<a href="cloud_main.asp"><div class="tab"><span>AiCloud</span></div></a>
+							<a href="cloud_main.asp"><div class="tab"><span>AiCloud 2.0</span></div></a>
 						</td>
 						<td>
 							<div class="tabclick"><span>Smart Sync</span></div>
@@ -1181,13 +1800,13 @@ function refresh_captcha(){
 						  <td bgcolor="#4D595D" valign="top">
 
 						<div>&nbsp;</div>
-						<div class="formfonttitle">AiCloud - Smart Sync</div>
+						<div class="formfonttitle">AiCloud 2.0 - Smart Sync</div>
 						<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 
 						<div>
 							<table width="700px" style="margin-left:25px;">
 								<tr>
-									<td>
+									<td style="width:214px;">
 										<img id="guest_image" src="/images/cloudsync/003.png" style="margin-top:10px;margin-left:-20px">
 										<div align="center" class="left" style="margin-top:25px;margin-left:43px;width:94px; float:left; cursor:pointer;" id="radio_smartSync_enable"></div>
 										<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
@@ -1214,8 +1833,8 @@ function refresh_captcha(){
 									<td>&nbsp;&nbsp;</td>
 									<td>
 										<div style="padding:10px;width:95%;font-style:italic;font-size:14px;word-break:normal;">
-												<#smart_sync1#><br />
-												<#smart_sync2#>											
+											Enables Smart Sync functionality. For step-by-step instructions, go to 
+											<a href="http://aicloud-faq.asuscomm.com/aicloud-faq/" style="text-decoration:underline;font-weight:bolder;">http://aicloud-faq.asuscomm.com/aicloud-faq/</a>
 										</div>
 									</td>
 								</tr>
@@ -1231,13 +1850,12 @@ function refresh_captcha(){
 
     					<tr>
       					<th width="10%"><#Provider#></th>
-    						<th width="25%"><#PPPConnection_UserName_itemname#></a></th>
+    					<th width="25%"><#PPPConnection_UserName_itemname#></a></th>
       					<th width="10%"><#Cloudsync_Rule#></a></th>
       					<th width="30%"><#FolderName#></th>
       					<th width="15%"><#PPPConnection_x_WANLink_itemname#></th>
       					<th width="10%"><#CTL_del#></th>
     					</tr>
-
 						</table>
 	
 						<div id="cloud_synclist_Block">
@@ -1250,80 +1868,7 @@ function refresh_captcha(){
 							</table>
 						</div>
 
-					  <table width="99%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="cloudAddTable" style="margin-top:10px;display:none;">
-	  					<thead>
-	   					<tr>
-	   						<td colspan="6" id="cloud_synclist"><#aicloud_cloud_list#></td>
-	   					</tr>
-	  					</thead>		  
 
-							<tr>
-							<th width="30%" style="height:40px;font-family: Calibri;font-weight: bolder;">
-								Provider
-							</th>
-							<td>
-								<div><img style="margin-top: -2px;" src="/images/cloudsync/ASUS-WebStorage.png"></div>
-								<div style="font-size:18px;font-weight: bolder;margin-left: 45px;margin-top: -27px;font-family: Calibri;">ASUS WebStorage</div>
-							</td>
-							</tr>
-				            
-						  <tr>
-							<th width="30%" style="font-family: Calibri;font-weight: bolder;">
-								<#AiDisk_Account#>
-							</th>			
-							<td>
-							  <input type="text" maxlength="32" class="input_30_table" style="height: 23px;" id="cloud_username" name="cloud_username" value="" onKeyPress="">
-							</td>
-						  </tr>	
-
-						  <tr>
-							<th width="30%" style="font-family: Calibri;font-weight: bolder;">
-								<#PPPConnection_Password_itemname#>
-							</th>			
-							<td>
-								<input id="cloud_password" name="cloud_password" type="password" autocapitalization="off" onBlur="switchType(this, false);" onFocus="switchType(this, true);" maxlength="25" class="input_30_table" style="height: 23px;" value="">
-							</td>
-						  </tr>						  				
-					  				
-						  <tr>
-							<th width="30%" style="font-family: Calibri;font-weight: bolder;"><#routerSync_folder#></th>
-							<td>
-			          <input type="text" id="PATH" class="input_30_table" style="height: 23px;" name="cloud_dir" value="" onclick=""/>
-		  					<input name="button" type="button" class="button_gen" onclick="get_disk_tree();" value="Browser"/>
-								<div id="noUSB" style="color:#FC0;display:none;margin-left: 3px;"><#no_usb_found#></div>
-							</td>
-						  </tr>
-
-						  <tr>
-							<th width="30%" style="font-family: Calibri;font-weight: bolder;"><#Cloudsync_Rule#></th>
-							<td>
-								<select name="cloud_rule" class="input_option">
-									<option value="0"><#Cloudsync_Rule_sync#></option>
-									<option value="1"><#Cloudsync_Rule_dl#></option>
-									<option value="2"><#Cloudsync_Rule_ul#></option>
-								</select>			
-							</td>
-						  </tr>
-						  <tr>
-							<th width="30%" style="font-family: Calibri;font-weight: bolder;"><#routerSync_Security_code#></th>
-							<td>
-								<div style="color:#FC0;"><input id="security_code_field" name="security_code_field" type="text" maxlength="6" class="input_32_table" style="height: 23px;width:100px;margin-right:10px;" >OTP Authentication</div>
-							</td>
-						  </tr>
-						  <tr height="45px;" id="captcha_tr" style="display:none;">
-							<th width="30%" style="font-family: Calibri;font-weight: bolder;">
-								Captcha
-							</th>			
-							<td style="height:85px;">
-								<div style="height:25px;"><input id="captcha_field" name="captcha_field" type="text" maxlength="6" class="input_32_table" style="height: 23px;width:100px;margin-top:8px;" ></div>
-								<div id="captcha_hint" style="color:#FC0;height:25px;margin-top:10px;">Please input the captcha</div>						
-								<div>
-									<iframe id="captcha_iframe" frameborder="0" scrolling="no" src="" style="width:230px;height:80px;*width:210px;*height:87px;margin:-60px 0 0 160px;*margin-left:165px;"></iframe>
-								</div>
-								<div style="color:#FC0;text-decoration:underline;height:35px;margin:-35px 0px 0px 380px;cursor:pointer" onclick="refresh_captcha();"><#CTL_refresh#></div>   
-							</td>
-						  </tr>
-						</table>	
 					
    					<table width="98%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" id="cloudmessageTable" style="margin-top:7px;display:none;">
 	  					<thead>
@@ -1339,13 +1884,8 @@ function refresh_captcha(){
 						</table>
 
 	  				<div class="apply_gen" id="creatBtn" style="margin-top:30px;display:none;">
-							<input name="applybutton" id="applybutton" type="button" class="button_gen_long" onclick="showEditTable=1;showAddTable();" value="<#AddAccountTitle#>" style="word-wrap:break-word;word-break:normal;">
+							<input name="applybutton" id="applybutton" type="button" class="button_gen_long" onclick="showAddTable(9);" value="<#AddAccountTitle#>" style="word-wrap:break-word;word-break:normal;">
 							<img id="update_scan" style="display:none;" src="images/InternetScan.gif" />
-	  				</div>
-
-	  				<div class="apply_gen" style="margin-top:30px;display:none;" id="applyBtn">
-	  					<input name="button" type="button" class="button_gen" onclick="showEditTable=0;showAddTable();" value="<#CTL_Cancel#>"/>
-	  					<input name="button" type="button" class="button_gen" onclick="applyRule()" value="<#CTL_apply#>"/>
 	  				</div>
 
 					  </td>
@@ -1386,6 +1926,9 @@ function refresh_captcha(){
 	<iframe src="" frameborder="0" scrolling="no" id="popupframe" width="400" height="400" allowtransparency="true" style="margin-top:150px;"></iframe>
 	</div>
 <!--[if lte IE 6.5]><iframe class="hackiframe"></iframe><![endif]-->
+</div>
+</body>
+</html>
 </div>
 </body>
 </html>

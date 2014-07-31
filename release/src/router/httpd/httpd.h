@@ -218,4 +218,8 @@ extern int ej_wl_status_2g(int eid, webs_t wp, int argc, char_t **argv);
 extern int ej_wps_info_2g(int eid, webs_t wp, int argc, char_t **argv);
 extern int ej_wps_info(int eid, webs_t wp, int argc, char_t **argv);
 
+#ifdef RTCONFIG_HTTPS
+extern char *pwenc(const char *input);
+#endif
+
 #endif /* _httpd_h_ */

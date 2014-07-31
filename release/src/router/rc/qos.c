@@ -98,14 +98,14 @@ void add_EbtablesRules(void)
 	// class : 0/1/2/3/4 
 	nvram_set("qos_inuse", "31");
 	eval("ebtables", "-t", "nat", "-F");
-	eval("ebtables", "-t", "nat", "-A", "PREROUTING", "-i", "wl0.1", "-j", "mark", "--set-mark", "3", "--mark-target", "ACCEPT");
-	eval("ebtables", "-t", "nat", "-A", "POSTROUTING", "-o", "wl0.1", "-j", "mark", "--set-mark", "3", "--mark-target", "ACCEPT");
-	eval("ebtables", "-t", "nat", "-A", "PREROUTING", "-i", "wl1.1", "-j", "mark", "--set-mark", "3", "--mark-target", "ACCEPT");
-	eval("ebtables", "-t", "nat", "-A", "POSTROUTING", "-o", "wl1.1", "-j", "mark", "--set-mark", "3", "--mark-target", "ACCEPT");
-	eval("ebtables", "-t", "nat", "-A", "PREROUTING", "-i", "eth1", "-j", "mark", "--set-mark", "2", "--mark-target", "ACCEPT");
-	eval("ebtables", "-t", "nat", "-A", "POSTROUTING", "-o", "eth1", "-j", "mark", "--set-mark", "2", "--mark-target", "ACCEPT");
-	eval("ebtables", "-t", "nat", "-A", "PREROUTING", "-i", "eth2", "-j", "mark", "--set-mark", "2", "--mark-target", "ACCEPT");
-	eval("ebtables", "-t", "nat", "-A", "POSTROUTING", "-o", "eth2", "-j", "mark", "--set-mark", "2", "--mark-target", "ACCEPT");
+	eval("ebtables", "-t", "nat", "-A", "PREROUTING", "-i", "wl0.1", "-j", "mark", "--mark-or", "3", "--mark-target", "ACCEPT");
+	eval("ebtables", "-t", "nat", "-A", "POSTROUTING", "-o", "wl0.1", "-j", "mark", "--mark-or", "3", "--mark-target", "ACCEPT");
+	eval("ebtables", "-t", "nat", "-A", "PREROUTING", "-i", "wl1.1", "-j", "mark", "--mark-or", "3", "--mark-target", "ACCEPT");
+	eval("ebtables", "-t", "nat", "-A", "POSTROUTING", "-o", "wl1.1", "-j", "mark", "--mark-or", "3", "--mark-target", "ACCEPT");
+	eval("ebtables", "-t", "nat", "-A", "PREROUTING", "-i", "eth1", "-j", "mark", "--mark-or", "2", "--mark-target", "ACCEPT");
+	eval("ebtables", "-t", "nat", "-A", "POSTROUTING", "-o", "eth1", "-j", "mark", "--mark-or", "2", "--mark-target", "ACCEPT");
+	eval("ebtables", "-t", "nat", "-A", "PREROUTING", "-i", "eth2", "-j", "mark", "--mark-or", "2", "--mark-target", "ACCEPT");
+	eval("ebtables", "-t", "nat", "-A", "POSTROUTING", "-o", "eth2", "-j", "mark", "--mark-or", "2", "--mark-target", "ACCEPT");
 	start_iQos();
 }
 #else
@@ -117,8 +117,8 @@ void add_EbtablesRules(void)
 	if(nv){
 		while ((p = strsep(&g, " ")) != NULL){
 			//fprintf(stderr, "%s: g=%s, p=%s\n", __FUNCTION__, g, p); //tmp test
-			eval("ebtables", "-t", "nat", "-A", "PREROUTING", "-i", p, "-j", "mark", "--set-mark", "6", "--mark-target", "ACCEPT");
-			eval("ebtables", "-t", "nat", "-A", "POSTROUTING", "-o", p, "-j", "mark", "--set-mark", "6", "--mark-target", "ACCEPT");
+			eval("ebtables", "-t", "nat", "-A", "PREROUTING", "-i", p, "-j", "mark", "--mark-or", "6", "--mark-target", "ACCEPT");
+			eval("ebtables", "-t", "nat", "-A", "POSTROUTING", "-o", p, "-j", "mark", "--mark-or", "6", "--mark-target", "ACCEPT");
 		}
 		free(nv);
 	}
@@ -135,8 +135,8 @@ void add_EbtablesRules(void)
 			snprintf(mssid_enable, sizeof(mssid_enable), "%s_bss_enabled", mssid_if);
 			//fprintf(stderr, "%s: mssid_enable=%s\n", __FUNCTION__, mssid_enable); //tmp test
 			if(!strcmp(nvram_safe_get(mssid_enable), "1")){
-				eval("ebtables", "-t", "nat", "-A", "PREROUTING", "-i", mssid_if, "-j", "mark", "--set-mark", "6", "--mark-target", "ACCEPT");
-				eval("ebtables", "-t", "nat", "-A", "POSTROUTING", "-o", mssid_if, "-j", "mark", "--set-mark", "6", "--mark-target", "ACCEPT");
+				eval("ebtables", "-t", "nat", "-A", "PREROUTING", "-i", mssid_if, "-j", "mark", "--mark-or", "6", "--mark-target", "ACCEPT");
+				eval("ebtables", "-t", "nat", "-A", "POSTROUTING", "-o", mssid_if, "-j", "mark", "--mark-or", "6", "--mark-target", "ACCEPT");
 			}
 		}
 	}
@@ -211,7 +211,7 @@ int add_iQosRules(char *pcWANIF)
 		":OUTPUT ACCEPT [0:0]\n"
 		":QOSO - [0:0]\n"
 		"-A QOSO -m mark --mark 0xd001 -j RETURN\n"
-		"-A QOSO -j CONNMARK --restore-mark --mask 0xff\n"
+		"-A QOSO -j CONNMARK --restore-mark --mask 0x7\n"
 		"-A QOSO -m connmark ! --mark 0/0xff00 -j RETURN\n"
 		);
 #ifdef RTCONFIG_IPV6
@@ -221,7 +221,7 @@ int add_iQosRules(char *pcWANIF)
 		":PREROUTING ACCEPT [0:0]\n"
 		":OUTPUT ACCEPT [0:0]\n"
 		":QOSO - [0:0]\n"
-		"-A QOSO -j CONNMARK --restore-mark --mask 0xff\n"
+		"-A QOSO -j CONNMARK --restore-mark --mask 0x7\n"
 		"-A QOSO -m connmark ! --mark 0/0xff00 -j RETURN\n"
 		);
 #endif
@@ -279,7 +279,7 @@ int add_iQosRules(char *pcWANIF)
 		down_class_num |= gum;	// for download
 
 		chain = "QOSO";		// chain name
-		sprintf(end , " -j CONNMARK --set-return 0x%x/0xFF\n", class_num);	// CONNMARK string
+		sprintf(end , " -j CONNMARK --set-return 0x%x/0x7\n", class_num);	// CONNMARK string
 		sprintf(end2, " -j RETURN\n");
 
 		/*************************************************/
@@ -614,23 +614,23 @@ int add_iQosRules(char *pcWANIF)
 		add_EbtablesRules();
 
 		// for multicast
-		fprintf(fn, "-A QOSO -d 224.0.0.0/4 -j CONNMARK --set-return 0x%x/0xFF\n",  down_class_num);
+		fprintf(fn, "-A QOSO -d 224.0.0.0/4 -j CONNMARK --set-return 0x%x/0x7\n",  down_class_num);
 		if(manual_return)
 			fprintf(fn , "-A QOSO -d 224.0.0.0/4 -j RETURN\n");
 		// for download (LAN or wireless)
-		fprintf(fn, "-A QOSO -d %s -j CONNMARK --set-return 0x%x/0xFF\n", lan_addr, down_class_num);
+		fprintf(fn, "-A QOSO -d %s -j CONNMARK --set-return 0x%x/0x7\n", lan_addr, down_class_num);
 		if(manual_return)
 			fprintf(fn , "-A QOSO -d %s -j RETURN\n", lan_addr);
 /* Requires bridge netfilter, but slows down and breaks EMF/IGS IGMP IPTV Snooping
 		// for WLAN to LAN bridge issue
-		fprintf(fn, "-A POSTROUTING -d %s -m physdev --physdev-is-in -j CONNMARK --set-return 0x6/0xFF\n", lan_addr);
+		fprintf(fn, "-A POSTROUTING -d %s -m physdev --physdev-is-in -j CONNMARK --set-return 0x6/0x7\n", lan_addr);
 */
 		// for download, interface br0
 		fprintf(fn, "-A POSTROUTING -o br0 -j QOSO\n");
 	}
 #endif
 		fprintf(fn,
-			"-A QOSO -j CONNMARK --set-return 0x%x\n"
+			"-A QOSO -j CONNMARK --set-return 0x%x/0x7\n"
 			"-A FORWARD -o %s -j QOSO\n"
 			"-A OUTPUT -o %s -j QOSO\n",
 				class_num, pcWANIF, pcWANIF);
@@ -650,23 +650,23 @@ int add_iQosRules(char *pcWANIF)
 			add_EbtablesRules();
 
 			// for multicast
-			fprintf(fn_ipv6, "-A QOSO -d 224.0.0.0/4 -j CONNMARK --set-return 0x%x/0xFF\n",  down_class_num);
+			fprintf(fn_ipv6, "-A QOSO -d 224.0.0.0/4 -j CONNMARK --set-return 0x%x/0x7\n",  down_class_num);
 			if(manual_return)
 				fprintf(fn_ipv6, "-A QOSO -d 224.0.0.0/4 -j RETURN\n");
 			// for download (LAN or wireless)
-			fprintf(fn_ipv6, "-A QOSO -d %s -j CONNMARK --set-return 0x%x/0xFF\n", lan_addr, down_class_num);
+			fprintf(fn_ipv6, "-A QOSO -d %s -j CONNMARK --set-return 0x%x/0x7\n", lan_addr, down_class_num);
 			if(manual_return)
 				fprintf(fn_ipv6, "-A QOSO -d %s -j RETURN\n", lan_addr);
 /* Requires bridge netfilter, but slows down and breaks EMF/IGS IGMP IPTV Snooping
 			// for WLAN to LAN bridge issue
-			fprintf(fn_ipv6, "-A POSTROUTING -d %s -m physdev --physdev-is-in -j CONNMARK --set-return 0x6/0xFF\n", lan_addr);
+			fprintf(fn_ipv6, "-A POSTROUTING -d %s -m physdev --physdev-is-in -j CONNMARK --set-return 0x6/0x7\n", lan_addr);
 */
 			// for download, interface br0
 			fprintf(fn_ipv6, "-A POSTROUTING -o br0 -j QOSO\n");
 		}
 #endif
 		fprintf(fn_ipv6,
-			"-A QOSO -j CONNMARK --set-return 0x%x\n"
+			"-A QOSO -j CONNMARK --set-return 0x%x/0x7\n"
 			"-A FORWARD -o %s -j QOSO\n"
 			"-A OUTPUT -o %s -j QOSO\n",
 				class_num, wan6face, wan6face);
@@ -686,13 +686,13 @@ int add_iQosRules(char *pcWANIF)
 		if ((!g) || ((p = strsep(&g, ",")) == NULL)) continue;
 		if ((inuse & (1 << i)) == 0) continue;
 		if (atoi(p) > 0) {
-			fprintf(fn, "-A PREROUTING -i %s -j CONNMARK --restore-mark --mask 0xff\n", pcWANIF);
+			fprintf(fn, "-A PREROUTING -i %s -j CONNMARK --restore-mark --mask 0x7\n", pcWANIF);
 #ifdef CLS_ACT
 			fprintf(fn, "-A PREROUTING -i %s -j IMQ --todev 0\n", pcWANIF);
 #endif
 #ifdef RTCONFIG_IPV6
 			if (ipv6_enabled() && *wan6face) {
-				fprintf(fn_ipv6, "-A PREROUTING -i %s -j CONNMARK --restore-mark --mask 0xff\n", wan6face);
+				fprintf(fn_ipv6, "-A PREROUTING -i %s -j CONNMARK --restore-mark --mask 0x7\n", wan6face);
 #ifdef CLS_ACT
 				fprintf(fn_ipv6, "-A PREROUTING -i %s -j IMQ --todev 0\n", wan6face);
 #endif

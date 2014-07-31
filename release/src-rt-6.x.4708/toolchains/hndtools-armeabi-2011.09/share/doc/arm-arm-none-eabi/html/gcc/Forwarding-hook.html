@@ -1,0 +1,116 @@
+<html lang="en">
+<head>
+<title>Forwarding hook - Using the GNU Compiler Collection (GCC)</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Using the GNU Compiler Collection (GCC)">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Messaging-with-the-GNU-Objective_002dC-runtime.html#Messaging-with-the-GNU-Objective_002dC-runtime" title="Messaging with the GNU Objective-C runtime">
+<link rel="prev" href="Dynamically-registering-methods.html#Dynamically-registering-methods" title="Dynamically registering methods">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997,
+1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
+2010 Free Software Foundation, Inc.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being ``Funding Free Software'', the Front-Cover
+Texts being (a) (see below), and with the Back-Cover Texts being (b)
+(see below).  A copy of the license is included in the section entitled
+``GNU Free Documentation License''.
+
+(a) The FSF's Front-Cover Text is:
+
+     A GNU Manual
+
+(b) The FSF's Back-Cover Text is:
+
+     You have freedom to copy and modify this GNU Manual, like GNU
+     software.  Copies published by the Free Software Foundation raise
+     funds for GNU development.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+<link rel="stylesheet" type="text/css" href="../cs.css">
+</head>
+<body>
+<div class="node">
+<a name="Forwarding-hook"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Dynamically-registering-methods.html#Dynamically-registering-methods">Dynamically registering methods</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Messaging-with-the-GNU-Objective_002dC-runtime.html#Messaging-with-the-GNU-Objective_002dC-runtime">Messaging with the GNU Objective-C runtime</a>
+<hr>
+</div>
+
+<h4 class="subsection">8.10.2 Forwarding hook</h4>
+
+<p>The GNU Objective-C runtime provides a hook, called
+<code>__objc_msg_forward2</code>, which is called by
+<code>objc_msg_lookup()</code> when it can't find a method implementation in
+the runtime tables and after calling <code>+resolveInstanceMethod:</code>
+and <code>+resolveClassMethod:</code> has been attempted and did not succeed
+in dynamically registering the method.
+
+ <p>To configure the hook, you set the global variable
+<code>__objc_msg_foward2</code> to a function with the same argument and
+return types of <code>objc_msg_lookup()</code>.  When
+<code>objc_msg_lookup()</code> can not find a method implementation, it
+invokes the hook function you provided to get a method implementation
+to return.  So, in practice <code>__objc_msg_forward2</code> allows you to
+extend <code>objc_msg_lookup()</code> by adding some custom code that is
+called to do a further lookup when no standard method implementation
+can be found using the normal lookup.
+
+ <p>This hook is generally reserved for &ldquo;Foundation&rdquo; libraries such as
+GNUstep Base, which use it to implement their high-level method
+forwarding API, typically based around the <code>forwardInvocation:</code>
+method.  So, unless you are implementing your own &ldquo;Foundation&rdquo;
+library, you should not set this hook.
+
+ <p>In a typical forwarding implementation, the <code>__objc_msg_forward2</code>
+hook function determines the argument and return type of the method
+that is being looked up, and then creates a function that takes these
+arguments and has that return type, and returns it to the caller. 
+Creating this function is non-trivial and is typically performed using
+a dedicated library such as <code>libffi</code>.
+
+ <p>The forwarding method implementation thus created is returned by
+<code>objc_msg_lookup()</code> and is executed as if it was a normal method
+implementation.  When the forwarding method implementation is called,
+it is usually expected to pack all arguments into some sort of object
+(typically, an <code>NSInvocation</code> in a &ldquo;Foundation&rdquo; library), and
+hand it over to the programmer (<code>forwardInvocation:</code>) who is then
+allowed to manipulate the method invocation using a high-level API
+provided by the &ldquo;Foundation&rdquo; library.  For example, the programmer
+may want to examine the method invocation arguments and name and
+potentially change them before forwarding the method invocation to one
+or more local objects (<code>performInvocation:</code>) or even to remote
+objects (by using Distributed Objects or some other mechanism).  When
+all this completes, the return value is passed back and must be
+returned correctly to the original caller.
+
+ <p>Note that the GNU Objective-C runtime currently provides no support
+for method forwarding or method invocations other than the
+<code>__objc_msg_forward2</code> hook.
+
+ <p>If the forwarding hook does not exist or returns <code>NULL</code>, the
+runtime currently attempts forwarding using an older, deprecated API,
+and if that fails, it aborts the program.  In future versions of the
+GNU Objective-C runtime, the runtime will immediately abort.
+
+<!-- Copyright (C) 2002, 2004 Free Software Foundation, Inc. -->
+<!-- This is part of the GCC manual. -->
+<!-- For copying conditions, see the file gcc.texi. -->
+ </body></html>
+

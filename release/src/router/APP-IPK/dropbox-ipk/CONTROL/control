@@ -1,0 +1,13 @@
+Package: dropboxclient
+Architecture: mipsel
+Priority: optional
+Section: net
+Version: 1.0.0.1.0.g4626812
+Maintainer: ASUS
+Source: http://nw-dlcdnet.asus.com/asusware/mipsel/stable
+URL: 
+Description: dropbox client sync
+Depends: uclibc-opt,inotify,libcurl,openssl
+Suggests: 
+Conflicts: 
+Enabled: yes

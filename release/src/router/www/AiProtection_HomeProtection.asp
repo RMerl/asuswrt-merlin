@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <html xmlns:v>
 <head>
-<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
@@ -119,6 +119,10 @@ function close_weakness_status(){
 }
 
 function enable_whole_security(){
+    if(!confirm("This will enable Vulnerability Protection, Malicious Site Blocking and Infected Device Prevention and Blocking. Security settings will impact your wireless, wired and attached storage network performance.")){
+		return false;
+	}
+	
 	var action_script_temp = "";
 	var wan0_upnp_enable = document.form.wan0_upnp_enable.value; 
 	var wan1_upnp_enable = document.form.wan1_upnp_enable.value; 
@@ -230,8 +234,7 @@ function enable_whole_security(){
 	document.form.submit();
 	if(ftp_account_mode == 0 || samba_account_mode == 0){
 		document.samba_Form.submit();
-	}	
-	
+	}		
 }
 function check_login_name_password(){
 	var username = document.form.http_username.value;
@@ -585,7 +588,7 @@ function apply_alert_preference(){
 	<table style="width:99%;">
 		<tr>
 			<td>
-				<div class="weakness_router_status">Router Status</div>
+				<div class="weakness_router_status"><#AiProtection_scan_status#></div>
 			</td>
 		</tr>	
 		<tr>
@@ -593,85 +596,85 @@ function apply_alert_preference(){
 				<div>
 					<table class="weakness_status" cellspacing="0" cellpadding="4" align="center">
 						<tr>
-							<th>Default router login username and password changed</th>
+							<th>Default router login username and password changed -</th>
 							<td>
 								<div id="login_password"></div>
 							</td>					
 						</tr>
 						<tr>
-							<th>Wireless password strength check</th>
+							<th>Wireless password strength check -</th>
 							<td>
 								<div id="score"></div>
 							</td>			
 						</tr>
 						<tr>
-							<th>Wireless encryption enabled</th>
+							<th>Wireless encryption enabled -</th>
 							<td>
 								<div id="wireless_encryption"></div>
 							</td>			
 						</tr>
 						<tr>
-							<th>UPnP service disabled</th>
+							<th>UPnP service disabled -</th>
 							<td>
 								<div id="upnp_service"></div>
 							</td>	
 						</tr>
 						<tr>
-							<th>Web access from WAN disabled</th>
+							<th>Web access from WAN disabled -</th>
 							<td>
 								<div id="access_from_wan"></div>
 							</td>	
 						</tr>
 						<tr>
-							<th>PING from WAN disabled</th>
+							<th>PING from WAN disabled -</th>
 							<td>
 								<div id="ping_from_wan"></div>
 							</td>	
 						</tr>
 						<tr>
-							<th>DMZ disabled</th>
+							<th>DMZ disabled -</th>
 							<td>
 								<div id="dmz_service"></div>
 							</td>
 						</tr>
 						<tr>
-							<th>Port trigger disabled</th>
+							<th>Port trigger disabled -</th>
 							<td>
 								<div id="port_tirgger"></div>
 							</td>
 						</tr>
 						<tr>
-							<th>Port forwarding disabled</th>
+							<th>Port forwarding disabled -</th>
 							<td>
 								<div id="port_forwarding"></div>
 							</td>		
 						</tr>
 						<tr>
-							<th>Anonymous login to FTP share disabled</th>
+							<th>Anonymous login to FTP share disabled -</th>
 							<td>
 								<div id="ftp_account"></div>
 							</td>		
 						</tr>
 						<tr>
-							<th>Disable guest login for Network Place Share</th>
+							<th>Disable guest login for Network Place Share -</th>
 							<td>
 								<div id="samba_account"></div>
 							</td>		
 						</tr>
 						<tr>
-							<th>Malicious Website Blocking enabled</th>
+							<th>Malicious Website Blocking enabled -</th>
 							<td>
 								<div id="wrs_service"></div>
 							</td>	
 						</tr>
 						<tr>
-							<th>Intruder Prevention enabled</th>
+							<th>Intruder Prevention enabled -</th>
 							<td>
 								<div id="vp_service"></div>
 							</td>						
 						</tr>
 						<tr>
-							<th>Infected device detecting and blocked enabled</th>
+							<th>Infected Device Prevention and Blocking -</th>
 							<td>
 								<div id="cc_service"></div>
 							</td>						
@@ -700,7 +703,7 @@ function apply_alert_preference(){
 			</th>		
 		</tr>
 			<td>
-				<div class="formfontdesc" style="font-style: italic;font-size: 14px;">Home Protection will send you an alert email if a suspicious connection between your client devices and malicious destination has been detected and blocked. Please fill in the informations of your email you want to receive.</div>
+				<div class="formfontdesc" style="font-style: italic;font-size: 14px;"><#AiProtection_HomeDesc1#></div>
 			</td>
 		<tr>
 			<td>
@@ -735,7 +738,7 @@ function apply_alert_preference(){
 						<th>Password</th>
 						<td>
 							<div>
-								<input type="password" class="input_30_table" id="mail_password" value="">
+								<input type="password" class="input_30_table" id="mail_password" maxlength="100" value="">
 							</div>
 						</td>
 					</tr>
@@ -794,7 +797,7 @@ function apply_alert_preference(){
 <input type="hidden" name="PM_SMTP_PORT" value="<% nvram_get("PM_SMTP_PORT"); %>">
 <input type="hidden" name="PM_MY_EMAIL" value="<% nvram_get("PM_MY_EMAIL"); %>">
 <input type="hidden" name="PM_SMTP_AUTH_USER" value="<% nvram_get("PM_SMTP_AUTH_USER"); %>">
-<input type="hidden" name="PM_SMTP_AUTH_PASS" value="<% nvram_get("PM_SMTP_AUTH_PASS"); %>">
+<input type="hidden" name="PM_SMTP_AUTH_PASS" value="">
 
 <table class="content" align="center" cellpadding="0" cellspacing="0" >
 	<tr>
@@ -818,7 +821,7 @@ function apply_alert_preference(){
 										<table width="730px">
 											<tr>
 												<td align="left">
-													<span class="formfonttitle">AiProtection - Home Protection</span>
+													<span class="formfonttitle">AiProtection - <#AiProtection_Home#></span>
 												</td>
 											</tr>
 										</table>
@@ -835,7 +838,7 @@ function apply_alert_preference(){
 													<table>
 														<tr>
 															<td>
-																<div style="width:430px">Home Protection keeps your home network in secure and safe with Trend Micro security. Enable these features to prevent your networking from virus infection and hacker invading</div>
+																<div style="width:430px"><#AiProtection_HomeDesc2#></div>
 															</td>
 															<td>
 																<div style="width:100px;height:48px;margin-left:-40px;background-image:url('images/New_ui/tm_logo.png');"></div>
@@ -867,8 +870,8 @@ function apply_alert_preference(){
 													<div><img src="/images/cloudsync/line.png"></div>
 												</td>
 												<td style="padding:10px;">
-													<div style="font-size:18px;text-shadow:1px 1px 0px black;">Router Security Scan</div>
-													<div style="font-style: italic;font-size: 14px;color:#FC0;height:auto;padding-top:5px;">Check secuirty related configuration for your router.</div>
+													<div style="font-size:18px;text-shadow:1px 1px 0px black;"><#AiProtection_scan#></div>
+													<div style="font-style: italic;font-size: 14px;color:#FC0;height:auto;padding-top:5px;"><#AiProtection_scan_desc#></div>
 												</td>
 												 <td width="6px">
 													<div><img src="/images/cloudsync/line.png"></div>
@@ -894,13 +897,13 @@ function apply_alert_preference(){
 															<tr>
 																<td style="padding-bottom:10px;">
 																	<div style="font-size:18px;text-shadow:1px 1px 0px black;">Malicious Sites Blocking</div>
-																	<div style="font-style: italic;font-size: 14px;color:#FC0;height:auto;padding-top:5px;">Malicious Sites Blocking allows to limit access contents with spyware, phishing and spam to protect your client device.</div>							
+																	<div style="font-style: italic;font-size: 14px;color:#FC0;height:auto;padding-top:5px;">Restricts access to known malicious websites in Trend Micro’s database for always-up-to-date protection.</div>							
 																</td>
 															</tr>										
 															<tr>
 																<td>
-																	<div style="font-size:18px;text-shadow:1px 1px 0px black;">Intruder Prevention</div>
-																	<div style="font-style: italic;font-size: 14px;color:#FC0;height:auto;padding-top:5px;">Prevent your network devices from being exposed to the threats on Internet. Enable Intruder Prevention to prevent threats from outer of home.</div>
+																	<div style="font-size:18px;text-shadow:1px 1px 0px black;"><#AiProtection_Vulnerability#></div>
+																	<div style="font-style: italic;font-size: 14px;color:#FC0;height:auto;padding-top:5px;"><#AiProtection_Vulnerability_desc#></div>
 																</td>
 															</tr>
 														</table>
@@ -987,8 +990,8 @@ function apply_alert_preference(){
 													<div><img src="/images/cloudsync/line.png"></div>
 												</td>
 												<td style="padding:10px;">
-													<div style="font-size:18px;text-shadow:1px 1px 0px black;">Infected Device Detection and Blocking</div>
-													<div style="font-style: italic;font-size: 14px;color:#FC0;height:auto;;padding-top:5px;">Prevents data stealing and device remote controlled from hacker. Any suspicious connections and activities will be identified and blocked to protect your presonal information safe.</div>
+													<div style="font-size:18px;text-shadow:1px 1px 0px black;">Infected Device Prevention and Blocking</div>
+													<div style="font-style: italic;font-size: 14px;color:#FC0;height:auto;;padding-top:5px;">Prevents infected devices from communicating personal information and/or infected status to external parties.</div>
 												</td>
 												 <td width="6px">
 													<div><img src="/images/cloudsync/line.png"></div>

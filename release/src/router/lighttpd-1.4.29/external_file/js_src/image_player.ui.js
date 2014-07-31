@@ -3,8 +3,35 @@ var g_image_player = {
 	page_width: 0,
 	page_height: 0,
 	file_array: null,
+	show_exif_mode: 0,
+	settings: null,
+	keydown: function(e){
+		if(!this.settings)
+			return;
+			
+		if (e.keyCode == 27) {
+			this.close();
+		}
+		else if(e.keyCode == 37){
+			//- left(prev) key
+			$('#'+this.settings.name).prev(this.settings);
+		}
+		else if(e.keyCode == 39){
+			//- right(next) key
+			$('#'+this.settings.name).next(this.settings);
+		}
+	},
+	adjustLayout: function(){
+		if(this.settings)
+			$('#'+this.settings.name).adjustLayout(this.settings);
+	},
+	close: function(){
+		if(this.settings)
+			$('#'+this.settings.name).close(this.settings);
+	},
 	show: function(i_loc, i_width, i_height, i_file_array) {
 		
+		var self = this;
 		this.loc = i_loc;
 		this.page_width = i_width;
 		this.page_height = i_height;
@@ -44,21 +71,15 @@ var g_image_player = {
 			var img_url = window.location.protocol + "//" + window.location.host + image_array[i].href;
 			
 			if(i==default_index)
-				div_html += '<img src="" path="' + img_url + '" alt="" class="default"/>';
+				div_html += '<img src="" path="' + img_url + '" uhref="' + image_array[i].href + '" file="' + image_array[i].name + '" alt="" class="default"/>';
 			else
-				div_html += '<img src="" path="' + img_url + '" alt="" class=""/>';
+				div_html += '<img src="" path="' + img_url + '" uhref="' + image_array[i].href + '" file="' + image_array[i].name + '" alt="" class=""/>';
 		}
 	
 		div_html += '</div>';
 	
 		div_html += '<div class="barousel_nav">';
-	
-		//- upload facebook
-		//div_html += '<a class="facebook_upload" href="#" style="color:#fff" file="' + image_array[default_index].href + '">Share</a><br>';
-		
-		//- upload picassa
-		//div_html += '<a class="picassa_upload" href="#" style="color:#fff" file="' + image_array[default_index].href + '">Share Picassa</a>';
-		
+			
 		div_html += '<div class="barousel_content transparent" style="display: block; ">';
 		
 		for(var i=0;i<image_array.length;i++){
@@ -77,94 +98,36 @@ var g_image_player = {
 		div_html += '</div>';
 	  
 		div_html += '<div class="barousel_loading" style="position:absolute;display:none;z-index=99;"><img src="/smb/css/load.gif" width="18px" height="18px"/></div>';
+		div_html += '<div class="barousel_exif_data" style="display:none"></div>';
 					  
 		div_html += '</div>';
 		
 		$(div_html)
 			.animate({width:"100%", height:"100%", left:"0px", top:"0px"},200, null, null )
 			.appendTo("body");
-	  
-		$('#image_slide_show').barousel({				
+	  	
+	  	var close_handler = function(){
+	  		self.file_array = null;
+			self.settings = null;
+	  	};
+	  	
+	  	var init_handler = function(settings){
+	  		self.settings = settings;
+	  	};
+	  	
+		$('#image_slide_show').barousel({
+			name: 'image_slide_show',
 			manualCarousel: 1,
 			contentResize:0,
-			startIndex:default_index
+			startIndex:default_index,
+			storage: g_storage,
+			stringTable: m,
+			enableExifFunc: 0,
+			enableShareFunc: 0,
+			closeHandler: close_handler,
+			initCompleteHandler: init_handler
 		});
 		
-		$('.facebook_upload').click(function(){
-		
-			var $modalWindow = $("div#modalWindow");
-			
-			var file = $(this).attr("file");
-			var this_file_name = myencodeURI(file.substring(file.lastIndexOf('/')+1, file.length));
-			var this_url = file.substring(0, file.lastIndexOf('/'));
-			var media_hostName = window.location.host;
-			if(media_hostName.indexOf(":")!=-1)
-				media_hostName = media_hostName.substring(0, media_hostName.indexOf(":"));
-			media_hostName = "http://" + media_hostName + ":" + g_storage.get("http_port") + "/";
-			
-			g_webdav_client.GSL(this_url, this_url, this_file_name, 0, 0, function(error, content, statusstring){
-				if(error==200){
-					var data = parseXml(statusstring);
-					var share_link = $(data).find('sharelink').text();
-					var open_url = "";							
-										
-					share_link = media_hostName + share_link;		
-					
-					//g_modal_url = '/smb/css/upload_facebook.html';
-					g_modal_url = 'http://www.efroip.com/efroip/fbtest/fb.html?v=' + share_link + '&b=' + mydecodeURI(this_file_name) + '&d=' + window.location.href;
-					//g_modal_url = 'http://www.efroip.com/facebook/upload_photo.html';
-			
-					g_modal_window_width = 600;
-					g_modal_window_height = 320;
-					$('#jqmMsg').css("display", "none");	
-					$('#jqmTitleText').text("Upload to Facebook");
-					if($modalWindow){
-						$modalWindow.jqmShow();
-					}
-					
-					$("#image_slide_show").remove();
-				}
-			});
-			
-		});
-		
-		$('.picassa_upload').click(function(){
-			var $modalWindow = $("div#modalWindow");
-			
-			var file = $(this).attr("file");
-			var this_file_name = myencodeURI(file.substring(file.lastIndexOf('/')+1, file.length));
-			var this_url = file.substring(0, file.lastIndexOf('/'));
-			var media_hostName = window.location.host;
-			if(media_hostName.indexOf(":")!=-1)
-				media_hostName = media_hostName.substring(0, media_hostName.indexOf(":"));
-			media_hostName = "http://" + media_hostName + ":" + g_storage.get("http_port") + "/";
-			
-			g_webdav_client.GSL(this_url, this_url, this_file_name, 0, 0, function(error, content, statusstring){
-				if(error==200){
-					var data = parseXml(statusstring);
-					var share_link = $(data).find('sharelink').text();
-					var open_url = "";							
-										
-					share_link = media_hostName + share_link;		
-					
-					//g_modal_url = '/smb/css/upload_facebook.html';
-					g_modal_url = 'http://www.efroip.com/efroip/google/index.html?v=' + share_link + '&b=' + mydecodeURI(this_file_name) + '&d=' + window.location.href;
-					//g_modal_url = 'http://www.efroip.com/facebook/upload_photo.html';
-			
-					g_modal_window_width = 600;
-					g_modal_window_height = 320;
-					$('#jqmMsg').css("display", "none");	
-					$('#jqmTitleText').text("Upload to Facebook");
-					if($modalWindow){
-						$modalWindow.jqmShow();
-					}
-					
-					$("#image_slide_show").remove();
-				}
-			});
-			
-		});
-	
 		image_array = null;
 	}
 };

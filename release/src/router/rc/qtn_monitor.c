@@ -74,6 +74,14 @@ void rpc_parse_nvram_from_httpd(int unit, int subunit)
 		rpc_update_wdslist();
 		rpc_update_wds_psk(nvram_safe_get("wl1_wds_psk"));
 		rpc_update_ap_isolate(WIFINAME, atoi(nvram_safe_get("wl1_ap_isolate")));
+
+		if(nvram_get_int("wl1_80211h") == 1){
+			dbG("[80211h] set_80211h_on\n");
+			qcsapi_wifi_run_script("router_command.sh", "80211h_on");
+		}else{
+			dbG("[80211h] set_80211h_off\n");
+			qcsapi_wifi_run_script("router_command.sh", "80211h_off");
+		}
 	}else if (unit == 1 && subunit == 1){
 		if(nvram_get_int("wl1.1_bss_enabled") == 1){
 			rpc_update_mbss("wl1.1_ssid", nvram_safe_get("wl1.1_ssid"));

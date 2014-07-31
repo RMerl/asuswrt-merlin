@@ -150,8 +150,6 @@ extern int wrs_url_main();
 extern void redirect_page_status(int cat_id, int *retval, webs_t wp);
 
 //dpi.c
-extern int start_dpi_service(char *cmd);
-extern int dpi_main(char *cmd);
 extern void stop_dpi_engine_service();
 extern void run_dpi_engine_service();
 extern void start_dpi_engine_service();

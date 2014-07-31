@@ -106,7 +106,7 @@ function openImageViewer(loc){
   
   	div_html += '</div>';
   
-  	//div_html += '<div class="barousel_nav"></div>';
+  	div_html += '<div class="barousel_loading" style="position:absolute;display:none;z-index=99;"><img src="/smb/css/load.gif" width="18px" height="18px"/></div>';
                   
 	div_html += '</div>';
 		
@@ -114,12 +114,35 @@ function openImageViewer(loc){
 		.animate({width:"100%", height:"100%", left:"0px", top:"0px"},200, null, null )
   		.appendTo("body");
   
+	var close_handler = function(){
+	  	self.file_array = null;
+		self.settings = null;
+	};
+	  	
+	var init_handler = function(settings){
+		self.settings = settings;
+	};
+	
+	$('#image_slide_show').barousel({
+		name: 'image_slide_show',
+		manualCarousel: 1,
+		contentResize:0,
+		startIndex:default_index,
+		storage: g_storage,
+		stringTable: m,
+		enableExifFunc: 0,
+		enableShareFunc: 0,
+		closeHandler: null,
+		initCompleteHandler: null
+	});
+	/*	
 	$('#image_slide_show').barousel({				
 		navType: 2,
 	    manualCarousel: 1,
 	    contentResize:0,
 	    startIndex:default_index
 	});
+	*/
 	
 	image_array = null;
 }

@@ -62,8 +62,9 @@ function QKinternettype_load_body(){
 		if (dsl_support) {
 			document.getElementById("prev_btn").style.display = "none";
 			var detect_status = '<% nvram_get("dsltmp_autodet_state"); %>';	
-			if ( (detect_status == "Detecting") || (detect_status == "wait_for_init") || (detect_status == "init") ||
-				(detect_status == "initializing") ||(detect_status == "up") || (detect_status == "down")) {
+			if ( (detect_status == "Detecting") || (detect_status == "wait_for_init") || 
+				(detect_status == "init") || (detect_status == "initializing") || 
+				(detect_status == "up") || (detect_status == "wait") || (detect_status == "down")) {
 				document.form.next_page.value = "/qis/QIS_detect.htm";
 			}
 			else if ( (detect_status == "pppoe") || (detect_status == "pppoa") ) { //1:PPPoE, 2:PPPoA
@@ -205,7 +206,7 @@ function submitForm(){
 			return false;
 		}
 		else{
-			if(!confirm('If you do not change the default password(admin), your router firmware is risky and others can easily guess the login password. Are you sure to keep this unsafe password?')){
+			if(!confirm('If you do not change the default password (admin), your router is vulnerable to security threats and others can easily guess the login password. Are you sure to keep this unsafe password?')){
 				document.form.http_passwd.focus();
 				document.form.http_passwd.select();
 				changeiuiBackground(0);

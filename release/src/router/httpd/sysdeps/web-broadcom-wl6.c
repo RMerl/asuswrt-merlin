@@ -1881,7 +1881,33 @@ wl_control_channel(int unit)
 int
 ej_wl_control_channel(int eid, webs_t wp, int argc, char_t **argv)
 {
-        return websWrite(wp, "[\"%d\", \"%d\"]", wl_control_channel(0), wl_control_channel(1));
+	int ret = 0;
+	int channel_24 = 0, channel_50 = 0;
+#ifdef RTAC3200
+	int channel_50_2 = 0;
+#endif
+
+	if (!(channel_24 = wl_control_channel(0)))
+	{
+		ret = websWrite(wp, "[\"0\"]");
+		return ret;
+	}
+
+	if (!(channel_50 = wl_control_channel(1)))
+		ret = websWrite(wp, "[\"%d\", \"%d\"]", channel_24, 0);
+	else
+#ifndef RTAC3200
+		ret = websWrite(wp, "[\"%d\", \"%d\"]", channel_24, channel_50);
+#else
+	{
+		if (!(channel_50_2 = wl_control_channel(2)))
+			ret = websWrite(wp, "[\"%d\", \"%d\", \"%d\"]", channel_24, channel_50, 0);
+		else
+			ret = websWrite(wp, "[\"%d\", \"%d\", \"%d\"]", channel_24, channel_50, channel_50_2);
+	}
+#endif
+
+	return ret;
 }
 
 #define	IW_MAX_FREQUENCIES	32
@@ -1981,14 +2007,22 @@ ERROR:
 int
 ej_wl_channel_list_2g(int eid, webs_t wp, int argc, char_t **argv)
 {
+#ifndef RTAC3200
 	return ej_wl_channel_list(eid, wp, argc, argv, 0);
+#else
+	return ej_wl_channel_list(eid, wp, argc, argv, 1);
+#endif
 }
 
 #ifndef RTCONFIG_QTN
 int
 ej_wl_channel_list_5g(int eid, webs_t wp, int argc, char_t **argv)
 {
+#ifndef RTAC3200
 	return ej_wl_channel_list(eid, wp, argc, argv, 1);
+#else
+	return ej_wl_channel_list(eid, wp, argc, argv, 0);
+#endif
 }
 #endif
 
@@ -2064,13 +2098,21 @@ ERROR:
 int
 ej_wl_rate_2g(int eid, webs_t wp, int argc, char_t **argv)
 {
+#ifndef RTAC3200
 	return ej_wl_rate(eid, wp, argc, argv, 0);
+#else
+	return ej_wl_rate(eid, wp, argc, argv, 1);
+#endif
 }
 
 int
 ej_wl_rate_5g(int eid, webs_t wp, int argc, char_t **argv)
 {
+#ifndef RTAC3200
 	return ej_wl_rate(eid, wp, argc, argv, 1);
+#else
+	return ej_wl_rate(eid, wp, argc, argv, 0);
+#endif
 }
 
 static int wps_error_count = 0;
@@ -3517,14 +3559,22 @@ exit:
 int
 ej_wl_sta_list_2g(int eid, webs_t wp, int argc, char_t **argv)
 {
+#ifndef RTAC3200
 	return wl_sta_list(eid, wp, argc, argv, 0);
+#else
+	return wl_sta_list(eid, wp, argc, argv, 1);
+#endif
 }
 
 #ifndef RTCONFIG_QTN
 int
 ej_wl_sta_list_5g(int eid, webs_t wp, int argc, char_t **argv)
 {
+#ifndef RTAC3200
 	return wl_sta_list(eid, wp, argc, argv, 1);
+#else
+	return wl_sta_list(eid, wp, argc, argv, 0);
+#endif
 }
 #else
 extern int ej_wl_sta_list_5g(int eid, webs_t wp, int argc, char_t **argv);
@@ -3921,62 +3971,6 @@ wl_autho(char *name, struct ether_addr *ea)
 }
 
 static int psta_auth = 0;
-
-#ifdef RTCONFIG_QTN
-int
-ej_wl_auth_psta_qtn(int eid, webs_t wp, int argc, char_t **argv)
-{
-	char *ifname = "wifi0";
-	char ssid[33], auth[33];
-	int psta_debug = 0;
-	int retval = 0, psta = 0;
-	char wlc_ssid[33];
-
-	strcpy(wlc_ssid, nvram_safe_get("wlc_ssid"));
-	memset(ssid, 0, sizeof(ssid));
-	memset(auth, 0, sizeof(auth));
-
-	if (nvram_match("psta_debug", "1"))
-		psta_debug = 1;
-
-	if (!rpc_qtn_ready()){
-		goto ERROR;
-	}
-
-	qcsapi_wifi_get_SSID(WIFINAME, ssid);
-
-	if(!strcmp(ssid, wlc_ssid))
-	{
-		if (psta_debug) dbg("connected: ssid %s\n", ssid);
-		psta = 1;
-		psta_auth = 0;
-	}
-	else
-	{
-		qcsapi_SSID_get_authentication_mode(ifname, wlc_ssid, auth);
-		if (psta_debug) dbg("get_auth : ssid=%s, auth=%s\n", wlc_ssid, auth);
-
-		if (!strcmp(auth, "PSKAuthentication") || !strcmp(auth, "EAPAuthentication"))
-		{
-			if (psta_debug) dbg("authorization failed\n");
-			psta = 2;
-			psta_auth = 1;
-		}
-		else
-		{
-			if (psta_debug) dbg("disconnected\n");
-			psta = 0;
-			psta_auth = 0;
-		}
-	}
-
-	retval += websWrite(wp, "wlc_state=%d;", psta);
-	retval += websWrite(wp, "wlc_state_auth=%d;", psta_auth);
-
-ERROR:
-	return retval;
-}
-#endif
 
 int
 ej_wl_auth_psta(int eid, webs_t wp, int argc, char_t **argv)

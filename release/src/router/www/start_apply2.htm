@@ -117,6 +117,7 @@ function initial(){
 			}
 			else{
 				parent.parent.dr_advise();
+				parent.parent.document.getElementById('disconnect_hint').style.display = "";
 				setTimeout("showdr_advise();", 10000);
 				return false;
 			}
@@ -163,6 +164,7 @@ function initial(){
 				}
 				else{
 					parent.parent.dr_advise();
+					parent.parent.document.getElementById('disconnect_hint').style.display = "";
 					setTimeout("showdr_advise();", 10000);
 					return false;
 				}

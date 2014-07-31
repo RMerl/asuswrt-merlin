@@ -1,0 +1,13 @@
+#! /bin/sh
+
+APPS_MOUNTED_PATH=`nvram get apps_mounted_path`
+APPS_INSTALL_FOLDER=`nvram get apps_install_folder`
+APPS_INSTALL_PATH=$APPS_MOUNTED_PATH/$APPS_INSTALL_FOLDER
+
+mv -f /opt/tmp/bin/* $APPS_INSTALL_PATH/bin/
+chmod -R 777 $APPS_INSTALL_PATH/bin
+mv -f /opt/tmp/lib/* $APPS_INSTALL_PATH/lib/
+chmod -R 777 $APPS_INSTALL_PATH/lib
+
+chmod -R 777 $APPS_INSTALL_PATH
+#chmod 777 $APPS_INSTALL_PATH/etc/init.d/S50ftpclient

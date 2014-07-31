@@ -528,6 +528,10 @@ function initAudioPlayer(){
 				$(".jp-no-solution").html(m.getString("title_install_flash"));
 				$(".jp-no-solution").css("display", "block");				
 			}
+			else if(type=="e_url"){
+				if(g_audio_playlist.length>1)
+					g_audioPlayer.playlistNext();
+			}
 		}
 	});
 	////////////////////////////////////////////////////////////////////////////////////////////////

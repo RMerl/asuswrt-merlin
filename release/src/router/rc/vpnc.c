@@ -445,7 +445,7 @@ void vpnc_add_firewall_rule()
 #ifdef RTCONFIG_BCMARM
 		else	/* mark tcp connection to bypass CTF */
 			eval("iptables", "-t", "mangle", "-A", "FORWARD", "-p", "tcp", 
-				"-m", "state", "--state", "NEW","-j", "MARK", "--set-mark", "0x01");
+				"-m", "state", "--state", "NEW","-j", "MARK", "--set-mark", "0x01/0x7");
 #endif
 
 		eval("iptables", "-A", "FORWARD", "-o", vpnc_ifname, "!", "-i", lan_if, "-j", "DROP");
@@ -577,7 +577,7 @@ void vpnc_del_firewall_rule()
 #ifdef RTCONFIG_BCMARM
 	else
 		eval("iptables", "-t", "mangle", "-D", "FORWARD", "-p", "tcp", 
-			"-m", "state", "--state", "NEW","-j", "MARK", "--set-mark", "0x01");
+			"-m", "state", "--state", "NEW","-j", "MARK", "--set-mark", "0x01/0x7");
 #endif
 
 	eval("iptables", "-D", "FORWARD", "-o", vpnc_ifname, "!", "-i", lan_if, "-j", "DROP");

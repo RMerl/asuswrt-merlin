@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <html xmlns:v>
 <head>
-<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7"/>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
@@ -148,6 +148,17 @@ function initial(){
 	}	
 	else{
 		$('ssh_table').style.display = "none";	
+	}
+
+	if(tmo_support){
+		document.getElementById("telnet_tr").style.display = "none";
+		document.form.telnetd_enable[0].disabled = true;
+		document.form.telnetd_enable[1].disabled = true;
+	}
+	else{
+		document.getElementById("telnet_tr").style.display = "";
+                document.form.telnetd_enable[0].disabled = false;
+		document.form.telnetd_enable[1].disabled = false;
 	}	
 }
 
@@ -1135,7 +1146,7 @@ function check_sshd_enable(obj_value){
 						<div id="svc_hint_div" style="display:none;"><span style="color:#FFCC00;"><#General_x_SystemTime_syncNTP#></span></div>
 					</td>
 				</tr>
-				<tr>
+				<tr id="telnet_tr">
 					<th><#Enable_Telnet#></th>
 					<td>
 						<input type="radio" name="telnetd_enable" class="input" value="1" <% nvram_match("telnetd_enable", "1", "checked"); %>><#checkbox_Yes#>

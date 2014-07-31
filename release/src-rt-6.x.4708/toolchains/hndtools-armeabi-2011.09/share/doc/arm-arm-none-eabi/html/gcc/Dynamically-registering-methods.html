@@ -1,0 +1,98 @@
+<html lang="en">
+<head>
+<title>Dynamically registering methods - Using the GNU Compiler Collection (GCC)</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Using the GNU Compiler Collection (GCC)">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Messaging-with-the-GNU-Objective_002dC-runtime.html#Messaging-with-the-GNU-Objective_002dC-runtime" title="Messaging with the GNU Objective-C runtime">
+<link rel="next" href="Forwarding-hook.html#Forwarding-hook" title="Forwarding hook">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997,
+1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
+2010 Free Software Foundation, Inc.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being ``Funding Free Software'', the Front-Cover
+Texts being (a) (see below), and with the Back-Cover Texts being (b)
+(see below).  A copy of the license is included in the section entitled
+``GNU Free Documentation License''.
+
+(a) The FSF's Front-Cover Text is:
+
+     A GNU Manual
+
+(b) The FSF's Back-Cover Text is:
+
+     You have freedom to copy and modify this GNU Manual, like GNU
+     software.  Copies published by the Free Software Foundation raise
+     funds for GNU development.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+<link rel="stylesheet" type="text/css" href="../cs.css">
+</head>
+<body>
+<div class="node">
+<a name="Dynamically-registering-methods"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Forwarding-hook.html#Forwarding-hook">Forwarding hook</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Messaging-with-the-GNU-Objective_002dC-runtime.html#Messaging-with-the-GNU-Objective_002dC-runtime">Messaging with the GNU Objective-C runtime</a>
+<hr>
+</div>
+
+<h4 class="subsection">8.10.1 Dynamically registering methods</h4>
+
+<p>If <code>objc_msg_lookup()</code> does not find a suitable method
+implementation, because the receiver does not implement the required
+method, it tries to see if the class can dynamically register the
+method.
+
+ <p>To do so, the runtime checks if the class of the receiver implements
+the method
+
+<pre class="smallexample">     + (BOOL) resolveInstanceMethod: (SEL)selector;
+</pre>
+ <p>in the case of an instance method, or
+
+<pre class="smallexample">     + (BOOL) resolveClassMethod: (SEL)selector;
+</pre>
+ <p>in the case of a class method.  If the class implements it, the
+runtime invokes it, passing as argument the selector of the original
+method, and if it returns <code>YES</code>, the runtime tries the lookup
+again, which could now succeed if a matching method was added
+dynamically by <code>+resolveInstanceMethod:</code> or
+<code>+resolveClassMethod:</code>.
+
+ <p>This allows classes to dynamically register methods (by adding them to
+the class using <code>class_addMethod</code>) when they are first called. 
+To do so, a class should implement <code>+resolveInstanceMethod:</code> (or,
+depending on the case, <code>+resolveClassMethod:</code>) and have it
+recognize the selectors of methods that can be registered dynamically
+at runtime, register them, and return <code>YES</code>.  It should return
+<code>NO</code> for methods that it does not dynamically registered at
+runtime.
+
+ <p>If <code>+resolveInstanceMethod:</code> (or <code>+resolveClassMethod:</code>) is
+not implemented or returns <code>NO</code>, the runtime then tries the
+forwarding hook.
+
+ <p>Support for <code>+resolveInstanceMethod:</code> and
+<code>resolveClassMethod:</code> was added to the GNU Objective-C runtime in
+GCC version 4.6.
+
+<!-- ========================================================================= -->
+ </body></html>
+

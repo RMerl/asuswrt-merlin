@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <html xmlns:v>
 <head>
-<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7"/>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
@@ -74,7 +74,7 @@ function initial(){
 						</tr>
 						<tr>
 							<td>
-								<div class="formfontdesc">Home Protection with Trend Micro that uses real-time network monitoring to detect malware, botnets and other intrusions before it reaches your PC or device. Parental Controls for scheduling times that devices can access the internet, restrict specific sites</div>
+								<div class="formfontdesc" style="font-size:14px;font-style:italic;"><#AiProtection_desc1#>&nbsp<#AiProtection_desc2#></div>
 							</td> 
 						</tr>					
 					<!-- Service table -->
@@ -89,7 +89,7 @@ function initial(){
 												</td>
 												<td class="app_table_radius_right" style="width:350px;height:120px;">
 													<div class="app_name">
-														<a style="text-decoration: underline;" href="AiProtection_HomeProtection.asp">Home Protection</a>
+														<a style="text-decoration: underline;" href="AiProtection_HomeProtection.asp"><#AiProtection_Home#></a>
 													</div>
 													<div class="app_desc" style="height:60px;">
 														<li>Router Security Scan</li>

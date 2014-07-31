@@ -1378,6 +1378,10 @@ $(document).ready(function(){
 			
 			closeJqmWindow();
 		}
+		
+		if(g_image_player){
+			g_image_player.keydown(e);
+		}
 	});
 	
 	g_storage.set('stopLogoutTimer', '0');

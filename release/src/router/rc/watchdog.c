@@ -129,6 +129,9 @@ static int LED_switch_count = 0;
 static int BTN_pressed_count = 0;
 #endif
 #endif
+#ifdef RTCONFIG_DSL
+static int dsl_sync_check_timer = 0;
+#endif
 
 extern int g_wsc_configured;
 extern int g_isEnrollee[MAX_NR_WL_IF];
@@ -1741,43 +1744,89 @@ void push_mail(void)
 #ifdef RTCONFIG_DSL
 
 #define DSL_LOSS_TIME_TH	18000
+void log_sync_time(int xdsl_link_status)
+{
+	FILE *fp = NULL;
+	struct sysinfo sys_info;
+	time_t secs = 0;
+	struct tm *tm = NULL;
+	static long last_loss_time = 0;
+	static long pre_uptime = 0;
+	unsigned long diff_time = 0;
+	char timestamp[32] = {0};
+	int setting_apply = nvram_get_int("dsltmp_syncloss_apply");
+
+	memset(&sys_info, 0, sizeof(sysinfo));
+	sysinfo(&sys_info);
+	diff_time = sys_info.uptime - pre_uptime;
+	pre_uptime = sys_info.uptime;
+
+	time(&secs);
+	tm = localtime(&secs);
+	sprintf(timestamp, "%s", asctime(tm));
+	timestamp[strlen(timestamp)-1] = '\0';
+
+	if(setting_apply) {
+		last_loss_time = 0;
+		nvram_set("dsltmp_syncloss_apply", "0");
+		nvram_set("dsltmp_syncloss", "0");
+	}
+	else {
+		if(!xdsl_link_status) {
+			if(!last_loss_time) {	//first time
+				last_loss_time = sys_info.uptime;
+			}
+			else {
+				if(sys_info.uptime - last_loss_time < DSL_LOSS_TIME_TH) {
+					if(nvram_invmatch("dsltmp_syncloss", "2"))
+						nvram_set("dsltmp_syncloss", "1");
+				}
+				else {
+					last_loss_time = sys_info.uptime;
+				}
+			}
+		}
+	}
+
+	fp = fopen(SYNC_LOG_FILE, "a");
+	if(!fp)
+	{
+		cprintf("[%s] %s: %ld\t %ld%s\n"
+			, timestamp
+			, xdsl_link_status ? "Up   time" : "Down time"
+			, sys_info.uptime
+			, diff_time
+			, setting_apply? " (apply DSL setting)" : ""
+			);
+		return;
+	}
+
+	fprintf(fp, "[%s] %s: %ld\t %ld%s\n"
+		, timestamp
+		, xdsl_link_status ? "Up   time" : "Down time"
+		, sys_info.uptime
+		, diff_time
+		, setting_apply ? " (apply manually)" : ""
+		);
+	fclose(fp);
+}
 
 void dsl_sync_check(void)
 {
-	static long last_loss_time = 0;
 	static int last_status = 0;	//0: others, 1: up
-	struct sysinfo info;
-
-	if(nvram_get_int("dsltmp_syncloss_apply")) {
-		nvram_set("dsltmp_syncloss_apply", "0");
-		nvram_set("dsltmp_adslsyncsts", "down");
-		nvram_set("dsltmp_syncloss", "0");
-		last_loss_time = 0;
-		last_status = 0;
-	}
-
-	if(nvram_match("dsltmp_syncloss", "2"))
-		return;
+	static int syncup_counter = 0;
 
 	if(nvram_match("dsltmp_adslsyncsts", "up")) {
-		if(!last_status)
+		if(!last_status) {
 			last_status = 1;
+			log_sync_time(1);
+			nvram_set_int("dsltmp_syncup_cnt", ++syncup_counter);
+		}
 	}
 	else {
 		if(last_status) {
 			last_status = 0;
-			sysinfo(&info);
-			if(!last_loss_time) {	//first time
-				last_loss_time = info.uptime;
-			}
-			else {
-				if(info.uptime - last_loss_time < DSL_LOSS_TIME_TH) {
-					nvram_set("dsltmp_syncloss", "1");
-				}
-				else {
-					last_loss_time = info.uptime;
-				}
-			}
+			log_sync_time(0);
 		}
 		else
 			;//wait to up
@@ -1974,7 +2023,7 @@ void rssi_check()
 static void send_wrslog_email(char *path)
 {
 	FILE *fp;
-	char tmp[1024], buf[1024], title[64], attach[64];
+	char tmp[1024], buf[1024], title[64], attach[64], smtp_auth_pass[256];
 	char date[30];
 	time_t now;
 
@@ -1983,6 +2032,7 @@ static void send_wrslog_email(char *path)
 	memset(title, 0, sizeof(title));
 	memset(attach, 0, sizeof(attach));
 	memset(date, 0, sizeof(date));
+	memset(smtp_auth_pass, 0, sizeof(smtp_auth_pass));
 
 	// get current date
 	time(&now);
@@ -1999,6 +2049,12 @@ static void send_wrslog_email(char *path)
 		return;
 	}
 
+#ifdef HTTPS
+	strncpy(smtp_auth_pass,pwdec(nvram_get("PM_SMTP_AUTH_PASS")),256);
+#else
+	strncpy(smtp_auth_pass,nvram_get("PM_SMTP_AUTH_PASS"),256);
+#endif
+
 	fprintf(fp,"SMTP_SERVER = '%s'\n", nvram_safe_get("PM_SMTP_SERVER"));
 	fprintf(fp,"SMTP_PORT = '%s'\n", nvram_safe_get("PM_SMTP_PORT"));
 	fprintf(fp,"MY_NAME = 'Administrator'\n");
@@ -2006,7 +2062,7 @@ static void send_wrslog_email(char *path)
 	fprintf(fp,"USE_TLS = 'true'\n");
 	fprintf(fp,"SMTP_AUTH = 'LOGIN'\n");
 	fprintf(fp,"SMTP_AUTH_USER = '%s'\n", nvram_safe_get("PM_SMTP_AUTH_USER"));
-	fprintf(fp,"SMTP_AUTH_PASS = '%s'\n", nvram_safe_get("PM_SMTP_AUTH_PASS"));
+	fprintf(fp,"SMTP_AUTH_PASS = '%s'\n", smtp_auth_pass);
 	fclose(fp);
 
 	// email content
@@ -2207,6 +2263,12 @@ void watchdog(int sig)
 
 	if (!nvram_match("asus_mfg", "0")) return;
 
+#ifdef RTCONFIG_DSL
+	dsl_sync_check_timer = (dsl_sync_check_timer + 1) % 10;
+	if(!dsl_sync_check_timer)
+		dsl_sync_check();
+#endif
+
 	watchdog_period = (watchdog_period + 1) % 30;
 
 #ifdef RTCONFIG_BCMARM
@@ -2253,9 +2315,6 @@ void watchdog(int sig)
 #endif
 //	auto_firmware_check();
 
-#ifdef RTCONFIG_DSL
-	dsl_sync_check();
-#endif
 #ifdef RTCONFIG_BWDPI
 	auto_sig_check();
 	capture_bwdpi_log();

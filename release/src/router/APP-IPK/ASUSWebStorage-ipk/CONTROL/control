@@ -2,7 +2,7 @@ Package: asuswebstorage
 Architecture: mipsel
 Priority: optional
 Section: net
-Version: 1.0.0.10.0.g0dcd8c2
+Version: 1.0.0.9.0.g4626812
 Maintainer: ASUS
 Source: http://127.0.0.1/
 URL: http://www.asusnetwork.net/cloud_sync.asp

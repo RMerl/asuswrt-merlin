@@ -2,13 +2,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <html xmlns:v>
 <head>
-<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7"/>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<title><#Web_Title#> - AiCloud</title>
+<title><#Web_Title#> - AiCloud 2.0</title>
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <script type="text/javascript" src="/state.js"></script>
@@ -1170,7 +1170,7 @@ function checkDDNSReturnCode(){
 					<tbody>
 					<tr>
 						<td>
-							<a href="cloud_main.asp"><div class="tab"><span>AiCloud</span></div></a>
+							<a href="cloud_main.asp"><div class="tab"><span>AiCloud 2.0</span></div></a>
 						</td>
 						<td>
 							<a href="cloud_sync.asp"><div class="tab"><span>Smart Sync</span></div></a>
@@ -1199,7 +1199,7 @@ function checkDDNSReturnCode(){
 						  <td bgcolor="#4D595D" valign="top">
 
 						<div>&nbsp;</div>
-						<div class="formfonttitle">AiCloud - Sync Server</div>
+						<div class="formfonttitle">AiCloud 2.0 - Sync Server</div>
 						<div style="margin-left:5px;margin-top:10px;margin-bottom:10px;"><img src="/images/New_ui/export/line_export.png"></div>
 						<div id="title_desc_block" style="display:none;">
 							<table width="700px" style="margin-left:25px;">
@@ -1210,7 +1210,7 @@ function checkDDNSReturnCode(){
 									<td>&nbsp;&nbsp;</td>
 									<td>
 										<div style="padding:10px;width:95%;font-style:italic;font-size:14px;word-break:break-all;">
-											Smart Sync let you to sync your cloud disk with other AiCloud account, fill the forms below then generate an invitation to your friend.<br>
+											Smart Sync let you to sync your cloud disk with other AiCloud 2.0 account, fill the forms below then generate an invitation to your friend.<br>
 											1. Fill the invitation form as below.<br>
 											2. Select a way to get a security code.<br>
 											3. Click "Generate" to get a invitation.<br>
@@ -1310,8 +1310,9 @@ function checkDDNSReturnCode(){
 							<table align="center">
 								<tr>
 									<td>
-										<div >You have not started the AiCloud service yet.
-											<a href="cloud_main.asp"><span style="font-family:Lucida Console;text-decoration:underline;color:#FC0"><#btn_go#></span></a>
+										<div style="width:90%;margin:0px auto;">
+											<a href="cloud_main.asp"><span style="font-family:Lucida Console;text-decoration:underline;color:#FC0">Sync Server cannot be enabled.</span></a>
+											Please enable AiCloud 2.0 first. Click here to enable AiCloud 2.0.
 										</div>
 									</td>
 								</tr>

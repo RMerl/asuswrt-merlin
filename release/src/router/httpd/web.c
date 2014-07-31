@@ -1692,6 +1692,15 @@ static int validate_apply(webs_t wp) {
 					change_passwd = 1;
 				}
 
+#ifdef RTCONFIG_HTTPS
+				if(!strcmp(name, "PM_SMTP_AUTH_PASS")){
+					_dprintf("PM_SMTP_AUTH_PASS match\n");
+					char pw_tmp[256];
+					memset(pw_tmp, 0, 256);
+					strncpy(pw_tmp, value,256);
+					strncpy(value, pwenc(pw_tmp),256);
+				}
+#endif
 				nvram_set(name, value);
 				nvram_modified = 1;
 				_dprintf("set %s=%s\n", name, value);
@@ -4965,6 +4974,135 @@ int ej_shown_language_css(int eid, webs_t wp, int argc, char **argv){
 	return 0;
 }
 
+int ej_shown_language_option(int eid, webs_t wp, int argc, char **argv){
+	struct language_table *pLang = NULL;
+	char lang[4];
+	int len;
+#ifdef RTCONFIG_AUTODICT
+	FILE *fp = fopen("Lang_Hdr.txt", "r");
+#else
+	FILE *fp = fopen("Lang_Hdr", "r");
+#endif
+	char buffer[1024], key[16], target[16];
+	char *follow_info, *follow_info_end;
+
+	if (fp == NULL){
+		fprintf(stderr, "No English dictionary!\n");
+		return 0;
+	}
+
+#ifdef RTCONFIG_AUTODICT
+	// skip <feff>
+	fread(key, 1, 3, fp);
+#endif
+
+	memset(lang, 0, 4);
+	strcpy(lang, nvram_safe_get("preferred_lang"));
+
+	while (1) {
+		memset(buffer, 0, sizeof(buffer));
+		if ((follow_info = fgets(buffer, sizeof(buffer), fp)) != NULL){
+			if (strncmp(follow_info, "LANG_", 5))    // 5 = strlen("LANG_")
+				continue;
+
+			follow_info += 5;
+			follow_info_end = strstr(follow_info, "=");
+			len = follow_info_end-follow_info;
+			memset(key, 0, sizeof(key));
+			strncpy(key, follow_info, len);
+
+			for (pLang = language_tables; pLang->Lang != NULL; ++pLang){
+				if (strcmp(key, pLang->Target_Lang))
+					continue;
+				follow_info = follow_info_end+1;
+				follow_info_end = strstr(follow_info, "\n");
+				len = follow_info_end-follow_info;
+				memset(target, 0, sizeof(target));
+				strncpy(target, follow_info, len);
+
+				if (!strcmp(key, lang))
+					websWrite(wp, "<option value=\"%s\" selected>%s</option>\\n", key, target);
+				else
+					websWrite(wp, "<option value=\"%s\">%s</option>\\n", key, target);
+
+				break;
+			}
+		}
+		else
+			break;
+	}
+	fclose(fp);
+
+	return 0;
+}
+
+//andi
+char*
+send_action(char *ftp_url,int port)
+{
+        char str[1024]={0};
+        char buf[1024]={0};
+	int my_fd;
+	if ((my_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+            perror("socket");
+            return NULL;
+        }
+
+        struct sockaddr_in their_addr; /* connector's address information */
+        bzero(&(their_addr), sizeof(their_addr)); /* zero the rest of the struct */
+        their_addr.sin_family = AF_INET; /* host byte order */
+        their_addr.sin_port = htons(port); /* short, network byte order */
+        their_addr.sin_addr.s_addr = INADDR_ANY;
+        //their_addr.sin_addr.s_addr = ((struct in_addr *)(he->h_addr))->s_addr;
+        bzero(&(their_addr.sin_zero), sizeof(their_addr.sin_zero)); /* zero the rest of the struct */
+
+        if (connect(my_fd, (struct sockaddr *)&their_addr,sizeof(struct sockaddr)) == -1) {
+            perror("connect");
+	    close(my_fd);
+            return NULL;
+        }
+        sprintf(str,"refresh@%s",ftp_url);
+	_dprintf("socket:%s\n",str);
+        if (send(my_fd, str, strlen(str), 0) == -1) {
+            perror("send");
+	    close(my_fd);
+            return NULL;
+        }
+	
+	int len;
+	while(len = recv(my_fd, buf, 1024, 0)) {
+        	//_dprintf("BUF:%s\n",buf);
+		close(my_fd);
+		return buf;
+    	}
+	
+        close(my_fd);
+	return NULL;
+}
+
+//andi
+static int
+ftpServerTree_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
+		char_t *url, char_t *path, char_t *query)
+{
+        char *ftp_url;
+	char *temp;
+        ftp_url = websGetVar(wp, "path","");
+    	_dprintf("URL:%s\n",ftp_url);
+	
+        char *buf = send_action(ftp_url,3568);
+	_dprintf("BUF:%s\n",buf);
+	if(buf == NULL)
+	{
+		websWrite(wp,"NULL");
+		return 0;
+	}
+	else
+		websWrite(wp,buf);	
+	
+        return 0;
+}
+
 #ifdef  __CONFIG_NORTON__
 /* Trigger an NGA LiveUpdate (linux/netbsd - no support for ECOS) */
 static int
@@ -5386,6 +5524,13 @@ do_auth(char *userid, char *passwd, char *realm)
 		strncpy(passwd, UserPass, AUTH_MAX);
 	}
 	strncpy(realm, ProductID, AUTH_MAX);
+}
+
+//andi
+static void
+do_ftpServerTree_cgi(char *url, FILE *stream)
+{
+    ftpServerTree_cgi(stream, NULL, NULL, 0, url, NULL, NULL);
 }
 
 static void
@@ -6463,6 +6608,7 @@ struct mime_handler mime_handlers[] = {
 	{ "**.js",  "text/javascript", no_cache_IE7, NULL, do_ej, do_auth },
 	{ "**.cab", "text/txt", NULL, NULL, do_file, do_auth },
 	{ "**.CFG", "application/force-download", NULL, NULL, do_prf_file, do_auth },
+	{ "ftpServerTree.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_ftpServerTree_cgi, do_auth },//andi
 	{ "**.ovpn", "application/force-download", NULL, NULL, do_prf_ovpn_file, do_auth },
 	{ "apply.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_apply_cgi, do_auth },
 	{ "applyapp.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_apply_cgi, do_auth },
@@ -6524,6 +6670,9 @@ struct except_mime_handler except_mime_handlers[] = {
 	{ "update_applist.asp", MIME_EXCEPTION_NOAUTH_ALL},
 	{ "update_cloudstatus.asp", MIME_EXCEPTION_NOAUTH_ALL},
 	{ "blocking.asp", MIME_EXCEPTION_NOAUTH_ALL},
+#ifdef RTCONFIG_TMOBILE
+	{ "MobileQIS_Login.asp", MIME_EXCEPTION_NOAUTH_ALL},
+#endif
 	{ "*.gz", MIME_EXCEPTION_NOAUTH_ALL},
 	{ "*.tgz", MIME_EXCEPTION_NOAUTH_ALL},
 	{ "*.zip", MIME_EXCEPTION_NOAUTH_ALL},
@@ -8411,6 +8560,261 @@ int ej_UI_cloud_status(int eid, webs_t wp, int argc, char **argv){
 	return 0;
 }
 
+int ej_UI_cloud_dropbox_status(int eid, webs_t wp, int argc, char **argv){
+	FILE *fp = fopen("/tmp/smartsync/.logs/dropbox", "r");
+	char line[PATH_MAX], buf[PATH_MAX], dest[PATH_MAX];
+	int line_num;
+	char status[16], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX], full_capa[PATH_MAX], used_capa[PATH_MAX], rule_num[PATH_MAX];
+
+	if(fp == NULL){
+		websWrite(wp, "cloud_dropbox_status=\"ERROR\";\n");
+		websWrite(wp, "cloud_dropbox_obj=\"\";\n");
+		websWrite(wp, "cloud_dropbox_msg=\"\";\n");
+		websWrite(wp, "cloud_dropbox_fullcapa=\"\";\n");
+		websWrite(wp, "cloud_dropbox_usedcapa=\"\";\n");
+		websWrite(wp, "cloud_dropbox_rule_num=\"\";\n");
+		return 0;
+	}
+
+	memset(status, 0, 16);
+	memset(mounted_path, 0, PATH_MAX);
+	memset(target_obj, 0, PATH_MAX);
+	memset(error_msg, 0, PATH_MAX);
+	memset(full_capa, 0, PATH_MAX);
+	memset(used_capa, 0, PATH_MAX);
+	memset(rule_num, 0, PATH_MAX);
+
+	memset(line, 0, PATH_MAX);
+	line_num = 0;
+	while(fgets(line, PATH_MAX, fp)){
+		++line_num;
+		line[strlen(line)-1] = 0;
+
+		if(strstr(line, "STATUS") != NULL){
+			strncpy(status, convert_cloudsync_status(line), 16);
+		}
+		else if(strstr(line, "MOUNT_PATH") != NULL){
+			memset(buf, 0, PATH_MAX);
+			substr(dest, line, 11, PATH_MAX);
+			char_to_ascii(buf, dest);
+			strcpy(mounted_path, buf);
+		}
+		else if(strstr(line, "FILENAME") != NULL){
+			substr(dest, line, 9, PATH_MAX);
+			strcpy(target_obj, dest); // support Chinese
+			break;
+		}
+		else if(strstr(line, "ERR_MSG") != NULL){
+			substr(dest, line, 8, PATH_MAX);
+			strcpy(error_msg, dest);
+		}
+		else if(strstr(line, "TOTAL_SPACE") != NULL){
+			substr(dest, line, 12, PATH_MAX);
+			strcpy(full_capa, dest);
+		}
+		else if(strstr(line, "USED_SPACE") != NULL){
+			substr(dest, line, 11, PATH_MAX);
+			strcpy(used_capa, dest);
+		}
+		else if(strstr(line, "RULENUM") != NULL){
+			substr(dest, line, 8, PATH_MAX);
+			strcpy(rule_num, dest);
+		}
+		
+		memset(line, 0, PATH_MAX);
+	}
+	fclose(fp);
+
+	if(!line_num){
+		websWrite(wp, "cloud_dropbox_status=\"ERROR\";\n");
+		websWrite(wp, "cloud_dropbox_obj=\"\";\n");
+		websWrite(wp, "cloud_dropbox_msg=\"\";\n");
+		websWrite(wp, "cloud_dropbox_fullcapa=\"\";\n");
+		websWrite(wp, "cloud_dropbox_usedcapa=\"\";\n");
+		websWrite(wp, "cloud_dropbox_rule_num=\"\";\n");
+	}
+	else{
+		websWrite(wp, "cloud_dropbox_status=\"%s\";\n", status);
+		websWrite(wp, "cloud_dropbox_obj=\"%s\";\n", target_obj);
+		websWrite(wp, "cloud_dropbox_msg=\"%s\";\n", error_msg);
+		websWrite(wp, "cloud_dropbox_fullcapa=\"%s\";\n", full_capa);
+		websWrite(wp, "cloud_dropbox_usedcapa=\"%s\";\n", used_capa);
+		websWrite(wp, "cloud_dropbox_rule_num=\"%s\";\n", rule_num);
+	}
+
+	return 0;
+}
+
+int ej_UI_cloud_ftpclient_status(int eid, webs_t wp, int argc, char **argv){
+	FILE *fp = fopen("/tmp/smartsync/.logs/ftpclient", "r");
+	char line[PATH_MAX], buf[PATH_MAX], dest[PATH_MAX];
+	int line_num;
+	char status[16], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX], full_capa[PATH_MAX], used_capa[PATH_MAX], rule_num[PATH_MAX];
+
+	if(fp == NULL){
+		websWrite(wp, "cloud_ftpclient_status=\"ERROR\";\n");
+		websWrite(wp, "cloud_ftpclient_obj=\"\";\n");
+		websWrite(wp, "cloud_ftpclient_msg=\"\";\n");
+		websWrite(wp, "cloud_ftpclient_fullcapa=\"\";\n");
+		websWrite(wp, "cloud_ftpclient_usedcapa=\"\";\n");
+		websWrite(wp, "cloud_ftpclient_rule_num=\"\";\n");
+		return 0;
+	}
+
+	memset(status, 0, 16);
+	memset(mounted_path, 0, PATH_MAX);
+	memset(target_obj, 0, PATH_MAX);
+	memset(error_msg, 0, PATH_MAX);
+	memset(full_capa, 0, PATH_MAX);
+	memset(used_capa, 0, PATH_MAX);
+	memset(rule_num, 0, PATH_MAX);
+
+	memset(line, 0, PATH_MAX);
+	line_num = 0;
+	while(fgets(line, PATH_MAX, fp)){
+		++line_num;
+		line[strlen(line)-1] = 0;
+
+		if(strstr(line, "STATUS") != NULL){
+			strncpy(status, convert_cloudsync_status(line), 16);
+		}
+		else if(strstr(line, "MOUNT_PATH") != NULL){
+			memset(buf, 0, PATH_MAX);
+			substr(dest, line, 11, PATH_MAX);
+			char_to_ascii(buf, dest);
+			strcpy(mounted_path, buf);
+		}
+		else if(strstr(line, "FILENAME") != NULL){
+			substr(dest, line, 9, PATH_MAX);
+			strcpy(target_obj, dest); // support Chinese
+			break;
+		}
+		else if(strstr(line, "ERR_MSG") != NULL){
+			substr(dest, line, 8, PATH_MAX);
+			strcpy(error_msg, dest);
+		}
+		else if(strstr(line, "TOTAL_SPACE") != NULL){
+			substr(dest, line, 12, PATH_MAX);
+			strcpy(full_capa, dest);
+		}
+		else if(strstr(line, "USED_SPACE") != NULL){
+			substr(dest, line, 11, PATH_MAX);
+			strcpy(used_capa, dest);
+		}
+		else if(strstr(line, "RULENUM") != NULL){
+			substr(dest, line, 8, PATH_MAX);
+			strcpy(rule_num, dest);
+		}
+		
+		memset(line, 0, PATH_MAX);
+	}
+	fclose(fp);
+
+	if(!line_num){
+		websWrite(wp, "cloud_ftpclient_status=\"ERROR\";\n");
+		websWrite(wp, "cloud_ftpclient_obj=\"\";\n");
+		websWrite(wp, "cloud_ftpclient_msg=\"\";\n");
+		websWrite(wp, "cloud_ftpclient_fullcapa=\"\";\n");
+		websWrite(wp, "cloud_ftpclient_usedcapa=\"\";\n");
+		websWrite(wp, "cloud_ftpclient_rule_num=\"\";\n");
+	}
+	else{
+		websWrite(wp, "cloud_ftpclient_status=\"%s\";\n", status);
+		websWrite(wp, "cloud_ftpclient_obj=\"%s\";\n", target_obj);
+		websWrite(wp, "cloud_ftpclient_msg=\"%s\";\n", error_msg);
+		websWrite(wp, "cloud_ftpclient_fullcapa=\"%s\";\n", full_capa);
+		websWrite(wp, "cloud_ftpclient_usedcapa=\"%s\";\n", used_capa);
+		websWrite(wp, "cloud_ftpclient_rule_num=\"%s\";\n", rule_num);
+	}
+
+	return 0;
+}
+
+int ej_UI_cloud_sambaclient_status(int eid, webs_t wp, int argc, char **argv){
+	FILE *fp = fopen("/tmp/smartsync/.logs/sambaclient", "r");
+	char line[PATH_MAX], buf[PATH_MAX], dest[PATH_MAX];
+	int line_num;
+	char status[16], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX], full_capa[PATH_MAX], used_capa[PATH_MAX], rule_num[PATH_MAX];
+
+	if(fp == NULL){
+		websWrite(wp, "cloud_sambaclient_status=\"ERROR\";\n");
+		websWrite(wp, "cloud_sambaclient_obj=\"\";\n");
+		websWrite(wp, "cloud_sambaclient_msg=\"\";\n");
+		websWrite(wp, "cloud_sambaclient_fullcapa=\"\";\n");
+		websWrite(wp, "cloud_sambaclient_usedcapa=\"\";\n");
+		websWrite(wp, "cloud_sambaclient_rule_num=\"\";\n");
+		return 0;
+	}
+
+	memset(status, 0, 16);
+	memset(mounted_path, 0, PATH_MAX);
+	memset(target_obj, 0, PATH_MAX);
+	memset(error_msg, 0, PATH_MAX);
+	memset(full_capa, 0, PATH_MAX);
+	memset(used_capa, 0, PATH_MAX);
+	memset(rule_num, 0, PATH_MAX);
+
+	memset(line, 0, PATH_MAX);
+	line_num = 0;
+	while(fgets(line, PATH_MAX, fp)){
+		++line_num;
+		line[strlen(line)-1] = 0;
+
+		if(strstr(line, "STATUS") != NULL){
+			strncpy(status, convert_cloudsync_status(line), 16);
+		}
+		else if(strstr(line, "MOUNT_PATH") != NULL){
+			memset(buf, 0, PATH_MAX);
+			substr(dest, line, 11, PATH_MAX);
+			char_to_ascii(buf, dest);
+			strcpy(mounted_path, buf);
+		}
+		else if(strstr(line, "FILENAME") != NULL){
+			substr(dest, line, 9, PATH_MAX);
+			strcpy(target_obj, dest); // support Chinese
+			break;
+		}
+		else if(strstr(line, "ERR_MSG") != NULL){
+			substr(dest, line, 8, PATH_MAX);
+			strcpy(error_msg, dest);
+		}
+		else if(strstr(line, "TOTAL_SPACE") != NULL){
+			substr(dest, line, 12, PATH_MAX);
+			strcpy(full_capa, dest);
+		}
+		else if(strstr(line, "USED_SPACE") != NULL){
+			substr(dest, line, 11, PATH_MAX);
+			strcpy(used_capa, dest);
+		}
+		else if(strstr(line, "RULENUM") != NULL){
+			substr(dest, line, 8, PATH_MAX);
+			strcpy(rule_num, dest);
+		}
+		
+		memset(line, 0, PATH_MAX);
+	}
+	fclose(fp);
+
+	if(!line_num){
+		websWrite(wp, "cloud_sambaclient_status=\"ERROR\";\n");
+		websWrite(wp, "cloud_sambaclient_obj=\"\";\n");
+		websWrite(wp, "cloud_sambaclient_msg=\"\";\n");
+		websWrite(wp, "cloud_sambaclient_fullcapa=\"\";\n");
+		websWrite(wp, "cloud_sambaclient_usedcapa=\"\";\n");
+		websWrite(wp, "cloud_sambaclient_rule_num=\"\";\n");
+	}
+	else{
+		websWrite(wp, "cloud_sambaclient_status=\"%s\";\n", status);
+		websWrite(wp, "cloud_sambaclient_obj=\"%s\";\n", target_obj);
+		websWrite(wp, "cloud_sambaclient_msg=\"%s\";\n", error_msg);
+		websWrite(wp, "cloud_sambaclient_fullcapa=\"%s\";\n", full_capa);
+		websWrite(wp, "cloud_sambaclient_usedcapa=\"%s\";\n", used_capa);
+		websWrite(wp, "cloud_sambaclient_rule_num=\"%s\";\n", rule_num);
+	}
+
+	return 0;
+}
+
 int ej_UI_rs_status(int eid, webs_t wp, int argc, char **argv){
 	FILE *fp = fopen("/tmp/Cloud/log/WebDAV", "r");
 	char line[PATH_MAX], buf[PATH_MAX], dest[PATH_MAX];
@@ -9563,6 +9967,9 @@ struct ej_handler ej_handlers[] = {
 //#ifdef RTCONFIG_CLOUDSYNC
 	{ "cloud_status", ej_cloud_status},
 	{ "UI_cloud_status", ej_UI_cloud_status},
+	{ "UI_cloud_dropbox_status", ej_UI_cloud_dropbox_status},
+	{ "UI_cloud_ftpclient_status", ej_UI_cloud_ftpclient_status},
+	{ "UI_cloud_sambaclient_status", ej_UI_cloud_sambaclient_status},
 	{ "UI_rs_status", ej_UI_rs_status},
 	{ "getWebdavInfo", ej_webdavInfo},
 //#endif

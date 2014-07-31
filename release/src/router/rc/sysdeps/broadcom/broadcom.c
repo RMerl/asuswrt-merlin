@@ -176,7 +176,6 @@ setMAC_2G(const char *mac)
 
 		case MODEL_DSLAC68U:
 		case MODEL_RTAC68U:
-		case MODEL_RTAC3200:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
 		case MODEL_RTN18U:
@@ -187,6 +186,16 @@ setMAC_2G(const char *mac)
 			eval("nvram", "set", cmd_l );
 			puts(nvram_safe_get("et0macaddr"));
 			break;
+
+		case MODEL_RTAC3200:
+			memset(cmd_l, 0, 64);
+			sprintf(cmd_l, "asuscfeet0macaddr=%s", mac);
+			eval("nvram", "set", cmd_l );
+			sprintf(cmd_l, "asuscfe1:macaddr=%s", mac);
+			eval("nvram", "set", cmd_l );
+			puts(nvram_safe_get("et0macaddr"));
+			break;
+
 		case MODEL_RTAC87U:
 			memset(cmd_l, 0, 64);
 			sprintf(cmd_l, "asuscfeet1macaddr=%s", mac);
@@ -234,7 +243,6 @@ setMAC_5G(const char *mac)
 
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
-		case MODEL_RTAC3200:
 		case MODEL_RTAC68U:
 		case MODEL_DSLAC68U:
 		{
@@ -244,6 +252,13 @@ setMAC_5G(const char *mac)
 			puts(nvram_safe_get("1:macaddr"));
 			break;
 		}
+
+		case MODEL_RTAC3200:
+			memset(cmd_l, 0, 64);
+			sprintf(cmd_l, "asuscfe0:macaddr=%s", mac);
+			eval("nvram", "set", cmd_l );
+			puts(nvram_safe_get("0:macaddr"));
+			break;
 	}
 	return 1;
 }
@@ -291,7 +306,6 @@ setCountryCode_2G(const char *cc)
 	switch(model) {
 		case MODEL_DSLAC68U:
 		case MODEL_RTAC87U:
-		case MODEL_RTAC3200:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
@@ -299,6 +313,11 @@ setCountryCode_2G(const char *cc)
 			sprintf(cmd, "asuscfe0:ccode=%s", cc);
 			eval("nvram", "set", cmd );
 			puts(nvram_safe_get("0:ccode"));
+			break;
+		case MODEL_RTAC3200:
+			sprintf(cmd, "asuscfe1:ccode=%s", cc);
+			eval("nvram", "set", cmd );
+			puts(nvram_safe_get("1:ccode"));
 			break;
 		case MODEL_RTAC53U:
 			sprintf(cmd, "asuscfesb/1/ccode=%s", cc);
@@ -329,16 +348,22 @@ setCountryCode_5G(const char *cc)
 
 	switch(model) {
 		case MODEL_DSLAC68U:
-		case MODEL_RTAC3200:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
 			sprintf(cmd, "asuscfe1:ccode=%s", cc);
 			eval("nvram", "set", cmd );
-			sprintf(cmd, "asuscfe2:ccode=%s", cc);
-			eval("nvram", "set", cmd );
 			puts(nvram_safe_get("1:ccode"));
 			break;
+
+		case MODEL_RTAC3200:
+			sprintf(cmd, "asuscfe0:ccode=%s", cc);
+			eval("nvram", "set", cmd );
+			sprintf(cmd, "asuscfe2:ccode=%s", cc);
+			eval("nvram", "set", cmd );
+			puts(nvram_safe_get("0:ccode"));
+			break;
+
 		case MODEL_RTAC53U:
 			sprintf(cmd, "asuscfe0:ccode=%s", cc);
 			eval("nvram", "set", cmd );
@@ -402,7 +427,6 @@ setRegrev_2G(const char *regrev)
 
 		case MODEL_DSLAC68U:
 		case MODEL_RTAC87U:
-		case MODEL_RTAC3200:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
@@ -411,6 +435,13 @@ setRegrev_2G(const char *regrev)
 			sprintf(cmd, "asuscfe0:regrev=%s", regrev);
 			eval("nvram", "set", cmd );
 			puts(nvram_safe_get("0:regrev"));
+			break;
+
+		case MODEL_RTAC3200:
+			memset(cmd, 0, 32);
+			sprintf(cmd, "asuscfe1:regrev=%s", regrev);
+			eval("nvram", "set", cmd );
+			puts(nvram_safe_get("1:regrev"));
 			break;
 	}
 	return 1;
@@ -449,16 +480,22 @@ setRegrev_5G(const char *regrev)
 		}
 
 		case MODEL_DSLAC68U:
-		case MODEL_RTAC3200:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
 			memset(cmd, 0, 32);
 			sprintf(cmd, "asuscfe1:regrev=%s", regrev);
 			eval("nvram", "set", cmd );
+			puts(nvram_safe_get("1:regrev"));
+			break;
+
+		case MODEL_RTAC3200:
+			memset(cmd, 0, 32);
+			sprintf(cmd, "asuscfe0:regrev=%s", regrev);
+			eval("nvram", "set", cmd );
 			sprintf(cmd, "asuscfe2:regrev=%s", regrev);
 			eval("nvram", "set", cmd );
-			puts(nvram_safe_get("1:regrev"));
+			puts(nvram_safe_get("0:regrev"));
 			break;
 	}
 	return 1;
@@ -1621,6 +1658,7 @@ getMAC_5G(void)
 	model = get_model();
 
 	switch(model) {
+		case MODEL_RTAC3200:
 		case MODEL_RTN53:
 		case MODEL_RTAC53U:
 		{
@@ -1637,7 +1675,6 @@ getMAC_5G(void)
 
 		case MODEL_DSLAC68U:
 		case MODEL_RTAC68U:
-		case MODEL_RTAC3200:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
 			puts(nvram_safe_get("1:macaddr"));
@@ -1712,6 +1749,9 @@ getCountryCode_2G(void)
 		case MODEL_RTN18U:
 			puts(nvram_safe_get("0:ccode"));
 			break;
+		case MODEL_RTAC3200:
+			puts(nvram_safe_get("1:ccode"));
+			break;
 		case MODEL_RTAC53U:
 			puts(nvram_safe_get("sb/1/ccode"));
 			break;
@@ -1737,6 +1777,7 @@ getCountryCode_5G(void)
 		case MODEL_RTAC56U:
 			puts(nvram_safe_get("1:ccode"));
 			break;
+		case MODEL_RTAC3200:
 		case MODEL_RTAC53U:
 			puts(nvram_safe_get("0:ccode"));
 			break;
@@ -1788,11 +1829,14 @@ getRegrev_2G(void)
 		case MODEL_DSLAC68U:
 		case MODEL_RTAC87U:
 		case MODEL_RTAC68U:
-		case MODEL_RTAC3200:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
 		case MODEL_RTN18U:
 			puts(nvram_safe_get("0:regrev"));
+			break;
+
+		case MODEL_RTAC3200:
+			puts(nvram_safe_get("1:regrev"));
 			break;
 	}
 	return 0;
@@ -1807,6 +1851,7 @@ getRegrev_5G(void)
 	model = get_model();
 
 	switch(model) {
+		case MODEL_RTAC3200:
 		case MODEL_RTN53:
 		case MODEL_RTAC53U:
 		{
@@ -1823,7 +1868,6 @@ getRegrev_5G(void)
 
 		case MODEL_DSLAC68U:
 		case MODEL_RTAC68U:
-		case MODEL_RTAC3200:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
 			puts(nvram_safe_get("1:regrev"));
@@ -1951,13 +1995,28 @@ ERROR:
 
 int Get_ChannelList_2G(void)
 {
+#ifndef RTAC3200
 	return Get_channel_list(0);
+#else
+	return Get_channel_list(1);
+#endif
 }
 
 int Get_ChannelList_5G(void)
 {
+#ifndef RTAC3200
 	return Get_channel_list(1);
+#else
+	return Get_channel_list(0);
+#endif
 }
+
+#ifdef RTAC3200
+int Get_ChannelList_5G_2(void)
+{
+	return Get_channel_list(2);
+}
+#endif
 
 static const unsigned char WPA_OUT_TYPE[] = { 0x00, 0x50, 0xf2, 1 };
 
@@ -3150,22 +3209,29 @@ reset_countrycode_2g(void)
 		case MODEL_DSLAC68U:
 		case MODEL_RTAC87U:
 		case MODEL_RTAC68U:
-		case MODEL_RTAC3200:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
 		case MODEL_RTN18U:
 			strcpy(country_code_str, "0:ccode");
 			break;
+
+		case MODEL_RTAC3200:
+			strcpy(country_code_str, "1:ccode");
+			break;
+
 		case MODEL_RTAC53U:
 			strcpy(country_code_str, "sb/1/ccode");
 			break;
+
 		default:
 			strcpy(country_code_str, "regulation_domain");
 			break;
 	}
-
+#ifndef RTAC3200
 	doSystem("nvram set wl0_country_code=`cat /dev/mtd0 | grep %s | cut -d \"=\" -f 2`", country_code_str);
-
+#else
+	doSystem("nvram set wl1_country_code=`cat /dev/mtd0 | grep %s | cut -d \"=\" -f 2`", country_code_str);
+#endif
 	return 0;
 }
 
@@ -3177,24 +3243,26 @@ reset_countrycode_5g(void)
 	switch(get_model()) {
 		case MODEL_DSLAC68U:
 		case MODEL_RTAC68U:
-		case MODEL_RTAC3200:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
 			strcpy(country_code_str, "1:ccode");
 			break;
+
+		case MODEL_RTAC3200:
 		case MODEL_RTAC53U:
 			strcpy(country_code_str, "0:ccode");
 			break;
+
 		default:
 			strcpy(country_code_str, "regulation_domain_5G");
 			break;
 	}
-
+#ifndef RTAC3200
 	doSystem("nvram set wl1_country_code=`cat /dev/mtd0 | grep %s | cut -d \"=\" -f 2`", country_code_str);
-#ifdef RTAC3200
-	nvram_set("wl2_country_code", nvram_safe_get("wl1_country_code"));
+#else
+	doSystem("nvram set wl0_country_code=`cat /dev/mtd0 | grep %s | cut -d \"=\" -f 2`", country_code_str);
+	nvram_set("wl2_country_code", nvram_safe_get("wl0_country_code"));
 #endif
-
 	return 0;
 }
 
@@ -3221,31 +3289,32 @@ reset_countryrev_2g(void)
 		case MODEL_RTN10D1:
 		case MODEL_RTN10PV2:
 		case MODEL_RTAC53U:
-		{
 			strcpy(country_rev_str, "sb/1/regrev");
 			break;
-		}
 
 		case MODEL_RTN66U:
 		case MODEL_RTAC66U:
-		{
 			strcpy(country_rev_str, "pci/1/1/regrev");
 			break;
-		}
 
 		case MODEL_DSLAC68U:
 		case MODEL_RTAC87U:
 		case MODEL_RTAC68U:
-		case MODEL_RTAC3200:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
 		case MODEL_RTN18U:
 			strcpy(country_rev_str, "0:regrev");
 			break;
+
+		case MODEL_RTAC3200:
+			strcpy(country_rev_str, "1:regrev");
+			break;
 	}
-
+#ifndef RTAC3200
 	doSystem("nvram set wl0_country_rev=`cat /dev/mtd0 | grep %s | cut -d \"=\" -f 2`", country_rev_str);
-
+#else
+	doSystem("nvram set wl1_country_rev=`cat /dev/mtd0 | grep %s | cut -d \"=\" -f 2`", country_rev_str);
+#endif
 	return 0;
 }
 
@@ -3255,33 +3324,30 @@ reset_countryrev_5g(void)
 	char country_rev_str[32];
 
 	switch(get_model()) {
+		case MODEL_RTAC3200:
 		case MODEL_RTN53:
 		case MODEL_RTAC53U:
-		{
 			strcpy(country_rev_str, "0:regrev");
 			break;
-		}
 
 		case MODEL_RTN66U:
 		case MODEL_RTAC66U:
-		{
 			strcpy(country_rev_str, "pci/2/1/regrev");
 			break;
-		}
 
 		case MODEL_DSLAC68U:
 		case MODEL_RTAC68U:
-		case MODEL_RTAC3200:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
 		case MODEL_RTAC87U:
 			strcpy(country_rev_str, "1:regrev");
 			break;
 	}
-
+#ifndef RTAC3200
 	doSystem("nvram set wl1_country_rev=`cat /dev/mtd0 | grep %s | cut -d \"=\" -f 2`", country_rev_str);
-#ifdef RTAC3200
-	nvram_set("wl2_country_rev", nvram_safe_get("wl1_country_rev"));
+#else
+	doSystem("nvram set wl0_country_rev=`cat /dev/mtd0 | grep %s | cut -d \"=\" -f 2`", country_rev_str);
+	nvram_set("wl2_country_rev", nvram_safe_get("wl0_country_rev"));
 #endif
 
 	return 0;

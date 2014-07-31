@@ -136,7 +136,7 @@ function initial(){
 	}
 	else{
 		var unit = 0;
-		if (wanlink_type() == "dhcp" || wanlink_xtype() == "dhcp") {
+		if ((wanlink_type() == "dhcp" || wanlink_xtype() == "dhcp") && wans_dualwan.split(" ")[0]!="usb") {
 		$('primary_lease_ctrl').style.display = "";
 		$('primary_expires_ctrl').style.display = "";
 		}

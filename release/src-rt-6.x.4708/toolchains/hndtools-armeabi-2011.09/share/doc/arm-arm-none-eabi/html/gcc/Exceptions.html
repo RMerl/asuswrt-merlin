@@ -1,0 +1,132 @@
+<html lang="en">
+<head>
+<title>Exceptions - Using the GNU Compiler Collection (GCC)</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Using the GNU Compiler Collection (GCC)">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Objective_002dC.html#Objective_002dC" title="Objective-C">
+<link rel="prev" href="compatibility_005falias.html#compatibility_005falias" title="compatibility_alias">
+<link rel="next" href="Synchronization.html#Synchronization" title="Synchronization">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997,
+1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
+2010 Free Software Foundation, Inc.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being ``Funding Free Software'', the Front-Cover
+Texts being (a) (see below), and with the Back-Cover Texts being (b)
+(see below).  A copy of the license is included in the section entitled
+``GNU Free Documentation License''.
+
+(a) The FSF's Front-Cover Text is:
+
+     A GNU Manual
+
+(b) The FSF's Back-Cover Text is:
+
+     You have freedom to copy and modify this GNU Manual, like GNU
+     software.  Copies published by the Free Software Foundation raise
+     funds for GNU development.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+<link rel="stylesheet" type="text/css" href="../cs.css">
+</head>
+<body>
+<div class="node">
+<a name="Exceptions"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Synchronization.html#Synchronization">Synchronization</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="compatibility_005falias.html#compatibility_005falias">compatibility_alias</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Objective_002dC.html#Objective_002dC">Objective-C</a>
+<hr>
+</div>
+
+<h3 class="section">8.7 Exceptions</h3>
+
+<p>GNU Objective-C provides exception support built into the language, as
+in the following example:
+
+<pre class="smallexample">       @try {
+         ...
+            @throw expr;
+         ...
+       }
+       @catch (AnObjCClass *exc) {
+         ...
+           @throw expr;
+         ...
+           @throw;
+         ...
+       }
+       @catch (AnotherClass *exc) {
+         ...
+       }
+       @catch (id allOthers) {
+         ...
+       }
+       @finally {
+         ...
+           @throw expr;
+         ...
+       }
+</pre>
+ <p>The <code>@throw</code> statement may appear anywhere in an Objective-C or
+Objective-C++ program; when used inside of a <code>@catch</code> block, the
+<code>@throw</code> may appear without an argument (as shown above), in
+which case the object caught by the <code>@catch</code> will be rethrown.
+
+ <p>Note that only (pointers to) Objective-C objects may be thrown and
+caught using this scheme.  When an object is thrown, it will be caught
+by the nearest <code>@catch</code> clause capable of handling objects of
+that type, analogously to how <code>catch</code> blocks work in C++ and
+Java.  A <code>@catch(id ...)</code> clause (as shown above) may also
+be provided to catch any and all Objective-C exceptions not caught by
+previous <code>@catch</code> clauses (if any).
+
+ <p>The <code>@finally</code> clause, if present, will be executed upon exit
+from the immediately preceding <code>@try ... @catch</code> section. 
+This will happen regardless of whether any exceptions are thrown,
+caught or rethrown inside the <code>@try ... @catch</code> section,
+analogously to the behavior of the <code>finally</code> clause in Java.
+
+ <p>There are several caveats to using the new exception mechanism:
+
+     <ul>
+<li>The <samp><span class="option">-fobjc-exceptions</span></samp> command line option must be used when
+compiling Objective-C files that use exceptions.
+
+     <li>With the GNU runtime, exceptions are always implemented as &ldquo;native&rdquo;
+exceptions and it is recommended that the <samp><span class="option">-fexceptions</span></samp> and
+<samp><span class="option">-shared-libgcc</span></samp> options are used when linking.
+
+     <li>With the NeXT runtime, although currently designed to be binary
+compatible with <code>NS_HANDLER</code>-style idioms provided by the
+<code>NSException</code> class, the new exceptions can only be used on Mac
+OS X 10.3 (Panther) and later systems, due to additional functionality
+needed in the NeXT Objective-C runtime.
+
+     <li>As mentioned above, the new exceptions do not support handling
+types other than Objective-C objects.   Furthermore, when used from
+Objective-C++, the Objective-C exception model does not interoperate with C++
+exceptions at this time.  This means you cannot <code>@throw</code> an exception
+from Objective-C and <code>catch</code> it in C++, or vice versa
+(i.e., <code>throw ... @catch</code>). 
+</ul>
+
+<!-- ========================================================================= -->
+ </body></html>
+

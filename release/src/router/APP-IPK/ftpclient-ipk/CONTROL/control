@@ -1,0 +1,14 @@
+Package: ftpclient
+Architecture: mipsel
+Priority: optional
+Section: net
+Version: 1.0.0.1.0.g4626812
+OptionalUtility:
+Maintainer: ASUS
+Source: http://nw-dlcdnet.asus.com/asusware/mipsel/stable
+URL: http://www.asusnetwork.net/cloud_sync.asp
+Description: Cloud client
+Depends: inotify,libcurl,openssl,libxml2,zlib,libuclibc++
+Suggests: 
+Conflicts: 
+Enabled: yes

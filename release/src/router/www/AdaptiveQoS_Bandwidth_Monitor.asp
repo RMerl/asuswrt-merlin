@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <html xmlns:v>
 <head>
-<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE9"/>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
@@ -1031,7 +1031,7 @@ function cancel(){
 								<table width="100%">
 									<tr>
 										<td class="formfonttitle" align="left">								
-											<div>Adaptive QoS - Bandwidth Monitor</div>
+											<div>Adaptive QoS - WAN/LAN Bandwidth Monitor</div>
 										</td>
 										<td>
 											<div style="margin-right:20px;">

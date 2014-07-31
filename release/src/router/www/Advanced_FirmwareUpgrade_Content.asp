@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <html xmlns:v>
 <head>
-<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7"/>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
@@ -116,16 +116,16 @@ function detect_update(){
 	
 	if(sw_mode != "1" || (link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2")){
 		//setCookie("after_check", 1, 365);
-  	document.start_update.action_mode.value="apply";
-  	document.start_update.action_script.value="start_webs_update";  	
-  	$('update_states').innerHTML="<#check_proceeding#>";
-  	$('update_scan').style.display="";
+		document.start_update.action_mode.value="apply";
+		document.start_update.action_script.value="start_webs_update";  	
+		$('update_states').innerHTML="<#check_proceeding#>";
+		$('update_scan').style.display="";
 		document.start_update.submit();				
 	}else{
 		$('update_scan').style.display="none";
-    $('update_states').innerHTML="<#connect_failed#>";
-    return false;	
-	}	
+		$('update_states').innerHTML="<#connect_failed#>";
+		return false;
+	}
 }
 
 function getCookie(c_name)

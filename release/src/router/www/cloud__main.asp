@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <html xmlns:v>
 <head>
-<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7"/>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
@@ -67,7 +67,7 @@ function initial(){
 					<tbody>
 					<tr>
 						<td>
-							<div class="tabclick"><span>AiCloud</span></div>
+							<div class="tabclick"><span>AiCloud 2.0</span></div>
 						</td>
 					</tr>
 					</tbody>
@@ -82,7 +82,7 @@ function initial(){
 							<tr>
 							  <td bgcolor="#4D595D" valign="top">
 									<div>&nbsp;</div>
-									<div class="formfonttitle">AiCloud</div>
+									<div class="formfonttitle">AiCloud 2.0</div>
 									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 
 									<table width="100%" height="auto" style="border-collapse:collapse;">
@@ -95,7 +95,7 @@ function initial(){
 																<img src="/images/cloudsync/facebookIcon.png">
 															</td>
 															<td>
-																<div style="margin-left:20px;">AiCloud coming soon! Follow us on Facebook for the latest news and update information.</div>
+																<div style="margin-left:20px;">AiCloud 2.0 coming soon! Follow us on Facebook for the latest news and update information.</div>
 															</td>
 														</tr>
 													</table>

@@ -1,0 +1,120 @@
+<html lang="en">
+<head>
+<title>MicroBlaze Options - Using the GNU Compiler Collection (GCC)</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Using the GNU Compiler Collection (GCC)">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Submodel-Options.html#Submodel-Options" title="Submodel Options">
+<link rel="prev" href="MeP-Options.html#MeP-Options" title="MeP Options">
+<link rel="next" href="MIPS-Options.html#MIPS-Options" title="MIPS Options">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997,
+1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
+2010 Free Software Foundation, Inc.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being ``Funding Free Software'', the Front-Cover
+Texts being (a) (see below), and with the Back-Cover Texts being (b)
+(see below).  A copy of the license is included in the section entitled
+``GNU Free Documentation License''.
+
+(a) The FSF's Front-Cover Text is:
+
+     A GNU Manual
+
+(b) The FSF's Back-Cover Text is:
+
+     You have freedom to copy and modify this GNU Manual, like GNU
+     software.  Copies published by the Free Software Foundation raise
+     funds for GNU development.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+<link rel="stylesheet" type="text/css" href="../cs.css">
+</head>
+<body>
+<div class="node">
+<a name="MicroBlaze-Options"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="MIPS-Options.html#MIPS-Options">MIPS Options</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="MeP-Options.html#MeP-Options">MeP Options</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Submodel-Options.html#Submodel-Options">Submodel Options</a>
+<hr>
+</div>
+
+<h4 class="subsection">3.17.26 MicroBlaze Options</h4>
+
+<p><a name="index-MicroBlaze-Options-1611"></a>
+     <dl>
+<dt><code>-msoft-float</code><dd><a name="index-msoft_002dfloat-1612"></a>Use software emulation for floating point (default).
+
+     <br><dt><code>-mhard-float</code><dd><a name="index-mhard_002dfloat-1613"></a>Use hardware floating point instructions.
+
+     <br><dt><code>-mmemcpy</code><dd><a name="index-mmemcpy-1614"></a>Do not optimize block moves, use <code>memcpy</code>.
+
+     <br><dt><code>-mno-clearbss</code><dd><a name="index-mno_002dclearbss-1615"></a>This option is deprecated.  Use <samp><span class="option">-fno-zero-initialized-in-bss</span></samp> instead.
+
+     <br><dt><code>-mcpu=</code><var>cpu-type</var><dd><a name="index-mcpu_003d-1616"></a>Use features of and schedule code for given CPU. 
+Supported values are in the format &lsquo;<samp><span class="samp">v</span><var>X</var><span class="samp">.</span><var>YY</var><span class="samp">.</span><var>Z</var></samp>&rsquo;,
+where <var>X</var> is a major version, <var>YY</var> is the minor version, and
+<var>Z</var> is compatibility code.  Example values are &lsquo;<samp><span class="samp">v3.00.a</span></samp>&rsquo;,
+&lsquo;<samp><span class="samp">v4.00.b</span></samp>&rsquo;, &lsquo;<samp><span class="samp">v5.00.a</span></samp>&rsquo;, &lsquo;<samp><span class="samp">v5.00.b</span></samp>&rsquo;, &lsquo;<samp><span class="samp">v5.00.b</span></samp>&rsquo;, &lsquo;<samp><span class="samp">v6.00.a</span></samp>&rsquo;.
+
+     <br><dt><code>-mxl-soft-mul</code><dd><a name="index-mxl_002dsoft_002dmul-1617"></a>Use software multiply emulation (default).
+
+     <br><dt><code>-mxl-soft-div</code><dd><a name="index-mxl_002dsoft_002ddiv-1618"></a>Use software emulation for divides (default).
+
+     <br><dt><code>-mxl-barrel-shift</code><dd><a name="index-mxl_002dbarrel_002dshift-1619"></a>Use the hardware barrel shifter.
+
+     <br><dt><code>-mxl-pattern-compare</code><dd><a name="index-mxl_002dpattern_002dcompare-1620"></a>Use pattern compare instructions.
+
+     <br><dt><code>-msmall-divides</code><dd><a name="index-msmall_002ddivides-1621"></a>Use table lookup optimization for small signed integer divisions.
+
+     <br><dt><code>-mxl-stack-check</code><dd><a name="index-mxl_002dstack_002dcheck-1622"></a>This option is deprecated.  Use -fstack-check instead.
+
+     <br><dt><code>-mxl-gp-opt</code><dd><a name="index-mxl_002dgp_002dopt-1623"></a>Use GP relative sdata/sbss sections.
+
+     <br><dt><code>-mxl-multiply-high</code><dd><a name="index-mxl_002dmultiply_002dhigh-1624"></a>Use multiply high instructions for high part of 32x32 multiply.
+
+     <br><dt><code>-mxl-float-convert</code><dd><a name="index-mxl_002dfloat_002dconvert-1625"></a>Use hardware floating point conversion instructions.
+
+     <br><dt><code>-mxl-float-sqrt</code><dd><a name="index-mxl_002dfloat_002dsqrt-1626"></a>Use hardware floating point square root instruction.
+
+     <br><dt><code>-mxl-mode-</code><var>app-model</var><dd>Select application model <var>app-model</var>.  Valid models are
+          <dl>
+<dt>&lsquo;<samp><span class="samp">executable</span></samp>&rsquo;<dd>normal executable (default), uses startup code <samp><span class="file">crt0.o</span></samp>.
+
+          <br><dt>&lsquo;<samp><span class="samp">xmdstub</span></samp>&rsquo;<dd>for use with Xilinx Microprocessor Debugger (XMD) based
+software intrusive debug agent called xmdstub. This uses startup file
+<samp><span class="file">crt1.o</span></samp> and sets the start address of the program to be 0x800.
+
+          <br><dt>&lsquo;<samp><span class="samp">bootstrap</span></samp>&rsquo;<dd>for applications that are loaded using a bootloader. 
+This model uses startup file <samp><span class="file">crt2.o</span></samp> which does not contain a processor
+reset vector handler. This is suitable for transferring control on a
+processor reset to the bootloader rather than the application.
+
+          <br><dt>&lsquo;<samp><span class="samp">novectors</span></samp>&rsquo;<dd>for applications that do not require any of the
+MicroBlaze vectors. This option may be useful for applications running
+within a monitoring application. This model uses <samp><span class="file">crt3.o</span></samp> as a startup file. 
+</dl>
+
+     <p>Option <samp><span class="option">-xl-mode-</span><var>app-model</var></samp> is a deprecated alias for
+<samp><span class="option">-mxl-mode-</span><var>app-model</var></samp>.
+
+ </dl>
+
+ </body></html>
+

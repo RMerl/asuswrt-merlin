@@ -20,6 +20,11 @@
 #define logmessage logmessage_normal
 #endif
 
+#ifdef RTCONFIG_DSL
+#define SYNC_LOG_FILE "/tmp/adsl/sync_status_log.txt"
+#define LOG_RECORD_FILE "/tmp/adsl/log_record.txt"
+#endif
+
 #define Y2K			946684800UL		// seconds since 1970
 
 #define ASIZE(array)	(sizeof(array) / sizeof(array[0]))

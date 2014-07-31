@@ -127,6 +127,7 @@ ifeq ($(RTCONFIG_TMOBILE), y)
 	mv $(INSTALLDIR)/www/images/tmo_modem_plug.png $(INSTALLDIR)/www/images/modem_plug.png
 	mv $(INSTALLDIR)/www/images/tmo_modem_unplug.png $(INSTALLDIR)/www/images/modem_unplug.png
 else
+	rm -rf $(INSTALLDIR)/www/MobileQIS_Login.asp
 	rm -rf $(INSTALLDIR)/www/Passpoint_hidden.asp
 	rm -rf $(INSTALLDIR)/www/Advanced_WAdvPassPoint_Content.asp
 	rm -rf $(INSTALLDIR)/www/Advanced_WPassPoint_Content.asp
@@ -293,7 +294,7 @@ ifeq ($(RTCONFIG_ODMPID),y)
 endif
 
 ifneq ($(RTCONFIG_BWDPI),y)
-	rm -rf $(INSTALLDIR)/www/AdaptiveQoS_Intelligence.asp
+	rm -rf $(INSTALLDIR)/www/AdaptiveQoS_Adaptive.asp
 	rm -rf $(INSTALLDIR)/www/AdaptiveQoS_Bandwidth_Monitor.asp
 	rm -rf $(INSTALLDIR)/www/AdaptiveQoS_WebHistory.asp
 	rm -rf $(INSTALLDIR)/www/AiProtection_HomeSecurity.asp
@@ -321,9 +322,18 @@ ifneq ($(RTCONFIG_ROG),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/indicator.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/speedmeter.png
 endif
-#else
-#	rm -rf $(INSTALLDIR)/www/Main_TrafficMonitor_daily.asp
-#	rm -rf $(INSTALLDIR)/www/Main_TrafficMonitor_last24.asp
-#	rm -rf $(INSTALLDIR)/www/Main_TrafficMonitor_realtime.asp
-#	rm -rf $(INSTALLDIR)/www/tmmenu.js
+endif
+
+ifneq ($(BUILD_NAME),RT-AC87U)
+ifneq ($(BUILD_NAME),RT-AC68U)
+ifneq ($(BUILD_NAME),RT-AC56U)
+ifneq ($(BUILD_NAME),RT-N65U)
+ifneq ($(BUILD_NAME),RT-N18U)
+ifneq ($(BUILD_NAME),DSL-AC68U)
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/USB3.png
+endif
+endif
+endif
+endif
+endif
 endif

@@ -2084,3 +2084,59 @@ getWPSEncrypType_qtn()
 	else
 		return "AES";
 }
+
+static int psta_auth = 0;
+
+int
+ej_wl_auth_psta_qtn(int eid, webs_t wp, int argc, char_t **argv)
+{
+	char *ifname = "wifi0";
+	char ssid[33], auth[33];
+	int psta_debug = 0;
+	int retval = 0, psta = 0;
+	char wlc_ssid[33];
+
+	strcpy(wlc_ssid, nvram_safe_get("wlc_ssid"));
+	memset(ssid, 0, sizeof(ssid));
+	memset(auth, 0, sizeof(auth));
+
+	if (nvram_match("psta_debug", "1"))
+		psta_debug = 1;
+
+	if (!rpc_qtn_ready()){
+		goto ERROR;
+	}
+
+	qcsapi_wifi_get_SSID(WIFINAME, ssid);
+
+	if(!strcmp(ssid, wlc_ssid))
+	{
+		if (psta_debug) dbg("connected: ssid %s\n", ssid);
+		psta = 1;
+		psta_auth = 0;
+	}
+	else
+	{
+		qcsapi_SSID_get_authentication_mode(ifname, wlc_ssid, auth);
+		if (psta_debug) dbg("get_auth : ssid=%s, auth=%s\n", wlc_ssid, auth);
+
+		if (!strcmp(auth, "PSKAuthentication") || !strcmp(auth, "EAPAuthentication"))
+		{
+			if (psta_debug) dbg("authorization failed\n");
+			psta = 2;
+			psta_auth = 1;
+		}
+		else
+		{
+			if (psta_debug) dbg("disconnected\n");
+			psta = 0;
+			psta_auth = 0;
+		}
+	}
+
+	retval += websWrite(wp, "wlc_state=%d;", psta);
+	retval += websWrite(wp, "wlc_state_auth=%d;", psta_auth);
+
+ERROR:
+	return retval;
+}

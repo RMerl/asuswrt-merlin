@@ -728,6 +728,26 @@ define RouterOptions
 			sed -i "/RTCONFIG_CLOUDSYNC/d" $(1); \
 			echo "RTCONFIG_CLOUDSYNC=y" >>$(1); \
 		fi; \
+		if [ "$(SWEBDAVCLIENT)" = "y" ]; then \
+			sed -i "/RTCONFIG_SWEBDAVCLIENT/d" $(1); \
+			echo "RTCONFIG_SWEBDAVCLIENT=y" >>$(1); \
+		fi; \
+		if [ "$(DROPBOXCLIENT)" = "y" ]; then \
+			sed -i "/RTCONFIG_DROPBOXCLIENT/d" $(1); \
+			echo "RTCONFIG_DROPBOXCLIENT=y" >>$(1); \
+		fi; \
+		if [ "$(FTPCLIENT)" = "y" ]; then \
+			sed -i "/RTCONFIG_FTPCLIENT/d" $(1); \
+			echo "RTCONFIG_FTPCLIENT=y" >>$(1); \
+		fi; \
+		if [ "$(SAMBACLIENT)" = "y" ]; then \
+			sed -i "/RTCONFIG_SAMBACLIENT/d" $(1); \
+			echo "RTCONFIG_SAMBACLIENT=y" >>$(1); \
+		fi; \
+		if [ "$(FLICKRCLIENT)" = "y" ]; then \
+			sed -i "/RTCONFIG_FLICKRCLIENT/d" $(1); \
+			echo "RTCONFIG_FLICKRCLIENT=y" >>$(1); \
+		fi; \
 		if [ "$(MODEM)" = "y" ]; then \
 			sed -i "/RTCONFIG_USB_MODEM/d" $(1); \
 			echo "RTCONFIG_USB_MODEM=y" >>$(1); \

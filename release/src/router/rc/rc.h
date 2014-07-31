@@ -916,6 +916,7 @@ extern int start_lldpd(void);
 extern int firmware_check_main(int argc, char *argv[]);
 #ifdef RTCONFIG_HTTPS
 extern int rsasign_check_main(int argc, char *argv[]);
+extern char *pwdec(const char *input);
 #endif
 extern int service_main(int argc, char *argv[]);
 #ifdef RTCONFIG_DSL

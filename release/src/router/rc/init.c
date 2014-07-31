@@ -2735,9 +2735,6 @@ int init_nvram(void)
 		nvram_set("lan_ifname", "br0");
 		nvram_set("landevs", "vlan1 wl0 wl1 wl2");
 
-#if 0
-		set_basic_ifname_vars("eth0", "vlan1", "eth1", "eth2", "usb", NULL, "vlan2", "vlan3", 0);
-#else
 #ifdef RTCONFIG_DUALWAN
 		if(get_wans_dualwan()&WANSCAP_WAN && get_wans_dualwan()&WANSCAP_LAN)
 			nvram_set("wandevs", "vlan2 vlan3");
@@ -2747,9 +2744,9 @@ int init_nvram(void)
 		set_lan_phy("vlan1");
 
 		if(!(get_wans_dualwan()&WANSCAP_2G))
-			add_lan_phy("eth1");
-		if(!(get_wans_dualwan()&WANSCAP_5G)){
 			add_lan_phy("eth2");
+		if(!(get_wans_dualwan()&WANSCAP_5G)){
+			add_lan_phy("eth1");
 			add_lan_phy("eth3");
 		}
 
@@ -2763,9 +2760,9 @@ int init_nvram(void)
 						add_wan_phy(the_wan_phy());
 				}
 				else if(get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_2G)
-					add_wan_phy("eth1");
-				else if(get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_5G){
 					add_wan_phy("eth2");
+				else if(get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_5G){
+					add_wan_phy("eth1");
 					add_wan_phy("eth3");
 				}
 				else if(get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_WAN){
@@ -2789,15 +2786,13 @@ int init_nvram(void)
 		else
 			nvram_set("wan_ifnames", "eth0 usb");
 #else
-		nvram_set("lan_ifnames", "vlan1 eth1 eth2 eth3");
+		nvram_set("lan_ifnames", "vlan1 eth2 eth1 eth3");
 		nvram_set("wan_ifnames", "eth0");
 #endif
-
 		nvram_set("wl_ifnames", "eth1 eth2 eth3");
 		nvram_set("wl0_vifnames", "wl0.1 wl0.2 wl0.3");
 		nvram_set("wl1_vifnames", "wl1.1 wl1.2 wl1.3");
 		nvram_set("wl2_vifnames", "wl2.1 wl2.2 wl2.3");
-#endif
 
 #ifdef RTCONFIG_USBRESET
 		nvram_set_int("pwr_usb_gpio", 9|GPIO_ACTIVE_LOW);
@@ -3760,6 +3755,34 @@ int init_nvram(void)
 
 #ifdef RTCONFIG_CLOUDSYNC
 	add_rc_support("cloudsync");
+	
+	char ss_support_value[1024]="\0";
+
+#ifdef RTCONFIG_CLOUDSYNC
+	strcat(ss_support_value, "asuswebstorage ");
+#endif
+
+#ifdef RTCONFIG_SWEBDAVCLIENT
+	strcat(ss_support_value, "webdav ");
+#endif
+
+#ifdef RTCONFIG_DROPBOXCLIENT
+	strcat(ss_support_value, "dropbox ");
+#endif
+
+#ifdef RTCONFIG_FTPCLIENT
+	strcat(ss_support_value, "ftp ");
+#endif
+
+#ifdef RTCONFIG_SAMBACLIENT
+	strcat(ss_support_value, "samba ");
+#endif
+
+#ifdef RTCONFIG_FLICKRCLIENT
+	strcat(ss_support_value, "flickr ");
+#endif
+
+	nvram_set("ss_support", ss_support_value);
 #endif
 
 #ifdef RTCONFIG_ISP_METER
@@ -4174,10 +4197,11 @@ fa_nvram_adjust()	/* before insmod et */
 	fa_mode_adjust();
 
 	if (FA_ON(fa_mode)) {
+#if 0
 		char wan_ifnames[128];
 		char wan_ifname[32], *next;
 		int len, ret;
-
+#endif
 		_dprintf("\nFA on.\n");
 
 		/* Set et2macaddr, et2phyaddr as same as et0macaddr, et0phyaddr */

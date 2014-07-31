@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <html xmlns:v>
 <head>
-<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7"/>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
@@ -64,7 +64,7 @@ function initial(){
 												["<#Servers_Center#>", tablink[4][1], "<#UPnPMediaServer_Help#>", "server.png", ""],
 												["<#Network_Printer_Server#>", "PrinterServer.asp", "<#Network_Printer_desc#>", "PrinterServer.png", ""],
 												["3G/4G", "Advanced_Modem_Content.asp", "<#HSDPAConfig_hsdpa_enable_hint1#>", "modem.png", ""],
-												["Time Machine", "Advanced_TimeMachine.asp", "Time Machine Support.", "TimeMachine.png", "1.0.0.1"]];
+												["Time Machine", "Advanced_TimeMachine.asp", "Enable Time Machine functionality.", "TimeMachine.png", "1.0.0.1"]];
 	
 	if(!media_support){
 			default_apps_array[1].splice(2,1,"<#MediaServer_Help#>");						
@@ -104,7 +104,7 @@ function initial(){
 
 	if(!nodm_support){
 		addOnlineHelp($("faq"), ["ASUSWRT", "download","master"]);
-		addOnlineHelp($("faq2"), ["ASUSWRT", "download","tool"]);
+		addOnlineHelp($("faq2"), ["ASUSWRT", "download","associated"]);
 	}
 }
 
@@ -418,15 +418,15 @@ function show_apps(){
 
 	var counter = 0;
 	appnum = 0;
-
+	
 	if(apps_array == "" && (appnet_support || appbase_support)){
-		apps_array = [["downloadmaster", "", "", "no", "no", "", "", "Download tools", "downloadmaster.png", "", "", ""],
+		apps_array = [["downloadmaster", "", "", "no", "no", "", "", "PC-free download manager.", "downloadmaster.png", "", "", ""],
 									["mediaserver", "", "", "no", "no", "", "", "", "mediaserver.png", "", "", ""]];
 		if(nodm_support)
 			apps_array[1][0] = "mediaserver2";
 
 		if(aicloudipk_support)
-			apps_array.push(["aicloud", "", "", "no", "no", "", "", "AiCloud utilities", "aicloud.png", "", "", ""]);
+			apps_array.push(["aicloud", "", "", "no", "no", "", "", "AiCloud 2.0 utilities", "aicloud.png", "", "", ""]);
 	}
 
 	if(!aicloudipk_support){
@@ -475,7 +475,12 @@ function show_apps(){
 	for(var i = 0; i < default_apps_array.length; i++){
 		htmlcode += '<tr><td align="center" class="app_table_radius_left" style="width:85px"><img style="margin-top:0px;" src="/images/New_ui/USBExt/'+ default_apps_array[i][3] +'" style="cursor:pointer" onclick="location.href=\''+ default_apps_array[i][1] +'\';"></td><td class="app_table_radius_right" style="width:350px;">\n';
 		htmlcode += '<div class="app_name"><a style="text-decoration: underline;" href="' + default_apps_array[i][1] + '">' + default_apps_array[i][0] + '</a></div>\n';
-		htmlcode += '<div class="app_desc">' + default_apps_array[i][2] + '</div>\n';
+		if(i ==3){
+			htmlcode += '<div class="app_desc">' + default_apps_array[i][2] + ' <a href="http://www.asus.com/event/networks_3G4G_support/" style="text-decoration:underline;">Support</a></div>\n';
+		}
+		else{
+			htmlcode += '<div class="app_desc">' + default_apps_array[i][2] + '</div>\n';
+		}
 		htmlcode += '<div style="margin-top:10px;"></div><br/><br/></td></tr>\n';
 	}
 
@@ -528,7 +533,7 @@ function show_apps(){
 		else if(apps_array[i][0] == "mediaserver" || apps_array[i][0] == "mediaserver2")
 			apps_array[i][0] = "Media Server";
 		else if(apps_array[i][0] == "aicloud")
-			apps_array[i][0] = "AiCloud";
+			apps_array[i][0] = "AiCloud 2.0";
 
 		if(apps_array[i][6] != ""){ // with hyper-link
 			htmlcode += '<div class="app_name">';
@@ -575,7 +580,7 @@ function show_apps(){
 			else
 				apps_array[i][0] = "mediaserver2";
 		}
-		else if(apps_array[i][0] == "AiCloud")
+		else if(apps_array[i][0] == "AiCloud 2.0")
 			apps_array[i][0] = "aicloud";
 
 		// apps_desc

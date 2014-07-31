@@ -266,6 +266,31 @@ config RTCONFIG_CLOUDSYNC
 	depends on RTCONFIG_USB
 	default n
 
+config RTCONFIG_SWEBDAVCLIENT
+	bool "webdavsync (webdav Client)"
+	depends on RTCONFIG_CLOUDSYNC
+	default n
+
+config RTCONFIG_DROPBOXCLIENT
+    bool "Dropboxsync (dropbox Client)"
+	depends on RTCONFIG_CLOUDSYNC
+	default n
+
+config RTCONFIG_FTPCLIENT
+    bool "FTPSync (ftp Client)"
+	depends on RTCONFIG_CLOUDSYNC
+	default n
+
+config RTCONFIG_SAMBACLIENT
+    bool "SambaSync (samba Client)"
+	depends on RTCONFIG_CLOUDSYNC
+	default n
+
+config RTCONFIG_FLICKRCLIENT
+    bool "FlickrSync (flickr Client)"
+	depends on RTCONFIG_CLOUDSYNC
+	default n
+
 config RTCONFIG_FTP
 	bool "FTP Server"
 	depends on RTCONFIG_USB

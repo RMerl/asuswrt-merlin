@@ -1,0 +1,138 @@
+<html lang="en">
+<head>
+<title>Expression Section - Untitled</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Untitled">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Expressions.html#Expressions" title="Expressions">
+<link rel="prev" href="Evaluation.html#Evaluation" title="Evaluation">
+<link rel="next" href="Builtin-Functions.html#Builtin-Functions" title="Builtin Functions">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This file documents the GNU linker LD
+(Sourcery CodeBench Lite 2011.09-69)
+version 2.21.53.
+
+Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
+2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3
+or any later version published by the Free Software Foundation;
+with no Invariant Sections, with no Front-Cover Texts, and with no
+Back-Cover Texts.  A copy of the license is included in the
+section entitled ``GNU Free Documentation License''.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+<link rel="stylesheet" type="text/css" href="../cs.css">
+</head>
+<body>
+<div class="node">
+<a name="Expression-Section"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Builtin-Functions.html#Builtin-Functions">Builtin Functions</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Evaluation.html#Evaluation">Evaluation</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Expressions.html#Expressions">Expressions</a>
+<hr>
+</div>
+
+<h4 class="subsection">3.10.8 The Section of an Expression</h4>
+
+<p><a name="index-expression-sections-527"></a><a name="index-absolute-expressions-528"></a><a name="index-relative-expressions-529"></a><a name="index-absolute-and-relocatable-symbols-530"></a><a name="index-relocatable-and-absolute-symbols-531"></a><a name="index-symbols_002c-relocatable-and-absolute-532"></a>Addresses and symbols may be section relative, or absolute.  A section
+relative symbol is relocatable.  If you request relocatable output
+using the &lsquo;<samp><span class="samp">-r</span></samp>&rsquo; option, a further link operation may change the
+value of a section relative symbol.  On the other hand, an absolute
+symbol will retain the same value throughout any further link
+operations.
+
+   <p>Some terms in linker expressions are addresses.  This is true of
+section relative symbols and for builtin functions that return an
+address, such as <code>ADDR</code>, <code>LOADADDR</code>, <code>ORIGIN</code> and
+<code>SEGMENT_START</code>.  Other terms are simply numbers, or are builtin
+functions that return a non-address value, such as <code>LENGTH</code>. 
+One complication is that unless you set <code>LD_FEATURE ("SANE_EXPR")</code>
+(see <a href="Miscellaneous-Commands.html#Miscellaneous-Commands">Miscellaneous Commands</a>), numbers and absolute symbols are treated
+differently depending on their location, for compatibility with older
+versions of <code>ld</code>.  Expressions appearing outside an output
+section definition treat all numbers as absolute addresses. 
+Expressions appearing inside an output section definition treat
+absolute symbols as numbers.  If <code>LD_FEATURE ("SANE_EXPR")</code> is
+given, then absolute symbols and numbers are simply treated as numbers
+everywhere.
+
+   <p>In the following simple example,
+
+<pre class="smallexample">     SECTIONS
+       {
+         . = 0x100;
+         __executable_start = 0x100;
+         .data :
+         {
+           . = 0x10;
+           __data_start = 0x10;
+           *(.data)
+         }
+         ...
+       }
+</pre>
+   <p>both <code>.</code> and <code>__executable_start</code> are set to the absolute
+address 0x100 in the first two assignments, then both <code>.</code> and
+<code>__data_start</code> are set to 0x10 relative to the <code>.data</code>
+section in the second two assignments.
+
+   <p>For expressions involving numbers, relative addresses and absolute
+addresses, ld follows these rules to evaluate terms:
+
+     <ul>
+<li>Unary operations on a relative address, and binary operations on two
+relative addresses in the same section or between one relative address
+and a number, apply the operator to the offset part of the address(es). 
+<li>Unary operations on an absolute address, and binary operations on one
+or more absolute addresses or on two relative addresses not in the
+same section, first convert any non-absolute term to an absolute
+address before applying the operator. 
+</ul>
+
+   <p>The result section of each sub-expression is as follows:
+
+     <ul>
+<li>An operation involving only numbers results in a number. 
+<li>The result of comparisons, &lsquo;<samp><span class="samp">&amp;&amp;</span></samp>&rsquo; and &lsquo;<samp><span class="samp">||</span></samp>&rsquo; is also a number. 
+<li>The result of other binary arithmetic and logical operations on two
+relative addresses in the same section or two absolute addresess
+(after above conversions) is also a number. 
+<li>The result of other operations on relative addresses or one
+relative address and a number, is a relative address in the same
+section as the relative operand(s). 
+<li>The result of other operations on absolute addresses (after above
+conversions) is an absolute address. 
+</ul>
+
+   <p>You can use the builtin function <code>ABSOLUTE</code> to force an expression
+to be absolute when it would otherwise be relative.  For example, to
+create an absolute symbol set to the address of the end of the output
+section &lsquo;<samp><span class="samp">.data</span></samp>&rsquo;:
+<pre class="smallexample">     SECTIONS
+       {
+         .data : { *(.data) _edata = ABSOLUTE(.); }
+       }
+</pre>
+   <p class="noindent">If &lsquo;<samp><span class="samp">ABSOLUTE</span></samp>&rsquo; were not used, &lsquo;<samp><span class="samp">_edata</span></samp>&rsquo; would be relative to the
+&lsquo;<samp><span class="samp">.data</span></samp>&rsquo; section.
+
+   <p>Using <code>LOADADDR</code> also forces an expression absolute, since this
+particular builtin function returns an absolute address.
+
+   </body></html>
+

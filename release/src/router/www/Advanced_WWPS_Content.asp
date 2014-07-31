@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <html xmlns:v>
 <head>
-<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7"/>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
@@ -597,7 +597,7 @@ function _change_wl_unit_status(__unit){
 										$j('#iphone_switch').animate({backgroundPosition: -37}, "slow", function() {});
 										return false;
 									}
-								 
+
 									document.form.wps_enable.value = "1";
 									enableWPS();
 								 },

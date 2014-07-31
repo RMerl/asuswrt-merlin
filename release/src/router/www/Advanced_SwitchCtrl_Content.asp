@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <html xmlns:v>
 <head>
-<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7"/>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
@@ -91,8 +91,16 @@ function applyRule(){
 		}
 	}
 	else{
-		document.form.ctf_fa_mode_close.disabled = true;
+		if(level2CTF_supprot){		// for RT-AC68U, RT-AC56U support Level 2 CTF
+			if(document.form.wan_proto.value != "dhcp" && document.form.wan_proto.value != "static"){
+				if(document.form.ctf_level.value == 2){
+					alert("Can not use Level 2 CTF if WAN type is PPPoE、PPTP or L2TP");
+					return false;
+				}		
+			}		
+		}
 
+		document.form.ctf_fa_mode_close.disabled = true;
 		if(document.form.ctf_level.value == 1){
 			document.form.ctf_disable_force.value = 0;
 			document.form.ctf_fa_mode.value = 0;
@@ -107,14 +115,8 @@ function applyRule(){
 		}
 	}
 
-	if(valid_form()){
-			showLoading();
-			document.form.submit();	
-	}
-}
-
-function valid_form(){		
-	return true;	
+	showLoading();
+	document.form.submit();	
 }
 
 </script>
@@ -156,6 +158,7 @@ function valid_form(){
 <input type="hidden" name="ctf_fa_mode_close" value="<% nvram_get("ctf_fa_mode_close"); %>">
 <input type="hidden" name="ctf_fa_mode" value="<% nvram_get("ctf_fa_mode"); %>">
 <input type="hidden" name="ctf_disable_force" value="<% nvram_get("ctf_disable_force"); %>">
+<input type="hidden" name="wan_proto" value="<% nvram_get("wan_proto"); %>" disabled>
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
   <tr>

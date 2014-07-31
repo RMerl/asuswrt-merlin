@@ -10,6 +10,16 @@ if [ -n "$CHECK_ASUSWEBSTORAGE" ]; then
 	exit 1
 fi
 
+CHECK_FTP=`ls /usr/sbin | grep ftpclient`
+if [ -n "$CHECK_FTP" ]; then
+	exit 1
+fi
+
+CHECK_DROPBOX=`ls /usr/sbin | grep dropbox_client`
+if [ -n "$CHECK_DROPBOX" ]; then
+	exit 1
+fi
+
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/opt/bin
 
 APP_UCLIBC_VERSION=0.9.28
@@ -36,6 +46,8 @@ case "$1" in
 		if [ "$1" == "restart" ]; then
 			killall -SIGTERM webdav_client &
 			killall -SIGTERM asuswebstorage &
+			killall -SIGTERM dropbox_client &
+			killall -SIGTERM ftpclient &
 			killall -SIGTERM inotify &
 		fi
 		exit 0
@@ -45,10 +57,14 @@ case "$1" in
 #		echo "restart"
 		killall -SIGTERM webdav_client &
 		killall -SIGTERM asuswebstorage &
+		killall -SIGTERM dropbox_client &
+		killall -SIGTERM ftpclient &
 		killall -SIGTERM inotify &
 		sleep 6
 		killall -9 webdav_client
 		killall -9 asuswebstorage
+		killall -9 dropbox_client
+		killall -9 ftpclient
 		killall -9 inotify
 		sleep 2
 		#echo "killall finish"
@@ -63,18 +79,6 @@ case "$1" in
 		$APPS_INSTALL_PATH/bin/inotify &
 		sleep 1
 	#fi
-
-	log_path="/tmp/smartsync/.logs"
-	log_fullname=$log_path"/asuswebstorage"
-	if [ ! -d "$log_path" ];then
-		mkdir -p $log_path
-	fi
-	if [ ! -f "$log_fullname" ];then
-		touch $log_fullname
-	fi
-	echo "STATUS:70" >$log_fullname
-	echo "TOTAL_SPACE:0" >>$log_fullname
-	echo "USED_SPACE:0"  >>$log_fullname
 
 	APP_BIN=$APPS_INSTALL_PATH/bin
 	APP_LIB=$APPS_INSTALL_PATH/lib
@@ -102,10 +106,47 @@ case "$1" in
 		#fi
 
 	#start asuswebstorage
+		log_path="/tmp/smartsync/.logs"
+		log_fullname=$log_path"/asuswebstorage"
+		if [ ! -d "$log_path" ];then
+			mkdir -p $log_path
+		fi
+		if [ ! -f "$log_fullname" ];then
+			touch $log_fullname
+		fi
+		echo "STATUS:70" >$log_fullname
+		echo "TOTAL_SPACE:0" >>$log_fullname
+		echo "USED_SPACE:0"  >>$log_fullname
+
 		#asuswebstoragenum=`ps | grep "asuswebstorage" | grep -v "$0" | grep -v "grep" | wc -l`
 		#echo "asuswebstoragenum="$asuswebstoragenum		
 		#if [ "$asuswebstoragenum" == "0" ]; then
 			$APPS_INSTALL_PATH/bin/asuswebstorage &
+		#fi
+
+	#start dropbox
+		#dropboxclientnum=`ps | grep "dropbox_client" | grep -v "$0" | grep -v "grep" | wc -l`
+		#echo "dropboxclientnum="$dropboxclientnum
+		ln -sf $APP_LIB/libcurl.so.4.2.0 $APP_LINK_LIB/libcurl.so.4
+		ln -sf $APP_LIB/libcurl.so.4.2.0 $APP_LINK_LIB/libcurl.so
+		ln -sf $APP_LIB/libcrypto.so.1.0.0 $APP_LINK_LIB/libcrypto.so.1
+		ln -sf $APP_LIB/libcrypto.so.1.0.0 $APP_LINK_LIB/libcrypto.so
+		ln -sf $APP_LIB/libssl.so.1.0.0 $APP_LINK_LIB/libssl.so.1
+		ln -sf $APP_LIB/libssl.so.1.0.0 $APP_LINK_LIB/libssl.so	
+		#if [ "$dropboxclientnum" == "0" ]; then
+			$APPS_INSTALL_PATH/bin/dropbox_client &
+		#fi
+
+	#start ftp
+		#ftpclientnum=`ps | grep "ftpclient" | grep -v "$0" | grep -v "grep" | wc -l`
+		#echo "ftpclientnum="$ftpclientnum
+		ln -sf $APP_LIB/libcurl.so.4.2.0 $APP_LINK_LIB/libcurl.so.4
+		ln -sf $APP_LIB/libcurl.so.4.2.0 $APP_LINK_LIB/libcurl.so
+		# libiconv-1.14
+		ln -sf $APP_LIB/libiconv.so.2.5.1 $APP_LINK_LIB/libiconv.so.2
+		ln -sf $APP_LIB/libiconv.so.2.5.1 $APP_LINK_LIB/libiconv.so
+		#if [ "$ftpclientnum" == "0" ]; then
+			$APPS_INSTALL_PATH/bin/ftpclient &
 		#fi
 		exit 0
 	fi
@@ -179,12 +220,35 @@ case "$1" in
 	# libcurl
 	ln -sf $APP_LIB/libcurl.so.4.2.0 $APP_LINK_LIB/libcurl.so.4
 	ln -sf $APP_LIB/libcurl.so.4.2.0 $APP_LINK_LIB/libcurl.so
+
+	# libiconv-1.14
+	ln -sf $APP_LIB/libiconv.so.2.5.1 $APP_LINK_LIB/libiconv.so.2
+	ln -sf $APP_LIB/libiconv.so.2.5.1 $APP_LINK_LIB/libiconv.so
+
+	# libuClibc++
+	ln -sf $APP_LIB/libuClibc++-0.2.3.so $APP_LINK_LIB/libuClibc++.so.0
+	ln -sf $APP_LIB/libuClibc++-0.2.3.so $APP_LINK_LIB/libuClibc++.so
+	
 	
 	#start webdav
 	#webdavclientnum=`ps | grep "webdav_client" | grep -v "$0" | grep -v "grep" | wc -l`
 	#echo "webdavclientnum="$webdavclientnum
 	#if [ "$webdavclientnum" == "0" ]; then
 		$APPS_INSTALL_PATH/bin/webdav_client &
+	#fi
+
+	#start dropbox
+	#dropboxclientnum=`ps | grep "dropbox_client" | grep -v "$0" | grep -v "grep" | wc -l`
+	#echo "dropboxclientnum="$dropboxclientnum
+	#if [ "$dropboxclientnum" == "0" ]; then
+		$APPS_INSTALL_PATH/bin/dropbox_client &
+	#fi
+
+	#start ftp
+	#ftpclientnum=`ps | grep "ftpclient" | grep -v "$0" | grep -v "grep" | wc -l`
+	#echo "ftpclientnum="$ftpclientnum
+	#if [ "$ftpclientnum" == "0" ]; then
+		$APPS_INSTALL_PATH/bin/ftpclient &
 	#fi
 
 	#start asuswebstorage
@@ -198,6 +262,8 @@ case "$1" in
   stop)
     killall -SIGTERM webdav_client &
 	killall -SIGTERM asuswebstorage &
+	killall -SIGTERM dropbox_client &
+	killall -SIGTERM ftpclient &
 	killall -SIGTERM inotify &
     ;;
   

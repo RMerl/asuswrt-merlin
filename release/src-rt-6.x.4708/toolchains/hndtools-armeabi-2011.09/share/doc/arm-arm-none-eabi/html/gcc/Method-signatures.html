@@ -1,0 +1,102 @@
+<html lang="en">
+<head>
+<title>Method signatures - Using the GNU Compiler Collection (GCC)</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Using the GNU Compiler Collection (GCC)">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Type-encoding.html#Type-encoding" title="Type encoding">
+<link rel="prev" href="_0040_0040encode.html#g_t_0040_0040encode" title="@@encode">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997,
+1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
+2010 Free Software Foundation, Inc.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being ``Funding Free Software'', the Front-Cover
+Texts being (a) (see below), and with the Back-Cover Texts being (b)
+(see below).  A copy of the license is included in the section entitled
+``GNU Free Documentation License''.
+
+(a) The FSF's Front-Cover Text is:
+
+     A GNU Manual
+
+(b) The FSF's Back-Cover Text is:
+
+     You have freedom to copy and modify this GNU Manual, like GNU
+     software.  Copies published by the Free Software Foundation raise
+     funds for GNU development.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+<link rel="stylesheet" type="text/css" href="../cs.css">
+</head>
+<body>
+<div class="node">
+<a name="Method-signatures"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_0040encode.html#g_t_0040encode">@encode</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Type-encoding.html#Type-encoding">Type encoding</a>
+<hr>
+</div>
+
+<h4 class="subsection">8.3.3 Method signatures</h4>
+
+<p>This section documents the encoding of method types, which is rarely
+needed to use Objective-C.  You should skip it at a first reading; the
+runtime provides functions that will work on methods and can walk
+through the list of parameters and interpret them for you.  These
+functions are part of the public &ldquo;API&rdquo; and are the preferred way to
+interact with method signatures from user code.
+
+ <p>But if you need to debug a problem with method signatures and need to
+know how they are implemented (i.e., the &ldquo;ABI&rdquo;), read on.
+
+ <p>Methods have their &ldquo;signature&rdquo; encoded and made available to the
+runtime.  The &ldquo;signature&rdquo; encodes all the information required to
+dynamically build invocations of the method at runtime: return type
+and arguments.
+
+ <p>The &ldquo;signature&rdquo; is a null-terminated string, composed of the following:
+
+     <ul>
+<li>The return type, including type qualifiers.  For example, a method
+returning <code>int</code> would have <code>i</code> here.
+
+     <li>The total size (in bytes) required to pass all the parameters.  This
+includes the two hidden parameters (the object <code>self</code> and the
+method selector <code>_cmd</code>).
+
+     <li>Each argument, with the type encoding, followed by the offset (in
+bytes) of the argument in the list of parameters.
+
+ </ul>
+
+ <p>For example, a method with no arguments and returning <code>int</code> would
+have the signature <code>i8@0:4</code> if the size of a pointer is 4.  The
+signature is interpreted as follows: the <code>i</code> is the return type
+(an <code>int</code>), the <code>8</code> is the total size of the parameters in
+bytes (two pointers each of size 4), the <code>@0</code> is the first
+parameter (an object at byte offset <code>0</code>) and <code>:4</code> is the
+second parameter (a <code>SEL</code> at byte offset <code>4</code>).
+
+ <p>You can easily find more examples by running the &ldquo;strings&rdquo; program
+on an Objective-C object file compiled by GCC.  You'll see a lot of
+strings that look very much like <code>i8@0:4</code>.  They are signatures
+of Objective-C methods.
+
+ </body></html>
+

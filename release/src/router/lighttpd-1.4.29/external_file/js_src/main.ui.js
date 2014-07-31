@@ -874,6 +874,10 @@ function adjustLayout(){
 	$("#audio_player_panel").css("display", "block");
 	
 	adjustUploadLayout();
+	
+	if(g_image_player){
+		g_image_player.adjustLayout();
+	}
 }
 
 function showHideAiButton(show){

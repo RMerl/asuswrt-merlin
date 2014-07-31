@@ -1,0 +1,117 @@
+<html lang="en">
+<head>
+<title>quadmath_snprintf - GCC libquadmath</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GCC libquadmath">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="I_002fO-Library-Routines.html#I_002fO-Library-Routines" title="I/O Library Routines">
+<link rel="prev" href="strtoflt128.html#strtoflt128" title="strtoflt128">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+Copyright (C) 2010 Free Software Foundation, Inc.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.2 or any later version published by the Free Software
+     Foundation; with no Invariant Sections, with the Front-Cover Texts
+     being ``A GNU Manual,'' and with the Back-Cover Texts as in (a)
+     below.  A copy of the license is included in the section entitled
+     ``GNU Free Documentation License.''
+
+     (a) The FSF's Back-Cover Text is: ``You have the freedom to copy
+     and modify this GNU manual.
+   -->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+<link rel="stylesheet" type="text/css" href="../cs.css">
+</head>
+<body>
+<div class="node">
+<a name="quadmath_snprintf"></a>
+<a name="quadmath_005fsnprintf"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="strtoflt128.html#strtoflt128">strtoflt128</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="I_002fO-Library-Routines.html#I_002fO-Library-Routines">I/O Library Routines</a>
+<hr>
+</div>
+
+<h3 class="section">3.2 <code>quadmath_snprintf</code> &mdash; Convert to string</h3>
+
+<p>The function <code>quadmath_snprintf</code> converts a <code>__float128</code> floating-point
+number into a string.  It is a specialized alternative to <code>snprintf</code>, where
+the format string is restricted to a single conversion specifier with <code>Q</code>
+modifier and conversion specifier <code>e</code>, <code>E</code>, <code>f</code>, <code>F</code>, <code>g</code>,
+<code>G</code>, <code>a</code> or <code>A</code>, with no extra characters before or after the
+conversion specifier.  The <code>%m$</code> or <code>*m$</code> style must not be used in
+the format.
+
+     <dl>
+<dt>Syntax<dd><code>int quadmath_snprintf (char *s, size_t size, const char *format, ...)</code>
+
+     <br><dt><em>Arguments</em>:<dd>
+     <p><table summary=""><tr align="left"><td valign="top" width="15%"><var>s</var>    </td><td valign="top" width="70%">output string
+<br></td></tr><tr align="left"><td valign="top" width="15%"><var>size</var> </td><td valign="top" width="70%">byte size of the string, including tailing NUL
+<br></td></tr><tr align="left"><td valign="top" width="15%"><var>format</var> </td><td valign="top" width="70%">conversion specifier string
+     <br></td></tr></table>
+
+     <br><dt>Example<dd>
+     <pre class="smallexample">          #include &lt;quadmath.h&gt;
+          #include &lt;stdlib.h&gt;
+          #include &lt;stdio.h&gt;
+          
+          int main ()
+          {
+            __float128 r;
+            int prec = 20;
+            int width = 46;
+            char buf[128];
+          
+            r = 2.0q;
+            r = sqrtq (r);
+            int n = quadmath_snprintf (buf, sizeof buf, "%+-#*.20Qe", width, r);
+            if ((size_t) n &lt; sizeof buf)
+              printf ("%s\n", buf);
+              /* Prints: +1.41421356237309504880e+00 */
+            quadmath_snprintf (buf, sizeof buf, "%Qa", r);
+            if ((size_t) n &lt; sizeof buf)
+              printf ("%s\n", buf);
+              /* Prints: 0x1.6a09e667f3bcc908b2fb1366ea96p+0 */
+            n = quadmath_snprintf (NULL, 0, "%+-#46.*Qe", prec, r);
+            if (n &gt; -1)
+              {
+                char *str = malloc (n + 1);
+                if (str)
+                  {
+                    quadmath_snprintf (str, n + 1, "%+-#46.*Qe", prec, r);
+                    printf ("%s\n", str);
+                    /* Prints: +1.41421356237309504880e+00 */
+                  }
+                free (str);
+              }
+            return 0;
+          }
+</pre>
+     </dl>
+
+   <p>On some targets when supported by the C library hooks are installed
+for <code>printf</code> family of functions, so that <code>printf ("%Qe", 1.2Q);</code>
+etc. works too.
+
+<!--  -->
+<!-- GNU Free Documentation License -->
+<!--  -->
+<!-- Special handling for inclusion in the install manual. -->
+<!-- man begin DESCRIPTION -->
+   </body></html>
+

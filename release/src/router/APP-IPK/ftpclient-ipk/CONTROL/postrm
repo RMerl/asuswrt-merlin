@@ -1,0 +1,15 @@
+#! /bin/sh
+
+APPS_MOUNTED_PATH=`nvram get apps_mounted_path`
+APPS_INSTALL_FOLDER=`nvram get apps_install_folder`
+APPS_INSTALL_PATH=$APPS_MOUNTED_PATH/$APPS_INSTALL_FOLDER
+
+rm -rf $APPS_INSTALL_PATH/bin/ftpclient
+
+rm -rf $APPS_INSTALL_PATH/lib/libiconv.so.2.5.1
+
+#rm -rf $APPS_INSTALL_PATH/etc/init.d/S50ftpclient
+#rm -rf $APPS_INSTALL_PATH/etc/lftp.conf
+
+#rm -rf /tmp/ftpclient/log/
+#rm -rf /tmp/ftpclient/

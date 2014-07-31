@@ -214,13 +214,6 @@ int setpoweroffset_rtac87u(uint8 level, char *prefix2)
 
 void init_devs(void)
 {
-#if 0
-#ifdef CONFIG_BCMWL5
-	// ctf must be loaded prior to any other modules
-	if (nvram_get_int("ctf_disable") == 0)
-		modprobe("ctf");
-#endif
-#endif
 }
 
 
@@ -1253,16 +1246,12 @@ void init_switch()
 	generate_switch_para();
 
 #ifdef CONFIG_BCMWL5
-#ifdef RTAC3200
-	nvram_set("ctf_disable_force", "1");
-#endif
+//#ifdef RTAC3200
+//	nvram_set("ctf_disable_force", "1");
+//#endif
 	// ctf should be disabled when some functions are enabled
-	if (nvram_get_int("cstats_enable") || (nvram_get_int("qos_enable") == 1 && nvram_get_int("qos_type") == 0) /*|| nvram_get_int("url_enable_x") || nvram_get_int("keyword_enable_x")*/ || nvram_get_int("ctf_disable_force")
-// #ifdef RTCONFIG_WIRELESSREPEATER
-// #ifndef RTCONFIG_PROXYSTA
+	if (nvram_get_int("cstats_enable") || (nvram_get_int("qos_enable") == 1 && nvram_get_int("qos_type") == 0) || nvram_get_int("ctf_disable_force")
 	|| nvram_get_int("sw_mode") == SW_MODE_REPEATER
-// #endif
-// #endif
 //#ifdef RTCONFIG_USB_MODEM
 //	|| nvram_get_int("ctf_disable_modem")
 //#endif
@@ -1271,7 +1260,7 @@ void init_switch()
 //		nvram_set("pktc_disable", "1");
 	}
 #ifdef RTCONFIG_BWDPI
-	else if(nvram_get_int("qos_enable") == 1 && nvram_get_int("qos_type") == 1 && nvram_get_int("sw_mode") == SW_MODE_ROUTER){
+	else if (nvram_get_int("qos_enable") == 1 && nvram_get_int("qos_type") == 1 && nvram_get_int("sw_mode") == SW_MODE_ROUTER) {
 		nvram_set("ctf_disable", "0");
 	}
 #endif
@@ -1291,7 +1280,7 @@ void init_switch()
 		modprobe("ctf");
 
 /* Requires bridge netfilter, but slows down and breaks EMF/IGS IGMP IPTV Snooping
-	if(nvram_get_int("sw_mode") == SW_MODE_ROUTER && nvram_get_int("qos_enable") == 1) {
+	if (nvram_get_int("sw_mode") == SW_MODE_ROUTER && nvram_get_int("qos_enable") == 1) {
 		// enable netfilter bridge only when phydev is used
 		f_write_string("/proc/sys/net/bridge/bridge-nf-call-iptables", "1", 0, 0);
 		f_write_string("/proc/sys/net/bridge/bridge-nf-call-ip6tables", "1", 0, 0);
@@ -1301,7 +1290,7 @@ void init_switch()
 #endif
 
 #ifdef RTCONFIG_SHP
-	if(nvram_get_int("qos_enable") == 1 || nvram_get_int("macfilter_enable_x") || nvram_get_int("lfp_disable_force")) {
+	if (nvram_get_int("qos_enable") == 1 || nvram_get_int("macfilter_enable_x") || nvram_get_int("lfp_disable_force")) {
 		nvram_set("lfp_disable", "1");
 	}
 	else {
@@ -1627,7 +1616,11 @@ void init_syspara(void)
 	int model;
 
 	nvram_set("firmver", rt_version);
+#ifndef RTCONFIG_TMOBILE
 	nvram_set("productid", rt_buildname);
+#else
+	nvram_set("productid", nvram_safe_get("odmpid"));
+#endif
 	nvram_set("buildno", rt_serialno);
 	nvram_set("extendno", rt_extendno);
 	nvram_set("buildinfo", rt_buildinfo);
@@ -1726,7 +1719,6 @@ void init_syspara(void)
 			nvram_set("LANMACADDR", nvram_safe_get("et1macaddr"));
 			break;
 
-		case MODEL_RTAC3200:
 		case MODEL_DSLAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56S:
@@ -1736,6 +1728,16 @@ void init_syspara(void)
 			if (!nvram_get("1:macaddr"))	//eth2(5G)
 				nvram_set("1:macaddr", "00:22:15:A5:03:04");
 			nvram_set("0:macaddr", nvram_safe_get("et0macaddr"));
+			break;
+
+		case MODEL_RTAC3200:
+			if (!nvram_get("et0macaddr"))				// eth0 (ethernet)
+				nvram_set("et0macaddr", "00:22:15:A5:03:00");
+			nvram_set("1:macaddr", nvram_safe_get("et0macaddr"));	// eth2 (2.4GHz)
+			if (!nvram_get("0:macaddr"))				// eth1(5GHz)
+				nvram_set("0:macaddr", "00:22:15:A5:03:04");
+			if (!nvram_get("2:macaddr"))				// eth3(5GHz)
+				nvram_set("2:macaddr", "00:22:15:A5:03:08");
 			break;
 
 		case MODEL_RTAC53U:
@@ -3886,6 +3888,15 @@ void generate_wl_para(int unit, int subunit)
 			nvram_set(strcat_r(prefix, "rate", tmp), "0");
 			nvram_set(strcat_r(prefix, "bss_opmode_cap_reqd", tmp), "3");	// devices must advertise VHT (11ac) capabilities to be allowed to associate
 		}
+		else if (nvram_match(strcat_r(prefix, "nmode_x", tmp), "8"))	// n/ac mixed
+		{
+			nvram_set(strcat_r(prefix, "nmcsidx", tmp), "-1");	// auto rate
+			nvram_set(strcat_r(prefix, "nmode", tmp), "-1");
+			nvram_set(strcat_r(prefix, "vreqd", tmp), "1");
+			nvram_set(strcat_r(prefix, "gmode", tmp), "-1");
+			nvram_set(strcat_r(prefix, "rate", tmp), "0");
+			nvram_set(strcat_r(prefix, "bss_opmode_cap_reqd", tmp), "2");	// devices must advertise HT (11n) capabilities to be allowed to associate
+		}
 #endif
 
 #ifdef RTCONFIG_BCMWL6
@@ -3908,8 +3919,7 @@ void generate_wl_para(int unit, int subunit)
 					get_model() == MODEL_RTAC68U ||
 					get_model() == MODEL_DSLAC68U ||
 					get_model() == MODEL_RTAC87U) &&
-				       (nvram_match(strcat_r(prefix, "nmode_x", tmp), "0") ||
-					nvram_match(strcat_r(prefix, "nmode_x", tmp), "3")))
+					nvram_match(strcat_r(prefix, "vreqd", tmp), "1"))
 					nvram_set(strcat_r(prefix, "bw_cap", tmp), "7");// 80M
 				else if (nvram_match(strcat_r(prefix, "nmode", tmp), "-1"))
 					nvram_set(strcat_r(prefix, "bw_cap", tmp), "3");// 40M

@@ -1,0 +1,72 @@
+<html lang="en">
+<head>
+<title>Typedef and constants - GCC libquadmath</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GCC libquadmath">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="prev" href="index.html#Top" title="Top">
+<link rel="next" href="Math-Library-Routines.html#Math-Library-Routines" title="Math Library Routines">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+Copyright (C) 2010 Free Software Foundation, Inc.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.2 or any later version published by the Free Software
+     Foundation; with no Invariant Sections, with the Front-Cover Texts
+     being ``A GNU Manual,'' and with the Back-Cover Texts as in (a)
+     below.  A copy of the license is included in the section entitled
+     ``GNU Free Documentation License.''
+
+     (a) The FSF's Back-Cover Text is: ``You have the freedom to copy
+     and modify this GNU manual.
+   -->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+<link rel="stylesheet" type="text/css" href="../cs.css">
+</head>
+<body>
+<div class="node">
+<a name="Typedef-and-constants"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Math-Library-Routines.html#Math-Library-Routines">Math Library Routines</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="index.html#Top">Top</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="index.html#Top">Top</a>
+<hr>
+</div>
+
+<h2 class="chapter">1 Typedef and constants</h2>
+
+<p>The following data type has been defined via <code>typedef</code>.
+
+     <dl>
+<dt><code>__complex128</code>: <code>__float128</code>-based complex number<dd></dl>
+
+   <p>The following macros are defined, which give the numeric limits of the
+<code>__float128</code> data type.
+
+     <dl>
+<dt><code>FLT128_MAX</code>: largest finite number<br><dt><code>FLT128_MIN</code>: smallest positive number with full precision<br><dt><code>FLT128_EPSILON</code>: difference between 1 and the next larger<dd>                             representable number
+<br><dt><code>FLT128_DENORM_MIN</code>: smallest positive denormalized number<br><dt><code>FLT128_MANT_DIG</code>: number of digits in the mantissa (bit precision)<br><dt><code>FLT128_MIN_EXP</code>: maximal negative exponent<br><dt><code>FLT128_MAX_EXP</code>: maximal positive exponent<br><dt><code>FLT128_DIG</code>: number of decimal digits in the mantissa<br><dt><code>FLT128_MIN_10_EXP</code>: maximal negative decimal exponent<br><dt><code>FLT128_MAX_10_EXP</code>: maximal positive decimal exponent<dd></dl>
+
+   <p>The following mathematical constants of type <code>__float128</code> are defined.
+
+     <dl>
+<dt><code>M_Eq</code>: the constant e (Euler's number)<br><dt><code>M_LOG2Eq</code>: binary logarithm of 2<br><dt><code>M_LOG10Eq</code>: common, decimal logarithm of 2<br><dt><code>M_LN2q</code>: natural logarithm of 2<br><dt><code>M_LN10q</code>: natural logarithm of 10<br><dt><code>M_PIq</code>: pi<br><dt><code>M_PI_2q</code>: two pi<br><dt><code>M_PI_4q</code>: four pi<br><dt><code>M_1_PIq</code>: one over pi<br><dt><code>M_2_PIq</code>: one over two pi<br><dt><code>M_2_SQRTPIq</code>: two over square root of pi<br><dt><code>M_SQRT2q</code>: square root of 2<br><dt><code>M_SQRT1_2q</code>: one over square root of 2<dd></dl>
+
+<!--  -->
+<!-- Math routines -->
+<!--  -->
+   </body></html>
+

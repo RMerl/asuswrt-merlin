@@ -166,8 +166,8 @@ SEP=echo "\033[41;1m   $@   \033[0m"
 obj-$(RTCONFIG_QTN) += libqcsapi_client
 obj-$(RTCONFIG_DMALLOC) += dmalloc
 
-#obj-$(RTCONFIG_DHDAP) += dhd pciefd
-obj-$(RTCONFIG_DHDAP) += dhd
+obj-$(RTCONFIG_DHDAP) += pciefd dhd
+#obj-$(RTCONFIG_DHDAP) += dhd
 
 ifeq ($(or $(RTN14U),$(RTAC52U),$(RTAC51U),$(RTN11P),$(RTN54U)),y)
 obj-y += reg
@@ -384,9 +384,14 @@ obj-$(RTCONFIG_CLOUDSYNC) += curl-7.21.7
 obj-$(RTCONFIG_CLOUDSYNC) += asuswebstorage$(BCMEX)
 obj-$(RTCONFIG_CLOUDSYNC) += inotify
 
-obj-$(RTCONFIG_CLOUDSYNC) += zlib # for neon
-obj-$(RTCONFIG_CLOUDSYNC) += neon
-obj-$(RTCONFIG_CLOUDSYNC) += webdav_client$(BCMEX)
+obj-$(RTCONFIG_SWEBDAVCLIENT) += zlib # for neon
+obj-$(RTCONFIG_SWEBDAVCLIENT) += neon
+obj-$(RTCONFIG_SWEBDAVCLIENT) += webdav_client$(BCMEX)
+obj-$(RTCONFIG_DROPBOXCLIENT) += dropbox_client
+
+obj-$(RTCONFIG_FTPCLIENT) += libiconv-1.14
+obj-$(RTCONFIG_FTPCLIENT) += ftpclient
+obj-$(RTCONFIG_SAMBACLIENT) += sambaclient
 
 #For timemachine
 obj-$(RTCONFIG_TIMEMACHINE) += openssl
@@ -1041,6 +1046,16 @@ roldconf: config/conf
 ifeq ($(RTCONFIG_BCMARM),y)
 	$(MAKE) compressed-clean
 endif
+ifeq ($(RTCONFIG_DHDAP),y)
+ifneq ($(wildcard $(SRCBASE_FW)/wl/sys),)
+ifeq ($(wildcard /projects/hnd/tools/linux/hndtools-armeabi-2011.09),)
+	# build 43602 src and to match its path
+	sudo mkdir /projects/hnd/tools/linux -p
+	sudo rm -rf /projects/hnd/tools/linux/hndtools-armeabi-2011.09
+	sudo ln -sf $(SRCBASE)/toolchains/hndtools-armeabi-2011.09 /projects/hnd/tools/linux/hndtools-armeabi-2011.09
+endif
+endif
+endif
 
 kconf:
 	$(MAKE) -C $(LINUXDIR) config
@@ -1325,7 +1340,7 @@ dmalloc-clean:
 
 $(obj-pciefd) :
 # Build PCIEFD firmware only if it is not prebuilt
-ifeq ($(CONFIG_DHDAP),y)
+ifeq ($(RTCONFIG_DHDAP),y)
 ifneq ($(wildcard $(SRCBASE_FW)/wl/sys),)
 	+$(MAKE) CROSS_COMPILE=arm-none-eabi -C $(SRCBASE_FW)/dongle/rte/wl $(patsubst %-obj,%,$@)/$(PCIEFD_TARGET_NAME) -j 8
 	if [ -a $(SRCBASE_FW)/dongle/rte/wl/builds/$(patsubst %-obj,%,$@)/$(PCIEFD_TARGET_NAME)/rtecdc_$(patsubst %-roml-obj,%,$@).h ]; then \
@@ -1336,12 +1351,18 @@ ifneq ($(wildcard $(SRCBASE_FW)/wl/sys),)
 		cp $(SRCBASE_FW)/dongle/rte/wl/builds/$(patsubst %-obj,%,$@)/$(PCIEFD_TARGET_NAME)/rtecdc_$(patsubst %-ram-obj,%,$@).h $(SRCBASE_DHD)/shared/rtecdc_$(patsubst %-ram-obj,%,$@).h; \
 		echo "#include <rtecdc_$(patsubst %-ram-obj,%,$@).h>" >> $(PCIEFD_EMBED_HEADER); \
 	fi;
+	cp $(SRCBASE_FW)/dongle/rte/chipimages/43602a0/roml.bin $(SRCBASE)/router/dhd_43602/43602a0
+	-cp $(SRCBASE_FW)/dongle/rte/chipimages/43602a1/roml.bin $(SRCBASE)/router/dhd_43602/43602a1
+	cp $(SRCBASE_FW)/dongle/rte/wl/builds/43602a0-roml/pcie-ag-splitrx-fdap-mbss-mfp-wl11k-wl11u-txbf-pktctx-amsdutx-ampduretry-proptxstatus/logstrs.bin $(SRCBASE)/router/dhd_43602/43602a0
+	cp $(SRCBASE_FW)/dongle/rte/wl/builds/43602a0-roml/pcie-ag-splitrx-fdap-mbss-mfp-wl11k-wl11u-txbf-pktctx-amsdutx-ampduretry-proptxstatus/rtecdc.bin $(SRCBASE)/router/dhd_43602/43602a0
+	-cp $(SRCBASE_FW)/dongle/rte/wl/builds/43602a1-roml/pcie-ag-splitrx-fdap-mbss-mfp-wl11k-wl11u-txbf-pktctx-amsdutx-ampduretry-proptxstatus/logstrs.bin $(SRCBASE)/router/dhd_43602/43602a1
+	-cp $(SRCBASE_FW)/dongle/rte/wl/builds/43602a1-roml/pcie-ag-splitrx-fdap-mbss-mfp-wl11k-wl11u-txbf-pktctx-amsdutx-ampduretry-proptxstatus/rtecdc.bin $(SRCBASE)/router/dhd_43602/43602a1
 endif
 endif
 
 pciefd-cleangen:
 # Clean PCIEFD firmware only if it is not prebuilt
-ifeq ($(CONFIG_DHDAP),y)
+ifeq ($(RTCONFIG_DHDAP),y)
 ifneq ($(wildcard $(SRCBASE_FW)/wl/sys),)
 	rm -f  $(PCIEFD_EMBED_HEADER);
 	cp $(PCIEFD_EMBED_HEADER_TEMPLATE) $(PCIEFD_EMBED_HEADER);
@@ -1351,10 +1372,10 @@ endif
 pciefd: pciefd-cleangen $(obj-pciefd)
 
 pciefd-clean :
-ifeq ($(CONFIG_DHDAP),y)
+ifeq ($(RTCONFIG_DHDAP),y)
 ifneq ($(wildcard $(SRCBASE_FW)/wl/sys),)
 	+$(MAKE) CROSS_COMPILE=arm-none-eabi -C $(SRCBASE_FW)/dongle/rte/wl clean -j 8
-	rm -f $(SRCBASE_DHD)/shared/rtecdc*.h
+	#rm -f $(SRCBASE_DHD)/shared/rtecdc*.h
 endif
 endif
 
@@ -1372,6 +1393,7 @@ dhd-clean :
 ifneq ($(wildcard $(SRCBASE_DHD)/dhd/exe),)
 	$(MAKE) TARGET_PREFIX=$(CROSS_COMPILE) -C $(SRCBASE_DHD)/dhd/exe clean
 	rm -f $(INSTALLDIR)/dhd/usr/sbin/dhd
+	cd $(SRCBASE_DHD) && rm -f `find ./ -name "*.cmd" && find ./ -name "*.o"`
 endif
 
 dhd-install :
@@ -2946,8 +2968,65 @@ libxml2-clean:
 	-@$(MAKE) -C libxml2 clean
 	@rm -f libxml2/stamp-h1
 
-#add by alan
-#add install neon
+#libiconv-1.14
+libiconv-1.14/stamp-h1:
+	cd libiconv-1.14 && \
+	$(CONFIGURE) CC=$(CC) --prefix=$(TOP)/libiconv-1.14/out
+	touch $@
+
+libiconv-1.14:libiconv-1.14/stamp-h1
+	@$(MAKE) -C libiconv-1.14
+
+libiconv-1.14-install: libiconv-1.14
+	@$(SEP)
+	install -D libiconv-1.14/lib/.libs/libiconv.so.2.5.1 $(INSTALLDIR)/libiconv-1.14/usr/lib/libiconv.so.2.5.1
+	$(STRIP) $(INSTALLDIR)/libiconv-1.14/usr/lib/libiconv.so.2.5.1
+	cd $(INSTALLDIR)/libiconv-1.14/usr/lib && ln -sf libiconv.so.2.5.1 libiconv.so && ln -sf libiconv.so.2.5.1 libiconv.so.2
+
+libiconv-1.14-clean:
+	-@$(MAKE) -C libiconv-1.14 clean
+	@rm -f libiconv-1.14/stamp-h1
+
+#ftpclient
+ftpclient/stamp-h1: 
+	@$(MAKE) -C ftpclient
+
+ftpclient:ftpclient/stamp-h1
+
+ftpclient-install: ftpclient
+	@$(SEP)
+	install -D ftpclient/ftpclient $(INSTALLDIR)/ftpclient/usr/sbin/ftpclient
+	$(STRIP) $(INSTALLDIR)/ftpclient/usr/sbin/ftpclient
+ifeq ($(RTCONFIG_BCMARM),y)
+	install -D $(shell dirname $(shell which $(CXX)))/../arm-brcm-linux-uclibcgnueabi/lib/libstdc++.so.6 $(INSTALLDIR)/ftpclient/usr/lib/libstdc++.so.6
+else
+	install -D $(shell dirname $(shell which $(CXX)))/../lib/libstdc++.so.6 $(INSTALLDIR)/ftpclient/usr/lib/libstdc++.so.6
+endif
+ftpclient-clean:
+	-@$(MAKE) -C ftpclient clean
+
+#sambaclient
+sambaclient/stamp-h1: 
+	touch $@
+
+sambaclient: sambaclient/stamp-h1
+	@$(MAKE) -C sambaclient
+
+sambaclient-install: sambaclient
+	@$(SEP)
+	install -D sambaclient/sambaclient $(INSTALLDIR)/sambaclient/usr/sbin/sambaclient
+	$(STRIP) $(INSTALLDIR)/sambaclient/usr/sbin/sambaclient
+ifeq ($(RTCONFIG_BCMARM),y)
+	install -D $(shell dirname $(shell which $(CXX)))/../arm-brcm-linux-uclibcgnueabi/lib/libstdc++.so.6 $(INSTALLDIR)/sambaclient/usr/lib/libstdc++.so.6
+else
+	install -D $(shell dirname $(shell which $(CXX)))/../lib/libstdc++.so.6 $(INSTALLDIR)/sambaclient/usr/lib/libstdc++.so.6
+endif
+sambaclient-clean:
+	-@$(MAKE) -C sambaclient clean
+	rm -rf sambaclient/stamp-h1
+
+#add by alan 
+#add install neon 
 neon/stamp-h1 neon/config.h:
 	cd neon && \
 	$(CONFIGURE) CC=$(CC) --enable-shared --disable-static --disable-nls --with-zlib --with-ssl=openssl --with-libs=$(TOP)/openssl:$(TOP)/libxml2 CFLAGS='-I$(TOP)/zlib -I$(TOP)/libxml2/include -I$(TOP)/openssl/include' LDFLAGS='-L$(TOP)/libxml2/.libs -L$(TOP)/openssl -L$(TOP)/zlib' LIBS='-lxml2 -lssl -lcrypto -lz' XML2_CONFIG='$(TOP)/libxml2/xml2-config'
@@ -2968,7 +3047,9 @@ neon-clean:
 	@rm -f neon/stamp-h1
 
 #webdav_client
-webdav_client$(BCMEX):
+webdav_client$(BCMEX)/stamp-h1:
+	touch $@
+webdav_client$(BCMEX): webdav_client$(BCMEX)/stamp-h1
 	@$(MAKE) -C webdav_client$(BCMEX)
 
 webdav_client$(BCMEX)-install: webdav_client$(BCMEX)
@@ -2978,6 +3059,7 @@ webdav_client$(BCMEX)-install: webdav_client$(BCMEX)
 
 webdav_client$(BCMEX)-clean:
 	-@$(MAKE) -C webdav_client$(BCMEX) clean
+	rm -rf webdav_client$(BCMEX)/stamp-h1
 
 #add by gauss
 #add install libcurl
@@ -3000,7 +3082,10 @@ curl-7.21.7-clean:
 	@rm -f curl-7.21.7/stamp-h1
 
 #asuswebstorage
-asuswebstorage$(BCMEX):
+asuswebstorage$(BCMEX)/stamp-h1:
+	touch $@
+
+asuswebstorage$(BCMEX): asuswebstorage$(BCMEX)/stamp-h1
 	@$(MAKE) -C asuswebstorage$(BCMEX)
 
 asuswebstorage$(BCMEX)-install: asuswebstorage$(BCMEX)
@@ -3010,6 +3095,23 @@ asuswebstorage$(BCMEX)-install: asuswebstorage$(BCMEX)
 
 asuswebstorage$(BCMEX)-clean:
 	-@$(MAKE) -C asuswebstorage$(BCMEX) clean
+	rm -rf asuswebstorage/stamp-h1
+
+#dropbox_client
+dropbox_client/stamp-h1:
+	touch $@
+
+dropbox_client: dropbox_client/stamp-h1
+	@$(MAKE) -C dropbox_client
+
+dropbox_client-install: dropbox_client
+	@$(SEP)
+	install -D dropbox_client/dropbox_client $(INSTALLDIR)/dropbox_client/usr/sbin/dropbox_client
+	$(STRIP) $(INSTALLDIR)/dropbox_client/usr/sbin/dropbox_client
+
+dropbox_client-clean:
+	-@$(MAKE) -C dropbox_client clean
+	rm -rf dropbox_client/stamp-h1
 
 #inotify
 inotify:

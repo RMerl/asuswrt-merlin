@@ -43,6 +43,7 @@ define platformKernelConfig
 		sed -i "/CONFIG_MTD_BRCMNAND/d" $(1); \
 		echo "CONFIG_MTD_BRCMNAND=y" >>$(1); \
 	fi; \
+	mkdir -p $(SRCBASE)/router/ctf_arm/linux;\
 	cp -f $(SRCBASE)/router/ctf_arm/asus/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
 	if [ "$(BCM7)" = "y" ]; then \
 		if [ "$(ARMCPUSMP)" = "up" ]; then \

@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <html xmlns:v>
 <head>
-<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7"/>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
@@ -304,6 +304,7 @@ function initial(){
 		$("wl_wme_apsd_field").style.display = "none";
 		$("wl_ampdu_mpdu_field").style.display = "none";
 		$("wl_ack_ratio_field").style.display = "none";
+		document.getElementById('wl_80211h_tr').style.display = "";
 		$("wl_regmode_field").style.display = "none";
 	}
 	
@@ -322,8 +323,9 @@ function initial(){
 		inputCtrl(document.form.wl_atf, 0);
 	}
 	
-	if(based_modelid != "RT-AC87U")
+	if(based_modelid != "RT-AC87U"){
 		check_ampdu_rts();
+	}
 }
 
 function adjust_tx_power(){
@@ -405,8 +407,9 @@ function validForm(){
 			|| !validate_timerange(document.form.wl_radio_time_x_startmin, 1) || !validate_timerange(document.form.wl_radio_time2_x_startmin, 1)
 			|| !validate_timerange(document.form.wl_radio_time_x_endhour, 2) || !validate_timerange(document.form.wl_radio_time2_x_endhour, 2)
 			|| !validate_timerange(document.form.wl_radio_time_x_endmin, 3) || !validate_timerange(document.form.wl_radio_time2_x_endmin, 3)
-			)
+			){
 		return false;
+	}
 	
 	if(power_support && !Rawifi_support){
 		// MODELDEP
@@ -685,6 +688,7 @@ function set_power(power_value){
 <input type="hidden" name="wl0_country_code" value="<% nvram_get("wl0_country_code"); %>" disabled>
 <input type="hidden" name="wl_HW_switch" value="<% nvram_get("wl_HW_switch"); %>" disabled>
 <input type="hidden" name="wl_TxPower" value="<% nvram_get("wl_TxPower"); %>" >
+<input type="hidden" name="wl1_80211h_orig" value="<% nvram_get("wl1_80211h"); %>" >
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 	<tr>
@@ -1003,6 +1007,18 @@ function set_power(power_value){
 						</td>
 					</tr>
 					<!-- [MODELDEP] end -->
+					<!--For 5GHz of RT-AC87U  -->
+					<tr id="wl_80211h_tr" style="display:none;">
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="">IEEE 802.11h support</a></th>
+						<td>
+							<select name="wl1_80211h" class="input_option">
+									<option value="0" <% nvram_match("wl1_80211h", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+									<option value="1" <% nvram_match("wl1_80211h", "1","selected"); %> ><#WLANConfig11b_WirelessCtrl_button1name#></option>
+							</select>
+						</td>
+					</tr>
+					
+					
 					<!--Broadcom ARM platform only, except RT-AC87U(5G) -->
 					<tr>
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,28);">Airtime Fairness</a></th>

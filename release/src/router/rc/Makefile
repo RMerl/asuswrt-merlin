@@ -245,6 +245,10 @@ ifeq ($(RTCONFIG_IPERF),y)
 OBJS += monitor.o
 endif
 
+ifeq ($(RTCONFIG_HTTPS),y)
+OBJS += pwdec.o
+endif
+
 ifeq ($(RTCONFIG_BCMARM),y)
 ifeq ($(RTCONFIG_QTN),y)
 vpath %.c sysdeps sysdeps/broadcom sysdeps/ralink sysdeps/qtn $(TOP)/libqcsapi_client/qcsapi_rpc_common/client $(TOP)/sysdeps/qtn $(SRCBASE)/shared
@@ -434,6 +438,10 @@ ifneq ($(RTCONFIG_RALINK),y)
 dsl_fb.o:
 	@-cp -f ./prebuild/dsl_fb.o .
 endif
+endif
+ifeq ($(RTCONFIG_HTTPS),y)
+pwdec.o:
+	@-cp -f ./prebuild/pwdec.o .
 endif
 endif
 

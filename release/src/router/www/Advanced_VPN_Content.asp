@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml"> 
 <html xmlns:v>
 <head>
-<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7"/>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
@@ -1139,7 +1139,7 @@ function enable_openvpn(state){
 				<tr>
 					<th>PM_SMTP_AUTH_PASS</th>
 					<td valign="top">
-						<input type="password" class="input_32_table" name="PM_SMTP_AUTH_PASS_TMP" value="<% nvram_get("PM_SMTP_AUTH_PASS"); %>">
+						<input type="password" class="input_32_table" name="PM_SMTP_AUTH_PASS_TMP" maxlength="100" value="">
 					</td>
 				</tr>    				      			
 				<tr>

@@ -32,10 +32,6 @@ ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U)$(RTN11P)$(RTN54U),y)
 CFLAGS += -DRA_ESW
 endif
 
-ifeq ($(RTCONFIG_HTTPS),y)
-CFLAGS += -I$(TOP)/mssl
-endif
-
 ifeq ($(RTCONFIG_USB),y)
 CFLAGS += -I$(TOP)/libdisk	
 endif
@@ -77,6 +73,10 @@ ifeq ($(RTCONFIG_GEOIP),y)
 OBJS += geoiplookup.o
 endif
 
+ifeq ($(RTCONFIG_HTTPS),y)
+OBJS += pwenc.o
+endif
+
 LIBS = -L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared
 
 ifeq ($(RTCONFIG_PUSH_EMAIL),y)
@@ -102,6 +102,8 @@ LIBS += -L$(TOP)/libdisk -ldisk
 endif
 
 ifeq ($(RTCONFIG_HTTPS),y)
+CFLAGS += -I$(TOP)/mssl
+CFLAGS += -I$(TOP)/openssl/include
 LIBS += -L$(TOP)/mssl -lmssl
 LIBS += -L$(TOP)/openssl -lssl -lcrypto
 endif
@@ -153,6 +155,14 @@ clean:
 
 size: httpd
 	mipsel-uclibc-nm --print-size --size-sort httpd
+
+# handle prebuilt object here
+ifneq ($(wildcard, ./prebuild/),)
+ifeq ($(RTCONFIG_HTTPS),y)
+pwenc.o:
+	@-cp -f ./prebuild/pwenc.o pwenc.o
+endif
+endif
 
 %.o: %.c .%.depend
 	@echo " [httpd] CC $@"

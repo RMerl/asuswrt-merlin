@@ -1,0 +1,71 @@
+<html lang="en">
+<head>
+<title>PowerPC-Chars - Using as</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Using as">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="PowerPC_002dSyntax.html#PowerPC_002dSyntax" title="PowerPC-Syntax">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This file documents the GNU Assembler "as".
+
+Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+2000, 2001, 2002, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation,
+Inc.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3
+or any later version published by the Free Software Foundation;
+with no Invariant Sections, with no Front-Cover Texts, and with no
+Back-Cover Texts.  A copy of the license is included in the
+section entitled ``GNU Free Documentation License''.
+
+-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+<link rel="stylesheet" type="text/css" href="../cs.css">
+</head>
+<body>
+<div class="node">
+<a name="PowerPC-Chars"></a>
+<a name="PowerPC_002dChars"></a>
+<p>
+Up:&nbsp;<a rel="up" accesskey="u" href="PowerPC_002dSyntax.html#PowerPC_002dSyntax">PowerPC-Syntax</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">9.30.3.1 Special Characters</h5>
+
+<p><a name="index-line-comment-character_002c-PowerPC-1578"></a><a name="index-PowerPC-line-comment-character-1579"></a>The presence of a &lsquo;<samp><span class="samp">#</span></samp>&rsquo; on a line indicates the start of a comment
+that extends to the end of the current line.
+
+   <p>If a &lsquo;<samp><span class="samp">#</span></samp>&rsquo; appears as the first character of a line then the whole
+line is treated as a comment, but in this case the line could also be
+a logical line number directive (see <a href="Comments.html#Comments">Comments</a>) or a preprocessor
+control command (see <a href="Preprocessing.html#Preprocessing">Preprocessing</a>).
+
+   <p>If the assembler has been configured for the ppc-*-solaris* target
+then the &lsquo;<samp><span class="samp">!</span></samp>&rsquo; character also acts as a line comment character. 
+This can be disabled via the <samp><span class="option">-mno-solaris</span></samp> command line
+option.
+
+   <p><a name="index-line-separator_002c-PowerPC-1580"></a><a name="index-statement-separator_002c-PowerPC-1581"></a><a name="index-PowerPC-line-separator-1582"></a>The &lsquo;<samp><span class="samp">;</span></samp>&rsquo; character can be used to separate statements on the same
+line.
+
+<!-- Copyright 2008, 2009, 2011 -->
+<!-- Free Software Foundation, Inc. -->
+<!-- This is part of the GAS manual. -->
+<!-- For copying conditions, see the file as.texinfo. -->
+   </body></html>
+

@@ -32,4 +32,12 @@ fi
 if [ "$1" == "set_bf_off" ] ; then
 	bfoff &
 fi
+if [ "$1" == "80211h_on" ] ; then
+	echo "on" > /tmp/80211h
+	iwpriv wifi0 pc_override 1 &
+fi
+if [ "$1" == "80211h_off" ] ; then
+	echo "off" > /tmp/80211h
+	iwpriv wifi0 pc_override 0 &
+fi
 exit 0

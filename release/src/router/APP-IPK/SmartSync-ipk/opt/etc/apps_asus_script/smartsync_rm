@@ -11,4 +11,8 @@ app_remove.sh webdavclient
 sleep 2
 app_remove.sh asuswebstorage
 sleep 2
+app_remove.sh ftpclient
+sleep 2
+app_remove.sh dropboxclient
+sleep 2
 app_remove.sh inotify

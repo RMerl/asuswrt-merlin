@@ -1,0 +1,104 @@
+<html lang="en">
+<head>
+<title>C++ Volatiles - Using the GNU Compiler Collection (GCC)</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Using the GNU Compiler Collection (GCC)">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="C_002b_002b-Extensions.html#C_002b_002b-Extensions" title="C++ Extensions">
+<link rel="next" href="Restricted-Pointers.html#Restricted-Pointers" title="Restricted Pointers">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997,
+1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
+2010 Free Software Foundation, Inc.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being ``Funding Free Software'', the Front-Cover
+Texts being (a) (see below), and with the Back-Cover Texts being (b)
+(see below).  A copy of the license is included in the section entitled
+``GNU Free Documentation License''.
+
+(a) The FSF's Front-Cover Text is:
+
+     A GNU Manual
+
+(b) The FSF's Back-Cover Text is:
+
+     You have freedom to copy and modify this GNU Manual, like GNU
+     software.  Copies published by the Free Software Foundation raise
+     funds for GNU development.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+<link rel="stylesheet" type="text/css" href="../cs.css">
+</head>
+<body>
+<div class="node">
+<a name="C++-Volatiles"></a>
+<a name="C_002b_002b-Volatiles"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Restricted-Pointers.html#Restricted-Pointers">Restricted Pointers</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="C_002b_002b-Extensions.html#C_002b_002b-Extensions">C++ Extensions</a>
+<hr>
+</div>
+
+<h3 class="section">7.1 When is a Volatile C++ Object Accessed?</h3>
+
+<p><a name="index-accessing-volatiles-3255"></a><a name="index-volatile-read-3256"></a><a name="index-volatile-write-3257"></a><a name="index-volatile-access-3258"></a>
+The C++ standard differs from the C standard in its treatment of
+volatile objects.  It fails to specify what constitutes a volatile
+access, except to say that C++ should behave in a similar manner to C
+with respect to volatiles, where possible.  However, the different
+lvalueness of expressions between C and C++ complicate the behavior. 
+G++ behaves the same as GCC for volatile access, See <a href="C-Extensions.html#C-Extensions">Volatiles</a>, for a description of GCC's behavior.
+
+ <p>The C and C++ language specifications differ when an object is
+accessed in a void context:
+
+<pre class="smallexample">     volatile int *src = <var>somevalue</var>;
+     *src;
+</pre>
+ <p>The C++ standard specifies that such expressions do not undergo lvalue
+to rvalue conversion, and that the type of the dereferenced object may
+be incomplete.  The C++ standard does not specify explicitly that it
+is lvalue to rvalue conversion which is responsible for causing an
+access.  There is reason to believe that it is, because otherwise
+certain simple expressions become undefined.  However, because it
+would surprise most programmers, G++ treats dereferencing a pointer to
+volatile object of complete type as GCC would do for an equivalent
+type in C.  When the object has incomplete type, G++ issues a
+warning; if you wish to force an error, you must force a conversion to
+rvalue with, for instance, a static cast.
+
+ <p>When using a reference to volatile, G++ does not treat equivalent
+expressions as accesses to volatiles, but instead issues a warning that
+no volatile is accessed.  The rationale for this is that otherwise it
+becomes difficult to determine where volatile access occur, and not
+possible to ignore the return value from functions returning volatile
+references.  Again, if you wish to force a read, cast the reference to
+an rvalue.
+
+ <p>G++ implements the same behavior as GCC does when assigning to a
+volatile object &ndash; there is no reread of the assigned-to object, the
+assigned rvalue is reused.  Note that in C++ assignment expressions
+are lvalues, and if used as an lvalue, the volatile object will be
+referred to.  For instance, <var>vref</var> will refer to <var>vobj</var>, as
+expected, in the following example:
+
+<pre class="smallexample">     volatile int vobj;
+     volatile int &amp;vref = vobj = <var>something</var>;
+</pre>
+ </body></html>
+

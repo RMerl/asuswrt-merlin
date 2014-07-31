@@ -827,6 +827,13 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 			puts("ATE_ERROR");
 		return 0;
 	}
+#ifdef RTAC3200
+	else if (!strcmp(command, "Get_ChannelList_5G_2")) {
+		if (!Get_ChannelList_5G_2())
+			puts("ATE_ERROR");
+		return 0;
+	}
+#endif
 #endif	/* RTCONFIG_HAS_5G */
 #if defined(RTCONFIG_USB_XHCI)
 	else if (!strcmp(command, "Get_Usb3p0_Port1_Infor")) {

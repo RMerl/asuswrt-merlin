@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <html xmlns:v>
 <head>
-<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7"/>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
@@ -147,7 +147,20 @@ function genWANSoption(){
 		$("WANscap").style.display = "none";
 }
 
+
 function applyRule(){
+	if(ctf.level2_supprot && (based_modelid == "RT-AC68U" || based_modelid == "RT-AC56U") && ctf.changeType()){		//To notify if using Level 2 CTF and change wan type to PPPoE、PPTP、L2TP
+		if((wan_proto_orig == "dhcp" || wan_proto_orig == "static") && ctf.getLevel() == 2){
+			if(confirm("Level 2 CTF can not be supported under PPPoE、PPTP or L2TP. If you want to switch to Level 1 CTF, please click confirm ")){
+				document.form.ctf_disable_force.value = 0;
+				document.form.ctf_fa_mode.value = 0;	
+			}
+			else{				
+				return false;
+			}
+		}	
+	}
+
 	if(validForm()){
 		showLoading();
 		inputCtrl(document.form.wan_dhcpenable_x[0], 1);
@@ -167,7 +180,7 @@ function applyRule(){
 
 		if(document.form.web_redirect.value != "<% nvram_get("web_redirect"); %>")
 			document.form.action_script += ";restart_firewall";
-
+		
 		// Turn CTF into level 1, and turn back to level 2 if there exists nvram ctf_fa_mode_close.
 		if(ctf.changeType() && ctf.getLevel() == 2 && ctf.level2_supprot){
 			FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
@@ -770,6 +783,8 @@ function pass_checked(obj){
 <input type="hidden" name="lan_netmask" value="<% nvram_get("lan_netmask"); %>" />
 <input type="hidden" name="wan_pppoe_username_org" value="<% nvram_char_to_ascii("", "wan_pppoe_username"); %>" />
 <input type="hidden" name="wan_pppoe_passwd_org" value="<% nvram_char_to_ascii("", "wan_pppoe_passwd"); %>" />
+<input type="hidden" name="ctf_fa_mode" value="<% nvram_get("ctf_fa_mode"); %>">
+<input type="hidden" name="ctf_disable_force" value="<% nvram_get("ctf_disable_force"); %>">
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
   <tr>

@@ -34,7 +34,6 @@ int bwdpi_main(int argc, char **argv)
 		printf("Usage :\n");
 		printf("  bwdpi [iqos/qosd/wrs/dc] [start/stop/restart]\n");
 		printf("  bwdpi stat -m [mode] -n [name] -u [dura] -d [date]\n");
-		printf("  bwdpi dpi [0/init/1]\n");
 		printf("  bwpdi history -m [MAC] -z\n");
 		printf("  bwpdi app [0/1]\n");
 		printf("  bwpdi cc [0/1]\n");
@@ -110,17 +109,6 @@ int bwdpi_main(int argc, char **argv)
 		}
 		//dbg("[bwdpi] mode=%s, name=%s, dura=%s, date=%s\n", mode, name, dura, date);
 		return stat_main(mode, name, dura, date);
-	}
-	else if (!strcmp(argv[1], "dpi")){
-		if(argc != 3)
-		{
-			printf("  bwdpi dpi [0/init/1]\n");
-			return 0;
-		}
-		else
-		{
-			return dpi_main(argv[2]);
-		}
 	}
 	else if (!strcmp(argv[1], "history")){
 		while ((c = getopt(argc, argv, "m:z")) != -1)
@@ -283,7 +271,6 @@ int bwdpi_main(int argc, char **argv)
 		printf("Usage :\n");
 		printf("  bwdpi [iqos/qosd/wrs/dc] [start/stop/restart]\n");
 		printf("  bwdpi stat -m [mode] -n [name] -u [dura] -d [date]\n");
-		printf("  bwdpi dpi [0/1]\n");
 		printf("  bwpdi history -m [MAC] -z\n");
 		printf("  bwpdi app [0/1]\n");
 		printf("  bwpdi cc [0/1]\n");

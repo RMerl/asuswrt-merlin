@@ -4946,9 +4946,7 @@ check_ddr_done:
 			add_iQosRules(get_wan_ifname(wan_primary_ifunit()));
 #endif
 #ifdef RTCONFIG_BWDPI
-			if(nvram_get_int("qos_type") == 1)
-				start_dpi_engine_service();
-			else
+			start_dpi_engine_service();
 #endif
 			start_iQos();
 		}
@@ -5694,8 +5692,8 @@ void set_acs_ifnames()
 	nvram_set("acs_ifnames", acs_ifnames);
 
 #ifdef RTAC3200
-	/* exclude acsd from selecting chanspec 149, 149l, 149/80, 153, 153u, 153/80,157, 157l, 157/80, 161, 161u, 161/80, 165 */
 	nvram_set("wl1_acs_excl_chans", "");
+	/* exclude acsd from selecting chanspec 149, 149l, 149/80, 153, 153u, 153/80,157, 157l, 157/80, 161, 161u, 161/80, 165 */
 	nvram_set("wl0_acs_excl_chans",
 		  "0xd095,0xd897,0xe09b,0xd099,0xd997,0xe19b,0xd09d,0xd89f,0xe29b,0xd0a1,0xd99f,0xe39b,0xd0a5");
 	/* exclude acsd from selecting chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80 */
@@ -5885,18 +5883,28 @@ rsasign_sig_check_main(int argc, char *argv[])
 #endif
 
 #ifdef RTCONFIG_PUSH_EMAIL
+#define	MAIL_CONF "/tmp/var/tmp/data"
 void start_sendmail(void)
 {
 	FILE *fp;
-	char tmp[128], buf[1024];
+	char tmp[128], buf[1024], smtp_auth_pass[256];
 	memset(buf, 0, sizeof(buf));
 	memset(tmp, 0, sizeof(tmp));
-
+	memset(smtp_auth_pass, 0, sizeof(smtp_auth_pass));
+#ifdef RTCONFIG_HTTPS
+	strncpy(smtp_auth_pass,pwdec(nvram_get("PM_SMTP_AUTH_PASS")),256);
+#else
+	strncpy(smtp_auth_pass,nvram_get("PM_SMTP_AUTH_PASS"),256);
+#endif
 	/* write the configuration file.*/
-	fp = fopen("/tmp/var/tmp/data","w");
-	if(fp == NULL){
+	if (!(fp = fopen(MAIL_CONF, "w"))) {
 		logmessage("email", "Failed to send mail!\n");
+		return;
 	}
+//	fp = fopen("/tmp/var/tmp/data","w");
+//	if(fp == NULL){
+//		logmessage("email", "Failed to send mail!\n");
+//	}
 	sprintf(buf,
 		"SMTP_SERVER = '%s'\n"
 		"SMTP_PORT = '%s'\n"
@@ -5913,11 +5921,12 @@ void start_sendmail(void)
 		, nvram_get("PM_USE_TLS")
 		, nvram_get("PM_SMTP_AUTH")
 		, nvram_get("PM_SMTP_AUTH_USER")
-		, nvram_get("PM_SMTP_AUTH_PASS")
+		, smtp_auth_pass
 	);
 	fputs(buf,fp);
 	fclose(fp);
 
+	mkdir_if_none("/etc/email");
 	fp = fopen("/etc/email/mailContent", "w");
 	if(fp == NULL){
 		logmessage("email", "Failed to send mail!\n");
@@ -5928,7 +5937,8 @@ void start_sendmail(void)
 	fputs(buf,fp);
 	fclose(fp);
 
-	sprintf(tmp, "cat /etc/email/mailContent | email -c /tmp/var/tmp/data -s \"%s\" -a %s %s &"
+	sprintf(tmp, "cat /etc/email/mailContent | email -c %s -s \"%s\" -a %s %s &"
+		, MAIL_CONF
 		, nvram_get("PM_MAIL_SUBJECT")
 		, nvram_get("PM_MAIL_FILE")
 		, nvram_get("PM_MAIL_TARGET")

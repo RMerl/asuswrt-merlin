@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<!DOCTYPE board SYSTEM "board.dtd">
+<!-- Description for Xilinx Zynq-7000
+
+     Version: Sourcery CodeBench Lite 2011.09-69
+     Support: https://support.codesourcery.com/GNUToolchain/
+
+     Copyright (c) 2007, 2008, 2009, 2010 CodeSourcery, Inc.
+
+     THIS FILE CONTAINS PROPRIETARY, CONFIDENTIAL, AND TRADE SECRET
+     INFORMATION OF CODESOURCERY AND/OR ITS LICENSORS.
+
+     You may not use or distribute this file without the express written
+     permission of CodeSourcery or its authorized distributor.  This file is
+     licensed only for use with Sourcery CodeBench.  No other use is permitted.
+     -->
+<board>
+  <properties>
+    <description>
+      Board:	Xilinx Zynq-7000
+CPU:	cortexa9
+    </description>
+    <property name="banked-regs"/>
+    <property name="has-vfp"/>
+  </properties>
+  <memory-map>
+    <memory-device address="0x00000000" size="256M" type="ram">
+      <description>
+	256MB DDR SDRAM
+      </description>
+    </memory-device>
+    <memory-device address="0xe4000000" size="64M" type="rom">
+      <description>
+	64MB NOR Flash Memory
+      </description>
+    </memory-device>
+  </memory-map>
+<debuggerDefaults>
+<debugInterface name="mesp">
+<option defaultValue="little" name="endian"/>
+<option defaultValue="cortex-a9" name="cpuid"/>
+<option defaultValue="${cb_install}/${cb_host}/${cb_target}/mep/tsp/arm/xilinx_zynq7000/xilinx_zynq7000_ctx-a9mp.maj" name="commandfile"/>
+</debugInterface>
+</debuggerDefaults>
+</board>
+<!-- checksum: 866558143bf61d404451b65c -->

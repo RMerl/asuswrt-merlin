@@ -1,0 +1,122 @@
+<html lang="en">
+<head>
+<title>Fast enumeration protocol - Using the GNU Compiler Collection (GCC)</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Using the GNU Compiler Collection (GCC)">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Fast-enumeration.html#Fast-enumeration" title="Fast enumeration">
+<link rel="prev" href="Fast-enumeration-details.html#Fast-enumeration-details" title="Fast enumeration details">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997,
+1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
+2010 Free Software Foundation, Inc.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being ``Funding Free Software'', the Front-Cover
+Texts being (a) (see below), and with the Back-Cover Texts being (b)
+(see below).  A copy of the license is included in the section entitled
+``GNU Free Documentation License''.
+
+(a) The FSF's Front-Cover Text is:
+
+     A GNU Manual
+
+(b) The FSF's Back-Cover Text is:
+
+     You have freedom to copy and modify this GNU Manual, like GNU
+     software.  Copies published by the Free Software Foundation raise
+     funds for GNU development.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+<link rel="stylesheet" type="text/css" href="../cs.css">
+</head>
+<body>
+<div class="node">
+<a name="Fast-enumeration-protocol"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Fast-enumeration-details.html#Fast-enumeration-details">Fast enumeration details</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Fast-enumeration.html#Fast-enumeration">Fast enumeration</a>
+<hr>
+</div>
+
+<h4 class="subsection">8.9.4 Fast enumeration protocol</h4>
+
+<p>If you want your own collection object to be usable with fast
+enumeration, you need to have it implement the method
+
+<pre class="smallexample">     - (unsigned long) countByEnumeratingWithState: (NSFastEnumerationState *)state
+                                           objects: (id *)objects
+                                             count: (unsigned long)len;
+</pre>
+ <p>where <code>NSFastEnumerationState</code> must be defined in your code as follows:
+
+<pre class="smallexample">     typedef struct
+     {
+       unsigned long state;
+       id            *itemsPtr;
+       unsigned long *mutationsPtr;
+       unsigned long extra[5];
+     } NSFastEnumerationState;
+</pre>
+ <p>If no <code>NSFastEnumerationState</code> is defined in your code, the
+compiler will automatically replace <code>NSFastEnumerationState *</code>
+with <code>struct __objcFastEnumerationState *</code>, where that type is
+silently defined by the compiler in an identical way.  This can be
+confusing and we recommend that you define
+<code>NSFastEnumerationState</code> (as shown above) instead.
+
+ <p>The method is called repeatedly during a fast enumeration to retrieve
+batches of objects.  Each invocation of the method should retrieve the
+next batch of objects.
+
+ <p>The return value of the method is the number of objects in the current
+batch; this should not exceed <code>len</code>, which is the maximum size of
+a batch as requested by the caller.  The batch itself is returned in
+the <code>itemsPtr</code> field of the <code>NSFastEnumerationState</code> struct.
+
+ <p>To help with returning the objects, the <code>objects</code> array is a C
+array preallocated by the caller (on the stack) of size <code>len</code>. 
+In many cases you can put the objects you want to return in that
+<code>objects</code> array, then do <code>itemsPtr = objects</code>.  But you
+don't have to; if your collection already has the objects to return in
+some form of C array, it could return them from there instead.
+
+ <p>The <code>state</code> and <code>extra</code> fields of the
+<code>NSFastEnumerationState</code> structure allows your collection object
+to keep track of the state of the enumeration.  In a simple array
+implementation, <code>state</code> may keep track of the index of the last
+object that was returned, and <code>extra</code> may be unused.
+
+ <p>The <code>mutationsPtr</code> field of the <code>NSFastEnumerationState</code> is
+used to keep track of mutations.  It should point to a number; before
+working on each object, the fast enumeration loop will check that this
+number has not changed.  If it has, a mutation has happened and the
+fast enumeration will abort.  So, <code>mutationsPtr</code> could be set to
+point to some sort of version number of your collection, which is
+increased by one every time there is a change (for example when an
+object is added or removed).  Or, if you are content with less strict
+mutation checks, it could point to the number of objects in your
+collection or some other value that can be checked to perform an
+approximate check that the collection has not been mutated.
+
+ <p>Finally, note how we declared the <code>len</code> argument and the return
+value to be of type <code>unsigned long</code>.  They could also be declared
+to be of type <code>unsigned int</code> and everything would still work.
+
+<!-- ========================================================================= -->
+ </body></html>
+

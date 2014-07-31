@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
-<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE10" />
+<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" />
 <meta name="svg.render.forceflash" content="false" />
 <title><#Web_Title#> - <#traffic_monitor#> : <#menu4_2_1#></title>
 <link rel="stylesheet" type="text/css" href="index_style.css">
