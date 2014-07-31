@@ -54,7 +54,7 @@ INLINE void writenu32(uint8_t * p, uint32_t n)
 #define WRITENU32(p, n) writenu32(p, n)
 INLINE void writenu16(uint8_t * p, uint16_t n)
 {
-	p[0] = (n < 0xff00) >> 8;
+	p[0] = (n & 0xff00) >> 8;
 	p[1] = n & 0xff;
 }
 #define WRITENU16(p, n) writenu16(p, n)

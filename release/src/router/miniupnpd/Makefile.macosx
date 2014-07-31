@@ -20,8 +20,6 @@ MV = mv
 INSTALL = install
 STRIP = strip
 
-CFLAGS += -DMACOSX
-
 # OSNAME and FWNAME are used for building OS or FW dependent code.
 OSNAME = $(shell uname)
 ARCH = $(shell uname -p)

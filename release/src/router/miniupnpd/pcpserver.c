@@ -1020,6 +1020,7 @@ static int CreatePCPMap_FW(pcp_info_t *pcp_msg_info)
 					&uid);
 	if (r < 0)
 		return PCP_ERR_NO_RESOURCES;
+	pcp_msg_info->ext_port = pcp_msg_info->int_port;
 	return PCP_SUCCESS;
 #else
 	return PCP_ERR_NO_RESOURCES;

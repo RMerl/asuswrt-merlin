@@ -206,6 +206,8 @@ int add_pinhole(const char * ifname,
 
 	e = calloc(1, sizeof(struct ip6t_entry));
 	e->ipv6.proto = proto;
+	if (proto)
+		e->ipv6.flags |= IP6T_F_PROTO;
 
 	if(ifname)
 		strncpy(e->ipv6.iniface, ifname, IFNAMSIZ);

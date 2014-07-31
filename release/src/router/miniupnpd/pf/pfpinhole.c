@@ -15,7 +15,7 @@
 #ifdef __DragonFly__
 #include <net/pf/pfvar.h>
 #else
-#ifdef MACOSX
+#ifdef __APPLE__
 #define PRIVATE 1
 #endif
 #include <net/pfvar.h>

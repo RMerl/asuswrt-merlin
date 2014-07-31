@@ -49,7 +49,7 @@
 #ifdef __DragonFly__
 #include <net/pf/pfvar.h>
 #else
-#ifdef MACOSX
+#ifdef __APPLE__
 #define PRIVATE 1
 #endif
 #include <net/pfvar.h>
@@ -269,7 +269,7 @@ add_redirect_rule2(const char * ifname,
 		pcr.rule.rdr.addr.type = PF_ADDR_ADDRMASK;
 #endif
 
-#ifdef MACOSX
+#ifdef __APPLE__
 		pcr.rule.dst.xport.range.op = PF_OP_EQ;
 		pcr.rule.dst.xport.range.port[0] = htons(eport);
 		pcr.rule.dst.xport.range.port[1] = htons(eport);
@@ -528,7 +528,7 @@ get_redirect_rule(const char * ifname, unsigned short eport, int proto,
 			syslog(LOG_ERR, "ioctl(dev, DIOCGETRULE): %m");
 			goto error;
 		}
-#ifdef MACOSX
+#ifdef __APPLE__
 		if( (eport == ntohs(pr.rule.dst.xport.range.port[0]))
 		  && (eport == ntohs(pr.rule.dst.xport.range.port[1]))
 #else
@@ -636,7 +636,7 @@ priv_delete_redirect_rule(const char * ifname, unsigned short eport,
 			syslog(LOG_ERR, "ioctl(dev, DIOCGETRULE): %m");
 			goto error;
 		}
-#ifdef MACOSX
+#ifdef __APPLE__
 		if( (eport == ntohs(pr.rule.dst.xport.range.port[0]))
 		  && (eport == ntohs(pr.rule.dst.xport.range.port[1]))
 #else
@@ -830,7 +830,7 @@ get_redirect_rule_by_index(int index,
 		goto error;
 	}
 	*proto = pr.rule.proto;
-#ifdef MACOSX
+#ifdef __APPLE__
 	*eport = ntohs(pr.rule.dst.xport.range.port[0]);
 #else
 	*eport = ntohs(pr.rule.dst.port[0]);
@@ -946,7 +946,7 @@ get_portmappings_in_range(unsigned short startport, unsigned short endport,
 			syslog(LOG_ERR, "ioctl(dev, DIOCGETRULE): %m");
 			continue;
 		}
-#ifdef MACOSX
+#ifdef __APPLE__
 		eport = ntohs(pr.rule.dst.xport.range.port[0]);
 		if( (eport == ntohs(pr.rule.dst.xport.range.port[1]))
 #else
