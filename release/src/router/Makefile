@@ -1511,7 +1511,7 @@ miniupnpd/config.h:
 miniupnpd: $(IPTABLES_TARGET) miniupnpd/config.h
 	@$(SEP)
 	cp -f ./shared/version.h miniupnpd/.
-	$(MAKE) -C miniupnpd -f Makefile.linux $(PARALLEL_BUILD)
+	$(MAKE) -C miniupnpd -f Makefile.merlin $(PARALLEL_BUILD)
 
 miniupnpd-clean:
 	-@$(MAKE) -C miniupnpd -f Makefile.linux clean
