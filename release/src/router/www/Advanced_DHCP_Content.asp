@@ -422,6 +422,8 @@ function showLANIPList(){
 		htmlCode += clientObj.mac;
 		htmlCode += '\', \'';
 		htmlCode += clientObj.ip;
+                htmlCode += '\', \'';
+                htmlCode += clientObj.name;
 		htmlCode += '\');"><strong>';
 		htmlCode += clientObj.ip + '</strong>&nbsp;&nbsp;(' + clientObj.name + ')';
 		htmlCode += '</strong></div></a><!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';
