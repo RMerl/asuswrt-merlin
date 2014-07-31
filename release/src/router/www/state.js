@@ -509,7 +509,7 @@ tabtitle[8] = new Array("", "<#menu5_6_1#>", "<#menu5_6_2#>", "<#menu5_6_3#>", "
 tabtitle[9] = new Array("", "<#menu5_7_2#>", "<#menu5_7_4#>", "<#menu5_7_3#>", "IPv6", "<#menu5_7_6#>", "<#menu5_7_5#>", "<#menu_dsl_log#>", "<#Connections#>");
 tabtitle[10] = new Array("", "<#Network_Analysis#>", "Netstat", "<#NetworkTools_WOL#>", "SMTP Client");
 if(bwdpi_support){
-	tabtitle[11] = new Array("", "Bandwidth Monitor", "QoS", "Web History", "<table style='margin-top:-10px \\9;'><tr><td><img src='/images/ROG_Logo.png' style='border:0px;width:32px;'></td><td>ROG First</td></tr></table>", ""<#traffic_monitor#>"");
+	tabtitle[11] = new Array("", "Bandwidth Monitor", "QoS", "Web History", "<table style='margin-top:-10px \\9;'><tr><td><img src='/images/ROG_Logo.png' style='border:0px;width:32px;'></td><td>ROG First</td></tr></table>", "<#traffic_monitor#>");
 	tabtitle[12] = new Array("", "<#AiProtection_Home#>", "Parental Control", "DNS Filtering");
 	tabtitle[14] = new Array("", "Time Limits", "Web & Apps Restriction");
 }
