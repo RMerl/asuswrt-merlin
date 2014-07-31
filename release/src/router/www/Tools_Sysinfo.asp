@@ -190,7 +190,7 @@ function show_etherstate(){
 					continue;	// This is the internal LAN port
 				if (tmpPort == "5") {
 					tmpPort = "4";	// This is the LAN 4 port from QTN
-					devicename = "&lt;unknown&gt;";
+					devicename = '<span class="ClientName">&lt;unknown&gt;</span>';
 				}
 			}
 			if (tmpPort == "0") {
