@@ -441,7 +441,7 @@ endif
 endif
 ifeq ($(RTCONFIG_HTTPS),y)
 pwdec.o:
-	@-cp -f ./prebuild/pwdec$(BCMEX).o .
+	@-cp -f ./prebuild/pwdec$(BCMEX).o pwdec.o
 endif
 endif
 
