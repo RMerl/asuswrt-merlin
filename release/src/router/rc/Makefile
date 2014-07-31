@@ -432,7 +432,7 @@ size: rc
 	mipsel-uclibc-nm --print-size --size-sort rc
 
 # handle prebuilt object here
-ifneq ($(wildcard, ./prebuild),)
+ifneq ($(wildcard ./prebuild),)
 ifeq ($(RTCONFIG_DSL),y)
 ifneq ($(RTCONFIG_RALINK),y)
 dsl_fb.o:
@@ -441,7 +441,7 @@ endif
 endif
 ifeq ($(RTCONFIG_HTTPS),y)
 pwdec.o:
-	@-cp -f ./prebuild/pwdec.o .
+	@-cp -f ./prebuild/pwdec$(BCMEX).o .
 endif
 endif
 
