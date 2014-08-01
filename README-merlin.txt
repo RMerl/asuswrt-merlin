@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 376.44-Beta3 (31-Jul-2014)
-=================================================
+Asuswrt-Merlin - build 376.44 (xx-Aug-2014)
+===========================================
 
 About
 -----
@@ -59,7 +59,7 @@ System:
    - LED control - put your Dark Knight in Stealth Mode by turning off 
      all LEDs
    - Entware easy setup script (alternative to Optware - the two are 
-     mutually exclusive) (not available on RT-AC56U/RT-AC68U)
+     mutually exclusive) (not available on RT-AC56/RT-AC68/RT-AC87)
 
 Disk sharing:
    - Enable/disable the use of shorter share names
@@ -74,19 +74,18 @@ Networking:
    - SSHD
    - Allows tweaking TCP/UDP connection tracking timeouts
    - CIFS client support (for mounting remote SMB share on the router)
-   - Layer7 iptables matching
+   - Layer7 iptables matching (N16/N66/AC66 only)
    - User-defined options for WAN DHCP queries (required by some ISPs)
    - Improved NAT loopback (based on code from phuzi0n from the DD-WRT 
      forums)
    - Advanced OpenVPN client and server support (all models except 
      RT-N16)
-   - Netfilter ipset module, for efficient blacklist implemetnation
+   - Netfilter ipset module, for efficient blacklist implementation
    - Configurable min/max UPNP ports
-   - IPSec kernel support (except RT-AC87)
+   - IPSec kernel support (N16/N66/AC66 only)
    - DNS-based Filtering, can be applied globally or per client
 
 Web interface:
-   - Improved client list, with DHCP hostnames
    - Optionally save traffic stats to disk (USB or JFFS partition)
    - Enhanced traffic monitoring: added monthly, as well as per IP 
      monitoring
@@ -95,13 +94,11 @@ Web interface:
    - Wireless client IP and hostname on the Wireless Log page
    - Wifi icon reports the state of both radios
    - Display the Ethernet port states
-   - The various MAC/IP selection pulldowns will also display hostnames
-     when possible instead of just NetBIOS names
    - Wireless site survey
 
 
-A few features that first debuted in Asuswrt-Merlin have since been 
-integrated/enabled in the official firmware:
+A few features that first appeared in Asuswrt-Merlin have since been 
+integrated/enabled/re-implemented in the official firmware:
 
 - 64K NVRAM for the RT-N66U
 - HTTPS webui
@@ -116,6 +113,8 @@ integrated/enabled in the official firmware:
 - OpenVPN client and server
 - Configurable IPv6 firewall
 - Persistent JFFS partition
+- The various MAC/IP selection pulldowns will also display hostnames
+  when possible instead of just NetBIOS names
 
 
 Installation
@@ -145,7 +144,7 @@ Usage
 -----
 
 ** JFFS **
-JFFS is a writable section of the flash memory which will allow you to 
+JFFS is a writeable section of the flash memory which will allow you to 
 store small files (such as scripts) inside the router without needing 
 to have a USB disk plugged in.  This space will survive reboots (but it 
 *MIGHT NOT survive firmware flashing*, so back it up first before 
@@ -495,10 +494,10 @@ Access your router through SSH/Telnet, and run
 "entware-setup.sh".
 
 Note that Entware requires the JFFS partition to be enabled, and an 
-ext2/ext3 formatted USB disk (NTFS and FAT32 are not supported).
+ext2/ext3 formatted USB disk (NTFS, HFS+ and FAT32 are not supported).
 
-Also note that Entware is not available for the RT-AC56U or RT-AC68U, 
-due to the different CPU architecture.
+Also note that Entware is not available for the RT-AC56U, RT-AC68U 
+or RT-AC87 due to the different CPU architecture.
 
 
 
@@ -568,56 +567,32 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-376.44-beta3 (31-Jul-2014)
-  - NEW: Merged with GPL 376_2044 (from AC87U).  This includes
-         amongst other things a minor webui refresh, 
-         and IE compatibility fixes.
-  - CHANGED: Updated miniupnpd to Git head (as of 20140731), which
-             includes NAT-PNP fixes
-  - FIXED: SmartSync hangs (updated binary blobs with
-           copies extracted from FW 376_1123) (N16/N66/AC66)
-
-
-376.44-beta2 (29-Jul-2014)
-  - NEW: HFS+ support for MIPS devices (N16/N66/AC66).
-         N16 also uses Tuxera now.
-  - CHANGED: Updated N66U driver to Asus's 1071 build
-  - CHANGED: Implemented RT-AC87U report of LAN port 4
-  - FIXED: RT-AC87U port order was wrong on SYsinfo page
-  - FIXED: Minidlna issues with Philips smart TVs
-  - FIXED: Incorrect state report of port 1 on AC87U.  
-           MAC and VLAN cannot be retrieved (AC87U)
-  - FIXED: SSHD brute force protection wasn't working if
-           Dual WAN was enabled and set to LB mode.
-  - FIXED: Miniupnpd error flood in Syslog when using a
-           Plex server on your LAN
-
-
-376.44-beta1 (26-Jul-2014)
+376.44 (xx-Aug-2014)
    IMPORTANT: Make a backup of your JFFS partition if upgrading
-              an RT-AC56U or RT-AC68U!  The partition layout
+              an RT-AC56U or RT-AC68U and you have stored files 
+			  in that partition!  The partition layout
               has been changed.
 
-   KNOWN ISSUE: Ethernet ports report on RT-AC87U are
-                inaccurate.  The same issue occurs with
-                Broadcom's own "et" userspace tool.  Unknown
-                if this is a bug in the current Asus code or
-                a technical limitation of the QTN integration.
-
-   - NEW: Merged with Asus's 376_1779 GPL
+   - NEW: Merged with Asus's 376_2044 GPL.
           Summary of changes:
             * New networkmap, lets users edit device names,
               assign icons to devices, etc...
             * Reworked IPv6 support
-            * Fix for Traffic Monitoring (replaces our own fix)
-            * 3G/4G fixes
             * New filesystem driver provider for NTFS/HFS+/FAT
-            * And a lot more
+            * Webui visual update
+			* Updated components (minidlna, radvd, dnsmasq)
+ 
   - NEW: Added support for RT-AC87U.
+  - NEW: HFS+ support for MIPS devices (N16/N66/AC66).
+  - CHANGED: Updated N66U wireless driver to Asus's 1071 build
+  - CHANGED: Updated miniupnpd to Git head (as of 20140731)
   - CHANGED: The JFFS partition on ARM devices now uses
              Asus's code, which means the whole unused space
              is now used for the JFFS partition.
              (AC56, AC68)
+  - CHANGED: Made all models use the new filesystem drivers from Tuxera, 
+             resulting in general improved USB disk performance (and 
+			 hopefully improved reliability as well).
   - CHANGED: Download Master packages are no longer included
              in the firmware on AC56/AC68 devices due to lack of
              space.  This simply means that on first install,
@@ -632,26 +607,29 @@ History
              reported.
   - CHANGED: Reworked layout of SSH settings on System page (based 
              on Asus's own WIP)
-  - CHNAGED: Allow FQDN (hostname + domain) rather than just
+  - CHANGED: Allow FQDN (hostname + domain) rather than just
              hostnames on the WAN page (some ISPs require that)
-  - CHANGED: Made all models (except RT-N16) use the new filesystem
-             drivers from Tuxera, resulting in general improved 
-             USB disk performance (and hopefully improved 
-             reliability as well).
+  - FIXED: Missing mDNSResponder daemon preventing mt-daapd
+           from working on MIPS devices (N16,N66,AC66)
+  - FIXED: System Log wouldn't properly be positioned
+           at the bottom (Patch by John9527)
+  - FIXED: DNSFilter clients configured to bypass DNSFilter
+           would still be prevented from using an IPv6 DNS.
+  - FIXED: Incorrect IPv6 prefix if not a multiple of 8
+           (patch by NickZ)
+  - FIXED: OpenVPN firewall cleanup was missing rules
+           (patch by sinshiva)
+  - FIXED: Minidlna issues with Philips smart TVs
+  - FIXED: SSHD brute force protection wasn't working if
+           Dual WAN was enabled and set to LB mode.
+  - FIXED: Miniupnpd error flood in Syslog when using a
+           Plex server on your LAN (fix from upstream)
   - REMOVED: Reverted various IPv6-related patches as they
              conflicted with Asus's own changes.  These might
              make it back at a later time if deemed
              necessary.
   - REMOVED: Removed layer7 filtering support in Netfilter from 
              ARM devices due to compatibility issues (AC56,AC68)
-  - FIXED: Missing mDNSResponder daemon preventing mt-daapd
-           from working on MIPS devices (N16,N66,AC66)
-  - FIXED: System Log wouldn't properly be positionned
-           at the bottom (Patch by John9527)
-  - FIXED: DNSFilter clients configured to bypass DNSFilter
-           would still be prevented from using an IPv6 DNS.
-  - FIXED: Broken WPS button on webui (fix backported from
-           Asus's 376_2044)
 
 
 374.43_2 (7-June-2014)
@@ -2041,8 +2019,9 @@ you really like it and want to give more than a simple "Thank you",
 there is also a Paypal donation button on my website.
 
 I want to give my special thanks to Asus for showing an interest in 
-this project, and also providing me with support when needed.  Also, 
-thank you everyone who has donated through Paypal.  Much appreciated!
+this project, and also providing me with support and development 
+devices when needed.  I also want to thank everyone that has 
+donated through Paypal.  Much appreciated!
 
 Finally, special thanks to r00t4rd3d for designing the Asuswrt-Merlin 
 logo.
