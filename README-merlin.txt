@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 376.44-Beta2 (29-Jul-2014)
+Asuswrt-Merlin - build 376.44-Beta3 (31-Jul-2014)
 =================================================
 
 About
@@ -49,7 +49,7 @@ Here is a list of features that Asuswrt-merlin brings over the original
 firmware:
 
 System:
-   - Based on 3.0.0.4.376_1779 sources (from RT-AC87U) from Asus
+   - Based on 3.0.0.4.376_2044 sources (from RT-AC87U) from Asus
    - Various bugfixes and optimizations
    - Some components were updated to newer versions, for improved
      stability and security
@@ -568,6 +568,16 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+376.44-beta3 (31-Jul-2014)
+  - NEW: Merged with GPL 376_2044 (from AC87U).  This includes
+         amongst other things a minor webui refresh, 
+         and IE compatibility fixes.
+  - CHANGED: Updated miniupnpd to Git head (as of 20140731), which
+             includes NAT-PNP fixes
+  - FIXED: SmartSync hangs (updated binary blobs with
+           copies extracted from FW 376_1123) (N16/N66/AC66)
+
+
 376.44-beta2 (29-Jul-2014)
   - NEW: HFS+ support for MIPS devices (N16/N66/AC66).
          N16 also uses Tuxera now.
