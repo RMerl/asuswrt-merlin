@@ -2357,7 +2357,6 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "g3state_dial", ""},
 	{ "g3state_conn", ""},
 #endif
-	{ "custom_clientlist",			""}, /* for customize device name  */
 	{ "nmp_client_list",		""},
 	{ NULL, NULL }
 };
