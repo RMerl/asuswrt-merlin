@@ -708,10 +708,8 @@ const char *getifaddr(char *ifname, int family, int flags)
 		if (addr && inet_ntop(ifa->ifa_addr->sa_family, addr, buf, sizeof(buf)) != NULL) {
 			if (netmask && (flags & GIF_PREFIXLEN)) {
 				int len = 0;
-				for (i = 0; netmask[i] == 0xff && len < maxlen; i++)
-					len += 8;
-				for (i = netmask[i]; i && len < maxlen; i <<= 1)
-					len++;
+				for (i = 0; netmask[i] != 0 && len < maxlen; i++)
+					len += (9 - ffs(netmask[i]));
 				if (len < maxlen) {
 					i = strlen(buf);
 					snprintf(&buf[i], sizeof(buf)-i, "/%d", len);
