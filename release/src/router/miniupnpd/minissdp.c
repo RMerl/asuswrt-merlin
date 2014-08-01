@@ -748,7 +748,7 @@ ProcessSSDPData(int s, const char *bufr, int n,
 #if defined(UPNP_STRICT) || defined(DELAY_MSEARCH_RESPONSE)
 	int mx_value = -1;
 #endif
-	unsigned int delay = 0;
+	unsigned int delay = 50; /* Non-zero default delay to prevent flooding */
 	/* UPnP Device Architecture v1.1.  1.3.3 Search response :
 	 * Devices responding to a multicast M-SEARCH SHOULD wait a random period
 	 * of time between 0 seconds and the number of seconds specified in the
