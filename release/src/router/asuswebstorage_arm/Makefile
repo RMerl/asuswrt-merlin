@@ -24,7 +24,12 @@ endif
 
 ifeq ($(wildcard $(TOP)/asuswebstorage/*.c),)
 all:
+ifeq ($(RTCONFIG_QTN),y)
+	-cp -f $(TOP)/asuswebstorage$(BCMEX)/prebuild/asuswebstorage_qtn asuswebstorage
+else
 	-cp -f $(TOP)/asuswebstorage$(BCMEX)/prebuild/asuswebstorage asuswebstorage
+endif
+
 else
 all: asuswebstorage
 endif
