@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 376.44 (xx-Aug-2014)
+Asuswrt-Merlin - build 376.44 (3-Aug-2014)
 ===========================================
 
 About
@@ -567,7 +567,7 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-376.44 (xx-Aug-2014)
+376.44 (3-Aug-2014)
    IMPORTANT: Make a backup of your JFFS partition if upgrading
               an RT-AC56U or RT-AC68U and you have stored files
               on that partition!  The partition layout has been 
@@ -592,14 +592,6 @@ History
   - CHANGED: Made all ARM models use the new filesystem drivers from Tuxera, 
              resulting in general improved USB disk performance (and 
              hopefully improved reliability as well) (AC56, AC68)
-  - CHANGED: Download Master packages are no longer included
-             in the firmware on AC56/AC68 devices due to lack of
-             space.  This simply means that on first install,
-             they will be downloaded from Asus's servers instead
-             of copied from flash - it might slow down the
-             initial install, however everything will work
-             the same afterward. AC87 is fine due to its
-             larger rootfs partition. (AC56, AC68)
   - CHANGED: The wifi notification icon will now report
              channel and channel width for the 5 GHz band,
              as the extension channel wasn't always accurately
@@ -629,6 +621,8 @@ History
              necessary.
   - REMOVED: Removed layer7 filtering support in Netfilter from 
              ARM devices due to compatibility issues (AC56,AC68)
+  - REMOVED: Removed IPsec support from ARM devices due to
+             compatibility issues (AC56, AC68)
 
 
 374.43_2 (7-June-2014)
