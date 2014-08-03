@@ -569,9 +569,9 @@ History
 -------
 376.44 (xx-Aug-2014)
    IMPORTANT: Make a backup of your JFFS partition if upgrading
-              an RT-AC56U or RT-AC68U and you have stored files 
-			  in that partition!  The partition layout
-              has been changed.
+              an RT-AC56U or RT-AC68U and you have stored files
+              on that partition!  The partition layout has been 
+              changed.
 
    - NEW: Merged with Asus's 376_2044 GPL.
           Summary of changes:
@@ -580,19 +580,18 @@ History
             * Reworked IPv6 support
             * New filesystem driver provider for NTFS/HFS+/FAT
             * Webui visual update
-			* Updated components (minidlna, radvd, dnsmasq)
+            * Updated components (minidlna, radvd, dnsmasq)
  
   - NEW: Added support for RT-AC87U.
-  - NEW: HFS+ support for MIPS devices (N16/N66/AC66).
   - CHANGED: Updated N66U wireless driver to Asus's 1071 build
   - CHANGED: Updated miniupnpd to Git head (as of 20140731)
   - CHANGED: The JFFS partition on ARM devices now uses
              Asus's code, which means the whole unused space
              is now used for the JFFS partition.
              (AC56, AC68)
-  - CHANGED: Made all models use the new filesystem drivers from Tuxera, 
+  - CHANGED: Made all ARM models use the new filesystem drivers from Tuxera, 
              resulting in general improved USB disk performance (and 
-			 hopefully improved reliability as well).
+             hopefully improved reliability as well) (AC56, AC68)
   - CHANGED: Download Master packages are no longer included
              in the firmware on AC56/AC68 devices due to lack of
              space.  This simply means that on first install,
