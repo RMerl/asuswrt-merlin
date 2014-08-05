@@ -1887,11 +1887,7 @@ ej_wl_control_channel(int eid, webs_t wp, int argc, char_t **argv)
 	int channel_50_2 = 0;
 #endif
 
-	if (!(channel_24 = wl_control_channel(0)))
-	{
-		ret = websWrite(wp, "[\"0\"]");
-		return ret;
-	}
+	channel_24 = wl_control_channel(0);
 
 	if (!(channel_50 = wl_control_channel(1)))
 		ret = websWrite(wp, "[\"%d\", \"%d\"]", channel_24, 0);
