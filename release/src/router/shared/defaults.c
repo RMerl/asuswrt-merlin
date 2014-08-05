@@ -1951,6 +1951,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "ipv6_ra_conf",	"noneset"	},	// address configuration from WAN router advertisement
 #endif /* RTCONFIG_WIDEDHCP6 */
 	{ "ipv6_dhcp6s_enable",	"1"		},	// DHCP6 Server for LAN
+	{ "ipv6_neighsol_drop", "1" 		}, 	// Filter out neighbour solicitation flood on Comcast network
 #endif
 	{ "web_redirect", 	"3"		},	// Redirect on NOLINK or NOINTERNET
 	{ "disiosdet",		"1"		},
