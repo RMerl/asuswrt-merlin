@@ -48,6 +48,19 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
+#include "config.h"
+
+#ifdef __linux__
+#define _GNU_SOURCE
+/* To call clock_gettime() directly */
+#include <sys/syscall.h>
+#endif /* __linux */
+
+#ifdef HAVE_MACH_MACH_TIME_H
+#include <mach/mach_time.h>
+#include <mach/mach.h>
+#endif
+
 #include "includes.h"
 #include "dbutil.h"
 #include "buffer.h"
@@ -319,7 +332,7 @@ int dropbear_listen(const char* address, const char* port,
 			continue;
 		}
 
-		if (listen(sock, 20) < 0) {
+		if (listen(sock, DROPBEAR_LISTEN_BACKLOG) < 0) {
 			err = errno;
 			close(sock);
 			TRACE(("listen() failed"))
@@ -930,5 +943,35 @@ int constant_time_memcmp(const void* a, const void *b, size_t n)
 		c |= (xa[i] ^ xb[i]);
 	}
 	return c;
+}
+
+time_t monotonic_now() {
+
+#if defined(__linux__) && defined(SYS_clock_gettime)
+	/* CLOCK_MONOTONIC_COARSE was added in Linux 2.6.32. Probably cheaper. */
+#ifndef CLOCK_MONOTONIC_COARSE
+#define CLOCK_MONOTONIC_COARSE 6
+#endif
+	static clockid_t clock_source = CLOCK_MONOTONIC_COARSE;
+	struct timespec ts;
+
+	if (syscall(SYS_clock_gettime, clock_source, &ts) == EINVAL) {
+		clock_source = CLOCK_MONOTONIC;
+		syscall(SYS_clock_gettime, CLOCK_MONOTONIC, &ts);
+	}
+	return ts.tv_sec;
+#elif defined(HAVE_MACH_ABSOLUTE_TIME)
+	/* OS X, see https://developer.apple.com/library/mac/qa/qa1398/_index.html */
+	static mach_timebase_info_data_t timebase_info;
+	if (timebase_info.denom == 0) {
+		mach_timebase_info(&timebase_info);
+	}
+	return mach_absolute_time() * timebase_info.numer / timebase_info.denom
+		/ 1e9;
+#else 
+	/* Fallback for everything else - this will sometimes go backwards */
+	return time(NULL);
+#endif
+
 }
 

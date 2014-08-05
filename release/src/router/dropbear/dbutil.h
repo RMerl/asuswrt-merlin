@@ -62,9 +62,9 @@ extern int debug_trace;
 #endif
 
 enum dropbear_prio {
-	DROPBEAR_PRIO_DEFAULT,
-	DROPBEAR_PRIO_LOWDELAY,
-	DROPBEAR_PRIO_BULK,
+	DROPBEAR_PRIO_DEFAULT = 10,
+	DROPBEAR_PRIO_LOWDELAY = 11,
+	DROPBEAR_PRIO_BULK = 12,
 };
 
 char * stripcontrol(const char * text);
@@ -105,5 +105,10 @@ int m_str_to_uint(const char* str, unsigned int *val);
 
 /* Returns 0 if a and b have the same contents */
 int constant_time_memcmp(const void* a, const void *b, size_t n);
+
+/* Returns a time in seconds that doesn't go backwards - does not correspond to
+a real-world clock */
+time_t monotonic_now();
+
 
 #endif /* _DBUTIL_H_ */

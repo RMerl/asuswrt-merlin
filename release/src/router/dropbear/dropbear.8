@@ -10,8 +10,7 @@ dropbear \- lightweight SSH server
 .IR [address:]port ]
 .SH DESCRIPTION
 .B dropbear
-is a SSH server designed to be small enough to be used in small memory
-environments, while still being functional and secure enough for general use.
+is a small SSH server 
 .SH OPTIONS
 .TP
 .B \-b \fIbanner
@@ -88,10 +87,14 @@ Ensure that traffic is transmitted at a certain interval in seconds. This is
 useful for working around firewalls or routers that drop connections after
 a certain period of inactivity. The trade-off is that a session may be
 closed if there is a temporary lapse of network connectivity. A setting
-if 0 disables keepalives.
+if 0 disables keepalives. If no response is received for 3 consecutive keepalives the connection will be closed.
 .TP
 .B \-I \fIidle_timeout
 Disconnect the session if no traffic is transmitted or received for \fIidle_timeout\fR seconds.
+.TP
+.B \-V
+Print the version
+
 .SH FILES
 
 .TP

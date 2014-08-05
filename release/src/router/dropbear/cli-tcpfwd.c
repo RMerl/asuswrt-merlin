@@ -52,7 +52,7 @@ static int cli_localtcp(const char* listenaddr,
 static const struct ChanType cli_chan_tcplocal = {
 	1, /* sepfds */
 	"direct-tcpip",
-	NULL,
+	tcp_prio_inithandler,
 	NULL,
 	NULL,
 	NULL
@@ -267,6 +267,8 @@ static int newtcpforwarded(struct Channel * channel) {
 	 * progress succeeds */
 	channel->writefd = sock;
 	channel->initconn = 1;
+
+	channel->prio = DROPBEAR_CHANNEL_PRIO_UNKNOWABLE;
 	
 	err = SSH_OPEN_IN_PROGRESS;
 

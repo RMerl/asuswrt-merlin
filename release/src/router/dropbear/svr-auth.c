@@ -392,8 +392,7 @@ void send_msg_userauth_success() {
 	/* authdone must be set after encrypt_packet() for 
 	 * delayed-zlib mode */
 	ses.authstate.authdone = 1;
-	ses.connect_time = 0;
-
+	svr_ses.connect_time = 0;
 
 	if (ses.authstate.pw_uid == 0) {
 		ses.allowprivport = 1;

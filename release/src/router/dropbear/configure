@@ -5855,6 +5855,31 @@ fi
 done
 
 
+# OS X monotonic time
+for ac_header in mach/mach_time.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "mach/mach_time.h" "ac_cv_header_mach_mach_time_h" "$ac_includes_default"
+if test "x$ac_cv_header_mach_mach_time_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_MACH_MACH_TIME_H 1
+_ACEOF
+
+fi
+
+done
+
+for ac_func in mach_absolute_time
+do :
+  ac_fn_c_check_func "$LINENO" "mach_absolute_time" "ac_cv_func_mach_absolute_time"
+if test "x$ac_cv_func_mach_absolute_time" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_MACH_ABSOLUTE_TIME 1
+_ACEOF
+
+fi
+done
+
+
 # Check whether --enable-bundled-libtom was given.
 if test "${enable_bundled_libtom+set}" = set; then :
   enableval=$enable_bundled_libtom;

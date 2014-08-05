@@ -59,6 +59,13 @@ static void close_chan_fd(struct Channel *channel, int fd, int how);
 #define ERRFD_IS_READ(channel) ((channel)->extrabuf == NULL)
 #define ERRFD_IS_WRITE(channel) (!ERRFD_IS_READ(channel))
 
+/* allow space for:
+ * 1 byte  byte      SSH_MSG_CHANNEL_DATA
+ * 4 bytes uint32    recipient channel
+ * 4 bytes string    data
+ */
+#define RECV_MAX_CHANNEL_DATA_LEN (RECV_MAX_PAYLOAD_LEN-(1+4+4))
+
 /* Initialise all the channels */
 void chaninitialise(const struct ChanType *chantypes[]) {
 
@@ -165,7 +172,9 @@ static struct Channel* newchannel(unsigned int remotechan,
 
 	newchan->extrabuf = NULL; /* The user code can set it up */
 	newchan->recvdonelen = 0;
-	newchan->recvmaxpacket = RECV_MAX_PAYLOAD_LEN;
+	newchan->recvmaxpacket = RECV_MAX_CHANNEL_DATA_LEN;
+
+	newchan->prio = DROPBEAR_CHANNEL_PRIO_EARLY; /* inithandler sets it */
 
 	ses.channels[i] = newchan;
 	ses.chancount++;
@@ -201,11 +210,14 @@ struct Channel* getchannel() {
 /* Iterate through the channels, performing IO if available */
 void channelio(fd_set *readfds, fd_set *writefds) {
 
+	/* Listeners such as TCP, X11, agent-auth */
 	struct Channel *channel;
 	unsigned int i;
 
 	/* foreach channel */
 	for (i = 0; i < ses.chansize; i++) {
+		/* Close checking only needs to occur for channels that had IO events */
+		int do_check_close = 0;
 
 		channel = ses.channels[i];
 		if (channel == NULL) {
@@ -217,6 +229,7 @@ void channelio(fd_set *readfds, fd_set *writefds) {
 		if (channel->readfd >= 0 && FD_ISSET(channel->readfd, readfds)) {
 			TRACE(("send normal readfd"))
 			send_msg_channel_data(channel, 0);
+			do_check_close = 1;
 		}
 
 		/* read stderr data and send it over the wire */
@@ -224,6 +237,7 @@ void channelio(fd_set *readfds, fd_set *writefds) {
 			&& FD_ISSET(channel->errfd, readfds)) {
 				TRACE(("send normal errfd"))
 				send_msg_channel_data(channel, 1);
+			do_check_close = 1;
 		}
 
 		/* write to program/pipe stdin */
@@ -235,20 +249,22 @@ void channelio(fd_set *readfds, fd_set *writefds) {
 							 check_in_progress(), as it may be NULL */
 			}
 			writechannel(channel, channel->writefd, channel->writebuf);
+			do_check_close = 1;
 		}
 		
 		/* stderr for client mode */
 		if (ERRFD_IS_WRITE(channel)
 				&& channel->errfd >= 0 && FD_ISSET(channel->errfd, writefds)) {
 			writechannel(channel, channel->errfd, channel->extrabuf);
+			do_check_close = 1;
 		}
 	
 		/* handle any channel closing etc */
-		check_close(channel);
-
+		if (do_check_close) {
+			check_close(channel);
+		}
 	}
 
-	/* Listeners such as TCP, X11, agent-auth */
 #ifdef USING_LISTENERS
 	handle_listeners(readfds);
 #endif
@@ -560,14 +576,16 @@ static void remove_channel(struct Channel * channel) {
 	}
 
 
-	/* close the FDs in case they haven't been done
-	 * yet (they might have been shutdown etc) */
-	TRACE(("CLOSE writefd %d", channel->writefd))
-	close(channel->writefd);
-	TRACE(("CLOSE readfd %d", channel->readfd))
-	close(channel->readfd);
-	TRACE(("CLOSE errfd %d", channel->errfd))
-	close(channel->errfd);
+	if (IS_DROPBEAR_SERVER || (channel->writefd != STDOUT_FILENO)) {
+		/* close the FDs in case they haven't been done
+		 * yet (they might have been shutdown etc) */
+		TRACE(("CLOSE writefd %d", channel->writefd))
+		close(channel->writefd);
+		TRACE(("CLOSE readfd %d", channel->readfd))
+		close(channel->readfd);
+		TRACE(("CLOSE errfd %d", channel->errfd))
+		close(channel->errfd);
+	}
 
 	if (!channel->close_handler_done
 		&& channel->type->closehandler) {
@@ -578,6 +596,8 @@ static void remove_channel(struct Channel * channel) {
 	ses.channels[channel->index] = NULL;
 	m_free(channel);
 	ses.chancount--;
+
+	update_channel_prio();
 
 	TRACE(("leave remove_channel"))
 }
@@ -869,6 +889,10 @@ void recv_msg_channel_open() {
 		}
 	}
 
+	if (channel->prio == DROPBEAR_CHANNEL_PRIO_EARLY) {
+		channel->prio = DROPBEAR_CHANNEL_PRIO_BULK;
+	}
+
 	chan_initwritebuf(channel);
 
 	/* success */
@@ -882,6 +906,8 @@ failure:
 
 cleanup:
 	m_free(type);
+	
+	update_channel_prio();
 
 	TRACE(("leave recv_msg_channel_open"))
 }
@@ -997,7 +1023,7 @@ static void close_chan_fd(struct Channel *channel, int fd, int how) {
  * for X11, agent, tcp forwarding, and should be filled with channel-specific
  * options, with the calling function calling encrypt_packet() after
  * completion. It is mandatory for the caller to encrypt_packet() if
- * DROPBEAR_SUCCESS is returned */
+ * a channel is returned. NULL is returned on failure. */
 int send_msg_channel_open_init(int fd, const struct ChanType *type) {
 
 	struct Channel* chan;
@@ -1028,7 +1054,7 @@ int send_msg_channel_open_init(int fd, const struct ChanType *type) {
 	buf_putstring(ses.writepayload, type->name, strlen(type->name));
 	buf_putint(ses.writepayload, chan->index);
 	buf_putint(ses.writepayload, opts.recv_window);
-	buf_putint(ses.writepayload, RECV_MAX_PAYLOAD_LEN);
+	buf_putint(ses.writepayload, RECV_MAX_CHANNEL_DATA_LEN);
 
 	TRACE(("leave send_msg_channel_open_init()"))
 	return DROPBEAR_SUCCESS;
@@ -1063,9 +1089,14 @@ void recv_msg_channel_open_confirmation() {
 		if (ret > 0) {
 			remove_channel(channel);
 			TRACE(("inithandler returned failure %d", ret))
+			return;
 		}
 	}
 
+	if (channel->prio == DROPBEAR_CHANNEL_PRIO_EARLY) {
+		channel->prio = DROPBEAR_CHANNEL_PRIO_BULK;
+	}
+	update_channel_prio();
 	
 	TRACE(("leave recv_msg_channel_open_confirmation"))
 }
@@ -1085,3 +1116,15 @@ void recv_msg_channel_open_failure() {
 	remove_channel(channel);
 }
 #endif /* USING_LISTENERS */
+
+void send_msg_request_success() {
+	CHECKCLEARTOWRITE();
+	buf_putbyte(ses.writepayload, SSH_MSG_REQUEST_SUCCESS);
+	encrypt_packet();
+}
+
+void send_msg_request_failure() {
+	CHECKCLEARTOWRITE();
+	buf_putbyte(ses.writepayload, SSH_MSG_REQUEST_FAILURE);
+	encrypt_packet();
+}

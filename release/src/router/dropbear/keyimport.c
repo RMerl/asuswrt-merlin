@@ -602,13 +602,18 @@ static sign_key *openssh_read(const char *filename, char * UNUSED(passphrase))
 	 */
 	blobbuf = buf_new(3000);
 
+#ifdef DROPBEAR_DSS
 	if (key->type == OSSH_DSA) {
 		buf_putstring(blobbuf, "ssh-dss", 7);
 		retkey->type = DROPBEAR_SIGNKEY_DSS;
-	} else if (key->type == OSSH_RSA) {
+	} 
+#endif
+#ifdef DROPBEAR_RSA
+	if (key->type == OSSH_RSA) {
 		buf_putstring(blobbuf, "ssh-rsa", 7);
 		retkey->type = DROPBEAR_SIGNKEY_RSA;
 	}
+#endif
 
 	for (i = 0; i < num_integers; i++) {
 		ret = ber_read_id_len(p, key->keyblob+key->keyblob_len-p,
@@ -831,7 +836,14 @@ static int openssh_write(const char *filename, sign_key *key,
 	mp_int dmp1, dmq1, iqmp, tmpval; /* for rsa */
 #endif
 
-	if (key->type == DROPBEAR_SIGNKEY_RSA || key->type == DROPBEAR_SIGNKEY_DSS)
+	if (
+#ifdef DROPBEAR_RSA
+			key->type == DROPBEAR_SIGNKEY_RSA ||
+#endif
+#ifdef DROPBEAR_DSS
+			key->type == DROPBEAR_SIGNKEY_DSS ||
+#endif
+			0)
 	{
 		/*
 		 * Fetch the key blobs.

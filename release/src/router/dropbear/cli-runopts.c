@@ -90,6 +90,7 @@ static void printhelp() {
 					"-c <cipher list> Specify preferred ciphers ('-c help' to list options)\n"
 					"-m <MAC list> Specify preferred MACs for packet verification (or '-m help')\n"
 #endif
+					"-V    Version\n"
 #ifdef DEBUG_TRACE
 					"-v    verbose (compiled with DEBUG_TRACE)\n"
 #endif
@@ -163,6 +164,8 @@ void cli_getopts(int argc, char ** argv) {
 	opts.ipv6 = 1;
 	*/
 	opts.recv_window = DEFAULT_RECV_WINDOW;
+	opts.keepalive_secs = DEFAULT_KEEPALIVE;
+	opts.idle_timeout_secs = DEFAULT_IDLE_TIMEOUT;
 
 	fill_own_user();
 
@@ -322,6 +325,10 @@ void cli_getopts(int argc, char ** argv) {
 #ifndef ENABLE_CLI_LOCALTCPFWD
 				case 'L':
 #endif
+				case 'V':
+					print_version();
+					exit(EXIT_SUCCESS);
+					break;
 				case 'o':
 				case 'b':
 					next = &dummy;

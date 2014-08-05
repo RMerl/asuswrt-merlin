@@ -29,14 +29,6 @@
 #include "buffer.h"
 #include "circbuffer.h"
 
-/* channel->type values */
-#define CHANNEL_ID_NONE 0
-#define CHANNEL_ID_SESSION 1
-#define CHANNEL_ID_X11 2
-#define CHANNEL_ID_AGENT 3
-#define CHANNEL_ID_TCPDIRECT 4
-#define CHANNEL_ID_TCPFORWARDED 5
-
 #define SSH_OPEN_ADMINISTRATIVELY_PROHIBITED    1
 #define SSH_OPEN_CONNECT_FAILED                 2
 #define SSH_OPEN_UNKNOWN_CHANNEL_TYPE           3
@@ -48,6 +40,13 @@
 #define CHAN_EXTEND_SIZE 3 /* how many extra slots to add when we need more */
 
 struct ChanType;
+
+enum dropbear_channel_prio {
+	DROPBEAR_CHANNEL_PRIO_INTERACTIVE, /* pty shell, x11 */
+	DROPBEAR_CHANNEL_PRIO_UNKNOWABLE, /* tcp - can't know what's being forwarded */
+	DROPBEAR_CHANNEL_PRIO_BULK, /* the rest - probably scp or something */
+	DROPBEAR_CHANNEL_PRIO_EARLY, /* channel is still being set up */
+};
 
 struct Channel {
 
@@ -87,6 +86,8 @@ struct Channel {
 	void (*read_mangler)(struct Channel*, unsigned char* bytes, int *len);
 
 	const struct ChanType* type;
+
+	enum dropbear_channel_prio prio;
 };
 
 struct ChanType {
@@ -97,7 +98,6 @@ struct ChanType {
 	int (*check_close)(struct Channel*);
 	void (*reqhandler)(struct Channel*);
 	void (*closehandler)(struct Channel*);
-
 };
 
 void chaninitialise(const struct ChanType *chantypes[]);
@@ -128,5 +128,8 @@ int send_msg_channel_open_init(int fd, const struct ChanType *type);
 void recv_msg_channel_open_confirmation();
 void recv_msg_channel_open_failure();
 #endif
+
+void send_msg_request_success();
+void send_msg_request_failure();
 
 #endif /* _CHANNEL_H_ */

@@ -270,7 +270,7 @@ static void kexinitialise() {
 
 	ses.kexstate.our_first_follows_matches = 0;
 
-	ses.kexstate.lastkextime = time(NULL);
+	ses.kexstate.lastkextime = monotonic_now();
 
 }
 
@@ -789,9 +789,11 @@ static void finish_kexhashbuf(void) {
 	hash_desc->done(&hs, buf_getwriteptr(ses.hash, hash_desc->hashsize));
 	buf_setlen(ses.hash, hash_desc->hashsize);
 
-#ifdef DEBUG_KEXHASH
-	printhex("kexhashbuf", ses.kexhashbuf->data, ses.kexhashbuf->len);
-	printhex("kexhash", ses.hash->data, ses.hash->len);
+#if defined(DEBUG_KEXHASH) && defined(DEBUG_TRACE)
+	if (!debug_trace) {
+		printhex("kexhashbuf", ses.kexhashbuf->data, ses.kexhashbuf->len);
+		printhex("kexhash", ses.hash->data, ses.hash->len);
+	}
 #endif
 
 	buf_burn(ses.kexhashbuf);

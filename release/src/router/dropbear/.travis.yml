@@ -1,0 +1,20 @@
+language: c
+compiler:
+  - gcc
+
+script: 
+  - autoconf && autoheader && ./configure $BUNDLEDLIBTOM CFLAGS="-O2 -Wall -Wno-pointer-sign" --prefix=$HOME/inst && make install
+  - ~/inst/bin/dropbearkey -t rsa -f testrsa
+  - ~/inst/bin/dropbearkey -t dss -f testdss
+  - ~/inst/bin/dropbearkey -t ecdsa -f testec256 -s 256
+  - ~/inst/bin/dropbearkey -t ecdsa -f testec384 -s 384
+  - ~/inst/bin/dropbearkey -t ecdsa -f testec521 -s 521
+
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq libz-dev libtomcrypt-dev libtommath-dev
+
+env: 
+  - BUNDLEDLIBTOM=--disable-bundled-libtom
+  - BUNDLEDLIBTOM=--enable-bundled-libtom
+  - MULTI=1

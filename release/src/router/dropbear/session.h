@@ -48,6 +48,8 @@ void session_cleanup();
 void send_session_identification();
 void send_msg_ignore();
 
+void update_channel_prio();
+
 const char* get_user_shell();
 void fill_passwd(const char* username);
 
@@ -104,10 +106,6 @@ struct sshsession {
 	/* Is it a client or server? */
 	unsigned char isserver;
 
-	time_t connect_time; /* time the connection was established
-							(cleared after auth once we're not
-							respecting AUTH_TIMEOUT any more) */
-
 	int sock_in;
 	int sock_out;
 
@@ -146,11 +144,14 @@ struct sshsession {
 	int signal_pipe[2]; /* stores endpoints of a self-pipe used for
 						   race-free signal handling */
 						
-	time_t last_trx_packet_time; /* time of the last packet transmission, for
-							keepalive purposes */
+	/* time of the last packet send/receive, for keepalive. Not real-world clock */
+	time_t last_packet_time_keepalive_sent;
+	time_t last_packet_time_keepalive_recv;
+	time_t last_packet_time_any_sent;
 
-	time_t last_packet_time; /* time of the last packet transmission or receive, for
-								idle timeout purposes */
+	time_t last_packet_time_idle; /* time of the last packet transmission or receive, for
+								idle timeout purposes so ignores SSH_MSG_IGNORE
+								or responses to keepalives. Not real-world clock */
 
 
 	/* KEX/encryption related */
@@ -187,7 +188,9 @@ struct sshsession {
 	unsigned int chancount; /* the number of Channel*s in use */
 	const struct ChanType **chantypes; /* The valid channel types */
 
-	
+	/* TCP priority level for the main "port 22" tcp socket */
+	enum dropbear_prio socket_prio;
+
 	/* TCP forwarding - where manage listeners */
 	struct Listener ** listeners;
 	unsigned int listensize;
@@ -216,6 +219,11 @@ struct serversession {
 
 	/* The resolved remote address, used for lastlog etc */
 	char *remotehost;
+
+	time_t connect_time; /* time the connection was established
+							(cleared after auth once we're not
+							respecting AUTH_TIMEOUT any more).
+							A monotonic time, not realworld */
 
 #ifdef USE_VFORK
 	pid_t server_pid;

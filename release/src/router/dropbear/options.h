@@ -222,12 +222,11 @@ much traffic. */
  * return the password on standard output */
 /*#define ENABLE_CLI_ASKPASS_HELPER*/
 
-/* Send a real auth request first rather than requesting a list of available methods.
- * It saves a network round trip at login but prevents immediate login to
- * accounts with no password, and might be rejected by some strict servers (none
- * encountered yet) - hence it isn't enabled by default. */
-/* #define CLI_IMMEDIATE_AUTH */
-
+/* Save a network roundtrip by sendng a real auth request immediately after
+ * sending a query for the available methods.  It is at the expense of < 100
+ * bytes of extra network traffic. This is not yet enabled by default since it
+ * could cause problems with non-compliant servers */
+/* #define DROPBEAR_CLI_IMMEDIATE_AUTH */
 
 /* Source for randomness. This must be able to provide hundreds of bytes per SSH
  * connection without blocking. In addition /dev/random is used for seeding
@@ -308,6 +307,11 @@ much traffic. */
 /* Ensure that data is transmitted every KEEPALIVE seconds. This can
 be overridden at runtime with -K. 0 disables keepalives */
 #define DEFAULT_KEEPALIVE 0
+
+/* If this many KEEPALIVES are sent with no packets received from the
+other side, exit. Not run-time configurable - if you have a need
+for runtime configuration please mail the Dropbear list */
+#define DEFAULT_KEEPALIVE_LIMIT 3
 
 /* Ensure that data is received within IDLE_TIMEOUT seconds. This can
 be overridden at runtime with -I. 0 disables idle timeouts */

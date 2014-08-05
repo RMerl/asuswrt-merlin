@@ -4,7 +4,7 @@
  *******************************************************************/
 
 #ifndef DROPBEAR_VERSION
-#define DROPBEAR_VERSION "2014.63"
+#define DROPBEAR_VERSION "2014.64"
 #endif
 
 #define LOCAL_IDENT "SSH-2.0-dropbear_" DROPBEAR_VERSION
@@ -250,5 +250,11 @@
 #ifndef HAVE_FORK
 #define USE_VFORK
 #endif  /* don't HAVE_FORK */
+
+#if MAX_UNAUTH_CLIENTS > MAX_CHANNELS
+#define DROPBEAR_LISTEN_BACKLOG MAX_UNAUTH_CLIENTS
+#else
+#define DROPBEAR_LISTEN_BACKLOG MAX_CHANNELS
+#endif
 
 /* no include guard for this file */

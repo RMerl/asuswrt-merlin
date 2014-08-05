@@ -37,8 +37,8 @@ typedef struct runopts {
 	int listen_fwd_all;
 #endif
 	unsigned int recv_window;
-	time_t keepalive_secs;
-	time_t idle_timeout_secs;
+	time_t keepalive_secs; /* Time between sending keepalives. 0 is off */
+	time_t idle_timeout_secs; /* Exit if no traffic is sent/received in this time */
 
 #ifndef DISABLE_ZLIB
 	/* TODO: add a commandline flag. Currently this is on by default if compression
@@ -163,5 +163,7 @@ void cli_getopts(int argc, char ** argv);
 #ifdef ENABLE_USER_ALGO_LIST
 void parse_ciphers_macs();
 #endif
+
+void print_version(void);
 
 #endif /* _RUNOPTS_H_ */

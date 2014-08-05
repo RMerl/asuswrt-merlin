@@ -44,6 +44,7 @@ void process_packet() {
 
 	unsigned char type;
 	unsigned int i;
+	time_t now;
 
 	TRACE2(("enter process_packet"))
 
@@ -52,7 +53,8 @@ void process_packet() {
 
 	ses.lastpacket = type;
 
-    ses.last_packet_time = time(NULL);
+	now = monotonic_now();
+	ses.last_packet_time_keepalive_recv = now;
 
 	/* These packets we can receive at any time */
 	switch(type) {
@@ -65,11 +67,19 @@ void process_packet() {
 		case SSH_MSG_UNIMPLEMENTED:
 			/* debugging XXX */
 			TRACE(("SSH_MSG_UNIMPLEMENTED"))
-			dropbear_exit("Received SSH_MSG_UNIMPLEMENTED");
+			goto out;
 			
 		case SSH_MSG_DISCONNECT:
 			/* TODO cleanup? */
 			dropbear_close("Disconnect received");
+	}
+
+	/* Ignore these packet types so that keepalives don't interfere with
+	idle detection. This is slightly incorrect since a tcp forwarded
+	global request with failure won't trigger the idle timeout,
+	but that's probably acceptable */
+	if (!(type == SSH_MSG_GLOBAL_REQUEST || type == SSH_MSG_REQUEST_FAILURE)) {
+		ses.last_packet_time_idle = now;
 	}
 
 	/* This applies for KEX, where the spec says the next packet MUST be

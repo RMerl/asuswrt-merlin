@@ -182,10 +182,15 @@ void x11cleanup(struct ChanSess *chansess) {
 	}
 }
 
+static int x11_inithandler(struct Channel *channel) {
+	channel->prio = DROPBEAR_CHANNEL_PRIO_INTERACTIVE;
+	return 0;
+}
+
 static const struct ChanType chan_x11 = {
 	0, /* sepfds */
 	"x11",
-	NULL, /* inithandler */
+	x11_inithandler, /* inithandler */
 	NULL, /* checkclose */
 	NULL, /* reqhandler */
 	NULL /* closehandler */

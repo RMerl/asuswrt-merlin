@@ -174,11 +174,11 @@ void recv_msg_userauth_failure() {
 	the "none" auth request, and then a response to the immediate auth request. 
 	We need to be careful handling them. */
 	if (cli_ses.ignore_next_auth_response) {
-		TRACE(("ignore next response, state set to USERAUTH_REQ_SENT"))
 		cli_ses.state = USERAUTH_REQ_SENT;
+		cli_ses.ignore_next_auth_response = 0;
+		TRACE(("leave recv_msg_userauth_failure, ignored response, state set to USERAUTH_REQ_SENT"));
+		return;
 	} else  {
-		cli_ses.state = USERAUTH_FAIL_RCVD;
-		cli_ses.lastauthtype = AUTH_TYPE_NONE;
 #ifdef ENABLE_CLI_PUBKEY_AUTH
 		/* If it was a pubkey auth request, we should cross that key 
 		 * off the list. */
@@ -197,9 +197,9 @@ void recv_msg_userauth_failure() {
 			cli_ses.auth_interact_failed = 1;
 		}
 #endif
+		cli_ses.state = USERAUTH_FAIL_RCVD;
+		cli_ses.lastauthtype = AUTH_TYPE_NONE;
 	}
-
-	cli_ses.ignore_next_auth_response = 0;
 
 	methods = buf_getstring(ses.payload, &methlen);
 

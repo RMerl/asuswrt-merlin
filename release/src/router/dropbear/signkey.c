@@ -106,6 +106,7 @@ enum signkey_type signkey_type_from_name(const char* name, unsigned int namelen)
 void **
 signkey_key_ptr(sign_key *key, enum signkey_type type) {
 	switch (type) {
+#ifdef DROPBEAR_ECDSA
 #ifdef DROPBEAR_ECC_256
 		case DROPBEAR_SIGNKEY_ECDSA_NISTP256:
 			return (void**)&key->ecckey256;
@@ -118,6 +119,7 @@ signkey_key_ptr(sign_key *key, enum signkey_type type) {
 		case DROPBEAR_SIGNKEY_ECDSA_NISTP521:
 			return (void**)&key->ecckey521;
 #endif
+#endif /* DROPBEAR_ECDSA */
 #ifdef DROPBEAR_RSA
 		case DROPBEAR_SIGNKEY_RSA:
 			return (void**)&key->rsakey;

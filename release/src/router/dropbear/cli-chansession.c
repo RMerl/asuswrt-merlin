@@ -41,7 +41,7 @@ static void cli_chansessreq(struct Channel *channel);
 static void send_chansess_pty_req(struct Channel *channel);
 static void send_chansess_shell_req(struct Channel *channel);
 static void cli_escape_handler(struct Channel *channel, unsigned char* buf, int *len);
-
+static int cli_init_netcat(struct Channel *channel);
 
 static void cli_tty_setup();
 
@@ -357,6 +357,11 @@ static int cli_init_stdpipe_sess(struct Channel *channel) {
 	return 0;
 }
 
+static int cli_init_netcat(struct Channel *channel) {
+	channel->prio = DROPBEAR_CHANNEL_PRIO_UNKNOWABLE;
+	return cli_init_stdpipe_sess(channel);
+}
+
 static int cli_initchansess(struct Channel *channel) {
 
 	cli_init_stdpipe_sess(channel);
@@ -369,8 +374,9 @@ static int cli_initchansess(struct Channel *channel) {
 
 	if (cli_opts.wantpty) {
 		send_chansess_pty_req(channel);
+		channel->prio = DROPBEAR_CHANNEL_PRIO_INTERACTIVE;
 	} else {
-		set_sock_priority(ses.sock_out, DROPBEAR_PRIO_BULK);
+		channel->prio = DROPBEAR_CHANNEL_PRIO_BULK;
 	}
 
 	send_chansess_shell_req(channel);
@@ -389,7 +395,7 @@ static int cli_initchansess(struct Channel *channel) {
 static const struct ChanType cli_chan_netcat = {
 	0, /* sepfds */
 	"direct-tcpip",
-	cli_init_stdpipe_sess, /* inithandler */
+	cli_init_netcat, /* inithandler */
 	NULL,
 	NULL,
 	cli_closechansess

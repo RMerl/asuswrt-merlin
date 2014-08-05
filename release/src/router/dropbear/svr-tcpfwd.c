@@ -34,14 +34,6 @@
 #include "runopts.h"
 #include "auth.h"
 
-static void send_msg_request_failure();
-
-static void send_msg_request_failure() {
-	CHECKCLEARTOWRITE();
-	buf_putbyte(ses.writepayload, SSH_MSG_REQUEST_FAILURE);
-	encrypt_packet();
-}
-
 #ifndef ENABLE_SVR_REMOTETCPFWD
 
 /* This is better than SSH_MSG_UNIMPLEMENTED */
@@ -53,7 +45,6 @@ void recv_msg_global_request_remotetcp() {
 /* */
 #endif /* !ENABLE_SVR_REMOTETCPFWD */
 
-static void send_msg_request_success();
 static int svr_cancelremotetcp();
 static int svr_remotetcpreq();
 static int newtcpdirect(struct Channel * channel);
@@ -62,7 +53,7 @@ static int newtcpdirect(struct Channel * channel);
 static const struct ChanType svr_chan_tcpremote = {
 	1, /* sepfds */
 	"forwarded-tcpip",
-	NULL,
+	tcp_prio_inithandler,
 	NULL,
 	NULL,
 	NULL
@@ -113,15 +104,6 @@ out:
 	m_free(reqname);
 
 	TRACE(("leave recv_msg_global_request"))
-}
-
-
-static void send_msg_request_success() {
-
-	CHECKCLEARTOWRITE();
-	buf_putbyte(ses.writepayload, SSH_MSG_REQUEST_SUCCESS);
-	encrypt_packet();
-
 }
 
 static int matchtcp(void* typedata1, void* typedata2) {
@@ -258,6 +240,8 @@ static int newtcpdirect(struct Channel * channel) {
 	int len;
 	int err = SSH_OPEN_ADMINISTRATIVELY_PROHIBITED;
 
+	TRACE(("newtcpdirect channel %d", channel->index))
+
 	if (svr_opts.nolocaltcp || !svr_pubkey_allows_tcpfwd()) {
 		TRACE(("leave newtcpdirect: local tcp forwarding disabled"))
 		goto out;
@@ -299,6 +283,8 @@ static int newtcpdirect(struct Channel * channel) {
 	 * progress succeeds */
 	channel->writefd = sock;
 	channel->initconn = 1;
+
+	channel->prio = DROPBEAR_CHANNEL_PRIO_UNKNOWABLE;
 	
 	err = SSH_OPEN_IN_PROGRESS;
 

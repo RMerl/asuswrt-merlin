@@ -253,6 +253,8 @@ static int newchansess(struct Channel *channel) {
 	chansess->agentdir = NULL;
 #endif
 
+	channel->prio = DROPBEAR_CHANNEL_PRIO_INTERACTIVE;
+
 	return 0;
 
 }
@@ -668,8 +670,11 @@ static int sessioncommand(struct Channel *channel, struct ChanSess *chansess,
 
 	if (chansess->term == NULL) {
 		/* no pty */
-		set_sock_priority(ses.sock_out, DROPBEAR_PRIO_BULK);
 		ret = noptycommand(channel, chansess);
+		if (ret == DROPBEAR_SUCCESS) {
+			channel->prio = DROPBEAR_CHANNEL_PRIO_BULK;
+			update_channel_prio();
+		}
 	} else {
 		/* want pty */
 		ret = ptycommand(channel, chansess);

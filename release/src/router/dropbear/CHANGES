@@ -1,3 +1,31 @@
+2014.64 - Sunday 27 July 2014
+
+- Fix compiling with ECDSA and DSS disabled
+
+- Don't exit abruptly if too many outgoing packets are queued for writev(). Patch
+  thanks to Ronny Meeus
+
+- The -K keepalive option now behaves more like OpenSSH's "ServerAliveInterval". 
+  If no response is received after 3 keepalives then the session is terminated. This
+  will close connections faster than waiting for a TCP timeout.
+
+- Rework TCP priority setting. New settings are
+	if (connecting || ptys || x11) tos = LOWDELAY
+	else if (tcp_forwards) tos = 0
+	else tos = BULK
+  Thanks to Catalin Patulea for the suggestion.
+
+- Improve handling of many concurrent new TCP forwarded connections, should now
+  be able to handle as many as MAX_CHANNELS. Thanks to Eduardo Silva for reporting
+  and investigating it.
+
+- Make sure that exit messages from the client are printed, regression in 2013.57
+
+- Use monotonic clock where available, timeouts won't be affected by system time
+  changes
+
+- Add -V for version
+
 2014.63 - Wednesday 19 February 2014
 
 - Fix ~. to terminate a client interactive session after waking a laptop
@@ -24,7 +52,7 @@
   still-in-flight packet after initiating rekeying. Reported by Oliver Metz.
   This is a longstanding bug but is triggered more easily since 2013.57
 
-- Fix README for ecdsa keys, from Caralin Patulea
+- Fix README for ecdsa keys, from Catalin Patulea
 
 - Ensure that generated RSA keys are always exactly the length
   requested. Previously Dropbear always generated N+16 or N+15 bit keys.

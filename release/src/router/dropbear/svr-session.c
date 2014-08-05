@@ -80,11 +80,21 @@ svr_session_cleanup(void)
 	svr_pubkey_options_cleanup();
 }
 
+static void
+svr_sessionloop() {
+	if (svr_ses.connect_time != 0 
+		&& monotonic_now() - svr_ses.connect_time >= AUTH_TIMEOUT) {
+		dropbear_close("Timeout before auth");
+	}
+}
+
 void svr_session(int sock, int childpipe) {
 	char *host, *port;
 	size_t len;
 
 	common_session_init(sock, sock);
+
+	svr_ses.connect_time = monotonic_now();;
 
 	/* Initialise server specific parts of the session */
 	svr_ses.childpipe = childpipe;
@@ -94,8 +104,6 @@ void svr_session(int sock, int childpipe) {
 	svr_authinitialise();
 	chaninitialise(svr_chantypes);
 	svr_chansessinitialise();
-
-	ses.connect_time = time(NULL);
 
 	/* for logging the remote address */
 	get_socket_address(ses.sock_in, NULL, NULL, &host, &port, 0);
@@ -128,7 +136,7 @@ void svr_session(int sock, int childpipe) {
 
 	/* Run the main for loop. NULL is for the dispatcher - only the client
 	 * code makes use of it */
-	session_loop(NULL);
+	session_loop(svr_sessionloop);
 
 	/* Not reached */
 
