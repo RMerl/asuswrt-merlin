@@ -89,6 +89,9 @@ static void sesssigchild_handler(int UNUSED(dummy)) {
 
 	const int saved_errno = errno;
 
+	/* Make channel handling code look for closed channels */
+	ses.channel_signal_pending = 1;
+
 	TRACE(("enter sigchld handler"))
 	while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
 		TRACE(("sigchld handler: pid %d", pid))

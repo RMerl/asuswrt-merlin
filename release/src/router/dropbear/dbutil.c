@@ -161,7 +161,7 @@ void dropbear_trace(const char* format, ...) {
 	gettimeofday(&tv, NULL);
 
 	va_start(param, format);
-	fprintf(stderr, "TRACE  (%d) %d.%d: ", getpid(), tv.tv_sec, tv.tv_usec);
+	fprintf(stderr, "TRACE  (%d) %d.%d: ", getpid(), (int)tv.tv_sec, (int)tv.tv_usec);
 	vfprintf(stderr, format, param);
 	fprintf(stderr, "\n");
 	va_end(param);
@@ -183,7 +183,7 @@ void dropbear_trace2(const char* format, ...) {
 	gettimeofday(&tv, NULL);
 
 	va_start(param, format);
-	fprintf(stderr, "TRACE2 (%d) %d.%d: ", getpid(), tv.tv_sec, tv.tv_usec);
+	fprintf(stderr, "TRACE2 (%d) %d.%d: ", getpid(), (int)tv.tv_sec, (int)tv.tv_usec);
 	vfprintf(stderr, format, param);
 	fprintf(stderr, "\n");
 	va_end(param);
@@ -202,6 +202,9 @@ void set_sock_priority(int sock, enum dropbear_prio prio) {
 
 	int iptos_val = 0, so_prio_val = 0, rc;
 
+	/* Don't log ENOTSOCK errors so that this can harmlessly be called
+	 * on a client '-J' proxy pipe */
+
 	/* set the TOS bit for either ipv4 or ipv6 */
 #ifdef IPTOS_LOWDELAY
 	if (prio == DROPBEAR_PRIO_LOWDELAY) {
@@ -211,12 +214,12 @@ void set_sock_priority(int sock, enum dropbear_prio prio) {
 	}
 #if defined(IPPROTO_IPV6) && defined(IPV6_TCLASS)
 	rc = setsockopt(sock, IPPROTO_IPV6, IPV6_TCLASS, (void*)&iptos_val, sizeof(iptos_val));
-	if (rc < 0) {
+	if (rc < 0 && errno != ENOTSOCK) {
 		TRACE(("Couldn't set IPV6_TCLASS (%s)", strerror(errno)));
 	}
 #endif
 	rc = setsockopt(sock, IPPROTO_IP, IP_TOS, (void*)&iptos_val, sizeof(iptos_val));
-	if (rc < 0) {
+	if (rc < 0 && errno != ENOTSOCK) {
 		TRACE(("Couldn't set IP_TOS (%s)", strerror(errno)));
 	}
 #endif
@@ -229,7 +232,7 @@ void set_sock_priority(int sock, enum dropbear_prio prio) {
 	}
 	/* linux specific, sets QoS class. see tc-prio(8) */
 	rc = setsockopt(sock, SOL_SOCKET, SO_PRIORITY, (void*) &so_prio_val, sizeof(so_prio_val));
-	if (rc < 0)
+	if (rc < 0 && errno != ENOTSOCK)
 		dropbear_log(LOG_WARNING, "Couldn't set SO_PRIORITY (%s)",
 				strerror(errno));
 #endif
@@ -945,22 +948,46 @@ int constant_time_memcmp(const void* a, const void *b, size_t n)
 	return c;
 }
 
-time_t monotonic_now() {
-
 #if defined(__linux__) && defined(SYS_clock_gettime)
-	/* CLOCK_MONOTONIC_COARSE was added in Linux 2.6.32. Probably cheaper. */
+/* CLOCK_MONOTONIC_COARSE was added in Linux 2.6.32 but took a while to
+reach userspace include headers */
 #ifndef CLOCK_MONOTONIC_COARSE
 #define CLOCK_MONOTONIC_COARSE 6
 #endif
-	static clockid_t clock_source = CLOCK_MONOTONIC_COARSE;
+static clockid_t get_linux_clock_source() {
 	struct timespec ts;
-
-	if (syscall(SYS_clock_gettime, clock_source, &ts) == EINVAL) {
-		clock_source = CLOCK_MONOTONIC;
-		syscall(SYS_clock_gettime, CLOCK_MONOTONIC, &ts);
+	if (syscall(SYS_clock_gettime, CLOCK_MONOTONIC_COARSE, &ts) == 0) {
+		return CLOCK_MONOTONIC_COARSE;
 	}
-	return ts.tv_sec;
-#elif defined(HAVE_MACH_ABSOLUTE_TIME)
+
+	if (syscall(SYS_clock_gettime, CLOCK_MONOTONIC, &ts) == 0) {
+		return CLOCK_MONOTONIC;
+	}
+	return -1;
+}
+#endif 
+
+time_t monotonic_now() {
+#if defined(__linux__) && defined(SYS_clock_gettime)
+	static clockid_t clock_source = -2;
+
+	if (clock_source == -2) {
+		/* First run, find out which one works. 
+		-1 will fall back to time() */
+		clock_source = get_linux_clock_source();
+	}
+
+	if (clock_source >= 0) {
+		struct timespec ts;
+		if (syscall(SYS_clock_gettime, clock_source, &ts) != 0) {
+			/* Intermittent clock failures should not happen */
+			dropbear_exit("Clock broke");
+		}
+		return ts.tv_sec;
+	}
+#endif /* linux clock_gettime */
+
+#if defined(HAVE_MACH_ABSOLUTE_TIME)
 	/* OS X, see https://developer.apple.com/library/mac/qa/qa1398/_index.html */
 	static mach_timebase_info_data_t timebase_info;
 	if (timebase_info.denom == 0) {
@@ -968,10 +995,9 @@ time_t monotonic_now() {
 	}
 	return mach_absolute_time() * timebase_info.numer / timebase_info.denom
 		/ 1e9;
-#else 
+#endif /* osx mach_absolute_time */
+
 	/* Fallback for everything else - this will sometimes go backwards */
 	return time(NULL);
-#endif
-
 }
 

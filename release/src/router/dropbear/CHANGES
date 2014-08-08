@@ -1,3 +1,20 @@
+2014.65 - Friday 8 August 2014
+
+- Fix 2014.64 regression, server session hang on exit with scp (and probably
+  others), thanks to NiLuJe for tracking it down
+
+- Fix 2014.64 regression, clock_gettime() error handling which broke on older
+  Linux kernels, reported by NiLuJe
+
+- Fix 2014.64 regression, writev() could occassionally fail with EAGAIN which
+  wasn't caught
+
+- Avoid error message when trying to set QoS on proxycommand or multihop pipes
+
+- Use /usr/bin/xauth, thanks to Mike Frysinger
+
+- Don't exit the client if the local user entry can't be found, thanks to iquaba
+
 2014.64 - Sunday 27 July 2014
 
 - Fix compiling with ECDSA and DSS disabled

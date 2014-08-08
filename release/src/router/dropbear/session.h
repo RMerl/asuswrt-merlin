@@ -187,6 +187,7 @@ struct sshsession {
 	unsigned int chansize; /* the number of Channel*s allocated for channels */
 	unsigned int chancount; /* the number of Channel*s in use */
 	const struct ChanType **chantypes; /* The valid channel types */
+	int channel_signal_pending; /* Flag set by sigchld handler */
 
 	/* TCP priority level for the main "port 22" tcp socket */
 	enum dropbear_prio socket_prio;

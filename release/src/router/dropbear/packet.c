@@ -93,9 +93,12 @@ void write_packet() {
 		iov[i].iov_base = buf_getptr(writebuf, len);
 		iov[i].iov_len = len;
 	}
+	/* This may return EAGAIN. The main loop sometimes
+	calls write_packet() without bothering to test with select() since
+	it's likely to be necessary */
 	written = writev(ses.sock_out, iov, iov_max_count);
 	if (written < 0) {
-		if (errno == EINTR) {
+		if (errno == EINTR || errno == EAGAIN) {
 			m_free(iov);
 			TRACE2(("leave write_packet: EINTR"))
 			return;
@@ -136,7 +139,7 @@ void write_packet() {
 	written = write(ses.sock_out, buf_getptr(writebuf, len), len);
 
 	if (written < 0) {
-		if (errno == EINTR) {
+		if (errno == EINTR || errno == EAGAIN) {
 			TRACE2(("leave writepacket: EINTR"))
 			return;
 		} else {
@@ -255,7 +258,7 @@ static int read_packet_init() {
 		ses.remoteclosed();
 	}
 	if (slen < 0) {
-		if (errno == EINTR) {
+		if (errno == EINTR || errno == EAGAIN) {
 			TRACE2(("leave read_packet_init: EINTR"))
 			return DROPBEAR_FAILURE;
 		}
