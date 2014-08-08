@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 376.44 (3-Aug-2014)
+Asuswrt-Merlin - build 376.45 (xx-xxx-2014)
 ===========================================
 
 About
@@ -567,6 +567,12 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+376.45 (xx-xxx-2014)
+   - CHANGED: Updated dropbear to 2014.64.
+   - CHANGED: Updated openssl to 1.0.0n (numerous
+              security fixes)
+
+
 376.44 (3-Aug-2014)
    IMPORTANT: Make a backup of your JFFS partition if upgrading
               an RT-AC56U or RT-AC68U and you have stored files
