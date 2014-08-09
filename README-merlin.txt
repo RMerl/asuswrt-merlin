@@ -568,9 +568,13 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 376.45 (xx-xxx-2014)
-   - CHANGED: Updated dropbear to 2014.64.
+   - CHANGED: Updated dropbear to 2014.65.
    - CHANGED: Updated openssl to 1.0.0n (numerous
               security fixes)
+   - FIXED: Garbled client dropdown selector on DNSFilter page
+   - FIXED: The Comcast neighbour solicitation block wasn't
+            enabled anymore (regression in 376.44) (Patch by
+            Sinshiva)
 
 
 376.44 (3-Aug-2014)
