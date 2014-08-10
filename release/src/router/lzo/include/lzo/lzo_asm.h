@@ -2,22 +2,7 @@
 
    This file is part of the LZO real-time data compression library.
 
-   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2005 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2004 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2003 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2002 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1999 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1998 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1997 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    The LZO library is free software; you can redistribute it and/or
@@ -129,18 +114,18 @@ LZO_EXTERN(int) lzo1y_decompress_asm_fast_safe
 
 #if 0
 
-LZO_EXTERN(lzo_uint32)
-lzo_crc32_asm(lzo_uint32 c, const lzo_bytep buf, lzo_uint len,
-              const lzo_uint32p tab);
+LZO_EXTERN(lzo_uint32_t)
+lzo_crc32_asm(lzo_uint32_t c, const lzo_bytep buf, lzo_uint len,
+              const lzo_uint32_tp tab);
 
-LZO_EXTERN(lzo_uint32)
-lzo_crc32_asm_small(lzo_uint32 c, const lzo_bytep buf, lzo_uint len);
+LZO_EXTERN(lzo_uint32_t)
+lzo_crc32_asm_small(lzo_uint32_t c, const lzo_bytep buf, lzo_uint len);
 
 LZO_EXTERN(int)
-lzo_cpuid_asm(lzo_uint32p /* lzo_uint32 info[16] */ );
+lzo_cpuid_asm(lzo_uint32_tp /* lzo_uint32_t info[16] */ );
 
-LZO_EXTERN(lzo_uint32)
-lzo_rdtsc_asm(lzo_uint32p /* lzo_uint32 ticks[2] */ );
+LZO_EXTERN(lzo_uint32_t)
+lzo_rdtsc_asm(lzo_uint32_tp /* lzo_uint32_t ticks[2] */ );
 
 #endif
 
@@ -152,4 +137,4 @@ lzo_rdtsc_asm(lzo_uint32p /* lzo_uint32 ticks[2] */ );
 #endif /* already included */
 
 
-/* vim:set ts=4 et: */
+/* vim:set ts=4 sw=4 et: */

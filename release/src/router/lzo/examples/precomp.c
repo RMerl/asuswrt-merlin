@@ -2,22 +2,7 @@
 
    This file is part of the LZO real-time data compression library.
 
-   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2005 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2004 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2003 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2002 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1999 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1998 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1997 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    The LZO library is free software; you can redistribute it and/or
@@ -85,14 +70,14 @@ int __lzo_cdecl_main main(int argc, char *argv[])
     lzo_uint out_len = 0;
 
     lzo_voidp wrkmem;
-    lzo_uint wrk_len;
+    lzo_uint wrkmem_size;
 
     lzo_uint best_len;
     int best_compress = -1;
 
     lzo_uint orig_len;
-    lzo_uint32 uncompressed_checksum;
-    lzo_uint32 compressed_checksum;
+    lzo_uint32_t uncompressed_checksum;
+    lzo_uint32_t compressed_checksum;
 
     FILE *fp;
     const char *in_name = NULL;
@@ -104,7 +89,7 @@ int __lzo_cdecl_main main(int argc, char *argv[])
 
     printf("\nLZO real-time data compression library (v%s, %s).\n",
            lzo_version_string(), lzo_version_date());
-    printf("Copyright (C) 1996-2011 Markus Franz Xaver Johannes Oberhumer\nAll Rights Reserved.\n\n");
+    printf("Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer\nAll Rights Reserved.\n\n");
 
     progname = argv[0];
     if (argc < 2 || argc > 3)
@@ -128,16 +113,14 @@ int __lzo_cdecl_main main(int argc, char *argv[])
 /*
  * Step 2: allocate the work-memory
  */
-    wrk_len = 1;
+    wrkmem_size = 1;
 #ifdef USE_LZO1X
-    if (wrk_len < LZO1X_999_MEM_COMPRESS)
-        wrk_len = LZO1X_999_MEM_COMPRESS;
+    wrkmem_size = (LZO1X_999_MEM_COMPRESS > wrkmem_size) ? LZO1X_999_MEM_COMPRESS : wrkmem_size;
 #endif
 #ifdef USE_LZO1Y
-    if (wrk_len < LZO1Y_999_MEM_COMPRESS)
-        wrk_len = LZO1Y_999_MEM_COMPRESS;
+    wrkmem_size = (LZO1Y_999_MEM_COMPRESS > wrkmem_size) ? LZO1Y_999_MEM_COMPRESS : wrkmem_size;
 #endif
-    wrkmem = (lzo_voidp) xmalloc(wrk_len);
+    wrkmem = (lzo_voidp) xmalloc(wrkmem_size);
     if (wrkmem == NULL)
     {
         printf("%s: out of memory\n", progname);
@@ -343,7 +326,5 @@ int __lzo_cdecl_main main(int argc, char *argv[])
     return 0;
 }
 
-/*
-vi:ts=4:et
-*/
 
+/* vim:set ts=4 sw=4 et: */

@@ -75,17 +75,7 @@ This section briefly describes the headers.
 2.1 The memory model
 --------------------
 
-The documentation indicates that LZO requires 32-bit integers. It's
-not the integer size that really matters, though, but the memory
-model. If your memory model allows to access pointers at 32-bit
-offsets, then there is no problem at all - LZO works fine on my
-old Atari ST, which has 16 bit integers and a flat 32-bit memory model.
-Using 'huge' 32-bit pointers under 16-bit DOS is a workaround for this.
-
-While LZO also works with a strict 16-bit memory model, I don't officially
-support this because this limits the maximum block size to 64 KiB - and this
-makes the library incompatible with other platforms, i.e. you cannot
-decompress larger blocks compressed on those platforms.
+LZO requires a flat 32-bit or 64-bit memory model.
 
 
 2.2 Public integral types
@@ -93,25 +83,15 @@ decompress larger blocks compressed on those platforms.
 
 lzo_uint
 
-    used as size_t, must be 32 bits or more for compatibility reasons
-
-lzo_uint32
-
-    *must* be 32 bits or more
+    must match size_t
 
 lzo_bool
 
     can store the values 0 ("false") and 1 ("true")
 
-lzo_byte
-
-    unsigned char (memory model specific)
-
 
 2.3 Public pointer types
 ------------------------
-
-All pointer types are memory model specific.
 
 lzo_voidp
 
@@ -120,10 +100,6 @@ lzo_voidp
 lzo_bytep
 
     pointer to unsigned char
-
-lzo_bytepp
-
-    array of pointers to unsigned char
 
 
 2.4 Public function types

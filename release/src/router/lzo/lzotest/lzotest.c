@@ -2,22 +2,7 @@
 
    This file is part of the LZO real-time data compression library.
 
-   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2005 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2004 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2003 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2002 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1999 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1998 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1997 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    The LZO library is free software; you can redistribute it and/or
@@ -52,8 +37,8 @@
 #define WANT_LZO_MALLOC 1
 #define WANT_LZO_FREAD 1
 #define WANT_LZO_WILDARGV 1
-#define WANT_LZO_UCLOCK 1
-#define ACC_WANT_ACCLIB_GETOPT 1
+#define WANT_LZO_PCLOCK 1
+#define LZO_WANT_ACCLIB_GETOPT 1
 #include "examples/portab.h"
 
 #if defined(HAVE_STRNICMP) && !defined(HAVE_STRNCASECMP)
@@ -255,11 +240,11 @@ lzo_bool opt_read_from_stdin = 0;
 /* set these to 1 to measure the speed impact of a checksum */
 lzo_bool opt_compute_adler32 = 0;
 lzo_bool opt_compute_crc32 = 0;
-static lzo_uint32 adler_in, adler_out;
-static lzo_uint32 crc_in, crc_out;
+static lzo_uint32_t adler_in, adler_out;
+static lzo_uint32_t crc_in, crc_out;
 
 lzo_bool opt_execution_time = 0;
-int opt_uclock = -1;
+int opt_pclock = -1;
 lzo_bool opt_clear_wrkmem = 0;
 
 static const lzo_bool opt_try_to_compress_0_bytes = 1;
@@ -270,7 +255,7 @@ static const lzo_bool opt_try_to_compress_0_bytes = 1;
 **************************************************************************/
 
 static const char *progname = "";
-static lzo_uclock_handle_t uch;
+static lzo_pclock_handle_t pch;
 
 /* for statistics and benchmark */
 int opt_totals = 0;
@@ -353,8 +338,8 @@ static lzo_uint opt_max_data_len;
 typedef struct {
     lzo_bytep   ptr;
     lzo_uint    len;
-    lzo_uint32  adler;
-    lzo_uint32  crc;
+    lzo_uint32_t adler;
+    lzo_uint32_t crc;
     lzo_bytep   alloc_ptr;
     lzo_uint    alloc_len;
     lzo_uint    saved_len;
@@ -491,8 +476,8 @@ typedef struct
 {
     const char *            name;
     int                     id;
-    lzo_uint32              mem_compress;
-    lzo_uint32              mem_decompress;
+    lzo_uint32_t            mem_compress;
+    lzo_uint32_t            mem_decompress;
     lzo_compress_t          compress;
     lzo_optimize_t          optimize;
     lzo_decompress_t        decompress;
@@ -508,14 +493,20 @@ compress_t;
 
 #include "asm.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "wrap.h"
 #define M_PRIVATE       LZO_PRIVATE
 #define m_uint          lzo_uint
-#define m_uint32        lzo_uint32
+#define m_uint32_t      lzo_uint32_t
 #define m_voidp         lzo_voidp
 #define m_bytep         lzo_bytep
 #define m_uintp         lzo_uintp
 #include "wrapmisc.h"
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 static const compress_t compress_database[] = {
 #include "db.h"
@@ -628,7 +619,7 @@ lzo_bool is_compressor ( const compress_t *c )
 // check that memory gets accessed within bounds
 **************************************************************************/
 
-void memchecker_init ( mblock_t *mb, lzo_xint l, unsigned char random_byte )
+static void memchecker_init ( mblock_t *mb, lzo_uint l, unsigned char random_byte )
 {
     lzo_uint i;
     lzo_uint len = (lzo_uint) l;
@@ -654,7 +645,7 @@ void memchecker_init ( mblock_t *mb, lzo_xint l, unsigned char random_byte )
 }
 
 
-int memchecker_check ( mblock_t *mb, lzo_xint l, unsigned char random_byte )
+static int memchecker_check ( mblock_t *mb, lzo_uint l, unsigned char random_byte )
 {
     lzo_uint i;
     lzo_uint len = (lzo_uint) l;
@@ -705,14 +696,14 @@ int call_compressor   ( const compress_t *c,
 
     if (r == 0 && opt_compute_adler32)
     {
-        lzo_uint32 adler;
+        lzo_uint32_t adler;
         adler = lzo_adler32(0, NULL, 0);
         adler = lzo_adler32(adler, src, src_len);
         adler_in = adler;
     }
     if (r == 0 && opt_compute_crc32)
     {
-        lzo_uint32 crc;
+        lzo_uint32_t crc;
         crc = lzo_crc32(0, NULL, 0);
         crc = lzo_crc32(crc, src, src_len);
         crc_in = crc;
@@ -907,7 +898,7 @@ void print_stats ( const char *method_name, const char *file_name,
     d_bytes = x_len * d_loops * t_loops;
     t_bytes = c_bytes + d_bytes;
 
-    if (opt_uclock == 0)
+    if (opt_pclock == 0)
         c_secs = d_secs = t_secs = 0.0;
 
     /* speed in uncompressed megabytes per second (1 megabyte = 1.000.000 bytes) */
@@ -982,11 +973,11 @@ void print_totals ( void )
         unsigned long n = total_n > 0 ? total_n : 1;
         const char *t1 = "-------";
         const char *t2 = total_method_names == 1 ? total_method_name : "";
-#if 1 && defined(__ACCLIB_PCLOCK_CH_INCLUDED)
-        char uclock_mode[32+1];
-        sprintf(uclock_mode, "[clock=%d]", uch.mode);
-        t1 = uclock_mode;
-        if (opt_uclock == 0) t1 = t2;
+#if 1 && defined(__LZOLIB_PCLOCK_CH_INCLUDED)
+        char pclock_mode[32+1];
+        sprintf(pclock_mode, "[clock=%d]", pch.mode);
+        t1 = pclock_mode;
+        if (opt_pclock == 0) t1 = t2;
 #endif
 
 #if 1
@@ -994,15 +985,15 @@ void print_totals ( void )
         printf("%-13s  %-12s %10lu %4.1f %9lu %4s %8.3f %8.3f\n",
                t1, "***AVG***",
                total_d_len / n, total_blocks * 1.0 / n, total_c_len / n, perc_str,
-               t_div(total_c_mbs_n, total_c_mbs_harmonic),
-               t_div(total_d_mbs_n, total_d_mbs_harmonic));
+               t_div((double)total_c_mbs_n, total_c_mbs_harmonic),
+               t_div((double)total_d_mbs_n, total_d_mbs_harmonic));
 #endif
         set_perc(total_c_len, total_d_len, perc_str);
         printf("%-13s  %-12s %10lu %4lu %9lu %4s %s%8.3f %8.3f\n",
                t2, "***TOTALS***",
                total_d_len, total_blocks, total_c_len, perc_str, "",
-               t_div(total_c_mbs_n, total_c_mbs_harmonic),
-               t_div(total_d_mbs_n, total_d_mbs_harmonic));
+               t_div((double)total_c_mbs_n, total_c_mbs_harmonic),
+               t_div((double)total_d_mbs_n, total_d_mbs_harmonic));
     }
 }
 
@@ -1021,7 +1012,7 @@ int process_file ( const compress_t *c, lzo_decompress_t decompress,
     unsigned long blocks = 0;
     unsigned long compressed_len = 0;
     double t_time = 0, c_time = 0, d_time = 0;
-    lzo_uclock_t t_start, t_stop, x_start, x_stop;
+    lzo_pclock_t t_start, t_stop, x_start, x_stop;
     FILE *fp_dump = NULL;
 
     if (opt_dump_compressed_data)
@@ -1029,8 +1020,8 @@ int process_file ( const compress_t *c, lzo_decompress_t decompress,
 
 /* process the file */
 
-    lzo_uclock_flush_cpu_cache(&uch, 0);
-    lzo_uclock_read(&uch, &t_start);
+    lzo_pclock_flush_cpu_cache(&pch, 0);
+    lzo_pclock_read(&pch, &t_start);
     for (t_i = 0; t_i < t_loops; t_i++)
     {
         lzo_uint len, c_len, c_len_max, d_len = 0;
@@ -1071,8 +1062,8 @@ int process_file ( const compress_t *c, lzo_decompress_t decompress,
 
         /* compress the block */
             c_len = c_len_max = 0;
-            lzo_uclock_flush_cpu_cache(&uch, 0);
-            lzo_uclock_read(&uch, &x_start);
+            lzo_pclock_flush_cpu_cache(&pch, 0);
+            lzo_pclock_read(&pch, &x_start);
             for (r = 0, c_i = 0; c_i < c_loops; c_i++)
             {
                 c_len = block_c.len;
@@ -1084,8 +1075,8 @@ int process_file ( const compress_t *c, lzo_decompress_t decompress,
                 if (c_len > block_c.len)
                     goto compress_overrun;
             }
-            lzo_uclock_read(&uch, &x_stop);
-            c_time += lzo_uclock_get_elapsed(&uch, &x_start, &x_stop);
+            lzo_pclock_read(&pch, &x_stop);
+            c_time += lzo_pclock_get_elapsed(&pch, &x_start, &x_stop);
             if (r != 0)
             {
                 printf("  compression failed in block %lu (%d) (%lu %lu)\n",
@@ -1134,8 +1125,8 @@ compress_overrun:
             }
 
         /* decompress the block and verify */
-            lzo_uclock_flush_cpu_cache(&uch, 0);
-            lzo_uclock_read(&uch, &x_start);
+            lzo_pclock_flush_cpu_cache(&pch, 0);
+            lzo_pclock_read(&pch, &x_start);
             for (r = 0, c_i = 0; c_i < d_loops; c_i++)
             {
                 d_len = bl;
@@ -1143,8 +1134,8 @@ compress_overrun:
                 if (r != 0 || d_len != bl)
                     break;
             }
-            lzo_uclock_read(&uch, &x_stop);
-            d_time += lzo_uclock_get_elapsed(&uch, &x_start, &x_stop);
+            lzo_pclock_read(&pch, &x_stop);
+            d_time += lzo_pclock_get_elapsed(&pch, &x_start, &x_stop);
             if (r != 0)
             {
                 printf("  decompression failed in block %lu (%d) "
@@ -1217,8 +1208,8 @@ compress_overrun:
         }
         while (len > 0);
     }
-    lzo_uclock_read(&uch, &t_stop);
-    t_time += lzo_uclock_get_elapsed(&uch, &t_start, &t_stop);
+    lzo_pclock_read(&pch, &t_stop);
+    t_time += lzo_pclock_get_elapsed(&pch, &t_start, &t_stop);
 
     if (fp_dump) {
         (void) fclose(fp_dump); fp_dump = NULL;
@@ -1242,12 +1233,12 @@ compress_overrun:
 static
 int do_file ( int method, const char *file_name,
               long c_loops, long d_loops,
-              lzo_uint32p p_adler, lzo_uint32p p_crc )
+              lzo_uint32_tp p_adler, lzo_uint32_tp p_crc )
 {
     int r;
     const compress_t *c;
     lzo_decompress_t decompress;
-    lzo_uint32 adler, crc;
+    lzo_uint32_t adler, crc;
     char method_name[256+1];
     const char *n;
     const long t_loops = 1;
@@ -1312,8 +1303,8 @@ struct corpus_entry_t
 {
     const char *name;
     long loops;
-    lzo_uint32 adler;
-    lzo_uint32 crc;
+    lzo_uint32_t adler;
+    lzo_uint32_t crc;
 };
 
 const struct corpus_entry_t *opt_corpus = NULL;
@@ -1375,7 +1366,7 @@ int do_corpus ( const struct corpus_entry_t *corpus, int method, const char *pat
 
     for (i = 0; corpus[i].name != NULL; i++)
     {
-        lzo_uint32 adler, crc;
+        lzo_uint32_t adler, crc;
         long c = c_loops * corpus[i].loops;
         long d = d_loops * corpus[i].loops;
         int r;
@@ -1436,11 +1427,11 @@ void usage ( const char *name, int exit_code, lzo_bool show_methods )
 
     if (show_methods)
     {
-#if defined(__ACCLIB_PCLOCK_CH_INCLUDED)
-        lzo_uclock_t t_dummy;
-        lzo_uclock_read(&uch, &t_dummy);
-        (void) lzo_uclock_get_elapsed(&uch, &t_dummy, &t_dummy);
-        fprintf(fp,"\nAll timings are recorded using uclock mode %d %s.\n", uch.mode, uch.name);
+#if defined(__LZOLIB_PCLOCK_CH_INCLUDED)
+        lzo_pclock_t t_dummy;
+        lzo_pclock_read(&pch, &t_dummy);
+        (void) lzo_pclock_get_elapsed(&pch, &t_dummy, &t_dummy);
+        fprintf(fp,"\nAll timings are recorded using pclock mode %d %s.\n", pch.mode, pch.name);
 #endif
         fprintf(fp,"\n\n");
         fprintf(fp,"The following compression methods are available:\n");
@@ -1692,11 +1683,11 @@ enum {
     OPT_MAX_DATA_LEN,
     OPT_MAX_DICT_LEN,
     OPT_SILESIA_CORPUS,
-    OPT_UCLOCK,
+    OPT_PCLOCK,
     OPT_UNUSED
 };
 
-static const struct acc_getopt_longopt_t longopts[] =
+static const struct lzo_getopt_longopt_t longopts[] =
 {
  /* { name  has_arg  *flag  val } */
     {"help",             0, 0, 'h'+256}, /* give help */
@@ -1708,7 +1699,7 @@ static const struct acc_getopt_longopt_t longopts[] =
     {"adler32",          0, 0, OPT_ADLER32},
     {"calgary-corpus",   1, 0, OPT_CALGARY_CORPUS},
     {"clear-wrkmem",     0, 0, OPT_CLEAR_WRKMEM},
-    {"clock",            1, 0, OPT_UCLOCK},
+    {"clock",            1, 0, OPT_PCLOCK},
     {"corpus",           1, 0, OPT_CALGARY_CORPUS},
     {"crc32",            0, 0, OPT_CRC32},
     {"dict",             1, 0, OPT_DICT},
@@ -1717,7 +1708,7 @@ static const struct acc_getopt_longopt_t longopts[] =
     {"max-data-length",  1, 0, OPT_MAX_DATA_LEN},
     {"max-dict-length",  1, 0, OPT_MAX_DICT_LEN},
     {"silesia-corpus",   1, 0, OPT_SILESIA_CORPUS},
-    {"uclock",           1, 0, OPT_UCLOCK},
+    {"uclock",           1, 0, OPT_PCLOCK},
     {"methods",          1, 0, 'm'},
     {"totals",           0, 0, 'T'},
 
@@ -1725,7 +1716,7 @@ static const struct acc_getopt_longopt_t longopts[] =
 };
 
 
-static int do_option(acc_getopt_p g, int optc)
+static int do_option(lzo_getopt_p g, int optc)
 {
 #define mfx_optarg      g->optarg
     switch (optc)
@@ -1855,13 +1846,13 @@ static int do_option(acc_getopt_p g, int optc)
             return optc;
         opt_max_dict_len = atol(mfx_optarg);
         break;
-    case OPT_UCLOCK:
+    case OPT_PCLOCK:
         if (!mfx_optarg || !is_digit(mfx_optarg[0]))
             return optc;
-        opt_uclock = atoi(mfx_optarg);
-#if defined(__ACCLIB_PCLOCK_CH_INCLUDED)
-        if (opt_uclock > 0)
-            uch.mode = opt_uclock;
+        opt_pclock = atoi(mfx_optarg);
+#if defined(__LZOLIB_PCLOCK_CH_INCLUDED)
+        if (opt_pclock > 0)
+            pch.mode = opt_pclock;
 #endif
         break;
 
@@ -1878,7 +1869,7 @@ static int do_option(acc_getopt_p g, int optc)
 }
 
 
-static void handle_opterr(acc_getopt_p g, const char *f, void *v)
+static void handle_opterr(lzo_getopt_p g, const char *f, void *v)
 {
     struct A { va_list ap; };
     struct A *a = (struct A *) v;
@@ -1893,15 +1884,15 @@ static void handle_opterr(acc_getopt_p g, const char *f, void *v)
 
 static int get_options(int argc, char **argv)
 {
-    acc_getopt_t mfx_getopt;
+    lzo_getopt_t mfx_getopt;
     int optc;
     static const char shortopts[] =
         "Ab::c:C:d:D:FhHLm::n:OqQs:STvV@123456789";
 
-    acc_getopt_init(&mfx_getopt, 1, argc, argv);
+    lzo_getopt_init(&mfx_getopt, 1, argc, argv);
     mfx_getopt.progname = progname;
     mfx_getopt.opterr = handle_opterr;
-    while ((optc = acc_getopt(&mfx_getopt, shortopts, longopts, NULL)) >= 0)
+    while ((optc = lzo_getopt(&mfx_getopt, shortopts, longopts, NULL)) >= 0)
     {
         if (do_option(&mfx_getopt, optc) != 0)
             exit(EXIT_USAGE);
@@ -1924,7 +1915,7 @@ int __lzo_cdecl_main main(int argc, char *argv[])
     const char *s;
 
     lzo_wildargv(&argc, &argv);
-    lzo_uclock_open(&uch);
+    lzo_pclock_open_default(&pch);
 
     progname = argv[0];
     for (s = progname; *s; s++)
@@ -1934,11 +1925,11 @@ int __lzo_cdecl_main main(int argc, char *argv[])
 #if defined(__LZO_PROFESSIONAL__)
     printf("\nLZO Professional real-time data compression library (v%s, %s).\n",
            lzo_version_string(), lzo_version_date());
-    printf("Copyright (C) 1996-2011 Markus Franz Xaver Johannes Oberhumer\nAll Rights Reserved.\n\n");
+    printf("Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer\nAll Rights Reserved.\n\n");
 #else
     printf("\nLZO real-time data compression library (v%s, %s).\n",
            lzo_version_string(), lzo_version_date());
-    printf("Copyright (C) 1996-2011 Markus Franz Xaver Johannes Oberhumer\nAll Rights Reserved.\n\n");
+    printf("Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer\nAll Rights Reserved.\n\n");
 #endif
 
 
@@ -1961,17 +1952,7 @@ int __lzo_cdecl_main main(int argc, char *argv[])
     opt_max_data_len = 64 * 1024L * 1024L;
     opt_block_size = 256 * 1024L;
 
-#if defined(LZO_ARCH_I086) && defined(ACC_MM_AHSHIFT)
-#  if 1 && defined(LZO_ARCH_I086PM) && defined(BLX286)
-    opt_max_data_len = 32 * 1024L * 1024L;
-#  else
-    opt_max_data_len = 14 * 1024L * 1024L;
-#  endif
-    /* reduce memory requirements for ancient 16-bit DOS 640kB real-mode */
-    if (ACC_MM_AHSHIFT != 3) {
-        opt_max_data_len = 16 * 1024L;
-    }
-#elif defined(LZO_OS_TOS)
+#if (LZO_ARCH_M68K && LZO_OS_TOS)
     /* reduce memory requirements for 14 MB machines */
     opt_max_data_len = 8 * 1024L * 1024L;
 #endif
@@ -2103,12 +2084,9 @@ int __lzo_cdecl_main main(int argc, char *argv[])
     if (r != EXIT_OK)
         printf("\n%s: exit code: %d\n", progname, r);
 
-    lzo_uclock_close(&uch);
+    lzo_pclock_close(&pch);
     return r;
 }
 
 
-/*
-vi:ts=4:et
-*/
-
+/* vim:set ts=4 sw=4 et: */

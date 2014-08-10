@@ -2,22 +2,7 @@
 
    This file is part of the LZO real-time data compression library.
 
-   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2005 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2004 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2003 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2002 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1999 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1998 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1997 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    The LZO library is free software; you can redistribute it and/or
@@ -50,7 +35,7 @@
 // see http://www.zlib.org/
 ************************************************************************/
 
-static const lzo_uint32 lzo_crc32_table[256] = {
+static const lzo_uint32_t lzo_crc32_table[256] = {
   0x00000000L, 0x77073096L, 0xee0e612cL, 0x990951baL, 0x076dc419L,
   0x706af48fL, 0xe963a535L, 0x9e6495a3L, 0x0edb8832L, 0x79dcb8a4L,
   0xe0d5e91eL, 0x97d2d988L, 0x09b64c2bL, 0x7eb17cbdL, 0xe7b82d07L,
@@ -106,7 +91,7 @@ static const lzo_uint32 lzo_crc32_table[256] = {
 };
 
 
-LZO_PUBLIC(const lzo_uint32p)
+LZO_PUBLIC(const lzo_uint32_tp)
 lzo_get_crc32_table(void)
 {
     return lzo_crc32_table;
@@ -120,21 +105,21 @@ lzo_get_crc32_table(void)
 #define LZO_DO1(buf,i) \
     crc = table[(unsigned char)((unsigned char)crc ^ buf[i])] ^ (crc >> 8)
 #endif
-#define LZO_DO2(buf,i)  LZO_DO1(buf,i); LZO_DO1(buf,i+1);
-#define LZO_DO4(buf,i)  LZO_DO2(buf,i); LZO_DO2(buf,i+2);
-#define LZO_DO8(buf,i)  LZO_DO4(buf,i); LZO_DO4(buf,i+4);
-#define LZO_DO16(buf,i) LZO_DO8(buf,i); LZO_DO8(buf,i+8);
+#define LZO_DO2(buf,i)  LZO_DO1(buf,i); LZO_DO1(buf,i+1)
+#define LZO_DO4(buf,i)  LZO_DO2(buf,i); LZO_DO2(buf,i+2)
+#define LZO_DO8(buf,i)  LZO_DO4(buf,i); LZO_DO4(buf,i+4)
+#define LZO_DO16(buf,i) LZO_DO8(buf,i); LZO_DO8(buf,i+8)
 
 
-LZO_PUBLIC(lzo_uint32)
-lzo_crc32(lzo_uint32 c, const lzo_bytep buf, lzo_uint len)
+LZO_PUBLIC(lzo_uint32_t)
+lzo_crc32(lzo_uint32_t c, const lzo_bytep buf, lzo_uint len)
 {
-    lzo_uint32 crc;
+    lzo_uint32_t crc;
 #undef table
 #if 1
 #  define table lzo_crc32_table
 #else
-   const lzo_uint32 * table = lzo_crc32_table;
+   const lzo_uint32_t * table = lzo_crc32_table;
 #endif
 
     if (buf == NULL)

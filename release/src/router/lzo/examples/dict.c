@@ -2,22 +2,7 @@
 
    This file is part of the LZO real-time data compression library.
 
-   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2005 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2004 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2003 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2002 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1999 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1998 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1997 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    The LZO library is free software; you can redistribute it and/or
@@ -62,7 +47,7 @@ static const char *progname = NULL;
 #define DICT_LEN    0xbfff
 static lzo_bytep    dict;
 static lzo_uint     dict_len = 0;
-static lzo_uint32   dict_adler32;
+static lzo_uint32_t dict_adler32;
 
 
 /*************************************************************************
@@ -73,11 +58,11 @@ static lzo_uint total_n = 0;
 static lzo_uint total_c_len = 0;
 static lzo_uint total_d_len = 0;
 
-static void print_file ( const char *name, lzo_uint d_len, lzo_uint c_len )
+static void print_info(const char *name, lzo_uint d_len, lzo_uint c_len)
 {
     double perc;
 
-    perc = (d_len > 0) ? c_len * 100.0 / d_len : 0;
+    perc = (d_len > 0) ? c_len * 100.0 / d_len : 0.0;
     printf("  |  %-30s   %9ld -> %9ld   %7.2f%%  |\n",
             name, (long) d_len, (long) c_len, perc);
 
@@ -91,7 +76,7 @@ static void print_file ( const char *name, lzo_uint d_len, lzo_uint c_len )
 //
 **************************************************************************/
 
-int do_file ( const char *in_name, int compression_level )
+static int do_file(const char *in_name, int compression_level)
 {
     int r;
     lzo_bytep in;
@@ -108,9 +93,9 @@ int do_file ( const char *in_name, int compression_level )
  * Step 1: open the input file
  */
     fp = fopen(in_name,"rb");
-    if (fp == 0)
+    if (fp == NULL)
     {
-        printf("%s: cannot open file %s\n", progname, in_name);
+        printf("%s: %s: cannot open file\n", progname, in_name);
         return 0;   /* no error */
     }
     fseek(fp, 0, SEEK_END);
@@ -120,9 +105,15 @@ int do_file ( const char *in_name, int compression_level )
     {
         printf("%s: %s: empty file -- skipping\n", progname, in_name);
         fclose(fp); fp = NULL;
-        return 0;
+        return 0;   /* no error */
     }
     in_len = (lzo_uint) l;
+    if ((long) in_len != l || l > 256L * 1024L * 1024L)
+    {
+        printf("%s: %s: file is too big -- skipping\n", progname, in_name);
+        fclose(fp); fp = NULL;
+        return 0;   /* no error */
+    }
 
 /*
  * Step 2: allocate compression buffers and read the file
@@ -151,13 +142,13 @@ int do_file ( const char *in_name, int compression_level )
         return 1;
     }
 
-    print_file(in_name,in_len,out_len);
+    print_info(in_name, in_len, out_len);
 
 /*
  * Step 4: decompress again, now going from 'out' to 'newb'
  */
     new_len = in_len;
-    r = lzo1x_decompress_dict_safe(out,out_len,newb,&new_len,NULL,dict,dict_len);
+    r = lzo1x_decompress_dict_safe(out, out_len, newb, &new_len, NULL, dict, dict_len);
     if (r != LZO_E_OK)
     {
         /* this should NEVER happen */
@@ -168,7 +159,7 @@ int do_file ( const char *in_name, int compression_level )
 /*
  * Step 5: verify decompression
  */
-    if (new_len != in_len || lzo_memcmp(in,newb,in_len) != 0)
+    if (new_len != in_len || lzo_memcmp(in, newb, in_len) != 0)
     {
         /* this should NEVER happen */
         printf("internal error - decompression data error\n");
@@ -191,7 +182,7 @@ int do_file ( const char *in_name, int compression_level )
 int __lzo_cdecl_main main(int argc, char *argv[])
 {
     int i = 1;
-    int r;
+    int r = 0;
     const char *dict_name;
     FILE *fp;
     time_t t_total;
@@ -201,7 +192,7 @@ int __lzo_cdecl_main main(int argc, char *argv[])
 
     printf("\nLZO real-time data compression library (v%s, %s).\n",
            lzo_version_string(), lzo_version_date());
-    printf("Copyright (C) 1996-2011 Markus Franz Xaver Johannes Oberhumer\nAll Rights Reserved.\n\n");
+    printf("Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer\nAll Rights Reserved.\n\n");
 
     progname = argv[0];
 
@@ -243,7 +234,7 @@ int __lzo_cdecl_main main(int argc, char *argv[])
     else
     {
         fp = fopen(dict_name,"rb");
-        if (!fp)
+        if (fp == NULL)
         {
             printf("%s: cannot open dictionary file %s\n", progname, dict_name);
             exit(1);
@@ -252,30 +243,32 @@ int __lzo_cdecl_main main(int argc, char *argv[])
         fclose(fp); fp = NULL;
     }
 
-    dict_adler32 = lzo_adler32(0,NULL,0);
-    dict_adler32 = lzo_adler32(dict_adler32,dict,dict_len);
+    dict_adler32 = lzo_adler32(0, NULL, 0);
+    dict_adler32 = lzo_adler32(dict_adler32, dict, dict_len);
     printf("Using dictionary '%s', %ld bytes, ID 0x%08lx.\n",
-            dict_name, (long) dict_len, (long) dict_adler32);
+           dict_name, (long) dict_len, (unsigned long) dict_adler32);
 
 /*
  * Step 3: process files
  */
     t_total = time(NULL);
-    for (r = 0; r == 0 && i < argc; i++)
-        r = do_file(argv[i], compression_level);
+    for ( ; i < argc; i++) {
+        if (do_file(argv[i], compression_level) != 0) {
+            r = 1;
+            break;
+        }
+    }
     t_total = time(NULL) - t_total;
 
     lzo_free(dict);
 
     if (total_n > 1)
-        print_file("***TOTALS***",total_d_len,total_c_len);
+        print_info("***TOTALS***", total_d_len, total_c_len);
 
     printf("Dictionary compression test %s, execution time %lu seconds.\n",
-            r == 0 ? "passed" : "FAILED", (unsigned long) t_total);
+           r == 0 ? "passed" : "FAILED", (unsigned long) t_total);
     return r;
 }
 
-/*
-vi:ts=4:et
-*/
 
+/* vim:set ts=4 sw=4 et: */

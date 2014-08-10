@@ -2,22 +2,7 @@
 
    This file is part of the LZO real-time data compression library.
 
-   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2005 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2004 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2003 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2002 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1999 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1998 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1997 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    The LZO library is free software; you can redistribute it and/or
@@ -140,10 +125,10 @@ lzo1a_decompress ( const lzo_bytep in , lzo_uint  in_len,
                          lzo_bytep out, lzo_uintp out_len,
                          lzo_voidp wrkmem )
 {
-    register lzo_bytep op;
-    register const lzo_bytep ip;
-    register lzo_uint t;
-    register const lzo_bytep m_pos;
+    lzo_bytep op;
+    const lzo_bytep ip;
+    lzo_uint t;
+    const lzo_bytep m_pos;
     const lzo_bytep const ip_end = in + in_len;
 
     LZO_UNUSED(wrkmem);
@@ -262,7 +247,7 @@ do_compress    ( const lzo_bytep in , lzo_uint  in_len,
                        lzo_bytep out, lzo_uintp out_len,
                        lzo_voidp wrkmem )
 {
-    register const lzo_bytep ip;
+    const lzo_bytep ip;
 #if defined(__LZO_HASH_INCREMENTAL)
     lzo_xint dv;
 #endif
@@ -374,7 +359,7 @@ match:
                         LZO_STATS(lzo_stats->lit_run_after_long_match[t]++);
                         assert(ii - im <= MAX_MATCH_LONG);
                         assert((op[-1] >> LBITS) == 0);
-                        op[-1] |= t << LBITS;
+                        op[-1] = LZO_BYTE(op[-1] | (t << LBITS));
                         MEMCPY_DS(op, ii, t);
                     }
                     else

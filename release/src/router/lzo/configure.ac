@@ -3,7 +3,7 @@
 #
 #  This file is part of the LZO data compression library.
 #
-#  Copyright (C) 1996-2011 Markus Franz Xaver Johannes Oberhumer
+#  Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer
 #  All Rights Reserved.
 #
 #  The LZO library is free software; you can redistribute it and/or
@@ -31,13 +31,13 @@
 # // Init
 # ************************************************************************/
 
-AC_COPYRIGHT([Copyright (C) 1996-2011 Markus Franz Xaver Johannes Oberhumer.
+AC_COPYRIGHT([Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer.
 All Rights Reserved.
 This configure script may be copied, distributed and modified under the
 terms of the GNU General Public License; see COPYING for more details.])
 
-AC_PREREQ(2.67)
-AC_INIT([LZO],[2.06],[markus@oberhumer.com],[lzo],[http://www.oberhumer.com/opensource/lzo/])
+AC_PREREQ(2.69)
+AC_INIT([LZO],[2.08],[markus@oberhumer.com],[lzo],[http://www.oberhumer.com/opensource/lzo/])
 AC_MSG_NOTICE([Configuring LZO $PACKAGE_VERSION])
 AC_CONFIG_SRCDIR(src/lzo_init.c)
 AC_CONFIG_AUX_DIR(autoconf)
@@ -67,7 +67,7 @@ AC_C_CONST
 mfx_LZO_CHECK_ENDIAN
 AC_SYS_LARGEFILE
 
-AM_INIT_AUTOMAKE([1.11.1 gnu subdir-objects])
+AM_INIT_AUTOMAKE([1.14.1 gnu subdir-objects])
 AM_SILENT_RULES([yes])
 AC_CONFIG_HEADERS([config.h:config.hin])
 
@@ -134,6 +134,10 @@ AC_MSG_CHECKING([whether to build assembly versions])
 if test "X$enable_asm" != Xno; then
 mfx_compile_S='${CCAS} ${CCASFLAGS} -c conftest.S 1>&AS_MESSAGE_LOG_FD'
 cat > conftest.S <<EOF
+#if !defined(__i386__) && !defined(__i386)
+#error
+this+is+an+error
+#endif
 #include "$ac_abs_top_srcdir/$asm_dir/lzo1x_f1.S"
 EOF
 enable_asm=no
@@ -160,7 +164,7 @@ AM_CONDITIONAL(LZO_USE_ASM_i386_obj_elf32, [false])
 # // Write output files
 # ************************************************************************/
 
-mfx_MINIACC_ACCCHK(["-I$srcdir"],["src/miniacc.h"])
+mfx_LZO_LZOCHK(["-I$srcdir"],[#include "include/lzo/lzoconf.h"],["src/lzo_supp.h"])
 
 if test -r .Conf.settings2; then
     . ./.Conf.settings2
@@ -199,7 +203,7 @@ cat <<EOF
 
    LZO ${PACKAGE_VERSION} configured.
 
-   Copyright (C) 1996-2011 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    The LZO library is free software; you can redistribute it and/or

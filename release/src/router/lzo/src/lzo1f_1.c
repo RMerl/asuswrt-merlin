@@ -2,22 +2,7 @@
 
    This file is part of the LZO real-time data compression library.
 
-   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2005 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2004 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2003 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2002 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1999 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1998 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1997 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    The LZO library is free software; you can redistribute it and/or
@@ -72,7 +57,7 @@ int do_compress          ( const lzo_bytep in , lzo_uint  in_len,
                                  lzo_bytep out, lzo_uintp out_len,
                                  lzo_voidp wrkmem )
 {
-    register const lzo_bytep ip;
+    const lzo_bytep ip;
     lzo_bytep op;
     const lzo_bytep const in_end = in + in_len;
     const lzo_bytep const ip_end = in + in_len - 9;
@@ -86,7 +71,7 @@ int do_compress          ( const lzo_bytep in , lzo_uint  in_len,
     ip++;
     for (;;)
     {
-        register const lzo_bytep m_pos;
+        const lzo_bytep m_pos;
         LZO_DEFINE_UNINITIALIZED_VAR(lzo_uint, m_off, 0);
         lzo_uint m_len;
         lzo_uint dindex;
@@ -110,8 +95,8 @@ int do_compress          ( const lzo_bytep in , lzo_uint  in_len,
 
 
 try_match:
-#if 0 && defined(LZO_UNALIGNED_OK_2)
-        if (UA_GET16(m_pos) != UA_GET16(ip))
+#if 0 && (LZO_OPT_UNALIGNED16)
+        if (UA_GET_NE16(m_pos) != UA_GET_NE16(ip))
 #else
         if (m_pos[0] != ip[0] || m_pos[1] != ip[1])
 #endif
@@ -155,21 +140,22 @@ match:
         lit = pd(ip,ii);
         if (lit > 0)
         {
-            register lzo_uint t = lit;
+            lzo_uint t = lit;
 
             if (t < 4 && op > out)
-                op[-2] |= LZO_BYTE(t);
+                op[-2] = LZO_BYTE(op[-2] | t);
             else if (t <= 31)
                 *op++ = LZO_BYTE(t);
             else
             {
-                register lzo_uint tt = t - 31;
+                lzo_uint tt = t - 31;
 
                 *op++ = 0;
                 while (tt > 255)
                 {
                     tt -= 255;
-                    *op++ = 0;
+                    UA_SET1(op, 0);
+                    op++;
                 }
                 assert(tt > 0);
                 *op++ = LZO_BYTE(tt);
@@ -228,7 +214,8 @@ match:
                 while (m_len > 255)
                 {
                     m_len -= 255;
-                    *op++ = 0;
+                    UA_SET1(op, 0);
+                    op++;
                 }
                 assert(m_len > 0);
                 *op++ = LZO_BYTE(m_len);
@@ -246,26 +233,28 @@ match:
     /* store final literal run */
     if (pd(in_end,ii) > 0)
     {
-        register lzo_uint t = pd(in_end,ii);
+        lzo_uint t = pd(in_end,ii);
 
         if (t < 4 && op > out)
-            op[-2] |= LZO_BYTE(t);
+            op[-2] = LZO_BYTE(op[-2] | t);
         else if (t <= 31)
             *op++ = LZO_BYTE(t);
         else
         {
-            register lzo_uint tt = t - 31;
+            lzo_uint tt = t - 31;
 
             *op++ = 0;
             while (tt > 255)
             {
                 tt -= 255;
-                *op++ = 0;
+                UA_SET1(op, 0);
+                op++;
             }
             assert(tt > 0);
             *op++ = LZO_BYTE(tt);
         }
-        do *op++ = *ii++; while (--t > 0);
+        UA_COPYN(op, ii, t);
+        op += t;
     }
 
     *out_len = pd(op, out);

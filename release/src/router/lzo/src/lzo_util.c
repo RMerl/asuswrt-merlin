@@ -2,22 +2,7 @@
 
    This file is part of the LZO real-time data compression library.
 
-   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2005 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2004 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2003 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2002 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1999 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1998 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1997 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    The LZO library is free software; you can redistribute it and/or
@@ -59,7 +44,7 @@ static const char __lzo_copyright[] =
 #else
     "\r\n\n"
     "LZO data compression library.\n"
-    "$Copyright: LZO Copyright (C) 1996-2011 Markus Franz Xaver Johannes Oberhumer\n"
+    "$Copyright: LZO Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer\n"
     "<markus@oberhumer.com>\n"
     "http://www.oberhumer.com $\n\n"
     "$Id: LZO version: v" LZO_VERSION_STRING ", " LZO_VERSION_DATE " $\n"
@@ -70,11 +55,7 @@ static const char __lzo_copyright[] =
 LZO_PUBLIC(const lzo_bytep)
 lzo_copyright(void)
 {
-#if (LZO_OS_DOS16 && LZO_CC_TURBOC)
-    return (lzo_voidp) __lzo_copyright;
-#else
     return (const lzo_bytep) __lzo_copyright;
-#endif
 }
 
 LZO_PUBLIC(unsigned)
@@ -119,16 +100,16 @@ _lzo_version_date(void)
 /* NMAX is the largest n such that 255n(n+1)/2 + (n+1)(BASE-1) <= 2^32-1 */
 
 #define LZO_DO1(buf,i)  s1 += buf[i]; s2 += s1
-#define LZO_DO2(buf,i)  LZO_DO1(buf,i); LZO_DO1(buf,i+1);
-#define LZO_DO4(buf,i)  LZO_DO2(buf,i); LZO_DO2(buf,i+2);
-#define LZO_DO8(buf,i)  LZO_DO4(buf,i); LZO_DO4(buf,i+4);
-#define LZO_DO16(buf,i) LZO_DO8(buf,i); LZO_DO8(buf,i+8);
+#define LZO_DO2(buf,i)  LZO_DO1(buf,i); LZO_DO1(buf,i+1)
+#define LZO_DO4(buf,i)  LZO_DO2(buf,i); LZO_DO2(buf,i+2)
+#define LZO_DO8(buf,i)  LZO_DO4(buf,i); LZO_DO4(buf,i+4)
+#define LZO_DO16(buf,i) LZO_DO8(buf,i); LZO_DO8(buf,i+8)
 
-LZO_PUBLIC(lzo_uint32)
-lzo_adler32(lzo_uint32 adler, const lzo_bytep buf, lzo_uint len)
+LZO_PUBLIC(lzo_uint32_t)
+lzo_adler32(lzo_uint32_t adler, const lzo_bytep buf, lzo_uint len)
 {
-    lzo_uint32 s1 = adler & 0xffff;
-    lzo_uint32 s2 = (adler >> 16) & 0xffff;
+    lzo_uint32_t s1 = adler & 0xffff;
+    lzo_uint32_t s2 = (adler >> 16) & 0xffff;
     unsigned k;
 
     if (buf == NULL)

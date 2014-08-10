@@ -3,8 +3,7 @@
 
 scriptversion=2010-08-21.06; # UTC
 
-# Copyright (C) 1995, 1996, 1997, 2003, 2004, 2005, 2007, 2009, 2010
-# Free Software Foundation, Inc.
+# Copyright (C) 1995-2014 Free Software Foundation, Inc.
 # written by Ulrich Drepper <drepper@gnu.ai.mit.edu>, June 1995
 #
 # This program is free software; you can redistribute it and/or modify
@@ -40,7 +39,7 @@ fi
 
 case $1 in
   '')
-     echo "$0: No file.  Try \`$0 --help' for more information." 1>&2
+     echo "$0: No file.  Try '$0 --help' for more information." 1>&2
      exit 1;
      ;;
   -h | --h*)
@@ -76,7 +75,7 @@ LC_TIME=C
 export LC_TIME
 
 # GNU ls changes its time format in response to the TIME_STYLE
-# variable.  Since we cannot assume `unset' works, revert this
+# variable.  Since we cannot assume 'unset' works, revert this
 # variable to its documented default.
 if test "${TIME_STYLE+set}" = set; then
   TIME_STYLE=posix-long-iso
@@ -96,14 +95,14 @@ if ls -n /dev/null 1>/dev/null 2>&1; then
   ls_command="$ls_command -n"
 fi
 
-# A `ls -l' line looks as follows on OS/2.
+# A 'ls -l' line looks as follows on OS/2.
 #  drwxrwx---        0 Aug 11  2001 foo
 # This differs from Unix, which adds ownership information.
 #  drwxrwx---   2 root  root      4096 Aug 11  2001 foo
 #
 # To find the date, we split the line on spaces and iterate on words
 # until we find a month.  This cannot work with files whose owner is a
-# user named `Jan', or `Feb', etc.  However, it's unlikely that `/'
+# user named "Jan", or "Feb", etc.  However, it's unlikely that '/'
 # will be owned by a user whose name is a month.  So we first look at
 # the extended ls output of the root directory to decide how many
 # words should be skipped to get the date.
@@ -116,7 +115,7 @@ month=
 command=
 until test $month
 do
-  test $# -gt 0 || error "failed parsing \`$ls_command /' output"
+  test $# -gt 0 || error "failed parsing '$ls_command /' output"
   shift
   # Add another shift to the command.
   command="$command shift;"
@@ -136,7 +135,7 @@ do
   esac
 done
 
-test -n "$month" || error "failed parsing \`$ls_command /' output"
+test -n "$month" || error "failed parsing '$ls_command /' output"
 
 # Get the extended ls output of the file or directory.
 set dummy x`eval "$ls_command \"\\\$save_arg1\""`

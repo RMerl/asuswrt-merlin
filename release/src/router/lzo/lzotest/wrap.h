@@ -2,22 +2,7 @@
 
    This file is part of the LZO real-time data compression library.
 
-   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2005 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2004 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2003 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2002 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1999 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1998 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1997 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    The LZO library is free software; you can redistribute it and/or
@@ -226,9 +211,9 @@ memcpy_x_compress       ( const lzo_bytep src, lzo_uint  src_len,
                                 lzo_bytep dst, lzo_uintp dst_len,
                                 lzo_voidp wrkmem )
 {
-    lzo_memcpy(dst,src,src_len);
+    lzo_memcpy(dst, src, src_len);
     *dst_len = src_len;
-    if (wrkmem) wrkmem = 0; /* avoid warning */
+    LZO_UNUSED(wrkmem);
     return 0;
 }
 
@@ -238,10 +223,9 @@ memset_x_compress       ( const lzo_bytep src, lzo_uint  src_len,
                                 lzo_bytep dst, lzo_uintp dst_len,
                                 lzo_voidp wrkmem )
 {
-    lzo_memset(dst,0,src_len);
+    lzo_memset(dst, 0, src_len);
     *dst_len = src_len;
-    if (src) src = 0;       /* avoid warning */
-    if (wrkmem) wrkmem = 0; /* avoid warning */
+    LZO_UNUSED(src); LZO_UNUSED(wrkmem);
     return 0;
 }
 
@@ -251,12 +235,11 @@ adler32_x_compress      ( const lzo_bytep src, lzo_uint  src_len,
                                 lzo_bytep dst, lzo_uintp dst_len,
                                 lzo_voidp wrkmem )
 {
-    lzo_uint32 adler;
+    lzo_uint32_t adler;
     adler = lzo_adler32(0, NULL, 0);
     adler = lzo_adler32(adler, dst, src_len);
     *dst_len = src_len;
-    if (src) src = 0;       /* avoid warning */
-    if (wrkmem) wrkmem = 0; /* avoid warning */
+    LZO_UNUSED(src); LZO_UNUSED(wrkmem);
     return 0;
 }
 
@@ -266,12 +249,11 @@ crc32_x_compress        ( const lzo_bytep src, lzo_uint  src_len,
                                 lzo_bytep dst, lzo_uintp dst_len,
                                 lzo_voidp wrkmem )
 {
-    lzo_uint32 crc;
+    lzo_uint32_t crc;
     crc = lzo_crc32(0, NULL, 0);
     crc = lzo_crc32(crc, dst, src_len);
     *dst_len = src_len;
-    if (src) src = 0;       /* avoid warning */
-    if (wrkmem) wrkmem = 0; /* avoid warning */
+    LZO_UNUSED(src); LZO_UNUSED(wrkmem);
     return 0;
 }
 
@@ -281,7 +263,4 @@ crc32_x_compress        ( const lzo_bytep src, lzo_uint  src_len,
 #endif
 
 
-/*
-vi:ts=4:et
-*/
-
+/* vim:set ts=4 sw=4 et: */

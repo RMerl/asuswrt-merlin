@@ -2,22 +2,7 @@
 
    This file is part of the LZO real-time data compression library.
 
-   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2005 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2004 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2003 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2002 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1999 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1998 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1997 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    The LZO library is free software; you can redistribute it and/or
@@ -57,17 +42,14 @@
 ************************************************************************/
 
 /* unsigned type for dictionary access - don't waste memory here */
-#if (0UL + SWD_N + SWD_F + SWD_F < 0UL + USHRT_MAX)
-   typedef unsigned short   swd_uint;
-#  define SWD_UINT_MAX      USHRT_MAX
-#elif (0UL + SWD_N + SWD_F + SWD_F < 0UL + UINT_MAX)
-   typedef unsigned         swd_uint;
-#  define SWD_UINT_MAX      UINT_MAX
+#if (0UL + SWD_N + SWD_F + SWD_F < 65535UL)
+   typedef lzo_uint16_t     swd_uint;
+#  define SWD_UINT_MAX      0xffffu
 #else
-   typedef lzo_uint         swd_uint;
-#  define SWD_UINT_MAX      LZO_UINT_MAX
+   typedef lzo_uint32_t     swd_uint;
+#  define SWD_UINT_MAX      0xffffffffu
 #endif
-#define swd_uintp           swd_uint __LZO_MMODEL *
+#define swd_uintp           swd_uint *
 #define SWD_UINT(x)         ((swd_uint)(x))
 
 
@@ -89,10 +71,10 @@
 #endif
 
 #if !(SWD_NO_HEAD2) && (SWD_THRESHOLD == 1) && !defined(HEAD2)
-#  if 1 && defined(LZO_UNALIGNED_OK_2)
-#    define HEAD2(b,p)      UA_GET16((b)+(p))
+#  if 1 && (LZO_OPT_UNALIGNED16)
+#    define HEAD2(b,p)      UA_GET_NE16((b)+(p))
 #  else
-#    define HEAD2(b,p)      (b[p] ^ ((unsigned)b[p+1]<<8))
+#    define HEAD2(b,p)      (b[p] ^ ((unsigned)b[(p)+1]<<8))
 #  endif
 #  define NIL2              SWD_UINT_MAX
 #endif
@@ -146,32 +128,7 @@ typedef struct
     lzo_uint node_count;
     lzo_uint first_rp;
 
-#if defined(__LZO_MMODEL_HUGE)
-#  define A(type, n)    ((((n) * sizeof(type)) + 3UL) &~ 3UL)
-
-#  define O_b(s)        (0L)
-#  define O_head3(s)    (O_b(s) + A(char, 0UL + SWD_N + SWD_F + SWD_F))
-#  define O_succ3(s)    (O_head3(s) + A(swd_uint, 0UL + SWD_HSIZE))
-#  define O_best3(s)    (O_succ3(s) + A(swd_uint, 0UL + SWD_N + SWD_F))
-#  define O_llen3(s)    (O_best3(s) + A(swd_uint, 0UL + SWD_N + SWD_F))
-# ifdef HEAD2
-#  define O_head2(s)    (O_llen3(s) + A(swd_uint, 0UL + SWD_HSIZE))
-#  define O_END(s)      (O_head2(s) + A(swd_uint, 0UL + 65536L))
-# else
-#  define O_END(s)      (O_llen3(s) + A(swd_uint, 0UL + SWD_HSIZE))
-# endif
-
-#  define S_DEF(s,type,off)  ((type) ((lzo_bytep)s + 0L + sizeof(*s) + off))
-#  define s_b(s)        S_DEF(s, lzo_bytep, O_b(s))
-#  define s_head3(s)    S_DEF(s, swd_uintp, O_head3(s))
-#  define s_succ3(s)    S_DEF(s, swd_uintp, O_succ3(s))
-#  define s_best3(s)    S_DEF(s, swd_uintp, O_best3(s))
-#  define s_llen3(s)    S_DEF(s, swd_uintp, O_llen3(s))
-# ifdef HEAD2
-#  define s_head2(s)    S_DEF(s, swd_uintp, O_head2(s))
-# endif
-
-#elif defined(__LZO_CHECKER)
+#if defined(__LZO_CHECKER)
     /* malloc arrays of the exact size to detect any overrun */
     unsigned char *b;
     swd_uint *head3;
@@ -194,12 +151,9 @@ typedef struct
 #endif
 }
 lzo_swd_t;
-#define lzo_swd_p   lzo_swd_t __LZO_MMODEL *
+#define lzo_swd_p   lzo_swd_t *
 
 
-#if defined(__LZO_MMODEL_HUGE)
-#define SIZEOF_LZO_SWD_T    O_END(0)
-#else
 #define s_b(s)      s->b
 #define s_head3(s)  s->head3
 #define s_succ3(s)  s->succ3
@@ -209,18 +163,17 @@ lzo_swd_t;
 #define s_head2(s)  s->head2
 #endif
 #define SIZEOF_LZO_SWD_T    (sizeof(lzo_swd_t))
-#endif
 
 
 /* Access macro for head3.
  * head3[key] may be uninitialized if the list is emtpy,
  * but then its value will never be used.
  */
-#if defined(__LZO_CHECKER)
+#if 1 || defined(__LZO_CHECKER)
 #  define s_get_head3(s,key) \
-        ((s_llen3(s)[key] == 0) ? SWD_UINT_MAX : s_head3(s)[key])
+        ((swd_uint)((s_llen3(s)[key] == 0) ? SWD_UINT_MAX : s_head3(s)[key]))
 #else
-#  define s_get_head3(s,key)    s_head3(s)[key]
+#  define s_get_head3(s,key)    (s_head3(s)[key])
 #endif
 
 
@@ -284,20 +237,33 @@ void swd_insertdict(lzo_swd_p s, lzo_uint node, lzo_uint len)
 //
 ************************************************************************/
 
+static void swd_exit(lzo_swd_p s);
+
 static
 int swd_init(lzo_swd_p s, const lzo_bytep dict, lzo_uint dict_len)
 {
 #if defined(__LZO_CHECKER)
+    unsigned r = 1;
     s->b = (lzo_bytep) malloc(SWD_N + SWD_F + SWD_F);
     s->head3 = (swd_uintp) malloc(sizeof(swd_uint) * SWD_HSIZE);
     s->succ3 = (swd_uintp) malloc(sizeof(swd_uint) * (SWD_N + SWD_F));
     s->best3 = (swd_uintp) malloc(sizeof(swd_uint) * (SWD_N + SWD_F));
     s->llen3 = (swd_uintp) malloc(sizeof(swd_uint) * SWD_HSIZE);
+    r &= s->b != NULL;
+    r &= s->head3 != NULL;
+    r &= s->succ3 != NULL;
+    r &= s->best3 != NULL;
+    r &= s->llen3 != NULL;
 #ifdef HEAD2
     IF_HEAD2(s) {
         s->head2 = (swd_uintp) malloc(sizeof(swd_uint) * 65536L);
+        r &= s->head2 != NULL;
     }
 #endif
+    if (r != 1) {
+        swd_exit(s);
+        return LZO_E_OUT_OF_MEMORY;
+    }
 #endif
 
     s->m_len = 0;
@@ -338,7 +304,7 @@ int swd_init(lzo_swd_p s, const lzo_bytep dict, lzo_uint dict_len)
         lzo_memset(s_head2(s), 0xff, (lzo_uint)sizeof(s_head2(s)[0]) * 65536L);
         assert(s_head2(s)[0] == NIL2);
 #else
-        lzo_uint32 i;
+        lzo_xint i;
         for (i = 0; i < 65536L; i++)
             s_head2(s)[i] = NIL2;
 #endif
@@ -434,7 +400,7 @@ void swd_getbyte(lzo_swd_p s)
     {
         if (s->look > 0)
             --s->look;
-#if defined(__LZO_CHECKER)
+#if 1 || defined(__LZO_CHECKER)
         /* initialize memory - value doesn't matter */
         s_b(s)[s->ip] = 0;
         if (s->ip < s->swd_f)
@@ -572,9 +538,9 @@ void swd_search(lzo_swd_p s, lzo_uint node, lzo_uint cnt)
             lzo_uint i;
             assert(lzo_memcmp(bp,&b[node],3) == 0);
 
-#if 0 && defined(LZO_UNALIGNED_OK_4)
+#if 0 && (LZO_OPT_UNALIGNED32)
             p1 += 3; p2 += 3;
-            while (p1 + 4 <= px && UA_GET32(p1) == UA_GET32(p2))
+            while (p1 + 4 <= px && UA_GET_NE32(p1) == UA_GET_NE32(p2))
                 p1 += 4, p2 += 4;
             while (p1 < px && *p1 == *p2)
                 p1 += 1, p2 += 1;

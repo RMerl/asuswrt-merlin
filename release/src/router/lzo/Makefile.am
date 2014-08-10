@@ -4,12 +4,12 @@
 #
 #  This file is part of the LZO data compression library.
 #
-#  Copyright (C) 1996-2011 Markus Franz Xaver Johannes Oberhumer
+#  Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer
 #  All Rights Reserved.
 #
 
 EXTRA_DIST =
-INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)
 LDADD = src/liblzo2.la
 lib_LTLIBRARIES =
 noinst_PROGRAMS =
@@ -20,7 +20,7 @@ noinst_PROGRAMS =
 ##************************************************************************/
 
 doc_DATA = AUTHORS COPYING NEWS THANKS doc/LZO.FAQ doc/LZO.TXT doc/LZOAPI.TXT
-EXTRA_DIST += BUGS autoconf/shtool
+EXTRA_DIST += BUGS CMakeLists.txt autoconf/shtool
 
 # hooks for Automake targets
 dist-hook: dist-hook-1
@@ -72,7 +72,7 @@ pkginclude_HEADERS = \
 
 lib_LTLIBRARIES += src/liblzo2.la
 
-src_liblzo2_la_LDFLAGS = -version-info 2:0:0 $(AM_LDFLAGS)
+src_liblzo2_la_LDFLAGS = -version-info 2:0:0 -no-undefined $(AM_LDFLAGS)
 
 src_liblzo2_la_SOURCES = \
     src/lzo1.c src/lzo1_99.c src/lzo1a.c src/lzo1a_99.c src/lzo1b_1.c \
@@ -101,23 +101,23 @@ EXTRA_DIST += \
     src/lzo1b_de.h src/lzo1b_r.ch src/lzo1b_sm.ch src/lzo1b_tm.ch \
     src/lzo1c_cc.h src/lzo1f_d.ch  src/lzo1x_c.ch src/lzo1x_d.ch \
     src/lzo1x_oo.ch src/lzo2a_d.ch src/lzo_conf.h src/lzo_dict.h \
-    src/lzo_dll.ch src/lzo_func.ch src/lzo_mchw.ch src/lzo_ptr.h src/lzo_swd.ch \
-    src/miniacc.h src/stats1a.h src/stats1b.h src/stats1c.h
+    src/lzo_dll.ch src/lzo_func.h src/lzo_mchw.ch src/lzo_ptr.h \
+    src/lzo_supp.h src/lzo_swd.ch src/stats1a.h src/stats1b.h src/stats1c.h
 
 LZO_ASM_SOURCES_i386_src_gas = \
-    asm/i386/src_gas/lzo1c_s1.S asm/i386/src_gas/lzo1c_s2.S \
-    asm/i386/src_gas/lzo1f_f1.S asm/i386/src_gas/lzo1f_f2.S \
-    asm/i386/src_gas/lzo1x_f1.S asm/i386/src_gas/lzo1x_f2.S \
-    asm/i386/src_gas/lzo1x_s1.S asm/i386/src_gas/lzo1x_s2.S \
-    asm/i386/src_gas/lzo1y_f1.S asm/i386/src_gas/lzo1y_f2.S \
-    asm/i386/src_gas/lzo1y_s1.S asm/i386/src_gas/lzo1y_s2.S
+    asm/i386/src_gas/lzo1c_s1.S \
+    asm/i386/src_gas/lzo1f_f1.S \
+    asm/i386/src_gas/lzo1x_f1.S \
+    asm/i386/src_gas/lzo1x_s1.S \
+    asm/i386/src_gas/lzo1y_f1.S \
+    asm/i386/src_gas/lzo1y_s1.S
 LZO_ASM_OBJECTS_i386_obj_elf32 = \
-    asm/i386/obj/elf32/lzo1c_s1.o asm/i386/obj/elf32/lzo1c_s2.o \
-    asm/i386/obj/elf32/lzo1f_f1.o asm/i386/obj/elf32/lzo1f_f2.o \
-    asm/i386/obj/elf32/lzo1x_f1.o asm/i386/obj/elf32/lzo1x_f2.o \
-    asm/i386/obj/elf32/lzo1x_s1.o asm/i386/obj/elf32/lzo1x_s2.o \
-    asm/i386/obj/elf32/lzo1y_f1.o asm/i386/obj/elf32/lzo1y_f2.o \
-    asm/i386/obj/elf32/lzo1y_s1.o asm/i386/obj/elf32/lzo1y_s2.o
+    asm/i386/obj/elf32/lzo1c_s1.o \
+    asm/i386/obj/elf32/lzo1f_f1.o \
+    asm/i386/obj/elf32/lzo1x_f1.o \
+    asm/i386/obj/elf32/lzo1x_s1.o \
+    asm/i386/obj/elf32/lzo1y_f1.o \
+    asm/i386/obj/elf32/lzo1y_s1.o
 if LZO_USE_ASM_i386_src_gas
 LZO_ASM_SOURCES = $(LZO_ASM_SOURCES_i386_src_gas)
 endif
@@ -186,9 +186,9 @@ noinst_PROGRAMS += minilzo/testmini
 
 minilzo_testmini_SOURCES   = minilzo/testmini.c minilzo/minilzo.c
 minilzo_testmini_SHORTNAME = t
-minilzo_testmini_CPPFLAGS  = -DMINILZO_HAVE_CONFIG_H=1
+minilzo_testmini_CPPFLAGS  = $(AM_CPPFLAGS)
+minilzo_testmini_CPPFLAGS += -DMINILZO_HAVE_CONFIG_H=1
 minilzo_testmini_CPPFLAGS += -I$(top_srcdir)/include/lzo
-minilzo_testmini_CPPFLAGS += $(AM_CPPFLAGS)
 minilzo_testmini_LDADD     =
 
 EXTRA_DIST += minilzo/Makefile.minilzo minilzo/README.LZO minilzo/minilzo.h

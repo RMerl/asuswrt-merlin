@@ -2,22 +2,7 @@
 
    This file is part of the LZO real-time data compression library.
 
-   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2005 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2004 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2003 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2002 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1999 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1998 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1997 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    The LZO library is free software; you can redistribute it and/or
@@ -55,8 +40,8 @@
 int main(int argc, char *argv[])
 {
     lzo_bytep block;
-    lzo_uint block_len;
-    lzo_uint32 adler, crc;
+    lzo_uint block_size;
+    lzo_uint32_t adler, crc;
 
     if (argc < 0 && argv == NULL)   /* avoid warning about unused args */
         return 0;
@@ -68,18 +53,18 @@ int main(int argc, char *argv[])
     }
 
 /* prepare the block */
-    block_len = 128 * 1024L;
-    block = (lzo_bytep) lzo_malloc(block_len);
+    block_size = 128 * 1024L;
+    block = (lzo_bytep) lzo_malloc(block_size);
     if (block == NULL)
     {
         printf("out of memory\n");
         return 3;
     }
-    lzo_memset(block, 0, block_len);
+    lzo_memset(block, 0, block_size);
 
 /* adler32 checksum */
     adler = lzo_adler32(0, NULL, 0);
-    adler = lzo_adler32(adler, block, block_len);
+    adler = lzo_adler32(adler, block, block_size);
     if (adler != 0x001e0001UL)
     {
         printf("adler32 checksum error !!! (0x%08lx)\n", (long) adler);
@@ -88,7 +73,7 @@ int main(int argc, char *argv[])
 
 /* crc32 checksum */
     crc = lzo_crc32(0, NULL, 0);
-    crc = lzo_crc32(crc, block, block_len);
+    crc = lzo_crc32(crc, block, block_size);
     if (crc != 0x7ee8cdcdUL)
     {
         printf("crc32 checksum error !!! (0x%08lx)\n", (long) crc);
@@ -101,7 +86,4 @@ int main(int argc, char *argv[])
 }
 
 
-/*
-vi:ts=4:et
-*/
-
+/* vim:set ts=4 sw=4 et: */

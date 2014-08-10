@@ -2,22 +2,7 @@
 
    This file is part of the LZO real-time data compression library.
 
-   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2005 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2004 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2003 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2002 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1999 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1998 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1997 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    The LZO library is free software; you can redistribute it and/or
@@ -53,8 +38,12 @@
    /* avoid warnings about inlining */
 #  pragma warning(disable: 4710 4711)
 #endif
-#if (LZO_CC_MSC && (_MSC_VER >= 1400))
-   /* avoid warnings when using "deprecated" POSIX functions */
+/* disable silly warnings about using "deprecated" POSIX functions like "fopen" */
+#if (LZO_CC_INTELC_MSC && (__INTEL_COMPILER >= 1100))
+#  pragma warning(disable: 1786)
+#elif (LZO_CC_INTELC_MSC && (__INTEL_COMPILER >= 1000))
+#  pragma warning(disable: 1478)
+#elif (LZO_CC_MSC && (_MSC_VER >= 1400))
 #  pragma warning(disable: 4996)
 #endif
 #if (LZO_CC_PELLESC && (__POCC__ >= 290))
@@ -66,19 +55,13 @@
 //
 **************************************************************************/
 
-#if defined(__LZO_MMODEL_HUGE) || defined(ACC_WANT_ACCLIB_GETOPT) || !(defined(LZO_LIBC_ISOC90) || defined(LZO_LIBC_ISOC99))
+#if defined(LZO_WANT_ACCLIB_GETOPT) || !(defined(LZO_LIBC_ISOC90) || defined(LZO_LIBC_ISOC99))
 
 #include "examples/portab_a.h"
 
 #else
 
-/* INFO:
- *   The "portab_a.h" version above uses the ACC library to add
- *   support for ancient systems (like 16-bit DOS) and to provide
- *   some gimmicks like Windows high-resolution timers.
- *   Still, on any halfway modern machine you can also use the
- *   following pure ANSI-C code instead.
- */
+/* On any halfway modern machine we can use the following pure ANSI-C code. */
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -98,13 +81,14 @@
 #  define lzo_fread(f,b,s)      (fread(b,1,s,f))
 #  define lzo_fwrite(f,b,s)     (fwrite(b,1,s,f))
 #endif
-#if defined(WANT_LZO_UCLOCK)
-#  define lzo_uclock_handle_t   int
-#  define lzo_uclock_t          double
-#  define lzo_uclock_open(a)    ((void)(a))
-#  define lzo_uclock_close(a)   ((void)(a))
-#  define lzo_uclock_read(a,b)  *(b) = (clock() / (double)(CLOCKS_PER_SEC))
-#  define lzo_uclock_get_elapsed(a,b,c) (*(c) - *(b))
+#if defined(WANT_LZO_PCLOCK)
+#  define lzo_pclock_handle_t   int
+#  define lzo_pclock_t          double
+#  define lzo_pclock_open_default(a) ((void)(a))
+#  define lzo_pclock_close(a)   ((void)(a))
+#  define lzo_pclock_read(a,b)  *(b) = (clock() / (double)(CLOCKS_PER_SEC))
+#  define lzo_pclock_get_elapsed(a,b,c) (*(c) - *(b))
+#  define lzo_pclock_flush_cpu_cache(a,b)  ((void)(a))
 #endif
 #if defined(WANT_LZO_WILDARGV)
 #  define lzo_wildargv(a,b)     ((void)0)
@@ -154,34 +138,4 @@ static lzo_voidp xmalloc(lzo_uint len)
 #endif
 
 
-#if defined(WANT_LZO_UCLOCK)
-
-/* High quality benchmarking.
- *
- * Flush the CPU cache to get more accurate benchmark values.
- * This needs custom kernel patches. As a result - in combination with
- * the perfctr Linux kernel patches - accurate high-quality benchmarking
- * is possible.
- *
- * All other methods (rdtsc, QueryPerformanceCounter, gettimeofday, ...)
- * are completely unreliable for our purposes, and the only other
- * option is to boot into a legacy single-task operating system
- * like plain MSDOS and to directly reprogram the hardware clock.
- * [The djgpp2 port of the gcc compiler has support functions for this.]
- *
- * Also, for embedded systems it's best to benchmark by using a
- * CPU emulator/simulator software that can exactly count all
- * virtual clock ticks.
- */
-
-#if !defined(lzo_uclock_flush_cpu_cache)
-#  define lzo_uclock_flush_cpu_cache(h,flags)  ((void)(h))
-#endif
-
-#endif
-
-
-/*
-vi:ts=4:et
-*/
-
+/* vim:set ts=4 sw=4 et: */

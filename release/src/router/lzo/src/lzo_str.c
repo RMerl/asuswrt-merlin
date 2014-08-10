@@ -2,22 +2,7 @@
 
    This file is part of the LZO real-time data compression library.
 
-   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2005 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2004 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2003 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2002 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1999 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1998 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1997 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    The LZO library is free software; you can redistribute it and/or
@@ -53,23 +38,20 @@
 // slow but portable <string.h> stuff, only used in assertions
 ************************************************************************/
 
-#if !(__LZO_MMODEL_HUGE)
-#  undef ACC_HAVE_MM_HUGE_PTR
+#define lzo_hsize_t             lzo_uint
+#define lzo_hvoid_p             lzo_voidp
+#define lzo_hbyte_p             lzo_bytep
+#define LZOLIB_PUBLIC(r,f)      LZO_PUBLIC(r) f
+#ifndef __LZOLIB_FUNCNAME
+#define __LZOLIB_FUNCNAME(f)    f
 #endif
-#define acc_hsize_t             lzo_uint
-#define acc_hvoid_p             lzo_voidp
-#define acc_hbyte_p             lzo_bytep
-#define ACCLIB_PUBLIC(r,f)      LZO_PUBLIC(r) f
-#ifndef __ACCLIB_FUNCNAME
-#define __ACCLIB_FUNCNAME(f)    f
-#endif
-#define acc_hmemcmp             __ACCLIB_FUNCNAME(lzo_memcmp)
-#define acc_hmemcpy             __ACCLIB_FUNCNAME(lzo_memcpy)
-#define acc_hmemmove            __ACCLIB_FUNCNAME(lzo_memmove)
-#define acc_hmemset             __ACCLIB_FUNCNAME(lzo_memset)
-#define ACC_WANT_ACCLIB_HMEMCPY 1
-#include "miniacc.h"
-#undef ACCLIB_PUBLIC
+#define lzo_hmemcmp             __LZOLIB_FUNCNAME(lzo_memcmp)
+#define lzo_hmemcpy             __LZOLIB_FUNCNAME(lzo_memcpy)
+#define lzo_hmemmove            __LZOLIB_FUNCNAME(lzo_memmove)
+#define lzo_hmemset             __LZOLIB_FUNCNAME(lzo_memset)
+#define LZO_WANT_ACCLIB_HMEMCPY 1
+#include "lzo_supp.h"
+#undef LZOLIB_PUBLIC
 
 
 /*

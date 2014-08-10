@@ -1,4 +1,4 @@
-@echo // Copyright (C) 1996-2011 Markus F.X.J. Oberhumer
+@echo // Copyright (C) 1996-2014 Markus F.X.J. Oberhumer
 @echo //
 @echo //   Windows 64-bit (AMD64 or Itanium)
 @echo //   Microsoft Visual C/C++ (DLL)
@@ -7,8 +7,8 @@
 @if "%BECHO%"=="n" echo off
 
 
-set CC=cl -nologo -MD
-set CF=-O2 -GF -W3 -Wp64 %CFI%
+set CC=cl -nologo -MT
+set CF=-O2 -GF -W3 %CFI%
 set LF=%BLIB%
 
 %CC% %CF% -D__LZO_EXPORT1#__declspec(dllexport) -c @b\src.rsp

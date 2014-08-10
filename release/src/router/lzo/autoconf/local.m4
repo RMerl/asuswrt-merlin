@@ -1,4 +1,4 @@
-dnl Serial 2 mfx/m4/acc.m4
+dnl Serial 3 mfx/m4/acc.m4
 
 AC_DEFUN([mfx_ACC_CHECK_ENDIAN], [
 AC_C_BIGENDIAN([AC_DEFINE(ACC_ABI_BIG_ENDIAN,1,[Define to 1 if your machine is big endian.])],[AC_DEFINE(ACC_ABI_LITTLE_ENDIAN,1,[Define to 1 if your machine is little endian.])])
@@ -37,7 +37,7 @@ test "X$mfx_tmp" = "X" || CPPFLAGS="$mfx_tmp $CPPFLAGS"
 AC_MSG_CHECKING([whether your compiler passes the ACC conformance test])
 
 AC_LANG_CONFTEST([AC_LANG_PROGRAM(
-[[#define ACC_CONFIG_NO_HEADER 1
+[[#define ACC_CFG_NO_CONFIG_HEADER 1
 #include "acc/acc.h"
 #include "acc/acc_incd.h"
 
@@ -87,7 +87,7 @@ dnl    AS_EXIT
 esac
 ])
 
-dnl Serial 2 mfx/m4/acc_miniacc.m4
+dnl Serial 3 mfx/m4/acc_miniacc.m4
 
 AC_DEFUN([mfx_MINIACC_ACCCHK], [
 mfx_tmp=$1
@@ -98,7 +98,7 @@ test "X$mfx_tmp" = "X" || CPPFLAGS="$mfx_tmp $CPPFLAGS"
 AC_MSG_CHECKING([whether your compiler passes the ACC conformance test])
 
 AC_LANG_CONFTEST([AC_LANG_PROGRAM(
-[[#define ACC_CONFIG_NO_HEADER 1
+[[#define ACC_CFG_NO_CONFIG_HEADER 1
 #define ACC_WANT_ACC_INCD_H 1
 #include $2
 
@@ -193,17 +193,17 @@ case x$mfx_tmp in
 esac
 ])
 
-dnl Serial 10  -*- Autoconf -*-
+dnl Serial 13  -*- Autoconf -*-
 # Enable extensions on systems that normally disable them.
 
-# Copyright (C) 2003, 2006-2011 Free Software Foundation, Inc.
+# Copyright (C) 2003, 2006-2014 Free Software Foundation, Inc.
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
 
-# This definition of AC_USE_SYSTEM_EXTENSIONS is stolen from CVS
+# This definition of AC_USE_SYSTEM_EXTENSIONS is stolen from git
 # Autoconf.  Perhaps we can remove this once we can assume Autoconf
-# 2.62 or later everywhere, but since CVS Autoconf mutates rapidly
+# 2.70 or later everywhere, but since Autoconf mutates rapidly
 # enough in this area it's likely we'll need to redefine
 # AC_USE_SYSTEM_EXTENSIONS for quite some time.
 
@@ -225,6 +225,7 @@ dnl Serial 10  -*- Autoconf -*-
 # ------------------------
 # Enable extensions on systems that normally disable them,
 # typically due to standards-conformance issues.
+#
 # Remember that #undef in AH_VERBATIM gets replaced with #define by
 # AC_DEFINE.  The goal here is to define all known feature-enabling
 # macros, then, if reports of conflicts are made, disable macros that
@@ -233,36 +234,28 @@ AC_DEFUN_ONCE([AC_USE_SYSTEM_EXTENSIONS],
 [AC_BEFORE([$0], [AC_COMPILE_IFELSE])dnl
 AC_BEFORE([$0], [AC_RUN_IFELSE])dnl
 
-  AC_REQUIRE([AC_CANONICAL_HOST])
-
   AC_CHECK_HEADER([minix/config.h], [MINIX=yes], [MINIX=])
   if test "$MINIX" = yes; then
     AC_DEFINE([_POSIX_SOURCE], [1],
-      [Define to 1 if you need to in order for `stat' and other
+      [Define to 1 if you need to in order for 'stat' and other
        things to work.])
     AC_DEFINE([_POSIX_1_SOURCE], [2],
       [Define to 2 if the system does not provide POSIX.1 features
        except with this defined.])
     AC_DEFINE([_MINIX], [1],
       [Define to 1 if on MINIX.])
+    AC_DEFINE([_NETBSD_SOURCE], [1],
+      [Define to 1 to make NetBSD features available.  MINIX 3 needs this.])
   fi
 
-  dnl HP-UX 11.11 defines mbstate_t only if _XOPEN_SOURCE is defined to 500,
-  dnl regardless of whether the flags -Ae or _D_HPUX_SOURCE=1 are already
-  dnl provided.
-  case "$host_os" in
-    hpux*)
-      AC_DEFINE([_XOPEN_SOURCE], [500],
-        [Define to 500 only on HP-UX.])
-      ;;
-  esac
-
-  AH_VERBATIM([__EXTENSIONS__],
+dnl Use a different key than __EXTENSIONS__, as that name broke existing
+dnl configure.ac when using autoheader 2.62.
+  AH_VERBATIM([USE_SYSTEM_EXTENSIONS],
 [/* Enable extensions on AIX 3, Interix.  */
 #ifndef _ALL_SOURCE
 # undef _ALL_SOURCE
 #endif
-/* Enable general extensions on MacOS X.  */
+/* Enable general extensions on OS X.  */
 #ifndef _DARWIN_C_SOURCE
 # undef _DARWIN_C_SOURCE
 #endif
@@ -277,6 +270,12 @@ AC_BEFORE([$0], [AC_RUN_IFELSE])dnl
 /* Enable extensions on HP NonStop.  */
 #ifndef _TANDEM_SOURCE
 # undef _TANDEM_SOURCE
+#endif
+/* Enable X/Open extensions if necessary.  HP-UX 11.11 defines
+   mbstate_t only if _XOPEN_SOURCE is defined to 500, regardless of
+   whether compiling with -Ae or -D_HPUX_SOURCE=1.  */
+#ifndef _XOPEN_SOURCE
+# undef _XOPEN_SOURCE
 #endif
 /* Enable general extensions on Solaris.  */
 #ifndef __EXTENSIONS__
@@ -298,6 +297,22 @@ AC_BEFORE([$0], [AC_RUN_IFELSE])dnl
   AC_DEFINE([_GNU_SOURCE])
   AC_DEFINE([_POSIX_PTHREAD_SEMANTICS])
   AC_DEFINE([_TANDEM_SOURCE])
+  AC_CACHE_CHECK([whether _XOPEN_SOURCE should be defined],
+    [ac_cv_should_define__xopen_source],
+    [ac_cv_should_define__xopen_source=no
+     AC_COMPILE_IFELSE(
+       [AC_LANG_PROGRAM([[
+          #include <wchar.h>
+          mbstate_t x;]])],
+       [],
+       [AC_COMPILE_IFELSE(
+          [AC_LANG_PROGRAM([[
+             #define _XOPEN_SOURCE 500
+             #include <wchar.h>
+             mbstate_t x;]])],
+          [ac_cv_should_define__xopen_source=yes])])])
+  test $ac_cv_should_define__xopen_source = yes &&
+    AC_DEFINE([_XOPEN_SOURCE], [500])
 ])# AC_USE_SYSTEM_EXTENSIONS
 
 # gl_USE_SYSTEM_EXTENSIONS
@@ -430,6 +445,73 @@ AC_DEFUN([mfx_LZO_CHECK_ENDIAN], [
 AC_C_BIGENDIAN([AC_DEFINE(LZO_ABI_BIG_ENDIAN,1,[Define to 1 if your machine is big endian.])],[AC_DEFINE(LZO_ABI_LITTLE_ENDIAN,1,[Define to 1 if your machine is little endian.])])
 ])
 
+dnl Serial 3 mfx/m4/lzo_lzochk.m4
+
+AC_DEFUN([mfx_LZO_LZOCHK], [
+mfx_tmp=$1
+mfx_save_CPPFLAGS=$CPPFLAGS
+dnl in Makefile.in $(INCLUDES) will be before $(CPPFLAGS), so we mimic this here
+test "X$mfx_tmp" = "X" || CPPFLAGS="$mfx_tmp $CPPFLAGS"
+
+AC_MSG_CHECKING([whether your compiler passes the LZO conformance test])
+
+AC_LANG_CONFTEST([AC_LANG_PROGRAM(
+[[#include <limits.h>
+#include <stddef.h>
+#define LZO_CFG_NO_CONFIG_HEADER 1
+#define LZO_WANT_ACC_INCD_H 1
+$2
+#include $3
+
+#undef  LZOCHK_ASSERT
+#define LZOCHK_ASSERT(expr)     LZO_COMPILE_TIME_ASSERT_HEADER(expr)
+#define LZO_WANT_ACC_CHK_CH 1
+#include $3
+
+#undef  LZOCHK_ASSERT
+#define LZOCHK_ASSERT(expr)     LZO_COMPILE_TIME_ASSERT(expr)
+static void test_lzo_compile_time_assert(void) {
+#define LZO_WANT_ACC_CHK_CH 1
+#include $3
+}
+
+#undef NDEBUG
+#include <assert.h>
+#undef  LZOCHK_ASSERT
+#define LZOCHK_ASSERT(expr)     assert(expr);
+static int test_lzo_run_time_assert(int r) {
+#define LZO_WANT_ACC_CHK_CH 1
+#include $3
+return r;
+}
+]], [[
+test_lzo_compile_time_assert();
+if (test_lzo_run_time_assert(1) != 1) return 1;
+]]
+)])
+
+mfx_tmp=FAILED
+_AC_COMPILE_IFELSE([], [mfx_tmp=yes])
+rm -f conftest.$ac_ext conftest.$ac_objext
+
+CPPFLAGS=$mfx_save_CPPFLAGS
+
+AC_MSG_RESULT([$mfx_tmp])
+case x$mfx_tmp in
+  xpassed | xyes) ;;
+  *)
+    AC_MSG_NOTICE([])
+    AC_MSG_NOTICE([Your compiler failed the LZO conformance test - for details see ])
+    AC_MSG_NOTICE([`config.log'. Please check that log file and consider sending])
+    AC_MSG_NOTICE([a patch or bug-report to <${PACKAGE_BUGREPORT}>.])
+    AC_MSG_NOTICE([Thanks for your support.])
+    AC_MSG_NOTICE([])
+    AC_MSG_ERROR([LZO conformance test failed. Stop.])
+dnl    AS_EXIT
+    ;;
+esac
+])
+
 dnl Serial 2 mfx/m4/mfx.m4
 
 AC_DEFUN([mfx_CHECK_SIZEOF], [
@@ -468,7 +550,7 @@ AC_C_BIGENDIAN([AC_DEFINE(NRV_ABI_BIG_ENDIAN,1,[Define to 1 if your machine is b
 ])
 # Checks for stat-related time functions.
 
-# Copyright (C) 1998-1999, 2001, 2003, 2005-2007, 2009-2011 Free Software
+# Copyright (C) 1998-1999, 2001, 2003, 2005-2007, 2009-2014 Free Software
 # Foundation, Inc.
 
 # This file is free software; the Free Software Foundation
@@ -487,7 +569,6 @@ dnl From Paul Eggert.
 
 AC_DEFUN([gl_STAT_TIME],
 [
-  AC_REQUIRE([AC_C_INLINE])
   AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
   AC_CHECK_HEADERS_ONCE([sys/time.h])
 
@@ -538,7 +619,6 @@ AC_DEFUN([gl_STAT_TIME],
 #
 AC_DEFUN([gl_STAT_BIRTHTIME],
 [
-  AC_REQUIRE([AC_C_INLINE])
   AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
   AC_CHECK_HEADERS_ONCE([sys/time.h])
   AC_CHECK_MEMBERS([struct stat.st_birthtimespec.tv_nsec], [],

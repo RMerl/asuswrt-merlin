@@ -2,22 +2,7 @@
 
    This file is part of the LZO real-time data compression library.
 
-   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2005 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2004 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2003 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2002 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1999 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1998 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1997 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    The LZO library is free software; you can redistribute it and/or
@@ -44,19 +29,8 @@
 
 #if 1 && defined(DO_COMPRESS) && !defined(do_compress)
    /* choose a unique name to better help PGO optimizations */
-#  define do_compress       LZO_CPP_ECONCAT2(DO_COMPRESS,_core)
+#  define do_compress       LZO_PP_ECONCAT2(DO_COMPRESS,_core)
 #endif
-
-#if defined(UA_GET64) && (LZO_ABI_BIG_ENDIAN)
-#  define WANT_lzo_bitops_clz64 1
-#elif defined(UA_GET64) && (LZO_ABI_LITTLE_ENDIAN)
-#  define WANT_lzo_bitops_ctz64 1
-#elif defined(UA_GET32) && (LZO_ABI_BIG_ENDIAN)
-#  define WANT_lzo_bitops_clz32 1
-#elif defined(UA_GET32) && (LZO_ABI_LITTLE_ENDIAN)
-#  define WANT_lzo_bitops_ctz32 1
-#endif
-#include "lzo_func.ch"
 
 
 /***********************************************************************
@@ -68,7 +42,7 @@ do_compress ( const lzo_bytep in , lzo_uint  in_len,
                     lzo_bytep out, lzo_uintp out_len,
                     lzo_uint  ti,  lzo_voidp wrkmem)
 {
-    register const lzo_bytep ip;
+    const lzo_bytep ip;
     lzo_bytep op;
     const lzo_bytep const in_end = in + in_len;
     const lzo_bytep const ip_end = in + in_len - 20;
@@ -107,8 +81,8 @@ next:
         goto literal;
 
 try_match:
-#if defined(UA_GET32)
-        if (UA_GET32(m_pos) != UA_GET32(ip))
+#if (LZO_OPT_UNALIGNED32)
+        if (UA_GET_NE32(m_pos) != UA_GET_NE32(ip))
 #else
         if (m_pos[0] != ip[0] || m_pos[1] != ip[1] || m_pos[2] != ip[2] || m_pos[3] != ip[3])
 #endif
@@ -125,18 +99,18 @@ literal:
         lzo_uint m_off;
         lzo_uint m_len;
         {
-        lzo_uint32 dv;
+        lzo_uint32_t dv;
         lzo_uint dindex;
 literal:
         ip += 1 + ((ip - ii) >> 5);
 next:
         if __lzo_unlikely(ip >= ip_end)
             break;
-        dv = UA_GET32(ip);
+        dv = UA_GET_LE32(ip);
         dindex = DINDEX(dv,ip);
         GINDEX(m_off,m_pos,in+dict,dindex,in);
         UPDATE_I(dict,0,dindex,ip,in);
-        if __lzo_unlikely(dv != UA_GET32(m_pos))
+        if __lzo_unlikely(dv != UA_GET_LE32(m_pos))
             goto literal;
         }
 #endif
@@ -145,32 +119,25 @@ next:
 
         ii -= ti; ti = 0;
         {
-        register lzo_uint t = pd(ip,ii);
+        lzo_uint t = pd(ip,ii);
         if (t != 0)
         {
             if (t <= 3)
             {
-                op[-2] |= LZO_BYTE(t);
-#if defined(UA_COPY32)
-                UA_COPY32(op, ii);
+                op[-2] = LZO_BYTE(op[-2] | t);
+#if (LZO_OPT_UNALIGNED32)
+                UA_COPY4(op, ii);
                 op += t;
 #else
                 { do *op++ = *ii++; while (--t > 0); }
 #endif
             }
-#if defined(UA_COPY32) || defined(UA_COPY64)
+#if (LZO_OPT_UNALIGNED32) || (LZO_OPT_UNALIGNED64)
             else if (t <= 16)
             {
                 *op++ = LZO_BYTE(t - 3);
-#if defined(UA_COPY64)
-                UA_COPY64(op, ii);
-                UA_COPY64(op+8, ii+8);
-#else
-                UA_COPY32(op, ii);
-                UA_COPY32(op+4, ii+4);
-                UA_COPY32(op+8, ii+8);
-                UA_COPY32(op+12, ii+12);
-#endif
+                UA_COPY8(op, ii);
+                UA_COPY8(op+8, ii+8);
                 op += t;
             }
 #endif
@@ -180,31 +147,21 @@ next:
                     *op++ = LZO_BYTE(t - 3);
                 else
                 {
-                    register lzo_uint tt = t - 18;
+                    lzo_uint tt = t - 18;
                     *op++ = 0;
                     while __lzo_unlikely(tt > 255)
                     {
                         tt -= 255;
-#if 1 && (LZO_CC_MSC && (_MSC_VER >= 1400))
-                        * (volatile unsigned char *) op++ = 0;
-#else
-                        *op++ = 0;
-#endif
+                        UA_SET1(op, 0);
+                        op++;
                     }
                     assert(tt > 0);
                     *op++ = LZO_BYTE(tt);
                 }
-#if defined(UA_COPY32) || defined(UA_COPY64)
+#if (LZO_OPT_UNALIGNED32) || (LZO_OPT_UNALIGNED64)
                 do {
-#if defined(UA_COPY64)
-                    UA_COPY64(op, ii);
-                    UA_COPY64(op+8, ii+8);
-#else
-                    UA_COPY32(op, ii);
-                    UA_COPY32(op+4, ii+4);
-                    UA_COPY32(op+8, ii+8);
-                    UA_COPY32(op+12, ii+12);
-#endif
+                    UA_COPY8(op, ii);
+                    UA_COPY8(op+8, ii+8);
                     op += 16; ii += 16; t -= 16;
                 } while (t >= 16); if (t > 0)
 #endif
@@ -214,26 +171,26 @@ next:
         }
         m_len = 4;
         {
-#if defined(UA_GET64)
-        lzo_uint64 v;
-        v = UA_GET64(ip + m_len) ^ UA_GET64(m_pos + m_len);
+#if (LZO_OPT_UNALIGNED64)
+        lzo_uint64_t v;
+        v = UA_GET_NE64(ip + m_len) ^ UA_GET_NE64(m_pos + m_len);
         if __lzo_unlikely(v == 0) {
             do {
                 m_len += 8;
-                v = UA_GET64(ip + m_len) ^ UA_GET64(m_pos + m_len);
+                v = UA_GET_NE64(ip + m_len) ^ UA_GET_NE64(m_pos + m_len);
                 if __lzo_unlikely(ip + m_len >= ip_end)
                     goto m_len_done;
             } while (v == 0);
         }
-#if (LZO_ABI_BIG_ENDIAN) && defined(lzo_bitops_clz64)
-        m_len += lzo_bitops_clz64(v) / CHAR_BIT;
+#if (LZO_ABI_BIG_ENDIAN) && defined(lzo_bitops_ctlz64)
+        m_len += lzo_bitops_ctlz64(v) / CHAR_BIT;
 #elif (LZO_ABI_BIG_ENDIAN)
         if ((v >> (64 - CHAR_BIT)) == 0) do {
             v <<= CHAR_BIT;
             m_len += 1;
         } while ((v >> (64 - CHAR_BIT)) == 0);
-#elif (LZO_ABI_LITTLE_ENDIAN) && defined(lzo_bitops_ctz64)
-        m_len += lzo_bitops_ctz64(v) / CHAR_BIT;
+#elif (LZO_ABI_LITTLE_ENDIAN) && defined(lzo_bitops_cttz64)
+        m_len += lzo_bitops_cttz64(v) / CHAR_BIT;
 #elif (LZO_ABI_LITTLE_ENDIAN)
         if ((v & UCHAR_MAX) == 0) do {
             v >>= CHAR_BIT;
@@ -244,26 +201,30 @@ next:
             m_len += 1;
         } while (ip[m_len] == m_pos[m_len]);
 #endif
-#elif defined(UA_GET32)
-        lzo_uint32 v;
-        v = UA_GET32(ip + m_len) ^ UA_GET32(m_pos + m_len);
+#elif (LZO_OPT_UNALIGNED32)
+        lzo_uint32_t v;
+        v = UA_GET_NE32(ip + m_len) ^ UA_GET_NE32(m_pos + m_len);
         if __lzo_unlikely(v == 0) {
             do {
                 m_len += 4;
-                v = UA_GET32(ip + m_len) ^ UA_GET32(m_pos + m_len);
+                v = UA_GET_NE32(ip + m_len) ^ UA_GET_NE32(m_pos + m_len);
+                if (v != 0)
+                    break;
+                m_len += 4;
+                v = UA_GET_NE32(ip + m_len) ^ UA_GET_NE32(m_pos + m_len);
                 if __lzo_unlikely(ip + m_len >= ip_end)
                     goto m_len_done;
             } while (v == 0);
         }
-#if (LZO_ABI_BIG_ENDIAN) && defined(lzo_bitops_clz32)
-        m_len += lzo_bitops_clz32(v) / CHAR_BIT;
+#if (LZO_ABI_BIG_ENDIAN) && defined(lzo_bitops_ctlz32)
+        m_len += lzo_bitops_ctlz32(v) / CHAR_BIT;
 #elif (LZO_ABI_BIG_ENDIAN)
         if ((v >> (32 - CHAR_BIT)) == 0) do {
             v <<= CHAR_BIT;
             m_len += 1;
         } while ((v >> (32 - CHAR_BIT)) == 0);
-#elif (LZO_ABI_LITTLE_ENDIAN) && defined(lzo_bitops_ctz32)
-        m_len += lzo_bitops_ctz32(v) / CHAR_BIT;
+#elif (LZO_ABI_LITTLE_ENDIAN) && defined(lzo_bitops_cttz32)
+        m_len += lzo_bitops_cttz32(v) / CHAR_BIT;
 #elif (LZO_ABI_LITTLE_ENDIAN)
         if ((v & UCHAR_MAX) == 0) do {
             v >>= CHAR_BIT;
@@ -277,6 +238,27 @@ next:
 #else
         if __lzo_unlikely(ip[m_len] == m_pos[m_len]) {
             do {
+                m_len += 1;
+                if (ip[m_len] != m_pos[m_len])
+                    break;
+                m_len += 1;
+                if (ip[m_len] != m_pos[m_len])
+                    break;
+                m_len += 1;
+                if (ip[m_len] != m_pos[m_len])
+                    break;
+                m_len += 1;
+                if (ip[m_len] != m_pos[m_len])
+                    break;
+                m_len += 1;
+                if (ip[m_len] != m_pos[m_len])
+                    break;
+                m_len += 1;
+                if (ip[m_len] != m_pos[m_len])
+                    break;
+                m_len += 1;
+                if (ip[m_len] != m_pos[m_len])
+                    break;
                 m_len += 1;
                 if __lzo_unlikely(ip + m_len >= ip_end)
                     goto m_len_done;
@@ -311,11 +293,8 @@ m_len_done:
                 while __lzo_unlikely(m_len > 255)
                 {
                     m_len -= 255;
-#if 1 && (LZO_CC_MSC && (_MSC_VER >= 1400))
-                    * (volatile unsigned char *) op++ = 0;
-#else
-                    *op++ = 0;
-#endif
+                    UA_SET1(op, 0);
+                    op++;
                 }
                 *op++ = LZO_BYTE(m_len);
             }
@@ -334,11 +313,8 @@ m_len_done:
                 while __lzo_unlikely(m_len > 255)
                 {
                     m_len -= 255;
-#if 1 && (LZO_CC_MSC && (_MSC_VER >= 1400))
-                    * (volatile unsigned char *) op++ = 0;
-#else
-                    *op++ = 0;
-#endif
+                    UA_SET1(op, 0);
+                    op++;
                 }
                 *op++ = LZO_BYTE(m_len);
             }
@@ -394,7 +370,7 @@ DO_COMPRESS      ( const lzo_bytep in , lzo_uint  in_len,
         if (op == out && t <= 238)
             *op++ = LZO_BYTE(17 + t);
         else if (t <= 3)
-            op[-2] |= LZO_BYTE(t);
+            op[-2] = LZO_BYTE(op[-2] | t);
         else if (t <= 18)
             *op++ = LZO_BYTE(t - 3);
         else
@@ -405,18 +381,14 @@ DO_COMPRESS      ( const lzo_bytep in , lzo_uint  in_len,
             while (tt > 255)
             {
                 tt -= 255;
-#if 1 && (LZO_CC_MSC && (_MSC_VER >= 1400))
-                /* prevent the compiler from transforming this loop
-                 * into a memset() call */
-                * (volatile unsigned char *) op++ = 0;
-#else
-                *op++ = 0;
-#endif
+                UA_SET1(op, 0);
+                op++;
             }
             assert(tt > 0);
             *op++ = LZO_BYTE(tt);
         }
-        do *op++ = *ii++; while (--t > 0);
+        UA_COPYN(op, ii, t);
+        op += t;
     }
 
     *op++ = M4_MARKER | 1;

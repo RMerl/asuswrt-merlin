@@ -2,22 +2,7 @@
 
    This file is part of the LZO real-time data compression library.
 
-   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2005 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2004 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2003 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2002 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1999 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1998 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1997 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    The LZO library is free software; you can redistribute it and/or
@@ -76,30 +61,30 @@ static const unsigned char magic[7] =
 // file IO
 **************************************************************************/
 
-lzo_uint xread(FILE *fp, lzo_voidp buf, lzo_uint len, lzo_bool allow_eof)
+static lzo_uint xread(FILE *fp, lzo_voidp buf, lzo_uint len, lzo_bool allow_eof)
 {
     lzo_uint l;
 
     l = (lzo_uint) lzo_fread(fp, buf, len);
     if (l > len)
     {
-        fprintf(stderr, "\nsomething's wrong with your C library !!!\n");
+        fprintf(stderr, "\n%s: internal error - something is wrong with your C library !!!\n", progname);
         exit(1);
     }
     if (l != len && !allow_eof)
     {
-        fprintf(stderr, "\nread error - premature end of file\n");
+        fprintf(stderr, "\n%s: read error - premature end of file\n", progname);
         exit(1);
     }
     total_in += (unsigned long) l;
     return l;
 }
 
-lzo_uint xwrite(FILE *fp, const lzo_voidp buf, lzo_uint len)
+static lzo_uint xwrite(FILE *fp, const lzo_voidp buf, lzo_uint len)
 {
     if (fp != NULL && lzo_fwrite(fp, buf, len) != len)
     {
-        fprintf(stderr, "\nwrite error  (disk full ?)\n");
+        fprintf(stderr, "\n%s: write error  (disk full ?)\n", progname);
         exit(1);
     }
     total_out += (unsigned long) len;
@@ -107,14 +92,14 @@ lzo_uint xwrite(FILE *fp, const lzo_voidp buf, lzo_uint len)
 }
 
 
-int xgetc(FILE *fp)
+static int xgetc(FILE *fp)
 {
     unsigned char c;
     xread(fp, (lzo_voidp) &c, 1, 0);
     return c;
 }
 
-void xputc(FILE *fp, int c)
+static void xputc(FILE *fp, int c)
 {
     unsigned char cc = (unsigned char) (c & 0xff);
     xwrite(fp, (const lzo_voidp) &cc, 1);
@@ -122,20 +107,20 @@ void xputc(FILE *fp, int c)
 
 /* read and write portable 32-bit integers */
 
-lzo_uint32 xread32(FILE *fp)
+static lzo_uint32_t xread32(FILE *fp)
 {
     unsigned char b[4];
-    lzo_uint32 v;
+    lzo_uint32_t v;
 
     xread(fp, b, 4, 0);
-    v  = (lzo_uint32) b[3] <<  0;
-    v |= (lzo_uint32) b[2] <<  8;
-    v |= (lzo_uint32) b[1] << 16;
-    v |= (lzo_uint32) b[0] << 24;
+    v  = (lzo_uint32_t) b[3] <<  0;
+    v |= (lzo_uint32_t) b[2] <<  8;
+    v |= (lzo_uint32_t) b[1] << 16;
+    v |= (lzo_uint32_t) b[0] << 24;
     return v;
 }
 
-void xwrite32(FILE *fp, lzo_xint v)
+static void xwrite32(FILE *fp, lzo_uint v)
 {
     unsigned char b[4];
 
@@ -159,7 +144,7 @@ void xwrite32(FILE *fp, lzo_xint v)
 //   compression.
 **************************************************************************/
 
-int do_compress(FILE *fi, FILE *fo, int compression_level, lzo_uint block_size)
+static int do_compress(FILE *fi, FILE *fo, int compression_level, lzo_uint block_size)
 {
     int r = 0;
     lzo_bytep in = NULL;
@@ -167,10 +152,10 @@ int do_compress(FILE *fi, FILE *fo, int compression_level, lzo_uint block_size)
     lzo_voidp wrkmem = NULL;
     lzo_uint in_len;
     lzo_uint out_len;
-    lzo_uint32 wrk_len = 0;
-    lzo_uint32 flags = 1;       /* do compute a checksum */
+    lzo_uint wrkmem_size;
+    lzo_uint32_t flags = 1;     /* do compute a checksum */
     int method = 1;             /* compression method: LZO1X */
-    lzo_uint32 checksum;
+    lzo_uint32_t checksum;
 
     total_in = total_out = 0;
 
@@ -190,10 +175,10 @@ int do_compress(FILE *fi, FILE *fo, int compression_level, lzo_uint block_size)
     in = (lzo_bytep) xmalloc(block_size);
     out = (lzo_bytep) xmalloc(block_size + block_size / 16 + 64 + 3);
     if (compression_level == 9)
-        wrk_len = LZO1X_999_MEM_COMPRESS;
+        wrkmem_size = LZO1X_999_MEM_COMPRESS;
     else
-        wrk_len = LZO1X_1_MEM_COMPRESS;
-    wrkmem = (lzo_voidp) xmalloc(wrk_len);
+        wrkmem_size = LZO1X_1_MEM_COMPRESS;
+    wrkmem = (lzo_voidp) xmalloc(wrkmem_size);
     if (in == NULL || out == NULL || wrkmem == NULL)
     {
         printf("%s: out of memory\n", progname);
@@ -217,7 +202,7 @@ int do_compress(FILE *fi, FILE *fo, int compression_level, lzo_uint block_size)
 
         /* clear wrkmem (not needed, only for debug/benchmark purposes) */
         if (opt_debug)
-            lzo_memset(wrkmem, 0xff, wrk_len);
+            lzo_memset(wrkmem, 0xff, wrkmem_size);
 
         /* compress block */
         if (compression_level == 9)
@@ -272,24 +257,24 @@ err:
 // memory - see overlap.c.
 **************************************************************************/
 
-int do_decompress(FILE *fi, FILE *fo)
+static int do_decompress(FILE *fi, FILE *fo)
 {
     int r = 0;
     lzo_bytep buf = NULL;
     lzo_uint buf_len;
     unsigned char m [ sizeof(magic) ];
-    lzo_uint32 flags;
+    lzo_uint32_t flags;
     int method;
     int compression_level;
     lzo_uint block_size;
-    lzo_uint32 checksum;
+    lzo_uint32_t checksum;
 
     total_in = total_out = 0;
 
 /*
  * Step 1: check magic header, read flags & block size, init checksum
  */
-    if (xread(fi, m, sizeof(magic),1) != sizeof(magic) ||
+    if (xread(fi, m, sizeof(magic), 1) != sizeof(magic) ||
         memcmp(m, magic, sizeof(magic)) != 0)
     {
         printf("%s: header error - this file is not compressed by lzopack\n", progname);
@@ -307,14 +292,14 @@ int do_decompress(FILE *fi, FILE *fo)
         goto err;
     }
     block_size = xread32(fi);
-    if (block_size < 1024 || block_size > 8*1024*1024L)
+    if (block_size < 1024 || block_size > 8L * 1024L * 1024L)
     {
         printf("%s: header error - invalid block size %ld\n",
                 progname, (long) block_size);
         r = 3;
         goto err;
     }
-    checksum = lzo_adler32(0,NULL,0);
+    checksum = lzo_adler32(0, NULL, 0);
 
 /*
  * Step 2: allocate buffer for in-place decompression
@@ -396,7 +381,7 @@ int do_decompress(FILE *fi, FILE *fo)
     /* read and verify checksum */
     if (flags & 1)
     {
-        lzo_uint32 c = xread32(fi);
+        lzo_uint32_t c = xread32(fi);
         if (c != checksum)
         {
             printf("%s: checksum error - data corrupted\n", progname);
@@ -524,7 +509,7 @@ int __lzo_cdecl_main main(int argc, char *argv[])
 
     printf("\nLZO real-time data compression library (v%s, %s).\n",
            lzo_version_string(), lzo_version_date());
-    printf("Copyright (C) 1996-2011 Markus Franz Xaver Johannes Oberhumer\nAll Rights Reserved.\n\n");
+    printf("Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer\nAll Rights Reserved.\n\n");
 
 #if 0
     printf(
@@ -552,9 +537,9 @@ int __lzo_cdecl_main main(int argc, char *argv[])
  */
     opt_block_size = 256 * 1024L;
 
-#if defined(ACC_MM_AHSHIFT)
+#if defined(LZO_MM_AHSHIFT)
     /* reduce memory requirements for ancient 16-bit DOS 640kB real-mode */
-    if (ACC_MM_AHSHIFT != 3)
+    if (LZO_MM_AHSHIFT != 3)
         opt_block_size = 16 * 1024L;
 #endif
 
@@ -639,7 +624,5 @@ int __lzo_cdecl_main main(int argc, char *argv[])
     return r;
 }
 
-/*
-vi:ts=4:et
-*/
 
+/* vim:set ts=4 sw=4 et: */

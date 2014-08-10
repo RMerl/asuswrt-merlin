@@ -1,4 +1,4 @@
-@echo // Copyright (C) 1996-2011 Markus F.X.J. Oberhumer
+@echo // Copyright (C) 1996-2014 Markus F.X.J. Oberhumer
 @echo //
 @echo //   Windows 32-bit
 @echo //   Intel C/C++
@@ -7,8 +7,8 @@
 @if "%BECHO%"=="n" echo off
 
 
-set CC=icl -nologo -MD
-set CF=-O2 -GF -W3 %CFI% %CFASM%
+set CC=icl -nologo -MT
+set CF=-O2 -GF -W3 -Qvec-report0 %CFI% %CFASM%
 set LF=%BLIB%
 
 %CC% %CF% -c @b\src.rsp

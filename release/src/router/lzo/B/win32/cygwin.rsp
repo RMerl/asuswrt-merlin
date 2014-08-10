@@ -66,14 +66,8 @@ lzo_ptr.o
 lzo_str.o
 lzo_util.o
 lzo1c_s1.o
-lzo1c_s2.o
 lzo1f_f1.o
-lzo1f_f2.o
 lzo1x_f1.o
-lzo1x_f2.o
 lzo1x_s1.o
-lzo1x_s2.o
 lzo1y_f1.o
-lzo1y_f2.o
 lzo1y_s1.o
-lzo1y_s2.o

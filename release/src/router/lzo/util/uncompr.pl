@@ -10,7 +10,7 @@
 ##  Description:
 ##      Create incompressible files for compression test
 ##
-##  Copyright (C) 1996-2011 Markus Franz Xaver Johannes Oberhumer
+##  Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer
 ##
 ##---------------------------------------------------------------------------##
 

@@ -2,22 +2,7 @@
 
    This file is part of the LZO real-time data compression library.
 
-   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2005 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2004 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2003 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2002 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1999 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1998 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1997 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    The LZO library is free software; you can redistribute it and/or
@@ -58,6 +43,11 @@
 
 #include "lzo/lzoconf.h"
 #include <stdio.h>
+
+#if (LZO_CC_MSC && (_MSC_VER >= 1300))
+   /* disable warning C4310: cast truncates constant value */
+#  pragma warning(disable: 4310)
+#endif
 
 
 union _lzo_align1_t
@@ -101,15 +91,15 @@ union _lzo_align6_t
 
 #define print_size(type) \
     sprintf(s,"sizeof(%s)",#type); \
-    printf("%-30s %2d\n", s, (int)sizeof(type));
+    printf("%-30s %2ld\n", s, (long)sizeof(type));
 
 #define print_ssize(type,m) \
     sprintf(s,"sizeof(%s)",#type); \
-    printf("%-30s %2d %20ld\n", s, (int)sizeof(type), (long)(m));
+    printf("%-30s %2ld %20ld\n", s, (long)sizeof(type), (long)(m));
 
 #define print_usize(type,m) \
     sprintf(s,"sizeof(%s)",#type); \
-    printf("%-30s %2d %20lu\n", s, (int)sizeof(type), (unsigned long)(m));
+    printf("%-30s %2ld %20lu\n", s, (long)sizeof(type), (unsigned long)(m));
 
 
 int main(int argc, char *argv[])
@@ -130,7 +120,6 @@ int main(int argc, char *argv[])
     printf("\n");
     print_ssize(lzo_int,LZO_INT_MAX);
     print_usize(lzo_uint,LZO_UINT_MAX);
-    print_usize(lzo_uint32,LZO_UINT32_MAX);
     print_size(lzo_bytep);
     printf("\n");
     print_size(union _lzo_align1_t);
@@ -145,7 +134,5 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-/*
-vi:ts=4:et
-*/
 
+/* vim:set ts=4 sw=4 et: */

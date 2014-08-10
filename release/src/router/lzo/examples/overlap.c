@@ -2,22 +2,7 @@
 
    This file is part of the LZO real-time data compression library.
 
-   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2005 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2004 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2003 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2002 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1999 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1998 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1997 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    The LZO library is free software; you can redistribute it and/or
@@ -71,15 +56,7 @@ static const char *progname = NULL;
  * will be needed. See step 4a) below.
  */
 
-static lzo_uint opt_overhead = 0;   /* assume worst case */
-
-
-#if 0 && defined(LZO_USE_ASM)
-   /* just for testing */
-#  include <lzo_asm.h>
-#  define lzo1x_decompress lzo1x_decompress_asm_fast
-#endif
-
+static long opt_overhead = 0;   /* assume worst case */
 
 static unsigned long total_files = 0;
 static unsigned long total_in = 0;
@@ -89,7 +66,7 @@ static unsigned long total_in = 0;
 //
 **************************************************************************/
 
-int do_file ( const char *in_name )
+static int do_file(const char *in_name)
 {
     int r;
     FILE *fp = NULL;
@@ -127,6 +104,11 @@ int do_file ( const char *in_name )
         goto next_file;
     }
     in_len = (lzo_uint) l;
+    if ((long) in_len != l || l > 256L * 1024L * 1024L)
+    {
+        printf("%s: %s: file is too big -- skipping\n", progname, in_name);
+        goto next_file;
+    }
 
 /*
  * Step 2: allocate compression buffers and read the file
@@ -144,14 +126,14 @@ int do_file ( const char *in_name )
 /*
  * Step 3: compress from 'in' to 'out' with LZO1X-1
  */
-    r = lzo1x_1_compress(in,in_len,out,&out_len,wrkmem);
+    r = lzo1x_1_compress(in, in_len, out, &out_len, wrkmem);
     if (r != LZO_E_OK || out_len > in_len + in_len / 16 + 64 + 3)
     {
         /* this should NEVER happen */
         printf("internal error - compression failed: %d\n", r);
         exit(1);
     }
-    printf("%-26s %8lu -> %8lu\n", "LZO1X-1:", (unsigned long) in_len, (unsigned long) out_len);
+    printf("%-25s %8lu -> %8lu\n", "LZO1X-1:", (unsigned long) in_len, (unsigned long) out_len);
 
 
 /***** Step 4: overlapping compression *****/
@@ -174,18 +156,18 @@ int do_file ( const char *in_name )
 /*
  * Step 4c: do an in-place compression within the 'overlap' buffer
  */
-    r = lzo1x_1_compress(overlap+offset,in_len,overlap,&new_len,wrkmem);
+    r = lzo1x_1_compress(overlap + offset, in_len, overlap, &new_len, wrkmem);
     if (r != LZO_E_OK)
     {
         /* this should NEVER happen */
-        printf("overlapping compression failed: %d\n", r);
+        printf("in-place compression failed: %d\n", r);
         exit(1);
     }
 
 /*
  * Step 4d: verify overlapping compression
  */
-    if (new_len != out_len || lzo_memcmp(out,overlap,out_len) != 0)
+    if (new_len != out_len || lzo_memcmp(out, overlap, out_len) != 0)
     {
         /* As compression is non-deterministic there can be a difference
          * in the representation of the compressed data (but this usually
@@ -198,18 +180,18 @@ int do_file ( const char *in_name )
         if (r != LZO_E_OK || ll != in_len || lzo_memcmp(in, tmp, ll) != 0)
         {
             /* this should NEVER happen */
-            printf("overlapping compression data error\n");
+            printf("in-place compression data error\n");
             exit(1);
         }
         lzo_free(tmp);
     }
 
-    printf("overlapping compression:   %8lu -> %8lu    overhead: %7lu\n",
+    printf("  in-place compression:   %8lu -> %8lu    overhead: %7lu\n",
             (unsigned long) in_len, (unsigned long) new_len, (unsigned long) overhead);
     lzo_free(overlap); overlap = NULL;
 
 
-/***** Step 5: overlapping decompression *****/
+/***** Step 5: in-place decompression *****/
 
 /*
  * Step 5a: allocate the 'overlap' buffer for in-place decompression
@@ -217,7 +199,7 @@ int do_file ( const char *in_name )
     if (opt_overhead == 0 || out_len >= in_len)
         overhead = in_len / 16 + 64 + 3;
     else
-        overhead = opt_overhead;
+        overhead = (lzo_uint) opt_overhead;
     overlap = (lzo_bytep) xmalloc(in_len + overhead);
 
 /*
@@ -231,24 +213,24 @@ int do_file ( const char *in_name )
  * Step 5c: do an in-place decompression within the 'overlap' buffer
  */
     new_len = in_len;
-    r = lzo1x_decompress(overlap+offset,out_len,overlap,&new_len,NULL);
+    r = lzo1x_decompress_safe(overlap + offset, out_len, overlap, &new_len, NULL);
     if (r != LZO_E_OK)
     {
         /* this may happen if overhead is too small */
-        printf("overlapping decompression failed: %d - increase 'opt_overhead'\n", r);
+        printf("in-place decompression failed: %d - increase 'opt_overhead'\n", r);
         exit(1);
     }
 
 /*
  * Step 5d: verify decompression
  */
-    if (new_len != in_len || lzo_memcmp(in,overlap,in_len) != 0)
+    if (new_len != in_len || lzo_memcmp(in, overlap, in_len) != 0)
     {
         /* this may happen if overhead is too small */
-        printf("overlapping decompression data error - increase 'opt_overhead'\n");
+        printf("in-place decompression data error - increase 'opt_overhead'\n");
         exit(1);
     }
-    printf("overlapping decompression: %8lu -> %8lu    overhead: %7lu\n",
+    printf("  in-place decompression: %8lu -> %8lu    overhead: %7lu\n",
             (unsigned long) out_len, (unsigned long) new_len, (unsigned long) overhead);
     lzo_free(overlap); overlap = NULL;
 
@@ -277,15 +259,15 @@ int __lzo_cdecl_main main(int argc, char *argv[])
 
     printf("\nLZO real-time data compression library (v%s, %s).\n",
            lzo_version_string(), lzo_version_date());
-    printf("Copyright (C) 1996-2011 Markus Franz Xaver Johannes Oberhumer\nAll Rights Reserved.\n\n");
+    printf("Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer\nAll Rights Reserved.\n\n");
 
     progname = argv[0];
     if (i < argc && argv[i][0] == '-')
-        opt_overhead = atoi(&argv[i++][1]);
+        opt_overhead = atol(&argv[i++][1]);
 #if 1
-    if (opt_overhead != 0 && opt_overhead < 8)
+    if (opt_overhead != 0 && opt_overhead < 4)
     {
-        printf("%s: invalid overhead value %ld\n", progname, (long)opt_overhead);
+        printf("%s: invalid overhead value %ld\n", progname, opt_overhead);
         exit(1);
     }
 #endif
@@ -316,7 +298,5 @@ int __lzo_cdecl_main main(int argc, char *argv[])
     return r;
 }
 
-/*
-vi:ts=4:et
-*/
 
+/* vim:set ts=4 sw=4 et: */

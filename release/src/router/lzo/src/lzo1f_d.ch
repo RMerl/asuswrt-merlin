@@ -2,22 +2,7 @@
 
    This file is part of the LZO real-time data compression library.
 
-   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2005 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2004 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2003 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2002 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1999 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1998 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1997 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    The LZO library is free software; you can redistribute it and/or
@@ -53,10 +38,10 @@ DO_DECOMPRESS  ( const lzo_bytep in , lzo_uint  in_len,
                        lzo_bytep out, lzo_uintp out_len,
                        lzo_voidp wrkmem )
 {
-    register lzo_bytep op;
-    register const lzo_bytep ip;
-    register lzo_uint t;
-    register const lzo_bytep m_pos;
+    lzo_bytep op;
+    const lzo_bytep ip;
+    lzo_uint t;
+    const lzo_bytep m_pos;
 
     const lzo_bytep const ip_end = in + in_len;
 #if defined(HAVE_ANY_OP)
@@ -70,7 +55,7 @@ DO_DECOMPRESS  ( const lzo_bytep in , lzo_uint  in_len,
     op = out;
     ip = in;
 
-    while (TEST_IP && TEST_OP)
+    while (TEST_IP_AND_TEST_OP)
     {
         t = *ip++;
         if (t > 31)
@@ -84,17 +69,18 @@ DO_DECOMPRESS  ( const lzo_bytep in , lzo_uint  in_len,
             {
                 t += 255;
                 ip++;
+                TEST_IV(t);
                 NEED_IP(1);
             }
             t += 31 + *ip++;
         }
         /* copy literals */
         assert(t > 0); NEED_OP(t); NEED_IP(t+1);
-#if defined(LZO_UNALIGNED_OK_4)
+#if (LZO_OPT_UNALIGNED32)
         if (t >= 4)
         {
             do {
-                UA_COPY32(op, ip);
+                UA_COPY4(op, ip);
                 op += 4; ip += 4; t -= 4;
             } while (t >= 4);
             if (t > 0) do *op++ = *ip++; while (--t > 0);
@@ -105,7 +91,7 @@ DO_DECOMPRESS  ( const lzo_bytep in , lzo_uint  in_len,
 
         t = *ip++;
 
-        while (TEST_IP && TEST_OP)
+        while (TEST_IP_AND_TEST_OP)
         {
             /* handle matches */
             if (t < 32)
@@ -138,14 +124,15 @@ match:
                         {
                             t += 255;
                             ip++;
+                            TEST_OV(t);
                             NEED_IP(1);
                         }
                         t += 31 + *ip++;
                     }
                     NEED_IP(2);
                     m_pos = op;
-#if defined(LZO_UNALIGNED_OK_2) && defined(LZO_ABI_LITTLE_ENDIAN)
-                    m_pos -= UA_GET16(ip) >> 2;
+#if (LZO_OPT_UNALIGNED16) && (LZO_ABI_LITTLE_ENDIAN)
+                    m_pos -= UA_GET_LE16(ip) >> 2;
                     ip += 2;
 #else
                     m_pos -= *ip++ >> 2;
@@ -157,13 +144,13 @@ match:
 
                 /* copy match */
                 TEST_LB(m_pos); assert(t > 0); NEED_OP(t+3-1);
-#if defined(LZO_UNALIGNED_OK_4)
+#if (LZO_OPT_UNALIGNED32)
                 if (t >= 2 * 4 - (3 - 1) && (op - m_pos) >= 4)
                 {
-                    UA_COPY32(op, m_pos);
+                    UA_COPY4(op, m_pos);
                     op += 4; m_pos += 4; t -= 4 - (3 - 1);
                     do {
-                        UA_COPY32(op, m_pos);
+                        UA_COPY4(op, m_pos);
                         op += 4; m_pos += 4; t -= 4;
                     } while (t >= 4);
                     if (t > 0) do *op++ = *m_pos++; while (--t > 0);

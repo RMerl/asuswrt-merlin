@@ -45,9 +45,6 @@ b\win64\ic_dll.bat          Intel C/C++ (Itanium) (DLL version)
 b\win64\vc.bat              Visual C/C++ (AMD64 or Itanium)
 b\win64\vc_dll.bat          Visual C/C++ (AMD64 or Itanium) (DLL version)
 
-Finally, there are also a number of build scripts for obsolete systems
-like dos16 and win16.
-
 
 Notes:
   (1) includes support for i386 assembler versions

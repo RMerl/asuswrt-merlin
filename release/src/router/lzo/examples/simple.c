@@ -2,22 +2,7 @@
 
    This file is part of the LZO real-time data compression library.
 
-   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2005 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2004 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2003 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2002 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1999 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1998 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1997 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    The LZO library is free software; you can redistribute it and/or
@@ -93,7 +78,7 @@ int __lzo_cdecl_main main(int argc, char *argv[])
 
     printf("\nLZO real-time data compression library (v%s, %s).\n",
            lzo_version_string(), lzo_version_date());
-    printf("Copyright (C) 1996-2011 Markus Franz Xaver Johannes Oberhumer\nAll Rights Reserved.\n\n");
+    printf("Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer\nAll Rights Reserved.\n\n");
 
 /*
  * Step 1: initialize the LZO library
@@ -128,10 +113,10 @@ int __lzo_cdecl_main main(int argc, char *argv[])
 /*
  * Step 4: compress from 'in' to 'out' with LZO1X-1
  */
-    r = lzo1x_1_compress(in,in_len,out,&out_len,wrkmem);
+    r = lzo1x_1_compress(in, in_len, out, &out_len, wrkmem);
     if (r == LZO_E_OK)
         printf("compressed %lu bytes into %lu bytes\n",
-            (unsigned long) in_len, (unsigned long) out_len);
+               (unsigned long) in_len, (unsigned long) out_len);
     else
     {
         /* this should NEVER happen */
@@ -149,10 +134,10 @@ int __lzo_cdecl_main main(int argc, char *argv[])
  * Step 5: decompress again, now going from 'out' to 'in'
  */
     new_len = in_len;
-    r = lzo1x_decompress(out,out_len,in,&new_len,NULL);
+    r = lzo1x_decompress(out, out_len, in, &new_len, NULL);
     if (r == LZO_E_OK && new_len == in_len)
         printf("decompressed %lu bytes back into %lu bytes\n",
-            (unsigned long) out_len, (unsigned long) in_len);
+               (unsigned long) out_len, (unsigned long) in_len);
     else
     {
         /* this should NEVER happen */
@@ -167,7 +152,5 @@ int __lzo_cdecl_main main(int argc, char *argv[])
     return 0;
 }
 
-/*
-vi:ts=4:et
-*/
 
+/* vim:set ts=4 sw=4 et: */
