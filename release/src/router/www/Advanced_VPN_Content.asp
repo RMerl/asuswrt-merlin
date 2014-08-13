@@ -800,6 +800,13 @@ function enable_openvpn(state){
 								<td bgcolor="#4D595D" valign="top">
 									<div>&nbsp;</div>
 									<div class="formfonttitle">VPN - <#BOP_isp_heart_item#></div>
+									<div align="right" style="margin-top:-35px;">
+										<select name="VPNServer_mode_select" class="input_option" onchange="change_mode(this);"></select>
+										<select id="openvpn_unit" style="display:none;" name="vpn_server_unit" class="input_option" onChange="change_vpn_unit(this.value);">
+											<option value="1" <% nvram_match("vpn_server_unit","1","selected"); %> >Server 1</option>
+											<option value="2" <% nvram_match("vpn_server_unit","2","selected"); %> >Server 2</option>
+										</select>
+									</div>
 									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 
 									<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
@@ -865,13 +872,6 @@ function enable_openvpn(state){
 											</td>
 										</tr>
 
-										<tr>
-											<th><#vpn_mode#></th>
-											<td>
-													<select name="VPNServer_mode_select" class="input_option" onchange="change_mode(this);">
-													</select>
-											</td>
-										</tr>
 										<tr id="pptp_samba">
 											<th><#vpn_network_place#></th>
 											<td>
@@ -879,17 +879,6 @@ function enable_openvpn(state){
 													<input type="radio" value="0" name="pptpd_broadcast_ppp" onchange="set_pptpd_broadcast(this);"/><#checkbox_No#>										
 											</td>
 										</tr>
-
-										<tr id="openvpn_unit" style="display:none;">
-											<th>Server instance</th>
-											<td>
-												<select name="vpn_server_unit" class="input_option" onChange="change_vpn_unit(this.value);">
-													<option value="1" <% nvram_match("vpn_server_unit","1","selected"); %> >Server 1</option>
-													<option value="2" <% nvram_match("vpn_server_unit","2","selected"); %> >Server 2</option>
-												</select>
-											</td>
-										</tr>
-
 
 										<tr id="openvpn_export" style="display:none;">
 										<th><#vpn_export_ovpnfile#></th>
