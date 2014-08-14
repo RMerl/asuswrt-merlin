@@ -442,7 +442,7 @@ function regen_5G_mode(obj,flag){
 		}
 		else{
 			obj.options[0] = new Option("<#Auto#>", 0);
-			obj.options[1] = new Option("N + AC", 1);
+			obj.options[1] = new Option("N only", 1);
 			obj.options[2] = new Option("Legacy", 2);
 		}
 	}
