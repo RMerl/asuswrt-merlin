@@ -568,9 +568,14 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 376.45 (xx-xxx-2014)
+   - NEW: Compiled vsftpd with SSL support (must be manually
+          configured if you intend to use it)
+   - NEW: Report FA state (Level 2 CTF) on Sysinfo page.
    - CHANGED: Updated dropbear to 2014.65.
    - CHANGED: Updated openssl to 1.0.0n (numerous
               security fixes)
+   - CHANGED: Updated lzo to 2.08
+   - CHANGED: Reworked VPN Server pages to be more intuitive
    - FIXED: Garbled client dropdown selector on DNSFilter page
    - FIXED: The Comcast neighbour solicitation block wasn't
             enabled anymore (regression in 376.44) (Patch by
