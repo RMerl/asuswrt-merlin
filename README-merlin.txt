@@ -580,6 +580,9 @@ History
    - FIXED: The Comcast neighbour solicitation block wasn't
             enabled anymore (regression in 376.44) (Patch by
             Sinshiva)
+   - FIXED: 5 GHz N+AC mode was incorrectly setting router to
+            N-only mode (Asus bug, fix backported from 2381,
+            additional fix by me for AC66)
 
 
 376.44 (3-Aug-2014)
