@@ -38,6 +38,7 @@ hwacc_force = "<% nvram_get("ctf_disable_force"); %>";
 arplist = [<% get_arp_table(); %>];
 etherstate = "<% sysinfo("ethernet"); %>";
 odmpid = "<% nvram_get("odmpid");%>";
+ctf_fa = "<% nvram_get("ctf_fa_mode"); %>";
 
 var $j = jQuery.noConflict();
 
@@ -113,7 +114,14 @@ function hwaccel_state(){
 			code = code.slice(0,-2) + "</span></>";
 		}
 	} else if (hwacc == "0") {
-		code = "<span>Enabled</span>";
+		code = "<span>Enabled";
+		if (ctf_fa != "") {
+                        if (ctf_fa != "0")
+                                code += " (CTF + FA)";
+                        else
+                                code += " (CTF only)";
+                }
+		code += "</span>";
 	} else {
 		code = "<span>N/A</span>";
 	}
