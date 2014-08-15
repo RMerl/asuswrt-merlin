@@ -4469,6 +4469,11 @@ int start_firewall(int wanunit, int lanunit)
 	char wanx_if[IFNAMSIZ+1], wanx_ip[32], wan_proto[16];
 	char prefix[] = "wanXXXXXXXXXX_", tmp[100];
 
+	if (getpid() != 1) {
+		notify_rc("start_firewall");
+		return 0;
+	}
+
 	if (!is_routing_enabled())
 		return -1;
 
