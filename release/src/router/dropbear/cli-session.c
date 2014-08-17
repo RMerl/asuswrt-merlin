@@ -73,6 +73,8 @@ static const packettype cli_packettypes[] = {
 #ifdef  ENABLE_CLI_REMOTETCPFWD
 	{SSH_MSG_REQUEST_SUCCESS, cli_recv_msg_request_success}, /* client */
 	{SSH_MSG_REQUEST_FAILURE, cli_recv_msg_request_failure}, /* client */
+#else
+	{SSH_MSG_REQUEST_FAILURE, ignore_recv_msg_request_failure}, /* for keepalive */
 #endif
 	{0, 0} /* End */
 };

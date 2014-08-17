@@ -394,6 +394,11 @@ static int ident_readln(int fd, char* buf, int count) {
 	return pos+1;
 }
 
+void ignore_recv_msg_request_failure() {
+	// Do nothing
+	TRACE(("Ignored msg_request_failure"))
+}
+
 static void send_msg_keepalive() {
 	CHECKCLEARTOWRITE();
 	time_t old_time_idle = ses.last_packet_time_idle;
