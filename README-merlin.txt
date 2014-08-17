@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 376.45 (xx-xxx-2014)
+Asuswrt-Merlin - build 376.45 (17-Aug-2014)
 ===========================================
 
 About
@@ -567,7 +567,7 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-376.45 (xx-xxx-2014)
+376.45 (17-Aug-2014)
    - NEW: Compiled vsftpd with SSL support (must be manually
           configured if you intend to use it)
    - NEW: Report FA state (Level 2 CTF) on Sysinfo page.
@@ -583,6 +583,10 @@ History
    - FIXED: 5 GHz N+AC mode was incorrectly setting router to
             N-only mode (Asus bug, fix backported from 2381,
             additional fix by me for AC66)
+   - FIXED: PControl page failing to display on French and
+            Italian locales (Asus bug)
+   - FIXED: IPv6 can occasionally fail to work properly when
+            using a PPPoE WAN interface (patch by pinwing)
 
 
 376.44 (3-Aug-2014)
