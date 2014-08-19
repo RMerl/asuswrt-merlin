@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 376.45 (17-Aug-2014)
+Asuswrt-Merlin - build 376.46 (xx-xxx-2014)
 ===========================================
 
 About
@@ -49,7 +49,7 @@ Here is a list of features that Asuswrt-merlin brings over the original
 firmware:
 
 System:
-   - Based on 3.0.0.4.376_2044 sources (from RT-AC87U) from Asus
+   - Based on 3.0.0.4.376_2061 sources (from RT-AC87U) from Asus
    - Various bugfixes and optimizations
    - Some components were updated to newer versions, for improved
      stability and security
@@ -567,6 +567,11 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+376.46 (xx-xxx-2014)
+   - NEW: Merged with Asus GPL 2061.  This is essentially
+          the new QTN driver for the AC87.
+
+
 376.45 (17-Aug-2014)
    - NEW: Compiled vsftpd with SSL support (must be manually
           configured if you intend to use it)
