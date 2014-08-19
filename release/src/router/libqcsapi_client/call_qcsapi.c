@@ -491,6 +491,7 @@ static const struct
 	{ e_qcsapi_get_spinor_jedecid,			"get_spinor_jedecid" },
 	{ e_qcsapi_get_custom_value,			"get_custom_value" },
 
+	{ e_qcsapi_get_board_parameter,			"get_board_parameter" },
 	{ e_qcsapi_wifi_get_mlme_stats_per_mac,				"get_mlme_stats_per_mac" },
 	{ e_qcsapi_wifi_get_mlme_stats_per_association,		"get_mlme_stats_per_association" },
 	{ e_qcsapi_wifi_get_mlme_stats_macs_list,			"get_mlme_stats_macs_list" },
@@ -560,6 +561,16 @@ static const struct
 	{ qcsapi_GI_fixed,		"GI_fixed" },
 	{ qcsapi_stbc,			"stbc" },
 	{ qcsapi_nosuch_option,		 NULL }
+};
+
+static const struct
+{
+	qcsapi_board_parameter_type	board_param;
+	const char			*board_param_name;
+} qcsapi_board_parameter_name[] =
+{
+	{ qcsapi_hw_revision,	"hw_revision" },
+	{ qcsapi_rf_chipid,	"rf_chipid" },
 };
 
 static const struct
@@ -1034,6 +1045,59 @@ list_option_names(qcsapi_output *print)
 }
 
 /* returns 1 if successful; 0 if failure */
+static int
+name_to_board_parameter_enum( char *lookup_name, qcsapi_board_parameter_type *p_boardparam )
+{
+	int		retval = 0;
+	int		found_entry = 0;
+	unsigned int	iter;
+
+	for (iter = 0; qcsapi_board_parameter_name[ iter ].board_param_name != NULL && found_entry == 0; iter++)
+	{
+		if (strcasecmp( qcsapi_board_parameter_name[ iter ].board_param_name, lookup_name ) == 0)
+		{
+			found_entry = 1;
+			*p_boardparam = qcsapi_board_parameter_name[ iter ].board_param;
+		}
+	}
+
+	if (found_entry)
+	  retval = 1;
+
+	return( retval );
+}
+
+static const char *
+board_paramter_enum_to_name( qcsapi_board_parameter_type the_board_param )
+{
+	const char	*retaddr = "No such QCSAPI option";
+	int		 found_entry = 0;
+	unsigned int	 iter;
+
+	for (iter = 0; qcsapi_board_parameter_name[ iter ].board_param_name != NULL && found_entry == 0; iter++)
+	{
+		if (qcsapi_board_parameter_name[ iter ].board_param == the_board_param)
+		{
+			found_entry = 1;
+			retaddr = qcsapi_board_parameter_name[ iter ].board_param_name;
+		}
+	}
+
+	return( retaddr );
+}
+
+static void
+list_board_parameter_names( qcsapi_output *print )
+{
+	unsigned int	 iter;
+
+	for (iter = 0; qcsapi_board_parameter_name[ iter ].board_param_name != NULL; iter++)
+	{
+		print_out( print, "\t%s\n", qcsapi_board_parameter_name[ iter ].board_param_name );
+	}
+}
+
+/* returns 1 if successful; 0 if failure */
 
 static int
 name_to_rates_enum( char *lookup_name, qcsapi_rate_type *p_rates )
@@ -1293,6 +1357,12 @@ parse_generic_parameter_name(qcsapi_output *print, char *generic_parameter_name,
 		  p_generic_parameter->index = (qcsapi_unsigned_int) qcsapi_security_configuration_path;
 		break;
 
+	  case e_qcsapi_board_parameter:
+		retval = name_to_board_parameter_enum( generic_parameter_name, &(p_generic_parameter->parameter_type.board_param) );
+		if (retval == 0)
+		  print_err( print, "Invalid QCSAPI option %s\n", generic_parameter_name );
+		break;
+
 	  case e_qcsapi_none:
 	  default:
 		print_err( print, "Programming error in parse generic parameter name:\n" );
@@ -1393,6 +1463,10 @@ dump_generic_parameter_name(qcsapi_output *print, qcsapi_generic_parameter *p_ge
 	  case e_qcsapi_select_SSID:
 	  case e_qcsapi_SSID_index:
 		print_out( print, "%s", &(p_generic_parameter->parameter_type.the_SSID[ 0 ]) );
+		break;
+
+	  case e_qcsapi_board_parameter:
+		print_out( print, "%s", board_paramter_enum_to_name( p_generic_parameter->parameter_type.board_param ) );
 		break;
 
 	  case e_qcsapi_none:
@@ -3376,6 +3450,39 @@ call_qcsapi_wifi_get_option( const call_qcsapi_bundle *p_calling_bundle, int arg
 	}
 
 	return( statval );
+}
+
+# define BUF_MAX_LEN	40
+
+static int
+call_qcsapi_get_board_parameter(const call_qcsapi_bundle *p_calling_bundle, int argc, char *argv[])
+{
+	int                             statval = 0;
+	int                             qcsapi_retval = 0;
+	qcsapi_output                   *print = p_calling_bundle->caller_output;
+	qcsapi_board_parameter_type     the_boardparam = p_calling_bundle->caller_generic_parameter.parameter_type.board_param;
+	char                            info_buffer[BUF_MAX_LEN];
+	char                            *p_buffer = &info_buffer[0];
+
+	if (argc < 1 || strcmp(argv[ 0 ], "NULL") != 0)
+	{
+		qcsapi_retval = qcsapi_get_board_parameter(the_boardparam, p_buffer,  BUF_MAX_LEN);
+	}
+
+	if (qcsapi_retval >= 0)
+	{
+		if (verbose_flag >= 0)
+		{
+			print_out(print, "%s\n", p_buffer);
+		}
+	}
+	else
+	{
+		report_qcsapi_error(p_calling_bundle, qcsapi_retval);
+		statval = 1;
+	}
+
+	return(statval);
 }
 
 static int
@@ -15335,6 +15442,10 @@ call_particular_qcsapi( call_qcsapi_bundle *p_calling_bundle, int argc, char *ar
 		statval = call_qcsapi_wifi_get_option( p_calling_bundle, argc, argv );
 		break;
 
+	 case e_qcsapi_get_board_parameter:
+		statval = call_qcsapi_get_board_parameter( p_calling_bundle, argc, argv );
+		break;
+
 	  case e_qcsapi_wifi_set_option:
 		statval = call_qcsapi_wifi_set_option( p_calling_bundle, argc, argv );
 		break;
@@ -16732,9 +16843,11 @@ process_options(qcsapi_output *print, int argc, char **argv)
 					  list_counter_names(print);
 					else if (strcasecmp( local_addr, "per_node_params" ) == 0)
 					  list_per_node_param_names(print);
+					else if (strcasecmp( local_addr, "board_parameters" ) == 0)
+					  list_board_parameter_names(print);
 					else {
 						print_err(print, "Unrecognized help option %s\n", local_addr );
-						print_err(print, "Choose from 'entry_points', 'counters', 'options' or 'per_node_params'\n");
+						print_err(print, "Choose from 'entry_points', 'counters', 'options', 'per_node_params', or 'board_parameters'\n");
 					}
 				}
 

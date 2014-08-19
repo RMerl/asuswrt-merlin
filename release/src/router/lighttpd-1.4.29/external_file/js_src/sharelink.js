@@ -8,6 +8,7 @@ var g_folder_array;
 var g_file_array;
 var g_root_path = '';
 var g_sharelink_openurl_key = '';
+var g_image_player_setting = null;
 
 var client = new davlib.DavClient();
 client.initialize();
@@ -137,19 +138,33 @@ function openImageViewer(loc){
   
   	div_html += '</div>';
   
-  	//div_html += '<div class="barousel_nav"></div>';
+  	div_html += '<div class="barousel_loading" style="position:absolute;display:none;z-index=99;"><img src="/smb/css/load.gif" width="18px" height="18px"/></div>';
                   
 	div_html += '</div>';
 		
 	$(div_html)
 		.animate({width:"100%", height:"100%", left:"0px", top:"0px"},200, null, null )
   		.appendTo("body");
-  
-	$('#image_slide_show').barousel({				
-		navType: 2,
-	    manualCarousel: 1,
-	    contentResize:0,
-	    startIndex:default_index
+  	
+  	var close_handler = function(){
+	  	g_image_player_setting = null;
+	};
+	  	
+	var init_handler = function(settings){
+		g_image_player_setting = settings;
+	};
+	  	
+	$('#image_slide_show').barousel({
+		name: 'image_slide_show',
+		manualCarousel: 1,
+		contentResize:0,
+		startIndex:default_index,
+		storage: g_storage,
+		stringTable: m,
+		enableExifFunc: 0,
+		enableShareFunc: 0,
+		closeHandler: close_handler,
+		initCompleteHandler: init_handler
 	});
 	
 	image_array = null;
@@ -784,6 +799,20 @@ function doPROPFIND(open_url, complete_handler, auth){
 	
 $(document).ready(function(){
 	document.oncontextmenu = function() {return false;};	
+	
+	$(document).keydown(function(e) {
+		if (e.keyCode == 27) {
+			$('#image_slide_show').close(g_image_player_setting);
+		}
+		else if(e.keyCode == 37){
+			//- left(prev) key
+			$('#image_slide_show').prev(g_image_player_setting);
+		}
+		else if(e.keyCode == 39){
+			//- right(next) key
+			$('#image_slide_show').next(g_image_player_setting);
+		}
+	});
 	
 	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
 	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');

@@ -2,7 +2,7 @@
 /*
 *  ########## DO NOT EDIT ###########
 
-Automatically generated on Mon Jul  7 21:21:49 PDT 2014
+Automatically generated on Fri Jul 25 19:47:07 PDT 2014
 
 *
 * Adapter from qcsapi.h functions
@@ -7862,6 +7862,54 @@ int qcsapi_wifi_set_option(const char * ifname, qcsapi_option_type qcsapi_option
 
 	}
 
+	if (debug) { fprintf(stderr, "%s:%d %s post\n", __FILE__, __LINE__, __FUNCTION__); }
+
+	return __resp.return_code;
+}
+
+int qcsapi_get_board_parameter(qcsapi_board_parameter_type board_param, char * p_buffer, int buf_len)
+{
+	int retries = 0;
+	CLIENT *clnt = qcsapi_adapter_get_client();
+	enum clnt_stat __rpcret;
+	struct qcsapi_get_board_parameter_request __req;
+	struct qcsapi_get_board_parameter_response __resp;
+	memset(&__req, 0, sizeof(__req));
+	memset(&__resp, 0, sizeof(__resp));
+	if (p_buffer == NULL) {
+		return -EFAULT;
+	}
+	__req.board_param = (int)board_param;
+	if (p_buffer) {
+		p_buffer[0] = 0;
+	}
+	__req.buf_len = (int)buf_len;
+	if (debug) { fprintf(stderr, "%s:%d %s pre\n", __FILE__, __LINE__, __FUNCTION__); }
+	client_qcsapi_pre();
+	while (1) {
+		__rpcret = clnt_call(clnt, QCSAPI_GET_BOARD_PARAMETER_REMOTE,
+				(xdrproc_t)xdr_qcsapi_get_board_parameter_request, (caddr_t)&__req,
+				(xdrproc_t)xdr_qcsapi_get_board_parameter_response, (caddr_t)&__resp,
+				__timeout);
+		if (__rpcret == RPC_SUCCESS) {
+			client_qcsapi_post(0);
+			break;
+		} else {
+			clnt_perror (clnt, "qcsapi_get_board_parameter call failed");
+			clnt_perrno (__rpcret);
+			if (retries >= retries_limit) {
+				client_qcsapi_post(1);
+				return -ENOLINK;
+			}
+			retries++;
+			client_qcsapi_reconnect();
+		}
+
+	}
+
+	if (p_buffer && __resp.p_buffer)
+		strcpy(p_buffer,
+			__resp.p_buffer);
 	if (debug) { fprintf(stderr, "%s:%d %s post\n", __FILE__, __LINE__, __FUNCTION__); }
 
 	return __resp.return_code;

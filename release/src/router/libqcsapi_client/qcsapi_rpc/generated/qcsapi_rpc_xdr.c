@@ -4850,6 +4850,30 @@ xdr_qcsapi_wifi_set_option_response (XDR *xdrs, qcsapi_wifi_set_option_response 
 }
 
 bool_t
+xdr_qcsapi_get_board_parameter_request (XDR *xdrs, qcsapi_get_board_parameter_request *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_int (xdrs, &objp->board_param))
+		 return FALSE;
+	 if (!xdr_int (xdrs, &objp->buf_len))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_qcsapi_get_board_parameter_response (XDR *xdrs, qcsapi_get_board_parameter_response *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_int (xdrs, &objp->return_code))
+		 return FALSE;
+	 if (!xdr_str (xdrs, &objp->p_buffer))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
 xdr_qcsapi_SSID_create_SSID_request (XDR *xdrs, qcsapi_SSID_create_SSID_request *objp)
 {
 	register int32_t *buf;

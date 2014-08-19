@@ -128,6 +128,7 @@ ifeq ($(RTCONFIG_TMOBILE), y)
 	mv $(INSTALLDIR)/www/images/tmo_modem_unplug.png $(INSTALLDIR)/www/images/modem_unplug.png
 else
 	rm -rf $(INSTALLDIR)/www/MobileQIS_Login.asp
+	rm -rf $(INSTALLDIR)/www/AjaxLogin.asp
 	rm -rf $(INSTALLDIR)/www/Passpoint_hidden.asp
 	rm -rf $(INSTALLDIR)/www/Advanced_WAdvPassPoint_Content.asp
 	rm -rf $(INSTALLDIR)/www/Advanced_WPassPoint_Content.asp

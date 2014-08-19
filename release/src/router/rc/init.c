@@ -3095,10 +3095,12 @@ int init_nvram(void)
 #ifdef RTCONFIG_LED_BTN
 		nvram_set_int("AllLED", 1);
 #endif
+#if 0
 		if(nvram_match("x_Setting", "0") && nvram_get_int("ac87uopmode") == 5){
 			nvram_set("wl1_txbf", "0");
 			nvram_set("wl1_itxbf", "0");
 		}
+#endif
 
 		break;
 

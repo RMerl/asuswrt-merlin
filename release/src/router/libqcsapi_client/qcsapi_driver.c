@@ -319,6 +319,11 @@ static const qcsapi_entry qcsapi_entry_table[] =
 	  e_qcsapi_option,
 	  e_qcsapi_integer
 	},
+	{ e_qcsapi_get_board_parameter,
+	  e_qcsapi_get_system_value,
+	  e_qcsapi_board_parameter,
+	  e_qcsapi_integer
+	},
 	{ e_qcsapi_wifi_get_rates,
 	  e_qcsapi_get_api,
 	  e_qcsapi_rates,

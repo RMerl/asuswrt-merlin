@@ -10,6 +10,14 @@
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript">
 function login(){
+	var make_base_auth = function (user, password) {
+	  var tok = user + ':' + password;
+	  var hash = btoa(tok);
+	  return "Basic " + hash;
+	}
+
+	$("#errorHint").html("");
+
 	if($("#loginID").val() == ""){
 		$("#loginID").focus();
 		$("#errorHint").html("Username cannot be blank!");
@@ -23,22 +31,17 @@ function login(){
 	}
 
 	$.ajax({
-		type: 'GET',
-		url: "/Logout.asp",
-		username: $("#loginID").val(),
-		password: $("#loginPW").val(),
-		dataType: 'script',
-		statusCode: {
-			404: function() {
-				$("#errorHint").html("page not found!");
-			},
-			200: function() {
-				alert( "Login OK!" );
-				location.href = location.protocol + "//" + $("#loginID").val() + ":" + $("#loginPW").val() + "@" + location.host + "/index.asp";
-			},
-			401: function() {
-				$("#errorHint").html("Login Fail!");
-			}
+		type: "GET",
+		url: "/AjaxLogin.asp",
+		dataType: 'text',
+		beforeSend: function (xhr){ 
+			xhr.setRequestHeader('Authorization', make_base_auth($("#loginID").val(), $("#loginPW").val())); 
+		},
+		success: function (){
+			$("#errorHint").html("Thanks for your comment!");
+		},
+		error : function (xhr, text, err) {            
+			$("#errorHint").html(xhr.statusCode().status + " " + xhr.statusCode().statusText);
 		}
 	});
 }
@@ -46,7 +49,7 @@ function login(){
 </head>
 <body onload="">
 <input type="text" id="loginID">
-<input type="text" id="loginPW">
+<input type="password" id="loginPW">
 <input type="button" value="Login" onclick="login();">
 <span id="errorHint"></span>
 </body>

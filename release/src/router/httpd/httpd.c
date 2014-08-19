@@ -233,6 +233,9 @@ int reget_passwd = 0;
 int x_Setting = 0;
 int skip_auth = 0;
 int isLogout = 0;
+#ifdef RTCONFIG_TMOBILE
+int isAjaxLogin = 0;
+#endif
 char url[128];
 int http_port=SERVER_PORT;
 
@@ -343,7 +346,11 @@ auth_check( char* dirname, char* authorization ,char* url)
 	char *temp_ip_str;
 	time_t dt;
 
+#ifdef RTCONFIG_TMOBILE
+	if(isLogout == 1 && isAjaxLogin == 0){
+#else
 	if(isLogout == 1){
+#endif
 		isLogout = 0;
 		send_authenticate( dirname );
 		return 0;
@@ -420,7 +427,9 @@ static void
 __send_authenticate( char* realm )
 {
 	char header[10000];
-
+#ifdef RTCONFIG_TMOBILE
+	if(isAjaxLogin == 0)
+#endif
 	(void) snprintf(header, sizeof(header), "WWW-Authenticate: Basic realm=\"%s\"", realm);
 	send_error( 401, "Unauthorized", header, "Authorization required." );
 }
@@ -894,6 +903,13 @@ handle_request(void)
 				strcpy(url, file);
 			}
 		}
+
+#ifdef RTCONFIG_TMOBILE
+	        isAjaxLogin = 0;
+        	if(!strcmp(file, "AjaxLogin.asp")){
+                	isAjaxLogin = 1;
+        	}
+#endif
 	}
 	else { // Jerry5 fix AiCloud login issue. 20120815
 		x_Setting = nvram_get_int("x_Setting");
@@ -985,7 +1001,11 @@ handle_request(void)
 	}
 
 	if(!fromapp) {
+#ifdef RTCONFIG_TMOBILE
+		if(!strcmp(file, "Logout.asp") || !strcmp(file, "AjaxLogin.asp")){
+#else
 		if(!strcmp(file, "Logout.asp")){
+#endif
 			isLogout = 1;
 			http_logout(login_ip_tmp);
 		}

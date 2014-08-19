@@ -1232,6 +1232,7 @@ enum {
 	IEEE80211_PARAM_RX_AMSDU_THRESHOLD_PMBL = 281,	/* The threshold of pmbl error for dynamic RX AMSDU */
 	IEEE80211_PARAM_RX_AMSDU_PMBL_WF_SP = 282,	/* The weight factor of short preamble error for calculating the pmbl error */
 	IEEE80211_PARAM_RX_AMSDU_PMBL_WF_LP = 283,	/* The weight factor of long preamble error for calculating the pmbl error */
+	IEEE80211_PARAM_BA_SETUP_ENABLE = 284,	/* enable the BA according the rssi threshold, 0 - disable, 1 - enable */
 };
 
 #define	SIOCG80211STATS			(SIOCDEVPRIVATE+2)

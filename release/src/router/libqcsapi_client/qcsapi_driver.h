@@ -78,6 +78,7 @@ typedef enum {
 	e_qcsapi_file_path_config,
 	e_qcsapi_tdls_params,
 	e_qcsapi_tdls_oper,
+	e_qcsapi_board_parameter,
 	e_qcsapi_none,
 	e_qcsapi_nosuch_generic_parameter = 0
 } qcsapi_generic_parameter_type;
@@ -176,6 +177,8 @@ typedef enum {
 	e_qcsapi_wifi_set_beacon_type,
 	e_qcsapi_wifi_get_beacon_interval,
 	e_qcsapi_wifi_set_beacon_interval,
+
+	e_qcsapi_get_board_parameter,
 
 	e_qcsapi_wifi_get_list_regulatory_regions,
 	e_qcsapi_wifi_get_regulatory_tx_power,
@@ -525,6 +528,7 @@ typedef struct qcsapi_generic_parameter {
 		qcsapi_option_type	option;
 		qcsapi_rate_type	typeof_rates;
 		qcsapi_mimo_type	modulation;
+                qcsapi_board_parameter_type board_param;
 		char			the_SSID[ IW_ESSID_MAX_SIZE + 10 ];
 	} parameter_type;
 } qcsapi_generic_parameter;

@@ -665,6 +665,14 @@ enum qcsapi_errno
 	 * <QCS API error 1046: MLME statistics is not supported>
 	 */
 	qcsapi_mlme_stats_not_supported = qcsapi_errno_base + 46,
+        /**
+         * This error code is returned when a board parameter requested for is not supported.
+         *
+         * <c>call_qcsapi</c> printed error message:
+         *
+         * <QCS API error 1047: Board parameter is not supported>
+         */
+        qcsapi_board_parameter_not_supported = qcsapi_errno_base + 47,
 };
 
 /*
@@ -962,6 +970,17 @@ typedef enum {
 	qcsapi_stbc,
 	qcsapi_nosuch_option = 0
 } qcsapi_option_type;
+
+/**
+ * \brief Enumeration used in the board parameter get API.
+ *
+ * \sa qcsapi_get_board_parameter
+ */
+typedef enum {
+	qcsapi_hw_revision = 1,
+	qcsapi_rf_chipid,
+	qcsapi_nosuch_parameter = 0
+} qcsapi_board_parameter_type;
 
 /**
  * \brief This enumeration represents the bandwidth in use on the device.
@@ -6673,6 +6692,31 @@ extern int	qcsapi_wifi_get_option( const char *ifname, qcsapi_option_type qcsapi
 extern int	qcsapi_wifi_set_option( const char *ifname, qcsapi_option_type qcsapi_option, int new_option );
 /**@}*/
 
+/**
+* @brief Get a board related parameter
+*
+* Get the value for the specified board parameter, as specified by
+* the qcsapi_board_parameter_type parameter, with the value returned
+* in the address specified by p_buffer.
+*
+* If the parameter (feature) is not supported, the API will
+* return <c>-qcsapi_board_parameter_not_supported</c>.
+*
+* \param board_param the board parameter to get the value of.
+* \param p_buffer return parameter to contain the value of the board parameter.
+* \param buf_length the parameter that specifies the length of p_buffer.
+*
+* \return 0 if the command succeeded.
+* \return A negative value if an error occurred. See @ref mysection4_1_4 "QCSAPI Return Values"
+* for error codes and messages.
+*
+* \callqcsapi
+*
+* <c>call_qcsapi get_board_parameter \<board parameter\> </c>
+*
+* \sa qcsapi_board_parameter_type
+*/
+extern int	qcsapi_get_board_parameter(qcsapi_board_parameter_type board_param, char *p_buffer, int buf_len);
 
 /*
  * Service Set (SSID) QCSAPIs

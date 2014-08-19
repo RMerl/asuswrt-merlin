@@ -676,6 +676,11 @@ struct muc_rx_stats {
 	u_int32_t	soft_ring_add_to_head;
 	u_int32_t	soft_ring_add_continue;
 	u_int32_t	mimo_ps_mode_switch;	/* times STA switch MIMO power-save mode by HT action */
+
+	/* RX frames BW mode*/
+	u_int32_t	rx_bw_80;
+	u_int32_t	rx_bw_40;
+	u_int32_t	rx_bw_20;
 };
 
 #define MUC_HT_NUM_RATES	77

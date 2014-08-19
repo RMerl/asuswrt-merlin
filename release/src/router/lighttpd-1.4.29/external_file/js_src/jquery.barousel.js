@@ -429,8 +429,7 @@ www.juliendecaudin.com
 						}
                   	}
 				}            
-                else	
-                	alert("freennn");
+                
                 settings.introActive = 0;
                 return false;
 			});
