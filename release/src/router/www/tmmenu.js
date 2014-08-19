@@ -2051,10 +2051,3 @@ function isLocal()
 	return location.href.search('file://') == 0;
 }
 
-function console(s)
-{
-}
-
-
-
-
