@@ -725,7 +725,7 @@ if (olNs4) {
 if (olIe4) {
 	var agent = navigator.userAgent;
 	if (/MSIE/.test(agent)) {
-		var versNum = parseFloat(agent.match(/MSIE[ ](\d\.\d+)\.*/i)[1]);
+		var versNum = parseFloat(agent.match(/MSIE[ ](\d+\.\d+)\.*/i)[1]);
 		if (versNum >= 5){
 			olIe5=true;
 			olIe55=(versNum>=5.5&&!olOp) ? true : false;
