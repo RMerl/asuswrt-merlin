@@ -2829,7 +2829,7 @@ gdb/Makefile:
 	  TUI_LIBRARY=$(TOP)/termcap/libtermcap.a \
 	  LDFLAGS=-L$(TOP)/termcap \
 	  CFLAGS_FOR_BUILD= \
-	  $(CONFIGURE) --bindir=/sbin \
+	  $(CONFIGURE) --bindir=/sbin --enable-werror=no \
 	)
 
 gdb-install:
