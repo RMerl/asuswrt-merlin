@@ -571,7 +571,10 @@ History
    - NEW: Merged with Asus GPL 2061.  This is essentially
           the new QTN driver for the AC87.
    - FIXED: Various webui issues with IE10/IE11 (patch by pinwing)
-
+   - FIXED: OpenVPN Client page was visible on the RT-N16
+   - FIXED: DHCP pool validation error on VPN Server advanced page.
+   - FIXED: Couldn't edit the first VPN Client entry due to broken
+            duplicate check (Asus bug)
 
 
 376.45 (17-Aug-2014)
