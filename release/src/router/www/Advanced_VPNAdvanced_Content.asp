@@ -596,7 +596,7 @@ function check_openvpn_conflict(){		//if conflict with LAN ip & DHCP ip pool & s
 		for(var i = 1; i < staticclist_row.length; i++){
 			var static_subnet ="";
 			var static_end ="";					
-			var static_ip = staticclist_row[i].split('>')[1];
+			var static_ip = staticclist_row[i].split('&#62')[1];
 			static_subnet = static_ip.split(".")[0]+"."+static_ip.split(".")[1]+"."+static_ip.split(".")[2]+".";
 			static_end = parseInt(static_ip.split(".")[3]);
 			if(static_subnet != openvpn_clients_start_subnet){
