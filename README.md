@@ -16,6 +16,7 @@ At this time, the supported devices are:
 - RT-AC66U
 - RT-AC68U
 - RT-AC87U
+- Any model above ending in "R" is a retail version identical to "U", and is supported.
 
 Firmware builds can be downloaded from the official download site:
 
