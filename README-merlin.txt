@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 376.46 (xx-xxx-2014)
+Asuswrt-Merlin - build 376.46 (26-Aug-2014)
 ===========================================
 
 About
@@ -567,7 +567,7 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-376.46 (xx-xxx-2014)
+376.46 (26-Aug-2014)
    - NEW: Merged with Asus GPL 2061.  This is essentially
           the new QTN driver for the AC87.
    - FIXED: Various webui issues with IE10/IE11 (patch by pinwing)
