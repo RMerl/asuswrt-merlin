@@ -51,6 +51,7 @@ function initial(){
 	if (based_modelid == "RT-AC87U") {
 		$("wifi5_clients_tr").style.display = "none";
 		$("wifi5_clients_tr_qtn").style.display = "";
+		$("qtn_version").style.display = "";
 	}
 	showbootTime();
 
@@ -310,6 +311,10 @@ function updateClientList(e){
 					<tr>
 						<th>Driver version</th>
 						<td><% sysinfo("driver_version"); %></td>
+					</tr>
+					<tr id="qtn_version" style="display:none;">
+						<th>Quantenna Firmware</th>
+						<td><% sysinfo("qtn_version"); %></td>
 					</tr>
 					<tr>
 						<th>Features</th>

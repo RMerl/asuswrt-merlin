@@ -69,6 +69,7 @@ typedef unsigned long long u64;
 unsigned int get_qtn_temperature(void);
 unsigned int get_phy_temperature(int radio);
 unsigned int get_wifi_clients(int radio, int querytype);
+unsigned int get_qtn_version(char *version, int len);
 
 #define MBYTES 1024 / 1024
 
@@ -267,6 +268,12 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				free(buffer);
 			}
 			unlink("/tmp/output.txt");
+#ifdef RTCONFIG_QTN
+                } else if(strcmp(type,"qtn_version") == 0 ) {
+
+			if (!get_qtn_version(result, sizeof(result)))
+				strcpy(result,"<unknown>");
+#endif
 		} else if(strcmp(type,"cfe_version") == 0 ) {
 			system("cat /dev/mtd0ro | grep bl_version >/tmp/output.txt");
 			char *buffer = read_whole_file("/tmp/output.txt");
@@ -385,6 +392,17 @@ int GetPhyStatus_qtn(void)
 		return 1000;
 	}
 	return 0;
+}
+
+unsigned int get_qtn_version(char *version, int len)
+{
+        if (!rpc_qtn_ready())
+                return 0;
+
+        if (qcsapi_firmware_get_version(version, len) >= 0)
+                return 1;
+
+        return 0;
 }
 #endif
 
