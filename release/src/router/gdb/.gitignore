@@ -1,0 +1,10 @@
+*.lo
+*.o
+*.a
+bfd/doc/elfcode.texi
+gdb/gdbserver/config.status.lineno
+gdb/gdbserver/new-reg-arm.c
+gdb/observer.h
+gdb/observer.inc
+gdb/stamp-int
+
